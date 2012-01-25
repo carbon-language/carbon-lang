@@ -471,7 +471,7 @@ namespace llvm {
                             const MachineBasicBlock *MBB,
                             unsigned uid) const;
     void EmitLLVMUsedList(const Constant *List);
-    void EmitXXStructorList(const Constant *List);
+    void EmitXXStructorList(const Constant *List, bool isCtor);
     GCMetadataPrinter *GetOrCreateGCPrinter(GCStrategy *C);
   };
 }

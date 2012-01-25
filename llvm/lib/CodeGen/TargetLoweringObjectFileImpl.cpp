@@ -340,6 +340,32 @@ getExprForDwarfGlobalReference(const GlobalValue *GV, Mangler *Mang,
     getExprForDwarfGlobalReference(GV, Mang, MMI, Encoding, Streamer);
 }
 
+const MCSection *
+TargetLoweringObjectFileELF::getStaticCtorSection(unsigned Priority) const {
+  // The default scheme is .ctor / .dtor, so we have to invert the priority
+  // numbering.
+  if (Priority == 65535)
+    return StaticCtorSection;
+
+  std::string Name = std::string(".ctors.") + utostr(65535 - Priority);
+  return getContext().getELFSection(Name, ELF::SHT_PROGBITS,
+                                    ELF::SHF_ALLOC |ELF::SHF_WRITE,
+                                    SectionKind::getDataRel());
+}
+
+const MCSection *
+TargetLoweringObjectFileELF::getStaticDtorSection(unsigned Priority) const {
+  // The default scheme is .ctor / .dtor, so we have to invert the priority
+  // numbering.
+  if (Priority == 65535)
+    return StaticDtorSection;
+
+  std::string Name = std::string(".dtors.") + utostr(65535 - Priority);
+  return getContext().getELFSection(Name, ELF::SHT_PROGBITS,
+                                    ELF::SHF_ALLOC |ELF::SHF_WRITE,
+                                    SectionKind::getDataRel());
+}
+
 //===----------------------------------------------------------------------===//
 //                                 MachO
 //===----------------------------------------------------------------------===//

@@ -1207,12 +1207,8 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
 
   assert(GV->hasInitializer() && "Not a special LLVM global!");
 
-  const TargetData *TD = TM.getTargetData();
-  unsigned Align = Log2_32(TD->getPointerPrefAlignment());
   if (GV->getName() == "llvm.global_ctors") {
-    OutStreamer.SwitchSection(getObjFileLowering().getStaticCtorSection());
-    EmitAlignment(Align);
-    EmitXXStructorList(GV->getInitializer());
+    EmitXXStructorList(GV->getInitializer(), /* isCtor */ true);
 
     if (TM.getRelocationModel() == Reloc::Static &&
         MAI->hasStaticCtorDtorReferenceInStaticMode()) {
@@ -1224,9 +1220,7 @@ bool AsmPrinter::EmitSpecialLLVMGlobal(const GlobalVariable *GV) {
   }
 
   if (GV->getName() == "llvm.global_dtors") {
-    OutStreamer.SwitchSection(getObjFileLowering().getStaticDtorSection());
-    EmitAlignment(Align);
-    EmitXXStructorList(GV->getInitializer());
+    EmitXXStructorList(GV->getInitializer(), /* isCtor */ false);
 
     if (TM.getRelocationModel() == Reloc::Static &&
         MAI->hasStaticCtorDtorReferenceInStaticMode()) {
@@ -1256,7 +1250,7 @@ void AsmPrinter::EmitLLVMUsedList(const Constant *List) {
   }
 }
 
-typedef std::pair<int, Constant*> Structor;
+typedef std::pair<unsigned, Constant*> Structor;
 
 static bool priority_order(const Structor& lhs, const Structor& rhs) {
   return lhs.first < rhs.first;
@@ -1264,7 +1258,7 @@ static bool priority_order(const Structor& lhs, const Structor& rhs) {
 
 /// EmitXXStructorList - Emit the ctor or dtor list taking into account the init
 /// priority.
-void AsmPrinter::EmitXXStructorList(const Constant *List) {
+void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
   // Should be an array of '{ int, void ()* }' structs.  The first value is the
   // init priority.
   if (!isa<ConstantArray>(List)) return;
@@ -1290,19 +1284,20 @@ void AsmPrinter::EmitXXStructorList(const Constant *List) {
                                        CS->getOperand(1)));
   }
 
-  // Emit the function pointers in reverse priority order.
-  switch (getObjFileLowering().getStructorOutputOrder()) {
-  case Structors::None:
-    break;
-  case Structors::PriorityOrder:
-    std::sort(Structors.begin(), Structors.end(), priority_order);
-    break;
-  case Structors::ReversePriorityOrder:
-    std::sort(Structors.rbegin(), Structors.rend(), priority_order);
-    break;
-  }
-  for (unsigned i = 0, e = Structors.size(); i != e; ++i)
+  // Emit the function pointers in the target-specific order
+  const TargetData *TD = TM.getTargetData();
+  unsigned Align = Log2_32(TD->getPointerPrefAlignment());
+  std::stable_sort(Structors.begin(), Structors.end(), priority_order);
+  for (unsigned i = 0, e = Structors.size(); i != e; ++i) {
+    const MCSection *OutputSection =
+      (isCtor ?
+       getObjFileLowering().getStaticCtorSection(Structors[i].first) :
+       getObjFileLowering().getStaticDtorSection(Structors[i].first));
+    OutStreamer.SwitchSection(OutputSection);
+    if (OutStreamer.getCurrentSection() != OutStreamer.getPreviousSection())
+      EmitAlignment(Align);
     EmitGlobalConstant(Structors[i].second);
+  }
 }
 
 //===--------------------------------------------------------------------===//

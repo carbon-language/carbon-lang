@@ -65,6 +65,11 @@ public:
   virtual MCSymbol *
   getCFIPersonalitySymbol(const GlobalValue *GV, Mangler *Mang,
                           MachineModuleInfo *MMI) const;
+
+  virtual const MCSection *
+  getStaticCtorSection(unsigned Priority = 65535) const;
+  virtual const MCSection *
+  getStaticDtorSection(unsigned Priority = 65535) const;
 };
 
 

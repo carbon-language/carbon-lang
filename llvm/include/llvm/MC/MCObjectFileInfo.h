@@ -22,10 +22,6 @@ namespace llvm {
   class MCContext;
   class MCSection;
   class Triple;
-  
-  namespace Structors {
-    enum OutputOrder { None, PriorityOrder, ReversePriorityOrder };
-  }
 
 class MCObjectFileInfo {  
 protected:
@@ -167,11 +163,6 @@ protected:
   const MCSection *DrectveSection;
   const MCSection *PDataSection;
   const MCSection *XDataSection;
-  
-  /// StructorOutputOrder - Whether the static ctor/dtor list should be output
-  /// in no particular order, in order of increasing priority or the reverse:
-  /// in order of decreasing priority (the default).
-  Structors::OutputOrder StructorOutputOrder; // Default is reverse order.
 
 public:
   void InitMCObjectFileInfo(StringRef TT, Reloc::Model RM, CodeModel::Model CM,
@@ -197,8 +188,6 @@ public:
   const MCSection *getTextSection() const { return TextSection; }
   const MCSection *getDataSection() const { return DataSection; }
   const MCSection *getBSSSection() const { return BSSSection; }
-  const MCSection *getStaticCtorSection() const { return StaticCtorSection; }
-  const MCSection *getStaticDtorSection() const { return StaticDtorSection; }
   const MCSection *getLSDASection() const { return LSDASection; }
   const MCSection *getCompactUnwindSection() const{
     return CompactUnwindSection;
@@ -298,10 +287,6 @@ public:
     if (!EHFrameSection)
       InitEHFrameSection();
     return EHFrameSection;
-  }
-
-  Structors::OutputOrder getStructorOutputOrder() const {
-    return StructorOutputOrder;
   }
 
 private:

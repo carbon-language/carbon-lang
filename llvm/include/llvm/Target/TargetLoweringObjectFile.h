@@ -121,7 +121,18 @@ public:
   const MCExpr *
   getExprForDwarfReference(const MCSymbol *Sym, unsigned Encoding,
                            MCStreamer &Streamer) const;
-  
+
+  virtual const MCSection *
+  getStaticCtorSection(unsigned Priority = 65535) const {
+    (void)Priority;
+    return StaticCtorSection;
+  }
+  virtual const MCSection *
+  getStaticDtorSection(unsigned Priority = 65535) const {
+    (void)Priority;
+    return StaticDtorSection;
+  }
+
 protected:
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
