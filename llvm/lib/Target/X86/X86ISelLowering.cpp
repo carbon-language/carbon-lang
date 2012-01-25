@@ -9302,6 +9302,18 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
   case Intrinsic::x86_avx_hsub_pd_256:
     return DAG.getNode(X86ISD::FHSUB, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
+  case Intrinsic::x86_ssse3_phadd_w_128:
+  case Intrinsic::x86_ssse3_phadd_d_128:
+  case Intrinsic::x86_avx2_phadd_w:
+  case Intrinsic::x86_avx2_phadd_d:
+    return DAG.getNode(X86ISD::HADD, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
+  case Intrinsic::x86_ssse3_phsub_w_128:
+  case Intrinsic::x86_ssse3_phsub_d_128:
+  case Intrinsic::x86_avx2_phsub_w:
+  case Intrinsic::x86_avx2_phsub_d:
+    return DAG.getNode(X86ISD::HSUB, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::x86_avx2_psllv_d:
   case Intrinsic::x86_avx2_psllv_q:
   case Intrinsic::x86_avx2_psllv_d_256:

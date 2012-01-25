@@ -5079,6 +5079,28 @@ defm PABSD : SS3I_unop_rm_int<0x1E, "pabsd",
 // SSSE3 - Packed Binary Operator Instructions
 //===---------------------------------------------------------------------===//
 
+/// SS3I_binop_rm - Simple SSSE3 bin op
+multiclass SS3I_binop_rm<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                         ValueType OpVT, RegisterClass RC, PatFrag memop_frag,
+                         X86MemOperand x86memop, bit Is2Addr = 1> {
+  let isCommutable = 1 in
+  def rr : SS38I<opc, MRMSrcReg, (outs RC:$dst),
+       (ins RC:$src1, RC:$src2),
+       !if(Is2Addr,
+         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (OpVT (OpNode RC:$src1, RC:$src2)))]>,
+       OpSize;
+  def rm : SS38I<opc, MRMSrcMem, (outs RC:$dst),
+       (ins RC:$src1, x86memop:$src2),
+       !if(Is2Addr,
+         !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+         !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst,
+         (OpVT (OpNode RC:$src1,
+          (bitconvert (memop_frag addr:$src2)))))]>, OpSize;
+}
+
 /// SS3I_binop_rm_int - Simple SSSE3 bin op whose type can be v*{i8,i16,i32}.
 multiclass SS3I_binop_rm_int<bits<8> opc, string OpcodeStr,
                              Intrinsic IntId128, bit Is2Addr = 1> {
@@ -5118,16 +5140,16 @@ multiclass SS3I_binop_rm_int_y<bits<8> opc, string OpcodeStr,
 
 let ImmT = NoImm, Predicates = [HasAVX] in {
 let isCommutable = 0 in {
-  defm VPHADDW    : SS3I_binop_rm_int<0x01, "vphaddw",
-                                      int_x86_ssse3_phadd_w_128, 0>, VEX_4V;
-  defm VPHADDD    : SS3I_binop_rm_int<0x02, "vphaddd",
-                                      int_x86_ssse3_phadd_d_128, 0>, VEX_4V;
+  defm VPHADDW    : SS3I_binop_rm<0x01, "vphaddw", X86hadd, v8i16, VR128,
+                                  memopv2i64, i128mem, 0>, VEX_4V;
+  defm VPHADDD    : SS3I_binop_rm<0x02, "vphaddd", X86hadd, v4i32, VR128,
+                                  memopv2i64, i128mem, 0>, VEX_4V;
+  defm VPHSUBW    : SS3I_binop_rm<0x05, "vphsubw", X86hsub, v8i16, VR128,
+                                  memopv2i64, i128mem, 0>, VEX_4V;
+  defm VPHSUBD    : SS3I_binop_rm<0x06, "vphsubd", X86hsub, v4i32, VR128,
+                                  memopv2i64, i128mem, 0>, VEX_4V;
   defm VPHADDSW   : SS3I_binop_rm_int<0x03, "vphaddsw",
                                       int_x86_ssse3_phadd_sw_128, 0>, VEX_4V;
-  defm VPHSUBW    : SS3I_binop_rm_int<0x05, "vphsubw",
-                                      int_x86_ssse3_phsub_w_128, 0>, VEX_4V;
-  defm VPHSUBD    : SS3I_binop_rm_int<0x06, "vphsubd",
-                                      int_x86_ssse3_phsub_d_128, 0>, VEX_4V;
   defm VPHSUBSW   : SS3I_binop_rm_int<0x07, "vphsubsw",
                                       int_x86_ssse3_phsub_sw_128, 0>, VEX_4V;
   defm VPMADDUBSW : SS3I_binop_rm_int<0x04, "vpmaddubsw",
@@ -5147,16 +5169,16 @@ defm VPMULHRSW    : SS3I_binop_rm_int<0x0B, "vpmulhrsw",
 
 let ImmT = NoImm, Predicates = [HasAVX2] in {
 let isCommutable = 0 in {
-  defm VPHADDW    : SS3I_binop_rm_int_y<0x01, "vphaddw",
-                                        int_x86_avx2_phadd_w>, VEX_4V;
-  defm VPHADDD    : SS3I_binop_rm_int_y<0x02, "vphaddd",
-                                        int_x86_avx2_phadd_d>, VEX_4V;
+  defm VPHADDWY   : SS3I_binop_rm<0x01, "vphaddw", X86hadd, v16i16, VR256,
+                                  memopv4i64, i256mem, 0>, VEX_4V;
+  defm VPHADDDY   : SS3I_binop_rm<0x02, "vphaddd", X86hadd, v8i32, VR256,
+                                  memopv4i64, i256mem, 0>, VEX_4V;
+  defm VPHSUBWY   : SS3I_binop_rm<0x05, "vphsubw", X86hsub, v16i16, VR256,
+                                  memopv4i64, i256mem, 0>, VEX_4V;
+  defm VPHSUBDY   : SS3I_binop_rm<0x06, "vphsubd", X86hsub, v8i32, VR256,
+                                  memopv4i64, i256mem, 0>, VEX_4V;
   defm VPHADDSW   : SS3I_binop_rm_int_y<0x03, "vphaddsw",
                                         int_x86_avx2_phadd_sw>, VEX_4V;
-  defm VPHSUBW    : SS3I_binop_rm_int_y<0x05, "vphsubw",
-                                        int_x86_avx2_phsub_w>, VEX_4V;
-  defm VPHSUBD    : SS3I_binop_rm_int_y<0x06, "vphsubd",
-                                        int_x86_avx2_phsub_d>, VEX_4V;
   defm VPHSUBSW   : SS3I_binop_rm_int_y<0x07, "vphsubsw",
                                         int_x86_avx2_phsub_sw>, VEX_4V;
   defm VPMADDUBSW : SS3I_binop_rm_int_y<0x04, "vpmaddubsw",
@@ -5177,16 +5199,16 @@ defm VPMULHRSW    : SS3I_binop_rm_int_y<0x0B, "vpmulhrsw",
 // None of these have i8 immediate fields.
 let ImmT = NoImm, Constraints = "$src1 = $dst" in {
 let isCommutable = 0 in {
-  defm PHADDW    : SS3I_binop_rm_int<0x01, "phaddw",
-                                     int_x86_ssse3_phadd_w_128>;
-  defm PHADDD    : SS3I_binop_rm_int<0x02, "phaddd",
-                                     int_x86_ssse3_phadd_d_128>;
+  defm PHADDW    : SS3I_binop_rm<0x01, "phaddw", X86hadd, v8i16, VR128,
+                                 memopv2i64, i128mem>;
+  defm PHADDD    : SS3I_binop_rm<0x02, "phaddd", X86hadd, v4i32, VR128,
+                                 memopv2i64, i128mem>;
+  defm PHSUBW    : SS3I_binop_rm<0x05, "phsubw", X86hsub, v8i16, VR128,
+                                 memopv2i64, i128mem>;
+  defm PHSUBD    : SS3I_binop_rm<0x06, "phsubd", X86hsub, v4i32, VR128,
+                                 memopv2i64, i128mem>;
   defm PHADDSW   : SS3I_binop_rm_int<0x03, "phaddsw",
                                      int_x86_ssse3_phadd_sw_128>;
-  defm PHSUBW    : SS3I_binop_rm_int<0x05, "phsubw",
-                                     int_x86_ssse3_phsub_w_128>;
-  defm PHSUBD    : SS3I_binop_rm_int<0x06, "phsubd",
-                                     int_x86_ssse3_phsub_d_128>;
   defm PHSUBSW   : SS3I_binop_rm_int<0x07, "phsubsw",
                                      int_x86_ssse3_phsub_sw_128>;
   defm PMADDUBSW : SS3I_binop_rm_int<0x04, "pmaddubsw",
@@ -5216,15 +5238,6 @@ let Predicates = [HasAVX] in {
             (VPSIGNWrr128 VR128:$src1, VR128:$src2)>;
   def : Pat<(v4i32 (X86psign VR128:$src1, VR128:$src2)),
             (VPSIGNDrr128 VR128:$src1, VR128:$src2)>;
-
-  def : Pat<(v8i16 (X86hadd VR128:$src1, VR128:$src2)),
-            (VPHADDWrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86hadd VR128:$src1, VR128:$src2)),
-            (VPHADDDrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v8i16 (X86hsub VR128:$src1, VR128:$src2)),
-            (VPHSUBWrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86hsub VR128:$src1, VR128:$src2)),
-            (VPHSUBDrr128 VR128:$src1, VR128:$src2)>;
 }
 
 let Predicates = [HasAVX2] in {
@@ -5234,15 +5247,6 @@ let Predicates = [HasAVX2] in {
             (VPSIGNWrr256 VR256:$src1, VR256:$src2)>;
   def : Pat<(v8i32 (X86psign VR256:$src1, VR256:$src2)),
             (VPSIGNDrr256 VR256:$src1, VR256:$src2)>;
-
-  def : Pat<(v16i16 (X86hadd VR256:$src1, VR256:$src2)),
-            (VPHADDWrr256 VR256:$src1, VR256:$src2)>;
-  def : Pat<(v8i32 (X86hadd VR256:$src1, VR256:$src2)),
-            (VPHADDDrr256 VR256:$src1, VR256:$src2)>;
-  def : Pat<(v16i16 (X86hsub VR256:$src1, VR256:$src2)),
-            (VPHSUBWrr256 VR256:$src1, VR256:$src2)>;
-  def : Pat<(v8i32 (X86hsub VR256:$src1, VR256:$src2)),
-            (VPHSUBDrr256 VR256:$src1, VR256:$src2)>;
 }
 
 let Predicates = [HasSSSE3] in {
@@ -5257,15 +5261,6 @@ let Predicates = [HasSSSE3] in {
             (PSIGNWrr128 VR128:$src1, VR128:$src2)>;
   def : Pat<(v4i32 (X86psign VR128:$src1, VR128:$src2)),
             (PSIGNDrr128 VR128:$src1, VR128:$src2)>;
-
-  def : Pat<(v8i16 (X86hadd VR128:$src1, VR128:$src2)),
-            (PHADDWrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86hadd VR128:$src1, VR128:$src2)),
-            (PHADDDrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v8i16 (X86hsub VR128:$src1, VR128:$src2)),
-            (PHSUBWrr128 VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4i32 (X86hsub VR128:$src1, VR128:$src2)),
-            (PHSUBDrr128 VR128:$src1, VR128:$src2)>;
 }
 
 //===---------------------------------------------------------------------===//
