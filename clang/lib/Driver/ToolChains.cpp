@@ -1627,11 +1627,11 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA,
 FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple)
   : Generic_ELF(D, Triple) {
 
-  // When targeting 32-bit platforms, look for '/usr/lib32/crt1.o' and fall
-  // back to '/usr/lib' if it doesn't exist.
+  // When targeting 32-bit platforms, look for '/usr/lib32' first and fall back
+  // to '/usr/lib' for the remaining cases.
   if ((Triple.getArch() == llvm::Triple::x86 ||
        Triple.getArch() == llvm::Triple::ppc) &&
-      llvm::sys::fs::exists(getDriver().SysRoot + "/usr/lib32/crt1.o"))
+      llvm::sys::fs::exists(getDriver().SysRoot + "/usr/lib32"))
     getFilePaths().push_back(getDriver().SysRoot + "/usr/lib32");
   else
     getFilePaths().push_back(getDriver().SysRoot + "/usr/lib");
