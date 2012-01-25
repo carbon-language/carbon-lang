@@ -819,13 +819,8 @@ unsigned LiveIntervals::getReMatImplicitUse(const LiveInterval &li,
     if (TargetRegisterInfo::isPhysicalRegister(Reg) &&
         !allocatableRegs_[Reg])
       continue;
-    // FIXME: For now, only remat MI with at most one register operand.
-    assert(!RegOp &&
-           "Can't rematerialize instruction with multiple register operand!");
     RegOp = MO.getReg();
-#ifdef NDEBUG
-    break;
-#endif
+    break; // Found vreg operand - leave the loop.
   }
   return RegOp;
 }
