@@ -4193,8 +4193,11 @@ DeclContext *ASTImporter::ImportContext(DeclContext *FromDC) {
     // When we're using a record declaration as a context, we need it to have
     // a definition.
     ASTNodeImporter Importer(*this);
-    Importer.ImportDefinition(cast<RecordDecl>(FromDC), ToRecord,
-                              ASTNodeImporter::IDK_Basic);
+    
+    RecordDecl *FromRecord = cast<RecordDecl>(FromDC);
+    if (FromRecord->isCompleteDefinition())
+      Importer.ImportDefinition(FromRecord, ToRecord,
+                                ASTNodeImporter::IDK_Basic);
   }
   
   return ToDC;
