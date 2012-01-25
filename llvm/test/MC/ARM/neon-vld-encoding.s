@@ -412,6 +412,46 @@
 @ CHECK: vld4.32 {d17[1], d19[1], d21[1], d23[1]}, [r9], r4 @ encoding: [0xc4,0x1b,0xe9,0xf4]
 
 
+	vld4.8 {d16[], d17[], d18[], d19[]}, [r1]
+	vld4.16 {d16[], d17[], d18[], d19[]}, [r2]
+	vld4.32 {d16[], d17[], d18[], d19[]}, [r3]
+	vld4.8 {d17[], d19[], d21[], d23[]}, [r7]
+	vld4.16 {d17[], d19[], d21[], d23[]}, [r7]
+	vld4.32 {d16[], d18[], d20[], d22[]}, [r8]
+
+	vld4.s8 {d16[], d17[], d18[], d19[]}, [r1]!
+	vld4.s16 {d16[], d17[], d18[], d19[]}, [r2]!
+	vld4.s32 {d16[], d17[], d18[], d19[]}, [r3]!
+	vld4.u8 {d17[], d19[], d21[], d23[]}, [r7]!
+	vld4.u16 {d17[], d19[], d21[], d23[]}, [r7]!
+	vld4.u32 {d16[], d18[], d20[], d22[]}, [r8]!
+
+	vld4.p8 {d16[], d17[], d18[], d19[]}, [r1], r8
+	vld4.p16 {d16[], d17[], d18[], d19[]}, [r2], r7
+	vld4.f32 {d16[], d17[], d18[], d19[]}, [r3], r5
+	vld4.i8 {d16[], d18[], d20[], d22[]}, [r6], r3
+	vld4.i16 {d16[], d18[], d20[], d22[]}, [r6], r3
+	vld4.i32 {d17[], d19[], d21[], d23[]}, [r9], r4
+
+@ CHECK: vld4.8 {d16[], d17[], d18[], d19[]}, [r1] @ encoding: [0x0f,0x0f,0xe1,0xf4]
+@ CHECK: vld4.16 {d16[], d17[], d18[], d19[]}, [r2] @ encoding: [0x4f,0x0f,0xe2,0xf4]
+@ CHECK: vld4.32 {d16[], d17[], d18[], d19[]}, [r3] @ encoding: [0x8f,0x0f,0xe3,0xf4]
+@ CHECK: vld4.8 {d17[], d19[], d21[], d23[]}, [r7] @ encoding: [0x2f,0x1f,0xe7,0xf4]
+@ CHECK: vld4.16 {d17[], d19[], d21[], d23[]}, [r7] @ encoding: [0x6f,0x1f,0xe7,0xf4]
+@ CHECK: vld4.32 {d16[], d18[], d20[], d22[]}, [r8] @ encoding: [0xaf,0x0f,0xe8,0xf4]
+@ CHECK: vld4.8 {d16[], d17[], d18[], d19[]}, [r1]! @ encoding: [0x0d,0x0f,0xe1,0xf4]
+@ CHECK: vld4.16 {d16[], d17[], d18[], d19[]}, [r2]! @ encoding: [0x4d,0x0f,0xe2,0xf4]
+@ CHECK: vld4.32 {d16[], d17[], d18[], d19[]}, [r3]! @ encoding: [0x8d,0x0f,0xe3,0xf4]
+@ CHECK: vld4.8 {d17[], d18[], d19[], d20[]}, [r7]! @ encoding: [0x2d,0x1f,0xe7,0xf4]
+@ CHECK: vld4.16 {d17[], d18[], d19[], d20[]}, [r7]! @ encoding: [0x6d,0x1f,0xe7,0xf4]
+@ CHECK: vld4.32 {d16[], d18[], d20[], d22[]}, [r8]! @ encoding: [0xad,0x0f,0xe8,0xf4]
+@ CHECK: vld4.8 {d16[], d17[], d18[], d19[]}, [r1], r8 @ encoding: [0x08,0x0f,0xe1,0xf4]
+@ CHECK: vld4.16 {d16[], d17[], d18[], d19[]}, [r2], r7 @ encoding: [0x47,0x0f,0xe2,0xf4]
+@ CHECK: vld4.32 {d16[], d17[], d18[], d19[]}, [r3], r5 @ encoding: [0x85,0x0f,0xe3,0xf4]
+@ CHECK: vld4.8 {d16[], d18[], d20[], d22[]}, [r6], r3 @ encoding: [0x23,0x0f,0xe6,0xf4]
+@ CHECK: vld4.16 {d16[], d18[], d20[], d22[]}, [r6], r3 @ encoding: [0x63,0x0f,0xe6,0xf4]
+@ CHECK: vld4.32 {d17[], d19[], d21[], d23[]}, [r9], r4 @ encoding: [0xa4,0x1f,0xe9,0xf4]
+
 @ Handle 'Q' registers in register lists as if the sub-reg D regs were
 @ specified instead.
 	vld1.8 {q3}, [r9]

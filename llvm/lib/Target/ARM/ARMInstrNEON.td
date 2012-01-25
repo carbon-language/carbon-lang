@@ -191,6 +191,25 @@ def VecListThreeQAllLanes : RegisterOperand<DPR,
                                          "printVectorListThreeSpacedAllLanes"> {
   let ParserMatchClass = VecListThreeQAllLanesAsmOperand;
 }
+// Register list of four D registers, with "all lanes" subscripting.
+def VecListFourDAllLanesAsmOperand : AsmOperandClass {
+  let Name = "VecListFourDAllLanes";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
+}
+def VecListFourDAllLanes : RegisterOperand<DPR, "printVectorListFourAllLanes"> {
+  let ParserMatchClass = VecListFourDAllLanesAsmOperand;
+}
+// Register list of four D registers spaced by 2 (four sequential Q regs).
+def VecListFourQAllLanesAsmOperand : AsmOperandClass {
+  let Name = "VecListFourQAllLanes";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
+}
+def VecListFourQAllLanes : RegisterOperand<DPR,
+                                         "printVectorListFourSpacedAllLanes"> {
+  let ParserMatchClass = VecListFourQAllLanesAsmOperand;
+}
 
 
 // Register list of one D register, with byte lane subscripting.
@@ -6332,6 +6351,65 @@ def VST3qWB_register_Asm_32 :
         NEONDataTypeAsmPseudoInst<"vst3${p}", ".32", "$list, $addr, $Rm",
                   (ins VecListThreeQ:$list, addrmode6:$addr,
                        rGPR:$Rm, pred:$p)>;
+
+// VLD4 all-lanes pseudo-instructions. These need special handling for
+// the lane index that an InstAlias can't handle, so we use these instead.
+def VLD4DUPdAsm_8  : NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr",
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD4DUPdAsm_16 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr",
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD4DUPdAsm_32 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr",
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD4DUPqAsm_8  : NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr",
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD4DUPqAsm_16 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr",
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD4DUPqAsm_32 : NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr",
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+
+def VLD4DUPdWB_fixed_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr!",
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD4DUPdWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr!",
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD4DUPdWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr!",
+               (ins VecListFourDAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD4DUPqWB_fixed_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr!",
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD4DUPqWB_fixed_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr!",
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD4DUPqWB_fixed_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr!",
+               (ins VecListFourQAllLanes:$list, addrmode6:$addr, pred:$p)>;
+def VLD4DUPdWB_register_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr, $Rm",
+                  (ins VecListFourDAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD4DUPdWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListFourDAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD4DUPdWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListFourDAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD4DUPqWB_register_Asm_8 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".8", "$list, $addr, $Rm",
+                  (ins VecListFourQAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD4DUPqWB_register_Asm_16 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".16", "$list, $addr, $Rm",
+                  (ins VecListFourQAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+def VLD4DUPqWB_register_Asm_32 :
+        NEONDataTypeAsmPseudoInst<"vld4${p}", ".32", "$list, $addr, $Rm",
+                  (ins VecListFourQAllLanes:$list, addrmode6:$addr,
+                       rGPR:$Rm, pred:$p)>;
+
 
 // VLD4 single-lane pseudo-instructions. These need special handling for
 // the lane index that an InstAlias can't handle, so we use these instead.
