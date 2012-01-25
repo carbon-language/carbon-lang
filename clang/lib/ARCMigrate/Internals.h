@@ -94,6 +94,8 @@ public:
 
   void reportError(StringRef error, SourceLocation loc,
                    SourceRange range = SourceRange());
+  void reportWarning(StringRef warning, SourceLocation loc,
+                   SourceRange range = SourceRange());
   void reportNote(StringRef note, SourceLocation loc,
                   SourceRange range = SourceRange());
 
@@ -138,6 +140,7 @@ class MigrationPass {
 public:
   ASTContext &Ctx;
   LangOptions::GCMode OrigGCMode;
+  MigratorOptions MigOptions;
   Sema &SemaRef;
   TransformActions &TA;
   std::vector<SourceLocation> &ARCMTMacroLocs;
@@ -145,10 +148,13 @@ public:
   MigrationPass(ASTContext &Ctx, LangOptions::GCMode OrigGCMode,
                 Sema &sema, TransformActions &TA,
                 std::vector<SourceLocation> &ARCMTMacroLocs)
-    : Ctx(Ctx), OrigGCMode(OrigGCMode), SemaRef(sema), TA(TA),
+    : Ctx(Ctx), OrigGCMode(OrigGCMode), MigOptions(),
+      SemaRef(sema), TA(TA),
       ARCMTMacroLocs(ARCMTMacroLocs) { }
 
   bool isGCMigration() const { return OrigGCMode != LangOptions::NonGC; }
+  bool noNSAllocReallocError() const { return MigOptions.NoNSAllocReallocError; }
+  void setNSAllocReallocError(bool val) { MigOptions.NoNSAllocReallocError = val; }
 };
 
 static inline StringRef getARCMTMacroName() {

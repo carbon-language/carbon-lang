@@ -692,6 +692,25 @@ void TransformActions::reportError(StringRef error, SourceLocation loc,
   ReportedErrors = true;
 }
 
+void TransformActions::reportWarning(StringRef warning, SourceLocation loc,
+                                   SourceRange range) {
+  assert(!static_cast<TransformActionsImpl*>(Impl)->isInTransaction() &&
+         "Warning should be emitted out of a transaction");
+  
+  SourceManager &SM = static_cast<TransformActionsImpl*>(Impl)->
+    getASTContext().getSourceManager();
+  if (SM.isInSystemHeader(SM.getExpansionLoc(loc)))
+    return;
+  
+  // FIXME: Use a custom category name to distinguish rewriter errors.
+  std::string rewriterWarn = "[rewriter] ";
+  rewriterWarn += warning;
+  unsigned diagID
+  = Diags.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Warning,
+                                              rewriterWarn);
+  Diags.Report(loc, diagID) << range;
+}
+
 void TransformActions::reportNote(StringRef note, SourceLocation loc,
                                   SourceRange range) {
   assert(!static_cast<TransformActionsImpl*>(Impl)->isInTransaction() &&

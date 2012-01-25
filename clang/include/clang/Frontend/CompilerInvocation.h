@@ -14,6 +14,7 @@
 #include "clang/Basic/TargetOptions.h"
 #include "clang/Basic/FileSystemOptions.h"
 #include "clang/Frontend/AnalyzerOptions.h"
+#include "clang/Frontend/MigratorOptions.h"
 #include "clang/Frontend/CodeGenOptions.h"
 #include "clang/Frontend/DependencyOutputOptions.h"
 #include "clang/Frontend/DiagnosticOptions.h"
@@ -56,6 +57,8 @@ class CompilerInvocation : public CompilerInvocationBase {
   /// Options controlling the static analyzer.
   AnalyzerOptions AnalyzerOpts;
 
+  MigratorOptions MigratorOpts;
+  
   /// Options controlling IRgen and the backend.
   CodeGenOptions CodeGenOpts;
 
@@ -147,6 +150,11 @@ public:
     return AnalyzerOpts;
   }
 
+  MigratorOptions &getMigratorOpts() { return MigratorOpts; }
+  const MigratorOptions &getMigratorOpts() const {
+    return MigratorOpts;
+  }
+  
   CodeGenOptions &getCodeGenOpts() { return CodeGenOpts; }
   const CodeGenOptions &getCodeGenOpts() const {
     return CodeGenOpts;
