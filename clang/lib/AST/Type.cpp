@@ -1889,7 +1889,9 @@ TemplateSpecializationType(TemplateName T,
          Canon.isNull()? T.isDependent() : Canon->isDependentType(),
          Canon.isNull()? T.isDependent() 
                        : Canon->isInstantiationDependentType(),
-         false, T.containsUnexpandedParameterPack()),
+         false,
+         Canon.isNull()? T.containsUnexpandedParameterPack()
+                       : Canon->containsUnexpandedParameterPack()),
     Template(T), NumArgs(NumArgs) {
   assert(!T.getAsDependentTemplateName() && 
          "Use DependentTemplateSpecializationType for dependent template-name");
@@ -1922,7 +1924,7 @@ TemplateSpecializationType(TemplateName T,
     if (Args[Arg].getKind() == TemplateArgument::Type &&
         Args[Arg].getAsType()->isVariablyModifiedType())
       setVariablyModified();
-    if (Args[Arg].containsUnexpandedParameterPack())
+    if (Canon.isNull() && Args[Arg].containsUnexpandedParameterPack())
       setContainsUnexpandedParameterPack();
 
     new (&TemplateArgs[Arg]) TemplateArgument(Args[Arg]);

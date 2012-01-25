@@ -1510,7 +1510,7 @@ ParmVarDecl *Sema::SubstParmVarDecl(ParmVarDecl *OldParm,
   // FIXME: When OldParm is a parameter pack and NewParm is not a parameter
   // pack, we actually have a set of instantiated locations. Maintain this set!
   if (OldParm->isParameterPack() && !NewParm->isParameterPack()) {
-    // Add the new parameter to 
+    // Add the new parameter to the instantiated parameter pack.
     CurrentInstantiationScope->InstantiatedLocalPackArg(OldParm, NewParm);
   } else {
     // Introduce an Old -> New mapping
