@@ -751,13 +751,19 @@ _mm256_load_ps(float const *p)
 static __inline __m256d __attribute__((__always_inline__, __nodebug__))
 _mm256_loadu_pd(double const *p)
 {
-  return (__m256d)__builtin_ia32_loadupd256(p);
+  struct __loadu_pd {
+    __m256d v;
+  } __attribute__((packed, may_alias));
+  return ((struct __loadu_pd*)p)->v;
 }
 
 static __inline __m256 __attribute__((__always_inline__, __nodebug__))
 _mm256_loadu_ps(float const *p)
 {
-  return (__m256)__builtin_ia32_loadups256(p);
+  struct __loadu_ps {
+    __m256 v;
+  } __attribute__((packed, may_alias));
+  return ((struct __loadu_ps*)p)->v;
 }
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
@@ -769,7 +775,10 @@ _mm256_load_si256(__m256i const *p)
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
 _mm256_loadu_si256(__m256i const *p)
 {
-  return (__m256i)__builtin_ia32_loaddqu256((char const *)p);
+  struct __loadu_si256 {
+    __m256i v;
+  } __attribute__((packed, may_alias));
+  return ((struct __loadu_si256*)p)->v;
 }
 
 static __inline __m256i __attribute__((__always_inline__, __nodebug__))
