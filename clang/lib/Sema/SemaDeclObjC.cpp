@@ -1931,6 +1931,51 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *left,
   return true;
 }
 
+/// \brief Add the given method to the given list of globally-known methods.
+static void addMethodToGlobalList(Sema &S, ObjCMethodList *List,
+                                  ObjCMethodDecl *Method) {
+  // If the list is empty, make it a singleton list.
+  if (List->Method == 0) {
+    List->Method = Method;
+    List->Next = 0;
+    return;
+  }
+  
+  // We've seen a method with this name, see if we have already seen this type
+  // signature.
+  ObjCMethodList *Previous = List;
+  for (; List; Previous = List, List = List->Next) {
+    if (!S.MatchTwoMethodDeclarations(Method, List->Method))
+      continue;
+    
+    ObjCMethodDecl *PrevObjCMethod = List->Method;
+
+    // Propagate the 'defined' bit.
+    if (Method->isDefined())
+      PrevObjCMethod->setDefined(true);
+    
+    // If a method is deprecated, push it in the global pool.
+    // This is used for better diagnostics.
+    if (Method->isDeprecated()) {
+      if (!PrevObjCMethod->isDeprecated())
+        List->Method = Method;
+    }
+    // If new method is unavailable, push it into global pool
+    // unless previous one is deprecated.
+    if (Method->isUnavailable()) {
+      if (PrevObjCMethod->getAvailability() < AR_Deprecated)
+        List->Method = Method;
+    }
+    
+    return;
+  }
+  
+  // We have a new signature for an existing method - add it.
+  // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
+  ObjCMethodList *Mem = S.BumpAlloc.Allocate<ObjCMethodList>();
+  Previous->Next = new (Mem) ObjCMethodList(Method, 0);
+}
+
 /// \brief Read the contents of the method pool for a given selector from
 /// external storage.
 ///
@@ -1957,43 +2002,11 @@ void Sema::AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl,
       Pos = MethodPool.insert(std::make_pair(Method->getSelector(),
                                              GlobalMethods())).first;
   }
+  
   Method->setDefined(impl);
+  
   ObjCMethodList &Entry = instance ? Pos->second.first : Pos->second.second;
-  if (Entry.Method == 0) {
-    // Haven't seen a method with this selector name yet - add it.
-    Entry.Method = Method;
-    Entry.Next = 0;
-    return;
-  }
-
-  // We've seen a method with this name, see if we have already seen this type
-  // signature.
-  for (ObjCMethodList *List = &Entry; List; List = List->Next) {
-    bool match = MatchTwoMethodDeclarations(Method, List->Method);
-
-    if (match) {
-      ObjCMethodDecl *PrevObjCMethod = List->Method;
-      PrevObjCMethod->setDefined(impl);
-      // If a method is deprecated, push it in the global pool.
-      // This is used for better diagnostics.
-      if (Method->isDeprecated()) {
-        if (!PrevObjCMethod->isDeprecated())
-          List->Method = Method;
-      }
-      // If new method is unavailable, push it into global pool
-      // unless previous one is deprecated.
-      if (Method->isUnavailable()) {
-        if (PrevObjCMethod->getAvailability() < AR_Deprecated)
-          List->Method = Method;
-      }
-      return;
-    }
-  }
-
-  // We have a new signature for an existing method - add it.
-  // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
-  ObjCMethodList *Mem = BumpAlloc.Allocate<ObjCMethodList>();
-  Entry.Next = new (Mem) ObjCMethodList(Method, Entry.Next);
+  addMethodToGlobalList(*this, &Entry, Method);
 }
 
 /// Determines if this is an "acceptable" loose mismatch in the global
