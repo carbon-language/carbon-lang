@@ -133,9 +133,9 @@ def warn_cxx98_compat_unicode_literal : Warning<
 def err_unsupported_string_concat : Error<
   "unsupported non-standard concatenation of string literals">;
 def err_bad_string_encoding : Error<
-  "illegal sequence in string literal">;
+  "illegal character encoding in string literal">;
 def err_bad_character_encoding : Error<
-  "illegal sequence in character literal">;
+  "illegal character encoding in character literal">;
   
 //===----------------------------------------------------------------------===//
 // PTH Diagnostics
