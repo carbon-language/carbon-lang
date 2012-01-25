@@ -260,7 +260,8 @@ void DiagnosticRenderer::emitMacroExpansionsAndCarets(
   Loc = getImmediateMacroCalleeLoc(SM, Loc);
   
   unsigned MacroSkipStart = 0, MacroSkipEnd = 0;
-  if (MacroDepth > DiagOpts.MacroBacktraceLimit) {
+  if (MacroDepth > DiagOpts.MacroBacktraceLimit &&
+      DiagOpts.MacroBacktraceLimit != 0) {
     MacroSkipStart = DiagOpts.MacroBacktraceLimit / 2 +
     DiagOpts.MacroBacktraceLimit % 2;
     MacroSkipEnd = MacroDepth - DiagOpts.MacroBacktraceLimit / 2;
