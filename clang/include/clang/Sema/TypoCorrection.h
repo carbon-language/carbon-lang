@@ -128,6 +128,11 @@ public:
     return isKeyword() ? CorrectionDecls.end() : CorrectionDecls.begin();
   }
   decl_iterator end() { return CorrectionDecls.end(); }
+  typedef llvm::SmallVector<NamedDecl*, 1>::const_iterator const_decl_iterator;
+  const_decl_iterator begin() const {
+    return isKeyword() ? CorrectionDecls.end() : CorrectionDecls.begin();
+  }
+  const_decl_iterator end() const { return CorrectionDecls.end(); }
 
 private:
   bool hasCorrectionDecl() const {
