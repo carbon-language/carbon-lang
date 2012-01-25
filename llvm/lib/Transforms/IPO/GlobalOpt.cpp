@@ -276,38 +276,6 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
   return false;
 }
 
-static Constant *getAggregateConstantElement(Constant *Agg, Constant *Idx) {
-  ConstantInt *CI = dyn_cast<ConstantInt>(Idx);
-  if (!CI) return 0;
-  unsigned IdxV = CI->getZExtValue();
-
-  if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Agg)) {
-    if (IdxV < CS->getNumOperands()) return CS->getOperand(IdxV);
-  } else if (ConstantArray *CA = dyn_cast<ConstantArray>(Agg)) {
-    if (IdxV < CA->getNumOperands()) return CA->getOperand(IdxV);
-  } else if (ConstantVector *CP = dyn_cast<ConstantVector>(Agg)) {
-    if (IdxV < CP->getNumOperands()) return CP->getOperand(IdxV);
-  } else if (isa<ConstantAggregateZero>(Agg)) {
-    if (StructType *STy = dyn_cast<StructType>(Agg->getType())) {
-      if (IdxV < STy->getNumElements())
-        return Constant::getNullValue(STy->getElementType(IdxV));
-    } else if (SequentialType *STy =
-               dyn_cast<SequentialType>(Agg->getType())) {
-      return Constant::getNullValue(STy->getElementType());
-    }
-  } else if (isa<UndefValue>(Agg)) {
-    if (StructType *STy = dyn_cast<StructType>(Agg->getType())) {
-      if (IdxV < STy->getNumElements())
-        return UndefValue::get(STy->getElementType(IdxV));
-    } else if (SequentialType *STy =
-               dyn_cast<SequentialType>(Agg->getType())) {
-      return UndefValue::get(STy->getElementType());
-    }
-  }
-  return 0;
-}
-
-
 /// CleanupConstantGlobalUsers - We just marked GV constant.  Loop over all
 /// users of the global, cleaning up the obvious ones.  This is largely just a
 /// quick scan over the use list to clean up the easy and obvious cruft.  This
@@ -520,8 +488,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
     NewGlobals.reserve(STy->getNumElements());
     const StructLayout &Layout = *TD.getStructLayout(STy);
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-      Constant *In = getAggregateConstantElement(Init,
-                    ConstantInt::get(Type::getInt32Ty(STy->getContext()), i));
+      Constant *In = Init->getAggregateElement(i);
       assert(In && "Couldn't get element of initializer?");
       GlobalVariable *NGV = new GlobalVariable(STy->getElementType(i), false,
                                                GlobalVariable::InternalLinkage,
@@ -553,8 +520,7 @@ static GlobalVariable *SRAGlobal(GlobalVariable *GV, const TargetData &TD) {
     uint64_t EltSize = TD.getTypeAllocSize(STy->getElementType());
     unsigned EltAlign = TD.getABITypeAlignment(STy->getElementType());
     for (unsigned i = 0, e = NumElements; i != e; ++i) {
-      Constant *In = getAggregateConstantElement(Init,
-                    ConstantInt::get(Type::getInt32Ty(Init->getContext()), i));
+      Constant *In = Init->getAggregateElement(i);
       assert(In && "Couldn't get element of initializer?");
 
       GlobalVariable *NGV = new GlobalVariable(STy->getElementType(), false,

@@ -844,21 +844,10 @@ bool ModuleLinker::linkAliasProto(GlobalAlias *SGA) {
 }
 
 static void getArrayElements(Constant *C, SmallVectorImpl<Constant*> &Dest) {
-  if (ConstantArray *I = dyn_cast<ConstantArray>(C)) {
-    for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
-      Dest.push_back(I->getOperand(i));
-    return;
-  }
-  
-  if (ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(C)) {
-    for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i)
-      Dest.push_back(CDS->getElementAsConstant(i));
-    return;
-  }
-  
-  ConstantAggregateZero *CAZ = cast<ConstantAggregateZero>(C);
-  Dest.append(cast<ArrayType>(C->getType())->getNumElements(),
-              CAZ->getSequentialElement());
+  unsigned NumElements = cast<ArrayType>(C->getType())->getNumElements();
+
+  for (unsigned i = 0; i != NumElements; ++i)
+    Dest.push_back(C->getAggregateElement(i));
 }
                              
 void ModuleLinker::linkAppendingVarInit(const AppendingVarInfo &AVI) {

@@ -311,65 +311,37 @@ static bool ReadDataFromGlobal(Constant *C, uint64_t ByteOffset,
     // not reached.
   }
 
-  if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
-    uint64_t EltSize = TD.getTypeAllocSize(CA->getType()->getElementType());
+  if (isa<ConstantArray>(C) || isa<ConstantVector>(C) ||
+      isa<ConstantDataSequential>(C)) {
+    Type *EltTy = cast<SequentialType>(C->getType())->getElementType();
+    uint64_t EltSize = TD.getTypeAllocSize(EltTy);
     uint64_t Index = ByteOffset / EltSize;
     uint64_t Offset = ByteOffset - Index * EltSize;
-    for (; Index != CA->getType()->getNumElements(); ++Index) {
-      if (!ReadDataFromGlobal(CA->getOperand(Index), Offset, CurPtr,
-                              BytesLeft, TD))
-        return false;
-      if (EltSize >= BytesLeft)
-        return true;
-      
-      Offset = 0;
-      BytesLeft -= EltSize;
-      CurPtr += EltSize;
-    }
-    return true;
-  }
-  
-  if (ConstantVector *CV = dyn_cast<ConstantVector>(C)) {
-    uint64_t EltSize = TD.getTypeAllocSize(CV->getType()->getElementType());
-    uint64_t Index = ByteOffset / EltSize;
-    uint64_t Offset = ByteOffset - Index * EltSize;
-    for (; Index != CV->getType()->getNumElements(); ++Index) {
-      if (!ReadDataFromGlobal(CV->getOperand(Index), Offset, CurPtr,
-                              BytesLeft, TD))
-        return false;
-      if (EltSize >= BytesLeft)
-        return true;
-      
-      Offset = 0;
-      BytesLeft -= EltSize;
-      CurPtr += EltSize;
-    }
-    return true;
-  }
-  
-  if (ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(C)) {
-    uint64_t EltSize = CDS->getElementByteSize();
-    uint64_t Index = ByteOffset / EltSize;    
-    uint64_t Offset = ByteOffset - Index * EltSize;
-    for (unsigned e = CDS->getNumElements(); Index != e; ++Index) {
-      if (!ReadDataFromGlobal(CDS->getElementAsConstant(Index), Offset, CurPtr,
-                              BytesLeft, TD))
-        return false;
-      if (EltSize >= BytesLeft)
-        return true;
-      
-      Offset = 0;
-      BytesLeft -= EltSize;
-      CurPtr += EltSize;
-    }
-    return true;
-  }
+    uint64_t NumElts;
+    if (ArrayType *AT = dyn_cast<ArrayType>(C->getType()))
+      NumElts = AT->getNumElements();
+    else
+      NumElts = cast<VectorType>(C->getType())->getNumElements();
     
+    for (; Index != NumElts; ++Index) {
+      if (!ReadDataFromGlobal(C->getAggregateElement(Index), Offset, CurPtr,
+                              BytesLeft, TD))
+        return false;
+      if (EltSize >= BytesLeft)
+        return true;
+      
+      Offset = 0;
+      BytesLeft -= EltSize;
+      CurPtr += EltSize;
+    }
+    return true;
+  }
+      
   if (ConstantExpr *CE = dyn_cast<ConstantExpr>(C)) {
     if (CE->getOpcode() == Instruction::IntToPtr &&
         CE->getOperand(0)->getType() == TD.getIntPtrType(CE->getContext())) 
-        return ReadDataFromGlobal(CE->getOperand(0), ByteOffset, CurPtr, 
-                                  BytesLeft, TD);
+      return ReadDataFromGlobal(CE->getOperand(0), ByteOffset, CurPtr, 
+                                BytesLeft, TD);
   }
 
   // Otherwise, unknown initializer type.
@@ -1010,11 +982,14 @@ Constant *llvm::ConstantFoldLoadThroughGEPConstantExpr(Constant *C,
                                                        ConstantExpr *CE) {
   if (!CE->getOperand(1)->isNullValue())
     return 0;  // Do not allow stepping over the value!
-  
-  SmallVector<Constant*, 8> Indices(CE->getNumOperands()-2);
-  for (unsigned i = 2, e = CE->getNumOperands(); i != e; ++i)
-    Indices[i-2] = CE->getOperand(i);
-  return ConstantFoldLoadThroughGEPIndices(C, Indices);
+
+  // Loop over all of the operands, tracking down which value we are
+  // addressing.
+  for (unsigned i = 2, e = CE->getNumOperands(); i != e; ++i) {
+    C = C->getAggregateElement(CE->getOperand(i));
+    if (C == 0) return 0;
+  }
+  return C;
 }
 
 /// ConstantFoldLoadThroughGEPIndices - Given a constant and getelementptr
@@ -1026,32 +1001,8 @@ Constant *llvm::ConstantFoldLoadThroughGEPIndices(Constant *C,
   // Loop over all of the operands, tracking down which value we are
   // addressing.
   for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
-    ConstantInt *Idx = dyn_cast<ConstantInt>(Indices[i]);
-    if (Idx == 0) return 0;
-    
-    uint64_t IdxVal = Idx->getZExtValue();
-    
-    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C)) {
-      C = CS->getOperand(IdxVal);
-    } else if (ConstantAggregateZero *CAZ = dyn_cast<ConstantAggregateZero>(C)){
-      C = CAZ->getElementValue(Idx);
-    } else if (UndefValue *UV = dyn_cast<UndefValue>(C)) {
-      C = UV->getElementValue(Idx);
-    } else if (ConstantArray *CA = dyn_cast<ConstantArray>(C)) {
-      if (IdxVal >= CA->getType()->getNumElements())
-        return 0;
-      C = CA->getOperand(IdxVal);
-    } else if (ConstantDataSequential *CDS=dyn_cast<ConstantDataSequential>(C)){
-      if (IdxVal >= CDS->getNumElements())
-        return 0;
-      C = CDS->getElementAsConstant(IdxVal);
-    } else if (ConstantVector *CV = dyn_cast<ConstantVector>(C)) {
-      if (IdxVal >= CV->getType()->getNumElements())
-        return 0;
-      C = CV->getOperand(IdxVal);
-    } else {
-      return 0;
-    }
+    C = C->getAggregateElement(Indices[i]);
+    if (C == 0) return 0;
   }
   return C;
 }

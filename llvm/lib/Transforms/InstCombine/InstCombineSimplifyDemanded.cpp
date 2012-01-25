@@ -834,59 +834,39 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
   }
 
   UndefElts = 0;
-  if (ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
+  
+  // Handle ConstantAggregateZero, ConstantVector, ConstantDataSequential.
+  if (Constant *C = dyn_cast<Constant>(V)) {
+    // Check if this is identity. If so, return 0 since we are not simplifying
+    // anything.
+    if (DemandedElts.isAllOnesValue())
+      return 0;
+
     Type *EltTy = cast<VectorType>(V->getType())->getElementType();
     Constant *Undef = UndefValue::get(EltTy);
-
-    std::vector<Constant*> Elts;
-    for (unsigned i = 0; i != VWidth; ++i)
+    
+    SmallVector<Constant*, 16> Elts;
+    for (unsigned i = 0; i != VWidth; ++i) {
       if (!DemandedElts[i]) {   // If not demanded, set to undef.
         Elts.push_back(Undef);
         UndefElts.setBit(i);
-      } else if (isa<UndefValue>(CV->getOperand(i))) {   // Already undef.
+        continue;
+      }
+      
+      Constant *Elt = C->getAggregateElement(i);
+      if (Elt == 0) return 0;
+      
+      if (isa<UndefValue>(Elt)) {   // Already undef.
         Elts.push_back(Undef);
         UndefElts.setBit(i);
       } else {                               // Otherwise, defined.
-        Elts.push_back(CV->getOperand(i));
+        Elts.push_back(Elt);
       }
-
+    }
+    
     // If we changed the constant, return it.
     Constant *NewCV = ConstantVector::get(Elts);
-    return NewCV != CV ? NewCV : 0;
-  }
-  
-  if (ConstantDataVector *CDV = dyn_cast<ConstantDataVector>(V)) {
-    // Check if this is identity. If so, return 0 since we are not simplifying
-    // anything.
-    if (DemandedElts.isAllOnesValue())
-      return 0;
-
-    // Simplify to a ConstantVector where the non-demanded elements are undef.
-    Constant *Undef = UndefValue::get(CDV->getElementType());
-    
-    SmallVector<Constant*, 16> Elts;
-    for (unsigned i = 0; i != VWidth; ++i)
-      Elts.push_back(DemandedElts[i] ? CDV->getElementAsConstant(i) : Undef);
-    UndefElts = DemandedElts ^ EltMask;
-    return ConstantVector::get(Elts);
-
-  }
-  
-  if (ConstantAggregateZero *CAZ = dyn_cast<ConstantAggregateZero>(V)) {
-    // Check if this is identity. If so, return 0 since we are not simplifying
-    // anything.
-    if (DemandedElts.isAllOnesValue())
-      return 0;
-    
-    // Simplify the CAZ to a ConstantVector where the non-demanded elements are
-    // set to undef.
-    Constant *Zero = CAZ->getSequentialElement();
-    Constant *Undef = UndefValue::get(Zero->getType());
-    SmallVector<Constant*, 16> Elts;
-    for (unsigned i = 0; i != VWidth; ++i)
-      Elts.push_back(DemandedElts[i] ? Zero : Undef);
-    UndefElts = DemandedElts ^ EltMask;
-    return ConstantVector::get(Elts);
+    return NewCV != C ? NewCV : 0;
   }
   
   // Limit search depth.

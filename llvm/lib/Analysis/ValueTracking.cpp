@@ -1493,19 +1493,12 @@ Value *llvm::FindInsertedValue(Value *V, ArrayRef<unsigned> idx_range,
          "Not looking at a struct or array?");
   assert(ExtractValueInst::getIndexedType(V->getType(), idx_range) &&
          "Invalid indices for type?");
-  CompositeType *PTy = cast<CompositeType>(V->getType());
 
-  if (isa<UndefValue>(V))
-    return UndefValue::get(ExtractValueInst::getIndexedType(PTy, idx_range));
-  if (isa<ConstantAggregateZero>(V))
-    return Constant::getNullValue(ExtractValueInst::getIndexedType(PTy, 
-                                                                  idx_range));
-  if (isa<ConstantArray>(V) || isa<ConstantStruct>(V))
-    // Recursively process this constant
-    return FindInsertedValue(cast<Constant>(V)->getOperand(idx_range[0]),
-                             idx_range.slice(1), InsertBefore);
-  if (ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(V))
-    return CDS->getElementAsConstant(idx_range[0]);
+  if (Constant *C = dyn_cast<Constant>(V)) {
+    C = C->getAggregateElement(idx_range[0]);
+    if (C == 0) return 0;
+    return FindInsertedValue(C, idx_range.slice(1), InsertBefore);
+  }
     
   if (InsertValueInst *I = dyn_cast<InsertValueInst>(V)) {
     // Loop the indices for the insertvalue instruction in parallel with the
