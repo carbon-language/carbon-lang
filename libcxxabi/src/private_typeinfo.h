@@ -16,7 +16,7 @@
 namespace __cxxabiv1
 {
 
-#pragma GCC visibility push(hidden)
+//#pragma GCC visibility push(hidden)
 
 class __shim_type_info
     : public std::type_info
@@ -259,7 +259,7 @@ public:
 #endif
 };
 
-#pragma GCC visibility pop
+//#pragma GCC visibility pop
 
 }  // __cxxabiv1
 

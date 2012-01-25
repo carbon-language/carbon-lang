@@ -16,7 +16,7 @@
 namespace __cxxabiv1
 {
 
-#pragma GCC visibility push(hidden)
+//#pragma GCC visibility push(hidden)
 
 // __shim_type_info
 
@@ -87,6 +87,8 @@ __pointer_type_info::~__pointer_type_info()
 __pointer_to_member_type_info::~__pointer_to_member_type_info()
 {
 }
+
+#pragma GCC visibility push(hidden)
 
 #ifdef DEBUG
 
@@ -427,7 +429,7 @@ __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
     return false;
 }
 
-#pragma GCC visibility pop
+//#pragma GCC visibility pop
 #pragma GCC visibility push(default)
 
 // __dynamic_cast
