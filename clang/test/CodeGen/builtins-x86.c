@@ -1,6 +1,5 @@
-// RUN: true
-// UN: %clang_cc1 -DUSE_64 -triple x86_64-unknown-unknown -emit-llvm -o %t %s
-// UN: %clang_cc1 -DUSE_ALL -triple x86_64-unknown-unknown -fsyntax-only -o %t %s
+// RUN: %clang_cc1 -DUSE_64 -triple x86_64-unknown-unknown -emit-llvm -o %t %s
+// RUN: %clang_cc1 -DUSE_ALL -triple x86_64-unknown-unknown -fsyntax-only -o %t %s
 
 #ifdef USE_ALL
 #define USE_3DNOW
@@ -455,11 +454,8 @@ void f0() {
   tmp_V8f = __builtin_ia32_vbroadcastss256(tmp_fCp);
   tmp_V4d = __builtin_ia32_vbroadcastf128_pd256(tmp_V2dCp);
   tmp_V8f = __builtin_ia32_vbroadcastf128_ps256(tmp_V4fCp);
-  tmp_V4d = __builtin_ia32_loadupd256(tmp_dCp);
-  tmp_V8f = __builtin_ia32_loadups256(tmp_fCp);
   __builtin_ia32_storeupd256(tmp_dp, tmp_V4d);
   __builtin_ia32_storeups256(tmp_fp, tmp_V8f);
-  tmp_V32c = __builtin_ia32_loaddqu256(tmp_cCp);
   __builtin_ia32_storedqu256(tmp_cp, tmp_V32c);
   tmp_V32c = __builtin_ia32_lddqu256(tmp_cCp);
   __builtin_ia32_movntdq256(tmp_V4LLip, tmp_V4LLi);
