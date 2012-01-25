@@ -1188,6 +1188,15 @@ static void HandleLValueMember(EvalInfo &Info, const Expr *E, LValue &LVal,
   LVal.addDecl(Info, E, FD);
 }
 
+/// Update LVal to refer to the given indirect field.
+static void HandleLValueIndirectMember(EvalInfo &Info, const Expr *E,
+                                       LValue &LVal,
+                                       const IndirectFieldDecl *IFD) {
+  for (IndirectFieldDecl::chain_iterator C = IFD->chain_begin(),
+                                         CE = IFD->chain_end(); C != CE; ++C)
+    HandleLValueMember(Info, E, LVal, cast<FieldDecl>(*C));
+}
+
 /// Get the size of the given type in char units.
 static bool HandleSizeof(EvalInfo &Info, QualType Type, CharUnits &Size) {
   // sizeof(void), __alignof__(void), sizeof(function) = 1 as a gcc
@@ -1654,10 +1663,13 @@ static const ValueDecl *HandleMemberPointerAccess(EvalInfo &Info,
 
   // Add the member. Note that we cannot build bound member functions here.
   if (IncludeMember) {
-    // FIXME: Deal with IndirectFieldDecls.
-    const FieldDecl *FD = dyn_cast<FieldDecl>(MemPtr.getDecl());
-    if (!FD) return 0;
-    HandleLValueMember(Info, BO, LV, FD);
+    if (const FieldDecl *FD = dyn_cast<FieldDecl>(MemPtr.getDecl()))
+      HandleLValueMember(Info, BO, LV, FD);
+    else if (const IndirectFieldDecl *IFD =
+               dyn_cast<IndirectFieldDecl>(MemPtr.getDecl()))
+      HandleLValueIndirectMember(Info, BO, LV, IFD);
+    else
+      llvm_unreachable("can't construct reference to bound member function");
   }
 
   return MemPtr.getDecl();
@@ -1904,11 +1916,40 @@ static bool HandleConstructorCall(const Expr *CallExpr, const LValue &This,
                    Result.getStructField(FD->getFieldIndex()),
                    Info, Subobject, (*I)->getInit(), CCEK_MemberInit))
         return false;
+    } else if (IndirectFieldDecl *IFD = (*I)->getIndirectMember()) {
+      LValue Subobject = This;
+      APValue *Value = &Result;
+      // Walk the indirect field decl's chain to find the object to initialize,
+      // and make sure we've initialized every step along it.
+      for (IndirectFieldDecl::chain_iterator C = IFD->chain_begin(),
+                                             CE = IFD->chain_end();
+           C != CE; ++C) {
+        FieldDecl *FD = cast<FieldDecl>(*C);
+        CXXRecordDecl *CD = cast<CXXRecordDecl>(FD->getParent());
+        // Switch the union field if it differs. This happens if we had
+        // preceding zero-initialization, and we're now initializing a union
+        // subobject other than the first.
+        // FIXME: In this case, the values of the other subobjects are
+        // specified, since zero-initialization sets all padding bits to zero.
+        if (Value->isUninit() ||
+            (Value->isUnion() && Value->getUnionField() != FD)) {
+          if (CD->isUnion())
+            *Value = APValue(FD);
+          else
+            *Value = APValue(APValue::UninitStruct(), CD->getNumBases(),
+                             std::distance(CD->field_begin(), CD->field_end()));
+        }
+        if (CD->isUnion())
+          Value = &Value->getUnionValue();
+        else
+          Value = &Value->getStructField(FD->getFieldIndex());
+        HandleLValueMember(Info, (*I)->getInit(), Subobject, FD);
+      }
+      if (!EvaluateConstantExpression(*Value, Info, Subobject, (*I)->getInit(),
+                                      CCEK_MemberInit))
+        return false;
     } else {
-      // FIXME: handle indirect field initializers
-      Info.Diag((*I)->getInit()->getExprLoc(),
-                diag::note_invalid_subexpr_in_const_expr);
-      return false;
+      llvm_unreachable("unknown base initializer kind");
     }
   }
 
@@ -2349,18 +2390,20 @@ public:
       BaseTy = E->getBase()->getType();
     }
 
-    const FieldDecl *FD = dyn_cast<FieldDecl>(E->getMemberDecl());
-    // FIXME: Handle IndirectFieldDecls
-    if (!FD) return this->Error(E);
-    assert(BaseTy->getAs<RecordType>()->getDecl()->getCanonicalDecl() ==
-           FD->getParent()->getCanonicalDecl() && "record / field mismatch");
-    (void)BaseTy;
+    const ValueDecl *MD = E->getMemberDecl();
+    if (const FieldDecl *FD = dyn_cast<FieldDecl>(E->getMemberDecl())) {
+      assert(BaseTy->getAs<RecordType>()->getDecl()->getCanonicalDecl() ==
+             FD->getParent()->getCanonicalDecl() && "record / field mismatch");
+      (void)BaseTy;
+      HandleLValueMember(this->Info, E, Result, FD);
+    } else if (const IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(MD)) {
+      HandleLValueIndirectMember(this->Info, E, Result, IFD);
+    } else
+      return this->Error(E);
 
-    HandleLValueMember(this->Info, E, Result, FD);
-
-    if (FD->getType()->isReferenceType()) {
+    if (MD->getType()->isReferenceType()) {
       CCValue RefValue;
-      if (!HandleLValueToRValueConversion(this->Info, E, FD->getType(), Result,
+      if (!HandleLValueToRValueConversion(this->Info, E, MD->getType(), Result,
                                           RefValue))
         return false;
       return Success(RefValue, E);

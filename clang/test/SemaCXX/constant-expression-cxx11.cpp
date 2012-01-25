@@ -1046,3 +1046,43 @@ namespace ConvertedConstantExpr {
     eq = reinterpret_cast<int>((int*)0) // expected-error {{not a constant expression}} expected-note {{reinterpret_cast}}
   };
 }
+
+namespace IndirectField {
+  struct S {
+    struct { // expected-warning {{GNU extension}}
+      union {
+        struct { // expected-warning {{GNU extension}}
+          int a;
+          int b;
+        };
+        int c;
+      };
+      int d;
+    };
+    union {
+      int e;
+      int f;
+    };
+    constexpr S(int a, int b, int d, int e) : a(a), b(b), d(d), e(e) {}
+    constexpr S(int c, int d, int f) : c(c), d(d), f(f) {}
+  };
+
+  constexpr S s1(1, 2, 3, 4);
+  constexpr S s2(5, 6, 7);
+
+  // FIXME: The diagnostics here do a very poor job of explaining which unnamed
+  // member is active and which is requested.
+  static_assert(s1.a == 1, "");
+  static_assert(s1.b == 2, "");
+  static_assert(s1.c == 0, ""); // expected-error {{constant expression}} expected-note {{union with active member}}
+  static_assert(s1.d == 3, "");
+  static_assert(s1.e == 4, "");
+  static_assert(s1.f == 0, ""); // expected-error {{constant expression}} expected-note {{union with active member}}
+
+  static_assert(s2.a == 0, ""); // expected-error {{constant expression}} expected-note {{union with active member}}
+  static_assert(s2.b == 0, ""); // expected-error {{constant expression}} expected-note {{union with active member}}
+  static_assert(s2.c == 5, "");
+  static_assert(s2.d == 6, "");
+  static_assert(s2.e == 0, ""); // expected-error {{constant expression}} expected-note {{union with active member}}
+  static_assert(s2.f == 7, "");
+}
