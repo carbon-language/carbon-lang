@@ -222,6 +222,11 @@ unsigned CodeMetrics::CountCodeReductionForAlloca(Value *V) {
   if (!V->getType()->isPointerTy()) return 0;  // Not a pointer
   unsigned Reduction = 0;
 
+  // Looking at ICmpInsts will never abort the analysis and return zero, and
+  // analyzing them is expensive, so save them for last so that we don't do
+  // extra work that we end up throwing out.
+  SmallVector<ICmpInst *, 4> ICmpInsts;
+
   SmallVector<Value *, 4> Worklist;
   Worklist.push_back(V);
   do {
@@ -271,10 +276,14 @@ unsigned CodeMetrics::CountCodeReductionForAlloca(Value *V) {
         case Intrinsic::memmove:
         case Intrinsic::lifetime_start:
         case Intrinsic::lifetime_end:
-	  // SROA can usually chew through these intrinsics.
+          // SROA can usually chew through these intrinsics.
           Reduction += InlineConstants::InstrCost;
           break;
         }
+      } else if (ICmpInst *ICI = dyn_cast<ICmpInst>(I)) {
+        if (!isa<Constant>(ICI->getOperand(1)))
+          return 0;
+        ICmpInsts.push_back(ICI);
       } else {
         // If there is some other strange instruction, we're not going to be
         // able to do much if we inline this.
@@ -282,6 +291,51 @@ unsigned CodeMetrics::CountCodeReductionForAlloca(Value *V) {
       }
     }
   } while (!Worklist.empty());
+
+  while (!ICmpInsts.empty()) {
+    ICmpInst *ICI = ICmpInsts.pop_back_val();
+
+    // An icmp pred (alloca, C) becomes true if the predicate is true when
+    // equal and false otherwise.
+    bool Result = ICI->isTrueWhenEqual();
+
+    SmallVector<Instruction *, 4> Worklist;
+    Worklist.push_back(ICI);
+    do {
+      Instruction *U = Worklist.pop_back_val();
+      Reduction += InlineConstants::InstrCost;
+      for (Value::use_iterator UI = U->use_begin(), UE = U->use_end();
+           UI != UE; ++UI) {
+        Instruction *I = dyn_cast<Instruction>(*UI);
+        if (!I || I->mayHaveSideEffects()) continue;
+        if (I->getNumOperands() == 1)
+          Worklist.push_back(I);
+        if (BinaryOperator *BO = dyn_cast<BinaryOperator>(I)) {
+          // If BO produces the same value as U, then the other operand is
+          // irrelevant and we can put it into the Worklist to continue
+          // deleting dead instructions. If BO produces the same value as the
+          // other operand, we can delete BO but that's it.
+          if (Result == true) {
+            if (BO->getOpcode() == Instruction::Or)
+              Worklist.push_back(I);
+            if (BO->getOpcode() == Instruction::And)
+              Reduction += InlineConstants::InstrCost;
+          } else {
+            if (BO->getOpcode() == Instruction::Or ||
+                BO->getOpcode() == Instruction::Xor)
+              Reduction += InlineConstants::InstrCost;
+            if (BO->getOpcode() == Instruction::And)
+              Worklist.push_back(I);
+          }
+        }
+        if (BranchInst *BI = dyn_cast<BranchInst>(I)) {
+          BasicBlock *BB = BI->getSuccessor(Result ? 0 : 1);
+          if (BB->getSinglePredecessor())
+            Reduction += InlineConstants::InstrCost * BB->size();
+        }
+      }
+    } while (!Worklist.empty());
+  }
 
   return Reduction;
 }
