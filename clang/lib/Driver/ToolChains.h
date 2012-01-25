@@ -73,12 +73,13 @@ protected:
 
     // FIXME: These might be better as path objects.
     std::string GCCInstallPath;
+    std::string GCCMultiarchSuffix;
     std::string GCCParentLibPath;
 
     GCCVersion Version;
 
   public:
-    GCCInstallationDetector(const Driver &D);
+    GCCInstallationDetector(const Driver &D, const llvm::Triple &TargetTriple);
 
     /// \brief Check whether we detected a valid GCC install.
     bool isValid() const { return IsValid; }
@@ -89,6 +90,9 @@ protected:
     /// \brief Get the detected GCC installation path.
     StringRef getInstallPath() const { return GCCInstallPath; }
 
+    /// \brief Get the detected GCC installation path suffix for multiarch GCCs.
+    StringRef getMultiarchSuffix() const { return GCCMultiarchSuffix; }
+
     /// \brief Get the detected GCC parent lib path.
     StringRef getParentLibPath() const { return GCCParentLibPath; }
 
@@ -96,13 +100,18 @@ protected:
     StringRef getVersion() const { return Version.Text; }
 
   private:
-    static void CollectLibDirsAndTriples(llvm::Triple::ArchType HostArch,
-                                         SmallVectorImpl<StringRef> &LibDirs,
-                                         SmallVectorImpl<StringRef> &Triples);
+    static void CollectLibDirsAndTriples(
+      const llvm::Triple &TargetTriple,
+      const llvm::Triple &MultiarchTriple,
+      SmallVectorImpl<StringRef> &LibDirs,
+      SmallVectorImpl<StringRef> &TripleAliases,
+      SmallVectorImpl<StringRef> &MultiarchLibDirs,
+      SmallVectorImpl<StringRef> &MultiarchTripleAliases);
 
-    void ScanLibDirForGCCTriple(llvm::Triple::ArchType HostArch,
+    void ScanLibDirForGCCTriple(llvm::Triple::ArchType TargetArch,
                                 const std::string &LibDir,
-                                StringRef CandidateTriple);
+                                StringRef CandidateTriple,
+                                bool NeedsMultiarchSuffix = false);
   };
 
   GCCInstallationDetector GCCInstallation;
