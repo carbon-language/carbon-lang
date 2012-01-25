@@ -9,7 +9,6 @@ add_clang_library(clangDriver
   Compilation.cpp
   Driver.cpp
   DriverOptions.cpp
-  HostInfo.cpp
   Job.cpp
   Option.cpp
   OptTable.cpp

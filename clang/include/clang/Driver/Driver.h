@@ -16,6 +16,7 @@
 #include "clang/Driver/Types.h"
 #include "clang/Driver/Util.h"
 
+#include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/Path.h" // FIXME: Kill when CompilationInfo
@@ -174,6 +175,13 @@ private:
 
   std::list<std::string> TempFiles;
   std::list<std::string> ResultFiles;
+
+  /// \brief Cache of all the ToolChains in use by the driver.
+  ///
+  /// This maps from the string representation of a triple to a ToolChain
+  /// created targetting that triple. The driver owns all the ToolChain objects
+  /// stored in it, and will clean them up when torn down.
+  mutable llvm::StringMap<ToolChain *> ToolChains;
 
 private:
   /// TranslateInputArgs - Create a new derived argument list from the input
@@ -390,8 +398,17 @@ public:
 
   bool IsUsingLTO(const ArgList &Args) const;
 
+private:
+  /// \brief Retrieves a ToolChain for a particular target triple.
+  ///
+  /// Will cache ToolChains for the life of the driver object, and create them
+  /// on-demand.
+  const ToolChain &getToolChain(const ArgList &Args,
+                                StringRef DarwinArchName = "") const;
+
   /// @}
 
+public:
   /// GetReleaseVersion - Parse (([0-9]+)(.([0-9]+)(.([0-9]+)?))?)? and
   /// return the grouped values as integers. Numbers which are not
   /// provided are set to 0.
