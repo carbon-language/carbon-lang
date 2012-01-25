@@ -1674,21 +1674,20 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA,
 
 /// NetBSD - NetBSD tool chain which can call as(1) and ld(1) directly.
 
-NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple,
-               const llvm::Triple& ToolTriple)
-  : Generic_ELF(D, Triple), ToolTriple(ToolTriple) {
-
-  // Determine if we are compiling 32-bit code on an x86_64 platform.
-  bool Lib32 = false;
-  if (ToolTriple.getArch() == llvm::Triple::x86_64 &&
-      Triple.getArch() == llvm::Triple::x86)
-    Lib32 = true;
+NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple)
+  : Generic_ELF(D, Triple) {
 
   if (getDriver().UseStdLib) {
-    if (Lib32)
+    // When targeting a 32-bit platform, try the special directory used on
+    // 64-bit hosts, and only fall back to the main library directory if that
+    // doesn't work.
+    // FIXME: It'd be nicer to test if this directory exists, but I'm not sure
+    // what all logic is needed to emulate the '=' prefix here.
+    if (Triple.getArch() == llvm::Triple::x86 ||
+        Triple.getArch() == llvm::Triple::ppc)
       getFilePaths().push_back("=/usr/lib/i386");
-    else
-      getFilePaths().push_back("=/usr/lib");
+
+    getFilePaths().push_back("=/usr/lib");
   }
 }
 
@@ -1711,10 +1710,10 @@ Tool &NetBSD::SelectTool(const Compilation &C, const JobAction &JA,
       if (UseIntegratedAs)
         T = new tools::ClangAs(*this);
       else
-        T = new tools::netbsd::Assemble(*this, ToolTriple);
+        T = new tools::netbsd::Assemble(*this, getTriple());
       break;
     case Action::LinkJobClass:
-      T = new tools::netbsd::Link(*this, ToolTriple);
+      T = new tools::netbsd::Link(*this, getTriple());
       break;
     default:
       T = &Generic_GCC::SelectTool(C, JA, Inputs);
