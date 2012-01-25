@@ -66,7 +66,7 @@ protected:
 
   virtual void InitializeSema(Sema &S);
   virtual void ForgetSema();
-  virtual std::pair<ObjCMethodList,ObjCMethodList> ReadMethodPool(Selector Sel);
+  virtual void ReadMethodPool(Selector Sel);
   virtual bool LookupUnqualified(LookupResult &R, Scope *S);
 };
 

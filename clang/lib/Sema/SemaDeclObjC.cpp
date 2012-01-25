@@ -1931,9 +1931,7 @@ bool Sema::MatchTwoMethodDeclarations(const ObjCMethodDecl *left,
   return true;
 }
 
-/// \brief Add the given method to the given list of globally-known methods.
-static void addMethodToGlobalList(Sema &S, ObjCMethodList *List,
-                                  ObjCMethodDecl *Method) {
+void Sema::addMethodToGlobalList(ObjCMethodList *List, ObjCMethodDecl *Method) {
   // If the list is empty, make it a singleton list.
   if (List->Method == 0) {
     List->Method = Method;
@@ -1945,7 +1943,7 @@ static void addMethodToGlobalList(Sema &S, ObjCMethodList *List,
   // signature.
   ObjCMethodList *Previous = List;
   for (; List; Previous = List, List = List->Next) {
-    if (!S.MatchTwoMethodDeclarations(Method, List->Method))
+    if (!MatchTwoMethodDeclarations(Method, List->Method))
       continue;
     
     ObjCMethodDecl *PrevObjCMethod = List->Method;
@@ -1972,33 +1970,27 @@ static void addMethodToGlobalList(Sema &S, ObjCMethodList *List,
   
   // We have a new signature for an existing method - add it.
   // This is extremely rare. Only 1% of Cocoa selectors are "overloaded".
-  ObjCMethodList *Mem = S.BumpAlloc.Allocate<ObjCMethodList>();
+  ObjCMethodList *Mem = BumpAlloc.Allocate<ObjCMethodList>();
   Previous->Next = new (Mem) ObjCMethodList(Method, 0);
 }
 
 /// \brief Read the contents of the method pool for a given selector from
 /// external storage.
-///
-/// This routine should only be called once, when the method pool has no entry
-/// for this selector.
-Sema::GlobalMethodPool::iterator Sema::ReadMethodPool(Selector Sel) {
+void Sema::ReadMethodPool(Selector Sel) {
   assert(ExternalSource && "We need an external AST source");
-  assert(MethodPool.find(Sel) == MethodPool.end() &&
-         "Selector data already loaded into the method pool");
-
-  // Read the method list from the external source.
-  GlobalMethods Methods = ExternalSource->ReadMethodPool(Sel);
-
-  return MethodPool.insert(std::make_pair(Sel, Methods)).first;
+  ExternalSource->ReadMethodPool(Sel);
 }
 
 void Sema::AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl,
                                  bool instance) {
   GlobalMethodPool::iterator Pos = MethodPool.find(Method->getSelector());
   if (Pos == MethodPool.end()) {
-    if (ExternalSource)
-      Pos = ReadMethodPool(Method->getSelector());
-    else
+    if (ExternalSource) {
+      ReadMethodPool(Method->getSelector());
+      Pos = MethodPool.find(Method->getSelector());
+    }
+    
+    if (Pos == MethodPool.end())
       Pos = MethodPool.insert(std::make_pair(Method->getSelector(),
                                              GlobalMethods())).first;
   }
@@ -2006,7 +1998,7 @@ void Sema::AddMethodToGlobalPool(ObjCMethodDecl *Method, bool impl,
   Method->setDefined(impl);
   
   ObjCMethodList &Entry = instance ? Pos->second.first : Pos->second.second;
-  addMethodToGlobalList(*this, &Entry, Method);
+  addMethodToGlobalList(&Entry, Method);
 }
 
 /// Determines if this is an "acceptable" loose mismatch in the global
@@ -2033,9 +2025,14 @@ ObjCMethodDecl *Sema::LookupMethodInGlobalPool(Selector Sel, SourceRange R,
                                                bool warn, bool instance) {
   GlobalMethodPool::iterator Pos = MethodPool.find(Sel);
   if (Pos == MethodPool.end()) {
-    if (ExternalSource)
-      Pos = ReadMethodPool(Sel);
-    else
+    if (ExternalSource) {
+      ReadMethodPool(Sel);
+      
+      Pos = MethodPool.find(Sel);
+      if (Pos == MethodPool.end())
+        return 0;
+      
+    } else
       return 0;
   }
 
@@ -2497,7 +2494,11 @@ public:
     Sema::GlobalMethodPool::iterator it = S.MethodPool.find(selector);
     if (it == S.MethodPool.end()) {
       if (!S.ExternalSource) return;
-      it = S.ReadMethodPool(selector);
+      S.ReadMethodPool(selector);
+      
+      it = S.MethodPool.find(selector);
+      if (it == S.MethodPool.end())
+        return;
     }
     ObjCMethodList &list =
       method->isInstanceMethod() ? it->second.first : it->second.second;

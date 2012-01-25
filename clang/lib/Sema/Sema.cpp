@@ -879,10 +879,7 @@ LambdaScopeInfo *Sema::getCurLambda() {
 // Pin this vtable to this file.
 ExternalSemaSource::~ExternalSemaSource() {}
 
-std::pair<ObjCMethodList, ObjCMethodList>
-ExternalSemaSource::ReadMethodPool(Selector Sel) {
-  return std::pair<ObjCMethodList, ObjCMethodList>();
-}
+void ExternalSemaSource::ReadMethodPool(Selector Sel) { }
 
 void ExternalSemaSource::ReadKnownNamespaces(
                            SmallVectorImpl<NamespaceDecl *> &Namespaces) {  

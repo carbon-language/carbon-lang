@@ -5216,30 +5216,6 @@ namespace clang { namespace serialization {
     llvm::SmallVector<ObjCMethodDecl *, 4> InstanceMethods;
     llvm::SmallVector<ObjCMethodDecl *, 4> FactoryMethods;
 
-    /// \brief Build an ObjCMethodList from a vector of Objective-C method
-    /// declarations.
-    ObjCMethodList 
-    buildObjCMethodList(const SmallVectorImpl<ObjCMethodDecl *> &Vec) const
-    {
-      ObjCMethodList List;
-      ObjCMethodList *Prev = 0;
-      for (unsigned I = 0, N = Vec.size(); I != N; ++I) {
-        if (!List.Method) {
-          // This is the first method, which is the easy case.
-          List.Method = Vec[I];
-          Prev = &List;
-          continue;
-        }
-        
-        ObjCMethodList *Mem =
-          Reader.getSema()->BumpAlloc.Allocate<ObjCMethodList>();
-        Prev->Next = new (Mem) ObjCMethodList(Vec[I], 0);
-        Prev = Prev->Next;
-      }
-      
-      return List;
-    }
-    
   public:
     ReadMethodPoolVisitor(ASTReader &Reader, Selector Sel)
       : Reader(Reader), Sel(Sel) { }
@@ -5273,28 +5249,44 @@ namespace clang { namespace serialization {
     }
     
     /// \brief Retrieve the instance methods found by this visitor.
-    ObjCMethodList getInstanceMethods() const { 
-      return buildObjCMethodList(InstanceMethods); 
+    ArrayRef<ObjCMethodDecl *> getInstanceMethods() const { 
+      return InstanceMethods; 
     }
 
     /// \brief Retrieve the instance methods found by this visitor.
-    ObjCMethodList getFactoryMethods() const { 
-      return buildObjCMethodList(FactoryMethods); 
+    ArrayRef<ObjCMethodDecl *> getFactoryMethods() const { 
+      return FactoryMethods;
     }
   };
 } } // end namespace clang::serialization
 
-std::pair<ObjCMethodList, ObjCMethodList>
-ASTReader::ReadMethodPool(Selector Sel) {
+/// \brief Add the given set of methods to the method list.
+static void addMethodsToPool(Sema &S, ArrayRef<ObjCMethodDecl *> Methods,
+                             ObjCMethodList &List) {
+  for (unsigned I = 0, N = Methods.size(); I != N; ++I) {
+    S.addMethodToGlobalList(&List, Methods[I]);
+  }
+}
+                             
+void ASTReader::ReadMethodPool(Selector Sel) {
   ReadMethodPoolVisitor Visitor(*this, Sel);
   ModuleMgr.visit(&ReadMethodPoolVisitor::visit, &Visitor);
-  std::pair<ObjCMethodList, ObjCMethodList> Result;
-  Result.first = Visitor.getInstanceMethods();
-  Result.second = Visitor.getFactoryMethods();
   
-  if (!Result.first.Method && !Result.second.Method)
+  if (Visitor.getInstanceMethods().empty() &&
+      Visitor.getFactoryMethods().empty()) {
     ++NumMethodPoolMisses;
-  return Result;
+    return;
+  }
+  
+  if (!getSema())
+    return;
+  
+  Sema &S = *getSema();
+  Sema::GlobalMethodPool::iterator Pos
+    = S.MethodPool.insert(std::make_pair(Sel, Sema::GlobalMethods())).first;
+  
+  addMethodsToPool(S, Visitor.getInstanceMethods(), Pos->second.first);
+  addMethodsToPool(S, Visitor.getFactoryMethods(), Pos->second.second);
 }
 
 void ASTReader::ReadKnownNamespaces(

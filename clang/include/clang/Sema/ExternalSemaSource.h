@@ -59,10 +59,7 @@ public:
 
   /// \brief Load the contents of the global method pool for a given
   /// selector.
-  ///
-  /// \returns a pair of Objective-C methods lists containing the
-  /// instance and factory methods, respectively, with this selector.
-  virtual std::pair<ObjCMethodList,ObjCMethodList> ReadMethodPool(Selector Sel);
+  virtual void ReadMethodPool(Selector Sel);
 
   /// \brief Load the set of namespaces that are known to the external source,
   /// which will be used during typo correction.

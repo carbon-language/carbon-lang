@@ -231,9 +231,8 @@ void ChainedIncludesSource::InitializeSema(Sema &S) {
 void ChainedIncludesSource::ForgetSema() {
   return getFinalReader().ForgetSema();
 }
-std::pair<ObjCMethodList,ObjCMethodList>
-ChainedIncludesSource::ReadMethodPool(Selector Sel) {
-  return getFinalReader().ReadMethodPool(Sel);
+void ChainedIncludesSource::ReadMethodPool(Selector Sel) {
+  getFinalReader().ReadMethodPool(Sel);
 }
 bool ChainedIncludesSource::LookupUnqualified(LookupResult &R, Scope *S) {
   return getFinalReader().LookupUnqualified(R, S);
