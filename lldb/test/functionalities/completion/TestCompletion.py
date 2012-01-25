@@ -18,6 +18,18 @@ class CommandLineCompletionTestCase(TestBase):
         system(["/bin/sh", "-c", "rm -f child_send.txt"])
         system(["/bin/sh", "-c", "rm -f child_read.txt"])
 
+    def test_frame_variable_dash_w(self):
+        """Test that 'frame variable -w' completes to 'frame variable -w '."""
+        self.complete_from_to('frame variable -w', 'frame variable -w ')
+
+    def test_frame_variable_dash_w_space(self):
+        """Test that 'frame variable -w ' completes to ['Available completions:', 'read', 'write', 'read_write']."""
+        self.complete_from_to('frame variable -w ', ['Available completions:', 'read', 'write', 'read_write'])
+
+    def test_help_fi(self):
+        """Test that 'help fi' completes to ['Available completions:', 'file', 'finish']."""
+        self.complete_from_to('help fi', ['Available completions:', 'file', 'finish'])
+
     def test_settings_append_target_er(self):
         """Test that 'settings append target.er' completes to 'settings append target.error-path'."""
         self.complete_from_to('settings append target.er', 'settings append target.error-path')
