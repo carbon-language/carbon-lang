@@ -25,3 +25,13 @@ void f(int argc, const char* argv[]) {
   // CHECK: call void @_ZN1XD1Ev
   // CHECK: ret void
 }
+
+namespace PR11744 {
+  // Make sure this doesn't crash; there was a use-after-free issue
+  // for this testcase.
+  template<typename T> int f(int n) {
+    T arr[3][n];
+    return 3;
+  }
+  int test = f<int>(0);
+}

@@ -8325,9 +8325,12 @@ TreeTransform<Derived>::RebuildArrayType(QualType ElementType,
       break;
     }
 
-  IntegerLiteral ArraySize(SemaRef.Context, *Size, SizeType,
-                           /*FIXME*/BracketsRange.getBegin());
-  return SemaRef.BuildArrayType(ElementType, SizeMod, &ArraySize,
+  // Note that we can return a VariableArrayType here in the case where
+  // the element type was a dependent VariableArrayType.
+  IntegerLiteral *ArraySize
+      = IntegerLiteral::Create(SemaRef.Context, *Size, SizeType,
+                               /*FIXME*/BracketsRange.getBegin());
+  return SemaRef.BuildArrayType(ElementType, SizeMod, ArraySize,
                                 IndexTypeQuals, BracketsRange,
                                 getDerived().getBaseEntity());
 }
