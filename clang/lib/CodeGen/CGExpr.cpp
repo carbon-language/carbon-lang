@@ -952,10 +952,8 @@ RValue CodeGenFunction::EmitLoadOfExtVectorElementLValue(LValue LV) {
   unsigned NumResultElts = ExprVT->getNumElements();
 
   SmallVector<llvm::Constant*, 4> Mask;
-  for (unsigned i = 0; i != NumResultElts; ++i) {
-    unsigned InIdx = getAccessedFieldNo(i, Elts);
-    Mask.push_back(llvm::ConstantInt::get(Int32Ty, InIdx));
-  }
+  for (unsigned i = 0; i != NumResultElts; ++i)
+    Mask.push_back(Builder.getInt32(getAccessedFieldNo(i, Elts)));
 
   llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
   Vec = Builder.CreateShuffleVector(Vec, llvm::UndefValue::get(Vec->getType()),
@@ -1175,10 +1173,8 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       // elements and restore the vector mask since it is on the side it will be
       // stored.
       SmallVector<llvm::Constant*, 4> Mask(NumDstElts);
-      for (unsigned i = 0; i != NumSrcElts; ++i) {
-        unsigned InIdx = getAccessedFieldNo(i, Elts);
-        Mask[InIdx] = llvm::ConstantInt::get(Int32Ty, i);
-      }
+      for (unsigned i = 0; i != NumSrcElts; ++i)
+        Mask[getAccessedFieldNo(i, Elts)] = Builder.getInt32(i);
 
       llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
       Vec = Builder.CreateShuffleVector(SrcVal,
@@ -1192,7 +1188,7 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       SmallVector<llvm::Constant*, 4> ExtMask;
       unsigned i;
       for (i = 0; i != NumSrcElts; ++i)
-        ExtMask.push_back(llvm::ConstantInt::get(Int32Ty, i));
+        ExtMask.push_back(Builder.getInt32(i));
       for (; i != NumDstElts; ++i)
         ExtMask.push_back(llvm::UndefValue::get(Int32Ty));
       llvm::Value *ExtMaskV = llvm::ConstantVector::get(ExtMask);
@@ -1203,13 +1199,11 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       // build identity
       SmallVector<llvm::Constant*, 4> Mask;
       for (unsigned i = 0; i != NumDstElts; ++i)
-        Mask.push_back(llvm::ConstantInt::get(Int32Ty, i));
+        Mask.push_back(Builder.getInt32(i));
 
       // modify when what gets shuffled in
-      for (unsigned i = 0; i != NumSrcElts; ++i) {
-        unsigned Idx = getAccessedFieldNo(i, Elts);
-        Mask[Idx] = llvm::ConstantInt::get(Int32Ty, i+NumDstElts);
-      }
+      for (unsigned i = 0; i != NumSrcElts; ++i)
+        Mask[getAccessedFieldNo(i, Elts)] = Builder.getInt32(i+NumDstElts);
       llvm::Value *MaskV = llvm::ConstantVector::get(Mask);
       Vec = Builder.CreateShuffleVector(Vec, ExtSrcVal, MaskV);
     } else {
@@ -1734,13 +1728,11 @@ LValue CodeGenFunction::EmitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 }
 
 static
-llvm::Constant *GenerateConstantVector(llvm::LLVMContext &VMContext,
+llvm::Constant *GenerateConstantVector(llvm::IRBuilder<> &Builder,
                                        SmallVector<unsigned, 4> &Elts) {
   SmallVector<llvm::Constant*, 4> CElts;
-
-  llvm::Type *Int32Ty = llvm::Type::getInt32Ty(VMContext);
   for (unsigned i = 0, e = Elts.size(); i != e; ++i)
-    CElts.push_back(llvm::ConstantInt::get(Int32Ty, Elts[i]));
+    CElts.push_back(Builder.getInt32(Elts[i]));
 
   return llvm::ConstantVector::get(CElts);
 }
@@ -1783,7 +1775,7 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   E->getEncodedElementAccess(Indices);
 
   if (Base.isSimple()) {
-    llvm::Constant *CV = GenerateConstantVector(getLLVMContext(), Indices);
+    llvm::Constant *CV = GenerateConstantVector(Builder, Indices);
     return LValue::MakeExtVectorElt(Base.getAddress(), CV, type);
   }
   assert(Base.isExtVectorElt() && "Can only subscript lvalue vec elts here!");
