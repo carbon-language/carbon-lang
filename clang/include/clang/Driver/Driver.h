@@ -36,7 +36,6 @@ namespace driver {
   class Command;
   class Compilation;
   class DerivedArgList;
-  class HostInfo;
   class InputArgList;
   class InputInfo;
   class JobAction;
@@ -95,10 +94,6 @@ public:
 
   /// Driver title to use with help.
   std::string DriverTitle;
-
-  /// Host information for the platform the driver is running as. This
-  /// will generally be the actual host platform, but not always.
-  const HostInfo *Host;
 
   /// Information about the host which can be overridden by the user.
   std::string HostBits, HostMachine, HostSystem, HostRelease;
@@ -386,10 +381,6 @@ public:
   ///
   /// GCC goes to extra lengths here to be a bit more robust.
   std::string GetTemporaryPath(StringRef Prefix, const char *Suffix) const;
-
-  /// GetHostInfo - Construct a new host info object for the given
-  /// host triple.
-  const HostInfo *GetHostInfo(const llvm::Triple &Triple) const;
 
   /// ShouldUseClangCompilar - Should the clang compiler be used to
   /// handle this action.
