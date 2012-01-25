@@ -275,6 +275,9 @@ protected:
   
   /// A flag that indicates whether nodes should be recycled.
   bool reclaimNodes;
+  
+  /// Counter to determine when to reclaim nodes.
+  unsigned reclaimCounter;
 
 public:
 
@@ -302,9 +305,7 @@ public:
     return V;
   }
 
-  ExplodedGraph()
-    : NumNodes(0), recentlyAllocatedNodes(0),
-      freeNodes(0), reclaimNodes(false) {}
+  ExplodedGraph();
 
   ~ExplodedGraph();
   

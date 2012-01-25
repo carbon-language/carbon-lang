@@ -15,6 +15,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/AST/Stmt.h"
+#include "clang/AST/ParentMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
@@ -47,6 +48,13 @@ void ExplodedNode::SetAuditor(ExplodedNode::Auditor* A) {
 typedef std::vector<ExplodedNode*> NodeList;
 static inline NodeList*& getNodeList(void *&p) { return (NodeList*&) p; }
 
+static const unsigned CounterTop = 1000;
+
+ExplodedGraph::ExplodedGraph()
+  : NumNodes(0), recentlyAllocatedNodes(0),
+    freeNodes(0), reclaimNodes(false),
+    reclaimCounter(CounterTop) {}
+
 ExplodedGraph::~ExplodedGraph() {
   if (reclaimNodes) {
     delete getNodeList(recentlyAllocatedNodes);
@@ -61,6 +69,15 @@ ExplodedGraph::~ExplodedGraph() {
 void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
   if (!recentlyAllocatedNodes)
     return;
+
+  // Only periodically relcaim nodes so that we can build up a set of
+  // nodes that meet the reclamation criteria.  Freshly created nodes
+  // by definition have no successor, and thus cannot be reclaimed (see below).
+  assert(reclaimCounter > 0);
+  if (--reclaimCounter != 0)
+    return;
+  reclaimCounter = CounterTop;
+  
   NodeList &nl = *getNodeList(recentlyAllocatedNodes);
  
   // Reclaimn all nodes that match *all* the following criteria:
@@ -72,7 +89,7 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
   // (5) The 'store' is the same as the predecessor.
   // (6) The 'GDM' is the same as the predecessor.
   // (7) The LocationContext is the same as the predecessor.
-  // (8) The PostStmt is for a non-CFGElement expression.
+  // (8) The PostStmt is for a non-consumed Stmt or Expr.
   
   for (NodeList::iterator i = nl.begin(), e = nl.end() ; i != e; ++i) {
     ExplodedNode *node = *i;
@@ -110,8 +127,11 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
       continue;
 
     // Condition 8.
-    if (node->getCFG().isBlkExpr(ps.getStmt()))
-      continue;
+    if (const Expr *Ex = dyn_cast<Expr>(ps.getStmt())) {
+      ParentMap &PM = progPoint.getLocationContext()->getParentMap();
+      if (!PM.isConsumedExpr(Ex))
+        continue;
+    }
     
     // If we reach here, we can remove the node.  This means:
     // (a) changing the predecessors successor to the successor of this node
