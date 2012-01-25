@@ -1576,52 +1576,83 @@ ShuffleVectorInst::ShuffleVectorInst(Value *V1, Value *V2, Value *Mask,
 
 bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
                                         const Value *Mask) {
+  // V1 and V2 must be vectors of the same type.
   if (!V1->getType()->isVectorTy() || V1->getType() != V2->getType())
     return false;
   
+  // Mask must be vector of i32.
   VectorType *MaskTy = dyn_cast<VectorType>(Mask->getType());
   if (MaskTy == 0 || !MaskTy->getElementType()->isIntegerTy(32))
     return false;
 
   // Check to see if Mask is valid.
+  if (isa<UndefValue>(Mask) || isa<ConstantAggregateZero>(Mask))
+    return true;
+
   if (const ConstantVector *MV = dyn_cast<ConstantVector>(Mask)) {
-    VectorType *VTy = cast<VectorType>(V1->getType());
+    unsigned V1Size = cast<VectorType>(V1->getType())->getNumElements();
     for (unsigned i = 0, e = MV->getNumOperands(); i != e; ++i) {
-      if (ConstantInt* CI = dyn_cast<ConstantInt>(MV->getOperand(i))) {
-        if (CI->uge(VTy->getNumElements()*2))
+      if (ConstantInt *CI = dyn_cast<ConstantInt>(MV->getOperand(i))) {
+        if (CI->uge(V1Size*2))
           return false;
       } else if (!isa<UndefValue>(MV->getOperand(i))) {
         return false;
       }
     }
-  } else if (!isa<UndefValue>(Mask) && !isa<ConstantAggregateZero>(Mask)) {
-    // The bitcode reader can create a place holder for a forward reference
-    // used as the shuffle mask. When this occurs, the shuffle mask will
-    // fall into this case and fail. To avoid this error, do this bit of
-    // ugliness to allow such a mask pass.
-    if (const ConstantExpr* CE = dyn_cast<ConstantExpr>(Mask)) {
-      if (CE->getOpcode() == Instruction::UserOp1)
-        return true;
-    }
-    return false;
+    return true;
   }
-  return true;
+  
+  if (const ConstantDataSequential *CDS =
+        dyn_cast<ConstantDataSequential>(Mask)) {
+    unsigned V1Size = cast<VectorType>(V1->getType())->getNumElements();
+    for (unsigned i = 0, e = MaskTy->getNumElements(); i != e; ++i)
+      if (CDS->getElementAsInteger(i) >= V1Size*2)
+        return false;
+    return true;
+  }
+  
+  // The bitcode reader can create a place holder for a forward reference
+  // used as the shuffle mask. When this occurs, the shuffle mask will
+  // fall into this case and fail. To avoid this error, do this bit of
+  // ugliness to allow such a mask pass.
+  if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(Mask))
+    if (CE->getOpcode() == Instruction::UserOp1)
+      return true;
+
+  return false;
 }
 
 /// getMaskValue - Return the index from the shuffle mask for the specified
 /// output result.  This is either -1 if the element is undef or a number less
 /// than 2*numelements.
 int ShuffleVectorInst::getMaskValue(unsigned i) const {
-  const Constant *Mask = cast<Constant>(getOperand(2));
-  if (isa<UndefValue>(Mask)) return -1;
-  if (isa<ConstantAggregateZero>(Mask)) return 0;
-  const ConstantVector *MaskCV = cast<ConstantVector>(Mask);
-  assert(i < MaskCV->getNumOperands() && "Index out of range");
-
-  if (isa<UndefValue>(MaskCV->getOperand(i)))
+  assert(i < getType()->getNumElements() && "Index out of range");
+  if (ConstantDataSequential *CDS =dyn_cast<ConstantDataSequential>(getMask()))
+    return CDS->getElementAsInteger(i);
+  Constant *C = getMask()->getAggregateElement(i);
+  if (isa<UndefValue>(C))
     return -1;
-  return cast<ConstantInt>(MaskCV->getOperand(i))->getZExtValue();
+  return cast<ConstantInt>(C)->getZExtValue();
 }
+
+/// getShuffleMask - Return the full mask for this instruction, where each
+/// element is the element number and undef's are returned as -1.
+void ShuffleVectorInst::getShuffleMask(SmallVectorImpl<int> &Result) const {
+  unsigned NumElts = getType()->getNumElements();
+  
+  if (ConstantDataSequential *CDS=dyn_cast<ConstantDataSequential>(getMask())) {
+    for (unsigned i = 0; i != NumElts; ++i)
+      Result.push_back(CDS->getElementAsInteger(i));
+    return;
+  }    
+  Constant *Mask = getMask();
+  for (unsigned i = 0; i != NumElts; ++i) {
+    Constant *C = Mask->getAggregateElement(i);
+    Result.push_back(isa<UndefValue>(C) ? -1 :
+                     cast<ConstantInt>(Mask)->getZExtValue());
+  }
+}
+
 
 //===----------------------------------------------------------------------===//
 //                             InsertValueInst Class
@@ -3457,15 +3488,11 @@ ExtractElementInst *ExtractElementInst::clone_impl() const {
 }
 
 InsertElementInst *InsertElementInst::clone_impl() const {
-  return InsertElementInst::Create(getOperand(0),
-                                   getOperand(1),
-                                   getOperand(2));
+  return InsertElementInst::Create(getOperand(0), getOperand(1), getOperand(2));
 }
 
 ShuffleVectorInst *ShuffleVectorInst::clone_impl() const {
-  return new ShuffleVectorInst(getOperand(0),
-                           getOperand(1),
-                           getOperand(2));
+  return new ShuffleVectorInst(getOperand(0), getOperand(1), getOperand(2));
 }
 
 PHINode *PHINode::clone_impl() const {
