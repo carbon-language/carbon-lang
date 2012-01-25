@@ -8,6 +8,6 @@ void f1(id arg) {
 }
 
 void f2(id str, va_list args) {
-  NSLogv(@"%@", args); // expected-warning {{implicitly declaring C library function 'NSLogv' with type 'void (id, __va_list_tag *)'}} \
+  NSLogv(@"%@", args); // expected-warning {{implicitly declaring C library function 'NSLogv' with type }} \
   // expected-note {{please include the header <Foundation/NSObjCRuntime.h> or explicitly provide a declaration for 'NSLogv'}}
 }
