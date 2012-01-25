@@ -2262,19 +2262,10 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
     return;
   }
 
-  // Check if the target architecture specific dirs need a suffix. Note that we
-  // only support the suffix-based bi-arch-like header scheme for host/target
-  // mismatches of just bit width.
-  // FIXME: This is using the Driver's target triple to emulate the host triple!
-  llvm::Triple::ArchType HostArch = getDriver().TargetTriple.getArch();
-  llvm::Triple::ArchType TargetArch = TargetTriple.getArch();
-  StringRef Suffix;
-  if ((HostArch == llvm::Triple::x86 && TargetArch == llvm::Triple::x86_64) ||
-      (HostArch == llvm::Triple::ppc && TargetArch == llvm::Triple::ppc64))
-    Suffix = "/64";
-  if ((HostArch == llvm::Triple::x86_64 && TargetArch == llvm::Triple::x86) ||
-      (HostArch == llvm::Triple::ppc64 && TargetArch == llvm::Triple::ppc))
-    Suffix = "/32";
+  // We need a detected GCC installation on Linux to provide libstdc++'s
+  // headers. We handled the libc++ case above.
+  if (!GCCInstallation.isValid())
+    return;
 
   // By default, look for the C++ headers in an include directory adjacent to
   // the lib directory of the GCC installation. Note that this is expect to be
@@ -2283,12 +2274,14 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
   StringRef InstallDir = GCCInstallation.getInstallPath();
   StringRef Version = GCCInstallation.getVersion();
   if (!addLibStdCXXIncludePaths(LibDir + "/../include/c++/" + Version,
-                                GCCInstallation.getTriple().str() + Suffix,
+                                (GCCInstallation.getTriple().str() +
+                                 GCCInstallation.getMultiarchSuffix()),
                                 DriverArgs, CC1Args)) {
     // Gentoo is weird and places its headers inside the GCC install, so if the
     // first attempt to find the headers fails, try this pattern.
     addLibStdCXXIncludePaths(InstallDir + "/include/g++-v4",
-                             GCCInstallation.getTriple().str() + Suffix,
+                             (GCCInstallation.getTriple().str() +
+                              GCCInstallation.getMultiarchSuffix()),
                              DriverArgs, CC1Args);
   }
 }
