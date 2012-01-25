@@ -1543,6 +1543,12 @@ void is_convertible_to() {
   { int arr[T(__is_convertible_to(X0<int>, X0<float>))]; }
 }
 
+namespace is_convertible_to_instantiate {
+  // Make sure we don't try to instantiate the constructor.
+  template<int x> class A { A(int) { int a[x]; } };
+  int x = __is_convertible_to(int, A<-1>);
+}
+
 void is_trivial()
 {
   { int arr[T(__is_trivial(int))]; }
