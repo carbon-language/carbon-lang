@@ -2291,7 +2291,8 @@ public:
   SourceRange getExprRange(Expr *E) const;
 
   ExprResult ActOnIdExpression(Scope *S, CXXScopeSpec &SS, UnqualifiedId &Id,
-                               bool HasTrailingLParen, bool IsAddressOfOperand);
+                               bool HasTrailingLParen, bool IsAddressOfOperand,
+                               CorrectionCandidateCallback *CCC = 0);
 
   void DecomposeUnqualifiedId(const UnqualifiedId &Id,
                               TemplateArgumentListInfo &Buffer,

@@ -1260,10 +1260,17 @@ private:
   //===--------------------------------------------------------------------===//
   // C99 6.5: Expressions.
 
-  ExprResult ParseExpression();
+  /// TypeCastState - State whether an expression is or may be a type cast.
+  enum TypeCastState {
+    NotTypeCast = 0,
+    MaybeTypeCast,
+    IsTypeCast
+  };
+
+  ExprResult ParseExpression(TypeCastState isTypeCast = NotTypeCast);
   ExprResult ParseConstantExpression();
   // Expr that doesn't include commas.
-  ExprResult ParseAssignmentExpression();
+  ExprResult ParseAssignmentExpression(TypeCastState isTypeCast = NotTypeCast);
 
   ExprResult ParseExpressionWithLeadingAt(SourceLocation AtLoc);
 
@@ -1274,10 +1281,10 @@ private:
   ExprResult ParseCastExpression(bool isUnaryExpression,
                                  bool isAddressOfOperand,
                                  bool &NotCastExpr,
-                                 bool isTypeCast);
+                                 TypeCastState isTypeCast);
   ExprResult ParseCastExpression(bool isUnaryExpression,
                                  bool isAddressOfOperand = false,
-                                 bool isTypeCast = false);
+                                 TypeCastState isTypeCast = NotTypeCast);
 
   /// Returns true if the next token would start a postfix-expression
   /// suffix.

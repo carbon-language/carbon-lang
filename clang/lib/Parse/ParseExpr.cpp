@@ -23,6 +23,7 @@
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ParsedTemplate.h"
+#include "clang/Sema/TypoCorrection.h"
 #include "clang/Basic/PrettyStackTrace.h"
 #include "RAIIObjectsForParser.h"
 #include "llvm/ADT/SmallVector.h"
@@ -174,8 +175,8 @@ static prec::Level getBinOpPrecedence(tok::TokenKind Kind,
 ///       expression: [C99 6.5.17]
 ///         assignment-expression ...[opt]
 ///         expression ',' assignment-expression ...[opt]
-ExprResult Parser::ParseExpression() {
-  ExprResult LHS(ParseAssignmentExpression());
+ExprResult Parser::ParseExpression(TypeCastState isTypeCast) {
+  ExprResult LHS(ParseAssignmentExpression(isTypeCast));
   return ParseRHSOfBinaryExpression(move(LHS), prec::Comma);
 }
 
@@ -211,7 +212,7 @@ Parser::ParseExpressionWithLeadingExtension(SourceLocation ExtLoc) {
 }
 
 /// ParseAssignmentExpression - Parse an expr that doesn't include commas.
-ExprResult Parser::ParseAssignmentExpression() {
+ExprResult Parser::ParseAssignmentExpression(TypeCastState isTypeCast) {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
     cutOffParsing();
@@ -221,7 +222,9 @@ ExprResult Parser::ParseAssignmentExpression() {
   if (Tok.is(tok::kw_throw))
     return ParseThrowExpression();
 
-  ExprResult LHS = ParseCastExpression(/*isUnaryExpression=*/false);
+  ExprResult LHS = ParseCastExpression(/*isUnaryExpression=*/false,
+                                       /*isAddressOfOperand=*/false,
+                                       isTypeCast);
   return ParseRHSOfBinaryExpression(move(LHS), prec::Assignment);
 }
 
@@ -417,7 +420,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
 ///
 ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand,
-                                       bool isTypeCast) {
+                                       TypeCastState isTypeCast) {
   bool NotCastExpr;
   ExprResult Res = ParseCastExpression(isUnaryExpression,
                                        isAddressOfOperand,
@@ -426,6 +429,29 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   if (NotCastExpr)
     Diag(Tok, diag::err_expected_expression);
   return move(Res);
+}
+
+namespace {
+class CastExpressionIdValidator : public CorrectionCandidateCallback {
+ public:
+  CastExpressionIdValidator(bool AllowTypes, bool AllowNonTypes)
+      : AllowNonTypes(AllowNonTypes) {
+    WantTypeSpecifiers = AllowTypes;
+  }
+
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    NamedDecl *ND = candidate.getCorrectionDecl();
+    if (!ND)
+      return candidate.isKeyword();
+
+    if (isa<TypeDecl>(ND))
+      return WantTypeSpecifiers;
+    return AllowNonTypes;
+  }
+
+ private:
+  bool AllowNonTypes;
+};
 }
 
 /// ParseCastExpression - Parse a cast-expression, or, if isUnaryExpression is
@@ -592,7 +618,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
 ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
                                        bool isAddressOfOperand,
                                        bool &NotCastExpr,
-                                       bool isTypeCast) {
+                                       TypeCastState isTypeCast) {
   ExprResult Res;
   tok::TokenKind SavedKind = Tok.getKind();
   NotCastExpr = false;
@@ -623,7 +649,7 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
       ColonProtectionRAIIObject X(*this, false);
 
       Res = ParseParenExpression(ParenExprType, false/*stopIfCastExr*/,
-                                 isTypeCast, CastTy, RParenLoc);
+                                 isTypeCast == IsTypeCast, CastTy, RParenLoc);
     }
 
     switch (ParenExprType) {
@@ -769,9 +795,12 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     // not.
     UnqualifiedId Name;
     CXXScopeSpec ScopeSpec;
+    CastExpressionIdValidator Validator(isTypeCast != NotTypeCast,
+                                        isTypeCast != IsTypeCast);
     Name.setIdentifier(&II, ILoc);
     Res = Actions.ActOnIdExpression(getCurScope(), ScopeSpec, Name, 
-                                    Tok.is(tok::l_paren), isAddressOfOperand);
+                                    Tok.is(tok::l_paren), isAddressOfOperand,
+                                    &Validator);
     break;
   }
   case tok::char_constant:     // constant: character-constant
@@ -1954,7 +1983,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
         // TODO: For cast expression with CastTy.
         Result = ParseCastExpression(/*isUnaryExpression=*/false,
                                      /*isAddressOfOperand=*/false,
-                                     /*isTypeCast=*/true);
+                                     /*isTypeCast=*/IsTypeCast);
         if (!Result.isInvalid()) {
           Result = Actions.ActOnCastExpr(getCurScope(), OpenLoc,
                                          DeclaratorInfo, CastTy, 
@@ -1981,7 +2010,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
   } else {
     InMessageExpressionRAIIObject InMessage(*this, false);
     
-    Result = ParseExpression();
+    Result = ParseExpression(MaybeTypeCast);
     ExprType = SimpleExpr;
 
     // Don't build a paren expression unless we actually match a ')'.

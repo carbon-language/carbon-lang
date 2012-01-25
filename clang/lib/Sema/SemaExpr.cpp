@@ -1704,7 +1704,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
                                    CXXScopeSpec &SS,
                                    UnqualifiedId &Id,
                                    bool HasTrailingLParen,
-                                   bool IsAddressOfOperand) {
+                                   bool IsAddressOfOperand,
+                                   CorrectionCandidateCallback *CCC) {
   assert(!(IsAddressOfOperand && HasTrailingLParen) &&
          "cannot be direct & operand and have a trailing lparen");
 
@@ -1819,7 +1820,7 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
                                           TemplateArgs);
 
       CorrectionCandidateCallback DefaultValidator;
-      if (DiagnoseEmptyLookup(S, SS, R, DefaultValidator))
+      if (DiagnoseEmptyLookup(S, SS, R, CCC ? *CCC : DefaultValidator))
         return ExprError();
 
       assert(!R.empty() &&

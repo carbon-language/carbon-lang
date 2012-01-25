@@ -114,6 +114,18 @@ struct TestRedecl : public BaseDecl {
 };
 void TestRedecl::add_in(int i) {} // expected-error{{out-of-line definition of 'add_in' does not match any declaration in 'TestRedecl'; did you mean 'add_it'?}}
 
+// Test the improved typo correction for the Parser::ParseCastExpr =>
+// Sema::ActOnIdExpression => Sema::DiagnoseEmptyLookup call path.
+class SomeNetMessage;
+class Message {};
+void foo(Message&);
+void foo(SomeNetMessage&);
+void doit(void *data) {
+  Message somenetmsg; // expected-note{{'somenetmsg' declared here}}
+  foo(somenetmessage); // expected-error{{use of undeclared identifier 'somenetmessage'; did you mean 'somenetmsg'?}}
+  foo((somenetmessage)data); // expected-error{{use of undeclared identifier 'somenetmessage'; did you mean 'SomeNetMessage'?}}
+}
+
 // Test the typo-correction callback in BuildRecoveryCallExpr.
 // Solves the main issue in PR 9320 of suggesting corrections that take the
 // wrong number of arguments.

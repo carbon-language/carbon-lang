@@ -2552,7 +2552,7 @@ Parser::ParseCXXAmbiguousParenExpression(ParenParseOption &ExprType,
                                    false/*isAddressofOperand*/,
                                    NotCastExpr,
                                    // type-id has priority.
-                                   true/*isTypeCast*/);
+                                   IsTypeCast);
     }
 
     // If we parsed a cast-expression, it's really a type-id, otherwise it's
