@@ -129,7 +129,7 @@ Constant *Constant::getIntegerValue(Type *Ty, const APInt &V) {
 
   // Broadcast a scalar to a vector, if necessary.
   if (VectorType *VTy = dyn_cast<VectorType>(Ty))
-    C = ConstantVector::getSplat(VTy->getNumElements(), C);
+    C = ConstantVector::get(std::vector<Constant *>(VTy->getNumElements(), C));
 
   return C;
 }
@@ -145,9 +145,11 @@ Constant *Constant::getAllOnesValue(Type *Ty) {
     return ConstantFP::get(Ty->getContext(), FL);
   }
 
+  SmallVector<Constant*, 16> Elts;
   VectorType *VTy = cast<VectorType>(Ty);
-  return ConstantVector::getSplat(VTy->getNumElements(),
-                                  getAllOnesValue(VTy->getElementType()));
+  Elts.resize(VTy->getNumElements(), getAllOnesValue(VTy->getElementType()));
+  assert(Elts[0] && "Invalid AllOnes value!");
+  return cast<ConstantVector>(ConstantVector::get(Elts));
 }
 
 void Constant::destroyConstantImpl() {
@@ -392,8 +394,9 @@ Constant *ConstantInt::getTrue(Type *Ty) {
   }
   assert(VTy->getElementType()->isIntegerTy(1) &&
          "True must be vector of i1 or i1.");
-  return ConstantVector::getSplat(VTy->getNumElements(),
-                                  ConstantInt::getTrue(Ty->getContext()));
+  SmallVector<Constant*, 16> Splat(VTy->getNumElements(),
+                                   ConstantInt::getTrue(Ty->getContext()));
+  return ConstantVector::get(Splat);
 }
 
 Constant *ConstantInt::getFalse(Type *Ty) {
@@ -404,8 +407,9 @@ Constant *ConstantInt::getFalse(Type *Ty) {
   }
   assert(VTy->getElementType()->isIntegerTy(1) &&
          "False must be vector of i1 or i1.");
-  return ConstantVector::getSplat(VTy->getNumElements(),
-                                  ConstantInt::getFalse(Ty->getContext()));
+  SmallVector<Constant*, 16> Splat(VTy->getNumElements(),
+                                   ConstantInt::getFalse(Ty->getContext()));
+  return ConstantVector::get(Splat);
 }
 
 
@@ -429,7 +433,8 @@ Constant *ConstantInt::get(Type *Ty, uint64_t V, bool isSigned) {
 
   // For vectors, broadcast the value.
   if (VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return ConstantVector::getSplat(VTy->getNumElements(), C);
+    return ConstantVector::get(SmallVector<Constant*,
+                                           16>(VTy->getNumElements(), C));
 
   return C;
 }
@@ -454,7 +459,8 @@ Constant *ConstantInt::get(Type* Ty, const APInt& V) {
 
   // For vectors, broadcast the value.
   if (VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return ConstantVector::getSplat(VTy->getNumElements(), C);
+    return ConstantVector::get(
+      SmallVector<Constant *, 16>(VTy->getNumElements(), C));
 
   return C;
 }
@@ -500,7 +506,8 @@ Constant *ConstantFP::get(Type* Ty, double V) {
 
   // For vectors, broadcast the value.
   if (VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return ConstantVector::getSplat(VTy->getNumElements(), C);
+    return ConstantVector::get(
+      SmallVector<Constant *, 16>(VTy->getNumElements(), C));
 
   return C;
 }
@@ -514,7 +521,8 @@ Constant *ConstantFP::get(Type* Ty, StringRef Str) {
 
   // For vectors, broadcast the value.
   if (VectorType *VTy = dyn_cast<VectorType>(Ty))
-    return ConstantVector::getSplat(VTy->getNumElements(), C);
+    return ConstantVector::get(
+      SmallVector<Constant *, 16>(VTy->getNumElements(), C));
 
   return C; 
 }
@@ -529,12 +537,15 @@ ConstantFP* ConstantFP::getNegativeZero(Type* Ty) {
 
 
 Constant *ConstantFP::getZeroValueForNegation(Type* Ty) {
-  if (Ty->getScalarType()->isFloatingPointTy()) {
-    Constant *C = getNegativeZero(Ty);
-    if (VectorType *VTy = dyn_cast<VectorType>(Ty))
-      return ConstantVector::getSplat(VTy->getNumElements(), C);
-    return C;
-  }
+  if (VectorType *PTy = dyn_cast<VectorType>(Ty))
+    if (PTy->getElementType()->isFloatingPointTy()) {
+      SmallVector<Constant*, 16> zeros(PTy->getNumElements(),
+                           getNegativeZero(PTy->getElementType()));
+      return ConstantVector::get(zeros);
+    }
+
+  if (Ty->isFloatingPointTy()) 
+    return getNegativeZero(Ty);
 
   return Constant::getNullValue(Ty);
 }
@@ -806,12 +817,6 @@ Constant *ConstantVector::get(ArrayRef<Constant*> V) {
     
   return pImpl->VectorConstants.getOrCreate(T, V);
 }
-
-Constant *ConstantVector::getSplat(unsigned NumElts, Constant *V) {
-  SmallVector<Constant*, 32> Elts(NumElts, V);
-  return get(Elts);
-}
-
 
 // Utility function for determining if a ConstantExpr is a CastOp or not. This
 // can't be inline because we don't want to #include Instruction.h into
@@ -2188,38 +2193,6 @@ Constant *ConstantDataVector::get(LLVMContext &Context, ArrayRef<double> Elts) {
   Type *Ty = VectorType::get(Type::getDoubleTy(Context), Elts.size());
   return getImpl(StringRef((char*)Elts.data(), Elts.size()*8), Ty);
 }
-
-Constant *ConstantDataVector::getSplat(unsigned NumElts, Constant *V) {
-  assert(isElementTypeCompatible(V->getType()) &&
-         "Element type not compatible with ConstantData");
-  if (ConstantInt *CI = dyn_cast<ConstantInt>(V)) {
-    if (CI->getType()->isIntegerTy(8)) {
-      SmallVector<uint8_t, 16> Elts(NumElts, CI->getZExtValue());
-      return get(V->getContext(), Elts);
-    }
-    if (CI->getType()->isIntegerTy(16)) {
-      SmallVector<uint16_t, 16> Elts(NumElts, CI->getZExtValue());
-      return get(V->getContext(), Elts);
-    }
-    if (CI->getType()->isIntegerTy(32)) {
-      SmallVector<uint32_t, 16> Elts(NumElts, CI->getZExtValue());
-      return get(V->getContext(), Elts);
-    }
-    assert(CI->getType()->isIntegerTy(64) && "Unsupported ConstantData type");
-    SmallVector<uint64_t, 16> Elts(NumElts, CI->getZExtValue());
-    return get(V->getContext(), Elts);
-  }
-
-  ConstantFP *CFP = cast<ConstantFP>(V);
-  if (CFP->getType()->isFloatTy()) {
-    SmallVector<float, 16> Elts(NumElts, CFP->getValueAPF().convertToFloat());
-    return get(V->getContext(), Elts);
-  }
-  assert(CFP->getType()->isDoubleTy() && "Unsupported ConstantData type");
-  SmallVector<double, 16> Elts(NumElts, CFP->getValueAPF().convertToDouble());
-  return get(V->getContext(), Elts);
-}
-
 
 /// getElementAsInteger - If this is a sequential container of integers (of
 /// any size), return the specified element in the low bits of a uint64_t.
