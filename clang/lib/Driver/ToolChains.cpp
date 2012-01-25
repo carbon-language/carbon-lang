@@ -1628,23 +1628,14 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA,
 FreeBSD::FreeBSD(const HostInfo &Host, const llvm::Triple& Triple)
   : Generic_ELF(Host, Triple) {
 
-  // Determine if we are compiling 32-bit code on an x86_64 platform.
-  bool Lib32 = false;
-  // FIXME: This is using the Driver's target triple as the host triple!
-  if (Triple.getArch() == llvm::Triple::x86 &&
-      getDriver().TargetTriple.getArch() == llvm::Triple::x86_64)
-    Lib32 = true;
-
-  // FIXME: This is using the Driver's target triple as the host triple!
-  if (Triple.getArch() == llvm::Triple::ppc &&
-      getDriver().TargetTriple.getArch() == llvm::Triple::ppc64)
-    Lib32 = true;
-
-  if (Lib32) {
+  // When targeting 32-bit platforms, look for libraries in '/usr/lib32' first;
+  // for 64-bit hosts that's where they will live. We fall back to '/usr/lib'
+  // for the remaining cases.
+  if (Triple.getArch() == llvm::Triple::x86 ||
+      Triple.getArch() == llvm::Triple::ppc)
     getFilePaths().push_back("/usr/lib32");
-  } else {
-    getFilePaths().push_back("/usr/lib");
-  }
+
+  getFilePaths().push_back("/usr/lib");
 }
 
 Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA,
