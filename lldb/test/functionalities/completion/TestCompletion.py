@@ -112,7 +112,8 @@ class CommandLineCompletionTestCase(TestBase):
                 child.sendline('')
                 child.expect_exact(prompt)
 
-        # Set logfile to None to stop logging.
+        # Now that the necessary logging is done, restore logfile to None to
+        # stop further logging.
         child.logfile_send = None
         child.logfile_read = None
         
