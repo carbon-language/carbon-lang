@@ -50,10 +50,10 @@ ProcessImplicitDefs::CanTurnIntoImplicitDef(MachineInstr *MI,
                                             SmallSet<unsigned, 8> &ImpDefRegs) {
   switch(OpIdx) {
   case 1:
-    return MI->isCopy() && (MI->getOperand(0).getSubReg() == 0 ||
+    return MI->isCopy() && (!MI->getOperand(0).readsReg() ||
                             ImpDefRegs.count(MI->getOperand(0).getReg()));
   case 2:
-    return MI->isSubregToReg() && (MI->getOperand(0).getSubReg() == 0 ||
+    return MI->isSubregToReg() && (!MI->getOperand(0).readsReg() ||
                                   ImpDefRegs.count(MI->getOperand(0).getReg()));
   default: return false;
   }
@@ -66,7 +66,7 @@ static bool isUndefCopy(MachineInstr *MI, unsigned Reg,
     MachineOperand &MO1 = MI->getOperand(1);
     if (MO1.getReg() != Reg)
       return false;
-    if (!MO0.getSubReg() || ImpDefRegs.count(MO0.getReg()))
+    if (!MO0.readsReg() || ImpDefRegs.count(MO0.getReg()))
       return true;
     return false;
   }
@@ -105,7 +105,9 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
       MachineInstr *MI = &*I;
       ++I;
       if (MI->isImplicitDef()) {
-        if (MI->getOperand(0).getSubReg())
+        ImpDefMIs.push_back(MI);
+        // Is this a sub-register read-modify-write?
+        if (MI->getOperand(0).readsReg())
           continue;
         unsigned Reg = MI->getOperand(0).getReg();
         ImpDefRegs.insert(Reg);
@@ -113,12 +115,11 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
           for (const unsigned *SS = TRI->getSubRegisters(Reg); *SS; ++SS)
             ImpDefRegs.insert(*SS);
         }
-        ImpDefMIs.push_back(MI);
         continue;
       }
 
       // Eliminate %reg1032:sub<def> = COPY undef.
-      if (MI->isCopy() && MI->getOperand(0).getSubReg()) {
+      if (MI->isCopy() && MI->getOperand(0).readsReg()) {
         MachineOperand &MO = MI->getOperand(1);
         if (MO.isUndef() || ImpDefRegs.count(MO.getReg())) {
           if (MO.isKill()) {
@@ -140,7 +141,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
       bool ChangedToImpDef = false;
       for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
         MachineOperand& MO = MI->getOperand(i);
-        if (!MO.isReg() || (MO.isDef() && !MO.getSubReg()) || MO.isUndef())
+        if (!MO.isReg() || !MO.readsReg())
           continue;
         unsigned Reg = MO.getReg();
         if (!Reg)
@@ -172,10 +173,10 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
           continue;
         }
         if (MO.isKill() || MI->isRegTiedToDefOperand(i)) {
-          // Make sure other uses of 
+          // Make sure other reads of Reg are also marked <undef>.
           for (unsigned j = i+1; j != e; ++j) {
             MachineOperand &MOJ = MI->getOperand(j);
-            if (MOJ.isReg() && MOJ.isUse() && MOJ.getReg() == Reg)
+            if (MOJ.isReg() && MOJ.getReg() == Reg && MOJ.readsReg())
               MOJ.setIsUndef();
           }
           ImpDefRegs.erase(Reg);

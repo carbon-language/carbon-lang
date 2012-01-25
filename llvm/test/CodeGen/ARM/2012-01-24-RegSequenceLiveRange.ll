@@ -1,5 +1,6 @@
 ; RUN: llc < %s -mcpu=cortex-a8 -verify-machineinstrs -verify-coalescing
 ; PR11841
+; PR11829
 target datalayout = "e-p:32:32:32-i1:8:8-i8:8:8-i16:16:16-i32:32:32-i64:64:64-f32:32:32-f64:64:64-v64:64:64-v128:64:128-a0:0:64-n32-S64"
 target triple = "armv7-none-linux-eabi"
 
@@ -37,7 +38,30 @@ bb:
   ret void
 }
 
+define arm_aapcs_vfpcc void @foo2() nounwind uwtable {
+entry:
+  br i1 undef, label %for.end, label %cond.end295
+
+cond.end295:                                      ; preds = %entry
+  %shuffle.i39.i.i1035 = shufflevector <2 x i64> undef, <2 x i64> undef, <1 x i32> zeroinitializer
+  %shuffle.i38.i.i1036 = shufflevector <2 x i64> zeroinitializer, <2 x i64> undef, <1 x i32> zeroinitializer
+  %shuffle.i37.i.i1037 = shufflevector <1 x i64> %shuffle.i39.i.i1035, <1 x i64> %shuffle.i38.i.i1036, <2 x i32> <i32 0, i32 1>
+  %0 = bitcast <2 x i64> %shuffle.i37.i.i1037 to <4 x float>
+  %1 = bitcast <4 x float> undef to <2 x i64>
+  %shuffle.i36.i.i = shufflevector <2 x i64> %1, <2 x i64> undef, <1 x i32> zeroinitializer
+  %shuffle.i35.i.i = shufflevector <2 x i64> undef, <2 x i64> undef, <1 x i32> zeroinitializer
+  %shuffle.i34.i.i = shufflevector <1 x i64> %shuffle.i36.i.i, <1 x i64> %shuffle.i35.i.i, <2 x i32> <i32 0, i32 1>
+  %2 = bitcast <2 x i64> %shuffle.i34.i.i to <4 x float>
+  tail call void @llvm.arm.neon.vst1.v4f32(i8* undef, <4 x float> %0, i32 4) nounwind
+  tail call void @llvm.arm.neon.vst1.v4f32(i8* undef, <4 x float> %2, i32 4) nounwind
+  unreachable
+
+for.end:                                          ; preds = %entry
+  ret void
+}
+
 declare arm_aapcs_vfpcc void @bar(i8*, float, float, float)
+declare void @llvm.arm.neon.vst1.v4f32(i8*, <4 x float>, i32) nounwind
 
 !0 = metadata !{metadata !"omnipotent char", metadata !1}
 !1 = metadata !{metadata !"Simple C/C++ TBAA", null}
