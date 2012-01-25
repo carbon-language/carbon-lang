@@ -864,7 +864,7 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     if (TryAnnotateTypeOrScopeToken())
       return TPResult::Error();
     return isCXXDeclarationSpecifier();
-      
+
     // decl-specifier:
     //   storage-class-specifier
     //   type-specifier
@@ -950,8 +950,31 @@ Parser::TPResult Parser::isCXXDeclarationSpecifier() {
     // We've already annotated a scope; try to annotate a type.
     if (TryAnnotateTypeOrScopeToken())
       return TPResult::Error();
-    if (!Tok.is(tok::annot_typename))
+    if (!Tok.is(tok::annot_typename)) {
+      // If the next token is an identifier or a type qualifier, then this
+      // can't possibly be a valid expression either.
+      if (Tok.is(tok::annot_cxxscope) && NextToken().is(tok::identifier)) {
+        CXXScopeSpec SS;
+        Actions.RestoreNestedNameSpecifierAnnotation(Tok.getAnnotationValue(),
+                                                     Tok.getAnnotationRange(),
+                                                     SS);
+        if (SS.getScopeRep() && SS.getScopeRep()->isDependent()) {
+          TentativeParsingAction PA(*this);
+          ConsumeToken();
+          ConsumeToken();
+          bool isIdentifier = Tok.is(tok::identifier);
+          TPResult TPR = TPResult::False();
+          if (!isIdentifier)
+            TPR = isCXXDeclarationSpecifier();
+          PA.Revert();
+
+          if (isIdentifier ||
+              TPR == TPResult::True() || TPR == TPResult::Error())
+            return TPResult::Error();
+        }
+      }
       return TPResult::False();
+    }
     // If that succeeded, fallthrough into the generic simple-type-id case.
 
     // The ambiguity resides in a simple-type-specifier/typename-specifier
