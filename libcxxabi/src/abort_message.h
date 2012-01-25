@@ -10,7 +10,7 @@
 #ifndef __ABORT_MESSAGE_H_
 #define __ABORT_MESSAGE_H_
 
-#include "cxxabi.h"
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C" {
