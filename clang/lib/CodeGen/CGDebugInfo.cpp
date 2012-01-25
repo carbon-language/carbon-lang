@@ -479,6 +479,31 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
                                Ty->getPointeeType(), Unit);
 }
 
+// Creates a forward declaration for a RecordDecl in the given context.
+llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
+					      llvm::DIDescriptor Ctx) {
+
+  llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
+  unsigned Line = getLineNumber(RD->getLocation());
+  const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
+  
+  if (CXXDecl)
+    return DBuilder.createClassType(Ctx, RD->getName(), DefUnit,
+				    Line, 0, 0, 0,
+				    llvm::DIType::FlagFwdDecl,
+				    llvm::DIType(), llvm::DIArray());
+  else if (RD->isStruct())
+    return DBuilder.createStructType(Ctx, RD->getName(), DefUnit,
+				     Line, 0, 0, llvm::DIType::FlagFwdDecl,
+				     llvm::DIArray());
+  else if (RD->isUnion())
+    return DBuilder.createUnionType(Ctx, RD->getName(), DefUnit,
+				    Line, 0, 0, llvm::DIType::FlagFwdDecl,
+				    llvm::DIArray());
+  else
+    llvm_unreachable("Unknown RecordDecl type!");
+}
+
 // Walk up the context chain and create forward decls for record decls,
 // and normal descriptors for namespaces.
 llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
@@ -497,27 +522,9 @@ llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
 
   if (const RecordDecl *RD = dyn_cast<RecordDecl>(Context)) {
     if (!RD->isDependentType()) {
-      llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
-      unsigned Line = getLineNumber(RD->getLocation());
       llvm::DIDescriptor FDContext =
         createContextChain(cast<Decl>(RD->getDeclContext()));
-      
-      const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
-      llvm::DIType Ty = llvm::DIType();
-      
-      if (CXXDecl)
-        Ty = DBuilder.createClassType(FDContext, RD->getName(), DefUnit,
-                                      Line, 0, 0, 0,
-                                      llvm::DIType::FlagFwdDecl,
-                                      llvm::DIType(), llvm::DIArray());
-      else if (RD->isStruct())
-        Ty = DBuilder.createStructType(FDContext, RD->getName(), DefUnit,
-                                       Line, 0, 0, llvm::DIType::FlagFwdDecl,
-                                       llvm::DIArray());
-      else if (RD->isUnion())
-        Ty = DBuilder.createUnionType(FDContext, RD->getName(), DefUnit,
-                                      Line, 0, 0, llvm::DIType::FlagFwdDecl,
-                                      llvm::DIArray());
+      llvm::DIType Ty = createRecordFwdDecl(RD, FDContext);
 
       RegionMap[Context] = llvm::WeakVH(Ty);
       return llvm::DIDescriptor(Ty);
@@ -546,26 +553,9 @@ llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
 
   if (const RecordType *RTy = dyn_cast<RecordType>(PointeeTy)) {
     RecordDecl *RD = RTy->getDecl();
-    llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
-    unsigned Line = getLineNumber(RD->getLocation());
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
-
-    CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
-    if (CXXDecl)
-      return DBuilder.createClassType(FDContext, RD->getName(), DefUnit,
-                                      Line, 0, 0, 0, llvm::DIType::FlagFwdDecl,
-                                      llvm::DIType(), llvm::DIArray());
-    else if (RD->isStruct())
-      return DBuilder.createStructType(FDContext, RD->getName(), DefUnit,
-                                       Line, 0, 0, llvm::DIType::FlagFwdDecl,
-                                       llvm::DIArray());
-    else if (RD->isUnion())
-      return DBuilder.createUnionType(FDContext, RD->getName(), DefUnit,
-                                      Line, 0, 0, llvm::DIType::FlagFwdDecl,
-                                      llvm::DIArray());
-    else
-      llvm_unreachable("Unknown RecordDecl type!");
+    return createRecordFwdDecl(RD, FDContext);
   }
   return getOrCreateType(PointeeTy, Unit);
 
