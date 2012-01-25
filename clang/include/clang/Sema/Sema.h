@@ -1583,7 +1583,8 @@ public:
                                      SourceLocation LParenLoc,
                                      Expr **Args, unsigned NumArgs,
                                      SourceLocation RParenLoc,
-                                     Expr *ExecConfig);
+                                     Expr *ExecConfig,
+                                     bool AllowTypoCorrection=true);
 
   ExprResult CreateOverloadedUnaryOp(SourceLocation OpLoc,
                                      unsigned Opc,

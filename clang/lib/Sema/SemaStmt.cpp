@@ -1286,7 +1286,7 @@ static ExprResult BuildForRangeBeginEndCall(Sema &SemaRef, Scope *S,
                                    FoundNames.begin(), FoundNames.end(),
                                    /*LookInStdNamespace=*/true);
     CallExpr = SemaRef.BuildOverloadedCallExpr(S, Fn, Fn, Loc, &Range, 1, Loc,
-                                               0);
+                                               0, /*AllowTypoCorrection=*/false);
     if (CallExpr.isInvalid()) {
       SemaRef.Diag(Range->getLocStart(), diag::note_for_range_type)
         << Range->getType();

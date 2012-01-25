@@ -9215,6 +9215,21 @@ class RecoveryCallCCC : public CorrectionCandidateCallback {
   unsigned NumArgs;
   bool HasExplicitTemplateArgs;
 };
+
+// Callback that effectively disabled typo correction
+class NoTypoCorrectionCCC : public CorrectionCandidateCallback {
+ public:
+  NoTypoCorrectionCCC() {
+    WantTypeSpecifiers = false;
+    WantExpressionKeywords = false;
+    WantCXXNamedCasts = false;
+    WantRemainingKeywords = false;
+  }
+
+  virtual bool ValidateCandidate(const TypoCorrection &candidate) {
+    return false;
+  }
+};
 }
 
 /// Attempts to recover from a call where no functions were found.
@@ -9226,7 +9241,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
                       SourceLocation LParenLoc,
                       Expr **Args, unsigned NumArgs,
                       SourceLocation RParenLoc,
-                      bool EmptyLookup) {
+                      bool EmptyLookup, bool AllowTypoCorrection) {
 
   CXXScopeSpec SS;
   SS.Adopt(ULE->getQualifierLoc());
@@ -9241,10 +9256,14 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
   LookupResult R(SemaRef, ULE->getName(), ULE->getNameLoc(),
                  Sema::LookupOrdinaryName);
   RecoveryCallCCC Validator(SemaRef, NumArgs, ExplicitTemplateArgs != 0);
+  NoTypoCorrectionCCC RejectAll;
+  CorrectionCandidateCallback *CCC = AllowTypoCorrection ?
+      (CorrectionCandidateCallback*)&Validator :
+      (CorrectionCandidateCallback*)&RejectAll;
   if (!DiagnoseTwoPhaseLookup(SemaRef, Fn->getExprLoc(), SS, R,
                               ExplicitTemplateArgs, Args, NumArgs) &&
       (!EmptyLookup ||
-       SemaRef.DiagnoseEmptyLookup(S, SS, R, Validator,
+       SemaRef.DiagnoseEmptyLookup(S, SS, R, *CCC,
                                    ExplicitTemplateArgs, Args, NumArgs)))
     return ExprError();
 
@@ -9283,7 +9302,8 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
                               SourceLocation LParenLoc,
                               Expr **Args, unsigned NumArgs,
                               SourceLocation RParenLoc,
-                              Expr *ExecConfig) {
+                              Expr *ExecConfig,
+                              bool AllowTypoCorrection) {
 #ifndef NDEBUG
   if (ULE->requiresADL()) {
     // To do ADL, we must have found an unqualified name.
@@ -9331,7 +9351,8 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
       return Owned(CE);
     }
     return BuildRecoveryCallExpr(*this, S, Fn, ULE, LParenLoc, Args, NumArgs,
-                                 RParenLoc, /*EmptyLookup=*/true);
+                                 RParenLoc, /*EmptyLookup=*/true,
+                                 AllowTypoCorrection);
   }
 
   UnbridgedCasts.restore();
@@ -9353,7 +9374,8 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
     // have meant to call.
     ExprResult Recovery = BuildRecoveryCallExpr(*this, S, Fn, ULE, LParenLoc,
                                                 Args, NumArgs, RParenLoc,
-                                                /*EmptyLookup=*/false);
+                                                /*EmptyLookup=*/false,
+                                                AllowTypoCorrection);
     if (!Recovery.isInvalid())
       return Recovery;
 

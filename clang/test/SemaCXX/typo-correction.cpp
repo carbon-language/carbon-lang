@@ -149,3 +149,11 @@ void Test3() {
   Provoke("foo", true); // expected-error{{use of undeclared identifier 'Provoke'; did you mean 'provoke'?}}
   Provoke("foo", 7, 22); // expected-error{{use of undeclared identifier 'Provoke'}}
 }
+
+// PR 11737 - Don't try to typo-correct the implicit 'begin' and 'end' in a
+// C++11 for-range statement.
+struct R {};
+bool begun(R);
+void RangeTest() {
+  for (auto b : R()) {} // expected-error {{use of undeclared identifier 'begin'}} expected-note {{range has type}}
+}
