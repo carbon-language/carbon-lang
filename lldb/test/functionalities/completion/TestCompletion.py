@@ -91,11 +91,10 @@ class CommandLineCompletionTestCase(TestBase):
                                'target.process.thread.trace-thread'])
 
     def complete_from_to(self, str_input, patterns):
-        """Test the completion mechanism completes str_input to pattern, where
-        patterns could be a pattern-string or a list of pattern-strings"""
+        """Test that the completion mechanism completes str_input to patterns,
+        where patterns could be a pattern-string or a list of pattern-strings"""
+        # The default lldb prompt.
         prompt = "(lldb) "
-        add_prompt = "Enter your stop hook command(s).  Type 'DONE' to end.\r\n> "
-        add_prompt1 = "\r\n> "
 
         # So that the child gets torn down after the test.
         self.child = pexpect.spawn('%s %s' % (self.lldbHere, self.lldbOption))
