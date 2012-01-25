@@ -839,11 +839,8 @@ def : Pat<(v4f64 (X86vzmovl
 }
 
 
-def : Pat<(int_x86_avx_loadu_ps_256 addr:$src), (VMOVUPSYrm addr:$src)>;
 def : Pat<(int_x86_avx_storeu_ps_256 addr:$dst, VR256:$src),
           (VMOVUPSYmr addr:$dst, VR256:$src)>;
-
-def : Pat<(int_x86_avx_loadu_pd_256 addr:$src), (VMOVUPDYrm addr:$src)>;
 def : Pat<(int_x86_avx_storeu_pd_256 addr:$dst, VR256:$src),
           (VMOVUPDYmr addr:$dst, VR256:$src)>;
 
@@ -3461,7 +3458,6 @@ def MOVDQUmr_Int :   I<0x7F, MRMDestMem, (outs), (ins i128mem:$dst, VR128:$src),
 } // ExeDomain = SSEPackedInt
 
 let Predicates = [HasAVX] in {
-  def : Pat<(int_x86_avx_loadu_dq_256 addr:$src), (VMOVDQUYrm addr:$src)>;
   def : Pat<(int_x86_avx_storeu_dq_256 addr:$dst, VR256:$src),
             (VMOVDQUYmr addr:$dst, VR256:$src)>;
 }
