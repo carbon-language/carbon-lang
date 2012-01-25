@@ -322,7 +322,6 @@ void MipsFrameLowering::
 processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
                                      RegScavenger *RS) const {
   MachineRegisterInfo& MRI = MF.getRegInfo();
-  unsigned RA = STI.isABI_N64() ? Mips::RA_64 : Mips::RA;
   unsigned FP = STI.isABI_N64() ? Mips::FP_64 : Mips::FP;
 
   // FIXME: remove this code if register allocator can correctly mark
@@ -338,7 +337,9 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   // To correct this, $ra is explicitly marked unused if there is no
   // function call.
   if (MF.getFrameInfo()->hasCalls())
-    MRI.setPhysRegUsed(RA);
-  else
-    MRI.setPhysRegUnused(RA);
+    MRI.setPhysRegUsed(Mips::RA);
+  else {
+    MRI.setPhysRegUnused(Mips::RA);
+    MRI.setPhysRegUnused(Mips::RA_64);
+  }
 }
