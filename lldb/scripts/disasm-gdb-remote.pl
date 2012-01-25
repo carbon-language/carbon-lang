@@ -506,7 +506,9 @@ our %cmd_callbacks =
 	'k' => \&dump_kill_cmd,
 	'A' => \&dump_A_command,
 	'c' => \&dump_continue_cmd,
+	's' => \&dump_continue_cmd,
 	'C' => \&dump_continue_with_signal_cmd,
+	'S' => \&dump_continue_with_signal_cmd,
 	'_M' => \&dump_allocate_memory_cmd,
 	'_m' => \&dump_deallocate_memory_cmd,
 	# extended commands
@@ -521,6 +523,7 @@ our %cmd_callbacks =
 our %rsp_callbacks = 
 (
 	'c' => \&dump_stop_reply_packet,
+	's' => \&dump_stop_reply_packet,
 	'C' => \&dump_stop_reply_packet,
 	'?' => \&dump_stop_reply_packet,
 	'T' => \&dump_thread_is_alive_rsp,
@@ -1060,30 +1063,37 @@ sub dump_read_mem_rsp
 }
 
 #----------------------------------------------------------------------
-# 'c' command
+# 'c' or 's' command
 #----------------------------------------------------------------------
 sub dump_continue_cmd
 {	
 	my $cmd = shift;
+	my $cmd_str;
+	$cmd eq 'c' and $cmd_str = 'continue';
+	$cmd eq 's' and $cmd_str = 'step';
 	my $address = -1;
 	if (@_)
 	{
 		my $address = get_addr(\@_);
-		printf("continue ($addr_format)\n", $address);
+		printf("%s ($addr_format)\n", $cmd_str, $address);
 	}
 	else
 	{
-		printf("continue ()\n");
+		printf("%s ()\n", $cmd_str);
 	}
 }
 
 #----------------------------------------------------------------------
 # 'Css' continue (C) with signal (ss where 'ss' is two hex digits)
+# 'Sss' step (S) with signal (ss where 'ss' is two hex digits)
 #----------------------------------------------------------------------
 sub dump_continue_with_signal_cmd
 {	
 	my $cmd = shift;
 	my $address = -1;
+	my $cmd_str;
+	$cmd eq 'c' and $cmd_str = 'continue';
+	$cmd eq 's' and $cmd_str = 'step';
 	my $signal = get_hex(\@_);
 	if (@_)
 	{
@@ -1097,11 +1107,11 @@ sub dump_continue_with_signal_cmd
 
 	if ($address != -1)
 	{
-		printf("continue_with_signal (signal = 0x%2.2x, address = $addr_format)\n", $signal, $address);
+		printf("%s_with_signal (signal = 0x%2.2x, address = $addr_format)\n", $cmd_str, $signal, $address);
 	}
 	else
 	{
-		printf("continue_with_signal (signal = 0x%2.2x)\n", $signal);
+		printf("%s_with_signal (signal = 0x%2.2x)\n", $cmd_str, $signal);
 	}
 }
 
