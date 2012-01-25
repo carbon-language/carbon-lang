@@ -319,6 +319,8 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
       return ArgTypeResult(Ctx.WCharTy, "wchar_t");
     case ConversionSpecifier::pArg:
       return ArgTypeResult::CPointerTy;
+    case ConversionSpecifier::ObjCObjArg:
+      return ArgTypeResult::ObjCPointerTy;
     default:
       break;
   }

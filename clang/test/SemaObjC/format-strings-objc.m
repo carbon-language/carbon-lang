@@ -13,6 +13,7 @@ typedef signed char BOOL;
 typedef unsigned int NSUInteger;
 @class NSString, Protocol;
 extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
+extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
 typedef struct _NSZone NSZone;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 @protocol NSObject  - (BOOL)isEqual:(id)object; @end
@@ -82,3 +83,9 @@ void check_method() {
   [Foo fooWithFormat:@"%@"]; // expected-warning {{more '%' conversions than data arguments}}
   [Foo fooWithCStringFormat:"%@"]; // expected-warning {{invalid conversion specifier '@'}}
 }
+
+// Warn about using BOOL with %@
+void rdar10743758(id x) {
+  NSLog(@"%@ %@", x, (BOOL) 1); // expected-warning {{format specifies type 'id' but the argument has type 'BOOL' (aka 'signed char')}}
+}
+

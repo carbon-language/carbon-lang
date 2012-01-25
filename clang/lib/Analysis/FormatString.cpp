@@ -337,7 +337,8 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
         argTy->isNullPtrType();
 
     case ObjCPointerTy:
-      return argTy->getAs<ObjCObjectPointerType>() != NULL;
+      return argTy->getAs<ObjCObjectPointerType>() ||
+             argTy->getAs<BlockPointerType>();
   }
 
   llvm_unreachable("Invalid ArgTypeResult Kind!");
