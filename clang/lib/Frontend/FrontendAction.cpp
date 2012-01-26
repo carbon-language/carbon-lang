@@ -18,6 +18,7 @@
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/FrontendPluginRegistry.h"
+#include "clang/Frontend/LayoutOverrideSource.h"
 #include "clang/Frontend/MultiplexConsumer.h"
 #include "clang/Parse/ParseAST.h"
 #include "clang/Serialization/ASTDeserializationListener.h"
@@ -285,6 +286,16 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
                                            PP.getLangOptions());
   }
 
+  // If there is a layout overrides file, attach an external AST source that
+  // provides the layouts from that file.
+  if (!CI.getFrontendOpts().OverrideRecordLayoutsFile.empty() && 
+      CI.hasASTContext() && !CI.getASTContext().getExternalSource()) {
+    llvm::OwningPtr<ExternalASTSource> 
+      Override(new LayoutOverrideSource(
+                     CI.getFrontendOpts().OverrideRecordLayoutsFile));
+    CI.getASTContext().setExternalSource(Override);
+  }
+  
   return true;
 
   // If we failed, reset state since the client will not end up calling the

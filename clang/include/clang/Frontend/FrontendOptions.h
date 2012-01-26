@@ -155,6 +155,10 @@ public:
   /// should only be used for debugging and experimental features.
   std::vector<std::string> LLVMArgs;
 
+  /// \brief File name of the file that will provide record layouts
+  /// (in the format produced by -fdump-record-layouts).
+  std::string OverrideRecordLayoutsFile;
+  
 public:
   FrontendOptions() {
     DisableFree = 0;

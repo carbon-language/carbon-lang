@@ -558,6 +558,10 @@ protected:
 
   SmallVector<uint64_t, 16> FieldOffsets;
 
+  /// \brief Whether the external AST source has provided a layout for this
+  /// record.
+  unsigned ExternalLayout : 1;
+  
   /// Packed - Whether the record is packed or not.
   unsigned Packed : 1;
 
@@ -618,11 +622,26 @@ protected:
   /// avoid visiting virtual bases more than once.
   llvm::SmallPtrSet<const CXXRecordDecl *, 4> VisitedVirtualBases;
 
+  /// \brief Externally-provided size.
+  uint64_t ExternalSize;
+  
+  /// \brief Externally-provided alignment.
+  uint64_t ExternalAlign;
+  
+  /// \brief Externally-provided field offsets.
+  llvm::DenseMap<const FieldDecl *, uint64_t> ExternalFieldOffsets;
+
+  /// \brief Externally-provided direct, non-virtual base offsets.
+  llvm::DenseMap<const CXXRecordDecl *, CharUnits> ExternalBaseOffsets;
+
+  /// \brief Externally-provided virtual base offsets.
+  llvm::DenseMap<const CXXRecordDecl *, CharUnits> ExternalVirtualBaseOffsets;
+
   RecordLayoutBuilder(const ASTContext &Context,
                       EmptySubobjectMap *EmptySubobjects)
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), 
       Alignment(CharUnits::One()), UnpackedAlignment(CharUnits::One()),
-      Packed(false), IsUnion(false), 
+      ExternalLayout(false), Packed(false), IsUnion(false), 
       IsMac68kAlign(false), IsMsStruct(false),
       UnfilledBitsInLastByte(0), MaxFieldAlignment(CharUnits::Zero()), 
       DataSize(0), NonVirtualSize(CharUnits::Zero()), 
@@ -1289,8 +1308,31 @@ void RecordLayoutBuilder::LayoutVirtualBase(const BaseSubobjectInfo *Base) {
 CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
   const ASTRecordLayout &Layout = Context.getASTRecordLayout(Base->Class);
 
+  
+  CharUnits Offset;
+  
+  // Query the external layout to see if it provides an offset.
+  bool HasExternalLayout = false;
+  if (ExternalLayout) {
+    llvm::DenseMap<const CXXRecordDecl *, CharUnits>::iterator Known;
+    if (Base->IsVirtual) {
+      Known = ExternalVirtualBaseOffsets.find(Base->Class);
+      if (Known != ExternalVirtualBaseOffsets.end()) {
+        Offset = Known->second;
+        HasExternalLayout = true;
+      }
+    } else {
+      Known = ExternalBaseOffsets.find(Base->Class);
+      if (Known != ExternalBaseOffsets.end()) {
+        Offset = Known->second;
+        HasExternalLayout = true;
+      }
+    }
+  }
+  
   // If we have an empty base class, try to place it at offset 0.
   if (Base->Class->isEmpty() &&
+      (!HasExternalLayout || Offset == CharUnits::Zero()) &&
       EmptySubobjects->CanPlaceBaseAtOffset(Base, CharUnits::Zero())) {
     setSize(std::max(getSize(), Layout.getSize()));
 
@@ -1306,13 +1348,19 @@ CharUnits RecordLayoutBuilder::LayoutBase(const BaseSubobjectInfo *Base) {
     UnpackedBaseAlign = std::min(UnpackedBaseAlign, MaxFieldAlignment);
   }
 
-  // Round up the current record size to the base's alignment boundary.
-  CharUnits Offset = getDataSize().RoundUpToAlignment(BaseAlign);
+  if (!HasExternalLayout) {
+    // Round up the current record size to the base's alignment boundary.
+    Offset = getDataSize().RoundUpToAlignment(BaseAlign);
 
-  // Try to place the base.
-  while (!EmptySubobjects->CanPlaceBaseAtOffset(Base, Offset))
-    Offset += BaseAlign;
-
+    // Try to place the base.
+    while (!EmptySubobjects->CanPlaceBaseAtOffset(Base, Offset))
+      Offset += BaseAlign;
+  } else {
+    bool Allowed = EmptySubobjects->CanPlaceBaseAtOffset(Base, Offset);
+    (void)Allowed;
+    assert(Allowed && "Base subobject externally placed at overlapping offset");
+  }
+  
   if (!Base->Class->isEmpty()) {
     // Update the data size.
     setDataSize(Offset + Layout.getNonVirtualSize());
@@ -1355,6 +1403,23 @@ void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
     if (unsigned MaxAlign = D->getMaxAlignment())
       UpdateAlignment(Context.toCharUnitsFromBits(MaxAlign));
   }
+  
+  // If there is an external AST source, ask it for the various offsets.
+  if (const RecordDecl *RD = dyn_cast<RecordDecl>(D))
+    if (ExternalASTSource *External = Context.getExternalSource()) {
+      ExternalLayout = External->layoutRecordType(RD, 
+                                                  ExternalSize,
+                                                  ExternalAlign,
+                                                  ExternalFieldOffsets,
+                                                  ExternalBaseOffsets,
+                                                  ExternalVirtualBaseOffsets);
+      
+      // Update based on external alignment.
+      if (ExternalLayout) {
+        Alignment = Context.toCharUnitsFromBits(ExternalAlign);
+        UnpackedAlignment = Alignment;
+      }
+    }
 }
 
 void RecordLayoutBuilder::Layout(const RecordDecl *D) {
@@ -1647,6 +1712,12 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   uint64_t TypeSize = FieldInfo.first;
   unsigned FieldAlign = FieldInfo.second;
   
+  if (ExternalLayout) {
+    assert(ExternalFieldOffsets.find(D) != ExternalFieldOffsets.end() &&
+           "Field does not have an external offset");
+    FieldOffset = ExternalFieldOffsets[D];
+  }
+
   // This check is needed for 'long long' in -m32 mode.
   if (IsMsStruct && (TypeSize > FieldAlign) && 
       (Context.hasSameType(D->getType(), 
@@ -1707,16 +1778,19 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
     UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignmentInBits);
   }
 
-  // Check if we need to add padding to give the field the correct alignment.
-  if (FieldSize == 0 || (MaxFieldAlignment.isZero() &&
-                         (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize))
-    FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
+  if (!ExternalLayout) {
+    // Check if we need to add padding to give the field the correct alignment.
+    if (FieldSize == 0 || 
+        (MaxFieldAlignment.isZero() &&
+         (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize))
+      FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
 
-  if (FieldSize == 0 ||
-      (MaxFieldAlignment.isZero() &&
-       (UnpackedFieldOffset & (UnpackedFieldAlign-1)) + FieldSize > TypeSize))
-    UnpackedFieldOffset = llvm::RoundUpToAlignment(UnpackedFieldOffset,
-                                                   UnpackedFieldAlign);
+    if (FieldSize == 0 ||
+        (MaxFieldAlignment.isZero() &&
+         (UnpackedFieldOffset & (UnpackedFieldAlign-1)) + FieldSize > TypeSize))
+      UnpackedFieldOffset = llvm::RoundUpToAlignment(UnpackedFieldOffset,
+                                                     UnpackedFieldAlign);
+  }
 
   // Padding members don't affect overall alignment, unless zero length bitfield
   // alignment is enabled.
@@ -1729,8 +1803,9 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   // Place this field at the current location.
   FieldOffsets.push_back(FieldOffset);
 
-  CheckFieldPadding(FieldOffset, UnpaddedFieldOffset, UnpackedFieldOffset,
-                    UnpackedFieldAlign, FieldPacked, D);
+  if (!ExternalLayout)
+    CheckFieldPadding(FieldOffset, UnpaddedFieldOffset, UnpackedFieldOffset,
+                      UnpackedFieldAlign, FieldPacked, D);
 
   // Update DataSize to include the last byte containing (part of) the bitfield.
   if (IsUnion) {
@@ -1752,7 +1827,7 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
                   Context.toCharUnitsFromBits(UnpackedFieldAlign));
 }
 
-void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
+void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {  
   if (D->isBitField()) {
     LayoutBitField(D);
     return;
@@ -1769,6 +1844,13 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   CharUnits FieldSize;
   CharUnits FieldAlign;
 
+  if (ExternalLayout) {
+    assert(ExternalFieldOffsets.find(D) != ExternalFieldOffsets.end() &&
+           "Field does not have an external offset");
+    FieldOffset = Context.toCharUnitsFromBits(ExternalFieldOffsets[D]);
+  }
+
+  
   if (D->getType()->isIncompleteArrayType()) {
     // This is a flexible array member; we can't directly
     // query getTypeInfo about these, so we figure it out here.
@@ -1846,25 +1928,33 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
     UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignment);
   }
 
-  // Round up the current record size to the field's alignment boundary.
-  FieldOffset = FieldOffset.RoundUpToAlignment(FieldAlign);
-  UnpackedFieldOffset = 
-    UnpackedFieldOffset.RoundUpToAlignment(UnpackedFieldAlign);
-
-  if (!IsUnion && EmptySubobjects) {
-    // Check if we can place the field at this offset.
-    while (!EmptySubobjects->CanPlaceFieldAtOffset(D, FieldOffset)) {
-      // We couldn't place the field at the offset. Try again at a new offset.
-      FieldOffset += FieldAlign;
+  if (!ExternalLayout) {
+    // Round up the current record size to the field's alignment boundary.
+    FieldOffset = FieldOffset.RoundUpToAlignment(FieldAlign);
+    UnpackedFieldOffset = 
+      UnpackedFieldOffset.RoundUpToAlignment(UnpackedFieldAlign);
+  
+    if (!IsUnion && EmptySubobjects) {
+      // Check if we can place the field at this offset.
+      while (!EmptySubobjects->CanPlaceFieldAtOffset(D, FieldOffset)) {
+        // We couldn't place the field at the offset. Try again at a new offset.
+        FieldOffset += FieldAlign;
+      }
     }
+  } else if (!IsUnion && EmptySubobjects) {
+    // Record the fact that we're placing a field at this offset.
+    bool Allowed = EmptySubobjects->CanPlaceFieldAtOffset(D, FieldOffset);
+    (void)Allowed;
+    assert(Allowed && "Externally-placed field cannot be placed here");
   }
-
+  
   // Place this field at the current location.
   FieldOffsets.push_back(Context.toBits(FieldOffset));
 
-  CheckFieldPadding(Context.toBits(FieldOffset), UnpaddedFieldOffset, 
-                    Context.toBits(UnpackedFieldOffset),
-                    Context.toBits(UnpackedFieldAlign), FieldPacked, D);
+  if (!ExternalLayout)
+    CheckFieldPadding(Context.toBits(FieldOffset), UnpaddedFieldOffset, 
+                      Context.toBits(UnpackedFieldOffset),
+                      Context.toBits(UnpackedFieldAlign), FieldPacked, D);
 
   // Reserve space for this field.
   uint64_t FieldSizeInBits = Context.toBits(FieldSize);
@@ -1936,8 +2026,9 @@ void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
 
 void RecordLayoutBuilder::UpdateAlignment(CharUnits NewAlignment,
                                           CharUnits UnpackedNewAlignment) {
-  // The alignment is not modified when using 'mac68k' alignment.
-  if (IsMac68kAlign)
+  // The alignment is not modified when using 'mac68k' alignment or when
+  // we have an externally-supplied layout.
+  if (IsMac68kAlign || ExternalLayout)
     return;
 
   if (NewAlignment > Alignment) {
@@ -2136,7 +2227,7 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
 
   if (getLangOptions().DumpRecordLayouts) {
     llvm::errs() << "\n*** Dumping AST Record Layout\n";
-    DumpRecordLayout(D, llvm::errs());
+    DumpRecordLayout(D, llvm::errs(), getLangOptions().DumpRecordLayoutsSimple);
   }
 
   return *NewEntry;
@@ -2329,16 +2420,20 @@ static void DumpCXXRecordLayout(raw_ostream &OS,
 }
 
 void ASTContext::DumpRecordLayout(const RecordDecl *RD,
-                                  raw_ostream &OS) const {
+                                  raw_ostream &OS,
+                                  bool Simple) const {
   const ASTRecordLayout &Info = getASTRecordLayout(RD);
 
   if (const CXXRecordDecl *CXXRD = dyn_cast<CXXRecordDecl>(RD))
-    return DumpCXXRecordLayout(OS, CXXRD, *this, CharUnits(), 0, 0,
-                               /*IncludeVirtualBases=*/true);
+    if (!Simple)
+      return DumpCXXRecordLayout(OS, CXXRD, *this, CharUnits(), 0, 0,
+                                 /*IncludeVirtualBases=*/true);
 
   OS << "Type: " << getTypeDeclType(RD).getAsString() << "\n";
-  OS << "Record: ";
-  RD->dump();
+  if (!Simple) {
+    OS << "Record: ";
+    RD->dump();
+  }
   OS << "\nLayout: ";
   OS << "<ASTRecordLayout\n";
   OS << "  Size:" << toBits(Info.getSize()) << "\n";

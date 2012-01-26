@@ -15,6 +15,8 @@
 #define LLVM_CLANG_AST_EXTERNAL_AST_SOURCE_H
 
 #include "clang/AST/DeclBase.h"
+#include "clang/AST/CharUnits.h"
+#include "llvm/ADT/DenseMap.h"
 
 namespace clang {
 
@@ -195,6 +197,44 @@ public:
   ///
   /// The default implementation of this method is a no-op.
   virtual void PrintStats();
+  
+  
+  /// \brief Perform layout on the given record.
+  ///
+  /// This routine allows the external AST source to provide an specific 
+  /// layout for a record, overriding the layout that would normally be
+  /// constructed. It is intended for clients who receive specific layout
+  /// details rather than source code (such as LLDB). The client is expected
+  /// to fill in the field offsets, base offsets, virtual base offsets, and
+  /// complete object size.
+  ///
+  /// \param Record The record whose layout is being requested.
+  ///
+  /// \param Size The final size of the record, in bits.
+  ///
+  /// \param Alignment The final alignment of the record, in bits.
+  ///
+  /// \param FieldOffsets The offset of each of the fields within the record,
+  /// expressed in bits. All of the fields must be provided with offsets.
+  ///
+  /// \param BaseOffsets The offset of each of the direct, non-virtual base
+  /// classes. If any bases are not given offsets, the bases will be laid 
+  /// out according to the ABI.
+  ///
+  /// \param VirtualBaseOffsets The offset of each of the virtual base classes
+  /// (either direct or not). If any bases are not given offsets, the bases will be laid 
+  /// out according to the ABI.
+  /// 
+  /// \returns true if the record layout was provided, false otherwise.
+  virtual bool 
+  layoutRecordType(const RecordDecl *Record,
+                   uint64_t &Size, uint64_t &Alignment,
+                   llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
+                 llvm::DenseMap<const CXXRecordDecl *, CharUnits> &BaseOffsets,
+          llvm::DenseMap<const CXXRecordDecl *, CharUnits> &VirtualBaseOffsets)
+  { 
+    return false;
+  }
   
   //===--------------------------------------------------------------------===//
   // Queries for performance analysis.

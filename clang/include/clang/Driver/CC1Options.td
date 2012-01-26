@@ -451,6 +451,8 @@ def ftime_report : Flag<"-ftime-report">,
   HelpText<"Print the amount of time each phase of compilation takes">;
 def fdump_record_layouts : Flag<"-fdump-record-layouts">,
   HelpText<"Dump record layout information">;
+def fdump_record_layouts_simple : Flag<"-fdump-record-layouts-simple">,
+  HelpText<"Dump record layout information in a simple form used for testing">;
 def fix_what_you_can : Flag<"-fix-what-you-can">,
   HelpText<"Apply fix-it advice even in the presence of unfixable errors">;
 def fix_only_warnings : Flag<"-fix-only-warnings">,
@@ -465,6 +467,9 @@ def fixit_to_temp : Flag<"-fixit-to-temporary">,
 def mllvm : Separate<"-mllvm">,
   HelpText<"Additional arguments to forward to LLVM's option processing">;
 
+def foverride_record_layout_EQ : Joined<"-foverride-record-layout=">,
+  HelpText<"Override record layouts with those in the given file">;
+  
 //===----------------------------------------------------------------------===//
 // Language Options
 //===----------------------------------------------------------------------===//

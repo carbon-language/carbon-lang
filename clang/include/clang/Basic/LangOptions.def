@@ -117,6 +117,7 @@ LANGOPT(AssumeSaneOperatorNew , 1, 1, "implicit __attribute__((malloc)) for C++'
 BENIGN_LANGOPT(ElideConstructors , 1, 1, "C++ copy constructor elision")
 BENIGN_LANGOPT(CatchUndefined    , 1, 0, "catching undefined behavior at run time")
 BENIGN_LANGOPT(DumpRecordLayouts , 1, 0, "dumping the layout of IRgen'd records")
+BENIGN_LANGOPT(DumpRecordLayoutsSimple , 1, 0, "dumping the layout of IRgen'd records in a simple form")
 BENIGN_LANGOPT(DumpVTableLayouts , 1, 0, "dumping the layouts of emitted vtables")
 LANGOPT(NoConstantCFStrings , 1, 0, "no constant CoreFoundation strings")
 BENIGN_LANGOPT(InlineVisibilityHidden , 1, 0, "hidden default visibility for inline C++ methods")

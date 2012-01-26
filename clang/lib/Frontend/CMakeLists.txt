@@ -27,6 +27,7 @@ add_clang_library(clangFrontend
   InitHeaderSearch.cpp
   InitPreprocessor.cpp
   LangStandards.cpp
+  LayoutOverrideSource.cpp
   LogDiagnosticPrinter.cpp
   MultiplexConsumer.cpp
   PrintPreprocessedOutput.cpp
