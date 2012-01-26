@@ -349,7 +349,7 @@ class CXXRecordDecl : public RecordDecl {
     bool HasMutableFields : 1;
 
     /// \brief True if there no non-field members declared by the user.
-    bool HasOnlyFields : 1;
+    bool HasOnlyCMembers : 1;
 
     /// HasTrivialDefaultConstructor - True when, if this class has a default
     /// constructor, this default constructor is trivial.

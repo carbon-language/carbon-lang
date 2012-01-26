@@ -43,7 +43,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     Aggregate(true), PlainOldData(true), Empty(true), Polymorphic(false),
     Abstract(false), IsStandardLayout(true), HasNoNonEmptyBases(true),
     HasPrivateFields(false), HasProtectedFields(false), HasPublicFields(false),
-    HasMutableFields(false), HasOnlyFields(true),
+    HasMutableFields(false), HasOnlyCMembers(true),
     HasTrivialDefaultConstructor(true),
     HasConstexprNonCopyMoveConstructor(false),
     DefaultedDefaultConstructorIsConstexpr(true),
@@ -457,8 +457,11 @@ void CXXRecordDecl::markedVirtualFunctionPure() {
 }
 
 void CXXRecordDecl::addedMember(Decl *D) {
-  if (!isa<FieldDecl>(D) && !isa<IndirectFieldDecl>(D) && !D->isImplicit())
-    data().HasOnlyFields = false;
+  if (!D->isImplicit() &&
+      !isa<FieldDecl>(D) &&
+      !isa<IndirectFieldDecl>(D) &&
+      (!isa<TagDecl>(D) || cast<TagDecl>(D)->getTagKind() == TTK_Class))
+    data().HasOnlyCMembers = false;
 
   // Ignore friends and invalid declarations.
   if (D->getFriendObjectKind() || D->isInvalidDecl())
@@ -968,7 +971,7 @@ bool CXXRecordDecl::isCLike() const {
     return true;
 
   return isPOD() &&
-      data().HasOnlyFields &&
+      data().HasOnlyCMembers &&
       !data().HasPrivateFields &&
       !data().HasProtectedFields &&
       !data().NumBases;
