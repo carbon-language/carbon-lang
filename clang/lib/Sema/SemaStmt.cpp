@@ -495,12 +495,8 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
   if (!Cond)
     return StmtError();
 
-  CondResult = DefaultFunctionArrayLvalueConversion(Cond);
-  if (CondResult.isInvalid())
-    return StmtError();
-
   CondResult
-    = ConvertToIntegralOrEnumerationType(SwitchLoc, CondResult.take(),
+    = ConvertToIntegralOrEnumerationType(SwitchLoc, Cond,
                           PDiag(diag::err_typecheck_statement_requires_integer),
                                    PDiag(diag::err_switch_incomplete_class_type)
                                      << Cond->getSourceRange(),

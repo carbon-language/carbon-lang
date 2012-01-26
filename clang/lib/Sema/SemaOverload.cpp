@@ -4801,10 +4801,17 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
   if (From->isTypeDependent())
     return Owned(From);
 
+  // Process placeholders immediately.
+  if (From->hasPlaceholderType()) {
+    ExprResult result = CheckPlaceholderExpr(From);
+    if (result.isInvalid()) return result;
+    From = result.take();
+  }
+
   // If the expression already has integral or enumeration type, we're golden.
   QualType T = From->getType();
   if (T->isIntegralOrEnumerationType())
-    return Owned(From);
+    return DefaultLvalueConversion(From);
 
   // FIXME: Check for missing '()' if T is a function type?
 
@@ -4933,7 +4940,7 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
     Diag(Loc, NotIntDiag)
       << From->getType() << From->getSourceRange();
 
-  return Owned(From);
+  return DefaultLvalueConversion(From);
 }
 
 /// AddOverloadCandidate - Adds the given function to the set of
