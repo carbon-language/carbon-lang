@@ -86,3 +86,14 @@ void func()
 - (id)not_ret:(id) b __attribute((ns_returns_retained)); // expected-error {{overriding method has mismatched ns_returns_retained attributes}}
 - (id)both__returns_not_retained:(id) b __attribute((ns_returns_not_retained));
 @end
+
+// Test that we give a good diagnostic here that mentions the missing
+// ownership qualifier.  We don't want this to get suppressed because
+// of an invalid conversion.
+void test7(void) {
+  id x;
+  id *px = &x; // expected-error {{pointer to non-const type 'id' with no explicit ownership}}
+
+  I *y;
+  J **py = &y; // expected-error {{pointer to non-const type 'J *' with no explicit ownership}} expected-warning {{incompatible pointer types initializing}}
+}

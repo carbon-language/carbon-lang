@@ -1062,7 +1062,9 @@ static QualType inferARCLifetimeForPointee(Sema &S, QualType type,
   } else if (S.ExprEvalContexts.back().Context == Sema::Unevaluated) {
     return type;
 
-  // If that failed, give an error and recover using __autoreleasing.
+  // If that failed, give an error and recover using __strong.  __strong
+  // is the option most likely to prevent spurious second-order diagnostics,
+  // like when binding a reference to a field.
   } else {
     // These types can show up in private ivars in system headers, so
     // we need this to not be an error in those cases.  Instead we
@@ -1074,7 +1076,7 @@ static QualType inferARCLifetimeForPointee(Sema &S, QualType type,
     } else {
       S.Diag(loc, diag::err_arc_indirect_no_ownership) << type << isReference;
     }
-    implicitLifetime = Qualifiers::OCL_Autoreleasing;
+    implicitLifetime = Qualifiers::OCL_Strong;
   }
   assert(implicitLifetime && "didn't infer any lifetime!");
 
