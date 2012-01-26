@@ -4176,10 +4176,25 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
   if (!getLangOptions().CPlusPlus)
     return Owned(E);
 
-  QualType ET = Context.getBaseElementType(E->getType());
-  const RecordType *RT = ET->getAs<RecordType>();
-  if (!RT)
-    return Owned(E);
+  // Search for the base element type (cf. ASTContext::getBaseElementType) with
+  // a fast path for the common case that the type is directly a RecordType.
+  const Type *T = Context.getCanonicalType(E->getType().getTypePtr());
+  const RecordType *RT = 0;
+  while (!RT) {
+    switch (T->getTypeClass()) {
+    case Type::Record:
+      RT = cast<RecordType>(T);
+      break;
+    case Type::ConstantArray:
+    case Type::IncompleteArray:
+    case Type::VariableArray:
+    case Type::DependentSizedArray:
+      T = cast<ArrayType>(T)->getElementType().getTypePtr();
+      break;
+    default:
+      return Owned(E);
+    }
+  }
 
   // That should be enough to guarantee that this type is complete.
   // If it has a trivial destructor, we can avoid the extra copy.
