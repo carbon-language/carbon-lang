@@ -950,10 +950,6 @@ static bool EvalPointerValueAsBool(const CCValue &Value, bool &Result) {
     return true;
   }
 
-  // Require the base expression to be a global l-value.
-  // FIXME: C++11 requires such conversions. Remove this check.
-  if (!IsGlobalLValue(Value.getLValueBase())) return false;
-
   // We have a non-null base.  These are generally known to be true, but if it's
   // a weak declaration it can be null at runtime.
   Result = true;

@@ -24,7 +24,7 @@ EVAL_EXPR(14, (1 ^ l_19) && 1); // expected-error {{fields must have a constant 
 void f()
 {
   int a;
-  EVAL_EXPR(15, (_Bool)&a); // expected-error {{fields must have a constant size}}
+  EVAL_EXPR(15, (_Bool)&a);
 }
 
 // FIXME: Turn into EVAL_EXPR test once we have more folding.

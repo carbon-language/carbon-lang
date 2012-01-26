@@ -737,6 +737,9 @@ constexpr int f(const S &s) {
 constexpr int n = f(T(5));
 static_assert(f(T(5)) == 5, "");
 
+constexpr bool b(int n) { return &n; }
+static_assert(b(0), "");
+
 }
 
 namespace Union {
