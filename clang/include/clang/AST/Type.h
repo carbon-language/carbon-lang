@@ -3094,8 +3094,6 @@ public:
     return T->getTypeClass() >= TagFirst && T->getTypeClass() <= TagLast;
   }
   static bool classof(const TagType *) { return true; }
-  static bool classof(const RecordType *) { return true; }
-  static bool classof(const EnumType *) { return true; }
 };
 
 /// RecordType - This is a helper class that allows the use of isa/cast/dyncast
@@ -3121,10 +3119,7 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
-  static bool classof(const TagType *T);
-  static bool classof(const Type *T) {
-    return isa<TagType>(T) && classof(cast<TagType>(T));
-  }
+  static bool classof(const Type *T) { return T->getTypeClass() == Record; }
   static bool classof(const RecordType *) { return true; }
 };
 
@@ -3143,10 +3138,7 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
-  static bool classof(const TagType *T);
-  static bool classof(const Type *T) {
-    return isa<TagType>(T) && classof(cast<TagType>(T));
-  }
+  static bool classof(const Type *T) { return T->getTypeClass() == Enum; }
   static bool classof(const EnumType *) { return true; }
 };
 

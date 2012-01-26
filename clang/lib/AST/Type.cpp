@@ -1802,14 +1802,6 @@ CXXRecordDecl *InjectedClassNameType::getDecl() const {
   return cast<CXXRecordDecl>(getInterestingTagDecl(Decl));
 }
 
-bool RecordType::classof(const TagType *TT) {
-  return isa<RecordDecl>(TT->getDecl());
-}
-
-bool EnumType::classof(const TagType *TT) {
-  return isa<EnumDecl>(TT->getDecl());
-}
-
 IdentifierInfo *TemplateTypeParmType::getIdentifier() const {
   return isCanonicalUnqualified() ? 0 : getDecl()->getIdentifier();
 }
