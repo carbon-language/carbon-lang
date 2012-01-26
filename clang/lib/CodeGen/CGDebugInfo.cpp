@@ -1126,7 +1126,6 @@ llvm::DIType CGDebugInfo::getOrCreateRecordType(QualType RTy,
 /// CreateType - get structure or union type.
 llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   RecordDecl *RD = Ty->getDecl();
-  llvm::DIFile Unit = getOrCreateFile(RD->getLocation());
 
   // Get overall information about the record type for the debug info.
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
@@ -1174,19 +1173,19 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
 
   // Collect static variables with initializers.
   CollectRecordStaticVars(RD, FwdDecl);
-  CollectRecordFields(RD, Unit, EltTys, FwdDecl);
+  CollectRecordFields(RD, DefUnit, EltTys, FwdDecl);
 
   // Collect C++ information.
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
   llvm::DIArray TParamsArray;
   if (CXXDecl) {
-    CollectCXXBases(CXXDecl, Unit, EltTys, FwdDecl);
-    CollectVTableInfo(CXXDecl, Unit, EltTys);
-    CollectCXXMemberFunctions(CXXDecl, Unit, EltTys, FwdDecl);
-    CollectCXXFriends(CXXDecl, Unit, EltTys, FwdDecl);
+    CollectCXXBases(CXXDecl, DefUnit, EltTys, FwdDecl);
+    CollectVTableInfo(CXXDecl, DefUnit, EltTys);
+    CollectCXXMemberFunctions(CXXDecl, DefUnit, EltTys, FwdDecl);
+    CollectCXXFriends(CXXDecl, DefUnit, EltTys, FwdDecl);
     if (const ClassTemplateSpecializationDecl *TSpecial
         = dyn_cast<ClassTemplateSpecializationDecl>(RD))
-      TParamsArray = CollectCXXTemplateParams(TSpecial, Unit);
+      TParamsArray = CollectCXXTemplateParams(TSpecial, DefUnit);
   }
 
   LexicalBlockStack.pop_back();
@@ -1219,7 +1218,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
           break;
       }
       ContainingType = 
-        getOrCreateType(QualType(PBase->getTypeForDecl(), 0), Unit);
+        getOrCreateType(QualType(PBase->getTypeForDecl(), 0), DefUnit);
     }
     else if (CXXDecl->isDynamicClass()) 
       ContainingType = FwdDecl;
