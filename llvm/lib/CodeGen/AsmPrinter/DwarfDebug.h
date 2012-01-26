@@ -31,6 +31,8 @@
 namespace llvm {
 
 class CompileUnit;
+class ConstantInt;
+class ConstantFP;
 class DbgVariable;
 class MachineFrameInfo;
 class MachineModuleInfo;
