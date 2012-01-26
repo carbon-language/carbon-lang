@@ -312,36 +312,6 @@ Constant::PossibleRelocationsTy Constant::getRelocationInfo() const {
   return Result;
 }
 
-
-/// getVectorElements - This method, which is only valid on constant of vector
-/// type, returns the elements of the vector in the specified smallvector.
-/// This handles breaking down a vector undef into undef elements, etc.  For
-/// constant exprs and other cases we can't handle, we return an empty vector.
-void Constant::getVectorElements(SmallVectorImpl<Constant*> &Elts) const {
-  assert(getType()->isVectorTy() && "Not a vector constant!");
-  
-  if (const ConstantVector *CV = dyn_cast<ConstantVector>(this)) {
-    for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i)
-      Elts.push_back(CV->getOperand(i));
-    return;
-  }
-  
-  VectorType *VT = cast<VectorType>(getType());
-  if (isa<ConstantAggregateZero>(this)) {
-    Elts.assign(VT->getNumElements(), 
-                Constant::getNullValue(VT->getElementType()));
-    return;
-  }
-  
-  if (isa<UndefValue>(this)) {
-    Elts.assign(VT->getNumElements(), UndefValue::get(VT->getElementType()));
-    return;
-  }
-  
-  // Unknown type, must be constant expr etc.
-}
-
-
 /// removeDeadUsersOfConstant - If the specified constantexpr is dead, remove
 /// it.  This involves recursively eliminating any dead users of the
 /// constantexpr.

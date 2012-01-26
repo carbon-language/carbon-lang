@@ -2806,22 +2806,13 @@ static bool isSequentialInRange(const SmallVectorImpl<int> &Mask,
 }
 
 void SelectionDAGBuilder::visitShuffleVector(const User &I) {
-  SmallVector<int, 8> Mask;
   SDValue Src1 = getValue(I.getOperand(0));
   SDValue Src2 = getValue(I.getOperand(1));
 
-  // Convert the ConstantVector mask operand into an array of ints, with -1
-  // representing undef values.
-  SmallVector<Constant*, 8> MaskElts;
-  cast<Constant>(I.getOperand(2))->getVectorElements(MaskElts);
-  unsigned MaskNumElts = MaskElts.size();
-  for (unsigned i = 0; i != MaskNumElts; ++i) {
-    if (isa<UndefValue>(MaskElts[i]))
-      Mask.push_back(-1);
-    else
-      Mask.push_back(cast<ConstantInt>(MaskElts[i])->getSExtValue());
-  }
-
+  SmallVector<int, 8> Mask;
+  ShuffleVectorInst::getShuffleMask(cast<Constant>(I.getOperand(2)), Mask);
+  unsigned MaskNumElts = Mask.size();
+  
   EVT VT = TLI.getValueType(I.getType());
   EVT SrcVT = Src1.getValueType();
   unsigned SrcNumElts = SrcVT.getVectorNumElements();

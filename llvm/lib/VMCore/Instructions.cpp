@@ -1625,11 +1625,11 @@ bool ShuffleVectorInst::isValidOperands(const Value *V1, const Value *V2,
 /// getMaskValue - Return the index from the shuffle mask for the specified
 /// output result.  This is either -1 if the element is undef or a number less
 /// than 2*numelements.
-int ShuffleVectorInst::getMaskValue(unsigned i) const {
-  assert(i < getType()->getNumElements() && "Index out of range");
-  if (ConstantDataSequential *CDS =dyn_cast<ConstantDataSequential>(getMask()))
+int ShuffleVectorInst::getMaskValue(Constant *Mask, unsigned i) {
+  assert(i < Mask->getType()->getVectorNumElements() && "Index out of range");
+  if (ConstantDataSequential *CDS =dyn_cast<ConstantDataSequential>(Mask))
     return CDS->getElementAsInteger(i);
-  Constant *C = getMask()->getAggregateElement(i);
+  Constant *C = Mask->getAggregateElement(i);
   if (isa<UndefValue>(C))
     return -1;
   return cast<ConstantInt>(C)->getZExtValue();
@@ -1637,15 +1637,15 @@ int ShuffleVectorInst::getMaskValue(unsigned i) const {
 
 /// getShuffleMask - Return the full mask for this instruction, where each
 /// element is the element number and undef's are returned as -1.
-void ShuffleVectorInst::getShuffleMask(SmallVectorImpl<int> &Result) const {
-  unsigned NumElts = getType()->getNumElements();
+void ShuffleVectorInst::getShuffleMask(Constant *Mask,
+                                       SmallVectorImpl<int> &Result) {
+  unsigned NumElts = Mask->getType()->getVectorNumElements();
   
-  if (ConstantDataSequential *CDS=dyn_cast<ConstantDataSequential>(getMask())) {
+  if (ConstantDataSequential *CDS=dyn_cast<ConstantDataSequential>(Mask)) {
     for (unsigned i = 0; i != NumElts; ++i)
       Result.push_back(CDS->getElementAsInteger(i));
     return;
   }    
-  Constant *Mask = getMask();
   for (unsigned i = 0; i != NumElts; ++i) {
     Constant *C = Mask->getAggregateElement(i);
     Result.push_back(isa<UndefValue>(C) ? -1 :

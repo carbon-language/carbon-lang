@@ -1697,20 +1697,20 @@ Constant *llvm::ConstantFoldCompareInstruction(unsigned short pred,
                                         R==APFloat::cmpEqual);
     }
   } else if (C1->getType()->isVectorTy()) {
-    SmallVector<Constant*, 16> C1Elts, C2Elts;
-    C1->getVectorElements(C1Elts);
-    C2->getVectorElements(C2Elts);
-    if (C1Elts.empty() || C2Elts.empty())
-      return 0;
-
     // If we can constant fold the comparison of each element, constant fold
     // the whole vector comparison.
     SmallVector<Constant*, 4> ResElts;
     // Compare the elements, producing an i1 result or constant expr.
-    for (unsigned i = 0, e = C1Elts.size(); i != e; ++i)
-      ResElts.push_back(ConstantExpr::getCompare(pred, C1Elts[i], C2Elts[i]));
-
-    return ConstantVector::get(ResElts);
+    for (unsigned i = 0, e = C1->getType()->getVectorNumElements(); i != e;++i){
+      Constant *C1E = C1->getAggregateElement(i);
+      Constant *C2E = C2->getAggregateElement(i);
+      if (C1E == 0 || C2E == 0) break;
+      
+      ResElts.push_back(ConstantExpr::getCompare(pred, C1E, C2E));
+    }
+    
+    if (ResElts.size() == C1->getType()->getVectorNumElements())
+      return ConstantVector::get(ResElts);
   }
 
   if (C1->getType()->isFloatingPointTy()) {
