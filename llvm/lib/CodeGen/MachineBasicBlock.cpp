@@ -537,9 +537,7 @@ bool MachineBasicBlock::canFallThrough() {
     // If the block doesn't end in a known control barrier, assume fallthrough
     // is possible. The isPredicated check is needed because this code can be
     // called during IfConversion, where an instruction which is normally a
-    // Barrier is predicated and thus no longer an actual control barrier. This
-    // is over-conservative though, because if an instruction isn't actually
-    // predicated we could still treat it like a barrier.
+    // Barrier is predicated and thus no longer an actual control barrier.
     return empty() || !back().isBarrier() || TII->isPredicated(&back());
   }
 
