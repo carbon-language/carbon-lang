@@ -318,13 +318,34 @@ Enter your Python command(s). Type 'DONE' to end.
           don't have to change your PYTHONPATH for temporary scripts.  It also has another convenience
           that if your new script module has a function of the form:</p>
 
-        <code><pre><tt>def __lldb_module_init(<b>debugger</b>, <b>dict</b>):
-          <font color=green># Command Initialization code goes here</font>
-          </tt></pre></code>
+<code><pre><tt>def __lldb_module_init(<b>debugger</b>, <b>dict</b>):
+    <font color=green># Command Initialization code goes here</font>
+</tt></pre></code>
 
         <p>where <b>debugger</b> and <b>dict</b> are as above, that function will get run when the module is loaded
-           allowing you to add whatever commands you want into the current debugger.</p>
-        <p>Now we can create a module called <b>ls.py</b> that will implement a function that
+           allowing you to add whatever commands you want into the current debugger. Note that
+           this function will only be run when using the LLDB comand <b>command script import</b>,
+           it will not get run if anyone imports your module from another module. 
+           If you want to always run code when your module is loaded from LLDB
+           <u>or</u> when loaded via an <b>import</b> statement in python code
+           you can test the <b>lldb.debugger</b> object, since you imported the
+           <lldb> module at the top of the python <b>ls.py</b> module. This test
+           must be in code that isn't contained inside of any function or class,
+           just like the standard test for <b>__main__</b> like all python modules
+           usally do. Sample code would look like:
+
+<code><pre><tt>if __name__ == '__main__':
+    <font color=green># Create a new debugger instance in your module if your module 
+    # can be run from the command line. When we run a script from
+    # the command line, we won't have any debugger object in
+    # lldb.debugger, so we can just create it if it will be needed</font>
+    lldb.debugger = lldb.SBDebugger.Create()
+elif lldb.debugger:
+    <font color=green># Module is being run inside the LLDB interpreter</font>
+    lldb.debugger.HandleCommand('command script add -f ls.ls ls')
+    print 'The "ls" python command has been installed and is ready for use.'
+</tt></pre></code>
+        <p>Now we can create a module called <b>ls.py</b> in the file <b>~/ls.py</b> that will implement a function that
            can be used by LLDB's python command code:</p>
         
 <code><pre><tt><font color=green>#!/usr/bin/python</font>
@@ -344,7 +365,7 @@ def __lldb_module_init(debugger, dict):
 </tt></pre></code>
         <p>Now we can load the module into LLDB and use it</p>
 <code><pre><tt>% lldb
-(lldb) <strong>command script import ls</strong>
+(lldb) <strong>command script import ~/ls.py</strong>
 The "ls" python command has been installed and is ready for use.
 (lldb) <strong>ls -l /tmp/</strong>
 total 365848
