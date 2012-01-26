@@ -238,7 +238,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::cttz, ArgType);
 
     llvm::Type *ResultType = ConvertType(E->getType());
-    Value *Result = Builder.CreateCall2(F, ArgValue, Builder.getTrue());
+    Value *ZeroUndef = Builder.getInt1(Target.isCLZForZeroUndef());
+    Value *Result = Builder.CreateCall2(F, ArgValue, ZeroUndef);
     if (Result->getType() != ResultType)
       Result = Builder.CreateIntCast(Result, ResultType, /*isSigned*/true,
                                      "cast");
@@ -253,7 +254,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *F = CGM.getIntrinsic(Intrinsic::ctlz, ArgType);
 
     llvm::Type *ResultType = ConvertType(E->getType());
-    Value *Result = Builder.CreateCall2(F, ArgValue, Builder.getTrue());
+    Value *ZeroUndef = Builder.getInt1(Target.isCLZForZeroUndef());
+    Value *Result = Builder.CreateCall2(F, ArgValue, ZeroUndef);
     if (Result->getType() != ResultType)
       Result = Builder.CreateIntCast(Result, ResultType, /*isSigned*/true,
                                      "cast");

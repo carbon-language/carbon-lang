@@ -357,6 +357,13 @@ public:
   virtual void getTargetBuiltins(const Builtin::Info *&Records,
                                  unsigned &NumRecords) const = 0;
 
+  /// isCLZForZeroUndef - The __builtin_clz* and __builtin_ctz* built-in
+  /// functions are specified to have undefined results for zero inputs, but
+  /// on targets that support these operations in a way that provides
+  /// well-defined results for zero without loss of performance, it is a good
+  /// idea to avoid optimizing based on that undef behavior.
+  virtual bool isCLZForZeroUndef() const { return true; }
+
   /// getVAListDeclaration - Return the declaration to use for
   /// __builtin_va_list, which is target-specific.
   virtual const char *getVAListDeclaration() const = 0;
