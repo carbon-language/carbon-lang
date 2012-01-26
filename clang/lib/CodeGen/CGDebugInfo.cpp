@@ -1131,6 +1131,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // Get overall information about the record type for the debug info.
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
   unsigned Line = getLineNumber(RD->getLocation());
+  StringRef RDName = RD->getName();
 
   // Records and classes and unions can all be recursive.  To handle them, we
   // first generate a debug descriptor for the struct as a forward declaration.
@@ -1139,17 +1140,17 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
 
-  llvm::DIDescriptor FDContext;
+  llvm::DIDescriptor RDContext;
   if (CGM.getCodeGenOpts().LimitDebugInfo)
-    FDContext = createContextChain(cast<Decl>(RD->getDeclContext()));
+    RDContext = createContextChain(cast<Decl>(RD->getDeclContext()));
   else
-    FDContext = getContextDescriptor(cast<Decl>(RD->getDeclContext()));
+    RDContext = getContextDescriptor(cast<Decl>(RD->getDeclContext()));
 
   // If this is just a forward declaration, construct an appropriately
   // marked node and just return it.
   if (!RD->getDefinition()) {
     llvm::DIType FwdDecl =
-      DBuilder.createStructType(FDContext, RD->getName(),
+      DBuilder.createStructType(RDContext, RDName,
                                 DefUnit, Line, 0, 0,
                                 llvm::DIDescriptor::FlagFwdDecl,
                                 llvm::DIArray());
@@ -1194,9 +1195,6 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   if (RI != RegionMap.end())
     RegionMap.erase(RI);
 
-  llvm::DIDescriptor RDContext =  
-    getContextDescriptor(cast<Decl>(RD->getDeclContext()));
-  StringRef RDName = RD->getName();
   uint64_t Size = CGM.getContext().getTypeSize(Ty);
   uint64_t Align = CGM.getContext().getTypeAlign(Ty);
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
