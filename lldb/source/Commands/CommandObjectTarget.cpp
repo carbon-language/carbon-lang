@@ -593,7 +593,8 @@ public:
         ValueObject::DumpValueObject (s, 
                                       valobj_sp.get(), 
                                       root_name,
-                                      options);                                        
+                                      options,
+                                      format);                                        
 
     }
     

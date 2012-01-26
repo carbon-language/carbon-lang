@@ -216,19 +216,21 @@ public:
         bool m_flat_output;
         uint32_t m_omit_summary_depth;
         bool m_ignore_cap;
+        lldb::Format m_override_format;
         
         DumpValueObjectOptions() :
-        m_ptr_depth(0),
-        m_max_depth(UINT32_MAX),
-        m_show_types(false),
-        m_show_location(false),
-        m_use_objc(false),
-        m_use_dynamic(lldb::eNoDynamicValues),
-        m_use_synthetic(lldb::eUseSyntheticFilter),
-        m_scope_already_checked(false),
-        m_flat_output(false),
-        m_omit_summary_depth(0),
-        m_ignore_cap(false)
+            m_ptr_depth(0),
+            m_max_depth(UINT32_MAX),
+            m_show_types(false),
+            m_show_location(false),
+            m_use_objc(false),
+            m_use_dynamic(lldb::eNoDynamicValues),
+            m_use_synthetic(lldb::eUseSyntheticFilter),
+            m_scope_already_checked(false),
+            m_flat_output(false),
+            m_omit_summary_depth(0),
+            m_ignore_cap(false), 
+            m_override_format (lldb::eFormatDefault)
         {}
         
         static const DumpValueObjectOptions
@@ -829,7 +831,8 @@ public:
     static void
     DumpValueObject (Stream &s,
                      ValueObject *valobj,
-                     const DumpValueObjectOptions& options)
+                     const DumpValueObjectOptions& options,
+                     lldb::Format format = lldb::eFormatDefault)
     {
         
         if (!valobj)
@@ -849,14 +852,16 @@ public:
                                      options.m_scope_already_checked,
                                      options.m_flat_output,
                                      options.m_omit_summary_depth,
-                                     options.m_ignore_cap);
+                                     options.m_ignore_cap,
+                                     format);
     }
                      
     static void
     DumpValueObject (Stream &s,
                      ValueObject *valobj,
                      const char *root_valobj_name,
-                     const DumpValueObjectOptions& options)
+                     const DumpValueObjectOptions& options,
+                     lldb::Format format = lldb::eFormatDefault)
     {
         
         if (!valobj)
@@ -876,7 +881,8 @@ public:
                                      options.m_scope_already_checked,
                                      options.m_flat_output,
                                      options.m_omit_summary_depth,
-                                     options.m_ignore_cap);
+                                     options.m_ignore_cap,
+                                     format);
     }
     
     static void
@@ -894,7 +900,8 @@ public:
                      bool scope_already_checked,
                      bool flat_output,
                      uint32_t omit_summary_depth,
-                     bool ignore_cap);
+                     bool ignore_cap,
+                     lldb::Format format = lldb::eFormatDefault);
     
     // returns true if this is a char* or a char[]
     // if it is a char* and check_pointer is true,

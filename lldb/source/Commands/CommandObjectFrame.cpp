@@ -476,8 +476,8 @@ public:
                                         valobj_sp = frame->GetValueObjectForFrameVariable (var_sp, m_varobj_options.use_dynamic);
                                         if (valobj_sp)
                                         {
-                                            if (format != eFormatDefault)
-                                                valobj_sp->SetFormat (format);
+//                                            if (format != eFormatDefault)
+//                                                valobj_sp->SetFormat (format);
                                             
                                             if (m_option_variable.show_decl && var_sp->GetDeclaration ().GetFile())
                                             {
@@ -490,7 +490,8 @@ public:
                                                 valobj_sp->SetCustomSummaryFormat(summary_format_sp);
                                             ValueObject::DumpValueObject (result.GetOutputStream(), 
                                                                           valobj_sp.get(),
-                                                                          options);
+                                                                          options,
+                                                                          format);
                                         }
                                     }
                                 }
@@ -521,8 +522,8 @@ public:
                                                                               error);
                         if (valobj_sp)
                         {
-                            if (format != eFormatDefault)
-                                valobj_sp->SetFormat (format);
+//                            if (format != eFormatDefault)
+//                                valobj_sp->SetFormat (format);
                             if (m_option_variable.show_decl && var_sp && var_sp->GetDeclaration ().GetFile())
                             {
                                 var_sp->GetDeclaration ().DumpStopContext (&s, false);
@@ -535,7 +536,8 @@ public:
                             ValueObject::DumpValueObject (output_stream, 
                                                           valobj_sp.get(), 
                                                           valobj_sp->GetParent() ? name_cstr : NULL,
-                                                          options);
+                                                          options,
+                                                          format);
                             // Process watchpoint if necessary.
                             if (m_option_watchpoint.watch_variable)
                             {
@@ -639,8 +641,8 @@ public:
                                                                                m_varobj_options.use_dynamic);
                             if (valobj_sp)
                             {
-                                if (format != eFormatDefault)
-                                    valobj_sp->SetFormat (format);
+//                                if (format != eFormatDefault)
+//                                    valobj_sp->SetFormat (format);
 
                                 // When dumping all variables, don't print any variables
                                 // that are not in scope to avoid extra unneeded output
@@ -656,7 +658,8 @@ public:
                                     ValueObject::DumpValueObject (result.GetOutputStream(), 
                                                                   valobj_sp.get(), 
                                                                   name_cstr,
-                                                                  options);
+                                                                  options,
+                                                                  format);
                                 }
                             }
                         }

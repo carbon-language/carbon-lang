@@ -2979,7 +2979,8 @@ ValueObject::DumpValueObject
     bool scope_already_checked,
     bool flat_output,
     uint32_t omit_summary_depth,
-    bool ignore_cap
+    bool ignore_cap,
+    Format format_override       // Normally the format is in the valobj, but we might want to override this
 )
 {
     if (valobj)
@@ -3064,6 +3065,7 @@ ValueObject::DumpValueObject
             }
         }
         
+        std::string value_str;
         const char *val_cstr = NULL;
         const char *sum_cstr = NULL;
         SummaryFormat* entry = valobj->GetSummaryFormat().get();
@@ -3071,9 +3073,26 @@ ValueObject::DumpValueObject
         if (omit_summary_depth > 0)
             entry = NULL;
         
+        Format orig_format = kNumFormats;
         if (err_cstr == NULL)
         {
+            if (format_override != eFormatDefault)
+            {
+                orig_format = valobj->GetFormat();
+                valobj->SetFormat (format_override);
+            }
             val_cstr = valobj->GetValueAsCString();
+            if (val_cstr)
+            {
+                // Cache the value in our own storage as running summaries might
+                // change our value from underneath us
+                value_str = val_cstr;
+            }
+            if (orig_format != kNumFormats && orig_format != format_override)
+            {
+                valobj->SetFormat (orig_format);
+                orig_format = kNumFormats;
+            }
             err_cstr = valobj->GetError().AsCString();
         }
 
@@ -3086,13 +3105,13 @@ ValueObject::DumpValueObject
             const bool is_ref = type_flags.Test (ClangASTContext::eTypeIsReference);
             if (print_valobj)
             {
-                
-                sum_cstr = (omit_summary_depth == 0) ? valobj->GetSummaryAsCString() : NULL;
+                if (omit_summary_depth == 0)
+                    sum_cstr = valobj->GetSummaryAsCString();
 
-                // We must calculate this value in realtime because entry might alter this variable's value
-                // (e.g. by saying ${var%fmt}) and render precached values useless
-                if (val_cstr && (!entry || entry->DoesPrintValue() || !sum_cstr))
-                    s.Printf(" %s", valobj->GetValueAsCString());
+                // Make sure we have a value and make sure the summary didn't
+                // specify that the value should not be printed
+                if (!value_str.empty() && (entry == NULL || entry->DoesPrintValue() || sum_cstr == NULL))
+                    s.Printf(" %s", value_str.c_str());
 
                 if (sum_cstr)
                 {
@@ -3199,7 +3218,8 @@ ValueObject::DumpValueObject
                                                  true,
                                                  flat_output,
                                                  omit_summary_depth > 1 ? omit_summary_depth - 1 : 0,
-                                                 ignore_cap);
+                                                 ignore_cap,
+                                                 format_override);
                             }
                         }
 
