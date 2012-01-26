@@ -759,7 +759,7 @@ def s : Flag<"-s">;
 def target : Separate<"-target">,
   HelpText<"Generate code for the given target">;
 // We should deprecate the use of -ccc-host-triple, and then remove.
-def ccc_host_triple : Flag<"-ccc-host-triple">, Alias<target>;
+def ccc_host_triple : Separate<"-ccc-host-triple">, Alias<target>;
 def time : Flag<"-time">,
   HelpText<"Time individual commands">;
 def traditional_cpp : Flag<"-traditional-cpp">;
