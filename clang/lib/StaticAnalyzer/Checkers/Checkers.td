@@ -368,6 +368,10 @@ def RetainCountChecker : Checker<"RetainCount">,
 
 let ParentPackage = CocoaExperimental in {
 
+def ObjCContainersASTChecker : Checker<"ContainerAPI">,
+  HelpText<"Check for common pitfalls when using 'CFArray', 'CFDictionary', 'CFSet' APIs">,
+  DescFile<"ObjCContainersASTChecker.cpp">;
+
 def ObjCSelfInitChecker : Checker<"SelfInit">,
   HelpText<"Check that 'self' is properly initialized inside an initializer method">,
   DescFile<"ObjCSelfInitChecker.cpp">;
