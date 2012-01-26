@@ -26,6 +26,7 @@ class raw_ostream;
 class Module;
 class LLVMContext;
 class LLVMContextImpl;
+class StringRef;
 template<class GraphType> struct GraphTraits;
 
 /// The instances of the Type class are immutable: once they are created,
@@ -327,7 +328,9 @@ public:
   unsigned getFunctionNumParams() const;
   bool isFunctionVarArg() const;
   
-  // TODO: StructType
+  StringRef getStructName() const;
+  unsigned getStructNumElements() const;
+  Type *getStructElementType(unsigned N) const;
   
   Type *getSequentialElementType() const;
   

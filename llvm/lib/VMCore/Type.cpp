@@ -217,6 +217,20 @@ unsigned Type::getFunctionNumParams() const {
   return cast<FunctionType>(this)->getNumParams();
 }
 
+StringRef Type::getStructName() const {
+  return cast<StructType>(this)->getName();
+}
+
+unsigned Type::getStructNumElements() const {
+  return cast<StructType>(this)->getNumElements();
+}
+
+Type *Type::getStructElementType(unsigned N) const {
+  return cast<StructType>(this)->getElementType(N);
+}
+
+
+
 Type *Type::getSequentialElementType() const {
   return cast<SequentialType>(this)->getElementType();
 }
