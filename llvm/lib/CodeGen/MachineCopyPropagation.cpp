@@ -142,7 +142,12 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
           // %RSP<def> = COPY %RAX
           // CALL
           // %RAX<def> = COPY %RSP
-          CopyMI->getOperand(1).setIsKill(false);
+
+          // Clear any kills of Def between CopyMI and MI. This extends the
+          // live range.
+          for (MachineBasicBlock::iterator I = CopyMI, E = MI; I != E; ++I)
+            I->clearRegisterKills(Def, TRI);
+
           MI->eraseFromParent();
           Changed = true;
           ++NumDeletes;

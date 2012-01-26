@@ -1707,6 +1707,20 @@ bool MachineInstr::addRegisterKilled(unsigned IncomingReg,
   return Found;
 }
 
+void MachineInstr::clearRegisterKills(unsigned Reg,
+                                      const TargetRegisterInfo *RegInfo) {
+  if (!TargetRegisterInfo::isPhysicalRegister(Reg))
+    RegInfo = 0;
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = getOperand(i);
+    if (!MO.isReg() || !MO.isUse() || !MO.isKill())
+      continue;
+    unsigned OpReg = MO.getReg();
+    if (OpReg == Reg || (RegInfo && RegInfo->isSuperRegister(Reg, OpReg)))
+      MO.setIsKill(false);
+  }
+}
+
 bool MachineInstr::addRegisterDead(unsigned IncomingReg,
                                    const TargetRegisterInfo *RegInfo,
                                    bool AddIfNotFound) {

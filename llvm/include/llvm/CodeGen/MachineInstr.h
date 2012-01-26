@@ -773,6 +773,10 @@ public:
                          const TargetRegisterInfo *RegInfo,
                          bool AddIfNotFound = false);
 
+  /// clearRegisterKills - Clear all kill flags affecting Reg.  If RegInfo is
+  /// provided, this includes super-register kills.
+  void clearRegisterKills(unsigned Reg, const TargetRegisterInfo *RegInfo);
+
   /// addRegisterDead - We have determined MI defined a register without a use.
   /// Look for the operand that defines it and mark it as IsDead. If
   /// AddIfNotFound is true, add a implicit operand if it's not found. Returns
