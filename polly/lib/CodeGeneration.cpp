@@ -858,8 +858,6 @@ Value *ClastExpCodeGen::codegen(const clast_reduction *r, Type *Ty) {
     case clast_red_sum:
       old = Builder.CreateAdd(old, exprValue);
       break;
-    default:
-      llvm_unreachable("Clast unknown reduction type");
     }
   }
 
