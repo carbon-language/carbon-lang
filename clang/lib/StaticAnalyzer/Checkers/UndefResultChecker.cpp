@@ -35,7 +35,7 @@ public:
 
 void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
                                        CheckerContext &C) const {
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   const LocationContext *LCtx = C.getLocationContext();
   if (state->getSVal(B, LCtx).isUndef()) {
     // Generate an error node.

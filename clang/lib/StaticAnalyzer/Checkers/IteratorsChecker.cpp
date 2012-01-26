@@ -117,17 +117,17 @@ public:
                     CheckerContext &C) const;
 
 private:
-  const ProgramState *handleAssign(const ProgramState *state,
+  ProgramStateRef handleAssign(ProgramStateRef state,
                                    const Expr *lexp,
                                    const Expr *rexp,
                                    const LocationContext *LC) const;
 
-  const ProgramState *handleAssign(const ProgramState *state,
+  ProgramStateRef handleAssign(ProgramStateRef state,
                                    const MemRegion *MR,
                                    const Expr *rexp,
                                    const LocationContext *LC) const;
 
-  const ProgramState *invalidateIterators(const ProgramState *state,
+  ProgramStateRef invalidateIterators(ProgramStateRef state,
                                           const MemRegion *MR,
                                           const MemberExpr *ME) const;
 
@@ -135,7 +135,7 @@ private:
 
   void checkArgs(CheckerContext &C, const CallExpr *CE) const;
 
-  const MemRegion *getRegion(const ProgramState *state,
+  const MemRegion *getRegion(ProgramStateRef state,
                              const Expr *E,
                              const LocationContext *LC) const;
 
@@ -227,7 +227,7 @@ static RefKind getTemplateKind(QualType T) {
 
 // Iterate through our map and invalidate any iterators that were
 // initialized fromt the specified instance MemRegion.
-const ProgramState *IteratorsChecker::invalidateIterators(const ProgramState *state,
+ProgramStateRef IteratorsChecker::invalidateIterators(ProgramStateRef state,
                           const MemRegion *MR, const MemberExpr *ME) const {
   IteratorState::EntryMap Map = state->get<IteratorState>();
   if (Map.isEmpty())
@@ -246,7 +246,7 @@ const ProgramState *IteratorsChecker::invalidateIterators(const ProgramState *st
 }
 
 // Handle assigning to an iterator where we don't have the LValue MemRegion.
-const ProgramState *IteratorsChecker::handleAssign(const ProgramState *state,
+ProgramStateRef IteratorsChecker::handleAssign(ProgramStateRef state,
     const Expr *lexp, const Expr *rexp, const LocationContext *LC) const {
   // Skip the cast if present.
   if (const MaterializeTemporaryExpr *M 
@@ -271,7 +271,7 @@ const ProgramState *IteratorsChecker::handleAssign(const ProgramState *state,
 }
 
 // handle assigning to an iterator
-const ProgramState *IteratorsChecker::handleAssign(const ProgramState *state,
+ProgramStateRef IteratorsChecker::handleAssign(ProgramStateRef state,
     const MemRegion *MR, const Expr *rexp, const LocationContext *LC) const {
   // Assume unknown until we find something definite.
   state = state->set<IteratorState>(MR, RefState::getUnknown());
@@ -376,7 +376,7 @@ const DeclRefExpr *IteratorsChecker::getDeclRefExpr(const Expr *E) const {
 }
 
 // Get the MemRegion associated with the expresssion.
-const MemRegion *IteratorsChecker::getRegion(const ProgramState *state,
+const MemRegion *IteratorsChecker::getRegion(ProgramStateRef state,
     const Expr *E, const LocationContext *LC) const {
   const DeclRefExpr *DRE = getDeclRefExpr(E);
   if (!DRE)
@@ -394,7 +394,7 @@ const MemRegion *IteratorsChecker::getRegion(const ProgramState *state,
 // use those nodes.  We also cannot create multiple nodes at one ProgramPoint
 // with the same tag.
 void IteratorsChecker::checkExpr(CheckerContext &C, const Expr *E) const {
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   const MemRegion *MR = getRegion(state, E, C.getLocationContext());
   if (!MR)
     return;
@@ -466,7 +466,7 @@ void IteratorsChecker::checkPreStmt(const CXXOperatorCallExpr *OCE,
                                     CheckerContext &C) const
 {
   const LocationContext *LC = C.getLocationContext();
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   OverloadedOperatorKind Kind = OCE->getOperator();
   if (Kind == OO_Equal) {
     checkExpr(C, OCE->getArg(1));
@@ -523,7 +523,7 @@ void IteratorsChecker::checkPreStmt(const DeclStmt *DS,
     return;
 
   // Get the MemRegion associated with the iterator and mark it as Undefined.
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   Loc VarLoc = state->getLValue(VD, C.getLocationContext());
   const MemRegion *MR = VarLoc.getAsRegion();
   if (!MR)
@@ -581,7 +581,7 @@ void IteratorsChecker::checkPreStmt(const CXXMemberCallExpr *MCE,
     return;
   // If we are calling a function that invalidates iterators, mark them
   // appropriately by finding matching instances.
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   StringRef mName = ME->getMemberDecl()->getName();
   if (llvm::StringSwitch<bool>(mName)
       .Cases("insert", "reserve", "push_back", true)

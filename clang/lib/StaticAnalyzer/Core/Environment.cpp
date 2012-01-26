@@ -160,7 +160,7 @@ static inline bool IsLocation(const EnvironmentEntry &E) {
 Environment
 EnvironmentManager::removeDeadBindings(Environment Env,
                                        SymbolReaper &SymReaper,
-                                       const ProgramState *ST) {
+                                       ProgramStateRef ST) {
 
   // We construct a new Environment object entirely, as this is cheaper than
   // individually removing all the subexpression bindings (which will greatly

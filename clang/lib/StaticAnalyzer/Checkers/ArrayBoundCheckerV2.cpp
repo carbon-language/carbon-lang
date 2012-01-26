@@ -30,7 +30,7 @@ class ArrayBoundCheckerV2 :
       
   enum OOB_Kind { OOB_Precedes, OOB_Excedes, OOB_Tainted };
   
-  void reportOOB(CheckerContext &C, const ProgramState *errorState,
+  void reportOOB(CheckerContext &C, ProgramStateRef errorState,
                  OOB_Kind kind) const;
       
 public:
@@ -54,7 +54,7 @@ public:
   NonLoc getByteOffset() const { return cast<NonLoc>(byteOffset); }
   const SubRegion *getRegion() const { return baseRegion; }
   
-  static RegionRawOffsetV2 computeOffset(const ProgramState *state,
+  static RegionRawOffsetV2 computeOffset(ProgramStateRef state,
                                          SValBuilder &svalBuilder,
                                          SVal location);
 
@@ -92,8 +92,8 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
   // memory access is within the extent of the base region.  Since we
   // have some flexibility in defining the base region, we can achieve
   // various levels of conservatism in our buffer overflow checking.
-  const ProgramState *state = checkerContext.getState();  
-  const ProgramState *originalState = state;
+  ProgramStateRef state = checkerContext.getState();  
+  ProgramStateRef originalState = state;
 
   SValBuilder &svalBuilder = checkerContext.getSValBuilder();
   const RegionRawOffsetV2 &rawOffset = 
@@ -118,7 +118,7 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
     if (!lowerBoundToCheck)
       return;
     
-    const ProgramState *state_precedesLowerBound, *state_withinLowerBound;
+    ProgramStateRef state_precedesLowerBound, state_withinLowerBound;
     llvm::tie(state_precedesLowerBound, state_withinLowerBound) =
       state->assume(*lowerBoundToCheck);
 
@@ -150,7 +150,7 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
     if (!upperboundToCheck)
       break;
   
-    const ProgramState *state_exceedsUpperBound, *state_withinUpperBound;
+    ProgramStateRef state_exceedsUpperBound, state_withinUpperBound;
     llvm::tie(state_exceedsUpperBound, state_withinUpperBound) =
       state->assume(*upperboundToCheck);
 
@@ -178,7 +178,7 @@ void ArrayBoundCheckerV2::checkLocation(SVal location, bool isLoad,
 }
 
 void ArrayBoundCheckerV2::reportOOB(CheckerContext &checkerContext,
-                                    const ProgramState *errorState,
+                                    ProgramStateRef errorState,
                                     OOB_Kind kind) const {
   
   ExplodedNode *errorNode = checkerContext.generateSink(errorState);
@@ -238,7 +238,7 @@ static inline SVal getValue(SVal val, SValBuilder &svalBuilder) {
 
 // Scale a base value by a scaling factor, and return the scaled
 // value as an SVal.  Used by 'computeOffset'.
-static inline SVal scaleValue(const ProgramState *state,
+static inline SVal scaleValue(ProgramStateRef state,
                               NonLoc baseVal, CharUnits scaling,
                               SValBuilder &sb) {
   return sb.evalBinOpNN(state, BO_Mul, baseVal,
@@ -248,7 +248,7 @@ static inline SVal scaleValue(const ProgramState *state,
 
 // Add an SVal to another, treating unknown and undefined values as
 // summing to UnknownVal.  Used by 'computeOffset'.
-static SVal addValue(const ProgramState *state, SVal x, SVal y,
+static SVal addValue(ProgramStateRef state, SVal x, SVal y,
                      SValBuilder &svalBuilder) {
   // We treat UnknownVals and UndefinedVals the same here because we
   // only care about computing offsets.
@@ -262,7 +262,7 @@ static SVal addValue(const ProgramState *state, SVal x, SVal y,
 
 /// Compute a raw byte offset from a base region.  Used for array bounds
 /// checking.
-RegionRawOffsetV2 RegionRawOffsetV2::computeOffset(const ProgramState *state,
+RegionRawOffsetV2 RegionRawOffsetV2::computeOffset(ProgramStateRef state,
                                                    SValBuilder &svalBuilder,
                                                    SVal location)
 {

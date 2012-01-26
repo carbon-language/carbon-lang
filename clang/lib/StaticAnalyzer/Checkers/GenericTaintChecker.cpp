@@ -70,14 +70,14 @@ private:
   static SymbolRef getPointedToSymbol(CheckerContext &C, const Expr *Arg);
 
   /// Functions defining the attack surface.
-  typedef const ProgramState *(GenericTaintChecker::*FnCheck)(const CallExpr *,
+  typedef ProgramStateRef (GenericTaintChecker::*FnCheck)(const CallExpr *,
                                                        CheckerContext &C) const;
-  const ProgramState *postScanf(const CallExpr *CE, CheckerContext &C) const;
-  const ProgramState *postSocket(const CallExpr *CE, CheckerContext &C) const;
-  const ProgramState *postRetTaint(const CallExpr *CE, CheckerContext &C) const;
+  ProgramStateRef postScanf(const CallExpr *CE, CheckerContext &C) const;
+  ProgramStateRef postSocket(const CallExpr *CE, CheckerContext &C) const;
+  ProgramStateRef postRetTaint(const CallExpr *CE, CheckerContext &C) const;
 
   /// Taint the scanned input if the file is tainted.
-  const ProgramState *preFscanf(const CallExpr *CE, CheckerContext &C) const;
+  ProgramStateRef preFscanf(const CallExpr *CE, CheckerContext &C) const;
 
   /// Check for CWE-134: Uncontrolled Format String.
   static const char MsgUncontrolledFormatString[];
@@ -156,7 +156,7 @@ private:
     }
 
     static inline bool isTaintedOrPointsToTainted(const Expr *E,
-                                                  const ProgramState *State,
+                                                  ProgramStateRef State,
                                                   CheckerContext &C) {
       return (State->isTainted(E, C.getLocationContext()) || isStdin(E, C) ||
               (E->getType().getTypePtr()->isPointerType() &&
@@ -165,7 +165,7 @@ private:
 
     /// \brief Pre-process a function which propagates taint according to the
     /// taint rule.
-    const ProgramState *process(const CallExpr *CE, CheckerContext &C) const;
+    ProgramStateRef process(const CallExpr *CE, CheckerContext &C) const;
 
   };
 };
@@ -296,7 +296,7 @@ void GenericTaintChecker::checkPostStmt(const CallExpr *CE,
 
 void GenericTaintChecker::addSourcesPre(const CallExpr *CE,
                                         CheckerContext &C) const {
-  const ProgramState *State = 0;
+  ProgramStateRef State = 0;
   const FunctionDecl *FDecl = C.getCalleeDecl(CE);
   StringRef Name = C.getCalleeName(FDecl);
   if (Name.empty())
@@ -328,7 +328,7 @@ void GenericTaintChecker::addSourcesPre(const CallExpr *CE,
 
 bool GenericTaintChecker::propagateFromPre(const CallExpr *CE,
                                            CheckerContext &C) const {
-  const ProgramState *State = C.getState();
+  ProgramStateRef State = C.getState();
 
   // Depending on what was tainted at pre-visit, we determined a set of
   // arguments which should be tainted after the function returns. These are
@@ -388,7 +388,7 @@ void GenericTaintChecker::addSourcesPost(const CallExpr *CE,
 
   // If the callee isn't defined, it is not of security concern.
   // Check and evaluate the call.
-  const ProgramState *State = 0;
+  ProgramStateRef State = 0;
   if (evalFunction)
     State = (this->*evalFunction)(CE, C);
   if (!State)
@@ -418,7 +418,7 @@ bool GenericTaintChecker::checkPre(const CallExpr *CE, CheckerContext &C) const{
 
 SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
                                                   const Expr* Arg) {
-  const ProgramState *State = C.getState();
+  ProgramStateRef State = C.getState();
   SVal AddrVal = State->getSVal(Arg->IgnoreParens(), C.getLocationContext());
   if (AddrVal.isUnknownOrUndef())
     return 0;
@@ -434,10 +434,10 @@ SymbolRef GenericTaintChecker::getPointedToSymbol(CheckerContext &C,
   return Val.getAsSymbol();
 }
 
-const ProgramState *
+ProgramStateRef 
 GenericTaintChecker::TaintPropagationRule::process(const CallExpr *CE,
                                                    CheckerContext &C) const {
-  const ProgramState *State = C.getState();
+  ProgramStateRef State = C.getState();
 
   // Check for taint in arguments.
   bool IsTainted = false;
@@ -504,10 +504,10 @@ GenericTaintChecker::TaintPropagationRule::process(const CallExpr *CE,
 
 // If argument 0 (file descriptor) is tainted, all arguments except for arg 0
 // and arg 1 should get taint.
-const ProgramState *GenericTaintChecker::preFscanf(const CallExpr *CE,
+ProgramStateRef GenericTaintChecker::preFscanf(const CallExpr *CE,
                                                    CheckerContext &C) const {
   assert(CE->getNumArgs() >= 2);
-  const ProgramState *State = C.getState();
+  ProgramStateRef State = C.getState();
 
   // Check is the file descriptor is tainted.
   if (State->isTainted(CE->getArg(0), C.getLocationContext()) ||
@@ -523,10 +523,10 @@ const ProgramState *GenericTaintChecker::preFscanf(const CallExpr *CE,
 
 
 // If argument 0(protocol domain) is network, the return value should get taint.
-const ProgramState *GenericTaintChecker::postSocket(const CallExpr *CE,
+ProgramStateRef GenericTaintChecker::postSocket(const CallExpr *CE,
                                                     CheckerContext &C) const {
   assert(CE->getNumArgs() >= 3);
-  const ProgramState *State = C.getState();
+  ProgramStateRef State = C.getState();
 
   SourceLocation DomLoc = CE->getArg(0)->getExprLoc();
   StringRef DomName = C.getMacroNameOrSpelling(DomLoc);
@@ -538,9 +538,9 @@ const ProgramState *GenericTaintChecker::postSocket(const CallExpr *CE,
   return State;
 }
 
-const ProgramState *GenericTaintChecker::postScanf(const CallExpr *CE,
+ProgramStateRef GenericTaintChecker::postScanf(const CallExpr *CE,
                                                    CheckerContext &C) const {
-  const ProgramState *State = C.getState();
+  ProgramStateRef State = C.getState();
   assert(CE->getNumArgs() >= 2);
   SVal x = State->getSVal(CE->getArg(1), C.getLocationContext());
   // All arguments except for the very first one should get taint.
@@ -555,13 +555,13 @@ const ProgramState *GenericTaintChecker::postScanf(const CallExpr *CE,
   return State;
 }
 
-const ProgramState *GenericTaintChecker::postRetTaint(const CallExpr *CE,
+ProgramStateRef GenericTaintChecker::postRetTaint(const CallExpr *CE,
                                                       CheckerContext &C) const {
   return C.getState()->addTaint(CE, C.getLocationContext());
 }
 
 bool GenericTaintChecker::isStdin(const Expr *E, CheckerContext &C) {
-  const ProgramState *State = C.getState();
+  ProgramStateRef State = C.getState();
   SVal Val = State->getSVal(E, C.getLocationContext());
 
   // stdin is a pointer, so it would be a region.
@@ -627,7 +627,7 @@ bool GenericTaintChecker::generateReportIfTainted(const Expr *E,
   assert(E);
 
   // Check for taint.
-  const ProgramState *State = C.getState();
+  ProgramStateRef State = C.getState();
   if (!State->isTainted(getPointedToSymbol(C, E)) &&
       !State->isTainted(E, C.getLocationContext()))
     return false;

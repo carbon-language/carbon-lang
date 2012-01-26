@@ -324,7 +324,7 @@ bugreporter::getTrackNullOrUndefValueVisitor(const ExplodedNode *N,
   if (!N)
     return 0;
   
-  const ProgramState *state = N->getState();
+  ProgramStateRef state = N->getState();
 
   // Walk through lvalue-to-rvalue conversions.  
   if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(S)) {
@@ -369,7 +369,7 @@ FindLastStoreBRVisitor::createVisitorObject(const ExplodedNode *N,
                                             const MemRegion *R) {
   assert(R && "The memory region is null.");
 
-  const ProgramState *state = N->getState();
+  ProgramStateRef state = N->getState();
   SVal V = state->getSVal(R);
   if (V.isUnknown())
     return 0;
@@ -391,7 +391,7 @@ PathDiagnosticPiece *NilReceiverBRVisitor::VisitNode(const ExplodedNode *N,
   const Expr *Receiver = ME->getInstanceReceiver();
   if (!Receiver)
     return 0;
-  const ProgramState *state = N->getState();
+  ProgramStateRef state = N->getState();
   const SVal &V = state->getSVal(Receiver, N->getLocationContext());
   const DefinedOrUnknownSVal *DV = dyn_cast<DefinedOrUnknownSVal>(&V);
   if (!DV)
@@ -422,7 +422,7 @@ void FindLastStoreBRVisitor::registerStatementVarDecls(BugReport &BR,
     const Stmt *Head = WorkList.front();
     WorkList.pop_front();
 
-    const ProgramState *state = N->getState();
+    ProgramStateRef state = N->getState();
     ProgramStateManager &StateMgr = state->getStateManager();
 
     if (const DeclRefExpr *DR = dyn_cast<DeclRefExpr>(Head)) {
@@ -456,8 +456,8 @@ PathDiagnosticPiece *ConditionBRVisitor::VisitNode(const ExplodedNode *N,
   
   const ProgramPoint &progPoint = N->getLocation();
 
-  const ProgramState *CurrentState = N->getState();
-  const ProgramState *PrevState = Prev->getState();
+  ProgramStateRef CurrentState = N->getState();
+  ProgramStateRef PrevState = Prev->getState();
   
   // Compare the GDMs of the state, because that is where constraints
   // are managed.  Note that ensure that we only look at nodes that

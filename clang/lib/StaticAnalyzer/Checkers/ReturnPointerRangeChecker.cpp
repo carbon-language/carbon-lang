@@ -33,7 +33,7 @@ public:
 
 void ReturnPointerRangeChecker::checkPreStmt(const ReturnStmt *RS,
                                              CheckerContext &C) const {
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
 
   const Expr *RetE = RS->getRetValue();
   if (!RetE)
@@ -58,8 +58,8 @@ void ReturnPointerRangeChecker::checkPreStmt(const ReturnStmt *RS,
     = C.getStoreManager().getSizeInElements(state, ER->getSuperRegion(),
                                            ER->getValueType());
 
-  const ProgramState *StInBound = state->assumeInBound(Idx, NumElements, true);
-  const ProgramState *StOutBound = state->assumeInBound(Idx, NumElements, false);
+  ProgramStateRef StInBound = state->assumeInBound(Idx, NumElements, true);
+  ProgramStateRef StOutBound = state->assumeInBound(Idx, NumElements, false);
   if (StOutBound && !StInBound) {
     ExplodedNode *N = C.generateSink(StOutBound);
 

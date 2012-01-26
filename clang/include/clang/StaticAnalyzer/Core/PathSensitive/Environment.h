@@ -129,7 +129,7 @@ public:
 
   Environment removeDeadBindings(Environment Env,
                                  SymbolReaper &SymReaper,
-                                 const ProgramState *state);
+                                 ProgramStateRef state);
 };
 
 } // end GR namespace

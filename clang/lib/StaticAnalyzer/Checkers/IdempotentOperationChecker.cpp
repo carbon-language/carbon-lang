@@ -141,7 +141,7 @@ void IdempotentOperationChecker::checkPreStmt(const BinaryOperator *B,
         || containsNonLocalVarDecl(RHS);
   }
 
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   const LocationContext *LCtx = C.getLocationContext();
   SVal LHSVal = state->getSVal(LHS, LCtx);
   SVal RHSVal = state->getSVal(RHS, LCtx);

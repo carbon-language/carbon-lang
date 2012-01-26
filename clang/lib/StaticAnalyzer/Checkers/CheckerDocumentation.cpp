@@ -173,7 +173,7 @@ public:
   /// performed on the symbols of interest and change the state accordingly.
   ///
   /// eval::Assume
-  const ProgramState *evalAssume(const ProgramState *State,
+  ProgramStateRef evalAssume(ProgramStateRef State,
                                  SVal Cond,
                                  bool Assumption) const { return State; }
 
@@ -182,12 +182,12 @@ public:
   /// dead and removed.
   ///
   /// check::LiveSymbols
-  void checkLiveSymbols(const ProgramState *State, SymbolReaper &SR) const {}
+  void checkLiveSymbols(ProgramStateRef State, SymbolReaper &SR) const {}
 
   /// check::RegionChanges
-  bool wantsRegionChangeUpdate(const ProgramState *St) const { return true; }
-  const ProgramState *
-    checkRegionChanges(const ProgramState *State,
+  bool wantsRegionChangeUpdate(ProgramStateRef St) const { return true; }
+  ProgramStateRef 
+    checkRegionChanges(ProgramStateRef State,
                        const StoreManager::InvalidatedSymbols *,
                        ArrayRef<const MemRegion *> ExplicitRegions,
                        ArrayRef<const MemRegion *> Regions) const {

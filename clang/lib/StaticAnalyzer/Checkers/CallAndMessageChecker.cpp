@@ -49,7 +49,7 @@ private:
                           ExplodedNode *N) const;
 
   void HandleNilReceiver(CheckerContext &C,
-                         const ProgramState *state,
+                         ProgramStateRef state,
                          ObjCMessage msg) const;
 
   static void LazyInit_BT(const char *desc, llvm::OwningPtr<BugType> &BT) {
@@ -219,7 +219,7 @@ void CallAndMessageChecker::checkPreStmt(const CallExpr *CE,
 void CallAndMessageChecker::checkPreObjCMessage(ObjCMessage msg,
                                                 CheckerContext &C) const {
 
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   const LocationContext *LCtx = C.getLocationContext();
 
   // FIXME: Handle 'super'?
@@ -242,7 +242,7 @@ void CallAndMessageChecker::checkPreObjCMessage(ObjCMessage msg,
       // Bifurcate the state into nil and non-nil ones.
       DefinedOrUnknownSVal receiverVal = cast<DefinedOrUnknownSVal>(recVal);
   
-      const ProgramState *notNilState, *nilState;
+      ProgramStateRef notNilState, nilState;
       llvm::tie(notNilState, nilState) = state->assume(receiverVal);
   
       // Handle receiver must be nil.
@@ -293,7 +293,7 @@ static bool supportsNilWithFloatRet(const llvm::Triple &triple) {
 }
 
 void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
-                                              const ProgramState *state,
+                                              ProgramStateRef state,
                                               ObjCMessage msg) const {
   ASTContext &Ctx = C.getASTContext();
 

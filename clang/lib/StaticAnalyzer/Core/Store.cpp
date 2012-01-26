@@ -22,7 +22,7 @@ StoreManager::StoreManager(ProgramStateManager &stateMgr)
   : svalBuilder(stateMgr.getSValBuilder()), StateMgr(stateMgr),
     MRMgr(svalBuilder.getRegionManager()), Ctx(stateMgr.getContext()) {}
 
-StoreRef StoreManager::enterStackFrame(const ProgramState *state,
+StoreRef StoreManager::enterStackFrame(ProgramStateRef state,
                                        const LocationContext *callerCtx,
                                        const StackFrameContext *calleeCtx) {
   return StoreRef(state->getStore(), *this);

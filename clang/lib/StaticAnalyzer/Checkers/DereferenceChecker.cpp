@@ -89,8 +89,8 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
   if (!isa<Loc>(location))
     return;
 
-  const ProgramState *state = C.getState();
-  const ProgramState *notNullState, *nullState;
+  ProgramStateRef state = C.getState();
+  ProgramStateRef notNullState, nullState;
   llvm::tie(notNullState, nullState) = state->assume(location);
 
   // The explicit NULL case.

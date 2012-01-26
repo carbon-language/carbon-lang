@@ -89,7 +89,7 @@ public:
     return 0;
   }
 
-  SVal getInstanceReceiverSVal(const ProgramState *State,
+  SVal getInstanceReceiverSVal(ProgramStateRef State,
                                const LocationContext *LC) const {
     assert(isValid() && "This ObjCMessage is uninitialized!");
     if (!isInstanceMessage())
@@ -143,7 +143,7 @@ public:
 
   SVal getArgSVal(unsigned i,
                   const LocationContext *LCtx,
-                  const ProgramState *state) const {
+                  ProgramStateRef state) const {
     assert(isValid() && "This ObjCMessage is uninitialized!");
     assert(i < getNumArgs() && "Invalid index for argument");
     if (const ObjCMessageExpr *msgE = dyn_cast<ObjCMessageExpr>(MsgOrPropE))
@@ -208,16 +208,16 @@ public:
 class CallOrObjCMessage {
   llvm::PointerUnion<const CallExpr *, const CXXConstructExpr *> CallE;
   ObjCMessage Msg;
-  const ProgramState *State;
+  ProgramStateRef State;
   const LocationContext *LCtx;
 public:
-  CallOrObjCMessage(const CallExpr *callE, const ProgramState *state,
+  CallOrObjCMessage(const CallExpr *callE, ProgramStateRef state,
                     const LocationContext *lctx)
     : CallE(callE), State(state), LCtx(lctx) {}
-  CallOrObjCMessage(const CXXConstructExpr *consE, const ProgramState *state,
+  CallOrObjCMessage(const CXXConstructExpr *consE, ProgramStateRef state,
                     const LocationContext *lctx)
     : CallE(consE), State(state), LCtx(lctx) {}
-  CallOrObjCMessage(const ObjCMessage &msg, const ProgramState *state,
+  CallOrObjCMessage(const ObjCMessage &msg, ProgramStateRef state,
                     const LocationContext *lctx)
     : CallE((CallExpr *)0), Msg(msg), State(state), LCtx(lctx) {}
 

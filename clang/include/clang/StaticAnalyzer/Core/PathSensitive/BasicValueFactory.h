@@ -18,16 +18,9 @@
 
 #include "clang/StaticAnalyzer/Core/PathSensitive/StoreRef.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
-#include "clang/AST/ASTContext.h"
-#include "llvm/ADT/FoldingSet.h"
-#include "llvm/ADT/APSInt.h"
-#include "llvm/ADT/ImmutableList.h"
 
 namespace clang {
-
 namespace ento {
-
-class ProgramState;
 
 class CompoundValData : public llvm::FoldingSetNode {
   QualType T;

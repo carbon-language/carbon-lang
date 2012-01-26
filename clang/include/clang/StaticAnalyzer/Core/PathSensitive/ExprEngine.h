@@ -61,7 +61,7 @@ class ExprEngine : public SubEngine {
 
   /// CleanedState - The state for EntryNode "cleaned" of all dead
   ///  variables and symbols (as determined by a liveness analysis).
-  const ProgramState *CleanedState;
+  ProgramStateRef CleanedState;
 
   /// currentStmt - The current block-level statement.
   const Stmt *currentStmt;
@@ -96,7 +96,7 @@ public:
   /// of the function are added into the Dst set, which represent the exit
   /// state of the function call.
   void ExecuteWorkListWithInitialState(const LocationContext *L, unsigned Steps,
-                                       const ProgramState *InitState, 
+                                       ProgramStateRef InitState, 
                                        ExplodedNodeSet &Dst) {
     Engine.ExecuteWorkListWithInitialState(L, Steps, InitState, Dst);
   }
@@ -135,7 +135,7 @@ public:
 
   /// getInitialState - Return the initial state used for the root vertex
   ///  in the ExplodedGraph.
-  const ProgramState *getInitialState(const LocationContext *InitLoc);
+  ProgramStateRef getInitialState(const LocationContext *InitLoc);
 
   ExplodedGraph& getGraph() { return G; }
   const ExplodedGraph& getGraph() const { return G; }
@@ -195,22 +195,22 @@ public:
 
   /// evalAssume - Callback function invoked by the ConstraintManager when
   ///  making assumptions about state values.
-  const ProgramState *processAssume(const ProgramState *state, SVal cond,bool assumption);
+  ProgramStateRef processAssume(ProgramStateRef state, SVal cond,bool assumption);
 
   /// wantsRegionChangeUpdate - Called by ProgramStateManager to determine if a
   ///  region change should trigger a processRegionChanges update.
-  bool wantsRegionChangeUpdate(const ProgramState *state);
+  bool wantsRegionChangeUpdate(ProgramStateRef state);
 
   /// processRegionChanges - Called by ProgramStateManager whenever a change is made
   ///  to the store. Used to update checkers that track region values.
-  const ProgramState *
-  processRegionChanges(const ProgramState *state,
+  ProgramStateRef 
+  processRegionChanges(ProgramStateRef state,
                        const StoreManager::InvalidatedSymbols *invalidated,
                        ArrayRef<const MemRegion *> ExplicitRegions,
                        ArrayRef<const MemRegion *> Regions);
 
   /// printState - Called by ProgramStateManager to print checker-specific data.
-  void printState(raw_ostream &Out, const ProgramState *State,
+  void printState(raw_ostream &Out, ProgramStateRef State,
                   const char *NL, const char *Sep);
 
   virtual ProgramStateManager& getStateManager() { return StateMgr; }
@@ -409,31 +409,31 @@ public:
 
 public:
 
-  SVal evalBinOp(const ProgramState *state, BinaryOperator::Opcode op,
+  SVal evalBinOp(ProgramStateRef state, BinaryOperator::Opcode op,
                  NonLoc L, NonLoc R, QualType T) {
     return svalBuilder.evalBinOpNN(state, op, L, R, T);
   }
 
-  SVal evalBinOp(const ProgramState *state, BinaryOperator::Opcode op,
+  SVal evalBinOp(ProgramStateRef state, BinaryOperator::Opcode op,
                  NonLoc L, SVal R, QualType T) {
     return R.isValid() ? svalBuilder.evalBinOpNN(state,op,L, cast<NonLoc>(R), T) : R;
   }
 
-  SVal evalBinOp(const ProgramState *ST, BinaryOperator::Opcode Op,
+  SVal evalBinOp(ProgramStateRef ST, BinaryOperator::Opcode Op,
                  SVal LHS, SVal RHS, QualType T) {
     return svalBuilder.evalBinOp(ST, Op, LHS, RHS, T);
   }
   
 protected:
   void evalObjCMessage(StmtNodeBuilder &Bldr, const ObjCMessage &msg,
-                       ExplodedNode *Pred, const ProgramState *state,
+                       ExplodedNode *Pred, ProgramStateRef state,
                        bool GenSink);
 
-  const ProgramState *invalidateArguments(const ProgramState *State,
+  ProgramStateRef invalidateArguments(ProgramStateRef State,
                                           const CallOrObjCMessage &Call,
                                           const LocationContext *LC);
 
-  const ProgramState *MarkBranch(const ProgramState *state,
+  ProgramStateRef MarkBranch(ProgramStateRef state,
                                  const Stmt *Terminator,
                                  const LocationContext *LCtx,
                                  bool branchTaken);
@@ -452,23 +452,23 @@ public:
   // same as state->getLValue(Ex).
   /// Simulate a read of the result of Ex.
   void evalLoad(ExplodedNodeSet &Dst, const Expr *Ex, ExplodedNode *Pred,
-                const ProgramState *St, SVal location, const ProgramPointTag *tag = 0,
+                ProgramStateRef St, SVal location, const ProgramPointTag *tag = 0,
                 QualType LoadTy = QualType());
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
   void evalStore(ExplodedNodeSet &Dst, const Expr *AssignE, const Expr *StoreE,
-                 ExplodedNode *Pred, const ProgramState *St, SVal TargetLV, SVal Val,
+                 ExplodedNode *Pred, ProgramStateRef St, SVal TargetLV, SVal Val,
                  const ProgramPointTag *tag = 0);
 private:
   void evalLoadCommon(ExplodedNodeSet &Dst, const Expr *Ex, ExplodedNode *Pred,
-                      const ProgramState *St, SVal location, const ProgramPointTag *tag,
+                      ProgramStateRef St, SVal location, const ProgramPointTag *tag,
                       QualType LoadTy);
 
   // FIXME: 'tag' should be removed, and a LocationContext should be used
   // instead.
   void evalLocation(ExplodedNodeSet &Dst, const Stmt *S, ExplodedNode *Pred,
-                    const ProgramState *St, SVal location,
+                    ProgramStateRef St, SVal location,
                     const ProgramPointTag *tag, bool isLoad);
 
   bool InlineCall(ExplodedNodeSet &Dst, const CallExpr *CE, ExplodedNode *Pred);

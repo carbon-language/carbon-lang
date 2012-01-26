@@ -27,10 +27,10 @@ class UndefBranchChecker : public Checker<check::BranchCondition> {
   mutable llvm::OwningPtr<BuiltinBug> BT;
 
   struct FindUndefExpr {
-    const ProgramState *St;
+    ProgramStateRef St;
     const LocationContext *LCtx;
 
-    FindUndefExpr(const ProgramState *S, const LocationContext *L) 
+    FindUndefExpr(ProgramStateRef S, const LocationContext *L) 
       : St(S), LCtx(L) {}
 
     const Expr *FindExpr(const Expr *Ex) {
@@ -88,7 +88,7 @@ void UndefBranchChecker::checkBranchCondition(const Stmt *Condition,
       const Expr *Ex = cast<Expr>(Condition);
       ExplodedNode *PrevN = *N->pred_begin();
       ProgramPoint P = PrevN->getLocation();
-      const ProgramState *St = N->getState();
+      ProgramStateRef St = N->getState();
 
       if (PostStmt *PS = dyn_cast<PostStmt>(&P))
         if (PS->getStmt() == Ex)

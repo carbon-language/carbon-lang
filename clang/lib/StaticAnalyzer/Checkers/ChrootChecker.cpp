@@ -85,7 +85,7 @@ bool ChrootChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
 }
 
 void ChrootChecker::Chroot(CheckerContext &C, const CallExpr *CE) const {
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   ProgramStateManager &Mgr = state->getStateManager();
   
   // Once encouter a chroot(), set the enum value ROOT_CHANGED directly in 
@@ -95,7 +95,7 @@ void ChrootChecker::Chroot(CheckerContext &C, const CallExpr *CE) const {
 }
 
 void ChrootChecker::Chdir(CheckerContext &C, const CallExpr *CE) const {
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   ProgramStateManager &Mgr = state->getStateManager();
 
   // If there are no jail state in the GDM, just return.

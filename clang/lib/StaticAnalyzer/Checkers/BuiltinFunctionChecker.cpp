@@ -31,7 +31,7 @@ public:
 
 bool BuiltinFunctionChecker::evalCall(const CallExpr *CE,
                                       CheckerContext &C) const {
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   const FunctionDecl *FD = C.getCalleeDecl(CE);
   const LocationContext *LCtx = C.getLocationContext();
   if (!FD)

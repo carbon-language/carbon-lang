@@ -22,46 +22,43 @@ class APSInt;
 }
 
 namespace clang {
-
 namespace ento {
 
-class ProgramState;
-class ProgramStateManager;
 class SubEngine;
 
 class ConstraintManager {
 public:
   virtual ~ConstraintManager();
-  virtual const ProgramState *assume(const ProgramState *state,
+  virtual ProgramStateRef assume(ProgramStateRef state,
                                      DefinedSVal Cond,
                                      bool Assumption) = 0;
 
-  std::pair<const ProgramState*, const ProgramState*>
-    assumeDual(const ProgramState *state, DefinedSVal Cond)
+  std::pair<ProgramStateRef , ProgramStateRef >
+    assumeDual(ProgramStateRef state, DefinedSVal Cond)
   {
-    std::pair<const ProgramState*, const ProgramState*> res =
+    std::pair<ProgramStateRef , ProgramStateRef > res =
       std::make_pair(assume(state, Cond, true), assume(state, Cond, false));
 
     assert(!(!res.first && !res.second) && "System is over constrained.");
     return res;
   }
 
-  virtual const llvm::APSInt* getSymVal(const ProgramState *state,
+  virtual const llvm::APSInt* getSymVal(ProgramStateRef state,
                                         SymbolRef sym) const = 0;
 
-  virtual bool isEqual(const ProgramState *state,
+  virtual bool isEqual(ProgramStateRef state,
                        SymbolRef sym,
                        const llvm::APSInt& V) const = 0;
 
-  virtual const ProgramState *removeDeadBindings(const ProgramState *state,
+  virtual ProgramStateRef removeDeadBindings(ProgramStateRef state,
                                                  SymbolReaper& SymReaper) = 0;
 
-  virtual void print(const ProgramState *state,
+  virtual void print(ProgramStateRef state,
                      raw_ostream &Out,
                      const char* nl,
                      const char *sep) = 0;
 
-  virtual void EndPath(const ProgramState *state) {}
+  virtual void EndPath(ProgramStateRef state) {}
 
 protected:
   /// canReasonAbout - Not all ConstraintManagers can accurately reason about

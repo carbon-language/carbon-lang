@@ -182,7 +182,7 @@ namespace ento {
 }
 
 template <typename T>
-static bool hasFlag(SVal val, const ProgramState *state) {
+static bool hasFlag(SVal val, ProgramStateRef state) {
   if (SymbolRef sym = val.getAsSymbol())
     if (const unsigned *attachedFlags = state->get<T>(sym))
       return *attachedFlags;
@@ -190,7 +190,7 @@ static bool hasFlag(SVal val, const ProgramState *state) {
 }
 
 template <typename T>
-static void setFlag(const ProgramState *state, SVal val, CheckerContext &C) {
+static void setFlag(ProgramStateRef state, SVal val, CheckerContext &C) {
   // We tag the symbol that the SVal wraps.
   if (SymbolRef sym = val.getAsSymbol())
     C.addTransition(state->set<T>(sym, true));
@@ -220,7 +220,7 @@ void NSOrCFErrorDerefChecker::checkLocation(SVal loc, bool isLoad,
     return;
 
   ASTContext &Ctx = C.getASTContext();
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
 
   // If we are loading from NSError**/CFErrorRef* parameter, mark the resulting
   // SVal so that we can later check it when handling the
@@ -253,7 +253,7 @@ void NSOrCFErrorDerefChecker::checkEvent(ImplicitNullDerefEvent event) const {
     return;
 
   SVal loc = event.Location;
-  const ProgramState *state = event.SinkNode->getState();
+  ProgramStateRef state = event.SinkNode->getState();
   BugReporter &BR = *event.BR;
 
   bool isNSError = hasFlag<NSErrorOut>(loc, state);

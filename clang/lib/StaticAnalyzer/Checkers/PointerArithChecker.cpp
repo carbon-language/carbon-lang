@@ -36,7 +36,7 @@ void PointerArithChecker::checkPreStmt(const BinaryOperator *B,
   if (B->getOpcode() != BO_Sub && B->getOpcode() != BO_Add)
     return;
 
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   const LocationContext *LCtx = C.getLocationContext();
   SVal LV = state->getSVal(B->getLHS(), LCtx);
   SVal RV = state->getSVal(B->getRHS(), LCtx);

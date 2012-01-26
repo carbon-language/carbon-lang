@@ -22,10 +22,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
 
 namespace clang {
-
 namespace ento {
-
-class ProgramState;
 
 class SValBuilder {
   virtual void anchor();
@@ -88,35 +85,35 @@ public:
 
   /// Create a new value which represents a binary expression with two non
   /// location operands.
-  virtual SVal evalBinOpNN(const ProgramState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpNN(ProgramStateRef state, BinaryOperator::Opcode op,
                            NonLoc lhs, NonLoc rhs, QualType resultTy) = 0;
 
   /// Create a new value which represents a binary expression with two memory
   /// location operands.
-  virtual SVal evalBinOpLL(const ProgramState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpLL(ProgramStateRef state, BinaryOperator::Opcode op,
                            Loc lhs, Loc rhs, QualType resultTy) = 0;
 
   /// Create a new value which represents a binary expression with a memory
   /// location and non location operands. For example, this would be used to
   /// evaluate a pointer arithmetic operation.
-  virtual SVal evalBinOpLN(const ProgramState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpLN(ProgramStateRef state, BinaryOperator::Opcode op,
                            Loc lhs, NonLoc rhs, QualType resultTy) = 0;
 
   /// Evaluates a given SVal. If the SVal has only one possible (integer) value,
   /// that value is returned. Otherwise, returns NULL.
-  virtual const llvm::APSInt *getKnownValue(const ProgramState *state, SVal val) = 0;
+  virtual const llvm::APSInt *getKnownValue(ProgramStateRef state, SVal val) = 0;
   
   /// Handles generation of the value in case the builder is not smart enough to
   /// handle the given binary expression. Depending on the state, decides to
   /// either keep the expression or forget the history and generate an
   /// UnknownVal.
-  SVal makeGenericVal(const ProgramState *state, BinaryOperator::Opcode op,
+  SVal makeGenericVal(ProgramStateRef state, BinaryOperator::Opcode op,
                           NonLoc lhs, NonLoc rhs, QualType resultTy);
 
-  SVal evalBinOp(const ProgramState *state, BinaryOperator::Opcode op,
+  SVal evalBinOp(ProgramStateRef state, BinaryOperator::Opcode op,
                  SVal lhs, SVal rhs, QualType type);
   
-  DefinedOrUnknownSVal evalEQ(const ProgramState *state, DefinedOrUnknownSVal lhs,
+  DefinedOrUnknownSVal evalEQ(ProgramStateRef state, DefinedOrUnknownSVal lhs,
                               DefinedOrUnknownSVal rhs);
 
   ASTContext &getContext() { return Context; }

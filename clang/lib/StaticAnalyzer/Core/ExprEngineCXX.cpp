@@ -109,7 +109,7 @@ void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
                                           ExplodedNodeSet &Dst) {
   StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   const Expr *tempExpr = ME->GetTemporaryExpr()->IgnoreParens();
-  const ProgramState *state = Pred->getState();
+  ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
 
   // Bind the temporary object to the value of the expression. Then bind
@@ -187,7 +187,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
     StmtNodeBuilder Bldr(argsEvaluated, destNodes, *currentBuilderContext);
     for (ExplodedNodeSet::iterator NI = argsEvaluated.begin(),
                                   NE = argsEvaluated.end(); NI != NE; ++NI) {
-      const ProgramState *state = (*NI)->getState();
+      ProgramStateRef state = (*NI)->getState();
       // Setup 'this' region, so that the ctor is evaluated on the object pointed
       // by 'Dest'.
       state = state->bindLoc(loc::MemRegionVal(ThisR), loc::MemRegionVal(Dest));
@@ -206,7 +206,7 @@ void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E,
     {
       ExplodedNode *Pred = *i;
       const LocationContext *LC = Pred->getLocationContext();
-      const ProgramState *state = Pred->getState();
+      ProgramStateRef state = Pred->getState();
 
       state = invalidateArguments(state, CallOrObjCMessage(E, state, LC), LC);
       Bldr.generateNode(E, Pred, state);
@@ -235,7 +235,7 @@ void ExprEngine::VisitCXXDestructor(const CXXDestructorDecl *DD,
 
   CallEnter PP(S, SFC, Pred->getLocationContext());
 
-  const ProgramState *state = Pred->getState();
+  ProgramStateRef state = Pred->getState();
   state = state->bindLoc(loc::MemRegionVal(ThisR), loc::MemRegionVal(Dest));
   Bldr.generateNode(PP, Pred, state);
 }
@@ -255,7 +255,7 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   if (CNE->isArray()) {
     // FIXME: allocating an array requires simulating the constructors.
     // For now, just return a symbolicated region.
-    const ProgramState *state = Pred->getState();
+    ProgramStateRef state = Pred->getState();
     state = state->BindExpr(CNE, Pred->getLocationContext(),
                             loc::MemRegionVal(EleReg));
     Bldr.generateNode(CNE, Pred, state);
@@ -277,7 +277,7 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
   for (ExplodedNodeSet::iterator I = argsEvaluated.begin(), 
                                  E = argsEvaluated.end(); I != E; ++I) {
 
-    const ProgramState *state = (*I)->getState();
+    ProgramStateRef state = (*I)->getState();
     
     // Accumulate list of regions that are invalidated.
     // FIXME: Eventually we should unify the logic for constructor
@@ -331,7 +331,7 @@ void ExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE,
   StmtNodeBuilder Bldr(Argevaluated, Dst, *currentBuilderContext);
   for (ExplodedNodeSet::iterator I = Argevaluated.begin(), 
                                  E = Argevaluated.end(); I != E; ++I) {
-    const ProgramState *state = (*I)->getState();
+    ProgramStateRef state = (*I)->getState();
     Bldr.generateNode(CDE, *I, state);
   }
 }
@@ -347,7 +347,7 @@ void ExprEngine::VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred,
                                   getContext().getCanonicalType(TE->getType()),
                                                     LCtx);
 
-  const ProgramState *state = Pred->getState();
+  ProgramStateRef state = Pred->getState();
   SVal V = state->getSVal(loc::MemRegionVal(R));
   Bldr.generateNode(TE, Pred, state->BindExpr(TE, LCtx, V));
 }

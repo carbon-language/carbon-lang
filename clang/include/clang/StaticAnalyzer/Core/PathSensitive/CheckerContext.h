@@ -55,7 +55,7 @@ public:
   /// the state of the program before the checker ran. Note, checkers should
   /// not retain the node in their state since the nodes might get invalidated.
   ExplodedNode *getPredecessor() { return Pred; }
-  const ProgramState *getState() const { return Pred->getState(); }
+  ProgramStateRef getState() const { return Pred->getState(); }
 
   /// \brief Returns the number of times the current block has been visited
   /// along the analyzed path.
@@ -111,7 +111,7 @@ public:
   ///        tag is specified, a default tag, unique to the given checker,
   ///        will be used. Tags are used to prevent states generated at
   ///        different sites from caching out.
-  ExplodedNode *addTransition(const ProgramState *State,
+  ExplodedNode *addTransition(ProgramStateRef State,
                               const ProgramPointTag *Tag = 0) {
     return addTransitionImpl(State, false, 0, Tag);
   }
@@ -131,7 +131,7 @@ public:
   /// @param Tag The tag to uniquely identify the creation site.
   /// @param IsSink Mark the new node as sink, which will stop exploration of
   ///               the given path.
-  ExplodedNode *addTransition(const ProgramState *State,
+  ExplodedNode *addTransition(ProgramStateRef State,
                              ExplodedNode *Pred,
                              const ProgramPointTag *Tag = 0,
                              bool IsSink = false) {
@@ -140,7 +140,7 @@ public:
 
   /// \brief Generate a sink node. Generating sink stops exploration of the
   /// given path.
-  ExplodedNode *generateSink(const ProgramState *state = 0) {
+  ExplodedNode *generateSink(ProgramStateRef state = 0) {
     return addTransitionImpl(state ? state : getState(), true);
   }
 
@@ -177,7 +177,7 @@ public:
   StringRef getMacroNameOrSpelling(SourceLocation &Loc);
 
 private:
-  ExplodedNode *addTransitionImpl(const ProgramState *State,
+  ExplodedNode *addTransitionImpl(ProgramStateRef State,
                                  bool MarkAsSink,
                                  ExplodedNode *P = 0,
                                  const ProgramPointTag *Tag = 0) {

@@ -120,8 +120,8 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
       continue;
 
     // Conditions 5, 6, and 7.
-    const ProgramState *state = node->getState();
-    const ProgramState *pred_state = pred->getState();    
+    ProgramStateRef state = node->getState();
+    ProgramStateRef pred_state = pred->getState();    
     if (state->store != pred_state->store || state->GDM != pred_state->GDM ||
         progPoint.getLocationContext() != pred->getLocationContext())
       continue;
@@ -236,7 +236,7 @@ ExplodedNode** ExplodedNode::NodeGroup::end() const {
 }
 
 ExplodedNode *ExplodedGraph::getNode(const ProgramPoint &L,
-                                     const ProgramState *State,
+                                     ProgramStateRef State,
                                      bool IsSink,
                                      bool* IsNew) {
   // Profile 'State' to determine if we already have an existing node.

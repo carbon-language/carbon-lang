@@ -45,7 +45,7 @@ class SubEngine {
 public:
   virtual ~SubEngine() {}
 
-  virtual const ProgramState *getInitialState(const LocationContext *InitLoc) = 0;
+  virtual ProgramStateRef getInitialState(const LocationContext *InitLoc) = 0;
 
   virtual AnalysisManager &getAnalysisManager() = 0;
 
@@ -90,30 +90,30 @@ public:
 
   /// Called by ConstraintManager. Used to call checker-specific
   /// logic for handling assumptions on symbolic values.
-  virtual const ProgramState *processAssume(const ProgramState *state,
+  virtual ProgramStateRef processAssume(ProgramStateRef state,
                                        SVal cond, bool assumption) = 0;
 
   /// wantsRegionChangeUpdate - Called by ProgramStateManager to determine if a
   ///  region change should trigger a processRegionChanges update.
-  virtual bool wantsRegionChangeUpdate(const ProgramState *state) = 0;
+  virtual bool wantsRegionChangeUpdate(ProgramStateRef state) = 0;
 
   /// processRegionChanges - Called by ProgramStateManager whenever a change is made
   ///  to the store. Used to update checkers that track region values.
-  virtual const ProgramState *
-  processRegionChanges(const ProgramState *state,
+  virtual ProgramStateRef 
+  processRegionChanges(ProgramStateRef state,
                        const StoreManager::InvalidatedSymbols *invalidated,
                        ArrayRef<const MemRegion *> ExplicitRegions,
                        ArrayRef<const MemRegion *> Regions) = 0;
 
 
-  inline const ProgramState *
-  processRegionChange(const ProgramState *state,
+  inline ProgramStateRef 
+  processRegionChange(ProgramStateRef state,
                       const MemRegion* MR) {
     return processRegionChanges(state, 0, MR, MR);
   }
 
   /// printState - Called by ProgramStateManager to print checker-specific data.
-  virtual void printState(raw_ostream &Out, const ProgramState *State,
+  virtual void printState(raw_ostream &Out, ProgramStateRef State,
                           const char *NL, const char *Sep) = 0;
 
   /// Called by CoreEngine when the analysis worklist is either empty or the

@@ -379,7 +379,7 @@ public: // Part of public interface to class.
   StoreRef removeDeadBindings(Store store, const StackFrameContext *LCtx,
                               SymbolReaper& SymReaper);
 
-  StoreRef enterStackFrame(const ProgramState *state,
+  StoreRef enterStackFrame(ProgramStateRef state,
                            const LocationContext *callerCtx,
                            const StackFrameContext *calleeCtx);
 
@@ -388,7 +388,7 @@ public: // Part of public interface to class.
   //===------------------------------------------------------------------===//
 
   // FIXME: This method will soon be eliminated; see the note in Store.h.
-  DefinedOrUnknownSVal getSizeInElements(const ProgramState *state,
+  DefinedOrUnknownSVal getSizeInElements(ProgramStateRef state,
                                          const MemRegion* R, QualType EleTy);
 
   //===------------------------------------------------------------------===//
@@ -796,7 +796,7 @@ StoreRef RegionStoreManager::invalidateRegions(Store store,
 //===----------------------------------------------------------------------===//
 
 DefinedOrUnknownSVal
-RegionStoreManager::getSizeInElements(const ProgramState *state,
+RegionStoreManager::getSizeInElements(ProgramStateRef state,
                                       const MemRegion *R,
                                       QualType EleTy) {
   SVal Size = cast<SubRegion>(R)->getExtent(svalBuilder);
@@ -1858,7 +1858,7 @@ StoreRef RegionStoreManager::removeDeadBindings(Store store,
 }
 
 
-StoreRef RegionStoreManager::enterStackFrame(const ProgramState *state,
+StoreRef RegionStoreManager::enterStackFrame(ProgramStateRef state,
                                              const LocationContext *callerCtx,
                                              const StackFrameContext *calleeCtx)
 {

@@ -364,7 +364,7 @@ class NotableSymbolHandler
 : public StoreManager::BindingsHandler {
 
   SymbolRef Sym;
-  const ProgramState *PrevSt;
+  ProgramStateRef PrevSt;
   const Stmt *S;
   ProgramStateManager& VMgr;
   const ExplodedNode *Pred;
@@ -374,7 +374,7 @@ class NotableSymbolHandler
 public:
 
   NotableSymbolHandler(SymbolRef sym,
-                       const ProgramState *prevst,
+                       ProgramStateRef prevst,
                        const Stmt *s,
                        ProgramStateManager& vmgr,
                        const ExplodedNode *pred,
@@ -458,7 +458,7 @@ static void HandleNotableSymbol(const ExplodedNode *N,
                                 PathDiagnostic& PD) {
 
   const ExplodedNode *Pred = N->pred_empty() ? 0 : *N->pred_begin();
-  const ProgramState *PrevSt = Pred ? Pred->getState() : 0;
+  ProgramStateRef PrevSt = Pred ? Pred->getState() : 0;
 
   if (!PrevSt)
     return;

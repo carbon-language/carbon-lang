@@ -35,7 +35,7 @@ private:
 };
 }
 
-static StringRef getCalleeName(const ProgramState *State,
+static StringRef getCalleeName(ProgramStateRef State,
                                const CallExpr *CE,
                                const LocationContext *LCtx) {
   const Expr *Callee = CE->getCallee();
@@ -104,7 +104,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
   static SimpleProgramPointTag OSAtomicStoreTag("OSAtomicChecker : Store");
   
   // Load 'theValue'.
-  const ProgramState *state = Pred->getState();
+  ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
   ExplodedNodeSet Tmp;
   SVal location = state->getSVal(theValueExpr, LCtx);
@@ -133,7 +133,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
        I != E; ++I) {
 
     ExplodedNode *N = *I;
-    const ProgramState *stateLoad = N->getState();
+    ProgramStateRef stateLoad = N->getState();
 
     // Use direct bindings from the environment since we are forcing a load
     // from a location that the Environment would typically not be used
@@ -158,7 +158,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
     DefinedOrUnknownSVal Cmp =
       svalBuilder.evalEQ(stateLoad,theValueVal,oldValueVal);
 
-    const ProgramState *stateEqual = stateLoad->assume(Cmp, true);
+    ProgramStateRef stateEqual = stateLoad->assume(Cmp, true);
 
     // Were they equal?
     if (stateEqual) {
@@ -186,7 +186,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
       for (ExplodedNodeSet::iterator I2 = TmpStore.begin(),
            E2 = TmpStore.end(); I2 != E2; ++I2) {
         ExplodedNode *predNew = *I2;
-        const ProgramState *stateNew = predNew->getState();
+        ProgramStateRef stateNew = predNew->getState();
         // Check for 'void' return type if we have a bogus function prototype.
         SVal Res = UnknownVal();
         QualType T = CE->getType();
@@ -198,7 +198,7 @@ bool OSAtomicChecker::evalOSAtomicCompareAndSwap(const CallExpr *CE,
     }
 
     // Were they not equal?
-    if (const ProgramState *stateNotEqual = stateLoad->assume(Cmp, false)) {
+    if (ProgramStateRef stateNotEqual = stateLoad->assume(Cmp, false)) {
       // Check for 'void' return type if we have a bogus function prototype.
       SVal Res = UnknownVal();
       QualType T = CE->getType();

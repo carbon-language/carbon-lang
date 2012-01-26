@@ -31,7 +31,7 @@ class VLASizeChecker : public Checker< check::PreStmt<DeclStmt> > {
 
   void reportBug(VLASize_Kind Kind,
                  const Expr *SizeE,
-                 const ProgramState *State,
+                 ProgramStateRef State,
                  CheckerContext &C) const;
 public:
   void checkPreStmt(const DeclStmt *DS, CheckerContext &C) const;
@@ -40,7 +40,7 @@ public:
 
 void VLASizeChecker::reportBug(VLASize_Kind Kind,
                                const Expr *SizeE,
-                               const ProgramState *State,
+                               ProgramStateRef State,
                                CheckerContext &C) const {
   // Generate an error node.
   ExplodedNode *N = C.generateSink(State);
@@ -87,7 +87,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
 
   // FIXME: Handle multi-dimensional VLAs.
   const Expr *SE = VLA->getSizeExpr();
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   SVal sizeV = state->getSVal(SE, C.getLocationContext());
 
   if (sizeV.isUndef()) {
@@ -109,7 +109,7 @@ void VLASizeChecker::checkPreStmt(const DeclStmt *DS, CheckerContext &C) const {
   // Check if the size is zero.
   DefinedSVal sizeD = cast<DefinedSVal>(sizeV);
 
-  const ProgramState *stateNotZero, *stateZero;
+  ProgramStateRef stateNotZero, stateZero;
   llvm::tie(stateNotZero, stateZero) = state->assume(sizeD);
 
   if (stateZero && !stateNotZero) {

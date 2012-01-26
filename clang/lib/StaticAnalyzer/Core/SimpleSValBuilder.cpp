@@ -32,16 +32,16 @@ public:
 
   virtual SVal evalMinus(NonLoc val);
   virtual SVal evalComplement(NonLoc val);
-  virtual SVal evalBinOpNN(const ProgramState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpNN(ProgramStateRef state, BinaryOperator::Opcode op,
                            NonLoc lhs, NonLoc rhs, QualType resultTy);
-  virtual SVal evalBinOpLL(const ProgramState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpLL(ProgramStateRef state, BinaryOperator::Opcode op,
                            Loc lhs, Loc rhs, QualType resultTy);
-  virtual SVal evalBinOpLN(const ProgramState *state, BinaryOperator::Opcode op,
+  virtual SVal evalBinOpLN(ProgramStateRef state, BinaryOperator::Opcode op,
                            Loc lhs, NonLoc rhs, QualType resultTy);
 
   /// getKnownValue - evaluates a given SVal. If the SVal has only one possible
   ///  (integer) value, that value is returned. Otherwise, returns NULL.
-  virtual const llvm::APSInt *getKnownValue(const ProgramState *state, SVal V);
+  virtual const llvm::APSInt *getKnownValue(ProgramStateRef state, SVal V);
   
   SVal MakeSymIntVal(const SymExpr *LHS, BinaryOperator::Opcode op,
                      const llvm::APSInt &RHS, QualType resultTy);
@@ -276,7 +276,7 @@ SVal SimpleSValBuilder::MakeSymIntVal(const SymExpr *LHS,
   return makeNonLoc(LHS, op, RHS, resultTy);
 }
 
-SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
+SVal SimpleSValBuilder::evalBinOpNN(ProgramStateRef state,
                                   BinaryOperator::Opcode op,
                                   NonLoc lhs, NonLoc rhs,
                                   QualType resultTy)  {
@@ -547,7 +547,7 @@ SVal SimpleSValBuilder::evalBinOpNN(const ProgramState *state,
 }
 
 // FIXME: all this logic will change if/when we have MemRegion::getLocation().
-SVal SimpleSValBuilder::evalBinOpLL(const ProgramState *state,
+SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
                                   BinaryOperator::Opcode op,
                                   Loc lhs, Loc rhs,
                                   QualType resultTy) {
@@ -842,7 +842,7 @@ SVal SimpleSValBuilder::evalBinOpLL(const ProgramState *state,
   }
 }
 
-SVal SimpleSValBuilder::evalBinOpLN(const ProgramState *state,
+SVal SimpleSValBuilder::evalBinOpLN(ProgramStateRef state,
                                   BinaryOperator::Opcode op,
                                   Loc lhs, NonLoc rhs, QualType resultTy) {
   
@@ -936,7 +936,7 @@ SVal SimpleSValBuilder::evalBinOpLN(const ProgramState *state,
   return UnknownVal();  
 }
 
-const llvm::APSInt *SimpleSValBuilder::getKnownValue(const ProgramState *state,
+const llvm::APSInt *SimpleSValBuilder::getKnownValue(ProgramStateRef state,
                                                    SVal V) {
   if (V.isUnknownOrUndef())
     return NULL;

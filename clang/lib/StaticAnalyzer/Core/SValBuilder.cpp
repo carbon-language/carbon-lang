@@ -169,7 +169,7 @@ DefinedSVal SValBuilder::getBlockPointer(const BlockDecl *block,
 
 //===----------------------------------------------------------------------===//
 
-SVal SValBuilder::makeGenericVal(const ProgramState *State,
+SVal SValBuilder::makeGenericVal(ProgramStateRef State,
                                      BinaryOperator::Opcode Op,
                                      NonLoc LHS, NonLoc RHS,
                                      QualType ResultTy) {
@@ -196,7 +196,7 @@ SVal SValBuilder::makeGenericVal(const ProgramState *State,
 }
 
 
-SVal SValBuilder::evalBinOp(const ProgramState *state, BinaryOperator::Opcode op,
+SVal SValBuilder::evalBinOp(ProgramStateRef state, BinaryOperator::Opcode op,
                             SVal lhs, SVal rhs, QualType type) {
 
   if (lhs.isUndef() || rhs.isUndef())
@@ -224,7 +224,7 @@ SVal SValBuilder::evalBinOp(const ProgramState *state, BinaryOperator::Opcode op
   return evalBinOpNN(state, op, cast<NonLoc>(lhs), cast<NonLoc>(rhs), type);
 }
 
-DefinedOrUnknownSVal SValBuilder::evalEQ(const ProgramState *state,
+DefinedOrUnknownSVal SValBuilder::evalEQ(ProgramStateRef state,
                                          DefinedOrUnknownSVal lhs,
                                          DefinedOrUnknownSVal rhs) {
   return cast<DefinedOrUnknownSVal>(evalBinOp(state, BO_EQ, lhs, rhs,

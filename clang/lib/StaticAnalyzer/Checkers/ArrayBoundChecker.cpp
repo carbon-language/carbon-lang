@@ -51,15 +51,15 @@ void ArrayBoundChecker::checkLocation(SVal l, bool isLoad, const Stmt* LoadS,
   if (Idx.isZeroConstant())
     return;
 
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
 
   // Get the size of the array.
   DefinedOrUnknownSVal NumElements 
     = C.getStoreManager().getSizeInElements(state, ER->getSuperRegion(), 
                                             ER->getValueType());
 
-  const ProgramState *StInBound = state->assumeInBound(Idx, NumElements, true);
-  const ProgramState *StOutBound = state->assumeInBound(Idx, NumElements, false);
+  ProgramStateRef StInBound = state->assumeInBound(Idx, NumElements, true);
+  ProgramStateRef StOutBound = state->assumeInBound(Idx, NumElements, false);
   if (StOutBound && !StInBound) {
     ExplodedNode *N = C.generateSink(StOutBound);
     if (!N)

@@ -115,7 +115,7 @@ public:
 
   // FIXME: This should soon be eliminated altogether; clients should deal with
   // region extents directly.
-  virtual DefinedOrUnknownSVal getSizeInElements(const ProgramState *state, 
+  virtual DefinedOrUnknownSVal getSizeInElements(ProgramStateRef state, 
                                                  const MemRegion *region,
                                                  QualType EleTy) {
     return UnknownVal();
@@ -131,12 +131,12 @@ public:
   }
 
   class CastResult {
-    const ProgramState *state;
+    ProgramStateRef state;
     const MemRegion *region;
   public:
-    const ProgramState *getState() const { return state; }
+    ProgramStateRef getState() const { return state; }
     const MemRegion* getRegion() const { return region; }
-    CastResult(const ProgramState *s, const MemRegion* r = 0) : state(s), region(r){}
+    CastResult(ProgramStateRef s, const MemRegion* r = 0) : state(s), region(r){}
   };
 
   const ElementRegion *GetElementZeroRegion(const MemRegion *R, QualType T);
@@ -196,7 +196,7 @@ public:
 
   /// enterStackFrame - Let the StoreManager to do something when execution
   /// engine is about to execute into a callee.
-  virtual StoreRef enterStackFrame(const ProgramState *state,
+  virtual StoreRef enterStackFrame(ProgramStateRef state,
                                    const LocationContext *callerCtx,
                                    const StackFrameContext *calleeCtx);
 

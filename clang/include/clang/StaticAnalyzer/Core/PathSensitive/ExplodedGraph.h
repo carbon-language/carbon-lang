@@ -106,7 +106,7 @@ class ExplodedNode : public llvm::FoldingSetNode {
   const ProgramPoint Location;
 
   /// State - The state associated with this node.
-  const ProgramState *State;
+  ProgramStateRef State;
 
   /// Preds - The predecessors of this node.
   NodeGroup Preds;
@@ -116,7 +116,7 @@ class ExplodedNode : public llvm::FoldingSetNode {
 
 public:
 
-  explicit ExplodedNode(const ProgramPoint &loc, const ProgramState *state,
+  explicit ExplodedNode(const ProgramPoint &loc, ProgramStateRef state,
                         bool IsSink)
     : Location(loc), State(state) {
     const_cast<ProgramState*>(State)->incrementReferenceCount();
@@ -146,14 +146,14 @@ public:
     return *getLocationContext()->getAnalysis<T>();
   }
 
-  const ProgramState *getState() const { return State; }
+  ProgramStateRef getState() const { return State; }
 
   template <typename T>
   const T* getLocationAs() const { return llvm::dyn_cast<T>(&Location); }
 
   static void Profile(llvm::FoldingSetNodeID &ID,
                       const ProgramPoint &Loc,
-                      const ProgramState *state,
+                      ProgramStateRef state,
                       bool IsSink) {
     ID.Add(Loc);
     ID.AddPointer(state);
@@ -285,7 +285,7 @@ public:
   ///  where the 'Location' is a ProgramPoint in the CFG.  If no node for
   ///  this pair exists, it is created. IsNew is set to true if
   ///  the node was freshly created.
-  ExplodedNode *getNode(const ProgramPoint &L, const ProgramState *State,
+  ExplodedNode *getNode(const ProgramPoint &L, ProgramStateRef State,
                         bool IsSink = false,
                         bool* IsNew = 0);
 

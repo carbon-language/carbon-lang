@@ -356,7 +356,7 @@ void CheckerManager::runCheckersForBranchCondition(const Stmt *Condition,
 }
 
 /// \brief Run checkers for live symbols.
-void CheckerManager::runCheckersForLiveSymbols(const ProgramState *state,
+void CheckerManager::runCheckersForLiveSymbols(ProgramStateRef state,
                                                SymbolReaper &SymReaper) {
   for (unsigned i = 0, e = LiveSymbolsCheckers.size(); i != e; ++i)
     LiveSymbolsCheckers[i](state, SymReaper);
@@ -400,7 +400,7 @@ void CheckerManager::runCheckersForDeadSymbols(ExplodedNodeSet &Dst,
 }
 
 /// \brief True if at least one checker wants to check region changes.
-bool CheckerManager::wantsRegionChangeUpdate(const ProgramState *state) {
+bool CheckerManager::wantsRegionChangeUpdate(ProgramStateRef state) {
   for (unsigned i = 0, e = RegionChangesCheckers.size(); i != e; ++i)
     if (RegionChangesCheckers[i].WantUpdateFn(state))
       return true;
@@ -409,8 +409,8 @@ bool CheckerManager::wantsRegionChangeUpdate(const ProgramState *state) {
 }
 
 /// \brief Run checkers for region changes.
-const ProgramState *
-CheckerManager::runCheckersForRegionChanges(const ProgramState *state,
+ProgramStateRef 
+CheckerManager::runCheckersForRegionChanges(ProgramStateRef state,
                             const StoreManager::InvalidatedSymbols *invalidated,
                                     ArrayRef<const MemRegion *> ExplicitRegions,
                                           ArrayRef<const MemRegion *> Regions) {
@@ -426,8 +426,8 @@ CheckerManager::runCheckersForRegionChanges(const ProgramState *state,
 }
 
 /// \brief Run checkers for handling assumptions on symbolic values.
-const ProgramState *
-CheckerManager::runCheckersForEvalAssume(const ProgramState *state,
+ProgramStateRef 
+CheckerManager::runCheckersForEvalAssume(ProgramStateRef state,
                                          SVal Cond, bool Assumption) {
   for (unsigned i = 0, e = EvalAssumeCheckers.size(); i != e; ++i) {
     // If any checker declares the state infeasible (or if it starts that way),
@@ -534,7 +534,7 @@ void CheckerManager::runCheckersOnEndOfTranslationUnit(
 }
 
 void CheckerManager::runCheckersForPrintState(raw_ostream &Out,
-                                              const ProgramState *State,
+                                              ProgramStateRef State,
                                               const char *NL, const char *Sep) {
   for (llvm::DenseMap<CheckerTag, CheckerRef>::iterator
         I = CheckerTags.begin(), E = CheckerTags.end(); I != E; ++I)

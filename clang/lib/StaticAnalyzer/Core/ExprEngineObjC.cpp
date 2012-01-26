@@ -21,7 +21,7 @@ using namespace ento;
 void ExprEngine::VisitLvalObjCIvarRefExpr(const ObjCIvarRefExpr *Ex, 
                                           ExplodedNode *Pred,
                                           ExplodedNodeSet &Dst) {
-  const ProgramState *state = Pred->getState();
+  ProgramStateRef state = Pred->getState();
   const LocationContext *LCtx = Pred->getLocationContext();
   SVal baseVal = state->getSVal(Ex->getBase(), LCtx);
   SVal location = state->getLValue(Ex->getDecl(), baseVal);
@@ -71,7 +71,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   //    result in state splitting.
 
   const Stmt *elem = S->getElement();
-  const ProgramState *state = Pred->getState();
+  ProgramStateRef state = Pred->getState();
   SVal elementV;
   StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
   
@@ -92,16 +92,16 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
   for (ExplodedNodeSet::iterator NI = dstLocation.begin(),
        NE = dstLocation.end(); NI!=NE; ++NI) {
     Pred = *NI;
-    const ProgramState *state = Pred->getState();
+    ProgramStateRef state = Pred->getState();
     const LocationContext *LCtx = Pred->getLocationContext();
     
     // Handle the case where the container still has elements.
     SVal TrueV = svalBuilder.makeTruthVal(1);
-    const ProgramState *hasElems = state->BindExpr(S, LCtx, TrueV);
+    ProgramStateRef hasElems = state->BindExpr(S, LCtx, TrueV);
     
     // Handle the case where the container has no elements.
     SVal FalseV = svalBuilder.makeTruthVal(0);
-    const ProgramState *noElems = state->BindExpr(S, LCtx, FalseV);
+    ProgramStateRef noElems = state->BindExpr(S, LCtx, FalseV);
     
     if (loc::MemRegionVal *MV = dyn_cast<loc::MemRegionVal>(&elementV))
       if (const TypedValueRegion *R = 
@@ -147,13 +147,13 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
     bool RaisesException = false;
     
     if (const Expr *Receiver = msg.getInstanceReceiver()) {
-      const ProgramState *state = Pred->getState();
+      ProgramStateRef state = Pred->getState();
       SVal recVal = state->getSVal(Receiver, Pred->getLocationContext());
       if (!recVal.isUndef()) {
         // Bifurcate the state into nil and non-nil ones.
         DefinedOrUnknownSVal receiverVal = cast<DefinedOrUnknownSVal>(recVal);
         
-        const ProgramState *notNilState, *nilState;
+        ProgramStateRef notNilState, nilState;
         llvm::tie(notNilState, nilState) = state->assume(receiverVal);
         
         // There are three cases: can be nil or non-nil, must be nil, must be
@@ -228,7 +228,7 @@ void ExprEngine::VisitObjCMessage(const ObjCMessage &msg,
 void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
                                  const ObjCMessage &msg,
                                  ExplodedNode *Pred,
-                                 const ProgramState *state,
+                                 ProgramStateRef state,
                                  bool GenSink) {
   // First handle the return value.
   SVal ReturnValue = UnknownVal();

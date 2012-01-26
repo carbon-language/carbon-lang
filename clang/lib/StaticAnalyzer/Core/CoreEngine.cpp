@@ -152,7 +152,7 @@ WorkList* WorkList::makeBFSBlockDFSContents() {
 
 /// ExecuteWorkList - Run the worklist algorithm for a maximum number of steps.
 bool CoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
-                                   const ProgramState *InitState) {
+                                   ProgramStateRef InitState) {
 
   if (G->num_roots() == 0) { // Initialize the analysis by constructing
     // the root if none exists.
@@ -236,7 +236,7 @@ bool CoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
 
 void CoreEngine::ExecuteWorkListWithInitialState(const LocationContext *L, 
                                                  unsigned Steps,
-                                                 const ProgramState *InitState, 
+                                                 ProgramStateRef InitState, 
                                                  ExplodedNodeSet &Dst) {
   ExecuteWorkList(L, Steps, InitState);
   for (SmallVectorImpl<ExplodedNode*>::iterator I = G->EndNodes.begin(), 
@@ -424,7 +424,7 @@ void CoreEngine::HandlePostStmt(const CFGBlock *B, unsigned StmtIdx,
 /// generateNode - Utility method to generate nodes, hook up successors,
 ///  and add nodes to the worklist.
 void CoreEngine::generateNode(const ProgramPoint &Loc,
-                              const ProgramState *State,
+                              ProgramStateRef State,
                               ExplodedNode *Pred) {
 
   bool IsNew;
@@ -527,7 +527,7 @@ void CoreEngine::enqueueEndOfFunction(ExplodedNodeSet &Set) {
 void NodeBuilder::anchor() { }
 
 ExplodedNode* NodeBuilder::generateNodeImpl(const ProgramPoint &Loc,
-                                            const ProgramState *State,
+                                            ProgramStateRef State,
                                             ExplodedNode *FromN,
                                             bool MarkAsSink) {
   HasGeneratedNodes = true;
@@ -556,7 +556,7 @@ StmtNodeBuilder::~StmtNodeBuilder() {
 
 void BranchNodeBuilder::anchor() { }
 
-ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,
+ExplodedNode *BranchNodeBuilder::generateNode(ProgramStateRef State,
                                               bool branch,
                                               ExplodedNode *NodePred) {
   // If the branch has been marked infeasible we should not generate a node.
@@ -571,7 +571,7 @@ ExplodedNode *BranchNodeBuilder::generateNode(const ProgramState *State,
 
 ExplodedNode*
 IndirectGotoNodeBuilder::generateNode(const iterator &I,
-                                      const ProgramState *St,
+                                      ProgramStateRef St,
                                       bool IsSink) {
   bool IsNew;
   ExplodedNode *Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock(),
@@ -591,7 +591,7 @@ IndirectGotoNodeBuilder::generateNode(const iterator &I,
 
 ExplodedNode*
 SwitchNodeBuilder::generateCaseStmtNode(const iterator &I,
-                                        const ProgramState *St) {
+                                        ProgramStateRef St) {
 
   bool IsNew;
   ExplodedNode *Succ = Eng.G->getNode(BlockEdge(Src, I.getBlock(),
@@ -607,7 +607,7 @@ SwitchNodeBuilder::generateCaseStmtNode(const iterator &I,
 
 
 ExplodedNode*
-SwitchNodeBuilder::generateDefaultCaseNode(const ProgramState *St,
+SwitchNodeBuilder::generateDefaultCaseNode(ProgramStateRef St,
                                            bool IsSink) {
   // Get the block for the default case.
   assert(Src->succ_rbegin() != Src->succ_rend());

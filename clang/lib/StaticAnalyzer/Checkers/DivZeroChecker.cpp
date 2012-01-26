@@ -25,7 +25,7 @@ namespace {
 class DivZeroChecker : public Checker< check::PreStmt<BinaryOperator> > {
   mutable llvm::OwningPtr<BuiltinBug> BT;
   void reportBug(const char *Msg,
-                 const ProgramState *StateZero,
+                 ProgramStateRef StateZero,
                  CheckerContext &C) const ;
 public:
   void checkPreStmt(const BinaryOperator *B, CheckerContext &C) const;
@@ -33,7 +33,7 @@ public:
 } // end anonymous namespace
 
 void DivZeroChecker::reportBug(const char *Msg,
-                               const ProgramState *StateZero,
+                               ProgramStateRef StateZero,
                                CheckerContext &C) const {
   if (ExplodedNode *N = C.generateSink(StateZero)) {
     if (!BT)
@@ -72,7 +72,7 @@ void DivZeroChecker::checkPreStmt(const BinaryOperator *B,
 
   // Check for divide by zero.
   ConstraintManager &CM = C.getConstraintManager();
-  const ProgramState *stateNotZero, *stateZero;
+  ProgramStateRef stateNotZero, stateZero;
   llvm::tie(stateNotZero, stateZero) = CM.assumeDual(C.getState(), *DV);
 
   if (!stateNotZero) {

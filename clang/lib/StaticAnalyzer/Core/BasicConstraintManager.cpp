@@ -56,59 +56,59 @@ public:
     : SimpleConstraintManager(subengine), 
       ISetFactory(statemgr.getAllocator()) {}
 
-  const ProgramState *assumeSymNE(const ProgramState *state,
+  ProgramStateRef assumeSymNE(ProgramStateRef state,
                                   SymbolRef sym,
                                   const llvm::APSInt& V,
                                   const llvm::APSInt& Adjustment);
 
-  const ProgramState *assumeSymEQ(const ProgramState *state,
+  ProgramStateRef assumeSymEQ(ProgramStateRef state,
                                   SymbolRef sym,
                                   const llvm::APSInt& V,
                                   const llvm::APSInt& Adjustment);
 
-  const ProgramState *assumeSymLT(const ProgramState *state,
+  ProgramStateRef assumeSymLT(ProgramStateRef state,
                                   SymbolRef sym,
                                   const llvm::APSInt& V,
                                   const llvm::APSInt& Adjustment);
 
-  const ProgramState *assumeSymGT(const ProgramState *state,
+  ProgramStateRef assumeSymGT(ProgramStateRef state,
                                   SymbolRef sym,
                                   const llvm::APSInt& V,
                                   const llvm::APSInt& Adjustment);
 
-  const ProgramState *assumeSymGE(const ProgramState *state,
+  ProgramStateRef assumeSymGE(ProgramStateRef state,
                                   SymbolRef sym,
                                   const llvm::APSInt& V,
                                   const llvm::APSInt& Adjustment);
 
-  const ProgramState *assumeSymLE(const ProgramState *state,
+  ProgramStateRef assumeSymLE(ProgramStateRef state,
                                   SymbolRef sym,
                                   const llvm::APSInt& V,
                                   const llvm::APSInt& Adjustment);
 
-  const ProgramState *AddEQ(const ProgramState *state,
+  ProgramStateRef AddEQ(ProgramStateRef state,
                             SymbolRef sym,
                             const llvm::APSInt& V);
 
-  const ProgramState *AddNE(const ProgramState *state,
+  ProgramStateRef AddNE(ProgramStateRef state,
                             SymbolRef sym,
                             const llvm::APSInt& V);
 
-  const llvm::APSInt* getSymVal(const ProgramState *state,
+  const llvm::APSInt* getSymVal(ProgramStateRef state,
                                 SymbolRef sym) const;
 
-  bool isNotEqual(const ProgramState *state,
+  bool isNotEqual(ProgramStateRef state,
                   SymbolRef sym,
                   const llvm::APSInt& V) const;
 
-  bool isEqual(const ProgramState *state,
+  bool isEqual(ProgramStateRef state,
                SymbolRef sym,
                const llvm::APSInt& V) const;
 
-  const ProgramState *removeDeadBindings(const ProgramState *state,
+  ProgramStateRef removeDeadBindings(ProgramStateRef state,
                                          SymbolReaper& SymReaper);
 
-  void print(const ProgramState *state,
+  void print(ProgramStateRef state,
              raw_ostream &Out,
              const char* nl,
              const char *sep);
@@ -122,8 +122,8 @@ ento::CreateBasicConstraintManager(ProgramStateManager& statemgr,
   return new BasicConstraintManager(statemgr, subengine);
 }
 
-const ProgramState*
-BasicConstraintManager::assumeSymNE(const ProgramState *state,
+ProgramStateRef 
+BasicConstraintManager::assumeSymNE(ProgramStateRef state,
                                     SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
@@ -143,8 +143,8 @@ BasicConstraintManager::assumeSymNE(const ProgramState *state,
   return AddNE(state, sym, Adjusted);
 }
 
-const ProgramState*
-BasicConstraintManager::assumeSymEQ(const ProgramState *state,
+ProgramStateRef 
+BasicConstraintManager::assumeSymEQ(ProgramStateRef state,
                                     SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
@@ -165,8 +165,8 @@ BasicConstraintManager::assumeSymEQ(const ProgramState *state,
 }
 
 // The logic for these will be handled in another ConstraintManager.
-const ProgramState*
-BasicConstraintManager::assumeSymLT(const ProgramState *state,
+ProgramStateRef 
+BasicConstraintManager::assumeSymLT(ProgramStateRef state,
                                     SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
@@ -180,8 +180,8 @@ BasicConstraintManager::assumeSymLT(const ProgramState *state,
   return assumeSymNE(state, sym, V, Adjustment);
 }
 
-const ProgramState*
-BasicConstraintManager::assumeSymGT(const ProgramState *state,
+ProgramStateRef 
+BasicConstraintManager::assumeSymGT(ProgramStateRef state,
                                     SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
@@ -195,8 +195,8 @@ BasicConstraintManager::assumeSymGT(const ProgramState *state,
   return assumeSymNE(state, sym, V, Adjustment);
 }
 
-const ProgramState*
-BasicConstraintManager::assumeSymGE(const ProgramState *state,
+ProgramStateRef 
+BasicConstraintManager::assumeSymGE(ProgramStateRef state,
                                     SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
@@ -224,8 +224,8 @@ BasicConstraintManager::assumeSymGE(const ProgramState *state,
   return state;
 }
 
-const ProgramState*
-BasicConstraintManager::assumeSymLE(const ProgramState *state,
+ProgramStateRef 
+BasicConstraintManager::assumeSymLE(ProgramStateRef state,
                                     SymbolRef sym,
                                     const llvm::APSInt &V,
                                     const llvm::APSInt &Adjustment) {
@@ -253,14 +253,14 @@ BasicConstraintManager::assumeSymLE(const ProgramState *state,
   return state;
 }
 
-const ProgramState *BasicConstraintManager::AddEQ(const ProgramState *state,
+ProgramStateRef BasicConstraintManager::AddEQ(ProgramStateRef state,
                                                   SymbolRef sym,
                                              const llvm::APSInt& V) {
   // Create a new state with the old binding replaced.
   return state->set<ConstEq>(sym, &state->getBasicVals().getValue(V));
 }
 
-const ProgramState *BasicConstraintManager::AddNE(const ProgramState *state,
+ProgramStateRef BasicConstraintManager::AddNE(ProgramStateRef state,
                                                   SymbolRef sym,
                                                   const llvm::APSInt& V) {
 
@@ -275,13 +275,13 @@ const ProgramState *BasicConstraintManager::AddNE(const ProgramState *state,
   return state->set<ConstNotEq>(sym, S);
 }
 
-const llvm::APSInt* BasicConstraintManager::getSymVal(const ProgramState *state,
+const llvm::APSInt* BasicConstraintManager::getSymVal(ProgramStateRef state,
                                                       SymbolRef sym) const {
   const ConstEqTy::data_type* T = state->get<ConstEq>(sym);
   return T ? *T : NULL;
 }
 
-bool BasicConstraintManager::isNotEqual(const ProgramState *state,
+bool BasicConstraintManager::isNotEqual(ProgramStateRef state,
                                         SymbolRef sym,
                                         const llvm::APSInt& V) const {
 
@@ -292,7 +292,7 @@ bool BasicConstraintManager::isNotEqual(const ProgramState *state,
   return T ? T->contains(&state->getBasicVals().getValue(V)) : false;
 }
 
-bool BasicConstraintManager::isEqual(const ProgramState *state,
+bool BasicConstraintManager::isEqual(ProgramStateRef state,
                                      SymbolRef sym,
                                      const llvm::APSInt& V) const {
   // Retrieve the EQ-set associated with the given symbol.
@@ -303,8 +303,8 @@ bool BasicConstraintManager::isEqual(const ProgramState *state,
 
 /// Scan all symbols referenced by the constraints. If the symbol is not alive
 /// as marked in LSymbols, mark it as dead in DSymbols.
-const ProgramState*
-BasicConstraintManager::removeDeadBindings(const ProgramState *state,
+ProgramStateRef 
+BasicConstraintManager::removeDeadBindings(ProgramStateRef state,
                                            SymbolReaper& SymReaper) {
 
   ConstEqTy CE = state->get<ConstEq>();
@@ -329,7 +329,7 @@ BasicConstraintManager::removeDeadBindings(const ProgramState *state,
   return state->set<ConstNotEq>(CNE);
 }
 
-void BasicConstraintManager::print(const ProgramState *state,
+void BasicConstraintManager::print(ProgramStateRef state,
                                    raw_ostream &Out,
                                    const char* nl, const char *sep) {
   // Print equality constraints.

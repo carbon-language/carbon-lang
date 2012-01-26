@@ -39,7 +39,7 @@ void ExprEngine::processCallEnter(CallEnter CE, ExplodedNode *Pred) {
   // Construct a new state which contains the mapping from actual to
   // formal arguments.
   const LocationContext *callerCtx = Pred->getLocationContext();
-  const ProgramState *state = Pred->getState()->enterStackFrame(callerCtx,
+  ProgramStateRef state = Pred->getState()->enterStackFrame(callerCtx,
                                                                 calleeCtx);
   
   // Construct a new node and add it to the worklist.
@@ -69,7 +69,7 @@ static const ReturnStmt *getReturnStmt(const ExplodedNode *Node) {
 }
 
 void ExprEngine::processCallExit(ExplodedNode *Pred) {
-  const ProgramState *state = Pred->getState();
+  ProgramStateRef state = Pred->getState();
   const StackFrameContext *calleeCtx = 
     Pred->getLocationContext()->getCurrentStackFrame();
   const LocationContext *callerCtx = calleeCtx->getParent();
@@ -130,7 +130,7 @@ static unsigned getNumberStackFrames(const LocationContext *LCtx) {
 bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
                             const CallExpr *CE, 
                             ExplodedNode *Pred) {
-  const ProgramState *state = Pred->getState();
+  ProgramStateRef state = Pred->getState();
   const Expr *Callee = CE->getCallee();
   const FunctionDecl *FD =
   state->getSVal(Callee, Pred->getLocationContext()).getAsFunctionDecl();
@@ -208,8 +208,8 @@ static void findPtrToConstParams(llvm::SmallSet<unsigned, 1> &PreserveArgs,
   }
 }
 
-const ProgramState *
-ExprEngine::invalidateArguments(const ProgramState *State,
+ProgramStateRef 
+ExprEngine::invalidateArguments(ProgramStateRef State,
                                 const CallOrObjCMessage &Call,
                                 const LocationContext *LC) {
   SmallVector<const MemRegion *, 8> RegionsToInvalidate;
@@ -335,7 +335,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
 
       // Get the callee.
       const Expr *Callee = CE->getCallee()->IgnoreParens();
-      const ProgramState *state = Pred->getState();
+      ProgramStateRef state = Pred->getState();
       SVal L = state->getSVal(Callee, Pred->getLocationContext());
 
       // Figure out the result type. We do this dance to handle references.

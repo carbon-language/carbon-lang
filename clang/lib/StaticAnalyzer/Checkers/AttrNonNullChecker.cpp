@@ -33,7 +33,7 @@ public:
 
 void AttrNonNullChecker::checkPreStmt(const CallExpr *CE,
                                       CheckerContext &C) const {
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   const LocationContext *LCtx = C.getLocationContext();
 
   // Check if the callee has a 'nonnull' attribute.
@@ -86,7 +86,7 @@ void AttrNonNullChecker::checkPreStmt(const CallExpr *CE,
     }
 
     ConstraintManager &CM = C.getConstraintManager();
-    const ProgramState *stateNotNull, *stateNull;
+    ProgramStateRef stateNotNull, stateNull;
     llvm::tie(stateNotNull, stateNull) = CM.assumeDual(state, *DV);
 
     if (stateNull && !stateNotNull) {

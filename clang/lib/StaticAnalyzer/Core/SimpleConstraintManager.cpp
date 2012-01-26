@@ -54,7 +54,7 @@ bool SimpleConstraintManager::canReasonAbout(SVal X) const {
   return true;
 }
 
-const ProgramState *SimpleConstraintManager::assume(const ProgramState *state,
+ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state,
                                                DefinedSVal Cond,
                                                bool Assumption) {
   if (isa<NonLoc>(Cond))
@@ -63,13 +63,13 @@ const ProgramState *SimpleConstraintManager::assume(const ProgramState *state,
     return assume(state, cast<Loc>(Cond), Assumption);
 }
 
-const ProgramState *SimpleConstraintManager::assume(const ProgramState *state, Loc cond,
+ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state, Loc cond,
                                                bool assumption) {
   state = assumeAux(state, cond, assumption);
   return SU.processAssume(state, cond, assumption);
 }
 
-const ProgramState *SimpleConstraintManager::assumeAux(const ProgramState *state,
+ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
                                                   Loc Cond, bool Assumption) {
 
   BasicValueFactory &BasicVals = state->getBasicVals();
@@ -111,7 +111,7 @@ const ProgramState *SimpleConstraintManager::assumeAux(const ProgramState *state
   } // end switch
 }
 
-const ProgramState *SimpleConstraintManager::assume(const ProgramState *state,
+ProgramStateRef SimpleConstraintManager::assume(ProgramStateRef state,
                                                NonLoc cond,
                                                bool assumption) {
   state = assumeAux(state, cond, assumption);
@@ -134,8 +134,8 @@ static BinaryOperator::Opcode NegateComparison(BinaryOperator::Opcode op) {
 }
 
 
-const ProgramState *SimpleConstraintManager::assumeAuxForSymbol(
-                                              const ProgramState *State,
+ProgramStateRef SimpleConstraintManager::assumeAuxForSymbol(
+                                              ProgramStateRef State,
                                               SymbolRef Sym,
                                               bool Assumption) {
   QualType T =  State->getSymbolManager().getType(Sym);
@@ -146,7 +146,7 @@ const ProgramState *SimpleConstraintManager::assumeAuxForSymbol(
     return assumeSymEQ(State, Sym, zero, zero);
 }
 
-const ProgramState *SimpleConstraintManager::assumeAux(const ProgramState *state,
+ProgramStateRef SimpleConstraintManager::assumeAux(ProgramStateRef state,
                                                   NonLoc Cond,
                                                   bool Assumption) {
 
@@ -239,7 +239,7 @@ static llvm::APSInt computeAdjustment(const SymExpr *LHS,
   }
 }
 
-const ProgramState *SimpleConstraintManager::assumeSymRel(const ProgramState *state,
+ProgramStateRef SimpleConstraintManager::assumeSymRel(ProgramStateRef state,
                                                      const SymExpr *LHS,
                                                      BinaryOperator::Opcode op,
                                                      const llvm::APSInt& Int) {

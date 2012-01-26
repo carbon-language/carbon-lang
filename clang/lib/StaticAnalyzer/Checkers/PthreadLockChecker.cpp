@@ -56,7 +56,7 @@ template <> struct ProgramStateTrait<LockSet> :
 
 void PthreadLockChecker::checkPostStmt(const CallExpr *CE,
                                        CheckerContext &C) const {
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   const LocationContext *LCtx = C.getLocationContext();
   StringRef FName = C.getCalleeName(CE);
   if (FName.empty())
@@ -100,7 +100,7 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
   if (!lockR)
     return;
   
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   
   SVal X = state->getSVal(CE, C.getLocationContext());
   if (X.isUnknownOrUndef())
@@ -122,10 +122,10 @@ void PthreadLockChecker::AcquireLock(CheckerContext &C, const CallExpr *CE,
     return;
   }
 
-  const ProgramState *lockSucc = state;
+  ProgramStateRef lockSucc = state;
   if (isTryLock) {
     // Bifurcate the state, and allow a mode where the lock acquisition fails.
-    const ProgramState *lockFail;
+    ProgramStateRef lockFail;
     switch (semantics) {
     case PthreadSemantics:
       llvm::tie(lockFail, lockSucc) = state->assume(retVal);    
@@ -162,7 +162,7 @@ void PthreadLockChecker::ReleaseLock(CheckerContext &C, const CallExpr *CE,
   if (!lockR)
     return;
   
-  const ProgramState *state = C.getState();
+  ProgramStateRef state = C.getState();
   llvm::ImmutableList<const MemRegion*> LS = state->get<LockSet>();
 
   // FIXME: Better analysis requires IPA for wrappers.
