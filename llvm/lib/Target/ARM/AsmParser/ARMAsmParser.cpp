@@ -2552,16 +2552,12 @@ tryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
     if (getParser().ParseExpression(ImmVal))
       return MatchOperand_ParseFail;
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
-    if (!MCE) {
-      TokError("immediate value expected for vector index");
-      return MatchOperand_ParseFail;
-    }
+    if (!MCE)
+      return TokError("immediate value expected for vector index");
 
     SMLoc E = Parser.getTok().getLoc();
-    if (Parser.getTok().isNot(AsmToken::RBrac)) {
-      Error(E, "']' expected");
-      return MatchOperand_ParseFail;
-    }
+    if (Parser.getTok().isNot(AsmToken::RBrac))
+      return Error(E, "']' expected");
 
     Parser.Lex(); // Eat right bracket token.
 
