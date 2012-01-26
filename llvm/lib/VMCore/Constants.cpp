@@ -170,7 +170,7 @@ Constant *Constant::getAggregateElement(unsigned Elt) const {
   if (const UndefValue *UV = dyn_cast<UndefValue>(this))
     return UV->getElementValue(Elt);
   
-  if (const ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(this))
+  if (const ConstantDataSequential *CDS =dyn_cast<ConstantDataSequential>(this))
     return CDS->getElementAsConstant(Elt);
   return 0;
 }
@@ -201,8 +201,7 @@ void Constant::destroyConstantImpl() {
     }
 #endif
     assert(isa<Constant>(V) && "References remain to Constant being destroyed");
-    Constant *CV = cast<Constant>(V);
-    CV->destroyConstant();
+    cast<Constant>(V)->destroyConstant();
 
     // The constant should remove itself from our use list...
     assert((use_empty() || use_back() != V) && "Constant not removed!");
@@ -628,15 +627,13 @@ bool ConstantFP::isExactlyValue(const APFloat &V) const {
 /// getSequentialElement - If this CAZ has array or vector type, return a zero
 /// with the right element type.
 Constant *ConstantAggregateZero::getSequentialElement() const {
-  return Constant::getNullValue(
-                            cast<SequentialType>(getType())->getElementType());
+  return Constant::getNullValue(getType()->getSequentialElementType());
 }
 
 /// getStructElement - If this CAZ has struct type, return a zero with the
 /// right element type for the specified element.
 Constant *ConstantAggregateZero::getStructElement(unsigned Elt) const {
-  return Constant::getNullValue(
-                              cast<StructType>(getType())->getElementType(Elt));
+  return Constant::getNullValue(getType()->getStructElementType(Elt));
 }
 
 /// getElementValue - Return a zero of the right value for the specified GEP
@@ -663,13 +660,13 @@ Constant *ConstantAggregateZero::getElementValue(unsigned Idx) const {
 /// getSequentialElement - If this undef has array or vector type, return an
 /// undef with the right element type.
 UndefValue *UndefValue::getSequentialElement() const {
-  return UndefValue::get(cast<SequentialType>(getType())->getElementType());
+  return UndefValue::get(getType()->getSequentialElementType());
 }
 
 /// getStructElement - If this undef has struct type, return a zero with the
 /// right element type for the specified element.
 UndefValue *UndefValue::getStructElement(unsigned Elt) const {
-  return UndefValue::get(cast<StructType>(getType())->getElementType(Elt));
+  return UndefValue::get(getType()->getStructElementType(Elt));
 }
 
 /// getElementValue - Return an undef of the right value for the specified GEP
@@ -1020,8 +1017,8 @@ getWithOperands(ArrayRef<Constant*> Ops, Type *Ty) const {
 //                      isValueValidForType implementations
 
 bool ConstantInt::isValueValidForType(Type *Ty, uint64_t Val) {
-  unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth(); // assert okay
-  if (Ty == Type::getInt1Ty(Ty->getContext()))
+  unsigned NumBits = Ty->getIntegerBitWidth(); // assert okay
+  if (Ty->isIntegerTy(1))
     return Val == 0 || Val == 1;
   if (NumBits >= 64)
     return true; // always true, has to fit in largest type
@@ -1030,8 +1027,8 @@ bool ConstantInt::isValueValidForType(Type *Ty, uint64_t Val) {
 }
 
 bool ConstantInt::isValueValidForType(Type *Ty, int64_t Val) {
-  unsigned NumBits = cast<IntegerType>(Ty)->getBitWidth(); // assert okay
-  if (Ty == Type::getInt1Ty(Ty->getContext()))
+  unsigned NumBits = Ty->getIntegerBitWidth();
+  if (Ty->isIntegerTy(1))
     return Val == 0 || Val == 1 || Val == -1;
   if (NumBits >= 64)
     return true; // always true, has to fit in largest type
@@ -1536,8 +1533,7 @@ Constant *ConstantExpr::getPtrToInt(Constant *C, Type *DstTy) {
          "PtrToInt destination must be integer or integer vector");
   assert(isa<VectorType>(C->getType()) == isa<VectorType>(DstTy));
   if (isa<VectorType>(C->getType()))
-    assert(cast<VectorType>(C->getType())->getNumElements() ==
-           cast<VectorType>(DstTy)->getNumElements() &&
+    assert(C->getType()->getVectorNumElements()==DstTy->getVectorNumElements()&&
            "Invalid cast between a different number of vector elements");
   return getFoldedCast(Instruction::PtrToInt, C, DstTy);
 }
@@ -1549,8 +1545,7 @@ Constant *ConstantExpr::getIntToPtr(Constant *C, Type *DstTy) {
          "IntToPtr destination must be a pointer or pointer vector");
   assert(isa<VectorType>(C->getType()) == isa<VectorType>(DstTy));
   if (isa<VectorType>(C->getType()))
-    assert(cast<VectorType>(C->getType())->getNumElements() ==
-           cast<VectorType>(DstTy)->getNumElements() &&
+    assert(C->getType()->getVectorNumElements()==DstTy->getVectorNumElements()&&
            "Invalid cast between a different number of vector elements");
   return getFoldedCast(Instruction::IntToPtr, C, DstTy);
 }
@@ -1731,7 +1726,7 @@ Constant *ConstantExpr::getGetElementPtr(Constant *C, ArrayRef<Value *> Idxs,
   // Get the result type of the getelementptr!
   Type *Ty = GetElementPtrInst::getIndexedType(C->getType(), Idxs);
   assert(Ty && "GEP indices invalid!");
-  unsigned AS = cast<PointerType>(C->getType())->getAddressSpace();
+  unsigned AS = C->getType()->getPointerAddressSpace();
   Type *ReqTy = Ty->getPointerTo(AS);
   
   assert(C->getType()->isPointerTy() &&
@@ -1811,7 +1806,7 @@ Constant *ConstantExpr::getExtractElement(Constant *Val, Constant *Idx) {
   const ExprMapKeyType Key(Instruction::ExtractElement,ArgVec);
   
   LLVMContextImpl *pImpl = Val->getContext().pImpl;
-  Type *ReqTy = cast<VectorType>(Val->getType())->getElementType();
+  Type *ReqTy = Val->getType()->getVectorElementType();
   return pImpl->ExprConstants.getOrCreate(ReqTy, Key);
 }
 
@@ -1819,8 +1814,8 @@ Constant *ConstantExpr::getInsertElement(Constant *Val, Constant *Elt,
                                          Constant *Idx) {
   assert(Val->getType()->isVectorTy() &&
          "Tried to create insertelement operation on non-vector type!");
-  assert(Elt->getType() == cast<VectorType>(Val->getType())->getElementType()
-         && "Insertelement types must match!");
+  assert(Elt->getType() == Val->getType()->getVectorElementType() &&
+         "Insertelement types must match!");
   assert(Idx->getType()->isIntegerTy(32) &&
          "Insertelement index must be i32 type!");
 
@@ -1844,8 +1839,8 @@ Constant *ConstantExpr::getShuffleVector(Constant *V1, Constant *V2,
   if (Constant *FC = ConstantFoldShuffleVectorInstruction(V1, V2, Mask))
     return FC;          // Fold a few common cases.
 
-  unsigned NElts = cast<VectorType>(Mask->getType())->getNumElements();
-  Type *EltTy = cast<VectorType>(V1->getType())->getElementType();
+  unsigned NElts = Mask->getType()->getVectorNumElements();
+  Type *EltTy = V1->getType()->getVectorElementType();
   Type *ShufTy = VectorType::get(EltTy, NElts);
 
   // Look up the constant in the table first to ensure uniqueness
@@ -2055,7 +2050,7 @@ bool ConstantDataSequential::isElementTypeCompatible(const Type *Ty) {
 unsigned ConstantDataSequential::getNumElements() const {
   if (ArrayType *AT = dyn_cast<ArrayType>(getType()))
     return AT->getNumElements();
-  return cast<VectorType>(getType())->getNumElements();
+  return getType()->getVectorNumElements();
 }
 
 
@@ -2084,7 +2079,7 @@ static bool isAllZeros(StringRef Arr) {
 /// the correct element type.  We take the bytes in as an StringRef because
 /// we *want* an underlying "char*" to avoid TBAA type punning violations.
 Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
-  assert(isElementTypeCompatible(cast<SequentialType>(Ty)->getElementType()));
+  assert(isElementTypeCompatible(Ty->getSequentialElementType()));
   // If the elements are all zero or there are no elements, return a CAZ, which
   // is more dense and canonical.
   if (isAllZeros(Elements))
@@ -2266,7 +2261,7 @@ uint64_t ConstantDataSequential::getElementAsInteger(unsigned Elt) const {
   
   // The data is stored in host byte order, make sure to cast back to the right
   // type to load with the right endianness.
-  switch (cast<IntegerType>(getElementType())->getBitWidth()) {
+  switch (getElementType()->getIntegerBitWidth()) {
   default: assert(0 && "Invalid bitwidth for CDS");
   case 8:  return *(uint8_t*)EltPtr;
   case 16: return *(uint16_t*)EltPtr;
