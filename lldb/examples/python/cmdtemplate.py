@@ -3,10 +3,10 @@
 #----------------------------------------------------------------------
 # Be sure to add the python path that points to the LLDB shared library.
 #
-# To use this in the embedded python interpreter using "lldb":
-#   % cd /path/containing/cmdtemplate.py
-#   % lldb
-#   (lldb) script import cmdtemplate
+# # To use this in the embedded python interpreter using "lldb" just
+# import it with the full path using the "command script import" 
+# command
+#   (lldb) command script import /path/to/cmdtemplate.py
 #
 # For the shells csh, tcsh:
 #   ( setenv PYTHONPATH /path/to/LLDB.framework/Resources/Python ; ./cmdtemplate.py )
