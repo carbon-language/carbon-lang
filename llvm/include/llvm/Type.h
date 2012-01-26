@@ -315,6 +315,32 @@ public:
   unsigned getNumContainedTypes() const { return NumContainedTys; }
 
   //===--------------------------------------------------------------------===//
+  // Helper methods corresponding to subclass methods.  This forces a cast to
+  // the specified subclass and calls its accessor.  "getVectorNumElements" (for
+  // example) is shorthand for cast<VectorType>(Ty)->getNumElements().  This is
+  // only intended to cover the core methods that are frequently used, helper
+  // methods should not be added here.
+  
+  unsigned getIntegerBitWidth() const;
+
+  Type *getFunctionParamType(unsigned i) const;
+  unsigned getFunctionNumParams() const;
+  bool isFunctionVarArg() const;
+  
+  // TODO: StructType
+  
+  Type *getSequentialElementType() const;
+  
+  uint64_t getArrayNumElements() const;
+  Type *getArrayElementType() const { return getSequentialElementType(); }
+
+  unsigned getVectorNumElements() const;
+  Type *getVectorElementType() const { return getSequentialElementType(); }
+
+  unsigned getPointerAddressSpace() const;
+  Type *getPointerElementType() const { return getSequentialElementType(); }
+  
+  //===--------------------------------------------------------------------===//
   // Static members exported by the Type class itself.  Useful for getting
   // instances of Type.
   //
