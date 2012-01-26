@@ -233,7 +233,7 @@ void MCObjectStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
 }
 
 void MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
-                                        unsigned char Value) {
+                                         unsigned char Value) {
   int64_t Res;
   if (Offset->EvaluateAsAbsolute(Res, getAssembler())) {
     new MCOrgFragment(*Offset, Value, getCurrentSectionData());
