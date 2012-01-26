@@ -55,7 +55,10 @@ ASTConsumer *FixItAction::CreateASTConsumer(CompilerInstance &CI,
 namespace {
 class FixItRewriteInPlace : public FixItOptions {
 public:
-  std::string RewriteFilename(const std::string &Filename) { return Filename; }
+  std::string RewriteFilename(const std::string &Filename, int &fd) {
+    fd = -1;
+    return Filename;
+  }
 };
 
 class FixItActionSuffixInserter : public FixItOptions {
@@ -67,7 +70,8 @@ public:
       this->FixWhatYouCan = FixWhatYouCan;
   }
 
-  std::string RewriteFilename(const std::string &Filename) {
+  std::string RewriteFilename(const std::string &Filename, int &fd) {
+    fd = -1;
     llvm::SmallString<128> Path(Filename);
     llvm::sys::path::replace_extension(Path,
       NewSuffix + llvm::sys::path::extension(Path));
@@ -77,16 +81,13 @@ public:
 
 class FixItRewriteToTemp : public FixItOptions {
 public:
-  std::string RewriteFilename(const std::string &Filename) {
+  std::string RewriteFilename(const std::string &Filename, int &fd) {
     llvm::SmallString<128> Path;
     Path = llvm::sys::path::filename(Filename);
     Path += "-%%%%%%%%";
     Path += llvm::sys::path::extension(Filename);
-    int fd;
     llvm::SmallString<128> NewPath;
-    if (llvm::sys::fs::unique_file(Path.str(), fd, NewPath)
-          == llvm::errc::success)
-      ::close(fd);
+    llvm::sys::fs::unique_file(Path.str(), fd, NewPath);
     return NewPath.str();
   }
 };

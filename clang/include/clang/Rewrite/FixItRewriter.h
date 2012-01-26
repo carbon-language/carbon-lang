@@ -33,7 +33,12 @@ public:
 
   /// \brief This file is about to be rewritten. Return the name of the file
   /// that is okay to write to.
-  virtual std::string RewriteFilename(const std::string &Filename) = 0;
+  ///
+  /// \param fd out parameter for file descriptor. After the call it may be set
+  /// to an open file descriptor for the returned filename, or it will be -1
+  /// otherwise.
+  ///
+  virtual std::string RewriteFilename(const std::string &Filename, int &fd) = 0;
 
   /// \brief Whether to abort fixing a file when not all errors could be fixed.
   bool FixWhatYouCan;
