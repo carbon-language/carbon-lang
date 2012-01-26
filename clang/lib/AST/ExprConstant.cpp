@@ -503,7 +503,7 @@ static void describeCall(CallStackFrame *Frame, llvm::raw_ostream &Out) {
 
   for (FunctionDecl::param_const_iterator I = Frame->Callee->param_begin(),
        E = Frame->Callee->param_end(); I != E; ++I, ++ArgIndex) {
-    if (ArgIndex > IsMemberCall)
+    if (ArgIndex > (unsigned)IsMemberCall)
       Out << ", ";
 
     const ParmVarDecl *Param = *I;
