@@ -1296,7 +1296,7 @@ void AsmPrinter::EmitXXStructorList(const Constant *List, bool isCtor) {
     OutStreamer.SwitchSection(OutputSection);
     if (OutStreamer.getCurrentSection() != OutStreamer.getPreviousSection())
       EmitAlignment(Align);
-    EmitGlobalConstant(Structors[i].second);
+    EmitXXStructor(Structors[i].second);
   }
 }
 

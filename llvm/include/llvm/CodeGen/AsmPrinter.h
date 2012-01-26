@@ -268,6 +268,12 @@ namespace llvm {
 
     virtual void EmitMachineConstantPoolValue(MachineConstantPoolValue *MCPV);
 
+    /// EmitXXStructor - Targets can override this to change how global constants
+    /// that are part of a C++ static/global constructor list are emitted.
+    virtual void EmitXXStructor(const Constant *CV) {
+      EmitGlobalConstant(CV);
+    }
+
     /// isBlockOnlyReachableByFallthough - Return true if the basic block has
     /// exactly one predecessor and the control transfer mechanism between
     /// the predecessor and this block is a fall-through.

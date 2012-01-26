@@ -299,6 +299,22 @@ void ARMAsmPrinter::EmitFunctionEntryLabel() {
   OutStreamer.EmitLabel(CurrentFnSym);
 }
 
+void ARMAsmPrinter::EmitXXStructor(const Constant *CV) {
+  uint64_t Size = TM.getTargetData()->getTypeAllocSize(CV->getType());
+  assert(Size && "C++ constructor pointer had zero size!");
+
+  const GlobalValue *GV = dyn_cast<GlobalValue>(CV);
+  assert(GV && "C++ constructor pointer was not a GlobalValue!");
+
+  const MCExpr *E = MCSymbolRefExpr::Create(Mang->getSymbol(GV),
+                                            (Subtarget->isTargetDarwin()
+                                             ? MCSymbolRefExpr::VK_None
+                                             : MCSymbolRefExpr::VK_ARM_TARGET1),
+                                            OutContext);
+  
+  OutStreamer.EmitValue(E, Size);
+}
+
 /// runOnMachineFunction - This uses the EmitInstruction()
 /// method to print assembly for each instruction.
 ///

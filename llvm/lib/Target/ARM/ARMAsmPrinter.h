@@ -73,6 +73,7 @@ public:
   virtual void EmitFunctionEntryLabel();
   void EmitStartOfAsmFile(Module &M);
   void EmitEndOfAsmFile(Module &M);
+  void EmitXXStructor(const Constant *CV);
 
   // lowerOperand - Convert a MachineOperand into the equivalent MCOperand.
   bool lowerOperand(const MachineOperand &MO, MCOperand &MCOp);
