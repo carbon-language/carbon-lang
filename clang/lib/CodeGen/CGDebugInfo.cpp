@@ -1171,16 +1171,21 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // Convert all the elements.
   SmallVector<llvm::Value *, 16> EltTys;
 
-  // Collect static variables with initializers.
-  CollectRecordStaticVars(RD, FwdDecl);
-  CollectRecordFields(RD, DefUnit, EltTys, FwdDecl);
-
-  // Collect C++ information.
+  // Note: The split of CXXDecl information here is intentional, the
+  // gdb tests will depend on a certain ordering at printout. The debug
+  // information offsets are still correct if we merge them all together
+  // though.
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
-  llvm::DIArray TParamsArray;
   if (CXXDecl) {
     CollectCXXBases(CXXDecl, DefUnit, EltTys, FwdDecl);
     CollectVTableInfo(CXXDecl, DefUnit, EltTys);
+  }
+
+  // Collect static variables with initializers and other fields.
+  CollectRecordStaticVars(RD, FwdDecl);
+  CollectRecordFields(RD, DefUnit, EltTys, FwdDecl);
+  llvm::DIArray TParamsArray;
+  if (CXXDecl) {
     CollectCXXMemberFunctions(CXXDecl, DefUnit, EltTys, FwdDecl);
     CollectCXXFriends(CXXDecl, DefUnit, EltTys, FwdDecl);
     if (const ClassTemplateSpecializationDecl *TSpecial
