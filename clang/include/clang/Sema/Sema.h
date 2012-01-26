@@ -2137,7 +2137,7 @@ public:
                                          bool AllowFunctionParameters);
 
   StmtResult ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp);
-  StmtResult ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp);
+  StmtResult ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp);
 
   StmtResult ActOnAsmStmt(SourceLocation AsmLoc,
                           bool IsSimple, bool IsVolatile,

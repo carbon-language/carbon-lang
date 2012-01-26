@@ -166,7 +166,8 @@ public:
   };
 
   CapturingScopeInfo(DiagnosticsEngine &Diag, ImplicitCaptureStyle Style)
-    : FunctionScopeInfo(Diag), ImpCaptureStyle(Style), CXXThisCaptureIndex(0)
+    : FunctionScopeInfo(Diag), ImpCaptureStyle(Style), CXXThisCaptureIndex(0),
+      HasImplicitReturnType(false)
      {}
 
   /// CaptureMap - A map of captured variables to (index+1) into Captures.
@@ -178,6 +179,14 @@ public:
 
   /// Captures - The captures.
   SmallVector<Capture, 4> Captures;
+
+  /// \brief - Whether the target type of return statements in this context
+  /// is deduced (e.g. a lambda or block with omitted return type).
+  bool HasImplicitReturnType;
+
+  /// ReturnType - The target type of return statements in this context,
+  /// or null if unknown.
+  QualType ReturnType;
 
   void AddCapture(VarDecl *Var, bool isByref, bool isNested, Expr *Cpy) {
     Captures.push_back(Capture(Var, isByref, isNested, Cpy));
@@ -203,10 +212,6 @@ public:
   /// TheScope - This is the scope for the block itself, which contains
   /// arguments etc.
   Scope *TheScope;
-
-  /// ReturnType - The return type of the block, or null if the block
-  /// signature didn't provide an explicit return type.
-  QualType ReturnType;
 
   /// BlockType - The function type of the block, if one was given.
   /// Its return type may be BuiltinType::Dependent.
@@ -236,15 +241,9 @@ public:
   /// explicit captures.
   unsigned NumExplicitCaptures;
 
-  /// \brief - Whether the return type of the lambda is implicit
-  bool HasImplicitReturnType;
-
-  /// ReturnType - The return type of the lambda, or null if unknown.
-  QualType ReturnType;
-
   LambdaScopeInfo(DiagnosticsEngine &Diag, CXXRecordDecl *Lambda)
     : CapturingScopeInfo(Diag, ImpCap_None), Lambda(Lambda),
-      NumExplicitCaptures(0), HasImplicitReturnType(false)
+      NumExplicitCaptures(0)
   {
     Kind = SK_Lambda;
   }

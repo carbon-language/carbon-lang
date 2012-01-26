@@ -8142,30 +8142,20 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   }
 
   const FunctionType *exprFunctionType = E->getFunctionType();
-  QualType exprResultType = exprFunctionType->getResultType();
-  if (!exprResultType.isNull()) {
-    if (!exprResultType->isDependentType())
-      blockScope->ReturnType = exprResultType;
-    else if (exprResultType != getSema().Context.DependentTy)
-      blockScope->ReturnType = getDerived().TransformType(exprResultType);
-  }
-  
-  // If the return type has not been determined yet, leave it as a dependent
-  // type; it'll get set when we process the body.
-  if (blockScope->ReturnType.isNull())
-    blockScope->ReturnType = getSema().Context.DependentTy;
+  QualType exprResultType =
+      getDerived().TransformType(exprFunctionType->getResultType());
 
   // Don't allow returning a objc interface by value.
-  if (blockScope->ReturnType->isObjCObjectType()) {
+  if (exprResultType->isObjCObjectType()) {
     getSema().Diag(E->getCaretLocation(), 
                    diag::err_object_cannot_be_passed_returned_by_value) 
-      << 0 << blockScope->ReturnType;
+      << 0 << exprResultType;
     getSema().ActOnBlockError(E->getCaretLocation(), /*Scope=*/0);
     return ExprError();
   }
 
   QualType functionType = getDerived().RebuildFunctionProtoType(
-                                                        blockScope->ReturnType,
+                                                        exprResultType,
                                                         paramTypes.data(),
                                                         paramTypes.size(),
                                                         oldBlock->isVariadic(),
@@ -8176,12 +8166,11 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
   // Set the parameters on the block decl.
   if (!params.empty())
     blockScope->TheDecl->setParams(params);
-  
-  // If the return type wasn't explicitly set, it will have been marked as a 
-  // dependent type (DependentTy); clear out the return type setting so 
-  // we will deduce the return type when type-checking the block's body.
-  if (blockScope->ReturnType == getSema().Context.DependentTy)
-    blockScope->ReturnType = QualType();
+
+  if (!oldBlock->blockMissingReturnType()) {
+    blockScope->HasImplicitReturnType = false;
+    blockScope->ReturnType = exprResultType;
+  }
   
   // Transform the body
   StmtResult body = getDerived().TransformStmt(E->getBody());

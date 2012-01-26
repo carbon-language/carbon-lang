@@ -1781,53 +1781,51 @@ Sema::PerformMoveOrCopyInitialization(const InitializedEntity &Entity,
   return Res;
 }
 
-/// ActOnBlockReturnStmt - Utility routine to figure out block's return type.
+/// ActOnCapScopeReturnStmt - Utility routine to type-check return statements
+/// for capturing scopes.
 ///
 StmtResult
-Sema::ActOnBlockReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
-  // If this is the first return we've seen in the block, infer the type of
-  // the block from it.
-  BlockScopeInfo *CurBlock = getCurBlock();
-  if (CurBlock->TheDecl->blockMissingReturnType()) {
-    QualType BlockReturnT;
+Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
+  // If this is the first return we've seen, infer the return type.
+  // [expr.prim.lambda]p4 in C++11; block literals follow a superset of those
+  // rules which allows multiple return statements.
+  CapturingScopeInfo *CurCap = cast<CapturingScopeInfo>(getCurFunction());
+  if (CurCap->HasImplicitReturnType) {
+    QualType ReturnT;
     if (RetValExp) {
-      // Don't call UsualUnaryConversions(), since we don't want to do
-      // integer promotions here.
       ExprResult Result = DefaultFunctionArrayLvalueConversion(RetValExp);
       if (Result.isInvalid())
         return StmtError();
       RetValExp = Result.take();
 
-      if (!RetValExp->isTypeDependent()) {
-        BlockReturnT = RetValExp->getType();
-        if (BlockDeclRefExpr *CDRE = dyn_cast<BlockDeclRefExpr>(RetValExp)) {
-          // We have to remove a 'const' added to copied-in variable which was
-          // part of the implementation spec. and not the actual qualifier for
-          // the variable.
-          if (CDRE->isConstQualAdded())
-            CurBlock->ReturnType.removeLocalConst(); // FIXME: local???
-        }
-      } else
-        BlockReturnT = Context.DependentTy;
-    } else
-        BlockReturnT = Context.VoidTy;
-    if (!CurBlock->ReturnType.isNull() && !CurBlock->ReturnType->isDependentType()
-        && !BlockReturnT->isDependentType() 
-        // when block's return type is not specified, all return types
-        // must strictly match.
-        && !Context.hasSameType(BlockReturnT, CurBlock->ReturnType)) { 
-        Diag(ReturnLoc, diag::err_typecheck_missing_return_type_incompatible) 
-            << BlockReturnT << CurBlock->ReturnType;
-        return StmtError();
+      if (!RetValExp->isTypeDependent())
+        ReturnT = RetValExp->getType();
+      else
+        ReturnT = Context.DependentTy;
+    } else {
+      ReturnT = Context.VoidTy;
     }
-    CurBlock->ReturnType = BlockReturnT;
+    // We require the return types to strictly match here.
+    if (!CurCap->ReturnType.isNull() &&
+        !CurCap->ReturnType->isDependentType() &&
+        !ReturnT->isDependentType() &&
+        !Context.hasSameType(ReturnT, CurCap->ReturnType)) { 
+      // FIXME: Adapt diagnostic for lambdas.
+      Diag(ReturnLoc, diag::err_typecheck_missing_return_type_incompatible) 
+          << ReturnT << CurCap->ReturnType;
+      return StmtError();
+    }
+    CurCap->ReturnType = ReturnT;
   }
-  QualType FnRetType = CurBlock->ReturnType;
+  QualType FnRetType = CurCap->ReturnType;
+  assert(!FnRetType.isNull());
 
-  if (CurBlock->FunctionType->getAs<FunctionType>()->getNoReturnAttr()) {
-    Diag(ReturnLoc, diag::err_noreturn_block_has_return_expr);
-    return StmtError();
-  }
+  if (BlockScopeInfo *CurBlock = dyn_cast<BlockScopeInfo>(CurCap))
+    if (CurBlock->FunctionType->getAs<FunctionType>()->getNoReturnAttr()) {
+      Diag(ReturnLoc, diag::err_noreturn_block_has_return_expr);
+      return StmtError();
+    }
+  // FIXME: [[noreturn]] for lambdas!
 
   // Otherwise, verify that this result type matches the previous one.  We are
   // pickier with blocks than for normal functions because we don't have GCC
@@ -1891,8 +1889,8 @@ Sema::ActOnReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   if (RetValExp && DiagnoseUnexpandedParameterPack(RetValExp))
     return StmtError();
   
-  if (getCurBlock())
-    return ActOnBlockReturnStmt(ReturnLoc, RetValExp);
+  if (isa<CapturingScopeInfo>(getCurFunction()))
+    return ActOnCapScopeReturnStmt(ReturnLoc, RetValExp);
 
   QualType FnRetType;
   QualType DeclaredRetType;

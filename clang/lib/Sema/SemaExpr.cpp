@@ -8769,6 +8769,8 @@ void Sema::ActOnBlockStart(SourceLocation CaretLoc, Scope *CurScope) {
   else
     CurContext = Block;
 
+  getCurBlock()->HasImplicitReturnType = true;
+
   // Enter a new evaluation context to insulate the block from any
   // cleanups from the enclosing full-expression.
   PushExpressionEvaluationContext(PotentiallyEvaluated);  
@@ -8835,6 +8837,7 @@ void Sema::ActOnBlockArguments(Declarator &ParamInfo, Scope *CurScope) {
   if (RetTy != Context.DependentTy) {
     CurBlock->ReturnType = RetTy;
     CurBlock->TheDecl->setBlockMissingReturnType(false);
+    CurBlock->HasImplicitReturnType = false;
   }
 
   // Push block parameters from the declarator if we had them.
