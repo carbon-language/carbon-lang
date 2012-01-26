@@ -249,7 +249,7 @@ let isCall = 1, isCodeGenOnly = 1 in
   let Defs = [RAX, RCX, RDX, R8, R9, R10, R11,
               FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0, ST1,
               MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, EFLAGS],
+              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, YMM_HI_6_15, EFLAGS],
       Uses = [RSP] in {
     def WINCALL64pcrel32 : Ii32PCRel<0xE8, RawFrm,
                              (outs), (ins i64i32imm_pcrel:$dst, variable_ops),
