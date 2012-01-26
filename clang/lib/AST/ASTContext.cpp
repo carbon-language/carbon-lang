@@ -5934,9 +5934,12 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
         return LHS;
     }
     // allow block pointer type to match an 'id' type.
-    if (OfBlockPointer && !BlockReturnType &&
-        LHS->isObjCIdType() && RHS->isBlockPointerType())
-      return LHS;
+    if (OfBlockPointer && !BlockReturnType) {
+       if (LHS->isObjCIdType() && RHS->isBlockPointerType())
+         return LHS;
+      if (RHS->isObjCIdType() && LHS->isBlockPointerType())
+        return RHS;
+    }
     
     return QualType();
   }
