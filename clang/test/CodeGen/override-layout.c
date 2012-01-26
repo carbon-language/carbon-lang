@@ -136,6 +136,7 @@ void use_structs() {
   x6.b = sizeof(struct X6);
 
   struct X7 x7;
+  typedef int X7array[sizeof(struct X7)];
   x7.x = sizeof(struct X7);
   x7.y = x7.x;
 
