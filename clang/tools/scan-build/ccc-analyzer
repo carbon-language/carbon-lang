@@ -331,7 +331,6 @@ my %CompileOptionMap = (
   '-nostdinc' => 0,
   '-fblocks' => 0,
   '-fno-builtin' => 0,
-  '-fobjc-arc' => 0,
   '-fobjc-gc-only' => 0,
   '-fobjc-gc' => 0,
   '-ffreestanding' => 0,
@@ -350,6 +349,8 @@ my %LinkerOptionMap = (
 );
 
 my %CompilerLinkerOptionMap = (
+  '-fobjc-arc' => 0,
+  '-fobjc-abi-version' => 0, # This is really a 1 argument, but always has '='
   '-isysroot' => 1,
   '-arch' => 1,
   '-m32' => 0,
