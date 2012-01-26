@@ -169,7 +169,8 @@ int main(int argc, char **argv) {
   // and from an installed path. We try and auto-detect which case we are in so
   // that we can report the correct information when run from a development
   // tree.
-  bool IsInDevelopmentTree, DevelopmentTreeLayoutIsCMakeStyle;
+  bool IsInDevelopmentTree;
+  enum { MakefileStyle, CMakeStyle, CMakeBuildModeStyle } DevelopmentTreeLayout;
   llvm::SmallString<256> CurrentPath(GetExecutablePath(argv[0]).str());
   std::string CurrentExecPrefix;
   std::string ActiveObjRoot;
@@ -185,7 +186,7 @@ int main(int argc, char **argv) {
   // symbolic links, but is good enough.
   if (CurrentExecPrefix == std::string(LLVM_OBJ_ROOT) + "/" + LLVM_BUILDMODE) {
     IsInDevelopmentTree = true;
-    DevelopmentTreeLayoutIsCMakeStyle = false;
+    DevelopmentTreeLayout = MakefileStyle;
 
     // If we are in a development tree, then check if we are in a BuildTools
     // directory. This indicates we are built for the build triple, but we
@@ -195,9 +196,13 @@ int main(int argc, char **argv) {
     } else {
       ActiveObjRoot = LLVM_OBJ_ROOT;
     }
+  } else if (CurrentExecPrefix == std::string(LLVM_OBJ_ROOT)) {
+    IsInDevelopmentTree = true;
+    DevelopmentTreeLayout = CMakeStyle;
+    ActiveObjRoot = LLVM_OBJ_ROOT;
   } else if (CurrentExecPrefix == std::string(LLVM_OBJ_ROOT) + "/bin") {
     IsInDevelopmentTree = true;
-    DevelopmentTreeLayoutIsCMakeStyle = true;
+    DevelopmentTreeLayout = CMakeBuildModeStyle;
     ActiveObjRoot = LLVM_OBJ_ROOT;
   } else {
     IsInDevelopmentTree = false;
@@ -213,12 +218,19 @@ int main(int argc, char **argv) {
 
     // CMake organizes the products differently than a normal prefix style
     // layout.
-    if (DevelopmentTreeLayoutIsCMakeStyle) {
-      ActiveBinDir = ActiveObjRoot + "/bin/" + LLVM_BUILDMODE;
-      ActiveLibDir = ActiveObjRoot + "/lib/" + LLVM_BUILDMODE;
-    } else {
+    switch (DevelopmentTreeLayout) {
+    case MakefileStyle:
       ActiveBinDir = ActiveObjRoot + "/" + LLVM_BUILDMODE + "/bin";
       ActiveLibDir = ActiveObjRoot + "/" + LLVM_BUILDMODE + "/lib";
+      break;
+    case CMakeStyle:
+      ActiveBinDir = ActiveObjRoot + "/bin";
+      ActiveLibDir = ActiveObjRoot + "/lib";
+      break;
+    case CMakeBuildModeStyle:
+      ActiveBinDir = ActiveObjRoot + "/bin/" + LLVM_BUILDMODE;
+      ActiveLibDir = ActiveObjRoot + "/lib/" + LLVM_BUILDMODE;
+      break;
     }
 
     // We need to include files from both the source and object trees.
