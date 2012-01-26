@@ -43,6 +43,8 @@ namespace llvm {
   public:
     typedef StringMap<MCSymbol*, BumpPtrAllocator&> SymbolTable;
   private:
+    /// The SourceMgr for this object, if any.
+    const SourceMgr *SrcMgr;
 
     /// The MCAsmInfo for this target.
     const MCAsmInfo &MAI;
@@ -137,8 +139,10 @@ namespace llvm {
 
   public:
     explicit MCContext(const MCAsmInfo &MAI, const MCRegisterInfo &MRI,
-                       const MCObjectFileInfo *MOFI);
+                       const MCObjectFileInfo *MOFI, const SourceMgr *Mgr = 0);
     ~MCContext();
+
+    const SourceMgr *getSourceManager() const { return SrcMgr; }
 
     const MCAsmInfo &getAsmInfo() const { return MAI; }
 
