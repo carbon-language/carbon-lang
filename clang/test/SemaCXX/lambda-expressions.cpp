@@ -61,6 +61,7 @@ namespace ReturnDeduction {
     [](){ return ({return 'c'; 1;}); }; // expected-error {{not supported yet}} expected-error {{must match previous return type}}
     []()->int{ return 'c'; return 1; }; // expected-error {{not supported yet}}
     [](){ return 'c'; return 1; }; // expected-error {{not supported yet}} expected-error {{must match previous return type}}
+    []() { return; return (void)0; }; // expected-error {{not supported yet}}
     // FIXME: Need to check structure of lambda body 
     [](){ return 1; return 1; }; // expected-error {{not supported yet}}
   }
