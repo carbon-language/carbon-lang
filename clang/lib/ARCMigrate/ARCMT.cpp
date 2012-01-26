@@ -232,7 +232,8 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   bool NoNSAllocReallocError = origCI.getMigratorOpts().NoNSAllocReallocError;
   bool NoFinalizeRemoval = origCI.getMigratorOpts().NoFinalizeRemoval;
 
-  std::vector<TransformFn> transforms = arcmt::getAllTransformations(OrigGCMode);
+  std::vector<TransformFn> transforms = arcmt::getAllTransformations(OrigGCMode,
+                                                                     NoFinalizeRemoval);
   assert(!transforms.empty());
 
   llvm::OwningPtr<CompilerInvocation> CInvok;
@@ -337,8 +338,10 @@ static bool applyTransforms(CompilerInvocation &origCI,
   CInvok.getFrontendOpts().Inputs.push_back(Input);
   
   MigrationProcess migration(CInvok, DiagClient, outputDir);
+  bool NoFinalizeRemoval = origCI.getMigratorOpts().NoFinalizeRemoval;
 
-  std::vector<TransformFn> transforms = arcmt::getAllTransformations(OrigGCMode);
+  std::vector<TransformFn> transforms = arcmt::getAllTransformations(OrigGCMode,
+                                                                     NoFinalizeRemoval);
   assert(!transforms.empty());
 
   for (unsigned i=0, e = transforms.size(); i != e; ++i) {

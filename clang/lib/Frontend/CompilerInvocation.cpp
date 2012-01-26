@@ -1065,6 +1065,7 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
 
 static bool ParseMigratorArgs(MigratorOptions &Opts, ArgList &Args) {
   Opts.NoNSAllocReallocError = Args.hasArg(OPT_migrator_no_nsalloc_error);
+  Opts.NoFinalizeRemoval = Args.hasArg(OPT_migrator_no_finalize_removal);
   return true;
 }
 
