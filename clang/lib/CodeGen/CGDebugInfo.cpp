@@ -681,6 +681,34 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   return DbgTy;
 }
 
+
+void CGDebugInfo::
+CollectRecordStaticVars(const RecordDecl *RD, llvm::DIType FwdDecl) {
+  
+  for (RecordDecl::decl_iterator I = RD->decls_begin(), E = RD->decls_end();
+       I != E; ++I)
+    if (const VarDecl *V = dyn_cast<VarDecl>(*I)) {
+      if (V->getInit()) {
+        const APValue *Value = V->evaluateValue();
+        if (Value && Value->isInt()) {
+          llvm::ConstantInt *CI
+            = llvm::ConstantInt::get(CGM.getLLVMContext(), Value->getInt());
+          
+          // Create the descriptor for static variable.
+          llvm::DIFile VUnit = getOrCreateFile(V->getLocation());
+          StringRef VName = V->getName();
+          llvm::DIType VTy = getOrCreateType(V->getType(), VUnit);
+          // Do not use DIGlobalVariable for enums.
+          if (VTy.getTag() != llvm::dwarf::DW_TAG_enumeration_type) {
+            DBuilder.createStaticVariable(FwdDecl, VName, VName, VUnit,
+                                          getLineNumber(V->getLocation()),
+                                          VTy, true, CI);
+          }
+        }
+      }
+    }
+}
+
 llvm::DIType CGDebugInfo::createFieldType(StringRef name,
                                           QualType type,
                                           uint64_t sizeInBitsOverride,
@@ -1150,28 +1178,7 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   }
 
   // Collect static variables with initializers.
-  for (RecordDecl::decl_iterator I = RD->decls_begin(), E = RD->decls_end();
-       I != E; ++I)
-    if (const VarDecl *V = dyn_cast<VarDecl>(*I)) {
-      if (V->getInit()) {
-        const APValue *Value = V->evaluateValue();
-        if (Value && Value->isInt()) {
-          llvm::ConstantInt *CI
-            = llvm::ConstantInt::get(CGM.getLLVMContext(), Value->getInt());
-
-          // Create the descriptor for static variable.
-          llvm::DIFile VUnit = getOrCreateFile(V->getLocation());
-          StringRef VName = V->getName();
-          llvm::DIType VTy = getOrCreateType(V->getType(), VUnit);
-          // Do not use DIGlobalVariable for enums.
-          if (VTy.getTag() != llvm::dwarf::DW_TAG_enumeration_type) {
-            DBuilder.createStaticVariable(FwdDecl, VName, VName, VUnit,
-                                          getLineNumber(V->getLocation()),
-                                          VTy, true, CI);
-          }
-        }
-      }
-    }
+  CollectRecordStaticVars(RD, FwdDecl);
 
   CollectRecordFields(RD, Unit, EltTys, FwdDecl);
   llvm::DIArray TParamsArray;

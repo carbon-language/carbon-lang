@@ -139,6 +139,7 @@ class CGDebugInfo {
                                AccessSpecifier AS, uint64_t offsetInBits,
                                llvm::DIFile tunit,
                                llvm::DIDescriptor scope);
+  void CollectRecordStaticVars(const RecordDecl *, llvm::DIType);
   void CollectRecordFields(const RecordDecl *Decl, llvm::DIFile F,
                            SmallVectorImpl<llvm::Value *> &E,
                            llvm::DIType RecordTy);
