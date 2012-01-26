@@ -19,6 +19,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/SMLoc.h"
 
 namespace llvm {
 class raw_ostream;
@@ -148,13 +149,16 @@ template <> struct isPodLike<MCOperand> { static const bool value = true; };
 /// instruction.
 class MCInst {
   unsigned Opcode;
+  SMLoc Loc;
   SmallVector<MCOperand, 8> Operands;
 public:
   MCInst() : Opcode(0) {}
 
   void setOpcode(unsigned Op) { Opcode = Op; }
-
   unsigned getOpcode() const { return Opcode; }
+
+  void setLoc(SMLoc loc) { Loc = loc; }
+  SMLoc getLoc() const { return Loc; }
 
   const MCOperand &getOperand(unsigned i) const { return Operands[i]; }
   MCOperand &getOperand(unsigned i) { return Operands[i]; }

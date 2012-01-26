@@ -20,6 +20,9 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/ELF.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/SourceMgr.h"
+#include "llvm/Support/Signals.h"
 using namespace llvm;
 
 typedef StringMap<const MCSectionMachO*> MachOUniqueMapTy;
@@ -320,4 +323,20 @@ bool MCContext::isValidDwarfFileNumber(unsigned FileNumber) {
     return false;
 
   return MCDwarfFiles[FileNumber] != 0;
+}
+
+void MCContext::FatalError(SMLoc Loc, const Twine &Msg) {
+  // If we have a source manager and a location, use it. Otherwise just
+  // use the generic report_fatal_error().
+  if (!SrcMgr || Loc == SMLoc())
+    report_fatal_error(Msg);
+
+  // Use the source manager to print the message.
+  SrcMgr->PrintMessage(Loc, SourceMgr::DK_Error, Msg);
+
+  // If we reached here, we are failing ungracefully. Run the interrupt handlers
+  // to make sure any special cleanups get done, in particular that we remove
+  // files registered with RemoveFileOnSignal.
+  sys::RunInterruptHandlers();
+  exit(1);
 }

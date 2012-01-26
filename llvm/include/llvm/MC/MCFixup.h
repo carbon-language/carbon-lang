@@ -11,6 +11,7 @@
 #define LLVM_MC_MCFIXUP_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/SMLoc.h"
 #include <cassert>
 
 namespace llvm {
@@ -69,14 +70,17 @@ class MCFixup {
   /// determine how the operand value should be encoded into the instruction.
   unsigned Kind;
 
+  /// The source location which gave rise to the fixup, if any.
+  SMLoc Loc;
 public:
   static MCFixup Create(uint32_t Offset, const MCExpr *Value,
-                        MCFixupKind Kind) {
+                        MCFixupKind Kind, SMLoc Loc = SMLoc()) {
     assert(unsigned(Kind) < MaxTargetFixupKind && "Kind out of range!");
     MCFixup FI;
     FI.Value = Value;
     FI.Offset = Offset;
     FI.Kind = unsigned(Kind);
+    FI.Loc = Loc;
     return FI;
   }
 
@@ -98,6 +102,8 @@ public:
     case 8: return isPCRel ? FK_PCRel_8 : FK_Data_8;
     }
   }
+
+  SMLoc getLoc() const { return Loc; }
 };
 
 } // End llvm namespace
