@@ -705,13 +705,6 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
     ID->data().AllReferencedProtocols.set(Protocols.data(), NumProtocols,
                                           Reader.getContext());
   
-    // Read the ivars.
-    unsigned NumIvars = Record[Idx++];
-    SmallVector<ObjCIvarDecl *, 16> IVars;
-    IVars.reserve(NumIvars);
-    for (unsigned I = 0; I != NumIvars; ++I)
-      IVars.push_back(ReadDeclAs<ObjCIvarDecl>(Record, Idx));
-    
     // Read the categories.
     ID->setCategoryList(ReadDeclAs<ObjCCategoryDecl>(Record, Idx));
   

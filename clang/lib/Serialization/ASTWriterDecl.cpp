@@ -481,12 +481,6 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
          P != PEnd; ++P)
       Writer.AddDeclRef(*P, Record);
     
-    // Write out the ivars.
-    Record.push_back(D->ivar_size());
-    for (ObjCInterfaceDecl::ivar_iterator I = D->ivar_begin(),
-                                       IEnd = D->ivar_end(); I != IEnd; ++I)
-      Writer.AddDeclRef(*I, Record);
-    
     Writer.AddDeclRef(D->getCategoryList(), Record);
   }  
   
