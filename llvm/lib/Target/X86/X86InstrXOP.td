@@ -286,6 +286,7 @@ defm VPERMIL2PS : xop5op<0x48, "vpermil2ps", int_x86_xop_vpermil2ps,
 
 // XOP Intrinsics patterns
 
+let Predicates = [HasXOP] in {
 // VPCOM EQ
 def : Pat<(int_x86_xop_vpcomeqw VR128:$src1, VR128:$src2),
           (VPCOMWri VR128:$src1, VR128:$src2, (i8 4))>;
@@ -827,4 +828,5 @@ def : Pat<(int_x86_xop_vpcmov_v8sf_256 VR256:$src1,
                                       (bitconvert (memopv2i64 addr:$src2)),
                                       VR256:$src3),
           (VPCMOVmrY VR256:$src1, addr:$src2, VR256:$src3)>;
+} // let Predicates = [HasXOP]
 
