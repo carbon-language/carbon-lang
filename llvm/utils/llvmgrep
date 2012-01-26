@@ -29,7 +29,7 @@ if test -d "$TOPDIR" ; then
   cd $TOPDIR
   case `uname -s` in
     SunOS) grep_cmd="ggrep -H -n" ;;
-    Linux) grep_cmd="egrep -H -n" ;;
+    Linux|Darwin) grep_cmd="egrep -H -n" ;;
     *) grep_cmd="egrep -l -n" ;;
   esac
   ./utils/llvmdo -topdir "$TOPDIR" \
