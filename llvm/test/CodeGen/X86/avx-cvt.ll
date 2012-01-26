@@ -18,7 +18,7 @@ define <4 x double> @sitofp01(<4 x i32> %a) {
   ret <4 x double> %b
 }
 
-; CHECK: vcvtpd2dqy %ymm
+; CHECK: vcvttpd2dqy %ymm
 define <4 x i32> @fptosi01(<4 x double> %a) {
   %b = fptosi <4 x double> %a to <4 x i32>
   ret <4 x i32> %b

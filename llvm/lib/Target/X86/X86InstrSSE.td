@@ -4693,9 +4693,9 @@ def CVTPD2DQrr  : S3DI<0xE6, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                        "cvtpd2dq\t{$src, $dst|$dst, $src}", []>;
 
 def : Pat<(v4i32 (fp_to_sint (v4f64 VR256:$src))),
-          (VCVTPD2DQYrr VR256:$src)>;
+          (VCVTTPD2DQYrr VR256:$src)>;
 def : Pat<(v4i32 (fp_to_sint (memopv4f64 addr:$src))),
-          (VCVTPD2DQYrm addr:$src)>;
+          (VCVTTPD2DQYrm addr:$src)>;
 
 // Convert Packed DW Integers to Packed Double FP
 let Predicates = [HasAVX] in {
