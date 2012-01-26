@@ -12,6 +12,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Parse/Parser.h"
 #include "clang/Basic/FileManager.h"
+#include "clang/Frontend/FrontendActions.h"
 #include "clang/Frontend/CompilerInstance.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Frontend/Utils.h"
@@ -21,6 +22,7 @@
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
+#include "llvm/Support/FileSystem.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -64,6 +66,22 @@ public:
     return Path.str();
   }
 };
+
+class FixItRewriteToTemp : public FixItOptions {
+public:
+  std::string RewriteFilename(const std::string &Filename) {
+    llvm::SmallString<128> Path;
+    Path = llvm::sys::path::filename(Filename);
+    Path += "-%%%%%%%%";
+    Path += llvm::sys::path::extension(Filename);
+    int fd;
+    llvm::SmallString<128> NewPath;
+    if (llvm::sys::fs::unique_file(Path.str(), fd, NewPath)
+          == llvm::errc::success)
+      ::close(fd);
+    return NewPath.str();
+  }
+};
 } // end anonymous namespace
 
 bool FixItAction::BeginSourceFileAction(CompilerInstance &CI,
@@ -84,6 +102,45 @@ bool FixItAction::BeginSourceFileAction(CompilerInstance &CI,
 void FixItAction::EndSourceFileAction() {
   // Otherwise rewrite all files.
   Rewriter->WriteFixedFiles();
+}
+
+bool FixItRecompile::BeginInvocation(CompilerInstance &CI) {
+
+  std::vector<std::pair<std::string, std::string> > RewrittenFiles;
+  bool err = false;
+  {
+    const FrontendOptions &FEOpts = CI.getFrontendOpts();
+    llvm::OwningPtr<FrontendAction> FixAction(new SyntaxOnlyAction());
+    FixAction->BeginSourceFile(CI, FEOpts.Inputs[0]);
+
+    llvm::OwningPtr<FixItOptions> FixItOpts;
+    if (FEOpts.FixToTemporaries)
+      FixItOpts.reset(new FixItRewriteToTemp());
+    else
+      FixItOpts.reset(new FixItRewriteInPlace());
+    FixItOpts->Silent = true;
+    FixItOpts->FixWhatYouCan = FEOpts.FixWhatYouCan;
+    FixItOpts->FixOnlyWarnings = FEOpts.FixOnlyWarnings;
+    FixItRewriter Rewriter(CI.getDiagnostics(), CI.getSourceManager(),
+                           CI.getLangOpts(), FixItOpts.get());
+    FixAction->Execute();
+
+    err = Rewriter.WriteFixedFiles(&RewrittenFiles);
+  
+    FixAction->EndSourceFile();
+    CI.setSourceManager(0);
+    CI.setFileManager(0);
+  }
+  if (err)
+    return false;
+  CI.getDiagnosticClient().clear();
+
+  PreprocessorOptions &PPOpts = CI.getPreprocessorOpts();
+  PPOpts.RemappedFiles.insert(PPOpts.RemappedFiles.end(),
+                              RewrittenFiles.begin(), RewrittenFiles.end());
+  PPOpts.RemappedFilesKeepOriginalName = false;
+
+  return true;
 }
 
 //===----------------------------------------------------------------------===//

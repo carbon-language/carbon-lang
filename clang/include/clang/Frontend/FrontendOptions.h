@@ -102,6 +102,9 @@ public:
   unsigned ShowVersion : 1;                ///< Show the -version text.
   unsigned FixWhatYouCan : 1;              ///< Apply fixes even if there are
                                            /// unfixable errors.
+  unsigned FixOnlyWarnings : 1;            ///< Apply fixes only for warnings.
+  unsigned FixAndRecompile : 1;            ///< Apply fixes and recompile.
+  unsigned FixToTemporaries : 1;           ///< Apply fixes to temporary files.
   unsigned ARCMTMigrateEmitARCErrors : 1;  /// Emit ARC errors even if the
                                            /// migrator can fix them
 

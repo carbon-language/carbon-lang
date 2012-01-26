@@ -466,6 +466,12 @@ static void FrontendOptsToArgs(const FrontendOptions &Opts,
     Res.push_back("-version");
   if (Opts.FixWhatYouCan)
     Res.push_back("-fix-what-you-can");
+  if (Opts.FixOnlyWarnings)
+    Res.push_back("-fix-only-warnings");
+  if (Opts.FixAndRecompile)
+    Res.push_back("-fixit-recompile");
+  if (Opts.FixToTemporaries)
+    Res.push_back("-fixit-to-temporary");
   switch (Opts.ARCMTAction) {
   case FrontendOptions::ARCMT_None:
     break;
@@ -1401,6 +1407,9 @@ static InputKind ParseFrontendArgs(FrontendOptions &Opts, ArgList &Args,
   Opts.ASTMergeFiles = Args.getAllArgValues(OPT_ast_merge);
   Opts.LLVMArgs = Args.getAllArgValues(OPT_mllvm);
   Opts.FixWhatYouCan = Args.hasArg(OPT_fix_what_you_can);
+  Opts.FixOnlyWarnings = Args.hasArg(OPT_fix_only_warnings);
+  Opts.FixAndRecompile = Args.hasArg(OPT_fixit_recompile);
+  Opts.FixToTemporaries = Args.hasArg(OPT_fixit_to_temp);
 
   Opts.ARCMTAction = FrontendOptions::ARCMT_None;
   if (const Arg *A = Args.getLastArg(OPT_arcmt_check,

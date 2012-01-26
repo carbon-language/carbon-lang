@@ -31,14 +31,16 @@ FixItRewriter::FixItRewriter(DiagnosticsEngine &Diags, SourceManager &SourceMgr,
   : Diags(Diags),
     Rewrite(SourceMgr, LangOpts),
     FixItOpts(FixItOpts),
-    NumFailures(0) {
+    NumFailures(0),
+    PrevDiagSilenced(false) {
+  OwnsClient = Diags.ownsClient();
   Client = Diags.takeClient();
   Diags.setClient(this);
 }
 
 FixItRewriter::~FixItRewriter() {
   Diags.takeClient();
-  Diags.setClient(Client);
+  Diags.setClient(Client, OwnsClient);
 }
 
 bool FixItRewriter::WriteFixedFile(FileID ID, raw_ostream &OS) {
@@ -49,7 +51,8 @@ bool FixItRewriter::WriteFixedFile(FileID ID, raw_ostream &OS) {
   return false;
 }
 
-bool FixItRewriter::WriteFixedFiles() {
+bool FixItRewriter::WriteFixedFiles(
+            std::vector<std::pair<std::string, std::string> > *RewrittenFiles) {
   if (NumFailures > 0 && !FixItOpts->FixWhatYouCan) {
     Diag(FullSourceLoc(), diag::warn_fixit_no_changes);
     return true;
@@ -69,6 +72,9 @@ bool FixItRewriter::WriteFixedFiles() {
     RewriteBuffer &RewriteBuf = I->second;
     RewriteBuf.write(OS);
     OS.flush();
+
+    if (RewrittenFiles)
+      RewrittenFiles->push_back(std::make_pair(Entry->getName(), Filename));
   }
 
   return false;
@@ -83,11 +89,24 @@ void FixItRewriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
   // Default implementation (Warnings/errors count).
   DiagnosticConsumer::HandleDiagnostic(DiagLevel, Info);
 
-  Client->HandleDiagnostic(DiagLevel, Info);
+  if (!FixItOpts->Silent ||
+      DiagLevel >= DiagnosticsEngine::Error ||
+      (DiagLevel == DiagnosticsEngine::Note && !PrevDiagSilenced) ||
+      (DiagLevel > DiagnosticsEngine::Note && Info.getNumFixItHints())) {
+    Client->HandleDiagnostic(DiagLevel, Info);
+    PrevDiagSilenced = false;
+  } else {
+    PrevDiagSilenced = true;
+  }
 
   // Skip over any diagnostics that are ignored or notes.
   if (DiagLevel <= DiagnosticsEngine::Note)
     return;
+  // Skip over errors if we are only fixing warnings.
+  if (DiagLevel >= DiagnosticsEngine::Error && FixItOpts->FixOnlyWarnings) {
+    ++NumFailures;
+    return;
+  }
 
   // Make sure that we can perform all of the modifications we
   // in this diagnostic.
@@ -107,8 +126,7 @@ void FixItRewriter::HandleDiagnostic(DiagnosticsEngine::Level DiagLevel,
       Diag(Info.getLocation(), diag::note_fixit_in_macro);
 
     // If this was an error, refuse to perform any rewriting.
-    if (DiagLevel == DiagnosticsEngine::Error ||
-          DiagLevel == DiagnosticsEngine::Fatal) {
+    if (DiagLevel >= DiagnosticsEngine::Error) {
       if (++NumFailures == 1)
         Diag(Info.getLocation(), diag::note_fixit_unfixed_error);
     }

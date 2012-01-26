@@ -87,6 +87,10 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   if (!Act)
     return 0;
 
+  if (CI.getFrontendOpts().FixAndRecompile) {
+    Act = new FixItRecompile(Act);
+  }
+  
   // Potentially wrap the base FE action in an ARC Migrate Tool action.
   switch (CI.getFrontendOpts().ARCMTAction) {
   case FrontendOptions::ARCMT_None:

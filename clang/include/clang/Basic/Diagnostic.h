@@ -1070,6 +1070,7 @@ public:
 
   unsigned getNumErrors() const { return NumErrors; }
   unsigned getNumWarnings() const { return NumWarnings; }
+  virtual void clear() { NumWarnings = NumErrors = 0; }
 
   virtual ~DiagnosticConsumer();
 
