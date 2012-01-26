@@ -71,4 +71,6 @@ void test7() {
 
 	f.twoBits1 = ~1; // expected-warning {{implicit truncation from 'int' to bitfield changes value from -2 to 2}}
 	f.twoBits2 = ~2; // expected-warning {{implicit truncation from 'int' to bitfield changes value from -3 to 1}}
+	f.twoBits1 &= ~1; // no-warning
+	f.twoBits2 &= ~2; // no-warning
 }

@@ -4053,8 +4053,8 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
     if (BO->isComparisonOp())
       return AnalyzeComparison(S, BO);
 
-    // And with assignments and compound assignments.
-    if (BO->isAssignmentOp())
+    // And with simple assignments.
+    if (BO->getOpcode() == BO_Assign)
       return AnalyzeAssignment(S, BO);
   }
 
