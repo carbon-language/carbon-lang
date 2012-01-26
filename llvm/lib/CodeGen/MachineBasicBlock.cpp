@@ -535,13 +535,12 @@ bool MachineBasicBlock::canFallThrough() {
   if (TII->AnalyzeBranch(*this, TBB, FBB, Cond)) {
     // If we couldn't analyze the branch, examine the last instruction.
     // If the block doesn't end in a known control barrier, assume fallthrough
-    // is possible. The isPredicable check is needed because this code can be
+    // is possible. The isPredicated check is needed because this code can be
     // called during IfConversion, where an instruction which is normally a
     // Barrier is predicated and thus no longer an actual control barrier. This
     // is over-conservative though, because if an instruction isn't actually
     // predicated we could still treat it like a barrier.
-    return empty() || !back().isBarrier() ||
-           back().isPredicable();
+    return empty() || !back().isBarrier() || TII->isPredicated(&back());
   }
 
   // If there is no branch, control always falls through.
