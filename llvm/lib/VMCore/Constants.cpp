@@ -904,66 +904,16 @@ unsigned ConstantExpr::getPredicate() const {
 /// one, but with the specified operand set to the specified value.
 Constant *
 ConstantExpr::getWithOperandReplaced(unsigned OpNo, Constant *Op) const {
-  assert(OpNo < getNumOperands() && "Operand num is out of range!");
   assert(Op->getType() == getOperand(OpNo)->getType() &&
          "Replacing operand with value of different type!");
   if (getOperand(OpNo) == Op)
     return const_cast<ConstantExpr*>(this);
+
+  SmallVector<Constant*, 8> NewOps;
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
+    NewOps.push_back(i == OpNo ? Op : getOperand(i));
   
-  Constant *Op0, *Op1, *Op2;
-  switch (getOpcode()) {
-  case Instruction::Trunc:
-  case Instruction::ZExt:
-  case Instruction::SExt:
-  case Instruction::FPTrunc:
-  case Instruction::FPExt:
-  case Instruction::UIToFP:
-  case Instruction::SIToFP:
-  case Instruction::FPToUI:
-  case Instruction::FPToSI:
-  case Instruction::PtrToInt:
-  case Instruction::IntToPtr:
-  case Instruction::BitCast:
-    return ConstantExpr::getCast(getOpcode(), Op, getType());
-  case Instruction::Select:
-    Op0 = (OpNo == 0) ? Op : getOperand(0);
-    Op1 = (OpNo == 1) ? Op : getOperand(1);
-    Op2 = (OpNo == 2) ? Op : getOperand(2);
-    return ConstantExpr::getSelect(Op0, Op1, Op2);
-  case Instruction::InsertElement:
-    Op0 = (OpNo == 0) ? Op : getOperand(0);
-    Op1 = (OpNo == 1) ? Op : getOperand(1);
-    Op2 = (OpNo == 2) ? Op : getOperand(2);
-    return ConstantExpr::getInsertElement(Op0, Op1, Op2);
-  case Instruction::ExtractElement:
-    Op0 = (OpNo == 0) ? Op : getOperand(0);
-    Op1 = (OpNo == 1) ? Op : getOperand(1);
-    return ConstantExpr::getExtractElement(Op0, Op1);
-  case Instruction::ShuffleVector:
-    Op0 = (OpNo == 0) ? Op : getOperand(0);
-    Op1 = (OpNo == 1) ? Op : getOperand(1);
-    Op2 = (OpNo == 2) ? Op : getOperand(2);
-    return ConstantExpr::getShuffleVector(Op0, Op1, Op2);
-  case Instruction::GetElementPtr: {
-    SmallVector<Constant*, 8> Ops;
-    Ops.resize(getNumOperands()-1);
-    for (unsigned i = 1, e = getNumOperands(); i != e; ++i)
-      Ops[i-1] = getOperand(i);
-    if (OpNo == 0)
-      return
-        ConstantExpr::getGetElementPtr(Op, Ops,
-                                       cast<GEPOperator>(this)->isInBounds());
-    Ops[OpNo-1] = Op;
-    return
-      ConstantExpr::getGetElementPtr(getOperand(0), Ops,
-                                     cast<GEPOperator>(this)->isInBounds());
-  }
-  default:
-    assert(getNumOperands() == 2 && "Must be binary operator?");
-    Op0 = (OpNo == 0) ? Op : getOperand(0);
-    Op1 = (OpNo == 1) ? Op : getOperand(1);
-    return ConstantExpr::get(getOpcode(), Op0, Op1, SubclassOptionalData);
-  }
+  return getWithOperands(NewOps);
 }
 
 /// getWithOperands - This returns the current constant expression with the
@@ -999,12 +949,15 @@ getWithOperands(ArrayRef<Constant*> Ops, Type *Ty) const {
     return ConstantExpr::getInsertElement(Ops[0], Ops[1], Ops[2]);
   case Instruction::ExtractElement:
     return ConstantExpr::getExtractElement(Ops[0], Ops[1]);
+  case Instruction::InsertValue:
+    return ConstantExpr::getInsertValue(Ops[0], Ops[1], getIndices());
+  case Instruction::ExtractValue:
+    return ConstantExpr::getExtractValue(Ops[0], getIndices());
   case Instruction::ShuffleVector:
     return ConstantExpr::getShuffleVector(Ops[0], Ops[1], Ops[2]);
   case Instruction::GetElementPtr:
-    return
-      ConstantExpr::getGetElementPtr(Ops[0], Ops.slice(1),
-                                     cast<GEPOperator>(this)->isInBounds());
+    return ConstantExpr::getGetElementPtr(Ops[0], Ops.slice(1),
+                                      cast<GEPOperator>(this)->isInBounds());
   case Instruction::ICmp:
   case Instruction::FCmp:
     return ConstantExpr::getCompare(getPredicate(), Ops[0], Ops[1]);
@@ -2539,88 +2492,13 @@ void ConstantExpr::replaceUsesOfWithOnConstant(Value *From, Value *ToV,
   assert(isa<Constant>(ToV) && "Cannot make Constant refer to non-constant!");
   Constant *To = cast<Constant>(ToV);
   
-  Constant *Replacement = 0;
-  if (getOpcode() == Instruction::GetElementPtr) {
-    SmallVector<Constant*, 8> Indices;
-    Constant *Pointer = getOperand(0);
-    Indices.reserve(getNumOperands()-1);
-    if (Pointer == From) Pointer = To;
-    
-    for (unsigned i = 1, e = getNumOperands(); i != e; ++i) {
-      Constant *Val = getOperand(i);
-      if (Val == From) Val = To;
-      Indices.push_back(Val);
-    }
-    Replacement = ConstantExpr::getGetElementPtr(Pointer, Indices,
-                                         cast<GEPOperator>(this)->isInBounds());
-  } else if (getOpcode() == Instruction::ExtractValue) {
-    Constant *Agg = getOperand(0);
-    if (Agg == From) Agg = To;
-    
-    ArrayRef<unsigned> Indices = getIndices();
-    Replacement = ConstantExpr::getExtractValue(Agg, Indices);
-  } else if (getOpcode() == Instruction::InsertValue) {
-    Constant *Agg = getOperand(0);
-    Constant *Val = getOperand(1);
-    if (Agg == From) Agg = To;
-    if (Val == From) Val = To;
-    
-    ArrayRef<unsigned> Indices = getIndices();
-    Replacement = ConstantExpr::getInsertValue(Agg, Val, Indices);
-  } else if (isCast()) {
-    assert(getOperand(0) == From && "Cast only has one use!");
-    Replacement = ConstantExpr::getCast(getOpcode(), To, getType());
-  } else if (getOpcode() == Instruction::Select) {
-    Constant *C1 = getOperand(0);
-    Constant *C2 = getOperand(1);
-    Constant *C3 = getOperand(2);
-    if (C1 == From) C1 = To;
-    if (C2 == From) C2 = To;
-    if (C3 == From) C3 = To;
-    Replacement = ConstantExpr::getSelect(C1, C2, C3);
-  } else if (getOpcode() == Instruction::ExtractElement) {
-    Constant *C1 = getOperand(0);
-    Constant *C2 = getOperand(1);
-    if (C1 == From) C1 = To;
-    if (C2 == From) C2 = To;
-    Replacement = ConstantExpr::getExtractElement(C1, C2);
-  } else if (getOpcode() == Instruction::InsertElement) {
-    Constant *C1 = getOperand(0);
-    Constant *C2 = getOperand(1);
-    Constant *C3 = getOperand(1);
-    if (C1 == From) C1 = To;
-    if (C2 == From) C2 = To;
-    if (C3 == From) C3 = To;
-    Replacement = ConstantExpr::getInsertElement(C1, C2, C3);
-  } else if (getOpcode() == Instruction::ShuffleVector) {
-    Constant *C1 = getOperand(0);
-    Constant *C2 = getOperand(1);
-    Constant *C3 = getOperand(2);
-    if (C1 == From) C1 = To;
-    if (C2 == From) C2 = To;
-    if (C3 == From) C3 = To;
-    Replacement = ConstantExpr::getShuffleVector(C1, C2, C3);
-  } else if (isCompare()) {
-    Constant *C1 = getOperand(0);
-    Constant *C2 = getOperand(1);
-    if (C1 == From) C1 = To;
-    if (C2 == From) C2 = To;
-    if (getOpcode() == Instruction::ICmp)
-      Replacement = ConstantExpr::getICmp(getPredicate(), C1, C2);
-    else {
-      assert(getOpcode() == Instruction::FCmp);
-      Replacement = ConstantExpr::getFCmp(getPredicate(), C1, C2);
-    }
-  } else if (getNumOperands() == 2) {
-    Constant *C1 = getOperand(0);
-    Constant *C2 = getOperand(1);
-    if (C1 == From) C1 = To;
-    if (C2 == From) C2 = To;
-    Replacement = ConstantExpr::get(getOpcode(), C1, C2, SubclassOptionalData);
-  } else {
-    llvm_unreachable("Unknown ConstantExpr type!");
+  SmallVector<Constant*, 8> NewOps;
+  for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
+    Constant *Op = getOperand(i);
+    NewOps.push_back(Op == From ? To : Op);
   }
   
+  Constant *Replacement = getWithOperands(NewOps);
   assert(Replacement != this && "I didn't contain From!");
   
   // Everyone using this now uses the replacement.
