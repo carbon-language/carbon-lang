@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.osx.cocoa.ContainerAPI -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.osx.cocoa.ContainerAPI -analyzer-store=region -triple x86_64-apple-darwin -verify %s
 
 typedef const struct __CFAllocator * CFAllocatorRef;
 typedef const struct __CFString * CFStringRef;
