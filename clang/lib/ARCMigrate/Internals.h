@@ -155,6 +155,8 @@ public:
   bool isGCMigration() const { return OrigGCMode != LangOptions::NonGC; }
   bool noNSAllocReallocError() const { return MigOptions.NoNSAllocReallocError; }
   void setNSAllocReallocError(bool val) { MigOptions.NoNSAllocReallocError = val; }
+  bool noFinalizeRemoval() const { return MigOptions.NoFinalizeRemoval; }
+  void setNoFinalizeRemoval(bool val) {MigOptions.NoFinalizeRemoval = val; }
 };
 
 static inline StringRef getARCMTMacroName() {

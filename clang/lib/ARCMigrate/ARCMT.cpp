@@ -230,6 +230,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
 
   LangOptions::GCMode OrigGCMode = origCI.getLangOpts()->getGC();
   bool NoNSAllocReallocError = origCI.getMigratorOpts().NoNSAllocReallocError;
+  bool NoFinalizeRemoval = origCI.getMigratorOpts().NoFinalizeRemoval;
 
   std::vector<TransformFn> transforms = arcmt::getAllTransformations(OrigGCMode);
   assert(!transforms.empty());
@@ -294,6 +295,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   TransformActions testAct(*Diags, capturedDiags, Ctx, Unit->getPreprocessor());
   MigrationPass pass(Ctx, OrigGCMode, Unit->getSema(), testAct, ARCMTMacroLocs);
   pass.setNSAllocReallocError(NoNSAllocReallocError);
+  pass.setNoFinalizeRemoval(NoFinalizeRemoval);
 
   for (unsigned i=0, e = transforms.size(); i != e; ++i)
     transforms[i](pass);

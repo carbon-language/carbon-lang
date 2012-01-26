@@ -106,6 +106,9 @@ def analyzer_checker_help : Flag<"-analyzer-checker-help">,
 def migrator_no_nsalloc_error : Flag<"-no-ns-alloc-error">,
   HelpText<"Do not error on use of NSAllocateCollectable/NSReallocateCollectable">;
 
+def migrator_no_finalize_removal : Flag<"-no-finalize-removal">,
+  HelpText<"Do not remove finalize method in gc mode">;
+
 //===----------------------------------------------------------------------===//
 // CodeGen Options
 //===----------------------------------------------------------------------===//
