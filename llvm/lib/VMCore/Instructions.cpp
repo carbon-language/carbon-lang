@@ -1649,7 +1649,7 @@ void ShuffleVectorInst::getShuffleMask(SmallVectorImpl<int> &Result) const {
   for (unsigned i = 0; i != NumElts; ++i) {
     Constant *C = Mask->getAggregateElement(i);
     Result.push_back(isa<UndefValue>(C) ? -1 :
-                     cast<ConstantInt>(Mask)->getZExtValue());
+                     cast<ConstantInt>(C)->getZExtValue());
   }
 }
 
