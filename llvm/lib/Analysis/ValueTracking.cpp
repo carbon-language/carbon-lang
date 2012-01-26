@@ -89,6 +89,7 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
   }
   // Handle a constant vector by taking the intersection of the known bits of
   // each element.
+  // FIXME: Remove.
   if (ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
     KnownZero.setAllBits(); KnownOne.setAllBits();
     for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i) {
@@ -1005,30 +1006,28 @@ unsigned llvm::ComputeNumSignBits(Value *V, const TargetData *TD,
     Tmp = TyBits - U->getOperand(0)->getType()->getScalarSizeInBits();
     return ComputeNumSignBits(U->getOperand(0), TD, Depth+1) + Tmp;
     
-  case Instruction::AShr:
+  case Instruction::AShr: {
     Tmp = ComputeNumSignBits(U->getOperand(0), TD, Depth+1);
-    // ashr X, C   -> adds C sign bits.
-    if (ConstantInt *C = dyn_cast<ConstantInt>(U->getOperand(1))) {
-      Tmp += C->getZExtValue();
+    // ashr X, C   -> adds C sign bits.  Vectors too.
+    const APInt *ShAmt;
+    if (match(U->getOperand(1), m_APInt(ShAmt))) {
+      Tmp += ShAmt->getZExtValue();
       if (Tmp > TyBits) Tmp = TyBits;
     }
-    // vector ashr X, <C, C, C, C>  -> adds C sign bits
-    if (ConstantVector *C = dyn_cast<ConstantVector>(U->getOperand(1))) {
-      if (ConstantInt *CI = dyn_cast_or_null<ConstantInt>(C->getSplatValue())) {
-        Tmp += CI->getZExtValue();
-        if (Tmp > TyBits) Tmp = TyBits;
-      }
-    }
     return Tmp;
-  case Instruction::Shl:
-    if (ConstantInt *C = dyn_cast<ConstantInt>(U->getOperand(1))) {
+  }
+  case Instruction::Shl: {
+    const APInt *ShAmt;
+    if (match(U->getOperand(1), m_APInt(ShAmt))) {
       // shl destroys sign bits.
       Tmp = ComputeNumSignBits(U->getOperand(0), TD, Depth+1);
-      if (C->getZExtValue() >= TyBits ||      // Bad shift.
-          C->getZExtValue() >= Tmp) break;    // Shifted all sign bits out.
-      return Tmp - C->getZExtValue();
+      Tmp2 = ShAmt->getZExtValue();
+      if (Tmp2 >= TyBits ||      // Bad shift.
+          Tmp2 >= Tmp) break;    // Shifted all sign bits out.
+      return Tmp - Tmp2;
     }
     break;
+  }
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:    // NOT is handled here.

@@ -98,7 +98,14 @@ struct apint_match {
       Res = &CI->getValue();
       return true;
     }
+    // FIXME: Remove this.
     if (ConstantVector *CV = dyn_cast<ConstantVector>(V))
+      if (ConstantInt *CI =
+          dyn_cast_or_null<ConstantInt>(CV->getSplatValue())) {
+        Res = &CI->getValue();
+        return true;
+      }
+    if (ConstantDataVector *CV = dyn_cast<ConstantDataVector>(V))
       if (ConstantInt *CI =
           dyn_cast_or_null<ConstantInt>(CV->getSplatValue())) {
         Res = &CI->getValue();
@@ -144,7 +151,11 @@ struct cst_pred_ty : public Predicate {
   bool match(ITy *V) {
     if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
       return this->isValue(CI->getValue());
+    // FIXME: Remove this.
     if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
+      if (ConstantInt *CI = dyn_cast_or_null<ConstantInt>(CV->getSplatValue()))
+        return this->isValue(CI->getValue());
+    if (const ConstantDataVector *CV = dyn_cast<ConstantDataVector>(V))
       if (ConstantInt *CI = dyn_cast_or_null<ConstantInt>(CV->getSplatValue()))
         return this->isValue(CI->getValue());
     return false;
@@ -164,12 +175,22 @@ struct api_pred_ty : public Predicate {
         Res = &CI->getValue();
         return true;
       }
+    
+    // FIXME: remove.
     if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
       if (ConstantInt *CI = dyn_cast_or_null<ConstantInt>(CV->getSplatValue()))
         if (this->isValue(CI->getValue())) {
           Res = &CI->getValue();
           return true;
         }
+    
+    if (const ConstantDataVector *CV = dyn_cast<ConstantDataVector>(V))
+      if (ConstantInt *CI = dyn_cast_or_null<ConstantInt>(CV->getSplatValue()))
+        if (this->isValue(CI->getValue())) {
+          Res = &CI->getValue();
+          return true;
+        }
+
     return false;
   }
 };
@@ -611,11 +632,11 @@ struct not_match {
   }
 private:
   bool matchIfNot(Value *LHS, Value *RHS) {
-    if (ConstantInt *CI = dyn_cast<ConstantInt>(RHS))
-      return CI->isAllOnesValue() && L.match(LHS);
-    if (ConstantVector *CV = dyn_cast<ConstantVector>(RHS))
-      return CV->isAllOnesValue() && L.match(LHS);
-    return false;
+    return (isa<ConstantInt>(RHS) || isa<ConstantDataVector>(RHS) ||
+            // FIXME: Remove CV.
+            isa<ConstantVector>(RHS)) &&
+           cast<Constant>(RHS)->isAllOnesValue() &&
+           L.match(LHS);
   }
 };
 
@@ -638,9 +659,9 @@ struct neg_match {
   }
 private:
   bool matchIfNeg(Value *LHS, Value *RHS) {
-    if (ConstantInt *C = dyn_cast<ConstantInt>(LHS))
-      return C->isZero() && L.match(RHS);
-    return false;
+    return ((isa<ConstantInt>(LHS) && cast<ConstantInt>(LHS)->isZero()) ||
+            isa<ConstantAggregateZero>(LHS)) &&
+           L.match(RHS);
   }
 };
 

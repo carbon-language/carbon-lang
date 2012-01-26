@@ -655,9 +655,12 @@ static bool CanShareConstantPoolEntry(const Constant *A, const Constant *B,
   if (A->getType() == B->getType()) return false;
 
   // For now, only support constants with the same size.
-  if (TD->getTypeStoreSize(A->getType()) != TD->getTypeStoreSize(B->getType()))
+  uint64_t StoreSize = TD->getTypeStoreSize(A->getType());
+  if (StoreSize != TD->getTypeStoreSize(B->getType()) || 
+      StoreSize > 128)
     return false;
 
+ 
   // If a floating-point value and an integer value have the same encoding,
   // they can share a constant-pool entry.
   if (const ConstantFP *AFP = dyn_cast<ConstantFP>(A))
