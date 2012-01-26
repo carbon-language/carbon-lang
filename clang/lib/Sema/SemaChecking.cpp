@@ -3655,17 +3655,18 @@ bool AnalyzeBitFieldAssignment(Sema &S, FieldDecl *Bitfield, Expr *Init,
   if (OriginalWidth <= FieldWidth)
     return false;
 
+  // Compute the value which the bitfield will contain.
   llvm::APSInt TruncatedValue = Value.trunc(FieldWidth);
+  TruncatedValue.setIsSigned(Bitfield->getType()->isSignedIntegerType());
 
-  // It's fairly common to write values into signed bitfields
-  // that, if sign-extended, would end up becoming a different
-  // value.  We don't want to warn about that.
-  if (Value.isSigned() && Value.isNegative())
-    TruncatedValue = TruncatedValue.sext(OriginalWidth);
-  else
-    TruncatedValue = TruncatedValue.zext(OriginalWidth);
-
+  // Check whether the stored value is equal to the original value.
+  TruncatedValue = TruncatedValue.extend(OriginalWidth);
   if (Value == TruncatedValue)
+    return false;
+
+  // Special-case bitfields of width 1: booleans are naturally 0/1, and
+  // therefore don't strictly fit into a bitfield of width 1.
+  if (FieldWidth == 1 && Value.getBoolValue() == TruncatedValue.getBoolValue())
     return false;
 
   std::string PrettyValue = Value.toString(10);
