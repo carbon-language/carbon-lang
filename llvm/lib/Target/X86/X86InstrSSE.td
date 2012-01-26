@@ -6583,8 +6583,9 @@ multiclass pseudo_pcmpistrm<string asm> {
 }
 
 let Defs = [EFLAGS], usesCustomInserter = 1 in {
+  let AddedComplexity = 1 in
+    defm VPCMPISTRM128 : pseudo_pcmpistrm<"#VPCMPISTRM128">, Requires<[HasAVX]>;
   defm PCMPISTRM128 : pseudo_pcmpistrm<"#PCMPISTRM128">, Requires<[HasSSE42]>;
-  defm VPCMPISTRM128 : pseudo_pcmpistrm<"#VPCMPISTRM128">, Requires<[HasAVX]>;
 }
 
 let Defs = [XMM0, EFLAGS], neverHasSideEffects = 1, Predicates = [HasAVX] in {
@@ -6620,8 +6621,9 @@ multiclass pseudo_pcmpestrm<string asm> {
 }
 
 let Defs = [EFLAGS], Uses = [EAX, EDX], usesCustomInserter = 1 in {
+  let AddedComplexity = 1 in
+    defm VPCMPESTRM128 : pseudo_pcmpestrm<"#VPCMPESTRM128">, Requires<[HasAVX]>;
   defm PCMPESTRM128 : pseudo_pcmpestrm<"#PCMPESTRM128">, Requires<[HasSSE42]>;
-  defm VPCMPESTRM128 : pseudo_pcmpestrm<"#VPCMPESTRM128">, Requires<[HasAVX]>;
 }
 
 let Predicates = [HasAVX],
