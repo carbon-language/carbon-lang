@@ -24,13 +24,6 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Support/FileSystem.h"
 
-// FIXME: This is terrible, we need this for ::close.
-#if !defined(_MSC_VER)
-#include <unistd.h>
-#else
-#include <io.h>
-#endif
-
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
