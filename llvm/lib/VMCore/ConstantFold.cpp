@@ -787,24 +787,22 @@ Constant *llvm::ConstantFoldShuffleVectorInstruction(Constant *V1,
   // Undefined shuffle mask -> undefined value.
   if (isa<UndefValue>(Mask)) return UndefValue::get(V1->getType());
 
-  unsigned MaskNumElts = cast<VectorType>(Mask->getType())->getNumElements();
-  unsigned SrcNumElts = cast<VectorType>(V1->getType())->getNumElements();
-  Type *EltTy = cast<VectorType>(V1->getType())->getElementType();
+  unsigned MaskNumElts = Mask->getType()->getVectorNumElements();
+  unsigned SrcNumElts = V1->getType()->getVectorNumElements();
+  Type *EltTy = V1->getType()->getVectorElementType();
 
   // Loop over the shuffle mask, evaluating each element.
   SmallVector<Constant*, 32> Result;
   for (unsigned i = 0; i != MaskNumElts; ++i) {
-    Constant *InElt = Mask->getAggregateElement(i);
-    if (InElt == 0) return 0;
-
-    if (isa<UndefValue>(InElt)) {
+    int Elt = ShuffleVectorInst::getMaskValue(Mask, i);
+    if (Elt == -1) {
       Result.push_back(UndefValue::get(EltTy));
       continue;
     }
-    unsigned Elt = cast<ConstantInt>(InElt)->getZExtValue();
-    if (Elt >= SrcNumElts*2)
+    Constant *InElt;
+    if (unsigned(Elt) >= SrcNumElts*2)
       InElt = UndefValue::get(EltTy);
-    else if (Elt >= SrcNumElts)
+    else if (unsigned(Elt) >= SrcNumElts)
       InElt = V2->getAggregateElement(Elt - SrcNumElts);
     else
       InElt = V1->getAggregateElement(Elt);
