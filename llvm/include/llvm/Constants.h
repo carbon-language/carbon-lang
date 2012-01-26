@@ -766,6 +766,10 @@ public:
   /// i32/i64/float/double) and must be a ConstantFP or ConstantInt.
   static Constant *getSplat(unsigned NumElts, Constant *Elt);
 
+  /// getSplatValue - If this is a splat constant, meaning that all of the
+  /// elements have the same value, return that value. Otherwise return NULL.
+  Constant *getSplatValue() const;
+  
   /// getType - Specialize the getType() method to always return a VectorType,
   /// which reduces the amount of casting needed in parts of the compiler.
   ///
