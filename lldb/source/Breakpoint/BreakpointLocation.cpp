@@ -414,12 +414,12 @@ BreakpointLocation::Dump(Stream *s) const
 
     s->Printf("BreakpointLocation %u: tid = %4.4llx  load addr = 0x%8.8llx  state = %s  type = %s breakpoint  "
               "hw_index = %i  hit_count = %-4u  ignore_count = %-4u",
-            GetID(),
-            GetOptionsNoCreate()->GetThreadSpecNoCreate()->GetTID(),
-            (uint64_t) m_address.GetOpcodeLoadAddress (&m_owner.GetTarget()),
-            (m_options_ap.get() ? m_options_ap->IsEnabled() : m_owner.IsEnabled()) ? "enabled " : "disabled",
-            IsHardware() ? "hardware" : "software",
-            GetHardwareIndex(),
-            GetHitCount(),
-            m_options_ap.get() ? m_options_ap->GetIgnoreCount() : m_owner.GetIgnoreCount());
+              GetID(),
+              GetOptionsNoCreate()->GetThreadSpecNoCreate()->GetTID(),
+              (uint64_t) m_address.GetOpcodeLoadAddress (&m_owner.GetTarget()),
+              (m_options_ap.get() ? m_options_ap->IsEnabled() : m_owner.IsEnabled()) ? "enabled " : "disabled",
+              IsHardware() ? "hardware" : "software",
+              GetHardwareIndex(),
+              GetHitCount(),
+              GetOptionsNoCreate()->GetIgnoreCount());
 }
