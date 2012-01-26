@@ -76,7 +76,7 @@ namespace BaseClass {
 
   struct E {};
   struct Test2 : X<E,0>, X<E,1>, X<E,2>, X<E,3> {};
-  // CHECK: @_ZN9BaseClass2t2E = global {{.*}} { [4 x i8] undef }
+  // CHECK: @_ZN9BaseClass2t2E = global {{.*}} undef
   extern constexpr Test2 t2 = Test2();
 }
 
