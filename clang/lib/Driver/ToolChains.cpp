@@ -1710,10 +1710,10 @@ Tool &NetBSD::SelectTool(const Compilation &C, const JobAction &JA,
       if (UseIntegratedAs)
         T = new tools::ClangAs(*this);
       else
-        T = new tools::netbsd::Assemble(*this, getTriple());
+        T = new tools::netbsd::Assemble(*this);
       break;
     case Action::LinkJobClass:
-      T = new tools::netbsd::Link(*this, getTriple());
+      T = new tools::netbsd::Link(*this);
       break;
     default:
       T = &Generic_GCC::SelectTool(C, JA, Inputs);

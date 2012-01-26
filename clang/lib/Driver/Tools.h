@@ -396,12 +396,10 @@ namespace freebsd {
   /// netbsd -- Directly call GNU Binutils assembler and linker
 namespace netbsd {
   class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {
-  private:
-    const llvm::Triple ToolTriple;
 
   public:
-    Assemble(const ToolChain &TC, const llvm::Triple &ToolTriple)
-      : Tool("netbsd::Assemble", "assembler", TC), ToolTriple(ToolTriple) {}
+    Assemble(const ToolChain &TC)
+      : Tool("netbsd::Assemble", "assembler", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
 
@@ -412,12 +410,10 @@ namespace netbsd {
                               const char *LinkingOutput) const;
   };
   class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
-  private:
-    const llvm::Triple ToolTriple;
 
   public:
-    Link(const ToolChain &TC, const llvm::Triple &ToolTriple)
-      : Tool("netbsd::Link", "linker", TC), ToolTriple(ToolTriple) {}
+    Link(const ToolChain &TC)
+      : Tool("netbsd::Link", "linker", TC) {}
 
     virtual bool hasIntegratedCPP() const { return false; }
 
