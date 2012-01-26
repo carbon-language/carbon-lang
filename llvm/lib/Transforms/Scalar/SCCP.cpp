@@ -408,15 +408,14 @@ private:
       return LV;  // Common case, already in the map.
 
     if (Constant *C = dyn_cast<Constant>(V)) {
-      if (isa<UndefValue>(C))
-        ; // Undef values remain undefined.
-      else if (ConstantStruct *CS = dyn_cast<ConstantStruct>(C))
-        LV.markConstant(CS->getOperand(i));      // Constants are constant.
-      else if (isa<ConstantAggregateZero>(C)) {
-        Type *FieldTy = cast<StructType>(V->getType())->getElementType(i);
-        LV.markConstant(Constant::getNullValue(FieldTy));
-      } else
+      Constant *Elt = C->getAggregateElement(i);
+      
+      if (Elt == 0)
         LV.markOverdefined();      // Unknown sort of constant.
+      else if (isa<UndefValue>(Elt))
+        ; // Undef values remain undefined.
+      else
+        LV.markConstant(Elt);      // Constants are constant.
     }
 
     // All others are underdefined by default.

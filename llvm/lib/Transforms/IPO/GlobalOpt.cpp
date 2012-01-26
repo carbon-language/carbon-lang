@@ -2176,21 +2176,9 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
 
   std::vector<Constant*> Elts;
   if (StructType *STy = dyn_cast<StructType>(Init->getType())) {
-
     // Break up the constant into its elements.
-    if (ConstantStruct *CS = dyn_cast<ConstantStruct>(Init)) {
-      for (User::op_iterator i = CS->op_begin(), e = CS->op_end(); i != e; ++i)
-        Elts.push_back(cast<Constant>(*i));
-    } else if (isa<ConstantAggregateZero>(Init)) {
-      for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-        Elts.push_back(Constant::getNullValue(STy->getElementType(i)));
-    } else if (isa<UndefValue>(Init)) {
-      for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
-        Elts.push_back(UndefValue::get(STy->getElementType(i)));
-    } else {
-      llvm_unreachable("This code is out of sync with "
-             " ConstantFoldLoadThroughGEPConstantExpr");
-    }
+    for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)
+      Elts.push_back(Init->getAggregateElement(i));
 
     // Replace the element that we are supposed to.
     ConstantInt *CU = cast<ConstantInt>(Addr->getOperand(OpNo));
@@ -2209,22 +2197,11 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
   if (ArrayType *ATy = dyn_cast<ArrayType>(InitTy))
     NumElts = ATy->getNumElements();
   else
-    NumElts = cast<VectorType>(InitTy)->getNumElements();
+    NumElts = InitTy->getVectorNumElements();
 
   // Break up the array into elements.
-  if (ConstantArray *CA = dyn_cast<ConstantArray>(Init)) {
-    for (User::op_iterator i = CA->op_begin(), e = CA->op_end(); i != e; ++i)
-      Elts.push_back(cast<Constant>(*i));
-  } else if (ConstantVector *CV = dyn_cast<ConstantVector>(Init)) {
-    for (User::op_iterator i = CV->op_begin(), e = CV->op_end(); i != e; ++i)
-      Elts.push_back(cast<Constant>(*i));
-  } else if (isa<ConstantAggregateZero>(Init)) {
-    Elts.assign(NumElts, Constant::getNullValue(InitTy->getElementType()));
-  } else {
-    assert(isa<UndefValue>(Init) && "This code is out of sync with "
-           " ConstantFoldLoadThroughGEPConstantExpr");
-    Elts.assign(NumElts, UndefValue::get(InitTy->getElementType()));
-  }
+  for (uint64_t i = 0, e = NumElts; i != e; ++i)
+    Elts.push_back(Init->getAggregateElement(i));
 
   assert(CI->getZExtValue() < NumElts);
   Elts[CI->getZExtValue()] =
