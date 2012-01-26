@@ -52,7 +52,7 @@ struct PACKED X5 { double a[19];  signed char b; };
 struct PACKED X6 { long double a; char b; };
 
 // CHECK: Type: struct X7
-typedef struct X7 {
+struct X7 {
         unsigned x;
         unsigned char y;
 } PACKED;
@@ -137,17 +137,23 @@ void use_structs() {
 
   struct X7 x7;
   x7.x = sizeof(struct X7);
+  x7.y = x7.x;
 
   union X8 x8;
+  typedef int X8array[sizeof(union X8)];
   x8.y = sizeof(union X8);
+  x8.x.x = x8.y;
 
   struct X9 x9;
+  typedef int X9array[sizeof(struct X9)];
   x9.y = sizeof(struct X9);
 
   struct X10 x10;
+  typedef int X10array[sizeof(struct X10)];
   x10.y = sizeof(struct X10);
 
   struct X11 x11;
+  typedef int X11array[sizeof(struct X11)];
   x11.y = sizeof(struct X11);
 
   struct X12 x12;
