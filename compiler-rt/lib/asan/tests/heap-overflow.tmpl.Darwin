@@ -5,4 +5,4 @@ allocated by thread T0 here:
     #0 0x.* in .*mz_malloc.* _asan_rtl_
     #1 0x.* in malloc_zone_malloc.*
     #2 0x.* in malloc.*
-    #3 0x.* in main heap-overflow.cc:4
+    #3 0x.* in main heap-overflow.cc:[45]

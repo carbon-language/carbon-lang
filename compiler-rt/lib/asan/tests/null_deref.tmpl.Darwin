@@ -1,0 +1,5 @@
+.*ERROR: AddressSanitizer crashed on unknown address 0x0*00028 .*pc 0x.*
+AddressSanitizer can not provide additional info. ABORTING
+# atos cannot resolve the file:line info for frame 0 on the O1 level
+    #0 0x.* in NullDeref.*
+    #1 0x.* in main.*null_deref.cc:[67]
