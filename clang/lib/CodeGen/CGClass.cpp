@@ -945,13 +945,13 @@ namespace {
 
   class DestroyField  : public EHScopeStack::Cleanup {
     const FieldDecl *field;
-    CodeGenFunction::Destroyer &destroyer;
+    CodeGenFunction::Destroyer *destroyer;
     bool useEHCleanupForArray;
 
   public:
     DestroyField(const FieldDecl *field, CodeGenFunction::Destroyer *destroyer,
                  bool useEHCleanupForArray)
-      : field(field), destroyer(*destroyer),
+      : field(field), destroyer(destroyer),
         useEHCleanupForArray(useEHCleanupForArray) {}
 
     void Emit(CodeGenFunction &CGF, Flags flags) {

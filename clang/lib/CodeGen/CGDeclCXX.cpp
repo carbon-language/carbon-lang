@@ -343,7 +343,7 @@ void CodeGenFunction::GenerateCXXGlobalDtorFunc(llvm::Function *Fn,
 llvm::Function * 
 CodeGenFunction::generateDestroyHelper(llvm::Constant *addr,
                                        QualType type,
-                                       Destroyer &destroyer,
+                                       Destroyer *destroyer,
                                        bool useEHCleanupForArray) {
   FunctionArgList args;
   ImplicitParamDecl dst(0, SourceLocation(), 0, getContext().VoidPtrTy);

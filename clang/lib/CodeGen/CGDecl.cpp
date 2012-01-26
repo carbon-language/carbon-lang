@@ -310,12 +310,12 @@ namespace {
     DestroyObject(llvm::Value *addr, QualType type,
                   CodeGenFunction::Destroyer *destroyer,
                   bool useEHCleanupForArray)
-      : addr(addr), type(type), destroyer(*destroyer),
+      : addr(addr), type(type), destroyer(destroyer),
         useEHCleanupForArray(useEHCleanupForArray) {}
 
     llvm::Value *addr;
     QualType type;
-    CodeGenFunction::Destroyer &destroyer;
+    CodeGenFunction::Destroyer *destroyer;
     bool useEHCleanupForArray;
 
     void Emit(CodeGenFunction &CGF, Flags flags) {
@@ -430,7 +430,7 @@ static void EmitAutoVarWithLifetime(CodeGenFunction &CGF, const VarDecl &var,
     break;
 
   case Qualifiers::OCL_Strong: {
-    CodeGenFunction::Destroyer &destroyer =
+    CodeGenFunction::Destroyer *destroyer =
       (var.hasAttr<ObjCPreciseLifetimeAttr>()
        ? CodeGenFunction::destroyARCStrongPrecise
        : CodeGenFunction::destroyARCStrongImprecise);
@@ -1111,7 +1111,7 @@ void CodeGenFunction::emitAutoVarTypeCleanup(
   }
 
   // If we haven't chosen a more specific destroyer, use the default.
-  if (!destroyer) destroyer = &getDestroyer(dtorKind);
+  if (!destroyer) destroyer = getDestroyer(dtorKind);
 
   // Use an EH cleanup in array destructors iff the destructor itself
   // is being pushed as an EH cleanup.
@@ -1155,25 +1155,17 @@ void CodeGenFunction::EmitAutoVarCleanups(const AutoVarEmission &emission) {
     enterByrefCleanup(emission);
 }
 
-CodeGenFunction::Destroyer &
+CodeGenFunction::Destroyer *
 CodeGenFunction::getDestroyer(QualType::DestructionKind kind) {
-  // This is surprisingly compiler-dependent.  GCC 4.2 can't bind
-  // references to functions directly in returns, and using '*&foo'
-  // confuses MSVC.  Luckily, the following code pattern works in both.
-  Destroyer *destroyer = 0;
   switch (kind) {
   case QualType::DK_none: llvm_unreachable("no destroyer for trivial dtor");
   case QualType::DK_cxx_destructor:
-    destroyer = &destroyCXXObject;
-    break;
+    return destroyCXXObject;
   case QualType::DK_objc_strong_lifetime:
-    destroyer = &destroyARCStrongPrecise;
-    break;
+    return destroyARCStrongPrecise;
   case QualType::DK_objc_weak_lifetime:
-    destroyer = &destroyARCWeak;
-    break;
+    return destroyARCWeak;
   }
-  return *destroyer;
 }
 
 /// pushDestroy - Push the standard destructor for the given type.
@@ -1187,7 +1179,7 @@ void CodeGenFunction::pushDestroy(QualType::DestructionKind dtorKind,
 }
 
 void CodeGenFunction::pushDestroy(CleanupKind cleanupKind, llvm::Value *addr,
-                                  QualType type, Destroyer &destroyer,
+                                  QualType type, Destroyer *destroyer,
                                   bool useEHCleanupForArray) {
   pushFullExprCleanup<DestroyObject>(cleanupKind, addr, type,
                                      destroyer, useEHCleanupForArray);
@@ -1205,7 +1197,7 @@ void CodeGenFunction::pushDestroy(CleanupKind cleanupKind, llvm::Value *addr,
 ///   used when destroying array elements, in case one of the
 ///   destructions throws an exception
 void CodeGenFunction::emitDestroy(llvm::Value *addr, QualType type,
-                                  Destroyer &destroyer,
+                                  Destroyer *destroyer,
                                   bool useEHCleanupForArray) {
   const ArrayType *arrayType = getContext().getAsArrayType(type);
   if (!arrayType)
@@ -1242,7 +1234,7 @@ void CodeGenFunction::emitDestroy(llvm::Value *addr, QualType type,
 void CodeGenFunction::emitArrayDestroy(llvm::Value *begin,
                                        llvm::Value *end,
                                        QualType type,
-                                       Destroyer &destroyer,
+                                       Destroyer *destroyer,
                                        bool checkZeroLength,
                                        bool useEHCleanup) {
   assert(!type->isArrayType());
@@ -1293,7 +1285,7 @@ void CodeGenFunction::emitArrayDestroy(llvm::Value *begin,
 static void emitPartialArrayDestroy(CodeGenFunction &CGF,
                                     llvm::Value *begin, llvm::Value *end,
                                     QualType type,
-                                    CodeGenFunction::Destroyer &destroyer) {
+                                    CodeGenFunction::Destroyer *destroyer) {
   // If the element type is itself an array, drill down.
   unsigned arrayDepth = 0;
   while (const ArrayType *arrayType = CGF.getContext().getAsArrayType(type)) {
@@ -1326,13 +1318,13 @@ namespace {
     llvm::Value *ArrayBegin;
     llvm::Value *ArrayEnd;
     QualType ElementType;
-    CodeGenFunction::Destroyer &Destroyer;
+    CodeGenFunction::Destroyer *Destroyer;
   public:
     RegularPartialArrayDestroy(llvm::Value *arrayBegin, llvm::Value *arrayEnd,
                                QualType elementType,
                                CodeGenFunction::Destroyer *destroyer)
       : ArrayBegin(arrayBegin), ArrayEnd(arrayEnd),
-        ElementType(elementType), Destroyer(*destroyer) {}
+        ElementType(elementType), Destroyer(destroyer) {}
 
     void Emit(CodeGenFunction &CGF, Flags flags) {
       emitPartialArrayDestroy(CGF, ArrayBegin, ArrayEnd,
@@ -1347,14 +1339,14 @@ namespace {
     llvm::Value *ArrayBegin;
     llvm::Value *ArrayEndPointer;
     QualType ElementType;
-    CodeGenFunction::Destroyer &Destroyer;
+    CodeGenFunction::Destroyer *Destroyer;
   public:
     IrregularPartialArrayDestroy(llvm::Value *arrayBegin,
                                  llvm::Value *arrayEndPointer,
                                  QualType elementType,
                                  CodeGenFunction::Destroyer *destroyer)
       : ArrayBegin(arrayBegin), ArrayEndPointer(arrayEndPointer),
-        ElementType(elementType), Destroyer(*destroyer) {}
+        ElementType(elementType), Destroyer(destroyer) {}
 
     void Emit(CodeGenFunction &CGF, Flags flags) {
       llvm::Value *arrayEnd = CGF.Builder.CreateLoad(ArrayEndPointer);
@@ -1377,10 +1369,10 @@ namespace {
 void CodeGenFunction::pushIrregularPartialArrayCleanup(llvm::Value *arrayBegin,
                                                  llvm::Value *arrayEndPointer,
                                                        QualType elementType,
-                                                       Destroyer &destroyer) {
+                                                       Destroyer *destroyer) {
   pushFullExprCleanup<IrregularPartialArrayDestroy>(EHCleanup,
                                                     arrayBegin, arrayEndPointer,
-                                                    elementType, &destroyer);
+                                                    elementType, destroyer);
 }
 
 /// pushRegularPartialArrayCleanup - Push an EH cleanup to destroy
@@ -1396,10 +1388,10 @@ void CodeGenFunction::pushIrregularPartialArrayCleanup(llvm::Value *arrayBegin,
 void CodeGenFunction::pushRegularPartialArrayCleanup(llvm::Value *arrayBegin,
                                                      llvm::Value *arrayEnd,
                                                      QualType elementType,
-                                                     Destroyer &destroyer) {
+                                                     Destroyer *destroyer) {
   pushFullExprCleanup<RegularPartialArrayDestroy>(EHCleanup,
                                                   arrayBegin, arrayEnd,
-                                                  elementType, &destroyer);
+                                                  elementType, destroyer);
 }
 
 namespace {

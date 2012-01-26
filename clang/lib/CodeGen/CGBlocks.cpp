@@ -535,9 +535,9 @@ static void enterBlockScope(CodeGenFunction &CGF, BlockDecl *block) {
     // Block captures count as local values and have imprecise semantics.
     // They also can't be arrays, so need to worry about that.
     if (dtorKind == QualType::DK_objc_strong_lifetime) {
-      destroyer = &CodeGenFunction::destroyARCStrongImprecise;
+      destroyer = CodeGenFunction::destroyARCStrongImprecise;
     } else {
-      destroyer = &CGF.getDestroyer(dtorKind);
+      destroyer = CGF.getDestroyer(dtorKind);
     }
 
     // GEP down to the address.
@@ -554,7 +554,7 @@ static void enterBlockScope(CodeGenFunction &CGF, BlockDecl *block) {
       cleanupKind = InactiveNormalAndEHCleanup;
 
     CGF.pushDestroy(cleanupKind, addr, variable->getType(),
-                    *destroyer, useArrayEHCleanup);
+                    destroyer, useArrayEHCleanup);
 
     // Remember where that cleanup was.
     capture.setCleanup(CGF.EHStack.stable_begin());
