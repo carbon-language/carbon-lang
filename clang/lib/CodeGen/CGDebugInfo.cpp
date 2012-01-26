@@ -1147,15 +1147,8 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
 
   // If this is just a forward declaration, construct an appropriately
   // marked node and just return it.
-  if (!RD->getDefinition()) {
-    llvm::DIType FwdDecl =
-      DBuilder.createStructType(RDContext, RDName,
-                                DefUnit, Line, 0, 0,
-                                llvm::DIDescriptor::FlagFwdDecl,
-                                llvm::DIArray());
-
-      return FwdDecl;
-  }
+  if (!RD->getDefinition())
+    return createRecordFwdDecl(RD, RDContext);
 
   llvm::DIType FwdDecl = DBuilder.createTemporaryType(DefUnit);
 
