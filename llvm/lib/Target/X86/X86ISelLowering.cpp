@@ -9358,6 +9358,15 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
   case Intrinsic::x86_avx2_psign_d:
     return DAG.getNode(X86ISD::PSIGN, dl, Op.getValueType(),
                        Op.getOperand(1), Op.getOperand(2));
+  case Intrinsic::x86_sse41_insertps:
+    return DAG.getNode(X86ISD::INSERTPS, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
+  case Intrinsic::x86_avx_vperm2f128_ps_256:
+  case Intrinsic::x86_avx_vperm2f128_pd_256:
+  case Intrinsic::x86_avx_vperm2f128_si_256:
+  case Intrinsic::x86_avx2_vperm2i128:
+    return DAG.getNode(X86ISD::VPERM2X128, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2), Op.getOperand(3));
 
   // ptest and testp intrinsics. The intrinsic these come from are designed to
   // return an integer value, not just an instruction so lower it to the ptest
