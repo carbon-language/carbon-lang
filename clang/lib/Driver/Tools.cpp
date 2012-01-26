@@ -1350,6 +1350,15 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
         CmdArgs.push_back("-analyzer-checker=osx");
       
       CmdArgs.push_back("-analyzer-checker=deadcode");
+      
+      // Enable the following experimental checkers for testing. 
+      CmdArgs.push_back("-analyzer-checker=experimental.osx.cocoa.ContainerAPI");
+      CmdArgs.push_back("-analyzer-checker=security.insecureAPI.UncheckedReturn");
+      CmdArgs.push_back("-analyzer-checker=security.insecureAPI.getpw");
+      CmdArgs.push_back("-analyzer-checker=security.insecureAPI.gets");
+      CmdArgs.push_back("-analyzer-checker=security.insecureAPI.mktemp");      
+      CmdArgs.push_back("-analyzer-checker=security.insecureAPI.mkstemp");
+      CmdArgs.push_back("-analyzer-checker=security.insecureAPI.vfork");
     }
 
     // Set the output format. The default is plist, for (lame) historical
