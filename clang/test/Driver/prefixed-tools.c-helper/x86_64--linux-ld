@@ -1,0 +1,2 @@
+#!/bin/sh
+echo "x86_64--linux-ld called"

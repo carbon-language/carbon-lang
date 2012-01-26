@@ -20,8 +20,9 @@
 using namespace clang::driver;
 using namespace clang;
 
-ToolChain::ToolChain(const Driver &D, const llvm::Triple &T)
-  : D(D), Triple(T) {
+ToolChain::ToolChain(const Driver &D, const llvm::Triple &T,
+                     const std::string &UserTriple)
+  : D(D), Triple(T), UserTriple(UserTriple) {
 }
 
 ToolChain::~ToolChain() {
