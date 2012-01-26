@@ -15,6 +15,22 @@
 
 <h1>Release notes for <tt>checker-XXX</tt> builds</h1>
 
+<h4 id="checker_260">checker-260</h4>
+
+<p><b>built: </b>January 25, 2012<br>
+<b>download:</b> <a href="http://bit.ly/wpAqVP">checker-260.tar.bz2</a></p>
+<p><b>highlights:</b></p>
+
+<p>This is essentially the same as checker-259, but enables the following <i>experimental</i> checkers (please provide feedback):</p>
+
+<ul>
+  <li>Warns about unsafe uses of CFArrayCreate, CFSetCreate, and CFDictionaryCreate</li>
+  <li>Warns about unsafe uses of getpw, gets, which are sources of buffer overflows</li>
+  <li>Warns about unsafe uses of mktemp and mktemps, which can lead to insecure temporary files</li>
+  <li>Warns about unsafe uses of vfork, which is <a href="https://www.securecoding.cert.org/confluence/display/seccode/POS33-C.+Do+not+use+vfork()">insecure</a> to use</li>
+  <li>Warns about not checking the return values of setuid, setgid, seteuid, setegid, setreuid, setregid (another security issue)</li>
+</ul>
+
 <h4 id="checker_259">checker-259</h4>
 
 <p><b>built: </b>January 25, 2012<br>
