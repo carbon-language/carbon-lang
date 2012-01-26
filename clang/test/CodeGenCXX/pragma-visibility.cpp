@@ -55,8 +55,6 @@ namespace n __attribute((visibility("default"))) {
 #pragma GCC visibility pop
 
 namespace n __attribute((visibility("default")))  {
-  extern int foofoo; // FIXME: Shouldn't be necessary, but otherwise the pragma
-                     //        gets to Sema before the namespace!
 #pragma GCC visibility push(hidden)
   void g() {}
   // CHECK: define hidden void @_ZN1n1gEv
@@ -66,8 +64,6 @@ namespace n __attribute((visibility("default")))  {
 // We used to test this, but it's insane, so unless it happens in
 // headers, we should not support it.
 namespace n __attribute((visibility("hidden"))) {
-  extern int foofoo; // FIXME: Shouldn't be necessary, but otherwise the pragma
-                     //        gets to Sema before the namespace!
   #pragma GCC visibility pop
   void h() {}
   // CHECK disabled: define void @_ZN1n1hEv

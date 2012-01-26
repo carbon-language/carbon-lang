@@ -29,6 +29,14 @@ void Parser::HandlePragmaUnused() {
   ConsumeToken(); // The argument token.
 }
 
+void Parser::HandlePragmaVisibility() {
+  assert(Tok.is(tok::annot_pragma_vis));
+  const IdentifierInfo *VisType =
+    static_cast<IdentifierInfo *>(Tok.getAnnotationValue());
+  SourceLocation VisLoc = ConsumeToken();
+  Actions.ActOnPragmaVisibility(VisType, VisLoc);
+}
+
 // #pragma GCC visibility comes in two variants:
 //   'push' '(' [visibility] ')'
 //   'pop'
@@ -77,7 +85,14 @@ void PragmaGCCVisibilityHandler::HandlePragma(Preprocessor &PP,
     return;
   }
 
-  Actions.ActOnPragmaVisibility(VisType, VisLoc);
+  Token *Toks = new Token[1];
+  Toks[0].startToken();
+  Toks[0].setKind(tok::annot_pragma_vis);
+  Toks[0].setLocation(VisLoc);
+  Toks[0].setAnnotationValue(
+                          const_cast<void*>(static_cast<const void*>(VisType)));
+  PP.EnterTokenStream(Toks, 1, /*DisableMacroExpansion=*/true,
+                      /*OwnsTokens=*/true);
 }
 
 // #pragma pack(...) comes in the following delicious flavors:

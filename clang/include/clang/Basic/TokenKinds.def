@@ -568,6 +568,11 @@ ANNOTATION(decltype)     // annotation for a decltype expression,
 // one 'pragma_unused' annotation token followed by the argument token.
 ANNOTATION(pragma_unused)
 
+// Annotation for #pragma GCC visibility...
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_vis)
+
 #undef ANNOTATION
 #undef TESTING_KEYWORD
 #undef OBJC2_AT_KEYWORD
