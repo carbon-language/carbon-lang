@@ -717,7 +717,7 @@ Constant *ConstantArray::get(ArrayType *Ty, ArrayRef<Constant*> V) {
 ///
 Constant *ConstantArray::get(LLVMContext &Context, StringRef Str,
                              bool AddNull) {
-  std::vector<Constant*> ElementVals;
+  SmallVector<Constant*, 8> ElementVals;
   ElementVals.reserve(Str.size() + size_t(AddNull));
   for (unsigned i = 0; i < Str.size(); ++i)
     ElementVals.push_back(ConstantInt::get(Type::getInt8Ty(Context), Str[i]));
@@ -1957,7 +1957,7 @@ const char *ConstantExpr::getOpcodeName() const {
 
 
 GetElementPtrConstantExpr::
-GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
+GetElementPtrConstantExpr(Constant *C, ArrayRef<Constant*> IdxList,
                           Type *DestTy)
   : ConstantExpr(DestTy, Instruction::GetElementPtr,
                  OperandTraits<GetElementPtrConstantExpr>::op_end(this)
@@ -2469,7 +2469,7 @@ void ConstantVector::replaceUsesOfWithOnConstant(Value *From, Value *To,
                                                  Use *U) {
   assert(isa<Constant>(To) && "Cannot make Constant refer to non-constant!");
   
-  std::vector<Constant*> Values;
+  SmallVector<Constant*, 8> Values;
   Values.reserve(getNumOperands());  // Build replacement array...
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     Constant *Val = getOperand(i);

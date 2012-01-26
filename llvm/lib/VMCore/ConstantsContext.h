@@ -211,11 +211,11 @@ public:
 /// used behind the scenes to implement getelementpr constant exprs.
 class GetElementPtrConstantExpr : public ConstantExpr {
   virtual void anchor();
-  GetElementPtrConstantExpr(Constant *C, const std::vector<Constant*> &IdxList,
+  GetElementPtrConstantExpr(Constant *C, ArrayRef<Constant*> IdxList,
                             Type *DestTy);
 public:
   static GetElementPtrConstantExpr *Create(Constant *C,
-                                           const std::vector<Constant*>&IdxList,
+                                           ArrayRef<Constant*> IdxList,
                                            Type *DestTy,
                                            unsigned Flags) {
     GetElementPtrConstantExpr *Result =
