@@ -64,6 +64,7 @@ class AsanProcMaps {
   char *current_;
 #elif defined __APPLE__
   int current_image_;
+  uint32_t current_magic_;
   int current_load_cmd_count_;
   char *current_load_cmd_addr_;
 #endif

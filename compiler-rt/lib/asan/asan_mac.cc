@@ -177,6 +177,7 @@ void AsanProcMaps::Reset() {
   current_image_ = _dyld_image_count();
   current_load_cmd_count_ = -1;
   current_load_cmd_addr_ = NULL;
+  current_magic_ = 0;
 }
 
 // Next and NextSegmentLoad were inspired by base/sysinfo.cc in
@@ -202,6 +203,8 @@ bool AsanProcMaps::NextSegmentLoad(
       real_strncpy(filename, _dyld_get_image_name(current_image_),
                    filename_size);
     }
+    if (FLAG_v >= 4)
+      Report("LC_SEGMENT: %p--%p %s+%p\n", *start, *end, filename, *offset);
     return true;
   }
   return false;
@@ -216,7 +219,8 @@ bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
     if (current_load_cmd_count_ < 0) {
       // Set up for this image;
       current_load_cmd_count_ = hdr->ncmds;
-      switch (hdr->magic) {
+      current_magic_ = hdr->magic;
+      switch (current_magic_) {
 #ifdef MH_MAGIC_64
         case MH_MAGIC_64: {
           current_load_cmd_addr_ = (char*)hdr + sizeof(mach_header_64);
@@ -233,18 +237,24 @@ bool AsanProcMaps::Next(uintptr_t *start, uintptr_t *end,
       }
     }
 
-    // We start with the next load command (we've already looked at this one).
-    for (current_load_cmd_count_--;
-         current_load_cmd_count_ >= 0;
-         current_load_cmd_count_--) {
+    for (; current_load_cmd_count_ >= 0; current_load_cmd_count_--) {
+      switch (current_magic_) {
+        // current_magic_ may be only one of MH_MAGIC, MH_MAGIC_64.
 #ifdef MH_MAGIC_64
-      if (NextSegmentLoad<LC_SEGMENT_64, struct segment_command_64>(
-              start, end, offset, filename, filename_size))
-        return true;
+        case MH_MAGIC_64: {
+          if (NextSegmentLoad<LC_SEGMENT_64, struct segment_command_64>(
+                  start, end, offset, filename, filename_size))
+            return true;
+          break;
+        }
 #endif
-      if (NextSegmentLoad<LC_SEGMENT, struct segment_command>(
-              start, end, offset, filename, filename_size))
-        return true;
+        case MH_MAGIC: {
+          if (NextSegmentLoad<LC_SEGMENT, struct segment_command>(
+                  start, end, offset, filename, filename_size))
+            return true;
+          break;
+        }
+      }
     }
     // If we get here, no more load_cmd's in this image talk about
     // segments.  Go on to the next image.
