@@ -7157,6 +7157,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     if (Inst.getOpcode() == ARM::ITasm)
       return false;
 
+    Inst.setLoc(IDLoc);
     Out.EmitInstruction(Inst);
     return false;
   case Match_MissingFeature:
