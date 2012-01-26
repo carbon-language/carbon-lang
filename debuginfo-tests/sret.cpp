@@ -6,8 +6,8 @@
 // DEBUGGER: r
 // DEBUGGER: p a
 // CHECK: $1 = (A &)
-// CHECK:  _vptr$A =
 // CHECK:  m_int = 12
+// CHECK:  _vptr$A =
 
 class A
 {
