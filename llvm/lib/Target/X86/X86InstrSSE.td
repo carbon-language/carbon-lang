@@ -7161,16 +7161,17 @@ def : Pat<(v4i64 (X86VPermilp (memopv4i64 addr:$src1), (i8 imm:$imm))),
 //===----------------------------------------------------------------------===//
 // VPERM2F128 - Permute Floating-Point Values in 128-bit chunks
 //
-let neverHasSideEffects = 1, ExeDomain = SSEPackedSingle in {
+let ExeDomain = SSEPackedSingle in {
 def VPERM2F128rr : AVXAIi8<0x06, MRMSrcReg, (outs VR256:$dst),
           (ins VR256:$src1, VR256:$src2, i8imm:$src3),
           "vperm2f128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, VEX_4V;
-let mayLoad = 1 in
+          [(set VR256:$dst, (v8f32 (X86VPerm2x128 VR256:$src1, VR256:$src2,
+                              (i8 imm:$src3))))]>, VEX_4V;
 def VPERM2F128rm : AVXAIi8<0x06, MRMSrcMem, (outs VR256:$dst),
           (ins VR256:$src1, f256mem:$src2, i8imm:$src3),
           "vperm2f128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, VEX_4V;
+          [(set VR256:$dst, (X86VPerm2x128 VR256:$src1, (memopv8f32 addr:$src2),
+                             (i8 imm:$src3)))]>, VEX_4V;
 }
 
 let Predicates = [HasAVX] in {
@@ -7179,6 +7180,36 @@ def : Pat<(int_x86_avx_vperm2f128_si_256 VR256:$src1, VR256:$src2, imm:$src3),
 def : Pat<(int_x86_avx_vperm2f128_si_256
                   VR256:$src1, (bc_v8i32 (memopv4i64 addr:$src2)), imm:$src3),
           (VPERM2F128rm VR256:$src1, addr:$src2, imm:$src3)>;
+
+def : Pat<(v8i32 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+          (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
+def : Pat<(v4i64 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+          (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
+def : Pat<(v4f64 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+          (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
+def : Pat<(v32i8 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+          (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
+def : Pat<(v16i16 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
+          (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
+
+def : Pat<(v8f32 (X86VPerm2x128 VR256:$src1,
+                  (memopv8f32 addr:$src2), (i8 imm:$imm))),
+          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
+def : Pat<(v8i32 (X86VPerm2x128 VR256:$src1,
+                  (bc_v8i32 (memopv4i64 addr:$src2)), (i8 imm:$imm))),
+          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
+def : Pat<(v4i64 (X86VPerm2x128 VR256:$src1,
+                  (memopv4i64 addr:$src2), (i8 imm:$imm))),
+          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
+def : Pat<(v4f64 (X86VPerm2x128 VR256:$src1,
+                  (memopv4f64 addr:$src2), (i8 imm:$imm))),
+          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
+def : Pat<(v32i8 (X86VPerm2x128 VR256:$src1,
+                  (bc_v32i8 (memopv4i64 addr:$src2)), (i8 imm:$imm))),
+          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
+def : Pat<(v16i16 (X86VPerm2x128 VR256:$src1,
+                  (bc_v16i16 (memopv4i64 addr:$src2)), (i8 imm:$imm))),
+          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -7382,22 +7413,21 @@ defm VPERMPD : avx2_perm_imm<0x01, "vpermpd", memopv4f64, int_x86_avx2_permpd>,
 //===----------------------------------------------------------------------===//
 // VPERM2I128 - Permute Floating-Point Values in 128-bit chunks
 //
-let neverHasSideEffects = 1 in {
+let AddedComplexity = 1 in {
 def VPERM2I128rr : AVX2AIi8<0x46, MRMSrcReg, (outs VR256:$dst),
           (ins VR256:$src1, VR256:$src2, i8imm:$src3),
           "vperm2i128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, VEX_4V;
-let mayLoad = 1 in
+          [(set VR256:$dst, (v4i64 (X86VPerm2x128 VR256:$src1, VR256:$src2,
+                            (i8 imm:$src3))))]>, VEX_4V;
 def VPERM2I128rm : AVX2AIi8<0x46, MRMSrcMem, (outs VR256:$dst),
           (ins VR256:$src1, f256mem:$src2, i8imm:$src3),
           "vperm2i128\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}",
-          []>, VEX_4V;
+          [(set VR256:$dst, (X86VPerm2x128 VR256:$src1, (memopv4i64 addr:$src2),
+                             (i8 imm:$src3)))]>, VEX_4V;
 }
 
-let Predicates = [HasAVX2] in {
+let Predicates = [HasAVX2], AddedComplexity = 1 in {
 def : Pat<(v8i32 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
-          (VPERM2I128rr VR256:$src1, VR256:$src2, imm:$imm)>;
-def : Pat<(v4i64 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
           (VPERM2I128rr VR256:$src1, VR256:$src2, imm:$imm)>;
 def : Pat<(v32i8 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
           (VPERM2I128rr VR256:$src1, VR256:$src2, imm:$imm)>;
@@ -7413,44 +7443,6 @@ def : Pat<(v16i16 (X86VPerm2x128 VR256:$src1,
 def : Pat<(v8i32 (X86VPerm2x128 VR256:$src1, (bc_v8i32 (memopv4i64 addr:$src2)),
                   (i8 imm:$imm))),
           (VPERM2I128rm VR256:$src1, addr:$src2, imm:$imm)>;
-def : Pat<(v4i64 (X86VPerm2x128 VR256:$src1, (memopv4i64 addr:$src2),
-                  (i8 imm:$imm))),
-          (VPERM2I128rm VR256:$src1, addr:$src2, imm:$imm)>;
-}
-
-// AVX1 patterns
-let Predicates = [HasAVX] in {
-def : Pat<(v8f32 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
-          (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
-def : Pat<(v8i32 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
-          (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
-def : Pat<(v4i64 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
-          (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
-def : Pat<(v4f64 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
-          (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
-def : Pat<(v32i8 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
-          (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
-def : Pat<(v16i16 (X86VPerm2x128 VR256:$src1, VR256:$src2, (i8 imm:$imm))),
-          (VPERM2F128rr VR256:$src1, VR256:$src2, imm:$imm)>;
-
-def : Pat<(v8f32 (X86VPerm2x128 VR256:$src1,
-                  (memopv8f32 addr:$src2), (i8 imm:$imm))),
-          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
-def : Pat<(v8i32 (X86VPerm2x128 VR256:$src1,
-                  (bc_v8i32 (memopv4i64 addr:$src2)), (i8 imm:$imm))),
-          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
-def : Pat<(v4i64 (X86VPerm2x128 VR256:$src1,
-                  (memopv4i64 addr:$src2), (i8 imm:$imm))),
-          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
-def : Pat<(v4f64 (X86VPerm2x128 VR256:$src1,
-                  (memopv4f64 addr:$src2), (i8 imm:$imm))),
-          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
-def : Pat<(v32i8 (X86VPerm2x128 VR256:$src1,
-                  (bc_v32i8 (memopv4i64 addr:$src2)), (i8 imm:$imm))),
-          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
-def : Pat<(v16i16 (X86VPerm2x128 VR256:$src1,
-                  (bc_v16i16 (memopv4i64 addr:$src2)), (i8 imm:$imm))),
-          (VPERM2F128rm VR256:$src1, addr:$src2, imm:$imm)>;
 }
 
 
