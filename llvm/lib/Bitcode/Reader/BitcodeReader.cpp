@@ -624,7 +624,7 @@ bool BitcodeReader::ParseTypeTableBody() {
       // FUNCTION: [vararg, attrid, retty, paramty x N]
       if (Record.size() < 3)
         return Error("Invalid FUNCTION type record");
-      std::vector<Type*> ArgTys;
+      SmallVector<Type*, 8> ArgTys;
       for (unsigned i = 3, e = Record.size(); i != e; ++i) {
         if (Type *T = getTypeByID(Record[i]))
           ArgTys.push_back(T);
@@ -643,7 +643,7 @@ bool BitcodeReader::ParseTypeTableBody() {
       // FUNCTION: [vararg, retty, paramty x N]
       if (Record.size() < 2)
         return Error("Invalid FUNCTION type record");
-      std::vector<Type*> ArgTys;
+      SmallVector<Type*, 8> ArgTys;
       for (unsigned i = 2, e = Record.size(); i != e; ++i) {
         if (Type *T = getTypeByID(Record[i]))
           ArgTys.push_back(T);
@@ -661,7 +661,7 @@ bool BitcodeReader::ParseTypeTableBody() {
     case bitc::TYPE_CODE_STRUCT_ANON: {  // STRUCT: [ispacked, eltty x N]
       if (Record.size() < 1)
         return Error("Invalid STRUCT type record");
-      std::vector<Type*> EltTys;
+      SmallVector<Type*, 8> EltTys;
       for (unsigned i = 1, e = Record.size(); i != e; ++i) {
         if (Type *T = getTypeByID(Record[i]))
           EltTys.push_back(T);
@@ -1070,7 +1070,7 @@ bool BitcodeReader::ParseConstants() {
         return Error("Invalid CST_AGGREGATE record");
 
       unsigned Size = Record.size();
-      std::vector<Constant*> Elts;
+      SmallVector<Constant*, 16> Elts;
 
       if (StructType *STy = dyn_cast<StructType>(CurTy)) {
         for (unsigned i = 0; i != Size; ++i)
@@ -1100,7 +1100,7 @@ bool BitcodeReader::ParseConstants() {
       Type *EltTy = ATy->getElementType();
 
       unsigned Size = Record.size();
-      std::vector<Constant*> Elts;
+      SmallVector<Constant*, 16> Elts;
       for (unsigned i = 0; i != Size; ++i)
         Elts.push_back(ConstantInt::get(EltTy, Record[i]));
       V = ConstantArray::get(ATy, Elts);
@@ -1114,7 +1114,7 @@ bool BitcodeReader::ParseConstants() {
       Type *EltTy = ATy->getElementType();
 
       unsigned Size = Record.size();
-      std::vector<Constant*> Elts;
+      SmallVector<Constant*, 16> Elts;
       for (unsigned i = 0; i != Size; ++i)
         Elts.push_back(ConstantInt::get(EltTy, Record[i]));
       Elts.push_back(Constant::getNullValue(EltTy));
