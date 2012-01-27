@@ -1166,6 +1166,7 @@ CodeGenFunction::getDestroyer(QualType::DestructionKind kind) {
   case QualType::DK_objc_weak_lifetime:
     return destroyARCWeak;
   }
+  llvm_unreachable("Unknown DestructionKind");
 }
 
 /// pushDestroy - Push the standard destructor for the given type.
