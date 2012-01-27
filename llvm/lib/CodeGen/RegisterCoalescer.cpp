@@ -553,10 +553,12 @@ bool RegisterCoalescer::AdjustCopiesBackFrom(const CoalescerPair &CP,
   if (UIdx != -1) {
     ValLREndInst->getOperand(UIdx).setIsKill(false);
   }
-
-  // If the copy instruction was killing the destination register before the
-  // merge, find the last use and trim the live range. That will also add the
-  // isKill marker.
+  
+  // Rewrite the copy. If the copy instruction was killing the destination
+  // register before the merge, find the last use and trim the live range. That
+  // will also add the isKill marker.
+  CopyMI->substituteRegister(IntA.reg, IntB.reg, CP.getSubIdx(),
+                             *TRI);
   if (ALR->end == CopyIdx)
     LIS->shrinkToUses(&IntA);
 
