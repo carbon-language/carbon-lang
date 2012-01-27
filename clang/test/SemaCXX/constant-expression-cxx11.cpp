@@ -206,7 +206,9 @@ namespace ParameterScopes {
   constexpr int b = MaybeReturnNonstaticRef(true, 0); // expected-error {{constant expression}} expected-note {{in call to 'MaybeReturnNonstaticRef(1, 0)'}}
 
   constexpr int InternalReturnJunk(int n) {
-    // FIXME: We should reject this: it never produces a constant expression.
+    // TODO: We could reject this: it never produces a constant expression.
+    // However, we currently don't evaluate function calls while testing for
+    // potential constant expressions, for performance.
     return MaybeReturnJunk(true, n); // expected-note {{in call to 'MaybeReturnJunk(1, 0)'}}
   }
   constexpr int n3 = InternalReturnJunk(0); // expected-error {{must be initialized by a constant expression}} expected-note {{in call to 'InternalReturnJunk(0)'}}
@@ -969,10 +971,9 @@ namespace PR11595 {
   struct B { B(); A& x; };
   static_assert(B().x == 3, "");  // expected-error {{constant expression}} expected-note {{non-literal type 'PR11595::B' cannot be used in a constant expression}}
 
-  constexpr bool f(int k) {
+  constexpr bool f(int k) { // expected-error {{constexpr function never produces a constant expression}}
     return B().x == k; // expected-note {{non-literal type 'PR11595::B' cannot be used in a constant expression}}
   }
-  constexpr int n = f(1); // expected-error {{must be initialized by a constant expression}} expected-note {{in call to 'f(1)'}}
 }
 
 namespace ExprWithCleanups {

@@ -127,3 +127,15 @@ constexpr int MultiReturn() {
 //    return value shall be one of those allowed in a constant expression.
 //
 // We implement the proposed resolution of DR1364 and ignore this bullet.
+// However, we implement the spirit of the check as part of the p5 checking that
+// a constexpr function must be able to produce a constant expression.
+namespace DR1364 {
+  constexpr int f(int k) {
+    return k; // ok, even though lvalue-to-rvalue conversion of a function
+              // parameter is not allowed in a constant expression.
+  }
+  int kGlobal; // expected-note {{here}}
+  constexpr int f() { // expected-error {{constexpr function never produces a constant expression}}
+    return kGlobal; // expected-note {{read of non-const}}
+  }
+}

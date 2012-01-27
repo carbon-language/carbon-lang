@@ -14,6 +14,7 @@ struct NonLiteral { // expected-note 2{{no constexpr constructors}}
 };
 struct Literal {
   constexpr Literal() {}
+  explicit Literal(int); // expected-note 2 {{here}}
   operator int() const { return 0; }
 };
 
@@ -190,9 +191,17 @@ constexpr int f(enable_shared_from_this<int>);
 
 // - every constructor involved in initializing non-static data members and base
 //   class sub-objects shall be a constexpr constructor.
-//
-// FIXME: Implement this as part of the 'must be able to produce a constant
-// expression' rules.
+struct ConstexprBaseMemberCtors : Literal {
+  Literal l;
+
+  constexpr ConstexprBaseMemberCtors() : Literal(), l() {} // ok
+  constexpr ConstexprBaseMemberCtors(char) : // expected-error {{constexpr constructor never produces a constant expression}}
+    Literal(0), // expected-note {{non-constexpr constructor}}
+    l() {}
+  constexpr ConstexprBaseMemberCtors(double) : Literal(), // expected-error {{constexpr constructor never produces a constant expression}}
+    l(0) // expected-note {{non-constexpr constructor}}
+  {}
+};
 
 // - every assignment-expression that is an initializer-caluse appearing
 //   directly or indirectly within a brace-or-equal-initializer for a non-static
@@ -215,6 +224,14 @@ struct X {
 //    expression.
 //
 // We implement the proposed resolution of DR1364 and ignore this bullet.
+// However, we implement the intent of this wording as part of the p5 check that
+// the function must be able to produce a constant expression.
+int kGlobal; // expected-note {{here}}
+struct Z {
+  constexpr Z(int a) : n(a) {}
+  constexpr Z() : n(kGlobal) {} // expected-error {{constexpr constructor never produces a constant expression}} expected-note {{read of non-const}}
+  int n;
+};
 
 
 namespace StdExample {

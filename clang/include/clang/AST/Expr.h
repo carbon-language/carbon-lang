@@ -425,6 +425,14 @@ public:
   bool isCXX11ConstantExpr(ASTContext &Ctx, APValue *Result = 0,
                            SourceLocation *Loc = 0) const;
 
+  /// isPotentialConstantExpr - Return true if this function's definition
+  /// might be usable in a constant expression in C++11, if it were marked
+  /// constexpr. Return false if the function can never produce a constant
+  /// expression, along with diagnostics describing why not.
+  static bool isPotentialConstantExpr(const FunctionDecl *FD,
+                                      llvm::SmallVectorImpl<
+                                        PartialDiagnosticAt> &Diags);
+
   /// isConstantInitializer - Returns true if this expression can be emitted to
   /// IR as a constant, and thus can be used as a constant initializer in C.
   bool isConstantInitializer(ASTContext &Ctx, bool ForRef) const;
