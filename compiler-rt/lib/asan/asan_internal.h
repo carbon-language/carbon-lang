@@ -31,6 +31,10 @@
 #endif
 #endif
 
+#if !defined(__has_feature)
+#define __has_feature(x) 0
+#endif
+
 #if defined(__has_feature) && __has_feature(address_sanitizer)
 # error "The AddressSanitizer run-time should not be"
         " instrumented by AddressSanitizer"

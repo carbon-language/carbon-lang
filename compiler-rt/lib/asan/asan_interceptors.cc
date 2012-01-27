@@ -26,8 +26,6 @@
 #include <ctype.h>
 #include <dlfcn.h>
 
-#include <string.h>
-#include <strings.h>
 #include <pthread.h>
 
 // To replace weak system functions on Linux we just need to declare functions
@@ -44,6 +42,10 @@
 // calls to our interceptors. We store pointers to system function f()
 // in __asan::real_f().
 #ifdef __APPLE__
+// Include the declarations of the original functions.
+#include <string.h>
+#include <strings.h>
+
 #include "mach_override/mach_override.h"
 #define WRAPPER_NAME(x) "wrap_"#x
 
@@ -307,7 +309,7 @@ void *WRAP(signal)(int signum, void *handler) {
 }
 
 extern "C"
-extern int (sigaction)(int signum, const void *act, void *oldact);
+int (sigaction)(int signum, const void *act, void *oldact);
 
 extern "C"
 int WRAP(sigaction)(int signum, const void *act, void *oldact) {
