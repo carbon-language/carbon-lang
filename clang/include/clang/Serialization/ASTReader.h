@@ -335,10 +335,6 @@ private:
   /// declarations that have not yet been linked to their definitions.
   llvm::SmallPtrSet<Decl *, 4> PendingDefinitions;
   
-  /// \brief Set of ObjC interfaces that have categories chained to them in
-  /// other modules.
-  llvm::DenseSet<serialization::GlobalDeclID> ObjCChainedCategoriesInterfaces;
-
   /// \brief Read the records that describe the contents of declcontexts.
   bool ReadDeclContextStorage(ModuleFile &M,
                               llvm::BitstreamCursor &Cursor,
@@ -687,6 +683,15 @@ private:
   /// \brief Keeps track of the elements added to PendingDeclChains.
   llvm::SmallSet<serialization::DeclID, 16> PendingDeclChainsKnown;
 
+  /// \brief The set of Objective-C categories that have been deserialized
+  /// since the last time the declaration chains were linked.
+  llvm::SmallPtrSet<ObjCCategoryDecl *, 16> CategoriesDeserialized;
+
+  /// \brief The set of Objective-C class definitions that have already been
+  /// loaded, for which we will need to check for categories whenever a new
+  /// module is loaded.
+  llvm::SmallVector<ObjCInterfaceDecl *, 16> ObjCClassesLoaded;
+  
   typedef llvm::DenseMap<Decl *, llvm::SmallVector<serialization::DeclID, 2> >
     MergedDeclsMap;
     
@@ -715,11 +720,6 @@ private:
   MergedDeclsMap::iterator
   combineStoredMergedDecls(Decl *Canon, serialization::GlobalDeclID CanonID);
   
-  /// \brief We delay loading the chain of objc categories after recursive
-  /// loading of declarations is finished.
-  std::vector<std::pair<ObjCInterfaceDecl *, serialization::DeclID> >
-    PendingChainedObjCCategories;
-
   /// \brief Ready to load the previous declaration of the given Decl.
   void loadAndAttachPreviousDecl(Decl *D, serialization::DeclID ID);
 
@@ -801,8 +801,8 @@ private:
                                  unsigned &RawLocation);
   void loadDeclUpdateRecords(serialization::DeclID ID, Decl *D);
   void loadPendingDeclChain(serialization::GlobalDeclID ID);
-  void loadObjCChainedCategories(serialization::GlobalDeclID ID,
-                                 ObjCInterfaceDecl *D);
+  void loadObjCCategories(serialization::GlobalDeclID ID, ObjCInterfaceDecl *D,
+                          unsigned PreviousGeneration = 0);
 
   RecordLocation getLocalBitOffset(uint64_t GlobalOffset);
   uint64_t getGlobalBitOffset(ModuleFile &M, uint32_t LocalOffset);
@@ -1049,6 +1049,10 @@ public:
   /// \arg M.
   bool isDeclIDFromModule(serialization::GlobalDeclID ID, ModuleFile &M) const;
 
+  /// \brief Retrieve the module file that owns the given declaration, or NULL
+  /// if the declaration is not from a module file.
+  ModuleFile *getOwningModuleFile(Decl *D);
+  
   /// \brief Returns the source location for the decl \arg ID.
   SourceLocation getSourceLocationForDeclID(serialization::GlobalDeclID ID);
 

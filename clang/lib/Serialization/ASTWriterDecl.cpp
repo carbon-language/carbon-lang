@@ -481,7 +481,14 @@ void ASTDeclWriter::VisitObjCInterfaceDecl(ObjCInterfaceDecl *D) {
          P != PEnd; ++P)
       Writer.AddDeclRef(*P, Record);
     
-    Writer.AddDeclRef(D->getCategoryList(), Record);
+    if (ObjCCategoryDecl *Cat = D->getCategoryList()) {
+      // Ensure that we write out the set of categories for this class.
+      Writer.ObjCClassesWithCategories.insert(D);
+      
+      // Make sure that the categories get serialized.
+      for (; Cat; Cat = Cat->getNextClassCategory())
+        (void)Writer.GetDeclRef(Cat);
+    }
   }  
   
   Code = serialization::DECL_OBJC_INTERFACE;
@@ -533,6 +540,7 @@ void ASTDeclWriter::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *D) {
 
 void ASTDeclWriter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
   VisitObjCContainerDecl(D);
+  Writer.AddSourceLocation(D->getCategoryNameLoc(), Record);
   Writer.AddDeclRef(D->getClassInterface(), Record);
   Record.push_back(D->protocol_size());
   for (ObjCCategoryDecl::protocol_iterator
@@ -542,9 +550,7 @@ void ASTDeclWriter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
          PL = D->protocol_loc_begin(), PLEnd = D->protocol_loc_end();
        PL != PLEnd; ++PL)
     Writer.AddSourceLocation(*PL, Record);
-  Writer.AddDeclRef(D->getNextClassCategory(), Record);
   Record.push_back(D->hasSynthBitfield());
-  Writer.AddSourceLocation(D->getCategoryNameLoc(), Record);
   Code = serialization::DECL_OBJC_CATEGORY;
 }
 

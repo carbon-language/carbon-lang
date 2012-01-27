@@ -36,6 +36,7 @@ ModuleFile::ModuleFile(ModuleKind Kind, unsigned Generation)
     DeclOffsets(0), BaseDeclID(0),
     LocalNumCXXBaseSpecifiers(0), CXXBaseSpecifiersOffsets(0),
     FileSortedDecls(0), RedeclarationsMap(0), LocalNumRedeclarationsInMap(0),
+    ObjCCategoriesMap(0), LocalNumObjCCategoriesInMap(0),
     LocalNumTypes(0), TypeOffsets(0), BaseTypeIndex(0), StatCache(0)
 {}
 

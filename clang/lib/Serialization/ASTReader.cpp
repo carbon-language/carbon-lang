@@ -2325,19 +2325,20 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
       break;
     }
 
-    case OBJC_CHAINED_CATEGORIES: {
-      if (Record.size() % 3 != 0) {
-        Error("invalid OBJC_CHAINED_CATEGORIES block in AST file");
+    case OBJC_CATEGORIES_MAP: {
+      if (F.LocalNumObjCCategoriesInMap != 0) {
+        Error("duplicate OBJC_CATEGORIES_MAP record in AST file");
         return Failure;
       }
-      for (unsigned I = 0, N = Record.size(); I != N; I += 3) {
-        serialization::GlobalDeclID GlobID = getGlobalDeclID(F, Record[I]);
-        F.ChainedObjCCategories[GlobID] = std::make_pair(Record[I+1],
-                                                         Record[I+2]);
-        ObjCChainedCategoriesInterfaces.insert(GlobID);
-      }
+      
+      F.LocalNumObjCCategoriesInMap = Record[0];
+      F.ObjCCategoriesMap = (const ObjCCategoriesInfo *)BlobStart;
       break;
     }
+        
+    case OBJC_CATEGORIES:
+      F.ObjCCategories.swap(Record);
+      break;
         
     case CXX_BASE_SPECIFIER_OFFSETS: {
       if (F.LocalNumCXXBaseSpecifiers != 0) {
@@ -2643,7 +2644,7 @@ void ASTReader::makeModuleVisible(Module *Mod,
 ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
                                             ModuleKind Type) {
   // Bump the generation number.
-  ++CurrentGeneration;
+  unsigned PreviousGeneration = CurrentGeneration++;
   
   switch(ReadASTCore(FileName, Type, /*ImportedBy=*/0)) {
   case Failure: return Failure;
@@ -2704,6 +2705,14 @@ ASTReader::ASTReadResult ASTReader::ReadAST(const std::string &FileName,
     } else if (Type == MK_MainFile) {
       SourceMgr.setMainFileID(OriginalFileID);
     }
+  }
+  
+  // For any Objective-C class definitions we have already loaded, make sure
+  // that we load any additional categories.
+  for (unsigned I = 0, N = ObjCClassesLoaded.size(); I != N; ++I) {
+    loadObjCCategories(ObjCClassesLoaded[I]->getGlobalID(), 
+                       ObjCClassesLoaded[I],
+                       PreviousGeneration);
   }
   
   return Success;
@@ -4576,6 +4585,14 @@ bool ASTReader::isDeclIDFromModule(serialization::GlobalDeclID ID,
   return &M == I->second;
 }
 
+ModuleFile *ASTReader::getOwningModuleFile(Decl *D) {
+  if (!D->isFromASTFile())
+    return 0;
+  GlobalDeclMapType::const_iterator I = GlobalDeclMap.find(D->getGlobalID());
+  assert(I != GlobalDeclMap.end() && "Corrupted global declaration map");
+  return I->second;
+}
+
 SourceLocation ASTReader::getSourceLocationForDeclID(GlobalDeclID ID) {
   if (ID < NUM_PREDEF_DECL_IDS)
     return SourceLocation();
@@ -6147,10 +6164,7 @@ void ASTReader::ClearSwitchCaseIDs() {
 }
 
 void ASTReader::finishPendingActions() {
-  while (!PendingIdentifierInfos.empty() ||
-         !PendingDeclChains.empty() ||
-         !PendingChainedObjCCategories.empty()) {
-
+  while (!PendingIdentifierInfos.empty() || !PendingDeclChains.empty()) {
     // If any identifiers with corresponding top-level declarations have
     // been loaded, load those declarations now.
     while (!PendingIdentifierInfos.empty()) {
@@ -6165,14 +6179,6 @@ void ASTReader::finishPendingActions() {
       PendingDeclChainsKnown.erase(PendingDeclChains[I]);
     }
     PendingDeclChains.clear();
-    
-    for (std::vector<std::pair<ObjCInterfaceDecl *,
-                               serialization::DeclID> >::iterator
-           I = PendingChainedObjCCategories.begin(),
-           E = PendingChainedObjCCategories.end(); I != E; ++I) {
-      loadObjCChainedCategories(I->second, I->first);
-    }
-    PendingChainedObjCCategories.clear();
   }
   
   // If we deserialized any C++ or Objective-C class definitions, any

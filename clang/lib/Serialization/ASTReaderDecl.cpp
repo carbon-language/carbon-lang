@@ -705,14 +705,14 @@ void ASTDeclReader::VisitObjCInterfaceDecl(ObjCInterfaceDecl *ID) {
     ID->data().AllReferencedProtocols.set(Protocols.data(), NumProtocols,
                                           Reader.getContext());
   
-    // Read the categories.
-    ID->setCategoryList(ReadDeclAs<ObjCCategoryDecl>(Record, Idx));
-  
     // We will rebuild this list lazily.
     ID->setIvarList(0);
     
     // Note that we have deserialized a definition.
     Reader.PendingDefinitions.insert(ID);
+    
+    // Note that we've loaded this Objective-C class.
+    Reader.ObjCClassesLoaded.push_back(ID);
   } else {
     ID->Data = ID->getCanonicalDecl()->Data;
   }
@@ -765,6 +765,13 @@ void ASTDeclReader::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *FD) {
 
 void ASTDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
   VisitObjCContainerDecl(CD);
+  CD->setCategoryNameLoc(ReadSourceLocation(Record, Idx));
+  
+  // Note that this category has been deserialized. We do this before
+  // deserializing the interface declaration, so that it will consider this
+  /// category.
+  Reader.CategoriesDeserialized.insert(CD);
+
   CD->ClassInterface = ReadDeclAs<ObjCInterfaceDecl>(Record, Idx);
   unsigned NumProtoRefs = Record[Idx++];
   SmallVector<ObjCProtocolDecl *, 16> ProtoRefs;
@@ -777,9 +784,7 @@ void ASTDeclReader::VisitObjCCategoryDecl(ObjCCategoryDecl *CD) {
     ProtoLocs.push_back(ReadSourceLocation(Record, Idx));
   CD->setProtocolList(ProtoRefs.data(), NumProtoRefs, ProtoLocs.data(),
                       Reader.getContext());
-  CD->NextClassCategory = ReadDeclAs<ObjCCategoryDecl>(Record, Idx);
   CD->setHasSynthBitfield(Record[Idx++]);
-  CD->setCategoryNameLoc(ReadSourceLocation(Record, Idx));
 }
 
 void ASTDeclReader::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *CAD) {
@@ -2049,17 +2054,17 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
   // Load any relevant update records.
   loadDeclUpdateRecords(ID, D);
 
-  // Load the category chain after recursive loading is finished.
-  if (ObjCChainedCategoriesInterfaces.count(ID))
-    PendingChainedObjCCategories.push_back(
-                                std::make_pair(cast<ObjCInterfaceDecl>(D), ID));
+  // Load the categories after recursive loading is finished.
+  if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(D))
+    if (Class->isThisDeclarationADefinition())
+      loadObjCCategories(ID, Class);
   
   // If we have deserialized a declaration that has a definition the
   // AST consumer might need to know about, queue it.
   // We don't pass it to the consumer immediately because we may be in recursive
   // loading, and some declarations may still be initializing.
   if (isConsumerInterestedIn(D))
-      InterestingDecls.push_back(D);
+    InterestingDecls.push_back(D);
   
   return D;
 }
@@ -2174,7 +2179,7 @@ namespace {
         return;
       }
       
-      // Dig out the starting/ending declarations.
+      // Dig out all of the redeclarations.
       unsigned Offset = Result->Offset;
       unsigned N = M.RedeclarationChains[Offset];
       M.RedeclarationChains[Offset++] = 0; // Don't try to deserialize again
@@ -2233,129 +2238,145 @@ void ASTReader::loadPendingDeclChain(serialization::GlobalDeclID ID) {
 }
 
 namespace {
+  struct CompareObjCCategoriesInfo {
+    bool operator()(const ObjCCategoriesInfo &X, DeclID Y) {
+      return X.DefinitionID < Y;
+    }
+    
+    bool operator()(DeclID X, const ObjCCategoriesInfo &Y) {
+      return X < Y.DefinitionID;
+    }
+    
+    bool operator()(const ObjCCategoriesInfo &X, 
+                    const ObjCCategoriesInfo &Y) {
+      return X.DefinitionID < Y.DefinitionID;
+    }
+    bool operator()(DeclID X, DeclID Y) {
+      return X < Y;
+    }
+  };
+
   /// \brief Given an ObjC interface, goes through the modules and links to the
   /// interface all the categories for it.
-  class ObjCChainedCategoriesVisitor {
+  class ObjCCategoriesVisitor {
     ASTReader &Reader;
     serialization::GlobalDeclID InterfaceID;
     ObjCInterfaceDecl *Interface;
-    ObjCCategoryDecl *GlobHeadCat, *GlobTailCat;
+    llvm::SmallPtrSet<ObjCCategoryDecl *, 16> &Deserialized;
+    unsigned PreviousGeneration;
+    ObjCCategoryDecl *Tail;
     llvm::DenseMap<DeclarationName, ObjCCategoryDecl *> NameCategoryMap;
-
+    
+    void add(ObjCCategoryDecl *Cat) {
+      // Only process each category once.
+      if (!Deserialized.count(Cat))
+        return;
+      Deserialized.erase(Cat);
+      
+      // Check for duplicate categories.
+      if (Cat->getDeclName()) {
+        ObjCCategoryDecl *&Existing = NameCategoryMap[Cat->getDeclName()];
+        if (Existing && 
+            Reader.getOwningModuleFile(Existing) 
+                                          != Reader.getOwningModuleFile(Cat)) {
+          // FIXME: We should not warn for duplicates in diamond:
+          //
+          //   MT     //
+          //  /  \    //
+          // ML  MR   //
+          //  \  /    //
+          //   MB     //
+          //
+          // If there are duplicates in ML/MR, there will be warning when 
+          // creating MB *and* when importing MB. We should not warn when 
+          // importing.
+          Reader.Diag(Cat->getLocation(), diag::warn_dup_category_def)
+            << Interface->getDeclName() << Cat->getDeclName();
+          Reader.Diag(Existing->getLocation(), diag::note_previous_definition);
+        } else if (!Existing) {
+          // Record this category.
+          Existing = Cat;
+        }
+      }
+      
+      // Add this category to the end of the chain.
+      if (Tail)
+        ASTDeclReader::setNextObjCCategory(Tail, Cat);
+      else
+        Interface->setCategoryList(Cat);
+      Tail = Cat;
+    }
+    
   public:
-    ObjCChainedCategoriesVisitor(ASTReader &Reader,
-                                 serialization::GlobalDeclID InterfaceID,
-                                 ObjCInterfaceDecl *Interface)
+    ObjCCategoriesVisitor(ASTReader &Reader,
+                          serialization::GlobalDeclID InterfaceID,
+                          ObjCInterfaceDecl *Interface,
+                        llvm::SmallPtrSet<ObjCCategoryDecl *, 16> &Deserialized,
+                          unsigned PreviousGeneration)
       : Reader(Reader), InterfaceID(InterfaceID), Interface(Interface),
-        GlobHeadCat(0), GlobTailCat(0) { }
+        Deserialized(Deserialized), PreviousGeneration(PreviousGeneration),
+        Tail(0) 
+    {
+      // Populate the name -> category map with the set of known categories.
+      for (ObjCCategoryDecl *Cat = Interface->getCategoryList(); Cat;
+           Cat = Cat->getNextClassCategory()) {
+        if (Cat->getDeclName())
+          NameCategoryMap[Cat->getDeclName()] = Cat;
+        
+        // Keep track of the tail of the category list.
+        Tail = Cat;
+      }
+    }
 
     static bool visit(ModuleFile &M, void *UserData) {
-      return static_cast<ObjCChainedCategoriesVisitor *>(UserData)->visit(M);
+      return static_cast<ObjCCategoriesVisitor *>(UserData)->visit(M);
     }
 
     bool visit(ModuleFile &M) {
-      if (Reader.isDeclIDFromModule(InterfaceID, M))
-        return true; // We reached the module where the interface originated
-                    // from. Stop traversing the imported modules.
+      // If we've loaded all of the category information we care about from
+      // this module file, we're done.
+      if (M.Generation <= PreviousGeneration)
+        return true;
+      
+      // Map global ID of the definition down to the local ID used in this 
+      // module file. If there is no such mapping, we'll find nothing here
+      // (or in any module it imports).
+      DeclID LocalID = Reader.mapGlobalIDToModuleFileGlobalID(M, InterfaceID);
+      if (!LocalID)
+        return true;
 
-      ModuleFile::ChainedObjCCategoriesMap::iterator
-        I = M.ChainedObjCCategories.find(InterfaceID);
-      if (I == M.ChainedObjCCategories.end())
-        return false;
-
-      ObjCCategoryDecl *
-        HeadCat = Reader.GetLocalDeclAs<ObjCCategoryDecl>(M, I->second.first);
-      ObjCCategoryDecl *
-        TailCat = Reader.GetLocalDeclAs<ObjCCategoryDecl>(M, I->second.second);
-
-      addCategories(HeadCat, TailCat);
-      return false;
+      // Perform a binary search to find the local redeclarations for this
+      // declaration (if any).
+      const ObjCCategoriesInfo *Result
+        = std::lower_bound(M.ObjCCategoriesMap,
+                           M.ObjCCategoriesMap + M.LocalNumObjCCategoriesInMap, 
+                           LocalID, CompareObjCCategoriesInfo());
+      if (Result == M.ObjCCategoriesMap + M.LocalNumObjCCategoriesInMap ||
+          Result->DefinitionID != LocalID) {
+        // We didn't find anything. If the class definition is in this module
+        // file, then the module files it depends on cannot have any categories,
+        // so suppress further lookup.
+        return Reader.isDeclIDFromModule(InterfaceID, M);
+      }
+      
+      // We found something. Dig out all of the categories.
+      unsigned Offset = Result->Offset;
+      unsigned N = M.ObjCCategories[Offset];
+      M.ObjCCategories[Offset++] = 0; // Don't try to deserialize again
+      for (unsigned I = 0; I != N; ++I)
+        add(cast_or_null<ObjCCategoryDecl>(
+              Reader.GetLocalDecl(M, M.ObjCCategories[Offset++])));
+      return true;
     }
-
-    void addCategories(ObjCCategoryDecl *HeadCat,
-                       ObjCCategoryDecl *TailCat = 0) {
-      if (!HeadCat) {
-        assert(!TailCat);
-        return;
-      }
-
-      if (!TailCat) {
-        TailCat = HeadCat;
-        while (TailCat->getNextClassCategory())
-          TailCat = TailCat->getNextClassCategory();
-      }
-
-      if (!GlobHeadCat) {
-        GlobHeadCat = HeadCat;
-        GlobTailCat = TailCat;
-      } else {
-        ASTDeclReader::setNextObjCCategory(GlobTailCat, HeadCat);
-        GlobTailCat = TailCat;
-      }
-
-      llvm::DenseSet<DeclarationName> Checked;
-      for (ObjCCategoryDecl *Cat = HeadCat,
-                            *CatEnd = TailCat->getNextClassCategory();
-             Cat != CatEnd; Cat = Cat->getNextClassCategory()) {
-        if (Checked.count(Cat->getDeclName()))
-          continue;
-        Checked.insert(Cat->getDeclName());
-        checkForDuplicate(Cat);
-      }
-    }
-
-    /// \brief Warns for duplicate categories that come from different modules.
-    void checkForDuplicate(ObjCCategoryDecl *Cat) {
-      DeclarationName Name = Cat->getDeclName();
-      // Find the top category with the same name. We do not want to warn for
-      // duplicates along the established chain because there were already
-      // warnings for them when the module was created. We only want to warn for
-      // duplicates between non-dependent modules:
-      //
-      //   MT     //
-      //  /  \    //
-      // ML  MR   //
-      //
-      // We want to warn for duplicates between ML and MR,not between ML and MT.
-      //
-      // FIXME: We should not warn for duplicates in diamond:
-      //
-      //   MT     //
-      //  /  \    //
-      // ML  MR   //
-      //  \  /    //
-      //   MB     //
-      //
-      // If there are duplicates in ML/MR, there will be warning when creating
-      // MB *and* when importing MB. We should not warn when importing.
-      for (ObjCCategoryDecl *Next = Cat->getNextClassCategory(); Next;
-             Next = Next->getNextClassCategory()) {
-        if (Next->getDeclName() == Name)
-          Cat = Next;
-      }
-
-      ObjCCategoryDecl *&PrevCat = NameCategoryMap[Name];
-      if (!PrevCat)
-        PrevCat = Cat;
-
-      if (PrevCat != Cat) {
-        Reader.Diag(Cat->getLocation(), diag::warn_dup_category_def)
-          << Interface->getDeclName() << Name;
-        Reader.Diag(PrevCat->getLocation(), diag::note_previous_definition);
-      }
-    }
-
-    ObjCCategoryDecl *getHeadCategory() const { return GlobHeadCat; }
   };
 }
 
-void ASTReader::loadObjCChainedCategories(serialization::GlobalDeclID ID,
-                                          ObjCInterfaceDecl *D) {
-  ObjCChainedCategoriesVisitor Visitor(*this, ID, D);
-  ModuleMgr.visit(ObjCChainedCategoriesVisitor::visit, &Visitor);
-  // Also add the categories that the interface already links to.
-  Visitor.addCategories(D->getCategoryList());
-  D->setCategoryList(Visitor.getHeadCategory());
+void ASTReader::loadObjCCategories(serialization::GlobalDeclID ID,
+                                   ObjCInterfaceDecl *D,
+                                   unsigned PreviousGeneration) {
+  ObjCCategoriesVisitor Visitor(*this, ID, D, CategoriesDeserialized,
+                                PreviousGeneration);
+  ModuleMgr.visit(ObjCCategoriesVisitor::visit, &Visitor);
 }
 
 void ASTDeclReader::UpdateDecl(Decl *D, ModuleFile &ModuleFile,

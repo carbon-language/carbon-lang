@@ -33,6 +33,7 @@ module category_bottom {
   export category_left
   export category_right
 }
+module category_other { header "category_other.h" }
 module redeclarations_left { header "redeclarations_left.h" }
 module redeclarations_right { header "redeclarations_right.h" }
 module load_failure { header "load_failure.h" }

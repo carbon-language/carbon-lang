@@ -444,9 +444,9 @@ namespace clang {
       /// which stores information about #line directives.
       SOURCE_MANAGER_LINE_TABLE = 48,
 
-      /// \brief Record code for ObjC categories in a module that are chained to
-      /// an interface.
-      OBJC_CHAINED_CATEGORIES = 49,
+      /// \brief Record code for map of Objective-C class definition IDs to the 
+      /// ObjC categories in a module that are attached to that class.
+      OBJC_CATEGORIES_MAP = 49,
 
       /// \brief Record code for a file sorted array of DeclIDs in a module.
       FILE_SORTED_DECLS = 50,
@@ -462,7 +462,14 @@ namespace clang {
       ///
       /// This array can only be interpreted properly using the local 
       /// redeclarations map.
-      LOCAL_REDECLARATIONS = 53
+      LOCAL_REDECLARATIONS = 53,
+      
+      /// \brief Record code for the array of Objective-C categories (including
+      /// extensions).
+      ///
+      /// This array can only be interpreted properly using the Objective-C
+      /// categories map.
+      OBJC_CATEGORIES
     };
 
     /// \brief Record types used within a source manager block.
@@ -1222,6 +1229,32 @@ namespace clang {
       friend bool operator>=(const LocalRedeclarationsInfo &X,
                              const LocalRedeclarationsInfo &Y) {
         return X.FirstID >= Y.FirstID;
+      }
+    };
+
+    /// \brief Describes the categories of an Objective-C class.
+    struct ObjCCategoriesInfo {
+      DeclID DefinitionID; // The ID of the definition
+      unsigned Offset;     // Offset into the array of category lists.
+      
+      friend bool operator<(const ObjCCategoriesInfo &X,
+                            const ObjCCategoriesInfo &Y) {
+        return X.DefinitionID < Y.DefinitionID;
+      }
+      
+      friend bool operator>(const ObjCCategoriesInfo &X,
+                            const ObjCCategoriesInfo &Y) {
+        return X.DefinitionID > Y.DefinitionID;
+      }
+      
+      friend bool operator<=(const ObjCCategoriesInfo &X,
+                             const ObjCCategoriesInfo &Y) {
+        return X.DefinitionID <= Y.DefinitionID;
+      }
+      
+      friend bool operator>=(const ObjCCategoriesInfo &X,
+                             const ObjCCategoriesInfo &Y) {
+        return X.DefinitionID >= Y.DefinitionID;
       }
     };
 

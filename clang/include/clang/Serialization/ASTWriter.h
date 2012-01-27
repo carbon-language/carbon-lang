@@ -284,17 +284,10 @@ private:
   /// \brief Decls that will be replaced in the current dependent AST file.
   DeclsToRewriteTy DeclsToRewrite;
 
-  struct ChainedObjCCategoriesData {
-    /// \brief The interface in the imported module.
-    const ObjCInterfaceDecl *Interface;
-    /// \brief The local tail category ID that got chained to the imported
-    /// interface.
-    const ObjCCategoryDecl *TailCategory;
-  };
-  /// \brief ObjC categories that got chained to an interface imported from
-  /// another module.
-  SmallVector<ChainedObjCCategoriesData, 16> LocalChainedObjCCategories;
-
+  /// \brief The set of Objective-C class that have categories we
+  /// should serialize.
+  llvm::SetVector<ObjCInterfaceDecl *> ObjCClassesWithCategories;
+                    
   struct ReplacedDeclInfo {
     serialization::DeclID ID;
     uint64_t Offset;
@@ -413,10 +406,10 @@ private:
   void ResolveDeclUpdatesBlocks();
   void WriteDeclUpdatesBlocks();
   void WriteDeclReplacementsBlock();
-  void WriteChainedObjCCategories();
   void WriteDeclContextVisibleUpdate(const DeclContext *DC);
   void WriteFPPragmaOptions(const FPOptions &Opts);
   void WriteOpenCLExtensions(Sema &SemaRef);
+  void WriteObjCCategories();
   void WriteRedeclarations();
   void WriteMergedDecls();
                         

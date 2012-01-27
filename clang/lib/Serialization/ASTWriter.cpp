@@ -798,11 +798,12 @@ void ASTWriter::WriteBlockInfoBlock() {
   RECORD(KNOWN_NAMESPACES);
   RECORD(MODULE_OFFSET_MAP);
   RECORD(SOURCE_MANAGER_LINE_TABLE);
-  RECORD(OBJC_CHAINED_CATEGORIES);
+  RECORD(OBJC_CATEGORIES_MAP);
   RECORD(FILE_SORTED_DECLS);
   RECORD(IMPORTED_MODULES);
   RECORD(MERGED_DECLARATIONS);
   RECORD(LOCAL_REDECLARATIONS);
+  RECORD(OBJC_CATEGORIES);
 
   // SourceManager Block.
   BLOCK(SOURCE_MANAGER_BLOCK);
@@ -2975,6 +2976,57 @@ void ASTWriter::WriteRedeclarations() {
   Stream.EmitRecord(LOCAL_REDECLARATIONS, LocalRedeclChains);
 }
 
+void ASTWriter::WriteObjCCategories() {
+  llvm::SmallVector<ObjCCategoriesInfo, 2> CategoriesMap;
+  RecordData Categories;
+  
+  for (unsigned I = 0, N = ObjCClassesWithCategories.size(); I != N; ++I) {
+    unsigned Size = 0;
+    unsigned StartIndex = Categories.size();
+    
+    ObjCInterfaceDecl *Class = ObjCClassesWithCategories[I];
+    
+    // Allocate space for the size.
+    Categories.push_back(0);
+    
+    // Add the categories.
+    for (ObjCCategoryDecl *Cat = Class->getCategoryList();
+         Cat; Cat = Cat->getNextClassCategory(), ++Size) {
+      assert(getDeclID(Cat) != 0 && "Bogus category");
+      AddDeclRef(Cat, Categories);
+    }
+    
+    // Update the size.
+    Categories[StartIndex] = Size;
+    
+    // Record this interface -> category map.
+    ObjCCategoriesInfo CatInfo = { getDeclID(Class), StartIndex };
+    CategoriesMap.push_back(CatInfo);
+  }
+
+  // Sort the categories map by the definition ID, since the reader will be
+  // performing binary searches on this information.
+  llvm::array_pod_sort(CategoriesMap.begin(), CategoriesMap.end());
+
+  // Emit the categories map.
+  using namespace llvm;
+  llvm::BitCodeAbbrev *Abbrev = new BitCodeAbbrev();
+  Abbrev->Add(BitCodeAbbrevOp(OBJC_CATEGORIES_MAP));
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::VBR, 6)); // # of entries
+  Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
+  unsigned AbbrevID = Stream.EmitAbbrev(Abbrev);
+  
+  RecordData Record;
+  Record.push_back(OBJC_CATEGORIES_MAP);
+  Record.push_back(CategoriesMap.size());
+  Stream.EmitRecordWithBlob(AbbrevID, Record, 
+                            reinterpret_cast<char*>(CategoriesMap.data()),
+                            CategoriesMap.size() * sizeof(ObjCCategoriesInfo));
+  
+  // Emit the category lists.
+  Stream.EmitRecord(OBJC_CATEGORIES, Categories);
+}
+
 void ASTWriter::WriteMergedDecls() {
   if (!Chain || Chain->MergedDecls.empty())
     return;
@@ -3492,9 +3544,9 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
   
   WriteDeclUpdatesBlocks();
   WriteDeclReplacementsBlock();
-  WriteChainedObjCCategories();
   WriteMergedDecls();
   WriteRedeclarations();
+  WriteObjCCategories();
   
   // Some simple statistics
   Record.clear();
@@ -3571,29 +3623,6 @@ void ASTWriter::WriteDeclReplacementsBlock() {
     Record.push_back(I->Loc);
   }
   Stream.EmitRecord(DECL_REPLACEMENTS, Record);
-}
-
-void ASTWriter::WriteChainedObjCCategories() {
-  if (LocalChainedObjCCategories.empty())
-    return;
-
-  RecordData Record;
-  for (SmallVector<ChainedObjCCategoriesData, 16>::iterator
-         I = LocalChainedObjCCategories.begin(),
-         E = LocalChainedObjCCategories.end(); I != E; ++I) {
-    ChainedObjCCategoriesData &Data = *I;
-    if (isRewritten(Data.Interface))
-      continue;
-
-    assert(Data.Interface->getCategoryList());
-    serialization::DeclID
-        HeadCatID = getDeclID(Data.Interface->getCategoryList());
-
-    Record.push_back(getDeclID(Data.Interface));
-    Record.push_back(HeadCatID);
-    Record.push_back(getDeclID(Data.TailCategory));
-  }
-  Stream.EmitRecord(OBJC_CHAINED_CATEGORIES, Record);
 }
 
 void ASTWriter::AddSourceLocation(SourceLocation Loc, RecordDataImpl &Record) {
@@ -4447,13 +4476,10 @@ void ASTWriter::AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
   assert(!WritingAST && "Already writing the AST!");
   if (!IFD->isFromASTFile())
     return; // Declaration not imported from PCH.
-  if (CatD->getNextClassCategory() &&
-      !CatD->getNextClassCategory()->isFromASTFile())
-    return; // We already recorded that the tail of a category chain should be
-            // attached to an interface.
-
-  ChainedObjCCategoriesData Data =  { IFD, CatD };
-  LocalChainedObjCCategories.push_back(Data);
+  
+  assert(IFD->getDefinition() && "Category on a class without a definition?");
+  ObjCClassesWithCategories.insert(
+    const_cast<ObjCInterfaceDecl *>(IFD->getDefinition()));
 }
 
 
