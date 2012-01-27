@@ -741,7 +741,7 @@ public:
   /// isRegTiedToUseOperand - Given the index of a register def operand,
   /// check if the register def is tied to a source operand, due to either
   /// two-address elimination or inline assembly constraints. Returns the
-  /// first tied use operand index by reference is UseOpIdx is not null.
+  /// first tied use operand index by reference if UseOpIdx is not null.
   bool isRegTiedToUseOperand(unsigned DefOpIdx, unsigned *UseOpIdx = 0) const;
 
   /// isRegTiedToDefOperand - Return true if the use operand of the specified
