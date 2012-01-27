@@ -935,7 +935,7 @@ static void handleMoveUses(const MachineBasicBlock *mbb,
 void LiveIntervals::moveInstr(MachineBasicBlock::iterator insertPt,
                               MachineInstr *mi) {
   MachineBasicBlock* mbb = mi->getParent();
-  assert(insertPt == mbb->end() || insertPt->getParent() == mbb &&
+  assert((insertPt == mbb->end() || insertPt->getParent() == mbb) &&
          "Cannot handle moves across basic block boundaries.");
   assert(&*insertPt != mi && "No-op move requested?");
   assert(!mi->isInsideBundle() && "Can't handle bundled instructions yet.");
