@@ -73,7 +73,8 @@ ConnectionFileDescriptor::ConnectionFileDescriptor () :
     m_fd_recv_type (eFDTypeFile),
     m_udp_send_sockaddr (),
     m_should_close_fd (false), 
-    m_socket_timeout_usec(0)
+    m_socket_timeout_usec(0),
+    m_mutex (Mutex::eMutexTypeRecursive)
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
     if (log)
@@ -113,6 +114,7 @@ ConnectionFileDescriptor::IsConnected () const
 ConnectionStatus
 ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
 {
+    Mutex::Locker locker (m_mutex);
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Connect (url = '%s')", this, s);
@@ -232,6 +234,7 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
 ConnectionStatus
 ConnectionFileDescriptor::Disconnect (Error *error_ptr)
 {
+    Mutex::Locker locker (m_mutex);
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Disconnect ()", this);
@@ -599,6 +602,7 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
 ConnectionStatus
 ConnectionFileDescriptor::Close (int& fd, Error *error_ptr)
 {
+    Mutex::Locker locker (m_mutex);
     if (error_ptr)
         error_ptr->Clear();
     bool success = true;

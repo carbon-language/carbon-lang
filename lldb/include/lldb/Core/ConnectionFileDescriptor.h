@@ -19,6 +19,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/Connection.h"
+#include "lldb/Host/Mutex.h"
 #include "lldb/Host/SocketAddress.h"
 
 namespace lldb_private {
@@ -104,6 +105,7 @@ protected:
     SocketAddress m_udp_send_sockaddr;
     bool m_should_close_fd; // True if this class should close the file descriptor when it goes away.
     uint32_t m_socket_timeout_usec;
+    Mutex m_mutex;
     
     static in_port_t
     GetSocketPort (int fd);
