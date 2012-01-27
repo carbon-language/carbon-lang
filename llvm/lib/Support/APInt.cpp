@@ -1123,6 +1123,18 @@ APInt APInt::sextOrTrunc(unsigned width) const {
   return *this;
 }
 
+APInt APInt::zextOrSelf(unsigned width) const {
+  if (BitWidth < width)
+    return zext(width);
+  return *this;
+}
+
+APInt APInt::sextOrSelf(unsigned width) const {
+  if (BitWidth < width)
+    return sext(width);
+  return *this;
+}
+
 /// Arithmetic right-shift this APInt by shiftAmt.
 /// @brief Arithmetic right-shift function.
 APInt APInt::ashr(const APInt &shiftAmt) const {

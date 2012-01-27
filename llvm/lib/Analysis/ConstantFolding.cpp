@@ -52,6 +52,44 @@ static Constant *FoldBitCast(Constant *C, Type *DestTy,
   if (C->isAllOnesValue() && !DestTy->isX86_MMXTy())
     return Constant::getAllOnesValue(DestTy);
 
+  // Handle a vector->integer cast.
+  if (IntegerType *IT = dyn_cast<IntegerType>(DestTy)) {
+    // FIXME: Remove ConstantVector support.
+    if ((!isa<ConstantDataVector>(C) && !isa<ConstantVector>(C)) ||
+        // TODO: Handle big endian someday.
+        !TD.isLittleEndian())
+      return ConstantExpr::getBitCast(C, DestTy);
+
+    unsigned NumSrcElts = C->getType()->getVectorNumElements();
+    
+    // If the vector is a vector of floating point, convert it to vector of int
+    // to simplify things.
+    if (C->getType()->getVectorElementType()->isFloatingPointTy()) {
+      unsigned FPWidth =
+        C->getType()->getVectorElementType()->getPrimitiveSizeInBits();
+      Type *SrcIVTy =
+        VectorType::get(IntegerType::get(C->getContext(), FPWidth), NumSrcElts);
+      // Ask VMCore to do the conversion now that #elts line up.
+      C = ConstantExpr::getBitCast(C, SrcIVTy);
+    }
+    
+    // Now that we know that the input value is a vector of integers, just shift
+    // and insert them into our result.
+    unsigned BitShift =
+      TD.getTypeAllocSizeInBits(C->getType()->getVectorElementType());
+    APInt Result(IT->getBitWidth(), 0);
+    for (unsigned i = 0; i != NumSrcElts; ++i) {
+      // FIXME: Rework when we have ConstantDataVector.
+      ConstantInt *Elt=dyn_cast_or_null<ConstantInt>(C->getAggregateElement(i));
+      if (Elt == 0)  // Elt must be a constant expr or something.
+        return ConstantExpr::getBitCast(C, DestTy);
+      
+      Result |= Elt->getValue().zextOrSelf(IT->getBitWidth()) << i*BitShift;
+    }
+   
+    return ConstantInt::get(IT, Result);
+  }
+  
   // The code below only handles casts to vectors currently.
   VectorType *DestVTy = dyn_cast<VectorType>(DestTy);
   if (DestVTy == 0)

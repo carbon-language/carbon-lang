@@ -1056,6 +1056,16 @@ public:
   /// @brief Zero extend or truncate to width
   APInt zextOrTrunc(unsigned width) const;
 
+  /// Make this APInt have the bit width given by \p width. The value is sign
+  /// extended, or left alone to make it that width.
+  /// @brief Sign extend or truncate to width
+  APInt sextOrSelf(unsigned width) const;
+
+  /// Make this APInt have the bit width given by \p width. The value is zero
+  /// extended, or left alone to make it that width.
+  /// @brief Zero extend or truncate to width
+  APInt zextOrSelf(unsigned width) const;
+
   /// @}
   /// @name Bit Manipulation Operators
   /// @{
