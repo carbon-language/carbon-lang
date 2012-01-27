@@ -55,23 +55,26 @@ public:
         {
             delete m_objects[i];
         }
+        // Decrement refcount should have been called on this ClusterManager,
+        // and it should have locked the mutex, now we will unlock it before
+        // we destroy it...
+        m_mutex.Unlock();
     }
     
     void ManageObject (T *new_object)
     {
-        m_mutex.Lock();
+        Mutex::Locker locker (m_mutex);
         if (!ContainsObject(new_object))
             m_objects.push_back (new_object);
-        m_mutex.Unlock();
     }
     
     typename lldb_private::SharingPtr<T> GetSharedPointer(T *desired_object)
     {
-        m_mutex.Lock();
-        m_external_ref++;
-        assert (ContainsObject(desired_object));
-        m_mutex.Unlock();
-        
+        {
+            Mutex::Locker locker (m_mutex);
+            m_external_ref++;
+            assert (ContainsObject(desired_object));
+        }
         return typename lldb_private::SharingPtr<T> (desired_object, new imp::shared_ptr_refcount<ClusterManager> (this));
     }
     
@@ -79,10 +82,9 @@ private:
     
     bool ContainsObject (const T *desired_object)
     {
-        typename std::vector<T *>::iterator pos;
-        pos = std::find(m_objects.begin(), m_objects.end(), desired_object);
-        
-        return pos < m_objects.end();
+        typename std::vector<T *>::iterator pos, end = m_objects.end();
+        pos = std::find(m_objects.begin(), end, desired_object);
+        return pos != end;
     }
     
     void DecrementRefCount () 
