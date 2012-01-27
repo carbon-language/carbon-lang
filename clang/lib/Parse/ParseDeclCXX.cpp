@@ -857,6 +857,7 @@ Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
   // We have an identifier; check whether it is actually a type.
   ParsedType Type = Actions.getTypeName(*Id, IdLoc, getCurScope(), &SS, true,
                                         false, ParsedType(),
+                                        /*IsCtorOrDtorName=*/false,
                                         /*NonTrivialTypeSourceInfo=*/true);
   if (!Type) {
     Diag(IdLoc, diag::err_expected_class_name);

@@ -851,6 +851,7 @@ public:
                          bool isClassName = false,
                          bool HasTrailingDot = false,
                          ParsedType ObjectType = ParsedType(),
+                         bool IsCtorOrDtorName = false,
                          bool WantNontrivialTypeSourceInfo = false,
                          IdentifierInfo **CorrectedII = 0);
   TypeSpecifierType isTagName(IdentifierInfo &II, Scope *S);
@@ -3941,7 +3942,8 @@ public:
                       TemplateTy Template, SourceLocation TemplateLoc,
                       SourceLocation LAngleLoc,
                       ASTTemplateArgsPtr TemplateArgs,
-                      SourceLocation RAngleLoc);
+                      SourceLocation RAngleLoc,
+                      bool IsCtorOrDtorName = false);
 
   /// \brief Parsed an elaborated-type-specifier that refers to a template-id,
   /// such as \c class T::template apply<U>.

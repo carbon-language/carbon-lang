@@ -2045,7 +2045,8 @@ Sema::ActOnTemplateIdType(CXXScopeSpec &SS,
                           TemplateTy TemplateD, SourceLocation TemplateLoc,
                           SourceLocation LAngleLoc,
                           ASTTemplateArgsPtr TemplateArgsIn,
-                          SourceLocation RAngleLoc) {
+                          SourceLocation RAngleLoc,
+                          bool IsCtorOrDtorName) {
   if (SS.isInvalid())
     return true;
 
@@ -2056,12 +2057,12 @@ Sema::ActOnTemplateIdType(CXXScopeSpec &SS,
   translateTemplateArguments(TemplateArgsIn, TemplateArgs);
 
   if (DependentTemplateName *DTN = Template.getAsDependentTemplateName()) {
-    QualType T = Context.getDependentTemplateSpecializationType(ETK_None,
-                                                           DTN->getQualifier(), 
-                                                           DTN->getIdentifier(), 
-                                                                TemplateArgs);
-    
-    // Build type-source information.    
+    QualType T
+      = Context.getDependentTemplateSpecializationType(ETK_None,
+                                                       DTN->getQualifier(),
+                                                       DTN->getIdentifier(),
+                                                       TemplateArgs);
+    // Build type-source information.
     TypeLocBuilder TLB;
     DependentTemplateSpecializationTypeLoc SpecTL
       = TLB.push<DependentTemplateSpecializationTypeLoc>(T);
@@ -2091,7 +2092,10 @@ Sema::ActOnTemplateIdType(CXXScopeSpec &SS,
   for (unsigned i = 0, e = SpecTL.getNumArgs(); i != e; ++i)
     SpecTL.setArgLocInfo(i, TemplateArgs[i].getLocInfo());
 
-  if (SS.isNotEmpty()) {
+  // NOTE: avoid constructing an ElaboratedTypeLoc if this is a
+  // constructor or destructor name (in such a case, the scope specifier
+  // will be attached to the enclosing Decl or Expr node).
+  if (SS.isNotEmpty() && !IsCtorOrDtorName) {
     // Create an elaborated-type-specifier containing the nested-name-specifier.
     Result = Context.getElaboratedType(ETK_None, SS.getScopeRep(), Result);
     ElaboratedTypeLoc ElabTL = TLB.push<ElaboratedTypeLoc>(Result);

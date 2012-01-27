@@ -94,6 +94,7 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                              Scope *S, CXXScopeSpec *SS,
                              bool isClassName, bool HasTrailingDot,
                              ParsedType ObjectTypePtr,
+                             bool IsCtorOrDtorName,
                              bool WantNontrivialTypeSourceInfo,
                              IdentifierInfo **CorrectedII) {
   // Determine where we will perform name lookup.
@@ -194,6 +195,7 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
                            false, Template, MemberOfUnknownSpecialization))) {
         ParsedType Ty = getTypeName(*NewII, NameLoc, S, NewSSPtr,
                                     isClassName, HasTrailingDot, ObjectTypePtr,
+                                    IsCtorOrDtorName,
                                     WantNontrivialTypeSourceInfo);
         if (Ty) {
           std::string CorrectedStr(Correction.getAsString(getLangOptions()));
@@ -272,8 +274,11 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
 
     if (T.isNull())
       T = Context.getTypeDeclType(TD);
-    
-    if (SS && SS->isNotEmpty()) {
+
+    // NOTE: avoid constructing an ElaboratedType(Loc) if this is a
+    // constructor or destructor name (in such a case, the scope specifier
+    // will be attached to the enclosing Expr or Decl node).
+    if (SS && SS->isNotEmpty() && !IsCtorOrDtorName) {
       if (WantNontrivialTypeSourceInfo) {
         // Construct a type with type-source information.
         TypeLocBuilder Builder;
@@ -394,6 +399,7 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
 
       SuggestedType = getTypeName(*Result->getIdentifier(), IILoc, S, SS,
                                   false, false, ParsedType(),
+                                  /*IsCtorOrDtorName=*/false,
                                   /*NonTrivialTypeSourceInfo=*/true);
     }
     return true;

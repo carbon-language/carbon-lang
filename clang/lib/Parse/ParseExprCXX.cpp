@@ -1647,12 +1647,12 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
   // Bundle the template arguments together.
   ASTTemplateArgsPtr TemplateArgsPtr(Actions, TemplateArgs.data(),
                                      TemplateArgs.size());
-  
+
   // Constructor and destructor names.
   TypeResult Type
     = Actions.ActOnTemplateIdType(SS, Template, NameLoc,
-                                  LAngleLoc, TemplateArgsPtr,
-                                  RAngleLoc);
+                                  LAngleLoc, TemplateArgsPtr, RAngleLoc,
+                                  /*IsCtorOrDtorName=*/true);
   if (Type.isInvalid())
     return true;
   
@@ -1910,11 +1910,12 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
     if (AllowConstructorName && 
         Actions.isCurrentClassName(*Id, getCurScope(), &SS)) {
       // We have parsed a constructor name.
-      Result.setConstructorName(Actions.getTypeName(*Id, IdLoc, getCurScope(),
-                                                    &SS, false, false,
-                                                    ParsedType(),
-                                            /*NonTrivialTypeSourceInfo=*/true),
-                                IdLoc, IdLoc);
+      ParsedType Ty = Actions.getTypeName(*Id, IdLoc, getCurScope(),
+                                          &SS, false, false,
+                                          ParsedType(),
+                                          /*IsCtorOrDtorName=*/true,
+                                          /*NonTrivialTypeSourceInfo=*/true);
+      Result.setConstructorName(Ty, IdLoc, IdLoc);
     } else {
       // We have parsed an identifier.
       Result.setIdentifier(Id, IdLoc);      
@@ -1947,13 +1948,14 @@ bool Parser::ParseUnqualifiedId(CXXScopeSpec &SS, bool EnteringContext,
           << TemplateId->Name
           << FixItHint::CreateRemoval(
                     SourceRange(TemplateId->LAngleLoc, TemplateId->RAngleLoc));
-        Result.setConstructorName(Actions.getTypeName(*TemplateId->Name,
-                                                  TemplateId->TemplateNameLoc, 
-                                                      getCurScope(),
-                                                      &SS, false, false,
-                                                      ParsedType(),
-                                            /*NontrivialTypeSourceInfo=*/true),
-                                  TemplateId->TemplateNameLoc, 
+        ParsedType Ty = Actions.getTypeName(*TemplateId->Name,
+                                            TemplateId->TemplateNameLoc,
+                                            getCurScope(),
+                                            &SS, false, false,
+                                            ParsedType(),
+                                            /*IsCtorOrDtorName=*/true,
+                                            /*NontrivialTypeSourceInfo=*/true);
+        Result.setConstructorName(Ty, TemplateId->TemplateNameLoc,
                                   TemplateId->RAngleLoc);
         ConsumeToken();
         return false;

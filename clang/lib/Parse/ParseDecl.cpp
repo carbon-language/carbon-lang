@@ -1846,6 +1846,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                                Next.getLocation(),
                                                getCurScope(), &SS,
                                                false, false, ParsedType(),
+                                               /*IsCtorOrDtorName=*/false,
                                                /*NonTrivialSourceInfo=*/true);
 
       // If the referenced identifier is not a type, then this declspec is

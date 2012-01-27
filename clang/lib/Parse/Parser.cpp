@@ -1279,6 +1279,7 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
                                             &SS, false, 
                                             NextToken().is(tok::period),
                                             ParsedType(),
+                                            /*IsCtorOrDtorName=*/false,
                                             /*NonTrivialTypeSourceInfo*/true,
                                             NeedType ? &CorrectedII : NULL)) {
       // A FixIt was applied as a result of typo correction
