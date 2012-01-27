@@ -2039,10 +2039,11 @@ ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
                      << ConditionVar->getSourceRange());
 
   ExprResult Condition =
-    Owned(DeclRefExpr::Create(Context, NestedNameSpecifierLoc(), 
-                                        ConditionVar,
-                                        ConditionVar->getLocation(),
-                            ConditionVar->getType().getNonReferenceType(),
+    Owned(DeclRefExpr::Create(Context, NestedNameSpecifierLoc(),
+                              SourceLocation(),
+                              ConditionVar,
+                              ConditionVar->getLocation(),
+                              ConditionVar->getType().getNonReferenceType(),
                               VK_LValue));
 
   MarkDeclarationReferenced(ConditionVar->getLocation(), ConditionVar);

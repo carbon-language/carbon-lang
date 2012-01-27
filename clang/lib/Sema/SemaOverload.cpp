@@ -9252,6 +9252,7 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
 
   CXXScopeSpec SS;
   SS.Adopt(ULE->getQualifierLoc());
+  SourceLocation TemplateKWLoc = ULE->getTemplateKeywordLoc();
 
   TemplateArgumentListInfo TABuffer;
   TemplateArgumentListInfo *ExplicitTemplateArgs = 0;
@@ -9280,10 +9281,11 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
   // casts and such from the call, we don't really care.
   ExprResult NewFn = ExprError();
   if ((*R.begin())->isCXXClassMember())
-    NewFn = SemaRef.BuildPossibleImplicitMemberExpr(SS, R,
-                                                    ExplicitTemplateArgs);
+    NewFn = SemaRef.BuildPossibleImplicitMemberExpr(SS, TemplateKWLoc,
+                                                    R, ExplicitTemplateArgs);
   else if (ExplicitTemplateArgs)
-    NewFn = SemaRef.BuildTemplateIdExpr(SS, R, false, *ExplicitTemplateArgs);
+    NewFn = SemaRef.BuildTemplateIdExpr(SS, TemplateKWLoc, R, false,
+                                        *ExplicitTemplateArgs);
   else
     NewFn = SemaRef.BuildDeclarationNameExpr(SS, R, false);
 
@@ -10774,6 +10776,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
 
     DeclRefExpr *DRE = DeclRefExpr::Create(Context,
                                            ULE->getQualifierLoc(),
+                                           ULE->getTemplateKeywordLoc(),
                                            Fn,
                                            ULE->getNameLoc(),
                                            Fn->getType(),
@@ -10800,6 +10803,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
       if (cast<CXXMethodDecl>(Fn)->isStatic()) {
         DeclRefExpr *DRE = DeclRefExpr::Create(Context,
                                                MemExpr->getQualifierLoc(),
+                                               MemExpr->getTemplateKeywordLoc(),
                                                Fn,
                                                MemExpr->getMemberLoc(),
                                                Fn->getType(),
@@ -10833,6 +10837,7 @@ Expr *Sema::FixOverloadedFunctionReference(Expr *E, DeclAccessPair Found,
     MemberExpr *ME = MemberExpr::Create(Context, Base,
                                         MemExpr->isArrow(),
                                         MemExpr->getQualifierLoc(),
+                                        MemExpr->getTemplateKeywordLoc(),
                                         Fn,
                                         Found,
                                         MemExpr->getMemberNameInfo(),

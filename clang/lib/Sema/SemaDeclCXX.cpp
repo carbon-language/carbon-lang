@@ -2385,7 +2385,8 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     SemaRef.MarkDeclarationReferenced(Constructor->getLocation(), Param);
 
     Expr *CopyCtorArg = 
-      DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(), Param, 
+      DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(),
+                          SourceLocation(), Param,
                           Constructor->getLocation(), ParamType,
                           VK_LValue, 0);
 
@@ -2460,7 +2461,8 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       return false;
         
     Expr *MemberExprBase = 
-      DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(), Param, 
+      DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(),
+                          SourceLocation(), Param,
                           Loc, ParamType, VK_LValue, 0);
 
     if (Moving) {
@@ -2479,6 +2481,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
                                          ParamType, Loc,
                                          /*IsArrow=*/false,
                                          SS,
+                                         /*TemplateKWLoc=*/SourceLocation(),
                                          /*FirstQualifierInScope=*/0,
                                          MemberLookup,
                                          /*TemplateArgs=*/0);    
@@ -7592,7 +7595,9 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
     // Create the reference to operator=.
     ExprResult OpEqualRef
       = S.BuildMemberReferenceExpr(To, T, Loc, /*isArrow=*/false, SS, 
-                                   /*FirstQualifierInScope=*/0, OpLookup, 
+                                   /*TemplateKWLoc=*/SourceLocation(),
+                                   /*FirstQualifierInScope=*/0,
+                                   OpLookup,
                                    /*TemplateArgs=*/0,
                                    /*SuppressQualifierCheck=*/true);
     if (OpEqualRef.isInvalid())
@@ -8034,10 +8039,12 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     MemberLookup.resolveKind();
     ExprResult From = BuildMemberReferenceExpr(OtherRef, OtherRefType,
                                                Loc, /*IsArrow=*/false,
-                                               SS, 0, MemberLookup, 0);
+                                               SS, SourceLocation(), 0,
+                                               MemberLookup, 0);
     ExprResult To = BuildMemberReferenceExpr(This, This->getType(),
                                              Loc, /*IsArrow=*/true,
-                                             SS, 0, MemberLookup, 0);
+                                             SS, SourceLocation(), 0,
+                                             MemberLookup, 0);
     assert(!From.isInvalid() && "Implicit field reference cannot fail");
     assert(!To.isInvalid() && "Implicit field reference cannot fail");
     
@@ -8454,10 +8461,12 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     MemberLookup.resolveKind();
     ExprResult From = BuildMemberReferenceExpr(OtherRef, OtherRefType,
                                                Loc, /*IsArrow=*/false,
-                                               SS, 0, MemberLookup, 0);
+                                               SS, SourceLocation(), 0,
+                                               MemberLookup, 0);
     ExprResult To = BuildMemberReferenceExpr(This, This->getType(),
                                              Loc, /*IsArrow=*/true,
-                                             SS, 0, MemberLookup, 0);
+                                             SS, SourceLocation(), 0,
+                                             MemberLookup, 0);
     assert(!From.isInvalid() && "Implicit field reference cannot fail");
     assert(!To.isInvalid() && "Implicit field reference cannot fail");
 

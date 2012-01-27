@@ -4269,7 +4269,7 @@ CXSourceRange clang_getCursorReferenceNameRange(CXCursor C, unsigned NameFlags,
     if (DeclRefExpr *E = dyn_cast<DeclRefExpr>(getCursorExpr(C)))
       Pieces = buildPieces(NameFlags, false, E->getNameInfo(), 
                            E->getQualifierLoc().getSourceRange(),
-                           E->getExplicitTemplateArgsOpt());
+                           E->getOptionalExplicitTemplateArgs());
     break;
     
   case CXCursor_CallExpr:

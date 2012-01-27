@@ -739,8 +739,8 @@ bool Sema::IsInvalidUnlessNestedName(Scope *S, CXXScopeSpec &SS,
 }
 
 bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
-                                       SourceLocation TemplateLoc, 
-                                       CXXScopeSpec &SS, 
+                                       CXXScopeSpec &SS,
+                                       SourceLocation TemplateKWLoc,
                                        TemplateTy Template,
                                        SourceLocation TemplateNameLoc,
                                        SourceLocation LAngleLoc,
@@ -777,7 +777,7 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
     
-    SS.Extend(Context, TemplateLoc, Builder.getTypeLocInContext(Context, T), 
+    SS.Extend(Context, TemplateKWLoc, Builder.getTypeLocInContext(Context, T),
               CCLoc);
     return false;
   }
@@ -823,7 +823,7 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
 
 
-  SS.Extend(Context, TemplateLoc, Builder.getTypeLocInContext(Context, T), 
+  SS.Extend(Context, TemplateKWLoc, Builder.getTypeLocInContext(Context, T),
             CCLoc);
   return false;
 }

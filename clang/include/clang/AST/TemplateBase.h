@@ -589,7 +589,42 @@ struct ASTTemplateArgumentListInfo {
                       bool &ContainsUnexpandedParameterPack);
   void copyInto(TemplateArgumentListInfo &List) const;
   static std::size_t sizeFor(unsigned NumTemplateArgs);
-  static std::size_t sizeFor(const TemplateArgumentListInfo &List);
+};
+
+/// \brief Extends ASTTemplateArgumentListInfo with the source location
+/// information for the template keyword; this is used as part of the
+/// representation of qualified identifiers, such as S<T>::template apply<T>.
+struct ASTTemplateKWAndArgsInfo : public ASTTemplateArgumentListInfo {
+  typedef ASTTemplateArgumentListInfo Base;
+
+  // NOTE: the source location of the (optional) template keyword is
+  // stored after all template arguments.
+
+  /// \brief Get the source location of the template keyword.
+  SourceLocation getTemplateKeywordLoc() const {
+    return *reinterpret_cast<const SourceLocation*>
+      (getTemplateArgs() + NumTemplateArgs);
+  }
+
+  /// \brief Sets the source location of the template keyword.
+  void setTemplateKeywordLoc(SourceLocation TemplateKWLoc) {
+    *reinterpret_cast<SourceLocation*>
+      (getTemplateArgs() + NumTemplateArgs) = TemplateKWLoc;
+  }
+
+  static const ASTTemplateKWAndArgsInfo*
+  Create(ASTContext &C, SourceLocation TemplateKWLoc,
+         const TemplateArgumentListInfo &List);
+
+  void initializeFrom(SourceLocation TemplateKWLoc,
+                      const TemplateArgumentListInfo &List);
+  void initializeFrom(SourceLocation TemplateKWLoc,
+                      const TemplateArgumentListInfo &List,
+                      bool &Dependent, bool &InstantiationDependent,
+                      bool &ContainsUnexpandedParameterPack);
+  void initializeFrom(SourceLocation TemplateKWLoc);
+
+  static std::size_t sizeFor(unsigned NumTemplateArgs);
 };
 
 const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,

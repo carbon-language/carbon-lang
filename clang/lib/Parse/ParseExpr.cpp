@@ -795,12 +795,13 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
     // not.
     UnqualifiedId Name;
     CXXScopeSpec ScopeSpec;
+    SourceLocation TemplateKWLoc;
     CastExpressionIdValidator Validator(isTypeCast != NotTypeCast,
                                         isTypeCast != IsTypeCast);
     Name.setIdentifier(&II, ILoc);
-    Res = Actions.ActOnIdExpression(getCurScope(), ScopeSpec, Name, 
-                                    Tok.is(tok::l_paren), isAddressOfOperand,
-                                    &Validator);
+    Res = Actions.ActOnIdExpression(getCurScope(), ScopeSpec, TemplateKWLoc,
+                                    Name, Tok.is(tok::l_paren),
+                                    isAddressOfOperand, &Validator);
     break;
   }
   case tok::char_constant:     // constant: character-constant
@@ -1403,19 +1404,19 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       // names a real destructor.
       // Allow explicit constructor calls in Microsoft mode.
       // FIXME: Add support for explicit call of template constructor.
+      SourceLocation TemplateKWLoc;
       UnqualifiedId Name;
       if (ParseUnqualifiedId(SS, 
                              /*EnteringContext=*/false, 
                              /*AllowDestructorName=*/true,
                              /*AllowConstructorName=*/ getLang().MicrosoftExt, 
-                             ObjectType,
-                             Name))
+                             ObjectType, TemplateKWLoc, Name))
         LHS = ExprError();
       
       if (!LHS.isInvalid())
         LHS = Actions.ActOnMemberAccessExpr(getCurScope(), LHS.take(), OpLoc, 
-                                            OpKind, SS, Name, ObjCImpDecl,
-                                            Tok.is(tok::l_paren));
+                                            OpKind, SS, TemplateKWLoc, Name,
+                                            ObjCImpDecl, Tok.is(tok::l_paren));
       break;
     }
     case tok::plusplus:    // postfix-expression: postfix-expression '++'

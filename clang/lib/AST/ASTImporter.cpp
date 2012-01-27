@@ -3909,6 +3909,7 @@ Expr *ASTNodeImporter::VisitDeclRefExpr(DeclRefExpr *E) {
 
   DeclRefExpr *DRE = DeclRefExpr::Create(Importer.getToContext(), 
                                          Importer.Import(E->getQualifierLoc()),
+                                   Importer.Import(E->getTemplateKeywordLoc()),
                                          ToD,
                                          Importer.Import(E->getLocation()),
                                          T, E->getValueKind(),

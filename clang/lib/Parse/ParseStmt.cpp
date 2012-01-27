@@ -171,7 +171,7 @@ Retry:
         if (AnnotateTemplateIdToken(
                             TemplateTy::make(Classification.getTemplateName()),
                                     Classification.getTemplateNameKind(),
-                                    SS, Id, SourceLocation(),
+                                    SS, SourceLocation(), Id,
                                     /*AllowTypeAnnotation=*/false)) {
           // Handle errors here by skipping up to the next semicolon or '}', and
           // eat the semicolon if that's what stopped us.

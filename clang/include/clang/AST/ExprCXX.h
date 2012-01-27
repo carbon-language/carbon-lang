@@ -1778,11 +1778,21 @@ class OverloadExpr : public Expr {
   NestedNameSpecifierLoc QualifierLoc;
 
 protected:
-  /// True if the name was a template-id.
-  bool HasExplicitTemplateArgs;
+  /// \brief Whether the name includes info for explicit template
+  /// keyword and arguments.
+  bool HasTemplateKWAndArgsInfo;
+
+  /// \brief Return the optional template keyword and arguments info.
+  ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo(); // defined far below.
+
+  /// \brief Return the optional template keyword and arguments info.
+  const ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() const {
+    return const_cast<OverloadExpr*>(this)->getTemplateKWAndArgsInfo();
+  }
 
   OverloadExpr(StmtClass K, ASTContext &C,
                NestedNameSpecifierLoc QualifierLoc,
+               SourceLocation TemplateKWLoc,
                const DeclarationNameInfo &NameInfo,
                const TemplateArgumentListInfo *TemplateArgs,
                UnresolvedSetIterator Begin, UnresolvedSetIterator End,
@@ -1792,7 +1802,7 @@ protected:
 
   OverloadExpr(StmtClass K, EmptyShell Empty)
     : Expr(K, Empty), Results(0), NumResults(0),
-      QualifierLoc(), HasExplicitTemplateArgs(false) { }
+      QualifierLoc(), HasTemplateKWAndArgsInfo(false) { }
 
   void initializeResults(ASTContext &C,
                          UnresolvedSetIterator Begin,
@@ -1863,14 +1873,57 @@ public:
   /// one was given.
   NestedNameSpecifierLoc getQualifierLoc() const { return QualifierLoc; }
 
-  /// \brief Determines whether this expression had an explicit
-  /// template argument list, e.g. f<int>.
-  bool hasExplicitTemplateArgs() const { return HasExplicitTemplateArgs; }
+  /// \brief Retrieve the location of the template keyword preceding
+  /// this name, if any.
+  SourceLocation getTemplateKeywordLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->getTemplateKeywordLoc();
+  }
 
-  ASTTemplateArgumentListInfo &getExplicitTemplateArgs(); // defined far below
+  /// \brief Retrieve the location of the left angle bracket starting the
+  /// explicit template argument list following the name, if any.
+  SourceLocation getLAngleLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->LAngleLoc;
+  }
+
+  /// \brief Retrieve the location of the right angle bracket ending the
+  /// explicit template argument list following the name, if any.
+  SourceLocation getRAngleLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->RAngleLoc;
+  }
+
+  /// Determines whether the name was preceded by the template keyword.
+  bool hasTemplateKeyword() const { return getTemplateKeywordLoc().isValid(); }
+
+  /// Determines whether this expression had explicit template arguments.
+  bool hasExplicitTemplateArgs() const { return getLAngleLoc().isValid(); }
+
+  // Note that, inconsistently with the explicit-template-argument AST
+  // nodes, users are *forbidden* from calling these methods on objects
+  // without explicit template arguments.
+
+  ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
+    assert(hasExplicitTemplateArgs());
+    return *getTemplateKWAndArgsInfo();
+  }
 
   const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
     return const_cast<OverloadExpr*>(this)->getExplicitTemplateArgs();
+  }
+
+  TemplateArgumentLoc const *getTemplateArgs() const {
+    return getExplicitTemplateArgs().getTemplateArgs();
+  }
+
+  unsigned getNumTemplateArgs() const {
+    return getExplicitTemplateArgs().NumTemplateArgs;
+  }
+
+  /// Copies the template arguments into the given structure.
+  void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
+    getExplicitTemplateArgs().copyInto(List);
   }
 
   /// \brief Retrieves the optional explicit template arguments.
@@ -1925,13 +1978,14 @@ class UnresolvedLookupExpr : public OverloadExpr {
   UnresolvedLookupExpr(ASTContext &C,
                        CXXRecordDecl *NamingClass,
                        NestedNameSpecifierLoc QualifierLoc,
+                       SourceLocation TemplateKWLoc,
                        const DeclarationNameInfo &NameInfo,
                        bool RequiresADL, bool Overloaded,
                        const TemplateArgumentListInfo *TemplateArgs,
                        UnresolvedSetIterator Begin, UnresolvedSetIterator End,
                        bool StdIsAssociatedNamespace)
-    : OverloadExpr(UnresolvedLookupExprClass, C, QualifierLoc, NameInfo,
-                   TemplateArgs, Begin, End, false, false, false),
+    : OverloadExpr(UnresolvedLookupExprClass, C, QualifierLoc, TemplateKWLoc,
+                   NameInfo, TemplateArgs, Begin, End, false, false, false),
       RequiresADL(RequiresADL),
       StdIsAssociatedNamespace(StdIsAssociatedNamespace),
       Overloaded(Overloaded), NamingClass(NamingClass)
@@ -1956,7 +2010,8 @@ public:
                                       bool StdIsAssociatedNamespace = false) {
     assert((ADL || !StdIsAssociatedNamespace) &&
            "std considered associated namespace when not performing ADL");
-    return new(C) UnresolvedLookupExpr(C, NamingClass, QualifierLoc, NameInfo,
+    return new(C) UnresolvedLookupExpr(C, NamingClass, QualifierLoc,
+                                       SourceLocation(), NameInfo,
                                        ADL, Overloaded, 0, Begin, End,
                                        StdIsAssociatedNamespace);
   }
@@ -1964,6 +2019,7 @@ public:
   static UnresolvedLookupExpr *Create(ASTContext &C,
                                       CXXRecordDecl *NamingClass,
                                       NestedNameSpecifierLoc QualifierLoc,
+                                      SourceLocation TemplateKWLoc,
                                       const DeclarationNameInfo &NameInfo,
                                       bool ADL,
                                       const TemplateArgumentListInfo &Args,
@@ -1971,7 +2027,7 @@ public:
                                       UnresolvedSetIterator End);
 
   static UnresolvedLookupExpr *CreateEmpty(ASTContext &C,
-                                           bool HasExplicitTemplateArgs,
+                                           bool HasTemplateKWAndArgsInfo,
                                            unsigned NumTemplateArgs);
 
   /// True if this declaration should be extended by
@@ -1989,51 +2045,6 @@ public:
   /// [class.access.base]p5) of the lookup.  This is the scope
   /// that was looked in to find these results.
   CXXRecordDecl *getNamingClass() const { return NamingClass; }
-
-  // Note that, inconsistently with the explicit-template-argument AST
-  // nodes, users are *forbidden* from calling these methods on objects
-  // without explicit template arguments.
-
-  ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
-    assert(hasExplicitTemplateArgs());
-    return *reinterpret_cast<ASTTemplateArgumentListInfo*>(this + 1);
-  }
-
-  /// Gets a reference to the explicit template argument list.
-  const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
-    assert(hasExplicitTemplateArgs());
-    return *reinterpret_cast<const ASTTemplateArgumentListInfo*>(this + 1);
-  }
-
-  /// \brief Retrieves the optional explicit template arguments.
-  /// This points to the same data as getExplicitTemplateArgs(), but
-  /// returns null if there are no explicit template arguments.
-  const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() {
-    if (!hasExplicitTemplateArgs()) return 0;
-    return &getExplicitTemplateArgs();
-  }
-
-  /// \brief Copies the template arguments (if present) into the given
-  /// structure.
-  void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
-    getExplicitTemplateArgs().copyInto(List);
-  }
-
-  SourceLocation getLAngleLoc() const {
-    return getExplicitTemplateArgs().LAngleLoc;
-  }
-
-  SourceLocation getRAngleLoc() const {
-    return getExplicitTemplateArgs().RAngleLoc;
-  }
-
-  TemplateArgumentLoc const *getTemplateArgs() const {
-    return getExplicitTemplateArgs().getTemplateArgs();
-  }
-
-  unsigned getNumTemplateArgs() const {
-    return getExplicitTemplateArgs().NumTemplateArgs;
-  }
 
   SourceRange getSourceRange() const {
     SourceRange Range(getNameInfo().getSourceRange());
@@ -2074,22 +2085,36 @@ class DependentScopeDeclRefExpr : public Expr {
   /// The name of the entity we will be referencing.
   DeclarationNameInfo NameInfo;
 
-  /// \brief Whether the name includes explicit template arguments.
-  bool HasExplicitTemplateArgs;
+  /// \brief Whether the name includes info for explicit template
+  /// keyword and arguments.
+  bool HasTemplateKWAndArgsInfo;
+
+  /// \brief Return the optional template keyword and arguments info.
+  ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() {
+    if (!HasTemplateKWAndArgsInfo) return 0;
+    return reinterpret_cast<ASTTemplateKWAndArgsInfo*>(this + 1);
+  }
+  /// \brief Return the optional template keyword and arguments info.
+  const ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() const {
+    return const_cast<DependentScopeDeclRefExpr*>(this)
+      ->getTemplateKWAndArgsInfo();
+  }
 
   DependentScopeDeclRefExpr(QualType T,
                             NestedNameSpecifierLoc QualifierLoc,
+                            SourceLocation TemplateKWLoc,
                             const DeclarationNameInfo &NameInfo,
                             const TemplateArgumentListInfo *Args);
 
 public:
   static DependentScopeDeclRefExpr *Create(ASTContext &C,
                                            NestedNameSpecifierLoc QualifierLoc,
+                                           SourceLocation TemplateKWLoc,
                                            const DeclarationNameInfo &NameInfo,
-                              const TemplateArgumentListInfo *TemplateArgs = 0);
+                              const TemplateArgumentListInfo *TemplateArgs);
 
   static DependentScopeDeclRefExpr *CreateEmpty(ASTContext &C,
-                                                bool HasExplicitTemplateArgs,
+                                                bool HasTemplateKWAndArgsInfo,
                                                 unsigned NumTemplateArgs);
 
   /// \brief Retrieve the name that this expression refers to.
@@ -2112,8 +2137,32 @@ public:
     return QualifierLoc.getNestedNameSpecifier();
   }
 
+  /// \brief Retrieve the location of the template keyword preceding
+  /// this name, if any.
+  SourceLocation getTemplateKeywordLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->getTemplateKeywordLoc();
+  }
+
+  /// \brief Retrieve the location of the left angle bracket starting the
+  /// explicit template argument list following the name, if any.
+  SourceLocation getLAngleLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->LAngleLoc;
+  }
+
+  /// \brief Retrieve the location of the right angle bracket ending the
+  /// explicit template argument list following the name, if any.
+  SourceLocation getRAngleLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->RAngleLoc;
+  }
+
+  /// Determines whether the name was preceded by the template keyword.
+  bool hasTemplateKeyword() const { return getTemplateKeywordLoc().isValid(); }
+
   /// Determines whether this lookup had explicit template arguments.
-  bool hasExplicitTemplateArgs() const { return HasExplicitTemplateArgs; }
+  bool hasExplicitTemplateArgs() const { return getLAngleLoc().isValid(); }
 
   // Note that, inconsistently with the explicit-template-argument AST
   // nodes, users are *forbidden* from calling these methods on objects
@@ -2142,14 +2191,6 @@ public:
   /// structure.
   void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
     getExplicitTemplateArgs().copyInto(List);
-  }
-
-  SourceLocation getLAngleLoc() const {
-    return getExplicitTemplateArgs().LAngleLoc;
-  }
-
-  SourceLocation getRAngleLoc() const {
-    return getExplicitTemplateArgs().RAngleLoc;
   }
 
   TemplateArgumentLoc const *getTemplateArgs() const {
@@ -2387,9 +2428,9 @@ class CXXDependentScopeMemberExpr : public Expr {
   /// the '.' operator.
   bool IsArrow : 1;
 
-  /// \brief Whether this member expression has explicitly-specified template
-  /// arguments.
-  bool HasExplicitTemplateArgs : 1;
+  /// \brief Whether this member expression has info for explicit template
+  /// keyword and arguments.
+  bool HasTemplateKWAndArgsInfo : 1;
 
   /// \brief The location of the '->' or '.' operator.
   SourceLocation OperatorLoc;
@@ -2411,10 +2452,22 @@ class CXXDependentScopeMemberExpr : public Expr {
   /// FIXME: could also be a template-id
   DeclarationNameInfo MemberNameInfo;
 
+  /// \brief Return the optional template keyword and arguments info.
+  ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() {
+    if (!HasTemplateKWAndArgsInfo) return 0;
+    return reinterpret_cast<ASTTemplateKWAndArgsInfo*>(this + 1);
+  }
+  /// \brief Return the optional template keyword and arguments info.
+  const ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() const {
+    return const_cast<CXXDependentScopeMemberExpr*>(this)
+      ->getTemplateKWAndArgsInfo();
+  }
+
   CXXDependentScopeMemberExpr(ASTContext &C,
                           Expr *Base, QualType BaseType, bool IsArrow,
                           SourceLocation OperatorLoc,
                           NestedNameSpecifierLoc QualifierLoc,
+                          SourceLocation TemplateKWLoc,
                           NamedDecl *FirstQualifierFoundInScope,
                           DeclarationNameInfo MemberNameInfo,
                           const TemplateArgumentListInfo *TemplateArgs);
@@ -2433,12 +2486,13 @@ public:
          Expr *Base, QualType BaseType, bool IsArrow,
          SourceLocation OperatorLoc,
          NestedNameSpecifierLoc QualifierLoc,
+         SourceLocation TemplateKWLoc,
          NamedDecl *FirstQualifierFoundInScope,
          DeclarationNameInfo MemberNameInfo,
          const TemplateArgumentListInfo *TemplateArgs);
 
   static CXXDependentScopeMemberExpr *
-  CreateEmpty(ASTContext &C, bool HasExplicitTemplateArgs,
+  CreateEmpty(ASTContext &C, bool HasTemplateKWAndArgsInfo,
               unsigned NumTemplateArgs);
 
   /// \brief True if this is an implicit access, i.e. one in which the
@@ -2502,16 +2556,38 @@ public:
   // expression refers to.
   SourceLocation getMemberLoc() const { return MemberNameInfo.getLoc(); }
 
+  /// \brief Retrieve the location of the template keyword preceding the
+  /// member name, if any.
+  SourceLocation getTemplateKeywordLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->getTemplateKeywordLoc();
+  }
+
+  /// \brief Retrieve the location of the left angle bracket starting the
+  /// explicit template argument list following the member name, if any.
+  SourceLocation getLAngleLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->LAngleLoc;
+  }
+
+  /// \brief Retrieve the location of the right angle bracket ending the
+  /// explicit template argument list following the member name, if any.
+  SourceLocation getRAngleLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->RAngleLoc;
+  }
+
+  /// Determines whether the member name was preceded by the template keyword.
+  bool hasTemplateKeyword() const { return getTemplateKeywordLoc().isValid(); }
+
   /// \brief Determines whether this member expression actually had a C++
   /// template argument list explicitly specified, e.g., x.f<int>.
-  bool hasExplicitTemplateArgs() const {
-    return HasExplicitTemplateArgs;
-  }
+  bool hasExplicitTemplateArgs() const { return getLAngleLoc().isValid(); }
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name, if any.
   ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
-    assert(HasExplicitTemplateArgs);
+    assert(hasExplicitTemplateArgs());
     return *reinterpret_cast<ASTTemplateArgumentListInfo *>(this + 1);
   }
 
@@ -2541,12 +2617,6 @@ public:
     getExplicitTemplateArgs().initializeFrom(List);
   }
 
-  /// \brief Retrieve the location of the left angle bracket following the
-  /// member name ('<'), if any.
-  SourceLocation getLAngleLoc() const {
-    return getExplicitTemplateArgs().LAngleLoc;
-  }
-
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
   const TemplateArgumentLoc *getTemplateArgs() const {
@@ -2557,12 +2627,6 @@ public:
   /// template-id.
   unsigned getNumTemplateArgs() const {
     return getExplicitTemplateArgs().NumTemplateArgs;
-  }
-
-  /// \brief Retrieve the location of the right angle bracket following the
-  /// template arguments ('>').
-  SourceLocation getRAngleLoc() const {
-    return getExplicitTemplateArgs().RAngleLoc;
   }
 
   SourceRange getSourceRange() const {
@@ -2633,6 +2697,7 @@ class UnresolvedMemberExpr : public OverloadExpr {
                        Expr *Base, QualType BaseType, bool IsArrow,
                        SourceLocation OperatorLoc,
                        NestedNameSpecifierLoc QualifierLoc,
+                       SourceLocation TemplateKWLoc,
                        const DeclarationNameInfo &MemberNameInfo,
                        const TemplateArgumentListInfo *TemplateArgs,
                        UnresolvedSetIterator Begin, UnresolvedSetIterator End);
@@ -2649,12 +2714,13 @@ public:
          Expr *Base, QualType BaseType, bool IsArrow,
          SourceLocation OperatorLoc,
          NestedNameSpecifierLoc QualifierLoc,
+         SourceLocation TemplateKWLoc,
          const DeclarationNameInfo &MemberNameInfo,
          const TemplateArgumentListInfo *TemplateArgs,
          UnresolvedSetIterator Begin, UnresolvedSetIterator End);
 
   static UnresolvedMemberExpr *
-  CreateEmpty(ASTContext &C, bool HasExplicitTemplateArgs,
+  CreateEmpty(ASTContext &C, bool HasTemplateKWAndArgsInfo,
               unsigned NumTemplateArgs);
 
   /// \brief True if this is an implicit access, i.e. one in which the
@@ -2700,57 +2766,6 @@ public:
   // \brief Retrieve the location of the name of the member that this
   // expression refers to.
   SourceLocation getMemberLoc() const { return getNameLoc(); }
-
-  /// \brief Retrieve the explicit template argument list that followed the
-  /// member template name.
-  ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
-    assert(hasExplicitTemplateArgs());
-    return *reinterpret_cast<ASTTemplateArgumentListInfo *>(this + 1);
-  }
-
-  /// \brief Retrieve the explicit template argument list that followed the
-  /// member template name, if any.
-  const ASTTemplateArgumentListInfo &getExplicitTemplateArgs() const {
-    assert(hasExplicitTemplateArgs());
-    return *reinterpret_cast<const ASTTemplateArgumentListInfo *>(this + 1);
-  }
-
-  /// \brief Retrieves the optional explicit template arguments.
-  /// This points to the same data as getExplicitTemplateArgs(), but
-  /// returns null if there are no explicit template arguments.
-  const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() {
-    if (!hasExplicitTemplateArgs()) return 0;
-    return &getExplicitTemplateArgs();
-  }
-
-  /// \brief Copies the template arguments into the given structure.
-  void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
-    getExplicitTemplateArgs().copyInto(List);
-  }
-
-  /// \brief Retrieve the location of the left angle bracket following
-  /// the member name ('<').
-  SourceLocation getLAngleLoc() const {
-    return getExplicitTemplateArgs().LAngleLoc;
-  }
-
-  /// \brief Retrieve the template arguments provided as part of this
-  /// template-id.
-  const TemplateArgumentLoc *getTemplateArgs() const {
-    return getExplicitTemplateArgs().getTemplateArgs();
-  }
-
-  /// \brief Retrieve the number of template arguments provided as
-  /// part of this template-id.
-  unsigned getNumTemplateArgs() const {
-    return getExplicitTemplateArgs().NumTemplateArgs;
-  }
-
-  /// \brief Retrieve the location of the right angle bracket
-  /// following the template arguments ('>').
-  SourceLocation getRAngleLoc() const {
-    return getExplicitTemplateArgs().RAngleLoc;
-  }
 
   SourceRange getSourceRange() const {
     SourceRange Range = getMemberNameInfo().getSourceRange();
@@ -2896,11 +2911,14 @@ public:
   }
 };
 
-inline ASTTemplateArgumentListInfo &OverloadExpr::getExplicitTemplateArgs() {
+inline ASTTemplateKWAndArgsInfo *OverloadExpr::getTemplateKWAndArgsInfo() {
+  if (!HasTemplateKWAndArgsInfo) return 0;
   if (isa<UnresolvedLookupExpr>(this))
-    return cast<UnresolvedLookupExpr>(this)->getExplicitTemplateArgs();
+    return reinterpret_cast<ASTTemplateKWAndArgsInfo*>
+      (cast<UnresolvedLookupExpr>(this) + 1);
   else
-    return cast<UnresolvedMemberExpr>(this)->getExplicitTemplateArgs();
+    return reinterpret_cast<ASTTemplateKWAndArgsInfo*>
+      (cast<UnresolvedMemberExpr>(this) + 1);
 }
 
 /// \brief Represents an expression that computes the length of a parameter

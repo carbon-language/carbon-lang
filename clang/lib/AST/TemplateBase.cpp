@@ -531,7 +531,7 @@ const ASTTemplateArgumentListInfo *
 ASTTemplateArgumentListInfo::Create(ASTContext &C,
                                     const TemplateArgumentListInfo &List) {
   std::size_t size = sizeof(CXXDependentScopeMemberExpr) +
-                     ASTTemplateArgumentListInfo::sizeFor(List);
+                     ASTTemplateArgumentListInfo::sizeFor(List.size());
   void *Mem = C.Allocate(size, llvm::alignOf<ASTTemplateArgumentListInfo>());
   ASTTemplateArgumentListInfo *TAI = new (Mem) ASTTemplateArgumentListInfo();
   TAI->initializeFrom(List);
@@ -584,7 +584,38 @@ std::size_t ASTTemplateArgumentListInfo::sizeFor(unsigned NumTemplateArgs) {
          sizeof(TemplateArgumentLoc) * NumTemplateArgs;
 }
 
-std::size_t ASTTemplateArgumentListInfo::sizeFor(
-                                      const TemplateArgumentListInfo &Info) {
-  return sizeFor(Info.size());
+void
+ASTTemplateKWAndArgsInfo::initializeFrom(SourceLocation TemplateKWLoc,
+                                         const TemplateArgumentListInfo &Info) {
+  Base::initializeFrom(Info);
+  setTemplateKeywordLoc(TemplateKWLoc);
 }
+
+void
+ASTTemplateKWAndArgsInfo
+::initializeFrom(SourceLocation TemplateKWLoc,
+                 const TemplateArgumentListInfo &Info,
+                 bool &Dependent,
+                 bool &InstantiationDependent,
+                 bool &ContainsUnexpandedParameterPack) {
+  Base::initializeFrom(Info, Dependent, InstantiationDependent,
+                       ContainsUnexpandedParameterPack);
+  setTemplateKeywordLoc(TemplateKWLoc);
+}
+
+void
+ASTTemplateKWAndArgsInfo::initializeFrom(SourceLocation TemplateKWLoc) {
+  // No explicit template arguments, but template keyword loc is valid.
+  assert(TemplateKWLoc.isValid());
+  LAngleLoc = SourceLocation();
+  RAngleLoc = SourceLocation();
+  NumTemplateArgs = 0;
+  setTemplateKeywordLoc(TemplateKWLoc);
+}
+
+std::size_t
+ASTTemplateKWAndArgsInfo::sizeFor(unsigned NumTemplateArgs) {
+  // Add space for the template keyword location.
+  return Base::sizeFor(NumTemplateArgs) + sizeof(SourceLocation);
+}
+

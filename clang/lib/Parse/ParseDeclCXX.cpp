@@ -461,12 +461,14 @@ Decl *Parser::ParseUsingDeclaration(unsigned Context,
   // Parse the unqualified-id. We allow parsing of both constructor and
   // destructor names and allow the action module to diagnose any semantic
   // errors.
+  SourceLocation TemplateKWLoc;
   UnqualifiedId Name;
   if (ParseUnqualifiedId(SS,
                          /*EnteringContext=*/false,
                          /*AllowDestructorName=*/true,
                          /*AllowConstructorName=*/true,
                          ParsedType(),
+                         TemplateKWLoc,
                          Name)) {
     SkipUntil(tok::semi);
     return 0;
@@ -835,8 +837,8 @@ Parser::TypeResult Parser::ParseBaseTypeSpecifier(SourceLocation &BaseLoc,
     TemplateName.setIdentifier(Id, IdLoc);
 
     // Parse the full template-id, then turn it into a type.
-    if (AnnotateTemplateIdToken(Template, TNK, SS, TemplateName,
-                                SourceLocation(), true))
+    if (AnnotateTemplateIdToken(Template, TNK, SS, SourceLocation(),
+                                TemplateName, true))
       return true;
     if (TNK == TNK_Dependent_template_name)
       AnnotateTemplateIdTokenAsType();
@@ -1692,8 +1694,10 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
                                      /*EnteringContext=*/false);
 
       // Try to parse an unqualified-id.
+      SourceLocation TemplateKWLoc;
       UnqualifiedId Name;
-      if (ParseUnqualifiedId(SS, false, true, true, ParsedType(), Name)) {
+      if (ParseUnqualifiedId(SS, false, true, true, ParsedType(),
+                             TemplateKWLoc, Name)) {
         SkipUntil(tok::semi);
         return;
       }

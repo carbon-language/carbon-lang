@@ -582,10 +582,12 @@ ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
                             << CT)) {
       // Turn this into a trap.
       CXXScopeSpec SS;
+      SourceLocation TemplateKWLoc;
       UnqualifiedId Name;
       Name.setIdentifier(PP.getIdentifierInfo("__builtin_trap"),
                          E->getLocStart());
-      ExprResult TrapFn = ActOnIdExpression(TUScope, SS, Name, true, false);
+      ExprResult TrapFn = ActOnIdExpression(TUScope, SS, TemplateKWLoc, Name,
+                                            true, false);
       if (TrapFn.isInvalid())
         return ExprError();
 
@@ -1442,8 +1444,9 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
   MarkDeclarationReferenced(NameInfo.getLoc(), D);
 
   Expr *E = DeclRefExpr::Create(Context,
-                                SS? SS->getWithLocInContext(Context) 
-                                  : NestedNameSpecifierLoc(),
+                                SS ? SS->getWithLocInContext(Context)
+                                   : NestedNameSpecifierLoc(),
+                                SourceLocation(),
                                 D, NameInfo, Ty, VK);
 
   // Just in case we're building an illegal pointer-to-member.
@@ -1557,7 +1560,8 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
             CXXDependentScopeMemberExpr *DepExpr =
                 CXXDependentScopeMemberExpr::Create(
                     Context, DepThis, DepThisType, true, SourceLocation(),
-                    SS.getWithLocInContext(Context), NULL,
+                    SS.getWithLocInContext(Context),
+                    ULE->getTemplateKeywordLoc(), 0,
                     R.getLookupNameInfo(),
                     ULE->hasExplicitTemplateArgs() ? &TList : 0);
             CallsUndergoingInstantiation.back()->setCallee(DepExpr);
@@ -1702,6 +1706,7 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
 
 ExprResult Sema::ActOnIdExpression(Scope *S,
                                    CXXScopeSpec &SS,
+                                   SourceLocation TemplateKWLoc,
                                    UnqualifiedId &Id,
                                    bool HasTrailingLParen,
                                    bool IsAddressOfOperand,
@@ -1748,8 +1753,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
   }
 
   if (DependentID)
-    return ActOnDependentIdExpression(SS, NameInfo, IsAddressOfOperand,
-                                      TemplateArgs);
+    return ActOnDependentIdExpression(SS, TemplateKWLoc, NameInfo,
+                                      IsAddressOfOperand, TemplateArgs);
 
   // Perform the required lookup.
   LookupResult R(*this, NameInfo, 
@@ -1767,8 +1772,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
     
     if (MemberOfUnknownSpecialization ||
         (R.getResultKind() == LookupResult::NotFoundInCurrentInstantiation))
-      return ActOnDependentIdExpression(SS, NameInfo, IsAddressOfOperand,
-                                        TemplateArgs);
+      return ActOnDependentIdExpression(SS, TemplateKWLoc, NameInfo,
+                                        IsAddressOfOperand, TemplateArgs);
   } else {
     bool IvarLookupFollowUp = II && !SS.isSet() && getCurMethodDecl();
     LookupParsedName(R, S, &SS, !IvarLookupFollowUp);
@@ -1776,9 +1781,9 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
     // If the result might be in a dependent base class, this is a dependent 
     // id-expression.
     if (R.getResultKind() == LookupResult::NotFoundInCurrentInstantiation)
-      return ActOnDependentIdExpression(SS, NameInfo, IsAddressOfOperand,
-                                        TemplateArgs);
-      
+      return ActOnDependentIdExpression(SS, TemplateKWLoc, NameInfo,
+                                        IsAddressOfOperand, TemplateArgs);
+
     // If this reference is in an Objective-C method, then we need to do
     // some special Objective-C lookup, too.
     if (IvarLookupFollowUp) {
@@ -1816,8 +1821,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
       // to be able to search into type dependent base classes.
       if (getLangOptions().MicrosoftMode && CurContext->isDependentContext() &&
           isa<CXXMethodDecl>(CurContext))
-        return ActOnDependentIdExpression(SS, NameInfo, IsAddressOfOperand,
-                                          TemplateArgs);
+        return ActOnDependentIdExpression(SS, TemplateKWLoc, NameInfo,
+                                          IsAddressOfOperand, TemplateArgs);
 
       CorrectionCandidateCallback DefaultValidator;
       if (DiagnoseEmptyLookup(S, SS, R, CCC ? *CCC : DefaultValidator))
@@ -1883,11 +1888,12 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
                               isa<IndirectFieldDecl>(R.getFoundDecl());
 
     if (MightBeImplicitMember)
-      return BuildPossibleImplicitMemberExpr(SS, R, TemplateArgs);
+      return BuildPossibleImplicitMemberExpr(SS, TemplateKWLoc,
+                                             R, TemplateArgs);
   }
 
   if (TemplateArgs)
-    return BuildTemplateIdExpr(SS, R, ADL, *TemplateArgs);
+    return BuildTemplateIdExpr(SS, TemplateKWLoc, R, ADL, *TemplateArgs);
 
   return BuildDeclarationNameExpr(SS, R, ADL);
 }
@@ -1898,10 +1904,11 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
 /// this path.
 ExprResult
 Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
+                                        SourceLocation TemplateKWLoc,
                                         const DeclarationNameInfo &NameInfo) {
   DeclContext *DC;
   if (!(DC = computeDeclContext(SS, false)) || DC->isDependentContext())
-    return BuildDependentDeclRefExpr(SS, NameInfo, 0);
+    return BuildDependentDeclRefExpr(SS, TemplateKWLoc, NameInfo, 0);
 
   if (RequireCompleteDeclContext(SS, DC))
     return ExprError();
@@ -1986,7 +1993,8 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
       SelfName.setIdentifier(&II, SourceLocation());
       SelfName.setKind(UnqualifiedId::IK_ImplicitSelfParam);
       CXXScopeSpec SelfScopeSpec;
-      ExprResult SelfExpr = ActOnIdExpression(S, SelfScopeSpec,
+      SourceLocation TemplateKWLoc;
+      ExprResult SelfExpr = ActOnIdExpression(S, SelfScopeSpec, TemplateKWLoc,
                                               SelfName, false, false);
       if (SelfExpr.isInvalid())
         return ExprError();

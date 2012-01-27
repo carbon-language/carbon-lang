@@ -746,9 +746,9 @@ public:
 ///       Specifies when this declaration reference expression has a record of
 ///       a NamedDecl (different from the referenced ValueDecl) which was found
 ///       during name lookup and/or overload resolution.
-///   DeclRefExprBits.HasExplicitTemplateArgs:
+///   DeclRefExprBits.HasTemplateKWAndArgsInfo:
 ///       Specifies when this declaration reference expression has an explicit
-///       C++ template argument list.
+///       C++ template keyword and/or template argument list.
 class DeclRefExpr : public Expr {
   /// \brief The declaration that we are referencing.
   ValueDecl *D;
@@ -791,6 +791,7 @@ class DeclRefExpr : public Expr {
   }
 
   DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
+              SourceLocation TemplateKWLoc,
               ValueDecl *D, const DeclarationNameInfo &NameInfo,
               NamedDecl *FoundD,
               const TemplateArgumentListInfo *TemplateArgs,
@@ -810,7 +811,7 @@ public:
     : Expr(DeclRefExprClass, T, VK, OK_Ordinary, false, false, false, false),
       D(D), Loc(L), DNLoc(LocInfo) {
     DeclRefExprBits.HasQualifier = 0;
-    DeclRefExprBits.HasExplicitTemplateArgs = 0;
+    DeclRefExprBits.HasTemplateKWAndArgsInfo = 0;
     DeclRefExprBits.HasFoundDecl = 0;
     DeclRefExprBits.HadMultipleCandidates = 0;
     computeDependence();
@@ -818,6 +819,7 @@ public:
 
   static DeclRefExpr *Create(ASTContext &Context,
                              NestedNameSpecifierLoc QualifierLoc,
+                             SourceLocation TemplateKWLoc,
                              ValueDecl *D,
                              SourceLocation NameLoc,
                              QualType T, ExprValueKind VK,
@@ -826,6 +828,7 @@ public:
 
   static DeclRefExpr *Create(ASTContext &Context,
                              NestedNameSpecifierLoc QualifierLoc,
+                             SourceLocation TemplateKWLoc,
                              ValueDecl *D,
                              const DeclarationNameInfo &NameInfo,
                              QualType T, ExprValueKind VK,
@@ -836,7 +839,7 @@ public:
   static DeclRefExpr *CreateEmpty(ASTContext &Context,
                                   bool HasQualifier,
                                   bool HasFoundDecl,
-                                  bool HasExplicitTemplateArgs,
+                                  bool HasTemplateKWAndArgsInfo,
                                   unsigned NumTemplateArgs);
 
   ValueDecl *getDecl() { return D; }
@@ -888,25 +891,65 @@ public:
     return hasFoundDecl() ? getInternalFoundDecl() : D;
   }
 
-  /// \brief Determines whether this declaration reference was followed by an
-  /// explict template argument list.
-  bool hasExplicitTemplateArgs() const {
-    return DeclRefExprBits.HasExplicitTemplateArgs;
+  bool hasTemplateKWAndArgsInfo() const {
+    return DeclRefExprBits.HasTemplateKWAndArgsInfo;
   }
+
+  /// \brief Return the optional template keyword and arguments info.
+  ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() {
+    if (!hasTemplateKWAndArgsInfo())
+      return 0;
+
+    if (hasFoundDecl())
+      return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
+        &getInternalFoundDecl() + 1);
+
+    if (hasQualifier())
+      return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
+        &getInternalQualifierLoc() + 1);
+
+    return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(this + 1);
+  }
+
+  /// \brief Return the optional template keyword and arguments info.
+  const ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() const {
+    return const_cast<DeclRefExpr*>(this)->getTemplateKWAndArgsInfo();
+  }
+
+  /// \brief Retrieve the location of the template keyword preceding
+  /// this name, if any.
+  SourceLocation getTemplateKeywordLoc() const {
+    if (!hasTemplateKWAndArgsInfo()) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->getTemplateKeywordLoc();
+  }
+
+  /// \brief Retrieve the location of the left angle bracket starting the
+  /// explicit template argument list following the name, if any.
+  SourceLocation getLAngleLoc() const {
+    if (!hasTemplateKWAndArgsInfo()) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->LAngleLoc;
+  }
+
+  /// \brief Retrieve the location of the right angle bracket ending the
+  /// explicit template argument list following the name, if any.
+  SourceLocation getRAngleLoc() const {
+    if (!hasTemplateKWAndArgsInfo()) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->RAngleLoc;
+  }
+
+  /// \brief Determines whether the name in this declaration reference
+  /// was preceded by the template keyword.
+  bool hasTemplateKeyword() const { return getTemplateKeywordLoc().isValid(); }
+
+  /// \brief Determines whether this declaration reference was followed by an
+  /// explicit template argument list.
+  bool hasExplicitTemplateArgs() const { return getLAngleLoc().isValid(); }
 
   /// \brief Retrieve the explicit template argument list that followed the
   /// member template name.
   ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
     assert(hasExplicitTemplateArgs());
-    if (hasFoundDecl())
-      return *reinterpret_cast<ASTTemplateArgumentListInfo *>(
-        &getInternalFoundDecl() + 1);
-
-    if (hasQualifier())
-      return *reinterpret_cast<ASTTemplateArgumentListInfo *>(
-        &getInternalQualifierLoc() + 1);
-
-    return *reinterpret_cast<ASTTemplateArgumentListInfo *>(this + 1);
+    return *getTemplateKWAndArgsInfo();
   }
 
   /// \brief Retrieve the explicit template argument list that followed the
@@ -918,7 +961,7 @@ public:
   /// \brief Retrieves the optional explicit template arguments.
   /// This points to the same data as getExplicitTemplateArgs(), but
   /// returns null if there are no explicit template arguments.
-  const ASTTemplateArgumentListInfo *getExplicitTemplateArgsOpt() const {
+  const ASTTemplateArgumentListInfo *getOptionalExplicitTemplateArgs() const {
     if (!hasExplicitTemplateArgs()) return 0;
     return &getExplicitTemplateArgs();
   }
@@ -928,15 +971,6 @@ public:
   void copyTemplateArgumentsInto(TemplateArgumentListInfo &List) const {
     if (hasExplicitTemplateArgs())
       getExplicitTemplateArgs().copyInto(List);
-  }
-
-  /// \brief Retrieve the location of the left angle bracket following the
-  /// member name ('<'), if any.
-  SourceLocation getLAngleLoc() const {
-    if (!hasExplicitTemplateArgs())
-      return SourceLocation();
-
-    return getExplicitTemplateArgs().LAngleLoc;
   }
 
   /// \brief Retrieve the template arguments provided as part of this
@@ -955,15 +989,6 @@ public:
       return 0;
 
     return getExplicitTemplateArgs().NumTemplateArgs;
-  }
-
-  /// \brief Retrieve the location of the right angle bracket following the
-  /// template arguments ('>').
-  SourceLocation getRAngleLoc() const {
-    if (!hasExplicitTemplateArgs())
-      return SourceLocation();
-
-    return getExplicitTemplateArgs().RAngleLoc;
   }
 
   /// \brief Returns true if this expression refers to a function that
@@ -2139,12 +2164,14 @@ class MemberExpr : public Expr {
   /// structure is allocated immediately after the MemberExpr.
   bool HasQualifierOrFoundDecl : 1;
 
-  /// \brief True if this member expression specified a template argument list
-  /// explicitly, e.g., x->f<int>. When true, an ExplicitTemplateArgumentList
-  /// structure (and its TemplateArguments) are allocated immediately after
-  /// the MemberExpr or, if the member expression also has a qualifier, after
-  /// the MemberNameQualifier structure.
-  bool HasExplicitTemplateArgumentList : 1;
+  /// \brief True if this member expression specified a template keyword
+  /// and/or a template argument list explicitly, e.g., x->f<int>,
+  /// x->template f, x->template f<int>.
+  /// When true, an ASTTemplateKWAndArgsInfo structure and its
+  /// TemplateArguments (if any) are allocated immediately after
+  /// the MemberExpr or, if the member expression also has a qualifier,
+  /// after the MemberNameQualifier structure.
+  bool HasTemplateKWAndArgsInfo : 1;
 
   /// \brief True if this member expression refers to a method that
   /// was resolved from an overloaded set having size greater than 1.
@@ -2172,7 +2199,7 @@ public:
            base->containsUnexpandedParameterPack()),
       Base(base), MemberDecl(memberdecl), MemberLoc(NameInfo.getLoc()),
       MemberDNLoc(NameInfo.getInfo()), IsArrow(isarrow),
-      HasQualifierOrFoundDecl(false), HasExplicitTemplateArgumentList(false),
+      HasQualifierOrFoundDecl(false), HasTemplateKWAndArgsInfo(false),
       HadMultipleCandidates(false) {
     assert(memberdecl->getDeclName() == NameInfo.getName());
   }
@@ -2180,7 +2207,7 @@ public:
   // NOTE: this constructor should be used only when it is known that
   // the member name can not provide additional syntactic info
   // (i.e., source locations for C++ operator names or type source info
-  // for constructors, destructors and conversion oeprators).
+  // for constructors, destructors and conversion operators).
   MemberExpr(Expr *base, bool isarrow, ValueDecl *memberdecl,
              SourceLocation l, QualType ty,
              ExprValueKind VK, ExprObjectKind OK)
@@ -2190,11 +2217,12 @@ public:
            base->containsUnexpandedParameterPack()),
       Base(base), MemberDecl(memberdecl), MemberLoc(l), MemberDNLoc(),
       IsArrow(isarrow),
-      HasQualifierOrFoundDecl(false), HasExplicitTemplateArgumentList(false),
+      HasQualifierOrFoundDecl(false), HasTemplateKWAndArgsInfo(false),
       HadMultipleCandidates(false) {}
 
   static MemberExpr *Create(ASTContext &C, Expr *base, bool isarrow,
                             NestedNameSpecifierLoc QualifierLoc,
+                            SourceLocation TemplateKWLoc,
                             ValueDecl *memberdecl, DeclAccessPair founddecl,
                             DeclarationNameInfo MemberNameInfo,
                             const TemplateArgumentListInfo *targs,
@@ -2243,11 +2271,50 @@ public:
     return getMemberQualifier()->QualifierLoc;
   }
 
-  /// \brief Determines whether this member expression actually had a C++
-  /// template argument list explicitly specified, e.g., x.f<int>.
-  bool hasExplicitTemplateArgs() const {
-    return HasExplicitTemplateArgumentList;
+  /// \brief Return the optional template keyword and arguments info.
+  ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() {
+    if (!HasTemplateKWAndArgsInfo)
+      return 0;
+
+    if (!HasQualifierOrFoundDecl)
+      return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(this + 1);
+
+    return reinterpret_cast<ASTTemplateKWAndArgsInfo *>(
+                                                      getMemberQualifier() + 1);
   }
+
+  /// \brief Return the optional template keyword and arguments info.
+  const ASTTemplateKWAndArgsInfo *getTemplateKWAndArgsInfo() const {
+    return const_cast<MemberExpr*>(this)->getTemplateKWAndArgsInfo();
+  }
+
+  /// \brief Retrieve the location of the template keyword preceding
+  /// the member name, if any.
+  SourceLocation getTemplateKeywordLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->getTemplateKeywordLoc();
+  }
+
+  /// \brief Retrieve the location of the left angle bracket starting the
+  /// explicit template argument list following the member name, if any.
+  SourceLocation getLAngleLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->LAngleLoc;
+  }
+
+  /// \brief Retrieve the location of the right angle bracket ending the
+  /// explicit template argument list following the member name, if any.
+  SourceLocation getRAngleLoc() const {
+    if (!HasTemplateKWAndArgsInfo) return SourceLocation();
+    return getTemplateKWAndArgsInfo()->RAngleLoc;
+  }
+
+  /// Determines whether the member name was preceded by the template keyword.
+  bool hasTemplateKeyword() const { return getTemplateKeywordLoc().isValid(); }
+
+  /// \brief Determines whether the member name was followed by an
+  /// explicit template argument list.
+  bool hasExplicitTemplateArgs() const { return getLAngleLoc().isValid(); }
 
   /// \brief Copies the template arguments (if present) into the given
   /// structure.
@@ -2260,12 +2327,8 @@ public:
   /// follow the member template name.  This must only be called on an
   /// expression with explicit template arguments.
   ASTTemplateArgumentListInfo &getExplicitTemplateArgs() {
-    assert(HasExplicitTemplateArgumentList);
-    if (!HasQualifierOrFoundDecl)
-      return *reinterpret_cast<ASTTemplateArgumentListInfo *>(this + 1);
-
-    return *reinterpret_cast<ASTTemplateArgumentListInfo *>(
-                                                      getMemberQualifier() + 1);
+    assert(hasExplicitTemplateArgs());
+    return *getTemplateKWAndArgsInfo();
   }
 
   /// \brief Retrieve the explicit template argument list that
@@ -2283,19 +2346,10 @@ public:
     return &getExplicitTemplateArgs();
   }
 
-  /// \brief Retrieve the location of the left angle bracket following the
-  /// member name ('<'), if any.
-  SourceLocation getLAngleLoc() const {
-    if (!HasExplicitTemplateArgumentList)
-      return SourceLocation();
-
-    return getExplicitTemplateArgs().LAngleLoc;
-  }
-
   /// \brief Retrieve the template arguments provided as part of this
   /// template-id.
   const TemplateArgumentLoc *getTemplateArgs() const {
-    if (!HasExplicitTemplateArgumentList)
+    if (!hasExplicitTemplateArgs())
       return 0;
 
     return getExplicitTemplateArgs().getTemplateArgs();
@@ -2304,19 +2358,10 @@ public:
   /// \brief Retrieve the number of template arguments provided as part of this
   /// template-id.
   unsigned getNumTemplateArgs() const {
-    if (!HasExplicitTemplateArgumentList)
+    if (!hasExplicitTemplateArgs())
       return 0;
 
     return getExplicitTemplateArgs().NumTemplateArgs;
-  }
-
-  /// \brief Retrieve the location of the right angle bracket following the
-  /// template arguments ('>').
-  SourceLocation getRAngleLoc() const {
-    if (!HasExplicitTemplateArgumentList)
-      return SourceLocation();
-
-    return getExplicitTemplateArgs().RAngleLoc;
   }
 
   /// \brief Retrieve the member declaration name info.

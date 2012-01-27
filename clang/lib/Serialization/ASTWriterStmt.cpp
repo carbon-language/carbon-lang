@@ -34,9 +34,8 @@ namespace clang {
 
     ASTStmtWriter(ASTWriter &Writer, ASTWriter::RecordData &Record)
       : Writer(Writer), Record(Record) { }
-    
-    void
-    AddExplicitTemplateArgumentList(const ASTTemplateArgumentListInfo &Args);
+
+    void AddTemplateKWAndArgsInfo(const ASTTemplateKWAndArgsInfo &Args);
 
     void VisitStmt(Stmt *S);
 #define STMT(Type, Base) \
@@ -46,7 +45,8 @@ namespace clang {
 }
 
 void ASTStmtWriter::
-AddExplicitTemplateArgumentList(const ASTTemplateArgumentListInfo &Args) {
+AddTemplateKWAndArgsInfo(const ASTTemplateKWAndArgsInfo &Args) {
+  Writer.AddSourceLocation(Args.getTemplateKeywordLoc(), Record);
   Writer.AddSourceLocation(Args.LAngleLoc, Record);
   Writer.AddSourceLocation(Args.RAngleLoc, Record);
   for (unsigned i=0; i != Args.NumTemplateArgs; ++i)
@@ -264,17 +264,17 @@ void ASTStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
 
   Record.push_back(E->hasQualifier());
   Record.push_back(E->getDecl() != E->getFoundDecl());
-  Record.push_back(E->hasExplicitTemplateArgs());
+  Record.push_back(E->hasTemplateKWAndArgsInfo());
   Record.push_back(E->hadMultipleCandidates());
 
-  if (E->hasExplicitTemplateArgs()) {
+  if (E->hasTemplateKWAndArgsInfo()) {
     unsigned NumTemplateArgs = E->getNumTemplateArgs();
     Record.push_back(NumTemplateArgs);
   }
 
   DeclarationName::NameKind nk = (E->getDecl()->getDeclName().getNameKind());
 
-  if ((!E->hasExplicitTemplateArgs()) && (!E->hasQualifier()) &&
+  if ((!E->hasTemplateKWAndArgsInfo()) && (!E->hasQualifier()) &&
       (E->getDecl() == E->getFoundDecl()) &&
       nk == DeclarationName::Identifier) {
     AbbrevToUse = Writer.getDeclRefExprAbbrev();
@@ -286,8 +286,8 @@ void ASTStmtWriter::VisitDeclRefExpr(DeclRefExpr *E) {
   if (E->getDecl() != E->getFoundDecl())
     Writer.AddDeclRef(E->getFoundDecl(), Record);
 
-  if (E->hasExplicitTemplateArgs())
-    AddExplicitTemplateArgumentList(E->getExplicitTemplateArgs());
+  if (E->hasTemplateKWAndArgsInfo())
+    AddTemplateKWAndArgsInfo(*E->getTemplateKWAndArgsInfo());
 
   Writer.AddDeclRef(E->getDecl(), Record);
   Writer.AddSourceLocation(E->getLocation(), Record);
@@ -449,8 +449,9 @@ void ASTStmtWriter::VisitMemberExpr(MemberExpr *E) {
   if (E->hasQualifier())
     Writer.AddNestedNameSpecifierLoc(E->getQualifierLoc(), Record);
 
-  Record.push_back(E->hasExplicitTemplateArgs());
-  if (E->hasExplicitTemplateArgs()) {
+  Record.push_back(E->HasTemplateKWAndArgsInfo);
+  if (E->HasTemplateKWAndArgsInfo) {
+    Writer.AddSourceLocation(E->getTemplateKeywordLoc(), Record);
     unsigned NumTemplateArgs = E->getNumTemplateArgs();
     Record.push_back(NumTemplateArgs);
     Writer.AddSourceLocation(E->getLAngleLoc(), Record);
@@ -1194,17 +1195,17 @@ void ASTStmtWriter::VisitExprWithCleanups(ExprWithCleanups *E) {
 void
 ASTStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
   VisitExpr(E);
-  
-  // Don't emit anything here, hasExplicitTemplateArgs() must be
+
+  // Don't emit anything here, HasTemplateKWAndArgsInfo must be
   // emitted first.
 
-  Record.push_back(E->hasExplicitTemplateArgs());
-  if (E->hasExplicitTemplateArgs()) {
-    const ASTTemplateArgumentListInfo &Args = E->getExplicitTemplateArgs();
+  Record.push_back(E->HasTemplateKWAndArgsInfo);
+  if (E->HasTemplateKWAndArgsInfo) {
+    const ASTTemplateKWAndArgsInfo &Args = *E->getTemplateKWAndArgsInfo();
     Record.push_back(Args.NumTemplateArgs);
-    AddExplicitTemplateArgumentList(Args);
+    AddTemplateKWAndArgsInfo(Args);
   }
-  
+
   if (!E->isImplicitAccess())
     Writer.AddStmt(E->getBase());
   else
@@ -1221,14 +1222,15 @@ ASTStmtWriter::VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E){
 void
 ASTStmtWriter::VisitDependentScopeDeclRefExpr(DependentScopeDeclRefExpr *E) {
   VisitExpr(E);
-  
-  // Don't emit anything here, hasExplicitTemplateArgs() must be
+
+  // Don't emit anything here, HasTemplateKWAndArgsInfo must be
   // emitted first.
-  Record.push_back(E->hasExplicitTemplateArgs());
-  if (E->hasExplicitTemplateArgs()) {
-    const ASTTemplateArgumentListInfo &Args = E->getExplicitTemplateArgs();
+
+  Record.push_back(E->HasTemplateKWAndArgsInfo);
+  if (E->HasTemplateKWAndArgsInfo) {
+    const ASTTemplateKWAndArgsInfo &Args = *E->getTemplateKWAndArgsInfo();
     Record.push_back(Args.NumTemplateArgs);
-    AddExplicitTemplateArgumentList(Args);
+    AddTemplateKWAndArgsInfo(Args);
   }
 
   Writer.AddNestedNameSpecifierLoc(E->getQualifierLoc(), Record);
@@ -1251,13 +1253,15 @@ ASTStmtWriter::VisitCXXUnresolvedConstructExpr(CXXUnresolvedConstructExpr *E) {
 
 void ASTStmtWriter::VisitOverloadExpr(OverloadExpr *E) {
   VisitExpr(E);
-  
-  // Don't emit anything here, hasExplicitTemplateArgs() must be emitted first.
-  Record.push_back(E->hasExplicitTemplateArgs());
-  if (E->hasExplicitTemplateArgs()) {
-    const ASTTemplateArgumentListInfo &Args = E->getExplicitTemplateArgs();
+
+  // Don't emit anything here, HasTemplateKWAndArgsInfo must be
+  // emitted first.
+
+  Record.push_back(E->HasTemplateKWAndArgsInfo);
+  if (E->HasTemplateKWAndArgsInfo) {
+    const ASTTemplateKWAndArgsInfo &Args = *E->getTemplateKWAndArgsInfo();
     Record.push_back(Args.NumTemplateArgs);
-    AddExplicitTemplateArgumentList(Args);
+    AddTemplateKWAndArgsInfo(Args);
   }
 
   Record.push_back(E->getNumDecls());

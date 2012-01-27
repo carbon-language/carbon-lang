@@ -699,10 +699,12 @@ static void handleExtVectorTypeAttr(Sema &S, Scope *scope, Decl *D,
   // Special case where the argument is a template id.
   if (Attr.getParameterName()) {
     CXXScopeSpec SS;
+    SourceLocation TemplateKWLoc;
     UnqualifiedId id;
     id.setIdentifier(Attr.getParameterName(), Attr.getLoc());
     
-    ExprResult Size = S.ActOnIdExpression(scope, SS, id, false, false);
+    ExprResult Size = S.ActOnIdExpression(scope, SS, TemplateKWLoc, id,
+                                          false, false);
     if (Size.isInvalid())
       return;
     

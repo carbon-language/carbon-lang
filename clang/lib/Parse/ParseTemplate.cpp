@@ -765,8 +765,8 @@ Parser::ParseTemplateIdAfterTemplateName(TemplateTy Template,
 ///
 bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
                                      CXXScopeSpec &SS,
-                                     UnqualifiedId &TemplateName,
                                      SourceLocation TemplateKWLoc,
+                                     UnqualifiedId &TemplateName,
                                      bool AllowTypeAnnotation) {
   assert(getLang().CPlusPlus && "Can only annotate template-ids in C++");
   assert(Template && Tok.is(tok::less) &&
@@ -833,6 +833,7 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
       TemplateId->Operator = TemplateName.OperatorFunctionId.Operator;
     }
     TemplateId->SS = SS;
+    TemplateId->TemplateKWLoc = TemplateKWLoc;
     TemplateId->Template = Template;
     TemplateId->Kind = TNK;
     TemplateId->LAngleLoc = LAngleLoc;
@@ -927,7 +928,7 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
   if (SS.isSet() && Tok.is(tok::kw_template)) {
     // Parse the optional 'template' keyword following the 
     // nested-name-specifier.
-    SourceLocation TemplateLoc = ConsumeToken();
+    SourceLocation TemplateKWLoc = ConsumeToken();
     
     if (Tok.is(tok::identifier)) {
       // We appear to have a dependent template name.
@@ -944,8 +945,8 @@ ParsedTemplateArgument Parser::ParseTemplateTemplateArgument() {
       // template argument.
       TemplateTy Template;
       if (isEndOfTemplateArgument(Tok) &&
-          Actions.ActOnDependentTemplateName(getCurScope(), TemplateLoc,
-                                             SS, Name, 
+          Actions.ActOnDependentTemplateName(getCurScope(),
+                                             SS, TemplateKWLoc, Name,
                                              /*ObjectType=*/ ParsedType(),
                                              /*EnteringContext=*/false,
                                              Template))

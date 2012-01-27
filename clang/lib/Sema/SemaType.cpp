@@ -3795,11 +3795,12 @@ static void HandleExtVectorTypeAttr(QualType &CurType,
   // Special case where the argument is a template id.
   if (Attr.getParameterName()) {
     CXXScopeSpec SS;
+    SourceLocation TemplateKWLoc;
     UnqualifiedId id;
     id.setIdentifier(Attr.getParameterName(), Attr.getLoc());
-    
-    ExprResult Size = S.ActOnIdExpression(S.getCurScope(), SS, id, false, 
-                                          false);
+
+    ExprResult Size = S.ActOnIdExpression(S.getCurScope(), SS, TemplateKWLoc,
+                                          id, false, false);
     if (Size.isInvalid())
       return;
     

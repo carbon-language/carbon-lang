@@ -258,6 +258,7 @@ void DeclRefExpr::computeDependence() {
 }
 
 DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
+                         SourceLocation TemplateKWLoc,
                          ValueDecl *D, const DeclarationNameInfo &NameInfo,
                          NamedDecl *FoundD,
                          const TemplateArgumentListInfo *TemplateArgs,
@@ -270,16 +271,20 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
   DeclRefExprBits.HasFoundDecl = FoundD ? 1 : 0;
   if (FoundD)
     getInternalFoundDecl() = FoundD;
-  DeclRefExprBits.HasExplicitTemplateArgs = TemplateArgs ? 1 : 0;
+  DeclRefExprBits.HasTemplateKWAndArgsInfo
+    = (TemplateArgs || TemplateKWLoc.isValid()) ? 1 : 0;
   if (TemplateArgs) {
     bool Dependent = false;
     bool InstantiationDependent = false;
     bool ContainsUnexpandedParameterPack = false;
-    getExplicitTemplateArgs().initializeFrom(*TemplateArgs, Dependent,
-                                             InstantiationDependent,
-                                             ContainsUnexpandedParameterPack);
+    getTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc, *TemplateArgs,
+                                               Dependent,
+                                               InstantiationDependent,
+                                               ContainsUnexpandedParameterPack);
     if (InstantiationDependent)
       setInstantiationDependent(true);
+  } else if (TemplateKWLoc.isValid()) {
+    getTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc);
   }
   DeclRefExprBits.HadMultipleCandidates = 0;
 
@@ -288,19 +293,21 @@ DeclRefExpr::DeclRefExpr(NestedNameSpecifierLoc QualifierLoc,
 
 DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  NestedNameSpecifierLoc QualifierLoc,
+                                 SourceLocation TemplateKWLoc,
                                  ValueDecl *D,
                                  SourceLocation NameLoc,
                                  QualType T,
                                  ExprValueKind VK,
                                  NamedDecl *FoundD,
                                  const TemplateArgumentListInfo *TemplateArgs) {
-  return Create(Context, QualifierLoc, D,
+  return Create(Context, QualifierLoc, TemplateKWLoc, D,
                 DeclarationNameInfo(D->getDeclName(), NameLoc),
                 T, VK, FoundD, TemplateArgs);
 }
 
 DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
                                  NestedNameSpecifierLoc QualifierLoc,
+                                 SourceLocation TemplateKWLoc,
                                  ValueDecl *D,
                                  const DeclarationNameInfo &NameInfo,
                                  QualType T,
@@ -317,25 +324,27 @@ DeclRefExpr *DeclRefExpr::Create(ASTContext &Context,
   if (FoundD)
     Size += sizeof(NamedDecl *);
   if (TemplateArgs)
-    Size += ASTTemplateArgumentListInfo::sizeFor(*TemplateArgs);
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(TemplateArgs->size());
+  else if (TemplateKWLoc.isValid())
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(0);
 
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
-  return new (Mem) DeclRefExpr(QualifierLoc, D, NameInfo, FoundD, TemplateArgs,
-                               T, VK);
+  return new (Mem) DeclRefExpr(QualifierLoc, TemplateKWLoc, D, NameInfo,
+                               FoundD, TemplateArgs, T, VK);
 }
 
 DeclRefExpr *DeclRefExpr::CreateEmpty(ASTContext &Context,
                                       bool HasQualifier,
                                       bool HasFoundDecl,
-                                      bool HasExplicitTemplateArgs,
+                                      bool HasTemplateKWAndArgsInfo,
                                       unsigned NumTemplateArgs) {
   std::size_t Size = sizeof(DeclRefExpr);
   if (HasQualifier)
     Size += sizeof(NestedNameSpecifierLoc);
   if (HasFoundDecl)
     Size += sizeof(NamedDecl *);
-  if (HasExplicitTemplateArgs)
-    Size += ASTTemplateArgumentListInfo::sizeFor(NumTemplateArgs);
+  if (HasTemplateKWAndArgsInfo)
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(NumTemplateArgs);
 
   void *Mem = Context.Allocate(Size, llvm::alignOf<DeclRefExpr>());
   return new (Mem) DeclRefExpr(EmptyShell());
@@ -941,6 +950,7 @@ IdentifierInfo *OffsetOfExpr::OffsetOfNode::getFieldName() const {
 
 MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
                                NestedNameSpecifierLoc QualifierLoc,
+                               SourceLocation TemplateKWLoc,
                                ValueDecl *memberdecl,
                                DeclAccessPair founddecl,
                                DeclarationNameInfo nameinfo,
@@ -957,7 +967,9 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
     Size += sizeof(MemberNameQualifier);
 
   if (targs)
-    Size += ASTTemplateArgumentListInfo::sizeFor(*targs);
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(targs->size());
+  else if (TemplateKWLoc.isValid())
+    Size += ASTTemplateKWAndArgsInfo::sizeFor(0);
 
   void *Mem = C.Allocate(Size, llvm::alignOf<MemberExpr>());
   MemberExpr *E = new (Mem) MemberExpr(base, isarrow, memberdecl, nameinfo,
@@ -981,16 +993,20 @@ MemberExpr *MemberExpr::Create(ASTContext &C, Expr *base, bool isarrow,
     NQ->FoundDecl = founddecl;
   }
 
+  E->HasTemplateKWAndArgsInfo = (targs || TemplateKWLoc.isValid());
+
   if (targs) {
     bool Dependent = false;
     bool InstantiationDependent = false;
     bool ContainsUnexpandedParameterPack = false;
-    E->HasExplicitTemplateArgumentList = true;
-    E->getExplicitTemplateArgs().initializeFrom(*targs, Dependent,
-                                                InstantiationDependent,
-                                              ContainsUnexpandedParameterPack);
+    E->getTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc, *targs,
+                                                  Dependent,
+                                                  InstantiationDependent,
+                                             ContainsUnexpandedParameterPack);
     if (InstantiationDependent)
       E->setInstantiationDependent(true);
+  } else if (TemplateKWLoc.isValid()) {
+    E->getTemplateKWAndArgsInfo()->initializeFrom(TemplateKWLoc);
   }
 
   return E;
@@ -1010,11 +1026,10 @@ SourceRange MemberExpr::getSourceRange() const {
     if (StartLoc.isInvalid())
       StartLoc = MemberLoc;
   }
-  
-  SourceLocation EndLoc = 
-    HasExplicitTemplateArgumentList? getRAngleLoc() 
-                                   : getMemberNameInfo().getEndLoc();
-  
+
+  SourceLocation EndLoc = hasExplicitTemplateArgs()
+    ? getRAngleLoc() : getMemberNameInfo().getEndLoc();
+
   return SourceRange(StartLoc, EndLoc);
 }
 

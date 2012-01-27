@@ -4999,9 +4999,11 @@ void Sema::CodeCompleteObjCSuperMessage(Scope *S, SourceLocation SuperLoc,
     } else {
       // Assume that "super" names some kind of value and parse that way.
       CXXScopeSpec SS;
+      SourceLocation TemplateKWLoc;
       UnqualifiedId id;
       id.setIdentifier(Super, SuperLoc);
-      ExprResult SuperExpr = ActOnIdExpression(S, SS, id, false, false);
+      ExprResult SuperExpr = ActOnIdExpression(S, SS, TemplateKWLoc, id,
+                                               false, false);
       return CodeCompleteObjCInstanceMessage(S, (Expr *)SuperExpr.get(),
                                              SelIdents, NumSelIdents,
                                              AtArgumentExpression);

@@ -141,7 +141,11 @@ namespace clang {
   struct TemplateIdAnnotation {
     /// \brief The nested-name-specifier that precedes the template name.
     CXXScopeSpec SS;
-    
+
+    /// TemplateKWLoc - The location of the template keyword within the
+    /// source.
+    SourceLocation TemplateKWLoc;
+
     /// TemplateNameLoc - The location of the template name within the
     /// source.
     SourceLocation TemplateNameLoc;
