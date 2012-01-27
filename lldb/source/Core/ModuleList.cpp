@@ -155,6 +155,14 @@ ModuleList::Clear()
     m_modules.clear();
 }
 
+void
+ModuleList::Destroy()
+{
+    Mutex::Locker locker(m_modules_mutex);
+    collection empty;
+    m_modules.swap(empty);
+}
+
 Module*
 ModuleList::GetModulePointerAtIndex (uint32_t idx) const
 {
@@ -653,28 +661,15 @@ GetSharedModuleList ()
     return g_shared_module_list;
 }
 
-const lldb::ModuleSP
-ModuleList::GetModuleSP (const Module *module_ptr)
+bool
+ModuleList::ModuleIsInCache (const Module *module_ptr)
 {
-    lldb::ModuleSP module_sp;
     if (module_ptr)
     {
         ModuleList &shared_module_list = GetSharedModuleList ();
-        module_sp = shared_module_list.FindModule (module_ptr);
-        if (module_sp.get() == NULL)
-        {
-            char uuid_cstr[256];
-            const_cast<Module *>(module_ptr)->GetUUID().GetAsCString (uuid_cstr, sizeof(uuid_cstr));
-            const FileSpec &module_file_spec = module_ptr->GetFileSpec();
-            Host::SystemLog (Host::eSystemLogWarning, 
-                             "warning: module not in shared module list: %s (%s) \"%s/%s\"\n", 
-                             uuid_cstr,
-                             module_ptr->GetArchitecture().GetArchitectureName(),
-                             module_file_spec.GetDirectory().GetCString(),
-                             module_file_spec.GetFilename().GetCString());
-        }
+        return shared_module_list.FindModule (module_ptr).get() != NULL;
     }
-    return module_sp;
+    return false;
 }
 
 size_t

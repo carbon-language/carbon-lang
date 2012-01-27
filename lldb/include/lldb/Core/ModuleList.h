@@ -89,6 +89,16 @@ public:
     Clear ();
 
     //------------------------------------------------------------------
+    /// Clear the object's state.
+    ///
+    /// Clears the list of modules and releases a reference to each
+    /// module object and if the reference count goes to zero, the
+    /// module will be deleted. Also relese all memory that might be
+    /// held by any collection classes (like std::vector)
+    //------------------------------------------------------------------
+    void
+    Destroy();
+    //------------------------------------------------------------------
     /// Dump the description of each module contained in this list.
     ///
     /// Dump the description of each module contained in this list to
@@ -395,8 +405,8 @@ public:
     size_t
     GetSize () const;
 
-    static const lldb::ModuleSP
-    GetModuleSP (const Module *module_ptr);
+    static bool
+    ModuleIsInCache (const Module *module_ptr);
 
     static Error
     GetSharedModule (const FileSpec& file_spec,

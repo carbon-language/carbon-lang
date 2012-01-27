@@ -111,11 +111,16 @@ extern "C" void track_sp (void *sp_this, void *ptr, long use_count)
         }
     }
 }
-extern "C" void dump_sp_refs (void *ptr)
-{
-    // Use a specially crafted call to "track_sp" which will
-    // dump info on all live shared pointers that reference "ptr"
-    track_sp (NULL, ptr, 0);
+// Put dump_sp_refs in the lldb namespace to it gets through our exports lists filter in the LLDB.framework or lldb.so
+namespace lldb {
+    
+    void dump_sp_refs (void *ptr)
+    {
+        // Use a specially crafted call to "track_sp" which will
+        // dump info on all live shared pointers that reference "ptr"
+        track_sp (NULL, ptr, 0);
+    }
+    
 }
 
 #endif
