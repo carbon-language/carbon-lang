@@ -148,3 +148,13 @@ int main() {
   }
   assert(total == 500);
 }
+
+// PR11793
+namespace test2 {
+  class A {
+    int xs[10]; // expected-note {{implicitly declared private here}}
+  };
+  void test(A &a) {
+    for (int x : a.xs) { } // expected-error {{'xs' is a private member of 'test2::A'}}
+  }
+}
