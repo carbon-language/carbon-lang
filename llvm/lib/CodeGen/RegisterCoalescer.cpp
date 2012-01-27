@@ -1931,8 +1931,8 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
           unsigned Reg = MO.getReg();
           if (!Reg)
             continue;
+          DeadDefs.push_back(Reg);
           if (TargetRegisterInfo::isVirtualRegister(Reg)) {
-            DeadDefs.push_back(Reg);
             // Remat may also enable register class inflation.
             if (RegClassInfo.isProperSubClass(MRI->getRegClass(Reg)))
               InflateRegs.push_back(Reg);
