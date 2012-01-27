@@ -43,6 +43,7 @@ public:
   const TargetInstrInfo *TII;
   const MachineLoopInfo *MLI;
   const MachineDominatorTree *MDT;
+  LiveIntervals *LIS;
 
   MachineScheduler();
 
@@ -236,7 +237,7 @@ void ScheduleTopDownLive::Schedule() {
     if (&*InsertPos == MI)
       ++InsertPos;
     else {
-      BB->splice(InsertPos, BB, MI);
+      Pass->LIS->moveInstr(InsertPos, MI);
       if (Begin == InsertPos)
         Begin = MI;
     }
@@ -253,6 +254,7 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
   MF = &mf;
   MLI = &getAnalysis<MachineLoopInfo>();
   MDT = &getAnalysis<MachineDominatorTree>();
+  LIS = &getAnalysis<LiveIntervals>();
   TII = MF->getTarget().getInstrInfo();
 
   // Select the scheduler, or set the default.

@@ -273,6 +273,11 @@ namespace llvm {
     /// register.
     void addKillFlags();
 
+    /// moveInstr - Move MachineInstr mi to insertPt, updating the live
+    /// intervals of mi's operands to reflect the new position. The insertion
+    /// point can be above or below mi, but must be in the same basic block.
+    void moveInstr(MachineBasicBlock::iterator insertPt, MachineInstr* mi);
+
   private:
     /// computeIntervals - Compute live intervals.
     void computeIntervals();

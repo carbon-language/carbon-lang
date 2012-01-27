@@ -797,6 +797,207 @@ void LiveIntervals::addKillFlags() {
   }
 }
 
+
+static bool intervalRangesSane(const LiveInterval& li) {
+  if (li.empty()) {
+    return true;
+  }
+
+  SlotIndex lastEnd = li.begin()->start;
+  for (LiveInterval::const_iterator lrItr = li.begin(), lrEnd = li.end();
+       lrItr != lrEnd; ++lrItr) {
+    const LiveRange& lr = *lrItr;
+    if (lastEnd > lr.start || lr.start >= lr.end)
+      return false;
+    lastEnd = lr.end;
+  }
+
+  return true;
+}
+
+template <typename DefSetT>
+static void handleMoveDefs(LiveIntervals& lis, SlotIndex origIdx,
+                           SlotIndex miIdx, const DefSetT& defs) {
+  for (typename DefSetT::const_iterator defItr = defs.begin(),
+                                        defEnd = defs.end();
+       defItr != defEnd; ++defItr) {
+    unsigned def = *defItr;
+    LiveInterval& li = lis.getInterval(def);
+    LiveRange* lr = li.getLiveRangeContaining(origIdx.getRegSlot());
+    assert(lr != 0 && "No range for def?");
+    lr->start = miIdx.getRegSlot();
+    lr->valno->def = miIdx.getRegSlot();
+    assert(intervalRangesSane(li) && "Broke live interval moving def.");
+  }
+}
+
+template <typename DeadDefSetT>
+static void handleMoveDeadDefs(LiveIntervals& lis, SlotIndex origIdx,
+                               SlotIndex miIdx, const DeadDefSetT& deadDefs) {
+  for (typename DeadDefSetT::const_iterator deadDefItr = deadDefs.begin(),
+                                            deadDefEnd = deadDefs.end();
+       deadDefItr != deadDefEnd; ++deadDefItr) {
+    unsigned deadDef = *deadDefItr;
+    LiveInterval& li = lis.getInterval(deadDef);
+    LiveRange* lr = li.getLiveRangeContaining(origIdx.getRegSlot());
+    assert(lr != 0 && "No range for dead def?");
+    assert(lr->start == origIdx.getRegSlot() && "Bad dead range start?");
+    assert(lr->end == origIdx.getDeadSlot() && "Bad dead range end?");
+    assert(lr->valno->def == origIdx.getRegSlot() && "Bad dead valno def.");
+    LiveRange t(*lr);
+    t.start = miIdx.getRegSlot();
+    t.valno->def = miIdx.getRegSlot();
+    t.end = miIdx.getDeadSlot();
+    li.removeRange(*lr);
+    li.addRange(t);
+    assert(intervalRangesSane(li) && "Broke live interval moving dead def.");
+  }
+}
+
+template <typename ECSetT>
+static void handleMoveECs(LiveIntervals& lis, SlotIndex origIdx,
+                          SlotIndex miIdx, const ECSetT& ecs) {
+  for (typename ECSetT::const_iterator ecItr = ecs.begin(), ecEnd = ecs.end();
+       ecItr != ecEnd; ++ecItr) {
+    unsigned ec = *ecItr;
+    LiveInterval& li = lis.getInterval(ec);
+    LiveRange* lr = li.getLiveRangeContaining(origIdx.getRegSlot(true));
+    assert(lr != 0 && "No range for early clobber?");
+    assert(lr->start == origIdx.getRegSlot(true) && "Bad EC range start?");
+    assert(lr->end == origIdx.getRegSlot() && "Bad EC range end.");
+    assert(lr->valno->def == origIdx.getRegSlot(true) && "Bad EC valno def.");
+    LiveRange t(*lr);
+    t.start = miIdx.getRegSlot(true);
+    t.valno->def = miIdx.getRegSlot(true);
+    t.end = miIdx.getRegSlot();
+    li.removeRange(*lr);
+    li.addRange(t);
+    assert(intervalRangesSane(li) && "Broke live interval moving EC.");
+  }
+}
+
+template <typename UseSetT>
+static void handleMoveUses(const MachineBasicBlock *mbb,
+                           const MachineRegisterInfo& mri,
+                           const BitVector& reservedRegs, LiveIntervals &lis,
+                           SlotIndex origIdx, SlotIndex miIdx,
+                           const UseSetT &uses) {
+  bool movingUp = miIdx < origIdx;
+  for (typename UseSetT::const_iterator usesItr = uses.begin(),
+                                        usesEnd = uses.end();
+       usesItr != usesEnd; ++usesItr) {
+    unsigned use = *usesItr;
+    if (!lis.hasInterval(use))
+      continue;
+    if (TargetRegisterInfo::isPhysicalRegister(use) && reservedRegs.test(use))
+      continue;
+    LiveInterval& li = lis.getInterval(use);
+    LiveRange* lr = li.getLiveRangeBefore(origIdx.getRegSlot());
+    assert(lr != 0 && "No range for use?");
+    bool liveThrough = lr->end > origIdx.getRegSlot();
+
+    if (movingUp) {
+      // If moving up and liveThrough - nothing to do.
+      // If not live through we need to extend the range to the last use
+      // between the old location and the new one.
+      if (!liveThrough) {
+        SlotIndex lastUseInRange = miIdx.getRegSlot();
+        for (MachineRegisterInfo::use_iterator useI = mri.use_begin(use),
+                                               useE = mri.use_end();
+             useI != useE; ++useI) {
+          const MachineInstr* mopI = &*useI;
+          const MachineOperand& mop = useI.getOperand();
+          SlotIndex instSlot = lis.getSlotIndexes()->getInstructionIndex(mopI);
+          SlotIndex opSlot = instSlot.getRegSlot(mop.isEarlyClobber());
+          if (opSlot >= lastUseInRange && opSlot < origIdx) {
+            lastUseInRange = opSlot;
+          }
+        }
+        lr->end = lastUseInRange;
+      }
+    } else {
+      // Moving down is easy - the existing live range end tells us where
+      // the last kill is.
+      if (!liveThrough) {
+        // Easy fix - just update the range endpoint.
+        lr->end = miIdx.getRegSlot();
+      } else {
+        bool liveOut = lr->end >= lis.getSlotIndexes()->getMBBEndIdx(mbb);
+        if (!liveOut && miIdx.getRegSlot() > lr->end) {
+          lr->end = miIdx.getRegSlot();
+        }
+      }
+    }
+    assert(intervalRangesSane(li) && "Broke live interval moving use.");
+  }
+}
+
+void LiveIntervals::moveInstr(MachineBasicBlock::iterator insertPt,
+                              MachineInstr *mi) {
+  MachineBasicBlock* mbb = mi->getParent();
+  assert(insertPt == mbb->end() || insertPt->getParent() == mbb &&
+         "Cannot handle moves across basic block boundaries.");
+  assert(&*insertPt != mi && "No-op move requested?");
+  assert(!mi->isInsideBundle() && "Can't handle bundled instructions yet.");
+
+  // Grab the original instruction index.
+  SlotIndex origIdx = indexes_->getInstructionIndex(mi);
+
+  // Move the machine instr and obtain its new index.
+  indexes_->removeMachineInstrFromMaps(mi);
+  mbb->remove(mi);
+  mbb->insert(insertPt, mi);
+  SlotIndex miIdx = indexes_->insertMachineInstrInMaps(mi);
+
+  // Pick the direction.
+  bool movingUp = miIdx < origIdx;
+
+  // Collect the operands.
+  DenseSet<unsigned> uses, defs, deadDefs, ecs;
+  for (MachineInstr::mop_iterator mopItr = mi->operands_begin(),
+         mopEnd = mi->operands_end();
+       mopItr != mopEnd; ++mopItr) {
+    const MachineOperand& mop = *mopItr;
+
+    if (!mop.isReg() || mop.getReg() == 0)
+      continue;
+    unsigned reg = mop.getReg();
+    if (mop.isUse()) {
+      assert(mop.readsReg());
+    }
+
+    if (mop.readsReg() && !ecs.count(reg)) {
+      uses.insert(reg);
+    }
+    if (mop.isDef()) {
+      if (mop.isDead()) {
+        assert(!defs.count(reg) && "Can't mix defs with dead-defs.");
+        deadDefs.insert(reg);
+      } else if (mop.isEarlyClobber()) {
+        uses.erase(reg);
+        ecs.insert(reg);
+      } else {
+        assert(!deadDefs.count(reg) && "Can't mix defs with dead-defs.");
+        defs.insert(reg);
+      }
+    }
+  }
+
+  BitVector reservedRegs(tri_->getReservedRegs(*mbb->getParent()));
+
+  if (movingUp) {
+    handleMoveUses(mbb, *mri_, reservedRegs, *this, origIdx, miIdx, uses);
+    handleMoveECs(*this, origIdx, miIdx, ecs);
+    handleMoveDeadDefs(*this, origIdx, miIdx, deadDefs);
+    handleMoveDefs(*this, origIdx, miIdx, defs);
+  } else {
+    handleMoveDefs(*this, origIdx, miIdx, defs);
+    handleMoveDeadDefs(*this, origIdx, miIdx, deadDefs);
+    handleMoveECs(*this, origIdx, miIdx, ecs);
+    handleMoveUses(mbb, *mri_, reservedRegs, *this, origIdx, miIdx, uses);
+  }
+}
+
 /// getReMatImplicitUse - If the remat definition MI has one (for now, we only
 /// allow one) virtual register operand, then its uses are implicitly using
 /// the register. Returns the virtual register.
