@@ -268,7 +268,7 @@ def warn_unreachable : Warning<"will never be executed">,
 
 /// Built-in functions.
 def ext_implicit_lib_function_decl : ExtWarn<
-  "implicitly declaring C library function '%0' with type %1">;
+  "implicitly declaring library function '%0' with type %1">;
 def note_please_include_header : Note<
   "please include the header <%0> or explicitly provide a "
   "declaration for '%1'">;

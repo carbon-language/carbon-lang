@@ -28,7 +28,7 @@
 @implementation Test1
 - (int) InstMethod
 {
-  return index;	// expected-warning {{implicitly declaring C library function 'index'}}	\
+  return index;	// expected-warning {{implicitly declaring library function 'index'}}	\
                 // expected-note {{please include the header <strings.h> or explicitly provide a declaration for 'index'}} \
                 // expected-warning {{incompatible pointer to integer conversion returning}}
 }
