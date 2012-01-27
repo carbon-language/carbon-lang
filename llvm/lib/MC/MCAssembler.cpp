@@ -243,7 +243,7 @@ bool MCAssembler::evaluateFixup(const MCAsmLayout &Layout,
   ++stats::evaluateFixup;
 
   if (!Fixup.getValue()->EvaluateAsRelocatable(Target, Layout))
-    report_fatal_error("expected relocatable expression");
+    getContext().FatalError(Fixup.getLoc(), "expected relocatable expression");
 
   bool IsPCRel = Backend.getFixupKindInfo(
     Fixup.getKind()).Flags & MCFixupKindInfo::FKF_IsPCRel;
