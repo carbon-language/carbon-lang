@@ -14,12 +14,35 @@
 #ifndef ASAN_INTERNAL_H
 #define ASAN_INTERNAL_H
 
-#if !defined(__linux__) && !defined(__APPLE__)
+#if !defined(__linux__) && !defined(__APPLE__) && !defined(_WIN32)
 # error "This operating system is not supported by AddressSanitizer"
 #endif
 
+#include <stdlib.h>  // for size_t, uintptr_t, etc.
+
+#if !defined(_WIN32)
 #include <stdint.h>  // for __WORDSIZE
-#include <stdlib.h>  // for size_t
+#else
+// There's no <stdint.h> in Visual Studio 9, so we have to define [u]int*_t.
+typedef unsigned __int8  uint8_t;
+typedef unsigned __int16 uint16_t;
+typedef unsigned __int32 uint32_t;
+typedef unsigned __int64 uint64_t;
+typedef __int8           int8_t;
+typedef __int16          int16_t;
+typedef __int32          int32_t;
+typedef __int64          int64_t;
+
+// Visual Studio does not define ssize_t.
+#ifdef _WIN64
+typedef int64_t ssize_t;
+#define __WORDSIZE 64
+#else
+typedef int32_t ssize_t;
+#define __WORDSIZE 32
+#endif
+
+#endif  // _WIN32
 
 // If __WORDSIZE was undefined by the platform, define it in terms of the
 // compiler built-in __LP64__.
@@ -185,8 +208,14 @@ const size_t kWordSizeInBits = 8 * kWordSize;
 const size_t kPageSizeBits = 12;
 const size_t kPageSize = 1UL << kPageSizeBits;
 
+#ifndef _WIN32
 #define GET_CALLER_PC() (uintptr_t)__builtin_return_address(0)
 #define GET_CURRENT_FRAME() (uintptr_t)__builtin_frame_address(0)
+#else
+// TODO(timurrrr): implement.
+#define GET_CALLER_PC() (uintptr_t)0
+#define GET_CURRENT_FRAME() (uintptr_t)0
+#endif
 
 #define GET_BP_PC_SP \
   uintptr_t bp = GET_CURRENT_FRAME();              \

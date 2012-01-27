@@ -16,7 +16,10 @@
 
 #include "asan_internal.h"
 
-#ifdef __APPLE__
+#if defined(__APPLE__)
+# define WRAP(x) wrap_##x
+#elif defined(_WIN32)
+// TODO(timurrrr): we're likely to use something else later on Windows.
 # define WRAP(x) wrap_##x
 #else
 # define WRAP(x) x

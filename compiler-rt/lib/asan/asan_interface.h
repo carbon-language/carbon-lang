@@ -15,7 +15,12 @@
 #ifndef ASAN_INTERFACE_H
 #define ASAN_INTERFACE_H
 
+#if !defined(_WIN32)
 #include <stdint.h>  // for __WORDSIZE
+#else
+// The __attribute__ keyword is not understood by Visual Studio.
+#define __attribute__(x)
+#endif
 #include <stdlib.h>  // for size_t
 
 // This header should NOT include any other headers from ASan runtime.

@@ -180,11 +180,16 @@ void Report(const char *format, ...) {
 }
 
 int SScanf(const char *str, const char *format, ...) {
+#ifndef _WIN32
   va_list args;
   va_start(args, format);
   int res = vsscanf(str, format, args);
   va_end(args);
   return res;
+#else
+  UNIMPLEMENTED();
+  return -1;
+#endif
 }
 
 }  // namespace __asan

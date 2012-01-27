@@ -245,6 +245,14 @@ static void force_interface_symbols() {
 }
 
 // -------------------------- Init ------------------- {{{1
+#if defined(_WIN32)
+// atoll is not defined on Windows.
+int64_t atoll(const char *str) {
+  UNIMPLEMENTED();
+  return -1;
+}
+#endif
+
 static int64_t IntFlagValue(const char *flags, const char *flag,
                             int64_t default_val) {
   if (!flags) return default_val;

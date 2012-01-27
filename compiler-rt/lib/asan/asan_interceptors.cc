@@ -24,9 +24,11 @@
 
 #include <new>
 #include <ctype.h>
-#include <dlfcn.h>
 
+#ifndef _WIN32
+#include <dlfcn.h>
 #include <pthread.h>
+#endif
 
 // To replace weak system functions on Linux we just need to declare functions
 // with same names in our library and then obtain the real function pointers
@@ -41,7 +43,7 @@
 // After interception, the calls to system functions will be substituted by
 // calls to our interceptors. We store pointers to system function f()
 // in __asan::real_f().
-#ifdef __APPLE__
+#if defined(__APPLE__)
 // Include the declarations of the original functions.
 #include <string.h>
 #include <strings.h>
@@ -70,6 +72,17 @@
 
 #define INTERCEPT_FUNCTION_IF_EXISTS(func)                              \
   OVERRIDE_FUNCTION_IF_EXISTS(func, WRAP(func))
+
+#elif defined(_WIN32)
+// TODO(timurrrr): change these macros once we decide how to intercept
+// functions on Windows.
+#define WRAPPER_NAME(x) #x
+
+#define INTERCEPT_FUNCTION(func)                                        \
+  do { } while (0)
+
+#define INTERCEPT_FUNCTION_IF_EXISTS(func)                              \
+  do { } while (0)
 
 #else  // __linux__
 #define WRAPPER_NAME(x) #x
@@ -287,6 +300,7 @@ static void *asan_thread_start(void *arg) {
   return t->ThreadStart();
 }
 
+#ifndef _WIN32
 extern "C"
 #ifndef __APPLE__
 __attribute__((visibility("default")))
@@ -318,6 +332,7 @@ int WRAP(sigaction)(int signum, const void *act, void *oldact) {
   }
   return 0;
 }
+#endif  // _WIN32
 
 
 static void UnpoisonStackFromHereToTop() {

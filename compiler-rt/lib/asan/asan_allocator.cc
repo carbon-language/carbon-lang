@@ -59,15 +59,44 @@ static inline bool IsAligned(uintptr_t a, uintptr_t alignment) {
   return (a & (alignment - 1)) == 0;
 }
 
+#ifdef _WIN32
+#include <intrin.h>
+#endif
+
 static inline size_t Log2(size_t x) {
   CHECK(IsPowerOfTwo(x));
+#if defined(_WIN64)
+  unsigned long ret;  // NOLINT
+  _BitScanForward64(&ret, x);
+  return ret;
+#elif defined(_WIN32)
+  unsigned long ret;  // NOLINT
+  _BitScanForward(&ret, x);
+  return ret;
+#else
   return __builtin_ctzl(x);
+#endif
+}
+
+static inline size_t clz(size_t x) {
+#if defined(_WIN64)
+  unsigned long ret;  // NOLINT
+  _BitScanReverse64(&ret, x);
+  return ret;
+#elif defined(_WIN32)
+  unsigned long ret;  // NOLINT
+  _BitScanReverse(&ret, x);
+  return ret;
+#else
+  return __builtin_clzl(x);
+#endif
 }
 
 static inline size_t RoundUpToPowerOfTwo(size_t size) {
   CHECK(size);
   if (IsPowerOfTwo(size)) return size;
-  size_t up = __WORDSIZE - __builtin_clzl(size);
+
+  size_t up = __WORDSIZE - clz(size);
   CHECK(size < (1ULL << up));
   CHECK(size > (1ULL << (up - 1)));
   return 1UL << up;
