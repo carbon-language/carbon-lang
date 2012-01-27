@@ -1421,42 +1421,6 @@ static bool RegistersDefinedFromSameValue(LiveIntervals &li,
   return true;
 }
 
-// Loop over the value numbers of the Dst interval and record the values that
-// are defined by a copy from the Src interval.
-static void FindValuesCopiedFrom(
-                              LiveIntervals& lis,
-                              const TargetRegisterInfo& tri,
-                              CoalescerPair& CP, 
-                              LiveInterval &Dst, LiveInterval &Src,
-                              DenseMap<VNInfo*, VNInfo*>& DstValsDefinedFromSrc,
-                              SmallVector<MachineInstr*, 8>& DupCopies) {
-
-  for (LiveInterval::vni_iterator i = Dst.vni_begin(), e = Dst.vni_end();
-       i != e; ++i) {
-    VNInfo *VNI = *i;
-    if (VNI->isUnused() || !VNI->isDefByCopy())  // Src not defined by a copy?
-      continue;
-
-    // Never join with a register that has EarlyClobber redefs.
-    if (VNI->hasRedefByEC())
-      return false;
-
-    // Figure out the value # from the Src.
-    LiveRange *lr = Src.getLiveRangeContaining(VNI->def.getPrevSlot());
-    // The copy could be to an aliased physreg.
-    if (!lr) continue;
-
-    // DstReg is known to be a register in the Dst interval.  If the src is
-    // from the Src interval, we can use its value #.
-    MachineInstr *MI = VNI->getCopy();
-    if (!CP.isCoalescable(MI) &&
-        !RegistersDefinedFromSameValue(lis, tri, CP, VNI, lr, DupCopies))
-      continue;
-
-    DstValsDefinedFromSrc[VNI] = lr->valno;
-  }
-}                            
-
 /// JoinIntervals - Attempt to join these two intervals.  On failure, this
 /// returns false.
 bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
@@ -1542,9 +1506,59 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
   LiveInterval &LHS = LIS->getOrCreateInterval(CP.getDstReg());
   DEBUG({ dbgs() << "\t\tLHS = "; LHS.print(dbgs(), TRI); dbgs() << "\n"; });
 
-  // Build a map of LHS values defined by copies from RHS and vice-versa.
-  FindValuesCopiedFrom(*LIS, *TRI, CP, LHS, RHS, LHSValsDefinedFromRHS, DupCopies);
-  FindValuesCopiedFrom(*LIS, *TRI, CP, RHS, LHS, RHSValsDefinedFromLHS, DupCopies);
+  // Loop over the value numbers of the LHS, seeing if any are defined from
+  // the RHS.
+  for (LiveInterval::vni_iterator i = LHS.vni_begin(), e = LHS.vni_end();
+       i != e; ++i) {
+    VNInfo *VNI = *i;
+    if (VNI->isUnused() || !VNI->isDefByCopy())  // Src not defined by a copy?
+      continue;
+
+    // Never join with a register that has EarlyClobber redefs.
+    if (VNI->hasRedefByEC())
+      return false;
+
+    // Figure out the value # from the RHS.
+    LiveRange *lr = RHS.getLiveRangeContaining(VNI->def.getPrevSlot());
+    // The copy could be to an aliased physreg.
+    if (!lr) continue;
+
+    // DstReg is known to be a register in the LHS interval.  If the src is
+    // from the RHS interval, we can use its value #.
+    MachineInstr *MI = VNI->getCopy();
+    if (!CP.isCoalescable(MI) &&
+        !RegistersDefinedFromSameValue(*LIS, *TRI, CP, VNI, lr, DupCopies))
+      continue;
+
+    LHSValsDefinedFromRHS[VNI] = lr->valno;
+  }
+
+  // Loop over the value numbers of the RHS, seeing if any are defined from
+  // the LHS.
+  for (LiveInterval::vni_iterator i = RHS.vni_begin(), e = RHS.vni_end();
+       i != e; ++i) {
+    VNInfo *VNI = *i;
+    if (VNI->isUnused() || !VNI->isDefByCopy())  // Src not defined by a copy?
+      continue;
+
+    // Never join with a register that has EarlyClobber redefs.
+    if (VNI->hasRedefByEC())
+      return false;
+
+    // Figure out the value # from the LHS.
+    LiveRange *lr = LHS.getLiveRangeContaining(VNI->def.getPrevSlot());
+    // The copy could be to an aliased physreg.
+    if (!lr) continue;
+
+    // DstReg is known to be a register in the RHS interval.  If the src is
+    // from the LHS interval, we can use its value #.
+    MachineInstr *MI = VNI->getCopy();
+    if (!CP.isCoalescable(MI) &&
+        !RegistersDefinedFromSameValue(*LIS, *TRI, CP, VNI, lr, DupCopies))
+        continue;
+
+    RHSValsDefinedFromLHS[VNI] = lr->valno;
+  }
 
   LHSValNoAssignments.resize(LHS.getNumValNums(), -1);
   RHSValNoAssignments.resize(RHS.getNumValNums(), -1);
