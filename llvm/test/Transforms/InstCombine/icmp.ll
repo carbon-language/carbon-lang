@@ -121,8 +121,8 @@ define i1 @test12(i1 %A) {
   %B = icmp ne i64 bitcast (<2 x i32> <i32 1, i32 -1> to i64), %S
   ret i1 %B
 ; CHECK: @test12
-; CHECK-NEXT: %B = select i1
-; CHECK-NEXT: ret i1 %B
+; CHECK-NEXT: = xor i1 %A, true
+; CHECK-NEXT: ret i1
 }
 
 ; PR6481
