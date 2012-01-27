@@ -320,7 +320,10 @@ void FrontendAction::Execute() {
   // Initialize the main file entry. This needs to be delayed until after PCH
   // has loaded.
   if (!isCurrentFileAST()) {
-    if (!CI.InitializeSourceManager(getCurrentFile()))
+    if (!CI.InitializeSourceManager(getCurrentFile(),
+                                    getCurrentInput().IsSystem
+                                      ? SrcMgr::C_System
+                                      : SrcMgr::C_User))
       return;
   }
 

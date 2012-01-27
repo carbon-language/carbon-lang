@@ -11,6 +11,7 @@
 #define LLVM_CLANG_FRONTEND_COMPILERINSTANCE_H_
 
 #include "clang/Frontend/CompilerInvocation.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/Lex/ModuleLoader.h"
 #include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/DenseMap.h"
@@ -627,17 +628,19 @@ public:
   /// as the main file.
   ///
   /// \return True on success.
-  bool InitializeSourceManager(StringRef InputFile);
+  bool InitializeSourceManager(StringRef InputFile,
+         SrcMgr::CharacteristicKind Kind = SrcMgr::C_User);
 
   /// InitializeSourceManager - Initialize the source manager to set InputFile
   /// as the main file.
   ///
   /// \return True on success.
   static bool InitializeSourceManager(StringRef InputFile,
-                                      DiagnosticsEngine &Diags,
-                                      FileManager &FileMgr,
-                                      SourceManager &SourceMgr,
-                                      const FrontendOptions &Opts);
+                SrcMgr::CharacteristicKind Kind,
+                DiagnosticsEngine &Diags,
+                FileManager &FileMgr,
+                SourceManager &SourceMgr,
+                const FrontendOptions &Opts);
 
   /// }
   

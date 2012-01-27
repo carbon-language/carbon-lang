@@ -134,7 +134,9 @@ const FileEntry *HeaderSearch::lookupModule(StringRef ModuleName,
         llvm::sys::path::append(FrameworkDirName, ModuleName + ".framework");
         if (const DirectoryEntry *FrameworkDir 
               = FileMgr.getDirectory(FrameworkDirName)) {
-          Module = getFrameworkModule(ModuleName, FrameworkDir);
+          bool IsSystem
+            = SearchDirs[Idx].getDirCharacteristic() != SrcMgr::C_User;
+          Module = getFrameworkModule(ModuleName, FrameworkDir, IsSystem);
           if (Module)
             break;
         }
@@ -319,8 +321,10 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   Module *Module = 0;
   if (SuggestedModule) {
     if (const DirectoryEntry *FrameworkDir
-                                    = FileMgr.getDirectory(FrameworkName))
-      Module = HS.getFrameworkModule(ModuleName, FrameworkDir);
+                                        = FileMgr.getDirectory(FrameworkName)) {
+      bool IsSystem = getDirCharacteristic() != SrcMgr::C_User;
+      Module = HS.getFrameworkModule(ModuleName, FrameworkDir, IsSystem);
+    }
   }
   
   // Check "/System/Library/Frameworks/Cocoa.framework/Headers/file.h"
@@ -858,7 +862,8 @@ Module *HeaderSearch::getModule(StringRef Name, bool AllowSearch) {
 }
   
 Module *HeaderSearch::getFrameworkModule(StringRef Name, 
-                                         const DirectoryEntry *Dir) {
+                                         const DirectoryEntry *Dir,
+                                         bool IsSystem) {
   if (Module *Module = ModMap.findModule(Name))
     return Module;
   
@@ -907,7 +912,8 @@ Module *HeaderSearch::getFrameworkModule(StringRef Name,
   
   // Try to infer a module map from the top-level framework directory.
   Module *Result = ModMap.inferFrameworkModule(SubmodulePath.back(), 
-                                               TopFrameworkDir, 
+                                               TopFrameworkDir,
+                                               IsSystem,
                                                /*Parent=*/0);
   
   // Follow the submodule path to find the requested (sub)framework module

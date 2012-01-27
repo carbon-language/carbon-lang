@@ -256,7 +256,8 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
     // Simple case: we have an umbrella header and there are no additional
     // includes, we can just parse the umbrella header directly.
     setCurrentInput(FrontendInputFile(UmbrellaHeader->getName(),
-                                      getCurrentFileKind()));
+                                      getCurrentFileKind(),
+                                      Module->IsSystem));
     return true;
   }
   
@@ -313,7 +314,8 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   llvm::MemoryBuffer *HeaderContentsBuf
     = llvm::MemoryBuffer::getMemBufferCopy(HeaderContents);
   CI.getSourceManager().overrideFileContents(HeaderFile, HeaderContentsBuf);  
-  setCurrentInput(FrontendInputFile(HeaderName, getCurrentFileKind()));
+  setCurrentInput(FrontendInputFile(HeaderName, getCurrentFileKind(),
+                                    Module->IsSystem));
   return true;
 }
 

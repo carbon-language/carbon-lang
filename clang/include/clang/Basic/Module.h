@@ -86,6 +86,10 @@ public:
   /// \brief Whether this is an explicit submodule.
   unsigned IsExplicit : 1;
   
+  /// \brief Whether this is a "system" module (which assumes that all
+  /// headers in it are system headers).
+  unsigned IsSystem : 1;
+  
   /// \brief Whether we should infer submodules for this module based on 
   /// the headers.
   ///
@@ -154,10 +158,11 @@ public:
                   bool IsFramework)
     : Name(Name), DefinitionLoc(DefinitionLoc), Parent(0), Umbrella(),
       IsAvailable(true), IsFromModuleFile(false), IsFramework(IsFramework), 
-      IsExplicit(false), InferSubmodules(false), InferExplicitSubmodules(false),
+      IsExplicit(false), IsSystem(false),
+      InferSubmodules(false), InferExplicitSubmodules(false),
       InferExportWildcard(false), NameVisibility(Hidden) { }
   
-  /// \brief Construct  a new module or submodule.
+  /// \brief Construct a new module or submodule.
   Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent, 
          bool IsFramework, bool IsExplicit);
   

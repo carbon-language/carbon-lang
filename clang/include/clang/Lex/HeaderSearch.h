@@ -401,9 +401,13 @@ public:
   ///
   /// \param Dir The framework directory (e.g., ModuleName.framework).
   ///
+  /// \param IsSystem Whether the framework directory is part of the system
+  /// frameworks.
+  ///
   /// \returns The module, if found; otherwise, null.
   Module *getFrameworkModule(StringRef Name, 
-                                        const DirectoryEntry *Dir);
+                             const DirectoryEntry *Dir,
+                             bool IsSystem);
 
   /// \brief Retrieve the module map.
   ModuleMap &getModuleMap() { return ModMap; }

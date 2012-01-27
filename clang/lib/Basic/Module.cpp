@@ -24,9 +24,9 @@ Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent,
                bool IsFramework, bool IsExplicit)
   : Name(Name), DefinitionLoc(DefinitionLoc), Parent(Parent), 
     Umbrella(), IsAvailable(true), IsFromModuleFile(false), 
-    IsFramework(IsFramework), IsExplicit(IsExplicit), InferSubmodules(false), 
-    InferExplicitSubmodules(false), InferExportWildcard(false),
-    NameVisibility(Hidden) 
+    IsFramework(IsFramework), IsExplicit(IsExplicit), IsSystem(false),
+    InferSubmodules(false), InferExplicitSubmodules(false), 
+    InferExportWildcard(false), NameVisibility(Hidden) 
 { 
   if (Parent) {
     if (!Parent->isAvailable())
@@ -172,8 +172,15 @@ void Module::print(llvm::raw_ostream &OS, unsigned Indent) const {
     OS << "framework ";
   if (IsExplicit)
     OS << "explicit ";
-  OS << "module " << Name << " {\n";
+  OS << "module " << Name;
 
+  if (IsSystem) {
+    OS.indent(Indent + 2);
+    OS << " [system]";
+  }
+
+  OS << " {\n";
+  
   if (!Requires.empty()) {
     OS.indent(Indent + 2);
     OS << "requires ";

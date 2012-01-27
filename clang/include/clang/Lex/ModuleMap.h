@@ -159,7 +159,7 @@ public:
   /// framework directory.
   Module *inferFrameworkModule(StringRef ModuleName, 
                                const DirectoryEntry *FrameworkDir,
-                               Module *Parent);
+                               bool IsSystem, Module *Parent);
   
   /// \brief Retrieve the module map file containing the definition of the given
   /// module.

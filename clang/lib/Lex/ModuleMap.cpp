@@ -284,6 +284,7 @@ ModuleMap::findOrCreateModule(StringRef Name, Module *Parent, bool IsFramework,
 Module *
 ModuleMap::inferFrameworkModule(StringRef ModuleName, 
                                 const DirectoryEntry *FrameworkDir,
+                                bool IsSystem,
                                 Module *Parent) {
   // Check whether we've already found this module.
   if (Module *Mod = lookupModuleQualified(ModuleName, Parent))
@@ -305,6 +306,9 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   
   Module *Result = new Module(ModuleName, SourceLocation(), Parent,
                               /*IsFramework=*/true, /*IsExplicit=*/false);
+  if (IsSystem)
+    Result->IsSystem = IsSystem;
+  
   if (!Parent)
     Modules[ModuleName] = Result;
   
@@ -338,7 +342,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
           = FileMgr.getDirectory(Dir->path())) {
       // FIXME: Do we want to warn about subframeworks without umbrella headers?
       inferFrameworkModule(llvm::sys::path::stem(Dir->path()), SubframeworkDir,
-                           Result);
+                           IsSystem, Result);
     }
   }
 
@@ -454,7 +458,9 @@ namespace clang {
       Star,
       StringLiteral,
       LBrace,
-      RBrace
+      RBrace,
+      LSquare,
+      RSquare
     } Kind;
     
     unsigned Location;
@@ -579,12 +585,20 @@ retry:
     Tok.Kind = MMToken::LBrace;
     break;
 
+  case tok::l_square:
+    Tok.Kind = MMToken::LSquare;
+    break;
+      
   case tok::period:
     Tok.Kind = MMToken::Period;
     break;
       
   case tok::r_brace:
     Tok.Kind = MMToken::RBrace;
+    break;
+      
+  case tok::r_square:
+    Tok.Kind = MMToken::RSquare;
     break;
       
   case tok::star:
@@ -625,27 +639,42 @@ retry:
 
 void ModuleMapParser::skipUntil(MMToken::TokenKind K) {
   unsigned braceDepth = 0;
+  unsigned squareDepth = 0;
   do {
     switch (Tok.Kind) {
     case MMToken::EndOfFile:
       return;
 
     case MMToken::LBrace:
-      if (Tok.is(K) && braceDepth == 0)
+      if (Tok.is(K) && braceDepth == 0 && squareDepth == 0)
         return;
         
       ++braceDepth;
       break;
-    
+
+    case MMToken::LSquare:
+      if (Tok.is(K) && braceDepth == 0 && squareDepth == 0)
+        return;
+      
+      ++squareDepth;
+      break;
+
     case MMToken::RBrace:
       if (braceDepth > 0)
         --braceDepth;
       else if (Tok.is(K))
         return;
       break;
-        
+
+    case MMToken::RSquare:
+      if (squareDepth > 0)
+        --squareDepth;
+      else if (Tok.is(K))
+        return;
+      break;
+
     default:
-      if (braceDepth == 0 && Tok.is(K))
+      if (braceDepth == 0 && squareDepth == 0 && Tok.is(K))
         return;
       break;
     }
@@ -681,10 +710,28 @@ bool ModuleMapParser::parseModuleId(ModuleId &Id) {
   return false;
 }
 
+namespace {
+  /// \brief Enumerates the known attributes.
+  enum AttributeKind {
+    /// \brief An unknown attribute.
+    AT_unknown,
+    /// \brief The 'system' attribute.
+    AT_system
+  };
+}
+
 /// \brief Parse a module declaration.
 ///
 ///   module-declaration:
-///     'explicit'[opt] 'framework'[opt] 'module' module-id { module-member* }
+///     'explicit'[opt] 'framework'[opt] 'module' module-id attributes[opt] 
+///       { module-member* }
+///
+///   attributes:
+///     attribute attributes
+///     attribute
+///
+///   attribute:
+///     [ identifier ]
 ///
 ///   module-member:
 ///     requires-declaration
@@ -777,6 +824,49 @@ void ModuleMapParser::parseModuleDecl() {
   StringRef ModuleName = Id.back().first;
   SourceLocation ModuleNameLoc = Id.back().second;
   
+  // Parse the optional attribute list.
+  bool IsSystem = false;
+  while (Tok.is(MMToken::LSquare)) {
+    // Consume the '['.
+    SourceLocation LSquareLoc = consumeToken();
+    
+    // Check whether we have an attribute name here.
+    if (!Tok.is(MMToken::Identifier)) {
+      Diags.Report(Tok.getLocation(), diag::err_mmap_expected_attribute);
+      skipUntil(MMToken::RSquare);
+      if (Tok.is(MMToken::RSquare))
+        consumeToken();
+      continue;
+    }
+    
+    // Decode the attribute name.
+    AttributeKind Attribute 
+      = llvm::StringSwitch<AttributeKind>(Tok.getString())
+        .Case("system", AT_system)
+        .Default(AT_unknown);
+    switch (Attribute) {
+    case AT_unknown:
+      Diags.Report(Tok.getLocation(), diag::warn_mmap_unknown_attribute)
+        << Tok.getString();
+      break;
+        
+    case AT_system:
+      IsSystem = true;
+      break;
+    }
+    consumeToken();
+    
+    // Consume the ']'.
+    if (!Tok.is(MMToken::RSquare)) {
+      Diags.Report(Tok.getLocation(), diag::err_mmap_expected_rsquare);
+      Diags.Report(LSquareLoc, diag::note_mmap_lsquare_match);
+      skipUntil(MMToken::RSquare);
+    }
+
+    if (Tok.is(MMToken::RSquare))
+      consumeToken();
+  }
+  
   // Parse the opening brace.
   if (!Tok.is(MMToken::LBrace)) {
     Diags.Report(Tok.getLocation(), diag::err_mmap_expected_lbrace)
@@ -818,6 +908,8 @@ void ModuleMapParser::parseModuleDecl() {
   ActiveModule = Map.findOrCreateModule(ModuleName, ActiveModule, Framework,
                                         Explicit).first;
   ActiveModule->DefinitionLoc = ModuleNameLoc;
+  if (IsSystem)
+    ActiveModule->IsSystem = true;
   
   bool Done = false;
   do {
@@ -1251,8 +1343,10 @@ bool ModuleMapParser::parseModuleMapFile() {
     case MMToken::HeaderKeyword:
     case MMToken::Identifier:
     case MMToken::LBrace:
+    case MMToken::LSquare:
     case MMToken::Period:
     case MMToken::RBrace:
+    case MMToken::RSquare:
     case MMToken::RequiresKeyword:
     case MMToken::Star:
     case MMToken::StringLiteral:

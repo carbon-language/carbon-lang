@@ -3130,9 +3130,10 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       SubmoduleID Parent = getGlobalSubmoduleID(F, Record[1]);
       bool IsFramework = Record[2];
       bool IsExplicit = Record[3];
-      bool InferSubmodules = Record[4];
-      bool InferExplicitSubmodules = Record[5];
-      bool InferExportWildcard = Record[6];
+      bool IsSystem = Record[4];
+      bool InferSubmodules = Record[5];
+      bool InferExplicitSubmodules = Record[6];
+      bool InferExportWildcard = Record[7];
       
       Module *ParentModule = 0;
       if (Parent)
@@ -3151,6 +3152,7 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
       }
       
       CurrentModule->IsFromModuleFile = true;
+      CurrentModule->IsSystem = IsSystem || CurrentModule->IsSystem;
       CurrentModule->InferSubmodules = InferSubmodules;
       CurrentModule->InferExplicitSubmodules = InferExplicitSubmodules;
       CurrentModule->InferExportWildcard = InferExportWildcard;

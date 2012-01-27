@@ -577,12 +577,15 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
 
 // Initialization Utilities
 
-bool CompilerInstance::InitializeSourceManager(StringRef InputFile) {
-  return InitializeSourceManager(InputFile, getDiagnostics(), getFileManager(),
-                                 getSourceManager(), getFrontendOpts());
+bool CompilerInstance::InitializeSourceManager(StringRef InputFile,
+                                               SrcMgr::CharacteristicKind Kind){
+  return InitializeSourceManager(InputFile, Kind, getDiagnostics(), 
+                                 getFileManager(), getSourceManager(), 
+                                 getFrontendOpts());
 }
 
 bool CompilerInstance::InitializeSourceManager(StringRef InputFile,
+                                               SrcMgr::CharacteristicKind Kind,
                                                DiagnosticsEngine &Diags,
                                                FileManager &FileMgr,
                                                SourceManager &SourceMgr,
@@ -594,7 +597,7 @@ bool CompilerInstance::InitializeSourceManager(StringRef InputFile,
       Diags.Report(diag::err_fe_error_reading) << InputFile;
       return false;
     }
-    SourceMgr.createMainFileID(File);
+    SourceMgr.createMainFileID(File, Kind);
   } else {
     llvm::OwningPtr<llvm::MemoryBuffer> SB;
     if (llvm::MemoryBuffer::getSTDIN(SB)) {
@@ -604,7 +607,7 @@ bool CompilerInstance::InitializeSourceManager(StringRef InputFile,
     }
     const FileEntry *File = FileMgr.getVirtualFile(SB->getBufferIdentifier(),
                                                    SB->getBufferSize(), 0);
-    SourceMgr.createMainFileID(File);
+    SourceMgr.createMainFileID(File, Kind);
     SourceMgr.overrideFileContents(File, SB.take());
   }
 

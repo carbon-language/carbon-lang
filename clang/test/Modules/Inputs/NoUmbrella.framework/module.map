@@ -1,4 +1,4 @@
-framework module NoUmbrella {
+framework module NoUmbrella [system] {
   umbrella "Headers"
   module * { }
 

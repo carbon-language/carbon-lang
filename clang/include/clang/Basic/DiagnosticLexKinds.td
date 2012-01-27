@@ -391,6 +391,8 @@ def err_mmap_expected_module_name : Error<"expected module name">;
 def err_mmap_expected_lbrace : Error<"expected '{' to start module '%0'">;
 def err_mmap_expected_rbrace : Error<"expected '}'">;
 def note_mmap_lbrace_match : Note<"to match this '{'">;
+def err_mmap_expected_rsquare : Error<"expected ']' to close attribute">;
+def note_mmap_lsquare_match : Note<"to match this ']'">;
 def err_mmap_expected_member : Error<
   "expected umbrella, header, submodule, or module export">;
 def err_mmap_expected_header : Error<"expected a header name after '%0'">;
@@ -429,6 +431,9 @@ def err_mmap_explicit_top_level : Error<
 def err_mmap_nested_submodule_id : Error<
   "qualified module name can only be used to define modules at the top level">;
 def err_mmap_expected_feature : Error<"expected a feature name">;
+def err_mmap_expected_attribute : Error<"expected an attribute name">;
+def warn_mmap_unknown_attribute : Warning<"unknown attribute '%0'">,
+  InGroup<IgnoredAttributes>;
 
 def warn_auto_module_import : Warning<
   "treating #%select{include|import|include_next|__include_macros}0 as an "

@@ -76,9 +76,12 @@ struct FrontendInputFile {
   /// \brief The kind of input, e.g., C source, AST file, LLVM IR.
   InputKind Kind;
 
+  /// \brief Whether we're dealing with a 'system' input (vs. a 'user' input).
+  bool IsSystem;
+  
   FrontendInputFile() : Kind(IK_None) { }
-  FrontendInputFile(StringRef File, InputKind Kind)
-    : File(File.str()), Kind(Kind) { }
+  FrontendInputFile(StringRef File, InputKind Kind, bool IsSystem = false)
+    : File(File.str()), Kind(Kind), IsSystem(IsSystem) { }
 };
   
 /// FrontendOptions - Options for controlling the behavior of the frontend.

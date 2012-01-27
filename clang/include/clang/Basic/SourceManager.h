@@ -618,9 +618,10 @@ public:
   FileID getMainFileID() const { return MainFileID; }
 
   /// createMainFileID - Create the FileID for the main source file.
-  FileID createMainFileID(const FileEntry *SourceFile) {
+  FileID createMainFileID(const FileEntry *SourceFile, 
+                          SrcMgr::CharacteristicKind Kind = SrcMgr::C_User) {
     assert(MainFileID.isInvalid() && "MainFileID already set!");
-    MainFileID = createFileID(SourceFile, SourceLocation(), SrcMgr::C_User);
+    MainFileID = createFileID(SourceFile, SourceLocation(), Kind);
     return MainFileID;
   }
 
