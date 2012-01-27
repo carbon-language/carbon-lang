@@ -9,66 +9,27 @@
 ##===----------------------------------------------------------------------===##
 #
 # This script builds many different flavors of the LLVM ecosystem.  It
-# will build LLVM, Clang, llvm-gcc, and dragonegg as well as run tests
-# on them.  This script is convenient to use to check builds and tests
-# before committing changes to the upstream repository
+# will build LLVM, Clang and dragonegg as well as run tests on them.
+# This script is convenient to use to check builds and tests before
+# committing changes to the upstream repository
 #
 # A typical source setup uses three trees and looks like this:
 #
 # official
 #   dragonegg
-#     trunk
-#   gcc
-#     trunk
 #   llvm
-#     trunk
-#       tools
-#         clang
-#     tags
-#       RELEASE_28
-#         tools
-#           clang
-#   llvm-gcc
-#     trunk
-#     tags
-#       RELEASE_28
+#     tools
+#       clang
 # staging
 #   dragonegg
-#     trunk
-#   gcc
-#     trunk
 #   llvm
-#     trunk
-#       tools
-#         clang
-#     tags
-#       RELEASE_28
-#         tools
-#           clang
-#   llvm-gcc
-#     trunk
-#     tags
-#       RELEASE_28
+#     tools
+#       clang
 # commit
 #   dragonegg
-#     trunk
-#   gcc
-#     trunk
 #   llvm
-#     trunk
-#       tools
-#         clang
-#     tags
-#       RELEASE_28
-#         tools
-#           clang
-#   llvm-gcc
-#     trunk
-#     tags
-#       RELEASE_28
-#
-# "gcc" above is the upstream FSF gcc and "gcc/trunk" refers to the
-# 4.5 branch as discussed in the dragonegg build guide.
+#     tools
+#       clang
 #
 # In a typical workflow, the "official" tree always contains unchanged
 # sources from the main LLVM project repositories.  The "staging" tree
@@ -82,30 +43,29 @@
 # 
 # A build may be invoked as such:
 #
-# llvmbuild --src=~/llvm/commit --src=~/llvm/staging
-#   --src=~/llvm/official --branch=trunk --branch=tags/RELEASE_28
+# llvmbuild --src=~/llvm/commit --src=~/llvm/staging --src=~/llvm/official
 #   --build=debug --build=release --build=paranoid
 #   --prefix=/home/greened/install --builddir=/home/greened/build
 #
-# This will build the LLVM ecosystem, including LLVM, Clang, llvm-gcc,
-# gcc 4.5 and dragonegg, putting build results in ~/build and
-# installing tools in ~/install.  llvmbuild creates separate build and
-# install directories for each source/branch/build flavor.  In the
-# above example, llvmbuild will build debug, release and paranoid
-# (debug+checks) flavors of the trunk and RELEASE_28 branches from
-# each source tree (official, staging and commit) for a total of
-# eighteen builds.  All builds will be run in parallel.
+# This will build the LLVM ecosystem, including LLVM, Clangand
+# dragonegg, putting build results in ~/build and installing tools in
+# ~/install.  llvm-compilers-check creates separate build and install
+# directories for each source/build flavor.  In the above example,
+# llvmbuild will build debug, release and paranoid (debug+checks)
+# flavors from each source tree (official, staging and commit) for a
+# total of nine builds.  All builds will be run in parallel.
 #
 # The user may control parallelism via the --jobs and --threads
-# switches.  --jobs tells llvmbuild the maximum total number of builds
-# to activate in parallel.  The user may think of it as equivalent to
-# the GNU make -j switch.  --threads tells llvmbuild how many worker
-# threads to use to accomplish those builds.  If --threads is less
-# than --jobs, --threads workers will be launched and each one will
-# pick a source/branch/flavor combination to build.  Then llvmbuild
-# will invoke GNU make with -j (--jobs / --threads) to use up the
-# remaining job capacity.  Once a worker is finished with a build, it
-# will pick another combination off the list and start building it.
+# switches.  --jobs tells llvm-compilers-checl the maximum total
+# number of builds to activate in parallel.  The user may think of it
+# as equivalent to the GNU make -j switch.  --threads tells
+# llvm-compilers-check how many worker threads to use to accomplish
+# those builds.  If --threads is less than --jobs, --threads workers
+# will be launched and each one will pick a source/flavor combination
+# to build.  Then llvm-compilers-check will invoke GNU make with -j
+# (--jobs / --threads) to use up the remaining job capacity.  Once a
+# worker is finished with a build, it will pick another combination
+# off the list and start building it.
 #
 ##===----------------------------------------------------------------------===##
 
@@ -165,8 +125,6 @@ def add_options(parser):
                       help=("Top-level source directory [default: %default]"))
     parser.add_option("--build", action="append",
                       help=("Build types to run [default: %default]"))
-    parser.add_option("--branch", action="append",
-                      help=("Source branch to build [default: %default]"))
     parser.add_option("--cc", default=find_executable("cc"),
                       help=("The C compiler to use [default: %default]"))
     parser.add_option("--cxx", default=find_executable("c++"),
@@ -183,14 +141,10 @@ def add_options(parser):
                       help=("Root build directory [default: %default]"))
     parser.add_option("--extra-llvm-config-flags", default="",
                       help=("Extra flags to pass to llvm configure [default: %default]"))
-    parser.add_option("--extra-llvm-gcc-config-flags", default="",
-                      help=("Extra flags to pass to llvm-gcc configure [default: %default]"))
-    parser.add_option("--extra-gcc-config-flags", default="",
-                      help=("Extra flags to pass to gcc configure [default: %default]"))
     parser.add_option("--force-configure", default=False, action="store_true",
                       help=("Force reconfigure of all components"))
-    parser.add_option("--no-gcc", default=False, action="store_true",
-                      help=("Do not build dragonegg and gcc"))
+    parser.add_option("--no-dragonegg", default=False, action="store_true",
+                      help=("Do not build dragonegg"))
     parser.add_option("--no-install", default=False, action="store_true",
                       help=("Do not do installs"))
     return
@@ -209,11 +163,6 @@ def check_options(parser, options, valid_builds):
             compsrc = src + "/" + component
             if (not os.path.isdir(compsrc)):
                 parser.error("'" + compsrc + "' does not exist")
-                if (options.branch is not None):
-                    for branch in options.branch:
-                        if (not os.path.isdir(os.path.join(compsrc, branch))):
-                            parser.error("'" + os.path.join(compsrc, branch)
-                                         + "' does not exist")
 
     # See if we can find the compilers
     options.cc = find_executable(options.cc)
@@ -298,7 +247,7 @@ class Builder(threading.Thread):
     class FileNotExecutable(Exception): pass
 
     def __init__(self, work_queue, jobs,
-                 build_abbrev, source_abbrev, branch_abbrev,
+                 build_abbrev, source_abbrev,
                  options):
         super().__init__()
         self.work_queue = work_queue
@@ -307,21 +256,17 @@ class Builder(threading.Thread):
         self.cxx = options.cxx
         self.build_abbrev = build_abbrev
         self.source_abbrev = source_abbrev
-        self.branch_abbrev = branch_abbrev
         self.build_prefix = options.builddir
         self.install_prefix = options.prefix
         self.options = options
         self.component_abbrev = dict(
             llvm="llvm",
-            llvm_gcc="lgcc",
-            llvm2="llv2",
-            gcc="ugcc",
-            dagonegg="degg")
+            dragonegg="degg")
     def run(self):
         while True:
             try:
-                source, branch, build = self.work_queue.get()
-                self.dobuild(source, branch, build)
+                source, build = self.work_queue.get()
+                self.dobuild(source, build)
             except:
                 traceback.print_exc()
             finally:
@@ -387,21 +332,14 @@ class Builder(threading.Thread):
         self.logger.debug(includes)
         return includes
 
-    def dobuild(self, source, branch, build):
+    def dobuild(self, source, build):
         build_suffix = ""
 
         ssabbrev = get_short_abbrevs([ab for ab in self.source_abbrev.values()])
 
-        if branch is not None:
-            sbabbrev = get_short_abbrevs([ab for ab in self.branch_abbrev.values()])
-
-            prefix = "[" + ssabbrev[self.source_abbrev[source]] + "-" + sbabbrev[self.branch_abbrev[branch]] + "-" + self.build_abbrev[build] + "]"
-            self.install_prefix += "/" + self.source_abbrev[source] + "/" + branch + "/" + build
-            build_suffix += self.source_abbrev[source] + "/" + branch + "/" + build
-        else:
-            prefix = "[" + ssabbrev[self.source_abbrev[source]] + "-" + self.build_abbrev[build] + "]"
-            self.install_prefix += "/" + self.source_abbrev[source] + "/" + build
-            build_suffix += "/" + self.source_abbrev[source] + "/" + build
+        prefix = "[" + ssabbrev[self.source_abbrev[source]] + "-" + self.build_abbrev[build] + "]"
+        self.install_prefix += "/" + self.source_abbrev[source] + "/" + build
+        build_suffix += "/" + self.source_abbrev[source] + "/" + build
 
         self.logger = logging.getLogger(prefix)
 
@@ -431,52 +369,6 @@ class Builder(threading.Thread):
                                 "--disable-optimized",
                                 "--with-cxx-include-root=" + cxxroot,
                                 "--with-cxx-include-arch=" + cxxarch]),
-            llvm_gcc=dict(debug=["--prefix=" + self.install_prefix,
-                                 "--enable-checking",
-                                 "--program-prefix=llvm-",
-                                 "--enable-llvm=" + self.build_prefix + "/llvm/" + build_suffix,
-# Fortran install seems to be broken.
-#                                 "--enable-languages=c,c++,fortran"],
-                                 "--enable-languages=c,c++"],
-                          release=["--prefix=" + self.install_prefix,
-                                   "--program-prefix=llvm-",
-                                   "--enable-llvm=" + self.build_prefix + "/llvm/" + build_suffix,
-# Fortran install seems to be broken.
-#                                   "--enable-languages=c,c++,fortran"],
-                                   "--enable-languages=c,c++"],
-                          paranoid=["--prefix=" + self.install_prefix,
-                                    "--enable-checking",
-                                    "--program-prefix=llvm-",
-                                    "--enable-llvm=" + self.build_prefix + "/llvm/" + build_suffix,
-# Fortran install seems to be broken.
-#                                    "--enable-languages=c,c++,fortran"]),
-                                    "--enable-languages=c,c++"]),
-            llvm2=dict(debug=["--prefix=" + self.install_prefix,
-                              "--with-extra-options=-Werror",
-                              "--enable-assertions",
-                              "--disable-optimized",
-                              "--with-llvmgccdir=" + self.install_prefix + "/bin",
-                              "--with-cxx-include-root=" + cxxroot,
-                              "--with-cxx-include-arch=" + cxxarch],
-                       release=["--prefix=" + self.install_prefix,
-                                "--with-extra-options=-Werror",
-                                "--enable-optimized",
-                                "--with-llvmgccdir=" + self.install_prefix + "/bin",
-                                "--with-cxx-include-root=" + cxxroot,
-                                "--with-cxx-include-arch=" + cxxarch],
-                       paranoid=["--prefix=" + self.install_prefix,
-                                 "--with-extra-options=-Werror",
-                                 "--enable-assertions",
-                                 "--enable-expensive-checks",
-                                 "--disable-optimized",
-                                 "--with-llvmgccdir=" + self.install_prefix + "/bin",
-                                 "--with-cxx-include-root=" + cxxroot,
-                                 "--with-cxx-include-arch=" + cxxarch]),
-            gcc=dict(debug=["--prefix=" + self.install_prefix,
-                            "--enable-checking"],
-                     release=["--prefix=" + self.install_prefix],
-                     paranoid=["--prefix=" + self.install_prefix,
-                               "--enable-checking"]),
             dragonegg=dict(debug=[],
                            release=[],
                            paranoid=[]))
@@ -488,24 +380,6 @@ class Builder(threading.Thread):
                                    CXX=self.cxx),
                       paranoid=dict(CC=self.cc,
                                     CXX=self.cxx)),
-            llvm_gcc=dict(debug=dict(CC=self.cc,
-                                     CXX=self.cxx),
-                          release=dict(CC=self.cc,
-                                       CXX=self.cxx),
-                          paranoid=dict(CC=self.cc,
-                                        CXX=self.cxx)),
-            llvm2=dict(debug=dict(CC=self.cc,
-                                  CXX=self.cxx),
-                       release=dict(CC=self.cc,
-                                    CXX=self.cxx),
-                       paranoid=dict(CC=self.cc,
-                                     CXX=self.cxx)),
-            gcc=dict(debug=dict(CC=self.cc,
-                                CXX=self.cxx),
-                     release=dict(CC=self.cc,
-                                  CXX=self.cxx),
-                     paranoid=dict(CC=self.cc,
-                                   CXX=self.cxx)),
             dragonegg=dict(debug=dict(CC=self.cc,
                                       CXX=self.cxx),
                            release=dict(CC=self.cc,
@@ -517,21 +391,6 @@ class Builder(threading.Thread):
             llvm=dict(debug=["-j" + str(self.jobs)],
                       release=["-j" + str(self.jobs)],
                       paranoid=["-j" + str(self.jobs)]),
-            llvm_gcc=dict(debug=["-j" + str(self.jobs),
-                                 "bootstrap"],
-                          release=["-j" + str(self.jobs),
-                                   "bootstrap"],
-                          paranoid=["-j" + str(self.jobs),
-                                    "bootstrap"]),
-            llvm2=dict(debug=["-j" + str(self.jobs)],
-                       release=["-j" + str(self.jobs)],
-                       paranoid=["-j" + str(self.jobs)]),
-            gcc=dict(debug=["-j" + str(self.jobs),
-                            "bootstrap"],
-                     release=["-j" + str(self.jobs),
-                              "bootstrap"],
-                     paranoid=["-j" + str(self.jobs),
-                               "bootstrap"]),
             dragonegg=dict(debug=["-j" + str(self.jobs)],
                            release=["-j" + str(self.jobs)],
                            paranoid=["-j" + str(self.jobs)]))
@@ -540,35 +399,17 @@ class Builder(threading.Thread):
             llvm=dict(debug=dict(),
                       release=dict(),
                       paranoid=dict()),
-            llvm_gcc=dict(debug=dict(),
-                          release=dict(),
-                          paranoid=dict()),
-            llvm2=dict(debug=dict(),
-                       release=dict(),
-                       paranoid=dict()),
-            gcc=dict(debug=dict(),
-                     release=dict(),
-                     paranoid=dict()),
-            dragonegg=dict(debug=dict(GCC=self.install_prefix + "/bin/gcc",
+            dragonegg=dict(debug=dict(GCC=self.cc,
                                       LLVM_CONFIG=self.install_prefix + "/bin/llvm-config"),
-                           release=dict(GCC=self.install_prefix + "/bin/gcc",
+                           release=dict(GCC=self.cc,
                                         LLVM_CONFIG=self.install_prefix + "/bin/llvm-config"),
-                           paranoid=dict(GCC=self.install_prefix + "/bin/gcc",
+                           paranoid=dict(GCC=self.cc,
                                          LLVM_CONFIG=self.install_prefix + "/bin/llvm-config")))
 
         make_install_flags = dict(
             llvm=dict(debug=["install"],
                       release=["install"],
                       paranoid=["install"]),
-            llvm_gcc=dict(debug=["install"],
-                          release=["install"],
-                          paranoid=["install"]),
-            llvm2=dict(debug=["install"],
-                       release=["install"],
-                       paranoid=["install"]),
-            gcc=dict(debug=["install"],
-                     release=["install"],
-                     paranoid=["install"]),
             dragonegg=dict(debug=["install"],
                            release=["install"],
                            paranoid=["install"]))
@@ -577,15 +418,6 @@ class Builder(threading.Thread):
             llvm=dict(debug=dict(),
                       release=dict(),
                       paranoid=dict()),
-            llvm_gcc=dict(debug=dict(),
-                          release=dict(),
-                          paranoid=dict()),
-            llvm2=dict(debug=dict(),
-                       release=dict(),
-                       paranoid=dict()),
-            gcc=dict(debug=dict(),
-                     release=dict(),
-                     paranoid=dict()),
             dragonegg=dict(debug=dict(),
                            release=dict(),
                            paranoid=dict()))
@@ -594,15 +426,6 @@ class Builder(threading.Thread):
             llvm=dict(debug=["check"],
                       release=["check"],
                       paranoid=["check"]),
-            llvm_gcc=dict(debug=["check"],
-                          release=["check"],
-                          paranoid=["check"]),
-            llvm2=dict(debug=["check"],
-                       release=["check"],
-                       paranoid=["check"]),
-            gcc=dict(debug=["check"],
-                     release=["check"],
-                     paranoid=["check"]),
             dragonegg=dict(debug=["check"],
                            release=["check"],
                            paranoid=["check"]))
@@ -611,15 +434,6 @@ class Builder(threading.Thread):
             llvm=dict(debug=dict(),
                       release=dict(),
                       paranoid=dict()),
-            llvm_gcc=dict(debug=dict(),
-                          release=dict(),
-                          paranoid=dict()),
-            llvm2=dict(debug=dict(),
-                       release=dict(),
-                       paranoid=dict()),
-            gcc=dict(debug=dict(),
-                     release=dict(),
-                     paranoid=dict()),
             dragonegg=dict(debug=dict(),
                            release=dict(),
                            paranoid=dict()))
@@ -627,8 +441,8 @@ class Builder(threading.Thread):
         for component in components:
             comp = component[:]
             
-            if (self.options.no_gcc):
-                if (comp == 'gcc' or comp == 'dragonegg' or comp == 'llvm2'):
+            if (self.options.no_dragonegg):
+                if (comp == 'dragonegg'):
                     self.logger.info("Skipping " + component + " in "
                                      + builddir)
                     continue
@@ -637,15 +451,13 @@ class Builder(threading.Thread):
             builddir = self.build_prefix + "/" + comp + "/" + build_suffix
             installdir = self.install_prefix
 
-            if (branch is not None):
-                srcdir += "/" + branch
-
             comp_key = comp.replace("-", "_")
 
             config_args = configure_flags[comp_key][build][:]
             config_args.extend(getattr(self.options,
                                        "extra_" + comp_key.rstrip("2")
-                                       + "_config_flags").split())
+                                       + "_config_flags",
+                                       "").split())
 
             self.logger.info("Configuring " + component + " in " + builddir)
             self.configure(component, srcdir, builddir,
@@ -678,12 +490,7 @@ class Builder(threading.Thread):
 
         configure_files = dict(
             llvm=[(srcdir + "/configure", builddir + "/Makefile")],
-            llvm_gcc=[(srcdir + "/configure", builddir + "/Makefile"),
-                      (srcdir + "/gcc/configure", builddir + "/gcc/Makefile")],
-            llvm2=[(srcdir + "/configure", builddir + "/Makefile")],
-            gcc=[(srcdir + "/configure", builddir + "/Makefile"),
-                 (srcdir + "/gcc/configure", builddir + "/gcc/Makefile")],
-            dragonegg=[()])
+            dragonegg=[("","")])
 
 
         doconfig = False
@@ -726,8 +533,7 @@ class Builder(threading.Thread):
 
 # Global constants
 build_abbrev = dict(debug="dbg", release="opt", paranoid="par")
-#components = ["llvm", "llvm-gcc", "llvm2", "gcc", "dragonegg"]
-components = ["llvm", "llvm2", "gcc", "dragonegg"]
+components = ["llvm", "dragonegg"]
 
 # Parse options
 parser = optparse.OptionParser(version="%prog 1.0")
@@ -744,10 +550,6 @@ else:
 
 source_abbrev = get_path_abbrevs(set(options.src))
 
-branch_abbrev = None
-if options.branch is not None:
-    branch_abbrev = get_path_abbrevs(set(options.branch))
-
 work_queue = queue.Queue()
 
 jobs = options.jobs // options.threads
@@ -760,19 +562,18 @@ logging.getLogger().info("Building with " + str(options.jobs) + " jobs and "
                          + str(numthreads) + " threads using " + str(jobs)
                          + " make jobs")
 
+logging.getLogger().info("CC  = " + str(options.cc))
+logging.getLogger().info("CXX = " + str(options.cxx))
+
 for t in range(numthreads):
     builder = Builder(work_queue, jobs,
-                      build_abbrev, source_abbrev, branch_abbrev,
+                      build_abbrev, source_abbrev,
                       options)
     builder.daemon = True
     builder.start()
 
 for build in set(options.build):
     for source in set(options.src):
-        if options.branch is not None:
-            for branch in set(options.branch):
-                work_queue.put((source, branch, build))
-        else:
-            work_queue.put((source, None, build))
+        work_queue.put((source, build))
 
 work_queue.join()
