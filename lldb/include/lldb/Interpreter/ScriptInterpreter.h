@@ -240,18 +240,6 @@ public:
 protected:
     CommandInterpreter &m_interpreter;
     lldb::ScriptLanguage m_script_lang;
-
-    // Scripting languages may need to use stdin for their interactive loops;
-    // however we don't want them to grab the real system stdin because that
-    // resource needs to be shared among the debugger UI, the inferior process and these
-    // embedded scripting loops.  Therefore we need to set up a pseudoterminal and use that
-    // as stdin for the script interpreter interactive loops/prompts.
-
-    lldb_utility::PseudoTerminal m_interpreter_pty; // m_session_pty
-    std::string m_pty_slave_name;                   //m_session_pty_slave_name
-
-private:
-
 };
 
 } // namespace lldb_private

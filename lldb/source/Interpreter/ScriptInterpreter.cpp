@@ -25,39 +25,18 @@ using namespace lldb_private;
 
 ScriptInterpreter::ScriptInterpreter (CommandInterpreter &interpreter, lldb::ScriptLanguage script_lang) :
     m_interpreter (interpreter),
-    m_script_lang (script_lang),
-    m_interpreter_pty (),
-    m_pty_slave_name ()
+    m_script_lang (script_lang)
 {
-    if (m_interpreter_pty.OpenFirstAvailableMaster (O_RDWR|O_NOCTTY, NULL, 0))
-    {
-        const char *slave_name = m_interpreter_pty.GetSlaveName(NULL, 0);
-        if (slave_name)
-            m_pty_slave_name.assign(slave_name);
-    }
 }
 
 ScriptInterpreter::~ScriptInterpreter ()
 {
-    m_interpreter_pty.CloseMasterFileDescriptor();
 }
 
 CommandInterpreter &
 ScriptInterpreter::GetCommandInterpreter ()
 {
     return m_interpreter;
-}
-
-const char *
-ScriptInterpreter::GetScriptInterpreterPtyName ()
-{
-    return m_pty_slave_name.c_str();
-}
-
-int
-ScriptInterpreter::GetMasterFileDescriptor ()
-{
-    return m_interpreter_pty.GetMasterFileDescriptor();
 }
 
 void 

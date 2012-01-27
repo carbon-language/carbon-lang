@@ -187,7 +187,6 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_dictionary_name (interpreter.GetDebugger().GetInstanceName().AsCString()),
     m_terminal_state (),
     m_session_is_active (false),
-    m_pty_slave_is_open (false),
     m_valid_session (true)
 {
 
@@ -262,7 +261,6 @@ ScriptInterpreterPython::~ScriptInterpreterPython ()
     {
         m_embedded_thread_input_reader_sp->SetIsDone (true);
         m_embedded_python_pty.CloseSlaveFileDescriptor();
-        m_pty_slave_is_open = false;
         const InputReaderSP reader_sp = m_embedded_thread_input_reader_sp;
         m_embedded_thread_input_reader_sp.reset();
         debugger.PopInputReader (reader_sp);
@@ -348,14 +346,14 @@ ScriptInterpreterPython::EnterSession ()
         run_string.Printf ("run_one_line (%s, 'lldb.target = lldb.debugger.GetSelectedTarget()')", 
                            m_dictionary_name.c_str());
     else
-        run_string.Printf ("run_one_line (%s, 'lldb.target = None')", m_dictionary_name.c_str());
+        run_string.Printf ("run_one_line (%s, 'lldb.target = lldb.SBTarget()')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
 
     if (exe_ctx.GetProcessPtr())
         run_string.Printf ("run_one_line (%s, 'lldb.process = lldb.target.GetProcess()')", m_dictionary_name.c_str());
     else
-        run_string.Printf ("run_one_line (%s, 'lldb.process = None')", m_dictionary_name.c_str());
+        run_string.Printf ("run_one_line (%s, 'lldb.process = lldb.SBProcess()')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
 
@@ -363,7 +361,7 @@ ScriptInterpreterPython::EnterSession ()
         run_string.Printf ("run_one_line (%s, 'lldb.thread = lldb.process.GetSelectedThread ()')", 
                            m_dictionary_name.c_str());
     else
-        run_string.Printf ("run_one_line (%s, 'lldb.thread = None')", m_dictionary_name.c_str());
+        run_string.Printf ("run_one_line (%s, 'lldb.thread = lldb.SBThread()')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
     
@@ -371,7 +369,7 @@ ScriptInterpreterPython::EnterSession ()
         run_string.Printf ("run_one_line (%s, 'lldb.frame = lldb.thread.GetSelectedFrame ()')", 
                            m_dictionary_name.c_str());
     else
-        run_string.Printf ("run_one_line (%s, 'lldb.frame = None')", m_dictionary_name.c_str());
+        run_string.Printf ("run_one_line (%s, 'lldb.frame = lldb.SBFrame()')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
     
@@ -385,19 +383,6 @@ ScriptInterpreterPython::EnterSession ()
             
     if (PyErr_Occurred())
         PyErr_Clear ();
-        
-    if (!m_pty_slave_is_open)
-    {
-        run_string.Clear();
-        run_string.Printf ("run_one_line (%s, \"new_stdin = open('%s', 'r')\")", m_dictionary_name.c_str(),
-                           m_pty_slave_name.c_str());
-        PyRun_SimpleString (run_string.GetData());
-        m_pty_slave_is_open = true;
-        
-        run_string.Clear();
-        run_string.Printf ("run_one_line (%s, 'sys.stdin = new_stdin')", m_dictionary_name.c_str());
-        PyRun_SimpleString (run_string.GetData());
-    }
 }   
 
 
@@ -1651,8 +1636,6 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
     
     script_interpreter->m_embedded_python_pty.CloseSlaveFileDescriptor();
 
-    script_interpreter->m_pty_slave_is_open = false;
-    
     log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SCRIPT);
     if (log)
         log->Printf ("%p ScriptInterpreterPython::RunEmbeddedPythonInterpreter () thread exiting...", baton);

@@ -208,32 +208,6 @@ SBCommandInterpreter::GetProcess ()
     return process;
 }
 
-ssize_t
-SBCommandInterpreter::WriteToScriptInterpreter (const char *src)
-{
-    return WriteToScriptInterpreter (src, strlen(src));
-}
-
-ssize_t
-SBCommandInterpreter::WriteToScriptInterpreter (const char *src, size_t src_len)
-{
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-
-    ssize_t bytes_written = 0;
-    if (m_opaque_ptr && src && src[0])
-    {
-        ScriptInterpreter *script_interpreter = m_opaque_ptr->GetScriptInterpreter();
-        if (script_interpreter)
-            bytes_written = ::write (script_interpreter->GetMasterFileDescriptor(), src, src_len);
-    }
-    if (log)
-        log->Printf ("SBCommandInterpreter(%p)::WriteToScriptInterpreter (src=\"%s\", src_len=%zu) => %zi", 
-                     m_opaque_ptr, src, src_len, bytes_written);
-
-    return bytes_written;
-}
-
-
 CommandInterpreter *
 SBCommandInterpreter::get ()
 {

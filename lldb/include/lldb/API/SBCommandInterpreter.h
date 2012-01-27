@@ -65,12 +65,6 @@ public:
     lldb::SBProcess
     GetProcess ();
 
-    ssize_t
-    WriteToScriptInterpreter (const char *src);
-
-    ssize_t
-    WriteToScriptInterpreter (const char *src, size_t src_len);
-
     void
     SourceInitFileInHomeDirectory (lldb::SBCommandReturnObject &result);
 
