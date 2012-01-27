@@ -1970,6 +1970,7 @@ bool AsmParser::ParseDirectiveOrg() {
   CheckForValidSection();
 
   const MCExpr *Offset;
+  SMLoc Loc = getTok().getLoc();
   if (ParseExpression(Offset))
     return true;
 
@@ -1989,9 +1990,11 @@ bool AsmParser::ParseDirectiveOrg() {
 
   Lex();
 
-  // FIXME: Only limited forms of relocatable expressions are accepted here, it
-  // has to be relative to the current section.
-  getStreamer().EmitValueToOffset(Offset, FillExpr);
+  // Only limited forms of relocatable expressions are accepted here, it
+  // has to be relative to the current section. The streamer will return
+  // 'true' if the expression wasn't evaluatable.
+  if (getStreamer().EmitValueToOffset(Offset, FillExpr))
+    return Error(Loc, "expected assembly-time absolute expression");
 
   return false;
 }

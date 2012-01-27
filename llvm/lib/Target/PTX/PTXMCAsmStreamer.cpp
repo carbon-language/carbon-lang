@@ -162,7 +162,7 @@ public:
   virtual void EmitCodeAlignment(unsigned ByteAlignment,
                                  unsigned MaxBytesToEmit = 0);
 
-  virtual void EmitValueToOffset(const MCExpr *Offset,
+  virtual bool EmitValueToOffset(const MCExpr *Offset,
                                  unsigned char Value = 0);
 
   virtual void EmitFileDirective(StringRef Filename);
@@ -478,8 +478,8 @@ void PTXMCAsmStreamer::EmitValueToAlignment(unsigned ByteAlignment,
 void PTXMCAsmStreamer::EmitCodeAlignment(unsigned ByteAlignment,
                                          unsigned MaxBytesToEmit) {}
 
-void PTXMCAsmStreamer::EmitValueToOffset(const MCExpr *Offset,
-                                         unsigned char Value) {}
+bool PTXMCAsmStreamer::EmitValueToOffset(const MCExpr *Offset,
+                                         unsigned char Value) {return false;}
 
 
 void PTXMCAsmStreamer::EmitFileDirective(StringRef Filename) {

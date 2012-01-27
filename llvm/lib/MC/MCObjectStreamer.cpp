@@ -232,12 +232,12 @@ void MCObjectStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
   new MCDwarfCallFrameFragment(*AddrDelta, getCurrentSectionData());
 }
 
-void MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
+bool MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
                                          unsigned char Value) {
   int64_t Res;
   if (Offset->EvaluateAsAbsolute(Res, getAssembler())) {
     new MCOrgFragment(*Offset, Value, getCurrentSectionData());
-    return;
+    return false;
   }
 
   MCSymbol *CurrentPos = getContext().CreateTempSymbol();
@@ -249,8 +249,9 @@ void MCObjectStreamer::EmitValueToOffset(const MCExpr *Offset,
     MCBinaryExpr::Create(MCBinaryExpr::Sub, Offset, Ref, getContext());
 
   if (!Delta->EvaluateAsAbsolute(Res, getAssembler()))
-    report_fatal_error("expected assembly-time absolute expression");
+    return true;
   EmitFill(Res, Value, 0);
+  return false;
 }
 
 // Associate GPRel32 fixup with data and resize data area

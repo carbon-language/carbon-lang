@@ -589,8 +589,8 @@ namespace {
                                       unsigned MaxBytesToEmit) {}
     virtual void EmitCodeAlignment(unsigned ByteAlignment,
                                    unsigned MaxBytesToEmit) {}
-    virtual void EmitValueToOffset(const MCExpr *Offset,
-                                   unsigned char Value ) {}
+    virtual bool EmitValueToOffset(const MCExpr *Offset,
+                                   unsigned char Value ) { return false; }
     virtual void EmitFileDirective(StringRef Filename) {}
     virtual void EmitDwarfAdvanceLineAddr(int64_t LineDelta,
                                           const MCSymbol *LastLabel,
