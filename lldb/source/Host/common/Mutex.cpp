@@ -8,6 +8,11 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Host/Mutex.h"
+#include "lldb/Host/Host.h"
+
+#include <string.h>
+#include <stdio.h>
+#include <unistd.h>
 
 #if 0
 // This logging is way too verbose to enable even for a log channel. 
@@ -17,6 +22,11 @@
 #define DEBUG_LOG(fmt, ...) printf(fmt, ## __VA_ARGS__)
 #else
 #define DEBUG_LOG(fmt, ...)
+#endif
+
+// Enable extra mutex error checking
+#ifdef LLDB_CONFIGURATION_DEBUG
+#define ENABLE_MUTEX_ERROR_CHECKING 1
 #endif
 
 using namespace lldb_private;
@@ -145,7 +155,11 @@ Mutex::Mutex (Mutex::Type type) :
     switch (type)
     {
     case eMutexTypeNormal:
+#if ENABLE_MUTEX_ERROR_CHECKING
+        err = ::pthread_mutexattr_settype (&attr, PTHREAD_MUTEX_ERRORCHECK);
+#else
         err = ::pthread_mutexattr_settype (&attr, PTHREAD_MUTEX_NORMAL);
+#endif
         break;
 
     case eMutexTypeRecursive:
@@ -172,6 +186,14 @@ Mutex::~Mutex()
 {
     int err;
     err = ::pthread_mutex_destroy (&m_mutex);
+#if ENABLE_MUTEX_ERROR_CHECKING
+    if (err)
+    {
+        Host::SetCrashDescriptionWithFormat ("%s error: pthread_mutex_destroy() => err = %i (%s)", __PRETTY_FUNCTION__, err, strerror(err));
+        assert(err == 0);
+    }
+    memset (&m_mutex, '\xba', sizeof(m_mutex));
+#endif
 }
 
 //----------------------------------------------------------------------
@@ -188,6 +210,13 @@ Mutex::Lock (pthread_mutex_t *mutex_ptr)
 {
     DEBUG_LOG ("[%4.4x/%4.4x] pthread_mutex_lock (%p)...\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), mutex_ptr);
     int err = ::pthread_mutex_lock (mutex_ptr);
+#if ENABLE_MUTEX_ERROR_CHECKING
+    if (err)
+    {
+        Host::SetCrashDescriptionWithFormat ("%s error: pthread_mutex_destroy(%p) => err = %i (%s)", __PRETTY_FUNCTION__, mutex_ptr, err, strerror(err));
+        assert(err == 0);
+    }
+#endif
     DEBUG_LOG ("[%4.4x/%4.4x] pthread_mutex_lock (%p) => %i\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), mutex_ptr, err);
     return err;
 }
@@ -204,6 +233,13 @@ int
 Mutex::Unlock (pthread_mutex_t *mutex_ptr)
 {
     int err = ::pthread_mutex_unlock (mutex_ptr);
+#if ENABLE_MUTEX_ERROR_CHECKING
+    if (err)
+    {
+        Host::SetCrashDescriptionWithFormat ("%s error: pthread_mutex_unlock(%p) => err = %i (%s)", __PRETTY_FUNCTION__, mutex_ptr, err, strerror(err));
+        assert(err == 0);
+    }
+#endif
     DEBUG_LOG ("[%4.4x/%4.4x] pthread_mutex_unlock (%p) => %i\n", Host::GetCurrentProcessID(), Host::GetCurrentThreadID(), mutex_ptr, err);
     return err;
 }
