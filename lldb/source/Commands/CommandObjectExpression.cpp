@@ -282,7 +282,7 @@ CommandObjectExpression::EvaluateExpression
     CommandReturnObject *result
 )
 {
-    Target *target = m_exe_ctx.GetTargetPtr();
+    Target *target = m_interpreter.GetExecutionContext().GetTargetPtr();
     
     if (!target)
         target = Host::GetDummyTarget(m_interpreter.GetDebugger()).get();
@@ -310,7 +310,7 @@ CommandObjectExpression::EvaluateExpression
         }
         
         exe_results = target->EvaluateExpression (expr, 
-                                                  m_exe_ctx.GetFramePtr(),
+                                                  m_interpreter.GetExecutionContext().GetFramePtr(),
                                                   eExecutionPolicyOnlyWhenNeeded,
                                                   m_command_options.print_object,
                                                   m_command_options.unwind_on_error,
@@ -323,7 +323,7 @@ CommandObjectExpression::EvaluateExpression
             uint32_t start_frame = 0;
             uint32_t num_frames = 1;
             uint32_t num_frames_with_source = 0;
-            Thread *thread = m_exe_ctx.GetThreadPtr();
+            Thread *thread = m_interpreter.GetExecutionContext().GetThreadPtr();
             if (thread)
             {
                 thread->GetStatus (result->GetOutputStream(), 
@@ -333,7 +333,7 @@ CommandObjectExpression::EvaluateExpression
             }
             else 
             {
-                Process *process = m_exe_ctx.GetProcessPtr();
+                Process *process = m_interpreter.GetExecutionContext().GetProcessPtr();
                 if (process)
                 {
                     bool only_threads_with_stop_reason = true;
@@ -422,8 +422,6 @@ CommandObjectExpression::ExecuteRawCommandString
     CommandReturnObject &result
 )
 {
-    m_exe_ctx = m_interpreter.GetExecutionContext();
-
     m_option_group.NotifyOptionParsingStarting();
 
     const char * expr = NULL;

@@ -96,7 +96,6 @@ protected:
     OptionGroupOptions m_option_group;
     OptionGroupFormat m_format_options;
     CommandOptions m_command_options;
-    ExecutionContext m_exe_ctx;
     uint32_t m_expr_line_count;
     std::string m_expr_lines; // Multi-line expression support
 };
