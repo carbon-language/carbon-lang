@@ -213,7 +213,7 @@ Mutex::Lock (pthread_mutex_t *mutex_ptr)
 #if ENABLE_MUTEX_ERROR_CHECKING
     if (err)
     {
-        Host::SetCrashDescriptionWithFormat ("%s error: pthread_mutex_destroy(%p) => err = %i (%s)", __PRETTY_FUNCTION__, mutex_ptr, err, strerror(err));
+        Host::SetCrashDescriptionWithFormat ("%s error: pthread_mutex_lock(%p) => err = %i (%s)", __PRETTY_FUNCTION__, mutex_ptr, err, strerror(err));
         assert(err == 0);
     }
 #endif
