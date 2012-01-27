@@ -400,6 +400,9 @@ public:
     // Begin Pure Virtual Functions
 
     virtual void
+    NotifyOwnerIsShuttingDown ();
+
+    virtual void
     UpdateInstanceSettingsVariable (const ConstString &var_name,
                                     const char *index_value,
                                     const char *value,
@@ -440,6 +443,7 @@ public:
 protected:
 
     UserSettingsController &m_owner;
+    bool m_owner_is_live;
     ConstString m_instance_name;
 };
 
