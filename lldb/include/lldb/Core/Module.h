@@ -64,7 +64,7 @@ public:
     static Module *
     GetAllocatedModuleAtIndex (size_t idx);
 
-    static Mutex &
+    static Mutex *
     GetAllocationModuleCollectionMutex();
 
     //------------------------------------------------------------------

@@ -1632,7 +1632,7 @@ FindModulesByName (Target *target,
     if (check_global_list && num_matches == 0)
     {
         // Check the global list
-        Mutex::Locker locker(Module::GetAllocationModuleCollectionMutex().GetMutex());
+        Mutex::Locker locker(Module::GetAllocationModuleCollectionMutex());
         const uint32_t num_modules = Module::GetNumberAllocatedModules();
         ModuleSP module_sp;
         for (uint32_t image_idx = 0; image_idx<num_modules; ++image_idx)
@@ -2051,7 +2051,7 @@ public:
                     else
                     {
                         // Check the global list
-                        Mutex::Locker locker(Module::GetAllocationModuleCollectionMutex().GetMutex());
+                        Mutex::Locker locker(Module::GetAllocationModuleCollectionMutex());
 
                         result.AppendWarningWithFormat("Unable to find an image that matches '%s'.\n", arg_cstr);
                     }
@@ -2785,7 +2785,7 @@ public:
             
             if (use_global_module_list)
             {
-                locker.Reset (Module::GetAllocationModuleCollectionMutex().GetMutex());
+                locker.Reset (Module::GetAllocationModuleCollectionMutex()->GetMutex());
                 num_modules = Module::GetNumberAllocatedModules();
             }
             else

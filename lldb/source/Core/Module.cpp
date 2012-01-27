@@ -43,11 +43,18 @@ GetModuleCollection()
     return *g_module_collection;
 }
 
-Mutex &
+Mutex *
 Module::GetAllocationModuleCollectionMutex()
 {
-    static Mutex g_module_collection_mutex(Mutex::eMutexTypeRecursive);
-    return g_module_collection_mutex;    
+    // NOTE: The mutex below must be leaked since the global module list in
+    // the ModuleList class will get torn at some point, and we can't know
+    // if it will tear itself down before the "g_module_collection_mutex" below
+    // will. So we leak a Mutex object below to safeguard against that
+
+    static Mutex *g_module_collection_mutex = NULL;
+    if (g_module_collection_mutex == NULL)
+        g_module_collection_mutex = new Mutex (Mutex::eMutexTypeRecursive); // NOTE: known leak
+    return g_module_collection_mutex;
 }
 
 size_t
