@@ -55,7 +55,7 @@ namespace {
     Value *PersonalityFn;
     Constant *CallSiteFn;
     Constant *FuncCtxFn;
-    Value *CallSite;
+    AllocaInst *FuncCtx;
   public:
     static char ID; // Pass identification, replacement for typeid
     explicit SjLjEHPass(const TargetLowering *tli = NULL)
@@ -75,7 +75,7 @@ namespace {
     Value *setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads);
     void lowerIncomingArguments(Function &F);
     void lowerAcrossUnwindEdges(Function &F, ArrayRef<InvokeInst*> Invokes);
-    void insertCallSiteStore(Instruction *I, int Number, Value *CallSite);
+    void insertCallSiteStore(Instruction *I, int Number);
   };
 } // end anonymous namespace
 
@@ -123,12 +123,20 @@ bool SjLjEHPass::doInitialization(Module &M) {
 
 /// insertCallSiteStore - Insert a store of the call-site value to the
 /// function context
-void SjLjEHPass::insertCallSiteStore(Instruction *I, int Number,
-                                     Value *CallSite) {
+void SjLjEHPass::insertCallSiteStore(Instruction *I, int Number) {
+  IRBuilder<> Builder(I);
+
+  // Get a reference to the call_site field.
+  Type *Int32Ty = Type::getInt32Ty(I->getContext());
+  Value *Zero = ConstantInt::get(Int32Ty, 0);
+  Value *One = ConstantInt::get(Int32Ty, 1);
+  Value *Idxs[2] = { Zero, One };
+  Value *CallSite = Builder.CreateGEP(FuncCtx, Idxs, "call_site");
+
+  // Insert a store of the call-site number
   ConstantInt *CallSiteNoC = ConstantInt::get(Type::getInt32Ty(I->getContext()),
                                               Number);
-  // Insert a store of the call-site number
-  new StoreInst(CallSiteNoC, CallSite, true, I);  // volatile
+  Builder.CreateStore(CallSiteNoC, CallSite, true/*volatile*/);
 }
 
 /// MarkBlocksLiveIn - Insert BB and all of its predescessors into LiveBBs until
@@ -184,51 +192,42 @@ setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads) {
   // because the value needs to be added to the global context list.
   unsigned Align =
     TLI->getTargetData()->getPrefTypeAlignment(FunctionContextTy);
-  AllocaInst *FuncCtx =
+  FuncCtx =
     new AllocaInst(FunctionContextTy, 0, Align, "fn_context", EntryBB->begin());
 
   // Fill in the function context structure.
-  Value *Idxs[2];
   Type *Int32Ty = Type::getInt32Ty(F.getContext());
   Value *Zero = ConstantInt::get(Int32Ty, 0);
   Value *One = ConstantInt::get(Int32Ty, 1);
+  Value *Two = ConstantInt::get(Int32Ty, 2);
+  Value *Three = ConstantInt::get(Int32Ty, 3);
+  Value *Four = ConstantInt::get(Int32Ty, 4);
 
-  // Keep around a reference to the call_site field.
-  Idxs[0] = Zero;
-  Idxs[1] = One;
-  CallSite = GetElementPtrInst::Create(FuncCtx, Idxs, "call_site",
-                                       EntryBB->getTerminator());
-
-  // Reference the __data field.
-  Idxs[1] = ConstantInt::get(Int32Ty, 2);
-  Value *FCData = GetElementPtrInst::Create(FuncCtx, Idxs, "__data",
-                                            EntryBB->getTerminator());
-
-  // The exception value comes back in context->__data[0].
-  Idxs[1] = Zero;
-  Value *ExceptionAddr = GetElementPtrInst::Create(FCData, Idxs,
-                                                   "exception_gep",
-                                                   EntryBB->getTerminator());
-
-  // The exception selector comes back in context->__data[1].
-  Idxs[1] = One;
-  Value *SelectorAddr = GetElementPtrInst::Create(FCData, Idxs,
-                                                  "exn_selector_gep",
-                                                  EntryBB->getTerminator());
+  Value *Idxs[2] = { Zero, 0 };
 
   for (unsigned I = 0, E = LPads.size(); I != E; ++I) {
     LandingPadInst *LPI = LPads[I];
     IRBuilder<> Builder(LPI->getParent()->getFirstInsertionPt());
 
+    // Reference the __data field.
+    Idxs[1] = Two;
+    Value *FCData = Builder.CreateGEP(FuncCtx, Idxs, "__data");
+
+    // The exception values come back in context->__data[0].
+    Idxs[1] = Zero;
+    Value *ExceptionAddr = Builder.CreateGEP(FCData, Idxs, "exception_gep");
     Value *ExnVal = Builder.CreateLoad(ExceptionAddr, true, "exn_val");
     ExnVal = Builder.CreateIntToPtr(ExnVal, Type::getInt8PtrTy(F.getContext()));
+
+    Idxs[1] = One;
+    Value *SelectorAddr = Builder.CreateGEP(FCData, Idxs, "exn_selector_gep");
     Value *SelVal = Builder.CreateLoad(SelectorAddr, true, "exn_selector_val");
 
     substituteLPadValues(LPI, ExnVal, SelVal);
   }
 
   // Personality function
-  Idxs[1] = ConstantInt::get(Int32Ty, 3);
+  Idxs[1] = Three;
   if (!PersonalityFn)
     PersonalityFn = LPads[0]->getPersonalityFn();
   Value *PersonalityFieldPtr =
@@ -238,11 +237,11 @@ setupFunctionContext(Function &F, ArrayRef<LandingPadInst*> LPads) {
                 EntryBB->getTerminator());
 
   // LSDA address
-  Idxs[1] = ConstantInt::get(Int32Ty, 4);
-  Value *LSDAFieldPtr = GetElementPtrInst::Create(FuncCtx, Idxs, "lsda_gep",
-                                                  EntryBB->getTerminator());
   Value *LSDA = CallInst::Create(LSDAAddrFn, "lsda_addr",
                                  EntryBB->getTerminator());
+  Idxs[1] = Four;
+  Value *LSDAFieldPtr = GetElementPtrInst::Create(FuncCtx, Idxs, "lsda_gep",
+                                                  EntryBB->getTerminator());
   new StoreInst(LSDA, LSDAFieldPtr, true, EntryBB->getTerminator());
 
   return FuncCtx;
@@ -464,7 +463,7 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
   // At this point, we are all set up, update the invoke instructions to mark
   // their call_site values.
   for (unsigned I = 0, E = Invokes.size(); I != E; ++I) {
-    insertCallSiteStore(Invokes[I], I + 1, CallSite);
+    insertCallSiteStore(Invokes[I], I + 1);
 
     ConstantInt *CallSiteNum =
       ConstantInt::get(Type::getInt32Ty(F.getContext()), I + 1);
@@ -483,9 +482,9 @@ bool SjLjEHPass::setupEntryBlockAndCallSites(Function &F) {
     for (BasicBlock::iterator I = BB->begin(), end = BB->end(); I != end; ++I)
       if (CallInst *CI = dyn_cast<CallInst>(I)) {
         if (!CI->doesNotThrow())
-          insertCallSiteStore(CI, -1, CallSite);
+          insertCallSiteStore(CI, -1);
       } else if (ResumeInst *RI = dyn_cast<ResumeInst>(I)) {
-        insertCallSiteStore(RI, -1, CallSite);
+        insertCallSiteStore(RI, -1);
       }
 
   // Register the function context and make sure it's known to not throw
