@@ -2251,8 +2251,7 @@ static FormatAttrKind getFormatAttrKind(StringRef Format) {
 
   // Otherwise, check for supported formats.
   if (Format == "scanf" || Format == "printf" || Format == "printf0" ||
-      Format == "strfmon" || Format == "cmn_err" || Format == "strftime" ||
-      Format == "NSString" || Format == "CFString" || Format == "vcmn_err" ||
+      Format == "strfmon" || Format == "cmn_err" || Format == "vcmn_err" ||
       Format == "zcmn_err" ||
       Format == "kprintf")  // OpenBSD.
     return SupportedFormat;
