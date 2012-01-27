@@ -113,25 +113,27 @@ bool FixItRecompile::BeginInvocation(CompilerInstance &CI) {
   {
     const FrontendOptions &FEOpts = CI.getFrontendOpts();
     llvm::OwningPtr<FrontendAction> FixAction(new SyntaxOnlyAction());
-    FixAction->BeginSourceFile(CI, FEOpts.Inputs[0]);
-
-    llvm::OwningPtr<FixItOptions> FixItOpts;
-    if (FEOpts.FixToTemporaries)
-      FixItOpts.reset(new FixItRewriteToTemp());
-    else
-      FixItOpts.reset(new FixItRewriteInPlace());
-    FixItOpts->Silent = true;
-    FixItOpts->FixWhatYouCan = FEOpts.FixWhatYouCan;
-    FixItOpts->FixOnlyWarnings = FEOpts.FixOnlyWarnings;
-    FixItRewriter Rewriter(CI.getDiagnostics(), CI.getSourceManager(),
-                           CI.getLangOpts(), FixItOpts.get());
-    FixAction->Execute();
-
-    err = Rewriter.WriteFixedFiles(&RewrittenFiles);
+    if (FixAction->BeginSourceFile(CI, FEOpts.Inputs[0])) {
+      llvm::OwningPtr<FixItOptions> FixItOpts;
+      if (FEOpts.FixToTemporaries)
+        FixItOpts.reset(new FixItRewriteToTemp());
+      else
+        FixItOpts.reset(new FixItRewriteInPlace());
+      FixItOpts->Silent = true;
+      FixItOpts->FixWhatYouCan = FEOpts.FixWhatYouCan;
+      FixItOpts->FixOnlyWarnings = FEOpts.FixOnlyWarnings;
+      FixItRewriter Rewriter(CI.getDiagnostics(), CI.getSourceManager(),
+                             CI.getLangOpts(), FixItOpts.get());
+      FixAction->Execute();
   
-    FixAction->EndSourceFile();
-    CI.setSourceManager(0);
-    CI.setFileManager(0);
+      err = Rewriter.WriteFixedFiles(&RewrittenFiles);
+    
+      FixAction->EndSourceFile();
+      CI.setSourceManager(0);
+      CI.setFileManager(0);
+    } else {
+      err = true;
+    }
   }
   if (err)
     return false;
