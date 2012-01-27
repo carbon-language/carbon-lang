@@ -1932,10 +1932,8 @@ BinaryOperator *BinaryOperator::CreateNot(Value *Op, const Twine &Name,
 
 // isConstantAllOnes - Helper function for several functions below
 static inline bool isConstantAllOnes(const Value *V) {
-  if (const ConstantInt *CI = dyn_cast<ConstantInt>(V))
-    return CI->isAllOnesValue();
-  if (const ConstantVector *CV = dyn_cast<ConstantVector>(V))
-    return CV->isAllOnesValue();
+  if (const Constant *C = dyn_cast<Constant>(V))
+    return C->isAllOnesValue();
   return false;
 }
 

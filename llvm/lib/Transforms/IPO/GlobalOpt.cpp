@@ -2174,7 +2174,7 @@ static Constant *EvaluateStoreInto(Constant *Init, Constant *Val,
     return Val;
   }
 
-  std::vector<Constant*> Elts;
+  SmallVector<Constant*, 32> Elts;
   if (StructType *STy = dyn_cast<StructType>(Init->getType())) {
     // Break up the constant into its elements.
     for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i)

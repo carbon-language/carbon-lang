@@ -207,7 +207,7 @@ Instruction *InstCombiner::visitExtractElementInst(ExtractElementInst &EI) {
 /// elements from either LHS or RHS, return the shuffle mask and true.
 /// Otherwise, return false.
 static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
-                                         std::vector<Constant*> &Mask) {
+                                         SmallVectorImpl<Constant*> &Mask) {
   assert(V->getType() == LHS->getType() && V->getType() == RHS->getType() &&
          "Invalid CollectSingleShuffleElements");
   unsigned NumElts = cast<VectorType>(V->getType())->getNumElements();
@@ -284,7 +284,7 @@ static bool CollectSingleShuffleElements(Value *V, Value *LHS, Value *RHS,
 /// CollectShuffleElements - We are building a shuffle of V, using RHS as the
 /// RHS of the shuffle instruction, if it is not null.  Return a shuffle mask
 /// that computes V and the LHS value of the shuffle.
-static Value *CollectShuffleElements(Value *V, std::vector<Constant*> &Mask,
+static Value *CollectShuffleElements(Value *V, SmallVectorImpl<Constant*> &Mask,
                                      Value *&RHS) {
   assert(V->getType()->isVectorTy() &&
          (RHS == 0 || V->getType() == RHS->getType()) &&
@@ -384,7 +384,7 @@ Instruction *InstCombiner::visitInsertElementInst(InsertElementInst &IE) {
       // If this insertelement isn't used by some other insertelement, turn it
       // (and any insertelements it points to), into one big shuffle.
       if (!IE.hasOneUse() || !isa<InsertElementInst>(IE.use_back())) {
-        std::vector<Constant*> Mask;
+        SmallVector<Constant*, 16> Mask;
         Value *RHS = 0;
         Value *LHS = CollectShuffleElements(&IE, Mask, RHS);
         if (RHS == 0) RHS = UndefValue::get(LHS->getType());
@@ -443,20 +443,21 @@ Instruction *InstCombiner::visitShuffleVectorInst(ShuffleVectorInst &SVI) {
     }
 
     // Remap any references to RHS to use LHS.
-    std::vector<Constant*> Elts;
+    SmallVector<Constant*, 16> Elts;
     for (unsigned i = 0, e = LHSWidth; i != VWidth; ++i) {
-      if (Mask[i] < 0)
+      if (Mask[i] < 0) {
         Elts.push_back(UndefValue::get(Type::getInt32Ty(SVI.getContext())));
-      else {
-        if ((Mask[i] >= (int)e && isa<UndefValue>(RHS)) ||
-            (Mask[i] <  (int)e && isa<UndefValue>(LHS))) {
-          Mask[i] = -1;     // Turn into undef.
-          Elts.push_back(UndefValue::get(Type::getInt32Ty(SVI.getContext())));
-        } else {
-          Mask[i] = Mask[i] % e;  // Force to LHS.
-          Elts.push_back(ConstantInt::get(Type::getInt32Ty(SVI.getContext()),
-                                          Mask[i]));
-        }
+        continue;
+      }
+
+      if ((Mask[i] >= (int)e && isa<UndefValue>(RHS)) ||
+          (Mask[i] <  (int)e && isa<UndefValue>(LHS))) {
+        Mask[i] = -1;     // Turn into undef.
+        Elts.push_back(UndefValue::get(Type::getInt32Ty(SVI.getContext())));
+      } else {
+        Mask[i] = Mask[i] % e;  // Force to LHS.
+        Elts.push_back(ConstantInt::get(Type::getInt32Ty(SVI.getContext()),
+                                        Mask[i]));
       }
     }
     SVI.setOperand(0, SVI.getOperand(1));

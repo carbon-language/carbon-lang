@@ -495,8 +495,10 @@ Value *InstCombiner::dyn_castNegVal(Value *V) const {
   if (ConstantInt *C = dyn_cast<ConstantInt>(V))
     return ConstantExpr::getNeg(C);
 
-  if (ConstantVector *C = dyn_cast<ConstantVector>(V))
-    if (C->getType()->getElementType()->isIntegerTy())
+  if (Constant *C = dyn_cast<Constant>(V))
+    // FIXME: Remove ConstantVector
+    if ((isa<ConstantVector>(C) || isa<ConstantDataVector>(C)) &&
+        C->getType()->getVectorElementType()->isIntegerTy())
       return ConstantExpr::getNeg(C);
 
   return 0;
@@ -514,8 +516,10 @@ Value *InstCombiner::dyn_castFNegVal(Value *V) const {
   if (ConstantFP *C = dyn_cast<ConstantFP>(V))
     return ConstantExpr::getFNeg(C);
 
-  if (ConstantVector *C = dyn_cast<ConstantVector>(V))
-    if (C->getType()->getElementType()->isFloatingPointTy())
+  if (Constant *C = dyn_cast<Constant>(V))
+    // FIXME: Remove ConstantVector
+    if ((isa<ConstantVector>(C) || isa<ConstantDataVector>(C)) &&
+        C->getType()->getVectorElementType()->isFloatingPointTy())
       return ConstantExpr::getFNeg(C);
 
   return 0;

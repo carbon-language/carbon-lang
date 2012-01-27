@@ -264,7 +264,16 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
       if (Op1F->isExactlyValue(1.0))
         return ReplaceInstUsesWith(I, Op0);  // Eliminate 'fmul double %X, 1.0'
     } else if (Op1C->getType()->isVectorTy()) {
+      // FIXME: Remove.
       if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1C)) {
+        // As above, vector X*splat(1.0) -> X in all defined cases.
+        if (Constant *Splat = Op1V->getSplatValue()) {
+          if (ConstantFP *F = dyn_cast<ConstantFP>(Splat))
+            if (F->isExactlyValue(1.0))
+              return ReplaceInstUsesWith(I, Op0);
+        }
+      }
+      if (ConstantDataVector *Op1V = dyn_cast<ConstantDataVector>(Op1C)) {
         // As above, vector X*splat(1.0) -> X in all defined cases.
         if (Constant *Splat = Op1V->getSplatValue()) {
           if (ConstantFP *F = dyn_cast<ConstantFP>(Splat))
@@ -688,28 +697,36 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
   }
 
   // If it's a constant vector, flip any negative values positive.
-  if (ConstantVector *RHSV = dyn_cast<ConstantVector>(Op1)) {
-    unsigned VWidth = RHSV->getNumOperands();
+  if (isa<ConstantVector>(Op1) || isa<ConstantDataVector>(Op1)) {
+    Constant *C = cast<Constant>(Op1);
+    unsigned VWidth = C->getType()->getVectorNumElements();
 
     bool hasNegative = false;
-    for (unsigned i = 0; !hasNegative && i != VWidth; ++i)
-      if (ConstantInt *RHS = dyn_cast<ConstantInt>(RHSV->getOperand(i)))
+    bool hasMissing = false;
+    for (unsigned i = 0; i != VWidth; ++i) {
+      Constant *Elt = C->getAggregateElement(i);
+      if (Elt == 0) {
+        hasMissing = true;
+        break;
+      }
+
+      if (ConstantInt *RHS = dyn_cast<ConstantInt>(Elt))
         if (RHS->isNegative())
           hasNegative = true;
+    }
 
-    if (hasNegative) {
+    if (hasNegative && !hasMissing) {
       SmallVector<Constant *, 16> Elts(VWidth);
       for (unsigned i = 0; i != VWidth; ++i) {
-        if (ConstantInt *RHS = dyn_cast<ConstantInt>(RHSV->getOperand(i))) {
+        Elts[i] = C->getAggregateElement(i);
+        if (ConstantInt *RHS = dyn_cast<ConstantInt>(Elts[i])) {
           if (RHS->isNegative())
             Elts[i] = cast<ConstantInt>(ConstantExpr::getNeg(RHS));
-          else
-            Elts[i] = RHS;
         }
       }
 
       Constant *NewRHSV = ConstantVector::get(Elts);
-      if (NewRHSV != RHSV) {
+      if (NewRHSV != C) {  // Don't loop on -MININT
         Worklist.AddValue(I.getOperand(1));
         I.setOperand(1, NewRHSV);
         return &I;

@@ -6061,7 +6061,7 @@ void SelectionDAGBuilder::visitInlineAsm(ImmutableCallSite CS) {
       // constant pool entry to get its address.
       const Value *OpVal = OpInfo.CallOperandVal;
       if (isa<ConstantFP>(OpVal) || isa<ConstantInt>(OpVal) ||
-          isa<ConstantVector>(OpVal)) {
+          isa<ConstantVector>(OpVal) || isa<ConstantDataVector>(OpVal)) {
         OpInfo.CallOperand = DAG.getConstantPool(cast<Constant>(OpVal),
                                                  TLI.getPointerTy());
       } else {

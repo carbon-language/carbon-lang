@@ -982,7 +982,7 @@ Value *InstCombiner::SimplifyDemandedVectorElts(Value *V, APInt DemandedElts,
 
     if (NewUndefElts) {
       // Add additional discovered undefs.
-      std::vector<Constant*> Elts;
+      SmallVector<Constant*, 16> Elts;
       for (unsigned i = 0; i < VWidth; ++i) {
         if (UndefElts[i])
           Elts.push_back(UndefValue::get(Type::getInt32Ty(I->getContext())));

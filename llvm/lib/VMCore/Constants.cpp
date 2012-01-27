@@ -441,12 +441,12 @@ Constant *ConstantInt::get(Type *Ty, uint64_t V, bool isSigned) {
   return C;
 }
 
-ConstantInt* ConstantInt::get(IntegerType* Ty, uint64_t V, 
+ConstantInt *ConstantInt::get(IntegerType *Ty, uint64_t V, 
                               bool isSigned) {
   return get(Ty->getContext(), APInt(Ty->getBitWidth(), V, isSigned));
 }
 
-ConstantInt* ConstantInt::getSigned(IntegerType* Ty, int64_t V) {
+ConstantInt *ConstantInt::getSigned(IntegerType *Ty, int64_t V) {
   return get(Ty, V, true);
 }
 
@@ -454,7 +454,7 @@ Constant *ConstantInt::getSigned(Type *Ty, int64_t V) {
   return get(Ty, V, true);
 }
 
-Constant *ConstantInt::get(Type* Ty, const APInt& V) {
+Constant *ConstantInt::get(Type *Ty, const APInt& V) {
   ConstantInt *C = get(Ty->getContext(), V);
   assert(C->getType() == Ty->getScalarType() &&
          "ConstantInt type doesn't match the type implied by its value!");
@@ -466,7 +466,7 @@ Constant *ConstantInt::get(Type* Ty, const APInt& V) {
   return C;
 }
 
-ConstantInt* ConstantInt::get(IntegerType* Ty, StringRef Str,
+ConstantInt *ConstantInt::get(IntegerType* Ty, StringRef Str,
                               uint8_t radix) {
   return get(Ty->getContext(), APInt(Ty->getBitWidth(), Str, radix));
 }
@@ -496,7 +496,7 @@ void ConstantFP::anchor() { }
 /// get() - This returns a constant fp for the specified value in the
 /// specified type.  This should only be used for simple constant values like
 /// 2.0/1.0 etc, that are known-valid both as double and as the target format.
-Constant *ConstantFP::get(Type* Ty, double V) {
+Constant *ConstantFP::get(Type *Ty, double V) {
   LLVMContext &Context = Ty->getContext();
   
   APFloat FV(V);
@@ -513,7 +513,7 @@ Constant *ConstantFP::get(Type* Ty, double V) {
 }
 
 
-Constant *ConstantFP::get(Type* Ty, StringRef Str) {
+Constant *ConstantFP::get(Type *Ty, StringRef Str) {
   LLVMContext &Context = Ty->getContext();
 
   APFloat FV(*TypeToFloatSemantics(Ty->getScalarType()), Str);

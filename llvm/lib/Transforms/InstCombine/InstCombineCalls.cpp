@@ -623,14 +623,16 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
 
   case Intrinsic::ppc_altivec_vperm:
     // Turn vperm(V1,V2,mask) -> shuffle(V1,V2,mask) if mask is a constant.
-    if (ConstantVector *Mask = dyn_cast<ConstantVector>(II->getArgOperand(2))) {
-      assert(Mask->getNumOperands() == 16 && "Bad type for intrinsic!");
+    if (Constant *Mask = dyn_cast<Constant>(II->getArgOperand(2))) {
+      assert(Mask->getType()->getVectorNumElements() == 16 &&
+             "Bad type for intrinsic!");
       
       // Check that all of the elements are integer constants or undefs.
       bool AllEltsOk = true;
       for (unsigned i = 0; i != 16; ++i) {
-        if (!isa<ConstantInt>(Mask->getOperand(i)) && 
-            !isa<UndefValue>(Mask->getOperand(i))) {
+        Constant *Elt = Mask->getAggregateElement(i);
+        if (Elt == 0 ||
+            !(isa<ConstantInt>(Elt) || isa<UndefValue>(Elt))) {
           AllEltsOk = false;
           break;
         }
@@ -649,9 +651,10 @@ Instruction *InstCombiner::visitCallInst(CallInst &CI) {
         memset(ExtractedElts, 0, sizeof(ExtractedElts));
         
         for (unsigned i = 0; i != 16; ++i) {
-          if (isa<UndefValue>(Mask->getOperand(i)))
+          if (isa<UndefValue>(Mask->getAggregateElement(i)))
             continue;
-          unsigned Idx=cast<ConstantInt>(Mask->getOperand(i))->getZExtValue();
+          unsigned Idx = 
+            cast<ConstantInt>(Mask->getAggregateElement(i))->getZExtValue();
           Idx &= 31;  // Match the hardware behavior.
           
           if (ExtractedElts[Idx] == 0) {

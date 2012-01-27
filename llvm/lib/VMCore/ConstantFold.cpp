@@ -547,18 +547,17 @@ Constant *llvm::ConstantFoldCastInstruction(unsigned opc, Constant *V,
   // If the cast operand is a constant vector, perform the cast by
   // operating on each element. In the cast of bitcasts, the element
   // count may be mismatched; don't attempt to handle that here.
-  if (ConstantVector *CV = dyn_cast<ConstantVector>(V))
-    if (DestTy->isVectorTy() &&
-        cast<VectorType>(DestTy)->getNumElements() ==
-        CV->getType()->getNumElements()) {
-      std::vector<Constant*> res;
-      VectorType *DestVecTy = cast<VectorType>(DestTy);
-      Type *DstEltTy = DestVecTy->getElementType();
-      for (unsigned i = 0, e = CV->getType()->getNumElements(); i != e; ++i)
-        res.push_back(ConstantExpr::getCast(opc,
-                                            CV->getOperand(i), DstEltTy));
-      return ConstantVector::get(res);
-    }
+  if ((isa<ConstantVector>(V) || isa<ConstantDataVector>(V)) &&
+      DestTy->isVectorTy() &&
+      DestTy->getVectorNumElements() == V->getType()->getVectorNumElements()) {
+    SmallVector<Constant*, 16> res;
+    VectorType *DestVecTy = cast<VectorType>(DestTy);
+    Type *DstEltTy = DestVecTy->getElementType();
+    for (unsigned i = 0, e = V->getType()->getVectorNumElements(); i != e; ++i)
+      res.push_back(ConstantExpr::getCast(opc,
+                                          V->getAggregateElement(i), DstEltTy));
+    return ConstantVector::get(res);
+  }
 
   // We actually have to do a cast now. Perform the cast according to the
   // opcode specified.
@@ -694,7 +693,7 @@ Constant *llvm::ConstantFoldSelectInstruction(Constant *Cond,
   if (Cond->isNullValue()) return V2;
   if (Cond->isAllOnesValue()) return V1;
 
-  // FIXME: CDV Condition.
+  // FIXME: Remove ConstantVector
   // If the condition is a vector constant, fold the result elementwise.
   if (ConstantVector *CondV = dyn_cast<ConstantVector>(Cond)) {
     SmallVector<Constant*, 16> Result;
@@ -703,6 +702,20 @@ Constant *llvm::ConstantFoldSelectInstruction(Constant *Cond,
       if (Cond == 0) break;
       
       Constant *Res = (Cond->getZExtValue() ? V2 : V1)->getAggregateElement(i);
+      if (Res == 0) break;
+      Result.push_back(Res);
+    }
+    
+    // If we were able to build the vector, return it.
+    if (Result.size() == V1->getType()->getVectorNumElements())
+      return ConstantVector::get(Result);
+  }
+  if (ConstantDataVector *CondV = dyn_cast<ConstantDataVector>(Cond)) {
+    SmallVector<Constant*, 16> Result;
+    for (unsigned i = 0, e = V1->getType()->getVectorNumElements(); i != e;++i){
+      uint64_t Cond = CondV->getElementAsInteger(i);
+      
+      Constant *Res = (Cond ? V2 : V1)->getAggregateElement(i);
       if (Res == 0) break;
       Result.push_back(Res);
     }
@@ -738,22 +751,19 @@ Constant *llvm::ConstantFoldSelectInstruction(Constant *Cond,
 Constant *llvm::ConstantFoldExtractElementInstruction(Constant *Val,
                                                       Constant *Idx) {
   if (isa<UndefValue>(Val))  // ee(undef, x) -> undef
-    return UndefValue::get(cast<VectorType>(Val->getType())->getElementType());
+    return UndefValue::get(Val->getType()->getVectorElementType());
   if (Val->isNullValue())  // ee(zero, x) -> zero
-    return Constant::getNullValue(
-                          cast<VectorType>(Val->getType())->getElementType());
+    return Constant::getNullValue(Val->getType()->getVectorElementType());
+  // ee({w,x,y,z}, undef) -> undef
+  if (isa<UndefValue>(Idx))
+    return UndefValue::get(Val->getType()->getVectorElementType());
 
-  if (ConstantVector *CVal = dyn_cast<ConstantVector>(Val)) {
-    if (ConstantInt *CIdx = dyn_cast<ConstantInt>(Idx)) {
-      uint64_t Index = CIdx->getZExtValue();
-      if (Index >= CVal->getNumOperands())
-        // ee({w,x,y,z}, wrong_value) -> undef
-        return UndefValue::get(cast<VectorType>(Val->getType())->getElementType());
-      return CVal->getOperand(CIdx->getZExtValue());
-    } else if (isa<UndefValue>(Idx)) {
-      // ee({w,x,y,z}, undef) -> undef
-      return UndefValue::get(cast<VectorType>(Val->getType())->getElementType());
-    }
+  if (ConstantInt *CIdx = dyn_cast<ConstantInt>(Idx)) {
+    uint64_t Index = CIdx->getZExtValue();
+    // ee({w,x,y,z}, wrong_value) -> undef
+    if (Index >= Val->getType()->getVectorNumElements())
+      return UndefValue::get(Val->getType()->getVectorElementType());
+    return Val->getAggregateElement(Index);
   }
   return 0;
 }
