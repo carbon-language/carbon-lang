@@ -1459,6 +1459,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
       Op->getToken() == "fstenv" || Op->getToken() == "fclex") {
     MCInst Inst;
     Inst.setOpcode(X86::WAIT);
+    Inst.setLoc(IDLoc);
     Out.EmitInstruction(Inst);
 
     const char *Repl =
@@ -1492,6 +1493,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     while (processInstruction(Inst, Operands))
       ;
 
+    Inst.setLoc(IDLoc);
     Out.EmitInstruction(Inst);
     return false;
   case Match_MissingFeature:
@@ -1549,6 +1551,7 @@ MatchAndEmitInstruction(SMLoc IDLoc,
     (Match1 == Match_Success) + (Match2 == Match_Success) +
     (Match3 == Match_Success) + (Match4 == Match_Success);
   if (NumSuccessfulMatches == 1) {
+    Inst.setLoc(IDLoc);
     Out.EmitInstruction(Inst);
     return false;
   }
