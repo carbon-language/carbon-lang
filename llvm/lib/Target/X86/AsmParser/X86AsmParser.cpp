@@ -610,7 +610,6 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
     // Parse BaseReg
     if (ParseRegister(BaseReg, Start, End)) {
       // Handle '[' 'symbol' ']'
-      const MCExpr *Disp = MCConstantExpr::Create(0, getParser().getContext());
       if (getParser().ParseExpression(Disp, End)) return 0;
       if (getLexer().isNot(AsmToken::RBrac))
         return ErrorOperand(Start, "Expected ']' token!");
@@ -624,8 +623,11 @@ X86Operand *X86AsmParser::ParseIntelBracExpression(unsigned SegReg,
       if (getLexer().is(AsmToken::RBrac)) {
         // Handle '[' number ']'
         Parser.Lex();
-        return X86Operand::CreateMem(MCConstantExpr::Create(Val, getContext()),
-                                     Start, End, Size);
+        const MCExpr *Disp = MCConstantExpr::Create(Val, getContext());
+        if (SegReg)
+          return X86Operand::CreateMem(SegReg, Disp, 0, 0, Scale,
+                                       Start, End, Size);
+        return X86Operand::CreateMem(Disp, Start, End, Size);
       } else if (getLexer().is(AsmToken::Star)) {
         // Handle '[' Scale*IndexReg ']'
         Parser.Lex();

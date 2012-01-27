@@ -61,4 +61,6 @@ _main:
         lea     R8D, DWORD PTR [4*RDI]
 // CHECK:        movl    _fnan(,%ecx,4), %ecx
         mov     ECX, DWORD PTR [4*ECX + _fnan]
+// CHECK:       movq    %fs:320, %rax
+        mov     RAX, QWORD PTR FS:[320]
 	ret
