@@ -295,6 +295,20 @@ bool DiagnosticsEngine::setDiagnosticGroupErrorAsFatal(StringRef Group,
   return false;
 }
 
+bool DiagnosticsEngine::setMappingToAllDiagnostics(diag::Mapping Map,
+                                                   SourceLocation Loc) {
+  // Get all the diagnostics.
+  llvm::SmallVector<diag::kind, 64> AllDiags;
+  Diags->getAllDiagnostics(AllDiags);
+
+  // Set the mapping.
+  for (unsigned i = 0, e = AllDiags.size(); i != e; ++i)
+    if (Diags->isBuiltinWarningOrExtension(AllDiags[i]))
+      setDiagnosticMapping(AllDiags[i], Map, Loc);
+
+  return false;
+}
+
 void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
   assert(CurDiagID == ~0U && "Multiple diagnostics in flight at once!");
 

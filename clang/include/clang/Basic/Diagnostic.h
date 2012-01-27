@@ -476,6 +476,12 @@ public:
   /// \returns True if the given group is unknown, false otherwise.
   bool setDiagnosticGroupErrorAsFatal(StringRef Group, bool Enabled);
 
+  /// \brief Add the specified mapping to all diagnostics. Mainly to be used
+  /// by -Wno-everything to disable all warnings but allow subsequent -W options
+  /// to enable specific warnings.
+  bool setMappingToAllDiagnostics(diag::Mapping Map,
+                                  SourceLocation Loc = SourceLocation());
+
   bool hasErrorOccurred() const { return ErrorOccurred; }
   bool hasFatalErrorOccurred() const { return FatalErrorOccurred; }
   

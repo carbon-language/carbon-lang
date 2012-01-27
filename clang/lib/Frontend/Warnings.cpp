@@ -110,8 +110,14 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
       // -Weverything is a special case as well.  It implicitly enables all
       // warnings, including ones not explicitly in a warning group.
       if (Opt == "everything") {
-        if (SetDiagnostic)
-          Diags.setEnableAllWarnings(true);
+        if (SetDiagnostic) {
+          if (isPositive) {
+            Diags.setEnableAllWarnings(true);
+          } else {
+            Diags.setEnableAllWarnings(false);
+            Diags.setMappingToAllDiagnostics(diag::MAP_IGNORE);
+          }
+        }
         continue;
       }
       

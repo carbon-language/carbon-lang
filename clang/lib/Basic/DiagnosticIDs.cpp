@@ -682,6 +682,12 @@ bool DiagnosticIDs::getDiagnosticsInGroup(
   return false;
 }
 
+void DiagnosticIDs::getAllDiagnostics(
+                               llvm::SmallVectorImpl<diag::kind> &Diags) const {
+  for (unsigned i = 0; i != StaticDiagInfoSize; ++i)
+    Diags.push_back(StaticDiagInfo[i].DiagID);
+}
+
 StringRef DiagnosticIDs::getNearestWarningOption(StringRef Group) {
   StringRef Best;
   unsigned BestDistance = Group.size() + 1; // Sanity threshold.
