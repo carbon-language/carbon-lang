@@ -137,7 +137,8 @@ RecordARMMovwMovtRelocation(MachObjectWriter *Writer,
   MCSymbolData *A_SD = &Asm.getSymbolData(*A);
 
   if (!A_SD->getFragment())
-    report_fatal_error("symbol '" + A->getName() +
+    Asm.getContext().FatalError(Fixup.getLoc(),
+                       "symbol '" + A->getName() +
                        "' can not be undefined in a subtraction expression");
 
   uint32_t Value = Writer->getSymbolAddress(A_SD, Layout);
@@ -150,7 +151,8 @@ RecordARMMovwMovtRelocation(MachObjectWriter *Writer,
     MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
 
     if (!B_SD->getFragment())
-      report_fatal_error("symbol '" + B->getSymbol().getName() +
+      Asm.getContext().FatalError(Fixup.getLoc(),
+                         "symbol '" + B->getSymbol().getName() +
                          "' can not be undefined in a subtraction expression");
 
     // Select the appropriate difference relocation type.
@@ -241,7 +243,8 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
   MCSymbolData *A_SD = &Asm.getSymbolData(*A);
 
   if (!A_SD->getFragment())
-    report_fatal_error("symbol '" + A->getName() +
+    Asm.getContext().FatalError(Fixup.getLoc(),
+                       "symbol '" + A->getName() +
                        "' can not be undefined in a subtraction expression");
 
   uint32_t Value = Writer->getSymbolAddress(A_SD, Layout);
@@ -253,7 +256,8 @@ void ARMMachObjectWriter::RecordARMScatteredRelocation(MachObjectWriter *Writer,
     MCSymbolData *B_SD = &Asm.getSymbolData(B->getSymbol());
 
     if (!B_SD->getFragment())
-      report_fatal_error("symbol '" + B->getSymbol().getName() +
+      Asm.getContext().FatalError(Fixup.getLoc(),
+                         "symbol '" + B->getSymbol().getName() +
                          "' can not be undefined in a subtraction expression");
 
     // Select the appropriate difference relocation type.
