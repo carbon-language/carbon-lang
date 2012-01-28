@@ -1281,8 +1281,8 @@ static bool isHighCostExpansion(const SCEV *S, BranchInst *BI,
   if (isa<SCEVSMaxExpr>(S) || isa<SCEVUMaxExpr>(S))
     return true;
 
-  // If we haven't recognized an expensive SCEV patter, assume its an expression
-  // produced by program code.
+  // If we haven't recognized an expensive SCEV pattern, assume it's an
+  // expression produced by program code.
   return false;
 }
 
