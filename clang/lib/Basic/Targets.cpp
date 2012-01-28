@@ -572,6 +572,8 @@ public:
     NumRecords = clang::PPC::LastTSBuiltin-Builtin::FirstTSBuiltin;
   }
 
+  virtual bool isCLZForZeroUndef() const { return false; }
+
   virtual void getTargetDefines(const LangOptions &Opts,
                                 MacroBuilder &Builder) const;
 
