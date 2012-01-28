@@ -1922,15 +1922,25 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                     const clang::RecordDecl *record_decl = record_type->getDecl();
                     
                     if (log)
+                    {
                         GetObjectFile()->GetModule()->LogMessage (log.get(), 
-                                                                  "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) record_decl = %p, bit_size = %llu, alignment = %llu, field_offsets[%u],base_offsets[0], vbase_offsets[0])",
+                                                                  "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) caching layout info for record_decl = %p, bit_size = %llu, alignment = %llu, field_offsets[%u], base_offsets[0], vbase_offsets[0])",
                                                                   clang_type,
                                                                   record_decl,
                                                                   layout_info.bit_size,
                                                                   layout_info.alignment,
                                                                   (uint32_t)layout_info.field_offsets.size());
                     
-
+                        llvm::DenseMap <const clang::FieldDecl *, uint64_t>::const_iterator pos, end = layout_info.field_offsets.end();
+                        for (pos = layout_info.field_offsets.begin(); pos != end; ++pos)
+                        {
+                            GetObjectFile()->GetModule()->LogMessage (log.get(), 
+                                                                      "SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (clang_type = %p) field = { bit_offset=%u, name='%s' }",
+                                                                      clang_type,
+                                                                      (uint32_t)pos->second,
+                                                                      pos->first->getNameAsString().c_str());
+                        }
+                    }
                     m_record_decl_to_layout_map.insert(std::make_pair(record_decl, layout_info));
                 }
             }
