@@ -11,8 +11,9 @@
 #include <algorithm>
 #include <iostream>
 #include <pthread.h>
+#include <unistd.h>
 
-#include "cxa_exception.hpp"
+#include "../src/cxa_exception.hpp"
 
 typedef __cxxabiv1::__cxa_eh_globals globals_t ;
 
