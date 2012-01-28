@@ -238,7 +238,8 @@ __cxa_throw(void* thrown_object, std::type_info* tinfo, void (*dest)(void*))
 #else
     _Unwind_RaiseException(&exception_header->unwindHeader);
 #endif
-//  If we get here, some kind of unwinding error has occurred.
+    //  This only happens when there is no handler, or some unexpected unwinding
+    //     error happens.
     failed_throw(exception_header);
 }
 
@@ -375,6 +376,7 @@ extern LIBCXXABI_NORETURN void __cxa_rethrow() {
         std::terminate ();
 
 // TODO:  Handle foreign exceptions?  How?
+//        Rethrow the foreign exception without touching anything!
 
 //  Mark the exception as being rethrown (reverse the effects of __cxa_begin_catch)
     exception_header->handlerCount = -exception_header->handlerCount;
