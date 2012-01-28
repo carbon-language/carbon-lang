@@ -30,6 +30,7 @@
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/MC/MCTargetAsmParser.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/SourceMgr.h"
@@ -1572,6 +1573,8 @@ static bool IsUsedIn(const MCSymbol *Sym, const MCExpr *Value) {
   case MCExpr::Unary:
     return IsUsedIn(Sym, static_cast<const MCUnaryExpr*>(Value)->getSubExpr());
   }
+
+  llvm_unreachable("Unknown expr kind!");
 }
 
 bool AsmParser::ParseAssignment(StringRef Name, bool allow_redef) {
