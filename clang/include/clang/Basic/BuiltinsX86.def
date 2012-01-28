@@ -593,11 +593,7 @@ BUILTIN(__builtin_ia32_psrlv4si, "V4iV4iV4i", "")
 BUILTIN(__builtin_ia32_psrlv4di, "V4LLiV4LLiV4LLi", "")
 BUILTIN(__builtin_ia32_psrlv2di, "V2LLiV2LLiV2LLi", "")
 
-// LZCNT
-BUILTIN(__builtin_clzs, "UsUs", "")
-
 // BMI
-BUILTIN(__builtin_ctzs, "UsUs", "")
 BUILTIN(__builtin_ia32_bextr_u32, "UiUiUi", "")
 BUILTIN(__builtin_ia32_bextr_u64, "ULLiULLiULLi", "")
 

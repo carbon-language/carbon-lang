@@ -229,6 +229,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
 
     return RValue::get(Result);
   }
+  case Builtin::BI__builtin_ctzs:
   case Builtin::BI__builtin_ctz:
   case Builtin::BI__builtin_ctzl:
   case Builtin::BI__builtin_ctzll: {
@@ -245,6 +246,7 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
                                      "cast");
     return RValue::get(Result);
   }
+  case Builtin::BI__builtin_clzs:
   case Builtin::BI__builtin_clz:
   case Builtin::BI__builtin_clzl:
   case Builtin::BI__builtin_clzll: {
@@ -2061,32 +2063,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
 
   switch (BuiltinID) {
   default: return 0;
-  case X86::BI__builtin_clzs: {
-    Value *ArgValue = EmitScalarExpr(E->getArg(0));
-
-    llvm::Type *ArgType = ArgValue->getType();
-    Value *F = CGM.getIntrinsic(Intrinsic::ctlz, ArgType);
-
-    llvm::Type *ResultType = ConvertType(E->getType());
-    Value *Result = Builder.CreateCall2(F, ArgValue, Builder.getTrue());
-    if (Result->getType() != ResultType)
-      Result = Builder.CreateIntCast(Result, ResultType, /*isSigned*/true,
-                                     "cast");
-    return Result;
-  }
-  case X86::BI__builtin_ctzs: {
-    Value *ArgValue = EmitScalarExpr(E->getArg(0));
-
-    llvm::Type *ArgType = ArgValue->getType();
-    Value *F = CGM.getIntrinsic(Intrinsic::cttz, ArgType);
-
-    llvm::Type *ResultType = ConvertType(E->getType());
-    Value *Result = Builder.CreateCall2(F, ArgValue, Builder.getTrue());
-    if (Result->getType() != ResultType)
-      Result = Builder.CreateIntCast(Result, ResultType, /*isSigned*/true,
-                                     "cast");
-    return Result;
-  }
   case X86::BI__builtin_ia32_pslldi128:
   case X86::BI__builtin_ia32_psllqi128:
   case X86::BI__builtin_ia32_psllwi128:

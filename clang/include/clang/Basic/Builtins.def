@@ -365,10 +365,12 @@ BUILTIN(__builtin_signbitf, "if", "nc")
 BUILTIN(__builtin_signbitl, "iLd", "nc")
 
 // Builtins for arithmetic.
+BUILTIN(__builtin_clzs , "iUs"  , "nc")
 BUILTIN(__builtin_clz  , "iUi"  , "nc")
 BUILTIN(__builtin_clzl , "iULi" , "nc")
 BUILTIN(__builtin_clzll, "iULLi", "nc")
 // TODO: int clzimax(uintmax_t)
+BUILTIN(__builtin_ctzs , "iUs"  , "nc")
 BUILTIN(__builtin_ctz  , "iUi"  , "nc")
 BUILTIN(__builtin_ctzl , "iULi" , "nc")
 BUILTIN(__builtin_ctzll, "iULLi", "nc")
