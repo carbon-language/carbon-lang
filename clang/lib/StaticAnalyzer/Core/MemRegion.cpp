@@ -18,6 +18,7 @@
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/Support/BumpVector.h"
 #include "clang/AST/CharUnits.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/Support/raw_ostream.h"
@@ -220,6 +221,17 @@ DefinedOrUnknownSVal StringRegion::getExtent(SValBuilder &svalBuilder) const {
                                 svalBuilder.getArrayIndexType());
 }
 
+ObjCIvarRegion::ObjCIvarRegion(const ObjCIvarDecl *ivd, const MemRegion* sReg)
+  : DeclRegion(ivd, sReg, ObjCIvarRegionKind) {}
+
+const ObjCIvarDecl *ObjCIvarRegion::getDecl() const {
+  return cast<ObjCIvarDecl>(D);
+}
+
+QualType ObjCIvarRegion::getValueType() const {
+  return getDecl()->getType();
+}
+
 QualType CXXBaseObjectRegion::getValueType() const {
   return QualType(decl->getTypeForDecl(), 0);
 }
@@ -284,6 +296,12 @@ void CXXThisRegion::ProfileRegion(llvm::FoldingSetNodeID &ID,
 
 void CXXThisRegion::Profile(llvm::FoldingSetNodeID &ID) const {
   CXXThisRegion::ProfileRegion(ID, ThisPointerTy, superRegion);
+}
+
+void ObjCIvarRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
+                                   const ObjCIvarDecl *ivd,
+                                   const MemRegion* superRegion) {
+  DeclRegion::ProfileRegion(ID, ivd, superRegion, ObjCIvarRegionKind);
 }
 
 void DeclRegion::ProfileRegion(llvm::FoldingSetNodeID& ID, const Decl *D,

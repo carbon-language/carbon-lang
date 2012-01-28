@@ -16,12 +16,14 @@
 #define LLVM_CLANG_GR_SVALBUILDER
 
 #include "clang/AST/Expr.h"
-#include "clang/AST/ExprCXX.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/BasicValueFactory.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
 
 namespace clang {
+
+class CXXBoolLiteralExpr;
+
 namespace ento {
 
 class SValBuilder {
@@ -207,9 +209,7 @@ public:
                      integer->getType()->isUnsignedIntegerOrEnumerationType()));
   }
 
-  nonloc::ConcreteInt makeBoolVal(const CXXBoolLiteralExpr *boolean) {
-    return makeTruthVal(boolean->getValue());
-  }
+  nonloc::ConcreteInt makeBoolVal(const CXXBoolLiteralExpr *boolean);
 
   nonloc::ConcreteInt makeIntVal(const llvm::APSInt& integer) {
     return nonloc::ConcreteInt(BasicVals.getValue(integer));

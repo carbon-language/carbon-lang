@@ -17,6 +17,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/Analysis/CFG.h"
+#include "clang/AST/DeclObjC.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtObjC.h"

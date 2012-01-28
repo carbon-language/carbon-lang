@@ -123,6 +123,12 @@ void ExprEngine::CreateCXXTemporaryObject(const MaterializeTemporaryExpr *ME,
   Bldr.generateNode(ME, Pred, state->BindExpr(ME, LCtx, loc::MemRegionVal(R)));
 }
 
+void ExprEngine::VisitCXXTemporaryObjectExpr(const CXXTemporaryObjectExpr *expr,
+                                             ExplodedNode *Pred,
+                                             ExplodedNodeSet &Dst) {
+  VisitCXXConstructExpr(expr, 0, Pred, Dst);
+}
+
 void ExprEngine::VisitCXXConstructExpr(const CXXConstructExpr *E, 
                                        const MemRegion *Dest,
                                        ExplodedNode *Pred,

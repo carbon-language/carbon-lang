@@ -14,6 +14,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/Store.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/AST/CharUnits.h"
+#include "clang/AST/DeclObjC.h"
 
 using namespace clang;
 using namespace ento;
@@ -266,6 +267,10 @@ SVal StoreManager::getLValueFieldOrIvar(const Decl *D, SVal Base) {
     return loc::MemRegionVal(MRMgr.getObjCIvarRegion(ID, BaseR));
 
   return loc::MemRegionVal(MRMgr.getFieldRegion(cast<FieldDecl>(D), BaseR));
+}
+
+SVal StoreManager::getLValueIvar(const ObjCIvarDecl *decl, SVal base) {
+  return getLValueFieldOrIvar(decl, base);
 }
 
 SVal StoreManager::getLValueElement(QualType elementType, NonLoc Offset, 

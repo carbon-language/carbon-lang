@@ -103,9 +103,7 @@ public:
     return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC));
   }
 
-  virtual SVal getLValueIvar(const ObjCIvarDecl *decl, SVal base) {
-    return getLValueFieldOrIvar(decl, base);
-  }
+  virtual SVal getLValueIvar(const ObjCIvarDecl *decl, SVal base);
 
   virtual SVal getLValueField(const FieldDecl *D, SVal Base) {
     return getLValueFieldOrIvar(D, Base);

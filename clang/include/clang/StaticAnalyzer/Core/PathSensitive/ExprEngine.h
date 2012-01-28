@@ -21,14 +21,19 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/CoreEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
+#include "clang/AST/Expr.h"
 #include "clang/AST/Type.h"
-#include "clang/AST/ExprObjC.h"
-#include "clang/AST/ExprCXX.h"
-#include "clang/AST/StmtObjC.h"
 
 namespace clang {
 
 class AnalysisDeclContextManager;
+class CXXConstructExpr;
+class CXXDeleteExpr;
+class CXXNewExpr;
+class CXXTemporaryObjectExpr;
+class CXXThisExpr;
+class MaterializeTemporaryExpr;
+class ObjCAtSynchronizedStmt;
 class ObjCForCollectionStmt;
   
 namespace ento {
@@ -348,9 +353,7 @@ public:
                         ExplodedNodeSet & Dst);
 
   void VisitCXXTemporaryObjectExpr(const CXXTemporaryObjectExpr *expr,
-                                   ExplodedNode *Pred, ExplodedNodeSet &Dst) {
-    VisitCXXConstructExpr(expr, 0, Pred, Dst);
-  }
+                                   ExplodedNode *Pred, ExplodedNodeSet &Dst);
 
   void VisitCXXConstructExpr(const CXXConstructExpr *E, const MemRegion *Dest,
                              ExplodedNode *Pred, ExplodedNodeSet &Dst);

@@ -12,6 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/AST/ExprCXX.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/MemRegion.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SValBuilder.h"
@@ -84,6 +85,10 @@ SVal SValBuilder::convertToArrayIndex(SVal val) {
   }
 
   return evalCastFromNonLoc(cast<NonLoc>(val), ArrayIndexTy);
+}
+
+nonloc::ConcreteInt SValBuilder::makeBoolVal(const CXXBoolLiteralExpr *boolean){
+  return makeTruthVal(boolean->getValue());
 }
 
 DefinedOrUnknownSVal 

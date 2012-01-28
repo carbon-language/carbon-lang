@@ -18,7 +18,6 @@
 
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Decl.h"
-#include "clang/AST/DeclObjC.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -844,17 +843,14 @@ class ObjCIvarRegion : public DeclRegion {
 
   friend class MemRegionManager;
 
-  ObjCIvarRegion(const ObjCIvarDecl *ivd, const MemRegion* sReg)
-    : DeclRegion(ivd, sReg, ObjCIvarRegionKind) {}
+  ObjCIvarRegion(const ObjCIvarDecl *ivd, const MemRegion* sReg);
 
   static void ProfileRegion(llvm::FoldingSetNodeID& ID, const ObjCIvarDecl *ivd,
-                            const MemRegion* superRegion) {
-    DeclRegion::ProfileRegion(ID, ivd, superRegion, ObjCIvarRegionKind);
-  }
+                            const MemRegion* superRegion);
 
 public:
-  const ObjCIvarDecl *getDecl() const { return cast<ObjCIvarDecl>(D); }
-  QualType getValueType() const { return getDecl()->getType(); }
+  const ObjCIvarDecl *getDecl() const;
+  QualType getValueType() const;
 
   void dumpToStream(raw_ostream &os) const;
 
