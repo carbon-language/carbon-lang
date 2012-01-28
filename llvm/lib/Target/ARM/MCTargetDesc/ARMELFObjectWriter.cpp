@@ -69,7 +69,7 @@ const MCSymbol *ARMELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
                                                    const MCFragment &F,
                                                    const MCFixup &Fixup,
                                                    bool IsPCRel) const {
-  const MCSymbol &Symbol = Target.getSymA()->getSymbol();
+  const MCSymbol &Symbol = Target.getSymA()->getSymbol().AliasedSymbol();
   bool EmitThisSym = false;
 
   const MCSectionELF &Section =

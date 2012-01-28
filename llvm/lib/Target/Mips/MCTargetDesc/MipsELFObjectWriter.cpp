@@ -53,7 +53,7 @@ const MCSymbol *MipsELFObjectWriter::ExplicitRelSym(const MCAssembler &Asm,
                                                     const MCFixup &Fixup,
                                                     bool IsPCRel) const {
   assert(Target.getSymA() && "SymA cannot be 0.");
-  const MCSymbol &Sym = Target.getSymA()->getSymbol();
+  const MCSymbol &Sym = Target.getSymA()->getSymbol().AliasedSymbol();
 
   if (Sym.getSection().getKind().isMergeableCString() ||
       Sym.getSection().getKind().isMergeableConst())
