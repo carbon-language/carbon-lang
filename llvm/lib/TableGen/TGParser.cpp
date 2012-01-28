@@ -1775,7 +1775,7 @@ bool TGParser::ParseDef(MultiClass *CurMultiClass) {
     // Top-level def definition.
 
     // Ensure redefinition doesn't happen.
-    if (Records.getDef(CurRec->getName())) {
+    if (Records.getDef(CurRec->getNameInitAsString())) {
       Error(DefLoc, "def '" + CurRec->getNameInitAsString()
             + "' already defined");
       return true;
