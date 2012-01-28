@@ -7,14 +7,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "abort_message.h"
+
 #pragma GCC visibility push(default)
 
 extern "C"
 {
 
-void (*__cxa_new_handler)() = 0;
-void (*__cxa_terminate_handler)() = 0;
-void (*__cxa_unexpected_handler)() = 0;
+static
+void f()
+{
+    abort_message("this shouldn't be called");
+}
+
+void (*__cxa_new_handler)() = f;
+void (*__cxa_terminate_handler)() = f;
+void (*__cxa_unexpected_handler)() = f;
 
 }
 
