@@ -327,64 +327,36 @@ ScriptInterpreterPython::EnterSession ()
 
     StreamString run_string;
 
-    run_string.Printf ("run_one_line (%s, 'lldb.debugger_unique_id = %llu')", m_dictionary_name.c_str(),
-                       GetCommandInterpreter().GetDebugger().GetID());
-    PyRun_SimpleString (run_string.GetData());
-    run_string.Clear();
-    
+    run_string.Printf (    "run_one_line (%s, 'lldb.debugger_unique_id = %llu", m_dictionary_name.c_str(), GetCommandInterpreter().GetDebugger().GetID());
+    run_string.Printf (    "; lldb.debugger = lldb.SBDebugger.FindDebuggerWithID (%llu)", GetCommandInterpreter().GetDebugger().GetID());
+    run_string.PutCString ("; lldb.target = lldb.debugger.GetSelectedTarget()");
+    run_string.PutCString ("; lldb.process = lldb.target.GetProcess()");
+    run_string.PutCString ("; lldb.thread = lldb.process.GetSelectedThread ()");
+    run_string.PutCString ("; lldb.frame = lldb.thread.GetSelectedFrame ()");
+    // Make sure STDIN is closed since when we run this as an embedded 
+    // interpreter we don't want someone to call "line = sys.stdin.readline()"
+    // and lock up. We don't have multiple windows and when the interpreter is
+    // embedded we don't know we should be feeding input to the embedded 
+    // interpreter or to the python sys.stdin. We also don't want to let python
+    // play with the real stdin from this process, so we need to close it...
+    run_string.PutCString ("; sys.stdin.close()");
+    run_string.PutCString ("')");
 
-    run_string.Printf ("run_one_line (%s, 'lldb.debugger = lldb.SBDebugger.FindDebuggerWithID (%llu)')", 
-                       m_dictionary_name.c_str(),
-                       GetCommandInterpreter().GetDebugger().GetID());
-    PyRun_SimpleString (run_string.GetData());
-    run_string.Clear();
-    
-
-    ExecutionContext exe_ctx (m_interpreter.GetDebugger().GetSelectedExecutionContext());
-
-    if (exe_ctx.GetTargetPtr())
-        run_string.Printf ("run_one_line (%s, 'lldb.target = lldb.debugger.GetSelectedTarget()')", 
-                           m_dictionary_name.c_str());
-    else
-        run_string.Printf ("run_one_line (%s, 'lldb.target = lldb.SBTarget()')", m_dictionary_name.c_str());
-    PyRun_SimpleString (run_string.GetData());
-    run_string.Clear();
-
-    if (exe_ctx.GetProcessPtr())
-        run_string.Printf ("run_one_line (%s, 'lldb.process = lldb.target.GetProcess()')", m_dictionary_name.c_str());
-    else
-        run_string.Printf ("run_one_line (%s, 'lldb.process = lldb.SBProcess()')", m_dictionary_name.c_str());
-    PyRun_SimpleString (run_string.GetData());
-    run_string.Clear();
-
-    if (exe_ctx.GetThreadPtr())
-        run_string.Printf ("run_one_line (%s, 'lldb.thread = lldb.process.GetSelectedThread ()')", 
-                           m_dictionary_name.c_str());
-    else
-        run_string.Printf ("run_one_line (%s, 'lldb.thread = lldb.SBThread()')", m_dictionary_name.c_str());
-    PyRun_SimpleString (run_string.GetData());
-    run_string.Clear();
-    
-    if (exe_ctx.GetFramePtr())
-        run_string.Printf ("run_one_line (%s, 'lldb.frame = lldb.thread.GetSelectedFrame ()')", 
-                           m_dictionary_name.c_str());
-    else
-        run_string.Printf ("run_one_line (%s, 'lldb.frame = lldb.SBFrame()')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
     
     PyObject *sysmod = PyImport_AddModule ("sys");
     PyObject *sysdict = PyModule_GetDict (sysmod);
     
-    if ((m_new_sysout != NULL)
-        && (sysmod != NULL)
-        && (sysdict != NULL))
-            PyDict_SetItemString (sysdict, "stdout", (PyObject*)m_new_sysout);
+    if (m_new_sysout && sysmod && sysdict)
+    {
+        PyDict_SetItemString (sysdict, "stdout", (PyObject*)m_new_sysout);
+        PyDict_SetItemString (sysdict, "stderr", (PyObject*)m_new_sysout);
+    }
             
     if (PyErr_Occurred())
         PyErr_Clear ();
-}   
-
+}
 
 bool
 ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObject *result)
