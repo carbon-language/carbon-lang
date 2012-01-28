@@ -19,16 +19,79 @@
 #include <stdlib.h>
 #include <assert.h>
 
-// +---------------------------+-----------------------------+---------------+
-// | __cxa_exception           | _Unwind_Exception CLNGC++\0 | thrown object |
-// +---------------------------+-----------------------------+---------------+
-//                                                           ^
-//                                                           |
-//   +-------------------------------------------------------+
-//   |
-// +---------------------------+-----------------------------+
-// | __cxa_dependent_exception | _Unwind_Exception CLNGC++\1 |
-// +---------------------------+-----------------------------+
+/*
+Exception Header Layout:
+
++---------------------------+-----------------------------+---------------+
+| __cxa_exception           | _Unwind_Exception CLNGC++\0 | thrown object |
++---------------------------+-----------------------------+---------------+
+                                                          ^
+                                                          |
+  +-------------------------------------------------------+
+  |
++---------------------------+-----------------------------+
+| __cxa_dependent_exception | _Unwind_Exception CLNGC++\1 |
++---------------------------+-----------------------------+
+
+    Exception Handling Table Layout:
+
++-----------------+--------+
+| lpStartEncoding | (char) |
++---------+-------+--------+---------------+-----------------------+
+| lpStart | (encoded wtih lpStartEncoding) | defaults to funcStart |
++---------+-----+--------+-----------------+---------------+-------+
+| ttypeEncoding | (char) | Encoding of the type_info table |
++---------------+-+------+----+----------------------------+----------------+
+| classInfoOffset | (ULEB128) | Offset to type_info table, defaults to null |
++-----------------++--------+-+----------------------------+----------------+
+| callSiteEncoding | (char) | Encoding for Call Site Table |
++------------------+--+-----+-----+------------------------+--------------------------+
+| callSiteTableLength | (ULEB128) | Call Site Table length, used to find Action table |
++---------------------+-----------+--------------------------------------------------++
+| Beginning of Call Site Table              If the current ip lies within the        |
+| ...                                       (start, length) range of one of these    |
+|                                           call sites, there may be action needed.  |
+| +-------------+-----------------------------------+------------------------------+ |
+| | start       | (encoded with Call Site Encoding) | offset relative to funcStart | |
+| | length      | (encoded with Call Site Encoding) | lenght of code fragment      | |
+| | landingPad  | (encoded with Call Site Encoding) | offset relative to lpStart   | |
+| | actionEntry | (ULEB128)                         | Action Table Index 1-based   | |
+| |             |                                   | actionEntry == 0 -> clean up | |
+| +-------------+-----------------------------------+------------------------------+ |
+| ...                                                                                |
++---------------------------------------------------------------------+--------------+
+| Beginning of Action Table       ttypeIndex == 0 : cleanup           |
+| ...                             ttypeIndex  > 0 : catch             |
+|                                 ttypeIndex  < 0 : exception spec    |
+| +--------------+-----------+--------------------------------------+ |
+| | ttypeIndex   | (SLEB128) | Index into type_info Table (1-based) | |
+| | actionOffset | (SLEB128) | Offset into next Action Table entry  | |
+| +--------------+-----------+--------------------------------------+ |
+| ...                                                                 |
++---------------------------------------------------------------------+-----------------+
+| type_info Table, but classInfoOffset does *not* point here!                           |
+| +----------------+------------------------------------------------+-----------------+ |
+| | Nth type_info* | Encoded with ttypeEncoding, 0 means every type | ttypeIndex == N | |
+| +----------------+------------------------------------------------+-----------------+ |
+| ...                                                                                   |
+| +----------------+------------------------------------------------+-----------------+ |
+| | 1st type_info* | Encoded with ttypeEncoding, 0 means every type | ttypeIndex == 1 | |
+| +----------------+------------------------------------------------+-----------------+ |
+| +---------------------------------------+-----------+------------------------------+  |
+| | 1st ttypeIndex for 1st exception spec | (ULEB128) | classInfoOffset points here! |  |
+| | 2nd ttypeIndex for 1st exception spec | (ULEB128) |                              |  |
+| | 3rd ttypeIndex for 1st exception spec | (ULEB128) |                              |  |
+| | 0                                     | (ULEB128) |                              |  |
+| +---------------------------------------+------------------------------------------+  |
+| ...                                                                                   |
+| +---------------------------------------+------------------------------------------+  |
+| | 1st ttypeIndex for Nth exception spec | (ULEB128) |                              |  |
+| | 2nd ttypeIndex for Nth exception spec | (ULEB128) |                              |  |
+| | 3rd ttypeIndex for Nth exception spec | (ULEB128) |                              |  |
+| | 0                                     | (ULEB128) |                              |  |
+| +---------------------------------------+------------------------------------------+  |
++---------------------------------------------------------------------------------------+
+*/
 
 namespace __cxxabiv1
 {
@@ -197,27 +260,27 @@ readEncodedPointer(const uint8_t** data, uint8_t encoding)
 
 static
 const uint8_t*
-getTTypeEntry(int64_t typeOffset, const uint8_t* classInfo, uint8_t ttypeEncoding)
+getTTypeEntry(int64_t ttypeIndex, const uint8_t* classInfo, uint8_t ttypeEncoding)
 {
     switch (ttypeEncoding & 0x0F)
     {
     case DW_EH_PE_absptr:
-        typeOffset *= sizeof(void*);
+        ttypeIndex *= sizeof(void*);
         break;
     case DW_EH_PE_udata2:
     case DW_EH_PE_sdata2:
-        typeOffset *= 2;
+        ttypeIndex *= 2;
         break;
     case DW_EH_PE_udata4:
     case DW_EH_PE_sdata4:
-        typeOffset *= 4;
+        ttypeIndex *= 4;
         break;
     case DW_EH_PE_udata8:
     case DW_EH_PE_sdata8:
-        typeOffset *= 8;
+        ttypeIndex *= 8;
         break;
     }
-    return classInfo - typeOffset;
+    return classInfo - ttypeIndex;
 }
 
 /// Deals with Dwarf actions matching our type infos 
@@ -254,12 +317,12 @@ handleActionValue(const uint8_t* classInfo, uintptr_t actionEntry,
         // type info address offset, and action offset to the next
         // emitted action.
         const uint8_t* SactionPos = actionPos;
-        int64_t typeOffset = readSLEB128(&actionPos);
+        int64_t ttypeIndex = readSLEB128(&actionPos);
         const uint8_t* tempActionPos = actionPos;
         int64_t actionOffset = readSLEB128(&tempActionPos);
-        if (typeOffset > 0)  // a catch handler
+        if (ttypeIndex > 0)  // a catch handler
         {
-            const uint8_t* TTypeEntry = getTTypeEntry(typeOffset, classInfo,
+            const uint8_t* TTypeEntry = getTTypeEntry(ttypeIndex, classInfo,
                                                       ttypeEncoding);
             const __shim_type_info* catchType =
                        (const __shim_type_info*)readEncodedPointer(&TTypeEntry,
@@ -268,17 +331,17 @@ handleActionValue(const uint8_t* classInfo, uintptr_t actionEntry,
             // catchType == 0 -> catch (...)
             if (catchType == 0 || catchType->can_catch(excpType, adjustedPtr))
             {
-                exception_header->handlerSwitchValue = typeOffset;
+                exception_header->handlerSwitchValue = ttypeIndex;
                 exception_header->actionRecord = SactionPos;  // unnecessary?
                 // used by __cxa_get_exception_ptr and __cxa_begin_catch
                 exception_header->adjustedPtr = adjustedPtr;
                 return true;
             }
         }
-        else if (typeOffset < 0)  // an exception spec
+        else if (ttypeIndex < 0)  // an exception spec
         {
         }
-        else  // typeOffset == 0  // a clean up
+        else  // ttypeIndex == 0  // a clean up
         {
         }
         if (actionOffset == 0)
@@ -302,18 +365,19 @@ contains_handler(_Unwind_Exception* unwind_exception, _Unwind_Context* context)
     {
         // Get the current instruction pointer and offset it before next
         // instruction in the current frame which threw the exception.
-        uintptr_t pc = _Unwind_GetIP(context) - 1;
+        uintptr_t ip = _Unwind_GetIP(context) - 1;
         // Get beginning current frame's code (as defined by the 
         // emitted dwarf code)
         uintptr_t funcStart = _Unwind_GetRegionStart(context);
-        uintptr_t pcOffset = pc - funcStart;
+        uintptr_t ipOffset = ip - funcStart;
         const uint8_t* classInfo = NULL;
         // Note: See JITDwarfEmitter::EmitExceptionTable(...) for corresponding
         //       dwarf emission
         // Parse LSDA header.
         uint8_t lpStartEncoding = *lsda++;
-        if (lpStartEncoding != DW_EH_PE_omit)
-            (void)readEncodedPointer(&lsda, lpStartEncoding); 
+        const uint8_t* lpStart = (const unit8_t*)readEncodedPointer(&lsda, lpStartEncoding);
+        if (lpStart == 0)
+            lpStart = funcStart;
         uint8_t ttypeEncoding = *lsda++;
         // TODO:  preflight ttypeEncoding here and return error if there's a problem
         if (ttypeEncoding != DW_EH_PE_omit)
@@ -343,9 +407,9 @@ contains_handler(_Unwind_Exception* unwind_exception, _Unwind_Context* context)
                 continue; // no landing pad for this entry
             if (actionEntry)
                 actionEntry += ((uintptr_t)actionTableStart) - 1;
-            if ((start <= pcOffset) && (pcOffset < (start + length)))
+            if ((start <= ipOffset) && (ipOffset < (start + length)))
             {
-                exception_header->catchTemp = (void*)(funcStart + landingPad);
+                exception_header->catchTemp = (void*)(lpStart + landingPad);
                 if (actionEntry)
                     return handleActionValue(classInfo, 
                                              actionEntry, 
@@ -355,7 +419,7 @@ contains_handler(_Unwind_Exception* unwind_exception, _Unwind_Context* context)
                 //       found. Otherwise the clean up handlers will be 
                 //       re-found and executed during the clean up 
                 //       phase.
-                return true;  //?
+                return false;  // Won't find another call site in range of ipOffset
             }
         }
         // Not found, need to properly terminate
@@ -388,13 +452,57 @@ perform_cleanup(_Unwind_Exception* unwind_exception, _Unwind_Context* context)
 
 // public API
 
-// Requires:  version == 1
-//            actions == _UA_SEARCH_PHASE, or
-//                    == _UA_CLEANUP_PHASE, or
-//                    == _UA_CLEANUP_PHASE | _UA_HANDLER_FRAME, or
-//                    == _UA_CLEANUP_PHASE | _UA_FORCE_UNWIND
-//            unwind_exception != nullptr
-//            context != nullptr
+/*
+A foreign exception is defined by by one with an exceptionClass that doesn't
+have 'C++' in the 3 low order bytes 3 - 1:
+
+  big end  |   | ... | C | + | + |1/0|  little end
+
+The lowest order byte may be 0 or 1.
+
+The personality function branches on actions like so:
+
+_UA_SEARCH_PHASE
+
+    If _UA_CLEANUP_PHASE or _UA_HANDLER_FRAME or _UA_FORCE_UNWIND there's
+    an error from above, return _URC_FATAL_PHASE1_ERROR.
+    
+    Scan for anything that could stop unwinding:
+    
+       1.  A catch clause that will catch this exception
+           (will never catch foreign).
+       2.  A catch (...) (will always catch foreign).
+       3.  An exception spec that will catch this exception
+           (will always catch foreign).
+    If a handler is found
+        If not foreign
+            Save state in header
+        return _URC_HANDLER_FOUND
+    Else a handler not found
+        return _URC_CONTINUE_UNWIND
+
+_UA_CLEANUP_PHASE
+
+    If _UA_HANDLER_FRAME
+        If _UA_FORCE_UNWIND
+            How did this happen?  return _URC_FATAL_PHASE2_ERROR
+        If foreign
+            Do _UA_SEARCH_PHASE to recover state
+        else
+            Recover state from header
+        Transfer control to landing pad.  return _URC_INSTALL_CONTEXT
+    
+    Else
+    
+        Scan for anything that can not stop unwinding:
+    
+            1.  A clean up.
+        
+        If a clean up is found
+            transfer control to it. return _URC_INSTALL_CONTEXT
+    
+    Else a clean up is not found: return _URC_CONTINUE_UNWIND
+*/
 _Unwind_Reason_Code
 __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClass,
                      _Unwind_Exception* unwind_exception, _Unwind_Context* context)
