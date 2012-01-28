@@ -479,7 +479,7 @@ public:
   /// \brief Add the specified mapping to all diagnostics. Mainly to be used
   /// by -Wno-everything to disable all warnings but allow subsequent -W options
   /// to enable specific warnings.
-  bool setMappingToAllDiagnostics(diag::Mapping Map,
+  void setMappingToAllDiagnostics(diag::Mapping Map,
                                   SourceLocation Loc = SourceLocation());
 
   bool hasErrorOccurred() const { return ErrorOccurred; }
