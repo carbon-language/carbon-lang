@@ -18,6 +18,7 @@
 #include <stdint.h>
 
 // Other libraries and framework includes
+#include "clang/AST/CharUnits.h"
 
 // Project includes
 #include "lldb/lldb-enumerations.h"
@@ -34,14 +35,23 @@ public:
     typedef void (*CompleteTagDeclCallback)(void *baton, clang::TagDecl *);
     typedef void (*CompleteObjCInterfaceDeclCallback)(void *baton, clang::ObjCInterfaceDecl *);
     typedef void (*FindExternalVisibleDeclsByNameCallback)(void *baton, const clang::DeclContext *DC, clang::DeclarationName Name, llvm::SmallVectorImpl <clang::NamedDecl *> *results);
+    typedef bool (*LayoutRecordTypeCallback)(void *baton, 
+                                             const clang::RecordDecl *Record,
+                                             uint64_t &Size, 
+                                             uint64_t &Alignment,
+                                             llvm::DenseMap <const clang::FieldDecl *, uint64_t> &FieldOffsets,
+                                             llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
+                                             llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets);
 
     ClangExternalASTSourceCallbacks (CompleteTagDeclCallback tag_decl_callback,
                                      CompleteObjCInterfaceDeclCallback objc_decl_callback,
                                      FindExternalVisibleDeclsByNameCallback find_by_name_callback,
+                                     LayoutRecordTypeCallback layout_record_type_callback,
                                      void *callback_baton) :
         m_callback_tag_decl (tag_decl_callback),
         m_callback_objc_decl (objc_decl_callback),
         m_callback_find_by_name (find_by_name_callback),
+        m_callback_layout_record_type (layout_record_type_callback),
         m_callback_baton (callback_baton)
     {
     }
@@ -117,11 +127,13 @@ public:
     SetExternalSourceCallbacks (CompleteTagDeclCallback tag_decl_callback,
                                 CompleteObjCInterfaceDeclCallback objc_decl_callback,
                                 FindExternalVisibleDeclsByNameCallback find_by_name_callback,
+                                LayoutRecordTypeCallback layout_record_type_callback,
                                 void *callback_baton)
     {
         m_callback_tag_decl = tag_decl_callback;
         m_callback_objc_decl = objc_decl_callback;
         m_callback_find_by_name = find_by_name_callback;
+        m_callback_layout_record_type = layout_record_type_callback;
         m_callback_baton = callback_baton;    
     }
 
@@ -133,6 +145,7 @@ public:
             m_callback_tag_decl = NULL;
             m_callback_objc_decl = NULL;
             m_callback_find_by_name = NULL;
+            m_callback_layout_record_type = NULL;
         }
     }
 
@@ -143,6 +156,7 @@ protected:
     CompleteTagDeclCallback                 m_callback_tag_decl;
     CompleteObjCInterfaceDeclCallback       m_callback_objc_decl;
     FindExternalVisibleDeclsByNameCallback  m_callback_find_by_name;
+    LayoutRecordTypeCallback                m_callback_layout_record_type;
     void *                                  m_callback_baton;
 };
 

@@ -83,6 +83,7 @@ SymbolFileDWARFDebugMap::InitializeObject()
         new ClangExternalASTSourceCallbacks (SymbolFileDWARFDebugMap::CompleteTagDecl,
                                              SymbolFileDWARFDebugMap::CompleteObjCInterfaceDecl,
                                              NULL,
+                                             SymbolFileDWARFDebugMap::LayoutRecordType,
                                              this));
 
     GetClangASTContext().SetExternalSource (ast_source_ap);
@@ -1145,6 +1146,27 @@ SymbolFileDWARFDebugMap::CompleteObjCInterfaceDecl (void *baton, clang::ObjCInte
         }
     }
 }
+
+bool 
+SymbolFileDWARFDebugMap::LayoutRecordType (void *baton, 
+                                           const clang::RecordDecl *record_decl,
+                                           uint64_t &size, 
+                                           uint64_t &alignment,
+                                           llvm::DenseMap <const clang::FieldDecl *, uint64_t> &field_offsets,
+                                           llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
+                                           llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets)
+{
+    SymbolFileDWARFDebugMap *symbol_file_dwarf = (SymbolFileDWARFDebugMap *)baton;
+    SymbolFileDWARF *oso_dwarf;
+    for (uint32_t oso_idx = 0; ((oso_dwarf = symbol_file_dwarf->GetSymbolFileByOSOIndex (oso_idx)) != NULL); ++oso_idx)
+    {
+        if (oso_dwarf->LayoutRecordType (record_decl, size, alignment, field_offsets, base_offsets, vbase_offsets))
+            return true;
+    }
+    return false;
+}
+
+
 
 clang::DeclContext*
 SymbolFileDWARFDebugMap::GetClangDeclContextContainingTypeUID (lldb::user_id_t type_uid)

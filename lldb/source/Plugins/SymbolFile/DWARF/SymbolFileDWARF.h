@@ -18,6 +18,7 @@
 #include <vector>
 
 // Other libraries and framework includes
+#include "clang/AST/CharUnits.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
@@ -141,6 +142,39 @@ public:
                                     clang::DeclarationName Name,
                                     llvm::SmallVectorImpl <clang::NamedDecl *> *results);
 
+    static bool 
+    LayoutRecordType (void *baton, 
+                      const clang::RecordDecl *record_decl,
+                      uint64_t &size, 
+                      uint64_t &alignment,
+                      llvm::DenseMap <const clang::FieldDecl *, uint64_t> &field_offsets,
+                      llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
+                      llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets);
+
+    bool 
+    LayoutRecordType (const clang::RecordDecl *record_decl,
+                      uint64_t &size, 
+                      uint64_t &alignment,
+                      llvm::DenseMap <const clang::FieldDecl *, uint64_t> &field_offsets,
+                      llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
+                      llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets);
+
+    struct LayoutInfo
+    {
+        LayoutInfo () :
+            bit_size(0),
+            alignment(0),
+            field_offsets()//,
+            //base_offsets(), // We don't need to fill in the base classes, this can be done automatically
+            //vbase_offsets() // We don't need to fill in the virtual base classes, this can be done automatically
+        {
+        }
+        uint64_t bit_size;
+        uint64_t alignment;
+        llvm::DenseMap <const clang::FieldDecl *, uint64_t> field_offsets;
+//        llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> base_offsets;
+//        llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> vbase_offsets;
+    };
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
@@ -307,7 +341,8 @@ protected:
                                 std::vector<int>& member_accessibilities,
                                 DWARFDIECollection& member_function_dies,
                                 lldb::AccessType &default_accessibility,
-                                bool &is_a_class);
+                                bool &is_a_class,
+                                LayoutInfo &layout_info);
 
     size_t                  ParseChildParameters(
                                 const lldb_private::SymbolContext& sc,
@@ -518,12 +553,14 @@ protected:
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::VariableSP> DIEToVariableSP;
     typedef llvm::DenseMap<const DWARFDebugInfoEntry *, lldb::clang_type_t> DIEToClangType;
     typedef llvm::DenseMap<lldb::clang_type_t, const DWARFDebugInfoEntry *> ClangTypeToDIE;
+    typedef llvm::DenseMap<const clang::RecordDecl *, LayoutInfo> RecordDeclToLayoutMap;
     DIEToDeclContextMap m_die_to_decl_ctx;
     DeclContextToDIEMap m_decl_ctx_to_die;
     DIEToTypePtr m_die_to_type;
     DIEToVariableSP m_die_to_variable_sp;
     DIEToClangType m_forward_decl_die_to_clang_type;
     ClangTypeToDIE m_forward_decl_clang_type_to_die;
+    RecordDeclToLayoutMap m_record_decl_to_layout_map;
 };
 
 #endif  // SymbolFileDWARF_SymbolFileDWARF_h_

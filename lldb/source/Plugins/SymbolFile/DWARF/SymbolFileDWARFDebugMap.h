@@ -13,6 +13,9 @@
 
 #include <vector>
 #include <bitset>
+
+#include "clang/AST/CharUnits.h"
+
 #include "lldb/Symbol/SymbolFile.h"
 
 #include "UniqueDWARFASTType.h"
@@ -90,6 +93,16 @@ public:
     
     static void
     CompleteObjCInterfaceDecl (void *baton, clang::ObjCInterfaceDecl *);
+    
+    static bool 
+    LayoutRecordType (void *baton, 
+                      const clang::RecordDecl *record_decl,
+                      uint64_t &size, 
+                      uint64_t &alignment,
+                      llvm::DenseMap <const clang::FieldDecl *, uint64_t> &field_offsets,
+                      llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &base_offsets,
+                      llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &vbase_offsets);
+
 
     //------------------------------------------------------------------
     // PluginInterface protocol
