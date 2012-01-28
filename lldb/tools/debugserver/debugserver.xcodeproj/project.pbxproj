@@ -417,7 +417,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = "/bin/sh -x";
-			shellScript = "if [ $CONFIGURATION!=\"BuildAndIntegration\" ]; then\n  if [ $PLATFORM_NAME=\"macosx\" ]; then\n    /usr/bin/codesign -s lldb_codesign -f \"$TARGET_BUILD_DIR/$TARGET_NAME\"\n  fi\nfi";
+			shellScript = "if [ $CONFIGURATION != BuildAndIntegration -a $PLATFORM_NAME = macosx ]; then /usr/bin/codesign -s lldb_codesign -f \"$TARGET_BUILD_DIR/$TARGET_NAME\"; fi";
 		};
 		26CE05C7115C36870022F371 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
