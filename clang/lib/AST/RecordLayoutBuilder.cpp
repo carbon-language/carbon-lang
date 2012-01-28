@@ -561,6 +561,10 @@ protected:
   /// \brief Whether the external AST source has provided a layout for this
   /// record.
   unsigned ExternalLayout : 1;
+
+  /// \brief Whether we need to infer alignment, even when we have an 
+  /// externally-provided layout.
+  unsigned InferAlignment : 1;
   
   /// Packed - Whether the record is packed or not.
   unsigned Packed : 1;
@@ -641,8 +645,8 @@ protected:
                       EmptySubobjectMap *EmptySubobjects)
     : Context(Context), EmptySubobjects(EmptySubobjects), Size(0), 
       Alignment(CharUnits::One()), UnpackedAlignment(CharUnits::One()),
-      ExternalLayout(false), Packed(false), IsUnion(false), 
-      IsMac68kAlign(false), IsMsStruct(false),
+      ExternalLayout(false), InferAlignment(false), 
+      Packed(false), IsUnion(false), IsMac68kAlign(false), IsMsStruct(false),
       UnfilledBitsInLastByte(0), MaxFieldAlignment(CharUnits::Zero()), 
       DataSize(0), NonVirtualSize(CharUnits::Zero()), 
       NonVirtualAlignment(CharUnits::One()), 
@@ -747,6 +751,14 @@ protected:
     UpdateAlignment(NewAlignment, NewAlignment);
   }
 
+  /// \brief Retrieve the externally-supplied field offset for the given
+  /// field.
+  ///
+  /// \param Field The field whose offset is being queried.
+  /// \param ComputedOffset The offset that we've computed for this field.
+  uint64_t updateExternalFieldOffset(const FieldDecl *Field, 
+                                     uint64_t ComputedOffset);
+  
   void CheckFieldPadding(uint64_t Offset, uint64_t UnpaddedOffset,
                           uint64_t UnpackedOffset, unsigned UnpackedAlign,
                           bool isPacked, const FieldDecl *D);
@@ -1416,8 +1428,13 @@ void RecordLayoutBuilder::InitializeLayout(const Decl *D) {
       
       // Update based on external alignment.
       if (ExternalLayout) {
-        Alignment = Context.toCharUnitsFromBits(ExternalAlign);
-        UnpackedAlignment = Alignment;
+        if (ExternalAlign > 0) {
+          Alignment = Context.toCharUnitsFromBits(ExternalAlign);
+          UnpackedAlignment = Alignment;
+        } else {
+          // The external source didn't have alignment information; infer it.
+          InferAlignment = true;
+        }
       }
     }
 }
@@ -1712,12 +1729,6 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
   uint64_t TypeSize = FieldInfo.first;
   unsigned FieldAlign = FieldInfo.second;
   
-  if (ExternalLayout) {
-    assert(ExternalFieldOffsets.find(D) != ExternalFieldOffsets.end() &&
-           "Field does not have an external offset");
-    FieldOffset = ExternalFieldOffsets[D];
-  }
-
   // This check is needed for 'long long' in -m32 mode.
   if (IsMsStruct && (TypeSize > FieldAlign) && 
       (Context.hasSameType(D->getType(), 
@@ -1778,19 +1789,17 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
     UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignmentInBits);
   }
 
-  if (!ExternalLayout) {
-    // Check if we need to add padding to give the field the correct alignment.
-    if (FieldSize == 0 || 
-        (MaxFieldAlignment.isZero() &&
-         (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize))
-      FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
+  // Check if we need to add padding to give the field the correct alignment.
+  if (FieldSize == 0 || 
+      (MaxFieldAlignment.isZero() &&
+       (FieldOffset & (FieldAlign-1)) + FieldSize > TypeSize))
+    FieldOffset = llvm::RoundUpToAlignment(FieldOffset, FieldAlign);
 
-    if (FieldSize == 0 ||
-        (MaxFieldAlignment.isZero() &&
-         (UnpackedFieldOffset & (UnpackedFieldAlign-1)) + FieldSize > TypeSize))
-      UnpackedFieldOffset = llvm::RoundUpToAlignment(UnpackedFieldOffset,
-                                                     UnpackedFieldAlign);
-  }
+  if (FieldSize == 0 ||
+      (MaxFieldAlignment.isZero() &&
+       (UnpackedFieldOffset & (UnpackedFieldAlign-1)) + FieldSize > TypeSize))
+    UnpackedFieldOffset = llvm::RoundUpToAlignment(UnpackedFieldOffset,
+                                                   UnpackedFieldAlign);
 
   // Padding members don't affect overall alignment, unless zero length bitfield
   // alignment is enabled.
@@ -1799,6 +1808,9 @@ void RecordLayoutBuilder::LayoutBitField(const FieldDecl *D) {
 
   if (!IsMsStruct)
     ZeroLengthBitfield = 0;
+
+  if (ExternalLayout)
+    FieldOffset = updateExternalFieldOffset(D, FieldOffset);
 
   // Place this field at the current location.
   FieldOffsets.push_back(FieldOffset);
@@ -1844,13 +1856,6 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
   CharUnits FieldSize;
   CharUnits FieldAlign;
 
-  if (ExternalLayout) {
-    assert(ExternalFieldOffsets.find(D) != ExternalFieldOffsets.end() &&
-           "Field does not have an external offset");
-    FieldOffset = Context.toCharUnitsFromBits(ExternalFieldOffsets[D]);
-  }
-
-  
   if (D->getType()->isIncompleteArrayType()) {
     // This is a flexible array member; we can't directly
     // query getTypeInfo about these, so we figure it out here.
@@ -1928,12 +1933,22 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
     UnpackedFieldAlign = std::min(UnpackedFieldAlign, MaxFieldAlignment);
   }
 
-  if (!ExternalLayout) {
-    // Round up the current record size to the field's alignment boundary.
-    FieldOffset = FieldOffset.RoundUpToAlignment(FieldAlign);
-    UnpackedFieldOffset = 
-      UnpackedFieldOffset.RoundUpToAlignment(UnpackedFieldAlign);
-  
+  // Round up the current record size to the field's alignment boundary.
+  FieldOffset = FieldOffset.RoundUpToAlignment(FieldAlign);
+  UnpackedFieldOffset = 
+    UnpackedFieldOffset.RoundUpToAlignment(UnpackedFieldAlign);
+
+  if (ExternalLayout) {
+    FieldOffset = Context.toCharUnitsFromBits(
+                    updateExternalFieldOffset(D, Context.toBits(FieldOffset)));
+    
+    if (!IsUnion && EmptySubobjects) {
+      // Record the fact that we're placing a field at this offset.
+      bool Allowed = EmptySubobjects->CanPlaceFieldAtOffset(D, FieldOffset);
+      (void)Allowed;
+      assert(Allowed && "Externally-placed field cannot be placed here");      
+    }
+  } else {
     if (!IsUnion && EmptySubobjects) {
       // Check if we can place the field at this offset.
       while (!EmptySubobjects->CanPlaceFieldAtOffset(D, FieldOffset)) {
@@ -1941,11 +1956,6 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
         FieldOffset += FieldAlign;
       }
     }
-  } else if (!IsUnion && EmptySubobjects) {
-    // Record the fact that we're placing a field at this offset.
-    bool Allowed = EmptySubobjects->CanPlaceFieldAtOffset(D, FieldOffset);
-    (void)Allowed;
-    assert(Allowed && "Externally-placed field cannot be placed here");
   }
   
   // Place this field at the current location.
@@ -1971,6 +1981,11 @@ void RecordLayoutBuilder::LayoutField(const FieldDecl *D) {
 }
 
 void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
+  if (ExternalLayout) {
+    setSize(ExternalSize);
+    return;
+  }
+  
   // In C++, records cannot be of size 0.
   if (Context.getLangOptions().CPlusPlus && getSizeInBits() == 0) {
     if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
@@ -2027,8 +2042,8 @@ void RecordLayoutBuilder::FinishLayout(const NamedDecl *D) {
 void RecordLayoutBuilder::UpdateAlignment(CharUnits NewAlignment,
                                           CharUnits UnpackedNewAlignment) {
   // The alignment is not modified when using 'mac68k' alignment or when
-  // we have an externally-supplied layout.
-  if (IsMac68kAlign || ExternalLayout)
+  // we have an externally-supplied layout that also provides overall alignment.
+  if (IsMac68kAlign || (ExternalLayout && !InferAlignment))
     return;
 
   if (NewAlignment > Alignment) {
@@ -2042,6 +2057,25 @@ void RecordLayoutBuilder::UpdateAlignment(CharUnits NewAlignment,
            "Alignment not a power of 2"));
     UnpackedAlignment = UnpackedNewAlignment;
   }
+}
+
+uint64_t
+RecordLayoutBuilder::updateExternalFieldOffset(const FieldDecl *Field, 
+                                               uint64_t ComputedOffset) {
+  assert(ExternalFieldOffsets.find(Field) != ExternalFieldOffsets.end() &&
+         "Field does not have an external offset");
+  
+  uint64_t ExternalFieldOffset = ExternalFieldOffsets[Field];
+  
+  if (InferAlignment && ExternalFieldOffset < ComputedOffset) {
+    // The externally-supplied field offset is before the field offset we
+    // computed. Assume that the structure is packed.
+    Alignment = CharUnits::fromQuantity(1);
+    InferAlignment = false;
+  }
+  
+  // Use the externally-supplied field offset.
+  return ExternalFieldOffset;
 }
 
 void RecordLayoutBuilder::CheckFieldPadding(uint64_t Offset,
