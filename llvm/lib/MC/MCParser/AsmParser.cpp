@@ -1565,7 +1565,9 @@ static bool IsUsedIn(const MCSymbol *Sym, const MCExpr *Value) {
     return false;
   case MCExpr::SymbolRef: {
     const MCSymbol &S = static_cast<const MCSymbolRefExpr*>(Value)->getSymbol();
-    return &S.AliasedSymbol() == Sym;
+    if (S.isVariable())
+      return IsUsedIn(Sym, S.getVariableValue());
+    return &S == Sym;
   }
   case MCExpr::Unary:
     return IsUsedIn(Sym, static_cast<const MCUnaryExpr*>(Value)->getSubExpr());

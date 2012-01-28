@@ -21,3 +21,7 @@ t2_s0:
         t4_s0 = t4_s1
         t4_s1 = t4_s2
         t4_s2 = t4_s0
+
+// CHECK: Recursive use of 't5_s1'
+        t5_s0 = t5_s1 + 1
+        t5_s1 = t5_s0
