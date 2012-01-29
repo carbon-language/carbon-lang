@@ -1521,3 +1521,14 @@ void test68(void) {
 // CHECK-NEXT: [[T2:%.*]] = load i8** [[CL]]
 // CHECK-NEXT: call void @objc_release(i8* [[T2]])
 // CHECK-NEXT: ret void
+
+// rdar://problem/10564852
+@interface Test69 @end
+@implementation Test69
+- (id) foo { return self; }
+@end
+// CHECK: define internal i8* @"\01-[Test69 foo]"(
+// CHECK:      [[SELF:%.*]] = alloca [[TEST69:%.*]]*, align 8
+// CHECK:      [[T0:%.*]] = load [[TEST69]]** [[SELF]], align 8
+// CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST69]]* [[T0]] to i8*
+// CHECK-NEXT: ret i8* [[T1]]

@@ -1100,6 +1100,17 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
   assert(AI == Fn->arg_end() && "Argument mismatch!");
 }
 
+static void eraseUnusedBitCasts(llvm::Instruction *insn) {
+  while (insn->use_empty()) {
+    llvm::BitCastInst *bitcast = dyn_cast<llvm::BitCastInst>(insn);
+    if (!bitcast) return;
+
+    // This is "safe" because we would have used a ConstantExpr otherwise.
+    insn = cast<llvm::Instruction>(bitcast->getOperand(0));
+    bitcast->eraseFromParent();
+  }
+}
+
 /// Try to emit a fused autorelease of a return result.
 static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
                                                     llvm::Value *result) {
@@ -1178,9 +1189,54 @@ static llvm::Value *tryEmitFusedAutoreleaseOfResult(CodeGenFunction &CGF,
   return CGF.Builder.CreateBitCast(result, resultType);
 }
 
+/// If this is a +1 of the value of an immutable 'self', remove it.
+static llvm::Value *tryRemoveRetainOfSelf(CodeGenFunction &CGF,
+                                          llvm::Value *result) {
+  // This is only applicable to a method with an immutable 'self'.
+  const ObjCMethodDecl *method = dyn_cast<ObjCMethodDecl>(CGF.CurCodeDecl);
+  if (!method) return 0;
+  const VarDecl *self = method->getSelfDecl();
+  if (!self->getType().isConstQualified()) return 0;
+
+  // Look for a retain call.
+  llvm::CallInst *retainCall =
+    dyn_cast<llvm::CallInst>(result->stripPointerCasts());
+  if (!retainCall ||
+      retainCall->getCalledValue() != CGF.CGM.getARCEntrypoints().objc_retain)
+    return 0;
+
+  // Look for an ordinary load of 'self'.
+  llvm::Value *retainedValue = retainCall->getArgOperand(0);
+  llvm::LoadInst *load =
+    dyn_cast<llvm::LoadInst>(retainedValue->stripPointerCasts());
+  if (!load || load->isAtomic() || load->isVolatile() || 
+      load->getPointerOperand() != CGF.GetAddrOfLocalVar(self))
+    return 0;
+
+  // Okay!  Burn it all down.  This relies for correctness on the
+  // assumption that the retain is emitted as part of the return and
+  // that thereafter everything is used "linearly".
+  llvm::Type *resultType = result->getType();
+  eraseUnusedBitCasts(cast<llvm::Instruction>(result));
+  assert(retainCall->use_empty());
+  retainCall->eraseFromParent();
+  eraseUnusedBitCasts(cast<llvm::Instruction>(retainedValue));
+
+  return CGF.Builder.CreateBitCast(load, resultType);
+}
+
 /// Emit an ARC autorelease of the result of a function.
+///
+/// \return the value to actually return from the function
 static llvm::Value *emitAutoreleaseOfResult(CodeGenFunction &CGF,
                                             llvm::Value *result) {
+  // If we're returning 'self', kill the initial retain.  This is a
+  // heuristic attempt to "encourage correctness" in the really unfortunate
+  // case where we have a return of self during a dealloc and we desperately
+  // need to avoid the possible autorelease.
+  if (llvm::Value *self = tryRemoveRetainOfSelf(CGF, result))
+    return self;
+
   // At -O0, try to emit a fused retain/autorelease.
   if (CGF.shouldUseFusedARCCalls())
     if (llvm::Value *fused = tryEmitFusedAutoreleaseOfResult(CGF, result))
