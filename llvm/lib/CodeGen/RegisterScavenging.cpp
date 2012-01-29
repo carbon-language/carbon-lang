@@ -234,10 +234,10 @@ void RegScavenger::forward() {
 }
 
 void RegScavenger::getRegsUsed(BitVector &used, bool includeReserved) {
-  if (includeReserved)
-    used = ~RegsAvailable;
-  else
-    used = ~RegsAvailable & ~ReservedRegs;
+  used = RegsAvailable;
+  if (!includeReserved)
+    used |= ReservedRegs;
+  used.flip();
 }
 
 unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RC) const {
@@ -352,9 +352,9 @@ unsigned RegScavenger::scavengeRegister(const TargetRegisterClass *RC,
   // RegsAvailable, as RegsAvailable does not take aliases into account.
   // That's what getRegsAvailable() is for.
   BitVector Available = getRegsAvailable(RC);
-
-  if ((Candidates & Available).any())
-     Candidates &= Available;
+  Available &= Candidates;
+  if (Available.any())
+    Candidates = Available;
 
   // Find the register whose use is furthest away.
   MachineBasicBlock::iterator UseMI;
