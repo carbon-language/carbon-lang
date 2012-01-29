@@ -1,0 +1,39 @@
+module __compiler_builtins [system] {
+  explicit module float_constants {
+    header "float.h"
+  }
+
+  explicit module iso646 {
+    header "iso646.h"
+  }
+
+  explicit module limits {
+    header "limits.h"
+  }
+
+  explicit module stdalign {
+    header "stdalign.h"
+  }
+
+  explicit module stdarg {
+    header "stdarg.h"
+  }
+
+  explicit module stdbool {
+    header "stdbool.h"
+  }
+
+  explicit module stddef {
+    header "stddef.h"
+  }
+
+  explicit module stdint {
+    header "stdint.h"
+  }
+
+  explicit module tgmath {
+    header "tgmath.h"
+  }
+
+  // FIXME: add various altivec,  *intrin headers.
+}

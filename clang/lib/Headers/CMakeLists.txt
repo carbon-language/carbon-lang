@@ -31,6 +31,7 @@ set(files
   xmmintrin.h
   cpuid.h
   unwind.h
+  module.map
   )
 
 set(output_dir ${LLVM_BINARY_DIR}/lib/clang/${CLANG_VERSION}/include)
