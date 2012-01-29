@@ -31,6 +31,7 @@ add_llvm_library(LLVMSupport
   IsInf.cpp
   IsNAN.cpp
   JSONParser.cpp
+  LockFileManager.cpp
   ManagedStatic.cpp
   MemoryBuffer.cpp
   MemoryObject.cpp
