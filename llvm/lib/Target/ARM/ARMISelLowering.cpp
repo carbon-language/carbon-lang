@@ -1127,7 +1127,9 @@ CCAssignFn *ARMTargetLowering::CCAssignFnForNode(CallingConv::ID CC,
     return (Return ? RetCC_ARM_AAPCS : CC_ARM_AAPCS);
   }
   case CallingConv::ARM_AAPCS_VFP:
-    return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
+    if (!isVarArg)
+      return (Return ? RetCC_ARM_AAPCS_VFP : CC_ARM_AAPCS_VFP);
+    // Fallthrough
   case CallingConv::ARM_AAPCS:
     return (Return ? RetCC_ARM_AAPCS : CC_ARM_AAPCS);
   case CallingConv::ARM_APCS:
