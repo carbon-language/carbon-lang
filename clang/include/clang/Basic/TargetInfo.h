@@ -479,6 +479,19 @@ public:
     const unsigned RegNum;
   };
 
+  /// hasProtectedVisibility - Does this target support "protected"
+  /// visibility?
+  ///
+  /// Any target which dynamic libraries will naturally support
+  /// something like "default" (meaning that the symbol is visible
+  /// outside this shared object) and "hidden" (meaning that it isn't)
+  /// visibilities, but "protected" is really an ELF-specific concept
+  /// with wierd semantics designed around the convenience of dynamic
+  /// linker implementations.  Which is not to suggest that there's
+  /// consistent target-independent semantics for "default" visibility
+  /// either; the entire thing is pretty badly mangled.
+  virtual bool hasProtectedVisibility() const { return true; }
+
   virtual bool useGlobalsForAutomaticVariables() const { return false; }
 
   /// getCFStringSection - Return the section to use for CFString

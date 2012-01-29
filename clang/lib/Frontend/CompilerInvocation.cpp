@@ -1792,6 +1792,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   else if (Vis == "hidden")
     Opts.setVisibilityMode(HiddenVisibility);
   else if (Vis == "protected")
+    // FIXME: diagnose if target does not support protected visibility
     Opts.setVisibilityMode(ProtectedVisibility);
   else
     Diags.Report(diag::err_drv_invalid_value)

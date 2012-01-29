@@ -1694,9 +1694,16 @@ static void handleVisibilityAttr(Sema &S, Decl *D, const AttributeList &Attr) {
     type = VisibilityAttr::Hidden;
   else if (TypeStr == "internal")
     type = VisibilityAttr::Hidden; // FIXME
-  else if (TypeStr == "protected")
-    type = VisibilityAttr::Protected;
-  else {
+  else if (TypeStr == "protected") {
+    // Complain about attempts to use protected visibility on targets
+    // (like Darwin) that don't support it.
+    if (!S.Context.getTargetInfo().hasProtectedVisibility()) {
+      S.Diag(Attr.getLoc(), diag::warn_attribute_protected_visibility);
+      type = VisibilityAttr::Default;
+    } else {
+      type = VisibilityAttr::Protected;
+    }
+  } else {
     S.Diag(Attr.getLoc(), diag::warn_attribute_unknown_visibility) << TypeStr;
     return;
   }

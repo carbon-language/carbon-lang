@@ -218,6 +218,12 @@ public:
     return "__TEXT,__StaticInit,regular,pure_instructions";
   }
 
+  /// Darwin does not support protected visibility.  Darwin's "default"
+  /// is very similar to ELF's "protected";  Darwin requires a "weak"
+  /// attribute on declarations that can be dynamically replaced.
+  virtual bool hasProtectedVisibility() const {
+    return false;
+  }
 };
 
 

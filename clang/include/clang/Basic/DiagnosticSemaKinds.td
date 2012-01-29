@@ -1740,6 +1740,9 @@ def warn_transparent_union_attribute_zero_fields : Warning<
 def warn_attribute_type_not_supported : Warning<
   "'%0' attribute argument not supported: %1">;
 def warn_attribute_unknown_visibility : Warning<"unknown visibility '%0'">;
+def warn_attribute_protected_visibility :
+  Warning<"target does not support 'protected' visibility; using 'default'">,
+  InGroup<DiagGroup<"unsupported-visibility">>;
 def err_unknown_machine_mode : Error<"unknown machine mode %0">;
 def err_unsupported_machine_mode : Error<"unsupported machine mode %0">;
 def err_mode_not_primitive : Error<
