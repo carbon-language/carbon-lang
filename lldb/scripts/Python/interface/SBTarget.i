@@ -496,9 +496,6 @@ public:
         __swig_getmethods__["debugger"] = GetDebugger
         if _newclass: x = property(GetDebugger, None)
 
-        __swig_getmethods__["file_offset"] = GetFileOffset
-        if _newclass: x = property(GetFileOffset, None)
-
         __swig_getmethods__["num_breakpoints"] = GetNumBreakpoints
         if _newclass: x = property(GetNumBreakpoints, None)
 
