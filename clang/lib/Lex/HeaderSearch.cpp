@@ -953,3 +953,58 @@ HeaderSearch::loadModuleMapFile(const DirectoryEntry *Dir) {
   return LMM_InvalidModuleMap;
 }
 
+void HeaderSearch::collectAllModules(llvm::SmallVectorImpl<Module *> &Modules) {
+  Modules.clear();
+  
+  // Load module maps for each of the header search directories.
+  for (unsigned Idx = 0, N = SearchDirs.size(); Idx != N; ++Idx) {
+    if (SearchDirs[Idx].isFramework()) {
+      llvm::error_code EC;
+      llvm::SmallString<128> DirNative;
+      llvm::sys::path::native(SearchDirs[Idx].getFrameworkDir()->getName(),
+                              DirNative);
+      
+      // Search each of the ".framework" directories to load them as modules.
+      bool IsSystem = SearchDirs[Idx].getDirCharacteristic() != SrcMgr::C_User;
+      for (llvm::sys::fs::directory_iterator Dir(DirNative.str(), EC), DirEnd;
+           Dir != DirEnd && !EC; Dir.increment(EC)) {
+        if (llvm::sys::path::extension(Dir->path()) != ".framework")
+          continue;
+        
+        const DirectoryEntry *FrameworkDir = FileMgr.getDirectory(Dir->path());
+        if (!FrameworkDir)
+          continue;
+        
+        // Load this framework module.
+        loadFrameworkModule(llvm::sys::path::stem(Dir->path()), FrameworkDir,
+                            IsSystem);
+      }
+      continue;
+    }
+    
+    // FIXME: Deal with header maps.
+    if (SearchDirs[Idx].isHeaderMap())
+      continue;
+    
+    // Try to load a module map file for the search directory.
+    loadModuleMapFile(SearchDirs[Idx].getDir());
+    
+    // Try to load module map files for immediate subdirectories of this search
+    // directory.
+    llvm::error_code EC;
+    llvm::SmallString<128> DirNative;
+    llvm::sys::path::native(SearchDirs[Idx].getDir()->getName(), DirNative);
+    for (llvm::sys::fs::directory_iterator Dir(DirNative.str(), EC), DirEnd;
+         Dir != DirEnd && !EC; Dir.increment(EC)) {
+      loadModuleMapFile(Dir->path());
+    }
+  }
+  
+  // Populate the list of modules.
+  for (ModuleMap::module_iterator M = ModMap.module_begin(), 
+                               MEnd = ModMap.module_end();
+       M != MEnd; ++M) {
+    Modules.push_back(M->getValue());
+  }
+}
+

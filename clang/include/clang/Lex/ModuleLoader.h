@@ -24,7 +24,8 @@ class IdentifierInfo;
   
 /// \brief A sequence of identifier/location pairs used to describe a particular
 /// module or submodule, e.g., std.vector.
-typedef llvm::ArrayRef<std::pair<IdentifierInfo*, SourceLocation> > ModuleIdPath;
+typedef llvm::ArrayRef<std::pair<IdentifierInfo*, SourceLocation> > 
+  ModuleIdPath;
   
 /// \brief Abstract interface for a module loader.
 ///

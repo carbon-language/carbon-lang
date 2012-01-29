@@ -1595,6 +1595,13 @@ Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
   // Parse the module path.
   do {
     if (!Tok.is(tok::identifier)) {
+      if (Tok.is(tok::code_completion)) {
+        Actions.CodeCompleteModuleImport(ImportLoc, Path);
+        ConsumeCodeCompletionToken();
+        SkipUntil(tok::semi);
+        return DeclGroupPtrTy();
+      }
+      
       Diag(Tok, diag::err_module_expected_ident);
       SkipUntil(tok::semi);
       return DeclGroupPtrTy();

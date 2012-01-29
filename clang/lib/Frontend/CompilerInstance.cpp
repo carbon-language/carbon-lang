@@ -1102,7 +1102,6 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
   SourceLocation ModuleNameLoc = Path[0].second;
 
   clang::Module *Module = 0;
-  const FileEntry *ModuleFile = 0;
   
   // If we don't already have information on this module, load the module now.
   llvm::DenseMap<const IdentifierInfo *, clang::Module *>::iterator Known

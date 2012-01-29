@@ -211,6 +211,10 @@ public:
     
   /// \brief Dump the contents of the module map, for debugging purposes.
   void dump();
+  
+  typedef llvm::StringMap<Module *>::const_iterator module_iterator;
+  module_iterator module_begin() const { return Modules.begin(); }
+  module_iterator module_end()   const { return Modules.end(); }
 };
   
 }

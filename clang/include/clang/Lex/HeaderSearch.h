@@ -391,7 +391,6 @@ public:
   /// \param File The header that we wish to map to a module.
   Module *findModuleForHeader(const FileEntry *File);
   
-  
   /// \brief Read the contents of the given module map file.
   ///
   /// \param File The module map file.
@@ -401,6 +400,11 @@ public:
   /// \returns true if an error occurred, false otherwise.
   bool loadModuleMapFile(const FileEntry *File);
 
+  /// \brief Collect the set of all known, top-level modules.
+  ///
+  /// \param Modules Will be filled with the set of known, top-level modules.
+  void collectAllModules(llvm::SmallVectorImpl<Module *> &Modules);
+                         
 private:
   /// \brief Retrieve a module with the given name, which may be part of the
   /// given framework.

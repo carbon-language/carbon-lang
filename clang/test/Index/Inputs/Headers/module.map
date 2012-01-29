@@ -1,0 +1,7 @@
+module LibA {
+  header "a.h"
+  module Extensions { 
+    header "a_extensions.h"
+  }
+}
+
