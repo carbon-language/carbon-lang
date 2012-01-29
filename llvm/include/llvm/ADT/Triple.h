@@ -193,6 +193,22 @@ public:
     return Environment;
   }
 
+  /// getOSVersion - Parse the version number from the OS name component of the
+  /// triple, if present.
+  ///
+  /// For example, "fooos1.2.3" would return (1, 2, 3).
+  ///
+  /// If an entry is not defined, it will be returned as 0.
+  void getOSVersion(unsigned &Major, unsigned &Minor, unsigned &Micro) const;
+
+  /// getOSMajorVersion - Return just the major version number, this is
+  /// specialized because it is a common query.
+  unsigned getOSMajorVersion() const {
+    unsigned Maj, Min, Micro;
+    getOSVersion(Maj, Min, Micro);
+    return Maj;
+  }
+
   /// @}
   /// @name Direct Component Access
   /// @{
@@ -221,21 +237,9 @@ public:
   /// if the environment component is present).
   StringRef getOSAndEnvironmentName() const;
 
-  /// getOSVersion - Parse the version number from the OS name component of the
-  /// triple, if present.
-  ///
-  /// For example, "fooos1.2.3" would return (1, 2, 3).
-  ///
-  /// If an entry is not defined, it will be returned as 0.
-  void getOSVersion(unsigned &Major, unsigned &Minor, unsigned &Micro) const;
-
-  /// getOSMajorVersion - Return just the major version number, this is
-  /// specialized because it is a common query.
-  unsigned getOSMajorVersion() const {
-    unsigned Maj, Min, Micro;
-    getOSVersion(Maj, Min, Micro);
-    return Maj;
-  }
+  /// @}
+  /// @name Convenience Predicates
+  /// @{
 
   /// isOSVersionLT - Helper function for doing comparisons against version
   /// numbers included in the target triple.
