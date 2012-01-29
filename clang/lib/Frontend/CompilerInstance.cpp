@@ -926,7 +926,7 @@ void LockFileManager::waitForUnlock() {
   const unsigned MaxSeconds = 3600;
   do {
     // Sleep for the designated interval, to allow the owning process time to
-    // finish up and
+    // finish up and remove the lock file.
     // FIXME: Should we hook in to system APIs to get a notification when the
     // lock file is deleted?
 #if LLVM_ON_WIN32
