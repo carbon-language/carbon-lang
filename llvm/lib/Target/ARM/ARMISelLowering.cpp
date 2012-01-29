@@ -386,8 +386,6 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     // Long long helper functions
     // RTABI chapter 4.2, Table 9
     setLibcallName(RTLIB::MUL_I64,  "__aeabi_lmul");
-    setLibcallName(RTLIB::SDIV_I64, "__aeabi_ldivmod");
-    setLibcallName(RTLIB::UDIV_I64, "__aeabi_uldivmod");
     setLibcallName(RTLIB::SHL_I64, "__aeabi_llsl");
     setLibcallName(RTLIB::SRL_I64, "__aeabi_llsr");
     setLibcallName(RTLIB::SRA_I64, "__aeabi_lasr");
@@ -403,21 +401,28 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setLibcallName(RTLIB::SDIV_I8,  "__aeabi_idiv");
     setLibcallName(RTLIB::SDIV_I16, "__aeabi_idiv");
     setLibcallName(RTLIB::SDIV_I32, "__aeabi_idiv");
+    setLibcallName(RTLIB::SDIV_I64, "__aeabi_ldivmod");
     setLibcallName(RTLIB::UDIV_I8,  "__aeabi_uidiv");
     setLibcallName(RTLIB::UDIV_I16, "__aeabi_uidiv");
     setLibcallName(RTLIB::UDIV_I32, "__aeabi_uidiv");
+    setLibcallName(RTLIB::UDIV_I64, "__aeabi_uldivmod");
     setLibcallCallingConv(RTLIB::SDIV_I8, CallingConv::ARM_AAPCS);
     setLibcallCallingConv(RTLIB::SDIV_I16, CallingConv::ARM_AAPCS);
     setLibcallCallingConv(RTLIB::SDIV_I32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::SDIV_I64, CallingConv::ARM_AAPCS);
     setLibcallCallingConv(RTLIB::UDIV_I8, CallingConv::ARM_AAPCS);
     setLibcallCallingConv(RTLIB::UDIV_I16, CallingConv::ARM_AAPCS);
     setLibcallCallingConv(RTLIB::UDIV_I32, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::UDIV_I64, CallingConv::ARM_AAPCS);
 
     // Memory operations
     // RTABI chapter 4.3.4
     setLibcallName(RTLIB::MEMCPY,  "__aeabi_memcpy");
     setLibcallName(RTLIB::MEMMOVE, "__aeabi_memmove");
     setLibcallName(RTLIB::MEMSET,  "__aeabi_memset");
+    setLibcallCallingConv(RTLIB::MEMCPY, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::MEMMOVE, CallingConv::ARM_AAPCS);
+    setLibcallCallingConv(RTLIB::MEMSET, CallingConv::ARM_AAPCS);
   }
 
   // Use divmod compiler-rt calls for iOS 5.0 and later.
