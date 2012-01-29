@@ -26,7 +26,6 @@
 #define __TGMATH_H
 
 /* C99 7.22 Type-generic math <tgmath.h>. */
-#if __has_include(<math.h>)
 #include <math.h>
 
 /* C++ handles type genericity with overloading in math.h. */
@@ -1355,5 +1354,4 @@ static long double
 #undef _TG_ATTRS
 
 #endif /* __cplusplus */
-#endif /* __has_include(<math.h>) */
 #endif /* __TGMATH_H */
