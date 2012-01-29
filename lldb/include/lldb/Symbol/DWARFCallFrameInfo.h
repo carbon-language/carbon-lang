@@ -78,7 +78,7 @@ private:
                                   inst_length (0), ptr_encoding (0), initial_row() {}
     };
 
-    typedef lldb::SharedPtr<CIE>::Type CIESP;
+    typedef SHARED_PTR(CIE) CIESP;
 
     struct FDEEntry
     {

@@ -85,7 +85,7 @@ private:
 };
 
 class Thread :
-    public ReferenceCountedBaseVirtual<Thread>,
+    public std::tr1::enable_shared_from_this<Thread>,
     public UserID,
     public ExecutionContextScope,
     public ThreadInstanceSettings
@@ -232,9 +232,6 @@ public:
 
     lldb::StateType
     GetState() const;
-
-    lldb::ThreadSP
-    GetSP ();
 
     void
     SetState (lldb::StateType state);
@@ -769,6 +766,7 @@ public:
 protected:
 
     friend class ThreadPlan;
+    friend class ThreadList;
     friend class StackFrameList;
     
     // This is necessary to make sure thread assets get destroyed while the thread is still in good shape

@@ -1255,12 +1255,12 @@ DynamicLoaderMacOSXDYLD::AlwaysRelyOnEHUnwindInfo (SymbolContext &sym_ctx)
         AddressRange *ar = sym_ctx.symbol->GetAddressRangePtr();
         if (ar)
         {
-            module_sp = ar->GetBaseAddress().GetModule();
+            module_sp = ar->GetBaseAddress().GetModuleSP();
         }
     }
     if (module_sp.get() == NULL && sym_ctx.function)
     {
-        module_sp = sym_ctx.function->GetAddressRange().GetBaseAddress().GetModule();
+        module_sp = sym_ctx.function->GetAddressRange().GetBaseAddress().GetModuleSP();
     }
     if (module_sp.get() == NULL)
         return false;
@@ -1522,7 +1522,7 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                         
                         Module* module_to_add = sc.symbol->CalculateSymbolContextModule();
                         if (module_to_add)
-                             modules_to_search.AppendIfNeeded(static_cast<ModuleSP>(module_to_add));
+                             modules_to_search.AppendIfNeeded(module_to_add->shared_from_this());
                     }
                     
                     // If the original stub symbol is a resolver, then we don't want to break on the symbol with the

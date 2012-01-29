@@ -318,7 +318,7 @@ SearchFilter::DoFunctionIteration (Function *function, const SymbolContext &cont
 // SearchFilterByModule constructors
 //----------------------------------------------------------------------
 
-SearchFilterByModule::SearchFilterByModule (lldb::TargetSP &target_sp, const FileSpec &module) :
+SearchFilterByModule::SearchFilterByModule (const lldb::TargetSP &target_sp, const FileSpec &module) :
     SearchFilter (target_sp),
     m_module_spec (module)
 {
@@ -430,7 +430,7 @@ SearchFilterByModule::Search (Searcher &searcher)
         Module* module = m_target_sp->GetImages().GetModulePointerAtIndex(i);
         if (FileSpec::Compare (m_module_spec, module->GetFileSpec(), false) == 0)
         {
-            SymbolContext matchingContext(m_target_sp, ModuleSP(module));
+            SymbolContext matchingContext(m_target_sp, module->shared_from_this());
             Searcher::CallbackReturn shouldContinue;
 
             shouldContinue = DoModuleIteration(matchingContext, searcher);
@@ -476,7 +476,7 @@ SearchFilterByModule::Dump (Stream *s) const
 // SearchFilterByModuleList constructors
 //----------------------------------------------------------------------
 
-SearchFilterByModuleList::SearchFilterByModuleList (lldb::TargetSP &target_sp, const FileSpecList &module_list) :
+SearchFilterByModuleList::SearchFilterByModuleList (const lldb::TargetSP &target_sp, const FileSpecList &module_list) :
     SearchFilter (target_sp),
     m_module_spec_list (module_list)
 {
@@ -594,7 +594,7 @@ SearchFilterByModuleList::Search (Searcher &searcher)
         Module* module = m_target_sp->GetImages().GetModulePointerAtIndex(i);
         if (m_module_spec_list.FindFileIndex(0, module->GetFileSpec(), false) != UINT32_MAX)
         {
-            SymbolContext matchingContext(m_target_sp, ModuleSP(module));
+            SymbolContext matchingContext(m_target_sp, module->shared_from_this());
             Searcher::CallbackReturn shouldContinue;
 
             shouldContinue = DoModuleIteration(matchingContext, searcher);
@@ -664,7 +664,7 @@ SearchFilterByModuleList::Dump (Stream *s) const
 // SearchFilterByModuleListAndCU constructors
 //----------------------------------------------------------------------
 
-SearchFilterByModuleListAndCU::SearchFilterByModuleListAndCU (lldb::TargetSP &target_sp, 
+SearchFilterByModuleListAndCU::SearchFilterByModuleListAndCU (const lldb::TargetSP &target_sp, 
                                                               const FileSpecList &module_list,
                                                               const FileSpecList &cu_list) :
     SearchFilterByModuleList (target_sp, module_list),

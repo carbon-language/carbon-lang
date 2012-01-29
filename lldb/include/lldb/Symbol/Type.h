@@ -21,7 +21,7 @@
 namespace lldb_private {
 
 class SymbolFileType :
-    public ReferenceCountedBaseVirtual<SymbolFileType>,
+    public std::tr1::enable_shared_from_this<SymbolFileType>,
     public UserID
     {
     public:
@@ -50,7 +50,7 @@ class SymbolFileType :
     };
     
 class Type :
-    public ReferenceCountedBaseVirtual<Type>,
+    public std::tr1::enable_shared_from_this<Type>,
     public UserID
 {
 public:

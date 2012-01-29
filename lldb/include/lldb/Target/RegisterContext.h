@@ -20,6 +20,7 @@
 namespace lldb_private {
 
 class RegisterContext :
+    public std::tr1::enable_shared_from_this<RegisterContext>,
     public ExecutionContextScope
 {
 public:

@@ -23,7 +23,7 @@ using namespace lldb_private;
 BreakpointSite::BreakpointSite
 (
     BreakpointSiteList *list,
-    BreakpointLocationSP& owner,
+    const BreakpointLocationSP& owner,
     lldb::addr_t addr,
     lldb::tid_t tid,
     bool use_hardware
@@ -155,7 +155,7 @@ BreakpointSite::SetEnabled (bool enabled)
 }
 
 void
-BreakpointSite::AddOwner (BreakpointLocationSP &owner)
+BreakpointSite::AddOwner (const BreakpointLocationSP &owner)
 {
     m_owners.Add(owner);
 }

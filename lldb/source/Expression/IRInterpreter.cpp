@@ -69,8 +69,8 @@ PrintType(const Type *type, bool truncate = false)
     return s;
 }
 
-typedef lldb::SharedPtr <lldb_private::DataEncoder>::Type DataEncoderSP;
-typedef lldb::SharedPtr <lldb_private::DataExtractor>::Type DataExtractorSP;
+typedef SHARED_PTR(lldb_private::DataEncoder) DataEncoderSP;
+typedef SHARED_PTR(lldb_private::DataExtractor) DataExtractorSP;
 
 class Memory
 {
@@ -127,7 +127,7 @@ public:
         }
     };
     
-    typedef lldb::SharedPtr <Allocation>::Type  AllocationSP;
+    typedef SHARED_PTR(Allocation)  AllocationSP;
     
     struct Region
     {

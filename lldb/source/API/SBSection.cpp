@@ -29,7 +29,7 @@ namespace lldb_private
             m_section (section)
         {
             if (section)
-                m_module_sp = section->GetModule();
+                m_module_sp = section->GetModule()->shared_from_this();
         }
         
         SectionImpl (const SectionImpl &rhs) :

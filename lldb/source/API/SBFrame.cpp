@@ -553,7 +553,7 @@ SBFrame::GetThread () const
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_thread.SetThread (m_opaque_sp->GetThread().GetSP());
+        sb_thread.SetThread (m_opaque_sp->GetThread().shared_from_this());
     }
 
     if (log)

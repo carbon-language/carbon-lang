@@ -220,7 +220,7 @@ AppleObjCRuntime::ReadObjCLibrary (const ModuleSP &module_sp)
 {
     // Maybe check here and if we have a handler already, and the UUID of this module is the same as the one in the
     // current module, then we don't have to reread it?
-    m_objc_trampoline_handler_ap.reset(new AppleObjCTrampolineHandler (m_process->GetSP(), module_sp));
+    m_objc_trampoline_handler_ap.reset(new AppleObjCTrampolineHandler (m_process->shared_from_this(), module_sp));
     if (m_objc_trampoline_handler_ap.get() != NULL)
     {
         m_read_objc_library = true;

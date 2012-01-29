@@ -68,7 +68,7 @@ public:
         {
         }
 
-        typedef lldb::SharedPtr<Prologue>::Type shared_ptr;
+        typedef SHARED_PTR(Prologue) shared_ptr;
 
         uint32_t    total_length;   // The size in bytes of the statement information for this compilation unit (not including the total_length field itself).
         uint16_t    version;        // Version identifier for the statement information format.
@@ -135,7 +135,7 @@ public:
     //------------------------------------------------------------------
     struct LineTable
     {
-        typedef lldb::SharedPtr<LineTable>::Type shared_ptr;
+        typedef SHARED_PTR(LineTable) shared_ptr;
 
         LineTable() :
             prologue(),

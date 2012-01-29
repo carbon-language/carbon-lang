@@ -355,6 +355,17 @@ ThreadList::Clear()
 }
 
 void
+ThreadList::Destroy()
+{
+    Mutex::Locker locker(m_threads_mutex);
+    const uint32_t num_threads = m_threads.size();
+    for (uint32_t idx = 0; idx < num_threads; ++idx)
+    {
+        m_threads[idx]->DestroyThread();
+    }
+}
+
+void
 ThreadList::RefreshStateAfterStop ()
 {
     Mutex::Locker locker(m_threads_mutex);
@@ -603,6 +614,32 @@ ThreadList::Update (ThreadList &rhs)
         m_stop_id = rhs.m_stop_id;
         m_threads.swap(rhs.m_threads);
         m_selected_tid = rhs.m_selected_tid;
+        
+        
+        // Now we look for threads that we are done with and
+        // make sure to clear them up as much as possible so 
+        // anyone with a shared pointer will still have a reference,
+        // but the thread won't be of much use. Using std::weak_ptr
+        // for all backward references (such as a thread to a process)
+        // will eventually solve this issue for us, but for now, we
+        // need to work around the issue
+        collection::iterator rhs_pos, rhs_end = rhs.m_threads.end();
+        for (rhs_pos = rhs.m_threads.begin(); rhs_pos != rhs_end; ++rhs_pos)
+        {
+            const lldb::tid_t tid = (*rhs_pos)->GetID();
+            bool thread_is_alive = false;
+            const uint32_t num_threads = m_threads.size();
+            for (uint32_t idx = 0; idx < num_threads; ++idx)
+            {
+                if (m_threads[idx]->GetID() == tid)
+                {
+                    thread_is_alive = true;
+                    break;
+                }
+            }
+            if (!thread_is_alive)
+                (*rhs_pos)->DestroyThread();
+        }        
     }
 }
 

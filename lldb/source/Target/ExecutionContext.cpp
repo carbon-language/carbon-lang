@@ -46,7 +46,7 @@ ExecutionContext::operator =(const ExecutionContext &rhs)
 }
 
 ExecutionContext::ExecutionContext (Target* t, bool fill_current_process_thread_frame) :
-    m_target_sp (t),
+    m_target_sp (t->shared_from_this()),
     m_process_sp (),
     m_thread_sp (),
     m_frame_sp ()
@@ -58,17 +58,19 @@ ExecutionContext::ExecutionContext (Target* t, bool fill_current_process_thread_
         {
             m_thread_sp = m_process_sp->GetThreadList().GetSelectedThread();
             if (m_thread_sp)
-                m_frame_sp = m_thread_sp->GetSelectedFrame().get();
+                m_frame_sp = m_thread_sp->GetSelectedFrame();
         }
     }
 }
 
 ExecutionContext::ExecutionContext(Process* process, Thread *thread, StackFrame *frame) :
-    m_target_sp (process ? &process->GetTarget() : NULL),
-    m_process_sp (process),
-    m_thread_sp (thread),
-    m_frame_sp (frame)
+    m_target_sp (),
+    m_process_sp (process->shared_from_this()),
+    m_thread_sp (thread->shared_from_this()),
+    m_frame_sp (frame->shared_from_this())
 {
+    if (process)
+        m_target_sp = process->GetTarget().shared_from_this();
 }
 
 ExecutionContext::ExecutionContext (ExecutionContextScope *exe_scope_ptr)
@@ -200,24 +202,36 @@ ExecutionContext::SetFrameSP (const lldb::StackFrameSP &frame_sp)
 void
 ExecutionContext::SetTargetPtr (Target* target)
 {
-    m_target_sp = target;
+    if (target)
+        m_target_sp = target->shared_from_this();
+    else
+        m_target_sp.reset();
 }
 
 void
 ExecutionContext::SetProcessPtr (Process *process)
 {
-    m_process_sp = process;
+    if (process)
+        m_process_sp = process->shared_from_this();
+    else
+        m_process_sp.reset();
 }
 
 void
 ExecutionContext::SetThreadPtr (Thread *thread)
 {
-    m_thread_sp = thread;
+    if (thread)
+        m_thread_sp = thread->shared_from_this();
+    else
+        m_thread_sp.reset();
 }
 
 void
 ExecutionContext::SetFramePtr (StackFrame *frame)
 {
-    m_frame_sp = frame;
+    if (frame)
+        m_frame_sp = frame->shared_from_this();
+    else
+        m_frame_sp.reset();
 }
 

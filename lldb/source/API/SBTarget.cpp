@@ -119,7 +119,7 @@ SBTarget::GetDebugger () const
 {
     SBDebugger debugger;
     if (m_opaque_sp)
-        debugger.reset (m_opaque_sp->GetDebugger().GetSP());
+        debugger.reset (m_opaque_sp->GetDebugger().shared_from_this());
     return debugger;
 }
 

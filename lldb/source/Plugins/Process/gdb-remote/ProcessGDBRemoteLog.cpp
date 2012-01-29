@@ -104,7 +104,7 @@ ProcessGDBRemoteLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, A
     // Now make a new log with this stream if one was provided
     if (log_stream_sp)
     {
-        log = make_shared<Log>(log_stream_sp);
+        log.reset (new Log(log_stream_sp));
         GetLog () = log;
     }
 

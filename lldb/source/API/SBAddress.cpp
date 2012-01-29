@@ -32,7 +32,7 @@ namespace lldb_private
         }
 
         AddressImpl (const Address &addr) :
-            m_module_sp (addr.GetModule()),
+            m_module_sp (addr.GetModuleSP()),
             m_address (addr)
         {
         }
@@ -301,7 +301,7 @@ SBAddress::GetModule ()
     {
         Module *module = m_opaque_ap->GetModule();
         if (module)
-            *sb_module = module;
+            *sb_module = module->shared_from_this();
     }
     return sb_module;
 }

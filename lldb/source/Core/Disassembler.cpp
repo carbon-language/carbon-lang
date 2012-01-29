@@ -383,7 +383,7 @@ Disassembler::PrintInstructions
 
             prev_sc = sc;
 
-            Module *module = addr.GetModule();
+            Module *module = addr.GetModulePtr();
             if (module)
             {
                 uint32_t resolved_mask = module->ResolveSymbolContextForAddress(addr, eSymbolContextEverything, sc);

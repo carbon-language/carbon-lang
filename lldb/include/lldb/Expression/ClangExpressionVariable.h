@@ -216,7 +216,7 @@ public:
     void
     TransferAddress (bool force = false);
 
-    typedef lldb::SharedPtr<ValueObjectConstResult>::Type ValueObjectConstResultSP;
+    typedef SHARED_PTR(ValueObjectConstResult) ValueObjectConstResultSP;
 
     //----------------------------------------------------------------------
     /// Members

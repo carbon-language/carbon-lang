@@ -39,7 +39,7 @@ namespace lldb_private {
 //----------------------------------------------------------------------
 
 class BreakpointSite : 
-    public ReferenceCountedBase<BreakpointSite>,
+    public std::tr1::enable_shared_from_this<BreakpointSite>,
     public StoppointLocation
 {
 public:
@@ -159,7 +159,7 @@ public:
     ///    \a owner is the Breakpoint Location to add.
     //------------------------------------------------------------------
     void
-    AddOwner (lldb::BreakpointLocationSP &owner);
+    AddOwner (const lldb::BreakpointLocationSP &owner);
 
     //------------------------------------------------------------------
     /// This method returns the number of breakpoint locations currently
@@ -263,7 +263,7 @@ private:
     // Only the Process can create breakpoint sites in
     // Process::CreateBreakpointSite (lldb::BreakpointLocationSP &, bool).
     BreakpointSite (BreakpointSiteList *list,
-                    lldb::BreakpointLocationSP& owner,
+                    const lldb::BreakpointLocationSP& owner,
                     lldb::addr_t m_addr,
                     lldb::tid_t tid,
                     bool use_hardware);

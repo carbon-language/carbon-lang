@@ -238,7 +238,7 @@ SBProcess::GetTarget() const
 
     SBTarget sb_target;
     if (m_opaque_sp)
-        sb_target = m_opaque_sp->GetTarget().GetSP();
+        sb_target = m_opaque_sp->GetTarget().shared_from_this();
     
     if (log)
         log->Printf ("SBProcess(%p)::GetTarget () => SBTarget(%p)", m_opaque_sp.get(), sb_target.get());

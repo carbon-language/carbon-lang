@@ -126,7 +126,7 @@ RegisterContextLLDB::InitializeZerothFrame()
         {
             m_current_offset = frame_sp->GetFrameCodeAddress().GetOffset() - m_start_pc.GetOffset();
         }
-        else if (frame_sp->GetFrameCodeAddress().GetModule() == m_start_pc.GetModule())
+        else if (frame_sp->GetFrameCodeAddress().GetModulePtr() == m_start_pc.GetModulePtr())
         {
             // This means that whatever symbol we kicked up isn't really correct
             // as no should cross section boundaries... We really should NULL out
@@ -284,7 +284,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
 
     // If we don't have a Module for some reason, we're not going to find symbol/function information - just
     // stick in some reasonable defaults and hope we can unwind past this frame.
-    if (!m_current_pc.IsValid() || m_current_pc.GetModule() == NULL)
+    if (!m_current_pc.IsValid() || m_current_pc.GetModulePtr() == NULL)
     {
         if (log)
         {
@@ -397,7 +397,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
     }
 
     // We require that eSymbolContextSymbol be successfully filled in or this context is of no use to us.
-    if ((m_current_pc.GetModule()->ResolveSymbolContextForAddress (m_current_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
+    if ((m_current_pc.GetModulePtr()->ResolveSymbolContextForAddress (m_current_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
     {
         m_sym_ctx_valid = true;
     }
@@ -436,7 +436,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         temporary_pc.SetOffset(m_current_pc.GetOffset() - 1);
         m_sym_ctx.Clear();
         m_sym_ctx_valid = false;
-        if ((m_current_pc.GetModule()->ResolveSymbolContextForAddress (temporary_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
+        if ((m_current_pc.GetModulePtr()->ResolveSymbolContextForAddress (temporary_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
         {
             m_sym_ctx_valid = true;
         }
@@ -619,13 +619,13 @@ UnwindPlanSP
 RegisterContextLLDB::GetFastUnwindPlanForFrame ()
 {
     UnwindPlanSP unwind_plan_sp;
-    if (!m_current_pc.IsValid() || m_current_pc.GetModule() == NULL || m_current_pc.GetModule()->GetObjectFile() == NULL)
+    if (!m_current_pc.IsValid() || m_current_pc.GetModulePtr() == NULL || m_current_pc.GetModulePtr()->GetObjectFile() == NULL)
         return unwind_plan_sp;
 
     if (IsFrameZero ())
         return unwind_plan_sp;
 
-    FuncUnwindersSP func_unwinders_sp (m_current_pc.GetModule()->GetObjectFile()->GetUnwindTable().GetFuncUnwindersContainingAddress (m_current_pc, m_sym_ctx));
+    FuncUnwindersSP func_unwinders_sp (m_current_pc.GetModulePtr()->GetObjectFile()->GetUnwindTable().GetFuncUnwindersContainingAddress (m_current_pc, m_sym_ctx));
     if (!func_unwinders_sp)
         return unwind_plan_sp;
 
@@ -712,7 +712,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     }
 
     // No Module for the current pc, try using the architecture default unwind.
-    if (!m_current_pc.IsValid() || m_current_pc.GetModule() == NULL || m_current_pc.GetModule()->GetObjectFile() == NULL)
+    if (!m_current_pc.IsValid() || m_current_pc.GetModulePtr() == NULL || m_current_pc.GetModulePtr()->GetObjectFile() == NULL)
     {
         m_frame_type = eNormalFrame;
         return arch_default_unwind_plan_sp;
@@ -721,7 +721,7 @@ RegisterContextLLDB::GetFullUnwindPlanForFrame ()
     FuncUnwindersSP func_unwinders_sp;
     if (m_sym_ctx_valid)
     {
-        func_unwinders_sp = m_current_pc.GetModule()->GetObjectFile()->GetUnwindTable().GetFuncUnwindersContainingAddress (m_current_pc, m_sym_ctx);
+        func_unwinders_sp = m_current_pc.GetModulePtr()->GetObjectFile()->GetUnwindTable().GetFuncUnwindersContainingAddress (m_current_pc, m_sym_ctx);
     }
 
     // No FuncUnwinders available for this pc, try using architectural default unwind.

@@ -272,7 +272,7 @@ ValueObjectMemory::IsInScope ()
 Module *
 ValueObjectMemory::GetModule()
 {
-    return m_address.GetModule();
+    return m_address.GetModulePtr();
 }
 
 

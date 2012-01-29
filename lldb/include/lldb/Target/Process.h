@@ -1263,7 +1263,7 @@ protected:
 /// @brief A plug-in interface definition class for debugging a process.
 //----------------------------------------------------------------------
 class Process :
-    public ReferenceCountedBaseVirtual<Process>,
+    public std::tr1::enable_shared_from_this<Process>,
     public UserID,
     public Broadcaster,
     public ExecutionContextScope,
@@ -2769,7 +2769,7 @@ public:
     ClearBreakpointSiteByID (lldb::user_id_t break_id);
 
     lldb::break_id_t
-    CreateBreakpointSite (lldb::BreakpointLocationSP &owner,
+    CreateBreakpointSite (const lldb::BreakpointLocationSP &owner,
                           bool use_hardware);
 
     Error
@@ -2996,9 +2996,6 @@ public:
 
     virtual void
     CalculateExecutionContext (ExecutionContext &exe_ctx);
-    
-    lldb::ProcessSP
-    GetSP ();
     
     void
     SetSTDIOFileDescriptor (int file_descriptor);

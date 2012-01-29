@@ -70,7 +70,7 @@ ClangFunction::ClangFunction
     // Can't make a ClangFunction without a process.
     assert (process != NULL);
         
-    m_jit_process_sp = process->GetSP();
+    m_jit_process_sp = process->shared_from_this();
 }
 
 ClangFunction::ClangFunction
@@ -95,7 +95,7 @@ ClangFunction::ClangFunction
     // Can't make a ClangFunction without a process.
     assert (process != NULL);
         
-    m_jit_process_sp = process->GetSP();
+    m_jit_process_sp = process->shared_from_this();
 
     m_function_addr = m_function_ptr->GetAddressRange().GetBaseAddress();
     m_function_return_qual_type = m_function_ptr->GetReturnClangType();
@@ -266,7 +266,7 @@ ClangFunction::WriteFunctionWrapper (ExecutionContext &exe_ctx, Stream &errors)
     if (!jit_error.Success())
         return false;
     if (process && m_jit_alloc != LLDB_INVALID_ADDRESS)
-        m_jit_process_sp = process->GetSP();
+        m_jit_process_sp = process->shared_from_this();
 
     return true;
 }

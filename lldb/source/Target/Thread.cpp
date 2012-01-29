@@ -1030,15 +1030,6 @@ Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
                             &end);
 }
 
-lldb::ThreadSP
-Thread::GetSP ()
-{
-    // This object contains an instrusive ref count base class so we can
-    // easily make a shared pointer to this object
-    return ThreadSP(this);
-}
-
-
 void
 Thread::SettingsInitialize ()
 {

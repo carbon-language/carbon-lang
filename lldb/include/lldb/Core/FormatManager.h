@@ -154,7 +154,7 @@ public:
                 const char** matching_category = NULL,
                 FormatCategoryItems* matching_type = NULL);
     
-    typedef lldb::SharedPtr<FormatCategory>::Type SharedPointer;
+    typedef SHARED_PTR(FormatCategory) SharedPointer;
     
 private:
     SummaryNavigator::SharedPointer m_summary_nav;

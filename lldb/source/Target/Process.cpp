@@ -848,7 +848,7 @@ Process::Finalize()
     m_abi_sp.reset();
     m_os_ap.reset();
     m_dyld_ap.reset();
-    m_thread_list.Clear();
+    m_thread_list.Destroy();
     std::vector<Notifications> empty_notifications;
     m_notifications.swap(empty_notifications);
     m_image_tokens.clear();
@@ -1543,7 +1543,7 @@ Process::EnableBreakpointSiteByID (lldb::user_id_t break_id)
 }
 
 lldb::break_id_t
-Process::CreateBreakpointSite (BreakpointLocationSP &owner, bool use_hardware)
+Process::CreateBreakpointSite (const BreakpointLocationSP &owner, bool use_hardware)
 {
     const addr_t load_addr = owner->GetAddress().GetOpcodeLoadAddress (&m_target);
     if (load_addr != LLDB_INVALID_ADDRESS)
@@ -3410,12 +3410,6 @@ Process::CalculateExecutionContext (ExecutionContext &exe_ctx)
     exe_ctx.SetFramePtr (NULL);
 }
 
-lldb::ProcessSP
-Process::GetSP ()
-{
-    return GetTarget().GetProcessSP();
-}
-
 //uint32_t
 //Process::ListProcessesMatchingName (const char *name, StringList &matches, std::vector<lldb::pid_t> &pids)
 //{
@@ -3680,13 +3674,10 @@ void
 Process::UpdateInstanceName ()
 {
     Module *module = GetTarget().GetExecutableModulePointer();
-    if (module)
+    if (module && module->GetFileSpec().GetFilename())
     {
-        StreamString sstr;
-        sstr.Printf ("%s", module->GetFileSpec().GetFilename().AsCString());
-                    
         GetSettingsController()->RenameInstanceSettings (GetInstanceName().AsCString(),
-                                                         sstr.GetData());
+                                                         module->GetFileSpec().GetFilename().AsCString());
     }
 }
 

@@ -2031,7 +2031,7 @@ SymbolFileDWARF::GetFunction (DWARFCompileUnit* curr_cu, const DWARFDebugInfoEnt
         
     if (sc.function)
     {        
-        sc.module_sp = sc.function->CalculateSymbolContextModule();
+        sc.module_sp = sc.function->CalculateSymbolContextModule()->shared_from_this();
         return true;
     }
     
@@ -2449,7 +2449,7 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_privat
     if (num_matches)
     {
         SymbolContext sc;
-        sc.module_sp = m_obj_file->GetModule();
+        sc.module_sp = m_obj_file->GetModule()->shared_from_this();
         assert (sc.module_sp);
         
         DWARFDebugInfo* debug_info = DebugInfo();
@@ -2535,7 +2535,7 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
     }
 
     SymbolContext sc;
-    sc.module_sp = m_obj_file->GetModule();
+    sc.module_sp = m_obj_file->GetModule()->shared_from_this();
     assert (sc.module_sp);
     
     DWARFCompileUnit* dwarf_cu = NULL;
@@ -3149,7 +3149,7 @@ SymbolFileDWARF::FindTypes (const SymbolContext& sc,
                 if (matching_type)
                 {
                     // We found a type pointer, now find the shared pointer form our type list
-                    types.InsertUnique (TypeSP (matching_type));
+                    types.InsertUnique (matching_type->shared_from_this());
                     if (types.GetSize() >= max_matches)
                         break;
                 }
@@ -3267,7 +3267,7 @@ SymbolFileDWARF::FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_ma
         if (matching_type)
         {
             // We found a type pointer, now find the shared pointer form our type list
-            types.InsertUnique (TypeSP (matching_type));
+            types.InsertUnique (matching_type->shared_from_this());
             ++num_matches;
             if (num_matches >= max_matches)
                 break;
@@ -3282,7 +3282,6 @@ SymbolFileDWARF::FindTypes(std::vector<dw_offset_t> die_offsets, uint32_t max_ma
 size_t
 SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                                        clang::DeclContext *containing_decl_ctx,
-                                       TypeSP& type_sp,
                                        DWARFCompileUnit* dwarf_cu,
                                        const DWARFDebugInfoEntry *parent_die,
                                        bool skip_artificial,
@@ -3676,7 +3675,7 @@ SymbolFileDWARF::GetTypeForDIE (DWARFCompileUnit *curr_cu, const DWARFDebugInfoE
         else if (type_ptr != DIE_IS_BEING_PARSED)
         {
             // Grab the existing type from the master types lists
-            type_sp = type_ptr;
+            type_sp = type_ptr->shared_from_this();
         }
 
     }
@@ -4026,7 +4025,7 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry
                             
                             if (die)
                                 m_die_to_type[die] = resolved_type;
-                            type_sp = resolved_type;
+                            type_sp = resolved_type->shared_from_this();
                             break;
                         }
                     }
@@ -4148,7 +4147,7 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
                                       MakeUserID(type_cu->GetOffset()));
                         
                         m_die_to_type[die] = resolved_type;
-                        type_sp = resolved_type;
+                        type_sp = resolved_type->shared_from_this();
                         break;
                     }
                 }
@@ -4934,7 +4933,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                         bool skip_artificial = true;
                         ParseChildParameters (sc, 
                                               containing_decl_ctx,
-                                              type_sp, 
                                               dwarf_cu, 
                                               die, 
                                               skip_artificial,
@@ -5120,7 +5118,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                 type_ptr = m_die_to_type[die];
                                                 if (type_ptr)
                                                 {
-                                                    type_sp = type_ptr;
+                                                    type_sp = type_ptr->shared_from_this();
                                                     break;
                                                 }
                                             }
@@ -5343,7 +5341,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
         }
         else if (type_ptr != DIE_IS_BEING_PARSED)
         {
-            type_sp = type_ptr;
+            type_sp = type_ptr->shared_from_this();
         }
     }
     return type_sp;

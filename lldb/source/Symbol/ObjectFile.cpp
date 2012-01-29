@@ -276,14 +276,6 @@ ObjectFile::GetAddressClass (addr_t file_addr)
     return eAddressClassUnknown;
 }
 
-ObjectFileSP
-ObjectFile::GetSP ()
-{
-    // This object contains an instrusive ref count base class so we can
-    // easily make a shared pointer to this object
-    return ObjectFileSP (this);
-}
-
 size_t
 ObjectFile::GetData (off_t offset, size_t length, DataExtractor &data) const
 {

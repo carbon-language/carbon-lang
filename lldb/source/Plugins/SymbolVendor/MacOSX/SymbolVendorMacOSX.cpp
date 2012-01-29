@@ -162,7 +162,7 @@ SymbolVendorMacOSX::CreateInstance(Module* module)
             // Just create our symbol vendor using the current objfile as this is either
             // an executable with no dSYM (that we could locate), an executable with
             // a dSYM that has a UUID that doesn't match.
-            symbol_vendor->AddSymbolFileRepresentation(obj_file->GetSP());
+            symbol_vendor->AddSymbolFileRepresentation(obj_file->shared_from_this());
         }
     }
     return symbol_vendor;

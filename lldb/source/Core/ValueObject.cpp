@@ -3490,7 +3490,7 @@ ValueObject::EvaluationPoint::EvaluationPoint (ExecutionContextScope *exe_scope,
     Target *target = exe_ctx.GetTargetPtr();
     if (target != NULL)
     {
-        m_target_sp = target;
+        m_target_sp = target->shared_from_this();
         m_process_sp = exe_ctx.GetProcessSP();
         if (!m_process_sp)
             m_process_sp = target->GetProcessSP();

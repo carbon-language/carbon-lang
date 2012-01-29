@@ -177,7 +177,7 @@ AddressRange::Dump(Stream *s, Target *target, Address::DumpStyle style, Address:
     {
         if (show_module)
         {
-            Module *module = GetBaseAddress().GetModule();
+            Module *module = GetBaseAddress().GetModulePtr();
             if (module)
                 s->Printf("%s", module->GetFileSpec().GetFilename().AsCString());
         }

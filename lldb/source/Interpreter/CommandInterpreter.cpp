@@ -2559,7 +2559,7 @@ CommandInterpreter::UpdateExecutionContext (ExecutionContext *override_context)
             m_exe_ctx.SetProcessSP (process_sp);
             if (process_sp && process_sp->IsAlive() && !process_sp->IsRunning())
             {
-                ThreadSP thread_sp (process_sp->GetThreadList().GetSelectedThread().get());
+                ThreadSP thread_sp (process_sp->GetThreadList().GetSelectedThread());
                 if (thread_sp)
                 {
                     m_exe_ctx.SetThreadSP (thread_sp);

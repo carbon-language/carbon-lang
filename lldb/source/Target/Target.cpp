@@ -149,14 +149,6 @@ Target::GetProcessSP () const
     return m_process_sp;
 }
 
-lldb::TargetSP
-Target::GetSP()
-{
-    // This object contains an instrusive ref count base class so we can
-    // easily make a shared pointer to this object
-    return TargetSP(this);
-}
-
 void
 Target::Destroy()
 {
@@ -256,8 +248,7 @@ Target::CreateBreakpoint (lldb::addr_t addr, bool internal)
 BreakpointSP
 Target::CreateBreakpoint (Address &addr, bool internal)
 {
-    TargetSP target_sp = this->GetSP();
-    SearchFilterSP filter_sp(new SearchFilterForNonModuleSpecificSearches (target_sp));
+    SearchFilterSP filter_sp(new SearchFilterForNonModuleSpecificSearches (shared_from_this()));
     BreakpointResolverSP resolver_sp (new BreakpointResolverAddress (NULL, addr));
     return CreateBreakpoint (filter_sp, resolver_sp, internal);
 }
@@ -290,17 +281,16 @@ SearchFilterSP
 Target::GetSearchFilterForModule (const FileSpec *containingModule)
 {
     SearchFilterSP filter_sp;
-    lldb::TargetSP target_sp = this->GetSP();
     if (containingModule != NULL)
     {
         // TODO: We should look into sharing module based search filters
         // across many breakpoints like we do for the simple target based one
-        filter_sp.reset (new SearchFilterByModule (target_sp, *containingModule));
+        filter_sp.reset (new SearchFilterByModule (shared_from_this(), *containingModule));
     }
     else
     {
         if (m_search_filter_sp.get() == NULL)
-            m_search_filter_sp.reset (new SearchFilterForNonModuleSpecificSearches (target_sp));
+            m_search_filter_sp.reset (new SearchFilterForNonModuleSpecificSearches (shared_from_this()));
         filter_sp = m_search_filter_sp;
     }
     return filter_sp;
@@ -310,17 +300,16 @@ SearchFilterSP
 Target::GetSearchFilterForModuleList (const FileSpecList *containingModules)
 {
     SearchFilterSP filter_sp;
-    lldb::TargetSP target_sp = this->GetSP();
     if (containingModules && containingModules->GetSize() != 0)
     {
         // TODO: We should look into sharing module based search filters
         // across many breakpoints like we do for the simple target based one
-        filter_sp.reset (new SearchFilterByModuleList (target_sp, *containingModules));
+        filter_sp.reset (new SearchFilterByModuleList (shared_from_this(), *containingModules));
     }
     else
     {
         if (m_search_filter_sp.get() == NULL)
-            m_search_filter_sp.reset (new SearchFilterForNonModuleSpecificSearches (target_sp));
+            m_search_filter_sp.reset (new SearchFilterForNonModuleSpecificSearches (shared_from_this()));
         filter_sp = m_search_filter_sp;
     }
     return filter_sp;
@@ -333,17 +322,16 @@ Target::GetSearchFilterForModuleAndCUList (const FileSpecList *containingModules
         return GetSearchFilterForModuleList(containingModules);
         
     SearchFilterSP filter_sp;
-    lldb::TargetSP target_sp = this->GetSP();
     if (containingModules == NULL)
     {
         // We could make a special "CU List only SearchFilter".  Better yet was if these could be composable, 
         // but that will take a little reworking.
         
-        filter_sp.reset (new SearchFilterByModuleListAndCU (target_sp, FileSpecList(), *containingSourceFiles));
+        filter_sp.reset (new SearchFilterByModuleListAndCU (shared_from_this(), FileSpecList(), *containingSourceFiles));
     }
     else
     {
-        filter_sp.reset (new SearchFilterByModuleListAndCU (target_sp, *containingModules, *containingSourceFiles));
+        filter_sp.reset (new SearchFilterByModuleListAndCU (shared_from_this(), *containingModules, *containingSourceFiles));
     }
     return filter_sp;
 }
@@ -1073,11 +1061,12 @@ Target::ReadMemory (const Address& addr,
 
         if (load_addr == LLDB_INVALID_ADDRESS)
         {
-            if (resolved_addr.GetModule() && resolved_addr.GetModule()->GetFileSpec())
+            Module *addr_module = resolved_addr.GetModulePtr();
+            if (addr_module && addr_module->GetFileSpec())
                 error.SetErrorStringWithFormat("%s[0x%llx] can't be resolved, %s in not currently loaded", 
-                                               resolved_addr.GetModule()->GetFileSpec().GetFilename().AsCString(), 
+                                               addr_module->GetFileSpec().GetFilename().AsCString(), 
                                                resolved_addr.GetFileAddress(),
-                                               resolved_addr.GetModule()->GetFileSpec().GetFilename().AsCString());
+                                               addr_module->GetFileSpec().GetFilename().AsCString());
             else
                 error.SetErrorStringWithFormat("0x%llx can't be resolved", resolved_addr.GetFileAddress());
         }
@@ -1339,7 +1328,7 @@ Target::GetScratchClangASTContext(bool create_on_demand)
     if (m_scratch_ast_context_ap.get() == NULL && m_arch.IsValid() && create_on_demand)
     {
         m_scratch_ast_context_ap.reset (new ClangASTContext(m_arch.GetTriple().str().c_str()));
-        m_scratch_ast_source_ap.reset (new ClangASTSource(GetSP()));
+        m_scratch_ast_source_ap.reset (new ClangASTSource(shared_from_this()));
         m_scratch_ast_source_ap->InstallASTContext(m_scratch_ast_context_ap->getASTContext());
         llvm::OwningPtr<clang::ExternalASTSource> proxy_ast_source(m_scratch_ast_source_ap->CreateProxy());
         m_scratch_ast_context_ap->SetExternalSource(proxy_ast_source);
@@ -1678,7 +1667,7 @@ lldb::user_id_t
 Target::AddStopHook (Target::StopHookSP &new_hook_sp)
 {
     lldb::user_id_t new_uid = ++m_stop_hook_next_id;
-    new_hook_sp.reset (new StopHook(GetSP(), new_uid));
+    new_hook_sp.reset (new StopHook(shared_from_this(), new_uid));
     m_stop_hooks[new_uid] = new_hook_sp;
     return new_uid;
 }

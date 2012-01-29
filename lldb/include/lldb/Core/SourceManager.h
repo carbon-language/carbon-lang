@@ -79,7 +79,7 @@ public:
 
 #endif // SWIG
 
-    typedef lldb::SharedPtr<File>::Type FileSP;
+    typedef std::tr1::shared_ptr<File> FileSP;
 
 #ifndef SWIG
 

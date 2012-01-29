@@ -281,7 +281,7 @@ class SearchFilterForNonModuleSpecificSearches :
     public SearchFilter
 {
 public:
-    SearchFilterForNonModuleSpecificSearches (lldb::TargetSP &targetSP) : SearchFilter(targetSP) {};
+    SearchFilterForNonModuleSpecificSearches (const lldb::TargetSP &targetSP) : SearchFilter(targetSP) {};
     ~SearchFilterForNonModuleSpecificSearches () {}
     
     virtual bool 
@@ -311,7 +311,7 @@ public:
     /// @param[in] module
     ///    The Module that limits the search.
     //------------------------------------------------------------------
-    SearchFilterByModule (lldb::TargetSP &targetSP,
+    SearchFilterByModule (const lldb::TargetSP &targetSP,
                           const FileSpec &module);
 
     SearchFilterByModule (const SearchFilterByModule& rhs);
@@ -372,8 +372,8 @@ public:
     /// @param[in] module
     ///    The Module that limits the search.
     //------------------------------------------------------------------
-    SearchFilterByModuleList (lldb::TargetSP &targetSP,
-                          const FileSpecList &module_list);
+    SearchFilterByModuleList (const lldb::TargetSP &targetSP,
+                              const FileSpecList &module_list);
 
     SearchFilterByModuleList (const SearchFilterByModuleList& rhs);
 
@@ -433,9 +433,9 @@ public:
     /// @param[in] module
     ///    The Module that limits the search.
     //------------------------------------------------------------------
-    SearchFilterByModuleListAndCU (lldb::TargetSP &targetSP,
-                          const FileSpecList &module_list,
-                          const FileSpecList &cu_list);
+    SearchFilterByModuleListAndCU (const lldb::TargetSP &targetSP,
+                                   const FileSpecList &module_list,
+                                   const FileSpecList &cu_list);
 
     SearchFilterByModuleListAndCU (const SearchFilterByModuleListAndCU& rhs);
 

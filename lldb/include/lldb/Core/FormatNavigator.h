@@ -232,7 +232,7 @@ public:
     typedef typename MapType::mapped_type MapValueType;
     typedef typename BackEndType::CallbackType CallbackType;
         
-    typedef typename lldb::SharedPtr<FormatNavigator<KeyType, ValueType> >::Type SharedPointer;
+    typedef typename std::tr1::shared_ptr<FormatNavigator<KeyType, ValueType> > SharedPointer;
     
     friend class FormatCategory;
 

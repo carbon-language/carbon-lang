@@ -57,7 +57,7 @@ struct ValueFormat
                  bool skipptr = false,
                  bool skipref = false);
     
-    typedef lldb::SharedPtr<ValueFormat>::Type SharedPointer;
+    typedef SHARED_PTR(ValueFormat) SharedPointer;
     typedef bool(*ValueCallback)(void*, ConstString, const lldb::ValueFormatSP&);
     
     ~ValueFormat()
@@ -115,7 +115,7 @@ public:
     virtual void
     Update() = 0;
     
-    typedef lldb::SharedPtr<SyntheticChildrenFrontEnd>::Type SharedPointer;
+    typedef SHARED_PTR(SyntheticChildrenFrontEnd) SharedPointer;
 
 };
     
@@ -166,7 +166,7 @@ public:
     virtual SyntheticChildrenFrontEnd::SharedPointer
     GetFrontEnd(lldb::ValueObjectSP backend) = 0;
     
-    typedef lldb::SharedPtr<SyntheticChildren>::Type SharedPointer;
+    typedef SHARED_PTR(SyntheticChildren) SharedPointer;
     typedef bool(*SyntheticChildrenCallback)(void*, ConstString, const SyntheticChildren::SharedPointer&);
     
 };
@@ -266,7 +266,7 @@ public:
             return UINT32_MAX;
         }
         
-        typedef lldb::SharedPtr<SyntheticChildrenFrontEnd>::Type SharedPointer;
+        typedef SHARED_PTR(SyntheticChildrenFrontEnd) SharedPointer;
         
     };
     
@@ -351,7 +351,7 @@ public:
             return m_interpreter->GetIndexOfChildWithName(m_wrapper, name.GetCString());
         }
         
-        typedef lldb::SharedPtr<SyntheticChildrenFrontEnd>::Type SharedPointer;
+        typedef SHARED_PTR(SyntheticChildrenFrontEnd) SharedPointer;
         
     };
     
@@ -550,7 +550,7 @@ public:
         virtual uint32_t
         GetIndexOfChildWithName (const ConstString &name_cs);
         
-        typedef lldb::SharedPtr<SyntheticChildrenFrontEnd>::Type SharedPointer;
+        typedef SHARED_PTR(SyntheticChildrenFrontEnd) SharedPointer;
         
     };
     
@@ -628,7 +628,7 @@ struct SummaryFormat
     virtual std::string
     GetDescription() = 0;
     
-    typedef lldb::SharedPtr<SummaryFormat>::Type SharedPointer;
+    typedef SHARED_PTR(SummaryFormat) SharedPointer;
     typedef bool(*SummaryCallback)(void*, ConstString, const lldb::SummaryFormatSP&);
     typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const lldb::SummaryFormatSP&);
     
@@ -706,7 +706,7 @@ struct ScriptSummaryFormat : public SummaryFormat
     virtual std::string
     GetDescription();
     
-    typedef lldb::SharedPtr<ScriptSummaryFormat>::Type SharedPointer;
+    typedef SHARED_PTR(ScriptSummaryFormat) SharedPointer;
 
 };
 

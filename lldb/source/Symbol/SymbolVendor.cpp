@@ -58,7 +58,7 @@ SymbolVendor::FindPlugin (Module* module)
     {
         ObjectFile *objfile = module->GetObjectFile();
         if (objfile)
-            instance_ap->AddSymbolFileRepresentation(objfile->GetSP());
+            instance_ap->AddSymbolFileRepresentation(objfile->shared_from_this());
     }
     return instance_ap.release();
 }

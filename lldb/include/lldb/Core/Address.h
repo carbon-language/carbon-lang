@@ -435,7 +435,10 @@ public:
     ///     isn't resolved yet.
     //------------------------------------------------------------------
     Module *
-    GetModule () const;
+    GetModulePtr () const;
+
+    lldb::ModuleSP
+    GetModuleSP () const;
 
     //------------------------------------------------------------------
     /// Get const accessor for the section.

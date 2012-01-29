@@ -133,10 +133,10 @@ SBFunction::GetInstructions (SBTarget target)
             target->CalculateExecutionContext (exe_ctx);
             exe_ctx.SetProcessSP(target->GetProcessSP());
         }
-        Module *module = m_opaque_ptr->GetAddressRange().GetBaseAddress().GetModule();
-        if (module)
+        ModuleSP module_sp = m_opaque_ptr->GetAddressRange().GetBaseAddress().GetModuleSP();
+        if (module_sp)
         {
-            sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module->GetArchitecture(),
+            sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module_sp->GetArchitecture(),
                                                                              NULL,
                                                                              exe_ctx,
                                                                              m_opaque_ptr->GetAddressRange()));

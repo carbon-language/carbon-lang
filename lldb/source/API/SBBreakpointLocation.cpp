@@ -301,7 +301,7 @@ SBBreakpointLocation::GetBreakpoint ()
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetBreakpoint().GetTarget().GetAPIMutex());
-        *sb_bp = m_opaque_sp->GetBreakpoint ().GetSP();
+        *sb_bp = m_opaque_sp->GetBreakpoint ().shared_from_this();
     }
 
     if (log)

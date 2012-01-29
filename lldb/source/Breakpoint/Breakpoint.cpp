@@ -556,11 +556,3 @@ Breakpoint::GetFilterDescription (Stream *s)
 {
     m_filter_sp->GetDescription (s);
 }
-
-const BreakpointSP
-Breakpoint::GetSP ()
-{
-    // This object contains an instrusive ref count base class so we can
-    // easily make a shared pointer to this object
-    return BreakpointSP (this);
-}

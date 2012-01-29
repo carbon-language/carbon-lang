@@ -163,7 +163,7 @@ namespace lldb_private {
         DeallocateMemory (lldb::addr_t ptr);
         
     protected:
-        typedef lldb::SharedPtr<AllocatedBlock>::Type AllocatedBlockSP;
+        typedef std::tr1::shared_ptr<AllocatedBlock> AllocatedBlockSP;
 
         AllocatedBlockSP
         AllocatePage (uint32_t byte_size, 

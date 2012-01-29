@@ -883,7 +883,7 @@ SBValue::GetThread()
     {
         if (m_opaque_sp->GetExecutionContextScope())
         {
-            result = SBThread(m_opaque_sp->GetExecutionContextScope()->CalculateThread()->GetSP());
+            result = SBThread(m_opaque_sp->GetExecutionContextScope()->CalculateThread()->shared_from_this());
         }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -905,7 +905,7 @@ SBValue::GetFrame()
     {
         if (m_opaque_sp->GetExecutionContextScope())
         {
-            result.SetFrame (m_opaque_sp->GetExecutionContextScope()->CalculateStackFrame()->GetSP());
+            result.SetFrame (m_opaque_sp->GetExecutionContextScope()->CalculateStackFrame()->shared_from_this());
         }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));

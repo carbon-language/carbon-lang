@@ -23,13 +23,13 @@
 
 //----------------------------------------------------------------------
 // All host systems must define:
-//  liblldb::condition_t       The native condition type (or a substitute class) for conditions on the host system.
-//  liblldb::mutex_t           The native mutex type for mutex objects on the host system.
-//  liblldb::thread_t          The native thread type for spawned threads on the system
-//  liblldb::thread_arg_t      The type of the one any only thread creation argument for the host system
-//  liblldb::thread_result_t   The return type that gets returned when a thread finishes.
-//  liblldb::thread_func_t     The function prototype used to spawn a thread on the host system.
-//  liblldb::SharedPtr         The template that wraps up the host version of a reference counted pointer (like boost::shared_ptr)
+//  lldb::condition_t       The native condition type (or a substitute class) for conditions on the host system.
+//  lldb::mutex_t           The native mutex type for mutex objects on the host system.
+//  lldb::thread_t          The native thread type for spawned threads on the system
+//  lldb::thread_arg_t      The type of the one any only thread creation argument for the host system
+//  lldb::thread_result_t   The return type that gets returned when a thread finishes.
+//  lldb::thread_func_t     The function prototype used to spawn a thread on the host system.
+//  lldb::SharedPtr         The template that wraps up the host version of a reference counted pointer (like boost::shared_ptr)
 //  #define LLDB_INVALID_PROCESS_ID ...
 //  #define LLDB_INVALID_THREAD_ID ...
 //  #define LLDB_INVALID_HOST_THREAD ...
@@ -64,17 +64,17 @@ namespace lldb {
         {
             typedef lldb_private::SharingPtr<_Tp> Type;
         };
-        template<typename _Tp>
-        struct LoggingSharedPtr
-        {
-            typedef lldb_private::LoggingSharingPtr<_Tp> Type;
-        };
-    
-        template <typename _Tp>
-        struct IntrusiveSharedPtr 
-        {
-            typedef lldb_private::IntrusiveSharingPtr<_Tp> Type;
-        };
+//        template<typename _Tp>
+//        struct LoggingSharedPtr
+//        {
+//            typedef lldb_private::LoggingSharingPtr<_Tp> Type;
+//        };
+//    
+//        template <typename _Tp>
+//        struct IntrusiveSharedPtr 
+//        {
+//            typedef lldb_private::IntrusiveSharingPtr<_Tp> Type;
+//        };
 
 } // namespace lldb
 
@@ -91,6 +91,7 @@ const lldb::thread_t lldb_invalid_host_thread_const = { NULL, 0 } ;
 
 #endif
 
+#define SHARED_PTR(T)   std::tr1::shared_ptr<T>
 #define LLDB_INVALID_HOST_TIME           { 0, 0 }
 
 namespace lldb 

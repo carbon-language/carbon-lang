@@ -131,10 +131,10 @@ SBSymbol::GetInstructions (SBTarget target)
         const AddressRange *symbol_range = m_opaque_ptr->GetAddressRangePtr();
         if (symbol_range)
         {
-            Module *module = symbol_range->GetBaseAddress().GetModule();
-            if (module)
+            ModuleSP module_sp = symbol_range->GetBaseAddress().GetModuleSP();
+            if (module_sp)
             {
-                sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module->GetArchitecture (),
+                sb_instructions.SetDisassembler (Disassembler::DisassembleRange (module_sp->GetArchitecture (),
                                                                                  NULL,
                                                                                  exe_ctx,
                                                                                  *symbol_range));

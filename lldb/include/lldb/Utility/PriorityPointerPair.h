@@ -30,7 +30,7 @@ public:
     typedef T& reference_type;
     typedef T* pointer_type;
     
-    typedef typename lldb::SharedPtr<T>::Type T_SP;
+    typedef typename SHARED_PTR(T) T_SP;
     
     PriorityPointerPair() : 
     m_high(),

@@ -122,7 +122,7 @@ AddSymbolicInfo (ExecutionContextScope *exe_scope,
     }
     else
     {
-        Module *module = inst_addr.GetModule();
+        Module *module = inst_addr.GetModulePtr();
         if (module)
         {
             if (module->ResolveFileAddress(operand_value, so_addr))

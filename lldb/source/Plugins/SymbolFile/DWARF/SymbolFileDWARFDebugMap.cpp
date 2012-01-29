@@ -172,10 +172,10 @@ SymbolFileDWARFDebugMap::GetModuleByCompUnitInfo (CompileUnitInfo *comp_unit_inf
             // use the debug map, to add new sections to each .o file and
             // even though a .o file might not have changed, the sections
             // that get added to the .o file can change.
-            comp_unit_info->oso_module_sp = new Module (oso_file_spec, 
-                                                        m_obj_file->GetModule()->GetArchitecture(),
-                                                        NULL, 
-                                                        0);
+            comp_unit_info->oso_module_sp.reset (new Module (oso_file_spec, 
+                                                             m_obj_file->GetModule()->GetArchitecture(),
+                                                             NULL, 
+                                                             0));
         }
     }
     return comp_unit_info->oso_module_sp.get();

@@ -95,7 +95,7 @@ StackFrame::StackFrame (user_id_t frame_idx,
     
     if (reg_context_sp && !m_sc.target_sp)
     {
-        m_sc.target_sp = reg_context_sp->GetThread().GetProcess().GetTarget().GetSP();
+        m_sc.target_sp = reg_context_sp->GetThread().GetProcess().GetTarget().shared_from_this();
         m_flags.Set (eSymbolContextTarget);
     }
 }
@@ -129,16 +129,16 @@ StackFrame::StackFrame (user_id_t frame_idx,
     
     if (m_sc.target_sp.get() == NULL && reg_context_sp)
     {
-        m_sc.target_sp = reg_context_sp->GetThread().GetProcess().GetTarget().GetSP();
+        m_sc.target_sp = reg_context_sp->GetThread().GetProcess().GetTarget().shared_from_this();
         m_flags.Set (eSymbolContextTarget);
     }
     
-    Module *pc_module = pc_addr.GetModule();
+    Module *pc_module = pc_addr.GetModulePtr();
     if (m_sc.module_sp.get() == NULL || m_sc.module_sp.get() != pc_module)
     {
         if (pc_module)
         {
-            m_sc.module_sp = pc_module;
+            m_sc.module_sp = pc_module->shared_from_this();
             m_flags.Set (eSymbolContextModule);
         }
         else
@@ -218,7 +218,7 @@ StackFrame::GetFrameCodeAddress()
                 Module *module = section->GetModule();
                 if (module)
                 {
-                    m_sc.module_sp = module;
+                    m_sc.module_sp = module->shared_from_this();
                     if (m_sc.module_sp)
                         m_flags.Set(eSymbolContextModule);
                 }
@@ -417,7 +417,7 @@ StackFrame::GetSymbolContext (uint32_t resolve_scope)
         // If the target was requested add that:
         if (m_sc.target_sp.get() == NULL)
         {
-            m_sc.target_sp = CalculateProcess()->GetTarget().GetSP();
+            m_sc.target_sp = CalculateProcess()->GetTarget().shared_from_this();
             if (m_sc.target_sp)
                 resolved |= eSymbolContextTarget;
         }
@@ -1244,16 +1244,6 @@ StackFrame::HasCachedData () const
         return true;
     return false;
 }
-
-StackFrameSP
-StackFrame::GetSP ()
-{
-    // This object contains an instrusive ref count base class so we can
-    // easily make a shared pointer to this object
-    return StackFrameSP (this);
-}
-
-
 
 bool
 StackFrame::GetStatus (Stream& strm,

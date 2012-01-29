@@ -411,7 +411,7 @@ SymbolFileSymtab::FindTypes (const lldb_private::SymbolContext& sc,
         
         Declaration decl;
         
-        lldb::TypeSP type(new Type (iter->second,
+        lldb::TypeSP type(new Type (match->value,
                                     this,
                                     name,
                                     0,      // byte_size - don't change this from 0, we currently use that to identify these "synthetic" ObjC class types.

@@ -251,7 +251,7 @@ private:
 
 
 class Debugger :
-    public ReferenceCountedBaseVirtual<Debugger>,
+    public std::tr1::enable_shared_from_this<Debugger>,
     public UserID,
     public DebuggerInstanceSettings
 {
@@ -314,9 +314,6 @@ public:
     ~Debugger ();
     
     void Clear();
-
-    lldb::DebuggerSP
-    GetSP ();
 
     bool
     GetAsyncExecution ();

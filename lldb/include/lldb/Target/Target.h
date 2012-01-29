@@ -246,7 +246,7 @@ protected:
 // Target
 //----------------------------------------------------------------------
 class Target :
-    public ReferenceCountedBaseVirtual<Target>,
+    public std::tr1::enable_shared_from_this<Target>,
     public Broadcaster,
     public ExecutionContextScope,
     public TargetInstanceSettings
@@ -340,9 +340,6 @@ public:
     const lldb::ProcessSP &
     GetProcessSP () const;
 
-    lldb::TargetSP
-    GetSP();
-    
     void
     Destroy();
 
@@ -912,7 +909,7 @@ public:
         StopHook (lldb::TargetSP target_sp, lldb::user_id_t uid);
         friend class Target;
     };
-    typedef lldb::SharedPtr<StopHook>::Type StopHookSP;
+    typedef SHARED_PTR(StopHook) StopHookSP;
     
     // Add an empty stop hook to the Target's stop hook list, and returns a shared pointer to it in new_hook.  
     // Returns the id of the new hook.        

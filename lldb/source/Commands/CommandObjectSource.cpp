@@ -468,7 +468,7 @@ public:
                     {
                         const bool show_inlines = true;
                         m_breakpoint_locations.Reset (last_file_sp->GetFileSpec(), 0, show_inlines);
-                        SearchFilter target_search_filter (target->GetSP());
+                        SearchFilter target_search_filter (target->shared_from_this());
                         target_search_filter.Search (m_breakpoint_locations);
                     }
                 }
@@ -570,7 +570,7 @@ public:
                     {
                         const bool show_inlines = true;
                         m_breakpoint_locations.Reset (*sc.comp_unit, 0, show_inlines);
-                        SearchFilter target_search_filter (target->GetSP());
+                        SearchFilter target_search_filter (target->shared_from_this());
                         target_search_filter.Search (m_breakpoint_locations);
                     }
                     else

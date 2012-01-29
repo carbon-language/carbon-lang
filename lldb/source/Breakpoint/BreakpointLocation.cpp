@@ -149,11 +149,10 @@ BreakpointLocation::SetCondition (const char *condition)
 ThreadPlan *
 BreakpointLocation::GetThreadPlanToTestCondition (ExecutionContext &exe_ctx, Stream &error)
 {
-    lldb::BreakpointLocationSP this_sp(this);
     if (m_options_ap.get())
-        return m_options_ap->GetThreadPlanToTestCondition (exe_ctx, this_sp, error);
+        return m_options_ap->GetThreadPlanToTestCondition (exe_ctx, shared_from_this(), error);
     else
-        return m_owner.GetThreadPlanToTestCondition (exe_ctx, this_sp, error);
+        return m_owner.GetThreadPlanToTestCondition (exe_ctx, shared_from_this(), error);
 }
 
 const char *
@@ -259,9 +258,7 @@ BreakpointLocation::ResolveBreakpointSite ()
     if (m_owner.GetTarget().GetSectionLoadList().IsEmpty())
         return false;
 
-    BreakpointLocationSP this_sp(this);
-
-    lldb::break_id_t new_id = process->CreateBreakpointSite (this_sp, false);
+    lldb::break_id_t new_id = process->CreateBreakpointSite (shared_from_this(), false);
 
     if (new_id == LLDB_INVALID_BREAK_ID)
     {

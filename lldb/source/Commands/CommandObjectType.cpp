@@ -75,7 +75,7 @@ public:
     {
     }
     
-    typedef lldb::SharedPtr<ScriptAddOptions>::Type SharedPointer;
+    typedef SHARED_PTR(ScriptAddOptions) SharedPointer;
     
 };
 
@@ -108,7 +108,7 @@ public:
     {
     }
     
-    typedef lldb::SharedPtr<SynthAddOptions>::Type SharedPointer;
+    typedef SHARED_PTR(SynthAddOptions) SharedPointer;
     
 };
 

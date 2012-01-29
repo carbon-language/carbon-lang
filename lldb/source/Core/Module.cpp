@@ -224,7 +224,7 @@ Module::ParseAllDebugSymbols()
         return;
 
     SymbolContext sc;
-    sc.module_sp = this;
+    sc.module_sp = shared_from_this();
     uint32_t cu_idx;
     SymbolVendor *symbols = GetSymbolVendor ();
 
@@ -258,7 +258,7 @@ Module::ParseAllDebugSymbols()
 void
 Module::CalculateSymbolContext(SymbolContext* sc)
 {
-    sc->module_sp = this;
+    sc->module_sp = shared_from_this();
 }
 
 Module *
@@ -328,7 +328,7 @@ Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve
     {
         // If the section offset based address resolved itself, then this
         // is the right module.
-        sc.module_sp = this;
+        sc.module_sp = shared_from_this();
         resolved_flags |= eSymbolContextModule;
 
         // Resolve the compile unit, function, block, line table or line
@@ -430,7 +430,7 @@ Module::FindCompileUnits (const FileSpec &path,
     const uint32_t start_size = sc_list.GetSize();
     const uint32_t num_compile_units = GetNumCompileUnits();
     SymbolContext sc;
-    sc.module_sp = this;
+    sc.module_sp = shared_from_this();
     const bool compare_directory = path.GetDirectory();
     for (uint32_t i=0; i<num_compile_units; ++i)
     {

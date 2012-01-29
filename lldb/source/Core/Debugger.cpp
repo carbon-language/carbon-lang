@@ -263,14 +263,6 @@ Debugger::Destroy (DebuggerSP &debugger_sp)
 }
 
 DebuggerSP
-Debugger::GetSP ()
-{
-    // This object contains an instrusive ref count base class so we can
-    // easily make a shared pointer to this object
-    return DebuggerSP (this);
-}
-
-DebuggerSP
 Debugger::FindDebuggerWithInstanceName (const ConstString &instance_name)
 {
     DebuggerSP debugger_sp;

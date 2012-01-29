@@ -55,7 +55,7 @@ GetByteOrderAndAddressSize (ExecutionContextScope *exe_scope, const Address &add
 
     if (byte_order == eByteOrderInvalid || addr_size == 0)
     {
-        Module *module = address.GetModule();
+        Module *module = address.GetModulePtr();
         if (module)
         {
             byte_order = module->GetArchitecture().GetByteOrder();
@@ -118,7 +118,7 @@ ReadAddress (ExecutionContextScope *exe_scope, const Address &address, uint32_t 
         {
             // If we were not running, yet able to read an integer, we must
             // have a module
-            Module *module = address.GetModule();
+            Module *module = address.GetModulePtr();
             assert (module);
             if (module->ResolveFileAddress(deref_addr, deref_so_addr))
                 return true;
@@ -248,11 +248,24 @@ Address::ResolveAddressUsingFileSections (addr_t addr, const SectionList *sectio
 }
 
 Module *
-Address::GetModule () const
+Address::GetModulePtr () const
 {
     if (m_section)
         return m_section->GetModule();
     return NULL;
+}
+
+ModuleSP
+Address::GetModuleSP () const
+{
+    lldb::ModuleSP module_sp;
+    if (m_section)
+    {
+        Module *module = m_section->GetModule();
+        if (module)
+            module_sp = module->shared_from_this();
+    }
+    return module_sp;
 }
 
 addr_t
@@ -434,7 +447,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
             }
 
             uint32_t pointer_size = 4;
-            Module *module = GetModule();
+            Module *module = GetModulePtr();
             if (target)
                 pointer_size = target->GetArchitecture().GetAddressByteSize();
             else if (module)
@@ -670,7 +683,7 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     case DumpStyleDetailedSymbolContext:
         if (IsSectionOffset())
         {
-            Module *module = GetModule();
+            Module *module = GetModulePtr();
             if (module)
             {
                 SymbolContext sc;
@@ -738,7 +751,7 @@ Address::CalculateSymbolContext (SymbolContext *sc, uint32_t resolve_scope) cons
         Module *address_module = m_section->GetModule();
         if (address_module)
         {
-            sc->module_sp = address_module;
+            sc->module_sp = address_module->shared_from_this();
             if (sc->module_sp)
                 return sc->module_sp->ResolveSymbolContextForAddress (*this, resolve_scope, *sc);
         }
@@ -760,7 +773,7 @@ Address::CalculateSymbolContextCompileUnit () const
     if (m_section)
     {
         SymbolContext sc;
-        sc.module_sp = m_section->GetModule();
+        sc.module_sp = m_section->GetModule()->shared_from_this();
         if (sc.module_sp)
         {
             sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextCompUnit, sc);
@@ -776,7 +789,7 @@ Address::CalculateSymbolContextFunction () const
     if (m_section)
     {
         SymbolContext sc;
-        sc.module_sp = m_section->GetModule();
+        sc.module_sp = m_section->GetModule()->shared_from_this();
         if (sc.module_sp)
         {
             sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextFunction, sc);
@@ -792,7 +805,7 @@ Address::CalculateSymbolContextBlock () const
     if (m_section)
     {
         SymbolContext sc;
-        sc.module_sp = m_section->GetModule();
+        sc.module_sp = m_section->GetModule()->shared_from_this();
         if (sc.module_sp)
         {
             sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextBlock, sc);
@@ -808,7 +821,7 @@ Address::CalculateSymbolContextSymbol () const
     if (m_section)
     {
         SymbolContext sc;
-        sc.module_sp = m_section->GetModule();
+        sc.module_sp = m_section->GetModule()->shared_from_this();
         if (sc.module_sp)
         {
             sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextSymbol, sc);
@@ -824,7 +837,7 @@ Address::CalculateSymbolContextLineEntry (LineEntry &line_entry) const
     if (m_section)
     {
         SymbolContext sc;
-        sc.module_sp = m_section->GetModule();
+        sc.module_sp = m_section->GetModule()->shared_from_this();
         if (sc.module_sp)
         {
             sc.module_sp->ResolveSymbolContextForAddress (*this, eSymbolContextLineEntry, sc);
@@ -868,8 +881,8 @@ Address::CompareLoadAddress (const Address& a, const Address& b, Target *target)
 int
 Address::CompareModulePointerAndOffset (const Address& a, const Address& b)
 {
-    Module *a_module = a.GetModule ();
-    Module *b_module = b.GetModule ();
+    Module *a_module = a.GetModulePtr ();
+    Module *b_module = b.GetModulePtr ();
     if (a_module < b_module)
         return -1;
     if (a_module > b_module)
@@ -913,8 +926,8 @@ Address::MemorySize () const
 bool
 lldb_private::operator< (const Address& lhs, const Address& rhs)
 {
-    Module *lhs_module = lhs.GetModule();
-    Module *rhs_module = rhs.GetModule();    
+    Module *lhs_module = lhs.GetModulePtr();
+    Module *rhs_module = rhs.GetModulePtr();    
     if (lhs_module == rhs_module)
     {
         // Addresses are in the same module, just compare the file addresses
@@ -931,8 +944,8 @@ lldb_private::operator< (const Address& lhs, const Address& rhs)
 bool
 lldb_private::operator> (const Address& lhs, const Address& rhs)
 {
-    Module *lhs_module = lhs.GetModule();
-    Module *rhs_module = rhs.GetModule();    
+    Module *lhs_module = lhs.GetModulePtr();
+    Module *rhs_module = rhs.GetModulePtr();    
     if (lhs_module == rhs_module)
     {
         // Addresses are in the same module, just compare the file addresses
@@ -987,7 +1000,7 @@ Address::ResolveLinkedAddress ()
 AddressClass
 Address::GetAddressClass () const
 {
-    Module *module = GetModule();
+    Module *module = GetModulePtr();
     if (module)
     {
         ObjectFile *obj_file = module->GetObjectFile();

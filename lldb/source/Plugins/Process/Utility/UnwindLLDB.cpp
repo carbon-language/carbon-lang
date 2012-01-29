@@ -69,10 +69,10 @@ UnwindLLDB::AddFirstFrame ()
 {
     // First, set up the 0th (initial) frame
     CursorSP first_cursor_sp(new Cursor ());
-    RegisterContextLLDBSharedPtr reg_ctx_sp (new RegisterContextLLDB (m_thread, 
-                                                                        RegisterContextLLDBSharedPtr(), 
-                                                                        first_cursor_sp->sctx, 
-                                                                        0, *this));
+    RegisterContextLLDBSP reg_ctx_sp (new RegisterContextLLDB (m_thread, 
+                                                               RegisterContextLLDBSP(), 
+                                                               first_cursor_sp->sctx, 
+                                                               0, *this));
     if (reg_ctx_sp.get() == NULL)
         return false;
     
@@ -87,7 +87,7 @@ UnwindLLDB::AddFirstFrame ()
 
     // Everything checks out, so release the auto pointer value and let the
     // cursor own it in its shared pointer
-    first_cursor_sp->reg_ctx = reg_ctx_sp;
+    first_cursor_sp->reg_ctx_lldb_sp = reg_ctx_sp;
     m_frames.push_back (first_cursor_sp);
     return true;
 }
@@ -104,10 +104,11 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
         return false;
 
     uint32_t cur_idx = m_frames.size ();
-    RegisterContextLLDBSharedPtr reg_ctx_sp(new RegisterContextLLDB (m_thread, 
-                                                                       m_frames[cur_idx - 1]->reg_ctx, 
-                                                                       cursor_sp->sctx, 
-                                                                       cur_idx, *this));
+    RegisterContextLLDBSP reg_ctx_sp(new RegisterContextLLDB (m_thread, 
+                                                              m_frames[cur_idx - 1]->reg_ctx_lldb_sp, 
+                                                              cursor_sp->sctx, 
+                                                              cur_idx, 
+                                                              *this));
     if (reg_ctx_sp.get() == NULL)
         return false;
 
@@ -171,7 +172,7 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
             }
         }
     }
-    cursor_sp->reg_ctx = reg_ctx_sp;
+    cursor_sp->reg_ctx_lldb_sp = reg_ctx_sp;
     m_frames.push_back (cursor_sp);
     return true;
 }
@@ -218,21 +219,27 @@ UnwindLLDB::DoCreateRegisterContextForFrame (StackFrame *frame)
 
     ABI *abi = m_thread.GetProcess().GetABI().get();
 
-    while (idx >= m_frames.size() && AddOneMoreFrame (abi))
-        ;
+    while (idx >= m_frames.size())
+    {
+        if (!AddOneMoreFrame (abi))
+            break;
+    }
 
-    if (idx < m_frames.size ())
-        reg_ctx_sp = m_frames[idx]->reg_ctx;
+    const uint32_t num_frames = m_frames.size();
+    if (idx < num_frames)
+    {
+        Cursor *frame_cursor = m_frames[idx].get();
+        reg_ctx_sp = frame_cursor->reg_ctx_lldb_sp->shared_from_this();
+    }
     return reg_ctx_sp;
 }
 
-UnwindLLDB::RegisterContextLLDBSharedPtr
+UnwindLLDB::RegisterContextLLDBSP
 UnwindLLDB::GetRegisterContextForFrameNum (uint32_t frame_num)
 {
-    RegisterContextLLDBSharedPtr reg_ctx_sp;
-    if (frame_num >= m_frames.size())
-        return reg_ctx_sp;
-    reg_ctx_sp = m_frames[frame_num]->reg_ctx;
+    RegisterContextLLDBSP reg_ctx_sp;
+    if (frame_num < m_frames.size())
+        reg_ctx_sp = m_frames[frame_num]->reg_ctx_lldb_sp;
     return reg_ctx_sp;
 }
 
@@ -244,7 +251,7 @@ UnwindLLDB::SearchForSavedLocationForRegister (uint32_t lldb_regnum, lldb_privat
         return false;
     while (frame_num >= 0)
     {
-        if (m_frames[frame_num]->reg_ctx->SavedLocationForRegister (lldb_regnum, regloc, false))
+        if (m_frames[frame_num]->reg_ctx_lldb_sp->SavedLocationForRegister (lldb_regnum, regloc, false))
             return true;
         frame_num--;
     }

@@ -1329,7 +1329,7 @@ LookupAddressInModule
         {
             if (!target->GetSectionLoadList().ResolveLoadAddress (addr, so_addr))
                 return false;
-            else if (so_addr.GetModule() != module)
+            else if (so_addr.GetModulePtr() != module)
                 return false;
         }
         else
@@ -1643,7 +1643,7 @@ FindModulesByName (Target *target,
             {
                 if (FileSpec::Equal(module->GetFileSpec(), module_file_spec, true))
                 {
-                    module_sp = module;
+                    module_sp = module->shared_from_this();
                     module_list.AppendIfNeeded(module_sp);
                 }
             }
@@ -2757,7 +2757,7 @@ public:
                     Address module_address;
                     if (module_address.SetLoadAddress(m_options.m_module_addr, target))
                     {
-                        Module *module = module_address.GetModule();
+                        Module *module = module_address.GetModulePtr();
                         if (module)
                         {
                             PrintModule (strm, module);
@@ -2800,7 +2800,7 @@ public:
                     if (use_global_module_list)
                     {
                         module = Module::GetAllocatedModuleAtIndex(image_idx);
-                        module_sp = module;
+                        module_sp = module->shared_from_this();
                     }
                     else
                     {
@@ -2874,7 +2874,7 @@ protected:
                     case 'r':
                         {
                             uint32_t ref_count = 0;
-                            ModuleSP module_sp (module);
+                            ModuleSP module_sp (module->shared_from_this());
                             if (module_sp)
                             {
                                 // Take one away to make sure we don't count our local "module_sp"

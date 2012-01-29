@@ -74,7 +74,7 @@ namespace lldb_private {
 /// not by the breakpoint.
 //----------------------------------------------------------------------
 class Breakpoint:
-    public ReferenceCountedBase<Breakpoint>,
+    public std::tr1::enable_shared_from_this<Breakpoint>,
     public Stoppoint
 {
 public:
@@ -285,10 +285,6 @@ public:
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
     GetLocationAtIndex (uint32_t index);
-
-
-    const lldb::BreakpointSP
-    GetSP ();
 
     //------------------------------------------------------------------
     // The next section deals with various breakpoint options.

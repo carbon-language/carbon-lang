@@ -44,7 +44,7 @@
 namespace lldb_private {
 
 class Module :
-    public ReferenceCountedBaseVirtual<Module>,
+    public std::tr1::enable_shared_from_this<Module>,
     public SymbolContextScope
 {
 public:

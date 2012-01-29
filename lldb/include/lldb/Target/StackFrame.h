@@ -27,7 +27,7 @@
 namespace lldb_private {
 
 class StackFrame :
-    public ReferenceCountedBaseVirtual<StackFrame>,
+    public std::tr1::enable_shared_from_this<StackFrame>,
     public ExecutionContextScope
 {
 public:
@@ -166,9 +166,6 @@ public:
     virtual void
     CalculateExecutionContext (ExecutionContext &exe_ctx);
     
-    lldb::StackFrameSP
-    GetSP ();
-
     bool
     GetStatus (Stream &strm,
                bool show_frame_info,

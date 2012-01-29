@@ -243,7 +243,7 @@ Variable::LocationIsValidForAddress (const Address &address)
     {
         SymbolContext sc;
         CalculateSymbolContext(&sc);
-        if (sc.module_sp.get() == address.GetModule())
+        if (sc.module_sp.get() == address.GetModulePtr())
         {
             // Is the variable is described by a single location?
             if (!m_location.IsLocationList())
@@ -480,7 +480,7 @@ Variable::DumpLocationForAddress (Stream *s, const Address &address)
     {
         SymbolContext sc;
         CalculateSymbolContext(&sc);
-        if (sc.module_sp.get() == address.GetModule())
+        if (sc.module_sp.get() == address.GetModulePtr())
         {
             ABI *abi = NULL;
             if (m_owner_scope)

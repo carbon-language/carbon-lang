@@ -1727,7 +1727,7 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
         return false;
     }
     
-    lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().GetSP();
+    lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().shared_from_this();
 
     {
         Locker py_lock(this);
@@ -1837,7 +1837,7 @@ ScriptInterpreterPython::RunScriptBasedCommand(const char* impl_function,
         return false;
     }
     
-    lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().GetSP();
+    lldb::DebuggerSP debugger_sp = m_interpreter.GetDebugger().shared_from_this();
 
     if (!debugger_sp.get())
     {

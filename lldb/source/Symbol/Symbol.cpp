@@ -267,7 +267,7 @@ Symbol::GetPrologueByteSize ()
         if (!m_type_data_resolved)
         {
             m_type_data_resolved = true;
-            Module *module = m_addr_range.GetBaseAddress().GetModule();
+            Module *module = m_addr_range.GetBaseAddress().GetModulePtr();
             SymbolContext sc;
             if (module && module->ResolveSymbolContextForAddress (m_addr_range.GetBaseAddress(),
                                                                   eSymbolContextLineEntry,
@@ -350,15 +350,9 @@ Symbol::CalculateSymbolContext (SymbolContext *sc)
     sc->symbol = this;
     const AddressRange *range = GetAddressRangePtr();
     if (range)
-    {   
-        Module *module = range->GetBaseAddress().GetModule ();
-        if (module)
-        {
-            sc->module_sp = module;
-            return;
-        }
-    }
-    sc->module_sp.reset();
+        sc->module_sp = range->GetBaseAddress().GetModuleSP ();
+    else
+        sc->module_sp.reset();
 }
 
 Module *
@@ -366,7 +360,7 @@ Symbol::CalculateSymbolContextModule ()
 {
     const AddressRange *range = GetAddressRangePtr();
     if (range)
-        return range->GetBaseAddress().GetModule ();
+        return range->GetBaseAddress().GetModulePtr ();
     return NULL;
 }
 
@@ -384,7 +378,7 @@ Symbol::DumpSymbolContext (Stream *s)
     const AddressRange *range = GetAddressRangePtr();
     if (range)
     {   
-        Module *module = range->GetBaseAddress().GetModule ();
+        Module *module = range->GetBaseAddress().GetModulePtr ();
         if (module)
         {
             dumped_module = true;

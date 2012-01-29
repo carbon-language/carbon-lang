@@ -119,7 +119,7 @@ ThreadPlanTestCondition::ShouldStop (Event *event_ptr)
     else
     {
         // Now we have to change the event to a breakpoint event and mark it up appropriately:
-        Process::ProcessEventData *new_data = new Process::ProcessEventData (m_thread.GetProcess().GetSP(), eStateStopped);
+        Process::ProcessEventData *new_data = new Process::ProcessEventData (m_thread.GetProcess().shared_from_this(), eStateStopped);
         event_ptr->SetData(new_data);
         event_ptr->SetType(Process::eBroadcastBitStateChanged);
         SetStopInfo(StopInfo::CreateStopReasonWithBreakpointSiteID (m_thread, 

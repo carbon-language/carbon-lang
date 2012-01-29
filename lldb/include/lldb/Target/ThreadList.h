@@ -59,6 +59,9 @@ public:
     void
     Clear();
 
+    void
+    Destroy();
+
     // Note that "idx" is not the same as the "thread_index". It is a zero
     // based index to accessing the current threads, whereas "thread_index"
     // is a unique index assigned

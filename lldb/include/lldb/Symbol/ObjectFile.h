@@ -50,7 +50,7 @@ namespace lldb_private {
 /// this abstract class.
 //----------------------------------------------------------------------
 class ObjectFile:
-    public ReferenceCountedBaseVirtual<ObjectFile>,
+    public std::tr1::enable_shared_from_this<ObjectFile>,
     public PluginInterface,
     public ModuleChild
 {
@@ -100,9 +100,6 @@ public:
     virtual
     ~ObjectFile();
     
-    lldb::ObjectFileSP
-    GetSP ();
-
     //------------------------------------------------------------------
     /// Dump a description of this object to a Stream.
     ///

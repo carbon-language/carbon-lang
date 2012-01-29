@@ -69,11 +69,11 @@ protected:
     lldb::RegisterContextSP
     DoCreateRegisterContextForFrame (lldb_private::StackFrame *frame);
 
-    typedef lldb::SharedPtr<lldb_private::RegisterContextLLDB>::Type RegisterContextLLDBSharedPtr;
+    typedef SHARED_PTR(RegisterContextLLDB) RegisterContextLLDBSP;
 
     // Needed to retrieve the "next" frame (e.g. frame 2 needs to retrieve frame 1's RegisterContextLLDB)
     // The RegisterContext for frame_num must already exist or this returns an empty shared pointer.
-    RegisterContextLLDBSharedPtr
+    RegisterContextLLDBSP
     GetRegisterContextForFrameNum (uint32_t frame_num);
 
     // Iterate over the RegisterContextLLDB's in our m_frames vector, look for the first one that
@@ -89,14 +89,14 @@ private:
         lldb::addr_t start_pc;  // The start address of the function/symbol for this frame - current pc if unknown
         lldb::addr_t cfa;       // The canonical frame address for this stack frame
         lldb_private::SymbolContext sctx;  // A symbol context we'll contribute to & provide to the StackFrame creation
-        RegisterContextLLDBSharedPtr reg_ctx; // These are all RegisterContextLLDB's
+        RegisterContextLLDBSP reg_ctx_lldb_sp; // These are all RegisterContextLLDB's
 
-        Cursor () : start_pc (LLDB_INVALID_ADDRESS), cfa (LLDB_INVALID_ADDRESS), sctx(), reg_ctx() { }
+        Cursor () : start_pc (LLDB_INVALID_ADDRESS), cfa (LLDB_INVALID_ADDRESS), sctx(), reg_ctx_lldb_sp() { }
     private:
         DISALLOW_COPY_AND_ASSIGN (Cursor);
     };
 
-    typedef lldb::SharedPtr<Cursor>::Type CursorSP;
+    typedef SHARED_PTR(Cursor) CursorSP;
     std::vector<CursorSP> m_frames;
 
     bool AddOneMoreFrame (ABI *abi);
