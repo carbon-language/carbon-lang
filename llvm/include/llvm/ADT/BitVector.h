@@ -318,6 +318,16 @@ public:
     return *this;
   }
 
+  // reset - Reset bits that are set in RHS. Same as *this &= ~RHS.
+  BitVector &reset(const BitVector &RHS) {
+    unsigned ThisWords = NumBitWords(size());
+    unsigned RHSWords  = NumBitWords(RHS.size());
+    unsigned i;
+    for (i = 0; i != std::min(ThisWords, RHSWords); ++i)
+      Bits[i] &= ~RHS.Bits[i];
+    return *this;
+  }
+
   BitVector &operator|=(const BitVector &RHS) {
     if (size() < RHS.size())
       resize(RHS.size());
