@@ -79,6 +79,14 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
+    
+    %pythoncode %{
+        __swig_getmethods__["file"] = GetFileSpec
+        if _newclass: x = property(GetFileSpec, None)
+        
+        __swig_getmethods__["num_line_entries"] = GetNumLineEntries
+        if _newclass: x = property(GetNumLineEntries, None)
+    %}
 };
 
 } // namespace lldb

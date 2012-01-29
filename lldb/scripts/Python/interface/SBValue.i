@@ -362,6 +362,82 @@ public:
     ) GetExpressionPath;
     bool
     GetExpressionPath (lldb::SBStream &description, bool qualify_cxx_base_classes);
+    
+    %pythoncode %{
+
+        __swig_getmethods__["name"] = GetName
+        if _newclass: x = property(GetName, None)
+
+        __swig_getmethods__["type"] = GetType
+        if _newclass: x = property(GetType, None)
+
+        __swig_getmethods__["size"] = GetByteSize
+        if _newclass: x = property(GetByteSize, None)
+
+        __swig_getmethods__["name"] = GetName
+        if _newclass: x = property(GetName, None)
+
+        __swig_getmethods__["is_in_scope"] = IsInScope
+        if _newclass: x = property(IsInScope, None)
+
+        __swig_getmethods__["format"] = GetFormat
+        __swig_setmethods__["format"] = SetFormat
+        if _newclass: x = property(GetName, SetFormat)
+
+        __swig_getmethods__["value"] = GetValue
+        __swig_setmethods__["value"] = SetValueFromCString
+        if _newclass: x = property(GetValue, SetValueFromCString)
+
+        __swig_getmethods__["value_type"] = GetValueType
+        if _newclass: x = property(GetValueType, None)
+
+        __swig_getmethods__["changed"] = GetValueDidChange
+        if _newclass: x = property(GetValueDidChange, None)
+
+        __swig_getmethods__["data"] = GetData
+        if _newclass: x = property(GetData, None)
+
+        __swig_getmethods__["load_addr"] = GetLoadAddress
+        if _newclass: x = property(GetLoadAddress, None)
+
+        __swig_getmethods__["addr"] = GetAddress
+        if _newclass: x = property(GetAddress, None)
+
+        __swig_getmethods__["deref"] = Dereference
+        if _newclass: x = property(Dereference, None)
+
+        __swig_getmethods__["address_of"] = AddressOf
+        if _newclass: x = property(AddressOf, None)
+
+        __swig_getmethods__["error"] = GetError
+        if _newclass: x = property(GetError, None)
+    
+        __swig_getmethods__["summary"] = GetSummary
+        if _newclass: x = property(GetSummary, None)
+
+        __swig_getmethods__["description"] = GetObjectDescription
+        if _newclass: x = property(GetObjectDescription, None)
+
+        __swig_getmethods__["location"] = GetLocation
+        if _newclass: x = property(GetLocation, None)
+
+        __swig_getmethods__["target"] = GetTarget
+        if _newclass: x = property(GetTarget, None)
+
+        __swig_getmethods__["process"] = GetProcess
+        if _newclass: x = property(GetProcess, None)
+
+        __swig_getmethods__["thread"] = GetThread
+        if _newclass: x = property(GetThread, None)
+
+        __swig_getmethods__["frame"] = GetFrame
+        if _newclass: x = property(GetFrame, None)
+
+        __swig_getmethods__["num_children"] = GetNumChildren
+        if _newclass: x = property(GetNumChildren, None)
+
+    %}
+
 };
 
 } // namespace lldb

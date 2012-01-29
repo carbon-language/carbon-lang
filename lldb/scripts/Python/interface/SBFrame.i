@@ -217,7 +217,52 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
+    
+    %pythoncode %{
+        __swig_getmethods__["pc"] = GetPC
+        __swig_setmethods__["pc"] = SetPC
+        if _newclass: x = property(GetPC, SetPC)
 
+        __swig_getmethods__["fp"] = GetFP
+        if _newclass: x = property(GetFP, None)
+
+        __swig_getmethods__["sp"] = GetSP
+        if _newclass: x = property(GetSP, None)
+
+        __swig_getmethods__["module"] = GetModule
+        if _newclass: x = property(GetModule, None)
+
+        __swig_getmethods__["compile_unit"] = GetCompileUnit
+        if _newclass: x = property(GetCompileUnit, None)
+
+        __swig_getmethods__["function"] = GetFunction
+        if _newclass: x = property(GetFunction, None)
+
+        __swig_getmethods__["symbol"] = GetSymbol
+        if _newclass: x = property(GetSymbol, None)
+
+        __swig_getmethods__["block"] = GetBlock
+        if _newclass: x = property(GetBlock, None)
+
+        __swig_getmethods__["is_inlined"] = IsInlined
+        if _newclass: x = property(IsInlined, None)
+
+        __swig_getmethods__["name"] = GetFunctionName
+        if _newclass: x = property(GetFunctionName, None)
+
+        __swig_getmethods__["line_entry"] = GetLineEntry
+        if _newclass: x = property(GetLineEntry, None)
+
+        __swig_getmethods__["thread"] = GetThread
+        if _newclass: x = property(GetThread, None)
+
+        __swig_getmethods__["disassembly"] = Disassemble
+        if _newclass: x = property(Disassemble, None)
+
+        __swig_getmethods__["idx"] = GetFrameID
+        if _newclass: x = property(GetFrameID, None)
+
+    %}
 };
 
 } // namespace lldb

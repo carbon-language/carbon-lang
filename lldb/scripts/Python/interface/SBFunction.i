@@ -76,6 +76,25 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
+    
+    %pythoncode %{
+        __swig_getmethods__["name"] = GetName
+        if _newclass: x = property(GetName, None)
+        
+        __swig_getmethods__["mangled"] = GetMangledName
+        if _newclass: x = property(GetMangledName, None)
+        
+        __swig_getmethods__["start_addr"] = GetStartAddress
+        if _newclass: x = property(GetStartAddress, None)
+        
+        __swig_getmethods__["end_addr"] = GetEndAddress
+        if _newclass: x = property(GetEndAddress, None)
+        
+        __swig_getmethods__["prologue_size"] = GetPrologueByteSize
+        if _newclass: x = property(GetPrologueByteSize, None)
+        
+    %}
+
 };
 
 } // namespace lldb

@@ -102,6 +102,25 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
+    
+    %pythoncode %{
+        __swig_getmethods__["value"] = GetError
+        if _newclass: x = property(GetError, None)
+        
+        __swig_getmethods__["fail"] = Fail
+        if _newclass: x = property(Fail, None)
+        
+        __swig_getmethods__["success"] = Success
+        if _newclass: x = property(Success, None)
+        
+        __swig_getmethods__["description"] = GetCString
+        if _newclass: x = property(GetCString, None)
+        
+        __swig_getmethods__["type"] = GetType
+        if _newclass: x = property(GetType, None)
+        
+    %}
+
 };
 
 } // namespace lldb

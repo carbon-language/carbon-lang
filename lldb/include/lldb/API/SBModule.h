@@ -73,6 +73,15 @@ public:
     bool
     SetPlatformFileSpec (const lldb::SBFileSpec &platform_file);
 
+    lldb::ByteOrder
+    GetByteOrder ();
+    
+    uint32_t
+    GetAddressByteSize();
+    
+    const char *
+    GetTriple ();
+
 #ifndef SWIG
     const uint8_t *
     GetUUIDBytes () const;

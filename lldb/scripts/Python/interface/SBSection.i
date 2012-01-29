@@ -87,6 +87,30 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
     
+    %pythoncode %{
+        __swig_getmethods__["name"] = GetName
+        if _newclass: x = property(GetName, None)
+
+        __swig_getmethods__["file_addr"] = GetFileAddress
+        if _newclass: x = property(GetFileAddress, None)
+
+        __swig_getmethods__["size"] = GetByteSize
+        if _newclass: x = property(GetByteSize, None)
+
+        __swig_getmethods__["file_offset"] = GetFileOffset
+        if _newclass: x = property(GetFileOffset, None)
+
+        __swig_getmethods__["file_size"] = GetFileByteSize
+        if _newclass: x = property(GetFileByteSize, None)
+
+        __swig_getmethods__["data"] = GetSectionData
+        if _newclass: x = property(GetSectionData, None)
+
+        __swig_getmethods__["type"] = GetSectionType
+        if _newclass: x = property(GetSectionType, None)
+
+    %}
+
 private:
 
     std::auto_ptr<lldb_private::SectionImpl> m_opaque_ap;

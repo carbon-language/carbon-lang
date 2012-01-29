@@ -37,6 +37,20 @@ public:
     uint64_t
     GetOffsetInBits();
     
+    %pythoncode %{
+        __swig_getmethods__["name"] = GetName
+        if _newclass: x = property(GetName, None)
+        
+        __swig_getmethods__["type"] = GetType
+        if _newclass: x = property(GetType, None)
+        
+        __swig_getmethods__["byte_offset"] = GetOffsetInBytes
+        if _newclass: x = property(GetOffsetInBytes, None)
+        
+        __swig_getmethods__["bit_offset"] = GetOffsetInBits
+        if _newclass: x = property(GetOffsetInBits, None)
+    %}    
+
 protected:
     std::auto_ptr<lldb_private::TypeMemberImpl> m_opaque_ap;
 };
@@ -174,6 +188,33 @@ public:
     
     lldb::TypeClass
     GetTypeClass ();
+    
+    %pythoncode %{
+        __swig_getmethods__["name"] = GetName
+        if _newclass: x = property(GetName, None)
+        
+        __swig_getmethods__["size"] = GetByteSize
+        if _newclass: x = property(GetByteSize, None)
+        
+        __swig_getmethods__["is_pointer"] = IsPointerType
+        if _newclass: x = property(IsPointerType, None)
+        
+        __swig_getmethods__["is_reference"] = IsReferenceType
+        if _newclass: x = property(IsReferenceType, None)
+
+        __swig_getmethods__["num_fields"] = GetNumberOfFields
+        if _newclass: x = property(GetNumberOfFields, None)
+        
+        __swig_getmethods__["num_bases"] = GetNumberOfDirectBaseClasses
+        if _newclass: x = property(GetNumberOfDirectBaseClasses, None)
+        
+        __swig_getmethods__["num_vbases"] = GetNumberOfVirtualBaseClasses
+        if _newclass: x = property(GetNumberOfVirtualBaseClasses, None)
+        
+        __swig_getmethods__["class"] = GetTypeClass
+        if _newclass: x = property(GetTypeClass, None)
+    %}
+
 };
 
 %feature("docstring",

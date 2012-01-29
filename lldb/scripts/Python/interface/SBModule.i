@@ -236,6 +236,43 @@ public:
     FindGlobalVariables (lldb::SBTarget &target, 
                          const char *name, 
                          uint32_t max_matches);
+    
+    lldb::ByteOrder
+    GetByteOrder ();
+    
+    uint32_t
+    GetAddressByteSize();
+    
+    const char *
+    GetTriple ();
+
+    %pythoncode %{
+        __swig_getmethods__["file"] = GetFileSpec
+        if _newclass: x = property(GetFileSpec, None)
+        
+        __swig_getmethods__["platform_file"] = GetPlatformFileSpec
+        if _newclass: x = property(GetPlatformFileSpec, None)
+        
+        __swig_getmethods__["uuid"] = GetUUIDString
+        if _newclass: x = property(GetUUIDString, None)
+        
+        __swig_getmethods__["byte_order"] = GetByteOrder
+        if _newclass: x = property(GetByteOrder, None)
+        
+        __swig_getmethods__["addr_size"] = GetAddressByteSize
+        if _newclass: x = property(GetAddressByteSize, None)
+        
+        __swig_getmethods__["triple"] = GetTriple
+        if _newclass: x = property(GetTriple, None)
+
+        __swig_getmethods__["num_symbols"] = GetNumSymbols
+        if _newclass: x = property(GetNumSymbols, None)
+        
+        __swig_getmethods__["num_sections"] = GetNumSections
+        if _newclass: x = property(GetNumSections, None)
+        
+    %}
+
 };
 
 } // namespace lldb

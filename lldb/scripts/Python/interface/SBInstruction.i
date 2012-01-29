@@ -62,6 +62,19 @@ public:
     
     bool
     TestEmulation (lldb::SBStream &output_stream, const char *test_file);
+    
+    %pythoncode %{
+        __swig_getmethods__["addr"] = GetAddress
+        if _newclass: x = property(GetAddress, None)
+        
+        __swig_getmethods__["size"] = GetByteSize
+        if _newclass: x = property(GetByteSize, None)
+
+        __swig_getmethods__["is_branch"] = DoesBranch
+        if _newclass: x = property(DoesBranch, None)
+    %}
+    
+
 };
 
 } // namespace lldb

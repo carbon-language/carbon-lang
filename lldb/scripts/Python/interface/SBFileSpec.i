@@ -66,6 +66,18 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description) const;
+    
+    %pythoncode %{
+        __swig_getmethods__["basename"] = GetFilename
+        if _newclass: x = property(GetFilename, None)
+        
+        __swig_getmethods__["dirname"] = GetDirectory
+        if _newclass: x = property(GetDirectory, None)
+        
+        __swig_getmethods__["exists"] = Exists
+        if _newclass: x = property(Exists, None)
+    %}
+
 };
 
 } // namespace lldb

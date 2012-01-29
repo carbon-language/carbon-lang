@@ -475,3 +475,34 @@ SBModule::FindSection (const char *sect_name)
     return sb_section;
 }
 
+lldb::ByteOrder
+SBModule::GetByteOrder ()
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetArchitecture().GetByteOrder();
+    return eByteOrderInvalid;
+}
+
+const char *
+SBModule::GetTriple ()
+{
+    if (m_opaque_sp)
+    {
+        std::string triple (m_opaque_sp->GetArchitecture().GetTriple().str());
+        // Unique the string so we don't run into ownership issues since
+        // the const strings put the string into the string pool once and
+        // the strings never comes out
+        ConstString const_triple (triple.c_str());
+        return const_triple.GetCString();
+    }
+    return NULL;
+}
+
+uint32_t
+SBModule::GetAddressByteSize()
+{
+    if (m_opaque_sp)
+        return m_opaque_sp->GetArchitecture().GetAddressByteSize();
+    return sizeof(void*);
+}
+

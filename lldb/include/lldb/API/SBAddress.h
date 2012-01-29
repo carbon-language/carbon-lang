@@ -76,6 +76,9 @@ public:
     lldb::SBSection
     GetSection ();
 
+    lldb::addr_t
+    GetOffset ();
+
     lldb::SBModule
     GetModule ();
     

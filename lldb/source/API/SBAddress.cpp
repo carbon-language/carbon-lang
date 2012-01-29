@@ -229,6 +229,13 @@ SBAddress::GetSection ()
     return sb_section;
 }
 
+lldb::addr_t
+SBAddress::GetOffset ()
+{
+    if (m_opaque_ap.get())
+        m_opaque_ap->GetAddress().GetOffset();
+    return 0;
+}
 
 Address *
 SBAddress::operator->()

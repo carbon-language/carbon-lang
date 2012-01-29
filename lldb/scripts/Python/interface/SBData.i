@@ -133,6 +133,16 @@ public:
     bool
     SetDataFromDoubleArray (double* array, size_t array_len);
 
+    %pythoncode %{
+        __swig_getmethods__["byte_order"] = GetByteOrder
+        __swig_setmethods__["byte_order"] = SetByteOrder
+        if _newclass: x = property(GetByteOrder, SetByteOrder)
+        
+        __swig_getmethods__["size"] = GetByteSize
+        if _newclass: x = property(GetByteSize, None)
+        
+    %}
+
 };
 
 } // namespace lldb

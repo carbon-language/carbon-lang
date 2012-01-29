@@ -269,6 +269,15 @@ public:
     lldb::SBModule
     FindModule (const lldb::SBFileSpec &file_spec);
 
+    lldb::ByteOrder
+    GetByteOrder ();
+
+    uint32_t
+    GetAddressByteSize();
+
+    const char *
+    GetTriple ();
+
     //------------------------------------------------------------------
     /// Set the base load address for a module section.
     ///

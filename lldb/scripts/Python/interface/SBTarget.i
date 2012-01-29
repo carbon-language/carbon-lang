@@ -311,6 +311,15 @@ public:
     lldb::SBModule
     FindModule (const lldb::SBFileSpec &file_spec);
 
+    lldb::ByteOrder
+    GetByteOrder ();
+    
+    uint32_t
+    GetAddressByteSize();
+    
+    const char *
+    GetTriple ();
+
     lldb::SBError
     SetSectionLoadAddress (lldb::SBSection section,
                            lldb::addr_t section_base_addr);
@@ -476,6 +485,39 @@ public:
     
     bool
     GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level);
+    
+    %pythoncode %{
+        __swig_getmethods__["process"] = GetProcess
+        if _newclass: x = property(GetProcess, None)
+
+        __swig_getmethods__["executable"] = GetExecutable
+        if _newclass: x = property(GetExecutable, None)
+
+        __swig_getmethods__["debugger"] = GetDebugger
+        if _newclass: x = property(GetDebugger, None)
+
+        __swig_getmethods__["file_offset"] = GetFileOffset
+        if _newclass: x = property(GetFileOffset, None)
+
+        __swig_getmethods__["num_breakpoints"] = GetNumBreakpoints
+        if _newclass: x = property(GetNumBreakpoints, None)
+
+        __swig_getmethods__["num_watchpoints"] = GetNumWatchpoints
+        if _newclass: x = property(GetNumWatchpoints, None)
+
+        __swig_getmethods__["broadcaster"] = GetBroadcaster
+        if _newclass: x = property(GetBroadcaster, None)
+        
+        __swig_getmethods__["byte_order"] = GetByteOrder
+        if _newclass: x = property(GetByteOrder, None)
+        
+        __swig_getmethods__["addr_size"] = GetAddressByteSize
+        if _newclass: x = property(GetAddressByteSize, None)
+        
+        __swig_getmethods__["triple"] = GetTriple
+        if _newclass: x = property(GetTriple, None)
+    %}
+
 };
 
 } // namespace lldb

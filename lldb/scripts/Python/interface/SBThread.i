@@ -173,6 +173,36 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description) const;
+    
+    %pythoncode %{
+        __swig_getmethods__["id"] = GetThreadID
+        if _newclass: x = property(GetThreadID, None)
+
+        __swig_getmethods__["idx"] = GetIndexID
+        if _newclass: x = property(GetIndexID, None)
+
+        __swig_getmethods__["return_value"] = GetStopReturnValue
+        if _newclass: x = property(GetStopReturnValue, None)
+
+        __swig_getmethods__["process"] = GetProcess
+        if _newclass: x = property(GetProcess, None)
+
+        __swig_getmethods__["num_frames"] = GetNumFrames
+        if _newclass: x = property(GetNumFrames, None)
+
+        __swig_getmethods__["name"] = GetName
+        if _newclass: x = property(GetName, None)
+
+        __swig_getmethods__["queue"] = GetQueueName
+        if _newclass: x = property(GetQueueName, None)
+
+        __swig_getmethods__["stop_reason"] = GetStopReason
+        if _newclass: x = property(GetStopReason, None)
+
+        __swig_getmethods__["is_suspended"] = IsSuspended
+        if _newclass: x = property(IsSuspended, None)
+    %}
+
 };
 
 } // namespace lldb

@@ -281,6 +281,33 @@ public:
     lldb::SBError
     UnloadImage (uint32_t image_token);
 
+    %pythoncode %{
+        __swig_getmethods__["id"] = GetProcessID
+        if _newclass: x = property(GetProcessID, None)
+        
+        __swig_getmethods__["target"] = GetTarget
+        if _newclass: x = property(GetTarget, None)
+        
+        __swig_getmethods__["num_threads"] = GetNumThreads
+        if _newclass: x = property(GetNumThreads, None)
+        
+        __swig_getmethods__["selected_thread"] = GetSelectedThread
+        __swig_setmethods__["selected_thread"] = SetSelectedThread
+        if _newclass: x = property(GetSelectedThread, SetSelectedThread)
+        
+        __swig_getmethods__["state"] = GetState
+        if _newclass: x = property(GetState, None)
+        
+        __swig_getmethods__["exit_state"] = GetExitStatus
+        if _newclass: x = property(GetExitStatus, None)
+        
+        __swig_getmethods__["exit_description"] = GetExitDescription
+        if _newclass: x = property(GetExitDescription, None)
+        
+        __swig_getmethods__["broadcaster"] = GetBroadcaster
+        if _newclass: x = property(GetBroadcaster, None)
+    %}
+
 };
 
 }  // namespace lldb

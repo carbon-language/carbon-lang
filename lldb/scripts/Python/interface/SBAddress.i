@@ -82,6 +82,9 @@ public:
     lldb::SBSection
     GetSection ();
 
+    lldb::addr_t
+    SBAddress::GetOffset ();
+
     %feature("docstring", "
     //------------------------------------------------------------------
     /// GetSymbolContext() and the following can lookup symbol information for a given address.
@@ -124,6 +127,37 @@ public:
 
     lldb::SBLineEntry
     GetLineEntry ();
+    
+    %pythoncode %{
+        __swig_getmethods__["module"] = GetModule
+        if _newclass: x = property(GetModule, None)
+
+        __swig_getmethods__["compile_unit"] = GetCompileUnit
+        if _newclass: x = property(GetCompileUnit, None)
+
+        __swig_getmethods__["line_entry"] = GetLineEntry
+        if _newclass: x = property(GetLineEntry, None)
+
+        __swig_getmethods__["function"] = GetFunction
+        if _newclass: x = property(GetFunction, None)
+
+        __swig_getmethods__["block"] = GetBlock
+        if _newclass: x = property(GetBlock, None)
+
+        __swig_getmethods__["symbol"] = GetSymbol
+        if _newclass: x = property(GetSymbol, None)
+
+        __swig_getmethods__["offset"] = GetOffset
+        if _newclass: x = property(GetOffset, None)
+
+        __swig_getmethods__["section"] = GetSection
+        if _newclass: x = property(GetSection, None)
+
+        __swig_getmethods__["file_addr"] = GetFileAddress
+        if _newclass: x = property(GetFileAddress, None)
+
+    %}
+
 };
 
 } // namespace lldb

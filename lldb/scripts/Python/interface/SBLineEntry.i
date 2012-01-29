@@ -77,6 +77,24 @@ public:
     void
     SetColumn (uint32_t column);
 
+    %pythoncode %{
+        __swig_getmethods__["file"] = GetFileSpec
+        if _newclass: x = property(GetFileSpec, None)
+        
+        __swig_getmethods__["line"] = GetLine
+        if _newclass: x = property(GetLine, None)
+        
+        __swig_getmethods__["column"] = GetColumn
+        if _newclass: x = property(GetColumn, None)
+        
+        __swig_getmethods__["start_addr"] = GetStartAddress
+        if _newclass: x = property(GetStartAddress, None)
+        
+        __swig_getmethods__["end_addr"] = GetEndAddress
+        if _newclass: x = property(GetEndAddress, None)
+        
+    %}
+
 };
 
 } // namespace lldb
