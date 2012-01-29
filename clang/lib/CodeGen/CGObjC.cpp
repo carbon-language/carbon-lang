@@ -136,7 +136,7 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
   bool isDelegateInit = E->isDelegateInitCall();
 
   const ObjCMethodDecl *method = E->getMethodDecl();
-  
+
   // We don't retain the receiver in delegate init calls, and this is
   // safe because the receiver value is always loaded from 'self',
   // which we zero out.  We don't want to Block_copy block receivers,
@@ -190,19 +190,6 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
     isClassMessage = true;
     break;
   }
-
-  // Check to see if receiver must be null checked before method is sent
-  // to the receiver.
-  NullReturnState nullReturn;
-  if (CGM.getLangOptions().ObjCAutoRefCount && method)
-    for (ObjCMethodDecl::param_const_iterator i = method->param_begin(), 
-         e = method->param_end(); i != e; ++i) {
-      const ParmVarDecl *ParamDecl = (*i);
-      if (ParamDecl->hasAttr<NSConsumedAttr>()) {
-        nullReturn.init(*this, Receiver);
-        break;
-      } 
-    }
 
   if (retainSelf)
     Receiver = EmitARCRetainNonBlock(Receiver);
@@ -275,8 +262,8 @@ RValue CodeGenFunction::EmitObjCMessageExpr(const ObjCMessageExpr *E,
 
     Builder.CreateStore(newSelf, selfAddr);
   }
-  RValue rvalue = AdjustRelatedResultType(*this, E, method, result);
-  return nullReturn.complete(*this, rvalue, ResultType);
+
+  return AdjustRelatedResultType(*this, E, method, result);
 }
 
 namespace {
@@ -305,7 +292,6 @@ struct FinishARCDealloc : EHScopeStack::Cleanup {
                                                       method);
   }
 };
-
 }
 
 /// StartObjCMethod - Begin emission of an ObjCMethod. This generates

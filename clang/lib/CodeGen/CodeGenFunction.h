@@ -2627,75 +2627,7 @@ template <> struct DominatingValue<RValue> {
   }
 };
 
-/// A helper class for performing the null-initialization of a return
-/// value.
-struct NullReturnState {
-  llvm::BasicBlock *NullBB;
-  llvm::BasicBlock *callBB;
-  NullReturnState() : NullBB(0), callBB(0) {}
-  
-  void init(CodeGenFunction &CGF, llvm::Value *receiver) {
-    // Make blocks for the null-init and call edges.
-    NullBB = CGF.createBasicBlock("msgSend.nullinit");
-    callBB = CGF.createBasicBlock("msgSend.call");
-    
-    // Check for a null receiver and, if there is one, jump to the
-    // null-init test.
-    llvm::Value *isNull = CGF.Builder.CreateIsNull(receiver);
-    CGF.Builder.CreateCondBr(isNull, NullBB, callBB);
-    
-    // Otherwise, start performing the call.
-    CGF.EmitBlock(callBB);
-  }
-  
-  RValue complete(CodeGenFunction &CGF, RValue result, QualType resultType) {
-    if (!NullBB) return result;
-    
-    llvm::Value *NullInitPtr = 0;
-    if (result.isScalar() && !resultType->isVoidType()) {
-      NullInitPtr = CGF.CreateTempAlloca(result.getScalarVal()->getType());
-      CGF.Builder.CreateStore(result.getScalarVal(), NullInitPtr);
-    }
-    // Finish the call path.
-    llvm::BasicBlock *contBB = CGF.createBasicBlock("msgSend.cont");
-    if (CGF.HaveInsertPoint()) CGF.Builder.CreateBr(contBB);
-    
-    // Emit the null-init block and perform the null-initialization there.
-    CGF.EmitBlock(NullBB);
-    if (result.isScalar()) {
-      if (NullInitPtr)
-        CGF.EmitNullInitialization(NullInitPtr, resultType);
-      // Jump to the continuation block.
-      CGF.EmitBlock(contBB);
-      return NullInitPtr ? RValue::get(CGF.Builder.CreateLoad(NullInitPtr))
-      : result;
-    }
-    
-    if (!resultType->isAnyComplexType()) {
-      assert(result.isAggregate() && "null init of non-aggregate result?");
-      CGF.EmitNullInitialization(result.getAggregateAddr(), resultType);
-      // Jump to the continuation block.
-      CGF.EmitBlock(contBB);
-      return result;
-    }
-    
-    // _Complex type
-    // FIXME. Now easy to handle any other scalar type whose result is returned
-    // in memory due to ABI limitations.
-    CGF.EmitBlock(contBB);
-    CodeGenFunction::ComplexPairTy CallCV = result.getComplexVal();
-    llvm::Type *MemberType = CallCV.first->getType();
-    llvm::Constant *ZeroCV = llvm::Constant::getNullValue(MemberType);
-    // Create phi instruction for scalar complex value.
-    llvm::PHINode *PHIReal = CGF.Builder.CreatePHI(MemberType, 2);
-    PHIReal->addIncoming(ZeroCV, NullBB);
-    PHIReal->addIncoming(CallCV.first, callBB);
-    llvm::PHINode *PHIImag = CGF.Builder.CreatePHI(MemberType, 2);
-    PHIImag->addIncoming(ZeroCV, NullBB);
-    PHIImag->addIncoming(CallCV.second, callBB);
-    return RValue::getComplex(PHIReal, PHIImag);
-  }
-};
 }  // end namespace CodeGen
 }  // end namespace clang
+
 #endif
