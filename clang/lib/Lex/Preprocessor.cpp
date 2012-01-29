@@ -383,7 +383,7 @@ Module *Preprocessor::getCurrentModule() {
   if (getLangOptions().CurrentModule.empty())
     return 0;
   
-  return getHeaderSearchInfo().getModule(getLangOptions().CurrentModule);
+  return getHeaderSearchInfo().lookupModule(getLangOptions().CurrentModule);
 }
 
 //===----------------------------------------------------------------------===//

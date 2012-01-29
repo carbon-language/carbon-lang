@@ -226,7 +226,8 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   }
   
   // Dig out the module definition.
-  Module = HS.getModule(CI.getLangOpts().CurrentModule, /*AllowSearch=*/false);
+  Module = HS.lookupModule(CI.getLangOpts().CurrentModule, 
+                           /*AllowSearch=*/false);
   if (!Module) {
     CI.getDiagnostics().Report(diag::err_missing_module)
       << CI.getLangOpts().CurrentModule << Filename;

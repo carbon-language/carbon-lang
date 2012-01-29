@@ -1116,11 +1116,25 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
     Known = KnownModules.insert(std::make_pair(Path[0].first, Module)).first;
   } else {
     // Search for a module with the given name.
+    Module = PP->getHeaderSearchInfo().lookupModule(ModuleName);
     std::string ModuleFileName;
-    ModuleFile
-      = PP->getHeaderSearchInfo().lookupModule(ModuleName, Module,
-                                               &ModuleFileName);
-
+    if (Module)
+      ModuleFileName = PP->getHeaderSearchInfo().getModuleFileName(Module);
+    else
+      ModuleFileName = PP->getHeaderSearchInfo().getModuleFileName(ModuleName);
+    
+    if (ModuleFileName.empty()) {
+      getDiagnostics().Report(ModuleNameLoc, diag::err_module_not_found)
+        << ModuleName
+        << SourceRange(ImportLoc, ModuleNameLoc);
+      LastModuleImportLoc = ImportLoc;
+      LastModuleImportResult = 0;
+      return 0;
+    }
+    
+    const FileEntry *ModuleFile
+      = getFileManager().getFile(ModuleFileName, /*OpenFile=*/false,
+                                 /*CacheFailure=*/false);
     bool BuildingModule = false;
     if (!ModuleFile && Module) {
       // The module is not cached, but we have a module map from which we can

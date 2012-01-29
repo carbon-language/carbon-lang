@@ -184,6 +184,9 @@ class HeaderSearch {
   explicit HeaderSearch();
   explicit HeaderSearch(const HeaderSearch&);
   void operator=(const HeaderSearch&);
+  
+  friend class DirectoryLookup;
+  
 public:
   HeaderSearch(FileManager &FM, DiagnosticsEngine &Diags,
                const LangOptions &LangOpts);
@@ -343,20 +346,34 @@ public:
   /// FileEntry, uniquing them through the the 'HeaderMaps' datastructure.
   const HeaderMap *CreateHeaderMap(const FileEntry *FE);
 
-  /// \brief Search in the module cache path for a module with the given
-  /// name.
+  /// \brief Retrieve the name of the module file that should be used to 
+  /// load the given module.
   ///
-  /// \param Module The module that was found with the given name, which 
-  /// describes the module and how to build it.
+  /// \param Module The module whose module file name will be returned.
   ///
-  /// \param If non-NULL, will be set to the module file name we expected to
-  /// find (regardless of whether it was actually found or not).
+  /// \returns The name of the module file that corresponds to this module,
+  /// or an empty string if this module does not correspond to any module file.
+  std::string getModuleFileName(Module *Module);
+
+  /// \brief Retrieve the name of the module file that should be used to 
+  /// load a module with the given name.
   ///
-  /// \returns A file describing the named module, if already available in the
-  /// cases, or NULL to indicate that the module could not be found.
-  const FileEntry *lookupModule(StringRef ModuleName,
-                                Module *&Module,
-                                std::string *ModuleFileName = 0);
+  /// \param Module The module whose module file name will be returned.
+  ///
+  /// \returns The name of the module file that corresponds to this module,
+  /// or an empty string if this module does not correspond to any module file.
+  std::string getModuleFileName(StringRef ModuleName);
+
+  /// \brief Lookup a module Search for a module with the given name.
+  ///
+  /// \param ModuleName The name of the module we're looking for.
+  ///
+  /// \param AllowSearch Whether we are allowed to search in the various
+  /// search directories to produce a module definition. If not, this lookup
+  /// will only return an already-known module.
+  ///
+  /// \returns The module with the given name.
+  Module *lookupModule(StringRef ModuleName, bool AllowSearch = true);
   
   void IncrementFrameworkLookupCount() { ++NumFrameworkLookups; }
 
@@ -383,17 +400,8 @@ public:
   ///
   /// \returns true if an error occurred, false otherwise.
   bool loadModuleMapFile(const FileEntry *File);
-  
-  /// \brief Retrieve a module with the given name.
-  ///
-  /// \param Name The name of the module to retrieve.
-  ///
-  /// \param AllowSearch If true, we're allowed to look for module maps within
-  /// the header search path. Otherwise, the module must already be known.
-  ///
-  /// \returns The module, if found; otherwise, null.
-  Module *getModule(StringRef Name, bool AllowSearch = true);
 
+private:
   /// \brief Retrieve a module with the given name, which may be part of the
   /// given framework.
   ///
@@ -405,10 +413,11 @@ public:
   /// frameworks.
   ///
   /// \returns The module, if found; otherwise, null.
-  Module *getFrameworkModule(StringRef Name, 
-                             const DirectoryEntry *Dir,
-                             bool IsSystem);
-
+  Module *loadFrameworkModule(StringRef Name, 
+                              const DirectoryEntry *Dir,
+                              bool IsSystem);
+  
+public:
   /// \brief Retrieve the module map.
   ModuleMap &getModuleMap() { return ModMap; }
   
