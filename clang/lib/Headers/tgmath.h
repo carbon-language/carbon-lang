@@ -30,9 +30,7 @@
 
 /* C++ handles type genericity with overloading in math.h. */
 #ifndef __cplusplus
-#if __has_include(<complex.h>)
-#  include <complex.h>
-#endif
+#include <complex.h>
 
 #define _TG_ATTRSp __attribute__((__overloadable__))
 #define _TG_ATTRS __attribute__((__overloadable__, __always_inline__))
