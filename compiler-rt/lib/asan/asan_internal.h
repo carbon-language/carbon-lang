@@ -20,9 +20,7 @@
 
 #include <stdlib.h>  // for size_t, uintptr_t, etc.
 
-#if !defined(_WIN32)
-#include <stdint.h>  // for __WORDSIZE
-#else
+#if defined(_WIN32)
 // There's no <stdint.h> in Visual Studio 9, so we have to define [u]int*_t.
 typedef unsigned __int8  uint8_t;
 typedef unsigned __int16 uint16_t;
@@ -32,16 +30,8 @@ typedef __int8           int8_t;
 typedef __int16          int16_t;
 typedef __int32          int32_t;
 typedef __int64          int64_t;
-
-// Visual Studio does not define ssize_t.
-#ifdef _WIN64
-typedef int64_t ssize_t;
-#define __WORDSIZE 64
 #else
-typedef int32_t ssize_t;
-#define __WORDSIZE 32
-#endif
-
+# include <stdint.h>  // for __WORDSIZE
 #endif  // _WIN32
 
 // If __WORDSIZE was undefined by the platform, define it in terms of the

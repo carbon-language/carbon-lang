@@ -35,6 +35,10 @@
 #include "asan_thread.h"
 #include "asan_thread_registry.h"
 
+#ifdef _WIN32
+#include <intrin.h>
+#endif
+
 namespace __asan {
 
 #define  REDZONE FLAG_redzone
@@ -58,10 +62,6 @@ static const size_t kMaxAllowedMallocSize = 8UL << 30;  // 8G
 static inline bool IsAligned(uintptr_t a, uintptr_t alignment) {
   return (a & (alignment - 1)) == 0;
 }
-
-#ifdef _WIN32
-#include <intrin.h>
-#endif
 
 static inline size_t Log2(size_t x) {
   CHECK(IsPowerOfTwo(x));
