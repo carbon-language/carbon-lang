@@ -90,15 +90,19 @@ SBSymbolContext::GetModule ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBModule sb_module;
+    ModuleSP module_sp;
     if (m_opaque_ap.get())
-        sb_module.SetModule(m_opaque_ap->module_sp);
+    {
+        module_sp = m_opaque_ap->module_sp;
+        sb_module.SetSP (module_sp);
+    }
 
     if (log)
     {
         SBStream sstr;
         sb_module.GetDescription (sstr);
         log->Printf ("SBSymbolContext(%p)::GetModule () => SBModule(%p): %s", 
-                     m_opaque_ap.get(), sb_module.get(), sstr.GetData());
+                     m_opaque_ap.get(), module_sp.get(), sstr.GetData());
     }
 
     return sb_module;
@@ -177,7 +181,7 @@ SBSymbolContext::GetSymbol ()
 void
 SBSymbolContext::SetModule (lldb::SBModule module)
 {
-    ref().module_sp = module.get_sp();
+    ref().module_sp = module.GetSP();
 }
 
 void

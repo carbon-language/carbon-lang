@@ -222,17 +222,19 @@ SBModule
 SBFrame::GetModule () const
 {
     SBModule sb_module;
+    ModuleSP module_sp;
     StackFrameSP frame_sp(GetFrameSP());
     if (frame_sp)
     {
         Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        *sb_module = frame_sp->GetSymbolContext (eSymbolContextModule).module_sp;
+        module_sp = frame_sp->GetSymbolContext (eSymbolContextModule).module_sp;
+        sb_module.SetSP (module_sp);
     }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetModule () => SBModule(%p)", 
-                     frame_sp.get(), sb_module.get());
+                     frame_sp.get(), module_sp.get());
 
     return sb_module;
 }

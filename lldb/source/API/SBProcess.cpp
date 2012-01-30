@@ -125,10 +125,11 @@ SBProcess::RemoteLaunch (char const **argv,
                      error.get());
     }
     
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        if (m_opaque_sp->GetState() == eStateConnected)
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        if (process_sp->GetState() == eStateConnected)
         {
             if (stop_at_entry)
                 launch_flags |= eLaunchFlagStopAtEntry;
@@ -137,14 +138,14 @@ SBProcess::RemoteLaunch (char const **argv,
                                            stderr_path,
                                            working_directory,
                                            launch_flags);
-            Module *exe_module = m_opaque_sp->GetTarget().GetExecutableModulePointer();
+            Module *exe_module = process_sp->GetTarget().GetExecutableModulePointer();
             if (exe_module)
                 launch_info.SetExecutableFile(exe_module->GetFileSpec(), true);
             if (argv)
                 launch_info.GetArguments().AppendArguments (argv);
             if (envp)
                 launch_info.GetEnvironmentEntries ().SetArguments (envp);
-            error.SetError (m_opaque_sp->Launch (launch_info));
+            error.SetError (process_sp->Launch (launch_info));
         }
         else
         {
@@ -159,7 +160,7 @@ SBProcess::RemoteLaunch (char const **argv,
     if (log) {
         SBStream sstr;
         error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::RemoteLaunch (...) => SBError (%p): %s", m_opaque_sp.get(), error.get(), sstr.GetData());
+        log->Printf ("SBProcess(%p)::RemoteLaunch (...) => SBError (%p): %s", process_sp.get(), error.get(), sstr.GetData());
     }
     
     return error.Success();
@@ -168,14 +169,15 @@ SBProcess::RemoteLaunch (char const **argv,
 bool
 SBProcess::RemoteAttachToProcessWithID (lldb::pid_t pid, lldb::SBError& error)
 {
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        if (m_opaque_sp->GetState() == eStateConnected)
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        if (process_sp->GetState() == eStateConnected)
         {
             ProcessAttachInfo attach_info;
             attach_info.SetProcessID (pid);
-            error.SetError (m_opaque_sp->Attach (attach_info));            
+            error.SetError (process_sp->Attach (attach_info));            
         }
         else
         {
@@ -191,7 +193,7 @@ SBProcess::RemoteAttachToProcessWithID (lldb::pid_t pid, lldb::SBError& error)
     if (log) {
         SBStream sstr;
         error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::RemoteAttachToProcessWithID (%llu) => SBError (%p): %s", m_opaque_sp.get(), pid, error.get(), sstr.GetData());
+        log->Printf ("SBProcess(%p)::RemoteAttachToProcessWithID (%llu) => SBError (%p): %s", process_sp.get(), pid, error.get(), sstr.GetData());
     }
 
     return error.Success();
@@ -204,15 +206,16 @@ SBProcess::GetNumThreads ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     uint32_t num_threads = 0;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
         const bool can_update = true;
-        num_threads = m_opaque_sp->GetThreadList().GetSize(can_update);
+        num_threads = process_sp->GetThreadList().GetSize(can_update);
     }
 
     if (log)
-        log->Printf ("SBProcess(%p)::GetNumThreads () => %d", m_opaque_sp.get(), num_threads);
+        log->Printf ("SBProcess(%p)::GetNumThreads () => %d", process_sp.get(), num_threads);
 
     return num_threads;
 }
@@ -224,16 +227,17 @@ SBProcess::GetSelectedThread () const
 
     SBThread sb_thread;
     ThreadSP thread_sp;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        thread_sp = m_opaque_sp->GetThreadList().GetSelectedThread();
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        thread_sp = process_sp->GetThreadList().GetSelectedThread();
         sb_thread.SetThread (thread_sp);
     }
 
     if (log)
     {
-        log->Printf ("SBProcess(%p)::GetSelectedThread () => SBThread(%p)", m_opaque_sp.get(), thread_sp.get());
+        log->Printf ("SBProcess(%p)::GetSelectedThread () => SBThread(%p)", process_sp.get(), thread_sp.get());
     }
 
     return sb_thread;
@@ -246,14 +250,15 @@ SBProcess::GetTarget() const
 
     SBTarget sb_target;
     TargetSP target_sp;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        target_sp = m_opaque_sp->GetTarget().shared_from_this();
+        target_sp = process_sp->GetTarget().shared_from_this();
         sb_target.SetSP (target_sp);
     }
     
     if (log)
-        log->Printf ("SBProcess(%p)::GetTarget () => SBTarget(%p)", m_opaque_sp.get(), target_sp.get());
+        log->Printf ("SBProcess(%p)::GetTarget () => SBTarget(%p)", process_sp.get(), target_sp.get());
 
     return sb_target;
 }
@@ -265,15 +270,16 @@ SBProcess::PutSTDIN (const char *src, size_t src_len)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     size_t ret_val = 0;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
         Error error;
-        ret_val =  m_opaque_sp->PutSTDIN (src, src_len, error);
+        ret_val =  process_sp->PutSTDIN (src, src_len, error);
     }
     
     if (log)
         log->Printf ("SBProcess(%p)::PutSTDIN (src=\"%s\", src_len=%d) => %lu", 
-                     m_opaque_sp.get(), 
+                     process_sp.get(), 
                      src, 
                      (uint32_t) src_len, 
                      ret_val);
@@ -285,16 +291,17 @@ size_t
 SBProcess::GetSTDOUT (char *dst, size_t dst_len) const
 {
     size_t bytes_read = 0;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
         Error error;
-        bytes_read = m_opaque_sp->GetSTDOUT (dst, dst_len, error);
+        bytes_read = process_sp->GetSTDOUT (dst, dst_len, error);
     }
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::GetSTDOUT (dst=\"%.*s\", dst_len=%zu) => %zu", 
-                     m_opaque_sp.get(), (int) bytes_read, dst, dst_len, bytes_read);
+                     process_sp.get(), (int) bytes_read, dst, dst_len, bytes_read);
 
     return bytes_read;
 }
@@ -303,16 +310,17 @@ size_t
 SBProcess::GetSTDERR (char *dst, size_t dst_len) const
 {
     size_t bytes_read = 0;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
         Error error;
-        bytes_read = m_opaque_sp->GetSTDERR (dst, dst_len, error);
+        bytes_read = process_sp->GetSTDERR (dst, dst_len, error);
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::GetSTDERR (dst=\"%.*s\", dst_len=%zu) => %zu",
-                     m_opaque_sp.get(), (int) bytes_read, dst, dst_len, bytes_read);
+                     process_sp.get(), (int) bytes_read, dst, dst_len, bytes_read);
 
     return bytes_read;
 }
@@ -323,14 +331,15 @@ SBProcess::ReportEventState (const SBEvent &event, FILE *out) const
     if (out == NULL)
         return;
 
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
         const StateType event_state = SBProcess::GetStateFromEvent (event);
         char message[1024];
         int message_len = ::snprintf (message,
                                       sizeof (message),
                                       "Process %llu %s\n",
-                                      m_opaque_sp->GetID(),
+                                      process_sp->GetID(),
                                       SBDebugger::StateAsCString (event_state));
 
         if (message_len > 0)
@@ -341,14 +350,15 @@ SBProcess::ReportEventState (const SBEvent &event, FILE *out) const
 void
 SBProcess::AppendEventStateReport (const SBEvent &event, SBCommandReturnObject &result)
 {
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
         const StateType event_state = SBProcess::GetStateFromEvent (event);
         char message[1024];
         ::snprintf (message,
                     sizeof (message),
                     "Process %llu %s\n",
-                    m_opaque_sp->GetID(),
+                    process_sp->GetID(),
                     SBDebugger::StateAsCString (event_state));
 
         result.AppendMessage (message);
@@ -358,10 +368,11 @@ SBProcess::AppendEventStateReport (const SBEvent &event, SBCommandReturnObject &
 bool
 SBProcess::SetSelectedThread (const SBThread &thread)
 {
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        return m_opaque_sp->GetThreadList().SetSelectedThreadByID (thread.GetThreadID());
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        return process_sp->GetThreadList().SetSelectedThreadByID (thread.GetThreadID());
     }
     return false;
 }
@@ -372,15 +383,16 @@ SBProcess::SetSelectedThreadByID (uint32_t tid)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     bool ret_val = false;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        ret_val = m_opaque_sp->GetThreadList().SetSelectedThreadByID (tid);
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        ret_val = process_sp->GetThreadList().SetSelectedThreadByID (tid);
     }
 
     if (log)
         log->Printf ("SBProcess(%p)::SetSelectedThreadByID (tid=0x%4.4x) => %s", 
-                     m_opaque_sp.get(), tid, (ret_val ? "true" : "false"));
+                     process_sp.get(), tid, (ret_val ? "true" : "false"));
 
     return ret_val;
 }
@@ -392,17 +404,18 @@ SBProcess::GetThreadAtIndex (size_t index)
 
     SBThread sb_thread;
     ThreadSP thread_sp;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        thread_sp = m_opaque_sp->GetThreadList().GetThreadAtIndex(index);
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        thread_sp = process_sp->GetThreadList().GetThreadAtIndex(index);
         sb_thread.SetThread (thread_sp);
     }
 
     if (log)
     {
         log->Printf ("SBProcess(%p)::GetThreadAtIndex (index=%d) => SBThread(%p)",
-                     m_opaque_sp.get(), (uint32_t) index, thread_sp.get());
+                     process_sp.get(), (uint32_t) index, thread_sp.get());
     }
 
     return sb_thread;
@@ -413,16 +426,17 @@ SBProcess::GetState ()
 {
 
     StateType ret_val = eStateInvalid;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        ret_val = m_opaque_sp->GetState();
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        ret_val = process_sp->GetState();
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::GetState () => %s", 
-                     m_opaque_sp.get(),
+                     process_sp.get(),
                      lldb_private::StateAsCString (ret_val));
 
     return ret_val;
@@ -433,15 +447,16 @@ int
 SBProcess::GetExitStatus ()
 {
     int exit_status = 0;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        exit_status = m_opaque_sp->GetExitStatus ();
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        exit_status = process_sp->GetExitStatus ();
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::GetExitStatus () => %i (0x%8.8x)", 
-                     m_opaque_sp.get(), exit_status, exit_status);
+                     process_sp.get(), exit_status, exit_status);
 
     return exit_status;
 }
@@ -450,15 +465,16 @@ const char *
 SBProcess::GetExitDescription ()
 {
     const char *exit_desc = NULL;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        exit_desc = m_opaque_sp->GetExitDescription ();
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        exit_desc = process_sp->GetExitDescription ();
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBProcess(%p)::GetExitDescription () => %s", 
-                     m_opaque_sp.get(), exit_desc);
+                     process_sp.get(), exit_desc);
     return exit_desc;
 }
 
@@ -466,12 +482,13 @@ lldb::pid_t
 SBProcess::GetProcessID ()
 {
     lldb::pid_t ret_val = LLDB_INVALID_PROCESS_ID;
-    if (m_opaque_sp)
-        ret_val = m_opaque_sp->GetID();
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+        ret_val = process_sp->GetID();
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetProcessID () => %llu", m_opaque_sp.get(), ret_val);
+        log->Printf ("SBProcess(%p)::GetProcessID () => %llu", process_sp.get(), ret_val);
 
     return ret_val;
 }
@@ -480,12 +497,13 @@ ByteOrder
 SBProcess::GetByteOrder () const
 {
     ByteOrder byteOrder = eByteOrderInvalid;
-    if (m_opaque_sp)
-        byteOrder = m_opaque_sp->GetTarget().GetArchitecture().GetByteOrder();
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+        byteOrder = process_sp->GetTarget().GetArchitecture().GetByteOrder();
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetByteOrder () => %d", m_opaque_sp.get(), byteOrder);
+        log->Printf ("SBProcess(%p)::GetByteOrder () => %d", process_sp.get(), byteOrder);
 
     return byteOrder;
 }
@@ -494,12 +512,13 @@ uint32_t
 SBProcess::GetAddressByteSize () const
 {
     uint32_t size = 0;
-    if (m_opaque_sp)
-        size =  m_opaque_sp->GetTarget().GetArchitecture().GetAddressByteSize();
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
+        size =  process_sp->GetTarget().GetArchitecture().GetAddressByteSize();
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBProcess(%p)::GetAddressByteSize () => %d", m_opaque_sp.get(), size);
+        log->Printf ("SBProcess(%p)::GetAddressByteSize () => %d", process_sp.get(), size);
 
     return size;
 }
@@ -508,22 +527,25 @@ SBError
 SBProcess::Continue ()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
-    if (log)
-        log->Printf ("SBProcess(%p)::Continue ()...", m_opaque_sp.get());
     
     SBError sb_error;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+
+    if (log)
+        log->Printf ("SBProcess(%p)::Continue ()...", process_sp.get());
+
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
         
-        Error error (m_opaque_sp->Resume());
+        Error error (process_sp->Resume());
         if (error.Success())
         {
-            if (m_opaque_sp->GetTarget().GetDebugger().GetAsyncExecution () == false)
+            if (process_sp->GetTarget().GetDebugger().GetAsyncExecution () == false)
             {
                 if (log)
-                    log->Printf ("SBProcess(%p)::Continue () waiting for process to stop...", m_opaque_sp.get());
-                m_opaque_sp->WaitForProcessToStop (NULL);
+                    log->Printf ("SBProcess(%p)::Continue () waiting for process to stop...", process_sp.get());
+                process_sp->WaitForProcessToStop (NULL);
             }
         }
         sb_error.SetError(error);
@@ -535,7 +557,7 @@ SBProcess::Continue ()
     {
         SBStream sstr;
         sb_error.GetDescription (sstr);
-        log->Printf ("SBProcess(%p)::Continue () => SBError (%p): %s", m_opaque_sp.get(), sb_error.get(), sstr.GetData());
+        log->Printf ("SBProcess(%p)::Continue () => SBError (%p): %s", process_sp.get(), sb_error.get(), sstr.GetData());
     }
 
     return sb_error;
@@ -546,10 +568,11 @@ SBError
 SBProcess::Destroy ()
 {
     SBError sb_error;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        sb_error.SetError(m_opaque_sp->Destroy());
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        sb_error.SetError(process_sp->Destroy());
     }
     else
         sb_error.SetErrorString ("SBProcess is invalid");
@@ -560,7 +583,7 @@ SBProcess::Destroy ()
         SBStream sstr;
         sb_error.GetDescription (sstr);
         log->Printf ("SBProcess(%p)::Destroy () => SBError (%p): %s", 
-                     m_opaque_sp.get(), 
+                     process_sp.get(), 
                      sb_error.get(), 
                      sstr.GetData());
     }
@@ -573,10 +596,11 @@ SBError
 SBProcess::Stop ()
 {
     SBError sb_error;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        sb_error.SetError (m_opaque_sp->Halt());
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        sb_error.SetError (process_sp->Halt());
     }
     else
         sb_error.SetErrorString ("SBProcess is invalid");
@@ -587,7 +611,7 @@ SBProcess::Stop ()
         SBStream sstr;
         sb_error.GetDescription (sstr);
         log->Printf ("SBProcess(%p)::Stop () => SBError (%p): %s", 
-                     m_opaque_sp.get(), 
+                     process_sp.get(), 
                      sb_error.get(),
                      sstr.GetData());
     }
@@ -599,10 +623,11 @@ SBError
 SBProcess::Kill ()
 {
     SBError sb_error;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        sb_error.SetError (m_opaque_sp->Destroy());
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        sb_error.SetError (process_sp->Destroy());
     }
     else
         sb_error.SetErrorString ("SBProcess is invalid");
@@ -613,7 +638,7 @@ SBProcess::Kill ()
         SBStream sstr;
         sb_error.GetDescription (sstr);
         log->Printf ("SBProcess(%p)::Kill () => SBError (%p): %s", 
-                     m_opaque_sp.get(), 
+                     process_sp.get(), 
                      sb_error.get(),
                      sstr.GetData());
     }
@@ -625,10 +650,11 @@ SBError
 SBProcess::Detach ()
 {
     SBError sb_error;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        sb_error.SetError (m_opaque_sp->Detach());
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        sb_error.SetError (process_sp->Detach());
     }
     else
         sb_error.SetErrorString ("SBProcess is invalid");    
@@ -640,10 +666,11 @@ SBError
 SBProcess::Signal (int signo)
 {
     SBError sb_error;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        sb_error.SetError (m_opaque_sp->Signal (signo));
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        sb_error.SetError (process_sp->Signal (signo));
     }
     else
         sb_error.SetErrorString ("SBProcess is invalid");    
@@ -653,7 +680,7 @@ SBProcess::Signal (int signo)
         SBStream sstr;
         sb_error.GetDescription (sstr);
         log->Printf ("SBProcess(%p)::Signal (signo=%i) => SBError (%p): %s", 
-                     m_opaque_sp.get(), 
+                     process_sp.get(), 
                      signo,
                      sb_error.get(),
                      sstr.GetData());
@@ -666,10 +693,11 @@ SBProcess::GetThreadByID (tid_t tid)
 {
     SBThread sb_thread;
     ThreadSP thread_sp;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        thread_sp = m_opaque_sp->GetThreadList().FindThreadByID (tid);
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        thread_sp = process_sp->GetThreadList().FindThreadByID (tid);
         sb_thread.SetThread (thread_sp);
     }
 
@@ -677,7 +705,7 @@ SBProcess::GetThreadByID (tid_t tid)
     if (log)
     {
         log->Printf ("SBProcess(%p)::GetThreadByID (tid=0x%4.4llx) => SBThread (%p)", 
-                     m_opaque_sp.get(), 
+                     process_sp.get(), 
                      tid,
                      thread_sp.get());
     }
@@ -718,10 +746,12 @@ SBProcess::GetBroadcaster () const
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    SBBroadcaster broadcaster(m_opaque_sp.get(), false);
+    ProcessSP process_sp(GetSP());
+
+    SBBroadcaster broadcaster(process_sp.get(), false);
 
     if (log)
-        log->Printf ("SBProcess(%p)::GetBroadcaster () => SBBroadcaster (%p)",  m_opaque_sp.get(),
+        log->Printf ("SBProcess(%p)::GetBroadcaster () => SBBroadcaster (%p)",  process_sp.get(),
                      broadcaster.get());
 
     return broadcaster;
@@ -734,21 +764,23 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
 
     size_t bytes_read = 0;
 
+    ProcessSP process_sp(GetSP());
+
     if (log)
     {
         log->Printf ("SBProcess(%p)::ReadMemory (addr=0x%llx, dst=%p, dst_len=%zu, SBError (%p))...",
-                     m_opaque_sp.get(), 
+                     process_sp.get(), 
                      addr, 
                      dst, 
                      dst_len, 
                      sb_error.get());
     }
-
-    if (m_opaque_sp)
+    
+    if (process_sp)
     {
         Error error;
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        bytes_read = m_opaque_sp->ReadMemory (addr, dst, dst_len, error);
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        bytes_read = process_sp->ReadMemory (addr, dst, dst_len, error);
         sb_error.SetError (error);
     }
     else
@@ -761,7 +793,7 @@ SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error
         SBStream sstr;
         sb_error.GetDescription (sstr);
         log->Printf ("SBProcess(%p)::ReadMemory (addr=0x%llx, dst=%p, dst_len=%zu, SBError (%p): %s) => %zu", 
-                     m_opaque_sp.get(), 
+                     process_sp.get(), 
                      addr, 
                      dst, 
                      dst_len, 
@@ -777,11 +809,12 @@ size_t
 SBProcess::ReadCStringFromMemory (addr_t addr, void *buf, size_t size, lldb::SBError &sb_error)
 {
     size_t bytes_read = 0;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
         Error error;
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        bytes_read = m_opaque_sp->ReadCStringFromMemory (addr, (char *)buf, size, error);
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        bytes_read = process_sp->ReadCStringFromMemory (addr, (char *)buf, size, error);
         sb_error.SetError (error);
     }
     else
@@ -794,11 +827,12 @@ SBProcess::ReadCStringFromMemory (addr_t addr, void *buf, size_t size, lldb::SBE
 uint64_t
 SBProcess::ReadUnsignedFromMemory (addr_t addr, uint32_t byte_size, lldb::SBError &sb_error)
 {
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
         Error error;
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        uint64_t value = m_opaque_sp->ReadUnsignedIntegerFromMemory (addr, byte_size, 0, error);
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        uint64_t value = process_sp->ReadUnsignedIntegerFromMemory (addr, byte_size, 0, error);
         sb_error.SetError (error);
         return value;
     }
@@ -813,11 +847,12 @@ lldb::addr_t
 SBProcess::ReadPointerFromMemory (addr_t addr, lldb::SBError &sb_error)
 {
     lldb::addr_t ptr = LLDB_INVALID_ADDRESS;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
         Error error;
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        ptr = m_opaque_sp->ReadPointerFromMemory (addr, error);
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        ptr = process_sp->ReadPointerFromMemory (addr, error);
         sb_error.SetError (error);
     }
     else
@@ -833,21 +868,24 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
     size_t bytes_written = 0;
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    ProcessSP process_sp(GetSP());
+
     if (log)
     {
         log->Printf ("SBProcess(%p)::WriteMemory (addr=0x%llx, src=%p, dst_len=%zu, SBError (%p))...",
-                     m_opaque_sp.get(), 
+                     process_sp.get(), 
                      addr, 
                      src, 
                      src_len, 
                      sb_error.get());
     }
 
-    if (m_opaque_sp)
+    if (process_sp)
     {
         Error error;
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        bytes_written = m_opaque_sp->WriteMemory (addr, src, src_len, error);
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        bytes_written = process_sp->WriteMemory (addr, src, src_len, error);
         sb_error.SetError (error);
     }
 
@@ -856,7 +894,7 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
         SBStream sstr;
         sb_error.GetDescription (sstr);
         log->Printf ("SBProcess(%p)::WriteMemory (addr=0x%llx, src=%p, dst_len=%zu, SBError (%p): %s) => %zu", 
-                     m_opaque_sp.get(), 
+                     process_sp.get(), 
                      addr, 
                      src, 
                      src_len, 
@@ -873,17 +911,18 @@ SBProcess::GetDescription (SBStream &description)
 {
     Stream &strm = description.ref();
 
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
         char path[PATH_MAX];
         GetTarget().GetExecutable().GetPath (path, sizeof(path));
-        Module *exe_module = m_opaque_sp->GetTarget().GetExecutableModulePointer();
+        Module *exe_module = process_sp->GetTarget().GetExecutableModulePointer();
         const char *exe_name = NULL;
         if (exe_module)
             exe_name = exe_module->GetFileSpec().GetFilename().AsCString();
 
         strm.Printf ("SBProcess: pid = %llu, state = %s, threads = %d%s%s", 
-                     m_opaque_sp->GetID(),
+                     process_sp->GetID(),
                      lldb_private::StateAsCString (GetState()), 
                      GetNumThreads(),
                      exe_name ? ", executable = " : "",
@@ -898,10 +937,11 @@ SBProcess::GetDescription (SBStream &description)
 uint32_t
 SBProcess::LoadImage (lldb::SBFileSpec &sb_image_spec, lldb::SBError &sb_error)
 {
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        return m_opaque_sp->LoadImage (*sb_image_spec, sb_error.ref());
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        return process_sp->LoadImage (*sb_image_spec, sb_error.ref());
     }
     return LLDB_INVALID_IMAGE_TOKEN;
 }
@@ -910,10 +950,11 @@ lldb::SBError
 SBProcess::UnloadImage (uint32_t image_token)
 {
     lldb::SBError sb_error;
-    if (m_opaque_sp)
+    ProcessSP process_sp(GetSP());
+    if (process_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        sb_error.SetError (m_opaque_sp->UnloadImage (image_token));
+        Mutex::Locker api_locker (process_sp->GetTarget().GetAPIMutex());
+        sb_error.SetError (process_sp->UnloadImage (image_token));
     }
     else
         sb_error.SetErrorString("invalid process");

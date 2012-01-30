@@ -300,9 +300,7 @@ SBAddress::GetModule ()
     SBModule sb_module;
     if (m_opaque_ap.get())
     {
-        Module *module = m_opaque_ap->GetModule();
-        if (module)
-            *sb_module = module->shared_from_this();
+        sb_module.SetSP (m_opaque_ap->GetModuleSP());
     }
     return sb_module;
 }

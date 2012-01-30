@@ -188,31 +188,11 @@ private:
 
     explicit SBModule (const lldb::ModuleSP& module_sp);
 
-    void
-    SetModule (const lldb::ModuleSP& module_sp);
-#ifndef SWIG
-
-    lldb::ModuleSP &
-    operator *();
-
-
-    lldb_private::Module *
-    operator ->();
-
-    const lldb_private::Module *
-    operator ->() const;
-
-    lldb_private::Module *
-    get();
-
-    const lldb_private::Module *
-    get() const;
-
-    const lldb::ModuleSP &
-    get_sp() const;
+    ModuleSP
+    GetSP () const;
     
-
-#endif
+    void
+    SetSP (const ModuleSP &module_sp);
 
     lldb::ModuleSP m_opaque_sp;
 };

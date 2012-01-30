@@ -193,48 +193,17 @@ SBModule::operator != (const SBModule &rhs) const
     return false;
 }
 
-lldb::ModuleSP &
-SBModule::operator *()
-{
-    return m_opaque_sp;
-}
-
-lldb_private::Module *
-SBModule::operator ->()
-{
-    return m_opaque_sp.get();
-}
-
-const lldb_private::Module *
-SBModule::operator ->() const
-{
-    return m_opaque_sp.get();
-}
-
-lldb_private::Module *
-SBModule::get()
-{
-    return m_opaque_sp.get();
-}
-
-const lldb_private::Module *
-SBModule::get() const
-{
-    return m_opaque_sp.get();
-}
-
-const lldb::ModuleSP &
-SBModule::get_sp() const
+ModuleSP
+SBModule::GetSP () const
 {
     return m_opaque_sp;
 }
 
 void
-SBModule::SetModule (const lldb::ModuleSP& module_sp)
+SBModule::SetSP (const ModuleSP &module_sp)
 {
     m_opaque_sp = module_sp;
 }
-
 
 SBAddress
 SBModule::ResolveFileAddress (lldb::addr_t vm_addr)
