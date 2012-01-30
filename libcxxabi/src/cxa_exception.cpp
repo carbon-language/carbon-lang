@@ -21,8 +21,6 @@
 #include "cxa_exception.hpp"
 #include "cxa_handlers.hpp"
 
-#include <stdio.h>
-
 // +---------------------------+-----------------------------+---------------+
 // | __cxa_exception           | _Unwind_Exception CLNGC++\0 | thrown object |
 // +---------------------------+-----------------------------+---------------+
@@ -297,7 +295,6 @@ to terminate or unexpected during unwinding.
 void*
 __cxa_begin_catch(void* unwind_arg) throw()
 {
-printf("entering __cxa_begin_catch\n");
     _Unwind_Exception* unwind_exception = static_cast<_Unwind_Exception*>(unwind_arg);
     bool native_exception = isOurExceptionClass(unwind_exception);
     __cxa_eh_globals* globals = __cxa_get_globals();
@@ -322,7 +319,6 @@ printf("entering __cxa_begin_catch\n");
             globals->caughtExceptions = exception_header;
         }
         globals->uncaughtExceptions -= 1;   // Not atomically, since globals are thread-local
-printf("leaving __cxa_begin_catch\n");
         return exception_header->adjustedPtr;
     }
     // Else this is a foreign exception
@@ -355,7 +351,6 @@ For a foreign exception:
 */
 void __cxa_end_catch()
 {
-printf("entering __cxa_end_catch\n");
     static_assert(sizeof(__cxa_exception) == sizeof(__cxa_dependent_exception),
                   "sizeof(__cxa_exception) must be equal to sizeof(__cxa_dependent_exception)");
     __cxa_eh_globals* globals = __cxa_get_globals_fast(); // __cxa_get_globals called in __cxa_begin_catch
@@ -417,7 +412,6 @@ printf("entering __cxa_end_catch\n");
             globals->caughtExceptions = 0;
         }
     }
-printf("leaving __cxa_end_catch\n");
 }
 
 // Note:  exception_header may be masquerading as a __cxa_dependent_exception
@@ -453,14 +447,12 @@ void
 __cxa_rethrow()
 {
     __cxa_eh_globals* globals = __cxa_get_globals();
-//printf("entering __cxa_rethrow\n");
     __cxa_exception* exception_header = globals->caughtExceptions;
     if (NULL == exception_header)
         std::terminate();      // throw; called outside of a exception handler
     bool native_exception = isOurExceptionClass(&exception_header->unwindHeader);
     if (native_exception)
     {
-//printf("__cxa_rethrow native branch\n");
         //  Mark the exception as being rethrown (reverse the effects of __cxa_begin_catch)
         exception_header->handlerCount = -exception_header->handlerCount;
         globals->uncaughtExceptions += 1;
@@ -474,7 +466,6 @@ __cxa_rethrow()
         //   nothing
         globals->caughtExceptions = 0;
     }
-//printf("leaving __cxa_rethrow, private_1 = %lu\n", exception_header->unwindHeader.private_1);
 #if __arm__
     (void) _Unwind_SjLj_Resume_or_Rethrow(&exception_header->unwindHeader);
 #else
