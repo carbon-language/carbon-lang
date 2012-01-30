@@ -208,6 +208,8 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::CST_CODE_CE_CMP:          return "CE_CMP";
     case bitc::CST_CODE_INLINEASM:       return "INLINEASM";
     case bitc::CST_CODE_CE_SHUFVEC_EX:   return "CE_SHUFVEC_EX";
+    case bitc::CST_CODE_BLOCKADDRESS:    return "CST_CODE_BLOCKADDRESS";
+    case bitc::CST_CODE_DATA:            return "DATA";
     }
   case bitc::FUNCTION_BLOCK_ID:
     switch (CodeID) {

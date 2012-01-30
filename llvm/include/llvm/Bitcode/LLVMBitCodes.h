@@ -164,7 +164,8 @@ namespace bitc {
     CST_CODE_INLINEASM     = 18,  // INLINEASM:     [sideeffect,asmstr,conststr]
     CST_CODE_CE_SHUFVEC_EX = 19,  // SHUFVEC_EX:    [opty, opval, opval, opval]
     CST_CODE_CE_INBOUNDS_GEP = 20,// INBOUNDS_GEP:  [n x operands]
-    CST_CODE_BLOCKADDRESS  = 21   // CST_CODE_BLOCKADDRESS [fnty, fnval, bb#]
+    CST_CODE_BLOCKADDRESS  = 21,  // CST_CODE_BLOCKADDRESS [fnty, fnval, bb#]
+    CST_CODE_DATA          = 22   // DATA:          [n x elements]
   };
 
   /// CastOpcodes - These are values used in the bitcode files to encode which

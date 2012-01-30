@@ -871,8 +871,55 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         AbbrevToUse = CString6Abbrev;
       else if (isCStr7)
         AbbrevToUse = CString7Abbrev;
-    } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(V) ||
-               isa<ConstantVector>(V)) {
+    } else if (isa<ConstantDataSequential>(C) &&
+               cast<ConstantDataSequential>(C)->isString()) {
+      const ConstantDataSequential *Str = cast<ConstantDataSequential>(C);
+      // Emit constant strings specially.
+      unsigned NumElts = Str->getNumElements();
+      // If this is a null-terminated string, use the denser CSTRING encoding.
+      if (Str->isCString()) {
+        Code = bitc::CST_CODE_CSTRING;
+        --NumElts;  // Don't encode the null, which isn't allowed by char6.
+      } else {
+        Code = bitc::CST_CODE_STRING;
+        AbbrevToUse = String8Abbrev;
+      }
+      bool isCStr7 = Code == bitc::CST_CODE_CSTRING;
+      bool isCStrChar6 = Code == bitc::CST_CODE_CSTRING;
+      for (unsigned i = 0; i != NumElts; ++i) {
+        unsigned char V = Str->getElementAsInteger(i);
+        Record.push_back(V);
+        isCStr7 &= (V & 128) == 0;
+        if (isCStrChar6)
+          isCStrChar6 = BitCodeAbbrevOp::isChar6(V);
+      }
+      
+      if (isCStrChar6)
+        AbbrevToUse = CString6Abbrev;
+      else if (isCStr7)
+        AbbrevToUse = CString7Abbrev;
+    } else if (const ConstantDataSequential *CDS = 
+                  dyn_cast<ConstantDataSequential>(C)) {
+      Type *EltTy = CDS->getType()->getElementType();
+      if (isa<IntegerType>(EltTy)) {
+        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i)
+          Record.push_back(CDS->getElementAsInteger(i));
+      } else if (EltTy->isFloatTy()) {
+        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
+          union { float F; uint32_t I; };
+          F = CDS->getElementAsFloat(i);
+          Record.push_back(I);
+        }
+      } else {
+        assert(EltTy->isDoubleTy() && "Unknown ConstantData element type");
+        for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
+          union { double F; uint64_t I; };
+          F = CDS->getElementAsDouble(i);
+          Record.push_back(I);
+        }
+      }
+    } else if (isa<ConstantArray>(C) || isa<ConstantStruct>(C) ||
+               isa<ConstantVector>(C)) {
       Code = bitc::CST_CODE_AGGREGATE;
       for (unsigned i = 0, e = C->getNumOperands(); i != e; ++i)
         Record.push_back(VE.getValueID(C->getOperand(i)));
