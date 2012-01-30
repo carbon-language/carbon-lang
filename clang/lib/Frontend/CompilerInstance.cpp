@@ -242,7 +242,8 @@ void CompilerInstance::createPreprocessor() {
   // Create the Preprocessor.
   HeaderSearch *HeaderInfo = new HeaderSearch(getFileManager(), 
                                               getDiagnostics(),
-                                              getLangOpts());
+                                              getLangOpts(),
+                                              &getTarget());
   PP = new Preprocessor(getDiagnostics(), getLangOpts(), &getTarget(),
                         getSourceManager(), *HeaderInfo, *this, PTHMgr,
                         /*OwnsHeaderSearch=*/true);
@@ -1045,7 +1046,7 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
 
     // Check whether this module is available.
     StringRef Feature;
-    if (!Module->isAvailable(getLangOpts(), Feature)) {
+    if (!Module->isAvailable(getLangOpts(), getTarget(), Feature)) {
       getDiagnostics().Report(ImportLoc, diag::err_module_unavailable)
         << Module->getFullModuleName()
         << Feature

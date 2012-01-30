@@ -3307,7 +3307,8 @@ ASTReader::ASTReadResult ASTReader::ReadSubmoduleBlock(ModuleFile &F) {
         break;
 
       CurrentModule->addRequirement(StringRef(BlobStart, BlobLen), 
-                                    Context.getLangOptions());
+                                    Context.getLangOptions(),
+                                    Context.getTargetInfo());
       break;
     }
     }

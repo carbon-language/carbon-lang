@@ -237,7 +237,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
 
   // Check whether we can build this module at all.
   StringRef Feature;
-  if (!Module->isAvailable(CI.getLangOpts(), Feature)) {
+  if (!Module->isAvailable(CI.getLangOpts(), CI.getTarget(), Feature)) {
     CI.getDiagnostics().Report(diag::err_module_unavailable)
       << Module->getFullModuleName()
       << Feature;

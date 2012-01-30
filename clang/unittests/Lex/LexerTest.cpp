@@ -69,7 +69,7 @@ TEST_F(LexerTest, LexAPI) {
   SourceMgr.createMainFileIDForMemBuffer(buf);
 
   VoidModuleLoader ModLoader;
-  HeaderSearch HeaderInfo(FileMgr, Diags, LangOpts);
+  HeaderSearch HeaderInfo(FileMgr, Diags, LangOpts, &*Target);
   Preprocessor PP(Diags, LangOpts,
                   Target.getPtr(),
                   SourceMgr, HeaderInfo, ModLoader,

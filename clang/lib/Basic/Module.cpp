@@ -47,7 +47,8 @@ Module::~Module() {
 
 /// \brief Determine whether a translation unit built using the current
 /// language options has the given feature.
-static bool hasFeature(StringRef Feature, const LangOptions &LangOpts) {
+static bool hasFeature(StringRef Feature, const LangOptions &LangOpts,
+                       const TargetInfo &Target) {
   return llvm::StringSwitch<bool>(Feature)
            .Case("blocks", LangOpts.Blocks)
            .Case("cplusplus", LangOpts.CPlusPlus)
@@ -58,13 +59,14 @@ static bool hasFeature(StringRef Feature, const LangOptions &LangOpts) {
 }
 
 bool 
-Module::isAvailable(const LangOptions &LangOpts, StringRef &Feature) const {
+Module::isAvailable(const LangOptions &LangOpts, const TargetInfo &Target,
+                    StringRef &Feature) const {
   if (IsAvailable)
     return true;
 
   for (const Module *Current = this; Current; Current = Current->Parent) {
     for (unsigned I = 0, N = Current->Requires.size(); I != N; ++I) {
-      if (!hasFeature(Current->Requires[I], LangOpts)) {
+      if (!hasFeature(Current->Requires[I], LangOpts, Target)) {
         Feature = Current->Requires[I];
         return false;
       }
@@ -121,11 +123,12 @@ const DirectoryEntry *Module::getUmbrellaDir() const {
   return Umbrella.dyn_cast<const DirectoryEntry *>();
 }
 
-void Module::addRequirement(StringRef Feature, const LangOptions &LangOpts) {
+void Module::addRequirement(StringRef Feature, const LangOptions &LangOpts,
+                            const TargetInfo &Target) {
   Requires.push_back(Feature);
 
   // If this feature is currently available, we're done.
-  if (hasFeature(Feature, LangOpts))
+  if (hasFeature(Feature, LangOpts, Target))
     return;
 
   if (!IsAvailable)

@@ -39,9 +39,10 @@ HeaderFileInfo::getControllingMacro(ExternalIdentifierLookup *External) {
 ExternalHeaderFileInfoSource::~ExternalHeaderFileInfoSource() {}
 
 HeaderSearch::HeaderSearch(FileManager &FM, DiagnosticsEngine &Diags,
-                           const LangOptions &LangOpts)
+                           const LangOptions &LangOpts, 
+                           const TargetInfo *Target)
   : FileMgr(FM), Diags(Diags), FrameworkMap(64), 
-    ModMap(FileMgr, *Diags.getClient(), LangOpts) 
+    ModMap(FileMgr, *Diags.getClient(), LangOpts, Target)
 {
   AngledDirIdx = 0;
   SystemDirIdx = 0;
@@ -363,6 +364,10 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   if (FE && AutomaticImport)
     *SuggestedModule = HS.findModuleForHeader(FE);
   return FE;
+}
+
+void HeaderSearch::setTarget(const TargetInfo &Target) {
+  ModMap.setTarget(Target);
 }
 
 

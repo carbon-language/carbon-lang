@@ -673,7 +673,8 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                      AST->getFileManager());
   AST->HeaderInfo.reset(new HeaderSearch(AST->getFileManager(),
                                          AST->getDiagnostics(),
-                                         AST->ASTFileLangOpts));
+                                         AST->ASTFileLangOpts,
+                                         /*Target=*/0));
   
   for (unsigned I = 0; I != NumRemappedFiles; ++I) {
     FilenameOrMemBuf fileOrBuf = RemappedFiles[I].second;

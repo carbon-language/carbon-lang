@@ -33,6 +33,7 @@ namespace clang {
 class DirectoryEntry;
 class FileEntry;
 class LangOptions;
+class TargetInfo;
   
 /// \brief Describes the name of a module.
 typedef llvm::SmallVector<std::pair<std::string, SourceLocation>, 2>
@@ -178,10 +179,14 @@ public:
   /// \param LangOpts The language options used for the current
   /// translation unit.
   ///
+  /// \param Target The target options used for the current translation unit.
+  ///
   /// \param Feature If this module is unavailable, this parameter
   /// will be set to one of the features that is required for use of
   /// this module (but is not available).
-  bool isAvailable(const LangOptions &LangOpts, StringRef &Feature) const;
+  bool isAvailable(const LangOptions &LangOpts, 
+                   const TargetInfo &Target,
+                   StringRef &Feature) const;
 
   /// \brief Determine whether this module is a submodule.
   bool isSubModule() const { return Parent != 0; }
@@ -246,7 +251,11 @@ public:
   ///
   /// \param LangOpts The set of language options that will be used to
   /// evaluate the availability of this feature.
-  void addRequirement(StringRef Feature, const LangOptions &LangOpts);
+  ///
+  /// \param Target The target options that will be used to evaluate the
+  /// availability of this feature.
+  void addRequirement(StringRef Feature, const LangOptions &LangOpts,
+                      const TargetInfo &Target);
 
   /// \brief Find the submodule with the given name.
   ///

@@ -70,8 +70,8 @@ ModuleMap::resolveExport(Module *Mod,
 }
 
 ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC,
-                     const LangOptions &LangOpts)
-  : LangOpts(LangOpts)
+                     const LangOptions &LangOpts, const TargetInfo *Target)
+  : LangOpts(LangOpts), Target(Target)
 {
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs(new DiagnosticIDs);
   Diags = llvm::IntrusiveRefCntPtr<DiagnosticsEngine>(
@@ -88,6 +88,12 @@ ModuleMap::~ModuleMap() {
   }
   
   delete SourceMgr;
+}
+
+void ModuleMap::setTarget(const TargetInfo &Target) {
+  assert((!this->Target || this->Target == &Target) && 
+         "Improper target override");
+  this->Target = &Target;
 }
 
 Module *ModuleMap::findModuleForHeader(const FileEntry *File) {
@@ -992,7 +998,7 @@ void ModuleMapParser::parseRequiresDecl() {
     consumeToken();
 
     // Add this feature.
-    ActiveModule->addRequirement(Feature, Map.LangOpts);
+    ActiveModule->addRequirement(Feature, Map.LangOpts, *Map.Target);
 
     if (!Tok.is(MMToken::Comma))
       break;
@@ -1360,6 +1366,7 @@ bool ModuleMapParser::parseModuleMapFile() {
 }
 
 bool ModuleMap::parseModuleMapFile(const FileEntry *File) {
+  assert(Target != 0 && "Missing target information");
   FileID ID = SourceMgr->createFileID(File, SourceLocation(), SrcMgr::C_User);
   const llvm::MemoryBuffer *Buffer = SourceMgr->getBuffer(ID);
   if (!Buffer)

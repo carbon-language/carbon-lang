@@ -189,7 +189,7 @@ class HeaderSearch {
   
 public:
   HeaderSearch(FileManager &FM, DiagnosticsEngine &Diags,
-               const LangOptions &LangOpts);
+               const LangOptions &LangOpts, const TargetInfo *Target);
   ~HeaderSearch();
 
   FileManager &getFileMgr() const { return FileMgr; }
@@ -242,6 +242,10 @@ public:
   void SetExternalSource(ExternalHeaderFileInfoSource *ES) {
     ExternalSource = ES;
   }
+  
+  /// \brief Set the target information for the header search, if not
+  /// already known.
+  void setTarget(const TargetInfo &Target);
   
   /// LookupFile - Given a "foo" or <foo> reference, look up the indicated file,
   /// return null on failure.
