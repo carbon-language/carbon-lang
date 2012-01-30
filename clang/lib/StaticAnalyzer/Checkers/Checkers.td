@@ -364,13 +364,13 @@ def RetainCountChecker : Checker<"RetainCount">,
   HelpText<"Check for leaks and improper reference count management">,
   DescFile<"RetainCountChecker.cpp">;
 
+def ObjCContainersASTChecker : Checker<"CFContainersSyntax">,
+  HelpText<"Check for common pitfalls when using 'CFArray', 'CFDictionary', 'CFSet' APIs">,
+  DescFile<"ObjCContainersASTChecker.cpp">;  
+
 } // end "cocoa"
 
 let ParentPackage = CocoaExperimental in {
-
-def ObjCContainersASTChecker : Checker<"ContainerAPI">,
-  HelpText<"Check for common pitfalls when using 'CFArray', 'CFDictionary', 'CFSet' APIs">,
-  DescFile<"ObjCContainersASTChecker.cpp">;
 
 def ObjCContainersChecker : Checker<"Containers">,
   HelpText<"Deep checks for common pitfalls when using 'CFArray' APIs">,
