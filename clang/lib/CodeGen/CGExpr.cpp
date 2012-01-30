@@ -511,10 +511,8 @@ CodeGenFunction::EmitReferenceBindingToExpr(const Expr *E,
 /// input field number being accessed.
 unsigned CodeGenFunction::getAccessedFieldNo(unsigned Idx,
                                              const llvm::Constant *Elts) {
-  if (isa<llvm::ConstantAggregateZero>(Elts))
-    return 0;
-
-  return cast<llvm::ConstantInt>(Elts->getOperand(Idx))->getZExtValue();
+  return cast<llvm::ConstantInt>(Elts->getAggregateElement(Idx))
+      ->getZExtValue();
 }
 
 void CodeGenFunction::EmitCheck(llvm::Value *Address, unsigned Size) {
@@ -1779,12 +1777,8 @@ EmitExtVectorElementExpr(const ExtVectorElementExpr *E) {
   llvm::Constant *BaseElts = Base.getExtVectorElts();
   SmallVector<llvm::Constant *, 4> CElts;
 
-  for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
-    if (isa<llvm::ConstantAggregateZero>(BaseElts))
-      CElts.push_back(llvm::ConstantInt::get(Int32Ty, 0));
-    else
-      CElts.push_back(cast<llvm::Constant>(BaseElts->getOperand(Indices[i])));
-  }
+  for (unsigned i = 0, e = Indices.size(); i != e; ++i)
+    CElts.push_back(BaseElts->getAggregateElement(Indices[i]));
   llvm::Constant *CV = llvm::ConstantVector::get(CElts);
   return LValue::MakeExtVectorElt(Base.getExtVectorAddr(), CV, type);
 }
