@@ -50,6 +50,11 @@ DisableTiling("polly-no-tiling",
 	      cl::desc("Disable tiling in the scheduler"), cl::Hidden,
               cl::location(polly::DisablePollyTiling), cl::init(false));
 
+static cl::opt<std::string>
+SimplifyDeps("polly-opt-simplify-deps",
+             cl::desc("Dependences should be simplified (yes/no)"),
+             cl::Hidden, cl::init("yes"));
+
 namespace {
 
   class IslScheduleOptimizer : public ScopPass {
@@ -410,8 +415,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
                           | Dependences::TYPE_WAR
                           | Dependences::TYPE_WAW;
 
-  isl_union_map *validity = D->getDependences(dependencyKinds);
-  isl_union_map *proximity = D->getDependences(dependencyKinds);
+  isl_union_map *dependences = D->getDependences(dependencyKinds);
   isl_union_set *domain = NULL;
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI)
@@ -426,14 +430,33 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   if (!domain)
     return false;
 
+  // Simplify the dependences by removing the constraints introduced by the
+  // domains. This can speed up the scheduling time significantly, as large
+  // constant coefficients will be removed from the dependences. The
+  // introduction of some additional dependences reduces the possible
+  // transformations, but in most cases, such transformation do not seem to be
+  // interesting anyway. In some cases this option may stop the scheduler to
+  // find any schedule.
+  if (SimplifyDeps == "yes") {
+    dependences = isl_union_map_gist_domain(dependences,
+                                            isl_union_set_copy(domain));
+    dependences = isl_union_map_gist_range(dependences,
+                                           isl_union_set_copy(domain));
+  } else if (SimplifyDeps != "no") {
+    errs() << "warning: Option -polly-opt-simplify-deps should either be 'yes' "
+              "or 'no'. Falling back to default: 'yes'\n";
+  }
+
+  isl_schedule *schedule;
+  isl_union_map *proximity = isl_union_map_copy(dependences);
+  isl_union_map *validity = dependences;
+
   DEBUG(dbgs() << "\n\nCompute schedule from: ");
   DEBUG(dbgs() << "Domain := "; isl_union_set_dump(domain); dbgs() << ";\n");
   DEBUG(dbgs() << "Proximity := "; isl_union_map_dump(proximity);
         dbgs() << ";\n");
   DEBUG(dbgs() << "Validity := "; isl_union_map_dump(validity);
         dbgs() << ";\n");
-
-  isl_schedule *schedule;
 
   isl_options_set_schedule_max_constant_term(S.getIslCtx(), CONSTANT_BOUND);
   isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), 1);
