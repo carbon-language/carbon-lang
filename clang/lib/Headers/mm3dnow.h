@@ -105,7 +105,7 @@ _m_pfrsqrt(__m64 __m) {
 
 static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))
 _m_pfrsqrtit1(__m64 __m1, __m64 __m2) {
-  return (__m64)__builtin_ia32_pfrsqrtit1((__v2sf)__m1, (__v2sf)__m2);
+  return (__m64)__builtin_ia32_pfrsqit1((__v2sf)__m1, (__v2sf)__m2);
 }
 
 static __inline__ __m64 __attribute__((__always_inline__, __nodebug__))

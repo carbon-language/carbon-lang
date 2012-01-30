@@ -486,7 +486,6 @@ void f0() {
   tmp_V2f = __builtin_ia32_pfrcpit2(tmp_V2f, tmp_V2f);
   tmp_V2f = __builtin_ia32_pfrsqrt(tmp_V2f);
   tmp_V2f = __builtin_ia32_pfrsqit1(tmp_V2f, tmp_V2f);
-  tmp_V2f = __builtin_ia32_pfrsqrtit1(tmp_V2f, tmp_V2f);
   tmp_V2f = __builtin_ia32_pfsub(tmp_V2f, tmp_V2f);
   tmp_V2f = __builtin_ia32_pfsubr(tmp_V2f, tmp_V2f);
   tmp_V2f = __builtin_ia32_pi2fd(tmp_V2i);
