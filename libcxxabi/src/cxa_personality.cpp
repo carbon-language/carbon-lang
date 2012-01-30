@@ -20,8 +20,6 @@
 #include <stdlib.h>
 #include <assert.h>
 
-#include <stdio.h>
-
 /*
     Exception Header Layout:
 
@@ -206,10 +204,6 @@ static
 uintptr_t
 readEncodedPointer(const uint8_t** data, uint8_t encoding)
 {
-// TODO:  Not quite rgiht.  This should be able to read a 0 from the TType table
-//                          and not dereference it.  Pasted in temporayr workaround
-// TODO:  Sometimes this is clearly not always reading an encoded pointer, for
-//        example a length in the call site table.  Needs new name?
     uintptr_t result = 0;
     if (encoding == DW_EH_PE_omit) 
         return result;
@@ -346,7 +340,8 @@ exception_spec_can_catch(int64_t specIndex, const uint8_t* classInfo,
         // this should not happen
         call_terminate(false, unwind_exception);
     }
-    // specIndex is 1-based byte offset into classInfo;
+    // specIndex is negative of 1-based byte offset into classInfo;
+    specIndex = -specIndex;
     --specIndex;
     const uint8_t* temp = classInfo + specIndex;
     // If any type in the spec list can catch excpType, return false, else return true
@@ -369,222 +364,360 @@ exception_spec_can_catch(int64_t specIndex, const uint8_t* classInfo,
 }
 
 static
-const uint8_t*
-getTTypeEntry(int64_t ttypeIndex, const uint8_t* classInfo, uint8_t ttypeEncoding)
+void*
+get_thrown_object_ptr(_Unwind_Exception* unwind_exception)
 {
-    switch (ttypeEncoding & 0x0F)
+    // Even for foreign exceptions, the exception object is *probably* at unwind_exception + 1
+    //    Regardless, this library is prohibited from touching a foreign exception
+    void* adjustedPtr = unwind_exception + 1;
+    if (unwind_exception->exception_class == kOurDependentExceptionClass)
+        adjustedPtr = ((__cxa_dependent_exception*)adjustedPtr - 1)->primaryException;
+    return adjustedPtr;
+}
+
+/*
+    There are 3 types of scans needed:
+
+    1.  Scan for handler with native or foreign exception.  If handler found,
+        save state and return _URC_HANDLER_FOUND, else return _URC_CONTINUE_UNWIND.
+        May also report an error on invalid input.
+        May terminate for invalid exception table.
+        _UA_SEARCH_PHASE
+
+    2.  Scan for handler with foreign exception.  Must return _URC_HANDLER_FOUND,
+        or call terminate.
+        _UA_CLEANUP_PHASE && _UA_HANDLER_FRAME && !native_exception
+
+    3.  Scan for cleanups.  If a handler is found and this isn't forced unwind,
+        then terminate, otherwise ignore the handler and keep looking for cleanup.
+        If a cleanup is found, return _URC_HANDLER_FOUND, else return _URC_CONTINUE_UNWIND.
+        May also report an error on invalid input.
+        May terminate for invalid exception table.
+        _UA_CLEANUP_PHASE && !_UA_HANDLER_FRAME
+*/
+
+namespace
+{
+
+struct scan_results
+{
+    int64_t        ttypeIndex;   // > 0 catch handler, < 0 exception spec handler, == 0 a cleanup
+    const uint8_t* actionRecord;         // Currently unused.  TODO: Remove?
+    const uint8_t* languageSpecificData;  // Needed only for __cxa_call_unexpected
+    uintptr_t      landingPad;   // null -> nothing found, else something found
+    void*          adjustedPtr;  // Used in cxa_exception.cpp
+    _Unwind_Reason_Code reason;  // One of _URC_FATAL_PHASE1_ERROR,
+                                 //        _URC_FATAL_PHASE2_ERROR,
+                                 //        _URC_CONTINUE_UNWIND,
+                                 //        _URC_HANDLER_FOUND
+};
+
+}  // unnamed namespace
+
+static
+void
+scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception,
+            _Unwind_Exception* unwind_exception, _Unwind_Context* context)
+{
+    // Initialize results to found nothing but an error
+    results.ttypeIndex = 0;
+    results.actionRecord = 0;
+    results.languageSpecificData = 0;
+    results.landingPad = 0;
+    results.adjustedPtr = 0;
+    results.reason = _URC_FATAL_PHASE1_ERROR;
+    // Check for consistent actions
+    if (actions & _UA_SEARCH_PHASE)
     {
-    case DW_EH_PE_absptr:
-        ttypeIndex *= sizeof(void*);
-        break;
-    case DW_EH_PE_udata2:
-    case DW_EH_PE_sdata2:
-        ttypeIndex *= 2;
-        break;
-    case DW_EH_PE_udata4:
-    case DW_EH_PE_sdata4:
-        ttypeIndex *= 4;
-        break;
-    case DW_EH_PE_udata8:
-    case DW_EH_PE_sdata8:
-        ttypeIndex *= 8;
-        break;
+        // Do Phase 1
+        if (actions & (_UA_CLEANUP_PHASE | _UA_HANDLER_FRAME | _UA_FORCE_UNWIND))
+        {
+            // None of these flags should be set during Phase 1
+            //   Client error
+            results.reason = _URC_FATAL_PHASE1_ERROR;
+            return;
+        }
     }
-    return classInfo - ttypeIndex;
-}
-
-static
-void
-save_state(__cxa_exception* exception_header, int handlerSwitchValue,
-           const uint8_t* actionRecord, const uint8_t* languageSpecificData,
-           void* landingPad, void* adjustedPtr)
-{
-    exception_header->handlerSwitchValue = handlerSwitchValue;
-    exception_header->actionRecord = actionRecord;
-    exception_header->languageSpecificData = languageSpecificData;
-    exception_header->catchTemp = landingPad;
-    exception_header->adjustedPtr = adjustedPtr;
-}
-
-static
-void
-save_state_for_exception_spec(__cxa_exception* exception_header,
-                              int handlerSwitchValue,
-                              const void* classInfo,
-                              uint8_t ttypeEncoding,
-                              void* adjustedPtr)
-{
-    exception_header->handlerSwitchValue = handlerSwitchValue;
-    exception_header->languageSpecificData = static_cast<const uint8_t*>(classInfo);
-    exception_header->catchTemp = (void*)(uintptr_t)ttypeEncoding;
-    exception_header->adjustedPtr = adjustedPtr;
-}
-
-/// Deals with Dwarf actions matching our type infos 
-/// (OurExceptionType_t instances). Returns whether or not a dwarf emitted 
-/// action matches the supplied exception type. If such a match succeeds, 
-/// the handlerSwitchValue will be set with > 0 index value. Only 
-/// corresponding llvm.eh.selector type info arguments, cleanup arguments 
-/// are supported. Filters are not supported.
-/// See Variable Length Data in: 
-/// @link http://dwarfstd.org/Dwarf3.pdf @unlink
-/// Also see @link http://refspecs.freestandards.org/abi-eh-1.21.html @unlink
-/// @param classInfo our array of type info pointers (to globals)
-/// @param actionEntry index into above type info array or 0 (cleanup). 
-///        We do not support filters.
-/// @param unwind_exception thrown _Unwind_Exception instance.
-/// @returns whether or not a type info was found. False is returned if only
-///          a cleanup was found
-static
-bool
-handleActionValue(const uint8_t* classInfo, uintptr_t actionEntry,
-                  _Unwind_Exception* unwind_exception, uint8_t ttypeEncoding)
-{
-    __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
-    void* thrown_object =
-        unwind_exception->exception_class == kOurDependentExceptionClass ?
-            ((__cxa_dependent_exception*)exception_header)->primaryException :
-            exception_header + 1;
-    const __shim_type_info* excpType =
-        static_cast<const __shim_type_info*>(exception_header->exceptionType);
-    const uint8_t* actionPos = (uint8_t*)actionEntry;
+    else if (actions & _UA_CLEANUP_PHASE)
+    {
+        if ((actions & _UA_HANDLER_FRAME) && (actions & _UA_FORCE_UNWIND))
+        {
+            // _UA_HANDLER_FRAME should only be set if phase 1 found a handler.
+            // If _UA_FORCE_UNWIND is set, phase 1 shouldn't have happened.
+            //    Client error
+            results.reason = _URC_FATAL_PHASE2_ERROR;
+            return;
+        }
+    }
+    else // Niether _UA_SEARCH_PHASE nor _UA_CLEANUP_PHASE is set
+    {
+        // One of these should be set.
+        //   Client error
+        results.reason = _URC_FATAL_PHASE1_ERROR;
+        return;
+    }
+    // Start scan by getting exception table address
+    const uint8_t* lsda = (const uint8_t*)_Unwind_GetLanguageSpecificData(context);
+    if (lsda == 0)
+    {
+        // There is no exception table
+        results.reason = _URC_CONTINUE_UNWIND;
+        return;
+    }
+    results.languageSpecificData = lsda;
+    // Get the current instruction pointer and offset it before next
+    // instruction in the current frame which threw the exception.
+    uintptr_t ip = _Unwind_GetIP(context) - 1;
+    // Get beginning current frame's code (as defined by the 
+    // emitted dwarf code)
+    uintptr_t funcStart = _Unwind_GetRegionStart(context);
+    uintptr_t ipOffset = ip - funcStart;
+    const uint8_t* classInfo = NULL;
+    // Note: See JITDwarfEmitter::EmitExceptionTable(...) for corresponding
+    //       dwarf emission
+    // Parse LSDA header.
+    uint8_t lpStartEncoding = *lsda++;
+    const uint8_t* lpStart = (const uint8_t*)readEncodedPointer(&lsda, lpStartEncoding);
+    if (lpStart == 0)
+        lpStart = (const uint8_t*)funcStart;
+    uint8_t ttypeEncoding = *lsda++;
+    if (ttypeEncoding != DW_EH_PE_omit)
+    {
+        // Calculate type info locations in emitted dwarf code which
+        // were flagged by type info arguments to llvm.eh.selector
+        // intrinsic
+        uintptr_t classInfoOffset = readULEB128(&lsda);
+        classInfo = lsda + classInfoOffset;
+    }
+    // Walk call-site table looking for range that 
+    // includes current PC. 
+    uint8_t callSiteEncoding = *lsda++;
+    uint32_t callSiteTableLength = readULEB128(&lsda);
+    const uint8_t* callSiteTableStart = lsda;
+    const uint8_t* callSiteTableEnd = callSiteTableStart + callSiteTableLength;
+    const uint8_t* actionTableStart = callSiteTableEnd;
+    const uint8_t* callSitePtr = callSiteTableStart;
     while (true)
     {
-        // Each emitted dwarf action corresponds to a 2 tuple of
-        // type info address offset, and action offset to the next
-        // emitted action.
-        const uint8_t* SactionPos = actionPos;
-        int64_t ttypeIndex = readSLEB128(&actionPos);
-        const uint8_t* tempActionPos = actionPos;
-        int64_t actionOffset = readSLEB128(&tempActionPos);
-        if (ttypeIndex > 0)  // a catch handler
+        // There is one entry per call site.
+        // The call sites are non-overlapping in [start, start+length)
+        // The call sites are ordered in increasing value of start
+        uintptr_t start = readEncodedPointer(&callSitePtr, callSiteEncoding);
+        uintptr_t length = readEncodedPointer(&callSitePtr, callSiteEncoding);
+        uintptr_t landingPad = readEncodedPointer(&callSitePtr, callSiteEncoding);
+        uintptr_t actionEntry = readULEB128(&callSitePtr);
+        if ((start <= ipOffset) && (ipOffset < (start + length)))
         {
-            const uint8_t* TTypeEntry = getTTypeEntry(ttypeIndex, classInfo,
-                                                      ttypeEncoding);
-            const __shim_type_info* catchType =
-                       (const __shim_type_info*)readEncodedPointer(&TTypeEntry,
-                                                                 ttypeEncoding);
-            void* adjustedPtr = thrown_object;
-            // catchType == 0 -> catch (...)
-            if (catchType == 0 || catchType->can_catch(excpType, adjustedPtr))
-            {
-                exception_header->handlerSwitchValue = ttypeIndex;
-                exception_header->actionRecord = SactionPos;  // unnecessary?
-                // used by __cxa_get_exception_ptr and __cxa_begin_catch
-                exception_header->adjustedPtr = adjustedPtr;
-                return true;
-            }
-        }
-        else if (ttypeIndex < 0)  // an exception spec
-        {
-        }
-        else  // ttypeIndex == 0  // a cleanup
-        {
-        }
-        if (actionOffset == 0)
-            break;
-        actionPos += actionOffset;
-    }
-    return false;
-}
-
-// Return true if there is a handler and false otherwise
-// cache handlerSwitchValue, actionRecord, languageSpecificData,
-//    catchTemp and adjustedPtr here.
-static
-bool
-contains_handler(_Unwind_Exception* unwind_exception, _Unwind_Context* context)
-{
-    __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
-    const uint8_t* lsda = (const uint8_t*)_Unwind_GetLanguageSpecificData(context);
-    exception_header->languageSpecificData = lsda;
-    if (lsda)
-    {
-        // Get the current instruction pointer and offset it before next
-        // instruction in the current frame which threw the exception.
-        uintptr_t ip = _Unwind_GetIP(context) - 1;
-        // Get beginning current frame's code (as defined by the 
-        // emitted dwarf code)
-        uintptr_t funcStart = _Unwind_GetRegionStart(context);
-        uintptr_t ipOffset = ip - funcStart;
-        const uint8_t* classInfo = NULL;
-        // Note: See JITDwarfEmitter::EmitExceptionTable(...) for corresponding
-        //       dwarf emission
-        // Parse LSDA header.
-        uint8_t lpStartEncoding = *lsda++;
-        const uint8_t* lpStart = (const uint8_t*)readEncodedPointer(&lsda, lpStartEncoding);
-        if (lpStart == 0)
-            lpStart = (const uint8_t*)funcStart;
-        uint8_t ttypeEncoding = *lsda++;
-        // TODO:  preflight ttypeEncoding here and return error if there's a problem
-        if (ttypeEncoding != DW_EH_PE_omit)
-        {
-            // Calculate type info locations in emitted dwarf code which
-            // were flagged by type info arguments to llvm.eh.selector
-            // intrinsic
-            uintptr_t classInfoOffset = readULEB128(&lsda);
-            classInfo = lsda + classInfoOffset;
-        }
-        // Walk call-site table looking for range that 
-        // includes current PC. 
-        uint8_t callSiteEncoding = *lsda++;
-        uint32_t callSiteTableLength = readULEB128(&lsda);
-        const uint8_t* callSiteTableStart = lsda;
-        const uint8_t* callSiteTableEnd = callSiteTableStart + callSiteTableLength;
-        const uint8_t* actionTableStart = callSiteTableEnd;
-        const uint8_t* callSitePtr = callSiteTableStart;
-        while (callSitePtr < callSiteTableEnd)
-        {
-            uintptr_t start = readEncodedPointer(&callSitePtr, callSiteEncoding);
-            uintptr_t length = readEncodedPointer(&callSitePtr, callSiteEncoding);
-            uintptr_t landingPad = readEncodedPointer(&callSitePtr, callSiteEncoding);
-            // Note: Action value
-            uintptr_t actionEntry = readULEB128(&callSitePtr);
+            // Found the call site containing ip.
             if (landingPad == 0)
-                continue; // no landing pad for this entry
-            if (actionEntry)
-                actionEntry += ((uintptr_t)actionTableStart) - 1;
-            if ((start <= ipOffset) && (ipOffset < (start + length)))
             {
-                exception_header->catchTemp = (void*)(lpStart + landingPad);
-                if (actionEntry)
-                    return handleActionValue(classInfo, 
-                                             actionEntry, 
-                                             unwind_exception,
-                                             ttypeEncoding);
-                // Note: Only non-cleanup handlers are marked as
-                //       found. Otherwise the cleanup handlers will be 
-                //       re-found and executed during the cleanup 
-                //       phase.
-                return false;  // Won't find another call site in range of ipOffset
+                // No handler here
+                results.reason = _URC_CONTINUE_UNWIND;
+                return;
             }
+            landingPad = (uintptr_t)lpStart + landingPad;
+            if (actionEntry == 0)
+            {
+                // Found a cleanup
+                // If this is a type 1 or type 2 search, ignore the clean up
+                //    and continue to scan for a handler.
+                // If this is a type 3 search, you want to install the cleanup.
+                if ((actions & _UA_CLEANUP_PHASE) && !(actions & _UA_HANDLER_FRAME))
+                {
+                    results.ttypeIndex = 0;  // Redundant but clarifying
+                    results.landingPad = landingPad;
+                    results.reason = _URC_HANDLER_FOUND;
+                    return;
+                }
+            }
+            // Convert 1-based byte offset into
+            const uint8_t* action = actionTableStart + (actionEntry - 1);
+            // Scan action entries until you find a matching handler, cleanup, or the end of action list
+            while (true)
+            {
+                const uint8_t* actionRecord = action;
+                int64_t ttypeIndex = readSLEB128(&action);
+                if (ttypeIndex > 0)
+                {
+                    // Found a catch, does it actually catch?
+                    // First check for catch (...)
+                    const __shim_type_info* catchType =
+                        get_shim_type_info(ttypeIndex, classInfo,
+                                           ttypeEncoding, native_exception,
+                                           unwind_exception);
+                    if (catchType == 0)
+                    {
+                        // Found catch (...) catches everything, including foreign exceptions
+                        // If this is a type 1 search save state and return _URC_HANDLER_FOUND
+                        // If this is a type 2 search save state and return _URC_HANDLER_FOUND
+                        // If this is a type 3 search !_UA_FORCE_UNWIND, we should have found this in phase 1!
+                        // If this is a type 3 search _UA_FORCE_UNWIND, ignore handler and continue scan
+                        if ((actions & _UA_SEARCH_PHASE) || (actions & _UA_HANDLER_FRAME))
+                        {
+                            // Save state and return _URC_HANDLER_FOUND
+                            results.ttypeIndex = ttypeIndex;
+                            results.actionRecord = actionRecord;
+                            results.landingPad = landingPad;
+                            results.adjustedPtr = get_thrown_object_ptr(unwind_exception);
+                            results.reason = _URC_HANDLER_FOUND;
+                            return;
+                        }
+                        else if (!(actions & _UA_FORCE_UNWIND))
+                        {
+                            // It looks like the exception table has changed
+                            //    on us.  Likely stack corruption!
+                            call_terminate(native_exception, unwind_exception);
+                        }
+                    }
+                    // Else this is a catch (T) clause and will never
+                    //    catch a foreign exception
+                    else if (native_exception)
+                    {
+                        __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
+                        void* adjustedPtr = get_thrown_object_ptr(unwind_exception);
+                        const __shim_type_info* excpType =
+                            static_cast<const __shim_type_info*>(exception_header->exceptionType);
+                        if (adjustedPtr == 0 || excpType == 0)
+                        {
+                            // Something very bad happened
+                            call_terminate(native_exception, unwind_exception);
+                        }
+                        if (catchType->can_catch(excpType, adjustedPtr))
+                        {
+                            // Found a matching handler
+                            // If this is a type 1 search save state and return _URC_HANDLER_FOUND
+                            // If this is a type 3 search and !_UA_FORCE_UNWIND, we should have found this in phase 1!
+                            // If this is a type 3 search and _UA_FORCE_UNWIND, ignore handler and continue scan
+                            if (actions & _UA_SEARCH_PHASE)
+                            {
+                                // Save state and return _URC_HANDLER_FOUND
+                                results.ttypeIndex = ttypeIndex;
+                                results.actionRecord = actionRecord;
+                                results.landingPad = landingPad;
+                                results.adjustedPtr = adjustedPtr;
+                                results.reason = _URC_HANDLER_FOUND;
+                                return;
+                            }
+                            else if (!(actions & _UA_FORCE_UNWIND))
+                            {
+                                // It looks like the exception table has changed
+                                //    on us.  Likely stack corruption!
+                                call_terminate(native_exception, unwind_exception);
+                            }
+                        }
+                    }
+                    // Scan next action ...
+                }
+                else if (ttypeIndex < 0)
+                {
+                    // Found an exception spec.  If this is a foreign exception,
+                    //   it is always caught.
+                    if (native_exception)
+                    {
+                        // Does the exception spec catch this native exception?
+                        __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
+                        void* adjustedPtr = get_thrown_object_ptr(unwind_exception);
+                        const __shim_type_info* excpType =
+                            static_cast<const __shim_type_info*>(exception_header->exceptionType);
+                        if (adjustedPtr == 0 || excpType == 0)
+                        {
+                            // Something very bad happened
+                            call_terminate(native_exception, unwind_exception);
+                        }
+                        if (exception_spec_can_catch(ttypeIndex, classInfo,
+                                                     ttypeEncoding, excpType,
+                                                     adjustedPtr, unwind_exception))
+                        {
+                            // native exception caught by exception spec
+                            // If this is a type 1 search, save state and return _URC_HANDLER_FOUND
+                            // If this is a type 3 search !_UA_FORCE_UNWIND, we should have found this in phase 1!
+                            // If this is a type 3 search _UA_FORCE_UNWIND, ignore handler and continue scan
+                            if (actions & _UA_SEARCH_PHASE)
+                            {
+                                // Save state and return _URC_HANDLER_FOUND
+                                results.ttypeIndex = ttypeIndex;
+                                results.actionRecord = actionRecord;
+                                results.landingPad = landingPad;
+                                results.adjustedPtr = adjustedPtr;
+                                results.reason = _URC_HANDLER_FOUND;
+                                return;
+                            }
+                            else if (!(actions & _UA_FORCE_UNWIND))
+                            {
+                                // It looks like the exception table has changed
+                                //    on us.  Likely stack corruption!
+                                call_terminate(native_exception, unwind_exception);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        // foreign exception caught by exception spec
+                        // If this is a type 1 search, save state and return _URC_HANDLER_FOUND
+                        // If this is a type 2 search, save state and return _URC_HANDLER_FOUND
+                        // If this is a type 3 search !_UA_FORCE_UNWIND, we should have found this in phase 1!
+                        // If this is a type 3 search _UA_FORCE_UNWIND, ignore handler and continue scan
+                        if ((actions & _UA_SEARCH_PHASE) || (actions & _UA_HANDLER_FRAME))
+                        {
+                            // Save state and return _URC_HANDLER_FOUND
+                            results.ttypeIndex = ttypeIndex;
+                            results.actionRecord = actionRecord;
+                            results.landingPad = landingPad;
+                            results.adjustedPtr = get_thrown_object_ptr(unwind_exception);
+                            results.reason = _URC_HANDLER_FOUND;
+                            return;
+                        }
+                        else if (!(actions & _UA_FORCE_UNWIND))
+                        {
+                            // It looks like the exception table has changed
+                            //    on us.  Likely stack corruption!
+                            call_terminate(native_exception, unwind_exception);
+                        }
+                    }
+                    // Scan next action ...
+                }
+                else  // ttypeIndex == 0
+                {
+                    // Found a cleanup
+                    // If this is a type 1 search, ignore it and continue scan
+                    // If this is a type 2 search, ignore it and continue scan
+                    // If this is a type 3 search, save state and return _URC_HANDLER_FOUND
+                    if ((actions & _UA_CLEANUP_PHASE) && !(actions & _UA_HANDLER_FRAME))
+                    {
+                        // Save state and return _URC_HANDLER_FOUND
+                        results.ttypeIndex = ttypeIndex;
+                        results.actionRecord = actionRecord;
+                        results.landingPad = landingPad;
+                        results.adjustedPtr = get_thrown_object_ptr(unwind_exception);
+                        results.reason = _URC_HANDLER_FOUND;
+                        return;
+                    }
+                }
+                const uint8_t* temp = action;
+                int64_t actionOffset = readSLEB128(&temp);
+                if (actionOffset == 0)
+                {
+                    // End of action list, no matching handler or cleanup found
+                    // If this is a type 2 search, phase 1 told us we would find
+                    //   a handler and we didn't.  Something has gone terribly wrong.
+                    // Searches type 1 and 3 should return _URC_CONTINUE_UNWIND
+                    if (actions & _UA_HANDLER_FRAME)
+                        call_terminate(native_exception, unwind_exception);
+                    results.reason = _URC_CONTINUE_UNWIND;
+                    return;
+                }
+                // Go to next action
+                action += actionOffset;
+            }  // there is no break out of this loop, only return
         }
-        // Not found, need to properly terminate
-    }
-    return false;
-}
-
-static
-_Unwind_Reason_Code
-transfer_control_to_landing_pad(_Unwind_Exception* unwind_exception,
-                                _Unwind_Context* context)
-{
-    __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
-    _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
-    _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), exception_header->handlerSwitchValue);
-    _Unwind_SetIP(context, (uintptr_t)exception_header->catchTemp);
-    return _URC_INSTALL_CONTEXT;
-}
-
-static
-_Unwind_Reason_Code
-perform_cleanup(_Unwind_Exception* unwind_exception, _Unwind_Context* context)
-{
-    __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
-    _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
-    _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), 0);
-    _Unwind_SetIP(context, (uintptr_t)exception_header->catchTemp);
-    return _URC_INSTALL_CONTEXT;
+        else if (ipOffset < start)
+        {
+            // There is no call site for this ip
+            // Something bad has happened.  We should never get here.
+            // Possible stack corruption.
+            call_terminate(native_exception, unwind_exception);
+        }
+    }  // there is no break out of this loop, only return
 }
 
 // public API
@@ -644,558 +777,58 @@ _Unwind_Reason_Code
 __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClass,
                      _Unwind_Exception* unwind_exception, _Unwind_Context* context)
 {
-printf("__gxx_personality_v0 start with unwind_exception = %p\n", unwind_exception);
     if (version != 1 || unwind_exception == 0 || context == 0)
         return _URC_FATAL_PHASE1_ERROR;
     bool native_exception = (exceptionClass     & get_language) ==
                             (kOurExceptionClass & get_language);
+    scan_results results;
     if (actions & _UA_SEARCH_PHASE)
     {
-printf("__gxx_personality_v0 start phase 1\n");
-        // Do Phase 1
-        if (actions & (_UA_CLEANUP_PHASE | _UA_HANDLER_FRAME | _UA_FORCE_UNWIND))
+        scan_eh_tab(results, actions, native_exception, unwind_exception, context);
+        if (results.reason == _URC_HANDLER_FOUND)
         {
-            // None of these flags should be set during Phase 1
-            return _URC_FATAL_PHASE1_ERROR;
-        }
-        // Scan for handlers
-        //   If a handler is found return _URC_HANDLER_FOUND else return _URC_CONTINUE_UNWIND
-        const uint8_t* lsda = (const uint8_t*)_Unwind_GetLanguageSpecificData(context);
-        if (lsda == 0)
-        {
-            // No LanguageSpecificData means no handlers
-printf("__gxx_personality_v0 phase 1 no lsda, returning _URC_CONTINUE_UNWIND\n");
-            return _URC_CONTINUE_UNWIND;
-        }
-        const uint8_t* languageSpecificData = lsda;
-        // Get the current instruction pointer and offset it before next
-        // instruction in the current frame which threw the exception.
-        uintptr_t ip = _Unwind_GetIP(context) - 1;
-        // Get beginning current frame's code (as defined by the 
-        // emitted dwarf code)
-        uintptr_t funcStart = _Unwind_GetRegionStart(context);
-        uintptr_t ipOffset = ip - funcStart;
-        const uint8_t* classInfo = NULL;
-        // Note: See JITDwarfEmitter::EmitExceptionTable(...) for corresponding
-        //       dwarf emission
-        // Parse LSDA header.
-        uint8_t lpStartEncoding = *lsda++;
-        const uint8_t* lpStart = (const uint8_t*)readEncodedPointer(&lsda, lpStartEncoding);
-        if (lpStart == 0)
-            lpStart = (const uint8_t*)funcStart;
-        uint8_t ttypeEncoding = *lsda++;
-        if (ttypeEncoding != DW_EH_PE_omit)
-        {
-            // Calculate type info locations in emitted dwarf code which
-            // were flagged by type info arguments to llvm.eh.selector
-            // intrinsic
-            uintptr_t classInfoOffset = readULEB128(&lsda);
-            classInfo = lsda + classInfoOffset;
-        }
-        // Walk call-site table looking for range that 
-        // includes current PC. 
-        uint8_t callSiteEncoding = *lsda++;
-        uint32_t callSiteTableLength = readULEB128(&lsda);
-        const uint8_t* callSiteTableStart = lsda;
-        const uint8_t* callSiteTableEnd = callSiteTableStart + callSiteTableLength;
-        const uint8_t* actionTableStart = callSiteTableEnd;
-        const uint8_t* callSitePtr = callSiteTableStart;
-        while (true)
-        {
-            // There is one entry per call site.
-            // The call sites are non-overlapping in [start, start+length)
-            // The call sites are ordered in increasing value of start
-            uintptr_t start = readEncodedPointer(&callSitePtr, callSiteEncoding);
-            uintptr_t length = readEncodedPointer(&callSitePtr, callSiteEncoding);
-            uintptr_t landingPad = readEncodedPointer(&callSitePtr, callSiteEncoding);
-            uintptr_t actionEntry = readULEB128(&callSitePtr);
-            if ((start <= ipOffset) && (ipOffset < (start + length)))
+            if (native_exception)
             {
-                // Found the call site containing ip.
-                if (landingPad == 0 || actionEntry == 0)
-                {
-                    // No handler here
- printf("__gxx_personality_v0 phase 1 no landingPad or no actionEntry, returning _URC_CONTINUE_UNWIND\n");
-                   return _URC_CONTINUE_UNWIND;
-                }
-                // Convert 1-based byte offset into
-                const uint8_t* action = actionTableStart + (actionEntry - 1);
-                // Scan action entries until you find a matching handler, or they end
-                while (true)
-                {
-                    const uint8_t* actionRecord = action;
-                    int64_t ttypeIndex = readSLEB128(&action);
-                    const uint8_t* temp = action;
-                    int64_t actionOffset = readSLEB128(&temp);
-                    if (ttypeIndex > 0)
-                    {
-                        // Does this handler match?
-                        // First check for catch (...)
-                        const __shim_type_info* catchType =
-                            get_shim_type_info(ttypeIndex, classInfo,
-                                               ttypeEncoding, native_exception,
-                                               unwind_exception);
-                        if (catchType == 0)
-                        {
-                            // catch (...) catches everything, including foreign exceptions
-                            // If not foreign, safe state before returning
-                            if (native_exception)
-                            {
-                                __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
-                                void* adjustedPtr =
-                                    unwind_exception->exception_class == kOurDependentExceptionClass ?
-                                        ((__cxa_dependent_exception*)exception_header)->primaryException :
-                                        exception_header + 1;
-                                save_state(exception_header, static_cast<int>(ttypeIndex),
-                                           actionRecord, languageSpecificData,
-                                           const_cast<uint8_t*>(lpStart + landingPad),
-                                           adjustedPtr);
-                            }
- printf("__gxx_personality_v0 phase 1 catch (...), returning _URC_HANDLER_FOUND\n");
-                            return _URC_HANDLER_FOUND;
-                        }
-                        // Else this is a catch (T) clause and will never
-                        //    catch a foreign exception
-                        if (native_exception)
-                        {
-                            __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
-                            void* adjustedPtr =
-                                unwind_exception->exception_class == kOurDependentExceptionClass ?
-                                    ((__cxa_dependent_exception*)exception_header)->primaryException :
-                                    exception_header + 1;
-                            const __shim_type_info* excpType =
-                                static_cast<const __shim_type_info*>(exception_header->exceptionType);
-                            if (adjustedPtr == 0 || excpType == 0)
-                            {
-                                // Something very bad happened
-                                call_terminate(native_exception, unwind_exception);
-                            }
-                            if (catchType->can_catch(excpType, adjustedPtr))
-                            {
-                                // Found a matching handler
-                                save_state(exception_header, static_cast<int>(ttypeIndex),
-                                           actionRecord, languageSpecificData,
-                                           const_cast<uint8_t*>(lpStart + landingPad),
-                                           adjustedPtr);
- printf("__gxx_personality_v0 phase 1 catch (T), returning _URC_HANDLER_FOUND\n");
-                                return _URC_HANDLER_FOUND;
-                            }
-                        }
-                        // Scan next action ...
-                    }
-                    else if (ttypeIndex < 0)
-                    {
-                        // Found an exception spec.  If this is a foreign exception,
-                        //   it is always caught.
-                        if (!native_exception)
-                        {
- printf("__gxx_personality_v0 phase 1 exception spec for foreign, returning _URC_HANDLER_FOUND\n");
-                            return _URC_HANDLER_FOUND;
-                        }
-                        __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
-                        void* adjustedPtr =
-                            unwind_exception->exception_class == kOurDependentExceptionClass ?
-                                ((__cxa_dependent_exception*)exception_header)->primaryException :
-                                exception_header + 1;
-                        const __shim_type_info* excpType =
-                            static_cast<const __shim_type_info*>(exception_header->exceptionType);
-                        if (adjustedPtr == 0 || excpType == 0)
-                        {
-                            // Something very bad happened
-                            call_terminate(native_exception, unwind_exception);
-                        }
-                        if (exception_spec_can_catch(ttypeIndex, classInfo,
-                                                     ttypeEncoding, excpType,
-                                                     adjustedPtr, unwind_exception))
-                        {
-                            // The state saved is a little different for exception specs
-                            save_state(exception_header,
-                                                          ttypeIndex,
-                                                          actionRecord,
-                                                          languageSpecificData,
-                                                          const_cast<uint8_t*>(lpStart + landingPad),
-                                                          adjustedPtr);
- printf("__gxx_personality_v0 phase 1 exception spec for native, returning _URC_HANDLER_FOUND\n");
-                                return _URC_HANDLER_FOUND;
-                        }
-                        // Scan next action ...
-                    }
-                    if (actionOffset == 0)
-                    {
-                        // End of action list, no matching handler found
- printf("__gxx_personality_v0 phase 1 no handler found, returning _URC_CONTINUE_UNWIND\n");
-                        return _URC_CONTINUE_UNWIND;
-                    }
-                    // Go to next action
-                    action += actionOffset;
-                }
+                __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
+                exception_header->handlerSwitchValue = static_cast<int>(results.ttypeIndex);
+                exception_header->actionRecord = results.actionRecord;
+                exception_header->languageSpecificData = results.languageSpecificData;
+                exception_header->catchTemp = reinterpret_cast<void*>(results.landingPad);
+                exception_header->adjustedPtr = results.adjustedPtr;
             }
-            else if (ipOffset < start)
-            {
-                // There is no call site for this ip
-                // Something bad has happened.  We should never get here.
-                // Possible stack corruption.
-                call_terminate(native_exception, unwind_exception);
-            }
+            return _URC_HANDLER_FOUND;
         }
+        return results.reason;
     }
     if (actions & _UA_CLEANUP_PHASE)
     {
         if (actions & _UA_HANDLER_FRAME)
         {
-printf("__gxx_personality_v0 start phase 2 handling\n");
-            // Search phase found a handler, now install it
-            if (actions & _UA_FORCE_UNWIND)
-            {
-                // This should never happen.  The search phase isn't executed
-                //   for forced unwinding, so no handler could have been found.
-                call_terminate(native_exception, unwind_exception);
-            }
-            // This is the state we need:
-            uintptr_t handlerSwitchValue;
-            uintptr_t landingPad;
             if (native_exception)
             {
-                // Just retrieve it from the exception_header
                 __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
-                handlerSwitchValue = static_cast<uintptr_t>(static_cast<intptr_t>(exception_header->handlerSwitchValue));
-                landingPad = reinterpret_cast<uintptr_t>(exception_header->catchTemp);
+                results.ttypeIndex = exception_header->handlerSwitchValue;
+                results.actionRecord = exception_header->actionRecord;
+                results.languageSpecificData = exception_header->languageSpecificData;
+                results.landingPad = reinterpret_cast<uintptr_t>(exception_header->catchTemp);
+                results.adjustedPtr = exception_header->adjustedPtr;
             }
             else
-            {
-                // Else a foreign exception, we need to find the handler that caught it
-                const uint8_t* lsda = (const uint8_t*)_Unwind_GetLanguageSpecificData(context);
-                if (lsda == 0)
-                {
-                    // If we don't find a handler, something bad happened
-                    call_terminate(native_exception, unwind_exception);
-                }
-                // Get the current instruction pointer and offset it before next
-                // instruction in the current frame which threw the exception.
-                uintptr_t ip = _Unwind_GetIP(context) - 1;
-                // Get beginning current frame's code (as defined by the 
-                // emitted dwarf code)
-                uintptr_t funcStart = _Unwind_GetRegionStart(context);
-                uintptr_t ipOffset = ip - funcStart;
-                const uint8_t* classInfo = NULL;
-                // Note: See JITDwarfEmitter::EmitExceptionTable(...) for corresponding
-                //       dwarf emission
-                // Parse LSDA header.
-                uint8_t lpStartEncoding = *lsda++;
-                const uint8_t* lpStart = (const uint8_t*)readEncodedPointer(&lsda, lpStartEncoding);
-                if (lpStart == 0)
-                    lpStart = (const uint8_t*)funcStart;
-                uint8_t ttypeEncoding = *lsda++;
-                if (ttypeEncoding != DW_EH_PE_omit)
-                {
-                    // Calculate type info locations in emitted dwarf code which
-                    // were flagged by type info arguments to llvm.eh.selector
-                    // intrinsic
-                    uintptr_t classInfoOffset = readULEB128(&lsda);
-                    classInfo = lsda + classInfoOffset;
-                }
-                // Walk call-site table looking for range that 
-                // includes current PC. 
-                uint8_t callSiteEncoding = *lsda++;
-                uint32_t callSiteTableLength = readULEB128(&lsda);
-                const uint8_t* callSiteTableStart = lsda;
-                const uint8_t* callSiteTableEnd = callSiteTableStart + callSiteTableLength;
-                const uint8_t* actionTableStart = callSiteTableEnd;
-                const uint8_t* callSitePtr = callSiteTableStart;
-                while (true)
-                {
-                    // There is one entry per call site.
-                    // The call sites are non-overlapping in [start, start+length)
-                    // The call sites are ordered in increasing value of start
-                    uintptr_t start = readEncodedPointer(&callSitePtr, callSiteEncoding);
-                    uintptr_t length = readEncodedPointer(&callSitePtr, callSiteEncoding);
-                    landingPad = readEncodedPointer(&callSitePtr, callSiteEncoding);
-                    uintptr_t actionEntry = readULEB128(&callSitePtr);
-                    if ((start <= ipOffset) && (ipOffset < (start + length)))
-                    {
-                        // Found the call site containing ip.
-                        if (landingPad == 0 || actionEntry == 0)
-                        {
-                            // No handler here
-                            // If we don't find a handler, something bad happened
-                            call_terminate(native_exception, unwind_exception);
-                        }
-                        landingPad = (uintptr_t)lpStart + landingPad;
-                        // Convert 1-based byte offset into
-                        const uint8_t* action = actionTableStart + (actionEntry - 1);
-                        // Scan action entries until you find a matching handler, or they end
-                        while (true)
-                        {
-                            int64_t ttypeIndex = readSLEB128(&action);
-                            const uint8_t* temp = action;
-                            int64_t actionOffset = readSLEB128(&temp);
-                            if (ttypeIndex > 0)
-                            {
-                                // Does this handler match?
-                                // First check for catch (...)
-                                const __shim_type_info* catchType =
-                                    get_shim_type_info(ttypeIndex, classInfo,
-                                                       ttypeEncoding, native_exception,
-                                                       unwind_exception);
-                                if (catchType == 0)
-                                {
-                                    // catch (...) catches everything, including foreign exceptions
-                                    handlerSwitchValue = ttypeIndex;
-                                    goto install_handler;
-                                }
-                                // Else this is a catch (T) clause and will never
-                                //    catch a foreign exception
-                                // Scan next action ...
-                            }
-                            else if (ttypeIndex < 0)
-                            {
-                                // Found an exception spec.  This is a foreign exception,
-                                //   and thus is always caught.
-                                //   However the landing pad is going to call either
-                                //   __cxa_call_unexpected (for a throw spec) or
-                                //   std::terminate (for noexcept).  We
-                                //   don't know which.  And __cxa_call_unexpected
-                                //   lacks the API to recover ttypeIndex.  However
-                                //   if we were to call a variant of __cxa_call_unexpected
-                                //   from here, and if it throws an exception,
-                                //   that won't work either.  We can't propagate
-                                //   an exception out of here.  So just call
-                                //   the landing pad and let __cxa_call_unexpected
-                                //   force terminate.  There's nothing else we
-                                //   can do.
-                                handlerSwitchValue = ttypeIndex;
-                                goto install_handler;
-                            }
-                            if (actionOffset == 0)
-                            {
-                                // End of action list, no matching handler found
-                                // If we don't find a handler, something bad happened
-                                call_terminate(native_exception, unwind_exception);
-                            }
-                            // Go to next action
-                            action += actionOffset;
-                        }
-                    }
-                    else if (ipOffset < start)
-                    {
-                        // There is no call site for this ip
-                        // Something bad has happened.  We should never get here.
-                        // Possible stack corruption.
-                        call_terminate(native_exception, unwind_exception);
-                    }
-                }
-            }
-        install_handler:
+                scan_eh_tab(results, actions, native_exception, unwind_exception, context);
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
-            _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), handlerSwitchValue);
-            _Unwind_SetIP(context, landingPad);
- printf("__gxx_personality_v0 phase 2 handler found, returning _URC_INSTALL_CONTEXT\n");
+            _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), results.ttypeIndex);
+            _Unwind_SetIP(context, results.landingPad);
             return _URC_INSTALL_CONTEXT;
         }
-printf("__gxx_personality_v0 start phase 2 cleanup\n");
-        // Else scan for a cleanup.
-        //  If handler found and !_UA_FORCE_UNWIND, terminate.
-        //  If cleanup found, install it.
-        //  If nothing found return _URC_CONTINUE_UNWIND
-        const uint8_t* lsda = (const uint8_t*)_Unwind_GetLanguageSpecificData(context);
-        if (lsda == 0)
+        scan_eh_tab(results, actions, native_exception, unwind_exception, context);
+        if (results.reason == _URC_HANDLER_FOUND)
         {
-            // No LanguageSpecificData means no handlers
- printf("__gxx_personality_v0 phase 2 no lsda, returning _URC_CONTINUE_UNWIND\n");
-            return _URC_CONTINUE_UNWIND;
+            _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
+            _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), results.ttypeIndex);
+            _Unwind_SetIP(context, results.landingPad);
+            return _URC_INSTALL_CONTEXT;
         }
-        // Get the current instruction pointer and offset it before next
-        // instruction in the current frame which threw the exception.
-        uintptr_t ip = _Unwind_GetIP(context) - 1;
-        // Get beginning current frame's code (as defined by the 
-        // emitted dwarf code)
-        uintptr_t funcStart = _Unwind_GetRegionStart(context);
-        uintptr_t ipOffset = ip - funcStart;
-        const uint8_t* classInfo = NULL;
-        // Note: See JITDwarfEmitter::EmitExceptionTable(...) for corresponding
-        //       dwarf emission
-        // Parse LSDA header.
-        uint8_t lpStartEncoding = *lsda++;
-        const uint8_t* lpStart = (const uint8_t*)readEncodedPointer(&lsda, lpStartEncoding);
-        if (lpStart == 0)
-            lpStart = (const uint8_t*)funcStart;
-        uint8_t ttypeEncoding = *lsda++;
-        if (ttypeEncoding != DW_EH_PE_omit)
-        {
-            // Calculate type info locations in emitted dwarf code which
-            // were flagged by type info arguments to llvm.eh.selector
-            // intrinsic
-            uintptr_t classInfoOffset = readULEB128(&lsda);
-            classInfo = lsda + classInfoOffset;
-        }
-        // Walk call-site table looking for range that 
-        // includes current PC. 
-        uint8_t callSiteEncoding = *lsda++;
-        uint32_t callSiteTableLength = readULEB128(&lsda);
-        const uint8_t* callSiteTableStart = lsda;
-        const uint8_t* callSiteTableEnd = callSiteTableStart + callSiteTableLength;
-        const uint8_t* actionTableStart = callSiteTableEnd;
-        const uint8_t* callSitePtr = callSiteTableStart;
-        while (true)
-        {
-            // There is one entry per call site.
-            // The call sites are non-overlapping in [start, start+length)
-            // The call sites are ordered in increasing value of start
-            uintptr_t start = readEncodedPointer(&callSitePtr, callSiteEncoding);
-            uintptr_t length = readEncodedPointer(&callSitePtr, callSiteEncoding);
-            uintptr_t landingPad = readEncodedPointer(&callSitePtr, callSiteEncoding);
-            uintptr_t actionEntry = readULEB128(&callSitePtr);
-            if ((start <= ipOffset) && (ipOffset < (start + length)))
-            {
-                // Found the call site containing ip.
-                if (landingPad == 0)
-                {
-                    // No handler here
- printf("__gxx_personality_v0 phase 2 no landingPad, returning _URC_CONTINUE_UNWIND\n");
-                    return _URC_CONTINUE_UNWIND;
-                }
-                landingPad = (uintptr_t)lpStart + landingPad;
-                if (actionEntry == 0)
-                {
-                    // Found a cleanup, install it:
-                    _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
-                    _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), 0);
-                    _Unwind_SetIP(context, landingPad);
- printf("__gxx_personality_v0 phase 2 found cleanup 1, returning _URC_INSTALL_CONTEXT\n");
-                    return _URC_INSTALL_CONTEXT;
-                }
-                // Convert 1-based byte offset into
-                const uint8_t* action = actionTableStart + (actionEntry - 1);
-                // Scan action entries until you find a matching handler, or they end
-                while (true)
-                {
-                    int64_t ttypeIndex = readSLEB128(&action);
-                    const uint8_t* temp = action;
-                    int64_t actionOffset = readSLEB128(&temp);
-                    if (ttypeIndex > 0)
-                    {
-                        // Does this handler match?
-                        // First check for catch (...)
-                        const __shim_type_info* catchType =
-                            get_shim_type_info(ttypeIndex, classInfo,
-                                               ttypeEncoding, native_exception,
-                                               unwind_exception);
-                        if (catchType == 0)
-                        {
-                            // catch (...) catches everything, including foreign exceptions
-                            if (!(actions & _UA_FORCE_UNWIND))
-                            {
-                                // Something bad has happened.  We should never get here.
-                                // We should have found this handler in phase 1
-                                // Possible stack corruption.
-                                call_terminate(native_exception, unwind_exception);
-                            }
-                            // Ignoring this handler because we are forced
-                        }
-                        else
-                        {
-                            // Else this is a catch (T) clause and will never
-                            //    catch a foreign exception
-                            if (native_exception)
-                            {
-                                __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
-                                void* adjustedPtr =
-                                    unwind_exception->exception_class == kOurDependentExceptionClass ?
-                                        ((__cxa_dependent_exception*)exception_header)->primaryException :
-                                        exception_header + 1;
-                                const __shim_type_info* excpType =
-                                    static_cast<const __shim_type_info*>(exception_header->exceptionType);
-                                if (adjustedPtr == 0 || excpType == 0)
-                                {
-                                    // Something very bad happened
-                                    call_terminate(native_exception, unwind_exception);
-                                }
-                                if (catchType->can_catch(excpType, adjustedPtr))
-                                {
-                                    // Found a matching handler
-                                    if (!(actions & _UA_FORCE_UNWIND))
-                                    {
-                                        // Something bad has happened.  We should never get here.
-                                        // We should have found this handler in phase 1
-                                        // Possible stack corruption.
-                                        call_terminate(native_exception, unwind_exception);
-                                    }
-                                    // Ignoring this handler because we are forced
-                                }
-                            }
-                        }
-                        // Scan next action ...
-                    }
-                    else if (ttypeIndex < 0)
-                    {
-                        // Found an exception spec.  If this is a foreign exception,
-                        //   it is always caught.
-                        if (!native_exception)
-                        {
-                            if (!(actions & _UA_FORCE_UNWIND))
-                            {
-                                // Something bad has happened.  We should never get here.
-                                // We should have found this handler in phase 1
-                                // Possible stack corruption.
-                                call_terminate(native_exception, unwind_exception);
-                            }
-                        }
-                        else
-                        {
-                            __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
-                            void* adjustedPtr =
-                                unwind_exception->exception_class == kOurDependentExceptionClass ?
-                                    ((__cxa_dependent_exception*)exception_header)->primaryException :
-                                    exception_header + 1;
-                            const __shim_type_info* excpType =
-                                static_cast<const __shim_type_info*>(exception_header->exceptionType);
-                            if (adjustedPtr == 0 || excpType == 0)
-                            {
-                                // Something very bad happened
-                                call_terminate(native_exception, unwind_exception);
-                            }
-                            if (exception_spec_can_catch(ttypeIndex, classInfo,
-                                                         ttypeEncoding, excpType,
-                                                         adjustedPtr, unwind_exception))
-                            {
-                                if (!(actions & _UA_FORCE_UNWIND))
-                                {
-                                    // Something bad has happened.  We should never get here.
-                                    // We should have found this handler in phase 1
-                                    // Possible stack corruption.
-                                    call_terminate(native_exception, unwind_exception);
-                                }
-                            }
-                        }
-                        // Scan next action ...
-                    }
-                    else  // ttypeIndex == 0
-                    {
-                        // Found a cleanup, install it:
-                        _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
-                        _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), 0);
-                        _Unwind_SetIP(context, landingPad);
- printf("__gxx_personality_v0 phase 2 found cleanup 2, returning _URC_INSTALL_CONTEXT\n");
-                        return _URC_INSTALL_CONTEXT;
-                    }
-                    if (actionOffset == 0)
-                    {
-                        // End of action list, no matching handler or cleanup found
- printf("__gxx_personality_v0 phase 2 found no cleanups, returning _URC_CONTINUE_UNWIND\n");
-                        return _URC_CONTINUE_UNWIND;
-                    }
-                    // Go to next action
-                    action += actionOffset;
-                }
-            }
-            else if (ipOffset < start)
-            {
-                // There is no call site for this ip
-                // Something bad has happened.  We should never get here.
-                // Possible stack corruption.
-                call_terminate(native_exception, unwind_exception);
-            }
-        }
+        return results.reason;
     }
     // Neither _UA_SEARCH_PHASE nor _UA_CLEANUP_PHASE
     return _URC_FATAL_PHASE1_ERROR;
@@ -1205,7 +838,6 @@ __attribute__((noreturn))
 void
 __cxa_call_unexpected(void* arg)
 {
-printf("__cxa_call_unexpected A\n");
     _Unwind_Exception* unwind_exception = static_cast<_Unwind_Exception*>(arg);
     if (unwind_exception == 0)
         call_terminate(true, unwind_exception);
@@ -1321,56 +953,6 @@ printf("__cxa_call_unexpected A\n");
     std::__terminate(t_handler);
 }
 
-/*
-_Unwind_Reason_Code
-__gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClass,
-                     _Unwind_Exception* unwind_exception, _Unwind_Context* context)
-{
-    if (version == 1 && unwind_exception != 0 && context != 0)
-    {
-        bool native_exception = (exceptionClass & 0xFFFFFF00) == 0x432B2B00;
-        bool force_unwind = actions & _UA_FORCE_UNWIND;
-        if (native_exception && !force_unwind)
-        {
-            if (actions & _UA_SEARCH_PHASE)
-            {
-                if (actions & _UA_CLEANUP_PHASE)
-                    return _URC_FATAL_PHASE1_ERROR;
-                if (contains_handler(unwind_exception, context))
-                    return _URC_HANDLER_FOUND;
-                return _URC_CONTINUE_UNWIND;
-            }
-            if (actions & _UA_CLEANUP_PHASE)
-            {
-                if (actions & _UA_HANDLER_FRAME)
-                {
-                    // return _URC_INSTALL_CONTEXT or _URC_FATAL_PHASE2_ERROR
-                    return transfer_control_to_landing_pad(unwind_exception, context);
-                }
-                // return _URC_CONTINUE_UNWIND or _URC_FATAL_PHASE2_ERROR
-                return perform_cleanup(unwind_exception, context);
-            }
-        }
-        else // foreign exception or force_unwind
-        {
-            if (actions & _UA_SEARCH_PHASE)
-            {
-                if (actions & _UA_CLEANUP_PHASE)
-                    return _URC_FATAL_PHASE1_ERROR;
-                return _URC_CONTINUE_UNWIND;
-            }
-            if (actions & _UA_CLEANUP_PHASE)
-            {
-                if (actions & _UA_HANDLER_FRAME)
-                    return _URC_FATAL_PHASE2_ERROR;
-                // return _URC_CONTINUE_UNWIND or _URC_FATAL_PHASE2_ERROR
-                return perform_cleanup(unwind_exception, context);
-            }
-        }
-    }
-    return _URC_FATAL_PHASE1_ERROR;
-}
-*/
 }  // extern "C"
 
 }  // __cxxabiv1
