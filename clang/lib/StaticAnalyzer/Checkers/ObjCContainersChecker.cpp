@@ -1,0 +1,161 @@
+//== ObjCContainersChecker.cpp - Path sensitive checker for CFArray *- C++ -*=//
+//
+//                     The LLVM Compiler Infrastructure
+//
+// This file is distributed under the University of Illinois Open Source
+// License. See LICENSE.TXT for details.
+//
+//===----------------------------------------------------------------------===//
+//
+// Performs path sensitive checks of Core Foundation static containers like
+// CFArray.
+// 1) Check for buffer overflows:
+//      In CFArrayGetArrayAtIndex( myArray, index), if the index is outside the
+//      index space of theArray (0 to N-1 inclusive (where N is the count of
+//      theArray), the behavior is undefined.
+//
+//===----------------------------------------------------------------------===//
+
+#include "ClangSACheckers.h"
+#include "clang/StaticAnalyzer/Core/Checker.h"
+#include "clang/StaticAnalyzer/Core/CheckerManager.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
+#include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
+#include "clang/AST/ParentMap.h"
+
+using namespace clang;
+using namespace ento;
+
+namespace {
+class ObjCContainersChecker : public Checker< check::PreStmt<CallExpr>,
+                                             check::PostStmt<CallExpr> > {
+  mutable llvm::OwningPtr<BugType> BT;
+  inline void initBugType() const {
+    if (!BT)
+      BT.reset(new BugType("CFArray API", "Core Foundation/Objective-C API"));
+  }
+
+  inline SymbolRef getArraySym(const Expr *E, CheckerContext &C) const {
+    SVal ArrayRef = C.getState()->getSVal(E, C.getLocationContext());
+    SymbolRef ArraySym = ArrayRef.getAsSymbol();
+    assert(ArraySym);
+    return ArraySym;
+  }
+
+  void addSizeInfo(const Expr *Array, const Expr *Size,
+                   CheckerContext &C) const;
+
+public:
+  /// A tag to id this checker.
+  static void *getTag() { static int Tag; return &Tag; }
+
+  void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
+  void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;
+};
+} // end anonymous namespace
+
+// Array state stores the array size on creation (allocation).
+// Size might be an unsigned or a symbol.
+struct ArraySize {
+  SVal NLSize;
+  ArraySize(SVal s) : NLSize(s) {}
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    NLSize.Profile(ID);
+  }
+};
+
+// ProgramState trait - a map from array symbol to it's state.
+typedef llvm::ImmutableMap<SymbolRef, SVal> ArraySizeM;
+
+namespace { struct ArraySizeMap {}; }
+namespace clang { namespace ento {
+template<> struct ProgramStateTrait<ArraySizeMap>
+    :  public ProgramStatePartialTrait<ArraySizeM > {
+  static void *GDMIndex() { return ObjCContainersChecker::getTag(); }
+};
+}}
+
+void ObjCContainersChecker::addSizeInfo(const Expr *Array, const Expr *Size,
+                                        CheckerContext &C) const {
+  const ProgramState *State = C.getState();
+  SVal SizeV = State->getSVal(Size, C.getLocationContext());
+  // Undefined is reported by another checker.
+  if (SizeV.isUnknownOrUndef())
+    return;
+
+  // Get the ArrayRef symbol.
+  SVal ArrayRef = State->getSVal(Array, C.getLocationContext());
+  SymbolRef ArraySym = ArrayRef.getAsSymbol();
+  if (!ArraySym)
+    return;
+
+  C.addTransition(State->set<ArraySizeMap>(ArraySym, SizeV));
+  return;
+}
+
+void ObjCContainersChecker::checkPostStmt(const CallExpr *CE,
+                                          CheckerContext &C) const {
+  StringRef Name = C.getCalleeName(CE);
+  if (Name.empty())
+    return;
+
+  // Add array size information to the state.
+  if (Name.equals("CFArrayCreate")) {
+    // Note, we can visit the Create method in the post-visit because
+    // the CFIndex parameter is passed in by value and will not be invalidated
+    // by the call.
+    addSizeInfo(CE, CE->getArg(2), C);
+    return;
+  }
+
+  if (Name.equals("CFArrayGetCount")) {
+    addSizeInfo(CE->getArg(0), CE, C);
+    return;
+  }
+}
+
+void ObjCContainersChecker::checkPreStmt(const CallExpr *CE,
+                                         CheckerContext &C) const {
+  StringRef Name = C.getCalleeName(CE);
+  if (Name.empty())
+    return;
+
+  // Check the array access.
+  if (Name.equals("CFArrayGetValueAtIndex")) {
+    const ProgramState *State = C.getState();
+    // Retrieve the size.
+    // Find out if we saw this array symbol before and have information about it.
+    const Expr *ArrayExpr = CE->getArg(0);
+    const SVal *SizeVal = State->get<ArraySizeMap>(getArraySym(ArrayExpr, C));
+    if (!SizeVal)
+      return;
+    DefinedOrUnknownSVal Size = cast<DefinedOrUnknownSVal>(*SizeVal);
+
+    // Get the index.
+    const Expr *IdxExpr = CE->getArg(1);
+    SVal IdxVal = State->getSVal(IdxExpr, C.getLocationContext());
+    DefinedOrUnknownSVal Idx = cast<DefinedOrUnknownSVal>(IdxVal);
+    
+    // Now, check if 'Idx in [0, Size-1]'.
+    const QualType T = IdxExpr->getType();
+    const ProgramState *StInBound = State->assumeInBound(Idx, Size, true, T);
+    const ProgramState *StOutBound = State->assumeInBound(Idx, Size, false, T);
+    if (StOutBound && !StInBound) {
+      ExplodedNode *N = C.generateSink(StOutBound);
+      if (!N)
+        return;
+      initBugType();
+      BugReport *R = new BugReport(*BT, "Index is out of bounds", N);
+      R->addRange(IdxExpr->getSourceRange());
+      C.EmitReport(R);
+      return;
+    }
+  }
+}
+
+/// Register checker.
+void ento::registerObjCContainersChecker(CheckerManager &mgr) {
+  mgr.registerChecker<ObjCContainersChecker>();
+}

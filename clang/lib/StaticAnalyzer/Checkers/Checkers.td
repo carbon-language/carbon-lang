@@ -372,6 +372,10 @@ def ObjCContainersASTChecker : Checker<"ContainerAPI">,
   HelpText<"Check for common pitfalls when using 'CFArray', 'CFDictionary', 'CFSet' APIs">,
   DescFile<"ObjCContainersASTChecker.cpp">;
 
+def ObjCContainersChecker : Checker<"Containers">,
+  HelpText<"Deep checks for common pitfalls when using 'CFArray' APIs">,
+  DescFile<"ObjCContainersChecker.cpp">;
+
 def ObjCSelfInitChecker : Checker<"SelfInit">,
   HelpText<"Check that 'self' is properly initialized inside an initializer method">,
   DescFile<"ObjCSelfInitChecker.cpp">;

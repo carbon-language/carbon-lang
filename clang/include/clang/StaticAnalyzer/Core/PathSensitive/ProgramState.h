@@ -178,7 +178,8 @@ public:
 
   ProgramStateRef assumeInBound(DefinedOrUnknownSVal idx,
                                DefinedOrUnknownSVal upperBound,
-                               bool assumption) const;
+                               bool assumption,
+                               QualType IndexType = QualType()) const;
 
   /// Utility method for getting regions.
   const VarRegion* getRegion(const VarDecl *D, const LocationContext *LC) const;

@@ -274,7 +274,8 @@ ProgramState::bindExprAndLocation(const Stmt *S, const LocationContext *LCtx,
 
 ProgramStateRef ProgramState::assumeInBound(DefinedOrUnknownSVal Idx,
                                       DefinedOrUnknownSVal UpperBound,
-                                      bool Assumption) const {
+                                      bool Assumption,
+                                      QualType indexTy) const {
   if (Idx.isUnknown() || UpperBound.isUnknown())
     return this;
 
@@ -288,7 +289,8 @@ ProgramStateRef ProgramState::assumeInBound(DefinedOrUnknownSVal Idx,
   // Get the offset: the minimum value of the array index type.
   BasicValueFactory &BVF = svalBuilder.getBasicValueFactory();
   // FIXME: This should be using ValueManager::ArrayindexTy...somehow.
-  QualType indexTy = Ctx.IntTy;
+  if (indexTy.isNull())
+    indexTy = Ctx.IntTy;
   nonloc::ConcreteInt Min(BVF.getMinValue(indexTy));
 
   // Adjust the index.

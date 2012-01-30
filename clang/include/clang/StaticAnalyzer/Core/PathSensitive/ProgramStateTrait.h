@@ -9,8 +9,8 @@
 //
 //  This file defines partial implementations of template specializations of
 //  the class ProgramStateTrait<>.  ProgramStateTrait<> is used by ProgramState 
-//  to implement set/get methods for mapulating a ProgramState's
-// generic data map.
+//  to implement set/get methods for manipulating a ProgramState's
+//  generic data map.
 //
 //===----------------------------------------------------------------------===//
 

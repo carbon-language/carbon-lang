@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.osx.cocoa.ContainerAPI -analyzer-store=region -triple x86_64-apple-darwin -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.osx.cocoa.ContainerAPI,experimental.osx.cocoa.Containers -analyzer-store=region -triple x86_64-apple-darwin -verify %s
 
 typedef const struct __CFAllocator * CFAllocatorRef;
 typedef const struct __CFString * CFStringRef;
@@ -81,6 +81,10 @@ extern
 const CFSetCallBacks kCFTypeSetCallBacks;
 extern
 const CFDictionaryKeyCallBacks kCFCopyStringDictionaryKeyCallBacks;
+extern
+const void *CFArrayGetValueAtIndex(CFArrayRef theArray, CFIndex idx);
+extern
+CFIndex CFArrayGetCount(CFArrayRef theArray);
 CFDictionaryRef CFDictionaryCreate(CFAllocatorRef allocator, const void **keys, const void **values, CFIndex numValues, const 
 CFDictionaryKeyCallBacks *keyCallBacks, const CFDictionaryValueCallBacks *valueCallBacks);
 CFNumberRef CFNumberCreate(CFAllocatorRef allocator, CFNumberType theType, const void *valuePtr);
@@ -123,4 +127,40 @@ void CreateDict(int *elems) {
   CFDictionaryRef dict1 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)keys, (const void**)values, numValues, &keyCB, &valCB); // no warning
   CFDictionaryRef dict2 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)elems[0], (const void**)values, numValues, &keyCB, &valCB); //expected-warning {{The first argument to 'CFDictionaryCreate' must be a C array of}}
   CFDictionaryRef dict3 = CFDictionaryCreate(kCFAllocatorDefault, (const void**)keys, (const void**)elems, numValues, &keyCB, &valCB); // expected-warning {{The second argument to 'CFDictionaryCreate' must be a C array of pointer-sized values}}
+}
+
+void OutOfBoundsSymbolicOffByOne(const void ** input, CFIndex S) {
+  CFArrayRef array;
+  array = CFArrayCreate(kCFAllocatorDefault, input, S, 0);
+  const void *s1 = CFArrayGetValueAtIndex(array, 0);   // no warning
+  const void *s2 = CFArrayGetValueAtIndex(array, S-1); // no warning
+  const void *s3 = CFArrayGetValueAtIndex(array, S);   // expected-warning {{Index is out of bounds}}
+}
+
+void OutOfBoundsConst(const void ** input, CFIndex S) {
+  CFArrayRef array;
+  array = CFArrayCreate(kCFAllocatorDefault, input, 3, 0);
+  const void *s1 = CFArrayGetValueAtIndex(array, 0); // no warning
+  const void *s2 = CFArrayGetValueAtIndex(array, 2); // no warning
+  const void *s3 = CFArrayGetValueAtIndex(array, 5); // expected-warning {{Index is out of bounds}}
+  
+  // TODO: The solver is probably not strong enough here.
+  CFIndex sIndex;
+  for (sIndex = 0 ; sIndex <= 5 ; sIndex += 3 ) {
+    const void *s = CFArrayGetValueAtIndex(array, sIndex); 
+  }  
+}
+
+void OutOfBoundsZiro(const void ** input, CFIndex S) {
+  CFArrayRef array;
+  // The API allows to set the size to 0. Check that we don't undeflow when the size is 0.
+  array = CFArrayCreate(kCFAllocatorDefault, 0, 0, 0);
+  const void *s1 = CFArrayGetValueAtIndex(array, 0); // expected-warning {{Index is out of bounds}}
+}
+
+void TestGetCount(CFArrayRef A, CFIndex sIndex, CFIndex badIndex) {
+  CFIndex sCount = CFArrayGetCount(A);
+  if (sCount > sIndex)
+    const void *s1 = CFArrayGetValueAtIndex(A, sIndex);
+  const void *s2 = CFArrayGetValueAtIndex(A, sCount);// expected-warning {{Index is out of bounds}}
 }
