@@ -24,6 +24,7 @@
 
 #include <crt_externs.h>  // for _NSGetEnviron
 #include <mach-o/dyld.h>
+#include <mach-o/loader.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
 #include <sys/ucontext.h>
