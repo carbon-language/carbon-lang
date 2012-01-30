@@ -32,6 +32,10 @@ void CFAllocatorMallocZoneDoubleFree() {
   CFAllocatorDeallocate(kCFAllocatorMallocZone, mem);
 }
 
+__attribute__((noinline))
+void access_memory(char *a) {
+  *a = 0;
+}
 
 // Test the +load instrumentation.
 // Because the +load methods are invoked before anything else is initialized,
@@ -51,7 +55,8 @@ char kStartupStr[] =
 
 +(void) load {
   for (int i = 0; i < strlen(kStartupStr); i++) {
-    volatile char ch = kStartupStr[i];  // make sure no optimizations occur.
+    // TODO: this is currently broken, see Issue 33.
+    // access_memory(&kStartupStr[i]);  // make sure no optimizations occur.
   }
   // Don't print anything here not to interfere with the death tests.
 }
@@ -66,7 +71,7 @@ void worker_do_alloc(int size) {
 
 void worker_do_crash(int size) {
   char * volatile mem = malloc(size);
-  mem[size] = 0;  // BOOM
+  access_memory(&mem[size]);  // BOOM
   free(mem);
 }
 
@@ -162,7 +167,7 @@ void TestGCDSourceEvent() {
   dispatch_source_set_timer(timer, milestone, DISPATCH_TIME_FOREVER, 0);
   char * volatile mem = malloc(10);
   dispatch_source_set_event_handler(timer, ^{
-    mem[10] = 1;
+    access_memory(&mem[10]);
   });
   dispatch_resume(timer);
   sleep(2);
@@ -186,7 +191,7 @@ void TestGCDSourceCancel() {
     dispatch_source_cancel(timer);
   });
   dispatch_source_set_cancel_handler(timer, ^{
-    mem[10] = 1;
+    access_memory(&mem[10]);
   });
   dispatch_resume(timer);
   sleep(2);
@@ -197,7 +202,7 @@ void TestGCDGroupAsync() {
   dispatch_group_t group = dispatch_group_create(); 
   char * volatile mem = malloc(10);
   dispatch_group_async(group, queue, ^{
-    mem[10] = 1;
+    access_memory(&mem[10]);
   });
   dispatch_group_wait(group, DISPATCH_TIME_FOREVER);
 }
