@@ -2109,7 +2109,7 @@ static bool isAllZeros(StringRef Arr) {
 
 /// getImpl - This is the underlying implementation of all of the
 /// ConstantDataSequential::get methods.  They all thunk down to here, providing
-/// the correct element type.  We take the bytes in as an StringRef because
+/// the correct element type.  We take the bytes in as a StringRef because
 /// we *want* an underlying "char*" to avoid TBAA type punning violations.
 Constant *ConstantDataSequential::getImpl(StringRef Elements, Type *Ty) {
   assert(isElementTypeCompatible(Ty->getSequentialElementType()));

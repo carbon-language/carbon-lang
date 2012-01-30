@@ -561,10 +561,13 @@ public:
 };
   
 //===----------------------------------------------------------------------===//
-/// ConstantDataSequential - A vector or array of data that contains no
-/// relocations, and whose element type is a simple 1/2/4/8-byte integer or
-/// float/double.  This is the common base class of ConstantDataArray and
-/// ConstantDataVector.
+/// ConstantDataSequential - A vector or array constant whose element type is a
+/// simple 1/2/4/8-byte integer or float/double, and whose elements are just
+/// simple data values (i.e. ConstantInt/ConstantFP).  This Constant node has no
+/// operands because it stores all of the elements of the constant as densely
+/// packed data, instead of as Value*'s.
+///
+/// This is the common base class of ConstantDataArray and ConstantDataVector.
 ///
 class ConstantDataSequential : public Constant {
   friend class LLVMContextImpl;
@@ -612,7 +615,7 @@ public:
   float getElementAsFloat(unsigned i) const;
   
   /// getElementAsDouble - If this is an sequential container of doubles, return
-  /// the specified element as a float.
+  /// the specified element as a double.
   double getElementAsDouble(unsigned i) const;
   
   /// getElementAsConstant - Return a Constant for a specified index's element.
@@ -683,9 +686,11 @@ private:
 };
 
 //===----------------------------------------------------------------------===//
-/// ConstantDataArray - An array of data that contains no relocations, and whose
-/// element type is a simple 1/2/4/8-byte integer or float/double.
-///
+/// ConstantDataArray - An array constant whose element type is a simple
+/// 1/2/4/8-byte integer or float/double, and whose elements are just simple
+/// data values (i.e. ConstantInt/ConstantFP).  This Constant node has no
+/// operands because it stores all of the elements of the constant as densely
+/// packed data, instead of as Value*'s.
 class ConstantDataArray : public ConstantDataSequential {
   void *operator new(size_t, unsigned);            // DO NOT IMPLEMENT
   ConstantDataArray(const ConstantDataArray &);    // DO NOT IMPLEMENT
@@ -734,9 +739,11 @@ public:
 };
   
 //===----------------------------------------------------------------------===//
-/// ConstantDataVector - A vector of data that contains no relocations, and
-/// whose element type is a simple 1/2/4/8-byte integer or float/double.
-///
+/// ConstantDataVector - A vector constant whose element type is a simple
+/// 1/2/4/8-byte integer or float/double, and whose elements are just simple
+/// data values (i.e. ConstantInt/ConstantFP).  This Constant node has no
+/// operands because it stores all of the elements of the constant as densely
+/// packed data, instead of as Value*'s.
 class ConstantDataVector : public ConstantDataSequential {
   void *operator new(size_t, unsigned);              // DO NOT IMPLEMENT
   ConstantDataVector(const ConstantDataVector &);    // DO NOT IMPLEMENT
