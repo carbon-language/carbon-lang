@@ -51,6 +51,7 @@ function(add_public_tablegen_target target)
     add_custom_target(${target}
       DEPENDS ${TABLEGEN_OUTPUT})
     add_dependencies(${target} ${LLVM_COMMON_DEPENDS})
+    set_target_properties(${target} PROPERTIES FOLDER "Tablegenning")
   endif( TABLEGEN_OUTPUT )
 endfunction()
 
