@@ -1,5 +1,5 @@
 """
-Test lldb watchpoint that uses '-x size' to watch a pointed location with size.
+Test lldb watchpoint that uses 'watchpoint set -w write -x size' to watch a pointed location with size.
 """
 
 import os, time
@@ -62,7 +62,7 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
         # protocol of only accessing the allowable index range of [0, 6].
         self.expect("watchpoint set -w write -x 1 g_char_ptr + 7", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 1', 'type = w'])
-        self.runCmd("expr unsigned val = *g_char_ptr; val")
+        self.runCmd("expr unsigned val = g_char_ptr[7]; val")
         self.expect(self.res.GetOutput().splitlines()[0], exe=False,
             endstr = ' = 0')
 
