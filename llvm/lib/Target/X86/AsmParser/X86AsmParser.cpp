@@ -981,9 +981,8 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
 
   Operands.push_back(X86Operand::CreateToken(PatchedName, NameLoc));
 
-  if (ExtraImmOp)
+  if (ExtraImmOp && !isParsingIntelSyntax())
     Operands.push_back(X86Operand::CreateImm(ExtraImmOp, NameLoc, NameLoc));
-
 
   // Determine whether this is an instruction prefix.
   bool isPrefix =
@@ -1037,6 +1036,9 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
     Parser.Lex(); // Consume the EndOfStatement
   else if (isPrefix && getLexer().is(AsmToken::Slash))
     Parser.Lex(); // Consume the prefix separator Slash
+
+  if (ExtraImmOp && isParsingIntelSyntax())
+    Operands.push_back(X86Operand::CreateImm(ExtraImmOp, NameLoc, NameLoc));
 
   // This is a terrible hack to handle "out[bwl]? %al, (%dx)" ->
   // "outb %al, %dx".  Out doesn't take a memory form, but this is a widely

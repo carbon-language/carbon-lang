@@ -39,3 +39,6 @@ LBB0_3:
 
 // CHECK: encoding: [0xd1,0xe7]
 	shl	EDI, 1
+
+// CHECK: encoding: [0x0f,0xc2,0xd1,0x01]
+	cmpltps XMM2, XMM1
