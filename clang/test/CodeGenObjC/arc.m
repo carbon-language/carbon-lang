@@ -1489,8 +1489,13 @@ void test66(void) {
 // CHECK-NEXT: [[T5:%.*]] = call i8* @objc_retainAutoreleasedReturnValue(i8* [[T4]])
 // CHECK-NEXT: [[T6:%.*]] = load i8** @"\01L_OBJC_SELECTOR_REFERENCES
 // CHECK-NEXT: [[T7:%.*]] = bitcast [[TEST66]]* [[T3]] to i8*
-// CHECK-NEXT: call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, i8*)*)(i8* [[T7]], i8* [[T6]], i8* [[T5]])
-// CHECK-NEXT: [[T8:%.*]] = bitcast [[TEST66]]* [[T3]] to i8*
+// CHECK-NEXT: [[SIX:%.*]] = icmp eq i8* [[T7]], null
+// CHECK-NEXT: br i1 [[SIX]], label [[NULINIT:%.*]], label [[CALL:%.*]]
+// CHECK: call void bitcast (i8* (i8*, i8*, ...)* @objc_msgSend to void (i8*, i8*, i8*)*)(i8* [[T7]], i8* [[T6]], i8* [[T5]])
+// CHECK-NEXT: br label [[CONT:%.*]]
+// CHECK: call void @objc_release(i8* [[T5]]) nounwind
+// CHECK-NEXT: br label [[CONT:%.*]]
+// CHECK: [[T8:%.*]] = bitcast [[TEST66]]* [[T3]] to i8*
 // CHECK-NEXT: call void @objc_release(i8* [[T8]])
 // CHECK-NEXT: ret void
 

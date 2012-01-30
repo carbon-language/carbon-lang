@@ -1414,8 +1414,16 @@ struct NullReturnState {
     CGF.EmitBlock(callBB);
   }
 
-  RValue complete(CodeGenFunction &CGF, RValue result, QualType resultType) {
+  RValue complete(CodeGenFunction &CGF, RValue result, QualType resultType,
+                  const CallArgList &CallArgs,
+                  const ObjCMethodDecl *Method) {
     if (!NullBB) return result;
+    
+    llvm::Value *NullInitPtr = 0;
+    if (result.isScalar() && !resultType->isVoidType()) {
+      NullInitPtr = CGF.CreateTempAlloca(result.getScalarVal()->getType());
+      CGF.Builder.CreateStore(result.getScalarVal(), NullInitPtr);
+    }
 
     // Finish the call path.
     llvm::BasicBlock *contBB = CGF.createBasicBlock("msgSend.cont");
@@ -1423,6 +1431,31 @@ struct NullReturnState {
 
     // Emit the null-init block and perform the null-initialization there.
     CGF.EmitBlock(NullBB);
+    
+    // Release consumed arguments along the null-receiver path.
+    if (Method) {
+      CallArgList::const_iterator I = CallArgs.begin();
+      for (ObjCMethodDecl::param_const_iterator i = Method->param_begin(),
+           e = Method->param_end(); i != e; ++i, ++I) {
+        const ParmVarDecl *ParamDecl = (*i);
+        if (ParamDecl->hasAttr<NSConsumedAttr>()) {
+          RValue RV = I->RV;
+          assert(RV.isScalar() && 
+                 "NullReturnState::complete - arg not on object");
+          CGF.EmitARCRelease(RV.getScalarVal(), true);
+        }
+      }
+    }
+    
+    if (result.isScalar()) {
+      if (NullInitPtr)
+        CGF.EmitNullInitialization(NullInitPtr, resultType);
+      // Jump to the continuation block.
+      CGF.EmitBlock(contBB);
+      return NullInitPtr ? RValue::get(CGF.Builder.CreateLoad(NullInitPtr)) 
+      : result;
+    }
+    
     if (!resultType->isAnyComplexType()) {
       assert(result.isAggregate() && "null init of non-aggregate result?");
       CGF.EmitNullInitialization(result.getAggregateAddr(), resultType);
@@ -1668,9 +1701,24 @@ CGObjCCommonMac::EmitMessageSend(CodeGen::CodeGenFunction &CGF,
     Fn = (ObjCABI == 2) ? ObjCTypes.getSendFn2(IsSuper)
       : ObjCTypes.getSendFn(IsSuper);
   }
+  
+  bool requiresnullCheck = false;
+  if (CGM.getLangOptions().ObjCAutoRefCount && Method)
+    for (ObjCMethodDecl::param_const_iterator i = Method->param_begin(),
+         e = Method->param_end(); i != e; ++i) {
+      const ParmVarDecl *ParamDecl = (*i);
+      if (ParamDecl->hasAttr<NSConsumedAttr>()) {
+        if (!nullReturn.NullBB)
+          nullReturn.init(CGF, Arg0);
+        requiresnullCheck = true;
+        break;
+      }
+    }
+  
   Fn = llvm::ConstantExpr::getBitCast(Fn, llvm::PointerType::getUnqual(FTy));
   RValue rvalue = CGF.EmitCall(FnInfo, Fn, Return, ActualArgs);
-  return nullReturn.complete(CGF, rvalue, ResultType);
+  return nullReturn.complete(CGF, rvalue, ResultType, CallArgs,
+                             requiresnullCheck ? Method : 0);
 }
 
 static Qualifiers::GC GetGCAttrTypeForType(ASTContext &Ctx, QualType FQT) {
@@ -5785,7 +5833,8 @@ CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
                                      llvm::PointerType::getUnqual(fnType));
 
   RValue result = CGF.EmitCall(fnInfo, callee, returnSlot, args);
-  return nullReturn.complete(CGF, result, resultType);
+  CallArgList CallArgs;
+  return nullReturn.complete(CGF, result, resultType, CallArgs, 0);
 }
 
 /// Generate code for a message send expression in the nonfragile abi.
