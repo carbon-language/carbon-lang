@@ -34,7 +34,7 @@ struct X86Operand;
 class X86AsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
-
+  bool IntelSyntax;
 private:
   MCAsmParser &getParser() const { return Parser; }
 
@@ -94,7 +94,7 @@ private:
 
 public:
   X86AsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
-    : MCTargetAsmParser(), STI(sti), Parser(parser) {
+    : MCTargetAsmParser(), STI(sti), Parser(parser), IntelSyntax(false) {
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
@@ -105,6 +105,10 @@ public:
                                 SmallVectorImpl<MCParsedAsmOperand*> &Operands);
 
   virtual bool ParseDirective(AsmToken DirectiveID);
+
+  bool isParsingIntelSyntax() {
+    return IntelSyntax || getParser().getAssemblerDialect();
+  }
 };
 } // end anonymous namespace
 
@@ -470,8 +474,7 @@ bool X86AsmParser::isDstOp(X86Operand &Op) {
 bool X86AsmParser::ParseRegister(unsigned &RegNo,
                                  SMLoc &StartLoc, SMLoc &EndLoc) {
   RegNo = 0;
-  bool IntelSyntax = getParser().getAssemblerDialect();
-  if (!IntelSyntax) {
+  if (!isParsingIntelSyntax()) {
     const AsmToken &TokPercent = Parser.getTok();
     assert(TokPercent.is(AsmToken::Percent) && "Invalid token kind!");
     StartLoc = TokPercent.getLoc();
@@ -480,7 +483,7 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
 
   const AsmToken &Tok = Parser.getTok();
   if (Tok.isNot(AsmToken::Identifier)) {
-    if (IntelSyntax) return true;
+    if (isParsingIntelSyntax()) return true;
     return Error(StartLoc, "invalid register name",
                  SMRange(StartLoc, Tok.getEndLoc()));
   }
@@ -564,7 +567,7 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
   }
 
   if (RegNo == 0) {
-    if (IntelSyntax) return true;
+    if (isParsingIntelSyntax()) return true;
     return Error(StartLoc, "invalid register name",
                  SMRange(StartLoc, Tok.getEndLoc()));
   }
@@ -575,7 +578,7 @@ bool X86AsmParser::ParseRegister(unsigned &RegNo,
 }
 
 X86Operand *X86AsmParser::ParseOperand() {
-  if (getParser().getAssemblerDialect())
+  if (isParsingIntelSyntax())
     return ParseIntelOperand();
   return ParseATTOperand();
 }
@@ -1170,7 +1173,7 @@ ParseInstruction(StringRef Name, SMLoc NameLoc,
        Name.startswith("rcl") || Name.startswith("rcr") ||
        Name.startswith("rol") || Name.startswith("ror")) &&
       Operands.size() == 3) {
-    if (getParser().getAssemblerDialect()) {
+    if (isParsingIntelSyntax()) {
       // Intel syntax
       X86Operand *Op1 = static_cast<X86Operand*>(Operands[2]);
       if (Op1->isImm() && isa<MCConstantExpr>(Op1->getImm()) &&
@@ -1485,8 +1488,8 @@ MatchAndEmitInstruction(SMLoc IDLoc,
   MCInst Inst;
 
   // First, try a direct match.
-  switch (MatchInstructionImpl(Operands, Inst, OrigErrorInfo, 
-                               getParser().getAssemblerDialect())) {
+  switch (MatchInstructionImpl(Operands, Inst, OrigErrorInfo,
+                               isParsingIntelSyntax())) {
   default: break;
   case Match_Success:
     // Some instructions need post-processing to, for example, tweak which
@@ -1640,6 +1643,17 @@ bool X86AsmParser::ParseDirective(AsmToken DirectiveID) {
     return ParseDirectiveWord(2, DirectiveID.getLoc());
   else if (IDVal.startswith(".code"))
     return ParseDirectiveCode(IDVal, DirectiveID.getLoc());
+  else if (IDVal.startswith(".intel_syntax")) {
+    IntelSyntax = true;
+    if (getLexer().isNot(AsmToken::EndOfStatement)) {
+      if(Parser.getTok().getString() == "noprefix") {
+	// FIXME : Handle noprefix
+	Parser.Lex();
+      } else
+	return true;
+    }
+    return false;
+  }
   return true;
 }
 
