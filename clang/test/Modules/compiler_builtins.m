@@ -13,3 +13,11 @@ float getFltMax() { return FLT_MAX; }
 char getCharMax() { return CHAR_MAX; }
 
 size_t size; // expected-error{{unknown type name 'size_t'}}
+
+#ifdef __SSE__
+@import __compiler_builtins.intel.sse;
+#endif
+
+#ifdef __AVX2__
+@import __compiler_builtins.intel.avx2;
+#endif

@@ -14,6 +14,7 @@
 #include "clang/Basic/Module.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/LangOptions.h"
+#include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/SmallVector.h"
@@ -50,12 +51,15 @@ Module::~Module() {
 static bool hasFeature(StringRef Feature, const LangOptions &LangOpts,
                        const TargetInfo &Target) {
   return llvm::StringSwitch<bool>(Feature)
+           .Case("altivec", LangOpts.AltiVec)
            .Case("blocks", LangOpts.Blocks)
            .Case("cplusplus", LangOpts.CPlusPlus)
            .Case("cplusplus11", LangOpts.CPlusPlus0x)
            .Case("objc", LangOpts.ObjC1)
            .Case("objc_arc", LangOpts.ObjCAutoRefCount)
-           .Default(false);
+           .Case("opencl", LangOpts.OpenCL)
+           .Case("tls", Target.isTLSSupported())
+           .Default(Target.hasFeature(Feature));
 }
 
 bool 

@@ -601,6 +601,11 @@ public:
   virtual void HandleTargetFeatures(std::vector<std::string> &Features) {
   }
 
+  /// \brief Determine whether the given target has the given feature.
+  virtual bool hasFeature(StringRef Feature) const {
+    return false;
+  }
+  
   // getRegParmMax - Returns maximal number of args passed in registers.
   unsigned getRegParmMax() const {
     assert(RegParmMax < 7 && "RegParmMax value is larger than AST can handle");
