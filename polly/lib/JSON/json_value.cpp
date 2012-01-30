@@ -13,6 +13,10 @@
 # include "json_batchallocator.h"
 #endif // #ifndef JSON_USE_SIMPLE_INTERNAL_ALLOCATOR
 
+// Disable warnings.  We do not fix these warnings, as this is a file imported
+// into Polly and we do not want to diverge from the original source.
+#pragma clang diagnostic ignored "-Wcovered-switch-default"
+
 #define JSON_ASSERT_UNREACHABLE assert( false )
 #define JSON_ASSERT( condition ) assert( condition );  // @todo <= change this into an exception throw
 // Do not use throw when exception is disable.
