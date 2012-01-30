@@ -70,12 +70,14 @@ BreakpointLocation::GetBreakpoint ()
 }
 
 bool
-BreakpointLocation::IsEnabled () const
+BreakpointLocation::IsEnabled ()
 {
-    if (m_options_ap.get() != NULL)
+    if (!m_owner.IsEnabled())
+        return false;
+    else if (m_options_ap.get() != NULL)
         return m_options_ap->IsEnabled();
     else
-        return m_owner.IsEnabled();
+        return true;
 }
 
 void
@@ -412,7 +414,7 @@ BreakpointLocation::Dump(Stream *s) const
               GetID(),
               GetOptionsNoCreate()->GetThreadSpecNoCreate()->GetTID(),
               (uint64_t) m_address.GetOpcodeLoadAddress (&m_owner.GetTarget()),
-              IsEnabled() ? "enabled " : "disabled",
+              (m_options_ap.get() ? m_options_ap->IsEnabled() : m_owner.IsEnabled()) ? "enabled " : "disabled",
               IsHardware() ? "hardware" : "software",
               GetHardwareIndex(),
               GetHitCount(),

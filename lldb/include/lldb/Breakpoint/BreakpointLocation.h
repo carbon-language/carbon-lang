@@ -111,7 +111,7 @@ public:
     ///     \b true if the breakpoint is enabled, \b false if disabled.
     //------------------------------------------------------------------
     bool
-    IsEnabled () const;
+    IsEnabled ();
 
     //------------------------------------------------------------------
     /// Return the current Ignore Count.
