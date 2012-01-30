@@ -32,6 +32,7 @@
 #include "isl/constraint.h"
 #include "isl/schedule.h"
 #include "isl/band.h"
+#include "isl/options.h"
 
 #define DEBUG_TYPE "polly-opt-isl"
 #include "llvm/Support/Debug.h"
@@ -460,7 +461,15 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   isl_options_set_schedule_max_constant_term(S.getIslCtx(), CONSTANT_BOUND);
   isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), 1);
+
+  isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_CONTINUE);
   schedule  = isl_union_set_compute_schedule(domain, validity, proximity);
+  isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_ABORT);
+
+  // In cases the scheduler is not able to optimize the code, we just do not
+  // touch the schedule.
+  if (!schedule)
+    return false;
 
   DEBUG(dbgs() << "Computed schedule: ");
   DEBUG(dbgs() << stringFromIslObj(schedule));
