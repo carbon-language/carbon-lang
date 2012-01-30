@@ -5294,8 +5294,8 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
     int MaskVec[] = {
       Reverse1 ? 1 : 0,
       Reverse1 ? 0 : 1,
-      Reverse2 ? 1-NumElems :   NumElems,
-      Reverse2 ?   NumElems : 1+NumElems
+      static_cast<int>(Reverse2 ? 1-NumElems :   NumElems),
+      static_cast<int>(Reverse2 ?   NumElems : 1+NumElems)
     };
     return DAG.getVectorShuffle(VT, dl, V[0], V[1], &MaskVec[0]);
   }
