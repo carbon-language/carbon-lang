@@ -422,14 +422,26 @@ bool AddressSanitizer::insertGlobalRedzones(Module &M) {
       continue;
     }
 
-    // Ignore the globals from the __OBJC section. The ObjC runtime assumes
-    // those conform to /usr/lib/objc/runtime.h, so we can't add redzones to
-    // them.
     if (G->hasSection()) {
       StringRef Section(G->getSection());
+      // Ignore the globals from the __OBJC section. The ObjC runtime assumes
+      // those conform to /usr/lib/objc/runtime.h, so we can't add redzones to
+      // them.
       if ((Section.find("__OBJC,") == 0) ||
           (Section.find("__DATA, __objc_") == 0)) {
         DEBUG(dbgs() << "Ignoring ObjC runtime global: " << *G);
+        continue;
+      }
+      // See http://code.google.com/p/address-sanitizer/issues/detail?id=32
+      // Constant CFString instances are compiled in the following way:
+      //  -- the string buffer is emitted into
+      //     __TEXT,__cstring,cstring_literals
+      //  -- the constant NSConstantString structure referencing that buffer
+      //     is placed into __DATA,__cfstring
+      // Therefore there's no point in placing redzones into __DATA,__cfstring.
+      // Moreover, it causes the linker to crash on OS X 10.7
+      if (Section.find("__DATA,__cfstring") == 0) {
+        DEBUG(dbgs() << "Ignoring CFString: " << *G);
         continue;
       }
     }
