@@ -738,6 +738,11 @@ Init *UnOpInit::Fold(Record *CurRec, MultiClass *CurMultiClass) const {
       if (LHSd) {
         return StringInit::get(LHSd->getDef()->getName());
       }
+
+      IntInit *LHSi = dynamic_cast<IntInit*>(LHS);
+      if (LHSi) {
+        return StringInit::get(LHSi->getAsString());
+      }
     } else {
       StringInit *LHSs = dynamic_cast<StringInit*>(LHS);
       if (LHSs) {
