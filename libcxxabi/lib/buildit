@@ -27,7 +27,7 @@ then
   RC_ProjectSourceVersion=1
 fi
 
-EXTRA_FLAGS="-std=c++0x -stdlib=libc++"
+EXTRA_FLAGS="-std=c++0x -stdlib=libc++ -fstrict-aliasing -Wstrict-aliasing=2"
 
 case $TRIPLE in
   *-apple-*)
@@ -73,7 +73,7 @@ fi
 set -x
 
 for FILE in ../src/*.cpp; do
-	$CXX -c -g -Os $RC_CFLAGS $EXTRA_FLAGS -I../include $FILE
+	$CXX -c -g -O3 $RC_CFLAGS $EXTRA_FLAGS -I../include $FILE
 done
 case $TRIPLE in
   *-*-mingw*)
