@@ -117,14 +117,17 @@ let isAsmParserOnly = 1 in {
 }
 
 multiclass xop3opimm<bits<8> opc, string OpcodeStr> {
-  def ri : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
-           (ins VR128:$src1, i8imm:$src2),
-           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-           []>, VEX;
-  def mi : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
-           (ins f128mem:$src1, i8imm:$src2),
-           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-           []>, VEX;
+  let neverHasSideEffects = 1 in {
+    def ri : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
+             (ins VR128:$src1, i8imm:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX;
+    let mayLoad = 1 in
+    def mi : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
+             (ins f128mem:$src1, i8imm:$src2),
+             !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
+             []>, VEX;
+  }
 }
 
 let isAsmParserOnly = 1 in {
@@ -167,74 +170,92 @@ let isAsmParserOnly = 1 in {
 }
 
 // Instruction where second source can be memory, third must be imm8
-multiclass xop4opimm<bits<8> opc, string OpcodeStr> {
+multiclass xop4opimm<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                     ValueType VT> {
   def ri : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, i8imm:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           []>, VEX_4V;
+           [(set VR128:$dst,
+             (VT (OpNode VR128:$src1, VR128:$src2, imm:$src3)))]>, VEX_4V;
   def mi : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, f128mem:$src2, i8imm:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           []>, VEX_4V;
+           [(set VR128:$dst,
+             (VT (OpNode VR128:$src1, (bitconvert (memopv2i64 addr:$src2)),
+                  imm:$src3)))]>, VEX_4V;
 }
 
 let isAsmParserOnly = 1 in {
-  defm VPCOMW  : xop4opimm<0xCD, "vpcomw">;
-  defm VPCOMUW : xop4opimm<0xED, "vpcomuw">;
-  defm VPCOMUQ : xop4opimm<0xEF, "vpcomuq">;
-  defm VPCOMUD : xop4opimm<0xEE, "vpcomud">;
-  defm VPCOMUB : xop4opimm<0xEC, "vpcomub">;
-  defm VPCOMQ  : xop4opimm<0xCF, "vpcomq">;
-  defm VPCOMD  : xop4opimm<0xCE, "vpcomd">;
-  defm VPCOMB  : xop4opimm<0xCC, "vpcomb">;
+  defm VPCOMB  : xop4opimm<0xCC, "vpcomb", X86vpcom, v16i8>;
+  defm VPCOMW  : xop4opimm<0xCD, "vpcomw", X86vpcom, v8i16>;
+  defm VPCOMD  : xop4opimm<0xCE, "vpcomd", X86vpcom, v4i32>;
+  defm VPCOMQ  : xop4opimm<0xCF, "vpcomq", X86vpcom, v2i64>;
+  defm VPCOMUB : xop4opimm<0xEC, "vpcomub", X86vpcomu, v16i8>;
+  defm VPCOMUW : xop4opimm<0xED, "vpcomuw", X86vpcomu, v8i16>;
+  defm VPCOMUD : xop4opimm<0xEE, "vpcomud", X86vpcomu, v4i32>;
+  defm VPCOMUQ : xop4opimm<0xEF, "vpcomuq", X86vpcomu, v2i64>;
 }
 
 // Instruction where either second or third source can be memory
-multiclass xop4op<bits<8> opc, string OpcodeStr> {
+multiclass xop4op<bits<8> opc, string OpcodeStr, Intrinsic Int> {
   def rr : IXOPi8<opc, MRMSrcReg, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, VR128:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           []>, VEX_4V, VEX_I8IMM;
+           [(set VR128:$dst, (Int VR128:$src1, VR128:$src2, VR128:$src3))]>,
+           VEX_4V, VEX_I8IMM;
   def rm : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, VR128:$src2, f128mem:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           []>, VEX_4V, VEX_I8IMM, VEX_W, MemOp4;
+           [(set VR128:$dst,
+             (Int VR128:$src1, VR128:$src2,
+              (bitconvert (memopv2i64 addr:$src3))))]>,
+           VEX_4V, VEX_I8IMM, VEX_W, MemOp4;
   def mr : IXOPi8<opc, MRMSrcMem, (outs VR128:$dst),
            (ins VR128:$src1, f128mem:$src2, VR128:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           []>, VEX_4V, VEX_I8IMM;
+           [(set VR128:$dst,
+             (Int VR128:$src1, (bitconvert (memopv2i64 addr:$src2)),
+              VR128:$src3))]>,
+           VEX_4V, VEX_I8IMM;
 }
 
 let isAsmParserOnly = 1 in {
-  defm VPPERM : xop4op<0xA3, "vpperm">;
-  defm VPCMOV : xop4op<0xA2, "vpcmov">;
+  defm VPPERM : xop4op<0xA3, "vpperm", int_x86_xop_vpperm>;
+  defm VPCMOV : xop4op<0xA2, "vpcmov", int_x86_xop_vpcmov>;
 }
 
-multiclass xop4op256<bits<8> opc, string OpcodeStr> {
+multiclass xop4op256<bits<8> opc, string OpcodeStr, Intrinsic Int> {
   def rrY : IXOPi8<opc, MRMSrcReg, (outs VR256:$dst),
            (ins VR256:$src1, VR256:$src2, VR256:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           []>, VEX_4V, VEX_I8IMM;
+           [(set VR256:$dst, (Int VR256:$src1, VR256:$src2, VR256:$src3))]>,
+           VEX_4V, VEX_I8IMM;
   def rmY : IXOPi8<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, VR256:$src2, f256mem:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           []>, VEX_4V, VEX_I8IMM, VEX_W, MemOp4;
+           [(set VR256:$dst,
+             (Int VR256:$src1, VR256:$src2,
+              (bitconvert (memopv4i64 addr:$src3))))]>,
+           VEX_4V, VEX_I8IMM, VEX_W, MemOp4;
   def mrY : IXOPi8<opc, MRMSrcMem, (outs VR256:$dst),
            (ins VR256:$src1, f256mem:$src2, VR256:$src3),
            !strconcat(OpcodeStr,
            "\t{$src3, $src2, $src1, $dst|$dst, $src1, $src2, $src3}"),
-           []>, VEX_4V, VEX_I8IMM;
+           [(set VR256:$dst,
+             (Int VR256:$src1, (bitconvert (memopv4i64 addr:$src2)),
+              VR256:$src3))]>,
+           VEX_4V, VEX_I8IMM;
 }
 
 let isAsmParserOnly = 1 in {
-  defm VPCMOV : xop4op256<0xA2, "vpcmov">;
+  defm VPCMOV : xop4op256<0xA2, "vpcmov", int_x86_xop_vpcmov_256>;
 }
 
 multiclass xop5op<bits<8> opc, string OpcodeStr, Intrinsic Int128,
@@ -287,427 +308,6 @@ defm VPERMIL2PS : xop5op<0x48, "vpermil2ps", int_x86_xop_vpermil2ps,
 // XOP Intrinsics patterns
 
 let Predicates = [HasXOP] in {
-// VPCOM EQ
-def : Pat<(int_x86_xop_vpcomeqw VR128:$src1, VR128:$src2),
-          (VPCOMWri VR128:$src1, VR128:$src2, (i8 4))>;
-def : Pat<(int_x86_xop_vpcomeqw VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMWmi VR128:$src1, addr:$src2, (i8 4))>;
-
-def : Pat<(int_x86_xop_vpcomequw VR128:$src1, VR128:$src2),
-          (VPCOMUWri VR128:$src1, VR128:$src2, (i8 4))>;
-def : Pat<(int_x86_xop_vpcomequw VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUWmi VR128:$src1, addr:$src2, (i8 4))>;
-
-def : Pat<(int_x86_xop_vpcomequq VR128:$src1, VR128:$src2),
-          (VPCOMUQri VR128:$src1, VR128:$src2, (i8 4))>;
-def : Pat<(int_x86_xop_vpcomequq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUQmi VR128:$src1, addr:$src2, (i8 4))>;
-
-def : Pat<(int_x86_xop_vpcomequd VR128:$src1, VR128:$src2),
-          (VPCOMUDri VR128:$src1, VR128:$src2, (i8 4))>;
-def : Pat<(int_x86_xop_vpcomequd VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUDmi VR128:$src1, addr:$src2, (i8 4))>;
-
-def : Pat<(int_x86_xop_vpcomequb VR128:$src1, VR128:$src2),
-          (VPCOMUBri VR128:$src1, VR128:$src2, (i8 4))>;
-def : Pat<(int_x86_xop_vpcomequb VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUBmi VR128:$src1, addr:$src2, (i8 4))>;
-
-def : Pat<(int_x86_xop_vpcomeqq VR128:$src1, VR128:$src2),
-          (VPCOMQri VR128:$src1, VR128:$src2, (i8 4))>;
-def : Pat<(int_x86_xop_vpcomeqq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMQmi VR128:$src1, addr:$src2, (i8 4))>;
-
-def : Pat<(int_x86_xop_vpcomeqd VR128:$src1, VR128:$src2),
-          (VPCOMDri VR128:$src1, VR128:$src2, (i8 4))>;
-def : Pat<(int_x86_xop_vpcomeqd VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMDmi VR128:$src1, addr:$src2, (i8 4))>;
-
-def : Pat<(int_x86_xop_vpcomeqb VR128:$src1, VR128:$src2),
-          (VPCOMBri VR128:$src1, VR128:$src2, (i8 4))>;
-def : Pat<(int_x86_xop_vpcomeqb VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMBmi VR128:$src1, addr:$src2, (i8 4))>;
-
-// VPCOM FALSE
-def : Pat<(int_x86_xop_vpcomfalsew VR128:$src1, VR128:$src2),
-          (VPCOMWri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomfalsew VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMWmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomfalseuw VR128:$src1, VR128:$src2),
-          (VPCOMUWri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomfalseuw VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUWmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomfalseuq VR128:$src1, VR128:$src2),
-          (VPCOMUQri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomfalseuq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUQmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomfalseud VR128:$src1, VR128:$src2),
-          (VPCOMUDri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomfalseud VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUDmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomfalseub VR128:$src1, VR128:$src2),
-          (VPCOMUBri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomfalseub VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUBmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomfalseq VR128:$src1, VR128:$src2),
-          (VPCOMQri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomfalseq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMQmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomfalsed VR128:$src1, VR128:$src2),
-          (VPCOMDri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomfalsed VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMDmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomfalseb VR128:$src1, VR128:$src2),
-          (VPCOMBri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomfalseb VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMBmi VR128:$src1, addr:$src2, (i8 6))>;
-
-// VPCOM GE
-def : Pat<(int_x86_xop_vpcomgew VR128:$src1, VR128:$src2),
-          (VPCOMWri VR128:$src1, VR128:$src2, (i8 3))>;
-def : Pat<(int_x86_xop_vpcomgew VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMWmi VR128:$src1, addr:$src2, (i8 3))>;
-
-def : Pat<(int_x86_xop_vpcomgeuw VR128:$src1, VR128:$src2),
-          (VPCOMUWri VR128:$src1, VR128:$src2, (i8 3))>;
-def : Pat<(int_x86_xop_vpcomgeuw VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUWmi VR128:$src1, addr:$src2, (i8 3))>;
-
-def : Pat<(int_x86_xop_vpcomgeuq VR128:$src1, VR128:$src2),
-          (VPCOMUQri VR128:$src1, VR128:$src2, (i8 3))>;
-def : Pat<(int_x86_xop_vpcomgeuq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUQmi VR128:$src1, addr:$src2, (i8 3))>;
-
-def : Pat<(int_x86_xop_vpcomgeud VR128:$src1, VR128:$src2),
-          (VPCOMUDri VR128:$src1, VR128:$src2, (i8 3))>;
-def : Pat<(int_x86_xop_vpcomgeud VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUDmi VR128:$src1, addr:$src2, (i8 3))>;
-
-def : Pat<(int_x86_xop_vpcomgeub VR128:$src1, VR128:$src2),
-          (VPCOMUBri VR128:$src1, VR128:$src2, (i8 3))>;
-def : Pat<(int_x86_xop_vpcomgeub VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUBmi VR128:$src1, addr:$src2, (i8 3))>;
-
-def : Pat<(int_x86_xop_vpcomgeq VR128:$src1, VR128:$src2),
-          (VPCOMQri VR128:$src1, VR128:$src2, (i8 3))>;
-def : Pat<(int_x86_xop_vpcomgeq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMQmi VR128:$src1, addr:$src2, (i8 3))>;
-
-def : Pat<(int_x86_xop_vpcomged VR128:$src1, VR128:$src2),
-          (VPCOMDri VR128:$src1, VR128:$src2, (i8 3))>;
-def : Pat<(int_x86_xop_vpcomged VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMDmi VR128:$src1, addr:$src2, (i8 3))>;
-
-def : Pat<(int_x86_xop_vpcomgeb VR128:$src1, VR128:$src2),
-          (VPCOMBri VR128:$src1, VR128:$src2, (i8 3))>;
-def : Pat<(int_x86_xop_vpcomgeb VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMBmi VR128:$src1, addr:$src2, (i8 3))>;
-
-// VPCOM GT
-def : Pat<(int_x86_xop_vpcomgtw VR128:$src1, VR128:$src2),
-          (VPCOMWri VR128:$src1, VR128:$src2, (i8 2))>;
-def : Pat<(int_x86_xop_vpcomgtw VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMWmi VR128:$src1, addr:$src2, (i8 2))>;
-
-def : Pat<(int_x86_xop_vpcomgtuw VR128:$src1, VR128:$src2),
-          (VPCOMUWri VR128:$src1, VR128:$src2, (i8 2))>;
-def : Pat<(int_x86_xop_vpcomgtuw VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUWmi VR128:$src1, addr:$src2, (i8 2))>;
-
-def : Pat<(int_x86_xop_vpcomgtuq VR128:$src1, VR128:$src2),
-          (VPCOMUQri VR128:$src1, VR128:$src2, (i8 2))>;
-def : Pat<(int_x86_xop_vpcomgtuq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUQmi VR128:$src1, addr:$src2, (i8 2))>;
-
-def : Pat<(int_x86_xop_vpcomgtud VR128:$src1, VR128:$src2),
-          (VPCOMUDri VR128:$src1, VR128:$src2, (i8 2))>;
-def : Pat<(int_x86_xop_vpcomgtud VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUDmi VR128:$src1, addr:$src2, (i8 2))>;
-
-def : Pat<(int_x86_xop_vpcomgtub VR128:$src1, VR128:$src2),
-          (VPCOMUBri VR128:$src1, VR128:$src2, (i8 2))>;
-def : Pat<(int_x86_xop_vpcomgtub VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUBmi VR128:$src1, addr:$src2, (i8 2))>;
-
-def : Pat<(int_x86_xop_vpcomgtq VR128:$src1, VR128:$src2),
-          (VPCOMQri VR128:$src1, VR128:$src2, (i8 2))>;
-def : Pat<(int_x86_xop_vpcomgtq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMQmi VR128:$src1, addr:$src2, (i8 2))>;
-
-def : Pat<(int_x86_xop_vpcomgtd VR128:$src1, VR128:$src2),
-          (VPCOMDri VR128:$src1, VR128:$src2, (i8 2))>;
-def : Pat<(int_x86_xop_vpcomgtd VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMDmi VR128:$src1, addr:$src2, (i8 2))>;
-
-def : Pat<(int_x86_xop_vpcomgtb VR128:$src1, VR128:$src2),
-          (VPCOMBri VR128:$src1, VR128:$src2, (i8 2))>;
-def : Pat<(int_x86_xop_vpcomgtb VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMBmi VR128:$src1, addr:$src2, (i8 2))>;
-
-// VPCOM LE
-def : Pat<(int_x86_xop_vpcomlew VR128:$src1, VR128:$src2),
-          (VPCOMWri VR128:$src1, VR128:$src2, (i8 1))>;
-def : Pat<(int_x86_xop_vpcomlew VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMWmi VR128:$src1, addr:$src2, (i8 1))>;
-
-def : Pat<(int_x86_xop_vpcomleuw VR128:$src1, VR128:$src2),
-          (VPCOMUWri VR128:$src1, VR128:$src2, (i8 1))>;
-def : Pat<(int_x86_xop_vpcomleuw VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUWmi VR128:$src1, addr:$src2, (i8 1))>;
-
-def : Pat<(int_x86_xop_vpcomleuq VR128:$src1, VR128:$src2),
-          (VPCOMUQri VR128:$src1, VR128:$src2, (i8 1))>;
-def : Pat<(int_x86_xop_vpcomleuq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUQmi VR128:$src1, addr:$src2, (i8 1))>;
-
-def : Pat<(int_x86_xop_vpcomleud VR128:$src1, VR128:$src2),
-          (VPCOMUDri VR128:$src1, VR128:$src2, (i8 1))>;
-def : Pat<(int_x86_xop_vpcomleud VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUDmi VR128:$src1, addr:$src2, (i8 1))>;
-
-def : Pat<(int_x86_xop_vpcomleub VR128:$src1, VR128:$src2),
-          (VPCOMUBri VR128:$src1, VR128:$src2, (i8 1))>;
-def : Pat<(int_x86_xop_vpcomleub VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUBmi VR128:$src1, addr:$src2, (i8 1))>;
-
-def : Pat<(int_x86_xop_vpcomleq VR128:$src1, VR128:$src2),
-          (VPCOMQri VR128:$src1, VR128:$src2, (i8 1))>;
-def : Pat<(int_x86_xop_vpcomleq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMQmi VR128:$src1, addr:$src2, (i8 1))>;
-
-def : Pat<(int_x86_xop_vpcomled VR128:$src1, VR128:$src2),
-          (VPCOMDri VR128:$src1, VR128:$src2, (i8 1))>;
-def : Pat<(int_x86_xop_vpcomled VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMDmi VR128:$src1, addr:$src2, (i8 1))>;
-
-def : Pat<(int_x86_xop_vpcomleb VR128:$src1, VR128:$src2),
-          (VPCOMBri VR128:$src1, VR128:$src2, (i8 1))>;
-def : Pat<(int_x86_xop_vpcomleb VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMBmi VR128:$src1, addr:$src2, (i8 1))>;
-
-// VPCOM LT
-def : Pat<(int_x86_xop_vpcomltw VR128:$src1, VR128:$src2),
-          (VPCOMWri VR128:$src1, VR128:$src2, (i8 0))>;
-def : Pat<(int_x86_xop_vpcomltw VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMWmi VR128:$src1, addr:$src2, (i8 0))>;
-
-def : Pat<(int_x86_xop_vpcomltuw VR128:$src1, VR128:$src2),
-          (VPCOMUWri VR128:$src1, VR128:$src2, (i8 0))>;
-def : Pat<(int_x86_xop_vpcomltuw VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUWmi VR128:$src1, addr:$src2, (i8 0))>;
-
-def : Pat<(int_x86_xop_vpcomltuq VR128:$src1, VR128:$src2),
-          (VPCOMUQri VR128:$src1, VR128:$src2, (i8 0))>;
-def : Pat<(int_x86_xop_vpcomltuq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUQmi VR128:$src1, addr:$src2, (i8 0))>;
-
-def : Pat<(int_x86_xop_vpcomltud VR128:$src1, VR128:$src2),
-          (VPCOMUDri VR128:$src1, VR128:$src2, (i8 0))>;
-def : Pat<(int_x86_xop_vpcomltud VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUDmi VR128:$src1, addr:$src2, (i8 0))>;
-
-def : Pat<(int_x86_xop_vpcomltub VR128:$src1, VR128:$src2),
-          (VPCOMUBri VR128:$src1, VR128:$src2, (i8 0))>;
-def : Pat<(int_x86_xop_vpcomltub VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUBmi VR128:$src1, addr:$src2, (i8 0))>;
-
-def : Pat<(int_x86_xop_vpcomltq VR128:$src1, VR128:$src2),
-          (VPCOMQri VR128:$src1, VR128:$src2, (i8 0))>;
-def : Pat<(int_x86_xop_vpcomltq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMQmi VR128:$src1, addr:$src2, (i8 0))>;
-
-def : Pat<(int_x86_xop_vpcomltd VR128:$src1, VR128:$src2),
-          (VPCOMDri VR128:$src1, VR128:$src2, (i8 0))>;
-def : Pat<(int_x86_xop_vpcomltd VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMDmi VR128:$src1, addr:$src2, (i8 0))>;
-
-def : Pat<(int_x86_xop_vpcomltb VR128:$src1, VR128:$src2),
-          (VPCOMBri VR128:$src1, VR128:$src2, (i8 0))>;
-def : Pat<(int_x86_xop_vpcomltb VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMBmi VR128:$src1, addr:$src2, (i8 0))>;
-
-// VPCOM NE
-def : Pat<(int_x86_xop_vpcomnew VR128:$src1, VR128:$src2),
-          (VPCOMWri VR128:$src1, VR128:$src2, (i8 5))>;
-def : Pat<(int_x86_xop_vpcomnew VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMWmi VR128:$src1, addr:$src2, (i8 5))>;
-
-def : Pat<(int_x86_xop_vpcomneuw VR128:$src1, VR128:$src2),
-          (VPCOMUWri VR128:$src1, VR128:$src2, (i8 5))>;
-def : Pat<(int_x86_xop_vpcomneuw VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUWmi VR128:$src1, addr:$src2, (i8 5))>;
-
-def : Pat<(int_x86_xop_vpcomneuq VR128:$src1, VR128:$src2),
-          (VPCOMUQri VR128:$src1, VR128:$src2, (i8 5))>;
-def : Pat<(int_x86_xop_vpcomneuq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUQmi VR128:$src1, addr:$src2, (i8 5))>;
-
-def : Pat<(int_x86_xop_vpcomneud VR128:$src1, VR128:$src2),
-          (VPCOMUDri VR128:$src1, VR128:$src2, (i8 5))>;
-def : Pat<(int_x86_xop_vpcomneud VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUDmi VR128:$src1, addr:$src2, (i8 5))>;
-
-def : Pat<(int_x86_xop_vpcomneub VR128:$src1, VR128:$src2),
-          (VPCOMUBri VR128:$src1, VR128:$src2, (i8 5))>;
-def : Pat<(int_x86_xop_vpcomneub VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUBmi VR128:$src1, addr:$src2, (i8 5))>;
-
-def : Pat<(int_x86_xop_vpcomneq VR128:$src1, VR128:$src2),
-          (VPCOMQri VR128:$src1, VR128:$src2, (i8 5))>;
-def : Pat<(int_x86_xop_vpcomneq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMQmi VR128:$src1, addr:$src2, (i8 5))>;
-
-def : Pat<(int_x86_xop_vpcomned VR128:$src1, VR128:$src2),
-          (VPCOMDri VR128:$src1, VR128:$src2, (i8 5))>;
-def : Pat<(int_x86_xop_vpcomned VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMDmi VR128:$src1, addr:$src2, (i8 5))>;
-
-def : Pat<(int_x86_xop_vpcomneb VR128:$src1, VR128:$src2),
-          (VPCOMBri VR128:$src1, VR128:$src2, (i8 5))>;
-def : Pat<(int_x86_xop_vpcomneb VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMBmi VR128:$src1, addr:$src2, (i8 5))>;
-
-// VPCOM TRUE
-def : Pat<(int_x86_xop_vpcomtruew VR128:$src1, VR128:$src2),
-          (VPCOMWri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomtruew VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMWmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomtrueuw VR128:$src1, VR128:$src2),
-          (VPCOMUWri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomtrueuw VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUWmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomtrueuq VR128:$src1, VR128:$src2),
-          (VPCOMUQri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomtrueuq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUQmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomtrueud VR128:$src1, VR128:$src2),
-          (VPCOMUDri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomtrueud VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUDmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomtrueub VR128:$src1, VR128:$src2),
-          (VPCOMUBri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomtrueub VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMUBmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomtrueq VR128:$src1, VR128:$src2),
-          (VPCOMQri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomtrueq VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMQmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomtrued VR128:$src1, VR128:$src2),
-          (VPCOMDri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomtrued VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMDmi VR128:$src1, addr:$src2, (i8 6))>;
-
-def : Pat<(int_x86_xop_vpcomtrueb VR128:$src1, VR128:$src2),
-          (VPCOMBri VR128:$src1, VR128:$src2, (i8 6))>;
-def : Pat<(int_x86_xop_vpcomtrueb VR128:$src1,
-          (bitconvert (memopv2i64 addr:$src2))),
-          (VPCOMBmi VR128:$src1, addr:$src2, (i8 6))>;
-
-// VPPERM
-def : Pat<(int_x86_xop_vpperm VR128:$src1, VR128:$src2, VR128:$src3),
-          (VPPERMrr VR128:$src1, VR128:$src2, VR128:$src3)>;
-def : Pat<(int_x86_xop_vpperm VR128:$src1, VR128:$src2,
-                                  (bitconvert (memopv2i64 addr:$src3))),
-          (VPPERMrm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_xop_vpperm VR128:$src1, (bitconvert (memopv2i64 addr:$src2)),
-                                  VR128:$src3),
-          (VPPERMmr VR128:$src1, addr:$src2, VR128:$src3)>;
-
-// VPCMOV
-def : Pat<(int_x86_xop_vpcmov VR128:$src1, VR128:$src2, VR128:$src3),
-          (VPCMOVrr VR128:$src1, VR128:$src2, VR128:$src3)>;
-def : Pat<(int_x86_xop_vpcmov VR128:$src1, VR128:$src2,
-                                  (bitconvert (memopv2i64 addr:$src3))),
-          (VPCMOVrm VR128:$src1, VR128:$src2, addr:$src3)>;
-def : Pat<(int_x86_xop_vpcmov VR128:$src1, (bitconvert (memopv2i64 addr:$src2)),
-                                  VR128:$src3),
-          (VPCMOVmr VR128:$src1, addr:$src2, VR128:$src3)>;
-def : Pat<(int_x86_xop_vpcmov_256 VR256:$src1, VR256:$src2, VR256:$src3),
-          (VPCMOVrrY VR256:$src1, VR256:$src2, VR256:$src3)>;
-def : Pat<(int_x86_xop_vpcmov_256 VR256:$src1, VR256:$src2,
-                                  (bitconvert (memopv4i64 addr:$src3))),
-          (VPCMOVrmY VR256:$src1, VR256:$src2, addr:$src3)>;
-def : Pat<(int_x86_xop_vpcmov_256 VR256:$src1,
-                                  (bitconvert (memopv4i64 addr:$src2)),
-                                  VR256:$src3),
-          (VPCMOVmrY VR256:$src1, addr:$src2, VR256:$src3)>;
-
 // VPCMOV di
 def : Pat<(int_x86_xop_vpcmov_v2di VR128:$src1, VR128:$src2, VR128:$src3),
           (VPCMOVrr VR128:$src1, VR128:$src2, VR128:$src3)>;
