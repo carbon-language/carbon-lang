@@ -155,6 +155,7 @@ struct AddressSanitizer : public ModulePass {
                                    Instruction *InsertBefore, bool IsWrite);
   Value *memToShadow(Value *Shadow, IRBuilder<> &IRB);
   bool handleFunction(Module &M, Function &F);
+  bool maybeInsertAsanInitAtFunctionEntry(Function &F);
   bool poisonStackInFunction(Module &M, Function &F);
   virtual bool runOnModule(Module &M);
   bool insertGlobalRedzones(Module &M);
@@ -617,9 +618,29 @@ bool AddressSanitizer::runOnModule(Module &M) {
   return Res;
 }
 
+bool AddressSanitizer::maybeInsertAsanInitAtFunctionEntry(Function &F) {
+  // For each NSObject descendant having a +load method, this method is invoked
+  // by the ObjC runtime before any of the static constructors is called.
+  // Therefore we need to instrument such methods with a call to __asan_init
+  // at the beginning in order to initialize our runtime before any access to
+  // the shadow memory.
+  // We cannot just ignore these methods, because they may call other
+  // instrumented functions.
+  if (F.getName().find(" load]") != std::string::npos) {
+    IRBuilder<> IRB(F.begin()->begin());
+    IRB.CreateCall(AsanInitFunction);
+    return true;
+  }
+  return false;
+}
+
 bool AddressSanitizer::handleFunction(Module &M, Function &F) {
   if (BL->isIn(F)) return false;
   if (&F == AsanCtorFunction) return false;
+
+  // If needed, insert __asan_init before checking for AddressSafety attr.
+  maybeInsertAsanInitAtFunctionEntry(F);
+
   if (!F.hasFnAttr(Attribute::AddressSafety)) return false;
 
   if (!ClDebugFunc.empty() && ClDebugFunc != F.getName())
@@ -673,19 +694,6 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
   DEBUG(dbgs() << F);
 
   bool ChangedStack = poisonStackInFunction(M, F);
-
-  // For each NSObject descendant having a +load method, this method is invoked
-  // by the ObjC runtime before any of the static constructors is called.
-  // Therefore we need to instrument such methods with a call to __asan_init
-  // at the beginning in order to initialize our runtime before any access to
-  // the shadow memory.
-  // We cannot just ignore these methods, because they may call other
-  // instrumented functions.
-  if (F.getName().find(" load]") != std::string::npos) {
-    IRBuilder<> IRB(F.begin()->begin());
-    IRB.CreateCall(AsanInitFunction);
-  }
-
   return NumInstrumented > 0 || ChangedStack;
 }
 
