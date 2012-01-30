@@ -1668,6 +1668,17 @@ TEST(AddressSanitizer, LargeStructCopyTest) {
   *Ident(&a) = *Ident(&a);
 }
 
+ __attribute__((no_address_safety_analysis))
+static void NoAddressSafety() {
+  char *foo = new char[10];
+  Ident(foo)[10] = 0;
+  delete [] foo;
+}
+
+TEST(AddressSanitizer, AttributeNoAddressSafetyTest) {
+  Ident(NoAddressSafety)();
+}
+
 // ------------------ demo tests; run each one-by-one -------------
 // e.g. --gtest_filter=*DemoOOBLeftHigh --gtest_also_run_disabled_tests
 TEST(AddressSanitizer, DISABLED_DemoThreadedTest) {
