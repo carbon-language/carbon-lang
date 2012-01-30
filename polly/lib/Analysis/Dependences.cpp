@@ -418,7 +418,7 @@ isl_union_map *Dependences::getDependences(int type) {
     dependences = isl_union_map_union(dependences,
                                       isl_union_map_copy(waw_dep));
 
-  return dependences;
+  return isl_union_map_coalesce(dependences);
 }
 
 void Dependences::getAnalysisUsage(AnalysisUsage &AU) const {
