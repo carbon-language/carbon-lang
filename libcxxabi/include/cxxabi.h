@@ -33,16 +33,16 @@ namespace __cxxabiv1 {
   extern "C"  {
 
 // 2.4.2 Allocating the Exception Object
-extern void * __cxa_allocate_exception(size_t thrown_size) noexcept;
-extern void __cxa_free_exception(void * thrown_exception) noexcept;
+extern void * __cxa_allocate_exception(size_t thrown_size) throw();
+extern void __cxa_free_exception(void * thrown_exception) throw();
 
 // 2.4.3 Throwing the Exception Object
 extern LIBCXXABI_NORETURN void __cxa_throw(void * thrown_exception, 
         std::type_info * tinfo, void (*dest)(void *));
 
 // 2.5.3 Exception Handlers
-extern void * __cxa_get_exception_ptr(void * exceptionObject) noexcept;
-extern void * __cxa_begin_catch(void * exceptionObject) noexcept;
+extern void * __cxa_get_exception_ptr(void * exceptionObject) throw();
+extern void * __cxa_begin_catch(void * exceptionObject) throw();
 extern void __cxa_end_catch();
 extern std::type_info * __cxa_current_exception_type();
 
@@ -157,13 +157,13 @@ extern char* __cxa_demangle(const char* mangled_name,
 
 // Apple additions to support C++ 0x exception_ptr class
 // These are primitives to wrap a smart pointer around an exception object
-extern void * __cxa_current_primary_exception() noexcept;
+extern void * __cxa_current_primary_exception() throw();
 extern void __cxa_rethrow_primary_exception(void* primary_exception);
-extern void __cxa_increment_exception_refcount(void* primary_exception) noexcept;
-extern void __cxa_decrement_exception_refcount(void* primary_exception) noexcept;
+extern void __cxa_increment_exception_refcount(void* primary_exception) throw();
+extern void __cxa_decrement_exception_refcount(void* primary_exception) throw();
 
 // Apple addition to support std::uncaught_exception()
-extern bool __cxa_uncaught_exception() noexcept;
+extern bool __cxa_uncaught_exception() throw();
 
   } // extern "C"
 } // namespace __cxxabiv1
