@@ -2178,14 +2178,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     llvm::Function *F = CGM.getIntrinsic(ID);
     return Builder.CreateCall(F, Ops, name);
   }
-  case X86::BI__builtin_ia32_cmpps: {
-    llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse_cmp_ps);
-    return Builder.CreateCall(F, Ops, "cmpps");
-  }
-  case X86::BI__builtin_ia32_cmpss: {
-    llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse_cmp_ss);
-    return Builder.CreateCall(F, Ops, "cmpss");
-  }
   case X86::BI__builtin_ia32_ldmxcsr: {
     llvm::Type *PtrTy = Int8PtrTy;
     Value *One = llvm::ConstantInt::get(Int32Ty, 1);
@@ -2201,14 +2193,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
     Builder.CreateCall(CGM.getIntrinsic(Intrinsic::x86_sse_stmxcsr),
                        Builder.CreateBitCast(Tmp, PtrTy));
     return Builder.CreateLoad(Tmp, "stmxcsr");
-  }
-  case X86::BI__builtin_ia32_cmppd: {
-    llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse2_cmp_pd);
-    return Builder.CreateCall(F, Ops, "cmppd");
-  }
-  case X86::BI__builtin_ia32_cmpsd: {
-    llvm::Function *F = CGM.getIntrinsic(Intrinsic::x86_sse2_cmp_sd);
-    return Builder.CreateCall(F, Ops, "cmpsd");
   }
   case X86::BI__builtin_ia32_storehps:
   case X86::BI__builtin_ia32_storelps: {
