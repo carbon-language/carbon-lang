@@ -797,7 +797,7 @@ void LiveIntervals::addKillFlags() {
   }
 }
 
-
+#ifndef NDEBUG
 static bool intervalRangesSane(const LiveInterval& li) {
   if (li.empty()) {
     return true;
@@ -814,6 +814,7 @@ static bool intervalRangesSane(const LiveInterval& li) {
 
   return true;
 }
+#endif
 
 template <typename DefSetT>
 static void handleMoveDefs(LiveIntervals& lis, SlotIndex origIdx,
@@ -1145,4 +1146,3 @@ LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
 
   return LR;
 }
-
