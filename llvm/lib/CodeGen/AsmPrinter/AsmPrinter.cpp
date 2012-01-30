@@ -1629,15 +1629,10 @@ static void EmitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
       AP.OutStreamer.EmitIntValue(CDS->getElementAsInteger(i),
                                   ElementByteSize, AddrSpace);
     }
-    return;
-  }
-
-  // FP Constants are printed as integer constants to avoid losing
-  // precision.
-  assert(CDS->getElementType()->isFloatTy() ||
-         CDS->getElementType()->isDoubleTy());
-
-  if (ElementByteSize == 4) {
+  } else if (ElementByteSize == 4) {
+    // FP Constants are printed as integer constants to avoid losing
+    // precision.
+    assert(CDS->getElementType()->isFloatTy());
     for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
       union {
         float F;
@@ -1649,20 +1644,28 @@ static void EmitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
         AP.OutStreamer.GetCommentOS() << "float " << F << '\n';
       AP.OutStreamer.EmitIntValue(I, 4, AddrSpace);
     }
-    return;
+  } else {
+    assert(CDS->getElementType()->isDoubleTy());
+    for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
+      union {
+        double F;
+        uint64_t I;
+      };
+      
+      F = CDS->getElementAsDouble(i);
+      if (AP.isVerbose())
+        AP.OutStreamer.GetCommentOS() << "double " << F << '\n';
+      AP.OutStreamer.EmitIntValue(I, 8, AddrSpace);
+    }
   }
 
-  for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
-    union {
-      double F;
-      uint64_t I;
-    };
-    
-    F = CDS->getElementAsDouble(i);
-    if (AP.isVerbose())
-      AP.OutStreamer.GetCommentOS() << "double " << F << '\n';
-    AP.OutStreamer.EmitIntValue(I, 8, AddrSpace);
-  }
+  const TargetData &TD = *AP.TM.getTargetData();
+  unsigned Size = TD.getTypeAllocSize(CDS->getType());
+  unsigned EmittedSize = TD.getTypeAllocSize(CDS->getType()->getElementType()) *
+                        CDS->getNumElements();
+  if (unsigned Padding = Size - EmittedSize)
+    AP.OutStreamer.EmitZeros(Padding, AddrSpace);
+
 }
 
 static void EmitGlobalConstantArray(const ConstantArray *CA, unsigned AddrSpace,
