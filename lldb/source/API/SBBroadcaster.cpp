@@ -9,7 +9,6 @@
 
 #include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Log.h"
-#include "lldb/lldb-forward-rtti.h"
 
 #include "lldb/API/SBBroadcaster.h"
 #include "lldb/API/SBListener.h"

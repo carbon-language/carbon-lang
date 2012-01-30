@@ -12,7 +12,6 @@
 
 #include "lldb/lldb-enumerations.h"
 #include "lldb/lldb-forward.h"
-#include "lldb/Utility/SharingPtr.h"
 
 #include <assert.h>
 #include <pthread.h>
@@ -59,11 +58,11 @@ namespace lldb {
         //      // Make a typedef to a Foo shared pointer
         //      typedef lldb::SharePtr<Foo>::Type FooSP;
         //
-        template<typename _Tp>
-        struct SharedPtr
-        {
-            typedef lldb_private::SharingPtr<_Tp> Type;
-        };
+//        template<typename _Tp>
+//        struct SharedPtr
+//        {
+//            typedef lldb_private::SharingPtr<_Tp> Type;
+//        };
 //        template<typename _Tp>
 //        struct LoggingSharedPtr
 //        {

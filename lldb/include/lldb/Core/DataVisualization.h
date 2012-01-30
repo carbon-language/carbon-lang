@@ -23,7 +23,6 @@
 
 // Other libraries and framework includes
 // Project includes
-#include "lldb/lldb-forward-rtti.h"
 #include "lldb/Core/ConstString.h"
 #include "lldb/Core/FormatClasses.h"
 #include "lldb/Core/FormatManager.h"

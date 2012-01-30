@@ -171,27 +171,6 @@ protected:
     friend class SBDebugger;
     friend class SBValue;
 
-
-#ifndef SWIG
-
-    lldb_private::Thread *
-    get ();
-
-    const lldb_private::Thread *
-    operator->() const;
-
-    const lldb_private::Thread &
-    operator*() const;
-
-
-    lldb_private::Thread *
-    operator->();
-
-    lldb_private::Thread &
-    operator*();
-
-#endif
-
     SBThread (const lldb::ThreadSP& lldb_object_sp);
 
     void
@@ -202,7 +181,7 @@ private:
     // Classes that inherit from Thread can see and modify these
     //------------------------------------------------------------------
 
-    lldb::ThreadSP m_opaque_sp;
+    lldb::ThreadWP m_opaque_wp;
 };
 
 } // namespace lldb

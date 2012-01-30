@@ -878,23 +878,25 @@ SBValue::GetProcess()
 lldb::SBThread
 SBValue::GetThread()
 {
-    SBThread result;
+    SBThread sb_thread;
+    ThreadSP thread_sp;
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetExecutionContextScope())
         {
-            result = SBThread(m_opaque_sp->GetExecutionContextScope()->CalculateThread()->shared_from_this());
+            thread_sp = m_opaque_sp->GetExecutionContextScope()->CalculateThread()->shared_from_this();
+            sb_thread.SetThread(thread_sp);
         }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
-        if (result.get() == NULL)
+        if (thread_sp.get() == NULL)
             log->Printf ("SBValue(%p)::GetThread () => NULL", m_opaque_sp.get());
         else
-            log->Printf ("SBValue(%p)::GetThread () => %p", m_opaque_sp.get(), result.get());
+            log->Printf ("SBValue(%p)::GetThread () => %p", m_opaque_sp.get(), thread_sp.get());
     }
-    return result;
+    return sb_thread;
 }
 
 lldb::SBFrame

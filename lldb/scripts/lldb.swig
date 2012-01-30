@@ -88,7 +88,6 @@ o SBLineEntry: Specifies an association with a contiguous range of instructions
 %include "lldb/lldb-defines.h"
 %include "lldb/lldb-enumerations.h"
 %include "lldb/lldb-forward.h"
-%include "lldb/lldb-forward-rtti.h"
 %include "lldb/lldb-types.h"
 
 /* Forward declaration of SB classes. */

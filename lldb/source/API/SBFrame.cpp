@@ -550,10 +550,12 @@ SBFrame::GetThread () const
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBThread sb_thread;
+    ThreadSP thread_sp;
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_thread.SetThread (m_opaque_sp->GetThread().shared_from_this());
+        thread_sp = m_opaque_sp->GetThread().shared_from_this();
+        sb_thread.SetThread (thread_sp);
     }
 
     if (log)
@@ -561,7 +563,7 @@ SBFrame::GetThread () const
         SBStream sstr;
         sb_thread.GetDescription (sstr);
         log->Printf ("SBFrame(%p)::GetThread () => SBThread(%p): %s", m_opaque_sp.get(), 
-                     sb_thread.get(), sstr.GetData());
+                     thread_sp.get(), sstr.GetData());
     }
 
     return sb_thread;

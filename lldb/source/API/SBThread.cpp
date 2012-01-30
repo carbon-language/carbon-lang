@@ -43,17 +43,17 @@ using namespace lldb_private;
 // Constructors
 //----------------------------------------------------------------------
 SBThread::SBThread () :
-    m_opaque_sp ()
+    m_opaque_wp ()
 {
 }
 
 SBThread::SBThread (const ThreadSP& lldb_object_sp) :
-    m_opaque_sp (lldb_object_sp)
+    m_opaque_wp (lldb_object_sp)
 {
 }
 
 SBThread::SBThread (const SBThread &rhs) :
-    m_opaque_sp (rhs.m_opaque_sp)
+    m_opaque_wp (rhs.m_opaque_wp)
 {
 }
 
@@ -65,7 +65,7 @@ const lldb::SBThread &
 SBThread::operator = (const SBThread &rhs)
 {
     if (this != &rhs)
-        m_opaque_sp = rhs.m_opaque_sp;
+        m_opaque_wp = rhs.m_opaque_wp;
     return *this;
 }
 
@@ -79,13 +79,13 @@ SBThread::~SBThread()
 bool
 SBThread::IsValid() const
 {
-    return m_opaque_sp;
+    return !m_opaque_wp.expired();
 }
 
 void
 SBThread::Clear ()
 {
-    m_opaque_sp.reset();
+    m_opaque_wp.reset();
 }
 
 
@@ -95,16 +95,17 @@ SBThread::GetStopReason()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     StopReason reason = eStopReasonInvalid;
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        StopInfoSP stop_info_sp = thread_sp->GetStopInfo ();
         if (stop_info_sp)
             reason =  stop_info_sp->GetStopReason();
     }
 
     if (log)
-        log->Printf ("SBThread(%p)::GetStopReason () => %s", m_opaque_sp.get(), 
+        log->Printf ("SBThread(%p)::GetStopReason () => %s", thread_sp.get(), 
                      Thread::StopReasonAsCString (reason));
 
     return reason;
@@ -113,10 +114,11 @@ SBThread::GetStopReason()
 size_t
 SBThread::GetStopReasonDataCount ()
 {
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        StopInfoSP stop_info_sp = thread_sp->GetStopInfo ();
         if (stop_info_sp)
         {
             StopReason reason = stop_info_sp->GetStopReason();
@@ -132,7 +134,7 @@ SBThread::GetStopReasonDataCount ()
             case eStopReasonBreakpoint:
                 {
                     break_id_t site_id = stop_info_sp->GetValue();
-                    lldb::BreakpointSiteSP bp_site_sp (m_opaque_sp->GetProcess().GetBreakpointSiteList().FindByID (site_id));
+                    lldb::BreakpointSiteSP bp_site_sp (thread_sp->GetProcess().GetBreakpointSiteList().FindByID (site_id));
                     if (bp_site_sp)
                         return bp_site_sp->GetNumberOfOwners () * 2;
                     else
@@ -157,10 +159,11 @@ SBThread::GetStopReasonDataCount ()
 uint64_t
 SBThread::GetStopReasonDataAtIndex (uint32_t idx)
 {
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        StopInfoSP stop_info_sp = thread_sp->GetStopInfo ();
         if (stop_info_sp)
         {
             StopReason reason = stop_info_sp->GetStopReason();
@@ -176,7 +179,7 @@ SBThread::GetStopReasonDataAtIndex (uint32_t idx)
             case eStopReasonBreakpoint:
                 {
                     break_id_t site_id = stop_info_sp->GetValue();
-                    lldb::BreakpointSiteSP bp_site_sp (m_opaque_sp->GetProcess().GetBreakpointSiteList().FindByID (site_id));
+                    lldb::BreakpointSiteSP bp_site_sp (thread_sp->GetProcess().GetBreakpointSiteList().FindByID (site_id));
                     if (bp_site_sp)
                     {
                         uint32_t bp_index = idx / 2;
@@ -218,10 +221,11 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        StopInfoSP stop_info_sp = thread_sp->GetStopInfo ();
         if (stop_info_sp)
         {
             const char *stop_desc = stop_info_sp->GetDescription();
@@ -229,7 +233,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
             {
                 if (log)
                     log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => \"%s\"", 
-                                 m_opaque_sp.get(), stop_desc);
+                                 thread_sp.get(), stop_desc);
                 if (dst)
                     return ::snprintf (dst, dst_len, "%s", stop_desc);
                 else
@@ -270,7 +274,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
 
                 case eStopReasonSignal:
                     {
-                        stop_desc = m_opaque_sp->GetProcess().GetUnixSignals ().GetSignalAsCString (stop_info_sp->GetValue());
+                        stop_desc = thread_sp->GetProcess().GetUnixSignals ().GetSignalAsCString (stop_info_sp->GetValue());
                         if (stop_desc == NULL || stop_desc[0] == '\0')
                         {
                             static char signal_desc[] = "signal";
@@ -296,7 +300,7 @@ SBThread::GetStopDescription (char *dst, size_t dst_len)
                 {
                     if (log)
                         log->Printf ("SBThread(%p)::GetStopDescription (dst, dst_len) => '%s'", 
-                                     m_opaque_sp.get(), stop_desc);
+                                     thread_sp.get(), stop_desc);
 
                     if (dst)
                         return ::snprintf (dst, dst_len, "%s", stop_desc) + 1; // Include the NULL byte
@@ -318,10 +322,11 @@ SBValue
 SBThread::GetStopReturnValue ()
 {
     ValueObjectSP return_valobj_sp;
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        StopInfoSP stop_info_sp = m_opaque_sp->GetStopInfo ();
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        StopInfoSP stop_info_sp = thread_sp->GetStopInfo ();
         if (stop_info_sp)
         {
             return_valobj_sp = StopInfo::GetReturnValueObject (stop_info_sp);
@@ -330,7 +335,7 @@ SBThread::GetStopReturnValue ()
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBThread(%p)::GetStopReturnValue () => %s", m_opaque_sp.get(), 
+        log->Printf ("SBThread(%p)::GetStopReturnValue () => %s", thread_sp.get(), 
                                                                   return_valobj_sp.get() 
                                                                       ? return_valobj_sp->GetValueAsCString() 
                                                                         : "<no return value>");
@@ -341,7 +346,7 @@ SBThread::GetStopReturnValue ()
 void
 SBThread::SetThread (const ThreadSP& lldb_object_sp)
 {
-    m_opaque_sp = lldb_object_sp;
+    m_opaque_wp = lldb_object_sp;
 }
 
 
@@ -351,11 +356,12 @@ SBThread::GetThreadID () const
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     lldb::tid_t tid = LLDB_INVALID_THREAD_ID;
-    if (m_opaque_sp)
-        tid = m_opaque_sp->GetID();
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
+        tid = thread_sp->GetID();
 
     if (log)
-        log->Printf ("SBThread(%p)::GetThreadID () => 0x%4.4llx", m_opaque_sp.get(), tid);
+        log->Printf ("SBThread(%p)::GetThreadID () => 0x%4.4llx", thread_sp.get(), tid);
 
     return tid;
 }
@@ -363,23 +369,25 @@ SBThread::GetThreadID () const
 uint32_t
 SBThread::GetIndexID () const
 {
-    if (m_opaque_sp)
-        return m_opaque_sp->GetIndexID();
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
+        return thread_sp->GetIndexID();
     return LLDB_INVALID_INDEX32;
 }
 const char *
 SBThread::GetName () const
 {
     const char *name = NULL;
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        name = m_opaque_sp->GetName();
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        name = thread_sp->GetName();
     }
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBThread(%p)::GetName () => %s", m_opaque_sp.get(), name ? name : "NULL");
+        log->Printf ("SBThread(%p)::GetName () => %s", thread_sp.get(), name ? name : "NULL");
 
     return name;
 }
@@ -388,15 +396,16 @@ const char *
 SBThread::GetQueueName () const
 {
     const char *name = NULL;
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        name = m_opaque_sp->GetQueueName();
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        name = thread_sp->GetQueueName();
     }
     
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBThread(%p)::GetQueueName () => %s", m_opaque_sp.get(), name ? name : "NULL");
+        log->Printf ("SBThread(%p)::GetQueueName () => %s", thread_sp.get(), name ? name : "NULL");
 
     return name;
 }
@@ -407,40 +416,42 @@ SBThread::StepOver (lldb::RunMode stop_other_threads)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    if (log)
-        log->Printf ("SBThread(%p)::StepOver (stop_other_threads='%s')", m_opaque_sp.get(), 
-                     Thread::RunModeAsCString (stop_other_threads));
+    ThreadSP thread_sp(m_opaque_wp.lock());
 
-    if (m_opaque_sp)
+    if (log)
+        log->Printf ("SBThread(%p)::StepOver (stop_other_threads='%s')", thread_sp.get(), 
+                     Thread::RunModeAsCString (stop_other_threads));
+    
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
         bool abort_other_plans = true;
-        StackFrameSP frame_sp(m_opaque_sp->GetStackFrameAtIndex (0));
+        StackFrameSP frame_sp(thread_sp->GetStackFrameAtIndex (0));
 
         if (frame_sp)
         {
             if (frame_sp->HasDebugInformation ())
             {
                 SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
-                m_opaque_sp->QueueThreadPlanForStepRange (abort_other_plans, 
-                                                          eStepTypeOver,
-                                                          sc.line_entry.range, 
-                                                          sc,
-                                                          stop_other_threads,
-                                                          false);
+                thread_sp->QueueThreadPlanForStepRange (abort_other_plans, 
+                                                        eStepTypeOver,
+                                                        sc.line_entry.range, 
+                                                        sc,
+                                                        stop_other_threads,
+                                                        false);
                 
             }
             else
             {
-                m_opaque_sp->QueueThreadPlanForStepSingleInstruction (true, 
-                                                                      abort_other_plans, 
-                                                                      stop_other_threads);
+                thread_sp->QueueThreadPlanForStepSingleInstruction (true, 
+                                                                    abort_other_plans, 
+                                                                    stop_other_threads);
             }
         }
 
-        Process &process = m_opaque_sp->GetProcess();
+        Process &process = thread_sp->GetProcess();
         // Why do we need to set the current thread by ID here???
-        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
+        process.GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
         Error error (process.Resume());
         if (error.Success())
         {
@@ -457,38 +468,40 @@ SBThread::StepInto (lldb::RunMode stop_other_threads)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    if (log)
-        log->Printf ("SBThread(%p)::StepInto (stop_other_threads='%s')", m_opaque_sp.get(),
-                     Thread::RunModeAsCString (stop_other_threads));
 
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+
+    if (log)
+        log->Printf ("SBThread(%p)::StepInto (stop_other_threads='%s')", thread_sp.get(),
+                     Thread::RunModeAsCString (stop_other_threads));
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
         bool abort_other_plans = true;
 
-        StackFrameSP frame_sp(m_opaque_sp->GetStackFrameAtIndex (0));
+        StackFrameSP frame_sp(thread_sp->GetStackFrameAtIndex (0));
 
         if (frame_sp && frame_sp->HasDebugInformation ())
         {
             bool avoid_code_without_debug_info = true;
             SymbolContext sc(frame_sp->GetSymbolContext(eSymbolContextEverything));
-            m_opaque_sp->QueueThreadPlanForStepRange (abort_other_plans, 
-                                                      eStepTypeInto, 
-                                                      sc.line_entry.range, 
-                                                      sc, 
-                                                      stop_other_threads,
-                                                      avoid_code_without_debug_info);
+            thread_sp->QueueThreadPlanForStepRange (abort_other_plans, 
+                                                    eStepTypeInto, 
+                                                    sc.line_entry.range, 
+                                                    sc, 
+                                                    stop_other_threads,
+                                                    avoid_code_without_debug_info);
         }
         else
         {
-            m_opaque_sp->QueueThreadPlanForStepSingleInstruction (false, 
-                                                                  abort_other_plans, 
-                                                                  stop_other_threads);
+            thread_sp->QueueThreadPlanForStepSingleInstruction (false, 
+                                                                abort_other_plans, 
+                                                                stop_other_threads);
         }
 
-        Process &process = m_opaque_sp->GetProcess();
+        Process &process = thread_sp->GetProcess();
         // Why do we need to set the current thread by ID here???
-        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
+        process.GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
         Error error (process.Resume());
         if (error.Success())
         {
@@ -505,25 +518,27 @@ SBThread::StepOut ()
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    if (log)
-        log->Printf ("SBThread(%p)::StepOut ()", m_opaque_sp.get());
+    ThreadSP thread_sp(m_opaque_wp.lock());
 
-    if (m_opaque_sp)
+    if (log)
+        log->Printf ("SBThread(%p)::StepOut ()", thread_sp.get());
+    
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
         bool abort_other_plans = true;
         bool stop_other_threads = true;
 
-        m_opaque_sp->QueueThreadPlanForStepOut (abort_other_plans, 
-                                                NULL, 
-                                                false, 
-                                                stop_other_threads, 
-                                                eVoteYes, 
-                                                eVoteNoOpinion,
-                                                0);
+        thread_sp->QueueThreadPlanForStepOut (abort_other_plans, 
+                                              NULL, 
+                                              false, 
+                                              stop_other_threads, 
+                                              eVoteYes, 
+                                              eVoteNoOpinion,
+                                              0);
         
-        Process &process = m_opaque_sp->GetProcess();
-        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
+        Process &process = thread_sp->GetProcess();
+        process.GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
         Error error (process.Resume());
         if (error.Success())
         {
@@ -540,29 +555,31 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
+    ThreadSP thread_sp(m_opaque_wp.lock());
+
     if (log)
     {
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
-        log->Printf ("SBThread(%p)::StepOutOfFrame (frame = SBFrame(%p): %s)", m_opaque_sp.get(), sb_frame.get(), frame_desc_strm.GetData());
+        log->Printf ("SBThread(%p)::StepOutOfFrame (frame = SBFrame(%p): %s)", thread_sp.get(), sb_frame.get(), frame_desc_strm.GetData());
     }
 
-    if (m_opaque_sp)
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
         bool abort_other_plans = true;
         bool stop_other_threads = true;
 
-        m_opaque_sp->QueueThreadPlanForStepOut (abort_other_plans, 
-                                                NULL, 
-                                                false, 
-                                                stop_other_threads, 
-                                                eVoteYes, 
-                                                eVoteNoOpinion,
-                                                sb_frame->GetFrameIndex());
+        thread_sp->QueueThreadPlanForStepOut (abort_other_plans, 
+                                              NULL, 
+                                              false, 
+                                              stop_other_threads, 
+                                              eVoteYes, 
+                                              eVoteNoOpinion,
+                                              sb_frame->GetFrameIndex());
         
-        Process &process = m_opaque_sp->GetProcess();
-        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
+        Process &process = thread_sp->GetProcess();
+        process.GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
         Error error (process.Resume());
         if (error.Success())
         {
@@ -579,15 +596,17 @@ SBThread::StepInstruction (bool step_over)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    if (log)
-        log->Printf ("SBThread(%p)::StepInstruction (step_over=%i)", m_opaque_sp.get(), step_over);
+    ThreadSP thread_sp(m_opaque_wp.lock());
 
-    if (m_opaque_sp)
+    if (log)
+        log->Printf ("SBThread(%p)::StepInstruction (step_over=%i)", thread_sp.get(), step_over);
+    
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        m_opaque_sp->QueueThreadPlanForStepSingleInstruction (step_over, true, true);
-        Process &process = m_opaque_sp->GetProcess();
-        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        thread_sp->QueueThreadPlanForStepSingleInstruction (step_over, true, true);
+        Process &process = thread_sp->GetProcess();
+        process.GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
         Error error (process.Resume());
         if (error.Success())
         {
@@ -604,19 +623,21 @@ SBThread::RunToAddress (lldb::addr_t addr)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    if (log)
-        log->Printf ("SBThread(%p)::RunToAddress (addr=0x%llx)", m_opaque_sp.get(), addr);
+    ThreadSP thread_sp(m_opaque_wp.lock());
 
-    if (m_opaque_sp)
+    if (log)
+        log->Printf ("SBThread(%p)::RunToAddress (addr=0x%llx)", thread_sp.get(), addr);
+    
+    if (thread_sp)
     {
         bool abort_other_plans = true;
         bool stop_other_threads = true;
 
         Address target_addr (NULL, addr);
 
-        m_opaque_sp->QueueThreadPlanForRunToAddress (abort_other_plans, target_addr, stop_other_threads);
-        Process &process = m_opaque_sp->GetProcess();
-        process.GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
+        thread_sp->QueueThreadPlanForRunToAddress (abort_other_plans, target_addr, stop_other_threads);
+        Process &process = thread_sp->GetProcess();
+        process.GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
         Error error (process.Resume());
         if (error.Success())
         {
@@ -636,22 +657,24 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
     SBError sb_error;
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     char path[PATH_MAX];
-
+    
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    
     if (log)
     {
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
         sb_file_spec->GetPath (path, sizeof(path));
         log->Printf ("SBThread(%p)::StepOverUntil (frame = SBFrame(%p): %s, file+line = %s:%u)", 
-                     m_opaque_sp.get(), 
+                     thread_sp.get(), 
                      sb_frame.get(), 
                      frame_desc_strm.GetData(),
                      path, line);
     }
-    
-    if (m_opaque_sp)
+
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
 
         if (line == 0)
         {
@@ -664,9 +687,9 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
             frame_sp = sb_frame.get_sp();
         else
         {
-            frame_sp = m_opaque_sp->GetSelectedFrame ();
+            frame_sp = thread_sp->GetSelectedFrame ();
             if (!frame_sp)
-                frame_sp = m_opaque_sp->GetStackFrameAtIndex (0);
+                frame_sp = thread_sp->GetStackFrameAtIndex (0);
         }
     
         SymbolContext frame_sc;
@@ -718,7 +741,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
         const bool stop_other_threads = true;
         const bool check_inlines = true;
         const bool exact = false;
-        Target *target = &m_opaque_sp->GetProcess().GetTarget();
+        Target *target = &thread_sp->GetProcess().GetTarget();
 
         SymbolContextList sc_list;
         const uint32_t num_matches = frame_sc.comp_unit->ResolveSymbolContext (step_file_spec, 
@@ -758,20 +781,20 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
         }
         else
         {
-            m_opaque_sp->QueueThreadPlanForStepUntil (abort_other_plans, 
-                                                      &step_over_until_addrs[0],
-                                                      step_over_until_addrs.size(),
-                                                      stop_other_threads,
-                                                      frame_sp->GetFrameIndex());      
+            thread_sp->QueueThreadPlanForStepUntil (abort_other_plans, 
+                                                    &step_over_until_addrs[0],
+                                                    step_over_until_addrs.size(),
+                                                    stop_other_threads,
+                                                    frame_sp->GetFrameIndex());      
 
-            m_opaque_sp->GetProcess().GetThreadList().SetSelectedThreadByID (m_opaque_sp->GetID());
-            sb_error.ref() = m_opaque_sp->GetProcess().Resume();
+            thread_sp->GetProcess().GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
+            sb_error.ref() = thread_sp->GetProcess().Resume();
             if (sb_error->Success())
             {
                 // If we are doing synchronous mode, then wait for the
                 // process to stop yet again!
-                if (m_opaque_sp->GetProcess().GetTarget().GetDebugger().GetAsyncExecution () == false)
-                    m_opaque_sp->GetProcess().WaitForProcessToStop (NULL);
+                if (thread_sp->GetProcess().GetTarget().GetDebugger().GetAsyncExecution () == false)
+                    thread_sp->GetProcess().WaitForProcessToStop (NULL);
             }
         }
     }
@@ -786,9 +809,10 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
 bool
 SBThread::Suspend()
 {
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        m_opaque_sp->SetResumeState (eStateSuspended);
+        thread_sp->SetResumeState (eStateSuspended);
         return true;
     }
     return false;
@@ -797,9 +821,10 @@ SBThread::Suspend()
 bool
 SBThread::Resume ()
 {
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        m_opaque_sp->SetResumeState (eStateRunning);
+        thread_sp->SetResumeState (eStateRunning);
         return true;
     }
     return false;
@@ -808,8 +833,9 @@ SBThread::Resume ()
 bool
 SBThread::IsSuspended()
 {
-    if (m_opaque_sp)
-        return m_opaque_sp->GetResumeState () == eStateSuspended;
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
+        return thread_sp->GetResumeState () == eStateSuspended;
     return false;
 }
 
@@ -818,10 +844,11 @@ SBThread::GetProcess ()
 {
 
     SBProcess process;
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
         // Have to go up to the target so we can get a shared pointer to our process...
-        process.SetProcess(m_opaque_sp->GetProcess().GetTarget().GetProcessSP());
+        process.SetProcess(thread_sp->GetProcess().GetTarget().GetProcessSP());
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -829,7 +856,7 @@ SBThread::GetProcess ()
     {
         SBStream frame_desc_strm;
         process.GetDescription (frame_desc_strm);
-        log->Printf ("SBThread(%p)::GetProcess () => SBProcess(%p): %s", m_opaque_sp.get(),
+        log->Printf ("SBThread(%p)::GetProcess () => SBProcess(%p): %s", thread_sp.get(),
                      process.get(), frame_desc_strm.GetData());
     }
 
@@ -842,14 +869,15 @@ SBThread::GetNumFrames ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     uint32_t num_frames = 0;
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        num_frames = m_opaque_sp->GetStackFrameCount();
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        num_frames = thread_sp->GetStackFrameCount();
     }
 
     if (log)
-        log->Printf ("SBThread(%p)::GetNumFrames () => %u", m_opaque_sp.get(), num_frames);
+        log->Printf ("SBThread(%p)::GetNumFrames () => %u", thread_sp.get(), num_frames);
 
     return num_frames;
 }
@@ -860,10 +888,11 @@ SBThread::GetFrameAtIndex (uint32_t idx)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        sb_frame.SetFrame (m_opaque_sp->GetStackFrameAtIndex (idx));
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        sb_frame.SetFrame (thread_sp->GetStackFrameAtIndex (idx));
     }
 
     if (log)
@@ -871,7 +900,7 @@ SBThread::GetFrameAtIndex (uint32_t idx)
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::GetFrameAtIndex (idx=%d) => SBFrame(%p): %s", 
-                     m_opaque_sp.get(), idx, sb_frame.get(), frame_desc_strm.GetData());
+                     thread_sp.get(), idx, sb_frame.get(), frame_desc_strm.GetData());
     }
 
     return sb_frame;
@@ -883,10 +912,11 @@ SBThread::GetSelectedFrame ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        sb_frame.SetFrame (m_opaque_sp->GetSelectedFrame ());
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        sb_frame.SetFrame (thread_sp->GetSelectedFrame ());
     }
 
     if (log)
@@ -894,7 +924,7 @@ SBThread::GetSelectedFrame ()
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::GetSelectedFrame () => SBFrame(%p): %s", 
-                     m_opaque_sp.get(), sb_frame.get(), frame_desc_strm.GetData());
+                     thread_sp.get(), sb_frame.get(), frame_desc_strm.GetData());
     }
 
     return sb_frame;
@@ -906,13 +936,14 @@ SBThread::SetSelectedFrame (uint32_t idx)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetProcess().GetTarget().GetAPIMutex());
-        lldb::StackFrameSP frame_sp (m_opaque_sp->GetStackFrameAtIndex (idx));
+        Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
+        lldb::StackFrameSP frame_sp (thread_sp->GetStackFrameAtIndex (idx));
         if (frame_sp)
         {
-            m_opaque_sp->SetSelectedFrame (frame_sp.get());
+            thread_sp->SetSelectedFrame (frame_sp.get());
             sb_frame.SetFrame (frame_sp);
         }
     }
@@ -922,7 +953,7 @@ SBThread::SetSelectedFrame (uint32_t idx)
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::SetSelectedFrame (idx=%u) => SBFrame(%p): %s", 
-                     m_opaque_sp.get(), idx, sb_frame.get(), frame_desc_strm.GetData());
+                     thread_sp.get(), idx, sb_frame.get(), frame_desc_strm.GetData());
     }
     return sb_frame;
 }
@@ -931,43 +962,13 @@ SBThread::SetSelectedFrame (uint32_t idx)
 bool
 SBThread::operator == (const SBThread &rhs) const
 {
-    return m_opaque_sp.get() == rhs.m_opaque_sp.get();
+    return m_opaque_wp.lock().get() == rhs.m_opaque_wp.lock().get();
 }
 
 bool
 SBThread::operator != (const SBThread &rhs) const
 {
-    return m_opaque_sp.get() != rhs.m_opaque_sp.get();
-}
-
-lldb_private::Thread *
-SBThread::get ()
-{
-    return m_opaque_sp.get();
-}
-
-const lldb_private::Thread *
-SBThread::operator->() const
-{
-    return m_opaque_sp.get();
-}
-
-const lldb_private::Thread &
-SBThread::operator*() const
-{
-    return *m_opaque_sp;
-}
-
-lldb_private::Thread *
-SBThread::operator->()
-{
-    return m_opaque_sp.get();
-}
-
-lldb_private::Thread &
-SBThread::operator*()
-{
-    return *m_opaque_sp;
+    return m_opaque_wp.lock().get() != rhs.m_opaque_wp.lock().get();
 }
 
 bool
@@ -975,9 +976,10 @@ SBThread::GetDescription (SBStream &description) const
 {
     Stream &strm = description.ref();
 
-    if (m_opaque_sp)
+    ThreadSP thread_sp(m_opaque_wp.lock());
+    if (thread_sp)
     {
-        strm.Printf("SBThread: tid = 0x%4.4llx", m_opaque_sp->GetID());
+        strm.Printf("SBThread: tid = 0x%4.4llx", thread_sp->GetID());
     }
     else
         strm.PutCString ("No value");

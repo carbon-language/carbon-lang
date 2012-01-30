@@ -217,15 +217,17 @@ SBProcess::GetSelectedThread () const
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBThread sb_thread;
+    ThreadSP thread_sp;
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        sb_thread.SetThread (m_opaque_sp->GetThreadList().GetSelectedThread());
+        thread_sp = m_opaque_sp->GetThreadList().GetSelectedThread();
+        sb_thread.SetThread (thread_sp);
     }
 
     if (log)
     {
-        log->Printf ("SBProcess(%p)::GetSelectedThread () => SBThread(%p)", m_opaque_sp.get(), sb_thread.get());
+        log->Printf ("SBProcess(%p)::GetSelectedThread () => SBThread(%p)", m_opaque_sp.get(), thread_sp.get());
     }
 
     return sb_thread;
@@ -378,20 +380,22 @@ SBProcess::GetThreadAtIndex (size_t index)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    SBThread thread;
+    SBThread sb_thread;
+    ThreadSP thread_sp;
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        thread.SetThread (m_opaque_sp->GetThreadList().GetThreadAtIndex(index));
+        thread_sp = m_opaque_sp->GetThreadList().GetThreadAtIndex(index);
+        sb_thread.SetThread (thread_sp);
     }
 
     if (log)
     {
         log->Printf ("SBProcess(%p)::GetThreadAtIndex (index=%d) => SBThread(%p)",
-                     m_opaque_sp.get(), (uint32_t) index, thread.get());
+                     m_opaque_sp.get(), (uint32_t) index, thread_sp.get());
     }
 
-    return thread;
+    return sb_thread;
 }
 
 StateType
@@ -651,10 +655,12 @@ SBThread
 SBProcess::GetThreadByID (tid_t tid)
 {
     SBThread sb_thread;
+    ThreadSP thread_sp;
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        sb_thread.SetThread (m_opaque_sp->GetThreadList().FindThreadByID ((tid_t) tid));
+        thread_sp = m_opaque_sp->GetThreadList().FindThreadByID (tid);
+        sb_thread.SetThread (thread_sp);
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -663,7 +669,7 @@ SBProcess::GetThreadByID (tid_t tid)
         log->Printf ("SBProcess(%p)::GetThreadByID (tid=0x%4.4llx) => SBThread (%p)", 
                      m_opaque_sp.get(), 
                      tid,
-                     sb_thread.get());
+                     thread_sp.get());
     }
 
     return sb_thread;
