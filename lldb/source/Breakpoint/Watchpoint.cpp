@@ -122,7 +122,7 @@ Watchpoint::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) c
               m_watch_write ? "w" : "");
 
     if (description_level >= lldb::eDescriptionLevelFull) {
-        if (m_decl_str.c_str())
+        if (!m_decl_str.empty())
             s->Printf("\n    declare @ '%s'", m_decl_str.c_str());
         if (GetConditionText())
             s->Printf("\n    condition = '%s'", GetConditionText());

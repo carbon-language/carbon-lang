@@ -17,6 +17,7 @@
 // Project includes
 #include "lldb/Interpreter/CommandObjectMultiword.h"
 #include "lldb/Interpreter/Options.h"
+#include "lldb/Interpreter/OptionGroupWatchpoint.h"
 
 namespace lldb_private {
 
@@ -240,6 +241,31 @@ public:
 
 private:
     CommandOptions m_options;
+};
+
+//-------------------------------------------------------------------------
+// CommandObjectWatchpointSet
+//-------------------------------------------------------------------------
+
+class CommandObjectWatchpointSet : public CommandObject
+{
+public:
+
+    CommandObjectWatchpointSet (CommandInterpreter &interpreter);
+
+    virtual
+    ~CommandObjectWatchpointSet ();
+
+    virtual bool
+    Execute (Args& command,
+             CommandReturnObject &result);
+
+    virtual Options *
+    GetOptions ();
+
+private:
+    OptionGroupOptions m_option_group;
+    OptionGroupWatchpoint m_option_watchpoint;
 };
 
 } // namespace lldb_private
