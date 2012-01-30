@@ -99,7 +99,7 @@ module __compiler_builtins [system] {
 
     explicit module avx2 {
       requires avx2
-      export acx
+      export avx
       header "avx2intrin.h"
     }
 
