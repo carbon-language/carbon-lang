@@ -86,7 +86,6 @@ if(PYTHONINTERP_FOUND)
                 ${LIT_ARGS}
                 ${CMAKE_CURRENT_BINARY_DIR}
                 COMMENT "Running Clang regression tests")
-  set_target_properties(clang-test PROPERTIES FOLDER "Clang tests")
 
   if( NOT CLANG_BUILT_STANDALONE )
     add_custom_target(check-all
@@ -107,7 +106,6 @@ if(PYTHONINTERP_FOUND)
                      llvm-dis llc opt
                      FileCheck count not
                      )
-    set_target_properties(check-all PROPERTIES FOLDER "Clang tests")
   endif()
 
   add_dependencies(clang-test clang-test.deps)
