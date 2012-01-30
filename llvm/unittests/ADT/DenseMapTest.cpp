@@ -176,4 +176,45 @@ TEST_F(DenseMapTest, ConstIteratorTest) {
   EXPECT_TRUE(cit == cit2);
 }
 
+// Key traits that allows lookup with either an unsigned or char* key;
+// In the latter case, "a" == 0, "b" == 1 and so on.
+struct TestDenseMapInfo {
+  static inline unsigned getEmptyKey() { return ~0; }
+  static inline unsigned getTombstoneKey() { return ~0U - 1; }
+  static unsigned getHashValue(const unsigned& Val) { return Val * 37U; }
+  static unsigned getHashValue(const char* Val) {
+    return (unsigned)(Val[0] - 'a') * 37U;
+  }
+  static bool isEqual(const unsigned& LHS, const unsigned& RHS) {
+    return LHS == RHS;
+  }
+  static bool isEqual(const char* LHS, const unsigned& RHS) {
+    return (unsigned)(LHS[0] - 'a') == RHS;
+  }
+};
+
+// find_as() tests
+TEST_F(DenseMapTest, FindAsTest) {
+  DenseMap<unsigned, unsigned, TestDenseMapInfo> map;
+  map[0] = 1;
+  map[1] = 2;
+  map[2] = 3;
+
+  // Size tests
+  EXPECT_EQ(3u, map.size());
+
+  // Normal lookup tests
+  EXPECT_EQ(1, map.count(1));
+  EXPECT_EQ(1u, map.find(0)->second);
+  EXPECT_EQ(2u, map.find(1)->second);
+  EXPECT_EQ(3u, map.find(2)->second);
+  EXPECT_TRUE(map.find(3) == map.end());
+
+  // find_as() tests
+  EXPECT_EQ(1u, map.find_as("a")->second);
+  EXPECT_EQ(2u, map.find_as("b")->second);
+  EXPECT_EQ(3u, map.find_as("c")->second);
+  EXPECT_TRUE(map.find_as("d") == map.end());
+}
+
 }

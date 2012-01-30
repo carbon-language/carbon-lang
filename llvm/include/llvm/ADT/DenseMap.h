@@ -147,6 +147,26 @@ public:
     return end();
   }
 
+  /// Alternate version of find() which allows a different, and possibly
+  /// less expensive, key type.
+  /// The DenseMapInfo is responsible for supplying methods
+  /// getHashValue(LookupKeyT) and isEqual(LookupKeyT, KeyT) for each key
+  /// type used.
+  template<class LookupKeyT>
+  iterator find_as(const LookupKeyT &Val) {
+    BucketT *TheBucket;
+    if (LookupBucketFor(Val, TheBucket))
+      return iterator(TheBucket, Buckets+NumBuckets, true);
+    return end();
+  }
+  template<class LookupKeyT>
+  const_iterator find_as(const LookupKeyT &Val) const {
+    BucketT *TheBucket;
+    if (LookupBucketFor(Val, TheBucket))
+      return const_iterator(TheBucket, Buckets+NumBuckets, true);
+    return end();
+  }
+
   /// lookup - Return the entry for the specified key, or a default
   /// constructed value if no such entry exists.
   ValueT lookup(const KeyT &Val) const {
@@ -309,6 +329,10 @@ private:
   static unsigned getHashValue(const KeyT &Val) {
     return KeyInfoT::getHashValue(Val);
   }
+  template<typename LookupKeyT>
+  static unsigned getHashValue(const LookupKeyT &Val) {
+    return KeyInfoT::getHashValue(Val);
+  }
   static const KeyT getEmptyKey() {
     return KeyInfoT::getEmptyKey();
   }
@@ -320,7 +344,8 @@ private:
   /// FoundBucket.  If the bucket contains the key and a value, this returns
   /// true, otherwise it returns a bucket with an empty marker or tombstone and
   /// returns false.
-  bool LookupBucketFor(const KeyT &Val, BucketT *&FoundBucket) const {
+  template<typename LookupKeyT>
+  bool LookupBucketFor(const LookupKeyT &Val, BucketT *&FoundBucket) const {
     unsigned BucketNo = getHashValue(Val);
     unsigned ProbeAmt = 1;
     BucketT *BucketsPtr = Buckets;
@@ -341,7 +366,7 @@ private:
     while (1) {
       BucketT *ThisBucket = BucketsPtr + (BucketNo & (NumBuckets-1));
       // Found Val's bucket?  If so, return it.
-      if (KeyInfoT::isEqual(ThisBucket->first, Val)) {
+      if (KeyInfoT::isEqual(Val, ThisBucket->first)) {
         FoundBucket = ThisBucket;
         return true;
       }
