@@ -8,10 +8,7 @@
 ; RAGreedy defeats the test by splitting live ranges.
 
 ; Constant pool all-ones vector:
-; CHECK: .long 4294967295
-; CHECK-NEXT: .long 4294967295
-; CHECK-NEXT: .long 4294967295
-; CHECK-NEXT: .long 4294967295
+; CHECK: .space 16,255
 
 ; No pcmpeqd instructions, everybody uses the constant pool.
 ; CHECK: program_1:

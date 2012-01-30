@@ -1558,7 +1558,7 @@ static int isRepeatedByteSequence(const ConstantDataSequential *V) {
   char C = Data[0];
   for (unsigned i = 1, e = Data.size(); i != e; ++i)
     if (Data[i] != C) return -1;
-  return C;
+  return static_cast<uint8_t>(C); // Ensure 255 is not returned as -1.
 }
 
 
