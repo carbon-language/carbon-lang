@@ -5816,6 +5816,20 @@ CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
     messageRef->setAlignment(16);
     messageRef->setSection("__DATA, __objc_msgrefs, coalesced");
   }
+  
+  bool requiresnullCheck = false;
+  if (CGM.getLangOptions().ObjCAutoRefCount && method)
+    for (ObjCMethodDecl::param_const_iterator i = method->param_begin(),
+         e = method->param_end(); i != e; ++i) {
+      const ParmVarDecl *ParamDecl = (*i);
+      if (ParamDecl->hasAttr<NSConsumedAttr>()) {
+        if (!nullReturn.NullBB)
+          nullReturn.init(CGF, arg0);
+        requiresnullCheck = true;
+        break;
+      }
+    }
+  
   llvm::Value *mref =
     CGF.Builder.CreateBitCast(messageRef, ObjCTypes.MessageRefPtrTy);
 
@@ -5833,8 +5847,8 @@ CGObjCNonFragileABIMac::EmitVTableMessageSend(CodeGenFunction &CGF,
                                      llvm::PointerType::getUnqual(fnType));
 
   RValue result = CGF.EmitCall(fnInfo, callee, returnSlot, args);
-  CallArgList CallArgs;
-  return nullReturn.complete(CGF, result, resultType, CallArgs, 0);
+  return nullReturn.complete(CGF, result, resultType, formalArgs, 
+                             requiresnullCheck ? method : 0);
 }
 
 /// Generate code for a message send expression in the nonfragile abi.
