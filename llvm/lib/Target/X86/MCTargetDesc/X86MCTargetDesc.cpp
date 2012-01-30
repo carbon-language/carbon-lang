@@ -331,7 +331,8 @@ MCSubtargetInfo *X86_MC::createX86MCSubtargetInfo(StringRef TT, StringRef CPU,
 
   std::string CPUName = CPU;
   if (CPUName.empty()) {
-#if defined (__x86_64__) || defined(__i386__)
+#if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)\
+    || defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
     CPUName = sys::getHostCPUName();
 #else
     CPUName = "generic";

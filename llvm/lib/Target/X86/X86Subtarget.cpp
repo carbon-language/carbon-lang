@@ -342,7 +342,8 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   if (!FS.empty() || !CPU.empty()) {
     std::string CPUName = CPU;
     if (CPUName.empty()) {
-#if defined (__x86_64__) || defined(__i386__)
+#if defined(i386) || defined(__i386__) || defined(__x86__) || defined(_M_IX86)\
+    || defined(__x86_64__) || defined(_M_AMD64) || defined (_M_X64)
       CPUName = sys::getHostCPUName();
 #else
       CPUName = "generic";
