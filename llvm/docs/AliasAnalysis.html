@@ -418,9 +418,8 @@ implementing, you just override the interfaces you can improve.</p>
 
 <div>
 
-<p>With only two special exceptions (the <tt><a
-href="#basic-aa">basicaa</a></tt> and <a href="#no-aa"><tt>no-aa</tt></a>
-passes) every alias analysis pass chains to another alias analysis
+<p>With only one special exception (the <a href="#no-aa"><tt>no-aa</tt></a>
+pass) every alias analysis pass chains to another alias analysis
 implementation (for example, the user can specify "<tt>-basicaa -ds-aa
 -licm</tt>" to get the maximum benefit from both alias
 analyses).  The alias analysis class automatically takes care of most of this
