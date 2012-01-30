@@ -10,14 +10,7 @@
 // Add the Polly passes to the optimization passes executed at -O3.
 //
 //===----------------------------------------------------------------------===//
-#include "llvm/Analysis/Passes.h"
-#include "llvm/InitializePasses.h"
-#include "llvm/PassManager.h"
-#include "llvm/PassRegistry.h"
-#include "llvm/Transforms/Scalar.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include "llvm/Support/CommandLine.h"
-
+#include "polly/RegisterPasses.h"
 #include "polly/LinkAllPasses.h"
 
 #include "polly/Cloog.h"
@@ -25,6 +18,14 @@
 #include "polly/ScopDetection.h"
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
+
+#include "llvm/Analysis/Passes.h"
+#include "llvm/InitializePasses.h"
+#include "llvm/PassManager.h"
+#include "llvm/PassRegistry.h"
+#include "llvm/Transforms/Scalar.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/Support/CommandLine.h"
 
 #include <string>
 
@@ -109,8 +110,7 @@ public:
 
 static StaticInitializer InitializeEverything;
 
-static void registerPollyPreoptPasses(const llvm::PassManagerBuilder &Builder,
-                                      llvm::PassManagerBase &PM) {
+void registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
   // A standard set of optimization passes partially taken/copied from the
   // set of default optimization passes. It is used to bring the code into
   // a canonical form that can than be analyzed by Polly. This set of passes is
@@ -142,38 +142,12 @@ static void registerPollyPreoptPasses(const llvm::PassManagerBuilder &Builder,
   PM.add(polly::createRegionSimplifyPass());
 }
 
-static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
-                                llvm::PassManagerBase &PM) {
-
-  if (Builder.OptLevel == 0)
-    return;
-
-  if (PollyOnlyPrinter || PollyPrinter || PollyOnlyViewer || PollyViewer ||
-      ExportJScop || ImportJScop)
-    PollyEnabled = true;
-
-  if (!PollyEnabled) {
-    if (DisableCodegen)
-      errs() << "The option -polly-no-codegen has no effect. "
-                "Polly was not enabled\n";
-
-    if (DisableScheduler)
-      errs() << "The option -polly-no-optimizer has no effect. "
-                "Polly was not enabled\n";
-
-    return;
-  }
-
-  // Polly is only enabled at -O3
-  if (Builder.OptLevel != 3) {
-    errs() << "Polly should only be run with -O3. Disabling Polly.\n";
-    return;
-  }
-
+void registerPollyPasses(llvm::PassManagerBase &PM, bool DisableScheduler,
+                         bool DisableCodegen) {
   bool RunScheduler = !DisableScheduler;
   bool RunCodegen = !DisableCodegen;
 
-  registerPollyPreoptPasses(Builder, PM);
+  registerPollyPreoptPasses(PM);
 
   if (PollyViewer)
     PM.add(polly::createDOTViewerPass());
@@ -213,6 +187,44 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
     PM.add(polly::createCodeGenerationPass());
 }
 
+static
+void registerPollyEarlyAsPossiblePasses(const llvm::PassManagerBuilder &Builder,
+                                               llvm::PassManagerBase &PM) {
+
+  if (Builder.OptLevel == 0)
+    return;
+
+  if (PollyOnlyPrinter || PollyPrinter || PollyOnlyViewer || PollyViewer ||
+      ExportJScop || ImportJScop)
+    PollyEnabled = true;
+
+  if (!PollyEnabled) {
+    if (DisableCodegen)
+      errs() << "The option -polly-no-codegen has no effect. "
+                "Polly was not enabled\n";
+
+    if (DisableScheduler)
+      errs() << "The option -polly-no-optimizer has no effect. "
+                "Polly was not enabled\n";
+
+    return;
+  }
+
+  // Polly is only enabled at -O3
+  if (Builder.OptLevel != 3) {
+    errs() << "Polly should only be run with -O3. Disabling Polly.\n";
+    return;
+  }
+
+  registerPollyPasses(PM, DisableScheduler, DisableCodegen);
+}
+
+static void registerPollyOptLevel0Passes(const llvm::PassManagerBuilder &,
+                                         llvm::PassManagerBase &PM) {
+  registerPollyPreoptPasses(PM);
+}
+
+
 // Execute Polly together with a set of preparing passes.
 //
 // We run Polly that early to run before loop optimizer passes like LICM or
@@ -221,7 +233,7 @@ static void registerPollyPasses(const llvm::PassManagerBuilder &Builder,
 
 static llvm::RegisterStandardPasses
 PassRegister(llvm::PassManagerBuilder::EP_EarlyAsPossible,
-             registerPollyPasses);
+             registerPollyEarlyAsPossiblePasses);
 static llvm::RegisterStandardPasses
 PassRegisterPreopt(llvm::PassManagerBuilder::EP_EnabledOnOptLevel0,
-                   registerPollyPreoptPasses);
+                  registerPollyOptLevel0Passes);
