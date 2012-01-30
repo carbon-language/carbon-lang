@@ -59,7 +59,7 @@ SimplifyDeps("polly-opt-simplify-deps",
 static cl::opt<std::string>
 FusionStrategy("polly-opt-fusion",
                cl::desc("The fusion strategy to choose (min/max)"),
-               cl::Hidden, cl::init("max"));
+               cl::Hidden, cl::init("min"));
 
 static cl::opt<std::string>
 MaxizeBandDepth("polly-opt-maximize-bands",
