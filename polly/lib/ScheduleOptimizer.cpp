@@ -38,8 +38,6 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/CommandLine.h"
 
-static const int CONSTANT_BOUND = 20;
-
 using namespace llvm;
 using namespace polly;
 
