@@ -52,6 +52,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
+#include <bitset>
 using namespace llvm;
 using namespace dwarf;
 
@@ -5259,8 +5260,7 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
   }
 
   // If element VT is == 32 bits, turn it into a number of shuffles.
-  SmallVector<SDValue, 8> V;
-  V.resize(NumElems);
+  SmallVector<SDValue, 8> V(NumElems);
   if (NumElems == 4 && NumZero > 0) {
     for (unsigned i = 0; i < 4; ++i) {
       bool isZero = !(NonZeros & (1 << i));
@@ -5289,13 +5289,14 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
       }
     }
 
-    SmallVector<int, 8> MaskVec;
-    bool Reverse = (NonZeros & 0x3) == 2;
-    for (unsigned i = 0; i < 2; ++i)
-      MaskVec.push_back(Reverse ? 1-i : i);
-    Reverse = ((NonZeros & (0x3 << 2)) >> 2) == 2;
-    for (unsigned i = 0; i < 2; ++i)
-      MaskVec.push_back(Reverse ? 1-i+NumElems : i+NumElems);
+    bool Reverse1 = (NonZeros & 0x3) == 2;
+    bool Reverse2 = ((NonZeros & (0x3 << 2)) >> 2) == 2;
+    int MaskVec[] = {
+      Reverse1 ? 1 : 0,
+      Reverse1 ? 0 : 1,
+      Reverse2 ? 1-NumElems :   NumElems,
+      Reverse2 ?   NumElems : 1+NumElems
+    };
     return DAG.getVectorShuffle(VT, dl, V[0], V[1], &MaskVec[0]);
   }
 
@@ -5497,9 +5498,10 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
   // words from all 4 input quadwords.
   SDValue NewV;
   if (BestLoQuad >= 0 || BestHiQuad >= 0) {
-    SmallVector<int, 8> MaskV;
-    MaskV.push_back(BestLoQuad < 0 ? 0 : BestLoQuad);
-    MaskV.push_back(BestHiQuad < 0 ? 1 : BestHiQuad);
+    int MaskV[] = {
+      BestLoQuad < 0 ? 0 : BestLoQuad,
+      BestHiQuad < 0 ? 1 : BestHiQuad
+    };
     NewV = DAG.getVectorShuffle(MVT::v2i64, dl,
                   DAG.getNode(ISD::BITCAST, dl, MVT::v2i64, V1),
                   DAG.getNode(ISD::BITCAST, dl, MVT::v2i64, V2), &MaskV[0]);
@@ -5602,23 +5604,18 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
 
   // If BestLoQuad >= 0, generate a pshuflw to put the low elements in order,
   // and update MaskVals with new element order.
-  BitVector InOrder(8);
+  std::bitset<8> InOrder;
   if (BestLoQuad >= 0) {
-    SmallVector<int, 8> MaskV;
+    int MaskV[] = { -1, -1, -1, -1, 4, 5, 6, 7 };
     for (int i = 0; i != 4; ++i) {
       int idx = MaskVals[i];
       if (idx < 0) {
-        MaskV.push_back(-1);
         InOrder.set(i);
       } else if ((idx / 4) == BestLoQuad) {
-        MaskV.push_back(idx & 3);
+        MaskV[i] = idx & 3;
         InOrder.set(i);
-      } else {
-        MaskV.push_back(-1);
       }
     }
-    for (unsigned i = 4; i != 8; ++i)
-      MaskV.push_back(i);
     NewV = DAG.getVectorShuffle(MVT::v8i16, dl, NewV, DAG.getUNDEF(MVT::v8i16),
                                 &MaskV[0]);
 
@@ -5632,19 +5629,14 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
   // If BestHi >= 0, generate a pshufhw to put the high elements in order,
   // and update MaskVals with the new element order.
   if (BestHiQuad >= 0) {
-    SmallVector<int, 8> MaskV;
-    for (unsigned i = 0; i != 4; ++i)
-      MaskV.push_back(i);
+    int MaskV[] = { 0, 1, 2, 3, -1, -1, -1, -1 };
     for (unsigned i = 4; i != 8; ++i) {
       int idx = MaskVals[i];
       if (idx < 0) {
-        MaskV.push_back(-1);
         InOrder.set(i);
       } else if ((idx / 4) == BestHiQuad) {
-        MaskV.push_back((idx & 3) + 4);
+        MaskV[i] = (idx & 3) + 4;
         InOrder.set(i);
-      } else {
-        MaskV.push_back(-1);
       }
     }
     NewV = DAG.getVectorShuffle(MVT::v8i16, dl, NewV, DAG.getUNDEF(MVT::v8i16),
@@ -6025,9 +6017,8 @@ LowerVECTOR_SHUFFLE_128v4(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
 
   assert(VT.getSizeInBits() == 128 && "Unsupported vector size");
 
-  SmallVector<std::pair<int, int>, 8> Locs;
-  Locs.resize(4);
-  SmallVector<int, 8> Mask1(4U, -1);
+  std::pair<int, int> Locs[4];
+  int Mask1[] = { -1, -1, -1, -1 };
   SmallVector<int, 8> PermMask(SVOp->getMask().begin(), SVOp->getMask().end());
 
   unsigned NumHi = 0;
@@ -6058,17 +6049,14 @@ LowerVECTOR_SHUFFLE_128v4(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
     // vector operands, put the elements into the right order.
     V1 = DAG.getVectorShuffle(VT, dl, V1, V2, &Mask1[0]);
 
-    SmallVector<int, 8> Mask2(4U, -1);
+    int Mask2[] = { -1, -1, -1, -1 };
 
-    for (unsigned i = 0; i != 4; ++i) {
-      if (Locs[i].first == -1)
-        continue;
-      else {
+    for (unsigned i = 0; i != 4; ++i)
+      if (Locs[i].first != -1) {
         unsigned Idx = (i < 2) ? 0 : 4;
         Idx += Locs[i].first * 2 + Locs[i].second;
         Mask2[i] = Idx;
       }
-    }
 
     return DAG.getVectorShuffle(VT, dl, V1, V1, &Mask2[0]);
   } else if (NumLo == 3 || NumHi == 3) {
@@ -6121,18 +6109,16 @@ LowerVECTOR_SHUFFLE_128v4(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
   }
 
   // Break it into (shuffle shuffle_hi, shuffle_lo).
-  Locs.clear();
-  Locs.resize(4);
-  SmallVector<int,8> LoMask(4U, -1);
-  SmallVector<int,8> HiMask(4U, -1);
+  int LoMask[] = { -1, -1, -1, -1 };
+  int HiMask[] = { -1, -1, -1, -1 };
 
-  SmallVector<int,8> *MaskPtr = &LoMask;
+  int *MaskPtr = LoMask;
   unsigned MaskIdx = 0;
   unsigned LoIdx = 0;
   unsigned HiIdx = 2;
   for (unsigned i = 0; i != 4; ++i) {
     if (i == 2) {
-      MaskPtr = &HiMask;
+      MaskPtr = HiMask;
       MaskIdx = 1;
       LoIdx = 0;
       HiIdx = 2;
@@ -6142,26 +6128,21 @@ LowerVECTOR_SHUFFLE_128v4(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
       Locs[i] = std::make_pair(-1, -1);
     } else if (Idx < 4) {
       Locs[i] = std::make_pair(MaskIdx, LoIdx);
-      (*MaskPtr)[LoIdx] = Idx;
+      MaskPtr[LoIdx] = Idx;
       LoIdx++;
     } else {
       Locs[i] = std::make_pair(MaskIdx, HiIdx);
-      (*MaskPtr)[HiIdx] = Idx;
+      MaskPtr[HiIdx] = Idx;
       HiIdx++;
     }
   }
 
   SDValue LoShuffle = DAG.getVectorShuffle(VT, dl, V1, V2, &LoMask[0]);
   SDValue HiShuffle = DAG.getVectorShuffle(VT, dl, V1, V2, &HiMask[0]);
-  SmallVector<int, 8> MaskOps;
-  for (unsigned i = 0; i != 4; ++i) {
-    if (Locs[i].first == -1) {
-      MaskOps.push_back(-1);
-    } else {
-      unsigned Idx = Locs[i].first * 4 + Locs[i].second;
-      MaskOps.push_back(Idx);
-    }
-  }
+  int MaskOps[] = { -1, -1, -1, -1 };
+  for (unsigned i = 0; i != 4; ++i)
+    if (Locs[i].first != -1)
+      MaskOps[i] = Locs[i].first * 4 + Locs[i].second;
   return DAG.getVectorShuffle(VT, dl, LoShuffle, HiShuffle, &MaskOps[0]);
 }
 
