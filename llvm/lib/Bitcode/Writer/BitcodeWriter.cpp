@@ -900,6 +900,7 @@ static void WriteConstants(unsigned FirstVal, unsigned LastVal,
         AbbrevToUse = CString7Abbrev;
     } else if (const ConstantDataSequential *CDS = 
                   dyn_cast<ConstantDataSequential>(C)) {
+      Code = bitc::CST_CODE_DATA;
       Type *EltTy = CDS->getType()->getElementType();
       if (isa<IntegerType>(EltTy)) {
         for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i)
