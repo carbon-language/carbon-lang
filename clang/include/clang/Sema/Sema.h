@@ -6278,8 +6278,6 @@ private:
                            Expr **Args, unsigned NumArgs);
   bool CheckBlockCall(NamedDecl *NDecl, CallExpr *TheCall);
 
-  bool CheckablePrintfAttr(const FormatAttr *Format, Expr **Args, 
-                           unsigned NumArgs, bool IsCXXMemberCall);
   bool CheckObjCString(Expr *Arg);
 
   ExprResult CheckBuiltinFunctionCall(unsigned BuiltinID, CallExpr *TheCall);
@@ -6303,28 +6301,38 @@ private:
   bool SemaBuiltinConstantArg(CallExpr *TheCall, int ArgNum,
                               llvm::APSInt &Result);
 
+  enum FormatStringType {
+    FST_Scanf,
+    FST_Printf,
+    FST_NSString,
+    FST_Strftime,
+    FST_Strfmon,
+    FST_Kprintf,
+    FST_Unknown
+  };
+  static FormatStringType GetFormatStringType(const FormatAttr *Format);
   bool SemaCheckStringLiteral(const Expr *E, Expr **Args, unsigned NumArgs,
                               bool HasVAListArg, unsigned format_idx,
-                              unsigned firstDataArg, bool isPrintf,
+                              unsigned firstDataArg, FormatStringType Type,
                               bool inFunctionCall = true);
 
   void CheckFormatString(const StringLiteral *FExpr, const Expr *OrigFormatExpr,
                          Expr **Args, unsigned NumArgs, bool HasVAListArg,
                          unsigned format_idx, unsigned firstDataArg,
-                         bool isPrintf, bool inFunctionCall);
-
-  void CheckNonNullArguments(const NonNullAttr *NonNull,
-                             const Expr * const *ExprArgs,
-                             SourceLocation CallSiteLoc);
+                         FormatStringType Type, bool inFunctionCall);
 
   void CheckFormatArguments(const FormatAttr *Format, CallExpr *TheCall);
   void CheckFormatArguments(const FormatAttr *Format, Expr **Args,
                             unsigned NumArgs, bool IsCXXMember,
                             SourceLocation Loc, SourceRange Range);
-  void CheckPrintfScanfArguments(Expr **Args, unsigned NumArgs,
-                                 bool HasVAListArg, unsigned format_idx,
-                                 unsigned firstDataArg, bool isPrintf,
-                                 SourceLocation Loc, SourceRange range);
+  void CheckFormatArguments(Expr **Args, unsigned NumArgs,
+                            bool HasVAListArg, unsigned format_idx,
+                            unsigned firstDataArg, FormatStringType Type,
+                            SourceLocation Loc, SourceRange range);
+
+  void CheckNonNullArguments(const NonNullAttr *NonNull,
+                             const Expr * const *ExprArgs,
+                             SourceLocation CallSiteLoc);
 
   void CheckMemaccessArguments(const CallExpr *Call,
                                unsigned BId,

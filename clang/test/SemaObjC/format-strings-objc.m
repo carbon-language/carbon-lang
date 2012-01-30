@@ -97,7 +97,7 @@ NSString *test_literal_propagation(void) {
   printf(s2); // expected-warning {{more '%' conversions than data arguments}}
 
   const char * const s3 = (const char *)0;
-  printf(s3); // expected-warning {{format string is not a string literal}}
+  printf(s3); // no-warning (NULL is a valid format string)
 
   NSString * const ns1 = @"constant string %s"; // expected-note {{format string is defined here}}
   NSLog(ns1); // expected-warning {{more '%' conversions than data arguments}}

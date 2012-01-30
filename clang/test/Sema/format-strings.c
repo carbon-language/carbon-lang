@@ -480,3 +480,14 @@ void printf_longlong(long long x, unsigned long long y) {
   printf("%Lx", x); // no-warning
   printf("%Ls", "hello"); // expected-warning {{length modifier 'L' results in undefined behavior or no effect with 's' conversion specifier}}
 }
+
+void __attribute__((format(strfmon,1,2))) monformat(const char *fmt, ...);
+void __attribute__((format(strftime,1,0))) dateformat(const char *fmt);
+
+// Other formats
+void test_other_formats() {
+  char *str = "";
+  monformat("", 1); // expected-warning{{format string is empty}}
+  dateformat(""); // expected-warning{{format string is empty}}
+  dateformat(str); // expected-warning{{format string is not a string literal (potentially insecure)}}
+}
