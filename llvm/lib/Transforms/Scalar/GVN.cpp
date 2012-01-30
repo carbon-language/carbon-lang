@@ -977,7 +977,7 @@ static Value *GetStoreValueForLoad(Value *SrcVal, unsigned Offset,
   return CoerceAvailableValueToLoadType(SrcVal, LoadTy, InsertPt, TD);
 }
 
-/// GetStoreValueForLoad - This function is called when we have a
+/// GetLoadValueForLoad - This function is called when we have a
 /// memdep query of a load that ends up being a clobbering load.  This means
 /// that the load *may* provide bits used by the load but we can't be sure
 /// because the pointers don't mustalias.  Check this case to see if there is
