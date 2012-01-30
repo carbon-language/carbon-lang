@@ -610,17 +610,41 @@ void CXXNameMangler::mangleFloat(const llvm::APFloat &f) {
   //   representation (IEEE on Itanium), high-order bytes first,
   //   without leading zeroes. For example: "Lf bf800000 E" is -1.0f
   //   on Itanium.
-  // APInt::toString uses uppercase hexadecimal, and it's not really
-  // worth embellishing that interface for this use case, so we just
-  // do a second pass to lowercase things.
-  typedef llvm::SmallString<20> buffer_t;
-  buffer_t buffer;
-  f.bitcastToAPInt().toString(buffer, 16, false);
+  // The 'without leading zeroes' thing seems to be an editorial
+  // mistake; see the discussion on cxx-abi-dev beginning on
+  // 2012-01-16.
 
-  for (buffer_t::iterator i = buffer.begin(), e = buffer.end(); i != e; ++i)
-    if (isupper(*i)) *i = tolower(*i);
+  // Our requirements here are just barely wierd enough to justify
+  // using a custom algorithm instead of post-processing APInt::toString().
 
-  Out.write(buffer.data(), buffer.size());
+  llvm::APInt valueBits = f.bitcastToAPInt();
+  unsigned numCharacters = (valueBits.getBitWidth() + 3) / 4;
+  assert(numCharacters != 0);
+
+  // Allocate a buffer of the right number of characters.
+  llvm::SmallVector<char, 20> buffer;
+  buffer.set_size(numCharacters);
+
+  // Fill the buffer left-to-right.
+  for (unsigned stringIndex = 0; stringIndex != numCharacters; ++stringIndex) {
+    // The bit-index of the next hex digit.
+    unsigned digitBitIndex = 4 * (numCharacters - stringIndex - 1);
+
+    // Project out 4 bits starting at 'digitIndex'.
+    llvm::integerPart hexDigit
+      = valueBits.getRawData()[digitBitIndex / llvm::integerPartWidth];
+    hexDigit >>= (digitBitIndex % llvm::integerPartWidth);
+    hexDigit &= 0xF;
+
+    // Map that over to a lowercase hex digit.
+    static const char charForHex[16] = {
+      '0', '1', '2', '3', '4', '5', '6', '7',
+      '8', '9', 'a', 'b', 'c', 'd', 'e', 'f'
+    };
+    buffer[stringIndex] = charForHex[hexDigit];
+  }
+
+  Out.write(buffer.data(), numCharacters);
 }
 
 void CXXNameMangler::mangleNumber(const llvm::APSInt &Value) {
