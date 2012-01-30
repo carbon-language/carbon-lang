@@ -951,7 +951,8 @@ CommandObjectWatchpointSet::Execute
         return false;
     }
     // If thre's no argument, it is an error.
-    if (command.GetArgumentCount() <= 0) {
+    if (command.GetArgumentCount() <= 0)
+    {
         result.GetErrorStream().Printf("error: specify your target variable (no '-x') or expression (with '-x') to watch for\n");
         result.SetStatus(eReturnStatusFailed);
         return false;
