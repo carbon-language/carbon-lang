@@ -8,20 +8,20 @@
 //===----------------------------------------------------------------------===//
 
 #include <exception>
+#include <cxxabi.h>
+#include "cxa_exception.hpp"
+
+namespace __cxxabiv1
+{
 
 #pragma GCC visibility push(default)
 
 extern "C"
 {
 
-__attribute__((noreturn))
-void
-__cxa_call_unexpected (void*)
-{
-    // TODO:  Completely unfinished!
-    std::terminate();
-}
-
 }
 
 #pragma GCC visibility pop
+
+}  // namespace __cxxabiv1
+

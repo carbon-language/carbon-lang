@@ -37,24 +37,34 @@ static void default_terminate_handler()
         {
             _Unwind_Exception* unwind_exception =
                 reinterpret_cast<_Unwind_Exception*>(exception_header + 1) - 1;
-            void* thrown_object =
-                unwind_exception->exception_class == kOurDependentExceptionClass ?
-                    ((__cxa_dependent_exception*)exception_header)->primaryException :
-                    exception_header + 1;
-            const __shim_type_info* thrown_type =
-                static_cast<const __shim_type_info*>(exception_header->exceptionType);
-            const __shim_type_info* catch_type =
-                static_cast<const __shim_type_info*>(&typeid(exception));
-            // If the uncaught exception can be caught with std::exception&
-            if (catch_type->can_catch(thrown_type, thrown_object))
+            bool native_exception = (unwind_exception->exception_class   & get_language) == 
+                                                     (kOurExceptionClass & get_language);
+            if (native_exception)
             {
-                // Include the what() message from the exception
-                const exception* e = static_cast<const exception*>(thrown_object);
-                abort_message("terminating with %s exception: %s", cause, e->what());
+                void* thrown_object =
+                    unwind_exception->exception_class == kOurDependentExceptionClass ?
+                        ((__cxa_dependent_exception*)exception_header)->primaryException :
+                        exception_header + 1;
+                const __shim_type_info* thrown_type =
+                    static_cast<const __shim_type_info*>(exception_header->exceptionType);
+                const __shim_type_info* catch_type =
+                    static_cast<const __shim_type_info*>(&typeid(exception));
+                // If the uncaught exception can be caught with std::exception&
+                if (catch_type->can_catch(thrown_type, thrown_object))
+                {
+                    // Include the what() message from the exception
+                    const exception* e = static_cast<const exception*>(thrown_object);
+                    abort_message("terminating with %s exception of type %s: %s",
+                                  cause, thrown_type->name(), e->what());
+                }
+                else
+                    // Else just note that we're terminating with an exception
+                    abort_message("terminating with %s exception of type %s",
+                                   cause, thrown_type->name());
             }
             else
-                // Else just note that we're terminating with an exception
-                abort_message("terminating with %s exception", cause);
+                // Else we're terminating with a foreign exception
+                abort_message("terminating with %s foreign exception", cause);
         }
     }
     // Else just note that we're terminating

@@ -50,26 +50,26 @@ struct heap_node {
 static const heap_node *list_end = (heap_node *) ( &heap [ HEAP_SIZE ] );   // one past the end of the heap
 static heap_node *freelist = NULL;
 
-heap_node *node_from_offset ( const heap_offset offset ) noexcept
+heap_node *node_from_offset ( const heap_offset offset )
     { return (heap_node *) ( heap + ( offset * sizeof (heap_node))); }
 
-heap_offset offset_from_node ( const heap_node *ptr ) noexcept
+heap_offset offset_from_node ( const heap_node *ptr )
     { return (((char *) ptr ) - heap)  / sizeof (heap_node); }
  
-void init_heap () noexcept {
+void init_heap () {
     freelist = (heap_node *) heap;
     freelist->next_node = offset_from_node ( list_end );
     freelist->len = HEAP_SIZE / sizeof (heap_node);
     }
     
 //  How big a chunk we allocate
-size_t alloc_size (size_t len) noexcept
+size_t alloc_size (size_t len)
     { return (len + sizeof(heap_node) - 1) / sizeof(heap_node) + 1; }
 
-bool is_fallback_ptr ( void *ptr ) noexcept
+bool is_fallback_ptr ( void *ptr )
     { return ptr >= heap && ptr < ( heap + HEAP_SIZE ); }
 
-void *fallback_malloc(size_t len) noexcept {
+void *fallback_malloc(size_t len) {
     heap_node *p, *prev;
     const size_t nelems = alloc_size ( len );
     mutexor mtx ( &heap_mutex );
@@ -104,9 +104,9 @@ void *fallback_malloc(size_t len) noexcept {
 }
 
 //  Return the start of the next block
-heap_node *after ( struct heap_node *p ) noexcept { return p + p->len; }
+heap_node *after ( struct heap_node *p ) { return p + p->len; }
 
-void fallback_free (void *ptr) noexcept {
+void fallback_free (void *ptr) {
     struct heap_node *cp = ((struct heap_node *) ptr) - 1;      // retrieve the chunk
     struct heap_node *p, *prev;
 

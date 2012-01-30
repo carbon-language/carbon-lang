@@ -19,6 +19,7 @@ namespace __cxxabiv1 {
 
 static const uint64_t kOurExceptionClass          = 0x434C4E47432B2B00; // CLNGC++\0
 static const uint64_t kOurDependentExceptionClass = 0x434C4E47432B2B01; // CLNGC++\1
+static const uint64_t get_language =                0x00000000FFFFFF00; // mask for C++
                                                     
     struct __cxa_exception { 
 #if __LP64__
@@ -102,10 +103,10 @@ static const uint64_t kOurDependentExceptionClass = 0x434C4E47432B2B01; // CLNGC
 #endif
     };
 
-    extern "C" __cxa_eh_globals * __cxa_get_globals      () noexcept;
-    extern "C" __cxa_eh_globals * __cxa_get_globals_fast () noexcept;
+    extern "C" __cxa_eh_globals * __cxa_get_globals      ();
+    extern "C" __cxa_eh_globals * __cxa_get_globals_fast ();
 
-    extern "C" void * __cxa_allocate_dependent_exception () noexcept;
-    extern "C" void __cxa_free_dependent_exception (void * dependent_exception) noexcept;
+    extern "C" void * __cxa_allocate_dependent_exception ();
+    extern "C" void __cxa_free_dependent_exception (void * dependent_exception);
 
 }

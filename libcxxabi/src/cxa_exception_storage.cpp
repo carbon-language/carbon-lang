@@ -18,15 +18,15 @@
 namespace __cxxabiv1 {
 
 namespace {
-    __cxa_eh_globals * __globals () noexcept {
+    __cxa_eh_globals * __globals () {
         static thread_local __cxa_eh_globals eh_globals;
         return &eh_globals;
         }
     }
 
 extern "C" {
-    __cxa_eh_globals * __cxa_get_globals      () noexcept { return __globals (); }
-    __cxa_eh_globals * __cxa_get_globals_fast () noexcept { return __globals (); }
+    __cxa_eh_globals * __cxa_get_globals      () { return __globals (); }
+    __cxa_eh_globals * __cxa_get_globals_fast () { return __globals (); }
     }
 }
 
@@ -43,23 +43,22 @@ extern "C" {
 namespace __cxxabiv1 {
 namespace {
     pthread_key_t  key_;
+    pthread_once_t flag_ = PTHREAD_ONCE_INIT;
 
-    void destruct_ (void *p) noexcept {
+    void destruct_ (void *p) {
         std::free ( p );
         if ( 0 != ::pthread_setspecific ( key_, NULL ) ) 
             abort_message("cannot zero out thread value for __cxa_get_globals()");
         }
 
-    int construct_ () noexcept {
+    void construct_ () {
         if ( 0 != pthread_key_create ( &key_, destruct_ ) )
             abort_message("cannot create pthread key for __cxa_get_globals()");
-        return 0;
         }
 }   
 
 extern "C" {
-    __cxa_eh_globals * __cxa_get_globals () noexcept {
-
+    __cxa_eh_globals * __cxa_get_globals () {
     //  Try to get the globals for this thread
         __cxa_eh_globals* retVal = __cxa_get_globals_fast ();
     
@@ -79,9 +78,11 @@ extern "C" {
     // preceeded by a call to __cxa_get_globals().  This is an extension
     // to the Itanium ABI and is taken advantage of in several places in
     // libc++abi.
-    __cxa_eh_globals * __cxa_get_globals_fast () noexcept {
+    __cxa_eh_globals * __cxa_get_globals_fast () {
     //  First time through, create the key.
-        static int init = construct_();
+        if (0 != pthread_once(&flag_, construct_))
+            abort_message("pthread_once failure in __cxa_get_globals_fast()");
+//        static int init = construct_();
         return static_cast<__cxa_eh_globals*>(::pthread_getspecific(key_));
         }
     
