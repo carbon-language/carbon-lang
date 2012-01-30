@@ -836,11 +836,89 @@ Constant *ConstantVector::get(ArrayRef<Constant*> V) {
     return ConstantAggregateZero::get(T);
   if (isUndef)
     return UndefValue::get(T);
+   
+  // Check to see if all of the elements are ConstantFP or ConstantInt and if
+  // the element type is compatible with ConstantDataVector.  If so, use it.
+  if (ConstantDataSequential::isElementTypeCompatible(C->getType()) &&
+      (isa<ConstantFP>(C) || isa<ConstantInt>(C))) {
+    // We speculatively build the elements here even if it turns out that there
+    // is a constantexpr or something else weird in the array, since it is so
+    // uncommon for that to happen.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
+      if (CI->getType()->isIntegerTy(8)) {
+        SmallVector<uint8_t, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(V[i]))
+            Elts.push_back(CI->getZExtValue());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataVector::get(C->getContext(), Elts);
+      } else if (CI->getType()->isIntegerTy(16)) {
+        SmallVector<uint16_t, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(V[i]))
+            Elts.push_back(CI->getZExtValue());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataVector::get(C->getContext(), Elts);
+      } else if (CI->getType()->isIntegerTy(32)) {
+        SmallVector<uint32_t, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(V[i]))
+            Elts.push_back(CI->getZExtValue());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataVector::get(C->getContext(), Elts);
+      } else if (CI->getType()->isIntegerTy(64)) {
+        SmallVector<uint64_t, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(V[i]))
+            Elts.push_back(CI->getZExtValue());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataVector::get(C->getContext(), Elts);
+      }
+    }
     
+    if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
+      if (CFP->getType()->isFloatTy()) {
+        SmallVector<float, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantFP *CFP = dyn_cast<ConstantFP>(V[i]))
+            Elts.push_back(CFP->getValueAPF().convertToFloat());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataVector::get(C->getContext(), Elts);
+      } else if (CFP->getType()->isDoubleTy()) {
+        SmallVector<double, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantFP *CFP = dyn_cast<ConstantFP>(V[i]))
+            Elts.push_back(CFP->getValueAPF().convertToDouble());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataVector::get(C->getContext(), Elts);
+      }
+    }
+  }
+  
+  // Otherwise, the element type isn't compatible with ConstantDataVector, or
+  // the operand list constants a ConstantExpr or something else strange.
   return pImpl->VectorConstants.getOrCreate(T, V);
 }
 
 Constant *ConstantVector::getSplat(unsigned NumElts, Constant *V) {
+  // If this splat is compatible with ConstantDataVector, use it instead of
+  // ConstantVector.
+  if ((isa<ConstantFP>(V) || isa<ConstantInt>(V)) &&
+      ConstantDataSequential::isElementTypeCompatible(V->getType()))
+    return ConstantDataVector::getSplat(NumElts, V);
+  
   SmallVector<Constant*, 32> Elts(NumElts, V);
   return get(Elts);
 }
@@ -2196,14 +2274,18 @@ Constant *ConstantDataVector::getSplat(unsigned NumElts, Constant *V) {
     return get(V->getContext(), Elts);
   }
 
-  ConstantFP *CFP = cast<ConstantFP>(V);
-  if (CFP->getType()->isFloatTy()) {
-    SmallVector<float, 16> Elts(NumElts, CFP->getValueAPF().convertToFloat());
-    return get(V->getContext(), Elts);
+  if (ConstantFP *CFP = dyn_cast<ConstantFP>(V)) {
+    if (CFP->getType()->isFloatTy()) {
+      SmallVector<float, 16> Elts(NumElts, CFP->getValueAPF().convertToFloat());
+      return get(V->getContext(), Elts);
+    }
+    if (CFP->getType()->isDoubleTy()) {
+      SmallVector<double, 16> Elts(NumElts,
+                                   CFP->getValueAPF().convertToDouble());
+      return get(V->getContext(), Elts);
+    }
   }
-  assert(CFP->getType()->isDoubleTy() && "Unsupported ConstantData type");
-  SmallVector<double, 16> Elts(NumElts, CFP->getValueAPF().convertToDouble());
-  return get(V->getContext(), Elts);
+  return ConstantVector::getSplat(NumElts, V);
 }
 
 
