@@ -1626,6 +1626,9 @@ static void EmitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
   unsigned ElementByteSize = CDS->getElementByteSize();
   if (isa<IntegerType>(CDS->getElementType())) {
     for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
+      if (AP.isVerbose())
+        AP.OutStreamer.GetCommentOS() << format("0x%" PRIx64 "\n",
+                                                CDS->getElementAsInteger(i));
       AP.OutStreamer.EmitIntValue(CDS->getElementAsInteger(i),
                                   ElementByteSize, AddrSpace);
     }
