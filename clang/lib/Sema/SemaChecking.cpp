@@ -1586,6 +1586,13 @@ void Sema::CheckFormatArguments(Expr **Args, unsigned NumArgs,
                              format_idx, firstDataArg, Type))
     return;  // Literal format string found, check done!
 
+  // Do not emit diag when the string param is a macro expansion and the
+  // format is either NSString or CFString. This is a hack to prevent
+  // diag when using the NSLocalizedString and CFCopyLocalizedString macros
+  // which are usually used in place of NS and CF string literals.
+  if (Type == FST_NSString && Args[format_idx]->getLocStart().isMacroID())
+    return;
+
   // If there are no arguments specified, warn with -Wformat-security, otherwise
   // warn only with -Wformat-nonliteral.
   if (NumArgs == format_idx+1)

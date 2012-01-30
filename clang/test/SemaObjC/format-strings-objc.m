@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -Wformat-nonliteral -fsyntax-only -verify %s
 
 //===----------------------------------------------------------------------===//
 // The following code is reduced using delta-debugging from
@@ -106,4 +106,12 @@ NSString *test_literal_propagation(void) {
   NSLog(ns2); // expected-warning {{more '%' conversions than data arguments}}
   NSString * ns3 = ns1;
   NSLog(ns3); // expected-warning {{format string is not a string literal}}}
+}
+
+// Do not emit warnings when using NSLocalizedString
+extern NSString *GetLocalizedString(NSString *str);
+#define NSLocalizedString(key) GetLocalizedString(key)
+
+void check_NSLocalizedString() {
+  [Foo fooWithFormat:NSLocalizedString(@"format"), @"arg"]; // no-warning
 }
