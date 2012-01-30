@@ -24,6 +24,7 @@
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/StringSwitch.h"
@@ -2526,7 +2527,7 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
 
     // Figure out which template parameters are deduced (or have default
     // arguments).
-    SmallVector<bool, 16> Deduced;
+    llvm::SmallBitVector Deduced;
     Sema::MarkDeducedTemplateParameters(Ctx, FunTmpl, Deduced);
     unsigned LastDeducibleArgument;
     for (LastDeducibleArgument = Deduced.size(); LastDeducibleArgument > 0;

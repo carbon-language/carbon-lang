@@ -45,6 +45,7 @@ namespace llvm {
   class APSInt;
   template <typename ValueT> struct DenseMapInfo;
   template <typename ValueT, typename ValueInfoT> class DenseSet;
+  class SmallBitVector;
 }
 
 namespace clang {
@@ -4702,14 +4703,14 @@ public:
   void MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
                                   bool OnlyDeduced,
                                   unsigned Depth,
-                                  SmallVectorImpl<bool> &Used);
+                                  llvm::SmallBitVector &Used);
   void MarkDeducedTemplateParameters(FunctionTemplateDecl *FunctionTemplate,
-                                     SmallVectorImpl<bool> &Deduced) {
+                                     llvm::SmallBitVector &Deduced) {
     return MarkDeducedTemplateParameters(Context, FunctionTemplate, Deduced);
   }
   static void MarkDeducedTemplateParameters(ASTContext &Ctx,
                                          FunctionTemplateDecl *FunctionTemplate,
-                                         SmallVectorImpl<bool> &Deduced);
+                                         llvm::SmallBitVector &Deduced);
 
   //===--------------------------------------------------------------------===//
   // C++ Template Instantiation

@@ -20,7 +20,7 @@
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
-#include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "TreeTransform.h"
 #include <algorithm>
 
@@ -736,7 +736,7 @@ DeduceTemplateArguments(Sema &S,
     SmallVector<unsigned, 2> PackIndices;
     QualType Pattern = Expansion->getPattern();
     {
-      llvm::BitVector SawIndices(TemplateParams->size());
+      llvm::SmallBitVector SawIndices(TemplateParams->size());
       SmallVector<UnexpandedParameterPack, 2> Unexpanded;
       S.collectUnexpandedParameterPacks(Pattern, Unexpanded);
       for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
@@ -1745,7 +1745,7 @@ DeduceTemplateArguments(Sema &S,
     // parameter packs expanded by the pack expansion.
     SmallVector<unsigned, 2> PackIndices;
     {
-      llvm::BitVector SawIndices(TemplateParams->size());
+      llvm::SmallBitVector SawIndices(TemplateParams->size());
       SmallVector<UnexpandedParameterPack, 2> Unexpanded;
       S.collectUnexpandedParameterPacks(Pattern, Unexpanded);
       for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
@@ -3021,7 +3021,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     QualType ParamPattern = ParamExpansion->getPattern();
     SmallVector<unsigned, 2> PackIndices;
     {
-      llvm::BitVector SawIndices(TemplateParams->size());
+      llvm::SmallBitVector SawIndices(TemplateParams->size());
       SmallVector<UnexpandedParameterPack, 2> Unexpanded;
       collectUnexpandedParameterPacks(ParamPattern, Unexpanded);
       for (unsigned I = 0, N = Unexpanded.size(); I != N; ++I) {
@@ -3474,7 +3474,7 @@ static void
 MarkUsedTemplateParameters(ASTContext &Ctx, QualType T,
                            bool OnlyDeduced,
                            unsigned Level,
-                           SmallVectorImpl<bool> &Deduced);
+                           llvm::SmallBitVector &Deduced);
 
 /// \brief If this is a non-static member function,
 static void MaybeAddImplicitObjectParameterType(ASTContext &Context,
@@ -3622,8 +3622,7 @@ static bool isAtLeastAsSpecializedAs(Sema &S,
   }
 
   // Figure out which template parameters were used.
-  SmallVector<bool, 4> UsedParameters;
-  UsedParameters.resize(TemplateParams->size());
+  llvm::SmallBitVector UsedParameters(TemplateParams->size());
   switch (TPOC) {
   case TPOC_Call: {
     unsigned NumParams = std::min(NumCallArguments,
@@ -4006,7 +4005,7 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
                            const TemplateArgument &TemplateArg,
                            bool OnlyDeduced,
                            unsigned Depth,
-                           SmallVectorImpl<bool> &Used);
+                           llvm::SmallBitVector &Used);
 
 /// \brief Mark the template parameters that are used by the given
 /// expression.
@@ -4015,7 +4014,7 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
                            const Expr *E,
                            bool OnlyDeduced,
                            unsigned Depth,
-                           SmallVectorImpl<bool> &Used) {
+                           llvm::SmallBitVector &Used) {
   // We can deduce from a pack expansion.
   if (const PackExpansionExpr *Expansion = dyn_cast<PackExpansionExpr>(E))
     E = Expansion->getPattern();
@@ -4046,7 +4045,7 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
                            NestedNameSpecifier *NNS,
                            bool OnlyDeduced,
                            unsigned Depth,
-                           SmallVectorImpl<bool> &Used) {
+                           llvm::SmallBitVector &Used) {
   if (!NNS)
     return;
 
@@ -4063,7 +4062,7 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
                            TemplateName Name,
                            bool OnlyDeduced,
                            unsigned Depth,
-                           SmallVectorImpl<bool> &Used) {
+                           llvm::SmallBitVector &Used) {
   if (TemplateDecl *Template = Name.getAsTemplateDecl()) {
     if (TemplateTemplateParmDecl *TTP
           = dyn_cast<TemplateTemplateParmDecl>(Template)) {
@@ -4087,7 +4086,7 @@ static void
 MarkUsedTemplateParameters(ASTContext &Ctx, QualType T,
                            bool OnlyDeduced,
                            unsigned Depth,
-                           SmallVectorImpl<bool> &Used) {
+                           llvm::SmallBitVector &Used) {
   if (T.isNull())
     return;
 
@@ -4320,7 +4319,7 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
                            const TemplateArgument &TemplateArg,
                            bool OnlyDeduced,
                            unsigned Depth,
-                           SmallVectorImpl<bool> &Used) {
+                           llvm::SmallBitVector &Used) {
   switch (TemplateArg.getKind()) {
   case TemplateArgument::Null:
   case TemplateArgument::Integral:
@@ -4365,7 +4364,7 @@ MarkUsedTemplateParameters(ASTContext &Ctx,
 void
 Sema::MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
                                  bool OnlyDeduced, unsigned Depth,
-                                 SmallVectorImpl<bool> &Used) {
+                                 llvm::SmallBitVector &Used) {
   // C++0x [temp.deduct.type]p9:
   //   If the template argument list of P contains a pack expansion that is not
   //   the last template argument, the entire template argument list is a
@@ -4384,7 +4383,7 @@ Sema::MarkUsedTemplateParameters(const TemplateArgumentList &TemplateArgs,
 void
 Sema::MarkDeducedTemplateParameters(ASTContext &Ctx,
                                     FunctionTemplateDecl *FunctionTemplate,
-                                    SmallVectorImpl<bool> &Deduced) {
+                                    llvm::SmallBitVector &Deduced) {
   TemplateParameterList *TemplateParams
     = FunctionTemplate->getTemplateParameters();
   Deduced.clear();
@@ -4404,14 +4403,9 @@ bool hasDeducibleTemplateParameters(Sema &S,
 
   TemplateParameterList *TemplateParams
     = FunctionTemplate->getTemplateParameters();
-  SmallVector<bool, 4> Deduced;
-  Deduced.resize(TemplateParams->size());
+  llvm::SmallBitVector Deduced(TemplateParams->size());
   ::MarkUsedTemplateParameters(S.Context, T, true, TemplateParams->getDepth(), 
                                Deduced);
 
-  for (unsigned I = 0, N = Deduced.size(); I != N; ++I)
-    if (Deduced[I])
-      return true;
-
-  return false;
+  return Deduced.any();
 }

@@ -26,6 +26,7 @@
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/PartialDiagnostic.h"
+#include "llvm/ADT/SmallBitVector.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 using namespace sema;
@@ -5090,17 +5091,13 @@ Sema::ActOnClassTemplateSpecialization(Scope *S, unsigned TagSpec,
     // partial specialization are deducible from the template
     // arguments. If not, this class template partial specialization
     // will never be used.
-    SmallVector<bool, 8> DeducibleParams;
-    DeducibleParams.resize(TemplateParams->size());
+    llvm::SmallBitVector DeducibleParams(TemplateParams->size());
     MarkUsedTemplateParameters(Partial->getTemplateArgs(), true,
                                TemplateParams->getDepth(),
                                DeducibleParams);
-    unsigned NumNonDeducible = 0;
-    for (unsigned I = 0, N = DeducibleParams.size(); I != N; ++I)
-      if (!DeducibleParams[I])
-        ++NumNonDeducible;
 
-    if (NumNonDeducible) {
+    if (!DeducibleParams.all()) {
+      unsigned NumNonDeducible = DeducibleParams.size()-DeducibleParams.count();
       Diag(TemplateNameLoc, diag::warn_partial_specs_not_deducible)
         << (NumNonDeducible > 1)
         << SourceRange(TemplateNameLoc, RAngleLoc);
