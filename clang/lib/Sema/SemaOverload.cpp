@@ -4646,6 +4646,7 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
 
   // Check for a narrowing implicit conversion.
   APValue PreNarrowingValue;
+  bool Diagnosed = false;
   switch (SCS->getNarrowingKind(Context, Result.get(), PreNarrowingValue)) {
   case NK_Variable_Narrowing:
     // Implicit conversion to a narrower type, and the value is not a constant
@@ -4657,11 +4658,13 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
     Diag(From->getSourceRange().getBegin(), diag::err_cce_narrowing)
       << CCE << /*Constant*/1
       << PreNarrowingValue.getAsString(Context, QualType()) << T;
+    Diagnosed = true;
     break;
 
   case NK_Type_Narrowing:
     Diag(From->getSourceRange().getBegin(), diag::err_cce_narrowing)
       << CCE << /*Constant*/0 << From->getType() << T;
+    Diagnosed = true;
     break;
   }
 
@@ -4674,11 +4677,18 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
     // The expression can't be folded, so we can't keep it at this position in
     // the AST.
     Result = ExprError();
-  } else if (Notes.empty()) {
-    // It's a constant expression.
+  } else {
     Value = Eval.Val.getInt();
-    return Result;
+
+    if (Notes.empty()) {
+      // It's a constant expression.
+      return Result;
+    }
   }
+
+  // Only issue one narrowing diagnostic.
+  if (Diagnosed)
+    return Result;
 
   // It's not a constant expression. Produce an appropriate diagnostic.
   if (Notes.size() == 1 &&
@@ -4690,7 +4700,7 @@ ExprResult Sema::CheckConvertedConstantExpression(Expr *From, QualType T,
     for (unsigned I = 0; I < Notes.size(); ++I)
       Diag(Notes[I].first, Notes[I].second);
   }
-  return ExprError();
+  return Result;
 }
 
 /// dropPointerConversions - If the given standard conversion sequence

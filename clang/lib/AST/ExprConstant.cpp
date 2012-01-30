@@ -1086,13 +1086,21 @@ static bool HandleFloatToFloatCast(EvalInfo &Info, const Expr *E,
   return true;
 }
 
-static APSInt HandleIntToIntCast(QualType DestType, QualType SrcType,
-                                 APSInt &Value, const ASTContext &Ctx) {
-  unsigned DestWidth = Ctx.getIntWidth(DestType);
+static APSInt HandleIntToIntCast(EvalInfo &Info, const Expr *E,
+                                 QualType DestType, QualType SrcType,
+                                 APSInt &Value) {
+  unsigned DestWidth = Info.Ctx.getIntWidth(DestType);
   APSInt Result = Value;
   // Figure out if this is a truncate, extend or noop cast.
   // If the input is signed, do a sign extend, noop, or truncate.
   Result = Result.extOrTrunc(DestWidth);
+
+  // Check whether we overflowed. If so, fold the cast anyway.
+  if (DestType->isSignedIntegerOrEnumerationType() &&
+      ((Result.isNegative() && Value.isUnsigned()) ||
+       Result.extOrTrunc(Value.getBitWidth()) != Value))
+    (void)HandleOverflow(Info, E, Value, DestType);
+
   Result.setIsUnsigned(DestType->isUnsignedIntegerOrEnumerationType());
   return Result;
 }
@@ -4703,8 +4711,8 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
       return Info.Ctx.getTypeSize(DestType) == Info.Ctx.getTypeSize(SrcType);
     }
 
-    return Success(HandleIntToIntCast(DestType, SrcType,
-                                      Result.getInt(), Info.Ctx), E);
+    return Success(HandleIntToIntCast(Info, E, DestType, SrcType,
+                                      Result.getInt()), E);
   }
 
   case CK_PointerToIntegral: {
@@ -4716,6 +4724,9 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
 
     if (LV.getLValueBase()) {
       // Only allow based lvalue casts if they are lossless.
+      // FIXME: Allow a larger integer size than the pointer size, and allow
+      // narrowing back down to pointer width in subsequent integral casts.
+      // FIXME: Check integer type's active bits, not its type size.
       if (Info.Ctx.getTypeSize(DestType) != Info.Ctx.getTypeSize(SrcType))
         return Error(E);
 
@@ -4726,7 +4737,7 @@ bool IntExprEvaluator::VisitCastExpr(const CastExpr *E) {
 
     APSInt AsInt = Info.Ctx.MakeIntValue(LV.getLValueOffset().getQuantity(), 
                                          SrcType);
-    return Success(HandleIntToIntCast(DestType, SrcType, AsInt, Info.Ctx), E);
+    return Success(HandleIntToIntCast(Info, E, DestType, SrcType, AsInt), E);
   }
 
   case CK_IntegralComplexToReal: {
@@ -5200,8 +5211,8 @@ bool ComplexExprEvaluator::VisitCastExpr(const CastExpr *E) {
     QualType From
       = E->getSubExpr()->getType()->getAs<ComplexType>()->getElementType();
 
-    Result.IntReal = HandleIntToIntCast(To, From, Result.IntReal, Info.Ctx);
-    Result.IntImag = HandleIntToIntCast(To, From, Result.IntImag, Info.Ctx);
+    Result.IntReal = HandleIntToIntCast(Info, E, To, From, Result.IntReal);
+    Result.IntImag = HandleIntToIntCast(Info, E, To, From, Result.IntImag);
     return true;
   }
 
