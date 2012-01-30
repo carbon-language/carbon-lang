@@ -25,7 +25,7 @@ class ThreadInstanceSettings : public InstanceSettings
 {
 public:
 
-    ThreadInstanceSettings (UserSettingsController &owner, bool live_instance = true, const char *name = NULL);
+    ThreadInstanceSettings (const lldb::UserSettingsControllerSP &owner_sp, bool live_instance = true, const char *name = NULL);
   
     ThreadInstanceSettings (const ThreadInstanceSettings &rhs);
 

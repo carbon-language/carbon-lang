@@ -54,7 +54,7 @@ class ProcessInstanceSettings : public InstanceSettings
 {
 public:
 
-    ProcessInstanceSettings (UserSettingsController &owner, bool live_instance = true, const char *name = NULL);
+    ProcessInstanceSettings (const lldb::UserSettingsControllerSP &owner_sp, bool live_instance = true, const char *name = NULL);
   
     ProcessInstanceSettings (const ProcessInstanceSettings &rhs);
 

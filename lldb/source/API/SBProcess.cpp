@@ -74,8 +74,14 @@ SBProcess::~SBProcess()
 {
 }
 
+lldb::ProcessSP
+SBProcess::GetSP() const
+{
+    return m_opaque_sp;
+}
+
 void
-SBProcess::SetProcess (const ProcessSP &process_sp)
+SBProcess::SetSP (const ProcessSP &process_sp)
 {
     m_opaque_sp = process_sp;
 }
@@ -239,11 +245,15 @@ SBProcess::GetTarget() const
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBTarget sb_target;
+    TargetSP target_sp;
     if (m_opaque_sp)
-        sb_target = m_opaque_sp->GetTarget().shared_from_this();
+    {
+        target_sp = m_opaque_sp->GetTarget().shared_from_this();
+        sb_target.SetSP (target_sp);
+    }
     
     if (log)
-        log->Printf ("SBProcess(%p)::GetTarget () => SBTarget(%p)", m_opaque_sp.get(), sb_target.get());
+        log->Printf ("SBProcess(%p)::GetTarget () => SBTarget(%p)", m_opaque_sp.get(), target_sp.get());
 
     return sb_target;
 }
@@ -717,12 +727,6 @@ SBProcess::GetBroadcaster () const
     return broadcaster;
 }
 
-lldb_private::Process *
-SBProcess::operator->() const
-{
-    return m_opaque_sp.get();
-}
-
 size_t
 SBProcess::ReadMemory (addr_t addr, void *dst, size_t dst_len, SBError &sb_error)
 {
@@ -862,13 +866,6 @@ SBProcess::WriteMemory (addr_t addr, const void *src, size_t src_len, SBError &s
     }
 
     return bytes_written;
-}
-
-// Mimic shared pointer...
-lldb_private::Process *
-SBProcess::get() const
-{
-    return m_opaque_sp.get();
 }
 
 bool

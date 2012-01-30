@@ -96,19 +96,19 @@ SBTarget::IsValid () const
 SBProcess
 SBTarget::GetProcess ()
 {
-
     SBProcess sb_process;
+    ProcessSP process_sp;
     if (m_opaque_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
-        sb_process.SetProcess (m_opaque_sp->GetProcessSP());
+        process_sp = m_opaque_sp->GetProcessSP();
+        sb_process.SetSP (process_sp);
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBTarget(%p)::GetProcess () => SBProcess(%p)", 
-                     m_opaque_sp.get(), sb_process.get());
+                     m_opaque_sp.get(), process_sp.get());
     }
 
     return sb_process;
@@ -182,6 +182,7 @@ SBTarget::Launch
                      error.get());
     }
     SBProcess sb_process;
+    ProcessSP process_sp;
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
@@ -190,18 +191,17 @@ SBTarget::Launch
             launch_flags |= eLaunchFlagDisableASLR;
 
         StateType state = eStateInvalid;
-        sb_process.SetProcess (m_opaque_sp->GetProcessSP());
-        if (sb_process.IsValid())
+        process_sp = m_opaque_sp->GetProcessSP();
+        if (process_sp)
         {
-            state = sb_process->GetState();
+            state = process_sp->GetState();
             
-            if (sb_process->IsAlive() && state != eStateConnected)
+            if (process_sp->IsAlive() && state != eStateConnected)
             {       
                 if (state == eStateAttaching)
                     error.SetErrorString ("process attach is in progress");
                 else
                     error.SetErrorString ("a process is already being debugged");
-                sb_process.Clear();
                 return sb_process;
             }            
         }
@@ -214,20 +214,20 @@ SBTarget::Launch
             if (listener.IsValid())
             {
                 error.SetErrorString ("process is connected and already has a listener, pass empty listener");
-                sb_process.Clear();
                 return sb_process;
             }
         }
         else
         {
             if (listener.IsValid())
-                sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));
+                process_sp = m_opaque_sp->CreateProcess (listener.ref());
             else
-                sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+                process_sp = m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener());
         }
 
-        if (sb_process.IsValid())
+        if (process_sp)
         {
+            sb_process.SetSP (process_sp);
             if (getenv("LLDB_LAUNCH_FLAG_DISABLE_STDIO"))
                 launch_flags |= eLaunchFlagDisableSTDIO;
 
@@ -241,7 +241,7 @@ SBTarget::Launch
             if (envp)
                 launch_info.GetEnvironmentEntries ().SetArguments (envp);
 
-            error.SetError (sb_process->Launch (launch_info));
+            error.SetError (process_sp->Launch (launch_info));
             if (error.Success())
             {
                 // We we are stopping at the entry point, we can return now!
@@ -249,17 +249,17 @@ SBTarget::Launch
                     return sb_process;
                 
                 // Make sure we are stopped at the entry
-                StateType state = sb_process->WaitForProcessToStop (NULL);
+                StateType state = process_sp->WaitForProcessToStop (NULL);
                 if (state == eStateStopped)
                 {
                     // resume the process to skip the entry point
-                    error.SetError (sb_process->Resume());
+                    error.SetError (process_sp->Resume());
                     if (error.Success())
                     {
                         // If we are doing synchronous mode, then wait for the
                         // process to stop yet again!
                         if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)
-                            sb_process->WaitForProcessToStop (NULL);
+                            process_sp->WaitForProcessToStop (NULL);
                     }
                 }
             }
@@ -278,7 +278,7 @@ SBTarget::Launch
     if (log)
     {
         log->Printf ("SBTarget(%p)::Launch (...) => SBProceess(%p)", 
-                     m_opaque_sp.get(), sb_process.get());
+                     m_opaque_sp.get(), process_sp.get());
     }
 
     return sb_process;
@@ -305,23 +305,23 @@ SBTarget::AttachToProcessWithID
 )
 {
     SBProcess sb_process;
+    ProcessSP process_sp;
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
 
         StateType state = eStateInvalid;
-        sb_process.SetProcess (m_opaque_sp->GetProcessSP());
-        if (sb_process.IsValid())
+        process_sp = m_opaque_sp->GetProcessSP();
+        if (process_sp)
         {
-            state = sb_process->GetState();
+            state = process_sp->GetState();
             
-            if (sb_process->IsAlive() && state != eStateConnected)
+            if (process_sp->IsAlive() && state != eStateConnected)
             {       
                 if (state == eStateAttaching)
                     error.SetErrorString ("process attach is in progress");
                 else
                     error.SetErrorString ("a process is already being debugged");
-                sb_process.Clear();
                 return sb_process;
             }            
         }
@@ -334,27 +334,27 @@ SBTarget::AttachToProcessWithID
             if (listener.IsValid())
             {
                 error.SetErrorString ("process is connected and already has a listener, pass empty listener");
-                sb_process.Clear();
                 return sb_process;
             }
         }
         else
         {
             if (listener.IsValid())
-                sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));
+                process_sp = m_opaque_sp->CreateProcess (listener.ref());
             else
-                sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+                process_sp = m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener());
         }
-
-        if (sb_process.IsValid())
+        if (process_sp)
         {
+            sb_process.SetSP (process_sp);
+            
             ProcessAttachInfo attach_info;
             attach_info.SetProcessID (pid);
-            error.SetError (sb_process->Attach (attach_info));            
+            error.SetError (process_sp->Attach (attach_info));            
             // If we are doing synchronous mode, then wait for the
             // process to stop!
             if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)
-                sb_process->WaitForProcessToStop (NULL);
+                process_sp->WaitForProcessToStop (NULL);
         }
         else
         {
@@ -379,23 +379,23 @@ SBTarget::AttachToProcessWithName
 )
 {
     SBProcess sb_process;
+    ProcessSP process_sp;
     if (name && m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
 
         StateType state = eStateInvalid;
-        sb_process.SetProcess (m_opaque_sp->GetProcessSP());
-        if (sb_process.IsValid())
+        process_sp = m_opaque_sp->GetProcessSP();
+        if (process_sp)
         {
-            state = sb_process->GetState();
+            state = process_sp->GetState();
             
-            if (sb_process->IsAlive() && state != eStateConnected)
+            if (process_sp->IsAlive() && state != eStateConnected)
             {       
                 if (state == eStateAttaching)
                     error.SetErrorString ("process attach is in progress");
                 else
                     error.SetErrorString ("a process is already being debugged");
-                sb_process.Clear();
                 return sb_process;
             }            
         }
@@ -408,28 +408,28 @@ SBTarget::AttachToProcessWithName
             if (listener.IsValid())
             {
                 error.SetErrorString ("process is connected and already has a listener, pass empty listener");
-                sb_process.Clear();
                 return sb_process;
             }
         }
         else
         {
             if (listener.IsValid())
-                sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref()));
+                process_sp = m_opaque_sp->CreateProcess (listener.ref());
             else
-                sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener()));
+                process_sp = m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener());
         }
 
-        if (sb_process.IsValid())
+        if (process_sp)
         {
+            sb_process.SetSP (process_sp);
             ProcessAttachInfo attach_info;
             attach_info.GetExecutableFile().SetFile(name, false);
             attach_info.SetWaitForLaunch(wait_for);
-            error.SetError (sb_process->Attach (attach_info));
+            error.SetError (process_sp->Attach (attach_info));
             // If we are doing synchronous mode, then wait for the
             // process to stop!
             if (m_opaque_sp->GetDebugger().GetAsyncExecution () == false)
-                sb_process->WaitForProcessToStop (NULL);
+                process_sp->WaitForProcessToStop (NULL);
         }
         else
         {
@@ -454,18 +454,20 @@ SBTarget::ConnectRemote
 )
 {
     SBProcess sb_process;
+    ProcessSP process_sp;
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetAPIMutex());
         if (listener.IsValid())
-            sb_process.SetProcess (m_opaque_sp->CreateProcess (listener.ref(), plugin_name));
+            process_sp = m_opaque_sp->CreateProcess (listener.ref(), plugin_name);
         else
-            sb_process.SetProcess (m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener(), plugin_name));
+            process_sp = m_opaque_sp->CreateProcess (m_opaque_sp->GetDebugger().GetListener(), plugin_name);
         
         
-        if (sb_process.IsValid())
+        if (process_sp)
         {
-            error.SetError (sb_process->ConnectRemote (url));
+            sb_process.SetSP (process_sp);
+            error.SetError (process_sp->ConnectRemote (url));
         }
         else
         {
@@ -513,26 +515,14 @@ SBTarget::operator != (const SBTarget &rhs) const
     return m_opaque_sp.get() != rhs.m_opaque_sp.get();
 }
 
-lldb_private::Target *
-SBTarget::operator ->() const
-{
-    return m_opaque_sp.get();
-}
-
-lldb_private::Target *
-SBTarget::get() const
-{
-    return m_opaque_sp.get();
-}
-
-const lldb::TargetSP &
-SBTarget::get_sp () const
+lldb::TargetSP
+SBTarget::GetSP () const
 {
     return m_opaque_sp;
 }
 
 void
-SBTarget::reset (const lldb::TargetSP& target_sp)
+SBTarget::SetSP (const lldb::TargetSP& target_sp)
 {
     m_opaque_sp = target_sp;
 }

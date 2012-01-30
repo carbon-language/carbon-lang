@@ -43,7 +43,7 @@ class TargetInstanceSettings : public InstanceSettings
 public:
     static OptionEnumValueElement g_dynamic_value_types[];
 
-    TargetInstanceSettings (UserSettingsController &owner, bool live_instance = true, const char *name = NULL);
+    TargetInstanceSettings (const lldb::UserSettingsControllerSP &owner_sp, bool live_instance = true, const char *name = NULL);
 
     TargetInstanceSettings (const TargetInstanceSettings &rhs);
 

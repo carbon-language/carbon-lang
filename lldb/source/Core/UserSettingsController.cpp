@@ -83,10 +83,6 @@ UserSettingsController::UserSettingsController (const char *level_name,
 UserSettingsController::~UserSettingsController ()
 {
     Mutex::Locker locker (m_live_settings_mutex);
-
-    // Notify all instance settings that their owner is shutting down, first.
-    for (InstanceSettingsMap::iterator pos = m_live_settings.begin(); pos != m_live_settings.end(); ++pos)
-        pos->second->NotifyOwnerIsShuttingDown();
     m_live_settings.clear();
 }
 
@@ -2460,27 +2456,24 @@ UserSettingsController::RenameInstanceSettings (const char *old_name, const char
 // class InstanceSettings
 //----------------------------------------------------------------------
 
-InstanceSettings::InstanceSettings (UserSettingsController &owner, const char *instance_name, bool live_instance) :
-    m_owner (owner),
-    m_instance_name (instance_name),
-    m_owner_is_live (true)
+InstanceSettings::InstanceSettings (const UserSettingsControllerSP &owner_sp, const char *instance_name, bool live_instance) :
+    m_owner_wp (owner_sp),
+    m_instance_name (instance_name)
 {
     if ((m_instance_name != InstanceSettings::GetDefaultName())
         && (m_instance_name !=  InstanceSettings::InvalidName())
         && live_instance)
-        m_owner.RegisterInstanceSettings (this);
+        owner_sp->RegisterInstanceSettings (this);
 }
 
 InstanceSettings::~InstanceSettings ()
 {
-    if (m_instance_name != InstanceSettings::GetDefaultName() && m_owner_is_live)
-        m_owner.UnregisterInstanceSettings (this);
-}
-
-void
-InstanceSettings::NotifyOwnerIsShuttingDown()
-{
-    m_owner_is_live = false;
+    if (m_instance_name != InstanceSettings::GetDefaultName())
+    {
+        UserSettingsControllerSP owner_sp (m_owner_wp.lock());
+        if (owner_sp)
+            owner_sp->UnregisterInstanceSettings (this);
+    }
 }
 
 const ConstString &

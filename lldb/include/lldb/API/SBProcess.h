@@ -197,22 +197,13 @@ protected:
     friend class SBThread;
     friend class SBValue;
 
-#ifndef SWIG
-
-    lldb_private::Process *
-    operator->() const;
-
-    // Mimic shared pointer...
-    lldb_private::Process *
-    get() const;
-
-#endif
-
-
     SBProcess (const lldb::ProcessSP &process_sp);
 
+    lldb::ProcessSP
+    GetSP() const;
+    
     void
-    SetProcess (const lldb::ProcessSP &process_sp);
+    SetSP (const lldb::ProcessSP &process_sp);
 
     lldb::ProcessSP m_opaque_sp;
 };

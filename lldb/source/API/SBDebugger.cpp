@@ -302,11 +302,12 @@ SBDebugger::HandleCommand (const char *command)
         if (m_opaque_sp->GetAsyncExecution() == false)
         {
             SBProcess process(GetCommandInterpreter().GetProcess ());
-            if (process.IsValid())
+            ProcessSP process_sp (process.GetSP());
+            if (process_sp)
             {
                 EventSP event_sp;
                 Listener &lldb_listener = m_opaque_sp->GetListener();
-                while (lldb_listener.GetNextEventForBroadcaster (process.get(), event_sp))
+                while (lldb_listener.GetNextEventForBroadcaster (process_sp.get(), event_sp))
                 {
                     SBEvent event(event_sp);
                     HandleProcessEvent (process, event, GetOutputFileHandle(), GetErrorFileHandle());
@@ -338,11 +339,15 @@ SBDebugger::HandleProcessEvent (const SBProcess &process, const SBEvent &event, 
     if (!process.IsValid())
         return;
 
+    TargetSP target_sp (process.GetTarget().GetSP());
+    if (!target_sp)
+        return;
+
     const uint32_t event_type = event.GetType();
     char stdio_buffer[1024];
     size_t len;
 
-    Mutex::Locker api_locker (process.GetTarget()->GetAPIMutex());
+    Mutex::Locker api_locker (target_sp->GetAPIMutex());
     
     if (event_type & (Process::eBroadcastBitSTDOUT | Process::eBroadcastBitStateChanged))
     {
@@ -474,6 +479,7 @@ SBDebugger::CreateTarget (const char *filename,
                           lldb::SBError& sb_error)
 {
     SBTarget sb_target;
+    TargetSP target_sp;
     if (m_opaque_sp)
     {
         sb_error.Clear();
@@ -481,7 +487,6 @@ SBDebugger::CreateTarget (const char *filename,
         OptionGroupPlatform platform_options (false);
         platform_options.SetPlatformName (platform_name);
         
-        TargetSP target_sp;
         sb_error.ref() = m_opaque_sp->GetTargetList().CreateTarget (*m_opaque_sp, 
                                                                     filename_spec, 
                                                                     target_triple, 
@@ -490,7 +495,7 @@ SBDebugger::CreateTarget (const char *filename,
                                                                     target_sp);
     
         if (sb_error.Success())
-            sb_target.reset (target_sp);
+            sb_target.SetSP (target_sp);
     }
     else
     {
@@ -507,7 +512,7 @@ SBDebugger::CreateTarget (const char *filename,
                      platform_name,
                      add_dependent_modules,
                      sb_error.GetCString(),
-                     sb_target.get());
+                     target_sp.get());
     }
     
     return sb_target;
@@ -517,7 +522,8 @@ SBTarget
 SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
                                                  const char *target_triple)
 {
-    SBTarget target;
+    SBTarget sb_target;
+    TargetSP target_sp;
     if (m_opaque_sp)
     {
         FileSpec file_spec (filename, true);
@@ -529,17 +535,17 @@ SBDebugger::CreateTargetWithFileAndTargetTriple (const char *filename,
                                                                 add_dependent_modules, 
                                                                 NULL,
                                                                 target_sp));
-        target.reset (target_sp);
+        sb_target.SetSP (target_sp);
     }
     
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndTargetTriple (filename=\"%s\", triple=%s) => SBTarget(%p)", 
-                     m_opaque_sp.get(), filename, target_triple, target.get());
+                     m_opaque_sp.get(), filename, target_triple, target_sp.get());
     }
 
-    return target;
+    return sb_target;
 }
 
 SBTarget
@@ -547,11 +553,11 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *arch_
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    SBTarget target;
+    SBTarget sb_target;
+    TargetSP target_sp;
     if (m_opaque_sp)
     {
         FileSpec file (filename, true);
-        TargetSP target_sp;
         Error error;
         const bool add_dependent_modules = true;
 
@@ -565,28 +571,28 @@ SBDebugger::CreateTargetWithFileAndArch (const char *filename, const char *arch_
         if (error.Success())
         {
             m_opaque_sp->GetTargetList().SetSelectedTarget (target_sp.get());
-            target.reset(target_sp);
+            sb_target.SetSP (target_sp);
         }
     }
 
     if (log)
     {
         log->Printf ("SBDebugger(%p)::CreateTargetWithFileAndArch (filename=\"%s\", arch=%s) => SBTarget(%p)", 
-                     m_opaque_sp.get(), filename, arch_cstr, target.get());
+                     m_opaque_sp.get(), filename, arch_cstr, target_sp.get());
     }
 
-    return target;
+    return sb_target;
 }
 
 SBTarget
 SBDebugger::CreateTarget (const char *filename)
 {
-    SBTarget target;
+    SBTarget sb_target;
+    TargetSP target_sp;
     if (m_opaque_sp)
     {
         FileSpec file (filename, true);
         ArchSpec arch = Target::GetDefaultArchitecture ();
-        TargetSP target_sp;
         Error error;
         const bool add_dependent_modules = true;
 
@@ -600,29 +606,33 @@ SBDebugger::CreateTarget (const char *filename)
         if (error.Success())
         {
             m_opaque_sp->GetTargetList().SetSelectedTarget (target_sp.get());
-            target.reset (target_sp);
+            sb_target.SetSP (target_sp);
         }
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         log->Printf ("SBDebugger(%p)::CreateTarget (filename=\"%s\") => SBTarget(%p)", 
-                     m_opaque_sp.get(), filename, target.get());
+                     m_opaque_sp.get(), filename, target_sp.get());
     }
-    return target;
+    return sb_target;
 }
 
 bool
 SBDebugger::DeleteTarget (lldb::SBTarget &target)
 {
     bool result = false;
-    if (m_opaque_sp && target.IsValid())
+    if (m_opaque_sp)
     {
-        // No need to lock, the target list is thread safe
-        result = m_opaque_sp->GetTargetList().DeleteTarget (target.m_opaque_sp);
-        target->Destroy();
-        target.Clear();
-        ModuleList::RemoveOrphanSharedModules();
+        TargetSP target_sp(target.GetSP());
+        if (target_sp)
+        {
+            // No need to lock, the target list is thread safe
+            result = m_opaque_sp->GetTargetList().DeleteTarget (target_sp);
+            target_sp->Destroy();
+            target.Clear();
+            ModuleList::RemoveOrphanSharedModules();
+        }
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
@@ -640,7 +650,7 @@ SBDebugger::GetTargetAtIndex (uint32_t idx)
     if (m_opaque_sp)
     {
         // No need to lock, the target list is thread safe
-        sb_target.reset(m_opaque_sp->GetTargetList().GetTargetAtIndex (idx));
+        sb_target.SetSP (m_opaque_sp->GetTargetList().GetTargetAtIndex (idx));
     }
     return sb_target;
 }
@@ -652,7 +662,7 @@ SBDebugger::FindTargetWithProcessID (pid_t pid)
     if (m_opaque_sp)
     {
         // No need to lock, the target list is thread safe
-        sb_target.reset(m_opaque_sp->GetTargetList().FindTargetWithProcessID (pid));
+        sb_target.SetSP (m_opaque_sp->GetTargetList().FindTargetWithProcessID (pid));
     }
     return sb_target;
 }
@@ -666,7 +676,7 @@ SBDebugger::FindTargetWithFileAndArch (const char *filename, const char *arch_na
         // No need to lock, the target list is thread safe
         ArchSpec arch (arch_name, m_opaque_sp->GetPlatformList().GetSelectedPlatform().get());
         TargetSP target_sp (m_opaque_sp->GetTargetList().FindTargetWithExecutableAndArchitecture (FileSpec(filename, false), arch_name ? &arch : NULL));
-        sb_target.reset(target_sp);
+        sb_target.SetSP (target_sp);
     }
     return sb_target;
 }
@@ -678,7 +688,7 @@ SBDebugger::FindTargetWithLLDBProcess (const ProcessSP &process_sp)
     if (m_opaque_sp)
     {
         // No need to lock, the target list is thread safe
-        sb_target.reset(m_opaque_sp->GetTargetList().FindTargetWithProcess (process_sp.get()));
+        sb_target.SetSP (m_opaque_sp->GetTargetList().FindTargetWithProcess (process_sp.get()));
     }
     return sb_target;
 }
@@ -701,10 +711,12 @@ SBDebugger::GetSelectedTarget ()
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBTarget sb_target;
+    TargetSP target_sp;
     if (m_opaque_sp)
     {
         // No need to lock, the target list is thread safe
-        sb_target.reset(m_opaque_sp->GetTargetList().GetSelectedTarget ());
+        target_sp = m_opaque_sp->GetTargetList().GetSelectedTarget ();
+        sb_target.SetSP (target_sp);
     }
 
     if (log)
@@ -712,7 +724,7 @@ SBDebugger::GetSelectedTarget ()
         SBStream sstr;
         sb_target.GetDescription (sstr, eDescriptionLevelBrief);
         log->Printf ("SBDebugger(%p)::GetSelectedTarget () => SBTarget(%p): %s", m_opaque_sp.get(),
-                     sb_target.get(), sstr.GetData());
+                     target_sp.get(), sstr.GetData());
     }
 
     return sb_target;
@@ -723,16 +735,17 @@ SBDebugger::SetSelectedTarget (SBTarget &sb_target)
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
+    TargetSP target_sp (sb_target.GetSP());
     if (m_opaque_sp)
     {
-        m_opaque_sp->GetTargetList().SetSelectedTarget (sb_target.get());
+        m_opaque_sp->GetTargetList().SetSelectedTarget (target_sp.get());
     }
     if (log)
     {
         SBStream sstr;
         sb_target.GetDescription (sstr, eDescriptionLevelBrief);
         log->Printf ("SBDebugger(%p)::SetSelectedTarget () => SBTarget(%p): %s", m_opaque_sp.get(),
-                     sb_target.get(), sstr.GetData());
+                     target_sp.get(), sstr.GetData());
     }
 }
 

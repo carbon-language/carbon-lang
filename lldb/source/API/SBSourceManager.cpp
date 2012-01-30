@@ -89,7 +89,7 @@ SBSourceManager::SBSourceManager (const SBDebugger &debugger)
 
 SBSourceManager::SBSourceManager (const SBTarget &target)
 {
-    m_opaque_ap.reset(new SourceManagerImpl (target.get_sp()));
+    m_opaque_ap.reset(new SourceManagerImpl (target.GetSP()));
 }
 
 SBSourceManager::SBSourceManager (const SBSourceManager &rhs)

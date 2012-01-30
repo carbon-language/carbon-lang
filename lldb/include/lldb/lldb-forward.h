@@ -142,6 +142,7 @@ class   SectionList;
 class   SourceManager;
 class   SourceManagerImpl;
 class   StackFrame;
+class   StackFrameImpl;
 class   StackFrameList;
 class   StackID;
 class   StopInfo;
@@ -293,6 +294,7 @@ namespace lldb {
     typedef std::tr1::shared_ptr<lldb_private::TypeImpl> TypeImplSP;
     typedef std::tr1::shared_ptr<lldb_private::FuncUnwinders> FuncUnwindersSP;
     typedef std::tr1::shared_ptr<lldb_private::UserSettingsController> UserSettingsControllerSP;
+    typedef std::tr1::weak_ptr<lldb_private::UserSettingsController> UserSettingsControllerWP;
     typedef std::tr1::shared_ptr<lldb_private::UnwindPlan> UnwindPlanSP;
     typedef lldb_private::SharingPtr<lldb_private::ValueObject> ValueObjectSP;
     typedef std::tr1::shared_ptr<lldb_private::Value> ValueSP;

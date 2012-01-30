@@ -381,10 +381,8 @@ SBModule::FindGlobalVariables (SBTarget &target, const char *name, uint32_t max_
             for (uint32_t i=0; i<match_count; ++i)
             {
                 lldb::ValueObjectSP valobj_sp;
-                if (target.IsValid())
-                    valobj_sp = ValueObjectVariable::Create (target.get(), variable_list.GetVariableAtIndex(i));
-                else
-                    valobj_sp = ValueObjectVariable::Create (NULL, variable_list.GetVariableAtIndex(i));
+                TargetSP target_sp (target.GetSP());
+                valobj_sp = ValueObjectVariable::Create (target_sp.get(), variable_list.GetVariableAtIndex(i));
                 if (valobj_sp)
                     value_object_list.Append(valobj_sp);
             }

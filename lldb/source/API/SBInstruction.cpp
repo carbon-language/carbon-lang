@@ -75,11 +75,12 @@ SBInstruction::GetMnemonic(SBTarget target)
     {        
         Mutex::Locker api_locker;
         ExecutionContext exe_ctx;
-        if (target.IsValid())
+        TargetSP target_sp (target.GetSP());
+        if (target_sp)
         {
-            api_locker.Reset (target->GetAPIMutex().GetMutex());
-            target->CalculateExecutionContext (exe_ctx);
-            exe_ctx.SetProcessSP(target->GetProcessSP());
+            api_locker.Reset (target_sp->GetAPIMutex().GetMutex());
+            target_sp->CalculateExecutionContext (exe_ctx);
+            exe_ctx.SetProcessSP(target_sp->GetProcessSP());
         }
         return m_opaque_sp->GetMnemonic(exe_ctx.GetBestExecutionContextScope());
     }
@@ -93,11 +94,12 @@ SBInstruction::GetOperands(SBTarget target)
     {
         Mutex::Locker api_locker;
         ExecutionContext exe_ctx;
-        if (target.IsValid())
+        TargetSP target_sp (target.GetSP());
+        if (target_sp)
         {
-            api_locker.Reset (target->GetAPIMutex().GetMutex());
-            target->CalculateExecutionContext (exe_ctx);
-            exe_ctx.SetProcessSP(target->GetProcessSP());
+            api_locker.Reset (target_sp->GetAPIMutex().GetMutex());
+            target_sp->CalculateExecutionContext (exe_ctx);
+            exe_ctx.SetProcessSP(target_sp->GetProcessSP());
         }
         return m_opaque_sp->GetOperands(exe_ctx.GetBestExecutionContextScope());
     }
@@ -111,11 +113,12 @@ SBInstruction::GetComment(SBTarget target)
     {
         Mutex::Locker api_locker;
         ExecutionContext exe_ctx;
-        if (target.IsValid())
+        TargetSP target_sp (target.GetSP());
+        if (target_sp)
         {
-            api_locker.Reset (target->GetAPIMutex().GetMutex());
-            target->CalculateExecutionContext (exe_ctx);
-            exe_ctx.SetProcessSP(target->GetProcessSP());
+            api_locker.Reset (target_sp->GetAPIMutex().GetMutex());
+            target_sp->CalculateExecutionContext (exe_ctx);
+            exe_ctx.SetProcessSP(target_sp->GetProcessSP());
         }
         return m_opaque_sp->GetComment(exe_ctx.GetBestExecutionContextScope());
     }
@@ -142,12 +145,13 @@ SBInstruction::GetData (SBTarget target)
         if (opcode_data && opcode_data_size > 0)
         {
             ByteOrder data_byte_order = opcode.GetDataByteOrder();
-            if (data_byte_order == eByteOrderInvalid)
-                data_byte_order = target->GetArchitecture().GetByteOrder();
+            TargetSP target_sp (target.GetSP());
+            if (data_byte_order == eByteOrderInvalid && target_sp)
+                data_byte_order = target_sp->GetArchitecture().GetByteOrder();
             DataBufferSP data_buffer_sp (new DataBufferHeap (opcode_data, opcode_data_size));
             DataExtractorSP data_extractor_sp (new DataExtractor (data_buffer_sp, 
                                                                   data_byte_order,
-                                                                  target.IsValid() ? target->GetArchitecture().GetAddressByteSize() : sizeof(void*)));
+                                                                  target_sp ? target_sp->GetArchitecture().GetAddressByteSize() : sizeof(void*)));
             sb_data.SetOpaque (data_extractor_sp);
         }
     }
@@ -199,20 +203,25 @@ SBInstruction::Print (FILE *out)
 bool
 SBInstruction::EmulateWithFrame (lldb::SBFrame &frame, uint32_t evaluate_options)
 {
-    if (m_opaque_sp && frame.get())
+    if (m_opaque_sp)
     {
-        lldb_private::ExecutionContext exe_ctx;
-        frame->CalculateExecutionContext (exe_ctx);
-        lldb_private::Target *target = exe_ctx.GetTargetPtr();
-        lldb_private::ArchSpec arch = target->GetArchitecture();
-        
-        return m_opaque_sp->Emulate (arch, 
-                                     evaluate_options,
-                                     (void *) frame.get(), 
-                                     &lldb_private::EmulateInstruction::ReadMemoryFrame,
-                                     &lldb_private::EmulateInstruction::WriteMemoryFrame,
-                                     &lldb_private::EmulateInstruction::ReadRegisterFrame,
-                                     &lldb_private::EmulateInstruction::WriteRegisterFrame);
+        lldb::StackFrameSP frame_sp (frame.GetFrameSP());
+
+        if (frame_sp)
+        {
+            lldb_private::ExecutionContext exe_ctx;
+            frame_sp->CalculateExecutionContext (exe_ctx);
+            lldb_private::Target *target = exe_ctx.GetTargetPtr();
+            lldb_private::ArchSpec arch = target->GetArchitecture();
+            
+            return m_opaque_sp->Emulate (arch, 
+                                         evaluate_options,
+                                         (void *) frame_sp.get(), 
+                                         &lldb_private::EmulateInstruction::ReadMemoryFrame,
+                                         &lldb_private::EmulateInstruction::WriteMemoryFrame,
+                                         &lldb_private::EmulateInstruction::ReadRegisterFrame,
+                                         &lldb_private::EmulateInstruction::WriteRegisterFrame);
+        }
     }
     return false;
 }

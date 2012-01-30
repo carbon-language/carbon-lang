@@ -156,8 +156,21 @@ DebuggerInstanceSettings::g_show_disassembly_enum_values[] =
 UserSettingsControllerSP &
 Debugger::GetSettingsController ()
 {
-    static UserSettingsControllerSP g_settings_controller;
-    return g_settings_controller;
+    static UserSettingsControllerSP g_settings_controller_sp;
+    if (!g_settings_controller_sp)
+    {
+        g_settings_controller_sp.reset (new Debugger::SettingsController);
+    
+        // The first shared pointer to Debugger::SettingsController in
+        // g_settings_controller_sp must be fully created above so that 
+        // the DebuggerInstanceSettings can use a weak_ptr to refer back 
+        // to the master setttings controller
+        InstanceSettingsSP default_instance_settings_sp (new DebuggerInstanceSettings (g_settings_controller_sp, 
+                                                                                       false, 
+                                                                                       InstanceSettings::GetDefaultName().AsCString()));
+        g_settings_controller_sp->SetDefaultInstanceSettings (default_instance_settings_sp);
+    }
+    return g_settings_controller_sp;
 }
 
 int
@@ -203,9 +216,7 @@ Debugger::SettingsInitialize ()
     if (!g_initialized)
     {
         g_initialized = true;
-        UserSettingsControllerSP &usc = GetSettingsController();
-        usc.reset (new SettingsController);
-        UserSettingsController::InitializeSettingsController (usc,
+        UserSettingsController::InitializeSettingsController (GetSettingsController(),
                                                               SettingsController::global_settings_table,
                                                               SettingsController::instance_settings_table);
         // Now call SettingsInitialize for each settings 'child' of Debugger
@@ -317,7 +328,7 @@ Debugger::FindTargetWithProcess (Process *process)
 
 Debugger::Debugger () :
     UserID (g_unique_id++),
-    DebuggerInstanceSettings (*GetSettingsController()),
+    DebuggerInstanceSettings (GetSettingsController()),
     m_input_comm("debugger.input"),
     m_input_file (),
     m_output_file (),
@@ -2282,8 +2293,6 @@ Debugger::FormatPrompt
 Debugger::SettingsController::SettingsController () :
     UserSettingsController ("", UserSettingsControllerSP())
 {
-    m_default_settings.reset (new DebuggerInstanceSettings (*this, false, 
-                                                            InstanceSettings::GetDefaultName().AsCString()));
 }
 
 Debugger::SettingsController::~SettingsController ()
@@ -2294,9 +2303,9 @@ Debugger::SettingsController::~SettingsController ()
 InstanceSettingsSP
 Debugger::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
-    DebuggerInstanceSettings *new_settings = new DebuggerInstanceSettings (*GetSettingsController(),
-                                                                           false, instance_name);
-    InstanceSettingsSP new_settings_sp (new_settings);
+    InstanceSettingsSP new_settings_sp (new DebuggerInstanceSettings (GetSettingsController(),
+                                                                      false, 
+                                                                      instance_name));
     return new_settings_sp;
 }
 
@@ -2307,11 +2316,11 @@ Debugger::SettingsController::CreateInstanceSettings (const char *instance_name)
 
 DebuggerInstanceSettings::DebuggerInstanceSettings 
 (
-    UserSettingsController &owner, 
+    const UserSettingsControllerSP &m_owner_sp, 
     bool live_instance,
     const char *name
 ) :
-    InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
+    InstanceSettings (m_owner_sp, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance),
     m_term_width (80),
     m_stop_source_before_count (3),
     m_stop_source_after_count (3),
@@ -2332,18 +2341,18 @@ DebuggerInstanceSettings::DebuggerInstanceSettings
     if (GetInstanceName() == InstanceSettings::InvalidName())
     {
         ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
-        m_owner.RegisterInstanceSettings (this);
+        m_owner_sp->RegisterInstanceSettings (this);
     }
 
     if (live_instance)
     {
-        const InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        const InstanceSettingsSP &pending_settings = m_owner_sp->FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings, false);
     }
 }
 
 DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs) :
-    InstanceSettings (*Debugger::GetSettingsController(), CreateInstanceName ().AsCString()),
+    InstanceSettings (Debugger::GetSettingsController(), CreateInstanceName ().AsCString()),
     m_prompt (rhs.m_prompt),
     m_frame_format (rhs.m_frame_format),
     m_thread_format (rhs.m_thread_format),
@@ -2351,9 +2360,12 @@ DebuggerInstanceSettings::DebuggerInstanceSettings (const DebuggerInstanceSettin
     m_use_external_editor (rhs.m_use_external_editor),
     m_auto_confirm_on(rhs.m_auto_confirm_on)
 {
-    const InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
-    CopyInstanceSettings (pending_settings, false);
-    m_owner.RemovePendingSettings (m_instance_name);
+    UserSettingsControllerSP owner_sp (m_owner_wp.lock());
+    if (owner_sp)
+    {
+        CopyInstanceSettings (owner_sp->FindPendingSettings (m_instance_name), false);
+        owner_sp->RemovePendingSettings (m_instance_name);
+    }
 }
 
 DebuggerInstanceSettings::~DebuggerInstanceSettings ()

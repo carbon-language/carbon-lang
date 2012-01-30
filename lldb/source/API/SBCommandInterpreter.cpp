@@ -188,24 +188,26 @@ SBCommandInterpreter::HasAliasOptions ()
 SBProcess
 SBCommandInterpreter::GetProcess ()
 {
-    SBProcess process;
+    SBProcess sb_process;
+    ProcessSP process_sp;
     if (m_opaque_ptr)
     {
         TargetSP target_sp(m_opaque_ptr->GetDebugger().GetSelectedTarget());
         if (target_sp)
         {
             Mutex::Locker api_locker(target_sp->GetAPIMutex());
-            process.SetProcess(target_sp->GetProcessSP());
+            process_sp = target_sp->GetProcessSP();
+            sb_process.SetSP(process_sp);
         }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
         log->Printf ("SBCommandInterpreter(%p)::GetProcess () => SBProcess(%p)", 
-                     m_opaque_ptr, process.get());
+                     m_opaque_ptr, process_sp.get());
 
     
-    return process;
+    return sb_process;
 }
 
 CommandInterpreter *

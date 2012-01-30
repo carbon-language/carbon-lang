@@ -557,11 +557,12 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
 
     ThreadSP thread_sp(m_opaque_wp.lock());
 
+    StackFrameSP frame_sp (sb_frame.GetFrameSP());
     if (log)
     {
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
-        log->Printf ("SBThread(%p)::StepOutOfFrame (frame = SBFrame(%p): %s)", thread_sp.get(), sb_frame.get(), frame_desc_strm.GetData());
+        log->Printf ("SBThread(%p)::StepOutOfFrame (frame = SBFrame(%p): %s)", thread_sp.get(), frame_sp.get(), frame_desc_strm.GetData());
     }
 
     if (thread_sp)
@@ -576,7 +577,7 @@ SBThread::StepOutOfFrame (lldb::SBFrame &sb_frame)
                                               stop_other_threads, 
                                               eVoteYes, 
                                               eVoteNoOpinion,
-                                              sb_frame->GetFrameIndex());
+                                              frame_sp->GetFrameIndex());
         
         Process &process = thread_sp->GetProcess();
         process.GetThreadList().SetSelectedThreadByID (thread_sp->GetID());
@@ -658,8 +659,9 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     char path[PATH_MAX];
     
-    ThreadSP thread_sp(m_opaque_wp.lock());
-    
+    ThreadSP thread_sp(m_opaque_wp.lock());    
+    StackFrameSP frame_sp (sb_frame.GetFrameSP());
+
     if (log)
     {
         SBStream frame_desc_strm;
@@ -667,7 +669,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
         sb_file_spec->GetPath (path, sizeof(path));
         log->Printf ("SBThread(%p)::StepOverUntil (frame = SBFrame(%p): %s, file+line = %s:%u)", 
                      thread_sp.get(), 
-                     sb_frame.get(), 
+                     frame_sp.get(), 
                      frame_desc_strm.GetData(),
                      path, line);
     }
@@ -683,9 +685,7 @@ SBThread::StepOverUntil (lldb::SBFrame &sb_frame,
         }
         
         StackFrameSP frame_sp;
-        if (sb_frame.IsValid())
-            frame_sp = sb_frame.get_sp();
-        else
+        if (!frame_sp)
         {
             frame_sp = thread_sp->GetSelectedFrame ();
             if (!frame_sp)
@@ -843,24 +843,26 @@ SBProcess
 SBThread::GetProcess ()
 {
 
-    SBProcess process;
+    SBProcess sb_process;
+    ProcessSP process_sp;
     ThreadSP thread_sp(m_opaque_wp.lock());
     if (thread_sp)
     {
         // Have to go up to the target so we can get a shared pointer to our process...
-        process.SetProcess(thread_sp->GetProcess().GetTarget().GetProcessSP());
+        process_sp = thread_sp->GetProcess().GetTarget().GetProcessSP();
+        sb_process.SetSP (process_sp);
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
         SBStream frame_desc_strm;
-        process.GetDescription (frame_desc_strm);
+        sb_process.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::GetProcess () => SBProcess(%p): %s", thread_sp.get(),
-                     process.get(), frame_desc_strm.GetData());
+                     process_sp.get(), frame_desc_strm.GetData());
     }
 
-    return process;
+    return sb_process;
 }
 
 uint32_t
@@ -888,11 +890,13 @@ SBThread::GetFrameAtIndex (uint32_t idx)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
+    StackFrameSP frame_sp;
     ThreadSP thread_sp(m_opaque_wp.lock());
     if (thread_sp)
     {
         Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
-        sb_frame.SetFrame (thread_sp->GetStackFrameAtIndex (idx));
+        frame_sp = thread_sp->GetStackFrameAtIndex (idx);
+        sb_frame.SetFrameSP (frame_sp);
     }
 
     if (log)
@@ -900,7 +904,7 @@ SBThread::GetFrameAtIndex (uint32_t idx)
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::GetFrameAtIndex (idx=%d) => SBFrame(%p): %s", 
-                     thread_sp.get(), idx, sb_frame.get(), frame_desc_strm.GetData());
+                     thread_sp.get(), idx, frame_sp.get(), frame_desc_strm.GetData());
     }
 
     return sb_frame;
@@ -912,11 +916,13 @@ SBThread::GetSelectedFrame ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
+    StackFrameSP frame_sp;
     ThreadSP thread_sp(m_opaque_wp.lock());
     if (thread_sp)
     {
         Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
-        sb_frame.SetFrame (thread_sp->GetSelectedFrame ());
+        frame_sp = thread_sp->GetSelectedFrame ();
+        sb_frame.SetFrameSP (frame_sp);
     }
 
     if (log)
@@ -924,7 +930,7 @@ SBThread::GetSelectedFrame ()
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::GetSelectedFrame () => SBFrame(%p): %s", 
-                     thread_sp.get(), sb_frame.get(), frame_desc_strm.GetData());
+                     thread_sp.get(), frame_sp.get(), frame_desc_strm.GetData());
     }
 
     return sb_frame;
@@ -936,15 +942,16 @@ SBThread::SetSelectedFrame (uint32_t idx)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBFrame sb_frame;
+    StackFrameSP frame_sp;
     ThreadSP thread_sp(m_opaque_wp.lock());
     if (thread_sp)
     {
         Mutex::Locker api_locker (thread_sp->GetProcess().GetTarget().GetAPIMutex());
-        lldb::StackFrameSP frame_sp (thread_sp->GetStackFrameAtIndex (idx));
+        frame_sp = thread_sp->GetStackFrameAtIndex (idx);
         if (frame_sp)
         {
             thread_sp->SetSelectedFrame (frame_sp.get());
-            sb_frame.SetFrame (frame_sp);
+            sb_frame.SetFrameSP (frame_sp);
         }
     }
 
@@ -953,7 +960,7 @@ SBThread::SetSelectedFrame (uint32_t idx)
         SBStream frame_desc_strm;
         sb_frame.GetDescription (frame_desc_strm);
         log->Printf ("SBThread(%p)::SetSelectedFrame (idx=%u) => SBFrame(%p): %s", 
-                     thread_sp.get(), idx, sb_frame.get(), frame_desc_strm.GetData());
+                     thread_sp.get(), idx, frame_sp.get(), frame_desc_strm.GetData());
     }
     return sb_frame;
 }

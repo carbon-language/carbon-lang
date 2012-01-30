@@ -540,17 +540,12 @@ protected:
 
     SBTarget (const lldb::TargetSP& target_sp);
 
+    lldb::TargetSP
+    GetSP () const;
+
     void
-    reset (const lldb::TargetSP& target_sp);
+    SetSP (const lldb::TargetSP& target_sp);
 
-    lldb_private::Target *
-    operator ->() const;
-
-    lldb_private::Target *
-    get() const;
-
-    const lldb::TargetSP &
-    get_sp () const;
 
 private:
     //------------------------------------------------------------------

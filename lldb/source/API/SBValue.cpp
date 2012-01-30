@@ -88,6 +88,8 @@ SBValue::GetError()
     
     if (m_opaque_sp.get())
         sb_error.SetError(m_opaque_sp->GetError());
+    else
+        sb_error.SetErrorString("error: invalid value");
     
     return sb_error;
 }
@@ -833,46 +835,44 @@ SBValue::GetOpaqueType()
 lldb::SBTarget
 SBValue::GetTarget()
 {
-    SBTarget result;
+    SBTarget sb_target;
+    TargetSP target_sp;
     if (m_opaque_sp)
     {
-        if (m_opaque_sp->GetUpdatePoint().GetTargetSP())
-        {
-            result = SBTarget(lldb::TargetSP(m_opaque_sp->GetUpdatePoint().GetTargetSP()));
-        }
+        target_sp = m_opaque_sp->GetUpdatePoint().GetTargetSP();
+        sb_target.SetSP (target_sp);
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
-        if (result.get() == NULL)
+        if (target_sp.get() == NULL)
             log->Printf ("SBValue(%p)::GetTarget () => NULL", m_opaque_sp.get());
         else
-            log->Printf ("SBValue(%p)::GetTarget () => %p", m_opaque_sp.get(), result.get());
+            log->Printf ("SBValue(%p)::GetTarget () => %p", m_opaque_sp.get(), target_sp.get());
     }
-    return result;
+    return sb_target;
 }
 
 lldb::SBProcess
 SBValue::GetProcess()
 {
-    SBProcess result;
+    SBProcess sb_process;
+    ProcessSP process_sp;
     if (m_opaque_sp)
     {
-        Target* target = m_opaque_sp->GetUpdatePoint().GetTargetSP().get();
-        if (target)
-        {
-            result = SBProcess(lldb::ProcessSP(target->GetProcessSP()));
-        }
+        process_sp = m_opaque_sp->GetUpdatePoint().GetProcessSP();
+        if (process_sp)
+            sb_process.SetSP (process_sp);
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
-        if (result.get() == NULL)
+        if (process_sp.get() == NULL)
             log->Printf ("SBValue(%p)::GetProcess () => NULL", m_opaque_sp.get());
         else
-            log->Printf ("SBValue(%p)::GetProcess () => %p", m_opaque_sp.get(), result.get());
+            log->Printf ("SBValue(%p)::GetProcess () => %p", m_opaque_sp.get(), process_sp.get());
     }
-    return result;
+    return sb_process;
 }
 
 lldb::SBThread
@@ -902,23 +902,25 @@ SBValue::GetThread()
 lldb::SBFrame
 SBValue::GetFrame()
 {
-    SBFrame result;
+    SBFrame sb_frame;
+    StackFrameSP frame_sp;
     if (m_opaque_sp)
     {
         if (m_opaque_sp->GetExecutionContextScope())
         {
-            result.SetFrame (m_opaque_sp->GetExecutionContextScope()->CalculateStackFrame()->shared_from_this());
+            frame_sp = m_opaque_sp->GetExecutionContextScope()->CalculateStackFrame()->shared_from_this();
+            sb_frame.SetFrameSP (frame_sp);
         }
     }
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
     {
-        if (result.get() == NULL)
+        if (frame_sp.get() == NULL)
             log->Printf ("SBValue(%p)::GetFrame () => NULL", m_opaque_sp.get());
         else
-            log->Printf ("SBValue(%p)::GetFrame () => %p", m_opaque_sp.get(), result.get());
+            log->Printf ("SBValue(%p)::GetFrame () => %p", m_opaque_sp.get(), frame_sp.get());
     }
-    return result;
+    return sb_frame;
 }
 
 
@@ -1191,17 +1193,25 @@ SBValue::WatchValue(bool read, bool write, bool watch_pointee)
     SBWatchpoint sb_wp_empty;
 
     // If the SBValue is not valid, there's no point in even trying to watch it.
-    if (!IsValid() || !GetFrame().IsValid())
+    if (!IsValid())
         return sb_wp_empty;
 
     // Read and Write cannot both be false.
     if (!read && !write)
         return sb_wp_empty;
-
+    
     // If we are watching the pointee, check that the SBValue is a pointer type.
     if (watch_pointee && !GetType().IsPointerType())
         return sb_wp_empty;
 
+    TargetSP target_sp (GetTarget().GetSP());
+    if (!target_sp)
+        return sb_wp_empty;
+    
+    StackFrameSP frame_sp (GetFrame().GetFrameSP());
+    if (!frame_sp)
+        return sb_wp_empty;
+    
     addr_t addr;
     size_t size;
     if (watch_pointee) {
@@ -1218,12 +1228,11 @@ SBValue::WatchValue(bool read, bool write, bool watch_pointee)
 
     uint32_t watch_type = (read ? LLDB_WATCH_TYPE_READ : 0) |
         (write ? LLDB_WATCH_TYPE_WRITE : 0);
-    WatchpointSP wp_sp = GetFrame().m_opaque_sp->GetThread().GetProcess().GetTarget().
-        CreateWatchpoint(addr, size, watch_type);
+    WatchpointSP wp_sp = target_sp->CreateWatchpoint(addr, size, watch_type);
 
     if (wp_sp) {
         // StackFrame::GetInScopeVariableList(true) to get file globals as well.
-        VariableListSP var_list_sp(GetFrame().m_opaque_sp->GetInScopeVariableList(true));
+        VariableListSP var_list_sp(frame_sp->GetInScopeVariableList(true));
         VariableSP var_sp = var_list_sp->FindVariable(ConstString(GetName()));
         if (var_sp && var_sp->GetDeclaration().GetFile()) {
             StreamString ss;

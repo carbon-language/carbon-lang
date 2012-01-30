@@ -741,7 +741,7 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
 Process::Process(Target &target, Listener &listener) :
     UserID (LLDB_INVALID_PROCESS_ID),
     Broadcaster ("lldb.process"),
-    ProcessInstanceSettings (*GetSettingsController()),
+    ProcessInstanceSettings (GetSettingsController()),
     m_target (target),
     m_public_state (eStateUnloaded),
     m_private_state (eStateUnloaded),
@@ -3666,8 +3666,21 @@ Process::SettingsTerminate ()
 UserSettingsControllerSP &
 Process::GetSettingsController ()
 {
-    static UserSettingsControllerSP g_settings_controller;
-    return g_settings_controller;
+    static UserSettingsControllerSP g_settings_controller_sp;
+    if (!g_settings_controller_sp)
+    {
+        g_settings_controller_sp.reset (new Process::SettingsController);
+        // The first shared pointer to Process::SettingsController in
+        // g_settings_controller_sp must be fully created above so that 
+        // the TargetInstanceSettings can use a weak_ptr to refer back 
+        // to the master setttings controller
+        InstanceSettingsSP default_instance_settings_sp (new ProcessInstanceSettings (g_settings_controller_sp, 
+                                                                                      false,
+                                                                                      InstanceSettings::GetDefaultName().AsCString()));
+        g_settings_controller_sp->SetDefaultInstanceSettings (default_instance_settings_sp);
+    }
+    return g_settings_controller_sp;
+
 }
 
 void
@@ -4350,9 +4363,6 @@ Process::GetThreadStatus (Stream &strm,
 Process::SettingsController::SettingsController () :
     UserSettingsController ("process", Target::GetSettingsController())
 {
-    m_default_settings.reset (new ProcessInstanceSettings (*this, 
-                                                           false,
-                                                           InstanceSettings::GetDefaultName().AsCString()));
 }
 
 Process::SettingsController::~SettingsController ()
@@ -4362,10 +4372,9 @@ Process::SettingsController::~SettingsController ()
 lldb::InstanceSettingsSP
 Process::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
-    ProcessInstanceSettings *new_settings = new ProcessInstanceSettings (*GetSettingsController(),
-                                                                         false, 
-                                                                         instance_name);
-    lldb::InstanceSettingsSP new_settings_sp (new_settings);
+    lldb::InstanceSettingsSP new_settings_sp (new ProcessInstanceSettings (GetSettingsController(),
+                                                                           false, 
+                                                                           instance_name));
     return new_settings_sp;
 }
 
@@ -4375,11 +4384,11 @@ Process::SettingsController::CreateInstanceSettings (const char *instance_name)
 
 ProcessInstanceSettings::ProcessInstanceSettings
 (
-    UserSettingsController &owner, 
+    const UserSettingsControllerSP &owner_sp, 
     bool live_instance, 
     const char *name
 ) :
-    InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance)
+    InstanceSettings (owner_sp, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance)
 {
     // CopyInstanceSettings is a pure virtual function in InstanceSettings; it therefore cannot be called
     // until the vtables for ProcessInstanceSettings are properly set up, i.e. AFTER all the initializers.
@@ -4389,25 +4398,27 @@ ProcessInstanceSettings::ProcessInstanceSettings
     if (GetInstanceName () == InstanceSettings::InvalidName())
     {
         ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
-        m_owner.RegisterInstanceSettings (this);
+        owner_sp->RegisterInstanceSettings (this);
     }
     
     if (live_instance)
     {
-        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
+        const lldb::InstanceSettingsSP &pending_settings = owner_sp->FindPendingSettings (m_instance_name);
         CopyInstanceSettings (pending_settings,false);
-        //m_owner.RemovePendingSettings (m_instance_name);
     }
 }
 
 ProcessInstanceSettings::ProcessInstanceSettings (const ProcessInstanceSettings &rhs) :
-    InstanceSettings (*Process::GetSettingsController(), CreateInstanceName().AsCString())
+    InstanceSettings (Process::GetSettingsController(), CreateInstanceName().AsCString())
 {
     if (m_instance_name != InstanceSettings::GetDefaultName())
     {
-        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
-        CopyInstanceSettings (pending_settings,false);
-        m_owner.RemovePendingSettings (m_instance_name);
+        UserSettingsControllerSP owner_sp (m_owner_wp.lock());
+        if (owner_sp)
+        {
+            CopyInstanceSettings (owner_sp->FindPendingSettings (m_instance_name), false);
+            owner_sp->RemovePendingSettings (m_instance_name);
+        }
     }
 }
 

@@ -52,7 +52,7 @@ public:
     };
     
 
-    DebuggerInstanceSettings (UserSettingsController &owner, bool live_instance = true, const char *name = NULL);
+    DebuggerInstanceSettings (const lldb::UserSettingsControllerSP &m_owner_sp, bool live_instance = true, const char *name = NULL);
 
     DebuggerInstanceSettings (const DebuggerInstanceSettings &rhs);
 

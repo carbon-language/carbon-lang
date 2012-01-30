@@ -19,6 +19,7 @@ namespace lldb {
 class SBFrame
 {
 public:
+    typedef SHARED_PTR(lldb_private::StackFrameImpl) StackFrameImplSP;
     SBFrame ();
 
     SBFrame (const lldb::SBFrame &rhs);
@@ -207,24 +208,13 @@ private:
     friend class lldb_private::ScriptInterpreterPython;
 #endif
 
-#ifndef SWIG
-
-    lldb_private::StackFrame *
-    operator->() const;
-
-    // Mimic shared pointer...
-    lldb_private::StackFrame *
-    get() const;
-
-    lldb::StackFrameSP &
-    get_sp();
-    
-#endif
+    lldb::StackFrameSP
+    GetFrameSP() const;
 
     void
-    SetFrame (const lldb::StackFrameSP &lldb_object_sp);
+    SetFrameSP (const lldb::StackFrameSP &lldb_object_sp);
 
-    lldb::StackFrameSP m_opaque_sp;
+    StackFrameImplSP m_opaque_sp;
 };
 
 } // namespace lldb

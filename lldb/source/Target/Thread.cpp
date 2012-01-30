@@ -45,7 +45,7 @@ using namespace lldb_private;
 
 Thread::Thread (Process &process, lldb::tid_t tid) :
     UserID (tid),
-    ThreadInstanceSettings (*GetSettingsController()),
+    ThreadInstanceSettings (GetSettingsController()),
     m_process (process),
     m_actual_stop_info_sp (),
     m_index_id (process.GetNextThreadIndexID ()),
@@ -1033,9 +1033,7 @@ Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
 void
 Thread::SettingsInitialize ()
 {
-    UserSettingsControllerSP &usc = GetSettingsController();
-    usc.reset (new SettingsController);
-    UserSettingsController::InitializeSettingsController (usc,
+    UserSettingsController::InitializeSettingsController (GetSettingsController(),
                                                           SettingsController::global_settings_table,
                                                           SettingsController::instance_settings_table);
                                                           
@@ -1059,8 +1057,21 @@ Thread::SettingsTerminate ()
 UserSettingsControllerSP &
 Thread::GetSettingsController ()
 {
-    static UserSettingsControllerSP g_settings_controller;
-    return g_settings_controller;
+    static UserSettingsControllerSP g_settings_controller_sp;
+    if (!g_settings_controller_sp)
+    {
+        g_settings_controller_sp.reset (new Thread::SettingsController);
+        // The first shared pointer to Target::SettingsController in
+        // g_settings_controller_sp must be fully created above so that 
+        // the TargetInstanceSettings can use a weak_ptr to refer back 
+        // to the master setttings controller
+        InstanceSettingsSP default_instance_settings_sp (new ThreadInstanceSettings (g_settings_controller_sp, 
+                                                                                     false, 
+                                                                                     InstanceSettings::GetDefaultName().AsCString()));
+
+        g_settings_controller_sp->SetDefaultInstanceSettings (default_instance_settings_sp);
+    }
+    return g_settings_controller_sp;
 }
 
 void
@@ -1243,8 +1254,6 @@ Thread::GetUnwinder ()
 Thread::SettingsController::SettingsController () :
     UserSettingsController ("thread", Process::GetSettingsController())
 {
-    m_default_settings.reset (new ThreadInstanceSettings (*this, false, 
-                                                          InstanceSettings::GetDefaultName().AsCString()));
 }
 
 Thread::SettingsController::~SettingsController ()
@@ -1254,10 +1263,9 @@ Thread::SettingsController::~SettingsController ()
 lldb::InstanceSettingsSP
 Thread::SettingsController::CreateInstanceSettings (const char *instance_name)
 {
-    ThreadInstanceSettings *new_settings = new ThreadInstanceSettings (*GetSettingsController(),
-                                                                       false, 
-                                                                       instance_name);
-    lldb::InstanceSettingsSP new_settings_sp (new_settings);
+    lldb::InstanceSettingsSP new_settings_sp (new ThreadInstanceSettings (GetSettingsController(),
+                                                                          false, 
+                                                                          instance_name));
     return new_settings_sp;
 }
 
@@ -1266,8 +1274,8 @@ Thread::SettingsController::CreateInstanceSettings (const char *instance_name)
 // class ThreadInstanceSettings
 //--------------------------------------------------------------
 
-ThreadInstanceSettings::ThreadInstanceSettings (UserSettingsController &owner, bool live_instance, const char *name) :
-    InstanceSettings (owner, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance), 
+ThreadInstanceSettings::ThreadInstanceSettings (const UserSettingsControllerSP &owner_sp, bool live_instance, const char *name) :
+    InstanceSettings (owner_sp, name ? name : InstanceSettings::InvalidName().AsCString(), live_instance), 
     m_avoid_regexp_ap (),
     m_trace_enabled (false)
 {
@@ -1279,27 +1287,28 @@ ThreadInstanceSettings::ThreadInstanceSettings (UserSettingsController &owner, b
     if (GetInstanceName() == InstanceSettings::InvalidName())
     {
         ChangeInstanceName (std::string (CreateInstanceName().AsCString()));
-        m_owner.RegisterInstanceSettings (this);
+        owner_sp->RegisterInstanceSettings (this);
     }
 
     if (live_instance)
     {
-        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
-        CopyInstanceSettings (pending_settings,false);
-        //m_owner.RemovePendingSettings (m_instance_name);
+        CopyInstanceSettings (owner_sp->FindPendingSettings (m_instance_name),false);
     }
 }
 
 ThreadInstanceSettings::ThreadInstanceSettings (const ThreadInstanceSettings &rhs) :
-    InstanceSettings (*Thread::GetSettingsController(), CreateInstanceName().AsCString()),
+    InstanceSettings (Thread::GetSettingsController(), CreateInstanceName().AsCString()),
     m_avoid_regexp_ap (),
     m_trace_enabled (rhs.m_trace_enabled)
 {
     if (m_instance_name != InstanceSettings::GetDefaultName())
     {
-        const lldb::InstanceSettingsSP &pending_settings = m_owner.FindPendingSettings (m_instance_name);
-        CopyInstanceSettings (pending_settings,false);
-        m_owner.RemovePendingSettings (m_instance_name);
+        UserSettingsControllerSP owner_sp (m_owner_wp.lock());
+        if (owner_sp)
+        {
+            CopyInstanceSettings (owner_sp->FindPendingSettings (m_instance_name), false);
+            owner_sp->RemovePendingSettings (m_instance_name);
+        }
     }
     if (rhs.m_avoid_regexp_ap.get() != NULL)
         m_avoid_regexp_ap.reset(new RegularExpression(rhs.m_avoid_regexp_ap->GetText()));
