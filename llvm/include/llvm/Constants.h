@@ -581,7 +581,7 @@ class ConstantDataSequential : public Constant {
   ConstantDataSequential(const ConstantDataSequential &);    // DO NOT IMPLEMENT
 protected:
   explicit ConstantDataSequential(Type *ty, ValueTy VT, const char *Data)
-    : Constant(ty, VT, 0, 0), DataElements(Data) {}
+    : Constant(ty, VT, 0, 0), DataElements(Data), Next(0) {}
   ~ConstantDataSequential() { delete Next; }
   
   static Constant *getImpl(StringRef Bytes, Type *Ty);
