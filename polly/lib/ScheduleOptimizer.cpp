@@ -61,6 +61,11 @@ FusionStrategy("polly-opt-fusion",
                cl::desc("The fusion strategy to choose (min/max)"),
                cl::Hidden, cl::init("max"));
 
+static cl::opt<std::string>
+MaxizeBandDepth("polly-opt-maximize-bands",
+                cl::desc("Maxize the band depth (yes/no)"),
+                cl::Hidden, cl::init("yes"));
+
 namespace {
 
   class IslScheduleOptimizer : public ScopPass {
@@ -476,9 +481,21 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
     IslFusionStrategy = ISL_SCHEDULE_FUSE_MAX;
   }
 
+  int IslMaximizeBands;
+
+  if (MaxizeBandDepth == "yes") {
+    IslMaximizeBands = 1;
+  } else if (MaxizeBandDepth == "no") {
+    IslMaximizeBands = 0;
+  } else {
+    errs() << "warning: Option -polly-opt-maximize-bands should either be 'yes'"
+              " or 'no'. Falling back to default: 'yes'\n";
+    IslMaximizeBands = 1;
+  }
+
   isl_options_set_schedule_fuse(S.getIslCtx(), IslFusionStrategy);
   isl_options_set_schedule_max_constant_term(S.getIslCtx(), CONSTANT_BOUND);
-  isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), 1);
+  isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), IslMaximizeBands);
 
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_CONTINUE);
   schedule  = isl_union_set_compute_schedule(domain, validity, proximity);
