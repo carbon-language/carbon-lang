@@ -4846,21 +4846,16 @@ X86TargetLowering::LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
     int EltNo = (Offset - StartOffset) >> 2;
     int NumElems = VT.getVectorNumElements();
 
-    EVT CanonVT = VT.getSizeInBits() == 128 ? MVT::v4i32 : MVT::v8i32;
     EVT NVT = EVT::getVectorVT(*DAG.getContext(), PVT, NumElems);
     SDValue V1 = DAG.getLoad(NVT, dl, Chain, Ptr,
                              LD->getPointerInfo().getWithOffset(StartOffset),
                              false, false, false, 0);
 
-    // Canonicalize it to a v4i32 or v8i32 shuffle.
     SmallVector<int, 8> Mask;
     for (int i = 0; i < NumElems; ++i)
       Mask.push_back(EltNo);
 
-    V1 = DAG.getNode(ISD::BITCAST, dl, CanonVT, V1);
-    return DAG.getNode(ISD::BITCAST, dl, NVT,
-                       DAG.getVectorShuffle(CanonVT, dl, V1,
-                                            DAG.getUNDEF(CanonVT),&Mask[0]));
+    return DAG.getVectorShuffle(NVT, dl, V1, DAG.getUNDEF(NVT), &Mask[0]);
   }
 
   return SDValue();

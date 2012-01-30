@@ -96,3 +96,16 @@ define i32 @test10(<4 x i32> %a) nounwind {
   %r = extractelement <8 x i32> %b, i32 2
   ret i32 %r
 }
+
+define <4 x float> @test11(<4 x float> %a) nounwind  {
+; CHECK: pshufd $27
+  %tmp1 = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
+  ret <4 x float> %tmp1
+}
+
+define <4 x float> @test12(<4 x float>* %a) nounwind  {
+; CHECK: pshufd $27, (
+  %tmp0 = load <4 x float>* %a
+  %tmp1 = shufflevector <4 x float> %tmp0, <4 x float> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
+  ret <4 x float> %tmp1
+}
