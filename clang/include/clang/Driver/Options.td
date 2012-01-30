@@ -756,7 +756,7 @@ def stdlib_EQ : Joined<"-stdlib=">;
 def sub__library : JoinedOrSeparate<"-sub_library">;
 def sub__umbrella : JoinedOrSeparate<"-sub_umbrella">;
 def s : Flag<"-s">;
-def target : Separate<"-target">,
+def target : Separate<"-target">, Flags<[DriverOption]>,
   HelpText<"Generate code for the given target">;
 // We should deprecate the use of -ccc-host-triple, and then remove.
 def ccc_host_triple : Separate<"-ccc-host-triple">, Alias<target>;
