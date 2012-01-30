@@ -36,10 +36,6 @@ module __compiler_builtins [system] {
     header "stdint.h"
   }
 
-  explicit module tgmath {
-    header "tgmath.h"
-  }
-
   explicit module intel {
     requires x86
 
@@ -136,6 +132,7 @@ module __compiler_builtins [system] {
   }
 
   // FIXME: mm_malloc.h
+  // FIXME: tgmath.h
   // FIXME: unwind.h
 
   explicit module varargs {
