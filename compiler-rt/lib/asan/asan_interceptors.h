@@ -18,12 +18,17 @@
 
 #if defined(__APPLE__)
 # define WRAP(x) wrap_##x
+# define INTERCEPTOR_ATTRIBUTE
 #elif defined(_WIN32)
 // TODO(timurrrr): we're likely to use something else later on Windows.
 # define WRAP(x) wrap_##x
+# define INTERCEPTOR_ATTRIBUTE
 #else
 # define WRAP(x) x
+# define INTERCEPTOR_ATTRIBUTE __attribute__((visibility("default")))
 #endif
+
+struct sigaction;
 
 namespace __asan {
 
@@ -44,7 +49,8 @@ typedef int (*strncmp_f)(const char *s1, const char *s2, size_t size);
 typedef char* (*strncpy_f)(char *to, const char *from, size_t size);
 typedef size_t (*strnlen_f)(const char *s, size_t maxlen);
 typedef void *(*signal_f)(int signum, void *handler);
-typedef int (*sigaction_f)(int signum, const void *act, void *oldact);
+typedef int (*sigaction_f)(int signum, const struct sigaction *act,
+                           struct sigaction *oldact);
 
 // __asan::real_X() holds pointer to library implementation of X().
 extern index_f          real_index;

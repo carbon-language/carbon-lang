@@ -22,8 +22,6 @@
 
 #include <malloc.h>
 
-#define INTERCEPTOR_ATTRIBUTE __attribute__((visibility("default")))
-
 #ifdef ANDROID
 struct MallocDebug {
   void* (*malloc)(size_t bytes);

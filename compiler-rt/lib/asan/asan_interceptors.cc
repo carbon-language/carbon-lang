@@ -45,6 +45,7 @@
 // in __asan::real_f().
 #if defined(__APPLE__)
 // Include the declarations of the original functions.
+#include <signal.h>
 #include <string.h>
 #include <strings.h>
 
@@ -302,9 +303,7 @@ static void *asan_thread_start(void *arg) {
 
 #ifndef _WIN32
 extern "C"
-#ifndef __APPLE__
-__attribute__((visibility("default")))
-#endif
+INTERCEPTOR_ATTRIBUTE
 int WRAP(pthread_create)(pthread_t *thread, const pthread_attr_t *attr,
                          void *(*start_routine) (void *), void *arg) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
@@ -315,6 +314,7 @@ int WRAP(pthread_create)(pthread_t *thread, const pthread_attr_t *attr,
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 void *WRAP(signal)(int signum, void *handler) {
   if (!AsanInterceptsSignal(signum)) {
     return real_signal(signum, handler);
@@ -323,10 +323,9 @@ void *WRAP(signal)(int signum, void *handler) {
 }
 
 extern "C"
-int (sigaction)(int signum, const void *act, void *oldact);
-
-extern "C"
-int WRAP(sigaction)(int signum, const void *act, void *oldact) {
+INTERCEPTOR_ATTRIBUTE
+int WRAP(sigaction)(int signum, const struct sigaction *act,
+                    struct sigaction *oldact) {
   if (!AsanInterceptsSignal(signum)) {
     return real_sigaction(signum, act, oldact);
   }
@@ -344,25 +343,35 @@ static void UnpoisonStackFromHereToTop() {
   PoisonShadow(bottom, top - bottom, 0);
 }
 
-extern "C" void WRAP(longjmp)(void *env, int val) {
+extern "C"
+INTERCEPTOR_ATTRIBUTE
+void WRAP(longjmp)(void *env, int val) {
   UnpoisonStackFromHereToTop();
   real_longjmp(env, val);
 }
 
-extern "C" void WRAP(_longjmp)(void *env, int val) {
+extern "C"
+INTERCEPTOR_ATTRIBUTE
+void WRAP(_longjmp)(void *env, int val) {
   UnpoisonStackFromHereToTop();
   real__longjmp(env, val);
 }
 
-extern "C" void WRAP(siglongjmp)(void *env, int val) {
+extern "C"
+INTERCEPTOR_ATTRIBUTE
+void WRAP(siglongjmp)(void *env, int val) {
   UnpoisonStackFromHereToTop();
   real_siglongjmp(env, val);
 }
 
-extern "C" void __cxa_throw(void *a, void *b, void *c);
-
 #if ASAN_HAS_EXCEPTIONS == 1
-extern "C" void WRAP(__cxa_throw)(void *a, void *b, void *c) {
+#ifdef __APPLE__
+extern "C" void __cxa_throw(void *a, void *b, void *c);
+#endif  // __APPLE__
+
+extern "C"
+INTERCEPTOR_ATTRIBUTE
+void WRAP(__cxa_throw)(void *a, void *b, void *c) {
   CHECK(&real___cxa_throw);
   UnpoisonStackFromHereToTop();
   real___cxa_throw(a, b, c);
@@ -379,18 +388,26 @@ static void MlockIsUnsupported() {
   printed = true;
   Printf("INFO: AddressSanitizer ignores mlock/mlockall/munlock/munlockall\n");
 }
+
+INTERCEPTOR_ATTRIBUTE
 int mlock(const void *addr, size_t len) {
   MlockIsUnsupported();
   return 0;
 }
+
+INTERCEPTOR_ATTRIBUTE
 int munlock(const void *addr, size_t len) {
   MlockIsUnsupported();
   return 0;
 }
+
+INTERCEPTOR_ATTRIBUTE
 int mlockall(int flags) {
   MlockIsUnsupported();
   return 0;
 }
+
+INTERCEPTOR_ATTRIBUTE
 int munlockall(void) {
   MlockIsUnsupported();
   return 0;
@@ -410,6 +427,7 @@ static inline int CharCaseCmp(unsigned char c1, unsigned char c2) {
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 int WRAP(memcmp)(const void *a1, const void *a2, size_t size) {
   ENSURE_ASAN_INITED();
   unsigned char c1 = 0, c2 = 0;
@@ -427,6 +445,7 @@ int WRAP(memcmp)(const void *a1, const void *a2, size_t size) {
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 void *WRAP(memcpy)(void *to, const void *from, size_t size) {
   // memcpy is called during __asan_init() from the internals
   // of printf(...).
@@ -447,6 +466,7 @@ void *WRAP(memcpy)(void *to, const void *from, size_t size) {
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 void *WRAP(memmove)(void *to, const void *from, size_t size) {
   ENSURE_ASAN_INITED();
   if (FLAG_replace_intrin) {
@@ -457,6 +477,7 @@ void *WRAP(memmove)(void *to, const void *from, size_t size) {
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 void *WRAP(memset)(void *block, int c, size_t size) {
   // memset is called inside INTERCEPT_FUNCTION on Mac.
   if (asan_init_is_running) {
@@ -471,11 +492,13 @@ void *WRAP(memset)(void *block, int c, size_t size) {
 
 #ifndef __APPLE__
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 char *WRAP(index)(const char *str, int c)
   __attribute__((alias(WRAPPER_NAME(strchr))));
 #endif
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 char *WRAP(strchr)(const char *str, int c) {
   ENSURE_ASAN_INITED();
   char *result = real_strchr(str, c);
@@ -487,6 +510,7 @@ char *WRAP(strchr)(const char *str, int c) {
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 int WRAP(strcasecmp)(const char *s1, const char *s2) {
   ENSURE_ASAN_INITED();
   unsigned char c1, c2;
@@ -502,6 +526,7 @@ int WRAP(strcasecmp)(const char *s1, const char *s2) {
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 char *WRAP(strcat)(char *to, const char *from) {  // NOLINT
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
@@ -518,6 +543,7 @@ char *WRAP(strcat)(char *to, const char *from) {  // NOLINT
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 int WRAP(strcmp)(const char *s1, const char *s2) {
   if (!asan_inited) {
     return internal_strcmp(s1, s2);
@@ -535,6 +561,7 @@ int WRAP(strcmp)(const char *s1, const char *s2) {
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 char *WRAP(strcpy)(char *to, const char *from) {  // NOLINT
   // strcpy is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
@@ -552,6 +579,7 @@ char *WRAP(strcpy)(char *to, const char *from) {  // NOLINT
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 char *WRAP(strdup)(const char *s) {
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
@@ -562,6 +590,7 @@ char *WRAP(strdup)(const char *s) {
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 size_t WRAP(strlen)(const char *s) {
   // strlen is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
@@ -577,6 +606,7 @@ size_t WRAP(strlen)(const char *s) {
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 int WRAP(strncasecmp)(const char *s1, const char *s2, size_t size) {
   ENSURE_ASAN_INITED();
   unsigned char c1 = 0, c2 = 0;
@@ -592,6 +622,7 @@ int WRAP(strncasecmp)(const char *s1, const char *s2, size_t size) {
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 int WRAP(strncmp)(const char *s1, const char *s2, size_t size) {
   // strncmp is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
@@ -611,6 +642,7 @@ int WRAP(strncmp)(const char *s1, const char *s2, size_t size) {
 }
 
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 char *WRAP(strncpy)(char *to, const char *from, size_t size) {
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
@@ -624,6 +656,7 @@ char *WRAP(strncpy)(char *to, const char *from, size_t size) {
 
 #ifndef __APPLE__
 extern "C"
+INTERCEPTOR_ATTRIBUTE
 size_t WRAP(strnlen)(const char *s, size_t maxlen) {
   ENSURE_ASAN_INITED();
   size_t length = real_strnlen(s, maxlen);
