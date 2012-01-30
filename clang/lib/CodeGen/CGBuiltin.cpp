@@ -2063,61 +2063,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
 
   switch (BuiltinID) {
   default: return 0;
-  case X86::BI__builtin_ia32_pslldi128:
-  case X86::BI__builtin_ia32_psllqi128:
-  case X86::BI__builtin_ia32_psllwi128:
-  case X86::BI__builtin_ia32_psradi128:
-  case X86::BI__builtin_ia32_psrawi128:
-  case X86::BI__builtin_ia32_psrldi128:
-  case X86::BI__builtin_ia32_psrlqi128:
-  case X86::BI__builtin_ia32_psrlwi128: {
-    Ops[1] = Builder.CreateZExt(Ops[1], Int64Ty, "zext");
-    llvm::Type *Ty = llvm::VectorType::get(Int64Ty, 2);
-    llvm::Value *Zero = llvm::ConstantInt::get(Int32Ty, 0);
-    Ops[1] = Builder.CreateInsertElement(llvm::UndefValue::get(Ty),
-                                         Ops[1], Zero, "insert");
-    Ops[1] = Builder.CreateBitCast(Ops[1], Ops[0]->getType(), "bitcast");
-    const char *name = 0;
-    Intrinsic::ID ID = Intrinsic::not_intrinsic;
-
-    switch (BuiltinID) {
-    default: llvm_unreachable("Unsupported shift intrinsic!");
-    case X86::BI__builtin_ia32_pslldi128:
-      name = "pslldi";
-      ID = Intrinsic::x86_sse2_psll_d;
-      break;
-    case X86::BI__builtin_ia32_psllqi128:
-      name = "psllqi";
-      ID = Intrinsic::x86_sse2_psll_q;
-      break;
-    case X86::BI__builtin_ia32_psllwi128:
-      name = "psllwi";
-      ID = Intrinsic::x86_sse2_psll_w;
-      break;
-    case X86::BI__builtin_ia32_psradi128:
-      name = "psradi";
-      ID = Intrinsic::x86_sse2_psra_d;
-      break;
-    case X86::BI__builtin_ia32_psrawi128:
-      name = "psrawi";
-      ID = Intrinsic::x86_sse2_psra_w;
-      break;
-    case X86::BI__builtin_ia32_psrldi128:
-      name = "psrldi";
-      ID = Intrinsic::x86_sse2_psrl_d;
-      break;
-    case X86::BI__builtin_ia32_psrlqi128:
-      name = "psrlqi";
-      ID = Intrinsic::x86_sse2_psrl_q;
-      break;
-    case X86::BI__builtin_ia32_psrlwi128:
-      name = "psrlwi";
-      ID = Intrinsic::x86_sse2_psrl_w;
-      break;
-    }
-    llvm::Function *F = CGM.getIntrinsic(ID);
-    return Builder.CreateCall(F, Ops, name);
-  }
   case X86::BI__builtin_ia32_vec_init_v8qi:
   case X86::BI__builtin_ia32_vec_init_v4hi:
   case X86::BI__builtin_ia32_vec_init_v2si:
@@ -2126,58 +2071,6 @@ Value *CodeGenFunction::EmitX86BuiltinExpr(unsigned BuiltinID,
   case X86::BI__builtin_ia32_vec_ext_v2si:
     return Builder.CreateExtractElement(Ops[0],
                                   llvm::ConstantInt::get(Ops[1]->getType(), 0));
-  case X86::BI__builtin_ia32_pslldi:
-  case X86::BI__builtin_ia32_psllqi:
-  case X86::BI__builtin_ia32_psllwi:
-  case X86::BI__builtin_ia32_psradi:
-  case X86::BI__builtin_ia32_psrawi:
-  case X86::BI__builtin_ia32_psrldi:
-  case X86::BI__builtin_ia32_psrlqi:
-  case X86::BI__builtin_ia32_psrlwi: {
-    Ops[1] = Builder.CreateZExt(Ops[1], Int64Ty, "zext");
-    llvm::Type *Ty = llvm::VectorType::get(Int64Ty, 1);
-    Ops[1] = Builder.CreateBitCast(Ops[1], Ty, "bitcast");
-    const char *name = 0;
-    Intrinsic::ID ID = Intrinsic::not_intrinsic;
-
-    switch (BuiltinID) {
-    default: llvm_unreachable("Unsupported shift intrinsic!");
-    case X86::BI__builtin_ia32_pslldi:
-      name = "pslldi";
-      ID = Intrinsic::x86_mmx_psll_d;
-      break;
-    case X86::BI__builtin_ia32_psllqi:
-      name = "psllqi";
-      ID = Intrinsic::x86_mmx_psll_q;
-      break;
-    case X86::BI__builtin_ia32_psllwi:
-      name = "psllwi";
-      ID = Intrinsic::x86_mmx_psll_w;
-      break;
-    case X86::BI__builtin_ia32_psradi:
-      name = "psradi";
-      ID = Intrinsic::x86_mmx_psra_d;
-      break;
-    case X86::BI__builtin_ia32_psrawi:
-      name = "psrawi";
-      ID = Intrinsic::x86_mmx_psra_w;
-      break;
-    case X86::BI__builtin_ia32_psrldi:
-      name = "psrldi";
-      ID = Intrinsic::x86_mmx_psrl_d;
-      break;
-    case X86::BI__builtin_ia32_psrlqi:
-      name = "psrlqi";
-      ID = Intrinsic::x86_mmx_psrl_q;
-      break;
-    case X86::BI__builtin_ia32_psrlwi:
-      name = "psrlwi";
-      ID = Intrinsic::x86_mmx_psrl_w;
-      break;
-    }
-    llvm::Function *F = CGM.getIntrinsic(ID);
-    return Builder.CreateCall(F, Ops, name);
-  }
   case X86::BI__builtin_ia32_ldmxcsr: {
     llvm::Type *PtrTy = Int8PtrTy;
     Value *One = llvm::ConstantInt::get(Int32Ty, 1);
