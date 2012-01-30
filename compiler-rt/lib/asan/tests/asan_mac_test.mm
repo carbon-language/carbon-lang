@@ -55,8 +55,7 @@ char kStartupStr[] =
 
 +(void) load {
   for (int i = 0; i < strlen(kStartupStr); i++) {
-    // TODO: this is currently broken, see Issue 33.
-    // access_memory(&kStartupStr[i]);  // make sure no optimizations occur.
+    access_memory(&kStartupStr[i]);  // make sure no optimizations occur.
   }
   // Don't print anything here not to interfere with the death tests.
 }
