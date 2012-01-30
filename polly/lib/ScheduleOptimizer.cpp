@@ -62,8 +62,8 @@ FusionStrategy("polly-opt-fusion",
                cl::Hidden, cl::init("min"));
 
 static cl::opt<std::string>
-MaxizeBandDepth("polly-opt-maximize-bands",
-                cl::desc("Maxize the band depth (yes/no)"),
+MaximizeBandDepth("polly-opt-maximize-bands",
+                cl::desc("Maximize the band depth (yes/no)"),
                 cl::Hidden, cl::init("yes"));
 
 namespace {
@@ -483,9 +483,9 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   int IslMaximizeBands;
 
-  if (MaxizeBandDepth == "yes") {
+  if (MaximizeBandDepth == "yes") {
     IslMaximizeBands = 1;
-  } else if (MaxizeBandDepth == "no") {
+  } else if (MaximizeBandDepth == "no") {
     IslMaximizeBands = 0;
   } else {
     errs() << "warning: Option -polly-opt-maximize-bands should either be 'yes'"
