@@ -56,6 +56,11 @@ SimplifyDeps("polly-opt-simplify-deps",
              cl::desc("Dependences should be simplified (yes/no)"),
              cl::Hidden, cl::init("yes"));
 
+static cl::opt<std::string>
+FusionStrategy("polly-opt-fusion",
+               cl::desc("The fusion strategy to choose (min/max)"),
+               cl::Hidden, cl::init("max"));
+
 namespace {
 
   class IslScheduleOptimizer : public ScopPass {
@@ -459,6 +464,19 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   DEBUG(dbgs() << "Validity := "; isl_union_map_dump(validity);
         dbgs() << ";\n");
 
+  int IslFusionStrategy;
+
+  if (FusionStrategy == "max") {
+    IslFusionStrategy = ISL_SCHEDULE_FUSE_MAX;
+  } else if (FusionStrategy == "min") {
+    IslFusionStrategy = ISL_SCHEDULE_FUSE_MIN;
+  } else {
+    errs() << "warning: Unknown fusion strategy. Falling back to maximal "
+              "fusion.\n";
+    IslFusionStrategy = ISL_SCHEDULE_FUSE_MAX;
+  }
+
+  isl_options_set_schedule_fuse(S.getIslCtx(), IslFusionStrategy);
   isl_options_set_schedule_max_constant_term(S.getIslCtx(), CONSTANT_BOUND);
   isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), 1);
 
