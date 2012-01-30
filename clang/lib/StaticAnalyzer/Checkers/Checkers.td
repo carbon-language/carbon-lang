@@ -39,6 +39,7 @@ def OSXExperimental : Package<"osx">, InPackage<Experimental>, Hidden;
 def Cocoa : Package<"cocoa">, InPackage<OSX>;
 def CocoaExperimental : Package<"cocoa">, InPackage<OSXExperimental>, Hidden;
 def CoreFoundation : Package<"coreFoundation">, InPackage<OSX>;
+def Containers : Package<"Containers">, InPackage<CoreFoundation>;
 
 def LLVM : Package<"llvm">;
 def Debug : Package<"debug">;
@@ -364,10 +365,6 @@ def RetainCountChecker : Checker<"RetainCount">,
   HelpText<"Check for leaks and improper reference count management">,
   DescFile<"RetainCountChecker.cpp">;
 
-def ObjCContainersASTChecker : Checker<"CFContainersSyntax">,
-  HelpText<"Check for common pitfalls when using 'CFArray', 'CFDictionary', 'CFSet' APIs">,
-  DescFile<"ObjCContainersASTChecker.cpp">;  
-
 } // end "cocoa"
 
 let ParentPackage = CocoaExperimental in {
@@ -401,6 +398,11 @@ def CFErrorChecker : Checker<"CFError">,
   DescFile<"NSErrorChecker.cpp">;
 }
 
+let ParentPackage = Containers in {
+def ObjCContainersASTChecker : Checker<"PointerSizedValues">,
+  HelpText<"Warns if 'CFArray', 'CFDictionary', 'CFSet' are created with non-pointer-size values">,
+  DescFile<"ObjCContainersASTChecker.cpp">;  
+}
 //===----------------------------------------------------------------------===//
 // Checkers for LLVM development.
 //===----------------------------------------------------------------------===//

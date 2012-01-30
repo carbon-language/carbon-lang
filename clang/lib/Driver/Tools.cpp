@@ -1352,7 +1352,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
       CmdArgs.push_back("-analyzer-checker=deadcode");
       
       // Enable the following experimental checkers for testing. 
-      CmdArgs.push_back("-analyzer-checker=experimental.osx.cocoa.ContainerAPI");
       CmdArgs.push_back("-analyzer-checker=security.insecureAPI.UncheckedReturn");
       CmdArgs.push_back("-analyzer-checker=security.insecureAPI.getpw");
       CmdArgs.push_back("-analyzer-checker=security.insecureAPI.gets");
