@@ -3323,7 +3323,10 @@ static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
   if (TLI.isLittleEndian())
     Offset = Offset + MSB - 1;
   for (unsigned i = 0; i != MSB; ++i) {
-    Val = (Val << 8) | (unsigned char)Str[Offset];
+    Val = (Val << 8);
+    
+    if (Offset < Str.size())
+      Val |= (unsigned char)Str[Offset];
     Offset += TLI.isLittleEndian() ? -1 : 1;
   }
   return DAG.getConstant(Val, VT);
@@ -3354,9 +3357,12 @@ static bool isMemSrcFromString(SDValue Src, std::string &Str) {
   if (!G)
     return false;
 
-  const GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
-  if (GV && GetConstantStringInfo(GV, Str, SrcDelta, false))
-    return true;
+  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal()))
+    if (GetConstantStringInfo(GV, Str, SrcDelta)) {
+      // The nul can also be read.
+      Str.push_back(0);
+      return true;
+    }
 
   return false;
 }
