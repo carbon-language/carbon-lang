@@ -5326,6 +5326,7 @@ TreeTransform<Derived>::TransformIndirectGotoStmt(IndirectGotoStmt *S) {
   ExprResult Target = getDerived().TransformExpr(S->getTarget());
   if (Target.isInvalid())
     return StmtError();
+  Target = SemaRef.MaybeCreateExprWithCleanups(Target.take());
 
   if (!getDerived().AlwaysRebuild() &&
       Target.get() == S->getTarget())
