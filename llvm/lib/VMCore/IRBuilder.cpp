@@ -24,7 +24,7 @@ using namespace llvm;
 /// specified.  If Name is specified, it is the name of the global variable
 /// created.
 Value *IRBuilderBase::CreateGlobalString(StringRef Str, const Twine &Name) {
-  Constant *StrConstant = ConstantArray::get(Context, Str, true);
+  Constant *StrConstant = ConstantDataArray::getString(Context, Str);
   Module &M = *BB->getParent()->getParent();
   GlobalVariable *GV = new GlobalVariable(M, StrConstant->getType(),
                                           true, GlobalValue::PrivateLinkage,

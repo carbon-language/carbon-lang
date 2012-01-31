@@ -352,17 +352,6 @@ public:
   // ConstantArray accessors
   static Constant *get(ArrayType *T, ArrayRef<Constant*> V);
                              
-  /// This method constructs a ConstantArray and initializes it with a text
-  /// string. The default behavior (AddNull==true) causes a null terminator to
-  /// be placed at the end of the array. This effectively increases the length
-  /// of the array by one (you've been warned).  However, in some situations 
-  /// this is not desired so if AddNull==false then the string is copied without
-  /// null termination.
-  
-  // FIXME Remove this.
-  static Constant *get(LLVMContext &Context, StringRef Initializer,
-                       bool AddNull = true);
-  
   /// Transparently provide more efficient getOperand methods.
   DECLARE_TRANSPARENT_OPERAND_ACCESSORS(Constant);
 

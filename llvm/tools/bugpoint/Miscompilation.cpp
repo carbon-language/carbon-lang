@@ -820,7 +820,8 @@ static void CleanupAndPrepareModules(BugDriver &BD, Module *&Test,
       // Don't forward functions which are external in the test module too.
       if (TestFn && !TestFn->isDeclaration()) {
         // 1. Add a string constant with its name to the global file
-        Constant *InitArray = ConstantArray::get(F->getContext(), F->getName());
+        Constant *InitArray =
+          ConstantDataArray::getString(F->getContext(), F->getName());
         GlobalVariable *funcName =
           new GlobalVariable(*Safe, InitArray->getType(), true /*isConstant*/,
                              GlobalValue::InternalLinkage, InitArray,

@@ -780,12 +780,6 @@ Constant *ConstantArray::get(ArrayType *Ty, ArrayRef<Constant*> V) {
   return pImpl->ArrayConstants.getOrCreate(Ty, V);
 }
 
-// FIXME: Remove this method.
-Constant *ConstantArray::get(LLVMContext &Context, StringRef Str,
-                             bool AddNull) {
-  return ConstantDataArray::getString(Context, Str, AddNull);
-}
-
 /// getTypeForElements - Return an anonymous struct type to use for a constant
 /// with the specified set of elements.  The list must not be empty.
 StructType *ConstantStruct::getTypeForElements(LLVMContext &Context,

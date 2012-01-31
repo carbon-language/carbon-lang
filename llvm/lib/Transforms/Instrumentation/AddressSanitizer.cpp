@@ -213,7 +213,7 @@ const char *AddressSanitizer::getPassName() const {
 
 // Create a constant for Str so that we can pass it to the run-time lib.
 static GlobalVariable *createPrivateGlobalForString(Module &M, StringRef Str) {
-  Constant *StrConst = ConstantArray::get(M.getContext(), Str);
+  Constant *StrConst = ConstantDataArray::getString(M.getContext(), Str);
   return new GlobalVariable(M, StrConst->getType(), true,
                             GlobalValue::PrivateLinkage, StrConst, "");
 }
