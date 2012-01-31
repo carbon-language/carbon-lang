@@ -43,7 +43,7 @@ $ alias pollycc clang -Xclang -load -Xclang ${POLLY_BUILD_DIR}/lib/LLVMPolly.so
 Optimizing with Polly is as easy as ading <b>-O3 -polly</b> to your compiler
 flags (Polly is only available at -O3).
 
-<pre class="code">pollycc -O3 -polly file.c</pre>
+<pre class="code">pollycc -O3 -mllvm -polly file.c</pre>
 
 <h2>Automatic OpenMP code generation</h2>
 
