@@ -373,31 +373,6 @@ public:
     return reinterpret_cast<ArrayType*>(Value::getType());
   }
 
-  // FIXME: String methods will eventually be removed.
-  
-  
-  /// isString - This method returns true if the array is an array of i8 and
-  /// the elements of the array are all ConstantInt's.
-  bool isString() const;
-
-  /// isCString - This method returns true if the array is a string (see
-  /// @verbatim
-  /// isString) and it ends in a null byte \0 and does not contains any other
-  /// @endverbatim
-  /// null bytes except its terminator.
-  bool isCString() const;
-
-  /// getAsString - If this array is isString(), then this method converts the
-  /// array to an std::string and returns it.  Otherwise, it asserts out.
-  ///
-  std::string getAsString() const;
-
-  /// getAsCString - If this array is isCString(), then this method converts the
-  /// array (without the trailing null byte) to an std::string and returns it.
-  /// Otherwise, it asserts out.
-  ///
-  std::string getAsCString() const;
-
   virtual void destroyConstant();
   virtual void replaceUsesOfWithOnConstant(Value *From, Value *To, Use *U);
 

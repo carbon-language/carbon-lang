@@ -1675,31 +1675,18 @@ static void EmitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
 
 static void EmitGlobalConstantArray(const ConstantArray *CA, unsigned AddrSpace,
                                     AsmPrinter &AP) {
-  if (AddrSpace != 0 || !CA->isString()) {
-    // Not a string.  Print the values in successive locations.
+  // See if we can aggregate some values.  Make sure it can be
+  // represented as a series of bytes of the constant value.
+  int Value = isRepeatedByteSequence(CA, AP.TM);
 
-    // See if we can aggregate some values.  Make sure it can be
-    // represented as a series of bytes of the constant value.
-    int Value = isRepeatedByteSequence(CA, AP.TM);
-
-    if (Value != -1) {
-      uint64_t Bytes = AP.TM.getTargetData()->getTypeAllocSize(CA->getType());
-      AP.OutStreamer.EmitFill(Bytes, Value, AddrSpace);
-    }
-    else {
-      for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
-        EmitGlobalConstantImpl(CA->getOperand(i), AddrSpace, AP);
-    }
-    return;
+  if (Value != -1) {
+    uint64_t Bytes = AP.TM.getTargetData()->getTypeAllocSize(CA->getType());
+    AP.OutStreamer.EmitFill(Bytes, Value, AddrSpace);
   }
-
-  // Otherwise, it can be emitted as .ascii.
-  SmallVector<char, 128> TmpVec;
-  TmpVec.reserve(CA->getNumOperands());
-  for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
-    TmpVec.push_back(cast<ConstantInt>(CA->getOperand(i))->getZExtValue());
-
-  AP.OutStreamer.EmitBytes(StringRef(TmpVec.data(), TmpVec.size()), AddrSpace);
+  else {
+    for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
+      EmitGlobalConstantImpl(CA->getOperand(i), AddrSpace, AP);
+  }
 }
 
 static void EmitGlobalConstantVector(const ConstantVector *CV,

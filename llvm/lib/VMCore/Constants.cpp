@@ -1201,69 +1201,6 @@ void ConstantArray::destroyConstant() {
   destroyConstantImpl();
 }
 
-/// isString - This method returns true if the array is an array of i8, and 
-/// if the elements of the array are all ConstantInt's.
-bool ConstantArray::isString() const {
-  // Check the element type for i8...
-  if (!getType()->getElementType()->isIntegerTy(8))
-    return false;
-  // Check the elements to make sure they are all integers, not constant
-  // expressions.
-  for (unsigned i = 0, e = getNumOperands(); i != e; ++i)
-    if (!isa<ConstantInt>(getOperand(i)))
-      return false;
-  return true;
-}
-
-/// isCString - This method returns true if the array is a string (see
-/// isString) and it ends in a null byte \\0 and does not contains any other
-/// null bytes except its terminator.
-bool ConstantArray::isCString() const {
-  // Check the element type for i8...
-  if (!getType()->getElementType()->isIntegerTy(8))
-    return false;
-
-  // Last element must be a null.
-  if (!getOperand(getNumOperands()-1)->isNullValue())
-    return false;
-  // Other elements must be non-null integers.
-  for (unsigned i = 0, e = getNumOperands()-1; i != e; ++i) {
-    if (!isa<ConstantInt>(getOperand(i)))
-      return false;
-    if (getOperand(i)->isNullValue())
-      return false;
-  }
-  return true;
-}
-
-
-/// convertToString - Helper function for getAsString() and getAsCString().
-static std::string convertToString(const User *U, unsigned len) {
-  std::string Result;
-  Result.reserve(len);
-  for (unsigned i = 0; i != len; ++i)
-    Result.push_back((char)cast<ConstantInt>(U->getOperand(i))->getZExtValue());
-  return Result;
-}
-
-/// getAsString - If this array is isString(), then this method converts the
-/// array to an std::string and returns it.  Otherwise, it asserts out.
-///
-std::string ConstantArray::getAsString() const {
-  assert(isString() && "Not a string!");
-  return convertToString(this, getNumOperands());
-}
-
-
-/// getAsCString - If this array is isCString(), then this method converts the
-/// array (without the trailing null byte) to an std::string and returns it.
-/// Otherwise, it asserts out.
-///
-std::string ConstantArray::getAsCString() const {
-  assert(isCString() && "Not a string!");
-  return convertToString(this, getNumOperands() - 1);
-}
-
 
 //---- ConstantStruct::get() implementation...
 //
