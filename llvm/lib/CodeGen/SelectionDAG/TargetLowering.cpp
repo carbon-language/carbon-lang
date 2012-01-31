@@ -1612,15 +1612,17 @@ bool TargetLowering::SimplifyDemandedBits(SDValue Op,
 
     APInt MsbMask = APInt::getHighBitsSet(BitWidth, 1);
     // If we only care about the highest bit, don't bother shifting right.
-    if (MsbMask ==  DemandedMask) {
+    if (MsbMask == DemandedMask) {
       unsigned ShAmt = ExVT.getScalarType().getSizeInBits();
       SDValue InOp = Op.getOperand(0);
-      // In this code we may handle vector types. We can't use the
-      // getShiftAmountTy API because it only works on scalars.
-      // We use the shift value type because we know that its an integer
-      // with enough bits.
-      SDValue ShiftAmt = TLO.DAG.getConstant(BitWidth - ShAmt,
-                                             Op.getValueType());
+
+      // Compute the correct shift amount type, which must be getShiftAmountTy
+      // for scalar types after legalization.
+      EVT ShiftAmtTy = Op.getValueType();
+      if (TLO.LegalTypes() && !ShiftAmtTy.isVector())
+        ShiftAmtTy = getShiftAmountTy(ShiftAmtTy);
+
+      SDValue ShiftAmt = TLO.DAG.getConstant(BitWidth - ShAmt, ShiftAmtTy);
       return TLO.CombineTo(Op, TLO.DAG.getNode(ISD::SHL, dl,
                                             Op.getValueType(), InOp, ShiftAmt));
     }
