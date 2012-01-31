@@ -570,10 +570,9 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     // Otherwise, create the new invoke instruction.
     ImmutableCallSite CS(CI);
     SmallVector<Value*, 8> InvokeArgs(CS.arg_begin(), CS.arg_end());
-    InvokeInst *II =
-      InvokeInst::Create(CI->getCalledValue(), Split,
-                         Invoke.getOuterUnwindDest(),
-                         InvokeArgs, CI->getName(), BB);
+    InvokeInst *II = InvokeInst::Create(CI->getCalledValue(), Split,
+                                        Invoke.getOuterUnwindDest(),
+                                        InvokeArgs, CI->getName(), BB);
     II->setCallingConv(CI->getCallingConv());
     II->setAttributes(CI->getAttributes());
     
@@ -581,17 +580,17 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     // updates the CallGraph if present, because it uses a WeakVH.
     CI->replaceAllUsesWith(II);
 
-    Split->getInstList().pop_front();  // Delete the original call
+    // Delete the original call
+    Split->getInstList().pop_front();
 
-    // Update any PHI nodes in the exceptional block to indicate that
-    // there is now a new entry in them.
+    // Update any PHI nodes in the exceptional block to indicate that there is
+    // now a new entry in them.
     Invoke.addIncomingPHIValuesFor(BB);
     return false;
   }
 
   return false;
 }
-  
 
 /// HandleInlinedInvoke - If we inlined an invoke site, we need to convert calls
 /// in the body of the inlined function into invokes and turn unwind
@@ -874,15 +873,15 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
   }
 }
 
-// InlineFunction - This function inlines the called function into the basic
-// block of the caller.  This returns false if it is not possible to inline this
-// call.  The program is still in a well defined state if this occurs though.
-//
-// Note that this only does one level of inlining.  For example, if the
-// instruction 'call B' is inlined, and 'B' calls 'C', then the call to 'C' now
-// exists in the instruction stream.  Similarly this will inline a recursive
-// function by one level.
-//
+/// InlineFunction - This function inlines the called function into the basic
+/// block of the caller.  This returns false if it is not possible to inline
+/// this call.  The program is still in a well defined state if this occurs
+/// though.
+///
+/// Note that this only does one level of inlining.  For example, if the
+/// instruction 'call B' is inlined, and 'B' calls 'C', then the call to 'C' now
+/// exists in the instruction stream.  Similarly this will inline a recursive
+/// function by one level.
 bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
   Instruction *TheCall = CS.getInstruction();
   LLVMContext &Context = TheCall->getContext();
@@ -934,7 +933,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
   // Find the personality function used by the landing pads of the caller. If it
   // exists, then check to see that it matches the personality function used in
   // the callee.
-  if (CalleePersonality)
+  if (CalleePersonality) {
     for (Function::const_iterator I = Caller->begin(), E = Caller->end();
          I != E; ++I)
       if (const InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator())) {
@@ -950,6 +949,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
 
         break;
       }
+  }
 
   // Get an iterator to the last basic block in the function, which will have
   // the new function inlined after it.
@@ -1016,7 +1016,6 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
   // block for the callee, move them to the entry block of the caller.  First
   // calculate which instruction they should be inserted before.  We insert the
   // instructions at the end of the current alloca list.
-  //
   {
     BasicBlock::iterator InsertPoint = Caller->begin()->begin();
     for (BasicBlock::iterator I = FirstNewBlock->begin(),
@@ -1301,11 +1300,12 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
   // If we inserted a phi node, check to see if it has a single value (e.g. all
   // the entries are the same or undef).  If so, remove the PHI so it doesn't
   // block other optimizations.
-  if (PHI)
+  if (PHI) {
     if (Value *V = SimplifyInstruction(PHI, IFI.TD)) {
       PHI->replaceAllUsesWith(V);
       PHI->eraseFromParent();
     }
+  }
 
   return true;
 }
