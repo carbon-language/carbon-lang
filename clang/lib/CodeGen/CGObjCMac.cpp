@@ -4040,7 +4040,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayoutBitmap(std::string &BitMap) {
   
   llvm::GlobalVariable * Entry =
   CreateMetadataVar("\01L_OBJC_CLASS_NAME_",
-                    llvm::ConstantDataArray::getString(VMContext, BitMap),
+                    llvm::ConstantDataArray::getString(VMContext, BitMap,false),
                     ((ObjCABI == 2) ?
                      "__TEXT,__objc_classname,cstring_literals" :
                      "__TEXT,__cstring,cstring_literals"),
