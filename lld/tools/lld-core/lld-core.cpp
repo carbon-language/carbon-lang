@@ -235,13 +235,13 @@ int main(int argc, const char *argv[]) {
   // read native file
   lld::File* natFile;
   parseNativeObjectFileOrSTDIN(tempPath, natFile);
-  
-  // delete temp .o file
-  bool existed;
-  llvm::sys::fs::remove(tempPath.str(), existed);
 
   // write new atom graph out as YAML doc
   yaml::writeObjectText(*natFile, out);
+
+  // delete temp .o file
+  bool existed;
+  llvm::sys::fs::remove(tempPath.str(), existed);
 
   return 0;
 }
