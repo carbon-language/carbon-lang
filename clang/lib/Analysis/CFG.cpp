@@ -696,8 +696,6 @@ void CFGBuilder::addAutomaticObjDtors(LocalScope::const_iterator B,
   if (B == E)
     return;
 
-  CFGBlock::iterator InsertPos;
-
   // We need to append the destructors in reverse order, but any one of them
   // may be a no-return destructor which changes the CFG. As a result, buffer
   // this sequence up and replay them in reverse order when appending onto the
