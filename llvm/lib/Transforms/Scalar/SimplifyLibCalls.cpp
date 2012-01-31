@@ -545,9 +545,9 @@ struct StrPBrkOpt : public LibCallOptimization {
         FT->getReturnType() != FT->getParamType(0))
       return 0;
 
-    std::string S1, S2;
-    bool HasS1 = GetConstantStringInfo(CI->getArgOperand(0), S1);
-    bool HasS2 = GetConstantStringInfo(CI->getArgOperand(1), S2);
+    StringRef S1, S2;
+    bool HasS1 = getConstantStringInfo(CI->getArgOperand(0), S1);
+    bool HasS2 = getConstantStringInfo(CI->getArgOperand(1), S2);
 
     // strpbrk(s, "") -> NULL
     // strpbrk("", s) -> NULL
@@ -694,9 +694,9 @@ struct StrStrOpt : public LibCallOptimization {
     }
 
     // See if either input string is a constant string.
-    std::string SearchStr, ToFindStr;
-    bool HasStr1 = GetConstantStringInfo(CI->getArgOperand(0), SearchStr);
-    bool HasStr2 = GetConstantStringInfo(CI->getArgOperand(1), ToFindStr);
+    StringRef SearchStr, ToFindStr;
+    bool HasStr1 = getConstantStringInfo(CI->getArgOperand(0), SearchStr);
+    bool HasStr2 = getConstantStringInfo(CI->getArgOperand(1), ToFindStr);
 
     // fold strstr(x, "") -> x.
     if (HasStr2 && ToFindStr.empty())
@@ -706,7 +706,7 @@ struct StrStrOpt : public LibCallOptimization {
     if (HasStr1 && HasStr2) {
       std::string::size_type Offset = SearchStr.find(ToFindStr);
 
-      if (Offset == std::string::npos) // strstr("foo", "bar") -> null
+      if (Offset == StringRef::npos) // strstr("foo", "bar") -> null
         return Constant::getNullValue(CI->getType());
 
       // strstr("abcd", "bc") -> gep((char*)"abcd", 1)
