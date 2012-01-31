@@ -15,6 +15,8 @@ ok2:
     unreachable
 
 lpad2:
+    %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            cleanup
     unreachable
 }
 
@@ -29,3 +31,4 @@ declare void @f6() nounwind
 
 declare void @f8()
 
+declare i32 @__gxx_personality_v0(...)
