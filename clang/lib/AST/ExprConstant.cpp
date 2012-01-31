@@ -1094,13 +1094,6 @@ static APSInt HandleIntToIntCast(EvalInfo &Info, const Expr *E,
   // Figure out if this is a truncate, extend or noop cast.
   // If the input is signed, do a sign extend, noop, or truncate.
   Result = Result.extOrTrunc(DestWidth);
-
-  // Check whether we overflowed. If so, fold the cast anyway.
-  if (DestType->isSignedIntegerOrEnumerationType() &&
-      ((Result.isNegative() && Value.isUnsigned()) ||
-       Result.extOrTrunc(Value.getBitWidth()) != Value))
-    (void)HandleOverflow(Info, E, Value, DestType);
-
   Result.setIsUnsigned(DestType->isUnsignedIntegerOrEnumerationType());
   return Result;
 }

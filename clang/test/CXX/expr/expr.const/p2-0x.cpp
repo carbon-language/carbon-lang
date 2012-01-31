@@ -118,8 +118,8 @@ namespace UndefinedBehavior {
   void f(int n) {
     switch (n) {
     case (int)4.4e9: // expected-error {{constant expression}} expected-note {{value 4.4E+9 is outside the range of representable values of type 'int'}}
-    case (int)10000000000ll: // expected-error {{constant expression}} expected-note {{value 10000000000 is outside the range of representable values of type 'int'}} expected-note {{here}}
-    case (int)0x80000000u: // expected-error {{constant expression}} expected-note {{value 2147483648 is outside the range of representable values of type 'int'}}
+    case (int)0x80000000u: // ok
+    case (int)10000000000ll: // expected-note {{here}}
     case (unsigned int)10000000000ll: // expected-error {{duplicate case value}}
     case (int)(unsigned)(long long)4.4e9: // ok
     case (int)(float)1e300: // expected-error {{constant expression}} expected-note {{value 1.0E+300 is outside the range of representable values of type 'float'}}
