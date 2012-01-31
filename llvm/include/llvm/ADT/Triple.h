@@ -241,6 +241,25 @@ public:
   /// @name Convenience Predicates
   /// @{
 
+  /// \brief Test whether the architecture is 64-bit
+  ///
+  /// Note that this tests for 64-bit pointer width, and nothing else. Note
+  /// that we intentionally expose only three predicates, 64-bit, 32-bit, and
+  /// 16-bit. The inner details of pointer width for particular architectures
+  /// is not summed up in the triple, and so only a coarse grained predicate
+  /// system is provided.
+  bool isArch64Bit() const;
+
+  /// \brief Test whether the architecture is 32-bit
+  ///
+  /// Note that this tests for 32-bit pointer width, and nothing else.
+  bool isArch32Bit() const;
+
+  /// \brief Test whether the architecture is 16-bit
+  ///
+  /// Note that this tests for 16-bit pointer width, and nothing else.
+  bool isArch16Bit() const;
+
   /// isOSVersionLT - Helper function for doing comparisons against version
   /// numbers included in the target triple.
   bool isOSVersionLT(unsigned Major, unsigned Minor = 0,

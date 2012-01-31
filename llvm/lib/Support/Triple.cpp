@@ -665,3 +665,52 @@ void Triple::setEnvironmentName(StringRef Str) {
 void Triple::setOSAndEnvironmentName(StringRef Str) {
   setTriple(getArchName() + "-" + getVendorName() + "-" + Str);
 }
+
+static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
+  switch (Arch) {
+  case llvm::Triple::UnknownArch:
+  case llvm::Triple::InvalidArch:
+    return 0;
+
+  case llvm::Triple::msp430:
+    return 16;
+
+  case llvm::Triple::amdil:
+  case llvm::Triple::arm:
+  case llvm::Triple::cellspu:
+  case llvm::Triple::hexagon:
+  case llvm::Triple::le32:
+  case llvm::Triple::mblaze:
+  case llvm::Triple::mips:
+  case llvm::Triple::mipsel:
+  case llvm::Triple::ppc:
+  case llvm::Triple::ptx32:
+  case llvm::Triple::sparc:
+  case llvm::Triple::tce:
+  case llvm::Triple::thumb:
+  case llvm::Triple::x86:
+  case llvm::Triple::xcore:
+    return 32;
+
+  case llvm::Triple::mips64:
+  case llvm::Triple::mips64el:
+  case llvm::Triple::ppc64:
+  case llvm::Triple::ptx64:
+  case llvm::Triple::sparcv9:
+  case llvm::Triple::x86_64:
+    return 64;
+  }
+  llvm_unreachable("Invalid architecture value");
+}
+
+bool Triple::isArch64Bit() const {
+  return getArchPointerBitWidth(getArch()) == 64;
+}
+
+bool Triple::isArch32Bit() const {
+  return getArchPointerBitWidth(getArch()) == 32;
+}
+
+bool Triple::isArch16Bit() const {
+  return getArchPointerBitWidth(getArch()) == 16;
+}
