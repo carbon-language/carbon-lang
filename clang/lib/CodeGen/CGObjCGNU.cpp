@@ -187,7 +187,7 @@ protected:
     std::string name = prefix + Str;
     llvm::Constant *ConstStr = TheModule.getGlobalVariable(name);
     if (!ConstStr) {
-      llvm::Constant *value = llvm::ConstantArray::get(VMContext, Str, true);
+      llvm::Constant *value = llvm::ConstantDataArray::getString(VMContext,Str);
       ConstStr = new llvm::GlobalVariable(TheModule, value->getType(), true,
               llvm::GlobalValue::LinkOnceODRLinkage, value, prefix + Str);
     }

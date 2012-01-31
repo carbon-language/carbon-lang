@@ -220,18 +220,15 @@ void BackendConsumer::InlineAsmDiagHandler2(const llvm::SMDiagnostic &D,
                                             SourceLocation LocCookie) {
   // There are a couple of different kinds of errors we could get here.  First,
   // we re-format the SMDiagnostic in terms of a clang diagnostic.
-
-  // Strip "error: " off the start of the message string.
   StringRef Message = D.getMessage();
-  if (Message.startswith("error: "))
-    Message = Message.substr(7);
 
   // If the SMDiagnostic has an inline asm source location, translate it.
   FullSourceLoc Loc;
   if (D.getLoc() != SMLoc())
     Loc = ConvertBackendLocation(D, Context->getSourceManager());
-  
 
+  // FIXME: Propagate ranges up as well.
+  
   // If this problem has clang-level source location information, report the
   // issue as being an error in the source with a note showing the instantiated
   // code.
