@@ -482,13 +482,6 @@ void InvokeInliningInfo::forwardResume(ResumeInst *RI) {
   RI->eraseFromParent();
 }
 
-/// [LIBUNWIND] Check whether this selector is "only cleanups":
-///   call i32 @llvm.eh.selector(blah, blah, i32 0)
-static bool isCleanupOnlySelector(EHSelectorInst *selector) {
-  if (selector->getNumArgOperands() != 3) return false;
-  ConstantInt *val = dyn_cast<ConstantInt>(selector->getArgOperand(2));
-  return (val && val->isZero());
-}
 
 /// HandleCallsInBlockInlinedThroughInvoke - When we inline a basic block into
 /// an invoke, we have to turn all of the calls that can throw into
@@ -514,58 +507,17 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     // We only need to check for function calls: inlined invoke
     // instructions require no special handling.
     CallInst *CI = dyn_cast<CallInst>(I);
-    if (CI == 0) continue;
 
-    // LIBUNWIND: merge selector instructions.
-    if (EHSelectorInst *Inner = dyn_cast<EHSelectorInst>(CI)) {
-      EHSelectorInst *Outer = Invoke.getOuterSelector();
-      if (!Outer) continue;
-
-      bool innerIsOnlyCleanup = isCleanupOnlySelector(Inner);
-      bool outerIsOnlyCleanup = isCleanupOnlySelector(Outer);
-
-      // If both selectors contain only cleanups, we don't need to do
-      // anything.  TODO: this is really just a very specific instance
-      // of a much more general optimization.
-      if (innerIsOnlyCleanup && outerIsOnlyCleanup) continue;
-
-      // Otherwise, we just append the outer selector to the inner selector.
-      SmallVector<Value*, 16> NewSelector;
-      for (unsigned i = 0, e = Inner->getNumArgOperands(); i != e; ++i)
-        NewSelector.push_back(Inner->getArgOperand(i));
-      for (unsigned i = 2, e = Outer->getNumArgOperands(); i != e; ++i)
-        NewSelector.push_back(Outer->getArgOperand(i));
-
-      CallInst *NewInner =
-        IRBuilder<>(Inner).CreateCall(Inner->getCalledValue(), NewSelector);
-      // No need to copy attributes, calling convention, etc.
-      NewInner->takeName(Inner);
-      Inner->replaceAllUsesWith(NewInner);
-      Inner->eraseFromParent();
-      continue;
-    }
-    
     // If this call cannot unwind, don't convert it to an invoke.
-    if (CI->doesNotThrow())
+    if (!CI || CI->doesNotThrow())
       continue;
-    
-    // Convert this function call into an invoke instruction.
-    // First, split the basic block.
+
+    // Convert this function call into an invoke instruction.  First, split the
+    // basic block.
     BasicBlock *Split = BB->splitBasicBlock(CI, CI->getName()+".noexc");
 
     // Delete the unconditional branch inserted by splitBasicBlock
     BB->getInstList().pop_back();
-
-    // LIBUNWIND: If this is a call to @llvm.eh.resume, just branch
-    // directly to the new landing pad.
-    if (Invoke.forwardEHResume(CI, BB)) {
-      // TODO: 'Split' is now unreachable; clean it up.
-
-      // We want to leave the original call intact so that the call
-      // graph and other structures won't get misled.  We also have to
-      // avoid processing the next block, or we'll iterate here forever.
-      return true;
-    }
 
     // Otherwise, create the new invoke instruction.
     ImmutableCallSite CS(CI);
