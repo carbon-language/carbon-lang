@@ -31,6 +31,28 @@
 namespace llvm {
   class CodeGenRegBank;
 
+  /// CodeGenSubRegIndex - Represents a sub-register index.
+  class CodeGenSubRegIndex {
+    Record *const TheDef;
+    const unsigned EnumValue;
+
+  public:
+    CodeGenSubRegIndex(Record *R, unsigned Enum);
+
+    const std::string &getName() const;
+    std::string getNamespace() const;
+    std::string getQualifiedName() const;
+
+    // Order CodeGenSubRegIndex pointers by EnumValue.
+    struct Less {
+      bool operator()(const CodeGenSubRegIndex *A,
+                      const CodeGenSubRegIndex *B) const {
+        assert(A && B);
+        return A->EnumValue < B->EnumValue;
+      }
+    };
+  };
+
   /// CodeGenRegister - Represents a register definition.
   struct CodeGenRegister {
     Record *TheDef;
@@ -39,7 +61,8 @@ namespace llvm {
     bool CoveredBySubRegs;
 
     // Map SubRegIndex -> Register.
-    typedef std::map<Record*, CodeGenRegister*, LessRecord> SubRegMap;
+    typedef std::map<CodeGenSubRegIndex*, CodeGenRegister*,
+                     CodeGenSubRegIndex::Less> SubRegMap;
 
     CodeGenRegister(Record *R, unsigned Enum);
 
@@ -55,7 +78,8 @@ namespace llvm {
     }
 
     // Add sub-registers to OSet following a pre-order defined by the .td file.
-    void addSubRegsPreOrder(SetVector<CodeGenRegister*> &OSet) const;
+    void addSubRegsPreOrder(SetVector<CodeGenRegister*> &OSet,
+                            CodeGenRegBank&) const;
 
     // List of super-registers in topological order, small to large.
     typedef std::vector<CodeGenRegister*> SuperRegList;
@@ -104,14 +128,15 @@ namespace llvm {
 
     // Map SubRegIndex -> sub-class.  This is the largest sub-class where all
     // registers have a SubRegIndex sub-register.
-    DenseMap<Record*, CodeGenRegisterClass*> SubClassWithSubReg;
+    DenseMap<CodeGenSubRegIndex*, CodeGenRegisterClass*> SubClassWithSubReg;
 
     // Map SubRegIndex -> set of super-reg classes.  This is all register
     // classes SuperRC such that:
     //
     //   R:SubRegIndex in this RC for all R in SuperRC.
     //
-    DenseMap<Record*, SmallPtrSet<CodeGenRegisterClass*, 8> > SuperRegClasses;
+    DenseMap<CodeGenSubRegIndex*,
+             SmallPtrSet<CodeGenRegisterClass*, 8> > SuperRegClasses;
   public:
     unsigned EnumValue;
     std::string Namespace;
@@ -158,20 +183,23 @@ namespace llvm {
 
     // getSubClassWithSubReg - Returns the largest sub-class where all
     // registers have a SubIdx sub-register.
-    CodeGenRegisterClass *getSubClassWithSubReg(Record *SubIdx) const {
+    CodeGenRegisterClass*
+    getSubClassWithSubReg(CodeGenSubRegIndex *SubIdx) const {
       return SubClassWithSubReg.lookup(SubIdx);
     }
 
-    void setSubClassWithSubReg(Record *SubIdx, CodeGenRegisterClass *SubRC) {
+    void setSubClassWithSubReg(CodeGenSubRegIndex *SubIdx,
+                               CodeGenRegisterClass *SubRC) {
       SubClassWithSubReg[SubIdx] = SubRC;
     }
 
     // getSuperRegClasses - Returns a bit vector of all register classes
     // containing only SubIdx super-registers of this class.
-    void getSuperRegClasses(Record *SubIdx, BitVector &Out) const;
+    void getSuperRegClasses(CodeGenSubRegIndex *SubIdx, BitVector &Out) const;
 
     // addSuperRegClass - Add a class containing only SudIdx super-registers.
-    void addSuperRegClass(Record *SubIdx, CodeGenRegisterClass *SuperRC) {
+    void addSuperRegClass(CodeGenSubRegIndex *SubIdx,
+                          CodeGenRegisterClass *SuperRC) {
       SuperRegClasses[SubIdx].insert(SuperRC);
     }
 
@@ -240,8 +268,12 @@ namespace llvm {
     RecordKeeper &Records;
     SetTheory Sets;
 
-    std::vector<Record*> SubRegIndices;
+    // SubRegIndices.
+    std::vector<CodeGenSubRegIndex*> SubRegIndices;
+    DenseMap<Record*, CodeGenSubRegIndex*> Def2SubRegIdx;
     unsigned NumNamedIndices;
+
+    // Registers.
     std::vector<CodeGenRegister*> Registers;
     DenseMap<Record*, CodeGenRegister*> Def2Reg;
 
@@ -268,7 +300,8 @@ namespace llvm {
 
     // Composite SubRegIndex instances.
     // Map (SubRegIndex, SubRegIndex) -> SubRegIndex.
-    typedef DenseMap<std::pair<Record*, Record*>, Record*> CompositeMap;
+    typedef DenseMap<std::pair<CodeGenSubRegIndex*, CodeGenSubRegIndex*>,
+                     CodeGenSubRegIndex*> CompositeMap;
     CompositeMap Composite;
 
     // Populate the Composite map from sub-register relationships.
@@ -282,14 +315,16 @@ namespace llvm {
     // Sub-register indices. The first NumNamedIndices are defined by the user
     // in the .td files. The rest are synthesized such that all sub-registers
     // have a unique name.
-    const std::vector<Record*> &getSubRegIndices() { return SubRegIndices; }
+    ArrayRef<CodeGenSubRegIndex*> getSubRegIndices() { return SubRegIndices; }
     unsigned getNumNamedIndices() { return NumNamedIndices; }
 
-    // Map a SubRegIndex Record to its enum value.
-    unsigned getSubRegIndexNo(Record *idx);
+    // Find a SubRegIndex form its Record def.
+    CodeGenSubRegIndex *getSubRegIdx(Record*);
 
     // Find or create a sub-register index representing the A+B composition.
-    Record *getCompositeSubRegIndex(Record *A, Record *B, bool create = false);
+    CodeGenSubRegIndex *getCompositeSubRegIndex(CodeGenSubRegIndex *A,
+                                                CodeGenSubRegIndex *B,
+                                                bool create = false);
 
     const std::vector<CodeGenRegister*> &getRegisters() { return Registers; }
 

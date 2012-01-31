@@ -22,6 +22,34 @@
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
+//                             CodeGenSubRegIndex
+//===----------------------------------------------------------------------===//
+
+CodeGenSubRegIndex::CodeGenSubRegIndex(Record *R, unsigned Enum)
+  : TheDef(R),
+    EnumValue(Enum)
+{}
+
+std::string CodeGenSubRegIndex::getNamespace() const {
+  if (TheDef->getValue("Namespace"))
+    return TheDef->getValueAsString("Namespace");
+  else
+    return "";
+}
+
+const std::string &CodeGenSubRegIndex::getName() const {
+  return TheDef->getName();
+}
+
+std::string CodeGenSubRegIndex::getQualifiedName() const {
+  std::string N = getNamespace();
+  if (!N.empty())
+    N += "::";
+  N += getName();
+  return N;
+}
+
+//===----------------------------------------------------------------------===//
 //                              CodeGenRegister
 //===----------------------------------------------------------------------===//
 
@@ -40,8 +68,8 @@ const std::string &CodeGenRegister::getName() const {
 namespace {
   struct Orphan {
     CodeGenRegister *SubReg;
-    Record *First, *Second;
-    Orphan(CodeGenRegister *r, Record *a, Record *b)
+    CodeGenSubRegIndex *First, *Second;
+    Orphan(CodeGenRegister *r, CodeGenSubRegIndex *a, CodeGenSubRegIndex *b)
       : SubReg(r), First(a), Second(b) {}
   };
 }
@@ -62,8 +90,9 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
   // First insert the direct subregs and make sure they are fully indexed.
   for (unsigned i = 0, e = SubList.size(); i != e; ++i) {
     CodeGenRegister *SR = RegBank.getReg(SubList[i]);
-    if (!SubRegs.insert(std::make_pair(Indices[i], SR)).second)
-      throw TGError(TheDef->getLoc(), "SubRegIndex " + Indices[i]->getName() +
+    CodeGenSubRegIndex *Idx = RegBank.getSubRegIdx(Indices[i]);
+    if (!SubRegs.insert(std::make_pair(Idx, SR)).second)
+      throw TGError(TheDef->getLoc(), "SubRegIndex " + Idx->getName() +
                     " appears twice in Register " + getName());
   }
 
@@ -74,6 +103,7 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
   // Here the order is important - earlier subregs take precedence.
   for (unsigned i = 0, e = SubList.size(); i != e; ++i) {
     CodeGenRegister *SR = RegBank.getReg(SubList[i]);
+    CodeGenSubRegIndex *Idx = RegBank.getSubRegIdx(Indices[i]);
     const SubRegMap &Map = SR->getSubRegs(RegBank);
 
     // Add this as a super-register of SR now all sub-registers are in the list.
@@ -84,7 +114,7 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
     for (SubRegMap::const_iterator SI = Map.begin(), SE = Map.end(); SI != SE;
          ++SI) {
       if (!SubRegs.insert(*SI).second)
-        Orphans.push_back(Orphan(SI->second, Indices[i], SI->first));
+        Orphans.push_back(Orphan(SI->second, Idx, SI->first));
 
       // Noop sub-register indexes are possible, so avoid duplicates.
       if (SI->second != SR)
@@ -104,6 +134,7 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
     if (!BaseIdxInit || !BaseIdxInit->getDef()->isSubClassOf("SubRegIndex"))
       throw TGError(TheDef->getLoc(), "Invalid SubClassIndex in " +
                     Pat->getAsString());
+    CodeGenSubRegIndex *BaseIdx = RegBank.getSubRegIdx(BaseIdxInit->getDef());
 
     // Resolve list of subreg indices into R2.
     CodeGenRegister *R2 = this;
@@ -113,8 +144,9 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
       if (!IdxInit || !IdxInit->getDef()->isSubClassOf("SubRegIndex"))
         throw TGError(TheDef->getLoc(), "Invalid SubClassIndex in " +
                       Pat->getAsString());
+      CodeGenSubRegIndex *Idx = RegBank.getSubRegIdx(IdxInit->getDef());
       const SubRegMap &R2Subs = R2->getSubRegs(RegBank);
-      SubRegMap::const_iterator ni = R2Subs.find(IdxInit->getDef());
+      SubRegMap::const_iterator ni = R2Subs.find(Idx);
       if (ni == R2Subs.end())
         throw TGError(TheDef->getLoc(), "Composite " + Pat->getAsString() +
                       " refers to bad index in " + R2->getName());
@@ -122,7 +154,7 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
     }
 
     // Insert composite index. Allow overriding inherited indices etc.
-    SubRegs[BaseIdxInit->getDef()] = R2;
+    SubRegs[BaseIdx] = R2;
 
     // R2 is no longer an orphan.
     for (unsigned j = 0, je = Orphans.size(); j != je; ++j)
@@ -143,13 +175,15 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
 }
 
 void
-CodeGenRegister::addSubRegsPreOrder(SetVector<CodeGenRegister*> &OSet) const {
+CodeGenRegister::addSubRegsPreOrder(SetVector<CodeGenRegister*> &OSet,
+                                    CodeGenRegBank &RegBank) const {
   assert(SubRegsComplete && "Must precompute sub-registers");
   std::vector<Record*> Indices = TheDef->getValueAsListOfDefs("SubRegIndices");
   for (unsigned i = 0, e = Indices.size(); i != e; ++i) {
-    CodeGenRegister *SR = SubRegs.find(Indices[i])->second;
+    CodeGenSubRegIndex *Idx = RegBank.getSubRegIdx(Indices[i]);
+    CodeGenRegister *SR = SubRegs.find(Idx)->second;
     if (OSet.insert(SR))
-      SR->addSubRegsPreOrder(OSet);
+      SR->addSubRegsPreOrder(OSet, RegBank);
   }
 }
 
@@ -516,8 +550,10 @@ void CodeGenRegisterClass::computeSubClasses(CodeGenRegBank &RegBank) {
 }
 
 void
-CodeGenRegisterClass::getSuperRegClasses(Record *SubIdx, BitVector &Out) const {
-  DenseMap<Record*, SmallPtrSet<CodeGenRegisterClass*, 8> >::const_iterator
+CodeGenRegisterClass::getSuperRegClasses(CodeGenSubRegIndex *SubIdx,
+                                         BitVector &Out) const {
+  DenseMap<CodeGenSubRegIndex*,
+           SmallPtrSet<CodeGenRegisterClass*, 8> >::const_iterator
     FindI = SuperRegClasses.find(SubIdx);
   if (FindI == SuperRegClasses.end())
     return;
@@ -539,9 +575,11 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
 
   // Read in the user-defined (named) sub-register indices.
   // More indices will be synthesized later.
-  SubRegIndices = Records.getAllDerivedDefinitions("SubRegIndex");
-  std::sort(SubRegIndices.begin(), SubRegIndices.end(), LessRecord());
-  NumNamedIndices = SubRegIndices.size();
+  std::vector<Record*> SRIs = Records.getAllDerivedDefinitions("SubRegIndex");
+  std::sort(SRIs.begin(), SRIs.end(), LessRecord());
+  NumNamedIndices = SRIs.size();
+  for (unsigned i = 0, e = SRIs.size(); i != e; ++i)
+    getSubRegIdx(SRIs[i]);
 
   // Read in the register definitions.
   std::vector<Record*> Regs = Records.getAllDerivedDefinitions("Register");
@@ -583,6 +621,15 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
   for (unsigned i = 0, e = RegClasses.size(); i != e; ++i)
     RegClasses[i]->EnumValue = i;
   CodeGenRegisterClass::computeSubClasses(*this);
+}
+
+CodeGenSubRegIndex *CodeGenRegBank::getSubRegIdx(Record *Def) {
+  CodeGenSubRegIndex *&Idx = Def2SubRegIdx[Def];
+  if (Idx)
+    return Idx;
+  Idx = new CodeGenSubRegIndex(Def, SubRegIndices.size() + 1);
+  SubRegIndices.push_back(Idx);
+  return Idx;
 }
 
 CodeGenRegister *CodeGenRegBank::getReg(Record *Def) {
@@ -630,25 +677,19 @@ CodeGenRegisterClass *CodeGenRegBank::getRegClass(Record *Def) {
   throw TGError(Def->getLoc(), "Not a known RegisterClass!");
 }
 
-Record *CodeGenRegBank::getCompositeSubRegIndex(Record *A, Record *B,
-                                                bool create) {
+CodeGenSubRegIndex*
+CodeGenRegBank::getCompositeSubRegIndex(CodeGenSubRegIndex *A,
+                                        CodeGenSubRegIndex *B,
+                                        bool create) {
   // Look for an existing entry.
-  Record *&Comp = Composite[std::make_pair(A, B)];
+  CodeGenSubRegIndex *&Comp = Composite[std::make_pair(A, B)];
   if (Comp || !create)
     return Comp;
 
   // None exists, synthesize one.
   std::string Name = A->getName() + "_then_" + B->getName();
-  Comp = new Record(Name, SMLoc(), Records);
-  SubRegIndices.push_back(Comp);
+  Comp = getSubRegIdx(new Record(Name, SMLoc(), Records));
   return Comp;
-}
-
-unsigned CodeGenRegBank::getSubRegIndexNo(Record *idx) {
-  std::vector<Record*>::const_iterator i =
-    std::find(SubRegIndices.begin(), SubRegIndices.end(), idx);
-  assert(i != SubRegIndices.end() && "Not a SubRegIndex");
-  return (i - SubRegIndices.begin()) + 1;
 }
 
 void CodeGenRegBank::computeComposites() {
@@ -657,7 +698,7 @@ void CodeGenRegBank::computeComposites() {
     const CodeGenRegister::SubRegMap &SRM1 = Reg1->getSubRegs();
     for (CodeGenRegister::SubRegMap::const_iterator i1 = SRM1.begin(),
          e1 = SRM1.end(); i1 != e1; ++i1) {
-      Record *Idx1 = i1->first;
+      CodeGenSubRegIndex *Idx1 = i1->first;
       CodeGenRegister *Reg2 = i1->second;
       // Ignore identity compositions.
       if (Reg1 == Reg2)
@@ -666,7 +707,8 @@ void CodeGenRegBank::computeComposites() {
       // Try composing Idx1 with another SubRegIndex.
       for (CodeGenRegister::SubRegMap::const_iterator i2 = SRM2.begin(),
            e2 = SRM2.end(); i2 != e2; ++i2) {
-        std::pair<Record*, Record*> IdxPair(Idx1, i2->first);
+        std::pair<CodeGenSubRegIndex*, CodeGenSubRegIndex*>
+          IdxPair(Idx1, i2->first);
         CodeGenRegister *Reg3 = i2->second;
         // Ignore identity compositions.
         if (Reg2 == Reg3)
@@ -679,11 +721,11 @@ void CodeGenRegBank::computeComposites() {
               Composite.insert(std::make_pair(IdxPair, i1d->first));
             // Conflicting composition? Emit a warning but allow it.
             if (!Ins.second && Ins.first->second != i1d->first) {
-              errs() << "Warning: SubRegIndex " << getQualifiedName(Idx1)
-                     << " and " << getQualifiedName(IdxPair.second)
+              errs() << "Warning: SubRegIndex " << Idx1->getQualifiedName()
+                     << " and " << IdxPair.second->getQualifiedName()
                      << " compose ambiguously as "
-                     << getQualifiedName(Ins.first->second) << " or "
-                     << getQualifiedName(i1d->first) << "\n";
+                     << Ins.first->second->getQualifiedName() << " or "
+                     << i1d->first->getQualifiedName() << "\n";
             }
           }
         }
@@ -826,7 +868,8 @@ void CodeGenRegBank::inferCommonSubClass(CodeGenRegisterClass *RC) {
 //
 void CodeGenRegBank::inferSubClassWithSubReg(CodeGenRegisterClass *RC) {
   // Map SubRegIndex to set of registers in RC supporting that SubRegIndex.
-  typedef std::map<Record*, CodeGenRegister::Set, LessRecord> SubReg2SetMap;
+  typedef std::map<CodeGenSubRegIndex*, CodeGenRegister::Set,
+                   CodeGenSubRegIndex::Less> SubReg2SetMap;
 
   // Compute the set of registers supporting each SubRegIndex.
   SubReg2SetMap SRSets;
@@ -841,7 +884,7 @@ void CodeGenRegBank::inferSubClassWithSubReg(CodeGenRegisterClass *RC) {
   // Find matching classes for all SRSets entries.  Iterate in SubRegIndex
   // numerical order to visit synthetic indices last.
   for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
-    Record *SubIdx = SubRegIndices[sri];
+    CodeGenSubRegIndex *SubIdx = SubRegIndices[sri];
     SubReg2SetMap::const_iterator I = SRSets.find(SubIdx);
     // Unsupported SubRegIndex. Skip it.
     if (I == SRSets.end())
@@ -873,7 +916,7 @@ void CodeGenRegBank::inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
 
   // Iterate in SubRegIndex numerical order to visit synthetic indices last.
   for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
-    Record *SubIdx = SubRegIndices[sri];
+    CodeGenSubRegIndex *SubIdx = SubRegIndices[sri];
     // Skip indexes that aren't fully supported by RC's registers. This was
     // computed by inferSubClassWithSubReg() above which should have been
     // called first.
@@ -1010,7 +1053,7 @@ BitVector CodeGenRegBank::computeCoveredRegisters(ArrayRef<Record*> Regs) {
     if (Set.insert(Reg))
       // Reg is new, add all sub-registers.
       // The pre-ordering is not important here.
-      Reg->addSubRegsPreOrder(Set);
+      Reg->addSubRegsPreOrder(Set, *this);
   }
 
   // Second, find all super-registers that are completely covered by the set.

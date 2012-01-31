@@ -282,7 +282,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
      continue;
     // getSubRegs() orders by SubRegIndex. We want a topological order.
     SetVector<CodeGenRegister*> SR;
-    Reg.addSubRegsPreOrder(SR);
+    Reg.addSubRegsPreOrder(SR, RegBank);
     OS << "  const unsigned " << Reg.getName() << "_SubRegsSet[] = { ";
     for (unsigned j = 0, je = SR.size(); j != je; ++j)
       OS << getQualifiedName(SR[j]->TheDef) << ", ";
@@ -431,10 +431,11 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
         "unsigned) const;\n"
      << "};\n\n";
 
-  const std::vector<Record*> &SubRegIndices = RegBank.getSubRegIndices();
+  ArrayRef<CodeGenSubRegIndex*> SubRegIndices = RegBank.getSubRegIndices();
   if (!SubRegIndices.empty()) {
     OS << "\n// Subregister indices\n";
-    std::string Namespace = SubRegIndices[0]->getValueAsString("Namespace");
+    std::string Namespace =
+      SubRegIndices[0]->getNamespace();
     if (!Namespace.empty())
       OS << "namespace " << Namespace << " {\n";
     OS << "enum {\n  NoSubRegister,\n";
@@ -690,7 +691,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   unsigned NamedIndices = RegBank.getNumNamedIndices();
 
   // Emit SubRegIndex names, skipping 0
-  const std::vector<Record*> &SubRegIndices = RegBank.getSubRegIndices();
+  ArrayRef<CodeGenSubRegIndex*> SubRegIndices = RegBank.getSubRegIndices();
   OS << "\n  static const char *const " << TargetName
      << "SubRegIndexTable[] = { \"";
   for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
@@ -729,7 +730,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     OS << "    default: return 0;\n";
     for (CodeGenRegister::SubRegMap::const_iterator ii = SRM.begin(),
          ie = SRM.end(); ii != ie; ++ii)
-      OS << "    case " << getQualifiedName(ii->first)
+      OS << "    case " << ii->first->getQualifiedName()
          << ": return " << getQualifiedName(ii->second->TheDef) << ";\n";
     OS << "    };\n" << "    break;\n";
   }
@@ -749,7 +750,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     for (CodeGenRegister::SubRegMap::const_iterator ii = SRM.begin(),
          ie = SRM.end(); ii != ie; ++ii)
       OS << "    if (SubRegNo == " << getQualifiedName(ii->second->TheDef)
-         << ")  return " << getQualifiedName(ii->first) << ";\n";
+         << ")  return " << ii->first->getQualifiedName() << ";\n";
     OS << "    return 0;\n";
   }
   OS << "  };\n";
@@ -764,15 +765,16 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i) {
     bool Open = false;
     for (unsigned j = 0; j != e; ++j) {
-      if (Record *Comp = RegBank.getCompositeSubRegIndex(SubRegIndices[i],
-                                                         SubRegIndices[j])) {
+      if (CodeGenSubRegIndex *Comp =
+            RegBank.getCompositeSubRegIndex(SubRegIndices[i],
+                                            SubRegIndices[j])) {
         if (!Open) {
-          OS << "  case " << getQualifiedName(SubRegIndices[i])
+          OS << "  case " << SubRegIndices[i]->getQualifiedName()
              << ": switch(IdxB) {\n    default: return IdxB;\n";
           Open = true;
         }
-        OS << "    case " << getQualifiedName(SubRegIndices[j])
-           << ": return " << getQualifiedName(Comp) << ";\n";
+        OS << "    case " << SubRegIndices[j]->getQualifiedName()
+           << ": return " << Comp->getQualifiedName() << ";\n";
       }
     }
     if (Open)
@@ -801,7 +803,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
       const CodeGenRegisterClass &RC = *RegisterClasses[rci];
       OS << "    {\t// " << RC.getName() << "\n";
       for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
-        Record *Idx = SubRegIndices[sri];
+        CodeGenSubRegIndex *Idx = SubRegIndices[sri];
         if (CodeGenRegisterClass *SRC = RC.getSubClassWithSubReg(Idx))
           OS << "      " << SRC->EnumValue + 1 << ",\t// " << Idx->getName()
              << " -> " << SRC->getName() << "\n";
@@ -842,7 +844,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
       const CodeGenRegisterClass &RC = *RegisterClasses[rci];
       OS << "    {\t// " << RC.getName() << "\n";
       for (unsigned sri = 0, sre = SubRegIndices.size(); sri != sre; ++sri) {
-        Record *Idx = SubRegIndices[sri];
+        CodeGenSubRegIndex *Idx = SubRegIndices[sri];
         BV.reset();
         RC.getSuperRegClasses(Idx, BV);
         OS << "      { ";
