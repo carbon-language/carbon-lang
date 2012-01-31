@@ -834,6 +834,7 @@ unsigned ARMConstantIslands::GetOffsetOf(MachineInstr *MI) const {
     if (&*I == MI) return Offset;
     Offset += TII->GetInstSizeInBytes(I);
   }
+  // Unreachable.
 }
 
 /// CompareMBBNumbers - Little predicate function to sort the WaterList by MBB
