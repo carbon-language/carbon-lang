@@ -161,6 +161,9 @@ sdir_has_content = False
 # svn_info stores the output from 'svn info lldb.base.dir'.
 svn_info = ''
 
+# The environment variables to unset before running the test cases.
+unsets = []
+
 # Default verbosity is 0.
 verbose = 0
 
@@ -229,6 +232,8 @@ where options:
        with errored or failed status; if not specified, the test driver uses the
        timestamp as the session dir name
 -t   : turn on tracing of lldb command and other detailed test executions
+-u   : specify an environment variable to unset before running the test cases
+       e.g., -u DYLD_INSERT_LIBRARIES -u MallocScribble'
 -v   : do verbose mode of unittest framework (print out each test case invocation)
 -X   : exclude a directory from consideration for test discovery
        -X types => if 'types' appear in the pathname components of a potential testfile
@@ -362,6 +367,7 @@ def parseOptionsAndInitTestdirs():
     global regexp
     global rdir
     global sdir_name
+    global unsets
     global verbose
     global testdirs
 
@@ -502,6 +508,13 @@ def parseOptionsAndInitTestdirs():
             index += 1
         elif sys.argv[index].startswith('-t'):
             os.environ["LLDB_COMMAND_TRACE"] = "YES"
+            index += 1
+        elif sys.argv[index].startswith('-u'):
+            # Increment by 1 to fetch the environment variable to unset.
+            index += 1
+            if index >= len(sys.argv) or sys.argv[index].startswith('-'):
+                usage()
+            unsets.append(sys.argv[index])
             index += 1
         elif sys.argv[index].startswith('-v'):
             verbose = 2
@@ -1007,6 +1020,16 @@ fname = os.path.join(sdir_name, "svn-info")
 with open(fname, "w") as f:
     print >> f, svn_info
     print >> f, "Command invoked: %s\n" % getMyCommandLine()
+
+#
+# If we have environment variables to unset, do it here before we invoke the test runner.
+#
+for env_var in unsets :
+    if env_var in os.environ:
+        # From Python Doc: When unsetenv() is supported, deletion of items in os.environ
+        # is automatically translated into a corresponding call to unsetenv()
+        del os.environ[env_var]
+        #os.unsetenv(env_var)
 
 #
 # Invoke the default TextTestRunner to run the test suite, possibly iterating
