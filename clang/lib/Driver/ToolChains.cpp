@@ -52,42 +52,17 @@ Darwin::Darwin(const Driver &D, const llvm::Triple& Triple)
 {
   // Compute the initial Darwin version from the triple
   unsigned Major, Minor, Micro;
-  Triple.getOSVersion(Major, Minor, Micro);
-  switch (Triple.getOS()) {
-  default: assert(0 && "unexpected OS for Darwin triple");
-  case llvm::Triple::Darwin:
-    // Default to darwin4, i.e., MacOSX 10.0.0.
-    if (Major == 0)
-      Major = 4;
-    if (Major < 4)
-      getDriver().Diag(diag::err_drv_invalid_darwin_version) <<
-        Triple.getOSName();
-    Micro = 0;
-    Minor = Major - 4;
-    Major = 10;
-    break;
-  case llvm::Triple::MacOSX:
-    // Default to MacOSX 10.
-    if (Major == 0)
-      Major = 10;
-    if (Major != 10)
-      getDriver().Diag(diag::err_drv_invalid_darwin_version) <<
-        Triple.getOSName();
-    break;
-  case llvm::Triple::IOS:
-    // Ignore the version from the triple.
-    Major = 10;
-    Minor = 0;
-    Micro = 0;
-    break;
-  }
+  if (!Triple.getMacOSXVersion(Major, Minor, Micro))
+    getDriver().Diag(diag::err_drv_invalid_darwin_version) <<
+      Triple.getOSName();
+  llvm::raw_string_ostream(MacosxVersionMin)
+    << Major << '.' << Minor << '.' << Micro;
+
   // FIXME: DarwinVersion is only used to find GCC's libexec directory.
   // It should be removed when we stop supporting that.
   DarwinVersion[0] = Minor + 4;
   DarwinVersion[1] = Micro;
   DarwinVersion[2] = 0;
-  llvm::raw_string_ostream(MacosxVersionMin)
-    << Major << '.' << Minor << '.' << Micro;
 }
 
 types::ID Darwin::LookupTypeForExtension(const char *Ext) const {
