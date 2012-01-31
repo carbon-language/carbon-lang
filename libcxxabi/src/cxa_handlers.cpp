@@ -150,6 +150,25 @@ __attribute__((noreturn))
 void
 terminate() _NOEXCEPT
 {
+    // If there might be an uncaught exception
+    using namespace __cxxabiv1;
+    __cxa_eh_globals* globals = __cxa_get_globals_fast();
+    if (globals)
+    {
+        __cxa_exception* exception_header = globals->caughtExceptions;
+        if (exception_header)
+        {
+            _Unwind_Exception* unwind_exception =
+                reinterpret_cast<_Unwind_Exception*>(exception_header + 1) - 1;
+            bool native_exception = (unwind_exception->exception_class & get_language) ==
+                                                   (kOurExceptionClass & get_language);
+            if (native_exception)
+            {
+                __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
+                __terminate(exception_header->terminateHandler);
+            }
+        }
+    }
     __terminate(get_terminate());
 }
 

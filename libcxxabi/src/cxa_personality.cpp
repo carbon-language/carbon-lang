@@ -840,7 +840,7 @@ __cxa_call_unexpected(void* arg)
 {
     _Unwind_Exception* unwind_exception = static_cast<_Unwind_Exception*>(arg);
     if (unwind_exception == 0)
-        call_terminate(true, unwind_exception);
+        call_terminate(false, unwind_exception);
     __cxa_begin_catch(unwind_exception);
     bool native_old_exception = (unwind_exception->exception_class & get_language) ==
                                 (kOurExceptionClass                & get_language);
