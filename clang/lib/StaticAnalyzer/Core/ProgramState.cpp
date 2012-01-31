@@ -25,6 +25,26 @@ using namespace ento;
 // FIXME: Move this elsewhere.
 ConstraintManager::~ConstraintManager() {}
 
+namespace clang { namespace  ento {
+/// Increments the number of times this state is referenced.
+
+void ProgramStateRetain(const ProgramState *state) {
+  ++const_cast<ProgramState*>(state)->refCount;
+}
+
+/// Decrement the number of times this state is referenced.
+void ProgramStateRelease(const ProgramState *state) {
+  assert(state->refCount > 0);
+  ProgramState *s = const_cast<ProgramState*>(state);
+  if (--s->refCount == 0) {
+    ProgramStateManager &Mgr = s->getStateManager();
+    Mgr.StateSet.RemoveNode(s);
+    s->~ProgramState();    
+    Mgr.freeStates.push_back(s);
+  }
+}
+}}
+
 ProgramState::ProgramState(ProgramStateManager *mgr, const Environment& env,
                  StoreRef st, GenericDataMap gdm)
   : stateMgr(mgr),
@@ -328,23 +348,10 @@ ProgramStateRef ProgramStateManager::getInitialState(const LocationContext *Init
   return getPersistentState(State);
 }
 
-void ProgramStateManager::recycleUnusedStates() {
-  for (std::vector<ProgramState*>::iterator i = recentlyAllocatedStates.begin(),
-       e = recentlyAllocatedStates.end(); i != e; ++i) {
-    ProgramState *state = *i;
-    if (state->referencedByExplodedNode())
-      continue;
-    StateSet.RemoveNode(state);
-    freeStates.push_back(state);
-    state->~ProgramState();
-  }
-  recentlyAllocatedStates.clear();
-}
-
 ProgramStateRef ProgramStateManager::getPersistentStateWithGDM(
                                                      ProgramStateRef FromState,
                                                      ProgramStateRef GDMState) {
-  ProgramState NewState = *FromState;
+  ProgramState NewState(*FromState);
   NewState.GDM = GDMState->GDM;
   return getPersistentState(NewState);
 }
@@ -368,12 +375,11 @@ ProgramStateRef ProgramStateManager::getPersistentState(ProgramState &State) {
   }
   new (newState) ProgramState(State);
   StateSet.InsertNode(newState, InsertPos);
-  recentlyAllocatedStates.push_back(newState);
   return newState;
 }
 
 ProgramStateRef ProgramState::makeWithStore(const StoreRef &store) const {
-  ProgramState NewSt = *this;
+  ProgramState NewSt(*this);
   NewSt.setStore(store);
   return getStateManager().getPersistentState(NewSt);
 }
