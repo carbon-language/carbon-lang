@@ -1995,8 +1995,8 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
     //     pointer, or member function pointer that does not have a non-throwing
     //     exception-specification
   case CallExprClass:
-  case CXXOperatorCallExprClass:
-  case CXXMemberCallExprClass: {
+  case CXXMemberCallExprClass:
+  case CXXOperatorCallExprClass: {
     const CallExpr *CE = cast<CallExpr>(this);
     CanThrowResult CT;
     if (isTypeDependent())
@@ -2068,34 +2068,34 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
 
     // Many other things have subexpressions, so we have to test those.
     // Some are simple:
-  case ParenExprClass:
-  case MemberExprClass:
-  case CXXReinterpretCastExprClass:
-  case CXXConstCastExprClass:
   case ConditionalOperatorClass:
   case CompoundLiteralExprClass:
+  case CXXConstCastExprClass:
+  case CXXDefaultArgExprClass:
+  case CXXReinterpretCastExprClass:
+  case DesignatedInitExprClass:
+  case ExprWithCleanupsClass:
   case ExtVectorElementExprClass:
   case InitListExprClass:
-  case DesignatedInitExprClass:
-  case ParenListExprClass:
-  case VAArgExprClass:
-  case CXXDefaultArgExprClass:
-  case ExprWithCleanupsClass:
-  case ObjCIvarRefExprClass:
+  case MemberExprClass:
   case ObjCIsaExprClass:
+  case ObjCIvarRefExprClass:
+  case ParenExprClass:
+  case ParenListExprClass:
   case ShuffleVectorExprClass:
+  case VAArgExprClass:
     return CanSubExprsThrow(C, this);
 
     // Some might be dependent for other reasons.
-  case UnaryOperatorClass:
   case ArraySubscriptExprClass:
-  case ImplicitCastExprClass:
+  case BinaryOperatorClass:
+  case CompoundAssignOperatorClass:
   case CStyleCastExprClass:
   case CXXStaticCastExprClass:
   case CXXFunctionalCastExprClass:
-  case BinaryOperatorClass:
-  case CompoundAssignOperatorClass:
-  case MaterializeTemporaryExprClass: {
+  case ImplicitCastExprClass:
+  case MaterializeTemporaryExprClass:
+  case UnaryOperatorClass: {
     CanThrowResult CT = isTypeDependent() ? CT_Dependent : CT_Cannot;
     return MergeCanThrow(CT, CanSubExprsThrow(C, this));
   }
@@ -2115,15 +2115,68 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
     return cast<GenericSelectionExpr>(this)->getResultExpr()->CanThrow(C);
 
     // Some expressions are always dependent.
-  case DependentScopeDeclRefExprClass:
-  case CXXUnresolvedConstructExprClass:
   case CXXDependentScopeMemberExprClass:
+  case CXXUnresolvedConstructExprClass:
+  case DependentScopeDeclRefExprClass:
     return CT_Dependent;
 
-  default:
-    // All other expressions don't have subexpressions, or else they are
-    // unevaluated.
+  case AtomicExprClass:
+  case AsTypeExprClass:
+  case BinaryConditionalOperatorClass:
+  case BlockExprClass:
+  case BlockDeclRefExprClass:
+  case CUDAKernelCallExprClass:
+  case DeclRefExprClass:
+  case ObjCBridgedCastExprClass:
+  case ObjCIndirectCopyRestoreExprClass:
+  case ObjCProtocolExprClass:
+  case ObjCSelectorExprClass:
+  case OffsetOfExprClass:
+  case PackExpansionExprClass:
+  case PseudoObjectExprClass:
+  case SubstNonTypeTemplateParmExprClass:
+  case SubstNonTypeTemplateParmPackExprClass:
+  case UnaryExprOrTypeTraitExprClass:
+  case UnresolvedLookupExprClass:
+  case UnresolvedMemberExprClass:
+    // FIXME: Can any of the above throw?  If so, when?
     return CT_Cannot;
+
+  case AddrLabelExprClass:
+  case ArrayTypeTraitExprClass:
+  case BinaryTypeTraitExprClass:
+  case CXXBoolLiteralExprClass:
+  case CXXNoexceptExprClass:
+  case CXXNullPtrLiteralExprClass:
+  case CXXPseudoDestructorExprClass:
+  case CXXScalarValueInitExprClass:
+  case CXXThisExprClass:
+  case CXXUuidofExprClass:
+  case CharacterLiteralClass:
+  case ExpressionTraitExprClass:
+  case FloatingLiteralClass:
+  case GNUNullExprClass:
+  case ImaginaryLiteralClass:
+  case ImplicitValueInitExprClass:
+  case IntegerLiteralClass:
+  case ObjCEncodeExprClass:
+  case ObjCStringLiteralClass:
+  case OpaqueValueExprClass:
+  case PredefinedExprClass:
+  case SizeOfPackExprClass:
+  case StringLiteralClass:
+  case UnaryTypeTraitExprClass:
+    // These expressions can never throw.
+    return CT_Cannot;
+
+#define STMT(CLASS, PARENT) case CLASS##Class:
+#define STMT_RANGE(Base, First, Last)
+#define LAST_STMT_RANGE(BASE, FIRST, LAST)
+#define EXPR(CLASS, PARENT)
+#define ABSTRACT_STMT(STMT)
+#include "clang/AST/StmtNodes.inc"
+  case NoStmtClass:
+    llvm_unreachable("Invalid class for expression");
   }
 }
 
