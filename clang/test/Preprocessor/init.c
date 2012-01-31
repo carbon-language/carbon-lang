@@ -525,7 +525,7 @@
 // PPC64:#define __DBL_MIN_10_EXP__ (-307)
 // PPC64:#define __DBL_MIN_EXP__ (-1021)
 // PPC64:#define __DBL_MIN__ 2.2250738585072014e-308
-// PPC64:#define __DECIMAL_DIG__ 17
+// PPC64:#define __DECIMAL_DIG__ 33
 // PPC64:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // PPC64:#define __FLT_DIG__ 6
 // PPC64:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -552,19 +552,19 @@
 // PPC64:#define __INTPTR_TYPE__ long int
 // PPC64:#define __INTPTR_WIDTH__ 64
 // PPC64:#define __INT_MAX__ 2147483647
-// PPC64:#define __LDBL_DENORM_MIN__ 4.9406564584124654e-324
-// PPC64:#define __LDBL_DIG__ 15
-// PPC64:#define __LDBL_EPSILON__ 2.2204460492503131e-16
+// PPC64:#define __LDBL_DENORM_MIN__ 4.94065645841246544176568792868221e-324L
+// PPC64:#define __LDBL_DIG__ 31
+// PPC64:#define __LDBL_EPSILON__ 4.94065645841246544176568792868221e-324L
 // PPC64:#define __LDBL_HAS_DENORM__ 1
 // PPC64:#define __LDBL_HAS_INFINITY__ 1
 // PPC64:#define __LDBL_HAS_QUIET_NAN__ 1
-// PPC64:#define __LDBL_MANT_DIG__ 53
+// PPC64:#define __LDBL_MANT_DIG__ 106
 // PPC64:#define __LDBL_MAX_10_EXP__ 308
 // PPC64:#define __LDBL_MAX_EXP__ 1024
-// PPC64:#define __LDBL_MAX__ 1.7976931348623157e+308
-// PPC64:#define __LDBL_MIN_10_EXP__ (-307)
-// PPC64:#define __LDBL_MIN_EXP__ (-1021)
-// PPC64:#define __LDBL_MIN__ 2.2250738585072014e-308
+// PPC64:#define __LDBL_MAX__ 1.79769313486231580793728971405301e+308L
+// PPC64:#define __LDBL_MIN_10_EXP__ (-291)
+// PPC64:#define __LDBL_MIN_EXP__ (-968)
+// PPC64:#define __LDBL_MIN__ 2.00416836000897277799610805135016e-292L
 // PPC64:#define __LONG_DOUBLE_128__ 1
 // PPC64:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // PPC64:#define __LONG_MAX__ 9223372036854775807L
@@ -582,7 +582,7 @@
 // PPC64:#define __SIZEOF_DOUBLE__ 8
 // PPC64:#define __SIZEOF_FLOAT__ 4
 // PPC64:#define __SIZEOF_INT__ 4
-// PPC64:#define __SIZEOF_LONG_DOUBLE__ 8
+// PPC64:#define __SIZEOF_LONG_DOUBLE__ 16
 // PPC64:#define __SIZEOF_LONG_LONG__ 8
 // PPC64:#define __SIZEOF_LONG__ 8
 // PPC64:#define __SIZEOF_POINTER__ 8
@@ -602,6 +602,111 @@
 // PPC64:#define __WINT_WIDTH__ 32
 // PPC64:#define __ppc64__ 1
 // PPC64:#define __ppc__ 1
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc64-unknown-linux-gnu -fno-signed-char < /dev/null | FileCheck -check-prefix PPC64-LINUX %s
+//
+// PPC64-LINUX:#define _ARCH_PPC 1
+// PPC64-LINUX:#define _ARCH_PPC64 1
+// PPC64-LINUX:#define _BIG_ENDIAN 1
+// PPC64-LINUX:#define _LP64 1
+// PPC64-LINUX:#define __BIG_ENDIAN__ 1
+// PPC64-LINUX:#define __CHAR16_TYPE__ unsigned short
+// PPC64-LINUX:#define __CHAR32_TYPE__ unsigned int
+// PPC64-LINUX:#define __CHAR_BIT__ 8
+// PPC64-LINUX:#define __CHAR_UNSIGNED__ 1
+// PPC64-LINUX:#define __DBL_DENORM_MIN__ 4.9406564584124654e-324
+// PPC64-LINUX:#define __DBL_DIG__ 15
+// PPC64-LINUX:#define __DBL_EPSILON__ 2.2204460492503131e-16
+// PPC64-LINUX:#define __DBL_HAS_DENORM__ 1
+// PPC64-LINUX:#define __DBL_HAS_INFINITY__ 1
+// PPC64-LINUX:#define __DBL_HAS_QUIET_NAN__ 1
+// PPC64-LINUX:#define __DBL_MANT_DIG__ 53
+// PPC64-LINUX:#define __DBL_MAX_10_EXP__ 308
+// PPC64-LINUX:#define __DBL_MAX_EXP__ 1024
+// PPC64-LINUX:#define __DBL_MAX__ 1.7976931348623157e+308
+// PPC64-LINUX:#define __DBL_MIN_10_EXP__ (-307)
+// PPC64-LINUX:#define __DBL_MIN_EXP__ (-1021)
+// PPC64-LINUX:#define __DBL_MIN__ 2.2250738585072014e-308
+// PPC64-LINUX:#define __DECIMAL_DIG__ 33
+// PPC64-LINUX:#define __FLT_DENORM_MIN__ 1.40129846e-45F
+// PPC64-LINUX:#define __FLT_DIG__ 6
+// PPC64-LINUX:#define __FLT_EPSILON__ 1.19209290e-7F
+// PPC64-LINUX:#define __FLT_EVAL_METHOD__ 0
+// PPC64-LINUX:#define __FLT_HAS_DENORM__ 1
+// PPC64-LINUX:#define __FLT_HAS_INFINITY__ 1
+// PPC64-LINUX:#define __FLT_HAS_QUIET_NAN__ 1
+// PPC64-LINUX:#define __FLT_MANT_DIG__ 24
+// PPC64-LINUX:#define __FLT_MAX_10_EXP__ 38
+// PPC64-LINUX:#define __FLT_MAX_EXP__ 128
+// PPC64-LINUX:#define __FLT_MAX__ 3.40282347e+38F
+// PPC64-LINUX:#define __FLT_MIN_10_EXP__ (-37)
+// PPC64-LINUX:#define __FLT_MIN_EXP__ (-125)
+// PPC64-LINUX:#define __FLT_MIN__ 1.17549435e-38F
+// PPC64-LINUX:#define __FLT_RADIX__ 2
+// PPC64-LINUX:#define __INT16_TYPE__ short
+// PPC64-LINUX:#define __INT32_TYPE__ int
+// PPC64-LINUX:#define __INT64_C_SUFFIX__ L
+// PPC64-LINUX:#define __INT64_TYPE__ long int
+// PPC64-LINUX:#define __INT8_TYPE__ char
+// PPC64-LINUX:#define __INTMAX_MAX__ 9223372036854775807L
+// PPC64-LINUX:#define __INTMAX_TYPE__ long int
+// PPC64-LINUX:#define __INTMAX_WIDTH__ 64
+// PPC64-LINUX:#define __INTPTR_TYPE__ long int
+// PPC64-LINUX:#define __INTPTR_WIDTH__ 64
+// PPC64-LINUX:#define __INT_MAX__ 2147483647
+// PPC64-LINUX:#define __LDBL_DENORM_MIN__ 4.94065645841246544176568792868221e-324L
+// PPC64-LINUX:#define __LDBL_DIG__ 31
+// PPC64-LINUX:#define __LDBL_EPSILON__ 4.94065645841246544176568792868221e-324L
+// PPC64-LINUX:#define __LDBL_HAS_DENORM__ 1
+// PPC64-LINUX:#define __LDBL_HAS_INFINITY__ 1
+// PPC64-LINUX:#define __LDBL_HAS_QUIET_NAN__ 1
+// PPC64-LINUX:#define __LDBL_MANT_DIG__ 106
+// PPC64-LINUX:#define __LDBL_MAX_10_EXP__ 308
+// PPC64-LINUX:#define __LDBL_MAX_EXP__ 1024
+// PPC64-LINUX:#define __LDBL_MAX__ 1.79769313486231580793728971405301e+308L
+// PPC64-LINUX:#define __LDBL_MIN_10_EXP__ (-291)
+// PPC64-LINUX:#define __LDBL_MIN_EXP__ (-968)
+// PPC64-LINUX:#define __LDBL_MIN__ 2.00416836000897277799610805135016e-292L
+// PPC64-LINUX:#define __LONG_DOUBLE_128__ 1
+// PPC64-LINUX:#define __LONG_LONG_MAX__ 9223372036854775807LL
+// PPC64-LINUX:#define __LONG_MAX__ 9223372036854775807L
+// PPC64-LINUX:#define __LP64__ 1
+// PPC64-LINUX:#define __NATURAL_ALIGNMENT__ 1
+// PPC64-LINUX:#define __NO_INLINE__ 1
+// PPC64-LINUX:#define __POINTER_WIDTH__ 64
+// PPC64-LINUX:#define __POWERPC__ 1
+// PPC64-LINUX:#define __PTRDIFF_TYPE__ long int
+// PPC64-LINUX:#define __PTRDIFF_WIDTH__ 64
+// PPC64-LINUX:#define __REGISTER_PREFIX__
+// PPC64-LINUX:#define __SCHAR_MAX__ 127
+// PPC64-LINUX:#define __SHRT_MAX__ 32767
+// PPC64-LINUX:#define __SIG_ATOMIC_WIDTH__ 32
+// PPC64-LINUX:#define __SIZEOF_DOUBLE__ 8
+// PPC64-LINUX:#define __SIZEOF_FLOAT__ 4
+// PPC64-LINUX:#define __SIZEOF_INT__ 4
+// PPC64-LINUX:#define __SIZEOF_LONG_DOUBLE__ 16
+// PPC64-LINUX:#define __SIZEOF_LONG_LONG__ 8
+// PPC64-LINUX:#define __SIZEOF_LONG__ 8
+// PPC64-LINUX:#define __SIZEOF_POINTER__ 8
+// PPC64-LINUX:#define __SIZEOF_PTRDIFF_T__ 8
+// PPC64-LINUX:#define __SIZEOF_SHORT__ 2
+// PPC64-LINUX:#define __SIZEOF_SIZE_T__ 8
+// PPC64-LINUX:#define __SIZEOF_WCHAR_T__ 4
+// PPC64-LINUX:#define __SIZEOF_WINT_T__ 4
+// PPC64-LINUX:#define __SIZE_TYPE__ long unsigned int
+// PPC64-LINUX:#define __SIZE_WIDTH__ 64
+// PPC64-LINUX:#define __UINTMAX_TYPE__ long unsigned int
+// PPC64-LINUX:#define __USER_LABEL_PREFIX__
+// PPC64-LINUX:#define __WCHAR_MAX__ 2147483647
+// PPC64-LINUX:#define __WCHAR_TYPE__ int
+// PPC64-LINUX:#define __WCHAR_WIDTH__ 32
+// PPC64-LINUX:#define __WINT_TYPE__ unsigned int
+// PPC64-LINUX:#define __WINT_UNSIGNED__ 1
+// PPC64-LINUX:#define __WINT_WIDTH__ 32
+// PPC64-LINUX:#define __powerpc64__ 1
+// PPC64-LINUX:#define __powerpc__ 1
+// PPC64-LINUX:#define __ppc64__ 1
+// PPC64-LINUX:#define __ppc__ 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc-none-none -fno-signed-char < /dev/null | FileCheck -check-prefix PPC %s
 //
@@ -625,7 +730,7 @@
 // PPC:#define __DBL_MIN_10_EXP__ (-307)
 // PPC:#define __DBL_MIN_EXP__ (-1021)
 // PPC:#define __DBL_MIN__ 2.2250738585072014e-308
-// PPC:#define __DECIMAL_DIG__ 17
+// PPC:#define __DECIMAL_DIG__ 33
 // PPC:#define __FLT_DENORM_MIN__ 1.40129846e-45F
 // PPC:#define __FLT_DIG__ 6
 // PPC:#define __FLT_EPSILON__ 1.19209290e-7F
@@ -652,19 +757,19 @@
 // PPC:#define __INTPTR_TYPE__ long int
 // PPC:#define __INTPTR_WIDTH__ 32
 // PPC:#define __INT_MAX__ 2147483647
-// PPC:#define __LDBL_DENORM_MIN__ 4.9406564584124654e-324
-// PPC:#define __LDBL_DIG__ 15
-// PPC:#define __LDBL_EPSILON__ 2.2204460492503131e-16
+// PPC:#define __LDBL_DENORM_MIN__ 4.94065645841246544176568792868221e-324L
+// PPC:#define __LDBL_DIG__ 31
+// PPC:#define __LDBL_EPSILON__ 4.94065645841246544176568792868221e-324L
 // PPC:#define __LDBL_HAS_DENORM__ 1
 // PPC:#define __LDBL_HAS_INFINITY__ 1
 // PPC:#define __LDBL_HAS_QUIET_NAN__ 1
-// PPC:#define __LDBL_MANT_DIG__ 53
+// PPC:#define __LDBL_MANT_DIG__ 106
 // PPC:#define __LDBL_MAX_10_EXP__ 308
 // PPC:#define __LDBL_MAX_EXP__ 1024
-// PPC:#define __LDBL_MAX__ 1.7976931348623157e+308
-// PPC:#define __LDBL_MIN_10_EXP__ (-307)
-// PPC:#define __LDBL_MIN_EXP__ (-1021)
-// PPC:#define __LDBL_MIN__ 2.2250738585072014e-308
+// PPC:#define __LDBL_MAX__ 1.79769313486231580793728971405301e+308L
+// PPC:#define __LDBL_MIN_10_EXP__ (-291)
+// PPC:#define __LDBL_MIN_EXP__ (-968)
+// PPC:#define __LDBL_MIN__ 2.00416836000897277799610805135016e-292L
 // PPC:#define __LONG_DOUBLE_128__ 1
 // PPC:#define __LONG_LONG_MAX__ 9223372036854775807LL
 // PPC:#define __LONG_MAX__ 2147483647L
@@ -681,7 +786,7 @@
 // PPC:#define __SIZEOF_DOUBLE__ 8
 // PPC:#define __SIZEOF_FLOAT__ 4
 // PPC:#define __SIZEOF_INT__ 4
-// PPC:#define __SIZEOF_LONG_DOUBLE__ 8
+// PPC:#define __SIZEOF_LONG_DOUBLE__ 16
 // PPC:#define __SIZEOF_LONG_LONG__ 8
 // PPC:#define __SIZEOF_LONG__ 4
 // PPC:#define __SIZEOF_POINTER__ 4
@@ -700,6 +805,106 @@
 // PPC:#define __WINT_TYPE__ int
 // PPC:#define __WINT_WIDTH__ 32
 // PPC:#define __ppc__ 1
+//
+// RUN: %clang_cc1 -E -dM -ffreestanding -triple=powerpc-unknown-linux-gnu -fno-signed-char < /dev/null | FileCheck -check-prefix PPC-LINUX %s
+//
+// PPC-LINUX:#define _ARCH_PPC 1
+// PPC-LINUX:#define _BIG_ENDIAN 1
+// PPC-LINUX:#define __BIG_ENDIAN__ 1
+// PPC-LINUX:#define __CHAR16_TYPE__ unsigned short
+// PPC-LINUX:#define __CHAR32_TYPE__ unsigned int
+// PPC-LINUX:#define __CHAR_BIT__ 8
+// PPC-LINUX:#define __CHAR_UNSIGNED__ 1
+// PPC-LINUX:#define __DBL_DENORM_MIN__ 4.9406564584124654e-324
+// PPC-LINUX:#define __DBL_DIG__ 15
+// PPC-LINUX:#define __DBL_EPSILON__ 2.2204460492503131e-16
+// PPC-LINUX:#define __DBL_HAS_DENORM__ 1
+// PPC-LINUX:#define __DBL_HAS_INFINITY__ 1
+// PPC-LINUX:#define __DBL_HAS_QUIET_NAN__ 1
+// PPC-LINUX:#define __DBL_MANT_DIG__ 53
+// PPC-LINUX:#define __DBL_MAX_10_EXP__ 308
+// PPC-LINUX:#define __DBL_MAX_EXP__ 1024
+// PPC-LINUX:#define __DBL_MAX__ 1.7976931348623157e+308
+// PPC-LINUX:#define __DBL_MIN_10_EXP__ (-307)
+// PPC-LINUX:#define __DBL_MIN_EXP__ (-1021)
+// PPC-LINUX:#define __DBL_MIN__ 2.2250738585072014e-308
+// PPC-LINUX:#define __DECIMAL_DIG__ 33
+// PPC-LINUX:#define __FLT_DENORM_MIN__ 1.40129846e-45F
+// PPC-LINUX:#define __FLT_DIG__ 6
+// PPC-LINUX:#define __FLT_EPSILON__ 1.19209290e-7F
+// PPC-LINUX:#define __FLT_EVAL_METHOD__ 0
+// PPC-LINUX:#define __FLT_HAS_DENORM__ 1
+// PPC-LINUX:#define __FLT_HAS_INFINITY__ 1
+// PPC-LINUX:#define __FLT_HAS_QUIET_NAN__ 1
+// PPC-LINUX:#define __FLT_MANT_DIG__ 24
+// PPC-LINUX:#define __FLT_MAX_10_EXP__ 38
+// PPC-LINUX:#define __FLT_MAX_EXP__ 128
+// PPC-LINUX:#define __FLT_MAX__ 3.40282347e+38F
+// PPC-LINUX:#define __FLT_MIN_10_EXP__ (-37)
+// PPC-LINUX:#define __FLT_MIN_EXP__ (-125)
+// PPC-LINUX:#define __FLT_MIN__ 1.17549435e-38F
+// PPC-LINUX:#define __FLT_RADIX__ 2
+// PPC-LINUX:#define __INT16_TYPE__ short
+// PPC-LINUX:#define __INT32_TYPE__ int
+// PPC-LINUX:#define __INT64_C_SUFFIX__ LL
+// PPC-LINUX:#define __INT64_TYPE__ long long int
+// PPC-LINUX:#define __INT8_TYPE__ char
+// PPC-LINUX:#define __INTMAX_MAX__ 9223372036854775807LL
+// PPC-LINUX:#define __INTMAX_TYPE__ long long int
+// PPC-LINUX:#define __INTMAX_WIDTH__ 64
+// PPC-LINUX:#define __INTPTR_TYPE__ long int
+// PPC-LINUX:#define __INTPTR_WIDTH__ 32
+// PPC-LINUX:#define __INT_MAX__ 2147483647
+// PPC-LINUX:#define __LDBL_DENORM_MIN__ 4.94065645841246544176568792868221e-324L
+// PPC-LINUX:#define __LDBL_DIG__ 31
+// PPC-LINUX:#define __LDBL_EPSILON__ 4.94065645841246544176568792868221e-324L
+// PPC-LINUX:#define __LDBL_HAS_DENORM__ 1
+// PPC-LINUX:#define __LDBL_HAS_INFINITY__ 1
+// PPC-LINUX:#define __LDBL_HAS_QUIET_NAN__ 1
+// PPC-LINUX:#define __LDBL_MANT_DIG__ 106
+// PPC-LINUX:#define __LDBL_MAX_10_EXP__ 308
+// PPC-LINUX:#define __LDBL_MAX_EXP__ 1024
+// PPC-LINUX:#define __LDBL_MAX__ 1.79769313486231580793728971405301e+308L
+// PPC-LINUX:#define __LDBL_MIN_10_EXP__ (-291)
+// PPC-LINUX:#define __LDBL_MIN_EXP__ (-968)
+// PPC-LINUX:#define __LDBL_MIN__ 2.00416836000897277799610805135016e-292L
+// PPC-LINUX:#define __LONG_DOUBLE_128__ 1
+// PPC-LINUX:#define __LONG_LONG_MAX__ 9223372036854775807LL
+// PPC-LINUX:#define __LONG_MAX__ 2147483647L
+// PPC-LINUX:#define __NATURAL_ALIGNMENT__ 1
+// PPC-LINUX:#define __NO_INLINE__ 1
+// PPC-LINUX:#define __POINTER_WIDTH__ 32
+// PPC-LINUX:#define __POWERPC__ 1
+// PPC-LINUX:#define __PTRDIFF_TYPE__ long int
+// PPC-LINUX:#define __PTRDIFF_WIDTH__ 32
+// PPC-LINUX:#define __REGISTER_PREFIX__
+// PPC-LINUX:#define __SCHAR_MAX__ 127
+// PPC-LINUX:#define __SHRT_MAX__ 32767
+// PPC-LINUX:#define __SIG_ATOMIC_WIDTH__ 32
+// PPC-LINUX:#define __SIZEOF_DOUBLE__ 8
+// PPC-LINUX:#define __SIZEOF_FLOAT__ 4
+// PPC-LINUX:#define __SIZEOF_INT__ 4
+// PPC-LINUX:#define __SIZEOF_LONG_DOUBLE__ 16
+// PPC-LINUX:#define __SIZEOF_LONG_LONG__ 8
+// PPC-LINUX:#define __SIZEOF_LONG__ 4
+// PPC-LINUX:#define __SIZEOF_POINTER__ 4
+// PPC-LINUX:#define __SIZEOF_PTRDIFF_T__ 4
+// PPC-LINUX:#define __SIZEOF_SHORT__ 2
+// PPC-LINUX:#define __SIZEOF_SIZE_T__ 4
+// PPC-LINUX:#define __SIZEOF_WCHAR_T__ 4
+// PPC-LINUX:#define __SIZEOF_WINT_T__ 4
+// PPC-LINUX:#define __SIZE_TYPE__ unsigned int
+// PPC-LINUX:#define __SIZE_WIDTH__ 32
+// PPC-LINUX:#define __UINTMAX_TYPE__ long long unsigned int
+// PPC-LINUX:#define __USER_LABEL_PREFIX__
+// PPC-LINUX:#define __WCHAR_MAX__ 2147483647
+// PPC-LINUX:#define __WCHAR_TYPE__ int
+// PPC-LINUX:#define __WCHAR_WIDTH__ 32
+// PPC-LINUX:#define __WINT_TYPE__ unsigned int
+// PPC-LINUX:#define __WINT_UNSIGNED__ 1
+// PPC-LINUX:#define __WINT_WIDTH__ 32
+// PPC-LINUX:#define __powerpc__ 1
+// PPC-LINUX:#define __ppc__ 1
 //
 // RUN: %clang_cc1 -E -dM -ffreestanding -triple=sparc-none-none < /dev/null | FileCheck -check-prefix SPARC %s
 //
