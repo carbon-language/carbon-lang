@@ -276,10 +276,7 @@ namespace {
         UnwindDestPHIValues.push_back(PHI->getIncomingValueForBlock(InvokeBB));
       }
 
-      // FIXME: With the new EH, this if/dyn_cast should be a 'cast'.
-      if (LandingPadInst *LPI = dyn_cast<LandingPadInst>(I)) {
-        CallerLPad = LPI;
-      }
+      CallerLPad = cast<LandingPadInst>(I);
     }
 
     /// The outer unwind destination is the target of unwind edges
@@ -507,13 +504,12 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
   for (BasicBlock::iterator BBI = BB->begin(), E = BB->end(); BBI != E; ) {
     Instruction *I = BBI++;
 
-    if (LPI) // FIXME: New EH - This won't be NULL in the new EH.
-      if (LandingPadInst *L = dyn_cast<LandingPadInst>(I)) {
-        unsigned NumClauses = LPI->getNumClauses();
-        L->reserveClauses(NumClauses);
-        for (unsigned i = 0; i != NumClauses; ++i)
-          L->addClause(LPI->getClause(i));
-      }
+    if (LandingPadInst *L = dyn_cast<LandingPadInst>(I)) {
+      unsigned NumClauses = LPI->getNumClauses();
+      L->reserveClauses(NumClauses);
+      for (unsigned i = 0; i != NumClauses; ++i)
+        L->addClause(LPI->getClause(i));
+    }
 
     // We only need to check for function calls: inlined invoke
     // instructions require no special handling.
@@ -930,11 +926,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
        I != E; ++I)
     if (const InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator())) {
       const BasicBlock *BB = II->getUnwindDest();
-      // FIXME: This 'if/dyn_cast' here should become a normal 'cast' once
-      // the new EH system is in place.
-      if (const LandingPadInst *LP =
-          dyn_cast<LandingPadInst>(BB->getFirstNonPHI()))
-        CalleePersonality = LP->getPersonalityFn();
+      const LandingPadInst *LP = BB->getLandingPadInst();
+      CalleePersonality = LP->getPersonalityFn();
       break;
     }
 
@@ -946,11 +939,7 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
          I != E; ++I)
       if (const InvokeInst *II = dyn_cast<InvokeInst>(I->getTerminator())) {
         const BasicBlock *BB = II->getUnwindDest();
-        // FIXME: This 'isa' here should become go away once the new EH system
-        // is in place.
-        if (!isa<LandingPadInst>(BB->getFirstNonPHI()))
-          continue;
-        const LandingPadInst *LP = cast<LandingPadInst>(BB->getFirstNonPHI());
+        const LandingPadInst *LP = BB->getLandingPadInst();
 
         // If the personality functions match, then we can perform the
         // inlining. Otherwise, we can't inline.
