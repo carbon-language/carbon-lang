@@ -1347,7 +1347,13 @@ Driver::MainLoop ()
                         else if (event.BroadcasterMatchesRef (sb_interpreter.GetBroadcaster()))
                         {
                             if (event_type & SBCommandInterpreter::eBroadcastBitQuitCommandReceived)
+                            {
+                                editline_output_pty.CloseMasterFileDescriptor();
+                                master_out_comm.Disconnect();
+                                out_comm_2.Disconnect();
+                                fclose (stdin);
                                 done = true;
+                            }
                             else if (event_type & SBCommandInterpreter::eBroadcastBitAsynchronousErrorData)
                             {
                                 const char *data = SBEvent::GetCStringFromEvent (event);

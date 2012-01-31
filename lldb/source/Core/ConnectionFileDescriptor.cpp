@@ -73,8 +73,8 @@ ConnectionFileDescriptor::ConnectionFileDescriptor () :
     m_fd_recv_type (eFDTypeFile),
     m_udp_send_sockaddr (),
     m_should_close_fd (false), 
-    m_socket_timeout_usec(0)//,
-    //m_mutex (Mutex::eMutexTypeRecursive)
+    m_socket_timeout_usec(0),
+    m_mutex (Mutex::eMutexTypeRecursive)
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
     if (log)
@@ -89,7 +89,8 @@ ConnectionFileDescriptor::ConnectionFileDescriptor (int fd, bool owns_fd) :
     m_fd_recv_type (eFDTypeFile),
     m_udp_send_sockaddr (),
     m_should_close_fd (owns_fd),
-    m_socket_timeout_usec(0)
+    m_socket_timeout_usec(0),
+    m_mutex (Mutex::eMutexTypeRecursive)
 {
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION |  LIBLLDB_LOG_OBJECT));
     if (log)
@@ -114,7 +115,7 @@ ConnectionFileDescriptor::IsConnected () const
 ConnectionStatus
 ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
 {
-    //Mutex::Locker locker (m_mutex);
+    Mutex::Locker locker (m_mutex);
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Connect (url = '%s')", this, s);
@@ -234,6 +235,7 @@ ConnectionFileDescriptor::Connect (const char *s, Error *error_ptr)
 ConnectionStatus
 ConnectionFileDescriptor::Disconnect (Error *error_ptr)
 {
+    Mutex::Locker locker (m_mutex);
     LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
     if (log)
         log->Printf ("%p ConnectionFileDescriptor::Disconnect ()", this);
@@ -243,22 +245,25 @@ ConnectionFileDescriptor::Disconnect (Error *error_ptr)
         return eConnectionStatusSuccess;
     }
     ConnectionStatus status = eConnectionStatusSuccess;
-    if (m_fd_send == m_fd_recv)
+    if (m_fd_send >= 0 || m_fd_recv >= 0)
     {
-        // Both file descriptors are the same, only close one
-        status = Close (m_fd_send, error_ptr);
-        m_fd_recv = -1;
-    }
-    else
-    {
-        // File descriptors are the different, close both if needed
-        if (m_fd_send >= 0)
-            status = Close (m_fd_send, error_ptr);
-        if (m_fd_recv >= 0)
+        if (m_fd_send == m_fd_recv)
         {
-            ConnectionStatus recv_status = Close (m_fd_recv, error_ptr);
-            if (status == eConnectionStatusSuccess)
-                status = recv_status;
+            // Both file descriptors are the same, only close one
+            m_fd_recv = -1;
+            status = Close (m_fd_send, error_ptr);
+        }
+        else
+        {
+            // File descriptors are the different, close both if needed
+            if (m_fd_send >= 0)
+                status = Close (m_fd_send, error_ptr);
+            if (m_fd_recv >= 0)
+            {
+                ConnectionStatus recv_status = Close (m_fd_recv, error_ptr);
+                if (status == eConnectionStatusSuccess)
+                    status = recv_status;
+            }
         }
     }
     return status;
@@ -601,27 +606,33 @@ ConnectionFileDescriptor::BytesAvailable (uint32_t timeout_usec, Error *error_pt
 ConnectionStatus
 ConnectionFileDescriptor::Close (int& fd, Error *error_ptr)
 {
-    //Mutex::Locker locker (m_mutex);
     if (error_ptr)
         error_ptr->Clear();
     bool success = true;
+    // Avoid taking a lock if we can
     if (fd >= 0)
     {
-        LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
-        if (log)
-            log->Printf ("%p ConnectionFileDescriptor::Close (fd = %i)", this,fd);
-
-        success = ::close (fd) == 0;
-        if (!success && error_ptr)
+        Mutex::Locker locker (m_mutex);
+        // Check the FD after the lock is taken to ensure only one thread
+        // can get into the close scope below
+        if (fd >= 0)
         {
-            // Only set the error if we have been asked to since something else
-            // might have caused us to try and shut down the connection and may
-            // have already set the error.
-            error_ptr->SetErrorToErrno();
+            LogSP log(lldb_private::GetLogIfAnyCategoriesSet (LIBLLDB_LOG_CONNECTION));
+            if (log)
+                log->Printf ("%p ConnectionFileDescriptor::Close (fd = %i)", this,fd);
+
+            success = ::close (fd) == 0;
+            // A reference to a FD was passed in, set it to an invalid value
+            fd = -1;
+            if (!success && error_ptr)
+            {
+                // Only set the error if we have been asked to since something else
+                // might have caused us to try and shut down the connection and may
+                // have already set the error.
+                error_ptr->SetErrorToErrno();
+            }
         }
-        fd = -1;
     }
-    m_fd_send_type = m_fd_recv_type = eFDTypeFile;
     if (success)
         return eConnectionStatusSuccess;
     else

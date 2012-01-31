@@ -469,8 +469,7 @@ ProcessKDP::DoDetach()
     // Sleep for one second to let the process get all detached...
     StopAsyncThread ();
     
-    m_comm.StopReadThread();
-    m_comm.Disconnect();    // Disconnect from the debug server.
+    m_comm.Clear();
     
     SetPrivateState (eStateDetached);
     ResumePrivateStateThread();
@@ -508,8 +507,7 @@ ProcessKDP::DoDestroy ()
         }
     }
     StopAsyncThread ();
-    m_comm.StopReadThread();
-    m_comm.Disconnect();    // Disconnect from the debug server.
+    m_comm.Clear();
     return error;
 }
 

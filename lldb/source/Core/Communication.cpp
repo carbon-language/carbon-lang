@@ -65,8 +65,8 @@ void
 Communication::Clear()
 {
     SetReadThreadBytesReceivedCallback (NULL, NULL);
-    StopReadThread (NULL);
     Disconnect (NULL);
+    StopReadThread (NULL);
 }
 
 ConnectionStatus
@@ -253,7 +253,7 @@ Communication::StopReadThread (Error *error_ptr)
 
     BroadcastEvent (eBroadcastBitReadThreadShouldExit, NULL);
 
-    Host::ThreadCancel (m_read_thread, error_ptr);
+    //Host::ThreadCancel (m_read_thread, error_ptr);
 
     bool status = Host::ThreadJoin (m_read_thread, NULL, error_ptr);
     m_read_thread = LLDB_INVALID_HOST_THREAD;
@@ -383,7 +383,7 @@ Communication::ReadThread (void *p)
     // Let clients know that this thread is exiting
     comm->BroadcastEvent (eBroadcastBitReadThreadDidExit);
     comm->m_read_thread_enabled = false;
-    comm->Disconnect();
+    comm->m_read_thread = LLDB_INVALID_HOST_THREAD;
     return NULL;
 }
 
@@ -401,8 +401,8 @@ Communication::SetReadThreadBytesReceivedCallback
 void
 Communication::SetConnection (Connection *connection)
 {
-    StopReadThread(NULL);
     Disconnect (NULL);
+    StopReadThread(NULL);
     m_connection_sp.reset(connection);
 }
 
