@@ -328,6 +328,15 @@ get_shim_type_info(int64_t ttypeIndex, const uint8_t* classInfo,
     return (const __shim_type_info*)readEncodedPointer(&classInfo, ttypeEncoding);
 }
 
+/*
+    This is checking a thrown exception type, excpType, against a posibly empty
+    list of catchType's which make up an exception spec.
+
+    An exception spec acts like a catch handler, but in reverse.  This "catch
+    handler" will catch an excpType if and only if none of the catchType's in
+    the list will catch a excpType.  If any catchType in the list can catch an
+    excpType, then this exception spec does not catch the excpType.
+*/
 static
 bool
 exception_spec_can_catch(int64_t specIndex, const uint8_t* classInfo,
@@ -851,11 +860,17 @@ __cxa_call_unexpected(void* arg)
     std::unexpected_handler u_handler;
     std::terminate_handler t_handler;
     __cxa_exception* old_exception_header = 0;
+    int64_t ttypeIndex;
+    const uint8_t* lsda;
     if (native_old_exception)
     {
         old_exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
         t_handler = old_exception_header->terminateHandler;
         u_handler = old_exception_header->unexpectedHandler;
+        // std::__unexpected(u_handler) rethrows the same exception,
+        //   these values get overwritten by the rethrow.  So save them now:
+        ttypeIndex = old_exception_header->handlerSwitchValue;
+        lsda = old_exception_header->languageSpecificData;
     }
     else
     {
@@ -875,14 +890,12 @@ __cxa_call_unexpected(void* arg)
         //   from here.
         if (native_old_exception)
         {
-            int64_t ttypeIndex = old_exception_header->handlerSwitchValue;
             // Have:
             //   old_exception_header->languageSpecificData
             //   old_exception_header->actionRecord
             // Need
             //   const uint8_t* classInfo
             //   uint8_t ttypeEncoding
-            const uint8_t* lsda = old_exception_header->languageSpecificData;
             uint8_t lpStartEncoding = *lsda++;
             const uint8_t* lpStart = (const uint8_t*)readEncodedPointer(&lsda, lpStartEncoding);
             uint8_t ttypeEncoding = *lsda++;
@@ -903,7 +916,7 @@ __cxa_call_unexpected(void* arg)
                 (new_exception_header->unwindHeader.exception_class & get_language) ==
                                                 (kOurExceptionClass & get_language);
             void* adjustedPtr;
-            if (native_new_exception && new_exception_header != old_exception_header)
+            if (native_new_exception && (new_exception_header != old_exception_header))
             {
                 const __shim_type_info* excpType =
                     static_cast<const __shim_type_info*>(new_exception_header->exceptionType);
