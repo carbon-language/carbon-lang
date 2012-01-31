@@ -519,8 +519,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
             if (actionEntry == 0)
             {
                 // Found a cleanup
-                // If this is a type 1 or type 2 search, ignore the clean up
-                //    and continue to scan for a handler.
+                // If this is a type 1 or type 2 search, there are no handlers
                 // If this is a type 3 search, you want to install the cleanup.
                 if ((actions & _UA_CLEANUP_PHASE) && !(actions & _UA_HANDLER_FRAME))
                 {
@@ -529,6 +528,9 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
                     results.reason = _URC_HANDLER_FOUND;
                     return;
                 }
+                // No handler here
+                results.reason = _URC_CONTINUE_UNWIND;
+                return;
             }
             // Convert 1-based byte offset into
             const uint8_t* action = actionTableStart + (actionEntry - 1);
@@ -814,7 +816,9 @@ __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClas
                 results.adjustedPtr = exception_header->adjustedPtr;
             }
             else
+            {
                 scan_eh_tab(results, actions, native_exception, unwind_exception, context);
+            }
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), results.ttypeIndex);
             _Unwind_SetIP(context, results.landingPad);

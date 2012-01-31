@@ -15,14 +15,26 @@ extern "C"
 {
 
 static
-void f()
+void f1()
 {
-    abort_message("this shouldn't be called");
+    abort_message("__cxa_new_handler shouldn't be called");
 }
 
-void (*__cxa_new_handler)() = f;
-void (*__cxa_terminate_handler)() = f;
-void (*__cxa_unexpected_handler)() = f;
+static
+void f2()
+{
+    abort_message("__cxa_terminate_handler shouldn't be called");
+}
+
+static
+void f3()
+{
+    abort_message("__cxa_unexpected_handler shouldn't be called");
+}
+
+void (*__cxa_new_handler)() = f1;
+void (*__cxa_terminate_handler)() = f2;
+void (*__cxa_unexpected_handler)() = f3;
 
 }
 
