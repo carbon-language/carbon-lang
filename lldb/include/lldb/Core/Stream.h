@@ -383,13 +383,12 @@ public:
     AddressRange(uint64_t lo_addr, uint64_t hi_addr, int addr_size, const char *prefix = NULL, const char *suffix = NULL);
 
     //------------------------------------------------------------------
-    /// Output a C string to the stream with optional format.
+    /// Output a C string to the stream.
     ///
-    /// Print a C string \a cstr to the stream using the printf format
-    /// in \a format.
+    /// Print a C string \a cstr to the stream.
     ///
-    /// @param[in] format
-    ///     The printf style format to use when outputting the C string.
+    /// @param[in] cstr
+    ///     The string to be output to the stream.
     //------------------------------------------------------------------
     int
     PutCString (const char *cstr);

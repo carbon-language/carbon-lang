@@ -122,8 +122,7 @@ Stream::PutULEB128 (uint64_t uval)
 }
 
 //------------------------------------------------------------------
-// Print a raw NULL terminated C string to the stream using the
-// printf format in "format".
+// Print a raw NULL terminated C string to the stream.
 //------------------------------------------------------------------
 int
 Stream::PutCString (const char *cstr)
