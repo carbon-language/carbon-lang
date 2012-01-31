@@ -291,8 +291,7 @@ namespace {
       return OuterSelector;
     }
 
-    // FIXME: New EH - Rename when new EH is turned on.
-    BasicBlock *getInnerUnwindDestNewEH();
+    BasicBlock *getInnerUnwindDest();
 
     LandingPadInst *getLandingPadInst() const { return CallerLPad; }
 
@@ -321,7 +320,7 @@ namespace {
 }
 
 /// getInnerUnwindDest - Get or create a target for the branch from ResumeInsts.
-BasicBlock *InvokeInliningInfo::getInnerUnwindDestNewEH() {
+BasicBlock *InvokeInliningInfo::getInnerUnwindDest() {
   if (InnerResumeDest) return InnerResumeDest;
 
   // Split the landing pad.
@@ -360,7 +359,7 @@ BasicBlock *InvokeInliningInfo::getInnerUnwindDestNewEH() {
 /// branch. When there is more than one predecessor, we need to split the
 /// landing pad block after the landingpad instruction and jump to there.
 void InvokeInliningInfo::forwardResume(ResumeInst *RI) {
-  BasicBlock *Dest = getInnerUnwindDestNewEH();
+  BasicBlock *Dest = getInnerUnwindDest();
   BasicBlock *Src = RI->getParent();
 
   BranchInst::Create(Dest, Src);
