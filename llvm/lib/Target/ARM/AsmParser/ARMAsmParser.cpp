@@ -2550,7 +2550,7 @@ tryParseRegisterWithWriteBack(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
     const MCExpr *ImmVal;
     if (getParser().ParseExpression(ImmVal))
-      return MatchOperand_ParseFail;
+      return true;
     const MCConstantExpr *MCE = dyn_cast<MCConstantExpr>(ImmVal);
     if (!MCE)
       return TokError("immediate value expected for vector index");
