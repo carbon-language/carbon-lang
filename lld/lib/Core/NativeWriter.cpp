@@ -71,6 +71,9 @@ private:
     _headerBufferSize = sizeof(NativeFileHeader) + 4*sizeof(NativeChunk);
     _headerBuffer = reinterpret_cast<NativeFileHeader*>
                                (operator new(_headerBufferSize, std::nothrow));
+    NativeChunk *chunks =
+      reinterpret_cast<NativeChunk*>(reinterpret_cast<char*>(_headerBuffer)
+                                     + sizeof(NativeFileHeader));
     memcpy(_headerBuffer->magic, NATIVE_FILE_HEADER_MAGIC, 16);
     _headerBuffer->endian = NFH_LittleEndian;
     _headerBuffer->architecture = 0;
@@ -78,25 +81,25 @@ private:
     _headerBuffer->chunkCount = 4;
     
     // create chunk for atom ivar array
-    NativeChunk& ch0 = _headerBuffer->chunks[0];
+    NativeChunk& ch0 = chunks[0];
     ch0.signature = NCS_DefinedAtomsV1;
     ch0.fileOffset = _headerBufferSize;
     ch0.fileSize = _definedAtomIvars.size()*sizeof(NativeDefinedAtomIvarsV1);
     ch0.elementCount = _definedAtomIvars.size();
-    // create chunk for attributes 
-    NativeChunk& ch1 = _headerBuffer->chunks[1];
+    // create chunk for attributes
+    NativeChunk& ch1 = chunks[1];
     ch1.signature = NCS_AttributesArrayV1;
     ch1.fileOffset = ch0.fileOffset + ch0.fileSize;
     ch1.fileSize = _attributes.size()*sizeof(NativeAtomAttributesV1);
     ch1.elementCount = _attributes.size();
-    // create chunk for content 
-    NativeChunk& ch2 = _headerBuffer->chunks[2];
+    // create chunk for content
+    NativeChunk& ch2 = chunks[2];
     ch2.signature = NCS_Content;
     ch2.fileOffset = ch1.fileOffset + ch1.fileSize;
     ch2.fileSize = _contentPool.size();
     ch2.elementCount = _contentPool.size();
     // create chunk for symbol strings
-    NativeChunk& ch3 = _headerBuffer->chunks[3];
+    NativeChunk& ch3 = chunks[3];
     ch3.signature = NCS_Strings;
     ch3.fileOffset = ch2.fileOffset + ch2.fileSize;
     ch3.fileSize = _stringPool.size();

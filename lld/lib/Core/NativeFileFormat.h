@@ -80,7 +80,6 @@ struct NativeFileHeader {
   uint32_t    architecture;
   uint32_t    fileSize;
   uint32_t    chunkCount;
-  NativeChunk chunks[];
 };
 
 //

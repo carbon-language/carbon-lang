@@ -175,6 +175,8 @@ public:
                        reinterpret_cast<const uint8_t*>(mb->getBufferStart());
     const NativeFileHeader* const header = 
                        reinterpret_cast<const NativeFileHeader*>(base);
+    const NativeChunk *const chunks =
+      reinterpret_cast<const NativeChunk*>(base + sizeof(NativeFileHeader));
     // make sure magic matches
     if ( memcmp(header->magic, NATIVE_FILE_HEADER_MAGIC, 16) != 0 )
       return make_error_code(unknown_file_format);
@@ -190,7 +192,7 @@ public:
     // process each chunk
     for(uint32_t i=0; i < header->chunkCount; ++i) {
       llvm::error_code ec;
-      const NativeChunk* chunk = &header->chunks[i];
+      const NativeChunk* chunk = &chunks[i];
       // sanity check chunk is within file
       if ( chunk->fileOffset > fileSize ) 
         return make_error_code(file_malformed);
