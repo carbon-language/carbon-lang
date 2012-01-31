@@ -51,6 +51,34 @@ namespace llvm {
         return A->EnumValue < B->EnumValue;
       }
     };
+
+    // Map of composite subreg indices.
+    typedef std::map<CodeGenSubRegIndex*, CodeGenSubRegIndex*, Less> CompMap;
+
+    // Returns the subreg index that results from composing this with Idx.
+    // Returns NULL if this and Idx don't compose.
+    CodeGenSubRegIndex *compose(CodeGenSubRegIndex *Idx) const {
+      CompMap::const_iterator I = Composed.find(Idx);
+      return I == Composed.end() ? 0 : I->second;
+    }
+
+    // Add a composite subreg index: this+A = B.
+    // Return a conflicting composite, or NULL
+    CodeGenSubRegIndex *addComposite(CodeGenSubRegIndex *A,
+                                     CodeGenSubRegIndex *B) {
+      std::pair<CompMap::iterator, bool> Ins =
+        Composed.insert(std::make_pair(A, B));
+      return (Ins.second || Ins.first->second == B) ? 0 : Ins.first->second;
+    }
+
+    // Clean out redundant composite mappings.
+    void cleanComposites();
+
+    // Return the map of composites.
+    const CompMap &getComposites() const { return Composed; }
+
+  private:
+    CompMap Composed;
   };
 
   /// CodeGenRegister - Represents a register definition.
@@ -298,12 +326,6 @@ namespace llvm {
     void inferMatchingSuperRegClass(CodeGenRegisterClass *RC,
                                     unsigned FirstSubRegRC = 0);
 
-    // Composite SubRegIndex instances.
-    // Map (SubRegIndex, SubRegIndex) -> SubRegIndex.
-    typedef DenseMap<std::pair<CodeGenSubRegIndex*, CodeGenSubRegIndex*>,
-                     CodeGenSubRegIndex*> CompositeMap;
-    CompositeMap Composite;
-
     // Populate the Composite map from sub-register relationships.
     void computeComposites();
 
@@ -323,8 +345,7 @@ namespace llvm {
 
     // Find or create a sub-register index representing the A+B composition.
     CodeGenSubRegIndex *getCompositeSubRegIndex(CodeGenSubRegIndex *A,
-                                                CodeGenSubRegIndex *B,
-                                                bool create = false);
+                                                CodeGenSubRegIndex *B);
 
     const std::vector<CodeGenRegister*> &getRegisters() { return Registers; }
 

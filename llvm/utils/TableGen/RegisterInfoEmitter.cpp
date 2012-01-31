@@ -766,8 +766,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     bool Open = false;
     for (unsigned j = 0; j != e; ++j) {
       if (CodeGenSubRegIndex *Comp =
-            RegBank.getCompositeSubRegIndex(SubRegIndices[i],
-                                            SubRegIndices[j])) {
+            SubRegIndices[i]->compose(SubRegIndices[j])) {
         if (!Open) {
           OS << "  case " << SubRegIndices[i]->getQualifiedName()
              << ": switch(IdxB) {\n    default: return IdxB;\n";

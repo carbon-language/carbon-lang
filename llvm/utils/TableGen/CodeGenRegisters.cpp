@@ -49,6 +49,16 @@ std::string CodeGenSubRegIndex::getQualifiedName() const {
   return N;
 }
 
+void CodeGenSubRegIndex::cleanComposites() {
+  // Clean out redundant mappings of the form this+X -> X.
+  for (CompMap::iterator i = Composed.begin(), e = Composed.end(); i != e;) {
+    CompMap::iterator j = i;
+    ++i;
+    if (j->first == j->second)
+      Composed.erase(j);
+  }
+}
+
 //===----------------------------------------------------------------------===//
 //                              CodeGenRegister
 //===----------------------------------------------------------------------===//
@@ -168,7 +178,7 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
     Orphan &O = Orphans[i];
     if (!O.SubReg)
       continue;
-    SubRegs[RegBank.getCompositeSubRegIndex(O.First, O.Second, true)] =
+    SubRegs[RegBank.getCompositeSubRegIndex(O.First, O.Second)] =
       O.SubReg;
   }
   return SubRegs;
@@ -679,16 +689,16 @@ CodeGenRegisterClass *CodeGenRegBank::getRegClass(Record *Def) {
 
 CodeGenSubRegIndex*
 CodeGenRegBank::getCompositeSubRegIndex(CodeGenSubRegIndex *A,
-                                        CodeGenSubRegIndex *B,
-                                        bool create) {
+                                        CodeGenSubRegIndex *B) {
   // Look for an existing entry.
-  CodeGenSubRegIndex *&Comp = Composite[std::make_pair(A, B)];
-  if (Comp || !create)
+  CodeGenSubRegIndex *Comp = A->compose(B);
+  if (Comp)
     return Comp;
 
   // None exists, synthesize one.
   std::string Name = A->getName() + "_then_" + B->getName();
   Comp = getSubRegIdx(new Record(Name, SMLoc(), Records));
+  A->addComposite(B, Comp);
   return Comp;
 }
 
@@ -707,8 +717,7 @@ void CodeGenRegBank::computeComposites() {
       // Try composing Idx1 with another SubRegIndex.
       for (CodeGenRegister::SubRegMap::const_iterator i2 = SRM2.begin(),
            e2 = SRM2.end(); i2 != e2; ++i2) {
-        std::pair<CodeGenSubRegIndex*, CodeGenSubRegIndex*>
-          IdxPair(Idx1, i2->first);
+      CodeGenSubRegIndex *Idx2 = i2->first;
         CodeGenRegister *Reg3 = i2->second;
         // Ignore identity compositions.
         if (Reg2 == Reg3)
@@ -717,16 +726,13 @@ void CodeGenRegBank::computeComposites() {
         for (CodeGenRegister::SubRegMap::const_iterator i1d = SRM1.begin(),
              e1d = SRM1.end(); i1d != e1d; ++i1d) {
           if (i1d->second == Reg3) {
-            std::pair<CompositeMap::iterator, bool> Ins =
-              Composite.insert(std::make_pair(IdxPair, i1d->first));
             // Conflicting composition? Emit a warning but allow it.
-            if (!Ins.second && Ins.first->second != i1d->first) {
+            if (CodeGenSubRegIndex *Prev = Idx1->addComposite(Idx2, i1d->first))
               errs() << "Warning: SubRegIndex " << Idx1->getQualifiedName()
-                     << " and " << IdxPair.second->getQualifiedName()
+                     << " and " << Idx2->getQualifiedName()
                      << " compose ambiguously as "
-                     << Ins.first->second->getQualifiedName() << " or "
+                     << Prev->getQualifiedName() << " or "
                      << i1d->first->getQualifiedName() << "\n";
-            }
           }
         }
       }
@@ -735,13 +741,8 @@ void CodeGenRegBank::computeComposites() {
 
   // We don't care about the difference between (Idx1, Idx2) -> Idx2 and invalid
   // compositions, so remove any mappings of that form.
-  for (CompositeMap::iterator i = Composite.begin(), e = Composite.end();
-       i != e;) {
-    CompositeMap::iterator j = i;
-    ++i;
-    if (j->first.second == j->second)
-      Composite.erase(j);
-  }
+  for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i)
+    SubRegIndices[i]->cleanComposites();
 }
 
 // Compute sets of overlapping registers.
