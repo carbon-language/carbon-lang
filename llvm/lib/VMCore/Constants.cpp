@@ -176,7 +176,7 @@ Constant *Constant::getAggregateElement(unsigned Elt) const {
     return UV->getElementValue(Elt);
   
   if (const ConstantDataSequential *CDS =dyn_cast<ConstantDataSequential>(this))
-    return CDS->getElementAsConstant(Elt);
+    return Elt < CDS->getNumElements() ? CDS->getElementAsConstant(Elt) : 0;
   return 0;
 }
 
