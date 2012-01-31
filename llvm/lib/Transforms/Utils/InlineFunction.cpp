@@ -41,9 +41,6 @@ bool llvm::InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI) {
 namespace {
   /// A class for recording information about inlining through an invoke.
   class InvokeInliningInfo {
-    BasicBlock *OuterUnwindDest;
-
-    // FIXME: New EH - These will replace the analogous ones above.
     BasicBlock *OuterResumeDest; //< Destination of the invoke's unwind.
     BasicBlock *InnerResumeDest; //< Destination for the callee's resume.
     LandingPadInst *CallerLPad;  //< LandingPadInst associated with the invoke.
@@ -52,14 +49,13 @@ namespace {
 
   public:
     InvokeInliningInfo(InvokeInst *II)
-      : OuterUnwindDest(II->getUnwindDest()),
-        OuterResumeDest(II->getUnwindDest()), InnerResumeDest(0),
+      : OuterResumeDest(II->getUnwindDest()), InnerResumeDest(0),
         CallerLPad(0), InnerEHValuesPHI(0) {
       // If there are PHI nodes in the unwind destination block, we need to keep
       // track of which values came into them from the invoke before removing
       // the edge from this block.
       llvm::BasicBlock *InvokeBB = II->getParent();
-      BasicBlock::iterator I = OuterUnwindDest->begin();
+      BasicBlock::iterator I = OuterResumeDest->begin();
       for (; isa<PHINode>(I); ++I) {
         // Save the value to use for this edge.
         PHINode *PHI = cast<PHINode>(I);
@@ -69,10 +65,10 @@ namespace {
       CallerLPad = cast<LandingPadInst>(I);
     }
 
-    /// The outer unwind destination is the target of unwind edges
-    /// introduced for calls within the inlined function.
+    /// getOuterResumeDest - The outer unwind destination is the target of
+    /// unwind edges introduced for calls within the inlined function.
     BasicBlock *getOuterResumeDest() const {
-      return OuterUnwindDest;
+      return OuterResumeDest;
     }
 
     BasicBlock *getInnerUnwindDest();
@@ -90,7 +86,7 @@ namespace {
     /// destination block for the given basic block, using the values for the
     /// original invoke's source block.
     void addIncomingPHIValuesFor(BasicBlock *BB) const {
-      addIncomingPHIValuesForInto(BB, OuterUnwindDest);
+      addIncomingPHIValuesForInto(BB, OuterResumeDest);
     }
 
     void addIncomingPHIValuesForInto(BasicBlock *src, BasicBlock *dest) const {
