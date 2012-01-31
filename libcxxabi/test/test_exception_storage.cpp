@@ -63,8 +63,8 @@ int main ( int argc, char *argv [] ) {
         
 //  print_sizes ( thread_globals, thread_globals + NUMTHREADS );
     std::sort ( thread_globals, thread_globals + NUMTHREADS );
-    for ( int i = 1; i < NUMTHREADS; ++i ) {
-        if ( thread_globals [ i - 1 ] == thread_globals [ i ] )
+    for ( int i = 1; i < NUMTHREADS; ++i )
+        if ( thread_globals [ i - 1 ] == thread_globals [ i ] ) {
             std::cerr << "Duplicate thread globals (" << i-1 << " and " << i << ")" << std::endl;
             retVal = 2;
             }
