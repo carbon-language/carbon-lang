@@ -837,19 +837,17 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
       Out << '"';
     } else {                // Cannot output in string format...
       Out << '[';
-      if (CA->getNumOperands()) {
+      TypePrinter.print(ETy, Out);
+      Out << ' ';
+      WriteAsOperandInternal(Out, CA->getOperand(0),
+                             &TypePrinter, Machine,
+                             Context);
+      for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
+        Out << ", ";
         TypePrinter.print(ETy, Out);
         Out << ' ';
-        WriteAsOperandInternal(Out, CA->getOperand(0),
-                               &TypePrinter, Machine,
+        WriteAsOperandInternal(Out, CA->getOperand(i), &TypePrinter, Machine,
                                Context);
-        for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
-          Out << ", ";
-          TypePrinter.print(ETy, Out);
-          Out << ' ';
-          WriteAsOperandInternal(Out, CA->getOperand(i), &TypePrinter, Machine,
-                                 Context);
-        }
       }
       Out << ']';
     }
@@ -868,21 +866,19 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
 
     Type *ETy = CA->getType()->getElementType();
     Out << '[';
-    if (CA->getNumOperands()) {
+    TypePrinter.print(ETy, Out);
+    Out << ' ';
+    WriteAsOperandInternal(Out, CA->getElementAsConstant(0),
+                           &TypePrinter, Machine,
+                           Context);
+    for (unsigned i = 1, e = CA->getNumElements(); i != e; ++i) {
+      Out << ", ";
       TypePrinter.print(ETy, Out);
       Out << ' ';
-      WriteAsOperandInternal(Out, CA->getElementAsConstant(0),
-                             &TypePrinter, Machine,
-                             Context);
-      for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
-        Out << ", ";
-        TypePrinter.print(ETy, Out);
-        Out << ' ';
-        WriteAsOperandInternal(Out, CA->getElementAsConstant(i), &TypePrinter,
-                               Machine, Context);
-      }
-      Out << ']';
+      WriteAsOperandInternal(Out, CA->getElementAsConstant(i), &TypePrinter,
+                             Machine, Context);
     }
+    Out << ']';
     return;
   }
 
