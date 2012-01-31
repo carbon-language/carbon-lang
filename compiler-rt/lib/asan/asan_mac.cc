@@ -27,6 +27,7 @@
 #include <mach-o/loader.h>
 #include <sys/mman.h>
 #include <sys/resource.h>
+#include <sys/sysctl.h>
 #include <sys/ucontext.h>
 #include <pthread.h>
 #include <fcntl.h>
@@ -56,6 +57,28 @@ void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
   *bp = ucontext->uc_mcontext->__ss.__ebp;
   *sp = ucontext->uc_mcontext->__ss.__esp;
 # endif  // __WORDSIZE
+}
+
+int GetMacosVersion() {
+  int mib[2] = { CTL_KERN, KERN_OSRELEASE };
+  char version[100];
+  size_t len = 0, maxlen = sizeof(version) / sizeof(version[0]);
+  for (int i = 0; i < maxlen; i++) version[i] = '\0';
+  // Get the version length.
+  CHECK(sysctl(mib, 2, NULL, &len, NULL, 0) != -1);
+  CHECK(len < maxlen);
+  CHECK(sysctl(mib, 2, version, &len, NULL, 0) != -1);
+  switch (version[0]) {
+    case '9': return MACOS_VERSION_LEOPARD;
+    case '1': {
+      switch (version[1]) {
+        case '0': return MACOS_VERSION_SNOW_LEOPARD;
+        case '1': return MACOS_VERSION_LION;
+        default: return MACOS_VERSION_UNKNOWN;
+      }
+    }
+    default: return MACOS_VERSION_UNKNOWN;
+  }
 }
 
 // No-op. Mac does not support static linkage anyway.
