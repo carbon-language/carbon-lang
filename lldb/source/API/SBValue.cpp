@@ -377,7 +377,10 @@ SBValue::CreateChildAtOffset (const char *name, uint32_t offset, SBType type)
 lldb::SBValue
 SBValue::Cast (SBType type)
 {
-    return CreateChildAtOffset(m_opaque_sp->GetName().GetCString(), 0, type);
+    lldb::SBValue sb_value;
+    if (m_opaque_sp)
+        sb_value = CreateChildAtOffset(m_opaque_sp->GetName().GetCString(), 0, type);
+    return sb_value;
 }
 
 lldb::SBValue
