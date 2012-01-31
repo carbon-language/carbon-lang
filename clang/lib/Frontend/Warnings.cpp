@@ -31,7 +31,8 @@
 #include <algorithm>
 using namespace clang;
 
-// EmitUnknownDiagWarning - Emit a warning and typo hint for unknown warning opts
+// EmitUnknownDiagWarning - Emit a warning and typo hint for unknown warning
+// opts
 static void EmitUnknownDiagWarning(DiagnosticsEngine &Diags,
                                   StringRef Prefix, StringRef Opt,
                                   bool isPositive) {
