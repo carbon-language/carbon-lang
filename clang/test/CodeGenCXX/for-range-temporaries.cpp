@@ -1,6 +1,9 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -std=c++11 -emit-llvm -o - -UDESUGAR %s | opt -instnamer -S | FileCheck %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -std=c++11 -emit-llvm -o - -DDESUGAR %s | opt -instnamer -S | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -std=c++11 -emit-llvm -o - -UDESUGAR -DTEMPLATE %s | opt -instnamer -S | FileCheck %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -std=c++11 -emit-llvm -o - -DDESUGAR -DTEMPLATE %s | opt -instnamer -S | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -std=c++11 -emit-llvm -o - -UDESUGAR -DTEMPLATE -DDEPENDENT %s | opt -instnamer -S | FileCheck %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -std=c++11 -emit-llvm -o - -DDESUGAR -DTEMPLATE -DDEPENDENT %s | opt -instnamer -S | FileCheck %s
 
 struct A {
   A();
@@ -67,7 +70,11 @@ struct I {
 void body(const I &);
 
 #ifdef TEMPLATE
+#ifdef DEPENDENT
 template<typename D>
+#else
+template<typename>
+#endif
 #endif
 void for_temps() {
   A a;
