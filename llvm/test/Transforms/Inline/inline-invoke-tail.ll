@@ -23,8 +23,8 @@ invcont:
 	ret i32 %retval
 
 lpad:
-	%eh_ptr = call i8* @llvm.eh.exception()
-	%eh_select = call i32 (i8*, i8*, ...)* @llvm.eh.selector(i8* %eh_ptr, i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*), i8* null)
+        %exn = landingpad {i8*, i32} personality i32 (...)* @__gxx_personality_v0
+            catch i8* null
 	unreachable
 }
 
