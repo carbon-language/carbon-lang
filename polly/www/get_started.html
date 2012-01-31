@@ -107,40 +107,6 @@ make install
 cd ${BASE}
 </pre>
 
-<h3> Install Pocc (Optional) </h3>
-
-<p>Polly can use <a href="http://www.cse.ohio-state.edu/~pouchet/software/pocc">
-PoCC</a> as an external optimizer. PoCC is a research project that provides
-an integrated version of <a href="http://pluto.sf.net">Pluto</a>, an
-advanced data-locality and tileability optimizer. Similar functionality was
-recently integrated in Polly (through isl), however the optimizations are not as
-mature as the ones in Pluto/PoCC. Hence, if you want to use Pluto to optimize
-your code or you want to compare the optimizer integrated in Polly to Pluto you
-may want to use PoCC.</p>
-
-Install PoCC 1.0-rc3.1 (the one with Polly support) and add it to your PATH.
-
-<pre>
-wget <a
-href="http://www.cse.ohio-state.edu/~pouchet/software/pocc/download/pocc-1.0-rc3.1-full.tar.gz">http://www.cse.ohio-state.edu/~pouchet/software/pocc/download/pocc-1.0-rc3.1-full.tar.gz</a>
-tar xzf pocc-1.0-rc3.1-full.tar.gz
-cd pocc-1.0-rc3.1
-./install.sh
-export PATH=`pwd`/bin
-</pre>
-
-Install scoplib-0.2.0
-
-<pre>
-wget <a
-href="http://www.cse.ohio-state.edu/~pouchet/software/pocc/download/modules/scoplib-0.2.0.tar.gz"
->http://www.cse.ohio-state.edu/~pouchet/software/pocc/download/modules/scoplib-0.2.0.tar.gz</a>
-tar xzf  scoplib-0.2.0.tar.gz
-cd scoplib-0.2.0
-./configure --enable-mp-version --prefix=/path/to/scoplib/installation
-make && make install
-</pre>
-
 <h3 id="build">Build Polly</h3>
 
 To build Polly you can either use the autoconf or the cmake build system. At the
@@ -173,6 +139,43 @@ make
 To check if Polly works correctly you can run <em>make polly-test</em> for the
 cmake build or <em>make polly-test -C tools/polly/test/</em> for the autoconf
 build.
+
+<h2> Optional Features </h2>
+
+<h3> Pocc </h3>
+
+<p>Polly can use <a href="http://www.cse.ohio-state.edu/~pouchet/software/pocc">
+PoCC</a> as an external optimizer. PoCC is a research project that provides
+an integrated version of <a href="http://pluto.sf.net">Pluto</a>, an
+advanced data-locality and tileability optimizer. Polly includes internally
+already a similar optimizer, such that in general PoCC is not needed. It is
+only recommended for people who want to compare against a different
+optimizer.</a>
+<br/>
+To use it install PoCC 1.0-rc3.1 (the one with Polly support) and add it to your PATH. 
+
+<pre>
+wget <a
+href="http://www.cse.ohio-state.edu/~pouchet/software/pocc/download/pocc-1.0-rc3.1-full.tar.gz">http://www.cse.ohio-state.edu/~pouchet/software/pocc/download/pocc-1.0-rc3.1-full.tar.gz</a>
+tar xzf pocc-1.0-rc3.1-full.tar.gz
+cd pocc-1.0-rc3.1
+./install.sh
+export PATH=`pwd`/bin
+</pre>
+
+You also need to install scoplib-0.2.0 and provide its location to
+Polly's cmake or configure call.
+
+<pre>
+wget <a
+href="http://www.cse.ohio-state.edu/~pouchet/software/pocc/download/modules/scoplib-0.2.0.tar.gz"
+>http://www.cse.ohio-state.edu/~pouchet/software/pocc/download/modules/scoplib-0.2.0.tar.gz</a>
+tar xzf  scoplib-0.2.0.tar.gz
+cd scoplib-0.2.0
+./configure --enable-mp-version --prefix=/path/to/scoplib/installation
+make && make install
+</pre>
 </div>
+
 </body>
 </html>
