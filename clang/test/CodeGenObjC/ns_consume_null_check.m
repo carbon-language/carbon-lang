@@ -22,8 +22,8 @@ void foo()
 // CHECK-NEXT:  [[SIX:%.*]] = bitcast
 // CHECK-NEXT:  [[SEVEN:%.*]]  = icmp eq i8* [[SIX]], null
 // CHECK-NEXT:  br i1 [[SEVEN]], label [[NULLINIT:%.*]], label [[CALL_LABEL:%.*]]
-// CHECK:  %msgSend_fn = load i8** getelementptr inbounds
-// CHECK-NEXT:  [[EIGHT:%.*]] = bitcast i8* %msgSend_fn
+// CHECK:  [[FN:%.*]] = load i8** getelementptr inbounds
+// CHECK-NEXT:  [[EIGHT:%.*]] = bitcast i8* [[FN]]
 // CHECK-NEXT:  [[CALL:%.*]] = call signext i8 [[EIGHT]]
 // CHECK-NEXT  store i8 [[CALL]], i8* [[TMP]]
 // CHECK-NEXT  br label [[CONT:%.*]]
