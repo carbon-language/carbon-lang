@@ -166,7 +166,7 @@ public:
     bool operator!=(const bundle_iterator &x) const {
       return !operator==(x);
     }
-    
+
     // Increment and decrement operators...
     bundle_iterator &operator--() {      // predecrement - Back up
       do {
@@ -197,7 +197,7 @@ public:
 
     IterTy getInstrIterator() const {
       return MII;
-    }    
+    }
   };
 
   typedef Instructions::iterator                                 instr_iterator;
@@ -360,7 +360,7 @@ public:
   const MachineBasicBlock *getLandingPadSuccessor() const;
 
   // Code Layout methods.
-  
+
   /// moveBefore/moveAfter - move 'this' block before or after the specified
   /// block.  This only moves the block, it does not modify the CFG or adjust
   /// potential fall-throughs at the end of the block.
@@ -407,7 +407,7 @@ public:
   /// in transferSuccessors, and update PHI operands in the successor blocks
   /// which refer to fromMBB to refer to this.
   void transferSuccessorsAndUpdatePHIs(MachineBasicBlock *fromMBB);
-  
+
   /// isSuccessor - Return true if the specified MBB is a successor of this
   /// block.
   bool isSuccessor(const MachineBasicBlock *MBB) const;
@@ -425,7 +425,7 @@ public:
   /// branch to do so (e.g., a table jump).  True is a conservative answer.
   bool canFallThrough();
 
-  /// Returns a pointer to the first instructon in this block that is not a 
+  /// Returns a pointer to the first instructon in this block that is not a
   /// PHINode instruction. When adding instruction to the beginning of the
   /// basic block, they should be added before the returned value, not before
   /// the first instruction, which might be PHI.
@@ -471,8 +471,8 @@ public:
   instr_iterator insert(instr_iterator I, MachineInstr *M) {
     return Insts.insert(I, M);
   }
-  instr_iterator insertAfter(instr_iterator I, MachineInstr *M) { 
-    return Insts.insertAfter(I, M); 
+  instr_iterator insertAfter(instr_iterator I, MachineInstr *M) {
+    return Insts.insertAfter(I, M);
   }
 
   template<typename IT>
@@ -482,8 +482,8 @@ public:
   iterator insert(iterator I, MachineInstr *M) {
     return Insts.insert(I.getInstrIterator(), M);
   }
-  iterator insertAfter(iterator I, MachineInstr *M) { 
-    return Insts.insertAfter(I.getInstrIterator(), M); 
+  iterator insertAfter(iterator I, MachineInstr *M) {
+    return Insts.insertAfter(I.getInstrIterator(), M);
   }
 
   /// erase - Remove the specified element or range from the instruction list.
@@ -544,7 +544,7 @@ public:
   /// removeFromParent - This method unlinks 'this' from the containing
   /// function, and returns it, but does not delete it.
   MachineBasicBlock *removeFromParent();
-  
+
   /// eraseFromParent - This method unlinks 'this' from the containing
   /// function and deletes it.
   void eraseFromParent();
