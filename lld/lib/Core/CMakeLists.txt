@@ -1,4 +1,5 @@
 add_lld_library(lldCore
+  Error.cpp
   File.cpp
   NativeFileFormat.h
   NativeReader.cpp

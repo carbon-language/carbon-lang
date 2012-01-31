@@ -11,6 +11,7 @@
 
 #include "lld/Core/YamlReader.h"
 #include "lld/Core/Atom.h"
+#include "lld/Core/Error.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
 
@@ -28,41 +29,6 @@
 
 namespace lld {
 namespace yaml {
-
-enum yaml_reader_errors {
-  success = 0,
-  unknown_keyword,
-  illegal_value
-};
-
-class reader_error_category : public llvm::_do_message {
-public:
-  virtual const char* name() const {
-    return "lld.yaml.reader";
-  }
-  virtual std::string message(int ev) const;
-};
-
-const reader_error_category reader_error_category_singleton;
-
-std::string reader_error_category::message(int ev) const {
-  switch (ev) {
-  case success: 
-    return "Success";
-  case unknown_keyword:
-    return "Unknown keyword found in yaml file";
-  case illegal_value: 
-    return "Bad value found in yaml file";
-  default:
-    llvm_unreachable("An enumerator of yaml_reader_errors does not have a "
-                     "message defined.");
-  }
-}
-
-inline llvm::error_code make_error_code(yaml_reader_errors e) {
-  return llvm::error_code(static_cast<int>(e), reader_error_category_singleton);
-}
-
 
 class YAML {
 public:
@@ -704,8 +670,8 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
         } 
         else if (strcmp(entry->key, KeyValues::sizeKeyword) == 0) {
           llvm::StringRef val = entry->value;
-          if ( val.getAsInteger(0, atomState._size) ) 
-            return make_error_code(illegal_value);
+          if ( val.getAsInteger(0, atomState._size) )
+            return make_error_code(yaml_reader_error::illegal_value);
           haveAtom = true;
         } 
         else if (strcmp(entry->key, KeyValues::contentKeyword) == 0) {
@@ -720,7 +686,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           inFixups = true;
         }
         else {
-          return make_error_code(unknown_keyword);
+          return make_error_code(yaml_reader_error::unknown_keyword);
         }
       } 
       else if (depthForFixups == entry->depth) {
@@ -749,7 +715,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
   }
 
   result.push_back(file);
-  return make_error_code(success);
+  return make_error_code(yaml_reader_error::success);
 }
 
 //

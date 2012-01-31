@@ -16,8 +16,8 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MemoryBuffer.h"
-#include "llvm/Support/system_error.h"
 
+#include "lld/Core/Error.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Atom.h"
 
@@ -27,53 +27,6 @@ namespace lld {
 
 // forward reference
 class NativeFile;
-
-
-enum native_reader_errors {
-  success = 0,
-  unknown_file_format,
-  file_too_short,
-  file_malformed,
-  unknown_chunk_type,
-  memory_error,
-};
-
-class reader_error_category : public llvm::_do_message {
-public:
-  virtual const char* name() const {
-    return "lld.native.reader";
-  }
-  virtual std::string message(int ev) const;
-};
-
-const reader_error_category reader_error_category_singleton;
-
-std::string reader_error_category::message(int ev) const {
-  switch (ev) {
-  case success: 
-    return "Success";
-  case unknown_file_format:
-    return "Unknown file foramt";
-  case file_too_short: 
-    return "file truncated";
-  case file_malformed: 
-    return "file malformed";
-  case memory_error: 
-    return "out of memory";
-  case unknown_chunk_type:
-    return "unknown chunk type";
-  default:
-    llvm_unreachable("An enumerator of native_reader_errors does not have a "
-                     "message defined.");
-  }
-}
-
-inline llvm::error_code make_error_code(native_reader_errors e) {
-  return llvm::error_code(static_cast<int>(e), reader_error_category_singleton);
-}
-
-
-
 
 //
 // An object of this class is instantied for each NativeDefinedAtomIvarsV1
@@ -179,13 +132,13 @@ public:
       reinterpret_cast<const NativeChunk*>(base + sizeof(NativeFileHeader));
     // make sure magic matches
     if ( memcmp(header->magic, NATIVE_FILE_HEADER_MAGIC, 16) != 0 )
-      return make_error_code(unknown_file_format);
-    
+      return make_error_code(native_reader_error::unknown_file_format);
+
     // make sure mapped file contains all needed data
     const size_t fileSize = mb->getBufferSize();
     if ( header->fileSize > fileSize )
-      return make_error_code(file_too_short);
-    
+      return make_error_code(native_reader_error::file_too_short);
+
     // instantiate NativeFile object and add values to it as found
     NativeFile* file = new NativeFile(mb, path);
     
@@ -194,10 +147,10 @@ public:
       llvm::error_code ec;
       const NativeChunk* chunk = &chunks[i];
       // sanity check chunk is within file
-      if ( chunk->fileOffset > fileSize ) 
-        return make_error_code(file_malformed);
-      if ( (chunk->fileOffset + chunk->fileSize) > fileSize) 
-        return make_error_code(file_malformed);
+      if ( chunk->fileOffset > fileSize )
+        return make_error_code(native_reader_error::file_malformed);
+      if ( (chunk->fileOffset + chunk->fileSize) > fileSize)
+        return make_error_code(native_reader_error::file_malformed);
       // process chunk, based on signature
       switch ( chunk->signature ) {
         case NCS_DefinedAtomsV1:
@@ -213,7 +166,7 @@ public:
           ec = file->processStrings(base, chunk);
           break;
         default:
-          return make_error_code(unknown_chunk_type);
+          return make_error_code(native_reader_error::unknown_chunk_type);
       }
       if ( ec ) {
         delete file;
@@ -224,9 +177,9 @@ public:
       
       result = file;
     }
-    
 
-    return make_error_code(success);
+
+    return make_error_code(native_reader_error::success);
   }
   
   virtual ~NativeFile() {
@@ -266,11 +219,11 @@ private:
     uint8_t* atomsStart = reinterpret_cast<uint8_t*>
                                 (operator new(atomsArraySize, std::nothrow));
     if (atomsStart == NULL )
-      return make_error_code(memory_error);
-    const size_t ivarElementSize = chunk->fileSize 
+      return make_error_code(native_reader_error::memory_error);
+    const size_t ivarElementSize = chunk->fileSize
                                           / chunk->elementCount;
     if ( ivarElementSize != sizeof(NativeDefinedAtomIvarsV1) )
-      return make_error_code(file_malformed);
+      return make_error_code(native_reader_error::file_malformed);
     uint8_t* atomsEnd = atomsStart + atomsArraySize;
     const NativeDefinedAtomIvarsV1* ivarData = 
                              reinterpret_cast<const NativeDefinedAtomIvarsV1*>
@@ -284,14 +237,14 @@ private:
     this->_definedAtoms.arrayStart = atomsStart;
     this->_definedAtoms.arrayEnd = atomsEnd;
     this->_definedAtoms.elementSize = atomSize;
-    return make_error_code(success);
+    return make_error_code(native_reader_error::success);
   }
   
   // set up pointers to attributes array
   llvm::error_code processAttributesV1(const uint8_t* base, const NativeChunk* chunk) {
     this->_attributes = base + chunk->fileOffset;
     this->_attributesMaxOffset = chunk->fileSize;
-    return make_error_code(success);
+    return make_error_code(native_reader_error::success);
   }
   
   // set up pointers to string pool in file
@@ -299,7 +252,7 @@ private:
                                                 const NativeChunk* chunk) {
     this->_strings = reinterpret_cast<const char*>(base + chunk->fileOffset);
     this->_stringsMaxOffset = chunk->fileSize;
-    return make_error_code(success);
+    return make_error_code(native_reader_error::success);
   }
   
   // set up pointers to content area in file
@@ -307,7 +260,7 @@ private:
                                                 const NativeChunk* chunk) {
     this->_contentStart = base + chunk->fileOffset;
     this->_contentEnd = base + chunk->fileOffset + chunk->fileSize;
-    return make_error_code(success);
+    return make_error_code(native_reader_error::success);
   }
   
   llvm::StringRef string(uint32_t offset) const {
