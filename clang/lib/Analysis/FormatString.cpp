@@ -373,7 +373,7 @@ QualType ArgTypeResult::getRepresentativeType(ASTContext &C) const {
 
 std::string ArgTypeResult::getRepresentativeTypeName(ASTContext &C) const {
   std::string S = getRepresentativeType(C).getAsString();
-  if (Name)
+  if (Name && S != Name)
     return std::string("'") + Name + "' (aka '" + S + "')";
   return std::string("'") + S + "'";
 }

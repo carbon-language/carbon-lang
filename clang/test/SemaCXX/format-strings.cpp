@@ -13,3 +13,7 @@ void f(char **sp, float *fp) {
   printf("%a", 1.0);
   scanf("%afoobar", fp);
 }
+
+void g() {
+  printf("%ls", "foo"); // expected-warning{{format specifies type 'wchar_t *' but the argument has type 'const char *'}}
+}
