@@ -481,8 +481,6 @@ LLVMTypeRef LLVMX86MMXType(void);
         macro(IntrinsicInst)                \
           macro(DbgInfoIntrinsic)           \
             macro(DbgDeclareInst)           \
-          macro(EHExceptionInst)            \
-          macro(EHSelectorInst)             \
           macro(MemIntrinsic)               \
             macro(MemCpyInst)               \
             macro(MemMoveInst)              \

@@ -425,34 +425,6 @@ void llvm::AddCatchInfo(const CallInst &I, MachineModuleInfo *MMI,
   }
 }
 
-void llvm::CopyCatchInfo(const BasicBlock *SuccBB, const BasicBlock *LPad,
-                         MachineModuleInfo *MMI, FunctionLoweringInfo &FLI) {
-  SmallPtrSet<const BasicBlock*, 4> Visited;
-
-  // The 'eh.selector' call may not be in the direct successor of a basic block,
-  // but could be several successors deeper. If we don't find it, try going one
-  // level further. <rdar://problem/8824861>
-  while (Visited.insert(SuccBB)) {
-    for (BasicBlock::const_iterator I = SuccBB->begin(), E = --SuccBB->end();
-         I != E; ++I)
-      if (const EHSelectorInst *EHSel = dyn_cast<EHSelectorInst>(I)) {
-        // Apply the catch info to LPad.
-        AddCatchInfo(*EHSel, MMI, FLI.MBBMap[LPad]);
-#ifndef NDEBUG
-        if (!FLI.MBBMap[SuccBB]->isLandingPad())
-          FLI.CatchInfoFound.insert(EHSel);
-#endif
-        return;
-      }
-
-    const BranchInst *Br = dyn_cast<BranchInst>(SuccBB->getTerminator());
-    if (Br && Br->isUnconditional())
-      SuccBB = Br->getSuccessor(0);
-    else
-      break;
-  }
-}
-
 /// AddLandingPadInfo - Extract the exception handling information from the
 /// landingpad instruction and add them to the specified machine module info.
 void llvm::AddLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,

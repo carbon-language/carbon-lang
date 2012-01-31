@@ -216,11 +216,6 @@ private:
 void AddCatchInfo(const CallInst &I,
                   MachineModuleInfo *MMI, MachineBasicBlock *MBB);
 
-/// CopyCatchInfo - Copy catch information from SuccBB (or one of its
-/// successors) to LPad.
-void CopyCatchInfo(const BasicBlock *SuccBB, const BasicBlock *LPad,
-                   MachineModuleInfo *MMI, FunctionLoweringInfo &FLI);
-
 /// AddLandingPadInfo - Extract the exception handling information from the
 /// landingpad instruction and add them to the specified machine module info.
 void AddLandingPadInfo(const LandingPadInst &I, MachineModuleInfo &MMI,
