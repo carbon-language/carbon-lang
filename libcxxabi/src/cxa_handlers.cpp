@@ -47,20 +47,27 @@ static void default_terminate_handler()
                         exception_header + 1;
                 const __shim_type_info* thrown_type =
                     static_cast<const __shim_type_info*>(exception_header->exceptionType);
+                // Try to get demangled name of thrown_type
+                int status;
+                char buf[1024];
+                size_t len = sizeof(buf);
+                const char* name = __cxa_demangle(thrown_type->name(), buf, &len, &status);
+                if (status != 0)
+                    name = thrown_type->name();
+                // If the uncaught exception can be caught with std::exception&
                 const __shim_type_info* catch_type =
                     static_cast<const __shim_type_info*>(&typeid(exception));
-                // If the uncaught exception can be caught with std::exception&
                 if (catch_type->can_catch(thrown_type, thrown_object))
                 {
                     // Include the what() message from the exception
                     const exception* e = static_cast<const exception*>(thrown_object);
                     abort_message("terminating with %s exception of type %s: %s",
-                                  cause, thrown_type->name(), e->what());
+                                  cause, name, e->what());
                 }
                 else
                     // Else just note that we're terminating with an exception
                     abort_message("terminating with %s exception of type %s",
-                                   cause, thrown_type->name());
+                                   cause, name);
             }
             else
                 // Else we're terminating with a foreign exception
