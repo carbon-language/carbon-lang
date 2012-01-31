@@ -15,8 +15,6 @@
 %"struct.std::locale::facet" = type { i32 (...)**, i32 }
 %union..0._15 = type { i32 }
 
-declare i8* @llvm.eh.exception() nounwind readonly
-
 declare i8* @__cxa_begin_catch(i8*) nounwind
 
 declare %"struct.std::ctype<char>"* @_ZSt9use_facetISt5ctypeIcEERKT_RKSt6locale(%"struct.std::locale"*)

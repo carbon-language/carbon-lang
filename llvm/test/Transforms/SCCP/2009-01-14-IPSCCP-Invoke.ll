@@ -21,10 +21,6 @@ define internal i32 @f() {
 
 declare i8* @__cxa_begin_catch(i8*) nounwind
 
-declare i8* @llvm.eh.exception() nounwind
-
-declare i32 @llvm.eh.selector.i32(i8*, i8*, ...) nounwind
-
 declare void @__cxa_end_catch()
 
 declare i32 @__gxx_personality_v0(...)

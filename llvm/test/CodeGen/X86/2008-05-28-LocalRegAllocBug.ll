@@ -2,8 +2,6 @@
 
 @_ZTVN10Evaluation10GridOutputILi3EEE = external constant [5 x i32 (...)*]		; <[5 x i32 (...)*]*> [#uses=1]
 
-declare i8* @llvm.eh.exception() nounwind 
-
 declare i8* @_Znwm(i32)
 
 declare i8* @__cxa_begin_catch(i8*) nounwind 

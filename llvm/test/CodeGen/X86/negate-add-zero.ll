@@ -486,10 +486,6 @@ declare void @_ZN7CDSListIP9HingeNodeEC1Eii(%"struct.CDSList<HingeNode*>"*, i32,
 
 declare i8* @_Znwm(i32)
 
-declare i8* @llvm.eh.exception() nounwind
-
-declare i32 @llvm.eh.selector.i32(i8*, i8*, ...) nounwind
-
 declare i32 @llvm.eh.typeid.for.i32(i8*) nounwind
 
 declare void @_ZdlPv(i8*) nounwind

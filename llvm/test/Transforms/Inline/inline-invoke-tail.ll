@@ -28,10 +28,6 @@ lpad:
 	unreachable
 }
 
-declare i8* @llvm.eh.exception() nounwind readonly
-
-declare i32 @llvm.eh.selector(i8*, i8*, ...) nounwind
-
 declare i32 @__gxx_personality_v0(...)
 
 declare void @llvm.memcpy.p0i8.p0i8.i32(i8* nocapture, i8* nocapture, i32, i32, i1) nounwind
