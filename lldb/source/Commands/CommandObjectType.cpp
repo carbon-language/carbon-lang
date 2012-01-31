@@ -929,8 +929,11 @@ public:
         }
         else
         {
-            out_stream->PutCString (error.AsCString());
-            out_stream->Flush();
+            if (error.AsCString())
+            {
+                out_stream->PutCString (error.AsCString());
+                out_stream->Flush();
+            }
             return;
         }
     }
@@ -1571,7 +1574,7 @@ public:
         
         if (m_options.m_delete_all)
         {
-            DataVisualization::Categories::LoopThrough(PerCategoryCallback, (void*)typeCS.GetCString());
+            DataVisualization::Categories::LoopThrough(PerCategoryCallback, &typeCS);
             result.SetStatus(eReturnStatusSuccessFinishNoResult);
             return result.Succeeded();
         }
