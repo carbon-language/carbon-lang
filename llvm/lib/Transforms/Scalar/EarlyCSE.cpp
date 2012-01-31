@@ -25,6 +25,7 @@
 #include "llvm/Support/RecyclingAllocator.h"
 #include "llvm/ADT/ScopedHashTable.h"
 #include "llvm/ADT/Statistic.h"
+#include <deque>
 using namespace llvm;
 
 STATISTIC(NumSimplify, "Number of instructions simplified or DCE'd");
@@ -259,7 +260,71 @@ public:
   bool runOnFunction(Function &F);
 
 private:
-  
+
+  // NodeScope - almost a POD, but needs to call the constructors for the
+  // scoped hash tables so that a new scope gets pushed on. These are RAII so
+  // that the scope gets popped when the NodeScope is destroyed.
+  class NodeScope {
+   public:
+    NodeScope(ScopedHTType *availableValues,
+              LoadHTType *availableLoads,
+              CallHTType *availableCalls) :
+        Scope(*availableValues),
+        LoadScope(*availableLoads),
+        CallScope(*availableCalls) {}
+
+   private:
+    NodeScope(const NodeScope&); // DO NOT IMPLEMENT
+
+    ScopedHTType::ScopeTy Scope;
+    LoadHTType::ScopeTy LoadScope;
+    CallHTType::ScopeTy CallScope;
+  };
+
+  // StackNode - contains all the needed information to create a stack for
+  // doing a depth first tranversal of the tree. This includes scopes for
+  // values, loads, and calls as well as the generation. There is a child
+  // iterator so that the children do not need to be store spearately.
+  class StackNode {
+   public:
+    StackNode(ScopedHTType *availableValues,
+              LoadHTType *availableLoads,
+              CallHTType *availableCalls,
+              unsigned cg, DomTreeNode *n,
+              DomTreeNode::iterator child, DomTreeNode::iterator end) :
+        CurrentGeneration(cg), ChildGeneration(cg), Node(n),
+        ChildIter(child), EndIter(end),
+        Scopes(availableValues, availableLoads, availableCalls),
+        Processed(false) {}
+
+    // Accessors.
+    unsigned currentGeneration() { return CurrentGeneration; }
+    unsigned childGeneration() { return ChildGeneration; }
+    void childGeneration(unsigned generation) { ChildGeneration = generation; }
+    DomTreeNode *node() { return Node; }
+    DomTreeNode::iterator childIter() { return ChildIter; }
+    DomTreeNode *nextChild() {
+      DomTreeNode *child = *ChildIter;
+      ++ChildIter;
+      return child;
+    }
+    DomTreeNode::iterator end() { return EndIter; }
+    bool isProcessed() { return Processed; }
+    void process() { Processed = true; }
+
+   private:
+    StackNode(const StackNode&); // DO NOT IMPLEMENT
+
+    // Members.
+    unsigned CurrentGeneration;
+    unsigned ChildGeneration;
+    DomTreeNode *Node;
+    DomTreeNode::iterator ChildIter;
+    DomTreeNode::iterator EndIter;
+    NodeScope Scopes;
+    bool Processed;
+  };
+
   bool processNode(DomTreeNode *Node);
   
   // This transformation requires dominator postdominator info
@@ -284,19 +349,6 @@ INITIALIZE_PASS_DEPENDENCY(TargetLibraryInfo)
 INITIALIZE_PASS_END(EarlyCSE, "early-cse", "Early CSE", false, false)
 
 bool EarlyCSE::processNode(DomTreeNode *Node) {
-  // Define a scope in the scoped hash table.  When we are done processing this
-  // domtree node and recurse back up to our parent domtree node, this will pop
-  // off all the values we install.
-  ScopedHTType::ScopeTy Scope(*AvailableValues);
-  
-  // Define a scope for the load values so that anything we add will get
-  // popped when we recurse back up to our parent domtree node.
-  LoadHTType::ScopeTy LoadScope(*AvailableLoads);
-  
-  // Define a scope for the call values so that anything we add will get
-  // popped when we recurse back up to our parent domtree node.
-  CallHTType::ScopeTy CallScope(*AvailableCalls);
-  
   BasicBlock *BB = Node->getBlock();
   
   // If this block has a single predecessor, then the predecessor is the parent
@@ -446,18 +498,14 @@ bool EarlyCSE::processNode(DomTreeNode *Node) {
       }
     }
   }
-  
-  unsigned LiveOutGeneration = CurrentGeneration;
-  for (DomTreeNode::iterator I = Node->begin(), E = Node->end(); I != E; ++I) {
-    Changed |= processNode(*I);
-    // Pop any generation changes off the stack from the recursive walk.
-    CurrentGeneration = LiveOutGeneration;
-  }
+
   return Changed;
 }
 
 
 bool EarlyCSE::runOnFunction(Function &F) {
+  std::deque<StackNode *> nodesToProcess;
+
   TD = getAnalysisIfAvailable<TargetData>();
   TLI = &getAnalysis<TargetLibraryInfo>();
   DT = &getAnalysis<DominatorTree>();
@@ -471,5 +519,52 @@ bool EarlyCSE::runOnFunction(Function &F) {
   AvailableCalls = &CallTable;
   
   CurrentGeneration = 0;
-  return processNode(DT->getRootNode());
+  bool Changed = false;
+
+  // Process the root node.
+  nodesToProcess.push_front(
+      new StackNode(AvailableValues, AvailableLoads, AvailableCalls,
+                    CurrentGeneration, DT->getRootNode(),
+                    DT->getRootNode()->begin(),
+                    DT->getRootNode()->end()));
+
+  // Save the current generation.
+  unsigned LiveOutGeneration = CurrentGeneration;
+
+  // Process the stack.
+  while (!nodesToProcess.empty()) {
+    // Grab the first item off the stack. Set the current generation, remove
+    // the node from the stack, and process it.
+    StackNode *NodeToProcess = nodesToProcess.front();
+
+    // Initialize class members.
+    CurrentGeneration = NodeToProcess->currentGeneration();
+
+    // Check if the node needs to be processed.
+    if (!NodeToProcess->isProcessed()) {
+      // Process the node.
+      Changed |= processNode(NodeToProcess->node());
+      NodeToProcess->childGeneration(CurrentGeneration);
+      NodeToProcess->process();
+    } else if (NodeToProcess->childIter() != NodeToProcess->end()) {
+      // Push the next child onto the stack.
+      DomTreeNode *child = NodeToProcess->nextChild();
+      nodesToProcess.push_front(
+          new StackNode(AvailableValues,
+                        AvailableLoads,
+                        AvailableCalls,
+                        NodeToProcess->childGeneration(), child,
+                        child->begin(), child->end()));
+    } else {
+      // It has been processed, and there are no more children to process,
+      // so delete it and pop it off the stack.
+      delete NodeToProcess;
+      nodesToProcess.pop_front();
+    }
+  } // while (!nodes...)
+
+  // Reset the current generation.
+  CurrentGeneration = LiveOutGeneration;
+
+  return Changed;
 }
