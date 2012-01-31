@@ -136,7 +136,7 @@ private:
                 FD->getParent()->isTranslationUnit() &&
                 FD->getLinkage() == ExternalLinkage) {
               Expr *Arg = callE->getArg(0);
-              if (const CastExpr *ICE = dyn_cast<CastExpr>(Arg)) {
+              if (const ImplicitCastExpr *ICE = dyn_cast<ImplicitCastExpr>(Arg)) {
                 const Expr *sub = ICE->getSubExpr();
                 QualType T = sub->getType();
                 if (T->isObjCObjectPointerType())

@@ -33,9 +33,7 @@ CFTypeRef CFRetain(CFTypeRef cf);
 					     // expected-note {{use __bridge to convert directly (no change in ownership)}} \
                                              // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFTypeRef' (aka 'const void *') into ARC}}
 
-  result = (id) CFRetain((CFTypeRef)((objc_format))); // expected-error {{cast of C pointer type 'CFTypeRef' (aka 'const void *') to Objective-C pointer type 'id' requires a bridged cast}} \
-						      // expected-note {{use __bridge to convert directly (no change in ownership)}} \
-                                                      // expected-note {{use __bridge_transfer to transfer ownership of a +1 'CFTypeRef' (aka 'const void *') into ARC}}
+  result = (id) CFRetain((CFTypeRef)((objc_format)));
 
   result = (id) CFRetain(cf_format); // OK
 }
