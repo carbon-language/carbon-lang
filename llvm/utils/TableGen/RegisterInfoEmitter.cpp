@@ -441,8 +441,7 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
     OS << "enum {\n  NoSubRegister,\n";
     for (unsigned i = 0, e = RegBank.getNumNamedIndices(); i != e; ++i)
       OS << "  " << SubRegIndices[i]->getName() << ",\t// " << i+1 << "\n";
-    OS << "  NUM_TARGET_NAMED_SUBREGS = " << SubRegIndices.size()+1 << "\n";
-    OS << "};\n";
+    OS << "  NUM_TARGET_NAMED_SUBREGS\n};\n";
     if (!Namespace.empty())
       OS << "}\n";
   }
