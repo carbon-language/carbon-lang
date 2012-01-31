@@ -68,6 +68,8 @@ MCObjectWriter::IsSymbolRefDifferenceFullyResolved(const MCAssembler &Asm,
 
   const MCSymbolData &DataA = Asm.getSymbolData(SA);
   const MCSymbolData &DataB = Asm.getSymbolData(SB);
+  if(!DataA.getFragment() || !DataB.getFragment())
+    return false;
 
   return IsSymbolRefDifferenceFullyResolvedImpl(Asm, DataA,
                                                 *DataB.getFragment(),
