@@ -1,9 +1,4 @@
-module __compiler_builtins [system] {
-  explicit module altivec {
-    requires altivec
-    header "altivec.h"
-  }
-
+module _Builtin_stdlib [system] {
   explicit module float_constants {
     header "float.h"
   }
@@ -34,6 +29,18 @@ module __compiler_builtins [system] {
 
   explicit module stdint {
     header "stdint.h"
+  }
+
+  explicit module varargs {
+    requires unavailable
+    header "varargs.h"
+  }
+}
+
+module _Builtin_intrinsics [system] {
+  explicit module altivec {
+    requires altivec
+    header "altivec.h"
   }
 
   explicit module intel {
@@ -129,14 +136,12 @@ module __compiler_builtins [system] {
       requires mm3dnow
       header "mm3dnow.h"
     }
+
+    explicit module mm_malloc {
+      header "mm_malloc.h"
+    }
   }
 
-  // FIXME: mm_malloc.h
   // FIXME: tgmath.h
   // FIXME: unwind.h
-
-  explicit module varargs {
-    requires unavailable
-    header "varargs.h"
-  }
 }
