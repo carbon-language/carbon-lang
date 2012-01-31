@@ -829,12 +829,11 @@ unsigned ARMConstantIslands::GetOffsetOf(MachineInstr *MI) const {
   unsigned Offset = BBInfo[MBB->getNumber()].Offset;
 
   // Sum instructions before MI in MBB.
-  for (MachineBasicBlock::iterator I = MBB->begin(); ; ++I) {
+  for (MachineBasicBlock::iterator I = MBB->begin(); &*I != MI; ++I) {
     assert(I != MBB->end() && "Didn't find MI in its own basic block?");
-    if (&*I == MI) return Offset;
     Offset += TII->GetInstSizeInBytes(I);
   }
-  // Unreachable.
+  return Offset;
 }
 
 /// CompareMBBNumbers - Little predicate function to sort the WaterList by MBB
