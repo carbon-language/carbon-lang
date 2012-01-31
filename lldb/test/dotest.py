@@ -1027,7 +1027,7 @@ with open(fname, "w") as f:
 for env_var in unsets :
     if env_var in os.environ:
         # From Python Doc: When unsetenv() is supported, deletion of items in os.environ
-        # is automatically translated into a corresponding call to unsetenv()
+        # is automatically translated into a corresponding call to unsetenv().
         del os.environ[env_var]
         #os.unsetenv(env_var)
 
