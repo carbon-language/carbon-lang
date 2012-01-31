@@ -38,12 +38,16 @@ public:
   // write the lld::File in native format to the specified stream
   void write(llvm::raw_ostream& out) {
     out.write((char*)_headerBuffer, _headerBufferSize);
-    out.write((char*)&_definedAtomIvars[0], 
-              _definedAtomIvars.size()*sizeof(NativeDefinedAtomIvarsV1));
-    out.write((char*)&_attributes[0], 
-              _attributes.size()*sizeof(NativeAtomAttributesV1));
-    out.write((char*)&_contentPool[0], _contentPool.size());
-    out.write(&_stringPool[0], _stringPool.size());
+    if (!_definedAtomIvars.empty())
+      out.write((char*)&_definedAtomIvars[0],
+                _definedAtomIvars.size()*sizeof(NativeDefinedAtomIvarsV1));
+    if (!_attributes.empty())
+      out.write((char*)&_attributes[0],
+                _attributes.size()*sizeof(NativeAtomAttributesV1));
+    if (!_contentPool.empty())
+      out.write((char*)&_contentPool[0], _contentPool.size());
+    if (!_stringPool.empty())
+      out.write(&_stringPool[0], _stringPool.size());
   }
 
 private:
