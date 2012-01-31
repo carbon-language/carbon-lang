@@ -42,22 +42,17 @@ namespace {
   /// A class for recording information about inlining through an invoke.
   class InvokeInliningInfo {
     BasicBlock *OuterUnwindDest;
-    EHSelectorInst *OuterSelector;
-    BasicBlock *InnerUnwindDest;
-    PHINode *InnerExceptionPHI;
-    PHINode *InnerSelectorPHI;
-    SmallVector<Value*, 8> UnwindDestPHIValues;
 
     // FIXME: New EH - These will replace the analogous ones above.
     BasicBlock *OuterResumeDest; //< Destination of the invoke's unwind.
     BasicBlock *InnerResumeDest; //< Destination for the callee's resume.
     LandingPadInst *CallerLPad;  //< LandingPadInst associated with the invoke.
     PHINode *InnerEHValuesPHI;   //< PHI for EH values from landingpad insts.
+    SmallVector<Value*, 8> UnwindDestPHIValues;
 
   public:
     InvokeInliningInfo(InvokeInst *II)
-      : OuterUnwindDest(II->getUnwindDest()), OuterSelector(0),
-        InnerUnwindDest(0), InnerExceptionPHI(0), InnerSelectorPHI(0),
+      : OuterUnwindDest(II->getUnwindDest()),
         OuterResumeDest(II->getUnwindDest()), InnerResumeDest(0),
         CallerLPad(0), InnerEHValuesPHI(0) {
       // If there are PHI nodes in the unwind destination block, we need to keep
@@ -76,7 +71,7 @@ namespace {
 
     /// The outer unwind destination is the target of unwind edges
     /// introduced for calls within the inlined function.
-    BasicBlock *getOuterUnwindDest() const {
+    BasicBlock *getOuterResumeDest() const {
       return OuterUnwindDest;
     }
 
@@ -201,7 +196,7 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
     ImmutableCallSite CS(CI);
     SmallVector<Value*, 8> InvokeArgs(CS.arg_begin(), CS.arg_end());
     InvokeInst *II = InvokeInst::Create(CI->getCalledValue(), Split,
-                                        Invoke.getOuterUnwindDest(),
+                                        Invoke.getOuterResumeDest(),
                                         InvokeArgs, CI->getName(), BB);
     II->setCallingConv(CI->getCallingConv());
     II->setAttributes(CI->getAttributes());
