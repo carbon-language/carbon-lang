@@ -18,7 +18,6 @@
 #include "CodeGenModule.h"
 #include "CodeGenFunction.h"
 #include "CGCleanup.h"
-
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -288,6 +287,10 @@ private:
   LazyRuntimeFunction IvarAssignFn, StrongCastAssignFn, MemMoveFn, WeakReadFn, 
     WeakAssignFn, GlobalAssignFn;
 
+  typedef std::pair<std::string, std::string> ClassAliasPair;
+  /// All classes that have aliases set for them.
+  std::vector<ClassAliasPair> ClassAliases;
+
 protected:
   /// Function used for throwing Objective-C exceptions.
   LazyRuntimeFunction ExceptionThrowFn;
@@ -466,6 +469,7 @@ public:
                                          const ObjCContainerDecl *CD);
   virtual void GenerateCategory(const ObjCCategoryImplDecl *CMD);
   virtual void GenerateClass(const ObjCImplementationDecl *ClassDecl);
+  virtual void RegisterAlias(const ObjCCompatibleAliasDecl *OAD);
   virtual llvm::Value *GenerateProtocolRef(CGBuilderTy &Builder,
                                            const ObjCProtocolDecl *PD);
   virtual void GenerateProtocol(const ObjCProtocolDecl *PD);
@@ -1934,6 +1938,15 @@ llvm::Constant *CGObjCGNU::GeneratePropertyList(const ObjCImplementationDecl *OI
           ".objc_property_list");
 }
 
+void CGObjCGNU::RegisterAlias(const ObjCCompatibleAliasDecl *OAD) {
+  // Get the class declaration for which the alias is specified.
+  ObjCInterfaceDecl *ClassDecl =
+    const_cast<ObjCInterfaceDecl *>(OAD->getClassInterface());
+  std::string ClassName = ClassDecl->getNameAsString();
+  std::string AliasName = OAD->getNameAsString();
+  ClassAliases.push_back(ClassAliasPair(ClassName,AliasName));
+}
+
 void CGObjCGNU::GenerateClass(const ObjCImplementationDecl *OID) {
   ASTContext &Context = CGM.getContext();
 
@@ -2349,6 +2362,46 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
                             llvm::PointerType::getUnqual(ModuleTy), true);
   llvm::Value *Register = CGM.CreateRuntimeFunction(FT, "__objc_exec_class");
   Builder.CreateCall(Register, Module);
+
+  if (0 != ClassAliases.size()) {
+    llvm::Type *ArgTypes[2] = {PtrTy, PtrToInt8Ty};
+    llvm::FunctionType *RegisterAliasTy =
+      llvm::FunctionType::get(Builder.getVoidTy(),
+                              ArgTypes, false);
+    llvm::Function *RegisterAlias = llvm::Function::Create(
+      RegisterAliasTy,
+      llvm::GlobalValue::ExternalWeakLinkage, "class_registerAlias_np",
+      &TheModule);
+    llvm::BasicBlock *AliasBB =
+      llvm::BasicBlock::Create(VMContext, "alias", LoadFunction);
+    llvm::BasicBlock *NoAliasBB =
+      llvm::BasicBlock::Create(VMContext, "no_alias", LoadFunction);
+
+    // Branch based on whether the runtime provided class_registerAlias_np()
+    llvm::Value *HasRegisterAlias = Builder.CreateICmpNE(RegisterAlias,
+            llvm::Constant::getNullValue(RegisterAlias->getType()));
+    Builder.CreateCondBr(HasRegisterAlias, AliasBB, NoAliasBB);
+
+    // The true branch (has alias registration fucntion):
+    Builder.SetInsertPoint(AliasBB);
+    // Emit alias registration calls:
+    for (std::vector<ClassAliasPair>::iterator iter = ClassAliases.begin();
+       iter != ClassAliases.end(); ++iter) {
+       llvm::Constant *TheClass =
+         TheModule.getGlobalVariable(("_OBJC_CLASS_" + iter->first).c_str(),
+            true);
+       if (0 != TheClass) {
+         TheClass = llvm::ConstantExpr::getBitCast(TheClass, PtrTy);
+         Builder.CreateCall2(RegisterAlias, TheClass,
+            MakeConstantString(iter->second));
+       }
+    }
+    // Jump to end:
+    Builder.CreateBr(NoAliasBB);
+
+    // Missing alias registration function, just return from the function:
+    Builder.SetInsertPoint(NoAliasBB);
+  }
   Builder.CreateRetVoid();
 
   return LoadFunction;
