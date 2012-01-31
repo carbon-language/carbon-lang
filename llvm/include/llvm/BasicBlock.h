@@ -268,6 +268,7 @@ public:
   /// getLandingPadInst() - Return the landingpad instruction associated with
   /// the landing pad.
   LandingPadInst *getLandingPadInst();
+  const LandingPadInst *getLandingPadInst() const;
 
 private:
   /// AdjustBlockAddressRefCount - BasicBlock stores the number of BlockAddress

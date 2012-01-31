@@ -366,3 +366,6 @@ bool BasicBlock::isLandingPad() const {
 LandingPadInst *BasicBlock::getLandingPadInst() {
   return dyn_cast<LandingPadInst>(getFirstNonPHI());
 }
+const LandingPadInst *BasicBlock::getLandingPadInst() const {
+  return dyn_cast<LandingPadInst>(getFirstNonPHI());
+}
