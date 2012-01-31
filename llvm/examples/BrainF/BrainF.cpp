@@ -134,7 +134,8 @@ void BrainF::header(LLVMContext& C) {
   {
     //@aberrormsg = internal constant [%d x i8] c"\00"
     Constant *msg_0 =
-      ConstantArray::get(C, "Error: The head has left the tape.", true);
+      ConstantDataArray::getString(C, "Error: The head has left the tape.",
+                                   true);
 
     GlobalVariable *aberrormsg = new GlobalVariable(
       *module,
