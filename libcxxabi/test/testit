@@ -8,8 +8,6 @@
 # //
 # //===--------------------------------------------------------------------===//
 
-export DYLD_LIBRARY_PATH=/Users/hhinnant/Development/libcxxabi/lib:/Users/hhinnant/Development/temp_libcxx/lib
-
 if [ -z $CC ]
 then
 	CC=clang++
