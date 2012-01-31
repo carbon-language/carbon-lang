@@ -19,20 +19,18 @@
 
 #include "polly/ScheduleOptimizer.h"
 
-#include "polly/Cloog.h"
-#include "polly/LinkAllPasses.h"
 #include "polly/CodeGeneration.h"
-#include "polly/Support/GICHelper.h"
 #include "polly/Dependences.h"
+#include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
 
 #include "isl/aff.h"
-#include "isl/space.h"
-#include "isl/map.h"
-#include "isl/constraint.h"
-#include "isl/schedule.h"
 #include "isl/band.h"
+#include "isl/constraint.h"
+#include "isl/map.h"
 #include "isl/options.h"
+#include "isl/schedule.h"
+#include "isl/space.h"
 
 #define DEBUG_TYPE "polly-opt-isl"
 #include "llvm/Support/Debug.h"
@@ -502,10 +500,6 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   // touch the schedule.
   if (!schedule)
     return false;
-
-  DEBUG(dbgs() << "Computed schedule: ");
-  DEBUG(dbgs() << stringFromIslObj(schedule));
-  DEBUG(dbgs() << "Individual bands: ");
 
   isl_union_map *ScheduleMap = getScheduleMap(schedule);
 
