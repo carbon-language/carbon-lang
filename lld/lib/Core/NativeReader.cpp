@@ -409,7 +409,7 @@ llvm::error_code parseNativeObjectFileOrSTDIN(llvm::StringRef path,
   if ( ec ) 
       return ec;
 
-  return parseNativeObjectFile(mb.get(), path, result);
+  return parseNativeObjectFile(mb.take(), path, result);
 }
 
 
