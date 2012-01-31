@@ -203,8 +203,12 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   // We need TD information to know the pointer size unless this is inbounds.
   if (!GEP->isInBounds() && TD == 0) return 0;
 
-  ConstantArray *Init = dyn_cast<ConstantArray>(GV->getInitializer());
-  if (Init == 0 || Init->getNumOperands() > 1024) return 0;
+  Constant *Init = GV->getInitializer();
+  if (!isa<ConstantArray>(Init) && !isa<ConstantDataArray>(Init))
+    return 0;
+  
+  uint64_t ArrayElementCount = Init->getType()->getArrayNumElements();
+  if (ArrayElementCount > 1024) return 0;  // Don't blow up on huge arrays.
 
   // There are many forms of this optimization we can handle, for now, just do
   // the simple index into a single-dimensional array.
@@ -221,7 +225,7 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   // structs.
   SmallVector<unsigned, 4> LaterIndices;
 
-  Type *EltTy = cast<ArrayType>(Init->getType())->getElementType();
+  Type *EltTy = Init->getType()->getArrayElementType();
   for (unsigned i = 3, e = GEP->getNumOperands(); i != e; ++i) {
     ConstantInt *Idx = dyn_cast<ConstantInt>(GEP->getOperand(i));
     if (Idx == 0) return 0;  // Variable index.
@@ -272,8 +276,9 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
 
   // Scan the array and see if one of our patterns matches.
   Constant *CompareRHS = cast<Constant>(ICI.getOperand(1));
-  for (unsigned i = 0, e = Init->getNumOperands(); i != e; ++i) {
-    Constant *Elt = Init->getOperand(i);
+  for (unsigned i = 0, e = ArrayElementCount; i != e; ++i) {
+    Constant *Elt = Init->getAggregateElement(i);
+    if (Elt == 0) return 0;
 
     // If this is indexing an array of structures, get the structure element.
     if (!LaterIndices.empty())
@@ -440,10 +445,10 @@ FoldCmpLoadFromIndexedGlobal(GetElementPtrInst *GEP, GlobalVariable *GV,
   // If a 32-bit or 64-bit magic bitvector captures the entire comparison state
   // of this load, replace it with computation that does:
   //   ((magic_cst >> i) & 1) != 0
-  if (Init->getNumOperands() <= 32 ||
-      (TD && Init->getNumOperands() <= 64 && TD->isLegalInteger(64))) {
+  if (ArrayElementCount <= 32 ||
+      (TD && ArrayElementCount <= 64 && TD->isLegalInteger(64))) {
     Type *Ty;
-    if (Init->getNumOperands() <= 32)
+    if (ArrayElementCount <= 32)
       Ty = Type::getInt32Ty(Init->getContext());
     else
       Ty = Type::getInt64Ty(Init->getContext());
