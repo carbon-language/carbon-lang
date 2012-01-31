@@ -164,6 +164,8 @@ public:
   /// Given a function declaration and a name checks if this is a C lib
   /// function with the given name.
   bool isCLibraryFunction(const FunctionDecl *FD, StringRef Name);
+  static bool isCLibraryFunction(const FunctionDecl *FD, StringRef Name,
+                                 ASTContext &Context);
 
   /// \brief Depending on wither the location corresponds to a macro, return 
   /// either the macro name or the token spelling.

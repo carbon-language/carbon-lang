@@ -33,6 +33,7 @@ def Taint : Package<"taint">, InPackage<SecurityExperimental>, Hidden;
 
 def Unix : Package<"unix">;
 def UnixExperimental : Package<"unix">, InPackage<Experimental>, Hidden;
+def CString : Package<"cstring">, InPackage<UnixExperimental>, Hidden;
 
 def OSX : Package<"osx">;
 def OSXExperimental : Package<"osx">, InPackage<Experimental>, Hidden;
@@ -281,10 +282,6 @@ def ChrootChecker : Checker<"Chroot">,
   HelpText<"Check improper use of chroot">,
   DescFile<"ChrootChecker.cpp">;
 
-def CStringChecker : Checker<"CString">,
-  HelpText<"Check calls to functions in <string.h>">,
-  DescFile<"CStringChecker.cpp">;
-
 def MallocChecker : Checker<"Malloc">,
   HelpText<"Check for potential memory leaks, double free, and use-after-free problems">,
   DescFile<"MallocChecker.cpp">;
@@ -302,6 +299,17 @@ def StreamChecker : Checker<"Stream">,
   DescFile<"StreamChecker.cpp">;
 
 } // end "unix.experimental"
+
+let ParentPackage = CString in {
+
+def CStringChecker : Checker<"Generic">,
+  HelpText<"Check calls to functions in <string.h>">,
+  DescFile<"CStringChecker.cpp">;
+
+def CStringSyntaxChecker : Checker<"BadSizeArg">,
+  HelpText<"Check the size argument passed into C string functions for common erroneous patterns">,
+  DescFile<"CStringSyntaxChecker.cpp">;  
+}
 
 //===----------------------------------------------------------------------===//
 // Mac OS X, Cocoa, and Core Foundation checkers.

@@ -37,19 +37,27 @@ StringRef CheckerContext::getCalleeName(const FunctionDecl *FunDecl) const {
 
 
 bool CheckerContext::isCLibraryFunction(const FunctionDecl *FD,
-                                        StringRef Name){
+                                        StringRef Name) {
+  return isCLibraryFunction(FD, Name, getASTContext());
+}
+
+bool CheckerContext::isCLibraryFunction(const FunctionDecl *FD,
+                                        StringRef Name, ASTContext &Context) {
   // To avoid false positives (Ex: finding user defined functions with
   // similar names), only perform fuzzy name matching when it's a builtin.
   // Using a string compare is slow, we might want to switch on BuiltinID here.
   unsigned BId = FD->getBuiltinID();
   if (BId != 0) {
-    ASTContext &Context = getASTContext();
     StringRef BName = Context.BuiltinInfo.GetName(BId);
-    if (StringRef(BName).find(Name) != StringRef::npos)
+    if (BName.find(Name) != StringRef::npos)
       return true;
   }
 
-  if (FD->isExternC() && FD->getIdentifier()->getName().equals(Name))
+  StringRef FName = FD->getIdentifier()->getName();
+  if (FName.startswith("__inline"))
+    return (FName.find(Name) != StringRef::npos);
+
+  if (FD->isExternC() && FName.equals(Name))
     return true;
 
   return false;
