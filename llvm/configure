@@ -3903,7 +3903,6 @@ if test "$llvm_cv_target_arch" = "Unknown" ; then
 echo "$as_me: WARNING: Configuring LLVM for an unknown target archicture" >&2;}
 fi
 
-# Determine the LLVM native architecture for the target
 case "$llvm_cv_target_arch" in
     x86)     LLVM_NATIVE_ARCH="X86" ;;
     x86_64)  LLVM_NATIVE_ARCH="X86" ;;
@@ -5345,8 +5344,6 @@ esac
 TARGETS_TO_BUILD=$TARGETS_TO_BUILD
 
 
-# Determine whether we are building LLVM support for the native architecture.
-# If so, define LLVM_NATIVE_ARCH to that LLVM target.
 for a_target in $TARGETS_TO_BUILD; do
   if test "$a_target" = "$LLVM_NATIVE_ARCH"; then
 
@@ -5391,8 +5388,6 @@ _ACEOF
   fi
 done
 
-# Build the LLVM_TARGET and LLVM_... macros for Targets.def and the individual
-# target feature def files.
 LLVM_ENUM_TARGETS=""
 LLVM_ENUM_ASM_PRINTERS=""
 LLVM_ENUM_ASM_PARSERS=""
@@ -10502,7 +10497,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10505 "configure"
+#line 10500 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -20832,9 +20827,6 @@ SHLIBEXT=$libltdl_cv_shlibext
 SHLIBPATH_VAR=$libltdl_cv_shlibpath_var
 
 
-# Translate the various configuration directories and other basic
-# information into substitutions that will end up in Makefile.config.in
-# that these configured values can be used by the makefiles
 if test "${prefix}" = "NONE" ; then
   prefix="/usr/local"
 fi
@@ -20859,8 +20851,6 @@ LLVM_CONFIGTIME=`date`
 
 
 
-# Place the various directores into the config.h file as #defines so that we
-# can know about the installation paths within LLVM.
 
 cat >>confdefs.h <<_ACEOF
 #define LLVM_PREFIX "$LLVM_PREFIX"
@@ -20917,7 +20907,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-# Determine which bindings to build.
 if test "$BINDINGS_TO_BUILD" = auto ; then
   BINDINGS_TO_BUILD=""
   if test "x$OCAMLC" != x -a "x$OCAMLDEP" != x ; then
@@ -20927,12 +20916,9 @@ fi
 BINDINGS_TO_BUILD=$BINDINGS_TO_BUILD
 
 
-# This isn't really configurey, but it avoids having to repeat the list in
-# other files.
 ALL_BINDINGS=ocaml
 
 
-# Do any work necessary to ensure that bindings have what they need.
 binding_prereqs_failed=0
 for a_binding in $BINDINGS_TO_BUILD ; do
   case "$a_binding" in
