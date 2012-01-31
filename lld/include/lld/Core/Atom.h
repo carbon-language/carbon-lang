@@ -50,9 +50,9 @@ public:
   virtual Definition definition() const = 0;
   
   /// definedAtom - like dynamic_cast, if atom is definitionRegular
-  /// returns atom cast to DefinedAtom*, else returns NULL;
-  virtual const DefinedAtom* definedAtom() const { return NULL; }
-  
+  /// returns atom cast to DefinedAtom*, else returns nullptr;
+  virtual const DefinedAtom* definedAtom() const { return 0; }
+
 protected:
   /// Atom is an abstract base class.  Only subclasses can access constructor.
   Atom() {}
