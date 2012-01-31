@@ -2178,6 +2178,7 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
   case NoStmtClass:
     llvm_unreachable("Invalid class for expression");
   }
+  llvm_unreachable("Bogus StmtClass");
 }
 
 Expr* Expr::IgnoreParens() {
