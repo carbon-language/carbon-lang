@@ -115,3 +115,35 @@ extern NSString *GetLocalizedString(NSString *str);
 void check_NSLocalizedString() {
   [Foo fooWithFormat:NSLocalizedString(@"format"), @"arg"]; // no-warning
 }
+
+typedef __WCHAR_TYPE__ wchar_t;
+
+
+// Test that %S, %C, %ls check for 16 bit types in ObjC strings, as described at
+// http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/Strings/Articles/formatSpecifiers.html#//apple_ref/doc/uid/TP40004265
+
+void test_percent_S() {
+  const unsigned short data[] = { 'a', 'b', 0 };
+  const unsigned short* ptr = data;
+  NSLog(@"%S", ptr);  // no-warning
+
+  const wchar_t* wchar_ptr = L"ab";
+  NSLog(@"%S", wchar_ptr);  // expected-warning{{format specifies type 'const unsigned short *' but the argument has type 'const wchar_t *'}}
+}
+
+void test_percent_ls() {
+  const unsigned short data[] = { 'a', 'b', 0 };
+  const unsigned short* ptr = data;
+  NSLog(@"%ls", ptr);  // no-warning
+
+  const wchar_t* wchar_ptr = L"ab";
+  NSLog(@"%ls", wchar_ptr);  // expected-warning{{format specifies type 'const unsigned short *' but the argument has type 'const wchar_t *'}}
+}
+
+void test_percent_C() {
+  const unsigned short data = 'a';
+  NSLog(@"%C", data);  // no-warning
+
+  const wchar_t wchar_data = L'a';
+  NSLog(@"%C", wchar_data);  // expected-warning{{format specifies type 'unsigned short' but the argument has type 'wchar_t'}}
+}

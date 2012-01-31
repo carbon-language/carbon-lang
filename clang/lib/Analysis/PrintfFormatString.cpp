@@ -241,7 +241,8 @@ bool clang::analyze_format_string::ParsePrintfString(FormatStringHandler &H,
 // Methods on PrintfSpecifier.
 //===----------------------------------------------------------------------===//
 
-ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
+ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx,
+                                          bool IsObjCLiteral) const {
   const PrintfConversionSpecifier &CS = getConversionSpecifier();
 
   if (!CS.consumesDataArgument())
@@ -309,13 +310,19 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx) const {
 
   switch (CS.getKind()) {
     case ConversionSpecifier::sArg:
-      if (LM.getKind() == LengthModifier::AsWideChar)
+      if (LM.getKind() == LengthModifier::AsWideChar) {
+        if (IsObjCLiteral)
+          return Ctx.getPointerType(Ctx.UnsignedShortTy.withConst());
         return ArgTypeResult(ArgTypeResult::WCStrTy, "wchar_t *");
+      }
       return ArgTypeResult::CStrTy;
     case ConversionSpecifier::SArg:
-      // FIXME: This appears to be Mac OS X specific.
+      if (IsObjCLiteral)
+        return Ctx.getPointerType(Ctx.UnsignedShortTy.withConst());
       return ArgTypeResult(ArgTypeResult::WCStrTy, "wchar_t *");
     case ConversionSpecifier::CArg:
+      if (IsObjCLiteral)
+        return Ctx.UnsignedShortTy;
       return ArgTypeResult(Ctx.WCharTy, "wchar_t");
     case ConversionSpecifier::pArg:
       return ArgTypeResult::CPointerTy;
