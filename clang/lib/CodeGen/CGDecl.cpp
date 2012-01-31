@@ -644,6 +644,16 @@ static bool canEmitInitWithFewStoresAfterMemset(llvm::Constant *Init,
     }
     return true;
   }
+  
+  if (llvm::ConstantDataSequential *CDS =
+        dyn_cast<llvm::ConstantDataSequential>(Init)) {
+    for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
+      llvm::Constant *Elt = CDS->getElementAsConstant(i);
+      if (!canEmitInitWithFewStoresAfterMemset(Elt, NumStores))
+        return false;
+    }
+    return true;
+  }
 
   // Anything else is hard and scary.
   return false;
@@ -654,17 +664,26 @@ static bool canEmitInitWithFewStoresAfterMemset(llvm::Constant *Init,
 /// stores that would be required.
 static void emitStoresForInitAfterMemset(llvm::Constant *Init, llvm::Value *Loc,
                                          bool isVolatile, CGBuilderTy &Builder) {
-  // Zero doesn't require any stores.
-  if (isa<llvm::ConstantAggregateZero>(Init) ||
-      isa<llvm::ConstantPointerNull>(Init) ||
-      isa<llvm::UndefValue>(Init))
+  // Zero doesn't require a store.
+  if (Init->isNullValue() || isa<llvm::UndefValue>(Init))
     return;
 
   if (isa<llvm::ConstantInt>(Init) || isa<llvm::ConstantFP>(Init) ||
       isa<llvm::ConstantVector>(Init) || isa<llvm::BlockAddress>(Init) ||
       isa<llvm::ConstantExpr>(Init)) {
-    if (!Init->isNullValue())
-      Builder.CreateStore(Init, Loc, isVolatile);
+    Builder.CreateStore(Init, Loc, isVolatile);
+    return;
+  }
+  
+  if (llvm::ConstantDataSequential *CDS = 
+        dyn_cast<llvm::ConstantDataSequential>(Init)) {
+    for (unsigned i = 0, e = CDS->getNumElements(); i != e; ++i) {
+      llvm::Constant *Elt = CDS->getElementAsConstant(i);
+      
+      // Get a pointer to the element and emit it.
+      emitStoresForInitAfterMemset(Elt, Builder.CreateConstGEP2_32(Loc, 0, i),
+                                   isVolatile, Builder);
+    }
     return;
   }
 
@@ -673,9 +692,7 @@ static void emitStoresForInitAfterMemset(llvm::Constant *Init, llvm::Value *Loc,
 
   for (unsigned i = 0, e = Init->getNumOperands(); i != e; ++i) {
     llvm::Constant *Elt = cast<llvm::Constant>(Init->getOperand(i));
-    if (Elt->isNullValue()) continue;
-
-    // Otherwise, get a pointer to the element and emit it.
+    // Get a pointer to the element and emit it.
     emitStoresForInitAfterMemset(Elt, Builder.CreateConstGEP2_32(Loc, 0, i),
                                  isVolatile, Builder);
   }
