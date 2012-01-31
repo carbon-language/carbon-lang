@@ -560,7 +560,8 @@ FormatManager::FormatManager() :
     m_categories_map(this),
     m_default_category_name(ConstString("default")),
     m_system_category_name(ConstString("system")), 
-    m_gnu_cpp_category_name(ConstString("gnu-libstdc++"))
+    m_gnu_cpp_category_name(ConstString("gnu-libstdc++")),
+    m_objc_category_name(ConstString("objc"))
 {
     
     // add some default stuff
@@ -583,7 +584,6 @@ FormatManager::FormatManager() :
                                                                              "${var%s}"));
     
     lldb::RegularExpressionSP any_size_char_arr(new RegularExpression("char \\[[0-9]+\\]"));
-    
     
     FormatCategory::SharedPointer sys_category_sp = GetCategory(m_system_category_name);
     
@@ -633,9 +633,23 @@ FormatManager::FormatManager() :
                                                                                      false,
                                                                                      false,
                                                                                      "gnu_libstdcpp.StdListSynthProvider")));
+
+    lldb::SummaryFormatSP ObjC_BOOL_summary(new ScriptSummaryFormat(false,
+                                                                    false,
+                                                                    false,
+                                                                    true,
+                                                                    true,
+                                                                    false,
+                                                                    "objc.BOOL_SummaryProvider",
+                                                                    ""));
+    FormatCategory::SharedPointer objc_category_sp = GetCategory(m_objc_category_name);
+    objc_category_sp->GetSummaryNavigator()->Add(ConstString("BOOL"),
+                                                 ObjC_BOOL_summary);
 #endif
+    
     // DO NOT change the order of these calls, unless you WANT a change in the priority of these categories
     EnableCategory(m_system_category_name);
+    EnableCategory(m_objc_category_name);
     EnableCategory(m_gnu_cpp_category_name);
     EnableCategory(m_default_category_name);
     

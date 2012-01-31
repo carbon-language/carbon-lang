@@ -508,6 +508,7 @@ private:
     ConstString m_default_category_name;
     ConstString m_system_category_name;
     ConstString m_gnu_cpp_category_name;
+    ConstString m_objc_category_name;
     
     CategoryMap&
     GetCategories ()

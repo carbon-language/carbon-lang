@@ -247,6 +247,10 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     run_string.Printf ("run_one_line (%s, 'import gnu_libstdcpp')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
     
+    run_string.Clear();
+    run_string.Printf ("run_one_line (%s, 'import objc')", m_dictionary_name.c_str());
+    PyRun_SimpleString (run_string.GetData());
+    
     if (m_dbg_stdout != NULL)
     {
         m_new_sysout = PyFile_FromFile (m_dbg_stdout, (char *) "", (char *) "w", _check_and_flush);

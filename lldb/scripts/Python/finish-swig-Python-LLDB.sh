@@ -184,6 +184,21 @@ else
     fi
 fi
 
+# Copy the ObjC formatters over to the framework Python directory
+if [ -f "${SRC_ROOT}/examples/synthetic/objc.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying objc.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/objc.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/objc.py"
+    fi
+fi
+
 fi
 
 exit 0
