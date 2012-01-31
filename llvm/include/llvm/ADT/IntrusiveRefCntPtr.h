@@ -80,7 +80,7 @@ namespace llvm {
     }
 
     template <typename T>
-    friend class IntrusiveRefCntPtr;
+    friend struct IntrusiveRefCntPtrInfo;
   };
 
   
