@@ -680,7 +680,7 @@ void CWriter::printConstantDataSequential(ConstantDataSequential *CDS,
   } else {
     Out << "{ ";
     printConstant(CDS->getElementAsConstant(0), Static);
-    for (unsigned i = 1, e = CDS->getNumOperands(); i != e; ++i) {
+    for (unsigned i = 1, e = CDS->getNumElements(); i != e; ++i) {
       Out << ", ";
       printConstant(CDS->getElementAsConstant(i), Static);
     }
