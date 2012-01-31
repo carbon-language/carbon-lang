@@ -131,6 +131,8 @@ find_type.py:
 class SBType
 {
 public:
+    SBType ();
+
     SBType (const lldb::SBType &rhs);
 
     ~SBType ();

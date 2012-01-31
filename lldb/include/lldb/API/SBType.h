@@ -138,8 +138,6 @@ public:
     GetDescription (lldb::SBStream &description, 
                     lldb::DescriptionLevel description_level);
 
-protected:
-    
 #ifndef SWIG
     lldb::SBType &
     operator = (const lldb::SBType &rhs);
@@ -149,7 +147,11 @@ protected:
     
     bool
     operator != (lldb::SBType &rhs);
+#endif
     
+protected:
+    
+#ifndef SWIG
     lldb_private::TypeImpl &
     ref ();
     
@@ -157,7 +159,7 @@ protected:
     ref () const;
     
     void
-    reset(const lldb::TypeImplSP &type_impl_sp);
+    SetSP (const lldb::TypeImplSP &type_impl_sp);
 #endif
     
 

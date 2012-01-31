@@ -23,4 +23,6 @@ def fuzz_obj(obj):
         print symbol
     for symbol in obj:
         print symbol
-
+    obj.GetAddressByteSize()
+    obj.GetByteOrder()
+    obj.GetTriple()

@@ -84,7 +84,7 @@ SBType::operator != (SBType &rhs)
 }
 
 void
-SBType::reset(const lldb::TypeImplSP &type_impl_sp)
+SBType::SetSP (const lldb::TypeImplSP &type_impl_sp)
 {
     m_opaque_sp = type_impl_sp;
 }
@@ -556,7 +556,7 @@ SBTypeMember::GetType ()
     SBType sb_type;
     if (m_opaque_ap.get())
     {
-        sb_type.reset (m_opaque_ap->GetTypeImpl());
+        sb_type.SetSP (m_opaque_ap->GetTypeImpl());
     }
     return sb_type;
 
