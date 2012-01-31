@@ -79,7 +79,7 @@ template<> struct ProgramStateTrait<ArraySizeMap>
 
 void ObjCContainersChecker::addSizeInfo(const Expr *Array, const Expr *Size,
                                         CheckerContext &C) const {
-  const ProgramState *State = C.getState();
+  ProgramStateRef State = C.getState();
   SVal SizeV = State->getSVal(Size, C.getLocationContext());
   // Undefined is reported by another checker.
   if (SizeV.isUnknownOrUndef())
@@ -124,7 +124,7 @@ void ObjCContainersChecker::checkPreStmt(const CallExpr *CE,
 
   // Check the array access.
   if (Name.equals("CFArrayGetValueAtIndex")) {
-    const ProgramState *State = C.getState();
+    ProgramStateRef State = C.getState();
     // Retrieve the size.
     // Find out if we saw this array symbol before and have information about it.
     const Expr *ArrayExpr = CE->getArg(0);
@@ -140,8 +140,8 @@ void ObjCContainersChecker::checkPreStmt(const CallExpr *CE,
     
     // Now, check if 'Idx in [0, Size-1]'.
     const QualType T = IdxExpr->getType();
-    const ProgramState *StInBound = State->assumeInBound(Idx, Size, true, T);
-    const ProgramState *StOutBound = State->assumeInBound(Idx, Size, false, T);
+    ProgramStateRef StInBound = State->assumeInBound(Idx, Size, true, T);
+    ProgramStateRef StOutBound = State->assumeInBound(Idx, Size, false, T);
     if (StOutBound && !StInBound) {
       ExplodedNode *N = C.generateSink(StOutBound);
       if (!N)
