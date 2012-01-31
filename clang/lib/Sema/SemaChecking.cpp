@@ -2198,11 +2198,14 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
           os.str()));
     }
     else {
-      S.Diag(getLocationOfByte(CS.getStart()),
-             diag::warn_printf_conversion_argument_type_mismatch)
-        << ATR.getRepresentativeTypeName(S.Context) << Ex->getType()
-        << getSpecifierRange(startSpecifier, specifierLen)
-        << Ex->getSourceRange();
+      EmitFormatDiagnostic(
+        S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
+          << ATR.getRepresentativeTypeName(S.Context) << Ex->getType()
+          << getSpecifierRange(startSpecifier, specifierLen)
+          << Ex->getSourceRange(),
+        getLocationOfByte(CS.getStart()),
+        true,
+        getSpecifierRange(startSpecifier, specifierLen));
     }
   }
 
@@ -2313,12 +2316,13 @@ bool CheckScanfHandler::HandleScanfSpecifier(
   // Check the length modifier is valid with the given conversion specifier.
   const LengthModifier &LM = FS.getLengthModifier();
   if (!FS.hasValidLengthModifier()) {
-    S.Diag(getLocationOfByte(LM.getStart()),
-           diag::warn_format_nonsensical_length)
-      << LM.toString() << CS.toString()
-      << getSpecifierRange(startSpecifier, specifierLen)
-      << FixItHint::CreateRemoval(getSpecifierRange(LM.getStart(),
-                                                    LM.getLength()));
+    const CharSourceRange &R = getSpecifierRange(LM.getStart(), LM.getLength());
+    EmitFormatDiagnostic(S.PDiag(diag::warn_format_nonsensical_length)
+                         << LM.toString() << CS.toString()
+                         << getSpecifierRange(startSpecifier, specifierLen),
+                         getLocationOfByte(LM.getStart()),
+                         /*IsStringLocation*/true, R,
+                         FixItHint::CreateRemoval(R));
   }
 
   // The remaining checks depend on the data arguments.
@@ -2352,11 +2356,13 @@ bool CheckScanfHandler::HandleScanfSpecifier(
           getSpecifierRange(startSpecifier, specifierLen),
           os.str()));
     } else {
-      S.Diag(getLocationOfByte(CS.getStart()),
-             diag::warn_printf_conversion_argument_type_mismatch)
+      EmitFormatDiagnostic(
+        S.PDiag(diag::warn_printf_conversion_argument_type_mismatch)
           << ATR.getRepresentativeTypeName(S.Context) << Ex->getType()
-          << getSpecifierRange(startSpecifier, specifierLen)
-          << Ex->getSourceRange();
+          << Ex->getSourceRange(),
+        getLocationOfByte(CS.getStart()),
+        /*IsStringLocation*/true,
+        getSpecifierRange(startSpecifier, specifierLen));
     }
   }
 

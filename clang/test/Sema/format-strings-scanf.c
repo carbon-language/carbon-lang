@@ -53,6 +53,10 @@ void pr9751() {
   const char kFormat2[] = "%["; // expected-note{{format string is defined here}}}
   scanf(kFormat2, str); // expected-warning{{no closing ']' for '%[' in scanf format string}}
   scanf("%[", str); // expected-warning{{no closing ']' for '%[' in scanf format string}}
+  const char kFormat3[] = "%hu"; // expected-note{{format string is defined here}}}
+  scanf(kFormat3, &i); // expected-warning {{format specifies type 'unsigned short *' but the argument}}
+  const char kFormat4[] = "%lp"; // expected-note{{format string is defined here}}}
+  scanf(kFormat4, &i); // expected-warning {{length modifier 'l' results in undefined behavior or no effect with 'p' conversion specifier}}
 }
 
 void test_variants(int *i, const char *s, ...) {

@@ -468,6 +468,9 @@ void pr9751() {
   // Make sure that the "format string is defined here" note is not emitted
   // when the original string is within the argument expression.
   printf(1 ? "yes %d" : "no %d"); // expected-warning 2{{more '%' conversions than data arguments}}
+
+  const char kFormat17[] = "%hu"; // expected-note{{format string is defined here}}}
+  printf(kFormat17, (int[]){0}); // expected-warning{{format specifies type 'unsigned short' but the argument}}
 }
 
 // PR 9466: clang: doesn't know about %Lu, %Ld, and %Lx 
