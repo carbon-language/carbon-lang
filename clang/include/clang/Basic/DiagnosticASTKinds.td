@@ -53,6 +53,8 @@ def note_constexpr_var_init_non_constant : Note<
 def note_constexpr_typeid_polymorphic : Note<
   "typeid applied to expression of polymorphic type %0 is "
   "not allowed in a constant expression">;
+def note_constexpr_void_comparison : Note<
+  "comparison between unequal pointers to void has unspecified result">;
 def note_constexpr_temporary_here : Note<"temporary created here">;
 def note_constexpr_literal_here : Note<"literal written here">;
 def note_constexpr_depth_limit_exceeded : Note<

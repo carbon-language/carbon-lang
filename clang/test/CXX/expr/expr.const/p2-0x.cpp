@@ -376,10 +376,21 @@ namespace UnspecifiedRelations {
   // If two pointers point to non-static data members of the same object with
   // different access control, the result is unspecified.
 
-  // FIXME:
   // [expr.rel]p3: Pointers to void can be compared [...] if both pointers
   // represent the same address or are both the null pointer [...]; otherwise
   // the result is unspecified.
+  struct S { int a, b; } s;
+  constexpr void *null = 0;
+  constexpr void *pv = (void*)&s.a;
+  constexpr void *qv = (void*)&s.b;
+  constexpr bool v1 = null < 0;
+  constexpr bool v2 = null < pv; // expected-error {{constant expression}}
+  constexpr bool v3 = null == pv; // ok
+  constexpr bool v4 = qv == pv; // ok
+  constexpr bool v5 = qv >= pv; // expected-error {{constant expression}} expected-note {{unequal pointers to void}}
+  constexpr bool v6 = qv > null; // expected-error {{constant expression}}
+  constexpr bool v7 = qv <= (void*)&s.b; // ok
+  constexpr bool v8 = qv > (void*)&s.a; // expected-error {{constant expression}} expected-note {{unequal pointers to void}}
 
   // FIXME: Implement comparisons of pointers to members.
   // [expr.eq]p2: If either is a pointer to a virtual member function and

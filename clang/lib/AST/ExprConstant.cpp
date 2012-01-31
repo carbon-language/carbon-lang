@@ -4331,6 +4331,18 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
       const CharUnits &LHSOffset = LHSValue.getLValueOffset();
       const CharUnits &RHSOffset = RHSValue.getLValueOffset();
+
+      // C++11 [expr.rel]p3:
+      //   Pointers to void (after pointer conversions) can be compared, with a
+      //   result defined as follows: If both pointers represent the same
+      //   address or are both the null pointer value, the result is true if the
+      //   operator is <= or >= and false otherwise; otherwise the result is
+      //   unspecified.
+      // We interpret this as applying to pointers to *cv* void.
+      if (LHSTy->isVoidPointerType() && LHSOffset != RHSOffset &&
+          E->getOpcode() != BO_EQ && E->getOpcode() != BO_NE)
+        CCEDiag(E, diag::note_constexpr_void_comparison);
+
       switch (E->getOpcode()) {
       default: llvm_unreachable("missing comparison operator");
       case BO_LT: return Success(LHSOffset < RHSOffset, E);
