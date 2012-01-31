@@ -66,6 +66,79 @@ ExplodedGraph::~ExplodedGraph() {
 // Node reclamation.
 //===----------------------------------------------------------------------===//
 
+bool ExplodedGraph::shouldCollect(const ExplodedNode *node) {
+  // Reclaimn all nodes that match *all* the following criteria:
+  //
+  // (1) 1 predecessor (that has one successor)
+  // (2) 1 successor (that has one predecessor)
+  // (3) The ProgramPoint is for a PostStmt.
+  // (4) There is no 'tag' for the ProgramPoint.
+  // (5) The 'store' is the same as the predecessor.
+  // (6) The 'GDM' is the same as the predecessor.
+  // (7) The LocationContext is the same as the predecessor.
+  // (8) The PostStmt is for a non-consumed Stmt or Expr.
+
+  // Conditions 1 and 2.
+  if (node->pred_size() != 1 || node->succ_size() != 1)
+    return false;
+
+  const ExplodedNode *pred = *(node->pred_begin());
+  if (pred->succ_size() != 1)
+    return false;
+  
+  const ExplodedNode *succ = *(node->succ_begin());
+  if (succ->pred_size() != 1)
+    return false;
+
+  // Condition 3.
+  ProgramPoint progPoint = node->getLocation();
+  if (!isa<PostStmt>(progPoint) ||
+      (isa<CallEnter>(progPoint) || isa<CallExit>(progPoint)))
+    return false;
+
+  // Condition 4.
+  PostStmt ps = cast<PostStmt>(progPoint);
+  if (ps.getTag())
+    return false;
+  
+  if (isa<BinaryOperator>(ps.getStmt()))
+    return false;
+
+  // Conditions 5, 6, and 7.
+  ProgramStateRef state = node->getState();
+  ProgramStateRef pred_state = pred->getState();    
+  if (state->store != pred_state->store || state->GDM != pred_state->GDM ||
+      progPoint.getLocationContext() != pred->getLocationContext())
+    return false;
+  
+  // Condition 8.
+  if (const Expr *Ex = dyn_cast<Expr>(ps.getStmt())) {
+    ParentMap &PM = progPoint.getLocationContext()->getParentMap();
+    if (!PM.isConsumedExpr(Ex))
+      return false;
+  }
+  
+  return true; 
+}
+
+void ExplodedGraph::collectNode(ExplodedNode *node) {
+  // Removing a node means:
+  // (a) changing the predecessors successor to the successor of this node
+  // (b) changing the successors predecessor to the predecessor of this node
+  // (c) Putting 'node' onto freeNodes.
+  assert(node->pred_size() == 1 || node->succ_size() == 1);
+  ExplodedNode *pred = *(node->pred_begin());
+  ExplodedNode *succ = *(node->succ_begin());
+  pred->replaceSuccessor(succ);
+  succ->replacePredecessor(pred);
+  if (!freeNodes)
+    freeNodes = new NodeList();
+  getNodeList(freeNodes)->push_back(node);
+  Nodes.RemoveNode(node);
+  --NumNodes;
+  node->~ExplodedNode();  
+}
+
 void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
   if (!recentlyAllocatedNodes)
     return;
@@ -79,72 +152,11 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
   reclaimCounter = CounterTop;
   
   NodeList &nl = *getNodeList(recentlyAllocatedNodes);
- 
-  // Reclaimn all nodes that match *all* the following criteria:
-  //
-  // (1) 1 predecessor (that has one successor)
-  // (2) 1 successor (that has one predecessor)
-  // (3) The ProgramPoint is for a PostStmt.
-  // (4) There is no 'tag' for the ProgramPoint.
-  // (5) The 'store' is the same as the predecessor.
-  // (6) The 'GDM' is the same as the predecessor.
-  // (7) The LocationContext is the same as the predecessor.
-  // (8) The PostStmt is for a non-consumed Stmt or Expr.
   
   for (NodeList::iterator i = nl.begin(), e = nl.end() ; i != e; ++i) {
-    ExplodedNode *node = *i;
-    
-    // Conditions 1 and 2.
-    if (node->pred_size() != 1 || node->succ_size() != 1)
-      continue;
-
-    ExplodedNode *pred = *(node->pred_begin());
-    if (pred->succ_size() != 1)
-      continue;
-
-    ExplodedNode *succ = *(node->succ_begin());
-    if (succ->pred_size() != 1)
-      continue;
-
-    // Condition 3.
-    ProgramPoint progPoint = node->getLocation();
-    if (!isa<PostStmt>(progPoint) ||
-        (isa<CallEnter>(progPoint) || isa<CallExit>(progPoint)))
-      continue;
-    // Condition 4.
-    PostStmt ps = cast<PostStmt>(progPoint);
-    if (ps.getTag())
-      continue;
-
-    if (isa<BinaryOperator>(ps.getStmt()))
-      continue;
-
-    // Conditions 5, 6, and 7.
-    ProgramStateRef state = node->getState();
-    ProgramStateRef pred_state = pred->getState();    
-    if (state->store != pred_state->store || state->GDM != pred_state->GDM ||
-        progPoint.getLocationContext() != pred->getLocationContext())
-      continue;
-
-    // Condition 8.
-    if (const Expr *Ex = dyn_cast<Expr>(ps.getStmt())) {
-      ParentMap &PM = progPoint.getLocationContext()->getParentMap();
-      if (!PM.isConsumedExpr(Ex))
-        continue;
-    }
-    
-    // If we reach here, we can remove the node.  This means:
-    // (a) changing the predecessors successor to the successor of this node
-    // (b) changing the successors predecessor to the predecessor of this node
-    // (c) Putting 'node' onto freeNodes.
-    pred->replaceSuccessor(succ);
-    succ->replacePredecessor(pred);
-    if (!freeNodes)
-      freeNodes = new NodeList();
-    getNodeList(freeNodes)->push_back(node);
-    Nodes.RemoveNode(node);
-    --NumNodes;
-    node->~ExplodedNode();
+    ExplodedNode *node = *i;    
+    if (shouldCollect(node))
+      collectNode(node);
   }
   
   nl.clear();

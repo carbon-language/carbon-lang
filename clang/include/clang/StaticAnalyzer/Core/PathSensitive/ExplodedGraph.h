@@ -367,6 +367,10 @@ public:
   /// Reclaim "uninteresting" nodes created since the last time this method
   /// was called.
   void reclaimRecentlyAllocatedNodes();
+
+private:
+  bool shouldCollect(const ExplodedNode *node);
+  void collectNode(ExplodedNode *node);
 };
 
 class ExplodedNodeSet {
