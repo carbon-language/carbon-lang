@@ -666,6 +666,13 @@ UndefValue *UndefValue::getElementValue(unsigned Idx) const {
 //                            ConstantXXX Classes
 //===----------------------------------------------------------------------===//
 
+template <typename ItTy, typename EltTy>
+static bool rangeOnlyContains(ItTy Start, ItTy End, EltTy Elt) {
+  for (; Start != End; ++Start)
+    if (*Start != Elt)
+      return false;
+  return true;
+}
 
 ConstantArray::ConstantArray(ArrayType *T, ArrayRef<Constant *> V)
   : Constant(T, ConstantArrayVal,
@@ -680,54 +687,103 @@ ConstantArray::ConstantArray(ArrayType *T, ArrayRef<Constant *> V)
 }
 
 Constant *ConstantArray::get(ArrayType *Ty, ArrayRef<Constant*> V) {
+  // Empty arrays are canonicalized to ConstantAggregateZero.
+  if (V.empty())
+    return ConstantAggregateZero::get(Ty);
+
   for (unsigned i = 0, e = V.size(); i != e; ++i) {
     assert(V[i]->getType() == Ty->getElementType() &&
            "Wrong type in array element initializer");
   }
   LLVMContextImpl *pImpl = Ty->getContext().pImpl;
-  // If this is an all-zero array, return a ConstantAggregateZero object
-  bool isAllZero = true;
-  bool isUndef = false;
-  if (!V.empty()) {
-    Constant *C = V[0];
-    isAllZero = C->isNullValue();
-    isUndef = isa<UndefValue>(C);
+  
+  // If this is an all-zero array, return a ConstantAggregateZero object.  If
+  // all undef, return an UndefValue, if "all simple", then return a
+  // ConstantDataArray.
+  Constant *C = V[0];
+  if (isa<UndefValue>(C) && rangeOnlyContains(V.begin(), V.end(), C))
+    return UndefValue::get(Ty);
 
-    if (isAllZero || isUndef)
-      for (unsigned i = 1, e = V.size(); i != e; ++i)
-        if (V[i] != C) {
-          isAllZero = false;
-          isUndef = false;
-          break;
-        }
+  if (C->isNullValue() && rangeOnlyContains(V.begin(), V.end(), C))
+    return ConstantAggregateZero::get(Ty);
+
+  // Check to see if all of the elements are ConstantFP or ConstantInt and if
+  // the element type is compatible with ConstantDataVector.  If so, use it.
+  if (ConstantDataSequential::isElementTypeCompatible(C->getType())) {
+    // We speculatively build the elements here even if it turns out that there
+    // is a constantexpr or something else weird in the array, since it is so
+    // uncommon for that to happen.
+    if (ConstantInt *CI = dyn_cast<ConstantInt>(C)) {
+      if (CI->getType()->isIntegerTy(8)) {
+        SmallVector<uint8_t, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(V[i]))
+            Elts.push_back(CI->getZExtValue());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataArray::get(C->getContext(), Elts);
+      } else if (CI->getType()->isIntegerTy(16)) {
+        SmallVector<uint16_t, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(V[i]))
+            Elts.push_back(CI->getZExtValue());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataArray::get(C->getContext(), Elts);
+      } else if (CI->getType()->isIntegerTy(32)) {
+        SmallVector<uint32_t, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(V[i]))
+            Elts.push_back(CI->getZExtValue());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataArray::get(C->getContext(), Elts);
+      } else if (CI->getType()->isIntegerTy(64)) {
+        SmallVector<uint64_t, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantInt *CI = dyn_cast<ConstantInt>(V[i]))
+            Elts.push_back(CI->getZExtValue());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataArray::get(C->getContext(), Elts);
+      }
+    }
+    
+    if (ConstantFP *CFP = dyn_cast<ConstantFP>(C)) {
+      if (CFP->getType()->isFloatTy()) {
+        SmallVector<float, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantFP *CFP = dyn_cast<ConstantFP>(V[i]))
+            Elts.push_back(CFP->getValueAPF().convertToFloat());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataArray::get(C->getContext(), Elts);
+      } else if (CFP->getType()->isDoubleTy()) {
+        SmallVector<double, 16> Elts;
+        for (unsigned i = 0, e = V.size(); i != e; ++i)
+          if (ConstantFP *CFP = dyn_cast<ConstantFP>(V[i]))
+            Elts.push_back(CFP->getValueAPF().convertToDouble());
+          else
+            break;
+        if (Elts.size() == V.size())
+          return ConstantDataArray::get(C->getContext(), Elts);
+      }
+    }
   }
 
-  if (isAllZero)
-    return ConstantAggregateZero::get(Ty);
-  if (isUndef)
-    return UndefValue::get(Ty);
+  // Otherwise, we really do want to create a ConstantArray.
   return pImpl->ArrayConstants.getOrCreate(Ty, V);
 }
 
-/// ConstantArray::get(const string&) - Return an array that is initialized to
-/// contain the specified string.  If length is zero then a null terminator is 
-/// added to the specified string so that it may be used in a natural way. 
-/// Otherwise, the length parameter specifies how much of the string to use 
-/// and it won't be null terminated.
-///
+// FIXME: Remove this method.
 Constant *ConstantArray::get(LLVMContext &Context, StringRef Str,
                              bool AddNull) {
-  SmallVector<Constant*, 8> ElementVals;
-  ElementVals.reserve(Str.size() + size_t(AddNull));
-  for (unsigned i = 0; i < Str.size(); ++i)
-    ElementVals.push_back(ConstantInt::get(Type::getInt8Ty(Context), Str[i]));
-
-  // Add a null terminator to the string...
-  if (AddNull)
-    ElementVals.push_back(ConstantInt::get(Type::getInt8Ty(Context), 0));
-
-  ArrayType *ATy = ArrayType::get(Type::getInt8Ty(Context), ElementVals.size());
-  return get(ATy, ElementVals);
+  return ConstantDataArray::getString(Context, Str, AddNull);
 }
 
 /// getTypeForElements - Return an anonymous struct type to use for a constant
@@ -839,8 +895,7 @@ Constant *ConstantVector::get(ArrayRef<Constant*> V) {
    
   // Check to see if all of the elements are ConstantFP or ConstantInt and if
   // the element type is compatible with ConstantDataVector.  If so, use it.
-  if (ConstantDataSequential::isElementTypeCompatible(C->getType()) &&
-      (isa<ConstantFP>(C) || isa<ConstantInt>(C))) {
+  if (ConstantDataSequential::isElementTypeCompatible(C->getType())) {
     // We speculatively build the elements here even if it turns out that there
     // is a constantexpr or something else weird in the array, since it is so
     // uncommon for that to happen.
