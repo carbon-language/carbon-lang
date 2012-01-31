@@ -119,33 +119,12 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
 
   // Get the platform type and version number from the triple.
   unsigned Maj, Min, Rev;
-
-  // If no version was given, default to to 10.4.0, for simplifying tests.
-  if (Triple.getOSName() == "darwin" || Triple.getOSName() == "osx") {
+  if (Triple.isMacOSX()) {
+    Triple.getMacOSXVersion(Maj, Min, Rev);
     PlatformName = "macosx";
-    Min = Rev = 0;
-    Maj = 8;
   } else {
-    // Otherwise, honor all three triple forms ("-darwinNNN[-iphoneos]",
-    // "-osxNNN", and "-iosNNN").
-
-    if (Triple.getOS() == llvm::Triple::Darwin) {
-      // For historical reasons that make little sense, the version passed here
-      // is the "darwin" version, which drops the 10 and offsets by 4.
-      Triple.getOSVersion(Maj, Min, Rev);
-
-      if (Triple.getEnvironmentName() == "iphoneos") {
-        PlatformName = "ios";
-      } else {
-        PlatformName = "macosx";
-        Rev = Min;
-        Min = Maj - 4;
-        Maj = 10;
-      }
-    } else {
-      Triple.getOSVersion(Maj, Min, Rev);
-      PlatformName = llvm::Triple::getOSTypeName(Triple.getOS());
-    }
+    Triple.getOSVersion(Maj, Min, Rev);
+    PlatformName = llvm::Triple::getOSTypeName(Triple.getOS());
   }
 
   // If -target arch-pc-win32-macho option specified, we're
@@ -157,7 +136,7 @@ static void getDarwinDefines(MacroBuilder &Builder, const LangOptions &Opts,
   }
 
   // Set the appropriate OS version define.
-  if (PlatformName == "ios") {
+  if (Triple.getOS() == llvm::Triple::IOS) {
     assert(Maj < 10 && Min < 100 && Rev < 100 && "Invalid version!");
     char Str[6];
     Str[0] = '0' + Maj;

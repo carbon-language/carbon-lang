@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 "-triple" "x86_64-apple-darwin3.0.0-iphoneos" -fsyntax-only -verify %s
+// RUN: %clang_cc1 "-triple" "x86_64-apple-ios3.0" -fsyntax-only -verify %s
 
 void f0(int) __attribute__((availability(ios,introduced=2.0,deprecated=2.1)));
 void f1(int) __attribute__((availability(ios,introduced=2.1)));
