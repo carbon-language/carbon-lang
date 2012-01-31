@@ -1278,14 +1278,14 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   // If we had to process more than one hundred blocks to find the
   // dependencies, this load isn't worth worrying about.  Optimizing
   // it will be too expensive.
-  if (Deps.size() > 100)
+  unsigned NumDeps = Deps.size();
+  if (NumDeps > 100)
     return false;
 
   // If we had a phi translation failure, we'll have a single entry which is a
   // clobber in the current block.  Reject this early.
-  if (Deps.size() == 1
-      && !Deps[0].getResult().isDef() && !Deps[0].getResult().isClobber())
-  {
+  if (NumDeps == 1 &&
+      !Deps[0].getResult().isDef() && !Deps[0].getResult().isClobber()) {
     DEBUG(
       dbgs() << "GVN: non-local load ";
       WriteAsOperand(dbgs(), LI);
@@ -1301,7 +1301,7 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   SmallVector<AvailableValueInBlock, 16> ValuesPerBlock;
   SmallVector<BasicBlock*, 16> UnavailableBlocks;
 
-  for (unsigned i = 0, e = Deps.size(); i != e; ++i) {
+  for (unsigned i = 0, e = NumDeps; i != e; ++i) {
     BasicBlock *DepBB = Deps[i].getBB();
     MemDepResult DepInfo = Deps[i].getResult();
 
