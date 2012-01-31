@@ -128,6 +128,21 @@ private:
           if (fname.endswith("Retain") ||
               fname.find("Create") != StringRef::npos ||
               fname.find("Copy") != StringRef::npos) {
+            // Do not migrate to couple of bridge transfer casts which
+            // cancel each other out. Leave it unchanged so error gets user
+            // attention instead.
+            if (FD->getName() == "CFRetain" && 
+                FD->getNumParams() == 1 &&
+                FD->getParent()->isTranslationUnit() &&
+                FD->getLinkage() == ExternalLinkage) {
+              Expr *Arg = callE->getArg(0);
+              if (const CastExpr *ICE = dyn_cast<CastExpr>(Arg)) {
+                const Expr *sub = ICE->getSubExpr();
+                QualType T = sub->getType();
+                if (T->isObjCObjectPointerType())
+                  return;
+              }
+            }
             castToObjCObject(E, /*retained=*/true);
             return;
           }
