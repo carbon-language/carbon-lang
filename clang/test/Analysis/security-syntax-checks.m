@@ -138,7 +138,7 @@ void test_strcpy() {
   char x[4];
   char *y;
 
-  strcpy(x, y); //expected-warning{{Call to function 'strcpy' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strncpy'. CWE-119.}}
+  strcpy(x, y); //expected-warning{{Call to function 'strcpy' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strlcpy'. CWE-119.}}
 }
 
 //===----------------------------------------------------------------------===
@@ -162,7 +162,7 @@ void test_strcat() {
   char x[4];
   char *y;
 
-  strcat(x, y); //expected-warning{{Call to function 'strcat' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strncat'. CWE-119.}}
+  strcat(x, y); //expected-warning{{Call to function 'strcat' is insecure as it does not provide bounding of the memory buffer. Replace unbounded copy functions with analogous functions that support length arguments such as 'strlcat'. CWE-119.}}
 }
 
 //===----------------------------------------------------------------------===

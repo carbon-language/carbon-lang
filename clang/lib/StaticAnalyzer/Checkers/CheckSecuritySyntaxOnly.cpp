@@ -516,7 +516,7 @@ void WalkAST::checkCall_strcpy(const CallExpr *CE, const FunctionDecl *FD) {
                      "Call to function 'strcpy' is insecure as it does not "
 		     "provide bounding of the memory buffer. Replace "
 		     "unbounded copy functions with analogous functions that "
-		     "support length arguments such as 'strncpy'. CWE-119.",
+		     "support length arguments such as 'strlcpy'. CWE-119.",
                      CELoc, &R, 1);
 }
 
@@ -543,7 +543,7 @@ void WalkAST::checkCall_strcat(const CallExpr *CE, const FunctionDecl *FD) {
 		     "Call to function 'strcat' is insecure as it does not "
 		     "provide bounding of the memory buffer. Replace "
 		     "unbounded copy functions with analogous functions that "
-		     "support length arguments such as 'strncat'. CWE-119.",
+		     "support length arguments such as 'strlcat'. CWE-119.",
                      CELoc, &R, 1);
 }
 
