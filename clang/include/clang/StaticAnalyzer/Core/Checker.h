@@ -230,7 +230,7 @@ public:
 
 class LiveSymbols {
   template <typename CHECKER>
-  static void _checkLiveSymbols(void *checker, const ProgramState *state,
+  static void _checkLiveSymbols(void *checker, ProgramStateRef state,
                                 SymbolReaper &SR) {
     ((const CHECKER *)checker)->checkLiveSymbols(state, SR);
   }
@@ -260,9 +260,9 @@ public:
 
 class RegionChanges {
   template <typename CHECKER>
-  static const ProgramState *
+  static ProgramStateRef 
   _checkRegionChanges(void *checker,
-                      const ProgramState *state,
+                      ProgramStateRef state,
                       const StoreManager::InvalidatedSymbols *invalidated,
                       ArrayRef<const MemRegion *> Explicits,
                       ArrayRef<const MemRegion *> Regions) {
@@ -271,7 +271,7 @@ class RegionChanges {
   }
   template <typename CHECKER>
   static bool _wantsRegionChangeUpdate(void *checker,
-                                       const ProgramState *state) {
+                                       ProgramStateRef state) {
     return ((const CHECKER *)checker)->wantsRegionChangeUpdate(state);
   }
 
@@ -306,8 +306,8 @@ namespace eval {
 
 class Assume {
   template <typename CHECKER>
-  static const ProgramState *_evalAssume(void *checker,
-                                         const ProgramState *state,
+  static ProgramStateRef _evalAssume(void *checker,
+                                         ProgramStateRef state,
                                          const SVal &cond,
                                          bool assumption) {
     return ((const CHECKER *)checker)->evalAssume(state, cond, assumption);
@@ -359,7 +359,7 @@ public:
   StringRef getTagDescription() const;
 
   /// See CheckerManager::runCheckersForPrintState.
-  virtual void printState(raw_ostream &Out, const ProgramState *State,
+  virtual void printState(raw_ostream &Out, ProgramStateRef State,
                           const char *NL, const char *Sep) const { }
 };
   

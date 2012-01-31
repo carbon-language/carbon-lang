@@ -33,10 +33,10 @@ public:
                                      DefinedSVal Cond,
                                      bool Assumption) = 0;
 
-  std::pair<ProgramStateRef , ProgramStateRef >
+  std::pair<ProgramStateRef, ProgramStateRef >
     assumeDual(ProgramStateRef state, DefinedSVal Cond)
   {
-    std::pair<ProgramStateRef , ProgramStateRef > res =
+    std::pair<ProgramStateRef, ProgramStateRef > res =
       std::make_pair(assume(state, Cond, true), assume(state, Cond, false));
 
     assert(!(!res.first && !res.second) && "System is over constrained.");

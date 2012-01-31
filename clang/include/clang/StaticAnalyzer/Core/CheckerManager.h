@@ -244,7 +244,7 @@ public:
   /// Allows modifying SymbolReaper object. For example, checkers can explicitly
   /// register symbols of interest as live. These symbols will not be marked
   /// dead and removed.
-  void runCheckersForLiveSymbols(const ProgramState *state,
+  void runCheckersForLiveSymbols(ProgramStateRef state,
                                  SymbolReaper &SymReaper);
 
   /// \brief Run checkers for dead symbols.
@@ -258,7 +258,7 @@ public:
                                  ExprEngine &Eng);
 
   /// \brief True if at least one checker wants to check region changes.
-  bool wantsRegionChangeUpdate(const ProgramState *state);
+  bool wantsRegionChangeUpdate(ProgramStateRef state);
 
   /// \brief Run checkers for region changes.
   ///
@@ -269,15 +269,15 @@ public:
   ///   For example, in the case of a function call, these would be arguments.
   /// \param Regions The transitive closure of accessible regions,
   ///   i.e. all regions that may have been touched by this change.
-  const ProgramState *
-  runCheckersForRegionChanges(const ProgramState *state,
+  ProgramStateRef 
+  runCheckersForRegionChanges(ProgramStateRef state,
                             const StoreManager::InvalidatedSymbols *invalidated,
                               ArrayRef<const MemRegion *> ExplicitRegions,
                               ArrayRef<const MemRegion *> Regions);
 
   /// \brief Run checkers for handling assumptions on symbolic values.
-  const ProgramState *runCheckersForEvalAssume(const ProgramState *state,
-                                          SVal Cond, bool Assumption);
+  ProgramStateRef runCheckersForEvalAssume(ProgramStateRef state,
+                                               SVal Cond, bool Assumption);
 
   /// \brief Run checkers for evaluating a call.
   void runCheckersForEvalCall(ExplodedNodeSet &Dst,
@@ -298,7 +298,7 @@ public:
   /// \param State The state being printed
   /// \param NL The preferred representation of a newline.
   /// \param Sep The preferred separator between different kinds of data.
-  void runCheckersForPrintState(raw_ostream &Out, const ProgramState *State,
+  void runCheckersForPrintState(raw_ostream &Out, ProgramStateRef State,
                                 const char *NL, const char *Sep);
 
 //===----------------------------------------------------------------------===//
@@ -345,17 +345,17 @@ public:
   typedef CheckerFn<void (SymbolReaper &, CheckerContext &)>
       CheckDeadSymbolsFunc;
   
-  typedef CheckerFn<void (const ProgramState *,SymbolReaper &)> CheckLiveSymbolsFunc;
+  typedef CheckerFn<void (ProgramStateRef,SymbolReaper &)> CheckLiveSymbolsFunc;
   
-  typedef CheckerFn<const ProgramState * (const ProgramState *,
+  typedef CheckerFn<ProgramStateRef (ProgramStateRef,
                                 const StoreManager::InvalidatedSymbols *symbols,
                                     ArrayRef<const MemRegion *> ExplicitRegions,
                                           ArrayRef<const MemRegion *> Regions)>
       CheckRegionChangesFunc;
   
-  typedef CheckerFn<bool (const ProgramState *)> WantsRegionChangeUpdateFunc;
+  typedef CheckerFn<bool (ProgramStateRef)> WantsRegionChangeUpdateFunc;
   
-  typedef CheckerFn<const ProgramState * (const ProgramState *,
+  typedef CheckerFn<ProgramStateRef (ProgramStateRef,
                                           const SVal &cond, bool assumption)>
       EvalAssumeFunc;
   
