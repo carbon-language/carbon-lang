@@ -21,6 +21,7 @@ add_polly_library(LLVMPolly
   Cloog.cpp
   CodePreparation.cpp
   CodeGeneration.cpp
+  DeadCodeElimination.cpp
   IndependentBlocks.cpp
   MayAliasSet.cpp
   Pocc.cpp

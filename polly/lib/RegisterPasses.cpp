@@ -61,6 +61,12 @@ PollyViewer("polly-show",
        cl::desc("Enable the Polly DOT viewer in -O3"), cl::Hidden,
        cl::value_desc("Run the Polly DOT viewer at -O3"),
        cl::init(false));
+
+static cl::opt<bool>
+DeadCodeElim("polly-run-dce",
+             cl::desc("Run the dead code elimination"),
+             cl::Hidden, cl::init(false));
+
 static cl::opt<bool>
 PollyOnlyViewer("polly-show-only",
        cl::desc("Enable the Polly DOT viewer in -O3 (no BB content)"),
@@ -83,6 +89,7 @@ void initializePollyPasses(PassRegistry &Registry) {
   initializeCloogInfoPass(Registry);
   initializeCodeGenerationPass(Registry);
   initializeCodePreparationPass(Registry);
+  initializeDeadCodeElimPass(Registry);
   initializeDependencesPass(Registry);
   initializeIndependentBlocksPass(Registry);
   initializeJSONExporterPass(Registry);
@@ -160,6 +167,9 @@ void registerPollyPasses(llvm::PassManagerBase &PM, bool DisableScheduler,
 
   if (ImportJScop)
     PM.add(polly::createJSONImporterPass());
+
+  if (DeadCodeElim)
+    PM.add(polly::createDeadCodeElimPass());
 
   if (RunScheduler) {
     if (Optimizer == "pocc") {

@@ -33,6 +33,7 @@ namespace polly {
   Pass *createCloogInfoPass();
   Pass *createCodeGenerationPass();
   Pass *createCodePreparationPass();
+  Pass *createDeadCodeElimPass();
   Pass *createDependencesPass();
   Pass *createDOTOnlyPrinterPass();
   Pass *createDOTOnlyViewerPass();
@@ -79,6 +80,7 @@ namespace {
        createCloogInfoPass();
        createCodeGenerationPass();
        createCodePreparationPass();
+       createDeadCodeElimPass();
        createDependencesPass();
        createDOTOnlyPrinterPass();
        createDOTOnlyViewerPass();
@@ -111,6 +113,7 @@ namespace llvm {
   class PassRegistry;
   void initializeCodeGenerationPass(llvm::PassRegistry&);
   void initializeCodePreparationPass(llvm::PassRegistry&);
+  void initializeDeadCodeElimPass(llvm::PassRegistry&);
   void initializeIndependentBlocksPass(llvm::PassRegistry&);
   void initializeJSONExporterPass(llvm::PassRegistry&);
   void initializeJSONImporterPass(llvm::PassRegistry&);
