@@ -123,6 +123,9 @@ private:
   int64_t CppHashLineNumber;
   SMLoc CppHashLoc;
 
+  /// AssemblerDialect. ~OU means unset value and use value provided by MAI.
+  unsigned AssemblerDialect;
+
 public:
   AsmParser(SourceMgr &SM, MCContext &Ctx, MCStreamer &Out,
             const MCAsmInfo &MAI);
@@ -144,7 +147,15 @@ public:
   virtual MCAsmLexer &getLexer() { return Lexer; }
   virtual MCContext &getContext() { return Ctx; }
   virtual MCStreamer &getStreamer() { return Out; }
-  virtual unsigned getAssemblerDialect() { return MAI.getAssemblerDialect(); }
+  virtual unsigned getAssemblerDialect() { 
+    if (AssemblerDialect == ~0U)
+      return MAI.getAssemblerDialect(); 
+    else
+      return AssemblerDialect;
+  }
+  virtual void setAssemblerDialect(unsigned i) {
+    AssemblerDialect = i;
+  }
 
   virtual bool Warning(SMLoc L, const Twine &Msg,
                        ArrayRef<SMRange> Ranges = ArrayRef<SMRange>());
@@ -369,7 +380,8 @@ AsmParser::AsmParser(SourceMgr &_SM, MCContext &_Ctx,
                      MCStreamer &_Out, const MCAsmInfo &_MAI)
   : Lexer(_MAI), Ctx(_Ctx), Out(_Out), MAI(_MAI), SrcMgr(_SM),
     GenericParser(new GenericAsmParser), PlatformParser(0),
-    CurBuffer(0), MacrosEnabled(true), CppHashLineNumber(0) {
+    CurBuffer(0), MacrosEnabled(true), CppHashLineNumber(0), 
+    AssemblerDialect(~0U) {
   // Save the old handler.
   SavedDiagHandler = SrcMgr.getDiagHandler();
   SavedDiagContext = SrcMgr.getDiagContext();

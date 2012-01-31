@@ -34,7 +34,6 @@ struct X86Operand;
 class X86AsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
-  bool IntelSyntax;
 private:
   MCAsmParser &getParser() const { return Parser; }
 
@@ -94,7 +93,7 @@ private:
 
 public:
   X86AsmParser(MCSubtargetInfo &sti, MCAsmParser &parser)
-    : MCTargetAsmParser(), STI(sti), Parser(parser), IntelSyntax(false) {
+    : MCTargetAsmParser(), STI(sti), Parser(parser) {
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
@@ -107,7 +106,7 @@ public:
   virtual bool ParseDirective(AsmToken DirectiveID);
 
   bool isParsingIntelSyntax() {
-    return IntelSyntax || getParser().getAssemblerDialect();
+    return getParser().getAssemblerDialect();
   }
 };
 } // end anonymous namespace
@@ -1646,7 +1645,7 @@ bool X86AsmParser::ParseDirective(AsmToken DirectiveID) {
   else if (IDVal.startswith(".code"))
     return ParseDirectiveCode(IDVal, DirectiveID.getLoc());
   else if (IDVal.startswith(".intel_syntax")) {
-    IntelSyntax = true;
+    getParser().setAssemblerDialect(1);
     if (getLexer().isNot(AsmToken::EndOfStatement)) {
       if(Parser.getTok().getString() == "noprefix") {
 	// FIXME : Handle noprefix
