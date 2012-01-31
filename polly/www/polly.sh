@@ -8,7 +8,6 @@ export CLOOG_SRC=${BASE}/cloog_src
 export CLOOG_INSTALL=${BASE}/cloog_install
 export LLVM_BUILD=${BASE}/llvm_build
 export SCOPLIB_DIR=${BASE}/scoplib-0.2.0
-export POCC_DIR=${BASE}/pocc-1.0-rc3.1
 
 if [ -e /proc/cpuinfo ]; then
     procs=`cat /proc/cpuinfo | grep processor | wc -l`
@@ -37,15 +36,6 @@ fi
 make
 make install
 cd ${BASE}
-
-if ! test -d ${POCC_DIR}; then
-    wget http://www.cse.ohio-state.edu/~pouchet/software/pocc/download/pocc-1.0-rc3.1-full.tar.gz
-    tar xzf pocc-1.0-rc3.1-full.tar.gz
-    cd ${POCC_DIR}
-    ./install.sh
-    cd ${BASE}
-fi
-export PATH=${POCC_DIR}/bin:$PATH
 
 if ! test -d ${SCOPLIB_DIR}; then
     wget http://www.cse.ohio-state.edu/~pouchet/software/pocc/download/modules/scoplib-0.2.0.tar.gz
