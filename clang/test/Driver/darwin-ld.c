@@ -109,3 +109,11 @@
 // RUN: FileCheck -check-prefix=LINK_LAZY_LIBRARY %s < %t.log
 // LINK_LAZY_LIBRARY: {{ld(.exe)?"}}
 // LINK_LAZY_LIBRARY: "-lazy_library" "Library"
+
+// RUN: %clang -target x86_64-apple-darwin10 -### %t.o 2> %t.log
+// RUN: %clang -target x86_64-apple-macosx10.7 -### %t.o 2>> %t.log
+// RUN: FileCheck -check-prefix=LINK_VERSION_MIN %s < %t.log
+// LINK_VERSION_MIN: {{ld(.exe)?"}}
+// LINK_VERSION_MIN: "-macosx_version_min" "10.6.0"
+// LINK_VERSION_MIN: {{ld(.exe)?"}}
+// LINK_VERSION_MIN: "-macosx_version_min" "10.7.0"
