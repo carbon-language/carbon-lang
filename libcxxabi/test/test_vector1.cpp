@@ -49,10 +49,16 @@ int gDestructorThrowTarget;
 void throw_construct ( void *p ) { if ( gConstructorCounter   == gConstructorThrowTarget ) throw 1; ++gConstructorCounter; }
 void throw_destruct  ( void *p ) { if ( ++gDestructorCounter  == gDestructorThrowTarget  ) throw 2; }
 
+#if __has_feature(cxx_noexcept)
+#   define CAN_THROW noexcept(false)
+#else
+#   define CAN_THROW
+#endif
+
 struct vec_on_stack {
     void *storage;
     vec_on_stack () : storage ( __cxxabiv1::__cxa_vec_new    (            10, 40, 8, throw_construct, throw_destruct )) {}
-    ~vec_on_stack () {          __cxxabiv1::__cxa_vec_delete ( storage,       40, 8,                  throw_destruct );  }
+    ~vec_on_stack () CAN_THROW {__cxxabiv1::__cxa_vec_delete ( storage,       40, 8,                  throw_destruct );  }
     };
 
 //  Test calls with empty constructors and destructors

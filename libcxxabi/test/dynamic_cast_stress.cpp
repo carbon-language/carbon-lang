@@ -53,7 +53,7 @@ void test()
     typedef std::chrono::high_resolution_clock Clock;
     typedef std::chrono::duration<double, std::micro> US;
     const std::size_t Width = 20;
-    const std::size_t Depth = 7;
+    const std::size_t Depth = 6;
     A<Width, Depth> a;
     typedef B<Width/2, Depth> Destination;
 //    typedef A<Width, Depth> Destination;
