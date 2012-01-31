@@ -132,8 +132,8 @@ namespace llvm {
                              uint64_t Offset = 0);
 
   // FIXME: Remove this.
-  bool GetConstantStringInfo(const Value *V, std::string &Str,
-                             uint64_t Offset = 0);
+ // bool GetConstantStringInfo(const Value *V, std::string &Str,
+ //                            uint64_t Offset = 0);
 
   /// GetStringLength - If we can compute the length of the string pointed to by
   /// the specified pointer, return 'len+1'.  If we can't, return 0.

@@ -3299,7 +3299,7 @@ static SDValue getMemsetValue(SDValue Value, EVT VT, SelectionDAG &DAG,
 /// string ptr.
 static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
                                   const TargetLowering &TLI,
-                                  std::string &Str, unsigned Offset) {
+                                  StringRef Str, unsigned Offset) {
   // Handle vector with all elements zero.
   if (Str.empty()) {
     if (VT.isInteger())
@@ -3343,7 +3343,7 @@ static SDValue getMemBasePlusOffset(SDValue Base, unsigned Offset,
 
 /// isMemSrcFromString - Returns true if memcpy source is a string constant.
 ///
-static bool isMemSrcFromString(SDValue Src, std::string &Str) {
+static bool isMemSrcFromString(SDValue Src, StringRef &Str) {
   unsigned SrcDelta = 0;
   GlobalAddressSDNode *G = NULL;
   if (Src.getOpcode() == ISD::GlobalAddress)
@@ -3358,11 +3358,8 @@ static bool isMemSrcFromString(SDValue Src, std::string &Str) {
     return false;
 
   if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal()))
-    if (GetConstantStringInfo(GV, Str, SrcDelta)) {
-      // The nul can also be read.
-      Str.push_back(0);
+    if (getConstantStringInfo(GV, Str, SrcDelta))
       return true;
-    }
 
   return false;
 }
@@ -3467,7 +3464,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   unsigned SrcAlign = DAG.InferPtrAlignment(Src);
   if (Align > SrcAlign)
     SrcAlign = Align;
-  std::string Str;
+  StringRef Str;
   bool CopyFromStr = isMemSrcFromString(Src, Str);
   bool isZeroStr = CopyFromStr && Str.empty();
   unsigned Limit = AlwaysInline ? ~0U : TLI.getMaxStoresPerMemcpy(OptSize);
