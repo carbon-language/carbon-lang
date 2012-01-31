@@ -4686,43 +4686,6 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       MMI.setVariableDbgInfo(Variable, FI, DI.getDebugLoc());
     return 0;
   }
-  case Intrinsic::eh_exception: {
-    // Insert the EXCEPTIONADDR instruction.
-    assert(FuncInfo.MBB->isLandingPad() &&
-           "Call to eh.exception not in landing pad!");
-    SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
-    SDValue Ops[1];
-    Ops[0] = DAG.getRoot();
-    SDValue Op = DAG.getNode(ISD::EXCEPTIONADDR, dl, VTs, Ops, 1);
-    setValue(&I, Op);
-    DAG.setRoot(Op.getValue(1));
-    return 0;
-  }
-
-  case Intrinsic::eh_selector: {
-    MachineBasicBlock *CallMBB = FuncInfo.MBB;
-    MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
-    if (CallMBB->isLandingPad())
-      AddCatchInfo(I, &MMI, CallMBB);
-    else {
-#ifndef NDEBUG
-      FuncInfo.CatchInfoLost.insert(&I);
-#endif
-      // FIXME: Mark exception selector register as live in.  Hack for PR1508.
-      unsigned Reg = TLI.getExceptionSelectorRegister();
-      if (Reg) FuncInfo.MBB->addLiveIn(Reg);
-    }
-
-    // Insert the EHSELECTION instruction.
-    SDVTList VTs = DAG.getVTList(TLI.getPointerTy(), MVT::Other);
-    SDValue Ops[2];
-    Ops[0] = getValue(I.getArgOperand(0));
-    Ops[1] = getRoot();
-    SDValue Op = DAG.getNode(ISD::EHSELECTION, dl, VTs, Ops, 2);
-    DAG.setRoot(Op.getValue(1));
-    setValue(&I, DAG.getSExtOrTrunc(Op, dl, MVT::i32));
-    return 0;
-  }
 
   case Intrinsic::eh_typeid_for: {
     // Find the type id for the given typeinfo.

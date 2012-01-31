@@ -304,10 +304,6 @@ let Properties = [IntrNoMem] in {
 
 //===------------------ Exception Handling Intrinsics----------------------===//
 //
-def int_eh_exception : Intrinsic<[llvm_ptr_ty], [], [IntrReadMem]>;
-def int_eh_selector  : Intrinsic<[llvm_i32_ty],
-                                 [llvm_ptr_ty, llvm_ptr_ty, llvm_vararg_ty]>;
-def int_eh_resume    : Intrinsic<[], [llvm_ptr_ty, llvm_i32_ty], [Throws]>;
 
 // The result of eh.typeid.for depends on the enclosing function, but inside a
 // given function it is 'const' and may be CSE'd etc.
