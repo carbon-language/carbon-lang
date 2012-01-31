@@ -93,7 +93,6 @@ private:
   void setStore(const StoreRef &storeRef);
 
 public:
-
   /// This ctor is used when creating the first ProgramState object.
   ProgramState(ProgramStateManager *mgr, const Environment& env,
           StoreRef st, GenericDataMap gdm);
@@ -106,9 +105,6 @@ public:
 
   /// Return the ProgramStateManager associated with this state.
   ProgramStateManager &getStateManager() const { return *stateMgr; }
-
-  /// Return true if this state is referenced by a persistent ExplodedNode.
-  bool referencedByExplodedNode() const { return refCount > 0; }
 
   /// getEnvironment - Return the environment associated with this state.
   ///  The environment is the mapping from expressions to values.
@@ -127,7 +123,7 @@ public:
   /// Profile - Profile the contents of a ProgramState object for use in a
   ///  FoldingSet.  Two ProgramState objects are considered equal if they
   ///  have the same Environment, Store, and GenericDataMap.
-  static void Profile(llvm::FoldingSetNodeID& ID, ProgramStateRef V) {
+  static void Profile(llvm::FoldingSetNodeID& ID, const ProgramState *V) {
     V->Env.Profile(ID);
     ID.AddPointer(V->store);
     V->GDM.Profile(ID);
@@ -376,14 +372,8 @@ public:
   void dumpTaint() const;
 
 private:
-  /// Increments the number of times this state is referenced by ExplodeNodes.
-  void incrementReferenceCount() { ++refCount; }
-
-  /// Decrement the number of times this state is referenced by ExplodeNodes.
-  void decrementReferenceCount() {
-    assert(refCount > 0);
-    --refCount;
-  }
+  friend void ProgramStateRetain(const ProgramState *state);
+  friend void ProgramStateRelease(const ProgramState *state);
   
   ProgramStateRef 
   invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
@@ -392,45 +382,13 @@ private:
                         const CallOrObjCMessage *Call) const;
 };
 
-class ProgramStateSet {
-  typedef llvm::SmallPtrSet<ProgramStateRef,5> ImplTy;
-  ImplTy Impl;
-public:
-  ProgramStateSet() {}
-
-  inline void Add(ProgramStateRef St) {
-    Impl.insert(St);
-  }
-
-  typedef ImplTy::const_iterator iterator;
-
-  inline unsigned size() const { return Impl.size();  }
-  inline bool empty()    const { return Impl.empty(); }
-
-  inline iterator begin() const { return Impl.begin(); }
-  inline iterator end() const { return Impl.end();   }
-
-  class AutoPopulate {
-    ProgramStateSet &S;
-    unsigned StartSize;
-    ProgramStateRef St;
-  public:
-    AutoPopulate(ProgramStateSet &s, ProgramStateRef st)
-      : S(s), StartSize(S.size()), St(st) {}
-
-    ~AutoPopulate() {
-      if (StartSize == S.size())
-        S.Add(St);
-    }
-  };
-};
-
 //===----------------------------------------------------------------------===//
 // ProgramStateManager - Factory object for ProgramStates.
 //===----------------------------------------------------------------------===//
 
 class ProgramStateManager {
   friend class ProgramState;
+  friend void ProgramStateRelease(const ProgramState *state);
 private:
   /// Eng - The SubEngine that owns this state manager.
   SubEngine *Eng; /* Can be null. */
@@ -453,10 +411,6 @@ private:
 
   /// A BumpPtrAllocator to allocate states.
   llvm::BumpPtrAllocator &Alloc;
-
-  /// A vector of recently allocated ProgramStates that can potentially be
-  /// reused.
-  std::vector<ProgramState *> recentlyAllocatedStates;
   
   /// A vector of ProgramStates that we can reuse.
   std::vector<ProgramState *> freeStates;
@@ -562,10 +516,6 @@ public:
   bool haveEqualStores(ProgramStateRef S1, ProgramStateRef S2) {
     return S1->store == S2->store;
   }
-
-  /// Periodically called by ExprEngine to recycle ProgramStates that were
-  /// created but never used for creating an ExplodedNode.
-  void recycleUnusedStates();
 
   //==---------------------------------------------------------------------==//
   // Generic Data Map methods.

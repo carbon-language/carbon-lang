@@ -238,13 +238,8 @@ static bool shouldRemoveDeadBindings(AnalysisManager &AMgr,
 
 void ExprEngine::ProcessStmt(const CFGStmt S,
                              ExplodedNode *Pred) {
-  // TODO: Use RAII to remove the unnecessary, tagged nodes.
-  //RegisterCreatedNodes registerCreatedNodes(getGraph());
-
   // Reclaim any unnecessary nodes in the ExplodedGraph.
   G.reclaimRecentlyAllocatedNodes();
-  // Recycle any unused states in the ProgramStateManager.
-  StateMgr.recycleUnusedStates();
   
   currentStmt = S.getStmt();
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
@@ -1856,7 +1851,7 @@ struct DOTGraphTraits<ExplodedNode*> :
     }
 
     ProgramStateRef state = N->getState();
-    Out << "\\|StateID: " << (void*) state
+    Out << "\\|StateID: " << (void*) state.getPtr()
         << " NodeID: " << (void*) N << "\\|";
     state->printDOT(Out);
 
