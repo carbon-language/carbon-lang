@@ -115,7 +115,7 @@ namespace llvm {
 
     explicit IntrusiveRefCntPtr() : Obj(0) {}
 
-    explicit IntrusiveRefCntPtr(T* obj) : Obj(obj) {
+    IntrusiveRefCntPtr(T* obj) : Obj(obj) {
       retain();
     }
 
