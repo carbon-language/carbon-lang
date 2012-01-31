@@ -167,6 +167,7 @@ namespace {
                                        unsigned VirtReg, unsigned Hint);
     void spillAll(MachineInstr *MI);
     bool setPhysReg(MachineInstr *MI, unsigned OpNum, unsigned PhysReg);
+    void addRetOperands(MachineBasicBlock *MBB);
   };
   char RAFast::ID = 0;
 }
@@ -739,29 +740,64 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
     UsedInInstr.set(PartialDefs[i]);
 }
 
+/// addRetOperand - ensure that a return instruction has an operand for each
+/// value live out of the function.
+///
+/// Things marked both call and return are tail calls; do not do this for them.
+/// The tail callee need not take the same registers as input that it produces
+/// as output, and there are dependencies for its input registers elsewhere.
+///
+/// FIXME: This should be done as part of instruction selection, and this helper
+/// should be deleted. Until then, we use custom logic here to create the proper
+/// operand under all circumstances. We can't use addRegisterKilled because that
+/// doesn't make sense for undefined values. We can't simply avoid calling it
+/// for undefined values, because we must ensure that the operand always exists.
+void RAFast::addRetOperands(MachineBasicBlock *MBB) {
+  if (MBB->empty() || !MBB->back().isReturn() || MBB->back().isCall())
+    return;
+
+  MachineInstr *MI = &MBB->back();
+
+  for (MachineRegisterInfo::liveout_iterator
+         I = MBB->getParent()->getRegInfo().liveout_begin(),
+         E = MBB->getParent()->getRegInfo().liveout_end(); I != E; ++I) {
+    unsigned Reg = *I;
+    assert(TargetRegisterInfo::isPhysicalRegister(Reg) &&
+           "Cannot have a live-out virtual register.");
+
+    bool hasDef = PhysRegState[Reg] == regReserved;
+
+    // Check if this register already has an operand.
+    bool Found = false;
+    for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+      MachineOperand &MO = MI->getOperand(i);
+      if (!MO.isReg() || !MO.isUse())
+        continue;
+
+      unsigned OperReg = MO.getReg();
+      for (const unsigned *AS = TRI->getOverlaps(Reg); *AS; ++AS) {
+        if (OperReg != *AS)
+          continue;
+        if (OperReg == Reg || TRI->isSuperRegister(OperReg, Reg)) {
+          // If the ret already has an operand for this physreg or a superset,
+          // don't duplicate it. Set the kill flag if the value is defined.
+          if (hasDef && !MO.isKill())
+            MO.setIsKill();
+          Found = true;
+          break;
+        }
+      }
+    }
+    if (!Found)
+      MI->addOperand(MachineOperand::CreateReg(Reg,
+                                               false /*IsDef*/,
+                                               true  /*IsImp*/,
+                                               hasDef/*IsKill*/));
+  }
+}
+
 void RAFast::AllocateBasicBlock() {
   DEBUG(dbgs() << "\nAllocating " << *MBB);
-
-  // FIXME: This should probably be added by instruction selection instead?
-  // If the last instruction in the block is a return, make sure to mark it as
-  // using all of the live-out values in the function.  Things marked both call
-  // and return are tail calls; do not do this for them.  The tail callee need
-  // not take the same registers as input that it produces as output, and there
-  // are dependencies for its input registers elsewhere.
-  if (!MBB->empty() && MBB->back().isReturn() &&
-      !MBB->back().isCall()) {
-    MachineInstr *Ret = &MBB->back();
-
-    for (MachineRegisterInfo::liveout_iterator
-         I = MF->getRegInfo().liveout_begin(),
-         E = MF->getRegInfo().liveout_end(); I != E; ++I) {
-      assert(TargetRegisterInfo::isPhysicalRegister(*I) &&
-             "Cannot have a live-out virtual register.");
-
-      // Add live-out registers as implicit uses.
-      Ret->addRegisterKilled(*I, TRI, true);
-    }
-  }
 
   PhysRegState.assign(TRI->getNumRegs(), regDisabled);
   assert(LiveVirtRegs.empty() && "Mapping not cleared form last block?");
@@ -1032,6 +1068,9 @@ void RAFast::AllocateBasicBlock() {
   for (unsigned i = 0, e = Coalesced.size(); i != e; ++i)
     MBB->erase(Coalesced[i]);
   NumCopies += Coalesced.size();
+
+  // addRetOperands must run after we've seen all defs in this block.
+  addRetOperands(MBB);
 
   DEBUG(MBB->dump());
 }
