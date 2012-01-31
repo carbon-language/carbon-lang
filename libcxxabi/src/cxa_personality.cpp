@@ -867,7 +867,7 @@ __cxa_call_unexpected(void* arg)
         old_exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
         t_handler = old_exception_header->terminateHandler;
         u_handler = old_exception_header->unexpectedHandler;
-        // std::__unexpected(u_handler) rethrows the same exception,
+        // If std::__unexpected(u_handler) rethrows the same exception,
         //   these values get overwritten by the rethrow.  So save them now:
         ttypeIndex = old_exception_header->handlerSwitchValue;
         lsda = old_exception_header->languageSpecificData;
