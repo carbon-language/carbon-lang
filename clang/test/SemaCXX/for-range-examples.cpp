@@ -158,3 +158,14 @@ namespace test2 {
     for (int x : a.xs) { } // expected-error {{'xs' is a private member of 'test2::A'}}
   }
 }
+
+namespace test3 {
+  // Make sure this doesn't crash
+  struct A {};
+  struct B { ~B(); operator bool(); };
+  struct C { B operator!=(const C&); C& operator++(); int operator*(); };
+  C begin(const A&);
+  C end(const A&);
+  template<typename T> void f() { for (auto a : A()) {} }
+  void g() { f<int>(); }
+}
