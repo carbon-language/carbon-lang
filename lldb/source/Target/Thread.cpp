@@ -58,6 +58,7 @@ Thread::Thread (Process &process, lldb::tid_t tid) :
     m_prev_frames_sp (),
     m_resume_signal (LLDB_INVALID_SIGNAL_NUMBER),
     m_resume_state (eStateRunning),
+    m_temporary_resume_state (eStateRunning),
     m_unwinder_ap (),
     m_destroy_called (false),
     m_thread_stop_reason_stop_id (0)
@@ -227,9 +228,20 @@ Thread::WillResume (StateType resume_state)
     m_completed_plan_stack.clear();
     m_discarded_plan_stack.clear();
 
-    StopInfo *stop_info = GetPrivateStopReason().get();
-    if (stop_info)
-        stop_info->WillResume (resume_state);
+    SetTemporaryResumeState(resume_state);
+    
+    // This is a little dubious, but we are trying to limit how often we actually fetch stop info from
+    // the target, 'cause that slows down single stepping.  So assume that if we got to the point where
+    // we're about to resume, and we haven't yet had to fetch the stop reason, then it doesn't need to know
+    // about the fact that we are resuming...
+        const uint32_t process_stop_id = GetProcess().GetStopID();
+    if (m_thread_stop_reason_stop_id == process_stop_id &&
+        (m_actual_stop_info_sp && m_actual_stop_info_sp->IsValid()))
+    {
+        StopInfo *stop_info = GetPrivateStopReason().get();
+        if (stop_info)
+            stop_info->WillResume (resume_state);
+    }
     
     // Tell all the plans that we are about to resume in case they need to clear any state.
     // We distinguish between the plan on the top of the stack and the lower
@@ -260,8 +272,49 @@ Thread::ShouldStop (Event* event_ptr)
     bool should_stop = true;
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    
+    if (GetResumeState () == eStateSuspended)
+    {
+        if (log)
+            log->Printf ("Thread::%s for tid = 0x%4.4llx, should_stop = 0 (ignore since thread was suspended)", 
+                         __FUNCTION__, 
+                         GetID ());
+//            log->Printf ("Thread::%s for tid = 0x%4.4llx, pc = 0x%16.16llx, should_stop = 0 (ignore since thread was suspended)", 
+//                         __FUNCTION__, 
+//                         GetID (), 
+//                         GetRegisterContext()->GetPC());
+        return false;
+    }
+    
+    if (GetTemporaryResumeState () == eStateSuspended)
+    {
+        if (log)
+            log->Printf ("Thread::%s for tid = 0x%4.4llx, should_stop = 0 (ignore since thread was suspended)", 
+                         __FUNCTION__, 
+                         GetID ());
+//            log->Printf ("Thread::%s for tid = 0x%4.4llx, pc = 0x%16.16llx, should_stop = 0 (ignore since thread was suspended)", 
+//                         __FUNCTION__, 
+//                         GetID (), 
+//                         GetRegisterContext()->GetPC());
+        return false;
+    }
+    
+    if (ThreadStoppedForAReason() == false)
+    {
+        if (log)
+            log->Printf ("Thread::%s for tid = 0x%4.4llx, pc = 0x%16.16llx, should_stop = 0 (ignore since no stop reason)", 
+                         __FUNCTION__, 
+                         GetID (), 
+                         GetRegisterContext()->GetPC());
+        return false;
+    }
+
     if (log)
     {
+        log->Printf ("Thread::%s for tid = 0x%4.4llx, pc = 0x%16.16llx", 
+                     __FUNCTION__, 
+                     GetID (), 
+                     GetRegisterContext()->GetPC());
         log->Printf ("^^^^^^^^ Thread::ShouldStop Begin ^^^^^^^^");
         StreamString s;
         s.IndentMore();
@@ -401,12 +454,28 @@ Vote
 Thread::ShouldReportStop (Event* event_ptr)
 {
     StateType thread_state = GetResumeState ();
+    StateType temp_thread_state = GetTemporaryResumeState();
+    
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
 
     if (thread_state == eStateSuspended || thread_state == eStateInvalid)
     {
         if (log)
             log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4llx: returning vote %i (state was suspended or invalid)\n", GetID(), eVoteNoOpinion);
+        return eVoteNoOpinion;
+    }
+
+    if (temp_thread_state == eStateSuspended || temp_thread_state == eStateInvalid)
+    {
+        if (log)
+            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4llx: returning vote %i (temporary state was suspended or invalid)\n", GetID(), eVoteNoOpinion);
+        return eVoteNoOpinion;
+    }
+
+    if (!ThreadStoppedForAReason())
+    {
+        if (log)
+            log->Printf ("Thread::ShouldReportStop() tid = 0x%4.4llx: returning vote %i (thread didn't stop for a reason.)\n", GetID(), eVoteNoOpinion);
         return eVoteNoOpinion;
     }
 

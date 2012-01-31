@@ -192,38 +192,10 @@ ThreadList::ShouldStop (Event *event_ptr)
         log->Printf ("ThreadList::%s: %zu threads", __FUNCTION__, m_threads.size());
     }
 
-    // Run through the threads and ask whether we should stop.  Don't ask
-    // suspended threads, however, it makes more sense for them to preserve their
-    // state across the times the process runs but they don't get a chance to.
     for (pos = m_threads.begin(); pos != end; ++pos)
     {
         ThreadSP thread_sp(*pos);
         
-        if (thread_sp->GetResumeState () == eStateSuspended)
-        {
-            if (log)
-                log->Printf ("ThreadList::%s for tid = 0x%4.4llx, pc = 0x%16.16llx, should_stop = 0 (ignore since thread was suspended)", 
-                             __FUNCTION__, 
-                             thread_sp->GetID (), 
-                             thread_sp->GetRegisterContext()->GetPC());
-            continue;
-        }
-        
-        if (thread_sp->ThreadStoppedForAReason() == false)
-        {
-            if (log)
-                log->Printf ("ThreadList::%s for tid = 0x%4.4llx, pc = 0x%16.16llx, should_stop = 0 (ignore since no stop reason)", 
-                             __FUNCTION__, 
-                             thread_sp->GetID (), 
-                             thread_sp->GetRegisterContext()->GetPC());
-            continue;
-        }
-
-        if (log)
-            log->Printf ("ThreadList::%s for tid = 0x%4.4llx, pc = 0x%16.16llx", 
-                         __FUNCTION__, 
-                         thread_sp->GetID (), 
-                         thread_sp->GetRegisterContext()->GetPC());
         const bool thread_should_stop = thread_sp->ShouldStop(event_ptr);
         if (thread_should_stop)
             should_stop |= true;
@@ -263,41 +235,31 @@ ThreadList::ShouldReportStop (Event *event_ptr)
     for (pos = m_threads.begin(); pos != end; ++pos)
     {
         ThreadSP thread_sp(*pos);
-        if (thread_sp->ThreadStoppedForAReason() && (thread_sp->GetResumeState () != eStateSuspended))
+        const Vote vote = thread_sp->ShouldReportStop (event_ptr);
+        switch (vote)
         {
-            const Vote vote = thread_sp->ShouldReportStop (event_ptr);
-            if (log)
-                log->Printf  ("ThreadList::%s thread 0x%4.4llx: pc = 0x%16.16llx, vote = %s", 
-                              __FUNCTION__,
-                              thread_sp->GetID (), 
-                              thread_sp->GetRegisterContext()->GetPC(),
-                              GetVoteAsCString (vote));
-            switch (vote)
+        case eVoteNoOpinion:
+            continue;
+
+        case eVoteYes:
+            result = eVoteYes;
+            break;
+
+        case eVoteNo:
+            if (result == eVoteNoOpinion)
             {
-            case eVoteNoOpinion:
-                continue;
-
-            case eVoteYes:
-                result = eVoteYes;
-                break;
-
-            case eVoteNo:
-                if (result == eVoteNoOpinion)
-                {
-                    result = eVoteNo;
-                }
-                else
-                {
-                    if (log)
-                        log->Printf ("ThreadList::%s thread 0x%4.4llx: pc = 0x%16.16llx voted %s, but lost out because result was %s", 
-                                     __FUNCTION__,
-                                     thread_sp->GetID (), 
-                                     thread_sp->GetRegisterContext()->GetPC(),
-                                     GetVoteAsCString (vote),
-                                     GetVoteAsCString (result));
-                }
-                break;
+                result = eVoteNo;
             }
+            else
+            {
+                if (log)
+                    log->Printf ("ThreadList::%s thread 0x%4.4llx: voted %s, but lost out because result was %s", 
+                                 __FUNCTION__,
+                                 thread_sp->GetID (), 
+                                 GetVoteAsCString (vote),
+                                 GetVoteAsCString (result));
+            }
+            break;
         }
     }
     if (log)

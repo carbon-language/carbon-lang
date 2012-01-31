@@ -807,6 +807,18 @@ protected:
     StackFrameList &
     GetStackFrameList ();
     
+    lldb::StateType GetTemporaryResumeState()
+    {
+        return m_temporary_resume_state;
+    }
+    
+    lldb::StateType SetTemporaryResumeState(lldb::StateType resume_state)
+    {
+        lldb::StateType old_temp_resume_state = m_temporary_resume_state;
+        m_temporary_resume_state = resume_state;
+        return old_temp_resume_state;
+    }
+    
     struct ThreadState
     {
         uint32_t           orig_stop_id;
@@ -829,7 +841,9 @@ protected:
     lldb::StackFrameListSP m_curr_frames_sp; ///< The stack frames that get lazily populated after a thread stops.
     lldb::StackFrameListSP m_prev_frames_sp; ///< The previous stack frames from the last time this thread stopped.
     int                 m_resume_signal;    ///< The signal that should be used when continuing this thread.
-    lldb::StateType     m_resume_state;     ///< The state that indicates what this thread should do when the process is resumed.
+    lldb::StateType     m_resume_state;     ///< This state is used to force a thread to be suspended from outside the ThreadPlan logic.
+    lldb::StateType     m_temporary_resume_state; ///< This state records what the thread was told to do by the thread plan logic for the current resume.
+                                                  /// It gets set in Thread::WillResume.
     std::auto_ptr<lldb_private::Unwind> m_unwinder_ap;
     bool                m_destroy_called;    // This is used internally to make sure derived Thread classes call DestroyThread.
     uint32_t m_thread_stop_reason_stop_id;   // This is the stop id for which the StopInfo is valid.  Can use this so you know that
