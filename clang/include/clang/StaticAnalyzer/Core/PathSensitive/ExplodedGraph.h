@@ -119,11 +119,14 @@ public:
   explicit ExplodedNode(const ProgramPoint &loc, ProgramStateRef state,
                         bool IsSink)
     : Location(loc), State(state) {
+    const_cast<ProgramState*>(State)->incrementReferenceCount();
     if (IsSink)
       Succs.setFlag();
   }
   
-  ~ExplodedNode() {}
+  ~ExplodedNode() {
+    const_cast<ProgramState*>(State)->decrementReferenceCount();
+  }
 
   /// getLocation - Returns the edge associated with the given node.
   ProgramPoint getLocation() const { return Location; }
@@ -153,7 +156,7 @@ public:
                       ProgramStateRef state,
                       bool IsSink) {
     ID.Add(Loc);
-    ID.AddPointer(state.getPtr());
+    ID.AddPointer(state);
     ID.AddBoolean(IsSink);
   }
 
