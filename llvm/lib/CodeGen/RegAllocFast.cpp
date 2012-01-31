@@ -775,17 +775,16 @@ void RAFast::addRetOperands(MachineBasicBlock *MBB) {
         continue;
 
       unsigned OperReg = MO.getReg();
-      for (const unsigned *AS = TRI->getOverlaps(Reg); *AS; ++AS) {
-        if (OperReg != *AS)
-          continue;
-        if (OperReg == Reg || TRI->isSuperRegister(OperReg, Reg)) {
-          // If the ret already has an operand for this physreg or a superset,
-          // don't duplicate it. Set the kill flag if the value is defined.
-          if (hasDef && !MO.isKill())
-            MO.setIsKill();
-          Found = true;
-          break;
-        }
+      if (!TargetRegisterInfo::isPhysicalRegister(OperReg))
+        continue;
+
+      if (OperReg == Reg || TRI->isSuperRegister(OperReg, Reg)) {
+        // If the ret already has an operand for this physreg or a superset,
+        // don't duplicate it. Set the kill flag if the value is defined.
+        if (hasDef && !MO.isKill())
+          MO.setIsKill();
+        Found = true;
+        break;
       }
     }
     if (!Found)
