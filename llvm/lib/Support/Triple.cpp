@@ -613,6 +613,45 @@ void Triple::getOSVersion(unsigned &Major, unsigned &Minor,
   }
 }
 
+bool Triple::getMacOSXVersion(unsigned &Major, unsigned &Minor,
+                              unsigned &Micro) const {
+  getOSVersion(Major, Minor, Micro);
+
+  switch (getOS()) {
+  default: assert(0 && "unexpected OS for Darwin triple");
+  case Darwin:
+    // Default to darwin8, i.e., MacOSX 10.4.
+    if (Major == 0)
+      Major = 8;
+    // Darwin version numbers are skewed from OS X versions.
+    if (Major < 4)
+      return false;
+    Micro = 0;
+    Minor = Major - 4;
+    Major = 10;
+    break;
+  case MacOSX:
+    // Default to 10.4.
+    if (Major == 0) {
+      Major = 10;
+      Minor = 4;
+    }
+    if (Major != 10)
+      return false;
+    break;
+  case IOS:
+    // Ignore the version from the triple.  This is only handled because the
+    // the clang driver combines OS X and IOS support into a common Darwin
+    // toolchain that wants to know the OS X version number even when targeting
+    // IOS.
+    Major = 10;
+    Minor = 4;
+    Micro = 0;
+    break;
+  }
+  return true;
+}
+
 void Triple::setTriple(const Twine &Str) {
   Data = Str.str();
   Arch = InvalidArch;

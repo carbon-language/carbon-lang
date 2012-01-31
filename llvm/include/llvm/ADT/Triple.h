@@ -209,6 +209,13 @@ public:
     return Maj;
   }
 
+  /// getMacOSXVersion - Parse the version number as with getOSVersion and then
+  /// translate generic "darwin" versions to the corresponding OS X versions.
+  /// This may also be called with IOS triples but the OS X version number is
+  /// just set to a constant 10.4.0 in that case.  Returns true if successful.
+  bool getMacOSXVersion(unsigned &Major, unsigned &Minor,
+                        unsigned &Micro) const;
+
   /// @}
   /// @name Direct Component Access
   /// @{
