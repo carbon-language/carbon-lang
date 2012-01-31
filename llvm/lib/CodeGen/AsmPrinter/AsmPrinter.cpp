@@ -1615,7 +1615,9 @@ static void EmitGlobalConstantDataSequential(const ConstantDataSequential *CDS,
   int Value = isRepeatedByteSequence(CDS, AP.TM);
   if (Value != -1) {
     uint64_t Bytes = AP.TM.getTargetData()->getTypeAllocSize(CDS->getType());
-    return AP.OutStreamer.EmitFill(Bytes, Value, AddrSpace);
+    // Don't emit a 1-byte object as a .fill.
+    if (Bytes > 1)
+      return AP.OutStreamer.EmitFill(Bytes, Value, AddrSpace);
   }
   
   // If this can be emitted with .ascii/.asciz, emit it as such.
