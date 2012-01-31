@@ -16,10 +16,11 @@
 #define ASAN_INTERFACE_H
 
 #if !defined(_WIN32)
-#include <stdint.h>  // for __WORDSIZE
+#include <stdint.h>  // for uintptr_t
+#define ASAN_INTERFACE_FUNCTION_ATTRIBUTE __attribute__((visibility("default")))
 #else
-// The __attribute__ keyword is not understood by Visual Studio.
-#define __attribute__(x)
+// TODO(timurrrr): find out what we need on Windows. __declspec(dllexport) ?
+#define ASAN_INTERFACE_FUNCTION_ATTRIBUTE
 #endif
 #include <stdlib.h>  // for size_t
 
@@ -29,13 +30,12 @@
 extern "C" {
   // This function should be called at the very beginning of the process,
   // before any instrumented code is executed and before any call to malloc.
-  void __asan_init()
-      __attribute__((visibility("default")));
+  void __asan_init() ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 
   // This function should be called by the instrumented code.
   // 'addr' is the address of a global variable called 'name' of 'size' bytes.
   void __asan_register_global(uintptr_t addr, size_t size, const char *name)
-      __attribute__((visibility("default")));
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 
   // This structure describes an instrumented global variable.
   struct __asan_global {
@@ -48,18 +48,18 @@ extern "C" {
   // These two functions should be called by the instrumented code.
   // 'globals' is an array of structures describing 'n' globals.
   void __asan_register_globals(__asan_global *globals, size_t n)
-      __attribute__((visibility("default")));
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
   void __asan_unregister_globals(__asan_global *globals, size_t n)
-      __attribute__((visibility("default")));
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 
   // These two functions are used by the instrumented code in the
   // use-after-return mode. __asan_stack_malloc allocates size bytes of
   // fake stack and __asan_stack_free poisons it. real_stack is a pointer to
   // the real stack region.
   size_t __asan_stack_malloc(size_t size, size_t real_stack)
-      __attribute__((visibility("default")));
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
   void __asan_stack_free(size_t ptr, size_t size, size_t real_stack)
-      __attribute__((visibility("default")));
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 
   // Marks memory region [addr, addr+size) as unaddressable.
   // This memory must be previously allocated by the user program. Accessing
@@ -101,7 +101,7 @@ extern "C" {
   // set a breakpoint on this function in a debugger.
   void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
                            uintptr_t addr, bool is_write, size_t access_size)
-    __attribute__((visibility("default")));
+    ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 
   // Sets the exit code to use when reporting an error.
   // Returns the old value.
@@ -137,4 +137,5 @@ extern "C" {
   void __asan_print_accumulated_stats();
 }  // namespace
 
+#undef ASAN_INTERFACE_FUNCTION_ATTRIBUTE
 #endif  // ASAN_INTERFACE_H

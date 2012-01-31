@@ -35,9 +35,9 @@ typedef __int64          int64_t;
 #endif  // _WIN32
 
 // If __WORDSIZE was undefined by the platform, define it in terms of the
-// compiler built-in __LP64__.
+// compiler built-ins __LP64__ and _WIN64.
 #ifndef __WORDSIZE
-#if __LP64__
+#if __LP64__ || defined(_WIN64)
 #define __WORDSIZE 64
 #else
 #define __WORDSIZE 32
