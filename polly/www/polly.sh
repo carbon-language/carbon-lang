@@ -7,7 +7,6 @@ export CLANG_SRC=${LLVM_SRC}/tools/clang
 export CLOOG_SRC=${BASE}/cloog_src
 export CLOOG_INSTALL=${BASE}/cloog_install
 export LLVM_BUILD=${BASE}/llvm_build
-export SCOPLIB_DIR=${BASE}/scoplib-0.2.0
 
 if [ -e /proc/cpuinfo ]; then
     procs=`cat /proc/cpuinfo | grep processor | wc -l`
@@ -36,14 +35,6 @@ fi
 make
 make install
 cd ${BASE}
-
-if ! test -d ${SCOPLIB_DIR}; then
-    wget http://www.cse.ohio-state.edu/~pouchet/software/pocc/download/modules/scoplib-0.2.0.tar.gz
-    tar xzf  scoplib-0.2.0.tar.gz
-    cd ${SCOPLIB_DIR}
-    ./configure --enable-mp-version --prefix=${SCOPLIB_DIR}/usr
-    make -j${procs} -l${procs} && make install
-fi
 
 mkdir -p ${LLVM_BUILD}
 cd ${LLVM_BUILD}
