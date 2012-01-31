@@ -1882,7 +1882,7 @@ Sema::BuildMemInitializer(Decl *ConstructorD,
       MemInitializerValidatorCCC Validator(ClassDecl);
       if (R.empty() && BaseType.isNull() &&
           (Corr = CorrectTypo(R.getLookupNameInfo(), R.getLookupKind(), S, &SS,
-                              &Validator, ClassDecl))) {
+                              Validator, ClassDecl))) {
         std::string CorrectedStr(Corr.getAsString(getLangOptions()));
         std::string CorrectedQuotedStr(Corr.getQuoted(getLangOptions()));
         if (FieldDecl *Member = Corr.getCorrectionDeclAs<FieldDecl>()) {
@@ -5953,7 +5953,7 @@ static bool TryNamespaceTypoCorrection(Sema &S, LookupResult &R, Scope *Sc,
   R.clear();
   if (TypoCorrection Corrected = S.CorrectTypo(R.getLookupNameInfo(),
                                                R.getLookupKind(), Sc, &SS,
-                                               &Validator)) {
+                                               Validator)) {
     std::string CorrectedStr(Corrected.getAsString(S.getLangOptions()));
     std::string CorrectedQuotedStr(Corrected.getQuoted(S.getLangOptions()));
     if (DeclContext *DC = S.computeDeclContext(SS, false))

@@ -500,7 +500,7 @@ bool Sema::BuildCXXNestedNameSpecifier(Scope *S,
     TypoCorrection Corrected;
     Found.clear();
     if ((Corrected = CorrectTypo(Found.getLookupNameInfo(),
-                                 Found.getLookupKind(), S, &SS, &Validator,
+                                 Found.getLookupKind(), S, &SS, Validator,
                                  LookupCtx, EnteringContext))) {
       std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
       std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));

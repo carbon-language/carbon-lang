@@ -174,7 +174,7 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
     if (CorrectedII) {
       TypeNameValidatorCCC Validator(true);
       TypoCorrection Correction = CorrectTypo(Result.getLookupNameInfo(),
-                                              Kind, S, SS, &Validator);
+                                              Kind, S, SS, Validator);
       IdentifierInfo *NewII = Correction.getCorrectionAsIdentifierInfo();
       TemplateTy Template;
       bool MemberOfUnknownSpecialization;
@@ -371,7 +371,7 @@ bool Sema::DiagnoseUnknownTypeName(const IdentifierInfo &II,
   TypeNameValidatorCCC Validator(false);
   if (TypoCorrection Corrected = CorrectTypo(DeclarationNameInfo(&II, IILoc),
                                              LookupOrdinaryName, S, SS,
-                                             &Validator)) {
+                                             Validator)) {
     std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
     std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
 
@@ -576,7 +576,7 @@ Corrected:
       CorrectionCandidateCallback DefaultValidator;
       if (TypoCorrection Corrected = CorrectTypo(Result.getLookupNameInfo(),
                                                  Result.getLookupKind(), S, 
-                                                 &SS, &DefaultValidator)) {
+                                                 &SS, DefaultValidator)) {
         unsigned UnqualifiedDiag = diag::err_undeclared_var_use_suggest;
         unsigned QualifiedDiag = diag::err_no_member_suggest;
         std::string CorrectedStr(Corrected.getAsString(getLangOptions()));
@@ -1274,7 +1274,7 @@ ObjCInterfaceDecl *Sema::getObjCInterfaceDecl(IdentifierInfo *&Id,
     DeclFilterCCC<ObjCInterfaceDecl> Validator;
     if (TypoCorrection C = CorrectTypo(DeclarationNameInfo(Id, IdLoc),
                                        LookupOrdinaryName, TUScope, NULL,
-                                       &Validator)) {
+                                       Validator)) {
       IDecl = C.getCorrectionDeclAs<ObjCInterfaceDecl>();
       Diag(IdLoc, diag::err_undef_interface_suggest)
         << Id << IDecl->getDeclName() 
@@ -4498,7 +4498,7 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
   // If the qualified name lookup yielded nothing, try typo correction
   } else if ((Correction = SemaRef.CorrectTypo(Prev.getLookupNameInfo(),
                                          Prev.getLookupKind(), 0, 0,
-                                         &Validator, NewDC))) {
+                                         Validator, NewDC))) {
     // Trap errors.
     Sema::SFINAETrap Trap(SemaRef);
 
@@ -7359,7 +7359,7 @@ NamedDecl *Sema::ImplicitlyDefineFunction(SourceLocation Loc,
     TypoCorrection Corrected;
     DeclFilterCCC<FunctionDecl> Validator;
     if (S && (Corrected = CorrectTypo(DeclarationNameInfo(&II, Loc),
-                                      LookupOrdinaryName, S, 0, &Validator))) {
+                                      LookupOrdinaryName, S, 0, Validator))) {
       std::string CorrectedStr = Corrected.getAsString(getLangOptions());
       std::string CorrectedQuotedStr = Corrected.getQuoted(getLangOptions());
       FunctionDecl *Func = Corrected.getCorrectionDeclAs<FunctionDecl>();

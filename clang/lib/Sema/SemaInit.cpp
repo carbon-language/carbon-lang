@@ -1711,7 +1711,7 @@ InitListChecker::CheckDesignatedInitializer(const InitializedEntity &Entity,
         FieldInitializerValidatorCCC Validator(RT->getDecl());
         TypoCorrection Corrected = SemaRef.CorrectTypo(
             DeclarationNameInfo(FieldName, D->getFieldLoc()),
-            Sema::LookupMemberName, /*Scope=*/0, /*SS=*/0, &Validator,
+            Sema::LookupMemberName, /*Scope=*/0, /*SS=*/0, Validator,
             RT->getDecl());
         if (Corrected) {
           std::string CorrectedStr(

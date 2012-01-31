@@ -753,7 +753,7 @@ ExprResult Sema::ActOnSizeofParameterPackExpr(Scope *S,
   case LookupResult::NotFoundInCurrentInstantiation:
     if (TypoCorrection Corrected = CorrectTypo(R.getLookupNameInfo(),
                                                R.getLookupKind(), S, 0,
-                                               &Validator)) {
+                                               Validator)) {
       std::string CorrectedQuotedStr(Corrected.getQuoted(getLangOptions()));
       ParameterPack = Corrected.getCorrectionDecl();
       Diag(NameLoc, diag::err_sizeof_pack_no_pack_name_suggest)
