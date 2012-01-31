@@ -23,8 +23,11 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
+#include "llvm/Support/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Support/Signals.h"
 #include "llvm/Support/system_error.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FileSystem.h"
@@ -198,6 +201,11 @@ private:
 }
 
 int main(int argc, const char *argv[]) {
+  // Print a stack trace if we signal out.
+  llvm::sys::PrintStackTraceOnErrorSignal();
+  llvm::PrettyStackTraceProgram X(argc, argv);
+  llvm::llvm_shutdown_obj Y;  // Call llvm_shutdown() on exit.
+
   // read input YAML doc into object file(s)
   std::vector<File *> files;
   if (error(yaml::parseObjectTextFileOrSTDIN(llvm::StringRef(argv[1]), files)))
