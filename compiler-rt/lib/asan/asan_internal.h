@@ -166,6 +166,7 @@ extern bool   FLAG_use_fake_stack;
 extern size_t FLAG_max_malloc_fill_size;
 extern int    FLAG_exitcode;
 extern bool   FLAG_allow_user_poisoning;
+extern int    FLAG_sleep_before_dying;
 extern bool   FLAG_handle_segv;
 
 extern int asan_inited;

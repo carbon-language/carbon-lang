@@ -19,6 +19,11 @@ $CC -g -faddress-sanitizer -O2 $C_TEST.c -pie
 ./a.out 2>&1 | grep "heap-use-after-free" > /dev/null
 rm ./a.out
 
+echo "Testing sleep_before_dying"
+$CC -g -faddress-sanitizer -O2 $C_TEST.c
+ASAN_OPTIONS=sleep_before_dying=1 ./a.out 2>&1 | grep "Sleeping for 1 second" > /dev/null
+rm a.out
+
 for t in  *.tmpl; do
   for b in 32 64; do
     for O in 0 1 2 3; do

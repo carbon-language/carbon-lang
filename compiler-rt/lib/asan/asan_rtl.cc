@@ -47,6 +47,7 @@ size_t FLAG_max_malloc_fill_size = 0;
 bool   FLAG_use_fake_stack;
 int    FLAG_exitcode = EXIT_FAILURE;
 bool   FLAG_allow_user_poisoning;
+int    FLAG_sleep_before_dying;
 
 // -------------------------- Globals --------------------- {{{1
 int asan_inited;
@@ -411,6 +412,7 @@ void __asan_init() {
   FLAG_exitcode = IntFlagValue(options, "exitcode=", EXIT_FAILURE);
   FLAG_allow_user_poisoning = IntFlagValue(options,
                                            "allow_user_poisoning=", 1);
+  FLAG_sleep_before_dying = IntFlagValue(options, "sleep_before_dying=", 0);
 
   if (FLAG_atexit) {
     atexit(asan_atexit);

@@ -70,6 +70,10 @@ void AsanDisableCoreDumper() {
 }
 
 void AsanDie() {
+  if (FLAG_sleep_before_dying) {
+    Report("Sleeping for %d second(s)\n", FLAG_sleep_before_dying);
+    sleep(FLAG_sleep_before_dying);
+  }
   _exit(FLAG_exitcode);
 }
 
