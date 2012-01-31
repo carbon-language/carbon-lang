@@ -3309,9 +3309,9 @@ def err_arc_cast_requires_bridge : Error<
 def note_arc_bridge : Note<
   "use __bridge to convert directly (no change in ownership)">;
 def note_arc_bridge_transfer : Note<
-  "use __bridge_transfer to transfer ownership of a +1 %0 into ARC">;
+  "use CFBridgeRelease call to transfer ownership of a +1 %0 into ARC">;
 def note_arc_bridge_retained : Note<
-  "use __bridge_retained to make an ARC object available as a +1 %0">;
+  "use CFBridgeRetain call to make an ARC object available as a +1 %0">;
 
 } // ARC Casting category
 

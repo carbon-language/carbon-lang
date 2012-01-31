@@ -263,8 +263,8 @@ void test11(id op, void *vp) {
   b = (vp == nil);
   b = (nil == vp);
 
-  b = (vp == op); // expected-error {{implicit conversion of Objective-C pointer type 'id' to C pointer type 'void *' requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use __bridge_retained}}
-  b = (op == vp); // expected-error {{implicit conversion of C pointer type 'void *' to Objective-C pointer type 'id' requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use __bridge_transfer}}
+  b = (vp == op); // expected-error {{implicit conversion of Objective-C pointer type 'id' to C pointer type 'void *' requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use CFBridgeRetain call}}
+  b = (op == vp); // expected-error {{implicit conversion of C pointer type 'void *' to Objective-C pointer type 'id' requires a bridged cast}} expected-note {{use __bridge}} expected-note {{use CFBridgeRelease call}}
 }
 
 void test12(id collection) {
@@ -404,10 +404,10 @@ void test19(void) {
   id x;
   x = (id) test19a; // expected-error {{bridged cast}} \
   // expected-note{{use __bridge to convert directly (no change in ownership)}} \
-  // expected-note{{use __bridge_transfer to transfer ownership of a +1 'struct Test19 *' into ARC}}
+  // expected-note{{use CFBridgeRelease call to transfer ownership of a +1 'struct Test19 *' into ARC}}
   x = (id) test19b; // expected-error {{bridged cast}} \
   // expected-note{{use __bridge to convert directly (no change in ownership)}} \
-  // expected-note{{use __bridge_transfer to transfer ownership of a +1 'struct Test19 *' into ARC}}
+  // expected-note{{use CFBridgeRelease call to transfer ownership of a +1 'struct Test19 *' into ARC}}
 }
 
 // rdar://problem/8951453

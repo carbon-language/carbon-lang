@@ -1951,7 +1951,7 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
     S.Diag(noteLoc, diag::note_arc_bridge_transfer)
       << castExprType
       << (CCK != Sema::CCK_CStyleCast ? FixItHint() :
-            FixItHint::CreateInsertion(afterLParen, "__bridge_transfer "));
+            FixItHint::CreateInsertion(afterLParen, "CFBridgeRelease "));
 
     return;
   }
@@ -1973,7 +1973,7 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
     S.Diag(noteLoc, diag::note_arc_bridge_retained)
       << castType
       << (CCK != Sema::CCK_CStyleCast ? FixItHint() :
-            FixItHint::CreateInsertion(afterLParen, "__bridge_retained "));
+            FixItHint::CreateInsertion(afterLParen, "CFBridgeRetain "));
 
     return;
   }
@@ -2217,7 +2217,7 @@ ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
       Diag(BridgeKeywordLoc, diag::note_arc_bridge_transfer)
         << FromType
         << FixItHint::CreateReplacement(BridgeKeywordLoc, 
-                                        "__bridge_transfer ");
+                                        "CFBridgeRelease ");
 
       Kind = OBC_Bridge;
       break;
@@ -2257,7 +2257,7 @@ ExprResult Sema::BuildObjCBridgedCast(SourceLocation LParenLoc,
         << FixItHint::CreateReplacement(BridgeKeywordLoc, "__bridge ");
       Diag(BridgeKeywordLoc, diag::note_arc_bridge_retained)
         << T
-        << FixItHint::CreateReplacement(BridgeKeywordLoc, "__bridge_retained ");
+        << FixItHint::CreateReplacement(BridgeKeywordLoc, "CFBridgeRetain ");
         
       Kind = OBC_Bridge;
       break;
