@@ -348,6 +348,24 @@ namespace {
         *Diag << v;
       return *this;
     }
+
+    OptionalDiagnostic &operator<<(const APSInt &I) {
+      if (Diag) {
+        llvm::SmallVector<char, 32> Buffer;
+        I.toString(Buffer);
+        *Diag << StringRef(Buffer.data(), Buffer.size());
+      }
+      return *this;
+    }
+
+    OptionalDiagnostic &operator<<(const APFloat &F) {
+      if (Diag) {
+        llvm::SmallVector<char, 32> Buffer;
+        F.toString(Buffer);
+        *Diag << StringRef(Buffer.data(), Buffer.size());
+      }
+      return *this;
+    }
   };
 
   struct EvalInfo {
@@ -1052,10 +1070,8 @@ static bool EvaluateAsBooleanCondition(const Expr *E, bool &Result,
 template<typename T>
 static bool HandleOverflow(EvalInfo &Info, const Expr *E,
                            const T &SrcValue, QualType DestType) {
-  llvm::SmallVector<char, 32> Buffer;
-  SrcValue.toString(Buffer);
   Info.Diag(E->getExprLoc(), diag::note_constexpr_overflow)
-    << StringRef(Buffer.data(), Buffer.size()) << DestType;
+    << SrcValue << DestType;
   return false;
 }
 
@@ -4405,33 +4421,60 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   case BO_Div:
     if (RHS == 0)
       return Error(E, diag::note_expr_divide_by_zero);
+    // Check for overflow case: INT_MIN / -1.
+    if (RHS.isNegative() && RHS.isAllOnesValue() &&
+        LHS.isSigned() && LHS.isMinSignedValue())
+      HandleOverflow(Info, E, -LHS.extend(LHS.getBitWidth() + 1), E->getType());
     return Success(LHS / RHS, E);
   case BO_Rem:
     if (RHS == 0)
       return Error(E, diag::note_expr_divide_by_zero);
     return Success(LHS % RHS, E);
   case BO_Shl: {
-    // During constant-folding, a negative shift is an opposite shift.
+    // During constant-folding, a negative shift is an opposite shift. Such a
+    // shift is not a constant expression.
     if (RHS.isSigned() && RHS.isNegative()) {
+      CCEDiag(E, diag::note_constexpr_negative_shift) << RHS;
       RHS = -RHS;
       goto shift_right;
     }
 
   shift_left:
-    unsigned SA
-      = (unsigned) RHS.getLimitedValue(LHS.getBitWidth()-1);
+    // C++11 [expr.shift]p1: Shift width must be less than the bit width of the
+    // shifted type.
+    unsigned SA = (unsigned) RHS.getLimitedValue(LHS.getBitWidth()-1);
+    if (SA != RHS) {
+      CCEDiag(E, diag::note_constexpr_large_shift)
+        << RHS << E->getType() << LHS.getBitWidth();
+    } else if (LHS.isSigned()) {
+      // C++11 [expr.shift]p2: A signed left shift must have a non-negative
+      // operand, and must not overflow.
+      if (LHS.isNegative())
+        CCEDiag(E, diag::note_constexpr_lshift_of_negative) << LHS;
+      else if (LHS.countLeadingZeros() <= SA)
+        HandleOverflow(Info, E, LHS.extend(LHS.getBitWidth() + SA) << SA,
+                       E->getType());
+    }
+
     return Success(LHS << SA, E);
   }
   case BO_Shr: {
-    // During constant-folding, a negative shift is an opposite shift.
+    // During constant-folding, a negative shift is an opposite shift. Such a
+    // shift is not a constant expression.
     if (RHS.isSigned() && RHS.isNegative()) {
+      CCEDiag(E, diag::note_constexpr_negative_shift) << RHS;
       RHS = -RHS;
       goto shift_left;
     }
 
   shift_right:
-    unsigned SA =
-      (unsigned) RHS.getLimitedValue(LHS.getBitWidth()-1);
+    // C++11 [expr.shift]p1: Shift width must be less than the bit width of the
+    // shifted type.
+    unsigned SA = (unsigned) RHS.getLimitedValue(LHS.getBitWidth()-1);
+    if (SA != RHS)
+      CCEDiag(E, diag::note_constexpr_large_shift)
+        << RHS << E->getType() << LHS.getBitWidth();
+
     return Success(LHS >> SA, E);
   }
 
@@ -4605,7 +4648,11 @@ bool IntExprEvaluator::VisitUnaryOperator(const UnaryOperator *E) {
     if (!Visit(E->getSubExpr()))
       return false;
     if (!Result.isInt()) return Error(E);
-    return Success(-Result.getInt(), E);
+    const APSInt &Value = Result.getInt();
+    if (Value.isSigned() && Value.isMinSignedValue())
+      HandleOverflow(Info, E, -Value.extend(Value.getBitWidth() + 1),
+                     E->getType());
+    return Success(-Value, E);
   }
   case UO_Not: {
     if (!Visit(E->getSubExpr()))
