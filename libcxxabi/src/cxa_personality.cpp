@@ -774,11 +774,13 @@ _UA_CLEANUP_PHASE
         Transfer control to landing pad.  return _URC_INSTALL_CONTEXT
     
     Else
-    
+
+        This branch handles both normal C++ non-catching handlers (cleanups)
+          and forced unwinding.    
         Scan for anything that can not stop unwinding:
     
             1.  A cleanup.
-        
+
         If a cleanup is found
             transfer control to it. return _URC_INSTALL_CONTEXT
         Else a cleanup is not found: return _URC_CONTINUE_UNWIND
