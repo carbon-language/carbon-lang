@@ -1032,7 +1032,8 @@ void Preprocessor::ExpandBuiltinMacro(Token &Tok) {
     }
 
     OS << (int)Value;
-    Tok.setKind(tok::numeric_constant);
+    if (IsValid)
+      Tok.setKind(tok::numeric_constant);
   } else if (II == Ident__has_include ||
              II == Ident__has_include_next) {
     // The argument to these two builtins should be a parenthesized
