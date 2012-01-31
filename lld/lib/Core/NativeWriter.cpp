@@ -128,8 +128,7 @@ private:
       return 0;
     uint32_t result = _contentPool.size();
     llvm::ArrayRef<uint8_t> cont = atom.rawContent();
-    _contentPool.insert(_contentPool.end(), cont.size(), 0);
-    memcpy(&_contentPool[result], cont.data(), cont.size());
+    _contentPool.insert(_contentPool.end(), cont.begin(), cont.end());
     return result;
   }
 
