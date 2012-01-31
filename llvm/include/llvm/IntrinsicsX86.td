@@ -452,28 +452,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
                          llvm_i32_ty], [IntrNoMem]>;
 }
 
-// Integer comparison ops
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse2_pcmpeq_b : GCCBuiltin<"__builtin_ia32_pcmpeqb128">,
-              Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty,
-                         llvm_v16i8_ty], [IntrNoMem, Commutative]>;
-  def int_x86_sse2_pcmpeq_w : GCCBuiltin<"__builtin_ia32_pcmpeqw128">,
-              Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty,
-                         llvm_v8i16_ty], [IntrNoMem, Commutative]>;
-  def int_x86_sse2_pcmpeq_d : GCCBuiltin<"__builtin_ia32_pcmpeqd128">,
-              Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty,
-                         llvm_v4i32_ty], [IntrNoMem, Commutative]>;
-  def int_x86_sse2_pcmpgt_b : GCCBuiltin<"__builtin_ia32_pcmpgtb128">,
-              Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty,
-                         llvm_v16i8_ty], [IntrNoMem]>;
-  def int_x86_sse2_pcmpgt_w : GCCBuiltin<"__builtin_ia32_pcmpgtw128">,
-              Intrinsic<[llvm_v8i16_ty], [llvm_v8i16_ty,
-                         llvm_v8i16_ty], [IntrNoMem]>;
-  def int_x86_sse2_pcmpgt_d : GCCBuiltin<"__builtin_ia32_pcmpgtd128">,
-              Intrinsic<[llvm_v4i32_ty], [llvm_v4i32_ty,
-                         llvm_v4i32_ty], [IntrNoMem]>;
-}
-
 // Conversion ops
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_sse2_cvtdq2pd : GCCBuiltin<"__builtin_ia32_cvtdq2pd">,
@@ -792,12 +770,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
 
 // Vector compare, min, max
 let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_sse41_pcmpeqq         : GCCBuiltin<"__builtin_ia32_pcmpeqq">,
-              Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty],
-                        [IntrNoMem, Commutative]>;
-  def int_x86_sse42_pcmpgtq         : GCCBuiltin<"__builtin_ia32_pcmpgtq">,
-              Intrinsic<[llvm_v2i64_ty], [llvm_v2i64_ty, llvm_v2i64_ty],
-                        [IntrNoMem]>;
   def int_x86_sse41_pmaxsb          : GCCBuiltin<"__builtin_ia32_pmaxsb128">,
               Intrinsic<[llvm_v16i8_ty], [llvm_v16i8_ty, llvm_v16i8_ty],
                         [IntrNoMem, Commutative]>;
@@ -1513,34 +1485,6 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
   def int_x86_avx2_psrl_dq_bs : GCCBuiltin<"__builtin_ia32_psrldqi256_byteshift">,
               Intrinsic<[llvm_v4i64_ty], [llvm_v4i64_ty,
                          llvm_i32_ty], [IntrNoMem]>;
-}
-
-// Integer comparison ops
-let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
-  def int_x86_avx2_pcmpeq_b : GCCBuiltin<"__builtin_ia32_pcmpeqb256">,
-              Intrinsic<[llvm_v32i8_ty], [llvm_v32i8_ty, llvm_v32i8_ty],
-                        [IntrNoMem, Commutative]>;
-  def int_x86_avx2_pcmpeq_w : GCCBuiltin<"__builtin_ia32_pcmpeqw256">,
-              Intrinsic<[llvm_v16i16_ty], [llvm_v16i16_ty, llvm_v16i16_ty],
-                        [IntrNoMem, Commutative]>;
-  def int_x86_avx2_pcmpeq_d : GCCBuiltin<"__builtin_ia32_pcmpeqd256">,
-              Intrinsic<[llvm_v8i32_ty], [llvm_v8i32_ty, llvm_v8i32_ty],
-                        [IntrNoMem, Commutative]>;
-  def int_x86_avx2_pcmpeq_q : GCCBuiltin<"__builtin_ia32_pcmpeqq256">,
-              Intrinsic<[llvm_v4i64_ty], [llvm_v4i64_ty, llvm_v4i64_ty],
-                        [IntrNoMem, Commutative]>;
-  def int_x86_avx2_pcmpgt_b : GCCBuiltin<"__builtin_ia32_pcmpgtb256">,
-              Intrinsic<[llvm_v32i8_ty], [llvm_v32i8_ty, llvm_v32i8_ty],
-                        [IntrNoMem]>;
-  def int_x86_avx2_pcmpgt_w : GCCBuiltin<"__builtin_ia32_pcmpgtw256">,
-              Intrinsic<[llvm_v16i16_ty], [llvm_v16i16_ty, llvm_v16i16_ty],
-                        [IntrNoMem]>;
-  def int_x86_avx2_pcmpgt_d : GCCBuiltin<"__builtin_ia32_pcmpgtd256">,
-              Intrinsic<[llvm_v8i32_ty], [llvm_v8i32_ty, llvm_v8i32_ty],
-                        [IntrNoMem]>;
-  def int_x86_avx2_pcmpgt_q : GCCBuiltin<"__builtin_ia32_pcmpgtq256">,
-              Intrinsic<[llvm_v4i64_ty], [llvm_v4i64_ty, llvm_v4i64_ty],
-                        [IntrNoMem]>;
 }
 
 // Pack ops.

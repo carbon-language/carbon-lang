@@ -9492,26 +9492,6 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
   case Intrinsic::x86_avx2_psrav_d_256:
     return DAG.getNode(ISD::SRA, dl, Op.getValueType(),
                       Op.getOperand(1), Op.getOperand(2));
-  case Intrinsic::x86_sse2_pcmpeq_b:
-  case Intrinsic::x86_sse2_pcmpeq_w:
-  case Intrinsic::x86_sse2_pcmpeq_d:
-  case Intrinsic::x86_sse41_pcmpeqq:
-  case Intrinsic::x86_avx2_pcmpeq_b:
-  case Intrinsic::x86_avx2_pcmpeq_w:
-  case Intrinsic::x86_avx2_pcmpeq_d:
-  case Intrinsic::x86_avx2_pcmpeq_q:
-    return DAG.getNode(X86ISD::PCMPEQ, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
-  case Intrinsic::x86_sse2_pcmpgt_b:
-  case Intrinsic::x86_sse2_pcmpgt_w:
-  case Intrinsic::x86_sse2_pcmpgt_d:
-  case Intrinsic::x86_sse42_pcmpgtq:
-  case Intrinsic::x86_avx2_pcmpgt_b:
-  case Intrinsic::x86_avx2_pcmpgt_w:
-  case Intrinsic::x86_avx2_pcmpgt_d:
-  case Intrinsic::x86_avx2_pcmpgt_q:
-    return DAG.getNode(X86ISD::PCMPGT, dl, Op.getValueType(),
-                       Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::x86_ssse3_pshuf_b_128:
   case Intrinsic::x86_avx2_pshuf_b:
     return DAG.getNode(X86ISD::PSHUFB, dl, Op.getValueType(),

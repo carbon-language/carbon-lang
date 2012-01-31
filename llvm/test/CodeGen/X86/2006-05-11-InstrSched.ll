@@ -30,7 +30,7 @@ cond_true:		; preds = %cond_true, %entry
 	%tmp87 = bitcast <16 x i8> %tmp66 to <4 x i32>		; <<4 x i32>> [#uses=1]
 	%tmp88 = add <4 x i32> %tmp87, %tmp77		; <<4 x i32>> [#uses=2]
 	%tmp88.upgrd.4 = bitcast <4 x i32> %tmp88 to <2 x i64>		; <<2 x i64>> [#uses=1]
-	%tmp99 = tail call <4 x i32> @llvm.x86.sse2.pcmpgt.d( <4 x i32> %tmp88, <4 x i32> %tmp55 )		; <<4 x i32>> [#uses=1]
+	%tmp99 = tail call <4 x i32> @llvm.x86.sse2.psra.d( <4 x i32> %tmp88, <4 x i32> %tmp55 )		; <<4 x i32>> [#uses=1]
 	%tmp99.upgrd.5 = bitcast <4 x i32> %tmp99 to <2 x i64>		; <<2 x i64>> [#uses=2]
 	%tmp110 = xor <2 x i64> %tmp99.upgrd.5, < i64 -1, i64 -1 >		; <<2 x i64>> [#uses=1]
 	%tmp111 = and <2 x i64> %tmp110, %tmp55.upgrd.2		; <<2 x i64>> [#uses=1]
@@ -48,4 +48,4 @@ return:		; preds = %cond_true, %entry
 	ret void
 }
 
-declare <4 x i32> @llvm.x86.sse2.pcmpgt.d(<4 x i32>, <4 x i32>)
+declare <4 x i32> @llvm.x86.sse2.psra.d(<4 x i32>, <4 x i32>)

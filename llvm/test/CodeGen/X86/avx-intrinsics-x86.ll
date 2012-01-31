@@ -369,54 +369,6 @@ define <8 x i16> @test_x86_sse2_pavg_w(<8 x i16> %a0, <8 x i16> %a1) {
 declare <8 x i16> @llvm.x86.sse2.pavg.w(<8 x i16>, <8 x i16>) nounwind readnone
 
 
-define <16 x i8> @test_x86_sse2_pcmpeq_b(<16 x i8> %a0, <16 x i8> %a1) {
-  ; CHECK: vpcmpeqb
-  %res = call <16 x i8> @llvm.x86.sse2.pcmpeq.b(<16 x i8> %a0, <16 x i8> %a1) ; <<16 x i8>> [#uses=1]
-  ret <16 x i8> %res
-}
-declare <16 x i8> @llvm.x86.sse2.pcmpeq.b(<16 x i8>, <16 x i8>) nounwind readnone
-
-
-define <4 x i32> @test_x86_sse2_pcmpeq_d(<4 x i32> %a0, <4 x i32> %a1) {
-  ; CHECK: vpcmpeqd
-  %res = call <4 x i32> @llvm.x86.sse2.pcmpeq.d(<4 x i32> %a0, <4 x i32> %a1) ; <<4 x i32>> [#uses=1]
-  ret <4 x i32> %res
-}
-declare <4 x i32> @llvm.x86.sse2.pcmpeq.d(<4 x i32>, <4 x i32>) nounwind readnone
-
-
-define <8 x i16> @test_x86_sse2_pcmpeq_w(<8 x i16> %a0, <8 x i16> %a1) {
-  ; CHECK: vpcmpeqw
-  %res = call <8 x i16> @llvm.x86.sse2.pcmpeq.w(<8 x i16> %a0, <8 x i16> %a1) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-declare <8 x i16> @llvm.x86.sse2.pcmpeq.w(<8 x i16>, <8 x i16>) nounwind readnone
-
-
-define <16 x i8> @test_x86_sse2_pcmpgt_b(<16 x i8> %a0, <16 x i8> %a1) {
-  ; CHECK: vpcmpgtb
-  %res = call <16 x i8> @llvm.x86.sse2.pcmpgt.b(<16 x i8> %a0, <16 x i8> %a1) ; <<16 x i8>> [#uses=1]
-  ret <16 x i8> %res
-}
-declare <16 x i8> @llvm.x86.sse2.pcmpgt.b(<16 x i8>, <16 x i8>) nounwind readnone
-
-
-define <4 x i32> @test_x86_sse2_pcmpgt_d(<4 x i32> %a0, <4 x i32> %a1) {
-  ; CHECK: vpcmpgtd
-  %res = call <4 x i32> @llvm.x86.sse2.pcmpgt.d(<4 x i32> %a0, <4 x i32> %a1) ; <<4 x i32>> [#uses=1]
-  ret <4 x i32> %res
-}
-declare <4 x i32> @llvm.x86.sse2.pcmpgt.d(<4 x i32>, <4 x i32>) nounwind readnone
-
-
-define <8 x i16> @test_x86_sse2_pcmpgt_w(<8 x i16> %a0, <8 x i16> %a1) {
-  ; CHECK: vpcmpgtw
-  %res = call <8 x i16> @llvm.x86.sse2.pcmpgt.w(<8 x i16> %a0, <8 x i16> %a1) ; <<8 x i16>> [#uses=1]
-  ret <8 x i16> %res
-}
-declare <8 x i16> @llvm.x86.sse2.pcmpgt.w(<8 x i16>, <8 x i16>) nounwind readnone
-
-
 define <4 x i32> @test_x86_sse2_pmadd_wd(<8 x i16> %a0, <8 x i16> %a1) {
   ; CHECK: vpmaddwd
   %res = call <4 x i32> @llvm.x86.sse2.pmadd.wd(<8 x i16> %a0, <8 x i16> %a1) ; <<4 x i32>> [#uses=1]
@@ -950,14 +902,6 @@ define <8 x i16> @test_x86_sse41_pblendw(<8 x i16> %a0, <8 x i16> %a1) {
 declare <8 x i16> @llvm.x86.sse41.pblendw(<8 x i16>, <8 x i16>, i32) nounwind readnone
 
 
-define <2 x i64> @test_x86_sse41_pcmpeqq(<2 x i64> %a0, <2 x i64> %a1) {
-  ; CHECK: vpcmpeqq
-  %res = call <2 x i64> @llvm.x86.sse41.pcmpeqq(<2 x i64> %a0, <2 x i64> %a1) ; <<2 x i64>> [#uses=1]
-  ret <2 x i64> %res
-}
-declare <2 x i64> @llvm.x86.sse41.pcmpeqq(<2 x i64>, <2 x i64>) nounwind readnone
-
-
 define <8 x i16> @test_x86_sse41_phminposuw(<8 x i16> %a0) {
   ; CHECK: vphminposuw
   %res = call <8 x i16> @llvm.x86.sse41.phminposuw(<8 x i16> %a0) ; <<8 x i16>> [#uses=1]
@@ -1269,14 +1213,6 @@ define <16 x i8> @test_x86_sse42_pcmpestrm128(<16 x i8> %a0, <16 x i8> %a2) {
   ret <16 x i8> %res
 }
 declare <16 x i8> @llvm.x86.sse42.pcmpestrm128(<16 x i8>, i32, <16 x i8>, i32, i8) nounwind readnone
-
-
-define <2 x i64> @test_x86_sse42_pcmpgtq(<2 x i64> %a0, <2 x i64> %a1) {
-  ; CHECK: vpcmpgtq
-  %res = call <2 x i64> @llvm.x86.sse42.pcmpgtq(<2 x i64> %a0, <2 x i64> %a1) ; <<2 x i64>> [#uses=1]
-  ret <2 x i64> %res
-}
-declare <2 x i64> @llvm.x86.sse42.pcmpgtq(<2 x i64>, <2 x i64>) nounwind readnone
 
 
 define i32 @test_x86_sse42_pcmpistri128(<16 x i8> %a0, <16 x i8> %a1) {
