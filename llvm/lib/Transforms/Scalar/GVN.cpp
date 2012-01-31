@@ -1298,8 +1298,8 @@ bool GVN::processNonLocalLoad(LoadInst *LI) {
   // where we have a value available in repl, also keep track of whether we see
   // dependencies that produce an unknown value for the load (such as a call
   // that could potentially clobber the load).
-  SmallVector<AvailableValueInBlock, 16> ValuesPerBlock;
-  SmallVector<BasicBlock*, 16> UnavailableBlocks;
+  SmallVector<AvailableValueInBlock, 64> ValuesPerBlock;
+  SmallVector<BasicBlock*, 64> UnavailableBlocks;
 
   for (unsigned i = 0, e = NumDeps; i != e; ++i) {
     BasicBlock *DepBB = Deps[i].getBB();
