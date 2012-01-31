@@ -46,9 +46,6 @@ public:
 private:
   const Driver &D;
   const llvm::Triple Triple;
-  /// The target triple originally requested by the user
-  /// before modifications due to -m32 and without normalization.
-  const std::string UserTriple;
 
   /// The list of toolchain specific path prefixes to search for
   /// files.
@@ -59,7 +56,7 @@ private:
   path_list ProgramPaths;
 
 protected:
-  ToolChain(const Driver &D, const llvm::Triple &T, const std::string &UT);
+  ToolChain(const Driver &D, const llvm::Triple &T);
 
   /// \name Utilities for implementing subclasses.
   ///@{
@@ -89,9 +86,6 @@ public:
 
   std::string getTripleString() const {
     return Triple.getTriple();
-  }
-  const std::string &getUserTriple() const {
-    return UserTriple;
   }
 
   path_list &getFilePaths() { return FilePaths; }

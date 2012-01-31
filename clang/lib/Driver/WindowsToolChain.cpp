@@ -35,9 +35,8 @@ using namespace clang::driver;
 using namespace clang::driver::toolchains;
 using namespace clang;
 
-Windows::Windows(const Driver &D, const llvm::Triple& Triple,
-                 const std::string &UserTriple)
-  : ToolChain(D, Triple, UserTriple) {
+Windows::Windows(const Driver &D, const llvm::Triple& Triple)
+  : ToolChain(D, Triple) {
 }
 
 Tool &Windows::SelectTool(const Compilation &C, const JobAction &JA,

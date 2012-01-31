@@ -1507,7 +1507,7 @@ static bool isPathExecutable(llvm::sys::Path &P, bool WantFile) {
 
 std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
                                    bool WantFile) const {
-  std::string TargetSpecificExecutable(TC.getUserTriple() + "-" + Name);
+  std::string TargetSpecificExecutable(DefaultTargetTriple + "-" + Name);
   // Respect a limited subset of the '-Bprefix' functionality in GCC by
   // attempting to use this prefix when lokup up program paths.
   for (Driver::prefix_list::const_iterator it = PrefixDirs.begin(),
@@ -1574,10 +1574,13 @@ std::string Driver::GetTemporaryPath(StringRef Prefix, const char *Suffix)
 ///
 /// This routine provides the logic to compute a target triple from various
 /// args passed to the driver and the default triple string.
-static llvm::Triple computeTargetTriple(StringRef TargetTriple,
+static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
                                         const ArgList &Args,
                                         StringRef DarwinArchName) {
-  llvm::Triple Target(llvm::Triple::normalize(TargetTriple));
+  if (const Arg *A = Args.getLastArg(options::OPT_target))
+    DefaultTargetTriple = A->getValue(Args);
+
+  llvm::Triple Target(llvm::Triple::normalize(DefaultTargetTriple));
 
   // Handle Darwin-specific options available here.
   if (Target.isOSDarwin()) {
@@ -1624,19 +1627,14 @@ static llvm::Triple computeTargetTriple(StringRef TargetTriple,
 
 const ToolChain &Driver::getToolChain(const ArgList &Args,
                                       StringRef DarwinArchName) const {
-  std::string TargetTriple(DefaultTargetTriple);
-  if (const Arg *A = Args.getLastArg(options::OPT_target))
-    TargetTriple = A->getValue(Args);
+  llvm::Triple Target = computeTargetTriple(DefaultTargetTriple, Args,
+                                            DarwinArchName);
 
-  llvm::Triple Target = computeTargetTriple(TargetTriple, Args, DarwinArchName);
-
-  std::string TargetIndex = TargetTriple + "::" + Target.str();
-
-  ToolChain *&TC = ToolChains[TargetIndex];
+  ToolChain *&TC = ToolChains[Target.str()];
   if (!TC) {
     switch (Target.getOS()) {
     case llvm::Triple::AuroraUX:
-      TC = new toolchains::AuroraUX(*this, Target, TargetTriple);
+      TC = new toolchains::AuroraUX(*this, Target);
       break;
     case llvm::Triple::Darwin:
     case llvm::Triple::MacOSX:
@@ -1645,44 +1643,44 @@ const ToolChain &Driver::getToolChain(const ArgList &Args,
           Target.getArch() == llvm::Triple::x86_64 ||
           Target.getArch() == llvm::Triple::arm ||
           Target.getArch() == llvm::Triple::thumb)
-        TC = new toolchains::DarwinClang(*this, Target, TargetTriple);
+        TC = new toolchains::DarwinClang(*this, Target);
       else
-        TC = new toolchains::Darwin_Generic_GCC(*this, Target, TargetTriple);
+        TC = new toolchains::Darwin_Generic_GCC(*this, Target);
       break;
     case llvm::Triple::DragonFly:
-      TC = new toolchains::DragonFly(*this, Target, TargetTriple);
+      TC = new toolchains::DragonFly(*this, Target);
       break;
     case llvm::Triple::OpenBSD:
-      TC = new toolchains::OpenBSD(*this, Target, TargetTriple);
+      TC = new toolchains::OpenBSD(*this, Target);
       break;
     case llvm::Triple::NetBSD:
-      TC = new toolchains::NetBSD(*this, Target, TargetTriple);
+      TC = new toolchains::NetBSD(*this, Target);
       break;
     case llvm::Triple::FreeBSD:
-      TC = new toolchains::FreeBSD(*this, Target, TargetTriple);
+      TC = new toolchains::FreeBSD(*this, Target);
       break;
     case llvm::Triple::Minix:
-      TC = new toolchains::Minix(*this, Target, TargetTriple);
+      TC = new toolchains::Minix(*this, Target);
       break;
     case llvm::Triple::Linux:
       if (Target.getArch() == llvm::Triple::hexagon)
-        TC = new toolchains::Hexagon_TC(*this, Target, TargetTriple);
+        TC = new toolchains::Hexagon_TC(*this, Target);
       else
-        TC = new toolchains::Linux(*this, Target, TargetTriple);
+        TC = new toolchains::Linux(*this, Target);
       break;
     case llvm::Triple::Win32:
-      TC = new toolchains::Windows(*this, Target, TargetTriple);
+      TC = new toolchains::Windows(*this, Target);
       break;
     case llvm::Triple::MinGW32:
       // FIXME: We need a MinGW toolchain. Fallthrough for now.
     default:
       // TCE is an OSless target
       if (Target.getArchName() == "tce") {
-        TC = new toolchains::TCEToolChain(*this, Target, TargetTriple);
+        TC = new toolchains::TCEToolChain(*this, Target);
         break;
       }
 
-      TC = new toolchains::Generic_GCC(*this, Target, TargetTriple);
+      TC = new toolchains::Generic_GCC(*this, Target);
       break;
     }
   }
