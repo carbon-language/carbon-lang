@@ -4431,17 +4431,15 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   case BO_Xor: return Success(LHS ^ RHS, E);
   case BO_Or:  return Success(LHS | RHS, E);
   case BO_Div:
-    if (RHS == 0)
-      return Error(E, diag::note_expr_divide_by_zero);
-    // Check for overflow case: INT_MIN / -1.
-    if (RHS.isNegative() && RHS.isAllOnesValue() &&
-        LHS.isSigned() && LHS.isMinSignedValue())
-      HandleOverflow(Info, E, -LHS.extend(LHS.getBitWidth() + 1), E->getType());
-    return Success(LHS / RHS, E);
   case BO_Rem:
     if (RHS == 0)
       return Error(E, diag::note_expr_divide_by_zero);
-    return Success(LHS % RHS, E);
+    // Check for overflow case: INT_MIN / -1 or INT_MIN % -1. The latter is not
+    // actually undefined behavior in C++11 due to a language defect.
+    if (RHS.isNegative() && RHS.isAllOnesValue() &&
+        LHS.isSigned() && LHS.isMinSignedValue())
+      HandleOverflow(Info, E, -LHS.extend(LHS.getBitWidth() + 1), E->getType());
+    return Success(E->getOpcode() == BO_Rem ? LHS % RHS : LHS / RHS, E);
   case BO_Shl: {
     // During constant-folding, a negative shift is an opposite shift. Such a
     // shift is not a constant expression.
