@@ -117,13 +117,6 @@ void *AsanMmapFixedNoReserve(uintptr_t fixed_addr, size_t size) {
                    0, 0);
 }
 
-void *AsanMmapFixedReserve(uintptr_t fixed_addr, size_t size) {
-  return asan_mmap((void*)fixed_addr, size,
-                   PROT_READ | PROT_WRITE,
-                   MAP_PRIVATE | MAP_ANON | MAP_FIXED,
-                   0, 0);
-}
-
 void *AsanMprotect(uintptr_t fixed_addr, size_t size) {
   return asan_mmap((void*)fixed_addr, size,
                    PROT_NONE,
