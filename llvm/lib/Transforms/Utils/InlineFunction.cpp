@@ -71,7 +71,7 @@ namespace {
       return OuterResumeDest;
     }
 
-    BasicBlock *getInnerUnwindDest();
+    BasicBlock *getInnerResumeDest();
 
     LandingPadInst *getLandingPadInst() const { return CallerLPad; }
 
@@ -99,8 +99,8 @@ namespace {
   };
 }
 
-/// getInnerUnwindDest - Get or create a target for the branch from ResumeInsts.
-BasicBlock *InvokeInliningInfo::getInnerUnwindDest() {
+/// getInnerResumeDest - Get or create a target for the branch from ResumeInsts.
+BasicBlock *InvokeInliningInfo::getInnerResumeDest() {
   if (InnerResumeDest) return InnerResumeDest;
 
   // Split the landing pad.
@@ -139,7 +139,7 @@ BasicBlock *InvokeInliningInfo::getInnerUnwindDest() {
 /// branch. When there is more than one predecessor, we need to split the
 /// landing pad block after the landingpad instruction and jump to there.
 void InvokeInliningInfo::forwardResume(ResumeInst *RI) {
-  BasicBlock *Dest = getInnerUnwindDest();
+  BasicBlock *Dest = getInnerResumeDest();
   BasicBlock *Src = RI->getParent();
 
   BranchInst::Create(Dest, Src);
