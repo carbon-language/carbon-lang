@@ -3693,15 +3693,24 @@ static void AnalyzeAssignment(Sema &S, BinaryOperator *E) {
 
 /// Diagnose an implicit cast;  purely a helper for CheckImplicitConversion.
 static void DiagnoseImpCast(Sema &S, Expr *E, QualType SourceType, QualType T, 
-                            SourceLocation CContext, unsigned diag) {
+                            SourceLocation CContext, unsigned diag,
+                            bool pruneControlFlow = false) {
+  if (pruneControlFlow) {
+    S.DiagRuntimeBehavior(E->getExprLoc(), E,
+                          S.PDiag(diag)
+                            << SourceType << T << E->getSourceRange()
+                            << SourceRange(CContext));
+    return;
+  }
   S.Diag(E->getExprLoc(), diag)
     << SourceType << T << E->getSourceRange() << SourceRange(CContext);
 }
 
 /// Diagnose an implicit cast;  purely a helper for CheckImplicitConversion.
 static void DiagnoseImpCast(Sema &S, Expr *E, QualType T,
-                            SourceLocation CContext, unsigned diag) {
-  DiagnoseImpCast(S, E, E->getType(), T, CContext, diag);
+                            SourceLocation CContext, unsigned diag,
+                            bool pruneControlFlow = false) {
+  DiagnoseImpCast(S, E, E->getType(), T, CContext, diag, pruneControlFlow);
 }
 
 /// Diagnose an implicit cast from a literal expression. Does not warn when the
@@ -3907,7 +3916,8 @@ void CheckImplicitConversion(Sema &S, Expr *E, QualType T,
       return;
     
     if (SourceRange.Width == 64 && TargetRange.Width == 32)
-      return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_integer_64_32);
+      return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_integer_64_32,
+                             /* pruneControlFlow */ true);
     return DiagnoseImpCast(S, E, T, CC, diag::warn_impcast_integer_precision);
   }
 
