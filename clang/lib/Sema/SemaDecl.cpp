@@ -2952,9 +2952,10 @@ Decl *Sema::BuildMicrosoftCAnonymousStruct(Scope *S, DeclSpec &DS,
   SmallVector<NamedDecl*, 2> Chain;
   Chain.push_back(Anon);
 
-  if (InjectAnonymousStructOrUnionMembers(*this, S, CurContext,
-                                          Record->getDefinition(),
-                                          AS_none, Chain, true))
+  RecordDecl *RecordDef = Record->getDefinition();
+  if (!RecordDef || InjectAnonymousStructOrUnionMembers(*this, S, CurContext,
+                                                        RecordDef, AS_none,
+                                                        Chain, true))
     Anon->setInvalidDecl();
 
   return Anon;

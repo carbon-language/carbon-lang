@@ -86,4 +86,13 @@ void pointer_to_integral_type_conv(char* ptr) {
    short sh = (short)ptr;
    ch = (char)ptr;
    sh = (short)ptr;
-} 
+}
+
+
+typedef struct {
+  UNKNOWN u; // expected-error {{unknown type name 'UNKNOWN'}}
+} AA;
+
+typedef struct {
+  AA; // expected-warning {{anonymous structs are a Microsoft extension}}
+} BB;
