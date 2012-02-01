@@ -5683,7 +5683,7 @@ Decl *Sema::ActOnStartNamespaceDef(Scope *NamespcScope,
 
   // FIXME: Should we be merging attributes?
   if (const VisibilityAttr *Attr = Namespc->getAttr<VisibilityAttr>())
-    PushNamespaceVisibilityAttr(Attr);
+    PushNamespaceVisibilityAttr(Attr, Loc);
 
   if (IsStd)
     StdNamespace = Namespc;
@@ -5758,7 +5758,7 @@ void Sema::ActOnFinishNamespaceDef(Decl *Dcl, SourceLocation RBrace) {
   Namespc->setRBraceLoc(RBrace);
   PopDeclContext();
   if (Namespc->hasAttr<VisibilityAttr>())
-    PopPragmaVisibility();
+    PopPragmaVisibility(true, RBrace);
 }
 
 CXXRecordDecl *Sema::getStdBadAlloc() const {

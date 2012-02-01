@@ -5625,7 +5625,8 @@ public:
 
   /// PushNamespaceVisibilityAttr - Note that we've entered a
   /// namespace with a visibility attribute.
-  void PushNamespaceVisibilityAttr(const VisibilityAttr *Attr);
+  void PushNamespaceVisibilityAttr(const VisibilityAttr *Attr,
+                                   SourceLocation Loc);
 
   /// AddPushedVisibilityAttribute - If '#pragma GCC visibility' was used,
   /// add an appropriate visibility attribute.
@@ -5633,7 +5634,7 @@ public:
 
   /// PopPragmaVisibility - Pop the top element of the visibility stack; used
   /// for '#pragma GCC visibility' and visibility attributes on namespaces.
-  void PopPragmaVisibility();
+  void PopPragmaVisibility(bool IsNamespaceEnd, SourceLocation EndLoc);
 
   /// FreeVisContext - Deallocate and null out VisContext.
   void FreeVisContext();

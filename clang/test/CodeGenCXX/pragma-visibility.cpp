@@ -60,11 +60,3 @@ namespace n __attribute((visibility("default")))  {
   // CHECK: define hidden void @_ZN1n1gEv
 #pragma GCC visibility pop
 }
-
-// We used to test this, but it's insane, so unless it happens in
-// headers, we should not support it.
-namespace n __attribute((visibility("hidden"))) {
-  #pragma GCC visibility pop
-  void h() {}
-  // CHECK disabled: define void @_ZN1n1hEv
-}
