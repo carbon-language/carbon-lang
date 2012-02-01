@@ -9,10 +9,6 @@
 
 #include "private_typeinfo.h"
 
-#ifdef DEBUG
-#include <iostream>
-#endif
-
 namespace __cxxabiv1
 {
 
@@ -89,107 +85,6 @@ __pointer_to_member_type_info::~__pointer_to_member_type_info()
 }
 
 #pragma GCC visibility push(hidden)
-
-#ifdef DEBUG
-
-void
-__fundamental_type_info::display() const
-{
-    std::cout << "__fundamental_type_info " << __type_name << '\n';
-}
-
-void
-__array_type_info::display() const
-{
-    std::cout << "__array_type_info " << __type_name << '\n';
-}
-
-void
-__function_type_info::display() const
-{
-    std::cout << "__function_type_info " << __type_name << '\n';
-}
-
-void
-__enum_type_info::display() const
-{
-    std::cout << "__enum_type_info " << __type_name << '\n';
-}
-
-void
-__class_type_info::display() const
-{
-    std::cout << "__class_type_info " << __type_name << '\n';
-}
-
-void
-__si_class_type_info::display() const
-{
-    std::cout << "__si_class_type_info " << __type_name << '\n';
-    std::cout << "derived from ";
-    __base_type->display();
-}
-
-void
-__vmi_class_type_info::display() const
-{
-    std::cout << "__vmi_class_type_info " << __type_name << '\n';
-    if (__flags & __non_diamond_repeat_mask)
-        std::cout << "__non_diamond_repeat_mask\n";
-    if (__flags & __diamond_shaped_mask)
-        std::cout << "__diamond_shaped_mask\n";
-    std::cout << "derived from\n";
-    for (const __base_class_type_info* p = __base_info; p < __base_info + __base_count; ++p)
-        p->display();
-}
-
-void
-__base_class_type_info::display() const
-{
-    if (__offset_flags & __public_mask)
-        std::cout << "public ";
-    __base_type->display();
-}
-
-void
-__pointer_type_info::display() const
-{
-    std::cout << "__pointer_type_info " << __type_name << '\n';
-    if (__flags & __const_mask)
-        std::cout << "const ";
-    if (__flags & __volatile_mask)
-        std::cout << "volatile ";
-    if (__flags & __restrict_mask)
-        std::cout << "restrict ";
-    if (__flags & __incomplete_mask)
-        std::cout << "__incomplete_mask ";
-    if (__flags & __incomplete_class_mask)
-        std::cout << "__incomplete_class_mask ";
-    std::cout << "pointer to ";
-    __pointee->display();
-}
-
-void
-__pointer_to_member_type_info::display() const
-{
-    std::cout << "__pointer_to_member_type_info " << __type_name << '\n';
-    if (__flags & __const_mask)
-        std::cout << "const ";
-    if (__flags & __volatile_mask)
-        std::cout << "volatile ";
-    if (__flags & __restrict_mask)
-        std::cout << "restrict ";
-    if (__flags & __incomplete_mask)
-        std::cout << "__incomplete_mask ";
-    if (__flags & __incomplete_class_mask)
-        std::cout << "__incomplete_class_mask ";
-    std::cout << "member pointer to class ";
-    __context->display();
-    std::cout << "and type ";
-    __pointee->display();
-}
-
-#endif
 
 // can_catch
 

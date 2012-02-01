@@ -25,9 +25,6 @@ public:
     virtual ~__shim_type_info();
 
     virtual bool can_catch(const __shim_type_info* thrown_type, void*& adjustedPtr) const = 0;
-#ifdef DEBUG
-    virtual void display() const = 0;
-#endif
 };
 
 class __fundamental_type_info
@@ -36,9 +33,6 @@ class __fundamental_type_info
 public:
     virtual ~__fundamental_type_info();
     virtual bool can_catch(const __shim_type_info*, void*&) const;
-#ifdef DEBUG
-    virtual void display() const;
-#endif
 };
 
 class __array_type_info
@@ -47,9 +41,6 @@ class __array_type_info
 public:
     virtual ~__array_type_info();
     virtual bool can_catch(const __shim_type_info*, void*&) const;
-#ifdef DEBUG
-    virtual void display() const;
-#endif
 };
 
 class __function_type_info
@@ -58,9 +49,6 @@ class __function_type_info
 public:
     virtual ~__function_type_info();
     virtual bool can_catch(const __shim_type_info*, void*&) const;
-#ifdef DEBUG
-    virtual void display() const;
-#endif
 };
 
 class __enum_type_info
@@ -69,9 +57,6 @@ class __enum_type_info
 public:
     virtual ~__enum_type_info();
     virtual bool can_catch(const __shim_type_info*, void*&) const;
-#ifdef DEBUG
-    virtual void display() const;
-#endif
 };
 
 enum
@@ -146,9 +131,6 @@ public:
     virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
     virtual bool can_catch(const __shim_type_info*, void*&) const;
     virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
-#ifdef DEBUG
-    virtual void display() const;
-#endif
 };
 
 // Has one non-virtual public base class at offset zero
@@ -163,9 +145,6 @@ public:
     virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
     virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
-#ifdef DEBUG
-    virtual void display() const;
-#endif
 };
 
 struct __base_class_type_info
@@ -184,9 +163,6 @@ public:
     void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     void search_below_dst(__dynamic_cast_info*, const void*, int) const;
     void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
-#ifdef DEBUG
-    void display() const;
-#endif
 };
 
 // Has one or more base classes
@@ -211,9 +187,6 @@ public:
     virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
     virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
     virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
-#ifdef DEBUG
-    virtual void display() const;
-#endif
 };
 
 class __pbase_type_info
@@ -242,9 +215,6 @@ class __pointer_type_info
 public:
     virtual ~__pointer_type_info();
     virtual bool can_catch(const __shim_type_info*, void*&) const;
-#ifdef DEBUG
-    virtual void display() const;
-#endif
 };
 
 class __pointer_to_member_type_info
@@ -254,9 +224,6 @@ public:
     const __class_type_info* __context;
 
     virtual ~__pointer_to_member_type_info();
-#ifdef DEBUG
-    virtual void display() const;
-#endif
 };
 
 //#pragma GCC visibility pop
