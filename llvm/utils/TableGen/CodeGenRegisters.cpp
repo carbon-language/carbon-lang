@@ -49,6 +49,19 @@ std::string CodeGenSubRegIndex::getQualifiedName() const {
   return N;
 }
 
+void CodeGenSubRegIndex::updateComponents(CodeGenRegBank &RegBank) {
+  std::vector<Record*> Comps = TheDef->getValueAsListOfDefs("ComposedOf");
+  if (Comps.empty())
+    return;
+  if (Comps.size() != 2)
+    throw TGError(TheDef->getLoc(), "ComposedOf must have exactly two entries");
+  CodeGenSubRegIndex *A = RegBank.getSubRegIdx(Comps[0]);
+  CodeGenSubRegIndex *B = RegBank.getSubRegIdx(Comps[1]);
+  CodeGenSubRegIndex *X = A->addComposite(B, this);
+  if (X)
+    throw TGError(TheDef->getLoc(), "Ambiguous ComposedOf entries");
+}
+
 void CodeGenSubRegIndex::cleanComposites() {
   // Clean out redundant mappings of the form this+X -> X.
   for (CompMap::iterator i = Composed.begin(), e = Composed.end(); i != e;) {
@@ -75,15 +88,6 @@ const std::string &CodeGenRegister::getName() const {
   return TheDef->getName();
 }
 
-namespace {
-  struct Orphan {
-    CodeGenRegister *SubReg;
-    CodeGenSubRegIndex *First, *Second;
-    Orphan(CodeGenRegister *r, CodeGenSubRegIndex *a, CodeGenSubRegIndex *b)
-      : SubReg(r), First(a), Second(b) {}
-  };
-}
-
 const CodeGenRegister::SubRegMap &
 CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
   // Only compute this map once.
@@ -92,28 +96,29 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
   SubRegsComplete = true;
 
   std::vector<Record*> SubList = TheDef->getValueAsListOfDefs("SubRegs");
-  std::vector<Record*> Indices = TheDef->getValueAsListOfDefs("SubRegIndices");
-  if (SubList.size() != Indices.size())
+  std::vector<Record*> IdxList = TheDef->getValueAsListOfDefs("SubRegIndices");
+  if (SubList.size() != IdxList.size())
     throw TGError(TheDef->getLoc(), "Register " + getName() +
                   " SubRegIndices doesn't match SubRegs");
 
   // First insert the direct subregs and make sure they are fully indexed.
+  SmallVector<CodeGenSubRegIndex*, 8> Indices;
   for (unsigned i = 0, e = SubList.size(); i != e; ++i) {
     CodeGenRegister *SR = RegBank.getReg(SubList[i]);
-    CodeGenSubRegIndex *Idx = RegBank.getSubRegIdx(Indices[i]);
+    CodeGenSubRegIndex *Idx = RegBank.getSubRegIdx(IdxList[i]);
+    Indices.push_back(Idx);
     if (!SubRegs.insert(std::make_pair(Idx, SR)).second)
       throw TGError(TheDef->getLoc(), "SubRegIndex " + Idx->getName() +
                     " appears twice in Register " + getName());
   }
 
   // Keep track of inherited subregs and how they can be reached.
-  SmallVector<Orphan, 8> Orphans;
+  SmallPtrSet<CodeGenRegister*, 8> Orphans;
 
-  // Clone inherited subregs and place duplicate entries on Orphans.
+  // Clone inherited subregs and place duplicate entries in Orphans.
   // Here the order is important - earlier subregs take precedence.
   for (unsigned i = 0, e = SubList.size(); i != e; ++i) {
     CodeGenRegister *SR = RegBank.getReg(SubList[i]);
-    CodeGenSubRegIndex *Idx = RegBank.getSubRegIdx(Indices[i]);
     const SubRegMap &Map = SR->getSubRegs(RegBank);
 
     // Add this as a super-register of SR now all sub-registers are in the list.
@@ -124,11 +129,38 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
     for (SubRegMap::const_iterator SI = Map.begin(), SE = Map.end(); SI != SE;
          ++SI) {
       if (!SubRegs.insert(*SI).second)
-        Orphans.push_back(Orphan(SI->second, Idx, SI->first));
+        Orphans.insert(SI->second);
 
       // Noop sub-register indexes are possible, so avoid duplicates.
       if (SI->second != SR)
         SI->second->SuperRegs.push_back(this);
+    }
+  }
+
+  // Expand any composed subreg indices.
+  // If dsub_2 has ComposedOf = [qsub_1, dsub_0], and this register has a
+  // qsub_1 subreg, add a dsub_2 subreg.  Keep growing Indices and process
+  // expanded subreg indices recursively.
+  for (unsigned i = 0; i != Indices.size(); ++i) {
+    CodeGenSubRegIndex *Idx = Indices[i];
+    const CodeGenSubRegIndex::CompMap &Comps = Idx->getComposites();
+    CodeGenRegister *SR = SubRegs[Idx];
+    const SubRegMap &Map = SR->getSubRegs(RegBank);
+
+    // Look at the possible compositions of Idx.
+    // They may not all be supported by SR.
+    for (CodeGenSubRegIndex::CompMap::const_iterator I = Comps.begin(),
+           E = Comps.end(); I != E; ++I) {
+      SubRegMap::const_iterator SRI = Map.find(I->first);
+      if (SRI == Map.end())
+        continue; // Idx + I->first doesn't exist in SR.
+      // Add I->second as a name for the subreg SRI->second, assuming it is
+      // orphaned, and the name isn't already used for something else.
+      if (SubRegs.count(I->second) || !Orphans.erase(SRI->second))
+        continue;
+      // We found a new name for the orphaned sub-register.
+      SubRegs.insert(std::make_pair(I->second, SRI->second));
+      Indices.push_back(I->second);
     }
   }
 
@@ -167,19 +199,33 @@ CodeGenRegister::getSubRegs(CodeGenRegBank &RegBank) {
     SubRegs[BaseIdx] = R2;
 
     // R2 is no longer an orphan.
-    for (unsigned j = 0, je = Orphans.size(); j != je; ++j)
-      if (Orphans[j].SubReg == R2)
-          Orphans[j].SubReg = 0;
+    Orphans.erase(R2);
   }
 
   // Now Orphans contains the inherited subregisters without a direct index.
   // Create inferred indexes for all missing entries.
-  for (unsigned i = 0, e = Orphans.size(); i != e; ++i) {
-    Orphan &O = Orphans[i];
-    if (!O.SubReg)
-      continue;
-    SubRegs[RegBank.getCompositeSubRegIndex(O.First, O.Second)] =
-      O.SubReg;
+  // Work backwards in the Indices vector in order to compose subregs bottom-up.
+  // Consider this subreg sequence:
+  //
+  //   qsub_1 -> dsub_0 -> ssub_0
+  //
+  // The qsub_1 -> dsub_0 composition becomes dsub_2, so the ssub_0 register
+  // can be reached in two different ways:
+  //
+  //   qsub_1 -> ssub_0
+  //   dsub_2 -> ssub_0
+  //
+  // We pick the latter composition because another register may have [dsub_0,
+  // dsub_1, dsub_2] subregs without neccessarily having a qsub_1 subreg.  The
+  // dsub_2 -> ssub_0 composition can be shared.
+  while (!Indices.empty() && !Orphans.empty()) {
+    CodeGenSubRegIndex *Idx = Indices.pop_back_val();
+    CodeGenRegister *SR = SubRegs[Idx];
+    const SubRegMap &Map = SR->getSubRegs(RegBank);
+    for (SubRegMap::const_iterator SI = Map.begin(), SE = Map.end(); SI != SE;
+         ++SI)
+      if (Orphans.erase(SI->second))
+        SubRegs[RegBank.getCompositeSubRegIndex(Idx, SI->first)] = SI->second;
   }
   return SubRegs;
 }
@@ -590,6 +636,9 @@ CodeGenRegBank::CodeGenRegBank(RecordKeeper &Records) : Records(Records) {
   NumNamedIndices = SRIs.size();
   for (unsigned i = 0, e = SRIs.size(); i != e; ++i)
     getSubRegIdx(SRIs[i]);
+  // Build composite maps from ComposedOf fields.
+  for (unsigned i = 0, e = SubRegIndices.size(); i != e; ++i)
+    SubRegIndices[i]->updateComponents(*this);
 
   // Read in the register definitions.
   std::vector<Record*> Regs = Records.getAllDerivedDefinitions("Register");

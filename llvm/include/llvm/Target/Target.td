@@ -22,8 +22,12 @@ include "llvm/Intrinsics.td"
 class RegisterClass; // Forward def
 
 // SubRegIndex - Use instances of SubRegIndex to identify subregisters.
-class SubRegIndex {
+class SubRegIndex<list<SubRegIndex> comps = []> {
   string Namespace = "";
+
+  // ComposedOf - A list of two SubRegIndex instances, [A, B].
+  // This indicates that this SubRegIndex is the result of composing A and B.
+  list<SubRegIndex> ComposedOf = comps;
 }
 
 // RegAltNameIndex - The alternate name set to use for register operands of

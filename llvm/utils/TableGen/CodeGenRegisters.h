@@ -71,6 +71,9 @@ namespace llvm {
       return (Ins.second || Ins.first->second == B) ? 0 : Ins.first->second;
     }
 
+    // Update the composite maps of components specified in 'ComposedOf'.
+    void updateComponents(CodeGenRegBank&);
+
     // Clean out redundant composite mappings.
     void cleanComposites();
 
