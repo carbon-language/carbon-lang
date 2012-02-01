@@ -1,4 +1,4 @@
-//===-- CPPLanguageRuntime.cpp -------------------------------------------------*- C++ -*-===//
+//===-- ObjCLanguageRuntime.cpp ---------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
