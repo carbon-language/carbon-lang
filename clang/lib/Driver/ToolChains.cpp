@@ -9,10 +9,6 @@
 
 #include "ToolChains.h"
 
-#ifdef HAVE_CLANG_CONFIG_H
-# include "clang/Config/config.h"
-#endif
-
 #include "clang/Driver/Arg.h"
 #include "clang/Driver/ArgList.h"
 #include "clang/Driver/Compilation.h"
@@ -37,7 +33,7 @@
 
 #include <cstdlib> // ::getenv
 
-#include "llvm/Config/config.h" // for CXX_INCLUDE_ROOT
+#include "clang/Config/config.h"
 
 using namespace clang::driver;
 using namespace clang::driver::toolchains;
