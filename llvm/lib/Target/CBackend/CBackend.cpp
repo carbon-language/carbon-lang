@@ -558,21 +558,73 @@ raw_ostream &CWriter::printType(raw_ostream &Out, Type *Ty,
 }
 
 void CWriter::printConstantArray(ConstantArray *CPA, bool Static) {
-  Out << "{ ";
-  printConstant(cast<Constant>(CPA->getOperand(0)), Static);
-  for (unsigned i = 1, e = CPA->getNumOperands(); i != e; ++i) {
-    Out << ", ";
-    printConstant(cast<Constant>(CPA->getOperand(i)), Static);
+  // As a special case, print the array as a string if it is an array of
+  // ubytes or an array of sbytes with positive values.
+  //
+  if (CPA->isCString()) {
+    Out << '\"';
+    // Keep track of whether the last number was a hexadecimal escape.
+    bool LastWasHex = false;
+
+    // Do not include the last character, which we know is null
+    for (unsigned i = 0, e = CPA->getNumOperands()-1; i != e; ++i) {
+      unsigned char C = cast<ConstantInt>(CPA->getOperand(i))->getZExtValue();
+
+      // Print it out literally if it is a printable character.  The only thing
+      // to be careful about is when the last letter output was a hex escape
+      // code, in which case we have to be careful not to print out hex digits
+      // explicitly (the C compiler thinks it is a continuation of the previous
+      // character, sheesh...)
+      //
+      if (isprint(C) && (!LastWasHex || !isxdigit(C))) {
+        LastWasHex = false;
+        if (C == '"' || C == '\\')
+          Out << "\\" << (char)C;
+        else
+          Out << (char)C;
+      } else {
+        LastWasHex = false;
+        switch (C) {
+        case '\n': Out << "\\n"; break;
+        case '\t': Out << "\\t"; break;
+        case '\r': Out << "\\r"; break;
+        case '\v': Out << "\\v"; break;
+        case '\a': Out << "\\a"; break;
+        case '\"': Out << "\\\""; break;
+        case '\'': Out << "\\\'"; break;
+        default:
+          Out << "\\x";
+          Out << (char)(( C/16  < 10) ? ( C/16 +'0') : ( C/16 -10+'A'));
+          Out << (char)(((C&15) < 10) ? ((C&15)+'0') : ((C&15)-10+'A'));
+          LastWasHex = true;
+          break;
+        }
+      }
+    }
+    Out << '\"';
+  } else {
+    Out << '{';
+    if (CPA->getNumOperands()) {
+      Out << ' ';
+      printConstant(cast<Constant>(CPA->getOperand(0)), Static);
+      for (unsigned i = 1, e = CPA->getNumOperands(); i != e; ++i) {
+        Out << ", ";
+        printConstant(cast<Constant>(CPA->getOperand(i)), Static);
+      }
+    }
+    Out << " }";
   }
-  Out << " }";
 }
 
 void CWriter::printConstantVector(ConstantVector *CP, bool Static) {
-  Out << "{ ";
-  printConstant(cast<Constant>(CP->getOperand(0)), Static);
-  for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
-    Out << ", ";
-    printConstant(cast<Constant>(CP->getOperand(i)), Static);
+  Out << '{';
+  if (CP->getNumOperands()) {
+    Out << ' ';
+    printConstant(cast<Constant>(CP->getOperand(0)), Static);
+    for (unsigned i = 1, e = CP->getNumOperands(); i != e; ++i) {
+      Out << ", ";
+      printConstant(cast<Constant>(CP->getOperand(i)), Static);
+    }
   }
   Out << " }";
 }

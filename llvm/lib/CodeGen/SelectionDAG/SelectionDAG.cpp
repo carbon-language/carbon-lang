@@ -3299,7 +3299,7 @@ static SDValue getMemsetValue(SDValue Value, EVT VT, SelectionDAG &DAG,
 /// string ptr.
 static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
                                   const TargetLowering &TLI,
-                                  StringRef Str, unsigned Offset) {
+                                  std::string &Str, unsigned Offset) {
   // Handle vector with all elements zero.
   if (Str.empty()) {
     if (VT.isInteger())
@@ -3323,10 +3323,7 @@ static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
   if (TLI.isLittleEndian())
     Offset = Offset + MSB - 1;
   for (unsigned i = 0; i != MSB; ++i) {
-    Val = (Val << 8);
-    
-    if (Offset < Str.size())
-      Val |= (unsigned char)Str[Offset];
+    Val = (Val << 8) | (unsigned char)Str[Offset];
     Offset += TLI.isLittleEndian() ? -1 : 1;
   }
   return DAG.getConstant(Val, VT);
@@ -3343,7 +3340,7 @@ static SDValue getMemBasePlusOffset(SDValue Base, unsigned Offset,
 
 /// isMemSrcFromString - Returns true if memcpy source is a string constant.
 ///
-static bool isMemSrcFromString(SDValue Src, StringRef &Str) {
+static bool isMemSrcFromString(SDValue Src, std::string &Str) {
   unsigned SrcDelta = 0;
   GlobalAddressSDNode *G = NULL;
   if (Src.getOpcode() == ISD::GlobalAddress)
@@ -3357,9 +3354,9 @@ static bool isMemSrcFromString(SDValue Src, StringRef &Str) {
   if (!G)
     return false;
 
-  if (const GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal()))
-    if (getConstantStringInfo(GV, Str, SrcDelta))
-      return true;
+  const GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
+  if (GV && GetConstantStringInfo(GV, Str, SrcDelta, false))
+    return true;
 
   return false;
 }
@@ -3464,7 +3461,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   unsigned SrcAlign = DAG.InferPtrAlignment(Src);
   if (Align > SrcAlign)
     SrcAlign = Align;
-  StringRef Str;
+  std::string Str;
   bool CopyFromStr = isMemSrcFromString(Src, Str);
   bool isZeroStr = CopyFromStr && Str.empty();
   unsigned Limit = AlwaysInline ? ~0U : TLI.getMaxStoresPerMemcpy(OptSize);

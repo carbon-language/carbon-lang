@@ -2018,8 +2018,7 @@ bool LLParser::ParseValID(ValID &ID, PerFunctionState *PFS) {
   }
   case lltok::kw_c:  // c "foo"
     Lex.Lex();
-    ID.ConstantVal = ConstantDataArray::getString(Context, Lex.getStrVal(),
-                                                  false);
+    ID.ConstantVal = ConstantArray::get(Context, Lex.getStrVal(), false);
     if (ParseToken(lltok::StringConstant, "expected string")) return true;
     ID.Kind = ValID::t_Constant;
     return false;

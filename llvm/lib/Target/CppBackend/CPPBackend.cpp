@@ -698,17 +698,36 @@ void CppWriter::printConstant(const Constant *CV) {
     printCFP(CFP);
     Out << ";";
   } else if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
-    Out << "std::vector<Constant*> " << constName << "_elems;";
-    nl(Out);
-    unsigned N = CA->getNumOperands();
-    for (unsigned i = 0; i < N; ++i) {
-      printConstant(CA->getOperand(i)); // recurse to print operands
-      Out << constName << "_elems.push_back("
-          << getCppName(CA->getOperand(i)) << ");";
+    if (CA->isString()) {
+      Out << "Constant* " << constName <<
+             " = ConstantArray::get(mod->getContext(), \"";
+      std::string tmp = CA->getAsString();
+      bool nullTerminate = false;
+      if (tmp[tmp.length()-1] == 0) {
+        tmp.erase(tmp.length()-1);
+        nullTerminate = true;
+      }
+      printEscapedString(tmp);
+      // Determine if we want null termination or not.
+      if (nullTerminate)
+        Out << "\", true"; // Indicate that the null terminator should be
+                           // added.
+      else
+        Out << "\", false";// No null terminator
+      Out << ");";
+    } else {
+      Out << "std::vector<Constant*> " << constName << "_elems;";
       nl(Out);
+      unsigned N = CA->getNumOperands();
+      for (unsigned i = 0; i < N; ++i) {
+        printConstant(CA->getOperand(i)); // recurse to print operands
+        Out << constName << "_elems.push_back("
+            << getCppName(CA->getOperand(i)) << ");";
+        nl(Out);
+      }
+      Out << "Constant* " << constName << " = ConstantArray::get("
+          << typeName << ", " << constName << "_elems);";
     }
-    Out << "Constant* " << constName << " = ConstantArray::get("
-        << typeName << ", " << constName << "_elems);";
   } else if (const ConstantStruct *CS = dyn_cast<ConstantStruct>(CV)) {
     Out << "std::vector<Constant*> " << constName << "_fields;";
     nl(Out);
@@ -721,14 +740,14 @@ void CppWriter::printConstant(const Constant *CV) {
     }
     Out << "Constant* " << constName << " = ConstantStruct::get("
         << typeName << ", " << constName << "_fields);";
-  } else if (const ConstantVector *CV = dyn_cast<ConstantVector>(CV)) {
+  } else if (const ConstantVector *CP = dyn_cast<ConstantVector>(CV)) {
     Out << "std::vector<Constant*> " << constName << "_elems;";
     nl(Out);
-    unsigned N = CV->getNumOperands();
+    unsigned N = CP->getNumOperands();
     for (unsigned i = 0; i < N; ++i) {
-      printConstant(CV->getOperand(i));
+      printConstant(CP->getOperand(i));
       Out << constName << "_elems.push_back("
-          << getCppName(CV->getOperand(i)) << ");";
+          << getCppName(CP->getOperand(i)) << ");";
       nl(Out);
     }
     Out << "Constant* " << constName << " = ConstantVector::get("
@@ -741,7 +760,7 @@ void CppWriter::printConstant(const Constant *CV) {
     if (CDS->isString()) {
       Out << "Constant *" << constName <<
       " = ConstantDataArray::getString(mod->getContext(), \"";
-      StringRef Str = CDS->getAsString();
+      StringRef Str = CA->getAsString();
       bool nullTerminate = false;
       if (Str.back() == 0) {
         Str = Str.drop_back();

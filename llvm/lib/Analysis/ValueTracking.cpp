@@ -1369,21 +1369,25 @@ Value *llvm::isBytewiseValue(Value *V) {
     }
   }
   
-  // A ConstantDataArray/Vector is splatable if all its members are equal and
-  // also splatable.
-  if (ConstantDataSequential *CA = dyn_cast<ConstantDataSequential>(V)) {
-    Value *Elt = CA->getElementAsConstant(0);
-    Value *Val = isBytewiseValue(Elt);
+  // A ConstantArray is splatable if all its members are equal and also
+  // splatable.
+  if (ConstantArray *CA = dyn_cast<ConstantArray>(V)) {
+    if (CA->getNumOperands() == 0)
+      return 0;
+    
+    Value *Val = isBytewiseValue(CA->getOperand(0));
     if (!Val)
       return 0;
     
-    for (unsigned I = 1, E = CA->getNumElements(); I != E; ++I)
-      if (CA->getElementAsConstant(I) != Elt)
+    for (unsigned I = 1, E = CA->getNumOperands(); I != E; ++I)
+      if (CA->getOperand(I-1) != CA->getOperand(I))
         return 0;
     
     return Val;
   }
 
+  // FIXME: Vector types (e.g., <4 x i32> <i32 -1, i32 -1, i32 -1, i32 -1>).
+  
   // Conceptually, we could handle things like:
   //   %a = zext i8 %X to i16
   //   %b = shl i16 %a, 8
@@ -1603,19 +1607,33 @@ Value *llvm::GetPointerBaseWithConstantOffset(Value *Ptr, int64_t &Offset,
 }
 
 
-/// getConstantStringInfo - This function computes the length of a
+/// GetConstantStringInfo - This function computes the length of a
 /// null-terminated C string pointed to by V.  If successful, it returns true
 /// and returns the string in Str.  If unsuccessful, it returns false.
-bool llvm::getConstantStringInfo(const Value *V, StringRef &Str,
-                                 uint64_t Offset) {
-  assert(V);
+bool llvm::GetConstantStringInfo(const Value *V, std::string &Str,
+                                 uint64_t Offset, bool StopAtNul) {
+  // If V is NULL then return false;
+  if (V == NULL) return false;
 
-  // Look through bitcast instructions and geps.
-  V = V->stripPointerCasts();
+  // Look through bitcast instructions.
+  if (const BitCastInst *BCI = dyn_cast<BitCastInst>(V))
+    return GetConstantStringInfo(BCI->getOperand(0), Str, Offset, StopAtNul);
   
-  // If the value is a GEP instructionor  constant expression, treat it as an
-  // offset.
-  if (const GEPOperator *GEP = dyn_cast<GEPOperator>(V)) {
+  // If the value is not a GEP instruction nor a constant expression with a
+  // GEP instruction, then return false because ConstantArray can't occur
+  // any other way.
+  const User *GEP = 0;
+  if (const GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(V)) {
+    GEP = GEPI;
+  } else if (const ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (CE->getOpcode() == Instruction::BitCast)
+      return GetConstantStringInfo(CE->getOperand(0), Str, Offset, StopAtNul);
+    if (CE->getOpcode() != Instruction::GetElementPtr)
+      return false;
+    GEP = CE;
+  }
+  
+  if (GEP) {
     // Make sure the GEP has exactly three arguments.
     if (GEP->getNumOperands() != 3)
       return false;
@@ -1640,45 +1658,51 @@ bool llvm::getConstantStringInfo(const Value *V, StringRef &Str,
       StartIdx = CI->getZExtValue();
     else
       return false;
-    return getConstantStringInfo(GEP->getOperand(0), Str, StartIdx+Offset);
+    return GetConstantStringInfo(GEP->getOperand(0), Str, StartIdx+Offset,
+                                 StopAtNul);
   }
 
   // The GEP instruction, constant or instruction, must reference a global
   // variable that is a constant and is initialized. The referenced constant
   // initializer is the array that we'll use for optimization.
-  const GlobalVariable *GV = dyn_cast<GlobalVariable>(V);
+  const GlobalVariable* GV = dyn_cast<GlobalVariable>(V);
   if (!GV || !GV->isConstant() || !GV->hasDefinitiveInitializer())
     return false;
-
+  const Constant *GlobalInit = GV->getInitializer();
+  
   // Handle the all-zeros case
-  if (GV->getInitializer()->isNullValue()) {
+  if (GlobalInit->isNullValue()) {
     // This is a degenerate case. The initializer is constant zero so the
     // length of the string must be zero.
-    Str = "";
+    Str.clear();
     return true;
   }
   
   // Must be a Constant Array
-  const ConstantDataArray *Array =
-    dyn_cast<ConstantDataArray>(GV->getInitializer());
-  if (Array == 0 || !Array->isString())
+  const ConstantArray *Array = dyn_cast<ConstantArray>(GlobalInit);
+  if (Array == 0 || !Array->getType()->getElementType()->isIntegerTy(8))
     return false;
   
   // Get the number of elements in the array
-  uint64_t NumElts = Array->getType()->getArrayNumElements();
-
-  // Start out with the entire array in the StringRef.
-  Str = Array->getAsString();
-
+  uint64_t NumElts = Array->getType()->getNumElements();
+  
   if (Offset > NumElts)
     return false;
   
-  // Skip over 'offset' bytes.
-  Str = Str.substr(Offset);
-  // Trim off the \0 and anything after it.  If the array is not nul terminated,
-  // we just return the whole end of string.  The client may know some other way
-  // that the string is length-bound.
-  Str = Str.substr(0, Str.find('\0'));
+  // Traverse the constant array from 'Offset' which is the place the GEP refers
+  // to in the array.
+  Str.reserve(NumElts-Offset);
+  for (unsigned i = Offset; i != NumElts; ++i) {
+    const Constant *Elt = Array->getOperand(i);
+    const ConstantInt *CI = dyn_cast<ConstantInt>(Elt);
+    if (!CI) // This array isn't suitable, non-int initializer.
+      return false;
+    if (StopAtNul && CI->isZero())
+      return true; // we found end of string, success!
+    Str += (char)CI->getZExtValue();
+  }
+  
+  // The array isn't null terminated, but maybe this is a memcpy, not a strcpy.
   return true;
 }
 
@@ -1690,7 +1714,8 @@ bool llvm::getConstantStringInfo(const Value *V, StringRef &Str,
 /// the specified pointer, return 'len+1'.  If we can't, return 0.
 static uint64_t GetStringLengthH(Value *V, SmallPtrSet<PHINode*, 32> &PHIs) {
   // Look through noop bitcast instructions.
-  V = V->stripPointerCasts();
+  if (BitCastInst *BCI = dyn_cast<BitCastInst>(V))
+    return GetStringLengthH(BCI->getOperand(0), PHIs);
 
   // If this is a PHI node, there are two cases: either we have already seen it
   // or we haven't.
@@ -1726,13 +1751,83 @@ static uint64_t GetStringLengthH(Value *V, SmallPtrSet<PHINode*, 32> &PHIs) {
     if (Len1 != Len2) return 0;
     return Len1;
   }
-  
-  // Otherwise, see if we can read the string.
-  StringRef StrData;
-  if (!getConstantStringInfo(V, StrData))
+
+  // As a special-case, "@string = constant i8 0" is also a string with zero
+  // length, not wrapped in a bitcast or GEP.
+  if (GlobalVariable *GV = dyn_cast<GlobalVariable>(V)) {
+    if (GV->isConstant() && GV->hasDefinitiveInitializer())
+      if (GV->getInitializer()->isNullValue()) return 1;
+    return 0;
+  }
+
+  // If the value is not a GEP instruction nor a constant expression with a
+  // GEP instruction, then return unknown.
+  User *GEP = 0;
+  if (GetElementPtrInst *GEPI = dyn_cast<GetElementPtrInst>(V)) {
+    GEP = GEPI;
+  } else if (ConstantExpr *CE = dyn_cast<ConstantExpr>(V)) {
+    if (CE->getOpcode() != Instruction::GetElementPtr)
+      return 0;
+    GEP = CE;
+  } else {
+    return 0;
+  }
+
+  // Make sure the GEP has exactly three arguments.
+  if (GEP->getNumOperands() != 3)
     return 0;
 
-  return StrData.size()+1;
+  // Check to make sure that the first operand of the GEP is an integer and
+  // has value 0 so that we are sure we're indexing into the initializer.
+  if (ConstantInt *Idx = dyn_cast<ConstantInt>(GEP->getOperand(1))) {
+    if (!Idx->isZero())
+      return 0;
+  } else
+    return 0;
+
+  // If the second index isn't a ConstantInt, then this is a variable index
+  // into the array.  If this occurs, we can't say anything meaningful about
+  // the string.
+  uint64_t StartIdx = 0;
+  if (ConstantInt *CI = dyn_cast<ConstantInt>(GEP->getOperand(2)))
+    StartIdx = CI->getZExtValue();
+  else
+    return 0;
+
+  // The GEP instruction, constant or instruction, must reference a global
+  // variable that is a constant and is initialized. The referenced constant
+  // initializer is the array that we'll use for optimization.
+  GlobalVariable* GV = dyn_cast<GlobalVariable>(GEP->getOperand(0));
+  if (!GV || !GV->isConstant() || !GV->hasInitializer() ||
+      GV->mayBeOverridden())
+    return 0;
+  Constant *GlobalInit = GV->getInitializer();
+
+  // Handle the ConstantAggregateZero case, which is a degenerate case. The
+  // initializer is constant zero so the length of the string must be zero.
+  if (isa<ConstantAggregateZero>(GlobalInit))
+    return 1;  // Len = 0 offset by 1.
+
+  // Must be a Constant Array
+  ConstantArray *Array = dyn_cast<ConstantArray>(GlobalInit);
+  if (!Array || !Array->getType()->getElementType()->isIntegerTy(8))
+    return false;
+
+  // Get the number of elements in the array
+  uint64_t NumElts = Array->getType()->getNumElements();
+
+  // Traverse the constant array from StartIdx (derived above) which is
+  // the place the GEP refers to in the array.
+  for (unsigned i = StartIdx; i != NumElts; ++i) {
+    Constant *Elt = Array->getOperand(i);
+    ConstantInt *CI = dyn_cast<ConstantInt>(Elt);
+    if (!CI) // This array isn't suitable, non-int initializer.
+      return 0;
+    if (CI->isZero())
+      return i-StartIdx+1; // We found end of string, success!
+  }
+
+  return 0; // The array isn't null terminated, conservatively return 'unknown'.
 }
 
 /// GetStringLength - If we can compute the length of the string pointed to by

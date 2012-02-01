@@ -256,18 +256,19 @@ struct StrChrOpt : public LibCallOptimization {
                         ConstantInt::get(TD->getIntPtrType(*Context), Len),
                         B, TD);
     }
-    
+
     // Otherwise, the character is a constant, see if the first argument is
     // a string literal.  If so, we can constant fold.
-    StringRef Str;
-    if (!getConstantStringInfo(SrcStr, Str))
+    std::string Str;
+    if (!GetConstantStringInfo(SrcStr, Str))
       return 0;
 
-    // Compute the offset, make sure to handle the case when we're searching for
-    // zero (a weird way to spell strlen).
-    size_t I = CharC->getSExtValue() == 0 ?
-        Str.size() : Str.find(CharC->getSExtValue());
-    if (I == StringRef::npos) // Didn't find the char.  strchr returns null.
+    // strchr can find the nul character.
+    Str += '\0';
+
+    // Compute the offset.
+    size_t I = Str.find(CharC->getSExtValue());
+    if (I == std::string::npos) // Didn't find the char.  strchr returns null.
       return Constant::getNullValue(CI->getType());
 
     // strchr(s+n,c)  -> gep(s+n+i,c)
@@ -295,18 +296,20 @@ struct StrRChrOpt : public LibCallOptimization {
     if (!CharC)
       return 0;
 
-    StringRef Str;
-    if (!getConstantStringInfo(SrcStr, Str)) {
+    std::string Str;
+    if (!GetConstantStringInfo(SrcStr, Str)) {
       // strrchr(s, 0) -> strchr(s, 0)
       if (TD && CharC->isZero())
         return EmitStrChr(SrcStr, '\0', B, TD);
       return 0;
     }
 
+    // strrchr can find the nul character.
+    Str += '\0';
+
     // Compute the offset.
-    size_t I = CharC->getSExtValue() == 0 ?
-        Str.size() : Str.rfind(CharC->getSExtValue());
-    if (I == StringRef::npos) // Didn't find the char. Return null.
+    size_t I = Str.rfind(CharC->getSExtValue());
+    if (I == std::string::npos) // Didn't find the char. Return null.
       return Constant::getNullValue(CI->getType());
 
     // strrchr(s+n,c) -> gep(s+n+i,c)
@@ -331,13 +334,14 @@ struct StrCmpOpt : public LibCallOptimization {
     if (Str1P == Str2P)      // strcmp(x,x)  -> 0
       return ConstantInt::get(CI->getType(), 0);
 
-    StringRef Str1, Str2;
-    bool HasStr1 = getConstantStringInfo(Str1P, Str1);
-    bool HasStr2 = getConstantStringInfo(Str2P, Str2);
+    std::string Str1, Str2;
+    bool HasStr1 = GetConstantStringInfo(Str1P, Str1);
+    bool HasStr2 = GetConstantStringInfo(Str2P, Str2);
 
     // strcmp(x, y)  -> cnst  (if both x and y are constant strings)
     if (HasStr1 && HasStr2)
-      return ConstantInt::get(CI->getType(), Str1.compare(Str2));
+      return ConstantInt::get(CI->getType(),
+                              StringRef(Str1).compare(Str2));
 
     if (HasStr1 && Str1.empty()) // strcmp("", x) -> -*x
       return B.CreateNeg(B.CreateZExt(B.CreateLoad(Str2P, "strcmpload"),
@@ -393,14 +397,14 @@ struct StrNCmpOpt : public LibCallOptimization {
     if (TD && Length == 1) // strncmp(x,y,1) -> memcmp(x,y,1)
       return EmitMemCmp(Str1P, Str2P, CI->getArgOperand(2), B, TD);
 
-    StringRef Str1, Str2;
-    bool HasStr1 = getConstantStringInfo(Str1P, Str1);
-    bool HasStr2 = getConstantStringInfo(Str2P, Str2);
+    std::string Str1, Str2;
+    bool HasStr1 = GetConstantStringInfo(Str1P, Str1);
+    bool HasStr2 = GetConstantStringInfo(Str2P, Str2);
 
     // strncmp(x, y)  -> cnst  (if both x and y are constant strings)
     if (HasStr1 && HasStr2) {
-      StringRef SubStr1 = Str1.substr(0, Length);
-      StringRef SubStr2 = Str2.substr(0, Length);
+      StringRef SubStr1 = StringRef(Str1).substr(0, Length);
+      StringRef SubStr2 = StringRef(Str2).substr(0, Length);
       return ConstantInt::get(CI->getType(), SubStr1.compare(SubStr2));
     }
 
@@ -545,9 +549,9 @@ struct StrPBrkOpt : public LibCallOptimization {
         FT->getReturnType() != FT->getParamType(0))
       return 0;
 
-    StringRef S1, S2;
-    bool HasS1 = getConstantStringInfo(CI->getArgOperand(0), S1);
-    bool HasS2 = getConstantStringInfo(CI->getArgOperand(1), S2);
+    std::string S1, S2;
+    bool HasS1 = GetConstantStringInfo(CI->getArgOperand(0), S1);
+    bool HasS2 = GetConstantStringInfo(CI->getArgOperand(1), S2);
 
     // strpbrk(s, "") -> NULL
     // strpbrk("", s) -> NULL
@@ -605,9 +609,9 @@ struct StrSpnOpt : public LibCallOptimization {
         !FT->getReturnType()->isIntegerTy())
       return 0;
 
-    StringRef S1, S2;
-    bool HasS1 = getConstantStringInfo(CI->getArgOperand(0), S1);
-    bool HasS2 = getConstantStringInfo(CI->getArgOperand(1), S2);
+    std::string S1, S2;
+    bool HasS1 = GetConstantStringInfo(CI->getArgOperand(0), S1);
+    bool HasS2 = GetConstantStringInfo(CI->getArgOperand(1), S2);
 
     // strspn(s, "") -> 0
     // strspn("", s) -> 0
@@ -615,11 +619,8 @@ struct StrSpnOpt : public LibCallOptimization {
       return Constant::getNullValue(CI->getType());
 
     // Constant folding.
-    if (HasS1 && HasS2) {
-      size_t Pos = S1.find_first_not_of(S2);
-      if (Pos == StringRef::npos) Pos = S1.size();
-      return ConstantInt::get(CI->getType(), Pos);
-    }
+    if (HasS1 && HasS2)
+      return ConstantInt::get(CI->getType(), strspn(S1.c_str(), S2.c_str()));
 
     return 0;
   }
@@ -637,20 +638,17 @@ struct StrCSpnOpt : public LibCallOptimization {
         !FT->getReturnType()->isIntegerTy())
       return 0;
 
-    StringRef S1, S2;
-    bool HasS1 = getConstantStringInfo(CI->getArgOperand(0), S1);
-    bool HasS2 = getConstantStringInfo(CI->getArgOperand(1), S2);
+    std::string S1, S2;
+    bool HasS1 = GetConstantStringInfo(CI->getArgOperand(0), S1);
+    bool HasS2 = GetConstantStringInfo(CI->getArgOperand(1), S2);
 
     // strcspn("", s) -> 0
     if (HasS1 && S1.empty())
       return Constant::getNullValue(CI->getType());
 
     // Constant folding.
-    if (HasS1 && HasS2) {
-      size_t Pos = S1.find_first_of(S2);
-      if (Pos == StringRef::npos) Pos = S1.size();
-      return ConstantInt::get(CI->getType(), Pos);
-    }
+    if (HasS1 && HasS2)
+      return ConstantInt::get(CI->getType(), strcspn(S1.c_str(), S2.c_str()));
 
     // strcspn(s, "") -> strlen(s)
     if (TD && HasS2 && S2.empty())
@@ -694,9 +692,9 @@ struct StrStrOpt : public LibCallOptimization {
     }
 
     // See if either input string is a constant string.
-    StringRef SearchStr, ToFindStr;
-    bool HasStr1 = getConstantStringInfo(CI->getArgOperand(0), SearchStr);
-    bool HasStr2 = getConstantStringInfo(CI->getArgOperand(1), ToFindStr);
+    std::string SearchStr, ToFindStr;
+    bool HasStr1 = GetConstantStringInfo(CI->getArgOperand(0), SearchStr);
+    bool HasStr2 = GetConstantStringInfo(CI->getArgOperand(1), ToFindStr);
 
     // fold strstr(x, "") -> x.
     if (HasStr2 && ToFindStr.empty())
@@ -706,7 +704,7 @@ struct StrStrOpt : public LibCallOptimization {
     if (HasStr1 && HasStr2) {
       std::string::size_type Offset = SearchStr.find(ToFindStr);
 
-      if (Offset == StringRef::npos) // strstr("foo", "bar") -> null
+      if (Offset == std::string::npos) // strstr("foo", "bar") -> null
         return Constant::getNullValue(CI->getType());
 
       // strstr("abcd", "bc") -> gep((char*)"abcd", 1)
@@ -758,11 +756,11 @@ struct MemCmpOpt : public LibCallOptimization {
     }
 
     // Constant folding: memcmp(x, y, l) -> cnst (all arguments are constant)
-    StringRef LHSStr, RHSStr;
-    if (getConstantStringInfo(LHS, LHSStr) &&
-        getConstantStringInfo(RHS, RHSStr)) {
+    std::string LHSStr, RHSStr;
+    if (GetConstantStringInfo(LHS, LHSStr) &&
+        GetConstantStringInfo(RHS, RHSStr)) {
       // Make sure we're not reading out-of-bounds memory.
-      if (Len > LHSStr.size() || Len > RHSStr.size())
+      if (Len > LHSStr.length() || Len > RHSStr.length())
         return 0;
       uint64_t Ret = memcmp(LHSStr.data(), RHSStr.data(), Len);
       return ConstantInt::get(CI->getType(), Ret);
@@ -1118,8 +1116,8 @@ struct PrintFOpt : public LibCallOptimization {
   Value *OptimizeFixedFormatString(Function *Callee, CallInst *CI,
                                    IRBuilder<> &B) {
     // Check for a fixed format string.
-    StringRef FormatStr;
-    if (!getConstantStringInfo(CI->getArgOperand(0), FormatStr))
+    std::string FormatStr;
+    if (!GetConstantStringInfo(CI->getArgOperand(0), FormatStr))
       return 0;
 
     // Empty format string -> noop.
@@ -1145,7 +1143,7 @@ struct PrintFOpt : public LibCallOptimization {
         FormatStr.find('%') == std::string::npos) {  // no format characters.
       // Create a string literal with no \n on it.  We expect the constant merge
       // pass to be run after this pass, to merge duplicate strings.
-      FormatStr = FormatStr.drop_back();
+      FormatStr.erase(FormatStr.end()-1);
       Value *GV = B.CreateGlobalString(FormatStr, "str");
       EmitPutS(GV, B, TD);
       return CI->use_empty() ? (Value*)CI :
@@ -1205,8 +1203,8 @@ struct SPrintFOpt : public LibCallOptimization {
   Value *OptimizeFixedFormatString(Function *Callee, CallInst *CI,
                                    IRBuilder<> &B) {
     // Check for a fixed format string.
-    StringRef FormatStr;
-    if (!getConstantStringInfo(CI->getArgOperand(1), FormatStr))
+    std::string FormatStr;
+    if (!GetConstantStringInfo(CI->getArgOperand(1), FormatStr))
       return 0;
 
     // If we just have a format string (nothing else crazy) transform it.
@@ -1360,8 +1358,8 @@ struct FPrintFOpt : public LibCallOptimization {
   Value *OptimizeFixedFormatString(Function *Callee, CallInst *CI,
                                    IRBuilder<> &B) {
     // All the optimizations depend on the format string.
-    StringRef FormatStr;
-    if (!getConstantStringInfo(CI->getArgOperand(1), FormatStr))
+    std::string FormatStr;
+    if (!GetConstantStringInfo(CI->getArgOperand(1), FormatStr))
       return 0;
 
     // fprintf(F, "foo") --> fwrite("foo", 3, 1, F)
@@ -1444,8 +1442,8 @@ struct PutsOpt : public LibCallOptimization {
       return 0;
 
     // Check for a constant string.
-    StringRef Str;
-    if (!getConstantStringInfo(CI->getArgOperand(0), Str))
+    std::string Str;
+    if (!GetConstantStringInfo(CI->getArgOperand(0), Str))
       return 0;
 
     if (Str.empty() && CI->use_empty()) {
@@ -2415,8 +2413,6 @@ bool SimplifyLibCalls::doInitialization(Module &M) {
 //   * stpcpy(str, "literal") ->
 //           llvm.memcpy(str,"literal",strlen("literal")+1,1)
 //
-// strchr:
-//   * strchr(p, 0) -> strlen(p)
 // tan, tanf, tanl:
 //   * tan(atan(x)) -> x
 //

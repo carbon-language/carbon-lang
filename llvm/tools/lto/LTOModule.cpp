@@ -190,9 +190,9 @@ bool LTOModule::objcClassNameFromExpression(Constant *c, std::string &name) {
     Constant *op = ce->getOperand(0);
     if (GlobalVariable *gvn = dyn_cast<GlobalVariable>(op)) {
       Constant *cn = gvn->getInitializer();
-      if (ConstantDataArray *ca = dyn_cast<ConstantDataArray>(cn)) {
+      if (ConstantArray *ca = dyn_cast<ConstantArray>(cn)) {
         if (ca->isCString()) {
-          name = ".objc_class_name_" + ca->getAsCString().str();
+          name = ".objc_class_name_" + ca->getAsCString();
           return true;
         }
       }
