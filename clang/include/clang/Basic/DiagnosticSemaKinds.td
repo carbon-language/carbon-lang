@@ -4068,7 +4068,9 @@ def err_capture_non_automatic_variable : Error<
   "%0 cannot be captured because it does not have automatic storage duration">;
 def err_implicit_this_capture : Error<
   "'this' cannot be implicitly captured in this context">;
-
+def err_lambda_capture_block : Error<
+  "__block variable %0 cannot be captured in a lambda">;
+  
 def err_operator_arrow_circular : Error<
   "circular pointer delegation detected">;
 def err_pseudo_dtor_base_not_scalar : Error<

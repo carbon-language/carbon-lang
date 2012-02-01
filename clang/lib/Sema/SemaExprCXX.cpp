@@ -4933,9 +4933,14 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       continue;
     }
 
-    // FIXME: This is completely wrong for nested captures and variables
-    // with a non-trivial constructor.
-    // FIXME: We should refuse to capture __block variables.
+    if (Var->hasAttr<BlocksAttr>()) {
+      Diag(C->Loc, diag::err_lambda_capture_block) << C->Id;
+      Diag(Var->getLocation(), diag::note_previous_decl) << C->Id;
+      continue;
+    }
+    
+    // FIXME: If this is capture by copy, make sure that we can in fact copy
+    // the variable.
     Captures.push_back(LambdaScopeInfo::Capture(Var, C->Kind == LCK_ByRef,
                                                 /*isNested*/false, 0));
     CaptureMap[Var] = Captures.size();
