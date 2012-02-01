@@ -40,8 +40,8 @@ $ alias pollycc clang -Xclang -load -Xclang ${POLLY_BUILD_DIR}/lib/LLVMPolly.so
 
 <h2>Optimizing with Polly</h2>
 
-Optimizing with Polly is as easy as ading <b>-O3 -polly</b> to your compiler
-flags (Polly is only available at -O3).
+Optimizing with Polly is as easy as adding <b>-O3 -mllvm -polly</b> to your
+compiler flags (Polly is only available at -O3).
 
 <pre class="code">pollycc -O3 -mllvm -polly file.c</pre>
 
