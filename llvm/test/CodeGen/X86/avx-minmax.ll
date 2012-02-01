@@ -33,7 +33,7 @@ define <4 x float> @minps(<4 x float> %x, <4 x float> %y) {
 }
 
 ; UNSAFE: vmaxpd:
-; UNSAFE: vmaxpd %ymm
+; UNSAFE: vmaxpd {{.+}}, %ymm
 define <4 x double> @vmaxpd(<4 x double> %x, <4 x double> %y) {
   %max_is_x = fcmp oge <4 x double> %x, %y
   %max = select <4 x i1> %max_is_x, <4 x double> %x, <4 x double> %y
@@ -41,7 +41,7 @@ define <4 x double> @vmaxpd(<4 x double> %x, <4 x double> %y) {
 }
 
 ; UNSAFE: vminpd:
-; UNSAFE: vminpd %ymm
+; UNSAFE: vminpd {{.+}}, %ymm
 define <4 x double> @vminpd(<4 x double> %x, <4 x double> %y) {
   %min_is_x = fcmp ole <4 x double> %x, %y
   %min = select <4 x i1> %min_is_x, <4 x double> %x, <4 x double> %y
@@ -49,7 +49,7 @@ define <4 x double> @vminpd(<4 x double> %x, <4 x double> %y) {
 }
 
 ; UNSAFE: vmaxps:
-; UNSAFE: vmaxps %ymm
+; UNSAFE: vmaxps {{.+}}, %ymm
 define <8 x float> @vmaxps(<8 x float> %x, <8 x float> %y) {
   %max_is_x = fcmp oge <8 x float> %x, %y
   %max = select <8 x i1> %max_is_x, <8 x float> %x, <8 x float> %y
@@ -57,7 +57,7 @@ define <8 x float> @vmaxps(<8 x float> %x, <8 x float> %y) {
 }
 
 ; UNSAFE: vminps:
-; UNSAFE: vminps %ymm
+; UNSAFE: vminps {{.+}}, %ymm
 define <8 x float> @vminps(<8 x float> %x, <8 x float> %y) {
   %min_is_x = fcmp ole <8 x float> %x, %y
   %min = select <8 x i1> %min_is_x, <8 x float> %x, <8 x float> %y
