@@ -22,23 +22,23 @@
 
 #define DEBUG_TYPE "polly-codegen"
 
-#include "polly/LinkAllPasses.h"
-#include "polly/Support/GICHelper.h"
-#include "polly/Support/ScopHelper.h"
 #include "polly/Cloog.h"
 #include "polly/CodeGeneration.h"
 #include "polly/Dependences.h"
+#include "polly/LinkAllPasses.h"
 #include "polly/ScopInfo.h"
 #include "polly/TempScopInfo.h"
+#include "polly/Support/GICHelper.h"
+
+#include "llvm/Module.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/Analysis/LoopInfo.h"
+#include "llvm/Analysis/ScalarEvolutionExpander.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/IRBuilder.h"
-#include "llvm/Analysis/LoopInfo.h"
-#include "llvm/Analysis/ScalarEvolutionExpander.h"
-#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Module.h"
-#include "llvm/ADT/SetVector.h"
+#include "llvm/Transforms/Utils/BasicBlockUtils.h"
 
 #define CLOOG_INT_GMP 1
 #include "cloog/cloog.h"
