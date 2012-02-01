@@ -4997,6 +4997,10 @@ static SDValue isVectorBroadcast(SDValue &Op, const X86Subtarget *Subtarget) {
   if (!ISD::isNormalLoad(Ld.getNode()))
     return SDValue();
 
+  // Reject loads that have uses of the chain result
+  if (Ld->hasAnyUseOfValue(1))
+    return SDValue();
+
   bool Is256 = VT.getSizeInBits() == 256;
   bool Is128 = VT.getSizeInBits() == 128;
   unsigned ScalarSize = Ld.getValueType().getSizeInBits();
