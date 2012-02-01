@@ -70,7 +70,7 @@ BreakpointLocation::GetBreakpoint ()
 }
 
 bool
-BreakpointLocation::IsEnabled ()
+BreakpointLocation::IsEnabled () const
 {
     if (!m_owner.IsEnabled())
         return false;
