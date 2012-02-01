@@ -82,8 +82,8 @@ static void setDependentExceptionClass(_Unwind_Exception* unwind_exception) {
 
 //  Is it one of ours?
 static bool isOurExceptionClass(const _Unwind_Exception* unwind_exception) {
-    return (unwind_exception->exception_class & get_language) == 
-           (kOurExceptionClass                & get_language);
+    return (unwind_exception->exception_class & get_vendor_and_language) == 
+           (kOurExceptionClass                & get_vendor_and_language);
 }
 
 static bool isDependentException(_Unwind_Exception* unwind_exception) {

@@ -19,7 +19,7 @@ namespace __cxxabiv1 {
 
 static const uint64_t kOurExceptionClass          = 0x434C4E47432B2B00; // CLNGC++\0
 static const uint64_t kOurDependentExceptionClass = 0x434C4E47432B2B01; // CLNGC++\1
-static const uint64_t get_language =                0x00000000FFFFFF00; // mask for C++
+static const uint64_t get_vendor_and_language =     0xFFFFFFFFFFFFFF00; // mask for CLNGC++
                                                     
     struct __cxa_exception { 
 #if __LP64__

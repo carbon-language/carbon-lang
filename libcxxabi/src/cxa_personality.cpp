@@ -784,8 +784,8 @@ __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClas
 {
     if (version != 1 || unwind_exception == 0 || context == 0)
         return _URC_FATAL_PHASE1_ERROR;
-    bool native_exception = (exceptionClass     & get_language) ==
-                            (kOurExceptionClass & get_language);
+    bool native_exception = (exceptionClass     & get_vendor_and_language) ==
+                            (kOurExceptionClass & get_vendor_and_language);
     scan_results results;
     if (actions & _UA_SEARCH_PHASE)
     {
@@ -873,8 +873,9 @@ __cxa_call_unexpected(void* arg)
     if (unwind_exception == 0)
         call_terminate(false, unwind_exception);
     __cxa_begin_catch(unwind_exception);
-    bool native_old_exception = (unwind_exception->exception_class & get_language) ==
-                                (kOurExceptionClass                & get_language);
+    bool native_old_exception =
+        (unwind_exception->exception_class & get_vendor_and_language) ==
+        (kOurExceptionClass                & get_vendor_and_language);
     std::unexpected_handler u_handler;
     std::terminate_handler t_handler;
     __cxa_exception* old_exception_header = 0;
@@ -931,8 +932,8 @@ __cxa_call_unexpected(void* arg)
                 // This shouldn't be able to happen!
                 std::__terminate(t_handler);
             bool native_new_exception =
-                (new_exception_header->unwindHeader.exception_class & get_language) ==
-                                                (kOurExceptionClass & get_language);
+                (new_exception_header->unwindHeader.exception_class & get_vendor_and_language) ==
+                                                (kOurExceptionClass & get_vendor_and_language);
             void* adjustedPtr;
             if (native_new_exception && (new_exception_header != old_exception_header))
             {
