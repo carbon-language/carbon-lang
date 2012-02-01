@@ -178,7 +178,7 @@ class targetCommandTestCase(TestBase):
         self.runCmd("b main")
         self.runCmd("run")
         
-         # New feature: you don't need to specify the variable(s) to 'target vaiable'.
+        # New feature: you don't need to specify the variable(s) to 'target vaiable'.
         # It will find all the global and static variables in the current compile unit.
         self.expect("target variable",
             substrs = ['my_global_char',
