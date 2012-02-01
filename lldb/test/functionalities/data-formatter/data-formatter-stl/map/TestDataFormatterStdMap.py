@@ -12,7 +12,7 @@ class StdMapDataFormatterTestCase(TestBase):
     mydir = os.path.join("functionalities", "data-formatter", "data-formatter-stl", "map")
 
     #rdar://problem/10334911
-    #@unittest2.expectedFailure
+    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
         """Test data formatter commands."""
@@ -20,7 +20,7 @@ class StdMapDataFormatterTestCase(TestBase):
         self.data_formatter_commands()
 
     #rdar://problem/10334911
-    #@unittest2.expectedFailure
+    @unittest2.expectedFailure
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()
