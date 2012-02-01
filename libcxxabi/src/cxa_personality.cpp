@@ -709,11 +709,6 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
                 if (actionOffset == 0)
                 {
                     // End of action list, no matching handler or cleanup found
-                    // If this is a type 2 search, phase 1 told us we would find
-                    //   a handler and we didn't.  Something has gone terribly wrong.
-                    // Searches type 1 and 3 should return _URC_CONTINUE_UNWIND
-                    if (actions & _UA_HANDLER_FRAME)
-                        call_terminate(native_exception, unwind_exception);
                     results.reason = _URC_CONTINUE_UNWIND;
                     return;
                 }
@@ -829,6 +824,8 @@ __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClas
             else
             {
                 scan_eh_tab(results, actions, native_exception, unwind_exception, context);
+                if (results.reason != _URC_HANDLER_FOUND)
+                    call_terminate(native_exception, unwind_exception);
             }
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), results.ttypeIndex);
