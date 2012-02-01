@@ -380,8 +380,7 @@ __vmi_class_type_info::has_unambiguous_public_base(__dynamic_cast_info* info,
     }
 }
 
-// Handles bullets 1 and 4
-// TODO:  Are we good to go here for __pointer_to_member_type_info?
+// Handles bullets 1 and 4 for both pointers and member pointers
 bool
 __pbase_type_info::can_catch(const __shim_type_info* thrown_type,
                              void*&) const
