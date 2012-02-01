@@ -970,11 +970,7 @@ bool CXXRecordDecl::isCLike() const {
   if (!hasDefinition())
     return true;
 
-  return isPOD() &&
-      data().HasOnlyCMembers &&
-      !data().HasPrivateFields &&
-      !data().HasProtectedFields &&
-      !data().NumBases;
+  return isPOD() && data().HasOnlyCMembers;
 }
 
 static CanQualType GetConversionType(ASTContext &Context, NamedDecl *Conv) {
