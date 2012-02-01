@@ -30,6 +30,7 @@
 #ifndef __APPLE__
 #include <malloc.h>
 #else
+#include <AvailabilityMacros.h>  // For MAC_OS_X_VERSION_*
 #include <CoreFoundation/CFString.h>
 #endif  // __APPLE__
 
@@ -1305,12 +1306,17 @@ TEST(AddressSanitizer, StrArgsOverlapTest) {
   size_t size = Ident(100);
   char *str = Ident((char*)malloc(size));
 
+// Do not check memcpy() on OS X 10.7 and later, where it actually aliases
+// memmove().
+#if !defined(__APPLE__) || !defined(MAC_OS_X_VERSION_10_7) || \
+    (MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7)
   // Check "memcpy". Use Ident() to avoid inlining.
   memset(str, 'z', size);
   Ident(memcpy)(str + 1, str + 11, 10);
   Ident(memcpy)(str, str, 0);
   EXPECT_DEATH(Ident(memcpy)(str, str + 14, 15), OverlapErrorMessage("memcpy"));
   EXPECT_DEATH(Ident(memcpy)(str + 14, str, 15), OverlapErrorMessage("memcpy"));
+#endif
 
   // We do not treat memcpy with to==from as a bug.
   // See http://llvm.org/bugs/show_bug.cgi?id=11763.
