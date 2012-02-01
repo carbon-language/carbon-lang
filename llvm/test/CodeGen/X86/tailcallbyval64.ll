@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=x86_64-linux  -tailcallopt  | FileCheck %s
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux  -tailcallopt  | FileCheck %s
 
 ; FIXME: Win64 does not support byval.
 

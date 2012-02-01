@@ -1,7 +1,7 @@
-; RUN: llc < %s -mtriple=i686-linux -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X32
-; RUN: llc < %s -mtriple=x86_64-linux  -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X64
-; RUN: llc < %s -mtriple=i686-linux -segmented-stacks -filetype=obj
-; RUN: llc < %s -mtriple=x86_64-linux -segmented-stacks -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux  -segmented-stacks -verify-machineinstrs | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mcpu=generic -mtriple=i686-linux -segmented-stacks -filetype=obj
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux -segmented-stacks -filetype=obj
 
 ; Just to prevent the alloca from being optimized away
 declare void @dummy_use(i32*, i32)

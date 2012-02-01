@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 | FileCheck %s
+; RUN: llc < %s -mcpu=generic -march=x86 | FileCheck %s
 
 ;; Simple case
 define i32 @test1(i8 %x) nounwind readnone {

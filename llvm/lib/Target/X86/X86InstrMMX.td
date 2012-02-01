@@ -105,19 +105,23 @@ multiclass sse12_cvt_pint<bits<8> opc, RegisterClass SrcRC, RegisterClass DstRC,
                          Intrinsic Int, X86MemOperand x86memop, PatFrag ld_frag,
                          string asm, Domain d> {
   def irr : PI<opc, MRMSrcReg, (outs DstRC:$dst), (ins SrcRC:$src), asm,
-                        [(set DstRC:$dst, (Int SrcRC:$src))], d>;
+                        [(set DstRC:$dst, (Int SrcRC:$src))], 
+                        IIC_DEFAULT, d>;
   def irm : PI<opc, MRMSrcMem, (outs DstRC:$dst), (ins x86memop:$src), asm,
-                        [(set DstRC:$dst, (Int (ld_frag addr:$src)))], d>;
+                        [(set DstRC:$dst, (Int (ld_frag addr:$src)))], 
+                        IIC_DEFAULT, d>;
 }
 
 multiclass sse12_cvt_pint_3addr<bits<8> opc, RegisterClass SrcRC,
                     RegisterClass DstRC, Intrinsic Int, X86MemOperand x86memop,
                     PatFrag ld_frag, string asm, Domain d> {
   def irr : PI<opc, MRMSrcReg, (outs DstRC:$dst),(ins DstRC:$src1, SrcRC:$src2),
-              asm, [(set DstRC:$dst, (Int DstRC:$src1, SrcRC:$src2))], d>;
+              asm, [(set DstRC:$dst, (Int DstRC:$src1, SrcRC:$src2))], 
+              IIC_DEFAULT, d>;
   def irm : PI<opc, MRMSrcMem, (outs DstRC:$dst),
                    (ins DstRC:$src1, x86memop:$src2), asm,
-              [(set DstRC:$dst, (Int DstRC:$src1, (ld_frag addr:$src2)))], d>;
+              [(set DstRC:$dst, (Int DstRC:$src1, (ld_frag addr:$src2)))], 
+              IIC_DEFAULT, d>;
 }
 
 //===----------------------------------------------------------------------===//

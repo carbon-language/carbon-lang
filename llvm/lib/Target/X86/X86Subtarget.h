@@ -49,6 +49,13 @@ protected:
     NoThreeDNow, ThreeDNow, ThreeDNowA
   };
 
+  enum X86ProcFamilyEnum {
+    Others, IntelAtom
+  };
+
+  /// X86ProcFamily - X86 processor family: Intel Atom, and others
+  X86ProcFamilyEnum X86ProcFamily;
+  
   /// PICStyle - Which PIC style to use
   ///
   PICStyles::Style PICStyle;
@@ -125,6 +132,9 @@ protected:
   /// this is true for most x86-64 chips, but not the first AMD chips.
   bool HasCmpxchg16b;
 
+  /// PostRAScheduler - True if using post-register-allocation scheduler.
+  bool PostRAScheduler;
+
   /// stackAlignment - The minimum alignment known to hold of the stack frame on
   /// entry to the function and which must be maintained by every function.
   unsigned stackAlignment;
@@ -135,6 +145,9 @@ protected:
 
   /// TargetTriple - What processor and OS we're targeting.
   Triple TargetTriple;
+  
+  /// Instruction itineraries for scheduling
+  InstrItineraryData InstrItins;
 
 private:
   /// In64BitMode - True if compiling for 64-bit, false for 32-bit.
@@ -201,6 +214,8 @@ public:
   bool isUnalignedMemAccessFast() const { return IsUAMemFast; }
   bool hasVectorUAMem() const { return HasVectorUAMem; }
   bool hasCmpxchg16b() const { return HasCmpxchg16b; }
+
+  bool isAtom() const { return X86ProcFamily == IntelAtom; }
 
   const Triple &getTargetTriple() const { return TargetTriple; }
 
@@ -291,6 +306,15 @@ public:
   /// indicating the number of scheduling cycles of backscheduling that
   /// should be attempted.
   unsigned getSpecialAddressLatency() const;
+
+  /// enablePostRAScheduler - run for Atom optimization.
+  bool enablePostRAScheduler(CodeGenOpt::Level OptLevel,
+                             TargetSubtargetInfo::AntiDepBreakMode& Mode,
+                             RegClassVector& CriticalPathRCs) const;
+
+  /// getInstrItins = Return the instruction itineraries based on the
+  /// subtarget selection.
+  const InstrItineraryData &getInstrItineraryData() const { return InstrItins; }
 };
 
 } // End llvm namespace

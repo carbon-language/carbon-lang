@@ -1,9 +1,9 @@
-; RUN: llc < %s -mtriple=i386-linux | FileCheck %s -check-prefix=LINUX-I386
-; RUN: llc < %s -mtriple=i386-netbsd | FileCheck %s -check-prefix=NETBSD-I386
-; RUN: llc < %s -mtriple=i686-apple-darwin8 | FileCheck %s -check-prefix=DARWIN-I386
-; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s -check-prefix=LINUX-X86_64
-; RUN: llc < %s -mtriple=x86_64-netbsd | FileCheck %s -check-prefix=NETBSD-X86_64
-; RUN: llc < %s -mtriple=x86_64-apple-darwin8 | FileCheck %s -check-prefix=DARWIN-X86_64
+; RUN: llc < %s -mcpu=generic -mtriple=i386-linux | FileCheck %s -check-prefix=LINUX-I386
+; RUN: llc < %s -mcpu=generic -mtriple=i386-netbsd | FileCheck %s -check-prefix=NETBSD-I386
+; RUN: llc < %s -mcpu=generic -mtriple=i686-apple-darwin8 | FileCheck %s -check-prefix=DARWIN-I386
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux | FileCheck %s -check-prefix=LINUX-X86_64
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-netbsd | FileCheck %s -check-prefix=NETBSD-X86_64
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-apple-darwin8 | FileCheck %s -check-prefix=DARWIN-X86_64
 
 define i32 @test() nounwind {
 entry:

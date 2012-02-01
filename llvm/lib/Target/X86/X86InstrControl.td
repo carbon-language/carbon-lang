@@ -20,41 +20,42 @@ let isTerminator = 1, isReturn = 1, isBarrier = 1,
     hasCtrlDep = 1, FPForm = SpecialFP in {
   def RET    : I   <0xC3, RawFrm, (outs), (ins variable_ops),
                     "ret",
-                    [(X86retflag 0)]>;
+                    [(X86retflag 0)], IIC_RET>;
   def RETI   : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "ret\t$amt",
-                    [(X86retflag timm:$amt)]>;
+                    [(X86retflag timm:$amt)], IIC_RET_IMM>;
   def RETIW  : Ii16<0xC2, RawFrm, (outs), (ins i16imm:$amt, variable_ops),
                     "retw\t$amt",
-                    []>, OpSize;
+                    [], IIC_RET_IMM>, OpSize;
   def LRETL  : I   <0xCB, RawFrm, (outs), (ins),
-                    "lretl", []>;
+                    "lretl", [], IIC_RET>;
   def LRETQ  : RI  <0xCB, RawFrm, (outs), (ins),
-                    "lretq", []>;
+                    "lretq", [], IIC_RET>;
   def LRETI  : Ii16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
-                    "lret\t$amt", []>;
+                    "lret\t$amt", [], IIC_RET>;
   def LRETIW : Ii16<0xCA, RawFrm, (outs), (ins i16imm:$amt),
-                    "lretw\t$amt", []>, OpSize;
+                    "lretw\t$amt", [], IIC_RET>, OpSize;
 }
 
 // Unconditional branches.
 let isBarrier = 1, isBranch = 1, isTerminator = 1 in {
   def JMP_4 : Ii32PCRel<0xE9, RawFrm, (outs), (ins brtarget:$dst),
-                        "jmp\t$dst", [(br bb:$dst)]>;
+                        "jmp\t$dst", [(br bb:$dst)], IIC_JMP_REL>;
   def JMP_1 : Ii8PCRel<0xEB, RawFrm, (outs), (ins brtarget8:$dst),
-                       "jmp\t$dst", []>;
+                       "jmp\t$dst", [], IIC_JMP_REL>;
   // FIXME : Intel syntax for JMP64pcrel32 such that it is not ambiguious
   // with JMP_1.
   def JMP64pcrel32 : I<0xE9, RawFrm, (outs), (ins brtarget:$dst),
-                       "jmpq\t$dst", []>;
+                       "jmpq\t$dst", [], IIC_JMP_REL>;
 }
 
 // Conditional Branches.
 let isBranch = 1, isTerminator = 1, Uses = [EFLAGS] in {
   multiclass ICBr<bits<8> opc1, bits<8> opc4, string asm, PatFrag Cond> {
-    def _1 : Ii8PCRel <opc1, RawFrm, (outs), (ins brtarget8:$dst), asm, []>;
+    def _1 : Ii8PCRel <opc1, RawFrm, (outs), (ins brtarget8:$dst), asm, [],
+                       IIC_Jcc>;
     def _4 : Ii32PCRel<opc4, RawFrm, (outs), (ins brtarget:$dst), asm,
-                       [(X86brcond bb:$dst, Cond, EFLAGS)]>, TB;
+                       [(X86brcond bb:$dst, Cond, EFLAGS)], IIC_Jcc>, TB;
   }
 }
 
@@ -82,55 +83,55 @@ let isAsmParserOnly = 1, isBranch = 1, isTerminator = 1 in {
   // jecxz.
   let Uses = [CX] in
     def JCXZ : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                        "jcxz\t$dst", []>, AdSize, Requires<[In32BitMode]>;
+                        "jcxz\t$dst", [], IIC_JCXZ>, AdSize, Requires<[In32BitMode]>;
   let Uses = [ECX] in
     def JECXZ_32 : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                           "jecxz\t$dst", []>, Requires<[In32BitMode]>;
+                           "jecxz\t$dst", [], IIC_JCXZ>, Requires<[In32BitMode]>;
 
   // J*CXZ instruction: 64-bit versions of this instruction for the asmparser.
   // In 64-bit mode, the address size prefix is jecxz and the unprefixed version
   // is jrcxz.
   let Uses = [ECX] in
     def JECXZ_64 : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                            "jecxz\t$dst", []>, AdSize, Requires<[In64BitMode]>;
+                            "jecxz\t$dst", [], IIC_JCXZ>, AdSize, Requires<[In64BitMode]>;
   let Uses = [RCX] in
     def JRCXZ : Ii8PCRel<0xE3, RawFrm, (outs), (ins brtarget8:$dst),
-                           "jrcxz\t$dst", []>, Requires<[In64BitMode]>;
+                           "jrcxz\t$dst", [], IIC_JCXZ>, Requires<[In64BitMode]>;
 }
 
 // Indirect branches
 let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
   def JMP32r     : I<0xFF, MRM4r, (outs), (ins GR32:$dst), "jmp{l}\t{*}$dst",
-                     [(brind GR32:$dst)]>, Requires<[In32BitMode]>;
+                     [(brind GR32:$dst)], IIC_JMP_REG>, Requires<[In32BitMode]>;
   def JMP32m     : I<0xFF, MRM4m, (outs), (ins i32mem:$dst), "jmp{l}\t{*}$dst",
-                     [(brind (loadi32 addr:$dst))]>, Requires<[In32BitMode]>;
+                     [(brind (loadi32 addr:$dst))], IIC_JMP_MEM>, Requires<[In32BitMode]>;
 
   def JMP64r     : I<0xFF, MRM4r, (outs), (ins GR64:$dst), "jmp{q}\t{*}$dst",
-                     [(brind GR64:$dst)]>, Requires<[In64BitMode]>;
+                     [(brind GR64:$dst)], IIC_JMP_REG>, Requires<[In64BitMode]>;
   def JMP64m     : I<0xFF, MRM4m, (outs), (ins i64mem:$dst), "jmp{q}\t{*}$dst",
-                     [(brind (loadi64 addr:$dst))]>, Requires<[In64BitMode]>;
+                     [(brind (loadi64 addr:$dst))], IIC_JMP_MEM>, Requires<[In64BitMode]>;
 
   def FARJMP16i  : Iseg16<0xEA, RawFrmImm16, (outs),
                           (ins i16imm:$off, i16imm:$seg),
-                          "ljmp{w}\t{$seg, $off|$off, $seg}", []>, OpSize;
+                          "ljmp{w}\t{$seg, $off|$off, $seg}", [], IIC_JMP_FAR_PTR>, OpSize;
   def FARJMP32i  : Iseg32<0xEA, RawFrmImm16, (outs),
                           (ins i32imm:$off, i16imm:$seg),
-                          "ljmp{l}\t{$seg, $off|$off, $seg}", []>;
+                          "ljmp{l}\t{$seg, $off|$off, $seg}", [], IIC_JMP_FAR_PTR>;
   def FARJMP64   : RI<0xFF, MRM5m, (outs), (ins opaque80mem:$dst),
-                      "ljmp{q}\t{*}$dst", []>;
+                      "ljmp{q}\t{*}$dst", [], IIC_JMP_FAR_MEM>;
 
   def FARJMP16m  : I<0xFF, MRM5m, (outs), (ins opaque32mem:$dst),
-                     "ljmp{w}\t{*}$dst", []>, OpSize;
+                     "ljmp{w}\t{*}$dst", [], IIC_JMP_FAR_MEM>, OpSize;
   def FARJMP32m  : I<0xFF, MRM5m, (outs), (ins opaque48mem:$dst),
-                     "ljmp{l}\t{*}$dst", []>;
+                     "ljmp{l}\t{*}$dst", [], IIC_JMP_FAR_MEM>;
 }
 
 
 // Loop instructions
 
-def LOOP   : Ii8PCRel<0xE2, RawFrm, (outs), (ins brtarget8:$dst), "loop\t$dst", []>;
-def LOOPE  : Ii8PCRel<0xE1, RawFrm, (outs), (ins brtarget8:$dst), "loope\t$dst", []>;
-def LOOPNE : Ii8PCRel<0xE0, RawFrm, (outs), (ins brtarget8:$dst), "loopne\t$dst", []>;
+def LOOP   : Ii8PCRel<0xE2, RawFrm, (outs), (ins brtarget8:$dst), "loop\t$dst", [], IIC_LOOP>;
+def LOOPE  : Ii8PCRel<0xE1, RawFrm, (outs), (ins brtarget8:$dst), "loope\t$dst", [], IIC_LOOPE>;
+def LOOPNE : Ii8PCRel<0xE0, RawFrm, (outs), (ins brtarget8:$dst), "loopne\t$dst", [], IIC_LOOPNE>;
 
 //===----------------------------------------------------------------------===//
 //  Call Instructions...
@@ -147,25 +148,27 @@ let isCall = 1 in
       Uses = [ESP] in {
     def CALLpcrel32 : Ii32PCRel<0xE8, RawFrm,
                            (outs), (ins i32imm_pcrel:$dst,variable_ops),
-                           "call{l}\t$dst", []>, Requires<[In32BitMode]>;
+                           "call{l}\t$dst", [], IIC_CALL_RI>, Requires<[In32BitMode]>;
     def CALL32r     : I<0xFF, MRM2r, (outs), (ins GR32:$dst, variable_ops),
-                        "call{l}\t{*}$dst", [(X86call GR32:$dst)]>,
+                        "call{l}\t{*}$dst", [(X86call GR32:$dst)], IIC_CALL_RI>,
                          Requires<[In32BitMode]>;
     def CALL32m     : I<0xFF, MRM2m, (outs), (ins i32mem:$dst, variable_ops),
-                        "call{l}\t{*}$dst", [(X86call (loadi32 addr:$dst))]>,
+                        "call{l}\t{*}$dst", [(X86call (loadi32 addr:$dst))], IIC_CALL_MEM>,
                         Requires<[In32BitMode]>;
 
     def FARCALL16i  : Iseg16<0x9A, RawFrmImm16, (outs),
                              (ins i16imm:$off, i16imm:$seg),
-                             "lcall{w}\t{$seg, $off|$off, $seg}", []>, OpSize;
+                             "lcall{w}\t{$seg, $off|$off, $seg}", [],
+                             IIC_CALL_FAR_PTR>, OpSize;
     def FARCALL32i  : Iseg32<0x9A, RawFrmImm16, (outs),
                              (ins i32imm:$off, i16imm:$seg),
-                             "lcall{l}\t{$seg, $off|$off, $seg}", []>;
+                             "lcall{l}\t{$seg, $off|$off, $seg}", [],
+                             IIC_CALL_FAR_PTR>;
 
     def FARCALL16m  : I<0xFF, MRM3m, (outs), (ins opaque32mem:$dst),
-                        "lcall{w}\t{*}$dst", []>, OpSize;
+                        "lcall{w}\t{*}$dst", [], IIC_CALL_FAR_MEM>, OpSize;
     def FARCALL32m  : I<0xFF, MRM3m, (outs), (ins opaque48mem:$dst),
-                        "lcall{l}\t{*}$dst", []>;
+                        "lcall{l}\t{*}$dst", [], IIC_CALL_FAR_MEM>;
 
     // callw for 16 bit code for the assembler.
     let isAsmParserOnly = 1 in
@@ -196,13 +199,13 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
   // mcinst.
   def TAILJMPd : Ii32PCRel<0xE9, RawFrm, (outs),
                            (ins i32imm_pcrel:$dst, variable_ops),
-                 "jmp\t$dst  # TAILCALL",
-                 []>;
+                           "jmp\t$dst  # TAILCALL",
+                           [], IIC_JMP_REL>;
   def TAILJMPr : I<0xFF, MRM4r, (outs), (ins GR32_TC:$dst, variable_ops),
-                   "", []>;  // FIXME: Remove encoding when JIT is dead.
+                   "", [], IIC_JMP_REG>;  // FIXME: Remove encoding when JIT is dead.
   let mayLoad = 1 in
   def TAILJMPm : I<0xFF, MRM4m, (outs), (ins i32mem_TC:$dst, variable_ops),
-                   "jmp{l}\t{*}$dst  # TAILCALL", []>;
+                   "jmp{l}\t{*}$dst  # TAILCALL", [], IIC_JMP_MEM>;
 }
 
 
@@ -226,17 +229,19 @@ let isCall = 1 in
     // the 32-bit pcrel field that we have.
     def CALL64pcrel32 : Ii32PCRel<0xE8, RawFrm,
                           (outs), (ins i64i32imm_pcrel:$dst, variable_ops),
-                          "call{q}\t$dst", []>,
+                          "call{q}\t$dst", [], IIC_CALL_RI>,
                         Requires<[In64BitMode, NotWin64]>;
     def CALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst, variable_ops),
-                          "call{q}\t{*}$dst", [(X86call GR64:$dst)]>,
+                          "call{q}\t{*}$dst", [(X86call GR64:$dst)],
+                          IIC_CALL_RI>,
                         Requires<[In64BitMode, NotWin64]>;
     def CALL64m       : I<0xFF, MRM2m, (outs), (ins i64mem:$dst, variable_ops),
-                          "call{q}\t{*}$dst", [(X86call (loadi64 addr:$dst))]>,
+                          "call{q}\t{*}$dst", [(X86call (loadi64 addr:$dst))],
+                          IIC_CALL_MEM>,
                         Requires<[In64BitMode, NotWin64]>;
 
     def FARCALL64   : RI<0xFF, MRM3m, (outs), (ins opaque80mem:$dst),
-                         "lcall{q}\t{*}$dst", []>;
+                         "lcall{q}\t{*}$dst", [], IIC_CALL_FAR_MEM>;
   }
 
   // FIXME: We need to teach codegen about single list of call-clobbered
@@ -253,15 +258,16 @@ let isCall = 1, isCodeGenOnly = 1 in
       Uses = [RSP] in {
     def WINCALL64pcrel32 : Ii32PCRel<0xE8, RawFrm,
                              (outs), (ins i64i32imm_pcrel:$dst, variable_ops),
-                             "call{q}\t$dst", []>,
+                             "call{q}\t$dst", [], IIC_CALL_RI>,
                            Requires<[IsWin64]>;
     def WINCALL64r       : I<0xFF, MRM2r, (outs), (ins GR64:$dst, variable_ops),
                              "call{q}\t{*}$dst",
-                             [(X86call GR64:$dst)]>, Requires<[IsWin64]>;
+                             [(X86call GR64:$dst)], IIC_CALL_RI>,
+                           Requires<[IsWin64]>;
     def WINCALL64m       : I<0xFF, MRM2m, (outs),
                               (ins i64mem:$dst,variable_ops),
                              "call{q}\t{*}$dst",
-                             [(X86call (loadi64 addr:$dst))]>,
+                             [(X86call (loadi64 addr:$dst))], IIC_CALL_MEM>,
                            Requires<[IsWin64]>;
   }
 
@@ -272,7 +278,7 @@ let isCall = 1, isCodeGenOnly = 1 in
       Uses = [RSP] in {
     def W64ALLOCA : Ii32PCRel<0xE8, RawFrm,
                       (outs), (ins i64i32imm_pcrel:$dst, variable_ops),
-                      "call{q}\t$dst", []>,
+                      "call{q}\t$dst", [], IIC_CALL_RI>,
                     Requires<[IsWin64]>;
   }
 
@@ -296,11 +302,11 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
 
   def TAILJMPd64 : Ii32PCRel<0xE9, RawFrm, (outs),
                                       (ins i64i32imm_pcrel:$dst, variable_ops),
-                   "jmp\t$dst  # TAILCALL", []>;
+                   "jmp\t$dst  # TAILCALL", [], IIC_JMP_REL>;
   def TAILJMPr64 : I<0xFF, MRM4r, (outs), (ins ptr_rc_tailcall:$dst, variable_ops),
-                     "jmp{q}\t{*}$dst  # TAILCALL", []>;
+                     "jmp{q}\t{*}$dst  # TAILCALL", [], IIC_JMP_MEM>;
 
   let mayLoad = 1 in
   def TAILJMPm64 : I<0xFF, MRM4m, (outs), (ins i64mem_TC:$dst, variable_ops),
-                     "jmp{q}\t{*}$dst  # TAILCALL", []>;
+                     "jmp{q}\t{*}$dst  # TAILCALL", [], IIC_JMP_MEM>;
 }

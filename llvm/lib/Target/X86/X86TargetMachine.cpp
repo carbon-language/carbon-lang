@@ -78,7 +78,8 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
   : LLVMTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL),
     Subtarget(TT, CPU, FS, Options.StackAlignmentOverride, is64Bit),
     FrameLowering(*this, Subtarget),
-    ELFWriterInfo(is64Bit, true) {
+    ELFWriterInfo(is64Bit, true),
+    InstrItins(Subtarget.getInstrItineraryData()){
   // Determine the PICStyle based on the target selected.
   if (getRelocationModel() == Reloc::Static) {
     // Unless we're in PIC or DynamicNoPIC mode, set the PIC style to None.

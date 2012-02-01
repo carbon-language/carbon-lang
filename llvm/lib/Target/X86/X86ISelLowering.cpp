@@ -179,8 +179,11 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
 
   // For 64-bit since we have so many registers use the ILP scheduler, for
   // 32-bit code use the register pressure specific scheduling.
+  // For 32 bit Atom, use Hybrid (register pressure + latency) scheduling.
   if (Subtarget->is64Bit())
     setSchedulingPreference(Sched::ILP);
+  else if (Subtarget->isAtom()) 
+    setSchedulingPreference(Sched::Hybrid);
   else
     setSchedulingPreference(Sched::RegPressure);
   setStackPointerRegisterToSaveRestore(X86StackPtr);

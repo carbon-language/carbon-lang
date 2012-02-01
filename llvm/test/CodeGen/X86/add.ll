@@ -1,6 +1,6 @@
-; RUN: llc < %s -march=x86 | FileCheck %s -check-prefix=X32
-; RUN: llc < %s -mtriple=x86_64-linux -join-physregs | FileCheck %s -check-prefix=X64
-; RUN: llc < %s -mtriple=x86_64-win32 -join-physregs | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mcpu=generic -march=x86 | FileCheck %s -check-prefix=X32
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-linux -join-physregs | FileCheck %s -check-prefix=X64
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-win32 -join-physregs | FileCheck %s -check-prefix=X64
 
 ; Some of these tests depend on -join-physregs to commute instructions.
 

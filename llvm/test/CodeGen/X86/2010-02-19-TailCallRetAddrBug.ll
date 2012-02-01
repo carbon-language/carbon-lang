@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=i386-apple-darwin -tailcallopt < %s | FileCheck %s
+; RUN: llc -mcpu=generic -mtriple=i386-apple-darwin -tailcallopt < %s | FileCheck %s
 ; Check that lowered argumens do not overwrite the return address before it is moved.
 ; Bug 6225
 ;

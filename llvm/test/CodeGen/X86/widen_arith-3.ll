@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86 -mattr=+sse42 -post-RA-scheduler=true | FileCheck %s
+; RUN: llc < %s -mcpu=generic -march=x86 -mattr=+sse42 -post-RA-scheduler=true | FileCheck %s
 ; CHECK: incl
 ; CHECK: incl
 ; CHECK: incl

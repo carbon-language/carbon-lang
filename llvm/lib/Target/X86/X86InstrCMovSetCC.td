@@ -21,17 +21,20 @@ multiclass CMOV<bits<8> opc, string Mnemonic, PatLeaf CondNode> {
       : I<opc, MRMSrcReg, (outs GR16:$dst), (ins GR16:$src1, GR16:$src2),
           !strconcat(Mnemonic, "{w}\t{$src2, $dst|$dst, $src2}"),
           [(set GR16:$dst,
-                (X86cmov GR16:$src1, GR16:$src2, CondNode, EFLAGS))]>,TB,OpSize;
+                (X86cmov GR16:$src1, GR16:$src2, CondNode, EFLAGS))],
+                IIC_CMOV16_RR>,TB,OpSize;
     def #NAME#32rr
       : I<opc, MRMSrcReg, (outs GR32:$dst), (ins GR32:$src1, GR32:$src2),
           !strconcat(Mnemonic, "{l}\t{$src2, $dst|$dst, $src2}"),
           [(set GR32:$dst,
-                (X86cmov GR32:$src1, GR32:$src2, CondNode, EFLAGS))]>, TB;
+                (X86cmov GR32:$src1, GR32:$src2, CondNode, EFLAGS))],
+                IIC_CMOV32_RR>, TB;
     def #NAME#64rr
       :RI<opc, MRMSrcReg, (outs GR64:$dst), (ins GR64:$src1, GR64:$src2),
           !strconcat(Mnemonic, "{q}\t{$src2, $dst|$dst, $src2}"),
           [(set GR64:$dst,
-                (X86cmov GR64:$src1, GR64:$src2, CondNode, EFLAGS))]>, TB;
+                (X86cmov GR64:$src1, GR64:$src2, CondNode, EFLAGS))],
+                IIC_CMOV32_RR>, TB;
   }
 
   let Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst" in {
@@ -39,17 +42,18 @@ multiclass CMOV<bits<8> opc, string Mnemonic, PatLeaf CondNode> {
       : I<opc, MRMSrcMem, (outs GR16:$dst), (ins GR16:$src1, i16mem:$src2),
           !strconcat(Mnemonic, "{w}\t{$src2, $dst|$dst, $src2}"),
           [(set GR16:$dst, (X86cmov GR16:$src1, (loadi16 addr:$src2),
-                                    CondNode, EFLAGS))]>, TB, OpSize;
+                                    CondNode, EFLAGS))], IIC_CMOV16_RM>,
+                                    TB, OpSize;
     def #NAME#32rm
       : I<opc, MRMSrcMem, (outs GR32:$dst), (ins GR32:$src1, i32mem:$src2),
           !strconcat(Mnemonic, "{l}\t{$src2, $dst|$dst, $src2}"),
           [(set GR32:$dst, (X86cmov GR32:$src1, (loadi32 addr:$src2),
-                                    CondNode, EFLAGS))]>, TB;
+                                    CondNode, EFLAGS))], IIC_CMOV32_RM>, TB;
     def #NAME#64rm
       :RI<opc, MRMSrcMem, (outs GR64:$dst), (ins GR64:$src1, i64mem:$src2),
           !strconcat(Mnemonic, "{q}\t{$src2, $dst|$dst, $src2}"),
           [(set GR64:$dst, (X86cmov GR64:$src1, (loadi64 addr:$src2),
-                                    CondNode, EFLAGS))]>, TB;
+                                    CondNode, EFLAGS))], IIC_CMOV32_RM>, TB;
   } // Uses = [EFLAGS], Predicates = [HasCMov], Constraints = "$src1 = $dst"
 } // end multiclass
 
@@ -78,10 +82,12 @@ multiclass SETCC<bits<8> opc, string Mnemonic, PatLeaf OpNode> {
   let Uses = [EFLAGS] in {
     def r    : I<opc, MRM0r,  (outs GR8:$dst), (ins),
                      !strconcat(Mnemonic, "\t$dst"),
-                     [(set GR8:$dst, (X86setcc OpNode, EFLAGS))]>, TB;
+                     [(set GR8:$dst, (X86setcc OpNode, EFLAGS))],
+                     IIC_SET_R>, TB;
     def m    : I<opc, MRM0m,  (outs), (ins i8mem:$dst),
                      !strconcat(Mnemonic, "\t$dst"),
-                     [(store (X86setcc OpNode, EFLAGS), addr:$dst)]>, TB;
+                     [(store (X86setcc OpNode, EFLAGS), addr:$dst)],
+                     IIC_SET_M>, TB;
   } // Uses = [EFLAGS]
 }
 

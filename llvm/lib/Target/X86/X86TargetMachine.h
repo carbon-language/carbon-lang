@@ -32,9 +32,10 @@ class formatted_raw_ostream;
 class StringRef;
 
 class X86TargetMachine : public LLVMTargetMachine {
-  X86Subtarget      Subtarget;
-  X86FrameLowering  FrameLowering;
-  X86ELFWriterInfo  ELFWriterInfo;
+  X86Subtarget       Subtarget;
+  X86FrameLowering   FrameLowering;
+  X86ELFWriterInfo   ELFWriterInfo;
+  InstrItineraryData InstrItins;
 
 public:
   X86TargetMachine(const Target &T, StringRef TT, 
@@ -64,6 +65,9 @@ public:
   }
   virtual const X86ELFWriterInfo *getELFWriterInfo() const {
     return Subtarget.isTargetELF() ? &ELFWriterInfo : 0;
+  }
+  virtual const InstrItineraryData *getInstrItineraryData() const {
+    return &InstrItins;
   }
 
   // Set up the pass pipeline.

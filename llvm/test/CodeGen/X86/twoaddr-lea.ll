@@ -5,7 +5,7 @@
 ;; allocator turns the shift into an LEA.  This also occurs for ADD.
 
 ; Check that the shift gets turned into an LEA.
-; RUN: llc < %s -mtriple=x86_64-apple-darwin | FileCheck %s
+; RUN: llc < %s -mcpu=generic -mtriple=x86_64-apple-darwin | FileCheck %s
 
 @G = external global i32
 

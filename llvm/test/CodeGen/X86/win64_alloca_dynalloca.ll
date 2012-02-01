@@ -1,6 +1,6 @@
-; RUN: llc < %s -join-physregs -mtriple=x86_64-mingw32     | FileCheck %s -check-prefix=M64
-; RUN: llc < %s -join-physregs -mtriple=x86_64-win32       | FileCheck %s -check-prefix=W64
-; RUN: llc < %s -join-physregs -mtriple=x86_64-win32-macho | FileCheck %s -check-prefix=EFI
+; RUN: llc < %s -join-physregs -mcpu=generic -mtriple=x86_64-mingw32     | FileCheck %s -check-prefix=M64
+; RUN: llc < %s -join-physregs -mcpu=generic -mtriple=x86_64-win32       | FileCheck %s -check-prefix=W64
+; RUN: llc < %s -join-physregs -mcpu=generic -mtriple=x86_64-win32-macho | FileCheck %s -check-prefix=EFI
 ; PR8777
 ; PR8778
 
