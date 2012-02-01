@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file declares the LLVM Pass Manager infrastructure. 
+// This file declares the LLVM Pass Manager infrastructure.
 //
 //===----------------------------------------------------------------------===//
 
@@ -24,11 +24,11 @@
 //===----------------------------------------------------------------------===//
 // Overview:
 // The Pass Manager Infrastructure manages passes. It's responsibilities are:
-// 
+//
 //   o Manage optimization pass execution order
 //   o Make required Analysis information available before pass P is run
 //   o Release memory occupied by dead passes
-//   o If Analysis information is dirtied by a pass then regenerate Analysis 
+//   o If Analysis information is dirtied by a pass then regenerate Analysis
 //     information before it is consumed by another pass.
 //
 // Pass Manager Infrastructure uses multiple pass managers.  They are
@@ -43,13 +43,13 @@
 //
 // [o] class PMTopLevelManager;
 //
-// Two top level managers, PassManager and FunctionPassManager, derive from 
-// PMTopLevelManager. PMTopLevelManager manages information used by top level 
+// Two top level managers, PassManager and FunctionPassManager, derive from
+// PMTopLevelManager. PMTopLevelManager manages information used by top level
 // managers such as last user info.
 //
 // [o] class PMDataManager;
 //
-// PMDataManager manages information, e.g. list of available analysis info, 
+// PMDataManager manages information, e.g. list of available analysis info,
 // used by a pass manager to manage execution order of passes. It also provides
 // a place to implement common pass manager APIs. All pass managers derive from
 // PMDataManager.
@@ -109,7 +109,7 @@ enum PassDebuggingString {
   ON_REGION_MSG, // " 'on Region ...\n'"
   ON_LOOP_MSG, // " 'on Loop ...\n'"
   ON_CG_MSG // "' on Call Graph ...\n'"
-};  
+};
 
 /// PassManagerPrettyStackEntry - This is used to print informative information
 /// about what pass is running when/if a stack trace is generated.
@@ -124,19 +124,19 @@ public:
     : P(p), V(&v), M(0) {} // When P is run on V
   PassManagerPrettyStackEntry(Pass *p, Module &m)
     : P(p), V(0), M(&m) {} // When P is run on M
-  
+
   /// print - Emit information about this stack frame to OS.
   virtual void print(raw_ostream &OS) const;
 };
-  
-  
+
+
 //===----------------------------------------------------------------------===//
 // PMStack
 //
 /// PMStack - This class implements a stack data structure of PMDataManager
 /// pointers.
 ///
-/// Top level pass managers (see PassManager.cpp) maintain active Pass Managers 
+/// Top level pass managers (see PassManager.cpp) maintain active Pass Managers
 /// using PMStack. Each Pass implements assignPassManager() to connect itself
 /// with appropriate manager. assignPassManager() walks PMStack to find
 /// suitable manager.
@@ -174,7 +174,7 @@ protected:
   void initializeAllAnalysisInfo();
 
 private:
-  /// This is implemented by top level pass manager and used by 
+  /// This is implemented by top level pass manager and used by
   /// schedulePass() to add analysis info passes that are not available.
   virtual void addTopLevelPass(Pass  *P) = 0;
 
@@ -198,7 +198,7 @@ public:
   /// Find analysis usage information for the pass P.
   AnalysisUsage *findAnalysisUsage(Pass *P);
 
-  virtual ~PMTopLevelManager(); 
+  virtual ~PMTopLevelManager();
 
   /// Add immutable pass and initialize it.
   inline void addImmutablePass(ImmutablePass *P) {
@@ -228,7 +228,7 @@ public:
   PMStack activeStack;
 
 protected:
-  
+
   /// Collection of pass managers
   SmallVector<PMDataManager *, 8> PassManagers;
 
@@ -254,7 +254,7 @@ private:
 };
 
 
-  
+
 //===----------------------------------------------------------------------===//
 // PMDataManager
 
@@ -268,7 +268,7 @@ public:
   }
 
   virtual ~PMDataManager();
-  
+
   virtual Pass *getAsPass() = 0;
 
   /// Augment AvailableAnalysis by adding analysis made available by pass P.
@@ -279,16 +279,16 @@ public:
 
   /// Remove Analysis that is not preserved by the pass
   void removeNotPreservedAnalysis(Pass *P);
-  
+
   /// Remove dead passes used by P.
-  void removeDeadPasses(Pass *P, StringRef Msg, 
+  void removeDeadPasses(Pass *P, StringRef Msg,
                         enum PassDebuggingString);
 
   /// Remove P.
-  void freePass(Pass *P, StringRef Msg, 
+  void freePass(Pass *P, StringRef Msg,
                 enum PassDebuggingString);
 
-  /// Add pass P into the PassVector. Update 
+  /// Add pass P into the PassVector. Update
   /// AvailableAnalysis appropriately if ProcessAnalysis is true.
   void add(Pass *P, bool ProcessAnalysis = true);
 
@@ -300,7 +300,7 @@ public:
   virtual Pass *getOnTheFlyPass(Pass *P, AnalysisID PI, Function &F);
 
   /// Initialize available analysis information.
-  void initializeAnalysisInfo() { 
+  void initializeAnalysisInfo() {
     AvailableAnalysis.clear();
     for (unsigned i = 0; i < PMT_Last; ++i)
       InheritedAnalysis[i] = NULL;
@@ -347,9 +347,9 @@ public:
     return (unsigned)PassVector.size();
   }
 
-  virtual PassManagerType getPassManagerType() const { 
+  virtual PassManagerType getPassManagerType() const {
     assert ( 0 && "Invalid use of getPassManagerType");
-    return PMT_Unknown; 
+    return PMT_Unknown;
   }
 
   std::map<AnalysisID, Pass*> *getAvailableAnalysis() {
@@ -377,17 +377,17 @@ protected:
   // then PMT_Last active pass mangers.
   std::map<AnalysisID, Pass *> *InheritedAnalysis[PMT_Last];
 
-  
+
   /// isPassDebuggingExecutionsOrMore - Return true if -debug-pass=Executions
   /// or higher is specified.
   bool isPassDebuggingExecutionsOrMore() const;
-  
+
 private:
   void dumpAnalysisUsage(StringRef Msg, const Pass *P,
                          const AnalysisUsage::VectorType &Set) const;
 
-  // Set of available Analysis. This information is used while scheduling 
-  // pass. If a pass requires an analysis which is not available then 
+  // Set of available Analysis. This information is used while scheduling
+  // pass. If a pass requires an analysis which is not available then
   // the required analysis pass is scheduled to run before the pass itself is
   // scheduled to run.
   std::map<AnalysisID, Pass*> AvailableAnalysis;
@@ -403,27 +403,27 @@ private:
 // FPPassManager
 //
 /// FPPassManager manages BBPassManagers and FunctionPasses.
-/// It batches all function passes and basic block pass managers together and 
-/// sequence them to process one function at a time before processing next 
+/// It batches all function passes and basic block pass managers together and
+/// sequence them to process one function at a time before processing next
 /// function.
 class FPPassManager : public ModulePass, public PMDataManager {
 public:
   static char ID;
-  explicit FPPassManager() 
+  explicit FPPassManager()
   : ModulePass(ID), PMDataManager() { }
-  
+
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
   bool runOnFunction(Function &F);
   bool runOnModule(Module &M);
-  
+
   /// cleanup - After running all passes, clean up pass manager cache.
   void cleanup();
 
   /// doInitialization - Run all of the initializers for the function passes.
   ///
   bool doInitialization(Module &M);
-  
+
   /// doFinalization - Run all of the finalizers for the function passes.
   ///
   bool doFinalization(Module &M);
@@ -449,8 +449,8 @@ public:
     return FP;
   }
 
-  virtual PassManagerType getPassManagerType() const { 
-    return PMT_FunctionPassManager; 
+  virtual PassManagerType getPassManagerType() const {
+    return PMT_FunctionPassManager;
   }
 };
 

@@ -53,7 +53,7 @@ public:
   /// will be destroyed as well, so there is no need to delete the pass.  This
   /// implies that all passes MUST be allocated with 'new'.
   void add(Pass *P);
- 
+
   /// run - Execute all of the passes scheduled for execution.  Keep track of
   /// whether any of the passes modifies the module, and if so, return true.
   bool run(Module &M);
@@ -63,7 +63,7 @@ private:
   /// checking whether to add a printer pass.
   void addImpl(Pass *P);
 
-  /// PassManagerImpl_New is the actual class. PassManager is just the 
+  /// PassManagerImpl_New is the actual class. PassManager is just the
   /// wraper to publish simple pass manager interface
   PassManagerImpl *PM;
 };
@@ -75,7 +75,7 @@ public:
   /// but does not take ownership of, the specified Module.
   explicit FunctionPassManager(Module *M);
   ~FunctionPassManager();
- 
+
   /// add - Add a pass to the queue of passes to run.  This passes
   /// ownership of the Pass to the PassManager.  When the
   /// PassManager_X is destroyed, the pass will be destroyed as well, so
@@ -88,15 +88,15 @@ public:
   /// so, return true.
   ///
   bool run(Function &F);
-  
+
   /// doInitialization - Run all of the initializers for the function passes.
   ///
   bool doInitialization();
-  
+
   /// doFinalization - Run all of the finalizers for the function passes.
   ///
   bool doFinalization();
-  
+
 private:
   /// addImpl - Add a pass to the queue of passes to run, without
   /// checking whether to add a printer pass.
