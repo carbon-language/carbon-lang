@@ -27,28 +27,30 @@ class ARMFReg<bits<6> num, string n> : Register<n> {
 
 // Subregister indices.
 let Namespace = "ARM" in {
+def qqsub_0 : SubRegIndex;
+def qqsub_1 : SubRegIndex;
+
 // Note: Code depends on these having consecutive numbers.
-def ssub_0  : SubRegIndex;
-def ssub_1  : SubRegIndex;
-def ssub_2  : SubRegIndex; // In a Q reg.
-def ssub_3  : SubRegIndex;
+def qsub_0 : SubRegIndex;
+def qsub_1 : SubRegIndex;
+def qsub_2 : SubRegIndex<[qqsub_1, qsub_0]>;
+def qsub_3 : SubRegIndex<[qqsub_1, qsub_1]>;
 
 def dsub_0 : SubRegIndex;
 def dsub_1 : SubRegIndex;
-def dsub_2 : SubRegIndex;
-def dsub_3 : SubRegIndex;
-def dsub_4 : SubRegIndex;
-def dsub_5 : SubRegIndex;
-def dsub_6 : SubRegIndex;
-def dsub_7 : SubRegIndex;
+def dsub_2 : SubRegIndex<[qsub_1, dsub_0]>;
+def dsub_3 : SubRegIndex<[qsub_1, dsub_1]>;
+def dsub_4 : SubRegIndex<[qsub_2, dsub_0]>;
+def dsub_5 : SubRegIndex<[qsub_2, dsub_1]>;
+def dsub_6 : SubRegIndex<[qsub_3, dsub_0]>;
+def dsub_7 : SubRegIndex<[qsub_3, dsub_1]>;
 
-def qsub_0 : SubRegIndex;
-def qsub_1 : SubRegIndex;
-def qsub_2 : SubRegIndex;
-def qsub_3 : SubRegIndex;
-
-def qqsub_0 : SubRegIndex;
-def qqsub_1 : SubRegIndex;
+def ssub_0  : SubRegIndex;
+def ssub_1  : SubRegIndex;
+def ssub_2  : SubRegIndex<[dsub_1, ssub_0]>;
+def ssub_3  : SubRegIndex<[dsub_1, ssub_1]>;
+// Let TableGen synthesize the remaining 12 ssub_* indices.
+// We don't need to name them.
 }
 
 // Integer registers
@@ -129,9 +131,7 @@ def D30 : ARMFReg<30, "d30">, DwarfRegNum<[286]>;
 def D31 : ARMFReg<31, "d31">, DwarfRegNum<[287]>;
 
 // Advanced SIMD (NEON) defines 16 quad-word aliases
-let SubRegIndices = [dsub_0, dsub_1],
- CompositeIndices = [(ssub_2 dsub_1, ssub_0),
-                     (ssub_3 dsub_1, ssub_1)] in {
+let SubRegIndices = [dsub_0, dsub_1] in {
 def Q0  : ARMReg< 0,  "q0", [D0,   D1]>;
 def Q1  : ARMReg< 1,  "q1", [D2,   D3]>;
 def Q2  : ARMReg< 2,  "q2", [D4,   D5]>;
@@ -297,9 +297,7 @@ def QPR_8 : RegisterClass<"ARM", [v16i8, v8i16, v4i32, v2i64, v4f32, v2f64],
 // stuff very messy.
 def Tuples2Q : RegisterTuples<[qsub_0, qsub_1],
                               [(decimate QPR, 2),
-                               (decimate (shl QPR, 1), 2)]> {
- let CompositeIndices = [(dsub_2 qsub_1, dsub_0), (dsub_3 qsub_1, dsub_1)];
-}
+                               (decimate (shl QPR, 1), 2)]>;
 
 // Pseudo 256-bit vector register class to model pairs of Q registers
 // (4 consecutive D registers).
@@ -314,11 +312,7 @@ def QQPR : RegisterClass<"ARM", [v4i64], 256, (add Tuples2Q)> {
 // Pseudo 512-bit registers to represent four consecutive Q registers.
 def Tuples2QQ : RegisterTuples<[qqsub_0, qqsub_1],
                                [(decimate QQPR, 2),
-                                (decimate (shl QQPR, 1), 2)]> {
- let CompositeIndices = [(qsub_2  qqsub_1, qsub_0), (qsub_3  qqsub_1, qsub_1),
-                         (dsub_4  qqsub_1, dsub_0), (dsub_5  qqsub_1, dsub_1),
-                         (dsub_6  qqsub_1, dsub_2), (dsub_7  qqsub_1, dsub_3)];
-}
+                                (decimate (shl QQPR, 1), 2)]>;
 
 // Pseudo 512-bit vector register class to model 4 consecutive Q registers
 // (8 consecutive D registers).
