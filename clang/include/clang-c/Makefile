@@ -27,6 +27,11 @@ ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
 	  cd $(PROJ_OBJ_ROOT)/tools/clang/include && \
 	  for hdr in `find clang-c -type f '!' '(' -name 'Makefile' ')' -print \
             | grep -v CVS | grep -v .tmp | grep -v .dir` ; do \
+	    instdir=`dirname "$(IntIncludeDir)/$$hdr"` ; \
+	    if test \! -d "$$instdir" ; then \
+	      $(EchoCmd) Making install directory $$instdir ; \
+	      $(MKDIR) $$instdir ;\
+	    fi ; \
 	    $(DataInstall) $$hdr $(IntIncludeDir)/$$hdr ; \
 	  done ; \
 	fi

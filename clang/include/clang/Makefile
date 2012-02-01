@@ -33,6 +33,11 @@ ifneq ($(PROJ_SRC_ROOT),$(PROJ_OBJ_ROOT))
 	       -o -name '*.inc' \
 	      ')' -print \
             | grep -v CVS | grep -v .tmp | grep -v .dir` ; do \
+	    instdir=$(DESTDIR)`dirname "$(PROJ_includedir)/$$hdr"` ; \
+	    if test \! -d "$$instdir" ; then \
+	      $(EchoCmd) Making install directory $$instdir ; \
+	      $(MKDIR) $$instdir ;\
+	    fi ; \
 	    $(DataInstall) $$hdr $(DESTDIR)$(PROJ_includedir)/$$hdr ; \
 	  done ; \
 	fi
