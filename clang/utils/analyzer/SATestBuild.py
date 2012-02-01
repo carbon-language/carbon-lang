@@ -72,7 +72,7 @@ SBOutputDirReferencePrefix = "Ref"
 
 # The list of checkers used during analyzes.
 # Currently, consists of all the non experimental checkers.
-Checkers="experimental.security.taint,core,deadcode,cplusplus,security,unix,osx,cocoa"
+Checkers="experimental.security.taint,core,deadcode,cplusplus,security,unix,osx,cocoa,experimental.osx.cocoa.Containers,experimental.unix.cstring.BadSizeArg"
 
 Verbose = 1
 
