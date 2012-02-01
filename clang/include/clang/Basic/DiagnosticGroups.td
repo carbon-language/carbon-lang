@@ -158,6 +158,7 @@ def : DiagGroup<"stack-protector">;
 def : DiagGroup<"switch-default">;
 def : DiagGroup<"synth">;
 def SizeofArrayArgument : DiagGroup<"sizeof-array-argument">;
+def StrncatSize : DiagGroup<"strncat-size">;
 def TautologicalCompare : DiagGroup<"tautological-compare">;
 def HeaderHygiene : DiagGroup<"header-hygiene">;
 

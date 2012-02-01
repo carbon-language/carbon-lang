@@ -6347,6 +6347,9 @@ private:
   void CheckStrlcpycatArguments(const CallExpr *Call,
                                 IdentifierInfo *FnName);
 
+  void CheckStrncatArguments(const CallExpr *Call,
+                             IdentifierInfo *FnName);
+
   void CheckReturnStackAddr(Expr *RetValExp, QualType lhsType,
                             SourceLocation ReturnLoc);
   void CheckFloatComparison(SourceLocation Loc, Expr* LHS, Expr* RHS);

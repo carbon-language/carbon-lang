@@ -132,8 +132,6 @@ void strcpy_and_friends() {
 
   strncpy(buff, BAR, sizeof(BAR)); // \
       // expected-warning {{argument to 'sizeof' in 'strncpy' call is the same expression as the source}}
-  strncat(buff, BAR, sizeof(BAR)); // \
-      // expected-warning {{argument to 'sizeof' in 'strncat' call is the same expression as the source}}
   strndup(FOO, sizeof(FOO)); // \
       // expected-warning {{argument to 'sizeof' in 'strndup' call is the same expression as the source}}
 }
