@@ -128,12 +128,9 @@ exception_cleanup_func(_Unwind_Reason_Code reason, _Unwind_Exception* unwind_exc
     __cxa_exception* exception_header = cxa_exception_from_exception_unwind_exception(unwind_exception);
     if (_URC_FOREIGN_EXCEPTION_CAUGHT != reason)
         std::__terminate(exception_header->terminateHandler);
-
-    // TODO: Shouldn't this check the reference count first?
-    void * thrown_object = thrown_object_from_cxa_exception(exception_header);
-    if (NULL != exception_header->exceptionDestructor)
-        exception_header->exceptionDestructor(thrown_object);
-    __cxa_free_exception(thrown_object);
+    // Just in case there exists a dependent exception that is pointing to this,
+    //    check the reference count and only destroy this if that count goes to zero.
+    __cxa_decrement_exception_refcount(unwind_exception + 1);
 }
 
 static LIBCXXABI_NORETURN void failed_throw(__cxa_exception* exception_header) {
