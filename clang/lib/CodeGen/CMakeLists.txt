@@ -5,6 +5,7 @@ set(LLVM_LINK_COMPONENTS
   instrumentation
   ipo
   linker
+  vectorize
   )
 
 set(LLVM_USED_LIBS clangBasic clangAST clangFrontend)
