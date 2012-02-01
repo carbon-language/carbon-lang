@@ -14306,7 +14306,7 @@ static SDValue PerformSTORECombine(SDNode *N, SelectionDAG &DAG,
       Ld = cast<LoadSDNode>(St->getChain());
     else if (St->getValue().hasOneUse() &&
              ChainVal->getOpcode() == ISD::TokenFactor) {
-      for (unsigned i=0, e = ChainVal->getNumOperands(); i != e; ++i) {
+      for (unsigned i = 0, e = ChainVal->getNumOperands(); i != e; ++i) {
         if (ChainVal->getOperand(i).getNode() == LdVal) {
           TokenFactorIndex = i;
           Ld = cast<LoadSDNode>(St->getValue());
