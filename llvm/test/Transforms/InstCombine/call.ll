@@ -30,20 +30,6 @@ define i32 @test2(i32 %A) {
 }
 
 
-; Resolving this should insert a cast from sbyte to int, following the C 
-; promotion rules.
-define void @test3a(i8, ...) {unreachable }
-
-define void @test3(i8 %A, i8 %B) {
-        call void bitcast (void (i8, ...)* @test3a to void (i8, i8)*)( i8 %A, i8 %B 
-)
-        ret void
-; CHECK: %1 = zext i8 %B to i32
-; CHECK: call void (i8, ...)* @test3a(i8 %A, i32 %1)
-; CHECK: ret void
-}
-
-
 ; test conversion of return value...
 define i8 @test4a() {
         ret i8 0
