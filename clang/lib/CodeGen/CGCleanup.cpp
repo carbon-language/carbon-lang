@@ -502,9 +502,9 @@ static void destroyOptimisticNormalEntry(CodeGenFunction &CGF,
     
     // The only uses should be fixup switches.
     llvm::SwitchInst *si = cast<llvm::SwitchInst>(use.getUser());
-    if (si->getNumCases() == 2 && si->getDefaultDest() == unreachableBB) {
+    if (si->getNumCases() == 1 && si->getDefaultDest() == unreachableBB) {
       // Replace the switch with a branch.
-      llvm::BranchInst::Create(si->getSuccessor(1), si);
+      llvm::BranchInst::Create(si->getCaseSuccessor(0), si);
 
       // The switch operand is a load from the cleanup-dest alloca.
       llvm::LoadInst *condition = cast<llvm::LoadInst>(si->getCondition());
