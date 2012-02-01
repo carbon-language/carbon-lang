@@ -255,6 +255,12 @@ namespace clang {
     
     /// \brief Return the set of declarations that we know are not equivalent.
     NonEquivalentDeclSet &getNonEquivalentDecls() { return NonEquivalentDecls; }
+
+    /// \brief Called for ObjCInterfaceDecl, ObjCProtocolDecl, and TagDecl.
+    /// Mark the Decl as complete, filling it in as much as possible.
+    ///
+    /// \param D A declaration in the "to" context.
+    virtual void CompleteDecl(Decl* D);
     
     /// \brief Note that we have imported the "from" declaration by mapping it
     /// to the (potentially-newly-created) "to" declaration.
