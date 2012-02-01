@@ -3637,10 +3637,7 @@ void Sema::CodeCompleteCase(Scope *S) {
     // If there are no prior enumerators in C++, check whether we have to 
     // qualify the names of the enumerators that we suggest, because they
     // may not be visible in this scope.
-    Qualifier = getRequiredQualification(Context, CurContext,
-                                         Enum->getDeclContext());
-    
-    // FIXME: Scoped enums need to start with "EnumDecl" as the context!
+    Qualifier = getRequiredQualification(Context, CurContext, Enum);
   }
   
   // Add any enumerators that have not yet been mentioned.
