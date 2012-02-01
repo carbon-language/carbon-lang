@@ -39,6 +39,8 @@ def note_constexpr_array_index : Note<"cannot refer to element %0 of "
 def note_constexpr_pointer_arithmetic : Note<
   "cannot refer to element %0 of non-array object in a constant "
   "expression">;
+def note_constexpr_compare_virtual_mem_ptr : Note<
+  "comparison of pointer to virtual member function %0 has unspecified value">;
 def note_constexpr_past_end : Note<
   "dereferenced pointer past the end of %select{|subobject of }0"
   "%select{temporary|%2}1 is not a constant expression">;

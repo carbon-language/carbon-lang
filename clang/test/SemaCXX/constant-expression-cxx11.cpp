@@ -827,6 +827,18 @@ namespace MemberPointer {
   static_assert((s.*&S::f)() == 2, "");
   static_assert((s.*s.pf)() == 2, "");
 
+  static_assert(pf == &S::f, "");
+  static_assert(pf == s.*&S::pf, "");
+  static_assert(pm == &S::m, "");
+  static_assert(pm != pn, "");
+  static_assert(s.pn != pn, "");
+  static_assert(s.pn == pm, "");
+  static_assert(pg != nullptr, "");
+  static_assert(pf != nullptr, "");
+  static_assert((int S::*)nullptr == nullptr, "");
+  static_assert(pg == pg, ""); // expected-error {{constant expression}} expected-note {{comparison of pointer to virtual member function 'g' has unspecified value}}
+  static_assert(pf != pg, ""); // expected-error {{constant expression}} expected-note {{comparison of pointer to virtual member function 'g' has unspecified value}}
+
   template<int n> struct T : T<n-1> {};
   template<> struct T<0> { int n; };
   template<> struct T<30> : T<29> { int m; };
@@ -836,10 +848,13 @@ namespace MemberPointer {
 
   constexpr int (T<10>::*deepn) = &T<0>::n;
   static_assert(&(t17.*deepn) == &t17.n, "");
+  static_assert(deepn == &T<2>::n, "");
 
   constexpr int (T<15>::*deepm) = (int(T<10>::*))&T<30>::m;
   constexpr int *pbad = &(t17.*deepm); // expected-error {{constant expression}}
   static_assert(&(t30.*deepm) == &t30.m, "");
+  static_assert(deepm == &T<50>::m, "");
+  static_assert(deepm != deepn, "");
 
   constexpr T<5> *p17_5 = &t17;
   constexpr T<13> *p17_13 = (T<13>*)p17_5;
@@ -857,6 +872,14 @@ namespace MemberPointer {
   static_assert(&(p30_5->*(int(T<2>::*))deepm) == &t30.m, "");
   static_assert(&(((T<17>*)p30_13)->*deepm) == &t30.m, "");
   static_assert(&(p30_23->*deepm) == &t30.m, "");
+
+  struct Base { int n; };
+  template<int N> struct Mid : Base {};
+  struct Derived : Mid<0>, Mid<1> {};
+  static_assert(&Mid<0>::n == &Mid<1>::n, "");
+  static_assert((int Derived::*)(int Mid<0>::*)&Mid<0>::n !=
+                (int Derived::*)(int Mid<1>::*)&Mid<1>::n, "");
+  static_assert(&Mid<0>::n == (int Mid<0>::*)&Base::n, "");
 }
 
 namespace ArrayBaseDerived {

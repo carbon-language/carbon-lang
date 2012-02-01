@@ -813,6 +813,15 @@ namespace {
     }
   };
 
+  /// Compare two member pointers, which are assumed to be of the same type.
+  static bool operator==(const MemberPtr &LHS, const MemberPtr &RHS) {
+    if (!LHS.getDecl() || !RHS.getDecl())
+      return !LHS.getDecl() && !RHS.getDecl();
+    if (LHS.getDecl()->getCanonicalDecl() != RHS.getDecl()->getCanonicalDecl())
+      return false;
+    return LHS.Path == RHS.Path;
+  }
+
   /// Kinds of constant expression checking, for diagnostics.
   enum CheckConstantExpressionKind {
     CCEK_Constant,    ///< A normal constant.
@@ -4295,9 +4304,9 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
             (!RHSValue.Base && !RHSValue.Offset.isZero()))
           return Error(E);
         // It's implementation-defined whether distinct literals will have
-        // distinct addresses. In clang, we do not guarantee the addresses are
-        // distinct. However, we do know that the address of a literal will be
-        // non-null.
+        // distinct addresses. In clang, the result of such a comparison is
+        // unspecified, so it is not a constant expression. However, we do know
+        // that the address of a literal will be non-null.
         if ((IsLiteralLValue(LHSValue) || IsLiteralLValue(RHSValue)) &&
             LHSValue.Base && RHSValue.Base)
           return Error(E);
@@ -4354,6 +4363,45 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       }
     }
   }
+
+  if (LHSTy->isMemberPointerType()) {
+    assert(E->isEqualityOp() && "unexpected member pointer operation");
+    assert(RHSTy->isMemberPointerType() && "invalid comparison");
+
+    MemberPtr LHSValue, RHSValue;
+
+    bool LHSOK = EvaluateMemberPointer(E->getLHS(), LHSValue, Info);
+    if (!LHSOK && Info.keepEvaluatingAfterFailure())
+      return false;
+
+    if (!EvaluateMemberPointer(E->getRHS(), RHSValue, Info) || !LHSOK)
+      return false;
+
+    // C++11 [expr.eq]p2:
+    //   If both operands are null, they compare equal. Otherwise if only one is
+    //   null, they compare unequal.
+    if (!LHSValue.getDecl() || !RHSValue.getDecl()) {
+      bool Equal = !LHSValue.getDecl() && !RHSValue.getDecl();
+      return Success(E->getOpcode() == BO_EQ ? Equal : !Equal, E);
+    }
+
+    //   Otherwise if either is a pointer to a virtual member function, the
+    //   result is unspecified.
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(LHSValue.getDecl()))
+      if (MD->isVirtual())
+        CCEDiag(E, diag::note_constexpr_compare_virtual_mem_ptr) << MD;
+    if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(RHSValue.getDecl()))
+      if (MD->isVirtual())
+        CCEDiag(E, diag::note_constexpr_compare_virtual_mem_ptr) << MD;
+
+    //   Otherwise they compare equal if and only if they would refer to the
+    //   same member of the same most derived object or the same subobject if
+    //   they were dereferenced with a hypothetical object of the associated
+    //   class type.
+    bool Equal = LHSValue == RHSValue;
+    return Success(E->getOpcode() == BO_EQ ? Equal : !Equal, E);
+  }
+
   if (!LHSTy->isIntegralOrEnumerationType() ||
       !RHSTy->isIntegralOrEnumerationType()) {
     // We can't continue from here for non-integral types.
