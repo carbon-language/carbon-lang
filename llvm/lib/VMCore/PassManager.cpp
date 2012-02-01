@@ -84,32 +84,28 @@ PrintAfterAll("print-after-all",
 /// This is a helper to determine whether to print IR before or
 /// after a pass.
 
-static bool ShouldPrintBeforeOrAfterPass(const void *PassID,
+static bool ShouldPrintBeforeOrAfterPass(const PassInfo *PI,
                                          PassOptionList &PassesToPrint) {
-  if (const llvm::PassInfo *PI =
-      PassRegistry::getPassRegistry()->getPassInfo(PassID)) {
-    for (unsigned i = 0, ie = PassesToPrint.size(); i < ie; ++i) {
-      const llvm::PassInfo *PassInf = PassesToPrint[i];
-      if (PassInf)
-        if (PassInf->getPassArgument() == PI->getPassArgument()) {
-          return true;
-        }
-    }
+  for (unsigned i = 0, ie = PassesToPrint.size(); i < ie; ++i) {
+    const llvm::PassInfo *PassInf = PassesToPrint[i];
+    if (PassInf)
+      if (PassInf->getPassArgument() == PI->getPassArgument()) {
+        return true;
+      }
   }
   return false;
 }
 
-
 /// This is a utility to check whether a pass should have IR dumped
 /// before it.
-static bool ShouldPrintBeforePass(const void *PassID) {
-  return PrintBeforeAll || ShouldPrintBeforeOrAfterPass(PassID, PrintBefore);
+static bool ShouldPrintBeforePass(const PassInfo *PI) {
+  return PrintBeforeAll || ShouldPrintBeforeOrAfterPass(PI, PrintBefore);
 }
 
 /// This is a utility to check whether a pass should have IR dumped
 /// after it.
-static bool ShouldPrintAfterPass(const void *PassID) {
-  return PrintAfterAll || ShouldPrintBeforeOrAfterPass(PassID, PrintAfter);
+static bool ShouldPrintAfterPass(const PassInfo *PI) {
+  return PrintAfterAll || ShouldPrintBeforeOrAfterPass(PI, PrintAfter);
 }
 
 } // End of llvm namespace
@@ -264,25 +260,13 @@ public:
 
   virtual PMDataManager *getAsPMDataManager() { return this; }
   virtual Pass *getAsPass() { return this; }
+  virtual PassManagerType getTopLevelPassManagerType() {
+    return PMT_FunctionPassManager;
+  }
 
   /// Pass Manager itself does not invalidate any analysis info.
   void getAnalysisUsage(AnalysisUsage &Info) const {
     Info.setPreservesAll();
-  }
-
-  void addTopLevelPass(Pass *P) {
-    if (ImmutablePass *IP = P->getAsImmutablePass()) {
-      // P is a immutable pass and it will be managed by this
-      // top level manager. Set up analysis resolver to connect them.
-      AnalysisResolver *AR = new AnalysisResolver(*this);
-      P->setResolver(AR);
-      initializeAnalysisImpl(P);
-      addImmutablePass(IP);
-      recordAvailableAnalysis(IP);
-    } else {
-      P->assignPassManager(activeStack, PMT_FunctionPassManager);
-    }
-
   }
 
   FPPassManager *getContainedManager(unsigned N) {
@@ -417,22 +401,11 @@ public:
     Info.setPreservesAll();
   }
 
-  void addTopLevelPass(Pass *P) {
-    if (ImmutablePass *IP = P->getAsImmutablePass()) {
-      // P is a immutable pass and it will be managed by this
-      // top level manager. Set up analysis resolver to connect them.
-      AnalysisResolver *AR = new AnalysisResolver(*this);
-      P->setResolver(AR);
-      initializeAnalysisImpl(P);
-      addImmutablePass(IP);
-      recordAvailableAnalysis(IP);
-    } else {
-      P->assignPassManager(activeStack, PMT_ModulePassManager);
-    }
-  }
-
   virtual PMDataManager *getAsPMDataManager() { return this; }
   virtual Pass *getAsPass() { return this; }
+  virtual PassManagerType getTopLevelPassManagerType() {
+    return PMT_ModulePassManager;
+  }
 
   MPPassManager *getContainedManager(unsigned N) {
     assert(N < PassManagers.size() && "Pass number out of range!");
@@ -660,7 +633,32 @@ void PMTopLevelManager::schedulePass(Pass *P) {
   }
 
   // Now all required passes are available.
-  addTopLevelPass(P);
+  if (ImmutablePass *IP = P->getAsImmutablePass()) {
+    // P is a immutable pass and it will be managed by this
+    // top level manager. Set up analysis resolver to connect them.
+    PMDataManager *DM = getAsPMDataManager();
+    AnalysisResolver *AR = new AnalysisResolver(*DM);
+    P->setResolver(AR);
+    DM->initializeAnalysisImpl(P);
+    addImmutablePass(IP);
+    DM->recordAvailableAnalysis(IP);
+    return;
+  }
+
+  if (PI && !PI->isAnalysis() && ShouldPrintBeforePass(PI)) {
+    Pass *PP = P->createPrinterPass(
+      dbgs(), std::string("*** IR Dump Before ") + P->getPassName() + " ***");
+    PP->assignPassManager(activeStack, getTopLevelPassManagerType());
+  }
+
+  // Add the requested pass to the best available pass manager.
+  P->assignPassManager(activeStack, getTopLevelPassManagerType());
+
+  if (PI && !PI->isAnalysis() && ShouldPrintAfterPass(PI)) {
+    Pass *PP = P->createPrinterPass(
+      dbgs(), std::string("*** IR Dump After ") + P->getPassName() + " ***");
+    PP->assignPassManager(activeStack, getTopLevelPassManagerType());
+  }
 }
 
 /// Find the pass that implements Analysis AID. Search immutable
@@ -1357,31 +1355,13 @@ FunctionPassManager::~FunctionPassManager() {
   delete FPM;
 }
 
-/// addImpl - Add a pass to the queue of passes to run, without
-/// checking whether to add a printer pass.
-void FunctionPassManager::addImpl(Pass *P) {
-  FPM->add(P);
-}
-
 /// add - Add a pass to the queue of passes to run.  This passes
 /// ownership of the Pass to the PassManager.  When the
 /// PassManager_X is destroyed, the pass will be destroyed as well, so
 /// there is no need to delete the pass. (TODO delete passes.)
 /// This implies that all passes MUST be allocated with 'new'.
 void FunctionPassManager::add(Pass *P) {
-  // If this is a not a function pass, don't add a printer for it.
-  const void *PassID = P->getPassID();
-  if (P->getPassKind() == PT_Function)
-    if (ShouldPrintBeforePass(PassID))
-      addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump Before ")
-                                   + P->getPassName() + " ***"));
-
-  addImpl(P);
-
-  if (P->getPassKind() == PT_Function)
-    if (ShouldPrintAfterPass(PassID))
-      addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump After ")
-                                   + P->getPassName() + " ***"));
+  FPM->add(P);
 }
 
 /// run - Execute all of the passes scheduled for execution.  Keep
@@ -1693,27 +1673,12 @@ PassManager::~PassManager() {
   delete PM;
 }
 
-/// addImpl - Add a pass to the queue of passes to run, without
-/// checking whether to add a printer pass.
-void PassManager::addImpl(Pass *P) {
-  PM->add(P);
-}
-
 /// add - Add a pass to the queue of passes to run.  This passes ownership of
 /// the Pass to the PassManager.  When the PassManager is destroyed, the pass
 /// will be destroyed as well, so there is no need to delete the pass.  This
 /// implies that all passes MUST be allocated with 'new'.
 void PassManager::add(Pass *P) {
-  const void* PassID = P->getPassID();
-  if (ShouldPrintBeforePass(PassID))
-    addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump Before ")
-                                 + P->getPassName() + " ***"));
-
-  addImpl(P);
-
-  if (ShouldPrintAfterPass(PassID))
-    addImpl(P->createPrinterPass(dbgs(), std::string("*** IR Dump After ")
-                                 + P->getPassName() + " ***"));
+  PM->add(P);
 }
 
 /// run - Execute all of the passes scheduled for execution.  Keep track of
@@ -1823,7 +1788,7 @@ void ModulePass::assignPassManager(PMStack &PMS,
 void FunctionPass::assignPassManager(PMStack &PMS,
                                      PassManagerType PreferredType) {
 
-  // Find Module Pass Manager
+  // Find Function Pass Manager
   while (!PMS.empty()) {
     if (PMS.top()->getPassManagerType() > PMT_FunctionPassManager)
       PMS.pop();

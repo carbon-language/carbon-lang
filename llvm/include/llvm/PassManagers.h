@@ -82,7 +82,7 @@
 // relies on PassManagerImpl to do all the tasks.
 //
 // [o] class PassManagerImpl : public Pass, public PMDataManager,
-//                             public PMDTopLevelManager
+//                             public PMTopLevelManager
 //
 // PassManagerImpl is a top level pass manager responsible for managing
 // MPPassManagers.
@@ -174,9 +174,8 @@ protected:
   void initializeAllAnalysisInfo();
 
 private:
-  /// This is implemented by top level pass manager and used by
-  /// schedulePass() to add analysis info passes that are not available.
-  virtual void addTopLevelPass(Pass  *P) = 0;
+  virtual PMDataManager *getAsPMDataManager() = 0;
+  virtual PassManagerType getTopLevelPassManagerType() = 0;
 
 public:
   /// Schedule pass P for execution. Make sure that passes required by
