@@ -671,8 +671,12 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   if (isa<FunctionNoProtoType>(Ty))
     EltTys.push_back(DBuilder.createUnspecifiedParameter());
   else if (const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(Ty)) {
-    for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
-      EltTys.push_back(getOrCreateType(FTP->getArgType(i), Unit));
+    for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i) {
+      if (CGM.getCodeGenOpts().LimitDebugInfo)
+        EltTys.push_back(getOrCreateLimitedType(FTP->getArgType(i), Unit));
+      else
+        EltTys.push_back(getOrCreateType(FTP->getArgType(i), Unit));
+    }
   }
 
   llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
@@ -680,7 +684,6 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   llvm::DIType DbgTy = DBuilder.createSubroutineType(Unit, EltTypeArray);
   return DbgTy;
 }
-
 
 void CGDebugInfo::
 CollectRecordStaticVars(const RecordDecl *RD, llvm::DIType FwdDecl) {
@@ -1646,6 +1649,64 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
   return Res;
 }
 
+/// getOrCreateLimitedType - Get the type from the cache or create a new
+/// limited type if necessary.
+llvm::DIType CGDebugInfo::getOrCreateLimitedType(QualType Ty,
+						 llvm::DIFile Unit) {
+  if (Ty.isNull())
+    return llvm::DIType();
+
+  // Unwrap the type as needed for debug information.
+  Ty = UnwrapTypeForDebugInfo(Ty);
+
+  llvm::DIType T = getTypeOrNull(Ty);
+  if (T.Verify()) return T;
+
+  // Otherwise create the type.
+  llvm::DIType Res = CreateLimitedTypeNode(Ty, Unit);
+
+  // And update the type cache.
+  TypeCache[Ty.getAsOpaquePtr()] = Res;
+  return Res;
+}
+
+// TODO: Not safe to use for inner types or for fields. Currently only
+// used for by value arguments to functions anything else needs to be
+// audited carefully.
+llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
+  RecordDecl *RD = Ty->getDecl();
+
+  // For templated records we want the full type information and
+  // our forward decls don't handle this correctly.
+  if (isa<ClassTemplateSpecializationDecl>(RD))
+    return CreateType(Ty);
+
+  llvm::DIDescriptor RDContext
+    = createContextChain(cast<Decl>(RD->getDeclContext()));
+
+  return createRecordFwdDecl(RD, RDContext);
+}
+
+/// CreateLimitedTypeNode - Create a new debug type node, but only forward
+/// declare composite types that haven't been processed yet.
+llvm::DIType CGDebugInfo::CreateLimitedTypeNode(QualType Ty,llvm::DIFile Unit) {
+
+  // Work out details of type.
+  switch (Ty->getTypeClass()) {
+#define TYPE(Class, Base)
+#define ABSTRACT_TYPE(Class, Base)
+#define NON_CANONICAL_TYPE(Class, Base)
+#define DEPENDENT_TYPE(Class, Base) case Type::Class:
+    #include "clang/AST/TypeNodes.def"
+    llvm_unreachable("Dependent types cannot show up in debug information");
+
+  case Type::Record:
+    return CreateLimitedType(cast<RecordType>(Ty));
+  default:
+    return CreateTypeNode(Ty, Unit);
+  }
+}
+ 
 /// CreateTypeNode - Create a new debug type node.
 llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   // Handle qualifiers, which recursively handles what they refer to.

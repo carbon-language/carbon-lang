@@ -73,6 +73,9 @@ class CGDebugInfo {
   llvm::DenseMap<const FunctionDecl *, llvm::WeakVH> SPCache;
   llvm::DenseMap<const NamespaceDecl *, llvm::WeakVH> NameSpaceCache;
 
+  /// Helper functions for getOrCreateLimitedType.
+  llvm::DIType CreateLimitedType(const RecordType *Ty);
+  
   /// Helper functions for getOrCreateType.
   llvm::DIType CreateType(const BuiltinType *Ty);
   llvm::DIType CreateType(const ComplexType *Ty);
@@ -257,8 +260,16 @@ private:
   /// necessary.
   llvm::DIType getOrCreateType(QualType Ty, llvm::DIFile F);
 
+  /// getOrCreateLimitedType - Get the type from the cache or create a flat
+  /// limited type.
+  llvm::DIType getOrCreateLimitedType(QualType Ty, llvm::DIFile F);
+
   /// CreateTypeNode - Create type metadata for a source language type.
   llvm::DIType CreateTypeNode(QualType Ty, llvm::DIFile F);
+
+  /// CreateLimitedTypeNode - Create type metadata for a source language type,
+  /// but create as little as possible.
+  llvm::DIType CreateLimitedTypeNode(QualType Ty, llvm::DIFile F);
 
   /// CreateMemberType - Create new member and increase Offset by FType's size.
   llvm::DIType CreateMemberType(llvm::DIFile Unit, QualType FType,
