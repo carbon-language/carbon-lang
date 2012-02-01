@@ -24,6 +24,7 @@
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Endian.h"
+#include "lldb/Host/Host.h"
 #include "lldb/Utility/CleanUp.h"
 #include "Host/macosx/cfcpp/CFCBundle.h"
 #include "Host/macosx/cfcpp/CFCReleaser.h"
@@ -116,7 +117,18 @@ SkinnyMachOFileContainsArchAndUUID
         if (cmd == LoadCommandUUID)
         {
             lldb_private::UUID file_uuid (data.GetData(&data_offset, 16), 16);
-            return file_uuid == *uuid;
+            if (file_uuid == *uuid)
+                return true;
+
+            // Emit some warning messages since the UUIDs do not match!
+            char path_buf[PATH_MAX];
+            path_buf[0] = '\0';
+            const char *path = file_spec.GetPath(path_buf, PATH_MAX) ? path_buf
+                                                                     : file_spec.GetFilename().AsCString();
+            Host::SystemLog (Host::eSystemLogWarning, 
+                             "warning: UUID mismatch detected between binary and:\n\t'%s'\n", 
+                             path);
+            return false;
         }
         data_offset = cmd_offset + cmd_size;
     }

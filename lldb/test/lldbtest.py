@@ -854,28 +854,28 @@ class Base(unittest2.TestCase):
     # Build methods supported through a plugin interface
     # ==================================================
 
-    def buildDefault(self, architecture=None, compiler=None, dictionary=None):
+    def buildDefault(self, architecture=None, compiler=None, dictionary=None, clean=True):
         """Platform specific way to build the default binaries."""
         if lldb.skip_build_and_cleanup:
             return
         module = builder_module()
-        if not module.buildDefault(self, architecture, compiler, dictionary):
+        if not module.buildDefault(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build default binary")
 
-    def buildDsym(self, architecture=None, compiler=None, dictionary=None):
+    def buildDsym(self, architecture=None, compiler=None, dictionary=None, clean=True):
         """Platform specific way to build binaries with dsym info."""
         if lldb.skip_build_and_cleanup:
             return
         module = builder_module()
-        if not module.buildDsym(self, architecture, compiler, dictionary):
+        if not module.buildDsym(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build binary with dsym")
 
-    def buildDwarf(self, architecture=None, compiler=None, dictionary=None):
+    def buildDwarf(self, architecture=None, compiler=None, dictionary=None, clean=True):
         """Platform specific way to build binaries with dwarf maps."""
         if lldb.skip_build_and_cleanup:
             return
         module = builder_module()
-        if not module.buildDwarf(self, architecture, compiler, dictionary):
+        if not module.buildDwarf(self, architecture, compiler, dictionary, clean):
             raise Exception("Don't know how to build binary with dwarf")
 
     def cleanup(self, dictionary=None):

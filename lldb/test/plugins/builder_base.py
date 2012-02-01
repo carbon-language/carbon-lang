@@ -63,25 +63,38 @@ def getCmdLine(d):
     return " " + cmdline
 
 
-def buildDefault(sender=None, architecture=None, compiler=None, dictionary=None):
+def buildDefault(sender=None, architecture=None, compiler=None, dictionary=None, clean=True):
     """Build the binaries the default way."""
-    lldbtest.system(["/bin/sh", "-c",
-                     "make clean" + getCmdLine(dictionary) + "; make"
-                     + getArchSpec(architecture) + getCCSpec(compiler)
-                     + getCmdLine(dictionary)],
-                    sender=sender)
+    if clean:
+        lldbtest.system(["/bin/sh", "-c",
+                         "make clean" + getCmdLine(dictionary) + "; make"
+                         + getArchSpec(architecture) + getCCSpec(compiler)
+                         + getCmdLine(dictionary)],
+                        sender=sender)
+    else:
+        lldbtest.system(["/bin/sh", "-c",
+                         "make" + getArchSpec(architecture) + getCCSpec(compiler)
+                         + getCmdLine(dictionary)],
+                        sender=sender)
 
     # True signifies that we can handle building default.
     return True
 
-def buildDwarf(sender=None, architecture=None, compiler=None, dictionary=None):
+def buildDwarf(sender=None, architecture=None, compiler=None, dictionary=None, clean=True):
     """Build the binaries with dwarf debug info."""
-    lldbtest.system(["/bin/sh", "-c",
-                     "make clean" + getCmdLine(dictionary)
-                     + "; make MAKE_DSYM=NO"
-                     + getArchSpec(architecture) + getCCSpec(compiler)
-                     + getCmdLine(dictionary)],
-                    sender=sender)
+    if clean:
+        lldbtest.system(["/bin/sh", "-c",
+                         "make clean" + getCmdLine(dictionary)
+                         + "; make MAKE_DSYM=NO"
+                         + getArchSpec(architecture) + getCCSpec(compiler)
+                         + getCmdLine(dictionary)],
+                        sender=sender)
+    else:
+        lldbtest.system(["/bin/sh", "-c",
+                         "make MAKE_DSYM=NO"
+                         + getArchSpec(architecture) + getCCSpec(compiler)
+                         + getCmdLine(dictionary)],
+                        sender=sender)
 
     # True signifies that we can handle building dwarf.
     return True
