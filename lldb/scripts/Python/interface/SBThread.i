@@ -175,6 +175,13 @@ public:
     GetDescription (lldb::SBStream &description) const;
     
     %pythoncode %{
+        def get_thread_frames(self):
+            frames = []
+            for frame in self:
+                frames.append(frame)
+            return frames
+
+
         __swig_getmethods__["id"] = GetThreadID
         if _newclass: x = property(GetThreadID, None)
 
@@ -189,6 +196,9 @@ public:
 
         __swig_getmethods__["num_frames"] = GetNumFrames
         if _newclass: x = property(GetNumFrames, None)
+
+        __swig_getmethods__["frames"] = get_thread_frames
+        if _newclass: x = property(get_thread_frames, None)
 
         __swig_getmethods__["name"] = GetName
         if _newclass: x = property(GetName, None)

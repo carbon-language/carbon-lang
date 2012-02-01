@@ -3,182 +3,338 @@
         PyObject *lldb::SBAddress::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBBlock {
         PyObject *lldb::SBBlock::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBBreakpoint {
         PyObject *lldb::SBBreakpoint::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBBreakpointLocation {
         PyObject *lldb::SBBreakpointLocation::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description, lldb::eDescriptionLevelFull);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBCommandReturnObject {
         PyObject *lldb::SBCommandReturnObject::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBCompileUnit {
         PyObject *lldb::SBCompileUnit::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBData {
         PyObject *lldb::SBData::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBDebugger {
         PyObject *lldb::SBDebugger::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBError {
         PyObject *lldb::SBError::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBFileSpec {
         PyObject *lldb::SBFileSpec::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBFrame {
         PyObject *lldb::SBFrame::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBFunction {
         PyObject *lldb::SBFunction::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBInstruction {
         PyObject *lldb::SBInstruction::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBInstructionList {
         PyObject *lldb::SBInstructionList::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBLineEntry {
         PyObject *lldb::SBLineEntry::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBModule {
         PyObject *lldb::SBModule::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBProcess {
         PyObject *lldb::SBProcess::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBSection {
         PyObject *lldb::SBSection::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBSymbol {
         PyObject *lldb::SBSymbol::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBSymbolContext {
         PyObject *lldb::SBSymbolContext::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBTarget {
         PyObject *lldb::SBTarget::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description, lldb::eDescriptionLevelBrief);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBType {
         PyObject *lldb::SBType::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description, lldb::eDescriptionLevelBrief);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBTypeMember {
         PyObject *lldb::SBTypeMember::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description, lldb::eDescriptionLevelBrief);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBThread {
         PyObject *lldb::SBThread::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBValue {
         PyObject *lldb::SBValue::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 %extend lldb::SBWatchpoint {
         PyObject *lldb::SBWatchpoint::__repr__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description, lldb::eDescriptionLevelVerbose);
-                return PyString_FromString (description.GetData());
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                return Py_None;
         }
 }
 
