@@ -4347,6 +4347,9 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       //  - Pointer subtractions must be on elements of the same array.
       //  - Pointer comparisons must be between members with the same access.
 
+      const CharUnits &LHSOffset = LHSValue.getLValueOffset();
+      const CharUnits &RHSOffset = RHSValue.getLValueOffset();
+
       if (E->getOpcode() == BO_Sub) {
         QualType Type = E->getLHS()->getType();
         QualType ElementType = Type->getAs<PointerType>()->getPointeeType();
@@ -4355,13 +4358,27 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         if (!HandleSizeof(Info, ElementType, ElementSize))
           return false;
 
-        CharUnits Diff = LHSValue.getLValueOffset() -
-                             RHSValue.getLValueOffset();
-        return Success(Diff / ElementSize, E);
-      }
+        // FIXME: LLVM and GCC both compute LHSOffset - RHSOffset at runtime,
+        // and produce incorrect results when it overflows. Such behavior
+        // appears to be non-conforming, but is common, so perhaps we should
+        // assume the standard intended for such cases to be undefined behavior
+        // and check for them.
 
-      const CharUnits &LHSOffset = LHSValue.getLValueOffset();
-      const CharUnits &RHSOffset = RHSValue.getLValueOffset();
+        // Compute (LHSOffset - RHSOffset) / Size carefully, checking for
+        // overflow in the final conversion to ptrdiff_t.
+        APSInt LHS(
+          llvm::APInt(65, (int64_t)LHSOffset.getQuantity(), true), false);
+        APSInt RHS(
+          llvm::APInt(65, (int64_t)RHSOffset.getQuantity(), true), false);
+        APSInt ElemSize(
+          llvm::APInt(65, (int64_t)ElementSize.getQuantity(), true), false);
+        APSInt TrueResult = (LHS - RHS) / ElemSize;
+        APSInt Result = TrueResult.trunc(Info.Ctx.getIntWidth(E->getType()));
+
+        if (Result.extend(65) != TrueResult)
+          HandleOverflow(Info, E, TrueResult, E->getType());
+        return Success(Result, E);
+      }
 
       // C++11 [expr.rel]p3:
       //   Pointers to void (after pointer conversions) can be compared, with a

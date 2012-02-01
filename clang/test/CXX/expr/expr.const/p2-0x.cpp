@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -std=c++11 -pedantic -verify -fcxx-exceptions %s -fconstexpr-depth 128
+// RUN: %clang_cc1 -fsyntax-only -std=c++11 -pedantic -verify -fcxx-exceptions %s -fconstexpr-depth 128 -triple i686-pc-linux-gnu
 
 // A conditional-expression is a core constant expression unless it involves one
 // of the following as a potentially evaluated subexpression [...]:
@@ -221,6 +221,14 @@ namespace UndefinedBehavior {
     constexpr long long ll3 = -ll1 - 1; // ok
     constexpr long long ll4 = ll3 - 1; // expected-error {{constant}} expected-note {{ -9223372036854775809 }}
     constexpr long long ll5 = ll3 * ll3; // expected-error {{constant}} expected-note {{ 85070591730234615865843651857942052864 }}
+
+    // Yikes.
+    char melchizedek[2200000000];
+    typedef decltype(melchizedek[1] - melchizedek[0]) ptrdiff_t;
+    constexpr ptrdiff_t d1 = &melchizedek[0x7fffffff] - &melchizedek[0]; // ok
+    constexpr ptrdiff_t d2 = &melchizedek[0x80000000u] - &melchizedek[0]; // expected-error {{constant expression}} expected-note {{ 2147483648 }}
+    constexpr ptrdiff_t d3 = &melchizedek[0] - &melchizedek[0x80000000u]; // ok
+    constexpr ptrdiff_t d4 = &melchizedek[0] - &melchizedek[0x80000001u]; // expected-error {{constant expression}} expected-note {{ -2147483649 }}
 
     // Unsigned int overflow.
     static_assert(65536u * 65536u == 0u, ""); // ok
