@@ -9,7 +9,6 @@ target triple = "x86_64-pc-win32"
 
 ; CHECK: f___vyf
 ; CHECK: pushq %rbp
-; CHECK-NOT: vmovaps{{.*}}(%r
 ; CHECK: vmovmsk
 ; CHECK: vmovaps %ymm{{.*}}(%r
 ; CHECK: vmovaps %ymm{{.*}}(%r
