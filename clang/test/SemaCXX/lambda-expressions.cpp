@@ -13,9 +13,9 @@ namespace ExplicitCapture {
     void ImplicitThisCapture() {
       [](){(void)Member;}; // expected-error {{'this' cannot be implicitly captured in this context}} expected-error {{not supported yet}}
       [&](){(void)Member;}; // expected-error {{not supported yet}}
-      // FIXME: 'this' captures below don't actually work yet
-      // FIXME: [this](){(void)Member;};
-      // FIXME: [this]{[this]{};};
+      // 'this' captures below don't actually work yet
+      [this](){(void)Member;}; // expected-error{{lambda expressions are not supported yet}}
+      [this]{[this]{};}; // expected-error 2{{lambda expressions are not supported yet}}
       []{[this]{};};// expected-error {{'this' cannot be implicitly captured in this context}} expected-error 2 {{not supported yet}}
       []{Overload(3);}; // expected-error {{not supported yet}}
       []{Overload();}; // expected-error {{'this' cannot be implicitly captured in this context}} expected-error {{not supported yet}}
@@ -25,7 +25,7 @@ namespace ExplicitCapture {
   };
 
   void f() {
-    [this] () {}; // expected-error {{invalid use of 'this'}} expected-error {{not supported yet}}
+    [this] () {}; // expected-error {{'this' cannot be captured in this context}} expected-error {{not supported yet}}
   }
 }
 

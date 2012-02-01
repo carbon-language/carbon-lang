@@ -670,9 +670,9 @@ QualType Sema::getCurrentThisType() {
   return ThisTy;
 }
 
-void Sema::CheckCXXThisCapture(SourceLocation Loc) {
+void Sema::CheckCXXThisCapture(SourceLocation Loc, bool Explicit) {
   // We don't need to capture this in an unevaluated context.
-  if (ExprEvalContexts.back().Context == Unevaluated)
+  if (ExprEvalContexts.back().Context == Unevaluated && !Explicit)
     return;
 
   // Otherwise, check that we can capture 'this'.
@@ -684,16 +684,19 @@ void Sema::CheckCXXThisCapture(SourceLocation Loc) {
         // 'this' is already being captured; there isn't anything more to do.
         break;
       }
+      
       if (CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_LambdaByref ||
-          CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_Block) {
-        // This closure can implicitly capture 'this'; continue looking upwards.
+          CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_Block ||
+          Explicit) {
+        // This closure can capture 'this'; continue looking upwards.
         // FIXME: Is this check correct?  The rules in the standard are a bit
         // unclear.
         NumClosures++;
+        Explicit = false;
         continue;
       }
       // This context can't implicitly capture 'this'; fail out.
-      Diag(Loc, diag::err_implicit_this_capture);
+      Diag(Loc, diag::err_this_capture) << Explicit;
       return;
     }
     break;
@@ -4862,20 +4865,90 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   Class->setLambda(true);
   CurContext->addDecl(Class);
 
-  QualType ThisCaptureType;
-  llvm::DenseMap<VarDecl*, unsigned> CaptureMap;
-  unsigned CXXThisCaptureIndex = 0;
-  llvm::SmallVector<LambdaScopeInfo::Capture, 4> Captures;
+  // Build the call operator; we don't really have all the relevant information
+  // at this point, but we need something to attach child declarations to.
+  QualType MethodTy;
+  TypeSourceInfo *MethodTyInfo;
+  if (ParamInfo.getNumTypeObjects() == 0) {
+    // C++11 [expr.prim.lambda]p4:
+    //   If a lambda-expression does not include a lambda-declarator, it is as 
+    //   if the lambda-declarator were ().
+    FunctionProtoType::ExtProtoInfo EPI;
+    EPI.TypeQuals |= DeclSpec::TQ_const;
+    MethodTy = Context.getFunctionType(Context.DependentTy,
+                                       /*Args=*/0, /*NumArgs=*/0, EPI);
+    MethodTyInfo = Context.getTrivialTypeSourceInfo(MethodTy);
+  } else {
+    assert(ParamInfo.isFunctionDeclarator() &&
+           "lambda-declarator is a function");
+    DeclaratorChunk::FunctionTypeInfo &FTI = ParamInfo.getFunctionTypeInfo();
+    
+    // C++11 [expr.prim.lambda]p5:
+    //   This function call operator is declared const (9.3.1) if and only if 
+    //   the lambda-expression’s parameter-declaration-clause is not followed 
+    //   by mutable. It is neither virtual nor declared volatile.
+    if (!FTI.hasMutableQualifier())
+      FTI.TypeQuals |= DeclSpec::TQ_const;
+    MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
+    // FIXME: Can these asserts actually fail?
+    assert(MethodTyInfo && "no type from lambda-declarator");
+    MethodTy = MethodTyInfo->getType();
+    assert(!MethodTy.isNull() && "no type from lambda declarator");
+  }
+  
+  // C++11 [expr.prim.lambda]p5:
+  //   The closure type for a lambda-expression has a public inline function 
+  //   call operator (13.5.4) whose parameters and return type are described by
+  //   the lambda-expression’s parameter-declaration-clause and 
+  //   trailing-return-type respectively.
+  DeclarationName MethodName
+    = Context.DeclarationNames.getCXXOperatorName(OO_Call);
+  CXXMethodDecl *Method
+    = CXXMethodDecl::Create(Context,
+                            Class,
+                            ParamInfo.getSourceRange().getEnd(),
+                            DeclarationNameInfo(MethodName,
+                                                /*NameLoc=*/SourceLocation()),
+                            MethodTy,
+                            MethodTyInfo,
+                            /*isStatic=*/false,
+                            SC_None,
+                            /*isInline=*/true,
+                            /*isConstExpr=*/false,
+                            ParamInfo.getSourceRange().getEnd());
+  Method->setAccess(AS_public);
+  Class->addDecl(Method);
+  Method->setLexicalDeclContext(DC); // FIXME: Minor hack.
+  
+  ProcessDeclAttributes(CurScope, Method, ParamInfo);
+  
+  // Enter a new evaluation context to insulate the block from any
+  // cleanups from the enclosing full-expression.
+  PushExpressionEvaluationContext(PotentiallyEvaluated);
+  
+  PushDeclContext(CurScope, Method);
+    
+  // Introduce the lambda scope.
+  PushLambdaScope(Class);
+  LambdaScopeInfo *LSI = getCurLambda();
+  if (Intro.Default == LCD_ByCopy)
+    LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByval;
+  else if (Intro.Default == LCD_ByRef)
+    LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByref;
+
+  // Handle explicit captures.
   for (llvm::SmallVector<LambdaCapture, 4>::const_iterator
-       C = Intro.Captures.begin(), E = Intro.Captures.end(); C != E; ++C) {
+         C = Intro.Captures.begin(), 
+         E = Intro.Captures.end(); 
+       C != E; ++C) {
     if (C->Kind == LCK_This) {
       // C++11 [expr.prim.lambda]p8:
       //   An identifier or this shall not appear more than once in a 
       //   lambda-capture.
-      if (!ThisCaptureType.isNull()) {
+      if (LSI->isCXXThisCaptured()) {
         Diag(C->Loc, diag::err_capture_more_than_once) 
           << "'this'"
-          << SourceRange(Captures[CXXThisCaptureIndex].getLocation());
+          << SourceRange(LSI->getCXXThisCapture().getLocation());
         continue;
       }
 
@@ -4890,19 +4963,13 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       // C++11 [expr.prim.lambda]p12:
       //   If this is captured by a local lambda expression, its nearest
       //   enclosing function shall be a non-static member function.
-      ThisCaptureType = getCurrentThisType();
+      QualType ThisCaptureType = getCurrentThisType();
       if (ThisCaptureType.isNull()) {
-        Diag(C->Loc, diag::err_invalid_this_use);
+        Diag(C->Loc, diag::err_this_capture) << true;
         continue;
       }
-      CheckCXXThisCapture(C->Loc);
-
-      // FIXME: Need getCurCapture().
-      bool isNested = getCurBlock() || getCurLambda();
-      CXXThisCaptureIndex = Captures.size();
-      CapturingScopeInfo::Capture Cap(CapturingScopeInfo::Capture::ThisCapture,
-                                      isNested, C->Loc);
-      Captures.push_back(Cap);
+      
+      CheckCXXThisCapture(C->Loc, /*Explicit=*/true);
       continue;
     }
 
@@ -4939,7 +5006,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     //   for unqualified name lookup (3.4.1); each such lookup shall find a 
     //   variable with automatic storage duration declared in the reaching 
     //   scope of the local lambda expression.
-    // FIXME: Check reaching scope.
+    // FIXME: Check reaching scope. 
     VarDecl *Var = R.getAsSingle<VarDecl>();
     if (!Var) {
       Diag(C->Loc, diag::err_capture_does_not_name_variable) << C->Id;
@@ -4961,118 +5028,43 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     // C++11 [expr.prim.lambda]p8:
     //   An identifier or this shall not appear more than once in a 
     //   lambda-capture.
-    if (CaptureMap.count(Var)) {
+    if (LSI->isCaptured(Var)) {
       Diag(C->Loc, diag::err_capture_more_than_once) 
         << C->Id
-        << SourceRange(Captures[CaptureMap[Var]].getLocation());
+        << SourceRange(LSI->getCapture(Var).getLocation());
       continue;
     }
     
     // FIXME: If this is capture by copy, make sure that we can in fact copy
     // the variable.
-    CaptureMap[Var] = Captures.size();
-    Captures.push_back(LambdaScopeInfo::Capture(Var, C->Kind == LCK_ByRef,
-                                                /*isNested*/false, C->Loc, 0));
+    // FIXME: Unify with normal capture path, so we get all of the necessary
+    // nested captures.
+    LSI->AddCapture(Var, C->Kind == LCK_ByRef, /*isNested=*/false, C->Loc, 0);
   }
-
-  // Build the call operator; we don't really have all the relevant information
-  // at this point, but we need something to attach child declarations to.
-  QualType MethodTy;
-  TypeSourceInfo *MethodTyInfo;
-  if (ParamInfo.getNumTypeObjects() == 0) {
-    // C++11 [expr.prim.lambda]p4:
-    //   If a lambda-expression does not include a lambda-declarator, it is as 
-    //   if the lambda-declarator were ().
-    FunctionProtoType::ExtProtoInfo EPI;
-    EPI.TypeQuals |= DeclSpec::TQ_const;
-    MethodTy = Context.getFunctionType(Context.DependentTy,
-                                       /*Args=*/0, /*NumArgs=*/0, EPI);
-    MethodTyInfo = Context.getTrivialTypeSourceInfo(MethodTy);
-  } else {
-    assert(ParamInfo.isFunctionDeclarator() &&
-           "lambda-declarator is a function");
-    DeclaratorChunk::FunctionTypeInfo &FTI = ParamInfo.getFunctionTypeInfo();
-    
-    // C++11 [expr.prim.lambda]p5:
-    //   This function call operator is declared const (9.3.1) if and only if 
-    //   the lambda- expression’s parameter-declaration-clause is not followed 
-    //   by mutable. It is neither virtual nor declared volatile.
-    if (!FTI.hasMutableQualifier())
-      FTI.TypeQuals |= DeclSpec::TQ_const;
-    MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
-    // FIXME: Can these asserts actually fail?
-    assert(MethodTyInfo && "no type from lambda-declarator");
-    MethodTy = MethodTyInfo->getType();
-    assert(!MethodTy.isNull() && "no type from lambda declarator");
-  }
-
-  // C++11 [expr.prim.lambda]p5:
-  //   The closure type for a lambda-expression has a public inline function 
-  //   call operator (13.5.4) whose parameters and return type are described by
-  //   the lambda-expression’s parameter-declaration-clause and 
-  //   trailing-return-type respectively.
-  DeclarationName MethodName
-    = Context.DeclarationNames.getCXXOperatorName(OO_Call);
-  CXXMethodDecl *Method
-    = CXXMethodDecl::Create(Context,
-                            Class,
-                            ParamInfo.getSourceRange().getEnd(),
-                            DeclarationNameInfo(MethodName,
-                                                /*NameLoc=*/SourceLocation()),
-                            MethodTy,
-                            MethodTyInfo,
-                            /*isStatic=*/false,
-                            SC_None,
-                            /*isInline=*/true,
-                            /*isConstExpr=*/false,
-                            ParamInfo.getSourceRange().getEnd());
-  Method->setAccess(AS_public);
-  Class->addDecl(Method);
-  Method->setLexicalDeclContext(DC); // FIXME: Is this really correct?
-
-  ProcessDeclAttributes(CurScope, Method, ParamInfo);
-
-  // Enter a new evaluation context to insulate the block from any
-  // cleanups from the enclosing full-expression.
-  PushExpressionEvaluationContext(PotentiallyEvaluated);
-
-  PushDeclContext(CurScope, Method);
+  LSI->finishedExplicitCaptures();
 
   // Set the parameters on the decl, if specified.
   if (isa<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc())) {
     FunctionProtoTypeLoc Proto =
-        cast<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc());
+    cast<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc());
     Method->setParams(Proto.getParams());
     CheckParmsForFunctionDef(Method->param_begin(),
                              Method->param_end(),
                              /*CheckParameterNames=*/false);
-
+    
     // Introduce our parameters into the function scope
     for (unsigned p = 0, NumParams = Method->getNumParams(); p < NumParams; ++p) {
       ParmVarDecl *Param = Method->getParamDecl(p);
       Param->setOwningFunction(Method);
-
+      
       // If this has an identifier, add it to the scope stack.
       if (Param->getIdentifier()) {
         CheckShadow(CurScope, Param);
-
+        
         PushOnScopeChains(Param, CurScope);
       }
     }
   }
-
-  // Introduce the lambda scope.
-  PushLambdaScope(Class);
-
-  LambdaScopeInfo *LSI = getCurLambda();
-  LSI->CXXThisCaptureIndex = CXXThisCaptureIndex;
-  std::swap(LSI->CaptureMap, CaptureMap);
-  std::swap(LSI->Captures, Captures);
-  LSI->NumExplicitCaptures = Captures.size();
-  if (Intro.Default == LCD_ByCopy)
-    LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByval;
-  else if (Intro.Default == LCD_ByRef)
-    LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByref;
 
   const FunctionType *Fn = MethodTy->getAs<FunctionType>();
   QualType RetTy = Fn->getResultType();

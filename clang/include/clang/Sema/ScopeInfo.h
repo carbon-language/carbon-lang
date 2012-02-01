@@ -18,7 +18,6 @@
 #include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/SetVector.h"
 
 namespace clang {
 
@@ -206,6 +205,34 @@ public:
     CXXThisCaptureIndex = Captures.size();
   }
 
+  /// \brief Determine whether the C++ 'this' is captured.
+  bool isCXXThisCaptured() const { return CXXThisCaptureIndex != 0; }
+  
+  /// \brief Retrieve the capture of C++ 'this', if it has been captured.
+  Capture &getCXXThisCapture() {
+    assert(isCXXThisCaptured() && "this has not been captured");
+    return Captures[CXXThisCaptureIndex - 1];
+  }
+  
+  /// \brief Determine whether the given variable has been captured.
+  bool isCaptured(VarDecl *Var) const {
+    return CaptureMap.count(Var) > 0;
+  }
+  
+  /// \brief Retrieve the capture of the given variable, if it has been
+  /// captured already.
+  Capture &getCapture(VarDecl *Var) {
+    assert(isCaptured(Var) && "Variable has not been captured");
+    return Captures[CaptureMap[Var] - 1];
+  }
+
+  const Capture &getCapture(VarDecl *Var) const {
+    llvm::DenseMap<VarDecl*, unsigned>::const_iterator Known
+      = CaptureMap.find(Var);
+    assert(Known != CaptureMap.end() && "Variable has not been captured");
+    return Captures[Known->second - 1];
+  }
+
   static bool classof(const FunctionScopeInfo *FSI) { 
     return FSI->Kind == SK_Block || FSI->Kind == SK_Lambda; 
   }
@@ -258,6 +285,11 @@ public:
 
   virtual ~LambdaScopeInfo();
 
+  /// \brief Note when 
+  void finishedExplicitCaptures() {
+    NumExplicitCaptures = Captures.size();
+  }
+  
   static bool classof(const FunctionScopeInfo *FSI) { 
     return FSI->Kind == SK_Lambda; 
   }

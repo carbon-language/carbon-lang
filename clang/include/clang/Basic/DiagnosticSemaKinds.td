@@ -4066,8 +4066,8 @@ def err_capture_does_not_name_variable : Error<
   "%0 in capture list does not name a variable">;
 def err_capture_non_automatic_variable : Error<
   "%0 cannot be captured because it does not have automatic storage duration">;
-def err_implicit_this_capture : Error<
-  "'this' cannot be implicitly captured in this context">;
+def err_this_capture : Error<
+  "'this' cannot be %select{implicitly |}0captured in this context">;
 def err_lambda_capture_block : Error<
   "__block variable %0 cannot be captured in a lambda">;
   
