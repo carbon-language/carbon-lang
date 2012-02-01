@@ -1263,7 +1263,8 @@ static CaptureResult propagateCapture(Sema &S, unsigned ValidScopeIndex,
          i != e; ++i) {
     BlockScopeInfo *innerBlock = cast<BlockScopeInfo>(S.FunctionScopes[i]);
     innerBlock->AddCapture(Cap.getVariable(), Cap.isReferenceCapture(),
-                           /*nested*/ true, Cap.getCopyExpr());
+                           /*nested*/ true, Cap.getLocation(),
+                           Cap.getCopyExpr());
   }
 
   return Cap.isReferenceCapture() ? CR_CaptureByRef : CR_Capture;
@@ -1377,7 +1378,7 @@ static CaptureResult shouldCaptureValueReference(Sema &S, SourceLocation loc,
     cast<BlockScopeInfo>(S.FunctionScopes[functionScopesIndex]);
 
   // Build a valid capture in this scope.
-  blockScope->AddCapture(var, byRef, /*nested*/ false, copyExpr);
+  blockScope->AddCapture(var, byRef, /*nested*/ false, loc, copyExpr);
 
   // Propagate that to inner captures if necessary.
   return propagateCapture(S, functionScopesIndex,

@@ -706,7 +706,7 @@ void Sema::CheckCXXThisCapture(SourceLocation Loc) {
        NumClosures; --idx, --NumClosures) {
     CapturingScopeInfo *CSI = cast<CapturingScopeInfo>(FunctionScopes[idx]);
     bool isNested = NumClosures > 1;
-    CSI->AddThisCapture(isNested);
+    CSI->AddThisCapture(isNested, Loc);
   }
 }
 
@@ -4869,16 +4869,27 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   for (llvm::SmallVector<LambdaCapture, 4>::const_iterator
        C = Intro.Captures.begin(), E = Intro.Captures.end(); C != E; ++C) {
     if (C->Kind == LCK_This) {
+      // C++11 [expr.prim.lambda]p8:
+      //   An identifier or this shall not appear more than once in a 
+      //   lambda-capture.
       if (!ThisCaptureType.isNull()) {
-        Diag(C->Loc, diag::err_capture_more_than_once) << "'this'";
+        Diag(C->Loc, diag::err_capture_more_than_once) 
+          << "'this'"
+          << SourceRange(Captures[CXXThisCaptureIndex].getLocation());
         continue;
       }
 
+      // C++11 [expr.prim.lambda]p8:
+      //   If a lambda-capture includes a capture-default that is =, the 
+      //   lambda-capture shall not contain this [...].
       if (Intro.Default == LCD_ByCopy) {
         Diag(C->Loc, diag::err_this_capture_with_copy_default);
         continue;
       }
 
+      // C++11 [expr.prim.lambda]p12:
+      //   If this is captured by a local lambda expression, its nearest
+      //   enclosing function shall be a non-static member function.
       ThisCaptureType = getCurrentThisType();
       if (ThisCaptureType.isNull()) {
         Diag(C->Loc, diag::err_invalid_this_use);
@@ -4888,15 +4899,20 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
 
       // FIXME: Need getCurCapture().
       bool isNested = getCurBlock() || getCurLambda();
-      CapturingScopeInfo::Capture Cap(CapturingScopeInfo::Capture::ThisCapture,
-                                      isNested);
-      Captures.push_back(Cap);
       CXXThisCaptureIndex = Captures.size();
+      CapturingScopeInfo::Capture Cap(CapturingScopeInfo::Capture::ThisCapture,
+                                      isNested, C->Loc);
+      Captures.push_back(Cap);
       continue;
     }
 
     assert(C->Id && "missing identifier for capture");
 
+    // C++11 [expr.prim.lambda]p8:
+    //   If a lambda-capture includes a capture-default that is &, the 
+    //   identifiers in the lambda-capture shall not be preceded by &.
+    //   If a lambda-capture includes a capture-default that is =, [...]
+    //   each identifier it contains shall be preceded by &.
     if (C->Kind == LCK_ByRef && Intro.Default == LCD_ByRef) {
       Diag(C->Loc, diag::err_reference_capture_with_reference_default);
       continue;
@@ -4907,43 +4923,56 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
 
     DeclarationNameInfo Name(C->Id, C->Loc);
     LookupResult R(*this, Name, LookupOrdinaryName);
-    CXXScopeSpec ScopeSpec;
-    LookupParsedName(R, CurScope, &ScopeSpec);
+    LookupName(R, CurScope);
     if (R.isAmbiguous())
       continue;
     if (R.empty()) {
+      // FIXME: Disable corrections that would add qualification?
+      CXXScopeSpec ScopeSpec;
       DeclFilterCCC<VarDecl> Validator;
       if (DiagnoseEmptyLookup(CurScope, ScopeSpec, R, Validator))
         continue;
     }
 
+    // C++11 [expr.prim.lambda]p10:
+    //   The identifiers in a capture-list are looked up using the usual rules
+    //   for unqualified name lookup (3.4.1); each such lookup shall find a 
+    //   variable with automatic storage duration declared in the reaching 
+    //   scope of the local lambda expression.
+    // FIXME: Check reaching scope.
     VarDecl *Var = R.getAsSingle<VarDecl>();
     if (!Var) {
       Diag(C->Loc, diag::err_capture_does_not_name_variable) << C->Id;
       continue;
     }
 
-    if (CaptureMap.count(Var)) {
-      Diag(C->Loc, diag::err_capture_more_than_once) << C->Id;
-      continue;
-    }
-
     if (!Var->hasLocalStorage()) {
       Diag(C->Loc, diag::err_capture_non_automatic_variable) << C->Id;
+      Diag(Var->getLocation(), diag::note_previous_decl) << C->Id;
       continue;
     }
-
+    
     if (Var->hasAttr<BlocksAttr>()) {
       Diag(C->Loc, diag::err_lambda_capture_block) << C->Id;
       Diag(Var->getLocation(), diag::note_previous_decl) << C->Id;
       continue;
     }
+
+    // C++11 [expr.prim.lambda]p8:
+    //   An identifier or this shall not appear more than once in a 
+    //   lambda-capture.
+    if (CaptureMap.count(Var)) {
+      Diag(C->Loc, diag::err_capture_more_than_once) 
+        << C->Id
+        << SourceRange(Captures[CaptureMap[Var]].getLocation());
+      continue;
+    }
     
     // FIXME: If this is capture by copy, make sure that we can in fact copy
     // the variable.
-    Captures.push_back(LambdaScopeInfo::Capture(Var, C->Kind == LCK_ByRef,
-                                                /*isNested*/false, 0));
     CaptureMap[Var] = Captures.size();
+    Captures.push_back(LambdaScopeInfo::Capture(Var, C->Kind == LCK_ByRef,
+                                                /*isNested*/false, C->Loc, 0));
   }
 
   // Build the call operator; we don't really have all the relevant information
@@ -4951,6 +4980,9 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   QualType MethodTy;
   TypeSourceInfo *MethodTyInfo;
   if (ParamInfo.getNumTypeObjects() == 0) {
+    // C++11 [expr.prim.lambda]p4:
+    //   If a lambda-expression does not include a lambda-declarator, it is as 
+    //   if the lambda-declarator were ().
     FunctionProtoType::ExtProtoInfo EPI;
     EPI.TypeQuals |= DeclSpec::TQ_const;
     MethodTy = Context.getFunctionType(Context.DependentTy,
@@ -4960,6 +4992,11 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     assert(ParamInfo.isFunctionDeclarator() &&
            "lambda-declarator is a function");
     DeclaratorChunk::FunctionTypeInfo &FTI = ParamInfo.getFunctionTypeInfo();
+    
+    // C++11 [expr.prim.lambda]p5:
+    //   This function call operator is declared const (9.3.1) if and only if 
+    //   the lambda- expression’s parameter-declaration-clause is not followed 
+    //   by mutable. It is neither virtual nor declared volatile.
     if (!FTI.hasMutableQualifier())
       FTI.TypeQuals |= DeclSpec::TQ_const;
     MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
@@ -4969,6 +5006,11 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     assert(!MethodTy.isNull() && "no type from lambda declarator");
   }
 
+  // C++11 [expr.prim.lambda]p5:
+  //   The closure type for a lambda-expression has a public inline function 
+  //   call operator (13.5.4) whose parameters and return type are described by
+  //   the lambda-expression’s parameter-declaration-clause and 
+  //   trailing-return-type respectively.
   DeclarationName MethodName
     = Context.DeclarationNames.getCXXOperatorName(OO_Call);
   CXXMethodDecl *Method
