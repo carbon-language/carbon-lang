@@ -300,6 +300,7 @@ namespace {
       AU.addRequired<ScalarEvolution>();
       AU.addPreserved<AliasAnalysis>();
       AU.addPreserved<ScalarEvolution>();
+      AU.setPreservesCFG();
     }
 
     // This returns the vector type that holds a pair of the provided type.
@@ -308,9 +309,9 @@ namespace {
       if (VectorType *VTy = dyn_cast<VectorType>(ElemTy)) {
         unsigned numElem = VTy->getNumElements();
         return VectorType::get(ElemTy->getScalarType(), numElem*2);
-      } else {
-        return VectorType::get(ElemTy, 2);
       }
+
+      return VectorType::get(ElemTy, 2);
     }
 
     // Returns the weight associated with the provided value. A chain of
@@ -431,7 +432,7 @@ namespace {
     std::vector<Value *> PairableInsts;
     std::multimap<Value *, Value *> CandidatePairs;
     getCandidatePairs(BB, CandidatePairs, PairableInsts);
-    if (PairableInsts.size() == 0) return false;
+    if (PairableInsts.empty()) return false;
 
     // Now we have a map of all of the pairable instructions and we need to
     // select the best possible pairing. A good pairing is one such that the
@@ -444,7 +445,7 @@ namespace {
 
     std::multimap<ValuePair, ValuePair> ConnectedPairs;
     computeConnectedPairs(CandidatePairs, PairableInsts, ConnectedPairs);
-    if (ConnectedPairs.size() == 0) return false;
+    if (ConnectedPairs.empty()) return false;
 
     // Build the pairable-instruction dependency map
     DenseSet<ValuePair> PairableInstUsers;
@@ -459,7 +460,7 @@ namespace {
     choosePairs(CandidatePairs, PairableInsts, ConnectedPairs,
       PairableInstUsers, ChosenPairs);
 
-    if (ChosenPairs.size() == 0) return false;
+    if (ChosenPairs.empty()) return false;
     NumFusedOps += ChosenPairs.size();
 
     // A set of pairs has now been selected. It is now necessary to replace the
@@ -647,8 +648,8 @@ namespace {
       UsesI = true;
 
     if (!UsesI)
-      for (User::op_iterator JU = J->op_begin(), e = J->op_end();
-           JU != e; ++JU) {
+      for (User::op_iterator JU = J->op_begin(), JE = J->op_end();
+           JU != JE; ++JU) {
         Value *V = *JU;
         if (I == V || Users.count(V)) {
           UsesI = true;

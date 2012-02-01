@@ -1,4 +1,4 @@
-/*===---------------------------Vectorize.h ------------------- -*- C++ -*-===*\
+/*===---------------------------Vectorize.h --------------------- -*- C -*-===*\
 |*===----------- Vectorization Transformation Library C Interface ---------===*|
 |*                                                                            *|
 |*                     The LLVM Compiler Infrastructure                       *|
