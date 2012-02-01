@@ -13604,6 +13604,7 @@ static SDValue PerformSHLCombine(SDNode *N, SelectionDAG &DAG) {
 /// PerformShiftCombine - Transforms vector shift nodes to use vector shifts
 ///                       when possible.
 static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
+                                   TargetLowering::DAGCombinerInfo &DCI,
                                    const X86Subtarget *Subtarget) {
   EVT VT = N->getValueType(0);
   if (N->getOpcode() == ISD::SHL) {
@@ -13667,9 +13668,16 @@ static SDValue PerformShiftCombine(SDNode* N, SelectionDAG &DAG,
            BaseShAmt = InVec.getOperand(1);
        }
     }
-    if (BaseShAmt.getNode() == 0)
+    if (BaseShAmt.getNode() == 0) {
+      // Don't create instructions with illegal types after legalize
+      // types has run.
+      if (!DAG.getTargetLoweringInfo().isTypeLegal(EltVT) &&
+          !DCI.isBeforeLegalize())
+        return SDValue();
+
       BaseShAmt = DAG.getNode(ISD::EXTRACT_VECTOR_ELT, DL, EltVT, ShAmtOp,
                               DAG.getIntPtrConstant(0));
+    }
   } else
     return SDValue();
 
@@ -14833,7 +14841,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::MUL:            return PerformMulCombine(N, DAG, DCI);
   case ISD::SHL:
   case ISD::SRA:
-  case ISD::SRL:            return PerformShiftCombine(N, DAG, Subtarget);
+  case ISD::SRL:            return PerformShiftCombine(N, DAG, DCI, Subtarget);
   case ISD::AND:            return PerformAndCombine(N, DAG, DCI, Subtarget);
   case ISD::OR:             return PerformOrCombine(N, DAG, DCI, Subtarget);
   case ISD::XOR:            return PerformXorCombine(N, DAG, DCI, Subtarget);
