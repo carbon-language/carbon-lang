@@ -106,22 +106,20 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions) {
     // If we are switching on a constant, we can convert the switch into a
     // single branch instruction!
     ConstantInt *CI = dyn_cast<ConstantInt>(SI->getCondition());
-    BasicBlock *TheOnlyDest = SI->getSuccessor(0);  // The default dest
+    BasicBlock *TheOnlyDest = SI->getDefaultDest();  // The default dest
     BasicBlock *DefaultDest = TheOnlyDest;
-    assert(TheOnlyDest == SI->getDefaultDest() &&
-           "Default destination is not successor #0?");
 
     // Figure out which case it goes to.
-    for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
+    for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i) {
       // Found case matching a constant operand?
-      if (SI->getSuccessorValue(i) == CI) {
-        TheOnlyDest = SI->getSuccessor(i);
+      if (SI->getCaseValue(i) == CI) {
+        TheOnlyDest = SI->getCaseSuccessor(i);
         break;
       }
 
       // Check to see if this branch is going to the same place as the default
       // dest.  If so, eliminate it as an explicit compare.
-      if (SI->getSuccessor(i) == DefaultDest) {
+      if (SI->getCaseSuccessor(i) == DefaultDest) {
         // Remove this entry.
         DefaultDest->removePredecessor(SI->getParent());
         SI->removeCase(i);
@@ -132,7 +130,7 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions) {
       // Otherwise, check to see if the switch only branches to one destination.
       // We do this by reseting "TheOnlyDest" to null when we find two non-equal
       // destinations.
-      if (SI->getSuccessor(i) != TheOnlyDest) TheOnlyDest = 0;
+      if (SI->getCaseSuccessor(i) != TheOnlyDest) TheOnlyDest = 0;
     }
 
     if (CI && !TheOnlyDest) {
@@ -166,14 +164,14 @@ bool llvm::ConstantFoldTerminator(BasicBlock *BB, bool DeleteDeadConditions) {
       return true;
     }
     
-    if (SI->getNumSuccessors() == 2) {
+    if (SI->getNumCases() == 1) {
       // Otherwise, we can fold this switch into a conditional branch
       // instruction if it has only one non-default destination.
       Value *Cond = Builder.CreateICmpEQ(SI->getCondition(),
-                                         SI->getSuccessorValue(1), "cond");
+                                         SI->getCaseValue(0), "cond");
 
       // Insert the new branch.
-      Builder.CreateCondBr(Cond, SI->getSuccessor(1), SI->getSuccessor(0));
+      Builder.CreateCondBr(Cond, SI->getCaseSuccessor(0), SI->getDefaultDest());
 
       // Delete the old switch.
       SI->eraseFromParent();

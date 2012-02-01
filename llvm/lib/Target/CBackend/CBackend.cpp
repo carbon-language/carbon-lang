@@ -2449,9 +2449,9 @@ void CWriter::visitSwitchInst(SwitchInst &SI) {
 
   unsigned NumCases = SI.getNumCases();
   // Skip the first item since that's the default case.
-  for (unsigned i = 1; i < NumCases; ++i) {
+  for (unsigned i = 0; i < NumCases; ++i) {
     ConstantInt* CaseVal = SI.getCaseValue(i);
-    BasicBlock* Succ = SI.getSuccessor(i);
+    BasicBlock* Succ = SI.getCaseSuccessor(i);
     Out << "  case ";
     writeOperand(CaseVal);
     Out << ":\n";

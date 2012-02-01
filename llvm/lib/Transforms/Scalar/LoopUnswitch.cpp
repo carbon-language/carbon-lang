@@ -436,7 +436,7 @@ bool LoopUnswitch::processCurrentLoop() {
       Value *LoopCond = FindLIVLoopCondition(SI->getCondition(), 
                                              currentLoop, Changed);
       unsigned NumCases = SI->getNumCases(); 
-      if (LoopCond && NumCases > 1) {
+      if (LoopCond && NumCases) {
         // Find a value to unswitch on:
         // FIXME: this should chose the most expensive case!
         // FIXME: scan for a case with a non-critical edge?
@@ -445,7 +445,7 @@ bool LoopUnswitch::processCurrentLoop() {
         // Do not process same value again and again.
         // At this point we have some cases already unswitched and
         // some not yet unswitched. Let's find the first not yet unswitched one.
-        for (unsigned i = 1; i < NumCases; ++i) {
+        for (unsigned i = 0; i < NumCases; ++i) {
           Constant* UnswitchValCandidate = SI->getCaseValue(i);
           if (!BranchesInfo.isUnswitched(SI, UnswitchValCandidate)) {
             UnswitchVal = UnswitchValCandidate;
@@ -574,10 +574,10 @@ bool LoopUnswitch::IsTrivialUnswitchCondition(Value *Cond, Constant **Val,
     // this. 
     // Note that we can't trivially unswitch on the default case or
     // on already unswitched cases.
-    for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
+    for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i) {
       BasicBlock* LoopExitCandidate;
       if ((LoopExitCandidate = isTrivialLoopExitBlock(currentLoop, 
-                                               SI->getSuccessor(i)))) {
+                                               SI->getCaseSuccessor(i)))) {
         // Okay, we found a trivial case, remember the value that is trivial.
         ConstantInt* CaseVal = SI->getCaseValue(i);
 
@@ -1118,14 +1118,15 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     if (SI == 0 || !isa<ConstantInt>(Val)) continue;
     
     unsigned DeadCase = SI->findCaseValue(cast<ConstantInt>(Val));
-    if (DeadCase == 0) continue;  // Default case is live for multiple values.
+    // Default case is live for multiple values.
+    if (DeadCase == SwitchInst::ErrorIndex) continue;
     
     // Found a dead case value.  Don't remove PHI nodes in the 
     // successor if they become single-entry, those PHI nodes may
     // be in the Users list.
 
     BasicBlock *Switch = SI->getParent();
-    BasicBlock *SISucc = SI->getSuccessor(DeadCase);
+    BasicBlock *SISucc = SI->getCaseSuccessor(DeadCase);
     BasicBlock *Latch = L->getLoopLatch();
     
     BranchesInfo.setUnswitched(SI, Val);
@@ -1145,7 +1146,7 @@ void LoopUnswitch::RewriteLoopBodyWithConditionConstant(Loop *L, Value *LIC,
     // Compute the successors instead of relying on the return value
     // of SplitEdge, since it may have split the switch successor
     // after PHI nodes.
-    BasicBlock *NewSISucc = SI->getSuccessor(DeadCase);
+    BasicBlock *NewSISucc = SI->getCaseSuccessor(DeadCase);
     BasicBlock *OldSISucc = *succ_begin(NewSISucc);
     // Create an "unreachable" destination.
     BasicBlock *Abort = BasicBlock::Create(Context, "us-unreachable",

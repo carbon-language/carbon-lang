@@ -2455,7 +2455,8 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
         ConstantInt *Val =
           dyn_cast<ConstantInt>(getVal(Values, SI->getCondition()));
         if (!Val) return false;  // Cannot determine.
-        NewBB = SI->getSuccessor(SI->findCaseValue(Val));
+        unsigned ValTISucc = SI->resolveSuccessorIndex(SI->findCaseValue(Val));
+        NewBB = SI->getSuccessor(ValTISucc);
       } else if (IndirectBrInst *IBI = dyn_cast<IndirectBrInst>(CurInst)) {
         Value *Val = getVal(Values, IBI->getAddress())->stripPointerCasts();
         if (BlockAddress *BA = dyn_cast<BlockAddress>(Val))

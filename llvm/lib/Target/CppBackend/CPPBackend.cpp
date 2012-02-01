@@ -1115,9 +1115,9 @@ void CppWriter::printInstruction(const Instruction *I,
         << SI->getNumCases() << ", " << bbname << ");";
     nl(Out);
     unsigned NumCases = SI->getNumCases();
-    for (unsigned i = 1; i < NumCases; ++i) {
+    for (unsigned i = 0; i < NumCases; ++i) {
       const ConstantInt* CaseVal = SI->getCaseValue(i);
-      const BasicBlock* BB = SI->getSuccessor(i);
+      const BasicBlock *BB = SI->getCaseSuccessor(i);
       Out << iName << "->addCase("
           << getOpName(CaseVal) << ", "
           << getOpName(BB) << ");";

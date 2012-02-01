@@ -2085,8 +2085,8 @@ bool GVN::processInstruction(Instruction *I) {
     Value *SwitchCond = SI->getCondition();
     BasicBlock *Parent = SI->getParent();
     bool Changed = false;
-    for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i) {
-      BasicBlock *Dst = SI->getSuccessor(i);
+    for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i) {
+      BasicBlock *Dst = SI->getCaseSuccessor(i);
       if (isOnlyReachableViaThisEdge(Parent, Dst, DT))
         Changed |= propagateEquality(SwitchCond, SI->getCaseValue(i), Dst);
     }

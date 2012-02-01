@@ -76,11 +76,14 @@ bool LowerExpectIntrinsic::HandleSwitchExpect(SwitchInst *SI) {
   unsigned caseNo = SI->findCaseValue(ExpectedValue);
   std::vector<Value *> Vec;
   unsigned n = SI->getNumCases();
-  Vec.resize(n + 1); // +1 for MDString
+  Vec.resize(n + 1 + 1); // +1 for MDString and +1 for default case
 
   Vec[0] = MDString::get(Context, "branch_weights");
+  Vec[1] = ConstantInt::get(Int32Ty, SwitchInst::ErrorIndex == caseNo ?
+                            LikelyBranchWeight : UnlikelyBranchWeight);
   for (unsigned i = 0; i < n; ++i) {
-    Vec[i + 1] = ConstantInt::get(Int32Ty, i == caseNo ? LikelyBranchWeight : UnlikelyBranchWeight);
+    Vec[i + 1 + 1] = ConstantInt::get(Int32Ty, i == caseNo ?
+        LikelyBranchWeight : UnlikelyBranchWeight);
   }
 
   MDNode *WeightsNode = llvm::MDNode::get(Context, Vec);

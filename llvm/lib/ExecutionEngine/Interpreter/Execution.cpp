@@ -670,10 +670,10 @@ void Interpreter::visitSwitchInst(SwitchInst &I) {
   BasicBlock *Dest = 0;
   unsigned NumCases = I.getNumCases();
   // Skip the first item since that's the default case.
-  for (unsigned i = 1; i < NumCases; ++i) {
+  for (unsigned i = 0; i < NumCases; ++i) {
     GenericValue CaseVal = getOperandValue(I.getCaseValue(i), SF);
     if (executeICMP_EQ(CondVal, CaseVal, ElTy).IntVal != 0) {
-      Dest = cast<BasicBlock>(I.getSuccessor(i));
+      Dest = cast<BasicBlock>(I.getCaseSuccessor(i));
       break;
     }
   }

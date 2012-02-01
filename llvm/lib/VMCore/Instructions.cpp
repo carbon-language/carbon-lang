@@ -3195,31 +3195,29 @@ SwitchInst::~SwitchInst() {
 /// addCase - Add an entry to the switch instruction...
 ///
 void SwitchInst::addCase(ConstantInt *OnVal, BasicBlock *Dest) {
+  unsigned NewCaseIdx = getNumCases(); 
   unsigned OpNo = NumOperands;
   if (OpNo+2 > ReservedSpace)
     growOperands();  // Get more space!
   // Initialize some new operands.
   assert(OpNo+1 < ReservedSpace && "Growing didn't work!");
   NumOperands = OpNo+2;
-  OperandList[OpNo] = OnVal;
-  OperandList[OpNo+1] = Dest;
+  setCaseValue(NewCaseIdx, OnVal);
+  setCaseSuccessor(NewCaseIdx, Dest);
 }
 
-/// removeCase - This method removes the specified successor from the switch
-/// instruction.  Note that this cannot be used to remove the default
-/// destination (successor #0).
-///
+/// removeCase - This method removes the specified case and its successor
+/// from the switch instruction.
 void SwitchInst::removeCase(unsigned idx) {
-  assert(idx != 0 && "Cannot remove the default case!");
-  assert(idx*2 < getNumOperands() && "Successor index out of range!!!");
+  assert(2 + idx*2 < getNumOperands() && "Case index out of range!!!");
 
   unsigned NumOps = getNumOperands();
   Use *OL = OperandList;
 
   // Overwrite this case with the end of the list.
-  if ((idx + 1) * 2 != NumOps) {
-    OL[idx * 2] = OL[NumOps - 2];
-    OL[idx * 2 + 1] = OL[NumOps - 1];
+  if (2 + (idx + 1) * 2 != NumOps) {
+    OL[2 + idx * 2] = OL[NumOps - 2];
+    OL[2 + idx * 2 + 1] = OL[NumOps - 1];
   }
 
   // Nuke the last value.

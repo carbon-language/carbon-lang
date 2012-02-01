@@ -481,8 +481,9 @@ GetValueEqualityComparisonCases(TerminatorInst *TI,
                                                       BasicBlock*> > &Cases) {
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
     Cases.reserve(SI->getNumCases());
-    for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
-      Cases.push_back(std::make_pair(SI->getCaseValue(i), SI->getSuccessor(i)));
+    for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i)
+      Cases.push_back(std::make_pair(SI->getCaseValue(i),
+                                     SI->getCaseSuccessor(i)));
     return SI->getDefaultDest();
   }
 
@@ -605,11 +606,13 @@ SimplifyEqualityComparisonWithOnlyPredecessor(TerminatorInst *TI,
     DEBUG(dbgs() << "Threading pred instr: " << *Pred->getTerminator()
                  << "Through successor TI: " << *TI);
 
-    for (unsigned i = SI->getNumCases()-1; i != 0; --i)
+    for (unsigned i = SI->getNumCases(); i != 0;) {
+      --i;
       if (DeadCases.count(SI->getCaseValue(i))) {
-        SI->getSuccessor(i)->removePredecessor(TI->getParent());
+        SI->getCaseSuccessor(i)->removePredecessor(TI->getParent());
         SI->removeCase(i);
       }
+    }
 
     DEBUG(dbgs() << "Leaving: " << *TI << "\n");
     return true;
@@ -2007,8 +2010,10 @@ static bool SimplifySwitchOnSelect(SwitchInst *SI, SelectInst *Select) {
 
   // Find the relevant condition and destinations.
   Value *Condition = Select->getCondition();
-  BasicBlock *TrueBB = SI->getSuccessor(SI->findCaseValue(TrueVal));
-  BasicBlock *FalseBB = SI->getSuccessor(SI->findCaseValue(FalseVal));
+  unsigned TrueCase = SI->findCaseValue(TrueVal);
+  unsigned FalseCase = SI->findCaseValue(FalseVal);
+  BasicBlock *TrueBB = SI->getSuccessor(SI->resolveSuccessorIndex(TrueCase));
+  BasicBlock *FalseBB = SI->getSuccessor(SI->resolveSuccessorIndex(FalseCase));
 
   // Perform the actual simplification.
   return SimplifyTerminatorOnSelect(SI, Condition, TrueBB, FalseBB);
@@ -2092,7 +2097,7 @@ static bool TryToSimplifyUncondBranchWithICmpInIt(ICmpInst *ICI,
   // Ok, the block is reachable from the default dest.  If the constant we're
   // comparing exists in one of the other edges, then we can constant fold ICI
   // and zap it.
-  if (SI->findCaseValue(Cst) != 0) {
+  if (SI->findCaseValue(Cst) != SwitchInst::ErrorIndex) {
     Value *V;
     if (ICI->getPredicate() == ICmpInst::ICMP_EQ)
       V = ConstantInt::getFalse(BB->getContext());
@@ -2465,8 +2470,8 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
         }
       }
     } else if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-      for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
-        if (SI->getSuccessor(i) == BB) {
+      for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i)
+        if (SI->getCaseSuccessor(i) == BB) {
           BB->removePredecessor(SI->getParent());
           SI->removeCase(i);
           --i; --e;
@@ -2474,11 +2479,11 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
         }
       // If the default value is unreachable, figure out the most popular
       // destination and make it the default.
-      if (SI->getSuccessor(0) == BB) {
+      if (SI->getDefaultDest() == BB) {
         std::map<BasicBlock*, std::pair<unsigned, unsigned> > Popularity;
-        for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i) {
+        for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i) {
           std::pair<unsigned, unsigned> &entry =
-              Popularity[SI->getSuccessor(i)];
+              Popularity[SI->getCaseSuccessor(i)];
           if (entry.first == 0) {
             entry.first = 1;
             entry.second = i;
@@ -2503,7 +2508,7 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
         if (MaxBlock) {
           // Make this the new default, allowing us to delete any explicit
           // edges to it.
-          SI->setSuccessor(0, MaxBlock);
+          SI->setDefaultDest(MaxBlock);
           Changed = true;
           
           // If MaxBlock has phinodes in it, remove MaxPop-1 entries from
@@ -2512,8 +2517,8 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
             for (unsigned i = 0; i != MaxPop-1; ++i)
               MaxBlock->removePredecessor(SI->getParent());
           
-          for (unsigned i = 1, e = SI->getNumCases(); i != e; ++i)
-            if (SI->getSuccessor(i) == MaxBlock) {
+          for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i)
+            if (SI->getCaseSuccessor(i) == MaxBlock) {
               SI->removeCase(i);
               --i; --e;
             }
@@ -2555,17 +2560,17 @@ bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
 /// TurnSwitchRangeIntoICmp - Turns a switch with that contains only a
 /// integer range comparison into a sub, an icmp and a branch.
 static bool TurnSwitchRangeIntoICmp(SwitchInst *SI, IRBuilder<> &Builder) {
-  assert(SI->getNumCases() > 2 && "Degenerate switch?");
+  assert(SI->getNumCases() > 1 && "Degenerate switch?");
 
   // Make sure all cases point to the same destination and gather the values.
   SmallVector<ConstantInt *, 16> Cases;
-  Cases.push_back(SI->getCaseValue(1));
-  for (unsigned I = 2, E = SI->getNumCases(); I != E; ++I) {
-    if (SI->getSuccessor(I-1) != SI->getSuccessor(I))
+  Cases.push_back(SI->getCaseValue(0));
+  for (unsigned I = 1, E = SI->getNumCases(); I != E; ++I) {
+    if (SI->getCaseSuccessor(I-1) != SI->getCaseSuccessor(I))
       return false;
     Cases.push_back(SI->getCaseValue(I));
   }
-  assert(Cases.size() == SI->getNumCases()-1 && "Not all cases gathered");
+  assert(Cases.size() == SI->getNumCases() && "Not all cases gathered");
 
   // Sort the case values, then check if they form a range we can transform.
   array_pod_sort(Cases.begin(), Cases.end(), ConstantIntSortPredicate);
@@ -2575,18 +2580,18 @@ static bool TurnSwitchRangeIntoICmp(SwitchInst *SI, IRBuilder<> &Builder) {
   }
 
   Constant *Offset = ConstantExpr::getNeg(Cases.back());
-  Constant *NumCases = ConstantInt::get(Offset->getType(), SI->getNumCases()-1);
+  Constant *NumCases = ConstantInt::get(Offset->getType(), SI->getNumCases());
 
   Value *Sub = SI->getCondition();
   if (!Offset->isNullValue())
     Sub = Builder.CreateAdd(Sub, Offset, Sub->getName()+".off");
   Value *Cmp = Builder.CreateICmpULT(Sub, NumCases, "switch");
-  Builder.CreateCondBr(Cmp, SI->getSuccessor(1), SI->getDefaultDest());
+  Builder.CreateCondBr(Cmp, SI->getCaseSuccessor(0), SI->getDefaultDest());
 
   // Prune obsolete incoming values off the successor's PHI nodes.
-  for (BasicBlock::iterator BBI = SI->getSuccessor(1)->begin();
+  for (BasicBlock::iterator BBI = SI->getCaseSuccessor(0)->begin();
        isa<PHINode>(BBI); ++BBI) {
-    for (unsigned I = 0, E = SI->getNumCases()-2; I != E; ++I)
+    for (unsigned I = 0, E = SI->getNumCases()-1; I != E; ++I)
       cast<PHINode>(BBI)->removeIncomingValue(SI->getParent());
   }
   SI->eraseFromParent();
@@ -2604,7 +2609,7 @@ static bool EliminateDeadSwitchCases(SwitchInst *SI) {
 
   // Gather dead cases.
   SmallVector<ConstantInt*, 8> DeadCases;
-  for (unsigned I = 1, E = SI->getNumCases(); I != E; ++I) {
+  for (unsigned I = 0, E = SI->getNumCases(); I != E; ++I) {
     if ((SI->getCaseValue(I)->getValue() & KnownZero) != 0 ||
         (SI->getCaseValue(I)->getValue() & KnownOne) != KnownOne) {
       DeadCases.push_back(SI->getCaseValue(I));
@@ -2616,8 +2621,10 @@ static bool EliminateDeadSwitchCases(SwitchInst *SI) {
   // Remove dead cases from the switch.
   for (unsigned I = 0, E = DeadCases.size(); I != E; ++I) {
     unsigned Case = SI->findCaseValue(DeadCases[I]);
+    assert(Case != SwitchInst::ErrorIndex &&
+           "Case was not found. Probably mistake in DeadCases forming.");
     // Prune unused values from PHI nodes.
-    SI->getSuccessor(Case)->removePredecessor(SI->getParent());
+    SI->getCaseSuccessor(Case)->removePredecessor(SI->getParent());
     SI->removeCase(Case);
   }
 
@@ -2666,9 +2673,9 @@ static bool ForwardSwitchConditionToPHI(SwitchInst *SI) {
   typedef DenseMap<PHINode*, SmallVector<int,4> > ForwardingNodesMap;
   ForwardingNodesMap ForwardingNodes;
 
-  for (unsigned I = 1; I < SI->getNumCases(); ++I) { // 0 is the default case.
+  for (unsigned I = 0; I < SI->getNumCases(); ++I) { // 0 is the default case.
     ConstantInt *CaseValue = SI->getCaseValue(I);
-    BasicBlock *CaseDest = SI->getSuccessor(I);
+    BasicBlock *CaseDest = SI->getCaseSuccessor(I);
 
     int PhiIndex;
     PHINode *PHI = FindPHIForConditionForwarding(CaseValue, CaseDest,

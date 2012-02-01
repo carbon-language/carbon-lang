@@ -1738,13 +1738,12 @@ void AssemblyWriter::printInstruction(const Instruction &I) {
     Out << ", ";
     writeOperand(SI.getDefaultDest(), true);
     Out << " [";
-    // Skip the first item since that's the default case.
     unsigned NumCases = SI.getNumCases();
-    for (unsigned i = 1; i < NumCases; ++i) {
+    for (unsigned i = 0; i < NumCases; ++i) {
       Out << "\n    ";
       writeOperand(SI.getCaseValue(i), true);
       Out << ", ";
-      writeOperand(SI.getSuccessor(i), true);
+      writeOperand(SI.getCaseSuccessor(i), true);
     }
     Out << "\n  ]";
   } else if (isa<IndirectBrInst>(I)) {

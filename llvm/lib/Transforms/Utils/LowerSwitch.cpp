@@ -237,10 +237,10 @@ unsigned LowerSwitch::Clusterify(CaseVector& Cases, SwitchInst *SI) {
   unsigned numCmps = 0;
 
   // Start with "simple" cases
-  for (unsigned i = 1; i < SI->getNumSuccessors(); ++i)
-    Cases.push_back(CaseRange(SI->getSuccessorValue(i),
-                              SI->getSuccessorValue(i),
-                              SI->getSuccessor(i)));
+  for (unsigned i = 0; i < SI->getNumCases(); ++i)
+    Cases.push_back(CaseRange(SI->getCaseValue(i),
+                              SI->getCaseValue(i),
+                              SI->getCaseSuccessor(i)));
   std::sort(Cases.begin(), Cases.end(), CaseCmp());
 
   // Merge case into clusters
@@ -281,7 +281,7 @@ void LowerSwitch::processSwitchInst(SwitchInst *SI) {
   BasicBlock* Default = SI->getDefaultDest();
 
   // If there is only the default destination, don't bother with the code below.
-  if (SI->getNumCases() == 1) {
+  if (!SI->getNumCases()) {
     BranchInst::Create(SI->getDefaultDest(), CurBlock);
     CurBlock->getInstList().erase(SI);
     return;

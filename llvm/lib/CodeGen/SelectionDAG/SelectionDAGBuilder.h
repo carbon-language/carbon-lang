@@ -130,13 +130,13 @@ private:
   /// Case - A struct to record the Value for a switch case, and the
   /// case's target basic block.
   struct Case {
-    Constant* Low;
-    Constant* High;
+    const Constant *Low;
+    const Constant *High;
     MachineBasicBlock* BB;
     uint32_t ExtraWeight;
 
     Case() : Low(0), High(0), BB(0), ExtraWeight(0) { }
-    Case(Constant* low, Constant* high, MachineBasicBlock* bb,
+    Case(const Constant *low, const Constant *high, MachineBasicBlock *bb,
          uint32_t extraweight) : Low(low), High(high), BB(bb),
          ExtraWeight(extraweight) { }
 

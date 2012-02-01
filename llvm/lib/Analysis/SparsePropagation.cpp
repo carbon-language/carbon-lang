@@ -195,7 +195,8 @@ void SparseSolver::getFeasibleSuccessors(TerminatorInst &TI,
     return;
   }
   
-  Succs[SI.findCaseValue(cast<ConstantInt>(C))] = true;
+  unsigned CCase = SI.findCaseValue(cast<ConstantInt>(C));
+  Succs[SI.resolveSuccessorIndex(CCase)] = true;
 }
 
 

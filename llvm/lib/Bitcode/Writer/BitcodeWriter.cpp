@@ -1162,10 +1162,17 @@ static void WriteInstruction(const Instruction &I, unsigned InstID,
     }
     break;
   case Instruction::Switch:
-    Code = bitc::FUNC_CODE_INST_SWITCH;
-    Vals.push_back(VE.getTypeID(I.getOperand(0)->getType()));
-    for (unsigned i = 0, e = I.getNumOperands(); i != e; ++i)
-      Vals.push_back(VE.getValueID(I.getOperand(i)));
+    {
+      Code = bitc::FUNC_CODE_INST_SWITCH;
+      SwitchInst &SI = cast<SwitchInst>(I);
+      Vals.push_back(VE.getTypeID(SI.getCondition()->getType()));
+      Vals.push_back(VE.getValueID(SI.getCondition()));
+      Vals.push_back(VE.getValueID(SI.getDefaultDest()));
+      for (unsigned i = 0, e = SI.getNumCases(); i != e; ++i) {
+        Vals.push_back(VE.getValueID(SI.getCaseValue(i)));
+        Vals.push_back(VE.getValueID(SI.getCaseSuccessor(i)));
+      }
+    }
     break;
   case Instruction::IndirectBr:
     Code = bitc::FUNC_CODE_INST_INDIRECTBR;

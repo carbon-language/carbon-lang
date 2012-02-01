@@ -319,13 +319,13 @@ class FunctionDifferenceEngine {
       bool Difference = false;
 
       DenseMap<ConstantInt*,BasicBlock*> LCases;
-      for (unsigned I = 1, E = LI->getNumCases(); I != E; ++I)
-        LCases[LI->getCaseValue(I)] = LI->getSuccessor(I);
-      for (unsigned I = 1, E = RI->getNumCases(); I != E; ++I) {
+      for (unsigned I = 0, E = LI->getNumCases(); I != E; ++I)
+        LCases[LI->getCaseValue(I)] = LI->getCaseSuccessor(I);
+      for (unsigned I = 0, E = RI->getNumCases(); I != E; ++I) {
         ConstantInt *CaseValue = RI->getCaseValue(I);
         BasicBlock *LCase = LCases[CaseValue];
         if (LCase) {
-          if (TryUnify) tryUnify(LCase, RI->getSuccessor(I));
+          if (TryUnify) tryUnify(LCase, RI->getCaseSuccessor(I));
           LCases.erase(CaseValue);
         } else if (Complain || !Difference) {
           if (Complain)

@@ -550,7 +550,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
   }
 
   if (SwitchInst *SI = dyn_cast<SwitchInst>(&TI)) {
-    if (TI.getNumSuccessors() < 2) {
+    if (!SI->getNumCases()) {
       Succs[0] = true;
       return;
     }
@@ -564,7 +564,7 @@ void SCCPSolver::getFeasibleSuccessors(TerminatorInst &TI,
       return;
     }
 
-    Succs[SI->findCaseValue(CI)] = true;
+    Succs[SI->resolveSuccessorIndex(SI->findCaseValue(CI))] = true;
     return;
   }
 
@@ -614,7 +614,7 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
     return true;
 
   if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-    if (SI->getNumSuccessors() < 2)
+    if (SI->getNumCases() < 1)
       return true;
 
     LatticeVal SCValue = getValueState(SI->getCondition());
@@ -624,9 +624,9 @@ bool SCCPSolver::isEdgeFeasible(BasicBlock *From, BasicBlock *To) {
       return !SCValue.isUndefined();
 
     // Make sure to skip the "default value" which isn't a value
-    for (unsigned i = 1, E = SI->getNumSuccessors(); i != E; ++i)
-      if (SI->getSuccessorValue(i) == CI) // Found the taken branch.
-        return SI->getSuccessor(i) == To;
+    for (unsigned i = 0, E = SI->getNumCases(); i != E; ++i)
+      if (SI->getCaseValue(i) == CI) // Found the taken branch.
+        return SI->getCaseSuccessor(i) == To;
 
     // If the constant value is not equal to any of the branches, we must
     // execute default branch.
@@ -1487,7 +1487,7 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
     }
 
     if (SwitchInst *SI = dyn_cast<SwitchInst>(TI)) {
-      if (SI->getNumSuccessors() < 2)   // no cases
+      if (!SI->getNumCases())
         continue;
       if (!getValueState(SI->getCondition()).isUndefined())
         continue;
@@ -1495,12 +1495,12 @@ bool SCCPSolver::ResolvedUndefsIn(Function &F) {
       // If the input to SCCP is actually switch on undef, fix the undef to
       // the first constant.
       if (isa<UndefValue>(SI->getCondition())) {
-        SI->setCondition(SI->getCaseValue(1));
-        markEdgeExecutable(BB, TI->getSuccessor(1));
+        SI->setCondition(SI->getCaseValue(0));
+        markEdgeExecutable(BB, SI->getCaseSuccessor(0));
         return true;
       }
 
-      markForcedConstant(SI->getCondition(), SI->getCaseValue(1));
+      markForcedConstant(SI->getCondition(), SI->getCaseValue(0));
       return true;
     }
   }

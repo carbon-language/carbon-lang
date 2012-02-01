@@ -854,8 +854,8 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
       // BBFrom to BBTo.
       unsigned NumEdges = 0;
       ConstantInt *EdgeVal = 0;
-      for (unsigned i = 1, e = SI->getNumSuccessors(); i != e; ++i) {
-        if (SI->getSuccessor(i) != BBTo) continue;
+      for (unsigned i = 0, e = SI->getNumCases(); i != e; ++i) {
+        if (SI->getCaseSuccessor(i) != BBTo) continue;
         if (NumEdges++) break;
         EdgeVal = SI->getCaseValue(i);
       }

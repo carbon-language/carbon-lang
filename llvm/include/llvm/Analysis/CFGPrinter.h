@@ -95,7 +95,8 @@ struct DOTGraphTraits<const Function*> : public DefaultDOTGraphTraits {
       
       std::string Str;
       raw_string_ostream OS(Str);
-      OS << SI->getCaseValue(SuccNo)->getValue();
+      unsigned Case = SI->resolveCaseIndex(SuccNo);
+      OS << SI->getCaseValue(Case)->getValue();
       return OS.str();
     }    
     return "";
