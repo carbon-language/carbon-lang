@@ -1,5 +1,5 @@
 // RUN: rm -rf %t
-// RUN: %clang -fsyntax-only -fmodules -fmodule-cache-path %t %s -Xclang -verify
+// RUN: %clang -fsyntax-only -fmodules -fmodule-cache-path %t -D__need_wint_t %s -Xclang -verify
 
 @import _Builtin_stdlib.float_constants;
 
