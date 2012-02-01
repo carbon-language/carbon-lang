@@ -2363,7 +2363,7 @@ llvm::Function *CGObjCGNU::ModuleInitFunction() {
   llvm::Value *Register = CGM.CreateRuntimeFunction(FT, "__objc_exec_class");
   Builder.CreateCall(Register, Module);
 
-  if (0 != ClassAliases.size()) {
+  if (!ClassAliases.empty()) {
     llvm::Type *ArgTypes[2] = {PtrTy, PtrToInt8Ty};
     llvm::FunctionType *RegisterAliasTy =
       llvm::FunctionType::get(Builder.getVoidTy(),
