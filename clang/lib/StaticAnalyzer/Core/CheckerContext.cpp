@@ -53,7 +53,13 @@ bool CheckerContext::isCLibraryFunction(const FunctionDecl *FD,
       return true;
   }
 
-  StringRef FName = FD->getIdentifier()->getName();
+  const IdentifierInfo *II = FD->getIdentifier();
+  // If this is a special C++ name without IdentifierInfo, it can't be a
+  // C library function.
+  if (!II)
+    return false;
+
+  StringRef FName = II->getName();
   if (FName.startswith("__inline"))
     return (FName.find(Name) != StringRef::npos);
 
