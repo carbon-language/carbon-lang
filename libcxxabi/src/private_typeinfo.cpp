@@ -249,7 +249,10 @@ bool
 __function_type_info::can_catch(const __shim_type_info* thrown_type,
                                 void*&) const
 {
-    // TODO:  Can this be called?
+    // We can get here if someone tries to catch a function by reference.
+    //   However if someone tries to throw a function, it immediately gets
+    //   converted to a pointer, which will not convert back to a function
+    //   at the catch clause.  So this can never catch anything.
     return false;
 }
 
