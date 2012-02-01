@@ -183,7 +183,7 @@ Symbol::IsTrampoline () const
 void
 Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target) const
 {
-    *s << "id = " << (const UserID&)*this << ", name = \"" << m_mangled.GetName() << '"';
+    s->Printf("uid={%6u}", m_uid);
     
     const Section *section = m_addr_range.GetBaseAddress().GetSection();
     if (section != NULL)
@@ -211,6 +211,11 @@ Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target)
         else
             s->Printf (", value = 0x%16.16llx", m_addr_range.GetBaseAddress().GetOffset());
     }
+    if (m_mangled.GetDemangledName())
+        s->Printf(", name=\"%s\"", m_mangled.GetDemangledName().AsCString());
+    if (m_mangled.GetMangledName())
+        s->Printf(", mangled=\"%s\"", m_mangled.GetMangledName().AsCString());
+
 }
 
 void

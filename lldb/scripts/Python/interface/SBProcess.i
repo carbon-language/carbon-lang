@@ -282,6 +282,73 @@ public:
     UnloadImage (uint32_t image_token);
 
     %pythoncode %{
+        def __get_is_alive__(self):
+            '''Returns "True" if the process is currently alive, "False" otherwise'''
+            s = self.GetState()
+            if (s == eStateAttaching or 
+                s == eStateLaunching or 
+                s == eStateStopped or 
+                s == eStateRunning or 
+                s == eStateStepping or 
+                s == eStateCrashed or 
+                s == eStateSuspended):
+                return True
+            return False
+
+        def __get_is_running__(self):
+            '''Returns "True" if the process is currently running, "False" otherwise'''
+            state = self.GetState()
+            if state == eStateRunning or state == eStateStepping:
+                return True
+            return False
+
+        def __get_is_running__(self):
+            '''Returns "True" if the process is currently stopped, "False" otherwise'''
+            state = self.GetState()
+            if state == eStateStopped or state == eStateCrashed or state == eStateSuspended:
+                return True
+            return False
+
+        class thread_array_access(object):
+            '''A helper object that will lazily hand out thread for a process when supplied an index.'''
+            def __init__(self, sbprocess):
+                self.sbprocess = sbprocess
+        
+            def __len__(self):
+                if self.sbprocess: return self.sbprocess.GetNumThreads()
+                return 0
+        
+            def __getitem__(self, key):
+                if type(key) is int and key < len(self):
+                    return self.sbprocess.GetThreadAtIndex(key)
+                return None
+        
+        def get_thread_array_access_object(self):
+            '''An accessor function that retuns a thread_array_access() object which allows lazy thread array access.'''
+            return self.thread_array_access (self)
+        
+        def get_process_thread_list(self):
+            '''An accessor function that retuns an array object that contains all threads in this process object.'''
+            threads = []
+            for idx in range(self.GetNumThreads()):
+                threads.append(GetThreadAtIndex(idx))
+            return threads
+        
+        __swig_getmethods__["threads"] = get_process_thread_list
+        if _newclass: x = property(get_process_thread_list, None)
+        
+        __swig_getmethods__["thread"] = get_thread_array_access_object
+        if _newclass: x = property(get_thread_array_access_object, None)
+
+        __swig_getmethods__["is_alive"] = __get_is_alive__
+        if _newclass: x = property(__get_is_alive__, None)
+
+        __swig_getmethods__["is_running"] = __get_is_running__
+        if _newclass: x = property(__get_is_running__, None)
+
+        __swig_getmethods__["is_stopped"] = __get_is_running__
+        if _newclass: x = property(__get_is_running__, None)
+
         __swig_getmethods__["id"] = GetProcessID
         if _newclass: x = property(GetProcessID, None)
         

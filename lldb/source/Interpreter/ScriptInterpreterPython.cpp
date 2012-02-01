@@ -208,8 +208,6 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     PyRun_SimpleString (run_string.GetData());
 
     run_string.Clear();
-    run_string.Printf ("run_one_line (%s, 'import sys')", m_dictionary_name.c_str());
-    PyRun_SimpleString (run_string.GetData());
 
     // Importing 'lldb' module calls SBDebugger::Initialize, which calls Debugger::Initialize, which increments a
     // global debugger ref-count; therefore we need to check the ref-count before and after importing lldb, and if the
@@ -220,10 +218,11 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     // which case the code inside it, including the call to SBDebugger::Initialize(), does not get executed.
     
     int old_count = Debugger::TestDebuggerRefCount();
+    
 
-    run_string.Clear();
-    run_string.Printf ("run_one_line (%s, 'import lldb')", m_dictionary_name.c_str());
+    run_string.Printf ("run_one_line (%s, 'import copy, os, re, sys, uuid, lldb, gnu_libstdcpp, objc')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
+
 
     int new_count = Debugger::TestDebuggerRefCount();
     
@@ -231,24 +230,8 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
         Debugger::Terminate();
 
     run_string.Clear();
-    run_string.Printf ("run_one_line (%s, 'import copy')", m_dictionary_name.c_str());
-    PyRun_SimpleString (run_string.GetData());
-
-    run_string.Clear();
-    run_string.Printf ("run_one_line (%s, 'import os')", m_dictionary_name.c_str());
-    PyRun_SimpleString (run_string.GetData());
-    
-    run_string.Clear();
     run_string.Printf ("run_one_line (%s, 'lldb.debugger_unique_id = %llu')", m_dictionary_name.c_str(),
                        interpreter.GetDebugger().GetID());
-    PyRun_SimpleString (run_string.GetData());
-    
-    run_string.Clear();
-    run_string.Printf ("run_one_line (%s, 'import gnu_libstdcpp')", m_dictionary_name.c_str());
-    PyRun_SimpleString (run_string.GetData());
-    
-    run_string.Clear();
-    run_string.Printf ("run_one_line (%s, 'import objc')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
     
     if (m_dbg_stdout != NULL)

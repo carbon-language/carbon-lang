@@ -129,6 +129,28 @@ public:
     GetLineEntry ();
     
     %pythoncode %{
+        def __get_load_addr_property__ (self):
+            '''Get the load address for a lldb.SBAddress using the current target.'''
+            return self.GetLoadAddress (target)
+
+        def __set_load_addr_property__ (self, load_addr):
+            '''Set the load address for a lldb.SBAddress using the current target.'''
+            return self.SetLoadAddress (load_addr, target)
+
+        def __int__(self):
+            '''Convert an address to a load address if there is a process and that
+            process is alive, or to a file address otherwise.'''
+            if process.is_alive:
+                return self.GetLoadAddress (target)
+            else:
+                return self.GetFileAddress ()
+
+        def __oct__(self):
+            return '%o' % int(self)
+
+        def __hex__(self):
+            return '0x%x' % int(self)
+
         __swig_getmethods__["module"] = GetModule
         if _newclass: x = property(GetModule, None)
 
@@ -155,6 +177,10 @@ public:
 
         __swig_getmethods__["file_addr"] = GetFileAddress
         if _newclass: x = property(GetFileAddress, None)
+
+        __swig_getmethods__["load_addr"] = __get_load_addr_property__
+        __swig_setmethods__["load_addr"] = __set_load_addr_property__
+        if _newclass: x = property(__get_load_addr_property__, __set_load_addr_property__)
 
     %}
 

@@ -175,13 +175,32 @@ public:
     GetDescription (lldb::SBStream &description) const;
     
     %pythoncode %{
+        class frame_array_access(object):
+            '''A helper object that will lazily hand out frames for a thread when supplied an index.'''
+            def __init__(self, sbthread):
+                self.sbthread = sbthread
+
+            def __len__(self):
+                if self.sbthread:
+                    return self.sbthread.GetNumFrames()
+                return 0
+            
+            def __getitem__(self, key):
+                if type(key) is int and key < self.sbthread.GetNumFrames():
+                    return self.sbthread.GetFrameAtIndex(key)
+                return None
+        
+        def get_frame_array_access_object(self):
+            '''An accessor function that retuns a frame_array_access() object which allows lazy frame array access.'''
+            return self.frame_array_access (self)
+
         def get_thread_frames(self):
+            '''An accessor function that retuns an array object that contains all frames in this thread object.'''
             frames = []
             for frame in self:
                 frames.append(frame)
             return frames
-
-
+        
         __swig_getmethods__["id"] = GetThreadID
         if _newclass: x = property(GetThreadID, None)
 
@@ -199,6 +218,9 @@ public:
 
         __swig_getmethods__["frames"] = get_thread_frames
         if _newclass: x = property(get_thread_frames, None)
+
+        __swig_getmethods__["frame"] = get_frame_array_access_object
+        if _newclass: x = property(get_frame_array_access_object, None)
 
         __swig_getmethods__["name"] = GetName
         if _newclass: x = property(GetName, None)

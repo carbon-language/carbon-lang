@@ -247,14 +247,81 @@ public:
     GetTriple ();
 
     %pythoncode %{
+        class symbols_access(object):
+            re_type = type(re.compile('.'))
+            '''A helper object that will lazily hand out lldb.SBModule objects for a target when supplied an index, or by full or partial path.'''
+            def __init__(self, sbmodule):
+                self.sbmodule = sbmodule
+        
+            def __len__(self):
+                if self.sbmodule:
+                    return self.sbmodule.GetNumSymbols()
+                return 0
+        
+            def __getitem__(self, key):
+                count = self.sbmodule.GetNumSymbols()
+                if type(key) is int:
+                    if key < count:
+                        return self.sbmodule.GetSymbolAtIndex(key)
+                elif type(key) is str:
+                    matches = []
+                    for idx in range(count):
+                        symbol = self.sbmodule.GetSymbolAtIndex(idx)
+                        if symbol.name == key or symbol.mangled == key:
+                            matches.append(symbol)
+                    if len(matches):
+                        return matches
+                elif isinstance(key, self.re_type):
+                    matches = []
+                    for idx in range(count):
+                        symbol = self.sbmodule.GetSymbolAtIndex(idx)
+                        added = False
+                        name = symbol.name
+                        if name:
+                            re_match = key.search(name)
+                            if re_match:
+                                matches.append(symbol)
+                                added = True
+                        if not added:
+                            mangled = symbol.mangled
+                            if mangled:
+                                re_match = key.search(mangled)
+                                if re_match:
+                                    matches.append(symbol)
+                    if len(matches):
+                        return matches
+                else:
+                    print "error: unsupported item type: %s" % type(key)
+                return None
+        
+        def get_symbols_access_object(self):
+            '''An accessor function that retuns a symbols_access() object which allows lazy module array access.'''
+            return self.symbols_access (self)
+        
+        def get_symbols_array(self):
+            '''An accessor function that retuns an array object that contains all modules in this target object.'''
+            symbols = []
+            for idx in range(self.GetNumSymbols()):
+                symbols.append(self.GetSymbolAtIndex(idx))
+            return symbols
+
+        __swig_getmethods__["symbols"] = get_symbols_array
+        if _newclass: x = property(get_symbols_array, None)
+
+        __swig_getmethods__["symbol"] = get_symbols_access_object
+        if _newclass: x = property(get_symbols_access_object, None)
+        
+        def get_uuid(self):
+            return uuid.UUID (self.GetUUIDString())
+        
+        __swig_getmethods__["uuid"] = get_uuid
+        if _newclass: x = property(get_uuid, None)
+        
         __swig_getmethods__["file"] = GetFileSpec
         if _newclass: x = property(GetFileSpec, None)
         
         __swig_getmethods__["platform_file"] = GetPlatformFileSpec
         if _newclass: x = property(GetPlatformFileSpec, None)
-        
-        __swig_getmethods__["uuid"] = GetUUIDString
-        if _newclass: x = property(GetUUIDString, None)
         
         __swig_getmethods__["byte_order"] = GetByteOrder
         if _newclass: x = property(GetByteOrder, None)

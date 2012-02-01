@@ -68,6 +68,20 @@ public:
     GetDescription (lldb::SBStream &description) const;
     
     %pythoncode %{
+        def __get_fullpath__(self):
+            spec_dir = self.GetDirectory()
+            spec_file = self.GetFilename()
+            if spec_dir and spec_file:
+                return '%s/%s' % (spec_dir, spec_file)
+            elif spec_dir:
+                return spec_dir
+            elif spec_file:
+                return spec_file
+            return None
+
+        __swig_getmethods__["fullpath"] = __get_fullpath__
+        if _newclass: x = property(__get_fullpath__, None)
+
         __swig_getmethods__["basename"] = GetFilename
         if _newclass: x = property(GetFilename, None)
         

@@ -223,6 +223,9 @@ public:
         __swig_setmethods__["pc"] = SetPC
         if _newclass: x = property(GetPC, SetPC)
 
+        __swig_getmethods__["addr"] = GetPCAddress
+        if _newclass: x = property(GetPCAddress, None)
+
         __swig_getmethods__["fp"] = GetFP
         if _newclass: x = property(GetFP, None)
 

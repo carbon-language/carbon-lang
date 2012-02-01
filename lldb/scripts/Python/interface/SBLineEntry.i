@@ -87,7 +87,7 @@ public:
         __swig_getmethods__["column"] = GetColumn
         if _newclass: x = property(GetColumn, None)
         
-        __swig_getmethods__["start_addr"] = GetStartAddress
+        __swig_getmethods__["addr"] = GetStartAddress
         if _newclass: x = property(GetStartAddress, None)
         
         __swig_getmethods__["end_addr"] = GetEndAddress

@@ -487,6 +487,73 @@ public:
     GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level);
     
     %pythoncode %{
+        class modules_access(object):
+            '''A helper object that will lazily hand out lldb.SBModule objects for a target when supplied an index, or by full or partial path.'''
+            def __init__(self, sbtarget):
+                self.sbtarget = sbtarget
+        
+            def __len__(self):
+                if self.sbtarget:
+                    return self.sbtarget.GetNumModules()
+                return 0
+        
+            def __getitem__(self, key):
+                num_modules = self.sbtarget.GetNumModules()
+                if type(key) is int:
+                    if key < num_modules:
+                        return self.sbtarget.GetModuleAtIndex(key)
+                elif type(key) is str:
+                    if key.find('/') == -1:
+                        for idx in range(num_modules):
+                            module = self.sbtarget.GetModuleAtIndex(idx)
+                            if module.file.basename == key:
+                                return module
+                    else:
+                        for idx in range(num_modules):
+                            module = self.sbtarget.GetModuleAtIndex(idx)
+                            if module.file.fullpath == key:
+                                return module
+                    # See if the string is a UUID
+                    the_uuid = uuid.UUID(key)
+                    if the_uuid:
+                        for idx in range(num_modules):
+                            module = self.sbtarget.GetModuleAtIndex(idx)
+                            if module.uuid == the_uuid:
+                                return module
+                elif type(key) is uuid.UUID:
+                    for idx in range(num_modules):
+                        module = self.sbtarget.GetModuleAtIndex(idx)
+                        if module.uuid == key:
+                            return module
+                elif type(key) is re.SRE_Pattern:
+                    matching_modules = []
+                    for idx in range(num_modules):
+                        module = self.sbtarget.GetModuleAtIndex(idx)
+                        re_match = key.search(module.path.fullpath)
+                        if re_match:
+                            matching_modules.append(module)
+                    return matching_modules
+                else:
+                    print "error: unsupported item type: %s" % type(key)
+                return None
+        
+        def get_modules_access_object(self):
+            '''An accessor function that retuns a modules_access() object which allows lazy module array access.'''
+            return self.modules_access (self)
+        
+        def get_modules_array(self):
+            '''An accessor function that retuns an array object that contains all modules in this target object.'''
+            modules = []
+            for idx in range(self.GetNumModules()):
+                modules.append(self.GetModuleAtIndex(idx))
+            return modules
+
+        __swig_getmethods__["modules"] = get_modules_array
+        if _newclass: x = property(get_modules_array, None)
+
+        __swig_getmethods__["module"] = get_modules_access_object
+        if _newclass: x = property(get_modules_access_object, None)
+
         __swig_getmethods__["process"] = GetProcess
         if _newclass: x = property(GetProcess, None)
 

@@ -37,6 +37,11 @@ o SBLineEntry: Specifies an association with a contiguous range of instructions
 // Parameter types will be used in the autodoc string.
 %feature("autodoc", "1");
 
+%pythoncode%{
+import uuid
+import re
+import os
+%}
 %include "./Python/python-typemaps.swig"
 
 /* The liblldb header files to be included. */
