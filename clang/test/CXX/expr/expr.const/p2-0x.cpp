@@ -186,6 +186,15 @@ namespace UndefinedBehavior {
     static_assert((B*)na == 0, "");
     constexpr const int &nf = nb->n; // expected-error {{constant expression}} expected-note {{cannot access field of null pointer}}
     constexpr const int &np = (*(int(*)[4])nullptr)[2]; // expected-error {{constant expression}} expected-note {{cannot access array element of null pointer}}
+
+    struct C {
+      constexpr int f() { return 0; }
+    } constexpr c = C();
+    constexpr int k1 = c.f(); // ok
+    constexpr int k2 = ((C*)nullptr)->f(); // expected-error {{constant expression}} expected-note {{cannot call member function on null pointer}}
+    constexpr int k3 = (&c)[1].f(); // expected-error {{constant expression}} expected-note {{cannot call member function on pointer past the end of object}}
+    C c2;
+    constexpr int k4 = c2.f(); // ok!
   }
 }
 

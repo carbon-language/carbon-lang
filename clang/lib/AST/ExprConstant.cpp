@@ -127,7 +127,8 @@ namespace {
 
   // The order of this enum is important for diagnostics.
   enum CheckSubobjectKind {
-    CSK_Base, CSK_Derived, CSK_Field, CSK_ArrayToPointer, CSK_ArrayIndex
+    CSK_Base, CSK_Derived, CSK_Field, CSK_ArrayToPointer, CSK_ArrayIndex,
+    CSK_This
   };
 
   /// A path from a glvalue to a subobject of that glvalue.
@@ -2361,6 +2362,9 @@ public:
         return Error(E);
     } else
       return Error(E);
+
+    if (This && !This->checkSubobject(Info, E, CSK_This))
+      return false;
 
     const FunctionDecl *Definition = 0;
     Stmt *Body = FD->getBody(Definition);
