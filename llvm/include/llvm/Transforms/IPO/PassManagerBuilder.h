@@ -99,6 +99,7 @@ public:
   bool DisableSimplifyLibCalls;
   bool DisableUnitAtATime;
   bool DisableUnrollLoops;
+  bool Vectorize;
 
 private:
   /// ExtensionList - This is list of all of the extensions that are registered.

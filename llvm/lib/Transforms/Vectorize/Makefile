@@ -1,4 +1,4 @@
-##===- tools/opt/Makefile ----------------------------------*- Makefile -*-===##
+##===- lib/Transforms/Vectorize/Makefile -----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
@@ -7,8 +7,9 @@
 #
 ##===----------------------------------------------------------------------===##
 
-LEVEL := ../..
-TOOLNAME := opt
-LINK_COMPONENTS := bitreader bitwriter asmparser instrumentation scalaropts ipo vectorize
+LEVEL = ../../..
+LIBRARYNAME = LLVMVectorize
+BUILD_ARCHIVE = 1
 
 include $(LEVEL)/Makefile.common
+

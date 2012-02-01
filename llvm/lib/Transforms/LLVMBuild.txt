@@ -16,7 +16,7 @@
 ;===------------------------------------------------------------------------===;
 
 [common]
-subdirectories = IPO InstCombine Instrumentation Scalar Utils
+subdirectories = IPO InstCombine Instrumentation Scalar Utils Vectorize
 
 [component_0]
 type = Group

@@ -31,6 +31,10 @@ void initializeTransformUtils(PassRegistry&);
 /// ScalarOpts library.
 void initializeScalarOpts(PassRegistry&);
 
+/// initializeVectorization - Initialize all passes linked into the
+/// Vectorize library.
+void initializeVectorization(PassRegistry&);
+
 /// initializeInstCombine - Initialize all passes linked into the
 /// ScalarOpts library.
 void initializeInstCombine(PassRegistry&);
@@ -236,7 +240,7 @@ void initializeVirtRegMapPass(PassRegistry&);
 void initializeInstSimplifierPass(PassRegistry&);
 void initializeUnpackMachineBundlesPass(PassRegistry&);
 void initializeFinalizeMachineBundlesPass(PassRegistry&);
-
+void initializeBBVectorizePass(PassRegistry&);
 }
 
 #endif

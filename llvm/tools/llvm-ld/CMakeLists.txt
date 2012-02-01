@@ -1,4 +1,4 @@
-set(LLVM_LINK_COMPONENTS ipo scalaropts linker archive bitwriter)
+set(LLVM_LINK_COMPONENTS ipo scalaropts linker archive bitwriter vectorize)
 
 add_llvm_tool(llvm-ld
   Optimize.cpp

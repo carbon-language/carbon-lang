@@ -126,6 +126,7 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
 <tr><td><a href="#adce">-adce</a></td><td>Aggressive Dead Code Elimination</td></tr>
 <tr><td><a href="#always-inline">-always-inline</a></td><td>Inliner for always_inline functions</td></tr>
 <tr><td><a href="#argpromotion">-argpromotion</a></td><td>Promote 'by reference' arguments to scalars</td></tr>
+<tr><td><a href="#bb-vectorize">-bb-vectorize</a></td><td>Combine instructions to form vector instructions within basic blocks</td></tr>
 <tr><td><a href="#block-placement">-block-placement</a></td><td>Profile Guided Basic Block Placement</td></tr>
 <tr><td><a href="#break-crit-edges">-break-crit-edges</a></td><td>Break critical edges in CFG</td></tr>
 <tr><td><a href="#codegenprepare">-codegenprepare</a></td><td>Optimize for code generation</td></tr>
@@ -812,6 +813,26 @@ perl -e '$/ = undef; for (split(/\n/, <>)) { s:^ *///? ?::; print "  <p>\n" if !
   stored to (returning the value instead), but does not currently.  This case
   would be best handled when and if LLVM starts supporting multiple return
   values from functions.
+  </p>
+</div>
+
+<!-------------------------------------------------------------------------- -->
+<h3>
+  <a name="bb-vectorize">-bb-vectorize: Basic-Block Vectorization</a>
+</h3>
+<div>
+  <p>This pass combines instructions inside basic blocks to form vector
+  instructions. It iterates over each basic block, attempting to pair
+  compatible instructions, repeating this process until no additional
+  pairs are selected for vectorization. When the outputs of some pair
+  of compatible instructions are used as inputs by some other pair of
+  compatible instructions, those pairs are part of a potential
+  vectorization chain. Instruction pairs are only fused into vector
+  instructions when they are part of a chain longer than some
+  threshold length. Moreover, the pass attempts to find the best
+  possible chain for each pair of compatible instructions. These
+  heuristics are intended to prevent vectorization in cases where
+  it would not yield a performance increase of the resulting code.
   </p>
 </div>
 
