@@ -1984,7 +1984,7 @@ CINDEX_LINKAGE unsigned clang_equalCursors(CXCursor, CXCursor);
 /**
  * \brief Returns non-zero if \arg cursor is null.
  */
-int clang_Cursor_isNull(CXCursor);
+CINDEX_LINKAGE int clang_Cursor_isNull(CXCursor);
 
 /**
  * \brief Compute a hash value for the given cursor.
