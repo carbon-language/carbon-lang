@@ -21095,6 +21095,7 @@ ac_config_files="$ac_config_files llvm.spec"
 ac_config_files="$ac_config_files docs/doxygen.cfg"
 
 if test -f ${srcdir}/tools/clang/README.txt; then
+  ac_config_headers="$ac_config_headers tools/clang/include/clang/Config/config.h"
   ac_config_files="$ac_config_files tools/clang/docs/doxygen.cfg"
 
 fi

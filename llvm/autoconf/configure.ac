@@ -1586,7 +1586,10 @@ AC_CONFIG_FILES([llvm.spec])
 
 dnl Configure doxygen's configuration file
 AC_CONFIG_FILES([docs/doxygen.cfg])
+
+dnl Configure clang, if present
 if test -f ${srcdir}/tools/clang/README.txt; then
+  AC_CONFIG_HEADERS([tools/clang/include/clang/Config/config.h])
   AC_CONFIG_FILES([tools/clang/docs/doxygen.cfg])
 fi
 
