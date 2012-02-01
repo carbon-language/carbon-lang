@@ -640,17 +640,22 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
            << "getRawAllocationOrder(const MachineFunction &MF) const {\n";
         for (unsigned oi = 1 , oe = RC.getNumOrders(); oi != oe; ++oi) {
           ArrayRef<Record*> Elems = RC.getOrder(oi);
-          OS << "  static const unsigned AltOrder" << oi << "[] = {";
-          for (unsigned elem = 0; elem != Elems.size(); ++elem)
-            OS << (elem ? ", " : " ") << getQualifiedName(Elems[elem]);
-          OS << " };\n";
+          if (!Elems.empty()) {
+            OS << "  static const unsigned AltOrder" << oi << "[] = {";
+            for (unsigned elem = 0; elem != Elems.size(); ++elem)
+              OS << (elem ? ", " : " ") << getQualifiedName(Elems[elem]);
+            OS << " };\n";
+          }
         }
         OS << "  const MCRegisterClass &MCR = " << Target.getName()
-           << "MCRegisterClasses[" << RC.getQualifiedName() + "RegClassID];"
+           << "MCRegisterClasses[" << RC.getQualifiedName() + "RegClassID];\n"
            << "  static const ArrayRef<unsigned> Order[] = {\n"
            << "    makeArrayRef(MCR.begin(), MCR.getNumRegs()";
         for (unsigned oi = 1, oe = RC.getNumOrders(); oi != oe; ++oi)
-          OS << "),\n    makeArrayRef(AltOrder" << oi;
+          if (RC.getOrder(oi).empty())
+            OS << "),\n    ArrayRef<unsigned>(";
+          else
+            OS << "),\n    makeArrayRef(AltOrder" << oi;
         OS << ")\n  };\n  const unsigned Select = " << RC.getName()
            << "AltOrderSelect(MF);\n  assert(Select < " << RC.getNumOrders()
            << ");\n  return Order[Select];\n}\n";
