@@ -218,8 +218,6 @@ __pointer_to_member_type_info::display() const
 // 
 // catch (...) : adjustedPtr == & of the exception
 
-// TODO:  can_catch looks similar to search_above_dst.  Reuse?
-
 bool
 __shim_type_info::can_catch(const __shim_type_info* thrown_type,
                             void*&) const
