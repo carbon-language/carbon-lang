@@ -218,15 +218,7 @@ __pointer_to_member_type_info::display() const
 // 
 // catch (...) : adjustedPtr == & of the exception
 
-bool
-__shim_type_info::can_catch(const __shim_type_info* thrown_type,
-                            void*&) const
-{
-    return this == thrown_type;
-}
-
 // Handles bullet 1
-// TODO:  Let __shim_type_info handle it?
 bool
 __fundamental_type_info::can_catch(const __shim_type_info* thrown_type,
                                    void*&) const
@@ -257,7 +249,6 @@ __function_type_info::can_catch(const __shim_type_info* thrown_type,
 }
 
 // Handles bullet 1
-// TODO:  Let __shim_type_info handle it?
 bool
 __enum_type_info::can_catch(const __shim_type_info* thrown_type,
                             void*&) const

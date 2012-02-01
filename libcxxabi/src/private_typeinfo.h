@@ -24,7 +24,7 @@ class __shim_type_info
 public:
     virtual ~__shim_type_info();
 
-    virtual bool can_catch(const __shim_type_info* thrown_type, void*& adjustedPtr) const;
+    virtual bool can_catch(const __shim_type_info* thrown_type, void*& adjustedPtr) const = 0;
 #ifdef DEBUG
     virtual void display() const = 0;
 #endif
