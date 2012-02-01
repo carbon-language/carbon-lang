@@ -5,7 +5,7 @@
 // CHECK: Target: unknown-unknown-unknown
 //
 // Also, ensure we don't blindly hand our target selection logic down to GCC.
-// CHECK: "{{.*}}gcc"
+// CHECK: "{{.*gcc(\.[Ee][Xx][Ee])?}}"
 // CHECK-NOT: "-target"
 // CHECK-NOT: "unknown-unknown-unknown"
 // CHECK: "-x" "assembler"
