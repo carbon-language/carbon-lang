@@ -94,6 +94,9 @@ else( MSVC )
     CACHE STRING "Semicolon-separated list of targets to build, or \"all\".")
 endif( MSVC )
 
+option(BUILD_SHARED_LIBS
+  "Build all libraries as shared libraries instead of static" OFF)
+
 option(LLVM_ENABLE_CBE_PRINTF_A "Set to ON if CBE is enabled for printf %a output" ON)
 if(LLVM_ENABLE_CBE_PRINTF_A)
   set(ENABLE_CBE_PRINTF_A 1)
