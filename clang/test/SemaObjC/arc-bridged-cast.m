@@ -1,6 +1,8 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin11 -fsyntax-only -fobjc-arc -fblocks -verify %s
 
 typedef const void *CFTypeRef;
+CFTypeRef CFBridgingRetain(id X);
+id CFBridgingRelease(CFTypeRef);
 typedef const struct __CFString *CFStringRef;
 
 @interface NSString
@@ -35,8 +37,8 @@ void to_cf(id obj) {
 void fixits() {
   id obj1 = (id)CFCreateSomething(); // expected-error{{cast of C pointer type 'CFTypeRef' (aka 'const void *') to Objective-C pointer type 'id' requires a bridged cast}} \
   // expected-note{{use __bridge to convert directly (no change in ownership)}} \
-  // expected-note{{use CFBridgeRelease call to transfer ownership of a +1 'CFTypeRef' (aka 'const void *') into ARC}}
+  // expected-note{{use CFBridgingRelease call to transfer ownership of a +1 'CFTypeRef' (aka 'const void *') into ARC}}
   CFTypeRef cf1 = (CFTypeRef)CreateSomething(); // expected-error{{cast of Objective-C pointer type 'id' to C pointer type 'CFTypeRef' (aka 'const void *') requires a bridged cast}} \
   // expected-note{{use __bridge to convert directly (no change in ownership)}} \
-  // expected-note{{use CFBridgeRetain call to make an ARC object available as a +1 'CFTypeRef' (aka 'const void *')}}
+  // expected-note{{use CFBridgingRetain call to make an ARC object available as a +1 'CFTypeRef' (aka 'const void *')}}
 }
