@@ -1218,6 +1218,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::LOAD);
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::ZERO_EXTEND);
+  setTargetDAGCombine(ISD::TRUNCATE);
   setTargetDAGCombine(ISD::SINT_TO_FP);
   if (Subtarget->is64Bit())
     setTargetDAGCombine(ISD::MUL);
@@ -12911,6 +12912,104 @@ static SDValue PerformShuffleCombine(SDNode *N, SelectionDAG &DAG,
   return EltsFromConsecutiveLoads(VT, Elts, dl, DAG);
 }
 
+
+/// PerformTruncateCombine - Converts truncate operation to
+/// a sequence of vector shuffle operations.
+/// It is possible when we truncate 256-bit vector to 128-bit vector
+
+SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG, 
+                                                  DAGCombinerInfo &DCI) const {
+  if (!DCI.isBeforeLegalizeOps())
+    return SDValue();
+
+  if (!Subtarget->hasAVX()) return SDValue();
+
+  EVT VT = N->getValueType(0);
+  SDValue Op = N->getOperand(0);
+  EVT OpVT = Op.getValueType();
+  DebugLoc dl = N->getDebugLoc();
+
+  if ((VT == MVT::v4i32) && (OpVT == MVT::v4i64)) {
+
+    SDValue OpLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i64, Op,
+                          DAG.getIntPtrConstant(0));
+
+    SDValue OpHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v2i64, Op,
+                          DAG.getIntPtrConstant(2));
+
+    OpLo = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpLo);
+    OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpHi);
+
+    // PSHUFD
+    SmallVector<int,4> ShufMask1;
+    ShufMask1.push_back(0);
+    ShufMask1.push_back(2);
+    ShufMask1.push_back(0);
+    ShufMask1.push_back(0);
+
+    OpLo = DAG.getVectorShuffle(VT, dl, OpLo, DAG.getUNDEF(VT),
+                                ShufMask1.data());
+    OpHi = DAG.getVectorShuffle(VT, dl, OpHi, DAG.getUNDEF(VT),
+                                ShufMask1.data());
+
+    // MOVLHPS
+    SmallVector<int,4> ShufMask2;
+    ShufMask2.push_back(0);
+    ShufMask2.push_back(1);
+    ShufMask2.push_back(4);
+    ShufMask2.push_back(5);
+
+    return DAG.getVectorShuffle(VT, dl, OpLo, OpHi, ShufMask2.data());
+  }
+  if ((VT == MVT::v8i16) && (OpVT == MVT::v8i32)) {
+
+    SDValue OpLo = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v4i32, Op,
+                          DAG.getIntPtrConstant(0));
+
+    SDValue OpHi = DAG.getNode(ISD::EXTRACT_SUBVECTOR, dl, MVT::v4i32, Op,
+                          DAG.getIntPtrConstant(4));
+
+    OpLo = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, OpLo);
+    OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, OpHi);
+
+    // PSHUFB
+    SmallVector<int,16> ShufMask1;
+    ShufMask1.push_back(0x0);
+    ShufMask1.push_back(0x1);
+    ShufMask1.push_back(0x4);
+    ShufMask1.push_back(0x5);
+    ShufMask1.push_back(0x8);
+    ShufMask1.push_back(0x9);
+    ShufMask1.push_back(0xc);
+    ShufMask1.push_back(0xd);
+    for (unsigned i=0; i<8; ++i)
+      ShufMask1.push_back(-1);
+
+    OpLo = DAG.getVectorShuffle(MVT::v16i8, dl, OpLo,
+                                DAG.getUNDEF(MVT::v16i8),
+                                ShufMask1.data());
+    OpHi = DAG.getVectorShuffle(MVT::v16i8, dl, OpHi,
+                                DAG.getUNDEF(MVT::v16i8),
+                                ShufMask1.data());
+
+    OpLo = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpLo);
+    OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpHi);
+
+    // MOVLHPS
+    SmallVector<int,4> ShufMask2;
+    ShufMask2.push_back(0);
+    ShufMask2.push_back(1);
+    ShufMask2.push_back(4);
+    ShufMask2.push_back(5);
+
+    SDValue res = DAG.getVectorShuffle(MVT::v4i32, dl, OpLo, OpHi, ShufMask2.data());
+    return DAG.getNode(ISD::BITCAST, dl, MVT::v8i16, res);
+ 
+  }
+
+  return SDValue();
+}
+
 /// PerformEXTRACT_VECTOR_ELTCombine - Detect vector gather/scatter index
 /// generation and convert it from being a bunch of shuffles and extracts
 /// to a simple store and scalar loads to extract the elements.
@@ -14771,6 +14870,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
   case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG, Subtarget);
+  case ISD::TRUNCATE:       return PerformTruncateCombine(N, DAG, DCI);
   case X86ISD::SETCC:       return PerformSETCCCombine(N, DAG);
   case X86ISD::SHUFP:       // Handle all target specific shuffles
   case X86ISD::PALIGN:
