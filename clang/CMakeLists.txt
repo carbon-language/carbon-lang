@@ -223,6 +223,7 @@ install(DIRECTORY include/
   FILES_MATCHING
   PATTERN "*.def"
   PATTERN "*.h"
+  PATTERN "config.h" EXCLUDE
   PATTERN ".svn" EXCLUDE
   )
 
