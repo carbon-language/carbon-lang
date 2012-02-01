@@ -1197,8 +1197,8 @@ CodeGenFunction::EmitCXXConstructorCall(const CXXConstructorDecl *D,
 
   CGDebugInfo *DI = getDebugInfo();
   if (DI && CGM.getCodeGenOpts().LimitDebugInfo) {
-    // If debug info for this class has been emitted then this is the right time
-    // to do so.
+    // If debug info for this class has not been emitted then this is the
+    // right time to do so.
     const CXXRecordDecl *Parent = D->getParent();
     DI->getOrCreateRecordType(CGM.getContext().getTypeDeclType(Parent),
                               Parent->getLocation());
