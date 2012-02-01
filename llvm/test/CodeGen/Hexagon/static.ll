@@ -1,12 +1,12 @@
-; RUN: llc -march=hexagon -mcpu=hexagonv4 < %s | FileCheck %s
+; RUN: llc -march=hexagon -mcpu=hexagonv4 -disable-dfa-sched < %s | FileCheck %s
 
 @num = external global i32
 @acc = external global i32
 @val = external global i32
 
+; CHECK: CONST32(#num)
 ; CHECK: CONST32(#acc)
 ; CHECK: CONST32(#val)
-; CHECK: CONST32(#num)
 
 define void @foo() nounwind {
 entry:

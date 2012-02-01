@@ -59,7 +59,8 @@ namespace llvm {
       Source,           // Follow source order.
       RegPressure,      // Scheduling for lowest register pressure.
       Hybrid,           // Scheduling for both latency and register pressure.
-      ILP               // Scheduling for ILP in low register pressure mode.
+      ILP,              // Scheduling for ILP in low register pressure mode.
+      VLIW              // Scheduling for VLIW targets.
     };
   }
 

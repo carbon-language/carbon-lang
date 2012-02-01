@@ -1298,6 +1298,7 @@ HexagonTargetLowering::HexagonTargetLowering(HexagonTargetMachine
     // Needed for DYNAMIC_STACKALLOC expansion.
     unsigned StackRegister = TM.getRegisterInfo()->getStackRegister();
     setStackPointerRegisterToSaveRestore(StackRegister);
+    setSchedulingPreference(Sched::VLIW);
 }
 
 

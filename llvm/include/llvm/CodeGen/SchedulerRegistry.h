@@ -42,7 +42,7 @@ public:
   : MachinePassRegistryNode(N, D, (MachinePassCtor)C)
   { Registry.Add(this); }
   ~RegisterScheduler() { Registry.Remove(this); }
-  
+
 
   // Accessors.
   //
@@ -92,6 +92,11 @@ ScheduleDAGSDNodes *createILPListDAGScheduler(SelectionDAGISel *IS,
 ScheduleDAGSDNodes *createFastDAGScheduler(SelectionDAGISel *IS,
                                            CodeGenOpt::Level OptLevel);
 
+/// createVLIWDAGScheduler - Scheduler for VLIW targets. This creates top down
+/// DFA driven list scheduler with clustering heuristic to control
+/// register pressure.
+ScheduleDAGSDNodes *createVLIWDAGScheduler(SelectionDAGISel *IS,
+                                           CodeGenOpt::Level OptLevel);
 /// createDefaultScheduler - This creates an instruction scheduler appropriate
 /// for the target.
 ScheduleDAGSDNodes *createDefaultScheduler(SelectionDAGISel *IS,

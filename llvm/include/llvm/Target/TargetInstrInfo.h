@@ -15,6 +15,7 @@
 #define LLVM_TARGET_TARGETINSTRINFO_H
 
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineFunction.h"
 
 namespace llvm {
@@ -810,6 +811,12 @@ public:
   virtual void
   breakPartialRegDependency(MachineBasicBlock::iterator MI, unsigned OpNum,
                             const TargetRegisterInfo *TRI) const {}
+
+  /// Create machine specific model for scheduling.
+  virtual DFAPacketizer*
+    CreateTargetScheduleState(const TargetMachine*, const ScheduleDAG*) const {
+    return NULL;
+  }
 
 private:
   int CallFrameSetupOpcode, CallFrameDestroyOpcode;

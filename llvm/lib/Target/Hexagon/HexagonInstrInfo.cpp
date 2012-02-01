@@ -24,7 +24,9 @@
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
 #define GET_INSTRINFO_CTOR
+#include "llvm/CodeGen/DFAPacketizer.h"
 #include "HexagonGenInstrInfo.inc"
+#include "HexagonGenDFAPacketizer.inc"
 
 #include <iostream>
 
@@ -469,6 +471,7 @@ unsigned HexagonInstrInfo::createVR(MachineFunction* MF, MVT VT) const {
 }
 
 
+
 bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
   bool isPred = MI->getDesc().isPredicable();
 
@@ -557,6 +560,7 @@ bool HexagonInstrInfo::isPredicable(MachineInstr *MI) const {
 
   return true;
 }
+
 
 
 int HexagonInstrInfo::
@@ -1449,4 +1453,30 @@ isConditionalLoad (const MachineInstr* MI) const {
     default:
       return false;
   }
+}
+
+DFAPacketizer *HexagonInstrInfo::
+CreateTargetScheduleState(const TargetMachine *TM,
+                           const ScheduleDAG *DAG) const {
+  const InstrItineraryData *II = TM->getInstrItineraryData();
+  return TM->getSubtarget<HexagonGenSubtargetInfo>().createDFAPacketizer(II);
+}
+
+bool HexagonInstrInfo::isSchedulingBoundary(const MachineInstr *MI,
+                                            const MachineBasicBlock *MBB,
+                                            const MachineFunction &MF) const {
+  // Debug info is never a scheduling boundary. It's necessary to be explicit
+  // due to the special treatment of IT instructions below, otherwise a
+  // dbg_value followed by an IT will result in the IT instruction being
+  // considered a scheduling hazard, which is wrong. It should be the actual
+  // instruction preceding the dbg_value instruction(s), just like it is
+  // when debug info is not present.
+  if (MI->isDebugValue())
+    return false;
+
+  // Terminators and labels can't be scheduled around.
+  if (MI->getDesc().isTerminator() || MI->isLabel() || MI->isInlineAsm())
+    return true;
+
+  return false;
 }
