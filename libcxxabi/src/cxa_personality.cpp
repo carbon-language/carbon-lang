@@ -296,10 +296,9 @@ get_shim_type_info(int64_t ttypeIndex, const uint8_t* classInfo,
                    uint8_t ttypeEncoding, bool native_exception,
                    _Unwind_Exception* unwind_exception)
 {
-    // TODO:  Move this check sooner
     if (classInfo == 0)
     {
-        // this should not happen
+        // this should not happen.  Indicates corrupted eh_table.
         call_terminate(native_exception, unwind_exception);
     }
     switch (ttypeEncoding & 0x0F)
@@ -320,8 +319,7 @@ get_shim_type_info(int64_t ttypeIndex, const uint8_t* classInfo,
         ttypeIndex *= 8;
         break;
     default:
-        // TODO:  Move this check sooner
-        // this should not happen
+        // this should not happen.   Indicates corrupted eh_table.
         call_terminate(native_exception, unwind_exception);
     }
     classInfo -= ttypeIndex;
@@ -343,10 +341,9 @@ exception_spec_can_catch(int64_t specIndex, const uint8_t* classInfo,
                          uint8_t ttypeEncoding, const __shim_type_info* excpType,
                          void* adjustedPtr, _Unwind_Exception* unwind_exception)
 {
-    // TODO:  Move this check sooner
     if (classInfo == 0)
     {
-        // this should not happen
+        // this should not happen.   Indicates corrupted eh_table.
         call_terminate(false, unwind_exception);
     }
     // specIndex is negative of 1-based byte offset into classInfo;
@@ -411,7 +408,7 @@ namespace
 struct scan_results
 {
     int64_t        ttypeIndex;   // > 0 catch handler, < 0 exception spec handler, == 0 a cleanup
-    const uint8_t* actionRecord;         // Currently unused.  TODO: Remove?
+    const uint8_t* actionRecord;         // Currently unused.  Retained to ease future maintenance.
     const uint8_t* languageSpecificData;  // Needed only for __cxa_call_unexpected
     uintptr_t      landingPad;   // null -> nothing found, else something found
     void*          adjustedPtr;  // Used in cxa_exception.cpp
@@ -792,9 +789,12 @@ __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClas
     scan_results results;
     if (actions & _UA_SEARCH_PHASE)
     {
+        // Phase 1 search:  All we're looking for in phase 1 is a handler that
+        //   halts unwinding
         scan_eh_tab(results, actions, native_exception, unwind_exception, context);
         if (results.reason == _URC_HANDLER_FOUND)
         {
+            // Found one.  Can we cache the results somewhere to optimize phase 2?
             if (native_exception)
             {
                 __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
@@ -806,14 +806,22 @@ __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClas
             }
             return _URC_HANDLER_FOUND;
         }
+        // Did not find a catching-handler.  Return the results of the scan
+        //    (normally _URC_CONTINUE_UNWIND, but could have been _URC_FATAL_PHASE1_ERROR
+        //     if we were called improperly).
         return results.reason;
     }
     if (actions & _UA_CLEANUP_PHASE)
     {
+        // Phase 2 search:
+        //  Did we find a catching handler in phase 1?
         if (actions & _UA_HANDLER_FRAME)
         {
+            // Yes, phase 1 said we have a catching handler here.
+            // Did we cache the results of the scan?
             if (native_exception)
             {
+                // Yes, reload the results from the cache.
                 __cxa_exception* exception_header = (__cxa_exception*)(unwind_exception+1) - 1;
                 results.ttypeIndex = exception_header->handlerSwitchValue;
                 results.actionRecord = exception_header->actionRecord;
@@ -823,26 +831,37 @@ __gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClas
             }
             else
             {
+                // No, do the scan again to reload the results.
                 scan_eh_tab(results, actions, native_exception, unwind_exception, context);
+                // Phase 1 told us we would find a handler.  Now in Phase 2 we
+                //   didn't find a handler.  The eh table should not be changing!
                 if (results.reason != _URC_HANDLER_FOUND)
                     call_terminate(native_exception, unwind_exception);
             }
+            // Jump to the handler
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), results.ttypeIndex);
             _Unwind_SetIP(context, results.landingPad);
             return _URC_INSTALL_CONTEXT;
         }
+        // Either we didn't do a phase 1 search (due to forced unwinding), or
+        //   phase 1 reported no catching-handlers.
+        // Search for a (non-catching) cleanup
         scan_eh_tab(results, actions, native_exception, unwind_exception, context);
         if (results.reason == _URC_HANDLER_FOUND)
         {
+            // Found a non-catching handler.  Jump to it:
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(0), (uintptr_t)unwind_exception);
             _Unwind_SetGR(context, __builtin_eh_return_data_regno(1), results.ttypeIndex);
             _Unwind_SetIP(context, results.landingPad);
             return _URC_INSTALL_CONTEXT;
         }
+        // Did not find a cleanup.  Return the results of the scan
+        //    (normally _URC_CONTINUE_UNWIND, but could have been _URC_FATAL_PHASE2_ERROR
+        //     if we were called improperly).
         return results.reason;
     }
-    // Neither _UA_SEARCH_PHASE nor _UA_CLEANUP_PHASE
+    // We were called improperly: neither a phase 1 or phase 2 search
     return _URC_FATAL_PHASE1_ERROR;
 }
 
