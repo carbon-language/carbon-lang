@@ -4886,9 +4886,15 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     // C++11 [expr.prim.lambda]p5:
     //   This function call operator is declared const (9.3.1) if and only if 
     //   the lambda-expression’s parameter-declaration-clause is not followed 
-    //   by mutable. It is neither virtual nor declared volatile.
+    //   by mutable. It is neither virtual nor declared volatile. [...]
     if (!FTI.hasMutableQualifier())
       FTI.TypeQuals |= DeclSpec::TQ_const;
+    
+    // C++11 [expr.prim.lambda]p5:
+    //   [...] Default arguments (8.3.6) shall not be specified in the 
+    //   parameter-declaration-clause of a lambda-declarator.
+    CheckExtraCXXDefaultArguments(ParamInfo);
+    
     MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
     // FIXME: Can these asserts actually fail?
     assert(MethodTyInfo && "no type from lambda-declarator");
