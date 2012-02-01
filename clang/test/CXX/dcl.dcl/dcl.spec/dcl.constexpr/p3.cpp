@@ -40,6 +40,7 @@ struct T : SS, NonLiteral { // expected-note {{base class 'NonLiteral' of non-li
 
   //  - its return type shall be a literal type;
   constexpr NonLiteral NonLiteralReturn(); // expected-error {{constexpr function's return type 'NonLiteral' is not a literal type}}
+  constexpr void VoidReturn(); // expected-error {{constexpr function's return type 'void' is not a literal type}}
   constexpr ~T(); // expected-error {{destructor cannot be marked constexpr}}
   typedef NonLiteral F();
   constexpr F NonLiteralReturn2; // expected-error {{constexpr function's return type 'NonLiteral' is not a literal type}}
