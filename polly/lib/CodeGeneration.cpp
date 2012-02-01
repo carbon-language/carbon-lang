@@ -1699,14 +1699,14 @@ class CodeGeneration : public ScopPass {
 
     assert(region->isSimple() && "Only simple regions are supported");
 
-    // In the CFG and we generate next to original code of the Scop the
-    // optimized version.  Both the new and the original version of the code
-    // remain in the CFG. A branch statement decides which version is executed.
-    // At the moment, we always execute the newly generated version (the old one
-    // is dead code eliminated by the cleanup passes). Later we may decide to
-    // execute the new version only under certain conditions. This will be the
-    // case if we support constructs for which we cannot prove all assumptions
-    // at compile time.
+    // In the CFG the optimized code of the SCoP is generated next to the
+    // original code. Both the new and the original version of the code remain
+    // in the CFG. A branch statement decides which version is executed.
+    // For now, we always execute the new version (the old one is dead code
+    // eliminated by the cleanup passes). In the future we may decide to execute
+    // the new version only if certain run time checks succeed. This will be
+    // useful to support constructs for which we cannot prove all assumptions at
+    // compile time.
     //
     // Before transformation:
     //
