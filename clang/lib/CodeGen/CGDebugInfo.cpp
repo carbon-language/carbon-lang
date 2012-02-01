@@ -1637,9 +1637,12 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
 
   // Unwrap the type as needed for debug information.
   Ty = UnwrapTypeForDebugInfo(Ty);
-  
+
+  // Check if we already have the type. If we've gotten here and
+  // have a forward declaration of the type we may want the full type.
+  // Go ahead and create it if that's the case.
   llvm::DIType T = getTypeOrNull(Ty);
-  if (T.Verify()) return T;
+  if (T.Verify() && !T.isForwardDecl()) return T;
 
   // Otherwise create the type.
   llvm::DIType Res = CreateTypeNode(Ty, Unit);
