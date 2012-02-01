@@ -45,6 +45,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include <cstring>
+#include <functional>
 
 using namespace clang;
 using llvm::APSInt;
@@ -4138,6 +4139,23 @@ static bool HasSameBase(const LValue &A, const LValue &B) {
          A.getLValueFrame() == B.getLValueFrame();
 }
 
+/// Perform the given integer operation, which is known to need at most BitWidth
+/// bits, and check for overflow in the original type (if that type was not an
+/// unsigned type).
+template<typename Operation>
+static APSInt CheckedIntArithmetic(EvalInfo &Info, const Expr *E,
+                                   const APSInt &LHS, const APSInt &RHS,
+                                   unsigned BitWidth, Operation Op) {
+  if (LHS.isUnsigned())
+    return Op(LHS, RHS);
+
+  APSInt Value(Op(LHS.extend(BitWidth), RHS.extend(BitWidth)), false);
+  APSInt Result = Value.trunc(LHS.getBitWidth());
+  if (Result.extend(BitWidth) != Value)
+    HandleOverflow(Info, E, Value, E->getType());
+  return Result;
+}
+
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (E->isAssignmentOp())
     return Error(E);
@@ -4476,9 +4494,18 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   switch (E->getOpcode()) {
   default:
     return Error(E);
-  case BO_Mul: return Success(LHS * RHS, E);
-  case BO_Add: return Success(LHS + RHS, E);
-  case BO_Sub: return Success(LHS - RHS, E);
+  case BO_Mul:
+    return Success(CheckedIntArithmetic(Info, E, LHS, RHS,
+                                        LHS.getBitWidth() * 2,
+                                        std::multiplies<APSInt>()), E);
+  case BO_Add:
+    return Success(CheckedIntArithmetic(Info, E, LHS, RHS,
+                                        LHS.getBitWidth() + 1,
+                                        std::plus<APSInt>()), E);
+  case BO_Sub:
+    return Success(CheckedIntArithmetic(Info, E, LHS, RHS,
+                                        LHS.getBitWidth() + 1,
+                                        std::minus<APSInt>()), E);
   case BO_And: return Success(LHS & RHS, E);
   case BO_Xor: return Success(LHS ^ RHS, E);
   case BO_Or:  return Success(LHS | RHS, E);
@@ -5078,17 +5105,21 @@ bool FloatExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   default: return Error(E);
   case BO_Mul:
     Result.multiply(RHS, APFloat::rmNearestTiesToEven);
-    return true;
+    break;
   case BO_Add:
     Result.add(RHS, APFloat::rmNearestTiesToEven);
-    return true;
+    break;
   case BO_Sub:
     Result.subtract(RHS, APFloat::rmNearestTiesToEven);
-    return true;
+    break;
   case BO_Div:
     Result.divide(RHS, APFloat::rmNearestTiesToEven);
-    return true;
+    break;
   }
+
+  if (Result.isInfinity() || Result.isNaN())
+    CCEDiag(E, diag::note_constexpr_float_arithmetic) << Result.isNaN();
+  return true;
 }
 
 bool FloatExprEvaluator::VisitFloatingLiteral(const FloatingLiteral *E) {
