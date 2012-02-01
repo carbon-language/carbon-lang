@@ -982,6 +982,34 @@ public:
 
 }
 
+static void checkAndRemoveNonDriverDiags(SmallVectorImpl<StoredDiagnostic> &
+                                                            StoredDiagnostics) {
+  // Get rid of stored diagnostics except the ones from the driver which do not
+  // have a source location.
+  for (unsigned I = 0; I < StoredDiagnostics.size(); ++I) {
+    if (StoredDiagnostics[I].getLocation().isValid()) {
+      StoredDiagnostics.erase(StoredDiagnostics.begin()+I);
+      --I;
+    }
+  }
+}
+
+static void checkAndSanitizeDiags(SmallVectorImpl<StoredDiagnostic> &
+                                                              StoredDiagnostics,
+                                  SourceManager &SM) {
+  // The stored diagnostic has the old source manager in it; update
+  // the locations to refer into the new source manager. Since we've
+  // been careful to make sure that the source manager's state
+  // before and after are identical, so that we can reuse the source
+  // location itself.
+  for (unsigned I = 0, N = StoredDiagnostics.size(); I < N; ++I) {
+    if (StoredDiagnostics[I].getLocation().isValid()) {
+      FullSourceLoc Loc(StoredDiagnostics[I].getLocation(), SM);
+      StoredDiagnostics[I].setLocation(Loc);
+    }
+  }
+}
+
 /// Parse the source file into a translation unit using the given compiler
 /// invocation, replacing the current translation unit.
 ///
@@ -1052,7 +1080,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   CleanTemporaryFiles();
 
   if (!OverrideMainBuffer) {
-    StoredDiagnostics.erase(stored_diag_afterDriver_begin(), stored_diag_end());
+    checkAndRemoveNonDriverDiags(StoredDiagnostics);
     TopLevelDeclsInPreamble.clear();
   }
 
@@ -1080,13 +1108,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     // been careful to make sure that the source manager's state
     // before and after are identical, so that we can reuse the source
     // location itself.
-    for (unsigned I = NumStoredDiagnosticsFromDriver, 
-                  N = StoredDiagnostics.size(); 
-         I < N; ++I) {
-      FullSourceLoc Loc(StoredDiagnostics[I].getLocation(),
-                        getSourceManager());
-      StoredDiagnostics[I].setLocation(Loc);
-    }
+    checkAndSanitizeDiags(StoredDiagnostics, getSourceManager());
 
     // Keep track of the override buffer;
     SavedMainFileBuffer = OverrideMainBuffer;
@@ -1520,7 +1542,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   // Clear out old caches and data.
   getDiagnostics().Reset();
   ProcessWarningOptions(getDiagnostics(), Clang->getDiagnosticOpts());
-  StoredDiagnostics.erase(stored_diag_afterDriver_begin(), stored_diag_end());
+  checkAndRemoveNonDriverDiags(StoredDiagnostics);
   TopLevelDecls.clear();
   TopLevelDeclsInPreamble.clear();
   
@@ -1563,7 +1585,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   PreambleDiagnostics.clear();
   PreambleDiagnostics.insert(PreambleDiagnostics.end(), 
                             stored_diag_afterDriver_begin(), stored_diag_end());
-  StoredDiagnostics.erase(stored_diag_afterDriver_begin(), stored_diag_end());
+  checkAndRemoveNonDriverDiags(StoredDiagnostics);
   
   // Keep track of the preamble we precompiled.
   setPreambleFile(this, FrontendOpts.OutputFile);
@@ -2368,6 +2390,8 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
     Act->Execute();
     Act->EndSourceFile();
   }
+
+  checkAndSanitizeDiags(StoredDiagnostics, getSourceManager());
 }
 
 CXSaveError ASTUnit::Save(StringRef File) {
