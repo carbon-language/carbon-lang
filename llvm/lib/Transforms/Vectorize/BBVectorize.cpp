@@ -940,7 +940,7 @@ namespace {
       bool MoreChildren = false;
       size_t MaxChildDepth = QTop.second;
       VPPIteratorPair qtRange = ConnectedPairs.equal_range(QTop.first);
-      for (std::map<ValuePair, ValuePair>::iterator k = qtRange.first;
+      for (std::multimap<ValuePair, ValuePair>::iterator k = qtRange.first;
            k != qtRange.second; ++k) {
         // Make sure that this child pair is still a candidate:
         bool IsStillCand = false;
@@ -997,7 +997,7 @@ namespace {
       // Visit each child, pruning as necessary...
       DenseMap<ValuePair, size_t> BestChilden;
       VPPIteratorPair QTopRange = ConnectedPairs.equal_range(QTop.first);
-      for (std::map<ValuePair, ValuePair>::iterator K = QTopRange.first;
+      for (std::multimap<ValuePair, ValuePair>::iterator K = QTopRange.first;
            K != QTopRange.second; ++K) {
         DenseMap<ValuePair, size_t>::iterator C = Tree.find(K->second);
         if (C == Tree.end()) continue;
