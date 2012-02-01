@@ -503,7 +503,7 @@ static int TopoOrderRC(const void *PA, const void *PB) {
     return 1;
 
   // Finally order by name as a tie breaker.
-  return A->getName() < B->getName();
+  return StringRef(A->getName()).compare(B->getName());
 }
 
 std::string CodeGenRegisterClass::getQualifiedName() const {
