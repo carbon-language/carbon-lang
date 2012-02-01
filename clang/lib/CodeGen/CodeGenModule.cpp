@@ -689,7 +689,7 @@ llvm::Constant *CodeGenModule::EmitAnnotationString(llvm::StringRef Str) {
     return i->second;
 
   // Not found yet, create a new global.
-  llvm::Constant *s = llvm::ConstantDataArray::getString(getLLVMContext(), Str);
+  llvm::Constant *s = llvm::ConstantArray::get(getLLVMContext(), Str, true);
   llvm::GlobalValue *gv = new llvm::GlobalVariable(getModule(), s->getType(),
     true, llvm::GlobalValue::PrivateLinkage, s, ".str");
   gv->setSection(AnnotationSection);
@@ -1853,8 +1853,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
     llvm::ConstantInt::get(Ty, 0x07C8);
 
   // String pointer.
-  llvm::Constant *C = llvm::ConstantDataArray::getString(VMContext,
-                                                         Entry.getKey());
+  llvm::Constant *C = llvm::ConstantArray::get(VMContext, Entry.getKey().str());
 
   llvm::GlobalValue::LinkageTypes Linkage;
   if (isUTF16)
@@ -1986,8 +1985,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   Fields[0] = ConstantStringClassRef;
   
   // String pointer.
-  llvm::Constant *C =
-    llvm::ConstantDataArray::getString(VMContext, Entry.getKey());
+  llvm::Constant *C = llvm::ConstantArray::get(VMContext, Entry.getKey().str());
   
   llvm::GlobalValue::LinkageTypes Linkage;
   bool isConstant;
@@ -2083,28 +2081,29 @@ CodeGenModule::GetConstantArrayFromStringLiteral(const StringLiteral *E) {
   // Don't emit it as the address of the string, emit the string data itself
   // as an inline array.
   if (E->getCharByteWidth()==1) {
-    return llvm::ConstantDataArray::getString(VMContext,
+    return llvm::ConstantArray::get(VMContext,
                                     GetStringForStringLiteral(E), false);
+  } else {
+    llvm::ArrayType *AType =
+      cast<llvm::ArrayType>(getTypes().ConvertType(E->getType()));
+    llvm::Type *ElemTy = AType->getElementType();
+    unsigned NumElements = AType->getNumElements();
+    std::vector<llvm::Constant*> Elts;
+    Elts.reserve(NumElements);
+    
+    for(unsigned i=0;i<E->getLength();++i) {
+      unsigned value = E->getCodeUnit(i);
+      llvm::Constant *C = llvm::ConstantInt::get(ElemTy,value,false);
+      Elts.push_back(C);
+    }
+    for(unsigned i=E->getLength();i<NumElements;++i) {
+      llvm::Constant *C = llvm::ConstantInt::get(ElemTy,0,false);
+      Elts.push_back(C);
+    }
+    
+    return llvm::ConstantArray::get(AType, Elts);
   }
-  
-  llvm::ArrayType *AType =
-    cast<llvm::ArrayType>(getTypes().ConvertType(E->getType()));
-  llvm::Type *ElemTy = AType->getElementType();
-  unsigned NumElements = AType->getNumElements();
-  std::vector<llvm::Constant*> Elts;
-  Elts.reserve(NumElements);
-  
-  for(unsigned i=0;i<E->getLength();++i) {
-    unsigned value = E->getCodeUnit(i);
-    llvm::Constant *C = llvm::ConstantInt::get(ElemTy,value,false);
-    Elts.push_back(C);
-  }
-  for(unsigned i=E->getLength();i<NumElements;++i) {
-    llvm::Constant *C = llvm::ConstantInt::get(ElemTy,0,false);
-    Elts.push_back(C);
-  }
-  
-  return llvm::ConstantArray::get(AType, Elts);
+
 }
 
 /// GetAddrOfConstantStringFromLiteral - Return a pointer to a
@@ -2153,7 +2152,7 @@ static llvm::GlobalVariable *GenerateStringLiteral(StringRef str,
                                              unsigned Alignment) {
   // Create Constant for this string literal. Don't add a '\0'.
   llvm::Constant *C =
-      llvm::ConstantDataArray::getString(CGM.getLLVMContext(), str, false);
+      llvm::ConstantArray::get(CGM.getLLVMContext(), str, false);
 
   // Create a global variable for this string
   llvm::GlobalVariable *GV =

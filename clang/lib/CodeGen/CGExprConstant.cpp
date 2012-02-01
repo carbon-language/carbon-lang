@@ -811,7 +811,7 @@ public:
     // Resize the string to the right size, adding zeros at the end, or
     // truncating as needed.
     Str.resize(CAT->getSize().getZExtValue(), '\0');
-    return llvm::ConstantDataArray::getString(VMContext, Str, false);
+    return llvm::ConstantArray::get(VMContext, Str, false);
   }
 
   llvm::Constant *VisitUnaryExtension(const UnaryOperator *E) {
