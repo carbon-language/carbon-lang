@@ -2151,7 +2151,6 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
                                        addr, ArgNo);
       
       // Insert an llvm.dbg.declare into the current block.
-      // Insert an llvm.dbg.declare into the current block.
       llvm::Instruction *Call =
         DBuilder.insertDeclare(Storage, D, Builder.GetInsertBlock());
       Call->setDebugLoc(llvm::DebugLoc::get(Line, Column, Scope));
