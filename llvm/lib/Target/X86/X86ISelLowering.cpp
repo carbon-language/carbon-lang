@@ -12941,25 +12941,17 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
     OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpHi);
 
     // PSHUFD
-    SmallVector<int,4> ShufMask1;
-    ShufMask1.push_back(0);
-    ShufMask1.push_back(2);
-    ShufMask1.push_back(0);
-    ShufMask1.push_back(0);
+    int ShufMask1[] = {0, 2, 0, 0};
 
     OpLo = DAG.getVectorShuffle(VT, dl, OpLo, DAG.getUNDEF(VT),
-                                ShufMask1.data());
+                                ShufMask1);
     OpHi = DAG.getVectorShuffle(VT, dl, OpHi, DAG.getUNDEF(VT),
-                                ShufMask1.data());
+                                ShufMask1);
 
     // MOVLHPS
-    SmallVector<int,4> ShufMask2;
-    ShufMask2.push_back(0);
-    ShufMask2.push_back(1);
-    ShufMask2.push_back(4);
-    ShufMask2.push_back(5);
+    int ShufMask2[] = {0, 1, 4, 5};
 
-    return DAG.getVectorShuffle(VT, dl, OpLo, OpHi, ShufMask2.data());
+    return DAG.getVectorShuffle(VT, dl, OpLo, OpHi, ShufMask2);
   }
   if ((VT == MVT::v8i16) && (OpVT == MVT::v8i32)) {
 
@@ -12973,38 +12965,24 @@ SDValue X86TargetLowering::PerformTruncateCombine(SDNode *N, SelectionDAG &DAG,
     OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v16i8, OpHi);
 
     // PSHUFB
-    SmallVector<int,16> ShufMask1;
-    ShufMask1.push_back(0x0);
-    ShufMask1.push_back(0x1);
-    ShufMask1.push_back(0x4);
-    ShufMask1.push_back(0x5);
-    ShufMask1.push_back(0x8);
-    ShufMask1.push_back(0x9);
-    ShufMask1.push_back(0xc);
-    ShufMask1.push_back(0xd);
-    for (unsigned i=0; i<8; ++i)
-      ShufMask1.push_back(-1);
+    int ShufMask1[] = {0,  1,  4,  5,  8,  9, 12, 13, 
+                      -1, -1, -1, -1, -1, -1, -1, -1};
 
     OpLo = DAG.getVectorShuffle(MVT::v16i8, dl, OpLo,
                                 DAG.getUNDEF(MVT::v16i8),
-                                ShufMask1.data());
+                                ShufMask1);
     OpHi = DAG.getVectorShuffle(MVT::v16i8, dl, OpHi,
                                 DAG.getUNDEF(MVT::v16i8),
-                                ShufMask1.data());
+                                ShufMask1);
 
     OpLo = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpLo);
     OpHi = DAG.getNode(ISD::BITCAST, dl, MVT::v4i32, OpHi);
 
     // MOVLHPS
-    SmallVector<int,4> ShufMask2;
-    ShufMask2.push_back(0);
-    ShufMask2.push_back(1);
-    ShufMask2.push_back(4);
-    ShufMask2.push_back(5);
+    int ShufMask2[] = {0, 1, 4, 5};
 
-    SDValue res = DAG.getVectorShuffle(MVT::v4i32, dl, OpLo, OpHi, ShufMask2.data());
+    SDValue res = DAG.getVectorShuffle(MVT::v4i32, dl, OpLo, OpHi, ShufMask2);
     return DAG.getNode(ISD::BITCAST, dl, MVT::v8i16, res);
- 
   }
 
   return SDValue();
