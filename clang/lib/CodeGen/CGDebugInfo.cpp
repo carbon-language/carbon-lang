@@ -35,7 +35,6 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/FileSystem.h"
 #include "llvm/Target/TargetData.h"
-#include "llvm/Target/TargetMachine.h"
 using namespace clang;
 using namespace clang::CodeGen;
 
