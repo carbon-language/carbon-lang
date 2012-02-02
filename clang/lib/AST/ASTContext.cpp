@@ -6673,9 +6673,7 @@ bool ASTContext::DeclMustBeEmitted(const Decl *D) {
     // always be deferred.  Normal inline functions can be deferred in C99/C++.
     // Implicit template instantiations can also be deferred in C++.
     if (Linkage == GVA_Internal  || Linkage == GVA_C99Inline ||
-        Linkage == GVA_CXXInline ||
-        (Linkage == GVA_StrongExternal && FD->isInlineSpecified()) ||
-        Linkage == GVA_TemplateInstantiation)
+        Linkage == GVA_CXXInline || Linkage == GVA_TemplateInstantiation)
       return false;
     return true;
   }

@@ -1,8 +1,10 @@
 // RUN: echo "GNU89 tests:"
 // RUN: %clang %s -O1 -emit-llvm -S -o %t -std=gnu89
+// RUN: grep "define available_externally i32 @ei()" %t
 // RUN: grep "define i32 @foo()" %t
 // RUN: grep "define i32 @bar()" %t
-// RUN: not grep unreferenced %t
+// RUN: grep "define void @unreferenced1()" %t
+// RUN: not grep unreferenced2 %t
 // RUN: grep "define void @gnu_inline()" %t
 // RUN: grep "define available_externally void @gnu_ei_inline()" %t
 // RUN: grep "define i32 @test1" %t
@@ -17,7 +19,8 @@
 // RUN: grep "define i32 @ei()" %t
 // RUN: grep "define available_externally i32 @foo()" %t
 // RUN: grep "define i32 @bar()" %t
-// RUN: not grep unreferenced %t
+// RUN: not grep unreferenced1 %t
+// RUN: grep "define void @unreferenced2()" %t
 // RUN: grep "define void @gnu_inline()" %t
 // RUN: grep "define available_externally void @gnu_ei_inline()" %t
 // RUN: grep "define i32 @test1" %t
@@ -50,7 +53,6 @@ __inline void unreferenced1() {}
 extern __inline void unreferenced2() {}
 
 __inline __attribute((__gnu_inline__)) void gnu_inline() {}
-void test_gnu_inline() { gnu_inline(); }
 
 // PR3988
 extern __inline __attribute__((gnu_inline)) void gnu_ei_inline() {}
@@ -69,7 +71,6 @@ void test_test2() { test2(); }
 // PR3989
 extern __inline void test3() __attribute__((gnu_inline));
 __inline void __attribute__((gnu_inline)) test3() {}
-void test_test3() { test3(); }
 
 extern int test4(void);
 extern __inline __attribute__ ((__gnu_inline__)) int test4(void)
@@ -91,10 +92,11 @@ void test_test5() { test5(); }
 
 __inline int test6() { return 0; }
 extern int test6();
-void test_test6() { test6(); }
 
-// PR10657
-extern __inline void test7() {}
+
+// No PR#, but this once crashed clang in C99 mode due to buggy extern inline
+// redeclaration detection.
+void test7() { }
 void test7();
 
 // PR11062; the fact that the function is named strlcpy matters here.
