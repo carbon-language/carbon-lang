@@ -9045,6 +9045,8 @@ Decl *Sema::ActOnIvar(Scope *S,
                                         : ObjCIvarDecl::None;
   // Must set ivar's DeclContext to its enclosing interface.
   ObjCContainerDecl *EnclosingDecl = cast<ObjCContainerDecl>(CurContext);
+  if (!EnclosingDecl || EnclosingDecl->isInvalidDecl())
+    return 0;
   ObjCContainerDecl *EnclosingContext;
   if (ObjCImplementationDecl *IMPDecl =
       dyn_cast<ObjCImplementationDecl>(EnclosingDecl)) {
