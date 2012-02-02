@@ -417,10 +417,7 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
     // We can't hoist an instruction defining a physreg that is clobbered in
     // the loop.
     if (MO.isRegMask()) {
-      if (const uint32_t *Mask = MO.getRegMask())
-        PhysRegClobbers.setBitsNotInMask(Mask);
-      else
-        PhysRegClobbers.set();
+      PhysRegClobbers.setBitsNotInMask(MO.getRegMask());
       continue;
     }
 

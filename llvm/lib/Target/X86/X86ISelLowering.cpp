@@ -2515,8 +2515,8 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // registers.
   if (UseRegMask) {
     const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
-    const uint32_t *Mask = TRI->getCallPreservedMask(CallConv);
-    Ops.push_back(DAG.getRegisterMask(Mask));
+    if (const uint32_t *Mask = TRI->getCallPreservedMask(CallConv))
+      Ops.push_back(DAG.getRegisterMask(Mask));
   }
 
   if (InFlag.getNode())

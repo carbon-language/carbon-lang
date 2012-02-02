@@ -175,10 +175,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
           }
         } else if (MO.isRegMask()) {
           // Register mask of preserved registers. All clobbers are dead.
-          if (const uint32_t *Mask = MO.getRegMask())
-            LivePhysRegs.clearBitsNotInMask(Mask);
-          else
-            LivePhysRegs.reset();
+          LivePhysRegs.clearBitsNotInMask(MO.getRegMask());
           LivePhysRegs |= ReservedRegs;
         }
       }

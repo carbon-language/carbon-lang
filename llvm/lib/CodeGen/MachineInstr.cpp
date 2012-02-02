@@ -327,7 +327,7 @@ void MachineOperand::print(raw_ostream &OS, const TargetMachine *TM) const {
     OS << '>';
     break;
   case MachineOperand::MO_RegisterMask:
-    OS << (getRegMask() ? "<regmask>" : "<regmask:null>");
+    OS << "<regmask>";
     break;
   case MachineOperand::MO_Metadata:
     OS << '<';

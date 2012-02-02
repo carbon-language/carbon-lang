@@ -446,12 +446,11 @@ public:
     assert(isRegMask() && "Wrong MachineOperand accessor");
     // See TargetRegisterInfo.h.
     assert(PhysReg < (1u << 30) && "Not a physical register");
-    return !Contents.RegMask ||
-           !(Contents.RegMask[PhysReg / 32] & (1u << PhysReg % 32));
+    return !(Contents.RegMask[PhysReg / 32] & (1u << PhysReg % 32));
   }
 
   /// getRegMask - Returns a bit mask of registers preserved by this RegMask
-  /// operand.  A NULL pointer means that all registers are clobbered.
+  /// operand.
   const uint32_t *getRegMask() const {
     assert(isRegMask() && "Wrong MachineOperand accessor");
     return Contents.RegMask;
@@ -616,6 +615,7 @@ public:
   /// Any physreg with a 0 bit in the mask is clobbered by the instruction.
   ///
   static MachineOperand CreateRegMask(const uint32_t *Mask) {
+    assert(Mask && "Missing register mask");
     MachineOperand Op(MachineOperand::MO_RegisterMask);
     Op.Contents.RegMask = Mask;
     return Op;

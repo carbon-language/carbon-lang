@@ -376,7 +376,10 @@ public:
   ///
   /// Bits are numbered from the LSB, so the bit for physical register Reg can
   /// be found as (Mask[Reg / 32] >> Reg % 32) & 1.
-  /// NULL pointer is equivalent to an all-zero mask.
+  ///
+  /// A NULL pointer means that no register mask will be used, and call
+  /// instructions should use implicit-def operands to indicate call clobbered
+  /// registers.
   ///
   virtual const uint32_t *getCallPreservedMask(CallingConv::ID) const {
     // The default mask clobbers everything.  All targets should override.
