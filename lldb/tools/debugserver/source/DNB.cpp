@@ -250,6 +250,10 @@ DNBProcessLaunch (const char *path,
             if (processSP->Task().TaskPortForProcessID (launch_err) == TASK_NULL)
             {
                 // We failed to get the task for our process ID which is bad.
+                // Kill our process otherwise it will be stopped at the entry
+                // point and get reparented to someone else and never go away.
+                kill (SIGKILL, pid);
+
                 if (err_str && err_len > 0)
                 {
                     if (launch_err.AsString())
