@@ -12,14 +12,17 @@
 
 #if __APPLE__
   #include <cxxabi.h>
+
   using namespace __cxxabiv1;
-  using namespace __cxxabiapple;
-  // On Darwin, there are two STL shared libraries and a lower level ABI
-  // shared libray.  The globals holding the current terminate handler and
-  // current unexpected handler are in the ABI library.
-  #define __terminate_handler  __cxxabiapple::__cxa_terminate_handler
-  #define __unexpected_handler __cxxabiapple::__cxa_unexpected_handler
   #define HAVE_DEPENDENT_EH_ABI 1
+  #ifndef _LIBCPPABI_VERSION
+    using namespace __cxxabiapple;
+    // On Darwin, there are two STL shared libraries and a lower level ABI
+    // shared libray.  The globals holding the current terminate handler and
+    // current unexpected handler are in the ABI library.
+    #define __terminate_handler  __cxxabiapple::__cxa_terminate_handler
+    #define __unexpected_handler __cxxabiapple::__cxa_unexpected_handler
+  #endif  // _LIBCPPABI_VERSION
 #elif defined(LIBCXXRT)
   #include <cxxabi.h>
   using namespace __cxxabiv1;
@@ -29,7 +32,8 @@
   static std::unexpected_handler __unexpected_handler;
 #endif  // __APPLE__
 
-#ifndef LIBCXXRT
+#if !defined(LIBCXXRT) && !defined(_LIBCPPABI_VERSION)
+
 // libcxxrt provides implementations of these functions itself.
 std::unexpected_handler
 std::set_unexpected(std::unexpected_handler func) _NOEXCEPT
@@ -84,13 +88,13 @@ std::terminate() _NOEXCEPT
     }
 #endif  // _LIBCPP_NO_EXCEPTIONS
 }
-#endif // LIBCXXRT
+#endif // !defined(LIBCXXRT) && !defined(_LIBCPPABI_VERSION)
 
 bool std::uncaught_exception() _NOEXCEPT
 {
 #if __APPLE__
     // on Darwin, there is a helper function so __cxa_get_globals is private
-    return __cxxabiapple::__cxa_uncaught_exception();
+    return __cxa_uncaught_exception();
 #elif LIBCXXRT
     __cxa_eh_globals * globals = __cxa_get_globals();
     return (globals->uncaughtExceptions != 0);
@@ -102,6 +106,8 @@ bool std::uncaught_exception() _NOEXCEPT
 
 namespace std
 {
+
+#ifndef _LIBCPPABI_VERSION
 
 exception::~exception() _NOEXCEPT
 {
@@ -120,6 +126,8 @@ const char* bad_exception::what() const _NOEXCEPT
 {
   return "std::bad_exception";
 }
+
+#endif  // _LIBCPPABI_VERSION
 
 exception_ptr::~exception_ptr() _NOEXCEPT
 {
