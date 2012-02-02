@@ -33,7 +33,11 @@
 
 #include <cstdlib> // ::getenv
 
-#include "clang/Config/config.h"
+#ifdef HAVE_CLANG_CONFIG_H
+# include "clang/Config/config.h"
+#endif
+
+#include "llvm/Config/config.h" // for CXX_INCLUDE_ROOT
 
 using namespace clang::driver;
 using namespace clang::driver::toolchains;

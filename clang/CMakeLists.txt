@@ -234,7 +234,7 @@ install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/include/
   PATTERN "*.inc"
   )
 
-add_definitions( -D_GNU_SOURCE )
+add_definitions( -D_GNU_SOURCE -DHAVE_CLANG_CONFIG_H )
 
 # Clang version information
 set(CLANG_EXECUTABLE_VERSION

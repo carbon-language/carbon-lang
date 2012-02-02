@@ -26,8 +26,11 @@
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Path.h"
 
-#include "clang/Config/config.h"
+#ifdef HAVE_CLANG_CONFIG_H
+# include "clang/Config/config.h"
+#endif
 
+#include "llvm/Config/config.h"
 using namespace clang;
 using namespace clang::frontend;
 
