@@ -813,7 +813,7 @@ AC_ARG_WITH(clang-srcdir,
     [Directory to the out-of-tree Clang source]),,
     withval="-")
 case "$withval" in
-  -) clang_src_root="" ;;
+  -) clang_src_root="$ac_pwd/tools/clang" ;;
   /* | [[A-Za-z]]:[[\\/]]*) clang_src_root="$withval" ;;
   *) clang_src_root="$ac_pwd/$withval" ;;
 esac
@@ -1588,9 +1588,9 @@ dnl Configure doxygen's configuration file
 AC_CONFIG_FILES([docs/doxygen.cfg])
 
 dnl Configure clang, if present
-if test -f ${srcdir}/tools/clang/README.txt; then
-  AC_CONFIG_HEADERS([tools/clang/include/clang/Config/config.h])
-  AC_CONFIG_FILES([tools/clang/docs/doxygen.cfg])
+if test -f ${clang_src_root}/README.txt; then
+  AC_CONFIG_HEADERS([${clang_src_root}/include/clang/Config/config.h])
+  AC_CONFIG_FILES([${clang_src_root}/docs/doxygen.cfg])
 fi
 
 dnl OCaml findlib META file
