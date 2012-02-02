@@ -566,55 +566,206 @@ private:
 };
 
 
-struct SummaryFormat
+class SummaryFormat
 {
-    uint32_t m_my_revision;
-    bool m_cascades;
-    bool m_skip_pointers;
-    bool m_skip_references;
-    bool m_dont_show_children;
-    bool m_dont_show_value;
-    bool m_show_members_oneliner;
+public:
+    class Flags
+    {
+    public:
+        
+        Flags () :
+            m_flags (FVCascades)
+        {}
+        
+        Flags (const Flags& other) :
+            m_flags (other.m_flags)
+        {}
+        
+        Flags&
+        operator = (const Flags& rhs)
+        {
+            if (&rhs != this)
+                m_flags = rhs.m_flags;
+            
+            return *this;
+        }
+        
+        Flags&
+        Clear()
+        {
+            m_flags = 0;
+            return *this;
+        }
+        
+        bool
+        GetCascades () const
+        {
+            return (m_flags & FVCascades) == FVCascades;
+        }
+        
+        Flags&
+        SetCascades (bool value = true)
+        {
+            if (value)
+                m_flags |= FVCascades;
+            else
+                m_flags &= ~FVCascades;
+            return *this;
+        }
+
+        bool
+        GetSkipPointers () const
+        {
+            return (m_flags & FVSkipPointers) == FVSkipPointers;
+        }
+
+        Flags&
+        SetSkipPointers (bool value = true)
+        {
+            if (value)
+                m_flags |= FVSkipPointers;
+            else
+                m_flags &= ~FVSkipPointers;
+            return *this;
+        }
+        
+        bool
+        GetSkipReferences () const
+        {
+            return (m_flags & FVSkipReferences) == FVSkipReferences;
+        }
+        
+        Flags&
+        SetSkipReferences (bool value = true)
+        {
+            if (value)
+                m_flags |= FVSkipReferences;
+            else
+                m_flags &= ~FVSkipReferences;
+            return *this;
+        }
+        
+        bool
+        GetDontShowChildren () const
+        {
+            return (m_flags & FVDontShowChildren) == FVDontShowChildren;
+        }
+        
+        Flags&
+        SetDontShowChildren (bool value = true)
+        {
+            if (value)
+                m_flags |= FVDontShowChildren;
+            else
+                m_flags &= ~FVDontShowChildren;
+            return *this;
+        }
+        
+        bool
+        GetDontShowValue () const
+        {
+            return (m_flags & FVDontShowValue) == FVDontShowValue;
+        }
+        
+        Flags&
+        SetDontShowValue (bool value = true)
+        {
+            if (value)
+                m_flags |= FVDontShowValue;
+            else
+                m_flags &= ~FVDontShowValue;
+            return *this;
+        }
+        
+        bool
+        GetShowMembersOneLiner () const
+        {
+            return (m_flags & FVShowMembersOneLiner) == FVShowMembersOneLiner;
+        }
+        
+        Flags&
+        SetShowMembersOneLiner (bool value = true)
+        {
+            if (value)
+                m_flags |= FVShowMembersOneLiner;
+            else
+                m_flags &= ~FVShowMembersOneLiner;
+            return *this;
+        }
+        
+        bool
+        GetHideItemNames () const
+        {
+            return (m_flags & FVHideItemNames) == FVHideItemNames;
+        }
+        
+        Flags&
+        SetHideItemNames (bool value = true)
+        {
+            if (value)
+                m_flags |= FVHideItemNames;
+            else
+                m_flags &= ~FVHideItemNames;
+            return *this;
+        }
+                
+    private:
+        uint32_t m_flags;
+        enum FlagValues
+        {
+            FVCascades            = 0x0001u,
+            FVSkipPointers        = 0x0002u,
+            FVSkipReferences      = 0x0004u,
+            FVDontShowChildren    = 0x0008u,
+            FVDontShowValue       = 0x0010u,
+            FVShowMembersOneLiner = 0x0020u,
+            FVHideItemNames       = 0x0040u
+        };
+    };
     
-    SummaryFormat(bool casc = false,
-                  bool skipptr = false,
-                  bool skipref = false,
-                  bool nochildren = true,
-                  bool novalue = true,
-                  bool oneliner = false);
+    uint32_t m_my_revision;
+    Flags m_flags;
+    
+    SummaryFormat(const SummaryFormat::Flags& flags);
     
     bool
     Cascades() const
     {
-        return m_cascades;
+        return m_flags.GetCascades();
     }
     bool
     SkipsPointers() const
     {
-        return m_skip_pointers;
+        return m_flags.GetSkipPointers();
     }
     bool
     SkipsReferences() const
     {
-        return m_skip_references;
+        return m_flags.GetSkipReferences();
     }
     
     bool
     DoesPrintChildren() const
     {
-        return !m_dont_show_children;
+        return !m_flags.GetDontShowChildren();
     }
     
     bool
     DoesPrintValue() const
     {
-        return !m_dont_show_value;
+        return !m_flags.GetDontShowValue();
     }
     
     bool
     IsOneliner() const
     {
-        return m_show_members_oneliner;
+        return m_flags.GetShowMembersOneLiner();
+    }
+    
+    bool
+    HideNames() const
+    {
+        return m_flags.GetHideItemNames();
     }
             
     virtual
@@ -639,13 +790,8 @@ struct StringSummaryFormat : public SummaryFormat
 {
     std::string m_format;
     
-    StringSummaryFormat(bool casc = false,
-                        bool skipptr = false,
-                        bool skipref = false,
-                        bool nochildren = true,
-                        bool novalue = true,
-                        bool oneliner = false,
-                        std::string f = "");
+    StringSummaryFormat(const SummaryFormat::Flags& flags,
+                        std::string f);
     
     std::string
     GetFormat() const
@@ -674,14 +820,9 @@ struct ScriptSummaryFormat : public SummaryFormat
     std::string m_function_name;
     std::string m_python_script;
     
-    ScriptSummaryFormat(bool casc = false,
-                        bool skipptr = false,
-                        bool skipref = false,
-                        bool nochildren = true,
-                        bool novalue = true,
-                        bool oneliner = false,
-                        std::string fname = "",
-                        std::string pscri = "");
+    ScriptSummaryFormat(const SummaryFormat::Flags& flags,
+                        std::string fname,
+                        std::string pscri);
     
     std::string
     GetFunctionName() const

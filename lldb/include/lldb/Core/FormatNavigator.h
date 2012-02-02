@@ -511,7 +511,7 @@ protected:
         {
             if (log)
                 log->Printf("stripping reference");
-            if (Get(valobj,type.getNonReferenceType(),entry, use_dynamic, reason) && !entry->m_skip_references)
+            if (Get(valobj,type.getNonReferenceType(),entry, use_dynamic, reason) && !entry->SkipsReferences())
             {
                 reason |= lldb_private::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
@@ -554,7 +554,7 @@ protected:
             if (log)
                 log->Printf("stripping pointer");
             clang::QualType pointee = typePtr->getPointeeType();
-            if (Get(valobj, pointee, entry, use_dynamic, reason) && !entry->m_skip_pointers)
+            if (Get(valobj, pointee, entry, use_dynamic, reason) && !entry->SkipsPointers())
             {
                 reason |= lldb_private::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
@@ -596,7 +596,7 @@ protected:
             ValueObject* target = valobj.Dereference(error).get();
             if (error.Fail() || !target)
                 return false;
-            if (Get(*target, typePtr->getPointeeType(), entry, use_dynamic, reason) && !entry->m_skip_pointers)
+            if (Get(*target, typePtr->getPointeeType(), entry, use_dynamic, reason) && !entry->SkipsPointers())
             {
                 reason |= lldb_private::eFormatterChoiceCriterionStrippedPointerReference;
                 return true;
@@ -621,7 +621,7 @@ protected:
                         if (log)
                             log->Printf("got a parent class for this ObjC class");
                         clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
-                        if (Get(valobj, ivar_qual_type, entry, use_dynamic, reason) && entry->m_cascades)
+                        if (Get(valobj, ivar_qual_type, entry, use_dynamic, reason) && entry->Cascades())
                         {
                             reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
                             return true;
@@ -650,7 +650,7 @@ protected:
                         end = record->bases_end();
                         for (pos = record->bases_begin(); pos != end; pos++)
                         {
-                            if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->m_cascades)
+                            if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->Cascades())
                             {
                                 reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
                                 return true;
@@ -664,7 +664,7 @@ protected:
                         end = record->vbases_end();
                         for (pos = record->vbases_begin(); pos != end; pos++)
                         {
-                            if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->m_cascades)
+                            if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->Cascades())
                             {
                                 reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
                                 return true;
@@ -680,7 +680,7 @@ protected:
         {
             if (log)
                 log->Printf("stripping typedef");
-            if ((Get(valobj, type_tdef->getDecl()->getUnderlyingType(), entry, use_dynamic, reason)) && entry->m_cascades)
+            if ((Get(valobj, type_tdef->getDecl()->getUnderlyingType(), entry, use_dynamic, reason)) && entry->Cascades())
             {
                 reason |= lldb_private::eFormatterChoiceCriterionNavigatedTypedefs;
                 return true;

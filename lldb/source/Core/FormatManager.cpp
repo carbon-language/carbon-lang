@@ -566,22 +566,24 @@ FormatManager::FormatManager() :
     
     // add some default stuff
     // most formats, summaries, ... actually belong to the users' lldbinit file rather than here
-    lldb::SummaryFormatSP string_format(new StringSummaryFormat(false,
-                                                                       true,
-                                                                       false,
-                                                                       true,
-                                                                       false,
-                                                                       false,
-                                                                       "${var%s}"));
+    lldb::SummaryFormatSP string_format(new StringSummaryFormat(SummaryFormat::Flags().SetCascades(false)
+                                                                .SetSkipPointers(true)
+                                                                .SetSkipReferences(false)
+                                                                .SetDontShowChildren(true)
+                                                                .SetDontShowValue(false)
+                                                                .SetShowMembersOneLiner(false)
+                                                                .SetHideItemNames(false),
+                                                                "${var%s}"));
     
     
-    lldb::SummaryFormatSP string_array_format(new StringSummaryFormat(false,
-                                                                             true,
-                                                                             false,
-                                                                             false,
-                                                                             false,
-                                                                             false,
-                                                                             "${var%s}"));
+    lldb::SummaryFormatSP string_array_format(new StringSummaryFormat(SummaryFormat::Flags().SetCascades(false)
+                                                                      .SetSkipPointers(true)
+                                                                      .SetSkipReferences(false)
+                                                                      .SetDontShowChildren(false)
+                                                                      .SetDontShowValue(true)
+                                                                      .SetShowMembersOneLiner(false)
+                                                                      .SetHideItemNames(false),
+                                                                      "${var%s}"));
     
     lldb::RegularExpressionSP any_size_char_arr(new RegularExpression("char \\[[0-9]+\\]"));
     
@@ -600,12 +602,13 @@ FormatManager::FormatManager() :
     // the GNU libstdc++ are defined regardless, and enabled by default
     // This is going to be moved to some platform-dependent location
     // (in the meanwhile, these formatters should work for Mac OS X & Linux)
-    lldb::SummaryFormatSP std_string_summary_sp(new StringSummaryFormat(true,
-                                                                        false,
-                                                                        false,
-                                                                        true,
-                                                                        true,
-                                                                        false,
+    lldb::SummaryFormatSP std_string_summary_sp(new StringSummaryFormat(SummaryFormat::Flags().SetCascades(true)
+                                                                        .SetSkipPointers(false)
+                                                                        .SetSkipReferences(false)
+                                                                        .SetDontShowChildren(true)
+                                                                        .SetDontShowValue(true)
+                                                                        .SetShowMembersOneLiner(false)
+                                                                        .SetHideItemNames(false),
                                                                         "${var._M_dataplus._M_p}"));
     
     FormatCategory::SharedPointer gnu_category_sp = GetCategory(m_gnu_cpp_category_name);
@@ -616,6 +619,9 @@ FormatManager::FormatManager() :
                                                 std_string_summary_sp);
     gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char,std::char_traits<char>,std::allocator<char> >"),
                                                 std_string_summary_sp);
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char, class std::char_traits<char>, class std::allocator<char> >"),
+                                                std_string_summary_sp);
+
     
 #ifndef LLDB_DISABLE_PYTHON
     gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?vector<.+>$")),
@@ -634,12 +640,13 @@ FormatManager::FormatManager() :
                                                                                      false,
                                                                                      "gnu_libstdcpp.StdListSynthProvider")));
 
-    lldb::SummaryFormatSP ObjC_BOOL_summary(new ScriptSummaryFormat(false,
-                                                                    false,
-                                                                    false,
-                                                                    true,
-                                                                    true,
-                                                                    false,
+    lldb::SummaryFormatSP ObjC_BOOL_summary(new ScriptSummaryFormat(SummaryFormat::Flags().SetCascades(false)
+                                                                    .SetSkipPointers(false)
+                                                                    .SetSkipReferences(false)
+                                                                    .SetDontShowChildren(true)
+                                                                    .SetDontShowValue(true)
+                                                                    .SetShowMembersOneLiner(false)
+                                                                    .SetHideItemNames(false),
                                                                     "objc.BOOL_SummaryProvider",
                                                                     ""));
     FormatCategory::SharedPointer objc_category_sp = GetCategory(m_objc_category_name);

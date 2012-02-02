@@ -37,38 +37,22 @@ class ScriptAddOptions
     
 public:
     
-    bool m_skip_pointers;
-    bool m_skip_references;
-    bool m_cascade;
+    SummaryFormat::Flags m_flags;
+    
     StringList m_target_types;
     StringList m_user_source;
     
-    bool m_no_children;
-    bool m_no_value;
-    bool m_one_liner;
     bool m_regex;
-    
+        
     ConstString m_name;
     
     std::string m_category;
     
-    ScriptAddOptions(bool sptr,
-                     bool sref,
-                     bool casc,
-                     bool noch,
-                     bool novl,
-                     bool onel,
+    ScriptAddOptions(const SummaryFormat::Flags& flags,
                      bool regx,
                      const ConstString& name,
                      std::string catg) :
-        m_skip_pointers(sptr),
-        m_skip_references(sref),
-        m_cascade(casc),
-        m_target_types(),
-        m_user_source(),
-        m_no_children(noch),
-        m_no_value(novl),
-        m_one_liner(onel),
+        m_flags(flags),
         m_regex(regx),
         m_name(name),
         m_category(catg)
@@ -149,12 +133,7 @@ private:
         
         // Instance variables to hold the values for command options.
         
-        bool m_cascade;
-        bool m_no_children;
-        bool m_no_value;
-        bool m_one_liner;
-        bool m_skip_references;
-        bool m_skip_pointers;
+        SummaryFormat::Flags m_flags;
         bool m_regex;
         std::string m_format_string;
         ConstString m_name;
@@ -872,12 +851,7 @@ public:
         // now I have a valid function name, let's add this as script for every type in the list
         
         SummaryFormatSP script_format;
-        script_format.reset(new ScriptSummaryFormat(options->m_cascade,
-                                                    options->m_skip_pointers,
-                                                    options->m_skip_references,
-                                                    options->m_no_children,
-                                                    options->m_no_value,
-                                                    options->m_one_liner,
+        script_format.reset(new ScriptSummaryFormat(options->m_flags,
                                                     std::string(funct_name),
                                                     options->m_user_source.CopyList("     ")));
         
@@ -951,27 +925,27 @@ CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx
     switch (short_option)
     {
         case 'C':
-            m_cascade = Args::StringToBoolean(option_arg, true, &success);
+            m_flags.SetCascades(Args::StringToBoolean(option_arg, true, &success));
             if (!success)
                 error.SetErrorStringWithFormat("invalid value for cascade: %s", option_arg);
             break;
         case 'e':
-            m_no_children = false;
+            m_flags.SetDontShowChildren(false);
             break;
         case 'v':
-            m_no_value = true;
+            m_flags.SetDontShowValue(true);
             break;
         case 'c':
-            m_one_liner = true;
+            m_flags.SetShowMembersOneLiner(true);
             break;
         case 's':
             m_format_string = std::string(option_arg);
             break;
         case 'p':
-            m_skip_pointers = true;
+            m_flags.SetSkipPointers(true);
             break;
         case 'r':
-            m_skip_references = true;
+            m_flags.SetSkipReferences(true);
             break;
         case 'x':
             m_regex = true;
@@ -993,6 +967,9 @@ CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx
         case 'w':
             m_category = std::string(option_arg);
             break;
+        case 'O':
+            m_flags.SetHideItemNames(true);
+            break;
         default:
             error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
             break;
@@ -1004,12 +981,9 @@ CommandObjectTypeSummaryAdd::CommandOptions::SetOptionValue (uint32_t option_idx
 void
 CommandObjectTypeSummaryAdd::CommandOptions::OptionParsingStarting ()
 {
-    m_cascade = true;
-    m_no_children = true;
-    m_no_value = false;
-    m_one_liner = false;
-    m_skip_references = false;
-    m_skip_pointers = false;
+    m_flags.Clear().SetCascades().SetDontShowChildren().SetDontShowValue(false);
+    m_flags.SetShowMembersOneLiner(false).SetSkipPointers(false).SetSkipReferences(false).SetHideItemNames(false);
+
     m_regex = false;
     m_name.Clear();
     m_python_script = "";
@@ -1080,12 +1054,7 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
             return false;
         }
         
-        script_format.reset(new ScriptSummaryFormat(m_options.m_cascade,
-                                                    m_options.m_skip_pointers,
-                                                    m_options.m_skip_references,
-                                                    m_options.m_no_children,
-                                                    m_options.m_no_value,
-                                                    m_options.m_one_liner,
+        script_format.reset(new ScriptSummaryFormat(m_options.m_flags,
                                                     std::string(funct_name),
                                                     "     " + m_options.m_python_function + "(valobj,dict)"));
     }
@@ -1122,23 +1091,13 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
             return false;
         }
         
-        script_format.reset(new ScriptSummaryFormat(m_options.m_cascade,
-                                                    m_options.m_skip_pointers,
-                                                    m_options.m_skip_references,
-                                                    m_options.m_no_children,
-                                                    m_options.m_no_value,
-                                                    m_options.m_one_liner,
+        script_format.reset(new ScriptSummaryFormat(m_options.m_flags,
                                                     std::string(funct_name),
                                                     "     " + m_options.m_python_script));
     }
     else // use an InputReader to grab Python code from the user
     {        
-        ScriptAddOptions *options = new ScriptAddOptions(m_options.m_skip_pointers,
-                                                         m_options.m_skip_references,
-                                                         m_options.m_cascade,
-                                                         m_options.m_no_children,
-                                                         m_options.m_no_value,
-                                                         m_options.m_one_liner,
+        ScriptAddOptions *options = new ScriptAddOptions(m_options.m_flags,
                                                          m_options.m_regex,
                                                          m_options.m_name,
                                                          m_options.m_category);
@@ -1211,14 +1170,14 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
         return false;
     }
     
-    if (!m_options.m_one_liner && m_options.m_format_string.empty())
+    if (!m_options.m_flags.GetShowMembersOneLiner() && m_options.m_format_string.empty())
     {
         result.AppendError("empty summary strings not allowed");
         result.SetStatus(eReturnStatusFailed);
         return false;
     }
     
-    const char* format_cstr = (m_options.m_one_liner ? "" : m_options.m_format_string.c_str());
+    const char* format_cstr = (m_options.m_flags.GetShowMembersOneLiner() ? "" : m_options.m_format_string.c_str());
     
     // ${var%S} is an endless recursion, prevent it
     if (strcmp(format_cstr, "${var%S}") == 0)
@@ -1230,15 +1189,10 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
     
     Error error;
     
-    lldb::SummaryFormatSP entry(new StringSummaryFormat(m_options.m_cascade,
-                                                               m_options.m_skip_pointers,
-                                                               m_options.m_skip_references,
-                                                               m_options.m_no_children,
-                                                               m_options.m_no_value,
-                                                               m_options.m_one_liner,
-                                                               format_cstr));
+    lldb::SummaryFormatSP entry(new StringSummaryFormat(m_options.m_flags,
+                                                        format_cstr));
     
-    if (error.Fail()) 
+    if (error.Fail())
     {
         result.AppendError(error.AsCString());
         result.SetStatus(eReturnStatusFailed);
@@ -1435,6 +1389,7 @@ CommandObjectTypeSummaryAdd::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_ALL, false, "skip-references", 'r', no_argument, NULL, 0, eArgTypeNone,         "Don't use this format for references-to-type objects."},
     { LLDB_OPT_SET_ALL, false,  "regex", 'x', no_argument, NULL, 0, eArgTypeNone,    "Type names are actually regular expressions."},
     { LLDB_OPT_SET_1  , true, "inline-children", 'c', no_argument, NULL, 0, eArgTypeNone,    "If true, inline all child values into summary string."},
+    { LLDB_OPT_SET_1  , false, "omit-names", 'O', no_argument, NULL, 0, eArgTypeNone,    "If true, omit value names in the summary display."},
     { LLDB_OPT_SET_2  , true, "summary-string", 's', required_argument, NULL, 0, eArgTypeSummaryString,    "Summary string used to display text and object contents."},
     { LLDB_OPT_SET_3, false, "python-script", 'o', required_argument, NULL, 0, eArgTypePythonScript, "Give a one-liner Python script as part of the command."},
     { LLDB_OPT_SET_3, false, "python-function", 'F', required_argument, NULL, 0, eArgTypePythonFunction, "Give the name of a Python function to use for this type."},

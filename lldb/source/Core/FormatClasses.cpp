@@ -55,34 +55,14 @@ ValueFormat::ValueFormat (lldb::Format f,
 {
 }
 
-SummaryFormat::SummaryFormat(bool casc,
-                             bool skipptr,
-                             bool skipref,
-                             bool nochildren,
-                             bool novalue,
-                             bool oneliner) :
-    m_cascades(casc),
-    m_skip_pointers(skipptr),
-    m_skip_references(skipref),
-    m_dont_show_children(nochildren),
-    m_dont_show_value(novalue),
-    m_show_members_oneliner(oneliner)
+SummaryFormat::SummaryFormat(const SummaryFormat::Flags& flags) :
+    m_flags(flags)
 {
 }
 
-StringSummaryFormat::StringSummaryFormat(bool casc,
-                                         bool skipptr,
-                                         bool skipref,
-                                         bool nochildren,
-                                         bool novalue,
-                                         bool oneliner,
+StringSummaryFormat::StringSummaryFormat(const SummaryFormat::Flags& flags,
                                          std::string f) :
-    SummaryFormat(casc,
-                  skipptr,
-                  skipref,
-                  nochildren,
-                  novalue,
-                  oneliner),
+    SummaryFormat(flags),
     m_format(f)
 {
 }
@@ -102,7 +82,7 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
     if (frame)
         sc = frame->GetSymbolContext(lldb::eSymbolContextEverything);
     
-    if (m_show_members_oneliner)
+    if (IsOneliner())
     {
         ValueObjectSP synth_valobj = object->GetSyntheticValue(lldb::eUseSyntheticFilter);
         const uint32_t num_children = synth_valobj->GetNumChildren();
@@ -117,8 +97,11 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
                 {
                     if (idx)
                         s.PutCString(", ");
-                    s.PutCString(child_sp.get()->GetName().AsCString());
-                    s.PutChar('=');
+                    if (!HideNames())
+                    {
+                        s.PutCString(child_sp.get()->GetName().AsCString());
+                        s.PutChar('=');
+                    }
                     child_sp.get()->GetPrintableRepresentation(s);
                 }
             }
@@ -144,32 +127,24 @@ std::string
 StringSummaryFormat::GetDescription()
 {
     StreamString sstr;
-    sstr.Printf ("`%s`%s%s%s%s%s%s",      m_format.c_str(),
-                 m_cascades ? "" : " (not cascading)",
-                 m_dont_show_children ? "" : " (show children)",
-                 m_dont_show_value ? " (hide value)" : "",
-                 m_show_members_oneliner ? " (one-line printout)" : "",
-                 m_skip_pointers ? " (skip pointers)" : "",
-                 m_skip_references ? " (skip references)" : "");
+    
+    sstr.Printf ("`%s`%s%s%s%s%s%s%s",      m_format.c_str(),
+                 Cascades() ? "" : " (not cascading)",
+                 !DoesPrintChildren() ? "" : " (show children)",
+                 !DoesPrintValue() ? " (hide value)" : "",
+                 IsOneliner() ? " (one-line printout)" : "",
+                 SkipsPointers() ? " (skip pointers)" : "",
+                 SkipsReferences() ? " (skip references)" : "",
+                 HideNames() ? " (hide member names)" : "");
     return sstr.GetString();
 }
 
 #ifndef LLDB_DISABLE_PYTHON
 
-ScriptSummaryFormat::ScriptSummaryFormat(bool casc,
-                                         bool skipptr,
-                                         bool skipref,
-                                         bool nochildren,
-                                         bool novalue,
-                                         bool oneliner,
+ScriptSummaryFormat::ScriptSummaryFormat(const SummaryFormat::Flags& flags,
                                          std::string fname,
                                          std::string pscri) :
-    SummaryFormat(casc,
-                  skipptr,
-                  skipref,
-                  nochildren,
-                  novalue,
-                  oneliner),
+    SummaryFormat(flags),
     m_function_name(fname),
     m_python_script(pscri)
 {
@@ -187,12 +162,13 @@ std::string
 ScriptSummaryFormat::GetDescription()
 {
     StreamString sstr;
-    sstr.Printf ("%s%s%s%s%s%s\n%s",       m_cascades ? "" : " (not cascading)",
-                 m_dont_show_children ? "" : " (show children)",
-                 m_dont_show_value ? " (hide value)" : "",
-                 m_show_members_oneliner ? " (one-line printout)" : "",
-                 m_skip_pointers ? " (skip pointers)" : "",
-                 m_skip_references ? " (skip references)" : "",
+    sstr.Printf ("%s%s%s%s%s%s%s\n%s",       Cascades() ? "" : " (not cascading)",
+                 !DoesPrintChildren() ? "" : " (show children)",
+                 !DoesPrintValue() ? " (hide value)" : "",
+                 IsOneliner() ? " (one-line printout)" : "",
+                 SkipsPointers() ? " (skip pointers)" : "",
+                 SkipsReferences() ? " (skip references)" : "",
+                 HideNames() ? " (hide member names)" : "",
                  m_python_script.c_str());
     return sstr.GetString();
     
