@@ -5535,7 +5535,7 @@ else
 fi
 
 case "$withval" in
-  -) clang_src_root="" ;;
+  -) clang_src_root="$ac_pwd/tools/clang" ;;
   /* | [A-Za-z]:[\\/]*) clang_src_root="$withval" ;;
   *) clang_src_root="$ac_pwd/$withval" ;;
 esac
@@ -21094,9 +21094,11 @@ ac_config_files="$ac_config_files llvm.spec"
 
 ac_config_files="$ac_config_files docs/doxygen.cfg"
 
-if test -f ${srcdir}/tools/clang/README.txt; then
-  ac_config_headers="$ac_config_headers tools/clang/include/clang/Config/config.h"
-  ac_config_files="$ac_config_files tools/clang/docs/doxygen.cfg"
+
+if test -f ${clang_src_root}/README.txt; then
+  ac_config_headers="$ac_config_headers ${clang_src_root}/include/clang/Config/config.h"
+
+  ac_config_files="$ac_config_files ${clang_src_root}/docs/doxygen.cfg"
 
 fi
 
@@ -21718,7 +21720,8 @@ do
     "Makefile.config") CONFIG_FILES="$CONFIG_FILES Makefile.config" ;;
     "llvm.spec") CONFIG_FILES="$CONFIG_FILES llvm.spec" ;;
     "docs/doxygen.cfg") CONFIG_FILES="$CONFIG_FILES docs/doxygen.cfg" ;;
-    "tools/clang/docs/doxygen.cfg") CONFIG_FILES="$CONFIG_FILES tools/clang/docs/doxygen.cfg" ;;
+    "${clang_src_root}/include/clang/Config/config.h") CONFIG_HEADERS="$CONFIG_HEADERS ${clang_src_root}/include/clang/Config/config.h" ;;
+    "${clang_src_root}/docs/doxygen.cfg") CONFIG_FILES="$CONFIG_FILES ${clang_src_root}/docs/doxygen.cfg" ;;
     "bindings/ocaml/llvm/META.llvm") CONFIG_FILES="$CONFIG_FILES bindings/ocaml/llvm/META.llvm" ;;
     "setup") CONFIG_COMMANDS="$CONFIG_COMMANDS setup" ;;
     "Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS Makefile" ;;
