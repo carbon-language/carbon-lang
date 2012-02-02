@@ -503,6 +503,9 @@ protected:
                             int tag_decl_kind,
                             const lldb_private::ClangASTContext::TemplateParameterInfos &template_param_infos);
 
+    bool
+    DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugInfoEntry *die1,
+                          DWARFCompileUnit* cu2, const DWARFDebugInfoEntry *die2);
 
     SymbolFileDWARFDebugMap *       m_debug_map_symfile;
     clang::TranslationUnitDecl *    m_clang_tu_decl;

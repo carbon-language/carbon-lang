@@ -1726,6 +1726,18 @@ DWARFDebugInfoEntry::BuildFunctionAddressRangeTable
     }
 }
 
+void
+DWARFDebugInfoEntry::GetDeclContextDIEs (SymbolFileDWARF* dwarf2Data, 
+                                         DWARFCompileUnit* cu,
+                                         DWARFDIECollection &decl_context_dies) const
+{
+    const DWARFDebugInfoEntry *parent_decl_ctx_die = GetParentDeclContextDIE (dwarf2Data, cu);
+    if (parent_decl_ctx_die && parent_decl_ctx_die != this)
+    {
+        decl_context_dies.Append(parent_decl_ctx_die);
+        parent_decl_ctx_die->GetDeclContextDIEs (dwarf2Data, cu, decl_context_dies);
+    }
+}
 
 const DWARFDebugInfoEntry *
 DWARFDebugInfoEntry::GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data, 

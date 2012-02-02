@@ -4045,6 +4045,60 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry
     return type_sp;
 }
 
+bool
+SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugInfoEntry *die1,
+                                       DWARFCompileUnit* cu2, const DWARFDebugInfoEntry *die2)
+{
+    assert (die1 != die2);
+    DWARFDIECollection decl_ctx_1;
+    DWARFDIECollection decl_ctx_2;
+    die1->GetDeclContextDIEs (this, cu1, decl_ctx_1);
+    die1->GetDeclContextDIEs (this, cu2, decl_ctx_2);
+    const size_t count1 = decl_ctx_1.Size();
+    const size_t count2 = decl_ctx_2.Size();
+    if (count1 != count2)
+        return false;
+    const DWARFDebugInfoEntry *decl_ctx_die1;
+    const DWARFDebugInfoEntry *decl_ctx_die2;
+    size_t i;
+    for (i=0; i<count1; i++)
+    {
+        decl_ctx_die1 = decl_ctx_1.GetDIEPtrAtIndex (i);
+        decl_ctx_die2 = decl_ctx_2.GetDIEPtrAtIndex (i);
+        if (decl_ctx_die1->Tag() != decl_ctx_die2->Tag())
+            return false;
+    }
+    // Make sure the top item in the decl context die array is always a compile unit
+#if defined LLDB_CONFIGURATION_DEBUG
+    assert (decl_ctx_1.GetDIEPtrAtIndex (count1 - 1)->Tag() == DW_TAG_compile_unit);
+#endif
+    // Always skip the compile unit when comparing by only iterating up to
+    // "count1 - 1"
+    for (i=0; i<count1 - 1; i++)
+    {
+        decl_ctx_die1 = decl_ctx_1.GetDIEPtrAtIndex (i);
+        decl_ctx_die2 = decl_ctx_2.GetDIEPtrAtIndex (i);
+        const char *name1 = decl_ctx_die1->GetName(this, cu1);
+        const char *name2 = decl_ctx_die1->GetName(this, cu2);
+        // If the string was from a DW_FORM_strp, then the pointer will often
+        // be the same!
+        if (name1 != name2)
+        {
+            if (name1 && name2)
+            {
+                // If the strings don't compare, we are done...
+                if (strcmp(name1, name2) != 0)
+                    return false;
+            }
+            else
+            {
+                // One name was NULL while the other wasn't
+                return false;
+            }
+        }
+    }
+    return true;
+}
                                           
 // This function can be used when a DIE is found that is a forward declaration
 // DIE and we want to try and find a type that has the complete definition.
@@ -4136,19 +4190,23 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
                         
                 if (try_resolving_type)
                 {
-                    Type *resolved_type = ResolveType (type_cu, type_die, false);
-                    if (resolved_type && resolved_type != DIE_IS_BEING_PARSED)
+                    // Make sure the decl contexts match all the way up
+                    if (DIEDeclContextsMatch(cu, die, type_cu, type_die))
                     {
-                        DEBUG_PRINTF ("resolved 0x%8.8llx (cu 0x%8.8llx) from %s to 0x%8.8llx (cu 0x%8.8llx)\n",
-                                      MakeUserID(die->GetOffset()), 
-                                      MakeUserID(curr_cu->GetOffset()), 
-                                      m_obj_file->GetFileSpec().GetFilename().AsCString(),
-                                      MakeUserID(type_die->GetOffset()), 
-                                      MakeUserID(type_cu->GetOffset()));
-                        
-                        m_die_to_type[die] = resolved_type;
-                        type_sp = resolved_type->shared_from_this();
-                        break;
+                        Type *resolved_type = ResolveType (type_cu, type_die, false);
+                        if (resolved_type && resolved_type != DIE_IS_BEING_PARSED)
+                        {
+                            DEBUG_PRINTF ("resolved 0x%8.8llx (cu 0x%8.8llx) from %s to 0x%8.8llx (cu 0x%8.8llx)\n",
+                                          MakeUserID(die->GetOffset()), 
+                                          MakeUserID(curr_cu->GetOffset()), 
+                                          m_obj_file->GetFileSpec().GetFilename().AsCString(),
+                                          MakeUserID(type_die->GetOffset()), 
+                                          MakeUserID(type_cu->GetOffset()));
+                            
+                            m_die_to_type[die] = resolved_type;
+                            type_sp = resolved_type;
+                            break;
+                        }
                     }
                 }
             }

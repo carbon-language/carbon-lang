@@ -355,6 +355,10 @@ public:
     const   DWARFDebugInfoEntry*    GetFirstChild() const   { return (HasChildren() && !m_empty_children) ? this + 1 : NULL; }
 
     
+    void                            GetDeclContextDIEs (SymbolFileDWARF* dwarf2Data, 
+                                                        DWARFCompileUnit* cu,
+                                                        DWARFDIECollection &decl_context_dies) const;
+
     const   DWARFDebugInfoEntry*    GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data, 
                                                              DWARFCompileUnit* cu) const;
     const   DWARFDebugInfoEntry*    GetParentDeclContextDIE (SymbolFileDWARF* dwarf2Data, 
