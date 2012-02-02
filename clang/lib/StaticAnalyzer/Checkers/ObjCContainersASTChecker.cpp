@@ -48,8 +48,17 @@ class WalkAST : public StmtVisitor<WalkAST> {
     // The type could be either a pointer or array.
     const Type *TP = T.getTypePtr();
     QualType PointeeT = TP->getPointeeType();
-    if (!PointeeT.isNull())
+    if (!PointeeT.isNull()) {
+      // If the type is a pointer to an array, check the size of the array
+      // elements. To avoid false positives coming from assumption that the
+      // values x and &x are equal when x is an array.
+      if (const Type *TElem = PointeeT->getArrayElementTypeNoTypeQual())
+        if (isPointerSize(TElem))
+          return true;
+
+      // Else, check the pointee size.
       return isPointerSize(PointeeT.getTypePtr());
+    }
 
     if (const Type *TElem = TP->getArrayElementTypeNoTypeQual())
       return isPointerSize(TElem);

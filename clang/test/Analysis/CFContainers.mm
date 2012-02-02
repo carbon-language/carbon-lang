@@ -164,3 +164,22 @@ void TestGetCount(CFArrayRef A, CFIndex sIndex, CFIndex badIndex) {
     const void *s1 = CFArrayGetValueAtIndex(A, sIndex);
   const void *s2 = CFArrayGetValueAtIndex(A, sCount);// expected-warning {{Index is out of bounds}}
 }
+
+typedef void* XX[3];
+void TestPointerToArray(int *elems, void *p1, void *p2, void *p3, unsigned count, void* fn[], char cp[]) {
+  void* x[] = { p1, p2, p3 };
+  CFArrayCreate(0, (const void **) &x, count, 0); // no warning
+
+  void* y[] = { p1, p2, p3 };
+  CFArrayCreate(0, (const void **) y, count, 0); // no warning
+  XX *z = &x;
+  CFArrayCreate(0, (const void **) z, count, 0); // no warning
+
+  CFArrayCreate(0, (const void **) &fn, count, 0); // false negative
+  CFArrayCreate(0, (const void **) fn, count, 0); // no warning
+  CFArrayCreate(0, (const void **) cp, count, 0); // expected-warning {{The first argument to 'CFArrayCreate' must be a C array of pointer-sized}}
+
+  char cc[] = { 0, 2, 3 };
+  CFArrayCreate(0, (const void **) &cc, count, 0); // expected-warning {{The first argument to 'CFArrayCreate' must be a C array of pointer-sized}}
+  CFArrayCreate(0, (const void **) cc, count, 0); // expected-warning {{The first argument to 'CFArrayCreate' must be a C array of pointer-sized}}
+}
