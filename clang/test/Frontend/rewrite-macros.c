@@ -9,7 +9,7 @@ A(1,2)
 _Pragma("mark")
 
 // RUN: grep "//#warning eek" %t
-/* expected-warning {{#warning eek}} */ #warning eek
+/* expected-warning {{eek}} */ #warning eek
 
 // RUN: grep "//#pragma mark mark" %t
 #pragma mark mark

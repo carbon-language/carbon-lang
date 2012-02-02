@@ -7,6 +7,6 @@
 
 // This test case tests that we can handle both fatal errors and errors without categories.
 
-// CHECK: {{.*[/\\]}}serialized-diags-no-category.c:1:2: error: #error foo []
+// CHECK: {{.*[/\\]}}serialized-diags-no-category.c:1:2: error: foo []
 // CHECK: Number of diagnostics: 2
 

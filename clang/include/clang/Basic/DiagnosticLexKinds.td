@@ -148,8 +148,13 @@ def err_invalid_pth_file : Error<
 //===----------------------------------------------------------------------===//
 // Preprocessor Diagnostics
 //===----------------------------------------------------------------------===//
-def pp_hash_warning : Warning<"#warning%0">,
+
+let CategoryName = "User Defined Issues" in {
+def pp_hash_warning : Warning<"%0">,
   InGroup<PoundWarning>, DefaultWarnShowInSystemHeader;
+def err_pp_hash_error : Error<"%0">;
+}
+
 def pp_include_next_in_primary : Warning<
   "#include_next in primary source file">;
 def pp_include_macros_out_of_predefines : Error<
@@ -223,7 +228,6 @@ def warn_cxx98_compat_empty_fnmacro_arg : Warning<
   InGroup<CXX98CompatPedantic>, DefaultIgnore;
 
 def err_pp_invalid_directive : Error<"invalid preprocessing directive">;
-def err_pp_hash_error : Error<"#error%0">;
 def err_pp_file_not_found : Error<"'%0' file not found">, DefaultFatal;
 def err_pp_error_opening_file : Error<
   "error opening file '%0': %1">, DefaultFatal;
