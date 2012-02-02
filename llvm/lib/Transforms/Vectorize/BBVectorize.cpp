@@ -67,6 +67,10 @@ MaxIter("bb-vectorize-max-iter", cl::init(0), cl::Hidden,
   cl::desc("The maximum number of pairing iterations"));
 
 static cl::opt<unsigned>
+MaxInsts("bb-vectorize-max-instr-per-group", cl::init(500), cl::Hidden,
+  cl::desc("The maximum number of pairable instructions per group"));
+
+static cl::opt<unsigned>
 MaxCandPairsForCycleCheck("bb-vectorize-max-cycle-check-pairs", cl::init(200),
   cl::Hidden, cl::desc("The maximum number of candidate pairs with which to use"
                        " a full cycle check"));
@@ -152,7 +156,8 @@ namespace {
 
     bool vectorizePairs(BasicBlock &BB);
 
-    void getCandidatePairs(BasicBlock &BB,
+    bool getCandidatePairs(BasicBlock &BB,
+                       BasicBlock::iterator &Start,
                        std::multimap<Value *, Value *> &CandidatePairs,
                        std::vector<Value *> &PairableInsts);
 
@@ -429,49 +434,62 @@ namespace {
   // This function implements one vectorization iteration on the provided
   // basic block. It returns true if the block is changed.
   bool BBVectorize::vectorizePairs(BasicBlock &BB) {
-    std::vector<Value *> PairableInsts;
-    std::multimap<Value *, Value *> CandidatePairs;
-    getCandidatePairs(BB, CandidatePairs, PairableInsts);
-    if (PairableInsts.empty()) return false;
+    bool ShouldContinue;
+    BasicBlock::iterator Start = BB.getFirstInsertionPt();
 
-    // Now we have a map of all of the pairable instructions and we need to
-    // select the best possible pairing. A good pairing is one such that the
-    // users of the pair are also paired. This defines a (directed) forest
-    // over the pairs such that two pairs are connected iff the second pair
-    // uses the first.
+    std::vector<Value *> AllPairableInsts;
+    DenseMap<Value *, Value *> AllChosenPairs;
 
-    // Note that it only matters that both members of the second pair use some
-    // element of the first pair (to allow for splatting).
+    do {
+      std::vector<Value *> PairableInsts;
+      std::multimap<Value *, Value *> CandidatePairs;
+      ShouldContinue = getCandidatePairs(BB, Start, CandidatePairs,
+                                         PairableInsts);
+      if (PairableInsts.empty()) continue;
+  
+      // Now we have a map of all of the pairable instructions and we need to
+      // select the best possible pairing. A good pairing is one such that the
+      // users of the pair are also paired. This defines a (directed) forest
+      // over the pairs such that two pairs are connected iff the second pair
+      // uses the first.
+  
+      // Note that it only matters that both members of the second pair use some
+      // element of the first pair (to allow for splatting).
+  
+      std::multimap<ValuePair, ValuePair> ConnectedPairs;
+      computeConnectedPairs(CandidatePairs, PairableInsts, ConnectedPairs);
+      if (ConnectedPairs.empty()) continue;
+  
+      // Build the pairable-instruction dependency map
+      DenseSet<ValuePair> PairableInstUsers;
+      buildDepMap(BB, CandidatePairs, PairableInsts, PairableInstUsers);
+  
+      // There is now a graph of the connected pairs. For each variable, pick the
+      // pairing with the largest tree meeting the depth requirement on at least
+      // one branch. Then select all pairings that are part of that tree and
+      // remove them from the list of available pairings and pairable variables.
+  
+      DenseMap<Value *, Value *> ChosenPairs;
+      choosePairs(CandidatePairs, PairableInsts, ConnectedPairs,
+        PairableInstUsers, ChosenPairs);
+  
+      if (ChosenPairs.empty()) continue;
+      AllPairableInsts.insert(AllPairableInsts.end(), PairableInsts.begin(),
+                              PairableInsts.end());
+      AllChosenPairs.insert(ChosenPairs.begin(), ChosenPairs.end());
+    } while (ShouldContinue);
 
-    std::multimap<ValuePair, ValuePair> ConnectedPairs;
-    computeConnectedPairs(CandidatePairs, PairableInsts, ConnectedPairs);
-    if (ConnectedPairs.empty()) return false;
-
-    // Build the pairable-instruction dependency map
-    DenseSet<ValuePair> PairableInstUsers;
-    buildDepMap(BB, CandidatePairs, PairableInsts, PairableInstUsers);
-
-    // There is now a graph of the connected pairs. For each variable, pick the
-    // pairing with the largest tree meeting the depth requirement on at least
-    // one branch. Then select all pairings that are part of that tree and
-    // remove them from the list of available pairings and pairable variables.
-
-    DenseMap<Value *, Value *> ChosenPairs;
-    choosePairs(CandidatePairs, PairableInsts, ConnectedPairs,
-      PairableInstUsers, ChosenPairs);
-
-    if (ChosenPairs.empty()) return false;
-    NumFusedOps += ChosenPairs.size();
-
+    if (AllChosenPairs.empty()) return false;
+    NumFusedOps += AllChosenPairs.size();
+ 
     // A set of pairs has now been selected. It is now necessary to replace the
     // paired instructions with vector instructions. For this procedure each
     // operand much be replaced with a vector operand. This vector is formed
     // by using build_vector on the old operands. The replaced values are then
     // replaced with a vector_extract on the result.  Subsequent optimization
     // passes should coalesce the build/extract combinations.
-
-    fuseChosenPairs(BB, PairableInsts, ChosenPairs);
-
+  
+    fuseChosenPairs(BB, AllPairableInsts, AllChosenPairs);
     return true;
   }
 
@@ -687,19 +705,28 @@ namespace {
 
   // This function iterates over all instruction pairs in the provided
   // basic block and collects all candidate pairs for vectorization.
-  void BBVectorize::getCandidatePairs(BasicBlock &BB,
+  bool BBVectorize::getCandidatePairs(BasicBlock &BB,
+                       BasicBlock::iterator &Start,
                        std::multimap<Value *, Value *> &CandidatePairs,
                        std::vector<Value *> &PairableInsts) {
     BasicBlock::iterator E = BB.end();
-    for (BasicBlock::iterator I = BB.getFirstInsertionPt(); I != E; ++I) {
+    if (Start == E) return false;
+
+    bool ShouldContinue = false, IAfterStart = false;
+    for (BasicBlock::iterator I = Start++; I != E; ++I) {
+      if (I == Start) IAfterStart = true;
+
       bool IsSimpleLoadStore;
       if (!isInstVectorizable(I, IsSimpleLoadStore)) continue;
 
       // Look for an instruction with which to pair instruction *I...
       DenseSet<Value *> Users;
       AliasSetTracker WriteSet(*AA);
-      BasicBlock::iterator J = I; ++J;
+      bool JAfterStart = IAfterStart;
+      BasicBlock::iterator J = llvm::next(I);
       for (unsigned ss = 0; J != E && ss <= SearchLimit; ++J, ++ss) {
+        if (J == Start) JAfterStart = true;
+
         // Determine if J uses I, if so, exit the loop.
         bool UsesI = trackUsesOfI(Users, WriteSet, I, J, !FastDep);
         if (FastDep) {
@@ -724,14 +751,36 @@ namespace {
              PairableInsts[PairableInsts.size()-1] != I) {
           PairableInsts.push_back(I);
         }
+
         CandidatePairs.insert(ValuePair(I, J));
+
+        // The next call to this function must start after the last instruction
+        // selected during this invocation.
+        if (JAfterStart) {
+          Start = llvm::next(J);
+          IAfterStart = JAfterStart = false;
+        }
+
         DEBUG(if (DebugCandidateSelection) dbgs() << "BBV: candidate pair "
                      << *I << " <-> " << *J << "\n");
+
+        // If we have already found too many pairs, break here and this function
+        // will be called again starting after the last instruction selected
+        // during this invocation.
+        if (PairableInsts.size() >= MaxInsts) {
+          ShouldContinue = true;
+          break;
+        }
       }
+
+      if (ShouldContinue)
+        break;
     }
 
     DEBUG(dbgs() << "BBV: found " << PairableInsts.size()
            << " instructions with candidate pairs\n");
+
+    return ShouldContinue;
   }
 
   // Finds candidate pairs connected to the pair P = <PI, PJ>. This means that
