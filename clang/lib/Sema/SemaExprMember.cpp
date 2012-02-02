@@ -776,7 +776,8 @@ Sema::BuildAnonymousStructUnionMemberReference(const CXXScopeSpec &SS,
 }
 
 /// \brief Build a MemberExpr AST node.
-static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
+static MemberExpr *BuildMemberExpr(Sema &SemaRef,
+                                   ASTContext &C, Expr *Base, bool isArrow,
                                    const CXXScopeSpec &SS,
                                    SourceLocation TemplateKWLoc,
                                    ValueDecl *Member,
@@ -786,9 +787,12 @@ static MemberExpr *BuildMemberExpr(ASTContext &C, Expr *Base, bool isArrow,
                                    ExprValueKind VK, ExprObjectKind OK,
                                    const TemplateArgumentListInfo *TemplateArgs = 0) {
   assert((!isArrow || Base->isRValue()) && "-> base must be a pointer rvalue");
-  return MemberExpr::Create(C, Base, isArrow, SS.getWithLocInContext(C),
-                            TemplateKWLoc, Member, FoundDecl, MemberNameInfo,
-                            TemplateArgs, Ty, VK, OK);
+  MemberExpr *E =
+      MemberExpr::Create(C, Base, isArrow, SS.getWithLocInContext(C),
+                         TemplateKWLoc, Member, FoundDecl, MemberNameInfo,
+                         TemplateArgs, Ty, VK, OK);
+  SemaRef.MarkMemberReferenced(E);
+  return E;
 }
 
 ExprResult
@@ -908,9 +912,8 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
                                                     BaseExpr, OpLoc);
 
   if (VarDecl *Var = dyn_cast<VarDecl>(MemberDecl)) {
-    MarkDeclarationReferenced(MemberLoc, Var);
-    return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS, TemplateKWLoc,
-                                 Var, FoundDecl, MemberNameInfo,
+    return Owned(BuildMemberExpr(*this, Context, BaseExpr, IsArrow, SS,
+                                 TemplateKWLoc, Var, FoundDecl, MemberNameInfo,
                                  Var->getType().getNonReferenceType(),
                                  VK_LValue, OK_Ordinary));
   }
@@ -926,17 +929,16 @@ Sema::BuildMemberReferenceExpr(Expr *BaseExpr, QualType BaseExprType,
       type = MemberFn->getType();
     }
 
-    MarkDeclarationReferenced(MemberLoc, MemberDecl);
-    return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS, TemplateKWLoc,
-                                 MemberFn, FoundDecl, MemberNameInfo,
-                                 type, valueKind, OK_Ordinary));
+    return Owned(BuildMemberExpr(*this, Context, BaseExpr, IsArrow, SS, 
+                                 TemplateKWLoc, MemberFn, FoundDecl, 
+                                 MemberNameInfo, type, valueKind,
+                                 OK_Ordinary));
   }
   assert(!isa<FunctionDecl>(MemberDecl) && "member function not C++ method?");
 
   if (EnumConstantDecl *Enum = dyn_cast<EnumConstantDecl>(MemberDecl)) {
-    MarkDeclarationReferenced(MemberLoc, MemberDecl);
-    return Owned(BuildMemberExpr(Context, BaseExpr, IsArrow, SS, TemplateKWLoc,
-                                 Enum, FoundDecl, MemberNameInfo,
+    return Owned(BuildMemberExpr(*this, Context, BaseExpr, IsArrow, SS,
+                                 TemplateKWLoc, Enum, FoundDecl, MemberNameInfo,
                                  Enum->getType(), VK_RValue, OK_Ordinary));
   }
 
@@ -1540,13 +1542,12 @@ BuildFieldReferenceExpr(Sema &S, Expr *BaseExpr, bool IsArrow,
       MemberType = S.Context.getQualifiedType(MemberType, Combined);
   }
   
-  S.MarkDeclarationReferenced(MemberNameInfo.getLoc(), Field);
   ExprResult Base =
   S.PerformObjectMemberConversion(BaseExpr, SS.getScopeRep(),
                                   FoundDecl, Field);
   if (Base.isInvalid())
     return ExprError();
-  return S.Owned(BuildMemberExpr(S.Context, Base.take(), IsArrow, SS,
+  return S.Owned(BuildMemberExpr(S, S.Context, Base.take(), IsArrow, SS,
                                  /*TemplateKWLoc=*/SourceLocation(),
                                  Field, FoundDecl, MemberNameInfo,
                                  MemberType, VK, OK));

@@ -2893,7 +2893,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
     // Record the standard conversion we used and the conversion function.
     if (CXXConstructorDecl *Constructor
           = dyn_cast<CXXConstructorDecl>(Best->Function)) {
-      S.MarkDeclarationReferenced(From->getLocStart(), Constructor);
+      S.MarkFunctionReferenced(From->getLocStart(), Constructor);
 
       // C++ [over.ics.user]p1:
       //   If the user-defined conversion is specified by a
@@ -2923,7 +2923,7 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
     }
     if (CXXConversionDecl *Conversion
                  = dyn_cast<CXXConversionDecl>(Best->Function)) {
-      S.MarkDeclarationReferenced(From->getLocStart(), Conversion);
+      S.MarkFunctionReferenced(From->getLocStart(), Conversion);
 
       // C++ [over.ics.user]p1:
       //
@@ -3793,7 +3793,7 @@ FindConversionForRefInit(Sema &S, ImplicitConversionSequence &ICS,
       return false;
 
     if (Best->Function)
-      S.MarkDeclarationReferenced(DeclLoc, Best->Function);
+      S.MarkFunctionReferenced(DeclLoc, Best->Function);
     ICS.setUserDefined();
     ICS.UserDefined.Before = Best->Conversions[0].Standard;
     ICS.UserDefined.After = Best->FinalConversion;
@@ -8817,7 +8817,7 @@ Sema::ResolveAddressOfOverloadedFunction(Expr *AddressOfExpr,
     Fn = Resolver.getMatchingFunctionDecl();
     assert(Fn);
     FoundResult = *Resolver.getMatchingFunctionAccessPair();
-    MarkDeclarationReferenced(AddressOfExpr->getLocStart(), Fn);
+    MarkFunctionReferenced(AddressOfExpr->getLocStart(), Fn);
     if (Complain)
       CheckAddressOfMemberAccess(AddressOfExpr, FoundResult);
   }
@@ -9380,7 +9380,7 @@ Sema::BuildOverloadedCallExpr(Scope *S, Expr *Fn, UnresolvedLookupExpr *ULE,
   switch (CandidateSet.BestViableFunction(*this, Fn->getLocStart(), Best)) {
   case OR_Success: {
     FunctionDecl *FDecl = Best->Function;
-    MarkDeclarationReferenced(Fn->getExprLoc(), FDecl);
+    MarkFunctionReferenced(Fn->getExprLoc(), FDecl);
     CheckUnresolvedLookupAccess(ULE, Best->FoundDecl);
     DiagnoseUseOfDecl(FDecl, ULE->getNameLoc());
     Fn = FixOverloadedFunctionReference(Fn, Best->FoundDecl, FDecl);
@@ -9534,7 +9534,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
       // We matched an overloaded operator. Build a call to that
       // operator.
 
-      MarkDeclarationReferenced(OpLoc, FnDecl);
+      MarkFunctionReferenced(OpLoc, FnDecl);
 
       // Convert the arguments.
       if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
@@ -9755,7 +9755,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
         // We matched an overloaded operator. Build a call to that
         // operator.
 
-        MarkDeclarationReferenced(OpLoc, FnDecl);
+        MarkFunctionReferenced(OpLoc, FnDecl);
 
         // Convert the arguments.
         if (CXXMethodDecl *Method = dyn_cast<CXXMethodDecl>(FnDecl)) {
@@ -9962,7 +9962,7 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
         // We matched an overloaded operator. Build a call to that
         // operator.
 
-        MarkDeclarationReferenced(LLoc, FnDecl);
+        MarkFunctionReferenced(LLoc, FnDecl);
 
         CheckMemberOperatorAccess(LLoc, Args[0], Args[1], Best->FoundDecl);
         DiagnoseUseOfDecl(Best->FoundDecl, LLoc);
@@ -10211,7 +10211,7 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                                             Best)) {
     case OR_Success:
       Method = cast<CXXMethodDecl>(Best->Function);
-      MarkDeclarationReferenced(UnresExpr->getMemberLoc(), Method);
+      MarkFunctionReferenced(UnresExpr->getMemberLoc(), Method);
       FoundDecl = Best->FoundDecl;
       CheckUnresolvedMemberAccess(UnresExpr, Best->FoundDecl);
       DiagnoseUseOfDecl(Best->FoundDecl, UnresExpr->getNameLoc());
@@ -10476,7 +10476,7 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
                          RParenLoc);
   }
 
-  MarkDeclarationReferenced(LParenLoc, Best->Function);
+  MarkFunctionReferenced(LParenLoc, Best->Function);
   CheckMemberOperatorAccess(LParenLoc, Object.get(), 0, Best->FoundDecl);
   DiagnoseUseOfDecl(Best->FoundDecl, LParenLoc);
 
@@ -10666,7 +10666,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
     return ExprError();
   }
 
-  MarkDeclarationReferenced(OpLoc, Best->Function);
+  MarkFunctionReferenced(OpLoc, Best->Function);
   CheckMemberOperatorAccess(OpLoc, Base, 0, Best->FoundDecl);
   DiagnoseUseOfDecl(Best->FoundDecl, OpLoc);
 

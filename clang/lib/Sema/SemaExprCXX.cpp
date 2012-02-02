@@ -645,7 +645,7 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
   if (!Destructor)
     return Owned(E);
 
-  MarkDeclarationReferenced(E->getExprLoc(), Destructor);
+  MarkFunctionReferenced(E->getExprLoc(), Destructor);
   CheckDestructorAccess(E->getExprLoc(), Destructor,
                         PDiag(diag::err_access_dtor_exception) << Ty);
   return Owned(E);
@@ -1188,16 +1188,16 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
 
   // Mark the new and delete operators as referenced.
   if (OperatorNew)
-    MarkDeclarationReferenced(StartLoc, OperatorNew);
+    MarkFunctionReferenced(StartLoc, OperatorNew);
   if (OperatorDelete)
-    MarkDeclarationReferenced(StartLoc, OperatorDelete);
+    MarkFunctionReferenced(StartLoc, OperatorDelete);
 
   // C++0x [expr.new]p17:
   //   If the new expression creates an array of objects of class type,
   //   access and ambiguity control are done for the destructor.
   if (ArraySize && Constructor) {
     if (CXXDestructorDecl *dtor = LookupDestructor(Constructor->getParent())) {
-      MarkDeclarationReferenced(StartLoc, dtor);
+      MarkFunctionReferenced(StartLoc, dtor);
       CheckDestructorAccess(StartLoc, dtor, 
                             PDiag(diag::err_access_dtor)
                               << Context.getBaseElementType(AllocType));
@@ -1517,7 +1517,7 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
   case OR_Success: {
     // Got one!
     FunctionDecl *FnDecl = Best->Function;
-    MarkDeclarationReferenced(StartLoc, FnDecl);
+    MarkFunctionReferenced(StartLoc, FnDecl);
     // The first argument is size_t, and the first parameter must be size_t,
     // too. This is checked on declaration and can be assumed. (It can't be
     // asserted on, though, since invalid decls are left in there.)
@@ -1956,7 +1956,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
 
       if (!PointeeRD->hasTrivialDestructor())
         if (CXXDestructorDecl *Dtor = LookupDestructor(PointeeRD)) {
-          MarkDeclarationReferenced(StartLoc,
+          MarkFunctionReferenced(StartLoc,
                                     const_cast<CXXDestructorDecl*>(Dtor));
           DiagnoseUseOfDecl(Dtor, StartLoc);
         }
@@ -2005,7 +2005,7 @@ Sema::ActOnCXXDelete(SourceLocation StartLoc, bool UseGlobal,
         return ExprError();
     }
 
-    MarkDeclarationReferenced(StartLoc, OperatorDelete);
+    MarkFunctionReferenced(StartLoc, OperatorDelete);
     
     // Check access and ambiguity of operator delete and destructor.
     if (PointeeRD) {
@@ -2049,7 +2049,7 @@ ExprResult Sema::CheckConditionVariable(VarDecl *ConditionVar,
                               ConditionVar->getType().getNonReferenceType(),
                               VK_LValue));
 
-  MarkDeclarationReferenced(ConditionVar->getLocation(), ConditionVar);
+  MarkDeclRefReferenced(cast<DeclRefExpr>(Condition.get()));
 
   if (ConvertToBoolean) {
     Condition = CheckBooleanCondition(Condition.take(), StmtLoc);
@@ -3609,7 +3609,7 @@ static bool FindConditionalOverload(Sema &Self, ExprResult &LHS, ExprResult &RHS
         break;
       RHS = move(RHSRes);
       if (Best->Function)
-        Self.MarkDeclarationReferenced(QuestionLoc, Best->Function);
+        Self.MarkFunctionReferenced(QuestionLoc, Best->Function);
       return false;
     }
     
@@ -4210,7 +4210,7 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
 
   CXXTemporary *Temp = CXXTemporary::Create(Context, Destructor);
   if (Destructor) {
-    MarkDeclarationReferenced(E->getExprLoc(), Destructor);
+    MarkFunctionReferenced(E->getExprLoc(), Destructor);
     CheckDestructorAccess(E->getExprLoc(), Destructor,
                           PDiag(diag::err_access_dtor_temp)
                             << E->getType());
@@ -4687,7 +4687,7 @@ ExprResult Sema::BuildCXXMemberCallExpr(Expr *E, NamedDecl *FoundDecl,
   ExprValueKind VK = Expr::getValueKindForType(ResultType);
   ResultType = ResultType.getNonLValueExprType(Context);
 
-  MarkDeclarationReferenced(Exp.get()->getLocStart(), Method);
+  MarkFunctionReferenced(Exp.get()->getLocStart(), Method);
   CXXMemberCallExpr *CE =
     new (Context) CXXMemberCallExpr(Context, ME, 0, 0, ResultType, VK,
                                     Exp.get()->getLocEnd());

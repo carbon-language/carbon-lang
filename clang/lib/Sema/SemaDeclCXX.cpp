@@ -2382,13 +2382,13 @@ BuildImplicitBaseInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     ParmVarDecl *Param = Constructor->getParamDecl(0);
     QualType ParamType = Param->getType().getNonReferenceType();
 
-    SemaRef.MarkDeclarationReferenced(Constructor->getLocation(), Param);
-
     Expr *CopyCtorArg = 
       DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(),
                           SourceLocation(), Param,
                           Constructor->getLocation(), ParamType,
                           VK_LValue, 0);
+
+    SemaRef.MarkDeclRefReferenced(cast<DeclRefExpr>(CopyCtorArg));
 
     // Cast to the base class to avoid ambiguities.
     QualType ArgTy = 
@@ -2454,8 +2454,6 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
     ParmVarDecl *Param = Constructor->getParamDecl(0);
     QualType ParamType = Param->getType().getNonReferenceType();
 
-    SemaRef.MarkDeclarationReferenced(Constructor->getLocation(), Param);
-
     // Suppress copying zero-width bitfields.
     if (Field->isBitField() && Field->getBitWidthValue(SemaRef.Context) == 0)
       return false;
@@ -2464,6 +2462,8 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       DeclRefExpr::Create(SemaRef.Context, NestedNameSpecifierLoc(),
                           SourceLocation(), Param,
                           Loc, ParamType, VK_LValue, 0);
+
+    SemaRef.MarkDeclRefReferenced(cast<DeclRefExpr>(MemberExprBase));
 
     if (Moving) {
       MemberExprBase = CastForMoving(SemaRef, MemberExprBase);
@@ -2796,7 +2796,7 @@ Sema::SetDelegatingInitializer(CXXConstructorDecl *Constructor,
   Constructor->setCtorInitializers(initializer);
 
   if (CXXDestructorDecl *Dtor = LookupDestructor(Constructor->getParent())) {
-    MarkDeclarationReferenced(Initializer->getSourceLocation(), Dtor);
+    MarkFunctionReferenced(Initializer->getSourceLocation(), Dtor);
     DiagnoseUseOfDecl(Dtor, Initializer->getSourceLocation());
   }
 
@@ -3272,7 +3272,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
                             << Field->getDeclName()
                             << FieldType);
 
-    MarkDeclarationReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
+    MarkFunctionReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
   }
 
   llvm::SmallPtrSet<const RecordType *, 8> DirectVirtualBases;
@@ -3304,7 +3304,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
                             << Base->getType()
                             << Base->getSourceRange());
     
-    MarkDeclarationReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
+    MarkFunctionReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
   }
   
   // Virtual bases.
@@ -3332,7 +3332,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
                           PDiag(diag::err_access_dtor_vbase)
                             << VBase->getType());
 
-    MarkDeclarationReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
+    MarkFunctionReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
   }
 }
 
@@ -5306,7 +5306,7 @@ bool Sema::CheckDestructor(CXXDestructorDecl *Destructor) {
     if (FindDeallocationFunction(Loc, RD, Name, OperatorDelete))
       return true;
 
-    MarkDeclarationReferenced(Loc, OperatorDelete);
+    MarkFunctionReferenced(Loc, OperatorDelete);
     
     Destructor->setOperatorDelete(OperatorDelete);
   }
@@ -9030,7 +9030,7 @@ Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
     CheckNonNullArguments(NonNull, ExprArgs.get(), ConstructLoc);
   }
 
-  MarkDeclarationReferenced(ConstructLoc, Constructor);
+  MarkFunctionReferenced(ConstructLoc, Constructor);
   return Owned(CXXConstructExpr::Create(Context, DeclInitType, ConstructLoc,
                                         Constructor, Elidable, Exprs, NumExprs,
                                         HadMultipleCandidates, RequiresZeroInit,
@@ -9052,7 +9052,7 @@ bool Sema::InitializeVarWithConstructor(VarDecl *VD,
 
   Expr *Temp = TempResult.takeAs<Expr>();
   CheckImplicitConversions(Temp, VD->getLocation());
-  MarkDeclarationReferenced(VD->getLocation(), Constructor);
+  MarkFunctionReferenced(VD->getLocation(), Constructor);
   Temp = MaybeCreateExprWithCleanups(Temp);
   VD->setInit(Temp);
 
@@ -9068,7 +9068,7 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
   if (ClassDecl->isDependentContext()) return;
 
   CXXDestructorDecl *Destructor = LookupDestructor(ClassDecl);
-  MarkDeclarationReferenced(VD->getLocation(), Destructor);
+  MarkFunctionReferenced(VD->getLocation(), Destructor);
   CheckDestructorAccess(VD->getLocation(), Destructor,
                         PDiag(diag::err_access_dtor_var)
                         << VD->getDeclName()
@@ -10905,7 +10905,7 @@ void Sema::MarkVirtualMembersReferenced(SourceLocation Loc,
     // C++ [basic.def.odr]p2:
     //   [...] A virtual member function is used if it is not pure. [...]
     if (MD->isVirtual() && !MD->isPure())
-      MarkDeclarationReferenced(Loc, MD);
+      MarkFunctionReferenced(Loc, MD);
   }
 
   // Only classes that have virtual bases need a VTT.
@@ -10965,7 +10965,7 @@ void Sema::SetIvarInitializers(ObjCImplementationDecl *ObjCImplementation) {
                                                         ->getAs<RecordType>()) {
                     CXXRecordDecl *RD = cast<CXXRecordDecl>(RecordTy->getDecl());
         if (CXXDestructorDecl *Destructor = LookupDestructor(RD)) {
-          MarkDeclarationReferenced(Field->getLocation(), Destructor);
+          MarkFunctionReferenced(Field->getLocation(), Destructor);
           CheckDestructorAccess(Field->getLocation(), Destructor,
                             PDiag(diag::err_access_dtor_ivar)
                               << Context.getBaseElementType(Field->getType()));

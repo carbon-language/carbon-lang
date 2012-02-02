@@ -2265,7 +2265,19 @@ public:
   ExprResult TranformToPotentiallyEvaluated(Expr *E);
   ExprResult HandleExprEvaluationContextForTypeof(Expr *E);
 
-  void MarkDeclarationReferenced(SourceLocation Loc, Decl *D);
+  // Functions for marking a declaration referenced.  These functions also
+  // contain the relevant logic for marking if a reference to a function or
+  // variable is an odr-use (in the C++11 sense).  There are separate variants
+  // for expressions referring to a decl; these exist because odr-use marking
+  // needs to be delayed for some constant variables when we build one of the
+  // named expressions.
+  void MarkAnyDeclReferenced(SourceLocation Loc, Decl *D);
+  void MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func);
+  void MarkVariableReferenced(SourceLocation Loc, VarDecl *Var);
+  void MarkBlockDeclRefReferenced(BlockDeclRefExpr *E);
+  void MarkDeclRefReferenced(DeclRefExpr *E);
+  void MarkMemberReferenced(MemberExpr *E);
+
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
   void MarkDeclarationsReferencedInExpr(Expr *E);
 

@@ -1331,8 +1331,6 @@ static CaptureResult shouldCaptureValueReference(Sema &S, SourceLocation loc,
     return CR_Error;
   }
 
-  S.MarkDeclarationReferenced(loc, var);
-
   // The BlocksAttr indicates the variable is bound by-reference.
   bool byRef = var->hasAttr<BlocksAttr>();
 
@@ -1411,6 +1409,8 @@ static ExprResult BuildBlockDeclRefExpr(Sema &S, ValueDecl *VD,
                                             NameInfo.getLoc(), true);
   }
 
+  S.MarkBlockDeclRefReferenced(BDRE);
+
   return S.Owned(BDRE);
 }
 
@@ -1442,13 +1442,13 @@ Sema::BuildDeclRefExpr(ValueDecl *D, QualType Ty, ExprValueKind VK,
         }
       }
 
-  MarkDeclarationReferenced(NameInfo.getLoc(), D);
+  DeclRefExpr *E = DeclRefExpr::Create(Context,
+                                       SS ? SS->getWithLocInContext(Context)
+                                              : NestedNameSpecifierLoc(),
+                                           SourceLocation(),
+                                           D, NameInfo, Ty, VK);
 
-  Expr *E = DeclRefExpr::Create(Context,
-                                SS ? SS->getWithLocInContext(Context)
-                                   : NestedNameSpecifierLoc(),
-                                SourceLocation(),
-                                D, NameInfo, Ty, VK);
+  MarkDeclRefReferenced(E);
 
   // Just in case we're building an illegal pointer-to-member.
   FieldDecl *FD = dyn_cast<FieldDecl>(D);
@@ -2004,7 +2004,7 @@ Sema::LookupInObjCMethod(LookupResult &Lookup, Scope *S,
       if (SelfExpr.isInvalid())
         return ExprError();
 
-      MarkDeclarationReferenced(Loc, IV);
+      MarkAnyDeclReferenced(Loc, IV);
       return Owned(new (Context)
                    ObjCIvarRefExpr(IV, IV->getType(), Loc,
                                    SelfExpr.take(), true, true));
@@ -3742,7 +3742,7 @@ Sema::ActOnCUDAExecConfigExpr(Scope *S, SourceLocation LLLLoc,
 
   DeclRefExpr *ConfigDR = new (Context) DeclRefExpr(
       ConfigDecl, ConfigQTy, VK_LValue, LLLLoc);
-  MarkDeclarationReferenced(LLLLoc, ConfigDecl);
+  MarkFunctionReferenced(LLLLoc, ConfigDecl);
 
   return ActOnCallExpr(S, ConfigDR, LLLLoc, ExecConfig, GGGLoc, 0,
                        /*IsExecConfig=*/true);
@@ -9436,9 +9436,7 @@ Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext) {
 }
 
 void Sema::PopExpressionEvaluationContext() {
-  // Pop the current expression evaluation context off the stack.
-  ExpressionEvaluationContextRecord Rec = ExprEvalContexts.back();
-  ExprEvalContexts.pop_back();
+  ExpressionEvaluationContextRecord& Rec = ExprEvalContexts.back();
 
   // When are coming out of an unevaluated context, clear out any
   // temporaries that we may have created as part of the evaluation of
@@ -9453,6 +9451,9 @@ void Sema::PopExpressionEvaluationContext() {
   } else {
     ExprNeedsCleanups |= Rec.ParentNeedsCleanups;
   }
+
+  // Pop the current expression evaluation context off the stack.
+  ExprEvalContexts.pop_back();
 }
 
 void Sema::DiscardCleanupsInEvaluationContext() {
@@ -9468,55 +9469,49 @@ ExprResult Sema::HandleExprEvaluationContextForTypeof(Expr *E) {
   return TranformToPotentiallyEvaluated(E);
 }
 
-/// \brief Note that the given declaration was referenced in the source code.
-///
-/// This routine should be invoke whenever a given declaration is referenced
-/// in the source code, and where that reference occurred. If this declaration
-/// reference means that the the declaration is used (C++ [basic.def.odr]p2,
-/// C99 6.9p3), then the declaration will be marked as used.
-///
-/// \param Loc the location where the declaration was referenced.
-///
-/// \param D the declaration that has been referenced by the source code.
-void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
-  assert(D && "No declaration?");
-
-  D->setReferenced();
-
-  if (D->isUsed(false))
-    return;
-
-  if (!isa<VarDecl>(D) && !isa<FunctionDecl>(D))
-    return;
-
+bool IsPotentiallyEvaluatedContext(Sema &SemaRef) {
   // Do not mark anything as "used" within a dependent context; wait for
   // an instantiation.
-  if (CurContext->isDependentContext())
-    return;
+  if (SemaRef.CurContext->isDependentContext())
+    return false;
 
-  switch (ExprEvalContexts.back().Context) {
-    case Unevaluated:
+  switch (SemaRef.ExprEvalContexts.back().Context) {
+    case Sema::Unevaluated:
       // We are in an expression that is not potentially evaluated; do nothing.
       // (Depending on how you read the standard, we actually do need to do
       // something here for null pointer constants, but the standard's
       // definition of a null pointer constant is completely crazy.)
-      return;
+      return false;
 
-    case ConstantEvaluated:
-    case PotentiallyEvaluated:
+    case Sema::ConstantEvaluated:
+    case Sema::PotentiallyEvaluated:
       // We are in a potentially evaluated expression (or a constant-expression
       // in C++03); we need to do implicit template instantiation, implicitly
       // define class members, and mark most declarations as used.
-      break;
+      return true;
 
-    case PotentiallyEvaluatedIfUsed:
+    case Sema::PotentiallyEvaluatedIfUsed:
       // Referenced declarations will only be used if the construct in the
       // containing expression is used.
-      return;
+      return false;
   }
+}
+
+/// \brief Mark a function referenced, and check whether it is odr-used
+/// (C++ [basic.def.odr]p2, C99 6.9p3)
+void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
+  assert(Func && "No function?");
+
+  Func->setReferenced();
+
+  if (Func->isUsed(false))
+    return;
+
+  if (!IsPotentiallyEvaluatedContext(*this))
+    return;
 
   // Note that this declaration has been used.
-  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(D)) {
+  if (CXXConstructorDecl *Constructor = dyn_cast<CXXConstructorDecl>(Func)) {
     if (Constructor->isDefaulted()) {
       if (Constructor->isDefaultConstructor()) {
         if (Constructor->isTrivial())
@@ -9533,12 +9528,13 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     }
 
     MarkVTableUsed(Loc, Constructor->getParent());
-  } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
+  } else if (CXXDestructorDecl *Destructor =
+                 dyn_cast<CXXDestructorDecl>(Func)) {
     if (Destructor->isDefaulted() && !Destructor->isUsed(false))
       DefineImplicitDestructor(Loc, Destructor);
     if (Destructor->isVirtual())
       MarkVTableUsed(Loc, Destructor->getParent());
-  } else if (CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(D)) {
+  } else if (CXXMethodDecl *MethodDecl = dyn_cast<CXXMethodDecl>(Func)) {
     if (MethodDecl->isDefaulted() && MethodDecl->isOverloadedOperator() &&
         MethodDecl->getOverloadedOperator() == OO_Equal) {
       if (!MethodDecl->isUsed(false)) {
@@ -9550,99 +9546,143 @@ void Sema::MarkDeclarationReferenced(SourceLocation Loc, Decl *D) {
     } else if (MethodDecl->isVirtual())
       MarkVTableUsed(Loc, MethodDecl->getParent());
   }
-  if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
-    // Recursive functions should be marked when used from another function.
-    if (CurContext == Function) return;
 
-    // Implicit instantiation of function templates and member functions of
-    // class templates.
-    if (Function->isImplicitlyInstantiable()) {
-      bool AlreadyInstantiated = false;
-      if (FunctionTemplateSpecializationInfo *SpecInfo
-                                = Function->getTemplateSpecializationInfo()) {
-        if (SpecInfo->getPointOfInstantiation().isInvalid())
-          SpecInfo->setPointOfInstantiation(Loc);
-        else if (SpecInfo->getTemplateSpecializationKind()
-                   == TSK_ImplicitInstantiation)
-          AlreadyInstantiated = true;
-      } else if (MemberSpecializationInfo *MSInfo
-                                  = Function->getMemberSpecializationInfo()) {
-        if (MSInfo->getPointOfInstantiation().isInvalid())
-          MSInfo->setPointOfInstantiation(Loc);
-        else if (MSInfo->getTemplateSpecializationKind()
-                   == TSK_ImplicitInstantiation)
-          AlreadyInstantiated = true;
-      }
+  // Recursive functions should be marked when used from another function.
+  // FIXME: Is this really right?
+  if (CurContext == Func) return;
 
-      if (!AlreadyInstantiated) {
-        if (isa<CXXRecordDecl>(Function->getDeclContext()) &&
-            cast<CXXRecordDecl>(Function->getDeclContext())->isLocalClass())
-          PendingLocalImplicitInstantiations.push_back(std::make_pair(Function,
-                                                                      Loc));
-        else if (Function->getTemplateInstantiationPattern()->isConstexpr())
-          // Do not defer instantiations of constexpr functions, to avoid the
-          // expression evaluator needing to call back into Sema if it sees a
-          // call to such a function.
-          InstantiateFunctionDefinition(Loc, Function);
-        else
-          PendingInstantiations.push_back(std::make_pair(Function, Loc));
-      }
-    } else {
-      // Walk redefinitions, as some of them may be instantiable.
-      for (FunctionDecl::redecl_iterator i(Function->redecls_begin()),
-           e(Function->redecls_end()); i != e; ++i) {
-        if (!i->isUsed(false) && i->isImplicitlyInstantiable())
-          MarkDeclarationReferenced(Loc, *i);
-      }
-    }
-
-    // Keep track of used but undefined functions.
-    if (!Function->isPure() && !Function->hasBody() &&
-        Function->getLinkage() != ExternalLinkage) {
-      SourceLocation &old = UndefinedInternals[Function->getCanonicalDecl()];
-      if (old.isInvalid()) old = Loc;
-    }
-
-    Function->setUsed(true);
-    return;
-  }
-
-  if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
-    // Implicit instantiation of static data members of class templates.
-    if (Var->isStaticDataMember() &&
-        Var->getInstantiatedFromStaticDataMember()) {
-      MemberSpecializationInfo *MSInfo = Var->getMemberSpecializationInfo();
-      assert(MSInfo && "Missing member specialization information?");
-      if (MSInfo->getPointOfInstantiation().isInvalid() &&
-          MSInfo->getTemplateSpecializationKind()== TSK_ImplicitInstantiation) {
+  // Implicit instantiation of function templates and member functions of
+  // class templates.
+  if (Func->isImplicitlyInstantiable()) {
+    bool AlreadyInstantiated = false;
+    if (FunctionTemplateSpecializationInfo *SpecInfo
+                              = Func->getTemplateSpecializationInfo()) {
+      if (SpecInfo->getPointOfInstantiation().isInvalid())
+        SpecInfo->setPointOfInstantiation(Loc);
+      else if (SpecInfo->getTemplateSpecializationKind()
+                 == TSK_ImplicitInstantiation)
+        AlreadyInstantiated = true;
+    } else if (MemberSpecializationInfo *MSInfo
+                                = Func->getMemberSpecializationInfo()) {
+      if (MSInfo->getPointOfInstantiation().isInvalid())
         MSInfo->setPointOfInstantiation(Loc);
-        // This is a modification of an existing AST node. Notify listeners.
-        if (ASTMutationListener *L = getASTMutationListener())
-          L->StaticDataMemberInstantiated(Var);
-        if (Var->isUsableInConstantExpressions())
-          // Do not defer instantiations of variables which could be used in a
-          // constant expression.
-          InstantiateStaticDataMemberDefinition(Loc, Var);
-        else
-          PendingInstantiations.push_back(std::make_pair(Var, Loc));
-      }
+      else if (MSInfo->getTemplateSpecializationKind()
+                 == TSK_ImplicitInstantiation)
+        AlreadyInstantiated = true;
     }
 
-    // Keep track of used but undefined variables.  We make a hole in
-    // the warning for static const data members with in-line
-    // initializers.
-    // FIXME: The hole we make for static const data members is too wide!
-    // We need to implement the C++11 rules for odr-used.
-    if (Var->hasDefinition() == VarDecl::DeclarationOnly
-        && Var->getLinkage() != ExternalLinkage
-        && !(Var->isStaticDataMember() && Var->hasInit())) {
-      SourceLocation &old = UndefinedInternals[Var->getCanonicalDecl()];
-      if (old.isInvalid()) old = Loc;
+    if (!AlreadyInstantiated) {
+      if (isa<CXXRecordDecl>(Func->getDeclContext()) &&
+          cast<CXXRecordDecl>(Func->getDeclContext())->isLocalClass())
+        PendingLocalImplicitInstantiations.push_back(std::make_pair(Func,
+                                                                    Loc));
+      else if (Func->getTemplateInstantiationPattern()->isConstexpr())
+        // Do not defer instantiations of constexpr functions, to avoid the
+        // expression evaluator needing to call back into Sema if it sees a
+        // call to such a function.
+        InstantiateFunctionDefinition(Loc, Func);
+      else
+        PendingInstantiations.push_back(std::make_pair(Func, Loc));
     }
-
-    D->setUsed(true);
-    return;
+  } else {
+    // Walk redefinitions, as some of them may be instantiable.
+    for (FunctionDecl::redecl_iterator i(Func->redecls_begin()),
+         e(Func->redecls_end()); i != e; ++i) {
+      if (!i->isUsed(false) && i->isImplicitlyInstantiable())
+        MarkFunctionReferenced(Loc, *i);
+    }
   }
+
+  // Keep track of used but undefined functions.
+  if (!Func->isPure() && !Func->hasBody() &&
+      Func->getLinkage() != ExternalLinkage) {
+    SourceLocation &old = UndefinedInternals[Func->getCanonicalDecl()];
+    if (old.isInvalid()) old = Loc;
+  }
+
+  Func->setUsed(true);
+}
+
+/// \brief Mark a variable referenced, and check whether it is odr-used
+/// (C++ [basic.def.odr]p2, C99 6.9p3).  Note that this should not be
+/// used directly for normal expressions referring to VarDecl.
+void Sema::MarkVariableReferenced(SourceLocation Loc, VarDecl *Var) {
+  Var->setReferenced();
+
+  if (Var->isUsed(false))
+    return;
+
+  if (!IsPotentiallyEvaluatedContext(*this))
+    return;
+
+  // Implicit instantiation of static data members of class templates.
+  if (Var->isStaticDataMember() &&
+      Var->getInstantiatedFromStaticDataMember()) {
+    MemberSpecializationInfo *MSInfo = Var->getMemberSpecializationInfo();
+    assert(MSInfo && "Missing member specialization information?");
+    if (MSInfo->getPointOfInstantiation().isInvalid() &&
+        MSInfo->getTemplateSpecializationKind()== TSK_ImplicitInstantiation) {
+      MSInfo->setPointOfInstantiation(Loc);
+      // This is a modification of an existing AST node. Notify listeners.
+      if (ASTMutationListener *L = getASTMutationListener())
+        L->StaticDataMemberInstantiated(Var);
+      if (Var->isUsableInConstantExpressions())
+        // Do not defer instantiations of variables which could be used in a
+        // constant expression.
+        InstantiateStaticDataMemberDefinition(Loc, Var);
+      else
+        PendingInstantiations.push_back(std::make_pair(Var, Loc));
+    }
+  }
+
+  // Keep track of used but undefined variables.  We make a hole in
+  // the warning for static const data members with in-line
+  // initializers.
+  // FIXME: The hole we make for static const data members is too wide!
+  // We need to implement the C++11 rules for odr-used.
+  if (Var->hasDefinition() == VarDecl::DeclarationOnly
+      && Var->getLinkage() != ExternalLinkage
+      && !(Var->isStaticDataMember() && Var->hasInit())) {
+    SourceLocation &old = UndefinedInternals[Var->getCanonicalDecl()];
+    if (old.isInvalid()) old = Loc;
+  }
+
+  Var->setUsed(true);
+}
+
+static void MarkExprReferenced(Sema &SemaRef, SourceLocation Loc,
+                               Decl *D, Expr *E) {
+  // TODO: Add special handling for variables
+  SemaRef.MarkAnyDeclReferenced(Loc, D);
+}
+
+/// \brief Perform reference-marking and odr-use handling for a
+/// BlockDeclRefExpr.
+void Sema::MarkBlockDeclRefReferenced(BlockDeclRefExpr *E) {
+  MarkExprReferenced(*this, E->getLocation(), E->getDecl(), E);
+}
+
+/// \brief Perform reference-marking and odr-use handling for a DeclRefExpr.
+void Sema::MarkDeclRefReferenced(DeclRefExpr *E) {
+  MarkExprReferenced(*this, E->getLocation(), E->getDecl(), E);
+}
+
+/// \brief Perform reference-marking and odr-use handling for a MemberExpr.
+void Sema::MarkMemberReferenced(MemberExpr *E) {
+  MarkExprReferenced(*this, E->getMemberLoc(), E->getMemberDecl(), E);
+}
+
+/// \brief Perform marking for a reference to an aribitrary declaration.  It
+/// marks the declaration referenced, and performs odr-use checking for functions
+/// and variables. This method should not be used when building an normal
+/// expression which refers to a variable.
+void Sema::MarkAnyDeclReferenced(SourceLocation Loc, Decl *D) {
+  if (VarDecl *VD = dyn_cast<VarDecl>(D))
+    MarkVariableReferenced(Loc, VD);
+  else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D))
+    MarkFunctionReferenced(Loc, FD);
+  else
+    D->setReferenced();
 }
 
 namespace {
@@ -9666,7 +9706,7 @@ namespace {
 bool MarkReferencedDecls::TraverseTemplateArgument(
   const TemplateArgument &Arg) {
   if (Arg.getKind() == TemplateArgument::Declaration) {
-    S.MarkDeclarationReferenced(Loc, Arg.getAsDecl());
+    S.MarkAnyDeclReferenced(Loc, Arg.getAsDecl());
   }
 
   return Inherited::TraverseTemplateArgument(Arg);
@@ -9699,37 +9739,37 @@ namespace {
     explicit EvaluatedExprMarker(Sema &S) : Inherited(S.Context), S(S) { }
     
     void VisitDeclRefExpr(DeclRefExpr *E) {
-      S.MarkDeclarationReferenced(E->getLocation(), E->getDecl());
+      S.MarkDeclRefReferenced(E);
     }
     
     void VisitMemberExpr(MemberExpr *E) {
-      S.MarkDeclarationReferenced(E->getMemberLoc(), E->getMemberDecl());
+      S.MarkMemberReferenced(E);
       Inherited::VisitMemberExpr(E);
     }
     
     void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
-      S.MarkDeclarationReferenced(E->getLocStart(),
+      S.MarkFunctionReferenced(E->getLocStart(),
             const_cast<CXXDestructorDecl*>(E->getTemporary()->getDestructor()));
       Visit(E->getSubExpr());
     }
     
     void VisitCXXNewExpr(CXXNewExpr *E) {
       if (E->getConstructor())
-        S.MarkDeclarationReferenced(E->getLocStart(), E->getConstructor());
+        S.MarkFunctionReferenced(E->getLocStart(), E->getConstructor());
       if (E->getOperatorNew())
-        S.MarkDeclarationReferenced(E->getLocStart(), E->getOperatorNew());
+        S.MarkFunctionReferenced(E->getLocStart(), E->getOperatorNew());
       if (E->getOperatorDelete())
-        S.MarkDeclarationReferenced(E->getLocStart(), E->getOperatorDelete());
+        S.MarkFunctionReferenced(E->getLocStart(), E->getOperatorDelete());
       Inherited::VisitCXXNewExpr(E);
     }
     
     void VisitCXXDeleteExpr(CXXDeleteExpr *E) {
       if (E->getOperatorDelete())
-        S.MarkDeclarationReferenced(E->getLocStart(), E->getOperatorDelete());
+        S.MarkFunctionReferenced(E->getLocStart(), E->getOperatorDelete());
       QualType Destroyed = S.Context.getBaseElementType(E->getDestroyedType());
       if (const RecordType *DestroyedRec = Destroyed->getAs<RecordType>()) {
         CXXRecordDecl *Record = cast<CXXRecordDecl>(DestroyedRec->getDecl());
-        S.MarkDeclarationReferenced(E->getLocStart(), 
+        S.MarkFunctionReferenced(E->getLocStart(), 
                                     S.LookupDestructor(Record));
       }
       
@@ -9737,12 +9777,12 @@ namespace {
     }
     
     void VisitCXXConstructExpr(CXXConstructExpr *E) {
-      S.MarkDeclarationReferenced(E->getLocStart(), E->getConstructor());
+      S.MarkFunctionReferenced(E->getLocStart(), E->getConstructor());
       Inherited::VisitCXXConstructExpr(E);
     }
     
     void VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
-      S.MarkDeclarationReferenced(E->getLocation(), E->getDecl());
+      S.MarkBlockDeclRefReferenced(E);
     }
     
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {

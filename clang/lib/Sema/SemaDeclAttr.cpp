@@ -2160,7 +2160,7 @@ static void handleCleanupAttr(Sema &S, Decl *D, const AttributeList &Attr) {
   }
 
   D->addAttr(::new (S.Context) CleanupAttr(Attr.getRange(), S.Context, FD));
-  S.MarkDeclarationReferenced(Attr.getParameterLoc(), FD);
+  S.MarkFunctionReferenced(Attr.getParameterLoc(), FD);
 }
 
 /// Handle __attribute__((format_arg((idx)))) attribute based on

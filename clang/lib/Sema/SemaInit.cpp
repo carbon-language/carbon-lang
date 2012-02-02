@@ -3156,7 +3156,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
 
   // This is the overload that will actually be used for the initialization, so
   // mark it as used.
-  S.MarkDeclarationReferenced(DeclLoc, Function);
+  S.MarkFunctionReferenced(DeclLoc, Function);
 
   // Compute the returned type of the conversion.
   if (isa<CXXConversionDecl>(Function))
@@ -3679,7 +3679,7 @@ static void TryUserDefinedConversion(Sema &S,
   }
 
   FunctionDecl *Function = Best->Function;
-  S.MarkDeclarationReferenced(DeclLoc, Function);
+  S.MarkFunctionReferenced(DeclLoc, Function);
   bool HadMultipleCandidates = (CandidateSet.size() > 1);
 
   if (isa<CXXConstructorDecl>(Function)) {
@@ -4388,7 +4388,7 @@ static ExprResult CopyObject(Sema &S,
     return S.Owned(CurInitExpr);
   }
 
-  S.MarkDeclarationReferenced(Loc, Constructor);
+  S.MarkFunctionReferenced(Loc, Constructor);
 
   // Determine the arguments required to actually perform the
   // constructor call (we might have derived-to-base conversions, or
@@ -4531,7 +4531,7 @@ PerformConstructorInitialization(Sema &S,
     // An explicitly-constructed temporary, e.g., X(1, 2).
     unsigned NumExprs = ConstructorArgs.size();
     Expr **Exprs = (Expr **)ConstructorArgs.take();
-    S.MarkDeclarationReferenced(Loc, Constructor);
+    S.MarkFunctionReferenced(Loc, Constructor);
     S.DiagnoseUseOfDecl(Constructor, Loc);
 
     TypeSourceInfo *TSInfo = Entity.getTypeSourceInfo();
@@ -4899,7 +4899,7 @@ InitializationSequence::Perform(Sema &S,
             = S.LookupDestructor(cast<CXXRecordDecl>(Record->getDecl()));
           S.CheckDestructorAccess(CurInit.get()->getLocStart(), Destructor,
                                   S.PDiag(diag::err_access_dtor_temp) << T);
-          S.MarkDeclarationReferenced(CurInit.get()->getLocStart(), Destructor);
+          S.MarkFunctionReferenced(CurInit.get()->getLocStart(), Destructor);
           S.DiagnoseUseOfDecl(Destructor, CurInit.get()->getLocStart());
         }
       }
