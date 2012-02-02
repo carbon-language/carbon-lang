@@ -9495,6 +9495,7 @@ bool IsPotentiallyEvaluatedContext(Sema &SemaRef) {
       // containing expression is used.
       return false;
   }
+  llvm_unreachable("Invalid context");
 }
 
 /// \brief Mark a function referenced, and check whether it is odr-used
