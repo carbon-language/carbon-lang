@@ -666,5 +666,13 @@ void clang::ApplyHeaderSearchOptions(HeaderSearch &HS,
 
   Init.AddDefaultIncludePaths(Lang, Triple, HSOpts);
 
+  if (HSOpts.UseBuiltinIncludes) {
+    // Set up the builtin include directory in the module map.
+    llvm::sys::Path P(HSOpts.ResourceDir);
+    P.appendComponent("include");
+    if (const DirectoryEntry *Dir = HS.getFileMgr().getDirectory(P.str()))
+      HS.getModuleMap().setBuiltinIncludeDir(Dir);
+  }
+
   Init.Realize(Lang);
 }

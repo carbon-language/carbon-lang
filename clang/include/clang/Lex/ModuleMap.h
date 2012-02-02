@@ -41,6 +41,10 @@ class ModuleMap {
   const LangOptions &LangOpts;
   const TargetInfo *Target;
   
+  /// \brief The directory used for Clang-supplied, builtin include headers,
+  /// such as "stdint.h".
+  const DirectoryEntry *BuiltinIncludeDir;
+  
   /// \brief Language options used to parse the module map itself.
   ///
   /// These are always simple C language options.
@@ -101,6 +105,12 @@ public:
 
   /// \brief Set the target information.
   void setTarget(const TargetInfo &Target);
+
+  /// \brief Set the directory that contains Clang-supplied include
+  /// files, such as our stdarg.h or tgmath.h.
+  void setBuiltinIncludeDir(const DirectoryEntry *Dir) {
+    BuiltinIncludeDir = Dir;
+  }
 
   /// \brief Retrieve the module that owns the given header file, if any.
   ///

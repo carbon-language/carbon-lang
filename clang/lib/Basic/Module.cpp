@@ -32,6 +32,8 @@ Module::Module(StringRef Name, SourceLocation DefinitionLoc, Module *Parent,
   if (Parent) {
     if (!Parent->isAvailable())
       IsAvailable = false;
+    if (Parent->IsSystem)
+      IsSystem = true;
     
     Parent->SubModuleIndex[Name] = Parent->SubModules.size();
     Parent->SubModules.push_back(this);

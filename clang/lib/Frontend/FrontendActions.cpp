@@ -126,32 +126,6 @@ ASTConsumer *GenerateModuleAction::CreateASTConsumer(CompilerInstance &CI,
                           Sysroot, OS);
 }
 
-/// \brief Add an appropriate #include/#import for the given header within
-/// the current module context.
-static void addHeaderInclude(StringRef Header, 
-                             bool IsBuiltinModule,
-                             const LangOptions &LangOpts,
-                             llvm::SmallString<256> &Includes) {
-  if (IsBuiltinModule) {
-    // Our own builtin headers play some evil tricks that depend both on
-    // knowing that our headers will be found first and on include_next. To
-    // Make sure these include_next tricks work, we include with <> and
-    // just the filename itself rather than using an absolutely path.
-    // FIXME: Is there some sensible way to generalize this?
-    Includes += "#include <";
-    Includes += llvm::sys::path::filename(Header);
-    Includes += ">\n";
-    return;
-  }
-  
-  if (LangOpts.ObjC1)
-    Includes += "#import \"";
-  else
-    Includes += "#include \"";  
-  Includes += Header;
-  Includes += "\"\n";
-}
-
 /// \brief Collect the set of header includes needed to construct the given 
 /// module.
 ///
@@ -163,21 +137,31 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
                                         FileManager &FileMgr,
                                         ModuleMap &ModMap,
                                         clang::Module *Module,
-                                        bool IsBuiltinModule,
                                         llvm::SmallString<256> &Includes) {
   // Don't collect any headers for unavailable modules.
   if (!Module->isAvailable())
     return;
 
   // Add includes for each of these headers.
-  for (unsigned I = 0, N = Module->Headers.size(); I != N; ++I)
-    addHeaderInclude(Module->Headers[I]->getName(), IsBuiltinModule, LangOpts, 
-                     Includes);
+  for (unsigned I = 0, N = Module->Headers.size(); I != N; ++I) {
+    if (LangOpts.ObjC1)
+      Includes += "#import \"";
+    else
+      Includes += "#include \"";
+    Includes += Module->Headers[I]->getName();
+    Includes += "\"\n";
+  }
 
   if (const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader()) {
-    if (Module->Parent)
-      addHeaderInclude(UmbrellaHeader->getName(), IsBuiltinModule, LangOpts, 
-                       Includes);
+    if (Module->Parent) {
+      // Include the umbrella header for submodules.
+      if (LangOpts.ObjC1)
+        Includes += "#import \"";
+      else
+        Includes += "#include \"";
+      Includes += UmbrellaHeader->getName();
+      Includes += "\"\n";
+    }
   } else if (const DirectoryEntry *UmbrellaDir = Module->getUmbrellaDir()) {
     // Add all of the headers we find in this subdirectory.
     llvm::error_code EC;
@@ -199,8 +183,13 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
         if (ModMap.isHeaderInUnavailableModule(Header))
           continue;
       
-      // Include this header.
-      addHeaderInclude(Dir->path(), IsBuiltinModule, LangOpts, Includes);
+      // Include this header umbrella header for submodules.
+      if (LangOpts.ObjC1)
+        Includes += "#import \"";
+      else
+        Includes += "#include \"";
+      Includes += Dir->path();
+      Includes += "\"\n";
     }
   }
   
@@ -208,8 +197,7 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
   for (clang::Module::submodule_iterator Sub = Module->submodule_begin(),
                                       SubEnd = Module->submodule_end();
        Sub != SubEnd; ++Sub)
-    collectModuleHeaderIncludes(LangOpts, FileMgr, ModMap, *Sub, 
-                                IsBuiltinModule, Includes);
+    collectModuleHeaderIncludes(LangOpts, FileMgr, ModMap, *Sub, Includes);
 }
 
 bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI, 
@@ -261,11 +249,10 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader();
   
   // Collect the set of #includes we need to build the module.
-  bool IsBuiltinModule = StringRef(Module->Name).startswith("_Builtin_");
   llvm::SmallString<256> HeaderContents;
   collectModuleHeaderIncludes(CI.getLangOpts(), CI.getFileManager(),
     CI.getPreprocessor().getHeaderSearchInfo().getModuleMap(),
-    Module, IsBuiltinModule, HeaderContents);
+    Module, HeaderContents);
   if (UmbrellaHeader && HeaderContents.empty()) {
     // Simple case: we have an umbrella header and there are no additional
     // includes, we can just parse the umbrella header directly.

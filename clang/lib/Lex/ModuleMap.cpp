@@ -71,7 +71,7 @@ ModuleMap::resolveExport(Module *Mod,
 
 ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC,
                      const LangOptions &LangOpts, const TargetInfo *Target)
-  : LangOpts(LangOpts), Target(Target)
+  : LangOpts(LangOpts), Target(Target), BuiltinIncludeDir(0)
 {
   llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs(new DiagnosticIDs);
   Diags = llvm::IntrusiveRefCntPtr<DiagnosticsEngine>(
@@ -499,7 +499,10 @@ namespace clang {
     
     /// \brief The directory that this module map resides in.
     const DirectoryEntry *Directory;
-    
+
+    /// \brief The directory containing Clang-supplied headers.
+    const DirectoryEntry *BuiltinIncludeDir;
+
     /// \brief Whether an error occurred.
     bool HadError;
     
@@ -540,9 +543,11 @@ namespace clang {
     explicit ModuleMapParser(Lexer &L, SourceManager &SourceMgr, 
                              DiagnosticsEngine &Diags,
                              ModuleMap &Map,
-                             const DirectoryEntry *Directory)
+                             const DirectoryEntry *Directory,
+                             const DirectoryEntry *BuiltinIncludeDir)
       : L(L), SourceMgr(SourceMgr), Diags(Diags), Map(Map), 
-        Directory(Directory), HadError(false), ActiveModule(0)
+        Directory(Directory), BuiltinIncludeDir(BuiltinIncludeDir), 
+        HadError(false), ActiveModule(0)
     {
       TargetOptions TargetOpts;
       TargetOpts.Triple = llvm::sys::getDefaultTargetTriple();
@@ -1028,6 +1033,24 @@ void appendSubframeworkPaths(Module *Mod, llvm::SmallVectorImpl<char> &Path) {
   }
 }
 
+/// \brief Determine whether the given file name is the name of a builtin
+/// header, supplied by Clang to replace, override, or augment existing system
+/// headers.
+static bool isBuiltinHeader(StringRef FileName) {
+  return llvm::StringSwitch<bool>(FileName)
+      .Case("float.h", true)
+      .Case("iso646.h", true)
+      .Case("limits.h", true)
+      .Case("stdalign.h", true)
+      .Case("stdarg.h", true)
+      .Case("stdbool.h", true)
+      .Case("stddef.h", true)
+      .Case("stdint.h", true)
+      .Case("tgmath.h", true)
+      .Case("unwind.h", true)
+      .Default(false);
+}
+
 /// \brief Parse a header declaration.
 ///
 ///   header-declaration:
@@ -1058,6 +1081,7 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc) {
 
   // Look for this file.
   const FileEntry *File = 0;
+  const FileEntry *BuiltinFile = 0;
   llvm::SmallString<128> PathName;
   if (llvm::sys::path::is_absolute(FileName)) {
     PathName = FileName;
@@ -1090,6 +1114,24 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc) {
       // Lookup for normal headers.
       llvm::sys::path::append(PathName, FileName);
       File = SourceMgr.getFileManager().getFile(PathName);
+      
+      // If this is a system module with a top-level header, this header
+      // may have a counterpart (or replacement) in the set of headers
+      // supplied by Clang. Find that builtin header.
+      if (ActiveModule->IsSystem && !Umbrella && BuiltinIncludeDir &&
+          BuiltinIncludeDir != Directory && isBuiltinHeader(FileName)) {
+        llvm::SmallString<128> BuiltinPathName(BuiltinIncludeDir->getName());
+        llvm::sys::path::append(BuiltinPathName, FileName);
+        BuiltinFile = SourceMgr.getFileManager().getFile(BuiltinPathName);
+        
+        // If Clang supplies this header but the underlying system does not,
+        // just silently swap in our builtin version. Otherwise, we'll end
+        // up adding both (later).
+        if (!File && BuiltinFile) {
+          File = BuiltinFile;
+          BuiltinFile = 0;
+        }
+      }
     }
   }
   
@@ -1113,6 +1155,10 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc) {
     } else {
       // Record this header.
       Map.addHeader(ActiveModule, File);
+      
+      // If there is a builtin counterpart to this file, add it now.
+      if (BuiltinFile)
+        Map.addHeader(ActiveModule, BuiltinFile);
     }
   } else {
     Diags.Report(FileNameLoc, diag::err_mmap_header_not_found)
@@ -1375,7 +1421,8 @@ bool ModuleMap::parseModuleMapFile(const FileEntry *File) {
   // Parse this module map file.
   Lexer L(ID, SourceMgr->getBuffer(ID), *SourceMgr, MMapLangOpts);
   Diags->getClient()->BeginSourceFile(MMapLangOpts);
-  ModuleMapParser Parser(L, *SourceMgr, *Diags, *this, File->getDir());
+  ModuleMapParser Parser(L, *SourceMgr, *Diags, *this, File->getDir(),
+                         BuiltinIncludeDir);
   bool Result = Parser.parseModuleMapFile();
   Diags->getClient()->EndSourceFile();
   

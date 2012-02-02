@@ -1,42 +1,3 @@
-module _Builtin_stdlib [system] {
-  explicit module float_constants {
-    header "float.h"
-  }
-
-  explicit module iso646 {
-    header "iso646.h"
-  }
-
-  explicit module limits {
-    header "limits.h"
-  }
-
-  explicit module stdalign {
-    header "stdalign.h"
-  }
-
-  explicit module stdarg {
-    header "stdarg.h"
-  }
-
-  explicit module stdbool {
-    header "stdbool.h"
-  }
-
-  explicit module stddef {
-    header "stddef.h"
-  }
-
-  explicit module stdint {
-    header "stdint.h"
-  }
-
-  explicit module varargs {
-    requires unavailable
-    header "varargs.h"
-  }
-}
-
 module _Builtin_intrinsics [system] {
   explicit module altivec {
     requires altivec
@@ -45,9 +6,15 @@ module _Builtin_intrinsics [system] {
 
   explicit module intel {
     requires x86
+    export *
 
     header "immintrin.h"
     header "x86intrin.h"
+
+    explicit module mm_malloc {
+      header "mm_malloc.h"
+      export * // note: for <stdlib.h> dependency
+    }
 
     explicit module cpuid {
       header "cpuid.h"
@@ -61,6 +28,7 @@ module _Builtin_intrinsics [system] {
     explicit module sse {
       requires sse
       export mmx
+      export * // note: for hackish <emmintrin.h> dependency
       header "xmmintrin.h"
     }
 
@@ -136,12 +104,5 @@ module _Builtin_intrinsics [system] {
       requires mm3dnow
       header "mm3dnow.h"
     }
-
-    explicit module mm_malloc {
-      header "mm_malloc.h"
-    }
   }
-
-  // FIXME: tgmath.h
-  // FIXME: unwind.h
 }
