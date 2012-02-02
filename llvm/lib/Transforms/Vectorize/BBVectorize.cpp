@@ -1591,9 +1591,7 @@ namespace {
                      std::multimap<Value *, Value *> &LoadMoveSet,
                      Instruction *I, Instruction *J) {
     // Skip to the first instruction past I.
-    BasicBlock::iterator L = BB.begin();
-    for (; cast<Instruction>(L) != I; ++L);
-    ++L;
+    BasicBlock::iterator L = llvm::next(BasicBlock::iterator(I));
 
     DenseSet<Value *> Users;
     AliasSetTracker WriteSet(*AA);
@@ -1613,9 +1611,7 @@ namespace {
                      Instruction *&InsertionPt,
                      Instruction *I, Instruction *J) {
     // Skip to the first instruction past I.
-    BasicBlock::iterator L = BB.begin();
-    for (; cast<Instruction>(L) != I; ++L);
-    ++L;
+    BasicBlock::iterator L = llvm::next(BasicBlock::iterator(I));
 
     DenseSet<Value *> Users;
     AliasSetTracker WriteSet(*AA);
@@ -1643,9 +1639,7 @@ namespace {
                      std::multimap<Value *, Value *> &LoadMoveSet,
                      Instruction *I) {
     // Skip to the first instruction past I.
-    BasicBlock::iterator L = BB.begin();
-    for (; cast<Instruction>(L) != I; ++L);
-    ++L;
+    BasicBlock::iterator L = llvm::next(BasicBlock::iterator(I));
 
     DenseSet<Value *> Users;
     AliasSetTracker WriteSet(*AA);
