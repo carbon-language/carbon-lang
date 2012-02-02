@@ -279,6 +279,9 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   if (!Context.hasSameType(PIDecl->getType(), PDecl->getType())) {
     bool IncompatibleObjC = false;
     QualType ConvertedType;
+    // Relax the strict type matching for property type in continuation class.
+    // Allow property object type of continuation class to be different as long
+    // as it narrows the object type in its primary class property.
     if (!isa<ObjCObjectPointerType>(PIDecl->getType()) ||
         !isa<ObjCObjectPointerType>(PDecl->getType()) ||
         (!isObjCPointerConversion(PDecl->getType(), PIDecl->getType(), 
