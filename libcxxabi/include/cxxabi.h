@@ -18,8 +18,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#define _LIBCPPABI_VERSION 1001
 #define LIBCXXABI_NORETURN  __attribute__((noreturn))
-
 
 #ifdef __cplusplus
 
@@ -167,7 +167,6 @@ extern bool __cxa_uncaught_exception() throw();
 
   } // extern "C"
 } // namespace __cxxabiv1
-namespace abi = __cxxabiv1;
 
 #endif // __cplusplus
 
