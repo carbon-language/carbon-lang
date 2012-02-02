@@ -16,6 +16,7 @@
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Module.h"
+#include "lldb/Core/State.h"
 #include "lldb/Core/Stream.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ClangASTContext.h"
@@ -425,18 +426,9 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
                     {
                         Address so_addr(address, objfile->GetSectionList());
                         addr_t load_address = so_addr.GetLoadAddress (exe_ctx->GetTargetPtr());
-                        bool process_launched_and_stopped = false;
-                        if (exe_ctx->GetProcessPtr())
-                            switch (exe_ctx->GetProcessPtr()->GetState())
-                            {
-                            default:
-                                break;
-                            case eStateInvalid:
-                            case eStateSuspended:
-                            case eStateCrashed:
-                            case eStateStopped:
-                                process_launched_and_stopped = true;
-                            }
+                        bool process_launched_and_stopped = exe_ctx->GetProcessPtr()
+                            ? StateIsStoppedState(exe_ctx->GetProcessPtr()->GetState(), true /* must_exist */)
+                            : false;
                         // Don't use the load address if the process has exited.
                         if (load_address != LLDB_INVALID_ADDRESS && process_launched_and_stopped)
                         {
