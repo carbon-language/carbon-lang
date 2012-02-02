@@ -4185,6 +4185,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
       Result.UserDefined.After.setAsIdentityConversion();
       Result.UserDefined.After.setFromType(ToType);
       Result.UserDefined.After.setAllToTypes(ToType);
+      Result.UserDefined.ConversionFunction = 0;
     }
     return Result;
   }
