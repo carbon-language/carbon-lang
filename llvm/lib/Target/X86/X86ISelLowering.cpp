@@ -12063,7 +12063,7 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
 // the EFLAGS operand.
 static bool shouldHaveEFlagsKill(MachineBasicBlock::iterator SelectItr,
                                  MachineBasicBlock* BB) {
-  for (MachineBasicBlock::iterator miI(next(SelectItr)), miE = BB->end();
+  for (MachineBasicBlock::iterator miI(llvm::next(SelectItr)), miE = BB->end();
        miI != miE; ++miI) {
     const MachineInstr& mi = *miI;
     if (mi.readsRegister(X86::EFLAGS)) {
