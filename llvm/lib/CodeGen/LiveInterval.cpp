@@ -381,8 +381,10 @@ void LiveInterval::join(LiveInterval &Other,
   for (unsigned i = 0; i != NumVals; ++i) {
     unsigned LHSValID = LHSValNoAssignments[i];
     if (i != LHSValID ||
-        (NewVNInfo[LHSValID] && NewVNInfo[LHSValID] != getValNumInfo(i)))
+        (NewVNInfo[LHSValID] && NewVNInfo[LHSValID] != getValNumInfo(i))) {
       MustMapCurValNos = true;
+      break;
+    }
   }
 
   // If we have to apply a mapping to our base interval assignment, rewrite it
