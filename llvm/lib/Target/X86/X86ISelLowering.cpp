@@ -1221,6 +1221,7 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
   setTargetDAGCombine(ISD::LOAD);
   setTargetDAGCombine(ISD::STORE);
   setTargetDAGCombine(ISD::ZERO_EXTEND);
+  setTargetDAGCombine(ISD::SIGN_EXTEND);
   setTargetDAGCombine(ISD::TRUNCATE);
   setTargetDAGCombine(ISD::SINT_TO_FP);
   if (Subtarget->is64Bit())
@@ -14641,6 +14642,55 @@ static SDValue PerformVZEXT_MOVLCombine(SDNode *N, SelectionDAG &DAG) {
   return SDValue();
 }
 
+static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
+                                  TargetLowering::DAGCombinerInfo &DCI,
+                                  const X86Subtarget *Subtarget) {
+  if (!DCI.isBeforeLegalizeOps())
+    return SDValue();
+
+  if (!Subtarget->hasAVX()) return SDValue();
+
+   // Optimize vectors in AVX mode
+   // Sign extend  v8i16 to v8i32 and
+   //              v4i32 to v4i64
+   //
+   // Divide input vector into two parts
+   // for v4i32 the shuffle mask will be { 0, 1, -1, -1} {2, 3, -1, -1}
+   // use vpmovsx instruction to extend v4i32 -> v2i64; v8i16 -> v4i32
+   // concat the vectors to original VT
+
+  EVT VT = N->getValueType(0);
+  SDValue Op = N->getOperand(0);
+  EVT OpVT = Op.getValueType();
+  DebugLoc dl = N->getDebugLoc();
+
+  if (((VT == MVT::v4i64) && (OpVT == MVT::v4i32)) ||
+    ((VT == MVT::v8i32) && (OpVT == MVT::v8i16))) {
+
+    unsigned NumElems = OpVT.getVectorNumElements();
+    SmallVector<int,8> ShufMask1(NumElems, -1);
+    for (unsigned i=0; i< NumElems/2; i++) ShufMask1[i] = i;
+
+    SDValue OpLo = DAG.getVectorShuffle(OpVT, dl, Op, DAG.getUNDEF(OpVT),
+                                ShufMask1.data());
+
+    SmallVector<int,8> ShufMask2(NumElems, -1);
+    for (unsigned i=0; i< NumElems/2; i++) ShufMask2[i] = i+NumElems/2;
+
+    SDValue OpHi = DAG.getVectorShuffle(OpVT, dl, Op, DAG.getUNDEF(OpVT),
+                                ShufMask2.data());
+
+    EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), VT.getScalarType(), 
+      VT.getVectorNumElements()/2);
+    
+    OpLo = DAG.getNode(X86ISD::VSEXT_MOVL, dl, HalfVT, OpLo); 
+    OpHi = DAG.getNode(X86ISD::VSEXT_MOVL, dl, HalfVT, OpHi);
+
+    return DAG.getNode(ISD::CONCAT_VECTORS, dl, VT, OpLo, OpHi);
+  }
+  return SDValue();
+}
+
 static SDValue PerformZExtCombine(SDNode *N, SelectionDAG &DAG,
                                   const X86Subtarget *Subtarget) {
   // (i32 zext (and (i8  x86isd::setcc_carry), 1)) ->
@@ -14886,6 +14936,7 @@ SDValue X86TargetLowering::PerformDAGCombine(SDNode *N,
   case X86ISD::BT:          return PerformBTCombine(N, DAG, DCI);
   case X86ISD::VZEXT_MOVL:  return PerformVZEXT_MOVLCombine(N, DAG);
   case ISD::ZERO_EXTEND:    return PerformZExtCombine(N, DAG, Subtarget);
+  case ISD::SIGN_EXTEND:    return PerformSExtCombine(N, DAG, DCI, Subtarget);
   case ISD::TRUNCATE:       return PerformTruncateCombine(N, DAG, DCI);
   case X86ISD::SETCC:       return PerformSETCCCombine(N, DAG);
   case X86ISD::SHUFP:       // Handle all target specific shuffles

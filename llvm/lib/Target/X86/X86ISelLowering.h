@@ -219,6 +219,9 @@ namespace llvm {
       // VZEXT_MOVL - Vector move low and zero extend.
       VZEXT_MOVL,
 
+      // VZEXT_MOVL - Vector move low and sign extend.
+      VSEXT_MOVL,
+
       // VSHL, VSRL - 128-bit vector logical left / right shift
       VSHLDQ, VSRLDQ,
 
