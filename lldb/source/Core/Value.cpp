@@ -425,7 +425,20 @@ Value::GetValueAsData (ExecutionContext *exe_ctx,
                     {
                         Address so_addr(address, objfile->GetSectionList());
                         addr_t load_address = so_addr.GetLoadAddress (exe_ctx->GetTargetPtr());
-                        if (load_address != LLDB_INVALID_ADDRESS)
+                        bool process_launched_and_stopped = false;
+                        if (exe_ctx->GetProcessPtr())
+                            switch (exe_ctx->GetProcessPtr()->GetState())
+                            {
+                            default:
+                                break;
+                            case eStateInvalid:
+                            case eStateSuspended:
+                            case eStateCrashed:
+                            case eStateStopped:
+                                process_launched_and_stopped = true;
+                            }
+                        // Don't use the load address if the process has exited.
+                        if (load_address != LLDB_INVALID_ADDRESS && process_launched_and_stopped)
                         {
                             resolved = true;
                             address = load_address;
