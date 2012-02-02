@@ -10,7 +10,9 @@
 @end
 
 @implementation SynthItAll
-//@synthesize howMany, what;
+#if !__has_feature(objc_default_synthesize_properties)
+@synthesize howMany, what;
+#endif
 @end
 
 
@@ -20,7 +22,9 @@
 @end
 
 @implementation SynthSetter
-//@synthesize howMany, what;
+#if !__has_feature(objc_default_synthesize_properties)
+@synthesize howMany, what;
+#endif
 
 - (int) howMany {
     return self.howMany;
@@ -40,7 +44,9 @@
 @end
 
 @implementation SynthGetter
-//@synthesize howMany, what;
+#if !__has_feature(objc_default_synthesize_properties)
+@synthesize howMany, what;
+#endif
 
 // - (int) howMany
 - (void) setHowMany: (int) value {
@@ -61,7 +67,9 @@
 @end
 
 @implementation SynthNone
-//@synthesize howMany, what;  // REM: Redundant anyway
+#if !__has_feature(objc_default_synthesize_properties)
+@synthesize howMany, what;  // REM: Redundant anyway
+#endif
 
 - (int) howMany {
     return self.howMany;
@@ -112,7 +120,9 @@
 
 @implementation D
 - (int) Meth { return self.PROP; }
+#if __has_feature(objc_default_synthesize_properties)
 @synthesize PROP=IVAR;
+#endif
 @end
 
 // rdar://10567333
