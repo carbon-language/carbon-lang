@@ -464,10 +464,11 @@ namespace {
       DenseSet<ValuePair> PairableInstUsers;
       buildDepMap(BB, CandidatePairs, PairableInsts, PairableInstUsers);
   
-      // There is now a graph of the connected pairs. For each variable, pick the
-      // pairing with the largest tree meeting the depth requirement on at least
-      // one branch. Then select all pairings that are part of that tree and
-      // remove them from the list of available pairings and pairable variables.
+      // There is now a graph of the connected pairs. For each variable, pick
+      // the pairing with the largest tree meeting the depth requirement on at
+      // least one branch. Then select all pairings that are part of that tree
+      // and remove them from the list of available pairings and pairable
+      // variables.
   
       DenseMap<Value *, Value *> ChosenPairs;
       choosePairs(CandidatePairs, PairableInsts, ConnectedPairs,
@@ -936,14 +937,12 @@ namespace {
     // A lookup table of visisted pairs is kept because the PairableInstUserMap
     // contains non-direct associations.
     DenseSet<ValuePair> Visited;
-    std::vector<ValuePair> Q;
+    SmallVector<ValuePair, 32> Q;
     // General depth-first post-order traversal:
     Q.push_back(P);
-    while (!Q.empty()) {
-      ValuePair QTop = Q.back();
-
+    do {
+      ValuePair QTop = Q.pop_back_val();
       Visited.insert(QTop);
-      Q.pop_back();
 
       DEBUG(if (DebugCycleCheck)
               dbgs() << "BBV: cycle check visiting: " << *QTop.first << " <-> "
@@ -962,7 +961,7 @@ namespace {
             Visited.count(C->second) == 0)
           Q.push_back(C->second);
       }
-    }
+    } while (!Q.empty());
 
     return false;
   }
@@ -979,10 +978,10 @@ namespace {
     // Each of these pairs is viewed as the root node of a Tree. The Tree
     // is then walked (depth-first). As this happens, we keep track of
     // the pairs that compose the Tree and the maximum depth of the Tree.
-    std::vector<ValuePairWithDepth> Q;
+    SmallVector<ValuePairWithDepth, 32> Q;
     // General depth-first post-order traversal:
     Q.push_back(ValuePairWithDepth(J, getDepthFactor(J.first)));
-    while (!Q.empty()) {
+    do {
       ValuePairWithDepth QTop = Q.back();
 
       // Push each child onto the queue:
@@ -1020,7 +1019,7 @@ namespace {
         Tree.insert(ValuePairWithDepth(QTop.first, MaxChildDepth));
         Q.pop_back();
       }
-    }
+    } while (!Q.empty());
   }
 
   // Given some initial tree, prune it by removing conflicting pairs (pairs
@@ -1035,13 +1034,12 @@ namespace {
                       DenseMap<ValuePair, size_t> &Tree,
                       DenseSet<ValuePair> &PrunedTree, ValuePair J,
                       bool UseCycleCheck) {
-    std::vector<ValuePairWithDepth> Q;
+    SmallVector<ValuePairWithDepth, 32> Q;
     // General depth-first post-order traversal:
     Q.push_back(ValuePairWithDepth(J, getDepthFactor(J.first)));
-    while (!Q.empty()) {
-      ValuePairWithDepth QTop = Q.back();
+    do {
+      ValuePairWithDepth QTop = Q.pop_back_val();
       PrunedTree.insert(QTop.first);
-      Q.pop_back();
 
       // Visit each child, pruning as necessary...
       DenseMap<ValuePair, size_t> BestChilden;
@@ -1114,7 +1112,7 @@ namespace {
         if (!CanAdd) continue;
 
         // And check the queue too...
-        for (std::vector<ValuePairWithDepth>::iterator C2 = Q.begin(),
+        for (SmallVector<ValuePairWithDepth, 32>::iterator C2 = Q.begin(),
              E2 = Q.end(); C2 != E2; ++C2) {
           if (C2->first.first == C->first.first ||
               C2->first.first == C->first.second ||
@@ -1182,7 +1180,7 @@ namespace {
         size_t DepthF = getDepthFactor(C->first.first);
         Q.push_back(ValuePairWithDepth(C->first, QTop.second+DepthF));
       }
-    }
+    } while (!Q.empty());
   }
 
   // This function finds the best tree of mututally-compatible connected
