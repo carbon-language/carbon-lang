@@ -40,24 +40,35 @@ typedef void* pthread_workitem_handle_t;
 
 typedef void (*dispatch_function_t)(void *block);
 typedef void* (*worker_t)(void *block);
-typedef int (*dispatch_async_f_f)(dispatch_queue_t dq, void *ctxt,
-                                  dispatch_function_t func);
-typedef int (*dispatch_sync_f_f)(dispatch_queue_t dq, void *ctxt,
-                                  dispatch_function_t func);
-typedef int (*dispatch_after_f_f)(dispatch_time_t when,
-                                  dispatch_queue_t dq, void *ctxt,
-                                  dispatch_function_t func);
-typedef void (*dispatch_barrier_async_f_f)(dispatch_queue_t dq,
-                                           void *ctxt,
-                                           dispatch_function_t func);
-typedef void (*dispatch_group_async_f_f)(dispatch_group_t group,
-                                         dispatch_queue_t dq,
-                                         void *ctxt, dispatch_function_t func);
-typedef int (*pthread_workqueue_additem_np_f)(pthread_workqueue_t workq,
-    void *(*workitem_func)(void *), void * workitem_arg,
-    pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp);
-typedef CFStringRef (*CFStringCreateCopy_f)(CFAllocatorRef alloc,
-                                            CFStringRef str);
+
+DECLARE_REAL_AND_INTERCEPTOR(void, dispatch_async_f, dispatch_queue_t dq,
+                                                     void *ctxt,
+                                                     dispatch_function_t func);
+DECLARE_REAL_AND_INTERCEPTOR(void, dispatch_sync_f, dispatch_queue_t dq,
+                                                    void *ctxt,
+                                                    dispatch_function_t func);
+DECLARE_REAL_AND_INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
+                                                     dispatch_queue_t dq,
+                                                     void *ctxt,
+                                                     dispatch_function_t func);
+DECLARE_REAL_AND_INTERCEPTOR(void, dispatch_barrier_async_f,
+                                   dispatch_queue_t dq,
+                                   void *ctxt,
+                                   dispatch_function_t func);
+DECLARE_REAL_AND_INTERCEPTOR(void, dispatch_group_async_f,
+                                   dispatch_group_t group,
+                                   dispatch_queue_t dq,
+                                   void *ctxt,
+                                   dispatch_function_t func);
+DECLARE_REAL_AND_INTERCEPTOR(int, pthread_workqueue_additem_np,
+                                  pthread_workqueue_t workq,
+                                  void *(*workitem_func)(void *),
+                                  void * workitem_arg,
+                                  pthread_workitem_handle_t * itemhandlep,
+                                  unsigned int *gencountp);
+DECLARE_REAL_AND_INTERCEPTOR(CFStringRef, CFStringCreateCopy,
+                                          CFAllocatorRef alloc,
+                                          CFStringRef str);
 
 // A wrapper for the ObjC blocks used to support libdispatch.
 typedef struct {
@@ -84,26 +95,6 @@ void dispatch_barrier_async_f(dispatch_queue_t dq,
 int pthread_workqueue_additem_np(pthread_workqueue_t workq,
     void *(*workitem_func)(void *), void * workitem_arg,
     pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp);
-
-int WRAP(dispatch_async_f)(dispatch_queue_t dq,
-                           void *ctxt,
-                           dispatch_function_t func);
-int WRAP(dispatch_sync_f)(dispatch_queue_t dq,
-                          void *ctxt,
-                          dispatch_function_t func);
-int WRAP(dispatch_after_f)(dispatch_time_t when,
-                           dispatch_queue_t dq,
-                           void *ctxt,
-                           dispatch_function_t func);
-void WRAP(dispatch_barrier_async_f)(dispatch_queue_t dq,
-                                    void *ctxt, dispatch_function_t func);
-void WRAP(dispatch_group_async_f)(dispatch_group_t group,
-                                  dispatch_queue_t dq,
-                                  void *ctxt, dispatch_function_t func);
-int WRAP(pthread_workqueue_additem_np)(pthread_workqueue_t workq,
-    void *(*workitem_func)(void *), void * workitem_arg,
-    pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp);
-CFStringRef WRAP(CFStringCreateCopy)(CFAllocatorRef alloc, CFStringRef str);
 }
 
 #endif  // ASAN_MAC_H

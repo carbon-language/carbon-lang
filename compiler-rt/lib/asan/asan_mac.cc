@@ -38,14 +38,6 @@ namespace __asan {
 
 void *island_allocator_pos = NULL;
 
-extern dispatch_async_f_f real_dispatch_async_f;
-extern dispatch_sync_f_f real_dispatch_sync_f;
-extern dispatch_after_f_f real_dispatch_after_f;
-extern dispatch_barrier_async_f_f real_dispatch_barrier_async_f;
-extern dispatch_group_async_f_f real_dispatch_group_async_f;
-extern pthread_workqueue_additem_np_f real_pthread_workqueue_additem_np;
-extern CFStringCreateCopy_f real_CFStringCreateCopy;
-
 void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
   ucontext_t *ucontext = (ucontext_t*)context;
 # if __WORDSIZE == 64
@@ -431,10 +423,8 @@ asan_block_context_t *alloc_asan_context(void *ctxt, dispatch_function_t func,
 }
 
 // TODO(glider): can we reduce code duplication by introducing a macro?
-extern "C"
-int WRAP(dispatch_async_f)(dispatch_queue_t dq,
-                           void *ctxt,
-                           dispatch_function_t func) {
+INTERCEPTOR(void, dispatch_async_f, dispatch_queue_t dq, void *ctxt,
+                                    dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (FLAG_v >= 2) {
@@ -446,10 +436,8 @@ int WRAP(dispatch_async_f)(dispatch_queue_t dq,
                                asan_dispatch_call_block_and_release);
 }
 
-extern "C"
-int WRAP(dispatch_sync_f)(dispatch_queue_t dq,
-                          void *ctxt,
-                          dispatch_function_t func) {
+INTERCEPTOR(void, dispatch_sync_f, dispatch_queue_t dq, void *ctxt,
+                                   dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (FLAG_v >= 2) {
@@ -461,11 +449,9 @@ int WRAP(dispatch_sync_f)(dispatch_queue_t dq,
                               asan_dispatch_call_block_and_release);
 }
 
-extern "C"
-int WRAP(dispatch_after_f)(dispatch_time_t when,
-                           dispatch_queue_t dq,
-                           void *ctxt,
-                           dispatch_function_t func) {
+INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
+                                    dispatch_queue_t dq, void *ctxt,
+                                    dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (FLAG_v >= 2) {
@@ -476,9 +462,8 @@ int WRAP(dispatch_after_f)(dispatch_time_t when,
                                asan_dispatch_call_block_and_release);
 }
 
-extern "C"
-void WRAP(dispatch_barrier_async_f)(dispatch_queue_t dq,
-                                    void *ctxt, dispatch_function_t func) {
+INTERCEPTOR(void, dispatch_barrier_async_f, dispatch_queue_t dq, void *ctxt,
+                                            dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (FLAG_v >= 2) {
@@ -490,10 +475,9 @@ void WRAP(dispatch_barrier_async_f)(dispatch_queue_t dq,
                                 asan_dispatch_call_block_and_release);
 }
 
-extern "C"
-void WRAP(dispatch_group_async_f)(dispatch_group_t group,
-                                  dispatch_queue_t dq,
-                                  void *ctxt, dispatch_function_t func) {
+INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
+                                          dispatch_queue_t dq, void *ctxt,
+                                          dispatch_function_t func) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   asan_block_context_t *asan_ctxt = alloc_asan_context(ctxt, func, &stack);
   if (FLAG_v >= 2) {
@@ -524,8 +508,7 @@ void *wrap_workitem_func(void *arg) {
   return result;
 }
 
-extern "C"
-int WRAP(pthread_workqueue_additem_np)(pthread_workqueue_t workq,
+INTERCEPTOR(int, pthread_workqueue_additem_np, pthread_workqueue_t workq,
     void *(*workitem_func)(void *), void * workitem_arg,
     pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
@@ -574,8 +557,8 @@ int __CFStrIsConstant(CFStringRef str) {
 #endif
 }
 
-extern "C"
-CFStringRef WRAP(CFStringCreateCopy)(CFAllocatorRef alloc, CFStringRef str) {
+INTERCEPTOR(CFStringRef, CFStringCreateCopy, CFAllocatorRef alloc,
+                                             CFStringRef str) {
   if (__CFStrIsConstant(str)) {
     return str;
   } else {
