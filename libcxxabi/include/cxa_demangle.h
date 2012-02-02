@@ -12,6 +12,8 @@
 
 #include <cxxabi.h>
 
+#pragma GCC visibility push(hidden)
+
 namespace __cxxabiv1
 {
 
@@ -158,5 +160,8 @@ __demangle(const char*, char*, size_t);
 
 }  // __libcxxabi
 }  // __cxxabiv1
+
+#pragma GCC visibility pop
+
 
 #endif  // _CXA_DEMANGLE_H

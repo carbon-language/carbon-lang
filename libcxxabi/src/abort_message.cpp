@@ -12,6 +12,8 @@
 #include <stdarg.h>
 #include "abort_message.h"
 
+#pragma GCC visibility push(hidden)
+
 #if __APPLE__ 
 #   if defined(__has_include) && __has_include(<CrashReporterClient.h>)
 #       define HAVE_CRASHREPORTERCLIENT_H 1
@@ -54,3 +56,5 @@ void abort_message(const char* format, ...)
 
     abort();
 }
+
+#pragma GCC visibility pop

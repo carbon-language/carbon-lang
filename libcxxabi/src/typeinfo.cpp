@@ -9,8 +9,6 @@
 
 #include <typeinfo>
 
-#pragma GCC visibility push(default)
-
 namespace std
 {
 
@@ -53,5 +51,3 @@ bad_typeid::what() const _NOEXCEPT
 }
 
 }  // std
-
-#pragma GCC visibility pop

@@ -12,7 +12,7 @@
 namespace __cxxabiv1
 {
 
-//#pragma GCC visibility push(hidden)
+#pragma GCC visibility push(hidden)
 
 // __shim_type_info
 
@@ -83,8 +83,6 @@ __pointer_type_info::~__pointer_type_info()
 __pointer_to_member_type_info::~__pointer_to_member_type_info()
 {
 }
-
-#pragma GCC visibility push(hidden)
 
 // can_catch
 
@@ -318,7 +316,7 @@ __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
     return false;
 }
 
-//#pragma GCC visibility pop
+#pragma GCC visibility pop
 #pragma GCC visibility push(default)
 
 // __dynamic_cast
@@ -398,9 +396,9 @@ __pointer_type_info::can_catch(const __shim_type_info* thrown_type,
 extern "C"
 void*
 __dynamic_cast(const void* static_ptr,
-			   const __class_type_info* static_type,
-			   const __class_type_info* dst_type,
-			   std::ptrdiff_t src2dst_offset)
+               const __class_type_info* static_type,
+               const __class_type_info* dst_type,
+               std::ptrdiff_t src2dst_offset)
 {
     // Possible future optimization:  Take advantage of src2dst_offset
     // Currently clang always sets src2dst_offset to -1 (no hint).

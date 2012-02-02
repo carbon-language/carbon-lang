@@ -10692,9 +10692,6 @@ __demangle_tree::__parse()
     }
 }
 
-#pragma GCC visibility pop
-#pragma GCC visibility push(default)
-
 __demangle_tree
 __demangle(const char* mangled_name, char* buf, size_t bs)
 {
@@ -10771,6 +10768,9 @@ printf("\n");
 }
 
 }  // __libcxxabi
+
+#pragma GCC visibility pop
+#pragma GCC visibility push(default)
 
 extern "C"
 {

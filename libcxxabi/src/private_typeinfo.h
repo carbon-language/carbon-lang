@@ -16,9 +16,9 @@
 namespace __cxxabiv1
 {
 
-//#pragma GCC visibility push(hidden)
+#pragma GCC visibility push(hidden)
 
-class __shim_type_info
+class __attribute__ ((__visibility__("hidden"))) __shim_type_info
     : public std::type_info
 {
 public:
@@ -27,36 +27,36 @@ public:
     virtual bool can_catch(const __shim_type_info* thrown_type, void*& adjustedPtr) const = 0;
 };
 
-class __fundamental_type_info
+class __attribute__ ((__visibility__("default"))) __fundamental_type_info
     : public __shim_type_info
 {
 public:
-    virtual ~__fundamental_type_info();
-    virtual bool can_catch(const __shim_type_info*, void*&) const;
+    __attribute__ ((__visibility__("hidden"))) virtual ~__fundamental_type_info();
+    __attribute__ ((__visibility__("hidden"))) virtual bool can_catch(const __shim_type_info*, void*&) const;
 };
 
-class __array_type_info
+class __attribute__ ((__visibility__("default"))) __array_type_info
     : public __shim_type_info
 {
 public:
-    virtual ~__array_type_info();
-    virtual bool can_catch(const __shim_type_info*, void*&) const;
+    __attribute__ ((__visibility__("hidden"))) virtual ~__array_type_info();
+    __attribute__ ((__visibility__("hidden"))) virtual bool can_catch(const __shim_type_info*, void*&) const;
 };
 
-class __function_type_info
+class __attribute__ ((__visibility__("default"))) __function_type_info
     : public __shim_type_info
 {
 public:
-    virtual ~__function_type_info();
-    virtual bool can_catch(const __shim_type_info*, void*&) const;
+    __attribute__ ((__visibility__("hidden"))) virtual ~__function_type_info();
+    __attribute__ ((__visibility__("hidden"))) virtual bool can_catch(const __shim_type_info*, void*&) const;
 };
 
-class __enum_type_info
+class __attribute__ ((__visibility__("default"))) __enum_type_info
     : public __shim_type_info
 {
 public:
-    virtual ~__enum_type_info();
-    virtual bool can_catch(const __shim_type_info*, void*&) const;
+    __attribute__ ((__visibility__("hidden"))) virtual ~__enum_type_info();
+    __attribute__ ((__visibility__("hidden"))) virtual bool can_catch(const __shim_type_info*, void*&) const;
 };
 
 enum
@@ -118,33 +118,43 @@ struct __dynamic_cast_info
 };
 
 // Has no base class
-class __class_type_info
+class __attribute__ ((__visibility__("default"))) __class_type_info
     : public __shim_type_info
 {
 public:
-    virtual ~__class_type_info();
+    __attribute__ ((__visibility__("hidden"))) virtual ~__class_type_info();
 
-    void process_static_type_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
-    void process_static_type_below_dst(__dynamic_cast_info*, const void*, int) const;
-    void process_found_base_class(__dynamic_cast_info*, void*, int) const;
-    virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
-    virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
-    virtual bool can_catch(const __shim_type_info*, void*&) const;
-    virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        void process_static_type_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        void process_static_type_below_dst(__dynamic_cast_info*, const void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        void process_found_base_class(__dynamic_cast_info*, void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        virtual bool can_catch(const __shim_type_info*, void*&) const;
+    __attribute__ ((__visibility__("hidden")))
+        virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
 };
 
 // Has one non-virtual public base class at offset zero
-class __si_class_type_info
+class __attribute__ ((__visibility__("default"))) __si_class_type_info
     : public __class_type_info
 {
 public:
     const __class_type_info* __base_type;
 
-    virtual ~__si_class_type_info();
+    __attribute__ ((__visibility__("hidden"))) virtual ~__si_class_type_info();
 
-    virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
-    virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
-    virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
 };
 
 struct __base_class_type_info
@@ -166,7 +176,7 @@ public:
 };
 
 // Has one or more base classes
-class __vmi_class_type_info
+class __attribute__ ((__visibility__("default"))) __vmi_class_type_info
     : public __class_type_info
 {
 public:
@@ -182,14 +192,17 @@ public:
                                           //    more derived objects
     };
 
-    virtual ~__vmi_class_type_info();
+    __attribute__ ((__visibility__("hidden"))) virtual ~__vmi_class_type_info();
 
-    virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
-    virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
-    virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        virtual void search_above_dst(__dynamic_cast_info*, const void*, const void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        virtual void search_below_dst(__dynamic_cast_info*, const void*, int) const;
+    __attribute__ ((__visibility__("hidden")))
+        virtual void has_unambiguous_public_base(__dynamic_cast_info*, void*, int) const;
 };
 
-class __pbase_type_info
+class __attribute__ ((__visibility__("default"))) __pbase_type_info
     : public __shim_type_info
 {
 public:
@@ -205,28 +218,28 @@ public:
         __incomplete_class_mask = 0x10
     };
 
-    virtual ~__pbase_type_info();
-    virtual bool can_catch(const __shim_type_info*, void*&) const;
+    __attribute__ ((__visibility__("hidden"))) virtual ~__pbase_type_info();
+    __attribute__ ((__visibility__("hidden"))) virtual bool can_catch(const __shim_type_info*, void*&) const;
 };
 
-class __pointer_type_info
+class __attribute__ ((__visibility__("default"))) __pointer_type_info
     : public __pbase_type_info
 {
 public:
-    virtual ~__pointer_type_info();
-    virtual bool can_catch(const __shim_type_info*, void*&) const;
+    __attribute__ ((__visibility__("hidden"))) virtual ~__pointer_type_info();
+    __attribute__ ((__visibility__("hidden"))) virtual bool can_catch(const __shim_type_info*, void*&) const;
 };
 
-class __pointer_to_member_type_info
+class __attribute__ ((__visibility__("default"))) __pointer_to_member_type_info
     : public __pbase_type_info
 {
 public:
     const __class_type_info* __context;
 
-    virtual ~__pointer_to_member_type_info();
+    __attribute__ ((__visibility__("hidden"))) virtual ~__pointer_to_member_type_info();
 };
 
-//#pragma GCC visibility pop
+#pragma GCC visibility pop
 
 }  // __cxxabiv1
 

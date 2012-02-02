@@ -12,6 +12,8 @@
 
 #include <stdio.h>
 
+#pragma GCC visibility push(hidden)
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -25,6 +27,7 @@ __attribute__((visibility("hidden"), noreturn))
 }
 #endif
 
+#pragma GCC visibility pop
 
 #endif
 

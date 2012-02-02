@@ -17,6 +17,8 @@
 
 namespace __cxxabiv1 {
 
+#pragma GCC visibility push(hidden)
+
 static const uint64_t kOurExceptionClass          = 0x434C4E47432B2B00; // CLNGC++\0
 static const uint64_t kOurDependentExceptionClass = 0x434C4E47432B2B01; // CLNGC++\1
 static const uint64_t get_vendor_and_language =     0xFFFFFFFFFFFFFF00; // mask for CLNGC++
@@ -103,10 +105,14 @@ static const uint64_t get_vendor_and_language =     0xFFFFFFFFFFFFFF00; // mask 
 #endif
     };
 
+#pragma GCC visibility pop
+#pragma GCC visibility push(default)
+
     extern "C" __cxa_eh_globals * __cxa_get_globals      ();
     extern "C" __cxa_eh_globals * __cxa_get_globals_fast ();
 
     extern "C" void * __cxa_allocate_dependent_exception ();
     extern "C" void __cxa_free_dependent_exception (void * dependent_exception);
 
+#pragma GCC visibility pop
 }
