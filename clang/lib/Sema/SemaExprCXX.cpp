@@ -4232,6 +4232,8 @@ Sema::MaybeCreateExprWithCleanups(ExprResult SubExpr) {
 Expr *Sema::MaybeCreateExprWithCleanups(Expr *SubExpr) {
   assert(SubExpr && "sub expression can't be null!");
 
+  CleanupVarDeclMarking();
+
   unsigned FirstCleanup = ExprEvalContexts.back().NumCleanupObjects;
   assert(ExprCleanupObjects.size() >= FirstCleanup);
   assert(ExprNeedsCleanups || ExprCleanupObjects.size() == FirstCleanup);
@@ -4250,6 +4252,8 @@ Expr *Sema::MaybeCreateExprWithCleanups(Expr *SubExpr) {
 
 Stmt *Sema::MaybeCreateStmtWithCleanups(Stmt *SubStmt) {
   assert(SubStmt && "sub statement can't be null!");
+
+  CleanupVarDeclMarking();
 
   if (!ExprNeedsCleanups)
     return SubStmt;

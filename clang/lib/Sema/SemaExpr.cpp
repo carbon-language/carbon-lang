@@ -404,6 +404,8 @@ ExprResult Sema::DefaultLvalueConversion(Expr *E) {
   if (T.hasQualifiers())
     T = T.getUnqualifiedType();
 
+  UpdateMarkingForLValueToRValue(E);
+
   ExprResult Res = Owned(ImplicitCastExpr::Create(Context, T, CK_LValueToRValue,
                                                   E, 0, VK_RValue));
 
@@ -9433,6 +9435,8 @@ Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext) {
                                                ExprCleanupObjects.size(),
                                                ExprNeedsCleanups));
   ExprNeedsCleanups = false;
+  if (!MaybeODRUseExprs.empty())
+    std::swap(MaybeODRUseExprs, ExprEvalContexts.back().SavedMaybeODRUseExprs);
 }
 
 void Sema::PopExpressionEvaluationContext() {
@@ -9446,10 +9450,14 @@ void Sema::PopExpressionEvaluationContext() {
     ExprCleanupObjects.erase(ExprCleanupObjects.begin() + Rec.NumCleanupObjects,
                              ExprCleanupObjects.end());
     ExprNeedsCleanups = Rec.ParentNeedsCleanups;
+    CleanupVarDeclMarking();
+    std::swap(MaybeODRUseExprs, Rec.SavedMaybeODRUseExprs);
 
   // Otherwise, merge the contexts together.
   } else {
     ExprNeedsCleanups |= Rec.ParentNeedsCleanups;
+    MaybeODRUseExprs.insert(Rec.SavedMaybeODRUseExprs.begin(),
+                            Rec.SavedMaybeODRUseExprs.end());
   }
 
   // Pop the current expression evaluation context off the stack.
@@ -9461,6 +9469,7 @@ void Sema::DiscardCleanupsInEvaluationContext() {
          ExprCleanupObjects.begin() + ExprEvalContexts.back().NumCleanupObjects,
          ExprCleanupObjects.end());
   ExprNeedsCleanups = false;
+  MaybeODRUseExprs.clear();
 }
 
 ExprResult Sema::HandleExprEvaluationContextForTypeof(Expr *E) {
@@ -9604,16 +9613,62 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
   Func->setUsed(true);
 }
 
-/// \brief Mark a variable referenced, and check whether it is odr-used
-/// (C++ [basic.def.odr]p2, C99 6.9p3).  Note that this should not be
-/// used directly for normal expressions referring to VarDecl.
-void Sema::MarkVariableReferenced(SourceLocation Loc, VarDecl *Var) {
+static void MarkVarDeclODRUsed(Sema &SemaRef, VarDecl *Var,
+                               SourceLocation Loc) {
+  // Keep track of used but undefined variables.
+  if (Var->hasDefinition() == VarDecl::DeclarationOnly &&
+      Var->getLinkage() != ExternalLinkage) {
+    SourceLocation &old = SemaRef.UndefinedInternals[Var->getCanonicalDecl()];
+    if (old.isInvalid()) old = Loc;
+  }
+
+  Var->setUsed(true);
+}
+
+void Sema::UpdateMarkingForLValueToRValue(Expr *E) {
+  // Per C++11 [basic.def.odr], a variable is odr-used "unless it is 
+  // an object that satisfies the requirements for appearing in a
+  // constant expression (5.19) and the lvalue-to-rvalue conversion (4.1)
+  // is immediately applied."  This function handles the lvalue-to-rvalue
+  // conversion part.
+  MaybeODRUseExprs.erase(E->IgnoreParens());
+}
+
+void Sema::CleanupVarDeclMarking() {
+  for (llvm::SmallPtrSetIterator<Expr*> i = MaybeODRUseExprs.begin(),
+                                        e = MaybeODRUseExprs.end();
+       i != e; ++i) {
+    VarDecl *Var;
+    SourceLocation Loc;
+    if (BlockDeclRefExpr *BDRE = dyn_cast<BlockDeclRefExpr>(*i)) {
+      Var = BDRE->getDecl();
+      Loc = BDRE->getLocation();
+    } else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(*i)) {
+      Var = cast<VarDecl>(DRE->getDecl());
+      Loc = DRE->getLocation();
+    } else if (MemberExpr *ME = dyn_cast<MemberExpr>(*i)) {
+      Var = cast<VarDecl>(ME->getMemberDecl());
+      Loc = ME->getMemberLoc();
+    } else {
+      llvm_unreachable("Unexpcted expression");
+    }
+
+    MarkVarDeclODRUsed(*this, Var, Loc);
+  }
+
+  MaybeODRUseExprs.clear();
+}
+
+// Mark a VarDecl referenced, and perform the necessary handling to compute
+// odr-uses.
+static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
+                                    VarDecl *Var, Expr *E) {
   Var->setReferenced();
 
   if (Var->isUsed(false))
     return;
 
-  if (!IsPotentiallyEvaluatedContext(*this))
+  if (!IsPotentiallyEvaluatedContext(SemaRef))
     return;
 
   // Implicit instantiation of static data members of class templates.
@@ -9625,35 +9680,47 @@ void Sema::MarkVariableReferenced(SourceLocation Loc, VarDecl *Var) {
         MSInfo->getTemplateSpecializationKind()== TSK_ImplicitInstantiation) {
       MSInfo->setPointOfInstantiation(Loc);
       // This is a modification of an existing AST node. Notify listeners.
-      if (ASTMutationListener *L = getASTMutationListener())
+      if (ASTMutationListener *L = SemaRef.getASTMutationListener())
         L->StaticDataMemberInstantiated(Var);
       if (Var->isUsableInConstantExpressions())
         // Do not defer instantiations of variables which could be used in a
         // constant expression.
-        InstantiateStaticDataMemberDefinition(Loc, Var);
+        SemaRef.InstantiateStaticDataMemberDefinition(Loc, Var);
       else
-        PendingInstantiations.push_back(std::make_pair(Var, Loc));
+        SemaRef.PendingInstantiations.push_back(std::make_pair(Var, Loc));
     }
   }
 
-  // Keep track of used but undefined variables.  We make a hole in
-  // the warning for static const data members with in-line
-  // initializers.
-  // FIXME: The hole we make for static const data members is too wide!
-  // We need to implement the C++11 rules for odr-used.
-  if (Var->hasDefinition() == VarDecl::DeclarationOnly
-      && Var->getLinkage() != ExternalLinkage
-      && !(Var->isStaticDataMember() && Var->hasInit())) {
-    SourceLocation &old = UndefinedInternals[Var->getCanonicalDecl()];
-    if (old.isInvalid()) old = Loc;
-  }
+  // Per C++11 [basic.def.odr], a variable is odr-used "unless it is 
+  // an object that satisfies the requirements for appearing in a
+  // constant expression (5.19) and the lvalue-to-rvalue conversion (4.1)
+  // is immediately applied."  We check the first part here, and
+  // Sema::UpdateMarkingForLValueToRValue deals with the second part.
+  // Note that we use the C++11 definition everywhere because nothing in
+  // C++03 depends on whether we get the C++03 version correct.
+  const VarDecl *DefVD;
+  if (E && !isa<ParmVarDecl>(Var) &&
+      Var->isUsableInConstantExpressions() &&
+      Var->getAnyInitializer(DefVD) && DefVD->checkInitIsICE())
+    SemaRef.MaybeODRUseExprs.insert(E);
+  else
+    MarkVarDeclODRUsed(SemaRef, Var, Loc);
+}
 
-  Var->setUsed(true);
+/// \brief Mark a variable referenced, and check whether it is odr-used
+/// (C++ [basic.def.odr]p2, C99 6.9p3).  Note that this should not be
+/// used directly for normal expressions referring to VarDecl.
+void Sema::MarkVariableReferenced(SourceLocation Loc, VarDecl *Var) {
+  DoMarkVarDeclReferenced(*this, Loc, Var, 0);
 }
 
 static void MarkExprReferenced(Sema &SemaRef, SourceLocation Loc,
                                Decl *D, Expr *E) {
-  // TODO: Add special handling for variables
+  if (VarDecl *Var = dyn_cast<VarDecl>(D)) {
+    DoMarkVarDeclReferenced(SemaRef, Loc, Var, E);
+    return;
+  }
+
   SemaRef.MarkAnyDeclReferenced(Loc, D);
 }
 
@@ -9788,6 +9855,13 @@ namespace {
     
     void VisitCXXDefaultArgExpr(CXXDefaultArgExpr *E) {
       Visit(E->getExpr());
+    }
+
+    void VisitImplicitCastExpr(ImplicitCastExpr *E) {
+      Inherited::VisitImplicitCastExpr(E);
+
+      if (E->getCastKind() == CK_LValueToRValue)
+        S.UpdateMarkingForLValueToRValue(E->getSubExpr());
     }
   };
 }
