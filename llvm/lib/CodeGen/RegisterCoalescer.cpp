@@ -841,6 +841,19 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   TII->reMaterialize(*MBB, MII, DstReg, 0, DefMI, *TRI);
   MachineInstr *NewMI = prior(MII);
 
+  // NewMI may have dead implicit defs (E.g. EFLAGS for MOV<bits>r0 on X86).
+  // We need to remember these so we can add intervals once we insert
+  // NewMI into SlotIndexes.
+  SmallVector<unsigned, 4> NewMIImplDefs;
+  for (unsigned i = NewMI->getDesc().getNumOperands(),
+         e = NewMI->getNumOperands(); i != e; ++i) {
+    MachineOperand &MO = NewMI->getOperand(i);
+    if (MO.isReg()) {
+      assert(MO.isDef() && MO.isImplicit() && MO.isDead());
+      NewMIImplDefs.push_back(MO.getReg());
+    }
+  }
+
   // CopyMI may have implicit operands, transfer them over to the newly
   // rematerialized instruction. And update implicit def interval valnos.
   for (unsigned i = CopyMI->getDesc().getNumOperands(),
@@ -853,6 +866,17 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   }
 
   LIS->ReplaceMachineInstrInMaps(CopyMI, NewMI);
+
+  SlotIndex NewMIIdx = LIS->getInstructionIndex(NewMI);
+  for (unsigned i = 0, e = NewMIImplDefs.size(); i != e; ++i) {
+    unsigned reg = NewMIImplDefs[i];
+    LiveInterval &li = LIS->getInterval(reg);
+    VNInfo *DeadDefVN = li.getNextValue(NewMIIdx.getRegSlot(), 0,
+                                        LIS->getVNInfoAllocator());
+    LiveRange lr(NewMIIdx.getRegSlot(), NewMIIdx.getDeadSlot(), DeadDefVN);
+    li.addRange(lr);
+  }
+
   NewMI->copyImplicitOps(CopyMI);
   CopyMI->eraseFromParent();
   ReMatCopies.insert(CopyMI);
