@@ -41,6 +41,17 @@ def note_constexpr_float_arithmetic : Note<
 def note_constexpr_pointer_arithmetic : Note<
   "cannot refer to element %0 of non-array object in a constant "
   "expression">;
+def note_constexpr_pointer_subtraction_not_same_array : Note<
+  "subtracted pointers are not elements of the same array">;
+def note_constexpr_pointer_comparison_base_classes : Note<
+  "comparison of addresses of subobjects of different base classes "
+  "has unspecified value">;
+def note_constexpr_pointer_comparison_base_field : Note<
+  "comparison of address of base class subobject %0 of class %1 to field %2 "
+  "has unspecified value">;
+def note_constexpr_pointer_comparison_differing_access : Note<
+  "comparison of address of fields %0 and %2 of %4 with differing access "
+  "specifiers (%1 vs %3) has unspecified value">;
 def note_constexpr_compare_virtual_mem_ptr : Note<
   "comparison of pointer to virtual member function %0 has unspecified value">;
 def note_constexpr_past_end : Note<

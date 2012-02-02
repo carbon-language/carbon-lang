@@ -109,7 +109,6 @@ namespace RecursionLimits {
   };
 }
 
-// FIXME:
 // - an operation that would have undefined behavior [Note: including, for
 //   example, signed integer overflow (Clause 5 [expr]), certain pointer
 //   arithmetic (5.7 [expr.add]), division by zero (5.6 [expr.mul]), or certain
@@ -195,6 +194,15 @@ namespace UndefinedBehavior {
     constexpr int k3 = (&c)[1].f(); // expected-error {{constant expression}} expected-note {{cannot call member function on pointer past the end of object}}
     C c2;
     constexpr int k4 = c2.f(); // ok!
+
+    constexpr int diff1 = &a[2] - &a[0];
+    constexpr int diff2 = &a[1][3] - &a[1][0];
+    constexpr int diff3 = &a[2][0] - &a[1][0]; // expected-error {{constant expression}} expected-note {{subtracted pointers are not elements of the same array}}
+    static_assert(&a[2][0] == &a[1][3], "");
+    constexpr int diff4 = (&b + 1) - &b;
+    constexpr int diff5 = &a[1][2].n - &a[1][0].n; // expected-error {{constant expression}} expected-note {{subtracted pointers are not elements of the same array}}
+    constexpr int diff6 = &a[1][2].n - &a[1][2].n;
+    constexpr int diff7 = (A*)&a[0][1] - (A*)&a[0][0]; // expected-error {{constant expression}} expected-note {{subtracted pointers are not elements of the same array}}
   }
 
   namespace Overflow {
@@ -293,8 +301,6 @@ namespace LValueToRValue {
   static_assert(((volatile const S&&)(S)0).i, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
 }
 
-// FIXME:
-//
 // DR1312: The proposed wording for this defect has issues, so we ignore this
 // bullet and instead prohibit casts from pointers to cv void (see core-20842
 // and core-20845).
@@ -303,9 +309,23 @@ namespace LValueToRValue {
 // glvalue of type cv1 T that refers to an object of type cv2 U, where T and U
 // are neither the same type nor similar types (4.4 [conv.qual]);
 
-// FIXME:
 // - an lvalue-to-rvalue conversion (4.1) that is applied to a glvalue that
 // refers to a non-active member of a union or a subobject thereof;
+namespace LValueToRValueUnion {
+  // test/SemaCXX/constant-expression-cxx11.cpp contains more thorough testing
+  // of this.
+  union U { int a, b; } constexpr u = U();
+  static_assert(u.a == 0, "");
+  constexpr const int *bp = &u.b;
+  constexpr int b = *bp; // expected-error {{constant expression}} expected-note {{read of member 'b' of union with active member 'a'}}
+
+  extern const U pu;
+  constexpr const int *pua = &pu.a;
+  constexpr const int *pub = &pu.b;
+  constexpr U pu = { .b = 1 }; // expected-warning {{C99 feature}}
+  constexpr const int a2 = *pua; // expected-error {{constant expression}} expected-note {{read of member 'a' of union with active member 'b'}}
+  constexpr const int b2 = *pub; // ok
+}
 
 // - an id-expression that refers to a variable or data member of reference type
 //   unless the reference has a preceding initialization, initialized with a
@@ -431,9 +451,43 @@ namespace UnspecifiedRelations {
   constexpr bool u13 = pf < pg; // expected-error {{constant expression}}
   constexpr bool u14 = pf == pg;
 
-  // FIXME:
   // If two pointers point to non-static data members of the same object with
   // different access control, the result is unspecified.
+  struct A {
+  public:
+    constexpr A() : a(0), b(0) {}
+    int a;
+    constexpr bool cmp() { return &a < &b; } // expected-error {{constexpr function never produces a constant expression}} expected-note {{comparison of address of fields 'a' and 'b' of 'A' with differing access specifiers (public vs private) has unspecified value}}
+  private:
+    int b;
+  };
+  class B {
+  public:
+    A a;
+    constexpr bool cmp() { return &a.a < &b.a; } // expected-error {{constexpr function never produces a constant expression}} expected-note {{comparison of address of fields 'a' and 'b' of 'B' with differing access specifiers (public vs protected) has unspecified value}}
+  protected:
+    A b;
+  };
+
+  // If two pointers point to different base sub-objects of the same object, or
+  // one points to a base subobject and the other points to a member, the result
+  // of the comparison is unspecified. This is not explicitly called out by
+  // [expr.rel]p2, but is covered by 'Other pointer comparisons are
+  // unspecified'.
+  struct C {
+    int c[2];
+  };
+  struct D {
+    int d;
+  };
+  struct E : C, D {
+    struct Inner {
+      int f;
+    } e;
+  } e;
+  constexpr bool base1 = &e.c[0] < &e.d; // expected-error {{constant expression}} expected-note {{comparison of addresses of subobjects of different base classes has unspecified value}}
+  constexpr bool base2 = &e.c[1] < &e.e.f; // expected-error {{constant expression}} expected-note {{comparison of address of base class subobject 'C' of class 'E' to field 'e' has unspecified value}}
+  constexpr bool base3 = &e.e.f < &e.d; // expected-error {{constant expression}} expected-note {{comparison of address of base class subobject 'D' of class 'E' to field 'e' has unspecified value}}
 
   // [expr.rel]p3: Pointers to void can be compared [...] if both pointers
   // represent the same address or are both the null pointer [...]; otherwise
@@ -450,10 +504,6 @@ namespace UnspecifiedRelations {
   constexpr bool v6 = qv > null; // expected-error {{constant expression}}
   constexpr bool v7 = qv <= (void*)&s.b; // ok
   constexpr bool v8 = qv > (void*)&s.a; // expected-error {{constant expression}} expected-note {{unequal pointers to void}}
-
-  // FIXME: Implement comparisons of pointers to members.
-  // [expr.eq]p2: If either is a pointer to a virtual member function and
-  // neither is null, the result is unspecified.
 }
 
 // - an assignment or a compound assignment (5.17); or

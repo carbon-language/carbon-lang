@@ -37,6 +37,7 @@ namespace DerivedToVBaseCast {
   D d;
   constexpr B *p = &d;
   constexpr C *q = &d;
+
   static_assert((void*)p != (void*)q, "");
   static_assert((A*)p == (A*)q, "");
   static_assert((Aa*)p != (Aa*)q, "");
@@ -65,7 +66,6 @@ namespace DerivedToVBaseCast {
   struct Z : Y1, Y2 {};
   Z z;
   static_assert((X*)(Y1*)&z != (X*)(Y2*)&z, "");
-
 }
 
 namespace ConstCast {
@@ -666,7 +666,7 @@ static_assert(&bot1 != &bot2, "");
 
 constexpr Bottom *pb1 = (Base*)&derived;
 constexpr Bottom *pb2 = (Base2*)&derived;
-static_assert(pb1 != pb2, "");
+static_assert(&pb1 != &pb2, "");
 static_assert(pb1 == &bot1, "");
 static_assert(pb2 == &bot2, "");
 
@@ -1112,4 +1112,18 @@ namespace IndirectField {
   static_assert(s2.d == 6, "");
   static_assert(s2.e == 0, ""); // expected-error {{constant expression}} expected-note {{union with active member}}
   static_assert(s2.f == 7, "");
+}
+
+namespace Fold {
+
+  // This macro forces its argument to be constant-folded, even if it's not
+  // otherwise a constant expression.
+  #define fold(x) (__builtin_constant_p(x) ? (x) : (x))
+
+  constexpr int n = (int)(char*)123; // expected-error {{constant expression}} expected-note {{reinterpret_cast}}
+  constexpr int m = fold((int)(char*)123); // ok
+  static_assert(m == 123, "");
+
+  #undef fold
+
 }

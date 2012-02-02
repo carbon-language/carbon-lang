@@ -2774,6 +2774,9 @@ public:
 const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
                                     AccessSpecifier AS);
 
+const PartialDiagnostic &operator<<(const PartialDiagnostic &DB,
+                                    AccessSpecifier AS);
+
 } // end namespace clang
 
 #endif

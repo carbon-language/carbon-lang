@@ -72,4 +72,10 @@ constexpr S InitList3(int a) { return a ? (S){ a, a } : (S){ a, ng }; }; // ok
 // expression with an unknown value, and diagnose if neither is constant.
 constexpr S InitList4(int a) { return a ? (S){ a, ng } : (S){ a, ng }; };
 
+// __builtin_constant_p ? : is magical, and is always a potential constant.
+constexpr bool BcpCall(int n) {
+  return __builtin_constant_p((int*)n != &n) ? (int*)n != &n : (int*)n != &n;
+}
+static_assert(BcpCall(0), "");
+
 }

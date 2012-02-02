@@ -78,25 +78,27 @@ namespace {
   }
 
   /// Get an LValue path entry, which is known to not be an array index, as a
-  /// field declaration.
-  const FieldDecl *getAsField(APValue::LValuePathEntry E) {
+  /// field or base class.
+  APValue::BaseOrMemberType getAsBaseOrMember(APValue::LValuePathEntry E) {
     APValue::BaseOrMemberType Value;
     Value.setFromOpaqueValue(E.BaseOrMember);
-    return dyn_cast<FieldDecl>(Value.getPointer());
+    return Value;
+  }
+
+  /// Get an LValue path entry, which is known to not be an array index, as a
+  /// field declaration.
+  const FieldDecl *getAsField(APValue::LValuePathEntry E) {
+    return dyn_cast<FieldDecl>(getAsBaseOrMember(E).getPointer());
   }
   /// Get an LValue path entry, which is known to not be an array index, as a
   /// base class declaration.
   const CXXRecordDecl *getAsBaseClass(APValue::LValuePathEntry E) {
-    APValue::BaseOrMemberType Value;
-    Value.setFromOpaqueValue(E.BaseOrMember);
-    return dyn_cast<CXXRecordDecl>(Value.getPointer());
+    return dyn_cast<CXXRecordDecl>(getAsBaseOrMember(E).getPointer());
   }
   /// Determine whether this LValue path entry for a base class names a virtual
   /// base class.
   bool isVirtualBaseClass(APValue::LValuePathEntry E) {
-    APValue::BaseOrMemberType Value;
-    Value.setFromOpaqueValue(E.BaseOrMember);
-    return Value.getInt();
+    return getAsBaseOrMember(E).getInt();
   }
 
   /// Find the path length and type of the most-derived subobject in the given
@@ -509,6 +511,22 @@ namespace {
     /// construct which can't be folded?
     bool keepEvaluatingAfterFailure() {
       return CheckingPotentialConstantExpression && EvalStatus.Diag->empty();
+    }
+  };
+
+  /// Object used to treat all foldable expressions as constant expressions.
+  struct FoldConstant {
+    bool Enabled;
+
+    explicit FoldConstant(EvalInfo &Info)
+      : Enabled(Info.EvalStatus.Diag && Info.EvalStatus.Diag->empty() &&
+                !Info.EvalStatus.HasSideEffects) {
+    }
+    // Treat the value we've computed since this object was created as constant.
+    void Fold(EvalInfo &Info) {
+      if (Enabled && !Info.EvalStatus.Diag->empty() &&
+          !Info.EvalStatus.HasSideEffects)
+        Info.EvalStatus.Diag->clear();
     }
   };
 }
@@ -1480,6 +1498,59 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
   return true;
 }
 
+/// Find the position where two subobject designators diverge, or equivalently
+/// the length of the common initial subsequence.
+static unsigned FindDesignatorMismatch(QualType ObjType,
+                                       const SubobjectDesignator &A,
+                                       const SubobjectDesignator &B,
+                                       bool &WasArrayIndex) {
+  unsigned I = 0, N = std::min(A.Entries.size(), B.Entries.size());
+  for (/**/; I != N; ++I) {
+    if (!ObjType.isNull() && ObjType->isArrayType()) {
+      // Next subobject is an array element.
+      if (A.Entries[I].ArrayIndex != B.Entries[I].ArrayIndex) {
+        WasArrayIndex = true;
+        return I;
+      }
+      ObjType = ObjType->castAsArrayTypeUnsafe()->getElementType();
+    } else {
+      if (A.Entries[I].BaseOrMember != B.Entries[I].BaseOrMember) {
+        WasArrayIndex = false;
+        return I;
+      }
+      if (const FieldDecl *FD = getAsField(A.Entries[I]))
+        // Next subobject is a field.
+        ObjType = FD->getType();
+      else
+        // Next subobject is a base class.
+        ObjType = QualType();
+    }
+  }
+  WasArrayIndex = false;
+  return I;
+}
+
+/// Determine whether the given subobject designators refer to elements of the
+/// same array object.
+static bool AreElementsOfSameArray(QualType ObjType,
+                                   const SubobjectDesignator &A,
+                                   const SubobjectDesignator &B) {
+  if (A.Entries.size() != B.Entries.size())
+    return false;
+
+  bool IsArray = A.MostDerivedArraySize != 0;
+  if (IsArray && A.MostDerivedPathLength != A.Entries.size())
+    // A is a subobject of the array element.
+    return false;
+
+  // If A (and B) designates an array element, the last entry will be the array
+  // index. That doesn't have to match. Otherwise, we're in the 'implicit array
+  // of length 1' case, and the entire path must match.
+  bool WasArrayIndex;
+  unsigned CommonLength = FindDesignatorMismatch(ObjType, A, B, WasArrayIndex);
+  return CommonLength >= A.Entries.size() - IsArray;
+}
+
 /// HandleLValueToRValueConversion - Perform an lvalue-to-rvalue conversion on
 /// the given lvalue. This can also be used for 'lvalue-to-lvalue' conversions
 /// for looking up the glvalue referred to by an entity of reference type.
@@ -1530,6 +1601,8 @@ static bool HandleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
     // parameters are constant expressions even if they're non-const.
     // In C, such things can also be folded, although they are not ICEs.
     const VarDecl *VD = dyn_cast<VarDecl>(D);
+    if (const VarDecl *VDef = VD->getDefinition())
+      VD = VDef;
     if (!VD || VD->isInvalidDecl()) {
       Info.Diag(Loc);
       return false;
@@ -2279,12 +2352,35 @@ public:
   }
 
   RetTy VisitConditionalOperator(const ConditionalOperator *E) {
+    bool IsBcpCall = false;
+    // If the condition (ignoring parens) is a __builtin_constant_p call,
+    // the result is a constant expression if it can be folded without
+    // side-effects. This is an important GNU extension. See GCC PR38377
+    // for discussion.
+    if (const CallExpr *CallCE =
+          dyn_cast<CallExpr>(E->getCond()->IgnoreParenCasts()))
+      if (CallCE->isBuiltinCall() == Builtin::BI__builtin_constant_p)
+        IsBcpCall = true;
+
+    // Always assume __builtin_constant_p(...) ? ... : ... is a potential
+    // constant expression; we can't check whether it's potentially foldable.
+    if (Info.CheckingPotentialConstantExpression && IsBcpCall)
+      return false;
+
+    FoldConstant Fold(Info);
+
     bool BoolResult;
     if (!EvaluateAsBooleanCondition(E->getCond(), BoolResult, Info))
       return false;
 
     Expr *EvalExpr = BoolResult ? E->getTrueExpr() : E->getFalseExpr();
-    return StmtVisitorTy::Visit(EvalExpr);
+    if (!StmtVisitorTy::Visit(EvalExpr))
+      return false;
+
+    if (IsBcpCall)
+      Fold.Fold(Info);
+
+    return true;
   }
 
   RetTy VisitOpaqueValueExpr(const OpaqueValueExpr *E) {
@@ -4343,14 +4439,22 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         return Success(E->getOpcode() == BO_NE, E);
       }
 
-      // FIXME: Implement the C++11 restrictions:
-      //  - Pointer subtractions must be on elements of the same array.
-      //  - Pointer comparisons must be between members with the same access.
-
       const CharUnits &LHSOffset = LHSValue.getLValueOffset();
       const CharUnits &RHSOffset = RHSValue.getLValueOffset();
 
+      SubobjectDesignator &LHSDesignator = LHSValue.getLValueDesignator();
+      SubobjectDesignator &RHSDesignator = RHSValue.getLValueDesignator();
+
       if (E->getOpcode() == BO_Sub) {
+        // C++11 [expr.add]p6:
+        //   Unless both pointers point to elements of the same array object, or
+        //   one past the last element of the array object, the behavior is
+        //   undefined.
+        if (!LHSDesignator.Invalid && !RHSDesignator.Invalid &&
+            !AreElementsOfSameArray(getType(LHSValue.Base),
+                                    LHSDesignator, RHSDesignator))
+          CCEDiag(E, diag::note_constexpr_pointer_subtraction_not_same_array);
+
         QualType Type = E->getLHS()->getType();
         QualType ElementType = Type->getAs<PointerType>()->getPointeeType();
 
@@ -4388,8 +4492,50 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
       //   unspecified.
       // We interpret this as applying to pointers to *cv* void.
       if (LHSTy->isVoidPointerType() && LHSOffset != RHSOffset &&
-          E->getOpcode() != BO_EQ && E->getOpcode() != BO_NE)
+          E->isRelationalOp())
         CCEDiag(E, diag::note_constexpr_void_comparison);
+
+      // C++11 [expr.rel]p2:
+      // - If two pointers point to non-static data members of the same object,
+      //   or to subobjects or array elements fo such members, recursively, the
+      //   pointer to the later declared member compares greater provided the
+      //   two members have the same access control and provided their class is
+      //   not a union.
+      //   [...]
+      // - Otherwise pointer comparisons are unspecified.
+      if (!LHSDesignator.Invalid && !RHSDesignator.Invalid &&
+          E->isRelationalOp()) {
+        bool WasArrayIndex;
+        unsigned Mismatch =
+          FindDesignatorMismatch(getType(LHSValue.Base), LHSDesignator,
+                                 RHSDesignator, WasArrayIndex);
+        // At the point where the designators diverge, the comparison has a
+        // specified value if:
+        //  - we are comparing array indices
+        //  - we are comparing fields of a union, or fields with the same access
+        // Otherwise, the result is unspecified and thus the comparison is not a
+        // constant expression.
+        if (!WasArrayIndex && Mismatch < LHSDesignator.Entries.size() &&
+            Mismatch < RHSDesignator.Entries.size()) {
+          const FieldDecl *LF = getAsField(LHSDesignator.Entries[Mismatch]);
+          const FieldDecl *RF = getAsField(RHSDesignator.Entries[Mismatch]);
+          if (!LF && !RF)
+            CCEDiag(E, diag::note_constexpr_pointer_comparison_base_classes);
+          else if (!LF)
+            CCEDiag(E, diag::note_constexpr_pointer_comparison_base_field)
+              << getAsBaseClass(LHSDesignator.Entries[Mismatch])
+              << RF->getParent() << RF;
+          else if (!RF)
+            CCEDiag(E, diag::note_constexpr_pointer_comparison_base_field)
+              << getAsBaseClass(RHSDesignator.Entries[Mismatch])
+              << LF->getParent() << LF;
+          else if (!LF->getParent()->isUnion() &&
+                   LF->getAccess() != RF->getAccess())
+            CCEDiag(E, diag::note_constexpr_pointer_comparison_differing_access)
+              << LF << LF->getAccess() << RF << RF->getAccess()
+              << LF->getParent();
+        }
+      }
 
       switch (E->getOpcode()) {
       default: llvm_unreachable("missing comparison operator");
