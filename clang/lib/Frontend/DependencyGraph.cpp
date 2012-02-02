@@ -7,7 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This code generates a header dependency graph in GraphViz format.
+// This code generates a header dependency graph in DOT format, for use
+// with, e.g., GraphViz.
 //
 //===----------------------------------------------------------------------===//
 

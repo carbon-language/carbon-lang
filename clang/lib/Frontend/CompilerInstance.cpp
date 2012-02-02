@@ -275,8 +275,8 @@ void CompilerInstance::createPreprocessor() {
   const DependencyOutputOptions &DepOpts = getDependencyOutputOpts();
   if (!DepOpts.OutputFile.empty())
     AttachDependencyFileGen(*PP, DepOpts);
-  if (!DepOpts.GraphvizOutputFile.empty())
-    AttachDependencyGraphGen(*PP, DepOpts.GraphvizOutputFile,
+  if (!DepOpts.DOTOutputFile.empty())
+    AttachDependencyGraphGen(*PP, DepOpts.DOTOutputFile,
                              getHeaderSearchOpts().Sysroot);
 
   

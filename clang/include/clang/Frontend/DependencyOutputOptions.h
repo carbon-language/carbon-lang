@@ -40,7 +40,7 @@ public:
   std::vector<std::string> Targets;
 
   /// \brief The file to write GraphViz-formatted header dependencies to.
-  std::string GraphvizOutputFile;
+  std::string DOTOutputFile;
   
 public:
   DependencyOutputOptions() {
