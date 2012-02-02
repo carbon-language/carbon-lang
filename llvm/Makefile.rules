@@ -116,6 +116,10 @@ $(LLVMConfigLibraryDependenciesInc): $(LLVMBuildMakeFrag)
 # building from a subdirectory, but that is always somewhat unreliable.
 ifeq ($(LEVEL),.)
 LLVMBUILD_INCLUDE_DEPENDENCIES := 1
+
+# Clean the generated makefile fragment at the top-level.
+clean-local::
+	-$(Verb) $(RM) -f $(LLVMBuildMakeFrag)
 endif
 -include $(LLVMBuildMakeFrag)
 
