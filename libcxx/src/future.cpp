@@ -29,7 +29,7 @@ __future_error_category::name() const _NOEXCEPT
 string
 __future_error_category::message(int ev) const
 {
-    switch (ev)
+    switch (static_cast<future_errc>(ev))
     {
     case future_errc::broken_promise:
         return string("The associated promise has been destructed prior "
