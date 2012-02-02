@@ -197,7 +197,9 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setOperationAction(ISD::FMA,               MVT::f64,   Expand);
 
   setOperationAction(ISD::EXCEPTIONADDR,     MVT::i32, Expand);
+  setOperationAction(ISD::EXCEPTIONADDR,     MVT::i64, Expand);
   setOperationAction(ISD::EHSELECTION,       MVT::i32, Expand);
+  setOperationAction(ISD::EHSELECTION,       MVT::i64, Expand);
 
   setOperationAction(ISD::VAARG,             MVT::Other, Expand);
   setOperationAction(ISD::VACOPY,            MVT::Other, Expand);
@@ -248,8 +250,8 @@ MipsTargetLowering(MipsTargetMachine &TM)
   setStackPointerRegisterToSaveRestore(HasMips64 ? Mips::SP_64 : Mips::SP);
   computeRegisterProperties();
 
-  setExceptionPointerRegister(Mips::A0);
-  setExceptionSelectorRegister(Mips::A1);
+  setExceptionPointerRegister(IsN64 ? Mips::A0_64 : Mips::A0);
+  setExceptionSelectorRegister(IsN64 ? Mips::A1_64 : Mips::A1);
 }
 
 bool MipsTargetLowering::allowsUnalignedMemoryAccesses(EVT VT) const {
