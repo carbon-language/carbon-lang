@@ -247,7 +247,7 @@ MipsTargetLowering(MipsTargetMachine &TM)
 
   setMinFunctionAlignment(2);
 
-  setStackPointerRegisterToSaveRestore(HasMips64 ? Mips::SP_64 : Mips::SP);
+  setStackPointerRegisterToSaveRestore(IsN64 ? Mips::SP_64 : Mips::SP);
   computeRegisterProperties();
 
   setExceptionPointerRegister(IsN64 ? Mips::A0_64 : Mips::A0);
