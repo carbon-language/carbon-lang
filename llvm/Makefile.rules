@@ -94,7 +94,8 @@ endif
 #
 # We include a dependency on this Makefile to ensure that changes to the
 # generation command get picked up.
-$(LLVMBuildMakeFrag): $(PROJ_SRC_ROOT)/Makefile.rules
+$(LLVMBuildMakeFrag): $(PROJ_SRC_ROOT)/Makefile.rules \
+		      $(PROJ_OBJ_ROOT)/Makefile.config
 	$(Echo) Constructing LLVMBuild project information.
 	$(Verb) $(LLVMBuildTool) \
 	  --native-target "$(TARGET_NATIVE_ARCH)" \
