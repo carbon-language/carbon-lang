@@ -515,10 +515,15 @@ class value(object):
         return float (self.sbvalue.GetValueAsSigned())
         
     def __oct__(self):
-        return '0%o' % self.sbvalue.GetValueAsSigned()
+        return '0%o' % self.sbvalue.GetValueAsUnsigned()
         
     def __hex__(self):
-        return '0x%x' % self.sbvalue.GetValueAsSigned()
+        return '0x%x' % self.sbvalue.GetValueAsUnsigned()
 
+    def __eq__(self, other):
+        return self.sbvalue.GetValueAsUnsigned() == self.sbvalue.GetValueAsUnsigned()
+                                                                    
+    def __neq__(self, other):
+        return not self.__eq__(other)
 %}
 
