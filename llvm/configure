@@ -21096,7 +21096,7 @@ ac_config_files="$ac_config_files docs/doxygen.cfg"
 
 
 if test ${clang_src_root} = ""; then
-  clang_src_root="$ac_pwd/tools/clang"
+  clang_src_root="$srcdir/tools/clang"
 fi
 if test -f ${clang_src_root}/README.txt; then
   ac_config_headers="$ac_config_headers ${clang_src_root}/include/clang/Config/config.h"
