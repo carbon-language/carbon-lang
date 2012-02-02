@@ -275,7 +275,11 @@ void CompilerInstance::createPreprocessor() {
   const DependencyOutputOptions &DepOpts = getDependencyOutputOpts();
   if (!DepOpts.OutputFile.empty())
     AttachDependencyFileGen(*PP, DepOpts);
+  if (!DepOpts.GraphvizOutputFile.empty())
+    AttachDependencyGraphGen(*PP, DepOpts.GraphvizOutputFile,
+                             getHeaderSearchOpts().Sysroot);
 
+  
   // Handle generating header include information, if requested.
   if (DepOpts.ShowHeaderIncludes)
     AttachHeaderIncludeGen(*PP);

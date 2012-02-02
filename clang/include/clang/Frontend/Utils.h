@@ -73,6 +73,11 @@ void DoPrintPreprocessedInput(Preprocessor &PP, raw_ostream* OS,
 void AttachDependencyFileGen(Preprocessor &PP,
                              const DependencyOutputOptions &Opts);
 
+/// AttachDependencyGraphGen - Create a dependency graph generator, and attach
+/// it to the given preprocessor.
+  void AttachDependencyGraphGen(Preprocessor &PP, StringRef OutputFile,
+                                StringRef SysRoot);
+
 /// AttachHeaderIncludeGen - Create a header include list generator, and attach
 /// it to the given preprocessor.
 ///

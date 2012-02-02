@@ -25,7 +25,7 @@ public:
                                      /// dependency, which can avoid some 'make'
                                      /// problems.
   unsigned AddMissingHeaderDeps : 1; ///< Add missing headers to dependency list
-
+  
   /// The file to write dependency output to.
   std::string OutputFile;
 
@@ -39,6 +39,9 @@ public:
   /// must contain at least one entry.
   std::vector<std::string> Targets;
 
+  /// \brief The file to write GraphViz-formatted header dependencies to.
+  std::string GraphvizOutputFile;
+  
 public:
   DependencyOutputOptions() {
     IncludeSystemHeaders = 0;

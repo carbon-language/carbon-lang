@@ -1191,6 +1191,7 @@ static void ParseDependencyOutputArgs(DependencyOutputOptions &Opts,
   Opts.ShowHeaderIncludes = Args.hasArg(OPT_H);
   Opts.HeaderIncludeOutputFile = Args.getLastArgValue(OPT_header_include_file);
   Opts.AddMissingHeaderDeps = Args.hasArg(OPT_MG);
+  Opts.GraphvizOutputFile = Args.getLastArgValue(OPT_dependency_graphviz);
 }
 
 static bool ParseDiagnosticArgs(DiagnosticOptions &Opts, ArgList &Args,

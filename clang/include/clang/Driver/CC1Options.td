@@ -233,6 +233,8 @@ def pg : Flag<"-pg">, HelpText<"Enable mcount instrumentation">;
 
 def dependency_file : Separate<"-dependency-file">,
   HelpText<"Filename (or -) to write dependency output to">;
+def dependency_graphviz : Separate<"-dependency-graphviz">,
+  HelpText<"Filename to write GraphViz-formatted header dependencies to">;
 def sys_header_deps : Flag<"-sys-header-deps">,
   HelpText<"Include system headers in dependency output">;
 def header_include_file : Separate<"-header-include-file">,
