@@ -37,6 +37,7 @@
 using namespace lldb;
 
 static void reset_stdin_termios ();
+static bool g_old_stdin_termios_is_valid = false;
 static struct termios g_old_stdin_termios;
 
 static char *g_debugger_name =  (char *) "";
@@ -47,7 +48,11 @@ static Driver *g_driver = NULL;
 static void
 reset_stdin_termios ()
 {
-    ::tcsetattr (STDIN_FILENO, TCSANOW, &g_old_stdin_termios);
+    if (g_old_stdin_termios_is_valid)
+    {
+        g_old_stdin_termios_is_valid = false;
+        ::tcsetattr (STDIN_FILENO, TCSANOW, &g_old_stdin_termios);
+    }
 }
 
 typedef struct
@@ -1109,7 +1114,10 @@ Driver::MainLoop ()
    // struct termios stdin_termios;
 
     if (::tcgetattr(STDIN_FILENO, &g_old_stdin_termios) == 0)
+    {
+        g_old_stdin_termios_is_valid = true;
         atexit (reset_stdin_termios);
+    }
 
     ::setbuf (stdin, NULL);
     ::setbuf (stdout, NULL);
@@ -1348,10 +1356,6 @@ Driver::MainLoop ()
                         {
                             if (event_type & SBCommandInterpreter::eBroadcastBitQuitCommandReceived)
                             {
-                                editline_output_pty.CloseMasterFileDescriptor();
-                                master_out_comm.Disconnect();
-                                out_comm_2.Disconnect();
-                                fclose (stdin);
                                 done = true;
                             }
                             else if (event_type & SBCommandInterpreter::eBroadcastBitAsynchronousErrorData)
@@ -1369,7 +1373,11 @@ Driver::MainLoop ()
                 }
             }
 
-            reset_stdin_termios ();
+            editline_output_pty.CloseMasterFileDescriptor();
+            master_out_comm.Disconnect();
+            out_comm_2.Disconnect();
+            reset_stdin_termios();
+            fclose (stdin);
 
             CloseIOChannelFile ();
 
