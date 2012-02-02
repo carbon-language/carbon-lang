@@ -4204,7 +4204,7 @@ SymbolFileDWARF::FindDefinitionTypeForDIE (DWARFCompileUnit* cu,
                                           MakeUserID(type_cu->GetOffset()));
                             
                             m_die_to_type[die] = resolved_type;
-                            type_sp = resolved_type;
+                            type_sp = resolved_type->shared_from_this();
                             break;
                         }
                     }
