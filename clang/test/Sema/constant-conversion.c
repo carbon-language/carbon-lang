@@ -74,3 +74,9 @@ void test7() {
 	f.twoBits1 &= ~1; // no-warning
 	f.twoBits2 &= ~2; // no-warning
 }
+
+void test8() {
+  enum E { A, B, C };
+  struct { enum E x : 1; } f;
+  f.x = C; // expected-warning {{implicit truncation from 'int' to bitfield changes value from 2 to 0}}
+}
