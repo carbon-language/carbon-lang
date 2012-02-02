@@ -276,11 +276,18 @@ Sema::HandlePropertyInClassExtension(Scope *S,
       L->AddedObjCPropertyInClassExtension(PDecl, /*OrigProp=*/0, CDecl);
     return PDecl;
   }
-  if (PIDecl->getType().getCanonicalType() 
-      != PDecl->getType().getCanonicalType()) {
-    Diag(AtLoc, 
-         diag::err_type_mismatch_continuation_class) << PDecl->getType();
-    Diag(PIDecl->getLocation(), diag::note_property_declare);
+  if (!Context.hasSameType(PIDecl->getType(), PDecl->getType())) {
+    bool IncompatibleObjC = false;
+    QualType ConvertedType;
+    if (!isa<ObjCObjectPointerType>(PIDecl->getType()) ||
+        !isa<ObjCObjectPointerType>(PDecl->getType()) ||
+        (!isObjCPointerConversion(PDecl->getType(), PIDecl->getType(), 
+                                  ConvertedType, IncompatibleObjC))
+        || IncompatibleObjC) {
+      Diag(AtLoc, 
+          diag::err_type_mismatch_continuation_class) << PDecl->getType();
+      Diag(PIDecl->getLocation(), diag::note_property_declare);
+    }
   }
     
   // The property 'PIDecl's readonly attribute will be over-ridden
