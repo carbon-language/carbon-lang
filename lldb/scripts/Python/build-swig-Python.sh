@@ -22,6 +22,7 @@ swig_output_file=${SRC_ROOT}/source/LLDBWrapPython.cpp
 swig_input_file=${SRC_ROOT}/scripts/lldb.swig
 swig_python_extensions=${SRC_ROOT}/scripts/Python/python-extensions.swig
 swig_python_wrapper=${SRC_ROOT}/scripts/Python/python-wrapper.swig
+swig_python_typemaps=${SRC_ROOT}/scripts/Python/python-typemaps.swig
 
 if [ "x$SDKROOT" = "x" ] ; then
 
@@ -204,6 +205,19 @@ then
         if [ $Debug == 1 ]
         then
             echo "${swig_python_wrapper} is newer than ${swig_output_file}"
+            echo "swig file will need to be re-built."
+        fi
+    fi
+fi
+
+if [ $NeedToUpdate == 0 ]
+then
+    if [ ${swig_python_typemaps} -nt ${swig_output_file} ]
+    then
+        NeedToUpdate=1
+        if [ $Debug == 1 ]
+        then
+            echo "${swig_python_typemaps} is newer than ${swig_output_file}"
             echo "swig file will need to be re-built."
         fi
     fi
