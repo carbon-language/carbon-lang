@@ -1664,6 +1664,8 @@ public:
     return Res;
   }
 
+  bool isSentinelNullExpr(const Expr *E);
+
   /// \brief Get the implementation of ObjCInterfaceDecl,or NULL if none exists.
   ObjCImplementationDecl *getObjCImplementation(ObjCInterfaceDecl *D);
   /// \brief Get the implementation of ObjCCategoryDecl, or NULL if none exists.

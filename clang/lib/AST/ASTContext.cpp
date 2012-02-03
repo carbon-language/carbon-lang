@@ -1247,6 +1247,24 @@ unsigned ASTContext::CountNonClassIvars(const ObjCInterfaceDecl *OI) const {
   return count;
 }
 
+bool ASTContext::isSentinelNullExpr(const Expr *E) {
+  if (!E)
+    return false;
+
+  // nullptr_t is always treated as null.
+  if (E->getType()->isNullPtrType()) return true;
+
+  if (E->getType()->isAnyPointerType() &&
+      E->IgnoreParenCasts()->isNullPointerConstant(*this,
+                                                Expr::NPC_ValueDependentIsNull))
+    return true;
+
+  // Unfortunately, __null has type 'int'.
+  if (isa<GNUNullExpr>(E)) return true;
+
+  return false;
+}
+
 /// \brief Get the implementation of ObjCInterfaceDecl,or NULL if none exists.
 ObjCImplementationDecl *ASTContext::getObjCImplementation(ObjCInterfaceDecl *D) {
   llvm::DenseMap<ObjCContainerDecl*, ObjCImplDecl*>::iterator

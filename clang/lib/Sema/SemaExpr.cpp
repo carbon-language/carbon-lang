@@ -249,7 +249,7 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
   Expr *sentinelExpr = args[numArgs - numArgsAfterSentinel - 1];
   if (!sentinelExpr) return;
   if (sentinelExpr->isValueDependent()) return;
-  if (isSentinelNullExpr(sentinelExpr)) return;
+  if (Context.isSentinelNullExpr(sentinelExpr)) return;
 
   // Pick a reasonable string to insert.  Optimistically use 'nil' or
   // 'NULL' if those are actually defined in the context.  Only use
@@ -277,24 +277,6 @@ void Sema::DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
 
 SourceRange Sema::getExprRange(Expr *E) const {
   return E ? E->getSourceRange() : SourceRange();
-}
-
-bool Sema::isSentinelNullExpr(const Expr *E) const {
-  if (!E)
-    return false;
-
-  // nullptr_t is always treated as null.
-  if (E->getType()->isNullPtrType()) return true;
-
-  if (E->getType()->isAnyPointerType() &&
-      E->IgnoreParenCasts()->isNullPointerConstant(Context,
-                                            Expr::NPC_ValueDependentIsNull))
-    return true;
-
-  // Unfortunately, __null has type 'int'.
-  if (isa<GNUNullExpr>(E)) return true;
-
-  return false;
 }
 
 //===----------------------------------------------------------------------===//
