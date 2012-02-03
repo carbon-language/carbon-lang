@@ -577,6 +577,19 @@ namespace lldb {
         eTypeClassAny               = (0xffffffffu)
     }TypeClass;
 
+    typedef enum TemplateArgumentKind
+    {
+        eTemplateArgumentKindNull = 0,
+        eTemplateArgumentKindType,
+        eTemplateArgumentKindDeclaration,
+        eTemplateArgumentKindIntegral,
+        eTemplateArgumentKindTemplate,
+        eTemplateArgumentKindTemplateExpansion,
+        eTemplateArgumentKindExpression,
+        eTemplateArgumentKindPack
+
+    } TemplateArgumentKind;
+
 } // namespace lldb
 
 

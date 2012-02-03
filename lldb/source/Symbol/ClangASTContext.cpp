@@ -2499,6 +2499,111 @@ ClangASTContext::AddMethodToObjCObjectType
     return objc_method_decl;
 }
 
+size_t
+ClangASTContext::GetNumTemplateArguments (clang::ASTContext *ast, clang_type_t clang_type)
+{
+    if (clang_type)
+    {
+        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+        
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
+        {
+            case clang::Type::Record:
+                if (GetCompleteQualType (ast, qual_type))
+                {
+                    const CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+                    if (cxx_record_decl)
+                    {
+                        const ClassTemplateSpecializationDecl *template_decl = dyn_cast<ClassTemplateSpecializationDecl>(cxx_record_decl);
+                        if (template_decl)
+                            return template_decl->getTemplateArgs().size();
+                    }
+                }
+                break;
+                
+            case clang::Type::Typedef:                         
+                return ClangASTContext::GetNumTemplateArguments (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr());
+            default:
+                break;
+        }
+    }
+    return 0;
+}
+
+clang_type_t
+ClangASTContext::GetTemplateArgument (clang::ASTContext *ast, clang_type_t clang_type, size_t arg_idx, lldb::TemplateArgumentKind &kind)
+{
+    if (clang_type)
+    {
+        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+        
+        const clang::Type::TypeClass type_class = qual_type->getTypeClass();
+        switch (type_class)
+        {
+            case clang::Type::Record:
+                if (GetCompleteQualType (ast, qual_type))
+                {
+                    const CXXRecordDecl *cxx_record_decl = qual_type->getAsCXXRecordDecl();
+                    if (cxx_record_decl)
+                    {
+                        const ClassTemplateSpecializationDecl *template_decl = dyn_cast<ClassTemplateSpecializationDecl>(cxx_record_decl);
+                        if (template_decl && arg_idx < template_decl->getTemplateArgs().size())
+                        {
+                            const TemplateArgument &template_arg = template_decl->getTemplateArgs()[arg_idx];
+                            switch (template_arg.getKind())
+                            {
+                                case clang::TemplateArgument::Null:
+                                    kind = eTemplateArgumentKindNull;
+                                    return NULL;
+
+                                case clang::TemplateArgument::Type:
+                                    kind = eTemplateArgumentKindType;
+                                    return template_arg.getAsType().getAsOpaquePtr();
+
+                                case clang::TemplateArgument::Declaration:
+                                    kind = eTemplateArgumentKindDeclaration;
+                                    return NULL;
+
+                                case clang::TemplateArgument::Integral:
+                                    kind = eTemplateArgumentKindIntegral;
+                                    return template_arg.getIntegralType().getAsOpaquePtr();
+
+                                case clang::TemplateArgument::Template:
+                                    kind = eTemplateArgumentKindTemplate;
+                                    return NULL;
+
+                                case clang::TemplateArgument::TemplateExpansion:
+                                    kind = eTemplateArgumentKindTemplateExpansion;
+                                    return NULL;
+
+                                case clang::TemplateArgument::Expression:
+                                    kind = eTemplateArgumentKindExpression;
+                                    return NULL;
+
+                                case clang::TemplateArgument::Pack:
+                                    kind = eTemplateArgumentKindPack;
+                                    return NULL;
+
+                                default:
+                                    assert (!"Unhandled TemplateArgument::ArgKind");
+                                    kind = eTemplateArgumentKindNull;
+                                    return NULL;
+                            }
+                        }
+                    }
+                }
+                break;
+                
+            case clang::Type::Typedef:                         
+                return ClangASTContext::GetTemplateArgument (ast, cast<TypedefType>(qual_type)->getDecl()->getUnderlyingType().getAsOpaquePtr(), arg_idx, kind);
+            default:
+                break;
+        }
+    }
+    kind = eTemplateArgumentKindNull;
+    return NULL;
+}
 
 uint32_t
 ClangASTContext::GetTypeInfo 

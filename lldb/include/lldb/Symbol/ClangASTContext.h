@@ -593,6 +593,30 @@ public:
                                    bool omit_empty_base_classes,
                                    std::vector<uint32_t>& child_indexes);
 
+    size_t
+    GetNumTemplateArguments (lldb::clang_type_t clang_type)
+    {
+        return GetNumTemplateArguments(getASTContext(), clang_type);
+    }
+
+    lldb::clang_type_t
+    GetTemplateArgument (lldb::clang_type_t clang_type, 
+                         size_t idx, 
+                         lldb::TemplateArgumentKind &kind)
+    {
+        return GetTemplateArgument(getASTContext(), clang_type, idx, kind);
+    }
+
+    static size_t
+    GetNumTemplateArguments (clang::ASTContext *ast, 
+                             lldb::clang_type_t clang_type);
+    
+    static lldb::clang_type_t
+    GetTemplateArgument (clang::ASTContext *ast, 
+                         lldb::clang_type_t clang_type, 
+                         size_t idx, 
+                         lldb::TemplateArgumentKind &kind);
+
     //------------------------------------------------------------------
     // clang::TagType
     //------------------------------------------------------------------

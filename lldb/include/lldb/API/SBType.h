@@ -124,6 +124,15 @@ public:
     lldb::SBTypeMember
     GetVirtualBaseClassAtIndex (uint32_t idx);
 
+    uint32_t
+    GetNumberOfTemplateArguments ();
+    
+    lldb::SBType
+    GetTemplateArgumentType (uint32_t idx);
+
+    lldb::TemplateArgumentKind
+    GetTemplateArgumentKind (uint32_t idx);
+
     const char*
     GetName();
     

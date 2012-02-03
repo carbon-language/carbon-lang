@@ -191,6 +191,15 @@ public:
     lldb::TypeClass
     GetTypeClass ();
     
+    uint32_t
+    GetNumberOfTemplateArguments ();
+    
+    lldb::SBType
+    GetTemplateArgumentType (uint32_t idx);
+    
+    lldb::TemplateArgumentKind
+    GetTemplateArgumentKind (uint32_t idx);
+
     %pythoncode %{
         __swig_getmethods__["name"] = GetName
         if _newclass: x = property(GetName, None)

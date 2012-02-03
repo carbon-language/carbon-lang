@@ -326,7 +326,7 @@ ScriptInterpreterPython::EnterSession ()
     // embedded we don't know we should be feeding input to the embedded 
     // interpreter or to the python sys.stdin. We also don't want to let python
     // play with the real stdin from this process, so we need to close it...
-    run_string.PutCString ("; sys.stdin.close()");
+    //run_string.PutCString ("; sys.stdin.close()");
     run_string.PutCString ("')");
 
     PyRun_SimpleString (run_string.GetData());
