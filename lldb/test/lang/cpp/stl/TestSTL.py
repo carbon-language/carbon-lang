@@ -29,13 +29,13 @@ class STLTestCase(TestBase):
 
     @python_api_test
     def test_SBType_template_aspects_with_dsym(self):
-        """Test APIs for getting template arguments from a SBType."""
+        """Test APIs for getting template arguments from an SBType."""
         self.buildDsym()
         self.sbtype_template_apis()
 
     @python_api_test
     def test_SBType_template_aspects_with_dwarf(self):
-        """Test APIs for getting template arguments from a SBType."""
+        """Test APIs for getting template arguments from an SBType."""
         self.buildDwarf()
         self.sbtype_template_apis()
 
