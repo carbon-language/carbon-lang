@@ -180,6 +180,11 @@ namespace llvm {
     const char *JT32Begin;                   // Defaults to "$a."
     bool SupportsDataRegions;
 
+    /// GPRel64Directive - if non-null, a directive that is used to emit a word
+    /// which should be relocated as a 64-bit GP-relative offset, e.g. .gpdword
+    /// on Mips.
+    const char *GPRel64Directive;            // Defaults to NULL.
+
     /// GPRel32Directive - if non-null, a directive that is used to emit a word
     /// which should be relocated as a 32-bit GP-relative offset, e.g. .gpword
     /// on Mips or .gprel32 on Alpha.
@@ -376,6 +381,7 @@ namespace llvm {
     const char *getData64bitsDirective(unsigned AS = 0) const {
       return AS == 0 ? Data64bitsDirective : getDataASDirective(64, AS);
     }
+    const char *getGPRel64Directive() const { return GPRel64Directive; }
     const char *getGPRel32Directive() const { return GPRel32Directive; }
 
     /// [Code|Data]Begin label name accessors.

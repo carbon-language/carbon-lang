@@ -186,6 +186,8 @@ public:
 
   virtual void EmitSLEB128Value(const MCExpr *Value);
 
+  virtual void EmitGPRel64Value(const MCExpr *Value);
+
   virtual void EmitGPRel32Value(const MCExpr *Value);
 
 
@@ -660,6 +662,12 @@ void MCAsmStreamer::EmitSLEB128Value(const MCExpr *Value) {
   }
   assert(MAI.hasLEB128() && "Cannot print a .sleb");
   OS << ".sleb128 " << *Value;
+  EmitEOL();
+}
+
+void MCAsmStreamer::EmitGPRel64Value(const MCExpr *Value) {
+  assert(MAI.getGPRel64Directive() != 0);
+  OS << MAI.getGPRel64Directive() << *Value;
   EmitEOL();
 }
 

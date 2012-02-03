@@ -530,6 +530,8 @@ unsigned MachineJumpTableInfo::getEntrySize(const TargetData &TD) const {
   switch (getEntryKind()) {
   case MachineJumpTableInfo::EK_BlockAddress:
     return TD.getPointerSize();
+  case MachineJumpTableInfo::EK_GPRel64BlockAddress:
+    return 8;
   case MachineJumpTableInfo::EK_GPRel32BlockAddress:
   case MachineJumpTableInfo::EK_LabelDifference32:
   case MachineJumpTableInfo::EK_Custom32:
@@ -549,6 +551,8 @@ unsigned MachineJumpTableInfo::getEntryAlignment(const TargetData &TD) const {
   switch (getEntryKind()) {
   case MachineJumpTableInfo::EK_BlockAddress:
     return TD.getPointerABIAlignment();
+  case MachineJumpTableInfo::EK_GPRel64BlockAddress:
+    return TD.getABIIntegerTypeAlignment(64);
   case MachineJumpTableInfo::EK_GPRel32BlockAddress:
   case MachineJumpTableInfo::EK_LabelDifference32:
   case MachineJumpTableInfo::EK_Custom32:

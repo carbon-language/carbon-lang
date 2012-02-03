@@ -67,6 +67,7 @@ MCAsmInfo::MCAsmInfo() {
   AlignDirective = "\t.align\t";
   AlignmentIsInBytes = true;
   TextAlignFillValue = 0;
+  GPRel64Directive = 0;
   GPRel32Directive = 0;
   GlobalDirective = "\t.globl\t";
   HasSetDirective = true;

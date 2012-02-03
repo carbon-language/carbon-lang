@@ -1155,6 +1155,15 @@ void AsmPrinter::EmitJumpTableEntry(const MachineJumpTableInfo *MJTI,
     return;
   }
 
+  case MachineJumpTableInfo::EK_GPRel64BlockAddress: {
+    // EK_GPRel64BlockAddress - Each entry is an address of block, encoded
+    // with a relocation as gp-relative, e.g.:
+    //     .gpdword LBB123
+    MCSymbol *MBBSym = MBB->getSymbol();
+    OutStreamer.EmitGPRel64Value(MCSymbolRefExpr::Create(MBBSym, OutContext));
+    return;
+  }
+
   case MachineJumpTableInfo::EK_LabelDifference32: {
     // EK_LabelDifference32 - Each entry is the address of the block minus
     // the address of the jump table.  This is used for PIC jump tables where

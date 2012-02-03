@@ -1161,6 +1161,9 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
     }
     break;
   }
+  case MachineJumpTableInfo::EK_GPRel64BlockAddress:
+    assert(false &&
+           "JT Info emission not implemented for GPRel64BlockAddress yet.");
   }
 }
 

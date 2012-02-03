@@ -47,7 +47,12 @@ public:
     /// EK_BlockAddress - Each entry is a plain address of block, e.g.:
     ///     .word LBB123
     EK_BlockAddress,
-    
+
+    /// EK_GPRel64BlockAddress - Each entry is an address of block, encoded
+    /// with a relocation as gp-relative, e.g.:
+    ///     .gpdword LBB123
+    EK_GPRel64BlockAddress,
+
     /// EK_GPRel32BlockAddress - Each entry is an address of block, encoded
     /// with a relocation as gp-relative, e.g.:
     ///     .gprel32 LBB123

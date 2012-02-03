@@ -441,6 +441,13 @@ namespace llvm {
     void EmitSymbolValue(const MCSymbol *Sym, unsigned Size,
                          unsigned AddrSpace = 0);
 
+    /// EmitGPRel64Value - Emit the expression @p Value into the output as a
+    /// gprel64 (64-bit GP relative) value.
+    ///
+    /// This is used to implement assembler directives such as .gpdword on
+    /// targets that support them.
+    virtual void EmitGPRel64Value(const MCExpr *Value);
+
     /// EmitGPRel32Value - Emit the expression @p Value into the output as a
     /// gprel32 (32-bit GP relative) value.
     ///

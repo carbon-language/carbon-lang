@@ -2909,3 +2909,10 @@ bool MipsTargetLowering::isFPImmLegal(const APFloat &Imm, EVT VT) const {
     return false;
   return Imm.isZero();
 }
+
+unsigned MipsTargetLowering::getJumpTableEncoding() const {
+  if (IsN64)
+    return MachineJumpTableInfo::EK_GPRel64BlockAddress;
+  
+  return TargetLowering::getJumpTableEncoding();
+}

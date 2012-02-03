@@ -15,7 +15,7 @@ entry:
 ; PIC-O32: sll ${{[0-9]+}}, ${{[0-9]+}}, 2
 ; PIC-N64: ld $[[R0:[0-9]+]], %got_page($JTI0_0)
 ; PIC-N64: daddiu ${{[0-9]+}}, $[[R0]], %got_ofst($JTI0_0)
-; PIC-N64: dsll ${{[0-9]+}}, ${{[0-9]+}}, 2
+; PIC-N64: dsll ${{[0-9]+}}, ${{[0-9]+}}, 3
   switch i32 %0, label %bb4 [
     i32 0, label %bb5
     i32 1, label %bb1
@@ -39,3 +39,23 @@ bb4:                                              ; preds = %entry
 bb5:                                              ; preds = %entry
   ret i32 1
 }
+
+; STATIC-O32: .align  2
+; STATIC-O32: $JTI0_0:
+; STATIC-O32: .4byte
+; STATIC-O32: .4byte
+; STATIC-O32: .4byte
+; STATIC-O32: .4byte
+; PIC-O32: .align  2
+; PIC-O32: $JTI0_0:
+; PIC-O32: .gpword
+; PIC-O32: .gpword
+; PIC-O32: .gpword 
+; PIC-O32: .gpword 
+; PIC-N64: .align  3
+; PIC-N64: $JTI0_0:
+; PIC-N64: .gpdword
+; PIC-N64: .gpdword
+; PIC-N64: .gpdword 
+; PIC-N64: .gpdword 
+

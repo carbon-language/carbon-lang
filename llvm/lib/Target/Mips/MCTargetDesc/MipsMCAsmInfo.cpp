@@ -32,6 +32,7 @@ MipsMCAsmInfo::MipsMCAsmInfo(const Target &T, StringRef TT) {
   CommentString               = "#";
   ZeroDirective               = "\t.space\t";
   GPRel32Directive            = "\t.gpword\t";
+  GPRel64Directive            = "\t.gpdword\t";
   WeakRefDirective            = "\t.weak\t";
 
   SupportsDebugInformation = true;

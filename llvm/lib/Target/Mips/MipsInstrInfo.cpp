@@ -469,11 +469,14 @@ unsigned MipsInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
   MachineBasicBlock::iterator MBBI = FirstMBB.begin();
   MachineRegisterInfo &RegInfo = MF->getRegInfo();
   const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
+  unsigned GP = IsN64 ? Mips::GP_64 : Mips::GP;
+  const TargetRegisterClass *RC
+    = IsN64 ? Mips::CPU64RegsRegisterClass : Mips::CPURegsRegisterClass;
 
-  GlobalBaseReg = RegInfo.createVirtualRegister(Mips::CPURegsRegisterClass);
+  GlobalBaseReg = RegInfo.createVirtualRegister(RC);
   BuildMI(FirstMBB, MBBI, DebugLoc(), TII->get(TargetOpcode::COPY),
-          GlobalBaseReg).addReg(Mips::GP);
-  RegInfo.addLiveIn(Mips::GP);
+          GlobalBaseReg).addReg(GP);
+  RegInfo.addLiveIn(GP);
 
   MipsFI->setGlobalBaseReg(GlobalBaseReg);
   return GlobalBaseReg;
