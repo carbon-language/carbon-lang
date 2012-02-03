@@ -2679,18 +2679,20 @@ StorageClassSpecToFunctionDeclStorageClass(DeclSpec::SCS StorageClassSpec) {
 
 /// BuildAnonymousStructOrUnion - Handle the declaration of an
 /// anonymous structure or union. Anonymous unions are a C++ feature
-/// (C++ [class.union]) and a GNU C extension; anonymous structures
-/// are a GNU C and GNU C++ extension.
+/// (C++ [class.union]) and a C11 feature; anonymous structures
+/// are a C11 feature and GNU C++ extension.
 Decl *Sema::BuildAnonymousStructOrUnion(Scope *S, DeclSpec &DS,
                                              AccessSpecifier AS,
                                              RecordDecl *Record) {
   DeclContext *Owner = Record->getDeclContext();
 
   // Diagnose whether this anonymous struct/union is an extension.
-  if (Record->isUnion() && !getLangOptions().CPlusPlus)
+  if (Record->isUnion() && !getLangOptions().CPlusPlus && !getLangOptions().C11)
     Diag(Record->getLocation(), diag::ext_anonymous_union);
-  else if (!Record->isUnion())
-    Diag(Record->getLocation(), diag::ext_anonymous_struct);
+  else if (!Record->isUnion() && getLangOptions().CPlusPlus)
+    Diag(Record->getLocation(), diag::ext_gnu_anonymous_struct);
+  else if (!Record->isUnion() && !getLangOptions().C11)
+    Diag(Record->getLocation(), diag::ext_c11_anonymous_struct);
 
   // C and C++ require different kinds of checks for anonymous
   // structs/unions.

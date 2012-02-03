@@ -4570,9 +4570,11 @@ def ext_in_class_initializer_non_constant : Extension<
 
 // C++ anonymous unions and GNU anonymous structs/unions
 def ext_anonymous_union : Extension<
-  "anonymous unions are a GNU extension in C">, InGroup<GNU>;
-def ext_anonymous_struct : Extension<
+  "anonymous unions are a C11 extension">, InGroup<C11>;
+def ext_gnu_anonymous_struct : Extension<
   "anonymous structs are a GNU extension">, InGroup<GNU>;
+def ext_c11_anonymous_struct : Extension<
+  "anonymous structs are a C11 extension">, InGroup<C11>;
 def err_anonymous_union_not_static : Error<
   "anonymous unions at namespace or global scope must be declared 'static'">;
 def err_anonymous_union_with_storage_spec : Error<

@@ -245,7 +245,7 @@ static void sppp_ipv6cp_up();
 const struct {} ipcp = { sppp_ipv6cp_up }; //expected-warning{{empty struct is a GNU extension}} \
 // expected-warning{{excess elements in struct initializer}}
 
-struct _Matrix { union { float m[4][4]; }; }; //expected-warning{{anonymous unions are a GNU extension in C}}
+struct _Matrix { union { float m[4][4]; }; }; //expected-warning{{anonymous unions are a C11 extension}}
 typedef struct _Matrix Matrix;
 void test_matrix() {
   const Matrix mat1 = {
