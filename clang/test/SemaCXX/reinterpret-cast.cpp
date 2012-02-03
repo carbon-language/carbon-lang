@@ -9,13 +9,27 @@ typedef void (*fnptr)();
 // Test the conversion to self.
 void self_conversion()
 {
-  // T*->T* is allowed, T->T in general not.
+  // T->T is allowed per [expr.reinterpret.cast]p2 so long as it doesn't
+  // cast away constness, and is integral, enumeration, pointer or 
+  // pointer-to-member.
   int i = 0;
-  (void)reinterpret_cast<int>(i); // expected-error {{reinterpret_cast from 'int' to 'int' is not allowed}}
-  structure s;
-  (void)reinterpret_cast<structure>(s); // expected-error {{reinterpret_cast from 'structure' to 'structure' is not allowed}}
+  (void)reinterpret_cast<int>(i);
+
+  test e = testval;
+  (void)reinterpret_cast<test>(e);
+
+  // T*->T* is allowed
   int *pi = 0;
   (void)reinterpret_cast<int*>(pi);
+
+  const int structure::*psi = 0;
+  (void)reinterpret_cast<const int structure::*>(psi);
+
+  structure s;
+  (void)reinterpret_cast<structure>(s); // expected-error {{reinterpret_cast from 'structure' to 'structure' is not allowed}}
+
+  float f = 0.0f;
+  (void)reinterpret_cast<float>(f); // expected-error {{reinterpret_cast from 'float' to 'float' is not allowed}}
 }
 
 // Test conversion between pointer and integral types, as in /3 and /4.

@@ -1616,7 +1616,27 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     
     return TC_Failed;
   }
-  
+
+  if (SrcType == DestType) {
+    // C++ 5.2.10p2 has a note that mentions that, subject to all other
+    // restrictions, a cast to the same type is allowed so long as it does not
+    // cast away constness. In C++98, the intent was not entirely clear here, 
+    // since all other paragraphs explicitly forbid casts to the same type.
+    // C++11 clarifies this case with p2.
+    //
+    // The only allowed types are: integral, enumeration, pointer, or 
+    // pointer-to-member types.  We also won't restrict Obj-C pointers either.
+    Kind = CK_NoOp;
+    TryCastResult Result = TC_NotApplicable;
+    if (SrcType->isIntegralOrEnumerationType() ||
+        SrcType->isAnyPointerType() ||
+        SrcType->isMemberPointerType() ||
+        SrcType->isBlockPointerType()) {
+      Result = TC_Success;
+    }
+    return Result;
+  }
+
   bool destIsPtr = DestType->isAnyPointerType() ||
                    DestType->isBlockPointerType();
   bool srcIsPtr = SrcType->isAnyPointerType() ||
@@ -1625,17 +1645,6 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     // Except for std::nullptr_t->integer and lvalue->reference, which are
     // handled above, at least one of the two arguments must be a pointer.
     return TC_NotApplicable;
-  }
-
-  if (SrcType == DestType) {
-    // C++ 5.2.10p2 has a note that mentions that, subject to all other
-    // restrictions, a cast to the same type is allowed. The intent is not
-    // entirely clear here, since all other paragraphs explicitly forbid casts
-    // to the same type. However, the behavior of compilers is pretty consistent
-    // on this point: allow same-type conversion if the involved types are
-    // pointers, disallow otherwise.
-    Kind = CK_NoOp;
-    return TC_Success;
   }
 
   if (DestType->isIntegralType(Self.Context)) {
