@@ -3743,35 +3743,6 @@ static bool isVPERMILPMask(ArrayRef<int> Mask, EVT VT, bool HasAVX) {
   return true;
 }
 
-/// getShuffleVPERMILPImmediate - Return the appropriate immediate to shuffle
-/// the specified VECTOR_MASK mask with VPERMILPS/D* instructions.
-static unsigned getShuffleVPERMILPImmediate(ShuffleVectorSDNode *SVOp) {
-  EVT VT = SVOp->getValueType(0);
-
-  unsigned NumElts = VT.getVectorNumElements();
-  unsigned NumLanes = VT.getSizeInBits()/128;
-  unsigned LaneSize = NumElts/NumLanes;
-
-  // Although the mask is equal for both lanes do it twice to get the cases
-  // where a mask will match because the same mask element is undef on the
-  // first half but valid on the second. This would get pathological cases
-  // such as: shuffle <u, 0, 1, 2, 4, 4, 5, 6>, which is completely valid.
-  unsigned Shift = (LaneSize == 4) ? 2 : 1;
-  unsigned Mask = 0;
-  for (unsigned i = 0; i != NumElts; ++i) {
-    int MaskElt = SVOp->getMaskElt(i);
-    if (MaskElt < 0)
-      continue;
-    MaskElt %= LaneSize;
-    unsigned Shamt = i;
-    // VPERMILPSY, the mask of the first half must be equal to the second one
-    if (NumElts == 8) Shamt %= LaneSize;
-    Mask |= MaskElt << (Shamt*Shift);
-  }
-
-  return Mask;
-}
-
 /// isCommutedMOVL - Returns true if the shuffle mask is except the reverse
 /// of what x86 movss want. X86 movs requires the lowest  element to be lowest
 /// element of vector 2 and the other elements to come from vector 1 in order.
@@ -6673,7 +6644,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   // Handle VPERMILPS/D* permutations
   if (isVPERMILPMask(M, VT, HasAVX))
     return getTargetShuffleNode(X86ISD::VPERMILP, dl, VT, V1,
-                                getShuffleVPERMILPImmediate(SVOp), DAG);
+                                X86::getShuffleSHUFImmediate(SVOp), DAG);
 
   // Handle VPERM2F128/VPERM2I128 permutations
   if (isVPERM2X128Mask(M, VT, HasAVX))
