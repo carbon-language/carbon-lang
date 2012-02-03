@@ -73,7 +73,7 @@ fi
 set -x
 
 for FILE in ../src/*.cpp; do
-	$CXX -c -g -O0 $RC_CFLAGS $EXTRA_FLAGS -I../include $FILE
+	$CXX -c -g -O3 $RC_CFLAGS $EXTRA_FLAGS -I../include $FILE
 done
 case $TRIPLE in
   *-*-mingw*)
