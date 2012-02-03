@@ -1105,12 +1105,21 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     if (FT->isVarArg()!=cast<FunctionType>(APTy->getElementType())->isVarArg())
       return false;
   }
+      
+  if (FT->getNumParams() < NumActualArgs && FT->isVarArg() &&
+      !CallerPAL.isEmpty())
+    // In this case we have more arguments than the new function type, but we
+    // won't be dropping them.  Check that these extra arguments have attributes
+    // that are compatible with being a vararg call argument.
+    for (unsigned i = CallerPAL.getNumSlots(); i; --i) {
+      if (CallerPAL.getSlot(i - 1).Index <= FT->getNumParams())
+        break;
+      Attributes PAttrs = CallerPAL.getSlot(i - 1).Attrs;
+      if (PAttrs & Attribute::VarArgsIncompatible)
+        return false;
+    }
 
-  // If we're casting varargs to non-varargs, that may not be allowable
-  // under the ABI, so conservatively don't do anything.
-  if (FT->getNumParams() < NumActualArgs && FT->isVarArg())
-    return false;
-
+  
   // Okay, we decided that this is a safe thing to do: go ahead and start
   // inserting cast instructions as necessary.
   std::vector<Value*> Args;
