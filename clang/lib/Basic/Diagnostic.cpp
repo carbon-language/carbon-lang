@@ -330,14 +330,11 @@ void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
          RE = storedDiag.range_end(); RI != RE; ++RI)
     DiagRanges[i++] = *RI;
 
-  NumFixItHints = storedDiag.fixit_size();
-  assert(NumFixItHints < DiagnosticsEngine::MaxFixItHints &&
-      "Too many fix-it hints!");
-  i = 0;
+  FixItHints.clear();
   for (StoredDiagnostic::fixit_iterator
          FI = storedDiag.fixit_begin(),
          FE = storedDiag.fixit_end(); FI != FE; ++FI)
-    FixItHints[i++] = *FI;
+    FixItHints.push_back(*FI);
 
   assert(Client && "DiagnosticConsumer not set!");
   Level DiagLevel = storedDiag.getLevel();
@@ -354,7 +351,6 @@ void DiagnosticsEngine::Report(const StoredDiagnostic &storedDiag) {
 void DiagnosticBuilder::FlushCounts() {
   DiagObj->NumDiagArgs = NumArgs;
   DiagObj->NumDiagRanges = NumRanges;
-  DiagObj->NumFixItHints = NumFixItHints;
 }
 
 bool DiagnosticBuilder::Emit() {

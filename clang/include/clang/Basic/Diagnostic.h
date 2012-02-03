@@ -614,9 +614,6 @@ private:
   signed char NumDiagArgs;
   /// NumRanges - This is the number of ranges in the DiagRanges array.
   unsigned char NumDiagRanges;
-  /// \brief The number of code modifications hints in the
-  /// FixItHints array.
-  unsigned char NumFixItHints;
 
   /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
   /// values, with one for each argument.  This specifies whether the argument
@@ -638,11 +635,9 @@ private:
   /// only support 10 ranges, could easily be extended if needed.
   CharSourceRange DiagRanges[10];
 
-  enum { MaxFixItHints = 6 };
-
   /// FixItHints - If valid, provides a hint with some code
   /// to insert, remove, or modify at a particular position.
-  FixItHint FixItHints[MaxFixItHints];
+  SmallVector<FixItHint, 6> FixItHints;
 
   DiagnosticMappingInfo makeMappingInfo(diag::Mapping Map, SourceLocation L) {
     bool isPragma = L.isValid();
@@ -720,12 +715,14 @@ public:
 /// for example.
 class DiagnosticBuilder {
   mutable DiagnosticsEngine *DiagObj;
-  mutable unsigned NumArgs, NumRanges, NumFixItHints;
+  mutable unsigned NumArgs, NumRanges;
 
   void operator=(const DiagnosticBuilder&); // DO NOT IMPLEMENT
   friend class DiagnosticsEngine;
   explicit DiagnosticBuilder(DiagnosticsEngine *diagObj)
-    : DiagObj(diagObj), NumArgs(0), NumRanges(0), NumFixItHints(0) {}
+    : DiagObj(diagObj), NumArgs(0), NumRanges(0) {
+    DiagObj->FixItHints.clear();
+  }
 
   friend class PartialDiagnostic;
 
@@ -740,7 +737,6 @@ public:
     D.DiagObj = 0;
     NumArgs = D.NumArgs;
     NumRanges = D.NumRanges;
-    NumFixItHints = D.NumFixItHints;
   }
 
   /// \brief Simple enumeration value used to give a name to the
@@ -750,7 +746,7 @@ public:
   /// \brief Create an empty DiagnosticBuilder object that represents
   /// no actual diagnostic.
   explicit DiagnosticBuilder(SuppressKind)
-    : DiagObj(0), NumArgs(0), NumRanges(0), NumFixItHints(0) { }
+    : DiagObj(0), NumArgs(0), NumRanges(0) { }
 
   /// \brief Force the diagnostic builder to emit the diagnostic now.
   ///
@@ -816,12 +812,8 @@ public:
   }
 
   void AddFixItHint(const FixItHint &Hint) const {
-    assert(NumFixItHints < DiagnosticsEngine::MaxFixItHints &&
-           "Too many fix-it hints!");
-    if (NumFixItHints >= DiagnosticsEngine::MaxFixItHints)
-      return;  // Don't crash in release builds
     if (DiagObj)
-      DiagObj->FixItHints[NumFixItHints++] = Hint;
+      DiagObj->FixItHints.push_back(Hint);
   }
 };
 
@@ -997,7 +989,7 @@ public:
   }
 
   unsigned getNumFixItHints() const {
-    return DiagObj->NumFixItHints;
+    return DiagObj->FixItHints.size();
   }
 
   const FixItHint &getFixItHint(unsigned Idx) const {
@@ -1005,8 +997,8 @@ public:
   }
 
   const FixItHint *getFixItHints() const {
-    return DiagObj->NumFixItHints?
-             &DiagObj->FixItHints[0] : 0;
+    return getNumFixItHints()?
+             DiagObj->FixItHints.data() : 0;
   }
 
   /// FormatDiagnostic - Format this diagnostic into a string, substituting the
