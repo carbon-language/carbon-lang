@@ -161,7 +161,7 @@ class ARMFastISel : public FastISel {
     bool SelectFPExt(const Instruction *I);
     bool SelectFPTrunc(const Instruction *I);
     bool SelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
-    bool SelectSIToFP(const Instruction *I);
+    bool SelectIToFP(const Instruction *I, bool isZExt);
     bool SelectFPToSI(const Instruction *I);
     bool SelectSDiv(const Instruction *I);
     bool SelectSRem(const Instruction *I);
@@ -1535,7 +1535,7 @@ bool ARMFastISel::SelectFPTrunc(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::SelectSIToFP(const Instruction *I) {
+bool ARMFastISel::SelectIToFP(const Instruction *I, bool isZExt) {
   // Make sure we have VFP.
   if (!Subtarget->hasVFP2()) return false;
 
@@ -1555,7 +1555,7 @@ bool ARMFastISel::SelectSIToFP(const Instruction *I) {
   // Handle sign-extension.
   if (SrcVT == MVT::i16 || SrcVT == MVT::i8) {
     EVT DestVT = MVT::i32;
-    unsigned ResultReg = ARMEmitIntExt(SrcVT, SrcReg, DestVT, /*isZExt*/ false);
+    unsigned ResultReg = ARMEmitIntExt(SrcVT, SrcReg, DestVT, isZExt);
     if (ResultReg == 0) return false;
     SrcReg = ResultReg;
   }
@@ -1566,8 +1566,8 @@ bool ARMFastISel::SelectSIToFP(const Instruction *I) {
   if (FP == 0) return false;
 
   unsigned Opc;
-  if (Ty->isFloatTy()) Opc = ARM::VSITOS;
-  else if (Ty->isDoubleTy()) Opc = ARM::VSITOD;
+  if (Ty->isFloatTy()) Opc = isZExt ? ARM::VUITOS : ARM::VSITOS;
+  else if (Ty->isDoubleTy()) Opc = isZExt ? ARM::VUITOD : ARM::VSITOD;
   else return false;
 
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(DstVT));
@@ -2449,7 +2449,9 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
     case Instruction::FPTrunc:
       return SelectFPTrunc(I);
     case Instruction::SIToFP:
-      return SelectSIToFP(I);
+      return SelectIToFP(I, /*isZExt*/ false);
+    case Instruction::UIToFP:
+      return SelectIToFP(I, /*isZExt*/ true);
     case Instruction::FPToSI:
       return SelectFPToSI(I);
     case Instruction::FAdd:
