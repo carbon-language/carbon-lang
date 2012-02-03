@@ -1108,7 +1108,9 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     // If both the callee and the cast type are varargs, we still have to make
     // sure the number of fixed parameters are the same or we have the same
     // ABI issues as if we introduce a varargs call.
-    if (FT->getNumParams() !=
+    if (FT->isVarArg() &&
+        cast<FunctionType>(APTy->getElementType())->isVarArg() &&
+        FT->getNumParams() !=
         cast<FunctionType>(APTy->getElementType())->getNumParams())
       return false;
   }
