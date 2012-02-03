@@ -276,9 +276,11 @@ public:
   /// explicit captures.
   unsigned NumExplicitCaptures;
 
+  bool Mutable;
+
   LambdaScopeInfo(DiagnosticsEngine &Diag, CXXRecordDecl *Lambda)
     : CapturingScopeInfo(Diag, ImpCap_None), Lambda(Lambda),
-      NumExplicitCaptures(0)
+      NumExplicitCaptures(0), Mutable(false)
   {
     Kind = SK_Lambda;
   }

@@ -4946,6 +4946,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   else if (Intro.Default == LCD_ByRef)
     LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByref;
 
+  LSI->Mutable = (Method->getTypeQualifiers() & Qualifiers::Const) == 0;
+
   // Handle explicit captures.
   for (llvm::SmallVector<LambdaCapture, 4>::const_iterator
          C = Intro.Captures.begin(), 
