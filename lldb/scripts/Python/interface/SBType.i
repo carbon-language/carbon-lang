@@ -201,6 +201,15 @@ public:
     GetTemplateArgumentKind (uint32_t idx);
 
     %pythoncode %{
+        def template_arg_array(self):
+            num_args = self.num_template_args
+            if num_args:
+                template_args = []
+                for i in range(num_args):
+                    template_args.append(self.GetTemplateArgumentType(i))
+                return template_args
+            return None
+            
         __swig_getmethods__["name"] = GetName
         if _newclass: x = property(GetName, None)
         
@@ -222,9 +231,16 @@ public:
         __swig_getmethods__["num_vbases"] = GetNumberOfVirtualBaseClasses
         if _newclass: x = property(GetNumberOfVirtualBaseClasses, None)
         
+        __swig_getmethods__["num_template_args"] = GetNumberOfTemplateArguments
+        if _newclass: x = property(GetNumberOfTemplateArguments, None)
+
+        __swig_getmethods__["template_args"] = template_arg_array
+        if _newclass: x = property(template_arg_array, None)
+
         __swig_getmethods__["class"] = GetTypeClass
         if _newclass: x = property(GetTypeClass, None)
-    %}
+
+        %}
 
 };
 

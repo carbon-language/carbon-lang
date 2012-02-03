@@ -774,6 +774,9 @@ public:
     }
 
     virtual lldb::ValueObjectSP
+    Cast (const ClangASTType &clang_ast_type);
+    
+    virtual lldb::ValueObjectSP
     CastPointerType (const char *name,
                      ClangASTType &ast_type);
 

@@ -378,8 +378,8 @@ lldb::SBValue
 SBValue::Cast (SBType type)
 {
     lldb::SBValue sb_value;
-    if (m_opaque_sp)
-        sb_value = CreateChildAtOffset(m_opaque_sp->GetName().GetCString(), 0, type);
+    if (m_opaque_sp && type.IsValid())
+        *sb_value = m_opaque_sp->Cast(type.ref().GetClangASTType());
     return sb_value;
 }
 

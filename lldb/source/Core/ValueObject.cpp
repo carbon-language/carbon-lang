@@ -3429,6 +3429,12 @@ ValueObject::AddressOf (Error &error)
     return m_addr_of_valobj_sp;
 }
 
+ValueObjectSP
+ValueObject::Cast (const ClangASTType &clang_ast_type)
+{
+    ValueObjectSP valobj_sp(new ValueObjectCast (*this, GetName(), clang_ast_type));
+    return valobj_sp;    
+}
 
 ValueObjectSP
 ValueObject::CastPointerType (const char *name, ClangASTType &clang_ast_type)

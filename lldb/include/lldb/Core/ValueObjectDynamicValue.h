@@ -15,8 +15,84 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Core/ValueObject.h"
+#include "lldb/Symbol/ClangASTType.h"
 
 namespace lldb_private {
+
+    class ValueObjectCast : public ValueObject
+    {
+    public:
+        virtual
+        ~ValueObjectCast();
+        
+        virtual size_t
+        GetByteSize();
+        
+        virtual clang::ASTContext *
+        GetClangAST ();
+        
+        virtual lldb::clang_type_t
+        GetClangType ();
+        
+        virtual ConstString
+        GetTypeName();
+        
+        virtual uint32_t
+        CalculateNumChildren();
+        
+        virtual lldb::ValueType
+        GetValueType() const;
+        
+        virtual bool
+        IsInScope ();
+        
+        virtual bool
+        IsDynamic ()
+        {
+            return true;
+        }
+        
+        virtual ValueObject *
+        GetParent()
+        {
+            if (m_parent)
+                return m_parent->GetParent();
+            else
+                return NULL;
+        }
+        
+        virtual const ValueObject *
+        GetParent() const
+        {
+            if (m_parent)
+                return m_parent->GetParent();
+            else
+                return NULL;
+        }
+        
+        virtual lldb::ValueObjectSP
+        GetStaticValue ()
+        {
+            return m_parent->GetSP();
+        }
+        
+    protected:
+        virtual bool
+        UpdateValue ();
+        
+        ClangASTType m_cast_type;
+        
+    private:
+        friend class ValueObject;
+        ValueObjectCast (ValueObject &parent, 
+                         const ConstString &name, 
+                         const ClangASTType &cast_type);
+        
+        //------------------------------------------------------------------
+        // For ValueObject only
+        //------------------------------------------------------------------
+        DISALLOW_COPY_AND_ASSIGN (ValueObjectCast);
+    };
 
 //----------------------------------------------------------------------
 // A ValueObject that represents memory at a given address, viewed as some 
