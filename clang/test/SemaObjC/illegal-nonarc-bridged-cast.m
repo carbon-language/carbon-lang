@@ -35,3 +35,10 @@ void fixits() {
   id obj1 = (id)CFCreateSomething();
   CFTypeRef cf1 = (CFTypeRef)CreateSomething();
 }
+
+#pragma clang diagnostic ignored "-Warc-bridge-casts-disallowed-in-nonarc"
+
+void to_cf_ignored(id obj) {
+  CFTypeRef cf1 = (__bridge_retained CFTypeRef)CreateSomething(); // no-warning
+  CFTypeRef cf3 = (__bridge CFTypeRef)CreateSomething(); // no-warning
+}
