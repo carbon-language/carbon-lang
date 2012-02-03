@@ -290,6 +290,8 @@ typedef llvm::ImmutableMap<NamedDecl*, unsigned> LocalVarContext;
 
 class LocalVariableMap;
 
+/// A side (entry or exit) of a CFG node.
+enum CFGBlockSide { CBS_Entry, CBS_Exit };
 
 /// CFGBlockInfo is a struct which contains all the information that is
 /// maintained for each block in the CFG.  See LocalVariableMap for more
@@ -299,7 +301,16 @@ struct CFGBlockInfo {
   Lockset ExitSet;              // Lockset held at exit from block
   LocalVarContext EntryContext; // Context held at entry to block
   LocalVarContext ExitContext;  // Context held at exit from block
+  SourceLocation EntryLoc;      // Location of first statement in block
+  SourceLocation ExitLoc;       // Location of last statement in block.
   unsigned EntryIndex;          // Used to replay contexts later
+
+  const Lockset &getSet(CFGBlockSide Side) const {
+    return Side == CBS_Entry ? EntrySet : ExitSet;
+  }
+  SourceLocation getLocation(CFGBlockSide Side) const {
+    return Side == CBS_Entry ? EntryLoc : ExitLoc;
+  }
 
 private:
   CFGBlockInfo(Lockset EmptySet, LocalVarContext EmptyCtx)
@@ -760,6 +771,51 @@ void LocalVariableMap::traverseCFG(CFG *CFGraph,
   saveContext(0, BlockInfo[exitID].ExitContext);
 }
 
+/// Find the appropriate source locations to use when producing diagnostics for
+/// each block in the CFG.
+static void findBlockLocations(CFG *CFGraph,
+                               PostOrderCFGView *SortedGraph,
+                               std::vector<CFGBlockInfo> &BlockInfo) {
+  for (PostOrderCFGView::iterator I = SortedGraph->begin(),
+       E = SortedGraph->end(); I!= E; ++I) {
+    const CFGBlock *CurrBlock = *I;
+    CFGBlockInfo *CurrBlockInfo = &BlockInfo[CurrBlock->getBlockID()];
+
+    // Find the source location of the last statement in the block, if the
+    // block is not empty.
+    if (const Stmt *S = CurrBlock->getTerminator()) {
+      CurrBlockInfo->EntryLoc = CurrBlockInfo->ExitLoc = S->getLocStart();
+    } else {
+      for (CFGBlock::const_reverse_iterator BI = CurrBlock->rbegin(),
+           BE = CurrBlock->rend(); BI != BE; ++BI) {
+        // FIXME: Handle other CFGElement kinds.
+        if (const CFGStmt *CS = dyn_cast<CFGStmt>(&*BI)) {
+          CurrBlockInfo->ExitLoc = CS->getStmt()->getLocStart();
+          break;
+        }
+      }
+    }
+
+    if (!CurrBlockInfo->ExitLoc.isInvalid()) {
+      // This block contains at least one statement. Find the source location
+      // of the first statement in the block.
+      for (CFGBlock::const_iterator BI = CurrBlock->begin(),
+           BE = CurrBlock->end(); BI != BE; ++BI) {
+        // FIXME: Handle other CFGElement kinds.
+        if (const CFGStmt *CS = dyn_cast<CFGStmt>(&*BI)) {
+          CurrBlockInfo->EntryLoc = CS->getStmt()->getLocStart();
+          break;
+        }
+      }
+    } else if (CurrBlock->pred_size() == 1 && *CurrBlock->pred_begin() &&
+               CurrBlock != &CFGraph->getExit()) {
+      // The block is empty, and has a single predecessor. Use its exit
+      // location.
+      CurrBlockInfo->EntryLoc = CurrBlockInfo->ExitLoc =
+          BlockInfo[(*CurrBlock->pred_begin())->getBlockID()].ExitLoc;
+    }
+  }
+}
 
 /// \brief Class which implements the core thread safety analysis routines.
 class ThreadSafetyAnalyzer {
@@ -772,7 +828,8 @@ class ThreadSafetyAnalyzer {
 public:
   ThreadSafetyAnalyzer(ThreadSafetyHandler &H) : Handler(H) {}
 
-  Lockset intersectAndWarn(const Lockset LSet1, const Lockset LSet2,
+  Lockset intersectAndWarn(const CFGBlockInfo &Block1, CFGBlockSide Side1,
+                           const CFGBlockInfo &Block2, CFGBlockSide Side2,
                            LockErrorKind LEK);
 
   Lockset addLock(Lockset &LSet, Expr *MutexExp, const NamedDecl *D,
@@ -1304,9 +1361,14 @@ void BuildLockset::VisitDeclStmt(DeclStmt *S) {
 /// A; if () then B; else C; D; we need to check that the lockset after B and C
 /// are the same. In the event of a difference, we use the intersection of these
 /// two locksets at the start of D.
-Lockset ThreadSafetyAnalyzer::intersectAndWarn(const Lockset LSet1,
-                                               const Lockset LSet2,
+Lockset ThreadSafetyAnalyzer::intersectAndWarn(const CFGBlockInfo &Block1,
+                                               CFGBlockSide Side1,
+                                               const CFGBlockInfo &Block2,
+                                               CFGBlockSide Side2,
                                                LockErrorKind LEK) {
+  Lockset LSet1 = Block1.getSet(Side1);
+  Lockset LSet2 = Block2.getSet(Side2);
+
   Lockset Intersection = LSet1;
   for (Lockset::iterator I = LSet2.begin(), E = LSet2.end(); I != E; ++I) {
     const MutexID &LSet2Mutex = I.getKey();
@@ -1322,7 +1384,8 @@ Lockset ThreadSafetyAnalyzer::intersectAndWarn(const Lockset LSet1,
       }
     } else {
       Handler.handleMutexHeldEndOfScope(LSet2Mutex.getName(),
-                                        LSet2LockData.AcquireLoc, LEK);
+                                        LSet2LockData.AcquireLoc,
+                                        Block1.getLocation(Side1), LEK);
     }
   }
 
@@ -1331,7 +1394,8 @@ Lockset ThreadSafetyAnalyzer::intersectAndWarn(const Lockset LSet1,
       const MutexID &Mutex = I.getKey();
       const LockData &MissingLock = I.getData();
       Handler.handleMutexHeldEndOfScope(Mutex.getName(),
-                                        MissingLock.AcquireLoc, LEK);
+                                        MissingLock.AcquireLoc,
+                                        Block2.getLocation(Side2), LEK);
       Intersection = LocksetFactory.remove(Intersection, Mutex);
     }
   }
@@ -1376,6 +1440,9 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
 
   // Compute SSA names for local variables
   LocalVarMap.traverseCFG(CFGraph, SortedGraph, BlockInfo);
+
+  // Fill in source locations for all CFGBlocks.
+  findBlockLocations(CFGraph, SortedGraph, BlockInfo);
 
   // Add locks from exclusive_locks_required and shared_locks_required
   // to initial lockset.
@@ -1456,7 +1523,8 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
         LocksetInitialized = true;
       } else {
         CurrBlockInfo->EntrySet =
-          intersectAndWarn(CurrBlockInfo->EntrySet, PrevBlockInfo->ExitSet,
+          intersectAndWarn(*CurrBlockInfo, CBS_Entry,
+                           *PrevBlockInfo, CBS_Exit,
                            LEK_LockedSomePredecessors);
       }
     }
@@ -1482,7 +1550,7 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
         bool IsLoop = Terminator && isa<ContinueStmt>(Terminator);
 
         // Do not update EntrySet.
-        intersectAndWarn(CurrBlockInfo->EntrySet, PrevBlockInfo->ExitSet,
+        intersectAndWarn(*CurrBlockInfo, CBS_Entry, *PrevBlockInfo, CBS_Exit,
                          IsLoop ? LEK_LockedSomeLoopIterations
                                 : LEK_LockedSomePredecessors);
       }
@@ -1541,17 +1609,19 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
         continue;
 
       CFGBlock *FirstLoopBlock = *SI;
-      Lockset PreLoop = BlockInfo[FirstLoopBlock->getBlockID()].EntrySet;
-      Lockset LoopEnd = BlockInfo[CurrBlockID].ExitSet;
-      intersectAndWarn(LoopEnd, PreLoop, LEK_LockedSomeLoopIterations);
+      CFGBlockInfo &PreLoop = BlockInfo[FirstLoopBlock->getBlockID()];
+      CFGBlockInfo &LoopEnd = BlockInfo[CurrBlockID];
+      intersectAndWarn(LoopEnd, CBS_Exit, PreLoop, CBS_Entry,
+                       LEK_LockedSomeLoopIterations);
     }
   }
 
-  Lockset InitialLockset = BlockInfo[CFGraph->getEntry().getBlockID()].EntrySet;
-  Lockset FinalLockset = BlockInfo[CFGraph->getExit().getBlockID()].ExitSet;
+  CFGBlockInfo &Initial = BlockInfo[CFGraph->getEntry().getBlockID()];
+  CFGBlockInfo &Final = BlockInfo[CFGraph->getExit().getBlockID()];
 
   // FIXME: Should we call this function for all blocks which exit the function?
-  intersectAndWarn(InitialLockset, FinalLockset, LEK_LockedAtEndOfFunction);
+  intersectAndWarn(Initial, CBS_Entry, Final, CBS_Exit,
+                   LEK_LockedAtEndOfFunction);
 }
 
 } // end anonymous namespace

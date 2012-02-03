@@ -592,7 +592,8 @@ private:
 //===----------------------------------------------------------------------===//
 namespace clang {
 namespace thread_safety {
-typedef std::pair<SourceLocation, PartialDiagnostic> DelayedDiag;
+typedef llvm::SmallVector<PartialDiagnosticAt, 1> OptionalNotes;
+typedef std::pair<PartialDiagnosticAt, OptionalNotes> DelayedDiag;
 typedef llvm::SmallVector<DelayedDiag, 4> DiagList;
 
 struct SortDiagBySourceLocation {
@@ -602,8 +603,8 @@ struct SortDiagBySourceLocation {
   bool operator()(const DelayedDiag &left, const DelayedDiag &right) {
     // Although this call will be slow, this is only called when outputting
     // multiple warnings.
-    return S.getSourceManager().isBeforeInTranslationUnit(left.first,
-                                                          right.first);
+    return S.getSourceManager().isBeforeInTranslationUnit(left.first.first,
+                                                          right.first.first);
   }
 };
 
@@ -611,7 +612,7 @@ namespace {
 class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
   Sema &S;
   DiagList Warnings;
-  SourceLocation FunLocation;
+  SourceLocation FunLocation, FunEndLocation;
 
   // Helper functions
   void warnLockMismatch(unsigned DiagID, Name LockName, SourceLocation Loc) {
@@ -619,13 +620,13 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
     // precise source location.
     if (!Loc.isValid())
       Loc = FunLocation;
-    PartialDiagnostic Warning = S.PDiag(DiagID) << LockName;
-    Warnings.push_back(DelayedDiag(Loc, Warning));
+    PartialDiagnosticAt Warning(Loc, S.PDiag(DiagID) << LockName);
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
 
  public:
-  ThreadSafetyReporter(Sema &S, SourceLocation FL)
-    : S(S), FunLocation(FL) {}
+  ThreadSafetyReporter(Sema &S, SourceLocation FL, SourceLocation FEL)
+    : S(S), FunLocation(FL), FunEndLocation(FEL) {}
 
   /// \brief Emit all buffered diagnostics in order of sourcelocation.
   /// We need to output diagnostics produced while iterating through
@@ -635,13 +636,18 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
     SortDiagBySourceLocation SortDiagBySL(S);
     sort(Warnings.begin(), Warnings.end(), SortDiagBySL);
     for (DiagList::iterator I = Warnings.begin(), E = Warnings.end();
-         I != E; ++I)
-      S.Diag(I->first, I->second);
+         I != E; ++I) {
+      S.Diag(I->first.first, I->first.second);
+      const OptionalNotes &Notes = I->second;
+      for (unsigned NoteI = 0, NoteN = Notes.size(); NoteI != NoteN; ++NoteI)
+        S.Diag(Notes[NoteI].first, Notes[NoteI].second);
+    }
   }
 
   void handleInvalidLockExp(SourceLocation Loc) {
-    PartialDiagnostic Warning = S.PDiag(diag::warn_cannot_resolve_lock) << Loc;
-    Warnings.push_back(DelayedDiag(Loc, Warning));
+    PartialDiagnosticAt Warning(Loc,
+                                S.PDiag(diag::warn_cannot_resolve_lock) << Loc);
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
   void handleUnmatchedUnlock(Name LockName, SourceLocation Loc) {
     warnLockMismatch(diag::warn_unlock_but_no_lock, LockName, Loc);
@@ -651,12 +657,13 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
     warnLockMismatch(diag::warn_double_lock, LockName, Loc);
   }
 
-  void handleMutexHeldEndOfScope(Name LockName, SourceLocation Loc,
+  void handleMutexHeldEndOfScope(Name LockName, SourceLocation LocLocked,
+                                 SourceLocation LocEndOfScope,
                                  LockErrorKind LEK){
     unsigned DiagID = 0;
     switch (LEK) {
       case LEK_LockedSomePredecessors:
-        DiagID = diag::warn_lock_at_end_of_scope;
+        DiagID = diag::warn_lock_some_predecessors;
         break;
       case LEK_LockedSomeLoopIterations:
         DiagID = diag::warn_expecting_lock_held_on_loop;
@@ -665,18 +672,22 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
         DiagID = diag::warn_no_unlock;
         break;
     }
-    warnLockMismatch(DiagID, LockName, Loc);
+    if (LocEndOfScope.isInvalid())
+      LocEndOfScope = FunEndLocation;
+
+    PartialDiagnosticAt Warning(LocEndOfScope, S.PDiag(DiagID) << LockName);
+    PartialDiagnosticAt Note(LocLocked, S.PDiag(diag::note_locked_here));
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes(1, Note)));
   }
 
 
   void handleExclusiveAndShared(Name LockName, SourceLocation Loc1,
                                 SourceLocation Loc2) {
-    PartialDiagnostic Warning =
-      S.PDiag(diag::warn_lock_exclusive_and_shared) << LockName;
-    PartialDiagnostic Note =
-      S.PDiag(diag::note_lock_exclusive_and_shared) << LockName;
-    Warnings.push_back(DelayedDiag(Loc1, Warning));
-    Warnings.push_back(DelayedDiag(Loc2, Note));
+    PartialDiagnosticAt Warning(
+      Loc1, S.PDiag(diag::warn_lock_exclusive_and_shared) << LockName);
+    PartialDiagnosticAt Note(
+      Loc2, S.PDiag(diag::note_lock_exclusive_and_shared) << LockName);
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes(1, Note)));
   }
 
   void handleNoMutexHeld(const NamedDecl *D, ProtectedOperationKind POK,
@@ -686,9 +697,9 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
     unsigned DiagID = POK == POK_VarAccess?
                         diag::warn_variable_requires_any_lock:
                         diag::warn_var_deref_requires_any_lock;
-    PartialDiagnostic Warning = S.PDiag(DiagID)
-      << D->getName() << getLockKindFromAccessKind(AK);
-    Warnings.push_back(DelayedDiag(Loc, Warning));
+    PartialDiagnosticAt Warning(Loc, S.PDiag(DiagID)
+      << D->getName() << getLockKindFromAccessKind(AK));
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
 
   void handleMutexNotHeld(const NamedDecl *D, ProtectedOperationKind POK,
@@ -705,15 +716,15 @@ class ThreadSafetyReporter : public clang::thread_safety::ThreadSafetyHandler {
         DiagID = diag::warn_fun_requires_lock;
         break;
     }
-    PartialDiagnostic Warning = S.PDiag(DiagID)
-      << D->getName() << LockName << LK;
-    Warnings.push_back(DelayedDiag(Loc, Warning));
+    PartialDiagnosticAt Warning(Loc, S.PDiag(DiagID)
+      << D->getName() << LockName << LK);
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
 
   void handleFunExcludesLock(Name FunName, Name LockName, SourceLocation Loc) {
-    PartialDiagnostic Warning =
-      S.PDiag(diag::warn_fun_excludes_mutex) << FunName << LockName;
-    Warnings.push_back(DelayedDiag(Loc, Warning));
+    PartialDiagnosticAt Warning(Loc,
+      S.PDiag(diag::warn_fun_excludes_mutex) << FunName << LockName);
+    Warnings.push_back(DelayedDiag(Warning, OptionalNotes()));
   }
 };
 }
@@ -897,7 +908,8 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   // Check for thread safety violations
   if (P.enableThreadSafetyAnalysis) {
     SourceLocation FL = AC.getDecl()->getLocation();
-    thread_safety::ThreadSafetyReporter Reporter(S, FL);
+    SourceLocation FEL = AC.getDecl()->getLocEnd();
+    thread_safety::ThreadSafetyReporter Reporter(S, FL, FEL);
     thread_safety::runThreadSafetyAnalysis(AC, Reporter);
     Reporter.emitDiagnostics();
   }

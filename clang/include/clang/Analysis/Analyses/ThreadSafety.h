@@ -93,10 +93,14 @@ public:
   /// 3. or when a mutex is locked but not unlocked inside a function.
   /// \param LockName -- A StringRef name for the lock expression, to be printed
   /// in the error message.
-  /// \param Loc -- The location of the lock expression where the mutex is
+  /// \param LocLocked -- The location of the lock expression where the mutex is
   ///               locked
+  /// \param LocEndOfScope -- The location of the end of the scope where the
+  ///               mutex is no longer held
   /// \param LEK -- which of the three above cases we should warn for
-  virtual void handleMutexHeldEndOfScope(Name LockName, SourceLocation Loc,
+  virtual void handleMutexHeldEndOfScope(Name LockName,
+                                         SourceLocation LocLocked,
+                                         SourceLocation LocEndOfScope,
                                          LockErrorKind LEK){}
 
   /// Warn when a mutex is held exclusively and shared at the same point. For

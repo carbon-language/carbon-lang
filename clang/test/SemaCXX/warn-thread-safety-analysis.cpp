@@ -172,30 +172,29 @@ void sls_fun_bad_2() {
 }
 
 void sls_fun_bad_3() {
-  sls_mu.Lock(); // \
-    // expected-warning{{mutex 'sls_mu' is still locked at the end of function}}
-}
+  sls_mu.Lock(); // expected-note {{mutex acquired here}}
+} // expected-warning{{mutex 'sls_mu' is still locked at the end of function}}
 
 void sls_fun_bad_4() {
   if (getBool())
     sls_mu.Lock(); // \
-      // expected-warning{{mutex 'sls_mu' is still locked at the end of its scope}}
+  expected-warning{{mutex 'sls_mu2' is not locked on every path through here}} \
+  expected-note{{mutex acquired here}}
+
   else
     sls_mu2.Lock(); // \
-      // expected-warning{{mutex 'sls_mu2' is still locked at the end of its scope}}
-}
+  expected-note{{mutex acquired here}}
+} // expected-warning{{mutex 'sls_mu' is not locked on every path through here}}
 
 void sls_fun_bad_5() {
-  sls_mu.Lock(); // \
-    // expected-warning{{mutex 'sls_mu' is still locked at the end of its scope}}
+  sls_mu.Lock(); // expected-note {{mutex acquired here}}
   if (getBool())
     sls_mu.Unlock();
-}
+} // expected-warning{{mutex 'sls_mu' is not locked on every path through here}}
 
 void sls_fun_bad_6() {
   if (getBool()) {
-    sls_mu.Lock(); // \
-      // expected-warning{{mutex 'sls_mu' is still locked at the end of its scope}}
+    sls_mu.Lock(); // expected-note {{mutex acquired here}}
   } else {
     if (getBool()) {
       getBool(); // EMPTY
@@ -204,7 +203,8 @@ void sls_fun_bad_6() {
     }
   }
   sls_mu.Unlock(); // \
-    // expected-warning{{unlocking 'sls_mu' that was not locked}}
+    expected-warning{{mutex 'sls_mu' is not locked on every path through here}}\
+    expected-warning{{unlocking 'sls_mu' that was not locked}}
 }
 
 void sls_fun_bad_7() {
@@ -213,19 +213,20 @@ void sls_fun_bad_7() {
     sls_mu.Unlock();
     if (getBool()) {
       if (getBool()) {
-        continue;
+        continue; // \
+        expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
       }
     }
-    sls_mu.Lock(); // \
-      // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+    sls_mu.Lock(); // expected-note {{mutex acquired here}}
   }
   sls_mu.Unlock();
 }
 
 void sls_fun_bad_8() {
-  sls_mu.Lock(); // \
-    // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
-  do {
+  sls_mu.Lock(); // expected-note{{mutex acquired here}}
+
+  // FIXME: TERRIBLE SOURCE LOCATION!
+  do { // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
     sls_mu.Unlock();
   } while (getBool());
 }
@@ -233,37 +234,35 @@ void sls_fun_bad_8() {
 void sls_fun_bad_9() {
   do {
     sls_mu.Lock(); // \
-      // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+      // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}} \
+      // expected-note{{mutex acquired here}}
   } while (getBool());
   sls_mu.Unlock();
 }
 
 void sls_fun_bad_10() {
-  sls_mu.Lock(); // \
-    // expected-warning{{mutex 'sls_mu' is still locked at the end of function}} \
-    // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+  sls_mu.Lock(); // expected-note 2{{mutex acquired here}}
   while(getBool()) {
-    sls_mu.Unlock();
+    sls_mu.Unlock(); // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
   }
-}
+} // expected-warning{{mutex 'sls_mu' is still locked at the end of function}}
 
 void sls_fun_bad_11() {
-  while (getBool()) {
-    sls_mu.Lock(); // \
-      // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+  while (getBool()) { // \
+   expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+    sls_mu.Lock(); // expected-note {{mutex acquired here}}
   }
   sls_mu.Unlock(); // \
     // expected-warning{{unlocking 'sls_mu' that was not locked}}
 }
 
 void sls_fun_bad_12() {
-  sls_mu.Lock(); // \
-    // expected-warning{{mutex 'sls_mu' is still locked at the end of its scope}}
+  sls_mu.Lock(); // expected-note {{mutex acquired here}}
   while (getBool()) {
     sls_mu.Unlock();
     if (getBool()) {
       if (getBool()) {
-        break;
+        break; // expected-warning{{mutex 'sls_mu' is not locked on every path through here}}
       }
     }
     sls_mu.Lock();
@@ -303,9 +302,8 @@ void aa_fun_bad_2() {
 }
 
 void aa_fun_bad_3() {
-  glock.globalLock(); // \
-    // expected-warning{{mutex 'aa_mu' is still locked at the end of function}}
-}
+  glock.globalLock(); // expected-note{{mutex acquired here}}
+} // expected-warning{{mutex 'aa_mu' is still locked at the end of function}}
 
 //--------------------------------------------------//
 // Regression tests for unusual method names
@@ -316,22 +314,18 @@ Mutex wmu;
 // Test diagnostics for other method names.
 class WeirdMethods {
   WeirdMethods() {
-    wmu.Lock(); // \
-      // expected-warning {{mutex 'wmu' is still locked at the end of function}}
-  }
+    wmu.Lock(); // expected-note {{mutex acquired here}}
+  } // expected-warning {{mutex 'wmu' is still locked at the end of function}}
   ~WeirdMethods() {
-    wmu.Lock(); // \
-      // expected-warning {{mutex 'wmu' is still locked at the end of function}}
-  }
+    wmu.Lock(); // expected-note {{mutex acquired here}}
+  } // expected-warning {{mutex 'wmu' is still locked at the end of function}}
   void operator++() {
-    wmu.Lock(); // \
-      // expected-warning {{mutex 'wmu' is still locked at the end of function}}
-  }
+    wmu.Lock(); // expected-note {{mutex acquired here}}
+  } // expected-warning {{mutex 'wmu' is still locked at the end of function}}
   operator int*() {
-    wmu.Lock(); // \
-      // expected-warning {{mutex 'wmu' is still locked at the end of function}}
+    wmu.Lock(); // expected-note {{mutex acquired here}}
     return 0;
-  }
+  } // expected-warning {{mutex 'wmu' is still locked at the end of function}}
 };
 
 //-----------------------------------------------//
@@ -1484,11 +1478,10 @@ namespace substitution_test {
 
     void bar3(MyData* d1, MyData* d2) {
       DataLocker dlr;
-      dlr.lockData(d1);   // \
-        // expected-warning {{mutex 'mu' is still locked at the end of function}}
+      dlr.lockData(d1);   // expected-note {{mutex acquired here}}
       dlr.unlockData(d2); // \
         // expected-warning {{unlocking 'mu' that was not locked}}
-    }
+    } // expected-warning {{mutex 'mu' is still locked at the end of function}}
 
     void bar4(MyData* d1, MyData* d2) {
       DataLocker dlr;
@@ -1914,3 +1907,32 @@ void test() {
 }
 
 };
+
+namespace GoingNative {
+
+  struct __attribute__((lockable)) mutex {
+    void lock() __attribute__((exclusive_lock_function));
+    void unlock() __attribute__((unlock_function));
+    // ...
+  };
+  bool foo();
+  bool bar();
+  mutex m;
+  void test() {
+    m.lock();
+    while (foo()) {
+      m.unlock();
+      // ...
+      if (bar()) {
+        // ...
+        if (foo())
+          continue; // expected-warning {{expecting mutex 'm' to be locked at start of each loop}}
+        //...
+      }
+      // ...
+      m.lock(); // expected-note {{mutex acquired here}}
+    }
+    m.unlock();
+  }
+
+}
