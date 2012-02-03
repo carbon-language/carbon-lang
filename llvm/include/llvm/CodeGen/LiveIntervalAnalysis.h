@@ -63,9 +63,6 @@ namespace llvm {
     /// allocatableRegs_ - A bit vector of allocatable registers.
     BitVector allocatableRegs_;
 
-    /// CloneMIs - A list of clones as result of re-materialization.
-    std::vector<MachineInstr*> CloneMIs;
-
   public:
     static char ID; // Pass identification, replacement for typeid
     LiveIntervals() : MachineFunctionPass(ID) {

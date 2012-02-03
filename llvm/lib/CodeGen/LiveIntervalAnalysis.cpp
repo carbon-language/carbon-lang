@@ -99,11 +99,6 @@ void LiveIntervals::releaseMemory() {
 
   // Release VNInfo memory regions, VNInfo objects don't need to be dtor'd.
   VNInfoAllocator.Reset();
-  while (!CloneMIs.empty()) {
-    MachineInstr *MI = CloneMIs.back();
-    CloneMIs.pop_back();
-    mf_->DeleteMachineInstr(MI);
-  }
 }
 
 /// runOnMachineFunction - Register allocate the whole function
