@@ -2,8 +2,8 @@
 
 ; Make sure that the conversion between v4i8 to v2i16 is not a simple bitcast.
 ; CHECK: prom_bug
-; CHECK: movd
 ; CHECK: shufb
+; CHECK: movd
 ; CHECK: movw
 ; CHECK: ret
 define void @prom_bug(<4 x i8> %t, i16* %p) {

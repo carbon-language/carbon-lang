@@ -4957,6 +4957,7 @@ SDValue DAGCombiner::visitSIGN_EXTEND_INREG(SDNode *N) {
 SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
   SDValue N0 = N->getOperand(0);
   EVT VT = N->getValueType(0);
+  bool isLE = TLI.isLittleEndian();
 
   // noop truncate
   if (N0.getValueType() == N->getValueType(0))
@@ -4982,6 +4983,39 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
       // if the source and dest are the same type, we can drop both the extend
       // and the truncate.
       return N0.getOperand(0);
+  }
+
+  // Fold Extract-and-trunc into a narrow extract:
+  //    trunc(extract(x)) -> extract(bitcast(x))
+  // We only run this optimization after type legalization (which often
+  // creates this pattern) and before operation legalization after which
+  // we need to be more careful about the vector instructions that we generate.
+  if (N0.getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
+      LegalTypes && !LegalOperations && N0->hasOneUse()) {
+
+    EVT VecTy = N0.getOperand(0).getValueType();
+    EVT ExTy = N0.getValueType();
+    EVT TrTy = N->getValueType(0);
+
+    unsigned NumElem = VecTy.getVectorNumElements();
+    unsigned SizeRatio = ExTy.getSizeInBits()/TrTy.getSizeInBits();
+
+    EVT NVT = EVT::getVectorVT(*DAG.getContext(), TrTy, SizeRatio * NumElem);
+    assert(NVT.getSizeInBits() == VecTy.getSizeInBits() && "Invalid Size");
+
+    SDValue EltNo = N0->getOperand(1);
+    if (isa<ConstantSDNode>(EltNo) && isTypeLegal(NVT)) {
+      int Elt = cast<ConstantSDNode>(EltNo)->getZExtValue();
+
+      int Index = isLE ? (Elt*SizeRatio) : (Elt*SizeRatio + (SizeRatio-1));
+
+      SDValue V = DAG.getNode(ISD::BITCAST, N->getDebugLoc(),
+                              NVT, N0.getOperand(0));
+
+      return DAG.getNode(ISD::EXTRACT_VECTOR_ELT,
+                         N->getDebugLoc(), TrTy, V,
+                         DAG.getConstant(Index, MVT::i32));
+    }
   }
 
   // See if we can simplify the input to this truncate through knowledge that
