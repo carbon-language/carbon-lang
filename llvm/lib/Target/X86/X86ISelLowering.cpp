@@ -5220,9 +5220,9 @@ X86TargetLowering::LowerBUILD_VECTOR(SDValue Op, SelectionDAG &DAG) const {
 
   // For AVX-length vectors, build the individual 128-bit pieces and use
   // shuffles to put them in place.
-  if (VT.getSizeInBits() == 256 && !ISD::isBuildVectorAllZeros(Op.getNode())) {
+  if (VT.getSizeInBits() == 256) {
     SmallVector<SDValue, 32> V;
-    for (unsigned i = 0; i < NumElems; ++i)
+    for (unsigned i = 0; i != NumElems; ++i)
       V.push_back(Op.getOperand(i));
 
     EVT HVT = EVT::getVectorVT(*DAG.getContext(), ExtVT, NumElems/2);
