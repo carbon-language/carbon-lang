@@ -30,9 +30,21 @@ typedef __int8           int8_t;
 typedef __int16          int16_t;
 typedef __int32          int32_t;
 typedef __int64          int64_t;
-#else
+
+# define ALIAS(x)   // TODO(timurrrr): do we need this on Windows?
+# define ALIGNED(x) __declspec(align(x))
+# define NOINLINE __declspec(noinline)
+
+# define ASAN_INTERFACE_ATTRIBUTE  // TODO(timurrrr): do we need this on Win?
+#else  // defined(_WIN32)
 # include <stdint.h>  // for __WORDSIZE
-#endif  // _WIN32
+
+# define ALIAS(x) __attribute__((alias(x)))
+# define ALIGNED(x) __attribute__((aligned(x)))
+# define NOINLINE __attribute__((noinline))
+
+# define ASAN_INTERFACE_ATTRIBUTE __attribute__((visibility("default")))
+#endif  // defined(_WIN32)
 
 // If __WORDSIZE was undefined by the platform, define it in terms of the
 // compiler built-ins __LP64__ and _WIN64.

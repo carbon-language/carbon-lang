@@ -94,8 +94,7 @@ namespace __asan {
 
 // Instruments read/write access to a single byte in memory.
 // On error calls __asan_report_error, which aborts the program.
-__attribute__((noinline))
-static void AccessAddress(uintptr_t address, bool isWrite) {
+static NOINLINE void AccessAddress(uintptr_t address, bool isWrite) {
   if (__asan_address_is_poisoned((void*)address)) {
     GET_BP_PC_SP;
     __asan_report_error(pc, bp, sp, address, isWrite, /* access_size */ 1);
@@ -433,9 +432,9 @@ INTERCEPTOR(char*, strchr, const char *str, int c) {
   return result;
 }
 
-#ifndef __APPLE__
+#ifdef __linux__
 INTERCEPTOR(void*, index, const char *string, int c)
-  __attribute__((alias(WRAPPER_NAME(strchr))));
+  ALIAS(WRAPPER_NAME(strchr));
 #else
 DEFINE_REAL(void*, index, const char *string, int c);
 #endif

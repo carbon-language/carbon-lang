@@ -31,7 +31,7 @@ struct MallocDebug {
   void* (*memalign)(size_t alignment, size_t bytes);
 };
 
-const MallocDebug asan_malloc_dispatch __attribute__((aligned(32))) = {
+const MallocDebug asan_malloc_dispatch ALIGNED(32) = {
   malloc, free, calloc, realloc, memalign
 };
 
@@ -96,7 +96,7 @@ INTERCEPTOR(void*, memalign, size_t boundary, size_t size) {
 }
 
 INTERCEPTOR(void*, __libc_memalign, size_t align, size_t s)
-  __attribute__((alias("memalign")));
+  ALIAS("memalign");
 
 INTERCEPTOR(size_t, malloc_usable_size, void *ptr) {
   GET_STACK_TRACE_HERE_FOR_MALLOC;
