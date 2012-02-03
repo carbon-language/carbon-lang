@@ -42,8 +42,7 @@ protected:
 
 public:
   TargetPassConfig(TargetMachine *tm, PassManagerBase &pm,
-                   bool DisableVerifyFlag)
-    : TM(tm), PM(pm), DisableVerify(DisableVerifyFlag) {}
+                   bool DisableVerifyFlag);
 
   virtual ~TargetPassConfig() {}
 

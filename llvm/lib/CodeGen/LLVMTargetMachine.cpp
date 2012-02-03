@@ -125,6 +125,13 @@ LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
          "and that InitializeAllTargetMCs() is being invoked!");
 }
 
+TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm,
+                                   bool DisableVerifyFlag)
+  : TM(tm), PM(pm), DisableVerify(DisableVerifyFlag) {
+  // Register all target independent codegen passes to activate their PassIDs.
+  initializeCodeGen(*PassRegistry::getPassRegistry());
+}
+
 /// createPassConfig - Create a pass configuration object to be used by
 /// addPassToEmitX methods for generating a pipeline of CodeGen passes.
 TargetPassConfig *LLVMTargetMachine::createPassConfig(PassManagerBase &PM,
