@@ -162,7 +162,7 @@ class ARMFastISel : public FastISel {
     bool SelectFPTrunc(const Instruction *I);
     bool SelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
     bool SelectIToFP(const Instruction *I, bool isZExt);
-    bool SelectFPToSI(const Instruction *I);
+    bool SelectFPToI(const Instruction *I, bool isZExt);
     bool SelectSDiv(const Instruction *I);
     bool SelectSRem(const Instruction *I);
     bool SelectCall(const Instruction *I, const char *IntrMemName);
@@ -1578,7 +1578,7 @@ bool ARMFastISel::SelectIToFP(const Instruction *I, bool isZExt) {
   return true;
 }
 
-bool ARMFastISel::SelectFPToSI(const Instruction *I) {
+bool ARMFastISel::SelectFPToI(const Instruction *I, bool isZExt) {
   // Make sure we have VFP.
   if (!Subtarget->hasVFP2()) return false;
 
@@ -1592,11 +1592,11 @@ bool ARMFastISel::SelectFPToSI(const Instruction *I) {
 
   unsigned Opc;
   Type *OpTy = I->getOperand(0)->getType();
-  if (OpTy->isFloatTy()) Opc = ARM::VTOSIZS;
-  else if (OpTy->isDoubleTy()) Opc = ARM::VTOSIZD;
+  if (OpTy->isFloatTy()) Opc = isZExt ? ARM::VTOUIZS : ARM::VTOSIZS;
+  else if (OpTy->isDoubleTy()) Opc = isZExt ? ARM::VTOUIZD : ARM::VTOSIZD;
   else return false;
 
-  // f64->s32 or f32->s32 both need an intermediate f32 reg.
+  // f64->s32/u32 or f32->s32/u32 both need an intermediate f32 reg.
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(MVT::f32));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc),
                           ResultReg)
@@ -2453,7 +2453,9 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
     case Instruction::UIToFP:
       return SelectIToFP(I, /*isZExt*/ true);
     case Instruction::FPToSI:
-      return SelectFPToSI(I);
+      return SelectFPToI(I, /*isZExt*/ false);
+    case Instruction::FPToUI:
+      return SelectFPToI(I, /*isZExt*/ true);
     case Instruction::FAdd:
       return SelectBinaryOp(I, ISD::FADD);
     case Instruction::FSub:

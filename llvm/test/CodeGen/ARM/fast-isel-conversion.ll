@@ -188,3 +188,55 @@ entry:
   store double %conv, double* %b.addr, align 8
   ret void
 }
+
+; Test fptosi
+
+define void @fptosi_float(float %a) nounwind ssp {
+entry:
+; ARM: fptosi_float
+; ARM: vcvt.s32.f32 s0, s0
+; THUMB: fptosi_float
+; THUMB: vcvt.s32.f32 s0, s0
+  %b.addr = alloca i32, align 4
+  %conv = fptosi float %a to i32
+  store i32 %conv, i32* %b.addr, align 4
+  ret void
+}
+
+define void @fptosi_double(double %a) nounwind ssp {
+entry:
+; ARM: fptosi_double
+; ARM: vcvt.s32.f64 s0, d16
+; THUMB: fptosi_double
+; THUMB: vcvt.s32.f64 s0, d16
+  %b.addr = alloca i32, align 8
+  %conv = fptosi double %a to i32
+  store i32 %conv, i32* %b.addr, align 8
+  ret void
+}
+
+; Test fptoui
+
+define void @fptoui_float(float %a) nounwind ssp {
+entry:
+; ARM: fptoui_float
+; ARM: vcvt.u32.f32 s0, s0
+; THUMB: fptoui_float
+; THUMB: vcvt.u32.f32 s0, s0
+  %b.addr = alloca i32, align 4
+  %conv = fptoui float %a to i32
+  store i32 %conv, i32* %b.addr, align 4
+  ret void
+}
+
+define void @fptoui_double(double %a) nounwind ssp {
+entry:
+; ARM: fptoui_double
+; ARM: vcvt.u32.f64 s0, d16
+; THUMB: fptoui_double
+; THUMB: vcvt.u32.f64 s0, d16
+  %b.addr = alloca i32, align 8
+  %conv = fptoui double %a to i32
+  store i32 %conv, i32* %b.addr, align 8
+  ret void
+}
