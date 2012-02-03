@@ -9453,7 +9453,8 @@ static bool shouldAddConstForScope(CapturingScopeInfo *CSI, VarDecl *VD) {
 // Check if the variable needs to be captured; if so, try to perform
 // the capture.
 // FIXME: Add support for explicit captures.
-void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc) {
+void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc,
+                         TryCaptureKind Kind) {
   DeclContext *DC = CurContext;
   if (var->getDeclContext() == DC) return;
   if (!var->hasLocalStorage()) return;
@@ -9536,7 +9537,12 @@ void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc) {
     }
 
     bool byRef;
-    if (CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_None) {
+    bool isInnermostCapture = (i == e - 1);
+    if (isInnermostCapture && Kind == TryCapture_ExplicitByVal) {
+      byRef = false;
+    } else if (isInnermostCapture && Kind == TryCapture_ExplicitByRef) {
+      byRef = true;
+    } else if (CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_None) {
       // No capture-default
       Diag(loc, diag::err_lambda_impcap) << var->getDeclName();
       Diag(var->getLocation(), diag::note_previous_decl) << var->getDeclName();

@@ -45,7 +45,7 @@ namespace ReturnDeduction {
 
 namespace ImplicitCapture {
   void test() {
-    int a = 0; // expected-note 3 {{declared}}
+    int a = 0; // expected-note 5 {{declared}}
     []() { return a; }; // expected-error {{variable 'a' cannot be implicitly captured in a lambda with no capture-default specified}} expected-note {{begins here}} expected-error {{not supported yet}} 
     [&]() { return a; }; // expected-error {{not supported yet}}
     [=]() { return a; }; // expected-error {{not supported yet}}
@@ -53,6 +53,8 @@ namespace ImplicitCapture {
     [=]() { return [&]() { return a; }; }; // expected-error 2 {{not supported yet}}
     []() { return [&]() { return a; }; }; // expected-error {{variable 'a' cannot be implicitly captured in a lambda with no capture-default specified}} expected-note {{lambda expression begins here}} expected-error 2 {{not supported yet}}
     []() { return ^{ return a; }; };// expected-error {{variable 'a' cannot be implicitly captured in a lambda with no capture-default specified}} expected-note {{lambda expression begins here}} expected-error {{not supported yet}}
+    []() { return [&a] { return a; }; }; // expected-error 2 {{variable 'a' cannot be implicitly captured in a lambda with no capture-default specified}} expected-note 2 {{lambda expression begins here}} expected-error 2 {{not supported yet}}
+    [=]() { return [&a] { return a; }; }; // expected-error 2 {{not supported yet}}
 
     const int b = 2;
     []() { return b; }; // expected-error {{not supported yet}}
@@ -64,8 +66,9 @@ namespace ImplicitCapture {
     d = 3;
     [=]() { return c; }; // expected-error {{unnamed variable cannot be implicitly captured in a lambda expression}} expected-error {{not supported yet}}
 
-    __block int e; // expected-note {{declared}}
+    __block int e; // expected-note 3 {{declared}}
     [&]() { return e; }; // expected-error {{__block variable 'e' cannot be captured in a lambda expression}} expected-error {{not supported yet}}
+    [&e]() { return e; }; // expected-error 2 {{__block variable 'e' cannot be captured in a lambda expression}} expected-error {{not supported yet}}
 
     int f[10]; // expected-note {{declared}}
     [&]() { return f[2]; };  // expected-error {{not supported yet}}

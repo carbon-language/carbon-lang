@@ -5030,12 +5030,6 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       Diag(Var->getLocation(), diag::note_previous_decl) << C->Id;
       continue;
     }
-    
-    if (Var->hasAttr<BlocksAttr>()) {
-      Diag(C->Loc, diag::err_lambda_capture_block) << C->Id;
-      Diag(Var->getLocation(), diag::note_previous_decl) << C->Id;
-      continue;
-    }
 
     // C++11 [expr.prim.lambda]p8:
     //   An identifier or this shall not appear more than once in a 
@@ -5046,13 +5040,10 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
         << SourceRange(LSI->getCapture(Var).getLocation());
       continue;
     }
-    
-    // FIXME: If this is capture by copy, make sure that we can in fact copy
-    // the variable.
-    // FIXME: Unify with normal capture path, so we get all of the necessary
-    // nested captures.
-    LSI->AddCapture(Var, /*isBlock*/false, C->Kind == LCK_ByRef,
-                    /*isNested=*/false, C->Loc, 0);
+
+    TryCaptureKind Kind = C->Kind == LCK_ByRef ? TryCapture_ExplicitByRef :
+                                                 TryCapture_ExplicitByVal;
+    TryCaptureVar(Var, C->Loc, Kind);
   }
   LSI->finishedExplicitCaptures();
 

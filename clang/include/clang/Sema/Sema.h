@@ -2284,7 +2284,11 @@ public:
   void UpdateMarkingForLValueToRValue(Expr *E);
   void CleanupVarDeclMarking();
 
-  void TryCaptureVar(VarDecl *var, SourceLocation loc);
+  enum TryCaptureKind {
+    TryCapture_Implicit, TryCapture_ExplicitByVal, TryCapture_ExplicitByRef
+  };
+  void TryCaptureVar(VarDecl *var, SourceLocation loc,
+                     TryCaptureKind Kind = TryCapture_Implicit);
 
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
   void MarkDeclarationsReferencedInExpr(Expr *E);
