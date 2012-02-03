@@ -1793,7 +1793,7 @@ void MachineInstr::addRegisterDefined(unsigned IncomingReg,
                                        true  /*IsImp*/));
 }
 
-void MachineInstr::setPhysRegsDeadExcept(const SmallVectorImpl<unsigned> &UsedRegs,
+void MachineInstr::setPhysRegsDeadExcept(ArrayRef<unsigned> UsedRegs,
                                          const TargetRegisterInfo &TRI) {
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     MachineOperand &MO = getOperand(i);
@@ -1801,8 +1801,8 @@ void MachineInstr::setPhysRegsDeadExcept(const SmallVectorImpl<unsigned> &UsedRe
     unsigned Reg = MO.getReg();
     if (!TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
     bool Dead = true;
-    for (SmallVectorImpl<unsigned>::const_iterator I = UsedRegs.begin(),
-         E = UsedRegs.end(); I != E; ++I)
+    for (ArrayRef<unsigned>::iterator I = UsedRegs.begin(), E = UsedRegs.end();
+         I != E; ++I)
       if (TRI.regsOverlap(*I, Reg)) {
         Dead = false;
         break;

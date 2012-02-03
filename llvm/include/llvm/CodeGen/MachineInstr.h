@@ -19,6 +19,7 @@
 #include "llvm/CodeGen/MachineOperand.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/Target/TargetOpcodes.h"
+#include "llvm/ADT/ArrayRef.h"
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/ADT/STLExtras.h"
@@ -791,7 +792,7 @@ public:
 
   /// setPhysRegsDeadExcept - Mark every physreg used by this instruction as
   /// dead except those in the UsedRegs list.
-  void setPhysRegsDeadExcept(const SmallVectorImpl<unsigned> &UsedRegs,
+  void setPhysRegsDeadExcept(ArrayRef<unsigned> UsedRegs,
                              const TargetRegisterInfo &TRI);
 
   /// isSafeToMove - Return true if it is safe to move this instruction. If
