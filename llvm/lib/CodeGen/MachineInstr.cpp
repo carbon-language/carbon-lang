@@ -1795,8 +1795,13 @@ void MachineInstr::addRegisterDefined(unsigned IncomingReg,
 
 void MachineInstr::setPhysRegsDeadExcept(ArrayRef<unsigned> UsedRegs,
                                          const TargetRegisterInfo &TRI) {
+  bool HasRegMask = false;
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     MachineOperand &MO = getOperand(i);
+    if (MO.isRegMask()) {
+      HasRegMask = true;
+      continue;
+    }
     if (!MO.isReg() || !MO.isDef()) continue;
     unsigned Reg = MO.getReg();
     if (!TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
@@ -1810,6 +1815,13 @@ void MachineInstr::setPhysRegsDeadExcept(ArrayRef<unsigned> UsedRegs,
     // If there are no uses, including partial uses, the def is dead.
     if (Dead) MO.setIsDead();
   }
+
+  // This is a call with a register mask operand.
+  // Mask clobbers are always dead, so add defs for the non-dead defines.
+  if (HasRegMask)
+    for (ArrayRef<unsigned>::iterator I = UsedRegs.begin(), E = UsedRegs.end();
+         I != E; ++I)
+      addRegisterDefined(*I, &TRI);
 }
 
 unsigned

@@ -792,6 +792,9 @@ public:
 
   /// setPhysRegsDeadExcept - Mark every physreg used by this instruction as
   /// dead except those in the UsedRegs list.
+  ///
+  /// On instructions with register mask operands, also add implicit-def
+  /// operands for all registers in UsedRegs.
   void setPhysRegsDeadExcept(ArrayRef<unsigned> UsedRegs,
                              const TargetRegisterInfo &TRI);
 
