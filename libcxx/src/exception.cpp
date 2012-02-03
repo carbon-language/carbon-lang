@@ -201,6 +201,7 @@ std::exception_ptr std::current_exception() _NOEXCEPT
 #endif  // __APPLE__
 }
 
+_ATTRIBUTE(noreturn)
 void std::rethrow_exception(exception_ptr p)
 {
 #if HAVE_DEPENDENT_EH_ABI
