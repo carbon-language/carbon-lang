@@ -347,28 +347,26 @@ class Builder(threading.Thread):
 
         # Assume we're building with gcc for now.
         cxxincludes = self.get_includes()
-        cxxroot = cxxincludes[0]
-        cxxarch = os.path.basename(cxxincludes[1])
+        cxxroot = os.path.dirname(cxxincludes[0]) # Remove the version
+        cxxroot = os.path.dirname(cxxroot)        # Remove the c++
+        cxxroot = os.path.dirname(cxxroot)        # Remove the include
 
         configure_flags = dict(
             llvm=dict(debug=["--prefix=" + self.install_prefix,
                              "--with-extra-options=-Werror",
                              "--enable-assertions",
                              "--disable-optimized",
-                             "--with-cxx-include-root=" + cxxroot,
-                             "--with-cxx-include-arch=" + cxxarch],
+                             "--with-gcc-toolchain=" + cxxroot],
                       release=["--prefix=" + self.install_prefix,
                                "--with-extra-options=-Werror",
                                "--enable-optimized",
-                               "--with-cxx-include-root=" + cxxroot,
-                               "--with-cxx-include-arch=" + cxxarch],
+                               "--with-gcc-toolchain=" + cxxroot],
                       paranoid=["--prefix=" + self.install_prefix,
                                 "--with-extra-options=-Werror",
                                 "--enable-assertions",
                                 "--enable-expensive-checks",
                                 "--disable-optimized",
-                                "--with-cxx-include-root=" + cxxroot,
-                                "--with-cxx-include-arch=" + cxxarch]),
+                                "--with-gcc-toolchain=" + cxxroot]),
             dragonegg=dict(debug=[],
                            release=[],
                            paranoid=[]))

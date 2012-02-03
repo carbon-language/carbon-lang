@@ -9,18 +9,6 @@
 /* Relative directory for resource files */
 #undef CLANG_RESOURCE_DIR
 
-/* 32 bit multilib directory. */
-#undef CXX_INCLUDE_32BIT_DIR
-
-/* 64 bit multilib directory. */
-#undef CXX_INCLUDE_64BIT_DIR
-
-/* Arch the libstdc++ headers. */
-#undef CXX_INCLUDE_ARCH
-
-/* Directory with the libstdc++ headers. */
-#undef CXX_INCLUDE_ROOT
-
 /* Directories clang will search for headers */
 #undef C_INCLUDE_DIRS
 
@@ -32,6 +20,9 @@
 
 /* Define if timestamp information (e.g., __DATE___) is allowed */
 #undef ENABLE_TIMESTAMPS
+
+/* Directory where gcc is installed. */
+#undef GCC_INSTALL_PREFIX
 
 /* Define to 1 if you have the `argz_append' function. */
 #undef HAVE_ARGZ_APPEND

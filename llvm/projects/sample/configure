@@ -1426,12 +1426,7 @@ Optional Packages:
                           resource files
   --with-c-include-dirs   Colon separated list of directories clang will
                           search for headers
-  --with-cxx-include-root Directory with the libstdc++ headers.
-  --with-cxx-include-arch Architecture of the libstdc++ headers.
-  --with-cxx-include-32bit-dir
-                          32 bit multilib dir.
-  --with-cxx-include-64bit-dir
-                          64 bit multilib directory.
+  --with-gcc-toolchain    Directory where gcc is installed.
   --with-binutils-include Specify path to binutils/include/ containing
                           plugin-api.h file for gold plugin.
   --with-bug-report-url   Specify the URL where bug reports should be
@@ -5493,59 +5488,20 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
+# Clang normally uses the system c++ headers and libraries. With this option,
+# clang will use the ones provided by a gcc installation instead. This option should
+# be passed the same value that was used with --prefix when configuring gcc.
 
-# Check whether --with-cxx-include-root was given.
-if test "${with_cxx_include_root+set}" = set; then
-  withval=$with_cxx_include_root;
+# Check whether --with-gcc-toolchain was given.
+if test "${with_gcc_toolchain+set}" = set; then
+  withval=$with_gcc_toolchain;
 else
   withval=""
 fi
 
 
 cat >>confdefs.h <<_ACEOF
-#define CXX_INCLUDE_ROOT "$withval"
-_ACEOF
-
-
-
-# Check whether --with-cxx-include-arch was given.
-if test "${with_cxx_include_arch+set}" = set; then
-  withval=$with_cxx_include_arch;
-else
-  withval=""
-fi
-
-
-cat >>confdefs.h <<_ACEOF
-#define CXX_INCLUDE_ARCH "$withval"
-_ACEOF
-
-
-
-# Check whether --with-cxx-include-32bit-dir was given.
-if test "${with_cxx_include_32bit_dir+set}" = set; then
-  withval=$with_cxx_include_32bit_dir;
-else
-  withval=""
-fi
-
-
-cat >>confdefs.h <<_ACEOF
-#define CXX_INCLUDE_32BIT_DIR "$withval"
-_ACEOF
-
-
-
-# Check whether --with-cxx-include-64bit-dir was given.
-if test "${with_cxx_include_64bit_dir+set}" = set; then
-  withval=$with_cxx_include_64bit_dir;
-else
-  withval=""
-fi
-
-
-cat >>confdefs.h <<_ACEOF
-#define CXX_INCLUDE_64BIT_DIR "$withval"
+#define GCC_INSTALL_PREFIX "$withval"
 _ACEOF
 
 
@@ -10409,7 +10365,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10412 "configure"
+#line 10368 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
