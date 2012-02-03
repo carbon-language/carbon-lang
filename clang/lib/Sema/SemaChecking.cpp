@@ -2742,12 +2742,22 @@ void Sema::CheckStrncatArguments(const CallExpr *CE,
   if (PatternType == 0)
     return;
 
+  // Generate the diagnostic.
+  SourceLocation SL = LenArg->getLocStart();
+  SourceRange SR = LenArg->getSourceRange();
+  SourceManager &SM  = PP.getSourceManager();
+
+  // If the function is defined as a builtin macro, do not show macro expansion.
+  if (SM.isMacroArgExpansion(SL)) {
+    SL = SM.getSpellingLoc(SL);
+    SR = SourceRange(SM.getSpellingLoc(SR.getBegin()),
+                     SM.getSpellingLoc(SR.getEnd()));
+  }
+
   if (PatternType == 1)
-    Diag(DstArg->getLocStart(), diag::warn_strncat_large_size)
-      << LenArg->getSourceRange();
+    Diag(SL, diag::warn_strncat_large_size) << SR;
   else
-    Diag(DstArg->getLocStart(), diag::warn_strncat_src_size)
-      << LenArg->getSourceRange();
+    Diag(SL, diag::warn_strncat_src_size) << SR;
 
   // Output a FIXIT hint if the destination is an array (rather than a
   // pointer to an array).  This could be enhanced to handle some
@@ -2773,9 +2783,8 @@ void Sema::CheckStrncatArguments(const CallExpr *CE,
   DstArg->printPretty(OS, Context, 0, getPrintingPolicy());
   OS << ") - 1";
 
-  Diag(LenArg->getLocStart(), diag::note_strncat_wrong_size)
-    << FixItHint::CreateReplacement(LenArg->getSourceRange(),
-                                    OS.str());
+  Diag(SL, diag::note_strncat_wrong_size)
+    << FixItHint::CreateReplacement(SR, OS.str());
 }
 
 //===--- CHECK: Return Address of Stack Variable --------------------------===//

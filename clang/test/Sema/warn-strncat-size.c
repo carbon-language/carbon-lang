@@ -1,8 +1,19 @@
 // RUN: %clang_cc1 -Wstrncat-size -verify -fsyntax-only %s
+// RUN: %clang_cc1 -DUSE_BUILTINS -Wstrncat-size -verify -fsyntax-only %s
+// RUN: %clang_cc1 -fsyntax-only -Wstrncat-size -fixit -x c %s
+// RUN: %clang_cc1 -DUSE_BUILTINS -fsyntax-only -Wstrncat-size -fixit -x c %s
 
 typedef __SIZE_TYPE__ size_t;
-char  *strncat(char *, const char *, size_t);
 size_t strlen (const char *s);
+
+#ifdef USE_BUILTINS
+# define BUILTIN(f) __builtin_ ## f
+#else
+# define BUILTIN(f) f
+#endif
+
+#define strncat BUILTIN(strncat)
+char *strncat(char *restrict s1, const char *restrict s2, size_t n);
 
 struct {
   char f1[100];
