@@ -115,13 +115,13 @@ TEST_F(LexerTest, LexAPI) {
   EXPECT_TRUE(Lexer::isAtEndOfMacroExpansion(rsqrLoc, SourceMgr, LangOpts, &Loc));
   EXPECT_EQ(Loc, macroRange.getEnd());
 
-  CharSourceRange range = Lexer::makeFileCharRange(SourceRange(lsqrLoc, idLoc),
-                                                   SourceMgr, LangOpts);
+  CharSourceRange range = Lexer::makeFileCharRange(
+           CharSourceRange::getTokenRange(lsqrLoc, idLoc), SourceMgr, LangOpts);
   EXPECT_TRUE(range.isInvalid());
-  range = Lexer::makeFileCharRange(SourceRange(idLoc, rsqrLoc),
+  range = Lexer::makeFileCharRange(CharSourceRange::getTokenRange(idLoc, rsqrLoc),
                                    SourceMgr, LangOpts);
   EXPECT_TRUE(range.isInvalid());
-  range = Lexer::makeFileCharRange(SourceRange(lsqrLoc, rsqrLoc),
+  range = Lexer::makeFileCharRange(CharSourceRange::getTokenRange(lsqrLoc, rsqrLoc),
                                    SourceMgr, LangOpts);
   EXPECT_TRUE(!range.isTokenRange());
   EXPECT_EQ(range.getAsRange(),
@@ -129,8 +129,8 @@ TEST_F(LexerTest, LexAPI) {
                         macroRange.getEnd().getLocWithOffset(1)));
 
   StringRef text = Lexer::getSourceText(
-                  CharSourceRange::getTokenRange(SourceRange(lsqrLoc, rsqrLoc)),
-                  SourceMgr, LangOpts);
+                               CharSourceRange::getTokenRange(lsqrLoc, rsqrLoc),
+                               SourceMgr, LangOpts);
   EXPECT_EQ(text, "M(foo)");
 
   SourceLocation macroLsqrLoc = toks[3].getLocation();
@@ -140,19 +140,21 @@ TEST_F(LexerTest, LexAPI) {
   SourceLocation fileIdLoc = SourceMgr.getSpellingLoc(macroIdLoc);
   SourceLocation fileRsqrLoc = SourceMgr.getSpellingLoc(macroRsqrLoc);
 
-  range = Lexer::makeFileCharRange(SourceRange(macroLsqrLoc, macroIdLoc),
-                                   SourceMgr, LangOpts);
+  range = Lexer::makeFileCharRange(
+      CharSourceRange::getTokenRange(macroLsqrLoc, macroIdLoc),
+      SourceMgr, LangOpts);
   EXPECT_EQ(SourceRange(fileLsqrLoc, fileIdLoc.getLocWithOffset(3)),
             range.getAsRange());
 
-  range = Lexer::makeFileCharRange(SourceRange(macroIdLoc, macroRsqrLoc),
+  range = Lexer::makeFileCharRange(CharSourceRange::getTokenRange(macroIdLoc, macroRsqrLoc),
                                    SourceMgr, LangOpts);
   EXPECT_EQ(SourceRange(fileIdLoc, fileRsqrLoc.getLocWithOffset(1)),
             range.getAsRange());
 
   macroPair = SourceMgr.getExpansionRange(macroLsqrLoc);
-  range = Lexer::makeFileCharRange(SourceRange(macroLsqrLoc, macroRsqrLoc),
-                                   SourceMgr, LangOpts);
+  range = Lexer::makeFileCharRange(
+                     CharSourceRange::getTokenRange(macroLsqrLoc, macroRsqrLoc),
+                     SourceMgr, LangOpts);
   EXPECT_EQ(SourceRange(macroPair.first, macroPair.second.getLocWithOffset(1)),
             range.getAsRange());
 

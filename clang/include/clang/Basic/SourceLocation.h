@@ -245,6 +245,7 @@ public:
   /// the last token.  Return false if the end of this range specifies the last
   /// character in the range.
   bool isTokenRange() const { return IsTokenRange; }
+  bool isCharRange() const { return !IsTokenRange; }
   
   SourceLocation getBegin() const { return Range.getBegin(); }
   SourceLocation getEnd() const { return Range.getEnd(); }

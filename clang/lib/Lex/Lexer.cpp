@@ -793,14 +793,17 @@ bool Lexer::isAtEndOfMacroExpansion(SourceLocation loc,
   return isAtEndOfMacroExpansion(expansionLoc, SM, LangOpts, MacroEnd);
 }
 
-static CharSourceRange makeRangeFromFileLocs(SourceLocation Begin,
-                                             SourceLocation End,
+static CharSourceRange makeRangeFromFileLocs(CharSourceRange Range,
                                              const SourceManager &SM,
                                              const LangOptions &LangOpts) {
+  SourceLocation Begin = Range.getBegin();
+  SourceLocation End = Range.getEnd();
   assert(Begin.isFileID() && End.isFileID());
-  End = Lexer::getLocForEndOfToken(End, 0, SM,LangOpts);
-  if (End.isInvalid())
-    return CharSourceRange();
+  if (Range.isTokenRange()) {
+    End = Lexer::getLocForEndOfToken(End, 0, SM,LangOpts);
+    if (End.isInvalid())
+      return CharSourceRange();
+  }
 
   // Break down the source locations.
   FileID FID;
@@ -817,38 +820,49 @@ static CharSourceRange makeRangeFromFileLocs(SourceLocation Begin,
   return CharSourceRange::getCharRange(Begin, End);
 }
 
-/// \brief Accepts a token source range and returns a character range with
-/// file locations.
+/// \brief Accepts a range and returns a character range with file locations.
+///
 /// Returns a null range if a part of the range resides inside a macro
 /// expansion or the range does not reside on the same FileID.
-CharSourceRange Lexer::makeFileCharRange(SourceRange TokenRange,
+CharSourceRange Lexer::makeFileCharRange(CharSourceRange Range,
                                          const SourceManager &SM,
                                          const LangOptions &LangOpts) {
-  SourceLocation Begin = TokenRange.getBegin();
-  SourceLocation End = TokenRange.getEnd();
+  SourceLocation Begin = Range.getBegin();
+  SourceLocation End = Range.getEnd();
   if (Begin.isInvalid() || End.isInvalid())
     return CharSourceRange();
 
   if (Begin.isFileID() && End.isFileID())
-    return makeRangeFromFileLocs(Begin, End, SM, LangOpts);
+    return makeRangeFromFileLocs(Range, SM, LangOpts);
 
   if (Begin.isMacroID() && End.isFileID()) {
     if (!isAtStartOfMacroExpansion(Begin, SM, LangOpts, &Begin))
       return CharSourceRange();
-    return makeRangeFromFileLocs(Begin, End, SM, LangOpts);
+    Range.setBegin(Begin);
+    return makeRangeFromFileLocs(Range, SM, LangOpts);
   }
 
   if (Begin.isFileID() && End.isMacroID()) {
-    if (!isAtEndOfMacroExpansion(End, SM, LangOpts, &End))
+    if ((Range.isTokenRange() && !isAtEndOfMacroExpansion(End, SM, LangOpts,
+                                                          &End)) ||
+        (Range.isCharRange() && !isAtStartOfMacroExpansion(End, SM, LangOpts,
+                                                           &End)))
       return CharSourceRange();
-    return makeRangeFromFileLocs(Begin, End, SM, LangOpts);
+    Range.setEnd(End);
+    return makeRangeFromFileLocs(Range, SM, LangOpts);
   }
 
   assert(Begin.isMacroID() && End.isMacroID());
   SourceLocation MacroBegin, MacroEnd;
   if (isAtStartOfMacroExpansion(Begin, SM, LangOpts, &MacroBegin) &&
-      isAtEndOfMacroExpansion(End, SM, LangOpts, &MacroEnd))
-    return makeRangeFromFileLocs(MacroBegin, MacroEnd, SM, LangOpts);
+      ((Range.isTokenRange() && isAtEndOfMacroExpansion(End, SM, LangOpts,
+                                                        &MacroEnd)) ||
+       (Range.isCharRange() && isAtStartOfMacroExpansion(End, SM, LangOpts,
+                                                         &MacroEnd)))) {
+    Range.setBegin(MacroBegin);
+    Range.setEnd(MacroEnd);
+    return makeRangeFromFileLocs(Range, SM, LangOpts);
+  }
 
   FileID FID;
   unsigned BeginOffs;
@@ -866,9 +880,9 @@ CharSourceRange Lexer::makeFileCharRange(SourceRange TokenRange,
   if (Expansion.isMacroArgExpansion() &&
       Expansion.getSpellingLoc().isFileID()) {
     SourceLocation SpellLoc = Expansion.getSpellingLoc();
-    return makeRangeFromFileLocs(SpellLoc.getLocWithOffset(BeginOffs),
-                                 SpellLoc.getLocWithOffset(EndOffs),
-                                 SM, LangOpts);
+    Range.setBegin(SpellLoc.getLocWithOffset(BeginOffs));
+    Range.setEnd(SpellLoc.getLocWithOffset(EndOffs));
+    return makeRangeFromFileLocs(Range, SM, LangOpts);
   }
 
   return CharSourceRange();
@@ -878,11 +892,8 @@ StringRef Lexer::getSourceText(CharSourceRange Range,
                                const SourceManager &SM,
                                const LangOptions &LangOpts,
                                bool *Invalid) {
-  if (Range.isTokenRange())
-    Range = makeFileCharRange(Range.getAsRange(), SM, LangOpts);
-
-  if (Range.isInvalid() ||
-      Range.getBegin().isMacroID() || Range.getEnd().isMacroID()) {
+  Range = makeFileCharRange(Range, SM, LangOpts);
+  if (Range.isInvalid()) {
     if (Invalid) *Invalid = true;
     return StringRef();
   }

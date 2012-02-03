@@ -331,11 +331,11 @@ public:
                                       const LangOptions &LangOpts,
                                       SourceLocation *MacroEnd = 0);
 
-  /// \brief Accepts a token source range and returns a character range with
-  /// file locations.
+  /// \brief Accepts a range and returns a character range with file locations.
+  ///
   /// Returns a null range if a part of the range resides inside a macro
   /// expansion or the range does not reside on the same FileID.
-  static CharSourceRange makeFileCharRange(SourceRange TokenRange,
+  static CharSourceRange makeFileCharRange(CharSourceRange Range,
                                            const SourceManager &SM,
                                            const LangOptions &LangOpts);
 
