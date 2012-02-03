@@ -1315,11 +1315,9 @@ void Verifier::visitShuffleVectorInst(ShuffleVectorInst &SV) {
 }
 
 void Verifier::visitGetElementPtrInst(GetElementPtrInst &GEP) {
-  Type *TargetTy = GEP.getPointerOperandType();
-  if (VectorType *VTy = dyn_cast<VectorType>(TargetTy))
-    TargetTy = VTy->getElementType();
+  Type *TargetTy = GEP.getPointerOperandType()->getScalarType();
 
-  Assert1(dyn_cast<PointerType>(TargetTy),
+  Assert1(isa<PointerType>(TargetTy),
     "GEP base pointer is not a vector or a vector of pointers", &GEP);
   Assert1(cast<PointerType>(TargetTy)->getElementType()->isSized(),
           "GEP into unsized type!", &GEP);
