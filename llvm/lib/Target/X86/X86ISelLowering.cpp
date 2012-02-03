@@ -12052,28 +12052,39 @@ X86TargetLowering::EmitVAStartSaveXMMRegsWithCustomInserter(
   return EndMBB;
 }
 
-// Check whether the given instruction should have had a kill marker on
-// the EFLAGS operand.
-static bool shouldHaveEFlagsKill(MachineBasicBlock::iterator SelectItr,
-                                 MachineBasicBlock* BB) {
-  for (MachineBasicBlock::iterator miI(llvm::next(SelectItr)), miE = BB->end();
-       miI != miE; ++miI) {
+// The EFLAGS operand of SelectItr might be missing a kill marker
+// because there were multiple uses of EFLAGS, and ISel didn't know
+// which to mark. Figure out whether SelectItr should have had a
+// kill marker, and set it if it should. Returns the correct kill
+// marker value.
+static bool checkAndUpdateEFLAGSKill(MachineBasicBlock::iterator SelectItr,
+                                     MachineBasicBlock* BB,
+                                     const TargetRegisterInfo* TRI) {
+  // Scan forward through BB for a use/def of EFLAGS.
+  MachineBasicBlock::iterator miI(llvm::next(SelectItr));
+  for (MachineBasicBlock::iterator miE = BB->end(); miI != miE; ++miI) {
     const MachineInstr& mi = *miI;
-    if (mi.readsRegister(X86::EFLAGS)) {
+    if (mi.readsRegister(X86::EFLAGS))
       return false;
-    }
-    if (mi.definesRegister(X86::EFLAGS)) {
-      // Should have kill-flag - update below.
-      break;
+    if (mi.definesRegister(X86::EFLAGS))
+      break; // Should have kill-flag - update below.
+  }
+
+  // If we hit the end of the block, check whether EFLAGS is live into a
+  // successor.
+  if (miI == BB->end()) {
+    for (MachineBasicBlock::succ_iterator sItr = BB->succ_begin(),
+                                          sEnd = BB->succ_end();
+         sItr != sEnd; ++sItr) {
+      MachineBasicBlock* succ = *sItr;
+      if (succ->isLiveIn(X86::EFLAGS))
+        return false;
     }
   }
 
-  // We found a def, or hit the end of the basic block. SelectMI should have a
-  // kill flag on EFLAGS.
-  MachineInstr& SelectMI = *SelectItr;
-  MachineOperand* EFlagsOp = SelectMI.findRegisterUseOperand(X86::EFLAGS);
-  assert(EFlagsOp != 0 && "No EFLAGS operand on select instruction?");
-  EFlagsOp->setIsKill();
+  // We found a def, or hit the end of the basic block and EFLAGS wasn't live
+  // out. SelectMI should have a kill flag on EFLAGS.
+  SelectItr->addRegisterKilled(X86::EFLAGS, TRI);
   return true;
 }
 
@@ -12106,11 +12117,11 @@ X86TargetLowering::EmitLoweredSelect(MachineInstr *MI,
 
   // If the EFLAGS register isn't dead in the terminator, then claim that it's
   // live into the sink and copy blocks.
-  if (!MI->killsRegister(X86::EFLAGS)) {
-    if (!shouldHaveEFlagsKill(MI, BB)) {
-      copy0MBB->addLiveIn(X86::EFLAGS);
-      sinkMBB->addLiveIn(X86::EFLAGS);
-    }
+  const TargetRegisterInfo* TRI = getTargetMachine().getRegisterInfo();
+  if (!MI->killsRegister(X86::EFLAGS) &&
+      !checkAndUpdateEFLAGSKill(MI, BB, TRI)) {
+    copy0MBB->addLiveIn(X86::EFLAGS);
+    sinkMBB->addLiveIn(X86::EFLAGS);
   }
 
   // Transfer the remainder of BB and its successor edges to sinkMBB.
