@@ -37,7 +37,7 @@
 # include "clang/Config/config.h"
 #endif
 
-#include "llvm/Config/config.h" // for CXX_INCLUDE_ROOT
+#include "llvm/Config/config.h" // for GCC_INSTALL_PREFIX
 
 using namespace clang::driver;
 using namespace clang::driver::toolchains;
@@ -1116,34 +1116,6 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
     const Driver &D,
     const llvm::Triple &TargetTriple)
     : IsValid(false) {
-  // FIXME: Using CXX_INCLUDE_ROOT is here is a bit of a hack, but
-  // avoids adding yet another option to configure/cmake.
-  // It would probably be cleaner to break it in two variables
-  // CXX_GCC_ROOT with just /foo/bar
-  // CXX_GCC_VER with 4.5.2
-  // Then we would have
-  // CXX_INCLUDE_ROOT = CXX_GCC_ROOT/include/c++/CXX_GCC_VER
-  // and this function would return
-  // CXX_GCC_ROOT/lib/gcc/CXX_INCLUDE_ARCH/CXX_GCC_VER
-  llvm::SmallString<128> CxxIncludeRoot(CXX_INCLUDE_ROOT);
-  if (CxxIncludeRoot != "") {
-    // This is of the form /foo/bar/include/c++/4.5.2/
-    if (CxxIncludeRoot.back() == '/')
-      llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the /
-    StringRef Version = llvm::sys::path::filename(CxxIncludeRoot);
-    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the version
-    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the c++
-    llvm::sys::path::remove_filename(CxxIncludeRoot); // remove the include
-    GCCInstallPath = CxxIncludeRoot.str();
-    GCCInstallPath.append("/lib/gcc/");
-    GCCInstallPath.append(CXX_INCLUDE_ARCH);
-    GCCInstallPath.append("/");
-    GCCInstallPath.append(Version);
-    GCCParentLibPath = GCCInstallPath + "/../../..";
-    IsValid = true;
-    return;
-  }
-
   llvm::Triple MultiarchTriple = getMultiarchAlternateTriple(TargetTriple);
   llvm::Triple::ArchType TargetArch = TargetTriple.getArch();
   // The library directories which may contain GCC installations.
@@ -1159,9 +1131,18 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
   // Compute the set of prefixes for our search.
   SmallVector<std::string, 8> Prefixes(D.PrefixDirs.begin(),
                                        D.PrefixDirs.end());
-  Prefixes.push_back(D.SysRoot);
-  Prefixes.push_back(D.SysRoot + "/usr");
-  Prefixes.push_back(D.InstalledDir + "/..");
+
+  llvm::SmallString<128> CxxInstallRoot(GCC_INSTALL_PREFIX);
+  if (CxxInstallRoot != "") {
+    if (CxxInstallRoot.back() == '/')
+      llvm::sys::path::remove_filename(CxxInstallRoot); // remove the /
+
+    Prefixes.push_back(CxxInstallRoot.str());
+  } else {
+    Prefixes.push_back(D.SysRoot);
+    Prefixes.push_back(D.SysRoot + "/usr");
+    Prefixes.push_back(D.InstalledDir + "/..");
+  }
 
   // Loop over the various components which exist and select the best GCC
   // installation available. GCC installs are ranked by version number.
@@ -2230,22 +2211,6 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
     // libc++ is always installed at a fixed path on Linux currently.
     addSystemInclude(DriverArgs, CC1Args,
                      getDriver().SysRoot + "/usr/include/c++/v1");
-    return;
-  }
-
-  const llvm::Triple &TargetTriple = getTriple();
-
-  StringRef CxxIncludeRoot(CXX_INCLUDE_ROOT);
-  if (!CxxIncludeRoot.empty()) {
-    StringRef CxxIncludeArch(CXX_INCLUDE_ARCH);
-    if (CxxIncludeArch.empty())
-      CxxIncludeArch = TargetTriple.str();
-
-    addLibStdCXXIncludePaths(
-      CxxIncludeRoot,
-      CxxIncludeArch + (isTarget64Bit() ? CXX_INCLUDE_64BIT_DIR
-                                        : CXX_INCLUDE_32BIT_DIR),
-      DriverArgs, CC1Args);
     return;
   }
 
