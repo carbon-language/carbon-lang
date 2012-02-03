@@ -102,6 +102,17 @@ class CommandLineCompletionTestCase(TestBase):
                                'target.process.thread.step-avoid-regexp',
                                'target.process.thread.trace-thread'])
 
+    def test_target_space(self):
+        """Test that 'target ' completes to ['Available completions:', 'create', 'delete', 'list',
+        'modules', 'select', 'stop-hook', 'variable']."""
+        self.complete_from_to('target ',
+                              ['Available completions:', 'create', 'delete', 'list',
+                               'modules', 'select', 'stop-hook', 'variable'])
+
+    def test_target_va(self):
+        """Test that 'target va' completes to 'target variable '."""
+        self.complete_from_to('target va', 'target variable ')
+
     def complete_from_to(self, str_input, patterns):
         """Test that the completion mechanism completes str_input to patterns,
         where patterns could be a pattern-string or a list of pattern-strings"""
