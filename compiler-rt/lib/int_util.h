@@ -22,11 +22,8 @@
 /** \brief Trigger a program abort (or panic for kernel code). */
 #define compilerrt_abort() compilerrt_abort_impl(__FILE__, __LINE__, \
                                                  __FUNCTION__)
+
 void compilerrt_abort_impl(const char *file, int line,
-                           const char *function)
-#ifndef KERNEL_USE
-  __attribute__((weak))
-#endif
-  __attribute__((noreturn)) __attribute__((visibility("hidden")));
+                           const char *function) __attribute__((noreturn));
 
 #endif /* INT_UTIL_H */
