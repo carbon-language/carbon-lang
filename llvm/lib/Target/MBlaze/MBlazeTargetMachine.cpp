@@ -45,17 +45,39 @@ MBlazeTargetMachine(const Target &T, StringRef TT,
     InstrItins(Subtarget.getInstrItineraryData()) {
 }
 
+namespace {
+/// MBlaze Code Generator Pass Configuration Options.
+class MBlazePassConfig : public TargetPassConfig {
+public:
+  MBlazePassConfig(MBlazeTargetMachine *TM, PassManagerBase &PM,
+                   bool DisableVerifyFlag)
+    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+
+  MBlazeTargetMachine &getMBlazeTargetMachine() const {
+    return getTM<MBlazeTargetMachine>();
+  }
+
+  virtual bool addInstSelector();
+  virtual bool addPreEmitPass();
+};
+} // namespace
+
+TargetPassConfig *MBlazeTargetMachine::createPassConfig(PassManagerBase &PM,
+                                                        bool DisableVerify) {
+  return new MBlazePassConfig(this, PM, DisableVerify);
+}
+
 // Install an instruction selector pass using
 // the ISelDag to gen MBlaze code.
-bool MBlazeTargetMachine::addInstSelector(PassManagerBase &PM) {
-  PM.add(createMBlazeISelDag(*this));
+bool MBlazePassConfig::addInstSelector() {
+  PM.add(createMBlazeISelDag(getMBlazeTargetMachine()));
   return false;
 }
 
 // Implemented by targets that want to run passes immediately before
 // machine code is emitted. return true if -print-machineinstrs should
 // print out the code after the passes.
-bool MBlazeTargetMachine::addPreEmitPass(PassManagerBase &PM) {
-  PM.add(createMBlazeDelaySlotFillerPass(*this));
+bool MBlazePassConfig::addPreEmitPass() {
+  PM.add(createMBlazeDelaySlotFillerPass(getMBlazeTargetMachine()));
   return true;
 }

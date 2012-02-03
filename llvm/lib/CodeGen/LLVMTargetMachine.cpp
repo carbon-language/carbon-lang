@@ -125,13 +125,21 @@ LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
          "and that InitializeAllTargetMCs() is being invoked!");
 }
 
+/// createPassConfig - Create a pass configuration object to be used by
+/// addPassToEmitX methods for generating a pipeline of CodeGen passes.
+TargetPassConfig *LLVMTargetMachine::createPassConfig(PassManagerBase &PM,
+                                                      bool DisableVerify) {
+  return new TargetPassConfig(this, PM, DisableVerify);
+}
+
 bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                             formatted_raw_ostream &Out,
                                             CodeGenFileType FileType,
                                             bool DisableVerify) {
   // Add common CodeGen passes.
   MCContext *Context = 0;
-  if (addCommonCodeGenPasses(PM, DisableVerify, Context))
+  OwningPtr<TargetPassConfig> PassConfig(createPassConfig(PM, DisableVerify));
+  if (PassConfig->addCodeGenPasses(Context))
     return true;
   assert(Context != 0 && "Failed to get MCContext");
 
@@ -215,7 +223,8 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
                                                    bool DisableVerify) {
   // Add common CodeGen passes.
   MCContext *Ctx = 0;
-  if (addCommonCodeGenPasses(PM, DisableVerify, Ctx))
+  OwningPtr<TargetPassConfig> PassConfig(createPassConfig(PM, DisableVerify));
+  if (PassConfig->addCodeGenPasses(Ctx))
     return true;
 
   addCodeEmitter(PM, JCE);
@@ -234,7 +243,8 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
                                           raw_ostream &Out,
                                           bool DisableVerify) {
   // Add common CodeGen passes.
-  if (addCommonCodeGenPasses(PM, DisableVerify, Ctx))
+  OwningPtr<TargetPassConfig> PassConfig(createPassConfig(PM, DisableVerify));
+  if (PassConfig->addCodeGenPasses(Ctx))
     return true;
 
   if (hasMCSaveTempLabels())
@@ -268,27 +278,23 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
   return false; // success!
 }
 
-void LLVMTargetMachine::printNoVerify(PassManagerBase &PM,
-                                      const char *Banner) const {
-  if (Options.PrintMachineCode)
+void TargetPassConfig::printNoVerify(const char *Banner) const {
+  if (TM->shouldPrintMachineCode())
     PM.add(createMachineFunctionPrinterPass(dbgs(), Banner));
 }
 
-void LLVMTargetMachine::printAndVerify(PassManagerBase &PM,
-                                       const char *Banner) const {
-  if (Options.PrintMachineCode)
+void TargetPassConfig::printAndVerify(const char *Banner) const {
+  if (TM->shouldPrintMachineCode())
     PM.add(createMachineFunctionPrinterPass(dbgs(), Banner));
 
   if (VerifyMachineCode)
     PM.add(createMachineVerifierPass(Banner));
 }
 
-/// addCommonCodeGenPasses - Add standard LLVM codegen passes used for both
+/// addCodeGenPasses - Add standard LLVM codegen passes used for both
 /// emitting to assembly files or machine code output.
 ///
-bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
-                                               bool DisableVerify,
-                                               MCContext *&OutContext) {
+bool TargetPassConfig::addCodeGenPasses(MCContext *&OutContext) {
   // Standard LLVM-Level Passes.
 
   // Basic AliasAnalysis support.
@@ -317,7 +323,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Turn exception handling constructs into something the code generators can
   // handle.
-  switch (getMCAsmInfo()->getExceptionHandlingType()) {
+  switch (TM->getMCAsmInfo()->getExceptionHandlingType()) {
   case ExceptionHandling::SjLj:
     // SjLj piggy-backs on dwarf for this bit. The cleanups done apply to both
     // Dwarf EH prepare needs to be run after SjLj prepare. Otherwise,
@@ -330,7 +336,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   case ExceptionHandling::DwarfCFI:
   case ExceptionHandling::ARM:
   case ExceptionHandling::Win64:
-    PM.add(createDwarfEHPass(this));
+    PM.add(createDwarfEHPass(TM));
     break;
   case ExceptionHandling::None:
     PM.add(createLowerInvokePass(getTargetLowering()));
@@ -345,7 +351,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   PM.add(createStackProtectorPass(getTargetLowering()));
 
-  addPreISel(PM);
+  addPreISel();
 
   if (PrintISelInput)
     PM.add(createPrintFunctionPass("\n\n"
@@ -362,26 +368,26 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Install a MachineModuleInfo class, which is an immutable pass that holds
   // all the per-module stuff we're generating, including MCContext.
   MachineModuleInfo *MMI =
-    new MachineModuleInfo(*getMCAsmInfo(), *getRegisterInfo(),
+    new MachineModuleInfo(*TM->getMCAsmInfo(), *TM->getRegisterInfo(),
                           &getTargetLowering()->getObjFileLowering());
   PM.add(MMI);
   OutContext = &MMI->getContext(); // Return the MCContext specifically by-ref.
 
   // Set up a MachineFunction for the rest of CodeGen to work on.
-  PM.add(new MachineFunctionAnalysis(*this));
+  PM.add(new MachineFunctionAnalysis(*TM));
 
   // Enable FastISel with -fast, but allow that to be overridden.
   if (EnableFastISelOption == cl::BOU_TRUE ||
       (getOptLevel() == CodeGenOpt::None &&
        EnableFastISelOption != cl::BOU_FALSE))
-    Options.EnableFastISel = true;
+    TM->setFastISel(true);
 
   // Ask the target for an isel.
-  if (addInstSelector(PM))
+  if (addInstSelector())
     return true;
 
   // Print the instruction selected machine code...
-  printAndVerify(PM, "After Instruction Selection");
+  printAndVerify("After Instruction Selection");
 
   // Expand pseudo-instructions emitted by ISel.
   PM.add(createExpandISelPseudosPass());
@@ -389,7 +395,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Pre-ra tail duplication.
   if (getOptLevel() != CodeGenOpt::None && !DisableEarlyTailDup) {
     PM.add(createTailDuplicatePass(true));
-    printAndVerify(PM, "After Pre-RegAlloc TailDuplicate");
+    printAndVerify("After Pre-RegAlloc TailDuplicate");
   }
 
   // Optimize PHIs before DCE: removing dead PHI cycles may make more
@@ -408,7 +414,7 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     // arguments directly (see t11 in test/CodeGen/X86/sibcall.ll).
     if (!DisableMachineDCE)
       PM.add(createDeadMachineInstructionElimPass());
-    printAndVerify(PM, "After codegen DCE pass");
+    printAndVerify("After codegen DCE pass");
 
     if (!DisableMachineLICM)
       PM.add(createMachineLICMPass());
@@ -416,19 +422,19 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
       PM.add(createMachineCSEPass());
     if (!DisableMachineSink)
       PM.add(createMachineSinkingPass());
-    printAndVerify(PM, "After Machine LICM, CSE and Sinking passes");
+    printAndVerify("After Machine LICM, CSE and Sinking passes");
 
     PM.add(createPeepholeOptimizerPass());
-    printAndVerify(PM, "After codegen peephole optimization pass");
+    printAndVerify("After codegen peephole optimization pass");
   }
 
   // Run pre-ra passes.
-  if (addPreRegAlloc(PM))
-    printAndVerify(PM, "After PreRegAlloc passes");
+  if (addPreRegAlloc())
+    printAndVerify("After PreRegAlloc passes");
 
   // Perform register allocation.
   PM.add(createRegisterAllocator(getOptLevel()));
-  printAndVerify(PM, "After Register Allocation");
+  printAndVerify("After Register Allocation");
 
   // Perform stack slot coloring and post-ra machine LICM.
   if (getOptLevel() != CodeGenOpt::None) {
@@ -441,47 +447,47 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     if (!DisablePostRAMachineLICM)
       PM.add(createMachineLICMPass(false));
 
-    printAndVerify(PM, "After StackSlotColoring and postra Machine LICM");
+    printAndVerify("After StackSlotColoring and postra Machine LICM");
   }
 
   // Run post-ra passes.
-  if (addPostRegAlloc(PM))
-    printAndVerify(PM, "After PostRegAlloc passes");
+  if (addPostRegAlloc())
+    printAndVerify("After PostRegAlloc passes");
 
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
-  printAndVerify(PM, "After PrologEpilogCodeInserter");
+  printAndVerify("After PrologEpilogCodeInserter");
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (getOptLevel() != CodeGenOpt::None && !DisableBranchFold) {
     PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
-    printNoVerify(PM, "After BranchFolding");
+    printNoVerify("After BranchFolding");
   }
 
   // Tail duplication.
   if (getOptLevel() != CodeGenOpt::None && !DisableTailDuplicate) {
     PM.add(createTailDuplicatePass(false));
-    printNoVerify(PM, "After TailDuplicate");
+    printNoVerify("After TailDuplicate");
   }
 
   // Copy propagation.
   if (getOptLevel() != CodeGenOpt::None && !DisableCopyProp) {
     PM.add(createMachineCopyPropagationPass());
-    printNoVerify(PM, "After copy propagation pass");
+    printNoVerify("After copy propagation pass");
   }
 
   // Expand pseudo instructions before second scheduling pass.
   PM.add(createExpandPostRAPseudosPass());
-  printNoVerify(PM, "After ExpandPostRAPseudos");
+  printNoVerify("After ExpandPostRAPseudos");
 
   // Run pre-sched2 passes.
-  if (addPreSched2(PM))
-    printNoVerify(PM, "After PreSched2 passes");
+  if (addPreSched2())
+    printNoVerify("After PreSched2 passes");
 
   // Second pass scheduler.
   if (getOptLevel() != CodeGenOpt::None && !DisablePostRA) {
     PM.add(createPostRAScheduler(getOptLevel()));
-    printNoVerify(PM, "After PostRAScheduler");
+    printNoVerify("After PostRAScheduler");
   }
 
   PM.add(createGCMachineCodeAnalysisPass());
@@ -495,21 +501,21 @@ bool LLVMTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
       // default currently. Eventually it should subsume CodePlacementOpt, so
       // when enabled, the other is disabled.
       PM.add(createMachineBlockPlacementPass());
-      printNoVerify(PM, "After MachineBlockPlacement");
+      printNoVerify("After MachineBlockPlacement");
     } else {
       PM.add(createCodePlacementOptPass());
-      printNoVerify(PM, "After CodePlacementOpt");
+      printNoVerify("After CodePlacementOpt");
     }
 
     // Run a separate pass to collect block placement statistics.
     if (EnableBlockPlacementStats) {
       PM.add(createMachineBlockPlacementStatsPass());
-      printNoVerify(PM, "After MachineBlockPlacementStats");
+      printNoVerify("After MachineBlockPlacementStats");
     }
   }
 
-  if (addPreEmitPass(PM))
-    printNoVerify(PM, "After PreEmit passes");
+  if (addPreEmitPass())
+    printNoVerify("After PreEmit passes");
 
   return false;
 }

@@ -67,11 +67,10 @@ public:
   }
 
   // Pass Pipeline Configuration
-  virtual bool addInstSelector(PassManagerBase &PM);
-  virtual bool addPreEmitPass(PassManagerBase &PM);
+  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
+                                             bool DisableVerify);
   virtual bool addCodeEmitter(PassManagerBase &PM,
                               JITCodeEmitter &JCE);
-  virtual bool getEnableTailMergeDefault() const;
 };
 
 /// PPC32TargetMachine - PowerPC 32-bit target machine.

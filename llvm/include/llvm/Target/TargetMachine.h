@@ -38,6 +38,7 @@ class TargetInstrInfo;
 class TargetIntrinsicInfo;
 class TargetJITInfo;
 class TargetLowering;
+class TargetPassConfig;
 class TargetRegisterInfo;
 class TargetSelectionDAGInfo;
 class TargetSubtargetInfo;
@@ -200,6 +201,10 @@ public:
   /// Default, or Aggressive.
   CodeGenOpt::Level getOptLevel() const;
 
+  void setFastISel(bool Enable) { Options.EnableFastISel = Enable; }
+
+  bool shouldPrintMachineCode() const { return Options.PrintMachineCode; }
+
   /// getAsmVerbosityDefault - Returns the default value of asm verbosity.
   ///
   static bool getAsmVerbosityDefault();
@@ -231,10 +236,6 @@ public:
     CGFT_ObjectFile,
     CGFT_Null         // Do not emit any output.
   };
-
-  /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
-  /// on this target.  User flag overrides.
-  virtual bool getEnableTailMergeDefault() const { return true; }
 
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
@@ -282,24 +283,12 @@ protected: // Can only create subclasses.
                     Reloc::Model RM, CodeModel::Model CM,
                     CodeGenOpt::Level OL);
 
-  /// printNoVerify - Add a pass to dump the machine function, if debugging is
-  /// enabled.
-  ///
-  void printNoVerify(PassManagerBase &PM, const char *Banner) const;
-
-  /// printAndVerify - Add a pass to dump then verify the machine function, if
-  /// those steps are enabled.
-  ///
-  void printAndVerify(PassManagerBase &PM, const char *Banner) const;
-
-private:
-  /// addCommonCodeGenPasses - Add standard LLVM codegen passes used for
-  /// both emitting to assembly files or machine code output.
-  ///
-  bool addCommonCodeGenPasses(PassManagerBase &,
-                              bool DisableVerify, MCContext *&OutCtx);
-
 public:
+  /// createPassConfig - Create a pass configuration object to be used by
+  /// addPassToEmitX methods for generating a pipeline of CodeGen passes.
+  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
+                                             bool DisableVerify);
+
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code
   /// generation.
@@ -328,51 +317,6 @@ public:
                                  raw_ostream &OS,
                                  bool DisableVerify = true);
 
-  /// Target-Independent Code Generator Pass Configuration Options.
-
-  /// addPreISelPasses - This method should add any "last minute" LLVM->LLVM
-  /// passes (which are run just before instruction selector).
-  virtual bool addPreISel(PassManagerBase &) {
-    return true;
-  }
-
-  /// addInstSelector - This method should install an instruction selector pass,
-  /// which converts from LLVM code to machine instructions.
-  virtual bool addInstSelector(PassManagerBase &) {
-    return true;
-  }
-
-  /// addPreRegAlloc - This method may be implemented by targets that want to
-  /// run passes immediately before register allocation. This should return
-  /// true if -print-machineinstrs should print after these passes.
-  virtual bool addPreRegAlloc(PassManagerBase &) {
-    return false;
-  }
-
-  /// addPostRegAlloc - This method may be implemented by targets that want
-  /// to run passes after register allocation but before prolog-epilog
-  /// insertion.  This should return true if -print-machineinstrs should print
-  /// after these passes.
-  virtual bool addPostRegAlloc(PassManagerBase &) {
-    return false;
-  }
-
-  /// addPreSched2 - This method may be implemented by targets that want to
-  /// run passes after prolog-epilog insertion and before the second instruction
-  /// scheduling pass.  This should return true if -print-machineinstrs should
-  /// print after these passes.
-  virtual bool addPreSched2(PassManagerBase &) {
-    return false;
-  }
-
-  /// addPreEmitPass - This pass may be implemented by targets that want to run
-  /// passes immediately before machine code is emitted.  This should return
-  /// true if -print-machineinstrs should print out the code after the passes.
-  virtual bool addPreEmitPass(PassManagerBase &) {
-    return false;
-  }
-
-
   /// addCodeEmitter - This pass should be overridden by the target to add a
   /// code emitter, if supported.  If this is not supported, 'true' should be
   /// returned.
@@ -380,10 +324,6 @@ public:
                               JITCodeEmitter &) {
     return true;
   }
-
-  /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
-  /// on this target.  User flag overrides.
-  virtual bool getEnableTailMergeDefault() const { return true; }
 };
 
 } // End llvm namespace

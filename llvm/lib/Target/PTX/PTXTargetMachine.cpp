@@ -105,14 +105,36 @@ PTX64TargetMachine::PTX64TargetMachine(const Target &T, StringRef TT,
   : PTXTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {
 }
 
-bool PTXTargetMachine::addInstSelector(PassManagerBase &PM) {
-  PM.add(createPTXISelDag(*this, getOptLevel()));
+namespace {
+/// PTX Code Generator Pass Configuration Options.
+class PTXPassConfig : public TargetPassConfig {
+public:
+  PTXPassConfig(PTXTargetMachine *TM, PassManagerBase &PM, bool DisableVerifyFlag)
+    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+
+  PTXTargetMachine &getPTXTargetMachine() const {
+      return getTM<PTXTargetMachine>();
+  }
+
+  bool addInstSelector();
+  bool addPostRegAlloc();
+  bool addCodeGenPasses(MCContext *&OutContext);
+};
+} // namespace
+
+TargetPassConfig *PTXTargetMachine::createPassConfig(PassManagerBase &PM,
+                                                     bool DisableVerify) {
+  return new PTXPassConfig(this, PM, DisableVerify);
+}
+
+bool PTXPassConfig::addInstSelector() {
+  PM.add(createPTXISelDag(getPTXTargetMachine(), getOptLevel()));
   return false;
 }
 
-bool PTXTargetMachine::addPostRegAlloc(PassManagerBase &PM) {
+bool PTXPassConfig::addPostRegAlloc() {
   // PTXMFInfoExtract must after register allocation!
-  //PM.add(createPTXMFInfoExtract(*this));
+  //PM.add(createPTXMFInfoExtract(getPTXTargetMachine()));
   return false;
 }
 
@@ -124,7 +146,8 @@ bool PTXTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 
   // Add common CodeGen passes.
   MCContext *Context = 0;
-  if (addCommonCodeGenPasses(PM, DisableVerify, Context))
+  OwningPtr<TargetPassConfig> PassConfig(createPassConfig(PM, DisableVerify));
+  if (PassConfig->addCodeGenPasses(Context))
     return true;
   assert(Context != 0 && "Failed to get MCContext");
 
@@ -179,9 +202,7 @@ bool PTXTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   return false;
 }
 
-bool PTXTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
-                                              bool DisableVerify,
-                                              MCContext *&OutContext) {
+bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
   // Add standard LLVM codegen passes.
   // This is derived from LLVMTargetMachine::addCommonCodeGenPasses, with some
   // modifications for the PTX target.
@@ -220,7 +241,7 @@ bool PTXTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   PM.add(createStackProtectorPass(getTargetLowering()));
 
-  addPreISel(PM);
+  addPreISel();
 
   //PM.add(createPrintFunctionPass("\n\n"
   //                               "*** Final LLVM Code input to ISel ***\n",
@@ -235,21 +256,21 @@ bool PTXTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   // Install a MachineModuleInfo class, which is an immutable pass that holds
   // all the per-module stuff we're generating, including MCContext.
-  MachineModuleInfo *MMI = new MachineModuleInfo(*getMCAsmInfo(),
-                                                 *getRegisterInfo(),
+  MachineModuleInfo *MMI = new MachineModuleInfo(*TM->getMCAsmInfo(),
+                                                 *TM->getRegisterInfo(),
                                     &getTargetLowering()->getObjFileLowering());
   PM.add(MMI);
   OutContext = &MMI->getContext(); // Return the MCContext specifically by-ref.
 
   // Set up a MachineFunction for the rest of CodeGen to work on.
-  PM.add(new MachineFunctionAnalysis(*this));
+  PM.add(new MachineFunctionAnalysis(*TM));
 
   // Ask the target for an isel.
-  if (addInstSelector(PM))
+  if (addInstSelector())
     return true;
 
   // Print the instruction selected machine code...
-  printAndVerify(PM, "After Instruction Selection");
+  printAndVerify("After Instruction Selection");
 
   // Expand pseudo-instructions emitted by ISel.
   PM.add(createExpandISelPseudosPass());
@@ -257,7 +278,7 @@ bool PTXTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
   // Pre-ra tail duplication.
   if (getOptLevel() != CodeGenOpt::None) {
     PM.add(createTailDuplicatePass(true));
-    printAndVerify(PM, "After Pre-RegAlloc TailDuplicate");
+    printAndVerify("After Pre-RegAlloc TailDuplicate");
   }
 
   // Optimize PHIs before DCE: removing dead PHI cycles may make more
@@ -275,24 +296,24 @@ bool PTXTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     // used by tail calls, where the tail calls reuse the incoming stack
     // arguments directly (see t11 in test/CodeGen/X86/sibcall.ll).
     PM.add(createDeadMachineInstructionElimPass());
-    printAndVerify(PM, "After codegen DCE pass");
+    printAndVerify("After codegen DCE pass");
 
     PM.add(createMachineLICMPass());
     PM.add(createMachineCSEPass());
     PM.add(createMachineSinkingPass());
-    printAndVerify(PM, "After Machine LICM, CSE and Sinking passes");
+    printAndVerify("After Machine LICM, CSE and Sinking passes");
 
     PM.add(createPeepholeOptimizerPass());
-    printAndVerify(PM, "After codegen peephole optimization pass");
+    printAndVerify("After codegen peephole optimization pass");
   }
 
   // Run pre-ra passes.
-  if (addPreRegAlloc(PM))
-    printAndVerify(PM, "After PreRegAlloc passes");
+  if (addPreRegAlloc())
+    printAndVerify("After PreRegAlloc passes");
 
   // Perform register allocation.
   PM.add(createPTXRegisterAllocator());
-  printAndVerify(PM, "After Register Allocation");
+  printAndVerify("After Register Allocation");
 
   // Perform stack slot coloring and post-ra machine LICM.
   if (getOptLevel() != CodeGenOpt::None) {
@@ -305,40 +326,40 @@ bool PTXTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
     //if (!DisablePostRAMachineLICM)
     //  PM.add(createMachineLICMPass(false));
 
-    printAndVerify(PM, "After StackSlotColoring and postra Machine LICM");
+    printAndVerify("After StackSlotColoring and postra Machine LICM");
   }
 
   // Run post-ra passes.
-  if (addPostRegAlloc(PM))
-    printAndVerify(PM, "After PostRegAlloc passes");
+  if (addPostRegAlloc())
+    printAndVerify("After PostRegAlloc passes");
 
   PM.add(createExpandPostRAPseudosPass());
-  printAndVerify(PM, "After ExpandPostRAPseudos");
+  printAndVerify("After ExpandPostRAPseudos");
 
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
   PM.add(createPrologEpilogCodeInserter());
-  printAndVerify(PM, "After PrologEpilogCodeInserter");
+  printAndVerify("After PrologEpilogCodeInserter");
 
   // Run pre-sched2 passes.
-  if (addPreSched2(PM))
-    printAndVerify(PM, "After PreSched2 passes");
+  if (addPreSched2())
+    printAndVerify("After PreSched2 passes");
 
   // Second pass scheduler.
   if (getOptLevel() != CodeGenOpt::None) {
     PM.add(createPostRAScheduler(getOptLevel()));
-    printAndVerify(PM, "After PostRAScheduler");
+    printAndVerify("After PostRAScheduler");
   }
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (getOptLevel() != CodeGenOpt::None) {
     PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
-    printNoVerify(PM, "After BranchFolding");
+    printNoVerify("After BranchFolding");
   }
 
   // Tail duplication.
   if (getOptLevel() != CodeGenOpt::None) {
     PM.add(createTailDuplicatePass(false));
-    printNoVerify(PM, "After TailDuplicate");
+    printNoVerify("After TailDuplicate");
   }
 
   PM.add(createGCMachineCodeAnalysisPass());
@@ -348,14 +369,14 @@ bool PTXTargetMachine::addCommonCodeGenPasses(PassManagerBase &PM,
 
   if (getOptLevel() != CodeGenOpt::None) {
     PM.add(createCodePlacementOptPass());
-    printNoVerify(PM, "After CodePlacementOpt");
+    printNoVerify("After CodePlacementOpt");
   }
 
-  if (addPreEmitPass(PM))
-    printNoVerify(PM, "After PreEmit passes");
+  if (addPreEmitPass())
+    printNoVerify("After PreEmit passes");
 
-  PM.add(createPTXMFInfoExtract(*this, getOptLevel()));
-  PM.add(createPTXFPRoundingModePass(*this, getOptLevel()));
+  PM.add(createPTXMFInfoExtract(getPTXTargetMachine(), getOptLevel()));
+  PM.add(createPTXFPRoundingModePass(getPTXTargetMachine(), getOptLevel()));
 
   return false;
 }

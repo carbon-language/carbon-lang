@@ -15,6 +15,7 @@
 #include "PPCTargetMachine.h"
 #include "llvm/PassManager.h"
 #include "llvm/MC/MCStreamer.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -39,10 +40,6 @@ PPCTargetMachine::PPCTargetMachine(const Target &T, StringRef TT,
     TLInfo(*this), TSInfo(*this),
     InstrItins(Subtarget.getInstrItineraryData()) {
 }
-
-/// Override this for PowerPC.  Tail merging happily breaks up instruction issue
-/// groups, which typically degrades performance.
-bool PPCTargetMachine::getEnableTailMergeDefault() const { return false; }
 
 void PPC32TargetMachine::anchor() { }
 
@@ -69,13 +66,40 @@ PPC64TargetMachine::PPC64TargetMachine(const Target &T, StringRef TT,
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool PPCTargetMachine::addInstSelector(PassManagerBase &PM) {
+namespace {
+/// PPC Code Generator Pass Configuration Options.
+class PPCPassConfig : public TargetPassConfig {
+public:
+  PPCPassConfig(PPCTargetMachine *TM, PassManagerBase &PM,
+                bool DisableVerifyFlag)
+    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+
+  PPCTargetMachine &getPPCTargetMachine() const {
+    return getTM<PPCTargetMachine>();
+  }
+
+  virtual bool addInstSelector();
+  virtual bool getEnableTailMergeDefault() const;
+  virtual bool addPreEmitPass();
+};
+} // namespace
+
+TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM,
+                                                     bool DisableVerify) {
+  return new PPCPassConfig(this, PM, DisableVerify);
+}
+
+bool PPCPassConfig::addInstSelector() {
   // Install an instruction selector.
-  PM.add(createPPCISelDag(*this));
+  PM.add(createPPCISelDag(getPPCTargetMachine()));
   return false;
 }
 
-bool PPCTargetMachine::addPreEmitPass(PassManagerBase &PM) {
+/// Override this for PowerPC.  Tail merging happily breaks up instruction issue
+/// groups, which typically degrades performance.
+bool PPCPassConfig::getEnableTailMergeDefault() const { return false; }
+
+bool PPCPassConfig::addPreEmitPass() {
   // Must run branch selection immediately preceding the asm printer.
   PM.add(createPPCBranchSelectionPass());
   return false;

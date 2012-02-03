@@ -59,9 +59,6 @@ class PTXTargetMachine : public LLVMTargetMachine {
 
     virtual const PTXSubtarget *getSubtargetImpl() const { return &Subtarget; }
 
-    virtual bool addInstSelector(PassManagerBase &PM);
-    virtual bool addPostRegAlloc(PassManagerBase &PM);
-
     // We override this method to supply our own set of codegen passes.
     virtual bool addPassesToEmitFile(PassManagerBase &,
                                      formatted_raw_ostream &,
@@ -83,10 +80,9 @@ class PTXTargetMachine : public LLVMTargetMachine {
       return true;
     }
 
-  private:
-
-    bool addCommonCodeGenPasses(PassManagerBase &,
-                                bool DisableVerify, MCContext *&OutCtx);
+    // Pass Pipeline Configuration
+    virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
+                                               bool DisableVerify);
 }; // class PTXTargetMachine
 
 

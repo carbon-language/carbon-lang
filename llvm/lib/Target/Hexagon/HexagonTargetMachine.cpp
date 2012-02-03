@@ -76,14 +76,39 @@ bool HexagonTargetMachine::addPassesForOptimizations(PassManagerBase &PM) {
   return true;
 }
 
-bool HexagonTargetMachine::addInstSelector(PassManagerBase &PM) {
-  PM.add(createHexagonRemoveExtendOps(*this));
-  PM.add(createHexagonISelDag(*this));
+namespace {
+/// Hexagon Code Generator Pass Configuration Options.
+class HexagonPassConfig : public TargetPassConfig {
+public:
+  HexagonPassConfig(HexagonTargetMachine *TM, PassManagerBase &PM,
+                bool DisableVerifyFlag)
+    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+
+  HexagonTargetMachine &getHexagonTargetMachine() const {
+    return getTM<HexagonTargetMachine>();
+  }
+
+  virtual bool addInstSelector();
+  virtual bool addPreRegAlloc();
+  virtual bool addPostRegAlloc();
+  virtual bool addPreSched2();
+  virtual bool addPreEmitPass();
+};
+} // namespace
+
+TargetPassConfig *HexagonTargetMachine::createPassConfig(PassManagerBase &PM,
+                                                         bool DisableVerify) {
+  return new HexagonPassConfig(this, PM, DisableVerify);
+}
+
+bool HexagonPassConfig::addInstSelector() {
+  PM.add(createHexagonRemoveExtendOps(getHexagonTargetMachine()));
+  PM.add(createHexagonISelDag(getHexagonTargetMachine()));
   return false;
 }
 
 
-bool HexagonTargetMachine::addPreRegAlloc(PassManagerBase &PM) {
+bool HexagonPassConfig::addPreRegAlloc() {
   if (!DisableHardwareLoops) {
     PM.add(createHexagonHardwareLoops());
   }
@@ -91,28 +116,28 @@ bool HexagonTargetMachine::addPreRegAlloc(PassManagerBase &PM) {
   return false;
 }
 
-bool HexagonTargetMachine::addPostRegAlloc(PassManagerBase &PM) {
-  PM.add(createHexagonCFGOptimizer(*this));
+bool HexagonPassConfig::addPostRegAlloc() {
+  PM.add(createHexagonCFGOptimizer(getHexagonTargetMachine()));
   return true;
 }
 
 
-bool HexagonTargetMachine::addPreSched2(PassManagerBase &PM) {
+bool HexagonPassConfig::addPreSched2() {
   PM.add(createIfConverterPass());
   return true;
 }
 
-bool HexagonTargetMachine::addPreEmitPass(PassManagerBase &PM) {
+bool HexagonPassConfig::addPreEmitPass() {
 
   if (!DisableHardwareLoops) {
     PM.add(createHexagonFixupHwLoops());
   }
 
   // Expand Spill code for predicate registers.
-  PM.add(createHexagonExpandPredSpillCode(*this));
+  PM.add(createHexagonExpandPredSpillCode(getHexagonTargetMachine()));
 
   // Split up TFRcondsets into conditional transfers.
-  PM.add(createHexagonSplitTFRCondSets(*this));
+  PM.add(createHexagonSplitTFRCondSets(getHexagonTargetMachine()));
 
   return false;
 }

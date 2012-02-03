@@ -71,10 +71,9 @@ public:
   }
 
   // Set up the pass pipeline.
-  virtual bool addInstSelector(PassManagerBase &PM);
-  virtual bool addPreRegAlloc(PassManagerBase &PM);
-  virtual bool addPostRegAlloc(PassManagerBase &PM);
-  virtual bool addPreEmitPass(PassManagerBase &PM);
+  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
+                                             bool DisableVerify);
+
   virtual bool addCodeEmitter(PassManagerBase &PM,
                               JITCodeEmitter &JCE);
 };

@@ -56,7 +56,8 @@ public:
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
 
   // Pass Pipeline Configuration
-  virtual bool addInstSelector(PassManagerBase &PM);
+  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
+                                             bool DisableVerify);
 };
 
 } // end namespace llvm

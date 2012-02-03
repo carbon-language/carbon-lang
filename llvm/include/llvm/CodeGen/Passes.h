@@ -26,7 +26,111 @@ namespace llvm {
   class TargetLowering;
   class TargetRegisterClass;
   class raw_ostream;
+}
 
+namespace llvm {
+
+/// Target-Independent Code Generator Pass Configuration Options.
+///
+/// FIXME: Why are we passing the DisableVerify flags around instead of setting
+/// an options in the target machine, like all the other driver options?
+class TargetPassConfig {
+protected:
+  TargetMachine *TM;
+  PassManagerBase &PM;
+  bool DisableVerify;
+
+public:
+  TargetPassConfig(TargetMachine *tm, PassManagerBase &pm,
+                   bool DisableVerifyFlag)
+    : TM(tm), PM(pm), DisableVerify(DisableVerifyFlag) {}
+
+  virtual ~TargetPassConfig() {}
+
+  /// Get the right type of TargetMachine for this target.
+  template<typename TMC> TMC &getTM() const {
+    return *static_cast<TMC*>(TM);
+  }
+
+  CodeGenOpt::Level getOptLevel() const { return TM->getOptLevel(); }
+
+  const TargetLowering *getTargetLowering() const { return TM->getTargetLowering(); }
+
+  /// Add the complete, standard set of LLVM CodeGen passes.
+  /// Fully developed targets will not generally override this.
+  virtual bool addCodeGenPasses(MCContext *&OutContext);
+
+protected:
+  /// Convenient points in the common codegen pass pipeline for inserting
+  /// passes, and major CodeGen stages that some targets may override.
+  ///
+
+  /// addPreISelPasses - This method should add any "last minute" LLVM->LLVM
+  /// passes (which are run just before instruction selector).
+  virtual bool addPreISel() {
+    return true;
+  }
+
+  /// addInstSelector - This method should install an instruction selector pass,
+  /// which converts from LLVM code to machine instructions.
+  virtual bool addInstSelector() {
+    return true;
+  }
+
+  /// addPreRegAlloc - This method may be implemented by targets that want to
+  /// run passes immediately before register allocation. This should return
+  /// true if -print-machineinstrs should print after these passes.
+  virtual bool addPreRegAlloc() {
+    return false;
+  }
+
+  /// addPostRegAlloc - This method may be implemented by targets that want
+  /// to run passes after register allocation but before prolog-epilog
+  /// insertion.  This should return true if -print-machineinstrs should print
+  /// after these passes.
+  virtual bool addPostRegAlloc() {
+    return false;
+  }
+
+  /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
+  /// on this target.  User flag overrides.
+  virtual bool getEnableTailMergeDefault() const { return true; }
+
+  /// addPreSched2 - This method may be implemented by targets that want to
+  /// run passes after prolog-epilog insertion and before the second instruction
+  /// scheduling pass.  This should return true if -print-machineinstrs should
+  /// print after these passes.
+  virtual bool addPreSched2() {
+    return false;
+  }
+
+  /// addPreEmitPass - This pass may be implemented by targets that want to run
+  /// passes immediately before machine code is emitted.  This should return
+  /// true if -print-machineinstrs should print out the code after the passes.
+  virtual bool addPreEmitPass() {
+    return false;
+  }
+
+  /// Utilities for targets to add passes to the pass manager.
+  ///
+
+  /// Add a target-independent CodeGen pass at this point in the pipeline.
+  void addCommonPass(char &ID);
+
+  /// printNoVerify - Add a pass to dump the machine function, if debugging is
+  /// enabled.
+  ///
+  void printNoVerify(const char *Banner) const;
+
+  /// printAndVerify - Add a pass to dump then verify the machine function, if
+  /// those steps are enabled.
+  ///
+  void printAndVerify(const char *Banner) const;
+};
+} // namespace llvm
+
+/// List of target independent CodeGen pass IDs.
+namespace llvm {
   /// createUnreachableBlockEliminationPass - The LLVM code generator does not
   /// work well with unreachable basic blocks (what live ranges make sense for a
   /// block that cannot be reached?).  As such, a code generator should either

@@ -13,6 +13,7 @@
 #include "Sparc.h"
 #include "SparcTargetMachine.h"
 #include "llvm/PassManager.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
@@ -24,7 +25,7 @@ extern "C" void LLVMInitializeSparcTarget() {
 
 /// SparcTargetMachine ctor - Create an ILP32 architecture model
 ///
-SparcTargetMachine::SparcTargetMachine(const Target &T, StringRef TT, 
+SparcTargetMachine::SparcTargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
@@ -37,17 +38,39 @@ SparcTargetMachine::SparcTargetMachine(const Target &T, StringRef TT,
     FrameLowering(Subtarget) {
 }
 
-bool SparcTargetMachine::addInstSelector(PassManagerBase &PM) {
-  PM.add(createSparcISelDag(*this));
+namespace {
+/// Sparc Code Generator Pass Configuration Options.
+class SparcPassConfig : public TargetPassConfig {
+public:
+  SparcPassConfig(SparcTargetMachine *TM, PassManagerBase &PM,
+                  bool DisableVerifyFlag)
+    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+
+  SparcTargetMachine &getSparcTargetMachine() const {
+    return getTM<SparcTargetMachine>();
+  }
+
+  virtual bool addInstSelector();
+  virtual bool addPreEmitPass();
+};
+} // namespace
+
+TargetPassConfig *SparcTargetMachine::createPassConfig(PassManagerBase &PM,
+                                                       bool DisableVerify) {
+  return new SparcPassConfig(this, PM, DisableVerify);
+}
+
+bool SparcPassConfig::addInstSelector() {
+  PM.add(createSparcISelDag(getSparcTargetMachine()));
   return false;
 }
 
 /// addPreEmitPass - This pass may be implemented by targets that want to run
 /// passes immediately before machine code is emitted.  This should return
 /// true if -print-machineinstrs should print out the code after the passes.
-bool SparcTargetMachine::addPreEmitPass(PassManagerBase &PM){
-  PM.add(createSparcFPMoverPass(*this));
-  PM.add(createSparcDelaySlotFillerPass(*this));
+bool SparcPassConfig::addPreEmitPass(){
+  PM.add(createSparcFPMoverPass(getSparcTargetMachine()));
+  PM.add(createSparcDelaySlotFillerPass(getSparcTargetMachine()));
   return true;
 }
 
@@ -65,7 +88,7 @@ SparcV8TargetMachine::SparcV8TargetMachine(const Target &T,
 
 void SparcV9TargetMachine::anchor() { }
 
-SparcV9TargetMachine::SparcV9TargetMachine(const Target &T, 
+SparcV9TargetMachine::SparcV9TargetMachine(const Target &T,
                                            StringRef TT,  StringRef CPU,
                                            StringRef FS,
                                            const TargetOptions &Options,

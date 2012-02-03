@@ -117,35 +117,63 @@ UseVZeroUpper("x86-use-vzeroupper",
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool X86TargetMachine::addInstSelector(PassManagerBase &PM) {
+namespace {
+/// X86 Code Generator Pass Configuration Options.
+class X86PassConfig : public TargetPassConfig {
+public:
+  X86PassConfig(X86TargetMachine *TM, PassManagerBase &PM,
+                bool DisableVerifyFlag)
+    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+
+  X86TargetMachine &getX86TargetMachine() const {
+    return getTM<X86TargetMachine>();
+  }
+
+  const X86Subtarget &getX86Subtarget() const {
+    return *getX86TargetMachine().getSubtargetImpl();
+  }
+
+  virtual bool addInstSelector();
+  virtual bool addPreRegAlloc();
+  virtual bool addPostRegAlloc();
+  virtual bool addPreEmitPass();
+};
+} // namespace
+
+TargetPassConfig *X86TargetMachine::createPassConfig(PassManagerBase &PM,
+                                                     bool DisableVerify) {
+  return new X86PassConfig(this, PM, DisableVerify);
+}
+
+bool X86PassConfig::addInstSelector() {
   // Install an instruction selector.
-  PM.add(createX86ISelDag(*this, getOptLevel()));
+  PM.add(createX86ISelDag(getX86TargetMachine(), getOptLevel()));
 
   // For 32-bit, prepend instructions to set the "global base reg" for PIC.
-  if (!Subtarget.is64Bit())
+  if (!getX86Subtarget().is64Bit())
     PM.add(createGlobalBaseRegPass());
 
   return false;
 }
 
-bool X86TargetMachine::addPreRegAlloc(PassManagerBase &PM) {
+bool X86PassConfig::addPreRegAlloc() {
   PM.add(createX86MaxStackAlignmentHeuristicPass());
   return false;  // -print-machineinstr shouldn't print after this.
 }
 
-bool X86TargetMachine::addPostRegAlloc(PassManagerBase &PM) {
+bool X86PassConfig::addPostRegAlloc() {
   PM.add(createX86FloatingPointStackifierPass());
   return true;  // -print-machineinstr should print after this.
 }
 
-bool X86TargetMachine::addPreEmitPass(PassManagerBase &PM) {
+bool X86PassConfig::addPreEmitPass() {
   bool ShouldPrint = false;
-  if (getOptLevel() != CodeGenOpt::None && Subtarget.hasSSE2()) {
+  if (getOptLevel() != CodeGenOpt::None && getX86Subtarget().hasSSE2()) {
     PM.add(createExecutionDependencyFixPass(&X86::VR128RegClass));
     ShouldPrint = true;
   }
 
-  if (Subtarget.hasAVX() && UseVZeroUpper) {
+  if (getX86Subtarget().hasAVX() && UseVZeroUpper) {
     PM.add(createX86IssueVZeroUpperPass());
     ShouldPrint = true;
   }

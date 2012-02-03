@@ -72,11 +72,8 @@ public:
 
   // Pass Pipeline Configuration.
   virtual bool addPassesForOptimizations(PassManagerBase &PM);
-  virtual bool addInstSelector(PassManagerBase &PM);
-  virtual bool addPreEmitPass(PassManagerBase &PM);
-  virtual bool addPreRegAlloc(llvm::PassManagerBase &PM);
-  virtual bool addPostRegAlloc(PassManagerBase &PM);
-  virtual bool addPreSched2(PassManagerBase &PM);
+  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
+                                             bool DisableVerify);
 };
 
 extern bool flag_aligned_memcpy;

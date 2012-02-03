@@ -14,6 +14,7 @@
 #include "XCore.h"
 #include "llvm/Module.h"
 #include "llvm/PassManager.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
 
@@ -34,8 +35,29 @@ XCoreTargetMachine::XCoreTargetMachine(const Target &T, StringRef TT,
     TSInfo(*this) {
 }
 
-bool XCoreTargetMachine::addInstSelector(PassManagerBase &PM) {
-  PM.add(createXCoreISelDag(*this, getOptLevel()));
+namespace {
+/// XCore Code Generator Pass Configuration Options.
+class XCorePassConfig : public TargetPassConfig {
+public:
+  XCorePassConfig(XCoreTargetMachine *TM, PassManagerBase &PM,
+                bool DisableVerifyFlag)
+    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+
+  XCoreTargetMachine &getXCoreTargetMachine() const {
+    return getTM<XCoreTargetMachine>();
+  }
+
+  virtual bool addInstSelector();
+};
+} // namespace
+
+TargetPassConfig *XCoreTargetMachine::createPassConfig(PassManagerBase &PM,
+                                                       bool DisableVerify) {
+  return new XCorePassConfig(this, PM, DisableVerify);
+}
+
+bool XCorePassConfig::addInstSelector() {
+  PM.add(createXCoreISelDag(getXCoreTargetMachine(), getOptLevel()));
   return false;
 }
 

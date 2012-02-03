@@ -21,7 +21,7 @@
 
 using namespace llvm;
 
-extern "C" void LLVMInitializeCellSPUTarget() { 
+extern "C" void LLVMInitializeCellSPUTarget() {
   // Register the target.
   RegisterTargetMachine<SPUTargetMachine> X(TheCellSPUTarget);
 }
@@ -51,15 +51,36 @@ SPUTargetMachine::SPUTargetMachine(const Target &T, StringRef TT,
 // Pass Pipeline Configuration
 //===----------------------------------------------------------------------===//
 
-bool SPUTargetMachine::addInstSelector(PassManagerBase &PM) {
+namespace {
+/// SPU Code Generator Pass Configuration Options.
+class SPUPassConfig : public TargetPassConfig {
+public:
+  SPUPassConfig(SPUTargetMachine *TM, PassManagerBase &PM,
+                bool DisableVerifyFlag)
+    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+
+  SPUTargetMachine &getSPUTargetMachine() const {
+    return getTM<SPUTargetMachine>();
+  }
+
+  virtual bool addInstSelector();
+  virtual bool addPreEmitPass();
+};
+} // namespace
+
+TargetPassConfig *SPUTargetMachine::createPassConfig(PassManagerBase &PM,
+                                                     bool DisableVerify) {
+  return new SPUPassConfig(this, PM, DisableVerify);
+}
+
+bool SPUPassConfig::addInstSelector() {
   // Install an instruction selector.
-  PM.add(createSPUISelDag(*this));
+  PM.add(createSPUISelDag(getSPUTargetMachine()));
   return false;
 }
 
 // passes to run just before printing the assembly
-bool SPUTargetMachine::
-addPreEmitPass(PassManagerBase &PM) {
+bool SPUPassConfig::addPreEmitPass() {
   // load the TCE instruction scheduler, if available via
   // loaded plugins
   typedef llvm::FunctionPass* (*BuilderFunc)(const char*);
@@ -70,6 +91,6 @@ addPreEmitPass(PassManagerBase &PM) {
       PM.add(schedulerCreator("cellspu"));
 
   //align instructions with nops/lnops for dual issue
-  PM.add(createSPUNopFillerPass(*this));
+  PM.add(createSPUNopFillerPass(getSPUTargetMachine()));
   return true;
 }
