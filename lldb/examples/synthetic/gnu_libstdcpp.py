@@ -53,33 +53,22 @@ class StdListSynthProvider:
 		except:
 			return None
 
-	def extract_type_name(self,name):
-		self.type_name = name[16:]
-		index = 2
-		count_of_template = 1
-		while index < len(self.type_name):
-			if self.type_name[index] == '<':
-				count_of_template = count_of_template + 1
-			elif self.type_name[index] == '>':
-				count_of_template = count_of_template - 1
-			elif self.type_name[index] == ',' and count_of_template == 1:
-				self.type_name = self.type_name[:index]
-				break
-			index = index + 1
-		self.type_name_nospaces = self.type_name.replace(", ", ",")
+	def extract_type(self):
+		list_type = self.valobj.GetType().GetUnqualifiedType()
+		if list_type.GetNumberOfTemplateArguments() > 0:
+			data_type = list_type.GetTemplateArgumentType(0)
+		else:
+			data_type = None
+		return data_type
 
 	def update(self):
 		try:
 			impl = self.valobj.GetChildMemberWithName('_M_impl')
 			node = impl.GetChildMemberWithName('_M_node')
-			self.extract_type_name(impl.GetType().GetName())
 			self.node_address = self.valobj.AddressOf().GetValueAsUnsigned(0)
 			self.next = node.GetChildMemberWithName('_M_next')
 			self.prev = node.GetChildMemberWithName('_M_prev')
-			self.data_type = node.GetTarget().FindFirstType(self.type_name)
-			# tries to fight against a difference in formatting type names between gcc and clang
-			if self.data_type.IsValid() == False:
-				self.data_type = node.GetTarget().FindFirstType(self.type_name_nospaces)
+			self.data_type = self.extract_type()
 			self.data_size = self.data_type.GetByteSize()
 		except:
 			pass
@@ -151,63 +140,51 @@ class StdMapSynthProvider:
 	def __init__(self, valobj, dict):
 		self.valobj = valobj;
 		self.update()
+		
+	# we need this function as a temporary workaround for rdar://problem/10801549
+	# which prevents us from extracting the std::pair<K,V> SBType out of the template
+	# arguments for _Rep_Type _M_t in the map itself - because we have to make up the
+	# typename and then find it, we may hit the situation were std::string has multiple
+	# names but only one is actually referenced in the debug information. hence, we need
+	# to replace the longer versions of std::string with the shorter one in order to be able
+	# to find the type name
+	def fixup_class_name(self, class_name):
+		if class_name == 'std::basic_string<char, class std::char_traits<char>, class std::allocator<char> >':
+			return 'std::basic_string<char>'
+		if class_name == 'basic_string<char, class std::char_traits<char>, class std::allocator<char> >':
+			return 'std::basic_string<char>'
+		if class_name == 'std::basic_string<char, std::char_traits<char>, std::allocator<char> >':
+			return 'std::basic_string<char>'
+		if class_name == 'basic_string<char, std::char_traits<char>, std::allocator<char> >':
+			return 'std::basic_string<char>'
+		return class_name
 
 	def update(self):
 		try:
 			self.Mt = self.valobj.GetChildMemberWithName('_M_t')
 			self.Mimpl = self.Mt.GetChildMemberWithName('_M_impl')
 			self.Mheader = self.Mimpl.GetChildMemberWithName('_M_header')
+			
+			map_arg_0 = str(self.valobj.GetType().GetTemplateArgumentType(0).GetName())
+			map_arg_1 = str(self.valobj.GetType().GetTemplateArgumentType(1).GetName())
+			
+			map_arg_0 = self.fixup_class_name(map_arg_0)
+			map_arg_1 = self.fixup_class_name(map_arg_1)
+			
+			map_arg_type = "std::pair<const " + map_arg_0 + ", " + map_arg_1
+			if map_arg_1[-1] == '>':
+				map_arg_type = map_arg_type + " >"
+			else:
+				map_arg_type = map_arg_type + ">"
+			
+			self.data_type = self.valobj.GetTarget().FindFirstType(map_arg_type)
+			
 			# from libstdc++ implementation of _M_root for rbtree
 			self.Mroot = self.Mheader.GetChildMemberWithName('_M_parent')
-			# the stuff into the tree is actually a std::pair<const key, value>
-			# life would be much easier if gcc had a coherent way to print out
-			# template names in debug info
-			self.expand_clang_type_name()
-			self.expand_gcc_type_name()
-			self.data_type = self.Mt.GetTarget().FindFirstType(self.clang_type_name)
-			if self.data_type.IsValid() == False:
-				self.data_type = self.Mt.GetTarget().FindFirstType(self.gcc_type_name)
 			self.data_size = self.data_type.GetByteSize()
 			self.skip_size = self.Mheader.GetType().GetByteSize()
 		except:
 			pass
-
-	def expand_clang_type_name(self):
-		type_name = self.Mimpl.GetType().GetName()
-		index = type_name.find("std::pair<")
-		type_name = type_name[index+5:]
-		index = 6
-		template_count = 1
-		while index < len(type_name):
-			if type_name[index] == '<':
-				template_count = template_count + 1
-			elif type_name[index] == '>' and template_count == 1:
-				type_name = type_name[:index+1]
-				break
-			elif type_name[index] == '>':
-				template_count = template_count - 1
-			index = index + 1;
-		self.clang_type_name = type_name
-
-	def expand_gcc_type_name(self):
-		type_name = self.Mt.GetType().GetName()
-		index = type_name.find("std::pair<")
-		type_name = type_name[index+5:]
-		index = 6
-		template_count = 1
-		while index < len(type_name):
-			if type_name[index] == '<':
-				template_count = template_count + 1
-			elif type_name[index] == '>' and template_count == 1:
-				type_name = type_name[:index+1]
-				break
-			elif type_name[index] == '>':
-				template_count = template_count - 1
-			elif type_name[index] == ' ' and template_count == 1 and type_name[index-1] == ',':
-			    type_name = type_name[0:index] + type_name[index+1:]
-			    index = index - 1
-			index = index + 1;
-		self.gcc_type_name = type_name
 
 	def num_children(self):
 		try:
