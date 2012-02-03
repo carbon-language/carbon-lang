@@ -1947,12 +1947,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
     CmdArgs.push_back(A->getValue(Args));
   }
 
-  // Forward -ftrap_function= options to the backend.
-  if (Arg *A = Args.getLastArg(options::OPT_ftrap_function_EQ)) {
-    StringRef FuncName = A->getValue(Args);
-    CmdArgs.push_back("-backend-option");
-    CmdArgs.push_back(Args.MakeArgString("-trap-func=" + FuncName));
-  }
+  Args.AddLastArg(CmdArgs, options::OPT_ftrap_function_EQ);
 
   // -fno-strict-overflow implies -fwrapv if it isn't disabled, but
   // -fstrict-overflow won't turn off an explicitly enabled -fwrapv.

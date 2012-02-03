@@ -1143,6 +1143,7 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
                       Args.hasArg(OPT_cl_fast_relaxed_math);
   Opts.UnwindTables = Args.hasArg(OPT_munwind_tables);
   Opts.RelocationModel = Args.getLastArgValue(OPT_mrelocation_model, "pic");
+  Opts.TrapFuncName = Args.getLastArgValue(OPT_ftrap_function_EQ);
 
   Opts.FunctionSections = Args.hasArg(OPT_ffunction_sections);
   Opts.DataSections = Args.hasArg(OPT_fdata_sections);
