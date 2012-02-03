@@ -538,11 +538,11 @@ public:
                 return None
         
         def get_modules_access_object(self):
-            '''An accessor function that retuns a modules_access() object which allows lazy module array access.'''
+            '''An accessor function that returns a modules_access() object which allows lazy module access from a lldb.SBTarget object.'''
             return self.modules_access (self)
         
         def get_modules_array(self):
-            '''An accessor function that retuns an array object that contains all modules in this target object.'''
+            '''An accessor function that returns a list() that contains all modules in a lldb.SBTarget object.'''
             modules = []
             for idx in range(self.GetNumModules()):
                 modules.append(self.GetModuleAtIndex(idx))

@@ -248,7 +248,7 @@ public:
 
     %pythoncode %{
         class symbols_access(object):
-            re_type = type(re.compile('.'))
+            re_compile_type = type(re.compile('.'))
             '''A helper object that will lazily hand out lldb.SBModule objects for a target when supplied an index, or by full or partial path.'''
             def __init__(self, sbmodule):
                 self.sbmodule = sbmodule
@@ -259,7 +259,7 @@ public:
                 return 0
         
             def __getitem__(self, key):
-                count = self.sbmodule.GetNumSymbols()
+                count = len(self)
                 if type(key) is int:
                     if key < count:
                         return self.sbmodule.GetSymbolAtIndex(key)
@@ -269,9 +269,8 @@ public:
                         symbol = self.sbmodule.GetSymbolAtIndex(idx)
                         if symbol.name == key or symbol.mangled == key:
                             matches.append(symbol)
-                    if len(matches):
-                        return matches
-                elif isinstance(key, self.re_type):
+                    return matches
+                elif isinstance(key, self.re_compile_type):
                     matches = []
                     for idx in range(count):
                         symbol = self.sbmodule.GetSymbolAtIndex(idx)
@@ -288,29 +287,83 @@ public:
                                 re_match = key.search(mangled)
                                 if re_match:
                                     matches.append(symbol)
-                    if len(matches):
-                        return matches
+                    return matches
                 else:
                     print "error: unsupported item type: %s" % type(key)
                 return None
         
         def get_symbols_access_object(self):
-            '''An accessor function that retuns a symbols_access() object which allows lazy module array access.'''
+            '''An accessor function that returns a symbols_access() object which allows lazy symbol access from a lldb.SBModule object.'''
             return self.symbols_access (self)
         
         def get_symbols_array(self):
-            '''An accessor function that retuns an array object that contains all modules in this target object.'''
+            '''An accessor function that returns a list() that contains all symbols in a lldb.SBModule object.'''
             symbols = []
-            for idx in range(self.GetNumSymbols()):
+            for idx in range(self.num_symbols):
                 symbols.append(self.GetSymbolAtIndex(idx))
             return symbols
+
+        class sections_access(object):
+            re_compile_type = type(re.compile('.'))
+            '''A helper object that will lazily hand out lldb.SBModule objects for a target when supplied an index, or by full or partial path.'''
+            def __init__(self, sbmodule):
+                self.sbmodule = sbmodule
+        
+            def __len__(self):
+                if self.sbmodule:
+                    return self.sbmodule.GetNumSections()
+                return 0
+        
+            def __getitem__(self, key):
+                count = len(self)
+                if type(key) is int:
+                    if key < count:
+                        return self.sbmodule.GetSectionAtIndex(key)
+                elif type(key) is str:
+                    matches = []
+                    for idx in range(count):
+                        section = self.sbmodule.GetSectionAtIndex(idx)
+                        if section.name == key:
+                            matches.append(section)
+                    return matches
+                elif isinstance(key, self.re_compile_type):
+                    matches = []
+                    for idx in range(count):
+                        section = self.sbmodule.GetSectionAtIndex(idx)
+                        name = section.name
+                        if name:
+                            re_match = key.search(name)
+                            if re_match:
+                                matches.append(section)
+                    return matches
+                else:
+                    print "error: unsupported item type: %s" % type(key)
+                return None
+        
+        def get_sections_access_object(self):
+            '''An accessor function that returns a sections_access() object which allows lazy section array access.'''
+            return self.sections_access (self)
+        
+        def get_sections_array(self):
+            '''An accessor function that returns an array object that contains all sections in this module object.'''
+            if not hasattr(self, 'sections'):
+                self.sections = []
+                for idx in range(self.num_sections):
+                    self.sections.append(self.GetSectionAtIndex(idx))
+            return self.sections
 
         __swig_getmethods__["symbols"] = get_symbols_array
         if _newclass: x = property(get_symbols_array, None)
 
         __swig_getmethods__["symbol"] = get_symbols_access_object
         if _newclass: x = property(get_symbols_access_object, None)
+
+        __swig_getmethods__["sections"] = get_sections_array
+        if _newclass: x = property(get_sections_array, None)
         
+        __swig_getmethods__["section"] = get_sections_access_object
+        if _newclass: x = property(get_sections_access_object, None)
+
         def get_uuid(self):
             return uuid.UUID (self.GetUUIDString())
         

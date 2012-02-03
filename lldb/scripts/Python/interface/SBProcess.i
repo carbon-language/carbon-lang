@@ -309,7 +309,7 @@ public:
                 return True
             return False
 
-        class thread_array_access(object):
+        class threads_access(object):
             '''A helper object that will lazily hand out thread for a process when supplied an index.'''
             def __init__(self, sbprocess):
                 self.sbprocess = sbprocess
@@ -323,12 +323,12 @@ public:
                     return self.sbprocess.GetThreadAtIndex(key)
                 return None
         
-        def get_thread_array_access_object(self):
-            '''An accessor function that retuns a thread_array_access() object which allows lazy thread array access.'''
-            return self.thread_array_access (self)
+        def get_threads_access_object(self):
+            '''An accessor function that returns a modules_access() object which allows lazy thread access from a lldb.SBProcess object.'''
+            return self.threads_access (self)
         
         def get_process_thread_list(self):
-            '''An accessor function that retuns an array object that contains all threads in this process object.'''
+            '''An accessor function that returns a list() that contains all threads in a lldb.SBProcess object.'''
             threads = []
             for idx in range(self.GetNumThreads()):
                 threads.append(GetThreadAtIndex(idx))
@@ -337,8 +337,8 @@ public:
         __swig_getmethods__["threads"] = get_process_thread_list
         if _newclass: x = property(get_process_thread_list, None)
         
-        __swig_getmethods__["thread"] = get_thread_array_access_object
-        if _newclass: x = property(get_thread_array_access_object, None)
+        __swig_getmethods__["thread"] = get_threads_access_object
+        if _newclass: x = property(get_threads_access_object, None)
 
         __swig_getmethods__["is_alive"] = __get_is_alive__
         if _newclass: x = property(__get_is_alive__, None)

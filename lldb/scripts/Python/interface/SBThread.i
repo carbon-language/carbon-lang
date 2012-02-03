@@ -175,7 +175,7 @@ public:
     GetDescription (lldb::SBStream &description) const;
     
     %pythoncode %{
-        class frame_array_access(object):
+        class frames_access(object):
             '''A helper object that will lazily hand out frames for a thread when supplied an index.'''
             def __init__(self, sbthread):
                 self.sbthread = sbthread
@@ -190,12 +190,12 @@ public:
                     return self.sbthread.GetFrameAtIndex(key)
                 return None
         
-        def get_frame_array_access_object(self):
-            '''An accessor function that retuns a frame_array_access() object which allows lazy frame array access.'''
-            return self.frame_array_access (self)
+        def get_frames_access_object(self):
+            '''An accessor function that returns a frames_access() object which allows lazy frame access from a lldb.SBThread object.'''
+            return self.frames_access (self)
 
         def get_thread_frames(self):
-            '''An accessor function that retuns an array object that contains all frames in this thread object.'''
+            '''An accessor function that returns a list() that contains all frames in a lldb.SBThread object.'''
             frames = []
             for frame in self:
                 frames.append(frame)
@@ -219,8 +219,8 @@ public:
         __swig_getmethods__["frames"] = get_thread_frames
         if _newclass: x = property(get_thread_frames, None)
 
-        __swig_getmethods__["frame"] = get_frame_array_access_object
-        if _newclass: x = property(get_frame_array_access_object, None)
+        __swig_getmethods__["frame"] = get_frames_access_object
+        if _newclass: x = property(get_frames_access_object, None)
 
         __swig_getmethods__["name"] = GetName
         if _newclass: x = property(GetName, None)
