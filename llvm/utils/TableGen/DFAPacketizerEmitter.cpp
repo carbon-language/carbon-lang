@@ -311,8 +311,10 @@ void DFA::writeTableAndAPI(raw_ostream &OS, const std::string &TargetName) {
 
     // If there are no valid transitions from this stage, we need a sentinel
     // transition.
-    if (ValidTransitions == StateEntry[i])
+    if (ValidTransitions == StateEntry[i]) {
       OS << "{-1, -1},";
+      ++ValidTransitions;
+    }
 
     OS << "\n";
   }
