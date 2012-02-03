@@ -53,26 +53,27 @@ static cl::opt<std::string>
 
 static const Target *GetTarget(const MachOObject *MachOObj) {
   // Figure out the target triple.
-  llvm::Triple TT("unknown-unknown-unknown");
-  switch (MachOObj->getHeader().CPUType) {
-  case llvm::MachO::CPUTypeI386:
-    TT.setArch(Triple::ArchType(Triple::x86));
-    break;
-  case llvm::MachO::CPUTypeX86_64:
-    TT.setArch(Triple::ArchType(Triple::x86_64));
-    break;
-  case llvm::MachO::CPUTypeARM:
-    TT.setArch(Triple::ArchType(Triple::arm));
-    break;
-  case llvm::MachO::CPUTypePowerPC:
-    TT.setArch(Triple::ArchType(Triple::ppc));
-    break;
-  case llvm::MachO::CPUTypePowerPC64:
-    TT.setArch(Triple::ArchType(Triple::ppc64));
-    break;
+  if (TripleName.empty()) {
+    llvm::Triple TT("unknown-unknown-unknown");
+    switch (MachOObj->getHeader().CPUType) {
+    case llvm::MachO::CPUTypeI386:
+      TT.setArch(Triple::ArchType(Triple::x86));
+      break;
+    case llvm::MachO::CPUTypeX86_64:
+      TT.setArch(Triple::ArchType(Triple::x86_64));
+      break;
+    case llvm::MachO::CPUTypeARM:
+      TT.setArch(Triple::ArchType(Triple::arm));
+      break;
+    case llvm::MachO::CPUTypePowerPC:
+      TT.setArch(Triple::ArchType(Triple::ppc));
+      break;
+    case llvm::MachO::CPUTypePowerPC64:
+      TT.setArch(Triple::ArchType(Triple::ppc64));
+      break;
+    }
+    TripleName = TT.str();
   }
-
-  TripleName = TT.str();
 
   // Get the target specific parser.
   std::string Error;
