@@ -2,8 +2,7 @@
 // rdar://10336845
 // Preserve type qualifiers in -flimit-debug-info mode.
 
-// 720934 = DW_TAG_const_type | LLVMDebugVersion
-// CHECK:  metadata !{i32 720934
+// CHECK:  DW_TAG_const_type
 class A {
 public:
   int bar(int arg) const;
