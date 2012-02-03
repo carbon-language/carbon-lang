@@ -5,6 +5,7 @@ Test some expressions involving STL data types.
 import os, time
 import unittest2
 import lldb
+import lldbutil
 from lldbtest import *
 
 class STLTestCase(TestBase):
@@ -26,11 +27,24 @@ class STLTestCase(TestBase):
         self.buildDwarf()
         self.step_stl_exprs()
 
+    @python_api_test
+    def test_SBType_template_aspects_with_dsym(self):
+        """Test APIs for getting template arguments from a SBType."""
+        self.buildDsym()
+        self.sbtype_template_apis()
+
+    @python_api_test
+    def test_SBType_template_aspects_with_dwarf(self):
+        """Test APIs for getting template arguments from a SBType."""
+        self.buildDwarf()
+        self.sbtype_template_apis()
+
     def setUp(self):
         # Call super's setUp().
         TestBase.setUp(self)
         # Find the line number to break inside main().
-        self.line = line_number('main.cpp', '// Set break point at this line.')
+        self.source = 'main.cpp'
+        self.line = line_number(self.source, '// Set break point at this line.')
 
     def step_stl_exprs(self):
         """Test some expressions involving STL data types."""
@@ -45,7 +59,7 @@ class STLTestCase(TestBase):
         # rdar://problem/8543077
         # test/stl: clang built binaries results in the breakpoint locations = 3,
         # is this a problem with clang generated debug info?
-        self.expect("breakpoint set -f main.cpp -l %d" % self.line,
+        self.expect("breakpoint set -f %s -l %d" % (self.source, self.line),
                     BREAKPOINT_CREATED,
             startstr = "Breakpoint created: 1: file ='main.cpp', line = %d" %
                         self.line)
@@ -75,6 +89,53 @@ class STLTestCase(TestBase):
             substrs = [' = 1'])
         self.expect('expr associative_array["hello"]',
             substrs = [' = 2'])
+
+    def sbtype_template_apis(self):
+        """Test APIs for getting template arguments from an SBType."""
+        exe = os.path.join(os.getcwd(), 'a.out')
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+
+        # Create the breakpoint inside function 'main'.
+        breakpoint = target.BreakpointCreateByLocation(self.source, self.line)
+        self.assertTrue(breakpoint, VALID_BREAKPOINT)
+
+        # Now launch the process, and do not stop at entry point.
+        process = target.LaunchSimple(None, None, os.getcwd())
+        self.assertTrue(process, PROCESS_IS_VALID)
+
+        # Get Frame #0.
+        self.assertTrue(process.GetState() == lldb.eStateStopped)
+        thread = lldbutil.get_stopped_thread(process, lldb.eStopReasonBreakpoint)
+        self.assertTrue(thread != None, "There should be a thread stopped due to breakpoint condition")
+        frame0 = thread.GetFrameAtIndex(0)
+
+        # Get the type for variable 'associative_array'.
+        associative_array = frame0.FindVariable('associative_array')
+        self.DebugSBValue(associative_array)
+        self.assertTrue(associative_array, VALID_VARIABLE)
+        map_type = associative_array.GetType()
+        self.DebugSBType(map_type)
+        self.assertTrue(map_type, VALID_TYPE)
+        num_template_args = map_type.GetNumberOfTemplateArguments()
+        self.assertTrue(num_template_args > 0)
+
+        # We expect the template arguments to contain at least 'string' and 'int'.
+        expected_types = { 'string': False, 'int': False }
+        for i in range(num_template_args):
+            t = map_type.GetTemplateArgumentType(i)
+            self.DebugSBType(t)
+            self.assertTrue(t, VALID_TYPE)
+            name = t.GetName()
+            if 'string' in name:
+                expected_types['string'] = True
+            elif 'int' == name:
+                expected_types['int'] = True
+
+        # Check that both entries of the dictionary have 'True' as the value.
+        self.assertTrue(all(expected_types.values()))
 
 
 if __name__ == '__main__':

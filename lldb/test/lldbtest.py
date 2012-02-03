@@ -196,6 +196,8 @@ VALID_SYMBOL = "Got a valid symbol"
 
 VALID_TARGET = "Got a valid target"
 
+VALID_TYPE = "Got a valid type"
+
 VALID_VARIABLE = "Got a valid variable"
 
 VARIABLES_DISPLAYED_CORRECTLY = "Variable(s) displayed correctly"
