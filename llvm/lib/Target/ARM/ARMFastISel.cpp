@@ -163,7 +163,7 @@ class ARMFastISel : public FastISel {
     bool SelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
     bool SelectIToFP(const Instruction *I, bool isZExt);
     bool SelectFPToI(const Instruction *I, bool isZExt);
-    bool SelectSDiv(const Instruction *I);
+    bool SelectDiv(const Instruction *I, bool isSigned);
     bool SelectSRem(const Instruction *I);
     bool SelectCall(const Instruction *I, const char *IntrMemName);
     bool SelectIntrinsicCall(const IntrinsicInst &I);
@@ -1671,7 +1671,7 @@ bool ARMFastISel::SelectSelect(const Instruction *I) {
   return true;
 }
 
-bool ARMFastISel::SelectSDiv(const Instruction *I) {
+bool ARMFastISel::SelectDiv(const Instruction *I, bool isSigned) {
   MVT VT;
   Type *Ty = I->getType();
   if (!isTypeLegal(Ty, VT))
@@ -1685,15 +1685,15 @@ bool ARMFastISel::SelectSDiv(const Instruction *I) {
   // Otherwise emit a libcall.
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
   if (VT == MVT::i8)
-    LC = RTLIB::SDIV_I8;
+    LC = isSigned ? RTLIB::SDIV_I8 : RTLIB::UDIV_I8;
   else if (VT == MVT::i16)
-    LC = RTLIB::SDIV_I16;
+    LC = isSigned ? RTLIB::SDIV_I16 : RTLIB::UDIV_I16;
   else if (VT == MVT::i32)
-    LC = RTLIB::SDIV_I32;
+    LC = isSigned ? RTLIB::SDIV_I32 : RTLIB::UDIV_I32;
   else if (VT == MVT::i64)
-    LC = RTLIB::SDIV_I64;
+    LC = isSigned ? RTLIB::SDIV_I64 : RTLIB::UDIV_I64;
   else if (VT == MVT::i128)
-    LC = RTLIB::SDIV_I128;
+    LC = isSigned ? RTLIB::SDIV_I128 : RTLIB::UDIV_I128;
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SDIV!");
 
   return ARMEmitLibcall(I, LC);
@@ -2463,7 +2463,9 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
     case Instruction::FMul:
       return SelectBinaryOp(I, ISD::FMUL);
     case Instruction::SDiv:
-      return SelectSDiv(I);
+      return SelectDiv(I, /*isSigned*/ true);
+    case Instruction::UDiv:
+      return SelectDiv(I, /*isSigned*/ false);
     case Instruction::SRem:
       return SelectSRem(I);
     case Instruction::Call:
