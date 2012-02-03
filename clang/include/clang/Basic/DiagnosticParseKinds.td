@@ -330,10 +330,10 @@ def err_illegal_super_cast : Error<
 let CategoryName = "ARC Parse Issue" in {
 def err_arc_bridge_retain : Error<
   "unknown cast annotation __bridge_retain; did you mean __bridge_retained?">;
+// To be default mapped to an error later.
 def err_arc_bridge_cast_nonarc : Warning<
   "'%0' casts are only allowed when using ARC">,
-  InGroup<DiagGroup<"arc-bridge-casts-disallowed-in-nonarc">>,
-  DefaultError;
+  InGroup<DiagGroup<"arc-bridge-casts-disallowed-in-nonarc">>;
 }
   
 def err_objc_illegal_visibility_spec : Error<
