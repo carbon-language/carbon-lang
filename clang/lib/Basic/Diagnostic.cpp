@@ -172,6 +172,13 @@ void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
 
   FullSourceLoc Loc(L, *SourceMgr);
   FullSourceLoc LastStateChangePos = DiagStatePoints.back().Loc;
+  // Don't allow a mapping to a warning override an error/fatal mapping.
+  if (Map == diag::MAP_WARNING) {
+    DiagnosticMappingInfo &Info = GetCurDiagState()->getOrAddMappingInfo(Diag);
+    if (Info.getMapping() == diag::MAP_ERROR ||
+        Info.getMapping() == diag::MAP_FATAL)
+      Map = Info.getMapping();
+  }
   DiagnosticMappingInfo MappingInfo = makeMappingInfo(Map, L);
 
   // Common case; setting all the diagnostics of a group in one place.
