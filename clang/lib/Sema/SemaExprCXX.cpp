@@ -5051,7 +5051,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     // the variable.
     // FIXME: Unify with normal capture path, so we get all of the necessary
     // nested captures.
-    LSI->AddCapture(Var, C->Kind == LCK_ByRef, /*isNested=*/false, C->Loc, 0);
+    LSI->AddCapture(Var, /*isBlock*/false, C->Kind == LCK_ByRef,
+                    /*isNested=*/false, C->Loc, 0);
   }
   LSI->finishedExplicitCaptures();
 

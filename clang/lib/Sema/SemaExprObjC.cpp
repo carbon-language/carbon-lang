@@ -237,14 +237,8 @@ ExprResult Sema::ParseObjCProtocolExpression(IdentifierInfo *ProtocolId,
 }
 
 /// Try to capture an implicit reference to 'self'.
-ObjCMethodDecl *Sema::tryCaptureObjCSelf() {
-  // Ignore block scopes: we can capture through them.
-  DeclContext *DC = CurContext;
-  while (true) {
-    if (isa<BlockDecl>(DC)) DC = cast<BlockDecl>(DC)->getDeclContext();
-    else if (isa<EnumDecl>(DC)) DC = cast<EnumDecl>(DC)->getDeclContext();
-    else break;
-  }
+ObjCMethodDecl *Sema::tryCaptureObjCSelf(SourceLocation Loc) {
+  DeclContext *DC = getFunctionLevelDeclContext();
 
   // If we're not in an ObjC method, error out.  Note that, unlike the
   // C++ case, we don't require an instance method --- class methods
@@ -253,22 +247,7 @@ ObjCMethodDecl *Sema::tryCaptureObjCSelf() {
   if (!method)
     return 0;
 
-  ImplicitParamDecl *self = method->getSelfDecl();
-  assert(self && "capturing 'self' in non-definition?");
-
-  // Mark that we're closing on 'this' in all the block scopes, if applicable.
-  for (unsigned idx = FunctionScopes.size() - 1;
-       isa<BlockScopeInfo>(FunctionScopes[idx]);
-       --idx) {
-    BlockScopeInfo *blockScope = cast<BlockScopeInfo>(FunctionScopes[idx]);
-    unsigned &captureIndex = blockScope->CaptureMap[self];
-    if (captureIndex) break;
-
-    bool nested = isa<BlockScopeInfo>(FunctionScopes[idx-1]);
-    blockScope->AddCapture(self, /*byref*/ false, nested, self->getLocation(),
-                           /*copy*/ 0);
-    captureIndex = blockScope->Captures.size(); // +1
-  }
+  TryCaptureVar(method->getSelfDecl(), Loc);
 
   return method;
 }
@@ -763,7 +742,7 @@ ActOnClassPropertyRefExpr(IdentifierInfo &receiverName,
     if (receiverNamePtr->isStr("super")) {
       IsSuper = true;
 
-      if (ObjCMethodDecl *CurMethod = tryCaptureObjCSelf()) {
+      if (ObjCMethodDecl *CurMethod = tryCaptureObjCSelf(receiverNameLoc)) {
         if (CurMethod->isInstanceMethod()) {
           QualType T = 
             Context.getObjCInterfaceType(CurMethod->getClassInterface());
@@ -975,7 +954,7 @@ ExprResult Sema::ActOnSuperMessage(Scope *S,
                                    SourceLocation RBracLoc,
                                    MultiExprArg Args) {
   // Determine whether we are inside a method or not.
-  ObjCMethodDecl *Method = tryCaptureObjCSelf();
+  ObjCMethodDecl *Method = tryCaptureObjCSelf(SuperLoc);
   if (!Method) {
     Diag(SuperLoc, diag::err_invalid_receiver_to_message_super);
     return ExprError();

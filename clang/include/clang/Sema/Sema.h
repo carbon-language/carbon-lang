@@ -2284,6 +2284,7 @@ public:
   void UpdateMarkingForLValueToRValue(Expr *E);
   void CleanupVarDeclMarking();
 
+  void TryCaptureVar(VarDecl *var, SourceLocation loc);
 
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
   void MarkDeclarationsReferencedInExpr(Expr *E);
@@ -5466,7 +5467,7 @@ public:
                             SourceLocation receiverNameLoc,
                             SourceLocation propertyNameLoc);
 
-  ObjCMethodDecl *tryCaptureObjCSelf();
+  ObjCMethodDecl *tryCaptureObjCSelf(SourceLocation Loc);
 
   /// \brief Describes the kind of message expression indicated by a message
   /// send that starts with an identifier.

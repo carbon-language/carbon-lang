@@ -125,8 +125,15 @@ public:
   ImplicitCaptureStyle ImpCaptureStyle;
 
   class Capture {
+    // There are two categories of capture: capturing 'this', and capturing
+    // local variables.  There are three ways to capture a local variable:
+    // capture by copy in the C++11 sense, capture by reference
+    // in the C++11 sense, and __block capture.  Lambdas explicitly specify
+    // capture by copy or capture by reference.  For blocks, __block capture
+    // applies to variables with that annotation, variables of reference type
+    // are captured by reference, and other variables are captured by copy.
     enum CaptureKind {
-      Cap_This, Cap_ByVal, Cap_ByRef
+      Cap_This, Cap_ByCopy, Cap_ByRef, Cap_Block
     };
 
     // The variable being captured (if we are not capturing 'this'),
@@ -143,9 +150,9 @@ public:
     SourceLocation Loc;
     
   public:
-    Capture(VarDecl *Var, bool isByref, bool isNested, SourceLocation Loc,
-            Expr *Cpy)
-      : VarAndKind(Var, isByref ? Cap_ByRef : Cap_ByVal),
+    Capture(VarDecl *Var, bool block, bool byRef, bool isNested, 
+            SourceLocation Loc, Expr *Cpy)
+      : VarAndKind(Var, block ? Cap_Block : byRef ? Cap_ByRef : Cap_ByCopy),
         CopyExprAndNested(Cpy, isNested) {}
 
     enum IsThisCapture { ThisCapture };
@@ -155,8 +162,9 @@ public:
 
     bool isThisCapture() const { return VarAndKind.getInt() == Cap_This; }
     bool isVariableCapture() const { return !isThisCapture(); }
-    bool isCopyCapture() const { return VarAndKind.getInt() == Cap_ByVal; }
+    bool isCopyCapture() const { return VarAndKind.getInt() == Cap_ByCopy; }
     bool isReferenceCapture() const { return VarAndKind.getInt() == Cap_ByRef; }
+    bool isBlockCapture() const { return VarAndKind.getInt() == Cap_Block; }
     bool isNested() { return CopyExprAndNested.getInt(); }
 
     VarDecl *getVariable() const {
@@ -194,9 +202,9 @@ public:
   /// or null if unknown.
   QualType ReturnType;
 
-  void AddCapture(VarDecl *Var, bool isByref, bool isNested, SourceLocation Loc,
-                  Expr *Cpy) {
-    Captures.push_back(Capture(Var, isByref, isNested, Loc, Cpy));
+  void AddCapture(VarDecl *Var, bool isBlock, bool isByref, bool isNested,
+                  SourceLocation Loc, Expr *Cpy) {
+    Captures.push_back(Capture(Var, isBlock, isByref, isNested, Loc, Cpy));
     CaptureMap[Var] = Captures.size();
   }
 

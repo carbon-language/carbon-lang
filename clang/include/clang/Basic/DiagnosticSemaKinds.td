@@ -4094,8 +4094,18 @@ def err_capture_non_automatic_variable : Error<
 def err_this_capture : Error<
   "'this' cannot be %select{implicitly |}0captured in this context">;
 def err_lambda_capture_block : Error<
-  "__block variable %0 cannot be captured in a lambda">;
-  
+  "__block variable %0 cannot be captured in a lambda expression">;
+def err_lambda_capture_anonymous_var : Error<
+  "unnamed variable cannot be implicitly captured in a lambda expression">;
+def err_lambda_capture_vm_type : Error<
+  "variable %0 with variably modified type cannot be captured in "
+  "a lambda expression">;
+def err_lambda_impcap : Error<
+  "variable %0 cannot be implicitly captured in a lambda with no "
+  "capture-default specified">;
+def note_lambda_decl : Note<"lambda expression begins here">;
+
+
 def err_operator_arrow_circular : Error<
   "circular pointer delegation detected">;
 def err_pseudo_dtor_base_not_scalar : Error<

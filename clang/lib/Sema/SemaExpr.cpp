@@ -8747,7 +8747,7 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     CapturingScopeInfo::Capture &Cap = BSI->Captures[i];
     if (Cap.isThisCapture())
       continue;
-    BlockDecl::Capture NewCap(Cap.getVariable(), Cap.isReferenceCapture(),
+    BlockDecl::Capture NewCap(Cap.getVariable(), Cap.isBlockCapture(),
                               Cap.isNested(), Cap.getCopyExpr());
     Captures.push_back(NewCap);
   }
@@ -9440,10 +9440,21 @@ diagnoseUncapturableValueReference(Sema &S, SourceLocation loc,
     << var->getIdentifier();
 }
 
-static void tryCaptureVar(Sema &S, VarDecl *var,
-                          SourceLocation loc) {
-  // Check if the variable needs to be captured.
-  DeclContext *DC = S.CurContext;
+static bool shouldAddConstForScope(CapturingScopeInfo *CSI, VarDecl *VD) {
+  if (VD->hasAttr<BlocksAttr>())
+    return false;
+  if (isa<BlockScopeInfo>(CSI))
+    return true;
+  if (LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(CSI))
+    return !LSI->Mutable;
+  return false;
+}
+
+// Check if the variable needs to be captured; if so, try to perform
+// the capture.
+// FIXME: Add support for explicit captures.
+void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc) {
+  DeclContext *DC = CurContext;
   if (var->getDeclContext() == DC) return;
   if (!var->hasLocalStorage()) return;
 
@@ -9451,87 +9462,144 @@ static void tryCaptureVar(Sema &S, VarDecl *var,
   QualType type = var->getType();
   bool Nested = false;
 
-  unsigned functionScopesIndex = S.FunctionScopes.size() - 1;
+  unsigned functionScopesIndex = FunctionScopes.size() - 1;
   do {
-    // Only blocks (and eventually C++0x closures) can capture; other
+    // Only block literals and lambda expressions can capture; other
     // scopes don't work.
-    // FIXME: Make this function support lambdas!
-    if (!isa<BlockDecl>(DC))
-      return diagnoseUncapturableValueReference(S, loc, var, DC);
+    DeclContext *ParentDC;
+    if (isa<BlockDecl>(DC))
+      ParentDC = DC->getParent();
+    else if (isa<CXXMethodDecl>(DC) &&
+             cast<CXXRecordDecl>(DC->getParent())->isLambda())
+      ParentDC = DC->getParent()->getParent();
+    else
+      return diagnoseUncapturableValueReference(*this, loc, var, DC);
 
-    BlockScopeInfo *blockScope =
-      cast<BlockScopeInfo>(S.FunctionScopes[functionScopesIndex]);
-    assert(blockScope->TheDecl == static_cast<BlockDecl*>(DC));
+    CapturingScopeInfo *CSI =
+      cast<CapturingScopeInfo>(FunctionScopes[functionScopesIndex]);
 
-    // Check whether we've already captured it in this block.
-    if (blockScope->CaptureMap.count(var)) {
+    // Check whether we've already captured it.
+    if (CSI->CaptureMap.count(var)) {
+      // If we found a capture, any subcaptures are nested
       Nested = true;
+
+      if (shouldAddConstForScope(CSI, var))
+        type.addConst();
       break;
     }
 
     functionScopesIndex--;
-    DC = cast<BlockDecl>(DC)->getDeclContext();
+    DC = ParentDC;
   } while (var->getDeclContext() != DC);
 
-  bool byRef = var->hasAttr<BlocksAttr>();
+  bool hasBlocksAttr = var->hasAttr<BlocksAttr>();
 
   for (unsigned i = functionScopesIndex + 1,
-                e = S.FunctionScopes.size(); i != e; ++i) {
-    // Prohibit variably-modified types.
+                e = FunctionScopes.size(); i != e; ++i) {
+    CapturingScopeInfo *CSI = cast<CapturingScopeInfo>(FunctionScopes[i]);
+    bool isBlock = isa<BlockScopeInfo>(CSI);
+    bool isLambda = isa<LambdaScopeInfo>(CSI);
+
+    // Lambdas are not allowed to capture unnamed variables
+    // (e.g. anonymous unions).
+    // FIXME: The C++11 rule don't actually state this explicitly, but I'm
+    // assuming that's the intent.
+    if (isLambda && !var->getDeclName()) {
+      Diag(loc, diag::err_lambda_capture_anonymous_var);
+      Diag(var->getLocation(), diag::note_declared_at);
+      return;
+    }
+
+    // Prohibit variably-modified types; they're difficult to deal with.
     if (type->isVariablyModifiedType()) {
-      S.Diag(loc, diag::err_ref_vm_type);
-      S.Diag(var->getLocation(), diag::note_declared_at);
+      if (isBlock)
+        Diag(loc, diag::err_ref_vm_type);
+      else
+        Diag(loc, diag::err_lambda_capture_vm_type) << var->getDeclName();
+      Diag(var->getLocation(), diag::note_previous_decl) << var->getDeclName();
       return;
     }
 
-    // Prohibit arrays, even in __block variables, but not references to
-    // them.
-    if (type->isArrayType()) {
-      S.Diag(loc, diag::err_ref_array_type);
-      S.Diag(var->getLocation(), diag::note_declared_at);
+    // Blocks are not allowed to capture arrays.
+    if (isBlock && type->isArrayType()) {
+      Diag(loc, diag::err_ref_array_type);
+      Diag(var->getLocation(), diag::note_previous_decl) << var->getDeclName();
       return;
     }
 
-    // Build a copy expression.
+    // Lambdas are not allowed to capture __block variables; they don't
+    // support the expected semantics.
+    if (isLambda && hasBlocksAttr) {
+      Diag(loc, diag::err_lambda_capture_block) << var->getDeclName();
+      Diag(var->getLocation(), diag::note_previous_decl) << var->getDeclName();
+      return;
+    }
+
+    bool byRef;
+    if (CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_None) {
+      // No capture-default
+      Diag(loc, diag::err_lambda_impcap) << var->getDeclName();
+      Diag(var->getLocation(), diag::note_previous_decl) << var->getDeclName();
+      Diag(cast<LambdaScopeInfo>(CSI)->Lambda->getLocStart(),
+           diag::note_lambda_decl);
+      return;
+    } else if (CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_LambdaByval) {
+      // capture-default '='
+      byRef = false;
+    } else if (CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_LambdaByref) {
+      // capture-default '&'
+      byRef = true;
+    } else {
+      // A block captures __block variables in a special __block fashion, 
+      // variables of reference type by reference (in the sense of
+      // [expr.prim.lambda]), and other non-__block variables by copy.
+      assert(CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_Block);
+      byRef = hasBlocksAttr || type->isReferenceType();
+    }
+
+    // Build a copy expression if we are capturing by copy and the copy
+    // might be non-trivial.
     Expr *copyExpr = 0;
     const RecordType *rtype;
-    if (!byRef && S.getLangOptions().CPlusPlus && !type->isDependentType() &&
-        (rtype = type->getAs<RecordType>())) {
-
+    if (!byRef && getLangOptions().CPlusPlus &&
+        (rtype = type.getNonReferenceType()->getAs<RecordType>())) {
       // The capture logic needs the destructor, so make sure we mark it.
       // Usually this is unnecessary because most local variables have
       // their destructors marked at declaration time, but parameters are
       // an exception because it's technically only the call site that
       // actually requires the destructor.
       if (isa<ParmVarDecl>(var))
-        S.FinalizeVarWithDestructor(var, rtype);
+        FinalizeVarWithDestructor(var, rtype);
 
       // According to the blocks spec, the capture of a variable from
       // the stack requires a const copy constructor.  This is not true
       // of the copy/move done to move a __block variable to the heap.
-      type.addConst();
+      // There is no equivalent language in the C++11 specification of lambdas.
+      if (isBlock)
+        type.addConst();
 
-      Expr *declRef = new (S.Context) DeclRefExpr(var, type, VK_LValue, loc);
+      Expr *declRef = new (Context) DeclRefExpr(var, type, VK_LValue, loc);
       ExprResult result =
-        S.PerformCopyInitialization(
+        PerformCopyInitialization(
                         InitializedEntity::InitializeBlock(var->getLocation(),
                                                            type, false),
-                                    loc, S.Owned(declRef));
+                                    loc, Owned(declRef));
 
       // Build a full-expression copy expression if initialization
       // succeeded and used a non-trivial constructor.  Recover from
       // errors by pretending that the copy isn't necessary.
       if (!result.isInvalid() &&
           !cast<CXXConstructExpr>(result.get())->getConstructor()->isTrivial()) {
-        result = S.MaybeCreateExprWithCleanups(result);
+        result = MaybeCreateExprWithCleanups(result);
         copyExpr = result.take();
       }
     }
 
-    BlockScopeInfo *blockScope = cast<BlockScopeInfo>(S.FunctionScopes[i]);
-    blockScope->AddCapture(var, byRef, Nested, loc, copyExpr);
+    CSI->AddCapture(var, hasBlocksAttr, byRef, Nested, loc, copyExpr);
 
     Nested = true;
+    if (shouldAddConstForScope(CSI, var))
+      type.addConst();
   }
 }
 
@@ -9544,7 +9612,7 @@ static void MarkVarDeclODRUsed(Sema &SemaRef, VarDecl *Var,
     if (old.isInvalid()) old = Loc;
   }
 
-  tryCaptureVar(SemaRef, Var, Loc);
+  SemaRef.TryCaptureVar(Var, Loc);
 
   Var->setUsed(true);
 }
