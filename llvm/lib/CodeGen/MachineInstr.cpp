@@ -1799,7 +1799,7 @@ void MachineInstr::setPhysRegsDeadExcept(const SmallVectorImpl<unsigned> &UsedRe
     MachineOperand &MO = getOperand(i);
     if (!MO.isReg() || !MO.isDef()) continue;
     unsigned Reg = MO.getReg();
-    if (Reg == 0) continue;
+    if (!TargetRegisterInfo::isPhysicalRegister(Reg)) continue;
     bool Dead = true;
     for (SmallVectorImpl<unsigned>::const_iterator I = UsedRegs.begin(),
          E = UsedRegs.end(); I != E; ++I)
