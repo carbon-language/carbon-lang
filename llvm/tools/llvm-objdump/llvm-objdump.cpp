@@ -189,6 +189,8 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       if (!error(i->containsSymbol(*si, contains)) && contains) {
         uint64_t Address;
         if (error(si->getAddress(Address))) break;
+        Address -= SectionAddr;
+
         StringRef Name;
         if (error(si->getName(Name))) break;
         Symbols.push_back(std::make_pair(Address, Name));
