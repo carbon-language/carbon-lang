@@ -90,7 +90,7 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo& VRInfo,
                                             MachineBasicBlock *MBB,
                                     std::vector<MachineBasicBlock*> &WorkList) {
   unsigned BBNum = MBB->getNumber();
-  
+
   // Check to see if this basic block is one of the killing blocks.  If so,
   // remove it.
   for (unsigned i = 0, e = VRInfo.Kills.size(); i != e; ++i)
@@ -98,7 +98,7 @@ void LiveVariables::MarkVirtRegAliveInBlock(VarInfo& VRInfo,
       VRInfo.Kills.erase(VRInfo.Kills.begin()+i);  // Erase entry
       break;
     }
-  
+
   if (MBB == DefBlock) return;  // Terminate recursion
 
   if (VRInfo.AliveBlocks.test(BBNum))
@@ -329,7 +329,7 @@ bool LiveVariables::HandlePhysRegKill(unsigned Reg, MachineInstr *MI) {
   // Or whole register is defined, but only partly used.
   // AX<dead> = AL<imp-def>
   //    = AL<kill>
-  // AX = 
+  // AX =
   MachineInstr *LastPartDef = 0;
   unsigned LastPartDefDist = 0;
   SmallSet<unsigned, 8> PartUses;

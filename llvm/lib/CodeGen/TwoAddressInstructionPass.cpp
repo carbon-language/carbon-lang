@@ -247,7 +247,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
 
   // If any of the definitions are used by another instruction between the
   // position and the kill use, then it's not safe to sink it.
-  // 
+  //
   // FIXME: This can be sped up if there is an easy way to query whether an
   // instruction is before or after another instruction. Then we can use
   // MachineRegisterInfo def / use instead.
@@ -290,7 +290,7 @@ bool TwoAddressInstructionPass::Sink3AddrInstruction(MachineBasicBlock *MBB,
   KillMO->setIsKill(false);
   KillMO = MI->findRegisterUseOperand(SavedReg, false, TRI);
   KillMO->setIsKill(true);
-  
+
   if (LV)
     LV->replaceKillInstruction(SavedReg, KillMI, MI);
 
@@ -336,7 +336,7 @@ TwoAddressInstructionPass::isProfitableToReMat(unsigned Reg,
         continue;  // Current use.
       OtherUse = true;
       // There is at least one other use in the MBB that will clobber the
-      // register. 
+      // register.
       if (isTwoAddrUse(UseMI, Reg))
         return true;
     }
@@ -590,7 +590,7 @@ TwoAddressInstructionPass::isProfitableToCommute(unsigned regB, unsigned regC,
   // %reg1029<def> = MOV8rr %reg1028
   // %reg1029<def> = SHR8ri %reg1029, 7, %EFLAGS<imp-def,dead>
   // insert => %reg1030<def> = MOV8rr %reg1029
-  // %reg1030<def> = ADD8rr %reg1029<kill>, %reg1028<kill>, %EFLAGS<imp-def,dead>  
+  // %reg1030<def> = ADD8rr %reg1029<kill>, %reg1028<kill>, %EFLAGS<imp-def,dead>
 
   if (!MI->killsRegister(regC))
     return false;
@@ -906,7 +906,7 @@ TwoAddressInstructionPass::RescheduleMIBelowKill(MachineBasicBlock *MBB,
                                      MachineBasicBlock::iterator &nmi,
                                      unsigned Reg) {
   MachineInstr *MI = &*mi;
-  DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI); 
+  DenseMap<MachineInstr*, unsigned>::iterator DI = DistanceMap.find(MI);
   if (DI == DistanceMap.end())
     // Must be created from unfolded load. Don't waste time trying this.
     return false;
@@ -1334,7 +1334,7 @@ TryInstructionTransform(MachineBasicBlock::iterator &mi,
           if (LV) {
             for (unsigned i = 0, e = MI.getNumOperands(); i != e; ++i) {
               MachineOperand &MO = MI.getOperand(i);
-              if (MO.isReg() && 
+              if (MO.isReg() &&
                   TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
                 if (MO.isUse()) {
                   if (MO.isKill()) {
@@ -1394,7 +1394,7 @@ bool TwoAddressInstructionPass::runOnMachineFunction(MachineFunction &MF) {
   bool MadeChange = false;
 
   DEBUG(dbgs() << "********** REWRITING TWO-ADDR INSTRS **********\n");
-  DEBUG(dbgs() << "********** Function: " 
+  DEBUG(dbgs() << "********** Function: "
         << MF.getFunction()->getName() << '\n');
 
   // This pass takes the function out of SSA form.
@@ -1924,7 +1924,7 @@ bool TwoAddressInstructionPass::EliminateRegSequences() {
       DEBUG(dbgs() << "Turned: " << *MI << " into an IMPLICIT_DEF");
       MI->setDesc(TII->get(TargetOpcode::IMPLICIT_DEF));
       for (int j = MI->getNumOperands() - 1, ee = 0; j > ee; --j)
-        MI->RemoveOperand(j);      
+        MI->RemoveOperand(j);
     } else {
       DEBUG(dbgs() << "Eliminated: " << *MI);
       MI->eraseFromParent();

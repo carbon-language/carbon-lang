@@ -50,7 +50,7 @@ public:
     return &FrameLowering;
   }
   virtual       PPCJITInfo        *getJITInfo()         { return &JITInfo; }
-  virtual const PPCTargetLowering *getTargetLowering() const { 
+  virtual const PPCTargetLowering *getTargetLowering() const {
    return &TLInfo;
   }
   virtual const PPCSelectionDAGInfo* getSelectionDAGInfo() const {
@@ -59,10 +59,10 @@ public:
   virtual const PPCRegisterInfo   *getRegisterInfo() const {
     return &InstrInfo.getRegisterInfo();
   }
-  
+
   virtual const TargetData    *getTargetData() const    { return &DataLayout; }
   virtual const PPCSubtarget  *getSubtargetImpl() const { return &Subtarget; }
-  virtual const InstrItineraryData *getInstrItineraryData() const {  
+  virtual const InstrItineraryData *getInstrItineraryData() const {
     return &InstrItins;
   }
 

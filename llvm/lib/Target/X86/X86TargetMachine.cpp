@@ -102,7 +102,7 @@ X86TargetMachine::X86TargetMachine(const Target &T, StringRef TT,
 
   // default to hard float ABI
   if (Options.FloatABIType == FloatABI::Default)
-    this->Options.FloatABIType = FloatABI::Hard;   
+    this->Options.FloatABIType = FloatABI::Hard;
 }
 
 //===----------------------------------------------------------------------===//

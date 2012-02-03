@@ -26,8 +26,8 @@ using namespace llvm;
 //
 
 // Force out-of-line virtual method.
-Pass::~Pass() { 
-  delete Resolver; 
+Pass::~Pass() {
+  delete Resolver;
 }
 
 // Force out-of-line virtual method.
@@ -69,7 +69,7 @@ void Pass::preparePassManager(PMStack &) {
 
 PassManagerType Pass::getPotentialPassManagerType() const {
   // Default implementation.
-  return PMT_Unknown; 
+  return PMT_Unknown;
 }
 
 void Pass::getAnalysisUsage(AnalysisUsage &) const {
@@ -153,7 +153,7 @@ PassManagerType FunctionPass::getPotentialPassManagerType() const {
 
 Pass *BasicBlockPass::createPrinterPass(raw_ostream &O,
                                         const std::string &Banner) const {
-  
+
   llvm_unreachable("BasicBlockPass printing unsupported.");
 }
 
@@ -178,7 +178,7 @@ bool BasicBlockPass::doFinalization(Module &) {
 }
 
 PassManagerType BasicBlockPass::getPotentialPassManagerType() const {
-  return PMT_BasicBlockPassManager; 
+  return PMT_BasicBlockPassManager;
 }
 
 const PassInfo *Pass::lookupPassInfo(const void *TI) {
@@ -243,7 +243,7 @@ namespace {
     typedef AnalysisUsage::VectorType VectorType;
     VectorType &CFGOnlyList;
     GetCFGOnlyPasses(VectorType &L) : CFGOnlyList(L) {}
-    
+
     void passEnumerate(const PassInfo *P) {
       if (P->isCFGOnlyPass())
         CFGOnlyList.push_back(P->getTypeInfo());

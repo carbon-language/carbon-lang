@@ -53,7 +53,7 @@ typedef const void* AnalysisID;
 /// Ordering of pass manager types is important here.
 enum PassManagerType {
   PMT_Unknown = 0,
-  PMT_ModulePassManager = 1, ///< MPPassManager 
+  PMT_ModulePassManager = 1, ///< MPPassManager
   PMT_CallGraphPassManager,  ///< CGPassManager
   PMT_FunctionPassManager,   ///< FPPassManager
   PMT_LoopPassManager,       ///< LPPassManager
@@ -84,14 +84,14 @@ class Pass {
   PassKind Kind;
   void operator=(const Pass&);  // DO NOT IMPLEMENT
   Pass(const Pass &);           // DO NOT IMPLEMENT
-  
+
 public:
   explicit Pass(PassKind K, char &pid) : Resolver(0), PassID(&pid), Kind(K) { }
   virtual ~Pass();
 
-  
+
   PassKind getPassKind() const { return Kind; }
-  
+
   /// getPassName - Return a nice clean name for a pass.  This usually
   /// implemented in terms of the name that is registered by one of the
   /// Registration templates, but can be overloaded directly.
@@ -119,12 +119,12 @@ public:
                                   const std::string &Banner) const = 0;
 
   /// Each pass is responsible for assigning a pass manager to itself.
-  /// PMS is the stack of available pass manager. 
-  virtual void assignPassManager(PMStack &, 
+  /// PMS is the stack of available pass manager.
+  virtual void assignPassManager(PMStack &,
                                  PassManagerType) {}
   /// Check if available pass managers are suitable for this pass or not.
   virtual void preparePassManager(PMStack &);
-  
+
   ///  Return what kind of Pass Manager can manage this pass.
   virtual PassManagerType getPotentialPassManagerType() const;
 
@@ -159,9 +159,9 @@ public:
   virtual void *getAdjustedAnalysisPointer(AnalysisID ID);
   virtual ImmutablePass *getAsImmutablePass();
   virtual PMDataManager *getAsPMDataManager();
-  
+
   /// verifyAnalysis() - This member can be implemented by a analysis pass to
-  /// check state of analysis information. 
+  /// check state of analysis information.
   virtual void verifyAnalysis() const;
 
   // dumpPassStructure - Implement the -debug-passes=PassStructure option
@@ -226,7 +226,7 @@ public:
   /// being operated on.
   virtual bool runOnModule(Module &M) = 0;
 
-  virtual void assignPassManager(PMStack &PMS, 
+  virtual void assignPassManager(PMStack &PMS,
                                  PassManagerType T);
 
   ///  Return what kind of Pass Manager can manage this pass.
@@ -259,9 +259,9 @@ public:
   ///
   bool runOnModule(Module &) { return false; }
 
-  explicit ImmutablePass(char &pid) 
+  explicit ImmutablePass(char &pid)
   : ModulePass(pid) {}
-  
+
   // Force out-of-line virtual method.
   virtual ~ImmutablePass();
 };
@@ -286,7 +286,7 @@ public:
   /// any necessary per-module initialization.
   ///
   virtual bool doInitialization(Module &);
-  
+
   /// runOnFunction - Virtual method overriden by subclasses to do the
   /// per-function processing of the pass.
   ///
@@ -297,7 +297,7 @@ public:
   ///
   virtual bool doFinalization(Module &);
 
-  virtual void assignPassManager(PMStack &PMS, 
+  virtual void assignPassManager(PMStack &PMS,
                                  PassManagerType T);
 
   ///  Return what kind of Pass Manager can manage this pass.
@@ -348,7 +348,7 @@ public:
   ///
   virtual bool doFinalization(Module &);
 
-  virtual void assignPassManager(PMStack &PMS, 
+  virtual void assignPassManager(PMStack &PMS,
                                  PassManagerType T);
 
   ///  Return what kind of Pass Manager can manage this pass.

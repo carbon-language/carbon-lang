@@ -22,7 +22,7 @@ using namespace llvm;
 
 extern "C" void LLVMInitializePowerPCTarget() {
   // Register the targets
-  RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);  
+  RegisterTargetMachine<PPC32TargetMachine> A(ThePPC32Target);
   RegisterTargetMachine<PPC64TargetMachine> B(ThePPC64Target);
 }
 
@@ -46,7 +46,7 @@ bool PPCTargetMachine::getEnableTailMergeDefault() const { return false; }
 
 void PPC32TargetMachine::anchor() { }
 
-PPC32TargetMachine::PPC32TargetMachine(const Target &T, StringRef TT, 
+PPC32TargetMachine::PPC32TargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU, StringRef FS,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
@@ -56,7 +56,7 @@ PPC32TargetMachine::PPC32TargetMachine(const Target &T, StringRef TT,
 
 void PPC64TargetMachine::anchor() { }
 
-PPC64TargetMachine::PPC64TargetMachine(const Target &T, StringRef TT, 
+PPC64TargetMachine::PPC64TargetMachine(const Target &T, StringRef TT,
                                        StringRef CPU,  StringRef FS,
                                        const TargetOptions &Options,
                                        Reloc::Model RM, CodeModel::Model CM,
@@ -87,12 +87,12 @@ bool PPCTargetMachine::addCodeEmitter(PassManagerBase &PM,
   if (Subtarget.isPPC64())
     // Temporary workaround for the inability of PPC64 JIT to handle jump
     // tables.
-    Options.DisableJumpTables = true;      
-  
+    Options.DisableJumpTables = true;
+
   // Inform the subtarget that we are in JIT mode.  FIXME: does this break macho
   // writing?
   Subtarget.SetJITMode();
-  
+
   // Machine code emitter pass for PowerPC.
   PM.add(createPPCJITCodeEmitterPass(*this, JCE));
 

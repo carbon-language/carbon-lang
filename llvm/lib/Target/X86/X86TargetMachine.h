@@ -27,7 +27,7 @@
 #include "llvm/Target/TargetFrameLowering.h"
 
 namespace llvm {
-  
+
 class formatted_raw_ostream;
 class StringRef;
 
@@ -38,7 +38,7 @@ class X86TargetMachine : public LLVMTargetMachine {
   InstrItineraryData InstrItins;
 
 public:
-  X86TargetMachine(const Target &T, StringRef TT, 
+  X86TargetMachine(const Target &T, StringRef TT,
                    StringRef CPU, StringRef FS, const TargetOptions &Options,
                    Reloc::Model RM, CodeModel::Model CM,
                    CodeGenOpt::Level OL,
@@ -57,7 +57,7 @@ public:
   virtual const X86TargetLowering *getTargetLowering() const {
     llvm_unreachable("getTargetLowering not implemented");
   }
-  virtual const X86SelectionDAGInfo *getSelectionDAGInfo() const { 
+  virtual const X86SelectionDAGInfo *getSelectionDAGInfo() const {
     llvm_unreachable("getSelectionDAGInfo not implemented");
   }
   virtual const X86RegisterInfo  *getRegisterInfo() const {
@@ -97,7 +97,7 @@ public:
   virtual const X86TargetLowering *getTargetLowering() const {
     return &TLInfo;
   }
-  virtual const X86SelectionDAGInfo *getSelectionDAGInfo() const { 
+  virtual const X86SelectionDAGInfo *getSelectionDAGInfo() const {
     return &TSInfo;
   }
   virtual const X86InstrInfo     *getInstrInfo() const {
@@ -126,7 +126,7 @@ public:
   virtual const X86TargetLowering *getTargetLowering() const {
     return &TLInfo;
   }
-  virtual const X86SelectionDAGInfo *getSelectionDAGInfo() const { 
+  virtual const X86SelectionDAGInfo *getSelectionDAGInfo() const {
     return &TSInfo;
   }
   virtual const X86InstrInfo     *getInstrInfo() const {
