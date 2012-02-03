@@ -1104,6 +1104,13 @@ bool InstCombiner::transformConstExprCastCall(CallSite CS) {
     PointerType *APTy = cast<PointerType>(CS.getCalledValue()->getType());
     if (FT->isVarArg()!=cast<FunctionType>(APTy->getElementType())->isVarArg())
       return false;
+
+    // If both the callee and the cast type are varargs, we still have to make
+    // sure the number of fixed parameters are the same or we have the same
+    // ABI issues as if we introduce a varargs call.
+    if (FT->getNumParams() !=
+        cast<FunctionType>(APTy->getElementType())->getNumParams())
+      return false;
   }
       
   if (FT->getNumParams() < NumActualArgs && FT->isVarArg() &&
