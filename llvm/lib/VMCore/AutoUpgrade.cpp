@@ -55,6 +55,16 @@ static bool UpgradeIntrinsicFunction1(Function *F, Function *&NewFn) {
     }
     break;
   }
+  case 'x': {
+    if (Name.startswith("x86.sse2.pcmpeq.") ||
+        Name.startswith("x86.sse2.pcmpgt.") ||
+        Name.startswith("x86.avx2.pcmpeq.") ||
+        Name.startswith("x86.avx2.pcmpgt.")) {
+      NewFn = 0;
+      return true;
+    }
+    break;
+  }
   }
 
   //  This may not belong here. This function is effectively being overloaded 
@@ -85,12 +95,39 @@ bool llvm::UpgradeGlobalVariable(GlobalVariable *GV) {
 // upgraded intrinsic. All argument and return casting must be provided in 
 // order to seamlessly integrate with existing context.
 void llvm::UpgradeIntrinsicCall(CallInst *CI, Function *NewFn) {
-  assert(CI->getCalledFunction() && "Intrinsic call is not direct?");
-  if (!NewFn) return;
-
+  Function *F = CI->getCalledFunction();
   LLVMContext &C = CI->getContext();
   IRBuilder<> Builder(C);
   Builder.SetInsertPoint(CI->getParent(), CI);
+
+  assert(F && "Intrinsic call is not direct?");
+
+  if (!NewFn) {
+    // Get the Function's name.
+    StringRef Name = F->getName();
+
+    Value *Rep;
+    // Upgrade packed integer vector compares intrinsics to compare instructions
+    if (Name.startswith("llvm.x86.sse2.pcmpeq.") ||
+        Name.startswith("llvm.x86.avx2.pcmpeq.")) {
+      Rep = Builder.CreateICmpEQ(CI->getArgOperand(0), CI->getArgOperand(1),
+                                 "pcmpeq");
+      // need to sign extend since icmp returns vector of i1
+      Rep = Builder.CreateSExt(Rep, CI->getType(), "");
+    } else if (Name.startswith("llvm.x86.sse2.pcmpgt.") ||
+               Name.startswith("llvm.x86.avx2.pcmpgt.")) {
+      Rep = Builder.CreateICmpSGT(CI->getArgOperand(0), CI->getArgOperand(1),
+                                  "pcmpgt");
+      // need to sign extend since icmp returns vector of i1
+      Rep = Builder.CreateSExt(Rep, CI->getType(), "");
+    } else {
+      llvm_unreachable("Unknown function for CallInst upgrade.");
+    }
+
+    CI->replaceAllUsesWith(Rep);
+    CI->eraseFromParent();
+    return;
+  }
 
   switch (NewFn->getIntrinsicID()) {
   default:
