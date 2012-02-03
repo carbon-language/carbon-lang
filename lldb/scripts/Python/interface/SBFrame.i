@@ -203,6 +203,34 @@ public:
     FindVariable (const char *var_name, lldb::DynamicValueType use_dynamic);
 
     %feature("docstring", "
+    /// Get a lldb.SBValue for a variable path. 
+    ///
+    /// Variable paths can include access to pointer or instance members:
+    ///     rect_ptr->origin.y
+    ///     pt.x
+    /// Pointer dereferences:
+    ///     *this->foo_ptr
+    ///     **argv
+    /// Address of:
+    ///     &pt
+    ///     &my_array[3].x
+    /// Array accesses and treating pointers as arrays:
+    ///     int_array[1]
+    ///     pt_ptr[22].x
+    ///
+    /// Unlike EvaluateExpression() which returns lldb.SBValue objects
+    /// with constant copies of the values at the time of evaluation,
+    /// the result of this function is a value that will continue to
+    /// track the current value of the value as execution progresses
+    /// in the current frame.
+    ") GetValueForVariablePath;
+    lldb::SBValue
+    GetValueForVariablePath (const char *var_path);
+             
+    lldb::SBValue
+    GetValueForVariablePath (const char *var_path, lldb::DynamicValueType use_dynamic);
+
+    %feature("docstring", "
     /// Find variables, register sets, registers, or persistent variables using
     /// the frame as the scope.
     ///
@@ -219,6 +247,23 @@ public:
     GetDescription (lldb::SBStream &description);
     
     %pythoncode %{
+        def get_all_variables(self):
+            return self.GetVariables(True,True,True,True)
+
+        def get_arguments(self):
+            return self.GetVariables(True,False,False,False)
+
+        def get_locals(self):
+            return self.GetVariables(False,True,False,False)
+
+        def get_statics(self):
+            return self.GetVariables(False,False,True,False)
+
+        def var(self, var_expr_path):
+            '''Calls through to lldb.SBFrame.GetValueForVariablePath() and returns 
+            a value that represents the variable expression path'''
+            return self.GetValueForVariablePath(var_expr_path)
+
         __swig_getmethods__["pc"] = GetPC
         __swig_setmethods__["pc"] = SetPC
         if _newclass: x = property(GetPC, SetPC)
@@ -264,6 +309,30 @@ public:
 
         __swig_getmethods__["idx"] = GetFrameID
         if _newclass: x = property(GetFrameID, None)
+
+        __swig_getmethods__["variables"] = get_all_variables
+        if _newclass: x = property(get_all_variables, None)
+
+        __swig_getmethods__["vars"] = get_all_variables
+        if _newclass: x = property(get_all_variables, None)
+
+        __swig_getmethods__["locals"] = get_locals
+        if _newclass: x = property(get_locals, None)
+
+        __swig_getmethods__["args"] = get_arguments
+        if _newclass: x = property(get_arguments, None)
+
+        __swig_getmethods__["arguments"] = get_arguments
+        if _newclass: x = property(get_arguments, None)
+
+        __swig_getmethods__["statics"] = get_statics
+        if _newclass: x = property(get_statics, None)
+
+        __swig_getmethods__["registers"] = GetRegisters
+        if _newclass: x = property(GetRegisters, None)
+
+        __swig_getmethods__["regs"] = GetRegisters
+        if _newclass: x = property(GetRegisters, None)
 
     %}
 };

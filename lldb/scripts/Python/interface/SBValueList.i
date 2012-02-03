@@ -96,6 +96,43 @@ public:
 
     lldb::SBValue
     FindValueObjectByUID (lldb::user_id_t uid);
+    %pythoncode %{
+        def __len__(self):
+            return self.GetSize()
+        
+        def __getitem__(self, key):
+            count = len(self)
+            #------------------------------------------------------------
+            # Access with "int" to get Nth item in the list
+            #------------------------------------------------------------
+            if type(key) is int:
+                if key < count:
+                    return self.GetValueAtIndex(key)
+            #------------------------------------------------------------
+            # Access with "str" to get values by name
+            #------------------------------------------------------------
+            elif type(key) is str:
+                matches = []
+                for idx in range(count):
+                    value = self.GetValueAtIndex(idx)
+                    if value.name == key:
+                        matches.append(value)
+                return matches
+            #------------------------------------------------------------
+            # Match with regex
+            #------------------------------------------------------------
+            elif isinstance(key, type(re.compile('.'))):
+                matches = []
+                for idx in range(count):
+                    value = self.GetValueAtIndex(idx)
+                    re_match = key.search(value.name)
+                    if re_match:
+                        matches.append(value)
+                return matches
+
+    %}
+
+
 };
 
 } // namespace lldb

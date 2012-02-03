@@ -436,6 +436,19 @@ public:
         __swig_getmethods__["num_children"] = GetNumChildren
         if _newclass: x = property(GetNumChildren, None)
 
+        __swig_getmethods__["unsigned"] = GetValueAsUnsigned
+        if _newclass: x = property(GetValueAsUnsigned, None)
+
+        __swig_getmethods__["signed"] = GetValueAsSigned
+        if _newclass: x = property(GetValueAsSigned, None)
+
+        def get_expr_path(self):
+            s = SBStream()
+            self.GetExpressionPath (s)
+            return s.GetData()
+        
+        __swig_getmethods__["path"] = get_expr_path
+        if _newclass: x = property(get_expr_path, None)
     %}
 
 };

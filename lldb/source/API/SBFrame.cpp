@@ -455,6 +455,39 @@ SBFrame::Clear()
     m_opaque_sp.reset();
 }
 
+lldb::SBValue
+SBFrame::GetValueForVariablePath (const char *var_path)
+{
+    SBValue sb_value;
+    StackFrameSP frame_sp(GetFrameSP());
+    if (frame_sp)
+    {
+        lldb::DynamicValueType  use_dynamic = frame_sp->CalculateTarget()->GetPreferDynamicValue();
+        sb_value = GetValueForVariablePath (var_path, use_dynamic);
+    }
+    return sb_value;
+}
+
+lldb::SBValue
+SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dynamic)
+{
+    SBValue sb_value;
+    StackFrameSP frame_sp(GetFrameSP());
+    if (frame_sp && var_path && var_path[0])
+    {
+        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
+        VariableSP var_sp;
+        Error error;
+        ValueObjectSP value_sp (frame_sp->GetValueForVariableExpressionPath (var_path, 
+                                                                             use_dynamic,
+                                                                             StackFrame::eExpressionPathOptionCheckPtrVsMember,
+                                                                             var_sp,
+                                                                             error));
+        *sb_value = value_sp;
+    }
+    return sb_value;
+}
+
 SBValue
 SBFrame::FindVariable (const char *name)
 {
@@ -467,6 +500,7 @@ SBFrame::FindVariable (const char *name)
     }
     return value;
 }
+                                    
 
 SBValue
 SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
