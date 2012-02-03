@@ -73,10 +73,10 @@ LayoutOverrideSource::LayoutOverrideSource(llvm::StringRef Filename) {
     }
     
     // Check for the size of the type.
-    StringRef::size_type Pos = LineStr.find("Size:");
+    StringRef::size_type Pos = LineStr.find(" Size:");
     if (Pos != StringRef::npos) {
-      // Skip past the "Size:" prefix.
-      LineStr = LineStr.substr(Pos + strlen("Size:"));
+      // Skip past the " Size:" prefix.
+      LineStr = LineStr.substr(Pos + strlen(" Size:"));
       
       unsigned long long Size = 0;
       (void)LineStr.getAsInteger(10, Size);

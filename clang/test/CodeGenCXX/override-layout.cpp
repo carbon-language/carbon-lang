@@ -35,16 +35,30 @@ struct PACKED X3 : virtual public X1, public X0 {
   int y;
 };
 
+// CHECK: Type: struct X4
+struct PACKED X4 {
+  unsigned int a : 1;
+  unsigned int b : 1;
+  unsigned int c : 1;
+  unsigned int d : 1;
+  unsigned int e : 1;
+  unsigned int f : 1;
+  unsigned int g : 1;
+  unsigned int h : 1;
+  unsigned int i : 1;
+  unsigned int j : 1;
+  unsigned int k : 1;
+  unsigned int l : 1;
+  unsigned int m : 1;
+  unsigned int n : 1;
+  X4();
+};
+
 void use_structs() {
-  struct X0 x0;
-  x0.x[5] = sizeof(struct X0);
-
-  struct X1 x1;
-  x1.x[5] = sizeof(struct X1);
-
-  struct X2 x2;
-  x2.y = sizeof(struct X2);
-
-  struct X3 x3;
-  x3.y = sizeof(struct X3);
+  X0 x0s[sizeof(X0)];
+  X1 x1s[sizeof(X1)];
+  X2 x2s[sizeof(X2)];
+  X3 x3s[sizeof(X3)];
+  X4 x4s[sizeof(X4)];
+  x4s[1].a = 1;
 }
