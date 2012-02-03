@@ -1429,12 +1429,24 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
     // union because the real error is probably that we forgot to unlock M on
     // all code paths.
     bool LocksetInitialized = false;
+    llvm::SmallVector<CFGBlock*, 8> SpecialBlocks;
     for (CFGBlock::const_pred_iterator PI = CurrBlock->pred_begin(),
          PE  = CurrBlock->pred_end(); PI != PE; ++PI) {
 
       // if *PI -> CurrBlock is a back edge
       if (*PI == 0 || !VisitedBlocks.alreadySet(*PI))
         continue;
+
+      // If the previous block ended in a 'continue' or 'break' statement, then
+      // a difference in locksets is probably due to a bug in that block, rather
+      // than in some other predecessor. In that case, keep the other
+      // predecessor's lockset.
+      if (const Stmt *Terminator = (*PI)->getTerminator()) {
+        if (isa<ContinueStmt>(Terminator) || isa<BreakStmt>(Terminator)) {
+          SpecialBlocks.push_back(*PI);
+          continue;
+        }
+      }
 
       int PrevBlockID = (*PI)->getBlockID();
       CFGBlockInfo *PrevBlockInfo = &BlockInfo[PrevBlockID];
@@ -1446,6 +1458,33 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
         CurrBlockInfo->EntrySet =
           intersectAndWarn(CurrBlockInfo->EntrySet, PrevBlockInfo->ExitSet,
                            LEK_LockedSomePredecessors);
+      }
+    }
+
+    // Process continue and break blocks. Assume that the lockset for the
+    // resulting block is unaffected by any discrepancies in them.
+    for (unsigned SpecialI = 0, SpecialN = SpecialBlocks.size();
+         SpecialI < SpecialN; ++SpecialI) {
+      CFGBlock *PrevBlock = SpecialBlocks[SpecialI];
+      int PrevBlockID = PrevBlock->getBlockID();
+      CFGBlockInfo *PrevBlockInfo = &BlockInfo[PrevBlockID];
+
+      if (!LocksetInitialized) {
+        CurrBlockInfo->EntrySet = PrevBlockInfo->ExitSet;
+        LocksetInitialized = true;
+      } else {
+        // Determine whether this edge is a loop terminator for diagnostic
+        // purposes. FIXME: A 'break' statement might be a loop terminator, but
+        // it might also be part of a switch. Also, a subsequent destructor
+        // might add to the lockset, in which case the real issue might be a
+        // double lock on the other path.
+        const Stmt *Terminator = PrevBlock->getTerminator();
+        bool IsLoop = Terminator && isa<ContinueStmt>(Terminator);
+
+        // Do not update EntrySet.
+        intersectAndWarn(CurrBlockInfo->EntrySet, PrevBlockInfo->ExitSet,
+                         IsLoop ? LEK_LockedSomeLoopIterations
+                                : LEK_LockedSomePredecessors);
       }
     }
 

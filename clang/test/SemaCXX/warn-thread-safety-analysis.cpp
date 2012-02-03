@@ -208,8 +208,7 @@ void sls_fun_bad_6() {
 }
 
 void sls_fun_bad_7() {
-  sls_mu.Lock(); // \
-    // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
+  sls_mu.Lock();
   while (getBool()) {
     sls_mu.Unlock();
     if (getBool()) {
@@ -218,7 +217,7 @@ void sls_fun_bad_7() {
       }
     }
     sls_mu.Lock(); // \
-      // expected-warning{{mutex 'sls_mu' is still locked at the end of its scope}}
+      // expected-warning{{expecting mutex 'sls_mu' to be locked at start of each loop}}
   }
   sls_mu.Unlock();
 }
@@ -255,6 +254,21 @@ void sls_fun_bad_11() {
   }
   sls_mu.Unlock(); // \
     // expected-warning{{unlocking 'sls_mu' that was not locked}}
+}
+
+void sls_fun_bad_12() {
+  sls_mu.Lock(); // \
+    // expected-warning{{mutex 'sls_mu' is still locked at the end of its scope}}
+  while (getBool()) {
+    sls_mu.Unlock();
+    if (getBool()) {
+      if (getBool()) {
+        break;
+      }
+    }
+    sls_mu.Lock();
+  }
+  sls_mu.Unlock();
 }
 
 //-----------------------------------------//
@@ -1900,4 +1914,3 @@ void test() {
 }
 
 };
-
