@@ -164,7 +164,7 @@ class ARMFastISel : public FastISel {
     bool SelectIToFP(const Instruction *I, bool isSigned);
     bool SelectFPToI(const Instruction *I, bool isSigned);
     bool SelectDiv(const Instruction *I, bool isSigned);
-    bool SelectSRem(const Instruction *I);
+    bool SelectRem(const Instruction *I, bool isSigned);
     bool SelectCall(const Instruction *I, const char *IntrMemName);
     bool SelectIntrinsicCall(const IntrinsicInst &I);
     bool SelectSelect(const Instruction *I);
@@ -1700,7 +1700,7 @@ bool ARMFastISel::SelectDiv(const Instruction *I, bool isSigned) {
   return ARMEmitLibcall(I, LC);
 }
 
-bool ARMFastISel::SelectSRem(const Instruction *I) {
+bool ARMFastISel::SelectRem(const Instruction *I, bool isSigned) {
   MVT VT;
   Type *Ty = I->getType();
   if (!isTypeLegal(Ty, VT))
@@ -1708,15 +1708,15 @@ bool ARMFastISel::SelectSRem(const Instruction *I) {
 
   RTLIB::Libcall LC = RTLIB::UNKNOWN_LIBCALL;
   if (VT == MVT::i8)
-    LC = RTLIB::SREM_I8;
+    LC = isSigned ? RTLIB::SREM_I8 : RTLIB::UREM_I8;
   else if (VT == MVT::i16)
-    LC = RTLIB::SREM_I16;
+    LC = isSigned ? RTLIB::SREM_I16 : RTLIB::UREM_I16;
   else if (VT == MVT::i32)
-    LC = RTLIB::SREM_I32;
+    LC = isSigned ? RTLIB::SREM_I32 : RTLIB::UREM_I32;
   else if (VT == MVT::i64)
-    LC = RTLIB::SREM_I64;
+    LC = isSigned ? RTLIB::SREM_I64 : RTLIB::UREM_I64;
   else if (VT == MVT::i128)
-    LC = RTLIB::SREM_I128;
+    LC = isSigned ? RTLIB::SREM_I128 : RTLIB::UREM_I128;
   assert(LC != RTLIB::UNKNOWN_LIBCALL && "Unsupported SREM!");
 
   return ARMEmitLibcall(I, LC);
@@ -2468,7 +2468,9 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
     case Instruction::UDiv:
       return SelectDiv(I, /*isSigned*/ false);
     case Instruction::SRem:
-      return SelectSRem(I);
+      return SelectRem(I, /*isSigned*/ true);
+    case Instruction::URem:
+      return SelectRem(I, /*isSigned*/ false);
     case Instruction::Call:
       if (const IntrinsicInst *II = dyn_cast<IntrinsicInst>(I))
         return SelectIntrinsicCall(*II);
