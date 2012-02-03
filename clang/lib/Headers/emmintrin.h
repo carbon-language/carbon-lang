@@ -947,7 +947,8 @@ _mm_cmpeq_epi32(__m128i a, __m128i b)
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
 _mm_cmpgt_epi8(__m128i a, __m128i b)
 {
-  return (__m128i)((__v16qi)a > (__v16qi)b);
+  typedef signed char __v16qs __attribute__((__vector_size__(16)));
+  return (__m128i)((__v16qs)a > (__v16qs)b);
 }
 
 static __inline__ __m128i __attribute__((__always_inline__, __nodebug__))
