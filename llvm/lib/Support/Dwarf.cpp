@@ -95,6 +95,7 @@ const char *llvm::dwarf::TagString(unsigned Tag) {
     return "DW_TAG_GNU_template_parameter_pack";
   case DW_TAG_GNU_formal_parameter_pack:
     return "DW_TAG_GNU_formal_parameter_pack";
+  case DW_TAG_APPLE_Property:            return "DW_TAG_APPLE_property";
   }
   return 0;
 }
@@ -245,6 +246,7 @@ const char *llvm::dwarf::AttributeString(unsigned Attribute) {
   case DW_AT_APPLE_property_getter:      return "DW_AT_APPLE_property_getter";
   case DW_AT_APPLE_property_setter:      return "DW_AT_APPLE_property_setter";
   case DW_AT_APPLE_property_attribute:   return "DW_AT_APPLE_property_attribute";
+  case DW_AT_APPLE_property:             return "DW_AT_APPLE_property";
   case DW_AT_APPLE_objc_complete_type:   return "DW_AT_APPLE_objc_complete_type";
   }
   return 0;

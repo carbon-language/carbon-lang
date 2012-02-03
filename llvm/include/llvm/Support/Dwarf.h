@@ -130,6 +130,7 @@ enum dwarf_constants {
   DW_TAG_GNU_template_parameter_pack = 0x4107,
   DW_TAG_GNU_formal_parameter_pack = 0x4108,
   DW_TAG_lo_user = 0x4080,
+  DW_TAG_APPLE_Property = 0x4200,
   DW_TAG_hi_user = 0xffff,
 
   // Children flag
@@ -269,6 +270,7 @@ enum dwarf_constants {
   DW_AT_APPLE_property_setter = 0x3fea,
   DW_AT_APPLE_property_attribute = 0x3feb,
   DW_AT_APPLE_objc_complete_type = 0x3fec,
+  DW_AT_APPLE_property = 0x3fed,
 
   // Attribute form encodings
   DW_FORM_addr = 0x01,
