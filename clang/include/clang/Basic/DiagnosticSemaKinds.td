@@ -417,6 +417,8 @@ def note_implementation_declared : Note<
   "class implementation is declared here">;
 def note_class_declared : Note<
   "class is declared here">;
+def note_receiver_is_id : Note<
+  "receiver is treated with 'id' type for purpose of method lookup">;
 def note_suppressed_class_declare : Note<
   "class with specified objc_requires_property_definitions attribute is declared here">;
 def warn_dup_category_def : Warning<
@@ -3268,6 +3270,9 @@ def err_arc_may_not_respond : Error<
   "no visible @interface for %0 declares the selector %1">;
 def err_arc_receiver_forward_instance : Error<
   "receiver type %0 for instance message is a forward declaration">;
+def warn_receiver_forward_instance : Warning<
+  "receiver type %0 for instance message is a forward declaration">,
+  InGroup<DiagGroup<"receiver-forward-class">>, DefaultIgnore;
 def err_arc_collection_forward : Error<
   "collection expression type %0 is a forward declaration">;
 def err_arc_multiple_method_decl : Error< 

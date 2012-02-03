@@ -1380,11 +1380,15 @@ ExprResult Sema::BuildInstanceMessage(Expr *Receiver,
                 ? PDiag(diag::err_arc_receiver_forward_instance)
                     << (Receiver ? Receiver->getSourceRange() 
                                  : SourceRange(SuperLoc))
-                : PDiag())) {
+                : PDiag(diag::warn_receiver_forward_instance)
+                    << (Receiver ? Receiver->getSourceRange() 
+                                 : SourceRange(SuperLoc)))) {
           if (getLangOptions().ObjCAutoRefCount)
             return ExprError();
           
           forwardClass = OCIType->getInterfaceDecl();
+          Diag(Receiver ? Receiver->getLocStart() 
+                        : SuperLoc, diag::note_receiver_is_id);
           Method = 0;
         } else {
           Method = ClassDecl->lookupInstanceMethod(Sel);
