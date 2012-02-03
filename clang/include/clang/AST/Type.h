@@ -3484,8 +3484,12 @@ class TemplateSpecializationType
 
   /// \brief - The number of template arguments named in this class
   /// template specialization.
-  unsigned NumArgs;
+  unsigned NumArgs : 31;
 
+  /// \brief Whether this template specialization type is a substituted
+  /// type alias.
+  bool TypeAlias : 1;
+    
   TemplateSpecializationType(TemplateName T,
                              const TemplateArgument *Args,
                              unsigned NumArgs, QualType Canon,
@@ -3527,9 +3531,23 @@ public:
     return isa<InjectedClassNameType>(getCanonicalTypeInternal());
   }
 
-  /// True if this template specialization type is for a type alias
-  /// template.
-  bool isTypeAlias() const;
+  /// \brief Determine if this template specialization type is for a type alias
+  /// template that has been substituted.
+  ///
+  /// Nearly every template specialization type whose template is an alias
+  /// template will be substituted. However, this is not the case when
+  /// the specialization contains a pack expansion but the template alias
+  /// does not have a corresponding parameter pack, e.g.,
+  ///
+  /// \code
+  /// template<typename T, typename U, typename V> struct S;
+  /// template<typename T, typename U> using A = S<T, int, U>;
+  /// template<typename... Ts> struct X {
+  ///   typedef A<Ts...> type; // not a type alias
+  /// };
+  /// \endcode
+  bool isTypeAlias() const { return TypeAlias; }
+    
   /// Get the aliased type, if this is a specialization of a type alias
   /// template.
   QualType getAliasedType() const {

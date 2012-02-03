@@ -1884,7 +1884,7 @@ TemplateSpecializationType(TemplateName T,
          false,
          Canon.isNull()? T.containsUnexpandedParameterPack()
                        : Canon->containsUnexpandedParameterPack()),
-    Template(T), NumArgs(NumArgs) {
+    Template(T), NumArgs(NumArgs), TypeAlias(!AliasedType.isNull()) {
   assert(!T.getAsDependentTemplateName() && 
          "Use DependentTemplateSpecializationType for dependent template-name");
   assert((T.getKind() == TemplateName::Template ||
@@ -1923,10 +1923,7 @@ TemplateSpecializationType(TemplateName T,
   }
 
   // Store the aliased type if this is a type alias template specialization.
-  bool IsTypeAlias = !AliasedType.isNull();
-  assert(IsTypeAlias == isTypeAlias() &&
-         "allocated wrong size for type alias");
-  if (IsTypeAlias) {
+  if (TypeAlias) {
     TemplateArgument *Begin = reinterpret_cast<TemplateArgument *>(this + 1);
     *reinterpret_cast<QualType*>(Begin + getNumArgs()) = AliasedType;
   }
@@ -1941,11 +1938,6 @@ TemplateSpecializationType::Profile(llvm::FoldingSetNodeID &ID,
   T.Profile(ID);
   for (unsigned Idx = 0; Idx < NumArgs; ++Idx)
     Args[Idx].Profile(ID, Context);
-}
-
-bool TemplateSpecializationType::isTypeAlias() const {
-  TemplateDecl *D = Template.getAsTemplateDecl();
-  return D && isa<TypeAliasTemplateDecl>(D);
 }
 
 QualType

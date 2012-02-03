@@ -118,3 +118,10 @@ namespace PartialSpecialization {
   X0<int, float> x0if;
   X0<int, float, double> x0ifd;
 }
+
+namespace FixedAliasTemplate {
+  template<typename,typename,typename> struct S {};
+  template<typename T, typename U> using U = S<T, int, U>;
+  template<typename...Ts> U<Ts...> &f(U<Ts...>, Ts...);
+  S<int, int, double> &s1 = f({}, 0, 0.0);
+}
