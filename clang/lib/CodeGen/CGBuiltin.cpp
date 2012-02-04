@@ -1516,20 +1516,25 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vld1, Ty),
                         Ops, "vld1");
   case ARM::BI__builtin_neon_vld1_lane_v:
-  case ARM::BI__builtin_neon_vld1q_lane_v:
+  case ARM::BI__builtin_neon_vld1q_lane_v: {
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
     Ty = llvm::PointerType::getUnqual(VTy->getElementType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    Ops[0] = Builder.CreateLoad(Ops[0]);
-    return Builder.CreateInsertElement(Ops[1], Ops[0], Ops[2], "vld1_lane");
+    LoadInst *Ld = Builder.CreateLoad(Ops[0]);
+    Value *Align = GetPointeeAlignment(*this, E->getArg(0));
+    Ld->setAlignment(cast<ConstantInt>(Align)->getZExtValue());
+    return Builder.CreateInsertElement(Ops[1], Ld, Ops[2], "vld1_lane");
+  }
   case ARM::BI__builtin_neon_vld1_dup_v:
   case ARM::BI__builtin_neon_vld1q_dup_v: {
     Value *V = UndefValue::get(Ty);
     Ty = llvm::PointerType::getUnqual(VTy->getElementType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
-    Ops[0] = Builder.CreateLoad(Ops[0]);
+    LoadInst *Ld = Builder.CreateLoad(Ops[0]);
+    Value *Align = GetPointeeAlignment(*this, E->getArg(0));
+    Ld->setAlignment(cast<ConstantInt>(Align)->getZExtValue());
     llvm::Constant *CI = ConstantInt::get(Int32Ty, 0);
-    Ops[0] = Builder.CreateInsertElement(V, Ops[0], CI);
+    Ops[0] = Builder.CreateInsertElement(V, Ld, CI);
     return EmitNeonSplat(Ops[0], CI);
   }
   case ARM::BI__builtin_neon_vld2_v:
@@ -1877,11 +1882,16 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst1, Ty),
                         Ops, "");
   case ARM::BI__builtin_neon_vst1_lane_v:
-  case ARM::BI__builtin_neon_vst1q_lane_v:
+  case ARM::BI__builtin_neon_vst1q_lane_v: {
     Ops[1] = Builder.CreateBitCast(Ops[1], Ty);
     Ops[1] = Builder.CreateExtractElement(Ops[1], Ops[2]);
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
-    return Builder.CreateStore(Ops[1], Builder.CreateBitCast(Ops[0], Ty));
+    StoreInst *St = Builder.CreateStore(Ops[1],
+                                        Builder.CreateBitCast(Ops[0], Ty));
+    Value *Align = GetPointeeAlignment(*this, E->getArg(0));
+    St->setAlignment(cast<ConstantInt>(Align)->getZExtValue());
+    return St;
+  }
   case ARM::BI__builtin_neon_vst2_v:
   case ARM::BI__builtin_neon_vst2q_v:
     Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
