@@ -359,6 +359,22 @@ DIType DIBuilder::createObjCIVar(StringRef Name,
   return DIType(MDNode::get(VMContext, Elts));
 }
 
+/// createObjCProperty - Create debugging information entry for Objective-C
+/// property.
+DIObjCProperty DIBuilder::createObjCProperty(StringRef Name, 
+                                             StringRef GetterName,
+                                             StringRef SetterName, 
+                                             unsigned PropertyAttributes) {
+  Value *Elts[] = {
+    GetTagConstant(VMContext, dwarf::DW_TAG_APPLE_Property),
+    MDString::get(VMContext, Name),
+    MDString::get(VMContext, GetterName),
+    MDString::get(VMContext, SetterName),
+    ConstantInt::get(Type::getInt32Ty(VMContext), PropertyAttributes)
+  };
+  return DIObjCProperty(MDNode::get(VMContext, Elts));
+}
+
 /// createClassType - Create debugging information entry for a class.
 DIType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
                                   DIFile File, unsigned LineNumber,

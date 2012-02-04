@@ -42,6 +42,7 @@ namespace llvm {
   class DISubprogram;
   class DITemplateTypeParameter;
   class DITemplateValueParameter;
+  class DIObjCProperty;
 
   class DIBuilder {
     private:
@@ -189,6 +190,16 @@ namespace llvm {
                           StringRef PropertyGetterName = StringRef(),
                           StringRef PropertySetterName = StringRef(),
                           unsigned PropertyAttributes = 0);
+
+    /// createObjCProperty - Create debugging information entry for Objective-C
+    /// property.
+    /// @param Name         Property name.
+    /// @param GetterName   Name of the Objective C property getter selector.
+    /// @param SetterName   Name of the Objective C property setter selector.
+    /// @param PropertyAttributes Objective C property attributes.
+    DIObjCProperty createObjCProperty(StringRef Name, StringRef GetterName,
+			              StringRef SetterName, 
+                                      unsigned PropertyAttributes);
 
     /// createClassType - Create debugging information entry for a class.
     /// @param Scope        Scope in which this class is defined.

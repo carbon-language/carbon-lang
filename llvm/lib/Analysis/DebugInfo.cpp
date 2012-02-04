@@ -289,6 +289,10 @@ bool DIDescriptor::isEnumerator() const {
   return DbgNode && getTag() == dwarf::DW_TAG_enumerator;
 }
 
+/// isObjCProperty - Return true if the specified tag is DW_TAG
+bool DIDescriptor::isObjCProperty() const {
+  return DbgNode && getTag() == dwarf::DW_TAG_APPLE_Property;
+}
 //===----------------------------------------------------------------------===//
 // Simple Descriptor Constructors and other Methods
 //===----------------------------------------------------------------------===//
