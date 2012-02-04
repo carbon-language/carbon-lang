@@ -30,6 +30,7 @@
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Lex/ModuleLoader.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TemplateKinds.h"
 #include "clang/Basic/TypeTraits.h"

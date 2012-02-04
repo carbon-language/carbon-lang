@@ -43,6 +43,7 @@ class ASTContext;
 class NestedNameSpecifier;
 class CXXBaseSpecifier;
 class CXXCtorInitializer;
+class DiagnosticsEngine;
 class FPOptions;
 class HeaderSearch;
 class IdentifierResolver;

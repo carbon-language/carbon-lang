@@ -24,6 +24,7 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Mangle.h"
 #include "clang/Basic/Builtins.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"

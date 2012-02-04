@@ -10,6 +10,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerRegistry.h"
 #include "clang/StaticAnalyzer/Core/CheckerOptInfo.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace clang;
 using namespace ento;

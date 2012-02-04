@@ -16,6 +16,7 @@
 #include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/ScopeInfo.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/SourceLocation.h"
 #include "clang/Lex/Preprocessor.h"

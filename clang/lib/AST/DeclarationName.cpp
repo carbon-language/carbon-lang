@@ -18,6 +18,7 @@
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/TypeOrdering.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -619,4 +620,18 @@ SourceLocation DeclarationNameInfo::getEndLoc() const {
     return NameLoc;
   }
   llvm_unreachable("Unexpected declaration name kind");
+}
+
+const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
+                                           DeclarationName N) {
+  DB.AddTaggedVal(N.getAsOpaqueInteger(),
+                  DiagnosticsEngine::ak_declarationname);
+  return DB;
+}
+
+const PartialDiagnostic &clang::operator<<(const PartialDiagnostic &PD,
+                                           DeclarationName N) {
+  PD.AddTaggedVal(N.getAsOpaqueInteger(),
+                  DiagnosticsEngine::ak_declarationname);
+  return PD;
 }

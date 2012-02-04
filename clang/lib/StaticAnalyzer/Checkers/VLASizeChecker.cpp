@@ -20,6 +20,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/AST/CharUnits.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace clang;
 using namespace ento;

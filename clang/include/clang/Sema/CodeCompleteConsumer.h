@@ -24,6 +24,7 @@
 namespace clang {
 
 class Decl;
+class Preprocessor;
 
 /// \brief Default priority values for code-completion results based
 /// on their kind.

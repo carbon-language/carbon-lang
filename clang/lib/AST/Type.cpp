@@ -20,6 +20,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/TypeVisitor.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/StringExtras.h"
@@ -2308,4 +2309,18 @@ bool QualType::hasTrivialAssignment(ASTContext &Context, bool Copying) const {
                      Record->hasTrivialMoveAssignment();
   
   return true;
+}
+
+const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
+                                           QualType T) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
+                  DiagnosticsEngine::ak_qualtype);
+  return DB;
+}
+
+const PartialDiagnostic &clang::operator<<(const PartialDiagnostic &PD,
+                                           QualType T) {
+  PD.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
+                  DiagnosticsEngine::ak_qualtype);
+  return PD;
 }

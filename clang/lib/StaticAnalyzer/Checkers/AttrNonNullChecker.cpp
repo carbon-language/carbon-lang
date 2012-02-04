@@ -17,6 +17,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
+#include "llvm/ADT/STLExtras.h"
 
 using namespace clang;
 using namespace ento;

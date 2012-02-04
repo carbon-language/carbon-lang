@@ -25,6 +25,7 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Module.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -2958,4 +2959,18 @@ SourceRange ImportDecl::getSourceRange() const {
                        *reinterpret_cast<const SourceLocation *>(this + 1));
   
   return SourceRange(getLocation(), getIdentifierLocs().back());
+}
+
+const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
+                                           const NamedDecl* ND) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(ND),
+                  DiagnosticsEngine::ak_nameddecl);
+  return DB;
+}
+
+const PartialDiagnostic &clang::operator<<(const PartialDiagnostic &PD,
+                                           const NamedDecl* ND) {
+  PD.AddTaggedVal(reinterpret_cast<intptr_t>(ND),
+                  DiagnosticsEngine::ak_nameddecl);
+  return PD;
 }

@@ -18,6 +18,7 @@
 #include "clang/AST/PrettyPrinter.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLoc.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 
@@ -639,3 +640,9 @@ NestedNameSpecifierLocBuilder::getWithLocInContext(ASTContext &Context) const {
   return NestedNameSpecifierLoc(Representation, Mem);
 }
 
+const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
+                                           NestedNameSpecifier *NNS) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(NNS),
+                  DiagnosticsEngine::ak_nestednamespec);
+  return DB;
+}

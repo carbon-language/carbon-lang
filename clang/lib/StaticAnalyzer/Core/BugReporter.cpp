@@ -21,6 +21,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/AST/StmtObjC.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Analysis/ProgramPoint.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"

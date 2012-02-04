@@ -41,7 +41,11 @@ class TypeLoc;
 class UnresolvedSetImpl;
 class LabelStmt;
 class Module;
-  
+
+// Forward declare PartialDiagnosticAt.
+// FIXME: This shouldn't be here.
+typedef std::pair<SourceLocation, PartialDiagnostic> PartialDiagnosticAt;
+
 /// \brief A container of type source information.
 ///
 /// A client can read the relevant info using TypeLoc wrappers, e.g:
@@ -3175,18 +3179,11 @@ public:
 
 /// Insertion operator for diagnostics.  This allows sending NamedDecl's
 /// into a diagnostic with <<.
-inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                           const NamedDecl* ND) {
-  DB.AddTaggedVal(reinterpret_cast<intptr_t>(ND),
-                  DiagnosticsEngine::ak_nameddecl);
-  return DB;
-}
-inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
-                                           const NamedDecl* ND) {
-  PD.AddTaggedVal(reinterpret_cast<intptr_t>(ND),
-                  DiagnosticsEngine::ak_nameddecl);
-  return PD;
-}
+const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                    const NamedDecl* ND);
+
+const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                    const NamedDecl* ND);
 
 template<typename decl_type>
 void Redeclarable<decl_type>::setPreviousDeclaration(decl_type *PrevDecl) {

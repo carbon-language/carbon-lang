@@ -42,6 +42,7 @@
 #include "clang/AST/ASTDiagnostic.h"
 #include "clang/AST/Expr.h"
 #include "clang/Basic/Builtins.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
 #include <cstring>

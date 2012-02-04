@@ -27,6 +27,8 @@ namespace clang {
   class CXXConstructorDecl;
   class CXXDestructorDecl;
   class CXXMethodDecl;
+  class DeclContext;
+  class DiagnosticsEngine;
   class FunctionDecl;
   class NamedDecl;
   class ObjCMethodDecl;
