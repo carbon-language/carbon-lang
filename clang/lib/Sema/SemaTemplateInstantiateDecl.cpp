@@ -2347,17 +2347,12 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
         E = SemaRef.CheckBooleanCondition(E.get(), E.get()->getLocStart());
 
       if (E.isUsable()) {
-        SourceLocation ErrLoc;
-        llvm::APSInt NoexceptVal;
         NoexceptExpr = E.take();
         if (!NoexceptExpr->isTypeDependent() &&
-            !NoexceptExpr->isValueDependent() &&
-            !NoexceptExpr->isIntegerConstantExpr(NoexceptVal, SemaRef.Context,
-                                                 &ErrLoc, /*evaluated=*/false)){
-          SemaRef.Diag(ErrLoc, diag::err_noexcept_needs_constant_expression)
-            << NoexceptExpr->getSourceRange();
-          NoexceptExpr = 0;
-        }
+            !NoexceptExpr->isValueDependent())
+          NoexceptExpr = SemaRef.VerifyIntegerConstantExpression(NoexceptExpr,
+            0, SemaRef.PDiag(diag::err_noexcept_needs_constant_expression),
+            /*AllowFold*/ false).take();
       }
     }
 

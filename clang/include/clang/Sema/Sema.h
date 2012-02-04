@@ -6120,17 +6120,25 @@ public:
   /// VerifyIntegerConstantExpression - Verifies that an expression is an ICE,
   /// and reports the appropriate diagnostics. Returns false on success.
   /// Can optionally return the value of the expression.
-  bool VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result = 0,
-                                       unsigned DiagId = 0,
-                                       bool AllowFold = true);
+  ExprResult VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
+                                             PartialDiagnostic Diag,
+                                             bool AllowFold,
+                                             PartialDiagnostic FoldDiag);
+  ExprResult VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
+                                             PartialDiagnostic Diag,
+                                             bool AllowFold = true) {
+    return VerifyIntegerConstantExpression(E, Result, Diag, AllowFold,
+                                           PDiag(0));
+  }
+  ExprResult VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result = 0);
 
   /// VerifyBitField - verifies that a bit field expression is an ICE and has
   /// the correct width, and that the field type is valid.
   /// Returns false on success.
   /// Can optionally return whether the bit-field is of width 0
-  bool VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
-                      QualType FieldTy, const Expr *BitWidth,
-                      bool *ZeroWidth = 0);
+  ExprResult VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
+                            QualType FieldTy, Expr *BitWidth,
+                            bool *ZeroWidth = 0);
 
   enum CUDAFunctionTarget {
     CFT_Device,

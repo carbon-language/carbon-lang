@@ -19,9 +19,9 @@ char floatArith[(int)(1.0+2.0)]; // expected-warning {{must be an integer consta
 char b[__builtin_constant_p((int)(1.0+2.0)) ? (int)(1.0+2.0) : -1];
 
 struct c {
-  int a : (  // expected-error {{expression is not an integer constant expression}}
+  int a : (
            __builtin_constant_p((int)(1.0+2.0)) ? (int)(1.0+
-     expr  // expected-note {{subexpression not valid in a constant expression}}
+     expr // expected-error {{expression is not an integer constant expression}}
            ) : -1);
 };
 

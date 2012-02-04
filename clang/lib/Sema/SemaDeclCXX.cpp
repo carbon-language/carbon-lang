@@ -9918,10 +9918,16 @@ Decl *Sema::ActOnStaticAssertDeclaration(SourceLocation StaticAssertLoc,
   StringLiteral *AssertMessage = cast<StringLiteral>(AssertMessageExpr_);
 
   if (!AssertExpr->isTypeDependent() && !AssertExpr->isValueDependent()) {
+    // In a static_assert-declaration, the constant-expression shall be a
+    // constant expression that can be contextually converted to bool.
+    ExprResult Converted = PerformContextuallyConvertToBool(AssertExpr);
+    if (Converted.isInvalid())
+      return 0;
+
     llvm::APSInt Cond;
-    if (VerifyIntegerConstantExpression(AssertExpr, &Cond,
-                             diag::err_static_assert_expression_is_not_constant,
-                                        /*AllowFold=*/false))
+    if (VerifyIntegerConstantExpression(Converted.get(), &Cond,
+          PDiag(diag::err_static_assert_expression_is_not_constant),
+          /*AllowFold=*/false).isInvalid())
       return 0;
 
     if (!Cond)

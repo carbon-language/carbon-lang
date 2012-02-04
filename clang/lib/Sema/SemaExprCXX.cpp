@@ -900,11 +900,11 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
 
       DeclaratorChunk::ArrayTypeInfo &Array = D.getTypeObject(I).Arr;
       if (Expr *NumElts = (Expr *)Array.NumElts) {
-        if (!NumElts->isTypeDependent() && !NumElts->isValueDependent() &&
-            !NumElts->isIntegerConstantExpr(Context)) {
-          Diag(D.getTypeObject(I).Loc, diag::err_new_array_nonconst)
-            << NumElts->getSourceRange();
-          return ExprError();
+        if (!NumElts->isTypeDependent() && !NumElts->isValueDependent()) {
+          Array.NumElts = VerifyIntegerConstantExpression(NumElts, 0,
+            PDiag(diag::err_new_array_nonconst)).take();
+          if (!Array.NumElts)
+            return ExprError();
         }
       }
     }
@@ -1034,6 +1034,8 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     // std::bad_array_new_length.
     if (!ArraySize->isValueDependent()) {
       llvm::APSInt Value;
+      // We've already performed any required implicit conversion to integer or
+      // unscoped enumeration type.
       if (ArraySize->isIntegerConstantExpr(Value, Context)) {
         if (Value < llvm::APSInt(
                         llvm::APInt::getNullValue(Value.getBitWidth()),
@@ -3269,18 +3271,16 @@ static uint64_t EvaluateArrayTypeTrait(Sema &Self, ArrayTypeTrait ATT,
   case ATT_ArrayExtent: {
     llvm::APSInt Value;
     uint64_t Dim;
-    if (DimExpr->isIntegerConstantExpr(Value, Self.Context, 0, false)) {
-      if (Value < llvm::APSInt(Value.getBitWidth(), Value.isUnsigned())) {
-        Self.Diag(KeyLoc, diag::err_dimension_expr_not_constant_integer) <<
-          DimExpr->getSourceRange();
-        return false;
-      }
-      Dim = Value.getLimitedValue();
-    } else {
-      Self.Diag(KeyLoc, diag::err_dimension_expr_not_constant_integer) <<
+    if (Self.VerifyIntegerConstantExpression(DimExpr, &Value,
+          Self.PDiag(diag::err_dimension_expr_not_constant_integer),
+          false).isInvalid())
+      return 0;
+    if (Value.isSigned() && Value.isNegative()) {
+      Self.Diag(KeyLoc, diag::err_dimension_expr_not_constant_integer),
         DimExpr->getSourceRange();
-      return false;
+      return 0;
     }
+    Dim = Value.getLimitedValue();
 
     if (T->isArrayType()) {
       unsigned D = 0;

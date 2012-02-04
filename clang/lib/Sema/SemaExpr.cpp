@@ -8544,11 +8544,11 @@ ExprResult Sema::ActOnChooseExpr(SourceLocation BuiltinLoc,
   } else {
     // The conditional expression is required to be a constant expression.
     llvm::APSInt condEval(32);
-    SourceLocation ExpLoc;
-    if (!CondExpr->isIntegerConstantExpr(condEval, Context, &ExpLoc))
-      return ExprError(Diag(ExpLoc,
-                       diag::err_typecheck_choose_expr_requires_constant)
-        << CondExpr->getSourceRange());
+    ExprResult CondICE = VerifyIntegerConstantExpression(CondExpr, &condEval,
+      PDiag(diag::err_typecheck_choose_expr_requires_constant), false);
+    if (CondICE.isInvalid())
+      return ExprError();
+    CondExpr = CondICE.take();
 
     // If the condition is > zero, then the AST type is the same as the LSHExpr.
     Expr *ActiveExpr = condEval.getZExtValue() ? LHSExpr : RHSExpr;
@@ -9120,16 +9120,61 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   return isInvalid;
 }
 
-bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result,
-                                           unsigned DiagID, bool AllowFold) {
+ExprResult Sema::VerifyIntegerConstantExpression(Expr *E,
+                                                 llvm::APSInt *Result) {
+  return VerifyIntegerConstantExpression(E, Result,
+      PDiag(diag::err_expr_not_ice) << LangOpts.CPlusPlus);
+}
+
+ExprResult Sema::VerifyIntegerConstantExpression(Expr *E, llvm::APSInt *Result,
+                                                 PartialDiagnostic NotIceDiag,
+                                                 bool AllowFold,
+                                                 PartialDiagnostic FoldDiag) {
+  SourceLocation DiagLoc = E->getSourceRange().getBegin();
+
+  if (getLangOptions().CPlusPlus0x) {
+    // C++11 [expr.const]p5:
+    //   If an expression of literal class type is used in a context where an
+    //   integral constant expression is required, then that class type shall
+    //   have a single non-explicit conversion function to an integral or
+    //   unscoped enumeration type
+    ExprResult Converted;
+    if (NotIceDiag.getDiagID()) {
+      Converted = ConvertToIntegralOrEnumerationType(
+        DiagLoc, E,
+        PDiag(diag::err_ice_not_integral),
+        PDiag(diag::err_ice_incomplete_type),
+        PDiag(diag::err_ice_explicit_conversion),
+        PDiag(diag::note_ice_conversion_here),
+        PDiag(diag::err_ice_ambiguous_conversion),
+        PDiag(diag::note_ice_conversion_here),
+        PDiag(0),
+        /*AllowScopedEnumerations*/ false);
+    } else {
+      // The caller wants to silently enquire whether this is an ICE. Don't
+      // produce any diagnostics if it isn't.
+      Converted = ConvertToIntegralOrEnumerationType(
+        DiagLoc, E, PDiag(), PDiag(), PDiag(), PDiag(),
+        PDiag(), PDiag(), PDiag(), false);
+    }
+    if (Converted.isInvalid())
+      return Converted;
+    E = Converted.take();
+    if (!E->getType()->isIntegralOrUnscopedEnumerationType())
+      return ExprError();
+  } else if (!E->getType()->isIntegralOrUnscopedEnumerationType()) {
+    // An ICE must be of integral or unscoped enumeration type.
+    if (NotIceDiag.getDiagID())
+      Diag(DiagLoc, NotIceDiag) << E->getSourceRange();
+    return ExprError();
+  }
+
   // Circumvent ICE checking in C++11 to avoid evaluating the expression twice
   // in the non-ICE case.
-  if (!getLangOptions().CPlusPlus0x) {
-    if (E->isIntegerConstantExpr(Context)) {
-      if (Result)
-        *Result = E->EvaluateKnownConstInt(Context);
-      return false;
-    }
+  if (!getLangOptions().CPlusPlus0x && E->isIntegerConstantExpr(Context)) {
+    if (Result)
+      *Result = E->EvaluateKnownConstInt(Context);
+    return Owned(E);
   }
 
   Expr::EvalResult EvalResult;
@@ -9147,36 +9192,39 @@ bool Sema::VerifyIntegerConstantExpression(const Expr *E, llvm::APSInt *Result,
   if (Folded && getLangOptions().CPlusPlus0x && Notes.empty()) {
     if (Result)
       *Result = EvalResult.Val.getInt();
-    return false;
+    return Owned(E);
+  }
+
+  // If our only note is the usual "invalid subexpression" note, just point
+  // the caret at its location rather than producing an essentially
+  // redundant note.
+  if (Notes.size() == 1 && Notes[0].second.getDiagID() ==
+        diag::note_invalid_subexpr_in_const_expr) {
+    DiagLoc = Notes[0].first;
+    Notes.clear();
   }
 
   if (!Folded || !AllowFold) {
-    if (DiagID)
-      Diag(E->getSourceRange().getBegin(), DiagID) << E->getSourceRange();
-    else
-      Diag(E->getSourceRange().getBegin(), diag::err_expr_not_ice)
-        << E->getSourceRange() << LangOpts.CPlusPlus;
-
-    // We only show the notes if they're not the usual "invalid subexpression"
-    // or if they are actually in a subexpression.
-    if (Notes.size() != 1 ||
-        Notes[0].second.getDiagID() != diag::note_invalid_subexpr_in_const_expr
-        || Notes[0].first != E->IgnoreParens()->getExprLoc()) {
+    if (NotIceDiag.getDiagID()) {
+      Diag(DiagLoc, NotIceDiag) << E->getSourceRange();
       for (unsigned I = 0, N = Notes.size(); I != N; ++I)
         Diag(Notes[I].first, Notes[I].second);
     }
 
-    return true;
+    return ExprError();
   }
 
-  Diag(E->getSourceRange().getBegin(), diag::ext_expr_not_ice)
-    << E->getSourceRange() << LangOpts.CPlusPlus;
+  if (FoldDiag.getDiagID())
+    Diag(DiagLoc, FoldDiag) << E->getSourceRange();
+  else
+    Diag(DiagLoc, diag::ext_expr_not_ice)
+      << E->getSourceRange() << LangOpts.CPlusPlus;
   for (unsigned I = 0, N = Notes.size(); I != N; ++I)
     Diag(Notes[I].first, Notes[I].second);
 
   if (Result)
     *Result = EvalResult.Val.getInt();
-  return false;
+  return Owned(E);
 }
 
 namespace {

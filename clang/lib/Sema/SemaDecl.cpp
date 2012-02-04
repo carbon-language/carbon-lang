@@ -8465,9 +8465,10 @@ void Sema::ActOnTagDefinitionError(Scope *S, Decl *TagD) {
 }
 
 // Note that FieldName may be null for anonymous bitfields.
-bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
-                          QualType FieldTy, const Expr *BitWidth,
-                          bool *ZeroWidth) {
+ExprResult Sema::VerifyBitField(SourceLocation FieldLoc,
+                                IdentifierInfo *FieldName,
+                                QualType FieldTy, Expr *BitWidth,
+                                bool *ZeroWidth) {
   // Default to true; that shouldn't confuse checks for emptiness
   if (ZeroWidth)
     *ZeroWidth = true;
@@ -8477,7 +8478,7 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
   if (!FieldTy->isDependentType() && !FieldTy->isIntegralOrEnumerationType()) {
     // Handle incomplete types with specific error.
     if (RequireCompleteType(FieldLoc, FieldTy, diag::err_field_incomplete))
-      return true;
+      return ExprError();
     if (FieldName)
       return Diag(FieldLoc, diag::err_not_integral_type_bitfield)
         << FieldName << FieldTy << BitWidth->getSourceRange();
@@ -8485,16 +8486,18 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
       << FieldTy << BitWidth->getSourceRange();
   } else if (DiagnoseUnexpandedParameterPack(const_cast<Expr *>(BitWidth),
                                              UPPC_BitFieldWidth))
-    return true;
+    return ExprError();
 
   // If the bit-width is type- or value-dependent, don't try to check
   // it now.
   if (BitWidth->isValueDependent() || BitWidth->isTypeDependent())
-    return false;
+    return Owned(BitWidth);
 
   llvm::APSInt Value;
-  if (VerifyIntegerConstantExpression(BitWidth, &Value))
-    return true;
+  ExprResult ICE = VerifyIntegerConstantExpression(BitWidth, &Value);
+  if (ICE.isInvalid())
+    return ICE;
+  BitWidth = ICE.take();
 
   if (Value != 0 && ZeroWidth)
     *ZeroWidth = false;
@@ -8534,7 +8537,7 @@ bool Sema::VerifyBitField(SourceLocation FieldLoc, IdentifierInfo *FieldName,
     }
   }
 
-  return false;
+  return Owned(BitWidth);
 }
 
 /// ActOnField - Each field of a C struct/union is passed into this in order
@@ -8700,11 +8703,13 @@ FieldDecl *Sema::CheckFieldDecl(DeclarationName Name, QualType T,
 
   bool ZeroWidth = false;
   // If this is declared as a bit-field, check the bit-field.
-  if (!InvalidDecl && BitWidth &&
-      VerifyBitField(Loc, II, T, BitWidth, &ZeroWidth)) {
-    InvalidDecl = true;
-    BitWidth = 0;
-    ZeroWidth = false;
+  if (!InvalidDecl && BitWidth) {
+    BitWidth = VerifyBitField(Loc, II, T, BitWidth, &ZeroWidth).take();
+    if (!BitWidth) {
+      InvalidDecl = true;
+      BitWidth = 0;
+      ZeroWidth = false;
+    }
   }
 
   // Check that 'mutable' is consistent with the type of the declaration.
@@ -9027,10 +9032,9 @@ Decl *Sema::ActOnIvar(Scope *S,
 
   if (BitWidth) {
     // 6.7.2.1p3, 6.7.2.1p4
-    if (VerifyBitField(Loc, II, T, BitWidth)) {
+    BitWidth = VerifyBitField(Loc, II, T, BitWidth).take();
+    if (!BitWidth)
       D.setInvalidType();
-      BitWidth = 0;
-    }
   } else {
     // Not a bitfield.
 
@@ -9591,9 +9595,9 @@ EnumConstantDecl *Sema::CheckEnumConstant(EnumDecl *Enum,
         else
           Val = Converted.take();
       } else if (!Val->isValueDependent() &&
-                 VerifyIntegerConstantExpression(Val, &EnumVal)) {
+                 !(Val = VerifyIntegerConstantExpression(Val,
+                                                         &EnumVal).take())) {
         // C99 6.7.2.2p2: Make sure we have an integer constant expression.
-        Val = 0;
       } else {
         if (!getLangOptions().CPlusPlus) {
           // C99 6.7.2.2p2:

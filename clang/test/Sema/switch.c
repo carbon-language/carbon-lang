@@ -50,12 +50,15 @@ void test4()
   }
   
   switch (cond) {
-  case g() && 0: // expected-error {{expression is not an integer constant expression}} // expected-note {{subexpression not valid in a constant expression}}
+  case g() // expected-error {{expression is not an integer constant expression}}
+      && 0:
     break;
   }
   
   switch (cond) {
-  case 0 ... g() || 1: // expected-error {{expression is not an integer constant expression}} // expected-note {{subexpression not valid in a constant expression}}
+  case 0 ...
+      g() // expected-error {{expression is not an integer constant expression}}
+      || 1:
     break;
   }
 }

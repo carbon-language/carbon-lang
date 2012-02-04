@@ -61,13 +61,13 @@ struct abstract {
 
 void bad_news(int *ip)
 {
-  int i = 1;
+  int i = 1; // expected-note 2{{here}}
   (void)new; // expected-error {{expected a type}}
   (void)new 4; // expected-error {{expected a type}}
   (void)new () int; // expected-error {{expected expression}}
   (void)new int[1.1]; // expected-error {{array size expression must have integral or enumeration type, not 'double'}}
-  (void)new int[1][i]; // expected-error {{only the first dimension}}
-  (void)new (int[1][i]); // expected-error {{only the first dimension}}
+  (void)new int[1][i]; // expected-error {{only the first dimension}} expected-note {{read of non-const variable 'i' is not allowed in a constant expression}}
+  (void)new (int[1][i]); // expected-error {{only the first dimension}} expected-note {{read of non-const variable 'i' is not allowed in a constant expression}}
   (void)new (int[i]); // expected-warning {{when type is in parentheses}}
   (void)new int(*(S*)0); // expected-error {{no viable conversion from 'S' to 'int'}}
   (void)new int(1, 2); // expected-error {{excess elements in scalar initializer}}

@@ -268,12 +268,14 @@ namespace LValueToRValue {
   //   non-volatile const object with a preceding initialization, initialized
   //   with a constant expression  [Note: a string literal (2.14.5 [lex.string])
   //   corresponds to an array of such objects. -end note], or
-  volatile const int vi = 1; // expected-note {{here}}
+  volatile const int vi = 1; // expected-note 2{{here}}
   const int ci = 1;
   volatile const int &vrci = ci;
-  static_assert(vi, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type 'const volatile int'}}
+  static_assert(vi, ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vi'}}
   static_assert(const_cast<int&>(vi), ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vi'}}
-  static_assert(vrci, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
+  static_assert(vrci, ""); // ok, vrci is converted to a prvalue before
+                           // evaluation and loses its volatility in the
+                           // conversion.
 
   // - a non-volatile glvalue of literal type that refers to a non-volatile
   //   object defined with constexpr, or that refers to a sub-object of such an
@@ -282,23 +284,23 @@ namespace LValueToRValue {
     constexpr S(int=0) : i(1), v(1) {}
     constexpr S(const S &s) : i(2), v(2) {}
     int i;
-    volatile int v;
+    volatile int v; // expected-note {{here}}
   };
   constexpr S s;
-  constexpr volatile S vs; // expected-note {{here}}
+  constexpr volatile S vs; // expected-note 2{{here}}
   constexpr const volatile S &vrs = s;
   static_assert(s.i, "");
-  static_assert(s.v, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
-  static_assert(vs.i, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
+  static_assert(s.v, ""); // expected-error {{constant expression}} expected-note {{read of volatile member 'v'}}
+  static_assert(vs.i, ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vs'}}
   static_assert(const_cast<int&>(vs.i), ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vs'}}
-  static_assert(vrs.i, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
+  static_assert(vrs.i, ""); // ok
 
   // - a non-volatile glvalue of literal type that refers to a non-volatile
   //   temporary object whose lifetime has not ended, initialized with a
   //   constant expression;
   constexpr volatile S f() { return S(); }
   static_assert(f().i, ""); // ok! there's no lvalue-to-rvalue conversion here!
-  static_assert(((volatile const S&&)(S)0).i, ""); // expected-error {{constant expression}} expected-note {{subexpression}}
+  static_assert(((volatile const S&&)(S)0).i, ""); // expected-error {{constant expression}}
 }
 
 // DR1312: The proposed wording for this defect has issues, so we ignore this
@@ -385,7 +387,7 @@ namespace PseudoDtor {
   int k;
   typedef int I;
   struct T {
-    int n : (k.~I(), 0); // expected-error {{constant expression}} expected-note{{subexpression}}
+    int n : (k.~I(), 0); // expected-error {{constant expression}}
   };
 }
 
@@ -419,8 +421,8 @@ namespace TypeId {
 namespace NewDelete {
   int *p = 0;
   struct T {
-    int n : *new int(4); // expected-error {{constant expression}} expected-note {{subexpression}}
-    int m : (delete p, 2); // expected-error {{constant expression}} expected-note {{subexpression}}
+    int n : *new int(4); // expected-error {{constant expression}}
+    int m : (delete p, 2); // expected-error {{constant expression}}
   };
 }
 
@@ -540,7 +542,7 @@ namespace Assignment {
 // - a throw-expression (15.1)
 namespace Throw {
   struct S {
-    int n : (throw "hello", 10); // expected-error {{constant expression}} expected-note {{subexpression}}
+    int n : (throw "hello", 10); // expected-error {{constant expression}}
   };
 }
 

@@ -2604,18 +2604,19 @@ void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, Expr *E) {
   SourceLocation AttrLoc = AttrRange.getBegin();
   // FIXME: Cache the number on the Attr object?
   llvm::APSInt Alignment(32);
-  if (!E->isIntegerConstantExpr(Alignment, Context)) {
-    Diag(AttrLoc, diag::err_attribute_argument_not_int)
-      << "aligned" << E->getSourceRange();
+  ExprResult ICE =
+    VerifyIntegerConstantExpression(E, &Alignment,
+      PDiag(diag::err_attribute_argument_not_int) << "aligned",
+      /*AllowFold*/ false);
+  if (ICE.isInvalid())
     return;
-  }
   if (!llvm::isPowerOf2_64(Alignment.getZExtValue())) {
     Diag(AttrLoc, diag::err_attribute_aligned_not_power_of_two)
       << E->getSourceRange();
     return;
   }
 
-  D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, true, E));
+  D->addAttr(::new (Context) AlignedAttr(AttrRange, Context, true, ICE.take()));
 }
 
 void Sema::AddAlignedAttr(SourceRange AttrRange, Decl *D, TypeSourceInfo *TS) {

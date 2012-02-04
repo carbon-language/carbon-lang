@@ -415,6 +415,9 @@ public:
   /// constant expression, and, if so, return its value in Result.  If not a
   /// valid i-c-e, return false and fill in Loc (if specified) with the location
   /// of the invalid expression.
+  ///
+  /// Note: This does not perform the implicit conversions required by C++11
+  /// [expr.const]p5.
   bool isIntegerConstantExpr(llvm::APSInt &Result, ASTContext &Ctx,
                              SourceLocation *Loc = 0,
                              bool isEvaluated = true) const;
@@ -422,6 +425,9 @@ public:
 
   /// isCXX11ConstantExpr - Return true if this expression is a constant
   /// expression in C++11. Can only be used in C++.
+  ///
+  /// Note: This does not perform the implicit conversions required by C++11
+  /// [expr.const]p5.
   bool isCXX11ConstantExpr(ASTContext &Ctx, APValue *Result = 0,
                            SourceLocation *Loc = 0) const;
 

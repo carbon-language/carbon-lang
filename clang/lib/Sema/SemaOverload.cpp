@@ -4841,8 +4841,8 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
   // expression of integral or enumeration type.
   const RecordType *RecordTy = T->getAs<RecordType>();
   if (!RecordTy || !getLangOptions().CPlusPlus) {
-    Diag(Loc, NotIntDiag)
-      << T << From->getSourceRange();
+    if (NotIntDiag.getDiagID())
+      Diag(Loc, NotIntDiag) << T << From->getSourceRange();
     return Owned(From);
   }
 
@@ -4877,7 +4877,7 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
 
   switch (ViableConversions.size()) {
   case 0:
-    if (ExplicitConversions.size() == 1) {
+    if (ExplicitConversions.size() == 1 && ExplicitConvDiag.getDiagID()) {
       DeclAccessPair Found = ExplicitConversions[0];
       CXXConversionDecl *Conversion
         = cast<CXXConversionDecl>(Found->getUnderlyingDecl());
@@ -4948,6 +4948,9 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
   }
 
   default:
+    if (!AmbigDiag.getDiagID())
+      return Owned(From);
+
     Diag(Loc, AmbigDiag)
       << T << From->getSourceRange();
     for (unsigned I = 0, N = ViableConversions.size(); I != N; ++I) {
@@ -4960,9 +4963,9 @@ Sema::ConvertToIntegralOrEnumerationType(SourceLocation Loc, Expr *From,
     return Owned(From);
   }
 
-  if (!isIntegralOrEnumerationType(From->getType(), AllowScopedEnumerations))
-    Diag(Loc, NotIntDiag)
-      << From->getType() << From->getSourceRange();
+  if (!isIntegralOrEnumerationType(From->getType(), AllowScopedEnumerations) &&
+      NotIntDiag.getDiagID())
+    Diag(Loc, NotIntDiag) << From->getType() << From->getSourceRange();
 
   return DefaultLvalueConversion(From);
 }

@@ -1178,19 +1178,12 @@ QualType Sema::BuildReferenceType(QualType T, bool SpelledAsLValue,
 
 /// Check whether the specified array size makes the array type a VLA.  If so,
 /// return true, if not, return the size of the array in SizeVal.
-static bool isArraySizeVLA(Expr *ArraySize, llvm::APSInt &SizeVal, Sema &S) {
-  // If the size is an ICE, it certainly isn't a VLA.
-  if (ArraySize->isIntegerConstantExpr(SizeVal, S.Context))
-    return false;
-    
-  // If we're in a GNU mode (like gnu99, but not c99) accept any evaluatable
-  // value as an extension.
-  if (S.LangOpts.GNUMode && ArraySize->EvaluateAsInt(SizeVal, S.Context)) {
-    S.Diag(ArraySize->getLocStart(), diag::ext_vla_folded_to_constant);
-    return false;
-  }
-
-  return true;
+static bool isArraySizeVLA(Sema &S, Expr *ArraySize, llvm::APSInt &SizeVal) {
+  // If the size is an ICE, it certainly isn't a VLA. If we're in a GNU mode
+  // (like gnu99, but not c99) accept any evaluatable value as an extension.
+  return S.VerifyIntegerConstantExpression(
+      ArraySize, &SizeVal, S.PDiag(), S.LangOpts.GNUMode,
+      S.PDiag(diag::ext_vla_folded_to_constant)).isInvalid();
 }
 
 
@@ -1285,14 +1278,15 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
   }
 
   // C99 6.7.5.2p1: The size expression shall have integer type.
-  // TODO: in theory, if we were insane, we could allow contextual
-  // conversions to integer type here.
-  if (ArraySize && !ArraySize->isTypeDependent() &&
+  // C++11 allows contextual conversions to such types.
+  if (!getLangOptions().CPlusPlus0x &&
+      ArraySize && !ArraySize->isTypeDependent() &&
       !ArraySize->getType()->isIntegralOrUnscopedEnumerationType()) {
     Diag(ArraySize->getLocStart(), diag::err_array_size_non_int)
       << ArraySize->getType() << ArraySize->getSourceRange();
     return QualType();
   }
+
   llvm::APSInt ConstVal(Context.getTypeSize(Context.getSizeType()));
   if (!ArraySize) {
     if (ASM == ArrayType::Star)
@@ -1301,11 +1295,19 @@ QualType Sema::BuildArrayType(QualType T, ArrayType::ArraySizeModifier ASM,
       T = Context.getIncompleteArrayType(T, ASM, Quals);
   } else if (ArraySize->isTypeDependent() || ArraySize->isValueDependent()) {
     T = Context.getDependentSizedArrayType(T, ArraySize, ASM, Quals, Brackets);
-  } else if (!T->isDependentType() && !T->isIncompleteType() &&
-             !T->isConstantSizeType()) {
+  } else if ((!T->isDependentType() && !T->isIncompleteType() &&
+              !T->isConstantSizeType()) ||
+             isArraySizeVLA(*this, ArraySize, ConstVal)) {
+    // Even in C++11, don't allow contextual conversions in the array bound
+    // of a VLA.
+    if (getLangOptions().CPlusPlus0x &&
+        !ArraySize->getType()->isIntegralOrUnscopedEnumerationType()) {
+      Diag(ArraySize->getLocStart(), diag::err_array_size_non_int)
+        << ArraySize->getType() << ArraySize->getSourceRange();
+      return QualType();
+    }
+
     // C99: an array with an element type that has a non-constant-size is a VLA.
-    T = Context.getVariableArrayType(T, ArraySize, ASM, Quals, Brackets);
-  } else if (isArraySizeVLA(ArraySize, ConstVal, *this)) {
     // C99: an array with a non-ICE size is a VLA.  We accept any expression
     // that we can fold to a non-zero positive value as an extension.
     T = Context.getVariableArrayType(T, ArraySize, ASM, Quals, Brackets);
@@ -2283,15 +2285,11 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
                     NoexceptExpr->getType()->getCanonicalTypeUnqualified() ==
                         Context.BoolTy) &&
                  "Parser should have made sure that the expression is boolean");
-            SourceLocation ErrLoc;
-            llvm::APSInt Dummy;
-            if (!NoexceptExpr->isValueDependent() &&
-                !NoexceptExpr->isIntegerConstantExpr(Dummy, Context, &ErrLoc,
-                                                     /*evaluated*/false))
-              S.Diag(ErrLoc, diag::err_noexcept_needs_constant_expression)
-                  << NoexceptExpr->getSourceRange();
-            else
-              EPI.NoexceptExpr = NoexceptExpr;
+            if (!NoexceptExpr->isValueDependent())
+              NoexceptExpr = S.VerifyIntegerConstantExpression(NoexceptExpr, 0,
+                S.PDiag(diag::err_noexcept_needs_constant_expression),
+                /*AllowFold*/ false).take();
+            EPI.NoexceptExpr = NoexceptExpr;
           }
         } else if (FTI.getExceptionSpecType() == EST_None &&
                    ImplicitlyNoexcept && chunkIndex == 0) {

@@ -2150,26 +2150,27 @@ void InitListChecker::UpdateStructuredListElement(InitListExpr *StructuredList,
 }
 
 /// Check that the given Index expression is a valid array designator
-/// value. This is essentailly just a wrapper around
+/// value. This is essentially just a wrapper around
 /// VerifyIntegerConstantExpression that also checks for negative values
 /// and produces a reasonable diagnostic if there is a
-/// failure. Returns true if there was an error, false otherwise.  If
-/// everything went okay, Value will receive the value of the constant
-/// expression.
-static bool
+/// failure. Returns the index expression, possibly with an implicit cast
+/// added, on success.  If everything went okay, Value will receive the
+/// value of the constant expression.
+static ExprResult
 CheckArrayDesignatorExpr(Sema &S, Expr *Index, llvm::APSInt &Value) {
   SourceLocation Loc = Index->getSourceRange().getBegin();
 
   // Make sure this is an integer constant expression.
-  if (S.VerifyIntegerConstantExpression(Index, &Value))
-    return true;
+  ExprResult Result = S.VerifyIntegerConstantExpression(Index, &Value);
+  if (Result.isInvalid())
+    return Result;
 
   if (Value.isSigned() && Value.isNegative())
     return S.Diag(Loc, diag::err_array_designator_negative)
       << Value.toString(10) << Index->getSourceRange();
 
   Value.setIsUnsigned(true);
-  return false;
+  return Result;
 }
 
 ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
@@ -2194,9 +2195,9 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
     case Designator::ArrayDesignator: {
       Expr *Index = static_cast<Expr *>(D.getArrayIndex());
       llvm::APSInt IndexValue;
-      if (!Index->isTypeDependent() &&
-          !Index->isValueDependent() &&
-          CheckArrayDesignatorExpr(*this, Index, IndexValue))
+      if (!Index->isTypeDependent() && !Index->isValueDependent())
+        Index = CheckArrayDesignatorExpr(*this, Index, IndexValue).take();
+      if (!Index)
         Invalid = true;
       else {
         Designators.push_back(ASTDesignator(InitExpressions.size(),
@@ -2216,10 +2217,13 @@ ExprResult Sema::ActOnDesignatedInitializer(Designation &Desig,
                             StartIndex->isValueDependent();
       bool EndDependent = EndIndex->isTypeDependent() ||
                           EndIndex->isValueDependent();
-      if ((!StartDependent &&
-           CheckArrayDesignatorExpr(*this, StartIndex, StartValue)) ||
-          (!EndDependent &&
-           CheckArrayDesignatorExpr(*this, EndIndex, EndValue)))
+      if (!StartDependent)
+        StartIndex =
+            CheckArrayDesignatorExpr(*this, StartIndex, StartValue).take();
+      if (!EndDependent)
+        EndIndex = CheckArrayDesignatorExpr(*this, EndIndex, EndValue).take();
+
+      if (!StartIndex || !EndIndex)
         Invalid = true;
       else {
         // Make sure we're comparing values with the same bit width.

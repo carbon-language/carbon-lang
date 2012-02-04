@@ -3912,11 +3912,11 @@ ExprResult Sema::CheckTemplateArgument(NonTypeTemplateParmDecl *Param,
         << ArgType << Arg->getSourceRange();
       Diag(Param->getLocation(), diag::note_template_param_here);
       return ExprError();
-    } else if (!Arg->isValueDependent() &&
-               !Arg->isIntegerConstantExpr(Value, Context, &NonConstantLoc)) {
-      Diag(NonConstantLoc, diag::err_template_arg_not_ice)
-        << ArgType << Arg->getSourceRange();
-      return ExprError();
+    } else if (!Arg->isValueDependent()) {
+      Arg = VerifyIntegerConstantExpression(Arg, &Value,
+        PDiag(diag::err_template_arg_not_ice) << ArgType, false).take();
+      if (!Arg)
+        return ExprError();
     }
 
     // From here on out, all we care about are the unqualified forms

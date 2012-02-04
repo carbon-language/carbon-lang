@@ -274,15 +274,17 @@ Sema::ActOnCaseStmt(SourceLocation CaseLoc, Expr *LHSVal,
   if (!getLangOptions().CPlusPlus0x) {
     // C99 6.8.4.2p3: The expression shall be an integer constant.
     // However, GCC allows any evaluatable integer expression.
-    if (!LHSVal->isTypeDependent() && !LHSVal->isValueDependent() &&
-        VerifyIntegerConstantExpression(LHSVal))
-      return StmtError();
+    if (!LHSVal->isTypeDependent() && !LHSVal->isValueDependent()) {
+      LHSVal = VerifyIntegerConstantExpression(LHSVal).take();
+      if (!LHSVal)
+        return StmtError();
+    }
 
     // GCC extension: The expression shall be an integer constant.
 
-    if (RHSVal && !RHSVal->isTypeDependent() && !RHSVal->isValueDependent() &&
-        VerifyIntegerConstantExpression(RHSVal)) {
-      RHSVal = 0;  // Recover by just forgetting about it.
+    if (RHSVal && !RHSVal->isTypeDependent() && !RHSVal->isValueDependent()) {
+      RHSVal = VerifyIntegerConstantExpression(RHSVal).take();
+      // Recover from an error by just forgetting about it.
     }
   }
 
