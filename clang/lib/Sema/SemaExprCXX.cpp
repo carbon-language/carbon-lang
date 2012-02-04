@@ -1018,28 +1018,44 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     if (!SizeType->isIntegralOrUnscopedEnumerationType())
       return ExprError();
 
-    // Let's see if this is a constant < 0. If so, we reject it out of hand.
-    // We don't care about special rules, so we tell the machinery it's not
-    // evaluated - it gives us a result in more cases.
+    // C++98 [expr.new]p7:
+    //   The expression in a direct-new-declarator shall have integral type
+    //   with a non-negative value.
+    //
+    // Let's see if this is a constant < 0. If so, we reject it out of
+    // hand. Otherwise, if it's not a constant, we must have an unparenthesized
+    // array type.
+    //
+    // Note: such a construct has well-defined semantics in C++11: it throws
+    // std::bad_array_new_length.
     if (!ArraySize->isValueDependent()) {
       llvm::APSInt Value;
-      if (ArraySize->isIntegerConstantExpr(Value, Context, 0, false)) {
+      if (ArraySize->isIntegerConstantExpr(Value, Context)) {
         if (Value < llvm::APSInt(
                         llvm::APInt::getNullValue(Value.getBitWidth()),
-                                 Value.isUnsigned()))
-          return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
-                                diag::err_typecheck_negative_array_size)
-            << ArraySize->getSourceRange());
-
-        if (!AllocType->isDependentType()) {
-          unsigned ActiveSizeBits
-            = ConstantArrayType::getNumAddressingBits(Context, AllocType, Value);
-          if (ActiveSizeBits > ConstantArrayType::getMaxSizeBits(Context)) {
+                                 Value.isUnsigned())) {
+          if (getLangOptions().CPlusPlus0x)
             Diag(ArraySize->getSourceRange().getBegin(),
-                 diag::err_array_too_large)
-              << Value.toString(10)
+                 diag::warn_typecheck_negative_array_new_size)
               << ArraySize->getSourceRange();
-            return ExprError();
+          else
+            return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
+                                  diag::err_typecheck_negative_array_size)
+                             << ArraySize->getSourceRange());
+        } else if (!AllocType->isDependentType()) {
+          unsigned ActiveSizeBits =
+            ConstantArrayType::getNumAddressingBits(Context, AllocType, Value);
+          if (ActiveSizeBits > ConstantArrayType::getMaxSizeBits(Context)) {
+            if (getLangOptions().CPlusPlus0x)
+              Diag(ArraySize->getSourceRange().getBegin(),
+                   diag::warn_array_new_too_large)
+                << Value.toString(10)
+                << ArraySize->getSourceRange();
+            else
+              return ExprError(Diag(ArraySize->getSourceRange().getBegin(),
+                                    diag::err_array_too_large)
+                               << Value.toString(10)
+                               << ArraySize->getSourceRange());
           }
         }
       } else if (TypeIdParens.isValid()) {

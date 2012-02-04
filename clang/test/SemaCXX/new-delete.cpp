@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify %s -triple=i686-pc-linux-gnu
 
 #include <stddef.h>
 
@@ -77,6 +77,7 @@ void bad_news(int *ip)
   (void)new float*(ip); // expected-error {{cannot initialize a new value of type 'float *' with an lvalue of type 'int *'}}
   // Undefined, but clang should reject it directly.
   (void)new int[-1]; // expected-error {{array size is negative}}
+  (void)new int[2000000000]; // expected-error {{array is too large}}
   (void)new int[*(S*)0]; // expected-error {{array size expression must have integral or enumerated type, not 'S'}}
   (void)::S::new int; // expected-error {{expected unqualified-id}}
   (void)new (0, 0) int; // expected-error {{no matching function for call to 'operator new'}}

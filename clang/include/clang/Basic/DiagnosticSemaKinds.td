@@ -2898,6 +2898,9 @@ def err_vm_func_decl : Error<
   "function declaration cannot have variably modified type">;
 def err_array_too_large : Error<
   "array is too large (%0 elements)">;
+def warn_array_new_too_large : Warning<"array is too large (%0 elements)">,
+  // FIXME PR11644: ", will throw std::bad_array_new_length at runtime"
+  InGroup<DiagGroup<"bad-array-new-length">>;
 
 // -Wpadded, -Wpacked
 def warn_padded_struct_field : Warning<
@@ -2913,6 +2916,9 @@ def warn_unnecessary_packed : Warning<
   "packed attribute is unnecessary for %0">, InGroup<Packed>, DefaultIgnore;
 
 def err_typecheck_negative_array_size : Error<"array size is negative">;
+def warn_typecheck_negative_array_new_size : Warning<"array size is negative">,
+  // FIXME PR11644: ", will throw std::bad_array_new_length at runtime"
+  InGroup<DiagGroup<"bad-array-new-length">>;
 def warn_typecheck_function_qualifiers : Warning<
   "qualifier on function type %0 has unspecified behavior">;
 def err_typecheck_invalid_restrict_not_pointer : Error<
