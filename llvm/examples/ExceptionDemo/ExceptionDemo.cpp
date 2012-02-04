@@ -63,11 +63,6 @@
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/TargetSelect.h"
 
-#ifdef OLD_EXC_SYSTEM
-// See use of UpgradeExceptionHandling(...) below                        
-#include "llvm/AutoUpgrade.h"
-#endif
-
 // FIXME: Although all systems tested with (Linux, OS X), do not need this 
 //        header file included. A user on ubuntu reported, undefined symbols 
 //        for stderr, and fprintf, and the addition of this include fixed the
@@ -188,9 +183,7 @@ static std::vector<std::string> ourTypeInfoNames;
 static std::map<int, std::string> ourTypeInfoNamesIndex;
 
 static llvm::StructType *ourTypeInfoType;
-#ifndef OLD_EXC_SYSTEM
 static llvm::StructType *ourCaughtResultType;
-#endif
 static llvm::StructType *ourExceptionType;
 static llvm::StructType *ourUnwindExceptionType;
 
@@ -969,9 +962,7 @@ void generateIntegerPrint(llvm::LLVMContext &context,
 /// @param unwindResumeBlock unwind resume block
 /// @param exceptionCaughtFlag reference exception caught/thrown status storage
 /// @param exceptionStorage reference to exception pointer storage
-#ifndef OLD_EXC_SYSTEM
 /// @param caughtResultStorage reference to landingpad result storage
-#endif
 /// @returns newly created block
 static llvm::BasicBlock *createFinallyBlock(llvm::LLVMContext &context, 
                                             llvm::Module &module, 
@@ -982,23 +973,17 @@ static llvm::BasicBlock *createFinallyBlock(llvm::LLVMContext &context,
                                             llvm::BasicBlock &terminatorBlock,
                                             llvm::BasicBlock &unwindResumeBlock,
                                             llvm::Value **exceptionCaughtFlag,
-                                            llvm::Value **exceptionStorage
-#ifndef OLD_EXC_SYSTEM
-                                            ,llvm::Value **caughtResultStorage
-#endif
-                                            ) {
+                                            llvm::Value **exceptionStorage,
+                                            llvm::Value **caughtResultStorage) {
   assert(exceptionCaughtFlag && 
          "ExceptionDemo::createFinallyBlock(...):exceptionCaughtFlag "
          "is NULL");
   assert(exceptionStorage && 
          "ExceptionDemo::createFinallyBlock(...):exceptionStorage "
          "is NULL");
-
-#ifndef OLD_EXC_SYSTEM
   assert(caughtResultStorage && 
          "ExceptionDemo::createFinallyBlock(...):caughtResultStorage "
          "is NULL");
-#endif
   
   *exceptionCaughtFlag = createEntryBlockAlloca(toAddTo,
                                          "exceptionCaught",
@@ -1011,13 +996,11 @@ static llvm::BasicBlock *createFinallyBlock(llvm::LLVMContext &context,
                                              exceptionStorageType,
                                              llvm::ConstantPointerNull::get(
                                                exceptionStorageType));
-#ifndef OLD_EXC_SYSTEM
   *caughtResultStorage = createEntryBlockAlloca(toAddTo,
                                               "caughtResultStorage",
                                               ourCaughtResultType,
                                               llvm::ConstantAggregateZero::get(
                                                 ourCaughtResultType));
-#endif
   
   llvm::BasicBlock *ret = llvm::BasicBlock::Create(context,
                                                    blockName,
@@ -1171,9 +1154,7 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   std::vector<llvm::BasicBlock*> catchBlocks(numExceptionsToCatch);
   llvm::Value *exceptionCaughtFlag = NULL;
   llvm::Value *exceptionStorage = NULL;
-#ifndef OLD_EXC_SYSTEM
   llvm::Value *caughtResultStorage = NULL;
-#endif
   
   // Finally block which will branch to unwindResumeBlock if 
   // exception is not caught. Initializes/allocates stack locations.
@@ -1186,10 +1167,8 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
                                                       *endBlock,
                                                       *unwindResumeBlock,
                                                       &exceptionCaughtFlag,
-                                                      &exceptionStorage
-#ifndef OLD_EXC_SYSTEM
-                                                      ,&caughtResultStorage
-#endif
+                                                      &exceptionStorage,
+                                                      &caughtResultStorage
                                                       );
   
   for (unsigned i = 0; i < numExceptionsToCatch; ++i) {
@@ -1250,15 +1229,7 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   
   builder.SetInsertPoint(unwindResumeBlock);
   
-  
-#ifndef OLD_EXC_SYSTEM
   builder.CreateResume(builder.CreateLoad(caughtResultStorage));
-#else
-  llvm::Function *resumeOurException = module.getFunction("_Unwind_Resume");
-  builder.CreateCall(resumeOurException, 
-                     builder.CreateLoad(exceptionStorage));
-  builder.CreateUnreachable();
-#endif
   
   // Exception Block
   
@@ -1266,7 +1237,6 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   
   llvm::Function *personality = module.getFunction("ourPersonality");
   
-#ifndef OLD_EXC_SYSTEM
   llvm::LandingPadInst *caughtResult = 
     builder.CreateLandingPad(ourCaughtResultType,
                              personality,
@@ -1290,42 +1260,6 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
   builder.CreateStore(caughtResult, caughtResultStorage);
   builder.CreateStore(unwindException, exceptionStorage);
   builder.CreateStore(ourExceptionThrownState, exceptionCaughtFlag);
-#else
-  llvm::Function *ehException = module.getFunction("llvm.eh.exception");
-
-  // Retrieve thrown exception
-  llvm::Value *unwindException = builder.CreateCall(ehException);
-  
-  // Store exception and flag
-  builder.CreateStore(unwindException, exceptionStorage);
-  builder.CreateStore(ourExceptionThrownState, exceptionCaughtFlag);
-  llvm::Value *functPtr = builder.CreatePointerCast(personality, 
-                                                    builder.getInt8PtrTy());
-  
-  args.clear();
-  args.push_back(unwindException);
-  args.push_back(functPtr);
-  
-  // Note: Skipping index 0
-  for (unsigned i = 0; i < numExceptionsToCatch; ++i) {
-    // Set up type infos to be caught
-    args.push_back(module.getGlobalVariable(
-                                  ourTypeInfoNames[exceptionTypesToCatch[i]]));
-  }
-  
-  args.push_back(llvm::ConstantInt::get(builder.getInt32Ty(), 0));
-  
-  llvm::Function *ehSelector = module.getFunction("llvm.eh.selector");
-  
-  // Set up this exeption block as the landing pad which will handle
-  // given type infos. See case Intrinsic::eh_selector in 
-  // SelectionDAGBuilder::visitIntrinsicCall(...) and AddCatchInfo(...)
-  // implemented in FunctionLoweringInfo.cpp to see how the implementation
-  // handles this call. This landing pad (this exception block), will be 
-  // called either because it nees to cleanup (call finally) or a type 
-  // info was found which matched the thrown exception.
-  llvm::Value *retTypeInfoIndex = builder.CreateCall(ehSelector, args);
-#endif
   
   // Retrieve exception_class member from thrown exception 
   // (_Unwind_Exception instance). This member tells us whether or not
@@ -1404,12 +1338,6 @@ llvm::Function *createCatchWrappedInvokeFunction(llvm::Module &module,
                                 catchBlocks[nextTypeToCatch]);
   }
 
-#ifdef OLD_EXC_SYSTEM
-  // Must be run before verifier                                                
-  UpgradeExceptionHandling(&module);
-#endif
-
-  
   llvm::verifyFunction(*ret);
   fpm.run(*ret);
   
@@ -1709,8 +1637,6 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   ourTypeInfoType = llvm::StructType::get(context, 
                                           TypeArray(builder.getInt32Ty()));
 
-#ifndef OLD_EXC_SYSTEM
-
   llvm::Type *caughtResultFieldTypes[] = {
     builder.getInt8PtrTy(),
     builder.getInt32Ty()
@@ -1719,8 +1645,6 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
   // Create our landingpad result type
   ourCaughtResultType = llvm::StructType::get(context,
                                             TypeArray(caughtResultFieldTypes));
-
-#endif
 
   // Create OurException type
   ourExceptionType = llvm::StructType::get(context, 
@@ -1964,14 +1888,6 @@ static void createStandardUtilityFunctions(unsigned numTypeInfos,
                  llvm::Function::ExternalLinkage, 
                  true, 
                  false);
-  
-  // llvm.eh.selector intrinsic
-  
-  getDeclaration(&module, llvm::Intrinsic::eh_selector);
-  
-  // llvm.eh.exception intrinsic
-  
-  getDeclaration(&module, llvm::Intrinsic::eh_exception);
   
   // llvm.eh.typeid.for intrinsic
   
