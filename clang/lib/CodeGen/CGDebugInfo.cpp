@@ -1353,6 +1353,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     StringRef PropertySetter;
     unsigned PropertyAttributes = 0;
     ObjCPropertyDecl *PD = NULL;
+    llvm::MDNode *PropertyNode = NULL;
     if (ImpD)
       if (ObjCPropertyImplDecl *PImpD = 
           ImpD->FindPropertyImplIvarDecl(Field->getIdentifier()))
@@ -1362,7 +1363,12 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
       PropertyGetter = getSelectorName(PD->getGetterName());
       PropertySetter = getSelectorName(PD->getSetterName());
       PropertyAttributes = PD->getPropertyAttributes();
-    } 
+      PropertyNode =
+	DBuilder.createObjCProperty(PropertyName, PropertyGetter, 
+                                    PropertySetter,
+                                    PropertyAttributes);
+      EltTys.push_back(PropertyNode);
+    }
     FieldTy = DBuilder.createObjCIVar(FieldName, FieldDefUnit,
                                       FieldLine, FieldSize, FieldAlign,
                                       FieldOffset, Flags, FieldTy,
