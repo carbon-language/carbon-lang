@@ -88,8 +88,14 @@ public:
     GetDescription (lldb::SBStream &description);
     
     %pythoncode %{
+        def get_addr(self):
+            return SBAddress(self, 0)
+
         __swig_getmethods__["name"] = GetName
         if _newclass: x = property(GetName, None)
+
+        __swig_getmethods__["addr"] = get_addr
+        if _newclass: x = property(get_addr, None)
 
         __swig_getmethods__["file_addr"] = GetFileAddress
         if _newclass: x = property(GetFileAddress, None)

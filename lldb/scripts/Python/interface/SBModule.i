@@ -320,12 +320,10 @@ public:
                     if key < count:
                         return self.sbmodule.GetSectionAtIndex(key)
                 elif type(key) is str:
-                    matches = []
                     for idx in range(count):
                         section = self.sbmodule.GetSectionAtIndex(idx)
                         if section.name == key:
-                            matches.append(section)
-                    return matches
+                            return section
                 elif isinstance(key, self.re_compile_type):
                     matches = []
                     for idx in range(count):

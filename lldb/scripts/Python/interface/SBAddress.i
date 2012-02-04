@@ -50,6 +50,9 @@ public:
 
     SBAddress (const lldb::SBAddress &rhs);
 
+    SBAddress (lldb::SBSection section,
+               lldb::addr_t offset);
+    
     %feature("docstring", "
     Create an address by resolving a load address using the supplied target.
     ") SBAddress;
@@ -84,6 +87,11 @@ public:
 
     lldb::addr_t
     SBAddress::GetOffset ();
+
+    void
+    SetAddress (lldb::SBSection section, 
+                lldb::addr_t offset);
+             
 
     %feature("docstring", "
     //------------------------------------------------------------------

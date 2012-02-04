@@ -103,6 +103,12 @@ SBAddress::SBAddress (const SBAddress &rhs) :
         m_opaque_ap.reset (new AddressImpl(*rhs.m_opaque_ap.get()));
 }
 
+
+SBAddress::SBAddress (lldb::SBSection section, lldb::addr_t offset) :
+    m_opaque_ap(new AddressImpl (Address(section.GetSection(), offset)))
+{
+}
+
 // Create an address by resolving a load address using the supplied target
 SBAddress::SBAddress (lldb::addr_t load_addr, lldb::SBTarget &target) :
     m_opaque_ap()
@@ -140,6 +146,15 @@ SBAddress::Clear ()
 {
     m_opaque_ap.reset();
 }
+
+void
+SBAddress::SetAddress (lldb::SBSection section, lldb::addr_t offset)
+{
+    Address &addr = ref();
+    addr.SetSection (section.GetSection());
+    addr.SetOffset (offset);
+}
+
 
 void
 SBAddress::SetAddress (const Address *lldb_object_ptr)

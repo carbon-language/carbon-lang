@@ -23,6 +23,8 @@ public:
 
     SBAddress (const lldb::SBAddress &rhs);
 
+    SBAddress (lldb::SBSection section, lldb::addr_t offset);
+
     // Create an address by resolving a load address using the supplied target
     SBAddress (lldb::addr_t load_addr, lldb::SBTarget &target);
 
@@ -44,6 +46,9 @@ public:
 
     addr_t
     GetLoadAddress (const lldb::SBTarget &target) const;
+
+    void
+    SetAddress (lldb::SBSection section, lldb::addr_t offset);
 
     void
     SetLoadAddress (lldb::addr_t load_addr, 
