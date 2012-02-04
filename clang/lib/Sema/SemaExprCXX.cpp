@@ -4767,7 +4767,7 @@ ExprResult Sema::ActOnFinishFullExpr(Expr *FE) {
     return ExprError();
 
   // Top-level message sends default to 'id' when we're in a debugger.
-  if (getLangOptions().DebuggerSupport &&
+  if (getLangOptions().DebuggerCastResultToId &&
       FullExpr.get()->getType() == Context.UnknownAnyTy &&
       isa<ObjCMessageExpr>(FullExpr.get())) {
     FullExpr = forceUnknownAnyToType(FullExpr.take(), Context.getObjCIdType());

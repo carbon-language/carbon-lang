@@ -826,6 +826,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-funknown-anytype");
   if (Opts.DebuggerSupport)
     Res.push_back("-fdebugger-support");
+  if (Opts.DebuggerCastResultToId)
+    Res.push_back("-fdebugger-cast-result-to-id");
   if (Opts.DelayedTemplateParsing)
     Res.push_back("-fdelayed-template-parsing");
   if (Opts.Deprecated)
@@ -1885,6 +1887,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.FakeAddressSpaceMap = Args.hasArg(OPT_ffake_address_space_map);
   Opts.ParseUnknownAnytype = Args.hasArg(OPT_funknown_anytype);
   Opts.DebuggerSupport = Args.hasArg(OPT_fdebugger_support);
+  Opts.DebuggerCastResultToId = Args.hasArg(OPT_fdebugger_cast_result_to_id);
   Opts.AddressSanitizer = Args.hasArg(OPT_faddress_sanitizer);
   Opts.ApplePragmaPack = Args.hasArg(OPT_fapple_pragma_pack);
   Opts.CurrentModule = Args.getLastArgValue(OPT_fmodule_name);
