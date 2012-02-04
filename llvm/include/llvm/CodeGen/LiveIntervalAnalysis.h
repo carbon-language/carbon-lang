@@ -161,14 +161,6 @@ namespace llvm {
       return indexes_;
     }
 
-    SlotIndex getZeroIndex() const {
-      return indexes_->getZeroIndex();
-    }
-
-    SlotIndex getInvalidIndex() const {
-      return indexes_->getInvalidIndex();
-    }
-
     /// isNotInMIMap - returns true if the specified machine instr has been
     /// removed or was never entered in the map.
     bool isNotInMIMap(const MachineInstr* Instr) const {

@@ -472,11 +472,6 @@ namespace llvm {
       return SlotIndex(back(), 0);
     }
 
-    /// Returns the invalid index marker for this analysis.
-    SlotIndex getInvalidIndex() {
-      return getZeroIndex();
-    }
-
     /// Returns the distance between the highest and lowest indexes allocated
     /// so far.
     unsigned getIndexesLength() const {
