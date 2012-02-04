@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -rewrite-objc -o - %s
+// RUN: %clang_cc1 -rewrite-objc -fobjc-fragile-abi -o - %s
 // rdar://5950938
 @interface NSArray {}
 + (id)arrayWithObjects:(id)firstObj, ...;

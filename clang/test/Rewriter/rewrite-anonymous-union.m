@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -rewrite-objc -o - %s
+// RUN: %clang_cc1 -rewrite-objc -fobjc-fragile-abi  -o - %s
 // rdar://6948022
 
 typedef unsigned int uint32_t;

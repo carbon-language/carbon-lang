@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -rewrite-objc -fms-extensions %s -o -
+// RUN: %clang_cc1 -rewrite-objc -fobjc-fragile-abi  -fms-extensions %s -o -
 // radar 7490331
 
 @interface Foo {

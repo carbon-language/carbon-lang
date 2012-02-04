@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -rewrite-objc %s -o -
+// RUN: %clang_cc1 -rewrite-objc -fobjc-fragile-abi  %s -o -
 
 id SYNCH_EXPR();
 void SYNCH_BODY();

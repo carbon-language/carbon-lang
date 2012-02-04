@@ -1,5 +1,5 @@
-// RUN: %clang_cc1 -rewrite-objc %s -o -
-// RUN: %clang_cc1 -rewrite-objc %s -o - | grep 'newInv->_container'
+// RUN: %clang_cc1 -rewrite-objc -fobjc-fragile-abi  %s -o -
+// RUN: %clang_cc1 -rewrite-objc -fobjc-fragile-abi  %s -o - | grep 'newInv->_container'
 
 @interface NSMutableArray 
 - (void)addObject:(id)addObject;
