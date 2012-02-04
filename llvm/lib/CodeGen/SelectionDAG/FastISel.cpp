@@ -1365,8 +1365,8 @@ bool FastISel::HandlePHINodesInSuccessorBlocks(const BasicBlock *LLVMBB) {
       // exactly one register for each non-void instruction.
       EVT VT = TLI.getValueType(PN->getType(), /*AllowUnknown=*/true);
       if (VT == MVT::Other || !TLI.isTypeLegal(VT)) {
-        // Promote MVT::i1.
-        if (VT == MVT::i1)
+        // Handle integer promotions, though, because they're common and easy.
+        if (VT == MVT::i1 || VT == MVT::i8 || VT == MVT::i16)
           VT = TLI.getTypeToTransformTo(LLVMBB->getContext(), VT);
         else {
           FuncInfo.PHINodesToUpdate.resize(OrigNumPHINodesToUpdate);
