@@ -14,7 +14,7 @@
 #ifndef LLVM_CLANG_PATH_DIAGNOSTIC_H
 #define LLVM_CLANG_PATH_DIAGNOSTIC_H
 
-#include "clang/Basic/Diagnostic.h"
+#include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerUnion.h"
 #include <deque>
@@ -266,7 +266,6 @@ public:
 
 private:
   const std::string str;
-  std::vector<FixItHint> FixItHints;
   const Kind kind;
   const DisplayHint Hint;
   std::vector<SourceRange> ranges;
@@ -307,10 +306,6 @@ public:
     ranges.push_back(SourceRange(B,E));
   }
 
-  void addFixItHint(const FixItHint& Hint) {
-    FixItHints.push_back(Hint);
-  }
-
   typedef const SourceRange* range_iterator;
 
   range_iterator ranges_begin() const {
@@ -319,17 +314,6 @@ public:
 
   range_iterator ranges_end() const {
     return ranges_begin() + ranges.size();
-  }
-
-  typedef const FixItHint *fixit_iterator;
-
-  fixit_iterator fixit_begin() const {
-    return FixItHints.empty()? 0 : &FixItHints[0];
-  }
-
-  fixit_iterator fixit_end() const {
-    return FixItHints.empty()? 0
-                   : &FixItHints[0] + FixItHints.size();
   }
 
   static inline bool classof(const PathDiagnosticPiece *P) {
