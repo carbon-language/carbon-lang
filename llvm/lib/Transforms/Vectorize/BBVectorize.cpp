@@ -104,6 +104,11 @@ AlignedOnly("bb-vectorize-aligned-only", cl::init(false), cl::Hidden,
   cl::desc("Only generate aligned loads and stores"));
 
 static cl::opt<bool>
+NoMemOpBoost("bb-vectorize-no-mem-op-boost",
+  cl::init(false), cl::Hidden,
+  cl::desc("Don't boost the chain-depth contribution of loads and stores"));
+
+static cl::opt<bool>
 FastDep("bb-vectorize-fast-dep", cl::init(false), cl::Hidden,
   cl::desc("Use a fast instruction dependency analysis"));
 
@@ -339,6 +344,11 @@ namespace {
       // instructions.
       if (isa<InsertElementInst>(V) || isa<ExtractElementInst>(V))
         return 0;
+
+      // Give a load or store half of the required depth so that load/store
+      // pairs will vectorize.
+      if (!NoMemOpBoost && (isa<LoadInst>(V) || isa<StoreInst>(V)))
+        return ReqChainDepth/2;
 
       return 1;
     }
