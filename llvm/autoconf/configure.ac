@@ -1570,7 +1570,7 @@ dnl Configure doxygen's configuration file
 AC_CONFIG_FILES([docs/doxygen.cfg])
 
 dnl Configure clang, if present
-if test ${clang_src_root} = ""; then
+if test "${clang_src_root}" = ""; then
   clang_src_root="$srcdir/tools/clang"
 fi
 if test -f ${clang_src_root}/README.txt; then
