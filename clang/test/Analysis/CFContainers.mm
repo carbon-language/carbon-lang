@@ -158,7 +158,7 @@ void OutOfBoundsZiro(const void ** input, CFIndex S) {
   const void *s1 = CFArrayGetValueAtIndex(array, 0); // expected-warning {{Index is out of bounds}}
 }
 
-void TestGetCount(CFArrayRef A, CFIndex sIndex, CFIndex badIndex) {
+void TestGetCount(CFArrayRef A, CFIndex sIndex) {
   CFIndex sCount = CFArrayGetCount(A);
   if (sCount > sIndex)
     const void *s1 = CFArrayGetValueAtIndex(A, sIndex);
@@ -182,4 +182,19 @@ void TestPointerToArray(int *elems, void *p1, void *p2, void *p3, unsigned count
   char cc[] = { 0, 2, 3 };
   CFArrayCreate(0, (const void **) &cc, count, 0); // expected-warning {{The first argument to 'CFArrayCreate' must be a C array of pointer-sized}}
   CFArrayCreate(0, (const void **) cc, count, 0); // expected-warning {{The first argument to 'CFArrayCreate' must be a C array of pointer-sized}}
+}
+
+void TestUndef(CFArrayRef A, CFIndex sIndex, void* x[]) {
+  unsigned undefVal;
+  const void *s1 = CFArrayGetValueAtIndex(A, undefVal);
+
+  unsigned undefVal2;
+  CFArrayRef B = CFArrayCreate(0, (const void **) &x, undefVal2, 0); 
+  const void *s2 = CFArrayGetValueAtIndex(B, 2);
+}
+
+void TestConst(CFArrayRef A, CFIndex sIndex, void* x[]) {
+  CFArrayRef B = CFArrayCreate(0, (const void **) &x, 4, 0); 
+  const void *s1 = CFArrayGetValueAtIndex(B, 2);
+
 }

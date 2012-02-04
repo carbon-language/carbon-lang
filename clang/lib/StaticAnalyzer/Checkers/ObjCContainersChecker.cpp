@@ -56,18 +56,8 @@ public:
 };
 } // end anonymous namespace
 
-// Array state stores the array size on creation (allocation).
-// Size might be an unsigned or a symbol.
-struct ArraySize {
-  SVal NLSize;
-  ArraySize(SVal s) : NLSize(s) {}
-  void Profile(llvm::FoldingSetNodeID &ID) const {
-    NLSize.Profile(ID);
-  }
-};
-
 // ProgramState trait - a map from array symbol to it's state.
-typedef llvm::ImmutableMap<SymbolRef, SVal> ArraySizeM;
+typedef llvm::ImmutableMap<SymbolRef, DefinedSVal> ArraySizeM;
 
 namespace { struct ArraySizeMap {}; }
 namespace clang { namespace ento {
@@ -91,18 +81,20 @@ void ObjCContainersChecker::addSizeInfo(const Expr *Array, const Expr *Size,
   if (!ArraySym)
     return;
 
-  C.addTransition(State->set<ArraySizeMap>(ArraySym, SizeV));
+  C.addTransition(State->set<ArraySizeMap>(ArraySym, cast<DefinedSVal>(SizeV)));
   return;
 }
 
 void ObjCContainersChecker::checkPostStmt(const CallExpr *CE,
                                           CheckerContext &C) const {
   StringRef Name = C.getCalleeName(CE);
-  if (Name.empty())
+  if (Name.empty() || CE->getNumArgs() < 1)
     return;
 
   // Add array size information to the state.
   if (Name.equals("CFArrayCreate")) {
+    if (CE->getNumArgs() < 3)
+      return;
     // Note, we can visit the Create method in the post-visit because
     // the CFIndex parameter is passed in by value and will not be invalidated
     // by the call.
@@ -119,7 +111,7 @@ void ObjCContainersChecker::checkPostStmt(const CallExpr *CE,
 void ObjCContainersChecker::checkPreStmt(const CallExpr *CE,
                                          CheckerContext &C) const {
   StringRef Name = C.getCalleeName(CE);
-  if (Name.empty())
+  if (Name.empty() || CE->getNumArgs() < 2)
     return;
 
   // Check the array access.
@@ -128,20 +120,22 @@ void ObjCContainersChecker::checkPreStmt(const CallExpr *CE,
     // Retrieve the size.
     // Find out if we saw this array symbol before and have information about it.
     const Expr *ArrayExpr = CE->getArg(0);
-    const SVal *SizeVal = State->get<ArraySizeMap>(getArraySym(ArrayExpr, C));
-    if (!SizeVal)
+    const DefinedSVal *Size =
+                            State->get<ArraySizeMap>(getArraySym(ArrayExpr, C));
+    if (!Size)
       return;
-    DefinedOrUnknownSVal Size = cast<DefinedOrUnknownSVal>(*SizeVal);
 
     // Get the index.
     const Expr *IdxExpr = CE->getArg(1);
     SVal IdxVal = State->getSVal(IdxExpr, C.getLocationContext());
-    DefinedOrUnknownSVal Idx = cast<DefinedOrUnknownSVal>(IdxVal);
+    if (IdxVal.isUnknownOrUndef())
+      return;
+    DefinedSVal Idx = cast<DefinedSVal>(IdxVal);
     
     // Now, check if 'Idx in [0, Size-1]'.
     const QualType T = IdxExpr->getType();
-    ProgramStateRef StInBound = State->assumeInBound(Idx, Size, true, T);
-    ProgramStateRef StOutBound = State->assumeInBound(Idx, Size, false, T);
+    ProgramStateRef StInBound = State->assumeInBound(Idx, *Size, true, T);
+    ProgramStateRef StOutBound = State->assumeInBound(Idx, *Size, false, T);
     if (StOutBound && !StInBound) {
       ExplodedNode *N = C.generateSink(StOutBound);
       if (!N)
