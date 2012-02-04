@@ -49,10 +49,9 @@ public:
 /// \brief Emits changes to temporary files and uses them for the original
 /// frontend action.
 class FixItRecompile : public WrapperFrontendAction {
-  FrontendAction *WrappedAction;
 public:
   FixItRecompile(FrontendAction *WrappedAction)
-    : WrapperFrontendAction(WrappedAction), WrappedAction(WrappedAction) {}
+    : WrapperFrontendAction(WrappedAction) {}
 
 protected:
   virtual bool BeginInvocation(CompilerInstance &CI);
