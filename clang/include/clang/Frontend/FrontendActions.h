@@ -153,8 +153,7 @@ protected:
   virtual void EndSourceFileAction();
 
 public:
-  ASTMergeAction(FrontendAction *AdaptedAction,
-                 std::string *ASTFiles, unsigned NumASTFiles);
+  ASTMergeAction(FrontendAction *AdaptedAction, ArrayRef<std::string> ASTFiles);
   virtual ~ASTMergeAction();
 
   virtual bool usesPreprocessorOnly() const;

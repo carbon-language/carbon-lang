@@ -87,12 +87,14 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   if (!Act)
     return 0;
 
-  if (CI.getFrontendOpts().FixAndRecompile) {
+  const FrontendOptions &FEOpts = CI.getFrontendOpts();
+
+  if (FEOpts.FixAndRecompile) {
     Act = new FixItRecompile(Act);
   }
   
   // Potentially wrap the base FE action in an ARC Migrate Tool action.
-  switch (CI.getFrontendOpts().ARCMTAction) {
+  switch (FEOpts.ARCMTAction) {
   case FrontendOptions::ARCMT_None:
     break;
   case FrontendOptions::ARCMT_Check:
@@ -103,17 +105,16 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
     break;
   case FrontendOptions::ARCMT_Migrate:
     Act = new arcmt::MigrateAction(Act,
-                                   CI.getFrontendOpts().ARCMTMigrateDir,
-                                   CI.getFrontendOpts().ARCMTMigrateReportOut,
-                                CI.getFrontendOpts().ARCMTMigrateEmitARCErrors);
+                                   FEOpts.ARCMTMigrateDir,
+                                   FEOpts.ARCMTMigrateReportOut,
+                                   FEOpts.ARCMTMigrateEmitARCErrors);
     break;
   }
 
   // If there are any AST files to merge, create a frontend action
   // adaptor to perform the merge.
-  if (!CI.getFrontendOpts().ASTMergeFiles.empty())
-    Act = new ASTMergeAction(Act, &CI.getFrontendOpts().ASTMergeFiles[0],
-                             CI.getFrontendOpts().ASTMergeFiles.size());
+  if (!FEOpts.ASTMergeFiles.empty())
+    Act = new ASTMergeAction(Act, FEOpts.ASTMergeFiles[0]);
 
   return Act;
 }

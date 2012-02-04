@@ -79,8 +79,8 @@ void ASTMergeAction::EndSourceFileAction() {
 }
 
 ASTMergeAction::ASTMergeAction(FrontendAction *AdaptedAction,
-                               std::string *ASTFiles, unsigned NumASTFiles)
-  : AdaptedAction(AdaptedAction), ASTFiles(ASTFiles, ASTFiles + NumASTFiles) {
+                               ArrayRef<std::string> ASTFiles)
+  : AdaptedAction(AdaptedAction), ASTFiles(ASTFiles.begin(), ASTFiles.end()) {
   assert(AdaptedAction && "ASTMergeAction needs an action to adapt");
 }
 
