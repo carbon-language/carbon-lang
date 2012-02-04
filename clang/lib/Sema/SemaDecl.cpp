@@ -5778,8 +5778,8 @@ bool Sema::CheckFunctionDeclaration(Scope *S, FunctionDecl *NewFD,
 }
 
 void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
-  // C++ [basic.start.main]p3:  A program that declares main to be inline
-  //   or static is ill-formed.
+  // C++11 [basic.start.main]p3:  A program that declares main to be inline,
+  //   static or constexpr is ill-formed.
   // C99 6.7.4p4:  In a hosted environment, the inline function specifier
   //   shall not appear in a declaration of main.
   // static main is not an error under C99, but we should warn about it.
@@ -5790,6 +5790,11 @@ void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
   if (FD->isInlineSpecified())
     Diag(DS.getInlineSpecLoc(), diag::err_inline_main) 
       << FixItHint::CreateRemoval(DS.getInlineSpecLoc());
+  if (FD->isConstexpr()) {
+    Diag(DS.getConstexprSpecLoc(), diag::err_constexpr_main)
+      << FixItHint::CreateRemoval(DS.getConstexprSpecLoc());
+    FD->setConstexpr(false);
+  }
 
   QualType T = FD->getType();
   assert(T->isFunctionType() && "function decl is not of function type");
