@@ -838,11 +838,15 @@ public:
   void AddListInitializationStep(QualType T);
 
   /// \brief Add a constructor-initialization step.
+  ///
+  /// \arg FromInitList The constructor call is syntactically an initializer
+  /// list.
+  /// \arg AsInitList The constructor is called as an init list constructor.
   void AddConstructorInitializationStep(CXXConstructorDecl *Constructor,
                                         AccessSpecifier Access,
                                         QualType T,
                                         bool HadMultipleCandidates,
-                                        bool FromInitList);
+                                        bool FromInitList, bool AsInitList);
 
   /// \brief Add a zero-initialization step.
   void AddZeroInitializationStep(QualType T);

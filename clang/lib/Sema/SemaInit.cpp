@@ -2566,9 +2566,10 @@ InitializationSequence
                                    AccessSpecifier Access,
                                    QualType T,
                                    bool HadMultipleCandidates,
-                                   bool FromInitList) {
+                                   bool FromInitList, bool AsInitList) {
   Step S;
-  S.Kind = FromInitList ? SK_ListConstructorCall : SK_ConstructorInitialization;
+  S.Kind = FromInitList && !AsInitList ? SK_ListConstructorCall
+                                       : SK_ConstructorInitialization;
   S.Type = T;
   S.Function.HadMultipleCandidates = HadMultipleCandidates;
   S.Function.Function = Constructor;
@@ -2727,7 +2728,8 @@ static bool TryListConstructionSpecialCases(Sema &S,
                                                 DefaultConstructor->getAccess(),
                                                   DestType,
                                                   /*MultipleCandidates=*/false,
-                                                  /*FromInitList=*/true);
+                                                  /*FromInitList=*/true,
+                                                  /*AsInitList=*/false);
       return true;
     }
   }
@@ -2795,7 +2797,7 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
 
     if (!Constructor->isInvalidDecl() &&
         (AllowExplicit || !Constructor->isExplicit()) &&
-        (!OnlyListConstructors || !S.isInitListConstructor(Constructor))) {
+        (!OnlyListConstructors || S.isInitListConstructor(Constructor))) {
       if (ConstructorTmpl)
         S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                        /*ExplicitArgs*/ 0,
@@ -2860,13 +2862,7 @@ static void TryConstructorInitialization(Sema &S,
   bool AllowExplicit = (Kind.getKind() == InitializationKind::IK_Direct ||
                         Kind.getKind() == InitializationKind::IK_Value ||
                         Kind.getKind() == InitializationKind::IK_Default);
-
-  if (InitListSyntax) {
-    // Time to unwrap the init list.
-    InitListExpr *ILE = cast<InitListExpr>(Args[0]);
-    Args = ILE->getInits();
-    NumArgs = ILE->getNumInits();
-  }
+  bool CopyInitialization = Kind.getKind() == InitializationKind::IK_Copy;
 
   //   - Otherwise, if T is a class type, constructors are considered. The
   //     applicable constructors are enumerated, and the best one is chosen
@@ -2874,13 +2870,42 @@ static void TryConstructorInitialization(Sema &S,
   DeclContext::lookup_iterator ConStart, ConEnd;
   llvm::tie(ConStart, ConEnd) = S.LookupConstructors(DestRecordDecl);
 
+  OverloadingResult Result = OR_No_Viable_Function;
   OverloadCandidateSet::iterator Best;
-  if (OverloadingResult Result =
-      ResolveConstructorOverload(S, Kind.getLocation(), Args, NumArgs,
-                                 CandidateSet, ConStart, ConEnd, Best,
-                                 Kind.getKind() == InitializationKind::IK_Copy,
-                                 AllowExplicit,
-                                 /*OnlyListConstructors=*/false)) {
+  bool AsInitializerList = false;
+
+  // C++11 [over.match.list]p1:
+  //   When objects of non-aggregate type T are list-initialized, overload
+  //   resolution selects the constructor in two phases:
+  //   - Initially, the candidate functions are the initializer-list
+  //     constructors of the class T and the argument list consists of the
+  //     initializer list as a single argument.
+  if (InitListSyntax) {
+    AsInitializerList = true;
+    Result = ResolveConstructorOverload(S, Kind.getLocation(), Args, NumArgs,
+                                        CandidateSet, ConStart, ConEnd, Best,
+                                        CopyInitialization, AllowExplicit,
+                                        /*OnlyListConstructor=*/true);
+
+    // Time to unwrap the init list.
+    InitListExpr *ILE = cast<InitListExpr>(Args[0]);
+    Args = ILE->getInits();
+    NumArgs = ILE->getNumInits();
+  }
+
+  // C++11 [over.match.list]p1:
+  //   - If no viable initializer-list constructor is found, overload resolution
+  //     is performed again, where the candidate functions are all the
+  //     constructors of the class T nad the argument list consists of the
+  //     elements of the initializer list.
+  if (Result == OR_No_Viable_Function) {
+    AsInitializerList = false;
+    Result = ResolveConstructorOverload(S, Kind.getLocation(), Args, NumArgs,
+                                        CandidateSet, ConStart, ConEnd, Best,
+                                        CopyInitialization, AllowExplicit,
+                                        /*OnlyListConstructors=*/false);
+  }
+  if (Result) {
     Sequence.SetOverloadFailure(InitListSyntax ?
                       InitializationSequence::FK_ListConstructorOverloadFailed :
                       InitializationSequence::FK_ConstructorOverloadFailed,
@@ -2906,7 +2931,7 @@ static void TryConstructorInitialization(Sema &S,
   Sequence.AddConstructorInitializationStep(CtorDecl,
                                             Best->FoundDecl.getAccess(),
                                             DestType, HadMultipleCandidates,
-                                            InitListSyntax);
+                                            InitListSyntax, AsInitializerList);
 }
 
 static bool

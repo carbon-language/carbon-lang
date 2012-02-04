@@ -5824,9 +5824,6 @@ bool Sema::isStdInitializerList(QualType Ty, QualType *Element) {
     if (!Specialization)
       return false;
 
-    if (Specialization->getSpecializationKind() != TSK_ImplicitInstantiation)
-      return false;
-
     Template = Specialization->getSpecializedTemplate();
     Arguments = Specialization->getTemplateArgs().data();
   } else if (const TemplateSpecializationType *TST =
