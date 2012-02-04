@@ -122,7 +122,14 @@ public:
     
     virtual void
     CompleteType (clang::ObjCInterfaceDecl *objc_decl);
-
+    
+    bool 
+    layoutRecordType(const clang::RecordDecl *Record,
+                     uint64_t &Size, 
+                     uint64_t &Alignment,
+                     llvm::DenseMap <const clang::FieldDecl *, uint64_t> &FieldOffsets,
+                     llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
+                     llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets);
     void
     SetExternalSourceCallbacks (CompleteTagDeclCallback tag_decl_callback,
                                 CompleteObjCInterfaceDeclCallback objc_decl_callback,

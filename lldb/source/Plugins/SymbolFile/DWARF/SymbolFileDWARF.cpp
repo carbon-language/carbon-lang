@@ -79,9 +79,20 @@ using namespace lldb;
 using namespace lldb_private;
 
 static inline bool
-DW_TAG_is_function_tag (dw_tag_t tag)
+child_requires_parent_class_union_or_struct_to_be_completed (dw_tag_t tag)
 {
-    return tag == DW_TAG_subprogram || tag == DW_TAG_inlined_subroutine;
+    switch (tag)
+    {
+    default:
+        break;
+    case DW_TAG_subprogram:
+    case DW_TAG_inlined_subroutine:
+    case DW_TAG_class_type:
+    case DW_TAG_structure_type:
+    case DW_TAG_union_type:
+        return true;
+    }
+    return false;
 }
 
 static AccessType
@@ -1475,10 +1486,41 @@ SymbolFileDWARF::ParseChildMembers
                                                                            encoding_uid);
                         }
 
-                        if (member_byte_offset != UINT32_MAX)
+                        if (member_byte_offset != UINT32_MAX || bit_size != 0)
                         {
-                            // Set the field offset in bits
-                            layout_info.field_offsets.insert(std::make_pair(field_decl, member_byte_offset * 8));
+                            /////////////////////////////////////////////////////////////
+                            // How to locate a field given the DWARF debug information
+                            //
+                            // AT_byte_size indicates the size of the word in which the
+                            // bit offset must be interpreted.
+                            //
+                            // AT_data_member_location indicates the byte offset of the
+                            // word from the base address of the structure.
+                            //
+                            // AT_bit_offset indicates how many bits into the word
+                            // (according to the host endianness) the low-order bit of
+                            // the field starts.  AT_bit_offset can be negative.
+                            //
+                            // AT_bit_size indicates the size of the field in bits.
+                            /////////////////////////////////////////////////////////////
+                                                    
+                            ByteOrder object_endian = GetObjectFile()->GetModule()->GetArchitecture().GetDefaultEndian();
+
+                            uint64_t total_bit_offset = 0;
+                            
+                            total_bit_offset += (member_byte_offset == UINT32_MAX ? 0 : (member_byte_offset * 8));
+                            
+                            if (object_endian == eByteOrderLittle)
+                            {  
+                                total_bit_offset += byte_size * 8;
+                                total_bit_offset -= (bit_offset + bit_size);
+                            }
+                            else
+                            {
+                                total_bit_offset += bit_offset;
+                            }
+                                                        
+                            layout_info.field_offsets.insert(std::make_pair(field_decl, total_bit_offset));
                         }
                         if (prop_name != NULL)
                         {
@@ -1646,7 +1688,7 @@ SymbolFileDWARF::ResolveTypeUID (lldb::user_id_t type_uid)
 
 Type*
 SymbolFileDWARF::ResolveTypeUID (DWARFCompileUnit* cu, const DWARFDebugInfoEntry* die, bool assert_not_being_parsed)
-{
+{    
     if (die != NULL)
     {
         LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
@@ -1677,7 +1719,7 @@ SymbolFileDWARF::ResolveTypeUID (DWARFCompileUnit* cu, const DWARFDebugInfoEntry
                                                               decl_ctx_die->GetOffset());
 
                 Type *parent_type = ResolveTypeUID (cu, decl_ctx_die, assert_not_being_parsed);
-                if (DW_TAG_is_function_tag(die->Tag()))
+                if (child_requires_parent_class_union_or_struct_to_be_completed(die->Tag()))
                 {
                     if (log)
                         GetObjectFile()->GetModule()->LogMessage (log.get(), 
@@ -1907,8 +1949,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                 }
                 
             }
-#if 0
-            // Disable assisted layout until we get the clang side hooked up
+            
             if (!layout_info.field_offsets.empty())
             {
                 if (type)
@@ -1944,7 +1985,6 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                     m_record_decl_to_layout_map.insert(std::make_pair(record_decl, layout_info));
                 }
             }
-#endif
         }
         ast.CompleteTagDeclarationDefinition (clang_type);
         return clang_type;
@@ -4053,7 +4093,7 @@ SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugIn
     DWARFDIECollection decl_ctx_1;
     DWARFDIECollection decl_ctx_2;
     die1->GetDeclContextDIEs (this, cu1, decl_ctx_1);
-    die1->GetDeclContextDIEs (this, cu2, decl_ctx_2);
+    die2->GetDeclContextDIEs (this, cu2, decl_ctx_2);
     const size_t count1 = decl_ctx_1.Size();
     const size_t count2 = decl_ctx_2.Size();
     if (count1 != count2)
@@ -4079,7 +4119,7 @@ SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugIn
         decl_ctx_die1 = decl_ctx_1.GetDIEPtrAtIndex (i);
         decl_ctx_die2 = decl_ctx_2.GetDIEPtrAtIndex (i);
         const char *name1 = decl_ctx_die1->GetName(this, cu1);
-        const char *name2 = decl_ctx_die1->GetName(this, cu2);
+        const char *name2 = decl_ctx_die2->GetName(this, cu2);
         // If the string was from a DW_FORM_strp, then the pointer will often
         // be the same!
         if (name1 != name2)
@@ -4231,16 +4271,40 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
     if (type_is_new_ptr)
         *type_is_new_ptr = false;
+   
+    static int depth = -1;
+    
+    class DepthTaker {
+    public:
+        DepthTaker (int &depth) : m_depth(depth) { ++m_depth; }
+        ~DepthTaker () { --m_depth; }
+        int &m_depth;
+    } depth_taker(depth);
 
     AccessType accessibility = eAccessNone;
     if (die != NULL)
     {
         LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
         if (log)
-            GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x) %s '%s'", 
-                        die->GetOffset(), 
+        {
+            const DWARFDebugInfoEntry *context_die;
+            clang::DeclContext *context = GetClangDeclContextContainingDIE (dwarf_cu, die, &context_die);
+            
+            std::string name_storage;
+            
+            const char* qual_name = die->GetQualifiedName(this, 
+                                                          dwarf_cu,
+                                                          name_storage);
+            
+            GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (depth = %d, die = 0x%8.8x, decl_ctx = %p (die 0x%8.8x)) %s '%s'='%s')", 
+                        depth,
+                        die->GetOffset(),
+                        context,
+                        context_die->GetOffset(),
                         DW_TAG_value_to_name(die->Tag()), 
-                        die->GetName(this, dwarf_cu));
+                        die->GetName(this, dwarf_cu),
+                        qual_name);
+        }
 //
 //        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
 //        if (log && dwarf_cu)
@@ -5010,6 +5074,9 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     
                     if (type_name_cstr)
                     {
+                        if (die->GetOffset() == 0xaeaba)
+                            fprintf(stderr, "This is the one!");
+                        
                         bool type_handled = false;
                         if (tag == DW_TAG_subprogram)
                         {

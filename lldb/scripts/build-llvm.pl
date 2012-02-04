@@ -21,8 +21,8 @@ our ($llvm_clang_basename, $llvm_clang_dirname) = fileparse ($llvm_clang_outfile
 
 our $llvm_configuration = $ENV{LLVM_CONFIGURATION};
 
-our $llvm_revision = "146622";
-our $clang_revision = "146622";
+our $llvm_revision = "149773";
+our $clang_revision = "149773";
 
 our $SRCROOT = "$ENV{SRCROOT}";
 our $llvm_dstroot_zip = "$SRCROOT/llvm.zip";

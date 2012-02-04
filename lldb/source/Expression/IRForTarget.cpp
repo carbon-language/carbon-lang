@@ -2669,6 +2669,11 @@ IRForTarget::runOnModule (Module &llvm_module)
             return true;
     }
     
+    if (m_execution_policy == lldb_private::eExecutionPolicyNever) {
+        m_decl_map->RemoveResultVariable(m_result_name);
+        return false;
+    }
+    
     if (log && log->GetVerbose())
     {
         std::string s;

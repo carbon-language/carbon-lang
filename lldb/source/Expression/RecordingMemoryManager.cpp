@@ -43,8 +43,7 @@ uint8_t *
 RecordingMemoryManager::startFunctionBody(const llvm::Function *F,
                      uintptr_t &ActualSize)
 {
-    uint8_t *return_value = m_default_mm_ap->startFunctionBody(F, ActualSize);
-    return return_value;
+    return m_default_mm_ap->startFunctionBody(F, ActualSize);
 }
 
 uint8_t *
@@ -52,7 +51,21 @@ RecordingMemoryManager::allocateStub(const llvm::GlobalValue* F, unsigned StubSi
                 unsigned Alignment)
 {
     uint8_t *return_value = m_default_mm_ap->allocateStub(F, StubSize, Alignment);
-    m_stubs.insert (std::pair<uint8_t *,unsigned>(return_value, StubSize));
+    
+    Allocation allocation;
+    allocation.m_size = StubSize;
+    allocation.m_alignment = Alignment;
+    allocation.m_local_start = (uintptr_t)return_value;
+
+    if (m_log)
+    {
+        m_log->Printf("RecordingMemoryManager::allocateStub (F=%p, StubSize=%u, Alignment=%u) = %p",
+                      F, StubSize, Alignment, return_value);
+        allocation.dump(m_log);
+    }
+    
+    m_allocations.push_back(allocation);
+    
     return return_value;
 }
 
@@ -61,31 +74,96 @@ RecordingMemoryManager::endFunctionBody(const llvm::Function *F, uint8_t *Functi
                uint8_t *FunctionEnd)
 {
     m_default_mm_ap->endFunctionBody(F, FunctionStart, FunctionEnd);
-    if (m_log)
-        m_log->Printf("Adding [%p-%p] to m_functions",
-                      FunctionStart, FunctionEnd);
-    m_functions.insert(std::pair<uint8_t *, uint8_t *>(FunctionStart, FunctionEnd));
 }
 
 uint8_t *
 RecordingMemoryManager::allocateSpace(intptr_t Size, unsigned Alignment)
 {
     uint8_t *return_value = m_default_mm_ap->allocateSpace(Size, Alignment);
+    
+    Allocation allocation;
+    allocation.m_size = Size;
+    allocation.m_alignment = Alignment;
+    allocation.m_local_start = (uintptr_t)return_value;
+    
     if (m_log)
-        m_log->Printf("RecordingMemoryManager::allocateSpace(Size=0x%llx, Alignment=%u) = %p",
+    {
+        m_log->Printf("RecordingMemoryManager::allocateSpace(Size=%llu, Alignment=%u) = %p",
                       (uint64_t)Size, Alignment, return_value);
-    m_spaceBlocks.insert (std::pair<uint8_t *, intptr_t>(return_value, Size));
+        allocation.dump(m_log);
+    }
+    
+    m_allocations.push_back(allocation);
+    
     return return_value;
+}
+
+uint8_t *
+RecordingMemoryManager::allocateCodeSection(uintptr_t Size, unsigned Alignment, unsigned SectionID)
+{
+    uint8_t *return_value = m_default_mm_ap->allocateCodeSection(Size, Alignment, SectionID);
+    
+    Allocation allocation;
+    allocation.m_size = Size;
+    allocation.m_alignment = Alignment;
+    allocation.m_local_start = (uintptr_t)return_value;
+    allocation.m_section_id = SectionID;
+    allocation.m_executable = true;
+    
+    if (m_log)
+    {
+        m_log->Printf("RecordingMemoryManager::allocateCodeSection(Size=0x%llx, Alignment=%u, SectionID=%u) = %p",
+                      (uint64_t)Size, Alignment, SectionID, return_value);
+        allocation.dump(m_log);
+    }
+    
+    m_allocations.push_back(allocation);
+    
+    return return_value;
+}
+
+uint8_t *
+RecordingMemoryManager::allocateDataSection(uintptr_t Size, unsigned Alignment, unsigned SectionID)
+{
+    uint8_t *return_value = m_default_mm_ap->allocateDataSection(Size, Alignment, SectionID);
+    
+    Allocation allocation;
+    allocation.m_size = Size;
+    allocation.m_alignment = Alignment;
+    allocation.m_local_start = (uintptr_t)return_value;
+    allocation.m_section_id = SectionID;
+    
+    if (m_log)
+    {
+        m_log->Printf("RecordingMemoryManager::allocateDataSection(Size=0x%llx, Alignment=%u, SectionID=%u) = %p",
+                      (uint64_t)Size, Alignment, SectionID, return_value);
+        allocation.dump(m_log);
+    }
+    
+    m_allocations.push_back(allocation);
+    
+    return return_value; 
 }
 
 uint8_t *
 RecordingMemoryManager::allocateGlobal(uintptr_t Size, unsigned Alignment)
 {
     uint8_t *return_value = m_default_mm_ap->allocateGlobal(Size, Alignment);
+    
+    Allocation allocation;
+    allocation.m_size = Size;
+    allocation.m_alignment = Alignment;
+    allocation.m_local_start = (uintptr_t)return_value;
+    
     if (m_log)
+    {
         m_log->Printf("RecordingMemoryManager::allocateGlobal(Size=0x%llx, Alignment=%u) = %p",
                       (uint64_t)Size, Alignment, return_value);
-    m_globals.insert (std::pair<uint8_t *, uintptr_t>(return_value, Size));
+        allocation.dump(m_log);
+    }
+    
+    m_allocations.push_back(allocation);
+
     return return_value;
 }
 
@@ -99,8 +177,7 @@ uint8_t*
 RecordingMemoryManager::startExceptionTable(const llvm::Function* F,
                        uintptr_t &ActualSize)
 {
-    uint8_t *return_value = m_default_mm_ap->startExceptionTable(F, ActualSize);
-    return return_value;
+    return m_default_mm_ap->startExceptionTable(F, ActualSize);
 }
 
 void
@@ -108,7 +185,6 @@ RecordingMemoryManager::endExceptionTable(const llvm::Function *F, uint8_t *Tabl
                  uint8_t *TableEnd, uint8_t* FrameRegister)
 {
     m_default_mm_ap->endExceptionTable(F, TableStart, TableEnd, FrameRegister);
-    m_exception_tables.insert (std::pair<uint8_t *, uint8_t *>(TableStart, TableEnd));
 }
 
 void
@@ -120,43 +196,125 @@ RecordingMemoryManager::deallocateExceptionTable(void *ET)
 lldb::addr_t
 RecordingMemoryManager::GetRemoteAddressForLocal (lldb::addr_t local_address)
 {
-    std::vector<LocalToRemoteAddressRange>::iterator pos, end = m_address_map.end();
-    for (pos = m_address_map.begin(); pos < end; pos++)
+    for (AllocationList::iterator ai = m_allocations.begin(), ae = m_allocations.end();
+         ai != ae;
+         ++ai)
     {
-        lldb::addr_t lstart = (*pos).m_local_start;
-        if (local_address >= lstart && local_address < lstart + (*pos).m_size)
-        {
-            return (*pos).m_remote_start + (local_address - lstart);
-        }
+        if (local_address >= ai->m_local_start &&
+            local_address < ai->m_local_start + ai->m_size)
+            return ai->m_remote_start + (local_address - ai->m_local_start);
     }
+
     return LLDB_INVALID_ADDRESS;
 }
 
-std::pair <lldb::addr_t, lldb::addr_t>
+RecordingMemoryManager::AddrRange
 RecordingMemoryManager::GetRemoteRangeForLocal (lldb::addr_t local_address)
 {
-    std::vector<LocalToRemoteAddressRange>::iterator pos, end = m_address_map.end();
-    
-    for (pos = m_address_map.begin(); pos < end; ++pos)
+    for (AllocationList::iterator ai = m_allocations.begin(), ae = m_allocations.end();
+         ai != ae;
+         ++ai)
     {
-        lldb::addr_t lstart = pos->m_local_start;
-        lldb::addr_t lend = lstart + pos->m_size;
+        if (local_address >= ai->m_local_start &&
+            local_address < ai->m_local_start + ai->m_size)
+            return AddrRange(ai->m_remote_start, ai->m_size);
+    }
+    
+    return AddrRange (0, 0);
+}
+
+bool
+RecordingMemoryManager::CommitAllocations (Process &process)
+{
+    bool ret = true;
+    
+    for (AllocationList::iterator ai = m_allocations.begin(), ae = m_allocations.end();
+         ai != ae;
+         ++ai)
+    {
+        if (ai->m_allocated)
+            continue;
         
-        if (local_address >= lstart && local_address < lend)
+        lldb_private::Error err;
+        
+        ai->m_remote_allocation = process.AllocateMemory(
+            ai->m_size + ai->m_alignment - 1, 
+            ai->m_executable ? (lldb::ePermissionsReadable | lldb::ePermissionsExecutable) 
+                             : (lldb::ePermissionsReadable | lldb::ePermissionsWritable), 
+            err);
+        
+        uint64_t mask = ai->m_alignment - 1;
+        
+        ai->m_remote_start = (ai->m_remote_allocation + mask) & (~mask);
+        
+        if (!err.Success())
         {
-            return std::pair <lldb::addr_t, lldb::addr_t> (pos->m_remote_start, pos->m_remote_start + pos->m_size);
+            ret = false;
+            break;
+        }
+        
+        ai->m_allocated = true;
+        
+        if (m_log)
+        {
+            m_log->Printf("RecordingMemoryManager::CommitAllocations() committed an allocation");
+            ai->dump(m_log);
         }
     }
     
-    return std::pair <lldb::addr_t, lldb::addr_t> (0, 0);
-}
-
-void
-RecordingMemoryManager::AddToLocalToRemoteMap (lldb::addr_t lstart, size_t size, lldb::addr_t rstart)
-{
-    if (m_log)
-        m_log->Printf("Adding local [0x%llx-0x%llx], remote [0x%llx-0x%llx] to local->remote map", lstart, lstart + size, rstart, rstart + size);
+    if (!ret)
+    {
+        for (AllocationList::iterator ai = m_allocations.end(), ae = m_allocations.end();
+             ai != ae;
+             ++ai)
+        {
+            if (ai->m_allocated)
+                process.DeallocateMemory(ai->m_remote_start);
+        }
+    }
     
-    m_address_map.push_back (LocalToRemoteAddressRange(lstart, size, rstart));
+    return ret;
 }
 
+bool
+RecordingMemoryManager::WriteData (Process &process)
+{    
+    for (AllocationList::iterator ai = m_allocations.begin(), ae = m_allocations.end();
+         ai != ae;
+         ++ai)
+    {
+        if (!ai->m_allocated)
+            return false;
+        
+        lldb_private::Error err;
+        
+        if (process.WriteMemory(ai->m_remote_start, 
+                                (void*)ai->m_local_start, 
+                                ai->m_size, 
+                                err) != ai->m_size ||
+            !err.Success())
+            return false;
+        
+        if (m_log)
+        {
+            m_log->Printf("RecordingMemoryManager::CommitAllocations() wrote an allocation");
+            ai->dump(m_log);
+        }
+    }
+    
+    return true;
+}
+
+void 
+RecordingMemoryManager::Allocation::dump (lldb::LogSP log)
+{
+    if (!log)
+        return;
+    
+    log->Printf("[0x%llx+0x%llx]->0x%llx (alignment %d, section ID %d)",
+                (unsigned long long)m_local_start,
+                (unsigned long long)m_size,
+                (unsigned long long)m_remote_start,
+                (unsigned)m_alignment,
+                (unsigned)m_section_id);
+}

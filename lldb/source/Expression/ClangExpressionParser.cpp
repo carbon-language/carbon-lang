@@ -172,8 +172,7 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
     // If there are any AST files to merge, create a frontend action
     // adaptor to perform the merge.
     if (!CI.getFrontendOpts().ASTMergeFiles.empty())
-        Act = new ASTMergeAction(Act, &CI.getFrontendOpts().ASTMergeFiles[0],
-                                 CI.getFrontendOpts().ASTMergeFiles.size());
+        Act = new ASTMergeAction(Act, CI.getFrontendOpts().ASTMergeFiles);
     
     return Act;
 }
@@ -492,12 +491,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
                                   error_stream,
                                   function_name.c_str());
         
-        if (!ir_for_target.runOnModule(*module))
-        {
-            err.SetErrorToGenericError();
-            err.SetErrorString("Couldn't prepare the expression for execution in the target");
-            return err;
-        }
+        ir_for_target.runOnModule(*module);
         
         Error &interpreter_error(ir_for_target.getInterpreterError());
         
@@ -519,6 +513,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
                 err.SetErrorString("Execution needed to run in the target, but the target can't be run");
             else
                 err.SetErrorStringWithFormat("Interpreting the expression locally failed: %s", interpreter_error.AsCString());
+
             return err;
         }
         
@@ -629,58 +624,9 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
         err.SetErrorString("Couldn't write the JIT compiled code into the target because there is no target");
         return err;
     }
-    
-    // Look over the regions allocated for the function compiled.  The JIT
-    // tries to allocate the functions & stubs close together, so we should try to
-    // write them that way too...
-    // For now I only write functions with no stubs, globals, exception tables,
-    // etc.  So I only need to write the functions.
-    
-    size_t alloc_size = 0;
-    
-    std::map<uint8_t *, uint8_t *>::iterator fun_pos = jit_memory_manager->m_functions.begin();
-    std::map<uint8_t *, uint8_t *>::iterator fun_end = jit_memory_manager->m_functions.end();
-
-    for (; fun_pos != fun_end; ++fun_pos)
-    {
-        size_t mem_size = fun_pos->second - fun_pos->first;
-        if (log)
-            log->Printf ("JIT memory: [%p - %p) size = %zu", fun_pos->first, fun_pos->second, mem_size);
-        alloc_size += mem_size;
-    }
-    
-    Error alloc_error;
-    func_allocation_addr = process->AllocateMemory (alloc_size, 
-                                                                lldb::ePermissionsReadable|lldb::ePermissionsExecutable, 
-                                                                alloc_error);
-    
-    if (func_allocation_addr == LLDB_INVALID_ADDRESS)
-    {
-        err.SetErrorToGenericError();
-        err.SetErrorStringWithFormat("Couldn't allocate memory for the JITted function: %s", alloc_error.AsCString("unknown error"));
-        return err;
-    }
-    
-    lldb::addr_t cursor = func_allocation_addr;
         
-    for (fun_pos = jit_memory_manager->m_functions.begin(); fun_pos != fun_end; fun_pos++)
-    {
-        lldb::addr_t lstart = (lldb::addr_t) (*fun_pos).first;
-        lldb::addr_t lend = (lldb::addr_t) (*fun_pos).second;
-        size_t size = lend - lstart;
-        
-        Error write_error;
-        
-        if (process->WriteMemory(cursor, (void *) lstart, size, write_error) != size)
-        {
-            err.SetErrorToGenericError();
-            err.SetErrorStringWithFormat("Couldn't copy JIT code for function into the target: %s", write_error.AsCString("unknown error"));
-            return err;
-        }
-            
-        jit_memory_manager->AddToLocalToRemoteMap (lstart, size, cursor);
-        cursor += size;
-    }
+    jit_memory_manager->CommitAllocations(*process);
+    jit_memory_manager->WriteData(*process);
     
     std::vector<JittedFunction>::iterator pos, end = m_jitted_functions.end();
     
@@ -690,7 +636,8 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     
         if (!(*pos).m_name.compare(function_name.c_str()))
         {
-            func_end = jit_memory_manager->GetRemoteRangeForLocal ((*pos).m_local_addr).second;
+            RecordingMemoryManager::AddrRange func_range = jit_memory_manager->GetRemoteRangeForLocal((*pos).m_local_addr);
+            func_end = func_range.first + func_range.second;
             func_addr = (*pos).m_remote_addr;
         }
     }
@@ -766,7 +713,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
     }
     
     if (log)
-        log->Printf("Function's code range is [0x%llx-0x%llx]", func_range.first, func_range.second);
+        log->Printf("Function's code range is [0x%llx+0x%llx]", func_range.first, func_range.second);
     
     Target *target = exe_ctx.GetTargetPtr();
     if (!target)
@@ -775,7 +722,7 @@ ClangExpressionParser::DisassembleFunction (Stream &stream, ExecutionContext &ex
         ret.SetErrorString("Couldn't find the target");
     }
     
-    lldb::DataBufferSP buffer_sp(new DataBufferHeap(func_range.second - func_remote_addr, 0));
+    lldb::DataBufferSP buffer_sp(new DataBufferHeap(func_range.second, 0));
     
     Process *process = exe_ctx.GetProcessPtr();
     Error err;

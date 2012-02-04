@@ -375,8 +375,6 @@ public:
         m_variables.push_back(var_sp);
         return var_sp;
     }
-    
-    
 
     lldb::ClangExpressionVariableSP
     CreateVariable (ExecutionContextScope *exe_scope,
@@ -391,6 +389,21 @@ public:
         var_sp->SetClangAST (user_type.GetASTContext());
         m_variables.push_back(var_sp);
         return var_sp;
+    }
+    
+    void
+    RemoveVariable (lldb::ClangExpressionVariableSP var_sp)
+    {
+        for (std::vector<lldb::ClangExpressionVariableSP>::iterator vi = m_variables.begin(), ve = m_variables.end();
+             vi != ve;
+             ++vi)
+        {
+            if (vi->get() == var_sp.get())
+            {
+                m_variables.erase(vi);
+                return;
+            }
+        }
     }
     
     void

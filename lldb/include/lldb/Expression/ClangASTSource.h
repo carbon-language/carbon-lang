@@ -121,6 +121,47 @@ public:
                               llvm::SmallVectorImpl<clang::Decl*> &Decls);
     
     //------------------------------------------------------------------
+    /// Specify the layout of the contents of a RecordDecl.
+    ///
+    /// @param[in] Record
+    ///     The record (in the parser's AST context) that needs to be
+    ///     laid out.
+    ///
+    /// @param[out] Size
+    ///     The total size of the record in bits.
+    ///
+    /// @param[out] Alignment
+    ///     The alignment of the record in bits.
+    ///
+    /// @param[in] FieldOffsets
+    ///     A map that must be populated with pairs of the record's
+    ///     fields (in the parser's AST context) and their offsets
+    ///     (measured in bits).
+    ///
+    /// @param[in] BaseOffsets
+    ///     A map that must be populated with pairs of the record's
+    ///     C++ concrete base classes (in the parser's AST context, 
+    ///     and only if the record is a CXXRecordDecl and has base
+    ///     classes) and their offsets (measured in bytes).
+    ///
+    /// @param[in] VirtualBaseOffsets
+    ///     A map that must be populated with pairs of the record's
+    ///     C++ virtual base classes (in the parser's AST context, 
+    ///     and only if the record is a CXXRecordDecl and has base
+    ///     classes) and their offsets (measured in bytes).
+    ///
+    /// @return
+    ///     True <=> the layout is valid.
+    //-----------------------------------------------------------------    
+    bool 
+    layoutRecordType(const clang::RecordDecl *Record,
+                     uint64_t &Size, 
+                     uint64_t &Alignment,
+                     llvm::DenseMap <const clang::FieldDecl *, uint64_t> &FieldOffsets,
+                     llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
+                     llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets);
+    
+    //------------------------------------------------------------------
     /// Complete a TagDecl.
     ///
     /// @param[in] Tag
@@ -233,6 +274,22 @@ public:
         {
             return m_original.CompleteType(Class);
         }
+        
+        bool 
+        layoutRecordType(const clang::RecordDecl *Record,
+                         uint64_t &Size, 
+                         uint64_t &Alignment,
+                         llvm::DenseMap <const clang::FieldDecl *, uint64_t> &FieldOffsets,
+                         llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
+                         llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets)
+        {
+            return m_original.layoutRecordType(Record,
+                                               Size, 
+                                               Alignment, 
+                                               FieldOffsets, 
+                                               BaseOffsets, 
+                                               VirtualBaseOffsets);
+        }
 
         void StartTranslationUnit (clang::ASTConsumer *Consumer)
         {
@@ -301,7 +358,7 @@ protected:
     FindObjCMethodDecls (NameSearchContext &context);
     
     //------------------------------------------------------------------
-    /// Find all Objective-C properties with a given name.
+    /// Find all Objective-C properties and ivars with a given name.
     ///
     /// @param[in] context
     ///     The NameSearchContext that can construct Decls for this name.
@@ -309,7 +366,7 @@ protected:
     ///     is the containing object.
     //------------------------------------------------------------------
     void
-    FindObjCPropertyDecls (NameSearchContext &context);
+    FindObjCPropertyAndIvarDecls (NameSearchContext &context);
     
     //------------------------------------------------------------------
     /// A wrapper for ClangASTContext::CopyType that sets a flag that

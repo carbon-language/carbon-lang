@@ -137,6 +137,43 @@ ClangASTImporter::DeportDecl (clang::ASTContext *dst_ctx,
     return result;
 }
 
+void
+ClangASTImporter::CompleteDecl (clang::Decl *decl)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+    if (log)    
+        log->Printf("    [ClangASTImporter] CompleteDecl called on (%sDecl*)%p",
+                    decl->getDeclKindName(),
+                    decl);
+    
+    if (ObjCInterfaceDecl *interface_decl = dyn_cast<ObjCInterfaceDecl>(decl)) 
+    {
+        if (!interface_decl->getDefinition())
+        {
+            interface_decl->startDefinition();
+            CompleteObjCInterfaceDecl(interface_decl);
+        }
+    }
+    else if (ObjCProtocolDecl *protocol_decl = dyn_cast<ObjCProtocolDecl>(protocol_decl)) 
+    {
+        if (!protocol_decl->getDefinition())
+            protocol_decl->startDefinition();
+    }
+    else if (TagDecl *tag_decl = dyn_cast<TagDecl>(decl)) 
+    {
+        if (!tag_decl->getDefinition() && !tag_decl->isBeingDefined()) 
+        {
+            tag_decl->startDefinition();
+            CompleteTagDecl(tag_decl);
+            tag_decl->setCompleteDefinition(true);
+        }
+    }
+    else {
+        assert (0 && "CompleteDecl called on a Decl that can't be completed");
+    }
+}
+
 bool
 ClangASTImporter::CompleteTagDecl (clang::TagDecl *decl)
 {   
@@ -310,14 +347,26 @@ void
 ClangASTImporter::Minion::ImportDefinitionTo (clang::Decl *to, clang::Decl *from)
 {
     ASTImporter::Imported(from, to);
+
+    ObjCInterfaceDecl *to_objc_interface = dyn_cast<ObjCInterfaceDecl>(to);
+
+    /*
+    if (to_objc_interface)
+        to_objc_interface->startDefinition();
+ 
+    CXXRecordDecl *to_cxx_record = dyn_cast<CXXRecordDecl>(to);
     
+    if (to_cxx_record)
+        to_cxx_record->startDefinition();
+    */
+
     ImportDefinition(from);
-    
+     
     // If we're dealing with an Objective-C class, ensure that the inheritance has
     // been set up correctly.  The ASTImporter may not do this correctly if the 
     // class was originally sourced from symbols.
     
-    if (ObjCInterfaceDecl *to_objc_interface = dyn_cast<ObjCInterfaceDecl>(to))
+    if (to_objc_interface)
     {
         do
         {
@@ -346,6 +395,9 @@ ClangASTImporter::Minion::ImportDefinitionTo (clang::Decl *to, clang::Decl *from
             if (!imported_from_superclass)
                 break;
             
+            if (!to_objc_interface->hasDefinition())
+                to_objc_interface->startDefinition();
+            
             to_objc_interface->setSuperClass(imported_from_superclass);
         }
         while (0);
@@ -366,6 +418,10 @@ clang::Decl
                         to,
                         from_named_decl->getName().str().c_str(),
                         from);
+            
+            if (!strcmp(from->getDeclKindName(), "ClassTemplateSpecialization") &&
+                !from_named_decl->getName().str().compare("rebind"))
+                fprintf(stderr, "This is the one!");
         }
         else
         {
@@ -464,17 +520,14 @@ clang::Decl
                 
         to_interface_decl->setHasExternalLexicalStorage();
         to_interface_decl->setHasExternalVisibleStorage();
-        
-        if (to_interface_decl->isForwardDecl())
-            to_interface_decl->completedForwardDecl();
-         
-        to_interface_decl->setExternallyCompleted();
+                 
+        /*to_interface_decl->setExternallyCompleted();*/
                 
         if (log)
             log->Printf("    [ClangASTImporter] To is an ObjCInterfaceDecl - attributes %s%s%s",
                         (to_interface_decl->hasExternalLexicalStorage() ? " Lexical" : ""),
                         (to_interface_decl->hasExternalVisibleStorage() ? " Visible" : ""),
-                        (to_interface_decl->isForwardDecl() ? " Forward" : ""));
+                        (to_interface_decl->hasDefinition() ? " HasDefinition" : ""));
     }
     
     return clang::ASTImporter::Imported(from, to);

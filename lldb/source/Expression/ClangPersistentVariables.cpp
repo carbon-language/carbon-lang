@@ -46,6 +46,20 @@ ClangPersistentVariables::CreatePersistentVariable (ExecutionContextScope *exe_s
     return var_sp;
 }
 
+void
+ClangPersistentVariables::RemovePersistentVariable (lldb::ClangExpressionVariableSP variable)
+{
+    RemoveVariable(variable);
+    
+    const char *name = variable->GetName().AsCString();
+    
+    if (*name != '$')
+        return;
+    name++;
+    
+    if (strtoul(name, NULL, 0) == m_next_persistent_variable_id - 1)
+        m_next_persistent_variable_id--;
+}
 
 ConstString
 ClangPersistentVariables::GetNextPersistentVariableName ()

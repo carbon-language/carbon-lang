@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 #include <stdint.h>
+#include <stdio.h>
 int main (int argc, char const *argv[])
 {
     struct Bits
@@ -14,12 +15,14 @@ int main (int argc, char const *argv[])
         uint32_t    b1 : 1,
                     b2 : 2,
                     b3 : 3,
-                    b4 : 4,
+                    b4 __attribute__ ((align(16))),
                     b5 : 5,
                     b6 : 6,
                     b7 : 7,
                     four : 4;
     };
+
+    printf("%lu", sizeof(struct Bits));
 
     struct Bits bits;
     int i;

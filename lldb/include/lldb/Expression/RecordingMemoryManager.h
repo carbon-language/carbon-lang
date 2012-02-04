@@ -152,6 +152,43 @@ public:
     ///     Allocated space.
     //------------------------------------------------------------------
     virtual uint8_t *allocateSpace(intptr_t Size, unsigned Alignment);
+    
+    //------------------------------------------------------------------
+    /// Allocate space for executable code, and add it to the 
+    /// m_spaceBlocks map
+    ///
+    /// @param[in] Size
+    ///     The size of the area.
+    ///
+    /// @param[in] Alignment
+    ///     The required alignment of the area.
+    ///
+    /// @param[in] SectionID
+    ///     A unique identifier for the section.
+    ///
+    /// @return
+    ///     Allocated space.
+    //------------------------------------------------------------------
+    virtual uint8_t *allocateCodeSection(uintptr_t Size, unsigned Alignment,
+                                         unsigned SectionID);
+    
+    //------------------------------------------------------------------
+    /// Allocate space for data, and add it to the m_spaceBlocks map
+    ///
+    /// @param[in] Size
+    ///     The size of the area.
+    ///
+    /// @param[in] Alignment
+    ///     The required alignment of the area.
+    ///
+    /// @param[in] SectionID
+    ///     A unique identifier for the section.
+    ///
+    /// @return
+    ///     Allocated space.
+    //------------------------------------------------------------------
+    virtual uint8_t *allocateDataSection(uintptr_t Size, unsigned Alignment,
+                                         unsigned SectionID);
 
     //------------------------------------------------------------------
     /// Allocate space for a global variable, and add it to the
@@ -246,7 +283,7 @@ public:
     }
 
     //------------------------------------------------------------------
-    /// [Convenience method for ClangExpression] Look up the object in
+    /// [Convenience method for ClangExpressionParser] Look up the object in
     /// m_address_map that contains a given address, find where it was
     /// copied to, and return the remote address at the same offset into
     /// the copied entity
@@ -261,7 +298,7 @@ public:
     GetRemoteAddressForLocal (lldb::addr_t local_address);
     
     //------------------------------------------------------------------
-    /// [Convenience method for ClangExpression] Look up the object in
+    /// [Convenience method for ClangExpressionParser] Look up the object in
     /// m_address_map that contains a given address, find where it was
     /// copied to, and return its address range in the target process
     ///
@@ -271,61 +308,82 @@ public:
     /// @return
     ///     The range of the containing object in the target process.
     //------------------------------------------------------------------
-    std::pair <lldb::addr_t, lldb::addr_t>
+    typedef std::pair <lldb::addr_t, uintptr_t> AddrRange;
+    AddrRange
     GetRemoteRangeForLocal (lldb::addr_t local_address);
+    
+    //------------------------------------------------------------------
+    /// [Convenience method for ClangExpressionParser] Commit all allocations
+    /// to the process and record where they were stored.
+    ///
+    /// @param[in] process
+    ///     The process to allocate memory in.
+    ///
+    /// @return
+    ///     True <=> all allocations were performed successfully.
+    ///     This method will attempt to free allocated memory if the
+    ///     operation fails.
+    //------------------------------------------------------------------
+    bool
+    CommitAllocations (Process &process);
+    
+    //------------------------------------------------------------------
+    /// [Convenience method for ClangExpressionParser] Write the contents
+    /// of all allocations to the process. 
+    ///
+    /// @param[in] local_address
+    ///     The process containing the allocations.
+    ///
+    /// @return
+    ///     True <=> all allocations were performed successfully.
+    //------------------------------------------------------------------
+    bool
+    WriteData (Process &process);
 private:
     std::auto_ptr<JITMemoryManager> m_default_mm_ap;    ///< The memory allocator to use in actually creating space.  All calls are passed through to it.
-    std::map<uint8_t *, uint8_t *> m_functions;         ///< A map from function base addresses to their end addresses.
-    std::map<uint8_t *, intptr_t> m_spaceBlocks;        ///< A map from the base addresses of generic allocations to their sizes.
-    std::map<uint8_t *, unsigned> m_stubs;              ///< A map from the base addresses of stubs to their sizes.
-    std::map<uint8_t *, uintptr_t> m_globals;           ///< A map from the base addresses of globals to their sizes.
-    std::map<uint8_t *, uint8_t *> m_exception_tables;  ///< A map from the base addresses of exception tables to their end addresses.
     
     lldb::LogSP m_log; ///< The log to use when printing log messages.  May be NULL.
 
     //----------------------------------------------------------------------
-    /// @class LocalToRemoteAddressRange RecordingMemoryManager.h "lldb/Expression/RecordingMemoryManager.h"
-    /// @brief A record of an allocated region that has been copied into the target
+    /// @class Allocation RecordingMemoryManager.h "lldb/Expression/RecordingMemoryManager.h"
+    /// @brief A record of a region that has been allocated by the JIT.
     ///
     /// The RecordingMemoryManager makes records of all regions that need copying;
-    /// then, ClangExpression copies these regions into the target.  It records
-    /// what was copied where in records of type LocalToRemoteAddressRange.
+    /// upon requests, it allocates and 
     //----------------------------------------------------------------------
-    struct LocalToRemoteAddressRange
+    struct Allocation
     {
-        lldb::addr_t m_local_start;     ///< The base address of the local allocation
-        size_t       m_size;            ///< The size of the allocation
-        lldb::addr_t m_remote_start;    ///< The base address of the remote allocation
+        lldb::addr_t    m_remote_allocation;///< The (unaligned) base for the remote allocation
+        lldb::addr_t    m_remote_start;     ///< The base address of the remote allocation
+        uintptr_t       m_local_start;      ///< The base address of the local allocation
+        uintptr_t       m_size;             ///< The size of the allocation
+        unsigned        m_section_id;       ///< The ID of the section
+        unsigned        m_alignment;        ///< The required alignment for the allocation
+        bool            m_executable;       ///< True <=> the allocation must be executable in the target
+        bool            m_allocated;        ///< True <=> the allocation has been propagated to the target
 
+        static const unsigned eSectionIDNone = (unsigned)-1;
+        
         //------------------------------------------------------------------
         /// Constructor
         //------------------------------------------------------------------
-        LocalToRemoteAddressRange (lldb::addr_t lstart, size_t size, lldb::addr_t rstart) :
-            m_local_start (lstart),
-            m_size (size),
-            m_remote_start (rstart)
-        {}
-
+        Allocation () :
+            m_remote_allocation(0),
+            m_remote_start(0),
+            m_local_start(0),
+            m_size(0),
+            m_section_id(eSectionIDNone),
+            m_alignment(0),
+            m_executable(false),
+            m_allocated(false)
+        {
+        }
+        
+        void dump (lldb::LogSP log);
     };
 
-    //------------------------------------------------------------------
-    /// Add a range to the list of copied ranges.
-    ///
-    /// @param[in] lstart
-    ///     The base address of the local allocation.
-    /// 
-    /// @param[in] size
-    ///     The size of the allocation.
-    ///
-    /// @param[in] rstart
-    ///     The base address of the remote allocation.
-    //------------------------------------------------------------------
-    void
-    AddToLocalToRemoteMap (lldb::addr_t lstart, size_t size, lldb::addr_t rstart);
-
-    std::vector<LocalToRemoteAddressRange> m_address_map;   ///< The base address of the remote allocation
-    
-    friend class ClangExpressionParser;
+    typedef std::vector<Allocation> AllocationList;
+    AllocationList                  m_allocations;  ///< The base address of the remote allocation
 };
 
 } // namespace lldb_private

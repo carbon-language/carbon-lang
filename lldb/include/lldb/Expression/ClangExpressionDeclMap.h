@@ -503,6 +503,10 @@ public:
                             bool transient,
                             bool maybe_make_load);
     
+    
+    void
+    RemoveResultVariable (const ConstString &name);
+    
     //------------------------------------------------------------------
     /// [Used by CommandObjectExpression] Materialize the entire struct
     /// at a given address, which should be aligned as specified by 

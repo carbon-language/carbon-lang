@@ -1232,8 +1232,9 @@ ClangASTType::IsDefined (clang_type_t clang_type)
         if (objc_class_type)
         {
             clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
-            if (class_interface_decl->isForwardDecl())
-                return false;
+            if (class_interface_decl)
+                return class_interface_decl->getDefinition() != NULL;
+            return false;
         }
     }
     return true;
@@ -1667,8 +1668,12 @@ ClangASTType::ReadFromMemory
         // context (which Module it came from)
         return false;
     }
+    
+    if (!ClangASTContext::GetCompleteType(ast_context, clang_type))
+        return false;
+    
     clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
-
+    
     const uint32_t byte_size = (ast_context->getTypeSize (qual_type) + 7) / 8;
     if (data.GetByteSize() < byte_size)
     {

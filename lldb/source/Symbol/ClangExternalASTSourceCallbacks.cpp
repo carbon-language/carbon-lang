@@ -134,3 +134,24 @@ ClangExternalASTSourceCallbacks::CompleteType (ObjCInterfaceDecl *objc_decl)
     if (m_callback_objc_decl)
         m_callback_objc_decl (m_callback_baton, objc_decl);
 }
+
+bool 
+ClangExternalASTSourceCallbacks::layoutRecordType(const clang::RecordDecl *Record,
+                                                  uint64_t &Size, 
+                                                  uint64_t &Alignment,
+                                                  llvm::DenseMap <const clang::FieldDecl *, uint64_t> &FieldOffsets,
+                                                  llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &BaseOffsets,
+                                                  llvm::DenseMap <const clang::CXXRecordDecl *, clang::CharUnits> &VirtualBaseOffsets)
+{
+    if (m_callback_layout_record_type)
+        return m_callback_layout_record_type(m_callback_baton,
+                                             Record,
+                                             Size, 
+                                             Alignment, 
+                                             FieldOffsets, 
+                                             BaseOffsets, 
+                                             VirtualBaseOffsets);
+    
+    return false;
+}
+

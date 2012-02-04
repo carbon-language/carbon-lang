@@ -415,7 +415,8 @@ ClangExpressionDeclMap::CompleteResultVariable (lldb::ClangExpressionVariableSP 
         const size_t pvar_byte_size = pvar_sp->GetByteSize();
         uint8_t *pvar_data = pvar_sp->GetValueBytes();
         
-        ReadTarget(pvar_data, value, pvar_byte_size);
+        if (!ReadTarget(pvar_data, value, pvar_byte_size))
+            return false;
         
         pvar_sp->m_flags &= ~(ClangExpressionVariable::EVNeedsFreezeDry);
     }
@@ -423,6 +424,16 @@ ClangExpressionDeclMap::CompleteResultVariable (lldb::ClangExpressionVariableSP 
     valobj = pvar_sp;
     
     return true;
+}
+
+void
+ClangExpressionDeclMap::RemoveResultVariable
+(
+    const ConstString &name
+)
+{
+    ClangExpressionVariableSP pvar_sp = m_parser_vars->m_persistent_vars->GetVariable(name);
+    m_parser_vars->m_persistent_vars->RemovePersistentVariable(pvar_sp);
 }
 
 bool 
@@ -2320,6 +2331,12 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
     const char *name_unique_cstr = name.GetCString();
     
     if (name_unique_cstr == NULL)
+        return;
+    
+    static ConstString id_name("id");
+    static ConstString Class_name("Class");
+    
+    if (name == id_name || name == Class_name)
         return;
     
     // Only look for functions by name out in our symbols if the function 

@@ -82,6 +82,15 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
     const clang::Type::TypeClass type_class = qual_type->getTypeClass();
     switch (type_class)
     {
+    case clang::Type::ConstantArray:
+        {
+            const clang::ArrayType *array_type = dyn_cast<clang::ArrayType>(qual_type.getTypePtr());
+            
+            if (array_type)
+                return GetCompleteQualType (ast, array_type->getElementType());
+        }
+        break;
+            
     case clang::Type::Record:
     case clang::Type::Enum:
         {
@@ -124,8 +133,10 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
                 // because it only supports TagDecl objects right now...
                 if (class_interface_decl)
                 {
-                    bool is_forward_decl = class_interface_decl->isForwardDecl();
-                    if (is_forward_decl && class_interface_decl->hasExternalLexicalStorage())
+                    if (class_interface_decl->getDefinition())
+                        return true;
+                    
+                    if (class_interface_decl->hasExternalLexicalStorage())
                     {
                         if (ast)
                         {
@@ -133,15 +144,12 @@ GetCompleteQualType (clang::ASTContext *ast, clang::QualType qual_type)
                             if (external_ast_source)
                             {
                                 external_ast_source->CompleteType (class_interface_decl);
-                                is_forward_decl = class_interface_decl->isForwardDecl();
+                                return !objc_class_type->isIncompleteType();
                             }
                         }
-                        return is_forward_decl == false;
                     }
-                    return true;
-                }
-                else
                     return false;
+                }
             }
         }
         break;
@@ -568,7 +576,7 @@ public:
     {
         if (m_log)
         {
-            llvm::SmallVectorImpl<char> diag_str(10);
+            llvm::SmallVector<char, 32> diag_str(10);
             info.FormatDiagnostic(diag_str);
             diag_str.push_back('\0');
             m_log->Printf("Compiler diagnostic: %s\n", diag_str.data());
@@ -1231,6 +1239,10 @@ ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
     {
         if (access_type != eAccessNone)
             class_template_decl->setAccess (ConvertAccessTypeToAccessSpecifier (access_type));
+        
+        //if (TagDecl *ctx_tag_decl = dyn_cast<TagDecl>(decl_ctx))
+        //    CompleteTagDeclarationDefinition(GetTypeForDecl(ctx_tag_decl));
+        
         decl_ctx->addDecl (class_template_decl);
         
 #ifdef LLDB_CONFIGURATION_DEBUG
@@ -1575,6 +1587,18 @@ check_op_param (uint32_t op_kind, bool unary, bool binary, uint32_t num_params)
 bool
 ClangASTContext::CheckOverloadedOperatorKindParameterCount (uint32_t op_kind, uint32_t num_params)
 {
+    switch (op_kind)
+    {
+    default:
+        break;
+    // C++ standard allows any number of arguments to new/delete
+    case OO_New:
+    case OO_Array_New:
+    case OO_Delete:
+    case OO_Array_Delete:
+        return true;
+    }
+    
 #define OVERLOADED_OPERATOR(Name,Spelling,Token,Unary,Binary,MemberOnly) case OO_##Name: return check_op_param (op_kind, Unary, Binary, num_params);
     switch (op_kind)
     {
@@ -2033,8 +2057,9 @@ ClangASTContext::CreateObjCClass
                                                          decl_ctx,
                                                          SourceLocation(),
                                                          &ast->Idents.get(name),
+                                                         NULL,
                                                          SourceLocation(),
-                                                         isForwardDecl,
+                                                         /*isForwardDecl,*/
                                                          isInternal);
     
     return ast->getObjCInterfaceType(decl).getAsOpaquePtr();
@@ -3759,7 +3784,7 @@ ClangASTContext::GetChildClangTypeAtIndex
                     }
 
                     // We have a pointer to an simple type
-                    if (idx == 0)
+                    if (idx == 0 && GetCompleteQualType(ast, pointee_type))
                     {
                         std::pair<uint64_t, unsigned> clang_type_info = ast->getTypeInfo(pointee_type);
                         assert(clang_type_info.first % 8 == 0);
@@ -4706,7 +4731,13 @@ ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *d
                 return namespace_decl;
         }
 
-        namespace_decl = NamespaceDecl::Create(*ast, decl_ctx, SourceLocation(), SourceLocation(), &identifier_info);
+        namespace_decl = NamespaceDecl::Create(*ast, 
+                                               decl_ctx, 
+                                               false, 
+                                               SourceLocation(), 
+                                               SourceLocation(),
+                                               &identifier_info,
+                                               NULL);
         
         decl_ctx->addDecl (namespace_decl);        
     }
@@ -4718,7 +4749,13 @@ ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *d
             if (namespace_decl)
                 return namespace_decl;
             
-            namespace_decl = NamespaceDecl::Create(*ast, decl_ctx, SourceLocation(), SourceLocation(), NULL);
+            namespace_decl = NamespaceDecl::Create(*ast, 
+                                                   decl_ctx,
+                                                   false,
+                                                   SourceLocation(),
+                                                   SourceLocation(),
+                                                   NULL,
+                                                   NULL);
             translation_unit_decl->setAnonymousNamespace (namespace_decl);
             translation_unit_decl->addDecl (namespace_decl);
             assert (namespace_decl == translation_unit_decl->getAnonymousNamespace());
@@ -4731,7 +4768,13 @@ ClangASTContext::GetUniqueNamespaceDeclaration (const char *name, DeclContext *d
                 namespace_decl = parent_namespace_decl->getAnonymousNamespace();
                 if (namespace_decl)
                     return namespace_decl;
-                namespace_decl = NamespaceDecl::Create(*ast, decl_ctx, SourceLocation(), SourceLocation(), NULL);
+                namespace_decl = NamespaceDecl::Create(*ast, 
+                                                       decl_ctx, 
+                                                       false,
+                                                       SourceLocation(), 
+                                                       SourceLocation(), 
+                                                       NULL,
+                                                       NULL);
                 parent_namespace_decl->setAnonymousNamespace (namespace_decl);
                 parent_namespace_decl->addDecl (namespace_decl);
                 assert (namespace_decl == parent_namespace_decl->getAnonymousNamespace());
@@ -4906,6 +4949,17 @@ ClangASTContext::StartTagDeclarationDefinition (clang_type_t clang_type)
                     return true;
                 }
             }
+            
+            const ObjCObjectType *object_type = dyn_cast<ObjCObjectType>(t);
+            if (object_type)
+            {
+                ObjCInterfaceDecl *interface_decl = object_type->getInterface();
+                if (interface_decl)
+                {
+                    interface_decl->startDefinition();
+                    return true;
+                }
+            }
         }
     }
     return false;
@@ -4931,9 +4985,8 @@ ClangASTContext::CompleteTagDeclarationDefinition (clang_type_t clang_type)
         
         if (objc_class_type)
         {
-            ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
-            
-            class_interface_decl->completedForwardDecl();
+            // ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+            // class_interface_decl->completeDefinition();
         }
         
         const EnumType *enum_type = dyn_cast<EnumType>(qual_type.getTypePtr());
@@ -6064,7 +6117,7 @@ ClangASTContext::GetCompleteDecl (clang::ASTContext *ast,
     }
     else if (clang::ObjCInterfaceDecl *objc_interface_decl = llvm::dyn_cast<clang::ObjCInterfaceDecl>(decl))
     {
-        if (!objc_interface_decl->isForwardDecl())
+        if (objc_interface_decl->getDefinition())
             return true;
         
         if (!objc_interface_decl->hasExternalLexicalStorage())
@@ -6072,7 +6125,7 @@ ClangASTContext::GetCompleteDecl (clang::ASTContext *ast,
         
         ast_source->CompleteType(objc_interface_decl);
         
-        return !objc_interface_decl->isForwardDecl();
+        return !objc_interface_decl->getTypeForDecl()->isIncompleteType();
     }
     else
     {

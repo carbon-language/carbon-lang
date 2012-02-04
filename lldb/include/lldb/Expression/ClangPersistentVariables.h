@@ -52,6 +52,9 @@ public:
     //----------------------------------------------------------------------
     ConstString
     GetNextPersistentVariableName ();
+    
+    void
+    RemovePersistentVariable (lldb::ClangExpressionVariableSP variable);
 
     void
     RegisterPersistentType (const ConstString &name,

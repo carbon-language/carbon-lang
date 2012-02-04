@@ -873,6 +873,7 @@ static const char *memory_allocation_error          = "Interpreter couldn't allo
 static const char *memory_write_error               = "Interpreter couldn't write to memory";
 static const char *memory_read_error                = "Interpreter couldn't read from memory";
 static const char *infinite_loop_error              = "Interpreter ran for too many cycles";
+static const char *bad_result_error                 = "Result of expression is in bad memory";
 
 bool
 IRInterpreter::supportsFunction (Function &llvm_function, 
@@ -1524,7 +1525,17 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     return true;
                 
                 GlobalValue *result_value = llvm_module.getNamedValue(result_name.GetCString());
-                return frame.ConstructResult(result, result_value, result_name, result_type, llvm_module);
+                
+                if (!frame.ConstructResult(result, result_value, result_name, result_type, llvm_module))
+                {
+                    if (log)
+                        log->Printf("Couldn't construct the expression's result");
+                    err.SetErrorToGenericError();
+                    err.SetErrorString(bad_result_error);
+                    return false;
+                }
+                
+                return true;
             }
         case Instruction::Store:
             {

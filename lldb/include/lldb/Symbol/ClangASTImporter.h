@@ -57,6 +57,9 @@ public:
     DeportDecl (clang::ASTContext *dst_ctx,
                 clang::ASTContext *src_ctx,
                 clang::Decl *decl);
+    
+    void
+    CompleteDecl (clang::Decl *decl);
         
     bool
     CompleteTagDecl (clang::TagDecl *decl);

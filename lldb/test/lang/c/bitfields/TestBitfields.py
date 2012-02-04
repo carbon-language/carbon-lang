@@ -66,7 +66,7 @@ class BitfieldsTestCase(TestBase):
             substrs = ['(uint32_t:1) b1 = 1',
                        '(uint32_t:2) b2 = 3',
                        '(uint32_t:3) b3 = 7',
-                       '(uint32_t:4) b4 = 15',
+                       '(uint32_t) b4 = 15',
                        '(uint32_t:5) b5 = 31',
                        '(uint32_t:6) b6 = 63',
                        '(uint32_t:7) b7 = 127',
@@ -78,7 +78,7 @@ class BitfieldsTestCase(TestBase):
             substrs = ['(uint32_t:1) b1 = 1',
                        '(uint32_t:2) b2 = 3',
                        '(uint32_t:3) b3 = 7',
-                       '(uint32_t:4) b4 = 15',
+                       '(uint32_t) b4 = 15',
                        '(uint32_t:5) b5 = 31',
                        '(uint32_t:6) b6 = 63',
                        '(uint32_t:7) b7 = 127',
@@ -113,8 +113,8 @@ class BitfieldsTestCase(TestBase):
         self.DebugSBValue(bits)
         self.assertTrue(bits.GetTypeName() == "Bits" and
                         bits.GetNumChildren() == 8 and
-                        bits.GetByteSize() == 4,
-                        "(Bits)bits with byte size of 4 and 8 children")
+                        bits.GetByteSize() == 32,
+                        "(Bits)bits with byte size of 32 and 8 children")
 
         # Notice the pattern of int(b1.GetValue(), 0).  We pass a base of 0
         # so that the proper radix is determined based on the contents of the
