@@ -1457,11 +1457,6 @@ public:
   typedef llvm::SmallPtrSet<DeclContext   *, 16> AssociatedNamespaceSet;
   typedef llvm::SmallPtrSet<CXXRecordDecl *, 16> AssociatedClassSet;
 
-  void AddOverloadCandidate(NamedDecl *Function,
-                            DeclAccessPair FoundDecl,
-                            Expr **Args, unsigned NumArgs,
-                            OverloadCandidateSet &CandidateSet);
-
   void AddOverloadCandidate(FunctionDecl *Function,
                             DeclAccessPair FoundDecl,
                             Expr **Args, unsigned NumArgs,
