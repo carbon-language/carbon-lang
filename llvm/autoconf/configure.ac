@@ -1574,8 +1574,11 @@ if test "${clang_src_root}" = ""; then
   clang_src_root="$srcdir/tools/clang"
 fi
 if test -f ${clang_src_root}/README.txt; then
-  AC_CONFIG_HEADERS([${clang_src_root}/include/clang/Config/config.h])
-  AC_CONFIG_FILES([${clang_src_root}/docs/doxygen.cfg])
+  dnl Use variables to stay under 80 columns.
+  configh="include/clang/Config/config.h"
+  doxy="docs/doxygen.cfg"
+  AC_CONFIG_HEADERS([tools/clang/${configh}:${clang_src_root}/${configh}.in])
+  AC_CONFIG_FILES([tools/clang/${doxy}:${clang_src_root}/${doxy}.in])
 fi
 
 dnl OCaml findlib META file
