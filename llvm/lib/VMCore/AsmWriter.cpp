@@ -2015,7 +2015,7 @@ static void WriteMDNodeComment(const MDNode *Node,
   if (!CI) return;
   APInt Val = CI->getValue();
   APInt Tag = Val & ~APInt(Val.getBitWidth(), LLVMDebugVersionMask);
-  if (Val.ult(LLVMDebugVersion))
+  if (Val.ult(LLVMDebugVersion11))
     return;
 
   Out.PadToColumn(50);

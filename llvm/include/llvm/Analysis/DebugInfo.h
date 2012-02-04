@@ -356,29 +356,41 @@ namespace llvm {
     /// return base type size.
     uint64_t getOriginalTypeSize() const;
 
-    StringRef getObjCPropertyName() const { return getStringField(10); }
+    StringRef getObjCPropertyName() const { 
+      if (getVersion() > LLVMDebugVersion11)
+	return StringRef();
+      return getStringField(10); 
+    }
     StringRef getObjCPropertyGetterName() const {
+      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
       return getStringField(11);
     }
     StringRef getObjCPropertySetterName() const {
+      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
       return getStringField(12);
     }
     bool isReadOnlyObjCProperty() {
+      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
       return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_readonly) != 0;
     }
     bool isReadWriteObjCProperty() {
+      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
       return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_readwrite) != 0;
     }
     bool isAssignObjCProperty() {
+      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
       return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_assign) != 0;
     }
     bool isRetainObjCProperty() {
+      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
       return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_retain) != 0;
     }
     bool isCopyObjCProperty() {
+      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
       return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_copy) != 0;
     }
     bool isNonAtomicObjCProperty() {
+      assert (getVersion() <= LLVMDebugVersion11  && "Invalid Request");
       return (getUnsignedField(13) & dwarf::DW_APPLE_PROPERTY_nonatomic) != 0;
     }
 
