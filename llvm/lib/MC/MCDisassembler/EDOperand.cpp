@@ -30,8 +30,10 @@ EDOperand::EDOperand(const EDDisassembler &disassembler,
   MCOpIndex(mcOpIndex) {
   unsigned int numMCOperands = 0;
     
-  if (Disassembler.Key.Arch == Triple::x86 ||
-      Disassembler.Key.Arch == Triple::x86_64) {
+  Triple::ArchType arch = Disassembler.TgtTriple.getArch();
+    
+  if (arch == Triple::x86 ||
+      arch == Triple::x86_64) {
     uint8_t operandType = inst.ThisInstInfo->operandTypes[opIndex];
     
     switch (operandType) {
@@ -54,8 +56,8 @@ EDOperand::EDOperand(const EDDisassembler &disassembler,
       break;
     }
   }
-  else if (Disassembler.Key.Arch == Triple::arm ||
-           Disassembler.Key.Arch == Triple::thumb) {
+  else if (arch == Triple::arm ||
+           arch == Triple::thumb) {
     uint8_t operandType = inst.ThisInstInfo->operandTypes[opIndex];
     
     switch (operandType) {
@@ -126,7 +128,9 @@ int EDOperand::evaluate(uint64_t &result,
                         void *arg) {
   uint8_t operandType = Inst.ThisInstInfo->operandTypes[OpIndex];
   
-  switch (Disassembler.Key.Arch) {
+  Triple::ArchType arch = Disassembler.TgtTriple.getArch();
+  
+  switch (arch) {
   default:
     return -1;  
   case Triple::x86:
@@ -168,7 +172,7 @@ int EDOperand::evaluate(uint64_t &result,
         
       unsigned segmentReg = Inst.Inst->getOperand(MCOpIndex+4).getReg();
         
-      if (segmentReg != 0 && Disassembler.Key.Arch == Triple::x86_64) {
+      if (segmentReg != 0 && arch == Triple::x86_64) {
         unsigned fsID = Disassembler.registerIDWithName("FS");
         unsigned gsID = Disassembler.registerIDWithName("GS");
         

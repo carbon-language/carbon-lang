@@ -95,16 +95,23 @@ static int getLLVMSyntaxVariant(Triple::ArchType arch,
 
 EDDisassembler *EDDisassembler::getDisassembler(Triple::ArchType arch,
                                                 AssemblySyntax syntax) {
+  const char *triple = tripleFromArch(arch);
+  return getDisassembler(StringRef(triple), syntax);
+}
+
+EDDisassembler *EDDisassembler::getDisassembler(StringRef str,
+                                                AssemblySyntax syntax) {
   CPUKey key;
-  key.Arch = arch;
+  key.Triple = str.str();
   key.Syntax = syntax;
   
   EDDisassembler::DisassemblerMap_t::iterator i = sDisassemblers.find(key);
-  
+    
   if (i != sDisassemblers.end()) {
-    return i->second;
-  } else {
-    EDDisassembler* sdd = new EDDisassembler(key);
+    return i->second;  
+  }
+  else {
+    EDDisassembler *sdd = new EDDisassembler(key);
     if (!sdd->valid()) {
       delete sdd;
       return NULL;
@@ -116,10 +123,7 @@ EDDisassembler *EDDisassembler::getDisassembler(Triple::ArchType arch,
   }
   
   return NULL;
-}
-
-EDDisassembler *EDDisassembler::getDisassembler(StringRef str,
-                                                AssemblySyntax syntax) {
+    
   return getDisassembler(Triple(str).getArch(), syntax);
 }
 
@@ -127,21 +131,20 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   Valid(false), 
   HasSemantics(false), 
   ErrorStream(nulls()), 
-  Key(key) {
-  const char *triple = tripleFromArch(key.Arch);
-    
-  if (!triple)
+  Key(key),
+  TgtTriple(key.Triple.c_str()) {        
+  if (TgtTriple.getArch() == Triple::InvalidArch)
     return;
   
-  LLVMSyntaxVariant = getLLVMSyntaxVariant(key.Arch, key.Syntax);
+  LLVMSyntaxVariant = getLLVMSyntaxVariant(TgtTriple.getArch(), key.Syntax);
   
   if (LLVMSyntaxVariant < 0)
     return;
   
-  std::string tripleString(triple);
+  std::string tripleString(key.Triple);
   std::string errorString;
   
-  Tgt = TargetRegistry::lookupTarget(tripleString, 
+  Tgt = TargetRegistry::lookupTarget(key.Triple, 
                                      errorString);
   
   if (!Tgt)
@@ -260,7 +263,7 @@ void EDDisassembler::initMaps(const MCRegisterInfo &registerInfo) {
     RegRMap[registerName] = registerIndex;
   }
   
-  switch (Key.Arch) {
+  switch (TgtTriple.getArch()) {
   default:
     break;
   case Triple::x86:
@@ -328,7 +331,7 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
                               const std::string &str) {
   int ret = 0;
   
-  switch (Key.Arch) {
+  switch (TgtTriple.getArch()) {
   default:
     return -1;
   case Triple::x86:
@@ -353,8 +356,7 @@ int EDDisassembler::parseInst(SmallVectorImpl<MCParsedAsmOperand*> &operands,
                                                          context, *streamer,
                                                          *AsmInfo));
 
-  StringRef triple = tripleFromArch(Key.Arch);
-  OwningPtr<MCSubtargetInfo> STI(Tgt->createMCSubtargetInfo(triple, "", ""));
+  OwningPtr<MCSubtargetInfo> STI(Tgt->createMCSubtargetInfo(Key.Triple.c_str(), "", ""));
   OwningPtr<MCTargetAsmParser>
     TargetParser(Tgt->createMCAsmParser(*STI, *genericParser));
   

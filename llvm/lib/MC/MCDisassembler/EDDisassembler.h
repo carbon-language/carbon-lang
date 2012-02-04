@@ -25,6 +25,7 @@
 
 #include <map>
 #include <set>
+#include <string>
 #include <vector>
 
 namespace llvm {
@@ -74,21 +75,21 @@ struct EDDisassembler {
   ///   pair
   struct CPUKey {
     /// The architecture type
-    llvm::Triple::ArchType Arch;
+    std::string Triple;
     
     /// The assembly syntax
     AssemblySyntax Syntax;
     
     /// operator== - Equality operator
     bool operator==(const CPUKey &key) const {
-      return (Arch == key.Arch &&
+      return (Triple == key.Triple &&
               Syntax == key.Syntax);
     }
     
     /// operator< - Less-than operator
     bool operator<(const CPUKey &key) const {
-      return ((Arch < key.Arch) ||
-              ((Arch == key.Arch) && Syntax < (key.Syntax)));
+      return ((Triple < key.Triple) ||
+              ((Triple == key.Triple) && Syntax < (key.Syntax)));
     }
   };
   
@@ -126,8 +127,10 @@ struct EDDisassembler {
   /// The stream to write errors to
   llvm::raw_ostream &ErrorStream;
 
-  /// The architecture/syntax pair for the current architecture
+  /// The triple/syntax pair for the current architecture
   CPUKey Key;
+  /// The Triple fur the current architecture
+  Triple TgtTriple;
   /// The LLVM target corresponding to the disassembler
   const llvm::Target *Tgt;
   /// The assembly information for the target architecture
