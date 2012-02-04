@@ -4,6 +4,6 @@
 namespace test0 {
   void test(id x) {
     if ([x foo]) {} // expected-error {{no known method '-foo'; cast the message send to the method's return type}}
-    [x foo];
+    [x foo]; // expected-error {{no known method '-foo'; cast the message send to the method's return type}}
   }
 }
