@@ -1105,7 +1105,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
 
   // Warn if the type is over-aligned and is being allocated by global operator
   // new.
-  if (OperatorNew &&
+  if (NumPlaceArgs == 0 && OperatorNew && 
       (OperatorNew->isImplicit() ||
        getSourceManager().isInSystemHeader(OperatorNew->getLocStart()))) {
     if (unsigned Align = Context.getPreferredTypeAlign(AllocType.getTypePtr())){

@@ -4,6 +4,7 @@
 // where the header here simulates <new>.
 #include <warn-new-overaligned-3.h>
 
+namespace test1 {
 struct Test {
   template <typename T>
   struct SeparateCacheLines {
@@ -15,6 +16,18 @@ struct Test {
 
 void helper() {
   Test t;
-  new Test;  // expected-warning {{type 'Test' requires 256 bytes of alignment and the default allocator only guarantees}}
-  new Test[10];  // expected-warning {{type 'Test' requires 256 bytes of alignment and the default allocator only guarantees}}
+  new Test;  // expected-warning {{type 'test1::Test' requires 256 bytes of alignment and the default allocator only guarantees}}
+  new Test[10];  // expected-warning {{type 'test1::Test' requires 256 bytes of alignment and the default allocator only guarantees}}
+}
+}
+
+namespace test2 {
+struct helper { int i __attribute__((aligned(256))); };
+
+struct Placement {
+  Placement() {
+    new (d) helper();
+  }
+  helper *d;
+};
 }

@@ -10,3 +10,10 @@ void* operator new[](unsigned long) {
   return 0;
 }
 
+void* operator new(unsigned long, void *) {
+  return 0;
+}
+
+void* operator new[](unsigned long, void *) {
+  return 0;
+}
