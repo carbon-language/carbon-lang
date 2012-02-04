@@ -116,8 +116,7 @@ void check_NSLocalizedString() {
   [Foo fooWithFormat:NSLocalizedString(@"format"), @"arg"]; // no-warning
 }
 
-// Not __WCHAR_TYPE__ because that's 2 byte on windows.
-typedef int wchar_t;
+typedef __WCHAR_TYPE__ wchar_t;
 
 // Test that %S, %C, %ls check for 16 bit types in ObjC strings, as described at
 // http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/Strings/Articles/formatSpecifiers.html#//apple_ref/doc/uid/TP40004265
