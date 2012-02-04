@@ -23,91 +23,87 @@
 
 namespace clang {
 
-class PartialDiagnostic {
-public:
+struct PartialDiagnosticStorage {
+  PartialDiagnosticStorage() : NumDiagArgs(0), NumDiagRanges(0) { }
+
   enum {
-      // The MaxArguments and MaxFixItHints member enum values from
-      // DiagnosticsEngine are private but DiagnosticsEngine declares
-      // PartialDiagnostic a friend.  These enum values are redeclared
-      // here so that the nested Storage class below can access them.
+      /// MaxArguments - The maximum number of arguments we can hold. We
+      /// currently only support up to 10 arguments (%0-%9).
+      /// A single diagnostic with more than that almost certainly has to
+      /// be simplified anyway.
       MaxArguments = DiagnosticsEngine::MaxArguments
   };
 
-  struct Storage {
-    Storage() : NumDiagArgs(0), NumDiagRanges(0) { }
+  /// NumDiagArgs - This contains the number of entries in Arguments.
+  unsigned char NumDiagArgs;
 
-    enum {
-        /// MaxArguments - The maximum number of arguments we can hold. We
-        /// currently only support up to 10 arguments (%0-%9).
-        /// A single diagnostic with more than that almost certainly has to
-        /// be simplified anyway.
-        MaxArguments = PartialDiagnostic::MaxArguments
-    };
+  /// NumDiagRanges - This is the number of ranges in the DiagRanges array.
+  unsigned char NumDiagRanges;
 
-    /// NumDiagArgs - This contains the number of entries in Arguments.
-    unsigned char NumDiagArgs;
+  /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
+  /// values, with one for each argument.  This specifies whether the argument
+  /// is in DiagArgumentsStr or in DiagArguments.
+  unsigned char DiagArgumentsKind[MaxArguments];
 
-    /// NumDiagRanges - This is the number of ranges in the DiagRanges array.
-    unsigned char NumDiagRanges;
+  /// DiagArgumentsVal - The values for the various substitution positions.
+  /// This is used when the argument is not an std::string. The specific value
+  /// is mangled into an intptr_t and the interpretation depends on exactly
+  /// what sort of argument kind it is.
+  intptr_t DiagArgumentsVal[MaxArguments];
 
-    /// DiagArgumentsKind - This is an array of ArgumentKind::ArgumentKind enum
-    /// values, with one for each argument.  This specifies whether the argument
-    /// is in DiagArgumentsStr or in DiagArguments.
-    unsigned char DiagArgumentsKind[MaxArguments];
+  /// \brief The values for the various substitution positions that have
+  /// string arguments.
+  std::string DiagArgumentsStr[MaxArguments];
 
-    /// DiagArgumentsVal - The values for the various substitution positions.
-    /// This is used when the argument is not an std::string. The specific value
-    /// is mangled into an intptr_t and the interpretation depends on exactly
-    /// what sort of argument kind it is.
-    intptr_t DiagArgumentsVal[MaxArguments];
+  /// DiagRanges - The list of ranges added to this diagnostic.  It currently
+  /// only support 10 ranges, could easily be extended if needed.
+  CharSourceRange DiagRanges[10];
 
-    /// \brief The values for the various substitution positions that have
-    /// string arguments.
-    std::string DiagArgumentsStr[MaxArguments];
+  /// FixItHints - If valid, provides a hint with some code
+  /// to insert, remove, or modify at a particular position.
+  SmallVector<FixItHint, 6>  FixItHints;
+};
 
-    /// DiagRanges - The list of ranges added to this diagnostic.  It currently
-    /// only support 10 ranges, could easily be extended if needed.
-    CharSourceRange DiagRanges[10];
+/// \brief An allocator for Storage objects, which uses a small cache to
+/// objects, used to reduce malloc()/free() traffic for partial diagnostics.
+class PartialDiagnosticStorageAllocator {
+  static const unsigned NumCached = 16;
+  typedef PartialDiagnosticStorage Storage;
+  Storage Cached[NumCached];
+  Storage *FreeList[NumCached];
+  unsigned NumFreeListEntries;
 
-    /// FixItHints - If valid, provides a hint with some code
-    /// to insert, remove, or modify at a particular position.
-    SmallVector<FixItHint, 6>  FixItHints;
-  };
+public:
+  PartialDiagnosticStorageAllocator();
+  ~PartialDiagnosticStorageAllocator();
 
-  /// \brief An allocator for Storage objects, which uses a small cache to
-  /// objects, used to reduce malloc()/free() traffic for partial diagnostics.
-  class StorageAllocator {
-    static const unsigned NumCached = 16;
-    Storage Cached[NumCached];
-    Storage *FreeList[NumCached];
-    unsigned NumFreeListEntries;
+  /// \brief Allocate new storage.
+  Storage *Allocate() {
+    if (NumFreeListEntries == 0)
+      return new Storage;
 
-  public:
-    StorageAllocator();
-    ~StorageAllocator();
+    Storage *Result = FreeList[--NumFreeListEntries];
+    Result->NumDiagArgs = 0;
+    Result->NumDiagRanges = 0;
+    Result->FixItHints.clear();
+    return Result;
+  }
 
-    /// \brief Allocate new storage.
-    Storage *Allocate() {
-      if (NumFreeListEntries == 0)
-        return new Storage;
-
-      Storage *Result = FreeList[--NumFreeListEntries];
-      Result->NumDiagArgs = 0;
-      Result->NumDiagRanges = 0;
-      Result->FixItHints.clear();
-      return Result;
+  /// \brief Free the given storage object.
+  void Deallocate(Storage *S) {
+    if (S >= Cached && S <= Cached + NumCached) {
+      FreeList[NumFreeListEntries++] = S;
+      return;
     }
 
-    /// \brief Free the given storage object.
-    void Deallocate(Storage *S) {
-      if (S >= Cached && S <= Cached + NumCached) {
-        FreeList[NumFreeListEntries++] = S;
-        return;
-      }
+    delete S;
+  }
+};
 
-      delete S;
-    }
-  };
+class PartialDiagnostic {
+public:
+  typedef PartialDiagnosticStorage Storage;
+  typedef PartialDiagnosticStorageAllocator StorageAllocator;
 
 private:
   // NOTE: Sema assumes that PartialDiagnostic is location-invariant

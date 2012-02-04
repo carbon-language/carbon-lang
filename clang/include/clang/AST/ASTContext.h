@@ -49,6 +49,7 @@ namespace clang {
   class ExternalASTSource;
   class ASTMutationListener;
   class IdentifierTable;
+  class PartialDiagnosticStorageAllocator;
   class SelectorTable;
   class SourceManager;
   class TargetInfo;
@@ -346,7 +347,7 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   mutable llvm::BumpPtrAllocator BumpAlloc;
 
   /// \brief Allocator for partial diagnostics.
-  PartialDiagnostic::StorageAllocator DiagAllocator;
+  PartialDiagnosticStorageAllocator *DiagAllocator;
 
   /// \brief The current C++ ABI.
   llvm::OwningPtr<CXXABI> ABI;
@@ -391,8 +392,8 @@ public:
   /// Return the total memory used for various side tables.
   size_t getSideTableAllocatedMemory() const;
   
-  PartialDiagnostic::StorageAllocator &getDiagAllocator() {
-    return DiagAllocator;
+  PartialDiagnosticStorageAllocator &getDiagAllocator() {
+    return *DiagAllocator;
   }
 
   const TargetInfo &getTargetInfo() const { return *Target; }

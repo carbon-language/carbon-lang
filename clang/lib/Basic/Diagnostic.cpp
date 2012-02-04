@@ -842,13 +842,13 @@ bool DiagnosticConsumer::IncludeInDiagnosticCounts() const { return true; }
 
 void IgnoringDiagConsumer::anchor() { }
 
-PartialDiagnostic::StorageAllocator::StorageAllocator() {
+PartialDiagnosticStorageAllocator::PartialDiagnosticStorageAllocator() {
   for (unsigned I = 0; I != NumCached; ++I)
     FreeList[I] = Cached + I;
   NumFreeListEntries = NumCached;
 }
 
-PartialDiagnostic::StorageAllocator::~StorageAllocator() {
+PartialDiagnosticStorageAllocator::~PartialDiagnosticStorageAllocator() {
   // Don't assert if we are in a CrashRecovery context, as this
   // invariant may be invalidated during a crash.
   assert((NumFreeListEntries == NumCached || llvm::CrashRecoveryContext::isRecoveringFromCrash()) && "A partial is on the lamb");
