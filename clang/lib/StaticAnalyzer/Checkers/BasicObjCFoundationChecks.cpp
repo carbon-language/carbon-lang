@@ -28,6 +28,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/ASTContext.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace clang;
 using namespace ento;

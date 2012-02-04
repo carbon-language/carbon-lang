@@ -39,8 +39,7 @@
 #include "clang/AST/TypeVisitor.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
-#include "llvm/ADT/SmallVector.h"
-#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace clang;
 

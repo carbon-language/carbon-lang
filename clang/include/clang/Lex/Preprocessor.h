@@ -32,6 +32,10 @@
 #include "llvm/Support/Allocator.h"
 #include <vector>
 
+namespace llvm {
+  template<unsigned InternalLen> class SmallString;
+}
+
 namespace clang {
 
 class SourceManager;

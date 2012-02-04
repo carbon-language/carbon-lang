@@ -18,6 +18,7 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Sema/PrettyDeclStackTrace.h"
+#include "llvm/ADT/SmallString.h"
 #include "RAIIObjectsForParser.h"
 using namespace clang;
 

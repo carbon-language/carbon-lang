@@ -17,6 +17,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/Lex/Lexer.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 raw_ostream &RewriteBuffer::write(raw_ostream &os) const {

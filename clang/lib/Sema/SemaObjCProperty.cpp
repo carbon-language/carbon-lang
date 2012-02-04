@@ -19,6 +19,7 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/AST/ASTMutationListener.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace clang;
 

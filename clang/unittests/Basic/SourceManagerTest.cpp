@@ -16,6 +16,7 @@
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Config/config.h"
 
 #include "gtest/gtest.h"

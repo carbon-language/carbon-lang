@@ -22,6 +22,7 @@
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/SmallString.h"
 #include <algorithm>
 #include <cctype>
 
@@ -40,10 +41,9 @@ static void printIntegral(const TemplateArgument &TemplArg,
   if (T->isBooleanType()) {
     Out << (Val->getBoolValue() ? "true" : "false");
   } else if (T->isCharType()) {
-    const unsigned char Ch = Val->getZExtValue();
-    const std::string Str(1, Ch);
+    const char Ch = Val->getZExtValue();
     Out << ((Ch == '\'') ? "'\\" : "'");
-    Out.write_escaped(Str, /*UseHexEscapes=*/ true);
+    Out.write_escaped(StringRef(&Ch, 1), /*UseHexEscapes=*/ true);
     Out << "'";
   } else {
     Out << Val->toString(10);

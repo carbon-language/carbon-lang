@@ -21,6 +21,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
 #include "llvm/ADT/ImmutableMap.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 using namespace clang;
 using namespace ento;

@@ -31,6 +31,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/ImmutableList.h"
 #include "llvm/ADT/ImmutableMap.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
 #include <cstdarg>

@@ -20,11 +20,9 @@
 #include "clang/Basic/LLVM.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/StringRef.h"
-#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
 #include <cassert>
-#include <cctype>
 #include <string>
 
 namespace llvm {
@@ -712,14 +710,7 @@ public:
   /// has been capitalized.
   static Selector constructSetterName(IdentifierTable &Idents,
                                       SelectorTable &SelTable,
-                                      const IdentifierInfo *Name) {
-    llvm::SmallString<100> SelectorName;
-    SelectorName = "set";
-    SelectorName += Name->getName();
-    SelectorName[3] = toupper(SelectorName[3]);
-    IdentifierInfo *SetterName = &Idents.get(SelectorName);
-    return SelTable.getUnarySelector(SetterName);
-  }
+                                      const IdentifierInfo *Name);
 };
 
 /// DeclarationNameExtra - Common base of the MultiKeywordSelector,

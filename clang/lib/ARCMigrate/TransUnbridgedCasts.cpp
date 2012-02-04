@@ -38,6 +38,7 @@
 #include "clang/Sema/SemaDiagnostic.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/Basic/SourceManager.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace clang;
 using namespace arcmt;

@@ -18,6 +18,7 @@
 #include "clang/AST/DeclTemplate.h"
 #include "clang/Lex/Preprocessor.h"
 #include "clang-c/Index.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/Twine.h"
 #include "llvm/Support/raw_ostream.h"

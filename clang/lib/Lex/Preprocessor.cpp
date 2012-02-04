@@ -40,7 +40,7 @@
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/APFloat.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Capacity.h"

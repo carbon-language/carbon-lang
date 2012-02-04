@@ -20,6 +20,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/AST/TypeLoc.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace clang;
 using namespace ento;

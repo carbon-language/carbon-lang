@@ -17,7 +17,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Lex/LexDiagnostic.h"
-#include "llvm/ADT/SmallVector.h"
+#include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 

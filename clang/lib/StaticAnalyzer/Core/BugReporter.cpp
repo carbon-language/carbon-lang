@@ -27,6 +27,7 @@
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <queue>

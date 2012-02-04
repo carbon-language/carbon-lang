@@ -19,6 +19,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace clang;
 using namespace ento;

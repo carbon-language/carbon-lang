@@ -19,6 +19,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace clang;
 using namespace ento;

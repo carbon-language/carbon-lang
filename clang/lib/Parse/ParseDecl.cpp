@@ -19,6 +19,7 @@
 #include "clang/Sema/PrettyDeclStackTrace.h"
 #include "RAIIObjectsForParser.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 using namespace clang;
 

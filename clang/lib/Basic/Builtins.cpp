@@ -15,6 +15,7 @@
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/LangOptions.h"
+#include "llvm/ADT/SmallVector.h"
 using namespace clang;
 
 static const Builtin::Info BuiltinInfo[] = {

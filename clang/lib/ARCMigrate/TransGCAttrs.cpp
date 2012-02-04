@@ -13,6 +13,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Analysis/Support/SaveAndRestore.h"
 #include "clang/Sema/SemaDiagnostic.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/TinyPtrVector.h"
 
 using namespace clang;

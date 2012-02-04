@@ -30,6 +30,7 @@
 #include "clang/AST/StmtObjC.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/BitVector.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include "clang/Basic/TargetBuiltins.h"

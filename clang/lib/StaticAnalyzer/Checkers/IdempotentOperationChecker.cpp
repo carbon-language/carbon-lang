@@ -57,6 +57,7 @@
 #include "clang/AST/Stmt.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/Support/ErrorHandling.h"
 

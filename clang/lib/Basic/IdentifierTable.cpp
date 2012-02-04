@@ -16,7 +16,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/DenseMap.h"
-#include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringSwitch.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -452,6 +452,18 @@ namespace {
 
 static SelectorTableImpl &getSelectorTableImpl(void *P) {
   return *static_cast<SelectorTableImpl*>(P);
+}
+
+/*static*/ Selector
+SelectorTable::constructSetterName(IdentifierTable &Idents,
+                                   SelectorTable &SelTable,
+                                   const IdentifierInfo *Name) {
+  llvm::SmallString<100> SelectorName;
+  SelectorName = "set";
+  SelectorName += Name->getName();
+  SelectorName[3] = toupper(SelectorName[3]);
+  IdentifierInfo *SetterName = &Idents.get(SelectorName);
+  return SelTable.getUnarySelector(SetterName);
 }
 
 size_t SelectorTable::getTotalMemory() const {

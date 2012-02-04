@@ -27,6 +27,7 @@
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "llvm/ADT/SmallBitVector.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
 using namespace clang;
 using namespace sema;

@@ -23,6 +23,7 @@
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ParentMap.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace clang;
 using namespace ento;

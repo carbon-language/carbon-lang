@@ -11,6 +11,7 @@
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/FrontendDiagnostic.h"
 #include "clang/Lex/Preprocessor.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace clang;
 

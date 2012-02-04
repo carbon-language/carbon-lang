@@ -19,6 +19,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace clang;
 using namespace ento;

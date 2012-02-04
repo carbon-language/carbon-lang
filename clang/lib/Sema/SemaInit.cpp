@@ -22,6 +22,7 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/TypeLoc.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>

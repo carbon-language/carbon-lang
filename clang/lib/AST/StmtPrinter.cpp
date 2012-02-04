@@ -17,9 +17,9 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/PrettyPrinter.h"
-#include "llvm/Support/Format.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/ExprCXX.h"
+#include "llvm/ADT/SmallString.h"
 using namespace clang;
 
 //===----------------------------------------------------------------------===//
@@ -666,7 +666,8 @@ void StmtPrinter::VisitCharacterLiteral(CharacterLiteral *Node) {
     if (value < 256 && isprint(value)) {
       OS << "'" << (char)value << "'";
     } else if (value < 256) {
-      OS << "'\\x" << llvm::format("%x", value) << "'";
+      OS << "'\\x";
+      OS.write_hex(value) << "'";
     } else {
       // FIXME what to really do here?
       OS << value;

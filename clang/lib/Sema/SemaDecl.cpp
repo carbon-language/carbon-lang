@@ -39,6 +39,7 @@
 #include "clang/Lex/Preprocessor.h"
 #include "clang/Lex/HeaderSearch.h"
 #include "clang/Lex/ModuleLoader.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/Triple.h"
 #include <algorithm>
 #include <cstring>

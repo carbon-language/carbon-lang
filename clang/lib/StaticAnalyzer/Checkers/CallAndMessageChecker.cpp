@@ -20,6 +20,7 @@
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/AST/ParentMap.h"
 #include "clang/Basic/TargetInfo.h"
+#include "llvm/ADT/SmallString.h"
 
 using namespace clang;
 using namespace ento;

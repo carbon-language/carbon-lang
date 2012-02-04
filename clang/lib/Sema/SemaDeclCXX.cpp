@@ -32,6 +32,7 @@
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Lex/Preprocessor.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include <map>
 #include <set>

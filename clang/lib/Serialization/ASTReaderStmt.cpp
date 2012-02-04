@@ -16,6 +16,7 @@
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
 #include "clang/AST/StmtVisitor.h"
+#include "llvm/ADT/SmallString.h"
 using namespace clang;
 using namespace clang::serialization;
 
