@@ -17,6 +17,7 @@
 #include "clang/Rewrite/HTMLRewrite.h"
 #include "clang/Lex/TokenConcatenation.h"
 #include "clang/Lex/Preprocessor.h"
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/OwningPtr.h"

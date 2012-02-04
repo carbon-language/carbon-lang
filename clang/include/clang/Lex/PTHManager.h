@@ -17,7 +17,6 @@
 #include "clang/Lex/PTHLexer.h"
 #include "clang/Basic/LangOptions.h"
 #include "clang/Basic/IdentifierTable.h"
-#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/Support/Allocator.h"
 #include <string>

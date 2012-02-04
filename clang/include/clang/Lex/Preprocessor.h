@@ -21,7 +21,6 @@
 #include "clang/Lex/TokenLexer.h"
 #include "clang/Lex/PTHManager.h"
 #include "clang/Basic/Builtins.h"
-#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/SourceLocation.h"
 #include "llvm/ADT/DenseMap.h"
@@ -57,7 +56,7 @@ class ModuleLoader;
 /// like the #include stack, token expansion, etc.
 ///
 class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
-  DiagnosticsEngine        *Diags;
+  DiagnosticsEngine *Diags;
   LangOptions       &Features;
   const TargetInfo  *Target;
   FileManager       &FileMgr;
@@ -725,12 +724,7 @@ public:
   bool isCodeCompletionReached() const { return CodeCompletionReached; }
 
   /// \brief Note that we hit the code-completion point.
-  void setCodeCompletionReached() {
-    assert(isCodeCompletionEnabled() && "Code-completion not enabled!");
-    CodeCompletionReached = true;
-    // Silence any diagnostics that occur after we hit the code-completion.
-    getDiagnostics().setSuppressAllDiagnostics(true);
-  }
+  void setCodeCompletionReached();
 
   /// \brief The location of the currently-active #pragma clang
   /// arc_cf_code_audited begin.  Returns an invalid location if there
@@ -760,13 +754,9 @@ public:
   /// Diag - Forwarding function for diagnostics.  This emits a diagnostic at
   /// the specified Token's location, translating the token's start
   /// position in the current buffer into a SourcePosition object for rendering.
-  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) const {
-    return Diags->Report(Loc, DiagID);
-  }
+  DiagnosticBuilder Diag(SourceLocation Loc, unsigned DiagID) const;
 
-  DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID) const {
-    return Diags->Report(Tok.getLocation(), DiagID);
-  }
+  DiagnosticBuilder Diag(const Token &Tok, unsigned DiagID) const;
 
   /// getSpelling() - Return the 'spelling' of the token at the given
   /// location; does not go up to the spelling location or down to the

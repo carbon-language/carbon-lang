@@ -128,7 +128,7 @@ public:
   virtual void PragmaDiagnosticPop(SourceLocation Loc,
                                    StringRef Namespace);
   virtual void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
-                                diag::Mapping Map, StringRef Str);
+                                unsigned Map, StringRef Str);
 
   bool HandleFirstTokOnLine(Token &Tok);
   bool MoveToLine(SourceLocation Loc) {
@@ -385,10 +385,10 @@ PragmaDiagnosticPop(SourceLocation Loc, StringRef Namespace) {
 
 void PrintPPOutputPPCallbacks::
 PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
-                 diag::Mapping Map, StringRef Str) {
+                 unsigned Map, StringRef Str) {
   MoveToLine(Loc);
   OS << "#pragma " << Namespace << " diagnostic ";
-  switch (Map) {
+  switch ((diag::Mapping)Map) {
   case diag::MAP_WARNING:
     OS << "warning";
     break;
