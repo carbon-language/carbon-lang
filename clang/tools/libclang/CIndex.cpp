@@ -560,6 +560,20 @@ bool CursorVisitor::VisitDeclContext(DeclContext *DC) {
     if (D->getLexicalDeclContext() != DC)
       continue;
     CXCursor Cursor = MakeCXCursor(D, TU, RegionOfInterest);
+
+    // FIXME: ObjCClassRef/ObjCProtocolRef for forward class/protocol
+    // declarations is a mismatch with the compiler semantics.
+    if (Cursor.kind == CXCursor_ObjCInterfaceDecl) {
+      ObjCInterfaceDecl *ID = cast<ObjCInterfaceDecl>(D);
+      if (!ID->isThisDeclarationADefinition())
+        Cursor = MakeCursorObjCClassRef(ID, ID->getLocation(), TU);
+
+    } else if (Cursor.kind == CXCursor_ObjCProtocolDecl) {
+      ObjCProtocolDecl *PD = cast<ObjCProtocolDecl>(D);
+      if (!PD->isThisDeclarationADefinition())
+        Cursor = MakeCursorObjCProtocolRef(PD, PD->getLocation(), TU);
+    }
+
     const llvm::Optional<bool> &V = shouldVisitCursor(Cursor);
     if (!V.hasValue())
       continue;
