@@ -15,6 +15,7 @@
 #ifndef CLANG_FRONTEND_MULTIPLEXCONSUMER_H
 #define CLANG_FRONTEND_MULTIPLEXCONSUMER_H
 
+#include "clang/Basic/LLVM.h"
 #include "clang/Sema/SemaConsumer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <vector>
@@ -28,7 +29,7 @@ class MultiplexASTDeserializationListener;
 class MultiplexConsumer : public SemaConsumer {
 public:
   // Takes ownership of the pointers in C.
-  MultiplexConsumer(const std::vector<ASTConsumer*>& C);
+  MultiplexConsumer(ArrayRef<ASTConsumer*> C);
   ~MultiplexConsumer();
 
   // ASTConsumer

@@ -148,8 +148,9 @@ void MultiplexASTMutationListener::StaticDataMemberInstantiated(
 }  // end namespace clang
 
 
-MultiplexConsumer::MultiplexConsumer(const std::vector<ASTConsumer*>& C)
-    : Consumers(C), MutationListener(0), DeserializationListener(0) {
+MultiplexConsumer::MultiplexConsumer(ArrayRef<ASTConsumer*> C)
+    : Consumers(C.begin(), C.end()),
+      MutationListener(0), DeserializationListener(0) {
   // Collect the mutation listeners and deserialization listeners of all
   // children, and create a multiplex listener each if so.
   std::vector<ASTMutationListener*> mutationListeners;
