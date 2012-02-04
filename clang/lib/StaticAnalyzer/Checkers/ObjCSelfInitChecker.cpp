@@ -34,17 +34,7 @@
 // receives a reference to 'self', the checker keeps track and passes the flags
 // for 1) and 2) to the new object that 'self' points to after the call.
 //
-// FIXME (rdar://7937506): In the case of:
-//   [super init];
-//   return self;
-// Have an extra PathDiagnosticPiece in the path that says "called [super init],
-// but didn't assign the result to self."
-
 //===----------------------------------------------------------------------===//
-
-// FIXME: Somehow stick the link to Apple's documentation about initializing
-// objects in the diagnostics.
-// http://developer.apple.com/library/mac/#documentation/Cocoa/Conceptual/ObjectiveC/Articles/ocAllocInit.html
 
 #include "ClangSACheckers.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
@@ -87,8 +77,8 @@ namespace {
 class InitSelfBug : public BugType {
   const std::string desc;
 public:
-  InitSelfBug() : BugType("missing \"self = [(super or self) init...]\"",
-                          "missing \"self = [(super or self) init...]\"") {}
+  InitSelfBug() : BugType("Missing \"self = [(super or self) init...]\"",
+                          "Core Foundation/Objective-C") {}
 };
 
 } // end anonymous namespace
@@ -194,7 +184,7 @@ void ObjCSelfInitChecker::checkPostObjCMessage(ObjCMessage msg,
 
   // FIXME: A callback should disable checkers at the start of functions.
   if (!shouldRunOnFunctionOrMethod(dyn_cast<NamedDecl>(
-                                     C.getCurrentAnalysisDeclContext()->getDecl())))
+                                C.getCurrentAnalysisDeclContext()->getDecl())))
     return;
 
   if (isInitMessage(msg)) {
@@ -221,7 +211,7 @@ void ObjCSelfInitChecker::checkPostStmt(const ObjCIvarRefExpr *E,
                                         CheckerContext &C) const {
   // FIXME: A callback should disable checkers at the start of functions.
   if (!shouldRunOnFunctionOrMethod(dyn_cast<NamedDecl>(
-                                     C.getCurrentAnalysisDeclContext()->getDecl())))
+                                 C.getCurrentAnalysisDeclContext()->getDecl())))
     return;
 
   checkForInvalidSelf(E->getBase(), C,
@@ -233,7 +223,7 @@ void ObjCSelfInitChecker::checkPreStmt(const ReturnStmt *S,
                                        CheckerContext &C) const {
   // FIXME: A callback should disable checkers at the start of functions.
   if (!shouldRunOnFunctionOrMethod(dyn_cast<NamedDecl>(
-                                     C.getCurrentAnalysisDeclContext()->getDecl())))
+                                 C.getCurrentAnalysisDeclContext()->getDecl())))
     return;
 
   checkForInvalidSelf(S->getRetValue(), C,

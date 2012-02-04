@@ -147,11 +147,27 @@ static id _commonInit(MyObj *self) {
 }
 
 -(id)init14 {
-  if (!(self = [super init]))
-    return 0;
   if (!(self = _commonInit(self)))
     return 0;
   return self;
+}
+
+-(id)init15 {
+  if (!(self = [super init]))
+    return 0;
+  return self;
+}
+
+-(id)init16 {
+  somePtr = [super init];
+  self = somePtr;
+  myivar = 0; 
+  return self;
+}
+
+-(id)init17 {
+  somePtr = [super init];
+  myivar = 0; // expected-warning {{Instance variable used}}
 }
 
 -(void)doSomething {}
