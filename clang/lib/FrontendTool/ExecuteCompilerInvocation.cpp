@@ -114,7 +114,7 @@ static FrontendAction *CreateFrontendAction(CompilerInstance &CI) {
   // If there are any AST files to merge, create a frontend action
   // adaptor to perform the merge.
   if (!FEOpts.ASTMergeFiles.empty())
-    Act = new ASTMergeAction(Act, FEOpts.ASTMergeFiles[0]);
+    Act = new ASTMergeAction(Act, FEOpts.ASTMergeFiles);
 
   return Act;
 }
