@@ -58,6 +58,9 @@ public:
     virtual SymbolContextScope *
     GetSymbolContextScope();
 
+    virtual bool
+    GetDeclaration (Declaration &decl);
+
 protected:
     virtual bool
     UpdateValue ();

@@ -101,7 +101,7 @@ class ArrayTypesTestCase(TestBase):
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Sanity check the print representation of breakpoint.
-        bp = repr(breakpoint)
+        bp = str(breakpoint)
         self.expect(bp, msg="Breakpoint looks good", exe=False,
             substrs = ["file ='main.c'",
                        "line = %d" % self.line,
@@ -114,7 +114,7 @@ class ArrayTypesTestCase(TestBase):
         self.assertTrue(process, PROCESS_IS_VALID)
 
         # Sanity check the print representation of process.
-        proc = repr(process)
+        proc = str(process)
         self.expect(proc, msg="Process looks good", exe=False,
             substrs = ["state = stopped",
                        "executable = a.out"])
@@ -127,7 +127,7 @@ class ArrayTypesTestCase(TestBase):
                       stop_reason_to_str(thread.GetStopReason()))
 
         # Sanity check the print representation of thread.
-        thr = repr(thread)
+        thr = str(thread)
         self.expect(thr, "Thread looks good with stop reason = breakpoint", exe=False,
             substrs = ["tid = 0x%4.4x" % thread.GetThreadID()])
 
@@ -135,7 +135,7 @@ class ArrayTypesTestCase(TestBase):
         self.assertTrue(breakpoint.GetHitCount() == 1, BREAKPOINT_HIT_ONCE)
 
         # The breakpoint should be resolved by now.
-        bp = repr(breakpoint)
+        bp = str(breakpoint)
         self.expect(bp, "Breakpoint looks good and is resolved", exe=False,
             substrs = ["file ='main.c'",
                        "line = %d" % self.line,
@@ -143,7 +143,7 @@ class ArrayTypesTestCase(TestBase):
 
         # Sanity check the print representation of frame.
         frame = thread.GetFrameAtIndex(0)
-        frm = repr(frame)
+        frm = str(frame)
         self.expect(frm,
                     "Frame looks good with correct index %d" % frame.GetFrameID(),
                     exe=False,
@@ -152,7 +152,7 @@ class ArrayTypesTestCase(TestBase):
         # Lookup the "strings" string array variable and sanity check its print
         # representation.
         variable = frame.FindVariable("strings")
-        var = repr(variable)
+        var = str(variable)
         self.expect(var, "Variable for 'strings' looks good with correct name", exe=False,
             substrs = ["%s" % variable.GetName()])
         self.DebugSBValue(variable)

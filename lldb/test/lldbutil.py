@@ -459,7 +459,7 @@ def print_stacktraces(process, string_buffer = False):
 
     output = StringIO.StringIO() if string_buffer else sys.stdout
 
-    print >> output, "Stack traces for " + repr(process)
+    print >> output, "Stack traces for " + str(process)
 
     for thread in process:
         print >> output, print_stacktrace(thread, string_buffer=True)
@@ -516,7 +516,7 @@ def print_registers(frame, string_buffer = False):
 
     output = StringIO.StringIO() if string_buffer else sys.stdout
 
-    print >> output, "Register sets for " + repr(frame)
+    print >> output, "Register sets for " + str(frame)
 
     registerSet = frame.GetRegisters() # Return type of SBValueList.
     print >> output, "Frame registers (size of register set = %d):" % registerSet.GetSize()

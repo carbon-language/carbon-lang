@@ -34,6 +34,14 @@
 
 using namespace lldb_private;
 
+lldb::ValueObjectSP
+ValueObjectCast::Create (ValueObject &parent, 
+                         const ConstString &name, 
+                         const ClangASTType &cast_type)
+{
+    ValueObjectCast *cast_valobj_ptr = new ValueObjectCast (parent, name, cast_type);
+    return cast_valobj_ptr->GetSP();
+}
 
 ValueObjectCast::ValueObjectCast
 (

@@ -167,6 +167,9 @@ protected:
     const lldb_private::TypeImpl &
     ref () const;
     
+    lldb::TypeImplSP
+    GetSP ();
+
     void
     SetSP (const lldb::TypeImplSP &type_impl_sp);
 #endif

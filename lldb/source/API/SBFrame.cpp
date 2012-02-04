@@ -483,7 +483,7 @@ SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dyn
                                                                              StackFrame::eExpressionPathOptionCheckPtrVsMember,
                                                                              var_sp,
                                                                              error));
-        *sb_value = value_sp;
+        sb_value.SetSP(value_sp);
     }
     return sb_value;
 }
@@ -507,6 +507,7 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
 {
     VariableSP var_sp;
     SBValue sb_value;
+    ValueObjectSP value_sp;
     StackFrameSP frame_sp(GetFrameSP());
     if (frame_sp && name && name[0])
     {
@@ -530,14 +531,17 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
         }
 
         if (var_sp)
-            *sb_value = ValueObjectSP (frame_sp->GetValueObjectForFrameVariable(var_sp, use_dynamic));
+        {
+            value_sp = frame_sp->GetValueObjectForFrameVariable(var_sp, use_dynamic);
+            sb_value.SetSP(value_sp);
+        }
         
     }
     
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::FindVariable (name=\"%s\") => SBValue(%p)", 
-                     frame_sp.get(), name, sb_value.get());
+                     frame_sp.get(), name, value_sp.get());
 
     return sb_value;
 }
@@ -559,6 +563,7 @@ SBValue
 SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueType use_dynamic)
 {
     SBValue sb_value;
+    ValueObjectSP value_sp;
     StackFrameSP frame_sp(GetFrameSP());
     if (frame_sp && name && name[0])
     {
@@ -593,8 +598,8 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
                             variable_sp->GetScope() == value_type &&
                             variable_sp->GetName() == const_name)
                         {
-                            *sb_value = ValueObjectSP (frame_sp->GetValueObjectForFrameVariable(variable_sp, 
-                                                                                                   use_dynamic));
+                            value_sp = frame_sp->GetValueObjectForFrameVariable (variable_sp, use_dynamic);
+                            sb_value.SetSP (value_sp);
                             break;
                         }
                     }
@@ -615,7 +620,9 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
                             ((reg_info->name && strcasecmp (reg_info->name, name) == 0) ||
                              (reg_info->alt_name && strcasecmp (reg_info->alt_name, name) == 0)))
                         {
-                            *sb_value = ValueObjectRegister::Create (frame_sp.get(), reg_ctx, reg_idx);
+                            value_sp = ValueObjectRegister::Create (frame_sp.get(), reg_ctx, reg_idx);
+                            sb_value.SetSP (value_sp);
+                            break;
                         }
                     }
                 }
@@ -635,7 +642,9 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
                             ((reg_set->name && strcasecmp (reg_set->name, name) == 0) ||
                              (reg_set->short_name && strcasecmp (reg_set->short_name, name) == 0)))
                         {
-                            *sb_value = ValueObjectRegisterSet::Create (frame_sp.get(), reg_ctx, set_idx);
+                            value_sp = ValueObjectRegisterSet::Create (frame_sp.get(), reg_ctx, set_idx);
+                            sb_value.SetSP (value_sp);
+                            break;
                         }
                     }
                 }
@@ -647,7 +656,10 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
                 ConstString const_name(name);
                 ClangExpressionVariableSP expr_var_sp (frame_sp->GetThread().GetProcess().GetTarget().GetPersistentVariables().GetVariable (const_name));
                 if (expr_var_sp)
-                    *sb_value = expr_var_sp->GetValueObject();
+                {
+                    value_sp = expr_var_sp->GetValueObject();
+                    sb_value.SetSP (value_sp);
+                }
             }
             break;
 
@@ -659,7 +671,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::FindVariableInScope (name=\"%s\", value_type=%i) => SBValue(%p)", 
-                     frame_sp.get(), name, value_type, sb_value.get());
+                     frame_sp.get(), name, value_type, value_sp.get());
 
     
     return sb_value;
@@ -885,6 +897,7 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
 
     ExecutionResults exe_results;
     SBValue expr_result;
+    ValueObjectSP expr_value_sp;
 
     StackFrameSP frame_sp(GetFrameSP());
     if (log)
@@ -912,8 +925,8 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
                                                                                         unwind_on_error, 
                                                                                         keep_in_memory, 
                                                                                         fetch_dynamic_value, 
-                                                                                        *expr_result);
-        
+                                                                                        expr_value_sp);
+        expr_result.SetSP(expr_value_sp);
         Host::SetCrashDescription (NULL);
     }
     
@@ -925,7 +938,7 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
     if (log)
         log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p) (execution result=%d)", frame_sp.get(), 
                      expr, 
-                     expr_result.get(),
+                     expr_value_sp.get(),
                      exe_results);
 
     return expr_result;

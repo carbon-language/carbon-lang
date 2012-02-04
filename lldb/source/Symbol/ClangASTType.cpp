@@ -182,10 +182,9 @@ ClangASTType::GetArrayElementType (clang::ASTContext* ast,
 }
 
 lldb::clang_type_t
-ClangASTType::GetPointerType ()
+ClangASTType::GetPointerType () const
 {
-    return GetPointerType (m_ast,
-                           m_type);
+    return GetPointerType (m_ast, m_type);
 }
 
 lldb::clang_type_t

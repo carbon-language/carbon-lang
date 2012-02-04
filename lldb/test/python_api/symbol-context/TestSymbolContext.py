@@ -68,7 +68,7 @@ class SymbolContextAPITestCase(TestBase):
             substrs = [os.path.join(self.mydir, 'a.out')])
 
         compileUnit = context.GetCompileUnit()
-        self.expect(repr(compileUnit), "The compile unit should match", exe=False,
+        self.expect(str(compileUnit), "The compile unit should match", exe=False,
             substrs = [os.path.join(self.mydir, 'main.c')])
 
         function = context.GetFunction()

@@ -22,12 +22,12 @@ public:
 
     SBWatchpoint (const lldb::SBWatchpoint &rhs);
 
+    SBWatchpoint (const lldb::WatchpointSP &wp_sp);
+
     ~SBWatchpoint ();
 
-#ifndef SWIG
     const lldb::SBWatchpoint &
     operator = (const lldb::SBWatchpoint &rhs);
-#endif
 
     bool
     IsValid() const;
@@ -72,27 +72,20 @@ public:
     bool
     GetDescription (lldb::SBStream &description, DescriptionLevel level);
 
-#ifndef SWIG
-    SBWatchpoint (const lldb::WatchpointSP &wp_sp);
-#endif
+    void
+    Clear ();
+
+    lldb::WatchpointSP
+    GetSP () const;
+
+    void
+    SetSP (const lldb::WatchpointSP &sp);
 
 private:
     friend class SBTarget;
     friend class SBValue;
 
-#ifndef SWIG
-
-    lldb_private::Watchpoint *
-    operator->();
-
-    lldb_private::Watchpoint *
-    get();
-
-    lldb::WatchpointSP &
-    operator *();
-
-#endif
-
+    
     lldb::WatchpointSP m_opaque_sp;
 
 };

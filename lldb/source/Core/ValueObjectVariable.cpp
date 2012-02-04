@@ -276,3 +276,14 @@ ValueObjectVariable::GetSymbolContextScope()
         return m_variable_sp->GetSymbolContextScope();
     return NULL;
 }
+
+bool
+ValueObjectVariable::GetDeclaration (Declaration &decl)
+{
+    if (m_variable_sp)
+    {
+        decl = m_variable_sp->GetDeclaration();
+        return true;
+    }
+    return false;
+}

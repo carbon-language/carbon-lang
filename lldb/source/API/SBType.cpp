@@ -83,6 +83,13 @@ SBType::operator != (SBType &rhs)
             (rhs.m_opaque_sp->GetOpaqueQualType() != m_opaque_sp->GetOpaqueQualType());
 }
 
+lldb::TypeImplSP
+SBType::GetSP ()
+{
+    return m_opaque_sp;
+}
+
+
 void
 SBType::SetSP (const lldb::TypeImplSP &type_impl_sp)
 {

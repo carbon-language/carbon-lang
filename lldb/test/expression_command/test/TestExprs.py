@@ -94,7 +94,7 @@ class BasicExprCommandsTestCase(TestBase):
         self.assertTrue(breakpoint, VALID_BREAKPOINT)
 
         # Verify the breakpoint just created.
-        self.expect(repr(breakpoint), BREAKPOINT_CREATED, exe=False,
+        self.expect(str(breakpoint), BREAKPOINT_CREATED, exe=False,
             substrs = ['main.cpp',
                        str(self.line)])
 

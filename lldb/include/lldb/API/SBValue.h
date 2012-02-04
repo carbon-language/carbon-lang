@@ -355,27 +355,13 @@ protected:
     friend class SBValueList;
     friend class SBFrame;
 
-#ifndef SWIG
-    // Mimic shared pointer...
-    lldb_private::ValueObject *
-    get() const;
-
-    lldb_private::ValueObject *
-    operator->() const;
-
-    lldb::ValueObjectSP &
-    operator*();
-
-    const lldb::ValueObjectSP &
-    operator*() const;
-
-#endif
-
+    lldb::ValueObjectSP
+    GetSP () const;
+    
+    void
+    SetSP (const lldb::ValueObjectSP &sp);
+    
 private:
-    // Helper function for SBValue::Watch() and SBValue::WatchPointee().
-    lldb::SBWatchpoint
-    WatchValue(bool read, bool write, bool watch_pointee);
-
     lldb::ValueObjectSP m_opaque_sp;
 };
 

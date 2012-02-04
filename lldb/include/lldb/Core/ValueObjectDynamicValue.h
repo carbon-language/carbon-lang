@@ -22,6 +22,11 @@ namespace lldb_private {
     class ValueObjectCast : public ValueObject
     {
     public:
+        static lldb::ValueObjectSP
+        Create (ValueObject &parent, 
+                const ConstString &name, 
+                const ClangASTType &cast_type);
+
         virtual
         ~ValueObjectCast();
         
@@ -83,7 +88,6 @@ namespace lldb_private {
         ClangASTType m_cast_type;
         
     private:
-        friend class ValueObject;
         ValueObjectCast (ValueObject &parent, 
                          const ConstString &name, 
                          const ClangASTType &cast_type);

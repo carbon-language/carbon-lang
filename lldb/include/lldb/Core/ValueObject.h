@@ -518,6 +518,9 @@ public:
     virtual ConstString
     GetTypeName() = 0;
 
+    //------------------------------------------------------------------
+    // Sublasses can implement the functions below.
+    //------------------------------------------------------------------
     virtual lldb::LanguageType
     GetObjectRuntimeLanguage();
 
@@ -632,6 +635,10 @@ public:
             return m_parent->GetModule();
         return NULL;
     }
+    
+    virtual bool
+    GetDeclaration (Declaration &decl);
+
     //------------------------------------------------------------------
     // The functions below should NOT be modified by sublasses
     //------------------------------------------------------------------

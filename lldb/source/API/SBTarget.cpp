@@ -947,7 +947,7 @@ SBTarget::GetWatchpointAtIndex (uint32_t idx) const
     if (target_sp)
     {
         // The watchpoint list is thread safe, no need to lock
-        *sb_watchpoint = target_sp->GetWatchpointList().GetByIndex(idx);
+        sb_watchpoint.SetSP (target_sp->GetWatchpointList().GetByIndex(idx));
     }
     return sb_watchpoint;
 }
@@ -979,17 +979,19 @@ SBTarget::FindWatchpointByID (lldb::watch_id_t wp_id)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBWatchpoint sb_watchpoint;
+    lldb::WatchpointSP watchpoint_sp;
     TargetSP target_sp(GetSP());
     if (target_sp && wp_id != LLDB_INVALID_WATCH_ID)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
-        *sb_watchpoint = target_sp->GetWatchpointList().FindByID(wp_id);
+        watchpoint_sp = target_sp->GetWatchpointList().FindByID(wp_id);
+        sb_watchpoint.SetSP (watchpoint_sp);
     }
 
     if (log)
     {
         log->Printf ("SBTarget(%p)::FindWatchpointByID (bp_id=%d) => SBWatchpoint(%p)", 
-                     target_sp.get(), (uint32_t) wp_id, sb_watchpoint.get());
+                     target_sp.get(), (uint32_t) wp_id, watchpoint_sp.get());
     }
 
     return sb_watchpoint;
@@ -1001,19 +1003,24 @@ SBTarget::WatchAddress (lldb::addr_t addr, size_t size, bool read, bool write)
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     
     SBWatchpoint sb_watchpoint;
+    lldb::WatchpointSP watchpoint_sp;
     TargetSP target_sp(GetSP());
-    if (target_sp)
+    if (target_sp && (read || write) && addr != LLDB_INVALID_ADDRESS && size > 0)
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
-        uint32_t watch_type = (read ? LLDB_WATCH_TYPE_READ : 0) |
-            (write ? LLDB_WATCH_TYPE_WRITE : 0);
-        sb_watchpoint = target_sp->CreateWatchpoint(addr, size, watch_type);
+        uint32_t watch_type = 0;
+        if (read)
+            watch_type |= LLDB_WATCH_TYPE_READ;
+        if (write)
+            watch_type |= LLDB_WATCH_TYPE_WRITE;
+        watchpoint_sp = target_sp->CreateWatchpoint(addr, size, watch_type);
+        sb_watchpoint.SetSP (watchpoint_sp);
     }
     
     if (log)
     {
         log->Printf ("SBTarget(%p)::WatchAddress (addr=0x%llx, 0x%u) => SBWatchpoint(%p)", 
-                     target_sp.get(), addr, (uint32_t) size, sb_watchpoint.get());
+                     target_sp.get(), addr, (uint32_t) size, watchpoint_sp.get());
     }
     
     return sb_watchpoint;

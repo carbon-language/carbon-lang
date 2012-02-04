@@ -110,10 +110,11 @@ SBValueList::operator*() const
 void
 SBValueList::Append (const SBValue &val_obj)
 {
-    if (val_obj.get())
+    ValueObjectSP value_sp (val_obj.GetSP());
+    if (value_sp)
     {
         CreateIfNeeded ();
-        m_opaque_ap->Append (*val_obj);
+        m_opaque_ap->Append (value_sp);
     }
 }
 
@@ -147,15 +148,19 @@ SBValueList::GetValueAtIndex (uint32_t idx) const
     //    log->Printf ("SBValueList::GetValueAtIndex (uint32_t idx) idx = %d", idx);
 
     SBValue sb_value;
+    ValueObjectSP value_sp;
     if (m_opaque_ap.get())
-        *sb_value = m_opaque_ap->GetValueObjectAtIndex (idx);
+    {
+        value_sp = m_opaque_ap->GetValueObjectAtIndex (idx);
+        sb_value.SetSP (value_sp);
+    }
 
     if (log)
     {
         SBStream sstr;
         sb_value.GetDescription (sstr);
         log->Printf ("SBValueList::GetValueAtIndex (this.ap=%p, idx=%d) => SBValue (this.sp = %p, '%s')", 
-                     m_opaque_ap.get(), idx, sb_value.get(), sstr.GetData());
+                     m_opaque_ap.get(), idx, value_sp.get(), sstr.GetData());
     }
 
     return sb_value;
@@ -192,7 +197,7 @@ SBValueList::FindValueObjectByUID (lldb::user_id_t uid)
 {
     SBValue sb_value;
     if (m_opaque_ap.get())
-        *sb_value = m_opaque_ap->FindValueObjectByUID (uid);
+        sb_value.SetSP (m_opaque_ap->FindValueObjectByUID (uid));
     return sb_value;
 }
 

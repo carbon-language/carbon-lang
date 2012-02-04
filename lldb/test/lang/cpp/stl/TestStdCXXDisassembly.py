@@ -43,7 +43,7 @@ class StdCXXDisassembleTestCase(TestBase):
         process = target.GetProcess()
 
         # The process should be in a 'stopped' state.
-        self.expect(repr(process), STOPPED_DUE_TO_BREAKPOINT, exe=False,
+        self.expect(str(process), STOPPED_DUE_TO_BREAKPOINT, exe=False,
             substrs = ["a.out",
                        "stopped"])
 
@@ -61,7 +61,7 @@ class StdCXXDisassembleTestCase(TestBase):
             module = target.GetModuleAtIndex(i)
             fs = module.GetFileSpec()
             if (fs.GetFilename().startswith("libstdc++")):
-                lib_stdcxx = repr(fs)
+                lib_stdcxx = str(fs)
                 break
 
         # At this point, lib_stdcxx is the full path to the stdc++ library and
@@ -70,7 +70,7 @@ class StdCXXDisassembleTestCase(TestBase):
         self.expect(fs.GetFilename(), "Libraray StdC++ is located", exe=False,
             substrs = ["libstdc++"])
 
-        self.runCmd("image dump symtab %s" % repr(fs))
+        self.runCmd("image dump symtab %s" % str(fs))
         raw_output = self.res.GetOutput()
         # Now, look for every 'Code' symbol and feed its load address into the
         # command: 'disassemble -s load_address -e end_address', where the

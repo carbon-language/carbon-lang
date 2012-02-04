@@ -1551,6 +1551,13 @@ ValueObject::SetValueFromCString (const char *value_str)
     return true;
 }
 
+bool
+ValueObject::GetDeclaration (Declaration &decl)
+{
+    decl.Clear();
+    return false;
+}
+
 LanguageType
 ValueObject::GetObjectRuntimeLanguage ()
 {
@@ -3432,8 +3439,7 @@ ValueObject::AddressOf (Error &error)
 ValueObjectSP
 ValueObject::Cast (const ClangASTType &clang_ast_type)
 {
-    ValueObjectSP valobj_sp(new ValueObjectCast (*this, GetName(), clang_ast_type));
-    return valobj_sp;    
+    return ValueObjectCast::Create (*this, GetName(), clang_ast_type);
 }
 
 ValueObjectSP

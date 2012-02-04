@@ -69,15 +69,16 @@ SBWatchpoint::GetID ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     watch_id_t watch_id = LLDB_INVALID_WATCH_ID;
-    if (m_opaque_sp)
-        watch_id = m_opaque_sp->GetID();
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
+        watch_id = watchpoint_sp->GetID();
 
     if (log)
     {
         if (watch_id == LLDB_INVALID_WATCH_ID)
-            log->Printf ("SBWatchpoint(%p)::GetID () => LLDB_INVALID_WATCH_ID", m_opaque_sp.get());
+            log->Printf ("SBWatchpoint(%p)::GetID () => LLDB_INVALID_WATCH_ID", watchpoint_sp.get());
         else
-            log->Printf ("SBWatchpoint(%p)::GetID () => %u", m_opaque_sp.get(), watch_id);
+            log->Printf ("SBWatchpoint(%p)::GetID () => %u", watchpoint_sp.get(), watch_id);
     }
 
     return watch_id;
@@ -86,7 +87,8 @@ SBWatchpoint::GetID ()
 bool
 SBWatchpoint::IsValid() const
 {
-    if (m_opaque_sp && m_opaque_sp->GetError().Success())
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp && watchpoint_sp->GetError().Success())
         return true;
     return false;
 }
@@ -95,9 +97,10 @@ SBError
 SBWatchpoint::GetError ()
 {
     SBError sb_error;
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        sb_error.SetError(m_opaque_sp->GetError());
+        sb_error.SetError(watchpoint_sp->GetError());
     }
     return sb_error;
 }
@@ -107,10 +110,11 @@ SBWatchpoint::GetHardwareIndex ()
 {
     int32_t hw_index = -1;
 
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        hw_index = m_opaque_sp->GetHardwareIndex();
+        Mutex::Locker api_locker (watchpoint_sp->GetTarget().GetAPIMutex());
+        hw_index = watchpoint_sp->GetHardwareIndex();
     }
 
     return hw_index;
@@ -121,10 +125,11 @@ SBWatchpoint::GetWatchAddress ()
 {
     addr_t ret_addr = LLDB_INVALID_ADDRESS;
 
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        ret_addr = m_opaque_sp->GetLoadAddress();
+        Mutex::Locker api_locker (watchpoint_sp->GetTarget().GetAPIMutex());
+        ret_addr = watchpoint_sp->GetLoadAddress();
     }
 
     return ret_addr;
@@ -135,10 +140,11 @@ SBWatchpoint::GetWatchSize ()
 {
     size_t watch_size = 0;
 
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        watch_size = m_opaque_sp->GetByteSize();
+        Mutex::Locker api_locker (watchpoint_sp->GetTarget().GetAPIMutex());
+        watch_size = watchpoint_sp->GetByteSize();
     }
 
     return watch_size;
@@ -147,20 +153,22 @@ SBWatchpoint::GetWatchSize ()
 void
 SBWatchpoint::SetEnabled (bool enabled)
 {
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        m_opaque_sp->GetTarget().DisableWatchpointByID(m_opaque_sp->GetID());
+        Mutex::Locker api_locker (watchpoint_sp->GetTarget().GetAPIMutex());
+        watchpoint_sp->GetTarget().DisableWatchpointByID(watchpoint_sp->GetID());
     }
 }
 
 bool
 SBWatchpoint::IsEnabled ()
 {
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        return m_opaque_sp->IsEnabled();
+        Mutex::Locker api_locker (watchpoint_sp->GetTarget().GetAPIMutex());
+        return watchpoint_sp->IsEnabled();
     }
     else
         return false;
@@ -170,15 +178,16 @@ uint32_t
 SBWatchpoint::GetHitCount ()
 {
     uint32_t count = 0;
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        count = m_opaque_sp->GetHitCount();
+        Mutex::Locker api_locker (watchpoint_sp->GetTarget().GetAPIMutex());
+        count = watchpoint_sp->GetHitCount();
     }
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBWatchpoint(%p)::GetHitCount () => %u", m_opaque_sp.get(), count);
+        log->Printf ("SBWatchpoint(%p)::GetHitCount () => %u", watchpoint_sp.get(), count);
 
     return count;
 }
@@ -186,10 +195,11 @@ SBWatchpoint::GetHitCount ()
 uint32_t
 SBWatchpoint::GetIgnoreCount ()
 {
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        return m_opaque_sp->GetIgnoreCount();
+        Mutex::Locker api_locker (watchpoint_sp->GetTarget().GetAPIMutex());
+        return watchpoint_sp->GetIgnoreCount();
     }
     else
         return 0;
@@ -198,20 +208,22 @@ SBWatchpoint::GetIgnoreCount ()
 void
 SBWatchpoint::SetIgnoreCount (uint32_t n)
 {
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        m_opaque_sp->SetIgnoreCount (n);
+        Mutex::Locker api_locker (watchpoint_sp->GetTarget().GetAPIMutex());
+        watchpoint_sp->SetIgnoreCount (n);
     }
 }
 
 const char *
 SBWatchpoint::GetCondition ()
 {
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        return m_opaque_sp->GetConditionText ();
+        Mutex::Locker api_locker (watchpoint_sp->GetTarget().GetAPIMutex());
+        return watchpoint_sp->GetConditionText ();
     }
     return NULL;
 }
@@ -219,10 +231,11 @@ SBWatchpoint::GetCondition ()
 void
 SBWatchpoint::SetCondition (const char *condition)
 {
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        m_opaque_sp->SetCondition (condition);
+        Mutex::Locker api_locker (watchpoint_sp->GetTarget().GetAPIMutex());
+        watchpoint_sp->SetCondition (condition);
     }
 }
 
@@ -231,10 +244,11 @@ SBWatchpoint::GetDescription (SBStream &description, DescriptionLevel level)
 {
     Stream &strm = description.ref();
 
-    if (m_opaque_sp)
+    lldb::WatchpointSP watchpoint_sp(GetSP());
+    if (watchpoint_sp)
     {
-        Mutex::Locker api_locker (m_opaque_sp->GetTarget().GetAPIMutex());
-        m_opaque_sp->GetDescription (&strm, level);
+        Mutex::Locker api_locker (watchpoint_sp->GetTarget().GetAPIMutex());
+        watchpoint_sp->GetDescription (&strm, level);
         strm.EOL();
     }
     else
@@ -243,20 +257,20 @@ SBWatchpoint::GetDescription (SBStream &description, DescriptionLevel level)
     return true;
 }
 
-lldb_private::Watchpoint *
-SBWatchpoint::operator->()
+void
+SBWatchpoint::Clear ()
 {
-    return m_opaque_sp.get();
+    m_opaque_sp.reset();
 }
 
-lldb_private::Watchpoint *
-SBWatchpoint::get()
-{
-    return m_opaque_sp.get();
-}
-
-lldb::WatchpointSP &
-SBWatchpoint::operator *()
+lldb::WatchpointSP
+SBWatchpoint::GetSP () const
 {
     return m_opaque_sp;
+}
+
+void
+SBWatchpoint::SetSP (const lldb::WatchpointSP &sp)
+{
+    m_opaque_sp = sp;
 }

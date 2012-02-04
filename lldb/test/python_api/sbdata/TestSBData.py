@@ -53,9 +53,9 @@ class SBDataAPICase(TestBase):
         thread = process.GetThreadAtIndex(0)
 
         frame = thread.GetSelectedFrame()
-
+        print frame
         foobar = frame.FindVariable('foobar')
-
+        self.assertTrue(foobar.IsValid())
         if self.TraceOn():
             print foobar
 
@@ -98,6 +98,7 @@ class SBDataAPICase(TestBase):
         self.assertTrue(data.GetUnsignedInt32(error, offset) == 0, 'do not read beyond end')
 
         star_foobar = foobar.Dereference()
+        self.assertTrue(star_foobar.IsValid())
         
         data = star_foobar.GetData()
 
@@ -118,7 +119,7 @@ class SBDataAPICase(TestBase):
         nothing = foobar.CreateValueFromAddress("nothing", foobar_addr, star_foobar.GetType().GetBasicType(lldb.eBasicTypeInvalid))
 
         new_foobar = foobar.CreateValueFromAddress("f00", foobar_addr, star_foobar.GetType())
-
+        self.assertTrue(new_foobar.IsValid())
         if self.TraceOn():
             print new_foobar
         

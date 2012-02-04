@@ -301,7 +301,7 @@ public:
 						 uint32_t& stride);
     
     lldb::clang_type_t
-    GetPointerType ();
+    GetPointerType () const;
     
     static lldb::clang_type_t
     GetPointerType (clang::ASTContext *ast_context,
