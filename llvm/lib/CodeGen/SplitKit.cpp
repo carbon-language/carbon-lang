@@ -374,7 +374,7 @@ VNInfo *SplitEditor::defValue(unsigned RegIdx,
   LiveInterval *LI = Edit->get(RegIdx);
 
   // Create a new value.
-  VNInfo *VNI = LI->getNextValue(Idx, 0, LIS.getVNInfoAllocator());
+  VNInfo *VNI = LI->getNextValue(Idx, LIS.getVNInfoAllocator());
 
   // Use insert for lookup, so we can add missing values with a second lookup.
   std::pair<ValueMap::iterator, bool> InsP =
@@ -449,9 +449,7 @@ VNInfo *SplitEditor::defFromParent(unsigned RegIdx,
   }
 
   // Define the value in Reg.
-  VNInfo *VNI = defValue(RegIdx, ParentVNI, Def);
-  VNI->setCopy(CopyMI);
-  return VNI;
+  return defValue(RegIdx, ParentVNI, Def);
 }
 
 /// Create a new virtual register and live interval.
@@ -1053,7 +1051,6 @@ void SplitEditor::finish(SmallVectorImpl<unsigned> *LRMap) {
     unsigned RegIdx = RegAssign.lookup(ParentVNI->def);
     VNInfo *VNI = defValue(RegIdx, ParentVNI, ParentVNI->def);
     VNI->setIsPHIDef(ParentVNI->isPHIDef());
-    VNI->setCopy(ParentVNI->getCopy());
 
     // Force rematted values to be recomputed everywhere.
     // The new live ranges may be truncated.

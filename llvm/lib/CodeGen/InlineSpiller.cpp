@@ -644,15 +644,17 @@ void InlineSpiller::analyzeSiblingValues() {
       if (VNI->isUnused())
         continue;
       MachineInstr *DefMI = 0;
+      if (!VNI->isPHIDef()) {
+       DefMI = LIS.getInstructionFromIndex(VNI->def);
+       assert(DefMI && "No defining instruction");
+      }
       // Check possible sibling copies.
-      if (VNI->isPHIDef() || VNI->getCopy()) {
+      if (VNI->isPHIDef() || DefMI->isCopy()) {
         VNInfo *OrigVNI = OrigLI.getVNInfoAt(VNI->def);
         assert(OrigVNI && "Def outside original live range");
         if (OrigVNI->def != VNI->def)
           DefMI = traceSiblingValue(Reg, VNI, OrigVNI);
       }
-      if (!DefMI && !VNI->isPHIDef())
-        DefMI = LIS.getInstructionFromIndex(VNI->def);
       if (DefMI && Edit->checkRematerializable(VNI, DefMI, TII, AA)) {
         DEBUG(dbgs() << "Value " << PrintReg(Reg) << ':' << VNI->id << '@'
                      << VNI->def << " may remat from " << *DefMI);
@@ -905,7 +907,7 @@ bool InlineSpiller::reMaterializeFor(LiveInterval &VirtReg,
   }
   DEBUG(dbgs() << "\t        " << UseIdx << '\t' << *MI);
 
-  VNInfo *DefVNI = NewLI.getNextValue(DefIdx, 0, LIS.getVNInfoAllocator());
+  VNInfo *DefVNI = NewLI.getNextValue(DefIdx, LIS.getVNInfoAllocator());
   NewLI.addRange(LiveRange(DefIdx, UseIdx.getRegSlot(), DefVNI));
   DEBUG(dbgs() << "\tinterval: " << NewLI << '\n');
   ++NumRemats;
@@ -1079,8 +1081,7 @@ void InlineSpiller::insertReload(LiveInterval &NewLI,
   --MI; // Point to load instruction.
   SlotIndex LoadIdx = LIS.InsertMachineInstrInMaps(MI).getRegSlot();
   DEBUG(dbgs() << "\treload:  " << LoadIdx << '\t' << *MI);
-  VNInfo *LoadVNI = NewLI.getNextValue(LoadIdx, 0,
-                                       LIS.getVNInfoAllocator());
+  VNInfo *LoadVNI = NewLI.getNextValue(LoadIdx, LIS.getVNInfoAllocator());
   NewLI.addRange(LiveRange(LoadIdx, Idx, LoadVNI));
   ++NumReloads;
 }
@@ -1094,7 +1095,7 @@ void InlineSpiller::insertSpill(LiveInterval &NewLI, const LiveInterval &OldLI,
   --MI; // Point to store instruction.
   SlotIndex StoreIdx = LIS.InsertMachineInstrInMaps(MI).getRegSlot();
   DEBUG(dbgs() << "\tspilled: " << StoreIdx << '\t' << *MI);
-  VNInfo *StoreVNI = NewLI.getNextValue(Idx, 0, LIS.getVNInfoAllocator());
+  VNInfo *StoreVNI = NewLI.getNextValue(Idx, LIS.getVNInfoAllocator());
   NewLI.addRange(LiveRange(Idx, StoreIdx, StoreVNI));
   ++NumSpills;
 }
@@ -1205,7 +1206,7 @@ void InlineSpiller::spillAroundUses(unsigned Reg) {
      else {
        // This instruction defines a dead value.  We don't need to spill it,
        // but do create a live range for the dead value.
-       VNInfo *VNI = NewLI.getNextValue(Idx, 0, LIS.getVNInfoAllocator());
+       VNInfo *VNI = NewLI.getNextValue(Idx, LIS.getVNInfoAllocator());
        NewLI.addRange(LiveRange(Idx, Idx.getDeadSlot(), VNI));
      }
     }
@@ -1220,7 +1221,7 @@ void InlineSpiller::spillAll() {
   if (StackSlot == VirtRegMap::NO_STACK_SLOT) {
     StackSlot = VRM.assignVirt2StackSlot(Original);
     StackInt = &LSS.getOrCreateInterval(StackSlot, MRI.getRegClass(Original));
-    StackInt->getNextValue(SlotIndex(), 0, LSS.getVNInfoAllocator());
+    StackInt->getNextValue(SlotIndex(), LSS.getVNInfoAllocator());
   } else
     StackInt = &LSS.getInterval(StackSlot);
 

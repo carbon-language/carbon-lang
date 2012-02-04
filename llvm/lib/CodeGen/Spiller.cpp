@@ -142,7 +142,7 @@ protected:
           lis->InsertMachineInstrInMaps(loadInstr).getRegSlot();
         SlotIndex endIndex = loadIndex.getNextIndex();
         VNInfo *loadVNI =
-          newLI->getNextValue(loadIndex, 0, lis->getVNInfoAllocator());
+          newLI->getNextValue(loadIndex, lis->getVNInfoAllocator());
         newLI->addRange(LiveRange(loadIndex, endIndex, loadVNI));
       }
 
@@ -155,7 +155,7 @@ protected:
           lis->InsertMachineInstrInMaps(storeInstr).getRegSlot();
         SlotIndex beginIndex = storeIndex.getPrevIndex();
         VNInfo *storeVNI =
-          newLI->getNextValue(beginIndex, 0, lis->getVNInfoAllocator());
+          newLI->getNextValue(beginIndex, lis->getVNInfoAllocator());
         newLI->addRange(LiveRange(beginIndex, storeIndex, storeVNI));
       }
 

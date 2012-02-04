@@ -298,8 +298,7 @@ namespace llvm {
     void handlePhysicalRegisterDef(MachineBasicBlock* mbb,
                                    MachineBasicBlock::iterator mi,
                                    SlotIndex MIIdx, MachineOperand& MO,
-                                   LiveInterval &interval,
-                                   MachineInstr *CopyMI);
+                                   LiveInterval &interval);
 
     /// handleLiveInRegister - Create interval for a livein register.
     void handleLiveInRegister(MachineBasicBlock* mbb,

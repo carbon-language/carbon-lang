@@ -48,7 +48,6 @@ namespace llvm {
       IS_UNUSED       = 1 << 3
     };
 
-    MachineInstr *copy;
     unsigned char flags;
 
   public:
@@ -61,19 +60,18 @@ namespace llvm {
     SlotIndex def;
 
     /// VNInfo constructor.
-    VNInfo(unsigned i, SlotIndex d, MachineInstr *c)
-      : copy(c), flags(0), id(i), def(d)
+    VNInfo(unsigned i, SlotIndex d)
+      : flags(0), id(i), def(d)
     { }
 
     /// VNInfo construtor, copies values from orig, except for the value number.
     VNInfo(unsigned i, const VNInfo &orig)
-      : copy(orig.copy), flags(orig.flags), id(i), def(orig.def)
+      : flags(orig.flags), id(i), def(orig.def)
     { }
 
     /// Copy from the parameter into this VNInfo.
     void copyFrom(VNInfo &src) {
       flags = src.flags;
-      copy = src.copy;
       def = src.def;
     }
 
@@ -85,19 +83,6 @@ namespace llvm {
     void mergeFlags(const VNInfo *VNI) {
       flags = (flags | VNI->flags) & ~IS_UNUSED;
     }
-
-    /// For a register interval, if this VN was definied by a copy instr
-    /// getCopy() returns a pointer to it, otherwise returns 0.
-    /// For a stack interval the behaviour of this method is undefined.
-    MachineInstr* getCopy() const { return copy; }
-    /// For a register interval, set the copy member.
-    /// This method should not be called on stack intervals as it may lead to
-    /// undefined behavior.
-    void setCopy(MachineInstr *c) { copy = c; }
-
-    /// isDefByCopy - Return true when this value was defined by a copy-like
-    /// instruction as determined by MachineInstr::isCopyLike.
-    bool isDefByCopy() const { return copy != 0; }
 
     /// Returns true if one or more kills are PHI nodes.
     /// Obsolete, do not use!
@@ -294,10 +279,9 @@ namespace llvm {
 
     /// getNextValue - Create a new value number and return it.  MIIdx specifies
     /// the instruction that defines the value number.
-    VNInfo *getNextValue(SlotIndex def, MachineInstr *CopyMI,
-                         VNInfo::Allocator &VNInfoAllocator) {
+    VNInfo *getNextValue(SlotIndex def, VNInfo::Allocator &VNInfoAllocator) {
       VNInfo *VNI =
-        new (VNInfoAllocator) VNInfo((unsigned)valnos.size(), def, CopyMI);
+        new (VNInfoAllocator) VNInfo((unsigned)valnos.size(), def);
       valnos.push_back(VNI);
       return VNI;
     }
