@@ -838,13 +838,13 @@ static void CheckConstexprCtorInitializer(Sema &SemaRef,
 /// \return true if the body is OK, false if we have diagnosed a problem.
 bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
   if (isa<CXXTryStmt>(Body)) {
-    // C++0x [dcl.constexpr]p3:
+    // C++11 [dcl.constexpr]p3:
     //  The definition of a constexpr function shall satisfy the following
     //  constraints: [...]
     // - its function-body shall be = delete, = default, or a
     //   compound-statement
     //
-    // C++0x [dcl.constexpr]p4:
+    // C++11 [dcl.constexpr]p4:
     //  In the definition of a constexpr constructor, [...]
     // - its function-body shall not be a function-try-block;
     Diag(Body->getLocStart(), diag::err_constexpr_function_try_block)
@@ -972,8 +972,23 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
     }
   }
 
+  // C++11 [dcl.constexpr]p5:
+  //   if no function argument values exist such that the function invocation
+  //   substitution would produce a constant expression, the program is
+  //   ill-formed; no diagnostic required.
+  // C++11 [dcl.constexpr]p3:
+  //   - every constructor call and implicit conversion used in initializing the
+  //     return value shall be one of those allowed in a constant expression.
+  // C++11 [dcl.constexpr]p4:
+  //   - every constructor involved in initializing non-static data members and
+  //     base class sub-objects shall be a constexpr constructor.
+  //
+  // FIXME: We currently disable this check inside system headers, to work
+  // around early STL implementations which contain constexpr functions which
+  // can't produce constant expressions.
   llvm::SmallVector<PartialDiagnosticAt, 8> Diags;
-  if (!Expr::isPotentialConstantExpr(Dcl, Diags)) {
+  if (!Context.getSourceManager().isInSystemHeader(Dcl->getLocation()) &&
+      !Expr::isPotentialConstantExpr(Dcl, Diags)) {
     Diag(Dcl->getLocation(), diag::err_constexpr_function_never_constant_expr)
       << isa<CXXConstructorDecl>(Dcl);
     for (size_t I = 0, N = Diags.size(); I != N; ++I)

@@ -575,7 +575,8 @@ CallStackFrame::~CallStackFrame() {
 static void describeCall(CallStackFrame *Frame, llvm::raw_ostream &Out) {
   unsigned ArgIndex = 0;
   bool IsMemberCall = isa<CXXMethodDecl>(Frame->Callee) &&
-                      !isa<CXXConstructorDecl>(Frame->Callee);
+                      !isa<CXXConstructorDecl>(Frame->Callee) &&
+                      cast<CXXMethodDecl>(Frame->Callee)->isInstance();
 
   if (!IsMemberCall)
     Out << *Frame->Callee << '(';
