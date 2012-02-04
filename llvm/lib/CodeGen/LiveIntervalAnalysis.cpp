@@ -432,8 +432,6 @@ exit:
   bool Extend = ValNo != 0;
   if (!Extend)
     ValNo = interval.getNextValue(start, VNInfoAllocator);
-  if (Extend && MO.isEarlyClobber())
-    ValNo->setHasRedefByEC(true);
   LiveRange LR(start, end, ValNo);
   interval.addRange(LR);
   DEBUG(dbgs() << " +" << LR << '\n');

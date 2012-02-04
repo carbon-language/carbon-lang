@@ -438,27 +438,6 @@ bool RegisterCoalescer::AdjustCopiesBackFrom(const CoalescerPair &CP,
   // The live range might not exist after fun with physreg coalescing.
   if (ALR == IntA.end()) return false;
   VNInfo *AValNo = ALR->valno;
-  // If it's re-defined by an early clobber somewhere in the live range, then
-  // it's not safe to eliminate the copy. FIXME: This is a temporary workaround.
-  // See PR3149:
-  // 172     %ECX<def> = MOV32rr %reg1039<kill>
-  // 180     INLINEASM <es:subl $5,$1
-  //         sbbl $3,$0>, 10, %EAX<def>, 14, %ECX<earlyclobber,def>, 9,
-  //         %EAX<kill>,
-  // 36, <fi#0>, 1, %reg0, 0, 9, %ECX<kill>, 36, <fi#1>, 1, %reg0, 0
-  // 188     %EAX<def> = MOV32rr %EAX<kill>
-  // 196     %ECX<def> = MOV32rr %ECX<kill>
-  // 204     %ECX<def> = MOV32rr %ECX<kill>
-  // 212     %EAX<def> = MOV32rr %EAX<kill>
-  // 220     %EAX<def> = MOV32rr %EAX
-  // 228     %reg1039<def> = MOV32rr %ECX<kill>
-  // The early clobber operand ties ECX input to the ECX def.
-  //
-  // The live interval of ECX is represented as this:
-  // %reg20,inf = [46,47:1)[174,230:0)  0@174-(230) 1@46-(47)
-  // The coalescer has no idea there was a def in the middle of [174,230].
-  if (AValNo->hasRedefByEC())
-    return false;
 
   // If AValNo is defined as a copy from IntB, we can potentially process this.
   // Get the instruction that defines this value number.
@@ -1510,10 +1489,6 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
     if (!MI->isCopyLike())  // Src not defined by a copy?
       continue;
 
-    // Never join with a register that has EarlyClobber redefs.
-    if (VNI->hasRedefByEC())
-      return false;
-
     // Figure out the value # from the RHS.
     LiveRange *lr = RHS.getLiveRangeContaining(VNI->def.getPrevSlot());
     // The copy could be to an aliased physreg.
@@ -1539,10 +1514,6 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
     assert(MI && "Missing def");
     if (!MI->isCopyLike())  // Src not defined by a copy?
       continue;
-
-    // Never join with a register that has EarlyClobber redefs.
-    if (VNI->hasRedefByEC())
-      return false;
 
     // Figure out the value # from the LHS.
     LiveRange *lr = LHS.getLiveRangeContaining(VNI->def.getPrevSlot());
@@ -1623,10 +1594,6 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
       // result liverange, we can still coalesce them.  If not, we can't.
       if (LHSValNoAssignments[I->valno->id] !=
           RHSValNoAssignments[J->valno->id])
-        return false;
-      // If it's re-defined by an early clobber somewhere in the live range,
-      // then conservatively abort coalescing.
-      if (NewVNInfo[LHSValNoAssignments[I->valno->id]]->hasRedefByEC())
         return false;
     }
 

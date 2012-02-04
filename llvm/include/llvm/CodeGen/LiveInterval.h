@@ -43,9 +43,8 @@ namespace llvm {
   private:
     enum {
       HAS_PHI_KILL    = 1,
-      REDEF_BY_EC     = 1 << 1,
-      IS_PHI_DEF      = 1 << 2,
-      IS_UNUSED       = 1 << 3
+      IS_PHI_DEF      = 1 << 1,
+      IS_UNUSED       = 1 << 2
     };
 
     unsigned char flags;
@@ -93,17 +92,6 @@ namespace llvm {
         flags |= HAS_PHI_KILL;
       else
         flags &= ~HAS_PHI_KILL;
-    }
-
-    /// Returns true if this value is re-defined by an early clobber somewhere
-    /// during the live range.
-    bool hasRedefByEC() const { return flags & REDEF_BY_EC; }
-    /// Set the "redef by early clobber" flag on this value.
-    void setHasRedefByEC(bool hasRedef) {
-      if (hasRedef)
-        flags |= REDEF_BY_EC;
-      else
-        flags &= ~REDEF_BY_EC;
     }
 
     /// Returns true if this value is defined by a PHI instruction (or was,
