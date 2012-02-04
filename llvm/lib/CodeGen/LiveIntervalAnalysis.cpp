@@ -402,7 +402,7 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
       if (DefIdx != -1) {
         if (mi->isRegTiedToUseOperand(DefIdx)) {
           // Two-address instruction.
-          end = baseIndex.getRegSlot();
+          end = baseIndex.getRegSlot(mi->getOperand(DefIdx).isEarlyClobber());
         } else {
           // Another instruction redefines the register before it is ever read.
           // Then the register is essentially dead at the instruction that
