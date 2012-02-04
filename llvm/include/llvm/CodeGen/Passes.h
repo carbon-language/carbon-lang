@@ -15,6 +15,7 @@
 #ifndef LLVM_CODEGEN_PASSES_H
 #define LLVM_CODEGEN_PASSES_H
 
+#include "llvm/Pass.h"
 #include "llvm/Target/TargetMachine.h"
 #include <string>
 
@@ -32,9 +33,12 @@ namespace llvm {
 
 /// Target-Independent Code Generator Pass Configuration Options.
 ///
+/// This is an ImmutablePass solely for the purpose of exposing CodeGen options
+/// to the internals of other CodeGen passes.
+///
 /// FIXME: Why are we passing the DisableVerify flags around instead of setting
 /// an options in the target machine, like all the other driver options?
-class TargetPassConfig {
+class TargetPassConfig : public ImmutablePass {
 protected:
   TargetMachine *TM;
   PassManagerBase &PM;
@@ -43,8 +47,12 @@ protected:
 public:
   TargetPassConfig(TargetMachine *tm, PassManagerBase &pm,
                    bool DisableVerifyFlag);
+  // Dummy constructor.
+  TargetPassConfig();
 
-  virtual ~TargetPassConfig() {}
+  virtual ~TargetPassConfig();
+
+  static char ID;
 
   /// Get the right type of TargetMachine for this target.
   template<typename TMC> TMC &getTM() const {

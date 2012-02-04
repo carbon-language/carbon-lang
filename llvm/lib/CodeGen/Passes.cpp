@@ -14,8 +14,42 @@
 
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/Support/ErrorHandling.h"
 
 using namespace llvm;
+
+//===---------------------------------------------------------------------===//
+/// TargetPassConfig
+//===---------------------------------------------------------------------===//
+
+INITIALIZE_PASS(TargetPassConfig, "targetpassconfig",
+                "Target Pass Configuration", false, false)
+char TargetPassConfig::ID = 0;
+
+// Out of line virtual method.
+TargetPassConfig::~TargetPassConfig() {}
+
+TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm,
+                                   bool DisableVerifyFlag)
+  : ImmutablePass(ID), TM(tm), PM(pm), DisableVerify(DisableVerifyFlag) {
+  // Register all target independent codegen passes to activate their PassIDs,
+  // including this pass itself.
+  initializeCodeGen(*PassRegistry::getPassRegistry());
+}
+
+/// createPassConfig - Create a pass configuration object to be used by
+/// addPassToEmitX methods for generating a pipeline of CodeGen passes.
+///
+/// Targets may override this to extend TargetPassConfig.
+TargetPassConfig *LLVMTargetMachine::createPassConfig(PassManagerBase &PM,
+                                                      bool DisableVerify) {
+  return new TargetPassConfig(this, PM, DisableVerify);
+}
+
+TargetPassConfig::TargetPassConfig()
+  : ImmutablePass(ID), PM(*(PassManagerBase*)0) {
+  llvm_unreachable("TargetPassConfig should not be constructed on-the-fly");
+}
 
 //===---------------------------------------------------------------------===//
 ///

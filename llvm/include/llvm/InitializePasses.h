@@ -228,6 +228,7 @@ void initializeStripNonDebugSymbolsPass(PassRegistry&);
 void initializeStripSymbolsPass(PassRegistry&);
 void initializeStrongPHIEliminationPass(PassRegistry&);
 void initializeTailCallElimPass(PassRegistry&);
+void initializeTargetPassConfigPass(PassRegistry&);
 void initializeTargetDataPass(PassRegistry&);
 void initializeTargetLibraryInfoPass(PassRegistry&);
 void initializeTwoAddressInstructionPassPass(PassRegistry&);

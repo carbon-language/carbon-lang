@@ -125,27 +125,14 @@ LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
          "and that InitializeAllTargetMCs() is being invoked!");
 }
 
-TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm,
-                                   bool DisableVerifyFlag)
-  : TM(tm), PM(pm), DisableVerify(DisableVerifyFlag) {
-  // Register all target independent codegen passes to activate their PassIDs.
-  initializeCodeGen(*PassRegistry::getPassRegistry());
-}
-
-/// createPassConfig - Create a pass configuration object to be used by
-/// addPassToEmitX methods for generating a pipeline of CodeGen passes.
-TargetPassConfig *LLVMTargetMachine::createPassConfig(PassManagerBase &PM,
-                                                      bool DisableVerify) {
-  return new TargetPassConfig(this, PM, DisableVerify);
-}
-
 bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                             formatted_raw_ostream &Out,
                                             CodeGenFileType FileType,
                                             bool DisableVerify) {
   // Add common CodeGen passes.
   MCContext *Context = 0;
-  OwningPtr<TargetPassConfig> PassConfig(createPassConfig(PM, DisableVerify));
+  TargetPassConfig *PassConfig = createPassConfig(PM, DisableVerify);
+  PM.add(PassConfig);
   if (PassConfig->addCodeGenPasses(Context))
     return true;
   assert(Context != 0 && "Failed to get MCContext");
