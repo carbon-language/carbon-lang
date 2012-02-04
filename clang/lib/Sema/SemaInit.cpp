@@ -2692,7 +2692,7 @@ static void MaybeProduceObjCObject(Sema &S,
 ///
 /// \return True if this was a special case, false otherwise.
 static bool TryListConstructionSpecialCases(Sema &S,
-                                            Expr **Args, unsigned NumArgs,
+                                            InitListExpr *List,
                                             CXXRecordDecl *DestRecordDecl,
                                             QualType DestType,
                                             InitializationSequence &Sequence) {
@@ -2700,7 +2700,7 @@ static bool TryListConstructionSpecialCases(Sema &S,
   //   List-initialization of an object of type T is defined as follows:
   //   - If the initializer list has no elements and T is a class type with
   //     a default constructor, the object is value-initialized.
-  if (NumArgs == 0) {
+  if (List->getNumInits() == 0) {
     if (CXXConstructorDecl *DefaultConstructor =
             S.LookupDefaultConstructor(DestRecordDecl)) {
       if (DefaultConstructor->isDeleted() ||
@@ -2713,11 +2713,11 @@ static bool TryListConstructionSpecialCases(Sema &S,
                 dyn_cast<FunctionTemplateDecl>(DefaultConstructor))
           S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                          /*ExplicitArgs*/ 0,
-                                         Args, NumArgs, CandidateSet,
+                                         0, 0, CandidateSet,
                                          /*SuppressUserConversions*/ false);
         else
           S.AddOverloadCandidate(DefaultConstructor, FoundDecl,
-                                 Args, NumArgs, CandidateSet,
+                                 0, 0, CandidateSet,
                                  /*SuppressUserConversions*/ false);
         Sequence.SetOverloadFailure(
                        InitializationSequence::FK_ListConstructorOverloadFailed,
@@ -2740,13 +2740,14 @@ static bool TryListConstructionSpecialCases(Sema &S,
     // later.
     InitializedEntity HiddenArray = InitializedEntity::InitializeTemporary(
         S.Context.getConstantArrayType(E,
-            llvm::APInt(S.Context.getTypeSize(S.Context.getSizeType()),NumArgs),
+            llvm::APInt(S.Context.getTypeSize(S.Context.getSizeType()),
+                        List->getNumInits()),
             ArrayType::Normal, 0));
     InitializedEntity Element = InitializedEntity::InitializeElement(S.Context,
         0, HiddenArray);
-    for (unsigned i = 0; i < NumArgs; ++i) {
+    for (unsigned i = 0, n = List->getNumInits(); i < n; ++i) {
       Element.setElementIndex(i);
-      if (!S.CanPerformCopyInitialization(Element, Args[i])) {
+      if (!S.CanPerformCopyInitialization(Element, List->getInit(i))) {
         Sequence.SetFailed(
             InitializationSequence::FK_InitListElementCopyFailure);
         return true;
@@ -2763,7 +2764,7 @@ static bool TryListConstructionSpecialCases(Sema &S,
 /// \brief Attempt initialization by constructor (C++ [dcl.init]), which
 /// enumerates the constructors of the initialized entity and performs overload
 /// resolution to select the best.
-/// If FromInitList is true, this is list-initialization of a non-aggregate
+/// If InitListSyntax is true, this is list-initialization of a non-aggregate
 /// class type.
 static void TryConstructorInitialization(Sema &S,
                                          const InitializedEntity &Entity,
@@ -2771,7 +2772,10 @@ static void TryConstructorInitialization(Sema &S,
                                          Expr **Args, unsigned NumArgs,
                                          QualType DestType,
                                          InitializationSequence &Sequence,
-                                         bool FromInitList = false) {
+                                         bool InitListSyntax = false) {
+  assert((!InitListSyntax || (NumArgs == 1 && isa<InitListExpr>(Args[0]))) &&
+         "InitListSyntax must come with a single initializer list argument.");
+
   // Check constructor arguments for self reference.
   if (DeclaratorDecl *DD = Entity.getDecl())
     // Parameters arguments are occassionially constructed with itself,
@@ -2801,10 +2805,17 @@ static void TryConstructorInitialization(Sema &S,
   CXXRecordDecl *DestRecordDecl
     = cast<CXXRecordDecl>(DestRecordType->getDecl());
 
-  if (FromInitList &&
-      TryListConstructionSpecialCases(S, Args, NumArgs, DestRecordDecl,
-                                      DestType, Sequence))
+  if (InitListSyntax &&
+      TryListConstructionSpecialCases(S, cast<InitListExpr>(Args[0]),
+                                      DestRecordDecl, DestType, Sequence))
     return;
+
+  if (InitListSyntax) {
+    // Time to unwrap the init list.
+    InitListExpr *ILE = cast<InitListExpr>(Args[0]);
+    Args = ILE->getInits();
+    NumArgs = ILE->getNumInits();
+  }
 
   //   - Otherwise, if T is a class type, constructors are considered. The
   //     applicable constructors are enumerated, and the best one is chosen
@@ -2853,7 +2864,7 @@ static void TryConstructorInitialization(Sema &S,
   OverloadCandidateSet::iterator Best;
   if (OverloadingResult Result
         = CandidateSet.BestViableFunction(S, DeclLoc, Best)) {
-    Sequence.SetOverloadFailure(FromInitList ?
+    Sequence.SetOverloadFailure(InitListSyntax ?
                       InitializationSequence::FK_ListConstructorOverloadFailed :
                       InitializationSequence::FK_ConstructorOverloadFailed,
                                 Result);
@@ -2878,7 +2889,7 @@ static void TryConstructorInitialization(Sema &S,
   Sequence.AddConstructorInitializationStep(CtorDecl,
                                             Best->FoundDecl.getAccess(),
                                             DestType, HadMultipleCandidates,
-                                            FromInitList);
+                                            InitListSyntax);
 }
 
 static bool
@@ -3009,11 +3020,11 @@ static void TryListInitialization(Sema &S,
     return;
   }
   if (DestType->isRecordType() && !DestType->isAggregateType()) {
-    if (S.getLangOptions().CPlusPlus0x)
-      TryConstructorInitialization(S, Entity, Kind, InitList->getInits(),
-                                   InitList->getNumInits(), DestType, Sequence,
-                                   /*FromInitList=*/true);
-    else
+    if (S.getLangOptions().CPlusPlus0x) {
+      Expr *Arg = InitList;
+      TryConstructorInitialization(S, Entity, Kind, &Arg, 1, DestType,
+                                   Sequence, /*InitListSyntax=*/true);
+    } else
       Sequence.SetFailed(InitializationSequence::FK_InitListBadDestinationType);
     return;
   }
