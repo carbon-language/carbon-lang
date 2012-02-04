@@ -62,8 +62,7 @@ public:
     return &TSInfo;
   }
 
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
-                                             bool DisableVerify);
+  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
 }; // MSP430TargetMachine.
 
 } // end namespace llvm

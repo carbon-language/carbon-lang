@@ -39,9 +39,8 @@ namespace {
 /// XCore Code Generator Pass Configuration Options.
 class XCorePassConfig : public TargetPassConfig {
 public:
-  XCorePassConfig(XCoreTargetMachine *TM, PassManagerBase &PM,
-                bool DisableVerifyFlag)
-    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+  XCorePassConfig(XCoreTargetMachine *TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
 
   XCoreTargetMachine &getXCoreTargetMachine() const {
     return getTM<XCoreTargetMachine>();
@@ -51,9 +50,8 @@ public:
 };
 } // namespace
 
-TargetPassConfig *XCoreTargetMachine::createPassConfig(PassManagerBase &PM,
-                                                       bool DisableVerify) {
-  return new XCorePassConfig(this, PM, DisableVerify);
+TargetPassConfig *XCoreTargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new XCorePassConfig(this, PM);
 }
 
 bool XCorePassConfig::addInstSelector() {

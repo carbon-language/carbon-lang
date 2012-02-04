@@ -121,9 +121,8 @@ namespace {
 /// X86 Code Generator Pass Configuration Options.
 class X86PassConfig : public TargetPassConfig {
 public:
-  X86PassConfig(X86TargetMachine *TM, PassManagerBase &PM,
-                bool DisableVerifyFlag)
-    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+  X86PassConfig(X86TargetMachine *TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
 
   X86TargetMachine &getX86TargetMachine() const {
     return getTM<X86TargetMachine>();
@@ -140,9 +139,8 @@ public:
 };
 } // namespace
 
-TargetPassConfig *X86TargetMachine::createPassConfig(PassManagerBase &PM,
-                                                     bool DisableVerify) {
-  return new X86PassConfig(this, PM, DisableVerify);
+TargetPassConfig *X86TargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new X86PassConfig(this, PM);
 }
 
 bool X86PassConfig::addInstSelector() {

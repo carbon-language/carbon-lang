@@ -81,8 +81,7 @@ class PTXTargetMachine : public LLVMTargetMachine {
     }
 
     // Pass Pipeline Configuration
-    virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
-                                               bool DisableVerify);
+    virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
 }; // class PTXTargetMachine
 
 

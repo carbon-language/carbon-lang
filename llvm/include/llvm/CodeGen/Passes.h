@@ -35,18 +35,17 @@ namespace llvm {
 ///
 /// This is an ImmutablePass solely for the purpose of exposing CodeGen options
 /// to the internals of other CodeGen passes.
-///
-/// FIXME: Why are we passing the DisableVerify flags around instead of setting
-/// an options in the target machine, like all the other driver options?
 class TargetPassConfig : public ImmutablePass {
 protected:
   TargetMachine *TM;
   PassManagerBase &PM;
+
+  // Target Pass Options
+  //
   bool DisableVerify;
 
 public:
-  TargetPassConfig(TargetMachine *tm, PassManagerBase &pm,
-                   bool DisableVerifyFlag);
+  TargetPassConfig(TargetMachine *tm, PassManagerBase &pm);
   // Dummy constructor.
   TargetPassConfig();
 
@@ -59,28 +58,42 @@ public:
     return *static_cast<TMC*>(TM);
   }
 
+  const TargetLowering *getTargetLowering() const {
+    return TM->getTargetLowering();
+  }
+
   CodeGenOpt::Level getOptLevel() const { return TM->getOptLevel(); }
 
-  const TargetLowering *getTargetLowering() const { return TM->getTargetLowering(); }
+  void setDisableVerify(bool disable) { DisableVerify = disable; }
+
+  /// Add common target configurable passes that perform LLVM IR to IR
+  /// transforms following machine independent optimization.
+  virtual void addIRPasses();
+
+  /// Add common passes that perform LLVM IR to IR transforms in preparation for
+  /// instruction selection.
+  virtual void addISelPrepare();
+
+  /// addInstSelector - This method should install an instruction selector pass,
+  /// which converts from LLVM code to machine instructions.
+  virtual bool addInstSelector() {
+    return true;
+  }
 
   /// Add the complete, standard set of LLVM CodeGen passes.
   /// Fully developed targets will not generally override this.
-  virtual bool addCodeGenPasses(MCContext *&OutContext);
-
+  virtual void addMachinePasses();
 protected:
-  /// Convenient points in the common codegen pass pipeline for inserting
-  /// passes, and major CodeGen stages that some targets may override.
+  /// Methods with trivial inline returns are convenient points in the common
+  /// codegen pass pipeline where targets may insert passes. Methods with
+  /// out-of-line standard implementations are major CodeGen stages called by
+  /// addMachinePasses. Some targets may override major stages when inserting
+  /// passes is insufficient, but maintaining overriden stages is more work.
   ///
 
   /// addPreISelPasses - This method should add any "last minute" LLVM->LLVM
   /// passes (which are run just before instruction selector).
   virtual bool addPreISel() {
-    return true;
-  }
-
-  /// addInstSelector - This method should install an instruction selector pass,
-  /// which converts from LLVM code to machine instructions.
-  virtual bool addInstSelector() {
     return true;
   }
 

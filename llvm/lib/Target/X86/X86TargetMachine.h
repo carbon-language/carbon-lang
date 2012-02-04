@@ -71,8 +71,7 @@ public:
   }
 
   // Set up the pass pipeline.
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
-                                             bool DisableVerify);
+  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
 
   virtual bool addCodeEmitter(PassManagerBase &PM,
                               JITCodeEmitter &JCE);

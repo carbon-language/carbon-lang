@@ -93,9 +93,8 @@ namespace {
 /// Mips Code Generator Pass Configuration Options.
 class MipsPassConfig : public TargetPassConfig {
 public:
-  MipsPassConfig(MipsTargetMachine *TM, PassManagerBase &PM,
-                 bool DisableVerifyFlag)
-    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+  MipsPassConfig(MipsTargetMachine *TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
 
   MipsTargetMachine &getMipsTargetMachine() const {
     return getTM<MipsTargetMachine>();
@@ -112,9 +111,8 @@ public:
 };
 } // namespace
 
-TargetPassConfig *MipsTargetMachine::createPassConfig(PassManagerBase &PM,
-                                                     bool DisableVerify) {
-  return new MipsPassConfig(this, PM, DisableVerify);
+TargetPassConfig *MipsTargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new MipsPassConfig(this, PM);
 }
 
 // Install an instruction selector pass using

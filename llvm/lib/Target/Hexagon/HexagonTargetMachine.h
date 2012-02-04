@@ -72,8 +72,7 @@ public:
 
   // Pass Pipeline Configuration.
   virtual bool addPassesForOptimizations(PassManagerBase &PM);
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
-                                             bool DisableVerify);
+  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
 };
 
 extern bool flag_aligned_memcpy;

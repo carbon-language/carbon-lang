@@ -70,9 +70,8 @@ namespace {
 /// PPC Code Generator Pass Configuration Options.
 class PPCPassConfig : public TargetPassConfig {
 public:
-  PPCPassConfig(PPCTargetMachine *TM, PassManagerBase &PM,
-                bool DisableVerifyFlag)
-    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+  PPCPassConfig(PPCTargetMachine *TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
 
   PPCTargetMachine &getPPCTargetMachine() const {
     return getTM<PPCTargetMachine>();
@@ -84,9 +83,8 @@ public:
 };
 } // namespace
 
-TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM,
-                                                     bool DisableVerify) {
-  return new PPCPassConfig(this, PM, DisableVerify);
+TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new PPCPassConfig(this, PM);
 }
 
 bool PPCPassConfig::addInstSelector() {

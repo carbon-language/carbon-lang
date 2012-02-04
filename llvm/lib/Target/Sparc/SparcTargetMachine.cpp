@@ -42,9 +42,8 @@ namespace {
 /// Sparc Code Generator Pass Configuration Options.
 class SparcPassConfig : public TargetPassConfig {
 public:
-  SparcPassConfig(SparcTargetMachine *TM, PassManagerBase &PM,
-                  bool DisableVerifyFlag)
-    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+  SparcPassConfig(SparcTargetMachine *TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
 
   SparcTargetMachine &getSparcTargetMachine() const {
     return getTM<SparcTargetMachine>();
@@ -55,9 +54,8 @@ public:
 };
 } // namespace
 
-TargetPassConfig *SparcTargetMachine::createPassConfig(PassManagerBase &PM,
-                                                       bool DisableVerify) {
-  return new SparcPassConfig(this, PM, DisableVerify);
+TargetPassConfig *SparcTargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new SparcPassConfig(this, PM);
 }
 
 bool SparcPassConfig::addInstSelector() {

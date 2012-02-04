@@ -55,8 +55,7 @@ public:
   virtual const TargetData       *getTargetData() const { return &DataLayout; }
 
   // Pass Pipeline Configuration
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
-                                             bool DisableVerify);
+  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
 };
 
 /// SparcV8TargetMachine - Sparc 32-bit target machine

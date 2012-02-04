@@ -68,8 +68,7 @@ namespace llvm {
     }
 
     // Pass Pipeline Configuration
-    virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
-                                               bool DisableVerify);
+    virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
     virtual bool addCodeEmitter(PassManagerBase &PM,
 				 JITCodeEmitter &JCE);
 

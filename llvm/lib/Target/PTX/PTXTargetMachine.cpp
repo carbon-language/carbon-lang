@@ -109,8 +109,8 @@ namespace {
 /// PTX Code Generator Pass Configuration Options.
 class PTXPassConfig : public TargetPassConfig {
 public:
-  PTXPassConfig(PTXTargetMachine *TM, PassManagerBase &PM, bool DisableVerifyFlag)
-    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+  PTXPassConfig(PTXTargetMachine *TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
 
   PTXTargetMachine &getPTXTargetMachine() const {
       return getTM<PTXTargetMachine>();
@@ -122,9 +122,8 @@ public:
 };
 } // namespace
 
-TargetPassConfig *PTXTargetMachine::createPassConfig(PassManagerBase &PM,
-                                                     bool DisableVerify) {
-  return new PTXPassConfig(this, PM, DisableVerify);
+TargetPassConfig *PTXTargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new PTXPassConfig(this, PM);
 }
 
 bool PTXPassConfig::addInstSelector() {
@@ -146,7 +145,13 @@ bool PTXTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
 
   // Add common CodeGen passes.
   MCContext *Context = 0;
-  OwningPtr<TargetPassConfig> PassConfig(createPassConfig(PM, DisableVerify));
+
+  // FIXME: soon this will be converted to use the exposed TargetPassConfig API.
+  OwningPtr<PTXPassConfig> PassConfig(
+    static_cast<PTXPassConfig*>(createPassConfig(PM)));
+
+  PassConfig->setDisableVerify(DisableVerify);
+
   if (PassConfig->addCodeGenPasses(Context))
     return true;
   assert(Context != 0 && "Failed to get MCContext");

@@ -286,8 +286,7 @@ protected: // Can only create subclasses.
 public:
   /// createPassConfig - Create a pass configuration object to be used by
   /// addPassToEmitX methods for generating a pipeline of CodeGen passes.
-  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM,
-                                             bool DisableVerify);
+  virtual TargetPassConfig *createPassConfig(PassManagerBase &PM);
 
   /// addPassesToEmitFile - Add passes to the specified pass manager to get the
   /// specified file emitted.  Typically this will involve several steps of code

@@ -42,9 +42,8 @@ namespace {
 /// MSP430 Code Generator Pass Configuration Options.
 class MSP430PassConfig : public TargetPassConfig {
 public:
-  MSP430PassConfig(MSP430TargetMachine *TM, PassManagerBase &PM,
-                   bool DisableVerifyFlag)
-    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+  MSP430PassConfig(MSP430TargetMachine *TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
 
   MSP430TargetMachine &getMSP430TargetMachine() const {
     return getTM<MSP430TargetMachine>();
@@ -55,9 +54,8 @@ public:
 };
 } // namespace
 
-TargetPassConfig *MSP430TargetMachine::createPassConfig(PassManagerBase &PM,
-                                                        bool DisableVerify) {
-  return new MSP430PassConfig(this, PM, DisableVerify);
+TargetPassConfig *MSP430TargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new MSP430PassConfig(this, PM);
 }
 
 bool MSP430PassConfig::addInstSelector() {

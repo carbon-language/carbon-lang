@@ -17,16 +17,11 @@
 #include "llvm/Transforms/Scalar.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/GCStrategy.h"
-#include "llvm/CodeGen/MachineFunctionAnalysis.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/Target/TargetLowering.h"
-#include "llvm/Target/TargetLoweringObjectFile.h"
 #include "llvm/Target/TargetOptions.h"
-#include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/MC/MCAsmInfo.h"
 #include "llvm/Assembly/PrintModulePass.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -77,13 +72,6 @@ static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
 
-// Enable or disable FastISel. Both options are needed, because
-// FastISel is enabled by default with -fast, and we wish to be
-// able to enable or disable fast-isel independently from -O0.
-static cl::opt<cl::boolOrDefault>
-EnableFastISelOption("fast-isel", cl::Hidden,
-  cl::desc("Enable the \"fast\" instruction selector"));
-
 //===---------------------------------------------------------------------===//
 /// TargetPassConfig
 //===---------------------------------------------------------------------===//
@@ -95,9 +83,8 @@ char TargetPassConfig::ID = 0;
 // Out of line virtual method.
 TargetPassConfig::~TargetPassConfig() {}
 
-TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm,
-                                   bool DisableVerifyFlag)
-  : ImmutablePass(ID), TM(tm), PM(pm), DisableVerify(DisableVerifyFlag) {
+TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
+  : ImmutablePass(ID), TM(tm), PM(pm), DisableVerify(false) {
   // Register all target independent codegen passes to activate their PassIDs,
   // including this pass itself.
   initializeCodeGen(*PassRegistry::getPassRegistry());
@@ -107,9 +94,8 @@ TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm,
 /// addPassToEmitX methods for generating a pipeline of CodeGen passes.
 ///
 /// Targets may override this to extend TargetPassConfig.
-TargetPassConfig *LLVMTargetMachine::createPassConfig(PassManagerBase &PM,
-                                                      bool DisableVerify) {
-  return new TargetPassConfig(this, PM, DisableVerify);
+TargetPassConfig *LLVMTargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new TargetPassConfig(this, PM);
 }
 
 TargetPassConfig::TargetPassConfig()
@@ -117,6 +103,9 @@ TargetPassConfig::TargetPassConfig()
   llvm_unreachable("TargetPassConfig should not be constructed on-the-fly");
 }
 
+void TargetPassConfig::addCommonPass(char &ID) {
+  // FIXME: about to be implemented.
+}
 
 void TargetPassConfig::printNoVerify(const char *Banner) const {
   if (TM->shouldPrintMachineCode())
@@ -131,12 +120,9 @@ void TargetPassConfig::printAndVerify(const char *Banner) const {
     PM.add(createMachineVerifierPass(Banner));
 }
 
-/// addCodeGenPasses - Add standard LLVM codegen passes used for both
-/// emitting to assembly files or machine code output.
-///
-bool TargetPassConfig::addCodeGenPasses(MCContext *&OutContext) {
-  // Standard LLVM-Level Passes.
-
+/// Add common target configurable passes that perform LLVM IR to IR transforms
+/// following machine independent optimization.
+void TargetPassConfig::addIRPasses() {
   // Basic AliasAnalysis support.
   // Add TypeBasedAliasAnalysis before BasicAliasAnalysis so that
   // BasicAliasAnalysis wins if they disagree. This is intended to help
@@ -160,32 +146,11 @@ bool TargetPassConfig::addCodeGenPasses(MCContext *&OutContext) {
 
   // Make sure that no unreachable blocks are instruction selected.
   PM.add(createUnreachableBlockEliminationPass());
+}
 
-  // Turn exception handling constructs into something the code generators can
-  // handle.
-  switch (TM->getMCAsmInfo()->getExceptionHandlingType()) {
-  case ExceptionHandling::SjLj:
-    // SjLj piggy-backs on dwarf for this bit. The cleanups done apply to both
-    // Dwarf EH prepare needs to be run after SjLj prepare. Otherwise,
-    // catch info can get misplaced when a selector ends up more than one block
-    // removed from the parent invoke(s). This could happen when a landing
-    // pad is shared by multiple invokes and is also a target of a normal
-    // edge from elsewhere.
-    PM.add(createSjLjEHPass(getTargetLowering()));
-    // FALLTHROUGH
-  case ExceptionHandling::DwarfCFI:
-  case ExceptionHandling::ARM:
-  case ExceptionHandling::Win64:
-    PM.add(createDwarfEHPass(TM));
-    break;
-  case ExceptionHandling::None:
-    PM.add(createLowerInvokePass(getTargetLowering()));
-
-    // The lower invoke pass may create unreachable code. Remove it.
-    PM.add(createUnreachableBlockEliminationPass());
-    break;
-  }
-
+/// Add common passes that perform LLVM IR to IR transforms in preparation for
+/// instruction selection.
+void TargetPassConfig::addISelPrepare() {
   if (getOptLevel() != CodeGenOpt::None && !DisableCGP)
     PM.add(createCodeGenPreparePass(getTargetLowering()));
 
@@ -202,30 +167,9 @@ bool TargetPassConfig::addCodeGenPasses(MCContext *&OutContext) {
   // to ensure that the IR is valid.
   if (!DisableVerify)
     PM.add(createVerifierPass());
+}
 
-  // Standard Lower-Level Passes.
-
-  // Install a MachineModuleInfo class, which is an immutable pass that holds
-  // all the per-module stuff we're generating, including MCContext.
-  MachineModuleInfo *MMI =
-    new MachineModuleInfo(*TM->getMCAsmInfo(), *TM->getRegisterInfo(),
-                          &getTargetLowering()->getObjFileLowering());
-  PM.add(MMI);
-  OutContext = &MMI->getContext(); // Return the MCContext specifically by-ref.
-
-  // Set up a MachineFunction for the rest of CodeGen to work on.
-  PM.add(new MachineFunctionAnalysis(*TM));
-
-  // Enable FastISel with -fast, but allow that to be overridden.
-  if (EnableFastISelOption == cl::BOU_TRUE ||
-      (getOptLevel() == CodeGenOpt::None &&
-       EnableFastISelOption != cl::BOU_FALSE))
-    TM->setFastISel(true);
-
-  // Ask the target for an isel.
-  if (addInstSelector())
-    return true;
-
+void TargetPassConfig::addMachinePasses() {
   // Print the instruction selected machine code...
   printAndVerify("After Instruction Selection");
 
@@ -356,8 +300,6 @@ bool TargetPassConfig::addCodeGenPasses(MCContext *&OutContext) {
 
   if (addPreEmitPass())
     printNoVerify("After PreEmit passes");
-
-  return false;
 }
 
 //===---------------------------------------------------------------------===//

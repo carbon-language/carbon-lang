@@ -11,24 +11,37 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/Target/TargetMachine.h"
+#include "llvm/Transforms/Scalar.h"
 #include "llvm/PassManager.h"
 #include "llvm/CodeGen/AsmPrinter.h"
 #include "llvm/CodeGen/Passes.h"
+#include "llvm/CodeGen/MachineFunctionAnalysis.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Target/TargetLowering.h"
+#include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
+#include "llvm/Target/TargetSubtargetInfo.h"
+#include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCSubtargetInfo.h"
-#include "llvm/Target/TargetInstrInfo.h"
-#include "llvm/Target/TargetSubtargetInfo.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 using namespace llvm;
+
+// Enable or disable FastISel. Both options are needed, because
+// FastISel is enabled by default with -fast, and we wish to be
+// able to enable or disable fast-isel independently from -O0.
+static cl::opt<cl::boolOrDefault>
+EnableFastISelOption("fast-isel", cl::Hidden,
+  cl::desc("Enable the \"fast\" instruction selector"));
 
 static cl::opt<bool> ShowMCEncoding("show-mc-encoding", cl::Hidden,
     cl::desc("Show encoding in .s output"));
@@ -65,17 +78,84 @@ LLVMTargetMachine::LLVMTargetMachine(const Target &T, StringRef Triple,
          "and that InitializeAllTargetMCs() is being invoked!");
 }
 
+/// Turn exception handling constructs into something the code generators can
+/// handle.
+static void addPassesToHandleExceptions(TargetMachine *TM,
+                                        PassManagerBase &PM) {
+  switch (TM->getMCAsmInfo()->getExceptionHandlingType()) {
+  case ExceptionHandling::SjLj:
+    // SjLj piggy-backs on dwarf for this bit. The cleanups done apply to both
+    // Dwarf EH prepare needs to be run after SjLj prepare. Otherwise,
+    // catch info can get misplaced when a selector ends up more than one block
+    // removed from the parent invoke(s). This could happen when a landing
+    // pad is shared by multiple invokes and is also a target of a normal
+    // edge from elsewhere.
+    PM.add(createSjLjEHPass(TM->getTargetLowering()));
+    // FALLTHROUGH
+  case ExceptionHandling::DwarfCFI:
+  case ExceptionHandling::ARM:
+  case ExceptionHandling::Win64:
+    PM.add(createDwarfEHPass(TM));
+    break;
+  case ExceptionHandling::None:
+    PM.add(createLowerInvokePass(TM->getTargetLowering()));
+
+    // The lower invoke pass may create unreachable code. Remove it.
+    PM.add(createUnreachableBlockEliminationPass());
+    break;
+  }
+}
+
+/// addPassesToX helper drives creation and initialization of TargetPassConfig.
+static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
+                                          PassManagerBase &PM,
+                                          bool DisableVerify) {
+  // Targets may override createPassConfig to provide a target-specific sublass.
+  TargetPassConfig *PassConfig = TM->createPassConfig(PM);
+
+  // Set PassConfig options provided by TargetMachine.
+  PassConfig->setDisableVerify(DisableVerify);
+
+  PassConfig->addIRPasses();
+
+  addPassesToHandleExceptions(TM, PM);
+
+  PassConfig->addISelPrepare();
+
+  // Install a MachineModuleInfo class, which is an immutable pass that holds
+  // all the per-module stuff we're generating, including MCContext.
+  MachineModuleInfo *MMI =
+    new MachineModuleInfo(*TM->getMCAsmInfo(), *TM->getRegisterInfo(),
+                          &TM->getTargetLowering()->getObjFileLowering());
+  PM.add(MMI);
+  MCContext *Context = &MMI->getContext(); // Return the MCContext specifically by-ref.
+
+  // Set up a MachineFunction for the rest of CodeGen to work on.
+  PM.add(new MachineFunctionAnalysis(*TM));
+
+  // Enable FastISel with -fast, but allow that to be overridden.
+  if (EnableFastISelOption == cl::BOU_TRUE ||
+      (TM->getOptLevel() == CodeGenOpt::None &&
+       EnableFastISelOption != cl::BOU_FALSE))
+    TM->setFastISel(true);
+
+  // Ask the target for an isel.
+  if (PassConfig->addInstSelector())
+    return NULL;
+
+  PassConfig->addMachinePasses();
+
+  return Context;
+}
+
 bool LLVMTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
                                             formatted_raw_ostream &Out,
                                             CodeGenFileType FileType,
                                             bool DisableVerify) {
   // Add common CodeGen passes.
-  MCContext *Context = 0;
-  TargetPassConfig *PassConfig = createPassConfig(PM, DisableVerify);
-  PM.add(PassConfig);
-  if (PassConfig->addCodeGenPasses(Context))
+  MCContext *Context = addPassesToGenerateCode(this, PM, DisableVerify);
+  if (!Context)
     return true;
-  assert(Context != 0 && "Failed to get MCContext");
 
   if (hasMCSaveTempLabels())
     Context->setAllowTemporaryLabels(false);
@@ -156,9 +236,8 @@ bool LLVMTargetMachine::addPassesToEmitMachineCode(PassManagerBase &PM,
                                                    JITCodeEmitter &JCE,
                                                    bool DisableVerify) {
   // Add common CodeGen passes.
-  MCContext *Ctx = 0;
-  OwningPtr<TargetPassConfig> PassConfig(createPassConfig(PM, DisableVerify));
-  if (PassConfig->addCodeGenPasses(Ctx))
+  MCContext *Context = addPassesToGenerateCode(this, PM, DisableVerify);
+  if (!Context)
     return true;
 
   addCodeEmitter(PM, JCE);
@@ -177,8 +256,8 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
                                           raw_ostream &Out,
                                           bool DisableVerify) {
   // Add common CodeGen passes.
-  OwningPtr<TargetPassConfig> PassConfig(createPassConfig(PM, DisableVerify));
-  if (PassConfig->addCodeGenPasses(Ctx))
+  Ctx = addPassesToGenerateCode(this, PM, DisableVerify);
+  if (!Ctx)
     return true;
 
   if (hasMCSaveTempLabels())

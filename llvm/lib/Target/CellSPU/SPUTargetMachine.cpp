@@ -55,9 +55,8 @@ namespace {
 /// SPU Code Generator Pass Configuration Options.
 class SPUPassConfig : public TargetPassConfig {
 public:
-  SPUPassConfig(SPUTargetMachine *TM, PassManagerBase &PM,
-                bool DisableVerifyFlag)
-    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+  SPUPassConfig(SPUTargetMachine *TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
 
   SPUTargetMachine &getSPUTargetMachine() const {
     return getTM<SPUTargetMachine>();
@@ -68,9 +67,8 @@ public:
 };
 } // namespace
 
-TargetPassConfig *SPUTargetMachine::createPassConfig(PassManagerBase &PM,
-                                                     bool DisableVerify) {
-  return new SPUPassConfig(this, PM, DisableVerify);
+TargetPassConfig *SPUTargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new SPUPassConfig(this, PM);
 }
 
 bool SPUPassConfig::addInstSelector() {

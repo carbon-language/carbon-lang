@@ -111,9 +111,8 @@ namespace {
 /// ARM Code Generator Pass Configuration Options.
 class ARMPassConfig : public TargetPassConfig {
 public:
-  ARMPassConfig(ARMBaseTargetMachine *TM, PassManagerBase &PM,
-                bool DisableVerifyFlag)
-    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+  ARMPassConfig(ARMBaseTargetMachine *TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
 
   ARMBaseTargetMachine &getARMTargetMachine() const {
     return getTM<ARMBaseTargetMachine>();
@@ -131,9 +130,8 @@ public:
 };
 } // namespace
 
-TargetPassConfig *ARMBaseTargetMachine::createPassConfig(PassManagerBase &PM,
-                                                         bool DisableVerify) {
-  return new ARMPassConfig(this, PM, DisableVerify);
+TargetPassConfig *ARMBaseTargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new ARMPassConfig(this, PM);
 }
 
 bool ARMPassConfig::addPreISel() {

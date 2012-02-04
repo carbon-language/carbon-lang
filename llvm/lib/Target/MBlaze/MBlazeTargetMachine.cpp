@@ -49,9 +49,8 @@ namespace {
 /// MBlaze Code Generator Pass Configuration Options.
 class MBlazePassConfig : public TargetPassConfig {
 public:
-  MBlazePassConfig(MBlazeTargetMachine *TM, PassManagerBase &PM,
-                   bool DisableVerifyFlag)
-    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+  MBlazePassConfig(MBlazeTargetMachine *TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
 
   MBlazeTargetMachine &getMBlazeTargetMachine() const {
     return getTM<MBlazeTargetMachine>();
@@ -62,9 +61,8 @@ public:
 };
 } // namespace
 
-TargetPassConfig *MBlazeTargetMachine::createPassConfig(PassManagerBase &PM,
-                                                        bool DisableVerify) {
-  return new MBlazePassConfig(this, PM, DisableVerify);
+TargetPassConfig *MBlazeTargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new MBlazePassConfig(this, PM);
 }
 
 // Install an instruction selector pass using

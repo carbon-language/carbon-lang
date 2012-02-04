@@ -80,9 +80,8 @@ namespace {
 /// Hexagon Code Generator Pass Configuration Options.
 class HexagonPassConfig : public TargetPassConfig {
 public:
-  HexagonPassConfig(HexagonTargetMachine *TM, PassManagerBase &PM,
-                bool DisableVerifyFlag)
-    : TargetPassConfig(TM, PM, DisableVerifyFlag) {}
+  HexagonPassConfig(HexagonTargetMachine *TM, PassManagerBase &PM)
+    : TargetPassConfig(TM, PM) {}
 
   HexagonTargetMachine &getHexagonTargetMachine() const {
     return getTM<HexagonTargetMachine>();
@@ -96,9 +95,8 @@ public:
 };
 } // namespace
 
-TargetPassConfig *HexagonTargetMachine::createPassConfig(PassManagerBase &PM,
-                                                         bool DisableVerify) {
-  return new HexagonPassConfig(this, PM, DisableVerify);
+TargetPassConfig *HexagonTargetMachine::createPassConfig(PassManagerBase &PM) {
+  return new HexagonPassConfig(this, PM);
 }
 
 bool HexagonPassConfig::addInstSelector() {
