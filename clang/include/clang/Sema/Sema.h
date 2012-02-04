@@ -1443,7 +1443,8 @@ public:
                                      const PartialDiagnostic &ExplicitConvNote,
                                      const PartialDiagnostic &AmbigDiag,
                                      const PartialDiagnostic &AmbigNote,
-                                     const PartialDiagnostic &ConvDiag);
+                                     const PartialDiagnostic &ConvDiag,
+                                     bool AllowScopedEnumerations);
 
   ExprResult PerformObjectMemberConversion(Expr *From,
                                            NestedNameSpecifier *Qualifier,

@@ -504,7 +504,8 @@ Sema::ActOnStartOfSwitchStmt(SourceLocation SwitchLoc, Expr *Cond,
                                          PDiag(diag::note_switch_conversion),
                                    PDiag(diag::err_switch_multiple_conversions),
                                          PDiag(diag::note_switch_conversion),
-                                         PDiag(0));
+                                         PDiag(0),
+                                         /*AllowScopedEnumerations*/ true);
   if (CondResult.isInvalid()) return StmtError();
   Cond = CondResult.take();
 

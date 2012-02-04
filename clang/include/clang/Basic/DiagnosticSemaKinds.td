@@ -3976,7 +3976,8 @@ def err_placement_new_non_placement_delete : Error<
   "'new' expression with placement arguments refers to non-placement "
   "'operator delete'">;
 def err_array_size_not_integral : Error<
-  "array size expression must have integral or enumerated type, not %0">;
+  "array size expression must have integral or %select{|unscoped }0"
+  "enumeration type, not %1">;
 def err_array_size_incomplete_type : Error<
   "array size expression has incomplete class type %0">;
 def err_array_size_explicit_conversion : Error<

@@ -995,12 +995,15 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
 
   QualType ResultType = Context.getPointerType(AllocType);
     
-  // C++ 5.3.4p6: "The expression in a direct-new-declarator shall have integral
-  //   or enumeration type with a non-negative value."
+  // C++98 5.3.4p6: "The expression in a direct-new-declarator shall have
+  //   integral or enumeration type with a non-negative value."
+  // C++11 [expr.new]p6: The expression [...] shall be of integral or unscoped
+  //   enumeration type, or a class type for which a single non-explicit
+  //   conversion function to integral or unscoped enumeration type exists.
   if (ArraySize && !ArraySize->isTypeDependent()) {
     ExprResult ConvertedSize = ConvertToIntegralOrEnumerationType(
       StartLoc, ArraySize,
-      PDiag(diag::err_array_size_not_integral),
+      PDiag(diag::err_array_size_not_integral) << getLangOptions().CPlusPlus0x,
       PDiag(diag::err_array_size_incomplete_type)
         << ArraySize->getSourceRange(),
       PDiag(diag::err_array_size_explicit_conversion),
@@ -1009,7 +1012,8 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
       PDiag(diag::note_array_size_conversion),
       PDiag(getLangOptions().CPlusPlus0x ?
               diag::warn_cxx98_compat_array_size_conversion :
-              diag::ext_array_size_conversion));
+              diag::ext_array_size_conversion),
+      /*AllowScopedEnumerations*/ false);
     if (ConvertedSize.isInvalid())
       return ExprError();
 

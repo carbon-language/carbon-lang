@@ -34,7 +34,7 @@ int a1[Val2];
 int a2[E1::Val1]; // expected-error{{size of array has non-integer type}}
 
 int* p1 = new int[Val2];
-int* p2 = new int[E1::Val1]; // FIXME Expected-error{{must have integral}}
+int* p2 = new int[E1::Val1]; // expected-error{{array size expression must have integral or unscoped enumeration type, not 'E1'}}
 
 enum class E4 {
   e1 = -2147483648, // ok

@@ -65,7 +65,7 @@ void bad_news(int *ip)
   (void)new; // expected-error {{expected a type}}
   (void)new 4; // expected-error {{expected a type}}
   (void)new () int; // expected-error {{expected expression}}
-  (void)new int[1.1]; // expected-error {{array size expression must have integral or enumerated type, not 'double'}}
+  (void)new int[1.1]; // expected-error {{array size expression must have integral or enumeration type, not 'double'}}
   (void)new int[1][i]; // expected-error {{only the first dimension}}
   (void)new (int[1][i]); // expected-error {{only the first dimension}}
   (void)new (int[i]); // expected-warning {{when type is in parentheses}}
@@ -78,7 +78,7 @@ void bad_news(int *ip)
   // Undefined, but clang should reject it directly.
   (void)new int[-1]; // expected-error {{array size is negative}}
   (void)new int[2000000000]; // expected-error {{array is too large}}
-  (void)new int[*(S*)0]; // expected-error {{array size expression must have integral or enumerated type, not 'S'}}
+  (void)new int[*(S*)0]; // expected-error {{array size expression must have integral or enumeration type, not 'S'}}
   (void)::S::new int; // expected-error {{expected unqualified-id}}
   (void)new (0, 0) int; // expected-error {{no matching function for call to 'operator new'}}
   (void)new (0L) int; // expected-error {{call to 'operator new' is ambiguous}}
