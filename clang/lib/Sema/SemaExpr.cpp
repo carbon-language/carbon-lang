@@ -9612,8 +9612,10 @@ void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc,
 static void MarkVarDeclODRUsed(Sema &SemaRef, VarDecl *Var,
                                SourceLocation Loc) {
   // Keep track of used but undefined variables.
+  // FIXME: We shouldn't suppress this warning for static data members.
   if (Var->hasDefinition() == VarDecl::DeclarationOnly &&
-      Var->getLinkage() != ExternalLinkage) {
+      Var->getLinkage() != ExternalLinkage &&
+      !(Var->isStaticDataMember() && Var->hasInit())) {
     SourceLocation &old = SemaRef.UndefinedInternals[Var->getCanonicalDecl()];
     if (old.isInvalid()) old = Loc;
   }
