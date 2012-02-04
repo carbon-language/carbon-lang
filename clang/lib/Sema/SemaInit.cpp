@@ -2761,6 +2761,57 @@ static bool TryListConstructionSpecialCases(Sema &S,
   return false;
 }
 
+static OverloadingResult
+ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
+                           Expr **Args, unsigned NumArgs,
+                           OverloadCandidateSet &CandidateSet,
+                           DeclContext::lookup_iterator Con,
+                           DeclContext::lookup_iterator ConEnd,
+                           OverloadCandidateSet::iterator &Best,
+                           bool CopyInitializing, bool AllowExplicit,
+                           bool OnlyListConstructors) {
+  CandidateSet.clear();
+
+  for (; Con != ConEnd; ++Con) {
+    NamedDecl *D = *Con;
+    DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
+    bool SuppressUserConversions = false;
+
+    // Find the constructor (which may be a template).
+    CXXConstructorDecl *Constructor = 0;
+    FunctionTemplateDecl *ConstructorTmpl = dyn_cast<FunctionTemplateDecl>(D);
+    if (ConstructorTmpl)
+      Constructor = cast<CXXConstructorDecl>(
+                                           ConstructorTmpl->getTemplatedDecl());
+    else {
+      Constructor = cast<CXXConstructorDecl>(D);
+
+      // If we're performing copy initialization using a copy constructor, we
+      // suppress user-defined conversions on the arguments.
+      // FIXME: Move constructors?
+      if (CopyInitializing && Constructor->isCopyConstructor())
+        SuppressUserConversions = true;
+    }
+
+    if (!Constructor->isInvalidDecl() &&
+        (AllowExplicit || !Constructor->isExplicit()) &&
+        (!OnlyListConstructors || !S.isInitListConstructor(Constructor))) {
+      if (ConstructorTmpl)
+        S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
+                                       /*ExplicitArgs*/ 0,
+                                       Args, NumArgs, CandidateSet,
+                                       SuppressUserConversions);
+      else
+        S.AddOverloadCandidate(Constructor, FoundDecl,
+                               Args, NumArgs, CandidateSet,
+                               SuppressUserConversions);
+    }
+  }
+
+  // Perform overload resolution and return the result.
+  return CandidateSet.BestViableFunction(S, DeclLoc, Best);
+}
+
 /// \brief Attempt initialization by constructor (C++ [dcl.init]), which
 /// enumerates the constructors of the initialized entity and performs overload
 /// resolution to select the best.
@@ -2784,20 +2835,10 @@ static void TryConstructorInitialization(Sema &S,
       for (unsigned i = 0; i < NumArgs; ++i)
         S.CheckSelfReference(DD, Args[i]);
 
-  // Build the candidate set directly in the initialization sequence
-  // structure, so that it will persist if we fail.
-  OverloadCandidateSet &CandidateSet = Sequence.getFailedCandidateSet();
-  CandidateSet.clear();
-
-  // Determine whether we are allowed to call explicit constructors or
-  // explicit conversion operators.
-  bool AllowExplicit = (Kind.getKind() == InitializationKind::IK_Direct ||
-                        Kind.getKind() == InitializationKind::IK_Value ||
-                        Kind.getKind() == InitializationKind::IK_Default);
-
   // The type we're constructing needs to be complete.
   if (S.RequireCompleteType(Kind.getLocation(), DestType, 0)) {
     Sequence.SetFailed(InitializationSequence::FK_Incomplete);
+    return;
   }
 
   const RecordType *DestRecordType = DestType->getAs<RecordType>();
@@ -2810,6 +2851,16 @@ static void TryConstructorInitialization(Sema &S,
                                       DestRecordDecl, DestType, Sequence))
     return;
 
+  // Build the candidate set directly in the initialization sequence
+  // structure, so that it will persist if we fail.
+  OverloadCandidateSet &CandidateSet = Sequence.getFailedCandidateSet();
+
+  // Determine whether we are allowed to call explicit constructors or
+  // explicit conversion operators.
+  bool AllowExplicit = (Kind.getKind() == InitializationKind::IK_Direct ||
+                        Kind.getKind() == InitializationKind::IK_Value ||
+                        Kind.getKind() == InitializationKind::IK_Default);
+
   if (InitListSyntax) {
     // Time to unwrap the init list.
     InitListExpr *ILE = cast<InitListExpr>(Args[0]);
@@ -2820,50 +2871,16 @@ static void TryConstructorInitialization(Sema &S,
   //   - Otherwise, if T is a class type, constructors are considered. The
   //     applicable constructors are enumerated, and the best one is chosen
   //     through overload resolution.
-  DeclContext::lookup_iterator Con, ConEnd;
-  for (llvm::tie(Con, ConEnd) = S.LookupConstructors(DestRecordDecl);
-       Con != ConEnd; ++Con) {
-    NamedDecl *D = *Con;
-    DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
-    bool SuppressUserConversions = false;
+  DeclContext::lookup_iterator ConStart, ConEnd;
+  llvm::tie(ConStart, ConEnd) = S.LookupConstructors(DestRecordDecl);
 
-    // Find the constructor (which may be a template).
-    CXXConstructorDecl *Constructor = 0;
-    FunctionTemplateDecl *ConstructorTmpl = dyn_cast<FunctionTemplateDecl>(D);
-    if (ConstructorTmpl)
-      Constructor = cast<CXXConstructorDecl>(
-                                           ConstructorTmpl->getTemplatedDecl());
-    else {
-      Constructor = cast<CXXConstructorDecl>(D);
-
-      // If we're performing copy initialization using a copy constructor, we
-      // suppress user-defined conversions on the arguments.
-      // FIXME: Move constructors?
-      if (Kind.getKind() == InitializationKind::IK_Copy &&
-          Constructor->isCopyConstructor())
-        SuppressUserConversions = true;
-    }
-
-    if (!Constructor->isInvalidDecl() &&
-        (AllowExplicit || !Constructor->isExplicit())) {
-      if (ConstructorTmpl)
-        S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
-                                       /*ExplicitArgs*/ 0,
-                                       Args, NumArgs, CandidateSet,
-                                       SuppressUserConversions);
-      else
-        S.AddOverloadCandidate(Constructor, FoundDecl,
-                               Args, NumArgs, CandidateSet,
-                               SuppressUserConversions);
-    }
-  }
-
-  SourceLocation DeclLoc = Kind.getLocation();
-
-  // Perform overload resolution. If it fails, return the failed result.
   OverloadCandidateSet::iterator Best;
-  if (OverloadingResult Result
-        = CandidateSet.BestViableFunction(S, DeclLoc, Best)) {
+  if (OverloadingResult Result =
+      ResolveConstructorOverload(S, Kind.getLocation(), Args, NumArgs,
+                                 CandidateSet, ConStart, ConEnd, Best,
+                                 Kind.getKind() == InitializationKind::IK_Copy,
+                                 AllowExplicit,
+                                 /*OnlyListConstructors=*/false)) {
     Sequence.SetOverloadFailure(InitListSyntax ?
                       InitializationSequence::FK_ListConstructorOverloadFailed :
                       InitializationSequence::FK_ConstructorOverloadFailed,
