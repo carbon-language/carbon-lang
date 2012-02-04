@@ -1173,25 +1173,36 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
   , SectionHeaderTable(0)
   , dot_shstrtab_sec(0)
   , dot_strtab_sec(0) {
+
+  const uint64_t FileSize = Data->getBufferSize();
+
+  if (sizeof(Elf_Ehdr) > FileSize)
+    // FIXME: Proper error handling.
+    report_fatal_error("File too short!");
+
   Header = reinterpret_cast<const Elf_Ehdr *>(base());
 
   if (Header->e_shoff == 0)
     return;
 
-  SectionHeaderTable =
-    reinterpret_cast<const Elf_Shdr *>(base() + Header->e_shoff);
-  uint64_t SectionTableSize = getNumSections() * Header->e_shentsize;
+  const uint64_t SectionTableOffset = Header->e_shoff;
 
-  if ((const uint8_t *)SectionHeaderTable + SectionTableSize
-         > base() + Data->getBufferSize()) {
+  if (SectionTableOffset + sizeof(Elf_Shdr) > FileSize)
+    // FIXME: Proper error handling.
+    report_fatal_error("Section header table goes past end of file!");
+
+  // The getNumSections() call below depends on SectionHeaderTable being set.
+  SectionHeaderTable =
+    reinterpret_cast<const Elf_Shdr *>(base() + SectionTableOffset);
+  const uint64_t SectionTableSize = getNumSections() * Header->e_shentsize;
+
+  if (SectionTableOffset + SectionTableSize > FileSize)
     // FIXME: Proper error handling.
     report_fatal_error("Section table goes past end of file!");
-  }
-
 
   // To find the symbol tables we walk the section table to find SHT_SYMTAB.
   const Elf_Shdr* SymbolTableSectionHeaderIndex = 0;
-  const Elf_Shdr* sh = reinterpret_cast<const Elf_Shdr*>(SectionHeaderTable);
+  const Elf_Shdr* sh = SectionHeaderTable;
   for (uint64_t i = 0, e = getNumSections(); i != e; ++i) {
     if (sh->sh_type == ELF::SHT_SYMTAB_SHNDX) {
       if (SymbolTableSectionHeaderIndex)
@@ -1357,8 +1368,11 @@ unsigned ELFObjectFile<target_endianness, is64Bits>::getArch() const {
 
 template<support::endianness target_endianness, bool is64Bits>
 uint64_t ELFObjectFile<target_endianness, is64Bits>::getNumSections() const {
-  if (Header->e_shnum == ELF::SHN_UNDEF)
+  assert(Header && "Header not initialized!");
+  if (Header->e_shnum == ELF::SHN_UNDEF) {
+    assert(SectionHeaderTable && "SectionHeaderTable not initialized!");
     return SectionHeaderTable->sh_size;
+  }
   return Header->e_shnum;
 }
 
