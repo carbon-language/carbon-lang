@@ -181,7 +181,7 @@ void RuntimeDyldELF::resolveX86_64Relocation(StringRef Name,
       Loc->second.second + RE.Offset;
   } else {
     // FIXME: Get the address of the target section and add that to RE.Offset
-    assert(0 && ("Non-function relocation not implemented yet!"));
+    llvm_unreachable("Non-function relocation not implemented yet!");
   }
 
   switch (RE.Type) {
@@ -230,7 +230,7 @@ void RuntimeDyldELF::resolveX86Relocation(StringRef Name,
       Loc->second.second + RE.Offset;
   } else {
     // FIXME: Get the address of the target section and add that to RE.Offset
-    assert(0 && ("Non-function relocation not implemented yet!"));
+    llvm_unreachable("Non-function relocation not implemented yet!");
   }
 
   switch (RE.Type) {
