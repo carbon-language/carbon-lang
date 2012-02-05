@@ -148,12 +148,25 @@ struct GlobalStatus {
   /// HasPHIUser - Set to true if this global has a user that is a PHI node.
   bool HasPHIUser;
 
+  /// AtomicOrdering - Set to the strongest atomic ordering requirement.
+  AtomicOrdering Ordering;
+
   GlobalStatus() : isCompared(false), isLoaded(false), StoredType(NotStored),
                    StoredOnceValue(0), AccessingFunction(0),
-                   HasMultipleAccessingFunctions(false), HasNonInstructionUser(false),
-                   HasPHIUser(false) {}
+                   HasMultipleAccessingFunctions(false),
+                   HasNonInstructionUser(false), HasPHIUser(false),
+                   Ordering(NotAtomic) {}
 };
 
+}
+
+/// StrongerOrdering - Return the stronger of the two ordering. If the two
+/// orderings are acquire and release, then return AcquireRelease.
+///
+static AtomicOrdering StrongerOrdering(AtomicOrdering X, AtomicOrdering Y) {
+  if (X == Acquire && Y == Release) return AcquireRelease;
+  if (Y == Acquire && X == Release) return AcquireRelease;
+  return (AtomicOrdering)std::max(X, Y);
 }
 
 /// SafeToDestroyConstant - It is safe to destroy a constant iff it is only used
@@ -200,14 +213,16 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
       }
       if (const LoadInst *LI = dyn_cast<LoadInst>(I)) {
         GS.isLoaded = true;
-        // Don't hack on volatile/atomic loads.
-        if (!LI->isSimple()) return true;
+        // Don't hack on volatile loads.
+        if (LI->isVolatile()) return true;
+        GS.Ordering = StrongerOrdering(GS.Ordering, LI->getOrdering());
       } else if (const StoreInst *SI = dyn_cast<StoreInst>(I)) {
         // Don't allow a store OF the address, only stores TO the address.
         if (SI->getOperand(0) == V) return true;
 
-        // Don't hack on volatile/atomic stores.
-        if (!SI->isSimple()) return true;
+        // Don't hack on volatile stores.
+        if (SI->isVolatile()) return true;
+        GS.Ordering = StrongerOrdering(GS.Ordering, SI->getOrdering());
 
         // If this is a direct store to the global (i.e., the global is a scalar
         // value, not an aggregate), keep more specific information about
@@ -879,7 +894,8 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   while (!GV->use_empty()) {
     if (StoreInst *SI = dyn_cast<StoreInst>(GV->use_back())) {
       // The global is initialized when the store to it occurs.
-      new StoreInst(ConstantInt::getTrue(GV->getContext()), InitBool, SI);
+      new StoreInst(ConstantInt::getTrue(GV->getContext()), InitBool, false, 0,
+                    SI->getOrdering(), SI->getSynchScope(), SI);
       SI->eraseFromParent();
       continue;
     }
@@ -894,7 +910,10 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
 
       ICmpInst *ICI = cast<ICmpInst>(LoadUse.getUser());
       // Replace the cmp X, 0 with a use of the bool value.
-      Value *LV = new LoadInst(InitBool, InitBool->getName()+".val", ICI);
+      // Sink the load to where the compare was, if atomic rules allow us to.
+      Value *LV = new LoadInst(InitBool, InitBool->getName()+".val", false, 0,
+                               LI->getOrdering(), LI->getSynchScope(),
+                               LI->isUnordered() ? (Instruction*)ICI : LI);
       InitBoolUsed = true;
       switch (ICI->getPredicate()) {
       default: llvm_unreachable("Unknown ICmp Predicate!");
@@ -1454,6 +1473,7 @@ static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
 static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
                                                CallInst *CI,
                                                Type *AllocTy,
+                                               AtomicOrdering Ordering,
                                                Module::global_iterator &GVI,
                                                TargetData *TD) {
   if (!TD)
@@ -1503,6 +1523,9 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
   // into multiple malloc'd arrays, one for each field.  This is basically
   // SRoA for malloc'd memory.
 
+  if (Ordering != NotAtomic)
+    return false;
+
   // If this is an allocation of a fixed size array of structs, analyze as a
   // variable size array.  malloc [100 x struct],1 -> malloc struct, 100
   if (NElems == ConstantInt::get(CI->getArgOperand(0)->getType(), 1))
@@ -1545,6 +1568,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
 // OptimizeOnceStoredGlobal - Try to optimize globals based on the knowledge
 // that only one value (besides its initializer) is ever stored to the global.
 static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
+                                     AtomicOrdering Ordering,
                                      Module::global_iterator &GVI,
                                      TargetData *TD) {
   // Ignore no-op GEPs and bitcasts.
@@ -1566,7 +1590,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
     } else if (CallInst *CI = extractMallocCall(StoredOnceVal)) {
       Type *MallocType = getMallocAllocatedType(CI);
       if (MallocType && TryToOptimizeStoreOfMallocToGlobal(GV, CI, MallocType,
-                                                           GVI, TD))
+                                                           Ordering, GVI, TD))
         return true;
     }
   }
@@ -1642,7 +1666,8 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
         if (LoadInst *LI = dyn_cast<LoadInst>(StoredVal)) {
           assert(LI->getOperand(0) == GV && "Not a copy!");
           // Insert a new load, to preserve the saved value.
-          StoreVal = new LoadInst(NewGV, LI->getName()+".b", LI);
+          StoreVal = new LoadInst(NewGV, LI->getName()+".b", false, 0,
+                                  LI->getOrdering(), LI->getSynchScope(), LI);
         } else {
           assert((isa<CastInst>(StoredVal) || isa<SelectInst>(StoredVal)) &&
                  "This is not a form that we understand!");
@@ -1650,11 +1675,13 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
           assert(isa<LoadInst>(StoreVal) && "Not a load of NewGV!");
         }
       }
-      new StoreInst(StoreVal, NewGV, SI);
+      new StoreInst(StoreVal, NewGV, false, 0,
+                    SI->getOrdering(), SI->getSynchScope(), SI);
     } else {
       // Change the load into a load of bool then a select.
       LoadInst *LI = cast<LoadInst>(UI);
-      LoadInst *NLI = new LoadInst(NewGV, LI->getName()+".b", LI);
+      LoadInst *NLI = new LoadInst(NewGV, LI->getName()+".b", false, 0,
+                                   LI->getOrdering(), LI->getSynchScope(), LI);
       Value *NSI;
       if (IsOneZero)
         NSI = new ZExtInst(NLI, LI->getType(), "", LI);
@@ -1808,7 +1835,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
     // Try to optimize globals based on the knowledge that only one value
     // (besides its initializer) is ever stored to the global.
-    if (OptimizeOnceStoredGlobal(GV, GS.StoredOnceValue, GVI,
+    if (OptimizeOnceStoredGlobal(GV, GS.StoredOnceValue, GS.Ordering, GVI,
                                  getAnalysisIfAvailable<TargetData>()))
       return true;
 
