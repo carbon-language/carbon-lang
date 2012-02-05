@@ -16,10 +16,11 @@
 #ifndef LLVM_CODEGEN_VALUETYPES_H
 #define LLVM_CODEGEN_VALUETYPES_H
 
+#include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
+#include "llvm/Support/MathExtras.h"
 #include <cassert>
 #include <string>
-#include "llvm/Support/DataTypes.h"
-#include "llvm/Support/MathExtras.h"
 
 namespace llvm {
   class Type;
@@ -246,13 +247,13 @@ namespace llvm {
     unsigned getSizeInBits() const {
       switch (SimpleTy) {
       case iPTR:
-        assert(0 && "Value type size is target-dependent. Ask TLI.");
+        llvm_unreachable("Value type size is target-dependent. Ask TLI.");
       case iPTRAny:
       case iAny:
       case fAny:
-        assert(0 && "Value type is overloaded.");
+        llvm_unreachable("Value type is overloaded.");
       default:
-        assert(0 && "getSizeInBits called on extended MVT.");
+        llvm_unreachable("getSizeInBits called on extended MVT.");
       case i1  :  return 1;
       case i8  :  return 8;
       case i16 :
@@ -306,7 +307,7 @@ namespace llvm {
     static MVT getFloatingPointVT(unsigned BitWidth) {
       switch (BitWidth) {
       default:
-        assert(false && "Bad bit width!");
+        llvm_unreachable("Bad bit width!");
       case 16:
         return MVT::f16;
       case 32:

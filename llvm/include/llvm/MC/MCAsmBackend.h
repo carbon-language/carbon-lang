@@ -14,6 +14,7 @@
 #include "llvm/MC/MCFixup.h"
 #include "llvm/MC/MCFixupKindInfo.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 class MCAsmLayout;
@@ -49,8 +50,8 @@ public:
   /// createELFObjectTargetWriter - Create a new ELFObjectTargetWriter to enable
   /// non-standard ELFObjectWriters.
   virtual  MCELFObjectTargetWriter *createELFObjectTargetWriter() const {
-    assert(0 && "createELFObjectTargetWriter is not supported by asm backend");
-    return 0;
+    llvm_unreachable("createELFObjectTargetWriter is not supported by asm "
+                     "backend");
   }
 
   /// hasReliableSymbolDifference - Check whether this target implements

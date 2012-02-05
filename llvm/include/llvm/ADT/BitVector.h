@@ -14,12 +14,12 @@
 #ifndef LLVM_ADT_BITVECTOR_H
 #define LLVM_ADT_BITVECTOR_H
 
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <algorithm>
 #include <cassert>
 #include <climits>
 #include <cstdlib>
-#include <cstring>
 
 namespace llvm {
 
@@ -116,7 +116,7 @@ public:
       else if (sizeof(BitWord) == 8)
         NumBits += CountPopulation_64(Bits[i]);
       else
-        assert(0 && "Unsupported!");
+        llvm_unreachable("Unsupported!");
     return NumBits;
   }
 
@@ -146,10 +146,9 @@ public:
       if (Bits[i] != 0) {
         if (sizeof(BitWord) == 4)
           return i * BITWORD_SIZE + CountTrailingZeros_32((uint32_t)Bits[i]);
-        else if (sizeof(BitWord) == 8)
+        if (sizeof(BitWord) == 8)
           return i * BITWORD_SIZE + CountTrailingZeros_64(Bits[i]);
-        else
-          assert(0 && "Unsupported!");
+        llvm_unreachable("Unsupported!");
       }
     return -1;
   }
@@ -170,10 +169,9 @@ public:
     if (Copy != 0) {
       if (sizeof(BitWord) == 4)
         return WordPos * BITWORD_SIZE + CountTrailingZeros_32((uint32_t)Copy);
-      else if (sizeof(BitWord) == 8)
+      if (sizeof(BitWord) == 8)
         return WordPos * BITWORD_SIZE + CountTrailingZeros_64(Copy);
-      else
-        assert(0 && "Unsupported!");
+      llvm_unreachable("Unsupported!");
     }
 
     // Check subsequent words.
@@ -181,10 +179,9 @@ public:
       if (Bits[i] != 0) {
         if (sizeof(BitWord) == 4)
           return i * BITWORD_SIZE + CountTrailingZeros_32((uint32_t)Bits[i]);
-        else if (sizeof(BitWord) == 8)
+        if (sizeof(BitWord) == 8)
           return i * BITWORD_SIZE + CountTrailingZeros_64(Bits[i]);
-        else
-          assert(0 && "Unsupported!");
+        llvm_unreachable("Unsupported!");
       }
     return -1;
   }

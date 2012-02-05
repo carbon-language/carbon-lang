@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/ilist.h"
 #include "llvm/Support/AlignOf.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 
 namespace llvm {
@@ -52,7 +53,7 @@ struct ilist_traits<RecyclerStruct> :
   static void noteHead(RecyclerStruct*, RecyclerStruct*) {}
 
   static void deleteNode(RecyclerStruct *) {
-    assert(0 && "Recycler's ilist_traits shouldn't see a deleteNode call!");
+    llvm_unreachable("Recycler's ilist_traits shouldn't see a deleteNode call!");
   }
 };
 

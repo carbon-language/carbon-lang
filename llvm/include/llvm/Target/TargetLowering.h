@@ -294,8 +294,7 @@ public:
         VT = getTypeToTransformTo(Context, VT);
         break;
       default:
-        assert(false && "Type is not legal nor is it to be expanded!");
-        return VT;
+        llvm_unreachable("Type is not legal nor is it to be expanded!");
       }
     }
   }
@@ -566,8 +565,7 @@ public:
     if (VT.isInteger()) {
       return getRegisterType(Context, getTypeToTransformTo(Context, VT));
     }
-    assert(0 && "Unsupported extended type!");
-    return EVT(MVT::Other); // Not reached
+    llvm_unreachable("Unsupported extended type!");
   }
 
   /// getNumRegisters - Return the number of registers that this ValueType will
@@ -592,8 +590,7 @@ public:
       unsigned RegWidth = getRegisterType(Context, VT).getSizeInBits();
       return (BitWidth + RegWidth - 1) / RegWidth;
     }
-    assert(0 && "Unsupported extended type!");
-    return 0; // Not reached
+    llvm_unreachable("Unsupported extended type!");
   }
 
   /// ShouldShrinkFPConstant - If true, then instruction selection should
@@ -784,8 +781,7 @@ public:
   LowerCustomJumpTableEntry(const MachineJumpTableInfo * /*MJTI*/,
                             const MachineBasicBlock * /*MBB*/, unsigned /*uid*/,
                             MCContext &/*Ctx*/) const {
-    assert(0 && "Need to implement this hook if target has custom JTIs");
-    return 0;
+    llvm_unreachable("Need to implement this hook if target has custom JTIs");
   }
 
   /// getPICJumpTableRelocaBase - Returns relocation base for the given PIC
@@ -1210,8 +1206,7 @@ public:
                          const SmallVectorImpl<ISD::InputArg> &/*Ins*/,
                          DebugLoc /*dl*/, SelectionDAG &/*DAG*/,
                          SmallVectorImpl<SDValue> &/*InVals*/) const {
-    assert(0 && "Not Implemented");
-    return SDValue();    // this is here to silence compiler errors
+    llvm_unreachable("Not Implemented");
   }
 
   /// LowerCallTo - This function lowers an abstract call to a function into an
@@ -1256,8 +1251,7 @@ public:
               const SmallVectorImpl<ISD::InputArg> &/*Ins*/,
               DebugLoc /*dl*/, SelectionDAG &/*DAG*/,
               SmallVectorImpl<SDValue> &/*InVals*/) const {
-    assert(0 && "Not Implemented");
-    return SDValue();    // this is here to silence compiler errors
+    llvm_unreachable("Not Implemented");
   }
 
   /// HandleByVal - Target-specific cleanup for formal ByVal parameters.
@@ -1287,8 +1281,7 @@ public:
                 const SmallVectorImpl<ISD::OutputArg> &/*Outs*/,
                 const SmallVectorImpl<SDValue> &/*OutVals*/,
                 DebugLoc /*dl*/, SelectionDAG &/*DAG*/) const {
-    assert(0 && "Not Implemented");
-    return SDValue();    // this is here to silence compiler errors
+    llvm_unreachable("Not Implemented");
   }
 
   /// isUsedByReturnOnly - Return true if result of the specified node is used
@@ -1353,7 +1346,7 @@ public:
   virtual void ReplaceNodeResults(SDNode * /*N*/,
                                   SmallVectorImpl<SDValue> &/*Results*/,
                                   SelectionDAG &/*DAG*/) const {
-    assert(0 && "ReplaceNodeResults not implemented for this target!");
+    llvm_unreachable("ReplaceNodeResults not implemented for this target!");
   }
 
   /// getTargetNodeName() - This method returns the name of a target specific
@@ -1939,9 +1932,6 @@ private:
     // Vectors with illegal element types are expanded.
     EVT NVT = EVT::getVectorVT(Context, EltVT, VT.getVectorNumElements() / 2);
     return LegalizeKind(TypeSplitVector, NVT);
-
-    assert(false && "Unable to handle this kind of vector type");
-    return LegalizeKind(TypeLegal, VT);
   }
 
   std::vector<std::pair<EVT, TargetRegisterClass*> > AvailableRegClasses;

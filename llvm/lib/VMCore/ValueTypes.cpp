@@ -87,8 +87,7 @@ unsigned EVT::getExtendedSizeInBits() const {
     return ITy->getBitWidth();
   if (VectorType *VTy = dyn_cast<VectorType>(LLVMTy))
     return VTy->getBitWidth();
-  assert(false && "Unrecognized extended type!");
-  return 0; // Suppress warnings.
+  llvm_unreachable("Unrecognized extended type!");
 }
 
 /// getEVTString - This function returns value type as a string, e.g. "i32".

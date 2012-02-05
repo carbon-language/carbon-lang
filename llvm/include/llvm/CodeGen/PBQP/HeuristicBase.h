@@ -157,7 +157,7 @@ namespace PBQP {
         case 0: s.applyR0(nItr); break;
         case 1: s.applyR1(nItr); break;
         case 2: s.applyR2(nItr); break;
-        default: assert(false &&
+        default: llvm_unreachable(
                         "Optimal reductions of degree > 2 nodes is invalid.");
       }
 
@@ -186,7 +186,7 @@ namespace PBQP {
     /// \brief Add a node to the heuristic reduce list.
     /// @param nItr Node iterator to add to the heuristic reduce list.
     void addToHeuristicList(Graph::NodeItr nItr) {
-      assert(false && "Must be implemented in derived class.");
+      llvm_unreachable("Must be implemented in derived class.");
     }
 
     /// \brief Heuristically reduce one of the nodes in the heuristic
@@ -194,25 +194,25 @@ namespace PBQP {
     /// @return True if a reduction takes place, false if the heuristic reduce
     ///         list is empty.
     void heuristicReduce() {
-      assert(false && "Must be implemented in derived class.");
+      llvm_unreachable("Must be implemented in derived class.");
     }
 
     /// \brief Prepare a change in the costs on the given edge.
     /// @param eItr Edge iterator.    
     void preUpdateEdgeCosts(Graph::EdgeItr eItr) {
-      assert(false && "Must be implemented in derived class.");
+      llvm_unreachable("Must be implemented in derived class.");
     }
 
     /// \brief Handle the change in the costs on the given edge.
     /// @param eItr Edge iterator.
     void postUpdateEdgeCostts(Graph::EdgeItr eItr) {
-      assert(false && "Must be implemented in derived class.");
+      llvm_unreachable("Must be implemented in derived class.");
     }
 
     /// \brief Handle the addition of a new edge into the PBQP graph.
     /// @param eItr Edge iterator for the added edge.
     void handleAddEdge(Graph::EdgeItr eItr) {
-      assert(false && "Must be implemented in derived class.");
+      llvm_unreachable("Must be implemented in derived class.");
     }
 
     /// \brief Handle disconnection of an edge from a node.
@@ -223,7 +223,7 @@ namespace PBQP {
     /// method allows for the effect to be computed only for the remaining
     /// node in the graph.
     void handleRemoveEdge(Graph::EdgeItr eItr, Graph::NodeItr nItr) {
-      assert(false && "Must be implemented in derived class.");
+      llvm_unreachable("Must be implemented in derived class.");
     }
 
     /// \brief Clean up any structures used by HeuristicBase.

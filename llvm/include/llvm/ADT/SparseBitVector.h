@@ -18,11 +18,11 @@
 #include "llvm/ADT/ilist.h"
 #include "llvm/ADT/ilist_node.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
 #include <climits>
-#include <cstring>
 
 namespace llvm {
 
@@ -128,7 +128,7 @@ public:
       else if (sizeof(BitWord) == 8)
         NumBits += CountPopulation_64(Bits[i]);
       else
-        assert(0 && "Unsupported!");
+        llvm_unreachable("Unsupported!");
     return NumBits;
   }
 
@@ -138,13 +138,11 @@ public:
       if (Bits[i] != 0) {
         if (sizeof(BitWord) == 4)
           return i * BITWORD_SIZE + CountTrailingZeros_32(Bits[i]);
-        else if (sizeof(BitWord) == 8)
+        if (sizeof(BitWord) == 8)
           return i * BITWORD_SIZE + CountTrailingZeros_64(Bits[i]);
-        else
-          assert(0 && "Unsupported!");
+        llvm_unreachable("Unsupported!");
       }
-    assert(0 && "Illegal empty element");
-    return 0; // Not reached
+    llvm_unreachable("Illegal empty element");
   }
 
   /// find_next - Returns the index of the next set bit starting from the
@@ -165,10 +163,9 @@ public:
     if (Copy != 0) {
       if (sizeof(BitWord) == 4)
         return WordPos * BITWORD_SIZE + CountTrailingZeros_32(Copy);
-      else if (sizeof(BitWord) == 8)
+      if (sizeof(BitWord) == 8)
         return WordPos * BITWORD_SIZE + CountTrailingZeros_64(Copy);
-      else
-        assert(0 && "Unsupported!");
+      llvm_unreachable("Unsupported!");
     }
 
     // Check subsequent words.
@@ -176,10 +173,9 @@ public:
       if (Bits[i] != 0) {
         if (sizeof(BitWord) == 4)
           return i * BITWORD_SIZE + CountTrailingZeros_32(Bits[i]);
-        else if (sizeof(BitWord) == 8)
+        if (sizeof(BitWord) == 8)
           return i * BITWORD_SIZE + CountTrailingZeros_64(Bits[i]);
-        else
-          assert(0 && "Unsupported!");
+        llvm_unreachable("Unsupported!");
       }
     return -1;
   }

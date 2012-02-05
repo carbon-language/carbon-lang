@@ -105,7 +105,7 @@ public:
   /// available cached constants.  Implementations should call
   /// destroyConstantImpl as the last thing they do, to destroy all users and
   /// delete this.
-  virtual void destroyConstant() { assert(0 && "Not reached!"); }
+  virtual void destroyConstant() { llvm_unreachable("Not reached!"); }
 
   //// Methods for support type inquiry through isa, cast, and dyn_cast:
   static inline bool classof(const Constant *) { return true; }
@@ -131,11 +131,12 @@ public:
     // to be here to avoid link errors.
     assert(getNumOperands() == 0 && "replaceUsesOfWithOnConstant must be "
            "implemented for all constants that have operands!");
-    assert(0 && "Constants that do not have operands cannot be using 'From'!");
+    llvm_unreachable("Constants that do not have operands cannot be using "
+                     "'From'!");
   }
-  
+
   static Constant *getNullValue(Type* Ty);
-  
+
   /// @returns the value for an integer constant of the given type that has all
   /// its bits set to true.
   /// @brief Get the all ones value

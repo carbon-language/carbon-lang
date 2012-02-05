@@ -1228,8 +1228,7 @@ void PMDataManager::addLowerLevelRequiredPass(Pass *P, Pass *RequiredPass) {
 }
 
 Pass *PMDataManager::getOnTheFlyPass(Pass *P, AnalysisID PI, Function &F) {
-  assert(0 && "Unable to find on the fly pass");
-  return NULL;
+  llvm_unreachable("Unable to find on the fly pass");
 }
 
 // Destructor

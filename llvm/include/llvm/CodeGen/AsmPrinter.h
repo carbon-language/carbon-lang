@@ -18,6 +18,7 @@
 
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
   class BlockAddress;
@@ -37,7 +38,6 @@ namespace llvm {
   class MachineModuleInfo;
   class MachineMove;
   class MCAsmInfo;
-  class MCInst;
   class MCContext;
   class MCSection;
   class MCStreamer;
@@ -49,8 +49,6 @@ namespace llvm {
   class TargetLoweringObjectFile;
   class TargetData;
   class TargetMachine;
-  class Twine;
-  class Type;
 
   /// AsmPrinter - This class is intended to be used as a driving class for all
   /// asm writers.
@@ -254,7 +252,7 @@ namespace llvm {
 
     /// EmitInstruction - Targets should implement this to emit instructions.
     virtual void EmitInstruction(const MachineInstr *) {
-      assert(0 && "EmitInstruction not implemented");
+      llvm_unreachable("EmitInstruction not implemented");
     }
 
     virtual void EmitFunctionEntryLabel();

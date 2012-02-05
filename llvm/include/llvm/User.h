@@ -19,6 +19,7 @@
 #ifndef LLVM_USER_H
 #define LLVM_USER_H
 
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Value.h"
 
 namespace llvm {
@@ -65,11 +66,11 @@ public:
   void operator delete(void *Usr);
   /// placement delete - required by std, but never called.
   void operator delete(void*, unsigned) {
-    assert(0 && "Constructor throws?");
+    llvm_unreachable("Constructor throws?");
   }
   /// placement delete - required by std, but never called.
   void operator delete(void*, unsigned, bool) {
-    assert(0 && "Constructor throws?");
+    llvm_unreachable("Constructor throws?");
   }
 protected:
   template <int Idx, typename U> static Use &OpFrom(const U *that) {

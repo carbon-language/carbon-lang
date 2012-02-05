@@ -133,8 +133,7 @@ LLVMContextRef LLVMGetModuleContext(LLVMModuleRef M) {
 
 LLVMTypeKind LLVMGetTypeKind(LLVMTypeRef Ty) {
   switch (unwrap(Ty)->getTypeID()) {
-  default:
-    assert(false && "Unhandled TypeID.");
+  default: llvm_unreachable("Unhandled TypeID.");
   case Type::VoidTyID:
     return LLVMVoidTypeKind;
   case Type::HalfTyID:
@@ -680,8 +679,7 @@ LLVMValueRef LLVMConstVector(LLVMValueRef *ScalarConstantVals, unsigned Size) {
 static LLVMOpcode map_to_llvmopcode(int opcode)
 {
     switch (opcode) {
-      default:
-        assert(0 && "Unhandled Opcode.");
+      default: llvm_unreachable("Unhandled Opcode.");
 #define HANDLE_INST(num, opc, clas) case num: return LLVM##opc;
 #include "llvm/Instruction.def"
 #undef HANDLE_INST

@@ -455,10 +455,10 @@ private:
   void ReadAbbreviatedField(const BitCodeAbbrevOp &Op,
                             SmallVectorImpl<uint64_t> &Vals) {
     assert(!Op.isLiteral() && "Use ReadAbbreviatedLiteral for literals!");
-    
+
     // Decode the value as we are commanded.
     switch (Op.getEncoding()) {
-    default: assert(0 && "Unknown encoding!");
+    default: llvm_unreachable("Unknown encoding!");
     case BitCodeAbbrevOp::Fixed:
       Vals.push_back(Read((unsigned)Op.getEncodingData()));
       break;

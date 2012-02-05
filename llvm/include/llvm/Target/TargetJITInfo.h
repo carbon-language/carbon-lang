@@ -46,8 +46,8 @@ namespace llvm {
     /// ptr.
     virtual void *emitGlobalValueIndirectSym(const GlobalValue* GV, void *ptr,
                                              JITCodeEmitter &JCE) {
-      assert(0 && "This target doesn't implement emitGlobalValueIndirectSym!");
-      return 0;
+      llvm_unreachable("This target doesn't implement "
+                       "emitGlobalValueIndirectSym!");
     }
 
     /// Records the required size and alignment for a call stub in bytes.
@@ -67,15 +67,13 @@ namespace llvm {
     /// aligned from the address the JCE was set up to emit at.
     virtual void *emitFunctionStub(const Function* F, void *Target,
                                    JITCodeEmitter &JCE) {
-      assert(0 && "This target doesn't implement emitFunctionStub!");
-      return 0;
+      llvm_unreachable("This target doesn't implement emitFunctionStub!");
     }
 
     /// getPICJumpTableEntry - Returns the value of the jumptable entry for the
     /// specific basic block.
     virtual uintptr_t getPICJumpTableEntry(uintptr_t BB, uintptr_t JTBase) {
-      assert(0 && "This target doesn't implement getPICJumpTableEntry!");
-      return 0;
+      llvm_unreachable("This target doesn't implement getPICJumpTableEntry!");
     }
 
     /// LazyResolverFn - This typedef is used to represent the function that
@@ -96,8 +94,7 @@ namespace llvm {
     /// function, and giving the JIT the target function used to do the lazy
     /// resolving.
     virtual LazyResolverFn getLazyResolverFunction(JITCompilerFn) {
-      assert(0 && "Not implemented for this target!");
-      return 0;
+      llvm_unreachable("Not implemented for this target!");
     }
 
     /// relocate - Before the JIT can run a block of code that has been emitted,
@@ -113,8 +110,7 @@ namespace llvm {
     /// handling thread local variables. This method returns a value only
     /// meaningful to the target.
     virtual char* allocateThreadLocalMemory(size_t size) {
-      assert(0 && "This target does not implement thread local storage!");
-      return 0;
+      llvm_unreachable("This target does not implement thread local storage!");
     }
 
     /// needsGOT - Allows a target to specify that it would like the

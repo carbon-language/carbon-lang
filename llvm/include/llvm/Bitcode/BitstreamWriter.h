@@ -275,7 +275,7 @@ private:
     
     // Encode the value as we are commanded.
     switch (Op.getEncoding()) {
-    default: assert(0 && "Unknown encoding!");
+    default: llvm_unreachable("Unknown encoding!");
     case BitCodeAbbrevOp::Fixed:
       if (Op.getEncodingData())
         Emit((unsigned)V, (unsigned)Op.getEncodingData());

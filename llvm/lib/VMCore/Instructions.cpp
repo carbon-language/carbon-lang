@@ -1410,8 +1410,7 @@ unsigned GetElementPtrInst::getAddressSpace(Value *Ptr) {
   if (PointerType *PTy = dyn_cast<PointerType>(Ty))
     return PTy->getAddressSpace();
 
-  assert(false && "Invalid GEP pointer type");
-  return 0;
+  llvm_unreachable("Invalid GEP pointer type");
 }
 
 /// hasAllZeroIndices - Return true if all of the indices of this GEP are
@@ -2079,8 +2078,7 @@ bool CastInst::isNoopCast(Instruction::CastOps Opcode,
                           Type *DestTy,
                           Type *IntPtrTy) {
   switch (Opcode) {
-    default:
-      assert(0 && "Invalid CastOp");
+    default: llvm_unreachable("Invalid CastOp");
     case Instruction::Trunc:
     case Instruction::ZExt:
     case Instruction::SExt: 
@@ -2273,11 +2271,9 @@ unsigned CastInst::isEliminableCastPair(
     case 99: 
       // cast combination can't happen (error in input). This is for all cases
       // where the MidTy is not the same for the two cast instructions.
-      assert(0 && "Invalid Cast Combination");
-      return 0;
+      llvm_unreachable("Invalid Cast Combination");
     default:
-      assert(0 && "Error in CastResults table!!!");
-      return 0;
+      llvm_unreachable("Error in CastResults table!!!");
   }
 }
 
@@ -2298,9 +2294,7 @@ CastInst *CastInst::Create(Instruction::CastOps op, Value *S, Type *Ty,
     case PtrToInt: return new PtrToIntInst (S, Ty, Name, InsertBefore);
     case IntToPtr: return new IntToPtrInst (S, Ty, Name, InsertBefore);
     case BitCast:  return new BitCastInst  (S, Ty, Name, InsertBefore);
-    default:
-      assert(0 && "Invalid opcode provided");
-      return 0;
+    default: llvm_unreachable("Invalid opcode provided");
   }
 }
 
@@ -2321,9 +2315,7 @@ CastInst *CastInst::Create(Instruction::CastOps op, Value *S, Type *Ty,
     case PtrToInt: return new PtrToIntInst (S, Ty, Name, InsertAtEnd);
     case IntToPtr: return new IntToPtrInst (S, Ty, Name, InsertAtEnd);
     case BitCast:  return new BitCastInst  (S, Ty, Name, InsertAtEnd);
-    default:
-      assert(0 && "Invalid opcode provided");
-      return 0;
+    default: llvm_unreachable("Invalid opcode provided");
   }
 }
 
@@ -2606,17 +2598,17 @@ CastInst::getCastOpcode(
     } else if (SrcTy->isIntegerTy()) {
       return IntToPtr;                              // int -> ptr
     } else {
-      assert(0 && "Casting pointer to other than pointer or int");
+      llvm_unreachable("Casting pointer to other than pointer or int");
     }
   } else if (DestTy->isX86_MMXTy()) {
     if (SrcTy->isVectorTy()) {
       assert(DestBits == SrcBits && "Casting vector of wrong width to X86_MMX");
       return BitCast;                               // 64-bit vector to MMX
     } else {
-      assert(0 && "Illegal cast to X86_MMX");
+      llvm_unreachable("Illegal cast to X86_MMX");
     }
   } else {
-    assert(0 && "Casting to type that is not first-class");
+    llvm_unreachable("Casting to type that is not first-class");
   }
 
   // If we fall through to here we probably hit an assertion cast above
@@ -2938,7 +2930,7 @@ bool CmpInst::isEquality() const {
 
 CmpInst::Predicate CmpInst::getInversePredicate(Predicate pred) {
   switch (pred) {
-    default: assert(0 && "Unknown cmp predicate!");
+    default: llvm_unreachable("Unknown cmp predicate!");
     case ICMP_EQ: return ICMP_NE;
     case ICMP_NE: return ICMP_EQ;
     case ICMP_UGT: return ICMP_ULE;
@@ -2971,7 +2963,7 @@ CmpInst::Predicate CmpInst::getInversePredicate(Predicate pred) {
 
 ICmpInst::Predicate ICmpInst::getSignedPredicate(Predicate pred) {
   switch (pred) {
-    default: assert(0 && "Unknown icmp predicate!");
+    default: llvm_unreachable("Unknown icmp predicate!");
     case ICMP_EQ: case ICMP_NE: 
     case ICMP_SGT: case ICMP_SLT: case ICMP_SGE: case ICMP_SLE: 
        return pred;
@@ -2984,7 +2976,7 @@ ICmpInst::Predicate ICmpInst::getSignedPredicate(Predicate pred) {
 
 ICmpInst::Predicate ICmpInst::getUnsignedPredicate(Predicate pred) {
   switch (pred) {
-    default: assert(0 && "Unknown icmp predicate!");
+    default: llvm_unreachable("Unknown icmp predicate!");
     case ICMP_EQ: case ICMP_NE: 
     case ICMP_UGT: case ICMP_ULT: case ICMP_UGE: case ICMP_ULE: 
        return pred;
@@ -3060,7 +3052,7 @@ ICmpInst::makeConstantRange(Predicate pred, const APInt &C) {
 
 CmpInst::Predicate CmpInst::getSwappedPredicate(Predicate pred) {
   switch (pred) {
-    default: assert(0 && "Unknown cmp predicate!");
+    default: llvm_unreachable("Unknown cmp predicate!");
     case ICMP_EQ: case ICMP_NE:
       return pred;
     case ICMP_SGT: return ICMP_SLT;

@@ -20,6 +20,7 @@
 #include "llvm/Support/Allocator.h"
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/raw_ostream.h"
 #include <map>
 
@@ -671,8 +672,7 @@ public:
   ///
   virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
                                     unsigned Bit) const {
-    assert(0 && "Illegal bit reference off int");
-    return 0;
+    llvm_unreachable("Illegal bit reference off int");
   }
 
   /// resolveListElementReference - This method is used to implement
@@ -680,8 +680,7 @@ public:
   /// now, we return the resolved value, otherwise we return null.
   virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                             unsigned Elt) const {
-    assert(0 && "Illegal element reference off int");
-    return 0;
+    llvm_unreachable("Illegal element reference off int");
   }
 };
 
@@ -716,8 +715,7 @@ public:
   ///
   virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
                                     unsigned Bit) const {
-    assert(0 && "Illegal bit reference off string");
-    return 0;
+    llvm_unreachable("Illegal bit reference off string");
   }
 
   /// resolveListElementReference - This method is used to implement
@@ -725,8 +723,7 @@ public:
   /// now, we return the resolved value, otherwise we return null.
   virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                             unsigned Elt) const {
-    assert(0 && "Illegal element reference off string");
-    return 0;
+    llvm_unreachable("Illegal element reference off string");
   }
 };
 
@@ -786,8 +783,7 @@ public:
   ///
   virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
                                     unsigned Bit) const {
-    assert(0 && "Illegal bit reference off list");
-    return 0;
+    llvm_unreachable("Illegal bit reference off list");
   }
 
   /// resolveListElementReference - This method is used to implement
@@ -1132,8 +1128,7 @@ public:
   ///
   virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
                                     unsigned Bit) const {
-    assert(0 && "Illegal bit reference off def");
-    return 0;
+    llvm_unreachable("Illegal bit reference off def");
   }
 
   /// resolveListElementReference - This method is used to implement
@@ -1141,8 +1136,7 @@ public:
   /// now, we return the resolved value, otherwise we return null.
   virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                             unsigned Elt) const {
-    assert(0 && "Illegal element reference off def");
-    return 0;
+    llvm_unreachable("Illegal element reference off def");
   }
 };
 
@@ -1251,14 +1245,12 @@ public:
 
   virtual Init *resolveBitReference(Record &R, const RecordVal *RV,
                                     unsigned Bit) const {
-    assert(0 && "Illegal bit reference off dag");
-    return 0;
+    llvm_unreachable("Illegal bit reference off dag");
   }
 
   virtual Init *resolveListElementReference(Record &R, const RecordVal *RV,
                                             unsigned Elt) const {
-    assert(0 && "Illegal element reference off dag");
-    return 0;
+    llvm_unreachable("Illegal element reference off dag");
   }
 };
 
@@ -1416,7 +1408,7 @@ public:
         Values.erase(Values.begin()+i);
         return;
       }
-    assert(0 && "Cannot remove an entry that does not exist!");
+    llvm_unreachable("Cannot remove an entry that does not exist!");
   }
 
   void removeValue(StringRef Name) {

@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 #include <string>
 
@@ -425,7 +426,7 @@ namespace llvm {
     StringRef getSingleStringRef() const {
       assert(isSingleStringRef() &&"This cannot be had as a single stringref!");
       switch (getLHSKind()) {
-      default: assert(0 && "Out of sync with isSingleStringRef");
+      default: llvm_unreachable("Out of sync with isSingleStringRef");
       case EmptyKind:      return StringRef();
       case CStringKind:    return StringRef(LHS.cString);
       case StdStringKind:  return StringRef(*LHS.stdString);

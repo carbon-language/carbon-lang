@@ -18,6 +18,7 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 #include <functional>
 #include <vector>
@@ -686,7 +687,7 @@ public:
         stack.back() |= VisitedRight;
         break;
       default:
-        assert(false && "Unreachable.");
+        llvm_unreachable("Unreachable.");
     }
   }
 
@@ -722,7 +723,7 @@ public:
         skipToParent();
         break;
       default:
-        assert(false && "Unreachable.");
+        llvm_unreachable("Unreachable.");
     }
     return *this;
   }
@@ -747,7 +748,7 @@ public:
           stack.push_back(reinterpret_cast<uintptr_t>(R) | VisitedRight);
         break;
       default:
-        assert(false && "Unreachable.");
+        llvm_unreachable("Unreachable.");
     }
     return *this;
   }

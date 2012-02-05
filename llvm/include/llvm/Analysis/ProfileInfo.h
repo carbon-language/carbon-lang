@@ -22,6 +22,7 @@
 #define LLVM_ANALYSIS_PROFILEINFO_H
 
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/raw_ostream.h"
 #include <cassert>
@@ -85,13 +86,11 @@ namespace llvm {
 
     // getFunction() - Returns the Function for an Edge, checking for validity.
     static const FType* getFunction(Edge e) {
-      if (e.first) {
+      if (e.first)
         return e.first->getParent();
-      } else if (e.second) {
+      if (e.second)
         return e.second->getParent();
-      }
-      assert(0 && "Invalid ProfileInfo::Edge");
-      return (const FType*)0;
+      llvm_unreachable("Invalid ProfileInfo::Edge");
     }
 
     // getEdge() - Creates an Edge from two BasicBlocks.

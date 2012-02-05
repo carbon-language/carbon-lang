@@ -279,8 +279,7 @@ public:
   /// This is only invoked in cases where AnalyzeBranch returns success. It
   /// returns the number of instructions that were removed.
   virtual unsigned RemoveBranch(MachineBasicBlock &MBB) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::RemoveBranch!");
-    return 0;
+    llvm_unreachable("Target didn't implement TargetInstrInfo::RemoveBranch!");
   }
 
   /// InsertBranch - Insert branch code into the end of the specified
@@ -297,8 +296,7 @@ public:
                                 MachineBasicBlock *FBB,
                                 const SmallVectorImpl<MachineOperand> &Cond,
                                 DebugLoc DL) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::InsertBranch!");
-    return 0;
+    llvm_unreachable("Target didn't implement TargetInstrInfo::InsertBranch!");
   }
 
   /// ReplaceTailWithBranchTo - Delete the instruction OldInst and everything
@@ -375,7 +373,7 @@ public:
                            MachineBasicBlock::iterator MI, DebugLoc DL,
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const {
-    assert(0 && "Target didn't implement TargetInstrInfo::copyPhysReg!");
+    llvm_unreachable("Target didn't implement TargetInstrInfo::copyPhysReg!");
   }
 
   /// storeRegToStackSlot - Store the specified register of the given register
@@ -388,7 +386,8 @@ public:
                                    unsigned SrcReg, bool isKill, int FrameIndex,
                                    const TargetRegisterClass *RC,
                                    const TargetRegisterInfo *TRI) const {
-  assert(0 && "Target didn't implement TargetInstrInfo::storeRegToStackSlot!");
+    llvm_unreachable("Target didn't implement "
+                     "TargetInstrInfo::storeRegToStackSlot!");
   }
 
   /// loadRegFromStackSlot - Load the specified register of the given register
@@ -400,7 +399,8 @@ public:
                                     unsigned DestReg, int FrameIndex,
                                     const TargetRegisterClass *RC,
                                     const TargetRegisterInfo *TRI) const {
-  assert(0 && "Target didn't implement TargetInstrInfo::loadRegFromStackSlot!");
+    llvm_unreachable("Target didn't implement "
+                     "TargetInstrInfo::loadRegFromStackSlot!");
   }
 
   /// expandPostRAPseudo - This function is called for all pseudo instructions

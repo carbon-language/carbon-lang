@@ -101,14 +101,14 @@ public:
   IntervalIterator(Function *M, bool OwnMemory) : IOwnMem(OwnMemory) {
     OrigContainer = M;
     if (!ProcessInterval(&M->front())) {
-      assert(0 && "ProcessInterval should never fail for first interval!");
+      llvm_unreachable("ProcessInterval should never fail for first interval!");
     }
   }
 
   IntervalIterator(IntervalPartition &IP, bool OwnMemory) : IOwnMem(OwnMemory) {
     OrigContainer = &IP;
     if (!ProcessInterval(IP.getRootInterval())) {
-      assert(0 && "ProcessInterval should never fail for first interval!");
+      llvm_unreachable("ProcessInterval should never fail for first interval!");
     }
   }
 

@@ -11,6 +11,7 @@
 #define LLVM_MC_MCFIXUP_H
 
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/SMLoc.h"
 #include <cassert>
 
@@ -95,7 +96,7 @@ public:
   /// size. It is an error to pass an unsupported size.
   static MCFixupKind getKindForSize(unsigned Size, bool isPCRel) {
     switch (Size) {
-    default: assert(0 && "Invalid generic fixup size!");
+    default: llvm_unreachable("Invalid generic fixup size!");
     case 1: return isPCRel ? FK_PCRel_1 : FK_Data_1;
     case 2: return isPCRel ? FK_PCRel_2 : FK_Data_2;
     case 4: return isPCRel ? FK_PCRel_4 : FK_Data_4;

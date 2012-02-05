@@ -17,6 +17,7 @@
 #define LLVM_MC_MCREGISTERINFO_H
 
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cassert>
 
 namespace llvm {
@@ -273,8 +274,7 @@ public:
     const DenseMap<unsigned, unsigned> &M = isEH ? EHDwarf2LRegs : Dwarf2LRegs;
     const DenseMap<unsigned, unsigned>::const_iterator I = M.find(RegNum);
     if (I == M.end()) {
-      assert(0 && "Invalid RegNum");
-      return -1;
+      llvm_unreachable("Invalid RegNum");
     }
     return I->second;
   }

@@ -175,7 +175,7 @@ public:
         return CountPopulation_32(Bits);
       if (sizeof(uintptr_t) * CHAR_BIT == 64)
         return CountPopulation_64(Bits);
-      assert(0 && "Unsupported!");
+      llvm_unreachable("Unsupported!");
     }
     return getPointer()->count();
   }
@@ -212,7 +212,7 @@ public:
         return CountTrailingZeros_32(Bits);
       if (sizeof(uintptr_t) * CHAR_BIT == 64)
         return CountTrailingZeros_64(Bits);
-      assert(0 && "Unsupported!");
+      llvm_unreachable("Unsupported!");
     }
     return getPointer()->find_first();
   }
@@ -230,7 +230,7 @@ public:
         return CountTrailingZeros_32(Bits);
       if (sizeof(uintptr_t) * CHAR_BIT == 64)
         return CountTrailingZeros_64(Bits);
-      assert(0 && "Unsupported!");
+      llvm_unreachable("Unsupported!");
     }
     return getPointer()->find_next(Prev);
   }

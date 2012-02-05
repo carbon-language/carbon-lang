@@ -220,8 +220,7 @@ bool Trie<Payload>::addString(const std::string& s, const Payload& data) {
         assert(0 && "FIXME!");
         return false;
       case Node::DontMatch:
-        assert(0 && "Impossible!");
-        return false;
+        llvm_unreachable("Impossible!");
       case Node::LabelIsPrefix:
         s1 = s1.substr(nNode->label().length());
         cNode = nNode;
@@ -258,8 +257,7 @@ const Payload& Trie<Payload>::lookup(const std::string& s) const {
       case Node::StringIsPrefix:
         return Empty;
       case Node::DontMatch:
-        assert(0 && "Impossible!");
-        return Empty;
+        llvm_unreachable("Impossible!");
       case Node::LabelIsPrefix:
         s1 = s1.substr(nNode->label().length());
         cNode = nNode;

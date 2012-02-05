@@ -51,7 +51,7 @@ public:
   static void noteHead(SDNode*, SDNode*) {}
 
   static void deleteNode(SDNode *) {
-    assert(0 && "ilist_traits<SDNode> shouldn't see a deleteNode call!");
+    llvm_unreachable("ilist_traits<SDNode> shouldn't see a deleteNode call!");
   }
 private:
   static void createNode(const SDNode &);

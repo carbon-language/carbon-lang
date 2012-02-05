@@ -117,8 +117,7 @@ Constant *Constant::getNullValue(Type *Ty) {
     return ConstantAggregateZero::get(Ty);
   default:
     // Function, Label, or Opaque type?
-    assert(0 && "Cannot create a null constant of that type!");
-    return 0;
+    llvm_unreachable("Cannot create a null constant of that type!");
   }
 }
 
@@ -2285,7 +2284,7 @@ uint64_t ConstantDataSequential::getElementAsInteger(unsigned Elt) const {
   // The data is stored in host byte order, make sure to cast back to the right
   // type to load with the right endianness.
   switch (getElementType()->getIntegerBitWidth()) {
-  default: assert(0 && "Invalid bitwidth for CDS");
+  default: llvm_unreachable("Invalid bitwidth for CDS");
   case 8:  return *(uint8_t*)EltPtr;
   case 16: return *(uint16_t*)EltPtr;
   case 32: return *(uint32_t*)EltPtr;
@@ -2300,7 +2299,7 @@ APFloat ConstantDataSequential::getElementAsAPFloat(unsigned Elt) const {
 
   switch (getElementType()->getTypeID()) {
   default:
-    assert(0 && "Accessor can only be used when element is float/double!");
+    llvm_unreachable("Accessor can only be used when element is float/double!");
   case Type::FloatTyID: return APFloat(*(float*)EltPtr);
   case Type::DoubleTyID: return APFloat(*(double*)EltPtr);
   }
