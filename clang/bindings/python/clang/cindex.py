@@ -379,6 +379,18 @@ class CursorKind(object):
         """Test if this is an invalid kind."""
         return CursorKind_is_inv(self)
 
+    def is_translation_unit(self):
+        """Test if this is a translation unit kind."""
+        return CursorKind_is_translation_unit(self)
+
+    def is_preprocessing(self):
+        """Test if this is a preprocessing kind."""
+        return CursorKind_is_preprocessing(self)
+
+    def is_unexposed(self):
+        """Test if this is an unexposed kind."""
+        return CursorKind_is_unexposed(self)
+
     def __repr__(self):
         return 'CursorKind.%s' % (self.name,)
 
@@ -1715,6 +1727,18 @@ CursorKind_is_attribute.restype = bool
 CursorKind_is_inv = lib.clang_isInvalid
 CursorKind_is_inv.argtypes = [CursorKind]
 CursorKind_is_inv.restype = bool
+
+CursorKind_is_translation_unit = lib.clang_isTranslationUnit
+CursorKind_is_translation_unit.argtypes = [CursorKind]
+CursorKind_is_translation_unit.restype = bool
+
+CursorKind_is_preprocessing = lib.clang_isPreprocessing
+CursorKind_is_preprocessing.argtypes = [CursorKind]
+CursorKind_is_preprocessing.restype = bool
+
+CursorKind_is_unexposed = lib.clang_isUnexposed
+CursorKind_is_unexposed.argtypes = [CursorKind]
+CursorKind_is_unexposed.restype = bool
 
 # Cursor Functions
 # TODO: Implement this function
