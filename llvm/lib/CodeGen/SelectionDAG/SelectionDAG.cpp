@@ -3298,8 +3298,7 @@ static SDValue getMemsetValue(SDValue Value, EVT VT, SelectionDAG &DAG,
 /// used when a memcpy is turned into a memset when the source is a constant
 /// string ptr.
 static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
-                                  const TargetLowering &TLI,
-                                  std::string &Str, unsigned Offset) {
+                                  const TargetLowering &TLI, StringRef Str) {
   // Handle vector with all elements zero.
   if (Str.empty()) {
     if (VT.isInteger())
@@ -3317,15 +3316,18 @@ static SDValue getMemsetStringVal(EVT VT, DebugLoc dl, SelectionDAG &DAG,
   }
 
   assert(!VT.isVector() && "Can't handle vector type here!");
-  unsigned NumBits = VT.getSizeInBits();
-  unsigned MSB = NumBits / 8;
+  unsigned NumVTBytes = VT.getSizeInBits() / 8;
+  unsigned NumBytes = std::min(NumVTBytes, unsigned(Str.size()));
+
   uint64_t Val = 0;
-  if (TLI.isLittleEndian())
-    Offset = Offset + MSB - 1;
-  for (unsigned i = 0; i != MSB; ++i) {
-    Val = (Val << 8) | (unsigned char)Str[Offset];
-    Offset += TLI.isLittleEndian() ? -1 : 1;
+  if (TLI.isLittleEndian()) {
+    for (unsigned i = 0; i != NumBytes; ++i)
+      Val |= (uint64_t)(unsigned char)Str[i] << i*8;
+  } else {
+    for (unsigned i = 0; i != NumBytes; ++i)
+      Val |= (uint64_t)(unsigned char)Str[i] << (NumVTBytes-i-1)*8;
   }
+
   return DAG.getConstant(Val, VT);
 }
 
@@ -3340,7 +3342,7 @@ static SDValue getMemBasePlusOffset(SDValue Base, unsigned Offset,
 
 /// isMemSrcFromString - Returns true if memcpy source is a string constant.
 ///
-static bool isMemSrcFromString(SDValue Src, std::string &Str) {
+static bool isMemSrcFromString(SDValue Src, StringRef &Str) {
   unsigned SrcDelta = 0;
   GlobalAddressSDNode *G = NULL;
   if (Src.getOpcode() == ISD::GlobalAddress)
@@ -3354,11 +3356,7 @@ static bool isMemSrcFromString(SDValue Src, std::string &Str) {
   if (!G)
     return false;
 
-  const GlobalVariable *GV = dyn_cast<GlobalVariable>(G->getGlobal());
-  if (GV && GetConstantStringInfo(GV, Str, SrcDelta, false))
-    return true;
-
-  return false;
+  return getConstantStringInfo(G->getGlobal(), Str, SrcDelta, false);
 }
 
 /// FindOptimalMemOpLowering - Determines the optimial series memory ops
@@ -3461,7 +3459,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
   unsigned SrcAlign = DAG.InferPtrAlignment(Src);
   if (Align > SrcAlign)
     SrcAlign = Align;
-  std::string Str;
+  StringRef Str;
   bool CopyFromStr = isMemSrcFromString(Src, Str);
   bool isZeroStr = CopyFromStr && Str.empty();
   unsigned Limit = AlwaysInline ? ~0U : TLI.getMaxStoresPerMemcpy(OptSize);
@@ -3498,7 +3496,7 @@ static SDValue getMemcpyLoadsAndStores(SelectionDAG &DAG, DebugLoc dl,
       // We only handle zero vectors here.
       // FIXME: Handle other cases where store of vector immediate is done in
       // a single instruction.
-      Value = getMemsetStringVal(VT, dl, DAG, TLI, Str, SrcOff);
+      Value = getMemsetStringVal(VT, dl, DAG, TLI, Str.substr(SrcOff));
       Store = DAG.getStore(Chain, dl, Value,
                            getMemBasePlusOffset(Dst, DstOff, DAG),
                            DstPtrInfo.getWithOffset(DstOff), isVol,

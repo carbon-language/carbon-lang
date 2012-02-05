@@ -827,30 +827,21 @@ static void WriteConstantInternal(raw_ostream &Out, const Constant *CV,
   }
 
   if (const ConstantArray *CA = dyn_cast<ConstantArray>(CV)) {
-    // As a special case, print the array as a string if it is an array of
-    // i8 with ConstantInt values.
-    //
     Type *ETy = CA->getType()->getElementType();
-    if (CA->isString()) {
-      Out << "c\"";
-      PrintEscapedString(CA->getAsString(), Out);
-      Out << '"';
-    } else {                // Cannot output in string format...
-      Out << '[';
+    Out << '[';
+    TypePrinter.print(ETy, Out);
+    Out << ' ';
+    WriteAsOperandInternal(Out, CA->getOperand(0),
+                           &TypePrinter, Machine,
+                           Context);
+    for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
+      Out << ", ";
       TypePrinter.print(ETy, Out);
       Out << ' ';
-      WriteAsOperandInternal(Out, CA->getOperand(0),
-                             &TypePrinter, Machine,
+      WriteAsOperandInternal(Out, CA->getOperand(i), &TypePrinter, Machine,
                              Context);
-      for (unsigned i = 1, e = CA->getNumOperands(); i != e; ++i) {
-        Out << ", ";
-        TypePrinter.print(ETy, Out);
-        Out << ' ';
-        WriteAsOperandInternal(Out, CA->getOperand(i), &TypePrinter, Machine,
-                               Context);
-      }
-      Out << ']';
     }
+    Out << ']';
     return;
   }
   
