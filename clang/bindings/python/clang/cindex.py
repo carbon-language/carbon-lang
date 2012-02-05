@@ -1099,6 +1099,7 @@ TypeKind.OBJCOBJECTPOINTER = TypeKind(109)
 TypeKind.FUNCTIONNOPROTO = TypeKind(110)
 TypeKind.FUNCTIONPROTO = TypeKind(111)
 TypeKind.CONSTANTARRAY = TypeKind(112)
+TypeKind.VECTOR = TypeKind(113)
 
 class Type(Structure):
     """
