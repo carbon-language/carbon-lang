@@ -28,7 +28,7 @@ By default B<lit> will use a succinct progress display and will only print
 summary information for test failures. See L<"OUTPUT OPTIONS"> for options
 controlling the B<lit> progress display and output.
 
-B<lit> also includes a number of options for controlling how tests are exected
+B<lit> also includes a number of options for controlling how tests are executed
 (specific features may depend on the particular test format). See L<"EXECUTION
 OPTIONS"> for more information.
 
@@ -227,7 +227,7 @@ which can report unsupported tests.
 =back
 
 Depending on the test format tests may produce additional information about
-their status (generally only for failures). See the L<Output|"LIT OUTPUT">
+their status (generally only for failures). See the L<Output|"OUTPUT OPTIONS">
 section for more information.
 
 =head1 LIT INFRASTRUCTURE
