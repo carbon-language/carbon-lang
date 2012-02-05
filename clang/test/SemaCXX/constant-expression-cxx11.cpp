@@ -1011,17 +1011,23 @@ volatile constexpr int n1 = 0; // expected-note {{here}}
 volatile const int n2 = 0; // expected-note {{here}}
 int n3 = 37; // expected-note {{declared here}}
 
-constexpr int m1 = n1; // expected-error {{constant expression}} expected-note {{read of volatile object 'n1'}}
-constexpr int m2 = n2; // expected-error {{constant expression}} expected-note {{read of volatile object 'n2'}}
+constexpr int m1 = n1; // expected-error {{constant expression}} expected-note {{read of volatile-qualified type 'const volatile int'}}
+constexpr int m2 = n2; // expected-error {{constant expression}} expected-note {{read of volatile-qualified type 'const volatile int'}}
+constexpr int m1b = const_cast<const int&>(n1); // expected-error {{constant expression}} expected-note {{read of volatile object 'n1'}}
+constexpr int m2b = const_cast<const int&>(n2); // expected-error {{constant expression}} expected-note {{read of volatile object 'n2'}}
 
 struct T { int n; };
 const T t = { 42 }; // expected-note {{declared here}}
 
 constexpr int f(volatile int &&r) {
-  return r; // expected-note {{read of volatile temporary is not allowed in a constant expression}}
+  return r; // expected-note {{read of volatile-qualified type 'volatile int'}}
+}
+constexpr int g(volatile int &&r) {
+  return const_cast<int&>(r); // expected-note {{read of volatile temporary is not allowed in a constant expression}}
 }
 struct S {
-  int k : f(0); // expected-error {{constant expression}} expected-note {{temporary created here}} expected-note {{in call to 'f(0)'}}
+  int j : f(0); // expected-error {{constant expression}} expected-note {{in call to 'f(0)'}}
+  int k : g(0); // expected-error {{constant expression}} expected-note {{temporary created here}} expected-note {{in call to 'g(0)'}}
   int l : n3; // expected-error {{constant expression}} expected-note {{read of non-const variable}}
   int m : t.n; // expected-error {{constant expression}} expected-note {{read of non-constexpr variable}}
 };

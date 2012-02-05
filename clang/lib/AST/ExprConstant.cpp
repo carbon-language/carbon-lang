@@ -1560,7 +1560,8 @@ static bool AreElementsOfSameArray(QualType ObjType,
 /// \param Info - Information about the ongoing evaluation.
 /// \param Conv - The expression for which we are performing the conversion.
 ///               Used for diagnostics.
-/// \param Type - The type we expect this conversion to produce.
+/// \param Type - The type we expect this conversion to produce, before
+///               stripping cv-qualifiers in the case of a non-clas type.
 /// \param LVal - The glvalue on which we are attempting to perform this action.
 /// \param RVal - The produced value will be placed here.
 static bool HandleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
@@ -2536,7 +2537,9 @@ public:
       if (!EvaluateLValue(E->getSubExpr(), LVal, Info))
         return false;
       CCValue RVal;
-      if (!HandleLValueToRValueConversion(Info, E, E->getType(), LVal, RVal))
+      // Note, we use the subexpression's type in order to retain cv-qualifiers.
+      if (!HandleLValueToRValueConversion(Info, E, E->getSubExpr()->getType(),
+                                          LVal, RVal))
         return false;
       return DerivedSuccess(RVal, E);
     }

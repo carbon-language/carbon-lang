@@ -268,14 +268,12 @@ namespace LValueToRValue {
   //   non-volatile const object with a preceding initialization, initialized
   //   with a constant expression  [Note: a string literal (2.14.5 [lex.string])
   //   corresponds to an array of such objects. -end note], or
-  volatile const int vi = 1; // expected-note 2{{here}}
+  volatile const int vi = 1; // expected-note {{here}}
   const int ci = 1;
   volatile const int &vrci = ci;
-  static_assert(vi, ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vi'}}
+  static_assert(vi, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
   static_assert(const_cast<int&>(vi), ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vi'}}
-  static_assert(vrci, ""); // ok, vrci is converted to a prvalue before
-                           // evaluation and loses its volatility in the
-                           // conversion.
+  static_assert(vrci, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
 
   // - a non-volatile glvalue of literal type that refers to a non-volatile
   //   object defined with constexpr, or that refers to a sub-object of such an
@@ -287,13 +285,14 @@ namespace LValueToRValue {
     volatile int v; // expected-note {{here}}
   };
   constexpr S s;
-  constexpr volatile S vs; // expected-note 2{{here}}
+  constexpr volatile S vs; // expected-note {{here}}
   constexpr const volatile S &vrs = s;
   static_assert(s.i, "");
-  static_assert(s.v, ""); // expected-error {{constant expression}} expected-note {{read of volatile member 'v'}}
-  static_assert(vs.i, ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vs'}}
+  static_assert(s.v, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
+  static_assert(const_cast<int&>(s.v), ""); // expected-error {{constant expression}} expected-note {{read of volatile member 'v'}}
+  static_assert(vs.i, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
   static_assert(const_cast<int&>(vs.i), ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vs'}}
-  static_assert(vrs.i, ""); // ok
+  static_assert(vrs.i, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
 
   // - a non-volatile glvalue of literal type that refers to a non-volatile
   //   temporary object whose lifetime has not ended, initialized with a
