@@ -37,7 +37,7 @@ MCDisableArithRelaxation("mc-x86-disable-arith-relaxation",
 
 static unsigned getFixupKindLog2Size(unsigned Kind) {
   switch (Kind) {
-  default: assert(0 && "invalid fixup kind!");
+  default: llvm_unreachable("invalid fixup kind!");
   case FK_PCRel_1:
   case FK_SecRel_1:
   case FK_Data_1: return 0;

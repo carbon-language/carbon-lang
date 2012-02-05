@@ -416,7 +416,7 @@ ReSimplify:
   case X86::TAILJMPd64: {
     unsigned Opcode;
     switch (OutMI.getOpcode()) {
-    default: assert(0 && "Invalid opcode");
+    default: llvm_unreachable("Invalid opcode");
     case X86::TAILJMPr: Opcode = X86::JMP32r; break;
     case X86::TAILJMPd:
     case X86::TAILJMPd64: Opcode = X86::JMP_1; break;

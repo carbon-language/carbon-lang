@@ -49,7 +49,7 @@ StringRef X86IntelInstPrinter::getOpcodeName(unsigned Opcode) const {
 void X86IntelInstPrinter::printSSECC(const MCInst *MI, unsigned Op,
                                      raw_ostream &O) {
   switch (MI->getOperand(Op).getImm()) {
-  default: assert(0 && "Invalid ssecc argument!");
+  default: llvm_unreachable("Invalid ssecc argument!");
   case 0: O << "eq"; break;
   case 1: O << "lt"; break;
   case 2: O << "le"; break;

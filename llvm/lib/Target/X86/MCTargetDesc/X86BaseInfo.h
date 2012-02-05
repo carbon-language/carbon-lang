@@ -19,7 +19,7 @@
 
 #include "X86MCTargetDesc.h"
 #include "llvm/Support/DataTypes.h"
-#include <cassert>
+#include "llvm/Support/ErrorHandling.h"
 
 namespace llvm {
 
@@ -450,7 +450,7 @@ namespace X86II {
   /// of the specified instruction.
   static inline unsigned getSizeOfImm(uint64_t TSFlags) {
     switch (TSFlags & X86II::ImmMask) {
-    default: assert(0 && "Unknown immediate size");
+    default: llvm_unreachable("Unknown immediate size");
     case X86II::Imm8:
     case X86II::Imm8PCRel:  return 1;
     case X86II::Imm16:
@@ -465,7 +465,7 @@ namespace X86II {
   /// TSFlags indicates that it is pc relative.
   static inline unsigned isImmPCRel(uint64_t TSFlags) {
     switch (TSFlags & X86II::ImmMask) {
-    default: assert(0 && "Unknown immediate size");
+    default: llvm_unreachable("Unknown immediate size");
     case X86II::Imm8PCRel:
     case X86II::Imm16PCRel:
     case X86II::Imm32PCRel:
@@ -488,8 +488,8 @@ namespace X86II {
   ///
   static inline int getMemoryOperandNo(uint64_t TSFlags, unsigned Opcode) {
     switch (TSFlags & X86II::FormMask) {
-    case X86II::MRMInitReg:  assert(0 && "FIXME: Remove this form");
-    default: assert(0 && "Unknown FormMask value in getMemoryOperandNo!");
+    case X86II::MRMInitReg:  llvm_unreachable("FIXME: Remove this form");
+    default: llvm_unreachable("Unknown FormMask value in getMemoryOperandNo!");
     case X86II::Pseudo:
     case X86II::RawFrm:
     case X86II::AddRegFrm:
