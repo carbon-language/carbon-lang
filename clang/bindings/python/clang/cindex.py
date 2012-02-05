@@ -995,6 +995,19 @@ class Cursor(Structure):
         return self._underlying_type
 
     @property
+    def enum_type(self):
+        """Return the integer type of an enum declaration.
+
+        Returns a type corresponding to an integer. If the cursor is not for an
+        enum, this raises.
+        """
+        if not hasattr(self, '_enum_type'):
+            assert self.kind == CursorKind.ENUM_DECL
+            self._enum_type = Cursor_enum_type(self)
+
+        return self._enum_type
+
+    @property
     def hash(self):
         """Returns a hash of the cursor as an int."""
         if not hasattr(self, '_hash'):
@@ -1817,6 +1830,11 @@ Cursor_underlying_type = lib.clang_getTypedefDeclUnderlyingType
 Cursor_underlying_type.argtypes = [Cursor]
 Cursor_underlying_type.restype = Type
 Cursor_underlying_type.errcheck = Type.from_result
+
+Cursor_enum_type = lib.clang_getEnumDeclIntegerType
+Cursor_enum_type.argtypes = [Cursor]
+Cursor_enum_type.restype = Type
+Cursor_enum_type.errcheck = Type.from_result
 
 Cursor_visit_callback = CFUNCTYPE(c_int, Cursor, Cursor, py_object)
 Cursor_visit = lib.clang_visitChildren

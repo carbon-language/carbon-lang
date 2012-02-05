@@ -77,3 +77,18 @@ def test_underlying_type():
     assert typedef.kind.is_declaration()
     underlying = typedef.underlying_typedef_type
     assert underlying.kind == TypeKind.INT
+
+def test_enum_type():
+    source = 'enum TEST { FOO=1, BAR=2 };'
+    index = Index.create()
+    tu = index.parse('test.c', unsaved_files=[('test.c', source)])
+    assert tu is not None
+
+    for cursor in tu.cursor.get_children():
+        if cursor.spelling == 'TEST':
+            enum = cursor
+            break
+
+    assert enum.kind == CursorKind.ENUM_DECL
+    enum_type = enum.enum_type
+    assert enum_type.kind == TypeKind.UINT
