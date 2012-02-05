@@ -8288,7 +8288,7 @@ SDValue X86TargetLowering::LowerVSETCC(SDValue Op, SelectionDAG &DAG) const {
   if (isFP) {
     unsigned SSECC = 8;
     EVT EltVT = Op0.getValueType().getVectorElementType();
-    assert(EltVT == MVT::f32 || EltVT == MVT::f64);
+    assert(EltVT == MVT::f32 || EltVT == MVT::f64); (void)EltVT;
 
     bool Swap = false;
 

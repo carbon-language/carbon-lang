@@ -103,7 +103,7 @@ static InstrUID decode(OpcodeType type,
                        InstructionContext insnContext,
                        uint8_t opcode,
                        uint8_t modRM) {
-  const struct ModRMDecision* dec;
+  const struct ModRMDecision* dec = 0;
   
   switch (type) {
   case ONEBYTE:

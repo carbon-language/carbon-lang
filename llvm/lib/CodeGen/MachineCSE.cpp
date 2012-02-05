@@ -255,6 +255,7 @@ bool MachineCSE::PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
 
     if (I == EE) {
       assert(CrossMBB && "Reaching end-of-MBB without finding MI?");
+      (void)CrossMBB;
       CrossMBB = false;
       NonLocal = true;
       I = MBB->begin();

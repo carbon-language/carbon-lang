@@ -51,7 +51,7 @@ MutexImpl::MutexImpl( bool recursive)
 
   // Initialize the mutex attributes
   int errorcode = pthread_mutexattr_init(&attr);
-  assert(errorcode == 0);
+  assert(errorcode == 0); (void)errorcode;
 
   // Initialize the mutex as a recursive mutex, if requested, or normal
   // otherwise.
