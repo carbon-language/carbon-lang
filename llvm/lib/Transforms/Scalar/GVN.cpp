@@ -1994,37 +1994,15 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root) {
 /// particular 'Dst' must not be reachable via another edge from 'Src'.
 static bool isOnlyReachableViaThisEdge(BasicBlock *Src, BasicBlock *Dst,
                                        DominatorTree *DT) {
-  // First off, there must not be more than one edge from Src to Dst, there
-  // should be exactly one.  So keep track of the number of times Src occurs
-  // as a predecessor of Dst and fail if it's more than once.
-  bool SawEdgeFromSrc = false;
-  for (pred_iterator PI = pred_begin(Dst), PE = pred_end(Dst); PI != PE; ++PI) {
-    if (*PI != Src)
-      continue;
-    // An edge from Src to Dst.
-    if (SawEdgeFromSrc)
-      // There are multiple edges from Src to Dst - fail.
-      return false;
-    SawEdgeFromSrc = true;
-  }
-  assert(SawEdgeFromSrc && "No edge between these basic blocks!");
-
-  // Secondly, any other predecessors of Dst should be dominated by Dst.  If the
-  // predecessor is not dominated by Dst, then it must be possible to reach it
-  // either without passing through Src (thus not via the edge) or by passing
-  // through Src but taking a different edge out of Src.  Either way Dst can be
-  // reached without passing via the edge, so fail.
-  for (pred_iterator PI = pred_begin(Dst), PE = pred_end(Dst); PI != PE; ++PI) {
-    BasicBlock *Pred = *PI;
-    if (Pred != Src && !DT->dominates(Dst, Pred))
-      return false;
-  }
-
-  // Every path from the entry block to Dst must at some point pass to Dst from
-  // a predecessor that is not dominated by Dst.  This predecessor can only be
-  // Src, since all others are dominated by Dst.  As there is only one edge from
-  // Src to Dst, the path passes by this edge.
-  return true;
+  // While in theory it is interesting to consider the case in which Dst has
+  // more than one predecessor, because Dst might be part of a loop which is
+  // only reachable from Src, in practice it is pointless since at the time
+  // GVN runs all such loops have preheaders, which means that Dst will have
+  // been changed to have only one predecessor, namely Src.
+  pred_iterator PI = pred_begin(Dst), PE = pred_end(Dst);
+  assert(PI != PE && *PI == Src && "No edge between these basic blocks!");
+  (void)Src;
+  return PE == ++PI;
 }
 
 /// processInstruction - When calculating availability, handle an instruction

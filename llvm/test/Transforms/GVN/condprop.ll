@@ -55,25 +55,6 @@ return:		; preds = %bb8
 }
 
 declare void @foo(i1)
-
-; CHECK: @test2
-define void @test2(i1 %x, i1 %y) {
-  %z = or i1 %x, %y
-  br i1 %z, label %true, label %false
-true:
-; CHECK: true:
-  %z2 = or i1 %x, %y
-  call void @foo(i1 %z2)
-; CHECK: call void @foo(i1 true)
-  br label %true
-false:
-; CHECK: false:
-  %z3 = or i1 %x, %y
-  call void @foo(i1 %z3)
-; CHECK: call void @foo(i1 false)
-  br label %false
-}
-
 declare void @bar(i32)
 
 ; CHECK: @test3
