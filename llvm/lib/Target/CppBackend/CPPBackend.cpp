@@ -721,14 +721,14 @@ void CppWriter::printConstant(const Constant *CV) {
     }
     Out << "Constant* " << constName << " = ConstantStruct::get("
         << typeName << ", " << constName << "_fields);";
-  } else if (const ConstantVector *CV = dyn_cast<ConstantVector>(CV)) {
+  } else if (const ConstantVector *CVec = dyn_cast<ConstantVector>(CV)) {
     Out << "std::vector<Constant*> " << constName << "_elems;";
     nl(Out);
-    unsigned N = CV->getNumOperands();
+    unsigned N = CVec->getNumOperands();
     for (unsigned i = 0; i < N; ++i) {
-      printConstant(CV->getOperand(i));
+      printConstant(CVec->getOperand(i));
       Out << constName << "_elems.push_back("
-          << getCppName(CV->getOperand(i)) << ");";
+          << getCppName(CVec->getOperand(i)) << ");";
       nl(Out);
     }
     Out << "Constant* " << constName << " = ConstantVector::get("
