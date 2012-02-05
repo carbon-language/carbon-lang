@@ -2324,3 +2324,9 @@ const PartialDiagnostic &clang::operator<<(const PartialDiagnostic &PD,
                   DiagnosticsEngine::ak_qualtype);
   return PD;
 }
+
+const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
+                                           CanQualType T) {
+  DB << static_cast<QualType>(T);
+  return DB;
+}
