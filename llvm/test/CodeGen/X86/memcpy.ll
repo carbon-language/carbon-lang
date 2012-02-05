@@ -79,3 +79,16 @@ entry:
 ; LINUX movq
 }
 
+
+@.str = private unnamed_addr constant [30 x i8] c"\00aaaaaaaaaaaaaaaaaaaaaaaaaaaa\00", align 1
+
+define void @test5(i8* nocapture %C) nounwind uwtable ssp {
+entry:
+  tail call void @llvm.memcpy.p0i8.p0i8.i64(i8* %C, i8* getelementptr inbounds ([30 x i8]* @.str, i64 0, i64 0), i64 16, i32 1, i1 false)
+  ret void
+
+; DARWIN: movabsq	$7016996765293437281
+; DARWIN: movabsq	$7016996765293437184
+}
+
+
