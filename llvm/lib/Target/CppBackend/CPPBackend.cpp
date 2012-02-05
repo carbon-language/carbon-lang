@@ -676,11 +676,6 @@ void CppWriter::printConstant(const Constant *CV) {
   std::string constName(getCppName(CV));
   std::string typeName(getCppName(CV->getType()));
 
-  if (isa<GlobalValue>(CV)) {
-    // Skip variables and functions, we emit them elsewhere
-    return;
-  }
-
   if (const ConstantInt *CI = dyn_cast<ConstantInt>(CV)) {
     std::string constValue = CI->getValue().toString(10, true);
     Out << "ConstantInt* " << constName
