@@ -4168,7 +4168,7 @@ SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugIn
                 if (strcmp(name1, name2) != 0)
                     return false;
             }
-            else
+            else if (name1 || name2)
             {
                 // One name was NULL while the other wasn't
                 return false;
