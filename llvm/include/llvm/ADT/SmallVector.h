@@ -688,9 +688,7 @@ public:
 
   explicit SmallVector(unsigned Size, const T &Value = T())
     : SmallVectorImpl<T>(NumTsAvailable) {
-    this->reserve(Size);
-    while (Size--)
-      this->push_back(Value);
+    this->assign(Size, Value);
   }
 
   template<typename ItTy>
@@ -720,9 +718,7 @@ public:
 
   explicit SmallVector(unsigned Size, const T &Value = T())
     : SmallVectorImpl<T>(0) {
-    this->reserve(Size);
-    while (Size--)
-      this->push_back(Value);
+    this->assign(Size, Value);
   }
 
   template<typename ItTy>
