@@ -24,6 +24,7 @@
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Support/Host.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 
 #define GET_REGINFO_MC_DESC

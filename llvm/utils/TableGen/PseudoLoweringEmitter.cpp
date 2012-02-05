@@ -67,7 +67,7 @@ addDagOperandMapping(Record *Rec, DagInit *Dag, CodeGenInstruction &Insn,
       // Since we added more than one, we also need to adjust the base.
       BaseIdx += NewOps - 1;
     } else
-      assert(0 && "Unhandled pseudo-expansion argument type!");
+      llvm_unreachable("Unhandled pseudo-expansion argument type!");
   }
   return OpsAdded;
 }

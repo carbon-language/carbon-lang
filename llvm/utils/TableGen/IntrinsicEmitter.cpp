@@ -320,7 +320,7 @@ void IntrinsicEmitter::EmitVerifier(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "// Verifier::visitIntrinsicFunctionCall code.\n";
   OS << "#ifdef GET_INTRINSIC_VERIFIER\n";
   OS << "  switch (ID) {\n";
-  OS << "  default: assert(0 && \"Invalid intrinsic!\");\n";
+  OS << "  default: llvm_unreachable(\"Invalid intrinsic!\");\n";
   
   // This checking can emit a lot of very common code.  To reduce the amount of
   // code that we emit, batch up cases that have identical types.  This avoids
@@ -416,7 +416,7 @@ void IntrinsicEmitter::EmitGenerator(const std::vector<CodeGenIntrinsic> &Ints,
   OS << "// Code for generating Intrinsic function declarations.\n";
   OS << "#ifdef GET_INTRINSIC_GENERATOR\n";
   OS << "  switch (id) {\n";
-  OS << "  default: assert(0 && \"Invalid intrinsic!\");\n";
+  OS << "  default: llvm_unreachable(\"Invalid intrinsic!\");\n";
   
   // Similar to GET_INTRINSIC_VERIFIER, batch up cases that have identical
   // types.
@@ -485,8 +485,7 @@ namespace {
     case CodeGenIntrinsic::ReadWriteMem:
       return MRK_none;
     }
-    assert(0 && "bad mod-ref kind");
-    return MRK_none;
+    llvm_unreachable("bad mod-ref kind");
   }
 
   struct AttributeComparator {

@@ -749,7 +749,7 @@ std::string PatternToMatch::getPredicateCheck() const {
 #ifndef NDEBUG
         Def->dump();
 #endif
-        assert(0 && "Unknown predicate type!");
+        llvm_unreachable("Unknown predicate type!");
       }
       if (!PredicateCheck.empty())
         PredicateCheck += " && ";
@@ -1609,10 +1609,9 @@ bool TreePatternNode::ApplyTypeConstraints(TreePattern &TP, bool NotRegisters) {
         MadeChange |= Child->UpdateNodeType(ChildResNo, MVT::iPTR, TP);
       } else if (OperandNode->getName() == "unknown") {
         // Nothing to do.
-      } else {
-        assert(0 && "Unknown operand type!");
-        abort();
-      }
+      } else
+        llvm_unreachable("Unknown operand type!");
+
       MadeChange |= Child->ApplyTypeConstraints(TP, NotRegisters);
     }
 

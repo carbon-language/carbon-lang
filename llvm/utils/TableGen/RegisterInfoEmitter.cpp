@@ -134,8 +134,7 @@ RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
       OS << "EHFlavour";
     OS << ") {\n"
      << "  default:\n"
-     << "    assert(0 && \"Unknown DWARF flavour\");\n"
-     << "    break;\n";
+     << "    llvm_unreachable(\"Unknown DWARF flavour\");\n";
 
     for (unsigned i = 0, e = maxLength; i != e; ++i) {
       OS << "  case " << i << ":\n";
@@ -180,8 +179,7 @@ RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
       OS << "EHFlavour";
     OS << ") {\n"
        << "  default:\n"
-       << "    assert(0 && \"Unknown DWARF flavour\");\n"
-       << "    break;\n";
+       << "    llvm_unreachable(\"Unknown DWARF flavour\");\n";
 
     for (unsigned i = 0, e = maxLength; i != e; ++i) {
       OS << "  case " << i << ":\n";

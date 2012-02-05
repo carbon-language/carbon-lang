@@ -573,8 +573,7 @@ EmitMatcher(const Matcher *N, unsigned Indent, unsigned CurrentIdx,
     return 2 + NumResultBytes;
   }
   }
-  assert(0 && "Unreachable");
-  return 0;
+  llvm_unreachable("Unreachable");
 }
 
 /// EmitMatcherList - Emit the bytes for the specified matcher subtree.
@@ -601,7 +600,7 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
   if (!PatternPredicates.empty()) {
     OS << "bool CheckPatternPredicate(unsigned PredNo) const {\n";
     OS << "  switch (PredNo) {\n";
-    OS << "  default: assert(0 && \"Invalid predicate in table?\");\n";
+    OS << "  default: llvm_unreachable(\"Invalid predicate in table?\");\n";
     for (unsigned i = 0, e = PatternPredicates.size(); i != e; ++i)
       OS << "  case " << i << ": return "  << PatternPredicates[i] << ";\n";
     OS << "  }\n";
@@ -619,7 +618,7 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
   if (!NodePredicates.empty()) {
     OS << "bool CheckNodePredicate(SDNode *Node, unsigned PredNo) const {\n";
     OS << "  switch (PredNo) {\n";
-    OS << "  default: assert(0 && \"Invalid predicate in table?\");\n";
+    OS << "  default: llvm_unreachable(\"Invalid predicate in table?\");\n";
     for (unsigned i = 0, e = NodePredicates.size(); i != e; ++i) {
       // Emit the predicate code corresponding to this pattern.
       TreePredicateFn PredFn = NodePredicates[i];
@@ -641,7 +640,7 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
     OS << "         SmallVectorImpl<std::pair<SDValue, SDNode*> > &Result) {\n";
     OS << "  unsigned NextRes = Result.size();\n";
     OS << "  switch (PatternNo) {\n";
-    OS << "  default: assert(0 && \"Invalid pattern # in table?\");\n";
+    OS << "  default: llvm_unreachable(\"Invalid pattern # in table?\");\n";
     for (unsigned i = 0, e = ComplexPatterns.size(); i != e; ++i) {
       const ComplexPattern &P = *ComplexPatterns[i];
       unsigned NumOps = P.getNumOperands();
@@ -679,7 +678,7 @@ void MatcherTableEmitter::EmitPredicateFunctions(formatted_raw_ostream &OS) {
   if (!NodeXForms.empty()) {
     OS << "SDValue RunSDNodeXForm(SDValue V, unsigned XFormNo) {\n";
     OS << "  switch (XFormNo) {\n";
-    OS << "  default: assert(0 && \"Invalid xform # in table?\");\n";
+    OS << "  default: llvm_unreachable(\"Invalid xform # in table?\");\n";
 
     // FIXME: The node xform could take SDValue's instead of SDNode*'s.
     for (unsigned i = 0, e = NodeXForms.size(); i != e; ++i) {

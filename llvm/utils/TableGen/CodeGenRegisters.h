@@ -22,6 +22,7 @@
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/SetVector.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <cstdlib>
 #include <map>
 #include <string>
@@ -192,8 +193,7 @@ namespace llvm {
     MVT::SimpleValueType getValueTypeNum(unsigned VTNum) const {
       if (VTNum < VTs.size())
         return VTs[VTNum];
-      assert(0 && "VTNum greater than number of ValueTypes in RegClass!");
-      abort();
+      llvm_unreachable("VTNum greater than number of ValueTypes in RegClass!");
     }
 
     // Return true if this this class contains the register.

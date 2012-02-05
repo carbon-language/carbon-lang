@@ -93,7 +93,7 @@ std::string llvm::getEnumName(MVT::SimpleValueType T) {
   case MVT::iPTR:     return "MVT::iPTR";
   case MVT::iPTRAny:  return "MVT::iPTRAny";
   case MVT::Untyped:  return "MVT::Untyped";
-  default: assert(0 && "ILLEGAL VALUE TYPE!"); return "";
+  default: llvm_unreachable("ILLEGAL VALUE TYPE!");
   }
 }
 
@@ -515,7 +515,7 @@ CodeGenIntrinsic::CodeGenIntrinsic(Record *R) {
       unsigned ArgNo = Property->getValueAsInt("ArgNo");
       ArgumentAttributes.push_back(std::make_pair(ArgNo, NoCapture));
     } else
-      assert(0 && "Unknown property!");
+      llvm_unreachable("Unknown property!");
   }
 
   // Sort the argument attributes for later benefit.

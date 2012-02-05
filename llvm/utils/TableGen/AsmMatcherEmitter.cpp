@@ -107,6 +107,7 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/TableGen/Error.h"
 #include "llvm/TableGen/Record.h"
 #include <map>
@@ -251,7 +252,7 @@ public:
 
     switch (Kind) {
     case Invalid:
-      assert(0 && "Invalid kind!");
+      llvm_unreachable("Invalid kind!");
 
     default:
       // This class precedes the RHS if it is a proper subset of the RHS.

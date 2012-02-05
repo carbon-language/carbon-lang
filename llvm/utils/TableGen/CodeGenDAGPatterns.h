@@ -19,6 +19,7 @@
 #include "CodeGenIntrinsics.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/Support/ErrorHandling.h"
 #include <set>
 #include <algorithm>
 #include <vector>
@@ -723,8 +724,7 @@ public:
       if (Intrinsics[i].TheDef == R) return Intrinsics[i];
     for (unsigned i = 0, e = TgtIntrinsics.size(); i != e; ++i)
       if (TgtIntrinsics[i].TheDef == R) return TgtIntrinsics[i];
-    assert(0 && "Unknown intrinsic!");
-    abort();
+    llvm_unreachable("Unknown intrinsic!");
   }
 
   const CodeGenIntrinsic &getIntrinsicInfo(unsigned IID) const {
@@ -732,8 +732,7 @@ public:
       return Intrinsics[IID-1];
     if (IID-Intrinsics.size()-1 < TgtIntrinsics.size())
       return TgtIntrinsics[IID-Intrinsics.size()-1];
-    assert(0 && "Bad intrinsic ID!");
-    abort();
+    llvm_unreachable("Bad intrinsic ID!");
   }
 
   unsigned getIntrinsicID(Record *R) const {
@@ -741,8 +740,7 @@ public:
       if (Intrinsics[i].TheDef == R) return i;
     for (unsigned i = 0, e = TgtIntrinsics.size(); i != e; ++i)
       if (TgtIntrinsics[i].TheDef == R) return i + Intrinsics.size();
-    assert(0 && "Unknown intrinsic!");
-    abort();
+    llvm_unreachable("Unknown intrinsic!");
   }
 
   const DAGDefaultOperand &getDefaultOperand(Record *R) const {

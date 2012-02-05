@@ -71,7 +71,7 @@ static void dumpBits(raw_ostream &o, BitsInit &bits) {
       o << "_";
       break;
     default:
-      assert(0 && "unexpected return value from bitFromBits");
+      llvm_unreachable("unexpected return value from bitFromBits");
     }
   }
 }
@@ -698,9 +698,7 @@ unsigned FilterChooser::getIslands(std::vector<unsigned> &StartBits,
     Val = Value(Insn[i]);
     bool Filtered = PositionFiltered(i);
     switch (State) {
-    default:
-      assert(0 && "Unreachable code!");
-      break;
+    default: llvm_unreachable("Unreachable code!");
     case 0:
     case 1:
       if (Filtered || Val == -1)
@@ -1069,7 +1067,7 @@ bool FilterChooser::filterProcessor(bool AllowMixed, bool Greedy) {
         RA = ATTR_MIXED;
         break;
       default:
-        assert(0 && "Unexpected bitAttr!");
+        llvm_unreachable("Unexpected bitAttr!");
       }
       break;
     case ATTR_ALL_SET:
@@ -1090,7 +1088,7 @@ bool FilterChooser::filterProcessor(bool AllowMixed, bool Greedy) {
         RA = ATTR_MIXED;
         break;
       default:
-        assert(0 && "Unexpected bitAttr!");
+        llvm_unreachable("Unexpected bitAttr!");
       }
       break;
     case ATTR_MIXED:
@@ -1112,13 +1110,13 @@ bool FilterChooser::filterProcessor(bool AllowMixed, bool Greedy) {
       case ATTR_MIXED:
         break;
       default:
-        assert(0 && "Unexpected bitAttr!");
+        llvm_unreachable("Unexpected bitAttr!");
       }
       break;
     case ATTR_ALL_UNSET:
-      assert(0 && "regionAttr state machine has no ATTR_UNSET state");
+      llvm_unreachable("regionAttr state machine has no ATTR_UNSET state");
     case ATTR_FILTERED:
-      assert(0 && "regionAttr state machine has no ATTR_FILTERED state");
+      llvm_unreachable("regionAttr state machine has no ATTR_FILTERED state");
     }
   }
 
