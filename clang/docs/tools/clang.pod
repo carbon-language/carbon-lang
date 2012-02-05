@@ -465,7 +465,7 @@ for include files.
 =item B<-nostdlibinc>
 
 Do not search the standard system directories for include files, but do search
-compiler builting include directories.
+compiler builtin include directories.
 
 =item B<-nobuiltininc>
 
