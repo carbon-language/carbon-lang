@@ -224,7 +224,7 @@ public:
   
   /// \brief Determine whether the given variable has been captured.
   bool isCaptured(VarDecl *Var) const {
-    return CaptureMap.count(Var) > 0;
+    return CaptureMap.count(Var);
   }
   
   /// \brief Retrieve the capture of the given variable, if it has been
