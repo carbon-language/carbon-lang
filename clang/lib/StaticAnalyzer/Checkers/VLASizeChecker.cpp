@@ -28,7 +28,7 @@ using namespace ento;
 
 namespace {
 class VLASizeChecker : public Checker< check::PreStmt<DeclStmt> > {
-  mutable llvm::OwningPtr<BugType> BT;
+  mutable OwningPtr<BugType> BT;
   enum VLASize_Kind { VLA_Garbage, VLA_Zero, VLA_Tainted };
 
   void reportBug(VLASize_Kind Kind,

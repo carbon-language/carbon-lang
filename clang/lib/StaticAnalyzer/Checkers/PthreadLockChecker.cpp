@@ -26,8 +26,8 @@ using namespace ento;
 
 namespace {
 class PthreadLockChecker : public Checker< check::PostStmt<CallExpr> > {
-  mutable llvm::OwningPtr<BugType> BT_doublelock;
-  mutable llvm::OwningPtr<BugType> BT_lor;
+  mutable OwningPtr<BugType> BT_doublelock;
+  mutable OwningPtr<BugType> BT_lor;
   enum LockingSemantics {
     NotApplicable = 0,
     PthreadSemantics,

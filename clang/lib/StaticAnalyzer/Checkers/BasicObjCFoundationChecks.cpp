@@ -71,7 +71,7 @@ static inline bool isNil(SVal X) {
 
 namespace {
   class NilArgChecker : public Checker<check::PreObjCMessage> {
-    mutable llvm::OwningPtr<APIMisuse> BT;
+    mutable OwningPtr<APIMisuse> BT;
 
     void WarnNilArg(CheckerContext &C,
                     const ObjCMessage &msg, unsigned Arg) const;
@@ -142,7 +142,7 @@ void NilArgChecker::checkPreObjCMessage(ObjCMessage msg,
 
 namespace {
 class CFNumberCreateChecker : public Checker< check::PreStmt<CallExpr> > {
-  mutable llvm::OwningPtr<APIMisuse> BT;
+  mutable OwningPtr<APIMisuse> BT;
   mutable IdentifierInfo* II;
 public:
   CFNumberCreateChecker() : II(0) {}
@@ -347,7 +347,7 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
 
 namespace {
 class CFRetainReleaseChecker : public Checker< check::PreStmt<CallExpr> > {
-  mutable llvm::OwningPtr<APIMisuse> BT;
+  mutable OwningPtr<APIMisuse> BT;
   mutable IdentifierInfo *Retain, *Release;
 public:
   CFRetainReleaseChecker(): Retain(0), Release(0) {}
@@ -430,7 +430,7 @@ class ClassReleaseChecker : public Checker<check::PreObjCMessage> {
   mutable Selector retainS;
   mutable Selector autoreleaseS;
   mutable Selector drainS;
-  mutable llvm::OwningPtr<BugType> BT;
+  mutable OwningPtr<BugType> BT;
 
 public:
   void checkPreObjCMessage(ObjCMessage msg, CheckerContext &C) const;
@@ -486,7 +486,7 @@ class VariadicMethodTypeChecker : public Checker<check::PreObjCMessage> {
   mutable Selector setWithObjectsS;
   mutable Selector initWithObjectsS;
   mutable Selector initWithObjectsAndKeysS;
-  mutable llvm::OwningPtr<BugType> BT;
+  mutable OwningPtr<BugType> BT;
 
   bool isVariadicMessage(const ObjCMessage &msg) const;
 

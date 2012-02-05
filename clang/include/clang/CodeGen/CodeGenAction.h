@@ -24,7 +24,7 @@ class BackendConsumer;
 class CodeGenAction : public ASTFrontendAction {
 private:
   unsigned Act;
-  llvm::OwningPtr<llvm::Module> TheModule;
+  OwningPtr<llvm::Module> TheModule;
   llvm::Module *LinkModule;
   llvm::LLVMContext *VMContext;
   bool OwnsVMContext;

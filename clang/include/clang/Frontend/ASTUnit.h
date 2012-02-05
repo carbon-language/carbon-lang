@@ -74,7 +74,7 @@ private:
   llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diagnostics;
   llvm::IntrusiveRefCntPtr<FileManager>       FileMgr;
   llvm::IntrusiveRefCntPtr<SourceManager>     SourceMgr;
-  llvm::OwningPtr<HeaderSearch>               HeaderInfo;
+  OwningPtr<HeaderSearch>                     HeaderInfo;
   llvm::IntrusiveRefCntPtr<TargetInfo>        Target;
   llvm::IntrusiveRefCntPtr<Preprocessor>      PP;
   llvm::IntrusiveRefCntPtr<ASTContext>        Ctx;
@@ -84,11 +84,11 @@ private:
 
   /// \brief The AST consumer that received information about the translation
   /// unit as it was parsed or loaded.
-  llvm::OwningPtr<ASTConsumer> Consumer;
+  OwningPtr<ASTConsumer> Consumer;
   
   /// \brief The semantic analysis object used to type-check the translation
   /// unit.
-  llvm::OwningPtr<Sema> TheSema;
+  OwningPtr<Sema> TheSema;
   
   /// Optional owned invocation, just used to make the invocation used in
   /// LoadFromCommandLine available.

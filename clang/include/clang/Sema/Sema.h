@@ -260,14 +260,14 @@ public:
   llvm::SmallPtrSet<NamedDecl *, 4> HiddenDefinitions;
   
   /// FieldCollector - Collects CXXFieldDecls during parsing of C++ classes.
-  llvm::OwningPtr<CXXFieldCollector> FieldCollector;
+  OwningPtr<CXXFieldCollector> FieldCollector;
 
   typedef llvm::SmallPtrSet<const CXXRecordDecl*, 8> RecordDeclSetTy;
 
   /// PureVirtualClassDiagSet - a set of class declarations which we have
   /// emitted a list of pure virtual functions. Used to prevent emitting the
   /// same list more than once.
-  llvm::OwningPtr<RecordDeclSetTy> PureVirtualClassDiagSet;
+  OwningPtr<RecordDeclSetTy> PureVirtualClassDiagSet;
 
   /// ParsingInitForAutoVars - a set of declarations with auto types for which
   /// we are currently parsing the initializer.

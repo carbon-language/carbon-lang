@@ -31,7 +31,7 @@ class TextDiagnosticPrinter : public DiagnosticConsumer {
   const SourceManager *SM;
 
   /// \brief Handle to the currently active text diagnostic emitter.
-  llvm::OwningPtr<TextDiagnostic> TextDiag;
+  OwningPtr<TextDiagnostic> TextDiag;
 
   /// A string to prefix to error messages.
   std::string Prefix;

@@ -2997,7 +2997,7 @@ std::string ASTReader::getOriginalSourceFile(const std::string &ASTFileName,
                                              DiagnosticsEngine &Diags) {
   // Open the AST file.
   std::string ErrStr;
-  llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
+  OwningPtr<llvm::MemoryBuffer> Buffer;
   Buffer.reset(FileMgr.getBufferForFile(ASTFileName, &ErrStr));
   if (!Buffer) {
     Diags.Report(diag::err_fe_unable_to_read_pch_file) << ErrStr;

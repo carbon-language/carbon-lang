@@ -30,7 +30,7 @@ private:
   ExternalSemaSource &getFinalReader() const { return *FinalReader; }
 
   std::vector<CompilerInstance *> CIs;
-  llvm::OwningPtr<ExternalSemaSource> FinalReader;
+  OwningPtr<ExternalSemaSource> FinalReader;
 
   
 protected:

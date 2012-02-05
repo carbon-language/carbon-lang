@@ -32,7 +32,7 @@ class CStringChecker : public Checker< eval::Call,
                                          check::DeadSymbols,
                                          check::RegionChanges
                                          > {
-  mutable llvm::OwningPtr<BugType> BT_Null, BT_Bounds,
+  mutable OwningPtr<BugType> BT_Null, BT_Bounds,
                                    BT_Overlap, BT_NotCString,
                                    BT_AdditionOverflow;
   mutable const char *CurrentFunctionDescription;

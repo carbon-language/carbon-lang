@@ -1061,7 +1061,7 @@ void Driver::BuildActions(const ToolChain &TC, const DerivedArgList &Args,
     }
 
     // Build the pipeline for this file.
-    llvm::OwningPtr<Action> Current(new InputAction(*InputArg, InputType));
+    OwningPtr<Action> Current(new InputAction(*InputArg, InputType));
     for (unsigned i = 0; i != NumSteps; ++i) {
       phases::ID Phase = types::getCompilationPhase(InputType, i);
 

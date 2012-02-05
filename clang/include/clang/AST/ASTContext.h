@@ -349,7 +349,7 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   PartialDiagnosticStorageAllocator *DiagAllocator;
 
   /// \brief The current C++ ABI.
-  llvm::OwningPtr<CXXABI> ABI;
+  OwningPtr<CXXABI> ABI;
   CXXABI *createCXXABI(const TargetInfo &T);
 
   /// \brief The logical -> physical address space map.
@@ -367,7 +367,7 @@ public:
   SelectorTable &Selectors;
   Builtin::Context &BuiltinInfo;
   mutable DeclarationNameTable DeclarationNames;
-  llvm::OwningPtr<ExternalASTSource> ExternalSource;
+  OwningPtr<ExternalASTSource> ExternalSource;
   ASTMutationListener *Listener;
 
   clang::PrintingPolicy getPrintingPolicy() const { return PrintingPolicy; }
@@ -573,7 +573,7 @@ public:
   /// The external AST source provides the ability to load parts of
   /// the abstract syntax tree as needed from some external storage,
   /// e.g., a precompiled header.
-  void setExternalSource(llvm::OwningPtr<ExternalASTSource> &Source);
+  void setExternalSource(OwningPtr<ExternalASTSource> &Source);
 
   /// \brief Retrieve a pointer to the external AST source associated
   /// with this AST context, if any.

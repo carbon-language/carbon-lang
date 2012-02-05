@@ -40,7 +40,7 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
                      TranslationUnitKind TUKind,
                      CodeCompleteConsumer *CompletionConsumer) {
 
-  llvm::OwningPtr<Sema> S(new Sema(PP, Ctx, *Consumer,
+  OwningPtr<Sema> S(new Sema(PP, Ctx, *Consumer,
                                    TUKind,
                                    CompletionConsumer));
 
@@ -63,7 +63,7 @@ void clang::ParseAST(Sema &S, bool PrintStats) {
 
   ASTConsumer *Consumer = &S.getASTConsumer();
 
-  llvm::OwningPtr<Parser> ParseOP(new Parser(S.getPreprocessor(), S));
+  OwningPtr<Parser> ParseOP(new Parser(S.getPreprocessor(), S));
   Parser &P = *ParseOP.get();
 
   PrettyStackTraceParserEntry CrashInfo(P);

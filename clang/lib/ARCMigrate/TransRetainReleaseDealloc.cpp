@@ -34,7 +34,7 @@ class RetainReleaseDeallocRemover :
   MigrationPass &Pass;
 
   ExprSet Removables;
-  llvm::OwningPtr<ParentMap> StmtMap;
+  OwningPtr<ParentMap> StmtMap;
 
   Selector DelegateSel, FinalizeSel;
 

@@ -394,8 +394,8 @@ private:
   SubEngine *Eng; /* Can be null. */
 
   EnvironmentManager                   EnvMgr;
-  llvm::OwningPtr<StoreManager>        StoreMgr;
-  llvm::OwningPtr<ConstraintManager>   ConstraintMgr;
+  OwningPtr<StoreManager>              StoreMgr;
+  OwningPtr<ConstraintManager>         ConstraintMgr;
 
   ProgramState::GenericDataMap::Factory     GDMFactory;
 
@@ -407,7 +407,7 @@ private:
   llvm::FoldingSet<ProgramState> StateSet;
 
   /// Object that manages the data for all created SVals.
-  llvm::OwningPtr<SValBuilder> svalBuilder;
+  OwningPtr<SValBuilder> svalBuilder;
 
   /// A BumpPtrAllocator to allocate states.
   llvm::BumpPtrAllocator &Alloc;
@@ -773,7 +773,7 @@ class ScanReachableSymbols : public SubRegionMap::Visitor  {
   VisitedItems visited;
   ProgramStateRef state;
   SymbolVisitor &visitor;
-  llvm::OwningPtr<SubRegionMap> SRM;
+  OwningPtr<SubRegionMap> SRM;
 public:
 
   ScanReachableSymbols(ProgramStateRef st, SymbolVisitor& v)

@@ -24,7 +24,7 @@ using namespace ento;
 
 namespace {
 class CastToStructChecker : public Checker< check::PreStmt<CastExpr> > {
-  mutable llvm::OwningPtr<BuiltinBug> BT;
+  mutable OwningPtr<BuiltinBug> BT;
 
 public:
   void checkPreStmt(const CastExpr *CE, CheckerContext &C) const;

@@ -1823,7 +1823,7 @@ static bool IsUbuntu(enum LinuxDistro Distro) {
 }
 
 static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
-  llvm::OwningPtr<llvm::MemoryBuffer> File;
+  OwningPtr<llvm::MemoryBuffer> File;
   if (!llvm::MemoryBuffer::getFile("/etc/lsb-release", File)) {
     StringRef Data = File.get()->getBuffer();
     SmallVector<StringRef, 8> Lines;

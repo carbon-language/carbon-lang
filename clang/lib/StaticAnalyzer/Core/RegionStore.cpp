@@ -1597,7 +1597,7 @@ StoreRef RegionStoreManager::KillStruct(Store store, const TypedRegion* R,
   // Remove the old bindings, using 'subReg' as the root of all regions
   // we will invalidate.
   RegionBindings B = GetRegionBindings(store);
-  llvm::OwningPtr<RegionStoreSubRegionMap>
+  OwningPtr<RegionStoreSubRegionMap>
     SubRegions(getRegionStoreSubRegionMap(store));
   RemoveSubRegionBindings(B, subReg, *SubRegions);
 
@@ -1615,7 +1615,7 @@ StoreRef RegionStoreManager::CopyLazyBindings(nonloc::LazyCompoundVal V,
   // Nuke the old bindings stemming from R.
   RegionBindings B = GetRegionBindings(store);
 
-  llvm::OwningPtr<RegionStoreSubRegionMap>
+  OwningPtr<RegionStoreSubRegionMap>
     SubRegions(getRegionStoreSubRegionMap(store));
 
   // B and DVM are updated after the call to RemoveSubRegionBindings.

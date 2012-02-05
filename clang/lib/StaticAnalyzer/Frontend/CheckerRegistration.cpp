@@ -104,7 +104,7 @@ CheckerManager *ento::createCheckerManager(const AnalyzerOptions &opts,
                                            const LangOptions &langOpts,
                                            ArrayRef<std::string> plugins,
                                            DiagnosticsEngine &diags) {
-  llvm::OwningPtr<CheckerManager> checkerMgr(new CheckerManager(langOpts));
+  OwningPtr<CheckerManager> checkerMgr(new CheckerManager(langOpts));
 
   SmallVector<CheckerOptInfo, 8> checkerOpts;
   for (unsigned i = 0, e = opts.CheckersControlList.size(); i != e; ++i) {

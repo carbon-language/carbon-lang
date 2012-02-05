@@ -155,15 +155,15 @@ class Parser : public CodeCompletionHandler {
   mutable IdentifierInfo *Ident_final;
   mutable IdentifierInfo *Ident_override;
 
-  llvm::OwningPtr<PragmaHandler> AlignHandler;
-  llvm::OwningPtr<PragmaHandler> GCCVisibilityHandler;
-  llvm::OwningPtr<PragmaHandler> OptionsHandler;
-  llvm::OwningPtr<PragmaHandler> PackHandler;
-  llvm::OwningPtr<PragmaHandler> MSStructHandler;
-  llvm::OwningPtr<PragmaHandler> UnusedHandler;
-  llvm::OwningPtr<PragmaHandler> WeakHandler;
-  llvm::OwningPtr<PragmaHandler> FPContractHandler;
-  llvm::OwningPtr<PragmaHandler> OpenCLExtensionHandler;
+  OwningPtr<PragmaHandler> AlignHandler;
+  OwningPtr<PragmaHandler> GCCVisibilityHandler;
+  OwningPtr<PragmaHandler> OptionsHandler;
+  OwningPtr<PragmaHandler> PackHandler;
+  OwningPtr<PragmaHandler> MSStructHandler;
+  OwningPtr<PragmaHandler> UnusedHandler;
+  OwningPtr<PragmaHandler> WeakHandler;
+  OwningPtr<PragmaHandler> FPContractHandler;
+  OwningPtr<PragmaHandler> OpenCLExtensionHandler;
 
   /// Whether the '>' token acts as an operator or not. This will be
   /// true except when we are parsing an expression within a C++

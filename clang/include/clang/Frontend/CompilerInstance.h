@@ -86,16 +86,16 @@ class CompilerInstance : public ModuleLoader {
   llvm::IntrusiveRefCntPtr<ASTContext> Context;
 
   /// The AST consumer.
-  llvm::OwningPtr<ASTConsumer> Consumer;
+  OwningPtr<ASTConsumer> Consumer;
 
   /// The code completion consumer.
-  llvm::OwningPtr<CodeCompleteConsumer> CompletionConsumer;
+  OwningPtr<CodeCompleteConsumer> CompletionConsumer;
 
   /// \brief The semantic analysis object.
-  llvm::OwningPtr<Sema> TheSema;
+  OwningPtr<Sema> TheSema;
   
   /// \brief The frontend timer
-  llvm::OwningPtr<llvm::Timer> FrontendTimer;
+  OwningPtr<llvm::Timer> FrontendTimer;
 
   /// \brief Non-owning reference to the ASTReader, if one exists.
   ASTReader *ModuleManager;

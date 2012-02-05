@@ -75,7 +75,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
 
   /// PTH - An optional PTHManager object used for getting tokens from
   ///  a token cache rather than lexing the original source file.
-  llvm::OwningPtr<PTHManager> PTH;
+  OwningPtr<PTHManager> PTH;
 
   /// BP - A BumpPtrAllocator object used to quickly allocate and release
   ///  objects internal to the Preprocessor.
@@ -193,12 +193,12 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
   /// CurLexer - This is the current top of the stack that we're lexing from if
   /// not expanding a macro and we are lexing directly from source code.
   ///  Only one of CurLexer, CurPTHLexer, or CurTokenLexer will be non-null.
-  llvm::OwningPtr<Lexer> CurLexer;
+  OwningPtr<Lexer> CurLexer;
 
   /// CurPTHLexer - This is the current top of stack that we're lexing from if
   ///  not expanding from a macro and we are lexing from a PTH cache.
   ///  Only one of CurLexer, CurPTHLexer, or CurTokenLexer will be non-null.
-  llvm::OwningPtr<PTHLexer> CurPTHLexer;
+  OwningPtr<PTHLexer> CurPTHLexer;
 
   /// CurPPLexer - This is the current top of the stack what we're lexing from
   ///  if not expanding a macro.  This is an alias for either CurLexer or
@@ -212,7 +212,7 @@ class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
 
   /// CurTokenLexer - This is the current macro we are expanding, if we are
   /// expanding a macro.  One of CurLexer and CurTokenLexer must be null.
-  llvm::OwningPtr<TokenLexer> CurTokenLexer;
+  OwningPtr<TokenLexer> CurTokenLexer;
 
   /// \brief The kind of lexer we're currently working with.
   enum CurLexerKind {

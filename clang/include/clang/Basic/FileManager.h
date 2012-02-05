@@ -148,7 +148,7 @@ class FileManager : public llvm::RefCountedBase<FileManager> {
   unsigned NumDirCacheMisses, NumFileCacheMisses;
 
   // Caching.
-  llvm::OwningPtr<FileSystemStatCache> StatCache;
+  OwningPtr<FileSystemStatCache> StatCache;
 
   bool getStatValue(const char *Path, struct stat &StatBuf,
                     int *FileDescriptor);

@@ -112,9 +112,9 @@ bool FixItRecompile::BeginInvocation(CompilerInstance &CI) {
   bool err = false;
   {
     const FrontendOptions &FEOpts = CI.getFrontendOpts();
-    llvm::OwningPtr<FrontendAction> FixAction(new SyntaxOnlyAction());
+    OwningPtr<FrontendAction> FixAction(new SyntaxOnlyAction());
     if (FixAction->BeginSourceFile(CI, FEOpts.Inputs[0])) {
-      llvm::OwningPtr<FixItOptions> FixItOpts;
+      OwningPtr<FixItOptions> FixItOpts;
       if (FEOpts.FixToTemporaries)
         FixItOpts.reset(new FixItRewriteToTemp());
       else

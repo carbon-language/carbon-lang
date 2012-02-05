@@ -300,7 +300,7 @@ ExplodedGraph::Trim(const NodeTy* const* NBeg, const NodeTy* const* NEnd,
 
   assert (NBeg < NEnd);
 
-  llvm::OwningPtr<InterExplodedGraphMap> M(new InterExplodedGraphMap());
+  OwningPtr<InterExplodedGraphMap> M(new InterExplodedGraphMap());
 
   ExplodedGraph* G = TrimInternal(NBeg, NEnd, M.get(), InverseMap);
 

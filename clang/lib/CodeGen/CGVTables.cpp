@@ -668,7 +668,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
                                       bool BaseIsVirtual, 
                                    llvm::GlobalVariable::LinkageTypes Linkage,
                                       VTableAddressPointsMapTy& AddressPoints) {
-  llvm::OwningPtr<VTableLayout> VTLayout(
+  OwningPtr<VTableLayout> VTLayout(
     VTContext.createConstructionVTableLayout(Base.getBase(),
                                              Base.getBaseOffset(),
                                              BaseIsVirtual, RD));

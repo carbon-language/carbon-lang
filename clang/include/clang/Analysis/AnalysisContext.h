@@ -76,19 +76,19 @@ class AnalysisDeclContext {
   // TranslationUnit is NULL if we don't have multiple translation units.
   idx::TranslationUnit *TU;
 
-  llvm::OwningPtr<CFG> cfg, completeCFG;
-  llvm::OwningPtr<CFGStmtMap> cfgStmtMap;
+  OwningPtr<CFG> cfg, completeCFG;
+  OwningPtr<CFGStmtMap> cfgStmtMap;
 
   CFG::BuildOptions cfgBuildOptions;
   CFG::BuildOptions::ForcedBlkExprs *forcedBlkExprs;
 
   bool builtCFG, builtCompleteCFG;
 
-  llvm::OwningPtr<LiveVariables> liveness;
-  llvm::OwningPtr<LiveVariables> relaxedLiveness;
-  llvm::OwningPtr<ParentMap> PM;
-  llvm::OwningPtr<PseudoConstantAnalysis> PCA;
-  llvm::OwningPtr<CFGReverseBlockReachabilityAnalysis> CFA;
+  OwningPtr<LiveVariables> liveness;
+  OwningPtr<LiveVariables> relaxedLiveness;
+  OwningPtr<ParentMap> PM;
+  OwningPtr<PseudoConstantAnalysis> PCA;
+  OwningPtr<CFGReverseBlockReachabilityAnalysis> CFA;
 
   llvm::BumpPtrAllocator A;
 

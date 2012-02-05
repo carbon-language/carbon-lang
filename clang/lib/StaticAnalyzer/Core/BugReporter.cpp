@@ -133,7 +133,7 @@ public:
 class PathDiagnosticBuilder : public BugReporterContext {
   BugReport *R;
   PathDiagnosticConsumer *PDC;
-  llvm::OwningPtr<ParentMap> PM;
+  OwningPtr<ParentMap> PM;
   NodeMapClosure NMC;
 public:
   PathDiagnosticBuilder(GRBugReporter &br,
@@ -1403,8 +1403,8 @@ MakeReportGraph(const ExplodedGraph* G,
 
   // Create owning pointers for GTrim and NMap just to ensure that they are
   // released when this function exists.
-  llvm::OwningPtr<ExplodedGraph> AutoReleaseGTrim(GTrim);
-  llvm::OwningPtr<InterExplodedGraphMap> AutoReleaseNMap(NMap);
+  OwningPtr<ExplodedGraph> AutoReleaseGTrim(GTrim);
+  OwningPtr<InterExplodedGraphMap> AutoReleaseNMap(NMap);
 
   // Find the (first) error node in the trimmed graph.  We just need to consult
   // the node map (NMap) which maps from nodes in the original graph to nodes
@@ -1635,8 +1635,8 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   BugReport *R = bugReports[GPair.second.second];
   assert(R && "No original report found for sliced graph.");
 
-  llvm::OwningPtr<ExplodedGraph> ReportGraph(GPair.first.first);
-  llvm::OwningPtr<NodeBackMap> BackMap(GPair.first.second);
+  OwningPtr<ExplodedGraph> ReportGraph(GPair.first.first);
+  OwningPtr<NodeBackMap> BackMap(GPair.first.second);
   const ExplodedNode *N = GPair.second.first;
 
   // Start building the path diagnostic...
@@ -1866,7 +1866,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   // Probably doesn't make a difference in practice.
   BugType& BT = exampleReport->getBugType();
 
-  llvm::OwningPtr<PathDiagnostic>
+  OwningPtr<PathDiagnostic>
     D(new PathDiagnostic(exampleReport->getBugType().getName(),
                          !PD || PD->useVerboseDescription()
                          ? exampleReport->getDescription() 

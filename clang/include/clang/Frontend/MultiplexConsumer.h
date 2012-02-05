@@ -17,6 +17,7 @@
 
 #include "clang/Basic/LLVM.h"
 #include "clang/Sema/SemaConsumer.h"
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/OwningPtr.h"
 #include <vector>
 
@@ -52,8 +53,8 @@ public:
   static bool classof(const MultiplexConsumer *) { return true; }
 private:
   std::vector<ASTConsumer*> Consumers;  // Owns these.
-  llvm::OwningPtr<MultiplexASTMutationListener> MutationListener;
-  llvm::OwningPtr<MultiplexASTDeserializationListener> DeserializationListener;
+  OwningPtr<MultiplexASTMutationListener> MutationListener;
+  OwningPtr<MultiplexASTDeserializationListener> DeserializationListener;
 };
 
 }  // end namespace clang

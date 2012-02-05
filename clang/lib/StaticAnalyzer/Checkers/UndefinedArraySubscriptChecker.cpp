@@ -24,7 +24,7 @@ using namespace ento;
 namespace {
 class UndefinedArraySubscriptChecker
   : public Checker< check::PreStmt<ArraySubscriptExpr> > {
-  mutable llvm::OwningPtr<BugType> BT;
+  mutable OwningPtr<BugType> BT;
 
 public:
   void checkPreStmt(const ArraySubscriptExpr *A, CheckerContext &C) const;

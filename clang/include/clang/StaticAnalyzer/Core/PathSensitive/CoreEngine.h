@@ -58,7 +58,7 @@ private:
   SubEngine& SubEng;
 
   /// G - The simulation graph.  Each node is a (location,state) pair.
-  llvm::OwningPtr<ExplodedGraph> G;
+  OwningPtr<ExplodedGraph> G;
 
   /// WList - A set of queued nodes that need to be processed by the
   ///  worklist algorithm.  It is up to the implementation of WList to decide

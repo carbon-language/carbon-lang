@@ -4022,7 +4022,7 @@ TargetInfo *TargetInfo::CreateTargetInfo(DiagnosticsEngine &Diags,
   llvm::Triple Triple(Opts.Triple);
 
   // Construct the target
-  llvm::OwningPtr<TargetInfo> Target(AllocateTarget(Triple.str()));
+  OwningPtr<TargetInfo> Target(AllocateTarget(Triple.str()));
   if (!Target) {
     Diags.Report(diag::err_target_unknown_triple) << Triple.str();
     return 0;

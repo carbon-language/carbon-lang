@@ -74,8 +74,8 @@ public:
   StoreManagerCreator CreateStoreMgr;
   ConstraintManagerCreator CreateConstraintMgr;
 
-  llvm::OwningPtr<CheckerManager> checkerMgr;
-  llvm::OwningPtr<AnalysisManager> Mgr;
+  OwningPtr<CheckerManager> checkerMgr;
+  OwningPtr<AnalysisManager> Mgr;
 
   AnalysisConsumer(const Preprocessor& pp,
                    const std::string& outdir,
@@ -315,7 +315,7 @@ static void ActionExprEngine(AnalysisConsumer &C, AnalysisManager &mgr,
   ExprEngine Eng(mgr, ObjCGCEnabled);
 
   // Set the graph auditor.
-  llvm::OwningPtr<ExplodedNode::Auditor> Auditor;
+  OwningPtr<ExplodedNode::Auditor> Auditor;
   if (mgr.shouldVisualizeUbigraph()) {
     Auditor.reset(CreateUbiViz());
     ExplodedNode::SetAuditor(Auditor.get());
@@ -377,7 +377,7 @@ ASTConsumer* ento::CreateAnalysisConsumer(const Preprocessor& pp,
 namespace {
 
 class UbigraphViz : public ExplodedNode::Auditor {
-  llvm::OwningPtr<raw_ostream> Out;
+  OwningPtr<raw_ostream> Out;
   llvm::sys::Path Dir, Filename;
   unsigned Cntr;
 
@@ -411,7 +411,7 @@ static ExplodedNode::Auditor* CreateUbiViz() {
 
   llvm::errs() << "Writing '" << Filename.str() << "'.\n";
 
-  llvm::OwningPtr<llvm::raw_fd_ostream> Stream;
+  OwningPtr<llvm::raw_fd_ostream> Stream;
   Stream.reset(new llvm::raw_fd_ostream(Filename.c_str(), ErrMsg));
 
   if (!ErrMsg.empty())

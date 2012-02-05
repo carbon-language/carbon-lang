@@ -28,8 +28,8 @@ using namespace ento;
 namespace {
 class ObjCAtSyncChecker
     : public Checker< check::PreStmt<ObjCAtSynchronizedStmt> > {
-  mutable llvm::OwningPtr<BuiltinBug> BT_null;
-  mutable llvm::OwningPtr<BuiltinBug> BT_undef;
+  mutable OwningPtr<BuiltinBug> BT_null;
+  mutable OwningPtr<BuiltinBug> BT_undef;
 
 public:
   void checkPreStmt(const ObjCAtSynchronizedStmt *S, CheckerContext &C) const;

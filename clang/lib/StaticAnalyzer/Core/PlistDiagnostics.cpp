@@ -30,7 +30,7 @@ namespace {
   class PlistDiagnostics : public PathDiagnosticConsumer {
     const std::string OutputFile;
     const LangOptions &LangOpts;
-    llvm::OwningPtr<PathDiagnosticConsumer> SubPD;
+    OwningPtr<PathDiagnosticConsumer> SubPD;
     bool flushed;
   public:
     PlistDiagnostics(const std::string& prefix, const LangOptions &LangOpts,

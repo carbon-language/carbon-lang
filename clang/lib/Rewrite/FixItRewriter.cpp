@@ -63,7 +63,7 @@ bool FixItRewriter::WriteFixedFiles(
     int fd;
     std::string Filename = FixItOpts->RewriteFilename(Entry->getName(), fd);
     std::string Err;
-    llvm::OwningPtr<llvm::raw_fd_ostream> OS;
+    OwningPtr<llvm::raw_fd_ostream> OS;
     if (fd != -1) {
       OS.reset(new llvm::raw_fd_ostream(fd, /*shouldClose=*/true));
     } else {

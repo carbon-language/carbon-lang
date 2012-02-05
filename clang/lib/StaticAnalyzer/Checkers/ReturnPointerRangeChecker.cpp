@@ -25,7 +25,7 @@ using namespace ento;
 namespace {
 class ReturnPointerRangeChecker : 
     public Checker< check::PreStmt<ReturnStmt> > {
-  mutable llvm::OwningPtr<BuiltinBug> BT;
+  mutable OwningPtr<BuiltinBug> BT;
 public:
     void checkPreStmt(const ReturnStmt *RS, CheckerContext &C) const;
 };

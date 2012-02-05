@@ -26,8 +26,8 @@ using namespace ento;
 namespace {
 class StackAddrEscapeChecker : public Checker< check::PreStmt<ReturnStmt>,
                                                check::EndPath > {
-  mutable llvm::OwningPtr<BuiltinBug> BT_stackleak;
-  mutable llvm::OwningPtr<BuiltinBug> BT_returnstack;
+  mutable OwningPtr<BuiltinBug> BT_stackleak;
+  mutable OwningPtr<BuiltinBug> BT_returnstack;
 
 public:
   void checkPreStmt(const ReturnStmt *RS, CheckerContext &C) const;

@@ -24,7 +24,7 @@ using namespace ento;
 namespace {
 class UndefinedAssignmentChecker
   : public Checker<check::Bind> {
-  mutable llvm::OwningPtr<BugType> BT;
+  mutable OwningPtr<BugType> BT;
 
 public:
   void checkBind(SVal location, SVal val, const Stmt *S,

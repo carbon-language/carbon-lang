@@ -654,7 +654,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
                                   RemappedFile *RemappedFiles,
                                   unsigned NumRemappedFiles,
                                   bool CaptureDiagnostics) {
-  llvm::OwningPtr<ASTUnit> AST(new ASTUnit(true));
+  OwningPtr<ASTUnit> AST(new ASTUnit(true));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
@@ -729,7 +729,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   std::string Predefines;
   unsigned Counter;
 
-  llvm::OwningPtr<ASTReader> Reader;
+  OwningPtr<ASTReader> Reader;
 
   AST->PP = new Preprocessor(AST->getDiagnostics(), AST->ASTFileLangOpts, 
                              /*Target=*/0, AST->getSourceManager(), HeaderInfo, 
@@ -778,7 +778,7 @@ ASTUnit *ASTUnit::LoadFromASTFile(const std::string &Filename,
   // source, so that declarations will be deserialized from the
   // AST file as needed.
   ASTReader *ReaderPtr = Reader.get();
-  llvm::OwningPtr<ExternalASTSource> Source(Reader.take());
+  OwningPtr<ExternalASTSource> Source(Reader.take());
 
   // Unregister the cleanup for ASTReader.  It will get cleaned up
   // by the ASTUnit cleanup.
@@ -1025,7 +1025,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   }
   
   // Create the compiler instance to use for building the AST.
-  llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+  OwningPtr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
@@ -1114,7 +1114,7 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
     SavedMainFileBuffer = OverrideMainBuffer;
   }
   
-  llvm::OwningPtr<TopLevelDeclTrackerAction> Act(
+  OwningPtr<TopLevelDeclTrackerAction> Act(
     new TopLevelDeclTrackerAction(*this));
     
   // Recover resources if we crash before exiting this method.
@@ -1319,7 +1319,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
     = ComputePreamble(*PreambleInvocation, MaxLines, CreatedPreambleBuffer);
 
   // If ComputePreamble() Take ownership of the preamble buffer.
-  llvm::OwningPtr<llvm::MemoryBuffer> OwnedPreambleBuffer;
+  OwningPtr<llvm::MemoryBuffer> OwnedPreambleBuffer;
   if (CreatedPreambleBuffer)
     OwnedPreambleBuffer.reset(NewPreamble.first);
 
@@ -1501,7 +1501,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   PreprocessorOpts.PrecompiledPreambleBytes.second = false;
   
   // Create the compiler instance to use for building the precompiled preamble.
-  llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+  OwningPtr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
@@ -1553,7 +1553,7 @@ llvm::MemoryBuffer *ASTUnit::getMainBufferWithPrecompiledPreamble(
   Clang->setSourceManager(new SourceManager(getDiagnostics(),
                                             Clang->getFileManager()));
   
-  llvm::OwningPtr<PrecompilePreambleAction> Act;
+  OwningPtr<PrecompilePreambleAction> Act;
   Act.reset(new PrecompilePreambleAction(*this));
   if (!Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0])) {
     llvm::sys::Path(FrontendOpts.OutputFile).eraseFromDisk();
@@ -1648,7 +1648,7 @@ StringRef ASTUnit::getMainFileName() const {
 ASTUnit *ASTUnit::create(CompilerInvocation *CI,
                          llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags,
                          bool CaptureDiagnostics) {
-  llvm::OwningPtr<ASTUnit> AST;
+  OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, 0, 0, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
@@ -1672,7 +1672,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
                                              bool CacheCodeCompletionResults) {
   assert(CI && "A CompilerInvocation is required");
 
-  llvm::OwningPtr<ASTUnit> OwnAST;
+  OwningPtr<ASTUnit> OwnAST;
   ASTUnit *AST = Unit;
   if (!AST) {
     // Create the AST unit.
@@ -1707,7 +1707,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
   AST->TargetFeatures = CI->getTargetOpts().Features;
 
   // Create the compiler instance to use for building the AST.
-  llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+  OwningPtr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
@@ -1754,7 +1754,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocationAction(CompilerInvocation *CI,
 
   ASTFrontendAction *Act = Action;
 
-  llvm::OwningPtr<TopLevelDeclTrackerAction> TrackerAct;
+  OwningPtr<TopLevelDeclTrackerAction> TrackerAct;
   if (!Act) {
     TrackerAct.reset(new TopLevelDeclTrackerAction(*AST));
     Act = TrackerAct.get();
@@ -1835,7 +1835,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              bool CacheCodeCompletionResults,
                                              bool NestedMacroExpansions) {  
   // Create the AST unit.
-  llvm::OwningPtr<ASTUnit> AST;
+  OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, 0, 0, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
@@ -1911,7 +1911,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   CI->getHeaderSearchOpts().ResourceDir = ResourceFilesPath;
 
   // Create the AST unit.
-  llvm::OwningPtr<ASTUnit> AST;
+  OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
   ConfigureDiags(Diags, ArgBegin, ArgEnd, *AST, CaptureDiagnostics);
   AST->Diagnostics = Diags;
@@ -2270,7 +2270,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   // Set the language options appropriately.
   LangOpts = *CCInvocation->getLangOpts();
 
-  llvm::OwningPtr<CompilerInstance> Clang(new CompilerInstance());
+  OwningPtr<CompilerInstance> Clang(new CompilerInstance());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<CompilerInstance>
@@ -2378,7 +2378,7 @@ void ASTUnit::CodeComplete(StringRef File, unsigned Line, unsigned Column,
   // Disable the preprocessing record
   PreprocessorOpts.DetailedRecord = false;
   
-  llvm::OwningPtr<SyntaxOnlyAction> Act;
+  OwningPtr<SyntaxOnlyAction> Act;
   Act.reset(new SyntaxOnlyAction);
   if (Act->BeginSourceFile(*Clang.get(), Clang->getFrontendOpts().Inputs[0])) {
     if (OverrideMainBuffer) {

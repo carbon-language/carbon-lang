@@ -28,7 +28,7 @@ class CompilerInstance;
 /// the frontend.
 class FrontendAction {
   FrontendInputFile CurrentInput;
-  llvm::OwningPtr<ASTUnit> CurrentASTUnit;
+  OwningPtr<ASTUnit> CurrentASTUnit;
   CompilerInstance *Instance;
   friend class ASTMergeAction;
   friend class WrapperFrontendAction;
@@ -248,7 +248,7 @@ public:
 /// implements every virtual method in the FrontendAction interface by
 /// forwarding to the wrapped action.
 class WrapperFrontendAction : public FrontendAction {
-  llvm::OwningPtr<FrontendAction> WrappedAction;
+  OwningPtr<FrontendAction> WrappedAction;
 
 protected:
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,

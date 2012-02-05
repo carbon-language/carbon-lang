@@ -67,7 +67,7 @@ public:
   DiagnosticsEngine &Diags;
   DiagnosticConsumer *PrimaryClient;
   bool OwnsPrimaryClient;
-  llvm::OwningPtr<TextDiagnosticBuffer> Buffer;
+  OwningPtr<TextDiagnosticBuffer> Buffer;
   Preprocessor *CurrentPreprocessor;
 
 private:

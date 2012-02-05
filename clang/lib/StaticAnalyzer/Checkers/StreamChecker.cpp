@@ -65,7 +65,7 @@ class StreamChecker : public Checker<eval::Call,
                  *II_fwrite, 
                  *II_fseek, *II_ftell, *II_rewind, *II_fgetpos, *II_fsetpos,  
                  *II_clearerr, *II_feof, *II_ferror, *II_fileno;
-  mutable llvm::OwningPtr<BuiltinBug> BT_nullfp, BT_illegalwhence,
+  mutable OwningPtr<BuiltinBug> BT_nullfp, BT_illegalwhence,
                                       BT_doubleclose, BT_ResourceLeak;
 
 public:

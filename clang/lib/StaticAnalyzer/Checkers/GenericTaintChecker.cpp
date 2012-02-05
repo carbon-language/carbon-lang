@@ -42,7 +42,7 @@ private:
   /// Denotes the return vale.
   static const unsigned ReturnValueIndex = UINT_MAX - 1;
 
-  mutable llvm::OwningPtr<BugType> BT;
+  mutable OwningPtr<BugType> BT;
   inline void initBugType() const {
     if (!BT)
       BT.reset(new BugType("Taint Analysis", "General"));

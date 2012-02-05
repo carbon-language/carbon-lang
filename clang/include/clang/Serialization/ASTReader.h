@@ -218,7 +218,7 @@ public:
 
 private:
   /// \brief The receiver of some callbacks invoked by ASTReader.
-  llvm::OwningPtr<ASTReaderListener> Listener;
+  OwningPtr<ASTReaderListener> Listener;
 
   /// \brief The receiver of deserialization events.
   ASTDeserializationListener *DeserializationListener;

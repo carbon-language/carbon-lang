@@ -23,7 +23,7 @@ using namespace ento;
 
 namespace {
 class CastSizeChecker : public Checker< check::PreStmt<CastExpr> > {
-  mutable llvm::OwningPtr<BuiltinBug> BT;
+  mutable OwningPtr<BuiltinBug> BT;
 public:
   void checkPreStmt(const CastExpr *CE, CheckerContext &C) const;
 };

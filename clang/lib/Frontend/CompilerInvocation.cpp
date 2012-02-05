@@ -2059,9 +2059,9 @@ bool CompilerInvocation::CreateFromArgs(CompilerInvocation &Res,
   bool Success = true;
 
   // Parse the arguments.
-  llvm::OwningPtr<OptTable> Opts(createCC1OptTable());
+  OwningPtr<OptTable> Opts(createCC1OptTable());
   unsigned MissingArgIndex, MissingArgCount;
-  llvm::OwningPtr<InputArgList> Args(
+  OwningPtr<InputArgList> Args(
     Opts->ParseArgs(ArgBegin, ArgEnd,MissingArgIndex, MissingArgCount));
 
   // Check for missing argument error.

@@ -27,8 +27,8 @@ namespace {
 class DereferenceChecker
     : public Checker< check::Location,
                         EventDispatcher<ImplicitNullDerefEvent> > {
-  mutable llvm::OwningPtr<BuiltinBug> BT_null;
-  mutable llvm::OwningPtr<BuiltinBug> BT_undef;
+  mutable OwningPtr<BuiltinBug> BT_null;
+  mutable OwningPtr<BuiltinBug> BT_undef;
 
 public:
   void checkLocation(SVal location, bool isLoad, const Stmt* S,

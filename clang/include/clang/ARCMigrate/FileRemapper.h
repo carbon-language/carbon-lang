@@ -30,7 +30,7 @@ namespace arcmt {
 
 class FileRemapper {
   // FIXME: Reuse the same FileManager for multiple ASTContexts.
-  llvm::OwningPtr<FileManager> FileMgr;
+  OwningPtr<FileManager> FileMgr;
 
   typedef llvm::PointerUnion<const FileEntry *, llvm::MemoryBuffer *> Target;
   typedef llvm::DenseMap<const FileEntry *, Target> MappingsTy;

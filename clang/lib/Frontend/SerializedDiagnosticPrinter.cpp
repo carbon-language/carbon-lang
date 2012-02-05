@@ -170,7 +170,7 @@ private:
   llvm::BitstreamWriter Stream;
 
   /// \brief The name of the diagnostics file.
-  llvm::OwningPtr<llvm::raw_ostream> OS;
+  OwningPtr<llvm::raw_ostream> OS;
   
   /// \brief The set of constructed record abbreviations.
   AbbreviationMap Abbrevs;

@@ -30,7 +30,7 @@ using llvm::Optional;
 
 namespace {
 class UnixAPIChecker : public Checker< check::PreStmt<CallExpr> > {
-  mutable llvm::OwningPtr<BugType> BT_open, BT_pthreadOnce, BT_mallocZero;
+  mutable OwningPtr<BugType> BT_open, BT_pthreadOnce, BT_mallocZero;
   mutable Optional<uint64_t> Val_O_CREAT;
 
 public:
@@ -63,7 +63,7 @@ private:
 // Utility functions.
 //===----------------------------------------------------------------------===//
 
-static inline void LazyInitialize(llvm::OwningPtr<BugType> &BT,
+static inline void LazyInitialize(OwningPtr<BugType> &BT,
                                   const char *name) {
   if (BT)
     return;

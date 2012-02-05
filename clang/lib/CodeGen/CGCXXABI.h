@@ -42,7 +42,7 @@ namespace CodeGen {
 class CGCXXABI {
 protected:
   CodeGenModule &CGM;
-  llvm::OwningPtr<MangleContext> MangleCtx;
+  OwningPtr<MangleContext> MangleCtx;
 
   CGCXXABI(CodeGenModule &CGM)
     : CGM(CGM), MangleCtx(CGM.getContext().createMangleContext()) {}

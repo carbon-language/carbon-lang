@@ -38,7 +38,7 @@ class AnalysisManager : public BugReporterData {
   DiagnosticsEngine &Diags;
   const LangOptions &LangInfo;
 
-  llvm::OwningPtr<PathDiagnosticConsumer> PD;
+  OwningPtr<PathDiagnosticConsumer> PD;
 
   // Configurable components creators.
   StoreManagerCreator CreateStoreMgr;

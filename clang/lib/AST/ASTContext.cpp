@@ -299,7 +299,7 @@ void ASTContext::AddDeallocation(void (*Callback)(void*), void *Data) {
 }
 
 void
-ASTContext::setExternalSource(llvm::OwningPtr<ExternalASTSource> &Source) {
+ASTContext::setExternalSource(OwningPtr<ExternalASTSource> &Source) {
   ExternalSource.reset(Source.take());
 }
 

@@ -27,7 +27,7 @@ namespace {
 class UndefResultChecker 
   : public Checker< check::PostStmt<BinaryOperator> > {
 
-  mutable llvm::OwningPtr<BugType> BT;
+  mutable OwningPtr<BugType> BT;
   
 public:
   void checkPostStmt(const BinaryOperator *B, CheckerContext &C) const;

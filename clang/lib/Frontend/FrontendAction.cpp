@@ -144,7 +144,7 @@ ASTConsumer* FrontendAction::CreateWrappedASTConsumer(CompilerInstance &CI,
         ie = FrontendPluginRegistry::end();
         it != ie; ++it) {
       if (it->getName() == CI.getFrontendOpts().AddPluginActions[i]) {
-        llvm::OwningPtr<PluginASTAction> P(it->instantiate());
+        OwningPtr<PluginASTAction> P(it->instantiate());
         FrontendAction* c = P.get();
         if (P->ParseArgs(CI, CI.getFrontendOpts().AddPluginArgs[i]))
           Consumers.push_back(c->CreateASTConsumer(CI, InFile));
@@ -238,7 +238,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   if (!usesPreprocessorOnly()) {
     CI.createASTContext();
 
-    llvm::OwningPtr<ASTConsumer> Consumer(
+    OwningPtr<ASTConsumer> Consumer(
                                    CreateWrappedASTConsumer(CI, Input.File));
     if (!Consumer)
       goto failure;
@@ -247,7 +247,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
 
     if (!CI.getPreprocessorOpts().ChainedIncludes.empty()) {
       // Convert headers to PCH and chain them.
-      llvm::OwningPtr<ExternalASTSource> source;
+      OwningPtr<ExternalASTSource> source;
       source.reset(ChainedIncludesSource::create(CI));
       if (!source)
         goto failure;
@@ -290,7 +290,7 @@ bool FrontendAction::BeginSourceFile(CompilerInstance &CI,
   // provides the layouts from that file.
   if (!CI.getFrontendOpts().OverrideRecordLayoutsFile.empty() && 
       CI.hasASTContext() && !CI.getASTContext().getExternalSource()) {
-    llvm::OwningPtr<ExternalASTSource> 
+    OwningPtr<ExternalASTSource> 
       Override(new LayoutOverrideSource(
                      CI.getFrontendOpts().OverrideRecordLayoutsFile));
     CI.getASTContext().setExternalSource(Override);

@@ -28,8 +28,8 @@ protected:
 
 class FixItAction : public ASTFrontendAction {
 protected:
-  llvm::OwningPtr<FixItRewriter> Rewriter;
-  llvm::OwningPtr<FixItOptions> FixItOpts;
+  OwningPtr<FixItRewriter> Rewriter;
+  OwningPtr<FixItOptions> FixItOpts;
 
   virtual ASTConsumer *CreateASTConsumer(CompilerInstance &CI,
                                          StringRef InFile);

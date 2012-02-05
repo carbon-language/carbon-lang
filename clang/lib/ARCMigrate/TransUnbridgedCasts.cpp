@@ -49,7 +49,7 @@ namespace {
 class UnbridgedCastRewriter : public RecursiveASTVisitor<UnbridgedCastRewriter>{
   MigrationPass &Pass;
   IdentifierInfo *SelfII;
-  llvm::OwningPtr<ParentMap> StmtMap;
+  OwningPtr<ParentMap> StmtMap;
 
 public:
   UnbridgedCastRewriter(MigrationPass &pass) : Pass(pass) {

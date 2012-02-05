@@ -81,7 +81,7 @@ const HeaderMap *HeaderMap::Create(const FileEntry *FE, FileManager &FM) {
   unsigned FileSize = FE->getSize();
   if (FileSize <= sizeof(HMapHeader)) return 0;
 
-  llvm::OwningPtr<const llvm::MemoryBuffer> FileBuffer(FM.getBufferForFile(FE));
+  OwningPtr<const llvm::MemoryBuffer> FileBuffer(FM.getBufferForFile(FE));
   if (FileBuffer == 0) return 0;  // Unreadable file?
   const char *FileStart = FileBuffer->getBufferStart();
 

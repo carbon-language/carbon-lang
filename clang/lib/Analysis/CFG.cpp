@@ -250,7 +250,7 @@ class CFGBuilder {
   typedef BlockScopePosPair JumpSource;
 
   ASTContext *Context;
-  llvm::OwningPtr<CFG> cfg;
+  OwningPtr<CFG> cfg;
 
   CFGBlock *Block;
   CFGBlock *Succ;

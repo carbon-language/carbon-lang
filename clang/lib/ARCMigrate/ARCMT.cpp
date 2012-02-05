@@ -185,7 +185,7 @@ static bool HasARCRuntime(CompilerInvocation &origCI) {
 
 static CompilerInvocation *
 createInvocationForMigration(CompilerInvocation &origCI) {
-  llvm::OwningPtr<CompilerInvocation> CInvok;
+  OwningPtr<CompilerInvocation> CInvok;
   CInvok.reset(new CompilerInvocation(origCI));
   CInvok->getPreprocessorOpts().ImplicitPCHInclude = std::string();
   CInvok->getPreprocessorOpts().ImplicitPTHInclude = std::string();
@@ -236,7 +236,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
                                                                      NoFinalizeRemoval);
   assert(!transforms.empty());
 
-  llvm::OwningPtr<CompilerInvocation> CInvok;
+  OwningPtr<CompilerInvocation> CInvok;
   CInvok.reset(createInvocationForMigration(origCI));
   CInvok->getFrontendOpts().Inputs.clear();
   CInvok->getFrontendOpts().Inputs.push_back(Input);
@@ -252,7 +252,7 @@ bool arcmt::checkForManualIssues(CompilerInvocation &origCI,
   CaptureDiagnosticConsumer errRec(*Diags, capturedDiags);
   Diags->setClient(&errRec, /*ShouldOwnClient=*/false);
 
-  llvm::OwningPtr<ASTUnit> Unit(
+  OwningPtr<ASTUnit> Unit(
       ASTUnit::LoadFromCompilerInvocationAction(CInvok.take(), Diags));
   if (!Unit)
     return true;
@@ -500,7 +500,7 @@ MigrationProcess::MigrationProcess(const CompilerInvocation &CI,
 
 bool MigrationProcess::applyTransform(TransformFn trans,
                                       RewriteListener *listener) {
-  llvm::OwningPtr<CompilerInvocation> CInvok;
+  OwningPtr<CompilerInvocation> CInvok;
   CInvok.reset(createInvocationForMigration(OrigCI));
   CInvok->getDiagnosticOpts().IgnoreWarnings = true;
 
@@ -518,10 +518,10 @@ bool MigrationProcess::applyTransform(TransformFn trans,
   CaptureDiagnosticConsumer errRec(*Diags, capturedDiags);
   Diags->setClient(&errRec, /*ShouldOwnClient=*/false);
 
-  llvm::OwningPtr<ARCMTMacroTrackerAction> ASTAction;
+  OwningPtr<ARCMTMacroTrackerAction> ASTAction;
   ASTAction.reset(new ARCMTMacroTrackerAction(ARCMTMacroLocs));
 
-  llvm::OwningPtr<ASTUnit> Unit(
+  OwningPtr<ASTUnit> Unit(
       ASTUnit::LoadFromCompilerInvocationAction(CInvok.take(), Diags,
                                                 ASTAction.get()));
   if (!Unit)

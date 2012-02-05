@@ -28,7 +28,7 @@ using namespace ento;
 namespace {
 class ArrayBoundCheckerV2 : 
     public Checker<check::Location> {
-  mutable llvm::OwningPtr<BuiltinBug> BT;
+  mutable OwningPtr<BuiltinBug> BT;
       
   enum OOB_Kind { OOB_Precedes, OOB_Excedes, OOB_Tainted };
   

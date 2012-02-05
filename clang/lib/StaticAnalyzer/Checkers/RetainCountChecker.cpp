@@ -2287,19 +2287,19 @@ class RetainCountChecker
                     check::RegionChanges,
                     eval::Assume,
                     eval::Call > {
-  mutable llvm::OwningPtr<CFRefBug> useAfterRelease, releaseNotOwned;
-  mutable llvm::OwningPtr<CFRefBug> deallocGC, deallocNotOwned;
-  mutable llvm::OwningPtr<CFRefBug> overAutorelease, returnNotOwnedForOwned;
-  mutable llvm::OwningPtr<CFRefBug> leakWithinFunction, leakAtReturn;
-  mutable llvm::OwningPtr<CFRefBug> leakWithinFunctionGC, leakAtReturnGC;
+  mutable OwningPtr<CFRefBug> useAfterRelease, releaseNotOwned;
+  mutable OwningPtr<CFRefBug> deallocGC, deallocNotOwned;
+  mutable OwningPtr<CFRefBug> overAutorelease, returnNotOwnedForOwned;
+  mutable OwningPtr<CFRefBug> leakWithinFunction, leakAtReturn;
+  mutable OwningPtr<CFRefBug> leakWithinFunctionGC, leakAtReturnGC;
 
   typedef llvm::DenseMap<SymbolRef, const SimpleProgramPointTag *> SymbolTagMap;
 
   // This map is only used to ensure proper deletion of any allocated tags.
   mutable SymbolTagMap DeadSymbolTags;
 
-  mutable llvm::OwningPtr<RetainSummaryManager> Summaries;
-  mutable llvm::OwningPtr<RetainSummaryManager> SummariesGC;
+  mutable OwningPtr<RetainSummaryManager> Summaries;
+  mutable OwningPtr<RetainSummaryManager> SummariesGC;
 
   mutable ARCounts::Factory ARCountFactory;
 

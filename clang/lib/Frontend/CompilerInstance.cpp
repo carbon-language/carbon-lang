@@ -95,7 +95,7 @@ static void SetUpBuildDumpLog(const DiagnosticOptions &DiagOpts,
                               unsigned argc, const char* const *argv,
                               DiagnosticsEngine &Diags) {
   std::string ErrorInfo;
-  llvm::OwningPtr<raw_ostream> OS(
+  OwningPtr<raw_ostream> OS(
     new llvm::raw_fd_ostream(DiagOpts.DumpBuildInformation.c_str(), ErrorInfo));
   if (!ErrorInfo.empty()) {
     Diags.Report(diag::err_fe_unable_to_open_logfile)
@@ -148,7 +148,7 @@ static void SetupSerializedDiagnostics(const DiagnosticOptions &DiagOpts,
                                        DiagnosticsEngine &Diags,
                                        StringRef OutputFile) {
   std::string ErrorInfo;
-  llvm::OwningPtr<llvm::raw_fd_ostream> OS;
+  OwningPtr<llvm::raw_fd_ostream> OS;
   OS.reset(new llvm::raw_fd_ostream(OutputFile.str().c_str(), ErrorInfo,
                                     llvm::raw_fd_ostream::F_Binary));
   
@@ -308,7 +308,7 @@ void CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                                   bool DisablePCHValidation,
                                                   bool DisableStatCache,
                                                  void *DeserializationListener){
-  llvm::OwningPtr<ExternalASTSource> Source;
+  OwningPtr<ExternalASTSource> Source;
   bool Preamble = getPreprocessorOpts().PrecompiledPreambleBytes.first != 0;
   Source.reset(createPCHExternalASTSource(Path, getHeaderSearchOpts().Sysroot,
                                           DisablePCHValidation,
@@ -329,7 +329,7 @@ CompilerInstance::createPCHExternalASTSource(StringRef Path,
                                              ASTContext &Context,
                                              void *DeserializationListener,
                                              bool Preamble) {
-  llvm::OwningPtr<ASTReader> Reader;
+  OwningPtr<ASTReader> Reader;
   Reader.reset(new ASTReader(PP, Context,
                              Sysroot.empty() ? "" : Sysroot.c_str(),
                              DisablePCHValidation, DisableStatCache));
@@ -525,7 +525,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
     OutFile = "-";
   }
 
-  llvm::OwningPtr<llvm::raw_fd_ostream> OS;
+  OwningPtr<llvm::raw_fd_ostream> OS;
   std::string OSFile;
 
   if (UseTemporary && OutFile != "-") {
@@ -593,7 +593,7 @@ bool CompilerInstance::InitializeSourceManager(StringRef InputFile,
     }
     SourceMgr.createMainFileID(File, Kind);
   } else {
-    llvm::OwningPtr<llvm::MemoryBuffer> SB;
+    OwningPtr<llvm::MemoryBuffer> SB;
     if (llvm::MemoryBuffer::getSTDIN(SB)) {
       // FIXME: Give ec.message() in this diag.
       Diags.Report(diag::err_fe_error_reading_stdin);
@@ -935,7 +935,7 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
         getASTContext().setASTMutationListener(
           getASTConsumer().GetASTMutationListener());
       }
-      llvm::OwningPtr<ExternalASTSource> Source;
+      OwningPtr<ExternalASTSource> Source;
       Source.reset(ModuleManager);
       getASTContext().setExternalSource(Source);
       if (hasSema())

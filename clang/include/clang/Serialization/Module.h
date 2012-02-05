@@ -77,7 +77,7 @@ public:
   
   /// \brief The memory buffer that stores the data associated with
   /// this AST file.
-  llvm::OwningPtr<llvm::MemoryBuffer> Buffer;
+  OwningPtr<llvm::MemoryBuffer> Buffer;
 
   /// \brief The size of this file, in bits.
   uint64_t SizeInBits;

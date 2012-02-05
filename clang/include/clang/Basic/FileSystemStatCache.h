@@ -14,6 +14,7 @@
 #ifndef LLVM_CLANG_FILESYSTEMSTATCACHE_H
 #define LLVM_CLANG_FILESYSTEMSTATCACHE_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/StringMap.h"
 #include <sys/types.h>
@@ -27,7 +28,7 @@ namespace clang {
 class FileSystemStatCache {
   virtual void anchor();
 protected:
-  llvm::OwningPtr<FileSystemStatCache> NextStatCache;
+  OwningPtr<FileSystemStatCache> NextStatCache;
   
 public:
   virtual ~FileSystemStatCache() {}

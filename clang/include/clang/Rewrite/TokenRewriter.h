@@ -41,7 +41,7 @@ namespace clang {
 
     /// ScratchBuf - This is the buffer that we create scratch tokens from.
     ///
-    llvm::OwningPtr<ScratchBuffer> ScratchBuf;
+    OwningPtr<ScratchBuffer> ScratchBuf;
 
     TokenRewriter(const TokenRewriter&);  // DO NOT IMPLEMENT
     void operator=(const TokenRewriter&); // DO NOT IMPLEMENT.

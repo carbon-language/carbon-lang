@@ -30,7 +30,7 @@ class MacOSKeychainAPIChecker : public Checker<check::PreStmt<CallExpr>,
                                                check::PostStmt<CallExpr>,
                                                check::EndPath,
                                                check::DeadSymbols> {
-  mutable llvm::OwningPtr<BugType> BT;
+  mutable OwningPtr<BugType> BT;
 
 public:
   /// AllocationState is a part of the checker specific state together with the

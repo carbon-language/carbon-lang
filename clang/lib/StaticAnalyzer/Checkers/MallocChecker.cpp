@@ -74,11 +74,11 @@ class MallocChecker : public Checker<eval::Call,
                                      check::Bind,
                                      eval::Assume>
 {
-  mutable llvm::OwningPtr<BuiltinBug> BT_DoubleFree;
-  mutable llvm::OwningPtr<BuiltinBug> BT_Leak;
-  mutable llvm::OwningPtr<BuiltinBug> BT_UseFree;
-  mutable llvm::OwningPtr<BuiltinBug> BT_UseRelinquished;
-  mutable llvm::OwningPtr<BuiltinBug> BT_BadFree;
+  mutable OwningPtr<BuiltinBug> BT_DoubleFree;
+  mutable OwningPtr<BuiltinBug> BT_Leak;
+  mutable OwningPtr<BuiltinBug> BT_UseFree;
+  mutable OwningPtr<BuiltinBug> BT_UseRelinquished;
+  mutable OwningPtr<BuiltinBug> BT_BadFree;
   mutable IdentifierInfo *II_malloc, *II_free, *II_realloc, *II_calloc;
 
 public:

@@ -22,7 +22,7 @@ using namespace ento;
 namespace {
 class TaintTesterChecker : public Checker< check::PostStmt<Expr> > {
 
-  mutable llvm::OwningPtr<BugType> BT;
+  mutable OwningPtr<BugType> BT;
   void initBugType() const;
 
   /// Given a pointer argument, get the symbol of the value it contains

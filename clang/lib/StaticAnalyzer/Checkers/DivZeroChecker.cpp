@@ -24,7 +24,7 @@ using namespace ento;
 
 namespace {
 class DivZeroChecker : public Checker< check::PreStmt<BinaryOperator> > {
-  mutable llvm::OwningPtr<BuiltinBug> BT;
+  mutable OwningPtr<BuiltinBug> BT;
   void reportBug(const char *Msg,
                  ProgramStateRef StateZero,
                  CheckerContext &C) const ;
