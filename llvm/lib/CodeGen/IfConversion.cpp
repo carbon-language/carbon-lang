@@ -315,8 +315,7 @@ bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
 
       bool RetVal = false;
       switch (Kind) {
-      default: assert(false && "Unexpected!");
-        break;
+      default: llvm_unreachable("Unexpected!");
       case ICSimple:
       case ICSimpleFalse: {
         bool isFalse = Kind == ICSimpleFalse;
@@ -1036,7 +1035,7 @@ bool IfConverter::IfConvertSimple(BBInfo &BBI, IfcvtKind Kind) {
 
   if (Kind == ICSimpleFalse)
     if (TII->ReverseBranchCondition(Cond))
-      assert(false && "Unable to reverse branch condition!");
+      llvm_unreachable("Unable to reverse branch condition!");
 
   // Initialize liveins to the first BB. These are potentiall redefined by
   // predicated instructions.
@@ -1109,7 +1108,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
 
   if (Kind == ICTriangleFalse || Kind == ICTriangleFRev)
     if (TII->ReverseBranchCondition(Cond))
-      assert(false && "Unable to reverse branch condition!");
+      llvm_unreachable("Unable to reverse branch condition!");
 
   if (Kind == ICTriangleRev || Kind == ICTriangleFRev) {
     if (ReverseBranchCondition(*CvtBBI)) {
@@ -1156,7 +1155,7 @@ bool IfConverter::IfConvertTriangle(BBInfo &BBI, IfcvtKind Kind) {
     SmallVector<MachineOperand, 4> RevCond(CvtBBI->BrCond.begin(),
                                            CvtBBI->BrCond.end());
     if (TII->ReverseBranchCondition(RevCond))
-      assert(false && "Unable to reverse branch condition!");
+      llvm_unreachable("Unable to reverse branch condition!");
     TII->InsertBranch(*BBI.BB, CvtBBI->FalseBB, NULL, RevCond, dl);
     BBI.BB->addSuccessor(CvtBBI->FalseBB);
   }
@@ -1228,7 +1227,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
   BBInfo *BBI2 = &FalseBBI;
   SmallVector<MachineOperand, 4> RevCond(BBI.BrCond.begin(), BBI.BrCond.end());
   if (TII->ReverseBranchCondition(RevCond))
-    assert(false && "Unable to reverse branch condition!");
+    llvm_unreachable("Unable to reverse branch condition!");
   SmallVector<MachineOperand, 4> *Cond1 = &BBI.BrCond;
   SmallVector<MachineOperand, 4> *Cond2 = &RevCond;
 

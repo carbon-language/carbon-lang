@@ -529,7 +529,7 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
       // We need another round if spill intervals were added.
       anotherRoundNeeded |= !LRE.empty();
     } else {
-      assert(false && "Unknown allocation option.");
+      llvm_unreachable("Unknown allocation option.");
     }
   }
 

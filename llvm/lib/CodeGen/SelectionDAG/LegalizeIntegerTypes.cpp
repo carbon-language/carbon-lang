@@ -2787,7 +2787,7 @@ SDValue DAGTypeLegalizer::ExpandIntOp_UINT_TO_FP(SDNode *N) {
     else if (SrcVT == MVT::i128)
       FF = APInt(32, F32TwoE128);
     else
-      assert(false && "Unsupported UINT_TO_FP!");
+      llvm_unreachable("Unsupported UINT_TO_FP!");
 
     // Check whether the sign bit is set.
     SDValue Lo, Hi;

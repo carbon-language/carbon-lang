@@ -31,6 +31,7 @@
 #include "llvm/Target/TargetOptions.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/Dwarf.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/StringExtras.h"
@@ -714,17 +715,17 @@ void DwarfException::EmitExceptionTable() {
 /// EndModule - Emit all exception information that should come after the
 /// content.
 void DwarfException::EndModule() {
-  assert(0 && "Should be implemented");
+  llvm_unreachable("Should be implemented");
 }
 
 /// BeginFunction - Gather pre-function exception information. Assumes it's
 /// being emitted immediately after the function entry point.
 void DwarfException::BeginFunction(const MachineFunction *MF) {
-  assert(0 && "Should be implemented");
+  llvm_unreachable("Should be implemented");
 }
 
 /// EndFunction - Gather and emit post-function exception information.
 ///
 void DwarfException::EndFunction() {
-  assert(0 && "Should be implemented");
+  llvm_unreachable("Should be implemented");
 }

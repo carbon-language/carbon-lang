@@ -141,7 +141,7 @@ SDValue VectorLegalizer::LegalizeOp(SDValue Op) {
     EVT ValVT = ST->getValue().getValueType();
     if (StVT.isVector() && ST->isTruncatingStore())
       switch (TLI.getTruncStoreAction(ValVT, StVT)) {
-      default: assert(0 && "This action is not supported yet!");
+      default: llvm_unreachable("This action is not supported yet!");
       case TargetLowering::Legal:
         return TranslateLegalizeResults(Op, Result);
       case TargetLowering::Custom:

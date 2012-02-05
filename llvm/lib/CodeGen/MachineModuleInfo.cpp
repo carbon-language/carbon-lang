@@ -268,9 +268,9 @@ MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI,
 MachineModuleInfo::MachineModuleInfo()
   : ImmutablePass(ID),
     Context(*(MCAsmInfo*)0, *(MCRegisterInfo*)0, (MCObjectFileInfo*)0) {
-  assert(0 && "This MachineModuleInfo constructor should never be called, MMI "
-         "should always be explicitly constructed by LLVMTargetMachine");
-  abort();
+  llvm_unreachable("This MachineModuleInfo constructor should never be called, "
+                   "MMI should always be explicitly constructed by "
+                   "LLVMTargetMachine");
 }
 
 MachineModuleInfo::~MachineModuleInfo() {

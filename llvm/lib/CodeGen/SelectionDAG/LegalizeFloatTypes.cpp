@@ -672,7 +672,7 @@ void DAGTypeLegalizer::SoftenSetCCOperands(SDValue &NewLHS, SDValue &NewRHS,
     case ISD::SETUEQ:
       LC2 = (VT == MVT::f32) ? RTLIB::OEQ_F32 : RTLIB::OEQ_F64;
       break;
-    default: assert(false && "Do not know how to soften this setcc!");
+    default: llvm_unreachable("Do not know how to soften this setcc!");
     }
   }
 
@@ -1212,7 +1212,7 @@ void DAGTypeLegalizer::ExpandFloatRes_XINT_TO_FP(SDNode *N, SDValue &Lo,
 
   switch (SrcVT.getSimpleVT().SimpleTy) {
   default:
-    assert(false && "Unsupported UINT_TO_FP!");
+    llvm_unreachable("Unsupported UINT_TO_FP!");
   case MVT::i32:
     Parts = TwoE32;
     break;

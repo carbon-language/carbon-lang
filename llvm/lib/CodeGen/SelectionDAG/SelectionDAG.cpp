@@ -1039,10 +1039,8 @@ SDValue SelectionDAG::getConstantFP(double Val, EVT VT, bool isTarget) {
     apf.convert(*EVTToAPFloatSemantics(EltVT), APFloat::rmNearestTiesToEven,
                 &ignored);
     return getConstantFP(apf, VT, isTarget);
-  } else {
-    assert(0 && "Unsupported type in getConstantFP");
-    return SDValue();
-  }
+  } else
+    llvm_unreachable("Unsupported type in getConstantFP");
 }
 
 SDValue SelectionDAG::getGlobalAddress(const GlobalValue *GV, DebugLoc DL,

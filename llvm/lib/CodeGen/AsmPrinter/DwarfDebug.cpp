@@ -389,8 +389,7 @@ DIE *DwarfDebug::constructInlinedScopeDIE(CompileUnit *TheCU,
   const MCSymbol *EndLabel = getLabelAfterInsn(RI->second);
 
   if (StartLabel == 0 || EndLabel == 0) {
-    assert(0 && "Unexpected Start and End labels for a inlined scope!");
-    return 0;
+    llvm_unreachable("Unexpected Start and End labels for a inlined scope!");
   }
   assert(StartLabel->isDefined() &&
          "Invalid starting label for an inlined scope!");
@@ -956,8 +955,7 @@ static DotDebugLocEntry getDebugLocEntry(AsmPrinter *Asm,
   if (MI->getOperand(0).isCImm())
     return DotDebugLocEntry(FLabel, SLabel, MI->getOperand(0).getCImm());
 
-  assert(0 && "Unexpected 3 operand DBG_VALUE instruction!");
-  return DotDebugLocEntry();
+  llvm_unreachable("Unexpected 3 operand DBG_VALUE instruction!");
 }
 
 /// collectVariableInfo - Find variables for each lexical scope.
@@ -1470,7 +1468,7 @@ void DwarfDebug::recordSourceLine(unsigned Line, unsigned Col, const MDNode *S,
       Fn = DB.getFilename();
       Dir = DB.getDirectory();
     } else
-      assert(0 && "Unexpected scope info");
+      llvm_unreachable("Unexpected scope info");
 
     Src = GetOrCreateSourceID(Fn, Dir);
   }
