@@ -46,7 +46,7 @@ int save_arguments(int argc, const char **argv) {
      * what to do with it.
      */
     const char *Arg = argv[1];
-    memmove(&argv[1], &argv[2], (argc-1)*sizeof(char*));
+    memmove((char**)&argv[1], &argv[2], (argc-1)*sizeof(char*));
     --argc;
 
     if (!strcmp(Arg, "-llvmprof-output")) {
@@ -54,7 +54,7 @@ int save_arguments(int argc, const char **argv) {
         puts("-llvmprof-output requires a filename argument!");
       else {
         OutputFilename = strdup(argv[1]);
-        memmove(&argv[1], &argv[2], (argc-1)*sizeof(char*));
+        memmove((char**)&argv[1], &argv[2], (argc-1)*sizeof(char*));
         --argc;
       }
     } else {
