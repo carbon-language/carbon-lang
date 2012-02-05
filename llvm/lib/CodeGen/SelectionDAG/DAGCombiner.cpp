@@ -4985,9 +4985,14 @@ SDValue DAGCombiner::visitTRUNCATE(SDNode *N) {
       return N0.getOperand(0);
   }
 
-  // Fold Extract-and-trunc into a narrow extract:
-  //    trunc(extract(x)) -> extract(bitcast(x))
-  // We only run this optimization after type legalization (which often
+  // Fold extract-and-trunc into a narrow extract. For example:
+  //   i64 x = EXTRACT_VECTOR_ELT(v2i64 val, i32 1)
+  //   i32 y = TRUNCATE(i64 x)
+  //        -- becomes --
+  //   v16i8 b = BITCAST (v2i64 val)
+  //   i8 x = EXTRACT_VECTOR_ELT(v16i8 b, i32 8)
+  //
+  // Note: We only run this optimization after type legalization (which often
   // creates this pattern) and before operation legalization after which
   // we need to be more careful about the vector instructions that we generate.
   if (N0.getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
