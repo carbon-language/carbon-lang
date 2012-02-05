@@ -299,7 +299,7 @@ public:
     } else if (N > this->size()) {
       if (this->capacity() < N)
         this->grow(N);
-      this->construct_range(this->end(), this->begin()+N, T());
+      std::uninitialized_fill(this->end(), this->begin()+N, T());
       this->setEnd(this->begin()+N);
     }
   }
@@ -311,7 +311,7 @@ public:
     } else if (N > this->size()) {
       if (this->capacity() < N)
         this->grow(N);
-      construct_range(this->end(), this->begin()+N, NV);
+      std::uninitialized_fill(this->end(), this->begin()+N, NV);
       this->setEnd(this->begin()+N);
     }
   }
@@ -378,7 +378,7 @@ public:
     if (this->capacity() < NumElts)
       this->grow(NumElts);
     this->setEnd(this->begin()+NumElts);
-    construct_range(this->begin(), this->end(), Elt);
+    std::uninitialized_fill(this->begin(), this->end(), Elt);
   }
 
   iterator erase(iterator I) {
@@ -555,12 +555,6 @@ public:
   void set_size(unsigned N) {
     assert(N <= this->capacity());
     this->setEnd(this->begin() + N);
-  }
-
-private:
-  static void construct_range(T *S, T *E, const T &Elt) {
-    for (; S != E; ++S)
-      new (S) T(Elt);
   }
 };
 
