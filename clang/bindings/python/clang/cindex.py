@@ -969,6 +969,14 @@ class Cursor(Structure):
             self._type = Cursor_type(self)
         return self._type
 
+    @property
+    def hash(self):
+        """Returns a hash of the cursor as an int."""
+        if not hasattr(self, '_hash'):
+            self._hash = Cursor_hash(self)
+
+        return self._hash
+
     def get_children(self):
         """Return an iterator for accessing the children of this cursor."""
 
@@ -1734,6 +1742,10 @@ Cursor_def.errcheck = Cursor.from_result
 Cursor_eq = lib.clang_equalCursors
 Cursor_eq.argtypes = [Cursor, Cursor]
 Cursor_eq.restype = c_uint
+
+Cursor_hash = lib.clang_hashCursor
+Cursor_hash.argtypes = [Cursor]
+Cursor_hash.restype = c_uint
 
 Cursor_spelling = lib.clang_getCursorSpelling
 Cursor_spelling.argtypes = [Cursor]

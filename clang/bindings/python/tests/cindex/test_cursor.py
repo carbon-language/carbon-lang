@@ -42,6 +42,7 @@ def test_get_children():
     assert tu_nodes[0].location.file.name == 't.c'
     assert tu_nodes[0].location.line == 4
     assert tu_nodes[0].location.column == 8
+    assert tu_nodes[0].hash > 0
 
     s0_nodes = list(tu_nodes[0].get_children())
     assert len(s0_nodes) == 2
