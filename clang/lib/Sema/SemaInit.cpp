@@ -5912,7 +5912,7 @@ static void DiagnoseNarrowingInInitList(Sema &S, InitializationSequence &Seq,
     break;
   }
 
-  llvm::SmallString<128> StaticCast;
+  SmallString<128> StaticCast;
   llvm::raw_svector_ostream OS(StaticCast);
   OS << "static_cast<";
   if (const TypedefType *TT = EntityType->getAs<TypedefType>()) {

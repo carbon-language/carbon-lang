@@ -160,7 +160,7 @@ void WalkAST::VisitCXXMemberCallExpr(CallExpr *CE) {
 }
 
 void WalkAST::ReportVirtualCall(const CallExpr *CE, bool isPure) {
-  llvm::SmallString<100> buf;
+  SmallString<100> buf;
   llvm::raw_svector_ostream os(buf);
   
   os << "Call Path : ";

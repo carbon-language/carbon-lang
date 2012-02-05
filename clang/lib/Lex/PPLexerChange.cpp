@@ -206,7 +206,7 @@ void Preprocessor::EnterTokenStream(const Token *Toks, unsigned NumToks,
 /// the given directory.
 static void computeRelativePath(FileManager &FM, const DirectoryEntry *Dir,
                                 const FileEntry *File,
-                                llvm::SmallString<128> &Result) {
+                                SmallString<128> &Result) {
   Result.clear();
 
   StringRef FilePath = File->getDir()->getName();
@@ -375,7 +375,7 @@ bool Preprocessor::HandleEndOfFile(Token &Result, bool isEndOfMacro) {
             if (!getSourceManager().hasFileInfo(Header)) {
               if (!ModMap.isHeaderInUnavailableModule(Header)) {
                 // Find the relative path that would access this header.
-                llvm::SmallString<128> RelativePath;
+                SmallString<128> RelativePath;
                 computeRelativePath(FileMgr, Dir, Header, RelativePath);              
                 Diag(StartLoc, diag::warn_uncovered_module_header)
                   << RelativePath;

@@ -2369,7 +2369,7 @@ ExprResult Sema::ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind) {
 }
 
 ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
-  llvm::SmallString<16> CharBuffer;
+  SmallString<16> CharBuffer;
   bool Invalid = false;
   StringRef ThisTok = PP.getSpelling(Tok, CharBuffer, &Invalid);
   if (Invalid)
@@ -2414,7 +2414,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
                     Context.IntTy, Tok.getLocation()));
   }
 
-  llvm::SmallString<512> IntegerBuffer;
+  SmallString<512> IntegerBuffer;
   // Add padding so that NumericLiteralParser can overread by one character.
   IntegerBuffer.resize(Tok.getLength()+1);
   const char *ThisTokBegin = &IntegerBuffer[0];
@@ -2453,7 +2453,7 @@ ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
     if ((result & APFloat::opOverflow) ||
         ((result & APFloat::opUnderflow) && Val.isZero())) {
       unsigned diagnostic;
-      llvm::SmallString<20> buffer;
+      SmallString<20> buffer;
       if (result & APFloat::opOverflow) {
         diagnostic = diag::warn_float_overflow;
         APFloat::getLargest(Format).toString(buffer);
@@ -6147,7 +6147,7 @@ static void DiagnoseBadShiftValues(Sema& S, ExprResult &LHS, ExprResult &RHS,
 
   // Print the bit representation of the signed integer as an unsigned
   // hexadecimal number.
-  llvm::SmallString<40> HexResult;
+  SmallString<40> HexResult;
   Result.toString(HexResult, 16, /*Signed =*/false, /*Literal =*/true);
 
   // If we are only missing a sign bit, this is less likely to result in actual

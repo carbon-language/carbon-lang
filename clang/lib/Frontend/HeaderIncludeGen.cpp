@@ -108,10 +108,10 @@ void HeaderIncludesCallback::FileChanged(SourceLocation Loc,
   // are showing all headers.
   if (ShowHeader && Reason == PPCallbacks::EnterFile) {
     // Write to a temporary string to avoid unnecessary flushing on errs().
-    llvm::SmallString<512> Filename(UserLoc.getFilename());
+    SmallString<512> Filename(UserLoc.getFilename());
     Lexer::Stringify(Filename);
 
-    llvm::SmallString<256> Msg;
+    SmallString<256> Msg;
     if (ShowDepth) {
       // The main source file is at depth 1, so skip one dot.
       for (unsigned i = 1; i != CurrentIncludeDepth; ++i)

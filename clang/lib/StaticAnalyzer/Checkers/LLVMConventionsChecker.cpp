@@ -252,7 +252,7 @@ void ASTFieldVisitor::Visit(FieldDecl *D) {
 }
 
 void ASTFieldVisitor::ReportError(QualType T) {
-  llvm::SmallString<1024> buf;
+  SmallString<1024> buf;
   llvm::raw_svector_ostream os(buf);
 
   os << "AST class '" << Root->getName() << "' has a field '"

@@ -382,7 +382,7 @@ void ASTStmtReader::VisitStringLiteral(StringLiteral *E) {
   bool isPascal = Record[Idx++];
 
   // Read string data
-  llvm::SmallString<16> Str(&Record[Idx], &Record[Idx] + Len);
+  SmallString<16> Str(&Record[Idx], &Record[Idx] + Len);
   E->setString(Reader.getContext(), Str.str(), kind, isPascal);
   Idx += Len;
 

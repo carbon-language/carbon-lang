@@ -210,7 +210,7 @@ std::string html::EscapeText(const std::string& s, bool EscapeSpaces,
 
 static void AddLineNumber(RewriteBuffer &RB, unsigned LineNo,
                           unsigned B, unsigned E) {
-  llvm::SmallString<256> Str;
+  SmallString<256> Str;
   llvm::raw_svector_ostream OS(Str);
 
   OS << "<tr><td class=\"num\" id=\"LN"

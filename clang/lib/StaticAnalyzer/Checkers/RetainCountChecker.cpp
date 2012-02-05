@@ -3373,7 +3373,7 @@ RetainCountChecker::handleAutoreleaseCounts(ProgramStateRef state,
   state = state->set<RefBindings>(Sym, V);
 
   if (ExplodedNode *N = Bd.MakeNode(state, Pred, true)) {
-    llvm::SmallString<128> sbuf;
+    SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
     os << "Object over-autoreleased: object was sent -autorelease ";
     if (V.getAutoreleaseCount() > 1)
@@ -3467,7 +3467,7 @@ const ProgramPointTag *
 RetainCountChecker::getDeadSymbolTag(SymbolRef sym) const {
   const SimpleProgramPointTag *&tag = DeadSymbolTags[sym];
   if (!tag) {
-    llvm::SmallString<64> buf;
+    SmallString<64> buf;
     llvm::raw_svector_ostream out(buf);
     out << "RetainCountChecker : Dead Symbol : ";
     sym->dumpToStream(out);

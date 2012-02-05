@@ -61,7 +61,7 @@ void Arg::dump() const {
 }
 
 std::string Arg::getAsString(const ArgList &Args) const {
-  llvm::SmallString<256> Res;
+  SmallString<256> Res;
   llvm::raw_svector_ostream OS(Res);
 
   ArgStringList ASL;
@@ -94,7 +94,7 @@ void Arg::render(const ArgList &Args, ArgStringList &Output) const {
     break;
 
   case Option::RenderCommaJoinedStyle: {
-    llvm::SmallString<256> Res;
+    SmallString<256> Res;
     llvm::raw_svector_ostream OS(Res);
     OS << getOption().getName();
     for (unsigned i = 0, e = getNumValues(); i != e; ++i) {

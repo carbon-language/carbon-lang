@@ -84,7 +84,7 @@ UndefCapturedBlockVarChecker::checkPostStmt(const BlockExpr *BE,
           BT.reset(new BuiltinBug("uninitialized variable captured by block"));
 
         // Generate a bug report.
-        llvm::SmallString<128> buf;
+        SmallString<128> buf;
         llvm::raw_svector_ostream os(buf);
 
         os << "Variable '" << VD->getName() 

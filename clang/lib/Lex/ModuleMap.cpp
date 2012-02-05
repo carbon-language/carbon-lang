@@ -299,7 +299,7 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   FileManager &FileMgr = SourceMgr->getFileManager();
   
   // Look for an umbrella header.
-  llvm::SmallString<128> UmbrellaName = StringRef(FrameworkDir->getName());
+  SmallString<128> UmbrellaName = StringRef(FrameworkDir->getName());
   llvm::sys::path::append(UmbrellaName, "Headers");
   llvm::sys::path::append(UmbrellaName, ModuleName + ".h");
   const FileEntry *UmbrellaHeader = FileMgr.getFile(UmbrellaName);
@@ -332,10 +332,10 @@ ModuleMap::inferFrameworkModule(StringRef ModuleName,
   
   // Look for subframeworks.
   llvm::error_code EC;
-  llvm::SmallString<128> SubframeworksDirName
+  SmallString<128> SubframeworksDirName
     = StringRef(FrameworkDir->getName());
   llvm::sys::path::append(SubframeworksDirName, "Frameworks");
-  llvm::SmallString<128> SubframeworksDirNameNative;
+  SmallString<128> SubframeworksDirNameNative;
   llvm::sys::path::native(SubframeworksDirName.str(),
                           SubframeworksDirNameNative);
   for (llvm::sys::fs::directory_iterator 
@@ -1082,7 +1082,7 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc) {
   // Look for this file.
   const FileEntry *File = 0;
   const FileEntry *BuiltinFile = 0;
-  llvm::SmallString<128> PathName;
+  SmallString<128> PathName;
   if (llvm::sys::path::is_absolute(FileName)) {
     PathName = FileName;
     File = SourceMgr.getFileManager().getFile(PathName);
@@ -1120,7 +1120,7 @@ void ModuleMapParser::parseHeaderDecl(SourceLocation UmbrellaLoc) {
       // supplied by Clang. Find that builtin header.
       if (ActiveModule->IsSystem && !Umbrella && BuiltinIncludeDir &&
           BuiltinIncludeDir != Directory && isBuiltinHeader(FileName)) {
-        llvm::SmallString<128> BuiltinPathName(BuiltinIncludeDir->getName());
+        SmallString<128> BuiltinPathName(BuiltinIncludeDir->getName());
         llvm::sys::path::append(BuiltinPathName, FileName);
         BuiltinFile = SourceMgr.getFileManager().getFile(BuiltinPathName);
         
@@ -1196,7 +1196,7 @@ void ModuleMapParser::parseUmbrellaDirDecl(SourceLocation UmbrellaLoc) {
   if (llvm::sys::path::is_absolute(DirName))
     Dir = SourceMgr.getFileManager().getDirectory(DirName);
   else {
-    llvm::SmallString<128> PathName;
+    SmallString<128> PathName;
     PathName = Directory->getName();
     llvm::sys::path::append(PathName, DirName);
     Dir = SourceMgr.getFileManager().getDirectory(PathName);

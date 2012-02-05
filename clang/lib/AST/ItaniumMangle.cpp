@@ -1083,7 +1083,7 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
     // Mangle it as a source name in the form
     // [n] $_<id>
     // where n is the length of the string.
-    llvm::SmallString<8> Str;
+    SmallString<8> Str;
     Str += "$_";
     Str += llvm::utostr(AnonStructId);
 
@@ -1291,7 +1291,7 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
 
   if (const BlockDecl *Block = dyn_cast<BlockDecl>(DC)) {
     manglePrefix(DC->getParent(), NoFunction);    
-    llvm::SmallString<64> Name;
+    SmallString<64> Name;
     llvm::raw_svector_ostream NameStream(Name);
     Context.mangleBlock(Block, NameStream);
     NameStream.flush();
@@ -1555,7 +1555,7 @@ void CXXNameMangler::mangleQualifiers(Qualifiers Quals) {
     // 
     // where <address-space-number> is a source name consisting of 'AS' 
     // followed by the address space <number>.
-    llvm::SmallString<64> ASString;
+    SmallString<64> ASString;
     ASString = "AS" + llvm::utostr_32(Quals.getAddressSpace());
     Out << 'U' << ASString.size() << ASString;
   }

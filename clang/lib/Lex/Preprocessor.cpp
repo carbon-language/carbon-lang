@@ -470,7 +470,7 @@ IdentifierInfo *Preprocessor::LookUpIdentifierInfo(Token &Identifier) const {
                                            Identifier.getLength()));
   } else {
     // Cleaning needed, alloca a buffer, clean into it, then use the buffer.
-    llvm::SmallString<64> IdentifierBuffer;
+    SmallString<64> IdentifierBuffer;
     StringRef CleanedStr = getSpelling(Identifier, IdentifierBuffer);
     II = getIdentifierInfo(CleanedStr);
   }

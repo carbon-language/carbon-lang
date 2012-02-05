@@ -2474,7 +2474,7 @@ CodeCompletionResult::CreateCodeCompletionString(ASTContext &Ctx,
         Result.AddChunk(Chunk(CodeCompletionString::CK_Comma));
 
       if (MI->isVariadic() && (A+1) == AEnd) {
-        llvm::SmallString<32> Arg = (*A)->getName();
+        SmallString<32> Arg = (*A)->getName();
         if (MI->isC99Varargs())
           Arg += ", ...";
         else

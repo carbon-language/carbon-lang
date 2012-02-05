@@ -128,12 +128,12 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
   if (ArgNum != InvalidArgIndex) {
     assert(ArgNum == 1 || ArgNum == 2);
 
-    llvm::SmallString<256> BufName;
+    SmallString<256> BufName;
     llvm::raw_svector_ostream OsName(BufName);
     assert(ArgNum == 1 || ArgNum == 2);
     OsName << " Invalid use of '" << Name << "'" ;
 
-    llvm::SmallString<256> Buf;
+    SmallString<256> Buf;
     llvm::raw_svector_ostream Os(Buf);
     Os << " The "<< ((ArgNum == 1) ? "first" : "second") << " argument to '"
         << Name << "' must be a C array of pointer-sized values, not '"

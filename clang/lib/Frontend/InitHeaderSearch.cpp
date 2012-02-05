@@ -109,7 +109,7 @@ void InitHeaderSearch::AddPath(const Twine &Path,
   FileManager &FM = Headers.getFileMgr();
 
   // Compute the actual path, taking into consideration -isysroot.
-  llvm::SmallString<256> MappedPathStorage;
+  SmallString<256> MappedPathStorage;
   StringRef MappedPathStr = Path.toStringRef(MappedPathStorage);
 
   // Handle isysroot.

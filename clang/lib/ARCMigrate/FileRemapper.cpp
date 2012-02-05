@@ -119,18 +119,18 @@ bool FileRemapper::flushToDisk(StringRef outputDir, DiagnosticsEngine &Diag) {
          I = FromToMappings.begin(), E = FromToMappings.end(); I != E; ++I) {
 
     const FileEntry *origFE = I->first;
-    llvm::SmallString<200> origPath = StringRef(origFE->getName());
+    SmallString<200> origPath = StringRef(origFE->getName());
     fs::make_absolute(origPath);
     infoOut << origPath << '\n';
     infoOut << (uint64_t)origFE->getModificationTime() << '\n';
 
     if (const FileEntry *FE = I->second.dyn_cast<const FileEntry *>()) {
-      llvm::SmallString<200> newPath = StringRef(FE->getName());
+      SmallString<200> newPath = StringRef(FE->getName());
       fs::make_absolute(newPath);
       infoOut << newPath << '\n';
     } else {
 
-      llvm::SmallString<64> tempPath;
+      SmallString<64> tempPath;
       tempPath = path::filename(origFE->getName());
       tempPath += "-%%%%%%%%";
       tempPath += path::extension(origFE->getName());
@@ -276,7 +276,7 @@ void FileRemapper::resetTarget(Target &targ) {
 }
 
 bool FileRemapper::report(const Twine &err, DiagnosticsEngine &Diag) {
-  llvm::SmallString<128> buf;
+  SmallString<128> buf;
   unsigned ID = Diag.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Error,
                                                          err.toStringRef(buf));
   Diag.Report(ID);

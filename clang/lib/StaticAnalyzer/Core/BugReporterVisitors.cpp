@@ -169,7 +169,7 @@ PathDiagnosticPiece *FindLastStoreBRVisitor::VisitNode(const ExplodedNode *N,
     return NULL;
 
   satisfied = true;
-  llvm::SmallString<256> sbuf;
+  SmallString<256> sbuf;
   llvm::raw_svector_ostream os(sbuf);
 
   if (const PostStmt *PS = N->getLocationAs<PostStmt>()) {
@@ -599,7 +599,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   
   bool shouldInvert = false;
   
-  llvm::SmallString<128> LhsString, RhsString;
+  SmallString<128> LhsString, RhsString;
   {
     llvm::raw_svector_ostream OutLHS(LhsString), OutRHS(RhsString);  
     const bool isVarLHS = patternMatch(BExpr->getLHS(), OutLHS, BRC);
@@ -623,7 +623,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
     return 0;
   
   // Should we invert the strings if the LHS is not a variable name?
-  llvm::SmallString<256> buf;
+  SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
   Out << "Assuming " << (shouldInvert ? RhsString : LhsString) << " is ";
 
@@ -673,7 +673,7 @@ ConditionBRVisitor::VisitConditionVariable(StringRef LhsString,
                                            const bool tookTrue,
                                            BugReporterContext &BRC,
                                            const LocationContext *LC) {
-  llvm::SmallString<256> buf;
+  SmallString<256> buf;
   llvm::raw_svector_ostream Out(buf);
   Out << "Assuming " << LhsString << " is ";
   
@@ -705,7 +705,7 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   if (!VD)
     return 0;
   
-  llvm::SmallString<256> Buf;
+  SmallString<256> Buf;
   llvm::raw_svector_ostream Out(Buf);
     
   Out << "Assuming '";

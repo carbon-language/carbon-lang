@@ -100,7 +100,7 @@ void StackAddrEscapeChecker::EmitStackError(CheckerContext &C, const MemRegion *
                  new BuiltinBug("Return of address to stack-allocated memory"));
 
   // Generate a report for this bug.
-  llvm::SmallString<512> buf;
+  SmallString<512> buf;
   llvm::raw_svector_ostream os(buf);
   SourceRange range = GenName(os, R, C.getSourceManager());
   os << " returned to caller";
@@ -201,7 +201,7 @@ void StackAddrEscapeChecker::checkEndPath(CheckerContext &Ctx) const {
   
   for (unsigned i = 0, e = cb.V.size(); i != e; ++i) {
     // Generate a report for this bug.
-    llvm::SmallString<512> buf;
+    SmallString<512> buf;
     llvm::raw_svector_ostream os(buf);
     SourceRange range = GenName(os, cb.V[i].second,
                                 Ctx.getSourceManager());

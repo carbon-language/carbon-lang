@@ -540,7 +540,7 @@ void clang::CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS) {
   // Get the name of the main file.
   const SourceManager &SrcMgr = PP.getSourceManager();
   const FileEntry *MainFile = SrcMgr.getFileEntryForID(SrcMgr.getMainFileID());
-  llvm::SmallString<128> MainFilePath(MainFile->getName());
+  SmallString<128> MainFilePath(MainFile->getName());
 
   llvm::sys::fs::make_absolute(MainFilePath);
 

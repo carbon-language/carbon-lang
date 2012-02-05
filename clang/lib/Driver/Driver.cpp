@@ -80,7 +80,7 @@ Driver::Driver(StringRef ClangExecutable,
 
   // Compute the path to the resource directory.
   StringRef ClangResourceDir(CLANG_RESOURCE_DIR);
-  llvm::SmallString<128> P(Dir);
+  SmallString<128> P(Dir);
   if (ClangResourceDir != "")
     llvm::sys::path::append(P, ClangResourceDir);
   else
@@ -964,7 +964,7 @@ void Driver::BuildInputs(const ToolChain &TC, const DerivedArgList &Args,
 
       // Check that the file exists, if enabled.
       if (CheckInputsExist && memcmp(Value, "-", 2) != 0) {
-        llvm::SmallString<64> Path(Value);
+        SmallString<64> Path(Value);
         if (Arg *WorkDir = Args.getLastArg(options::OPT_working_directory))
           if (llvm::sys::path::is_absolute(Path.str())) {
             Path = WorkDir->getValue(Args);
@@ -1408,7 +1408,7 @@ const char *Driver::GetNamedOutputPath(Compilation &C,
     return C.addTempFile(C.getArgs().MakeArgString(TmpName.c_str()));
   }
 
-  llvm::SmallString<128> BasePath(BaseInput);
+  SmallString<128> BasePath(BaseInput);
   StringRef BaseName;
 
   // Dsymutil actions should use the full path.

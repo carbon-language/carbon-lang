@@ -89,7 +89,7 @@ void NilArgChecker::WarnNilArg(CheckerContext &C,
     BT.reset(new APIMisuse("nil argument"));
   
   if (ExplodedNode *N = C.generateSink()) {
-    llvm::SmallString<128> sbuf;
+    SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
     os << "Argument to '" << GetReceiverNameType(msg) << "' method '"
        << msg.getSelector().getAsString() << "' cannot be nil";
@@ -316,7 +316,7 @@ void CFNumberCreateChecker::checkPreStmt(const CallExpr *CE,
   //
   if (ExplodedNode *N = SourceSize < TargetSize ? C.generateSink() 
                                                 : C.addTransition()) {
-    llvm::SmallString<128> sbuf;
+    SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
     
     os << (SourceSize == 8 ? "An " : "A ")
@@ -461,7 +461,7 @@ void ClassReleaseChecker::checkPreObjCMessage(ObjCMessage msg,
     return;
   
   if (ExplodedNode *N = C.addTransition()) {
-    llvm::SmallString<200> buf;
+    SmallString<200> buf;
     llvm::raw_svector_ostream os(buf);
 
     os << "The '" << S.getAsString() << "' message should be sent to instances "
@@ -615,7 +615,7 @@ void VariadicMethodTypeChecker::checkPreObjCMessage(ObjCMessage msg,
     if (!errorNode.getValue())
       continue;
 
-    llvm::SmallString<128> sbuf;
+    SmallString<128> sbuf;
     llvm::raw_svector_ostream os(sbuf);
 
     if (const char *TypeName = GetReceiverNameType(msg))

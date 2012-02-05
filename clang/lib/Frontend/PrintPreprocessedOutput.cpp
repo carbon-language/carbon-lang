@@ -62,7 +62,7 @@ static void PrintMacroDefinition(const IdentifierInfo &II, const MacroInfo &MI,
   if (MI.tokens_empty() || !MI.tokens_begin()->hasLeadingSpace())
     OS << ' ';
 
-  llvm::SmallString<128> SpellingBuffer;
+  SmallString<128> SpellingBuffer;
   for (MacroInfo::tokens_iterator I = MI.tokens_begin(), E = MI.tokens_end();
        I != E; ++I) {
     if (I->hasLeadingSpace())
@@ -89,7 +89,7 @@ private:
   bool EmittedTokensOnThisLine;
   bool EmittedMacroOnThisLine;
   SrcMgr::CharacteristicKind FileType;
-  llvm::SmallString<512> CurFilename;
+  SmallString<512> CurFilename;
   bool Initialized;
   bool DisableLineMarkers;
   bool DumpDefines;

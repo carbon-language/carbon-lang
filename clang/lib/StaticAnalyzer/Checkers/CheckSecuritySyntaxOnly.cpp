@@ -272,7 +272,7 @@ void WalkAST::checkLoopConditionForFloat(const ForStmt *FS) {
   const DeclRefExpr *drCond = vdLHS == drInc->getDecl() ? drLHS : drRHS;
 
   SmallVector<SourceRange, 2> ranges;
-  llvm::SmallString<256> sbuf;
+  SmallString<256> sbuf;
   llvm::raw_svector_ostream os(sbuf);
 
   os << "Variable '" << drCond->getDecl()->getName()
@@ -476,7 +476,7 @@ void WalkAST::checkCall_mkstemp(const CallExpr *CE, const FunctionDecl *FD) {
   SourceRange R = strArg->getSourceRange();
   PathDiagnosticLocation CELoc =
     PathDiagnosticLocation::createBegin(CE, BR.getSourceManager(), AC);
-  llvm::SmallString<512> buf;
+  SmallString<512> buf;
   llvm::raw_svector_ostream out(buf);
   out << "Call to '" << Name << "' should have at least 6 'X's in the"
     " format string to be secure (" << numX << " 'X'";
@@ -606,11 +606,11 @@ void WalkAST::checkCall_rand(const CallExpr *CE, const FunctionDecl *FD) {
     return;
 
   // Issue a warning.
-  llvm::SmallString<256> buf1;
+  SmallString<256> buf1;
   llvm::raw_svector_ostream os1(buf1);
   os1 << '\'' << *FD << "' is a poor random number generator";
 
-  llvm::SmallString<256> buf2;
+  SmallString<256> buf2;
   llvm::raw_svector_ostream os2(buf2);
   os2 << "Function '" << *FD
       << "' is obsolete because it implements a poor random number generator."
@@ -723,11 +723,11 @@ void WalkAST::checkUncheckedReturnValue(CallExpr *CE) {
       return;
 
   // Issue a warning.
-  llvm::SmallString<256> buf1;
+  SmallString<256> buf1;
   llvm::raw_svector_ostream os1(buf1);
   os1 << "Return value is not checked in call to '" << *FD << '\'';
 
-  llvm::SmallString<256> buf2;
+  SmallString<256> buf2;
   llvm::raw_svector_ostream os2(buf2);
   os2 << "The return value from the call to '" << *FD
       << "' is not checked.  If an error occurs in '" << *FD

@@ -378,7 +378,7 @@ static unsigned PrintProblem(DiagnosticsEngine &Diags, SourceManager *SourceMgr,
                              const char *Kind, bool Expected) {
   if (diag_begin == diag_end) return 0;
 
-  llvm::SmallString<256> Fmt;
+  SmallString<256> Fmt;
   llvm::raw_svector_ostream OS(Fmt);
   for (const_diag_iterator I = diag_begin, E = diag_end; I != E; ++I) {
     if (I->first.isInvalid() || !SourceMgr)
@@ -399,7 +399,7 @@ static unsigned PrintProblem(DiagnosticsEngine &Diags, SourceManager *SourceMgr,
   if (DL.empty())
     return 0;
 
-  llvm::SmallString<256> Fmt;
+  SmallString<256> Fmt;
   llvm::raw_svector_ostream OS(Fmt);
   for (DirectiveList::iterator I = DL.begin(), E = DL.end(); I != E; ++I) {
     Directive& D = **I;

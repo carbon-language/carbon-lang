@@ -167,7 +167,7 @@ void UnixAPIChecker::CheckPthreadOnce(CheckerContext &C,
   if (!N)
     return;
 
-  llvm::SmallString<256> S;
+  SmallString<256> S;
   llvm::raw_svector_ostream os(S);
   os << "Call to 'pthread_once' uses";
   if (const VarRegion *VR = dyn_cast<VarRegion>(R))
@@ -218,7 +218,7 @@ bool UnixAPIChecker::ReportZeroByteAllocation(CheckerContext &C,
   LazyInitialize(BT_mallocZero,
     "Undefined allocation of 0 bytes (CERT MEM04-C; CWE-131)");
 
-  llvm::SmallString<256> S;
+  SmallString<256> S;
   llvm::raw_svector_ostream os(S);    
   os << "Call to '" << fn_name << "' has an allocation size of 0 bytes";
   BugReport *report = new BugReport(*BT_mallocZero, os.str(), N);

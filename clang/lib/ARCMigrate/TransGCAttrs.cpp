@@ -93,7 +93,7 @@ public:
     SourceManager &SM = Ctx.getSourceManager();
     if (Loc.isMacroID())
       Loc = SM.getImmediateExpansionRange(Loc).first;
-    llvm::SmallString<32> Buf;
+    SmallString<32> Buf;
     bool Invalid = false;
     StringRef Spell = Lexer::getSpelling(
                                   SM.getSpellingLoc(TL.getAttrEnumOperandLoc()),

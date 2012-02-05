@@ -70,7 +70,7 @@ void MangleContext::mangleCtorBlock(const CXXConstructorDecl *CD,
                                     CXXCtorType CT, const BlockDecl *BD,
                                     raw_ostream &ResStream) {
   checkMangleDC(CD, BD);
-  llvm::SmallString<64> Buffer;
+  SmallString<64> Buffer;
   llvm::raw_svector_ostream Out(Buffer);
   mangleCXXCtor(CD, CT, Out);
   Out.flush();
@@ -81,7 +81,7 @@ void MangleContext::mangleDtorBlock(const CXXDestructorDecl *DD,
                                     CXXDtorType DT, const BlockDecl *BD,
                                     raw_ostream &ResStream) {
   checkMangleDC(DD, BD);
-  llvm::SmallString<64> Buffer;
+  SmallString<64> Buffer;
   llvm::raw_svector_ostream Out(Buffer);
   mangleCXXDtor(DD, DT, Out);
   Out.flush();
@@ -93,7 +93,7 @@ void MangleContext::mangleBlock(const DeclContext *DC, const BlockDecl *BD,
   assert(!isa<CXXConstructorDecl>(DC) && !isa<CXXDestructorDecl>(DC));
   checkMangleDC(DC, BD);
 
-  llvm::SmallString<64> Buffer;
+  SmallString<64> Buffer;
   llvm::raw_svector_ostream Stream(Buffer);
   if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(DC)) {
     mangleObjCMethodName(Method, Stream);
@@ -116,7 +116,7 @@ void MangleContext::mangleBlock(const DeclContext *DC, const BlockDecl *BD,
 
 void MangleContext::mangleObjCMethodName(const ObjCMethodDecl *MD,
                                          raw_ostream &Out) {
-  llvm::SmallString<64> Name;
+  SmallString<64> Name;
   llvm::raw_svector_ostream OS(Name);
   
   const ObjCContainerDecl *CD =

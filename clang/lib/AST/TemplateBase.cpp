@@ -503,7 +503,7 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
     // This shouldn't actually ever happen, so it's okay that we're
     // regurgitating an expression here.
     // FIXME: We're guessing at LangOptions!
-    llvm::SmallString<32> Str;
+    SmallString<32> Str;
     llvm::raw_svector_ostream OS(Str);
     LangOptions LangOpts;
     LangOpts.CPlusPlus = true;
@@ -514,7 +514,7 @@ const DiagnosticBuilder &clang::operator<<(const DiagnosticBuilder &DB,
       
   case TemplateArgument::Pack: {
     // FIXME: We're guessing at LangOptions!
-    llvm::SmallString<32> Str;
+    SmallString<32> Str;
     llvm::raw_svector_ostream OS(Str);
     LangOptions LangOpts;
     LangOpts.CPlusPlus = true;

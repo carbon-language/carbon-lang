@@ -468,7 +468,7 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
     if (!BT_BadFree)
       BT_BadFree.reset(new BuiltinBug("Bad free"));
     
-    llvm::SmallString<100> buf;
+    SmallString<100> buf;
     llvm::raw_svector_ostream os(buf);
     
     const MemRegion *MR = ArgVal.getAsRegion();

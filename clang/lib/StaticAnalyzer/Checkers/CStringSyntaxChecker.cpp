@@ -146,7 +146,7 @@ void WalkAST::VisitCallExpr(CallExpr *CE) {
 
       StringRef DstName = getPrintableName(DstArg);
 
-      llvm::SmallString<256> S;
+      SmallString<256> S;
       llvm::raw_svector_ostream os(S);
       os << "Potential buffer overflow. ";
       if (!DstName.empty()) {

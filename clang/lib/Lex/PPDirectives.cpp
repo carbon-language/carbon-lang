@@ -738,7 +738,7 @@ static bool GetLineValue(Token &DigitTok, unsigned &Val,
     return true;
   }
 
-  llvm::SmallString<64> IntegerBuffer;
+  SmallString<64> IntegerBuffer;
   IntegerBuffer.resize(DigitTok.getLength());
   const char *DigitTokBegin = &IntegerBuffer[0];
   bool Invalid = false;
@@ -1173,7 +1173,7 @@ bool Preprocessor::GetIncludeFilenameSpelling(SourceLocation Loc,
 /// false if the > was found, otherwise it returns true if it finds and consumes
 /// the EOD marker.
 bool Preprocessor::ConcatenateIncludeName(
-                                        llvm::SmallString<128> &FilenameBuffer,
+                                        SmallString<128> &FilenameBuffer,
                                           SourceLocation &End) {
   Token CurTok;
 
@@ -1235,7 +1235,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   CurPPLexer->LexIncludeFilename(FilenameTok);
 
   // Reserve a buffer to get the spelling.
-  llvm::SmallString<128> FilenameBuffer;
+  SmallString<128> FilenameBuffer;
   StringRef Filename;
   SourceLocation End;
   SourceLocation CharEnd; // the end of this directive, in characters
@@ -1299,8 +1299,8 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
 
   // Search include directories.
   const DirectoryLookup *CurDir;
-  llvm::SmallString<1024> SearchPath;
-  llvm::SmallString<1024> RelativePath;
+  SmallString<1024> SearchPath;
+  SmallString<1024> RelativePath;
   // We get the raw path only if we have 'Callbacks' to which we later pass
   // the path.
   Module *SuggestedModule = 0;
@@ -1312,7 +1312,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
   if (Callbacks) {
     if (!File) {
       // Give the clients a chance to recover.
-      llvm::SmallString<128> RecoveryPath;
+      SmallString<128> RecoveryPath;
       if (Callbacks->FileNotFound(Filename, RecoveryPath)) {
         if (const DirectoryEntry *DE = FileMgr.getDirectory(RecoveryPath)) {
           // Add the recovery path to the list of search paths.
@@ -1351,7 +1351,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     std::reverse(Path.begin(), Path.end());
 
     // Warn that we're replacing the include/import with a module import.
-    llvm::SmallString<128> PathString;
+    SmallString<128> PathString;
     for (unsigned I = 0, N = Path.size(); I != N; ++I) {
       if (I)
         PathString += '.';

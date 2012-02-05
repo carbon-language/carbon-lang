@@ -155,7 +155,7 @@ class StringLiteralParser {
   unsigned SizeBound;
   unsigned CharByteWidth;
   tok::TokenKind Kind;
-  llvm::SmallString<512> ResultBuf;
+  SmallString<512> ResultBuf;
   char *ResultPtr; // cursor
 public:
   StringLiteralParser(const Token *StringToks, unsigned NumStringToks,

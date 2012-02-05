@@ -132,7 +132,7 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
 
   // Render the diagnostic message into a temporary buffer eagerly. We'll use
   // this later as we print out the diagnostic to the terminal.
-  llvm::SmallString<100> OutStr;
+  SmallString<100> OutStr;
   Info.FormatDiagnostic(OutStr);
 
   llvm::raw_svector_ostream DiagMessageStream(OutStr);

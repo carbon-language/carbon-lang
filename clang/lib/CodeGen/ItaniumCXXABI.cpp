@@ -1040,7 +1040,7 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   llvm::PointerType *GuardPtrTy = GuardTy->getPointerTo();
 
   // Create the guard variable.
-  llvm::SmallString<256> GuardVName;
+  SmallString<256> GuardVName;
   llvm::raw_svector_ostream Out(GuardVName);
   getMangleContext().mangleItaniumGuardVariable(&D, Out);
   Out.flush();

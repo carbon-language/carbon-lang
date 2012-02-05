@@ -197,7 +197,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
     PP.Diag(PeekTok, diag::err_pp_expected_value_in_expr);
     return true;
   case tok::numeric_constant: {
-    llvm::SmallString<64> IntegerBuffer;
+    SmallString<64> IntegerBuffer;
     bool NumberInvalid = false;
     StringRef Spelling = PP.getSpelling(PeekTok, IntegerBuffer, 
                                               &NumberInvalid);
@@ -251,7 +251,7 @@ static bool EvaluateValue(PPValue &Result, Token &PeekTok, DefinedTracker &DT,
   case tok::wide_char_constant: {   // L'x'
   case tok::utf16_char_constant:    // u'x'
   case tok::utf32_char_constant:    // U'x'
-    llvm::SmallString<32> CharBuffer;
+    SmallString<32> CharBuffer;
     bool CharInvalid = false;
     StringRef ThisTok = PP.getSpelling(PeekTok, CharBuffer, &CharInvalid);
     if (CharInvalid)

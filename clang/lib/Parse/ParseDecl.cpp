@@ -434,7 +434,7 @@ VersionTuple Parser::ParseVersionTuple(SourceRange &Range) {
   // are stored in the numeric constant. We utilize a quirk of the
   // lexer, which is that it handles something like 1.2.3 as a single
   // numeric constant, rather than two separate tokens.
-  llvm::SmallString<512> Buffer;
+  SmallString<512> Buffer;
   Buffer.resize(Tok.getLength()+1);
   const char *ThisTokBegin = &Buffer[0];
 

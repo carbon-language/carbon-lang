@@ -137,7 +137,7 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
                                         FileManager &FileMgr,
                                         ModuleMap &ModMap,
                                         clang::Module *Module,
-                                        llvm::SmallString<256> &Includes) {
+                                        SmallString<256> &Includes) {
   // Don't collect any headers for unavailable modules.
   if (!Module->isAvailable())
     return;
@@ -165,7 +165,7 @@ static void collectModuleHeaderIncludes(const LangOptions &LangOpts,
   } else if (const DirectoryEntry *UmbrellaDir = Module->getUmbrellaDir()) {
     // Add all of the headers we find in this subdirectory.
     llvm::error_code EC;
-    llvm::SmallString<128> DirNative;
+    SmallString<128> DirNative;
     llvm::sys::path::native(UmbrellaDir->getName(), DirNative);
     for (llvm::sys::fs::recursive_directory_iterator Dir(DirNative.str(), EC), 
                                                      DirEnd;
@@ -249,7 +249,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   const FileEntry *UmbrellaHeader = Module->getUmbrellaHeader();
   
   // Collect the set of #includes we need to build the module.
-  llvm::SmallString<256> HeaderContents;
+  SmallString<256> HeaderContents;
   collectModuleHeaderIncludes(CI.getLangOpts(), CI.getFileManager(),
     CI.getPreprocessor().getHeaderSearchInfo().getModuleMap(),
     Module, HeaderContents);
@@ -263,7 +263,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
   }
   
   FileManager &FileMgr = CI.getFileManager();
-  llvm::SmallString<128> HeaderName;
+  SmallString<128> HeaderName;
   time_t ModTime;
   if (UmbrellaHeader) {
     // Read in the umbrella header.
@@ -280,7 +280,7 @@ bool GenerateModuleAction::BeginSourceFileAction(CompilerInstance &CI,
     
     // Combine the contents of the umbrella header with the automatically-
     // generated includes.
-    llvm::SmallString<256> OldContents = HeaderContents;
+    SmallString<256> OldContents = HeaderContents;
     HeaderContents = UmbrellaContents->getBuffer();
     HeaderContents += "\n\n";
     HeaderContents += "/* Module includes */\n";
@@ -329,7 +329,7 @@ bool GenerateModuleAction::ComputeASTConsumerArguments(CompilerInstance &CI,
   // in the module cache.
   if (CI.getFrontendOpts().OutputFile.empty()) {
     HeaderSearch &HS = CI.getPreprocessor().getHeaderSearchInfo();
-    llvm::SmallString<256> ModuleFileName(HS.getModuleCachePath());
+    SmallString<256> ModuleFileName(HS.getModuleCachePath());
     llvm::sys::path::append(ModuleFileName, 
                             CI.getLangOpts().CurrentModule + ".pcm");
     CI.getFrontendOpts().OutputFile = ModuleFileName.str();

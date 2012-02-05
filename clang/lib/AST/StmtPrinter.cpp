@@ -698,7 +698,7 @@ void StmtPrinter::VisitIntegerLiteral(IntegerLiteral *Node) {
   }
 }
 void StmtPrinter::VisitFloatingLiteral(FloatingLiteral *Node) {
-  llvm::SmallString<16> Str;
+  SmallString<16> Str;
   Node->getValue().toString(Str);
   OS << Str;
 }

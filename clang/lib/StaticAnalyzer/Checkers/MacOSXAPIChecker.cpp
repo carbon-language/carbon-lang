@@ -70,7 +70,7 @@ void MacOSXAPIChecker::CheckDispatchOnce(CheckerContext &C, const CallExpr *CE,
     BT_dispatchOnce.reset(new BugType("Improper use of 'dispatch_once'",
                                       "Mac OS X API"));
 
-  llvm::SmallString<256> S;
+  SmallString<256> S;
   llvm::raw_svector_ostream os(S);
   os << "Call to '" << FName << "' uses";
   if (const VarRegion *VR = dyn_cast<VarRegion>(R))

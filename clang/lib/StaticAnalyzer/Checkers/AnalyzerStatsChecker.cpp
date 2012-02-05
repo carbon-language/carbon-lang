@@ -74,7 +74,7 @@ void AnalyzerStatsChecker::checkEndAnalysis(ExplodedGraph &G,
   unreachable--;
 
   // Generate the warning string
-  llvm::SmallString<128> buf;
+  SmallString<128> buf;
   llvm::raw_svector_ostream output(buf);
   PresumedLoc Loc = SM.getPresumedLoc(D->getLocation());
   if (Loc.isValid()) {

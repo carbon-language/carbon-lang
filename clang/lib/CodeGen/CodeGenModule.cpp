@@ -317,7 +317,7 @@ StringRef CodeGenModule::getMangledName(GlobalDecl GD) {
     return Str;
   }
   
-  llvm::SmallString<256> Buffer;
+  SmallString<256> Buffer;
   llvm::raw_svector_ostream Out(Buffer);
   if (const CXXConstructorDecl *D = dyn_cast<CXXConstructorDecl>(ND))
     getCXXABI().getMangleContext().mangleCXXCtor(D, GD.getCtorType(), Out);
@@ -1779,7 +1779,7 @@ GetConstantCFStringEntry(llvm::StringMap<llvm::Constant*> &Map,
   // order.
   //
   // FIXME: This isn't something we should need to do here.
-  llvm::SmallString<128> AsBytes;
+  SmallString<128> AsBytes;
   AsBytes.reserve(StringLength * 2);
   for (unsigned i = 0; i != StringLength; ++i) {
     unsigned short Val = ToBuf[i];

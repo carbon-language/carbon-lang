@@ -47,7 +47,7 @@ void UndefResultChecker::checkPostStmt(const BinaryOperator *B,
     if (!BT)
       BT.reset(new BuiltinBug("Result of operation is garbage or undefined"));
 
-    llvm::SmallString<256> sbuf;
+    SmallString<256> sbuf;
     llvm::raw_svector_ostream OS(sbuf);
     const Expr *Ex = NULL;
     bool isLeft = true;

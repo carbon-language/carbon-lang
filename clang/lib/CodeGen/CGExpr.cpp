@@ -185,7 +185,7 @@ CreateReferenceTemporary(CodeGenFunction &CGF, QualType Type,
                          const NamedDecl *InitializedDecl) {
   if (const VarDecl *VD = dyn_cast_or_null<VarDecl>(InitializedDecl)) {
     if (VD->hasGlobalStorage()) {
-      llvm::SmallString<256> Name;
+      SmallString<256> Name;
       llvm::raw_svector_ostream Out(Name);
       CGF.CGM.getCXXABI().getMangleContext().mangleReferenceTemporary(VD, Out);
       Out.flush();

@@ -234,13 +234,13 @@ void Clang::AddPreprocessingOptions(Compilation &C,
         // Otherwise derive from the base input.
         //
         // FIXME: This should use the computed output file location.
-        llvm::SmallString<128> P(Inputs[0].getBaseInput());
+        SmallString<128> P(Inputs[0].getBaseInput());
         llvm::sys::path::replace_extension(P, "o");
         DepTarget = Args.MakeArgString(llvm::sys::path::filename(P));
       }
 
       CmdArgs.push_back("-MT");
-      llvm::SmallString<128> Quoted;
+      SmallString<128> Quoted;
       QuoteTarget(DepTarget, Quoted);
       CmdArgs.push_back(Args.MakeArgString(Quoted));
     }
@@ -268,7 +268,7 @@ void Clang::AddPreprocessingOptions(Compilation &C,
 
     if (A->getOption().matches(options::OPT_MQ)) {
       CmdArgs.push_back("-MT");
-      llvm::SmallString<128> Quoted;
+      SmallString<128> Quoted;
       QuoteTarget(A->getValue(Args), Quoted);
       CmdArgs.push_back(Args.MakeArgString(Quoted));
 
@@ -379,7 +379,7 @@ void Clang::AddPreprocessingOptions(Compilation &C,
     A->claim();
     A->render(Args, CmdArgs);
   } else {
-    llvm::SmallString<128> DefaultModuleCache;
+    SmallString<128> DefaultModuleCache;
     llvm::sys::path::system_temp_directory(/*erasedOnReboot=*/false, 
                                            DefaultModuleCache);
     llvm::sys::path::append(DefaultModuleCache, "clang-module-cache");
@@ -1185,7 +1185,7 @@ static void addAsanRTLinux(const ToolChain &TC, const ArgList &Args,
 
   // LibAsan is "libclang_rt.asan-<ArchName>.a" in the Linux library resource
   // directory.
-  llvm::SmallString<128> LibAsan(TC.getDriver().ResourceDir);
+  SmallString<128> LibAsan(TC.getDriver().ResourceDir);
   llvm::sys::path::append(LibAsan, "lib", "linux",
                           (Twine("libclang_rt.asan-") +
                            TC.getArchName() + ".a"));
@@ -2511,7 +2511,7 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
            ie = Args.end(); it != ie; ++it)
       (*it)->render(Args, OriginalArgs);
 
-    llvm::SmallString<256> Flags;
+    SmallString<256> Flags;
     Flags += Exec;
     for (unsigned i = 0, e = OriginalArgs.size(); i != e; ++i) {
       Flags += " ";
@@ -2608,7 +2608,7 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
            ie = Args.end(); it != ie; ++it)
       (*it)->render(Args, OriginalArgs);
 
-    llvm::SmallString<256> Flags;
+    SmallString<256> Flags;
     const char *Exec = getToolChain().getDriver().getClangProgramPath();
     Flags += Exec;
     for (unsigned i = 0, e = OriginalArgs.size(); i != e; ++i) {

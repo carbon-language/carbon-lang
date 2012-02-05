@@ -6966,7 +6966,7 @@ void Sema::ActOnFinishKNRParamDeclarations(Scope *S, Declarator &D,
     for (int i = FTI.NumArgs; i != 0; /* decrement in loop */) {
       --i;
       if (FTI.ArgInfo[i].Param == 0) {
-        llvm::SmallString<256> Code;
+        SmallString<256> Code;
         llvm::raw_svector_ostream(Code) << "  int "
                                         << FTI.ArgInfo[i].Ident->getName()
                                         << ";\n";

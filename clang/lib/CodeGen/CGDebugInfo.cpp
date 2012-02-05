@@ -131,7 +131,7 @@ StringRef CGDebugInfo::getFunctionName(const FunctionDecl *FD) {
 }
 
 StringRef CGDebugInfo::getObjCMethodName(const ObjCMethodDecl *OMD) {
-  llvm::SmallString<256> MethodName;
+  SmallString<256> MethodName;
   llvm::raw_svector_ostream OS(MethodName);
   OS << (OMD->isInstanceMethod() ? '-' : '+') << '[';
   const DeclContext *DC = OMD->getDeclContext();
@@ -254,7 +254,7 @@ StringRef CGDebugInfo::getCurrentDirname() {
 
   if (!CWDName.empty())
     return CWDName;
-  llvm::SmallString<256> CWD;
+  SmallString<256> CWD;
   llvm::sys::fs::current_path(CWD);
   char *CompDirnamePtr = DebugInfoNames.Allocate<char>(CWD.size());
   memcpy(CompDirnamePtr, CWD.data(), CWD.size());
@@ -2403,7 +2403,7 @@ void CGDebugInfo::EmitDeclareOfBlockLiteralArgVariable(const CGBlockInfo &block,
     fields.push_back(fieldType);
   }
 
-  llvm::SmallString<36> typeName;
+  SmallString<36> typeName;
   llvm::raw_svector_ostream(typeName)
     << "__block_literal_" << CGM.getUniqueBlockCount();
 

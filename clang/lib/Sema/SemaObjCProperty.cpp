@@ -1341,7 +1341,7 @@ ObjCPropertyDecl *Sema::LookupPropertyDecl(const ObjCContainerDecl *CDecl,
 
 static IdentifierInfo * getDefaultSynthIvarName(ObjCPropertyDecl *Prop,
                                                 ASTContext &Ctx) {
-  llvm::SmallString<128> ivarName;
+  SmallString<128> ivarName;
   {
     llvm::raw_svector_ostream os(ivarName);
     os << '_' << Prop->getIdentifier()->getName();

@@ -192,7 +192,7 @@ bool PCHValidator::ReadPredefinesBuffer(const PCHPredefinesBlocks &Buffers,
   // have a #include entry for the PCH file itself (as normalized by the
   // preprocessor initialization). Find it and skip over it in the checking
   // below.
-  llvm::SmallString<256> PCHInclude;
+  SmallString<256> PCHInclude;
   PCHInclude += "#include \"";
   PCHInclude += HeaderSearch::NormalizeDashIncludePath(OriginalFileName,
                                                        FileMgr);
@@ -1050,10 +1050,10 @@ resolveFileRelativeToOriginalDir(const std::string &Filename,
   assert(OriginalDir != CurrDir &&
          "No point trying to resolve the file if the PCH dir didn't change");
   using namespace llvm::sys;
-  llvm::SmallString<128> filePath(Filename);
+  SmallString<128> filePath(Filename);
   fs::make_absolute(filePath);
   assert(path::is_absolute(OriginalDir));
-  llvm::SmallString<128> currPCHPath(CurrDir);
+  SmallString<128> currPCHPath(CurrDir);
 
   path::const_iterator fileDirI = path::begin(path::parent_path(filePath)),
                        fileDirE = path::end(path::parent_path(filePath));
@@ -1815,7 +1815,7 @@ ASTReader::ReadASTBlock(ModuleFile &F) {
         // Read information about the AST file.
         ModuleKind ImportedKind = (ModuleKind)Record[Idx++];
         unsigned Length = Record[Idx++];
-        llvm::SmallString<128> ImportedFile(Record.begin() + Idx,
+        SmallString<128> ImportedFile(Record.begin() + Idx,
                                             Record.begin() + Idx + Length);
         Idx += Length;
 

@@ -285,7 +285,7 @@ void DiagnosticRenderer::emitMacroExpansionsAndCarets(
   if (Suppressed) {
     // Tell the user that we've skipped contexts.
     if (OnMacroInst == MacroSkipStart) {
-      llvm::SmallString<200> MessageStorage;
+      SmallString<200> MessageStorage;
       llvm::raw_svector_ostream Message(MessageStorage);
       Message << "(skipping " << (MacroSkipEnd - MacroSkipStart)
               << " expansions in backtrace; use -fmacro-backtrace-limit=0 to "
@@ -295,7 +295,7 @@ void DiagnosticRenderer::emitMacroExpansionsAndCarets(
     return;
   }
   
-  llvm::SmallString<100> MessageStorage;
+  SmallString<100> MessageStorage;
   llvm::raw_svector_ostream Message(MessageStorage);
   Message << "expanded from macro '"
           << getImmediateMacroName(MacroLoc, SM, LangOpts) << "'";

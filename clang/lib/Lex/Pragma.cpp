@@ -353,7 +353,7 @@ void Preprocessor::HandlePragmaDependency(Token &DependencyTok) {
     return;
 
   // Reserve a buffer to get the spelling.
-  llvm::SmallString<128> FilenameBuffer;
+  SmallString<128> FilenameBuffer;
   bool Invalid = false;
   StringRef Filename = getSpelling(FilenameTok, FilenameBuffer, &Invalid);
   if (Invalid)

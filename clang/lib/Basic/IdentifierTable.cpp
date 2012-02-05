@@ -356,7 +356,7 @@ StringRef Selector::getNameForSlot(unsigned int argIndex) const {
 }
 
 std::string MultiKeywordSelector::getName() const {
-  llvm::SmallString<256> Str;
+  SmallString<256> Str;
   llvm::raw_svector_ostream OS(Str);
   for (keyword_iterator I = keyword_begin(), E = keyword_end(); I != E; ++I) {
     if (*I)
@@ -458,7 +458,7 @@ static SelectorTableImpl &getSelectorTableImpl(void *P) {
 SelectorTable::constructSetterName(IdentifierTable &Idents,
                                    SelectorTable &SelTable,
                                    const IdentifierInfo *Name) {
-  llvm::SmallString<100> SelectorName;
+  SmallString<100> SelectorName;
   SelectorName = "set";
   SelectorName += Name->getName();
   SelectorName[3] = toupper(SelectorName[3]);

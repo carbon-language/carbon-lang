@@ -64,7 +64,7 @@ void LogDiagnosticPrinter::EndSourceFile() {
     return;
 
   // Write to a temporary string to ensure atomic write of diagnostic object.
-  llvm::SmallString<512> Msg;
+  SmallString<512> Msg;
   llvm::raw_svector_ostream OS(Msg);
 
   OS << "<dict>\n";
@@ -140,7 +140,7 @@ void LogDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   DE.DiagnosticLevel = Level;
 
   // Format the message.
-  llvm::SmallString<100> MessageStr;
+  SmallString<100> MessageStr;
   Info.FormatDiagnostic(MessageStr);
   DE.Message = MessageStr.str();
 

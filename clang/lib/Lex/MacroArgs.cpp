@@ -198,7 +198,7 @@ Token MacroArgs::StringifyArgument(const Token *ArgToks,
   const Token *ArgTokStart = ArgToks;
 
   // Stringify all the tokens.
-  llvm::SmallString<128> Result;
+  SmallString<128> Result;
   Result += "\"";
 
   bool isFirst = true;

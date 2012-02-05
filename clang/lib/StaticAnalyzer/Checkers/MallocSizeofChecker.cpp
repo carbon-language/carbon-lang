@@ -175,7 +175,7 @@ public:
             TSI = i->ExplicitCastType;
           }
 
-          llvm::SmallString<64> buf;
+          SmallString<64> buf;
           llvm::raw_svector_ostream OS(buf);
 
           OS << "Result of '"

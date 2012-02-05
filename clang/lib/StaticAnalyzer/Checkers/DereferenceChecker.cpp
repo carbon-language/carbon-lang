@@ -108,7 +108,7 @@ void DereferenceChecker::checkLocation(SVal l, bool isLoad, const Stmt* S,
       if (!BT_null)
         BT_null.reset(new BuiltinBug("Dereference of null pointer"));
 
-      llvm::SmallString<100> buf;
+      SmallString<100> buf;
       SmallVector<SourceRange, 2> Ranges;
       
       // Walk through lvalue casts to get the original expression

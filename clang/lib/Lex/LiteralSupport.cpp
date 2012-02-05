@@ -1036,7 +1036,7 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
   ResultBuf.resize(SizeBound);
 
   // Likewise, but for each string piece.
-  llvm::SmallString<512> TokenBuf;
+  SmallString<512> TokenBuf;
   TokenBuf.resize(MaxTokenLength);
 
   // Loop over all the strings, getting their spelling, and expanding them to
@@ -1245,7 +1245,7 @@ bool StringLiteralParser::CopyStringFragment(StringRef Fragment) {
 unsigned StringLiteralParser::getOffsetOfStringByte(const Token &Tok,
                                                     unsigned ByteNo) const {
   // Get the spelling of the token.
-  llvm::SmallString<32> SpellingBuffer;
+  SmallString<32> SpellingBuffer;
   SpellingBuffer.resize(Tok.getLength());
 
   bool StringInvalid = false;

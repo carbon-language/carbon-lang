@@ -573,13 +573,13 @@ bool MigrationProcess::applyTransform(TransformFn trans,
     assert(file);
     std::string newFname = file->getName();
     newFname += "-trans";
-    llvm::SmallString<512> newText;
+    SmallString<512> newText;
     llvm::raw_svector_ostream vecOS(newText);
     buf.write(vecOS);
     vecOS.flush();
     llvm::MemoryBuffer *memBuf = llvm::MemoryBuffer::getMemBufferCopy(
                    StringRef(newText.data(), newText.size()), newFname);
-    llvm::SmallString<64> filePath(file->getName());
+    SmallString<64> filePath(file->getName());
     Unit->getFileManager().FixupRelativePath(filePath);
     Remapper.remap(filePath.str(), memBuf);
   }

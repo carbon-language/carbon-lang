@@ -264,7 +264,7 @@ void CompilerInstance::createPreprocessor() {
 
   // Set up the module path, including the hash for the
   // module-creation options.
-  llvm::SmallString<256> SpecificModuleCache(
+  SmallString<256> SpecificModuleCache(
                            getHeaderSearchOpts().ModuleCachePath);
   if (!getHeaderSearchOpts().DisableModuleHash)
     llvm::sys::path::append(SpecificModuleCache,
@@ -445,7 +445,7 @@ void CompilerInstance::clearOutputFiles(bool EraseFiles) {
         bool existed;
         llvm::sys::fs::remove(it->TempFilename, existed);
       } else {
-        llvm::SmallString<128> NewOutFile(it->Filename);
+        SmallString<128> NewOutFile(it->Filename);
 
         // If '-working-directory' was passed, the output filename should be
         // relative to that.
@@ -536,7 +536,7 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
     if ((llvm::sys::fs::exists(OutPath.str(), Exists) || !Exists) ||
         (OutPath.isRegularFile() && OutPath.canWrite())) {
       // Create a temporary file.
-      llvm::SmallString<128> TempPath;
+      SmallString<128> TempPath;
       TempPath = OutFile;
       TempPath += "-%%%%%%%%";
       int fd;
@@ -761,7 +761,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
   InputKind IK = getSourceInputKindFromOptions(*Invocation->getLangOpts());
 
   // Get or create the module map that we'll use to build this module.
-  llvm::SmallString<128> TempModuleMapFileName;
+  SmallString<128> TempModuleMapFileName;
   if (const FileEntry *ModuleMapFile
                                   = ModMap.getContainingModuleMapFile(Module)) {
     // Use the module map where this module resides.
@@ -890,7 +890,7 @@ Module *CompilerInstance::loadModule(SourceLocation ImportLoc,
       SmallVectorImpl<std::string>::iterator Pos
         = std::find(ModuleBuildPath.begin(), ModuleBuildPath.end(), ModuleName);
       if (Pos != ModuleBuildPath.end()) {
-        llvm::SmallString<256> CyclePath;
+        SmallString<256> CyclePath;
         for (; Pos != ModuleBuildPath.end(); ++Pos) {
           CyclePath += *Pos;
           CyclePath += " -> ";

@@ -267,7 +267,7 @@ void MacOSKeychainAPIChecker::
   if (!N)
     return;
   initBugType();
-  llvm::SmallString<80> sbuf;
+  SmallString<80> sbuf;
   llvm::raw_svector_ostream os(sbuf);
   unsigned int PDeallocIdx =
                FunctionsToTrack[AP.second->AllocatorIdx].DeallocatorIdx;
@@ -303,7 +303,7 @@ void MacOSKeychainAPIChecker::checkPreStmt(const CallExpr *CE,
           if (!N)
             return;
           initBugType();
-          llvm::SmallString<128> sbuf;
+          SmallString<128> sbuf;
           llvm::raw_svector_ostream os(sbuf);
           unsigned int DIdx = FunctionsToTrack[AS->AllocatorIdx].DeallocatorIdx;
           os << "Allocated data should be released before another call to "
@@ -498,7 +498,7 @@ BugReport *MacOSKeychainAPIChecker::
                                          ExplodedNode *N) const {
   const ADFunctionInfo &FI = FunctionsToTrack[AP.second->AllocatorIdx];
   initBugType();
-  llvm::SmallString<70> sbuf;
+  SmallString<70> sbuf;
   llvm::raw_svector_ostream os(sbuf);
 
   os << "Allocated data is not released: missing a call to '"

@@ -2400,7 +2400,7 @@ CXSaveError ASTUnit::Save(StringRef File) {
 
   // Write to a temporary file and later rename it to the actual file, to avoid
   // possible race conditions.
-  llvm::SmallString<128> TempPath;
+  SmallString<128> TempPath;
   TempPath = File;
   TempPath += "-%%%%%%%%";
   int fd;

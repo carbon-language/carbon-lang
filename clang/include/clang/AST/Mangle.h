@@ -60,7 +60,7 @@ public:
 
 private:
   StringRef String;
-  llvm::SmallString<256> Buffer;
+  SmallString<256> Buffer;
 };
 
 /// MangleContext - Context for tracking state which persists across multiple

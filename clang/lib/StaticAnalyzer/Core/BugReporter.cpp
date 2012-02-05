@@ -441,7 +441,7 @@ public:
 
     // Create the diagnostic.
     if (Loc::isLocType(VD->getType())) {
-      llvm::SmallString<64> buf;
+      SmallString<64> buf;
       llvm::raw_svector_ostream os(buf);
       os << '\'' << *VD << "' now aliases '" << *MostRecent << '\'';
       PathDiagnosticLocation L =
@@ -1897,7 +1897,7 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   StringRef desc = exampleReport->getShortDescription();
   unsigned ErrorDiag;
   {
-    llvm::SmallString<512> TmpStr;
+    SmallString<512> TmpStr;
     llvm::raw_svector_ostream Out(TmpStr);
     for (StringRef::iterator I=desc.begin(), E=desc.end(); I!=E; ++I)
       if (*I == '%')
@@ -1952,7 +1952,7 @@ void BugReporter::EmitBasicReport(StringRef name,
 
 BugType *BugReporter::getBugTypeForName(StringRef name,
                                         StringRef category) {
-  llvm::SmallString<136> fullDesc;
+  SmallString<136> fullDesc;
   llvm::raw_svector_ostream(fullDesc) << name << ":" << category;
   llvm::StringMapEntry<BugType *> &
       entry = StrBugTypes.GetOrCreateValue(fullDesc);

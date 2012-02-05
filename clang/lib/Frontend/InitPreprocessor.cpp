@@ -127,7 +127,7 @@ static void DefineFloatMacros(MacroBuilder &Builder, StringRef Prefix,
                "1.79769313486231580793728971405301e+308L",
                "1.18973149535723176508575932662800702e+4932L");
 
-  llvm::SmallString<32> DefPrefix;
+  SmallString<32> DefPrefix;
   DefPrefix = "__";
   DefPrefix += Prefix;
   DefPrefix += "_";

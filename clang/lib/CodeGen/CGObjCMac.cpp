@@ -2233,7 +2233,7 @@ void CGObjCMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   const ObjCCategoryDecl *Category =
     Interface->FindCategoryDeclaration(OCD->getIdentifier());
 
-  llvm::SmallString<256> ExtName;
+  SmallString<256> ExtName;
   llvm::raw_svector_ostream(ExtName) << Interface->getName() << '_'
                                      << OCD->getName();
 
@@ -2676,7 +2676,7 @@ llvm::Constant *CGObjCMac::EmitMethodList(Twine Name,
 
 llvm::Function *CGObjCCommonMac::GenerateMethod(const ObjCMethodDecl *OMD,
                                                 const ObjCContainerDecl *CD) {
-  llvm::SmallString<256> Name;
+  SmallString<256> Name;
   GetNameForMethod(OMD, CD, Name);
 
   CodeGenTypes &Types = CGM.getTypes();
@@ -4251,7 +4251,7 @@ void CGObjCMac::FinishModule() {
   //
   // FIXME: It would be nice if we had an LLVM construct for this.
   if (!LazySymbols.empty() || !DefinedSymbols.empty()) {
-    llvm::SmallString<256> Asm;
+    SmallString<256> Asm;
     Asm += CGM.getModule().getModuleInlineAsm();
     if (!Asm.empty() && Asm.back() != '\n')
       Asm += '\n';
@@ -5252,7 +5252,7 @@ void CGObjCNonFragileABIMac::GenerateCategory(const ObjCCategoryImplDecl *OCD) {
   const ObjCCategoryDecl *Category =
     Interface->FindCategoryDeclaration(OCD->getIdentifier());
   if (Category) {
-    llvm::SmallString<256> ExtName;
+    SmallString<256> ExtName;
     llvm::raw_svector_ostream(ExtName) << Interface->getName() << "_$_"
                                        << OCD->getName();
     Values[4] = EmitProtocolList("\01l_OBJC_CATEGORY_PROTOCOLS_$_"
@@ -5634,7 +5634,7 @@ CGObjCNonFragileABIMac::EmitProtocolList(Twine Name,
     return llvm::Constant::getNullValue(ObjCTypes.ProtocolListnfABIPtrTy);
 
   // FIXME: We shouldn't need to do this lookup here, should we?
-  llvm::SmallString<256> TmpName;
+  SmallString<256> TmpName;
   Name.toVector(TmpName);
   llvm::GlobalVariable *GV =
     CGM.getModule().getGlobalVariable(TmpName.str(), true);

@@ -110,7 +110,7 @@ std::string HeaderSearch::getModuleFileName(Module *Module) {
     return std::string();
 
 
-  llvm::SmallString<256> Result(ModuleCachePath);
+  SmallString<256> Result(ModuleCachePath);
   llvm::sys::path::append(Result, Module->getTopLevelModule()->Name + ".pcm");
   return Result.str().str();
 }
@@ -121,7 +121,7 @@ std::string HeaderSearch::getModuleFileName(StringRef ModuleName) {
     return std::string();
   
   
-  llvm::SmallString<256> Result(ModuleCachePath);
+  SmallString<256> Result(ModuleCachePath);
   llvm::sys::path::append(Result, ModuleName + ".pcm");
   return Result.str().str();
 }
@@ -137,7 +137,7 @@ Module *HeaderSearch::lookupModule(StringRef ModuleName, bool AllowSearch) {
   for (unsigned Idx = 0, N = SearchDirs.size(); Idx != N; ++Idx) {
     if (SearchDirs[Idx].isFramework()) {
       // Search for or infer a module map for a framework.
-      llvm::SmallString<128> FrameworkDirName;
+      SmallString<128> FrameworkDirName;
       FrameworkDirName += SearchDirs[Idx].getFrameworkDir()->getName();
       llvm::sys::path::append(FrameworkDirName, ModuleName + ".framework");
       if (const DirectoryEntry *FrameworkDir 
@@ -167,7 +167,7 @@ Module *HeaderSearch::lookupModule(StringRef ModuleName, bool AllowSearch) {
               
     // Search for a module map in a subdirectory with the same name as the
     // module.
-    llvm::SmallString<128> NestedModuleMapDirName;
+    SmallString<128> NestedModuleMapDirName;
     NestedModuleMapDirName = SearchDirs[Idx].getDir()->getName();
     llvm::sys::path::append(NestedModuleMapDirName, ModuleName);
     if (loadModuleMapFile(NestedModuleMapDirName) == LMM_NewlyLoaded) {
@@ -205,7 +205,7 @@ const FileEntry *DirectoryLookup::LookupFile(
     SmallVectorImpl<char> *SearchPath,
     SmallVectorImpl<char> *RelativePath,
     Module **SuggestedModule) const {
-  llvm::SmallString<1024> TmpDir;
+  SmallString<1024> TmpDir;
   if (isNormalDir()) {
     // Concatenate the requested file onto the directory.
     TmpDir = getDir()->getName();
@@ -286,7 +286,7 @@ const FileEntry *DirectoryLookup::DoFrameworkLookup(
   // Otherwise, construct the path to this framework dir.
 
   // FrameworkName = "/System/Library/Frameworks/"
-  llvm::SmallString<1024> FrameworkName;
+  SmallString<1024> FrameworkName;
   FrameworkName += getFrameworkDir()->getName();
   if (FrameworkName.empty() || FrameworkName.back() != '/')
     FrameworkName.push_back('/');
@@ -418,7 +418,7 @@ const FileEntry *HeaderSearch::LookupFile(
   // a subsequent include of "baz.h" should resolve to "whatever/foo/baz.h".
   // This search is not done for <> headers.
   if (CurFileEnt && !isAngled && !NoCurDirSearch) {
-    llvm::SmallString<1024> TmpDir;
+    SmallString<1024> TmpDir;
     // Concatenate the requested file onto the directory.
     // FIXME: Portability.  Filename concatenation should be in sys::Path.
     TmpDir += CurFileEnt->getDir()->getName();
@@ -512,7 +512,7 @@ const FileEntry *HeaderSearch::LookupFile(
   if (CurFileEnt && !isAngled && Filename.find('/') == StringRef::npos) {
     HeaderFileInfo &IncludingHFI = getFileInfo(CurFileEnt);
     if (IncludingHFI.IndexHeaderMapHeader) {
-      llvm::SmallString<128> ScratchFilename;
+      SmallString<128> ScratchFilename;
       ScratchFilename += IncludingHFI.Framework;
       ScratchFilename += '/';
       ScratchFilename += Filename;
@@ -562,7 +562,7 @@ LookupSubframeworkHeader(StringRef Filename,
        FrameworkPos[DotFrameworkLen] != '\\'))
     return 0;
 
-  llvm::SmallString<1024> FrameworkName(ContextName,
+  SmallString<1024> FrameworkName(ContextName,
                                         FrameworkPos+DotFrameworkLen+1);
 
   // Append Frameworks/HIToolbox.framework/
@@ -601,7 +601,7 @@ LookupSubframeworkHeader(StringRef Filename,
   }
 
   // Check ".../Frameworks/HIToolbox.framework/Headers/HIToolbox.h"
-  llvm::SmallString<1024> HeadersFilename(FrameworkName);
+  SmallString<1024> HeadersFilename(FrameworkName);
   HeadersFilename += "Headers/";
   if (SearchPath != NULL) {
     SearchPath->clear();
@@ -647,7 +647,7 @@ HeaderSearch::NormalizeDashIncludePath(StringRef File, FileManager &FileMgr) {
   // it has no file entry. For now, workaround this by using an
   // absolute path if we find the file here, and otherwise letting
   // header search handle it.
-  llvm::SmallString<128> Path(File);
+  SmallString<128> Path(File);
   llvm::sys::fs::make_absolute(Path);
   bool exists;
   if (llvm::sys::fs::exists(Path.str(), exists) || !exists)
@@ -831,7 +831,7 @@ bool HeaderSearch::loadModuleMapFile(const FileEntry *File) {
   if (!Result && llvm::sys::path::filename(File->getName()) == "module.map") {
     // If the file we loaded was a module.map, look for the corresponding
     // module_private.map.
-    llvm::SmallString<128> PrivateFilename(Dir->getName());
+    SmallString<128> PrivateFilename(Dir->getName());
     llvm::sys::path::append(PrivateFilename, "module_private.map");
     if (const FileEntry *PrivateFile = FileMgr.getFile(PrivateFilename))
       Result = ModMap.parseModuleMapFile(PrivateFile);
@@ -922,7 +922,7 @@ HeaderSearch::loadModuleMapFile(const DirectoryEntry *Dir) {
   if (KnownDir != DirectoryHasModuleMap.end())
     return KnownDir->second? LMM_AlreadyLoaded : LMM_InvalidModuleMap;
   
-  llvm::SmallString<128> ModuleMapFileName;
+  SmallString<128> ModuleMapFileName;
   ModuleMapFileName += Dir->getName();
   unsigned ModuleMapDirNameLen = ModuleMapFileName.size();
   llvm::sys::path::append(ModuleMapFileName, "module.map");
@@ -965,7 +965,7 @@ void HeaderSearch::collectAllModules(llvm::SmallVectorImpl<Module *> &Modules) {
   for (unsigned Idx = 0, N = SearchDirs.size(); Idx != N; ++Idx) {
     if (SearchDirs[Idx].isFramework()) {
       llvm::error_code EC;
-      llvm::SmallString<128> DirNative;
+      SmallString<128> DirNative;
       llvm::sys::path::native(SearchDirs[Idx].getFrameworkDir()->getName(),
                               DirNative);
       
@@ -997,7 +997,7 @@ void HeaderSearch::collectAllModules(llvm::SmallVectorImpl<Module *> &Modules) {
     // Try to load module map files for immediate subdirectories of this search
     // directory.
     llvm::error_code EC;
-    llvm::SmallString<128> DirNative;
+    SmallString<128> DirNative;
     llvm::sys::path::native(SearchDirs[Idx].getDir()->getName(), DirNative);
     for (llvm::sys::fs::directory_iterator Dir(DirNative.str(), EC), DirEnd;
          Dir != DirEnd && !EC; Dir.increment(EC)) {

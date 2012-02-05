@@ -1054,7 +1054,7 @@ public:
   /// This code concatenates and consumes tokens up to the '>' token.  It
   /// returns false if the > was found, otherwise it returns true if it finds
   /// and consumes the EOD marker.
-  bool ConcatenateIncludeName(llvm::SmallString<128> &FilenameBuffer,
+  bool ConcatenateIncludeName(SmallString<128> &FilenameBuffer,
                               SourceLocation &End);
 
   /// LexOnOffSwitch - Lex an on-off-switch (C99 6.10.6p2) and verify that it is

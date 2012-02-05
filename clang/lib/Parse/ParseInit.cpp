@@ -81,7 +81,7 @@ ExprResult Parser::ParseInitializerWithPotentialDesignator() {
   if (Tok.is(tok::identifier)) {
     const IdentifierInfo *FieldName = Tok.getIdentifierInfo();
 
-    llvm::SmallString<256> NewSyntax;
+    SmallString<256> NewSyntax;
     llvm::raw_svector_ostream(NewSyntax) << '.' << FieldName->getName()
                                          << " = ";
 

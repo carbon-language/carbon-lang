@@ -233,7 +233,7 @@ static unsigned findEndOfWord(unsigned Start, StringRef Str,
 
   // We have the start of a balanced punctuation sequence (quotes,
   // parentheses, etc.). Determine the full sequence is.
-  llvm::SmallString<16> PunctuationEndStack;
+  SmallString<16> PunctuationEndStack;
   PunctuationEndStack.push_back(EndPunct);
   while (End < Length && !PunctuationEndStack.empty()) {
     if (Str[End] == PunctuationEndStack.back())
@@ -284,7 +284,7 @@ static bool printWordWrapped(raw_ostream &OS, StringRef Str,
   const unsigned Length = std::min(Str.find('\n'), Str.size());
 
   // The string used to indent each line.
-  llvm::SmallString<16> IndentStr;
+  SmallString<16> IndentStr;
   IndentStr.assign(Indentation, ' ');
   bool Wrapped = false;
   for (unsigned WordStart = 0, WordEnd; WordStart < Length;

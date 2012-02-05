@@ -2525,7 +2525,7 @@ BuildImplicitMemberInitializer(Sema &SemaRef, CXXConstructorDecl *Constructor,
       // Create the iteration variable for this array index.
       IdentifierInfo *IterationVarName = 0;
       {
-        llvm::SmallString<8> Str;
+        SmallString<8> Str;
         llvm::raw_svector_ostream OS(Str);
         OS << "__i" << IndexVariables.size();
         IterationVarName = &SemaRef.Context.Idents.get(OS.str());
@@ -7651,7 +7651,7 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
   // Create the iteration variable.
   IdentifierInfo *IterationVarName = 0;
   {
-    llvm::SmallString<8> Str;
+    SmallString<8> Str;
     llvm::raw_svector_ostream OS(Str);
     OS << "__i" << Depth;
     IterationVarName = &S.Context.Idents.get(OS.str());

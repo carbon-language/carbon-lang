@@ -63,7 +63,7 @@ llvm::Constant *CodeGenModule::GetAddrOfThunk(GlobalDecl GD,
   const CXXMethodDecl *MD = cast<CXXMethodDecl>(GD.getDecl());
 
   // Compute the mangled name.
-  llvm::SmallString<256> Name;
+  SmallString<256> Name;
   llvm::raw_svector_ostream Out(Name);
   if (const CXXDestructorDecl* DD = dyn_cast<CXXDestructorDecl>(MD))
     getCXXABI().getMangleContext().mangleCXXDtorThunk(DD, GD.getDtorType(),
@@ -622,7 +622,7 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   if (ShouldEmitVTableInThisTU(RD))
     CGM.DeferredVTables.push_back(RD);
 
-  llvm::SmallString<256> OutName;
+  SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   CGM.getCXXABI().getMangleContext().mangleCXXVTable(RD, Out);
   Out.flush();
@@ -677,7 +677,7 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   AddressPoints = VTLayout->getAddressPoints();
 
   // Get the mangled construction vtable name.
-  llvm::SmallString<256> OutName;
+  SmallString<256> OutName;
   llvm::raw_svector_ostream Out(OutName);
   CGM.getCXXABI().getMangleContext().
     mangleCXXCtorVTable(RD, Base.getBaseOffset().getQuantity(), Base.getBase(), 

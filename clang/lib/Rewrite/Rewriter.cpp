@@ -236,7 +236,7 @@ bool Rewriter::InsertText(SourceLocation Loc, StringRef Str,
   FileID FID;
   unsigned StartOffs = getLocationOffsetAndFileID(Loc, FID);
 
-  llvm::SmallString<128> indentedStr;
+  SmallString<128> indentedStr;
   if (indentNewLines && Str.find('\n') != StringRef::npos) {
     StringRef MB = SourceMgr->getBufferData(FID);
 

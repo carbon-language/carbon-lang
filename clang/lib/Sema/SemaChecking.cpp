@@ -2185,7 +2185,7 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
 
     if (success) {
       // Get the fix string from the fixed format specifier
-      llvm::SmallString<128> buf;
+      SmallString<128> buf;
       llvm::raw_svector_ostream os(buf);
       fixedFS.toString(os);
 
@@ -2344,7 +2344,7 @@ bool CheckScanfHandler::HandleScanfSpecifier(
 
     if (success) {
       // Get the fix string from the fixed format specifier.
-      llvm::SmallString<128> buf;
+      SmallString<128> buf;
       llvm::raw_svector_ostream os(buf);
       fixedFS.toString(os);
 
@@ -2675,7 +2675,7 @@ void Sema::CheckStrlcpycatArguments(const CallExpr *Call,
     return;
   }
 
-  llvm::SmallString<128> sizeString;
+  SmallString<128> sizeString;
   llvm::raw_svector_ostream OS(sizeString);
   OS << "sizeof(";
   DstArg->printPretty(OS, Context, 0, getPrintingPolicy());
@@ -2775,7 +2775,7 @@ void Sema::CheckStrncatArguments(const CallExpr *CE,
     return;
   }
 
-  llvm::SmallString<128> sizeString;
+  SmallString<128> sizeString;
   llvm::raw_svector_ostream OS(sizeString);
   OS << "sizeof(";
   DstArg->printPretty(OS, Context, 0, getPrintingPolicy());

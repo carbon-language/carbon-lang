@@ -220,7 +220,7 @@ const FileEntry *HeaderMap::LookupFile(
 
     // If so, we have a match in the hash table.  Construct the destination
     // path.
-    llvm::SmallString<1024> DestPath;
+    SmallString<1024> DestPath;
     DestPath += getString(B.Prefix);
     DestPath += getString(B.Suffix);
     return FM.getFile(DestPath.str());

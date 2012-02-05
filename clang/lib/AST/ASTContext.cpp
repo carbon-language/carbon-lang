@@ -3966,7 +3966,7 @@ ASTContext::BuildByRefType(StringRef DeclName, QualType Ty) const {
   bool HasCopyAndDispose = BlockRequiresCopying(Ty);
 
   // FIXME: Move up
-  llvm::SmallString<36> Name;
+  SmallString<36> Name;
   llvm::raw_svector_ostream(Name) << "__Block_byref_" <<
                                   ++UniqueBlockByRefTypeID << '_' << DeclName;
   RecordDecl *T;

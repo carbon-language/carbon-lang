@@ -105,7 +105,7 @@ public:
     if (!reachableCode->isReachable(currentBlock))
       return;
 
-    llvm::SmallString<64> buf;
+    SmallString<64> buf;
     llvm::raw_svector_ostream os(buf);
     const char *BugType = 0;
 

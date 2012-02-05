@@ -65,7 +65,7 @@ public:
 
   std::string RewriteFilename(const std::string &Filename, int &fd) {
     fd = -1;
-    llvm::SmallString<128> Path(Filename);
+    SmallString<128> Path(Filename);
     llvm::sys::path::replace_extension(Path,
       NewSuffix + llvm::sys::path::extension(Path));
     return Path.str();
@@ -75,11 +75,11 @@ public:
 class FixItRewriteToTemp : public FixItOptions {
 public:
   std::string RewriteFilename(const std::string &Filename, int &fd) {
-    llvm::SmallString<128> Path;
+    SmallString<128> Path;
     Path = llvm::sys::path::filename(Filename);
     Path += "-%%%%%%%%";
     Path += llvm::sys::path::extension(Filename);
-    llvm::SmallString<128> NewPath;
+    SmallString<128> NewPath;
     llvm::sys::fs::unique_file(Path.str(), fd, NewPath);
     return NewPath.str();
   }

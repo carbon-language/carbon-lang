@@ -155,7 +155,7 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
     if (F.Find(D->getRegion())) {
       if (ExplodedNode *N = C.generateSink()) {
         LazyInit_BT(BT_desc, BT);
-        llvm::SmallString<512> Str;
+        SmallString<512> Str;
         llvm::raw_svector_ostream os(Str);
         os << "Passed-by-value struct argument contains uninitialized data";
 
@@ -271,7 +271,7 @@ void CallAndMessageChecker::emitNilReceiverBug(CheckerContext &C,
       new BuiltinBug("Receiver in message expression is "
                      "'nil' and returns a garbage value"));
 
-  llvm::SmallString<200> buf;
+  SmallString<200> buf;
   llvm::raw_svector_ostream os(buf);
   os << "The receiver of message '" << msg.getSelector().getAsString()
      << "' is nil and returns a value of type '"

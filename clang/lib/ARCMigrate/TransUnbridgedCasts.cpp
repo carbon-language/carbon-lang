@@ -195,7 +195,7 @@ private:
       TA.insertAfterToken(CCE->getLParenLoc(), bridge);
     } else {
       SourceLocation insertLoc = E->getSubExpr()->getLocStart();
-      llvm::SmallString<128> newCast;
+      SmallString<128> newCast;
       newCast += '(';
       newCast += bridge;
       newCast += E->getType().getAsString(Pass.Ctx.getPrintingPolicy());

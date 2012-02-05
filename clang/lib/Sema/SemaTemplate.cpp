@@ -6944,7 +6944,7 @@ std::string
 Sema::getTemplateArgumentBindingsText(const TemplateParameterList *Params,
                                       const TemplateArgument *Args,
                                       unsigned NumArgs) {
-  llvm::SmallString<128> Str;
+  SmallString<128> Str;
   llvm::raw_svector_ostream Out(Str);
 
   if (!Params || Params->size() == 0 || NumArgs == 0)

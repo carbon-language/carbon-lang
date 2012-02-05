@@ -809,7 +809,7 @@ StoredDiagnostic::StoredDiagnostic(DiagnosticsEngine::Level Level,
        "Valid source location without setting a source manager for diagnostic");
   if (Info.getLocation().isValid())
     Loc = FullSourceLoc(Info.getLocation(), Info.getSourceManager());
-  llvm::SmallString<64> Message;
+  SmallString<64> Message;
   Info.FormatDiagnostic(Message);
   this->Message.assign(Message.begin(), Message.end());
 

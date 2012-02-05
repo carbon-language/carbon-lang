@@ -368,7 +368,7 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     if (IT != PrettyFunction && IT != PrettyFunctionNoVirtual)
       return FD->getNameAsString();
 
-    llvm::SmallString<256> Name;
+    SmallString<256> Name;
     llvm::raw_svector_ostream Out(Name);
 
     if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(FD)) {
@@ -421,7 +421,7 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
     return Name.str().str();
   }
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(CurrentDecl)) {
-    llvm::SmallString<256> Name;
+    SmallString<256> Name;
     llvm::raw_svector_ostream Out(Name);
     Out << (MD->isInstanceMethod() ? '-' : '+');
     Out << '[';

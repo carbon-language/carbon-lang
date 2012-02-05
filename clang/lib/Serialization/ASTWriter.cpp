@@ -1016,7 +1016,7 @@ void ASTWriter::WriteMetadata(ASTContext &Context, StringRef isysroot,
     FileAbbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
     unsigned FileAbbrevCode = Stream.EmitAbbrev(FileAbbrev);
 
-    llvm::SmallString<128> MainFilePath(MainFile->getName());
+    SmallString<128> MainFilePath(MainFile->getName());
 
     llvm::sys::fs::make_absolute(MainFilePath);
 
@@ -1039,7 +1039,7 @@ void ASTWriter::WriteMetadata(ASTContext &Context, StringRef isysroot,
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob)); // File name
     unsigned AbbrevCode = Stream.EmitAbbrev(Abbrev);
 
-    llvm::SmallString<128> OutputPath(OutputFile);
+    SmallString<128> OutputPath(OutputFile);
 
     llvm::sys::fs::make_absolute(OutputPath);
     StringRef origDir = llvm::sys::path::parent_path(OutputPath);
@@ -1136,7 +1136,7 @@ void ASTWriter::WriteStatCache(MemorizeStatCalls &StatCalls) {
   }
 
   // Create the on-disk hash table in a buffer.
-  llvm::SmallString<4096> StatCacheData;
+  SmallString<4096> StatCacheData;
   uint32_t BucketOffset;
   {
     llvm::raw_svector_ostream Out(StatCacheData);
@@ -1353,7 +1353,7 @@ void ASTWriter::WriteHeaderSearch(const HeaderSearch &HS, StringRef isysroot) {
   }
   
   // Create the on-disk hash table in a buffer.
-  llvm::SmallString<4096> TableData;
+  SmallString<4096> TableData;
   uint32_t BucketOffset;
   {
     llvm::raw_svector_ostream Out(TableData);
@@ -1471,7 +1471,7 @@ void ASTWriter::WriteSourceManagerBlock(SourceManager &SourceMgr,
         
         // Turn the file name into an absolute path, if it isn't already.
         const char *Filename = Content->OrigEntry->getName();
-        llvm::SmallString<128> FilePath(Filename);
+        SmallString<128> FilePath(Filename);
 
         // Ask the file manager to fixup the relative path for us. This will 
         // honor the working directory.
@@ -1820,7 +1820,7 @@ void ASTWriter::WritePreprocessorDetail(PreprocessingRecord &PPRec) {
       Record.push_back(ID->getFileName().size());
       Record.push_back(ID->wasInQuotes());
       Record.push_back(static_cast<unsigned>(ID->getKind()));
-      llvm::SmallString<64> Buffer;
+      SmallString<64> Buffer;
       Buffer += ID->getFileName();
       Buffer += ID->getFile()->getName();
       Stream.EmitRecordWithBlob(InclusionAbbrev, Record, Buffer);
@@ -2372,7 +2372,7 @@ void ASTWriter::WriteSelectors(Sema &SemaRef) {
     }
 
     // Create the on-disk hash table in a buffer.
-    llvm::SmallString<4096> MethodPool;
+    SmallString<4096> MethodPool;
     uint32_t BucketOffset;
     {
       ASTMethodPoolTrait Trait(*this);
@@ -2600,7 +2600,7 @@ void ASTWriter::WriteIdentifierTable(Preprocessor &PP,
     }
 
     // Create the on-disk hash table in a buffer.
-    llvm::SmallString<4096> IdentifierTable;
+    SmallString<4096> IdentifierTable;
     uint32_t BucketOffset;
     {
       ASTIdentifierTableTrait Trait(*this, PP, IdResolver, IsModule);
@@ -2830,7 +2830,7 @@ uint64_t ASTWriter::WriteDeclContextVisibleBlock(ASTContext &Context,
   }
   
   // Create the on-disk hash table in a buffer.
-  llvm::SmallString<4096> LookupTable;
+  SmallString<4096> LookupTable;
   uint32_t BucketOffset;
   {
     llvm::raw_svector_ostream Out(LookupTable);
@@ -2876,7 +2876,7 @@ void ASTWriter::WriteDeclContextVisibleUpdate(const DeclContext *DC) {
   }
 
   // Create the on-disk hash table in a buffer.
-  llvm::SmallString<4096> LookupTable;
+  SmallString<4096> LookupTable;
   uint32_t BucketOffset;
   {
     llvm::raw_svector_ostream Out(LookupTable);
@@ -3420,7 +3420,7 @@ void ASTWriter::WriteASTCore(Sema &SemaRef, MemorizeStatCalls *StatCalls,
     Abbrev->Add(BitCodeAbbrevOp(MODULE_OFFSET_MAP));
     Abbrev->Add(BitCodeAbbrevOp(BitCodeAbbrevOp::Blob));
     unsigned ModuleOffsetMapAbbrev = Stream.EmitAbbrev(Abbrev);
-    llvm::SmallString<2048> Buffer;
+    SmallString<2048> Buffer;
     {
       llvm::raw_svector_ostream Out(Buffer);
       for (ModuleManager::ModuleConstIterator M = Chain->ModuleMgr.begin(),

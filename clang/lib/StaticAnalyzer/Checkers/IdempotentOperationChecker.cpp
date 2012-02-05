@@ -376,7 +376,7 @@ void IdempotentOperationChecker::checkEndAnalysis(ExplodedGraph &G,
     }
 
     // Select the error message and SourceRanges to report.
-    llvm::SmallString<128> buf;
+    SmallString<128> buf;
     llvm::raw_svector_ostream os(buf);
     bool LHSRelevant = false, RHSRelevant = false;
     switch (A) {

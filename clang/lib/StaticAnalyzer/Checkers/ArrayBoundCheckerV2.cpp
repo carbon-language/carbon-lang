@@ -193,7 +193,7 @@ void ArrayBoundCheckerV2::reportOOB(CheckerContext &checkerContext,
   // FIXME: This diagnostics are preliminary.  We should get far better
   // diagnostics for explaining buffer overruns.
 
-  llvm::SmallString<256> buf;
+  SmallString<256> buf;
   llvm::raw_svector_ostream os(buf);
   os << "Out of bound memory access ";
   switch (kind) {
