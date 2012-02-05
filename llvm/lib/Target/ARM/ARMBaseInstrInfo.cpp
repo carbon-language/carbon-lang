@@ -513,7 +513,7 @@ bool ARMBaseInstrInfo::DefinesPredicate(MachineInstr *MI,
   bool Found = false;
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
-    if (MO.isReg() && MO.getReg() == ARM::CPSR) {
+    if (MO.isReg() && MO.isDef() && MO.getReg() == ARM::CPSR) {
       Pred.push_back(MO);
       Found = true;
     }
