@@ -16,6 +16,7 @@
 #define LLVM_CLANG_AST_CANONICAL_TYPE_H
 
 #include "clang/AST/Type.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/type_traits.h"
 #include <iterator>
