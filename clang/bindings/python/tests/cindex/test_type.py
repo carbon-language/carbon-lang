@@ -97,3 +97,21 @@ def testConstantArray():
             break
     else:
         assert False, "Didn't find teststruct??"
+
+def test_is_pod():
+    index = Index.create()
+    tu = index.parse('t.c', unsaved_files=[('t.c', 'int i; void f();')])
+    assert tu is not None
+    i, f = None, None
+
+    for cursor in tu.cursor.get_children():
+        if cursor.spelling == 'i':
+            i = cursor
+        elif cursor.spelling == 'f':
+            f = cursor
+
+    assert i is not None
+    assert f is not None
+
+    assert i.type.is_pod()
+    assert not f.type.is_pod()

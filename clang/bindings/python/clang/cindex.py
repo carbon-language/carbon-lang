@@ -1178,6 +1178,10 @@ class Type(Structure):
         """
         return Type_is_restrict_qualified(self)
 
+    def is_pod(self):
+        """Determine whether this Type represents plain old data (POD)."""
+        return Type_is_pod(self)
+
     def get_pointee(self):
         """
         For pointer types, returns the type of the pointee.
@@ -1857,6 +1861,10 @@ Type_is_volatile_qualified.restype = bool
 Type_is_restrict_qualified = lib.clang_isRestrictQualifiedType
 Type_is_restrict_qualified.argtypes = [Type]
 Type_is_restrict_qualified.restype = bool
+
+Type_is_pod = lib.clang_isPODType
+Type_is_pod.argtypes = [Type]
+Type_is_pod.restype = bool
 
 Type_get_pointee = lib.clang_getPointeeType
 Type_get_pointee.argtypes = [Type]
