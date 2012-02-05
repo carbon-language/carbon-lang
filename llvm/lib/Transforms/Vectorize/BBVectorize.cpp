@@ -967,8 +967,7 @@ namespace {
           return true;
         }
 
-        if (CurrentPairs.count(C->second) != 0 &&
-            Visited.count(C->second) == 0)
+        if (CurrentPairs.count(C->second) && !Visited.count(C->second))
           Q.push_back(C->second);
       }
     } while (!Q.empty());
