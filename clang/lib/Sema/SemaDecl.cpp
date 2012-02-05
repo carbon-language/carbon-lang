@@ -7302,7 +7302,7 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
     }
 
     if (FD && FD->isConstexpr() && !FD->isInvalidDecl() &&
-        !CheckConstexprFunctionBody(FD, Body))
+        !CheckConstexprFunctionBody(FD, Body, IsInstantiation))
       FD->setInvalidDecl();
 
     assert(ExprCleanupObjects.empty() && "Leftover temporaries in function");

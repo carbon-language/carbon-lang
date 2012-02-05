@@ -837,7 +837,8 @@ static void CheckConstexprCtorInitializer(Sema &SemaRef,
 /// the permitted types of statement. C++11 [dcl.constexpr]p3,p4.
 ///
 /// \return true if the body is OK, false if we have diagnosed a problem.
-bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
+bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body,
+                                      bool IsInstantiation) {
   if (isa<CXXTryStmt>(Body)) {
     // C++11 [dcl.constexpr]p3:
     //  The definition of a constexpr function shall satisfy the following
@@ -989,7 +990,7 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body) {
   // can't produce constant expressions.
   llvm::SmallVector<PartialDiagnosticAt, 8> Diags;
   if (!Context.getSourceManager().isInSystemHeader(Dcl->getLocation()) &&
-      !Expr::isPotentialConstantExpr(Dcl, Diags)) {
+      !IsInstantiation && !Expr::isPotentialConstantExpr(Dcl, Diags)) {
     Diag(Dcl->getLocation(), diag::err_constexpr_function_never_constant_expr)
       << isa<CXXConstructorDecl>(Dcl);
     for (size_t I = 0, N = Diags.size(); I != N; ++I)

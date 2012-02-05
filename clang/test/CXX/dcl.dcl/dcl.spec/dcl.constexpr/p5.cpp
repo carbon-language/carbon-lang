@@ -78,4 +78,29 @@ constexpr bool BcpCall(int n) {
 }
 static_assert(BcpCall(0), "");
 
+// DR1311: A function template which can produce a constant expression, but
+// for which a particular specialization cannot, is ok.
+template<typename T> constexpr T cmin(T a, T b) {
+  return a < b ? a : b;
+}
+int n = cmin(3, 5); // ok
+
+struct X {
+  constexpr X() {}
+  bool operator<(X); // not constexpr
+};
+
+X x = cmin(X(), X()); // ok, not constexpr
+
+// Same with other temploids.
+template<typename T>
+struct Y {
+  constexpr Y() {}
+  constexpr int get() { return T(); }
+};
+struct Z { operator int(); };
+
+int y1 = Y<int>().get(); // ok
+int y2 = Y<Z>().get(); // ok
+
 }

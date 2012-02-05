@@ -1016,7 +1016,8 @@ public:
   };
   bool CheckConstexprFunctionDecl(const FunctionDecl *FD,
                                   CheckConstexprKind CCK);
-  bool CheckConstexprFunctionBody(const FunctionDecl *FD, Stmt *Body);
+  bool CheckConstexprFunctionBody(const FunctionDecl *FD, Stmt *Body,
+                                  bool IsInstantiation);
 
   void DiagnoseHiddenVirtualMethods(CXXRecordDecl *DC, CXXMethodDecl *MD);
   // Returns true if the function declaration is a redeclaration
