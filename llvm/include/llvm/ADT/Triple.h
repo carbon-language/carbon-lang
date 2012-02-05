@@ -284,23 +284,6 @@ public:
     return false;
   }
 
-  /// isMacOSX - Is this a Mac OS X triple. For legacy reasons, we support both
-  /// "darwin" and "osx" as OS X triples.
-  bool isMacOSX() const {
-    return getOS() == Triple::Darwin || getOS() == Triple::MacOSX;
-  }
-
-  /// isOSDarwin - Is this a "Darwin" OS (OS X or iOS).
-  bool isOSDarwin() const {
-    return isMacOSX() || getOS() == Triple::IOS;
-  }
-
-  /// isOSWindows - Is this a "Windows" OS.
-  bool isOSWindows() const {
-    return getOS() == Triple::Win32 || getOS() == Triple::Cygwin ||
-      getOS() == Triple::MinGW32;
-  }
-
   /// isMacOSXVersionLT - Comparison function for checking OS X version
   /// compatibility, which handles supporting skewed version numbering schemes
   /// used by the "darwin" triples.
@@ -315,6 +298,43 @@ public:
     // Otherwise, compare to the "Darwin" number.
     assert(Major == 10 && "Unexpected major version");
     return isOSVersionLT(Minor + 4, Micro, 0);
+  }
+
+  /// isMacOSX - Is this a Mac OS X triple. For legacy reasons, we support both
+  /// "darwin" and "osx" as OS X triples.
+  bool isMacOSX() const {
+    return getOS() == Triple::Darwin || getOS() == Triple::MacOSX;
+  }
+
+  /// isOSDarwin - Is this a "Darwin" OS (OS X or iOS).
+  bool isOSDarwin() const {
+    return isMacOSX() || getOS() == Triple::IOS;
+  }
+
+  /// \brief Tests for either Cygwin or MinGW OS
+  bool isOSCygMing() const {
+    return getOS() == Triple::Cygwin || getOS() == Triple::MinGW32;
+  }
+
+  /// isOSWindows - Is this a "Windows" OS.
+  bool isOSWindows() const {
+    return getOS() == Triple::Win32 || isOSCygMing();
+  }
+
+  /// \brief Tests whether the OS uses the ELF binary format.
+  bool isOSBinFormatELF() const {
+    return !isOSDarwin() && !isOSWindows();
+  }
+
+  /// \brief Tests whether the OS uses the COFF binary format.
+  bool isOSBinFormatCOFF() const {
+    return isOSWindows();
+  }
+
+  /// \brief Tests whether the environment is MachO.
+  // FIXME: Should this be an OSBinFormat predicate?
+  bool isEnvironmentMachO() const {
+    return getEnvironment() == Triple::MachO || isOSDarwin();
   }
 
   /// @}

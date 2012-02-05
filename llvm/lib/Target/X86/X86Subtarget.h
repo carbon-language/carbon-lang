@@ -229,38 +229,28 @@ public:
 
   // ELF is a reasonably sane default and the only other X86 targets we
   // support are Darwin and Windows. Just use "not those".
-  bool isTargetELF() const {
-    return !isTargetDarwin() && !isTargetWindows() && !isTargetCygMing();
-  }
+  bool isTargetELF() const { return TargetTriple.isOSBinFormatELF(); }
   bool isTargetLinux() const { return TargetTriple.getOS() == Triple::Linux; }
   bool isTargetNaCl() const {
     return TargetTriple.getOS() == Triple::NativeClient;
   }
   bool isTargetNaCl32() const { return isTargetNaCl() && !is64Bit(); }
   bool isTargetNaCl64() const { return isTargetNaCl() && is64Bit(); }
-
   bool isTargetWindows() const { return TargetTriple.getOS() == Triple::Win32; }
   bool isTargetMingw() const { return TargetTriple.getOS() == Triple::MinGW32; }
   bool isTargetCygwin() const { return TargetTriple.getOS() == Triple::Cygwin; }
-  bool isTargetCygMing() const {
-    return isTargetMingw() || isTargetCygwin();
-  }
-
-  /// isTargetCOFF - Return true if this is any COFF/Windows target variant.
-  bool isTargetCOFF() const {
-    return isTargetMingw() || isTargetCygwin() || isTargetWindows();
-  }
+  bool isTargetCygMing() const { return TargetTriple.isOSCygMing(); }
+  bool isTargetCOFF() const { return TargetTriple.isOSBinFormatCOFF(); }
+  bool isTargetEnvMacho() const { return TargetTriple.isEnvironmentMachO(); }
 
   bool isTargetWin64() const {
     // FIXME: x86_64-cygwin has not been released yet.
-    return In64BitMode && (isTargetCygMing() || isTargetWindows());
-  }
-
-  bool isTargetEnvMacho() const {
-    return isTargetDarwin() || (TargetTriple.getEnvironment() == Triple::MachO);
+    return In64BitMode && TargetTriple.isOSWindows();
   }
 
   bool isTargetWin32() const {
+    // FIXME: Cygwin is included for isTargetWin64 -- should it be included
+    // here too?
     return !In64BitMode && (isTargetMingw() || isTargetWindows());
   }
 
