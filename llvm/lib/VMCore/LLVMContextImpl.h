@@ -140,16 +140,13 @@ public:
   
   DenseMap<Type*, ConstantAggregateZero*> CAZConstants;
 
-  typedef ConstantUniqueMap<std::vector<Constant*>, ArrayRef<Constant*>,
-    ArrayType, ConstantArray, true /*largekey*/> ArrayConstantsTy;
+  typedef ConstantAggrUniqueMap<ArrayType, ConstantArray> ArrayConstantsTy;
   ArrayConstantsTy ArrayConstants;
   
-  typedef ConstantUniqueMap<std::vector<Constant*>, ArrayRef<Constant*>,
-    StructType, ConstantStruct, true /*largekey*/> StructConstantsTy;
+  typedef ConstantAggrUniqueMap<StructType, ConstantStruct> StructConstantsTy;
   StructConstantsTy StructConstants;
   
-  typedef ConstantUniqueMap<std::vector<Constant*>, ArrayRef<Constant*>,
-                            VectorType, ConstantVector> VectorConstantsTy;
+  typedef ConstantAggrUniqueMap<VectorType, ConstantVector> VectorConstantsTy;
   VectorConstantsTy VectorConstants;
   
   DenseMap<PointerType*, ConstantPointerNull*> CPNConstants;

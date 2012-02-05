@@ -39,6 +39,8 @@ class SequentialType;
 template<class ConstantClass, class TypeClass, class ValType>
 struct ConstantCreator;
 template<class ConstantClass, class TypeClass>
+struct ConstantArrayCreator;
+template<class ConstantClass, class TypeClass>
 struct ConvertConstantType;
 
 //===----------------------------------------------------------------------===//
@@ -343,8 +345,7 @@ public:
 /// ConstantArray - Constant Array Declarations
 ///
 class ConstantArray : public Constant {
-  friend struct ConstantCreator<ConstantArray, ArrayType,
-                                    std::vector<Constant*> >;
+  friend struct ConstantArrayCreator<ConstantArray, ArrayType>;
   ConstantArray(const ConstantArray &);      // DO NOT IMPLEMENT
 protected:
   ConstantArray(ArrayType *T, ArrayRef<Constant *> Val);
@@ -383,8 +384,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantArray, Constant)
 // ConstantStruct - Constant Struct Declarations
 //
 class ConstantStruct : public Constant {
-  friend struct ConstantCreator<ConstantStruct, StructType,
-                                    std::vector<Constant*> >;
+  friend struct ConstantArrayCreator<ConstantStruct, StructType>;
   ConstantStruct(const ConstantStruct &);      // DO NOT IMPLEMENT
 protected:
   ConstantStruct(StructType *T, ArrayRef<Constant *> Val);
@@ -444,8 +444,7 @@ DEFINE_TRANSPARENT_OPERAND_ACCESSORS(ConstantStruct, Constant)
 /// ConstantVector - Constant Vector Declarations
 ///
 class ConstantVector : public Constant {
-  friend struct ConstantCreator<ConstantVector, VectorType,
-                                    std::vector<Constant*> >;
+  friend struct ConstantArrayCreator<ConstantVector, VectorType>;
   ConstantVector(const ConstantVector &);      // DO NOT IMPLEMENT
 protected:
   ConstantVector(VectorType *T, ArrayRef<Constant *> Val);

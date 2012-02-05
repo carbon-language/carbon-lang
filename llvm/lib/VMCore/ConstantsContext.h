@@ -15,6 +15,7 @@
 #ifndef LLVM_CONSTANTSCONTEXT_H
 #define LLVM_CONSTANTSCONTEXT_H
 
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/InlineAsm.h"
 #include "llvm/Instructions.h"
 #include "llvm/Operator.h"
@@ -408,6 +409,13 @@ struct ConstantCreator {
   }
 };
 
+template<class ConstantClass, class TypeClass>
+struct ConstantArrayCreator {
+  static ConstantClass *create(TypeClass *Ty, ArrayRef<Constant*> V) {
+    return new(V.size()) ConstantClass(Ty, V);
+  }
+};
+
 template<class ConstantClass>
 struct ConstantKeyData {
   typedef void ValType;
@@ -476,44 +484,6 @@ struct ConstantKeyData<ConstantExpr> {
           CE->getIndices() : ArrayRef<unsigned>());
   }
 };
-
-
-template<>
-struct ConstantKeyData<ConstantVector> {
-  typedef std::vector<Constant*> ValType;
-  static ValType getValType(ConstantVector *CP) {
-    std::vector<Constant*> Elements;
-    Elements.reserve(CP->getNumOperands());
-    for (unsigned i = 0, e = CP->getNumOperands(); i != e; ++i)
-      Elements.push_back(CP->getOperand(i));
-    return Elements;
-  }
-};
-
-template<>
-struct ConstantKeyData<ConstantArray> {
-  typedef std::vector<Constant*> ValType;
-  static ValType getValType(ConstantArray *CA) {
-    std::vector<Constant*> Elements;
-    Elements.reserve(CA->getNumOperands());
-    for (unsigned i = 0, e = CA->getNumOperands(); i != e; ++i)
-      Elements.push_back(cast<Constant>(CA->getOperand(i)));
-    return Elements;
-  }
-};
-
-template<>
-struct ConstantKeyData<ConstantStruct> {
-  typedef std::vector<Constant*> ValType;
-  static ValType getValType(ConstantStruct *CS) {
-    std::vector<Constant*> Elements;
-    Elements.reserve(CS->getNumOperands());
-    for (unsigned i = 0, e = CS->getNumOperands(); i != e; ++i)
-      Elements.push_back(cast<Constant>(CS->getOperand(i)));
-    return Elements;
-  }
-};
-
 
 template<>
 struct ConstantCreator<InlineAsm, PointerType, InlineAsmKeyType> {
@@ -661,6 +631,159 @@ public:
       assert(I->second == C && "Bad inversemap entry!");
       InverseMap[C] = I;
     }
+  }
+
+  void dump() const {
+    DEBUG(dbgs() << "Constant.cpp: ConstantUniqueMap\n");
+  }
+};
+
+// Unique map for aggregate constants
+template<class TypeClass, class ConstantClass>
+class ConstantAggrUniqueMap {
+public:
+  typedef ArrayRef<Constant*> Operands;
+  typedef std::pair<TypeClass*, Operands> LookupKey;
+private:
+  struct MapInfo {
+    typedef DenseMapInfo<ConstantClass*> ConstantClassInfo;
+    typedef DenseMapInfo<Constant*> ConstantInfo;
+    typedef DenseMapInfo<TypeClass*> TypeClassInfo;
+    static inline ConstantClass* getEmptyKey() {
+      return ConstantClassInfo::getEmptyKey();
+    }
+    static inline ConstantClass* getTombstoneKey() {
+      return ConstantClassInfo::getTombstoneKey();
+    }
+    static unsigned getHashValue(const ConstantClass *CP) {
+      // This is adapted from SuperFastHash by Paul Hsieh.
+      unsigned Hash = TypeClassInfo::getHashValue(CP->getType());
+      for (unsigned I = 0, E = CP->getNumOperands(); I < E; ++I) {
+        unsigned Data = ConstantInfo::getHashValue(CP->getOperand(I));
+        Hash         += Data & 0xFFFF;
+        unsigned Tmp  = ((Data >> 16) << 11) ^ Hash;
+        Hash          = (Hash << 16) ^ Tmp;
+        Hash         += Hash >> 11;
+      }
+
+      // Force "avalanching" of final 127 bits.
+      Hash ^= Hash << 3;
+      Hash += Hash >> 5;
+      Hash ^= Hash << 4;
+      Hash += Hash >> 17;
+      Hash ^= Hash << 25;
+      Hash += Hash >> 6;
+      return Hash;
+    }
+    static bool isEqual(const ConstantClass *LHS, const ConstantClass *RHS) {
+      return LHS == RHS;
+    }
+    static unsigned getHashValue(const LookupKey &Val) {
+      // This is adapted from SuperFastHash by Paul Hsieh.
+      unsigned Hash = TypeClassInfo::getHashValue(Val.first);
+      for (Operands::const_iterator
+        I = Val.second.begin(), E = Val.second.end(); I != E; ++I) {
+        unsigned Data = ConstantInfo::getHashValue(*I);
+        Hash         += Data & 0xFFFF;
+        unsigned Tmp  = ((Data >> 16) << 11) ^ Hash;
+        Hash          = (Hash << 16) ^ Tmp;
+        Hash         += Hash >> 11;
+      }
+
+      // Force "avalanching" of final 127 bits.
+      Hash ^= Hash << 3;
+      Hash += Hash >> 5;
+      Hash ^= Hash << 4;
+      Hash += Hash >> 17;
+      Hash ^= Hash << 25;
+      Hash += Hash >> 6;
+      return Hash;
+    }
+    static bool isEqual(const LookupKey &LHS, const ConstantClass *RHS) {
+      if (RHS == getEmptyKey() || RHS == getTombstoneKey())
+        return false;
+      if (LHS.first != RHS->getType()
+          || LHS.second.size() != RHS->getNumOperands())
+        return false;
+      for (unsigned I = 0, E = RHS->getNumOperands(); I < E; ++I) {
+        if (LHS.second[I] != RHS->getOperand(I))
+          return false;
+      }
+      return true;
+    }
+  };
+public:
+  typedef DenseMap<ConstantClass *, char, MapInfo> MapTy;
+
+private:
+  /// Map - This is the main map from the element descriptor to the Constants.
+  /// This is the primary way we avoid creating two of the same shape
+  /// constant.
+  MapTy Map;
+
+public:
+  typename MapTy::iterator map_begin() { return Map.begin(); }
+  typename MapTy::iterator map_end() { return Map.end(); }
+
+  void freeConstants() {
+    for (typename MapTy::iterator I=Map.begin(), E=Map.end();
+         I != E; ++I) {
+      // Asserts that use_empty().
+      delete I->first;
+    }
+  }
+
+private:
+  typename MapTy::iterator findExistingElement(ConstantClass *CP) {
+    return Map.find(CP);
+  }
+
+  ConstantClass *Create(TypeClass *Ty, Operands V, typename MapTy::iterator I) {
+    ConstantClass* Result =
+      ConstantArrayCreator<ConstantClass,TypeClass>::create(Ty, V);
+
+    assert(Result->getType() == Ty && "Type specified is not correct!");
+    Map[Result] = '\0';
+
+    return Result;
+  }
+public:
+
+  /// getOrCreate - Return the specified constant from the map, creating it if
+  /// necessary.
+  ConstantClass *getOrCreate(TypeClass *Ty, Operands V) {
+    LookupKey Lookup(Ty, V);
+    ConstantClass* Result = 0;
+
+    typename MapTy::iterator I = Map.find_as(Lookup);
+    // Is it in the map?
+    if (I != Map.end())
+      Result = I->first;
+
+    if (!Result) {
+      // If no preexisting value, create one now...
+      Result = Create(Ty, V, I);
+    }
+
+    return Result;
+  }
+
+  /// Find the constant by lookup key.
+  typename MapTy::iterator find(LookupKey Lookup) {
+    return Map.find_as(Lookup);
+  }
+
+  /// Insert the constant into its proper slot.
+  void insert(ConstantClass *CP) {
+    Map[CP] = '\0';
+  }
+
+  /// Remove this constant from the map
+  void remove(ConstantClass *CP) {
+    typename MapTy::iterator I = findExistingElement(CP);
+    assert(I != Map.end() && "Constant not found in constant table!");
+    assert(I->first == CP && "Didn't find correct element?");
+    Map.erase(I);
   }
 
   void dump() const {

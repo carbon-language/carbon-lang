@@ -2388,11 +2388,9 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
 
   LLVMContextImpl *pImpl = getType()->getContext().pImpl;
 
-  std::pair<LLVMContextImpl::ArrayConstantsTy::MapKey, ConstantArray*> Lookup;
-  Lookup.first.first = cast<ArrayType>(getType());
-  Lookup.second = this;
-
-  std::vector<Constant*> &Values = Lookup.first.second;
+  SmallVector<Constant*, 8> Values;
+  LLVMContextImpl::ArrayConstantsTy::LookupKey Lookup;
+  Lookup.first = cast<ArrayType>(getType());
   Values.reserve(getNumOperands());  // Build replacement array.
 
   // Fill values with the modified operands of the constant array.  Also, 
@@ -2408,7 +2406,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
       ++NumUpdated;
     }
     Values.push_back(Val);
-    AllSame = Val == ToC;
+    AllSame &= Val == ToC;
   }
   
   Constant *Replacement = 0;
@@ -2418,18 +2416,18 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = UndefValue::get(getType());
   } else {
     // Check to see if we have this array type already.
-    bool Exists;
+    Lookup.second = makeArrayRef(Values);
     LLVMContextImpl::ArrayConstantsTy::MapTy::iterator I =
-      pImpl->ArrayConstants.InsertOrGetItem(Lookup, Exists);
+      pImpl->ArrayConstants.find(Lookup);
     
-    if (Exists) {
-      Replacement = I->second;
+    if (I != pImpl->ArrayConstants.map_end()) {
+      Replacement = I->first;
     } else {
       // Okay, the new shape doesn't exist in the system yet.  Instead of
       // creating a new constant array, inserting it, replaceallusesof'ing the
       // old with the new, then deleting the old... just update the current one
       // in place!
-      pImpl->ArrayConstants.MoveConstantToNewSlot(this, I);
+      pImpl->ArrayConstants.remove(this);
       
       // Update to the new value.  Optimize for the case when we have a single
       // operand that we're changing, but handle bulk updates efficiently.
@@ -2443,6 +2441,7 @@ void ConstantArray::replaceUsesOfWithOnConstant(Value *From, Value *To,
           if (getOperand(i) == From)
             setOperand(i, ToC);
       }
+      pImpl->ArrayConstants.insert(this);
       return;
     }
   }
@@ -2465,12 +2464,10 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
   unsigned OperandToUpdate = U-OperandList;
   assert(getOperand(OperandToUpdate) == From && "ReplaceAllUsesWith broken!");
 
-  std::pair<LLVMContextImpl::StructConstantsTy::MapKey, ConstantStruct*> Lookup;
-  Lookup.first.first = cast<StructType>(getType());
-  Lookup.second = this;
-  std::vector<Constant*> &Values = Lookup.first.second;
+  SmallVector<Constant*, 8> Values;
+  LLVMContextImpl::StructConstantsTy::LookupKey Lookup;
+  Lookup.first = cast<StructType>(getType());
   Values.reserve(getNumOperands());  // Build replacement struct.
-  
   
   // Fill values with the modified operands of the constant struct.  Also, 
   // compute whether this turns into an all-zeros struct.
@@ -2505,21 +2502,22 @@ void ConstantStruct::replaceUsesOfWithOnConstant(Value *From, Value *To,
     Replacement = UndefValue::get(getType());
   } else {
     // Check to see if we have this struct type already.
-    bool Exists;
+    Lookup.second = makeArrayRef(Values);
     LLVMContextImpl::StructConstantsTy::MapTy::iterator I =
-      pImpl->StructConstants.InsertOrGetItem(Lookup, Exists);
+      pImpl->StructConstants.find(Lookup);
     
-    if (Exists) {
-      Replacement = I->second;
+    if (I != pImpl->StructConstants.map_end()) {
+      Replacement = I->first;
     } else {
       // Okay, the new shape doesn't exist in the system yet.  Instead of
       // creating a new constant struct, inserting it, replaceallusesof'ing the
       // old with the new, then deleting the old... just update the current one
       // in place!
-      pImpl->StructConstants.MoveConstantToNewSlot(this, I);
+      pImpl->StructConstants.remove(this);
       
       // Update to the new value.
       setOperand(OperandToUpdate, ToC);
+      pImpl->StructConstants.insert(this);
       return;
     }
   }

@@ -48,6 +48,16 @@ struct DropReferences {
     P.second->dropAllReferences();
   }
 };
+
+// Temporary - drops pair.first instead of second.
+struct DropFirst {
+  // Takes the value_type of a ConstantUniqueMap's internal map, whose 'second'
+  // is a Constant*.
+  template<typename PairT>
+  void operator()(const PairT &P) {
+    P.first->dropAllReferences();
+  }
+};
 }
 
 LLVMContextImpl::~LLVMContextImpl() {
@@ -63,11 +73,11 @@ LLVMContextImpl::~LLVMContextImpl() {
   std::for_each(ExprConstants.map_begin(), ExprConstants.map_end(),
                 DropReferences());
   std::for_each(ArrayConstants.map_begin(), ArrayConstants.map_end(),
-                DropReferences());
+                DropFirst());
   std::for_each(StructConstants.map_begin(), StructConstants.map_end(),
-                DropReferences());
+                DropFirst());
   std::for_each(VectorConstants.map_begin(), VectorConstants.map_end(),
-                DropReferences());
+                DropFirst());
   ExprConstants.freeConstants();
   ArrayConstants.freeConstants();
   StructConstants.freeConstants();
