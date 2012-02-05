@@ -1,4 +1,4 @@
-from clang.cindex import Index, File, SourceLocation, Cursor
+from clang.cindex import Index, File, SourceLocation, SourceRange, Cursor
 
 baseInput="int one;\nint two;\n"
 
@@ -47,6 +47,12 @@ def test_location():
         if n.spelling == 'one':
             assert n == cursor
 
+    # Ensure locations referring to the same entity are equivalent.
+    location2 = SourceLocation.from_position(tu, file, 1, 5)
+    assert location == location2
+    location3 = SourceLocation.from_position(tu, file, 1, 4)
+    assert location2 != location3
+
 def test_extent():
     index = Index.create()
     tu = index.parse('t.c', unsaved_files = [('t.c',baseInput)])
@@ -60,3 +66,15 @@ def test_extent():
             assert_location(n.extent.start,line=2,column=1,offset=9)
             assert_location(n.extent.end,line=2,column=8,offset=16)
             assert baseInput[n.extent.start.offset:n.extent.end.offset] == "int two"
+
+    file = File.from_name(tu, 't.c')
+    location1 = SourceLocation.from_position(tu, file, 1, 1)
+    location2 = SourceLocation.from_position(tu, file, 1, 8)
+
+    range1 = SourceRange.from_locations(location1, location2)
+    range2 = SourceRange.from_locations(location1, location2)
+    assert range1 == range2
+
+    location3 = SourceLocation.from_position(tu, file, 1, 6)
+    range3 = SourceRange.from_locations(location1, location3)
+    assert range1 != range3
