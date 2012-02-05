@@ -4085,6 +4085,18 @@ SymbolFileDWARF::FindCompleteObjCDefinitionTypeForDIE (const DWARFDebugInfoEntry
     return type_sp;
 }
 
+//----------------------------------------------------------------------
+// This function helps to ensure that the declaration contexts match for
+// two different DIEs. Often times debug information will refer to a 
+// forward declaration of a type (the equivalent of "struct my_struct;".
+// There will often be a declaration of that type elsewhere that has the
+// full definition. When we go looking for the full type "my_struct", we
+// will find one or more matches in the accelerator tables and we will
+// then need to make sure the type was in the same declaration context 
+// as the original DIE. This function can efficiently compare two DIEs
+// and will return true when the declaration context matches, and false
+// when they don't. 
+//----------------------------------------------------------------------
 bool
 SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugInfoEntry *die1,
                                        DWARFCompileUnit* cu2, const DWARFDebugInfoEntry *die2)
@@ -4092,12 +4104,32 @@ SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugIn
     assert (die1 != die2);
     DWARFDIECollection decl_ctx_1;
     DWARFDIECollection decl_ctx_2;
+    //The declaration DIE stack is a stack of the declaration context 
+    // DIEs all the way back to the compile unit. If a type "T" is
+    // declared inside a class "B", and class "B" is declared inside
+    // a class "A" and class "A" is in a namespace "lldb", and the
+    // namespace is in a compile unit, there will be a stack of DIEs:
+    //
+    //   [0] DW_TAG_class_type for "B"
+    //   [1] DW_TAG_class_type for "A"
+    //   [2] DW_TAG_namespace  for "lldb"
+    //   [3] DW_TAG_compile_unit for the source file.
+    // 
+    // We grab both contexts and make sure that everything matches 
+    // all the way back to the compiler unit.
+    
+    // First lets grab the decl contexts for both DIEs
     die1->GetDeclContextDIEs (this, cu1, decl_ctx_1);
     die2->GetDeclContextDIEs (this, cu2, decl_ctx_2);
+    // Make sure the context arrays have the same size, otherwise
+    // we are done
     const size_t count1 = decl_ctx_1.Size();
     const size_t count2 = decl_ctx_2.Size();
     if (count1 != count2)
         return false;
+    
+    // Make sure the DW_TAG values match all the way back up the the
+    // compile unit. If they don't, then we are done.
     const DWARFDebugInfoEntry *decl_ctx_die1;
     const DWARFDebugInfoEntry *decl_ctx_die2;
     size_t i;
@@ -4108,12 +4140,16 @@ SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugIn
         if (decl_ctx_die1->Tag() != decl_ctx_die2->Tag())
             return false;
     }
-    // Make sure the top item in the decl context die array is always a compile unit
 #if defined LLDB_CONFIGURATION_DEBUG
+
+    // Make sure the top item in the decl context die array is always 
+    // DW_TAG_compile_unit. If it isn't then something went wrong in
+    // the DWARFDebugInfoEntry::GetDeclContextDIEs() function...
     assert (decl_ctx_1.GetDIEPtrAtIndex (count1 - 1)->Tag() == DW_TAG_compile_unit);
+
 #endif
     // Always skip the compile unit when comparing by only iterating up to
-    // "count1 - 1"
+    // "count - 1". Here we compare the names as we go. 
     for (i=0; i<count1 - 1; i++)
     {
         decl_ctx_die1 = decl_ctx_1.GetDIEPtrAtIndex (i);
@@ -4124,6 +4160,8 @@ SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugIn
         // be the same!
         if (name1 != name2)
         {
+            // Name pointers are not equal, so only compare the strings
+            // if both are not NULL.
             if (name1 && name2)
             {
                 // If the strings don't compare, we are done...
@@ -4137,6 +4175,8 @@ SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugIn
             }
         }
     }
+    // We made it through all of the checks and the declaration contexts
+    // are equal.
     return true;
 }
                                           
