@@ -247,7 +247,7 @@ suite>. Test suites serve to define the format of the tests they contain, the
 logic for finding those tests, and any additional information to run the tests.
 
 B<lit> identifies test suites as directories containing I<lit.cfg> or
-I<lit.site.cfg> files (see also B<--config-prefix>. Test suites are initially
+I<lit.site.cfg> files (see also B<--config-prefix>). Test suites are initially
 discovered by recursively searching up the directory hierarchy for all the input
 files passed on the command line. You can use B<--show-suites> to display the
 discovered test suites at startup.
