@@ -219,7 +219,7 @@ namespace llvm {
       // VZEXT_MOVL - Vector move low and zero extend.
       VZEXT_MOVL,
 
-      // VZEXT_MOVL - Vector move low and sign extend.
+      // VSEXT_MOVL - Vector move low and sign extend.
       VSEXT_MOVL,
 
       // VSHL, VSRL - 128-bit vector logical left / right shift
@@ -282,6 +282,9 @@ namespace llvm {
       VPERMILP,
       VPERM2X128,
       VBROADCAST,
+
+      // PMULUDQ - Vector multiply packed unsigned doubleword integers
+      PMULUDQ,
 
       // VASTART_SAVE_XMM_REGS - Save xmm argument registers to the stack,
       // according to %al. An operator is needed so that this can be expanded

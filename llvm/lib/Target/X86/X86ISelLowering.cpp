@@ -9426,6 +9426,10 @@ X86TargetLowering::LowerINTRINSIC_WO_CHAIN(SDValue Op, SelectionDAG &DAG) const 
   }
 
   // Arithmetic intrinsics.
+  case Intrinsic::x86_sse2_pmulu_dq:
+  case Intrinsic::x86_avx2_pmulu_dq:
+    return DAG.getNode(X86ISD::PMULUDQ, dl, Op.getValueType(),
+                       Op.getOperand(1), Op.getOperand(2));
   case Intrinsic::x86_sse3_hadd_ps:
   case Intrinsic::x86_sse3_hadd_pd:
   case Intrinsic::x86_avx_hadd_ps_256:
@@ -10085,78 +10089,46 @@ SDValue X86TargetLowering::LowerMUL(SDValue Op, SelectionDAG &DAG) const {
   if (VT.getSizeInBits() == 256 && !Subtarget->hasAVX2())
     return Lower256IntArith(Op, DAG);
 
+  assert((VT == MVT::v2i64 || VT == MVT::v4i64) &&
+         "Only know how to lower V2I64/V4I64 multiply");
+
   DebugLoc dl = Op.getDebugLoc();
+
+  //  Ahi = psrlqi(a, 32);
+  //  Bhi = psrlqi(b, 32);
+  //
+  //  AloBlo = pmuludq(a, b);
+  //  AloBhi = pmuludq(a, Bhi);
+  //  AhiBlo = pmuludq(Ahi, b);
+
+  //  AloBhi = psllqi(AloBhi, 32);
+  //  AhiBlo = psllqi(AhiBlo, 32);
+  //  return AloBlo + AloBhi + AhiBlo;
 
   SDValue A = Op.getOperand(0);
   SDValue B = Op.getOperand(1);
 
-  if (VT == MVT::v4i64) {
-    assert(Subtarget->hasAVX2() && "Lowering v4i64 multiply requires AVX2");
+  SDValue ShAmt = DAG.getConstant(32, MVT::i32);
 
-    //  ulong2 Ahi = __builtin_ia32_psrlqi256( a, 32);
-    //  ulong2 Bhi = __builtin_ia32_psrlqi256( b, 32);
-    //  ulong2 AloBlo = __builtin_ia32_pmuludq256( a, b );
-    //  ulong2 AloBhi = __builtin_ia32_pmuludq256( a, Bhi );
-    //  ulong2 AhiBlo = __builtin_ia32_pmuludq256( Ahi, b );
-    //
-    //  AloBhi = __builtin_ia32_psllqi256( AloBhi, 32 );
-    //  AhiBlo = __builtin_ia32_psllqi256( AhiBlo, 32 );
-    //  return AloBlo + AloBhi + AhiBlo;
+  SDValue Ahi = DAG.getNode(X86ISD::VSRLI, dl, VT, A, ShAmt);
+  SDValue Bhi = DAG.getNode(X86ISD::VSRLI, dl, VT, B, ShAmt);
 
-    SDValue Ahi = DAG.getNode(X86ISD::VSRLI, dl, VT, A,
-                              DAG.getConstant(32, MVT::i32));
-    SDValue Bhi = DAG.getNode(X86ISD::VSRLI, dl, VT, B,
-                              DAG.getConstant(32, MVT::i32));
-    SDValue AloBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_pmulu_dq, MVT::i32),
-                         A, B);
-    SDValue AloBhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_pmulu_dq, MVT::i32),
-                         A, Bhi);
-    SDValue AhiBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                         DAG.getConstant(Intrinsic::x86_avx2_pmulu_dq, MVT::i32),
-                         Ahi, B);
-    AloBhi = DAG.getNode(X86ISD::VSHLI, dl, VT, AloBhi,
-                         DAG.getConstant(32, MVT::i32));
-    AhiBlo = DAG.getNode(X86ISD::VSHLI, dl, VT, AhiBlo,
-                         DAG.getConstant(32, MVT::i32));
-    SDValue Res = DAG.getNode(ISD::ADD, dl, VT, AloBlo, AloBhi);
-    Res = DAG.getNode(ISD::ADD, dl, VT, Res, AhiBlo);
-    return Res;
-  }
+  // Bit cast to 32-bit vectors for MULUDQ
+  EVT MulVT = (VT == MVT::v2i64) ? MVT::v4i32 : MVT::v8i32;
+  A = DAG.getNode(ISD::BITCAST, dl, MulVT, A);
+  B = DAG.getNode(ISD::BITCAST, dl, MulVT, B);
+  Ahi = DAG.getNode(ISD::BITCAST, dl, MulVT, Ahi);
+  Bhi = DAG.getNode(ISD::BITCAST, dl, MulVT, Bhi);
 
-  assert(VT == MVT::v2i64 && "Only know how to lower V2I64 multiply");
+  SDValue AloBlo = DAG.getNode(X86ISD::PMULUDQ, dl, VT, A, B);
+  SDValue AloBhi = DAG.getNode(X86ISD::PMULUDQ, dl, VT, A, Bhi);
+  SDValue AhiBlo = DAG.getNode(X86ISD::PMULUDQ, dl, VT, Ahi, B);
 
-  //  ulong2 Ahi = __builtin_ia32_psrlqi128( a, 32);
-  //  ulong2 Bhi = __builtin_ia32_psrlqi128( b, 32);
-  //  ulong2 AloBlo = __builtin_ia32_pmuludq128( a, b );
-  //  ulong2 AloBhi = __builtin_ia32_pmuludq128( a, Bhi );
-  //  ulong2 AhiBlo = __builtin_ia32_pmuludq128( Ahi, b );
-  //
-  //  AloBhi = __builtin_ia32_psllqi128( AloBhi, 32 );
-  //  AhiBlo = __builtin_ia32_psllqi128( AhiBlo, 32 );
-  //  return AloBlo + AloBhi + AhiBlo;
+  AloBhi = DAG.getNode(X86ISD::VSHLI, dl, VT, AloBhi, ShAmt);
+  AhiBlo = DAG.getNode(X86ISD::VSHLI, dl, VT, AhiBlo, ShAmt);
 
-  SDValue Ahi = DAG.getNode(X86ISD::VSRLI, dl, VT, A,
-                            DAG.getConstant(32, MVT::i32));
-  SDValue Bhi = DAG.getNode(X86ISD::VSRLI, dl, VT, B,
-                            DAG.getConstant(32, MVT::i32));
-  SDValue AloBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_sse2_pmulu_dq, MVT::i32),
-                       A, B);
-  SDValue AloBhi = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_sse2_pmulu_dq, MVT::i32),
-                       A, Bhi);
-  SDValue AhiBlo = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, dl, VT,
-                       DAG.getConstant(Intrinsic::x86_sse2_pmulu_dq, MVT::i32),
-                       Ahi, B);
-  AloBhi = DAG.getNode(X86ISD::VSHLI, dl, VT, AloBhi,
-                       DAG.getConstant(32, MVT::i32));
-  AhiBlo = DAG.getNode(X86ISD::VSHLI, dl, VT, AhiBlo,
-                       DAG.getConstant(32, MVT::i32));
   SDValue Res = DAG.getNode(ISD::ADD, dl, VT, AloBlo, AloBhi);
-  Res = DAG.getNode(ISD::ADD, dl, VT, Res, AhiBlo);
-  return Res;
+  return DAG.getNode(ISD::ADD, dl, VT, Res, AhiBlo);
 }
 
 SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
@@ -11092,6 +11064,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::VBROADCAST:         return "X86ISD::VBROADCAST";
   case X86ISD::VPERMILP:           return "X86ISD::VPERMILP";
   case X86ISD::VPERM2X128:         return "X86ISD::VPERM2X128";
+  case X86ISD::PMULUDQ:            return "X86ISD::PMULUDQ";
   case X86ISD::VASTART_SAVE_XMM_REGS: return "X86ISD::VASTART_SAVE_XMM_REGS";
   case X86ISD::VAARG_64:           return "X86ISD::VAARG_64";
   case X86ISD::WIN_ALLOCA:         return "X86ISD::WIN_ALLOCA";

@@ -3530,6 +3530,26 @@ multiclass PDI_binop_rmi<bits<8> opc, bits<8> opc2, Format ImmForm,
        [(set RC:$dst, (DstVT (OpNode2 RC:$src1, (i32 imm:$src2))))]>;
 }
 
+/// PDI_binop_rm - Simple SSE2 binary operator with different src and dst types
+multiclass PDI_binop_rm2<bits<8> opc, string OpcodeStr, SDNode OpNode,
+                         ValueType DstVT, ValueType SrcVT, RegisterClass RC,
+                         PatFrag memop_frag, X86MemOperand x86memop,
+                         bit IsCommutable = 0, bit Is2Addr = 1> {
+  let isCommutable = IsCommutable in
+  def rr : PDI<opc, MRMSrcReg, (outs RC:$dst),
+       (ins RC:$src1, RC:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (DstVT (OpNode (SrcVT RC:$src1), RC:$src2)))]>;
+  def rm : PDI<opc, MRMSrcMem, (outs RC:$dst),
+       (ins RC:$src1, x86memop:$src2),
+       !if(Is2Addr,
+           !strconcat(OpcodeStr, "\t{$src2, $dst|$dst, $src2}"),
+           !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}")),
+       [(set RC:$dst, (DstVT (OpNode (SrcVT RC:$src1),
+                                     (bitconvert (memop_frag addr:$src2)))))]>;
+}
 } // ExeDomain = SSEPackedInt
 
 // 128-bit Integer Arithmetic
@@ -3553,6 +3573,8 @@ defm VPSUBD : PDI_binop_rm<0xFA, "vpsubd", sub, v4i32, VR128, memopv2i64,
                             i128mem, 0, 0>, VEX_4V;
 defm VPSUBQ : PDI_binop_rm<0xFB, "vpsubq", sub, v2i64, VR128, memopv2i64,
                             i128mem, 0, 0>, VEX_4V;
+defm VPMULUDQ : PDI_binop_rm2<0xF4, "vpmuludq", X86pmuludq, v2i64, v4i32, VR128,
+                              memopv2i64, i128mem, 1, 0>, VEX_4V;
 
 // Intrinsic forms
 defm VPSUBSB  : PDI_binop_rm_int<0xE8, "vpsubsb" , int_x86_sse2_psubs_b,
@@ -3574,8 +3596,6 @@ defm VPADDUSW : PDI_binop_rm_int<0xDD, "vpaddusw", int_x86_sse2_paddus_w,
 defm VPMULHUW : PDI_binop_rm_int<0xE4, "vpmulhuw", int_x86_sse2_pmulhu_w,
                                  VR128, memopv2i64, i128mem, 1, 0>, VEX_4V;
 defm VPMULHW  : PDI_binop_rm_int<0xE5, "vpmulhw" , int_x86_sse2_pmulh_w,
-                                 VR128, memopv2i64, i128mem, 1, 0>, VEX_4V;
-defm VPMULUDQ : PDI_binop_rm_int<0xF4, "vpmuludq", int_x86_sse2_pmulu_dq,
                                  VR128, memopv2i64, i128mem, 1, 0>, VEX_4V;
 defm VPMADDWD : PDI_binop_rm_int<0xF5, "vpmaddwd", int_x86_sse2_pmadd_wd,
                                  VR128, memopv2i64, i128mem, 1, 0>, VEX_4V;
@@ -3614,6 +3634,8 @@ defm VPSUBDY  : PDI_binop_rm<0xFA, "vpsubd", sub, v8i32, VR256, memopv4i64,
                              i256mem, 0, 0>, VEX_4V;
 defm VPSUBQY  : PDI_binop_rm<0xFB, "vpsubq", sub, v4i64, VR256, memopv4i64,
                              i256mem, 0, 0>, VEX_4V;
+defm VPMULUDQY : PDI_binop_rm2<0xF4, "vpmuludq", X86pmuludq, v4i64, v8i32,
+                               VR256, memopv4i64, i256mem, 1, 0>, VEX_4V;
 
 // Intrinsic forms
 defm VPSUBSBY  : PDI_binop_rm_int<0xE8, "vpsubsb" , int_x86_avx2_psubs_b,
@@ -3635,8 +3657,6 @@ defm VPADDUSWY : PDI_binop_rm_int<0xDD, "vpaddusw", int_x86_avx2_paddus_w,
 defm VPMULHUWY : PDI_binop_rm_int<0xE4, "vpmulhuw", int_x86_avx2_pmulhu_w,
                                   VR256, memopv4i64, i256mem, 1, 0>, VEX_4V;
 defm VPMULHWY  : PDI_binop_rm_int<0xE5, "vpmulhw" , int_x86_avx2_pmulh_w,
-                                  VR256, memopv4i64, i256mem, 1, 0>, VEX_4V;
-defm VPMULUDQY : PDI_binop_rm_int<0xF4, "vpmuludq", int_x86_avx2_pmulu_dq,
                                   VR256, memopv4i64, i256mem, 1, 0>, VEX_4V;
 defm VPMADDWDY : PDI_binop_rm_int<0xF5, "vpmaddwd", int_x86_avx2_pmadd_wd,
                                   VR256, memopv4i64, i256mem, 1, 0>, VEX_4V;
@@ -3675,6 +3695,8 @@ defm PSUBD : PDI_binop_rm<0xFA, "psubd", sub, v4i32, VR128, memopv2i64,
                           i128mem>;
 defm PSUBQ : PDI_binop_rm<0xFB, "psubq", sub, v2i64, VR128, memopv2i64,
                           i128mem>;
+defm PMULUDQ : PDI_binop_rm2<0xF4, "pmuludq", X86pmuludq, v2i64, v4i32, VR128,
+                             memopv2i64, i128mem, 1>;
 
 // Intrinsic forms
 defm PSUBSB  : PDI_binop_rm_int<0xE8, "psubsb" , int_x86_sse2_psubs_b,
@@ -3696,8 +3718,6 @@ defm PADDUSW : PDI_binop_rm_int<0xDD, "paddusw", int_x86_sse2_paddus_w,
 defm PMULHUW : PDI_binop_rm_int<0xE4, "pmulhuw", int_x86_sse2_pmulhu_w,
                                 VR128, memopv2i64, i128mem, 1>;
 defm PMULHW  : PDI_binop_rm_int<0xE5, "pmulhw" , int_x86_sse2_pmulh_w,
-                                VR128, memopv2i64, i128mem, 1>;
-defm PMULUDQ : PDI_binop_rm_int<0xF4, "pmuludq", int_x86_sse2_pmulu_dq,
                                 VR128, memopv2i64, i128mem, 1>;
 defm PMADDWD : PDI_binop_rm_int<0xF5, "pmaddwd", int_x86_sse2_pmadd_wd,
                                 VR128, memopv2i64, i128mem, 1>;
