@@ -267,6 +267,29 @@ class Diagnostic(object):
 
         return FixItIterator(self)
 
+    @property
+    def category_number(self):
+        """The category number for this diagnostic."""
+        return _clang_getDiagnosticCategory(self)
+
+    @property
+    def category_name(self):
+        """The string name of the category for this diagnostic."""
+        return _clang_getDiagnosticCategoryName(self.category_number)
+
+    @property
+    def option(self):
+        """The command-line option that enables this diagnostic."""
+        return _clang_getDiagnosticOption(self, None)
+
+    @property
+    def disable_option(self):
+        """The command-line option that disables this diagnostic."""
+        disable = _CXString()
+        _clang_getDiagnosticOption(self, byref(disable))
+
+        return _CXString_getCString(disable)
+
     def __repr__(self):
         return "<Diagnostic severity %r, location %r, spelling %r>" % (
             self.severity, self.location, self.spelling)
@@ -1204,6 +1227,20 @@ _clang_getDiagnosticFixIt = lib.clang_getDiagnosticFixIt
 _clang_getDiagnosticFixIt.argtypes = [Diagnostic, c_uint, POINTER(SourceRange)]
 _clang_getDiagnosticFixIt.restype = _CXString
 _clang_getDiagnosticFixIt.errcheck = _CXString.from_result
+
+_clang_getDiagnosticCategory = lib.clang_getDiagnosticCategory
+_clang_getDiagnosticCategory.argtypes = [Diagnostic]
+_clang_getDiagnosticCategory.restype = c_uint
+
+_clang_getDiagnosticCategoryName = lib.clang_getDiagnosticCategoryName
+_clang_getDiagnosticCategoryName.argtypes = [c_uint]
+_clang_getDiagnosticCategoryName.restype = _CXString
+_clang_getDiagnosticCategoryName.errcheck = _CXString.from_result
+
+_clang_getDiagnosticOption = lib.clang_getDiagnosticOption
+_clang_getDiagnosticOption.argtypes = [Diagnostic, POINTER(_CXString)]
+_clang_getDiagnosticOption.restype = _CXString
+_clang_getDiagnosticOption.errcheck = _CXString.from_result
 
 ###
 

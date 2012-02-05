@@ -1,8 +1,13 @@
 from clang.cindex import *
 
-def tu_from_source(source):
+def tu_from_source(source, all_warnings=False):
+    args = []
+    if all_warnings:
+        args = ['-Wall', '-Wextra']
+
     index = Index.create()
-    tu = index.parse('INPUT.c', unsaved_files = [('INPUT.c', source)])
+    tu = index.parse('INPUT.c', args=args,
+            unsaved_files = [('INPUT.c', source)])
     return tu
 
 # FIXME: We need support for invalid translation units to test better.
@@ -65,5 +70,28 @@ def test_diagnostic_range():
       assert True
     else:
       assert False
-      
+
+def test_diagnostic_category():
+    # Ensure that category properties work.
+    index = Index.create()
+    tu = tu_from_source("""int f(int i) { return 7; }""", all_warnings=True)
+    assert len(tu.diagnostics) == 1
+    d = tu.diagnostics[0]
+
+    assert d.severity == Diagnostic.Warning
+    assert d.location.line == 1
+    assert d.location.column == 11
+
+    assert d.category_number == 2
+    assert d.category_name == 'Semantic Issue'
+
+def test_diagnostic_option():
+    # Ensure that category option properties work.
+    index = Index.create()
+    tu = tu_from_source("""int f(int i) { return 7; }""", all_warnings=True)
+    assert len(tu.diagnostics) == 1
+    d = tu.diagnostics[0]
+
+    assert d.option == '-Wunused-parameter'
+    assert d.disable_option == '-Wno-unused-parameter'
 
