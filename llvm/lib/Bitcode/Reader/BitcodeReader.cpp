@@ -1092,33 +1092,17 @@ bool BitcodeReader::ParseConstants() {
       }
       break;
     }
-    case bitc::CST_CODE_STRING: { // STRING: [values]
-      if (Record.empty())
-        return Error("Invalid CST_AGGREGATE record");
-
-      ArrayType *ATy = cast<ArrayType>(CurTy);
-      Type *EltTy = ATy->getElementType();
-
-      unsigned Size = Record.size();
-      SmallVector<Constant*, 16> Elts;
-      for (unsigned i = 0; i != Size; ++i)
-        Elts.push_back(ConstantInt::get(EltTy, Record[i]));
-      V = ConstantArray::get(ATy, Elts);
-      break;
-    }
+    case bitc::CST_CODE_STRING:    // STRING: [values]
     case bitc::CST_CODE_CSTRING: { // CSTRING: [values]
       if (Record.empty())
-        return Error("Invalid CST_AGGREGATE record");
-
-      ArrayType *ATy = cast<ArrayType>(CurTy);
-      Type *EltTy = ATy->getElementType();
+        return Error("Invalid CST_STRING record");
 
       unsigned Size = Record.size();
-      SmallVector<Constant*, 16> Elts;
+      SmallString<16> Elts;
       for (unsigned i = 0; i != Size; ++i)
-        Elts.push_back(ConstantInt::get(EltTy, Record[i]));
-      Elts.push_back(Constant::getNullValue(EltTy));
-      V = ConstantArray::get(ATy, Elts);
+        Elts.push_back(Record[i]);
+      V = ConstantDataArray::getString(Context, Elts,
+                                       BitCode == bitc::CST_CODE_CSTRING);
       break;
     }
     case bitc::CST_CODE_DATA: {// DATA: [n x value]
