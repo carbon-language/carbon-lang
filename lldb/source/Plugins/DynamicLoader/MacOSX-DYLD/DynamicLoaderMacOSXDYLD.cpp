@@ -286,6 +286,10 @@ DynamicLoaderMacOSXDYLD::FindTargetModuleForDYLDImageInfo (const DYLDImageInfo &
                 module_sp = m_process->GetTarget().GetSharedModule (image_info.file_spec,
                                                                     arch,
                                                                     image_info_uuid_is_valid ? &image_info.uuid : NULL);
+                if (!module_sp || module_sp->GetObjectFile() == NULL)
+                    module_sp = m_process->ReadModuleFromMemory (image_info.file_spec,
+                                                                 image_info.address);
+
                 if (did_create_ptr)
                     *did_create_ptr = module_sp;
             }
@@ -752,6 +756,11 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfos (DYLDImageInfo::collection &i
                                                                               NULL,
                                                                               &commpage_dbstr,
                                                                               objfile->GetOffset() + commpage_section->GetFileOffset());
+                            if (!commpage_image_module_sp || commpage_image_module_sp->GetObjectFile() == NULL)
+                                commpage_image_module_sp = m_process->ReadModuleFromMemory (image_infos[idx].file_spec,
+                                                                                            image_infos[idx].address);
+                            
+
                         }
                         if (commpage_image_module_sp)
                             UpdateCommPageLoadAddress (commpage_image_module_sp.get());
@@ -1216,6 +1225,9 @@ DynamicLoaderMacOSXDYLD::UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::co
             exe_module_sp = m_process->GetTarget().GetSharedModule (image_infos[exe_idx].file_spec,
                                                                     exe_arch_spec,
                                                                     &image_infos[exe_idx].uuid);
+            if (!exe_module_sp || exe_module_sp->GetObjectFile() == NULL)
+                exe_module_sp = m_process->ReadModuleFromMemory (image_infos[exe_idx].file_spec,
+                                                                 image_infos[exe_idx].address);
         }
         
         if (exe_module_sp)

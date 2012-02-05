@@ -118,7 +118,7 @@ private:
     GetCFIData();
 
     ObjectFile&                 m_objfile;
-    lldb::SectionSP             m_section;
+    lldb::SectionSP             m_section_sp;
     lldb::RegisterKind          m_reg_kind;
     Flags                       m_flags;
     cie_map_t                   m_cie_map;

@@ -42,6 +42,11 @@ public:
                     lldb::addr_t offset,
                     lldb::addr_t length);
     
+    static lldb_private::ObjectFile *
+    CreateMemoryInstance (lldb_private::Module* module, 
+                          lldb::DataBufferSP& data_sp, 
+                          const lldb::ProcessSP &process_sp, 
+                          lldb::addr_t header_addr);
     static bool
     MagicBytesMatch (lldb::DataBufferSP& dataSP);
     

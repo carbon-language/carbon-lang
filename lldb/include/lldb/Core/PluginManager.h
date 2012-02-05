@@ -137,16 +137,23 @@ public:
     static bool
     RegisterPlugin (const char *name,
                     const char *description,
-                    ObjectFileCreateInstance create_callback);
+                    ObjectFileCreateInstance create_callback,
+                    ObjectFileCreateMemoryInstance create_memory_callback);
 
     static bool
     UnregisterPlugin (ObjectFileCreateInstance create_callback);
 
     static ObjectFileCreateInstance
     GetObjectFileCreateCallbackAtIndex (uint32_t idx);
+    
+    static ObjectFileCreateMemoryInstance
+    GetObjectFileCreateMemoryCallbackAtIndex (uint32_t idx);
 
     static ObjectFileCreateInstance
     GetObjectFileCreateCallbackForPluginName (const char *name);
+
+    static ObjectFileCreateMemoryInstance
+    GetObjectFileCreateMemoryCallbackForPluginName (const char *name);
 
 
     //------------------------------------------------------------------

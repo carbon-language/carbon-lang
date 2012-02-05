@@ -275,7 +275,7 @@ SymbolFileDWARF::InitializeObject()
         // Memory map the DWARF mach-o segment so we have everything mmap'ed
         // to keep our heap memory usage down.
         if (section)
-            section->MemoryMapSectionDataFromObjectFile(m_obj_file, m_dwarf_data);
+            m_obj_file->MemoryMapSectionData(section, m_dwarf_data);
     }
     get_apple_names_data();
     if (m_data_apple_names.GetByteSize() > 0)
@@ -460,7 +460,7 @@ SymbolFileDWARF::GetCachedSectionData (uint32_t got_flag, SectionType sect_type,
                 }
                 else
                 {
-                    if (section->ReadSectionDataFromObjectFile(m_obj_file, data) == 0)
+                    if (m_obj_file->ReadSectionData (section, data) == 0)
                         data.Clear();
                 }
             }

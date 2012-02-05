@@ -120,7 +120,8 @@ ObjectFilePECOFF::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    GetPluginDescriptionStatic(),
-                                   CreateInstance);
+                                   CreateInstance,
+                                   CreateMemoryInstance);
 }
 
 void
@@ -152,6 +153,15 @@ ObjectFilePECOFF::CreateInstance (Module* module, DataBufferSP& dataSP, const Fi
         if (objfile_ap.get() && objfile_ap->ParseHeader())
             return objfile_ap.release();
     }
+    return NULL;
+}
+
+ObjectFile *
+ObjectFilePECOFF::CreateMemoryInstance (lldb_private::Module* module, 
+                                        lldb::DataBufferSP& data_sp, 
+                                        const lldb::ProcessSP &process_sp, 
+                                        lldb::addr_t header_addr)
+{
     return NULL;
 }
 

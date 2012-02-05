@@ -10,6 +10,7 @@
 #include "lldb/API/SBModule.h"
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBProcess.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/API/SBSymbolContextList.h"
 #include "lldb/Core/Module.h"
@@ -38,6 +39,14 @@ SBModule::SBModule (const lldb::ModuleSP& module_sp) :
 SBModule::SBModule(const SBModule &rhs) :
     m_opaque_sp (rhs.m_opaque_sp)
 {
+}
+
+SBModule::SBModule (lldb::SBProcess &process, lldb::addr_t header_addr) :
+    m_opaque_sp ()
+{
+    ProcessSP process_sp (process.GetSP());
+    if (process_sp)
+        m_opaque_sp = process_sp->ReadModuleFromMemory (FileSpec(), header_addr);
 }
 
 const SBModule &

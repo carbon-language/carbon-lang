@@ -983,10 +983,10 @@ Target::ReadMemoryFromFileCache (const Address& addr, void *dst, size_t dst_len,
         ObjectFile *objfile = section->GetModule()->GetObjectFile();
         if (objfile)
         {
-            size_t bytes_read = section->ReadSectionDataFromObjectFile (objfile, 
-                                                                        addr.GetOffset(), 
-                                                                        dst, 
-                                                                        dst_len);
+            size_t bytes_read = objfile->ReadSectionData (section, 
+                                                          addr.GetOffset(), 
+                                                          dst, 
+                                                          dst_len);
             if (bytes_read > 0)
                 return bytes_read;
             else

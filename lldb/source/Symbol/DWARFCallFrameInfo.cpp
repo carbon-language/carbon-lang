@@ -27,9 +27,9 @@
 using namespace lldb;
 using namespace lldb_private;
 
-DWARFCallFrameInfo::DWARFCallFrameInfo(ObjectFile& objfile, SectionSP& section, lldb::RegisterKind reg_kind, bool is_eh_frame) :
+DWARFCallFrameInfo::DWARFCallFrameInfo(ObjectFile& objfile, SectionSP& section_sp, lldb::RegisterKind reg_kind, bool is_eh_frame) :
     m_objfile (objfile),
-    m_section (section),
+    m_section_sp (section_sp),
     m_reg_kind (reg_kind),  // The flavor of registers that the CFI data uses (enum RegisterKind)
     m_flags (),
     m_cie_map (),
@@ -68,7 +68,7 @@ DWARFCallFrameInfo::GetUnwindPlan (Address addr, UnwindPlan& unwind_plan)
 bool
 DWARFCallFrameInfo::GetFDEEntryByAddress (Address addr, FDEEntry& fde_entry)
 {
-    if (m_section.get() == NULL || m_section->IsEncrypted())
+    if (m_section_sp.get() == NULL || m_section_sp->IsEncrypted())
         return false;
     GetFDEIndex();
 
@@ -280,7 +280,7 @@ DWARFCallFrameInfo::GetCFIData()
         LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
         if (log)
             m_objfile.GetModule()->LogMessage(log.get(), "Reading EH frame info");
-        m_section->ReadSectionDataFromObjectFile (&m_objfile, m_cfi_data);
+        m_objfile.ReadSectionData (m_section_sp.get(), m_cfi_data);
         m_cfi_data_initialized = true;
     }
 }
@@ -291,7 +291,7 @@ DWARFCallFrameInfo::GetCFIData()
 void
 DWARFCallFrameInfo::GetFDEIndex ()
 {
-    if (m_section.get() == NULL || m_section->IsEncrypted())
+    if (m_section_sp.get() == NULL || m_section_sp->IsEncrypted())
         return;
     if (m_fde_index_initialized)
         return;
@@ -318,7 +318,7 @@ DWARFCallFrameInfo::GetFDEIndex ()
         const CIE *cie = GetCIE (cie_offset);
         if (cie)
         {
-            const lldb::addr_t pc_rel_addr = m_section->GetFileAddress();
+            const lldb::addr_t pc_rel_addr = m_section_sp->GetFileAddress();
             const lldb::addr_t text_addr = LLDB_INVALID_ADDRESS;
             const lldb::addr_t data_addr = LLDB_INVALID_ADDRESS;
 
@@ -348,7 +348,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
 {
     dw_offset_t current_entry = offset;
 
-    if (m_section.get() == NULL || m_section->IsEncrypted())
+    if (m_section_sp.get() == NULL || m_section_sp->IsEncrypted())
         return false;
 
     if (m_cfi_data_initialized == false)
@@ -377,7 +377,7 @@ DWARFCallFrameInfo::FDEToUnwindPlan (dw_offset_t offset, Address startaddr, Unwi
 
     const dw_offset_t end_offset = current_entry + length + 4;
 
-    const lldb::addr_t pc_rel_addr = m_section->GetFileAddress();
+    const lldb::addr_t pc_rel_addr = m_section_sp->GetFileAddress();
     const lldb::addr_t text_addr = LLDB_INVALID_ADDRESS;
     const lldb::addr_t data_addr = LLDB_INVALID_ADDRESS;
     lldb::addr_t range_base = m_cfi_data.GetGNUEHPointer(&offset, cie->ptr_encoding, pc_rel_addr, text_addr, data_addr);

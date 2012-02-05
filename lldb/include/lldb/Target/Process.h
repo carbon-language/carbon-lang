@@ -2574,6 +2574,10 @@ public:
         return error;
     }
 
+    lldb::ModuleSP
+    ReadModuleFromMemory (const FileSpec& file_spec, 
+                          lldb::addr_t header_addr);
+
     //------------------------------------------------------------------
     /// Attempt to get the attributes for a region of memory in the process.
     ///

@@ -226,15 +226,6 @@ public:
     bool
     IsDescendant (const Section *section);
 
-    size_t
-    MemoryMapSectionDataFromObjectFile (const ObjectFile* file, DataExtractor& section_data) const;
-
-    size_t
-    ReadSectionDataFromObjectFile (const ObjectFile* objfile, off_t section_offset, void *dst, size_t dst_len) const;
-
-    size_t
-    ReadSectionDataFromObjectFile (const ObjectFile* file, DataExtractor& section_data) const;
-
     ConstString&
     GetName ();
 

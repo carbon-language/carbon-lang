@@ -148,7 +148,8 @@ ObjectFileELF::Initialize()
 {
     PluginManager::RegisterPlugin(GetPluginNameStatic(),
                                   GetPluginDescriptionStatic(),
-                                  CreateInstance);
+                                  CreateInstance,
+                                  CreateMemoryInstance);
 }
 
 void
@@ -192,6 +193,13 @@ ObjectFileELF::CreateInstance(Module *module,
             }
         }
     }
+    return NULL;
+}
+
+
+ObjectFile*
+ObjectFileELF::CreateMemoryInstance(Module* module, DataBufferSP& data_sp, const lldb::ProcessSP &process_sp, lldb::addr_t header_addr)
+{
     return NULL;
 }
 
@@ -428,8 +436,8 @@ ObjectFileELF::ParseDependentModules()
 
     DataExtractor dynsym_data;
     DataExtractor dynstr_data;
-    if (dynsym->ReadSectionDataFromObjectFile(this, dynsym_data) &&
-        dynstr->ReadSectionDataFromObjectFile(this, dynstr_data))
+    if (ReadSectionData(dynsym, dynsym_data) &&
+        ReadSectionData(dynstr, dynstr_data))
     {
         ELFDynamic symbol;
         const unsigned section_size = dynsym_data.GetByteSize();
@@ -812,8 +820,8 @@ ObjectFileELF::ParseSymbolTable(Symtab *symbol_table, user_id_t start_id,
     {
         DataExtractor symtab_data;
         DataExtractor strtab_data;
-        if (symtab->ReadSectionDataFromObjectFile(this, symtab_data) &&
-            strtab->ReadSectionDataFromObjectFile(this, strtab_data))
+        if (ReadSectionData(symtab, symtab_data) &&
+            ReadSectionData(strtab, strtab_data))
         {
             num_symbols = ParseSymbols(symbol_table, start_id, 
                                        section_list, symtab_hdr,
@@ -844,7 +852,7 @@ ObjectFileELF::ParseDynamicSymbols()
 
     ELFDynamic symbol;
     DataExtractor dynsym_data;
-    if (dynsym->ReadSectionDataFromObjectFile(this, dynsym_data))
+    if (ReadSectionData(dynsym, dynsym_data))
     {
 
         const unsigned section_size = dynsym_data.GetByteSize();
@@ -1034,15 +1042,15 @@ ObjectFileELF::ParseTrampolineSymbols(Symtab *symbol_table,
         return 0;
 
     DataExtractor rel_data;
-    if (!rel_section->ReadSectionDataFromObjectFile(this, rel_data))
+    if (!ReadSectionData(rel_section, rel_data))
         return 0;
 
     DataExtractor symtab_data;
-    if (!symtab->ReadSectionDataFromObjectFile(this, symtab_data))
+    if (!ReadSectionData(symtab, symtab_data))
         return 0;
 
     DataExtractor strtab_data;
-    if (!strtab->ReadSectionDataFromObjectFile(this, strtab_data))
+    if (!ReadSectionData(strtab, strtab_data))
         return 0;
 
     unsigned rel_type = PLTRelocationType();

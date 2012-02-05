@@ -31,6 +31,9 @@ public:
     operator = (const SBModule &rhs);
 #endif
 
+    SBModule (lldb::SBProcess &process, 
+              lldb::addr_t header_addr);
+
     ~SBModule ();
 
     bool

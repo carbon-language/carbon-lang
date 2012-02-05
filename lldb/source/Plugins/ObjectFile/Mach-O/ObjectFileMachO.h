@@ -40,12 +40,18 @@ public:
     static const char *
     GetPluginDescriptionStatic();
 
-    static ObjectFile *
+    static lldb_private::ObjectFile *
     CreateInstance (lldb_private::Module* module,
                     lldb::DataBufferSP& dataSP,
                     const lldb_private::FileSpec* file,
                     lldb::addr_t offset,
                     lldb::addr_t length);
+
+    static lldb_private::ObjectFile *
+    CreateMemoryInstance (lldb_private::Module* module, 
+                          lldb::DataBufferSP& data_sp, 
+                          const lldb::ProcessSP &process_sp, 
+                          lldb::addr_t header_addr);
 
     static bool
     MagicBytesMatch (lldb::DataBufferSP& dataSP, 
@@ -60,6 +66,11 @@ public:
                      const lldb_private::FileSpec* file,
                      lldb::addr_t offset,
                      lldb::addr_t length);
+
+    ObjectFileMachO (lldb_private::Module* module,
+                     lldb::DataBufferSP& dataSP,
+                     const lldb::ProcessSP &process_sp,
+                     lldb::addr_t header_addr);
 
     virtual
     ~ObjectFileMachO();
@@ -111,7 +122,10 @@ public:
 
     virtual lldb_private::Address
     GetEntryPointAddress ();
-
+    
+    virtual lldb_private::Address
+    GetHeaderAddress ();
+    
     virtual ObjectFile::Type
     CalculateType();
     
@@ -123,6 +137,11 @@ protected:
     llvm::MachO::mach_header m_header;
     mutable std::auto_ptr<lldb_private::SectionList> m_sections_ap;
     mutable std::auto_ptr<lldb_private::Symtab> m_symtab_ap;
+    static const lldb_private::ConstString &GetSegmentNameTEXT();
+    static const lldb_private::ConstString &GetSegmentNameDATA();
+    static const lldb_private::ConstString &GetSegmentNameOBJC();
+    static const lldb_private::ConstString &GetSegmentNameLINKEDIT();
+    static const lldb_private::ConstString &GetSectionNameEHFrame();
 
     llvm::MachO::dysymtab_command m_dysymtab;
     std::vector<llvm::MachO::segment_command_64> m_mach_segments;

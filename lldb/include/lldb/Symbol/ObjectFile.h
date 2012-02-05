@@ -91,6 +91,11 @@ public:
                 lldb::addr_t length, 
                 lldb::DataBufferSP& headerDataSP);
 
+    ObjectFile (Module* module, 
+                const lldb::ProcessSP &process_sp,
+                lldb::addr_t header_addr, 
+                lldb::DataBufferSP& headerDataSP);
+
     //------------------------------------------------------------------
     /// Destructor.
     ///
@@ -145,6 +150,29 @@ public:
                 lldb::addr_t file_offset,
                 lldb::addr_t file_size,
                 lldb::DataBufferSP &data_sp);
+
+    //------------------------------------------------------------------
+    /// Find a ObjectFile plug-in that can parse a file in memory.
+    ///
+    /// Scans all loaded plug-in interfaces that implement versions of
+    /// the ObjectFile plug-in interface and returns the first
+    /// instance that can parse the file.
+    ///
+    /// @param[in] module
+    ///     The parent module that owns this object file.
+    ///
+    /// @param[in] process_sp
+    ///     A shared pointer to the process whose memory space contains
+    ///     an object file. This will be stored as a std::weak_ptr.
+    ///
+    /// @param[in] header_addr
+    ///     The address of the header for the object file in memory.
+    //------------------------------------------------------------------
+    static lldb::ObjectFileSP
+    FindPlugin (Module* module, 
+                const lldb::ProcessSP &process_sp,
+                lldb::addr_t header_addr,
+                lldb::DataBufferSP &file_data_sp);
 
     //------------------------------------------------------------------
     /// Gets the address size in bytes for the current object file.
@@ -372,6 +400,22 @@ public:
     GetEntryPointAddress () { return Address();}
 
     //------------------------------------------------------------------
+    /// Returns the address that represents the header of this object
+    /// file.
+    ///
+    /// The header address is defined as where the header for the object
+    /// file is that describes the content of the file. If the header
+    /// doesn't appear in a section that is defined in the object file,
+    /// an address with no section is returned that has the file offset
+    /// set in the m_offset member of the lldb_private::Address object.
+    ///
+    /// @return
+    ///     Returns the entry address for this module.
+    //------------------------------------------------------------------
+    virtual lldb_private::Address
+    GetHeaderAddress () { return Address();}
+
+    //------------------------------------------------------------------
     /// The object file should be able to calculate its type by looking
     /// at its file header and possibly the sections or other data in
     /// the object file. The file type is used in the debugger to help
@@ -421,12 +465,33 @@ public:
         return m_strata;
     }
     
+    // When an object file is in memory, subclasses should try and lock
+    // the process weak pointer. If the process weak pointer produces a
+    // valid ProcessSP, then subclasses can call this function to read
+    // memory.
+    static lldb::DataBufferSP
+    ReadMemory (const lldb::ProcessSP &process_sp, 
+                lldb::addr_t addr, 
+                size_t byte_size);
+
     size_t
     GetData (off_t offset, size_t length, DataExtractor &data) const;
     
     size_t
     CopyData (off_t offset, size_t length, void *dst) const;
     
+    size_t
+    ReadSectionData (const Section *section, 
+                     off_t section_offset, 
+                     void *dst, 
+                     size_t dst_len) const;
+    size_t
+    ReadSectionData (const Section *section, 
+                     DataExtractor& section_data) const;
+    
+    size_t
+    MemoryMapSectionData (const Section *section, 
+                          DataExtractor& section_data) const;
 protected:
     //------------------------------------------------------------------
     // Member variables.
@@ -438,6 +503,8 @@ protected:
     lldb::addr_t m_length; ///< The length of this object file if it is known (can be zero if length is unknown or can't be determined).
     DataExtractor m_data; ///< The data for this object file so things can be parsed lazily.
     lldb_private::UnwindTable m_unwind_table; /// < Table of FuncUnwinders objects created for this ObjectFile's functions
+    lldb::ProcessWP m_process_wp;
+    const bool m_in_memory;
     
     //------------------------------------------------------------------
     /// Sets the architecture for a module.  At present the architecture

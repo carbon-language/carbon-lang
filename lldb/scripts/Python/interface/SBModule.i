@@ -98,6 +98,9 @@ public:
 
     SBModule (const SBModule &rhs);
     
+    SBModule (lldb::SBProcess &process, 
+              lldb::addr_t header_addr);
+
     ~SBModule ();
 
     bool

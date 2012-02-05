@@ -26,6 +26,7 @@
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
+#include "lldb/Target/Process.h"
 
 
 using namespace lldb;
@@ -39,7 +40,8 @@ ObjectFileMachO::Initialize()
 {
     PluginManager::RegisterPlugin (GetPluginNameStatic(),
                                    GetPluginDescriptionStatic(),
-                                   CreateInstance);
+                                   CreateInstance,
+                                   CreateMemoryInstance);
 }
 
 void
@@ -73,6 +75,58 @@ ObjectFileMachO::CreateInstance (Module* module, DataBufferSP& data_sp, const Fi
     }
     return NULL;
 }
+
+ObjectFile *
+ObjectFileMachO::CreateMemoryInstance (Module* module, 
+                                       DataBufferSP& data_sp, 
+                                       const ProcessSP &process_sp, 
+                                       lldb::addr_t header_addr)
+{
+    if (ObjectFileMachO::MagicBytesMatch(data_sp, 0, data_sp->GetByteSize()))
+    {
+        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module, data_sp, process_sp, header_addr));
+        if (objfile_ap.get() && objfile_ap->ParseHeader())
+            return objfile_ap.release();
+    }
+    return NULL;    
+}
+
+
+const ConstString &
+ObjectFileMachO::GetSegmentNameTEXT()
+{
+    static ConstString g_segment_name_TEXT ("__TEXT");
+    return g_segment_name_TEXT;
+}
+
+const ConstString &
+ObjectFileMachO::GetSegmentNameDATA()
+{
+    static ConstString g_segment_name_DATA ("__DATA");
+    return g_segment_name_DATA;
+}
+
+const ConstString &
+ObjectFileMachO::GetSegmentNameOBJC()
+{
+    static ConstString g_segment_name_OBJC ("__OBJC");
+    return g_segment_name_OBJC;
+}
+
+const ConstString &
+ObjectFileMachO::GetSegmentNameLINKEDIT()
+{
+    static ConstString g_section_name_LINKEDIT ("__LINKEDIT");
+    return g_section_name_LINKEDIT;
+}
+
+const ConstString &
+ObjectFileMachO::GetSectionNameEHFrame()
+{
+    static ConstString g_section_name_eh_frame ("__eh_frame");
+    return g_section_name_eh_frame;
+}
+
 
 
 static uint32_t
@@ -121,6 +175,20 @@ ObjectFileMachO::ObjectFileMachO(Module* module, DataBufferSP& data_sp, const Fi
     ::memset (&m_dysymtab, 0, sizeof(m_dysymtab));
 }
 
+ObjectFileMachO::ObjectFileMachO (lldb_private::Module* module,
+                                  lldb::DataBufferSP& header_data_sp,
+                                  const lldb::ProcessSP &process_sp,
+                                  lldb::addr_t header_addr) :
+    ObjectFile(module, process_sp, header_addr, header_data_sp),
+    m_mutex (Mutex::eMutexTypeRecursive),
+    m_header(),
+    m_sections_ap(),
+    m_symtab_ap(),
+    m_entry_point_address ()
+{
+    ::memset (&m_header, 0, sizeof(m_header));
+    ::memset (&m_dysymtab, 0, sizeof(m_dysymtab));
+}
 
 ObjectFileMachO::~ObjectFileMachO()
 {
@@ -173,7 +241,28 @@ ObjectFileMachO::ParseHeader ()
         ArchSpec mach_arch(eArchTypeMachO, m_header.cputype, m_header.cpusubtype);
         
         if (SetModulesArchitecture (mach_arch))
-            return true;
+        {
+            const size_t header_and_lc_size = m_header.sizeofcmds + MachHeaderSizeFromMagic(m_header.magic);
+            if (m_data.GetByteSize() < header_and_lc_size)
+            {
+                DataBufferSP data_sp;
+                ProcessSP process_sp (m_process_wp.lock());
+                if (process_sp)
+                {
+                    data_sp = ReadMemory (process_sp, m_offset, header_and_lc_size);
+                }
+                else
+                {
+                    // Read in all only the load command data from the file on disk
+                    data_sp = m_file.ReadFileContents(m_offset, header_and_lc_size);
+                    if (data_sp->GetByteSize() != header_and_lc_size)
+                        return false;
+                }
+                if (data_sp)
+                    m_data.SetData (data_sp);
+            }
+        }
+        return true;
     }
     else
     {
@@ -799,11 +888,45 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                 if (section_list == NULL)
                     return 0;
 
+                ProcessSP process_sp (m_process_wp.lock());
+
                 const size_t addr_byte_size = m_data.GetAddressByteSize();
                 bool bit_width_32 = addr_byte_size == 4;
                 const size_t nlist_byte_size = bit_width_32 ? sizeof(struct nlist) : sizeof(struct nlist_64);
 
-                DataExtractor nlist_data (m_data, symtab_load_command.symoff, symtab_load_command.nsyms * nlist_byte_size);
+                DataExtractor nlist_data (NULL, 0, m_data.GetByteOrder(), m_data.GetAddressByteSize());
+                DataExtractor strtab_data (NULL, 0, m_data.GetByteOrder(), m_data.GetAddressByteSize());
+
+                const addr_t nlist_data_byte_size = symtab_load_command.nsyms * nlist_byte_size;
+                const addr_t strtab_data_byte_size = symtab_load_command.strsize;
+                if (process_sp)
+                {
+                    Target &target = process_sp->GetTarget();
+                    SectionSP linkedit_section_sp(section_list->FindSectionByName(GetSegmentNameLINKEDIT()));
+                    // Reading mach file from memory in a process or core file...
+
+                    if (linkedit_section_sp)
+                    {
+                        const addr_t linkedit_load_addr = linkedit_section_sp->GetLoadBaseAddress(&target);
+                        const addr_t linkedit_file_offset = linkedit_section_sp->GetFileOffset();
+                        const addr_t symoff_addr = linkedit_load_addr + symtab_load_command.symoff - linkedit_file_offset;
+                        const addr_t stroff_addr = linkedit_load_addr + symtab_load_command.stroff - linkedit_file_offset;
+                        DataBufferSP nlist_data_sp (ReadMemory (process_sp, symoff_addr, nlist_data_byte_size));
+                        DataBufferSP strtab_data_sp (ReadMemory (process_sp, stroff_addr, strtab_data_byte_size));
+                        nlist_data.SetData (nlist_data_sp, 0, nlist_data_sp->GetByteSize());
+                        strtab_data.SetData (strtab_data_sp, 0, strtab_data_sp->GetByteSize());
+                    }
+                }
+                else
+                {
+                    nlist_data.SetData (m_data, 
+                                        symtab_load_command.symoff, 
+                                        nlist_data_byte_size);
+                    strtab_data.SetData (m_data, 
+                                         symtab_load_command.stroff, 
+                                         strtab_data_byte_size);
+
+                }
 
                 if (nlist_data.GetByteSize() == 0)
                 {
@@ -812,7 +935,6 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     return 0;
                 }
 
-                DataExtractor strtab_data (m_data, symtab_load_command.stroff, symtab_load_command.strsize);
 
                 if (strtab_data.GetByteSize() == 0)
                 {
@@ -821,10 +943,10 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     return 0;
                 }
 
-                static ConstString g_segment_name_TEXT ("__TEXT");
-                static ConstString g_segment_name_DATA ("__DATA");
-                static ConstString g_segment_name_OBJC ("__OBJC");
-                static ConstString g_section_name_eh_frame ("__eh_frame");
+                const ConstString &g_segment_name_TEXT = GetSegmentNameTEXT();
+                const ConstString &g_segment_name_DATA = GetSegmentNameDATA();
+                const ConstString &g_segment_name_OBJC = GetSegmentNameOBJC();
+                const ConstString &g_section_name_eh_frame = GetSectionNameEHFrame();
                 SectionSP text_section_sp(section_list->FindSectionByName(g_segment_name_TEXT));
                 SectionSP data_section_sp(section_list->FindSectionByName(g_segment_name_DATA));
                 SectionSP objc_section_sp(section_list->FindSectionByName(g_segment_name_OBJC));
@@ -1822,6 +1944,24 @@ ObjectFileMachO::GetEntryPointAddress ()
     return m_entry_point_address;
 
 }
+
+lldb_private::Address
+ObjectFileMachO::GetHeaderAddress ()
+{
+    lldb_private::Address header_addr;
+    SectionList *section_list = GetSectionList();
+    if (section_list)
+    {
+        SectionSP text_segment_sp (section_list->FindSectionByName (GetSegmentNameTEXT()));
+        if (text_segment_sp)
+        {
+            header_addr.SetSection (text_segment_sp.get());
+            header_addr.SetOffset (0);
+        }
+    }
+    return header_addr;
+}
+
 
 ObjectFile::Type
 ObjectFileMachO::CalculateType()

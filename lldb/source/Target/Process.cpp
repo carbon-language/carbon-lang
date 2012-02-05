@@ -2183,6 +2183,18 @@ Process::DeallocateMemory (addr_t ptr)
     return error;
 }
 
+ModuleSP
+Process::ReadModuleFromMemory (const FileSpec& file_spec, lldb::addr_t header_addr)
+{
+    ModuleSP module_sp (new Module (file_spec, shared_from_this(), header_addr));
+    if (module_sp)
+    {
+        m_target.GetImages().Append(module_sp);
+        bool changed = false;
+        module_sp->SetLoadAddress (m_target, 0, changed);
+    }
+    return module_sp;
+}
 
 Error
 Process::EnableWatchpoint (Watchpoint *watchpoint)

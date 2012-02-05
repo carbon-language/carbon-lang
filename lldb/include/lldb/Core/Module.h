@@ -96,12 +96,51 @@ public:
             const ConstString *object_name = NULL,
             off_t object_offset = 0);
 
+    Module (const FileSpec& file_spec, 
+            const lldb::ProcessSP &processSP,
+            lldb::addr_t header_addr);
     //------------------------------------------------------------------
     /// Destructor.
     //------------------------------------------------------------------
     virtual 
     ~Module ();
 
+    
+    //------------------------------------------------------------------
+    /// Set the load address for all sections in a module to be the
+    /// file address plus \a slide.
+    ///
+    /// Many times a module will be loaded in a target with a constant
+    /// offset applied to all top level sections. This function can 
+    /// set the load address for all top level sections to be the
+    /// section file address + offset.
+    ///
+    /// @param[in] target
+    ///     The target in which to apply the section load addresses.
+    ///
+    /// @param[in] offset
+    ///     The offset to apply to all file addresses for all top 
+    ///     level sections in the object file as each section load
+    ///     address is being set.
+    ///
+    /// @param[out] changed
+    ///     If any section load addresses were changed in \a target,
+    ///     then \a changed will be set to \b true. Else \a changed
+    ///     will be set to false. This allows this function to be
+    ///     called multiple times on the same module for the same
+    ///     target. If the module hasn't moved, then \a changed will
+    ///     be false and no module updated notification will need to
+    ///     be sent out.
+    ///
+    /// @returns
+    ///     /b True if any sections were successfully loaded in \a target,
+    ///     /b false otherwise.
+    //------------------------------------------------------------------
+    bool
+    SetLoadAddress (Target &target, 
+                    lldb::addr_t offset, 
+                    bool &changed);
+    
     //------------------------------------------------------------------
     /// @copydoc SymbolContextScope::CalculateSymbolContext(SymbolContext*)
     ///

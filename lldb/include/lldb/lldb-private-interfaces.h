@@ -21,6 +21,7 @@ namespace lldb_private
     typedef DynamicLoader* (*DynamicLoaderCreateInstance) (Process* process, bool force);
     typedef ObjectContainer* (*ObjectContainerCreateInstance) (Module* module, lldb::DataBufferSP& dataSP, const FileSpec *file, lldb::addr_t offset, lldb::addr_t length);
     typedef ObjectFile* (*ObjectFileCreateInstance) (Module* module, lldb::DataBufferSP& dataSP, const FileSpec* file, lldb::addr_t offset, lldb::addr_t length);
+    typedef ObjectFile* (*ObjectFileCreateMemoryInstance) (Module* module, lldb::DataBufferSP& dataSP, const lldb::ProcessSP &process_sp, lldb::addr_t offset);
     typedef LogChannel* (*LogChannelCreateInstance) ();
     typedef EmulateInstruction * (*EmulateInstructionCreateInstance) (const ArchSpec &arch, InstructionType inst_type);
     typedef OperatingSystem* (*OperatingSystemCreateInstance) (Process *process, bool force);

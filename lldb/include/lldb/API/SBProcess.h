@@ -193,6 +193,7 @@ protected:
     friend class SBCommandInterpreter;
     friend class SBDebugger;
     friend class SBFunction;
+    friend class SBModule;
     friend class SBTarget;
     friend class SBThread;
     friend class SBValue;

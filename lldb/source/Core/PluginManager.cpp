@@ -865,6 +865,8 @@ struct ObjectFileInstance
     std::string name;
     std::string description;
     ObjectFileCreateInstance create_callback;
+    ObjectFileCreateMemoryInstance create_memory_callback;
+
 };
 
 typedef std::vector<ObjectFileInstance> ObjectFileInstances;
@@ -889,7 +891,8 @@ PluginManager::RegisterPlugin
 (
     const char *name,
     const char *description,
-    ObjectFileCreateInstance create_callback
+    ObjectFileCreateInstance create_callback,
+    ObjectFileCreateMemoryInstance create_memory_callback
 )
 {
     if (create_callback)
@@ -900,6 +903,7 @@ PluginManager::RegisterPlugin
         if (description && description[0])
             instance.description = description;
         instance.create_callback = create_callback;
+        instance.create_memory_callback = create_memory_callback;
         Mutex::Locker locker (GetObjectFileMutex ());
         GetObjectFileInstances ().push_back (instance);
     }
@@ -937,6 +941,17 @@ PluginManager::GetObjectFileCreateCallbackAtIndex (uint32_t idx)
     return NULL;
 }
 
+
+ObjectFileCreateMemoryInstance
+PluginManager::GetObjectFileCreateMemoryCallbackAtIndex (uint32_t idx)
+{
+    Mutex::Locker locker (GetObjectFileMutex ());
+    ObjectFileInstances &instances = GetObjectFileInstances ();
+    if (idx < instances.size())
+        return instances[idx].create_memory_callback;
+    return NULL;
+}
+
 ObjectFileCreateInstance
 PluginManager::GetObjectFileCreateCallbackForPluginName (const char *name)
 {
@@ -951,6 +966,26 @@ PluginManager::GetObjectFileCreateCallbackForPluginName (const char *name)
         {
             if (name_sref.equals (pos->name))
                 return pos->create_callback;
+        }
+    }
+    return NULL;
+}
+
+
+ObjectFileCreateMemoryInstance
+PluginManager::GetObjectFileCreateMemoryCallbackForPluginName (const char *name)
+{
+    if (name && name[0])
+    {
+        llvm::StringRef name_sref(name);
+        Mutex::Locker locker (GetObjectFileMutex ());
+        ObjectFileInstances &instances = GetObjectFileInstances ();
+        
+        ObjectFileInstances::iterator pos, end = instances.end();
+        for (pos = instances.begin(); pos != end; ++ pos)
+        {
+            if (name_sref.equals (pos->name))
+                return pos->create_memory_callback;
         }
     }
     return NULL;

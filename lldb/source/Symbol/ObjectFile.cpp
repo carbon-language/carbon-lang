@@ -10,6 +10,7 @@
 #include "lldb/lldb-private.h"
 #include "lldb/lldb-private-log.h"
 #include "lldb/Core/DataBuffer.h"
+#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/PluginManager.h"
@@ -18,6 +19,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/ObjectContainer.h"
 #include "lldb/Symbol/SymbolFile.h"
+#include "lldb/Target/Process.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -106,6 +108,40 @@ ObjectFile::FindPlugin (Module* module, const FileSpec* file, addr_t file_offset
     return object_file_sp;
 }
 
+ObjectFileSP
+ObjectFile::FindPlugin (Module* module, 
+                        const ProcessSP &process_sp,
+                        lldb::addr_t header_addr,
+                        DataBufferSP &file_data_sp)
+{
+    Timer scoped_timer (__PRETTY_FUNCTION__,
+                        "ObjectFile::FindPlugin (module = %s/%s, process = %p, header_addr = 0x%llx)",
+                        module->GetFileSpec().GetDirectory().AsCString(),
+                        module->GetFileSpec().GetFilename().AsCString(),
+                        process_sp.get(), header_addr);
+    ObjectFileSP object_file_sp;
+    
+    if (module != NULL)
+    {
+        uint32_t idx;
+        
+        // Check if this is a normal object file by iterating through
+        // all object file plugin instances.
+        ObjectFileCreateMemoryInstance create_callback;
+        for (idx = 0; (create_callback = PluginManager::GetObjectFileCreateMemoryCallbackAtIndex(idx)) != NULL; ++idx)
+        {
+            object_file_sp.reset (create_callback(module, file_data_sp, process_sp, header_addr));
+            if (object_file_sp.get())
+                return object_file_sp;
+        }
+        
+    }
+    // We didn't find it, so clear our shared pointer in case it
+    // contains anything and return an empty shared pointer
+    object_file_sp.reset();
+    return object_file_sp;
+}
+
 ObjectFile::ObjectFile (Module* module, 
                         const FileSpec *file_spec_ptr, 
                         addr_t file_offset, 
@@ -118,7 +154,9 @@ ObjectFile::ObjectFile (Module* module,
     m_offset (file_offset),
     m_length (file_size),
     m_data (),
-    m_unwind_table (*this)
+    m_unwind_table (*this),
+    m_process_wp(),
+    m_in_memory (false)
 {    
     if (file_spec_ptr)
         m_file = *file_spec_ptr;
@@ -149,6 +187,37 @@ ObjectFile::ObjectFile (Module* module,
         }
     }
 }
+
+
+ObjectFile::ObjectFile (Module* module, 
+                        const ProcessSP &process_sp,
+                        lldb::addr_t header_addr, 
+                        DataBufferSP& header_data_sp) :
+    ModuleChild (module),
+    m_file (),
+    m_type (eTypeInvalid),
+    m_strata (eStrataInvalid),
+    m_offset (header_addr),
+    m_length (0),
+    m_data (),
+    m_unwind_table (*this),
+    m_process_wp (process_sp),
+    m_in_memory (true)
+{    
+    if (header_data_sp)
+        m_data.SetData (header_data_sp, 0, header_data_sp->GetByteSize());
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    if (log)
+    {
+        log->Printf ("%p ObjectFile::ObjectFile () module = %s/%s, process = %p, header_addr = 0x%llx\n",
+                     this,
+                     m_module->GetFileSpec().GetDirectory().AsCString(),
+                     m_module->GetFileSpec().GetFilename().AsCString(),
+                     process_sp.get(),
+                     m_offset);
+    }
+}
+
 
 ObjectFile::~ObjectFile()
 {
@@ -276,6 +345,24 @@ ObjectFile::GetAddressClass (addr_t file_addr)
     return eAddressClassUnknown;
 }
 
+DataBufferSP
+ObjectFile::ReadMemory (const ProcessSP &process_sp, lldb::addr_t addr, size_t byte_size)
+{
+    DataBufferSP data_sp;
+    if (process_sp)
+    {
+        std::auto_ptr<DataBufferHeap> data_ap (new DataBufferHeap (byte_size, 0));
+        Error error;
+        const size_t bytes_read = process_sp->ReadMemory (addr, 
+                                                          data_ap->GetBytes(), 
+                                                          data_ap->GetByteSize(), 
+                                                          error);
+        if (bytes_read == byte_size)
+            data_sp.reset (data_ap.release());
+    }
+    return data_sp;
+}
+
 size_t
 ObjectFile::GetData (off_t offset, size_t length, DataExtractor &data) const
 {
@@ -289,5 +376,71 @@ ObjectFile::CopyData (off_t offset, size_t length, void *dst) const
 {
     // The entire file has already been mmap'ed into m_data, so just copy from there
     return m_data.CopyByteOrderedData (offset, length, dst, length, lldb::endian::InlHostByteOrder());
+}
+
+
+size_t
+ObjectFile::ReadSectionData (const Section *section, off_t section_offset, void *dst, size_t dst_len) const
+{
+    if (m_in_memory)
+    {
+        ProcessSP process_sp (m_process_wp.lock());
+        if (process_sp)
+        {
+            Error error;
+            return process_sp->ReadMemory (section->GetLoadBaseAddress (&process_sp->GetTarget()) + section_offset, dst, dst_len, error);
+        }
+    }
+    else
+    {
+        return CopyData (section->GetFileOffset() + section_offset, dst_len, dst);
+    }
+    return 0;
+}
+
+//----------------------------------------------------------------------
+// Get the section data the file on disk
+//----------------------------------------------------------------------
+size_t
+ObjectFile::ReadSectionData (const Section *section, DataExtractor& section_data) const
+{
+    if (m_in_memory)
+    {
+        ProcessSP process_sp (m_process_wp.lock());
+        if (process_sp)
+        {
+            DataBufferSP data_sp (ReadMemory (process_sp, section->GetLoadBaseAddress (&process_sp->GetTarget()), section->GetByteSize()));
+            if (data_sp)
+            {
+                section_data.SetData (data_sp, 0, data_sp->GetByteSize());
+                section_data.SetByteOrder (process_sp->GetByteOrder());
+                section_data.SetAddressByteSize (process_sp->GetAddressByteSize());
+                return section_data.GetByteSize();
+            }
+        }
+    }
+    else
+    {
+        // The object file now contains a full mmap'ed copy of the object file data, so just use this
+        return MemoryMapSectionData (section, section_data);
+    }
+    section_data.Clear();
+    return 0;
+}
+
+size_t
+ObjectFile::MemoryMapSectionData (const Section *section, DataExtractor& section_data) const
+{
+    if (m_in_memory)
+    {
+        return ReadSectionData (section, section_data);
+    }
+    else
+    {
+        // The object file now contains a full mmap'ed copy of the object file data, so just use this
+        return GetData(section->GetFileOffset(), section->GetByteSize(), section_data);
+    }
+    section_data.Clear();
+    return 0;
 }
 

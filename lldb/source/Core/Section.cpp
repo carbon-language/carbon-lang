@@ -307,35 +307,6 @@ Section::DumpName (Stream *s) const
     m_name.Dump(s);
 }
 
-size_t
-Section::ReadSectionDataFromObjectFile (const ObjectFile* objfile, off_t section_offset, void *dst, size_t dst_len) const
-{
-	// The object file now contains a full mmap'ed copy of the object file data, so just use this
-    if (objfile)
-        return objfile->CopyData (GetFileOffset() + section_offset, dst_len, dst);
-    return 0;
-}
-
-//----------------------------------------------------------------------
-// Get the section data the file on disk
-//----------------------------------------------------------------------
-size_t
-Section::ReadSectionDataFromObjectFile(const ObjectFile* objfile, DataExtractor& section_data) const
-{
-	// The object file now contains a full mmap'ed copy of the object file data, so just use this
-    return MemoryMapSectionDataFromObjectFile (objfile, section_data);
-}
-
-size_t
-Section::MemoryMapSectionDataFromObjectFile(const ObjectFile* objfile, DataExtractor& section_data) const
-{
-	// The object file now contains a full mmap'ed copy of the object file data, so just use this
-    if (objfile)
-        return objfile->GetData(GetFileOffset(), GetByteSize(), section_data);
-    section_data.Clear();
-    return 0;
-}
-
 bool
 Section::IsDescendant (const Section *section)
 {

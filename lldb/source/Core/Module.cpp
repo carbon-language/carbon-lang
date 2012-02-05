@@ -8,6 +8,8 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Core/Module.h"
+#include "lldb/Core/DataBuffer.h"
+#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/ModuleList.h"
 #include "lldb/Core/RegularExpression.h"
@@ -18,6 +20,8 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContext.h"
 #include "lldb/Symbol/SymbolVendor.h"
+#include "lldb/Target/Process.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -110,6 +114,61 @@ namespace lldb {
 
 #endif
     
+
+Module::Module(const FileSpec& file_spec, const lldb::ProcessSP &process_sp, lldb::addr_t header_addr) :
+    m_mutex (Mutex::eMutexTypeRecursive),
+    m_mod_time (),
+    m_arch (),
+    m_uuid (),
+    m_file (file_spec),
+    m_platform_file(),
+    m_object_name (),
+    m_object_offset (),
+    m_objfile_sp (),
+    m_symfile_ap (),
+    m_ast (),
+    m_did_load_objfile (false),
+    m_did_load_symbol_vendor (false),
+    m_did_parse_uuid (false),
+    m_did_init_ast (false),
+    m_is_dynamic_loader_module (false),
+    m_was_modified (false)
+{
+    // Scope for locker below...
+    {
+        Mutex::Locker locker (GetAllocationModuleCollectionMutex());
+        GetModuleCollection().push_back(this);
+    }
+    StreamString s;
+    if (m_file.GetFilename())
+        s << m_file.GetFilename();
+    s.Printf("[0x%16.16llx]", header_addr);
+    m_file.GetFilename().SetCString (s.GetData());
+    Mutex::Locker locker (m_mutex);
+    DataBufferSP data_sp;
+    if (process_sp)
+    {
+        m_did_load_objfile = true;
+        std::auto_ptr<DataBufferHeap> data_ap (new DataBufferHeap (512, 0));
+        Error error;
+        const size_t bytes_read = process_sp->ReadMemory (header_addr, 
+                                                          data_ap->GetBytes(), 
+                                                          data_ap->GetByteSize(), 
+                                                          error);
+        if (bytes_read == 512)
+        {
+            data_sp.reset (data_ap.release());
+            m_objfile_sp = ObjectFile::FindPlugin(this, process_sp, header_addr, data_sp);
+            if (m_objfile_sp)
+            {
+                // Once we get the object file, update our module with the object file's 
+                // architecture since it might differ in vendor/os if some parts were
+                // unknown.
+                m_objfile_sp->GetArchitecture (m_arch);
+            }
+        }
+    }
+}
 
 Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstString *object_name, off_t object_offset) :
     m_mutex (Mutex::eMutexTypeRecursive),
@@ -975,5 +1034,35 @@ Module::SetArchitecture (const ArchSpec &new_arch)
         return true;
     }    
     return m_arch == new_arch;
+}
+
+bool 
+Module::SetLoadAddress (Target &target, lldb::addr_t offset, bool &changed)
+{
+    changed = false;
+    ObjectFile *image_object_file = GetObjectFile();
+    if (image_object_file)
+    {
+        SectionList *section_list = image_object_file->GetSectionList ();
+        if (section_list)
+        {
+            const size_t num_sections = section_list->GetSize();
+            size_t sect_idx = 0;
+            for (sect_idx = 0; sect_idx < num_sections; ++sect_idx)
+            {
+                // Iterate through the object file sections to find the
+                // first section that starts of file offset zero and that
+                // has bytes in the file...
+                Section *section = section_list->GetSectionAtIndex (sect_idx).get();
+                if (section)
+                {
+                    if (target.GetSectionLoadList().SetSectionLoadAddress (section, section->GetFileAddress() + offset))
+                        changed = true;
+                }
+            }
+            return sect_idx > 0;
+        }
+    }
+    return false;
 }
 
