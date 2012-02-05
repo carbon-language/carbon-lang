@@ -1996,27 +1996,29 @@ static bool isOnlyReachableViaThisEdge(BasicBlock *Src, BasicBlock *Dst,
                                        DominatorTree *DT) {
   // First off, there must not be more than one edge from Src to Dst, there
   // should be exactly one.  So keep track of the number of times Src occurs
-  // as a predecessor of Dst and fail if it's more than once.  Secondly, any
-  // other predecessors of Dst should be dominated by Dst (see logic below).
+  // as a predecessor of Dst and fail if it's more than once.
   bool SawEdgeFromSrc = false;
   for (pred_iterator PI = pred_begin(Dst), PE = pred_end(Dst); PI != PE; ++PI) {
-    BasicBlock *Pred = *PI;
-    if (Pred == Src) {
-      // An edge from Src to Dst.
-      if (SawEdgeFromSrc)
-        // There are multiple edges from Src to Dst - fail.
-        return false;
-      SawEdgeFromSrc = true;
+    if (*PI != Src)
       continue;
-    }
-    // If the predecessor is not dominated by Dst, then it must be possible to
-    // reach it either without passing through Src (and thus not via the edge)
-    // or by passing through Src but taking a different edge out of Src.  Either
-    // way it is possible to reach Dst without passing via the edge, so fail.
-    if (!DT->dominates(Dst, *PI))
+    // An edge from Src to Dst.
+    if (SawEdgeFromSrc)
+      // There are multiple edges from Src to Dst - fail.
       return false;
+    SawEdgeFromSrc = true;
   }
   assert(SawEdgeFromSrc && "No edge between these basic blocks!");
+
+  // Secondly, any other predecessors of Dst should be dominated by Dst.  If the
+  // predecessor is not dominated by Dst, then it must be possible to reach it
+  // either without passing through Src (thus not via the edge) or by passing
+  // through Src but taking a different edge out of Src.  Either way Dst can be
+  // reached without passing via the edge, so fail.
+  for (pred_iterator PI = pred_begin(Dst), PE = pred_end(Dst); PI != PE; ++PI) {
+    BasicBlock *Pred = *PI;
+    if (Pred != Src && !DT->dominates(Dst, Pred))
+      return false;
+  }
 
   // Every path from the entry block to Dst must at some point pass to Dst from
   // a predecessor that is not dominated by Dst.  This predecessor can only be
