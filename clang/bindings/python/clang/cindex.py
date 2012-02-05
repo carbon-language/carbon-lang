@@ -974,8 +974,7 @@ class Cursor(Structure):
     @property
     def type(self):
         """
-        Retrieve the type (if any) of of the entity pointed at by the
-        cursor.
+        Retrieve the Type (if any) of the entity pointed at by the cursor.
         """
         if not hasattr(self, '_type'):
             self._type = Cursor_type(self)
@@ -985,7 +984,7 @@ class Cursor(Structure):
     def underlying_typedef_type(self):
         """Return the underlying type of a typedef declaration.
 
-        Returns a type for the typedef this cursor is a declaration for. If
+        Returns a Type for the typedef this cursor is a declaration for. If
         the current cursor is not a typedef, this raises.
         """
         if not hasattr(self, '_underlying_type'):
@@ -998,7 +997,7 @@ class Cursor(Structure):
     def enum_type(self):
         """Return the integer type of an enum declaration.
 
-        Returns a type corresponding to an integer. If the cursor is not for an
+        Returns a Type corresponding to an integer. If the cursor is not for an
         enum, this raises.
         """
         if not hasattr(self, '_enum_type'):
