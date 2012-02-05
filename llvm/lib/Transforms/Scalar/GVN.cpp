@@ -1999,10 +1999,10 @@ static bool isOnlyReachableViaThisEdge(BasicBlock *Src, BasicBlock *Dst,
   // only reachable from Src, in practice it is pointless since at the time
   // GVN runs all such loops have preheaders, which means that Dst will have
   // been changed to have only one predecessor, namely Src.
-  pred_iterator PI = pred_begin(Dst), PE = pred_end(Dst);
-  assert(PI != PE && "No edge between these basic blocks!");
+  BasicBlock *Pred = Dst->getSinglePredecessor();
+  assert((!Pred || Pred == Src) && "No edge between these basic blocks!");
   (void)Src;
-  return PE == ++PI;
+  return Pred != 0;
 }
 
 /// processInstruction - When calculating availability, handle an instruction
