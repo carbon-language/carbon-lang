@@ -4502,9 +4502,7 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     case X86ISD::MOVSLDUP:
     case X86ISD::PALIGN:
       return SDValue(); // Not yet implemented.
-    default:
-      assert(0 && "unknown target shuffle node");
-      return SDValue();
+    default: llvm_unreachable("unknown target shuffle node");
     }
 
     Index = ShuffleMask[Index];
@@ -5813,7 +5811,7 @@ SDValue RewriteAsNarrowerShuffle(ShuffleVectorSDNode *SVOp,
   unsigned NewWidth = (NumElems == 4) ? 2 : 4;
   EVT NewVT;
   switch (VT.getSimpleVT().SimpleTy) {
-  default: assert(false && "Unexpected!");
+  default: llvm_unreachable("Unexpected!");
   case MVT::v4f32: NewVT = MVT::v2f64; break;
   case MVT::v4i32: NewVT = MVT::v2i64; break;
   case MVT::v8i16: NewVT = MVT::v4i32; break;
@@ -10577,8 +10575,7 @@ SDValue X86TargetLowering::LowerCMP_SWAP(SDValue Op, SelectionDAG &DAG) const {
   unsigned Reg = 0;
   unsigned size = 0;
   switch(T.getSimpleVT().SimpleTy) {
-  default:
-    assert(false && "Invalid value type!");
+  default: llvm_unreachable("Invalid value type!");
   case MVT::i8:  Reg = X86::AL;  size = 1; break;
   case MVT::i16: Reg = X86::AX;  size = 2; break;
   case MVT::i32: Reg = X86::EAX; size = 4; break;
@@ -10696,7 +10693,7 @@ static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
   unsigned Opc;
   bool ExtraOp = false;
   switch (Op.getOpcode()) {
-  default: assert(0 && "Invalid code");
+  default: llvm_unreachable("Invalid code");
   case ISD::ADDC: Opc = X86ISD::ADD; break;
   case ISD::ADDE: Opc = X86ISD::ADC; ExtraOp = true; break;
   case ISD::SUBC: Opc = X86ISD::SUB; break;
@@ -10838,8 +10835,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
   switch (N->getOpcode()) {
   default:
-    assert(false && "Do not know how to custom type legalize this operation!");
-    return;
+    llvm_unreachable("Do not know how to custom type legalize this operation!");
   case ISD::SIGN_EXTEND_INREG:
   case ISD::ADDC:
   case ISD::ADDE:
@@ -12322,7 +12318,7 @@ MachineBasicBlock *
 X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                MachineBasicBlock *BB) const {
   switch (MI->getOpcode()) {
-  default: assert(0 && "Unexpected instr type to insert");
+  default: llvm_unreachable("Unexpected instr type to insert");
   case X86::TAILJMPd64:
   case X86::TAILJMPr64:
   case X86::TAILJMPm64:
@@ -12699,6 +12695,7 @@ void X86TargetLowering::computeMaskedBitsForTargetNode(const SDValue Op,
     case Intrinsic::x86_avx2_pmovmskb: {
       // High bits of movmskp{s|d}, pmovmskb are known zero.
       switch (IntId) {
+        default: llvm_unreachable("Impossible intrinsic");  // Can't reach here.
         case Intrinsic::x86_sse_movmsk_ps:      NumLoBits = 4; break;
         case Intrinsic::x86_avx_movmsk_ps_256:  NumLoBits = 8; break;
         case Intrinsic::x86_sse2_movmsk_pd:     NumLoBits = 2; break;
