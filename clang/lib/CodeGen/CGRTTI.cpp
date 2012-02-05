@@ -125,7 +125,8 @@ RTTIBuilder::GetAddrOfTypeName(QualType Ty,
   // We know that the mangled name of the type starts at index 4 of the
   // mangled name of the typename, so we can just index into it in order to
   // get the mangled name of the type.
-  llvm::Constant *Init = llvm::ConstantArray::get(VMContext, Name.substr(4));
+  llvm::Constant *Init = llvm::ConstantDataArray::getString(VMContext,
+                                                            Name.substr(4));
 
   llvm::GlobalVariable *GV = 
     CGM.CreateOrReplaceCXXRuntimeVariable(Name, Init->getType(), Linkage);
