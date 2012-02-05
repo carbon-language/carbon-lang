@@ -2000,7 +2000,7 @@ static bool isOnlyReachableViaThisEdge(BasicBlock *Src, BasicBlock *Dst,
   // GVN runs all such loops have preheaders, which means that Dst will have
   // been changed to have only one predecessor, namely Src.
   pred_iterator PI = pred_begin(Dst), PE = pred_end(Dst);
-  assert(PI != PE && *PI == Src && "No edge between these basic blocks!");
+  assert(PI != PE && "No edge between these basic blocks!");
   (void)Src;
   return PE == ++PI;
 }
