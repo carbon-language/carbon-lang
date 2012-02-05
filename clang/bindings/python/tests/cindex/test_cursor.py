@@ -62,3 +62,18 @@ def test_get_children():
     assert tu_nodes[2].spelling == 'f0'
     assert tu_nodes[2].displayname == 'f0(int, int)'
     assert tu_nodes[2].is_definition() == True
+
+def test_underlying_type():
+    source = 'typedef int foo;'
+    index = Index.create()
+    tu = index.parse('test.c', unsaved_files=[('test.c', source)])
+    assert tu is not None
+
+    for cursor in tu.cursor.get_children():
+        if cursor.spelling == 'foo':
+            typedef = cursor
+            break
+
+    assert typedef.kind.is_declaration()
+    underlying = typedef.underlying_typedef_type
+    assert underlying.kind == TypeKind.INT

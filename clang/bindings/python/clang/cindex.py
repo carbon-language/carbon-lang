@@ -982,6 +982,19 @@ class Cursor(Structure):
         return self._type
 
     @property
+    def underlying_typedef_type(self):
+        """Return the underlying type of a typedef declaration.
+
+        Returns a type for the typedef this cursor is a declaration for. If
+        the current cursor is not a typedef, this raises.
+        """
+        if not hasattr(self, '_underlying_type'):
+            assert self.kind.is_declaration()
+            self._underlying_type = Cursor_underlying_type(self)
+
+        return self._underlying_type
+
+    @property
     def hash(self):
         """Returns a hash of the cursor as an int."""
         if not hasattr(self, '_hash'):
@@ -1799,6 +1812,11 @@ Cursor_type = lib.clang_getCursorType
 Cursor_type.argtypes = [Cursor]
 Cursor_type.restype = Type
 Cursor_type.errcheck = Type.from_result
+
+Cursor_underlying_type = lib.clang_getTypedefDeclUnderlyingType
+Cursor_underlying_type.argtypes = [Cursor]
+Cursor_underlying_type.restype = Type
+Cursor_underlying_type.errcheck = Type.from_result
 
 Cursor_visit_callback = CFUNCTYPE(c_int, Cursor, Cursor, py_object)
 Cursor_visit = lib.clang_visitChildren
