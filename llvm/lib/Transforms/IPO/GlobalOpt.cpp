@@ -156,10 +156,10 @@ struct GlobalStatus {
 
 }
 
-// SafeToDestroyConstant - It is safe to destroy a constant iff it is only used
-// by constants itself.  Note that constants cannot be cyclic, so this test is
-// pretty easy to implement recursively.
-//
+/// SafeToDestroyConstant - It is safe to destroy a constant iff it is only used
+/// by constants itself.  Note that constants cannot be cyclic, so this test is
+/// pretty easy to implement recursively.
+///
 static bool SafeToDestroyConstant(const Constant *C) {
   if (isa<GlobalValue>(C)) return false;
 
@@ -821,7 +821,7 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                                      CallInst *CI,
                                                      Type *AllocTy,
                                                      ConstantInt *NElements,
-                                                     TargetData* TD) {
+                                                     TargetData *TD) {
   DEBUG(errs() << "PROMOTING GLOBAL: " << *GV << "  CALL = " << *CI << '\n');
 
   Type *GlobalType;
@@ -1265,9 +1265,9 @@ static void RewriteUsesOfLoadForHeapSRoA(LoadInst *Load,
 /// PerformHeapAllocSRoA - CI is an allocation of an array of structures.  Break
 /// it up into multiple allocations of arrays of the fields.
 static GlobalVariable *PerformHeapAllocSRoA(GlobalVariable *GV, CallInst *CI,
-                                            Value* NElems, TargetData *TD) {
+                                            Value *NElems, TargetData *TD) {
   DEBUG(dbgs() << "SROA HEAP ALLOC: " << *GV << "  MALLOC = " << *CI << '\n');
-  Type* MAT = getMallocAllocatedType(CI);
+  Type *MAT = getMallocAllocatedType(CI);
   StructType *STy = cast<StructType>(MAT);
 
   // There is guaranteed to be at least one use of the malloc (storing
@@ -1474,7 +1474,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
 
   // We can't optimize this if the malloc itself is used in a complex way,
   // for example, being stored into multiple globals.  This allows the
-  // malloc to be stored into the specified global, loaded setcc'd, and
+  // malloc to be stored into the specified global, loaded icmp'd, and
   // GEP'd.  These are all things we could transform to using the global
   // for.
   SmallPtrSet<const PHINode*, 8> PHIs;
@@ -1535,7 +1535,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
         extractMallocCallFromBitCast(Malloc) : cast<CallInst>(Malloc);
     }
 
-    GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, TD, true),TD);
+    GVI = PerformHeapAllocSRoA(GV, CI, getMallocArraySize(CI, TD, true), TD);
     return true;
   }
 
@@ -1564,7 +1564,7 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
       if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC))
         return true;
     } else if (CallInst *CI = extractMallocCall(StoredOnceVal)) {
-      Type* MallocType = getMallocAllocatedType(CI);
+      Type *MallocType = getMallocAllocatedType(CI);
       if (MallocType && TryToOptimizeStoreOfMallocToGlobal(GV, CI, MallocType,
                                                            GVI, TD))
         return true;
@@ -1727,11 +1727,11 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
       GS.AccessingFunction->hasExternalLinkage() &&
       GV->getType()->getAddressSpace() == 0) {
     DEBUG(dbgs() << "LOCALIZING GLOBAL: " << *GV);
-    Instruction& FirstI = const_cast<Instruction&>(*GS.AccessingFunction
+    Instruction &FirstI = const_cast<Instruction&>(*GS.AccessingFunction
                                                    ->getEntryBlock().begin());
-    Type* ElemTy = GV->getType()->getElementType();
+    Type *ElemTy = GV->getType()->getElementType();
     // FIXME: Pass Global's alignment when globals have alignment
-    AllocaInst* Alloca = new AllocaInst(ElemTy, NULL, GV->getName(), &FirstI);
+    AllocaInst *Alloca = new AllocaInst(ElemTy, NULL, GV->getName(), &FirstI);
     if (!isa<UndefValue>(GV->getInitializer()))
       new StoreInst(GV->getInitializer(), Alloca, &FirstI);
 
