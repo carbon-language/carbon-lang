@@ -336,9 +336,23 @@ bool ArgTypeResult::matchesType(ASTContext &C, QualType argTy) const {
       return argTy->isPointerType() || argTy->isObjCObjectPointerType() ||
         argTy->isNullPtrType();
 
-    case ObjCPointerTy:
-      return argTy->getAs<ObjCObjectPointerType>() ||
-             argTy->getAs<BlockPointerType>();
+    case ObjCPointerTy: {
+      if (argTy->getAs<ObjCObjectPointerType>() ||
+          argTy->getAs<BlockPointerType>())
+        return true;
+      
+      // Handle implicit toll-free bridging.
+      if (const PointerType *PT = argTy->getAs<PointerType>()) {
+        // Things such as CFTypeRef are really just opaque pointers
+        // to C structs representing CF types that can often be bridged
+        // to Objective-C objects.  Since the compiler doesn't know which
+        // structs can be toll-free bridged, we just accept them all.
+        QualType pointee = PT->getPointeeType();
+        if (pointee->getAsStructureType() || pointee->isVoidType())
+          return true;
+      }
+      return false;      
+    }
   }
 
   llvm_unreachable("Invalid ArgTypeResult Kind!");

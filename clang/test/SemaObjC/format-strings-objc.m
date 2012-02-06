@@ -146,3 +146,8 @@ void test_percent_C() {
   const wchar_t wchar_data = L'a';
   NSLog(@"%C", wchar_data);  // expected-warning{{format specifies type 'unsigned short' but the argument has type 'wchar_t'}}
 }
+
+// Test that %@ works with toll-free bridging (<rdar://problem/10814120>).
+void test_toll_free_bridging(CFStringRef x) {
+  NSLog(@"%@", x); // no-warning
+}
