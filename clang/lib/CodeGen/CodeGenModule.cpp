@@ -1913,8 +1913,7 @@ CodeGenModule::GetAddrOfConstantString(const StringLiteral *Literal) {
   if (llvm::Constant *C = Entry.getValue())
     return C;
   
-  llvm::Constant *Zero =
-  llvm::Constant::getNullValue(llvm::Type::getInt32Ty(VMContext));
+  llvm::Constant *Zero = llvm::Constant::getNullValue(Int32Ty);
   llvm::Constant *Zeros[] = { Zero, Zero };
   
   // If we don't already have it, get _NSConstantStringClassReference.
@@ -2054,34 +2053,20 @@ QualType CodeGenModule::getObjCFastEnumerationStateType() {
   return ObjCFastEnumerationStateType;
 }
 
-/// GetStringForStringLiteral - Return the appropriate bytes for a
-/// string literal, properly padded to match the literal type.
-static std::string GetStringForStringLiteral(const StringLiteral *E,
-                                             const ASTContext &Context) {
-  assert((E->isAscii() || E->isUTF8())
-         && "Use GetConstantArrayFromStringLiteral for wide strings");
-  const ConstantArrayType *CAT =
-    Context.getAsConstantArrayType(E->getType());
-  assert(CAT && "String isn't pointer or array!");
-
-  // Resize the string to the right size.
-  uint64_t RealLen = CAT->getSize().getZExtValue();
-
-  std::string Str = E->getString().str();
-  Str.resize(RealLen, '\0');
-  return Str;
-}
-
 llvm::Constant *
 CodeGenModule::GetConstantArrayFromStringLiteral(const StringLiteral *E) {
   assert(!E->getType()->isPointerType() && "Strings are always arrays");
   
   // Don't emit it as the address of the string, emit the string data itself
   // as an inline array.
-  if (E->getCharByteWidth() == 1)
-    return llvm::ConstantDataArray::getString(VMContext,
-                                    GetStringForStringLiteral(E, getContext()),
-                                              false);
+  if (E->getCharByteWidth() == 1) {
+    SmallString<64> Str(E->getString());
+
+    // Resize the string to the right size, which is indicated by its type.
+    const ConstantArrayType *CAT = Context.getAsConstantArrayType(E->getType());
+    Str.resize(CAT->getSize().getZExtValue());
+    return llvm::ConstantDataArray::getString(VMContext, Str, false);
+  }
   
   llvm::ArrayType *AType =
     cast<llvm::ArrayType>(getTypes().ConvertType(E->getType()));
@@ -2107,16 +2092,17 @@ CodeGenModule::GetConstantArrayFromStringLiteral(const StringLiteral *E) {
 /// constant array for the given string literal.
 llvm::Constant *
 CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
-  // FIXME: This can be more efficient.
-  // FIXME: We shouldn't need to bitcast the constant in the wide string case.
   CharUnits Align = getContext().getTypeAlignInChars(S->getType());
   if (S->isAscii() || S->isUTF8()) {
-    return GetAddrOfConstantString(GetStringForStringLiteral(S, getContext()),
-                                   /* GlobalName */ 0,
-                                   Align.getQuantity());
+    SmallString<64> Str(S->getString());
+    
+    // Resize the string to the right size, which is indicated by its type.
+    const ConstantArrayType *CAT = Context.getAsConstantArrayType(S->getType());
+    Str.resize(CAT->getSize().getZExtValue());
+    return GetAddrOfConstantString(Str, /*GlobalName*/ 0, Align.getQuantity());
   }
 
-  // FIXME: the following does not memoize wide strings
+  // FIXME: the following does not memoize wide strings.
   llvm::Constant *C = GetConstantArrayFromStringLiteral(S);
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(getModule(),C->getType(),
@@ -2126,7 +2112,6 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
 
   GV->setAlignment(Align.getQuantity());
   GV->setUnnamedAddr(true);
-  
   return GV;
 }
 
@@ -2172,14 +2157,12 @@ static llvm::GlobalVariable *GenerateStringLiteral(StringRef str,
 llvm::Constant *CodeGenModule::GetAddrOfConstantString(StringRef Str,
                                                        const char *GlobalName,
                                                        unsigned Alignment) {
-  bool IsConstant = !Features.WritableStrings;
-
   // Get the default prefix if a name wasn't specified.
   if (!GlobalName)
     GlobalName = ".str";
 
   // Don't share any string literals if strings aren't constant.
-  if (!IsConstant)
+  if (Features.WritableStrings)
     return GenerateStringLiteral(Str, false, *this, GlobalName, Alignment);
 
   llvm::StringMapEntry<llvm::GlobalVariable *> &Entry =
@@ -2193,7 +2176,8 @@ llvm::Constant *CodeGenModule::GetAddrOfConstantString(StringRef Str,
   }
 
   // Create a global variable for this.
-  llvm::GlobalVariable *GV = GenerateStringLiteral(Str, true, *this, GlobalName, Alignment);
+  llvm::GlobalVariable *GV = GenerateStringLiteral(Str, true, *this, GlobalName,
+                                                   Alignment);
   Entry.setValue(GV);
   return GV;
 }
