@@ -128,7 +128,6 @@
           <li><a href="#i_switch">'<tt>switch</tt>' Instruction</a></li>
           <li><a href="#i_indirectbr">'<tt>indirectbr</tt>' Instruction</a></li>
           <li><a href="#i_invoke">'<tt>invoke</tt>' Instruction</a></li>
-          <li><a href="#i_unwind">'<tt>unwind</tt>'  Instruction</a></li>
           <li><a href="#i_resume">'<tt>resume</tt>'  Instruction</a></li>
           <li><a href="#i_unreachable">'<tt>unreachable</tt>' Instruction</a></li>
         </ol>
@@ -1206,8 +1205,7 @@ define void @f() optsize { ... }
       It does not write through any pointer arguments
       (including <tt><a href="#byval">byval</a></tt> arguments) and never
       changes any state visible to callers.  This means that it cannot unwind
-      exceptions by calling the <tt>C++</tt> exception throwing methods, but
-      could use the <tt>unwind</tt> instruction.</dd>
+      exceptions by calling the <tt>C++</tt> exception throwing methods.</dd>
 
   <dt><tt><b><a name="readonly">readonly</a></b></tt></dt>
   <dd>This attribute indicates that the function does not write through any
@@ -1217,8 +1215,7 @@ define void @f() optsize { ... }
       and read state that may be set in the caller.  A readonly function always
       returns the same value (or unwinds an exception identically) when called
       with the same set of arguments and global state.  It cannot unwind an
-      exception by calling the <tt>C++</tt> exception throwing methods, but may
-      use the <tt>unwind</tt> instruction.</dd>
+      exception by calling the <tt>C++</tt> exception throwing methods.</dd>
 
   <dt><tt><b><a name="returns_twice">returns_twice</a></b></tt></dt>
   <dd>This attribute indicates that this function can return twice. The
@@ -2543,7 +2540,7 @@ b: unreachable
     control back to them.</li>
 
 <li><a href="#i_invoke"><tt>Invoke</tt></a> instructions depend on the
-    <a href="#i_ret"><tt>ret</tt></a>, <a href="#i_unwind"><tt>unwind</tt></a>,
+    <a href="#i_ret"><tt>ret</tt></a>, <a href="#i_resume"><tt>resume</tt></a>,
     or exception-throwing call instructions that dynamically transfer control
     back to them.</li>
 
@@ -3180,7 +3177,6 @@ cast formed of bitcast or getelementptr.  For example, a legal use of it is:</p>
    '<a href="#i_switch"><tt>switch</tt></a>', 
    '<a href="#i_indirectbr"><tt>indirectbr</tt></a>',
    '<a href="#i_invoke"><tt>invoke</tt></a>', 
-   '<a href="#i_unwind"><tt>unwind</tt></a>',
    '<a href="#i_resume"><tt>resume</tt></a>', and 
    '<a href="#i_unreachable"><tt>unreachable</tt></a>'.</p>
 
@@ -3400,9 +3396,9 @@ IfUnequal:
    '<tt>normal</tt>' label or the '<tt>exception</tt>' label.  If the callee
    function returns with the "<tt><a href="#i_ret">ret</a></tt>" instruction,
    control flow will return to the "normal" label.  If the callee (or any
-   indirect callees) returns with the "<a href="#i_unwind"><tt>unwind</tt></a>"
-   instruction, control is interrupted and continued at the dynamically nearest
-   "exception" label.</p>
+   indirect callees) returns via the "<a href="#i_resume"><tt>resume</tt></a>"
+   instruction or other exception handling mechanism, control is interrupted and
+   continued at the dynamically nearest "exception" label.</p>
 
 <p>The '<tt>exception</tt>' label is a
    <i><a href="ExceptionHandling.html#overview">landing pad</a></i> for the
@@ -3444,8 +3440,9 @@ IfUnequal:
   <li>'<tt>normal label</tt>': the label reached when the called function
       executes a '<tt><a href="#i_ret">ret</a></tt>' instruction. </li>
 
-  <li>'<tt>exception label</tt>': the label reached when a callee returns with
-      the <a href="#i_unwind"><tt>unwind</tt></a> instruction. </li>
+  <li>'<tt>exception label</tt>': the label reached when a callee returns via
+      the <a href="#i_resume"><tt>resume</tt></a> instruction or other exception
+      handling mechanism.</li>
 
   <li>The optional <a href="#fnattrs">function attributes</a> list. Only
       '<tt>noreturn</tt>', '<tt>nounwind</tt>', '<tt>readonly</tt>' and
@@ -3468,9 +3465,6 @@ IfUnequal:
    block to the "normal" label. If the callee unwinds then no return value is
    available.</p>
 
-<p>Note that the code generator does not yet completely support unwind, and
-that the invoke/unwind semantics are likely to change in future versions.</p>
-
 <h5>Example:</h5>
 <pre>
   %retval = invoke i32 @Test(i32 15) to label %Continue
@@ -3478,41 +3472,6 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
   %retval = invoke <a href="#callingconv">coldcc</a> i32 %Testfnptr(i32 15) to label %Continue
               unwind label %TestCleanup              <i>; {i32}:retval set</i>
 </pre>
-
-</div>
-
-<!-- _______________________________________________________________________ -->
-
-<h4>
-  <a name="i_unwind">'<tt>unwind</tt>' Instruction</a>
-</h4>
-
-<div>
-
-<h5>Syntax:</h5>
-<pre>
-  unwind
-</pre>
-
-<h5>Overview:</h5>
-<p><span class="doc_warning">N.B. The <tt>unwind</tt> instruction has been
-   deprecated and is slated for removal.</span></p>
-
-<p>The '<tt>unwind</tt>' instruction unwinds the stack, continuing control flow
-   at the first callee in the dynamic call stack which used
-   an <a href="#i_invoke"><tt>invoke</tt></a> instruction to perform the call.
-   This is primarily used to implement exception handling.</p>
-
-<h5>Semantics:</h5>
-<p>The '<tt>unwind</tt>' instruction causes execution of the current function to
-   immediately halt.  The dynamic call stack is then searched for the
-   first <a href="#i_invoke"><tt>invoke</tt></a> instruction on the call stack.
-   Once found, execution continues at the "exceptional" destination block
-   specified by the <tt>invoke</tt> instruction.  If there is no <tt>invoke</tt>
-   instruction in the dynamic call chain, undefined behavior results.</p>
-
-<p>Note that the code generator does not yet completely support unwind, and
-that the invoke/unwind semantics are likely to change in future versions.</p>
 
 </div>
 
@@ -4700,7 +4659,7 @@ that the invoke/unwind semantics are likely to change in future versions.</p>
    '<tt>alloca</tt>' instruction is commonly used to represent automatic
    variables that must have an address available.  When the function returns
    (either with the <tt><a href="#i_ret">ret</a></tt>
-   or <tt><a href="#i_unwind">unwind</a></tt> instructions), the memory is
+   or <tt><a href="#i_resume">resume</a></tt> instructions), the memory is
    reclaimed.  Allocating zero bytes is legal, but the result is undefined.</p>
 
 <h5>Example:</h5>
