@@ -2104,7 +2104,7 @@ Sema::ActOnTemplateIdType(CXXScopeSpec &SS, SourceLocation TemplateKWLoc,
     // Create an elaborated-type-specifier containing the nested-name-specifier.
     Result = Context.getElaboratedType(ETK_None, SS.getScopeRep(), Result);
     ElaboratedTypeLoc ElabTL = TLB.push<ElaboratedTypeLoc>(Result);
-    ElabTL.setKeywordLoc(SourceLocation());
+    ElabTL.setElaboratedKeywordLoc(SourceLocation());
     ElabTL.setQualifierLoc(SS.getWithLocInContext(Context));
   }
   
@@ -2197,7 +2197,7 @@ TypeResult Sema::ActOnTagTemplateIdType(TagUseKind TUK,
   // and tag keyword.
   Result = Context.getElaboratedType(Keyword, SS.getScopeRep(), Result);
   ElaboratedTypeLoc ElabTL = TLB.push<ElaboratedTypeLoc>(Result);
-  ElabTL.setKeywordLoc(TagLoc);
+  ElabTL.setElaboratedKeywordLoc(TagLoc);
   ElabTL.setQualifierLoc(SS.getWithLocInContext(Context));
   return CreateParsedType(Result, TLB.getTypeSourceInfo(Context, Result));
 }
@@ -6587,7 +6587,7 @@ Sema::ActOnDependentTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
   // Create type-source location information for this type.
   TypeLocBuilder TLB;
   DependentNameTypeLoc TL = TLB.push<DependentNameTypeLoc>(Result);
-  TL.setKeywordLoc(TagLoc);
+  TL.setElaboratedKeywordLoc(TagLoc);
   TL.setQualifierLoc(SS.getWithLocInContext(Context));
   TL.setNameLoc(NameLoc);
   return CreateParsedType(Result, TLB.getTypeSourceInfo(Context, Result));
@@ -6616,12 +6616,12 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
   TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
   if (isa<DependentNameType>(T)) {
     DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
-    TL.setKeywordLoc(TypenameLoc);
+    TL.setElaboratedKeywordLoc(TypenameLoc);
     TL.setQualifierLoc(QualifierLoc);
     TL.setNameLoc(IdLoc);
   } else {
     ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
-    TL.setKeywordLoc(TypenameLoc);
+    TL.setElaboratedKeywordLoc(TypenameLoc);
     TL.setQualifierLoc(QualifierLoc);
     cast<TypeSpecTypeLoc>(TL.getNamedTypeLoc()).setNameLoc(IdLoc);
   }
@@ -6692,7 +6692,7 @@ Sema::ActOnTypenameType(Scope *S,
   
   T = Context.getElaboratedType(ETK_Typename, SS.getScopeRep(), T);
   ElaboratedTypeLoc TL = Builder.push<ElaboratedTypeLoc>(T);
-  TL.setKeywordLoc(TypenameLoc);
+  TL.setElaboratedKeywordLoc(TypenameLoc);
   TL.setQualifierLoc(SS.getWithLocInContext(Context));
   
   TypeSourceInfo *TSI = Builder.getTypeSourceInfo(Context, T);

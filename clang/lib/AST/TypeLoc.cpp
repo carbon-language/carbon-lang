@@ -254,7 +254,7 @@ TypeLoc TypeLoc::IgnoreParensImpl(TypeLoc TL) {
 
 void ElaboratedTypeLoc::initializeLocal(ASTContext &Context, 
                                         SourceLocation Loc) {
-  setKeywordLoc(Loc);
+  setElaboratedKeywordLoc(Loc);
   NestedNameSpecifierLocBuilder Builder;
   Builder.MakeTrivial(Context, getTypePtr()->getQualifier(), Loc);
   setQualifierLoc(Builder.getWithLocInContext(Context));
@@ -262,7 +262,7 @@ void ElaboratedTypeLoc::initializeLocal(ASTContext &Context,
 
 void DependentNameTypeLoc::initializeLocal(ASTContext &Context, 
                                            SourceLocation Loc) {
-  setKeywordLoc(Loc);
+  setElaboratedKeywordLoc(Loc);
   NestedNameSpecifierLocBuilder Builder;
   Builder.MakeTrivial(Context, getTypePtr()->getQualifier(), Loc);
   setQualifierLoc(Builder.getWithLocInContext(Context));

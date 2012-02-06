@@ -566,14 +566,14 @@ void TypeLocWriter::VisitParenTypeLoc(ParenTypeLoc TL) {
   Writer.AddSourceLocation(TL.getRParenLoc(), Record);
 }
 void TypeLocWriter::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
-  Writer.AddSourceLocation(TL.getKeywordLoc(), Record);
+  Writer.AddSourceLocation(TL.getElaboratedKeywordLoc(), Record);
   Writer.AddNestedNameSpecifierLoc(TL.getQualifierLoc(), Record);
 }
 void TypeLocWriter::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }
 void TypeLocWriter::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
-  Writer.AddSourceLocation(TL.getKeywordLoc(), Record);
+  Writer.AddSourceLocation(TL.getElaboratedKeywordLoc(), Record);
   Writer.AddNestedNameSpecifierLoc(TL.getQualifierLoc(), Record);
   Writer.AddSourceLocation(TL.getNameLoc(), Record);
 }

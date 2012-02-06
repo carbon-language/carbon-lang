@@ -10086,12 +10086,12 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
     TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
     if (isa<DependentNameType>(T)) {
       DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
-      TL.setKeywordLoc(TagLoc);
+      TL.setElaboratedKeywordLoc(TagLoc);
       TL.setQualifierLoc(QualifierLoc);
       TL.setNameLoc(NameLoc);
     } else {
       ElaboratedTypeLoc TL = cast<ElaboratedTypeLoc>(TSI->getTypeLoc());
-      TL.setKeywordLoc(TagLoc);
+      TL.setElaboratedKeywordLoc(TagLoc);
       TL.setQualifierLoc(QualifierLoc);
       cast<TypeSpecTypeLoc>(TL.getNamedTypeLoc()).setNameLoc(NameLoc);
     }
@@ -10114,7 +10114,7 @@ Decl *Sema::ActOnTemplatedFriendTag(Scope *S, SourceLocation FriendLoc,
   QualType T = Context.getDependentNameType(ETK, SS.getScopeRep(), Name);
   TypeSourceInfo *TSI = Context.CreateTypeSourceInfo(T);
   DependentNameTypeLoc TL = cast<DependentNameTypeLoc>(TSI->getTypeLoc());
-  TL.setKeywordLoc(TagLoc);
+  TL.setElaboratedKeywordLoc(TagLoc);
   TL.setQualifierLoc(SS.getWithLocInContext(Context));
   TL.setNameLoc(NameLoc);
 

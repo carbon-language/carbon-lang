@@ -2921,9 +2921,9 @@ namespace {
           return;
         }
       }
-      TL.setKeywordLoc(Keyword != ETK_None
-                       ? DS.getTypeSpecTypeLoc()
-                       : SourceLocation());
+      TL.setElaboratedKeywordLoc(Keyword != ETK_None
+                                 ? DS.getTypeSpecTypeLoc()
+                                 : SourceLocation());
       const CXXScopeSpec& SS = DS.getTypeSpecScope();
       TL.setQualifierLoc(SS.getWithLocInContext(Context));
       Visit(TL.getNextTypeLoc().getUnqualifiedLoc());
@@ -2939,9 +2939,9 @@ namespace {
           return;
         }
       }
-      TL.setKeywordLoc(Keyword != ETK_None
-                       ? DS.getTypeSpecTypeLoc()
-                       : SourceLocation());
+      TL.setElaboratedKeywordLoc(Keyword != ETK_None
+                                 ? DS.getTypeSpecTypeLoc()
+                                 : SourceLocation());
       const CXXScopeSpec& SS = DS.getTypeSpecScope();
       TL.setQualifierLoc(SS.getWithLocInContext(Context));
       TL.setNameLoc(DS.getTypeSpecTypeNameLoc());
@@ -3027,7 +3027,7 @@ namespace {
         assert(isa<DependentNameType>(ClsTy) && "Unexpected TypeLoc");
         {
           DependentNameTypeLoc DNTLoc = cast<DependentNameTypeLoc>(ClsTL);
-          DNTLoc.setKeywordLoc(SourceLocation());
+          DNTLoc.setElaboratedKeywordLoc(SourceLocation());
           DNTLoc.setQualifierLoc(NNSLoc.getPrefix());
           DNTLoc.setNameLoc(NNSLoc.getLocalBeginLoc());
         }
@@ -3037,7 +3037,7 @@ namespace {
       case NestedNameSpecifier::TypeSpecWithTemplate:
         if (isa<ElaboratedType>(ClsTy)) {
           ElaboratedTypeLoc ETLoc = *cast<ElaboratedTypeLoc>(&ClsTL);
-          ETLoc.setKeywordLoc(SourceLocation());
+          ETLoc.setElaboratedKeywordLoc(SourceLocation());
           ETLoc.setQualifierLoc(NNSLoc.getPrefix());
           TypeLoc NamedTL = ETLoc.getNamedTypeLoc();
           NamedTL.initializeFullCopy(NNSLoc.getTypeLoc());

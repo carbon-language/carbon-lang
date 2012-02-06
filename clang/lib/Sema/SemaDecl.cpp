@@ -287,7 +287,7 @@ ParsedType Sema::getTypeName(IdentifierInfo &II, SourceLocation NameLoc,
         
         T = getElaboratedType(ETK_None, *SS, T);
         ElaboratedTypeLoc ElabTL = Builder.push<ElaboratedTypeLoc>(T);
-        ElabTL.setKeywordLoc(SourceLocation());
+        ElabTL.setElaboratedKeywordLoc(SourceLocation());
         ElabTL.setQualifierLoc(SS->getWithLocInContext(Context));
         return CreateParsedType(T, Builder.getTypeSourceInfo(Context, T));
       } else {

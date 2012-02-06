@@ -4711,7 +4711,7 @@ TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
   if (getDerived().AlwaysRebuild() ||
       QualifierLoc != TL.getQualifierLoc() ||
       NamedT != T->getNamedType()) {
-    Result = getDerived().RebuildElaboratedType(TL.getKeywordLoc(),
+    Result = getDerived().RebuildElaboratedType(TL.getElaboratedKeywordLoc(),
                                                 T->getKeyword(), 
                                                 QualifierLoc, NamedT);
     if (Result.isNull())
@@ -4719,7 +4719,7 @@ TreeTransform<Derived>::TransformElaboratedType(TypeLocBuilder &TLB,
   }
 
   ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
-  NewTL.setKeywordLoc(TL.getKeywordLoc());
+  NewTL.setElaboratedKeywordLoc(TL.getElaboratedKeywordLoc());
   NewTL.setQualifierLoc(QualifierLoc);
   return Result;
 }
@@ -4795,7 +4795,7 @@ QualType TreeTransform<Derived>::TransformDependentNameType(TypeLocBuilder &TLB,
 
   QualType Result
     = getDerived().RebuildDependentNameType(T->getKeyword(),
-                                            TL.getKeywordLoc(),
+                                            TL.getElaboratedKeywordLoc(),
                                             QualifierLoc,
                                             T->getIdentifier(),
                                             TL.getNameLoc());
@@ -4807,11 +4807,11 @@ QualType TreeTransform<Derived>::TransformDependentNameType(TypeLocBuilder &TLB,
     TLB.pushTypeSpec(NamedT).setNameLoc(TL.getNameLoc());
 
     ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
-    NewTL.setKeywordLoc(TL.getKeywordLoc());
+    NewTL.setElaboratedKeywordLoc(TL.getElaboratedKeywordLoc());
     NewTL.setQualifierLoc(QualifierLoc);
   } else {
     DependentNameTypeLoc NewTL = TLB.push<DependentNameTypeLoc>(Result);
-    NewTL.setKeywordLoc(TL.getKeywordLoc());
+    NewTL.setElaboratedKeywordLoc(TL.getElaboratedKeywordLoc());
     NewTL.setQualifierLoc(QualifierLoc);
     NewTL.setNameLoc(TL.getNameLoc());
   }
@@ -4876,7 +4876,7 @@ TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
     
     // Copy information relevant to the elaborated type.
     ElaboratedTypeLoc NewTL = TLB.push<ElaboratedTypeLoc>(Result);
-    NewTL.setKeywordLoc(TL.getElaboratedKeywordLoc());
+    NewTL.setElaboratedKeywordLoc(TL.getElaboratedKeywordLoc());
     NewTL.setQualifierLoc(QualifierLoc);
   } else if (isa<DependentTemplateSpecializationType>(Result)) {
     DependentTemplateSpecializationTypeLoc SpecTL

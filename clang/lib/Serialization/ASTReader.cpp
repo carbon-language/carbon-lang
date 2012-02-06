@@ -4330,14 +4330,14 @@ void TypeLocReader::VisitParenTypeLoc(ParenTypeLoc TL) {
   TL.setRParenLoc(ReadSourceLocation(Record, Idx));
 }
 void TypeLocReader::VisitElaboratedTypeLoc(ElaboratedTypeLoc TL) {
-  TL.setKeywordLoc(ReadSourceLocation(Record, Idx));
+  TL.setElaboratedKeywordLoc(ReadSourceLocation(Record, Idx));
   TL.setQualifierLoc(Reader.ReadNestedNameSpecifierLoc(F, Record, Idx));
 }
 void TypeLocReader::VisitInjectedClassNameTypeLoc(InjectedClassNameTypeLoc TL) {
   TL.setNameLoc(ReadSourceLocation(Record, Idx));
 }
 void TypeLocReader::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
-  TL.setKeywordLoc(ReadSourceLocation(Record, Idx));
+  TL.setElaboratedKeywordLoc(ReadSourceLocation(Record, Idx));
   TL.setQualifierLoc(Reader.ReadNestedNameSpecifierLoc(F, Record, Idx));
   TL.setNameLoc(ReadSourceLocation(Record, Idx));
 }

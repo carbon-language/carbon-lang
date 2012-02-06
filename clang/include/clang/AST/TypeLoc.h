@@ -1492,10 +1492,8 @@ class AutoTypeLoc : public InheritingConcreteTypeLoc<TypeSpecTypeLoc,
 };
 
 struct ElaboratedLocInfo {
-  SourceLocation KeywordLoc;
-
-  /// \brief Opaque data pointer used to reconstruct a nested-name-specifier
-  /// from
+  SourceLocation ElaboratedKWLoc;
+  /// \brief Data associated with the nested-name-specifier location.
   void *QualifierData;
 };
 
@@ -1504,11 +1502,11 @@ class ElaboratedTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
                                                  ElaboratedType,
                                                  ElaboratedLocInfo> {
 public:
-  SourceLocation getKeywordLoc() const {
-    return this->getLocalData()->KeywordLoc;
+  SourceLocation getElaboratedKeywordLoc() const {
+    return this->getLocalData()->ElaboratedKWLoc;
   }
-  void setKeywordLoc(SourceLocation Loc) {
-    this->getLocalData()->KeywordLoc = Loc;
+  void setElaboratedKeywordLoc(SourceLocation Loc) {
+    this->getLocalData()->ElaboratedKWLoc = Loc;
   }
 
   NestedNameSpecifierLoc getQualifierLoc() const {
@@ -1524,11 +1522,12 @@ public:
   }
 
   SourceRange getLocalSourceRange() const {
-    if (getKeywordLoc().isValid())
+    if (getElaboratedKeywordLoc().isValid())
       if (getQualifierLoc())
-        return SourceRange(getKeywordLoc(), getQualifierLoc().getEndLoc());
+        return SourceRange(getElaboratedKeywordLoc(),
+                           getQualifierLoc().getEndLoc());
       else
-        return SourceRange(getKeywordLoc());
+        return SourceRange(getElaboratedKeywordLoc());
     else
       return getQualifierLoc().getSourceRange();
   }
@@ -1554,9 +1553,6 @@ public:
 // type is some sort of TypeDeclTypeLoc.
 struct DependentNameLocInfo : ElaboratedLocInfo {
   SourceLocation NameLoc;
-
-  /// \brief Data associated with the nested-name-specifier location.
-  void *QualifierData;
 };
 
 class DependentNameTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
@@ -1564,11 +1560,11 @@ class DependentNameTypeLoc : public ConcreteTypeLoc<UnqualTypeLoc,
                                                     DependentNameType,
                                                     DependentNameLocInfo> {
 public:
-  SourceLocation getKeywordLoc() const {
-    return this->getLocalData()->KeywordLoc;
+  SourceLocation getElaboratedKeywordLoc() const {
+    return this->getLocalData()->ElaboratedKWLoc;
   }
-  void setKeywordLoc(SourceLocation Loc) {
-    this->getLocalData()->KeywordLoc = Loc;
+  void setElaboratedKeywordLoc(SourceLocation Loc) {
+    this->getLocalData()->ElaboratedKWLoc = Loc;
   }
 
   NestedNameSpecifierLoc getQualifierLoc() const {
@@ -1591,8 +1587,8 @@ public:
   }
 
   SourceRange getLocalSourceRange() const {
-    if (getKeywordLoc().isValid())
-      return SourceRange(getKeywordLoc(), getNameLoc());
+    if (getElaboratedKeywordLoc().isValid())
+      return SourceRange(getElaboratedKeywordLoc(), getNameLoc());
     else
       return SourceRange(getQualifierLoc().getBeginLoc(), getNameLoc());
   }
@@ -1607,7 +1603,6 @@ public:
 };
 
 struct DependentTemplateSpecializationLocInfo : DependentNameLocInfo {
-  SourceLocation ElaboratedKWLoc;
   SourceLocation LAngleLoc;
   SourceLocation RAngleLoc;
   // followed by a TemplateArgumentLocInfo[]
