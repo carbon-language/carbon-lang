@@ -183,7 +183,7 @@ SourceLocation IndexingContext::CXXBasesListInfo::getBaseLoc(
     return DL->getNameLoc();
   if (const DependentTemplateSpecializationTypeLoc *
         DTL = dyn_cast<DependentTemplateSpecializationTypeLoc>(&TL))
-    return DTL->getNameLoc();
+    return DTL->getTemplateNameLoc();
 
   return Loc;
 }

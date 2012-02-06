@@ -798,10 +798,9 @@ bool Parser::AnnotateTemplateIdToken(TemplateTy Template, TemplateNameKind TNK,
   // Build the annotation token.
   if (TNK == TNK_Type_template && AllowTypeAnnotation) {
     TypeResult Type
-      = Actions.ActOnTemplateIdType(SS, 
+      = Actions.ActOnTemplateIdType(SS, TemplateKWLoc,
                                     Template, TemplateNameLoc,
-                                    LAngleLoc, TemplateArgsPtr,
-                                    RAngleLoc);
+                                    LAngleLoc, TemplateArgsPtr, RAngleLoc);
     if (Type.isInvalid()) {
       // If we failed to parse the template ID but skipped ahead to a >, we're not
       // going to be able to form a token annotation.  Eat the '>' if present.
@@ -879,6 +878,7 @@ void Parser::AnnotateTemplateIdTokenAsType() {
 
   TypeResult Type
     = Actions.ActOnTemplateIdType(TemplateId->SS,
+                                  TemplateId->TemplateKWLoc,
                                   TemplateId->Template,
                                   TemplateId->TemplateNameLoc,
                                   TemplateId->LAngleLoc,

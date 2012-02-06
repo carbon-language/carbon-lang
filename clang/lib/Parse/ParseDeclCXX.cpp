@@ -1182,14 +1182,14 @@ void Parser::ParseClassSpecifier(tok::TokenKind TagTokKind,
     } else if (TUK == Sema::TUK_Reference ||
                (TUK == Sema::TUK_Friend &&
                 TemplateInfo.Kind == ParsedTemplateInfo::NonTemplate)) {
-      TypeResult = Actions.ActOnTagTemplateIdType(TUK, TagType, 
-                                                  StartLoc, 
+      TypeResult = Actions.ActOnTagTemplateIdType(TUK, TagType, StartLoc,
                                                   TemplateId->SS,
+                                                  TemplateId->TemplateKWLoc,
                                                   TemplateId->Template,
                                                   TemplateId->TemplateNameLoc,
                                                   TemplateId->LAngleLoc,
                                                   TemplateArgsPtr,
-                                                  TemplateId->RAngleLoc);                                                  
+                                                  TemplateId->RAngleLoc);
     } else {
       // This is an explicit specialization or a class template
       // partial specialization.

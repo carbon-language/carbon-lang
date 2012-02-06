@@ -272,7 +272,7 @@ void DependentNameTypeLoc::initializeLocal(ASTContext &Context,
 void 
 DependentTemplateSpecializationTypeLoc::initializeLocal(ASTContext &Context, 
                                                         SourceLocation Loc) {
-  setKeywordLoc(Loc);
+  setElaboratedKeywordLoc(Loc);
   if (getTypePtr()->getQualifier()) {
     NestedNameSpecifierLocBuilder Builder;
     Builder.MakeTrivial(Context, getTypePtr()->getQualifier(), Loc);
@@ -281,7 +281,7 @@ DependentTemplateSpecializationTypeLoc::initializeLocal(ASTContext &Context,
     setQualifierLoc(NestedNameSpecifierLoc());
   }
   
-  setNameLoc(Loc);
+  setTemplateNameLoc(Loc);
   setLAngleLoc(Loc);
   setRAngleLoc(Loc);
   TemplateSpecializationTypeLoc::initializeArgLocs(Context, getNumArgs(),

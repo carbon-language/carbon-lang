@@ -3974,7 +3974,7 @@ public:
                               TemplateArgumentListInfo &TemplateArgs);
 
   TypeResult
-  ActOnTemplateIdType(CXXScopeSpec &SS,
+  ActOnTemplateIdType(CXXScopeSpec &SS, SourceLocation TemplateKWLoc,
                       TemplateTy Template, SourceLocation TemplateLoc,
                       SourceLocation LAngleLoc,
                       ASTTemplateArgsPtr TemplateArgs,
@@ -3989,6 +3989,7 @@ public:
                                     TypeSpecifierType TagSpec,
                                     SourceLocation TagLoc,
                                     CXXScopeSpec &SS,
+                                    SourceLocation TemplateKWLoc,
                                     TemplateTy TemplateD,
                                     SourceLocation TemplateLoc,
                                     SourceLocation LAngleLoc,

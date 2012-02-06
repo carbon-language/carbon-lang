@@ -2045,7 +2045,7 @@ QualType Sema::CheckTemplateIdType(TemplateName Name,
 }
 
 TypeResult
-Sema::ActOnTemplateIdType(CXXScopeSpec &SS,
+Sema::ActOnTemplateIdType(CXXScopeSpec &SS, SourceLocation TemplateKWLoc,
                           TemplateTy TemplateD, SourceLocation TemplateLoc,
                           SourceLocation LAngleLoc,
                           ASTTemplateArgsPtr TemplateArgsIn,
@@ -2070,11 +2070,11 @@ Sema::ActOnTemplateIdType(CXXScopeSpec &SS,
     TypeLocBuilder TLB;
     DependentTemplateSpecializationTypeLoc SpecTL
       = TLB.push<DependentTemplateSpecializationTypeLoc>(T);
-    SpecTL.setKeywordLoc(SourceLocation());
-    SpecTL.setNameLoc(TemplateLoc);
+    SpecTL.setElaboratedKeywordLoc(SourceLocation());
+    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
+    SpecTL.setTemplateNameLoc(TemplateLoc);
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);
-    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
     for (unsigned I = 0, N = SpecTL.getNumArgs(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
     return CreateParsedType(T, TLB.getTypeSourceInfo(Context, T));
@@ -2087,9 +2087,10 @@ Sema::ActOnTemplateIdType(CXXScopeSpec &SS,
     return true;
 
   // Build type-source information.
-  TypeLocBuilder TLB;  
+  TypeLocBuilder TLB;
   TemplateSpecializationTypeLoc SpecTL
     = TLB.push<TemplateSpecializationTypeLoc>(Result);
+  SpecTL.setTemplateKeywordLoc(TemplateKWLoc);
   SpecTL.setTemplateNameLoc(TemplateLoc);
   SpecTL.setLAngleLoc(LAngleLoc);
   SpecTL.setRAngleLoc(RAngleLoc);
@@ -2114,7 +2115,8 @@ TypeResult Sema::ActOnTagTemplateIdType(TagUseKind TUK,
                                         TypeSpecifierType TagSpec,
                                         SourceLocation TagLoc,
                                         CXXScopeSpec &SS,
-                                        TemplateTy TemplateD, 
+                                        SourceLocation TemplateKWLoc,
+                                        TemplateTy TemplateD,
                                         SourceLocation TemplateLoc,
                                         SourceLocation LAngleLoc,
                                         ASTTemplateArgsPtr TemplateArgsIn,
@@ -2139,12 +2141,12 @@ TypeResult Sema::ActOnTagTemplateIdType(TagUseKind TUK,
     // Build type-source information.    
     TypeLocBuilder TLB;
     DependentTemplateSpecializationTypeLoc SpecTL
-    = TLB.push<DependentTemplateSpecializationTypeLoc>(T);
-    SpecTL.setKeywordLoc(TagLoc);
-    SpecTL.setNameLoc(TemplateLoc);
+      = TLB.push<DependentTemplateSpecializationTypeLoc>(T);
+    SpecTL.setElaboratedKeywordLoc(TagLoc);
+    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
+    SpecTL.setTemplateNameLoc(TemplateLoc);
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);
-    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
     for (unsigned I = 0, N = SpecTL.getNumArgs(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
     return CreateParsedType(T, TLB.getTypeSourceInfo(Context, T));
@@ -2179,11 +2181,12 @@ TypeResult Sema::ActOnTagTemplateIdType(TagUseKind TUK,
       Diag(D->getLocation(), diag::note_previous_use);
     }
   }
-  
+
   // Provide source-location information for the template specialization.
   TypeLocBuilder TLB;
   TemplateSpecializationTypeLoc SpecTL
     = TLB.push<TemplateSpecializationTypeLoc>(Result);
+  SpecTL.setTemplateKeywordLoc(TemplateKWLoc);
   SpecTL.setTemplateNameLoc(TemplateLoc);
   SpecTL.setLAngleLoc(LAngleLoc);
   SpecTL.setRAngleLoc(RAngleLoc);
@@ -2191,7 +2194,7 @@ TypeResult Sema::ActOnTagTemplateIdType(TagUseKind TUK,
     SpecTL.setArgLocInfo(i, TemplateArgs[i].getLocInfo());
 
   // Construct an elaborated type containing the nested-name-specifier (if any)
-  // and keyword.
+  // and tag keyword.
   Result = Context.getElaboratedType(Keyword, SS.getScopeRep(), Result);
   ElaboratedTypeLoc ElabTL = TLB.push<ElaboratedTypeLoc>(Result);
   ElabTL.setKeywordLoc(TagLoc);
@@ -6627,9 +6630,10 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
 }
 
 TypeResult
-Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc, 
-                        const CXXScopeSpec &SS, 
-                        SourceLocation TemplateLoc, 
+Sema::ActOnTypenameType(Scope *S,
+                        SourceLocation TypenameLoc,
+                        const CXXScopeSpec &SS,
+                        SourceLocation TemplateKWLoc,
                         TemplateTy TemplateIn,
                         SourceLocation TemplateNameLoc,
                         SourceLocation LAngleLoc,
@@ -6661,11 +6665,11 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
     TypeLocBuilder Builder;
     DependentTemplateSpecializationTypeLoc SpecTL 
     = Builder.push<DependentTemplateSpecializationTypeLoc>(T);
+    SpecTL.setElaboratedKeywordLoc(TypenameLoc);
+    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
+    SpecTL.setTemplateNameLoc(TemplateNameLoc);
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);
-    SpecTL.setKeywordLoc(TypenameLoc);
-    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
-    SpecTL.setNameLoc(TemplateNameLoc);
     for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
     return CreateParsedType(T, Builder.getTypeSourceInfo(Context, T));
@@ -6675,16 +6679,14 @@ Sema::ActOnTypenameType(Scope *S, SourceLocation TypenameLoc,
   if (T.isNull())
     return true;
   
-  // Provide source-location information for the template specialization 
-  // type.
+  // Provide source-location information for the template specialization type.
   TypeLocBuilder Builder;
-  TemplateSpecializationTypeLoc SpecTL 
+  TemplateSpecializationTypeLoc SpecTL
     = Builder.push<TemplateSpecializationTypeLoc>(T);
-  
-  // FIXME: No place to set the location of the 'template' keyword!
+  SpecTL.setTemplateKeywordLoc(TemplateKWLoc);
+  SpecTL.setTemplateNameLoc(TemplateNameLoc);
   SpecTL.setLAngleLoc(LAngleLoc);
   SpecTL.setRAngleLoc(RAngleLoc);
-  SpecTL.setTemplateNameLoc(TemplateNameLoc);
   for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
     SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
   

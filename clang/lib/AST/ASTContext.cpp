@@ -2431,6 +2431,7 @@ ASTContext::getTemplateSpecializationTypeInfo(TemplateName Name,
   TypeSourceInfo *DI = CreateTypeSourceInfo(TST);
   TemplateSpecializationTypeLoc TL
     = cast<TemplateSpecializationTypeLoc>(DI->getTypeLoc());
+  TL.setTemplateKeywordLoc(SourceLocation());
   TL.setTemplateNameLoc(NameLoc);
   TL.setLAngleLoc(Args.getLAngleLoc());
   TL.setRAngleLoc(Args.getRAngleLoc());

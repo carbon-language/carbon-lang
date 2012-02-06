@@ -2960,12 +2960,12 @@ namespace {
         }
       }
       TL.initializeLocal(Context, SourceLocation());
-      TL.setKeywordLoc(Keyword != ETK_None
-                       ? DS.getTypeSpecTypeLoc()
-                       : SourceLocation());
+      TL.setElaboratedKeywordLoc(Keyword != ETK_None
+                                 ? DS.getTypeSpecTypeLoc()
+                                 : SourceLocation());
       const CXXScopeSpec& SS = DS.getTypeSpecScope();
       TL.setQualifierLoc(SS.getWithLocInContext(Context));
-      TL.setNameLoc(DS.getTypeSpecTypeNameLoc());
+      TL.setTemplateNameLoc(DS.getTypeSpecTypeNameLoc());
     }
     void VisitTagTypeLoc(TagTypeLoc TL) {
       TL.setNameLoc(DS.getTypeSpecTypeNameLoc());

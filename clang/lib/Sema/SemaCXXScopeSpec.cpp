@@ -767,13 +767,13 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     
     // Create source-location information for this type.
     TypeLocBuilder Builder;
-    DependentTemplateSpecializationTypeLoc SpecTL 
+    DependentTemplateSpecializationTypeLoc SpecTL
       = Builder.push<DependentTemplateSpecializationTypeLoc>(T);
+    SpecTL.setElaboratedKeywordLoc(SourceLocation());
+    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
+    SpecTL.setTemplateNameLoc(TemplateNameLoc);
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);
-    SpecTL.setKeywordLoc(SourceLocation());
-    SpecTL.setNameLoc(TemplateNameLoc);
-    SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
     for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
       SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
     
@@ -810,15 +810,14 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
     return true;
   }
 
-  // Provide source-location information for the template specialization 
-  // type.
+  // Provide source-location information for the template specialization type.
   TypeLocBuilder Builder;
-  TemplateSpecializationTypeLoc SpecTL 
+  TemplateSpecializationTypeLoc SpecTL
     = Builder.push<TemplateSpecializationTypeLoc>(T);
-  
+  SpecTL.setTemplateKeywordLoc(TemplateKWLoc);
+  SpecTL.setTemplateNameLoc(TemplateNameLoc);
   SpecTL.setLAngleLoc(LAngleLoc);
   SpecTL.setRAngleLoc(RAngleLoc);
-  SpecTL.setTemplateNameLoc(TemplateNameLoc);
   for (unsigned I = 0, N = TemplateArgs.size(); I != N; ++I)
     SpecTL.setArgLocInfo(I, TemplateArgs[I].getLocInfo());
 

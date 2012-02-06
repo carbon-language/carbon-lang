@@ -553,6 +553,7 @@ void TypeLocWriter::VisitSubstTemplateTypeParmPackTypeLoc(
 }
 void TypeLocWriter::VisitTemplateSpecializationTypeLoc(
                                            TemplateSpecializationTypeLoc TL) {
+  Writer.AddSourceLocation(TL.getTemplateKeywordLoc(), Record);
   Writer.AddSourceLocation(TL.getTemplateNameLoc(), Record);
   Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
   Writer.AddSourceLocation(TL.getRAngleLoc(), Record);
@@ -578,9 +579,9 @@ void TypeLocWriter::VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
 }
 void TypeLocWriter::VisitDependentTemplateSpecializationTypeLoc(
        DependentTemplateSpecializationTypeLoc TL) {
-  Writer.AddSourceLocation(TL.getKeywordLoc(), Record);
+  Writer.AddSourceLocation(TL.getElaboratedKeywordLoc(), Record);
   Writer.AddNestedNameSpecifierLoc(TL.getQualifierLoc(), Record);
-  Writer.AddSourceLocation(TL.getNameLoc(), Record);
+  Writer.AddSourceLocation(TL.getTemplateNameLoc(), Record);
   Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
   Writer.AddSourceLocation(TL.getRAngleLoc(), Record);
   for (unsigned I = 0, E = TL.getNumArgs(); I != E; ++I)
