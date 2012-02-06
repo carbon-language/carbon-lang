@@ -2247,7 +2247,6 @@ recurse:
   case Expr::ImplicitValueInitExprClass:
   case Expr::InitListExprClass:
   case Expr::ParenListExprClass:
-  case Expr::CXXScalarValueInitExprClass:
     llvm_unreachable("unexpected statement kind");
 
   // FIXME: invent manglings for all these.
@@ -2426,6 +2425,12 @@ recurse:
     if (N != 1) Out << 'E';
     break;
   }
+
+  case Expr::CXXScalarValueInitExprClass:
+    Out <<"cv";
+    mangleType(E->getType());
+    Out <<"_E";
+    break;
 
   case Expr::UnaryExprOrTypeTraitExprClass: {
     const UnaryExprOrTypeTraitExpr *SAE = cast<UnaryExprOrTypeTraitExpr>(E);

@@ -28,6 +28,10 @@ namespace Casts {
   void auto_(decltype(new auto(T()))) {
   }
 
+  template< typename T >
+  void scalar_(decltype(T(), int())) {
+  }
+
   // FIXME: Test const_cast, reinterpret_cast, dynamic_cast, which are
   // a bit harder to use in template arguments.
   template <unsigned N> struct T {};
@@ -48,6 +52,9 @@ namespace Casts {
 
   // CHECK: define weak_odr void @_ZN5Casts5auto_IiEEvDTnw_DapicvT__EEE(
   template void auto_<int>(int*);
+
+  // CHECK: define weak_odr void @_ZN5Casts7scalar_IiEEvDTcmcvT__Ecvi_EE(
+  template void scalar_<int>(int);
 }
 
 namespace test1 {
