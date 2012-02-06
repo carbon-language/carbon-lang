@@ -118,7 +118,7 @@ size_t AsanWrite(int fd, const void *buf, size_t count) {
 }
 
 int AsanOpenReadonly(const char* filename) {
-  return open(filename, O_RDONLY);
+  return syscall(__NR_open, filename, O_RDONLY);
 }
 
 // Like getenv, but reads env directly from /proc and does not use libc.
@@ -154,7 +154,7 @@ size_t AsanRead(int fd, void *buf, size_t count) {
 }
 
 int AsanClose(int fd) {
-  return close(fd);
+  return syscall(__NR_close, fd);
 }
 
 AsanProcMaps::AsanProcMaps() {
