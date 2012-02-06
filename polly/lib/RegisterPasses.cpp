@@ -156,6 +156,8 @@ void registerPollyPasses(llvm::PassManagerBase &PM, bool DisableScheduler,
 
   registerPollyPreoptPasses(PM);
 
+  PM.add(polly::createScopInfoPass());
+
   if (PollyViewer)
     PM.add(polly::createDOTViewerPass());
   if (PollyOnlyViewer)
