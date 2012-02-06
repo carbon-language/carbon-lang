@@ -53,7 +53,8 @@ class SBDataAPICase(TestBase):
         thread = process.GetThreadAtIndex(0)
 
         frame = thread.GetSelectedFrame()
-        print frame
+        if self.TraceOn():
+            print frame
         foobar = frame.FindVariable('foobar')
         self.assertTrue(foobar.IsValid())
         if self.TraceOn():
