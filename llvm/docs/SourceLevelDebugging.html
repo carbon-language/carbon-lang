@@ -1861,11 +1861,32 @@ developers inspect Objective C properties.
 <!-- *********************************************************************** -->
 
 <div>
-<p>Objective C properties are always backed by an instance variable. The 
-instance variables backing properties are identified using 
-DW_AT_APPLE_property_name attribute. The instance variables with this 
-attribute may not have data location attributes. The location of instance 
-variables is determined by debugger only after consulting Objective C runtime.
+<p>Objective C properties exist separately from class members. A property
+can be defined only by &quot;setter&quot; and &quot;getter&quot; selectors, and 
+be calculated anew on each access.  Or a property can just be a direct access 
+to some declared ivar.  Finally it can have an ivar &quot;automatically 
+synthesized&quot; for it by the compiler, in which case the property can be 
+referred to in user code directly using the standard C dereference syntax as 
+well as through the property &quot;dot&quot; syntax, but there is no entry in 
+the @interface declaration corresponding to this ivar.
+</p>
+<p>
+To facilitate debugging, these properties we will add a new DWARF TAG into the 
+DW_TAG_structure_type definition for the class to hold the description of a 
+given property, and a set of DWARF attributes that provide said description.
+The property tag will also contain the name and declared type of the property.  
+</p>
+<p>
+If there is a related ivar, there will also be a DWARF property attribute placed 
+in the DW_TAG_member DIE for that ivar referring back to the property TAG for 
+that property. And in the case where the compiler synthesizes the ivar directly, 
+the compiler is expected to generate a DW_TAG_member for that ivar (with the 
+DW_AT_artificial set to 1), whose name will be the name used to access this 
+ivar directly in code, and with the property attribute pointing back to the 
+property it is backing.
+</p>
+<p>
+The following examples will serve as illustration for our discussion:
 </p>
 
 <div class="doc_code">
@@ -1874,33 +1895,65 @@ variables is determined by debugger only after consulting Objective C runtime.
   int n2;
 } 
 
-@property p1; 
-@property p2; 
+@property int p1; 
+@property int p2; 
 @end
 
 @implementation I1 
 @synthesize p1; 
 @synthesize p2 = n2; 
 @end
-
-
-TAG_structure_type [7] * 
-  AT_APPLE_runtime_class( 0x10 )
-  AT_name( "I1" )
-  AT_decl_file( "Objc_Property.m" ) 
-  AT_decl_line( 3 )
-
-  TAG_member [8] 
-    AT_name( "p1" )
-    AT_APPLE_property_name(“p1”) 
-    AT_type( {0x00000147} ( int ) )
-
-  TAG_member [8] 
-    AT_name( "n2" )
-    AT_APPLE_property_name(“p2”) 
-    AT_type( {0x00000147} ( int ) )
 </pre>
 </div>
+
+<p>
+This produces the following DWARF (this is a &quot;pseudo dwarfdump&quot; output):
+</p>
+<div class="doc_code">
+<pre>
+0x00000100:  TAG_structure_type [7] * 
+               AT_APPLE_runtime_class( 0x10 )
+               AT_name( "I1" )
+               AT_decl_file( "Objc_Property.m" ) 
+               AT_decl_line( 3 )
+
+0x00000110    TAG_APPLE_property
+                AT_name ( "p1" )
+                AT_type ( {0x00000150} ( int ) )
+
+0x00000120:   TAG_APPLE_property
+                AT_name ( "p2" )
+                AT_type ( {0x00000150} ( int ) )
+
+0x00000130:   TAG_member [8] 
+                AT_name( "_p1" )
+                AT_APPLE_property ( {0x00000110} "p1" )
+                AT_type( {0x00000150} ( int ) )
+                AT_artificial ( 0x1 )
+
+0x00000140:    TAG_member [8] 
+                 AT_name( "n2" )
+                 AT_APPLE_property ( {0x00000120} "p2" )
+                 AT_type( {0x00000150} ( int ) )
+
+0x00000150:  AT_type( ( int ) )
+</pre>
+</div>
+
+<p> Note, the current convention is that the name of the ivar for an 
+auto-synthesized property is the name of the property from which it derives with
+an underscore prepended, as is shown in the example.
+But we actually don't need to know this convention, since we are given the name
+of the ivar directly.
+</p>
+
+<p>
+Also, it is common practice in ObjC to have different property declarations in 
+the @interface and @implementation - e.g. to provide a read-only property in 
+the interface,and a read-write interface in the implementation.  In that case, 
+the compiler should emit whichever property declaration will be in force in the 
+current translation unit.
+</p>
 
 <p> Developers can decorate a property with attributes which are encoded using 
 DW_AT_APPLE_property_attribute.
@@ -1909,11 +1962,15 @@ DW_AT_APPLE_property_attribute.
 <div class="doc_code">
 <pre>
 @property (readonly, nonatomic) int pr;
-
-
-TAG_member [8] 
-  AT_name(“pr”) 
-  AT_APPLE_property_name(“pr”) 
+</pre>
+</div>
+<p>
+Which produces a property tag:
+<p>
+<div class="doc_code">
+<pre>
+TAG_APPLE_property [8] 
+  AT_name( "pr" ) 
   AT_type ( {0x00000147} (int) ) 
   AT_APPLE_property_attribute (DW_APPLE_PROPERTY_readonly, DW_APPLE_PROPERTY_nonatomic)
 </pre>
@@ -1933,19 +1990,52 @@ DW_AT_APPLE_property_setter and DW_AT_APPLE_property_getter attributes.
 @synthesize p3;
 -(void)myOwnP3Setter:(int)a{ } 
 @end
+</pre>
+</div>
 
+<p>
+The DWARF for this would be:
+</p>
+<div class="doc_code">
+<pre>
 0x000003bd: TAG_structure_type [7] * 
               AT_APPLE_runtime_class( 0x10 )
               AT_name( "I1" )
               AT_decl_file( "Objc_Property.m" ) 
               AT_decl_line( 3 )
-0x000003f3: TAG_member [8] 
-              AT_name( "p3" ) 
-              AT_APPLE_property_name(“p3”) 
-              AT_APPLE_property_setter(“myOwnP3Setter:”)
-              AT_type( {0x00000147} ( int ) )
+
+0x000003cd      TAG_APPLE_property
+                  AT_name ( "p3" )
+                  AT_APPLE_property_setter ( "myOwnP3Setter:" )
+                  AT_type( {0x00000147} ( int ) )
+              
+0x000003f3:     TAG_member [8] 
+                  AT_name( "_p3" ) 
+                  AT_type ( {0x00000147} ( int ) )
+                  AT_APPLE_property ( {0x000003cd} )
+                  AT_artificial ( 0x1 )
 </pre>
 </div>
+
+</div>
+
+<!-- *********************************************************************** -->
+<h4>
+  <a name="objcpropertynewtags">New DWARF Tags</a>
+</h4>
+<!-- *********************************************************************** -->
+
+<div>
+<table border="1" cellspacing="0">
+  <tr>
+    <th width=200 >TAG</th>
+    <th width=200 >Value</th>
+  </tr>
+  <tr>
+    <td width=200 >DW_TAG_APPLE_property</td>
+    <td width=200 >0x4200</td>
+  </tr>
+</table>
 
 </div>
 
@@ -1963,9 +2053,9 @@ DW_AT_APPLE_property_setter and DW_AT_APPLE_property_getter attributes.
     <th width=200 >Classes</th>
   </tr>
   <tr>
-    <td width=200 >DW_AT_APPLE_property_name</td>
-    <td width=200 >0x3fe8</td>
-    <td width=200 >String</td>
+    <td width=200 >DW_AT_APPLE_property</td>
+    <td width=200 >0x3fed</td>
+    <td width=200 >Reference</td>
   </tr>
   <tr>
     <td width=200 >DW_AT_APPLE_property_getter</td>
