@@ -30,10 +30,8 @@ public:
 
     ~SBAddress ();
 
-#ifndef SWIG
     const lldb::SBAddress &
     operator = (const lldb::SBAddress &rhs);
-#endif
 
     bool
     IsValid () const;
@@ -119,8 +117,6 @@ protected:
     friend class SBThread;
     friend class SBValue;
 
-#ifndef SWIG
-
     lldb_private::Address *
     operator->();
 
@@ -135,9 +131,6 @@ protected:
 
     const lldb_private::Address &
     ref() const;
-
-#endif
-
 
     SBAddress (const lldb_private::Address *lldb_object_ptr);
 

@@ -905,6 +905,28 @@ SymbolContextList::Append(const SymbolContext& sc)
     m_symbol_contexts.push_back(sc);
 }
 
+void
+SymbolContextList::Append (const SymbolContextList& sc_list)
+{
+    collection::const_iterator pos, end = sc_list.m_symbol_contexts.end();
+    for (pos = sc_list.m_symbol_contexts.begin(); pos != end; ++pos)
+        m_symbol_contexts.push_back (*pos);
+}
+
+
+uint32_t
+SymbolContextList::AppendIfUnique (const SymbolContextList& sc_list, bool merge_symbol_into_function)
+{
+    uint32_t unique_sc_add_count = 0;
+    collection::const_iterator pos, end = sc_list.m_symbol_contexts.end();
+    for (pos = sc_list.m_symbol_contexts.begin(); pos != end; ++pos)
+    {
+        if (AppendIfUnique (*pos, merge_symbol_into_function))
+            ++unique_sc_add_count;
+    }
+    return unique_sc_add_count;
+}
+
 bool
 SymbolContextList::AppendIfUnique (const SymbolContext& sc, bool merge_symbol_into_function)
 {
@@ -1011,6 +1033,16 @@ SymbolContextList::NumLineEntriesWithLine (uint32_t line) const
             ++match_count;
     }
     return match_count;
+}
+
+void
+SymbolContextList::GetDescription(Stream *s, 
+                                  lldb::DescriptionLevel level, 
+                                  Target *target) const
+{
+    const uint32_t size = m_symbol_contexts.size();
+    for (uint32_t idx = 0; idx<size; ++idx)
+        m_symbol_contexts[idx].GetDescription (s, level, target);
 }
 
 bool

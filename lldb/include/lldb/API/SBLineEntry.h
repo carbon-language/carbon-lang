@@ -26,10 +26,8 @@ public:
 
     ~SBLineEntry ();
 
-#ifndef SWIG
     const lldb::SBLineEntry &
     operator = (const lldb::SBLineEntry &rhs);
-#endif
 
     lldb::SBAddress
     GetStartAddress () const;
@@ -58,14 +56,11 @@ public:
     void
     SetColumn (uint32_t column);
 
-#ifndef SWIG
     bool
     operator == (const lldb::SBLineEntry &rhs) const;
 
     bool
     operator != (const lldb::SBLineEntry &rhs) const;
-
-#endif
 
     bool
     GetDescription (lldb::SBStream &description);
@@ -81,8 +76,6 @@ private:
     friend class SBFrame;
     friend class SBSymbolContext;
 
-#ifndef SWIG
-
     const lldb_private::LineEntry *
     operator->() const;
 
@@ -91,9 +84,6 @@ private:
 
     const lldb_private::LineEntry &
     ref() const;
-
-#endif
-
 
     SBLineEntry (const lldb_private::LineEntry *lldb_object_ptr);
 

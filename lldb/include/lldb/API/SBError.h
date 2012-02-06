@@ -22,12 +22,8 @@ public:
 
     ~SBError();
 
-#ifndef SWIG
-
     const SBError &
     operator =(const lldb::SBError &rhs);
-
-#endif
 
     const char *
     GetCString () const;
@@ -70,7 +66,6 @@ public:
 
 protected:
 
-#ifndef SWIG
     friend class SBArguments;
     friend class SBData;
     friend class SBDebugger;
@@ -94,9 +89,6 @@ protected:
 
     lldb_private::Error &
     ref();
-
-#endif
-
 
     void
     SetError (const lldb_private::Error &lldb_error);

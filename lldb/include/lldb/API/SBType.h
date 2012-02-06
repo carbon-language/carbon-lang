@@ -24,11 +24,9 @@ public:
     SBTypeMember (const lldb::SBTypeMember& rhs);
     
     ~SBTypeMember();
-    
-#ifndef SWIG
+
     lldb::SBTypeMember&
     operator = (const lldb::SBTypeMember& rhs);
-#endif
 
     bool
     IsValid() const;
@@ -52,7 +50,6 @@ public:
 protected:
     friend class SBType;
 
-#ifndef SWIG
     void
     reset (lldb_private::TypeMemberImpl *);
 
@@ -61,7 +58,6 @@ protected:
 
     const lldb_private::TypeMemberImpl &
     ref () const;
-#endif
 
     std::auto_ptr<lldb_private::TypeMemberImpl> m_opaque_ap;
 };
@@ -147,7 +143,6 @@ public:
     GetDescription (lldb::SBStream &description, 
                     lldb::DescriptionLevel description_level);
 
-#ifndef SWIG
     lldb::SBType &
     operator = (const lldb::SBType &rhs);
     
@@ -156,11 +151,9 @@ public:
     
     bool
     operator != (lldb::SBType &rhs);
-#endif
     
 protected:
-    
-#ifndef SWIG
+
     lldb_private::TypeImpl &
     ref ();
     
@@ -171,17 +164,16 @@ protected:
     GetSP ();
 
     void
-    SetSP (const lldb::TypeImplSP &type_impl_sp);
-#endif
-    
+    SetSP (const lldb::TypeImplSP &type_impl_sp);    
 
     lldb::TypeImplSP m_opaque_sp;
     
+    friend class SBFunction;
     friend class SBModule;
     friend class SBTarget;
-    friend class SBValue;
     friend class SBTypeMember;
     friend class SBTypeList;
+    friend class SBValue;
         
     SBType (const lldb_private::ClangASTType &);
     SBType (const lldb::TypeSP &);

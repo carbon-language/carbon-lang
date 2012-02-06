@@ -770,6 +770,21 @@ TypeImpl::TypeImpl(const lldb::TypeSP& type) :
 {
 }
 
+void
+TypeImpl::SetType (const lldb::TypeSP &type_sp)
+{
+    if (type_sp)
+    {
+        m_clang_ast_type.SetClangType (type_sp->GetClangAST(), type_sp->GetClangFullType());
+        m_type_sp = type_sp;
+    }
+    else
+    {
+        m_clang_ast_type.Clear();
+        m_type_sp.reset();
+    }
+}
+
 TypeImpl&
 TypeImpl::operator = (const TypeImpl& rhs)
 {

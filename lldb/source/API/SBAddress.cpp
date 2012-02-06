@@ -352,7 +352,7 @@ SBAddress::GetBlock ()
 {
     SBBlock sb_block;
     if (m_opaque_ap.get())
-        sb_block.reset(m_opaque_ap->GetAddress().CalculateSymbolContextBlock());
+        sb_block.SetPtr(m_opaque_ap->GetAddress().CalculateSymbolContextBlock());
     return sb_block;
 }
 

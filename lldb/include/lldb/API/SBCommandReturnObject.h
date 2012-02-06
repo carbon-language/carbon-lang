@@ -24,8 +24,6 @@ public:
 
     SBCommandReturnObject (const lldb::SBCommandReturnObject &rhs);
 
-#ifndef SWIG
-
     const lldb::SBCommandReturnObject &
     operator = (const lldb::SBCommandReturnObject &rhs);
     
@@ -34,7 +32,6 @@ public:
     
     lldb_private::CommandReturnObject *
     Release ();
-#endif
 
     ~SBCommandReturnObject ();
 
@@ -93,9 +90,6 @@ protected:
     friend class SBCommandInterpreter;
     friend class SBOptions;
 
-
-#ifndef SWIG
-
     lldb_private::CommandReturnObject *
     operator->() const;
 
@@ -108,7 +102,6 @@ protected:
     lldb_private::CommandReturnObject &
     ref() const;
 
-#endif
     void
     SetLLDBObjectPtr (lldb_private::CommandReturnObject *ptr);
 

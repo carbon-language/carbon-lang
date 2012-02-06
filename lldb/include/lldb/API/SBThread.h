@@ -147,8 +147,6 @@ public:
     lldb::SBProcess
     GetProcess ();
 
-#ifndef SWIG
-
     const lldb::SBThread &
     operator = (const lldb::SBThread &rhs);
 
@@ -157,8 +155,6 @@ public:
 
     bool
     operator != (const lldb::SBThread &rhs) const;
-
-#endif
 
     bool
     GetDescription (lldb::SBStream &description) const;

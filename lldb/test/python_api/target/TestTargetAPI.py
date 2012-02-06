@@ -152,9 +152,8 @@ class TargetAPITestCase(TestBase):
         target = self.dbg.CreateTarget(exe)
         self.assertTrue(target, VALID_TARGET)
 
-        list = lldb.SBSymbolContextList()
-        num = target.FindFunctions('c', lldb.eFunctionNameTypeAuto, False, list)
-        self.assertTrue(num == 1 and list.GetSize() == 1)
+        list = target.FindFunctions('c', lldb.eFunctionNameTypeAuto)
+        self.assertTrue(list.GetSize() == 1)
 
         for sc in list:
             self.assertTrue(sc.GetModule().GetFileSpec().GetFilename() == exe_name)

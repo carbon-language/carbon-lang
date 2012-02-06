@@ -23,10 +23,8 @@ public:
 
     SBBroadcaster (const SBBroadcaster &rhs);
     
-#ifndef SWIG
     const SBBroadcaster &
     operator = (const SBBroadcaster &rhs);
-#endif
 
     ~SBBroadcaster();
 
@@ -57,7 +55,6 @@ public:
     bool
     RemoveListener (const lldb::SBListener &listener, uint32_t event_mask = UINT32_MAX);
 
-#ifndef SWIG
     // This comparison is checking if the internal opaque pointer value
     // is equal to that in "rhs".
     bool
@@ -74,8 +71,6 @@ public:
     bool
     operator < (const lldb::SBBroadcaster &rhs) const;
 
-#endif
-
 protected:
     friend class SBCommandInterpreter;
     friend class SBCommunication;
@@ -86,15 +81,11 @@ protected:
 
     SBBroadcaster (lldb_private::Broadcaster *broadcaster, bool owns);
 
-#ifndef SWIG
-
     lldb_private::Broadcaster *
     get () const;
 
     void
     reset (lldb_private::Broadcaster *broadcaster, bool owns);
-
-#endif
 
 private:
     lldb::BroadcasterSP m_opaque_sp;

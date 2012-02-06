@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBSymbolContextList.h"
+#include "lldb/API/SBStream.h"
 #include "lldb/Symbol/SymbolContext.h"
 
 using namespace lldb;
@@ -67,6 +68,20 @@ SBSymbolContextList::Clear()
         m_opaque_ap->Clear();
 }
 
+void
+SBSymbolContextList::Append(SBSymbolContext &sc)
+{
+    if (sc.IsValid() && m_opaque_ap.get())
+        m_opaque_ap->Append(*sc);
+}
+
+void
+SBSymbolContextList::Append(SBSymbolContextList &sc_list)
+{
+    if (sc_list.IsValid() && m_opaque_ap.get())
+        m_opaque_ap->Append(*sc_list);
+}
+
 
 bool
 SBSymbolContextList::IsValid () const
@@ -90,6 +105,13 @@ SBSymbolContextList::operator*() const
     return *m_opaque_ap.get();
 }
 
-
+bool
+SBSymbolContextList::GetDescription (lldb::SBStream &description)
+{
+    Stream &strm = description.ref();    
+    if (m_opaque_ap.get())
+        m_opaque_ap->GetDescription (&strm, lldb::eDescriptionLevelFull, NULL);
+    return true;
+}
 
 

@@ -300,12 +300,12 @@ SBFrame::GetBlock () const
     if (frame_sp)
     {
         Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_block.reset (frame_sp->GetSymbolContext (eSymbolContextBlock).block);
+        sb_block.SetPtr (frame_sp->GetSymbolContext (eSymbolContextBlock).block);
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetBlock () => SBBlock(%p)", 
-                     frame_sp.get(), sb_block.get());
+                     frame_sp.get(), sb_block.GetPtr());
     return sb_block;
 }
 
@@ -317,12 +317,12 @@ SBFrame::GetFrameBlock () const
     if (frame_sp)
     {
         Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_block.reset(frame_sp->GetFrameBlock ());
+        sb_block.SetPtr(frame_sp->GetFrameBlock ());
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFrameBlock () => SBBlock(%p)", 
-                     frame_sp.get(), sb_block.get());
+                     frame_sp.get(), sb_block.GetPtr());
     return sb_block;    
 }
 

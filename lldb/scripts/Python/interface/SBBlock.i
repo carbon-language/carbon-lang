@@ -89,6 +89,87 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
+
+    lldb::SBValueList
+    GetVariables (lldb::SBFrame& frame,
+                  bool arguments,
+                  bool locals,
+                  bool statics,
+                  lldb::DynamicValueType use_dynamic);
+
+     lldb::SBValueList
+     GetVariables (lldb::SBTarget& target,
+                   bool arguments,
+                   bool locals,
+                   bool statics);
+
+    %pythoncode %{
+        def get_range_at_index(self, idx):
+            if idx < self.GetNumRanges():
+                return [self.sbblock.GetRangeStartAddress(key), self.sbblock.GetRangeEndAddress(key)]
+            return []
+
+        class ranges_access(object):
+            '''A helper object that will lazily hand out an array of lldb.SBAddress that represent address ranges for a block.'''
+            def __init__(self, sbblock):
+                self.sbblock = sbblock
+        
+            def __len__(self):
+                if self.sbblock:
+                    return self.sbblock.GetNumRanges()
+                return 0
+        
+            def __getitem__(self, key):
+                count = len(self)
+                if type(key) is int:
+                    return self.sbblock.get_range_at_index (key);
+                else:
+                    print "error: unsupported item type: %s" % type(key)
+                return None
+        
+        def get_ranges_access_object(self):
+            '''An accessor function that returns a ranges_access() object which allows lazy block address ranges access.'''
+            return self.ranges_access (self)
+        
+        def get_ranges_array(self):
+            '''An accessor function that returns an array object that contains all ranges in this block object.'''
+            if not hasattr(self, 'ranges'):
+                self.ranges = []
+                for idx in range(self.num_ranges):
+                    self.ranges.append (self.get_range_at_index (idx))
+            return self.ranges
+        
+        def get_call_site(self):
+            return declaration(self.GetInlinedCallSiteFile(), self.GetInlinedCallSiteLine(), self.GetInlinedCallSiteColumn())
+
+        __swig_getmethods__["parent"] = GetParent
+        if _newclass: x = property(GetParent, None)
+
+        __swig_getmethods__["first_child"] = GetFirstChild
+        if _newclass: x = property(GetFirstChild, None)
+        
+        __swig_getmethods__["call_site"] = get_call_site
+        if _newclass: x = property(get_call_site, None)
+        
+        __swig_getmethods__["sibling"] = GetSibling
+        if _newclass: x = property(GetSibling, None)
+
+        __swig_getmethods__["name"] = GetInlinedName
+        if _newclass: x = property(GetInlinedName, None)
+
+        __swig_getmethods__["inlined_block"] = GetContainingInlinedBlock
+        if _newclass: x = property(GetContainingInlinedBlock, None)
+
+        __swig_getmethods__["range"] = get_ranges_access_object
+        if _newclass: x = property(get_ranges_access_object, None)
+
+        __swig_getmethods__["ranges"] = get_ranges_array
+        if _newclass: x = property(get_ranges_array, None)
+
+        __swig_getmethods__["num_ranges"] = GetNumRanges
+        if _newclass: x = property(GetNumRanges, None)
+    %}
+
 };
 
 } // namespace lldb

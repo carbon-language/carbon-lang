@@ -25,10 +25,8 @@ public:
 
     ~SBBreakpointLocation ();
 
-#ifndef SWIG
     const lldb::SBBreakpointLocation &
     operator = (const lldb::SBBreakpointLocation &rhs);
-#endif
 
     bool
     IsValid() const;
@@ -90,9 +88,7 @@ public:
     SBBreakpoint
     GetBreakpoint ();
 
-#ifndef SWIG
     SBBreakpointLocation (const lldb::BreakpointLocationSP &break_loc_sp);
-#endif
 
 private:
     friend class SBBreakpoint;

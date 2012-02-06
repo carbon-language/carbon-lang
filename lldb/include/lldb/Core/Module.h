@@ -132,7 +132,7 @@ public:
     ///     be false and no module updated notification will need to
     ///     be sent out.
     ///
-    /// @returns
+    /// @return
     ///     /b True if any sections were successfully loaded in \a target,
     ///     /b false otherwise.
     //------------------------------------------------------------------

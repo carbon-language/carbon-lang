@@ -28,10 +28,8 @@ public:
 
     SBInstruction (const SBInstruction &rhs);
     
-#ifndef SWIG
     const SBInstruction &
     operator = (const SBInstruction &rhs);
-#endif
 
     ~SBInstruction ();
 

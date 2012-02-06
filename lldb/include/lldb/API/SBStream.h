@@ -79,14 +79,13 @@ protected:
     friend class SBSourceManager;
     friend class SBSymbol;
     friend class SBSymbolContext;
+    friend class SBSymbolContextList;
     friend class SBTarget;
     friend class SBThread;
     friend class SBType;
     friend class SBTypeMember;
     friend class SBValue;
     friend class SBWatchpoint;
-
-#ifndef SWIG
 
     lldb_private::Stream *
     operator->();
@@ -96,8 +95,6 @@ protected:
 
     lldb_private::Stream &
     ref();
-
-#endif
 
 private:
 

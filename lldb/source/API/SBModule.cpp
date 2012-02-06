@@ -318,25 +318,23 @@ SBModule::GetSectionAtIndex (size_t idx)
     return sb_section;
 }
 
-uint32_t
+lldb::SBSymbolContextList
 SBModule::FindFunctions (const char *name, 
-                         uint32_t name_type_mask, 
-                         bool append, 
-                         lldb::SBSymbolContextList& sc_list)
+                         uint32_t name_type_mask)
 {
-    if (!append)
-        sc_list.Clear();
+    lldb::SBSymbolContextList sb_sc_list;
     if (name && m_opaque_sp)
     {
+        const bool append = true;
         const bool symbols_ok = true;
-        return m_opaque_sp->FindFunctions (ConstString(name),
-                                           NULL,
-                                           name_type_mask, 
-                                           symbols_ok, 
-                                           append, 
-                                           *sc_list);
+        m_opaque_sp->FindFunctions (ConstString(name),
+                                    NULL,
+                                    name_type_mask, 
+                                    symbols_ok, 
+                                    append, 
+                                    *sb_sc_list);
     }
-    return 0;
+    return sb_sc_list;
 }
 
 

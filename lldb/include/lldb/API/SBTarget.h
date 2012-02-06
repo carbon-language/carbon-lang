@@ -42,10 +42,8 @@ public:
 
     SBTarget (const lldb::SBTarget& rhs);
 
-#ifndef SWIG
     const lldb::SBTarget&
     operator = (const lldb::SBTarget& rhs);
-#endif
 
     //------------------------------------------------------------------
     // Destructor
@@ -361,22 +359,13 @@ public:
     ///     C++ methods, or ObjC selectors. 
     ///     See FunctionNameType for more details.
     ///
-    /// @param[in] append
-    ///     If true, any matches will be appended to \a sc_list, else
-    ///     matches replace the contents of \a sc_list.
-    ///
-    /// @param[out] sc_list
-    ///     A symbol context list that gets filled in with all of the
-    ///     matches.
-    ///
     /// @return
-    ///     The number of matches added to \a sc_list.
+    ///     A lldb::SBSymbolContextList that gets filled in with all of 
+    ///     the symbol contexts for all the matches.
     //------------------------------------------------------------------
-    uint32_t
+    lldb::SBSymbolContextList
     FindFunctions (const char *name, 
-                   uint32_t name_type_mask, // Logical OR one or more FunctionNameType enum bits
-                   bool append, 
-                   lldb::SBSymbolContextList& sc_list);
+                   uint32_t name_type_mask = lldb::eFunctionNameTypeAny);
 
     //------------------------------------------------------------------
     /// Find global and static variables by name.
@@ -510,20 +499,18 @@ public:
     lldb::SBInstructionList
     GetInstructions (lldb::addr_t base_addr, const void *buf, size_t size);
 
-#ifndef SWIG
     bool
     operator == (const lldb::SBTarget &rhs) const;
 
     bool
     operator != (const lldb::SBTarget &rhs) const;
 
-#endif
-
     bool
     GetDescription (lldb::SBStream &description, lldb::DescriptionLevel description_level);
 
 protected:
     friend class SBAddress;
+    friend class SBBlock;
     friend class SBDebugger;
     friend class SBFunction;
     friend class SBInstruction;

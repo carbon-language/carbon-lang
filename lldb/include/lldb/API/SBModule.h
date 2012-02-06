@@ -25,11 +25,9 @@ public:
     SBModule ();
 
     SBModule (const SBModule &rhs);
-    
-#ifndef SWIG
+
     const SBModule &
     operator = (const SBModule &rhs);
-#endif
 
     SBModule (lldb::SBProcess &process, 
               lldb::addr_t header_addr);
@@ -85,22 +83,18 @@ public:
     const char *
     GetTriple ();
 
-#ifndef SWIG
     const uint8_t *
     GetUUIDBytes () const;
-#endif
 
     const char *
     GetUUIDString () const;
 
-#ifndef SWIG
     bool
     operator == (const lldb::SBModule &rhs) const;
 
     bool
     operator != (const lldb::SBModule &rhs) const;
 
-#endif
     lldb::SBSection
     FindSection (const char *sect_name);
 
@@ -138,22 +132,13 @@ public:
     ///     C++ methods, or ObjC selectors. 
     ///     See FunctionNameType for more details.
     ///
-    /// @param[in] append
-    ///     If true, any matches will be appended to \a sc_list, else
-    ///     matches replace the contents of \a sc_list.
-    ///
-    /// @param[out] sc_list
-    ///     A symbol context list that gets filled in with all of the
-    ///     matches.
-    ///
     /// @return
-    ///     The number of matches added to \a sc_list.
+    ///     A lldb::SBSymbolContextList that gets filled in with all of 
+    ///     the symbol contexts for all the matches.
     //------------------------------------------------------------------
-    uint32_t
+    lldb::SBSymbolContextList
     FindFunctions (const char *name, 
-                   uint32_t name_type_mask, // Logical OR one or more FunctionNameType enum bits
-                   bool append, 
-                   lldb::SBSymbolContextList& sc_list);
+                   uint32_t name_type_mask = lldb::eFunctionNameTypeAny);
 
     //------------------------------------------------------------------
     /// Find global and static variables by name.

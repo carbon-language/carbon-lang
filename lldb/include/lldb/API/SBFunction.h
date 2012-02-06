@@ -24,11 +24,8 @@ public:
 
     SBFunction (const lldb::SBFunction &rhs);
 
-#ifndef SWIG
     const lldb::SBFunction &
     operator = (const lldb::SBFunction &rhs);
-#endif
-
 
     ~SBFunction ();
 
@@ -44,37 +41,37 @@ public:
     lldb::SBInstructionList
     GetInstructions (lldb::SBTarget target);
 
-    SBAddress
+    lldb::SBAddress
     GetStartAddress ();
 
-    SBAddress
+    lldb::SBAddress
     GetEndAddress ();
 
     uint32_t
     GetPrologueByteSize ();
 
-#ifndef SWIG
+    lldb::SBType
+    GetType ();
+
+    lldb::SBBlock
+    GetBlock ();
+
     bool
     operator == (const lldb::SBFunction &rhs) const;
 
     bool
     operator != (const lldb::SBFunction &rhs) const;
-#endif
 
     bool
     GetDescription (lldb::SBStream &description);
 
 protected:
 
-#ifndef SWIG
-
     lldb_private::Function *
     get ();
 
     void
     reset (lldb_private::Function *lldb_object_ptr);
-
-#endif
 
 private:
     friend class SBAddress;

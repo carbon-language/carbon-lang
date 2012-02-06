@@ -65,14 +65,20 @@ public:
     lldb::SBInstructionList
     GetInstructions (lldb::SBTarget target);
 
-    SBAddress
+    lldb::SBAddress
     GetStartAddress ();
 
-    SBAddress
+    lldb::SBAddress
     GetEndAddress ();
 
     uint32_t
     GetPrologueByteSize ();
+
+    lldb::SBType
+    GetType ();
+
+    lldb::SBBlock
+    GetBlock ();
 
     bool
     GetDescription (lldb::SBStream &description);
@@ -81,24 +87,29 @@ public:
         def get_instructions_from_current_target (self):
             return self.GetInstructions (target)
 
-        __swig_getmethods__["name"] = GetName
-        if _newclass: x = property(GetName, None)
-        
-        __swig_getmethods__["mangled"] = GetMangledName
-        if _newclass: x = property(GetMangledName, None)
-        
         __swig_getmethods__["addr"] = GetStartAddress
         if _newclass: x = property(GetStartAddress, None)
-        
+
+        __swig_getmethods__["block"] = GetBlock
+        if _newclass: x = property(GetBlock, None)
+
         __swig_getmethods__["end_addr"] = GetEndAddress
         if _newclass: x = property(GetEndAddress, None)
         
-        __swig_getmethods__["prologue_size"] = GetPrologueByteSize
-        if _newclass: x = property(GetPrologueByteSize, None)
-
         __swig_getmethods__["instructions"] = get_instructions_from_current_target
         if _newclass: x = property(get_instructions_from_current_target, None)
 
+        __swig_getmethods__["mangled"] = GetMangledName
+        if _newclass: x = property(GetMangledName, None)
+
+        __swig_getmethods__["name"] = GetName
+        if _newclass: x = property(GetName, None)
+
+        __swig_getmethods__["prologue_size"] = GetPrologueByteSize
+        if _newclass: x = property(GetPrologueByteSize, None)
+
+        __swig_getmethods__["type"] = GetType
+        if _newclass: x = property(GetType, None)
     %}
 
 };

@@ -390,6 +390,8 @@ public:
     GetDescription (lldb_private::Stream &strm, 
                     lldb::DescriptionLevel description_level);
     
+    void
+    SetType (const lldb::TypeSP &type_sp);
 
 private:
     ClangASTType m_clang_ast_type;

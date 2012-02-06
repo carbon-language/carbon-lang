@@ -25,10 +25,8 @@ public:
     
     ~SBSourceManager();
 
-#ifndef SWIG
     const lldb::SBSourceManager &
     operator = (const lldb::SBSourceManager &rhs);
-#endif
 
     size_t
     DisplaySourceLinesWithLineNumbers (const lldb::SBFileSpec &file,

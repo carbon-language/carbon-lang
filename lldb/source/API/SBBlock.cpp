@@ -10,11 +10,18 @@
 #include "lldb/API/SBBlock.h"
 #include "lldb/API/SBAddress.h"
 #include "lldb/API/SBFileSpec.h"
+#include "lldb/API/SBFrame.h"
 #include "lldb/API/SBStream.h"
+#include "lldb/API/SBValue.h"
 #include "lldb/Core/AddressRange.h"
+#include "lldb/Core/Log.h"
+#include "lldb/Core/ValueObjectVariable.h"
 #include "lldb/Symbol/Block.h"
 #include "lldb/Symbol/Function.h"
 #include "lldb/Symbol/SymbolContext.h"
+#include "lldb/Symbol/VariableList.h"
+#include "lldb/Target/StackFrame.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -157,13 +164,13 @@ SBBlock::GetFirstChild ()
 }
 
 lldb_private::Block *
-SBBlock::get ()
+SBBlock::GetPtr ()
 {
     return m_opaque_ptr;
 }
 
 void
-SBBlock::reset (lldb_private::Block *block)
+SBBlock::SetPtr (lldb_private::Block *block)
 {
     m_opaque_ptr = block;
 }
@@ -243,5 +250,119 @@ SBBlock::GetRangeIndexForBlockAddress (lldb::SBAddress block_addr)
     }
 
     return UINT32_MAX;
+}
+
+
+lldb::SBValueList
+SBBlock::GetVariables (lldb::SBFrame& frame,
+                       bool arguments,
+                       bool locals,
+                       bool statics,
+                       lldb::DynamicValueType use_dynamic)
+{
+    Block *block = GetPtr();
+    SBValueList value_list;
+    if (block)
+    {
+        StackFrameSP frame_sp(frame.GetFrameSP());
+        VariableListSP variable_list_sp (block->GetBlockVariableList (true));
+
+        if (variable_list_sp)
+        {
+            const size_t num_variables = variable_list_sp->GetSize();
+            if (num_variables)
+            {
+                for (size_t i = 0; i < num_variables; ++i)
+                {
+                    VariableSP variable_sp (variable_list_sp->GetVariableAtIndex(i));
+                    if (variable_sp)
+                    {
+                        bool add_variable = false;
+                        switch (variable_sp->GetScope())
+                        {
+                            case eValueTypeVariableGlobal:
+                            case eValueTypeVariableStatic:
+                                add_variable = statics;
+                                break;
+                                
+                            case eValueTypeVariableArgument:
+                                add_variable = arguments;
+                                break;
+                                
+                            case eValueTypeVariableLocal:
+                                add_variable = locals;
+                                break;
+                                
+                            default:
+                                break;
+                        }
+                        if (add_variable)
+                        {
+                            if (frame_sp)
+                                value_list.Append (frame_sp->GetValueObjectForFrameVariable (variable_sp, use_dynamic));
+                        }
+                    }
+                }
+            }
+        }        
+    }
+    return value_list;
+}
+
+lldb::SBValueList
+SBBlock::GetVariables (lldb::SBTarget& target,
+                       bool arguments,
+                       bool locals,
+                       bool statics)
+{
+    Block *block = GetPtr();
+    
+    SBValueList value_list;
+    if (block)
+    {
+        TargetSP target_sp(target.GetSP());
+        
+        VariableListSP variable_list_sp (block->GetBlockVariableList (true));
+        
+        if (variable_list_sp)
+        {
+            const size_t num_variables = variable_list_sp->GetSize();
+            if (num_variables)
+            {
+                for (size_t i = 0; i < num_variables; ++i)
+                {
+                    VariableSP variable_sp (variable_list_sp->GetVariableAtIndex(i));
+                    if (variable_sp)
+                    {
+                        bool add_variable = false;
+                        switch (variable_sp->GetScope())
+                        {
+                            case eValueTypeVariableGlobal:
+                            case eValueTypeVariableStatic:
+                                add_variable = statics;
+                                break;
+                                
+                            case eValueTypeVariableArgument:
+                                add_variable = arguments;
+                                break;
+                                
+                            case eValueTypeVariableLocal:
+                                add_variable = locals;
+                                break;
+                                
+                            default:
+                                break;
+                        }
+                        if (add_variable)
+                        {
+                            if (target_sp)
+                                value_list.Append (ValueObjectVariable::Create (target_sp.get(), variable_sp));
+                        }
+                    }
+                }
+            }
+        }
+    }        
+    return value_list;
 }
 

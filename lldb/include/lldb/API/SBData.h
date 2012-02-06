@@ -22,10 +22,8 @@ public:
 
     SBData (const SBData &rhs);
     
-#ifndef SWIG
     const SBData &
     operator = (const SBData &rhs);
-#endif
 
     ~SBData ();
     
@@ -149,7 +147,6 @@ public:
     
 protected:
     
-#ifndef SWIG
     // Mimic shared pointer...
     lldb_private::DataExtractor *
     get() const;
@@ -162,7 +159,6 @@ protected:
     
     const lldb::DataExtractorSP &
     operator*() const;
-#endif
 
     SBData (const lldb::DataExtractorSP &data_sp);
 

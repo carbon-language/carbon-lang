@@ -192,4 +192,27 @@ SBFunction::GetPrologueByteSize ()
     return 0;
 }
 
+SBType
+SBFunction::GetType ()
+{
+    SBType sb_type;
+    if (m_opaque_ptr)
+    {
+        Type *function_type = m_opaque_ptr->GetType();
+        if (function_type)
+            sb_type.ref().SetType (function_type->shared_from_this());
+    }
+    return sb_type;
+}
+
+SBBlock
+SBFunction::GetBlock ()
+{
+    SBBlock sb_block;
+    if (m_opaque_ptr)
+        sb_block.SetPtr (&m_opaque_ptr->GetBlock (true));
+    return sb_block;
+}
+
+
 

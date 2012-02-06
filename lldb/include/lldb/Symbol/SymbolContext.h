@@ -361,9 +361,16 @@ public:
     void
     Append (const SymbolContext& sc);
 
-    bool
-    AppendIfUnique (const SymbolContext& sc, bool merge_symbol_into_function);
+    void
+    Append (const SymbolContextList& sc_list);
 
+    bool
+    AppendIfUnique (const SymbolContext& sc, 
+                    bool merge_symbol_into_function);
+
+    uint32_t
+    AppendIfUnique (const SymbolContextList& sc_list, 
+                    bool merge_symbol_into_function);
     //------------------------------------------------------------------
     /// Clear the object's state.
     ///
@@ -418,6 +425,11 @@ public:
     uint32_t
     NumLineEntriesWithLine (uint32_t line) const;
     
+    void
+    GetDescription(Stream *s, 
+                   lldb::DescriptionLevel level, 
+                   Target *target) const;
+
 protected:
     typedef std::vector<SymbolContext> collection; ///< The collection type for the list.
 

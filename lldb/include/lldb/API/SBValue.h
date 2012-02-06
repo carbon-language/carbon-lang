@@ -24,10 +24,8 @@ public:
 
     SBValue (const lldb::SBValue &rhs);
 
-#ifndef SWIG
     lldb::SBValue &
     operator =(const lldb::SBValue &rhs);
-#endif
 
     ~SBValue ();
 
@@ -339,7 +337,6 @@ public:
     lldb::SBWatchpoint
     WatchPointee (bool resolve_location, bool read, bool write);
 
-#ifndef SWIG
     // this must be defined in the .h file because synthetic children as implemented in the core
     // currently rely on being able to extract the SharedPointer out of an SBValue. if the implementation
     // is deferred to the .cpp file instead of being inlined here, the platform will fail to link
@@ -349,7 +346,6 @@ public:
     {
         return m_opaque_sp;
     }
-#endif
 
 protected:
     friend class SBValueList;

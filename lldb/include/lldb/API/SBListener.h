@@ -25,10 +25,8 @@ public:
 
     ~SBListener ();
 
-#ifndef SWIG
     const lldb::SBListener &
     operator = (const lldb::SBListener &rhs);
-#endif
 
     void
     AddEvent (const lldb::SBEvent &event);
@@ -100,8 +98,6 @@ protected:
 
 private:
 
-#ifndef SWIG
-
     lldb_private::Listener *
     operator->() const;
 
@@ -119,8 +115,6 @@ private:
 
     void
     reset(lldb_private::Listener *listener, bool transfer_ownership);
-
-#endif
 
     lldb::ListenerSP m_opaque_sp;
     lldb_private::Listener *m_opaque_ptr;

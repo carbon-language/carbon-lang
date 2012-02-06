@@ -42,12 +42,10 @@ public:
 
     SBDebugger(const lldb::SBDebugger &rhs);
 
-#ifndef SWIG
     SBDebugger(const lldb::DebuggerSP &debugger_sp);
     
     lldb::SBDebugger &
     operator = (const lldb::SBDebugger &rhs);
-#endif
     
     ~SBDebugger();
 
@@ -245,8 +243,6 @@ public:
 
 private:
 
-#ifndef SWIG
-
     friend class SBInputReader;
     friend class SBProcess;
     friend class SBSourceManager;
@@ -266,7 +262,6 @@ private:
 
     const lldb::DebuggerSP &
     get_sp () const;
-#endif
     
     lldb::DebuggerSP m_opaque_sp;
 

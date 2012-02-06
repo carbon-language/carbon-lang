@@ -45,8 +45,6 @@ public:
     lldb::SBValue
     FindValueObjectByUID (lldb::user_id_t uid);
 
-
-#ifndef SWIG
     const lldb::SBValueList &
     operator = (const lldb::SBValueList &rhs);
 
@@ -67,8 +65,6 @@ public:
 
     lldb_private::ValueObjectList &
     ref ();
-
-#endif
 
 private:
     friend class SBFrame;

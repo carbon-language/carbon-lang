@@ -27,10 +27,8 @@ public:
 
     SBSymbol (const lldb::SBSymbol &rhs);
 
-#ifndef SWIG
     const lldb::SBSymbol &
     operator = (const lldb::SBSymbol &rhs);
-#endif
 
     bool
     IsValid () const;
@@ -57,26 +55,22 @@ public:
     SymbolType
     GetType ();
 
-#ifndef SWIG
     bool
     operator == (const lldb::SBSymbol &rhs) const;
 
     bool
     operator != (const lldb::SBSymbol &rhs) const;
-#endif
 
     bool
     GetDescription (lldb::SBStream &description);
 
 protected:
 
-#ifndef SWIG
     lldb_private::Symbol *
     get ();
 
     void
     reset (lldb_private::Symbol *);
-#endif
     
 private:
     friend class SBAddress;

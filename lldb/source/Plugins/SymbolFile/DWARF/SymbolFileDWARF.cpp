@@ -4158,21 +4158,21 @@ SymbolFileDWARF::DIEDeclContextsMatch (DWARFCompileUnit* cu1, const DWARFDebugIn
         const char *name2 = decl_ctx_die2->GetName(this, cu2);
         // If the string was from a DW_FORM_strp, then the pointer will often
         // be the same!
-        if (name1 != name2)
+        if (name1 == name2)
+            continue;
+
+        // Name pointers are not equal, so only compare the strings
+        // if both are not NULL.
+        if (name1 && name2)
         {
-            // Name pointers are not equal, so only compare the strings
-            // if both are not NULL.
-            if (name1 && name2)
-            {
-                // If the strings don't compare, we are done...
-                if (strcmp(name1, name2) != 0)
-                    return false;
-            }
-            else if (name1 || name2)
-            {
-                // One name was NULL while the other wasn't
+            // If the strings don't compare, we are done...
+            if (strcmp(name1, name2) != 0)
                 return false;
-            }
+        }
+        else
+        {
+            // One name was NULL while the other wasn't
+            return false;
         }
     }
     // We made it through all of the checks and the declaration contexts

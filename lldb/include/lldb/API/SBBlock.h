@@ -11,6 +11,9 @@
 #define LLDB_SBBlock_h_
 
 #include "lldb/API/SBDefines.h"
+#include "lldb/API/SBFrame.h"
+#include "lldb/API/SBTarget.h"
+#include "lldb/API/SBValueList.h"
 
 namespace lldb {
 
@@ -24,10 +27,8 @@ public:
 
     ~SBBlock ();
 
-#ifndef SWIG
     const lldb::SBBlock &
     operator = (const lldb::SBBlock &rhs);
-#endif
 
     bool
     IsInlined () const;
@@ -67,7 +68,19 @@ public:
 
     uint32_t
     GetRangeIndexForBlockAddress (lldb::SBAddress block_addr);
+
+    lldb::SBValueList
+    GetVariables (lldb::SBFrame& frame,
+                  bool arguments,
+                  bool locals,
+                  bool statics,
+                  lldb::DynamicValueType use_dynamic);
     
+    lldb::SBValueList
+    GetVariables (lldb::SBTarget& target,
+                  bool arguments,
+                  bool locals,
+                  bool statics);
     //------------------------------------------------------------------
     /// Get the inlined block that contains this block.
     ///
@@ -87,22 +100,19 @@ public:
 private:
     friend class SBAddress;
     friend class SBFrame;
+    friend class SBFunction;
     friend class SBSymbolContext;
 
-#ifndef SWIG
-
     lldb_private::Block *
-    get ();
+    GetPtr ();
 
     void
-    reset (lldb_private::Block *lldb_object_ptr);
+    SetPtr (lldb_private::Block *lldb_object_ptr);
 
     SBBlock (lldb_private::Block *lldb_object_ptr);
 
     void
     AppendVariables (bool can_create, bool get_parent_variables, lldb_private::VariableList *var_list);
-
-#endif
 
     lldb_private::Block *m_opaque_ptr;
 };

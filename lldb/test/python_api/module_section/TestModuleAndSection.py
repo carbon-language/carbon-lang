@@ -87,7 +87,7 @@ class ModuleAndSectionAPIsTestCase(TestBase):
         exe_module.FindFirstType(None)
         exe_module.FindTypes(None)
         exe_module.FindGlobalVariables(target, None, 1)
-        exe_module.FindFunctions(None, 0, True, lldb.SBSymbolContextList())
+        exe_module.FindFunctions(None, 0)
         exe_module.FindSection(None)
 
         # Get the section at index 1.

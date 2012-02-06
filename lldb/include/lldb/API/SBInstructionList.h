@@ -24,10 +24,8 @@ public:
 
     SBInstructionList (const SBInstructionList &rhs);
     
-#ifndef SWIG
     const SBInstructionList &
     operator = (const SBInstructionList &rhs);
-#endif
 
     ~SBInstructionList ();
 

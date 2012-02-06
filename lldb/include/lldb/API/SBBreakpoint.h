@@ -29,7 +29,6 @@ public:
 
     ~SBBreakpoint();
 
-#ifndef SWIG
     const lldb::SBBreakpoint &
     operator = (const lldb::SBBreakpoint& rhs);
     
@@ -37,8 +36,6 @@ public:
     // opaque breakpoint object in "rhs".
     bool
     operator == (const lldb::SBBreakpoint& rhs);
-
-#endif
 
     break_id_t
     GetID () const;
@@ -133,8 +130,6 @@ private:
 
     SBBreakpoint (const lldb::BreakpointSP &bp_sp);
 
-#ifndef SWIG
-
     lldb_private::Breakpoint *
     operator->() const;
 
@@ -146,8 +141,6 @@ private:
 
     const lldb::BreakpointSP &
     operator *() const;
-
-#endif
 
     static bool
     PrivateBreakpointHitCallback (void *baton, 

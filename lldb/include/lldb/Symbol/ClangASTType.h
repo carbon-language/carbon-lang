@@ -310,6 +310,13 @@ public:
     static lldb::clang_type_t
     RemoveFastQualifiers (lldb::clang_type_t);
 
+    void
+    Clear()
+    {
+        m_type = NULL;
+        m_ast = NULL;
+    }
+
 private:
     lldb::clang_type_t m_type;
     clang::ASTContext *m_ast;

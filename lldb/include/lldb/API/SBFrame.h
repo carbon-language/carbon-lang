@@ -24,10 +24,8 @@ public:
 
     SBFrame (const lldb::SBFrame &rhs);
     
-#ifndef SWIG
     const lldb::SBFrame &
     operator =(const lldb::SBFrame &rhs);
-#endif
 
    ~SBFrame();
 
@@ -130,14 +128,11 @@ public:
     void
     Clear();
 
-#ifndef SWIG
     bool
     operator == (const lldb::SBFrame &rhs) const;
 
     bool
     operator != (const lldb::SBFrame &rhs) const;
-
-#endif
 
     /// The version that doesn't supply a 'use_dynamic' value will use the
     /// target's default.
@@ -208,16 +203,14 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
-#ifndef SWIG
     SBFrame (const lldb::StackFrameSP &lldb_object_sp);
-#endif
 
 protected:
-    friend class SBValue;
 
-private:
-    friend class SBThread;
+    friend class SBBlock;
     friend class SBInstruction;
+    friend class SBThread;
+    friend class SBValue;
 #ifndef LLDB_DISABLE_PYTHON
     friend class lldb_private::ScriptInterpreterPython;
 #endif

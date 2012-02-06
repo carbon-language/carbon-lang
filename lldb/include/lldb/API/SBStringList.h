@@ -22,10 +22,8 @@ public:
 
     SBStringList (const lldb::SBStringList &rhs);
     
-#ifndef SWIG
     const SBStringList &
     operator = (const SBStringList &rhs);
-#endif
 
     ~SBStringList ();
 
@@ -55,15 +53,11 @@ protected:
 
     SBStringList (const lldb_private::StringList *lldb_strings);
 
-#ifndef SWIG
-
     const lldb_private::StringList *
     operator->() const;
 
     const lldb_private::StringList &
     operator*() const;
-
-#endif
 
 private:
 

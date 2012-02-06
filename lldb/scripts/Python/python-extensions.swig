@@ -280,6 +280,20 @@
                     return PyString_FromString("");
         }
 }
+%extend lldb::SBSymbolContextList {
+        PyObject *lldb::SBSymbolContextList::__str__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description);
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                else
+                    return PyString_FromString("");
+        }
+}
 %extend lldb::SBTarget {
         PyObject *lldb::SBTarget::__str__ (){
                 lldb::SBStream description;
@@ -388,6 +402,13 @@
 }
 
 %pythoncode %{
+
+class declaration(object):
+    '''A class that represents a source declaration location with file, line and column.'''
+    def __init__(self, file, line, col):
+        self.file = file
+        self.line = line
+        self.col = col
 
 class value(object):
     '''A class designed to wrap lldb.SBValue() objects so the resulting object

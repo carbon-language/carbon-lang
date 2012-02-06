@@ -1252,28 +1252,25 @@ SBTarget::GetDescription (SBStream &description, lldb::DescriptionLevel descript
     return true;
 }
 
-uint32_t
-SBTarget::FindFunctions (const char *name, 
-                         uint32_t name_type_mask, 
-                         bool append, 
-                         lldb::SBSymbolContextList& sc_list)
+lldb::SBSymbolContextList
+SBTarget::FindFunctions (const char *name, uint32_t name_type_mask)
 {
-    if (!append)
-        sc_list.Clear();
+    lldb::SBSymbolContextList sb_sc_list;
     if (name && name[0])
     {
         TargetSP target_sp(GetSP());
         if (target_sp)
         {
             const bool symbols_ok = true;
-            return target_sp->GetImages().FindFunctions (ConstString(name), 
-                                                         name_type_mask, 
-                                                         symbols_ok, 
-                                                         append, 
-                                                         *sc_list);
+            const bool append = true;
+            target_sp->GetImages().FindFunctions (ConstString(name), 
+                                                  name_type_mask, 
+                                                  symbols_ok, 
+                                                  append, 
+                                                  *sb_sc_list);
         }
     }
-    return 0;
+    return sb_sc_list;
 }
 
 lldb::SBType

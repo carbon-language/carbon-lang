@@ -23,10 +23,8 @@ public:
 
     ~SBFileSpecList ();
 
-#ifndef SWIG
     const SBFileSpecList &
     operator = (const lldb::SBFileSpecList &rhs);
-#endif
 
     uint32_t
     GetSize () const;
@@ -53,8 +51,6 @@ private:
 
 friend class SBTarget;
 
-#ifndef SWIG
-
     const lldb_private::FileSpecList *
     operator->() const;
 
@@ -66,8 +62,6 @@ friend class SBTarget;
 
     const lldb_private::FileSpecList &
     ref() const;
-
-#endif
 
     std::auto_ptr <lldb_private::FileSpecList> m_opaque_ap;
 };

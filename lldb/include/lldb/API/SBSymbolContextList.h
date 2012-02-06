@@ -24,10 +24,8 @@ public:
 
     ~SBSymbolContextList ();
 
-#ifndef SWIG
     const lldb::SBSymbolContextList &
     operator = (const lldb::SBSymbolContextList &rhs);
-#endif
 
     bool
     IsValid () const;
@@ -35,9 +33,18 @@ public:
     uint32_t
     GetSize() const;
 
-    SBSymbolContext
+    lldb::SBSymbolContext
     GetContextAtIndex (uint32_t idx);
+    
+    bool
+    GetDescription (lldb::SBStream &description);
 
+    void
+    Append (lldb::SBSymbolContext &sc);
+    
+    void
+    Append (lldb::SBSymbolContextList &sc_list);
+    
     void
     Clear();
 
@@ -46,15 +53,11 @@ protected:
     friend class SBModule;
     friend class SBTarget;
 
-#ifndef SWIG
-
     lldb_private::SymbolContextList*
     operator->() const;
 
     lldb_private::SymbolContextList&
     operator*() const;
-
-#endif
 
 private:
     std::auto_ptr<lldb_private::SymbolContextList> m_opaque_ap;

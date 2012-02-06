@@ -32,10 +32,8 @@ public:
     bool
     IsValid () const;
 
-#ifndef SWIG
     const lldb::SBSymbolContext &
     operator = (const lldb::SBSymbolContext &rhs);
-#endif
 
     lldb::SBModule        GetModule ();
     lldb::SBCompileUnit   GetCompileUnit ();
@@ -66,8 +64,6 @@ protected:
     friend class SBTarget;
     friend class SBSymbolContextList;
 
-#ifndef SWIG
-
     lldb_private::SymbolContext*
     operator->() const;
 
@@ -79,8 +75,6 @@ protected:
 
     const lldb_private::SymbolContext&
     operator*() const;
-
-#endif
 
     lldb_private::SymbolContext *
     get() const;

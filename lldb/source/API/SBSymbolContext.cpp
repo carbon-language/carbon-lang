@@ -199,7 +199,7 @@ SBSymbolContext::SetFunction (lldb::SBFunction function)
 void 
 SBSymbolContext::SetBlock (lldb::SBBlock block)
 {
-    ref().block = block.get();
+    ref().block = block.GetPtr();
 }
 
 void 

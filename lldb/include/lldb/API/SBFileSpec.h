@@ -27,10 +27,8 @@ public:
 
     ~SBFileSpec ();
 
-#ifndef SWIG
     const SBFileSpec &
     operator = (const lldb::SBFileSpec &rhs);
-#endif
 
     bool
     IsValid() const;
@@ -70,7 +68,6 @@ private:
 
     void
     SetFileSpec (const lldb_private::FileSpec& fs);
-#ifndef SWIG
 
     const lldb_private::FileSpec *
     operator->() const;
@@ -83,8 +80,6 @@ private:
 
     const lldb_private::FileSpec &
     ref() const;
-
-#endif
 
     std::auto_ptr <lldb_private::FileSpec> m_opaque_ap;
 };

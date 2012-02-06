@@ -79,6 +79,34 @@ public:
 
     bool
     GetDescription (lldb::SBStream &description);
+    
+    
+    %pythoncode %{
+        __swig_getmethods__["module"] = GetModule
+        __swig_setmethods__["module"] = SetModule
+        if _newclass: x = property(GetModule, SetModule)
+
+        __swig_getmethods__["compile_unit"] = GetCompileUnit
+        __swig_setmethods__["compile_unit"] = SetCompileUnit
+        if _newclass: x = property(GetCompileUnit, SetCompileUnit)
+
+        __swig_getmethods__["function"] = GetFunction
+        __swig_setmethods__["function"] = SetFunction
+        if _newclass: x = property(GetFunction, SetFunction)
+
+        __swig_getmethods__["block"] = GetBlock
+        __swig_setmethods__["block"] = SetBlock
+        if _newclass: x = property(GetBlock, SetBlock)
+            
+        __swig_getmethods__["symbol"] = GetSymbol
+        __swig_setmethods__["symbol"] = SetSymbol
+        if _newclass: x = property(GetSymbol, SetSymbol)
+
+        __swig_getmethods__["line_entry"] = GetLineEntry
+        __swig_setmethods__["line_entry"] = SetLineEntry
+        if _newclass: x = property(GetLineEntry, SetLineEntry)
+    %}
+
 };
 
 } // namespace lldb

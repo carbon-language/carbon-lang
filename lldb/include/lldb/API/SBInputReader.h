@@ -45,10 +45,8 @@ public:
     bool
     IsValid () const;
 
-#ifndef SWIG
     const lldb::SBInputReader &
     operator = (const lldb::SBInputReader &rhs);
-#endif
 
     bool
     IsActive () const;
@@ -65,8 +63,6 @@ public:
 protected:
     friend class SBDebugger;
 
-#ifndef SWIG
-
     lldb_private::InputReader *
     operator->() const;
 
@@ -81,9 +77,6 @@ protected:
 
     lldb_private::InputReader &
     ref() const;
-
-#endif
-
 
 private:
 

@@ -25,10 +25,8 @@ public:
 
     ~SBCompileUnit ();
 
-#ifndef SWIG
     const lldb::SBCompileUnit &
     operator = (const lldb::SBCompileUnit &rhs);
-#endif
 
     bool
     IsValid () const;
@@ -53,15 +51,11 @@ public:
                         lldb::SBFileSpec *inline_file_spec,
                         bool exact) const;
 
-#ifndef SWIG
-
     bool
     operator == (const lldb::SBCompileUnit &rhs) const;
 
     bool
     operator != (const lldb::SBCompileUnit &rhs) const;
-
-#endif
 
     bool
     GetDescription (lldb::SBStream &description);
@@ -72,8 +66,6 @@ private:
     friend class SBSymbolContext;
 
     SBCompileUnit (lldb_private::CompileUnit *lldb_object_ptr);
-
-#ifndef SWIG
 
     const lldb_private::CompileUnit *
     operator->() const;
@@ -86,8 +78,6 @@ private:
     
     void
     reset (lldb_private::CompileUnit *lldb_object_ptr);
-
-#endif
 
     lldb_private::CompileUnit *m_opaque_ptr;
 };
