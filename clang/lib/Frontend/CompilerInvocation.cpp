@@ -1076,13 +1076,14 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   using namespace cc1options;
   bool Success = true;
 
-  Opts.OptimizationLevel = getOptimizationLevel(Args, IK, Diags);
-  if (Opts.OptimizationLevel > 3) {
+  unsigned OptLevel = getOptimizationLevel(Args, IK, Diags);
+  if (OptLevel > 3) {
     Diags.Report(diag::err_drv_invalid_value)
-      << Args.getLastArg(OPT_O)->getAsString(Args) << Opts.OptimizationLevel;
-    Opts.OptimizationLevel = 3;
+      << Args.getLastArg(OPT_O)->getAsString(Args) << OptLevel;
+    OptLevel = 3;
     Success = false;
   }
+  Opts.OptimizationLevel = OptLevel;
 
   // We must always run at least the always inlining pass.
   Opts.Inlining = (Opts.OptimizationLevel > 1) ? CodeGenOptions::NormalInlining
