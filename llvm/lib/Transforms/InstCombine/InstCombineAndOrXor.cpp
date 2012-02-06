@@ -90,12 +90,12 @@ static unsigned getFCmpCode(FCmpInst::Predicate CC, bool &isOrdered) {
   }
 }
 
-/// getICmpValue - This is the complement of getICmpCode, which turns an
+/// getNewICmpValue - This is the complement of getICmpCode, which turns an
 /// opcode and two operands into either a constant true or false, or a brand 
 /// new ICmp instruction. The sign is passed in to determine which kind
 /// of predicate to use in the new icmp instruction.
-Value *getNewICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS,
-                    InstCombiner::BuilderTy *Builder) {
+static Value *getNewICmpValue(bool Sign, unsigned Code, Value *LHS, Value *RHS,
+                              InstCombiner::BuilderTy *Builder) {
   ICmpInst::Predicate NewPred;
   if (Value *NewConstant = getICmpValue(Sign, Code, LHS, RHS, NewPred))
     return NewConstant;
