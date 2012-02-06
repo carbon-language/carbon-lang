@@ -7601,9 +7601,10 @@ BuildSingleCopyAssign(Sema &S, SourceLocation Loc, QualType T,
     // reference to operator=; this is required to suppress the virtual
     // call mechanism.
     CXXScopeSpec SS;
+    const Type *CanonicalT = S.Context.getCanonicalType(T.getTypePtr());
     SS.MakeTrivial(S.Context, 
                    NestedNameSpecifier::Create(S.Context, 0, false, 
-                                               T.getTypePtr()),
+                                               CanonicalT),
                    Loc);
     
     // Create the reference to operator=.
