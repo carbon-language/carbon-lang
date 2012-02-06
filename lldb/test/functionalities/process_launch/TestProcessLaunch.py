@@ -135,9 +135,9 @@ class ProcessLaunchTestCase(TestBase):
         except OSError:
             pass
 
-        launch_command = "process launch -w %s -o %s -e %sl" % (my_working_dir_path,
-                                                                out_file_path,
-                                                                err_file_path)
+        launch_command = "process launch -w %s -o %s -e %s" % (my_working_dir_path,
+                                                               out_file_path,
+                                                               err_file_path)
 
         self.expect(launch_command,
                     patterns = [ "Process .* launched: .*a.out" ])
