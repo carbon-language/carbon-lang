@@ -510,6 +510,13 @@ uint64_t DIDerivedType::getOriginalTypeSize() const {
   return getSizeInBits();
 }
 
+/// getObjCProperty - Return property node, if this ivar is associated with one.
+MDNode *DIDerivedType::getObjCProperty() const {
+  if (getVersion() <= LLVMDebugVersion11 || DbgNode->getNumOperands() <= 10)
+    return NULL;
+  return dyn_cast_or_null<MDNode>(DbgNode->getOperand(10));
+}
+
 /// isInlinedFnArgument - Return true if this variable provides debugging
 /// information for an inlined function arguments.
 bool DIVariable::isInlinedFnArgument(const Function *CurFn) {

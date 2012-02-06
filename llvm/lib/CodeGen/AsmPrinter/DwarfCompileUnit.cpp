@@ -851,6 +851,12 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         if (PropertyAttributes)
           addUInt(ElemDie, dwarf::DW_AT_APPLE_property_attribute, 0, 
                  PropertyAttributes);
+
+	DIEEntry *Entry = getDIEEntry(Element);
+	if (!Entry) {
+	  Entry = createDIEEntry(ElemDie);
+	  insertDIEEntry(Element, Entry);
+	}
       } else
         continue;
       Buffer.addChild(ElemDie);
@@ -1455,6 +1461,11 @@ DIE *CompileUnit::createMemberDIE(DIDerivedType DT) {
             dwarf::DW_VIRTUALITY_virtual);
 
   // Objective-C properties.
+  if (MDNode *PNode = DT.getObjCProperty())
+    if (DIEEntry *PropertyDie = getDIEEntry(PNode))
+      MemberDie->addValue(dwarf::DW_AT_APPLE_property, dwarf::DW_FORM_ref4, 
+                          PropertyDie);
+
   // This is only for backward compatibility.
   StringRef PropertyName = DT.getObjCPropertyName();
   if (!PropertyName.empty()) {
