@@ -2022,7 +2022,7 @@ public:
                                       SourceLocation TemplateKWLoc,
                                       const DeclarationNameInfo &NameInfo,
                                       bool ADL,
-                                      const TemplateArgumentListInfo &Args,
+                                      const TemplateArgumentListInfo *Args,
                                       UnresolvedSetIterator Begin,
                                       UnresolvedSetIterator End);
 

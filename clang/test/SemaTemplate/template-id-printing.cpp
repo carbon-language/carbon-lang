@@ -130,3 +130,12 @@ void test() {
 }
 
 } // namespace DSME
+
+namespace DSDRE_withImplicitTemplateArgs {
+
+template <typename T> void foo() {
+  // CHECK: T::template bar();
+  T::template bar();
+}
+
+} // namespace DSDRE_withImplicitTemplateArgs

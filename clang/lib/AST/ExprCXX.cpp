@@ -200,15 +200,17 @@ UnresolvedLookupExpr::Create(ASTContext &C,
                              SourceLocation TemplateKWLoc,
                              const DeclarationNameInfo &NameInfo,
                              bool ADL,
-                             const TemplateArgumentListInfo &Args,
-                             UnresolvedSetIterator Begin, 
-                             UnresolvedSetIterator End) 
+                             const TemplateArgumentListInfo *Args,
+                             UnresolvedSetIterator Begin,
+                             UnresolvedSetIterator End)
 {
+  assert(Args || TemplateKWLoc.isValid());
+  unsigned num_args = Args ? Args->size() : 0;
   void *Mem = C.Allocate(sizeof(UnresolvedLookupExpr) +
-                         ASTTemplateKWAndArgsInfo::sizeFor(Args.size()));
+                         ASTTemplateKWAndArgsInfo::sizeFor(num_args));
   return new (Mem) UnresolvedLookupExpr(C, NamingClass, QualifierLoc,
                                         TemplateKWLoc, NameInfo,
-                                        ADL, /*Overload*/ true, &Args,
+                                        ADL, /*Overload*/ true, Args,
                                         Begin, End, /*StdIsAssociated=*/false);
 }
 

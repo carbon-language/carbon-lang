@@ -2032,12 +2032,11 @@ public:
     CXXScopeSpec SS;
     SS.Adopt(QualifierLoc);
 
-    if (TemplateArgs)
+    if (TemplateArgs || TemplateKWLoc.isValid())
       return getSema().BuildQualifiedTemplateIdExpr(SS, TemplateKWLoc,
-                                                    NameInfo, *TemplateArgs);
+                                                    NameInfo, TemplateArgs);
 
-    return getSema().BuildQualifiedDeclarationNameExpr(SS, TemplateKWLoc,
-                                                       NameInfo);
+    return getSema().BuildQualifiedDeclarationNameExpr(SS, NameInfo);
   }
 
   /// \brief Build a new template-id expression.
@@ -2048,7 +2047,7 @@ public:
                                    SourceLocation TemplateKWLoc,
                                    LookupResult &R,
                                    bool RequiresADL,
-                              const TemplateArgumentListInfo &TemplateArgs) {
+                              const TemplateArgumentListInfo *TemplateArgs) {
     return getSema().BuildTemplateIdExpr(SS, TemplateKWLoc, R, RequiresADL,
                                          TemplateArgs);
   }
@@ -7361,8 +7360,9 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
 
   SourceLocation TemplateKWLoc = Old->getTemplateKeywordLoc();
 
-  // If we have no template arguments, it's a normal declaration name.
-  if (!Old->hasExplicitTemplateArgs())
+  // If we have neither explicit template arguments, nor the template keyword,
+  // it's a normal declaration name.
+  if (!Old->hasExplicitTemplateArgs() && !TemplateKWLoc.isValid())
     return getDerived().RebuildDeclarationNameExpr(SS, R, Old->requiresADL());
 
   // If we have template arguments, rebuild them, then rebuild the
@@ -7374,7 +7374,7 @@ TreeTransform<Derived>::TransformUnresolvedLookupExpr(
     return ExprError();
 
   return getDerived().RebuildTemplateIdExpr(SS, TemplateKWLoc, R,
-                                            Old->requiresADL(), TransArgs);
+                                            Old->requiresADL(), &TransArgs);
 }
 
 template<typename Derived>

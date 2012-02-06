@@ -9310,9 +9310,9 @@ BuildRecoveryCallExpr(Sema &SemaRef, Scope *S, Expr *Fn,
   if ((*R.begin())->isCXXClassMember())
     NewFn = SemaRef.BuildPossibleImplicitMemberExpr(SS, TemplateKWLoc,
                                                     R, ExplicitTemplateArgs);
-  else if (ExplicitTemplateArgs)
+  else if (ExplicitTemplateArgs || TemplateKWLoc.isValid())
     NewFn = SemaRef.BuildTemplateIdExpr(SS, TemplateKWLoc, R, false,
-                                        *ExplicitTemplateArgs);
+                                        ExplicitTemplateArgs);
   else
     NewFn = SemaRef.BuildDeclarationNameExpr(SS, R, false);
 

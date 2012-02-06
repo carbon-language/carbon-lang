@@ -2203,7 +2203,7 @@ ExprResult Sema::BuildTemplateIdExpr(const CXXScopeSpec &SS,
                                      SourceLocation TemplateKWLoc,
                                      LookupResult &R,
                                      bool RequiresADL,
-                                 const TemplateArgumentListInfo &TemplateArgs) {
+                                 const TemplateArgumentListInfo *TemplateArgs) {
   // FIXME: Can we do any checking at this point? I guess we could check the
   // template arguments that we have against the template name, if the template
   // name refers to a single template. That's not a terribly common case,
@@ -2237,13 +2237,13 @@ ExprResult
 Sema::BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
                                    SourceLocation TemplateKWLoc,
                                    const DeclarationNameInfo &NameInfo,
-                             const TemplateArgumentListInfo &TemplateArgs) {
+                             const TemplateArgumentListInfo *TemplateArgs) {
+  assert(TemplateArgs || TemplateKWLoc.isValid());
   DeclContext *DC;
   if (!(DC = computeDeclContext(SS, false)) ||
       DC->isDependentContext() ||
       RequireCompleteDeclContext(SS, DC))
-    return BuildDependentDeclRefExpr(SS, TemplateKWLoc, NameInfo,
-                                     &TemplateArgs);
+    return BuildDependentDeclRefExpr(SS, TemplateKWLoc, NameInfo, TemplateArgs);
 
   bool MemberOfUnknownSpecialization;
   LookupResult R(*this, NameInfo, LookupOrdinaryName);

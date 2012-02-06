@@ -232,8 +232,8 @@ Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
   case IMA_Mixed_StaticContext:
   case IMA_Unresolved_StaticContext:
   case IMA_Field_Uneval_Context:
-    if (TemplateArgs)
-      return BuildTemplateIdExpr(SS, TemplateKWLoc, R, false, *TemplateArgs);
+    if (TemplateArgs || TemplateKWLoc.isValid())
+      return BuildTemplateIdExpr(SS, TemplateKWLoc, R, false, TemplateArgs);
     return BuildDeclarationNameExpr(SS, R, false);
 
   case IMA_Error_StaticContext:

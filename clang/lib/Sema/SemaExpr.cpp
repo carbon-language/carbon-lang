@@ -1652,8 +1652,8 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
                                              R, TemplateArgs);
   }
 
-  if (TemplateArgs)
-    return BuildTemplateIdExpr(SS, TemplateKWLoc, R, ADL, *TemplateArgs);
+  if (TemplateArgs || TemplateKWLoc.isValid())
+    return BuildTemplateIdExpr(SS, TemplateKWLoc, R, ADL, TemplateArgs);
 
   return BuildDeclarationNameExpr(SS, R, ADL);
 }
@@ -1664,11 +1664,11 @@ ExprResult Sema::ActOnIdExpression(Scope *S,
 /// this path.
 ExprResult
 Sema::BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
-                                        SourceLocation TemplateKWLoc,
                                         const DeclarationNameInfo &NameInfo) {
   DeclContext *DC;
   if (!(DC = computeDeclContext(SS, false)) || DC->isDependentContext())
-    return BuildDependentDeclRefExpr(SS, TemplateKWLoc, NameInfo, 0);
+    return BuildDependentDeclRefExpr(SS, /*TemplateKWLoc=*/SourceLocation(),
+                                     NameInfo, /*TemplateArgs=*/0);
 
   if (RequireCompleteDeclContext(SS, DC))
     return ExprError();

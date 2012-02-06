@@ -82,3 +82,17 @@ struct Y0 {
     x = this->template f4(0); // expected-error {{assigning to 'int' from incompatible type 'void'}}
   }
 };
+
+struct A {
+  template<int I>
+  struct B {
+    static void b1();
+  };
+};
+
+template<int I>
+void f5() {
+  A::template B<I>::template b1(); // expected-error {{'b1' following the 'template' keyword does not refer to a template}}
+}
+
+template void f5<0>(); // expected-note {{in instantiation of function template specialization 'f5<0>' requested here}}

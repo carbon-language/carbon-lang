@@ -2369,7 +2369,6 @@ public:
                                   bool HasTrailingLParen);
 
   ExprResult BuildQualifiedDeclarationNameExpr(CXXScopeSpec &SS,
-                                               SourceLocation TemplateKWLoc,
                                          const DeclarationNameInfo &NameInfo);
   ExprResult BuildDependentDeclRefExpr(const CXXScopeSpec &SS,
                                        SourceLocation TemplateKWLoc,
@@ -4001,12 +4000,12 @@ public:
                                  SourceLocation TemplateKWLoc,
                                  LookupResult &R,
                                  bool RequiresADL,
-                               const TemplateArgumentListInfo &TemplateArgs);
+                               const TemplateArgumentListInfo *TemplateArgs);
 
   ExprResult BuildQualifiedTemplateIdExpr(CXXScopeSpec &SS,
                                           SourceLocation TemplateKWLoc,
                                const DeclarationNameInfo &NameInfo,
-                               const TemplateArgumentListInfo &TemplateArgs);
+                               const TemplateArgumentListInfo *TemplateArgs);
 
   TemplateNameKind ActOnDependentTemplateName(Scope *S,
                                               CXXScopeSpec &SS,
