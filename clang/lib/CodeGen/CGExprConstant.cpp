@@ -1375,17 +1375,18 @@ llvm::Constant *CodeGenModule::EmitNullConstant(QualType T) {
     return llvm::Constant::getNullValue(getTypes().ConvertTypeForMem(T));
     
   if (const ConstantArrayType *CAT = Context.getAsConstantArrayType(T)) {
+    llvm::ArrayType *ATy =
+      cast<llvm::ArrayType>(getTypes().ConvertTypeForMem(T));
 
     QualType ElementTy = CAT->getElementType();
 
     llvm::Constant *Element = EmitNullConstant(ElementTy);
     unsigned NumElements = CAT->getSize().getZExtValue();
-    std::vector<llvm::Constant *> Array(NumElements);
-    for (unsigned i = 0; i != NumElements; ++i)
-      Array[i] = Element;
-
-    llvm::ArrayType *ATy =
-      cast<llvm::ArrayType>(getTypes().ConvertTypeForMem(T));
+    
+    if (Element->isNullValue())
+      return llvm::ConstantAggregateZero::get(ATy);
+    
+    SmallVector<llvm::Constant *, 8> Array(NumElements, Element);
     return llvm::ConstantArray::get(ATy, Array);
   }
 
