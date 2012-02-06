@@ -771,6 +771,7 @@ bool Sema::ActOnCXXNestedNameSpecifier(Scope *S,
       = Builder.push<DependentTemplateSpecializationTypeLoc>(T);
     SpecTL.setElaboratedKeywordLoc(SourceLocation());
     SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
+    SpecTL.setTemplateKeywordLoc(TemplateKWLoc);
     SpecTL.setTemplateNameLoc(TemplateNameLoc);
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);

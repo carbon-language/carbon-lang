@@ -2072,6 +2072,7 @@ Sema::ActOnTemplateIdType(CXXScopeSpec &SS, SourceLocation TemplateKWLoc,
       = TLB.push<DependentTemplateSpecializationTypeLoc>(T);
     SpecTL.setElaboratedKeywordLoc(SourceLocation());
     SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
+    SpecTL.setTemplateKeywordLoc(TemplateKWLoc);
     SpecTL.setTemplateNameLoc(TemplateLoc);
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);
@@ -2144,6 +2145,7 @@ TypeResult Sema::ActOnTagTemplateIdType(TagUseKind TUK,
       = TLB.push<DependentTemplateSpecializationTypeLoc>(T);
     SpecTL.setElaboratedKeywordLoc(TagLoc);
     SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
+    SpecTL.setTemplateKeywordLoc(TemplateKWLoc);
     SpecTL.setTemplateNameLoc(TemplateLoc);
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);
@@ -6667,6 +6669,7 @@ Sema::ActOnTypenameType(Scope *S,
     = Builder.push<DependentTemplateSpecializationTypeLoc>(T);
     SpecTL.setElaboratedKeywordLoc(TypenameLoc);
     SpecTL.setQualifierLoc(SS.getWithLocInContext(Context));
+    SpecTL.setTemplateKeywordLoc(TemplateKWLoc);
     SpecTL.setTemplateNameLoc(TemplateNameLoc);
     SpecTL.setLAngleLoc(LAngleLoc);
     SpecTL.setRAngleLoc(RAngleLoc);

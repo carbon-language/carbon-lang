@@ -581,6 +581,7 @@ void TypeLocWriter::VisitDependentTemplateSpecializationTypeLoc(
        DependentTemplateSpecializationTypeLoc TL) {
   Writer.AddSourceLocation(TL.getElaboratedKeywordLoc(), Record);
   Writer.AddNestedNameSpecifierLoc(TL.getQualifierLoc(), Record);
+  Writer.AddSourceLocation(TL.getTemplateKeywordLoc(), Record);
   Writer.AddSourceLocation(TL.getTemplateNameLoc(), Record);
   Writer.AddSourceLocation(TL.getLAngleLoc(), Record);
   Writer.AddSourceLocation(TL.getRAngleLoc(), Record);

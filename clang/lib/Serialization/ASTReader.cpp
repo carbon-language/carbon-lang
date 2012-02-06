@@ -4345,6 +4345,7 @@ void TypeLocReader::VisitDependentTemplateSpecializationTypeLoc(
        DependentTemplateSpecializationTypeLoc TL) {
   TL.setElaboratedKeywordLoc(ReadSourceLocation(Record, Idx));
   TL.setQualifierLoc(Reader.ReadNestedNameSpecifierLoc(F, Record, Idx));
+  TL.setTemplateKeywordLoc(ReadSourceLocation(Record, Idx));
   TL.setTemplateNameLoc(ReadSourceLocation(Record, Idx));
   TL.setLAngleLoc(ReadSourceLocation(Record, Idx));
   TL.setRAngleLoc(ReadSourceLocation(Record, Idx));

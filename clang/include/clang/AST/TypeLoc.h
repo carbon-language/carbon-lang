@@ -1603,6 +1603,7 @@ public:
 };
 
 struct DependentTemplateSpecializationLocInfo : DependentNameLocInfo {
+  SourceLocation TemplateKWLoc;
   SourceLocation LAngleLoc;
   SourceLocation RAngleLoc;
   // followed by a TemplateArgumentLocInfo[]
@@ -1643,6 +1644,13 @@ public:
                                         == getTypePtr()->getQualifier() &&
            "Inconsistent nested-name-specifier pointer");
     getLocalData()->QualifierData = QualifierLoc.getOpaqueData();
+  }
+
+  SourceLocation getTemplateKeywordLoc() const {
+    return getLocalData()->TemplateKWLoc;
+  }
+  void setTemplateKeywordLoc(SourceLocation Loc) {
+    getLocalData()->TemplateKWLoc = Loc;
   }
 
   SourceLocation getTemplateNameLoc() const {
@@ -1686,6 +1694,8 @@ public:
       return SourceRange(getElaboratedKeywordLoc(), getRAngleLoc());
     else if (getQualifierLoc())
       return SourceRange(getQualifierLoc().getBeginLoc(), getRAngleLoc());
+    else if (getTemplateKeywordLoc().isValid())
+      return SourceRange(getTemplateKeywordLoc(), getRAngleLoc());
     else
       return SourceRange(getTemplateNameLoc(), getRAngleLoc());
   }

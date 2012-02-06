@@ -269,8 +269,8 @@ void DependentNameTypeLoc::initializeLocal(ASTContext &Context,
   setNameLoc(Loc);
 }
 
-void 
-DependentTemplateSpecializationTypeLoc::initializeLocal(ASTContext &Context, 
+void
+DependentTemplateSpecializationTypeLoc::initializeLocal(ASTContext &Context,
                                                         SourceLocation Loc) {
   setElaboratedKeywordLoc(Loc);
   if (getTypePtr()->getQualifier()) {
@@ -280,7 +280,7 @@ DependentTemplateSpecializationTypeLoc::initializeLocal(ASTContext &Context,
   } else {
     setQualifierLoc(NestedNameSpecifierLoc());
   }
-  
+  setTemplateKeywordLoc(Loc);
   setTemplateNameLoc(Loc);
   setLAngleLoc(Loc);
   setRAngleLoc(Loc);

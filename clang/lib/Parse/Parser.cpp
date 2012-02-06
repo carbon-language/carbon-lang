@@ -1240,13 +1240,13 @@ bool Parser::TryAnnotateTypeOrScopeToken(bool EnteringContext, bool NeedType) {
       ASTTemplateArgsPtr TemplateArgsPtr(Actions,
                                          TemplateId->getTemplateArgs(),
                                          TemplateId->NumArgs);
-      
+
       Ty = Actions.ActOnTypenameType(getCurScope(), TypenameLoc, SS,
-                                     /*FIXME:*/SourceLocation(),
+                                     TemplateId->TemplateKWLoc,
                                      TemplateId->Template,
                                      TemplateId->TemplateNameLoc,
                                      TemplateId->LAngleLoc,
-                                     TemplateArgsPtr, 
+                                     TemplateArgsPtr,
                                      TemplateId->RAngleLoc);
     } else {
       Diag(Tok, diag::err_expected_type_name_after_typename)

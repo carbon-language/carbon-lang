@@ -4592,6 +4592,7 @@ QualType TreeTransform<Derived>::TransformTemplateSpecializationType(
         = TLB.push<DependentTemplateSpecializationTypeLoc>(Result);
       NewTL.setElaboratedKeywordLoc(SourceLocation());
       NewTL.setQualifierLoc(NestedNameSpecifierLoc());
+      NewTL.setTemplateKeywordLoc(TL.getTemplateKeywordLoc());
       NewTL.setTemplateNameLoc(TL.getTemplateNameLoc());
       NewTL.setLAngleLoc(TL.getLAngleLoc());
       NewTL.setRAngleLoc(TL.getRAngleLoc());
@@ -4643,6 +4644,7 @@ QualType TreeTransform<Derived>::TransformDependentTemplateSpecializationType(
       = TLB.push<DependentTemplateSpecializationTypeLoc>(Result);
     NewTL.setElaboratedKeywordLoc(TL.getElaboratedKeywordLoc());
     NewTL.setQualifierLoc(SS.getWithLocInContext(SemaRef.Context));
+    NewTL.setTemplateKeywordLoc(TL.getTemplateKeywordLoc());
     NewTL.setTemplateNameLoc(TL.getTemplateNameLoc());
     NewTL.setLAngleLoc(TL.getLAngleLoc());
     NewTL.setRAngleLoc(TL.getRAngleLoc());
@@ -4660,7 +4662,7 @@ QualType TreeTransform<Derived>::TransformDependentTemplateSpecializationType(
     /// FIXME: Wrap this in an elaborated-type-specifier?
     TemplateSpecializationTypeLoc NewTL
       = TLB.push<TemplateSpecializationTypeLoc>(Result);
-    NewTL.setTemplateKeywordLoc(SourceLocation()); // FIXME.
+    NewTL.setTemplateKeywordLoc(TL.getTemplateKeywordLoc());
     NewTL.setTemplateNameLoc(TL.getTemplateNameLoc());
     NewTL.setLAngleLoc(TL.getLAngleLoc());
     NewTL.setRAngleLoc(TL.getRAngleLoc());
@@ -4867,7 +4869,7 @@ TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
     // Copy information relevant to the template specialization.
     TemplateSpecializationTypeLoc NamedTL
       = TLB.push<TemplateSpecializationTypeLoc>(NamedT);
-    NamedTL.setTemplateKeywordLoc(SourceLocation()); // FIXME.
+    NamedTL.setTemplateKeywordLoc(TL.getTemplateKeywordLoc());
     NamedTL.setTemplateNameLoc(TL.getTemplateNameLoc());
     NamedTL.setLAngleLoc(TL.getLAngleLoc());
     NamedTL.setRAngleLoc(TL.getRAngleLoc());
@@ -4883,6 +4885,7 @@ TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
       = TLB.push<DependentTemplateSpecializationTypeLoc>(Result);
     SpecTL.setElaboratedKeywordLoc(TL.getElaboratedKeywordLoc());
     SpecTL.setQualifierLoc(QualifierLoc);
+    SpecTL.setTemplateKeywordLoc(TL.getTemplateKeywordLoc());
     SpecTL.setTemplateNameLoc(TL.getTemplateNameLoc());
     SpecTL.setLAngleLoc(TL.getLAngleLoc());
     SpecTL.setRAngleLoc(TL.getRAngleLoc());
@@ -4891,7 +4894,7 @@ TransformDependentTemplateSpecializationType(TypeLocBuilder &TLB,
   } else {
     TemplateSpecializationTypeLoc SpecTL
       = TLB.push<TemplateSpecializationTypeLoc>(Result);
-    SpecTL.setTemplateKeywordLoc(SourceLocation()); // FIXME.
+    SpecTL.setTemplateKeywordLoc(TL.getTemplateKeywordLoc());
     SpecTL.setTemplateNameLoc(TL.getTemplateNameLoc());
     SpecTL.setLAngleLoc(TL.getLAngleLoc());
     SpecTL.setRAngleLoc(TL.getRAngleLoc());

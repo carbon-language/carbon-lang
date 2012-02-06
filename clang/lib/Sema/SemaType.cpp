@@ -2929,43 +2929,20 @@ namespace {
       Visit(TL.getNextTypeLoc().getUnqualifiedLoc());
     }
     void VisitDependentNameTypeLoc(DependentNameTypeLoc TL) {
-      ElaboratedTypeKeyword Keyword
-        = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
-      if (DS.getTypeSpecType() == TST_typename) {
-        TypeSourceInfo *TInfo = 0;
-        Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
-        if (TInfo) {
-          TL.copy(cast<DependentNameTypeLoc>(TInfo->getTypeLoc()));
-          return;
-        }
-      }
-      TL.setElaboratedKeywordLoc(Keyword != ETK_None
-                                 ? DS.getTypeSpecTypeLoc()
-                                 : SourceLocation());
-      const CXXScopeSpec& SS = DS.getTypeSpecScope();
-      TL.setQualifierLoc(SS.getWithLocInContext(Context));
-      TL.setNameLoc(DS.getTypeSpecTypeNameLoc());
+      assert(DS.getTypeSpecType() == TST_typename);
+      TypeSourceInfo *TInfo = 0;
+      Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
+      assert(TInfo);
+      TL.copy(cast<DependentNameTypeLoc>(TInfo->getTypeLoc()));
     }
     void VisitDependentTemplateSpecializationTypeLoc(
                                  DependentTemplateSpecializationTypeLoc TL) {
-      ElaboratedTypeKeyword Keyword
-        = TypeWithKeyword::getKeywordForTypeSpec(DS.getTypeSpecType());
-      if (Keyword == ETK_Typename) {
-        TypeSourceInfo *TInfo = 0;
-        Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
-        if (TInfo) {
-          TL.copy(cast<DependentTemplateSpecializationTypeLoc>(
-                    TInfo->getTypeLoc()));
-          return;
-        }
-      }
-      TL.initializeLocal(Context, SourceLocation());
-      TL.setElaboratedKeywordLoc(Keyword != ETK_None
-                                 ? DS.getTypeSpecTypeLoc()
-                                 : SourceLocation());
-      const CXXScopeSpec& SS = DS.getTypeSpecScope();
-      TL.setQualifierLoc(SS.getWithLocInContext(Context));
-      TL.setTemplateNameLoc(DS.getTypeSpecTypeNameLoc());
+      assert(DS.getTypeSpecType() == TST_typename);
+      TypeSourceInfo *TInfo = 0;
+      Sema::GetTypeFromParser(DS.getRepAsType(), &TInfo);
+      assert(TInfo);
+      TL.copy(cast<DependentTemplateSpecializationTypeLoc>(
+                TInfo->getTypeLoc()));
     }
     void VisitTagTypeLoc(TagTypeLoc TL) {
       TL.setNameLoc(DS.getTypeSpecTypeNameLoc());
