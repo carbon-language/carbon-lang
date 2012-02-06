@@ -79,5 +79,8 @@ namespace ImplicitCapture {
     [=]() { const G* gg = &g; return gg->a; }; // expected-error {{not supported yet}}
     [=]() { return [=]{ const G* gg = &g; return gg->a; }(); }; // expected-error {{no matching constructor for initialization of 'const ImplicitCapture::G'}} expected-error 2 {{not supported yet}}
     (void)^{ return [=]{ const G* gg = &g; return gg->a; }(); }; // expected-error 2 {{no matching constructor for initialization of 'const ImplicitCapture::G'}} expected-error {{not supported yet}}
+
+    const int h = a; // expected-note {{declared}}
+    []() { return h; }; // expected-error {{variable 'h' cannot be implicitly captured in a lambda with no capture-default specified}} expected-note {{lambda expression begins here}} expected-error {{not supported yet}}
   }
 }

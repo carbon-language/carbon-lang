@@ -1413,7 +1413,7 @@ APValue *VarDecl::evaluateValue(
   // expression as a side-effect.
   if (getASTContext().getLangOptions().CPlusPlus0x && !Eval->CheckedICE) {
     Eval->CheckedICE = true;
-    Eval->IsICE = Notes.empty();
+    Eval->IsICE = Result && Notes.empty();
   }
 
   return Result ? &Eval->Evaluated : 0;
