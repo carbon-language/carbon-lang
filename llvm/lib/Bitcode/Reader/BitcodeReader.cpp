@@ -2384,10 +2384,6 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
       InstructionList.push_back(I);
       break;
     }
-    case bitc::FUNC_CODE_INST_UNWIND: // UNWIND
-      I = new UnwindInst(Context);
-      InstructionList.push_back(I);
-      break;
     case bitc::FUNC_CODE_INST_UNREACHABLE: // UNREACHABLE
       I = new UnreachableInst(Context);
       InstructionList.push_back(I);
