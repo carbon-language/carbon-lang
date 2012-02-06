@@ -1414,8 +1414,12 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
       // Deny any overlapping intervals.  This depends on all the reserved
       // register live ranges to look like dead defs.
       for (const unsigned *AS = TRI->getOverlaps(CP.getDstReg()); *AS; ++AS) {
-        if (!LIS->hasInterval(*AS))
+        if (!LIS->hasInterval(*AS)) {
+          // Make sure at least DstReg itself exists before attempting a join.
+          if (*AS == CP.getDstReg())
+            LIS->getOrCreateInterval(CP.getDstReg());
           continue;
+        }
         if (RHS.overlaps(LIS->getInterval(*AS))) {
           DEBUG(dbgs() << "\t\tInterference: " << PrintReg(*AS, TRI) << '\n');
           return false;
