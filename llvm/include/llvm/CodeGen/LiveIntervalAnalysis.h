@@ -192,19 +192,9 @@ namespace llvm {
       return li.liveAt(getMBBStartIdx(mbb));
     }
 
-    LiveRange* findEnteringRange(LiveInterval &li,
-                                 const MachineBasicBlock *mbb) {
-      return li.getLiveRangeContaining(getMBBStartIdx(mbb));
-    }
-
     bool isLiveOutOfMBB(const LiveInterval &li,
                         const MachineBasicBlock *mbb) const {
       return li.liveAt(getMBBEndIdx(mbb).getPrevSlot());
-    }
-
-    LiveRange* findExitingRange(LiveInterval &li,
-                                const MachineBasicBlock *mbb) {
-      return li.getLiveRangeContaining(getMBBEndIdx(mbb).getPrevSlot());
     }
 
     MachineBasicBlock* getMBBFromIndex(SlotIndex index) const {
@@ -223,17 +213,9 @@ namespace llvm {
       indexes_->replaceMachineInstrInMaps(MI, NewMI);
     }
 
-    void InsertMBBInMaps(MachineBasicBlock *MBB) {
-      indexes_->insertMBBInMaps(MBB);
-    }
-
     bool findLiveInMBBs(SlotIndex Start, SlotIndex End,
                         SmallVectorImpl<MachineBasicBlock*> &MBBs) const {
       return indexes_->findLiveInMBBs(Start, End, MBBs);
-    }
-
-    void renumber() {
-      indexes_->renumberIndexes();
     }
 
     VNInfo::Allocator& getVNInfoAllocator() { return VNInfoAllocator; }
