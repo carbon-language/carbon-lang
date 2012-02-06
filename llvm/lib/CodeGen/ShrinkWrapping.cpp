@@ -93,6 +93,7 @@ void PEI::getAnalysisUsage(AnalysisUsage &AU) const {
   }
   AU.addPreserved<MachineLoopInfo>();
   AU.addPreserved<MachineDominatorTree>();
+  AU.addRequired<TargetPassConfig>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 

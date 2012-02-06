@@ -50,6 +50,7 @@ INITIALIZE_PASS_BEGIN(PEI, "prologepilog",
                 "Prologue/Epilogue Insertion", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
+INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
 INITIALIZE_PASS_END(PEI, "prologepilog",
                 "Prologue/Epilogue Insertion", false, false)
 
