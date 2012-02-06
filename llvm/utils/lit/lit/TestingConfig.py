@@ -50,14 +50,19 @@ class TestingConfig:
             cfg_globals['__file__'] = path
             try:
                 exec f in cfg_globals
+                if litConfig.debug:
+                    litConfig.note('... loaded config %r' % path)
             except SystemExit,status:
                 # We allow normal system exit inside a config file to just
                 # return control without error.
                 if status.args:
                     raise
             f.close()
-        elif mustExist:
-            litConfig.fatal('unable to load config from %r ' % path)
+        else:
+            if mustExist:
+                litConfig.fatal('unable to load config from %r ' % path)
+            elif litConfig.debug:
+                litConfig.note('... config not found  - %r' %path)
 
         config.finish(litConfig)
         return config

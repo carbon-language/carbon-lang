@@ -61,6 +61,8 @@ class LitConfig:
         """load_config(config, path) - Load a config object from an alternate
         path."""
         from TestingConfig import TestingConfig
+        if self.debug:
+            self.note('load_config from %r' % path)
         return TestingConfig.frompath(path, config.parent, self,
                                       mustExist = True,
                                       config = config)
