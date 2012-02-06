@@ -987,9 +987,6 @@ ClangASTSource::layoutRecordType(const RecordDecl *record,
     
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
-    if (!record->getNameAsString().compare("PseudoObjectExprBitfields"))
-        fprintf(stderr, "THIS IS THE ONE!");
-    
     if (log)
     {
         log->Printf("LayoutRecordType[%u] on (RecordDecl*)%p [name = '%s']",

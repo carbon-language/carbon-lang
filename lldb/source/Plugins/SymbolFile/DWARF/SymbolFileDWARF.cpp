@@ -1291,8 +1291,6 @@ SymbolFileDWARF::ParseTemplateParameterInfos (DWARFCompileUnit* dwarf_cu,
     if (parent_die == NULL)
         return NULL;
     
-    const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
-
     Args template_parameter_names;
     for (const DWARFDebugInfoEntry *die = parent_die->GetFirstChild(); 
          die != NULL; 
@@ -5156,9 +5154,6 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     
                     if (type_name_cstr)
                     {
-                        if (die->GetOffset() == 0xaeaba)
-                            fprintf(stderr, "This is the one!");
-                        
                         bool type_handled = false;
                         if (tag == DW_TAG_subprogram)
                         {
