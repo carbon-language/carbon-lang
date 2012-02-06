@@ -1373,8 +1373,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     FieldTy = DBuilder.createObjCIVar(FieldName, FieldDefUnit,
                                       FieldLine, FieldSize, FieldAlign,
                                       FieldOffset, Flags, FieldTy,
-                                      PropertyName, PropertyGetter,
-                                      PropertySetter, PropertyAttributes);
+                                      PropertyNode);
     EltTys.push_back(FieldTy);
   }
 
