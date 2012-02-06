@@ -332,7 +332,9 @@ public:
                        "Children of aggregate variables can be specified such as "
                        "'var->child.x'. "
                        "You can choose to watch a variable with the '-w' option. "
-                       "Note that hardware resources for watching are often limited.",
+                       "Note that hardware resources for watching are often limited. "
+                       "See alo 'watchpoint set' where you can use an expression to "
+                       "specify the address to watch for.",
                        NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_option_group (interpreter),
