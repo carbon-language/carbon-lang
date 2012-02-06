@@ -2813,7 +2813,7 @@ class RecordDecl : public TagDecl {
   bool AnonymousStructOrUnion : 1;
 
   /// HasObjectMember - This is true if this struct has at least one member
-  /// containing an object.
+  /// containing an Objective-C object pointer type.
   bool HasObjectMember : 1;
 
   /// \brief Whether the field declarations of this record have been loaded
