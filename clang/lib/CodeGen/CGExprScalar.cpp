@@ -1190,6 +1190,8 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
   case CK_VectorSplat: {
     llvm::Type *DstTy = ConvertType(DestTy);
     Value *Elt = Visit(const_cast<Expr*>(E));
+    Elt = EmitScalarConversion(Elt, E->getType(),
+                               DestTy->getAs<VectorType>()->getElementType());
 
     // Insert the element in element zero of an undef vector
     llvm::Value *UnV = llvm::UndefValue::get(DstTy);
