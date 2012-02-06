@@ -2282,9 +2282,6 @@ static Constant *ComputeLoadResult(Constant *P,
   return 0;  // don't know how to evaluate.
 }
 
-/// EvaluateFunction - Evaluate a call to function F, returning true if
-/// successful, false if we can't evaluate it.  ActualArgs contains the formal
-/// arguments for the function.
 static bool EvaluateFunction(Function *F, Constant *&RetVal,
                              const SmallVectorImpl<Constant*> &ActualArgs,
                              std::vector<Function*> &CallStack,
@@ -2292,30 +2289,21 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
                              std::vector<GlobalVariable*> &AllocaTmps,
                              SmallPtrSet<Constant*, 8> &SimpleConstants,
                              const TargetData *TD,
-                             const TargetLibraryInfo *TLI) {
-  // Check to see if this function is already executing (recursion).  If so,
-  // bail out.  TODO: we might want to accept limited recursion.
-  if (std::find(CallStack.begin(), CallStack.end(), F) != CallStack.end())
-    return false;
+                             const TargetLibraryInfo *TLI);
 
-  CallStack.push_back(F);
-
-  /// Values - As we compute SSA register values, we store their contents here.
-  DenseMap<Value*, Constant*> Values;
-
-  // Initialize arguments to the incoming values specified.
-  unsigned ArgNo = 0;
-  for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E;
-       ++AI, ++ArgNo)
-    Values[AI] = ActualArgs[ArgNo];
-
-  /// ExecutedBlocks - We only handle non-looping, non-recursive code.  As such,
-  /// we can only evaluate any one basic block at most once.  This set keeps
-  /// track of what we have executed so we can detect recursive cases etc.
-  SmallPtrSet<BasicBlock*, 32> ExecutedBlocks;
-
+/// EvaluateBlock - Evaluate all instructions in block BB, returning true if
+/// successful, false if we can't evaluate it.  NewBB returns the next BB that
+/// control flows into, or null upon return.
+static bool EvaluateBlock(BasicBlock *BB, BasicBlock *&NextBB,
+                          std::vector<Function*> &CallStack,
+                          DenseMap<Value*, Constant*> &Values,
+                          DenseMap<Constant*, Constant*> &MutatedMemory,
+                          std::vector<GlobalVariable*> &AllocaTmps,
+                          SmallPtrSet<Constant*, 8> &SimpleConstants,
+                          const TargetData *TD,
+                          const TargetLibraryInfo *TLI) {
   // CurInst - The current instruction we're evaluating.
-  BasicBlock::iterator CurInst = F->begin()->begin();
+  BasicBlock::iterator CurInst = BB->getFirstNonPHI();
 
   // This is the main evaluation loop.
   while (1) {
@@ -2342,7 +2330,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
           // stored value.
           Ptr = CE->getOperand(0);
           
-          Type *NewTy=cast<PointerType>(Ptr->getType())->getElementType();
+          Type *NewTy = cast<PointerType>(Ptr->getType())->getElementType();
           
           // In order to push the bitcast onto the stored value, a bitcast
           // from NewTy to Val's type must be legal.  If it's not, we can try
@@ -2354,7 +2342,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
             if (StructType *STy = dyn_cast<StructType>(NewTy)) {
               NewTy = STy->getTypeAtIndex(0U);
 
-              IntegerType *IdxTy =IntegerType::get(NewTy->getContext(), 32);
+              IntegerType *IdxTy = IntegerType::get(NewTy->getContext(), 32);
               Constant *IdxZero = ConstantInt::get(IdxTy, 0, false);
               Constant * const IdxList[] = {IdxZero, IdxZero};
 
@@ -2363,7 +2351,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
             // If we can't improve the situation by introspecting NewTy,
             // we have to give up.
             } else {
-              return 0;
+              return false;
             }
           }
           
@@ -2467,57 +2455,37 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
         InstResult = RetVal;
       }
     } else if (isa<TerminatorInst>(CurInst)) {
-      BasicBlock *NewBB = 0;
       if (BranchInst *BI = dyn_cast<BranchInst>(CurInst)) {
         if (BI->isUnconditional()) {
-          NewBB = BI->getSuccessor(0);
+          NextBB = BI->getSuccessor(0);
         } else {
           ConstantInt *Cond =
             dyn_cast<ConstantInt>(getVal(Values, BI->getCondition()));
           if (!Cond) return false;  // Cannot determine.
 
-          NewBB = BI->getSuccessor(!Cond->getZExtValue());
+          NextBB = BI->getSuccessor(!Cond->getZExtValue());
         }
       } else if (SwitchInst *SI = dyn_cast<SwitchInst>(CurInst)) {
         ConstantInt *Val =
           dyn_cast<ConstantInt>(getVal(Values, SI->getCondition()));
         if (!Val) return false;  // Cannot determine.
         unsigned ValTISucc = SI->resolveSuccessorIndex(SI->findCaseValue(Val));
-        NewBB = SI->getSuccessor(ValTISucc);
+        NextBB = SI->getSuccessor(ValTISucc);
       } else if (IndirectBrInst *IBI = dyn_cast<IndirectBrInst>(CurInst)) {
         Value *Val = getVal(Values, IBI->getAddress())->stripPointerCasts();
         if (BlockAddress *BA = dyn_cast<BlockAddress>(Val))
-          NewBB = BA->getBasicBlock();
+          NextBB = BA->getBasicBlock();
         else
           return false;  // Cannot determine.
-      } else if (ReturnInst *RI = dyn_cast<ReturnInst>(CurInst)) {
-        if (RI->getNumOperands())
-          RetVal = getVal(Values, RI->getOperand(0));
-
-        CallStack.pop_back();  // return from fn.
-        return true;  // We succeeded at evaluating this ctor!
+      } else if (isa<ReturnInst>(CurInst)) {
+        NextBB = 0;
       } else {
         // invoke, unwind, resume, unreachable.
         return false;  // Cannot handle this terminator.
       }
 
-      // Okay, we succeeded in evaluating this control flow.  See if we have
-      // executed the new block before.  If so, we have a looping function,
-      // which we cannot evaluate in reasonable time.
-      if (!ExecutedBlocks.insert(NewBB))
-        return false;  // looped!
-
-      // Okay, we have never been in this block before.  Check to see if there
-      // are any PHI nodes.  If so, evaluate them with information about where
-      // we came from.
-      BasicBlock *OldBB = CurInst->getParent();
-      CurInst = NewBB->begin();
-      PHINode *PN;
-      for (; (PN = dyn_cast<PHINode>(CurInst)); ++CurInst)
-        Values[PN] = getVal(Values, PN->getIncomingValueForBlock(OldBB));
-
-      // Do NOT increment CurInst.  We know that the terminator had no value.
-      continue;
+      // We succeeded at evaluating this block!
+      return true;
     } else {
       // Did not know how to evaluate this!
       return false;
@@ -2532,6 +2500,76 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 
     // Advance program counter.
     ++CurInst;
+  }
+}
+
+/// EvaluateFunction - Evaluate a call to function F, returning true if
+/// successful, false if we can't evaluate it.  ActualArgs contains the formal
+/// arguments for the function.
+static bool EvaluateFunction(Function *F, Constant *&RetVal,
+                             const SmallVectorImpl<Constant*> &ActualArgs,
+                             std::vector<Function*> &CallStack,
+                             DenseMap<Constant*, Constant*> &MutatedMemory,
+                             std::vector<GlobalVariable*> &AllocaTmps,
+                             SmallPtrSet<Constant*, 8> &SimpleConstants,
+                             const TargetData *TD,
+                             const TargetLibraryInfo *TLI) {
+  // Check to see if this function is already executing (recursion).  If so,
+  // bail out.  TODO: we might want to accept limited recursion.
+  if (std::find(CallStack.begin(), CallStack.end(), F) != CallStack.end())
+    return false;
+
+  CallStack.push_back(F);
+
+  /// Values - As we compute SSA register values, we store their contents here.
+  DenseMap<Value*, Constant*> Values;
+
+  // Initialize arguments to the incoming values specified.
+  unsigned ArgNo = 0;
+  for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E;
+       ++AI, ++ArgNo)
+    Values[AI] = ActualArgs[ArgNo];
+
+  // ExecutedBlocks - We only handle non-looping, non-recursive code.  As such,
+  // we can only evaluate any one basic block at most once.  This set keeps
+  // track of what we have executed so we can detect recursive cases etc.
+  SmallPtrSet<BasicBlock*, 32> ExecutedBlocks;
+
+  // CurBB - The current basic block we're evaluating.
+  BasicBlock *CurBB = F->begin();
+
+  while (1) {
+    BasicBlock *NextBB;
+    if (!EvaluateBlock(CurBB, NextBB, CallStack, Values, MutatedMemory,
+                       AllocaTmps, SimpleConstants, TD, TLI))
+      return false;
+
+    if (NextBB == 0) {
+      // Successfully running until there's no next block means that we found
+      // the return.  Fill it the return value and pop the call stack.
+      ReturnInst *RI = cast<ReturnInst>(CurBB->getTerminator());
+      if (RI->getNumOperands())
+        RetVal = getVal(Values, RI->getOperand(0));
+      CallStack.pop_back();
+      return true;
+    }
+
+    // Okay, we succeeded in evaluating this control flow.  See if we have
+    // executed the new block before.  If so, we have a looping function,
+    // which we cannot evaluate in reasonable time.
+    if (!ExecutedBlocks.insert(NextBB))
+      return false;  // looped!
+
+    // Okay, we have never been in this block before.  Check to see if there
+    // are any PHI nodes.  If so, evaluate them with information about where
+    // we came from.
+    PHINode *PN = 0;
+    for (BasicBlock::iterator Inst = NextBB->begin();
+         (PN = dyn_cast<PHINode>(Inst)); ++Inst)
+      Values[PN] = getVal(Values, PN->getIncomingValueForBlock(CurBB));
+
+    // Advance to the next block.
+    CurBB = NextBB;
   }
 }
 
