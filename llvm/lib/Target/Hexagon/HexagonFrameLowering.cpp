@@ -1,4 +1,4 @@
-//==-- HexagonFrameLowering.cpp - Define frame lowering         --*- C++ -*-==//
+//===- HexagonFrameLowering.cpp - Define frame lowering -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,7 @@
 //
 //
 //===----------------------------------------------------------------------===//
+
 #include "Hexagon.h"
 #include "HexagonInstrInfo.h"
 #include "HexagonRegisterInfo.h"
@@ -14,27 +15,25 @@
 #include "HexagonTargetMachine.h"
 #include "HexagonMachineFunctionInfo.h"
 #include "HexagonFrameLowering.h"
-
-#include "llvm/CodeGen/AsmPrinter.h"
-#include "llvm/CodeGen/MachineInstrBuilder.h"
-#include "llvm/CodeGen/MachineModuleInfo.h"
-#include "llvm/CodeGen/MachineFunction.h"
-#include "llvm/CodeGen/MachineFrameInfo.h"
-#include "llvm/CodeGen/MachineRegisterInfo.h"
-#include "llvm/MC/MachineLocation.h"
-#include "llvm/MC/MCAsmInfo.h"
-#include "llvm/CodeGen/RegisterScavenging.h"
-#include "llvm/Target/TargetInstrInfo.h"
+#include "llvm/Function.h"
 #include "llvm/Type.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/STLExtras.h"
-#include "llvm/Support/CommandLine.h"
+#include "llvm/CodeGen/AsmPrinter.h"
+#include "llvm/CodeGen/MachineInstrBuilder.h"
+#include "llvm/CodeGen/MachineFunction.h"
+#include "llvm/CodeGen/MachineFunctionPass.h"
+#include "llvm/CodeGen/MachineFrameInfo.h"
+#include "llvm/CodeGen/MachineModuleInfo.h"
+#include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
+#include "llvm/MC/MachineLocation.h"
+#include "llvm/MC/MCAsmInfo.h"
+#include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Target/TargetOptions.h"
-#include <iostream>
+#include "llvm/Support/CommandLine.h"
 
-#include "llvm/CodeGen/MachineFunctionPass.h"
-#include "llvm/Function.h"
 using namespace llvm;
 
 static cl::opt<bool> DisableDeallocRet(

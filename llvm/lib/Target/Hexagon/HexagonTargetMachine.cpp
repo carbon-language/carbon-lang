@@ -1,4 +1,4 @@
-//===-- HexagonTargetMachine.cpp - Define TargetMachine for Hexagon -------===//
+//===- HexagonTargetMachine.cpp - Define TargetMachine for Hexagon --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -16,11 +16,10 @@
 #include "llvm/Module.h"
 #include "llvm/CodeGen/Passes.h"
 #include "llvm/PassManager.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/Transforms/Scalar.h"
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/TargetRegistry.h"
-#include <iostream>
 
 using namespace llvm;
 

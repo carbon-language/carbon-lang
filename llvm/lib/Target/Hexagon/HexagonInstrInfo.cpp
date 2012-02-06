@@ -1,4 +1,4 @@
-//=- HexagonInstrInfo.cpp - Hexagon Instruction Information -------*- C++ -*-=//
+//===- HexagonInstrInfo.cpp - Hexagon Instruction Information -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -15,21 +15,18 @@
 #include "HexagonInstrInfo.h"
 #include "HexagonSubtarget.h"
 #include "Hexagon.h"
-#include "llvm/Support/MathExtras.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/CodeGen/DFAPacketizer.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/CodeGen/PseudoSourceValue.h"
+#include "llvm/Support/MathExtras.h"
 #define GET_INSTRINFO_CTOR
-#include "llvm/CodeGen/DFAPacketizer.h"
 #include "HexagonGenInstrInfo.inc"
 #include "HexagonGenDFAPacketizer.inc"
-
-#include <iostream>
-
 
 using namespace llvm;
 

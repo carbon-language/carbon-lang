@@ -1,4 +1,4 @@
-//=- HexagonRemoveExtendArgs.cpp - Remove unecessary argument sign extends --=//
+//===- HexagonRemoveExtendArgs.cpp - Remove unecessary argument sign extends =//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -12,15 +12,12 @@
 //
 //===----------------------------------------------------------------------===//
 
-
-
-#include "llvm/Pass.h"
+#include "HexagonTargetMachine.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
-#include "llvm/Transforms/Scalar.h"
+#include "llvm/Pass.h"
 #include "llvm/CodeGen/MachineFunctionAnalysis.h"
-#include "HexagonTargetMachine.h"
-#include <iostream>
+#include "llvm/Transforms/Scalar.h"
 
 using namespace llvm;
 namespace {
