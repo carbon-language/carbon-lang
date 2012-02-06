@@ -878,7 +878,7 @@ void generateStringPrint(llvm::LLVMContext &context,
   
   llvm::Value *stringVar;
   llvm::Constant *stringConstant = 
-  llvm::ConstantArray::get(context, toPrint);
+  llvm::ConstantDataArray::getString(context, toPrint);
   
   if (useGlobal) {
     // Note: Does not work without allocation
@@ -920,7 +920,8 @@ void generateIntegerPrint(llvm::LLVMContext &context,
                           llvm::Value &toPrint,
                           std::string format, 
                           bool useGlobal = true) {
-  llvm::Constant *stringConstant = llvm::ConstantArray::get(context, format);
+  llvm::Constant *stringConstant =
+    llvm::ConstantDataArray::getString(context, format);
   llvm::Value *stringVar;
   
   if (useGlobal) {
