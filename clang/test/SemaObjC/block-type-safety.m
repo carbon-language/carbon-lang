@@ -138,3 +138,20 @@ int test5() {
     return 0;
 }
 
+// rdar://10798770
+typedef int NSInteger;
+
+typedef enum : NSInteger {NSOrderedAscending = -1L, NSOrderedSame, NSOrderedDescending} NSComparisonResult;
+
+typedef NSComparisonResult (^NSComparator)(id obj1, id obj2);
+
+@interface radar10798770
+- (void)sortUsingComparator:(NSComparator)c;
+@end
+
+void f() {
+   radar10798770 *f;
+   [f sortUsingComparator:^(id a, id b) {
+        return NSOrderedSame;
+   }];
+}

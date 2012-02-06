@@ -5960,11 +5960,13 @@ QualType ASTContext::mergeTypes(QualType LHS, QualType RHS,
     // Compatibility is based on the underlying type, not the promotion
     // type.
     if (const EnumType* ETy = LHS->getAs<EnumType>()) {
-      if (ETy->getDecl()->getIntegerType() == RHSCan.getUnqualifiedType())
+      QualType TINT = ETy->getDecl()->getIntegerType();
+      if (!TINT.isNull() && hasSameType(TINT, RHSCan.getUnqualifiedType()))
         return RHS;
     }
     if (const EnumType* ETy = RHS->getAs<EnumType>()) {
-      if (ETy->getDecl()->getIntegerType() == LHSCan.getUnqualifiedType())
+      QualType TINT = ETy->getDecl()->getIntegerType();
+      if (!TINT.isNull() && hasSameType(TINT, LHSCan.getUnqualifiedType()))
         return LHS;
     }
     // allow block pointer type to match an 'id' type.
