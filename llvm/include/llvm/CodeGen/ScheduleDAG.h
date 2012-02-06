@@ -128,8 +128,8 @@ namespace llvm {
                  Other.Contents.Order.isNormalMemory &&
                Contents.Order.isMustAlias == Other.Contents.Order.isMustAlias &&
                Contents.Order.isArtificial == Other.Contents.Order.isArtificial;
-      default: llvm_unreachable("Invalid dependency kind!");
       }
+      llvm_unreachable("Invalid dependency kind!");
     }
 
     bool operator!=(const SDep &Other) const {
