@@ -394,8 +394,6 @@ bool StrongPHIElimination::runOnMachineFunction(MachineFunction &MF) {
     LastUse->setIsKill(true);
   }
 
-  LI->renumber();
-
   Allocator.Reset();
   RegNodeMap.clear();
   PHISrcDefs.clear();
