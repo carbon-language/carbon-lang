@@ -6,6 +6,12 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
+#ifdef VIRTUAL
+#define VIRTUAL virtual
+#else
+#define VIRTUAL 
+#endif
+
 #include <stdio.h>
 
 class Base
@@ -24,7 +30,7 @@ protected:
     int m_base_val;
 };
 
-class DerivedA : public virtual Base
+class DerivedA : public VIRTUAL Base
 {
 public:
     DerivedA(int val) : Base(val*2), m_a_val(val) {
@@ -38,7 +44,7 @@ private:
     int m_a_val;
 };
 
-class DerivedB : public virtual Base
+class DerivedB : public VIRTUAL Base
 {
 public:
     DerivedB(int val) : Base(val), m_b_val(val*3) {

@@ -12,17 +12,34 @@ class CppValueCastTestCase(TestBase):
 
     mydir = os.path.join("lang", "cpp", "dynamic-value")
 
+    # rdar://problem/10808472 SBValue::Cast test case is failing (virtual inheritance)
+    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
-    def test_value_cast_with_dsym(self):
-        """Test SBValue::Cast(SBType) API for C++ types."""
-        self.buildDsym(dictionary=self.d)
+    def test_value_cast_with_dsym_and_virtual_inheritance(self):
+        """Test SBValue::Cast(SBType) API for C++ types with virtual inheritance."""
+        self.buildDsym(dictionary=self.d_virtual)
+        self.do_sbvalue_cast(self.exe_name)
+
+    # rdar://problem/10808472 SBValue::Cast test case is failing (virtual inheritance)
+    @unittest2.expectedFailure
+    @python_api_test
+    def test_value_cast_with_dwarf_and_virtual_inheritance(self):
+        """Test SBValue::Cast(SBType) API for C++ types with virtual inheritance."""
+        self.buildDwarf(dictionary=self.d_virtual)
+        self.do_sbvalue_cast(self.exe_name)
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @python_api_test
+    def test_value_cast_with_dsym_and_regular_inheritance(self):
+        """Test SBValue::Cast(SBType) API for C++ types with regular inheritance."""
+        self.buildDsym(dictionary=self.d_regular)
         self.do_sbvalue_cast(self.exe_name)
 
     @python_api_test
-    def test_get_dynamic_vals_with_dwarf(self):
-        """Test SBValue::Cast(SBType) API for C++ types."""
-        self.buildDwarf(dictionary=self.d)
+    def test_value_cast_with_dwarf_and_regular_inheritance(self):
+        """Test SBValue::Cast(SBType) API for C++ types with regular inheritance."""
+        self.buildDwarf(dictionary=self.d_regular)
         self.do_sbvalue_cast(self.exe_name)
 
     def setUp(self):
@@ -33,7 +50,8 @@ class CppValueCastTestCase(TestBase):
         self.source = 'sbvalue-cast.cpp';
         self.line = line_number(self.source, '// Set breakpoint here.')
         self.exe_name = self.testMethodName
-        self.d = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
+        self.d_virtual = {'CXX_SOURCES': self.source, 'EXE': self.exe_name, 'CFLAGS_EXTRAS': '-DVIRTUAL=YES'}
+        self.d_regular = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
     def do_sbvalue_cast (self, exe_name):
         """Test SBValue::Cast(SBType) API for C++ types."""
@@ -83,13 +101,14 @@ class CppValueCastTestCase(TestBase):
         instanceA = tellerA.Cast(typeA.GetPointerType())
         self.DebugSBValue(instanceA)
 
-        # These outputs don't look correct?
+        # Iterate through all the children and print their values.
         if self.TraceOn():
             for child in instanceA:
                 print "child name:", child.GetName()
                 print child
         a_member_val = instanceA.GetChildMemberWithName('m_a_val')
         self.DebugSBValue(a_member_val)
+        self.assertTrue(a_member_val.GetValueAsUnsigned(error, 0) == 10)
 
         # Second stop is for DerivedB instance.
         threads = lldbutil.continue_to_breakpoint (process, breakpoint)
@@ -110,13 +129,14 @@ class CppValueCastTestCase(TestBase):
         instanceB = tellerB.Cast(typeB.GetPointerType())
         self.DebugSBValue(instanceB)
 
-        # These outputs don't look correct?
+        # Iterate through all the children and print their values.
         if self.TraceOn():
             for child in instanceB:
                 print "child name:", child.GetName()
                 print child
         b_member_val = instanceB.GetChildMemberWithName('m_b_val')
         self.DebugSBValue(b_member_val)
+        self.assertTrue(b_member_val.GetValueAsUnsigned(error, 0) == 36)
 
 
 if __name__ == '__main__':
