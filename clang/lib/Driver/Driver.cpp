@@ -868,9 +868,8 @@ void Driver::BuildUniversalActions(const ToolChain &TC,
 
         Actions.push_back(new DsymutilJobAction(Inputs, types::TY_dSYM));
 
-	// Verify the debug output if we're in assert mode.
-	// TODO: The verifier is noisy by default so put this under an
-	// option for now.
+        // Verify the debug information if we're in debug mode and '-verify'
+        // is passed.
 	#ifndef NDEBUG
 	if (Args.hasArg(options::OPT_verify)) {
 	  ActionList VerifyInputs;
