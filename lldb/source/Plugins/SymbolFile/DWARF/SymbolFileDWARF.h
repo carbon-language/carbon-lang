@@ -354,7 +354,8 @@ protected:
                                 lldb_private::TypeList* type_list,
                                 std::vector<lldb::clang_type_t>& function_args,
                                 std::vector<clang::ParmVarDecl*>& function_param_decls,
-                                unsigned &type_quals);
+                                unsigned &type_quals,
+                                lldb_private::ClangASTContext::TemplateParameterInfos &template_param_infos);
 
     size_t                  ParseChildEnumerators(
                                 const lldb_private::SymbolContext& sc,
@@ -495,6 +496,11 @@ protected:
     ParseTemplateParameterInfos (DWARFCompileUnit* dwarf_cu,
                                  const DWARFDebugInfoEntry *parent_die,
                                  lldb_private::ClangASTContext::TemplateParameterInfos &template_param_infos);
+
+    bool
+    ParseTemplateDIE (DWARFCompileUnit* dwarf_cu,
+                      const DWARFDebugInfoEntry *die,
+                      lldb_private::ClangASTContext::TemplateParameterInfos &template_param_infos);
 
     clang::ClassTemplateDecl *
     ParseClassTemplateDecl (clang::DeclContext *decl_ctx,

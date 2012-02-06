@@ -1140,6 +1140,102 @@ ClangASTContext::CreateRecordType (DeclContext *decl_ctx, AccessType access_type
     return ast->getTagDeclType(decl).getAsOpaquePtr();
 }
 
+static TemplateParameterList *
+CreateTemplateParameterList (ASTContext *ast, 
+                             const ClangASTContext::TemplateParameterInfos &template_param_infos, 
+                             llvm::SmallVector<NamedDecl *, 8> &template_param_decls)
+{
+    const bool parameter_pack = false;
+    const bool is_typename = false;
+    const unsigned depth = 0;
+    const size_t num_template_params = template_param_infos.GetSize();
+    for (size_t i=0; i<num_template_params; ++i)
+    {
+        const char *name = template_param_infos.names[i];
+        if (template_param_infos.args[i].getAsIntegral())
+        {
+            template_param_decls.push_back (NonTypeTemplateParmDecl::Create (*ast,
+                                                                             ast->getTranslationUnitDecl(), // Is this the right decl context?, SourceLocation StartLoc,
+                                                                             SourceLocation(), 
+                                                                             SourceLocation(), 
+                                                                             depth, 
+                                                                             i,
+                                                                             &ast->Idents.get(name), 
+                                                                             template_param_infos.args[i].getIntegralType(), 
+                                                                             parameter_pack, 
+                                                                             NULL));
+            
+        }
+        else
+        {
+            template_param_decls.push_back (TemplateTypeParmDecl::Create (*ast, 
+                                                                          ast->getTranslationUnitDecl(), // Is this the right decl context?
+                                                                          SourceLocation(),
+                                                                          SourceLocation(),
+                                                                          depth, 
+                                                                          i,
+                                                                          &ast->Idents.get(name), 
+                                                                          is_typename,
+                                                                          parameter_pack));
+        }
+    }
+
+    TemplateParameterList *template_param_list = TemplateParameterList::Create (*ast,
+                                                                                SourceLocation(),
+                                                                                SourceLocation(),
+                                                                                &template_param_decls.front(),
+                                                                                template_param_decls.size(),
+                                                                                SourceLocation());
+    return template_param_list;
+}
+
+clang::FunctionTemplateDecl *
+ClangASTContext::CreateFunctionTemplateDecl (clang::DeclContext *decl_ctx,
+                                             clang::FunctionDecl *func_decl,
+                                             const char *name, 
+                                             const TemplateParameterInfos &template_param_infos)
+{
+//    /// \brief Create a function template node.
+    ASTContext *ast = getASTContext();
+    
+    llvm::SmallVector<NamedDecl *, 8> template_param_decls;
+
+    TemplateParameterList *template_param_list = CreateTemplateParameterList (ast,
+                                                                              template_param_infos, 
+                                                                              template_param_decls);
+    FunctionTemplateDecl *func_tmpl_decl = FunctionTemplateDecl::Create (*ast,
+                                                                         decl_ctx,
+                                                                         func_decl->getLocation(),
+                                                                         func_decl->getDeclName(),
+                                                                         template_param_list,
+                                                                         func_decl);
+    
+    for (size_t i=0, template_param_decl_count = template_param_decls.size();
+         i < template_param_decl_count;
+         ++i)
+    {
+        // TODO: verify which decl context we should put template_param_decls into..
+        template_param_decls[i]->setDeclContext (func_decl); 
+    }
+
+    return func_tmpl_decl;
+}
+
+void
+ClangASTContext::CreateFunctionTemplateSpecializationInfo (FunctionDecl *func_decl, 
+                                                           clang::FunctionTemplateDecl *func_tmpl_decl,
+                                                           const TemplateParameterInfos &infos)
+{
+    TemplateArgumentList template_args (TemplateArgumentList::OnStack,
+                                        infos.args.data(), 
+                                        infos.args.size());
+
+    func_decl->setFunctionTemplateSpecialization (func_tmpl_decl,
+                                                  &template_args,
+                                                  NULL);
+}
+
+
 ClassTemplateDecl *
 ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
                                           lldb::AccessType access_type,
@@ -1165,48 +1261,10 @@ ClangASTContext::CreateClassTemplateDecl (DeclContext *decl_ctx,
     }
 
     llvm::SmallVector<NamedDecl *, 8> template_param_decls;
-    const bool parameter_pack = false;
-    const bool is_typename = false;
-    const unsigned depth = 0;
-    const size_t num_template_params = template_param_infos.GetSize();
-    for (size_t i=0; i<num_template_params; ++i)
-    {
-        const char *name = template_param_infos.names[i];
-        if (template_param_infos.args[i].getAsIntegral())
-        {
-            template_param_decls.push_back (NonTypeTemplateParmDecl::Create (*ast,
-                                                                             ast->getTranslationUnitDecl(), // Is this the right decl context?, SourceLocation StartLoc,
-                                                                             SourceLocation(), 
-                                                                             SourceLocation(), 
-                                                                             depth, 
-                                                                             i,
-                                                                             &ast->Idents.get(name), 
-                                                                             template_param_infos.args[i].getIntegralType(), 
-                                                                             parameter_pack, 
-                                                                             NULL));
-                                            
-        }
-        else
-        {
-            template_param_decls.push_back (TemplateTypeParmDecl::Create (*ast, 
-                                                                          ast->getTranslationUnitDecl(), // Is this the right decl context?
-                                                                          SourceLocation(),
-                                                                          SourceLocation(),
-                                                                          depth, 
-                                                                          i,
-                                                                          &ast->Idents.get(name), 
-                                                                          is_typename,
-                                                                          parameter_pack));
-        }
-    }
-    
-    TemplateParameterList *template_param_list =  TemplateParameterList::Create (*ast,
-                                                                                 SourceLocation(),
-                                                                                 SourceLocation(),
-                                                                                 &template_param_decls.front(),
-                                                                                 template_param_decls.size(),
-                                                                                 SourceLocation());
 
+    TemplateParameterList *template_param_list = CreateTemplateParameterList (ast,
+                                                                              template_param_infos, 
+                                                                              template_param_decls);
 
     CXXRecordDecl *template_cxx_decl = CXXRecordDecl::Create (*ast,
                                                               (TagDecl::TagKind)kind,

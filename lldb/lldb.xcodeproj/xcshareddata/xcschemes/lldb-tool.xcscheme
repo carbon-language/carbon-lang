@@ -101,7 +101,7 @@
       </BuildableProductRunnable>
       <CommandLineArguments>
          <CommandLineArgument
-            argument = "/Volumes/work/gclayton/Documents/src/args/a.out"
+            argument = "/private/tmp/a.out"
             isEnabled = "YES">
          </CommandLineArgument>
       </CommandLineArguments>

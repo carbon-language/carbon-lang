@@ -67,6 +67,8 @@ namespace clang
     class FloatingLiteral;
     class FrontendOptions;
     class FunctionDecl;
+    class FunctionTemplateDecl;
+    class FunctionTemplateSpecializationInfo;
     class GotoStmt;
     class HeaderSearchOptions;
     class IdentifierTable;
@@ -109,6 +111,7 @@ namespace clang
     class TargetOptions;
     class TemplateArgument;
     class TemplateDecl;
+    class TemplateParameterList;
     class TemplateTemplateParmDecl;
     class TemplateTypeParmDecl;
     class TextDiagnosticBuffer;

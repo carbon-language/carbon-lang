@@ -342,6 +342,17 @@ public:
         llvm::SmallVector<clang::TemplateArgument, 8> args;        
     };
 
+    clang::FunctionTemplateDecl *
+    CreateFunctionTemplateDecl (clang::DeclContext *decl_ctx,
+                                clang::FunctionDecl *func_decl,
+                                const char *name, 
+                                const TemplateParameterInfos &infos);
+    
+    void
+    CreateFunctionTemplateSpecializationInfo (clang::FunctionDecl *func_decl, 
+                                              clang::FunctionTemplateDecl *Template,
+                                              const TemplateParameterInfos &infos);
+
     clang::ClassTemplateDecl *
     CreateClassTemplateDecl (clang::DeclContext *decl_ctx,
                              lldb::AccessType access_type,

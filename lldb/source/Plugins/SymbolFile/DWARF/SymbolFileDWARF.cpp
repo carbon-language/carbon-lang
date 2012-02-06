@@ -15,6 +15,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclGroup.h"
 #include "clang/AST/DeclObjC.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/LangOptions.h"
@@ -733,7 +734,18 @@ SymbolFileDWARF::ParseCompileUnitFunction (const SymbolContext& sc, DWARFCompile
     if (die->Tag() != DW_TAG_subprogram)
         return NULL;
 
-    if (die->GetDIENamesAndRanges(this, dwarf_cu, name, mangled, func_ranges, decl_file, decl_line, decl_column, call_file, call_line, call_column, &frame_base))
+    if (die->GetDIENamesAndRanges (this, 
+                                   dwarf_cu, 
+                                   name, 
+                                   mangled, 
+                                   func_ranges, 
+                                   decl_file, 
+                                   decl_line, 
+                                   decl_column, 
+                                   call_file, 
+                                   call_line, 
+                                   call_column, 
+                                   &frame_base))
     {
         // Union of all ranges in the function DIE (if the function is discontiguous)
         AddressRange func_range;
@@ -1181,6 +1193,96 @@ SymbolFileDWARF::ParseFunctionBlocks
 }
 
 bool
+SymbolFileDWARF::ParseTemplateDIE (DWARFCompileUnit* dwarf_cu,
+                                   const DWARFDebugInfoEntry *die,
+                                   ClangASTContext::TemplateParameterInfos &template_param_infos)
+{
+    const dw_tag_t tag = die->Tag();
+    
+    switch (tag)
+    {
+    case DW_TAG_template_type_parameter:
+    case DW_TAG_template_value_parameter:
+        {
+            const uint8_t *fixed_form_sizes = DWARFFormValue::GetFixedFormSizesForAddressSize (dwarf_cu->GetAddressByteSize());
+
+            DWARFDebugInfoEntry::Attributes attributes;
+            const size_t num_attributes = die->GetAttributes (this, 
+                                                              dwarf_cu, 
+                                                              fixed_form_sizes, 
+                                                              attributes);
+            const char *name = NULL;
+            Type *lldb_type = NULL;
+            clang_type_t clang_type = NULL;
+            uint64_t uval64 = 0;
+            bool uval64_valid = false;
+            if (num_attributes > 0)
+            {
+                DWARFFormValue form_value;
+                for (size_t i=0; i<num_attributes; ++i)
+                {
+                    const dw_attr_t attr = attributes.AttributeAtIndex(i);
+                    
+                    switch (attr)
+                    {
+                        case DW_AT_name:
+                            if (attributes.ExtractFormValueAtIndex(this, i, form_value))
+                                name = form_value.AsCString(&get_debug_str_data());
+                            break;
+                            
+                        case DW_AT_type:
+                            if (attributes.ExtractFormValueAtIndex(this, i, form_value))
+                            {
+                                const dw_offset_t type_die_offset = form_value.Reference(dwarf_cu);
+                                lldb_type = ResolveTypeUID(type_die_offset);
+                                if (lldb_type)
+                                    clang_type = lldb_type->GetClangForwardType();
+                            }
+                            break;
+                            
+                        case DW_AT_const_value:
+                            if (attributes.ExtractFormValueAtIndex(this, i, form_value))
+                            {
+                                uval64_valid = true;
+                                uval64 = form_value.Unsigned();
+                            }
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                
+                if (name && lldb_type && clang_type)
+                {
+                    bool is_signed = false;
+                    template_param_infos.names.push_back(name);
+                    clang::QualType clang_qual_type (clang::QualType::getFromOpaquePtr (clang_type));
+                    if (tag == DW_TAG_template_value_parameter && ClangASTContext::IsIntegerType (clang_type, is_signed) && uval64_valid)
+                    {
+                        llvm::APInt apint (lldb_type->GetByteSize() * 8, uval64, is_signed);
+                        template_param_infos.args.push_back (clang::TemplateArgument (llvm::APSInt(apint), clang_qual_type));
+                    }
+                    else
+                    {
+                        template_param_infos.args.push_back (clang::TemplateArgument (clang_qual_type));
+                    }
+                }
+                else
+                {
+                    return false;
+                }
+                
+            }
+        }
+        return true;
+
+    default:
+        break;
+    }
+    return false;
+}
+
+bool
 SymbolFileDWARF::ParseTemplateParameterInfos (DWARFCompileUnit* dwarf_cu,
                                               const DWARFDebugInfoEntry *parent_die,
                                               ClangASTContext::TemplateParameterInfos &template_param_infos)
@@ -1202,75 +1304,7 @@ SymbolFileDWARF::ParseTemplateParameterInfos (DWARFCompileUnit* dwarf_cu,
         {
             case DW_TAG_template_type_parameter:
             case DW_TAG_template_value_parameter:
-            {
-                DWARFDebugInfoEntry::Attributes attributes;
-                const size_t num_attributes = die->GetAttributes (this, 
-                                                                  dwarf_cu, 
-                                                                  fixed_form_sizes, 
-                                                                  attributes);
-                const char *name = NULL;
-                Type *lldb_type = NULL;
-                clang_type_t clang_type = NULL;
-                uint64_t uval64 = 0;
-                bool uval64_valid = false;
-                if (num_attributes > 0)
-                {
-                    DWARFFormValue form_value;
-                    for (size_t i=0; i<num_attributes; ++i)
-                    {
-                        const dw_attr_t attr = attributes.AttributeAtIndex(i);
-                        
-                        switch (attr)
-                        {
-                            case DW_AT_name:
-                                if (attributes.ExtractFormValueAtIndex(this, i, form_value))
-                                    name = form_value.AsCString(&get_debug_str_data());
-                                break;
-                                
-                            case DW_AT_type:
-                                if (attributes.ExtractFormValueAtIndex(this, i, form_value))
-                                {
-                                    const dw_offset_t type_die_offset = form_value.Reference(dwarf_cu);
-                                    lldb_type = ResolveTypeUID(type_die_offset);
-                                    if (lldb_type)
-                                        clang_type = lldb_type->GetClangForwardType();
-                                }
-                                break;
-
-                            case DW_AT_const_value:
-                                if (attributes.ExtractFormValueAtIndex(this, i, form_value))
-                                {
-                                    uval64_valid = true;
-                                    uval64 = form_value.Unsigned();
-                                }
-                                break;
-                            default:
-                                break;
-                        }
-                    }
-                    
-                    if (name && lldb_type && clang_type)
-                    {
-                        bool is_signed = false;
-                        template_param_infos.names.push_back(name);
-                        clang::QualType clang_qual_type (clang::QualType::getFromOpaquePtr (clang_type));
-                        if (tag == DW_TAG_template_value_parameter && ClangASTContext::IsIntegerType (clang_type, is_signed) && uval64_valid)
-                        {
-                            llvm::APInt apint (lldb_type->GetByteSize() * 8, uval64, is_signed);
-                            template_param_infos.args.push_back (clang::TemplateArgument (llvm::APSInt(apint), clang_qual_type));
-                        }
-                        else
-                        {
-                            template_param_infos.args.push_back (clang::TemplateArgument (clang_qual_type));
-                        }
-                    }
-                    else
-                    {
-                        return false;
-                    }
-                    
-                }
-            }
+                ParseTemplateDIE (dwarf_cu, die, template_param_infos);
             break;
                 
         default:
@@ -3329,7 +3363,8 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                                        TypeList* type_list,
                                        std::vector<clang_type_t>& function_param_types,
                                        std::vector<clang::ParmVarDecl*>& function_param_decls,
-                                       unsigned &type_quals)
+                                       unsigned &type_quals,
+                                       ClangASTContext::TemplateParameterInfos &template_param_infos)
 {
     if (parent_die == NULL)
         return 0;
@@ -3464,6 +3499,11 @@ SymbolFileDWARF::ParseChildParameters (const SymbolContext& sc,
                 }
                 arg_idx++;
             }
+            break;
+
+        case DW_TAG_template_type_parameter:
+        case DW_TAG_template_value_parameter:
+            ParseTemplateDIE (dwarf_cu, die,template_param_infos);
             break;
 
         default:
@@ -5089,7 +5129,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     // if we find a "this" paramters as the first parameter
                     if (is_cxx_method)
                         is_static = true;
-                    
+                    ClangASTContext::TemplateParameterInfos template_param_infos;
+
                     if (die->HasChildren())
                     {
                         bool skip_artificial = true;
@@ -5102,7 +5143,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                               type_list, 
                                               function_param_types, 
                                               function_param_decls,
-                                              type_quals);
+                                              type_quals,
+                                              template_param_infos);
                     }
 
                     // clang_type will get the function prototype clang type after this call
@@ -5301,7 +5343,18 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                                                                                 clang_type, 
                                                                                                 storage, 
                                                                                                 is_inline);
-                            
+
+//                            if (template_param_infos.GetSize() > 0)
+//                            {
+//                                clang::FunctionTemplateDecl *func_template_decl = ast.CreateFunctionTemplateDecl (containing_decl_ctx,
+//                                                                                                                  function_decl,
+//                                                                                                                  type_name_cstr, 
+//                                                                                                                  template_param_infos);
+//                                
+//                                ast.CreateFunctionTemplateSpecializationInfo (function_decl,
+//                                                                              func_template_decl,
+//                                                                              template_param_infos);
+//                            }
                             // Add the decl to our DIE to decl context map
                             assert (function_decl);
                             LinkDeclContextToDIE(function_decl, die);
