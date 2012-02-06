@@ -401,7 +401,7 @@ Type *BitcodeReader::getTypeByID(unsigned ID) {
   // The type table size is always specified correctly.
   if (ID >= TypeList.size())
     return 0;
-  
+
   if (Type *Ty = TypeList[ID])
     return Ty;
 
@@ -522,7 +522,7 @@ bool BitcodeReader::ParseAttributeBlock() {
 bool BitcodeReader::ParseTypeTable() {
   if (Stream.EnterSubBlock(bitc::TYPE_BLOCK_ID_NEW))
     return Error("Malformed block record");
-  
+
   return ParseTypeTableBody();
 }
 
@@ -534,7 +534,7 @@ bool BitcodeReader::ParseTypeTableBody() {
   unsigned NumRecords = 0;
 
   SmallString<64> TypeName;
-  
+
   // Read all the records for this type table.
   while (1) {
     unsigned Code = Stream.ReadCode();
