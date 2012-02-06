@@ -29,7 +29,7 @@ JSONParser::JSONParser(StringRef Input, SourceMgr *SM)
 
 JSONValue *JSONParser::parseRoot() {
   if (Position != InputBuffer->getBuffer().begin())
-    report_fatal_error("Cannot resuse JSONParser.");
+    report_fatal_error("Cannot reuse JSONParser.");
   if (isWhitespace())
     nextNonWhitespace();
   if (errorIfAtEndOfFile("'[' or '{' at start of JSON text"))
