@@ -77,23 +77,6 @@ static bool isSuitableForBSS(const GlobalVariable *GV, bool NoZerosInBSS) {
 /// than ConstantDataSequential::isString because we allow 2 & 4 byte strings.
 static bool IsNullTerminatedString(const Constant *C) {
   // First check: is we have constant array terminated with zero
-  if (const ConstantArray *CVA = dyn_cast<ConstantArray>(C)) {
-    ArrayType *ATy = cast<ArrayType>(C->getType());
-    if (ATy->getNumElements() == 0) return false;
-
-    ConstantInt *Null =
-      dyn_cast<ConstantInt>(CVA->getOperand(ATy->getNumElements()-1));
-    if (Null == 0 || !Null->isZero())
-      return false; // Not null terminated.
-
-    // Verify that the null doesn't occur anywhere else in the string.
-    for (unsigned i = 0, e = ATy->getNumElements()-1; i != e; ++i)
-      // Reject constantexpr elements etc.
-      if (!isa<ConstantInt>(CVA->getOperand(i)) ||
-          CVA->getOperand(i) == Null)
-        return false;
-    return true;
-  }
   if (const ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(C)) {
     unsigned NumElts = CDS->getNumElements();
     assert(NumElts != 0 && "Can't have an empty CDS");

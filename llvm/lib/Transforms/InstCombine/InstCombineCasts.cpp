@@ -1421,16 +1421,15 @@ static Instruction *OptimizeVectorResize(Value *InVal, VectorType *DestTy,
   // Now that the element types match, get the shuffle mask and RHS of the
   // shuffle to use, which depends on whether we're increasing or decreasing the
   // size of the input.
-  SmallVector<Constant*, 16> ShuffleMask;
+  SmallVector<uint32_t, 16> ShuffleMask;
   Value *V2;
-  IntegerType *Int32Ty = Type::getInt32Ty(SrcTy->getContext());
   
   if (SrcTy->getNumElements() > DestTy->getNumElements()) {
     // If we're shrinking the number of elements, just shuffle in the low
     // elements from the input and use undef as the second shuffle input.
     V2 = UndefValue::get(SrcTy);
     for (unsigned i = 0, e = DestTy->getNumElements(); i != e; ++i)
-      ShuffleMask.push_back(ConstantInt::get(Int32Ty, i));
+      ShuffleMask.push_back(i);
     
   } else {
     // If we're increasing the number of elements, shuffle in all of the
@@ -1439,14 +1438,16 @@ static Instruction *OptimizeVectorResize(Value *InVal, VectorType *DestTy,
     V2 = Constant::getNullValue(SrcTy);
     unsigned SrcElts = SrcTy->getNumElements();
     for (unsigned i = 0, e = SrcElts; i != e; ++i)
-      ShuffleMask.push_back(ConstantInt::get(Int32Ty, i));
+      ShuffleMask.push_back(i);
 
     // The excess elements reference the first element of the zero input.
-    ShuffleMask.append(DestTy->getNumElements()-SrcElts,
-                       ConstantInt::get(Int32Ty, SrcElts));
+    for (unsigned i = 0, e = DestTy->getNumElements()-SrcElts; i != e; ++i)
+      ShuffleMask.push_back(SrcElts);
   }
   
-  return new ShuffleVectorInst(InVal, V2, ConstantVector::get(ShuffleMask));
+  return new ShuffleVectorInst(InVal, V2,
+                               ConstantDataVector::get(V2->getContext(),
+                                                       ShuffleMask));
 }
 
 static bool isMultipleOfTypeSize(unsigned Value, Type *Ty) {

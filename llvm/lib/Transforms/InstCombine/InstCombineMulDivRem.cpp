@@ -256,31 +256,18 @@ Instruction *InstCombiner::visitFMul(BinaryOperator &I) {
   bool Changed = SimplifyAssociativeOrCommutative(I);
   Value *Op0 = I.getOperand(0), *Op1 = I.getOperand(1);
 
-  // Simplify mul instructions with a constant RHS...
+  // Simplify mul instructions with a constant RHS.
   if (Constant *Op1C = dyn_cast<Constant>(Op1)) {
     if (ConstantFP *Op1F = dyn_cast<ConstantFP>(Op1C)) {
       // "In IEEE floating point, x*1 is not equivalent to x for nans.  However,
       // ANSI says we can drop signals, so we can do this anyway." (from GCC)
       if (Op1F->isExactlyValue(1.0))
         return ReplaceInstUsesWith(I, Op0);  // Eliminate 'fmul double %X, 1.0'
-    } else if (Op1C->getType()->isVectorTy()) {
-      // FIXME: Remove.
-      if (ConstantVector *Op1V = dyn_cast<ConstantVector>(Op1C)) {
-        // As above, vector X*splat(1.0) -> X in all defined cases.
-        if (Constant *Splat = Op1V->getSplatValue()) {
-          if (ConstantFP *F = dyn_cast<ConstantFP>(Splat))
-            if (F->isExactlyValue(1.0))
-              return ReplaceInstUsesWith(I, Op0);
-        }
-      }
-      if (ConstantDataVector *Op1V = dyn_cast<ConstantDataVector>(Op1C)) {
-        // As above, vector X*splat(1.0) -> X in all defined cases.
-        if (Constant *Splat = Op1V->getSplatValue()) {
-          if (ConstantFP *F = dyn_cast<ConstantFP>(Splat))
-            if (F->isExactlyValue(1.0))
-              return ReplaceInstUsesWith(I, Op0);
-        }
-      }
+    } else if (ConstantDataVector *Op1V = dyn_cast<ConstantDataVector>(Op1C)) {
+      // As above, vector X*splat(1.0) -> X in all defined cases.
+      if (ConstantFP *F = dyn_cast_or_null<ConstantFP>(Op1V->getSplatValue()))
+        if (F->isExactlyValue(1.0))
+          return ReplaceInstUsesWith(I, Op0);
     }
 
     // Try to fold constant mul into select arguments.
@@ -718,7 +705,7 @@ Instruction *InstCombiner::visitSRem(BinaryOperator &I) {
     if (hasNegative && !hasMissing) {
       SmallVector<Constant *, 16> Elts(VWidth);
       for (unsigned i = 0; i != VWidth; ++i) {
-        Elts[i] = C->getAggregateElement(i);
+        Elts[i] = C->getAggregateElement(i);  // Handle undef, etc.
         if (ConstantInt *RHS = dyn_cast<ConstantInt>(Elts[i])) {
           if (RHS->isNegative())
             Elts[i] = cast<ConstantInt>(ConstantExpr::getNeg(RHS));

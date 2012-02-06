@@ -88,19 +88,8 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
     return;
   }
   // Handle a constant vector by taking the intersection of the known bits of
-  // each element.
-  // FIXME: Remove.
-  if (ConstantVector *CV = dyn_cast<ConstantVector>(V)) {
-    KnownZero.setAllBits(); KnownOne.setAllBits();
-    for (unsigned i = 0, e = CV->getNumOperands(); i != e; ++i) {
-      APInt KnownZero2(BitWidth, 0), KnownOne2(BitWidth, 0);
-      ComputeMaskedBits(CV->getOperand(i), Mask, KnownZero2, KnownOne2,
-                        TD, Depth);
-      KnownZero &= KnownZero2;
-      KnownOne &= KnownOne2;
-    }
-    return;
-  }
+  // each element.  There is no real need to handle ConstantVector here, because
+  // we don't handle undef in any particularly useful way.
   if (ConstantDataSequential *CDS = dyn_cast<ConstantDataSequential>(V)) {
     // We know that CDS must be a vector of integers. Take the intersection of
     // each element.

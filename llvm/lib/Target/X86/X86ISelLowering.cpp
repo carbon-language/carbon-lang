@@ -7527,12 +7527,8 @@ SDValue X86TargetLowering::LowerUINT_TO_FP_i64(SDValue Op,
   LLVMContext *Context = DAG.getContext();
 
   // Build some magic constants.
-  SmallVector<Constant*,4> CV0;
-  CV0.push_back(ConstantInt::get(*Context, APInt(32, 0x43300000)));
-  CV0.push_back(ConstantInt::get(*Context, APInt(32, 0x45300000)));
-  CV0.push_back(ConstantInt::get(*Context, APInt(32, 0)));
-  CV0.push_back(ConstantInt::get(*Context, APInt(32, 0)));
-  Constant *C0 = ConstantVector::get(CV0);
+  const uint32_t CV0[] = { 0x43300000, 0x45300000, 0, 0 };
+  Constant *C0 = ConstantDataVector::get(*Context, CV0);
   SDValue CPIdx0 = DAG.getConstantPool(C0, getPointerTy(), 16);
 
   SmallVector<Constant*,2> CV1;
@@ -10249,8 +10245,8 @@ SDValue X86TargetLowering::LowerShift(SDValue Op, SelectionDAG &DAG) const {
     Op = DAG.getNode(X86ISD::VSHLI, dl, VT, Op.getOperand(1),
                      DAG.getConstant(23, MVT::i32));
 
-    ConstantInt *CI = ConstantInt::get(*Context, APInt(32, 0x3f800000U));
-    Constant *C = ConstantVector::getSplat(4, CI);
+    const uint32_t CV[] = { 0x3f800000U, 0x3f800000U, 0x3f800000U, 0x3f800000U};
+    Constant *C = ConstantDataVector::get(*Context, CV);
     SDValue CPIdx = DAG.getConstantPool(C, getPointerTy(), 16);
     SDValue Addend = DAG.getLoad(VT, dl, DAG.getEntryNode(), CPIdx,
                                  MachinePointerInfo::getConstantPool(),

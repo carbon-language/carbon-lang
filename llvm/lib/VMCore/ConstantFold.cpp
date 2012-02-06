@@ -693,7 +693,6 @@ Constant *llvm::ConstantFoldSelectInstruction(Constant *Cond,
   if (Cond->isNullValue()) return V2;
   if (Cond->isAllOnesValue()) return V1;
 
-  // FIXME: Remove ConstantVector
   // If the condition is a vector constant, fold the result elementwise.
   if (ConstantVector *CondV = dyn_cast<ConstantVector>(Cond)) {
     SmallVector<Constant*, 16> Result;
@@ -710,21 +709,6 @@ Constant *llvm::ConstantFoldSelectInstruction(Constant *Cond,
     if (Result.size() == V1->getType()->getVectorNumElements())
       return ConstantVector::get(Result);
   }
-  if (ConstantDataVector *CondV = dyn_cast<ConstantDataVector>(Cond)) {
-    SmallVector<Constant*, 16> Result;
-    for (unsigned i = 0, e = V1->getType()->getVectorNumElements(); i != e;++i){
-      uint64_t Cond = CondV->getElementAsInteger(i);
-      
-      Constant *Res = (Cond ? V2 : V1)->getAggregateElement(i);
-      if (Res == 0) break;
-      Result.push_back(Res);
-    }
-    
-    // If we were able to build the vector, return it.
-    if (Result.size() == V1->getType()->getVectorNumElements())
-      return ConstantVector::get(Result);
-  }
-
 
   if (isa<UndefValue>(Cond)) {
     if (isa<UndefValue>(V1)) return V1;
