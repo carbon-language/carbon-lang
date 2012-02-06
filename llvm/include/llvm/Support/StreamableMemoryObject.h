@@ -1,4 +1,4 @@
-//===- StreamableMemoryObject.h - Streamable data interface - -*- C++ -*-===//
+//===- StreamableMemoryObject.h - Streamable data interface -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

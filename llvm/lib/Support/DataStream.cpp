@@ -1,4 +1,4 @@
-//===--- llvm/Support/DataStream.cpp - Lazy streamed Data               ---===//
+//===--- llvm/Support/DataStream.cpp - Lazy streamed data -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
