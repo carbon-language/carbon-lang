@@ -39,7 +39,6 @@
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCSymbol.h"
-#include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/ADT/StringExtras.h"
@@ -5412,7 +5411,7 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
   // mask values count as coming from any quadword, for better codegen.
   unsigned LoQuad[] = { 0, 0, 0, 0 };
   unsigned HiQuad[] = { 0, 0, 0, 0 };
-  BitVector InputQuads(4);
+  std::bitset<4> InputQuads;
   for (unsigned i = 0; i < 8; ++i) {
     unsigned *Quad = i < 4 ? LoQuad : HiQuad;
     int EltIdx = SVOp->getMaskElt(i);
@@ -5454,8 +5453,8 @@ X86TargetLowering::LowerVECTOR_SHUFFLEv8i16(SDValue Op,
   bool V2Used = InputQuads[2] || InputQuads[3];
   if (Subtarget->hasSSSE3()) {
     if (InputQuads.count() == 2 && V1Used && V2Used) {
-      BestLoQuad = InputQuads.find_first();
-      BestHiQuad = InputQuads.find_next(BestLoQuad);
+      BestLoQuad = InputQuads[0] ? 0 : 1;
+      BestHiQuad = InputQuads[2] ? 2 : 3;
     }
     if (InputQuads.count() > 2) {
       BestLoQuad = -1;
