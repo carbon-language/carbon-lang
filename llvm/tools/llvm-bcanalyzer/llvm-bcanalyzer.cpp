@@ -230,7 +230,6 @@ static const char *GetCodeName(unsigned CodeID, unsigned BlockID,
     case bitc::FUNC_CODE_INST_BR:           return "INST_BR";
     case bitc::FUNC_CODE_INST_SWITCH:       return "INST_SWITCH";
     case bitc::FUNC_CODE_INST_INVOKE:       return "INST_INVOKE";
-    case bitc::FUNC_CODE_INST_UNWIND:       return "INST_UNWIND";
     case bitc::FUNC_CODE_INST_UNREACHABLE:  return "INST_UNREACHABLE";
 
     case bitc::FUNC_CODE_INST_PHI:          return "INST_PHI";
