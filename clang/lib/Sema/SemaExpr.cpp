@@ -9325,7 +9325,7 @@ ExprResult Sema::HandleExprEvaluationContextForTypeof(Expr *E) {
   return TranformToPotentiallyEvaluated(E);
 }
 
-bool IsPotentiallyEvaluatedContext(Sema &SemaRef) {
+static bool IsPotentiallyEvaluatedContext(Sema &SemaRef) {
   // Do not mark anything as "used" within a dependent context; wait for
   // an instantiation.
   if (SemaRef.CurContext->isDependentContext())

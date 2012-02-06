@@ -100,8 +100,8 @@ void Sema::InstantiateAttrs(const MultiLevelTemplateArgumentList &TemplateArgs,
         Saved = CurrentInstantiationScope->cloneScopes(OuterMostScope);
       LateAttrs->push_back(LateInstantiatedAttribute(TmplAttr, Saved, New));
     } else {
-      Attr *NewAttr =
-        instantiateTemplateAttribute(TmplAttr, Context, *this, TemplateArgs);
+      Attr *NewAttr = sema::instantiateTemplateAttribute(TmplAttr, Context,
+                                                         *this, TemplateArgs);
       New->addAttr(NewAttr);
     }
   }

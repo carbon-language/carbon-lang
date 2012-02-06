@@ -1015,7 +1015,8 @@ void ModuleMapParser::parseRequiresDecl() {
 
 /// \brief Append to \p Paths the set of paths needed to get to the 
 /// subframework in which the given module lives.
-void appendSubframeworkPaths(Module *Mod, llvm::SmallVectorImpl<char> &Path) {
+static void appendSubframeworkPaths(Module *Mod,
+                                    llvm::SmallVectorImpl<char> &Path) {
   // Collect the framework names from the given module to the top-level module.
   llvm::SmallVector<StringRef, 2> Paths;
   for (; Mod; Mod = Mod->Parent) {

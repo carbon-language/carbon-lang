@@ -15,7 +15,7 @@
 using namespace clang;
 
 /// \brief Parse a simple identifier.
-std::string parseName(StringRef S) {
+static std::string parseName(StringRef S) {
   unsigned Offset = 0;
   while (Offset < S.size() &&
          (isalpha(S[Offset]) || S[Offset] == '_' ||
