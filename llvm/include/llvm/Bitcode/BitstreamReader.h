@@ -17,10 +17,10 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/BitCodes.h"
+#include "llvm/Support/StreamableMemoryObject.h"
 #include <climits>
 #include <string>
 #include <vector>
-#include "llvm/Support/StreamableMemoryObject.h"
 
 namespace llvm {
 
