@@ -42,3 +42,93 @@ llvm::StringRef{
 clang::Token{
 	preview((clang::tok::TokenKind)(int)$e.Kind)
 }
+
+PointerIntPair<*,*,*,*>{
+	preview (
+		#(
+			($T1*)($e.Value & PointerBitMask),
+			" [",
+			($T3)(($e.Value >> IntShift) & IntMask),
+			"]"
+		)
+	)
+	
+	children (
+		#(
+			#([ptr] : ($T1*)($e.Value & PointerBitMask)),
+			#([int] : ($T3)($e.Value >> IntShift) & IntMask)
+		)
+	)
+}
+
+PointerUnion<*,*>{
+	preview (
+		#if ((($e.Val.Value >> $e.Val.IntShift) & $e.Val.IntMask) == 0) (
+			"PT1"
+		) #else (
+			"PT2"
+		)
+	)
+	
+	children (
+		#(
+			#if ((($e.Val.Value >> $e.Val.IntShift) & $e.Val.IntMask) == 0) (
+				#([ptr] : ($T1)($e.Val.Value & $e.Val.PointerBitMask))
+			)	#else (
+				#([ptr] : ($T2)($e.Val.Value & $e.Val.PointerBitMask))
+			)
+		)
+	)
+}
+
+PointerUnion3<*,*,*>{
+	preview (
+		#if (($e.Val.Val.Value & 0x2) == 2) (
+			"PT2"
+		) #elif (($e.Val.Val.Value & 0x1) == 1) (
+			"PT3"
+		) #else (
+			"PT1"
+		)
+	)
+	
+	children (
+		#(
+			#if (($e.Val.Val.Value & 0x2) == 2) (
+				#([ptr] : ($T2)(($e.Val.Val.Value >> 2) << 2))
+			) #elif (($e.Val.Val.Value & 0x1) == 1) (
+				#([ptr] : ($T3)(($e.Val.Val.Value >> 2) << 2))
+			) #else (
+				#([ptr] : ($T1)(($e.Val.Val.Value >> 2) << 2))
+			)
+		)
+	)
+}
+
+PointerUnion4<*,*,*,*>{
+	preview (
+		#if (($e.Val.Val.Value & 0x3) == 3) (
+			"PT4"
+		)	#elif (($e.Val.Val.Value & 0x2) == 2) (
+			"PT2"
+		) #elif (($e.Val.Val.Value & 0x1) == 1) (
+			"PT3"
+		) #else (
+			"PT1"
+		)
+	)
+	
+	children (
+		#(
+			#if (($e.Val.Val.Value & 0x3) == 3) (
+				#([ptr] : ($T4)(($e.Val.Val.Value >> 2) << 2))
+			)	#elif (($e.Val.Val.Value & 0x2) == 2) (
+				#([ptr] : ($T2)(($e.Val.Val.Value >> 2) << 2))
+			) #elif (($e.Val.Val.Value & 0x1) == 1) (
+				#([ptr] : ($T3)(($e.Val.Val.Value >> 2) << 2))
+			) #else (
+				#([ptr] : ($T1)(($e.Val.Val.Value >> 2) << 2))
+			)
+		)
+	)
+}
