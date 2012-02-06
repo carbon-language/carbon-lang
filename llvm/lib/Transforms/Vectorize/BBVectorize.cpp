@@ -194,7 +194,7 @@ namespace {
                       AliasSetTracker &WriteSet, Instruction *I,
                       Instruction *J, bool UpdateUsers = true,
                       std::multimap<Value *, Value *> *LoadMoveSet = 0);
-  
+
     void computePairsConnectedTo(
                       std::multimap<Value *, Value *> &CandidatePairs,
                       std::vector<Value *> &PairableInsts,
@@ -628,10 +628,10 @@ namespace {
           // An aligned load or store is possible only if the instruction
           // with the lower offset has an alignment suitable for the
           // vector type.
-  
+
           unsigned BottomAlignment = IAlignment;
           if (OffsetInElmts < 0) BottomAlignment = JAlignment;
-  
+
           Type *VType = getVecTypeForPair(aType);
           unsigned VecAlignment = TD->getPrefTypeAlignment(VType);
           if (BottomAlignment < VecAlignment)
@@ -1152,11 +1152,11 @@ namespace {
         }
         if (!CanAdd) continue;
 
-	// To check for non-trivial cycles formed by the addition of the
-	// current pair we've formed a list of all relevant pairs, now use a
-	// graph walk to check for a cycle. We start from the current pair and
-	// walk the use tree to see if we again reach the current pair. If we
-	// do, then the current pair is rejected.
+        // To check for non-trivial cycles formed by the addition of the
+        // current pair we've formed a list of all relevant pairs, now use a
+        // graph walk to check for a cycle. We start from the current pair and
+        // walk the use tree to see if we again reach the current pair. If we
+        // do, then the current pair is rejected.
 
         // FIXME: It may be more efficient to use a topological-ordering
         // algorithm to improve the cycle check. This should be investigated.
@@ -1468,7 +1468,7 @@ namespace {
       if (LEE->getOperand(0) == HEE->getOperand(0)) {
         if (LowIndx == 0 && HighIndx == 1)
           return LEE->getOperand(0);
- 
+
         std::vector<Constant*> Mask(2);
         Mask[0] = ConstantInt::get(Type::getInt32Ty(Context), LowIndx);
         Mask[1] = ConstantInt::get(Type::getInt32Ty(Context), HighIndx);
