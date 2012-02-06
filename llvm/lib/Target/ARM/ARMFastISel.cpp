@@ -160,7 +160,8 @@ class ARMFastISel : public FastISel {
     bool SelectCmp(const Instruction *I);
     bool SelectFPExt(const Instruction *I);
     bool SelectFPTrunc(const Instruction *I);
-    bool SelectBinaryOp(const Instruction *I, unsigned ISDOpcode);
+    bool SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode);
+    bool SelectBinaryFPOp(const Instruction *I, unsigned ISDOpcode);
     bool SelectIToFP(const Instruction *I, bool isSigned);
     bool SelectFPToI(const Instruction *I, bool isSigned);
     bool SelectDiv(const Instruction *I, bool isSigned);
@@ -1722,7 +1723,33 @@ bool ARMFastISel::SelectRem(const Instruction *I, bool isSigned) {
   return ARMEmitLibcall(I, LC);
 }
 
-bool ARMFastISel::SelectBinaryOp(const Instruction *I, unsigned ISDOpcode) {
+bool ARMFastISel::SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode) {
+  assert (ISDOpcode == ISD::ADD && "Expected an add.");
+  EVT DestVT  = TLI.getValueType(I->getType(), true);
+
+  // We can get here in the case when we have a binary operation on a non-legal
+  // type and the target independent selector doesn't know how to handle it.
+  if (DestVT != MVT::i16 && DestVT != MVT::i8 && DestVT != MVT::i1)
+    return false;
+  
+  unsigned SrcReg1 = getRegForValue(I->getOperand(0));
+  if (SrcReg1 == 0) return false;
+
+  // TODO: Often the 2nd operand is an immediate, which can be encoded directly
+  // in the instruction, rather then materializing the value in a register.
+  unsigned SrcReg2 = getRegForValue(I->getOperand(1));
+  if (SrcReg2 == 0) return false;
+
+  unsigned Opc = isThumb2 ? ARM::t2ADDrr : ARM::ADDrr;
+  unsigned ResultReg = createResultReg(TLI.getRegClassFor(MVT::i32));
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
+                          TII.get(Opc), ResultReg)
+                  .addReg(SrcReg1).addReg(SrcReg2));
+  UpdateValueMap(I, ResultReg);
+  return true;
+}
+
+bool ARMFastISel::SelectBinaryFPOp(const Instruction *I, unsigned ISDOpcode) {
   EVT VT  = TLI.getValueType(I->getType(), true);
 
   // We can get here in the case when we want to use NEON for our fp
@@ -2458,12 +2485,14 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectFPToI(I, /*isSigned*/ true);
     case Instruction::FPToUI:
       return SelectFPToI(I, /*isSigned*/ false);
+    case Instruction::Add:
+      return SelectBinaryIntOp(I, ISD::ADD);
     case Instruction::FAdd:
-      return SelectBinaryOp(I, ISD::FADD);
+      return SelectBinaryFPOp(I, ISD::FADD);
     case Instruction::FSub:
-      return SelectBinaryOp(I, ISD::FSUB);
+      return SelectBinaryFPOp(I, ISD::FSUB);
     case Instruction::FMul:
-      return SelectBinaryOp(I, ISD::FMUL);
+      return SelectBinaryFPOp(I, ISD::FMUL);
     case Instruction::SDiv:
       return SelectDiv(I, /*isSigned*/ true);
     case Instruction::UDiv:
