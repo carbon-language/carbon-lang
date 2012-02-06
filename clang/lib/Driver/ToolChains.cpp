@@ -1784,6 +1784,7 @@ enum LinuxDistro {
   Fedora13,
   Fedora14,
   Fedora15,
+  Fedora16,
   FedoraRawhide,
   OpenSuse11_3,
   OpenSuse11_4,
@@ -1801,19 +1802,16 @@ enum LinuxDistro {
 };
 
 static bool IsRedhat(enum LinuxDistro Distro) {
-  return Distro == Fedora13 || Distro == Fedora14 ||
-         Distro == Fedora15 || Distro == FedoraRawhide ||
-         Distro == RHEL4 || Distro == RHEL5 || Distro == RHEL6;
+  return (Distro >= Fedora13 && Distro <= FedoraRawhide) ||
+         (Distro >= RHEL4    && Distro <= RHEL6);
 }
 
 static bool IsOpenSuse(enum LinuxDistro Distro) {
-  return Distro == OpenSuse11_3 || Distro == OpenSuse11_4 ||
-         Distro == OpenSuse12_1;
+  return Distro >= OpenSuse11_3 && Distro <= OpenSuse12_1;
 }
 
 static bool IsDebian(enum LinuxDistro Distro) {
-  return Distro == DebianLenny || Distro == DebianSqueeze ||
-         Distro == DebianWheezy;
+  return Distro >= DebianLenny && Distro <= DebianWheezy;
 }
 
 static bool IsUbuntu(enum LinuxDistro Distro) {
@@ -1845,7 +1843,9 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
 
   if (!llvm::MemoryBuffer::getFile("/etc/redhat-release", File)) {
     StringRef Data = File.get()->getBuffer();
-    if (Data.startswith("Fedora release 15"))
+    if (Data.startswith("Fedora release 16"))
+      return Fedora16;
+    else if (Data.startswith("Fedora release 15"))
       return Fedora15;
     else if (Data.startswith("Fedora release 14"))
       return Fedora14;
@@ -1879,16 +1879,12 @@ static LinuxDistro DetectLinuxDistro(llvm::Triple::ArchType Arch) {
     return UnknownDistro;
   }
 
-  if (!llvm::MemoryBuffer::getFile("/etc/SuSE-release", File)) {
-    StringRef Data = File.get()->getBuffer();
-    if (Data.startswith("openSUSE 11.3"))
-      return OpenSuse11_3;
-    else if (Data.startswith("openSUSE 11.4"))
-      return OpenSuse11_4;
-    else if (Data.startswith("openSUSE 12.1"))
-      return OpenSuse12_1;
-    return UnknownDistro;
-  }
+  if (!llvm::MemoryBuffer::getFile("/etc/SuSE-release", File))
+    return llvm::StringSwitch<LinuxDistro>(File.get()->getBuffer())
+      .StartsWith("openSUSE 11.3", OpenSuse11_3)
+      .StartsWith("openSUSE 11.4", OpenSuse11_4)
+      .StartsWith("openSUSE 12.1", OpenSuse12_1)
+      .Default(UnknownDistro);
 
   bool Exists;
   if (!llvm::sys::fs::exists("/etc/exherbo-release", Exists) && Exists)
