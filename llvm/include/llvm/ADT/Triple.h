@@ -385,6 +385,26 @@ public:
   const char *getArchNameForAssembler();
 
   /// @}
+  /// @name Helpers to build variants of a particular triple.
+  /// @{
+
+  /// \brief Form a triple with a 32-bit variant of the current architecture.
+  ///
+  /// This can be used to move across "families" of architectures where useful.
+  ///
+  /// \returns A new triple with a 32-bit architecture or an unknown
+  ///          architecture if no such variant can be found.
+  llvm::Triple get32BitArchVariant() const;
+
+  /// \brief Form a triple with a 64-bit variant of the current architecture.
+  ///
+  /// This can be used to move across "families" of architectures where useful.
+  ///
+  /// \returns A new triple with a 64-bit architecture or an unknown
+  ///          architecture if no such variant can be found.
+  llvm::Triple get64BitArchVariant() const;
+
+  /// @}
   /// @name Static helpers for IDs.
   /// @{
 
