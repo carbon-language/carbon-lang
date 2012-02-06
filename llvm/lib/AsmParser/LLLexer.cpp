@@ -481,6 +481,7 @@ lltok::Kind LLLexer::LexIdentifier() {
   KEYWORD(tail);
   KEYWORD(target);
   KEYWORD(triple);
+  KEYWORD(unwind);
   KEYWORD(deplibs);
   KEYWORD(datalayout);
   KEYWORD(volatile);
@@ -622,7 +623,6 @@ lltok::Kind LLLexer::LexIdentifier() {
   INSTKEYWORD(indirectbr,  IndirectBr);
   INSTKEYWORD(invoke,      Invoke);
   INSTKEYWORD(resume,      Resume);
-  INSTKEYWORD(unwind,      Unwind);
   INSTKEYWORD(unreachable, Unreachable);
 
   INSTKEYWORD(alloca,      Alloca);

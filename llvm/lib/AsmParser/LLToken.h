@@ -50,6 +50,7 @@ namespace lltok {
     kw_tail,
     kw_target,
     kw_triple,
+    kw_unwind, 
     kw_deplibs,
     kw_datalayout,
     kw_volatile,
@@ -127,7 +128,7 @@ namespace lltok {
 
     kw_landingpad, kw_personality, kw_cleanup, kw_catch, kw_filter,
 
-    kw_ret, kw_br, kw_switch, kw_indirectbr, kw_invoke, kw_unwind, kw_resume,
+    kw_ret, kw_br, kw_switch, kw_indirectbr, kw_invoke, kw_resume,
     kw_unreachable,
 
     kw_alloca, kw_load, kw_store, kw_fence, kw_cmpxchg, kw_atomicrmw,
