@@ -72,7 +72,6 @@ class TargetLowering;
 class TruncInst;
 class UIToFPInst;
 class UnreachableInst;
-class UnwindInst;
 class VAArgInst;
 class ZExtInst;
 
@@ -475,7 +474,6 @@ private:
   // These all get lowered before this pass.
   void visitInvoke(const InvokeInst &I);
   void visitResume(const ResumeInst &I);
-  void visitUnwind(const UnwindInst &I);
 
   void visitBinary(const User &I, unsigned OpCode);
   void visitShift(const User &I, unsigned Opcode);

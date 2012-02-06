@@ -74,7 +74,6 @@ STATISTIC(NumFastIselFailSwitch,"Fast isel fails on Switch");
 STATISTIC(NumFastIselFailIndirectBr,"Fast isel fails on IndirectBr");
 STATISTIC(NumFastIselFailInvoke,"Fast isel fails on Invoke");
 STATISTIC(NumFastIselFailResume,"Fast isel fails on Resume");
-STATISTIC(NumFastIselFailUnwind,"Fast isel fails on Unwind");
 STATISTIC(NumFastIselFailUnreachable,"Fast isel fails on Unreachable");
 
   // Standard binary operators...
@@ -895,7 +894,6 @@ static void collectFailStats(const Instruction *I) {
   case Instruction::IndirectBr:  NumFastIselFailIndirectBr++; return;
   case Instruction::Invoke:      NumFastIselFailInvoke++; return;
   case Instruction::Resume:      NumFastIselFailResume++; return;
-  case Instruction::Unwind:      NumFastIselFailUnwind++; return;
   case Instruction::Unreachable: NumFastIselFailUnreachable++; return;
 
   // Standard binary operators...

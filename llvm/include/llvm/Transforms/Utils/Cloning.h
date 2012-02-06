@@ -56,21 +56,13 @@ struct ClonedCodeInfo {
   /// call instruction.
   bool ContainsCalls;
   
-  /// ContainsUnwinds - This is set to true if the cloned code contains an
-  /// unwind instruction.
-  bool ContainsUnwinds;
-  
   /// ContainsDynamicAllocas - This is set to true if the cloned code contains
   /// a 'dynamic' alloca.  Dynamic allocas are allocas that are either not in
   /// the entry block or they are in the entry block but are not a constant
   /// size.
   bool ContainsDynamicAllocas;
   
-  ClonedCodeInfo() {
-    ContainsCalls = false;
-    ContainsUnwinds = false;
-    ContainsDynamicAllocas = false;
-  }
+  ClonedCodeInfo() : ContainsCalls(false), ContainsDynamicAllocas(false) {}
 };
 
 

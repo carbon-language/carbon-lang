@@ -2973,42 +2973,6 @@ InvokeInst::InvokeInst(Value *Func,
 DEFINE_TRANSPARENT_OPERAND_ACCESSORS(InvokeInst, Value)
 
 //===----------------------------------------------------------------------===//
-//                              UnwindInst Class
-//===----------------------------------------------------------------------===//
-
-//===---------------------------------------------------------------------------
-/// UnwindInst - Immediately exit the current function, unwinding the stack
-/// until an invoke instruction is found.
-///
-class UnwindInst : public TerminatorInst {
-  void *operator new(size_t, unsigned);  // DO NOT IMPLEMENT
-protected:
-  virtual UnwindInst *clone_impl() const;
-public:
-  // allocate space for exactly zero operands
-  void *operator new(size_t s) {
-    return User::operator new(s, 0);
-  }
-  explicit UnwindInst(LLVMContext &C, Instruction *InsertBefore = 0);
-  explicit UnwindInst(LLVMContext &C, BasicBlock *InsertAtEnd);
-
-  unsigned getNumSuccessors() const { return 0; }
-
-  // Methods for support type inquiry through isa, cast, and dyn_cast:
-  static inline bool classof(const UnwindInst *) { return true; }
-  static inline bool classof(const Instruction *I) {
-    return I->getOpcode() == Instruction::Unwind;
-  }
-  static inline bool classof(const Value *V) {
-    return isa<Instruction>(V) && classof(cast<Instruction>(V));
-  }
-private:
-  virtual BasicBlock *getSuccessorV(unsigned idx) const;
-  virtual unsigned getNumSuccessorsV() const;
-  virtual void setSuccessorV(unsigned idx, BasicBlock *B);
-};
-
-//===----------------------------------------------------------------------===//
 //                              ResumeInst Class
 //===----------------------------------------------------------------------===//
 

@@ -631,32 +631,6 @@ ReturnInst::~ReturnInst() {
 }
 
 //===----------------------------------------------------------------------===//
-//                        UnwindInst Implementation
-//===----------------------------------------------------------------------===//
-
-UnwindInst::UnwindInst(LLVMContext &Context, Instruction *InsertBefore)
-  : TerminatorInst(Type::getVoidTy(Context), Instruction::Unwind,
-                   0, 0, InsertBefore) {
-}
-UnwindInst::UnwindInst(LLVMContext &Context, BasicBlock *InsertAtEnd)
-  : TerminatorInst(Type::getVoidTy(Context), Instruction::Unwind,
-                   0, 0, InsertAtEnd) {
-}
-
-
-unsigned UnwindInst::getNumSuccessorsV() const {
-  return getNumSuccessors();
-}
-
-void UnwindInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
-  llvm_unreachable("UnwindInst has no successors!");
-}
-
-BasicBlock *UnwindInst::getSuccessorV(unsigned idx) const {
-  llvm_unreachable("UnwindInst has no successors!");
-}
-
-//===----------------------------------------------------------------------===//
 //                        ResumeInst Implementation
 //===----------------------------------------------------------------------===//
 
@@ -709,11 +683,11 @@ unsigned UnreachableInst::getNumSuccessorsV() const {
 }
 
 void UnreachableInst::setSuccessorV(unsigned idx, BasicBlock *NewSucc) {
-  llvm_unreachable("UnwindInst has no successors!");
+  llvm_unreachable("UnreachableInst has no successors!");
 }
 
 BasicBlock *UnreachableInst::getSuccessorV(unsigned idx) const {
-  llvm_unreachable("UnwindInst has no successors!");
+  llvm_unreachable("UnreachableInst has no successors!");
 }
 
 //===----------------------------------------------------------------------===//
@@ -3514,11 +3488,6 @@ InvokeInst *InvokeInst::clone_impl() const {
 
 ResumeInst *ResumeInst::clone_impl() const {
   return new(1) ResumeInst(*this);
-}
-
-UnwindInst *UnwindInst::clone_impl() const {
-  LLVMContext &Context = getContext();
-  return new UnwindInst(Context);
 }
 
 UnreachableInst *UnreachableInst::clone_impl() const {

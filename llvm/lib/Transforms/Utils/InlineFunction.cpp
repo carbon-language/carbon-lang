@@ -214,8 +214,7 @@ static bool HandleCallsInBlockInlinedThroughInvoke(BasicBlock *BB,
 }
 
 /// HandleInlinedInvoke - If we inlined an invoke site, we need to convert calls
-/// in the body of the inlined function into invokes and turn unwind
-/// instructions into branches to the invoke unwind dest.
+/// in the body of the inlined function into invokes.
 ///
 /// II is the invoke instruction being inlined.  FirstNewBlock is the first
 /// block of the inlined code (the last block is the end of the function),
@@ -230,7 +229,7 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
   // start of the inlined code to its end, checking for stuff we need to
   // rewrite.  If the code doesn't have calls or unwinds, we know there is
   // nothing to rewrite.
-  if (!InlinedCodeInfo.ContainsCalls && !InlinedCodeInfo.ContainsUnwinds) {
+  if (!InlinedCodeInfo.ContainsCalls) {
     // Now that everything is happy, we have one final detail.  The PHI nodes in
     // the exception destination block still have entries due to the original
     // invoke instruction.  Eliminate these entries (which might even delete the
@@ -244,26 +243,10 @@ static void HandleInlinedInvoke(InvokeInst *II, BasicBlock *FirstNewBlock,
   for (Function::iterator BB = FirstNewBlock, E = Caller->end(); BB != E; ++BB){
     if (InlinedCodeInfo.ContainsCalls)
       if (HandleCallsInBlockInlinedThroughInvoke(BB, Invoke)) {
-        // Honor a request to skip the next block.  We don't need to
-        // consider UnwindInsts in this case either.
+        // Honor a request to skip the next block.
         ++BB;
         continue;
       }
-
-    if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-      // An UnwindInst requires special handling when it gets inlined into an
-      // invoke site.  Once this happens, we know that the unwind would cause
-      // a control transfer to the invoke exception destination, so we can
-      // transform it into a direct branch to the exception destination.
-      BranchInst::Create(InvokeDest, UI);
-
-      // Delete the unwind instruction!
-      UI->eraseFromParent();
-
-      // Update any PHI nodes in the exceptional block to indicate that
-      // there is now a new entry in them.
-      Invoke.addIncomingPHIValuesFor(BB);
-    }
 
     if (ResumeInst *RI = dyn_cast<ResumeInst>(BB->getTerminator()))
       Invoke.forwardResume(RI);
@@ -503,7 +486,6 @@ static void fixupLineNumbers(Function *Fn, Function::iterator FI,
 /// function by one level.
 bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
   Instruction *TheCall = CS.getInstruction();
-  LLVMContext &Context = TheCall->getContext();
   assert(TheCall->getParent() && TheCall->getParent()->getParent() &&
          "Instruction not in function!");
 
@@ -708,20 +690,6 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
     for (unsigned i = 0, e = Returns.size(); i != e; ++i) {
       IRBuilder<>(Returns[i]).CreateCall(StackRestore, SavedPtr);
     }
-
-    // Count the number of StackRestore calls we insert.
-    unsigned NumStackRestores = Returns.size();
-
-    // If we are inlining an invoke instruction, insert restores before each
-    // unwind.  These unwinds will be rewritten into branches later.
-    if (InlinedFunctionInfo.ContainsUnwinds && isa<InvokeInst>(TheCall)) {
-      for (Function::iterator BB = FirstNewBlock, E = Caller->end();
-           BB != E; ++BB)
-        if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-          IRBuilder<>(UI).CreateCall(StackRestore, SavedPtr);
-          ++NumStackRestores;
-        }
-    }
   }
 
   // If we are inlining tail call instruction through a call site that isn't
@@ -741,21 +709,8 @@ bool llvm::InlineFunction(CallSite CS, InlineFunctionInfo &IFI) {
         }
   }
 
-  // If we are inlining through a 'nounwind' call site then any inlined 'unwind'
-  // instructions are unreachable.
-  if (InlinedFunctionInfo.ContainsUnwinds && MarkNoUnwind)
-    for (Function::iterator BB = FirstNewBlock, E = Caller->end();
-         BB != E; ++BB) {
-      TerminatorInst *Term = BB->getTerminator();
-      if (isa<UnwindInst>(Term)) {
-        new UnreachableInst(Context, Term);
-        BB->getInstList().erase(Term);
-      }
-    }
-
   // If we are inlining for an invoke instruction, we must make sure to rewrite
-  // any inlined 'unwind' instructions into branches to the invoke exception
-  // destination, and call instructions into invoke instructions.
+  // any call instructions into invoke instructions.
   if (InvokeInst *II = dyn_cast<InvokeInst>(TheCall))
     HandleInlinedInvoke(II, FirstNewBlock, InlinedFunctionInfo);
 

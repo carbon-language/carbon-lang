@@ -60,7 +60,6 @@ BasicBlock *llvm::CloneBasicBlock(const BasicBlock *BB,
   
   if (CodeInfo) {
     CodeInfo->ContainsCalls          |= hasCalls;
-    CodeInfo->ContainsUnwinds        |= isa<UnwindInst>(BB->getTerminator());
     CodeInfo->ContainsDynamicAllocas |= hasDynamicAllocas;
     CodeInfo->ContainsDynamicAllocas |= hasStaticAllocas && 
                                         BB != &BB->getParent()->getEntryBlock();
@@ -337,7 +336,6 @@ void PruningFunctionCloner::CloneBlock(const BasicBlock *BB,
   
   if (CodeInfo) {
     CodeInfo->ContainsCalls          |= hasCalls;
-    CodeInfo->ContainsUnwinds        |= isa<UnwindInst>(OldTI);
     CodeInfo->ContainsDynamicAllocas |= hasDynamicAllocas;
     CodeInfo->ContainsDynamicAllocas |= hasStaticAllocas && 
       BB != &BB->getParent()->front();

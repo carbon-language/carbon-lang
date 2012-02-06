@@ -1869,7 +1869,6 @@ bool llvm::isSafeToSpeculativelyExecute(const Value *V,
   case Instruction::Br:
   case Instruction::IndirectBr:
   case Instruction::Switch:
-  case Instruction::Unwind:
   case Instruction::Unreachable:
   case Instruction::Fence:
   case Instruction::LandingPad:
