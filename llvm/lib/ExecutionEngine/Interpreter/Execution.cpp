@@ -625,24 +625,6 @@ void Interpreter::visitReturnInst(ReturnInst &I) {
   popStackAndReturnValueToCaller(RetTy, Result);
 }
 
-void Interpreter::visitUnwindInst(UnwindInst &I) {
-  // Unwind stack
-  Instruction *Inst;
-  do {
-    ECStack.pop_back();
-    if (ECStack.empty())
-      report_fatal_error("Empty stack during unwind!");
-    Inst = ECStack.back().Caller.getInstruction();
-  } while (!(Inst && isa<InvokeInst>(Inst)));
-
-  // Return from invoke
-  ExecutionContext &InvokingSF = ECStack.back();
-  InvokingSF.Caller = CallSite();
-
-  // Go to exceptional destination BB of invoke instruction
-  SwitchToNewBasicBlock(cast<InvokeInst>(Inst)->getUnwindDest(), InvokingSF);
-}
-
 void Interpreter::visitUnreachableInst(UnreachableInst &I) {
   report_fatal_error("Program executed an 'unreachable' instruction!");
 }

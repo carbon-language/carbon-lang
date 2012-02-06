@@ -67,9 +67,8 @@ class SimplifyCFGOpt {
   bool FoldValueComparisonIntoPredecessors(TerminatorInst *TI,
                                            IRBuilder<> &Builder);
 
-  bool SimplifyResume(ResumeInst *RI, IRBuilder<> &Builder);
   bool SimplifyReturn(ReturnInst *RI, IRBuilder<> &Builder);
-  bool SimplifyUnwind(UnwindInst *UI, IRBuilder<> &Builder);
+  bool SimplifyResume(ResumeInst *RI, IRBuilder<> &Builder);
   bool SimplifyUnreachable(UnreachableInst *UI);
   bool SimplifySwitch(SwitchInst *SI, IRBuilder<> &Builder);
   bool SimplifyIndirectBr(IndirectBrInst *IBI);
@@ -2353,52 +2352,6 @@ bool SimplifyCFGOpt::SimplifyReturn(ReturnInst *RI, IRBuilder<> &Builder) {
   return false;
 }
 
-bool SimplifyCFGOpt::SimplifyUnwind(UnwindInst *UI, IRBuilder<> &Builder) {
-  // Check to see if the first instruction in this block is just an unwind.
-  // If so, replace any invoke instructions which use this as an exception
-  // destination with call instructions.
-  BasicBlock *BB = UI->getParent();
-  if (!BB->getFirstNonPHIOrDbg()->isTerminator()) return false;
-
-  bool Changed = false;
-  SmallVector<BasicBlock*, 8> Preds(pred_begin(BB), pred_end(BB));
-  while (!Preds.empty()) {
-    BasicBlock *Pred = Preds.back();
-    InvokeInst *II = dyn_cast<InvokeInst>(Pred->getTerminator());
-    if (II && II->getUnwindDest() == BB) {
-      // Insert a new branch instruction before the invoke, because this
-      // is now a fall through.
-      Builder.SetInsertPoint(II);
-      BranchInst *BI = Builder.CreateBr(II->getNormalDest());
-      Pred->getInstList().remove(II);   // Take out of symbol table
-      
-      // Insert the call now.
-      SmallVector<Value*,8> Args(II->op_begin(), II->op_end()-3);
-      Builder.SetInsertPoint(BI);
-      CallInst *CI = Builder.CreateCall(II->getCalledValue(),
-                                        Args, II->getName());
-      CI->setCallingConv(II->getCallingConv());
-      CI->setAttributes(II->getAttributes());
-      // If the invoke produced a value, the Call now does instead.
-      II->replaceAllUsesWith(CI);
-      delete II;
-      Changed = true;
-    }
-    
-    Preds.pop_back();
-  }
-  
-  // If this block is now dead (and isn't the entry block), remove it.
-  if (pred_begin(BB) == pred_end(BB) &&
-      BB != &BB->getParent()->getEntryBlock()) {
-    // We know there are no successors, so just nuke the block.
-    BB->eraseFromParent();
-    return true;
-  }
-  
-  return Changed;  
-}
-
 bool SimplifyCFGOpt::SimplifyUnreachable(UnreachableInst *UI) {
   BasicBlock *BB = UI->getParent();
   
@@ -3003,17 +2956,15 @@ bool SimplifyCFGOpt::run(BasicBlock *BB) {
     } else {
       if (SimplifyCondBranch(BI, Builder)) return true;
     }
-  } else if (ResumeInst *RI = dyn_cast<ResumeInst>(BB->getTerminator())) {
-    if (SimplifyResume(RI, Builder)) return true;
   } else if (ReturnInst *RI = dyn_cast<ReturnInst>(BB->getTerminator())) {
     if (SimplifyReturn(RI, Builder)) return true;
+  } else if (ResumeInst *RI = dyn_cast<ResumeInst>(BB->getTerminator())) {
+    if (SimplifyResume(RI, Builder)) return true;
   } else if (SwitchInst *SI = dyn_cast<SwitchInst>(BB->getTerminator())) {
     if (SimplifySwitch(SI, Builder)) return true;
   } else if (UnreachableInst *UI =
                dyn_cast<UnreachableInst>(BB->getTerminator())) {
     if (SimplifyUnreachable(UI)) return true;
-  } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-    if (SimplifyUnwind(UI, Builder)) return true;
   } else if (IndirectBrInst *IBI =
                dyn_cast<IndirectBrInst>(BB->getTerminator())) {
     if (SimplifyIndirectBr(IBI)) return true;

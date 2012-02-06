@@ -54,7 +54,6 @@
 using namespace llvm;
 
 STATISTIC(NumInvokes, "Number of invokes replaced");
-STATISTIC(NumUnwinds, "Number of unwinds replaced");
 STATISTIC(NumSpilled, "Number of registers live across unwind edges");
 
 static cl::opt<bool> ExpensiveEHSupport("enable-correct-eh-support",
@@ -193,20 +192,6 @@ bool LowerInvoke::insertCheapEHSupport(Function &F) {
       BB->getInstList().erase(II);
 
       ++NumInvokes; Changed = true;
-    } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-      // Insert a call to abort()
-      CallInst::Create(AbortFn, "", UI)->setTailCall();
-
-      // Insert a return instruction.  This really should be a "barrier", as it
-      // is unreachable.
-      ReturnInst::Create(F.getContext(),
-                         F.getReturnType()->isVoidTy() ?
-                          0 : Constant::getNullValue(F.getReturnType()), UI);
-
-      // Remove the unwind instruction now.
-      BB->getInstList().erase(UI);
-
-      ++NumUnwinds; Changed = true;
     }
   return Changed;
 }
@@ -404,7 +389,6 @@ splitLiveRangesLiveAcrossInvokes(SmallVectorImpl<InvokeInst*> &Invokes) {
 
 bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   SmallVector<ReturnInst*,16> Returns;
-  SmallVector<UnwindInst*,16> Unwinds;
   SmallVector<InvokeInst*,16> Invokes;
   UnreachableInst* UnreachablePlaceholder = 0;
 
@@ -415,14 +399,11 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
       Returns.push_back(RI);
     } else if (InvokeInst *II = dyn_cast<InvokeInst>(BB->getTerminator())) {
       Invokes.push_back(II);
-    } else if (UnwindInst *UI = dyn_cast<UnwindInst>(BB->getTerminator())) {
-      Unwinds.push_back(UI);
     }
 
-  if (Unwinds.empty() && Invokes.empty()) return false;
+  if (Invokes.empty()) return false;
 
   NumInvokes += Invokes.size();
-  NumUnwinds += Unwinds.size();
 
   // TODO: This is not an optimal way to do this.  In particular, this always
   // inserts setjmp calls into the entries of functions with invoke instructions
@@ -571,13 +552,6 @@ bool LowerInvoke::insertExpensiveEHSupport(Function &F) {
   // Insert a call to abort()
   CallInst::Create(AbortFn, "",
                    TermBlock->getTerminator())->setTailCall();
-
-
-  // Replace all unwinds with a branch to the unwind handler.
-  for (unsigned i = 0, e = Unwinds.size(); i != e; ++i) {
-    BranchInst::Create(UnwindHandler, Unwinds[i]);
-    Unwinds[i]->eraseFromParent();
-  }
 
   // Replace the inserted unreachable with a branch to the unwind handler.
   if (UnreachablePlaceholder) {

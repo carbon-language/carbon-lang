@@ -290,9 +290,6 @@ namespace {
     void visitInvokeInst(InvokeInst &I) {
       llvm_unreachable("Lowerinvoke pass didn't work!");
     }
-    void visitUnwindInst(UnwindInst &I) {
-      llvm_unreachable("Lowerinvoke pass didn't work!");
-    }
     void visitResumeInst(ResumeInst &I) {
       llvm_unreachable("DwarfEHPrepare pass didn't work!");
     }

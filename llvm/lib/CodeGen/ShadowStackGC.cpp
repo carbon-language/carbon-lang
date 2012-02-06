@@ -116,8 +116,7 @@ namespace {
           // Branches and invokes do not escape, only unwind, resume, and return
           // do.
           TerminatorInst *TI = CurBB->getTerminator();
-          if (!isa<UnwindInst>(TI) && !isa<ReturnInst>(TI) &&
-              !isa<ResumeInst>(TI))
+          if (!isa<ReturnInst>(TI) && !isa<ResumeInst>(TI))
             continue;
 
           Builder.SetInsertPoint(TI->getParent(), TI);

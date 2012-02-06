@@ -1142,11 +1142,6 @@ void CppWriter::printInstruction(const Instruction *I,
     nl(Out);
     break;
   }
-  case Instruction::Unwind: {
-    Out << "new UnwindInst("
-        << bbname << ");";
-    break;
-  }
   case Instruction::Unreachable: {
     Out << "new UnreachableInst("
         << "mod->getContext(), "

@@ -50,32 +50,12 @@ bool UnifyFunctionExitNodes::runOnFunction(Function &F) {
   // return.
   //
   std::vector<BasicBlock*> ReturningBlocks;
-  std::vector<BasicBlock*> UnwindingBlocks;
   std::vector<BasicBlock*> UnreachableBlocks;
   for(Function::iterator I = F.begin(), E = F.end(); I != E; ++I)
     if (isa<ReturnInst>(I->getTerminator()))
       ReturningBlocks.push_back(I);
-    else if (isa<UnwindInst>(I->getTerminator()))
-      UnwindingBlocks.push_back(I);
     else if (isa<UnreachableInst>(I->getTerminator()))
       UnreachableBlocks.push_back(I);
-
-  // Handle unwinding blocks first.
-  if (UnwindingBlocks.empty()) {
-    UnwindBlock = 0;
-  } else if (UnwindingBlocks.size() == 1) {
-    UnwindBlock = UnwindingBlocks.front();
-  } else {
-    UnwindBlock = BasicBlock::Create(F.getContext(), "UnifiedUnwindBlock", &F);
-    new UnwindInst(F.getContext(), UnwindBlock);
-
-    for (std::vector<BasicBlock*>::iterator I = UnwindingBlocks.begin(),
-           E = UnwindingBlocks.end(); I != E; ++I) {
-      BasicBlock *BB = *I;
-      BB->getInstList().pop_back();  // Remove the unwind insn
-      BranchInst::Create(UnwindBlock, BB);
-    }
-  }
 
   // Then unreachable blocks.
   if (UnreachableBlocks.empty()) {
