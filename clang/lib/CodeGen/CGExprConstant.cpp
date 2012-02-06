@@ -727,7 +727,7 @@ public:
     if (RewriteType) {
       // FIXME: Try to avoid packing the array
       std::vector<llvm::Type*> Types;
-      for (unsigned i = 0; i < Elts.size(); ++i)
+      for (unsigned i = 0, e = Elts.size(); i < e; ++i)
         Types.push_back(Elts[i]->getType());
       llvm::StructType *SType = llvm::StructType::get(AType->getContext(),
                                                             Types, true);
@@ -1132,7 +1132,7 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
     if (!CommonElementType) {
       // FIXME: Try to avoid packing the array
       std::vector<llvm::Type*> Types;
-      for (unsigned i = 0; i < Elts.size(); ++i)
+      for (unsigned i = 0, e = Elts.size(); i < e; ++i)
         Types.push_back(Elts[i]->getType());
       llvm::StructType *SType = llvm::StructType::get(VMContext, Types, true);
       return llvm::ConstantStruct::get(SType, Elts);
