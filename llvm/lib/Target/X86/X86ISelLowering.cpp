@@ -4430,14 +4430,15 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     if (Index < 0)
       return DAG.getUNDEF(VT.getVectorElementType());
 
-    int NumElems = VT.getVectorNumElements();
-    SDValue NewV = (Index < NumElems) ? SV->getOperand(0) : SV->getOperand(1);
+    unsigned NumElems = VT.getVectorNumElements();
+    SDValue NewV = (Index < (int)NumElems) ? SV->getOperand(0)
+                                           : SV->getOperand(1);
     return getShuffleScalarElt(NewV.getNode(), Index % NumElems, DAG, Depth+1);
   }
 
   // Recurse into target specific vector shuffles to find scalars.
   if (isTargetShuffle(Opcode)) {
-    int NumElems = VT.getVectorNumElements();
+    unsigned NumElems = VT.getVectorNumElements();
     SmallVector<unsigned, 16> ShuffleMask;
     SDValue ImmN;
 
@@ -4460,9 +4461,9 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
       DecodeMOVLHPSMask(NumElems, ShuffleMask);
       break;
     case X86ISD::PSHUFD:
+    case X86ISD::VPERMILP:
       ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodePSHUFMask(NumElems,
-                      cast<ConstantSDNode>(ImmN)->getZExtValue(),
+      DecodePSHUFMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
                       ShuffleMask);
       break;
     case X86ISD::PSHUFHW:
@@ -4484,14 +4485,9 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
       return getShuffleScalarElt(V.getOperand(OpNum).getNode(), Index, DAG,
                                  Depth+1);
     }
-    case X86ISD::VPERMILP:
-      ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodeVPERMILPMask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
-                        ShuffleMask);
-      break;
     case X86ISD::VPERM2X128:
       ImmN = N->getOperand(N->getNumOperands()-1);
-      DecodeVPERM2F128Mask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
+      DecodeVPERM2X128Mask(VT, cast<ConstantSDNode>(ImmN)->getZExtValue(),
                            ShuffleMask);
       break;
     case X86ISD::MOVDDUP:
@@ -4509,7 +4505,8 @@ static SDValue getShuffleScalarElt(SDNode *N, int Index, SelectionDAG &DAG,
     if (Index < 0)
       return DAG.getUNDEF(VT.getVectorElementType());
 
-    SDValue NewV = (Index < NumElems) ? N->getOperand(0) : N->getOperand(1);
+    SDValue NewV = (Index < (int)NumElems) ? N->getOperand(0)
+                                           : N->getOperand(1);
     return getShuffleScalarElt(NewV.getNode(), Index % NumElems, DAG,
                                Depth+1);
   }
