@@ -383,12 +383,12 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
                           llvm::PointerType::getUnqual(CtorFTy), NULL);
 
   // Construct the constructor and destructor arrays.
-  std::vector<llvm::Constant*> Ctors;
+  SmallVector<llvm::Constant*, 8> Ctors;
   for (CtorList::const_iterator I = Fns.begin(), E = Fns.end(); I != E; ++I) {
-    std::vector<llvm::Constant*> S;
-    S.push_back(llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
-                I->second, false));
-    S.push_back(llvm::ConstantExpr::getBitCast(I->first, CtorPFTy));
+    llvm::Constant *S[] = {
+      llvm::ConstantInt::get(Int32Ty, I->second, false),
+      llvm::ConstantExpr::getBitCast(I->first, CtorPFTy)
+    };
     Ctors.push_back(llvm::ConstantStruct::get(CtorStructTy, S));
   }
 
@@ -612,20 +612,18 @@ void CodeGenModule::EmitLLVMUsed() {
   if (LLVMUsed.empty())
     return;
 
-  llvm::Type *i8PTy = llvm::Type::getInt8PtrTy(VMContext);
-
   // Convert LLVMUsed to what ConstantArray needs.
-  std::vector<llvm::Constant*> UsedArray;
+  SmallVector<llvm::Constant*, 8> UsedArray;
   UsedArray.resize(LLVMUsed.size());
   for (unsigned i = 0, e = LLVMUsed.size(); i != e; ++i) {
     UsedArray[i] =
      llvm::ConstantExpr::getBitCast(cast<llvm::Constant>(&*LLVMUsed[i]),
-                                      i8PTy);
+                                    Int8PtrTy);
   }
 
   if (UsedArray.empty())
     return;
-  llvm::ArrayType *ATy = llvm::ArrayType::get(i8PTy, UsedArray.size());
+  llvm::ArrayType *ATy = llvm::ArrayType::get(Int8PtrTy, UsedArray.size());
 
   llvm::GlobalVariable *GV =
     new llvm::GlobalVariable(getModule(), ATy, false,
@@ -2058,10 +2056,10 @@ QualType CodeGenModule::getObjCFastEnumerationStateType() {
 
 /// GetStringForStringLiteral - Return the appropriate bytes for a
 /// string literal, properly padded to match the literal type.
-std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
+static std::string GetStringForStringLiteral(const StringLiteral *E,
+                                             const ASTContext &Context) {
   assert((E->isAscii() || E->isUTF8())
          && "Use GetConstantArrayFromStringLiteral for wide strings");
-  const ASTContext &Context = getContext();
   const ConstantArrayType *CAT =
     Context.getAsConstantArrayType(E->getType());
   assert(CAT && "String isn't pointer or array!");
@@ -2071,7 +2069,6 @@ std::string CodeGenModule::GetStringForStringLiteral(const StringLiteral *E) {
 
   std::string Str = E->getString().str();
   Str.resize(RealLen, '\0');
-
   return Str;
 }
 
@@ -2081,10 +2078,10 @@ CodeGenModule::GetConstantArrayFromStringLiteral(const StringLiteral *E) {
   
   // Don't emit it as the address of the string, emit the string data itself
   // as an inline array.
-  if (E->getCharByteWidth()==1) {
+  if (E->getCharByteWidth() == 1)
     return llvm::ConstantDataArray::getString(VMContext,
-                                    GetStringForStringLiteral(E), false);
-  }
+                                    GetStringForStringLiteral(E, getContext()),
+                                              false);
   
   llvm::ArrayType *AType =
     cast<llvm::ArrayType>(getTypes().ConvertType(E->getType()));
@@ -2114,7 +2111,7 @@ CodeGenModule::GetAddrOfConstantStringFromLiteral(const StringLiteral *S) {
   // FIXME: We shouldn't need to bitcast the constant in the wide string case.
   CharUnits Align = getContext().getTypeAlignInChars(S->getType());
   if (S->isAscii() || S->isUTF8()) {
-    return GetAddrOfConstantString(GetStringForStringLiteral(S),
+    return GetAddrOfConstantString(GetStringForStringLiteral(S, getContext()),
                                    /* GlobalName */ 0,
                                    Align.getQuantity());
   }
