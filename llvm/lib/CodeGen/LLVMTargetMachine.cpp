@@ -116,6 +116,8 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
   // Set PassConfig options provided by TargetMachine.
   PassConfig->setDisableVerify(DisableVerify);
 
+  PM.add(PassConfig);
+
   PassConfig->addIRPasses();
 
   addPassesToHandleExceptions(TM, PM);
@@ -144,8 +146,6 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
     return NULL;
 
   PassConfig->addMachinePasses();
-
-  delete PassConfig;
 
   return Context;
 }

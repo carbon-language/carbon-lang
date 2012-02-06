@@ -105,7 +105,7 @@ PTX64TargetMachine::PTX64TargetMachine(const Target &T, StringRef TT,
   : PTXTargetMachine(T, TT, CPU, FS, Options, RM, CM, OL, true) {
 }
 
-namespace {
+namespace llvm {
 /// PTX Code Generator Pass Configuration Options.
 class PTXPassConfig : public TargetPassConfig {
 public:
@@ -147,10 +147,12 @@ bool PTXTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
   MCContext *Context = 0;
 
   // FIXME: soon this will be converted to use the exposed TargetPassConfig API.
-  OwningPtr<PTXPassConfig> PassConfig(
-    static_cast<PTXPassConfig*>(createPassConfig(PM)));
+  PTXPassConfig *PassConfig =
+    static_cast<PTXPassConfig*>(createPassConfig(PM));
 
   PassConfig->setDisableVerify(DisableVerify);
+
+  PM.add(PassConfig);
 
   if (PassConfig->addCodeGenPasses(Context))
     return true;
