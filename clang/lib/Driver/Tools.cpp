@@ -4081,6 +4081,7 @@ void darwin::VerifyDebug::ConstructJob(Compilation &C, const JobAction &JA,
   CmdArgs.push_back("--verify");
   CmdArgs.push_back("--debug-info");
   CmdArgs.push_back("--eh-frame");
+  CmdArgs.push_back("--quiet");
 
   assert(Inputs.size() == 1 && "Unable to handle multiple inputs.");
   const InputInfo &Input = Inputs[0];
