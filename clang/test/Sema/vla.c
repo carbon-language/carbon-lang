@@ -60,3 +60,8 @@ void pr5185(int a[*]);
 void pr5185(int a[*]) // expected-error {{variable length array must be bound in function definition}}
 {
 }
+
+// Make sure this isn't treated as an error
+int TransformBug(int a) {
+ return sizeof(*(int(*)[({ goto v; v: a;})]) 0); // expected-warning {{use of GNU statement expression extension}}
+}
