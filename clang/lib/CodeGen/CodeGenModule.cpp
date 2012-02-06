@@ -2072,20 +2072,26 @@ CodeGenModule::GetConstantArrayFromStringLiteral(const StringLiteral *E) {
     cast<llvm::ArrayType>(getTypes().ConvertType(E->getType()));
   llvm::Type *ElemTy = AType->getElementType();
   unsigned NumElements = AType->getNumElements();
-  std::vector<llvm::Constant*> Elts;
-  Elts.reserve(NumElements);
-  
-  for(unsigned i=0;i<E->getLength();++i) {
-    unsigned value = E->getCodeUnit(i);
-    llvm::Constant *C = llvm::ConstantInt::get(ElemTy,value,false);
-    Elts.push_back(C);
+
+  // Wide strings have either 2-byte or 4-byte elements.
+  if (ElemTy->getPrimitiveSizeInBits() == 16) {
+    SmallVector<uint16_t, 32> Elements;
+    Elements.reserve(NumElements);
+
+    for(unsigned i = 0, e = E->getLength(); i != e; ++i)
+      Elements.push_back(E->getCodeUnit(i));
+    Elements.resize(NumElements);
+    return llvm::ConstantDataArray::get(VMContext, Elements);
   }
-  for(unsigned i=E->getLength();i<NumElements;++i) {
-    llvm::Constant *C = llvm::ConstantInt::get(ElemTy,0,false);
-    Elts.push_back(C);
-  }
   
-  return llvm::ConstantArray::get(AType, Elts);
+  assert(ElemTy->getPrimitiveSizeInBits() == 32);
+  SmallVector<uint32_t, 32> Elements;
+  Elements.reserve(NumElements);
+  
+  for(unsigned i = 0, e = E->getLength(); i != e; ++i)
+    Elements.push_back(E->getCodeUnit(i));
+  Elements.resize(NumElements);
+  return llvm::ConstantDataArray::get(VMContext, Elements);
 }
 
 /// GetAddrOfConstantStringFromLiteral - Return a pointer to a
