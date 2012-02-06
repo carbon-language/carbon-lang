@@ -46,7 +46,7 @@ public:
   /// getInstruction - See MCDisassembler.
   DecodeStatus getInstruction(MCInst &instr,
                               uint64_t &size,
-                              const MemoryObject &region,
+                              MemoryObject &region,
                               uint64_t address,
                               raw_ostream &vStream,
                               raw_ostream &cStream) const;
@@ -71,7 +71,7 @@ public:
   /// getInstruction - See MCDisassembler.
   DecodeStatus getInstruction(MCInst &instr,
                               uint64_t &size,
-                              const MemoryObject &region,
+                              MemoryObject &region,
                               uint64_t address,
                               raw_ostream &vStream,
                               raw_ostream &cStream) const;
@@ -341,7 +341,7 @@ EDInstInfo *ThumbDisassembler::getEDInfo() const {
 }
 
 DecodeStatus ARMDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
-                                             const MemoryObject &Region,
+                                             MemoryObject &Region,
                                              uint64_t Address,
                                              raw_ostream &os,
                                              raw_ostream &cs) const {
@@ -691,7 +691,7 @@ void ThumbDisassembler::UpdateThumbVFPPredicate(MCInst &MI) const {
 }
 
 DecodeStatus ThumbDisassembler::getInstruction(MCInst &MI, uint64_t &Size,
-                                               const MemoryObject &Region,
+                                               MemoryObject &Region,
                                                uint64_t Address,
                                                raw_ostream &os,
                                                raw_ostream &cs) const {

@@ -34,7 +34,7 @@ public:
   ///                   is getBase() + getExtent() - 1).
   ///
   /// @result         - The size of the region.
-  virtual uint64_t getExtent() const = 0;
+  virtual uint64_t getExtent() = 0;
   
   /// readByte        - Tries to read a single byte from the region.
   ///
@@ -42,7 +42,7 @@ public:
   /// @param ptr      - A pointer to a byte to be filled in.  Must be non-NULL.
   /// @result         - 0 if successful; -1 if not.  Failure may be due to a
   ///                   bounds violation or an implementation-specific error.
-  virtual int readByte(uint64_t address, uint8_t* ptr) const = 0;
+  virtual int readByte(uint64_t address, uint8_t* ptr) = 0;
   
   /// readBytes       - Tries to read a contiguous range of bytes from the
   ///                   region, up to the end of the region.
@@ -61,7 +61,7 @@ public:
   virtual int readBytes(uint64_t address,
                         uint64_t size,
                         uint8_t* buf,
-                        uint64_t* copied) const;
+                        uint64_t* copied);
 };
 
 }

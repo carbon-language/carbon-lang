@@ -1738,11 +1738,6 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   // Emit metadata.
   WriteModuleMetadata(M, VE, Stream);
 
-  // Emit function bodies.
-  for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F)
-    if (!F->isDeclaration())
-      WriteFunction(*F, VE, Stream);
-
   // Emit metadata.
   WriteModuleMetadataStore(M, Stream);
 
@@ -1752,6 +1747,11 @@ static void WriteModule(const Module *M, BitstreamWriter &Stream) {
   // Emit use-lists.
   if (EnablePreserveUseListOrdering)
     WriteModuleUseLists(M, VE, Stream);
+
+  // Emit function bodies.
+  for (Module::const_iterator F = M->begin(), E = M->end(); F != E; ++F)
+    if (!F->isDeclaration())
+      WriteFunction(*F, VE, Stream);
 
   Stream.ExitBlock();
 }

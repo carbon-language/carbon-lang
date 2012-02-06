@@ -483,13 +483,13 @@ static int AnalyzeBitcode() {
   if (MemBuf->getBufferSize() & 3)
     return Error("Bitcode stream should be a multiple of 4 bytes in length");
 
-  unsigned char *BufPtr = (unsigned char *)MemBuf->getBufferStart();
-  unsigned char *EndBufPtr = BufPtr+MemBuf->getBufferSize();
+  const unsigned char *BufPtr = (unsigned char *)MemBuf->getBufferStart();
+  const unsigned char *EndBufPtr = BufPtr+MemBuf->getBufferSize();
 
   // If we have a wrapper header, parse it and ignore the non-bc file contents.
   // The magic number is 0x0B17C0DE stored in little endian.
   if (isBitcodeWrapper(BufPtr, EndBufPtr))
-    if (SkipBitcodeWrapperHeader(BufPtr, EndBufPtr))
+    if (SkipBitcodeWrapperHeader(BufPtr, EndBufPtr, true))
       return Error("Invalid bitcode wrapper header");
 
   BitstreamReader StreamFile(BufPtr, EndBufPtr);

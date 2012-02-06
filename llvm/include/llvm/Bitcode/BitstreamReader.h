@@ -15,10 +15,12 @@
 #ifndef BITSTREAM_READER_H
 #define BITSTREAM_READER_H
 
+#include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/BitCodes.h"
 #include <climits>
 #include <string>
 #include <vector>
+#include "llvm/Support/StreamableMemoryObject.h"
 
 namespace llvm {
 
@@ -36,9 +38,7 @@ public:
     std::vector<std::pair<unsigned, std::string> > RecordNames;
   };
 private:
-  /// FirstChar/LastChar - This remembers the first and last bytes of the
-  /// stream.
-  const unsigned char *FirstChar, *LastChar;
+  OwningPtr<StreamableMemoryObject> BitcodeBytes;
   
   std::vector<BlockInfo> BlockInfoRecords;
 
@@ -47,10 +47,10 @@ private:
   /// uses this.
   bool IgnoreBlockInfoNames;
   
-  BitstreamReader(const BitstreamReader&);  // NOT IMPLEMENTED
-  void operator=(const BitstreamReader&);  // NOT IMPLEMENTED
+  BitstreamReader(const BitstreamReader&);  // DO NOT IMPLEMENT
+  void operator=(const BitstreamReader&);  // DO NOT IMPLEMENT
 public:
-  BitstreamReader() : FirstChar(0), LastChar(0), IgnoreBlockInfoNames(true) {
+  BitstreamReader() : IgnoreBlockInfoNames(true) {
   }
 
   BitstreamReader(const unsigned char *Start, const unsigned char *End) {
@@ -58,11 +58,16 @@ public:
     init(Start, End);
   }
 
-  void init(const unsigned char *Start, const unsigned char *End) {
-    FirstChar = Start;
-    LastChar = End;
-    assert(((End-Start) & 3) == 0 &&"Bitcode stream not a multiple of 4 bytes");
+  BitstreamReader(StreamableMemoryObject *bytes) {
+    BitcodeBytes.reset(bytes);
   }
+
+  void init(const unsigned char *Start, const unsigned char *End) {
+    assert(((End-Start) & 3) == 0 &&"Bitcode stream not a multiple of 4 bytes");
+    BitcodeBytes.reset(getNonStreamedMemoryObject(Start, End));
+  }
+
+  StreamableMemoryObject &getBitcodeBytes() { return *BitcodeBytes; }
 
   ~BitstreamReader() {
     // Free the BlockInfoRecords.
@@ -75,9 +80,6 @@ public:
       BlockInfoRecords.pop_back();
     }
   }
-  
-  const unsigned char *getFirstChar() const { return FirstChar; }
-  const unsigned char *getLastChar() const { return LastChar; }
 
   /// CollectBlockInfoNames - This is called by clients that want block/record
   /// name information.
@@ -122,7 +124,7 @@ public:
 class BitstreamCursor {
   friend class Deserializer;
   BitstreamReader *BitStream;
-  const unsigned char *NextChar;
+  size_t NextChar;
   
   /// CurWord - This is the current data we have pulled from the stream but have
   /// not returned to the client.
@@ -156,8 +158,7 @@ public:
   }
   
   explicit BitstreamCursor(BitstreamReader &R) : BitStream(&R) {
-    NextChar = R.getFirstChar();
-    assert(NextChar && "Bitstream not initialized yet");
+    NextChar = 0;
     CurWord = 0;
     BitsInCurWord = 0;
     CurCodeSize = 2;
@@ -167,8 +168,7 @@ public:
     freeState();
     
     BitStream = &R;
-    NextChar = R.getFirstChar();
-    assert(NextChar && "Bitstream not initialized yet");
+    NextChar = 0;
     CurWord = 0;
     BitsInCurWord = 0;
     CurCodeSize = 2;
@@ -225,13 +225,38 @@ public:
   /// GetAbbrevIDWidth - Return the number of bits used to encode an abbrev #.
   unsigned GetAbbrevIDWidth() const { return CurCodeSize; }
   
-  bool AtEndOfStream() const {
-    return NextChar == BitStream->getLastChar() && BitsInCurWord == 0;
+  bool isEndPos(size_t pos) {
+    return BitStream->getBitcodeBytes().isObjectEnd(static_cast<uint64_t>(pos));
+  }
+
+  bool canSkipToPos(size_t pos) const {
+    // pos can be skipped to if it is a valid address or one byte past the end.
+    return pos == 0 || BitStream->getBitcodeBytes().isValidAddress(
+        static_cast<uint64_t>(pos - 1));
+  }
+
+  unsigned char getByte(size_t pos) {
+    uint8_t byte = -1;
+    BitStream->getBitcodeBytes().readByte(pos, &byte);
+    return byte;
+  }
+
+  uint32_t getWord(size_t pos) {
+    uint32_t word = -1;
+    BitStream->getBitcodeBytes().readBytes(pos,
+                                           sizeof(word),
+                                           reinterpret_cast<uint8_t *>(&word),
+                                           NULL);
+    return word;
+  }
+
+  bool AtEndOfStream() {
+    return isEndPos(NextChar) && BitsInCurWord == 0;
   }
   
   /// GetCurrentBitNo - Return the bit # of the bit we are reading.
   uint64_t GetCurrentBitNo() const {
-    return (NextChar-BitStream->getFirstChar())*CHAR_BIT - BitsInCurWord;
+    return NextChar*CHAR_BIT - BitsInCurWord;
   }
   
   BitstreamReader *getBitStreamReader() {
@@ -246,12 +271,10 @@ public:
   void JumpToBit(uint64_t BitNo) {
     uintptr_t ByteNo = uintptr_t(BitNo/8) & ~3;
     uintptr_t WordBitNo = uintptr_t(BitNo) & 31;
-    assert(ByteNo <= (uintptr_t)(BitStream->getLastChar()-
-                                 BitStream->getFirstChar()) &&
-           "Invalid location");
+    assert(canSkipToPos(ByteNo) && "Invalid location");
     
     // Move the cursor to the right word.
-    NextChar = BitStream->getFirstChar()+ByteNo;
+    NextChar = ByteNo;
     BitsInCurWord = 0;
     CurWord = 0;
     
@@ -272,7 +295,7 @@ public:
     }
 
     // If we run out of data, stop at the end of the stream.
-    if (NextChar == BitStream->getLastChar()) {
+    if (isEndPos(NextChar)) {
       CurWord = 0;
       BitsInCurWord = 0;
       return 0;
@@ -281,8 +304,7 @@ public:
     unsigned R = CurWord;
 
     // Read the next word from the stream.
-    CurWord = (NextChar[0] <<  0) | (NextChar[1] << 8) |
-              (NextChar[2] << 16) | (NextChar[3] << 24);
+    CurWord = getWord(NextChar);
     NextChar += 4;
 
     // Extract NumBits-BitsInCurWord from what we just read.
@@ -376,9 +398,8 @@ public:
 
     // Check that the block wasn't partially defined, and that the offset isn't
     // bogus.
-    const unsigned char *const SkipTo = NextChar + NumWords*4;
-    if (AtEndOfStream() || SkipTo > BitStream->getLastChar() ||
-                           SkipTo < BitStream->getFirstChar())
+    size_t SkipTo = NextChar + NumWords*4;
+    if (AtEndOfStream() || !canSkipToPos(SkipTo))
       return true;
 
     NextChar = SkipTo;
@@ -409,8 +430,7 @@ public:
     if (NumWordsP) *NumWordsP = NumWords;
 
     // Validate that this block is sane.
-    if (CurCodeSize == 0 || AtEndOfStream() ||
-        NextChar+NumWords*4 > BitStream->getLastChar())
+    if (CurCodeSize == 0 || AtEndOfStream())
       return true;
 
     return false;
@@ -512,24 +532,25 @@ public:
         SkipToWord();  // 32-bit alignment
 
         // Figure out where the end of this blob will be including tail padding.
-        const unsigned char *NewEnd = NextChar+((NumElts+3)&~3);
+        size_t NewEnd = NextChar+((NumElts+3)&~3);
         
         // If this would read off the end of the bitcode file, just set the
         // record to empty and return.
-        if (NewEnd > BitStream->getLastChar()) {
+        if (!canSkipToPos(NewEnd)) {
           Vals.append(NumElts, 0);
-          NextChar = BitStream->getLastChar();
+          NextChar = BitStream->getBitcodeBytes().getExtent();
           break;
         }
         
         // Otherwise, read the number of bytes.  If we can return a reference to
         // the data, do so to avoid copying it.
         if (BlobStart) {
-          *BlobStart = (const char*)NextChar;
+          *BlobStart = (const char*)BitStream->getBitcodeBytes().getPointer(
+              NextChar, NumElts);
           *BlobLen = NumElts;
         } else {
           for (; NumElts; ++NextChar, --NumElts)
-            Vals.push_back(*NextChar);
+            Vals.push_back(getByte(NextChar));
         }
         // Skip over tail padding.
         NextChar = NewEnd;

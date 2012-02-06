@@ -100,9 +100,9 @@ public:
                      Bytes(bytes), Size(size), BasePC(basePC) {}
  
   uint64_t getBase() const { return BasePC; }
-  uint64_t getExtent() const { return Size; }
+  uint64_t getExtent() { return Size; }
 
-  int readByte(uint64_t Addr, uint8_t *Byte) const {
+  int readByte(uint64_t Addr, uint8_t *Byte) {
     if (Addr - BasePC >= Size)
       return -1;
     *Byte = Bytes[Addr - BasePC];

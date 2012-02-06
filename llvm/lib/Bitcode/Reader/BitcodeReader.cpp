@@ -22,6 +22,7 @@
 #include "llvm/AutoUpgrade.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/DataStream.h"
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/MemoryBuffer.h"
 #include "llvm/OperandTraits.h"
@@ -1409,8 +1410,36 @@ bool BitcodeReader::RememberAndSkipFunctionBody() {
   return false;
 }
 
-bool BitcodeReader::ParseModule() {
-  if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
+bool BitcodeReader::GlobalCleanup() {
+  // Patch the initializers for globals and aliases up.
+  ResolveGlobalAndAliasInits();
+  if (!GlobalInits.empty() || !AliasInits.empty())
+    return Error("Malformed global initializer set");
+
+  // Look for intrinsic functions which need to be upgraded at some point
+  for (Module::iterator FI = TheModule->begin(), FE = TheModule->end();
+       FI != FE; ++FI) {
+    Function *NewFn;
+    if (UpgradeIntrinsicFunction(FI, NewFn))
+      UpgradedIntrinsics.push_back(std::make_pair(FI, NewFn));
+  }
+
+  // Look for global variables which need to be renamed.
+  for (Module::global_iterator
+         GI = TheModule->global_begin(), GE = TheModule->global_end();
+       GI != GE; ++GI)
+    UpgradeGlobalVariable(GI);
+  // Force deallocation of memory for these vectors to favor the client that
+  // want lazy deserialization.
+  std::vector<std::pair<GlobalVariable*, unsigned> >().swap(GlobalInits);
+  std::vector<std::pair<GlobalAlias*, unsigned> >().swap(AliasInits);
+  return false;
+}
+
+bool BitcodeReader::ParseModule(bool Resume) {
+  if (Resume)
+    Stream.JumpToBit(NextUnreadBit);
+  else if (Stream.EnterSubBlock(bitc::MODULE_BLOCK_ID))
     return Error("Malformed block record");
 
   SmallVector<uint64_t, 64> Record;
@@ -1424,33 +1453,7 @@ bool BitcodeReader::ParseModule() {
       if (Stream.ReadBlockEnd())
         return Error("Error at end of module block");
 
-      // Patch the initializers for globals and aliases up.
-      ResolveGlobalAndAliasInits();
-      if (!GlobalInits.empty() || !AliasInits.empty())
-        return Error("Malformed global initializer set");
-      if (!FunctionsWithBodies.empty())
-        return Error("Too few function bodies found");
-
-      // Look for intrinsic functions which need to be upgraded at some point
-      for (Module::iterator FI = TheModule->begin(), FE = TheModule->end();
-           FI != FE; ++FI) {
-        Function* NewFn;
-        if (UpgradeIntrinsicFunction(FI, NewFn))
-          UpgradedIntrinsics.push_back(std::make_pair(FI, NewFn));
-      }
-
-      // Look for global variables which need to be renamed.
-      for (Module::global_iterator
-             GI = TheModule->global_begin(), GE = TheModule->global_end();
-           GI != GE; ++GI)
-        UpgradeGlobalVariable(GI);
-
-      // Force deallocation of memory for these vectors to favor the client that
-      // want lazy deserialization.
-      std::vector<std::pair<GlobalVariable*, unsigned> >().swap(GlobalInits);
-      std::vector<std::pair<GlobalAlias*, unsigned> >().swap(AliasInits);
-      std::vector<Function*>().swap(FunctionsWithBodies);
-      return false;
+      return GlobalCleanup();
     }
 
     if (Code == bitc::ENTER_SUBBLOCK) {
@@ -1474,6 +1477,7 @@ bool BitcodeReader::ParseModule() {
       case bitc::VALUE_SYMTAB_BLOCK_ID:
         if (ParseValueSymbolTable())
           return true;
+        SeenValueSymbolTable = true;
         break;
       case bitc::CONSTANTS_BLOCK_ID:
         if (ParseConstants() || ResolveGlobalAndAliasInits())
@@ -1486,13 +1490,25 @@ bool BitcodeReader::ParseModule() {
       case bitc::FUNCTION_BLOCK_ID:
         // If this is the first function body we've seen, reverse the
         // FunctionsWithBodies list.
-        if (!HasReversedFunctionsWithBodies) {
+        if (!SeenFirstFunctionBody) {
           std::reverse(FunctionsWithBodies.begin(), FunctionsWithBodies.end());
-          HasReversedFunctionsWithBodies = true;
+          if (GlobalCleanup())
+            return true;
+          SeenFirstFunctionBody = true;
         }
 
         if (RememberAndSkipFunctionBody())
           return true;
+        // For streaming bitcode, suspend parsing when we reach the function
+        // bodies. Subsequent materialization calls will resume it when
+        // necessary. For streaming, the function bodies must be at the end of
+        // the bitcode. If the bitcode file is old, the symbol table will be
+        // at the end instead and will not have been seen yet. In this case,
+        // just finish the parse now.
+        if (LazyStreamer && SeenValueSymbolTable) {
+          NextUnreadBit = Stream.GetCurrentBitNo();
+          return false;
+        }
         break;
       case bitc::USELIST_BLOCK_ID:
         if (ParseUseLists())
@@ -1651,8 +1667,10 @@ bool BitcodeReader::ParseModule() {
 
       // If this is a function with a body, remember the prototype we are
       // creating now, so that we can match up the body with them later.
-      if (!isProto)
+      if (!isProto) {
         FunctionsWithBodies.push_back(Func);
+        if (LazyStreamer) DeferredFunctionInfo[Func] = 0;
+      }
       break;
     }
     // ALIAS: [alias type, aliasee val#, linkage]
@@ -1691,24 +1709,7 @@ bool BitcodeReader::ParseModule() {
 bool BitcodeReader::ParseBitcodeInto(Module *M) {
   TheModule = 0;
 
-  unsigned char *BufPtr = (unsigned char *)Buffer->getBufferStart();
-  unsigned char *BufEnd = BufPtr+Buffer->getBufferSize();
-
-  if (Buffer->getBufferSize() & 3) {
-    if (!isRawBitcode(BufPtr, BufEnd) && !isBitcodeWrapper(BufPtr, BufEnd))
-      return Error("Invalid bitcode signature");
-    else
-      return Error("Bitcode stream should be a multiple of 4 bytes in length");
-  }
-
-  // If we have a wrapper header, parse it and ignore the non-bc file contents.
-  // The magic number is 0x0B17C0DE stored in little endian.
-  if (isBitcodeWrapper(BufPtr, BufEnd))
-    if (SkipBitcodeWrapperHeader(BufPtr, BufEnd))
-      return Error("Invalid bitcode wrapper header");
-
-  StreamFile.init(BufPtr, BufEnd);
-  Stream.init(StreamFile);
+  if (InitStream()) return true;
 
   // Sniff for the signature.
   if (Stream.Read(8) != 'B' ||
@@ -1750,8 +1751,9 @@ bool BitcodeReader::ParseBitcodeInto(Module *M) {
       if (TheModule)
         return Error("Multiple MODULE_BLOCKs in same stream");
       TheModule = M;
-      if (ParseModule())
+      if (ParseModule(false))
         return true;
+      if (LazyStreamer) return false;
       break;
     default:
       if (Stream.SkipBlock())
@@ -1819,20 +1821,7 @@ bool BitcodeReader::ParseModuleTriple(std::string &Triple) {
 }
 
 bool BitcodeReader::ParseTriple(std::string &Triple) {
-  if (Buffer->getBufferSize() & 3)
-    return Error("Bitcode stream should be a multiple of 4 bytes in length");
-
-  unsigned char *BufPtr = (unsigned char *)Buffer->getBufferStart();
-  unsigned char *BufEnd = BufPtr+Buffer->getBufferSize();
-
-  // If we have a wrapper header, parse it and ignore the non-bc file contents.
-  // The magic number is 0x0B17C0DE stored in little endian.
-  if (isBitcodeWrapper(BufPtr, BufEnd))
-    if (SkipBitcodeWrapperHeader(BufPtr, BufEnd))
-      return Error("Invalid bitcode wrapper header");
-
-  StreamFile.init(BufPtr, BufEnd);
-  Stream.init(StreamFile);
+  if (InitStream()) return true;
 
   // Sniff for the signature.
   if (Stream.Read(8) != 'B' ||
@@ -2708,6 +2697,19 @@ bool BitcodeReader::ParseFunctionBody(Function *F) {
   return false;
 }
 
+/// FindFunctionInStream - Find the function body in the bitcode stream
+bool BitcodeReader::FindFunctionInStream(Function *F,
+       DenseMap<Function*, uint64_t>::iterator DeferredFunctionInfoIterator) {
+  while (DeferredFunctionInfoIterator->second == 0) {
+    if (Stream.AtEndOfStream())
+      return Error("Could not find Function in stream");
+    // ParseModule will parse the next body in the stream and set its
+    // position in the DeferredFunctionInfo map.
+    if (ParseModule(true)) return true;
+  }
+  return false;
+}
+
 //===----------------------------------------------------------------------===//
 // GVMaterializer implementation
 //===----------------------------------------------------------------------===//
@@ -2728,6 +2730,10 @@ bool BitcodeReader::Materialize(GlobalValue *GV, std::string *ErrInfo) {
 
   DenseMap<Function*, uint64_t>::iterator DFII = DeferredFunctionInfo.find(F);
   assert(DFII != DeferredFunctionInfo.end() && "Deferred function not found!");
+  // If its position is recorded as 0, its body is somewhere in the stream
+  // but we haven't seen it yet.
+  if (DFII->second == 0)
+    if (LazyStreamer && FindFunctionInStream(F, DFII)) return true;
 
   // Move the bit stream to the saved position of the deferred function body.
   Stream.JumpToBit(DFII->second);
@@ -2805,6 +2811,57 @@ bool BitcodeReader::MaterializeModule(Module *M, std::string *ErrInfo) {
   return false;
 }
 
+bool BitcodeReader::InitStream() {
+  if (LazyStreamer) return InitLazyStream();
+  return InitStreamFromBuffer();
+}
+
+bool BitcodeReader::InitStreamFromBuffer() {
+  const unsigned char *BufPtr = (unsigned char *)Buffer->getBufferStart();
+  const unsigned char *BufEnd = BufPtr+Buffer->getBufferSize();
+
+  if (Buffer->getBufferSize() & 3) {
+    if (!isRawBitcode(BufPtr, BufEnd) && !isBitcodeWrapper(BufPtr, BufEnd))
+      return Error("Invalid bitcode signature");
+    else
+      return Error("Bitcode stream should be a multiple of 4 bytes in length");
+  }
+
+  // If we have a wrapper header, parse it and ignore the non-bc file contents.
+  // The magic number is 0x0B17C0DE stored in little endian.
+  if (isBitcodeWrapper(BufPtr, BufEnd))
+    if (SkipBitcodeWrapperHeader(BufPtr, BufEnd, true))
+      return Error("Invalid bitcode wrapper header");
+
+  StreamFile.reset(new BitstreamReader(BufPtr, BufEnd));
+  Stream.init(*StreamFile);
+
+  return false;
+}
+
+bool BitcodeReader::InitLazyStream() {
+  // Check and strip off the bitcode wrapper; BitstreamReader expects never to
+  // see it.
+  StreamingMemoryObject *Bytes = new StreamingMemoryObject(LazyStreamer);
+  StreamFile.reset(new BitstreamReader(Bytes));
+  Stream.init(*StreamFile);
+
+  unsigned char buf[16];
+  if (Bytes->readBytes(0, 16, buf, NULL) == -1)
+    return Error("Bitcode stream must be at least 16 bytes in length");
+
+  if (!isBitcode(buf, buf + 16))
+    return Error("Invalid bitcode signature");
+
+  if (isBitcodeWrapper(buf, buf + 4)) {
+    const unsigned char *bitcodeStart = buf;
+    const unsigned char *bitcodeEnd = buf + 16;
+    SkipBitcodeWrapperHeader(bitcodeStart, bitcodeEnd, false);
+    Bytes->dropLeadingBytes(bitcodeStart - buf);
+    Bytes->setKnownObjectSize(bitcodeEnd - bitcodeStart);
+  }
+  return false;
+}
 
 //===----------------------------------------------------------------------===//
 // External interface
@@ -2830,6 +2887,24 @@ Module *llvm::getLazyBitcodeModule(MemoryBuffer *Buffer,
 
   R->materializeForwardReferencedFunctions();
 
+  return M;
+}
+
+
+Module *llvm::getStreamedBitcodeModule(const std::string &name,
+                                       DataStreamer *streamer,
+                                       LLVMContext &Context,
+                                       std::string *ErrMsg) {
+  Module *M = new Module(name, Context);
+  BitcodeReader *R = new BitcodeReader(streamer, Context);
+  M->setMaterializer(R);
+  if (R->ParseBitcodeInto(M)) {
+    if (ErrMsg)
+      *ErrMsg = R->getErrorString();
+    delete M;  // Also deletes R.
+    return 0;
+  }
+  R->setBufferOwned(false); // no buffer to delete
   return M;
 }
 

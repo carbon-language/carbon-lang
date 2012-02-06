@@ -16,6 +16,7 @@ add_llvm_library(LLVMSupport
   ConstantRange.cpp
   CrashRecoveryContext.cpp
   DataExtractor.cpp
+  DataStream.cpp
   Debug.cpp
   DeltaAlgorithm.cpp
   DAGDeltaAlgorithm.cpp
@@ -42,6 +43,7 @@ add_llvm_library(LLVMSupport
   SmallVector.cpp
   SourceMgr.cpp
   Statistic.cpp
+  StreamableMemoryObject.cpp
   StringExtras.cpp
   StringMap.cpp
   StringPool.cpp

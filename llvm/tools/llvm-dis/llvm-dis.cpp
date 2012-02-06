@@ -24,6 +24,7 @@
 #include "llvm/Analysis/DebugInfo.h"
 #include "llvm/Assembly/AssemblyAnnotationWriter.h"
 #include "llvm/Support/CommandLine.h"
+#include "llvm/Support/DataStream.h"
 #include "llvm/Support/FormattedStream.h"
 #include "llvm/Support/ManagedStatic.h"
 #include "llvm/Support/MemoryBuffer.h"
@@ -126,12 +127,19 @@ int main(int argc, char **argv) {
   std::string ErrorMessage;
   std::auto_ptr<Module> M;
 
-  {
-    OwningPtr<MemoryBuffer> BufferPtr;
-    if (error_code ec = MemoryBuffer::getFileOrSTDIN(InputFilename, BufferPtr))
-      ErrorMessage = ec.message();
+  // Use the bitcode streaming interface
+  DataStreamer *streamer = getDataFileStreamer(InputFilename, &ErrorMessage);
+  if (streamer) {
+    std::string DisplayFilename;
+    if (InputFilename == "-")
+      DisplayFilename = "<stdin>";
     else
-      M.reset(ParseBitcodeFile(BufferPtr.get(), Context, &ErrorMessage));
+      DisplayFilename = InputFilename;
+    M.reset(getStreamedBitcodeModule(DisplayFilename, streamer, Context,
+                                     &ErrorMessage));
+    if(M.get() != 0 && M->MaterializeAllPermanently(&ErrorMessage)) {
+      M.reset();
+    }
   }
 
   if (M.get() == 0) {
@@ -183,4 +191,3 @@ int main(int argc, char **argv) {
 
   return 0;
 }
-
