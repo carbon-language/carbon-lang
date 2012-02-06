@@ -19,6 +19,7 @@ class CppValueCastTestCase(TestBase):
     def test_value_cast_with_dsym_and_virtual_inheritance(self):
         """Test SBValue::Cast(SBType) API for C++ types with virtual inheritance."""
         self.buildDsym(dictionary=self.d_virtual)
+        self.setTearDownCleanup(dictionary=self.d_virtual)
         self.do_sbvalue_cast(self.exe_name)
 
     # rdar://problem/10808472 SBValue::Cast test case is failing (virtual inheritance)
@@ -27,6 +28,7 @@ class CppValueCastTestCase(TestBase):
     def test_value_cast_with_dwarf_and_virtual_inheritance(self):
         """Test SBValue::Cast(SBType) API for C++ types with virtual inheritance."""
         self.buildDwarf(dictionary=self.d_virtual)
+        self.setTearDownCleanup(dictionary=self.d_virtual)
         self.do_sbvalue_cast(self.exe_name)
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
@@ -34,12 +36,14 @@ class CppValueCastTestCase(TestBase):
     def test_value_cast_with_dsym_and_regular_inheritance(self):
         """Test SBValue::Cast(SBType) API for C++ types with regular inheritance."""
         self.buildDsym(dictionary=self.d_regular)
+        self.setTearDownCleanup(dictionary=self.d_regular)
         self.do_sbvalue_cast(self.exe_name)
 
     @python_api_test
     def test_value_cast_with_dwarf_and_regular_inheritance(self):
         """Test SBValue::Cast(SBType) API for C++ types with regular inheritance."""
         self.buildDwarf(dictionary=self.d_regular)
+        self.setTearDownCleanup(dictionary=self.d_regular)
         self.do_sbvalue_cast(self.exe_name)
 
     def setUp(self):
