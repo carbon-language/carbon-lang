@@ -784,9 +784,10 @@ Constant *ConstantArray::get(ArrayType *Ty, ArrayRef<Constant*> V) {
 StructType *ConstantStruct::getTypeForElements(LLVMContext &Context,
                                                ArrayRef<Constant*> V,
                                                bool Packed) {
-  SmallVector<Type*, 16> EltTypes;
-  for (unsigned i = 0, e = V.size(); i != e; ++i)
-    EltTypes.push_back(V[i]->getType());
+  unsigned VecSize = V.size();
+  SmallVector<Type*, 16> EltTypes(VecSize);
+  for (unsigned i = 0; i != VecSize; ++i)
+    EltTypes[i] = V[i]->getType();
   
   return StructType::get(Context, EltTypes, Packed);
 }

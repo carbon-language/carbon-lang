@@ -440,11 +440,12 @@ bool FunctionType::isValidArgumentType(Type *ArgTy) {
 StructType *StructType::get(LLVMContext &Context, ArrayRef<Type*> ETypes, 
                             bool isPacked) {
   // FIXME: std::vector is horribly inefficient for this probe.
-  std::vector<Type*> Key;
-  for (unsigned i = 0, e = ETypes.size(); i != e; ++i) {
+  unsigned ETypesSize = ETypes.size();
+  std::vector<Type*> Key(ETypesSize);
+  for (unsigned i = 0, e = ETypesSize; i != e; ++i) {
     assert(isValidElementType(ETypes[i]) &&
            "Invalid type for structure element!");
-    Key.push_back(ETypes[i]);
+    Key[i] = ETypes[i];
   }
   if (isPacked)
     Key.push_back(0);
