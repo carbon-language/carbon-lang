@@ -3003,11 +3003,25 @@ void darwin::CC1::RemoveCC1UnsupportedArgs(ArgStringList &CmdArgs) const {
     StringRef Option = *it;
     bool RemoveOption = false;
 
-    // Remove -faltivec
-    if (Option.equals("-faltivec")) {
-      it = CmdArgs.erase(it);
+    // Erase both -fmodule-cache-path and its argument.
+    if (Option.equals("-fmodule-cache-path") && it+2 != ie) {
+      it = CmdArgs.erase(it, it+2);
       ie = CmdArgs.end();
       continue;
+    }
+
+    // Remove unsupported -f options.
+    if (Option.startswith("-f")) {
+      // Remove -f/-fno- to reduce the number of cases.
+      if (Option.startswith("-fno-"))
+        Option = Option.substr(5);
+      else
+        Option = Option.substr(2);
+      RemoveOption = llvm::StringSwitch<bool>(Option)
+        .Case("altivec", true)
+        .Case("modules", true)
+        .Case("diagnostics-show-note-include-stack", true)
+        .Default(false);
     }
 
     // Handle machine specific options.
