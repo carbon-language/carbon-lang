@@ -497,50 +497,84 @@ ARMLoadStoreOpt::MergeLDR_STR(MachineBasicBlock &MBB, unsigned SIndex,
   return;
 }
 
-static inline bool isMatchingDecrement(MachineInstr *MI, unsigned Base,
-                                       unsigned Bytes, unsigned Limit,
-                                       ARMCC::CondCodes Pred, unsigned PredReg){
+static bool definesCPSR(MachineInstr *MI) {
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (!MO.isReg())
+      continue;
+    if (MO.isDef() && MO.getReg() == ARM::CPSR && !MO.isDead())
+      // If the instruction has live CPSR def, then it's not safe to fold it
+      // into load / store.
+      return true;
+  }
+
+  return false;
+}
+
+static bool isMatchingDecrement(MachineInstr *MI, unsigned Base,
+                                unsigned Bytes, unsigned Limit,
+                                ARMCC::CondCodes Pred, unsigned PredReg) {
   unsigned MyPredReg = 0;
   if (!MI)
     return false;
-  if (MI->getOpcode() != ARM::t2SUBri &&
-      MI->getOpcode() != ARM::tSUBspi &&
-      MI->getOpcode() != ARM::SUBri)
-    return false;
+
+  bool CheckCPSRDef = false;
+  switch (MI->getOpcode()) {
+  default: return false;
+  case ARM::t2SUBri:
+  case ARM::SUBri:
+    CheckCPSRDef = true;
+  // fallthrough
+  case ARM::tSUBspi:
+    break;
+  }
 
   // Make sure the offset fits in 8 bits.
   if (Bytes == 0 || (Limit && Bytes >= Limit))
     return false;
 
   unsigned Scale = (MI->getOpcode() == ARM::tSUBspi) ? 4 : 1; // FIXME
-  return (MI->getOperand(0).getReg() == Base &&
-          MI->getOperand(1).getReg() == Base &&
-          (MI->getOperand(2).getImm()*Scale) == Bytes &&
-          llvm::getInstrPredicate(MI, MyPredReg) == Pred &&
-          MyPredReg == PredReg);
+  if (!(MI->getOperand(0).getReg() == Base &&
+        MI->getOperand(1).getReg() == Base &&
+        (MI->getOperand(2).getImm()*Scale) == Bytes &&
+        llvm::getInstrPredicate(MI, MyPredReg) == Pred &&
+        MyPredReg == PredReg))
+    return false;
+
+  return CheckCPSRDef ? !definesCPSR(MI) : true;
 }
 
-static inline bool isMatchingIncrement(MachineInstr *MI, unsigned Base,
-                                       unsigned Bytes, unsigned Limit,
-                                       ARMCC::CondCodes Pred, unsigned PredReg){
+static bool isMatchingIncrement(MachineInstr *MI, unsigned Base,
+                                unsigned Bytes, unsigned Limit,
+                                ARMCC::CondCodes Pred, unsigned PredReg) {
   unsigned MyPredReg = 0;
   if (!MI)
     return false;
-  if (MI->getOpcode() != ARM::t2ADDri &&
-      MI->getOpcode() != ARM::tADDspi &&
-      MI->getOpcode() != ARM::ADDri)
-    return false;
+
+  bool CheckCPSRDef = false;
+  switch (MI->getOpcode()) {
+  default: return false;
+  case ARM::t2ADDri:
+  case ARM::ADDri:
+    CheckCPSRDef = true;
+  // fallthrough
+  case ARM::tADDspi:
+    break;
+  }
 
   if (Bytes == 0 || (Limit && Bytes >= Limit))
     // Make sure the offset fits in 8 bits.
     return false;
 
   unsigned Scale = (MI->getOpcode() == ARM::tADDspi) ? 4 : 1; // FIXME
-  return (MI->getOperand(0).getReg() == Base &&
-          MI->getOperand(1).getReg() == Base &&
-          (MI->getOperand(2).getImm()*Scale) == Bytes &&
-          llvm::getInstrPredicate(MI, MyPredReg) == Pred &&
-          MyPredReg == PredReg);
+  if (!(MI->getOperand(0).getReg() == Base &&
+        MI->getOperand(1).getReg() == Base &&
+        (MI->getOperand(2).getImm()*Scale) == Bytes &&
+        llvm::getInstrPredicate(MI, MyPredReg) == Pred &&
+        MyPredReg == PredReg))
+    return false;
+
+  return CheckCPSRDef ? !definesCPSR(MI) : true;
 }
 
 static inline unsigned getLSMultipleTransferSize(MachineInstr *MI) {
