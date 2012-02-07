@@ -590,8 +590,8 @@ public:
 
       // Build a struct with the union sub-element as the first member,
       // and padded to the appropriate size
-      std::vector<llvm::Constant*> Elts;
-      std::vector<llvm::Type*> Types;
+      SmallVector<llvm::Constant*, 2> Elts;
+      SmallVector<llvm::Type*, 2> Types;
       Elts.push_back(C);
       Types.push_back(C->getType());
       unsigned CurSize = CGM.getTargetData().getTypeAllocSize(C->getType());
@@ -689,7 +689,6 @@ public:
          isa<ObjCEncodeExpr>(ILE->getInit(0))))
       return Visit(ILE->getInit(0));
 
-    std::vector<llvm::Constant*> Elts;
     llvm::ArrayType *AType =
         cast<llvm::ArrayType>(ConvertType(ILE->getType()));
     llvm::Type *ElemTy = AType->getElementType();
@@ -700,6 +699,8 @@ public:
     unsigned NumInitableElts = std::min(NumInitElements, NumElements);
 
     // Copy initializer elements.
+    std::vector<llvm::Constant*> Elts;
+    Elts.reserve(NumInitableElts + NumElements);
     unsigned i = 0;
     bool RewriteType = false;
     for (; i < NumInitableElts; ++i) {
@@ -727,6 +728,7 @@ public:
     if (RewriteType) {
       // FIXME: Try to avoid packing the array
       std::vector<llvm::Type*> Types;
+      Types.reserve(NumInitableElts + NumElements);
       for (unsigned i = 0, e = Elts.size(); i < e; ++i)
         Types.push_back(Elts[i]->getType());
       llvm::StructType *SType = llvm::StructType::get(AType->getContext(),
@@ -1132,6 +1134,7 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
     if (!CommonElementType) {
       // FIXME: Try to avoid packing the array
       std::vector<llvm::Type*> Types;
+      Types.reserve(NumElements);
       for (unsigned i = 0, e = Elts.size(); i < e; ++i)
         Types.push_back(Elts[i]->getType());
       llvm::StructType *SType = llvm::StructType::get(VMContext, Types, true);
