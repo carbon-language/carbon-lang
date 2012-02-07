@@ -3074,15 +3074,11 @@ class TypoCorrectionConsumer : public VisibleDeclConsumer {
   /// whether there is a keyword with this name.
   TypoEditDistanceMap BestResults;
 
-  /// \brief The worst of the best N edit distances found so far.
-  unsigned MaxEditDistance;
-
   Sema &SemaRef;
 
 public:
   explicit TypoCorrectionConsumer(Sema &SemaRef, IdentifierInfo *Typo)
     : Typo(Typo->getName()),
-      MaxEditDistance((std::numeric_limits<unsigned>::max)()),
       SemaRef(SemaRef) { }
 
   ~TypoCorrectionConsumer() {
@@ -3113,12 +3109,9 @@ public:
     return (*BestResults.begin()->second)[Name];
   }
 
-  unsigned getMaxEditDistance() const {
-    return MaxEditDistance;
-  }
-
   unsigned getBestEditDistance() {
-    return (BestResults.empty()) ? MaxEditDistance : BestResults.begin()->first;
+    return (BestResults.empty()) ?
+        (std::numeric_limits<unsigned>::max)() : BestResults.begin()->first;
   }
 };
 
@@ -3144,40 +3137,22 @@ void TypoCorrectionConsumer::FoundName(StringRef Name) {
   // Use a simple length-based heuristic to determine the minimum possible
   // edit distance. If the minimum isn't good enough, bail out early.
   unsigned MinED = abs((int)Name.size() - (int)Typo.size());
-  if (MinED > MaxEditDistance || (MinED && Typo.size() / MinED < 3))
+  if (MinED && Typo.size() / MinED < 3)
     return;
 
   // Compute an upper bound on the allowable edit distance, so that the
   // edit-distance algorithm can short-circuit.
-  unsigned UpperBound =
-    std::min(unsigned((Typo.size() + 2) / 3), MaxEditDistance);
+  unsigned UpperBound = (Typo.size() + 2) / 3;
 
   // Compute the edit distance between the typo and the name of this
-  // entity. If this edit distance is not worse than the best edit
-  // distance we've seen so far, add it to the list of results.
-  unsigned ED = Typo.edit_distance(Name, true, UpperBound);
-
-  if (ED > MaxEditDistance) {
-    // This result is worse than the best results we've seen so far;
-    // ignore it.
-    return;
-  }
-
-  addName(Name, NULL, ED);
+  // entity, and add the identifier to the list of results.
+  addName(Name, NULL, Typo.edit_distance(Name, true, UpperBound));
 }
 
 void TypoCorrectionConsumer::addKeywordResult(StringRef Keyword) {
-  // Compute the edit distance between the typo and this keyword.
-  // If this edit distance is not worse than the best edit
-  // distance we've seen so far, add it to the list of results.
-  unsigned ED = Typo.edit_distance(Keyword);
-  if (ED > MaxEditDistance) {
-    // This result is worse than the best results we've seen so far;
-    // ignore it.
-    return;
-  }
-
-  addName(Keyword, NULL, ED, NULL, true);
+  // Compute the edit distance between the typo and this keyword,
+  // and add the keyword to the list of results.
+  addName(Keyword, NULL, Typo.edit_distance(Keyword), NULL, true);
 }
 
 void TypoCorrectionConsumer::addName(StringRef Name,
@@ -3628,12 +3603,14 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
     // For unqualified lookup, look through all of the names that we have
     // seen in this translation unit.
+    // FIXME: Re-add the ability to skip very unlikely potential corrections.
     for (IdentifierTable::iterator I = Context.Idents.begin(),
                                 IEnd = Context.Idents.end();
          I != IEnd; ++I)
       Consumer.FoundName(I->getKey());
 
     // Walk through identifiers in external identifier sources.
+    // FIXME: Re-add the ability to skip very unlikely potential corrections.
     if (IdentifierInfoLookup *External
                             = Context.Idents.getExternalIdentifierLookup()) {
       OwningPtr<IdentifierIterator> Iter(External->getIdentifiers());
@@ -3777,10 +3754,9 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
           DeclContext *Ctx = NI->DeclCtx;
           unsigned QualifiedED = ED + NI->EditDistance;
 
-          // Stop searching once the namespaces are too far away to create
+          // FIXME: Stop searching once the namespaces are too far away to create
           // acceptable corrections for this identifier (since the namespaces
-          // are sorted in ascending order by edit distance)
-          if (QualifiedED > Consumer.getMaxEditDistance()) break;
+          // are sorted in ascending order by edit distance).
 
           TmpRes.clear();
           TmpRes.setLookupName(*QRI);
