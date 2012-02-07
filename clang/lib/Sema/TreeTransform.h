@@ -7620,6 +7620,13 @@ TreeTransform<Derived>::TransformCXXTemporaryObjectExpr(
 
 template<typename Derived>
 ExprResult
+TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
+  assert(false && "Lambda expressions cannot be instantiated (yet)");
+  return ExprError();
+}
+
+template<typename Derived>
+ExprResult
 TreeTransform<Derived>::TransformCXXUnresolvedConstructExpr(
                                                   CXXUnresolvedConstructExpr *E) {
   TypeSourceInfo *T = getDerived().TransformType(E->getTypeSourceInfo());

@@ -25,6 +25,7 @@
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/Lex/Token.h"
 #include "clang/Basic/ExceptionSpecificationType.h"
+#include "clang/Basic/Lambda.h"
 #include "clang/Basic/OperatorKinds.h"
 #include "clang/Basic/Specifiers.h"
 #include "llvm/ADT/SmallVector.h"
@@ -1917,31 +1918,14 @@ private:
   SourceLocation LastLocation;
 };
 
-/// LambdaCaptureDefault - The default, if any, capture method for a
-/// lambda expression.
-enum LambdaCaptureDefault {
-  LCD_None,
-  LCD_ByCopy,
-  LCD_ByRef
-};
-
-/// LambdaCaptureKind - The different capture forms in a lambda
-/// introducer: 'this' or a copied or referenced variable.
-enum LambdaCaptureKind {
-  LCK_This,
-  LCK_ByCopy,
-  LCK_ByRef
-};
-
 /// LambdaCapture - An individual capture in a lambda introducer.
 struct LambdaCapture {
   LambdaCaptureKind Kind;
   SourceLocation Loc;
   IdentifierInfo* Id;
 
-  LambdaCapture(LambdaCaptureKind Kind,
-                     SourceLocation Loc,
-                     IdentifierInfo* Id = 0)
+  LambdaCapture(LambdaCaptureKind Kind, SourceLocation Loc,
+                IdentifierInfo* Id = 0)
     : Kind(Kind), Loc(Loc), Id(Id)
   {}
 };

@@ -397,6 +397,35 @@ void TypePrinter::printExtVector(const ExtVectorType *T, std::string &S) {
   print(T->getElementType(), S);
 }
 
+void 
+FunctionProtoType::printExceptionSpecification(std::string &S, 
+                                               PrintingPolicy Policy) const {
+  
+  if (hasDynamicExceptionSpec()) {
+    S += " throw(";
+    if (getExceptionSpecType() == EST_MSAny)
+      S += "...";
+    else
+      for (unsigned I = 0, N = getNumExceptions(); I != N; ++I) {
+        if (I)
+          S += ", ";
+        
+        S += getExceptionType(I).getAsString(Policy);
+      }
+    S += ")";
+  } else if (isNoexceptExceptionSpec(getExceptionSpecType())) {
+    S += " noexcept";
+    if (getExceptionSpecType() == EST_ComputedNoexcept) {
+      S += "(";
+      llvm::raw_string_ostream EOut(S);
+      getNoexceptExpr()->printPretty(EOut, 0, Policy);
+      EOut.flush();
+      S += EOut.str();
+      S += ")";
+    }
+  }
+}
+
 void TypePrinter::printFunctionProto(const FunctionProtoType *T, 
                                      std::string &S) { 
   // If needed for precedence reasons, wrap the inner part in grouping parens.
@@ -470,33 +499,7 @@ void TypePrinter::printFunctionProto(const FunctionProtoType *T,
     S += " &&";
     break;
   }
-
-  if (T->hasDynamicExceptionSpec()) {
-    S += " throw(";
-    if (T->getExceptionSpecType() == EST_MSAny)
-      S += "...";
-    else
-      for (unsigned I = 0, N = T->getNumExceptions(); I != N; ++I) {
-        if (I)
-          S += ", ";
-
-        std::string ExceptionType;
-        print(T->getExceptionType(I), ExceptionType);
-        S += ExceptionType;
-      }
-    S += ")";
-  } else if (isNoexceptExceptionSpec(T->getExceptionSpecType())) {
-    S += " noexcept";
-    if (T->getExceptionSpecType() == EST_ComputedNoexcept) {
-      S += "(";
-      llvm::raw_string_ostream EOut(S);
-      T->getNoexceptExpr()->printPretty(EOut, 0, Policy);
-      EOut.flush();
-      S += EOut.str();
-      S += ")";
-    }
-  }
-
+  T->printExceptionSpecification(S, Policy);
   print(T->getResultType(), S);
 }
 

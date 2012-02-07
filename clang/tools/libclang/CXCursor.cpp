@@ -226,6 +226,7 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
   case Stmt::UnaryExprOrTypeTraitExprClass:
   case Stmt::UnaryTypeTraitExprClass:
   case Stmt::VAArgExprClass:
+  case Stmt::LambdaExprClass:
     K = CXCursor_UnexposedExpr;
     break;
 

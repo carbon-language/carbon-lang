@@ -1953,6 +1953,10 @@ DEF_TRAVERSE_STMT(CXXTemporaryObjectExpr, {
     TRY_TO(TraverseTypeLoc(S->getTypeSourceInfo()->getTypeLoc()));
   })
 
+DEF_TRAVERSE_STMT(LambdaExpr, {
+    TRY_TO(TraverseStmt(S->getBody()));
+  })
+
 DEF_TRAVERSE_STMT(CXXUnresolvedConstructExpr, {
     // This is called for code like 'T()', where T is a template argument.
     TRY_TO(TraverseTypeLoc(S->getTypeSourceInfo()->getTypeLoc()));

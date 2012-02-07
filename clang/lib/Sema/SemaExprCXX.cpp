@@ -4895,6 +4895,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   // at this point, but we need something to attach child declarations to.
   QualType MethodTy;
   TypeSourceInfo *MethodTyInfo;
+  bool ExplicitParams = true;
   if (ParamInfo.getNumTypeObjects() == 0) {
     // C++11 [expr.prim.lambda]p4:
     //   If a lambda-expression does not include a lambda-declarator, it is as 
@@ -4904,6 +4905,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     MethodTy = Context.getFunctionType(Context.DependentTy,
                                        /*Args=*/0, /*NumArgs=*/0, EPI);
     MethodTyInfo = Context.getTrivialTypeSourceInfo(MethodTy);
+    ExplicitParams = false;
   } else {
     assert(ParamInfo.isFunctionDeclarator() &&
            "lambda-declarator is a function");
@@ -4967,9 +4969,10 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByval;
   else if (Intro.Default == LCD_ByRef)
     LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByref;
-
+  LSI->IntroducerRange = Intro.Range;
+  LSI->ExplicitParams = ExplicitParams;
   LSI->Mutable = (Method->getTypeQualifiers() & Qualifiers::Const) == 0;
-
+ 
   // Handle explicit captures.
   for (llvm::SmallVector<LambdaCapture, 4>::const_iterator
          C = Intro.Captures.begin(), 
@@ -5116,8 +5119,78 @@ void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope) {
 
 ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
                                  Stmt *Body, Scope *CurScope) {
-  // FIXME: Implement
+  // Leave the expression-evaluation context.
+  DiscardCleanupsInEvaluationContext();
+  PopExpressionEvaluationContext();
+
+  // Leave the context of the lambda.
+  PopDeclContext();
+
+  // FIXME: End-of-lambda checking
+
+  // Collect information from the lambda scope.
+  llvm::SmallVector<LambdaExpr::Capture, 4> Captures;
+  llvm::SmallVector<Expr *, 4> CaptureInits;
+  LambdaCaptureDefault CaptureDefault;
+  CXXRecordDecl *Class;
+  SourceRange IntroducerRange;
+  bool ExplicitParams;
+  {
+    LambdaScopeInfo *LSI = getCurLambda();
+    Class = LSI->Lambda;
+    IntroducerRange = LSI->IntroducerRange;
+    ExplicitParams = LSI->ExplicitParams;
+
+    // Translate captures.
+    for (unsigned I = 0, N = LSI->Captures.size(); I != N; ++I) {
+      LambdaScopeInfo::Capture From = LSI->Captures[I];
+      assert(!From.isBlockCapture() && "Cannot capture __block variables");
+      bool IsImplicit = I >= LSI->NumExplicitCaptures;
+
+      // Handle 'this' capture.
+      if (From.isThisCapture()) {
+        Captures.push_back(LambdaExpr::Capture(From.getLocation(),
+                                               IsImplicit,
+                                               LCK_This));
+        CaptureInits.push_back(new (Context) CXXThisExpr(From.getLocation(),
+                                                         getCurrentThisType(),
+                                                         /*isImplicit=*/true));
+        continue;
+      }
+
+      VarDecl *Var = From.getVariable();
+      // FIXME: Handle pack expansions.
+      LambdaCaptureKind Kind = From.isCopyCapture()? LCK_ByCopy : LCK_ByRef;
+      Captures.push_back(LambdaExpr::Capture(From.getLocation(), IsImplicit, 
+                                             Kind, Var));
+      CaptureInits.push_back(From.getCopyExpr());
+    }
+
+    switch (LSI->ImpCaptureStyle) {
+    case CapturingScopeInfo::ImpCap_None:
+      CaptureDefault = LCD_None;
+      break;
+
+    case CapturingScopeInfo::ImpCap_LambdaByval:
+      CaptureDefault = LCD_ByCopy;
+      break;
+
+    case CapturingScopeInfo::ImpCap_LambdaByref:
+      CaptureDefault = LCD_ByRef;
+      break;
+
+    case CapturingScopeInfo::ImpCap_Block:
+      llvm_unreachable("block capture in lambda");
+      break;
+    }
+
+    PopFunctionScopeInfo();
+  }
+
+  Expr *Lambda = LambdaExpr::Create(Context, Class, IntroducerRange, 
+                                    CaptureDefault, Captures, ExplicitParams, 
+                                    CaptureInits, Body->getLocEnd());
+  (void)Lambda;
   Diag(StartLoc, diag::err_lambda_unsupported);
-  ActOnLambdaError(StartLoc, CurScope);
   return ExprError();
 }

@@ -1022,6 +1022,11 @@ void ASTStmtWriter::VisitCXXTemporaryObjectExpr(CXXTemporaryObjectExpr *E) {
   Code = serialization::EXPR_CXX_TEMPORARY_OBJECT;
 }
 
+void ASTStmtWriter::VisitLambdaExpr(LambdaExpr *E) {
+  VisitExpr(E);
+  assert(false && "Cannot serialize lambda expressions yet");
+}
+
 void ASTStmtWriter::VisitCXXNamedCastExpr(CXXNamedCastExpr *E) {
   VisitExplicitCastExpr(E);
   Writer.AddSourceRange(SourceRange(E->getOperatorLoc(), E->getRParenLoc()),

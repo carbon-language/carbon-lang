@@ -9637,11 +9637,77 @@ void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc,
       byRef = hasBlocksAttr || type->isReferenceType();
     }
 
-    // Build a copy expression if we are capturing by copy and the copy
-    // might be non-trivial.
+    // Build a copy expression if we are capturing by copy into a
+    // block and the copy might be non-trivial.
     Expr *copyExpr = 0;
     const RecordType *rtype;
-    if (!byRef && getLangOptions().CPlusPlus &&
+    if (isLambda) {
+      CXXRecordDecl *Lambda = cast<LambdaScopeInfo>(CSI)->Lambda;
+      QualType FieldType;
+      if (byRef) {
+        // C++11 [expr.prim.lambda]p15:
+        //   An entity is captured by reference if it is implicitly or
+        //   explicitly captured but not captured by copy. It is
+        //   unspecified whether additional unnamed non-static data
+        //   members are declared in the closure type for entities
+        //   captured by reference.
+        FieldType = Context.getLValueReferenceType(type.getNonReferenceType());
+      } else {
+        // C++11 [expr.prim.lambda]p14:
+        // 
+        //   For each entity captured by copy, an unnamed non-static
+        //   data member is declared in the closure type. The
+        //   declaration order of these members is unspecified. The type
+        //   of such a data member is the type of the corresponding
+        //   captured entity if the entity is not a reference to an
+        //   object, or the referenced type otherwise. [Note: If the
+        //   captured entity is a reference to a function, the
+        //   corresponding data member is also a reference to a
+        //   function. - end note ]
+        if (const ReferenceType *RefType
+                                      = type->getAs<ReferenceType>()) {
+          if (!RefType->getPointeeType()->isFunctionType())
+            FieldType = RefType->getPointeeType();
+          else
+            FieldType = type;
+        } else {
+          FieldType = type;
+        }
+      }
+
+      // Build the non-static data member.
+      FieldDecl *Field
+        = FieldDecl::Create(Context, Lambda, loc, loc, 0, FieldType,
+                            Context.getTrivialTypeSourceInfo(FieldType, loc),
+                            0, false, false);
+      Field->setImplicit(true);
+      Field->setAccess(AS_private);
+
+      // C++11 [expr.prim.lambda]p21:
+      //   When the lambda-expression is evaluated, the entities that
+      //   are captured by copy are used to direct-initialize each
+      //   corresponding non-static data member of the resulting closure
+      //   object. (For array members, the array elements are
+      //   direct-initialized in increasing subscript order.) These
+      //   initializations are performed in the (unspecified) order in
+      //   which the non-static data members are declared.
+      //
+      // FIXME: Introduce an initialization entity for lambda captures.
+      // FIXME: Totally broken for arrays.
+      Expr *Ref = new (Context) DeclRefExpr(var, type.getNonReferenceType(),
+                                            VK_LValue, loc);
+      InitializedEntity InitEntity
+        = InitializedEntity::InitializeMember(Field, /*Parent=*/0);
+      InitializationKind InitKind
+        = InitializationKind::CreateDirect(loc, loc, loc);
+      InitializationSequence Init(*this, InitEntity, InitKind, &Ref, 1);
+      if (!Init.Diagnose(*this, InitEntity, InitKind, &Ref, 1)) {
+        ExprResult Result = Init.Perform(*this, InitEntity, InitKind, 
+                                         MultiExprArg(*this, &Ref, 1));
+        if (!Result.isInvalid())
+          copyExpr = Result.take();
+      }
+    } else if (!byRef && getLangOptions().CPlusPlus &&
         (rtype = type.getNonReferenceType()->getAs<RecordType>())) {
       // The capture logic needs the destructor, so make sure we mark it.
       // Usually this is unnecessary because most local variables have
@@ -9654,10 +9720,10 @@ void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc,
       // According to the blocks spec, the capture of a variable from
       // the stack requires a const copy constructor.  This is not true
       // of the copy/move done to move a __block variable to the heap.
-      // There is no equivalent language in the C++11 specification of lambdas.
-      if (isBlock)
-        type.addConst();
+      type.addConst();
 
+      // FIXME: Add an initialized entity for lambda capture.
+      // FIXME: Won't work for arrays, although we do need this behavior.
       Expr *declRef = new (Context) DeclRefExpr(var, type, VK_LValue, loc);
       ExprResult result =
         PerformCopyInitialization(

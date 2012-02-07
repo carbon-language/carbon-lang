@@ -279,12 +279,18 @@ class LambdaScopeInfo : public CapturingScopeInfo {
 public:
   /// \brief The class that describes the lambda.
   CXXRecordDecl *Lambda;
-  
+
+  /// \brief Source range covering the lambda introducer [...].
+  SourceRange IntroducerRange;
+
   /// \brief The number of captures in the \c Captures list that are 
   /// explicit captures.
   unsigned NumExplicitCaptures;
 
   bool Mutable;
+  
+  /// \brief Whether the (empty) parameter list is explicit.
+  bool ExplicitParams;
 
   LambdaScopeInfo(DiagnosticsEngine &Diag, CXXRecordDecl *Lambda)
     : CapturingScopeInfo(Diag, ImpCap_None), Lambda(Lambda),

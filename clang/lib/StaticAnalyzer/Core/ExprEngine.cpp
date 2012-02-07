@@ -486,6 +486,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::SubstNonTypeTemplateParmPackExprClass:
     case Stmt::SEHTryStmtClass:
     case Stmt::SEHExceptStmtClass:
+    case Stmt::LambdaExprClass:
     case Stmt::SEHFinallyStmtClass: {
       const ExplodedNode *node = Bldr.generateNode(S, Pred, Pred->getState());
       Engine.addAbortedBlock(node, currentBuilderContext->getBlock());

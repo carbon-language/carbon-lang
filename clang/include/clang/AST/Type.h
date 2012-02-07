@@ -2857,6 +2857,9 @@ public:
   bool isSugared() const { return false; }
   QualType desugar() const { return QualType(this, 0); }
 
+  void printExceptionSpecification(std::string &S, 
+                                   PrintingPolicy Policy) const;
+
   static bool classof(const Type *T) {
     return T->getTypeClass() == FunctionProto;
   }

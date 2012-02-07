@@ -14,11 +14,12 @@
 #ifndef LLVM_CLANG_AST_EXPRCXX_H
 #define LLVM_CLANG_AST_EXPRCXX_H
 
-#include "clang/Basic/TypeTraits.h"
-#include "clang/Basic/ExpressionTraits.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/UnresolvedSet.h"
 #include "clang/AST/TemplateBase.h"
+#include "clang/Basic/ExpressionTraits.h"
+#include "clang/Basic/Lambda.h"
+#include "clang/Basic/TypeTraits.h"
 
 namespace clang {
 
@@ -1005,6 +1006,274 @@ public:
   static bool classof(const CXXTemporaryObjectExpr *) { return true; }
 
   friend class ASTStmtReader;
+};
+
+/// \brief A C++ lambda expression, which produces a function object
+/// (of unspecified type) that can be invoked later.
+///
+/// Example:
+/// \code
+/// void low_pass_filter(std::vector<double> &values, double cutoff) {
+///   values.erase(std::remove_if(values.begin(), values.end(),
+//                                [=](double value) { return value > cutoff; });
+/// }
+/// \endcode
+///
+/// Lambda expressions can capture local variables, either by copying
+/// the values of those local variables at the time the function
+/// object is constructed (not when it is called!) or by holding a
+/// reference to the local variable. These captures can occur either
+/// implicitly or can be written explicitly between the square
+/// brackets ([...]) that start the lambda expression.
+class LambdaExpr : public Expr {
+  enum {
+    /// \brief Flag used by the Capture class to indicate that the given
+    /// capture was implicit.
+    Capture_Implicit = 0x01,
+
+    /// \brief Flag used by the Capture class to indciate that the
+    /// given capture was by-copy.
+    Capture_ByCopy = 0x02
+  };
+
+  /// \brief The source range that covers the lambda introducer ([...]).
+  SourceRange IntroducerRange;
+
+  /// \brief The number of captures in this lambda.
+  unsigned NumCaptures : 16;
+
+  /// \brief The number of explicit captures in this lambda.
+  unsigned NumExplicitCaptures : 13;
+
+  /// \brief The default capture kind, which is a value of type
+  /// LambdaCaptureDefault.
+  unsigned CaptureDefault : 2;
+
+  /// \brief Whether this lambda had an explicit parameter list vs. an
+  /// implicit (and empty) parameter list.
+  unsigned ExplicitParams : 1;
+
+  /// \brief The location of the closing brace ('}') that completes
+  /// the lambda.
+  /// 
+  /// The location of the brace is also available by looking up the
+  /// function call operator in the lambda class. However, it is
+  /// stored here to improve the performance of getSourceRange(), and
+  /// to avoid having to deserialize the function call operator from a
+  /// module file just to determine the source range.
+  SourceLocation ClosingBrace;
+
+  // Note: The Create method allocates storage after the LambdaExpr
+  // object, which contains the captures, followed by the capture
+  // initializers, and finally the body of the lambda. The capture
+  // initializers and lambda body are placed next to each other so
+  // that the children() function can visit all of them easily.
+
+public:
+  /// \brief Describes the capture of either a variable or 'this'.
+  class Capture {
+    llvm::PointerIntPair<VarDecl *, 2> VarAndBits;
+    SourceLocation Loc;
+    SourceLocation EllipsisLoc;
+
+    friend class ASTStmtReader;
+    friend class ASTStmtWriter;
+
+  public:
+    /// \brief Create a new capture.
+    ///
+    /// \param Loc The source location associated with this capture.
+    ///
+    /// \param Kind The kind of capture (this, byref, bycopy).
+    ///
+    /// \param Implicit Whether the capture was implicit or explicit.
+    ///
+    /// \param Var The local variable being captured, or null if capturing this.
+    ///
+    /// \param EllipsisLoc The location of the ellipsis (...) for a
+    /// capture that is a pack expansion, or an invalid source
+    /// location to indicate that this is not a pack expansion.
+    Capture(SourceLocation Loc, bool Implicit,
+            LambdaCaptureKind Kind, VarDecl *Var = 0,
+            SourceLocation EllipsisLoc = SourceLocation());
+
+    /// \brief Determine the kind of capture.
+    LambdaCaptureKind getCaptureKind() const;
+
+    /// \brief Determine whether this capture handles the C++ 'this'
+    /// pointer.
+    bool capturesThis() const { return VarAndBits.getPointer() == 0; }
+
+    /// \brief Determine whether this capture handles a variable.
+    bool capturesVariable() const { return VarAndBits.getPointer() != 0; }
+
+    /// \brief Retrieve the declaration of the local variable being
+    /// captured.
+    ///
+    /// This operation is only valid if this capture does not capture
+    /// 'this'.
+    VarDecl *getCapturedVar() const { 
+      assert(!capturesThis() && "No variable available for 'this' capture");
+      return VarAndBits.getPointer();
+    }
+
+    /// \brief Determine whether this was an implicit capture (not
+    /// written between the square brackets introducing the lambda).
+    bool isImplicit() const { return VarAndBits.getInt() & Capture_Implicit; }
+
+    /// \brief Determine whether this was an explicit capture, written
+    /// between the square brackets introducing the lambda.
+    bool isExplicit() const { return !isImplicit(); }
+
+    /// \brief Retrieve the source location of the capture.
+    ///
+    /// For an explicit capture, this returns the location of the
+    /// explicit capture in the source. For an implicit capture, this
+    /// returns the location at which the variable or 'this' was first
+    /// used.
+    SourceLocation getLocation() const { return Loc; }
+
+    /// \brief Determine whether this capture is a pack expansion,
+    /// which captures a function parameter pack.
+    bool isPackExpansion() const { return EllipsisLoc.isValid(); }
+
+    /// \brief Retrieve the location of the ellipsis for a capture
+    /// that is a pack expansion.
+    SourceLocation getEllipsisLoc() const {
+      assert(isPackExpansion() && "No ellipsis location for a non-expansion");
+      return EllipsisLoc;
+    }
+  };
+
+private:
+  /// \brief Construct a lambda expression.
+  LambdaExpr(QualType T, SourceRange IntroducerRange,
+             LambdaCaptureDefault CaptureDefault,
+             ArrayRef<Capture> Captures,
+             bool ExplicitParams,
+             ArrayRef<Expr *> CaptureInits,
+             SourceLocation ClosingBrace);
+
+  Stmt **getStoredStmts() const {
+    LambdaExpr *This = const_cast<LambdaExpr *>(this);
+    return reinterpret_cast<Stmt **>(reinterpret_cast<Capture *>(This + 1)
+                                     + NumCaptures);
+  }
+
+public:
+  /// \brief Construct a new lambda expression.
+  static LambdaExpr *Create(ASTContext &C, 
+                            CXXRecordDecl *Class,
+                            SourceRange IntroducerRange,
+                            LambdaCaptureDefault CaptureDefault,
+                            ArrayRef<Capture> Captures,
+                            bool ExplicitParams,
+                            ArrayRef<Expr *> CaptureInits,
+                            SourceLocation ClosingBrace);
+
+  /// \brief Determine the default capture kind for this lambda.
+  LambdaCaptureDefault getCaptureDefault() const {
+    return static_cast<LambdaCaptureDefault>(CaptureDefault);
+  }
+
+  /// \brief An iterator that walks over the captures of the lambda,
+  /// both implicit and explicit.
+  typedef const Capture *capture_iterator;
+
+  /// \brief Retrieve an iterator pointing to the first lambda capture.
+  capture_iterator capture_begin() const {
+    return reinterpret_cast<const Capture *>(this + 1);
+  }
+
+  /// \brief Retrieve an iterator pointing past the end of the
+  /// sequence of lambda captures.
+  capture_iterator capture_end() const {
+    return capture_begin() + NumCaptures;
+  }
+
+  /// \brief Retrieve an iterator pointing to the first explicit
+  /// lambda capture.
+  capture_iterator explicit_capture_begin() const {
+    return capture_begin();
+  }
+
+  /// \brief Retrieve an iterator pointing past the end of the sequence of
+  /// explicit lambda captures.
+  capture_iterator explicit_capture_end() const {
+    return capture_begin() + NumExplicitCaptures;
+  }
+
+  /// \brief Retrieve an iterator pointing to the first implicit
+  /// lambda capture.
+  capture_iterator implicit_capture_begin() const {
+    return explicit_capture_end();
+  }
+
+  /// \brief Retrieve an iterator pointing past the end of the sequence of
+  /// implicit lambda captures.
+  capture_iterator implicit_capture_end() const {
+    return capture_end();
+  }
+
+  /// \brief Iterator that walks over the capture initialization
+  /// arguments.
+  typedef Expr **capture_init_iterator;
+
+  /// \brief Retrieve the first initialization argument for this
+  /// lambda expression (which initializes the first capture field).
+  capture_init_iterator capture_init_begin() const {
+    return reinterpret_cast<Expr **>(getStoredStmts() + 1);
+  }
+
+  /// \brief Retrieve the iterator pointing one past the last
+  /// initialization argument for this lambda expression (which
+  /// initializes the first capture field).
+  capture_init_iterator capture_init_end() const {
+    return capture_init_begin() + NumCaptures;
+  }
+
+  /// \brief Retrieve the source range covering the lambda introducer,
+  /// which contains the explicit capture list surrounded by square
+  /// brackets ([...]).
+  SourceRange getIntroducerRange() const { return IntroducerRange; }
+
+  /// \brief Retrieve the class that corresponds to the lambda, which
+  /// stores the captures in its fields and provides the various
+  /// operations permitted on a lambda (copying, calling).
+  CXXRecordDecl *getLambdaClass() const;
+
+  /// \brief Retrieve the function call operator associated with this
+  /// lambda expression. 
+  CXXMethodDecl *getCallOperator() const;
+
+  /// \brief Retrieve the body of the lambda.
+  CompoundStmt *getBody() const {
+    return reinterpret_cast<CompoundStmt *>(getStoredStmts()[NumCaptures]);
+  }
+
+  /// \brief Determine whether the lambda is mutable, meaning that any
+  /// captures values can be modified.
+  bool isMutable() const;
+
+  /// \brief Determine whether this lambda has an explicit parameter
+  /// list vs. an implicit (empty) parameter list.
+  bool hasExplicitParameters() const { return ExplicitParams; }
+
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == LambdaExprClass;
+  }
+  static bool classof(const LambdaExpr *) { return true; }
+
+  SourceRange getSourceRange() const {
+    return SourceRange(IntroducerRange.getBegin(), ClosingBrace);
+  }
+
+  child_range children() { 
+    return child_range(getStoredStmts(), getStoredStmts() + NumCaptures + 1);
+  }
+
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
 };
 
 /// CXXScalarValueInitExpr - [C++ 5.2.3p2]

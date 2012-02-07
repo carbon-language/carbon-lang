@@ -127,6 +127,7 @@ def SizeOfPackExpr : DStmt<Expr>;
 def SubstNonTypeTemplateParmExpr : DStmt<Expr>;
 def SubstNonTypeTemplateParmPackExpr : DStmt<Expr>;
 def MaterializeTemporaryExpr : DStmt<Expr>;
+def LambdaExpr : DStmt<Expr>;
 
 // Obj-C Expressions.
 def ObjCStringLiteral : DStmt<Expr>;

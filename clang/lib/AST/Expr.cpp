@@ -2019,6 +2019,16 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
     return MergeCanThrow(CT, CanSubExprsThrow(C, this));
   }
 
+  case LambdaExprClass: {
+    const LambdaExpr *Lambda = cast<LambdaExpr>(this);
+    CanThrowResult CT = Expr::CT_Cannot;
+    for (LambdaExpr::capture_init_iterator Cap = Lambda->capture_init_begin(),
+                                        CapEnd = Lambda->capture_init_end();
+         Cap != CapEnd; ++Cap)
+      CT = MergeCanThrow(CT, (*Cap)->CanThrow(C));
+    return CT;
+  }
+
   case CXXNewExprClass: {
     CanThrowResult CT;
     if (isTypeDependent())

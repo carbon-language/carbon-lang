@@ -330,6 +330,7 @@ static Cl::Kinds ClassifyInternal(ASTContext &Ctx, const Expr *E) {
     // Some C++ expressions are always class temporaries.
   case Expr::CXXConstructExprClass:
   case Expr::CXXTemporaryObjectExprClass:
+  case Expr::LambdaExprClass:
     return Cl::CL_ClassTemporary;
 
   case Expr::VAArgExprClass:
