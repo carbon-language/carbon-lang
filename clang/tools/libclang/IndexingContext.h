@@ -459,7 +459,7 @@ private:
 
   CXCursor getRefCursor(const NamedDecl *D, SourceLocation Loc);
 
-  static bool shouldIgnoreIfImplicit(const NamedDecl *D);
+  static bool shouldIgnoreIfImplicit(const Decl *D);
 };
 
 class ScratchAlloc {

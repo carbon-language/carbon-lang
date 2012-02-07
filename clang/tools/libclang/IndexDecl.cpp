@@ -243,6 +243,9 @@ public:
 } // anonymous namespace
 
 void IndexingContext::indexDecl(const Decl *D) {
+  if (D->isImplicit() && shouldIgnoreIfImplicit(D))
+    return;
+
   bool Handled = IndexingDeclVisitor(*this).Visit(const_cast<Decl*>(D));
   if (!Handled && isa<DeclContext>(D))
     indexDeclContext(cast<DeclContext>(D));
