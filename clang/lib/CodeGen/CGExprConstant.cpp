@@ -40,7 +40,7 @@ class ConstStructBuilder {
   bool Packed;
   CharUnits NextFieldOffsetInChars;
   CharUnits LLVMStructAlignment;
-  std::vector<llvm::Constant *> Elements;
+  SmallVector<llvm::Constant *, 16> Elements;
 public:
   static llvm::Constant *BuildStruct(CodeGenModule &CGM, CodeGenFunction *CGF,
                                      InitListExpr *ILE);
@@ -301,7 +301,7 @@ void ConstStructBuilder::AppendTailPadding(CharUnits RecordSize) {
 }
 
 void ConstStructBuilder::ConvertStructToPacked() {
-  std::vector<llvm::Constant *> PackedElements;
+  SmallVector<llvm::Constant *, 16> PackedElements;
   CharUnits ElementOffsetInChars = CharUnits::Zero();
 
   for (unsigned i = 0, e = Elements.size(); i != e; ++i) {
@@ -333,7 +333,7 @@ void ConstStructBuilder::ConvertStructToPacked() {
   assert(ElementOffsetInChars == NextFieldOffsetInChars &&
          "Packing the struct changed its size!");
 
-  Elements = PackedElements;
+  Elements.swap(PackedElements);
   LLVMStructAlignment = CharUnits::One();
   Packed = true;
 }
@@ -1172,7 +1172,7 @@ CodeGenModule::getMemberPointerConstant(const UnaryOperator *uo) {
 
 static void
 FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
-                             std::vector<llvm::Constant *> &Elements,
+                             SmallVectorImpl<llvm::Constant *> &Elements,
                              uint64_t StartOffset) {
   assert(StartOffset % CGM.getContext().getCharWidth() == 0 && 
          "StartOffset not byte aligned!");
@@ -1353,7 +1353,7 @@ static llvm::Constant *EmitNullConstantForBase(CodeGenModule &CGM,
   unsigned numBaseElements = baseArrayType->getNumElements();
 
   // Fill in null data member pointers.
-  std::vector<llvm::Constant *> baseElements(numBaseElements);
+  SmallVector<llvm::Constant *, 16> baseElements(numBaseElements);
   FillInNullDataMemberPointers(CGM, CGM.getContext().getTypeDeclType(base),
                                baseElements, 0);
 
