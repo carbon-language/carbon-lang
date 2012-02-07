@@ -131,7 +131,7 @@ const char* AsanGetEnv(const char* name) {
     inited = true;
     size_t environ_size;
     len = ReadFileToBuffer("/proc/self/environ",
-                           &environ, &environ_size, 1 << 20);
+                           &environ, &environ_size, 1 << 26);
   }
   if (!environ || len == 0) return NULL;
   size_t namelen = internal_strlen(name);
@@ -160,7 +160,7 @@ int AsanClose(int fd) {
 AsanProcMaps::AsanProcMaps() {
   proc_self_maps_buff_len_ =
       ReadFileToBuffer("/proc/self/maps", &proc_self_maps_buff_,
-                       &proc_self_maps_buff_mmaped_size_, 1 << 20);
+                       &proc_self_maps_buff_mmaped_size_, 1 << 26);
   CHECK(proc_self_maps_buff_len_ > 0);
   // AsanWrite(2, proc_self_maps_buff_, proc_self_maps_buff_len_);
   Reset();
