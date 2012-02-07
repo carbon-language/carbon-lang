@@ -266,8 +266,8 @@ static bool CommaSeparateAndAddOccurence(Option *Handler, unsigned pos,
 /// and a null value (StringRef()).  The later is accepted for arguments that
 /// don't allow a value (-foo) the former is rejected (-foo=).
 static inline bool ProvideOption(Option *Handler, StringRef ArgName,
-                                 StringRef Value, int argc, char **argv,
-                                 int &i) {
+                                 StringRef Value, int argc,
+                                 const char *const *argv, int &i) {
   // Is this a multi-argument option?
   unsigned NumAdditionalVals = Handler->getNumAdditionalVals();
 
@@ -495,10 +495,10 @@ void cl::ParseEnvironmentOptions(const char *progName, const char *envVar,
 /// ExpandResponseFiles - Copy the contents of argv into newArgv,
 /// substituting the contents of the response files for the arguments
 /// of type @file.
-static void ExpandResponseFiles(unsigned argc, char** argv,
+static void ExpandResponseFiles(unsigned argc, const char*const* argv,
                                 std::vector<char*>& newArgv) {
   for (unsigned i = 1; i != argc; ++i) {
-    char *arg = argv[i];
+    const char *arg = argv[i];
 
     if (arg[0] == '@') {
       sys::PathWithStatus respFile(++arg);
@@ -528,7 +528,7 @@ static void ExpandResponseFiles(unsigned argc, char** argv,
   }
 }
 
-void cl::ParseCommandLineOptions(int argc, char **argv,
+void cl::ParseCommandLineOptions(int argc, const char * const *argv,
                                  const char *Overview, bool ReadResponseFiles) {
   // Process all registered options.
   SmallVector<Option*, 4> PositionalOpts;
