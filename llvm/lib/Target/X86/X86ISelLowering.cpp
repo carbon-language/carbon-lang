@@ -3713,7 +3713,7 @@ static unsigned getShuffleVPERM2X128Immediate(ShuffleVectorSDNode *SVOp) {
 /// type is 32 or 64. In the VPERMILPS the high half of the mask should point
 /// to the same elements of the low, but to the higher half of the source.
 /// In VPERMILPD the two lanes could be shuffled independently of each other
-/// with the same restriction that lanes can't be crossed.
+/// with the same restriction that lanes can't be crossed. Also handles PSHUFDY.
 static bool isVPERMILPMask(ArrayRef<int> Mask, EVT VT, bool HasAVX) {
   if (!HasAVX)
     return false;
@@ -6467,6 +6467,9 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
 
     unsigned TargetMask = X86::getShuffleSHUFImmediate(SVOp);
 
+    if (HasAVX && (VT == MVT::v4f32 || VT == MVT::v2f64))
+      return getTargetShuffleNode(X86ISD::VPERMILP, dl, VT, V1, TargetMask, DAG);
+
     if (HasSSE2 && (VT == MVT::v4f32 || VT == MVT::v4i32))
       return getTargetShuffleNode(X86ISD::PSHUFD, dl, VT, V1, TargetMask, DAG);
 
@@ -6636,9 +6639,13 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
     return getTargetShuffleNode(X86ISD::MOVDDUP, dl, VT, V1, DAG);
 
   // Handle VPERMILPS/D* permutations
-  if (isVPERMILPMask(M, VT, HasAVX))
+  if (isVPERMILPMask(M, VT, HasAVX)) {
+    if (HasAVX2 && VT == MVT::v8i32)
+      return getTargetShuffleNode(X86ISD::PSHUFD, dl, VT, V1,
+                                  X86::getShuffleSHUFImmediate(SVOp), DAG);
     return getTargetShuffleNode(X86ISD::VPERMILP, dl, VT, V1,
                                 X86::getShuffleSHUFImmediate(SVOp), DAG);
+  }
 
   // Handle VPERM2F128/VPERM2I128 permutations
   if (isVPERM2X128Mask(M, VT, HasAVX))

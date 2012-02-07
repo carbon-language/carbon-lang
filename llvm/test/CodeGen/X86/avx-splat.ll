@@ -32,7 +32,7 @@ entry:
   ret <4 x i64> %vecinit6.i
 }
 
-; CHECK: vshufpd $0
+; CHECK: vpermilpd $0
 ; CHECK-NEXT: vinsertf128 $1
 define <4 x double> @funcD(double %q) nounwind uwtable readnone ssp {
 entry:

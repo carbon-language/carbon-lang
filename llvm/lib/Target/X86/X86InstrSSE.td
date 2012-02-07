@@ -3993,21 +3993,19 @@ def mi : Ii8<0x70, MRMSrcMem,
                                       (undef))))]>;
 }
 
-multiclass sse2_pshuffle_y<string OpcodeStr, ValueType vt, PatFrag pshuf_frag,
-                           PatFrag bc_frag> {
+multiclass sse2_pshuffle_y<string OpcodeStr, ValueType vt, SDNode OpNode> {
 def Yri : Ii8<0x70, MRMSrcReg,
               (outs VR256:$dst), (ins VR256:$src1, i8imm:$src2),
               !strconcat(OpcodeStr,
                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-              [(set VR256:$dst, (vt (pshuf_frag:$src2 VR256:$src1,
-                                                      (undef))))]>;
+              [(set VR256:$dst, (vt (OpNode VR256:$src1, (i8 imm:$src2))))]>;
 def Ymi : Ii8<0x70, MRMSrcMem,
               (outs VR256:$dst), (ins i256mem:$src1, i8imm:$src2),
               !strconcat(OpcodeStr,
                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-              [(set VR256:$dst, (vt (pshuf_frag:$src2
-                                      (bc_frag (memopv4i64 addr:$src1)),
-                                      (undef))))]>;
+              [(set VR256:$dst,
+                (vt (OpNode (bitconvert (memopv4i64 addr:$src1)),
+                             (i8 imm:$src2))))]>;
 }
 } // ExeDomain = SSEPackedInt
 
@@ -4053,17 +4051,9 @@ let Predicates = [HasAVX] in {
 }
 
 let Predicates = [HasAVX2] in {
-  let AddedComplexity = 5 in
-  defm VPSHUFD : sse2_pshuffle_y<"vpshufd", v8i32, pshufd, bc_v8i32>, TB,
-                                 OpSize, VEX;
-
-  // SSE2 with ImmT == Imm8 and XS prefix.
-  defm VPSHUFHW : sse2_pshuffle_y<"vpshufhw", v16i16, pshufhw, bc_v16i16>, XS,
-                                  VEX;
-
-  // SSE2 with ImmT == Imm8 and XD prefix.
-  defm VPSHUFLW : sse2_pshuffle_y<"vpshuflw", v16i16, pshuflw, bc_v16i16>, XD,
-                                  VEX;
+  defm VPSHUFD : sse2_pshuffle_y<"vpshufd", v8i32, X86PShufd>, TB, OpSize, VEX;
+  defm VPSHUFHW : sse2_pshuffle_y<"vpshufhw", v16i16, X86PShufhw>, XS, VEX;
+  defm VPSHUFLW : sse2_pshuffle_y<"vpshuflw", v16i16, X86PShuflw>, XD, VEX;
 }
 
 let Predicates = [HasSSE2] in {
@@ -4226,9 +4216,9 @@ let Predicates = [HasAVX] in {
 // Splat v2f64 / v2i64
 let AddedComplexity = 10 in {
   def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
-            (PUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
-  def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
             (VPUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasAVX]>;
+  def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
+            (PUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
 }
 
 //===---------------------------------------------------------------------===//
@@ -7200,6 +7190,19 @@ def : Pat<(v8i32 (X86VPermilp (bc_v8i32 (memopv4i64 addr:$src1)),
           (VPERMILPSYmi addr:$src1, imm:$imm)>;
 def : Pat<(v4i64 (X86VPermilp (memopv4i64 addr:$src1), (i8 imm:$imm))),
           (VPERMILPDYmi addr:$src1, imm:$imm)>;
+
+def : Pat<(v4f32 (X86VPermilp VR128:$src1, (i8 imm:$imm))),
+          (VPERMILPSri VR128:$src1, imm:$imm)>;
+def : Pat<(v2f64 (X86VPermilp VR128:$src1, (i8 imm:$imm))),
+          (VPERMILPDri VR128:$src1, imm:$imm)>;
+def : Pat<(v2i64 (X86VPermilp VR128:$src1, (i8 imm:$imm))),
+          (VPERMILPDri VR128:$src1, imm:$imm)>;
+def : Pat<(v4f32 (X86VPermilp (memopv4f32 addr:$src1), (i8 imm:$imm))),
+          (VPERMILPSmi addr:$src1, imm:$imm)>;
+def : Pat<(v2f64 (X86VPermilp (memopv2f64 addr:$src1), (i8 imm:$imm))),
+          (VPERMILPDmi addr:$src1, imm:$imm)>;
+def : Pat<(v2i64 (X86VPermilp (memopv2i64 addr:$src1), (i8 imm:$imm))),
+          (VPERMILPDmi addr:$src1, imm:$imm)>;
 }
 
 //===----------------------------------------------------------------------===//

@@ -6,7 +6,7 @@ define <4 x float> @test1(<4 x float> %a) nounwind {
   ret <4 x float> %b
 ; CHECK: test1:
 ; CHECK: vshufps
-; CHECK: vpshufd
+; CHECK: vpermilps
 }
 
 ; rdar://10538417
@@ -98,22 +98,40 @@ define i32 @test10(<4 x i32> %a) nounwind {
 }
 
 define <4 x float> @test11(<4 x float> %a) nounwind  {
-; CHECK: pshufd $27
+; check: test11
+; check: vpermilps $27
   %tmp1 = shufflevector <4 x float> %a, <4 x float> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
   ret <4 x float> %tmp1
 }
 
 define <4 x float> @test12(<4 x float>* %a) nounwind  {
-; CHECK: pshufd $27, (
+; CHECK: test12
+; CHECK: vpermilps $27, (
   %tmp0 = load <4 x float>* %a
   %tmp1 = shufflevector <4 x float> %tmp0, <4 x float> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
   ret <4 x float> %tmp1
 }
 
-;CHECK: test13
-;CHECK: shufd
-;CHECK: ret
-define <4 x i32> @test13(<2 x i32>%x) nounwind readnone {
+define <4 x i32> @test13(<4 x i32> %a) nounwind  {
+; check: test13
+; check: vpshufd $27
+  %tmp1 = shufflevector <4 x i32> %a, <4 x i32> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
+  ret <4 x i32> %tmp1
+}
+
+define <4 x i32> @test14(<4 x i32>* %a) nounwind  {
+; CHECK: test14
+; CHECK: vpshufd $27, (
+  %tmp0 = load <4 x i32>* %a
+  %tmp1 = shufflevector <4 x i32> %tmp0, <4 x i32> undef, <4 x i32> <i32 3, i32 2, i32 1, i32 0>
+  ret <4 x i32> %tmp1
+}
+
+; CHECK: test15
+; CHECK: vpshufd $8
+; CHECK: ret
+define <4 x i32> @test15(<2 x i32>%x) nounwind readnone {
   %x1 = shufflevector <2 x i32> %x, <2 x i32> undef, <4 x i32> <i32 0, i32 1, i32 undef, i32 undef>
   ret <4 x i32>%x1
 }
+
