@@ -246,8 +246,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
     CM = llvm::CodeModel::Default;
   }
 
-  std::vector<const char *> BackendArgs;
-  BackendArgs.reserve(16);
+  SmallVector<const char *, 16> BackendArgs;
   BackendArgs.push_back("clang"); // Fake program name.
   if (!CodeGenOpts.DebugPass.empty()) {
     BackendArgs.push_back("-debug-pass");
@@ -265,7 +264,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
     BackendArgs.push_back("-global-merge=false");
   BackendArgs.push_back(0);
   llvm::cl::ParseCommandLineOptions(BackendArgs.size() - 1,
-                                    const_cast<char **>(&BackendArgs[0]));
+                                    BackendArgs.data());
 
   std::string FeaturesStr;
   if (TargetOpts.Features.size()) {

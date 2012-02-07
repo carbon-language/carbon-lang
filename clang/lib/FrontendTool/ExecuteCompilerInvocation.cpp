@@ -157,7 +157,7 @@ bool clang::ExecuteCompilerInvocation(CompilerInstance *Clang) {
     for (unsigned i = 0; i != NumArgs; ++i)
       Args[i + 1] = Clang->getFrontendOpts().LLVMArgs[i].c_str();
     Args[NumArgs + 1] = 0;
-    llvm::cl::ParseCommandLineOptions(NumArgs + 1, const_cast<char **>(Args));
+    llvm::cl::ParseCommandLineOptions(NumArgs + 1, Args);
   }
 
   // Honor -analyzer-checker-help.
