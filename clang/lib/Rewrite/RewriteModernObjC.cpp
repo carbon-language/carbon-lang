@@ -5172,7 +5172,7 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 
 /// WriteModernMetadataDeclarations - Writes out metadata declarations for modern ABI.
 /// struct _prop_t {
-///   char *name;
+///   const char *name;
 ///   char *attributes;
 /// }
 
@@ -5221,15 +5221,8 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
     return;
   
   Result += "\nstruct _prop_t {\n";
-  Result += "\tchar *name;\n";
-  Result += "\tchar *attributes;\n";
-  Result += "};\n";
-  
-  Result += "\nstruct _prop_list_t {\n";
-  Result += "\tunsigned int entsize;      // sizeof(struct _prop_t)\n";
-  Result += "\tunsigned int count_of_properties;\n";
-  
-  Result += "\tstruct _prop_t prop_list[/*count_of_properties*/];\n";
+  Result += "\tconst char *name;\n";
+  Result += "\tconst char *attributes;\n";
   Result += "};\n";
   
   Result += "\nstruct _protocol_t;\n";
@@ -5272,6 +5265,16 @@ static void Write_method_list_t_TypeDecl(std::string &Result,
   Result += "}";
 }
 
+static void Write__prop_list_t_TypeDecl(std::string &Result,
+                                        unsigned int property_count) {
+  Result += "struct /*_prop_list_t*/"; Result += " {\n";
+  Result += "\tunsigned int entsize;  // sizeof(struct _prop_t)\n";
+  Result += "\tunsigned int count_of_properties;\n";
+  Result += "\tstruct _prop_t prop_list[";
+  Result += utostr(property_count); Result += "];\n";
+  Result += "}";
+}
+
 static void Write_method_list_t_initializer(ASTContext *Context, std::string &Result,
                                             ArrayRef<ObjCMethodDecl *> Methods,
                                             StringRef VarName,
@@ -5301,6 +5304,40 @@ static void Write_method_list_t_initializer(ASTContext *Context, std::string &Re
         Result += "0}}\n";
       else
         Result += "0},\n";
+    }
+    Result += "};\n";
+  }
+}
+
+static void Write__prop_list_t_initializer(RewriteModernObjC &RewriteObj,
+                                           ASTContext *Context, std::string &Result,
+                                           ArrayRef<ObjCPropertyDecl *> Properties,
+                                           const Decl *Container,
+                                           StringRef VarName,
+                                           StringRef ProtocolName) {
+  if (Properties.size() > 0) {
+    Result += "\nstatic ";
+    Write__prop_list_t_TypeDecl(Result, Properties.size());
+    Result += " "; Result += VarName;
+    Result += ProtocolName; 
+    Result += " __attribute__ ((used, section (\"__DATA,__objc_const\"))) = {\n";
+    Result += "\t"; Result += "sizeof(_prop_t)"; Result += ",\n";
+    Result += "\t"; Result += utostr(Properties.size()); Result += ",\n";
+    for (unsigned i = 0, e = Properties.size(); i < e; i++) {
+      ObjCPropertyDecl *PropDecl = Properties[i];
+      if (i == 0)
+        Result += "\t{{\"";
+      else
+        Result += "\t{\"";
+      Result += PropDecl->getName(); Result += "\",";
+      std::string PropertyTypeString, QuotePropertyTypeString;
+      Context->getObjCEncodingForPropertyDecl(PropDecl, Container, PropertyTypeString);
+      RewriteObj.QuoteDoublequotes(PropertyTypeString, QuotePropertyTypeString);
+      Result += "\""; Result += QuotePropertyTypeString; Result += "\"";
+      if (i  == e-1)
+        Result += "}}\n";
+      else
+        Result += "},\n";
     }
     Result += "};\n";
   }
@@ -5374,6 +5411,18 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(
   Write_method_list_t_initializer(Context, Result, OptClassMethods, 
                                   "_OBJC_PROTOCOL_OPT_CLASS_METHODS_",
                                   PDecl->getNameAsString());
+  
+  // Protocol's property metadata.
+  std::vector<ObjCPropertyDecl *> ProtocolProperties;
+  for (ObjCContainerDecl::prop_iterator I = PDecl->prop_begin(),
+       E = PDecl->prop_end(); I != E; ++I)
+    ProtocolProperties.push_back(*I);
+  
+  Write__prop_list_t_initializer(*this, Context, Result, ProtocolProperties,
+                                 /* Container */0,
+                                 "_OBJC_PROTOCOL_PROPERTIES_",
+                                 PDecl->getNameAsString());
+    
   
   
   // ====================================Legacy ABI ====================================================
