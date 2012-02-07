@@ -729,7 +729,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     RecTy *Type = 0;
 
     switch (Lex.getCode()) {
-    default: assert(0 && "Unhandled code!");
+    default: llvm_unreachable("Unhandled code!");
     case tgtok::XCast:
       Lex.Lex();  // eat the operation
       Code = UnOpInit::CAST;
@@ -845,7 +845,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     RecTy *Type = 0;
 
     switch (OpTok) {
-    default: assert(0 && "Unhandled code!");
+    default: llvm_unreachable("Unhandled code!");
     case tgtok::XConcat: Code = BinOpInit::CONCAT;Type = DagRecTy::get(); break;
     case tgtok::XSRA:    Code = BinOpInit::SRA;   Type = IntRecTy::get(); break;
     case tgtok::XSRL:    Code = BinOpInit::SRL;   Type = IntRecTy::get(); break;
@@ -909,7 +909,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     tgtok::TokKind LexCode = Lex.getCode();
     Lex.Lex();  // eat the operation
     switch (LexCode) {
-    default: assert(0 && "Unhandled code!");
+    default: llvm_unreachable("Unhandled code!");
     case tgtok::XIf:
       Code = TernOpInit::IF;
       break;
@@ -954,7 +954,7 @@ Init *TGParser::ParseOperation(Record *CurRec) {
     Lex.Lex();  // eat the ')'
 
     switch (LexCode) {
-    default: assert(0 && "Unhandled code!");
+    default: llvm_unreachable("Unhandled code!");
     case tgtok::XIf: {
       // FIXME: The `!if' operator doesn't handle non-TypedInit well at
       // all. This can be made much more robust.

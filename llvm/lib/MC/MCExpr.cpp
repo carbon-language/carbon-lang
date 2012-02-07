@@ -132,7 +132,7 @@ void MCExpr::print(raw_ostream &OS) const {
   }
   }
 
-  assert(0 && "Invalid expression kind!");
+  llvm_unreachable("Invalid expression kind!");
 }
 
 void MCExpr::dump() const {
@@ -576,8 +576,7 @@ bool MCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
   }
   }
 
-  assert(0 && "Invalid assembly expression kind!");
-  return false;
+  llvm_unreachable("Invalid assembly expression kind!");
 }
 
 const MCSection *MCExpr::FindAssociatedSection() const {
@@ -618,6 +617,5 @@ const MCSection *MCExpr::FindAssociatedSection() const {
   }
   }
 
-  assert(0 && "Invalid assembly expression kind!");
-  return 0;
+  llvm_unreachable("Invalid assembly expression kind!");
 }

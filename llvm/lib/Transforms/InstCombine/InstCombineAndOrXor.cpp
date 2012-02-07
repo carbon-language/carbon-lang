@@ -110,7 +110,7 @@ static Value *getFCmpValue(bool isordered, unsigned code,
                            InstCombiner::BuilderTy *Builder) {
   CmpInst::Predicate Pred;
   switch (code) {
-  default: assert(0 && "Illegal FCmp code!");
+  default: llvm_unreachable("Illegal FCmp code!");
   case 0: Pred = isordered ? FCmpInst::FCMP_ORD : FCmpInst::FCMP_UNO; break;
   case 1: Pred = isordered ? FCmpInst::FCMP_OGT : FCmpInst::FCMP_UGT; break;
   case 2: Pred = isordered ? FCmpInst::FCMP_OEQ : FCmpInst::FCMP_UEQ; break;

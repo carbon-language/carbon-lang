@@ -53,23 +53,23 @@ public:
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                 unsigned ByteAlignment);
   virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol) {
-    assert(0 && "macho doesn't support this directive");
+    llvm_unreachable("macho doesn't support this directive");
   }
   virtual void EmitCOFFSymbolStorageClass(int StorageClass) {
-    assert(0 && "macho doesn't support this directive");
+    llvm_unreachable("macho doesn't support this directive");
   }
   virtual void EmitCOFFSymbolType(int Type) {
-    assert(0 && "macho doesn't support this directive");
+    llvm_unreachable("macho doesn't support this directive");
   }
   virtual void EndCOFFSymbolDef() {
-    assert(0 && "macho doesn't support this directive");
+    llvm_unreachable("macho doesn't support this directive");
   }
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
-    assert(0 && "macho doesn't support this directive");
+    llvm_unreachable("macho doesn't support this directive");
   }
   virtual void EmitLocalCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                      unsigned ByteAlignment) {
-    assert(0 && "macho doesn't support this directive");
+    llvm_unreachable("macho doesn't support this directive");
   }
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned ByteAlignment = 0);
@@ -211,8 +211,7 @@ void MCMachOStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_Protected:
   case MCSA_Weak:
   case MCSA_Local:
-    assert(0 && "Invalid symbol attribute for Mach-O!");
-    break;
+    llvm_unreachable("Invalid symbol attribute for Mach-O!");
 
   case MCSA_Global:
     SD.setExternal(true);

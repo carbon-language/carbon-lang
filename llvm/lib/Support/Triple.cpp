@@ -459,8 +459,7 @@ std::string Triple::normalize(StringRef Str) {
       bool Valid = false;
       StringRef Comp = Components[Idx];
       switch (Pos) {
-      default:
-        assert(false && "unexpected component type!");
+      default: llvm_unreachable("unexpected component type!");
       case 0:
         Arch = ParseArch(Comp);
         Valid = Arch != UnknownArch;
@@ -618,7 +617,7 @@ bool Triple::getMacOSXVersion(unsigned &Major, unsigned &Minor,
   getOSVersion(Major, Minor, Micro);
 
   switch (getOS()) {
-  default: assert(0 && "unexpected OS for Darwin triple");
+  default: llvm_unreachable("unexpected OS for Darwin triple");
   case Darwin:
     // Default to darwin8, i.e., MacOSX 10.4.
     if (Major == 0)

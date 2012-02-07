@@ -224,7 +224,7 @@ static bool isRemovable(Instruction *I) {
 
   IntrinsicInst *II = cast<IntrinsicInst>(I);
   switch (II->getIntrinsicID()) {
-  default: assert(0 && "doesn't pass 'hasMemoryWrite' predicate");
+  default: llvm_unreachable("doesn't pass 'hasMemoryWrite' predicate");
   case Intrinsic::lifetime_end:
     // Never remove dead lifetime_end's, e.g. because it is followed by a
     // free.
@@ -268,7 +268,7 @@ static Value *getStoredPointerOperand(Instruction *I) {
 
   IntrinsicInst *II = cast<IntrinsicInst>(I);
   switch (II->getIntrinsicID()) {
-  default: assert(false && "Unexpected intrinsic!");
+  default: llvm_unreachable("Unexpected intrinsic!");
   case Intrinsic::init_trampoline:
     return II->getArgOperand(0);
   }

@@ -862,7 +862,7 @@ Constant *llvm::ConstantFoldInstOperands(unsigned Opcode, Type *DestTy,
   switch (Opcode) {
   default: return 0;
   case Instruction::ICmp:
-  case Instruction::FCmp: assert(0 && "Invalid for compares");
+  case Instruction::FCmp: llvm_unreachable("Invalid for compares");
   case Instruction::Call:
     if (Function *F = dyn_cast<Function>(Ops.back()))
       if (canConstantFoldCallTo(F))
@@ -1390,7 +1390,7 @@ llvm::ConstantFoldCall(Function *F, ArrayRef<Constant *> Operands,
           APInt Res;
           bool Overflow;
           switch (F->getIntrinsicID()) {
-          default: assert(0 && "Invalid case");
+          default: llvm_unreachable("Invalid case");
           case Intrinsic::sadd_with_overflow:
             Res = Op1->getValue().sadd_ov(Op2->getValue(), Overflow);
             break;

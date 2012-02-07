@@ -765,8 +765,7 @@ static unsigned getSizeForEncoding(MCStreamer &streamer,
   MCContext &context = streamer.getContext();
   unsigned format = symbolEncoding & 0x0f;
   switch (format) {
-  default:
-    assert(0 && "Unknown Encoding");
+  default: llvm_unreachable("Unknown Encoding");
   case dwarf::DW_EH_PE_absptr:
   case dwarf::DW_EH_PE_signed:
     return context.getAsmInfo().getPointerSize();

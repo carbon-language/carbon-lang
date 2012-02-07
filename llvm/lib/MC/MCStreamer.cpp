@@ -600,7 +600,7 @@ void MCStreamer::EmitWin64EHEndProlog() {
 }
 
 void MCStreamer::EmitCOFFSecRel32(MCSymbol const *Symbol) {
-  assert(0 && "This file format doesn't support this directive");
+  llvm_unreachable("This file format doesn't support this directive");
 }
 
 void MCStreamer::EmitFnStart() {

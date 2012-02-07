@@ -60,24 +60,24 @@ public:
   virtual void EmitWeakReference(MCSymbol *Alias, const MCSymbol *Symbol);
   virtual void EmitSymbolAttribute(MCSymbol *Symbol, MCSymbolAttr Attribute);
   virtual void EmitSymbolDesc(MCSymbol *Symbol, unsigned DescValue) {
-    assert(0 && "ELF doesn't support this directive");
+    llvm_unreachable("ELF doesn't support this directive");
   }
   virtual void EmitCommonSymbol(MCSymbol *Symbol, uint64_t Size,
                                 unsigned ByteAlignment);
   virtual void BeginCOFFSymbolDef(const MCSymbol *Symbol) {
-    assert(0 && "ELF doesn't support this directive");
+    llvm_unreachable("ELF doesn't support this directive");
   }
 
   virtual void EmitCOFFSymbolStorageClass(int StorageClass) {
-    assert(0 && "ELF doesn't support this directive");
+    llvm_unreachable("ELF doesn't support this directive");
   }
 
   virtual void EmitCOFFSymbolType(int Type) {
-    assert(0 && "ELF doesn't support this directive");
+    llvm_unreachable("ELF doesn't support this directive");
   }
 
   virtual void EndCOFFSymbolDef() {
-    assert(0 && "ELF doesn't support this directive");
+    llvm_unreachable("ELF doesn't support this directive");
   }
 
   virtual void EmitELFSize(MCSymbol *Symbol, const MCExpr *Value) {
@@ -90,11 +90,11 @@ public:
 
   virtual void EmitZerofill(const MCSection *Section, MCSymbol *Symbol = 0,
                             unsigned Size = 0, unsigned ByteAlignment = 0) {
-    assert(0 && "ELF doesn't support this directive");
+    llvm_unreachable("ELF doesn't support this directive");
   }
   virtual void EmitTBSSSymbol(const MCSection *Section, MCSymbol *Symbol,
                               uint64_t Size, unsigned ByteAlignment = 0) {
-    assert(0 && "ELF doesn't support this directive");
+    llvm_unreachable("ELF doesn't support this directive");
   }
   virtual void EmitBytes(StringRef Data, unsigned AddrSpace);
   virtual void EmitValueToAlignment(unsigned ByteAlignment, int64_t Value = 0,
@@ -180,7 +180,7 @@ void MCELFStreamer::EmitAssemblerFlag(MCAssemblerFlag Flag) {
     return;
   }
 
-  assert(0 && "invalid assembler flag!");
+  llvm_unreachable("invalid assembler flag!");
 }
 
 void MCELFStreamer::EmitThumbFunc(MCSymbol *Func) {
@@ -250,8 +250,7 @@ void MCELFStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
   case MCSA_WeakDefAutoPrivate:
   case MCSA_Invalid:
   case MCSA_IndirectSymbol:
-    assert(0 && "Invalid symbol attribute for ELF!");
-    break;
+    llvm_unreachable("Invalid symbol attribute for ELF!");
 
   case MCSA_ELF_TypeGnuUniqueObject:
     // Ignore for now.

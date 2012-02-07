@@ -703,8 +703,7 @@ static uint64_t ValueForPoison(uint64_t PoisonByte, size_t ShadowRedzoneSize) {
   if (ShadowRedzoneSize == 4)
     return (PoisonByte << 24) + (PoisonByte << 16) +
         (PoisonByte << 8) + (PoisonByte);
-  assert(0 && "ShadowRedzoneSize is either 1, 2 or 4");
-  return 0;
+  llvm_unreachable("ShadowRedzoneSize is either 1, 2 or 4");
 }
 
 static void PoisonShadowPartialRightRedzone(uint8_t *Shadow,

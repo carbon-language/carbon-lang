@@ -583,8 +583,7 @@ StringRef DIScope::getFilename() const {
     return DIType(DbgNode).getFilename();
   if (isFile())
     return DIFile(DbgNode).getFilename();
-  assert(0 && "Invalid DIScope!");
-  return StringRef();
+  llvm_unreachable("Invalid DIScope!");
 }
 
 StringRef DIScope::getDirectory() const {
@@ -604,8 +603,7 @@ StringRef DIScope::getDirectory() const {
     return DIType(DbgNode).getDirectory();
   if (isFile())
     return DIFile(DbgNode).getDirectory();
-  assert(0 && "Invalid DIScope!");
-  return StringRef();
+  llvm_unreachable("Invalid DIScope!");
 }
 
 DIArray DICompileUnit::getEnumTypes() const {

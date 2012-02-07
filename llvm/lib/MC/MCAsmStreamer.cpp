@@ -394,7 +394,7 @@ void MCAsmStreamer::EmitDwarfAdvanceFrameAddr(const MCSymbol *LastLabel,
 void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
                                         MCSymbolAttr Attribute) {
   switch (Attribute) {
-  case MCSA_Invalid: assert(0 && "Invalid symbol attribute");
+  case MCSA_Invalid: llvm_unreachable("Invalid symbol attribute");
   case MCSA_ELF_TypeFunction:    /// .type _foo, STT_FUNC  # aka @function
   case MCSA_ELF_TypeIndFunction: /// .type _foo, STT_GNU_IFUNC
   case MCSA_ELF_TypeObject:      /// .type _foo, STT_OBJECT  # aka @object
@@ -406,7 +406,7 @@ void MCAsmStreamer::EmitSymbolAttribute(MCSymbol *Symbol,
     OS << "\t.type\t" << *Symbol << ','
        << ((MAI.getCommentString()[0] != '@') ? '@' : '%');
     switch (Attribute) {
-    default: assert(0 && "Unknown ELF .type");
+    default: llvm_unreachable("Unknown ELF .type");
     case MCSA_ELF_TypeFunction:    OS << "function"; break;
     case MCSA_ELF_TypeIndFunction: OS << "gnu_indirect_function"; break;
     case MCSA_ELF_TypeObject:      OS << "object"; break;

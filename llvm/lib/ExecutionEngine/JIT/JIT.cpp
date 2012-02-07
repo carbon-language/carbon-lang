@@ -706,9 +706,8 @@ void *JIT::getPointerToBasicBlock(BasicBlock *BB) {
   if (I != getBasicBlockAddressMap(locked).end()) {
     return I->second;
   } else {
-    assert(0 && "JIT does not have BB address for address-of-label, was"
-           " it eliminated by optimizer?");
-    return 0;
+    llvm_unreachable("JIT does not have BB address for address-of-label, was"
+                     " it eliminated by optimizer?");
   }
 }
 

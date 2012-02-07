@@ -199,7 +199,7 @@ static Value *GetShiftedValue(Value *V, unsigned NumBits, bool isLeftShift,
   IC.Worklist.Add(I);
 
   switch (I->getOpcode()) {
-  default: assert(0 && "Inconsistency with CanEvaluateShifted");
+  default: llvm_unreachable("Inconsistency with CanEvaluateShifted");
   case Instruction::And:
   case Instruction::Or:
   case Instruction::Xor:

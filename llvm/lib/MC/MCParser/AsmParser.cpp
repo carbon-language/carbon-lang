@@ -805,8 +805,7 @@ AsmParser::ApplyModifierToExpr(const MCExpr *E,
   }
   }
 
-  assert(0 && "Invalid expression kind!");
-  return 0;
+  llvm_unreachable("Invalid expression kind!");
 }
 
 /// ParseExpression - Parse an expression and return it.

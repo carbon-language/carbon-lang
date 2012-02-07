@@ -26,7 +26,7 @@ resolveRelocation(uint8_t *Address, uint64_t Value, bool isPCRel,
                   unsigned Type, unsigned Size, int64_t Addend) {
   // This just dispatches to the proper target specific routine.
   switch (CPUType) {
-  default: assert(0 && "Unsupported CPU type!");
+  default: llvm_unreachable("Unsupported CPU type!");
   case mach::CTM_x86_64:
     return resolveX86_64Relocation((uintptr_t)Address, (uintptr_t)Value,
                                    isPCRel, Type, Size, Addend);

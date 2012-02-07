@@ -185,9 +185,7 @@ void RuntimeDyldELF::resolveX86_64Relocation(StringRef Name,
   }
 
   switch (RE.Type) {
-  default:
-    assert(0 && ("Relocation type not implemented yet!"));
-  break;
+  default: llvm_unreachable("Relocation type not implemented yet!");
   case ELF::R_X86_64_64: {
     uint8_t **Target = reinterpret_cast<uint8_t**>(TargetAddr);
     *Target = Addr + RE.Addend;
@@ -249,8 +247,7 @@ void RuntimeDyldELF::resolveX86Relocation(StringRef Name,
     default:
       // There are other relocation types, but it appears these are the
       //  only ones currently used by the LLVM ELF object writer
-      assert(0 && ("Relocation type not implemented yet!"));
-      break;
+      llvm_unreachable("Relocation type not implemented yet!");
   }
 }
 
@@ -272,9 +269,7 @@ void RuntimeDyldELF::resolveRelocation(StringRef Name,
   case Triple::arm:
     resolveArmRelocation(Name, Addr, RE);
     break;
-  default:
-    assert(0 && "Unsupported CPU type!");
-    break;
+  default: llvm_unreachable("Unsupported CPU type!");
   }
 }
 

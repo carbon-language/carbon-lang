@@ -267,7 +267,7 @@ Type *TypeMapTy::getImpl(Type *Ty) {
     
     // Otherwise, rebuild a modified type.
     switch (Ty->getTypeID()) {
-    default: assert(0 && "unknown derived type to remap");
+    default: llvm_unreachable("unknown derived type to remap");
     case Type::ArrayTyID:
       return *Entry = ArrayType::get(ElementTypes[0],
                                      cast<ArrayType>(Ty)->getNumElements());

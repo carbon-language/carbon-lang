@@ -76,8 +76,8 @@ namespace {
   struct NoRAUWValueMapConfig : public ValueMapConfig<ValueTy> {
     typedef JITResolverState *ExtraData;
     static void onRAUW(JITResolverState *, Value *Old, Value *New) {
-      assert(false && "The JIT doesn't know how to handle a"
-             " RAUW on a value it has emitted.");
+      llvm_unreachable("The JIT doesn't know how to handle a"
+                       " RAUW on a value it has emitted.");
     }
   };
 
@@ -1162,7 +1162,7 @@ void JITEmitter::emitJumpTableInfo(MachineJumpTableInfo *MJTI) {
     break;
   }
   case MachineJumpTableInfo::EK_GPRel64BlockAddress:
-    assert(false &&
+    llvm_unreachable(
            "JT Info emission not implemented for GPRel64BlockAddress yet.");
   }
 }

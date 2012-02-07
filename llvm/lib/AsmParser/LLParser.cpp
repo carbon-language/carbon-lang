@@ -2837,7 +2837,7 @@ bool LLParser::ParseBasicBlock(PerFunctionState &PFS) {
     }
 
     switch (ParseInstruction(Inst, BB, PFS)) {
-    default: assert(0 && "Unknown ParseInstruction result!");
+    default: llvm_unreachable("Unknown ParseInstruction result!");
     case InstError: return true;
     case InstNormal:
       BB->getInstList().push_back(Inst);

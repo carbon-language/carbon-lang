@@ -23,7 +23,7 @@ int EDGetDisassembler(EDDisassemblerRef *disassembler,
                       EDAssemblySyntax_t syntax) {
   EDDisassembler::AssemblySyntax Syntax;
   switch (syntax) {
-  default: assert(0 && "Unknown assembly syntax!");
+  default: llvm_unreachable("Unknown assembly syntax!");
   case kEDAssemblySyntaxX86Intel:
     Syntax = EDDisassembler::kEDAssemblySyntaxX86Intel;
     break;

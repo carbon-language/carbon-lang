@@ -1595,8 +1595,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   if (match(RHS, m_Zero())) {
     bool LHSKnownNonNegative, LHSKnownNegative;
     switch (Pred) {
-    default:
-      assert(false && "Unknown ICmp predicate!");
+    default: llvm_unreachable("Unknown ICmp predicate!");
     case ICmpInst::ICMP_ULT:
       return getFalse(ITy);
     case ICmpInst::ICMP_UGE:
@@ -1766,8 +1765,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         // there.  Use this to work out the result of the comparison.
         if (RExt != CI) {
           switch (Pred) {
-          default:
-            assert(false && "Unknown ICmp predicate!");
+          default: llvm_unreachable("Unknown ICmp predicate!");
           // LHS <u RHS.
           case ICmpInst::ICMP_EQ:
           case ICmpInst::ICMP_UGT:
@@ -1826,8 +1824,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
         // bits there.  Use this to work out the result of the comparison.
         if (RExt != CI) {
           switch (Pred) {
-          default:
-            assert(false && "Unknown ICmp predicate!");
+          default: llvm_unreachable("Unknown ICmp predicate!");
           case ICmpInst::ICMP_EQ:
             return ConstantInt::getFalse(CI->getContext());
           case ICmpInst::ICMP_NE:

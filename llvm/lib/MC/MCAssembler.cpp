@@ -348,8 +348,7 @@ uint64_t MCAssembler::computeFragmentSize(const MCAsmLayout &Layout,
     return cast<MCDwarfCallFrameFragment>(F).getContents().size();
   }
 
-  assert(0 && "invalid fragment kind");
-  return 0;
+  llvm_unreachable("invalid fragment kind");
 }
 
 void MCAsmLayout::LayoutFragment(MCFragment *F) {
@@ -414,8 +413,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
     // Otherwise, write out in multiples of the value size.
     for (uint64_t i = 0; i != Count; ++i) {
       switch (AF.getValueSize()) {
-      default:
-        assert(0 && "Invalid size!");
+      default: llvm_unreachable("Invalid size!");
       case 1: OW->Write8 (uint8_t (AF.getValue())); break;
       case 2: OW->Write16(uint16_t(AF.getValue())); break;
       case 4: OW->Write32(uint32_t(AF.getValue())); break;
@@ -439,8 +437,7 @@ static void WriteFragmentData(const MCAssembler &Asm, const MCAsmLayout &Layout,
 
     for (uint64_t i = 0, e = FF.getSize() / FF.getValueSize(); i != e; ++i) {
       switch (FF.getValueSize()) {
-      default:
-        assert(0 && "Invalid size!");
+      default: llvm_unreachable("Invalid size!");
       case 1: OW->Write8 (uint8_t (FF.getValue())); break;
       case 2: OW->Write16(uint16_t(FF.getValue())); break;
       case 4: OW->Write32(uint32_t(FF.getValue())); break;
@@ -496,8 +493,7 @@ void MCAssembler::writeSectionData(const MCSectionData *SD,
     for (MCSectionData::const_iterator it = SD->begin(),
            ie = SD->end(); it != ie; ++it) {
       switch (it->getKind()) {
-      default:
-        assert(0 && "Invalid fragment in virtual section!");
+      default: llvm_unreachable("Invalid fragment in virtual section!");
       case MCFragment::FT_Data: {
         // Check that we aren't trying to write a non-zero contents (or fixups)
         // into a virtual section. This is to support clients which use standard

@@ -1149,6 +1149,6 @@ void ExecutionEngineState::AddressMapConfig::onDelete(ExecutionEngineState *EES,
 void ExecutionEngineState::AddressMapConfig::onRAUW(ExecutionEngineState *,
                                                     const GlobalValue *,
                                                     const GlobalValue *) {
-  assert(false && "The ExecutionEngine doesn't know how to handle a"
-         " RAUW on a value it has a global mapping for.");
+  llvm_unreachable("The ExecutionEngine doesn't know how to handle a"
+                   " RAUW on a value it has a global mapping for.");
 }
