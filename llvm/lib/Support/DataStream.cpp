@@ -17,6 +17,7 @@
 #define DEBUG_TYPE "Data-stream"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/DataStream.h"
+#include "llvm/Support/Program.h"
 #include "llvm/Support/system_error.h"
 #include <string>
 #include <cerrno>
@@ -69,8 +70,10 @@ public:
 #ifdef O_BINARY
     OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
 #endif
-    if (Filename == "-")
+    if (Filename == "-") {
       Fd = 0;
+      sys::Program::ChangeStdinToBinary();
+    }
     else
       Fd = ::open(Filename.c_str(), OpenFlags);
     if (Fd == -1) return error_code(errno, posix_category());
