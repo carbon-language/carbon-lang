@@ -1637,6 +1637,18 @@ TEST(AddressSanitizer, ThreadedStressStackReuseTest) {
   }
 }
 
+static void *PthreadExit(void *a) {
+  pthread_exit(0);
+}
+
+TEST(AddressSanitizer, PthreadExitTest) {
+  pthread_t t;
+  for (int i = 0; i < 1000; i++) {
+    pthread_create(&t, 0, PthreadExit, 0);
+    pthread_join(t, 0);
+  }
+}
+
 #ifdef __EXCEPTIONS
 __attribute__((noinline))
 static void StackReuseAndException() {

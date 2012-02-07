@@ -32,7 +32,7 @@ AsanThreadRegistry::AsanThreadRegistry(LinkerInitialized x)
       mu_(x) { }
 
 void AsanThreadRegistry::Init() {
-  AsanTSDInit();
+  AsanTSDInit(AsanThreadSummary::TSDDtor);
   main_thread_.set_summary(&main_thread_summary_);
   main_thread_summary_.set_thread(&main_thread_);
   RegisterThread(&main_thread_);

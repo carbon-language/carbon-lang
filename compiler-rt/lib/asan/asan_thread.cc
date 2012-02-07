@@ -40,7 +40,23 @@ AsanThread *AsanThread::Create(int parent_tid, void *(*start_routine) (void *),
   return thread;
 }
 
+void AsanThreadSummary::TSDDtor(void *tsd) {
+  AsanThreadSummary *summary = (AsanThreadSummary*)tsd;
+  if (FLAG_v >= 1) {
+    Report("T%d TSDDtor\n", summary->tid());
+  }
+  if (summary->thread()) {
+    summary->thread()->Destroy();
+  }
+}
+
 void AsanThread::Destroy() {
+  if (FLAG_v >= 1) {
+    Report("T%d exited\n", tid());
+  }
+
+  asanThreadRegistry().UnregisterThread(this);
+  CHECK(summary()->thread() == NULL);
   // We also clear the shadow on thread destruction because
   // some code may still be executing in later TSD destructors
   // and we don't want it to have any poisoned stack.
@@ -78,11 +94,6 @@ void *AsanThread::ThreadStart() {
   void *res = start_routine_(arg_);
   malloc_storage().CommitBack();
 
-  if (FLAG_v >= 1) {
-    Report("T%d exited\n", tid());
-  }
-
-  asanThreadRegistry().UnregisterThread(this);
   this->Destroy();
 
   return res;

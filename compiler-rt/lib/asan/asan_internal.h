@@ -129,7 +129,7 @@ uintptr_t GetThreadSelf();
 int AtomicInc(int *a);
 
 // Wrapper for TLS/TSD.
-void AsanTSDInit();
+void AsanTSDInit(void (*destructor)(void *tsd));
 void *AsanTSDGet();
 void AsanTSDSet(void *tsd);
 

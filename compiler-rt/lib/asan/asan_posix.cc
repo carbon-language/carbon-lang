@@ -97,10 +97,10 @@ int AtomicInc(int *a) {
 
 static pthread_key_t tsd_key;
 static bool tsd_key_inited = false;
-void AsanTSDInit() {
+void AsanTSDInit(void (*destructor)(void *tsd)) {
   CHECK(!tsd_key_inited);
   tsd_key_inited = true;
-  CHECK(0 == pthread_key_create(&tsd_key, 0));
+  CHECK(0 == pthread_key_create(&tsd_key, destructor));
 }
 
 void *AsanTSDGet() {

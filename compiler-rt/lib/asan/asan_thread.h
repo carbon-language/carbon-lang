@@ -51,6 +51,8 @@ class AsanThreadSummary {
   void set_tid(int tid) { tid_ = tid; }
   AsanThread *thread() { return thread_; }
   void set_thread(AsanThread *thread) { thread_ = thread; }
+  static void TSDDtor(void *tsd);
+
  private:
   int tid_;
   int parent_tid_;
