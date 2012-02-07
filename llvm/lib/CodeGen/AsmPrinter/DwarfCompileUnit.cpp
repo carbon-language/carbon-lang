@@ -696,7 +696,7 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DIBasicType BTy) {
 
   Buffer.setTag(dwarf::DW_TAG_base_type);
   addUInt(&Buffer, dwarf::DW_AT_encoding, dwarf::DW_FORM_data1,
-	  BTy.getEncoding());
+          BTy.getEncoding());
 
   uint64_t Size = BTy.getSizeInBits() >> 3;
   addUInt(&Buffer, dwarf::DW_AT_byte_size, 0, Size);
@@ -825,17 +825,17 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
       } else if (Element.isDerivedType())
         ElemDie = createMemberDIE(DIDerivedType(Element));
       else if (Element.isObjCProperty()) {
-	DIObjCProperty Property(Element);
-	ElemDie = new DIE(Property.getTag());
-	StringRef PropertyName = Property.getObjCPropertyName();
-	addString(ElemDie, dwarf::DW_AT_APPLE_property_name, PropertyName);
-	StringRef GetterName = Property.getObjCPropertyGetterName();
-	if (!GetterName.empty())
-	  addString(ElemDie, dwarf::DW_AT_APPLE_property_getter, GetterName);
-	StringRef SetterName = Property.getObjCPropertySetterName();
-	if (!SetterName.empty())
-	  addString(ElemDie, dwarf::DW_AT_APPLE_property_setter, SetterName);
-	unsigned PropertyAttributes = 0;
+        DIObjCProperty Property(Element);
+        ElemDie = new DIE(Property.getTag());
+        StringRef PropertyName = Property.getObjCPropertyName();
+        addString(ElemDie, dwarf::DW_AT_APPLE_property_name, PropertyName);
+        StringRef GetterName = Property.getObjCPropertyGetterName();
+        if (!GetterName.empty())
+          addString(ElemDie, dwarf::DW_AT_APPLE_property_getter, GetterName);
+        StringRef SetterName = Property.getObjCPropertySetterName();
+        if (!SetterName.empty())
+          addString(ElemDie, dwarf::DW_AT_APPLE_property_setter, SetterName);
+        unsigned PropertyAttributes = 0;
         if (Property.isReadOnlyObjCProperty())
           PropertyAttributes |= dwarf::DW_APPLE_PROPERTY_readonly;
         if (Property.isReadWriteObjCProperty())
@@ -852,11 +852,11 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
           addUInt(ElemDie, dwarf::DW_AT_APPLE_property_attribute, 0, 
                  PropertyAttributes);
 
-	DIEEntry *Entry = getDIEEntry(Element);
-	if (!Entry) {
-	  Entry = createDIEEntry(ElemDie);
-	  insertDIEEntry(Element, Entry);
-	}
+        DIEEntry *Entry = getDIEEntry(Element);
+        if (!Entry) {
+          Entry = createDIEEntry(ElemDie);
+          insertDIEEntry(Element, Entry);
+        }
       } else
         continue;
       Buffer.addChild(ElemDie);
