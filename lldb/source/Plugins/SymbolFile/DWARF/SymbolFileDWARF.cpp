@@ -4660,27 +4660,25 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     }
 
                     UniqueDWARFASTType unique_ast_entry;
-                    if (decl.IsValid())
+
+                    if (GetUniqueDWARFASTTypeMap().Find (type_name_const_str,
+                                                         this,
+                                                         dwarf_cu,
+                                                         die,
+                                                         decl,
+                                                         byte_size_valid ? byte_size : -1,
+                                                         unique_ast_entry))
                     {
-                        if (GetUniqueDWARFASTTypeMap().Find (type_name_const_str,
-                                                             this,
-                                                             dwarf_cu,
-                                                             die,
-                                                             decl,
-                                                             byte_size_valid ? byte_size : -1,
-                                                             unique_ast_entry))
+                        // We have already parsed this type or from another 
+                        // compile unit. GCC loves to use the "one definition
+                        // rule" which can result in multiple definitions
+                        // of the same class over and over in each compile
+                        // unit.
+                        type_sp = unique_ast_entry.m_type_sp;
+                        if (type_sp)
                         {
-                            // We have already parsed this type or from another 
-                            // compile unit. GCC loves to use the "one definition
-                            // rule" which can result in multiple definitions
-                            // of the same class over and over in each compile
-                            // unit.
-                            type_sp = unique_ast_entry.m_type_sp;
-                            if (type_sp)
-                            {
-                                m_die_to_type[die] = type_sp.get();
-                                return type_sp;
-                            }
+                            m_die_to_type[die] = type_sp.get();
+                            return type_sp;
                         }
                     }
                     
