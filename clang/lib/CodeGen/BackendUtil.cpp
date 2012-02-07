@@ -247,6 +247,7 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   }
 
   std::vector<const char *> BackendArgs;
+  BackendArgs.reserve(16);
   BackendArgs.push_back("clang"); // Fake program name.
   if (!CodeGenOpts.DebugPass.empty()) {
     BackendArgs.push_back("-debug-pass");
