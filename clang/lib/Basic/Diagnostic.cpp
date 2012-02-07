@@ -119,7 +119,7 @@ void DiagnosticsEngine::Reset() {
 }
 
 void DiagnosticsEngine::SetDelayedDiagnostic(unsigned DiagID, StringRef Arg1,
-                                      StringRef Arg2) {
+                                             StringRef Arg2) {
   if (DelayedDiagID)
     return;
 
@@ -162,7 +162,7 @@ DiagnosticsEngine::GetDiagStatePointForLoc(SourceLocation L) const {
 /// \param The source location that this change of diagnostic state should
 /// take affect. It can be null if we are setting the latest state.
 void DiagnosticsEngine::setDiagnosticMapping(diag::kind Diag, diag::Mapping Map,
-                                      SourceLocation L) {
+                                             SourceLocation L) {
   assert(Diag < diag::DIAG_UPPER_LIMIT &&
          "Can only map builtin diagnostics");
   assert((Diags->isBuiltinWarningOrExtension(Diag) ||
@@ -884,7 +884,9 @@ PartialDiagnostic::StorageAllocator::StorageAllocator() {
 }
 
 PartialDiagnostic::StorageAllocator::~StorageAllocator() {
-  // Don't assert if we are in a CrashRecovery context, as this
-  // invariant may be invalidated during a crash.
-  assert((NumFreeListEntries == NumCached || llvm::CrashRecoveryContext::isRecoveringFromCrash()) && "A partial is on the lamb");
+  // Don't assert if we are in a CrashRecovery context, as this invariant may
+  // be invalidated during a crash.
+  assert((NumFreeListEntries == NumCached || 
+          llvm::CrashRecoveryContext::isRecoveringFromCrash()) && 
+         "A partial is on the lamb");
 }
