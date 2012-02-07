@@ -64,6 +64,11 @@
 #  undef FLT_MIN
 #  undef DBL_MIN
 #  undef LDBL_MIN
+#  if __STDC_VERSION__ >= 201112L || !defined(__STRICT_ANSI__)
+#    undef FLT_TRUE_MIN
+#    undef DBL_TRUE_MIN
+#    undef LDBL_TRUE_MIN
+#  endif
 #endif
 
 /* Characteristics of floating point types, C99 5.2.4.2.2 */
@@ -109,5 +114,11 @@
 #define FLT_MIN __FLT_MIN__
 #define DBL_MIN __DBL_MIN__
 #define LDBL_MIN __LDBL_MIN__
+
+#if __STDC_VERSION__ >= 201112L || !defined(__STRICT_ANSI__)
+#  define FLT_TRUE_MIN __FLT_DENORM_MIN__
+#  define DBL_TRUE_MIN __DBL_DENORM_MIN__
+#  define LDBL_TRUE_MIN __LDBL_DENORM_MIN__
+#endif
 
 #endif /* __FLOAT_H */
