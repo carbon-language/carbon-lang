@@ -88,9 +88,10 @@ struct NativeFileHeader {
 enum NativeChunkSignatures {
   NCS_DefinedAtomsV1 = 1,
   NCS_AttributesArrayV1 = 2,
-  NCS_Content = 3,
+  NCS_UndefinedAtomsV1 = 3,
   NCS_Strings = 4,
-  NCS_ReferencesArray = 5,
+  NCS_Content = 5,
+  NCS_ReferencesArray = 6,
 }; 
 
 //
@@ -148,6 +149,16 @@ struct NativeAtomAttributesV1 {
   uint8_t   alias;
   uint8_t   pad1;
   uint8_t   pad2;
+};
+
+
+
+//
+// The NCS_UndefinedAtomsV1 chunk contains an array of these structs
+//
+struct NativeUndefinedAtomIvarsV1 {
+  uint32_t  nameOffset;
+  uint32_t  flags;
 };
 
 

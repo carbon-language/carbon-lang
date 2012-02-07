@@ -172,20 +172,19 @@ public:
 
   virtual bool forEachAtom(File::AtomHandler &handler) const {
     handler.doFile(*this);
+    // visit defined atoms
     for (std::vector<const Atom *>::iterator it = _atoms.begin();
          it != _atoms.end(); ++it) {
-      const Atom* atom = *it;
-      switch ( atom->definition() ) {
-        case Atom::definitionRegular:
-          handler.doDefinedAtom(*(DefinedAtom*)atom);
-          break;
-        case Atom::definitionUndefined:
-          handler.doUndefinedAtom(*(UndefinedAtom*)atom);
-          break;
-        default:
-          // TO DO
-          break;
-      }
+      const DefinedAtom* atom = (*it)->definedAtom();
+      if ( atom ) 
+          handler.doDefinedAtom(*atom);
+    }
+    // visit undefined atoms
+    for (std::vector<const Atom *>::iterator it = _atoms.begin();
+         it != _atoms.end(); ++it) {
+      const UndefinedAtom* atom = (*it)->undefinedAtom();
+      if ( atom ) 
+          handler.doUndefinedAtom(*atom);
     }
     return true;
   }
@@ -198,7 +197,8 @@ public:
 private:
   std::vector<const Atom *> &_atoms;
 };
-}
+} //anonymous namespace
+
 
 int main(int argc, const char *argv[]) {
   // Print a stack trace if we signal out.
@@ -220,7 +220,7 @@ int main(int argc, const char *argv[]) {
   // write new atom graph out as YAML doc
   std::string errorInfo;
   llvm::raw_fd_ostream out("-", errorInfo);
-//  yaml::writeObjectText(outFile, out);
+  //yaml::writeObjectText(outFile, out);
 
   // make unique temp .o file to put generated object file
   int fd;
@@ -233,7 +233,7 @@ int main(int argc, const char *argv[]) {
   binaryOut.close();  // manually close so that file can be read next
 
   // read native file
-  lld::File* natFile;
+  llvm::OwningPtr<lld::File> natFile;
   parseNativeObjectFileOrSTDIN(tempPath, natFile);
 
   // write new atom graph out as YAML doc
@@ -242,6 +242,6 @@ int main(int argc, const char *argv[]) {
   // delete temp .o file
   bool existed;
   llvm::sys::fs::remove(tempPath.str(), existed);
-
+  
   return 0;
 }

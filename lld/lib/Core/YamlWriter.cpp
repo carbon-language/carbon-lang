@@ -81,7 +81,7 @@ public:
             << "\n";
     }
     
-	if ( atom.merge() != KeyValues::mergeDefault ) {
+    if ( atom.merge() != KeyValues::mergeDefault ) {
       _out  << "      " 
             << KeyValues::mergeKeyword 
             << ":"
@@ -124,7 +124,7 @@ public:
             << "\n";
     }
 
-	if ( atom.isThumb() != KeyValues::isThumbDefault ) {
+    if ( atom.isThumb() != KeyValues::isThumbDefault ) {
       _out  << "      " 
             << KeyValues::isThumbKeyword 
             << ":"
@@ -142,7 +142,8 @@ public:
             << "\n";
     }
 
-    if ( atom.contentType() != DefinedAtom::typeZeroFill ) {
+    if ( (atom.contentType() != DefinedAtom::typeZeroFill) 
+                                   && (atom.size() != 0) ) {
       _out  << "      " 
             << KeyValues::contentKeyword 
             << ":"
@@ -171,9 +172,35 @@ public:
 
   }
 
-	virtual void doUndefinedAtom(const class UndefinedAtom &atom) {
+  virtual void doUndefinedAtom(const class UndefinedAtom &atom) {
+      // add blank line between atoms for readability
+      if ( !_firstAtom )
+        _out << "\n";
+      _firstAtom = false;
+        
+      _out  << "    - "
+            << KeyValues::nameKeyword
+            << ":"
+            << spacePadding(KeyValues::nameKeyword)
+            << atom.name() 
+            << "\n";
 
-	}
+      _out  << "      " 
+            << KeyValues::definitionKeyword 
+            << ":"
+            << spacePadding(KeyValues::definitionKeyword)
+            << KeyValues::definition(atom.definition()) 
+            << "\n";
+
+    if ( atom.weakImport() != KeyValues::weakImportDefault ) {
+      _out  << "      " 
+            << KeyValues::weakImportKeyword 
+            << ":"
+            << spacePadding(KeyValues::weakImportKeyword)
+            << KeyValues::weakImport(atom.weakImport()) 
+            << "\n";
+    }
+  }
 
 
 private:

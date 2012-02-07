@@ -20,31 +20,22 @@ namespace lld {
 /// It exists as a place holder for a future atom.
 class UndefinedAtom : public Atom {
 public:
-  UndefinedAtom(llvm::StringRef nm, bool weakImport, const File& f)
-          : _name(nm), _file(f), _weakImport(weakImport) {}
-
-  virtual const File& file() const {
-    return _file;
-  }
-
-  virtual llvm::StringRef name() const {
-    return _name;
-  }
-
   virtual Definition definition() const {
     return Atom::definitionUndefined;
   }
 
-  virtual bool weakImport() const {
-    return _weakImport;
+  /// like dynamic_cast, if atom is definitionUndefined
+  /// returns atom cast to UndefinedAtom*, else returns NULL
+  virtual const UndefinedAtom* undefinedAtom() const { 
+    return this;
   }
 
+  /// returns if undefined symbol can be missing at runtime
+  virtual bool weakImport() const = 0;
+  
 protected:
+           UndefinedAtom() {}
   virtual ~UndefinedAtom() {}
-
-  llvm::StringRef _name;
-  const File&     _file;
-  bool            _weakImport;
 };
 
 } // namespace lld

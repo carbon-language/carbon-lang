@@ -44,10 +44,13 @@ public:
     if (!_attributes.empty())
       out.write((char*)&_attributes[0],
                 _attributes.size()*sizeof(NativeAtomAttributesV1));
-    if (!_contentPool.empty())
-      out.write((char*)&_contentPool[0], _contentPool.size());
+    if ( !_undefinedAtomIvars.empty() ) 
+      out.write((char*)&_undefinedAtomIvars[0], 
+              _undefinedAtomIvars.size()*sizeof(NativeUndefinedAtomIvarsV1));
     if (!_stringPool.empty())
       out.write(&_stringPool[0], _stringPool.size());
+    if (!_contentPool.empty())
+      out.write((char*)&_contentPool[0], _contentPool.size());
   }
 
 private:
@@ -64,15 +67,22 @@ private:
   
   // visitor routine called by forEachAtom() 
   virtual void doUndefinedAtom(const class UndefinedAtom& atom) {
+    NativeUndefinedAtomIvarsV1 ivar;
+    ivar.nameOffset = getNameOffset(atom);
+    ivar.flags = (atom.weakImport() ? 1 : 0);
+    _undefinedAtomIvars.push_back(ivar);
   }
   
   // visitor routine called by forEachAtom() 
   virtual void doFile(const class File &) {
   }
-  
+
   // fill out native file header and chunk directory
   void makeHeader() {
-    _headerBufferSize = sizeof(NativeFileHeader) + 4*sizeof(NativeChunk);
+    const bool hasUndefines = !_undefinedAtomIvars.empty();
+    const int chunkCount = hasUndefines ? 5 : 4;
+    _headerBufferSize = sizeof(NativeFileHeader) 
+                         + chunkCount*sizeof(NativeChunk);
     _headerBuffer = reinterpret_cast<NativeFileHeader*>
                                (operator new(_headerBufferSize, std::nothrow));
     NativeChunk *chunks =
@@ -82,39 +92,59 @@ private:
     _headerBuffer->endian = NFH_LittleEndian;
     _headerBuffer->architecture = 0;
     _headerBuffer->fileSize = 0;
-    _headerBuffer->chunkCount = 4;
+    _headerBuffer->chunkCount = chunkCount;
+    
     
     // create chunk for atom ivar array
-    NativeChunk& ch0 = chunks[0];
-    ch0.signature = NCS_DefinedAtomsV1;
-    ch0.fileOffset = _headerBufferSize;
-    ch0.fileSize = _definedAtomIvars.size()*sizeof(NativeDefinedAtomIvarsV1);
-    ch0.elementCount = _definedAtomIvars.size();
-    // create chunk for attributes
-    NativeChunk& ch1 = chunks[1];
-    ch1.signature = NCS_AttributesArrayV1;
-    ch1.fileOffset = ch0.fileOffset + ch0.fileSize;
-    ch1.fileSize = _attributes.size()*sizeof(NativeAtomAttributesV1);
-    ch1.elementCount = _attributes.size();
-    // create chunk for content
-    NativeChunk& ch2 = chunks[2];
-    ch2.signature = NCS_Content;
-    ch2.fileOffset = ch1.fileOffset + ch1.fileSize;
-    ch2.fileSize = _contentPool.size();
-    ch2.elementCount = _contentPool.size();
-    // create chunk for symbol strings
-    NativeChunk& ch3 = chunks[3];
-    ch3.signature = NCS_Strings;
-    ch3.fileOffset = ch2.fileOffset + ch2.fileSize;
-    ch3.fileSize = _stringPool.size();
-    ch3.elementCount = _stringPool.size();
+    int nextIndex = 0;
+    NativeChunk& chd = chunks[nextIndex++];
+    chd.signature = NCS_DefinedAtomsV1;
+    chd.fileOffset = _headerBufferSize;
+    chd.fileSize = _definedAtomIvars.size()*sizeof(NativeDefinedAtomIvarsV1);
+    chd.elementCount = _definedAtomIvars.size();
+    uint32_t nextFileOffset = chd.fileOffset + chd.fileSize;
+
+    // create chunk for attributes 
+    NativeChunk& cha = chunks[nextIndex++];
+    cha.signature = NCS_AttributesArrayV1;
+    cha.fileOffset = nextFileOffset;
+    cha.fileSize = _attributes.size()*sizeof(NativeAtomAttributesV1);
+    cha.elementCount = _attributes.size();
+    nextFileOffset = cha.fileOffset + cha.fileSize;
     
-    _headerBuffer->fileSize = ch3.fileOffset + ch3.fileSize;
+    // create chunk for undefined atom array
+    if ( hasUndefines ) {
+      NativeChunk& chu = chunks[nextIndex++];
+      chu.signature = NCS_UndefinedAtomsV1;
+      chu.fileOffset = nextFileOffset;
+      chu.fileSize = _undefinedAtomIvars.size() * 
+                                            sizeof(NativeUndefinedAtomIvarsV1);
+      chu.elementCount = _undefinedAtomIvars.size();
+      nextFileOffset = chu.fileOffset + chu.fileSize;
+    }
+    
+    // create chunk for symbol strings
+    NativeChunk& chs = chunks[nextIndex++];
+    chs.signature = NCS_Strings;
+    chs.fileOffset = nextFileOffset;
+    chs.fileSize = _stringPool.size();
+    chs.elementCount = _stringPool.size();
+    nextFileOffset = chs.fileOffset + chs.fileSize;
+    
+    // create chunk for content 
+    NativeChunk& chc = chunks[nextIndex++];
+    chc.signature = NCS_Content;
+    chc.fileOffset = nextFileOffset;
+    chc.fileSize = _contentPool.size();
+    chc.elementCount = _contentPool.size();
+    nextFileOffset = chc.fileOffset + chc.fileSize;
+
+    _headerBuffer->fileSize = nextFileOffset;
   }
 
 
   // append atom name to string pool and return offset
-  uint32_t getNameOffset(const class DefinedAtom& atom) {
+  uint32_t getNameOffset(const Atom& atom) {
     return this->getNameOffset(atom.name());
   }
   
@@ -190,14 +220,15 @@ private:
 
   typedef std::vector<std::pair<llvm::StringRef, uint32_t> > NameToOffsetVector;
 
-  const lld::File&                      _file;
-  NativeFileHeader*                     _headerBuffer;
-  size_t                                _headerBufferSize;
-  std::vector<char>                     _stringPool;
-  std::vector<uint8_t>                  _contentPool;
-  std::vector<NativeDefinedAtomIvarsV1> _definedAtomIvars;
-  std::vector<NativeAtomAttributesV1>   _attributes;
-  NameToOffsetVector                    _sectionNames;
+  const lld::File&                        _file;
+  NativeFileHeader*                       _headerBuffer;
+  size_t                                  _headerBufferSize;
+  std::vector<char>                       _stringPool;
+  std::vector<uint8_t>                    _contentPool;
+  std::vector<NativeDefinedAtomIvarsV1>   _definedAtomIvars;
+  std::vector<NativeAtomAttributesV1>     _attributes;
+  std::vector<NativeUndefinedAtomIvarsV1> _undefinedAtomIvars;
+  NameToOffsetVector                      _sectionNames;
 };
 
 

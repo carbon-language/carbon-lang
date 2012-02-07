@@ -33,7 +33,7 @@ public:
     // don't remove if live
     if ( _liveAtoms.count(atom) )
       return false;
-	// don't remove if marked never-dead-strip
+   // don't remove if marked never-dead-strip
     if ( const DefinedAtom* defAtom = atom->definedAtom() ) {
       if ( defAtom->deadStrip() == DefinedAtom::deadStripNever )
         return false;

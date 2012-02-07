@@ -12,6 +12,8 @@
 
 #include "lld/Core/File.h"
 
+#include "llvm/ADT/OwningPtr.h"
+
 #include "llvm/Support/system_error.h"
 
 #include <vector>
@@ -26,13 +28,14 @@ namespace lld {
   /// parseNativeObjectFileOrSTDIN - Open the specified native object file (use 
   /// stdin if the path is "-") and instantiate into an lld::File object.
   llvm::error_code parseNativeObjectFileOrSTDIN(llvm::StringRef path
-                                 , File*&);
+                                              , llvm::OwningPtr<File>& result);
 
 
   /// parseNativeObjectFile - Parse the specified native object file 
   /// (in a buffer) and instantiate into an lld::File object.
-  llvm::error_code parseNativeObjectFile(llvm::MemoryBuffer* mb, 
-                                       llvm::StringRef path, File*& result);
+  llvm::error_code parseNativeObjectFile(llvm::OwningPtr<llvm::MemoryBuffer>& mb
+                                        ,llvm::StringRef path
+                                        ,llvm::OwningPtr<File>& result);
 
 } // namespace lld
 

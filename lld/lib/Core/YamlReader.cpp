@@ -267,6 +267,10 @@ bool YAMLFile::forEachAtom(File::AtomHandler &handler) const {
        it != _definedAtoms.end(); ++it) {
     handler.doDefinedAtom(**it);
   }
+  for (std::vector<UndefinedAtom *>::const_iterator it = _undefinedAtoms.begin();
+       it != _undefinedAtoms.end(); ++it) {
+    handler.doUndefinedAtom(**it);
+  }
   return true;
 }
 
@@ -424,6 +428,32 @@ private:
 };
 
 
+class YAMLUndefinedAtom : public UndefinedAtom {
+public:
+        YAMLUndefinedAtom(YAMLFile& f, int32_t ord, const char* nm, bool wi)
+            : _file(f), _name(nm), _ordinal(ord), _weakImport(wi) { }
+
+  virtual const class File& file() const {
+    return _file;
+  }
+
+  virtual llvm::StringRef name() const {
+    return _name;
+  }
+
+  virtual bool weakImport() const {
+    return _weakImport;
+  }
+  
+private:
+  YAMLFile&                   _file;
+  const char *                _name;
+  uint32_t                    _ordinal;
+  bool                        _weakImport;
+};
+
+
+
 class YAMLAtomState {
 public:
   YAMLAtomState();
@@ -455,6 +485,7 @@ public:
   bool                        _internalName;
   bool                        _isThumb;
   bool                        _isAlias;
+  bool                        _weakImport;
   Reference                   _ref;
 };
 
@@ -477,6 +508,7 @@ YAMLAtomState::YAMLAtomState()
   , _internalName(KeyValues::internalNameDefault)
   , _isThumb(KeyValues::isThumbDefault)
   , _isAlias(KeyValues::isAliasDefault) 
+  , _weakImport(false)
   {
   _ref.target       = NULL;
   _ref.addend       = 0;
@@ -494,6 +526,12 @@ void YAMLAtomState::makeAtom(YAMLFile& f) {
                           _alignment, _name, _sectionName, _size, _content);
 
     f._definedAtoms.push_back(a);
+    ++_ordinal;
+  }
+  else if ( _definition == Atom::definitionUndefined ) {
+    UndefinedAtom *a = new YAMLUndefinedAtom(f, _ordinal, _name, _weakImport);
+
+    f._undefinedAtoms.push_back(a);
     ++_ordinal;
   }
   
@@ -515,6 +553,7 @@ void YAMLAtomState::makeAtom(YAMLFile& f) {
   _permissions      = KeyValues::permissionsDefault;
   _isThumb          = KeyValues::isThumbDefault;
   _isAlias          = KeyValues::isAliasDefault;
+  _weakImport       = KeyValues::weakImportDefault;
   _ref.target       = NULL;
   _ref.addend       = 0;
   _ref.offsetInAtom = 0;
@@ -662,6 +701,10 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
         }
         else if (strcmp(entry->key, KeyValues::isAliasKeyword) == 0) {
           atomState._isAlias = KeyValues::isAlias(entry->value);
+          haveAtom = true;
+        }
+        else if (strcmp(entry->key, KeyValues::weakImportKeyword) == 0) {
+          atomState._weakImport = KeyValues::weakImport(entry->value);
           haveAtom = true;
         }
         else if (strcmp(entry->key, KeyValues::sectionNameKeyword) == 0) {

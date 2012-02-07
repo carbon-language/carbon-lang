@@ -20,6 +20,7 @@ namespace lld {
 
 class File;
 class DefinedAtom;
+class UndefinedAtom;
 
 ///
 /// The linker has a Graph Theory model of linking. An object file is seen
@@ -53,6 +54,10 @@ public:
   /// returns atom cast to DefinedAtom*, else returns nullptr;
   virtual const DefinedAtom* definedAtom() const { return 0; }
 
+  /// undefinedAtom - like dynamic_cast, if atom is definitionUndefined
+  /// returns atom cast to UndefinedAtom*, else returns NULL;
+  virtual const UndefinedAtom* undefinedAtom() const { return NULL; }
+  
 protected:
   /// Atom is an abstract base class.  Only subclasses can access constructor.
   Atom() {}

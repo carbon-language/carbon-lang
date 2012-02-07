@@ -65,7 +65,8 @@ public:
   }
 
   virtual DefinedAtom::ContentType contentType() const {
-    return (DefinedAtom::ContentType)(attributes().contentType);
+    const NativeAtomAttributesV1& attr = attributes();
+    return (DefinedAtom::ContentType)(attr.contentType);
   }
     
   virtual DefinedAtom::Alignment alignment() const {
@@ -113,6 +114,29 @@ private:
 
 
 
+//
+// An object of this class is instantied for each NativeUndefinedAtomIvarsV1
+// struct in the NCS_UndefinedAtomsV1 chunk.
+//
+class NativeUndefinedAtomV1 : public UndefinedAtom {
+public:
+       NativeUndefinedAtomV1(const NativeFile& f, 
+                             const NativeUndefinedAtomIvarsV1* ivarData)
+        : _file(&f), _ivarData(ivarData) { } 
+
+  virtual const File& file() const;
+  virtual llvm::StringRef name() const;
+  
+  virtual bool weakImport() const {
+    return (_ivarData->flags & 0x1);
+  }
+  
+private:
+  const NativeFile*                 _file;
+  const NativeUndefinedAtomIvarsV1* _ivarData;
+};
+
+
 
 //
 // lld::File object for native llvm object file
@@ -122,8 +146,9 @@ public:
 
   /// Instantiates a File object from a native object file.  Ownership
   /// of the MemoryBuffer is transfered to the resulting File object.
-  static llvm::error_code make(llvm::MemoryBuffer* mb, llvm::StringRef path, 
-                                                                File*& result) {
+  static llvm::error_code make(llvm::OwningPtr<llvm::MemoryBuffer>& mb, 
+                               llvm::StringRef path, 
+                               llvm::OwningPtr<File>& result) {
     const uint8_t* const base = 
                        reinterpret_cast<const uint8_t*>(mb->getBufferStart());
     const NativeFileHeader* const header = 
@@ -159,6 +184,9 @@ public:
         case NCS_AttributesArrayV1:
           ec = file->processAttributesV1(base, chunk);
           break;
+        case NCS_UndefinedAtomsV1:
+          ec = file->processUndefinedAtomsV1(base, chunk);
+          break;
         case NCS_Content:
           ec = file->processContent(base, chunk);
           break;
@@ -175,7 +203,7 @@ public:
       
       // TO DO: validate enough chunks were used
       
-      result = file;
+      result.reset(file);
     }
 
 
@@ -183,13 +211,14 @@ public:
   }
   
   virtual ~NativeFile() {
-    // The NativeFile owns the MemoryBuffer and must not delete it.
-    delete _buffer;
+    // _buffer is automatically deleted because of OwningPtr<>
+    
     // All other ivar pointers are pointers into the MemoryBuffer, except
     // the _definedAtoms array which was allocated to contain an array
     // of Atom objects.  The atoms have empty destructors, so it is ok
     // to just delete the memory.
     delete _definedAtoms.arrayStart;
+    delete _undefinedAtoms.arrayStart;
   }
   
   // visits each atom in the file
@@ -198,6 +227,11 @@ public:
           p += _definedAtoms.elementSize) {
       const DefinedAtom* atom = reinterpret_cast<const DefinedAtom*>(p);
       handler.doDefinedAtom(*atom);
+    }
+    for(const uint8_t* p=_undefinedAtoms.arrayStart; p != _undefinedAtoms.arrayEnd; 
+          p += _undefinedAtoms.elementSize) {
+      const UndefinedAtom* atom = reinterpret_cast<const UndefinedAtom*>(p);
+      handler.doUndefinedAtom(*atom);
     }
     return (_definedAtoms.arrayStart != _definedAtoms.arrayEnd);
   }
@@ -210,6 +244,7 @@ public:
   
 private:
   friend class NativeDefinedAtomV1;
+  friend class NativeUndefinedAtomV1;
   
   // instantiate array of DefinedAtoms from v1 ivar data in file
   llvm::error_code processDefinedAtomsV1(const uint8_t* base, 
@@ -247,6 +282,34 @@ private:
     return make_error_code(native_reader_error::success);
   }
   
+  llvm::error_code processUndefinedAtomsV1(const uint8_t* base, 
+                                                const NativeChunk* chunk) {
+    const size_t atomSize = sizeof(NativeUndefinedAtomV1);
+    size_t atomsArraySize = chunk->elementCount * atomSize;
+    uint8_t* atomsStart = reinterpret_cast<uint8_t*>
+                                (operator new(atomsArraySize, std::nothrow));
+    if (atomsStart == NULL )
+      return make_error_code(native_reader_error::memory_error);
+    const size_t ivarElementSize = chunk->fileSize 
+                                          / chunk->elementCount;
+    if ( ivarElementSize != sizeof(NativeUndefinedAtomIvarsV1) )
+      return make_error_code(native_reader_error::file_malformed);
+    uint8_t* atomsEnd = atomsStart + atomsArraySize;
+    const NativeUndefinedAtomIvarsV1* ivarData = 
+                            reinterpret_cast<const NativeUndefinedAtomIvarsV1*>
+                                                  (base + chunk->fileOffset);
+    for(uint8_t* s = atomsStart; s != atomsEnd; s += atomSize) {
+      NativeUndefinedAtomV1* atomAllocSpace = 
+                  reinterpret_cast<NativeUndefinedAtomV1*>(s);
+      new (atomAllocSpace) NativeUndefinedAtomV1(*this, ivarData);
+      ++ivarData;
+    }
+    this->_undefinedAtoms.arrayStart = atomsStart;
+    this->_undefinedAtoms.arrayEnd = atomsEnd;
+    this->_undefinedAtoms.elementSize = atomSize;
+    return make_error_code(native_reader_error::success);
+  }
+  
   // set up pointers to string pool in file
   llvm::error_code processStrings(const uint8_t* base, 
                                                 const NativeChunk* chunk) {
@@ -281,12 +344,18 @@ private:
 
 
   // private constructor, only called by make()
-  NativeFile(llvm::MemoryBuffer* mb, llvm::StringRef path) :
-    lld::File(path), _buffer(mb), _header(NULL), 
-    _strings(NULL), _stringsMaxOffset(0),
-    _contentStart(NULL), _contentEnd(NULL)
+  NativeFile(llvm::OwningPtr<llvm::MemoryBuffer>& mb, llvm::StringRef path) :
+    lld::File(path), 
+    _buffer(mb.take()),  // NativeFile now takes ownership of buffer
+    _header(NULL), 
+    _strings(NULL), 
+    _stringsMaxOffset(0),
+    _contentStart(NULL), 
+    _contentEnd(NULL)
   {
-    _header = reinterpret_cast<const NativeFileHeader*>(mb->getBufferStart());
+    _header = reinterpret_cast<const NativeFileHeader*>(_buffer->getBufferStart());
+    _definedAtoms.arrayStart = NULL;
+    _undefinedAtoms.arrayStart = NULL;
   }
 
   struct AtomArray {
@@ -297,9 +366,10 @@ private:
     uint32_t           elementSize;
   };
 
-  llvm::MemoryBuffer*             _buffer;
+  llvm::OwningPtr<llvm::MemoryBuffer>  _buffer;
   const NativeFileHeader*         _header;
   AtomArray                       _definedAtoms;
+  AtomArray                       _undefinedAtoms;
   const uint8_t*                  _attributes;
   uint32_t                        _attributesMaxOffset;
   const char*                     _strings;
@@ -342,11 +412,24 @@ inline llvm::StringRef NativeDefinedAtomV1::customSectionName() const {
 
 
 
+
+inline const class File& NativeUndefinedAtomV1::file() const {
+  return *_file;
+}
+
+inline llvm::StringRef NativeUndefinedAtomV1::name() const {
+  return _file->string(_ivarData->nameOffset);
+}
+
+
+
+
 //
 // Instantiate an lld::File from the given native object file buffer
 //
-llvm::error_code parseNativeObjectFile(llvm::MemoryBuffer* mb, 
-                                       llvm::StringRef path, File*& result) {
+llvm::error_code parseNativeObjectFile(llvm::OwningPtr<llvm::MemoryBuffer>& mb, 
+                                       llvm::StringRef path, 
+                                       llvm::OwningPtr<File>& result) {
   return NativeFile::make(mb, path, result);
 }
 
@@ -356,13 +439,13 @@ llvm::error_code parseNativeObjectFile(llvm::MemoryBuffer* mb,
 // Instantiate an lld::File from the given native object file path
 //
 llvm::error_code parseNativeObjectFileOrSTDIN(llvm::StringRef path, 
-                                              File*& result) {
+                                              llvm::OwningPtr<File>& result) {
   llvm::OwningPtr<llvm::MemoryBuffer> mb;
   llvm::error_code ec = llvm::MemoryBuffer::getFileOrSTDIN(path, mb);
   if ( ec ) 
       return ec;
 
-  return parseNativeObjectFile(mb.take(), path, result);
+  return parseNativeObjectFile(mb, path, result);
 }
 
 

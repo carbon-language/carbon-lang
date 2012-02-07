@@ -79,6 +79,11 @@ public:
   static bool                             isAlias(const char*);
   static const char*                      isAlias(bool);
 
+  static const char* const                weakImportKeyword;
+  static const bool                       weakImportDefault;
+  static bool                             weakImport(const char*);
+  static const char*                      weakImport(bool);
+
 };
 
 } // namespace yaml
