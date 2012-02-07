@@ -92,14 +92,13 @@ public:
                             const MCInstFragment *DF,
                             const MCAsmLayout &Layout) const {
     // FIXME.
-    assert(0 && "relaxInstruction() unimplemented");
-    return false;
+    llvm_unreachable("relaxInstruction() unimplemented");
   }
 
 
   void relaxInstruction(const MCInst &Inst, MCInst &Res) const {
     // FIXME.
-    assert(0 && "relaxInstruction() unimplemented");
+    llvm_unreachable("relaxInstruction() unimplemented");
   }
 
   bool writeNopData(uint64_t Count, MCObjectWriter *OW) const {
@@ -128,7 +127,7 @@ namespace {
 
     void applyFixup(const MCFixup &Fixup, char *Data, unsigned DataSize,
                     uint64_t Value) const {
-      assert(0 && "UNIMP");
+      llvm_unreachable("UNIMP");
     }
 
     MCObjectWriter *createObjectWriter(raw_ostream &OS) const {

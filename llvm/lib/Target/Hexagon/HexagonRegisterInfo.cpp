@@ -125,7 +125,7 @@ eliminateCallFramePseudoInstr(MachineFunction &MF, MachineBasicBlock &MBB,
   } else if (MI.getOpcode() == Hexagon::ADJCALLSTACKUP) {
     // Hexagon_TODO: add code
   } else {
-    assert(0 && "Cannot handle this call frame pseudo instruction");
+    llvm_unreachable("Cannot handle this call frame pseudo instruction");
   }
   MBB.erase(I);
 }
@@ -305,13 +305,11 @@ void HexagonRegisterInfo::getInitialFrameState(std::vector<MachineMove>
 }
 
 unsigned HexagonRegisterInfo::getEHExceptionRegister() const {
-  assert(0 && "What is the exception register");
-  return 0;
+  llvm_unreachable("What is the exception register");
 }
 
 unsigned HexagonRegisterInfo::getEHHandlerRegister() const {
-  assert(0 && "What is the exception handler register");
-  return 0;
+  llvm_unreachable("What is the exception handler register");
 }
 
 #define GET_REGINFO_TARGET_DESC

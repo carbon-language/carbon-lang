@@ -383,7 +383,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
           .addFrameIndex(FI).addImm(0)
           .addReg(SrcReg, getKillRegState(isKill)).addMemOperand(MMO);
   } else {
-    assert(0 && "Unimplemented");
+    llvm_unreachable("Unimplemented");
   }
 }
 
@@ -395,8 +395,7 @@ void HexagonInstrInfo::storeRegToAddr(
                                  const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const
 {
-  assert(0 && "Unimplemented");
-  return;
+  llvm_unreachable("Unimplemented");
 }
 
 
@@ -427,7 +426,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
     BuildMI(MBB, I, DL, get(Hexagon::LDriw_pred), DestReg)
           .addFrameIndex(FI).addImm(0).addMemOperand(MMO);
   } else {
-    assert(0 && "Can't store this register to stack slot");
+    llvm_unreachable("Can't store this register to stack slot");
   }
 }
 
@@ -436,7 +435,7 @@ void HexagonInstrInfo::loadRegFromAddr(MachineFunction &MF, unsigned DestReg,
                                         SmallVectorImpl<MachineOperand> &Addr,
                                         const TargetRegisterClass *RC,
                                  SmallVectorImpl<MachineInstr*> &NewMIs) const {
-  assert(0 && "Unimplemented");
+  llvm_unreachable("Unimplemented");
 }
 
 
@@ -823,7 +822,7 @@ PredicateInstruction(MachineInstr *MI,
     } else if (MO.isImm()) {
       MI->getOperand(oper+1).ChangeToImmediate(MO.getImm());
     } else {
-      assert(false && "Unexpected operand type");
+      llvm_unreachable("Unexpected operand type");
     }
   }
 
@@ -1269,10 +1268,8 @@ isValidAutoIncImm(const EVT VT, const int Offset) const {
       return (Offset >= Hexagon_MEMB_AUTOINC_MIN &&
               Offset <= Hexagon_MEMB_AUTOINC_MAX);
   }
-  
-  assert(0 && "Not an auto-inc opc!");
 
-  return false;
+  llvm_unreachable("Not an auto-inc opc!");
 }
 
 

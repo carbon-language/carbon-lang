@@ -216,7 +216,7 @@ MBlazeTargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
                                                   MachineBasicBlock *MBB)
                                                   const {
   switch (MI->getOpcode()) {
-  default: assert(false && "Unexpected instr type to insert");
+  default: llvm_unreachable("Unexpected instr type to insert");
 
   case MBlaze::ShiftRL:
   case MBlaze::ShiftRA:

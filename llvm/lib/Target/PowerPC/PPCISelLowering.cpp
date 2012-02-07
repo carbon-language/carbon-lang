@@ -4578,8 +4578,7 @@ void PPCTargetLowering::ReplaceNodeResults(SDNode *N,
   DebugLoc dl = N->getDebugLoc();
   switch (N->getOpcode()) {
   default:
-    assert(false && "Do not know how to custom type legalize this operation!");
-    return;
+    llvm_unreachable("Do not know how to custom type legalize this operation!");
   case ISD::VAARG: {
     if (!TM.getSubtarget<PPCSubtarget>().isSVR4ABI()
         || TM.getSubtarget<PPCSubtarget>().isPPC64())

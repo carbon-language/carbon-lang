@@ -21,7 +21,7 @@ ARMMCExpr::Create(VariantKind Kind, const MCExpr *Expr,
 
 void ARMMCExpr::PrintImpl(raw_ostream &OS) const {
   switch (Kind) {
-  default: assert(0 && "Invalid kind!");
+  default: llvm_unreachable("Invalid kind!");
   case VK_ARM_HI16: OS << ":upper16:"; break;
   case VK_ARM_LO16: OS << ":lower16:"; break;
   }
@@ -45,8 +45,7 @@ ARMMCExpr::EvaluateAsRelocatableImpl(MCValue &Res,
 static void AddValueSymbols_(const MCExpr *Value, MCAssembler *Asm) {
   switch (Value->getKind()) {
   case MCExpr::Target:
-    assert(0 && "Can't handle nested target expr!");
-    break;
+    llvm_unreachable("Can't handle nested target expr!");
 
   case MCExpr::Constant:
     break;

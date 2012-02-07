@@ -54,8 +54,8 @@ public:
 
   static unsigned GetMBlazeRegNum(const MCOperand &MO) {
     // FIXME: getMBlazeRegisterNumbering() is sufficient?
-    assert(0 && "MBlazeMCCodeEmitter::GetMBlazeRegNum() not yet implemented.");
-    return 0;
+    llvm_unreachable("MBlazeMCCodeEmitter::GetMBlazeRegNum() not yet "
+                     "implemented.");
   }
 
   void EmitByte(unsigned char C, unsigned &CurByte, raw_ostream &OS) const {

@@ -881,9 +881,7 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3) {
 
   bool needsLowering = false;
   switch (VT.getSimpleVT().SimpleTy) {
-    default:
-      assert(false && "Unhandled load/store type!");
-      break;
+    default: llvm_unreachable("Unhandled load/store type!");
     case MVT::i1:
     case MVT::i8:
     case MVT::i16:

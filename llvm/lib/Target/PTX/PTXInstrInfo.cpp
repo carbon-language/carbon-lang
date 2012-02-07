@@ -300,7 +300,7 @@ void PTXInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
                                      unsigned SrcReg, bool isKill, int FrameIdx,
                                        const TargetRegisterClass *RC,
                                        const TargetRegisterInfo *TRI) const {
-  assert(false && "storeRegToStackSlot should not be called for PTX");
+  llvm_unreachable("storeRegToStackSlot should not be called for PTX");
 }
 
 void PTXInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -308,7 +308,7 @@ void PTXInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
                                         unsigned DestReg, int FrameIdx,
                                         const TargetRegisterClass *RC,
                                         const TargetRegisterInfo *TRI) const {
-  assert(false && "loadRegFromStackSlot should not be called for PTX");
+  llvm_unreachable("loadRegFromStackSlot should not be called for PTX");
 }
 
 // static helper routines

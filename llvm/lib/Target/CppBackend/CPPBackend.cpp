@@ -1356,7 +1356,7 @@ void CppWriter::printInstruction(const Instruction *I,
     case Instruction::PtrToInt: Out << "PtrToIntInst"; break;
     case Instruction::IntToPtr: Out << "IntToPtrInst"; break;
     case Instruction::BitCast:  Out << "BitCastInst"; break;
-    default: assert(0 && "Unreachable"); break;
+    default: llvm_unreachable("Unreachable");
     }
     Out << "(" << opNames[0] << ", "
         << getCppName(cst->getType()) << ", \"";

@@ -31,8 +31,7 @@ MCOperand ARMAsmPrinter::GetSymbolRef(const MachineOperand &MO,
     Expr = MCSymbolRefExpr::Create(Symbol, MCSymbolRefExpr::VK_None,
                                    OutContext);
     switch (MO.getTargetFlags()) {
-    default:
-      assert(0 && "Unknown target flag on symbol operand");
+    default: llvm_unreachable("Unknown target flag on symbol operand");
     case 0:
       break;
     case ARMII::MO_LO16:
@@ -67,9 +66,7 @@ MCOperand ARMAsmPrinter::GetSymbolRef(const MachineOperand &MO,
 bool ARMAsmPrinter::lowerOperand(const MachineOperand &MO,
                                  MCOperand &MCOp) {
   switch (MO.getType()) {
-  default:
-    assert(0 && "unknown operand type");
-    return false;
+  default: llvm_unreachable("unknown operand type");
   case MachineOperand::MO_Register:
     // Ignore all non-CPSR implicit register operands.
     if (MO.isImplicit() && MO.getReg() != ARM::CPSR)

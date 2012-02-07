@@ -174,7 +174,7 @@ void PPCInstPrinter::printcrbitm(const MCInst *MI, unsigned OpNo,
   unsigned CCReg = MI->getOperand(OpNo).getReg();
   unsigned RegNo;
   switch (CCReg) {
-  default: assert(0 && "Unknown CR register");
+  default: llvm_unreachable("Unknown CR register");
   case PPC::CR0: RegNo = 0; break;
   case PPC::CR1: RegNo = 1; break;
   case PPC::CR2: RegNo = 2; break;

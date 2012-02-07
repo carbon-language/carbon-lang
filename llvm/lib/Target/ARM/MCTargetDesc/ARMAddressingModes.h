@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APInt.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <cassert>
 
@@ -43,7 +44,7 @@ namespace ARM_AM {
 
   static inline const char *getShiftOpcStr(ShiftOpc Op) {
     switch (Op) {
-    default: assert(0 && "Unknown shift opc!");
+    default: llvm_unreachable("Unknown shift opc!");
     case ARM_AM::asr: return "asr";
     case ARM_AM::lsl: return "lsl";
     case ARM_AM::lsr: return "lsr";
@@ -54,7 +55,7 @@ namespace ARM_AM {
 
   static inline unsigned getShiftOpcEncoding(ShiftOpc Op) {
     switch (Op) {
-    default: assert(0 && "Unknown shift opc!");
+    default: llvm_unreachable("Unknown shift opc!");
     case ARM_AM::asr: return 2;
     case ARM_AM::lsl: return 0;
     case ARM_AM::lsr: return 1;
@@ -72,7 +73,7 @@ namespace ARM_AM {
 
   static inline const char *getAMSubModeStr(AMSubMode Mode) {
     switch (Mode) {
-    default: assert(0 && "Unknown addressing sub-mode!");
+    default: llvm_unreachable("Unknown addressing sub-mode!");
     case ARM_AM::ia: return "ia";
     case ARM_AM::ib: return "ib";
     case ARM_AM::da: return "da";
@@ -569,7 +570,7 @@ namespace ARM_AM {
       }
       EltBits = 64;
     } else {
-      assert(false && "Unsupported NEON immediate");
+      llvm_unreachable("Unsupported NEON immediate");
     }
     return Val;
   }

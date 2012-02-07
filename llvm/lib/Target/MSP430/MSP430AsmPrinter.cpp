@@ -65,7 +65,7 @@ void MSP430AsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
                                     raw_ostream &O, const char *Modifier) {
   const MachineOperand &MO = MI->getOperand(OpNum);
   switch (MO.getType()) {
-  default: assert(0 && "Not implemented yet!");
+  default: llvm_unreachable("Not implemented yet!");
   case MachineOperand::MO_Register:
     O << MSP430InstPrinter::getRegisterName(MO.getReg());
     return;

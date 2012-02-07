@@ -84,7 +84,7 @@ HexagonCFGOptimizer::InvertAndChangeJumpTarget(MachineInstr* MI,
     break;
 
   default:
-    assert(0 && "Cannot handle this case");
+    llvm_unreachable("Cannot handle this case");
   }
 
   MI->setDesc(QII->get(NewOpcode));

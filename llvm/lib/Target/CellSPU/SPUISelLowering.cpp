@@ -2033,8 +2033,7 @@ static SDValue LowerEXTRACT_VECTOR_ELT(SDValue Op, SelectionDAG &DAG) {
     int elt_byte = EltNo * VT.getSizeInBits() / 8;
 
     switch (VT.getSimpleVT().SimpleTy) {
-    default:
-      assert(false && "Invalid value type!");
+    default: llvm_unreachable("Invalid value type!");
     case MVT::i8: {
       prefslot_begin = prefslot_end = 3;
       break;
@@ -2362,8 +2361,7 @@ static SDValue LowerCTPOP(SDValue Op, SelectionDAG &DAG) {
   DebugLoc dl = Op.getDebugLoc();
 
   switch (VT.getSimpleVT().SimpleTy) {
-  default:
-    assert(false && "Invalid value type!");
+  default: llvm_unreachable("Invalid value type!");
   case MVT::i8: {
     SDValue N = Op.getOperand(0);
     SDValue Elt0 = DAG.getConstant(0, MVT::i32);

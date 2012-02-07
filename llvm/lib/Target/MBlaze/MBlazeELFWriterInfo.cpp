@@ -102,8 +102,6 @@ long int MBlazeELFWriterInfo::computeRelocation(unsigned SymOffset,
                                                 unsigned RelTy) const {
   if (RelTy == ELF::R_MICROBLAZE_32_PCREL || ELF::R_MICROBLAZE_64_PCREL)
     return SymOffset - (RelOffset + 4);
-  else
-    assert(0 && "computeRelocation unknown for this relocation type");
 
-  return 0;
+  llvm_unreachable("computeRelocation unknown for this relocation type");
 }

@@ -2725,7 +2725,7 @@ static unsigned getNextRegister(unsigned Reg) {
   if (!ARMMCRegisterClasses[ARM::GPRRegClassID].contains(Reg))
     return Reg + 1;
   switch(Reg) {
-  default: assert(0 && "Invalid GPR number!");
+  default: llvm_unreachable("Invalid GPR number!");
   case ARM::R0:  return ARM::R1;  case ARM::R1:  return ARM::R2;
   case ARM::R2:  return ARM::R3;  case ARM::R3:  return ARM::R4;
   case ARM::R4:  return ARM::R5;  case ARM::R5:  return ARM::R6;
@@ -5222,7 +5222,7 @@ validateInstruction(MCInst &Inst,
 
 static unsigned getRealVSTOpcode(unsigned Opc, unsigned &Spacing) {
   switch(Opc) {
-  default: assert(0 && "unexpected opcode!");
+  default: llvm_unreachable("unexpected opcode!");
   // VST1LN
   case ARM::VST1LNdWB_fixed_Asm_8:  Spacing = 1; return ARM::VST1LNd8_UPD;
   case ARM::VST1LNdWB_fixed_Asm_16: Spacing = 1; return ARM::VST1LNd16_UPD;
@@ -5331,7 +5331,7 @@ static unsigned getRealVSTOpcode(unsigned Opc, unsigned &Spacing) {
 
 static unsigned getRealVLDOpcode(unsigned Opc, unsigned &Spacing) {
   switch(Opc) {
-  default: assert(0 && "unexpected opcode!");
+  default: llvm_unreachable("unexpected opcode!");
   // VLD1LN
   case ARM::VLD1LNdWB_fixed_Asm_8:  Spacing = 1; return ARM::VLD1LNd8_UPD;
   case ARM::VLD1LNdWB_fixed_Asm_16: Spacing = 1; return ARM::VLD1LNd16_UPD;
@@ -7022,7 +7022,7 @@ processInstruction(MCInst &Inst,
     ARM_AM::ShiftOpc SOpc = ARM_AM::getSORegShOp(Inst.getOperand(3).getImm());
     if (SOpc == ARM_AM::rrx) return false;
     switch (Inst.getOpcode()) {
-    default: assert(0 && "unexpected opcode!");
+    default: llvm_unreachable("unexpected opcode!");
     case ARM::ANDrsi: newOpc = ARM::ANDrr; break;
     case ARM::ORRrsi: newOpc = ARM::ORRrr; break;
     case ARM::EORrsi: newOpc = ARM::EORrr; break;

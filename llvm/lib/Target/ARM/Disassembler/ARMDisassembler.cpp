@@ -533,7 +533,7 @@ static bool tryAddingSymbolicOperand(uint64_t Address, int32_t Value,
   else if (SymbolicOp.VariantKind == LLVMDisassembler_VariantKind_None)
     MI.addOperand(MCOperand::CreateExpr(Expr));
   else
-    assert(0 && "bad SymbolicOp.VariantKind");
+    llvm_unreachable("bad SymbolicOp.VariantKind");
 
   return true;
 }

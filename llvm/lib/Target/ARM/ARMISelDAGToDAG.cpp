@@ -2361,8 +2361,7 @@ SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDNode *N) {
   SDValue Ops[] = { FalseVal, TrueVal, Tmp2, CCR, InFlag };
   unsigned Opc = 0;
   switch (VT.getSimpleVT().SimpleTy) {
-  default: assert(false && "Illegal conditional move type!");
-    break;
+  default: llvm_unreachable("Illegal conditional move type!");
   case MVT::i32:
     Opc = Subtarget->isThumb()
       ? (Subtarget->hasThumb2() ? ARM::t2MOVCCr : ARM::tMOVCCr_pseudo)

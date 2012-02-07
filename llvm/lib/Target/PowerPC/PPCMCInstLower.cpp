@@ -140,7 +140,7 @@ void llvm::LowerPPCMachineInstrToMCInst(const MachineInstr *MI, MCInst &OutMI,
     switch (MO.getType()) {
     default:
       MI->dump();
-      assert(0 && "unknown operand type");
+      llvm_unreachable("unknown operand type");
     case MachineOperand::MO_Register:
       assert(!MO.getSubReg() && "Subregs should be eliminated!");
       MCOp = MCOperand::CreateReg(MO.getReg());

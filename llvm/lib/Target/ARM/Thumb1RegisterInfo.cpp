@@ -694,7 +694,7 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
         // register. The offset is already handled in the vreg value.
         MI.getOperand(i+1).ChangeToRegister(FrameReg, false, false, false);
   } else {
-    assert(false && "Unexpected opcode!");
+    llvm_unreachable("Unexpected opcode!");
   }
 
   // Add predicate back if it's needed.

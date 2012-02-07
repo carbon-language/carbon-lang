@@ -41,8 +41,8 @@ unsigned ARMELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
   case ARM::reloc_arm_machine_cp_entry:
   case ARM::reloc_arm_jt_base:
   case ARM::reloc_arm_pic_jt:
-    assert(0 && "unsupported ARM relocation type"); return 0;
-    
+    llvm_unreachable("unsupported ARM relocation type");
+
   case ARM::reloc_arm_branch: return ELF::R_ARM_CALL;
   case ARM::reloc_arm_movt:   return ELF::R_ARM_MOVT_ABS;
   case ARM::reloc_arm_movw:   return ELF::R_ARM_MOVW_ABS_NC;
@@ -53,30 +53,26 @@ unsigned ARMELFWriterInfo::getRelocationType(unsigned MachineRelTy) const {
 
 long int ARMELFWriterInfo::getDefaultAddendForRelTy(unsigned RelTy,
                                                     long int Modifier) const {
-  assert(0 && "ARMELFWriterInfo::getDefaultAddendForRelTy() not implemented");
-  return 0;
+  llvm_unreachable("ARMELFWriterInfo::getDefaultAddendForRelTy() not "
+                   "implemented");
 }
 
 unsigned ARMELFWriterInfo::getRelocationTySize(unsigned RelTy) const {
-  assert(0 && "ARMELFWriterInfo::getRelocationTySize() not implemented");
-  return 0;
+  llvm_unreachable("ARMELFWriterInfo::getRelocationTySize() not implemented");
 }
 
 bool ARMELFWriterInfo::isPCRelativeRel(unsigned RelTy) const {
-  assert(0 && "ARMELFWriterInfo::isPCRelativeRel() not implemented");
-  return 1;
+  llvm_unreachable("ARMELFWriterInfo::isPCRelativeRel() not implemented");
 }
 
 unsigned ARMELFWriterInfo::getAbsoluteLabelMachineRelTy() const {
-  assert(0 &&
-         "ARMELFWriterInfo::getAbsoluteLabelMachineRelTy() not implemented");
-  return 0;
+  llvm_unreachable("ARMELFWriterInfo::getAbsoluteLabelMachineRelTy() not "
+                   "implemented");
 }
 
 long int ARMELFWriterInfo::computeRelocation(unsigned SymOffset,
                                              unsigned RelOffset,
                                              unsigned RelTy) const {
-  assert(0 &&
-         "ARMELFWriterInfo::getAbsoluteLabelMachineRelTy() not implemented");
-  return 0;
+  llvm_unreachable("ARMELFWriterInfo::getAbsoluteLabelMachineRelTy() not "
+                   "implemented");
 }

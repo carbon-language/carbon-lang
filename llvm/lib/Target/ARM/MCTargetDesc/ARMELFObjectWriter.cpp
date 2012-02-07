@@ -163,7 +163,7 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
   unsigned Type = 0;
   if (IsPCRel) {
     switch ((unsigned)Fixup.getKind()) {
-    default: assert(0 && "Unimplemented");
+    default: llvm_unreachable("Unimplemented");
     case FK_Data_4:
       switch (Modifier) {
       default: llvm_unreachable("Unsupported Modifier");
@@ -171,8 +171,7 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
         Type = ELF::R_ARM_REL32;
         break;
       case MCSymbolRefExpr::VK_ARM_TLSGD:
-        assert(0 && "unimplemented");
-        break;
+        llvm_unreachable("unimplemented");
       case MCSymbolRefExpr::VK_ARM_GOTTPOFF:
         Type = ELF::R_ARM_TLS_IE32;
         break;
@@ -248,8 +247,7 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
     case ARM::fixup_arm_thumb_cb:
     case ARM::fixup_arm_thumb_cp:
     case ARM::fixup_arm_thumb_br:
-      assert(0 && "Unimplemented");
-      break;
+      llvm_unreachable("Unimplemented");
     case ARM::fixup_arm_uncondbranch:
       Type = ELF::R_ARM_CALL;
       break;

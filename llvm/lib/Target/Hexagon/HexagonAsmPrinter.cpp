@@ -318,14 +318,14 @@ bool HexagonAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
   if (Base.isReg())
     printOperand(MI, OpNo, O);
   else
-    assert(0 && "Unimplemented");
+    llvm_unreachable("Unimplemented");
 
   if (Offset.isImm()) {
     if (Offset.getImm())
       O << " + #" << Offset.getImm();
   }
   else
-    assert(0 && "Unimplemented");
+    llvm_unreachable("Unimplemented");
 
   return false;
 }
@@ -333,7 +333,7 @@ bool HexagonAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
 void HexagonAsmPrinter::printPredicateOperand(const MachineInstr *MI,
                                               unsigned OpNo,
                                               raw_ostream &O) {
-  assert(0 && "Unimplemented");
+  llvm_unreachable("Unimplemented");
 }
 
 

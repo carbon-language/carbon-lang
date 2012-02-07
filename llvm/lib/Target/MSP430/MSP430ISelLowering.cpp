@@ -593,8 +593,7 @@ SDValue MSP430TargetLowering::LowerShifts(SDValue Op,
   // Expand non-constant shifts to loops:
   if (!isa<ConstantSDNode>(N->getOperand(1)))
     switch (Opc) {
-    default:
-      assert(0 && "Invalid shift opcode!");
+    default: llvm_unreachable("Invalid shift opcode!");
     case ISD::SHL:
       return DAG.getNode(MSP430ISD::SHL, dl,
                          VT, N->getOperand(0), N->getOperand(1));
@@ -1022,8 +1021,7 @@ MSP430TargetLowering::EmitShiftInstr(MachineInstr *MI,
   unsigned Opc;
   const TargetRegisterClass * RC;
   switch (MI->getOpcode()) {
-  default:
-    assert(0 && "Invalid shift opcode!");
+  default: llvm_unreachable("Invalid shift opcode!");
   case MSP430::Shl8:
    Opc = MSP430::SHL8r1;
    RC = MSP430::GR8RegisterClass;

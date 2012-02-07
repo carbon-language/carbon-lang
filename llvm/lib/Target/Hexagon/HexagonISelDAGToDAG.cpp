@@ -1099,7 +1099,7 @@ SDNode *HexagonDAGToDAGISel::SelectZeroExtend(SDNode *N) {
         ReplaceUses(N, RsPd);
         return RsPd;
       }
-      assert(0 && "Unexpected value type");
+      llvm_unreachable("Unexpected value type");
     }
   }
   return SelectCode(N);
@@ -1145,7 +1145,7 @@ SDNode *HexagonDAGToDAGISel::SelectIntrinsicWOChain(SDNode *N) {
         SDValue SDVal = CurDAG->getTargetConstant(Val, MVT::i32);
         Ops.push_back(SDVal);
       } else {
-        assert(0 && "Unimplemented");
+        llvm_unreachable("Unimplemented");
       }
     }
     EVT ReturnValueVT = N->getValueType(0);

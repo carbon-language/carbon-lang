@@ -3070,8 +3070,7 @@ static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
   unsigned Opc;
 
   switch (Op.getOpcode()) {
-  default:
-    assert(0 && "Invalid opcode!");
+  default: llvm_unreachable("Invalid opcode!");
   case ISD::FP_TO_SINT:
     Opc = ARMISD::FTOSI;
     break;
@@ -3101,8 +3100,7 @@ static SDValue LowerVectorINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   unsigned CastOpc;
   unsigned Opc;
   switch (Op.getOpcode()) {
-  default:
-    assert(0 && "Invalid opcode!");
+  default: llvm_unreachable("Invalid opcode!");
   case ISD::SINT_TO_FP:
     CastOpc = ISD::SIGN_EXTEND;
     Opc = ISD::SINT_TO_FP;
@@ -3126,8 +3124,7 @@ static SDValue LowerINT_TO_FP(SDValue Op, SelectionDAG &DAG) {
   unsigned Opc;
 
   switch (Op.getOpcode()) {
-  default:
-    assert(0 && "Invalid opcode!");
+  default: llvm_unreachable("Invalid opcode!");
   case ISD::SINT_TO_FP:
     Opc = ARMISD::SITOF;
     break;
@@ -4957,7 +4954,7 @@ static SDValue LowerADDC_ADDE_SUBC_SUBE(SDValue Op, SelectionDAG &DAG) {
   unsigned Opc;
   bool ExtraOp = false;
   switch (Op.getOpcode()) {
-  default: assert(0 && "Invalid code");
+  default: llvm_unreachable("Invalid code");
   case ISD::ADDC: Opc = ARMISD::ADDC; break;
   case ISD::ADDE: Opc = ARMISD::ADDE; ExtraOp = true; break;
   case ISD::SUBC: Opc = ARMISD::SUBC; break;
@@ -6667,7 +6664,7 @@ static SDValue AddCombineToVPADDL(SDNode *N, SDValue N0, SDValue N1,
     case MVT::i16: widenType = MVT::getVectorVT(MVT::i32, numElem); break;
     case MVT::i32: widenType = MVT::getVectorVT(MVT::i64, numElem); break;
     default:
-      assert(0 && "Invalid vector element type for padd optimization.");
+      llvm_unreachable("Invalid vector element type for padd optimization.");
   }
 
   SDValue tmp = DAG.getNode(ISD::INTRINSIC_WO_CHAIN, N->getDebugLoc(),
@@ -7332,7 +7329,7 @@ static SDValue CombineBaseUpdate(SDNode *N,
     if (isIntrinsic) {
       unsigned IntNo = cast<ConstantSDNode>(N->getOperand(1))->getZExtValue();
       switch (IntNo) {
-      default: assert(0 && "unexpected intrinsic for Neon base update");
+      default: llvm_unreachable("unexpected intrinsic for Neon base update");
       case Intrinsic::arm_neon_vld1:     NewOpc = ARMISD::VLD1_UPD;
         NumVecs = 1; break;
       case Intrinsic::arm_neon_vld2:     NewOpc = ARMISD::VLD2_UPD;
@@ -7365,7 +7362,7 @@ static SDValue CombineBaseUpdate(SDNode *N,
     } else {
       isLaneOp = true;
       switch (N->getOpcode()) {
-      default: assert(0 && "unexpected opcode for Neon base update");
+      default: llvm_unreachable("unexpected opcode for Neon base update");
       case ARMISD::VLD2DUP: NewOpc = ARMISD::VLD2DUP_UPD; NumVecs = 2; break;
       case ARMISD::VLD3DUP: NewOpc = ARMISD::VLD3DUP_UPD; NumVecs = 3; break;
       case ARMISD::VLD4DUP: NewOpc = ARMISD::VLD4DUP_UPD; NumVecs = 4; break;

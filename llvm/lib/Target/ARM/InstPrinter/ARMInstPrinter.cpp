@@ -645,7 +645,7 @@ void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
 
   if (getAvailableFeatures() & ARM::FeatureMClass) {
     switch (Op.getImm()) {
-    default: assert(0 && "Unexpected mask value!");
+    default: llvm_unreachable("Unexpected mask value!");
     case 0: O << "apsr"; return;
     case 1: O << "iapsr"; return;
     case 2: O << "eapsr"; return;
@@ -668,7 +668,7 @@ void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
   if (!SpecRegRBit && (Mask == 8 || Mask == 4 || Mask == 12)) {
     O << "APSR_";
     switch (Mask) {
-    default: assert(0);
+    default: llvm_unreachable("Unexpected mask value!");
     case 4:  O << "g"; return;
     case 8:  O << "nzcvq"; return;
     case 12: O << "nzcvqg"; return;

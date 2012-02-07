@@ -37,7 +37,7 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   const MCSymbol *Symbol;
 
   switch(MO.getTargetFlags()) {
-  default:                   assert(0 && "Invalid target flag!");
+  default:                   llvm_unreachable("Invalid target flag!");
   case MipsII::MO_NO_FLAG:   Kind = MCSymbolRefExpr::VK_None; break;
   case MipsII::MO_GPREL:     Kind = MCSymbolRefExpr::VK_Mips_GPREL; break;
   case MipsII::MO_GOT_CALL:  Kind = MCSymbolRefExpr::VK_Mips_GOT_CALL; break;
@@ -176,9 +176,7 @@ MCOperand MipsMCInstLower::LowerOperand(const MachineOperand& MO,
   MachineOperandType MOTy = MO.getType();
   
   switch (MOTy) {
-  default:
-    assert(0 && "unknown operand type");
-    break;
+  default: llvm_unreachable("unknown operand type");
   case MachineOperand::MO_Register:
     // Ignore all implicit register operands.
     if (MO.isImplicit()) break;
@@ -315,7 +313,7 @@ void MipsMCInstLower::LowerUnalignedLoadStore(const MachineInstr *MI,
   }
   default:
     // FIXME: need to add others
-    assert(0 && "unaligned instruction not processed");
+    llvm_unreachable("unaligned instruction not processed");
   }
 
   MCInsts.push_back(Instr1);

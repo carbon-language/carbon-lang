@@ -84,6 +84,7 @@ namespace {
 
     void EmitTextAttribute(unsigned Attribute, StringRef String) {
       switch (Attribute) {
+      default: llvm_unreachable("Unsupported Text attribute in ASM Mode");
       case ARMBuildAttrs::CPU_name:
         Streamer.EmitRawText(StringRef("\t.cpu ") + String.lower());
         break;
@@ -92,7 +93,6 @@ namespace {
       case ARMBuildAttrs::VFP_arch:
         Streamer.EmitRawText(StringRef("\t.fpu ") + String.lower());
         break;
-      default: assert(0 && "Unsupported Text attribute in ASM Mode"); break;
       }
     }
     void Finish() { }
@@ -196,6 +196,7 @@ namespace {
         AttributeItemType item = Contents[i];
         Streamer.EmitULEB128IntValue(item.Tag, 0);
         switch (item.Type) {
+        default: llvm_unreachable("Invalid attribute type");
         case AttributeItemType::NumericAttribute:
           Streamer.EmitULEB128IntValue(item.IntValue, 0);
           break;
@@ -203,8 +204,6 @@ namespace {
           Streamer.EmitBytes(item.StringValue.upper(), 0);
           Streamer.EmitIntValue(0, 1); // '\0'
           break;
-        default:
-          assert(0 && "Invalid attribute type");
         }
       }
 
@@ -331,8 +330,7 @@ void ARMAsmPrinter::printOperand(const MachineInstr *MI, int OpNum,
   unsigned TF = MO.getTargetFlags();
 
   switch (MO.getType()) {
-  default:
-    assert(0 && "<unknown operand type>");
+  default: llvm_unreachable("<unknown operand type>");
   case MachineOperand::MO_Register: {
     unsigned Reg = MO.getReg();
     assert(TargetRegisterInfo::isPhysicalRegister(Reg));
@@ -1118,7 +1116,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
     switch (Opc) {
     default:
       MI->dump();
-      assert(0 && "Unsupported opcode for unwinding information");
+      llvm_unreachable("Unsupported opcode for unwinding information");
     case ARM::tPUSH:
       // Special case here: no src & dst reg, but two extra imp ops.
       StartOp = 2; NumOffset = 2;
@@ -1147,7 +1145,7 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
       switch (Opc) {
       default:
         MI->dump();
-        assert(0 && "Unsupported opcode for unwinding information");
+        llvm_unreachable("Unsupported opcode for unwinding information");
       case ARM::MOVr:
       case ARM::tMOVr:
         Offset = 0;
@@ -1194,16 +1192,16 @@ void ARMAsmPrinter::EmitUnwindingInstruction(const MachineInstr *MI) {
         OutStreamer.EmitPad(Offset);
       } else {
         MI->dump();
-        assert(0 && "Unsupported opcode for unwinding information");
+        llvm_unreachable("Unsupported opcode for unwinding information");
       }
     } else if (DstReg == ARM::SP) {
       // FIXME: .movsp goes here
       MI->dump();
-      assert(0 && "Unsupported opcode for unwinding information");
+      llvm_unreachable("Unsupported opcode for unwinding information");
     }
     else {
       MI->dump();
-      assert(0 && "Unsupported opcode for unwinding information");
+      llvm_unreachable("Unsupported opcode for unwinding information");
     }
   }
 }
@@ -1232,7 +1230,7 @@ void ARMAsmPrinter::EmitInstruction(const MachineInstr *MI) {
   // Check for manual lowerings.
   unsigned Opc = MI->getOpcode();
   switch (Opc) {
-  case ARM::t2MOVi32imm: assert(0 && "Should be lowered by thumb2it pass");
+  case ARM::t2MOVi32imm: llvm_unreachable("Should be lowered by thumb2it pass");
   case ARM::DBG_VALUE: {
     if (isVerbose() && OutStreamer.hasRawTextSupport()) {
       SmallString<128> TmpStr;

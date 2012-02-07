@@ -62,8 +62,7 @@ const char *ARMConstantPoolValue::getModifierText() const {
 
 int ARMConstantPoolValue::getExistingMachineCPValue(MachineConstantPool *CP,
                                                     unsigned Alignment) {
-  assert(false && "Shouldn't be calling this directly!");
-  return -1;
+  llvm_unreachable("Shouldn't be calling this directly!");
 }
 
 void

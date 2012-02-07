@@ -92,7 +92,7 @@ static void printExpr(const MCExpr *Expr, raw_ostream &OS) {
   MCSymbolRefExpr::VariantKind Kind = SRE->getKind();
 
   switch (Kind) {
-  default:                                 assert(0 && "Invalid kind!");
+  default:                                 llvm_unreachable("Invalid kind!");
   case MCSymbolRefExpr::VK_None:           break;
   case MCSymbolRefExpr::VK_Mips_GPREL:     OS << "%gp_rel("; break;
   case MCSymbolRefExpr::VK_Mips_GOT_CALL:  OS << "%call16("; break;

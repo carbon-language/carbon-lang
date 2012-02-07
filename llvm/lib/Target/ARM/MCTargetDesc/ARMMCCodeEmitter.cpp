@@ -166,7 +166,7 @@ public:
                                SmallVectorImpl<MCFixup> &Fixups) const {
     ARM_AM::AMSubMode Mode = (ARM_AM::AMSubMode)MI.getOperand(OpIdx).getImm();
     switch (Mode) {
-    default: assert(0 && "Unknown addressing sub-mode!");
+    default: llvm_unreachable("Unknown addressing sub-mode!");
     case ARM_AM::da: return 0;
     case ARM_AM::ia: return 1;
     case ARM_AM::db: return 2;
@@ -832,7 +832,7 @@ getT2AddrModeImm0_1020s4OpValue(const MCInst &MI, unsigned OpIdx,
 // but this is good enough for now.
 static bool EvaluateAsPCRel(const MCExpr *Expr) {
   switch (Expr->getKind()) {
-  default: assert(0 && "Unexpected expression type");
+  default: llvm_unreachable("Unexpected expression type");
   case MCExpr::SymbolRef: return false;
   case MCExpr::Binary: return true;
   }
@@ -856,7 +856,7 @@ ARMMCCodeEmitter::getHiLo16ImmOpValue(const MCInst &MI, unsigned OpIdx,
 
     MCFixupKind Kind;
     switch (ARM16Expr->getKind()) {
-    default: assert(0 && "Unsupported ARMFixup");
+    default: llvm_unreachable("Unsupported ARMFixup");
     case ARMMCExpr::VK_ARM_HI16:
       if (!isTargetDarwin() && EvaluateAsPCRel(E))
         Kind = MCFixupKind(isThumb2()

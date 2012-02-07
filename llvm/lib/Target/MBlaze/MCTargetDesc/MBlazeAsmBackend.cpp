@@ -27,7 +27,7 @@ using namespace llvm;
 
 static unsigned getFixupKindSize(unsigned Kind) {
   switch (Kind) {
-  default: assert(0 && "invalid fixup kind!");
+  default: llvm_unreachable("invalid fixup kind!");
   case FK_Data_1: return 1;
   case FK_PCRel_2:
   case FK_Data_2: return 2;

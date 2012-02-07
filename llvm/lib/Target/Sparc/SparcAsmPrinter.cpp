@@ -142,7 +142,7 @@ bool SparcAsmPrinter::printGetPCX(const MachineInstr *MI, unsigned opNum,
   std::string operand = "";
   const MachineOperand &MO = MI->getOperand(opNum);
   switch (MO.getType()) {
-  default: assert(0 && "Operand is not a register ");
+  default: llvm_unreachable("Operand is not a register");
   case MachineOperand::MO_Register:
     assert(TargetRegisterInfo::isPhysicalRegister(MO.getReg()) &&
            "Operand is not a physical register ");

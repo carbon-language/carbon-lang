@@ -130,9 +130,7 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const {
   MSP430CC::CondCodes CC = static_cast<MSP430CC::CondCodes>(Cond[0].getImm());
 
   switch (CC) {
-  default:
-    assert(0 && "Invalid branch condition!");
-    break;
+  default: llvm_unreachable("Invalid branch condition!");
   case MSP430CC::COND_E:
     CC = MSP430CC::COND_NE;
     break;
@@ -297,8 +295,7 @@ unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
   switch (Desc.TSFlags & MSP430II::SizeMask) {
   default:
     switch (Desc.getOpcode()) {
-    default:
-      assert(0 && "Unknown instruction size!");
+    default: llvm_unreachable("Unknown instruction size!");
     case TargetOpcode::PROLOG_LABEL:
     case TargetOpcode::EH_LABEL:
     case TargetOpcode::IMPLICIT_DEF:
@@ -314,8 +311,7 @@ unsigned MSP430InstrInfo::GetInstSizeInBytes(const MachineInstr *MI) const {
     }
   case MSP430II::SizeSpecial:
     switch (MI->getOpcode()) {
-    default:
-      assert(0 && "Unknown instruction size!");
+    default: llvm_unreachable("Unknown instruction size!");
     case MSP430::SAR8r1c:
     case MSP430::SAR16r1c:
       return 4;

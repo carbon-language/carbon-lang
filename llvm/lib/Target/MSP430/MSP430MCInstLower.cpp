@@ -39,7 +39,7 @@ GetGlobalAddressSymbol(const MachineOperand &MO) const {
 MCSymbol *MSP430MCInstLower::
 GetExternalSymbolSymbol(const MachineOperand &MO) const {
   switch (MO.getTargetFlags()) {
-  default: assert(0 && "Unknown target flag on GV operand");
+  default: llvm_unreachable("Unknown target flag on GV operand");
   case 0: break;
   }
 
@@ -81,7 +81,7 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
 MCSymbol *MSP430MCInstLower::
 GetBlockAddressSymbol(const MachineOperand &MO) const {
   switch (MO.getTargetFlags()) {
-  default: assert(0 && "Unknown target flag on GV operand");
+  default: llvm_unreachable("Unknown target flag on GV operand");
   case 0: break;
   }
 
@@ -116,7 +116,7 @@ void MSP430MCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
     switch (MO.getType()) {
     default:
       MI->dump();
-      assert(0 && "unknown operand type");
+      llvm_unreachable("unknown operand type");
     case MachineOperand::MO_Register:
       // Ignore all implicit register operands.
       if (MO.isImplicit()) continue;

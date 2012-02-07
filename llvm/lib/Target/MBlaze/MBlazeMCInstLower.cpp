@@ -85,9 +85,7 @@ GetConstantPoolIndexSymbol(const MachineOperand &MO) const {
 MCSymbol *MBlazeMCInstLower::
 GetBlockAddressSymbol(const MachineOperand &MO) const {
   switch (MO.getTargetFlags()) {
-  default:
-      assert(0 && "Unknown target flag on GV operand");
-
+  default: llvm_unreachable("Unknown target flag on GV operand");
   case 0: break;
   }
 
