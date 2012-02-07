@@ -17,6 +17,7 @@
 
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/Bitcode/BitCodes.h"
+#include "llvm/Support/Endian.h"
 #include "llvm/Support/StreamableMemoryObject.h"
 #include <climits>
 #include <string>
@@ -242,12 +243,13 @@ public:
   }
 
   uint32_t getWord(size_t pos) {
-    uint32_t word = -1;
+    uint8_t buf[sizeof(uint32_t)];
+    memset(buf, 0xFF, sizeof(buf));
     BitStream->getBitcodeBytes().readBytes(pos,
-                                           sizeof(word),
-                                           reinterpret_cast<uint8_t *>(&word),
+                                           sizeof(buf),
+                                           buf,
                                            NULL);
-    return word;
+    return *reinterpret_cast<support::ulittle32_t *>(buf);
   }
 
   bool AtEndOfStream() {
