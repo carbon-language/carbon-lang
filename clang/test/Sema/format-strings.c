@@ -491,6 +491,7 @@ void __attribute__((format(strftime,1,0))) dateformat(const char *fmt);
 void test_other_formats() {
   char *str = "";
   monformat("", 1); // expected-warning{{format string is empty}}
+  monformat(str); // expected-warning{{format string is not a string literal (potentially insecure)}}
   dateformat(""); // expected-warning{{format string is empty}}
-  dateformat(str); // expected-warning{{format string is not a string literal (potentially insecure)}}
+  dateformat(str); // no-warning (using strftime non literal is not unsafe)
 }

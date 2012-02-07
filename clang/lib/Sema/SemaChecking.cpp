@@ -1584,6 +1584,11 @@ void Sema::CheckFormatArguments(Expr **Args, unsigned NumArgs,
                              format_idx, firstDataArg, Type))
     return;  // Literal format string found, check done!
 
+  // Strftime is particular as it always uses a single 'time' argument,
+  // so it is safe to pass a non-literal string.
+  if (Type == FST_Strftime)
+    return;
+
   // Do not emit diag when the string param is a macro expansion and the
   // format is either NSString or CFString. This is a hack to prevent
   // diag when using the NSLocalizedString and CFCopyLocalizedString macros
