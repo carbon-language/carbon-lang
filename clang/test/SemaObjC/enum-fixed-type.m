@@ -25,3 +25,13 @@ void test() {
   long value = 2;
   Enumeration e = value;
 }
+
+// <rdar://10381507>
+typedef enum : long { Foo } IntegerEnum;
+int arr[(sizeof(typeof(Foo)) == sizeof(typeof(IntegerEnum))) - 1];
+int arr1[(sizeof(typeof(Foo)) == sizeof(typeof(long))) - 1];
+int arr2[(sizeof(typeof(IntegerEnum)) == sizeof(typeof(long))) - 1];
+
+// <rdar://problem/10760113>
+typedef enum : long long { Bar = -1 } LongLongEnum;
+int arr3[(long long)Bar == (long long)-1 ? 1 : -1];

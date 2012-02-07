@@ -117,3 +117,5 @@ void crash(enum E* e) // expected-warning {{declaration of 'enum E' will not be 
         PR8694(e); // expected-warning {{incompatible pointer types passing 'enum E *' to parameter of type 'int *'}}
 }
 
+typedef enum { NegativeShort = (short)-1 } NegativeShortEnum;
+int NegativeShortTest[NegativeShort == -1 ? 1 : -1];
