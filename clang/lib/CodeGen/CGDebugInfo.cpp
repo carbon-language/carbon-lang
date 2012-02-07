@@ -1307,8 +1307,18 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     EltTys.push_back(InhTag);
   }
 
+  for (ObjCContainerDecl::prop_iterator I = ID->prop_begin(),
+         E = ID->prop_end(); I != E; ++I) {
+    const ObjCPropertyDecl *PD = *I;
+    llvm::MDNode *PropertyNode =
+      DBuilder.createObjCProperty(PD->getName(),
+				  getSelectorName(PD->getGetterName()),
+				  getSelectorName(PD->getSetterName()),
+				  PD->getPropertyAttributes());
+    EltTys.push_back(PropertyNode);
+  }
+
   const ASTRecordLayout &RL = CGM.getContext().getASTObjCInterfaceLayout(ID);
-  ObjCImplementationDecl *ImpD = ID->getImplementation();
   unsigned FieldNo = 0;
   for (ObjCIvarDecl *Field = ID->all_declared_ivar_begin(); Field;
        Field = Field->getNextIvar(), ++FieldNo) {
@@ -1351,26 +1361,18 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     else if (Field->getAccessControl() == ObjCIvarDecl::Private)
       Flags = llvm::DIDescriptor::FlagPrivate;
 
-    StringRef PropertyName;
-    StringRef PropertyGetter;
-    StringRef PropertySetter;
-    unsigned PropertyAttributes = 0;
-    ObjCPropertyDecl *PD = NULL;
     llvm::MDNode *PropertyNode = NULL;
-    if (ImpD)
+    if (ObjCImplementationDecl *ImpD = ID->getImplementation()) {
       if (ObjCPropertyImplDecl *PImpD = 
-          ImpD->FindPropertyImplIvarDecl(Field->getIdentifier()))
-        PD = PImpD->getPropertyDecl();
-    if (PD) {
-      PropertyName = PD->getName();
-      PropertyGetter = getSelectorName(PD->getGetterName());
-      PropertySetter = getSelectorName(PD->getSetterName());
-      PropertyAttributes = PD->getPropertyAttributes();
-      PropertyNode =
-	DBuilder.createObjCProperty(PropertyName, PropertyGetter, 
-                                    PropertySetter,
-                                    PropertyAttributes);
-      EltTys.push_back(PropertyNode);
+          ImpD->FindPropertyImplIvarDecl(Field->getIdentifier())) {
+        if (ObjCPropertyDecl *PD = PImpD->getPropertyDecl()) {
+	  PropertyNode =
+	    DBuilder.createObjCProperty(PD->getName(),
+                                        getSelectorName(PD->getGetterName()),
+                                        getSelectorName(PD->getSetterName()),
+                                        PD->getPropertyAttributes());
+	}
+      }
     }
     FieldTy = DBuilder.createObjCIVar(FieldName, FieldDefUnit,
                                       FieldLine, FieldSize, FieldAlign,
