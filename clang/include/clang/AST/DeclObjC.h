@@ -1498,8 +1498,7 @@ public:
   friend class ASTDeclWriter;
 };
 
-raw_ostream &operator<<(raw_ostream &OS,
-                              const ObjCCategoryImplDecl *CID);
+raw_ostream &operator<<(raw_ostream &OS, const ObjCCategoryImplDecl &CID);
 
 /// ObjCImplementationDecl - Represents a class definition - this is where
 /// method definitions are specified. For example:
@@ -1643,8 +1642,7 @@ public:
   friend class ASTDeclWriter;
 };
 
-raw_ostream &operator<<(raw_ostream &OS,
-                              const ObjCImplementationDecl *ID);
+raw_ostream &operator<<(raw_ostream &OS, const ObjCImplementationDecl &ID);
 
 /// ObjCCompatibleAliasDecl - Represents alias of a class. This alias is
 /// declared as @compatibility_alias alias class.

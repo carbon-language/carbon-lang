@@ -1191,8 +1191,8 @@ FindPropertyImplDecl(IdentifierInfo *Id) const {
 }
 
 raw_ostream &clang::operator<<(raw_ostream &OS,
-                                     const ObjCCategoryImplDecl *CID) {
-  OS << CID->getName();
+                               const ObjCCategoryImplDecl &CID) {
+  OS << CID.getName();
   return OS;
 }
 
@@ -1235,8 +1235,8 @@ void ObjCImplementationDecl::setIvarInitializers(ASTContext &C,
 }
 
 raw_ostream &clang::operator<<(raw_ostream &OS,
-                                     const ObjCImplementationDecl *ID) {
-  OS << ID->getName();
+                               const ObjCImplementationDecl &ID) {
+  OS << ID.getName();
   return OS;
 }
 

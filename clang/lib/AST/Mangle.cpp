@@ -124,7 +124,7 @@ void MangleContext::mangleObjCMethodName(const ObjCMethodDecl *MD,
   assert (CD && "Missing container decl in GetNameForMethod");
   OS << (MD->isInstanceMethod() ? '-' : '+') << '[' << CD->getName();
   if (const ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(CD))
-    OS << '(' << CID << ')';
+    OS << '(' << *CID << ')';
   OS << ' ' << MD->getSelector().getAsString() << ']';
   
   Out << OS.str().size() << OS.str();

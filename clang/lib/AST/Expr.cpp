@@ -433,7 +433,7 @@ std::string PredefinedExpr::ComputeName(IdentType IT, const Decl *CurrentDecl) {
 
     if (const ObjCCategoryImplDecl *CID =
         dyn_cast<ObjCCategoryImplDecl>(MD->getDeclContext()))
-      Out << '(' << CID << ')';
+      Out << '(' << *CID << ')';
 
     Out <<  ' ';
     Out << MD->getSelector().getAsString();
