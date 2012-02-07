@@ -927,6 +927,12 @@ public:
       rawAddEdge(L);
   }
 
+  void flushLocations() {
+    while (!CLocs.empty())
+      popLocation();
+    PrevLoc = PathDiagnosticLocation();
+  }
+  
   void addEdge(PathDiagnosticLocation NewLoc, bool alwaysAdd = false);
 
   void rawAddEdge(PathDiagnosticLocation NewLoc);
@@ -1132,8 +1138,27 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
     ProgramPoint P = N->getLocation();
 
     do {
+      if (const CallExit *CE = dyn_cast<CallExit>(&P)) {
+        const StackFrameContext *LCtx =
+        CE->getLocationContext()->getCurrentStackFrame();
+        PathDiagnosticLocation Loc(LCtx->getCallSite(),
+                                   PDB.getSourceManager(),
+                                   LCtx);
+        EB.addEdge(Loc, true);
+        EB.flushLocations();
+        break;
+      }
+      
+      // Was the predecessor in a different stack frame?
+      if (NextNode &&
+          !isa<CallExit>(NextNode->getLocation()) &&
+          NextNode->getLocationContext()->getCurrentStackFrame() !=
+          N->getLocationContext()->getCurrentStackFrame()) {
+        EB.flushLocations();
+      }
+
       // Block edges.
-      if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
+      if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {        
         const CFGBlock &Blk = *BE->getSrc();
         const Stmt *Term = Blk.getTerminator();
 
@@ -1182,6 +1207,8 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         
         break;
       }
+      
+      
     } while (0);
 
     if (!NextNode)
