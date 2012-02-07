@@ -3454,6 +3454,13 @@ void RetainCountChecker::checkEndPath(CheckerContext &Ctx) const {
       return;
   }
 
+  // If the current LocationContext has a parent, don't check for leaks.
+  // We will do that later.
+  // FIXME: we should instead check for imblances of the retain/releases,
+  // and suggest annotations.
+  if (Ctx.getLocationContext()->getParent())
+    return;
+  
   B = state->get<RefBindings>();
   SmallVector<SymbolRef, 10> Leaked;
 

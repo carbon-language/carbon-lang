@@ -1646,6 +1646,11 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   // Register additional node visitors.
   R->addVisitor(new NilReceiverBRVisitor());
   R->addVisitor(new ConditionBRVisitor());
+  
+  // If inlining is turning out, emit diagnostics for CallEnter and
+  // CallExit at the top level.
+  bool showTopLevel = Eng.getAnalysisManager().shouldInlineCall();
+  R->addVisitor(new CallEnterExitBRVisitor(showTopLevel));
 
   // Generate the very last diagnostic piece - the piece is visible before 
   // the trace is expanded.

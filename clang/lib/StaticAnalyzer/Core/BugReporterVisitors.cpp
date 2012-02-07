@@ -726,3 +726,54 @@ ConditionBRVisitor::VisitTrueTest(const Expr *Cond,
   PathDiagnosticLocation Loc(Cond, BRC.getSourceManager(), LC);
   return new PathDiagnosticEventPiece(Loc, Out.str());
 }
+
+static PathDiagnosticLocation getLastStmtLoc(const ExplodedNode *N,
+                                             const SourceManager &SM) {
+  while (N) {
+    ProgramPoint PP = N->getLocation();
+    if (const StmtPoint *SP = dyn_cast<StmtPoint>(&PP))
+      return PathDiagnosticLocation(SP->getStmt(), SM, PP.getLocationContext());
+    if (N->pred_empty())
+      break;
+    N = *N->pred_begin();
+  }
+  return PathDiagnosticLocation();
+}
+
+PathDiagnosticPiece *
+CallEnterExitBRVisitor::VisitNode(const ExplodedNode *N,
+                                  const ExplodedNode *PrevN,
+                                  BugReporterContext &BRC,
+                                  BugReport &BR) {
+  ProgramPoint PP = N->getLocation();
+  SmallString<256> buf;
+  llvm::raw_svector_ostream Out(buf);
+  PathDiagnosticLocation pos;
+
+  if (const CallEnter *CEnter = dyn_cast<CallEnter>(&PP)) {
+    const Decl *callee = CEnter->getCalleeContext()->getDecl();
+    pos = PathDiagnosticLocation(CEnter->getCallExpr(), BRC.getSourceManager(),
+                                 PP.getLocationContext());
+    if (isa<BlockDecl>(callee))
+      Out << "Entering call to block";
+    else if (const NamedDecl *ND = dyn_cast<NamedDecl>(callee))
+      Out << "Entering call to '" << ND->getNameAsString() << "'";
+  }
+  else if (const CallExit *CExit = dyn_cast<CallExit>(&PP)) {
+    const Decl *caller = CExit->getLocationContext()->getParent()->getDecl();
+    pos = getLastStmtLoc(PrevN, BRC.getSourceManager());
+    if (const NamedDecl *ND = dyn_cast<NamedDecl>(caller))
+      Out << "Returning to " << ND->getNameAsString();
+    else
+      Out << "Returning to caller"; 
+  }
+  
+  if (!pos.isValid())
+    return 0;
+    
+  StringRef msg = Out.str();
+  if (msg.empty())
+    return 0;
+
+  return new PathDiagnosticEventPiece(pos, msg);
+} 
