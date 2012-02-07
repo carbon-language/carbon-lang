@@ -24,7 +24,6 @@
 #include "clang/AST/ExprObjC.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/Basic/ABI.h"
-#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/StringExtras.h"

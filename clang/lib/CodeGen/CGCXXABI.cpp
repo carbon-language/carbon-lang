@@ -13,7 +13,6 @@
 //===----------------------------------------------------------------------===//
 
 #include "CGCXXABI.h"
-#include "clang/Basic/Diagnostic.h"
 
 using namespace clang;
 using namespace CodeGen;

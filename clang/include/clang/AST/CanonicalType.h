@@ -200,7 +200,11 @@ inline CanQualType Type::getCanonicalTypeUnqualified() const {
   return CanQualType::CreateUnsafe(getCanonicalTypeInternal());
 }
 
-const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB, CanQualType T);
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           CanQualType T) {
+  DB << static_cast<QualType>(T);
+  return DB;
+}
 
 //----------------------------------------------------------------------------//
 // Internal proxy classes used by canonical types

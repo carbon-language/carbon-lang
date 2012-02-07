@@ -16,6 +16,7 @@
 
 #include "clang/Lex/DirectoryLookup.h"
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/DiagnosticIDs.h"
 #include "llvm/ADT/StringRef.h"
 #include <string>
 
@@ -157,10 +158,9 @@ public:
   }
 
   /// PragmaDiagnostic - This callback is invoked when a
-  /// #pragma gcc diagnostic directive is read.
-  /// Mapping is an element of the diag::Mapping enum.
+  /// #pragma gcc dianostic directive is read.
   virtual void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
-                                unsigned mapping, StringRef Str) {
+                                diag::Mapping mapping, StringRef Str) {
   }
 
   /// MacroExpands - This is called by
@@ -303,7 +303,7 @@ public:
   }
 
   virtual void PragmaDiagnostic(SourceLocation Loc, StringRef Namespace,
-                                unsigned mapping, StringRef Str) {
+                                diag::Mapping mapping, StringRef Str) {
     First->PragmaDiagnostic(Loc, Namespace, mapping, Str);
     Second->PragmaDiagnostic(Loc, Namespace, mapping, Str);
   }

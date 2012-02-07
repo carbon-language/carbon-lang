@@ -19,7 +19,6 @@
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "llvm/ADT/ImmutableList.h"
-#include "llvm/ADT/STLExtras.h"
 
 using namespace clang;
 using namespace ento;

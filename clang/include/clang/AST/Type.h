@@ -14,9 +14,11 @@
 #ifndef LLVM_CLANG_AST_TYPE_H
 #define LLVM_CLANG_AST_TYPE_H
 
+#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/ExceptionSpecificationType.h"
 #include "clang/Basic/IdentifierTable.h"
 #include "clang/Basic/Linkage.h"
+#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/Visibility.h"
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/TemplateName.h"
@@ -92,7 +94,6 @@ namespace clang {
   class ExtQuals;
   class ExtQualsTypeCommonBase;
   struct PrintingPolicy;
-  class PartialDiagnostic;
 
   template <typename> class CanQual;
   typedef CanQual<Type> CanQualType;
@@ -4801,11 +4802,21 @@ inline const Type *Type::getBaseElementTypeUnsafe() const {
 
 /// Insertion operator for diagnostics.  This allows sending QualType's into a
 /// diagnostic with <<.
-const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB, QualType T);
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           QualType T) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
+                  DiagnosticsEngine::ak_qualtype);
+  return DB;
+}
 
 /// Insertion operator for partial diagnostics.  This allows sending QualType's
 /// into a diagnostic with <<.
-const PartialDiagnostic &operator<<(const PartialDiagnostic &PD, QualType T);
+inline const PartialDiagnostic &operator<<(const PartialDiagnostic &PD,
+                                           QualType T) {
+  PD.AddTaggedVal(reinterpret_cast<intptr_t>(T.getAsOpaquePtr()),
+                  DiagnosticsEngine::ak_qualtype);
+  return PD;
+}
 
 // Helper class template that is used by Type::getAs to ensure that one does
 // not try to look through a qualified type to get to an array type.

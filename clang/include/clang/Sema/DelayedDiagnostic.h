@@ -22,7 +22,6 @@
 #define LLVM_CLANG_SEMA_DELAYED_DIAGNOSTIC_H
 
 #include "clang/AST/DeclCXX.h"
-#include "clang/Basic/PartialDiagnostic.h"
 
 namespace clang {
 namespace sema {

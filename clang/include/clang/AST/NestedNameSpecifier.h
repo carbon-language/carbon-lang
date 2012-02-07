@@ -14,14 +14,13 @@
 #ifndef LLVM_CLANG_AST_NESTEDNAMESPECIFIER_H
 #define LLVM_CLANG_AST_NESTEDNAMESPECIFIER_H
 
-#include "clang/Basic/SourceLocation.h"
+#include "clang/Basic/Diagnostic.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/PointerIntPair.h"
 
 namespace clang {
 
 class ASTContext;
-class DiagnosticBuilder;
 class NamespaceAliasDecl;
 class NamespaceDecl;
 class IdentifierInfo;
@@ -465,8 +464,12 @@ public:
 
 /// Insertion operator for diagnostics.  This allows sending
 /// NestedNameSpecifiers into a diagnostic with <<.
-const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
-                                    NestedNameSpecifier *NNS);
+inline const DiagnosticBuilder &operator<<(const DiagnosticBuilder &DB,
+                                           NestedNameSpecifier *NNS) {
+  DB.AddTaggedVal(reinterpret_cast<intptr_t>(NNS),
+                  DiagnosticsEngine::ak_nestednamespec);
+  return DB;
+}
 
 }
 

@@ -27,7 +27,6 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathDiagnosticConsumers.h"
 
-#include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/FileManager.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Frontend/AnalyzerOptions.h"

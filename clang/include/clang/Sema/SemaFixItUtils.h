@@ -14,7 +14,6 @@
 #define LLVM_CLANG_SEMA_FIXITUTILS_H
 
 #include "clang/AST/Expr.h"
-#include "clang/Basic/Diagnostic.h"
 
 namespace clang {
 

@@ -24,7 +24,6 @@
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/Mangle.h"
 #include "clang/Basic/Builtins.h"
-#include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Basic/SourceManager.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
@@ -242,9 +241,6 @@ ASTContext::ASTContext(LangOptions& LOpts, SourceManager &SM,
     LastSDM(0, 0),
     UniqueBlockByRefTypeID(0) 
 {
-  // Create a new allocator for partial diagnostics.
-  DiagAllocator = new (BumpAlloc) PartialDiagnosticStorageAllocator;
-
   if (size_reserve > 0) Types.reserve(size_reserve);
   TUDecl = TranslationUnitDecl::Create(*this);
   
@@ -289,9 +285,6 @@ ASTContext::~ASTContext() {
                                                     AEnd = DeclAttrs.end();
        A != AEnd; ++A)
     A->second->~AttrVec();
-
-  // Destroy the partial diagnostic allocator.
-  DiagAllocator->~PartialDiagnosticStorageAllocator();
 }
 
 void ASTContext::AddDeallocation(void (*Callback)(void*), void *Data) {

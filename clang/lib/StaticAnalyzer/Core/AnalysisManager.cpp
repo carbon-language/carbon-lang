@@ -10,7 +10,6 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/Index/Entity.h"
 #include "clang/Index/Indexer.h"
-#include "llvm/ADT/STLExtras.h"
 
 using namespace clang;
 using namespace ento;

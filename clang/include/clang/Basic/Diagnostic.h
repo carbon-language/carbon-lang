@@ -601,7 +601,6 @@ private:
   friend class DiagnosticBuilder;
   friend class Diagnostic;
   friend class PartialDiagnostic;
-  friend struct PartialDiagnosticStorage;
   friend class DiagnosticErrorTrap;
   
   /// CurDiagLoc - This is the location of the current diagnostic that is in

@@ -22,7 +22,6 @@
 #include "llvm/Metadata.h"
 #include "llvm/Constants.h"
 #include "llvm/Type.h"
-#include "llvm/ADT/STLExtras.h"
 using namespace clang;
 using namespace CodeGen;
 
