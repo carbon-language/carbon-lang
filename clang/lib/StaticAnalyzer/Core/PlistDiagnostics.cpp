@@ -275,8 +275,10 @@ static void ReportDiag(raw_ostream &o, const PathDiagnosticPiece& P,
     ReportControlFlow(o, cast<PathDiagnosticControlFlowPiece>(P), FM, SM,
                       LangOpts, indent);
     break;
+  case PathDiagnosticPiece::CallEnter:
+  case PathDiagnosticPiece::CallExit:
   case PathDiagnosticPiece::Event:
-    ReportEvent(o, cast<PathDiagnosticEventPiece>(P), FM, SM, LangOpts,
+    ReportEvent(o, cast<PathDiagnosticSpotPiece>(P), FM, SM, LangOpts,
                 indent);
     break;
   case PathDiagnosticPiece::Macro:

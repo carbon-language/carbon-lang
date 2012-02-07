@@ -261,7 +261,7 @@ public:
 
 class PathDiagnosticPiece {
 public:
-  enum Kind { ControlFlow, Event, Macro };
+  enum Kind { ControlFlow, Event, Macro, CallEnter, CallExit };
   enum DisplayHint { Above, Below };
 
 private:
@@ -355,6 +355,32 @@ public:
   static inline bool classof(const PathDiagnosticPiece *P) {
     return P->getKind() == Event;
   }
+};
+  
+class PathDiagnosticCallEnterPiece : public PathDiagnosticSpotPiece {
+public:
+  PathDiagnosticCallEnterPiece(const PathDiagnosticLocation &pos,
+                              StringRef s)
+    : PathDiagnosticSpotPiece(pos, s, CallEnter, false) {}
+  
+  ~PathDiagnosticCallEnterPiece();
+  
+  static inline bool classof(const PathDiagnosticPiece *P) {
+    return P->getKind() == CallEnter;
+  }  
+};
+
+class PathDiagnosticCallExitPiece : public PathDiagnosticSpotPiece {
+public:
+  PathDiagnosticCallExitPiece(const PathDiagnosticLocation &pos,
+                             StringRef s)
+  : PathDiagnosticSpotPiece(pos, s, CallExit, false) {}
+  
+  ~PathDiagnosticCallExitPiece();
+  
+  static inline bool classof(const PathDiagnosticPiece *P) {
+    return P->getKind() == CallExit;
+  }  
 };
 
 class PathDiagnosticControlFlowPiece : public PathDiagnosticPiece {

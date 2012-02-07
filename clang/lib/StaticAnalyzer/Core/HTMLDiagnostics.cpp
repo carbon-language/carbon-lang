@@ -334,6 +334,8 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
 
   const char *Kind = 0;
   switch (P.getKind()) {
+  case PathDiagnosticPiece::CallEnter:
+  case PathDiagnosticPiece::CallExit:
   case PathDiagnosticPiece::Event:  Kind = "Event"; break;
   case PathDiagnosticPiece::ControlFlow: Kind = "Control"; break;
     // Setting Kind to "Control" is intentional.

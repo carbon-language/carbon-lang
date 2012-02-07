@@ -52,6 +52,8 @@ PathDiagnosticPiece::PathDiagnosticPiece(Kind k, DisplayHint hint)
 
 PathDiagnosticPiece::~PathDiagnosticPiece() {}
 PathDiagnosticEventPiece::~PathDiagnosticEventPiece() {}
+PathDiagnosticCallEnterPiece::~PathDiagnosticCallEnterPiece() {}
+PathDiagnosticCallExitPiece::~PathDiagnosticCallExitPiece() {}
 PathDiagnosticControlFlowPiece::~PathDiagnosticControlFlowPiece() {}
 
 PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {
