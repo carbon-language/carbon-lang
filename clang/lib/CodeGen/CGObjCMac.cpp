@@ -1817,7 +1817,7 @@ llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
   if (CGM.getLangOptions().ObjCGCBitmapPrint) {
     printf("\n block variable layout for block: ");
     const unsigned char *s = (unsigned char*)BitMap.c_str();
-    for (unsigned i = 0; i < BitMap.size(); i++)
+    for (unsigned i = 0, e = BitMap.size(); i < e; i++)
       if (!(s[i] & 0xf0))
         printf("0x0%x%s", s[i], s[i] != 0 ? ", " : "");
       else
@@ -4108,7 +4108,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
            ForStrongLayout ? "strong" : "weak",
            OMD->getClassInterface()->getName().data());
     const unsigned char *s = (unsigned char*)BitMap.c_str();
-    for (unsigned i = 0; i < BitMap.size(); i++)
+    for (unsigned i = 0, e = BitMap.size(); i < e; i++)
       if (!(s[i] & 0xf0))
         printf("0x0%x%s", s[i], s[i] != 0 ? ", " : "");
       else
@@ -4256,7 +4256,7 @@ void CGObjCMac::FinishModule() {
       OS << "\t.lazy_reference .objc_class_name_" << (*I)->getName() << "\n";
     }
 
-    for (size_t i = 0; i < DefinedCategoryNames.size(); ++i) {
+    for (size_t i = 0, e = DefinedCategoryNames.size(); i < e; ++i) {
       OS << "\t.objc_category_name_" << DefinedCategoryNames[i] << "=0\n"
          << "\t.globl .objc_category_name_" << DefinedCategoryNames[i] << "\n";
     }
@@ -4770,14 +4770,14 @@ void CGObjCNonFragileABIMac::FinishNonFragileABIModule() {
                      "\01L_OBJC_LABEL_CLASS_$",
                      "__DATA, __objc_classlist, regular, no_dead_strip");
   
-  for (unsigned i = 0; i < DefinedClasses.size(); i++) {
+  for (unsigned i = 0, e = DefinedClasses.size(); i < e; i++) {
     llvm::GlobalValue *IMPLGV = DefinedClasses[i];
     if (IMPLGV->getLinkage() != llvm::GlobalValue::ExternalWeakLinkage)
       continue;
     IMPLGV->setLinkage(llvm::GlobalValue::ExternalLinkage);
   }
   
-  for (unsigned i = 0; i < DefinedMetaClasses.size(); i++) {
+  for (unsigned i = 0, e = DefinedMetaClasses.size(); i < e; i++) {
     llvm::GlobalValue *IMPLGV = DefinedMetaClasses[i];
     if (IMPLGV->getLinkage() != llvm::GlobalValue::ExternalWeakLinkage)
       continue;
