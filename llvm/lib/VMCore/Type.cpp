@@ -391,10 +391,11 @@ FunctionType::FunctionType(Type *Result, ArrayRef<Type*> Params,
 FunctionType *FunctionType::get(Type *ReturnType,
                                 ArrayRef<Type*> Params, bool isVarArg) {
   // TODO: This is brutally slow.
+  unsigned ParamsSize = Params.size();
   std::vector<Type*> Key;
-  Key.reserve(Params.size()+2);
+  Key.reserve(ParamsSize + 2);
   Key.push_back(const_cast<Type*>(ReturnType));
-  for (unsigned i = 0, e = Params.size(); i != e; ++i)
+  for (unsigned i = 0, e = ParamsSize; i != e; ++i)
     Key.push_back(const_cast<Type*>(Params[i]));
   if (isVarArg)
     Key.push_back(0);
@@ -404,7 +405,7 @@ FunctionType *FunctionType::get(Type *ReturnType,
   
   if (FT == 0) {
     FT = (FunctionType*) pImpl->TypeAllocator.
-      Allocate(sizeof(FunctionType) + sizeof(Type*)*(Params.size()+1),
+      Allocate(sizeof(FunctionType) + sizeof(Type*) * (ParamsSize + 1),
                AlignOf<FunctionType>::Alignment);
     new (FT) FunctionType(ReturnType, Params, isVarArg);
   }
@@ -466,13 +467,13 @@ void StructType::setBody(ArrayRef<Type*> Elements, bool isPacked) {
   setSubclassData(getSubclassData() | SCDB_HasBody);
   if (isPacked)
     setSubclassData(getSubclassData() | SCDB_Packed);
-  
-  Type **Elts = getContext().pImpl->
-    TypeAllocator.Allocate<Type*>(Elements.size());
-  memcpy(Elts, Elements.data(), sizeof(Elements[0])*Elements.size());
+
+  unsigned NumElements = Elements.size();
+  Type **Elts = getContext().pImpl->TypeAllocator.Allocate<Type*>(NumElements);
+  memcpy(Elts, Elements.data(), sizeof(Elements[0]) * NumElements);
   
   ContainedTys = Elts;
-  NumContainedTys = Elements.size();
+  NumContainedTys = NumElements;
 }
 
 void StructType::setName(StringRef Name) {
@@ -497,9 +498,10 @@ void StructType::setName(StringRef Name) {
     SmallString<64> TempStr(Name);
     TempStr.push_back('.');
     raw_svector_ostream TmpStream(TempStr);
+    unsigned NameSize = Name.size();
    
     do {
-      TempStr.resize(Name.size()+1);
+      TempStr.resize(NameSize + 1);
       TmpStream.resync();
       TmpStream << getContext().pImpl->NamedStructTypesUniqueID++;
       
