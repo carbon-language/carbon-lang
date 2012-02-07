@@ -40,7 +40,7 @@ class ConstStructBuilder {
   bool Packed;
   CharUnits NextFieldOffsetInChars;
   CharUnits LLVMStructAlignment;
-  SmallVector<llvm::Constant *, 16> Elements;
+  SmallVector<llvm::Constant *, 32> Elements;
 public:
   static llvm::Constant *BuildStruct(CodeGenModule &CGM, CodeGenFunction *CGF,
                                      InitListExpr *ILE);
