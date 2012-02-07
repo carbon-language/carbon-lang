@@ -8,7 +8,7 @@ void f()
   extern int g();
   
   struct local {
-    int g() { return x; } // expected-error{{reference to local variable 'x' declared in enclosed function 'f'}}
+    int g() { return x; } // expected-error{{reference to local variable 'x' declared in enclosing function 'f'}}
     int h() { return s; }
     int k() { return :: x; }
     int l() { return g(); }

@@ -9471,29 +9471,47 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
 static void
 diagnoseUncapturableValueReference(Sema &S, SourceLocation loc,
                                    VarDecl *var, DeclContext *DC) {
+  DeclContext *VarDC = var->getDeclContext();
+
   //  If the parameter still belongs to the translation unit, then
   //  we're actually just using one parameter in the declaration of
   //  the next.
   if (isa<ParmVarDecl>(var) &&
-      isa<TranslationUnitDecl>(var->getDeclContext()))
+      isa<TranslationUnitDecl>(VarDC))
     return;
 
-  // Don't diagnose about capture if we're not actually in code right
-  // now; in general, there are more appropriate places that will
-  // diagnose this.
-  // FIXME: We incorrectly skip diagnosing C++11 member initializers.
-  if (!S.CurContext->isFunctionOrMethod())
+  // For C code, don't diagnose about capture if we're not actually in code
+  // right now; it's impossible to write a non-constant expression outside of
+  // function context, so we'll get other (more useful) diagnostics later.
+  //
+  // For C++, things get a bit more nasty... it would be nice to suppress this
+  // diagnostic for certain cases like using a local variable in an array bound
+  // for a member of a local class, but the correct predicate is not obvious.
+  if (!S.getLangOptions().CPlusPlus && !S.CurContext->isFunctionOrMethod())
     return;
 
-  DeclarationName functionName;
-  if (FunctionDecl *fn = dyn_cast<FunctionDecl>(var->getDeclContext()))
-    functionName = fn->getDeclName();
-  // FIXME: variable from enclosing block that we couldn't capture from!
+  if (isa<CXXMethodDecl>(VarDC) &&
+      cast<CXXRecordDecl>(VarDC->getParent())->isLambda()) {
+    S.Diag(loc, diag::err_reference_to_local_var_in_enclosing_lambda)
+      << var->getIdentifier();
+  } else if (FunctionDecl *fn = dyn_cast<FunctionDecl>(VarDC)) {
+    S.Diag(loc, diag::err_reference_to_local_var_in_enclosing_function)
+      << var->getIdentifier() << fn->getDeclName();
+  } else if (isa<BlockDecl>(VarDC)) {
+    S.Diag(loc, diag::err_reference_to_local_var_in_enclosing_block)
+      << var->getIdentifier();
+  } else {
+    // FIXME: Is there any other context where a local variable can be
+    // declared?
+    S.Diag(loc, diag::err_reference_to_local_var_in_enclosing_context)
+      << var->getIdentifier();
+  }
 
-  S.Diag(loc, diag::err_reference_to_local_var_in_enclosing_function)
-    << var->getIdentifier() << functionName;
   S.Diag(var->getLocation(), diag::note_local_variable_declared_here)
     << var->getIdentifier();
+
+  // FIXME: Add additional diagnostic info about class etc. which prevents
+  // capture.
 }
 
 static bool shouldAddConstForScope(CapturingScopeInfo *CSI, VarDecl *VD) {

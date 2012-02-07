@@ -73,10 +73,11 @@ void test_accept_array(int N) {
 }
 
 // Variably-modified types cannot be used in local classes.
-void local_classes(int N) {
+void local_classes(int N) { // expected-note {{declared here}}
   struct X {
     int size;
     int array[N]; // expected-error{{fields must have a constant size: 'variable length array in structure' extension will never be supported}} \
+                  // expected-error{{reference to local variable 'N' declared in enclosing function 'local_classes'}} \
                   // expected-warning{{variable length arrays are a C99 feature}}
   };
 }

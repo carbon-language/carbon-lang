@@ -4636,7 +4636,14 @@ def ext_ms_anonymous_struct : ExtWarn<
 
 // C++ local classes
 def err_reference_to_local_var_in_enclosing_function : Error<
-  "reference to local variable %0 declared in enclosed function %1">;
+  "reference to local variable %0 declared in enclosing function %1">;
+def err_reference_to_local_var_in_enclosing_block : Error<
+  "reference to local variable %0 declared in enclosing block literal">;
+def err_reference_to_local_var_in_enclosing_lambda : Error<
+  "reference to local variable %0 declared in enclosing lambda expression">;
+def err_reference_to_local_var_in_enclosing_context : Error<
+  "reference to local variable %0 declared in enclosing context">;
+
 def note_local_variable_declared_here : Note<
   "%0 declared here">;
 def err_static_data_member_not_allowed_in_local_class : Error<
