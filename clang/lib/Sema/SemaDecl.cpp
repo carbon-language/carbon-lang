@@ -9171,11 +9171,23 @@ void Sema::ActOnFields(Scope* S,
   if (EnclosingDecl->isInvalidDecl())
     return;
 
-  // Verify that all the fields are okay.
+  RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
+
+  // Start counting up the number of named members; make sure to include
+  // members of anonymous structs and unions in the total.
   unsigned NumNamedMembers = 0;
+  if (Record) {
+    for (RecordDecl::decl_iterator i = Record->decls_begin(),
+                                   e = Record->decls_end(); i != e; i++) {
+      if (IndirectFieldDecl *IFD = dyn_cast<IndirectFieldDecl>(*i))
+        if (IFD->getDeclName())
+          ++NumNamedMembers;
+    }
+  }
+
+  // Verify that all the fields are okay.
   SmallVector<FieldDecl*, 32> RecFields;
 
-  RecordDecl *Record = dyn_cast<RecordDecl>(EnclosingDecl);
   bool ARCErrReported = false;
   for (llvm::ArrayRef<Decl *>::iterator i = Fields.begin(), end = Fields.end();
        i != end; ++i) {

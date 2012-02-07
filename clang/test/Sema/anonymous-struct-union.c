@@ -102,3 +102,9 @@ typedef struct {
   int x;
 } a_struct;
 int tmp = (a_struct) { .x = 0 }; // expected-error {{initializing 'int' with an expression of incompatible type 'a_struct'}}
+
+// This example comes out of the C11 standard; make sure we don't accidentally reject it.
+struct s {
+  struct { int i; };
+  int a[];
+};
