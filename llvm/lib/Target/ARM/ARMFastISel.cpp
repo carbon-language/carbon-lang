@@ -157,6 +157,7 @@ class ARMFastISel : public FastISel {
     bool SelectLoad(const Instruction *I);
     bool SelectStore(const Instruction *I);
     bool SelectBranch(const Instruction *I);
+    bool SelectIndirectBr(const Instruction *I);
     bool SelectCmp(const Instruction *I);
     bool SelectFPExt(const Instruction *I);
     bool SelectFPTrunc(const Instruction *I);
@@ -1350,6 +1351,16 @@ bool ARMFastISel::SelectBranch(const Instruction *I) {
   return true;
 }
 
+bool ARMFastISel::SelectIndirectBr(const Instruction *I) {
+  unsigned AddrReg = getRegForValue(I->getOperand(0));
+  if (AddrReg == 0) return false;
+
+  unsigned Opc = isThumb2 ? ARM::tBRIND : ARM::BX;
+  AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(Opc))
+                  .addReg(AddrReg));
+  return true;  
+}
+
 bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
                              bool isZExt) {
   Type *Ty = Src1Value->getType();
@@ -2468,6 +2479,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectStore(I);
     case Instruction::Br:
       return SelectBranch(I);
+    case Instruction::IndirectBr:
+      return SelectIndirectBr(I);
     case Instruction::ICmp:
     case Instruction::FCmp:
       return SelectCmp(I);
