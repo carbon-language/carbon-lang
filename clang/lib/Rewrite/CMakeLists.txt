@@ -7,6 +7,7 @@ add_clang_library(clangRewrite
   HTMLPrint.cpp
   HTMLRewrite.cpp
   RewriteMacros.cpp
+  RewriteModernObjC.cpp
   RewriteObjC.cpp
   RewriteRope.cpp
   RewriteTest.cpp

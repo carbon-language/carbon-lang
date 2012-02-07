@@ -154,10 +154,15 @@ bool FixItRecompile::BeginInvocation(CompilerInstance &CI) {
 
 ASTConsumer *RewriteObjCAction::CreateASTConsumer(CompilerInstance &CI,
                                                   StringRef InFile) {
-  if (raw_ostream *OS = CI.createDefaultOutputFile(false, InFile, "cpp"))
+  if (raw_ostream *OS = CI.createDefaultOutputFile(false, InFile, "cpp")) {
+    if (CI.getLangOpts().ObjCNonFragileABI)
+      return CreateModernObjCRewriter(InFile, OS,
+                                CI.getDiagnostics(), CI.getLangOpts(),
+                                CI.getDiagnosticOpts().NoRewriteMacros);
     return CreateObjCRewriter(InFile, OS,
                               CI.getDiagnostics(), CI.getLangOpts(),
                               CI.getDiagnosticOpts().NoRewriteMacros);
+  }
   return 0;
 }
 
