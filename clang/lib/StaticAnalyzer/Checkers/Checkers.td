@@ -302,8 +302,20 @@ def StreamChecker : Checker<"Stream">,
 
 let ParentPackage = CString in {
 
-def CStringChecker : Checker<"Generic">,
-  HelpText<"Check calls to functions in <string.h>">,
+def CStringNullArg : Checker<"NullArg">,
+  HelpText<"Check for null pointers being passed as arguments to C string functions">,
+  DescFile<"CStringChecker.cpp">;
+
+def CStringOutOfBounds : Checker<"OutOfBounds">,
+  HelpText<"Check for out-of-bounds access in string functions">,
+  DescFile<"CStringChecker.cpp">;
+
+def CStringBufferOverlap : Checker<"BufferOverlap">,
+  HelpText<"Checks for overlap in two buffer arguments">,
+  DescFile<"CStringChecker.cpp">;
+
+def CStringNotNullTerm : Checker<"NotNullTerminated">,
+  HelpText<"Check for arguments which are not null-terminating strings">,
   DescFile<"CStringChecker.cpp">;
 
 def CStringSyntaxChecker : Checker<"BadSizeArg">,
@@ -408,7 +420,7 @@ def ObjCContainersASTChecker : Checker<"PointerSizedValues">,
   DescFile<"ObjCContainersASTChecker.cpp">;
 
 def ObjCContainersChecker : Checker<"OutOfBounds">,
-  HelpText<"Checks for index out of bounds when using 'CFArray' API">,
+  HelpText<"Checks for index out-of-bounds when using 'CFArray' API">,
   DescFile<"ObjCContainersChecker.cpp">;
     
 }

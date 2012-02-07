@@ -22,7 +22,13 @@ namespace ento {
 
 class CheckerContext {
   ExprEngine &Eng;
+  /// The current exploded(symbolic execution) graph node.
   ExplodedNode *Pred;
+  /// The flag is true if the (state of the execution) has been modified
+  /// by the checker using this context. For example, a new transition has been
+  /// added or a bug report issued.
+  bool Changed;
+  /// The tagged location, which is used to generate all new nodes.
   const ProgramPoint Location;
   NodeBuilder &NB;
 
@@ -33,6 +39,7 @@ public:
                  const ProgramPoint &loc)
     : Eng(eng),
       Pred(pred),
+      Changed(false),
       Location(loc),
       NB(builder) {
     assert(Pred->getState() &&
@@ -56,6 +63,10 @@ public:
   /// not retain the node in their state since the nodes might get invalidated.
   ExplodedNode *getPredecessor() { return Pred; }
   ProgramStateRef getState() const { return Pred->getState(); }
+
+  /// \brief Check if the checker changed the state of the execution; ex: added
+  /// a new transition or a bug report.
+  bool isDifferent() { return Changed; }
 
   /// \brief Returns the number of times the current block has been visited
   /// along the analyzed path.
@@ -146,6 +157,7 @@ public:
 
   /// \brief Emit the diagnostics report.
   void EmitReport(BugReport *R) {
+    Changed = true;
     Eng.getBugReporter().EmitReport(R);
   }
 
@@ -187,11 +199,20 @@ private:
     if (State == Pred->getState() && !Tag && !MarkAsSink)
       return Pred;
 
+    Changed = true;
     ExplodedNode *node = NB.generateNode(Tag ? Location.withTag(Tag) : Location,
                                         State,
                                         P ? P : Pred, MarkAsSink);
     return node;
   }
+};
+
+/// \brief A helper class which wraps a boolean value set to false by default.
+struct DefaultBool {
+  bool Val;
+  DefaultBool() : Val(false) {}
+  operator bool() const { return Val; }
+  DefaultBool &operator=(bool b) { Val = b; return *this; }
 };
 
 } // end GR namespace

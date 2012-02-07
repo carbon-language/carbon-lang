@@ -32,12 +32,26 @@ class CStringChecker : public Checker< eval::Call,
                                          check::DeadSymbols,
                                          check::RegionChanges
                                          > {
-  mutable OwningPtr<BugType> BT_Null, BT_Bounds,
-                                   BT_Overlap, BT_NotCString,
-                                   BT_AdditionOverflow;
+  mutable OwningPtr<BugType> BT_Null,
+                             BT_Bounds,
+                             BT_Overlap,
+                             BT_NotCString,
+                             BT_AdditionOverflow;
+
   mutable const char *CurrentFunctionDescription;
 
 public:
+  /// The filter is used to filter out the diagnostics which are not enabled by
+  /// the user.
+  struct CStringChecksFilter {
+    DefaultBool CheckCStringNullArg;
+    DefaultBool CheckCStringOutOfBounds;
+    DefaultBool CheckCStringBufferOverlap;
+    DefaultBool CheckCStringNotNullTerm;
+  };
+
+  CStringChecksFilter Filter;
+
   static void *getTag() { static int tag; return &tag; }
 
   bool evalCall(const CallExpr *CE, CheckerContext &C) const;
@@ -215,12 +229,15 @@ ProgramStateRef CStringChecker::checkNonNull(CheckerContext &C,
   llvm::tie(stateNull, stateNonNull) = assumeZero(C, state, l, S->getType());
 
   if (stateNull && !stateNonNull) {
+    if (!Filter.CheckCStringNullArg)
+      return NULL;
+
     ExplodedNode *N = C.generateSink(stateNull);
     if (!N)
       return NULL;
 
     if (!BT_Null)
-      BT_Null.reset(new BuiltinBug("API",
+      BT_Null.reset(new BuiltinBug("Unix API",
         "Null pointer argument in call to byte string function"));
 
     SmallString<80> buf;
@@ -342,6 +359,10 @@ ProgramStateRef CStringChecker::CheckBufferAccess(CheckerContext &C,
   if (!state)
     return NULL;
 
+  // If out-of-bounds checking is turned off, skip the rest.
+  if (!Filter.CheckCStringOutOfBounds)
+    return state;
+
   // Get the access length and make sure it is known.
   // FIXME: This assumes the caller has already checked that the access length
   // is positive. And that it's unsigned.
@@ -395,6 +416,9 @@ ProgramStateRef CStringChecker::CheckOverlap(CheckerContext &C,
                                             const Expr *Size,
                                             const Expr *First,
                                             const Expr *Second) const {
+  if (!Filter.CheckCStringBufferOverlap)
+    return state;
+
   // Do a simple check for overlap: if the two arguments are from the same
   // buffer, see if the end of the first is greater than the start of the second
   // or vice versa.
@@ -525,6 +549,10 @@ ProgramStateRef CStringChecker::checkAdditionOverflow(CheckerContext &C,
                                                      ProgramStateRef state,
                                                      NonLoc left,
                                                      NonLoc right) const {
+  // If out-of-bounds checking is turned off, skip the rest.
+  if (!Filter.CheckCStringOutOfBounds)
+    return state;
+
   // If a previous check has failed, propagate the failure.
   if (!state)
     return NULL;
@@ -664,9 +692,12 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
     // C string. In the context of locations, the only time we can issue such
     // a warning is for labels.
     if (loc::GotoLabel *Label = dyn_cast<loc::GotoLabel>(&Buf)) {
+      if (!Filter.CheckCStringNotNullTerm)
+        return UndefinedVal();
+
       if (ExplodedNode *N = C.addTransition(state)) {
         if (!BT_NotCString)
-          BT_NotCString.reset(new BuiltinBug("API",
+          BT_NotCString.reset(new BuiltinBug("Unix API",
             "Argument is not a null-terminated string."));
 
         SmallString<120> buf;
@@ -683,8 +714,8 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
         report->addRange(Ex->getSourceRange());
         C.EmitReport(report);        
       }
-
       return UndefinedVal();
+
     }
 
     // If it's not a region and not a label, give up.
@@ -721,9 +752,12 @@ SVal CStringChecker::getCStringLength(CheckerContext &C, ProgramStateRef &state,
     // Other regions (mostly non-data) can't have a reliable C string length.
     // In this case, an error is emitted and UndefinedVal is returned.
     // The caller should always be prepared to handle this case.
+    if (!Filter.CheckCStringNotNullTerm)
+      return UndefinedVal();
+
     if (ExplodedNode *N = C.addTransition(state)) {
       if (!BT_NotCString)
-        BT_NotCString.reset(new BuiltinBug("API",
+        BT_NotCString.reset(new BuiltinBug("Unix API",
           "Argument is not a null-terminated string."));
 
       SmallString<120> buf;
@@ -1715,6 +1749,16 @@ bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
 
   // Check and evaluate the call.
   (this->*evalFunction)(C, CE);
+
+  // If the evaluate call resulted in no change, chain to the next eval call
+  // handler.
+  // Note, the custom CString evaluation calls assume that basic safety
+  // properties are held. However, if the user chooses to turn off some of these
+  // checks, we ignore the issues and leave the call evaluation to a generic
+  // handler.
+  if (!C.isDifferent())
+    return false;
+
   return true;
 }
 
@@ -1850,6 +1894,15 @@ void CStringChecker::checkDeadSymbols(SymbolReaper &SR,
   C.addTransition(state);
 }
 
-void ento::registerCStringChecker(CheckerManager &mgr) {
-  mgr.registerChecker<CStringChecker>();
+#define REGISTER_CHECKER(name) \
+void ento::register##name(CheckerManager &mgr) {\
+  static CStringChecker *TheChecker = 0; \
+  if (TheChecker == 0) \
+    TheChecker = mgr.registerChecker<CStringChecker>(); \
+  TheChecker->Filter.Check##name = true; \
 }
+
+REGISTER_CHECKER(CStringNullArg)
+REGISTER_CHECKER(CStringOutOfBounds)
+REGISTER_CHECKER(CStringBufferOverlap)
+REGISTER_CHECKER(CStringNotNullTerm)
