@@ -546,6 +546,12 @@ void NumericLiteralParser::ParseNumberStartingWithZero(SourceLocation TokLoc) {
   // Handle a hex number like 0x1234.
   if ((*s == 'x' || *s == 'X') && (isxdigit(s[1]) || s[1] == '.')) {
     s++;
+    if (!isxdigit(*s)) {
+      PP.Diag(PP.AdvanceToTokenCharacter(TokLoc, s-ThisTokBegin), \
+        diag::err_hexconstant_requires_digits);
+      hadError = true;
+      return;
+    }
     radix = 16;
     DigitsBegin = s;
     s = SkipHexDigits(s);
