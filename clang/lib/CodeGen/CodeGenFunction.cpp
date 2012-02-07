@@ -229,8 +229,7 @@ void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
   llvm::PointerType *PointerTy = Int8PtrTy;
   llvm::Type *ProfileFuncArgs[] = { PointerTy, PointerTy };
   llvm::FunctionType *FunctionTy =
-    llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()),
-                            ProfileFuncArgs, false);
+    llvm::FunctionType::get(VoidTy, ProfileFuncArgs, false);
 
   llvm::Constant *F = CGM.CreateRuntimeFunction(FunctionTy, Fn);
   llvm::CallInst *CallSite = Builder.CreateCall(
@@ -244,8 +243,7 @@ void CodeGenFunction::EmitFunctionInstrumentation(const char *Fn) {
 }
 
 void CodeGenFunction::EmitMCountInstrumentation() {
-  llvm::FunctionType *FTy =
-    llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()), false);
+  llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
 
   llvm::Constant *MCountFn = CGM.CreateRuntimeFunction(FTy,
                                                        Target.getMCountName());

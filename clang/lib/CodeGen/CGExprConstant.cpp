@@ -281,7 +281,7 @@ void ConstStructBuilder::AppendPadding(CharUnits PadSize) {
   if (PadSize.isZero())
     return;
 
-  llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
+  llvm::Type *Ty = CGM.Int8Ty;
   if (PadSize > CharUnits::One())
     Ty = llvm::ArrayType::get(Ty, PadSize.getQuantity());
 
@@ -317,7 +317,7 @@ void ConstStructBuilder::ConvertStructToPacked() {
       CharUnits NumChars =
         AlignedElementOffsetInChars - ElementOffsetInChars;
 
-      llvm::Type *Ty = llvm::Type::getInt8Ty(CGM.getLLVMContext());
+      llvm::Type *Ty = CGM.Int8Ty;
       if (NumChars > CharUnits::One())
         Ty = llvm::ArrayType::get(Ty, NumChars.getQuantity());
 
@@ -599,7 +599,7 @@ public:
 
       assert(CurSize <= TotalSize && "Union size mismatch!");
       if (unsigned NumPadBytes = TotalSize - CurSize) {
-        llvm::Type *Ty = llvm::Type::getInt8Ty(VMContext);
+        llvm::Type *Ty = CGM.Int8Ty;
         if (NumPadBytes > 1)
           Ty = llvm::ArrayType::get(Ty, NumPadBytes);
 
@@ -982,8 +982,7 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
   case APValue::LValue: {
     llvm::Type *DestTy = getTypes().ConvertTypeForMem(DestType);
     llvm::Constant *Offset =
-      llvm::ConstantInt::get(llvm::Type::getInt64Ty(VMContext),
-                             Value.getLValueOffset().getQuantity());
+      llvm::ConstantInt::get(Int64Ty, Value.getLValueOffset().getQuantity());
 
     llvm::Constant *C;
     if (APValue::LValueBase LVBase = Value.getLValueBase()) {
@@ -998,8 +997,7 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
 
       // Apply offset if necessary.
       if (!Offset->isNullValue()) {
-        llvm::Type *Type = llvm::Type::getInt8PtrTy(VMContext);
-        llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, Type);
+        llvm::Constant *Casted = llvm::ConstantExpr::getBitCast(C, Int8PtrTy);
         Casted = llvm::ConstantExpr::getGetElementPtr(Casted, Offset);
         C = llvm::ConstantExpr::getBitCast(Casted, C->getType());
       }
@@ -1242,8 +1240,7 @@ FillInNullDataMemberPointers(CodeGenModule &CGM, QualType T,
 
     // FIXME: hardcodes Itanium member pointer representation!
     llvm::Constant *NegativeOne =
-      llvm::ConstantInt::get(llvm::Type::getInt8Ty(CGM.getLLVMContext()),
-                             -1ULL, /*isSigned*/true);
+      llvm::ConstantInt::get(CGM.Int8Ty, -1ULL, /*isSigned*/true);
 
     // Fill in the null data member pointer.
     for (CharUnits I = StartIndex; I != EndIndex; ++I)
@@ -1362,8 +1359,7 @@ static llvm::Constant *EmitNullConstantForBase(CodeGenModule &CGM,
 
   // Now go through all other elements and zero them out.
   if (numBaseElements) {
-    llvm::Type *i8 = llvm::Type::getInt8Ty(CGM.getLLVMContext());
-    llvm::Constant *i8_zero = llvm::Constant::getNullValue(i8);
+    llvm::Constant *i8_zero = llvm::Constant::getNullValue(CGM.Int8Ty);
     for (unsigned i = 0; i != numBaseElements; ++i) {
       if (!baseElements[i])
         baseElements[i] = i8_zero;

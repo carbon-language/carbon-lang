@@ -128,9 +128,7 @@ CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
   }
 
   // Get the destructor function type
-  llvm::Type *DtorFnTy =
-    llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()),
-                            Int8PtrTy, false);
+  llvm::Type *DtorFnTy = llvm::FunctionType::get(VoidTy, Int8PtrTy, false);
   DtorFnTy = llvm::PointerType::getUnqual(DtorFnTy);
 
   llvm::Type *Params[] = { DtorFnTy, Int8PtrTy, Int8PtrTy };
@@ -189,9 +187,7 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
 void
 CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
                                             llvm::GlobalVariable *Addr) {
-  llvm::FunctionType *FTy
-    = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                              false);
+  llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
 
   // Create a variable initialization function.
   llvm::Function *Fn =
@@ -226,9 +222,7 @@ CodeGenModule::EmitCXXGlobalInitFunc() {
   if (CXXGlobalInits.empty() && PrioritizedCXXGlobalInits.empty())
     return;
 
-  llvm::FunctionType *FTy
-    = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                              false);
+  llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
 
   // Create our global initialization function.
   llvm::Function *Fn = 
@@ -260,9 +254,7 @@ void CodeGenModule::EmitCXXGlobalDtorFunc() {
   if (CXXGlobalDtors.empty())
     return;
 
-  llvm::FunctionType *FTy
-    = llvm::FunctionType::get(llvm::Type::getVoidTy(VMContext),
-                              false);
+  llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
 
   // Create our global destructor function.
   llvm::Function *Fn =

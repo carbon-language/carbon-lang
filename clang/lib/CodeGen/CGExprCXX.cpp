@@ -1523,10 +1523,7 @@ void CodeGenFunction::EmitCXXDeleteExpr(const CXXDeleteExpr *E) {
 
 static llvm::Constant *getBadTypeidFn(CodeGenFunction &CGF) {
   // void __cxa_bad_typeid();
-  
-  llvm::Type *VoidTy = llvm::Type::getVoidTy(CGF.getLLVMContext());
-  llvm::FunctionType *FTy =
-  llvm::FunctionType::get(VoidTy, false);
+  llvm::FunctionType *FTy = llvm::FunctionType::get(CGF.VoidTy, false);
   
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_bad_typeid");
 }
@@ -1607,7 +1604,7 @@ static llvm::Constant *getDynamicCastFn(CodeGenFunction &CGF) {
   //                      const abi::__class_type_info *dst,
   //                      std::ptrdiff_t src2dst_offset);
   
-  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
+  llvm::Type *Int8PtrTy = CGF.Int8PtrTy;
   llvm::Type *PtrDiffTy = 
     CGF.ConvertType(CGF.getContext().getPointerDiffType());
 
@@ -1621,11 +1618,7 @@ static llvm::Constant *getDynamicCastFn(CodeGenFunction &CGF) {
 
 static llvm::Constant *getBadCastFn(CodeGenFunction &CGF) {
   // void __cxa_bad_cast();
-  
-  llvm::Type *VoidTy = llvm::Type::getVoidTy(CGF.getLLVMContext());
-  llvm::FunctionType *FTy =
-    llvm::FunctionType::get(VoidTy, false);
-  
+  llvm::FunctionType *FTy = llvm::FunctionType::get(CGF.VoidTy, false);
   return CGF.CGM.CreateRuntimeFunction(FTy, "__cxa_bad_cast");
 }
 

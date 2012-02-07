@@ -95,7 +95,6 @@ CodeGenFunction::GetAddressOfDirectBaseInCompleteClass(llvm::Value *This,
   // TODO: for complete types, this should be possible with a GEP.
   llvm::Value *V = This;
   if (Offset.isPositive()) {
-    llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(getLLVMContext());
     V = Builder.CreateBitCast(V, Int8PtrTy);
     V = Builder.CreateConstInBoundsGEP1_64(V, Offset.getQuantity());
   }
@@ -125,8 +124,7 @@ ApplyNonVirtualAndVirtualOffset(CodeGenFunction &CGF, llvm::Value *ThisPtr,
     BaseOffset = NonVirtualOffset;
   
   // Apply the base offset.
-  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
-  ThisPtr = CGF.Builder.CreateBitCast(ThisPtr, Int8PtrTy);
+  ThisPtr = CGF.Builder.CreateBitCast(ThisPtr, CGF.Int8PtrTy);
   ThisPtr = CGF.Builder.CreateGEP(ThisPtr, BaseOffset, "add.ptr");
 
   return ThisPtr;

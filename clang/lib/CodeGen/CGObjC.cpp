@@ -1696,8 +1696,7 @@ CodeGenFunction::EmitARCRetainAutoreleasedReturnValue(llvm::Value *value) {
     // in a moment.
     } else if (CGM.getCodeGenOpts().OptimizationLevel == 0) {
       llvm::FunctionType *type =
-        llvm::FunctionType::get(llvm::Type::getVoidTy(getLLVMContext()),
-                                /*variadic*/ false);
+        llvm::FunctionType::get(VoidTy, /*variadic*/false);
       
       marker = llvm::InlineAsm::get(type, assembly, "", /*sideeffects*/ true);
 

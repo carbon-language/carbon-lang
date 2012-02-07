@@ -211,9 +211,7 @@ const EHPersonality &EHPersonality::get(const LangOptions &L) {
 static llvm::Constant *getPersonalityFn(CodeGenModule &CGM,
                                         const EHPersonality &Personality) {
   llvm::Constant *Fn =
-    CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-                                llvm::Type::getInt32Ty(CGM.getLLVMContext()),
-                                true),
+    CGM.CreateRuntimeFunction(llvm::FunctionType::get(CGM.Int32Ty, true),
                               Personality.getPersonalityFnName());
   return Fn;
 }

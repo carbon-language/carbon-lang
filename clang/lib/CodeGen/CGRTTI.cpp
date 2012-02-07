@@ -26,8 +26,6 @@ class RTTIBuilder {
   CodeGenModule &CGM;  // Per-module state.
   llvm::LLVMContext &VMContext;
   
-  llvm::Type *Int8PtrTy;
-  
   /// Fields - The fields of the RTTI descriptor currently being built.
   SmallVector<llvm::Constant *, 16> Fields;
 
@@ -65,8 +63,7 @@ class RTTIBuilder {
   
 public:
   RTTIBuilder(CodeGenModule &CGM) : CGM(CGM), 
-    VMContext(CGM.getModule().getContext()),
-    Int8PtrTy(llvm::Type::getInt8PtrTy(VMContext)) { }
+    VMContext(CGM.getModule().getContext()) { }
 
   // Pointer type info flags.
   enum {
@@ -149,11 +146,12 @@ llvm::Constant *RTTIBuilder::GetAddrOfExternalRTTIDescriptor(QualType Ty) {
   
   if (!GV) {
     // Create a new global variable.
-    GV = new llvm::GlobalVariable(CGM.getModule(), Int8PtrTy, /*Constant=*/true,
+    GV = new llvm::GlobalVariable(CGM.getModule(), CGM.Int8PtrTy,
+                                  /*Constant=*/true,
                                   llvm::GlobalValue::ExternalLinkage, 0, Name);
   }
   
-  return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
+  return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);
 }
 
 /// TypeInfoIsInStandardLibrary - Given a builtin type, returns whether the type
@@ -482,7 +480,7 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
   }
 
   llvm::Constant *VTable = 
-    CGM.getModule().getOrInsertGlobal(VTableName, Int8PtrTy);
+    CGM.getModule().getOrInsertGlobal(VTableName, CGM.Int8PtrTy);
     
   llvm::Type *PtrDiffTy = 
     CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
@@ -490,7 +488,7 @@ void RTTIBuilder::BuildVTablePointer(const Type *Ty) {
   // The vtable address point is 2.
   llvm::Constant *Two = llvm::ConstantInt::get(PtrDiffTy, 2);
   VTable = llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Two);
-  VTable = llvm::ConstantExpr::getBitCast(VTable, Int8PtrTy);
+  VTable = llvm::ConstantExpr::getBitCast(VTable, CGM.Int8PtrTy);
 
   Fields.push_back(VTable);
 }
@@ -564,7 +562,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   if (OldGV && !OldGV->isDeclaration()) {
     maybeUpdateRTTILinkage(CGM, OldGV, Ty);
 
-    return llvm::ConstantExpr::getBitCast(OldGV, Int8PtrTy);
+    return llvm::ConstantExpr::getBitCast(OldGV, CGM.Int8PtrTy);
   }
 
   // Check if there is already an external RTTI descriptor for this type.
@@ -585,8 +583,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
   // And the name.
   llvm::GlobalVariable *TypeName = GetAddrOfTypeName(Ty, Linkage);
 
-  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
-  Fields.push_back(llvm::ConstantExpr::getBitCast(TypeName, Int8PtrTy));
+  Fields.push_back(llvm::ConstantExpr::getBitCast(TypeName, CGM.Int8PtrTy));
 
   switch (Ty->getTypeClass()) {
 #define TYPE(Class, Base)
@@ -708,7 +705,7 @@ llvm::Constant *RTTIBuilder::BuildTypeInfo(QualType Ty, bool Force) {
 
   GV->setUnnamedAddr(true);
 
-  return llvm::ConstantExpr::getBitCast(GV, Int8PtrTy);
+  return llvm::ConstantExpr::getBitCast(GV, CGM.Int8PtrTy);
 }
 
 /// ComputeQualifierFlags - Compute the pointer type info flags from the
@@ -985,14 +982,11 @@ llvm::Constant *CodeGenModule::GetAddrOfRTTIDescriptor(QualType Ty,
   // Return a bogus pointer if RTTI is disabled, unless it's for EH.
   // FIXME: should we even be calling this method if RTTI is disabled
   // and it's not for EH?
-  if (!ForEH && !getContext().getLangOptions().RTTI) {
-    llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  if (!ForEH && !getContext().getLangOptions().RTTI)
     return llvm::Constant::getNullValue(Int8PtrTy);
-  }
   
-  if (ForEH && Ty->isObjCObjectPointerType() && !Features.NeXTRuntime) {
+  if (ForEH && Ty->isObjCObjectPointerType() && !Features.NeXTRuntime)
     return ObjCRuntime->GetEHType(Ty);
-  }
 
   return RTTIBuilder(*this).BuildTypeInfo(Ty);
 }

@@ -1014,9 +1014,8 @@ static void CheckAggExprForMemSetUse(AggValueSlot &Slot, const Expr *E,
   CharUnits Align = TypeInfo.second;
 
   llvm::Value *Loc = Slot.getAddr();
-  llvm::Type *BP = llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
   
-  Loc = CGF.Builder.CreateBitCast(Loc, BP);
+  Loc = CGF.Builder.CreateBitCast(Loc, CGF.Int8PtrTy);
   CGF.Builder.CreateMemSet(Loc, CGF.Builder.getInt8(0), SizeVal, 
                            Align.getQuantity(), false);
   

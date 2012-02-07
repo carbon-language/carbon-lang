@@ -83,9 +83,7 @@ static llvm::Value *PerformTypeAdjustment(CodeGenFunction &CGF,
   if (!NonVirtualAdjustment && !VirtualAdjustment)
     return Ptr;
 
-  llvm::Type *Int8PtrTy = 
-    llvm::Type::getInt8PtrTy(CGF.getLLVMContext());
-  
+  llvm::Type *Int8PtrTy = CGF.Int8PtrTy;
   llvm::Value *V = CGF.Builder.CreateBitCast(Ptr, Int8PtrTy);
 
   if (NonVirtualAdjustment) {
@@ -511,7 +509,7 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
                                         unsigned NumVTableThunks) {
   SmallVector<llvm::Constant *, 64> Inits;
 
-  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
+  llvm::Type *Int8PtrTy = CGM.Int8PtrTy;
   
   llvm::Type *PtrDiffTy = 
     CGM.getTypes().ConvertType(CGM.getContext().getPointerDiffType());
@@ -571,8 +569,7 @@ CodeGenVTables::CreateVTableInitializer(const CXXRecordDecl *RD,
         // We have a pure virtual member function.
         if (!PureVirtualFn) {
           llvm::FunctionType *Ty = 
-            llvm::FunctionType::get(llvm::Type::getVoidTy(CGM.getLLVMContext()), 
-                                    /*isVarArg=*/false);
+            llvm::FunctionType::get(CGM.VoidTy, /*isVarArg=*/false);
           PureVirtualFn = 
             CGM.CreateRuntimeFunction(Ty, "__cxa_pure_virtual");
           PureVirtualFn = llvm::ConstantExpr::getBitCast(PureVirtualFn, 
@@ -628,9 +625,8 @@ llvm::GlobalVariable *CodeGenVTables::GetAddrOfVTable(const CXXRecordDecl *RD) {
   Out.flush();
   StringRef Name = OutName.str();
 
-  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 
-    llvm::ArrayType::get(Int8PtrTy,
+    llvm::ArrayType::get(CGM.Int8PtrTy,
                         VTContext.getVTableLayout(RD).getNumVTableComponents());
 
   VTable =
@@ -685,9 +681,8 @@ CodeGenVTables::GenerateConstructionVTable(const CXXRecordDecl *RD,
   Out.flush();
   StringRef Name = OutName.str();
 
-  llvm::Type *Int8PtrTy = llvm::Type::getInt8PtrTy(CGM.getLLVMContext());
   llvm::ArrayType *ArrayType = 
-    llvm::ArrayType::get(Int8PtrTy, VTLayout->getNumVTableComponents());
+    llvm::ArrayType::get(CGM.Int8PtrTy, VTLayout->getNumVTableComponents());
 
   // Create the variable that will hold the construction vtable.
   llvm::GlobalVariable *VTable = 

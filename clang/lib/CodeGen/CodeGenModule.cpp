@@ -75,6 +75,24 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
     NSConcreteGlobalBlock(0), NSConcreteStackBlock(0),
     BlockObjectAssign(0), BlockObjectDispose(0),
     BlockDescriptorType(0), GenericBlockLiteralType(0) {
+      
+  // Initialize the type cache.
+  llvm::LLVMContext &LLVMContext = M.getContext();
+  VoidTy = llvm::Type::getVoidTy(LLVMContext);
+  Int8Ty = llvm::Type::getInt8Ty(LLVMContext);
+  Int16Ty = llvm::Type::getInt16Ty(LLVMContext);
+  Int32Ty = llvm::Type::getInt32Ty(LLVMContext);
+  Int64Ty = llvm::Type::getInt64Ty(LLVMContext);
+  FloatTy = llvm::Type::getFloatTy(LLVMContext);
+  DoubleTy = llvm::Type::getDoubleTy(LLVMContext);
+  PointerWidthInBits = C.getTargetInfo().getPointerWidth(0);
+  PointerAlignInBytes =
+  C.toCharUnitsFromBits(C.getTargetInfo().getPointerAlign(0)).getQuantity();
+  IntTy = llvm::IntegerType::get(LLVMContext, C.getTargetInfo().getIntWidth());
+  IntPtrTy = llvm::IntegerType::get(LLVMContext, PointerWidthInBits);
+  Int8PtrTy = Int8Ty->getPointerTo(0);
+  Int8PtrPtrTy = Int8PtrTy->getPointerTo(0);
+
   if (Features.ObjC1)
     createObjCRuntime();
   if (Features.OpenCL)
@@ -98,20 +116,6 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
   if (C.getLangOptions().ObjCAutoRefCount)
     ARCData = new ARCEntrypoints();
   RRData = new RREntrypoints();
-
-  // Initialize the type cache.
-  llvm::LLVMContext &LLVMContext = M.getContext();
-  VoidTy = llvm::Type::getVoidTy(LLVMContext);
-  Int8Ty = llvm::Type::getInt8Ty(LLVMContext);
-  Int32Ty = llvm::Type::getInt32Ty(LLVMContext);
-  Int64Ty = llvm::Type::getInt64Ty(LLVMContext);
-  PointerWidthInBits = C.getTargetInfo().getPointerWidth(0);
-  PointerAlignInBytes =
-    C.toCharUnitsFromBits(C.getTargetInfo().getPointerAlign(0)).getQuantity();
-  IntTy = llvm::IntegerType::get(LLVMContext, C.getTargetInfo().getIntWidth());
-  IntPtrTy = llvm::IntegerType::get(LLVMContext, PointerWidthInBits);
-  Int8PtrTy = Int8Ty->getPointerTo(0);
-  Int8PtrPtrTy = Int8PtrTy->getPointerTo(0);
 }
 
 CodeGenModule::~CodeGenModule() {
@@ -379,8 +383,7 @@ void CodeGenModule::EmitCtorList(const CtorList &Fns, const char *GlobalName) {
 
   // Get the type of a ctor entry, { i32, void ()* }.
   llvm::StructType *CtorStructTy =
-    llvm::StructType::get(llvm::Type::getInt32Ty(VMContext),
-                          llvm::PointerType::getUnqual(CtorFTy), NULL);
+    llvm::StructType::get(Int32Ty, llvm::PointerType::getUnqual(CtorFTy), NULL);
 
   // Construct the constructor and destructor arrays.
   SmallVector<llvm::Constant*, 8> Ctors;
@@ -1819,8 +1822,7 @@ CodeGenModule::GetAddrOfConstantCFString(const StringLiteral *Literal) {
   if (llvm::Constant *C = Entry.getValue())
     return C;
 
-  llvm::Constant *Zero =
-      llvm::Constant::getNullValue(llvm::Type::getInt32Ty(VMContext));
+  llvm::Constant *Zero = llvm::Constant::getNullValue(Int32Ty);
   llvm::Constant *Zeros[] = { Zero, Zero };
 
   // If we don't already have it, get __CFConstantStringClassReference.

@@ -92,9 +92,8 @@ private:
   /// would be unbalanced.
   llvm::Constant *getMessageSendFpretFn() const {
     llvm::Type *params[] = { ObjectPtrTy, SelectorPtrTy };
-    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(
-                                             llvm::Type::getDoubleTy(VMContext),
-                                                        params, true),
+    return CGM.CreateRuntimeFunction(llvm::FunctionType::get(CGM.DoubleTy,
+                                                             params, true),
                                      "objc_msgSend_fpret");
 
   }
@@ -1744,8 +1743,7 @@ static Qualifiers::GC GetGCAttrTypeForType(ASTContext &Ctx, QualType FQT) {
 
 llvm::Constant *CGObjCCommonMac::BuildGCBlockLayout(CodeGenModule &CGM,
                                                 const CGBlockInfo &blockInfo) {
-  llvm::Constant *nullPtr = 
-    llvm::Constant::getNullValue(llvm::Type::getInt8PtrTy(VMContext));
+  llvm::Constant *nullPtr = llvm::Constant::getNullValue(CGM.Int8PtrTy);
 
   if (CGM.getLangOptions().getGC() == LangOptions::NonGC &&
       !CGM.getLangOptions().ObjCAutoRefCount)
@@ -3922,7 +3920,7 @@ void CGObjCCommonMac::BuildAggrIvarLayout(const ObjCImplementationDecl *OI,
 /// filled already by the caller.
 llvm::Constant *CGObjCCommonMac::BuildIvarLayoutBitmap(std::string &BitMap) {
   unsigned int WordsToScan, WordsToSkip;
-  llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  llvm::Type *PtrTy = CGM.Int8PtrTy;
   
   // Build the string of skip/scan nibbles
   SmallVector<SKIP_SCAN, 32> SkipScanIvars;
@@ -4066,7 +4064,7 @@ llvm::Constant *CGObjCCommonMac::BuildIvarLayout(
   bool ForStrongLayout) {
   bool hasUnion = false;
 
-  llvm::Type *PtrTy = llvm::Type::getInt8PtrTy(VMContext);
+  llvm::Type *PtrTy = CGM.Int8PtrTy;
   if (CGM.getLangOptions().getGC() == LangOptions::NonGC &&
       !CGM.getLangOptions().ObjCAutoRefCount)
     return llvm::Constant::getNullValue(PtrTy);
@@ -4286,8 +4284,8 @@ ObjCCommonTypesHelper::ObjCCommonTypesHelper(CodeGen::CodeGenModule &cgm)
   IntTy = Types.ConvertType(Ctx.IntTy);
   LongTy = Types.ConvertType(Ctx.LongTy);
   LongLongTy = Types.ConvertType(Ctx.LongLongTy);
-  Int8PtrTy = llvm::Type::getInt8PtrTy(VMContext);
-  Int8PtrPtrTy = llvm::PointerType::getUnqual(Int8PtrTy);
+  Int8PtrTy = CGM.Int8PtrTy;
+  Int8PtrPtrTy = CGM.Int8PtrPtrTy;
 
   ObjectPtrTy = Types.ConvertType(Ctx.getObjCIdType());
   PtrObjectPtrTy = llvm::PointerType::getUnqual(ObjectPtrTy);
@@ -4528,14 +4526,12 @@ ObjCTypesHelper::ObjCTypesHelper(CodeGen::CodeGenModule &cgm)
   uint64_t SetJmpBufferSize = 18;
 
   // Exceptions
-  llvm::Type *StackPtrTy = llvm::ArrayType::get(
-    llvm::Type::getInt8PtrTy(VMContext), 4);
+  llvm::Type *StackPtrTy = llvm::ArrayType::get(CGM.Int8PtrTy, 4);
 
   ExceptionDataTy =
     llvm::StructType::create("struct._objc_exception_data",
-                         llvm::ArrayType::get(llvm::Type::getInt32Ty(VMContext),
-                                              SetJmpBufferSize),
-                         StackPtrTy, NULL);
+                             llvm::ArrayType::get(CGM.Int32Ty,SetJmpBufferSize),
+                             StackPtrTy, NULL);
 
 }
 
@@ -6266,8 +6262,7 @@ CGObjCNonFragileABIMac::GetInterfaceEHType(const ObjCInterfaceDecl *ID,
                                         llvm::GlobalValue::ExternalLinkage,
                                         0, VTableName);
 
-  llvm::Value *VTableIdx =
-    llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext), 2);
+  llvm::Value *VTableIdx = llvm::ConstantInt::get(CGM.Int32Ty, 2);
 
   llvm::Constant *Values[] = {
     llvm::ConstantExpr::getGetElementPtr(VTableGV, VTableIdx),

@@ -102,8 +102,10 @@ namespace CodeGen {
     /// void
     llvm::Type *VoidTy;
 
-    /// i8, i32, and i64
-    llvm::IntegerType *Int8Ty, *Int32Ty, *Int64Ty;
+    /// i8, i16, i32, and i64
+    llvm::IntegerType *Int8Ty, *Int16Ty, *Int32Ty, *Int64Ty;
+    /// float, double
+    llvm::Type *FloatTy, *DoubleTy;
 
     /// int
     llvm::IntegerType *IntTy;

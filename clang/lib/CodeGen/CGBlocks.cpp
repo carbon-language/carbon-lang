@@ -1851,7 +1851,7 @@ llvm::Type *CodeGenFunction::BuildByRefType(const VarDecl *D) {
     
     unsigned NumPaddingBytes = AlignedOffsetInBytes - CurrentOffsetInBytes;
     if (NumPaddingBytes > 0) {
-      llvm::Type *Ty = llvm::Type::getInt8Ty(getLLVMContext());
+      llvm::Type *Ty = Int8Ty;
       // FIXME: We need a sema error for alignment larger than the minimum of
       // the maximal stack alignment and the alignment of malloc on the system.
       if (NumPaddingBytes > 1)

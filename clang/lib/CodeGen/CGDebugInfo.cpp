@@ -2141,7 +2141,7 @@ void CGDebugInfo::EmitDeclare(const VarDecl *VD, unsigned Tag,
     if (VD->hasAttr<BlocksAttr>()) {
       CharUnits offset = CharUnits::fromQuantity(32);
       SmallVector<llvm::Value *, 9> addr;
-      llvm::Type *Int64Ty = llvm::Type::getInt64Ty(CGM.getLLVMContext());
+      llvm::Type *Int64Ty = CGM.Int64Ty;
       addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
       // offset of __forwarding field
       offset = CGM.getContext().toCharUnitsFromBits(
@@ -2246,7 +2246,7 @@ void CGDebugInfo::EmitDeclareOfBlockDeclRefVariable(
           ->getElementOffset(blockInfo.getCapture(VD).getIndex()));
 
   SmallVector<llvm::Value *, 9> addr;
-  llvm::Type *Int64Ty = llvm::Type::getInt64Ty(CGM.getLLVMContext());
+  llvm::Type *Int64Ty = CGM.Int64Ty;
   addr.push_back(llvm::ConstantInt::get(Int64Ty, llvm::DIBuilder::OpPlus));
   addr.push_back(llvm::ConstantInt::get(Int64Ty, offset.getQuantity()));
   if (isByRef) {
