@@ -1312,9 +1312,9 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
     const ObjCPropertyDecl *PD = *I;
     llvm::MDNode *PropertyNode =
       DBuilder.createObjCProperty(PD->getName(),
-				  getSelectorName(PD->getGetterName()),
-				  getSelectorName(PD->getSetterName()),
-				  PD->getPropertyAttributes());
+                                  getSelectorName(PD->getGetterName()),
+                                  getSelectorName(PD->getSetterName()),
+                                  PD->getPropertyAttributes());
     EltTys.push_back(PropertyNode);
   }
 
@@ -1366,8 +1366,8 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
       if (ObjCPropertyImplDecl *PImpD = 
           ImpD->FindPropertyImplIvarDecl(Field->getIdentifier())) {
         if (ObjCPropertyDecl *PD = PImpD->getPropertyDecl()) {
-	  PropertyNode =
-	    DBuilder.createObjCProperty(PD->getName(),
+          PropertyNode =
+            DBuilder.createObjCProperty(PD->getName(),
                                         getSelectorName(PD->getGetterName()),
                                         getSelectorName(PD->getSetterName()),
                                         PD->getPropertyAttributes());
