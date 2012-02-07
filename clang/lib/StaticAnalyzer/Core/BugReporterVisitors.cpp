@@ -763,7 +763,7 @@ CallEnterExitBRVisitor::VisitNode(const ExplodedNode *N,
     const Decl *caller = CExit->getLocationContext()->getParent()->getDecl();
     pos = getLastStmtLoc(PrevN, BRC.getSourceManager());
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(caller))
-      Out << "Returning to " << ND->getNameAsString();
+      Out << "Returning to '" << ND->getNameAsString() << "'";
     else
       Out << "Returning to caller"; 
   }
