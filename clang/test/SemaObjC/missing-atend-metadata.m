@@ -10,7 +10,7 @@
 @end
 
 @implementation I1 // expected-note {{implementation started here}}
--(void) im0 { self = [super init]; }
+-(void) im0 { self = [super init]; } // expected-warning {{not found}}
 
 @interface I2 : I0 // expected-error {{missing '@end'}}
 - I2meth;

@@ -1723,7 +1723,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                     : Sema::PCC_Template;
       else if (DSContext == DSC_class)
         CCC = Sema::PCC_Class;
-      else if (ObjCImpDecl)
+      else if (CurParsedObjCImpl)
         CCC = Sema::PCC_ObjCImplementation;
       
       Actions.CodeCompleteOrdinaryName(getCurScope(), CCC);

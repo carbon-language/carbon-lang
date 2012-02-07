@@ -258,8 +258,6 @@ public:
   /// the EOF was encountered.
   bool ParseTopLevelDecl(DeclGroupPtrTy &Result);
 
-  DeclGroupPtrTy FinishPendingObjCActions();
-
 private:
   //===--------------------------------------------------------------------===//
   // Low-Level token peeking and consumption methods.
@@ -403,9 +401,6 @@ private:
     // Cut off parsing by acting as if we reached the end-of-file.
     Tok.setKind(tok::eof);
   }
-
-  /// \brief Clear and free the cached objc methods.
-  void clearLateParsedObjCMethods();
 
   /// \brief Handle the annotation token produced for #pragma unused(...)
   void HandlePragmaUnused();
@@ -1227,12 +1222,28 @@ private:
   DeclGroupPtrTy ParseObjCAtProtocolDeclaration(SourceLocation atLoc,
                                                 ParsedAttributes &prefixAttrs);
 
-  Decl *ObjCImpDecl;
-  SmallVector<Decl *, 4> PendingObjCImpDecl;
-  typedef SmallVector<LexedMethod*, 2> LateParsedObjCMethodContainer;
-  LateParsedObjCMethodContainer LateParsedObjCMethods;
+  struct ObjCImplParsingDataRAII {
+    Parser &P;
+    Decl *Dcl;
+    typedef SmallVector<LexedMethod*, 8> LateParsedObjCMethodContainer;
+    LateParsedObjCMethodContainer LateParsedObjCMethods;
 
-  Decl *ParseObjCAtImplementationDeclaration(SourceLocation AtLoc);
+    ObjCImplParsingDataRAII(Parser &parser, Decl *D)
+      : P(parser), Dcl(D) {
+      P.CurParsedObjCImpl = this;
+      Finished = false;
+    }
+    ~ObjCImplParsingDataRAII();
+
+    void finish(SourceRange AtEnd);
+    bool isFinished() const { return Finished; }
+
+  private:
+    bool Finished;
+  };
+  ObjCImplParsingDataRAII *CurParsedObjCImpl;
+
+  DeclGroupPtrTy ParseObjCAtImplementationDeclaration(SourceLocation AtLoc);
   DeclGroupPtrTy ParseObjCAtEndDeclaration(SourceRange atEnd);
   Decl *ParseObjCAtAliasDeclaration(SourceLocation atLoc);
   Decl *ParseObjCPropertySynthesize(SourceLocation atLoc);

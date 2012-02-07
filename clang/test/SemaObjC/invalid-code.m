@@ -27,3 +27,17 @@ void foo() {
     return self;
 }
 @end
+
+@interface I
+@end
+@interface I2
+@end
+
+@implementation I // expected-note {{started here}}
+-(void) foo {}
+
+@implementation I2 // expected-error {{missing '@end'}}
+-(void) foo2 {}
+@end
+
+@end // expected-error {{'@end' must appear in an Objective-C context}}

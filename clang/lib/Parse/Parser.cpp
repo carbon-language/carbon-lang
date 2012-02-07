@@ -39,7 +39,7 @@ Parser::Parser(Preprocessor &pp, Sema &actions)
   Actions.CurScope = 0;
   NumCachedScopes = 0;
   ParenCount = BracketCount = BraceCount = 0;
-  ObjCImpDecl = 0;
+  CurParsedObjCImpl = 0;
 
   // Add #pragma handlers. These are removed and destroyed in the
   // destructor.
@@ -367,8 +367,6 @@ Parser::~Parser() {
       it != LateParsedTemplateMap.end(); ++it)
     delete it->second;
 
-  clearLateParsedObjCMethods();
-
   // Remove the pragma handlers we installed.
   PP.RemovePragmaHandler(AlignHandler.get());
   AlignHandler.reset();
@@ -595,7 +593,7 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
     break;
   case tok::code_completion:
       Actions.CodeCompleteOrdinaryName(getCurScope(), 
-                                   ObjCImpDecl? Sema::PCC_ObjCImplementation
+                             CurParsedObjCImpl? Sema::PCC_ObjCImplementation
                                               : Sema::PCC_Namespace);
     cutOffParsing();
     return DeclGroupPtrTy();

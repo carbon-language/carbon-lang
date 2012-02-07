@@ -418,6 +418,8 @@ void Sema::ActOnEndOfTranslationUnit() {
   // Only complete translation units define vtables and perform implicit
   // instantiations.
   if (TUKind == TU_Complete) {
+    DiagnoseUseOfUnimplementedSelectors();
+
     // If any dynamic classes have their key function defined within
     // this translation unit, then those vtables are considered "used" and must
     // be emitted.

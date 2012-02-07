@@ -52,8 +52,7 @@ Parser::DeclGroupPtrTy Parser::ParseObjCAtDirectives() {
     return ParseObjCAtProtocolDeclaration(AtLoc, attrs);
   }
   case tok::objc_implementation:
-    SingleDecl = ParseObjCAtImplementationDeclaration(AtLoc);
-    break;
+    return ParseObjCAtImplementationDeclaration(AtLoc);
   case tok::objc_end:
     return ParseObjCAtEndDeclaration(AtLoc);
   case tok::objc_compatibility_alias:
@@ -122,15 +121,17 @@ void Parser::CheckNestedObjCContexts(SourceLocation AtLoc)
   if (ock == Sema::OCK_None)
     return;
 
-  Decl *Decl = Actions.ActOnAtEnd(getCurScope(), AtLoc);
+  Decl *Decl = Actions.getObjCDeclContext();
+  if (CurParsedObjCImpl) {
+    CurParsedObjCImpl->finish(AtLoc);
+  } else {
+    Actions.ActOnAtEnd(getCurScope(), AtLoc);
+  }
   Diag(AtLoc, diag::err_objc_missing_end)
       << FixItHint::CreateInsertion(AtLoc, "@end\n");
   if (Decl)
     Diag(Decl->getLocStart(), diag::note_objc_container_start)
         << (int) ock;
-  if (!PendingObjCImpDecl.empty())
-    PendingObjCImpDecl.pop_back();
-  ObjCImpDecl = 0;
 }
 
 ///
@@ -403,7 +404,7 @@ void Parser::ParseObjCInterfaceDeclList(tok::ObjCKeywordKind contextKey,
     // Code completion within an Objective-C interface.
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteOrdinaryName(getCurScope(), 
-                                  ObjCImpDecl? Sema::PCC_ObjCImplementation
+                            CurParsedObjCImpl? Sema::PCC_ObjCImplementation
                                              : Sema::PCC_ObjCInterface);
       return cutOffParsing();
     }
@@ -1441,7 +1442,8 @@ Parser::ParseObjCAtProtocolDeclaration(SourceLocation AtLoc,
 ///
 ///   objc-category-implementation-prologue:
 ///     @implementation identifier ( identifier )
-Decl *Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
+Parser::DeclGroupPtrTy
+Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
   assert(Tok.isObjCAtKeyword(tok::objc_implementation) &&
          "ParseObjCAtImplementationDeclaration(): Expected @implementation");
   CheckNestedObjCContexts(AtLoc);
@@ -1451,16 +1453,17 @@ Decl *Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
   if (Tok.is(tok::code_completion)) {
     Actions.CodeCompleteObjCImplementationDecl(getCurScope());
     cutOffParsing();
-    return 0;
+    return DeclGroupPtrTy();
   }
 
   if (Tok.isNot(tok::identifier)) {
     Diag(Tok, diag::err_expected_ident); // missing class or category name.
-    return 0;
+    return DeclGroupPtrTy();
   }
   // We have a class or category name - consume it.
   IdentifierInfo *nameId = Tok.getIdentifierInfo();
   SourceLocation nameLoc = ConsumeToken(); // consume class or category name
+  Decl *ObjCImpDecl = 0;
 
   if (Tok.is(tok::l_paren)) {
     // we have a category implementation.
@@ -1471,7 +1474,7 @@ Decl *Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
     if (Tok.is(tok::code_completion)) {
       Actions.CodeCompleteObjCImplementationCategory(getCurScope(), nameId, nameLoc);
       cutOffParsing();
-      return 0;
+      return DeclGroupPtrTy();
     }
     
     if (Tok.is(tok::identifier)) {
@@ -1479,45 +1482,59 @@ Decl *Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
       categoryLoc = ConsumeToken();
     } else {
       Diag(Tok, diag::err_expected_ident); // missing category name.
-      return 0;
+      return DeclGroupPtrTy();
     }
     if (Tok.isNot(tok::r_paren)) {
       Diag(Tok, diag::err_expected_rparen);
       SkipUntil(tok::r_paren, false); // don't stop at ';'
-      return 0;
+      return DeclGroupPtrTy();
     }
     rparenLoc = ConsumeParen();
-    Decl *ImplCatType = Actions.ActOnStartCategoryImplementation(
+    ObjCImpDecl = Actions.ActOnStartCategoryImplementation(
                                     AtLoc, nameId, nameLoc, categoryId,
                                     categoryLoc);
 
-    ObjCImpDecl = ImplCatType;
-    PendingObjCImpDecl.push_back(ObjCImpDecl);
-    return 0;
-  }
-  // We have a class implementation
-  SourceLocation superClassLoc;
-  IdentifierInfo *superClassId = 0;
-  if (Tok.is(tok::colon)) {
-    // We have a super class
-    ConsumeToken();
-    if (Tok.isNot(tok::identifier)) {
-      Diag(Tok, diag::err_expected_ident); // missing super class name.
-      return 0;
+  } else {
+    // We have a class implementation
+    SourceLocation superClassLoc;
+    IdentifierInfo *superClassId = 0;
+    if (Tok.is(tok::colon)) {
+      // We have a super class
+      ConsumeToken();
+      if (Tok.isNot(tok::identifier)) {
+        Diag(Tok, diag::err_expected_ident); // missing super class name.
+        return DeclGroupPtrTy();
+      }
+      superClassId = Tok.getIdentifierInfo();
+      superClassLoc = ConsumeToken(); // Consume super class name
     }
-    superClassId = Tok.getIdentifierInfo();
-    superClassLoc = ConsumeToken(); // Consume super class name
+    ObjCImpDecl = Actions.ActOnStartClassImplementation(
+                                    AtLoc, nameId, nameLoc,
+                                    superClassId, superClassLoc);
+  
+    if (Tok.is(tok::l_brace)) // we have ivars
+      ParseObjCClassInstanceVariables(ObjCImpDecl, tok::objc_private, AtLoc);
   }
-  Decl *ImplClsType = Actions.ActOnStartClassImplementation(
-                                  AtLoc, nameId, nameLoc,
-                                  superClassId, superClassLoc);
+  assert(ObjCImpDecl);
 
-  if (Tok.is(tok::l_brace)) // we have ivars
-    ParseObjCClassInstanceVariables(ImplClsType, tok::objc_private, AtLoc);
+  SmallVector<Decl *, 8> DeclsInGroup;
 
-  ObjCImpDecl = ImplClsType;
-  PendingObjCImpDecl.push_back(ObjCImpDecl);
-  return 0;
+  {
+    ObjCImplParsingDataRAII ObjCImplParsing(*this, ObjCImpDecl);
+    while (!ObjCImplParsing.isFinished() && Tok.isNot(tok::eof)) {
+      ParsedAttributesWithRange attrs(AttrFactory);
+      MaybeParseCXX0XAttributes(attrs);
+      MaybeParseMicrosoftAttributes(attrs);
+      if (DeclGroupPtrTy DGP = ParseExternalDeclaration(attrs)) {
+        DeclGroupRef DG = DGP.get();
+        DeclsInGroup.append(DG.begin(), DG.end());
+      }
+    }
+  }
+
+  DeclsInGroup.push_back(ObjCImpDecl);
+  return Actions.BuildDeclaratorGroup(
+           DeclsInGroup.data(), DeclsInGroup.size(), false);
 }
 
 Parser::DeclGroupPtrTy
@@ -1525,51 +1542,44 @@ Parser::ParseObjCAtEndDeclaration(SourceRange atEnd) {
   assert(Tok.isObjCAtKeyword(tok::objc_end) &&
          "ParseObjCAtEndDeclaration(): Expected @end");
   ConsumeToken(); // the "end" identifier
-  SmallVector<Decl *, 8> DeclsInGroup;
-  Actions.DefaultSynthesizeProperties(getCurScope(), ObjCImpDecl);
-  for (size_t i = 0; i < LateParsedObjCMethods.size(); ++i) {
-    Decl *D = ParseLexedObjCMethodDefs(*LateParsedObjCMethods[i]);
-    if (D)
-      DeclsInGroup.push_back(D);
-  }
-  DeclsInGroup.push_back(ObjCImpDecl);
-  
-  if (ObjCImpDecl) {
-    Actions.ActOnAtEnd(getCurScope(), atEnd);
-    PendingObjCImpDecl.pop_back();
-  }
+  if (CurParsedObjCImpl)
+    CurParsedObjCImpl->finish(atEnd);
   else
     // missing @implementation
     Diag(atEnd.getBegin(), diag::err_expected_objc_container);
-    
-  clearLateParsedObjCMethods();
-  ObjCImpDecl = 0;
-  return Actions.BuildDeclaratorGroup(
-           DeclsInGroup.data(), DeclsInGroup.size(), false);
+  return DeclGroupPtrTy();
 }
 
-Parser::DeclGroupPtrTy Parser::FinishPendingObjCActions() {
-  Actions.DiagnoseUseOfUnimplementedSelectors();
-  if (PendingObjCImpDecl.empty())
-    return Actions.ConvertDeclToDeclGroup(0);
-
-  Decl *ImpDecl = PendingObjCImpDecl.pop_back_val();
-  Actions.ActOnAtEnd(getCurScope(), SourceRange(Tok.getLocation()));
-  Diag(Tok, diag::err_objc_missing_end)
-      << FixItHint::CreateInsertion(Tok.getLocation(), "\n@end\n");
-  if (ImpDecl)
-    Diag(ImpDecl->getLocStart(), diag::note_objc_container_start)
-        << Sema::OCK_Implementation;
-
-  return Actions.ConvertDeclToDeclGroup(ImpDecl);
+Parser::ObjCImplParsingDataRAII::~ObjCImplParsingDataRAII() {
+  if (!Finished) {
+    finish(P.Tok.getLocation());
+    if (P.Tok.is(tok::eof)) {
+      P.Diag(P.Tok, diag::err_objc_missing_end)
+          << FixItHint::CreateInsertion(P.Tok.getLocation(), "\n@end\n");
+      P.Diag(Dcl->getLocStart(), diag::note_objc_container_start)
+          << Sema::OCK_Implementation;
+    }
+  }
+  P.CurParsedObjCImpl = 0;
+  assert(LateParsedObjCMethods.empty());
 }
 
-void Parser::clearLateParsedObjCMethods() {
+void Parser::ObjCImplParsingDataRAII::finish(SourceRange AtEnd) {
+  assert(!Finished);
+  P.Actions.DefaultSynthesizeProperties(P.getCurScope(), Dcl);
+  for (size_t i = 0; i < LateParsedObjCMethods.size(); ++i)
+    P.ParseLexedObjCMethodDefs(*LateParsedObjCMethods[i]);
+
+  P.Actions.ActOnAtEnd(P.getCurScope(), AtEnd);
+
+  /// \brief Clear and free the cached objc methods.
   for (LateParsedObjCMethodContainer::iterator
          I = LateParsedObjCMethods.begin(),
          E = LateParsedObjCMethods.end(); I != E; ++I)
     delete *I;
   LateParsedObjCMethods.clear();
+
+  Finished = true;
 }
 
 ///   compatibility-alias-decl:
@@ -1908,7 +1918,7 @@ Decl *Parser::ParseObjCMethodDefinition() {
 
   // parse optional ';'
   if (Tok.is(tok::semi)) {
-    if (ObjCImpDecl) {
+    if (CurParsedObjCImpl) {
       Diag(Tok, diag::warn_semicolon_before_method_body)
         << FixItHint::CreateRemoval(Tok.getLocation());
     }
@@ -1926,19 +1936,32 @@ Decl *Parser::ParseObjCMethodDefinition() {
     if (Tok.isNot(tok::l_brace))
       return 0;
   }
+
+  if (!MDecl) {
+    ConsumeBrace();
+    SkipUntil(tok::r_brace, /*StopAtSemi=*/false);
+    return 0;
+  }
+
   // Allow the rest of sema to find private method decl implementations.
-  if (MDecl)
-    Actions.AddAnyMethodToGlobalPool(MDecl);
-    
-  // Consume the tokens and store them for later parsing.
-  LexedMethod* LM = new LexedMethod(this, MDecl);
-  LateParsedObjCMethods.push_back(LM);
-  CachedTokens &Toks = LM->Toks;
-  // Begin by storing the '{' token.
-  Toks.push_back(Tok);
-  ConsumeBrace();
-  // Consume everything up to (and including) the matching right brace.
-  ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
+  Actions.AddAnyMethodToGlobalPool(MDecl);
+
+  if (CurParsedObjCImpl) {
+    // Consume the tokens and store them for later parsing.
+    LexedMethod* LM = new LexedMethod(this, MDecl);
+    CurParsedObjCImpl->LateParsedObjCMethods.push_back(LM);
+    CachedTokens &Toks = LM->Toks;
+    // Begin by storing the '{' token.
+    Toks.push_back(Tok);
+    ConsumeBrace();
+    // Consume everything up to (and including) the matching right brace.
+    ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
+
+  } else {
+    ConsumeBrace();
+    SkipUntil(tok::r_brace, /*StopAtSemi=*/false);
+  }
+
   return MDecl;
 }
 
