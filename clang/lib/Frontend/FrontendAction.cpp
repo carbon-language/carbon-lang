@@ -76,7 +76,7 @@ public:
   virtual void DeclRead(serialization::DeclID ID, const Decl *D) {
     llvm::outs() << "PCH DECL: " << D->getDeclKindName();
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(D))
-      llvm::outs() << " - " << ND->getNameAsString();
+      llvm::outs() << " - " << *ND;
     llvm::outs() << "\n";
 
     DelegatingDeserializationListener::DeclRead(ID, D);

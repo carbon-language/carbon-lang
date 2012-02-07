@@ -2205,7 +2205,7 @@ CFRefLeakReportVisitor::getEndPath(BugReporterContext &BRC,
     else {
       const FunctionDecl *FD = cast<FunctionDecl>(D);
       os << " is returned from a function whose name ('"
-         << FD->getNameAsString()
+         << *FD
          << "') does not contain 'Copy' or 'Create'.  This violates the naming"
             " convention rules given in the Memory Management Guide for Core"
             " Foundation";

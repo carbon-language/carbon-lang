@@ -326,7 +326,7 @@ void TemplateArgument::print(const PrintingPolicy &Policy,
     if (NamedDecl *ND = dyn_cast_or_null<NamedDecl>(getAsDecl())) {
       if (ND->getDeclName()) {
         Unnamed = false;
-        Out << ND->getNameAsString();
+        Out << *ND;
       }
     }
     

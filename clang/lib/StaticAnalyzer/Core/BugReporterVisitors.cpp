@@ -757,7 +757,7 @@ CallEnterExitBRVisitor::VisitNode(const ExplodedNode *N,
     if (isa<BlockDecl>(callee))
       Out << "Entering call to block";
     else if (const NamedDecl *ND = dyn_cast<NamedDecl>(callee))
-      Out << "Entering call to '" << ND->getNameAsString() << "'";
+      Out << "Entering call to '" << *ND << "'";
     StringRef msg = Out.str();
     if (msg.empty())
       return 0;
@@ -767,7 +767,7 @@ CallEnterExitBRVisitor::VisitNode(const ExplodedNode *N,
     const Decl *caller = CExit->getLocationContext()->getParent()->getDecl();
     pos = getLastStmtLoc(PrevN, BRC.getSourceManager());
     if (const NamedDecl *ND = dyn_cast<NamedDecl>(caller))
-      Out << "Returning to '" << ND->getNameAsString() << "'";
+      Out << "Returning to '" << *ND << "'";
     else
       Out << "Returning to caller";
     return new PathDiagnosticCallExitPiece(pos, Out.str());

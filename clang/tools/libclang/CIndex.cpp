@@ -3042,7 +3042,7 @@ CXString clang_getCursorDisplayName(CXCursor C) {
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
     llvm::SmallString<64> Str;
     llvm::raw_svector_ostream OS(Str);
-    OS << Function->getNameAsString();
+    OS << *Function;
     if (Function->getPrimaryTemplate())
       OS << "<>";
     OS << "(";
@@ -3064,7 +3064,7 @@ CXString clang_getCursorDisplayName(CXCursor C) {
   if (ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(D)) {
     llvm::SmallString<64> Str;
     llvm::raw_svector_ostream OS(Str);
-    OS << ClassTemplate->getNameAsString();
+    OS << *ClassTemplate;
     OS << "<";
     TemplateParameterList *Params = ClassTemplate->getTemplateParameters();
     for (unsigned I = 0, N = Params->size(); I != N; ++I) {
@@ -3100,7 +3100,7 @@ CXString clang_getCursorDisplayName(CXCursor C) {
     
     llvm::SmallString<64> Str;
     llvm::raw_svector_ostream OS(Str);
-    OS << ClassSpec->getNameAsString();
+    OS << *ClassSpec;
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
                                       ClassSpec->getTemplateArgs().data(),
                                       ClassSpec->getTemplateArgs().size(),

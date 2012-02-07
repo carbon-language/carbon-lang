@@ -165,18 +165,18 @@ void WalkAST::ReportVirtualCall(const CallExpr *CE, bool isPure) {
   
   os << "Call Path : ";
   // Name of current visiting CallExpr.
-  os << CE->getDirectCallee()->getNameAsString();
+  os << *CE->getDirectCallee();
 
   // Name of the CallExpr whose body is current walking.
   if (visitingCallExpr)
-    os << " <-- " << visitingCallExpr->getDirectCallee()->getNameAsString();
+    os << " <-- " << *visitingCallExpr->getDirectCallee();
   // Names of FunctionDecls in worklist with state PostVisited.
   for (SmallVectorImpl<const CallExpr *>::iterator I = WList.end(),
          E = WList.begin(); I != E; --I) {
     const FunctionDecl *FD = (*(I-1))->getDirectCallee();
     assert(FD);
     if (VisitedFunctions[FD] == PostVisited)
-      os << " <-- " << FD->getNameAsString();
+      os << " <-- " << *FD;
   }
 
   PathDiagnosticLocation CELoc =

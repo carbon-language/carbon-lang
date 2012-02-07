@@ -149,7 +149,7 @@ TemplateName::print(raw_ostream &OS, const PrintingPolicy &Policy,
     subst->getReplacement().print(OS, Policy, SuppressNNS);
   } else if (SubstTemplateTemplateParmPackStorage *SubstPack
                                         = getAsSubstTemplateTemplateParmPack())
-    OS << SubstPack->getParameterPack()->getNameAsString();
+    OS << *SubstPack->getParameterPack();
   else {
     OverloadedTemplateStorage *OTS = getAsOverloadedTemplate();
     (*OTS->begin())->printName(OS);

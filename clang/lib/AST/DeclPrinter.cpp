@@ -335,8 +335,7 @@ void DeclPrinter::VisitTypedefDecl(TypedefDecl *D) {
 }
 
 void DeclPrinter::VisitTypeAliasDecl(TypeAliasDecl *D) {
-  Out << "using " << D->getNameAsString() << " = "
-      << D->getUnderlyingType().getAsString(Policy);
+  Out << "using " << *D << " = " << D->getUnderlyingType().getAsString(Policy);
 }
 
 void DeclPrinter::VisitEnumDecl(EnumDecl *D) {
@@ -600,7 +599,7 @@ void DeclPrinter::VisitFieldDecl(FieldDecl *D) {
 }
 
 void DeclPrinter::VisitLabelDecl(LabelDecl *D) {
-  Out << D->getNameAsString() << ":";
+  Out << *D << ":";
 }
 
 
@@ -761,7 +760,7 @@ void DeclPrinter::PrintTemplateParameters(
       if (TTP->isParameterPack())
         Out << "... ";
 
-      Out << TTP->getNameAsString();
+      Out << *TTP;
 
       if (Args) {
         Out << " = ";

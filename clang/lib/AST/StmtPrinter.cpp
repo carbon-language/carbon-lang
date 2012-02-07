@@ -1608,12 +1608,12 @@ void StmtPrinter::VisitPackExpansionExpr(PackExpansionExpr *E) {
 }
 
 void StmtPrinter::VisitSizeOfPackExpr(SizeOfPackExpr *E) {
-  OS << "sizeof...(" << E->getPack()->getNameAsString() << ")";
+  OS << "sizeof...(" << *E->getPack() << ")";
 }
 
 void StmtPrinter::VisitSubstNonTypeTemplateParmPackExpr(
                                        SubstNonTypeTemplateParmPackExpr *Node) {
-  OS << Node->getParameterPack()->getNameAsString();
+  OS << *Node->getParameterPack();
 }
 
 void StmtPrinter::VisitSubstNonTypeTemplateParmExpr(
