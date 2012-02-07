@@ -5191,7 +5191,7 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 
 /// struct _objc_method {
 ///   SEL _cmd;
-///   char *method_type;
+///   const char *method_type;
 ///   char *_imp;
 /// }
 
@@ -5241,14 +5241,8 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
   
   Result += "\nstruct _objc_method {\n";
   Result += "\tstruct objc_selector * _cmd;\n";
-  Result += "\tchar *method_type;\n";
+  Result += "\tconst char *method_type;\n";
   Result += "\tchar *_imp;\n";
-  Result += "};\n";
-
-  Result += "\nstruct _method_list_t {\n";
-  Result += "\tunsigned int entsize;  // sizeof(struct _objc_method)\n";
-  Result += "\tunsigned int method_count;\n";
-  Result += "\tstruct _objc_method method_list[/*method_count*/];\n";
   Result += "};\n";
   
   Result += "\nstruct _protocol_t {\n";
@@ -5266,6 +5260,50 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
   Result += "};\n";
   
   meta_data_declared = true;
+}
+
+static void Write_method_list_t_TypeDecl(std::string &Result,
+                                         unsigned int method_count) {
+  Result += "struct /*_method_list_t*/"; Result += " {\n";
+  Result += "\tunsigned int entsize;  // sizeof(struct _objc_method)\n";
+  Result += "\tunsigned int method_count;\n";
+  Result += "\tstruct _objc_method method_list[";
+  Result += utostr(method_count); Result += "];\n";
+  Result += "}";
+}
+
+static void Write_method_list_t_initializer(ASTContext *Context, std::string &Result,
+                                            ArrayRef<ObjCMethodDecl *> Methods,
+                                            StringRef VarName,
+                                            StringRef ProtocolName) {
+  if (Methods.size() > 0) {
+    Result += "\nstatic ";
+    Write_method_list_t_TypeDecl(Result, Methods.size());
+    Result += " "; Result += VarName;
+    Result += ProtocolName; 
+    Result += " __attribute__ ((used, section (\"__DATA,__objc_const\"))) = {\n";
+    Result += "\t"; Result += "sizeof(_objc_method)"; Result += ",\n";
+    Result += "\t"; Result += utostr(Methods.size()); Result += ",\n";
+    for (unsigned i = 0, e = Methods.size(); i < e; i++) {
+      ObjCMethodDecl *MD = Methods[i];
+      if (i == 0)
+        Result += "\t{{(struct objc_selector *)\"";
+      else
+        Result += "\t{(struct objc_selector *)\"";
+      Result += (MD)->getSelector().getAsString(); Result += "\"";
+      Result += ", ";
+      std::string MethodTypeString;
+      Context->getObjCEncodingForMethodDecl(MD, MethodTypeString);
+      Result += "\""; Result += MethodTypeString; Result += "\"";
+      Result += ", ";
+      // FIXME is _imp always null here?
+      if (i  == e-1)
+        Result += "0}}\n";
+      else
+        Result += "0},\n";
+    }
+    Result += "};\n";
+  }
 }
 
 /// RewriteObjCProtocolMetaData - Rewrite protocols meta-data.
@@ -5297,6 +5335,48 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(
   if (ObjCProtocolDecl *Def = PDecl->getDefinition())
     PDecl = Def;
   
+  // Construct method lists.
+  std::vector<ObjCMethodDecl *> InstanceMethods, ClassMethods;
+  std::vector<ObjCMethodDecl *> OptInstanceMethods, OptClassMethods;
+  for (ObjCProtocolDecl::instmeth_iterator
+       I = PDecl->instmeth_begin(), E = PDecl->instmeth_end();
+       I != E; ++I) {
+    ObjCMethodDecl *MD = *I;
+    if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
+      OptInstanceMethods.push_back(MD);
+    } else {
+      InstanceMethods.push_back(MD);
+    }
+  }
+  
+  for (ObjCProtocolDecl::classmeth_iterator
+       I = PDecl->classmeth_begin(), E = PDecl->classmeth_end();
+       I != E; ++I) {
+    ObjCMethodDecl *MD = *I;
+    if (MD->getImplementationControl() == ObjCMethodDecl::Optional) {
+      OptClassMethods.push_back(MD);
+    } else {
+      ClassMethods.push_back(MD);
+    }
+  }
+  Write_method_list_t_initializer(Context, Result, InstanceMethods, 
+                                  "_OBJC_PROTOCOL_INSTANCE_METHODS_",
+                                  PDecl->getNameAsString());
+  
+  Write_method_list_t_initializer(Context, Result, ClassMethods, 
+                                  "_OBJC_PROTOCOL_CLASS_METHODS_",
+                                  PDecl->getNameAsString());
+
+  Write_method_list_t_initializer(Context, Result, OptInstanceMethods, 
+                                  "_OBJC_PROTOCOL_OPT_INSTANCE_METHODS_",
+                                  PDecl->getNameAsString());
+  
+  Write_method_list_t_initializer(Context, Result, OptClassMethods, 
+                                  "_OBJC_PROTOCOL_OPT_CLASS_METHODS_",
+                                  PDecl->getNameAsString());
+  
+  
+  // ====================================Legacy ABI ====================================================
   if (PDecl->instmeth_begin() != PDecl->instmeth_end()) {
     unsigned NumMethods = std::distance(PDecl->instmeth_begin(),
                                         PDecl->instmeth_end());
