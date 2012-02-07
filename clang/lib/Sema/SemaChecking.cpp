@@ -1459,21 +1459,20 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, Expr **Args,
     return false;
   }
 
-  case Stmt::CallExprClass: {
+  case Stmt::CallExprClass:
+  case Stmt::CXXMemberCallExprClass: {
     const CallExpr *CE = cast<CallExpr>(E);
-    if (const ImplicitCastExpr *ICE
-          = dyn_cast<ImplicitCastExpr>(CE->getCallee())) {
-      if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(ICE->getSubExpr())) {
-        if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(DRE->getDecl())) {
-          if (const FormatArgAttr *FA = FD->getAttr<FormatArgAttr>()) {
-            unsigned ArgIndex = FA->getFormatIdx();
-            const Expr *Arg = CE->getArg(ArgIndex - 1);
+    if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(CE->getCalleeDecl())) {
+      if (const FormatArgAttr *FA = ND->getAttr<FormatArgAttr>()) {
+        unsigned ArgIndex = FA->getFormatIdx();
+        if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ND))
+          if (MD->isInstance())
+            --ArgIndex;
+        const Expr *Arg = CE->getArg(ArgIndex - 1);
 
-            return SemaCheckStringLiteral(Arg, Args, NumArgs, HasVAListArg,
-                                          format_idx, firstDataArg, Type,
-                                          inFunctionCall);
-          }
-        }
+        return SemaCheckStringLiteral(Arg, Args, NumArgs, HasVAListArg,
+                                      format_idx, firstDataArg, Type,
+                                      inFunctionCall);
       }
     }
 
@@ -1534,11 +1533,7 @@ void Sema::CheckFormatArguments(const FormatAttr *Format, CallExpr *TheCall) {
   // The way the format attribute works in GCC, the implicit this argument
   // of member functions is counted. However, it doesn't appear in our own
   // lists, so decrement format_idx in that case.
-  if (isa<CXXMemberCallExpr>(TheCall)) {
-    const CXXMethodDecl *method_decl = 
-    dyn_cast<CXXMethodDecl>(TheCall->getCalleeDecl());
-    IsCXXMember = method_decl && method_decl->isInstance();
-  }
+  IsCXXMember = isa<CXXMemberCallExpr>(TheCall);
   CheckFormatArguments(Format, TheCall->getArgs(), TheCall->getNumArgs(),
                        IsCXXMember, TheCall->getRParenLoc(), 
                        TheCall->getCallee()->getSourceRange());
