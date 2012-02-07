@@ -79,6 +79,10 @@ static unsigned getADDriOpcode(unsigned is64Bit, int64_t Imm) {
   }
 }
 
+static unsigned getLEArOpcode(unsigned is64Bit) {
+  return is64Bit ? X86::LEA64r : X86::LEA32r;
+}
+
 /// findDeadCallerSavedReg - Return a caller-saved register that isn't live
 /// when it reaches the "return" instruction. We can then pop a stack object
 /// to this register without worry about clobbering it.
@@ -141,13 +145,18 @@ static unsigned findDeadCallerSavedReg(MachineBasicBlock &MBB,
 static
 void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
                   unsigned StackPtr, int64_t NumBytes,
-                  bool Is64Bit, const TargetInstrInfo &TII,
-                  const TargetRegisterInfo &TRI) {
+                  bool Is64Bit, bool UseLEA,
+                  const TargetInstrInfo &TII, const TargetRegisterInfo &TRI) {
   bool isSub = NumBytes < 0;
   uint64_t Offset = isSub ? -NumBytes : NumBytes;
-  unsigned Opc = isSub ?
-    getSUBriOpcode(Is64Bit, Offset) :
-    getADDriOpcode(Is64Bit, Offset);
+  unsigned Opc;
+  if (UseLEA)
+    Opc = getLEArOpcode(Is64Bit);
+  else
+    Opc = isSub
+      ? getSUBriOpcode(Is64Bit, Offset)
+      : getADDriOpcode(Is64Bit, Offset);
+
   uint64_t Chunk = (1LL << 31) - 1;
   DebugLoc DL = MBB.findDebugLoc(MBBI);
 
@@ -171,13 +180,21 @@ void emitSPUpdate(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
       }
     }
 
-    MachineInstr *MI =
-      BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr)
-      .addReg(StackPtr)
-      .addImm(ThisVal);
+    MachineInstr *MI = NULL;
+
+    if (UseLEA) {
+      MI =  addRegOffset(BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr),
+                          StackPtr, false, isSub ? -ThisVal : ThisVal);
+    } else {
+      MI = BuildMI(MBB, MBBI, DL, TII.get(Opc), StackPtr)
+            .addReg(StackPtr)
+            .addImm(ThisVal);
+      MI->getOperand(3).setIsDead(); // The EFLAGS implicit def is dead.
+    }
+
     if (isSub)
       MI->setFlag(MachineInstr::FrameSetup);
-    MI->getOperand(3).setIsDead(); // The EFLAGS implicit def is dead.
+
     Offset -= ThisVal;
   }
 }
@@ -191,7 +208,8 @@ void mergeSPUpdatesUp(MachineBasicBlock &MBB, MachineBasicBlock::iterator &MBBI,
   MachineBasicBlock::iterator PI = prior(MBBI);
   unsigned Opc = PI->getOpcode();
   if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
-       Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
+       Opc == X86::ADD32ri || Opc == X86::ADD32ri8 ||
+       Opc == X86::LEA32r || Opc == X86::LEA64_32r) &&
       PI->getOperand(0).getReg() == StackPtr) {
     if (NumBytes)
       *NumBytes += PI->getOperand(2).getImm();
@@ -237,8 +255,8 @@ void mergeSPUpdatesDown(MachineBasicBlock &MBB,
 }
 
 /// mergeSPUpdates - Checks the instruction before/after the passed
-/// instruction. If it is an ADD/SUB instruction it is deleted argument and the
-/// stack adjustment is returned as a positive value for ADD and a negative for
+/// instruction. If it is an ADD/SUB/LEA instruction it is deleted argument and the
+/// stack adjustment is returned as a positive value for ADD/LEA and a negative for
 /// SUB.
 static int mergeSPUpdates(MachineBasicBlock &MBB,
                            MachineBasicBlock::iterator &MBBI,
@@ -254,7 +272,8 @@ static int mergeSPUpdates(MachineBasicBlock &MBB,
   int Offset = 0;
 
   if ((Opc == X86::ADD64ri32 || Opc == X86::ADD64ri8 ||
-       Opc == X86::ADD32ri || Opc == X86::ADD32ri8) &&
+       Opc == X86::ADD32ri || Opc == X86::ADD32ri8 ||
+       Opc == X86::LEA32r || Opc == X86::LEA64_32r) &&
       PI->getOperand(0).getReg() == StackPtr){
     Offset += PI->getOperand(2).getImm();
     MBB.erase(PI);
@@ -626,6 +645,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
   bool HasFP = hasFP(MF);
   bool Is64Bit = STI.is64Bit();
   bool IsWin64 = STI.isTargetWin64();
+  bool UseLEA = STI.useLeaForSP();
   unsigned StackAlign = getStackAlignment();
   unsigned SlotSize = RegInfo->getSlotSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
@@ -879,7 +899,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     // FIXME: %rax preserves the offset and should be available.
     if (isSPUpdateNeeded)
       emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
-                   TII, *RegInfo);
+                   UseLEA, TII, *RegInfo);
 
     if (isEAXAlive) {
         // Restore EAX
@@ -891,7 +911,7 @@ void X86FrameLowering::emitPrologue(MachineFunction &MF) const {
     }
   } else if (NumBytes)
     emitSPUpdate(MBB, MBBI, StackPtr, -(int64_t)NumBytes, Is64Bit,
-                 TII, *RegInfo);
+                 UseLEA, TII, *RegInfo);
 
   if (( (!HasFP && NumBytes) || PushedRegs) && needsFrameMoves) {
     // Mark end of stack pointer adjustment.
@@ -935,6 +955,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
   unsigned RetOpcode = MBBI->getOpcode();
   DebugLoc DL = MBBI->getDebugLoc();
   bool Is64Bit = STI.is64Bit();
+  bool UseLEA = STI.useLeaForSP();
   unsigned StackAlign = getStackAlignment();
   unsigned SlotSize = RegInfo->getSlotSize();
   unsigned FramePtr = RegInfo->getFrameRegister(MF);
@@ -1015,7 +1036,8 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     // We cannot use LEA here, because stack pointer was realigned. We need to
     // deallocate local frame back.
     if (CSSize) {
-      emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII, *RegInfo);
+      emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, UseLEA, TII,
+                   *RegInfo);
       MBBI = prior(LastCSPop);
     }
 
@@ -1036,7 +1058,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     }
   } else if (NumBytes) {
     // Adjust stack pointer back: ESP += numbytes.
-    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, TII, *RegInfo);
+    emitSPUpdate(MBB, MBBI, StackPtr, NumBytes, Is64Bit, UseLEA, TII, *RegInfo);
   }
 
   // We're returning from function via eh_return.
@@ -1071,7 +1093,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
     if (Offset) {
       // Check for possible merge with preceding ADD instruction.
       Offset += mergeSPUpdates(MBB, MBBI, StackPtr, true);
-      emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, TII, *RegInfo);
+      emitSPUpdate(MBB, MBBI, StackPtr, Offset, Is64Bit, UseLEA, TII, *RegInfo);
     }
 
     // Jump to label or value in register.
@@ -1115,7 +1137,7 @@ void X86FrameLowering::emitEpilogue(MachineFunction &MF,
 
     // Check for possible merge with preceding ADD instruction.
     delta += mergeSPUpdates(MBB, MBBI, StackPtr, true);
-    emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, TII, *RegInfo);
+    emitSPUpdate(MBB, MBBI, StackPtr, delta, Is64Bit, UseLEA, TII, *RegInfo);
   }
 }
 

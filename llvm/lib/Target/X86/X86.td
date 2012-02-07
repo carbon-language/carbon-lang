@@ -115,6 +115,8 @@ def FeatureBMI     : SubtargetFeature<"bmi", "HasBMI", "true",
                                       "Support BMI instructions">;
 def FeatureBMI2    : SubtargetFeature<"bmi2", "HasBMI2", "true",
                                       "Support BMI2 instructions">;
+def FeatureLeaForSP : SubtargetFeature<"lea-sp", "UseLeaForSP", "true",
+                                     "Use LEA for adjusting the stack pointer">;
 
 //===----------------------------------------------------------------------===//
 // X86 processors supported.
@@ -155,7 +157,7 @@ def : Proc<"core2",           [FeatureSSSE3, FeatureCMPXCHG16B,
 def : Proc<"penryn",          [FeatureSSE41, FeatureCMPXCHG16B,
                                FeatureSlowBTMem]>;
 def : AtomProc<"atom",        [ProcIntelAtom, FeatureSSE3, FeatureCMPXCHG16B,
-                               FeatureMOVBE, FeatureSlowBTMem]>;
+                               FeatureMOVBE, FeatureSlowBTMem, FeatureLeaForSP]>;
 // "Arrandale" along with corei3 and corei5
 def : Proc<"corei7",          [FeatureSSE42, FeatureCMPXCHG16B,
                                FeatureSlowBTMem, FeatureFastUAMem,

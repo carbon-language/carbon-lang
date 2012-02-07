@@ -257,6 +257,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
     // Set processor type. Currently only Atom is detected.
     if (Family == 6 && Model == 28) {
       X86ProcFamily = IntelAtom;
+      ToggleFeature(X86::FeatureLeaForSP);
     }
 
     unsigned MaxExtLevel;
@@ -340,6 +341,7 @@ X86Subtarget::X86Subtarget(const std::string &TT, const std::string &CPU,
   , IsUAMemFast(false)
   , HasVectorUAMem(false)
   , HasCmpxchg16b(false)
+  , UseLeaForSP(false)
   , PostRAScheduler(false)
   , stackAlignment(4)
   // FIXME: this is a known good value for Yonah. How about others?
