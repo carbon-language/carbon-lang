@@ -14597,41 +14597,42 @@ static SDValue PerformSExtCombine(SDNode *N, SelectionDAG &DAG,
   if (!DCI.isBeforeLegalizeOps())
     return SDValue();
 
-  if (!Subtarget->hasAVX()) return SDValue();
+  if (!Subtarget->hasAVX()) 
+    return SDValue();
 
-   // Optimize vectors in AVX mode
-   // Sign extend  v8i16 to v8i32 and
-   //              v4i32 to v4i64
-   //
-   // Divide input vector into two parts
-   // for v4i32 the shuffle mask will be { 0, 1, -1, -1} {2, 3, -1, -1}
-   // use vpmovsx instruction to extend v4i32 -> v2i64; v8i16 -> v4i32
-   // concat the vectors to original VT
+  // Optimize vectors in AVX mode
+  // Sign extend  v8i16 to v8i32 and
+  //              v4i32 to v4i64
+  //
+  // Divide input vector into two parts
+  // for v4i32 the shuffle mask will be { 0, 1, -1, -1} {2, 3, -1, -1}
+  // use vpmovsx instruction to extend v4i32 -> v2i64; v8i16 -> v4i32
+  // concat the vectors to original VT
 
   EVT VT = N->getValueType(0);
   SDValue Op = N->getOperand(0);
   EVT OpVT = Op.getValueType();
   DebugLoc dl = N->getDebugLoc();
 
-  if (((VT == MVT::v4i64) && (OpVT == MVT::v4i32)) ||
-    ((VT == MVT::v8i32) && (OpVT == MVT::v8i16))) {
+  if ((VT == MVT::v4i64 && OpVT == MVT::v4i32) ||
+      (VT == MVT::v8i32 && OpVT == MVT::v8i16)) {
 
     unsigned NumElems = OpVT.getVectorNumElements();
     SmallVector<int,8> ShufMask1(NumElems, -1);
-    for (unsigned i=0; i< NumElems/2; i++) ShufMask1[i] = i;
+    for (unsigned i = 0; i < NumElems/2; i++) ShufMask1[i] = i;
 
     SDValue OpLo = DAG.getVectorShuffle(OpVT, dl, Op, DAG.getUNDEF(OpVT),
-                                ShufMask1.data());
+                                        ShufMask1.data());
 
     SmallVector<int,8> ShufMask2(NumElems, -1);
-    for (unsigned i=0; i< NumElems/2; i++) ShufMask2[i] = i+NumElems/2;
+    for (unsigned i = 0; i < NumElems/2; i++) ShufMask2[i] = i + NumElems/2;
 
     SDValue OpHi = DAG.getVectorShuffle(OpVT, dl, Op, DAG.getUNDEF(OpVT),
-                                ShufMask2.data());
+                                        ShufMask2.data());
 
     EVT HalfVT = EVT::getVectorVT(*DAG.getContext(), VT.getScalarType(), 
-      VT.getVectorNumElements()/2);
-    
+                                  VT.getVectorNumElements()/2);
+
     OpLo = DAG.getNode(X86ISD::VSEXT_MOVL, dl, HalfVT, OpLo); 
     OpHi = DAG.getNode(X86ISD::VSEXT_MOVL, dl, HalfVT, OpHi);
 

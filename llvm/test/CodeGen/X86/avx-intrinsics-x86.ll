@@ -1766,6 +1766,74 @@ define <8 x float> @test_x86_avx_cmp_ps_256(<8 x float> %a0, <8 x float> %a1) {
   %res = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a1, i8 7) ; <<8 x float>> [#uses=1]
   ret <8 x float> %res
 }
+
+define <8 x float> @test_x86_avx_cmp_ps_256_pseudo_op(<8 x float> %a0, <8 x float> %a1) {
+  ; CHECK: vcmpeqps
+  %a2 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a1, i8 0) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpltps
+  %a3 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a2, i8 1) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpleps
+  %a4 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a3, i8 2) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpunordps
+  %a5 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a4, i8 3) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpneqps
+  %a6 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a5, i8 4) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpnltps
+  %a7 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a6, i8 5) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpnleps
+  %a8 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a7, i8 6) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpordps
+  %a9 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a8, i8 7) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpeq_uqps
+  %a10 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a9, i8 8) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpngeps
+  %a11 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a10, i8 9) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpngtps
+  %a12 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a11, i8 10) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpfalseps
+  %a13 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a12, i8 11) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpneq_oqps
+  %a14 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a13, i8 12) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpgeps
+  %a15 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a14, i8 13) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpgtps
+  %a16 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a15, i8 14) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmptrueps
+  %a17 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a16, i8 15) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpeq_osps
+  %a18 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a17, i8 16) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmplt_oqps
+  %a19 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a18, i8 17) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmple_oqps
+  %a20 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a19, i8 18) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpunord_sps
+  %a21 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a20, i8 19) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpneq_usps
+  %a22 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a21, i8 20) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpnlt_uqps
+  %a23 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a22, i8 21) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpnle_uqps
+  %a24 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a23, i8 22) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpord_sps
+  %a25 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a24, i8 23) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpeq_usps
+  %a26 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a25, i8 24) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpnge_uqps
+  %a27 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a26, i8 25) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpngt_uqps
+  %a28 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a27, i8 26) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpfalse_osps
+  %a29 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a28, i8 27) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpneq_osps
+  %a30 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a29, i8 28) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpge_oqps
+  %a31 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a30, i8 29) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmpgt_oqps
+  %a32 = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a31, i8 30) ; <<8 x float>> [#uses=1]
+  ; CHECK: vcmptrue_usps
+  %res = call <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float> %a0, <8 x float> %a32, i8 31) ; <<8 x float>> [#uses=1]
+  ret <8 x float> %res
+}
 declare <8 x float> @llvm.x86.avx.cmp.ps.256(<8 x float>, <8 x float>, i8) nounwind readnone
 
 

@@ -266,14 +266,38 @@ void X86AsmPrinter::printSSECC(const MachineInstr *MI, unsigned Op,
   unsigned char value = MI->getOperand(Op).getImm();
   assert(value <= 7 && "Invalid ssecc argument!");
   switch (value) {
-  case 0: O << "eq"; break;
-  case 1: O << "lt"; break;
-  case 2: O << "le"; break;
-  case 3: O << "unord"; break;
-  case 4: O << "neq"; break;
-  case 5: O << "nlt"; break;
-  case 6: O << "nle"; break;
-  case 7: O << "ord"; break;
+  case    0: O << "eq"; break;
+  case    1: O << "lt"; break;
+  case    2: O << "le"; break;
+  case    3: O << "unord"; break;
+  case    4: O << "neq"; break;
+  case    5: O << "nlt"; break;
+  case    6: O << "nle"; break;
+  case    7: O << "ord"; break;
+  case    8: O << "eq_uq"; break;
+  case    9: O << "nge"; break;
+  case  0xa: O << "ngt"; break;
+  case  0xb: O << "false"; break;
+  case  0xc: O << "neq_oq"; break;
+  case  0xd: O << "ge"; break;
+  case  0xe: O << "gt"; break;
+  case  0xf: O << "true"; break;
+  case 0x10: O << "eq_os"; break;
+  case 0x11: O << "lt_oq"; break;
+  case 0x12: O << "le_oq"; break;
+  case 0x13: O << "unord_s"; break;
+  case 0x14: O << "neq_us"; break;
+  case 0x15: O << "nlt_uq"; break;
+  case 0x16: O << "nle_uq"; break;
+  case 0x17: O << "ord_s"; break;
+  case 0x18: O << "eq_us"; break;
+  case 0x19: O << "nge_uq"; break;
+  case 0x1a: O << "ngt_uq"; break;
+  case 0x1b: O << "false_os"; break;
+  case 0x1c: O << "neq_os"; break;
+  case 0x1d: O << "ge_oq"; break;
+  case 0x1e: O << "gt_oq"; break;
+  case 0x1f: O << "true_us"; break;
   }
 }
 
