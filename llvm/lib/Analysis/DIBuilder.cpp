@@ -541,7 +541,7 @@ DIType DIBuilder::createEnumerationType(DIDescriptor Scope, StringRef Name,
                                         DIFile File, unsigned LineNumber,
                                         uint64_t SizeInBits,
                                         uint64_t AlignInBits,
-					DIArray Elements) {
+                                        DIArray Elements) {
   // TAG_enumeration_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_enumeration_type),
@@ -779,7 +779,7 @@ DIVariable DIBuilder::createComplexVariable(unsigned Tag, DIDescriptor Scope,
   Elts.push_back(MDString::get(VMContext, Name));
   Elts.push_back(F);
   Elts.push_back(ConstantInt::get(Type::getInt32Ty(VMContext),
-				  (LineNo | (ArgNo << 24))));
+                                  (LineNo | (ArgNo << 24))));
   Elts.push_back(Ty);
   Elts.push_back(llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)));
   Elts.push_back(llvm::Constant::getNullValue(Type::getInt32Ty(VMContext)));
@@ -895,7 +895,7 @@ DINameSpace DIBuilder::createNameSpace(DIDescriptor Scope, StringRef Name,
 /// createLexicalBlockFile - This creates a new MDNode that encapsulates
 /// an existing scope with a new filename.
 DILexicalBlockFile DIBuilder::createLexicalBlockFile(DIDescriptor Scope,
-						     DIFile File) {
+                                                     DIFile File) {
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_lexical_block),
     Scope,

@@ -363,7 +363,7 @@ namespace llvm {
 
     StringRef getObjCPropertyName() const { 
       if (getVersion() > LLVMDebugVersion11)
-	return StringRef();
+        return StringRef();
       return getStringField(10); 
     }
     StringRef getObjCPropertyGetterName() const {

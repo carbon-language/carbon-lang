@@ -974,22 +974,22 @@ void DebugInfoFinder::processModule(Module &M) {
       DICompileUnit CU(CU_Nodes->getOperand(i));
       addCompileUnit(CU);
       if (CU.getVersion() > LLVMDebugVersion10) {
-	DIArray GVs = CU.getGlobalVariables();
-	for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i) {
-	  DIGlobalVariable DIG(GVs.getElement(i));
-	  if (addGlobalVariable(DIG))
-	    processType(DIG.getType());
-	}
-	DIArray SPs = CU.getSubprograms();
-	for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
-	  processSubprogram(DISubprogram(SPs.getElement(i)));
-	DIArray EnumTypes = CU.getEnumTypes();
-	for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i)
-	  processType(DIType(EnumTypes.getElement(i)));
-	DIArray RetainedTypes = CU.getRetainedTypes();
-	for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i)
-	  processType(DIType(RetainedTypes.getElement(i)));
-	return;
+        DIArray GVs = CU.getGlobalVariables();
+        for (unsigned i = 0, e = GVs.getNumElements(); i != e; ++i) {
+          DIGlobalVariable DIG(GVs.getElement(i));
+          if (addGlobalVariable(DIG))
+            processType(DIG.getType());
+        }
+        DIArray SPs = CU.getSubprograms();
+        for (unsigned i = 0, e = SPs.getNumElements(); i != e; ++i)
+          processSubprogram(DISubprogram(SPs.getElement(i)));
+        DIArray EnumTypes = CU.getEnumTypes();
+        for (unsigned i = 0, e = EnumTypes.getNumElements(); i != e; ++i)
+          processType(DIType(EnumTypes.getElement(i)));
+        DIArray RetainedTypes = CU.getRetainedTypes();
+        for (unsigned i = 0, e = RetainedTypes.getNumElements(); i != e; ++i)
+          processType(DIType(RetainedTypes.getElement(i)));
+        return;
       }
     }
   }

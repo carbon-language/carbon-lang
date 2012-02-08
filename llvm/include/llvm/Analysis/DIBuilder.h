@@ -215,7 +215,7 @@ namespace llvm {
     /// @param SetterName   Name of the Objective C property setter selector.
     /// @param PropertyAttributes Objective C property attributes.
     DIObjCProperty createObjCProperty(StringRef Name, StringRef GetterName,
-			              StringRef SetterName, 
+                                      StringRef SetterName, 
                                       unsigned PropertyAttributes);
 
     /// createClassType - Create debugging information entry for a class.
@@ -498,7 +498,7 @@ namespace llvm {
     /// @param Scope       Lexical block.
     /// @param File        Source file.
     DILexicalBlockFile createLexicalBlockFile(DIDescriptor Scope,
-					      DIFile File);
+                                              DIFile File);
     
     /// createLexicalBlock - This creates a descriptor for a lexical block
     /// with the specified parent context.
