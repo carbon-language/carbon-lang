@@ -163,8 +163,8 @@ StringRef CGDebugInfo::getSelectorName(Selector S) {
 
 /// getClassName - Get class name including template argument list.
 StringRef 
-CGDebugInfo::getClassName(RecordDecl *RD) {
-  ClassTemplateSpecializationDecl *Spec
+CGDebugInfo::getClassName(const RecordDecl *RD) {
+  const ClassTemplateSpecializationDecl *Spec
     = dyn_cast<ClassTemplateSpecializationDecl>(RD);
   if (!Spec)
     return RD->getName();
@@ -486,12 +486,15 @@ llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
 
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
   unsigned Line = getLineNumber(RD->getLocation());
+  StringRef RDName = RD->getName();
 
   // Get the tag.
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
   unsigned Tag = 0;
-  if (CXXDecl)
+  if (CXXDecl) {
+    RDName = getClassName(RD);
     Tag = llvm::dwarf::DW_TAG_class_type;
+  }
   else if (RD->isStruct())
     Tag = llvm::dwarf::DW_TAG_structure_type;
   else if (RD->isUnion())
@@ -500,7 +503,7 @@ llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
     llvm_unreachable("Unknown RecordDecl type!");
 
   // Create the type.
-  return DBuilder.createForwardDecl(Tag, RD->getName(), DefUnit,
+  return DBuilder.createForwardDecl(Tag, RDName, DefUnit,
                                     Line);
 }
 

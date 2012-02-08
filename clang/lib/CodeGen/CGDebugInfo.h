@@ -293,7 +293,7 @@ private:
   StringRef getSelectorName(Selector S);
 
   /// getClassName - Get class name including template argument list.
-  StringRef getClassName(RecordDecl *RD);
+  StringRef getClassName(const RecordDecl *RD);
 
   /// getVTableName - Get vtable name for the given Class.
   StringRef getVTableName(const CXXRecordDecl *Decl);
