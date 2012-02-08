@@ -27,7 +27,7 @@ class MCRegisterClass {
 public:
   typedef const unsigned* iterator;
   typedef const unsigned* const_iterator;
-private:
+
   unsigned ID;
   const char *Name;
   const unsigned RegSize, Alignment; // Size & Alignment of register in bytes
@@ -36,17 +36,6 @@ private:
   const iterator RegsBegin, RegsEnd;
   const unsigned char *const RegSet;
   const unsigned RegSetSize;
-public:
-  MCRegisterClass(unsigned id, const char *name,
-                  unsigned RS, unsigned Al, int CC, bool Allocable,
-                  iterator RB, iterator RE, const unsigned char *Bits,
-                  unsigned NumBytes)
-    : ID(id), Name(name), RegSize(RS), Alignment(Al), CopyCost(CC),
-      Allocatable(Allocable), RegsBegin(RB), RegsEnd(RE), RegSet(Bits),
-      RegSetSize(NumBytes) {
-    for (iterator i = RegsBegin; i != RegsEnd; ++i)
-       assert(contains(*i) && "Bit field corrupted.");
-  }
 
   /// getID() - Return the register class ID number.
   ///
