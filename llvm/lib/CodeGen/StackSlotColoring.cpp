@@ -90,14 +90,14 @@ namespace {
       MachineFunctionPass(ID), ColorWithRegs(RegColor), NextColor(-1) {
         initializeStackSlotColoringPass(*PassRegistry::getPassRegistry());
       }
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<SlotIndexes>();
       AU.addPreserved<SlotIndexes>();
       AU.addRequired<LiveStacks>();
       AU.addRequired<VirtRegMap>();
-      AU.addPreserved<VirtRegMap>();      
+      AU.addPreserved<VirtRegMap>();
       AU.addRequired<MachineLoopInfo>();
       AU.addPreserved<MachineLoopInfo>();
       AU.addPreservedID(MachineDominatorsID);
@@ -372,33 +372,33 @@ bool StackSlotColoring::RemoveDeadStores(MachineBasicBlock* MBB) {
        I != E; ++I) {
     if (DCELimit != -1 && (int)NumDead >= DCELimit)
       break;
-    
+
     MachineBasicBlock::iterator NextMI = llvm::next(I);
     if (NextMI == MBB->end()) continue;
-    
+
     int FirstSS, SecondSS;
     unsigned LoadReg = 0;
     unsigned StoreReg = 0;
     if (!(LoadReg = TII->isLoadFromStackSlot(I, FirstSS))) continue;
     if (!(StoreReg = TII->isStoreToStackSlot(NextMI, SecondSS))) continue;
     if (FirstSS != SecondSS || LoadReg != StoreReg || FirstSS == -1) continue;
-    
+
     ++NumDead;
     changed = true;
-    
+
     if (NextMI->findRegisterUseOperandIdx(LoadReg, true, 0) != -1) {
       ++NumDead;
       toErase.push_back(I);
     }
-    
+
     toErase.push_back(NextMI);
     ++I;
   }
-  
+
   for (SmallVector<MachineInstr*, 4>::iterator I = toErase.begin(),
        E = toErase.end(); I != E; ++I)
     (*I)->eraseFromParent();
-  
+
   return changed;
 }
 
@@ -406,7 +406,7 @@ bool StackSlotColoring::RemoveDeadStores(MachineBasicBlock* MBB) {
 bool StackSlotColoring::runOnMachineFunction(MachineFunction &MF) {
   DEBUG({
       dbgs() << "********** Stack Slot Coloring **********\n"
-             << "********** Function: " 
+             << "********** Function: "
              << MF.getFunction()->getName() << '\n';
     });
 

@@ -33,7 +33,7 @@ namespace {
   class MachineCopyPropagation : public MachineFunctionPass {
     const TargetRegisterInfo *TRI;
     BitVector ReservedRegs;
-    
+
   public:
     static char ID; // Pass identification, replacement for typeid
     MachineCopyPropagation() : MachineFunctionPass(ID) {

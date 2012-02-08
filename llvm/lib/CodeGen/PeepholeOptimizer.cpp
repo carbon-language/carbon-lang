@@ -39,7 +39,7 @@
 //   =>
 //     v1 = bitcast v0
 //        = v0
-// 
+//
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "peephole-opt"
@@ -124,7 +124,7 @@ FunctionPass *llvm::createPeepholeOptimizerPass() {
 /// source, and if the source value is preserved as a sub-register of the
 /// result, then replace all reachable uses of the source with the subreg of the
 /// result.
-/// 
+///
 /// Do not generate an EXTRACT that is used only in a debug use, as this changes
 /// the code. Since this code does not currently share EXTRACTs, just ignore all
 /// debug uses.
@@ -134,7 +134,7 @@ OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
   unsigned SrcReg, DstReg, SubIdx;
   if (!TII->isCoalescableExtInstr(*MI, SrcReg, DstReg, SubIdx))
     return false;
-  
+
   if (TargetRegisterInfo::isPhysicalRegister(DstReg) ||
       TargetRegisterInfo::isPhysicalRegister(SrcReg))
     return false;
@@ -363,7 +363,7 @@ bool PeepholeOptimizer::isMoveImmediate(MachineInstr *MI,
     ImmDefRegs.insert(Reg);
     return true;
   }
-  
+
   return false;
 }
 
@@ -395,7 +395,7 @@ bool PeepholeOptimizer::FoldImmediate(MachineInstr *MI, MachineBasicBlock *MBB,
 bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
   if (DisablePeephole)
     return false;
-  
+
   TM  = &MF.getTarget();
   TII = TM->getInstrInfo();
   MRI = &MF.getRegInfo();
@@ -408,7 +408,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
   DenseMap<unsigned, MachineInstr*> ImmDefMIs;
   for (MachineFunction::iterator I = MF.begin(), E = MF.end(); I != E; ++I) {
     MachineBasicBlock *MBB = &*I;
-    
+
     bool SeenMoveImm = false;
     LocalMIs.clear();
     ImmDefRegs.clear();
@@ -435,7 +435,7 @@ bool PeepholeOptimizer::runOnMachineFunction(MachineFunction &MF) {
           Changed = true;
           MII = First ? I->begin() : llvm::next(PMII);
           continue;
-        }        
+        }
       } else if (MI->isCompare()) {
         if (OptimizeCmpInstr(MI, MBB)) {
           // MI is deleted.

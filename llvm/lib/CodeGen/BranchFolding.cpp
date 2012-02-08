@@ -208,7 +208,7 @@ bool BranchFolder::OptimizeFunction(MachineFunction &MF,
     delete RS;
     return MadeChange;
   }
-  
+
   // Walk the function to find jump tables that are live.
   BitVector JTIsLive(JTI->getJumpTables().size());
   for (MachineFunction::iterator BB = MF.begin(), E = MF.end();
@@ -1095,7 +1095,7 @@ ReoptimizeBlock:
         MachineBasicBlock::iterator PrevBBIter = PrevBB.end();
         --PrevBBIter;
         MachineBasicBlock::iterator MBBIter = MBB->begin();
-        // Check if DBG_VALUE at the end of PrevBB is identical to the 
+        // Check if DBG_VALUE at the end of PrevBB is identical to the
         // DBG_VALUE at the beginning of MBB.
         while (PrevBBIter != PrevBB.begin() && MBBIter != MBB->end()
                && PrevBBIter->isDebugValue() && MBBIter->isDebugValue()) {

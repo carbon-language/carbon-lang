@@ -50,7 +50,7 @@ namespace {
     }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
-    
+
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
@@ -177,7 +177,7 @@ MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
       SeenDef = true;
     }
     if (SeenDef)
-      // See a def of Reg (or an alias) before encountering any use, it's 
+      // See a def of Reg (or an alias) before encountering any use, it's
       // trivially dead.
       return true;
 
