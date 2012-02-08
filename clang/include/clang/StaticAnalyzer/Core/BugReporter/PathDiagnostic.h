@@ -44,6 +44,12 @@ class ExplodedNode;
 //===----------------------------------------------------------------------===//
 
 class PathDiagnostic;
+class PathDiagnosticPiece;
+
+class PathPieces : public std::deque<PathDiagnosticPiece *> {
+public:
+  ~PathPieces();  
+};
 
 class PathDiagnosticConsumer {
   virtual void anchor();
@@ -475,7 +481,7 @@ public:
 ///  diagnostic.  It represents an ordered-collection of PathDiagnosticPieces,
 ///  each which represent the pieces of the path.
 class PathDiagnostic : public llvm::FoldingSetNode {
-  std::deque<PathDiagnosticPiece*> path;
+  PathPieces path;
   unsigned Size;
   std::string BugType;
   std::string Desc;

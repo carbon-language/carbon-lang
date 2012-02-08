@@ -62,9 +62,11 @@ PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {
 
 PathDiagnostic::PathDiagnostic() : Size(0) {}
 
-PathDiagnostic::~PathDiagnostic() {
-  for (iterator I = begin(), E = end(); I != E; ++I) delete &*I;
+PathPieces::~PathPieces() {
+  for (iterator I = begin(), E = end(); I != E; ++I) delete *I;
 }
+
+PathDiagnostic::~PathDiagnostic() {}
 
 void PathDiagnostic::resetPath(bool deletePieces) {
   Size = 0;
