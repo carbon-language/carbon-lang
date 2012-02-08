@@ -1900,12 +1900,9 @@ unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
   unsigned Count = 0;
   for (Value::use_iterator UI = From->use_begin(), UE = From->use_end();
        UI != UE; ) {
-    Instruction *User = cast<Instruction>(*UI);
-    unsigned OpNum = UI.getOperandNo();
-    ++UI;
-
-    if (DT->dominates(Root, User->getParent())) {
-      User->setOperand(OpNum, To);
+    Use &U = (UI++).getUse();
+    if (DT->dominates(Root, cast<Instruction>(U.getUser())->getParent())) {
+      U.set(To);
       ++Count;
     }
   }
