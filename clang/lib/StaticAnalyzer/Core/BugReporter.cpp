@@ -1631,12 +1631,9 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
   PD.path.clear();
 
   for (PiecesTy::iterator I=Pieces.begin(), E=Pieces.end(); I!=E; ++I) {
-    if (PathDiagnosticMacroPiece *MP=dyn_cast<PathDiagnosticMacroPiece>(*I))
-      if (!MP->containsEvent()) {
-        delete MP;
+    if (PathDiagnosticMacroPiece *MP = dyn_cast<PathDiagnosticMacroPiece>(*I))
+      if (!MP->containsEvent())
         continue;
-      }
-
     PD.path.push_back(*I);
   }
 }
