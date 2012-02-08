@@ -175,6 +175,10 @@ public:
   // argument string, or null if it is not known.
   static const PassInfo *lookupPassInfo(StringRef Arg);
 
+  // createPass - Create a object for the specified pass class,
+  // or null if it is not known.
+  static Pass *createPass(char &TI);
+
   /// getAnalysisIfAvailable<AnalysisType>() - Subclasses use this function to
   /// get analysis information that might be around, for example to update it.
   /// This is different than getAnalysis in that it can fail (if the analysis

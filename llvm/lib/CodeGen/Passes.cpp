@@ -103,8 +103,12 @@ TargetPassConfig::TargetPassConfig()
   llvm_unreachable("TargetPassConfig should not be constructed on-the-fly");
 }
 
-void TargetPassConfig::addCommonPass(char &ID) {
-  // FIXME: about to be implemented.
+void TargetPassConfig::addPass(char &ID) {
+  // FIXME: check user overrides
+  Pass *P = Pass::createPass(ID);
+  if (!P)
+    llvm_unreachable("Pass ID not registered");
+  PM.add(P);
 }
 
 void TargetPassConfig::printNoVerify(const char *Banner) const {

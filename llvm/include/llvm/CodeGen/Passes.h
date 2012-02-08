@@ -135,7 +135,7 @@ protected:
   ///
 
   /// Add a target-independent CodeGen pass at this point in the pipeline.
-  void addCommonPass(char &ID);
+  void addPass(char &ID);
 
   /// printNoVerify - Add a pass to dump the machine function, if debugging is
   /// enabled.

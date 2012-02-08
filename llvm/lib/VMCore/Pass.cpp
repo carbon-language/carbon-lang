@@ -189,6 +189,13 @@ const PassInfo *Pass::lookupPassInfo(StringRef Arg) {
   return PassRegistry::getPassRegistry()->getPassInfo(Arg);
 }
 
+Pass *Pass::createPass(char &TI) {
+  const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(&TI);
+  if (!PI)
+    return NULL;
+  return PI->createPass();
+}
+
 Pass *PassInfo::createPass() const {
   assert((!isAnalysisGroup() || NormalCtor) &&
          "No default implementation found for analysis group!");
