@@ -2187,6 +2187,10 @@ ASTContext::getASTRecordLayout(const RecordDecl *D) const {
   // as soon as we begin to parse the definition.  That definition is
   // not a complete definition (which is what isDefinition() tests)
   // until we *finish* parsing the definition.
+
+  if (D->hasExternalLexicalStorage() && !D->getDefinition())
+    getExternalSource()->CompleteType(const_cast<RecordDecl*>(D));
+    
   D = D->getDefinition();
   assert(D && "Cannot get layout of forward declarations!");
   assert(D->isCompleteDefinition() && "Cannot layout type before complete!");
