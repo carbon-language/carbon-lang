@@ -669,6 +669,28 @@ DIType DIBuilder::createTemporaryType(DIFile F) {
   return DIType(Node);
 }
 
+/// createForwardDecl - Create a temporary forward-declared type that
+/// can be RAUW'd if the full type is seen.
+DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name, DIFile F,
+                                    unsigned Line) {
+  // Create a temporary MDNode.
+  Value *Elts[] = {
+    GetTagConstant(VMContext, Tag),
+    NULL, // TheCU
+    MDString::get(VMContext, Name),
+    F,
+    ConstantInt::get(Type::getInt32Ty(VMContext), Line),
+    // To ease transition include sizes etc of 0.
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
+    ConstantInt::get(Type::getInt32Ty(VMContext), 0),
+    ConstantInt::get(Type::getInt32Ty(VMContext),
+                     DIDescriptor::FlagFwdDecl)
+  };
+  MDNode *Node = MDNode::getTemporary(VMContext, Elts);
+  return DIType(Node);
+}
+
 /// getOrCreateArray - Get a DIArray, create one if required.
 DIArray DIBuilder::getOrCreateArray(ArrayRef<Value *> Elements) {
   if (Elements.empty()) {

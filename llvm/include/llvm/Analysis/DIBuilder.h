@@ -341,6 +341,10 @@ namespace llvm {
     DIType createTemporaryType();
     DIType createTemporaryType(DIFile F);
 
+    /// createForwardDecl - Create a temporary forward-declared type.
+    DIType createForwardDecl(unsigned Tag, StringRef Name, DIFile F,
+                             unsigned Line);
+
     /// retainType - Retain DIType in a module even if it is not referenced 
     /// through debug info anchors.
     void retainType(DIType T);
