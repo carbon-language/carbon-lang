@@ -147,6 +147,8 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
 
   PassConfig->addMachinePasses();
 
+  PassConfig->setInitialized();
+
   return Context;
 }
 

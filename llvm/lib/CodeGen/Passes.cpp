@@ -84,7 +84,10 @@ char TargetPassConfig::ID = 0;
 TargetPassConfig::~TargetPassConfig() {}
 
 TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
-  : ImmutablePass(ID), TM(tm), PM(pm), DisableVerify(false) {
+  : ImmutablePass(ID), TM(tm), PM(pm), Initialized(false),
+    DisableVerify(false),
+    EnableTailMerge(true) {
+
   // Register all target independent codegen passes to activate their PassIDs,
   // including this pass itself.
   initializeCodeGen(*PassRegistry::getPassRegistry());
@@ -101,6 +104,12 @@ TargetPassConfig *LLVMTargetMachine::createPassConfig(PassManagerBase &PM) {
 TargetPassConfig::TargetPassConfig()
   : ImmutablePass(ID), PM(*(PassManagerBase*)0) {
   llvm_unreachable("TargetPassConfig should not be constructed on-the-fly");
+}
+
+// Helper to verify the analysis is really immutable.
+void TargetPassConfig::setOpt(bool &Opt, bool Val) {
+  assert(!Initialized && "PassConfig is immutable");
+  Opt = Val;
 }
 
 void TargetPassConfig::addPass(char &ID) {

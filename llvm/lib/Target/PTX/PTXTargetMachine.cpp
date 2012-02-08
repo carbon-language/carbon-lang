@@ -385,5 +385,7 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
   PM.add(createPTXMFInfoExtract(getPTXTargetMachine(), getOptLevel()));
   PM.add(createPTXFPRoundingModePass(getPTXTargetMachine(), getOptLevel()));
 
+  setInitialized();
+
   return false;
 }

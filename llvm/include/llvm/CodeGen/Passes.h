@@ -39,6 +39,7 @@ class TargetPassConfig : public ImmutablePass {
 protected:
   TargetMachine *TM;
   PassManagerBase &PM;
+  bool Initialized; // Flagged after all passes are configured.
 
   // Target Pass Options
   //
@@ -62,6 +63,8 @@ public:
     return TM->getTargetLowering();
   }
 
+  void setInitialized() { Initialized = true; }
+
   CodeGenOpt::Level getOptLevel() const { return TM->getOptLevel(); }
 
   void setDisableVerify(bool disable) { DisableVerify = disable; }
@@ -84,6 +87,9 @@ public:
   /// Fully developed targets will not generally override this.
   virtual void addMachinePasses();
 protected:
+  // Helper to verify the analysis is really immutable.
+  void setOpt(bool &Opt, bool Val);
+
   /// Methods with trivial inline returns are convenient points in the common
   /// codegen pass pipeline where targets may insert passes. Methods with
   /// out-of-line standard implementations are major CodeGen stages called by
