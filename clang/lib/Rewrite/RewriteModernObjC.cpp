@@ -360,10 +360,8 @@ namespace {
                                     StringRef prefix,
                                     StringRef ClassName,
                                     std::string &Result);
-    virtual void RewriteObjCProtocolMetaData(ObjCProtocolDecl *Protocol,
-                                             StringRef prefix,
-                                             StringRef ClassName,
-                                             std::string &Result);
+    void RewriteObjCProtocolMetaData(ObjCProtocolDecl *Protocol,
+                                     std::string &Result);
     virtual void RewriteObjCProtocolListMetaData(
                    const ObjCList<ObjCProtocolDecl> &Prots,
                    StringRef prefix, StringRef ClassName, std::string &Result);
@@ -5009,7 +5007,7 @@ void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
   // Write out meta data for each @protocol(<expr>).
   for (llvm::SmallPtrSet<ObjCProtocolDecl *,8>::iterator I = ProtocolExprDecls.begin(),
        E = ProtocolExprDecls.end(); I != E; ++I)
-    RewriteObjCProtocolMetaData(*I, "", "", Preamble);
+    RewriteObjCProtocolMetaData(*I, Preamble);
 
   InsertText(SM->getLocForStartOfFile(MainFileID), Preamble, false);
   if (ClassImplementation.size() || CategoryImplementation.size())
@@ -5227,11 +5225,6 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
   
   Result += "\nstruct _protocol_t;\n";
   
-  Result += "\nstruct _protocol_list_t {\n";
-  Result += "\tlong protocol_count;   // Note, this is 32/64 bit\n";
-  Result += "\tstruct _protocol_t *protocol_list[/*protocol_count*/];\n";
-  Result += "};\n";
-  
   Result += "\nstruct _objc_method {\n";
   Result += "\tstruct objc_selector * _cmd;\n";
   Result += "\tconst char *method_type;\n";
@@ -5255,6 +5248,15 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
   meta_data_declared = true;
 }
 
+static void Write_protocol_list_t_TypeDecl(std::string &Result,
+                                           long super_protocol_count) {
+  Result += "struct /*_protocol_list_t*/"; Result += " {\n";
+  Result += "\tlong protocol_count;  // Note, this is 32/64 bit\n";
+  Result += "\tstruct _protocol_t *super_protocols[";
+  Result += utostr(super_protocol_count); Result += "];\n";
+  Result += "}";
+}
+
 static void Write_method_list_t_TypeDecl(std::string &Result,
                                          unsigned int method_count) {
   Result += "struct /*_method_list_t*/"; Result += " {\n";
@@ -5273,6 +5275,29 @@ static void Write__prop_list_t_TypeDecl(std::string &Result,
   Result += "\tstruct _prop_t prop_list[";
   Result += utostr(property_count); Result += "];\n";
   Result += "}";
+}
+
+static void Write_protocol_list_initializer(ASTContext *Context, std::string &Result,
+                                            ArrayRef<ObjCProtocolDecl *> SuperProtocols,
+                                            StringRef VarName,
+                                            StringRef ProtocolName) {
+  if (SuperProtocols.size() > 0) {
+    Result += "\nstatic ";
+    Write_protocol_list_t_TypeDecl(Result, SuperProtocols.size());
+    Result += " "; Result += VarName;
+    Result += ProtocolName; 
+    Result += " __attribute__ ((used, section (\"__DATA,__objc_const\"))) = {\n";
+    Result += "\t"; Result += utostr(SuperProtocols.size()); Result += ",\n";
+    for (unsigned i = 0, e = SuperProtocols.size(); i < e; i++) {
+      ObjCProtocolDecl *SuperPD = SuperProtocols[i];
+      Result += "\t&"; Result += "_OBJC_PROTOCOL_"; 
+      Result += SuperPD->getNameAsString();
+      if (i == e-1)
+        Result += "\n};\n";
+      else
+        Result += ",\n";
+    }
+  }
 }
 
 static void Write_method_list_t_initializer(ASTContext *Context, std::string &Result,
@@ -5344,9 +5369,8 @@ static void Write__prop_list_t_initializer(RewriteModernObjC &RewriteObj,
 }
 
 /// RewriteObjCProtocolMetaData - Rewrite protocols meta-data.
-void RewriteModernObjC::RewriteObjCProtocolMetaData(
-                            ObjCProtocolDecl *PDecl, StringRef prefix,
-                            StringRef ClassName, std::string &Result) {
+void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl, 
+                                                    std::string &Result) {
   
   // Do not synthesize the protocol more than once.
   if (ObjCSynthesizedProtocols.count(PDecl->getCanonicalDecl()))
@@ -5355,6 +5379,11 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(
   
   if (ObjCProtocolDecl *Def = PDecl->getDefinition())
     PDecl = Def;
+  // Must write out all protocol definitions in current qualifier list,
+  // and in their nested qualifiers before writing out current definition.
+  for (ObjCProtocolDecl::protocol_iterator I = PDecl->protocol_begin(),
+       E = PDecl->protocol_end(); I != E; ++I)
+    RewriteObjCProtocolMetaData(*I, Result);
   
   // Construct method lists.
   std::vector<ObjCMethodDecl *> InstanceMethods, ClassMethods;
@@ -5380,6 +5409,17 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(
       ClassMethods.push_back(MD);
     }
   }
+  
+  // Protocol's super protocol list
+  std::vector<ObjCProtocolDecl *> SuperProtocols;
+  for (ObjCProtocolDecl::protocol_iterator I = PDecl->protocol_begin(),
+       E = PDecl->protocol_end(); I != E; ++I)
+    SuperProtocols.push_back(*I);
+  
+  Write_protocol_list_initializer(Context, Result, SuperProtocols,
+                                  "_OBJC_PROTOCOL_REFS_",
+                                  PDecl->getNameAsString());
+  
   Write_method_list_t_initializer(Context, Result, InstanceMethods, 
                                   "_OBJC_PROTOCOL_INSTANCE_METHODS_",
                                   PDecl->getNameAsString());
@@ -5413,9 +5453,12 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(
   Result += " __attribute__ ((used, section (\"__DATA,__datacoal_nt,coalesced\"))) = {\n";
   Result += "\t0,\n"; // id is; is null
   Result += "\t\""; Result += PDecl->getNameAsString(); Result += "\",\n";
-  
-  // FIXME. const struct _protocol_list_t * protocol_list; // super protocols
-  Result += "\t0,\n";
+  if (SuperProtocols.size() > 0) {
+    Result += "\t(const struct _protocol_list_t *)&"; Result += "_OBJC_PROTOCOL_REFS_";
+    Result += PDecl->getNameAsString(); Result += ",\n";
+  }
+  else
+    Result += "\t0,\n";
   if (InstanceMethods.size() > 0) {
     Result += "\t(const struct method_list_t *)&_OBJC_PROTOCOL_INSTANCE_METHODS_"; 
     Result += PDecl->getNameAsString(); Result += ",\n";
@@ -5470,7 +5513,7 @@ void RewriteModernObjC::RewriteObjCProtocolListMetaData(
   if (Protocols.empty()) return;
   
   for (unsigned i = 0; i != Protocols.size(); i++)
-    RewriteObjCProtocolMetaData(Protocols[i], prefix, ClassName, Result);
+    RewriteObjCProtocolMetaData(Protocols[i], Result);
   
   // Output the top lovel protocol meta-data for the class.
   /* struct _objc_protocol_list {
