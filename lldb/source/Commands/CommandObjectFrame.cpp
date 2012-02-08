@@ -331,7 +331,10 @@ public:
                        "argument, local, file static and file global variables. "
                        "Children of aggregate variables can be specified such as "
                        "'var->child.x'. "
-                       "You can choose to watch a variable with the '-w' option. "
+                       "You can choose to watch a variable with the '-w' option; "
+                       "with the additional '-x' option to specify the region size, "
+                       "the variable's value will be used as the starting address of "
+                       "the region to watch for, instead. "
                        "Note that hardware resources for watching are often limited. "
                        "See alo 'watchpoint set' where you can use an expression to "
                        "specify the address to watch for.",
