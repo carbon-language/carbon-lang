@@ -677,8 +677,8 @@ __m256i test_mm256_permute4x64_epi64(__m256i a) {
 }
 
 __m256i test_mm256_permute2x128_si256(__m256i a, __m256i b) {
-  // CHECK: @llvm.x86.avx2.vperm2i128
-  return _mm256_permute2x128_si256(a, b, 94);
+  // CHECK: shufflevector{{.*}}<i32 2, i32 3, i32 6, i32 7>
+  return _mm256_permute2x128_si256(a, b, 0x31);
 }
 
 __m128i test_mm256_extracti128_si256(__m256i a) {
