@@ -176,9 +176,7 @@ SBBreakpointLocation::GetThreadID ()
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetBreakpoint().GetTarget().GetAPIMutex());
-        const ThreadSpec *thread_spec = m_opaque_sp->GetLocationOptions()->GetThreadSpecNoCreate();
-        if (thread_spec)
-            tid = thread_spec->GetTID();
+        return m_opaque_sp->GetThreadID();
     }
     return tid;
 }
@@ -189,7 +187,7 @@ SBBreakpointLocation::SetThreadIndex (uint32_t index)
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetBreakpoint().GetTarget().GetAPIMutex());
-        m_opaque_sp->GetLocationOptions()->GetThreadSpec()->SetIndex (index);
+        m_opaque_sp->SetThreadIndex (index);
     }
 }
 
@@ -200,9 +198,7 @@ SBBreakpointLocation::GetThreadIndex() const
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetBreakpoint().GetTarget().GetAPIMutex());
-        const ThreadSpec *thread_spec = m_opaque_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
-        if (thread_spec)
-            thread_idx = thread_spec->GetIndex();
+        return m_opaque_sp->GetThreadIndex();
     }
     return thread_idx;
 }
@@ -214,7 +210,7 @@ SBBreakpointLocation::SetThreadName (const char *thread_name)
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetBreakpoint().GetTarget().GetAPIMutex());
-        m_opaque_sp->GetLocationOptions()->GetThreadSpec()->SetName (thread_name);
+        m_opaque_sp->SetThreadName (thread_name);
     }
 }
 
@@ -224,9 +220,7 @@ SBBreakpointLocation::GetThreadName () const
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetBreakpoint().GetTarget().GetAPIMutex());
-        const ThreadSpec *thread_spec = m_opaque_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
-        if (thread_spec)
-            return thread_spec->GetName();
+        return m_opaque_sp->GetThreadName();
     }
     return NULL;
 }
@@ -237,7 +231,7 @@ SBBreakpointLocation::SetQueueName (const char *queue_name)
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetBreakpoint().GetTarget().GetAPIMutex());
-        m_opaque_sp->GetLocationOptions()->GetThreadSpec()->SetQueueName (queue_name);
+        m_opaque_sp->SetQueueName (queue_name);
     }
 }
 
@@ -247,9 +241,7 @@ SBBreakpointLocation::GetQueueName () const
     if (m_opaque_sp)
     {
         Mutex::Locker api_locker (m_opaque_sp->GetBreakpoint().GetTarget().GetAPIMutex());
-        const ThreadSpec *thread_spec = m_opaque_sp->GetOptionsNoCreate()->GetThreadSpecNoCreate();
-        if (thread_spec)
-            return thread_spec->GetQueueName();
+        m_opaque_sp->GetQueueName ();
     }
     return NULL;
 }

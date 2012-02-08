@@ -269,6 +269,9 @@ public:
     static lldb::SBProcess
     GetProcessFromEvent (const lldb::SBEvent &event);
 
+    static bool
+    EventIsProcessEvent (const lldb::SBEvent &event);
+
     lldb::SBBroadcaster
     GetBroadcaster () const;
 

@@ -740,6 +740,11 @@ SBProcess::GetProcessFromEvent (const SBEvent &event)
     return process;
 }
 
+bool
+SBProcess::EventIsProcessEvent (const SBEvent &event)
+{
+    return Process::ProcessEventData::GetEventDataFromEvent(event.get()) != NULL;
+}
 
 SBBroadcaster
 SBProcess::GetBroadcaster () const

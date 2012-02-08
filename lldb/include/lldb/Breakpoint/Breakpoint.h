@@ -106,7 +106,7 @@ public:
         GetFlavor () const;
 
         BreakpointEventData (lldb::BreakpointEventType sub_type,
-                             lldb::BreakpointSP &new_breakpoint_sp);
+                             const lldb::BreakpointSP &new_breakpoint_sp);
 
         virtual
         ~BreakpointEventData();
@@ -116,6 +116,12 @@ public:
 
         lldb::BreakpointSP &
         GetBreakpoint ();
+        
+        BreakpointLocationCollection &
+        GetBreakpointLocationCollection()
+        {
+            return m_locations;
+        }
 
 
         virtual void
@@ -129,10 +135,14 @@ public:
 
         static lldb::BreakpointLocationSP
         GetBreakpointLocationAtIndexFromEvent (const lldb::EventSP &event_sp, uint32_t loc_idx);
+        
+        static uint32_t
+        GetNumBreakpointLocationsFromEvent (const lldb::EventSP &event_sp);
+
+        static const BreakpointEventData *
+        GetEventDataFromEvent (const Event *event_sp);
 
     private:
-        static BreakpointEventData *
-        GetEventDataFromEvent (const lldb::EventSP &event_sp);
 
         lldb::BreakpointEventType m_breakpoint_event;
         lldb::BreakpointSP m_new_breakpoint_sp;
@@ -343,7 +353,25 @@ public:
     ///     The thread id for which the breakpoint hit will stop, LLDB_INVALID_THREAD_ID for all threads.
     //------------------------------------------------------------------
     lldb::tid_t
-    GetThreadID ();
+    GetThreadID () const;
+
+    void
+    SetThreadIndex (uint32_t index);
+    
+    uint32_t
+    GetThreadIndex() const;
+    
+    void
+    SetThreadName (const char *thread_name);
+    
+    const char *
+    GetThreadName () const;
+    
+    void 
+    SetQueueName (const char *queue_name);
+    
+    const char *
+    GetQueueName () const;
 
     //------------------------------------------------------------------
     /// Set the callback action invoked when the breakpoint is hit.  
@@ -531,11 +559,18 @@ private:
     //------------------------------------------------------------------
     // For Breakpoint only
     //------------------------------------------------------------------
+    bool m_being_created;
     Target &m_target;                         // The target that holds this breakpoint.
     lldb::SearchFilterSP m_filter_sp;         // The filter that constrains the breakpoint's domain.
     lldb::BreakpointResolverSP m_resolver_sp; // The resolver that defines this breakpoint.
     BreakpointOptions m_options;              // Settable breakpoint options
     BreakpointLocationList m_locations;       // The list of locations currently found for this breakpoint.
+    
+    void
+    SendBreakpointChangedEvent (lldb::BreakpointEventType eventKind);
+    
+    void
+    SendBreakpointChangedEvent (BreakpointEventData *data);
 
     DISALLOW_COPY_AND_ASSIGN(Breakpoint);
 };

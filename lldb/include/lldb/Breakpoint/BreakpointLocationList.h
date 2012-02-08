@@ -223,7 +223,7 @@ protected:
     /// here because only Breakpoints are allowed to create the
     /// breakpoint location list.
     //------------------------------------------------------------------
-    BreakpointLocationList();
+    BreakpointLocationList(Breakpoint &owner);
 
     //------------------------------------------------------------------
     /// Add the breakpoint \a bp_loc_sp to the list.
@@ -236,18 +236,29 @@ protected:
     ///     Returns breakpoint location id.
     //------------------------------------------------------------------
     lldb::BreakpointLocationSP
-    Create (Breakpoint &owner, const Address &addr);
-//    Add (lldb::BreakpointLocationSP& bp_loc_sp);
+    Create (const Address &addr);
+    
+    void
+    StartRecordingNewLocations(BreakpointLocationCollection &new_locations);
+    
+    void
+    StopRecordingNewLocations();
+    
+    lldb::BreakpointLocationSP
+    AddLocation (const Address &addr,
+                 bool *new_location = NULL);
 
     typedef std::vector<lldb::BreakpointLocationSP> collection;
     typedef std::map<lldb_private::Address,
                      lldb::BreakpointLocationSP,
                      Address::ModulePointerAndOffsetLessThanFunctionObject> addr_map;
 
+    Breakpoint &m_owner;
     collection m_locations;
     addr_map m_address_to_location;
     mutable Mutex m_mutex;
     lldb::break_id_t m_next_id;
+    BreakpointLocationCollection *m_new_location_recorder;
 };
 
 } // namespace lldb_private

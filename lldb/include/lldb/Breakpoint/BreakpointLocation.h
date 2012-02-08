@@ -203,6 +203,27 @@ public:
     //------------------------------------------------------------------
     void
     SetThreadID (lldb::tid_t thread_id);
+    
+    lldb::tid_t
+    GetThreadID ();
+
+    void
+    SetThreadIndex (uint32_t index);
+    
+    uint32_t
+    GetThreadIndex() const;
+    
+    void
+    SetThreadName (const char *thread_name);
+    
+    const char *
+    GetThreadName () const;
+    
+    void 
+    SetQueueName (const char *queue_name);
+    
+    const char *
+    GetQueueName () const;
 
     //------------------------------------------------------------------
     // The next section deals with this location's breakpoint sites.
@@ -366,11 +387,15 @@ private:
     //------------------------------------------------------------------
     // Data members:
     //------------------------------------------------------------------
+    bool m_being_created;
     Address m_address; ///< The address defining this location.
     Breakpoint &m_owner; ///< The breakpoint that produced this object.
     std::auto_ptr<BreakpointOptions> m_options_ap; ///< Breakpoint options pointer, NULL if we're using our breakpoint's options.
     lldb::BreakpointSiteSP m_bp_site_sp; ///< Our breakpoint site (it may be shared by more than one location.)
 
+    void
+    SendBreakpointLocationChangedEvent (lldb::BreakpointEventType eventKind);
+    
     DISALLOW_COPY_AND_ASSIGN (BreakpointLocation);
 };
 

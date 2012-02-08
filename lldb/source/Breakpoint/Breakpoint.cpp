@@ -45,12 +45,14 @@ Breakpoint::GetEventIdentifier ()
 // Breakpoint constructor
 //----------------------------------------------------------------------
 Breakpoint::Breakpoint(Target &target, SearchFilterSP &filter_sp, BreakpointResolverSP &resolver_sp) :
+    m_being_created(true),
     m_target (target),
     m_filter_sp (filter_sp),
     m_resolver_sp (resolver_sp),
     m_options (),
-    m_locations ()
+    m_locations (*this)
 {
+    m_being_created = false;
 }
 
 //----------------------------------------------------------------------
@@ -83,21 +85,7 @@ Breakpoint::GetTarget () const
 BreakpointLocationSP
 Breakpoint::AddLocation (const Address &addr, bool *new_location)
 {
-    if (new_location)
-        *new_location = false;
-    BreakpointLocationSP bp_loc_sp (m_locations.FindByAddress(addr));
-    if (!bp_loc_sp)
-	{
-		bp_loc_sp = m_locations.Create (*this, addr);
-		if (bp_loc_sp)
-		{
-	    	bp_loc_sp->ResolveBreakpointSite();
-
-		    if (new_location)
-	    	    *new_location = true;
-		}
-	}
-    return bp_loc_sp;
+    return m_locations.AddLocation (addr, new_location);
 }
 
 BreakpointLocationSP
@@ -135,11 +123,17 @@ Breakpoint::GetLocationAtIndex (uint32_t index)
 void
 Breakpoint::SetEnabled (bool enable)
 {
+    if (enable == m_options.IsEnabled())
+        return;
+
     m_options.SetEnabled(enable);
     if (enable)
         m_locations.ResolveAllBreakpointSites();
     else
         m_locations.ClearAllBreakpointSites();
+        
+    SendBreakpointChangedEvent (enable ? eBreakpointEventTypeEnabled : eBreakpointEventTypeDisabled);
+
 }
 
 bool
@@ -151,7 +145,11 @@ Breakpoint::IsEnabled ()
 void
 Breakpoint::SetIgnoreCount (uint32_t n)
 {
+    if (m_options.GetIgnoreCount() == n)
+        return;
+        
     m_options.SetIgnoreCount(n);
+    SendBreakpointChangedEvent (eBreakpointEventTypeIgnoreChanged);
 }
 
 uint32_t
@@ -169,22 +167,84 @@ Breakpoint::GetHitCount () const
 void
 Breakpoint::SetThreadID (lldb::tid_t thread_id)
 {
+    if (m_options.GetThreadSpec()->GetTID() == thread_id)
+        return;
+        
     m_options.GetThreadSpec()->SetTID(thread_id);
+    SendBreakpointChangedEvent (eBreakpointEventTypeThreadChanged);
 }
 
 lldb::tid_t
-Breakpoint::GetThreadID ()
+Breakpoint::GetThreadID () const
 {
-    if (m_options.GetThreadSpec() == NULL)
+    if (m_options.GetThreadSpecNoCreate() == NULL)
         return LLDB_INVALID_THREAD_ID;
     else
-        return m_options.GetThreadSpec()->GetTID();
+        return m_options.GetThreadSpecNoCreate()->GetTID();
+}
+
+void
+Breakpoint::SetThreadIndex (uint32_t index)
+{
+    if (m_options.GetThreadSpec()->GetIndex() == index)
+        return;
+        
+    m_options.GetThreadSpec()->SetIndex(index);
+    SendBreakpointChangedEvent (eBreakpointEventTypeThreadChanged);
+}
+
+uint32_t
+Breakpoint::GetThreadIndex() const
+{
+    if (m_options.GetThreadSpecNoCreate() == NULL)
+        return 0;
+    else
+        return m_options.GetThreadSpecNoCreate()->GetIndex();
+}
+
+void
+Breakpoint::SetThreadName (const char *thread_name)
+{
+    if (::strcmp (m_options.GetThreadSpec()->GetName(), thread_name) == 0)
+        return;
+        
+    m_options.GetThreadSpec()->SetName (thread_name);
+    SendBreakpointChangedEvent (eBreakpointEventTypeThreadChanged);
+}
+
+const char *
+Breakpoint::GetThreadName () const
+{
+    if (m_options.GetThreadSpecNoCreate() == NULL)
+        return NULL;
+    else
+        return m_options.GetThreadSpecNoCreate()->GetName();
+}
+
+void 
+Breakpoint::SetQueueName (const char *queue_name)
+{
+    if (::strcmp (m_options.GetThreadSpec()->GetQueueName(), queue_name) == 0)
+        return;
+        
+    m_options.GetThreadSpec()->SetQueueName (queue_name);
+    SendBreakpointChangedEvent (eBreakpointEventTypeThreadChanged);
+}
+
+const char *
+Breakpoint::GetQueueName () const
+{
+    if (m_options.GetThreadSpecNoCreate() == NULL)
+        return NULL;
+    else
+        return m_options.GetThreadSpecNoCreate()->GetQueueName();
 }
 
 void 
 Breakpoint::SetCondition (const char *condition)
 {
     m_options.SetCondition (condition);
+    SendBreakpointChangedEvent (eBreakpointEventTypeConditionChanged);
 }
 
 ThreadPlan *
@@ -206,6 +266,8 @@ Breakpoint::SetCallback (BreakpointHitCallback callback, void *baton, bool is_sy
     // The default "Baton" class will keep a copy of "baton" and won't free
     // or delete it when it goes goes out of scope.
     m_options.SetCallback(callback, BatonSP (new Baton(baton)), is_synchronous);
+    
+    SendBreakpointChangedEvent (eBreakpointEventTypeCommandChanged);
 }
 
 // This function is used when a baton needs to be freed and therefore is 
@@ -309,9 +371,31 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
                 new_modules.AppendIfNeeded (module_sp);
 
         }
+        
         if (new_modules.GetSize() > 0)
         {
-            ResolveBreakpointInModules(new_modules);
+            // If this is not an internal breakpoint, set up to record the new locations, then dispatch
+            // an event with the new locations.
+            if (!IsInternal())
+            {
+                BreakpointEventData *new_locations_event = new BreakpointEventData (eBreakpointEventTypeLocationsAdded, 
+                                                                                    shared_from_this());
+                
+                m_locations.StartRecordingNewLocations(new_locations_event->GetBreakpointLocationCollection());
+                
+                ResolveBreakpointInModules(new_modules);
+
+                m_locations.StopRecordingNewLocations();
+                if (new_locations_event->GetBreakpointLocationCollection().GetSize() != 0)
+                {
+                    SendBreakpointChangedEvent (new_locations_event);
+                }
+                else
+                    delete new_locations_event;
+            }
+            else
+                ResolveBreakpointInModules(new_modules);
+            
         }
     }
     else
@@ -323,6 +407,13 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
         // the same?  Or do we need to do an equality on modules that is an
         // "equivalence"???
 
+        BreakpointEventData *removed_locations_event;
+        if (!IsInternal())
+            removed_locations_event = new BreakpointEventData (eBreakpointEventTypeLocationsRemoved, 
+                                                               shared_from_this());
+        else
+            removed_locations_event = NULL;
+                    
         for (size_t i = 0; i < module_list.GetSize(); i++)
         {
             ModuleSP module_sp (module_list.GetModuleAtIndex (i));
@@ -340,10 +431,15 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
                         // so we always get complete hit count and breakpoint
                         // lifetime info
                         break_loc->ClearBreakpointSite();
+                        if (removed_locations_event)
+                        {
+                            removed_locations_event->GetBreakpointLocationCollection().Add(break_loc);
+                        }
                     }
                 }
             }
         }
+        SendBreakpointChangedEvent (removed_locations_event);
     }
 }
 
@@ -429,7 +525,7 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
 }
 
 Breakpoint::BreakpointEventData::BreakpointEventData (BreakpointEventType sub_type, 
-                                                      BreakpointSP &new_breakpoint_sp) :
+                                                      const BreakpointSP &new_breakpoint_sp) :
     EventData (),
     m_breakpoint_event (sub_type),
     m_new_breakpoint_sp (new_breakpoint_sp)
@@ -471,14 +567,14 @@ Breakpoint::BreakpointEventData::Dump (Stream *s) const
 {
 }
 
-Breakpoint::BreakpointEventData *
-Breakpoint::BreakpointEventData::GetEventDataFromEvent (const EventSP &event_sp)
+const Breakpoint::BreakpointEventData *
+Breakpoint::BreakpointEventData::GetEventDataFromEvent (const Event *event)
 {
-    if (event_sp)
+    if (event)
     {
-        EventData *event_data = event_sp->GetData();
+        const EventData *event_data = event->GetData();
         if (event_data && event_data->GetFlavor() == BreakpointEventData::GetFlavorString())
-            return static_cast <BreakpointEventData *> (event_sp->GetData());
+            return static_cast <const BreakpointEventData *> (event->GetData());
     }
     return NULL;
 }
@@ -486,7 +582,7 @@ Breakpoint::BreakpointEventData::GetEventDataFromEvent (const EventSP &event_sp)
 BreakpointEventType
 Breakpoint::BreakpointEventData::GetBreakpointEventTypeFromEvent (const EventSP &event_sp)
 {
-    BreakpointEventData *data = GetEventDataFromEvent (event_sp);
+    const BreakpointEventData *data = GetEventDataFromEvent (event_sp.get());
 
     if (data == NULL)
         return eBreakpointEventTypeInvalidType;
@@ -499,11 +595,21 @@ Breakpoint::BreakpointEventData::GetBreakpointFromEvent (const EventSP &event_sp
 {
     BreakpointSP bp_sp;
 
-    BreakpointEventData *data = GetEventDataFromEvent (event_sp);
+    const BreakpointEventData *data = GetEventDataFromEvent (event_sp.get());
     if (data)
-        bp_sp = data->GetBreakpoint();
+        bp_sp = data->m_new_breakpoint_sp;
 
     return bp_sp;
+}
+
+uint32_t
+Breakpoint::BreakpointEventData::GetNumBreakpointLocationsFromEvent (const EventSP &event_sp)
+{
+    const BreakpointEventData *data = GetEventDataFromEvent (event_sp.get());
+    if (data)
+        return data->m_locations.GetSize();
+
+    return 0;
 }
 
 lldb::BreakpointLocationSP
@@ -511,12 +617,10 @@ Breakpoint::BreakpointEventData::GetBreakpointLocationAtIndexFromEvent (const ll
 {
     lldb::BreakpointLocationSP bp_loc_sp;
 
-    BreakpointEventData *data = GetEventDataFromEvent (event_sp);
+    const BreakpointEventData *data = GetEventDataFromEvent (event_sp.get());
     if (data)
     {
-        Breakpoint *bp = data->GetBreakpoint().get();
-        if (bp)
-            bp_loc_sp = bp->GetLocationAtIndex(bp_loc_idx);
+        bp_loc_sp = data->m_locations.GetByIndex(bp_loc_idx);
     }
 
     return bp_loc_sp;
@@ -555,4 +659,32 @@ void
 Breakpoint::GetFilterDescription (Stream *s)
 {
     m_filter_sp->GetDescription (s);
+}
+
+void
+Breakpoint::SendBreakpointChangedEvent (lldb::BreakpointEventType eventKind)
+{
+    if (!m_being_created
+        && !IsInternal() 
+        && GetTarget().EventTypeHasListeners(Target::eBroadcastBitBreakpointChanged))
+    {
+        BreakpointEventData *data = new Breakpoint::BreakpointEventData (eventKind, shared_from_this());
+            
+        GetTarget().BroadcastEvent (Target::eBroadcastBitBreakpointChanged, data);
+    }
+}
+
+void
+Breakpoint::SendBreakpointChangedEvent (BreakpointEventData *data)
+{
+
+    if (data == NULL)
+        return;
+        
+    if (!m_being_created
+        && !IsInternal() 
+        && GetTarget().EventTypeHasListeners(Target::eBroadcastBitBreakpointChanged))
+        GetTarget().BroadcastEvent (Target::eBroadcastBitBreakpointChanged, data);
+    else
+        delete data;
 }

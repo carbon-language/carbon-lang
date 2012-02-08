@@ -22,6 +22,7 @@
 #include <string>
 
 #include "IOChannel.h"
+#include "lldb/API/SBBreakpoint.h"
 #include "lldb/API/SBCommandInterpreter.h"
 #include "lldb/API/SBCommandReturnObject.h"
 #include "lldb/API/SBCommunication.h"
@@ -824,6 +825,46 @@ Driver::UpdateSelectedThread ()
     }
 }
 
+// This function handles events that were broadcast by the process.
+void
+Driver::HandleBreakpointEvent (const SBEvent &event)
+{
+    using namespace lldb;
+    const uint32_t event_type = SBBreakpoint::GetBreakpointEventTypeFromEvent (event);
+    
+    if (event_type & eBreakpointEventTypeAdded
+        || event_type & eBreakpointEventTypeRemoved
+        || event_type & eBreakpointEventTypeEnabled
+        || event_type & eBreakpointEventTypeDisabled
+        || event_type & eBreakpointEventTypeCommandChanged
+        || event_type & eBreakpointEventTypeConditionChanged
+        || event_type & eBreakpointEventTypeIgnoreChanged
+        || event_type & eBreakpointEventTypeLocationsResolved)
+    {
+        // Don't do anything about these events, since the breakpoint commands already echo these actions.
+    }              
+    else if (event_type & eBreakpointEventTypeLocationsAdded)
+    {
+        char message[256];
+        uint32_t num_new_locations = SBBreakpoint::GetNumBreakpointLocationsFromEvent(event);
+        if (num_new_locations > 0)
+        {
+            SBBreakpoint breakpoint = SBBreakpoint::GetBreakpointFromEvent(event);
+            int message_len = ::snprintf (message, sizeof(message), "%d locations added to breakpoint %d\n", 
+                                          num_new_locations,
+                                          breakpoint.GetID());
+            m_io_channel_ap->OutWrite(message, message_len, ASYNC);
+        }
+    }
+    else if (event_type & eBreakpointEventTypeLocationsRemoved)
+    {
+       // These locations just get disabled, not sure it is worth spamming folks about this on the command line.
+    }
+    else if (event_type & eBreakpointEventTypeLocationsResolved)
+    {
+       // This might be an interesting thing to note, but I'm going to leave it quiet for now, it just looked noisy.
+    }
+}
 
 // This function handles events that were broadcast by the process.
 void
@@ -1348,9 +1389,13 @@ Driver::MainLoop ()
                             else
                                 done = HandleIOEvent (event);
                         }
-                        else if (event.BroadcasterMatchesRef (m_debugger.GetSelectedTarget().GetProcess().GetBroadcaster()))
+                        else if (SBProcess::EventIsProcessEvent (event))
                         {
                             HandleProcessEvent (event);
+                        }
+                        else if (SBBreakpoint::EventIsBreakpointEvent (event))
+                        {
+                            HandleBreakpointEvent (event);
                         }
                         else if (event.BroadcasterMatchesRef (sb_interpreter.GetBroadcaster()))
                         {

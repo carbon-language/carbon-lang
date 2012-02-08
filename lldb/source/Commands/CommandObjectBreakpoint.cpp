@@ -1516,16 +1516,16 @@ CommandObjectBreakpointModify::Execute
                             location->SetThreadID (m_options.m_thread_id);
                             
                         if (m_options.m_thread_index_passed)
-                            location->GetLocationOptions()->GetThreadSpec()->SetIndex(m_options.m_thread_index);
+                            location->SetThreadIndex(m_options.m_thread_index);
                         
                         if (m_options.m_name_passed)
-                            location->GetLocationOptions()->GetThreadSpec()->SetName(m_options.m_thread_name.c_str());
+                            location->SetThreadName(m_options.m_thread_name.c_str());
                         
                         if (m_options.m_queue_passed)
-                            location->GetLocationOptions()->GetThreadSpec()->SetQueueName(m_options.m_queue_name.c_str());
+                            location->SetQueueName(m_options.m_queue_name.c_str());
                             
                         if (m_options.m_ignore_count != 0)
-                            location->GetLocationOptions()->SetIgnoreCount(m_options.m_ignore_count);
+                            location->SetIgnoreCount(m_options.m_ignore_count);
                             
                         if (m_options.m_enable_passed)
                             location->SetEnabled (m_options.m_enable_value);
@@ -1540,16 +1540,16 @@ CommandObjectBreakpointModify::Execute
                         bp->SetThreadID (m_options.m_thread_id);
                         
                     if (m_options.m_thread_index_passed)
-                        bp->GetOptions()->GetThreadSpec()->SetIndex(m_options.m_thread_index);
+                        bp->SetThreadIndex(m_options.m_thread_index);
                     
                     if (m_options.m_name_passed)
-                        bp->GetOptions()->GetThreadSpec()->SetName(m_options.m_thread_name.c_str());
+                        bp->SetThreadName(m_options.m_thread_name.c_str());
                     
                     if (m_options.m_queue_passed)
-                        bp->GetOptions()->GetThreadSpec()->SetQueueName(m_options.m_queue_name.c_str());
+                        bp->SetQueueName(m_options.m_queue_name.c_str());
                         
                     if (m_options.m_ignore_count != 0)
-                        bp->GetOptions()->SetIgnoreCount(m_options.m_ignore_count);
+                        bp->SetIgnoreCount(m_options.m_ignore_count);
                         
                     if (m_options.m_enable_passed)
                         bp->SetEnabled (m_options.m_enable_value);

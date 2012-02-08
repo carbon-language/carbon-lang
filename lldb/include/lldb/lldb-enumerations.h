@@ -284,9 +284,15 @@ namespace lldb {
         eBreakpointEventTypeInvalidType         = (1u << 0),
         eBreakpointEventTypeAdded               = (1u << 1),
         eBreakpointEventTypeRemoved             = (1u << 2),
-        eBreakpointEventTypeLocationsAdded      = (1u << 3),
+        eBreakpointEventTypeLocationsAdded      = (1u << 3),  // Locations added doesn't get sent when the breakpoint is created
         eBreakpointEventTypeLocationsRemoved    = (1u << 4),
-        eBreakpointEventTypeLocationsResolved   = (1u << 5)
+        eBreakpointEventTypeLocationsResolved   = (1u << 5),
+        eBreakpointEventTypeEnabled             = (1u << 6),
+        eBreakpointEventTypeDisabled            = (1u << 7),
+        eBreakpointEventTypeCommandChanged      = (1u << 8),
+        eBreakpointEventTypeConditionChanged    = (1u << 9),
+        eBreakpointEventTypeIgnoreChanged       = (1u << 10),
+        eBreakpointEventTypeThreadChanged       = (1u << 11)
     } BreakpointEventType;
 
 

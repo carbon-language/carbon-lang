@@ -115,6 +115,9 @@ public:
     bool
     GetDescription (lldb::SBStream &description);
 
+    static bool
+    EventIsBreakpointEvent (const lldb::SBEvent &event);
+    
     static lldb::BreakpointEventType
     GetBreakpointEventTypeFromEvent (const lldb::SBEvent& event);
 
@@ -123,6 +126,10 @@ public:
     
     static lldb::SBBreakpointLocation
     GetBreakpointLocationAtIndexFromEvent (const lldb::SBEvent& event, uint32_t loc_idx);
+    
+    static uint32_t
+    GetNumBreakpointLocationsFromEvent (const lldb::SBEvent &event_sp);
+
 
 private:
     friend class SBBreakpointLocation;

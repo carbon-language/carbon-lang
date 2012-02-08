@@ -557,6 +557,13 @@ SBBreakpoint::operator *() const
     return m_opaque_sp;
 }
 
+bool
+SBBreakpoint::EventIsBreakpointEvent (const lldb::SBEvent &event)
+{
+    return Breakpoint::BreakpointEventData::GetEventDataFromEvent(event.get()) != NULL;
+
+}
+
 BreakpointEventType
 SBBreakpoint::GetBreakpointEventTypeFromEvent (const SBEvent& event)
 {
@@ -581,6 +588,15 @@ SBBreakpoint::GetBreakpointLocationAtIndexFromEvent (const lldb::SBEvent& event,
     if (event.IsValid())
         sb_breakpoint_loc.SetLocation (Breakpoint::BreakpointEventData::GetBreakpointLocationAtIndexFromEvent (event.GetSP(), loc_idx));
     return sb_breakpoint_loc;
+}
+
+uint32_t
+SBBreakpoint::GetNumBreakpointLocationsFromEvent (const lldb::SBEvent &event)
+{
+    uint32_t num_locations = 0;
+    if (event.IsValid())
+        num_locations = (Breakpoint::BreakpointEventData::GetNumBreakpointLocationsFromEvent (event.GetSP()));
+    return num_locations;
 }
 
 

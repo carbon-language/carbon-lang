@@ -20,10 +20,12 @@
 using namespace lldb;
 using namespace lldb_private;
 
-BreakpointLocationList::BreakpointLocationList() :
+BreakpointLocationList::BreakpointLocationList(Breakpoint &owner) :
     m_locations(),
     m_address_to_location (),
-    m_mutex (Mutex::eMutexTypeRecursive)
+    m_mutex (Mutex::eMutexTypeRecursive),
+    m_new_location_recorder (NULL),
+    m_owner (owner)
 {
 }
 
@@ -32,12 +34,12 @@ BreakpointLocationList::~BreakpointLocationList()
 }
 
 BreakpointLocationSP
-BreakpointLocationList::Create (Breakpoint &bp, const Address &addr)
+BreakpointLocationList::Create (const Address &addr)
 {
     Mutex::Locker locker (m_mutex);
     // The location ID is just the size of the location list + 1
     lldb::break_id_t bp_loc_id = m_locations.size() + 1;
-    BreakpointLocationSP bp_loc_sp (new BreakpointLocation (bp_loc_id, bp, addr));
+    BreakpointLocationSP bp_loc_sp (new BreakpointLocation (bp_loc_id, m_owner, addr));
     m_locations.push_back (bp_loc_sp);
     m_address_to_location[addr] = bp_loc_sp;
     return bp_loc_sp;
@@ -215,5 +217,47 @@ BreakpointLocationList::GetDescription (Stream *s, lldb::DescriptionLevel level)
         s->Printf(" ");
         (*pos)->GetDescription(s, level);
     }
+}
+
+BreakpointLocationSP
+BreakpointLocationList::AddLocation (const Address &addr, bool *new_location)
+{
+    Mutex::Locker locker (m_mutex);
+
+    if (new_location)
+        *new_location = false;
+    BreakpointLocationSP bp_loc_sp (FindByAddress(addr));
+    if (!bp_loc_sp)
+	{
+		bp_loc_sp = Create (addr);
+		if (bp_loc_sp)
+		{
+	    	bp_loc_sp->ResolveBreakpointSite();
+
+		    if (new_location)
+	    	    *new_location = true;
+            if(m_new_location_recorder)
+            {
+                m_new_location_recorder->Add(bp_loc_sp);
+            }
+		}
+	}
+    return bp_loc_sp;
+}
+
+
+void
+BreakpointLocationList::StartRecordingNewLocations (BreakpointLocationCollection &new_locations)
+{
+    Mutex::Locker locker (m_mutex);
+    assert (m_new_location_recorder == NULL);
+    m_new_location_recorder = &new_locations;
+}
+
+void
+BreakpointLocationList::StopRecordingNewLocations ()
+{
+    Mutex::Locker locker (m_mutex);
+    m_new_location_recorder = NULL;
 }
 
