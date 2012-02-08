@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify -Wswitch-enum %s
+// RUN: %clang_cc1 -fsyntax-only -verify -Wswitch-enum -Wcovered-switch-default %s
 void f (int z) { 
   while (z) { 
     default: z--;            // expected-error {{statement not in switch}}

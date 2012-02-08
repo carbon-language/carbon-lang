@@ -5064,7 +5064,7 @@ def warn_missing_cases : Warning<
 
 def warn_unreachable_default : Warning<
   "default label in switch which covers all enumeration values">,
-  InGroup<CoveredSwitchDefault>;
+  InGroup<CoveredSwitchDefault>, DefaultIgnore;
 def warn_not_in_enum : Warning<"case value not in enumerated type %0">,
   InGroup<Switch>; 
 def err_typecheck_statement_requires_scalar : Error<
