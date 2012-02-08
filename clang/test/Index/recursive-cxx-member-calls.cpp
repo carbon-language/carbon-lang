@@ -933,7 +933,7 @@ AttributeList::Kind AttributeList::getKind(const IdentifierInfo * Name) {
 // CHECK-tokens: Punctuation: ")" [102:58 - 102:59] CallExpr=endswith:56:8
 // CHECK-tokens: Punctuation: ")" [102:59 - 102:60] IfStmt=
 // CHECK-tokens: Identifier: "AttrName" [103:5 - 103:13] DeclRefExpr=AttrName:101:19
-// CHECK-tokens: Punctuation: "=" [103:14 - 103:15] CallExpr=operator=:38:7
+// CHECK-tokens: Punctuation: "=" [103:14 - 103:15] DeclRefExpr=operator=:38:7
 // CHECK-tokens: Identifier: "AttrName" [103:16 - 103:24] DeclRefExpr=AttrName:101:19
 // CHECK-tokens: Punctuation: "." [103:24 - 103:25] MemberRefExpr=substr:60:13
 // CHECK-tokens: Identifier: "substr" [103:25 - 103:31] MemberRefExpr=substr:60:13

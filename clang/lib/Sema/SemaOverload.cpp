@@ -9585,7 +9585,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
 
       // Build the actual expression node.
       ExprResult FnExpr = CreateFunctionRefExpr(*this, FnDecl,
-                                                HadMultipleCandidates);
+                                                HadMultipleCandidates, OpLoc);
       if (FnExpr.isInvalid())
         return ExprError();
 
@@ -10011,12 +10011,12 @@ Sema::CreateOverloadedArraySubscriptExpr(SourceLocation LLoc,
         ResultTy = ResultTy.getNonLValueExprType(Context);
 
         // Build the actual expression node.
-        DeclarationNameLoc LocInfo;
-        LocInfo.CXXOperatorName.BeginOpNameLoc = LLoc.getRawEncoding();
-        LocInfo.CXXOperatorName.EndOpNameLoc = RLoc.getRawEncoding();
+        DeclarationNameInfo OpLocInfo(OpName, LLoc);
+        OpLocInfo.setCXXOperatorNameRange(SourceRange(LLoc, RLoc));
         ExprResult FnExpr = CreateFunctionRefExpr(*this, FnDecl,
                                                   HadMultipleCandidates,
-                                                  LLoc, LocInfo);
+                                                  OpLocInfo.getLoc(),
+                                                  OpLocInfo.getInfo());
         if (FnExpr.isInvalid())
           return ExprError();
 
@@ -10521,8 +10521,13 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   for (unsigned ArgIdx = 0; ArgIdx < NumArgs; ++ArgIdx)
     MethodArgs[ArgIdx + 1] = Args[ArgIdx];
 
+  DeclarationNameInfo OpLocInfo(
+               Context.DeclarationNames.getCXXOperatorName(OO_Call), LParenLoc);
+  OpLocInfo.setCXXOperatorNameRange(SourceRange(LParenLoc, RParenLoc));
   ExprResult NewFn = CreateFunctionRefExpr(*this, Method,
-                                           HadMultipleCandidates);
+                                           HadMultipleCandidates,
+                                           OpLocInfo.getLoc(),
+                                           OpLocInfo.getInfo());
   if (NewFn.isInvalid())
     return true;
 
@@ -10698,7 +10703,7 @@ Sema::BuildOverloadedArrowExpr(Scope *S, Expr *Base, SourceLocation OpLoc) {
 
   // Build the operator call.
   ExprResult FnExpr = CreateFunctionRefExpr(*this, Method,
-                                            HadMultipleCandidates);
+                                            HadMultipleCandidates, OpLoc);
   if (FnExpr.isInvalid())
     return ExprError();
 

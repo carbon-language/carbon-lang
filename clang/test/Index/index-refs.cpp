@@ -18,6 +18,22 @@ enum {
   SecondVal = EnumVal
 };
 
+struct S {
+  S& operator++();
+  int operator*();
+  S& operator=(int x);
+  S& operator!=(int x);
+  S& operator()(int x);
+};
+
+void foo2(S &s) {
+  (void)++s;
+  (void)*s;
+  s = 3;
+  (void)(s != 3);
+  s(3);
+}
+
 // RUN: c-index-test -index-file %s | FileCheck %s
 // CHECK:      [indexDeclaration]: kind: namespace | name: NS
 // CHECK-NEXT: [indexDeclaration]: kind: variable | name: gx
@@ -35,3 +51,10 @@ enum {
 // CHECK-NEXT: [indexDeclaration]: kind: enum
 // CHECK-NEXT: [indexDeclaration]: kind: enumerator | name: SecondVal
 // CHECK-NEXT: [indexEntityReference]: kind: enumerator | name: EnumVal
+
+// CHECK:      [indexDeclaration]: kind: function | name: foo2
+// CHECK:      [indexEntityReference]: kind: c++-instance-method | name: operator++
+// CHECK-NEXT: [indexEntityReference]: kind: c++-instance-method | name: operator*
+// CHECK-NEXT: [indexEntityReference]: kind: c++-instance-method | name: operator=
+// CHECK-NEXT: [indexEntityReference]: kind: c++-instance-method | name: operator!=
+// CHECK-NEXT: [indexEntityReference]: kind: c++-instance-method | name: operator()

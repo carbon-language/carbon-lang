@@ -34,7 +34,7 @@ void test3(S2 s2) {
 // CHECK: Punctuation: ")" [2:17 - 2:18] FunctionDecl=test:2:6 (Definition)
 // CHECK: Punctuation: "{" [2:19 - 2:20] CompoundStmt=
 // CHECK: Identifier: "X" [3:5 - 3:6] DeclRefExpr=X:2:16
-// CHECK: Punctuation: "=" [3:7 - 3:8] CallExpr=operator=:1:8
+// CHECK: Punctuation: "=" [3:7 - 3:8] DeclRefExpr=operator=:1:8
 // CHECK: Identifier: "X" [3:9 - 3:10] DeclRefExpr=X:2:16
 // CHECK: Punctuation: ";" [3:10 - 3:11] CompoundStmt=
 // CHECK: Keyword: "__is_base_of" [4:5 - 4:17] UnexposedExpr=
@@ -78,7 +78,7 @@ void test3(S2 s2) {
 // CHECK: Punctuation: "(" [13:3 - 13:4] ParenExpr=
 // CHECK: Identifier: "x" [13:4 - 13:5] DeclRefExpr=x:11:14
 // CHECK: Punctuation: ")" [13:5 - 13:6] ParenExpr=
-// CHECK: Punctuation: "++" [13:6 - 13:8] CallExpr=operator++:9:5
+// CHECK: Punctuation: "++" [13:6 - 13:8] DeclRefExpr=operator++:9:5
 // CHECK: Punctuation: ";" [13:8 - 13:9] CompoundStmt=
 // CHECK: Punctuation: "}" [14:1 - 14:2] CompoundStmt=
 // CHECK: Keyword: "struct" [16:1 - 16:7] StructDecl=S1:16:8 (Definition)
@@ -111,7 +111,7 @@ void test3(S2 s2) {
 // CHECK: Punctuation: ")" [18:17 - 18:18] FunctionDecl=test3:18:6 (Definition)
 // CHECK: Punctuation: "{" [18:19 - 18:20] CompoundStmt=
 // CHECK: Identifier: "s2" [19:3 - 19:5] DeclRefExpr=s2:18:15
-// CHECK: Punctuation: "->" [19:5 - 19:7] MemberRefExpr=f:16:18
+// CHECK: Punctuation: "->" [19:5 - 19:7] DeclRefExpr=operator->:17:17
 // CHECK: Identifier: "f" [19:7 - 19:8] MemberRefExpr=f:16:18
 // CHECK: Punctuation: "(" [19:8 - 19:9] CallExpr=f:16:18
 // CHECK: Punctuation: ")" [19:9 - 19:10] CallExpr=f:16:18

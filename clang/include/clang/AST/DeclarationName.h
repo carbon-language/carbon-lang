@@ -511,7 +511,9 @@ public:
   SourceLocation getEndLoc() const;
   /// getSourceRange - The range of the declaration name.
   SourceRange getSourceRange() const {
-    return SourceRange(getBeginLoc(), getEndLoc());
+    SourceLocation BeginLoc = getBeginLoc();
+    SourceLocation EndLoc = getEndLoc();
+    return SourceRange(BeginLoc, EndLoc.isValid() ? EndLoc : BeginLoc);
   }
 };
 
