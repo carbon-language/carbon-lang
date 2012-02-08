@@ -319,49 +319,49 @@ def ZXTH : ALU32_rr<(outs IntRegs:$dst), (ins IntRegs:$src1),
 //===----------------------------------------------------------------------===//
 
 // Conditional add.
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_ri_cPt : ALU32_ri<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, s16Imm:$src3),
             "if ($src1) $dst = add($src2, #$src3)",
             []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_ri_cNotPt : ALU32_ri<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, s16Imm:$src3),
             "if (!$src1) $dst = add($src2, #$src3)",
             []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_ri_cdnPt : ALU32_ri<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, s16Imm:$src3),
             "if ($src1.new) $dst = add($src2, #$src3)",
             []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_ri_cdnNotPt : ALU32_ri<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, s16Imm:$src3),
             "if (!$src1.new) $dst = add($src2, #$src3)",
             []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_rr_cPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1) $dst = add($src2, $src3)",
             []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_rr_cNotPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1) $dst = add($src2, $src3)",
             []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_rr_cdnPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1.new) $dst = add($src2, $src3)",
             []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def ADD_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1.new) $dst = add($src2, $src3)",
@@ -370,25 +370,25 @@ def ADD_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
 
 // Conditional combine.
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def COMBINE_rr_cPt : ALU32_rr<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1) $dst = combine($src2, $src3)",
             []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def COMBINE_rr_cNotPt : ALU32_rr<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1) $dst = combine($src2, $src3)",
             []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def COMBINE_rr_cdnPt : ALU32_rr<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1.new) $dst = combine($src2, $src3)",
             []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def COMBINE_rr_cdnNotPt : ALU32_rr<(outs DoubleRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1.new) $dst = combine($src2, $src3)",
@@ -396,61 +396,73 @@ def COMBINE_rr_cdnNotPt : ALU32_rr<(outs DoubleRegs:$dst),
 
 // Conditional logical operations.
 
+let isPredicated = 1 in
 def XOR_rr_cPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1) $dst = xor($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def XOR_rr_cNotPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1) $dst = xor($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def XOR_rr_cdnPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1.new) $dst = xor($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def XOR_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1.new) $dst = xor($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def AND_rr_cPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1) $dst = and($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def AND_rr_cNotPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1) $dst = and($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def AND_rr_cdnPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1.new) $dst = and($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def AND_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1.new) $dst = and($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def OR_rr_cPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1) $dst = or($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def OR_rr_cNotPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1) $dst = or($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def OR_rr_cdnPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1.new) $dst = or($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def OR_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1.new) $dst = or($src2, $src3)",
@@ -459,21 +471,25 @@ def OR_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
 
 // Conditional subtract.
 
+let isPredicated = 1 in
 def SUB_rr_cPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1) $dst = sub($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def SUB_rr_cNotPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1) $dst = sub($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def SUB_rr_cdnPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if ($src1.new) $dst = sub($src2, $src3)",
             []>;
 
+let isPredicated = 1 in
 def SUB_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3),
             "if (!$src1.new) $dst = sub($src2, $src3)",
@@ -482,47 +498,47 @@ def SUB_rr_cdnNotPt : ALU32_rr<(outs IntRegs:$dst),
 
 // Conditional transfer.
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def TFR_cPt : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1, IntRegs:$src2),
               "if ($src1) $dst = $src2",
               []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def TFR_cNotPt : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
                                                     IntRegs:$src2),
                  "if (!$src1) $dst = $src2",
                  []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def TFRI_cPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1, s12Imm:$src2),
                "if ($src1) $dst = #$src2",
                []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def TFRI_cNotPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1,
                                                      s12Imm:$src2),
                   "if (!$src1) $dst = #$src2",
                   []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def TFR_cdnPt : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
                                                    IntRegs:$src2),
                 "if ($src1.new) $dst = $src2",
                 []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def TFR_cdnNotPt : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
                                                       IntRegs:$src2),
                    "if (!$src1.new) $dst = $src2",
                    []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def TFRI_cdnPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1,
                                                     s12Imm:$src2),
                  "if ($src1.new) $dst = #$src2",
                  []>;
 
-let neverHasSideEffects = 1 in
+let neverHasSideEffects = 1, isPredicated = 1 in
 def TFRI_cdnNotPt : ALU32_ri<(outs IntRegs:$dst), (ins PredRegs:$src1,
                                                        s12Imm:$src2),
                     "if (!$src1.new) $dst = #$src2",
@@ -743,7 +759,8 @@ let isBranch = 1, isTerminator=1, isBarrier = 1, isPredicable = 1 in {
 }
 
 // if (p0) jump
-let isBranch = 1, isTerminator=1, Defs = [PC] in {
+let isBranch = 1, isTerminator=1, Defs = [PC],
+    isPredicated = 1 in {
   def JMP_Pred : JInst< (outs),
                  (ins PredRegs:$src, brtarget:$offset),
                  "if ($src) jump $offset",
@@ -751,14 +768,16 @@ let isBranch = 1, isTerminator=1, Defs = [PC] in {
 }
 
 // if (!p0) jump
-let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC] in {
+let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
+    isPredicated = 1 in {
   def JMP_PredNot : JInst< (outs),
                     (ins PredRegs:$src, brtarget:$offset),
                     "if (!$src) jump $offset",
                     []>;
 }
 
-let isTerminator = 1, isBranch = 1, neverHasSideEffects = 1, Defs = [PC] in {
+let isTerminator = 1, isBranch = 1, neverHasSideEffects = 1, Defs = [PC],
+    isPredicated = 1 in {
   def BRCOND : JInst < (outs), (ins PredRegs:$pred, brtarget:$dst),
                "if ($pred) jump $dst",
                []>;
@@ -766,7 +785,8 @@ let isTerminator = 1, isBranch = 1, neverHasSideEffects = 1, Defs = [PC] in {
 
 // Jump to address conditioned on new predicate.
 // if (p0) jump:t
-let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC] in {
+let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
+    isPredicated = 1 in {
   def JMP_PredPt : JInst< (outs),
                    (ins PredRegs:$src, brtarget:$offset),
                    "if ($src.new) jump:t $offset",
@@ -774,7 +794,8 @@ let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC] in {
 }
 
 // if (!p0) jump:t
-let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC] in {
+let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
+    isPredicated = 1 in {
   def JMP_PredNotPt : JInst< (outs),
                       (ins PredRegs:$src, brtarget:$offset),
                       "if (!$src.new) jump:t $offset",
@@ -782,7 +803,8 @@ let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC] in {
 }
 
 // Not taken.
-let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC] in {
+let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
+    isPredicated = 1 in {
   def JMP_PredPnt : JInst< (outs),
                     (ins PredRegs:$src, brtarget:$offset),
                     "if ($src.new) jump:nt $offset",
@@ -790,7 +812,8 @@ let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC] in {
 }
 
 // Not taken.
-let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC] in {
+let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
+    isPredicated = 1 in {
   def JMP_PredNotPnt : JInst< (outs),
                        (ins PredRegs:$src, brtarget:$offset),
                        "if (!$src.new) jump:nt $offset",
@@ -1779,7 +1802,8 @@ def POST_STdri_cPt : STInstPI<(outs IntRegs:$dst),
             "$src3 = $dst">;
 
 // if (!Pv) memd(Rx++#s4:3)=Rtt
-let AddedComplexity = 10, mayStore = 1, neverHasSideEffects = 1 in
+let AddedComplexity = 10, mayStore = 1, neverHasSideEffects = 1,
+    isPredicated = 1 in
 def POST_STdri_cNotPt : STInstPI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, DoubleRegs:$src2, IntRegs:$src3,
                  s4_3Imm:$offset),
@@ -1859,14 +1883,14 @@ def STrib_indexed_cNotPt : STInst<(outs),
 
 // if ([!]Pv) memb(Rx++#s4:0)=Rt
 // if (Pv) memb(Rx++#s4:0)=Rt
-let mayStore = 1, hasCtrlDep = 1 in
+let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
 def POST_STbri_cPt : STInstPI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_0Imm:$offset),
             "if ($src1) memb($src3++#$offset) = $src2",
             [],"$src3 = $dst">;
 
 // if (!Pv) memb(Rx++#s4:0)=Rt
-let mayStore = 1, hasCtrlDep = 1 in
+let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
 def POST_STbri_cNotPt : STInstPI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_0Imm:$offset),
             "if (!$src1) memb($src3++#$offset) = $src2",
@@ -1944,14 +1968,14 @@ def STrih_indexed_cNotPt : STInst<(outs),
 
 // if ([!]Pv) memh(Rx++#s4:1)=Rt
 // if (Pv) memh(Rx++#s4:1)=Rt
-let mayStore = 1, hasCtrlDep = 1 in
+let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
 def POST_SThri_cPt : STInstPI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_1Imm:$offset),
             "if ($src1) memh($src3++#$offset) = $src2",
             [],"$src3 = $dst">;
 
 // if (!Pv) memh(Rx++#s4:1)=Rt
-let mayStore = 1, hasCtrlDep = 1 in
+let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
 def POST_SThri_cNotPt : STInstPI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_1Imm:$offset),
             "if (!$src1) memh($src3++#$offset) = $src2",
@@ -2030,14 +2054,14 @@ def STriw_indexed_cNotPt : STInst<(outs),
 
 // if ([!]Pv) memw(Rx++#s4:2)=Rt
 // if (Pv) memw(Rx++#s4:2)=Rt
-let mayStore = 1, hasCtrlDep = 1 in
+let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
 def POST_STwri_cPt : STInstPI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_2Imm:$offset),
             "if ($src1) memw($src3++#$offset) = $src2",
             [],"$src3 = $dst">;
 
 // if (!Pv) memw(Rx++#s4:2)=Rt
-let mayStore = 1, hasCtrlDep = 1 in
+let mayStore = 1, hasCtrlDep = 1, isPredicated = 1 in
 def POST_STwri_cNotPt : STInstPI<(outs IntRegs:$dst),
             (ins PredRegs:$src1, IntRegs:$src2, IntRegs:$src3, s4_2Imm:$offset),
             "if (!$src1) memw($src3++#$offset) = $src2",

@@ -7,16 +7,22 @@
 //
 //===----------------------------------------------------------------------===//
 
+//----------------------------------------------------------------------------//
+//                         Hexagon Intruction Flags +
+//
+//                    *** Must match HexagonBaseInfo.h ***
+//----------------------------------------------------------------------------//
+
+
+//----------------------------------------------------------------------------//
+//                         Intruction Class Declaration +
+//----------------------------------------------------------------------------//
+
 class InstHexagon<dag outs, dag ins, string asmstr, list<dag> pattern,
-                  string cstr,
-                InstrItinClass itin> : Instruction {
+                  string cstr, InstrItinClass itin> : Instruction {
   field bits<32> Inst;
 
   let Namespace = "Hexagon";
-
-/* Commented out for Hexagon
-  bits<2> op;
-  let Inst{31-30} = op; */              // Top two bits are the 'op' field
 
   dag OutOperandList = outs;
   dag InOperandList = ins;
@@ -24,6 +30,14 @@ class InstHexagon<dag outs, dag ins, string asmstr, list<dag> pattern,
   let Pattern = pattern;
   let Constraints = cstr;
   let Itinerary   = itin;
+
+  // *** The code below must match HexagonBaseInfo.h ***
+
+  // Predicated instructions.
+  bits<1> isPredicated = 0;
+  let TSFlags{1} = isPredicated;
+
+  // *** The code above must match HexagonBaseInfo.h ***
 }
 
 //----------------------------------------------------------------------------//

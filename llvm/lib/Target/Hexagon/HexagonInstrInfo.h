@@ -14,6 +14,7 @@
 #ifndef HexagonINSTRUCTIONINFO_H
 #define HexagonINSTRUCTIONINFO_H
 
+#include "MCTargetDesc/HexagonBaseInfo.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "HexagonRegisterInfo.h"
