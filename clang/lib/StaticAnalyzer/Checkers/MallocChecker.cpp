@@ -131,6 +131,10 @@ private:
   void ReallocMem(CheckerContext &C, const CallExpr *CE) const;
   static void CallocMem(CheckerContext &C, const CallExpr *CE);
   
+  bool checkEscape(SymbolRef Sym, const Stmt *S, CheckerContext &C) const;
+  bool checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
+                         const Stmt *S = 0) const;
+
   static bool SummarizeValue(raw_ostream &os, SVal V);
   static bool SummarizeRegion(raw_ostream &os, const MemRegion *MR);
   void ReportBadFree(CheckerContext &C, SVal ArgVal, SourceRange range) const;
@@ -186,6 +190,7 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
     return;
   }
 
+  if (Filter.CMallocOptimistic)
   // Check all the attributes, if there are any.
   // There can be multiple of these attributes.
   if (FD->hasAttrs()) {
@@ -203,6 +208,22 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
         FreeMemAttr(C, CE, *i);
         break;
       }
+      }
+    }
+  }
+
+  if (Filter.CMallocPessimistic) {
+    ProgramStateRef State = C.getState();
+    // The pointer might escape through a function call.
+    for (CallExpr::const_arg_iterator I = CE->arg_begin(),
+                                      E = CE->arg_end(); I != E; ++I) {
+      const Expr *A = *I;
+      if (A->getType().getTypePtr()->isAnyPointerType()) {
+        SymbolRef Sym = State->getSVal(A, C.getLocationContext()).getAsSymbol();
+        if (!Sym)
+          return;
+        checkEscape(Sym, A, C);
+        checkUseAfterFree(Sym, C, A);
       }
     }
   }
@@ -642,32 +663,36 @@ void MallocChecker::checkEndPath(CheckerContext &Ctx) const {
   }
 }
 
-void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
-  const Expr *retExpr = S->getRetValue();
-  if (!retExpr)
-    return;
-
+bool MallocChecker::checkEscape(SymbolRef Sym, const Stmt *S,
+                                CheckerContext &C) const {
   ProgramStateRef state = C.getState();
+  const RefState *RS = state->get<RegionState>(Sym);
+  if (!RS)
+    return false;
 
-  SymbolRef Sym = state->getSVal(retExpr, C.getLocationContext()).getAsSymbol();
+  if (RS->isAllocated()) {
+    state = state->set<RegionState>(Sym, RefState::getEscaped(S));
+    C.addTransition(state);
+    return true;
+  }
+  return false;
+}
+
+void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
+  const Expr *E = S->getRetValue();
+  if (!E)
+    return;
+  SymbolRef Sym = C.getState()->getSVal(E, C.getLocationContext()).getAsSymbol();
   if (!Sym)
     return;
 
-  const RefState *RS = state->get<RegionState>(Sym);
-  if (!RS)
-    return;
-
-  // FIXME: check other cases.
-  if (RS->isAllocated())
-    state = state->set<RegionState>(Sym, RefState::getEscaped(S));
-
-  C.addTransition(state);
+  checkEscape(Sym, S, C);
 }
 
 ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
                                               SVal Cond, 
                                               bool Assumption) const {
-  // If a symblic region is assumed to NULL, set its state to AllocateFailed.
+  // If a symbolic region is assumed to NULL, set its state to AllocateFailed.
   // FIXME: should also check symbols assumed to non-null.
 
   RegionStateTy RS = state->get<RegionState>();
@@ -681,24 +706,32 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
   return state;
 }
 
+bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
+                                      const Stmt *S) const {
+  assert(Sym);
+  const RefState *RS = C.getState()->get<RegionState>(Sym);
+  if (RS && RS->isReleased()) {
+    if (ExplodedNode *N = C.addTransition()) {
+      if (!BT_UseFree)
+        BT_UseFree.reset(new BuiltinBug("Use dynamically allocated memory "
+            "after it is freed."));
+
+      BugReport *R = new BugReport(*BT_UseFree, BT_UseFree->getDescription(),N);
+      if (S)
+        R->addRange(S->getSourceRange());
+      C.EmitReport(R);
+      return true;
+    }
+  }
+  return false;
+}
+
 // Check if the location is a freed symbolic region.
 void MallocChecker::checkLocation(SVal l, bool isLoad, const Stmt *S,
                                   CheckerContext &C) const {
   SymbolRef Sym = l.getLocSymbolInBase();
-  if (Sym) {
-    const RefState *RS = C.getState()->get<RegionState>(Sym);
-    if (RS && RS->isReleased()) {
-      if (ExplodedNode *N = C.addTransition()) {
-        if (!BT_UseFree)
-          BT_UseFree.reset(new BuiltinBug("Use dynamically allocated memory "
-                                          "after it is freed."));
-
-        BugReport *R = new BugReport(*BT_UseFree, BT_UseFree->getDescription(),
-                                     N);
-        C.EmitReport(R);
-      }
-    }
-  }
+  if (Sym)
+    checkUseAfterFree(Sym, C);
 }
 
 void MallocChecker::checkBind(SVal location, SVal val,

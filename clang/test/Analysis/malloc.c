@@ -4,23 +4,9 @@ void *malloc(size_t);
 void free(void *);
 void *realloc(void *ptr, size_t size);
 void *calloc(size_t nmemb, size_t size);
-void __attribute((ownership_returns(malloc))) *my_malloc(size_t);
-void __attribute((ownership_takes(malloc, 1))) my_free(void *);
-void __attribute((ownership_returns(malloc, 1))) *my_malloc2(size_t);
-void __attribute((ownership_holds(malloc, 1))) my_hold(void *);
 
-// Duplicate attributes are silly, but not an error.
-// Duplicate attribute has no extra effect.
-// If two are of different kinds, that is an error and reported as such. 
-void __attribute((ownership_holds(malloc, 1)))
-__attribute((ownership_holds(malloc, 1)))
-__attribute((ownership_holds(malloc, 3))) my_hold2(void *, void *, void *);
-void *my_malloc3(size_t);
-void *myglobalpointer;
-struct stuff {
-  void *somefield;
-};
-struct stuff myglobalstuff;
+void myfoo(int *p);
+void myfooint(int p);
 
 void f1() {
   int *p = malloc(12);
@@ -43,107 +29,6 @@ void f2_realloc_1() {
   int *p = malloc(12);
   int *q = realloc(p,0); // no-warning
 }
-
-// ownership attributes tests
-void naf1() {
-  int *p = my_malloc3(12);
-  return; // no-warning
-}
-
-void n2af1() {
-  int *p = my_malloc2(12);
-  return; // expected-warning{{Allocated memory never released. Potential memory leak.}}
-}
-
-void af1() {
-  int *p = my_malloc(12);
-  return; // expected-warning{{Allocated memory never released. Potential memory leak.}}
-}
-
-void af1_b() {
-  int *p = my_malloc(12); // expected-warning{{Allocated memory never released. Potential memory leak.}}
-}
-
-void af1_c() {
-  myglobalpointer = my_malloc(12); // no-warning
-}
-
-void af1_d() {
-  struct stuff mystuff;
-  mystuff.somefield = my_malloc(12); // expected-warning{{Allocated memory never released. Potential memory leak.}}
-}
-
-// Test that we can pass out allocated memory via pointer-to-pointer.
-void af1_e(void **pp) {
-  *pp = my_malloc(42); // no-warning
-}
-
-void af1_f(struct stuff *somestuff) {
-  somestuff->somefield = my_malloc(12); // no-warning
-}
-
-// Allocating memory for a field via multiple indirections to our arguments is OK.
-void af1_g(struct stuff **pps) {
-  *pps = my_malloc(sizeof(struct stuff)); // no-warning
-  (*pps)->somefield = my_malloc(42); // no-warning
-}
-
-void af2() {
-  int *p = my_malloc(12);
-  my_free(p);
-  free(p); // expected-warning{{Try to free a memory block that has been released}}
-}
-
-void af2b() {
-  int *p = my_malloc(12);
-  free(p);
-  my_free(p); // expected-warning{{Try to free a memory block that has been released}}
-}
-
-void af2c() {
-  int *p = my_malloc(12);
-  free(p);
-  my_hold(p); // expected-warning{{Try to free a memory block that has been released}}
-}
-
-void af2d() {
-  int *p = my_malloc(12);
-  free(p);
-  my_hold2(0, 0, p); // expected-warning{{Try to free a memory block that has been released}}
-}
-
-// No leak if malloc returns null.
-void af2e() {
-  int *p = my_malloc(12);
-  if (!p)
-    return; // no-warning
-  free(p); // no-warning
-}
-
-// This case would inflict a double-free elsewhere.
-// However, this case is considered an analyzer bug since it causes false-positives.
-void af3() {
-  int *p = my_malloc(12);
-  my_hold(p);
-  free(p); // no-warning
-}
-
-// This case would inflict a double-free elsewhere.
-// However, this case is considered an analyzer bug since it causes false-positives.
-int * af4() {
-  int *p = my_malloc(12);
-  my_free(p);
-  return p; // no-warning
-}
-
-// This case is (possibly) ok, be conservative
-int * af5() {
-  int *p = my_malloc(12);
-  my_hold(p);
-  return p; // no-warning
-}
-
-
 
 // This case tests that storing malloc'ed memory to a static variable which is
 // then returned is not leaked.  In the absence of known contracts for functions
@@ -261,3 +146,97 @@ char callocZeroesBad () {
 	}
 	return result; // expected-warning{{never released}}
 }
+
+void nullFree() {
+  int *p = 0;
+  free(p); // no warning - a nop
+}
+
+void paramFree(int *p) {
+  myfoo(p);
+  free(p); // no warning
+  myfoo(p); // TODO: This should be a warning.
+}
+
+int* mallocEscapeRet() {
+  int *p = malloc(12);
+  return p; // no warning
+}
+
+void mallocEscapeFoo() {
+  int *p = malloc(12);
+  myfoo(p);
+  return; // no warning
+}
+
+void mallocEscapeFree() {
+  int *p = malloc(12);
+  myfoo(p);
+  free(p);
+}
+
+void mallocEscapeFreeFree() {
+  int *p = malloc(12);
+  myfoo(p);
+  free(p);
+  free(p); // expected-warning{{Try to free a memory block that has been released}}
+}
+
+void mallocEscapeFreeUse() {
+  int *p = malloc(12);
+  myfoo(p);
+  free(p);
+  myfoo(p); // expected-warning{{Use dynamically allocated memory after it is freed.}}
+}
+
+int *myalloc();
+void myalloc2(int **p);
+
+void mallocEscapeFreeCustomAlloc() {
+  int *p = malloc(12);
+  myfoo(p);
+  free(p);
+  p = myalloc();
+  free(p); // no warning
+}
+
+void mallocEscapeFreeCustomAlloc2() {
+  int *p = malloc(12);
+  myfoo(p);
+  free(p);
+  myalloc2(&p);
+  free(p); // no warning
+}
+
+void mallocBindFreeUse() {
+  int *x = malloc(12);
+  int *y = x;
+  free(y);
+  myfoo(x); // expected-warning{{Use dynamically allocated memory after it is freed.}}
+}
+
+void mallocEscapeMalloc() {
+  int *p = malloc(12);
+  myfoo(p);
+  p = malloc(12); // expected-warning{{Allocated memory never released. Potential memory leak.}}
+}
+
+void mallocMalloc() {
+  int *p = malloc(12);
+  p = malloc(12); // expected-warning{{Allocated memory never released. Potential memory leak}}
+}
+
+void mallocFreeMalloc() {
+  int *p = malloc(12);
+  free(p);
+  p = malloc(12);
+  free(p);
+}
+
+void MallocFreeUse_params() {
+  int *p = malloc(12);
+  free(p);
+  myfoo(p); //expected-warning{{Use dynamically allocated memory after it is freed}}
+  myfooint(*p); //expected-warning{{Use dynamically allocated memory after it is freed}}
+}
+
