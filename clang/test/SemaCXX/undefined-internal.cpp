@@ -170,3 +170,14 @@ namespace cxx11_odr_rules {
     b();
   }
 }
+
+
+namespace OverloadUse {
+  namespace {
+    void f();
+    void f(int); // expected-warning {{function 'OverloadUse::<anonymous namespace>::f' has internal linkage but is not defined}}
+  }
+  template<void x()> void t(int*) { x(); }
+  template<void x(int)> void t(long*) { x(10); } // expected-note {{used here}}
+  void g() { long a; t<f>(&a); }
+}
