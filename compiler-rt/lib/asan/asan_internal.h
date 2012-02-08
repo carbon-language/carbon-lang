@@ -31,6 +31,9 @@ typedef __int16          int16_t;
 typedef __int32          int32_t;
 typedef __int64          int64_t;
 
+extern "C" void* _ReturnAddress(void);
+# pragma intrinsic(_ReturnAddress)
+
 # define ALIAS(x)   // TODO(timurrrr): do we need this on Windows?
 # define ALIGNED(x) __declspec(align(x))
 # define NOINLINE __declspec(noinline)
@@ -215,8 +218,6 @@ const size_t kPageSize = 1UL << kPageSizeBits;
 # define GET_CALLER_PC() (uintptr_t)__builtin_return_address(0)
 # define GET_CURRENT_FRAME() (uintptr_t)__builtin_frame_address(0)
 #else
-extern "C" void* _ReturnAddress(void);
-# pragma intrinsic(_ReturnAddress)
 # define GET_CALLER_PC() (uintptr_t)_ReturnAddress()
 // CaptureStackBackTrace doesn't need to know BP on Windows.
 // FIXME: This macro is still used when printing error reports though it's not
