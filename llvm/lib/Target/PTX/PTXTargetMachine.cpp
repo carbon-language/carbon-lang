@@ -359,7 +359,7 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (getOptLevel() != CodeGenOpt::None) {
-    PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
+    addPass(BranchFolderPassID);
     printNoVerify("After BranchFolding");
   }
 

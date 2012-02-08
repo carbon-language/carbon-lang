@@ -71,6 +71,7 @@ void initializeBasicCallGraphPass(PassRegistry&);
 void initializeBlockExtractorPassPass(PassRegistry&);
 void initializeBlockFrequencyInfoPass(PassRegistry&);
 void initializeBlockPlacementPass(PassRegistry&);
+void initializeBranchFolderPassPass(PassRegistry&);
 void initializeBranchProbabilityInfoPass(PassRegistry&);
 void initializeBreakCriticalEdgesPass(PassRegistry&);
 void initializeCFGOnlyPrinterPass(PassRegistry&);

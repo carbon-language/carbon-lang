@@ -78,13 +78,18 @@ public:
   }
 
   virtual bool addInstSelector();
-  virtual bool getEnableTailMergeDefault() const;
   virtual bool addPreEmitPass();
 };
 } // namespace
 
 TargetPassConfig *PPCTargetMachine::createPassConfig(PassManagerBase &PM) {
-  return new PPCPassConfig(this, PM);
+  TargetPassConfig *PassConfig = new PPCPassConfig(this, PM);
+
+  // Override this for PowerPC.  Tail merging happily breaks up instruction issue
+  // groups, which typically degrades performance.
+  PassConfig->setEnableTailMerge(false);
+
+  return PassConfig;
 }
 
 bool PPCPassConfig::addInstSelector() {
@@ -92,10 +97,6 @@ bool PPCPassConfig::addInstSelector() {
   PM.add(createPPCISelDag(getPPCTargetMachine()));
   return false;
 }
-
-/// Override this for PowerPC.  Tail merging happily breaks up instruction issue
-/// groups, which typically degrades performance.
-bool PPCPassConfig::getEnableTailMergeDefault() const { return false; }
 
 bool PPCPassConfig::addPreEmitPass() {
   // Must run branch selection immediately preceding the asm printer.

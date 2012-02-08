@@ -83,6 +83,8 @@ char TargetPassConfig::ID = 0;
 // Out of line virtual method.
 TargetPassConfig::~TargetPassConfig() {}
 
+// Out of line constructor provides default values for pass options and
+// registers all common codegen passes.
 TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
   : ImmutablePass(ID), TM(tm), PM(pm), Initialized(false),
     DisableVerify(false),
@@ -257,7 +259,7 @@ void TargetPassConfig::addMachinePasses() {
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (getOptLevel() != CodeGenOpt::None && !DisableBranchFold) {
-    PM.add(createBranchFoldingPass(getEnableTailMergeDefault()));
+    addPass(BranchFolderPassID);
     printNoVerify("After BranchFolding");
   }
 

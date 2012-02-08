@@ -42,8 +42,12 @@ protected:
   bool Initialized; // Flagged after all passes are configured.
 
   // Target Pass Options
+  // Targets provide a default setting, user flags override.
   //
   bool DisableVerify;
+
+  /// Default setting for -enable-tail-merge on this target.
+  bool EnableTailMerge;
 
 public:
   TargetPassConfig(TargetMachine *tm, PassManagerBase &pm);
@@ -67,7 +71,10 @@ public:
 
   CodeGenOpt::Level getOptLevel() const { return TM->getOptLevel(); }
 
-  void setDisableVerify(bool disable) { DisableVerify = disable; }
+  void setDisableVerify(bool Disable) { setOpt(DisableVerify, Disable); }
+
+  bool getEnableTailMerge() const { return EnableTailMerge; }
+  void setEnableTailMerge(bool Enable) { setOpt(EnableTailMerge, Enable); }
 
   /// Add common target configurable passes that perform LLVM IR to IR
   /// transforms following machine independent optimization.
@@ -117,10 +124,6 @@ protected:
   virtual bool addPostRegAlloc() {
     return false;
   }
-
-  /// getEnableTailMergeDefault - the default setting for -enable-tail-merge
-  /// on this target.  User flag overrides.
-  virtual bool getEnableTailMergeDefault() const { return true; }
 
   /// addPreSched2 - This method may be implemented by targets that want to
   /// run passes after prolog-epilog insertion and before the second instruction
@@ -274,7 +277,7 @@ namespace llvm {
   /// optimizations to delete branches to branches, eliminate branches to
   /// successor blocks (creating fall throughs), and eliminating branches over
   /// branches.
-  FunctionPass *createBranchFoldingPass(bool DefaultEnableTailMerge);
+  extern char &BranchFolderPassID;
 
   /// TailDuplicate Pass - Duplicate blocks with unconditional branches
   /// into tails of their predecessors.
