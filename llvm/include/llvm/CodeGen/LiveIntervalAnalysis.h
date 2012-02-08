@@ -63,6 +63,25 @@ namespace llvm {
     /// allocatableRegs_ - A bit vector of allocatable registers.
     BitVector allocatableRegs_;
 
+    /// RegMaskSlots - Sorted list of instructions with register mask operands.
+    /// Always use the 'r' slot, RegMasks are normal clobbers, not early
+    /// clobbers.
+    SmallVector<SlotIndex, 8> RegMaskSlots;
+
+    /// RegMaskBits - This vector is parallel to RegMaskSlots, it holds a
+    /// pointer to the corresponding register mask.  This pointer can be
+    /// recomputed as:
+    ///
+    ///   MI = Indexes->getInstructionFromIndex(RegMaskSlot[N]);
+    ///   unsigned OpNum = findRegMaskOperand(MI);
+    ///   RegMaskBits[N] = MI->getOperand(OpNum).getRegMask();
+    ///
+    /// This is kept in a separate vector partly because some standard
+    /// libraries don't support lower_bound() with mixed objects, partly to
+    /// improve locality when searching in RegMaskSlots.
+    /// Also see the comment in LiveInterval::find().
+    SmallVector<const uint32_t*, 8> RegMaskBits;
+
   public:
     static char ID; // Pass identification, replacement for typeid
     LiveIntervals() : MachineFunctionPass(ID) {
@@ -248,6 +267,30 @@ namespace llvm {
     /// intervals of mi's operands to reflect the new position. The insertion
     /// point can be above or below mi, but must be in the same basic block.
     void moveInstr(MachineBasicBlock::iterator insertPt, MachineInstr* mi);
+
+    // Register mask functions.
+    //
+    // Machine instructions may use a register mask operand to indicate that a
+    // large number of registers are clobbered by the instruction.  This is
+    // typically used for calls.
+    //
+    // For compile time performance reasons, these clobbers are not recorded in
+    // the live intervals for individual physical registers.  Instead,
+    // LiveIntervalAnalysis maintains a sorted list of instructions with
+    // register mask operands.
+
+    /// getRegMaskSlots - Returns asorted array of slot indices of all
+    /// instructions with register mask operands.
+    ArrayRef<SlotIndex> getRegMaskSlots() const { return RegMaskSlots; }
+
+    /// checkRegMaskInterference - Test if LI is live across any register mask
+    /// instructions, and compute a bit mask of physical registers that are not
+    /// clobbered by any of them.
+    ///
+    /// Returns false if LI doesn't cross any register mask instructions. In
+    /// that case, the bit vector is not filled in.
+    bool checkRegMaskInterference(LiveInterval &LI,
+                                  BitVector &UsableRegs);
 
   private:
     /// computeIntervals - Compute live intervals.

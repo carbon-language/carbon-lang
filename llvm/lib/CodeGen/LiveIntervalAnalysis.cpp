@@ -88,6 +88,8 @@ void LiveIntervals::releaseMemory() {
     delete I->second;
 
   r2iMap_.clear();
+  RegMaskSlots.clear();
+  RegMaskBits.clear();
 
   // Release VNInfo memory regions, VNInfo objects don't need to be dtor'd.
   VNInfoAllocator.Reset();
@@ -558,10 +560,20 @@ void LiveIntervals::computeIntervals() {
       DEBUG(dbgs() << MIIndex << "\t" << *MI);
       if (MI->isDebugValue())
         continue;
+      assert(indexes_->getInstructionFromIndex(MIIndex) == MI &&
+             "Lost SlotIndex synchronization");
 
       // Handle defs.
       for (int i = MI->getNumOperands() - 1; i >= 0; --i) {
         MachineOperand &MO = MI->getOperand(i);
+
+        // Collect register masks.
+        if (MO.isRegMask()) {
+          RegMaskSlots.push_back(MIIndex.getRegSlot());
+          RegMaskBits.push_back(MO.getRegMask());
+          continue;
+        }
+
         if (!MO.isReg() || !MO.getReg())
           continue;
 
@@ -1110,4 +1122,54 @@ LiveRange LiveIntervals::addLiveRangeToEndOfBlock(unsigned reg,
   Interval.addRange(LR);
 
   return LR;
+}
+
+
+//===----------------------------------------------------------------------===//
+//                          Register mask functions
+//===----------------------------------------------------------------------===//
+
+bool LiveIntervals::checkRegMaskInterference(LiveInterval &LI,
+                                             BitVector &UsableRegs) {
+  if (LI.empty())
+    return false;
+
+  // We are going to enumerate all the register mask slots contained in LI.
+  // Start with a binary search of RegMaskSlots to find a starting point.
+  LiveInterval::iterator LiveI = LI.begin(), LiveE = LI.end();
+  ArrayRef<SlotIndex> Slots = getRegMaskSlots();
+  ArrayRef<SlotIndex>::iterator SlotI =
+    std::lower_bound(Slots.begin(), Slots.end(), LiveI->start);
+  ArrayRef<SlotIndex>::iterator SlotE = Slots.end();
+
+  // No slots in range, LI begins after the last call.
+  if (SlotI == SlotE)
+    return false;
+
+  bool Found = false;
+  for (;;) {
+    assert(*SlotI >= LiveI->start);
+    // Loop over all slots overlapping this segment.
+    while (*SlotI < LiveI->end) {
+      // *SlotI overlaps LI. Collect mask bits.
+      if (!Found) {
+        // This is the first overlap. Initialize UsableRegs to all ones.
+        UsableRegs.clear();
+        UsableRegs.resize(tri_->getNumRegs(), true);
+        Found = true;
+      }
+      // Remove usable registers clobbered by this mask.
+      UsableRegs.clearBitsNotInMask(RegMaskBits[SlotI-Slots.begin()]);
+      if (++SlotI == SlotE)
+        return Found;
+    }
+    // *SlotI is beyond the current LI segment.
+    LiveI = LI.advanceTo(LiveI, *SlotI);
+    if (LiveI == LiveE)
+      return Found;
+    // Advance SlotI until it overlaps.
+    while (*SlotI < LiveI->start)
+      if (++SlotI == SlotE)
+        return Found;
+  }
 }
