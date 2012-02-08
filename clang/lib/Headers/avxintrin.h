@@ -260,19 +260,31 @@ _mm256_permutevar_ps(__m256 a, __m256i c)
 
 #define _mm_permute_pd(A, C) __extension__ ({ \
   __m128d __A = (A); \
-  (__m128d)__builtin_ia32_vpermilpd((__v2df)__A, (C)); })
+  (__m128d)__builtin_shufflevector((__v2df)__A, (__v2df) _mm_setzero_pd(), \
+                                   (C) & 0x1, ((C) & 0x2) >> 1); })
 
 #define _mm256_permute_pd(A, C) __extension__ ({ \
   __m256d __A = (A); \
-  (__m256d)__builtin_ia32_vpermilpd256((__v4df)__A, (C)); })
+  (__m256d)__builtin_shufflevector((__v4df)__A, (__v4df) _mm256_setzero_pd(), \
+                                   (C) & 0x1, ((C) & 0x2) >> 1, \
+                                   2 + (((C) & 0x4) >> 2), \
+                                   2 + (((C) & 0x8) >> 3)); })
 
 #define _mm_permute_ps(A, C) __extension__ ({ \
   __m128 __A = (A); \
-  (__m128)__builtin_ia32_vpermilps((__v4sf)__A, (C)); })
+  (__m128)__builtin_shufflevector((__v4sf)__A, (__v4sf) _mm_setzero_ps(), \
+                                   (C) & 0x3, ((C) & 0xc) >> 2, \
+                                   ((C) & 0x30) >> 4, ((C) & 0xc0) >> 8); })
 
 #define _mm256_permute_ps(A, C) __extension__ ({ \
   __m256 __A = (A); \
-  (__m256)__builtin_ia32_vpermilps256((__v8sf)__A, (C)); })
+  (__m256)__builtin_shufflevector((__v8sf)__A, (__v8sf) _mm256_setzero_ps(), \
+                                  (C) & 0x3, ((C) & 0xc) >> 2, \
+                                  ((C) & 0x30) >> 4, ((C) & 0xc0) >> 6, \
+                                  4 + (((C) & 0x03) >> 0), \
+                                  4 + (((C) & 0x0c) >> 2), \
+                                  4 + (((C) & 0x30) >> 4), \
+                                  4 + (((C) & 0xc0) >> 6)); })
 
 #define _mm256_permute2f128_pd(V1, V2, M) __extension__ ({ \
   __m256d __V1 = (V1); \
