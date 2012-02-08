@@ -342,7 +342,7 @@ namespace llvm {
   FunctionPass *createOptimizePHIsPass();
 
   /// createStackSlotColoringPass - This pass performs stack slot coloring.
-  FunctionPass *createStackSlotColoringPass(bool);
+  FunctionPass *createStackSlotColoringPass();
 
   /// createStackProtectorPass - This pass adds stack protectors to functions.
   FunctionPass *createStackProtectorPass(const TargetLowering *tli);

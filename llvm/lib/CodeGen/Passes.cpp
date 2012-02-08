@@ -240,7 +240,7 @@ void TargetPassConfig::addMachinePasses() {
     // FIXME: Re-enable coloring with register when it's capable of adding
     // kill markers.
     if (!DisableSSC)
-      PM.add(createStackSlotColoringPass(false));
+      PM.add(createStackSlotColoringPass());
 
     // Run post-ra machine LICM to hoist reloads / remats.
     if (!DisablePostRAMachineLICM)

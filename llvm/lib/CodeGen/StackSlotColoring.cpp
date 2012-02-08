@@ -132,8 +132,8 @@ INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_END(StackSlotColoring, "stack-slot-coloring",
                 "Stack Slot Coloring", false, false)
 
-FunctionPass *llvm::createStackSlotColoringPass(bool RegColor) {
-  return new StackSlotColoring(RegColor);
+FunctionPass *llvm::createStackSlotColoringPass() {
+  return new StackSlotColoring(/*RegColor=*/false);
 }
 
 namespace {

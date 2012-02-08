@@ -326,7 +326,7 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
   if (getOptLevel() != CodeGenOpt::None) {
     // FIXME: Re-enable coloring with register when it's capable of adding
     // kill markers.
-    PM.add(createStackSlotColoringPass(false));
+    PM.add(createStackSlotColoringPass());
 
     // FIXME: Post-RA LICM has asserts that fire on virtual registers.
     // Run post-ra machine LICM to hoist reloads / remats.
