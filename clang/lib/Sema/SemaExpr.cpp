@@ -2094,6 +2094,15 @@ static bool shouldBuildBlockDeclRef(ValueDecl *D, Sema &S) {
   return S.getCurBlock() != 0;
 }
 
+/// \brief Determine whether the given lambda would capture the given
+/// variable by copy.
+static bool willCaptureByCopy(LambdaScopeInfo *LSI, VarDecl *Var) {
+  if (LSI->isCaptured(Var))
+    return LSI->getCapture(Var).isCopyCapture();
+
+  return LSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_LambdaByval;
+}
+
 static bool shouldAddConstQualToVarRef(ValueDecl *D, Sema &S) {
   VarDecl *var = dyn_cast<VarDecl>(D);
   if (!var)
@@ -2117,7 +2126,8 @@ static bool shouldAddConstQualToVarRef(ValueDecl *D, Sema &S) {
   // about decltype hints that it might apply in unevaluated contexts
   // as well... and there's precent in our blocks implementation.
   return !LSI->Mutable &&
-         S.ExprEvalContexts.back().Context != Sema::Unevaluated;
+         S.ExprEvalContexts.back().Context != Sema::Unevaluated &&
+         willCaptureByCopy(LSI, var);
 }
 
 static ExprResult BuildBlockDeclRefExpr(Sema &S, ValueDecl *VD,
