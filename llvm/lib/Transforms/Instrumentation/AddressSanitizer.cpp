@@ -60,6 +60,7 @@ static const char *kAsanReportErrorTemplate = "__asan_report_";
 static const char *kAsanRegisterGlobalsName = "__asan_register_globals";
 static const char *kAsanUnregisterGlobalsName = "__asan_unregister_globals";
 static const char *kAsanInitName = "__asan_init";
+static const char *kAsanHandleNoReturnName = "__asan_handle_no_return";
 static const char *kAsanMappingOffsetName = "__asan_mapping_offset";
 static const char *kAsanMappingScaleName = "__asan_mapping_scale";
 static const char *kAsanStackMallocName = "__asan_stack_malloc";
@@ -649,6 +650,7 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
   // (unless there are calls between uses).
   SmallSet<Value*, 16> TempsToInstrument;
   SmallVector<Instruction*, 16> ToInstrument;
+  SmallVector<Instruction*, 8> NoReturnCalls;
 
   // Fill the set of memory operations to instrument.
   for (Function::iterator FI = F.begin(), FE = F.end();
@@ -667,9 +669,12 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
       } else if (isa<MemIntrinsic>(BI) && ClMemIntrin) {
         // ok, take it.
       } else {
-        if (isa<CallInst>(BI)) {
+        if (CallInst *CI = dyn_cast<CallInst>(BI)) {
           // A call inside BB.
           TempsToInstrument.clear();
+          if (CI->doesNotReturn()) {
+            NoReturnCalls.push_back(CI);
+          }
         }
         continue;
       }
@@ -694,7 +699,17 @@ bool AddressSanitizer::handleFunction(Module &M, Function &F) {
   DEBUG(dbgs() << F);
 
   bool ChangedStack = poisonStackInFunction(M, F);
-  return NumInstrumented > 0 || ChangedStack;
+
+  // We must unpoison the stack before every NoReturn call (throw, _exit, etc).
+  // See e.g. http://code.google.com/p/address-sanitizer/issues/detail?id=37
+  for (size_t i = 0, n = NoReturnCalls.size(); i != n; i++) {
+    Instruction *CI = NoReturnCalls[i];
+    IRBuilder<> IRB(CI);
+    IRB.CreateCall(M.getOrInsertFunction(kAsanHandleNoReturnName,
+                                         IRB.getVoidTy(), NULL));
+  }
+
+  return NumInstrumented > 0 || ChangedStack || !NoReturnCalls.empty();
 }
 
 static uint64_t ValueForPoison(uint64_t PoisonByte, size_t ShadowRedzoneSize) {
