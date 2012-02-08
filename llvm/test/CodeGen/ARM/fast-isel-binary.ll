@@ -39,6 +39,8 @@ entry:
   ret void
 }
 
+; Test or with non-legal types
+
 define void @or_i1(i1 %a, i1 %b) nounwind ssp {
 entry:
 ; ARM: or_i1
