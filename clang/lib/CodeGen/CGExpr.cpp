@@ -686,6 +686,8 @@ LValue CodeGenFunction::EmitLValue(const Expr *E) {
     return EmitCXXConstructLValue(cast<CXXConstructExpr>(E));
   case Expr::CXXBindTemporaryExprClass:
     return EmitCXXBindTemporaryLValue(cast<CXXBindTemporaryExpr>(E));
+  case Expr::LambdaExprClass:
+    return EmitLambdaLValue(cast<LambdaExpr>(E));
 
   case Expr::ExprWithCleanupsClass: {
     const ExprWithCleanups *cleanups = cast<ExprWithCleanups>(E);
@@ -2356,6 +2358,15 @@ CodeGenFunction::EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E) {
   Slot.setExternallyDestructed();
   EmitAggExpr(E->getSubExpr(), Slot);
   EmitCXXTemporary(E->getTemporary(), E->getType(), Slot.getAddr());
+  return MakeAddrLValue(Slot.getAddr(), E->getType());
+}
+
+LValue
+CodeGenFunction::EmitLambdaLValue(const LambdaExpr *E) {
+  if (E->capture_begin() != E->capture_end())
+    return EmitUnsupportedLValue(E, "lambda expression");
+
+  AggValueSlot Slot = CreateAggTemp(E->getType(), "temp.lvalue");
   return MakeAddrLValue(Slot.getAddr(), E->getType());
 }
 

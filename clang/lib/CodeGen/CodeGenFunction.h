@@ -2117,6 +2117,7 @@ public:
 
   LValue EmitCXXConstructLValue(const CXXConstructExpr *E);
   LValue EmitCXXBindTemporaryLValue(const CXXBindTemporaryExpr *E);
+  LValue EmitLambdaLValue(const LambdaExpr *E);
   LValue EmitCXXTypeidLValue(const CXXTypeidExpr *E);
 
   LValue EmitObjCMessageExprLValue(const ObjCMessageExpr *E);
