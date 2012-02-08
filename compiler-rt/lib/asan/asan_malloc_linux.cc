@@ -71,7 +71,7 @@ INTERCEPTOR(void*, malloc, size_t size) {
 
 INTERCEPTOR(void*, calloc, size_t nmemb, size_t size) {
   if (!asan_inited) {
-    // Hack: dlsym calls calloc before real_calloc is retrieved from dlsym.
+    // Hack: dlsym calls calloc before REAL(calloc) is retrieved from dlsym.
     const size_t kCallocPoolSize = 1024;
     static uintptr_t calloc_memory_for_dlsym[kCallocPoolSize];
     static size_t allocated;
@@ -105,7 +105,7 @@ INTERCEPTOR(size_t, malloc_usable_size, void *ptr) {
 
 INTERCEPTOR(struct mallinfo, mallinfo) {
   struct mallinfo res;
-  real_memset(&res, 0, sizeof(res));
+  REAL(memset)(&res, 0, sizeof(res));
   return res;
 }
 

@@ -21,8 +21,8 @@
 namespace __asan {
 
 AsanStats::AsanStats() {
-  CHECK(real_memset != NULL);
-  real_memset(this, 0, sizeof(AsanStats));
+  CHECK(REAL(memset) != NULL);
+  REAL(memset)(this, 0, sizeof(AsanStats));
 }
 
 static void PrintMallocStatsArray(const char *prefix,

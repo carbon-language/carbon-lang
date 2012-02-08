@@ -241,7 +241,7 @@ static int dl_iterate_phdr_callback(struct dl_phdr_info *info,
     data->filename[path_len] = 0;
   } else {
     CHECK(info->dlpi_name);
-    real_strncpy(data->filename, info->dlpi_name, data->filename_size);
+    REAL(strncpy)(data->filename, info->dlpi_name, data->filename_size);
   }
   data->offset = data->addr - info->dlpi_addr;
   return 1;

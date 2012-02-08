@@ -92,7 +92,7 @@ void *cf_malloc(CFIndex size, CFOptionFlags hint, void *info) {
 
 void *mz_calloc(malloc_zone_t *zone, size_t nmemb, size_t size) {
   if (!asan_inited) {
-    // Hack: dlsym calls calloc before real_calloc is retrieved from dlsym.
+    // Hack: dlsym calls calloc before REAL(calloc) is retrieved from dlsym.
     const size_t kCallocPoolSize = 1024;
     static uintptr_t calloc_memory_for_dlsym[kCallocPoolSize];
     static size_t allocated;
@@ -310,7 +310,7 @@ extern bool kCFUseCollectableAllocator;  // is GC on?
 namespace __asan {
 void ReplaceSystemMalloc() {
   static malloc_introspection_t asan_introspection;
-  __asan::real_memset(&asan_introspection, 0, sizeof(asan_introspection));
+  __asan::REAL(memset)(&asan_introspection, 0, sizeof(asan_introspection));
 
   asan_introspection.enumerator = &mi_enumerator;
   asan_introspection.good_size = &mi_good_size;
@@ -321,7 +321,7 @@ void ReplaceSystemMalloc() {
   asan_introspection.force_unlock = &mi_force_unlock;
 
   static malloc_zone_t asan_zone;
-  __asan::real_memset(&asan_zone, 0, sizeof(malloc_zone_t));
+  __asan::REAL(memset)(&asan_zone, 0, sizeof(malloc_zone_t));
 
   // Start with a version 4 zone which is used for OS X 10.4 and 10.5.
   asan_zone.version = 4;

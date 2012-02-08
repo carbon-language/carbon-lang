@@ -209,8 +209,8 @@ bool AsanProcMaps::NextSegmentLoad(
     if (end) *end = sc->vmaddr + sc->vmsize + dlloff;
     if (offset) *offset = sc->fileoff;
     if (filename) {
-      real_strncpy(filename, _dyld_get_image_name(current_image_),
-                   filename_size);
+      REAL(strncpy)(filename, _dyld_get_image_name(current_image_),
+                    filename_size);
     }
     if (FLAG_v >= 4)
       Report("LC_SEGMENT: %p--%p %s+%p\n", *start, *end, filename, *offset);
@@ -432,8 +432,8 @@ INTERCEPTOR(void, dispatch_async_f, dispatch_queue_t dq, void *ctxt,
         asan_ctxt, pthread_self());
     PRINT_CURRENT_STACK();
   }
-  return real_dispatch_async_f(dq, (void*)asan_ctxt,
-                               asan_dispatch_call_block_and_release);
+  return REAL(dispatch_async_f)(dq, (void*)asan_ctxt,
+                                asan_dispatch_call_block_and_release);
 }
 
 INTERCEPTOR(void, dispatch_sync_f, dispatch_queue_t dq, void *ctxt,
@@ -445,8 +445,8 @@ INTERCEPTOR(void, dispatch_sync_f, dispatch_queue_t dq, void *ctxt,
         asan_ctxt, pthread_self());
     PRINT_CURRENT_STACK();
   }
-  return real_dispatch_sync_f(dq, (void*)asan_ctxt,
-                              asan_dispatch_call_block_and_release);
+  return REAL(dispatch_sync_f)(dq, (void*)asan_ctxt,
+                               asan_dispatch_call_block_and_release);
 }
 
 INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
@@ -458,8 +458,8 @@ INTERCEPTOR(void, dispatch_after_f, dispatch_time_t when,
     Report("dispatch_after_f: %p\n", asan_ctxt);
     PRINT_CURRENT_STACK();
   }
-  return real_dispatch_after_f(when, dq, (void*)asan_ctxt,
-                               asan_dispatch_call_block_and_release);
+  return REAL(dispatch_after_f)(when, dq, (void*)asan_ctxt,
+                                asan_dispatch_call_block_and_release);
 }
 
 INTERCEPTOR(void, dispatch_barrier_async_f, dispatch_queue_t dq, void *ctxt,
@@ -471,8 +471,8 @@ INTERCEPTOR(void, dispatch_barrier_async_f, dispatch_queue_t dq, void *ctxt,
            asan_ctxt, pthread_self());
     PRINT_CURRENT_STACK();
   }
-  real_dispatch_barrier_async_f(dq, (void*)asan_ctxt,
-                                asan_dispatch_call_block_and_release);
+  REAL(dispatch_barrier_async_f)(dq, (void*)asan_ctxt,
+                                 asan_dispatch_call_block_and_release);
 }
 
 INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
@@ -485,8 +485,8 @@ INTERCEPTOR(void, dispatch_group_async_f, dispatch_group_t group,
            asan_ctxt, pthread_self());
     PRINT_CURRENT_STACK();
   }
-  real_dispatch_group_async_f(group, dq, (void*)asan_ctxt,
-                              asan_dispatch_call_block_and_release);
+  REAL(dispatch_group_async_f)(group, dq, (void*)asan_ctxt,
+                               asan_dispatch_call_block_and_release);
 }
 
 // The following stuff has been extremely helpful while looking for the
@@ -521,8 +521,9 @@ INTERCEPTOR(int, pthread_workqueue_additem_np, pthread_workqueue_t workq,
     Report("pthread_workqueue_additem_np: %p\n", asan_ctxt);
     PRINT_CURRENT_STACK();
   }
-  return real_pthread_workqueue_additem_np(workq, wrap_workitem_func, asan_ctxt,
-                                           itemhandlep, gencountp);
+  return REAL(pthread_workqueue_additem_np)(workq, wrap_workitem_func,
+                                            asan_ctxt, itemhandlep,
+                                            gencountp);
 }
 
 // CF_RC_BITS, the layout of CFRuntimeBase and __CFStrIsConstant are internal
@@ -562,7 +563,7 @@ INTERCEPTOR(CFStringRef, CFStringCreateCopy, CFAllocatorRef alloc,
   if (__CFStrIsConstant(str)) {
     return str;
   } else {
-    return real_CFStringCreateCopy(alloc, str);
+    return REAL(CFStringCreateCopy)(alloc, str);
   }
 }
 

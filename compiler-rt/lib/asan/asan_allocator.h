@@ -45,8 +45,8 @@ struct AsanThreadLocalMallocStorage {
   explicit AsanThreadLocalMallocStorage(LinkerInitialized x)
       : quarantine_(x) { }
   AsanThreadLocalMallocStorage() {
-    CHECK(real_memset);
-    real_memset(this, 0, sizeof(AsanThreadLocalMallocStorage));
+    CHECK(REAL(memset));
+    REAL(memset)(this, 0, sizeof(AsanThreadLocalMallocStorage));
   }
 
   AsanChunkFifoList quarantine_;

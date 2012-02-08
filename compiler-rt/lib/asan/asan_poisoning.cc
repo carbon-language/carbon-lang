@@ -24,8 +24,8 @@ void PoisonShadow(uintptr_t addr, size_t size, uint8_t value) {
   CHECK(AddrIsAlignedByGranularity(addr + size));
   uintptr_t shadow_beg = MemToShadow(addr);
   uintptr_t shadow_end = MemToShadow(addr + size);
-  CHECK(real_memset != NULL);
-  real_memset((void*)shadow_beg, value, shadow_end - shadow_beg);
+  CHECK(REAL(memset) != NULL);
+  REAL(memset)((void*)shadow_beg, value, shadow_end - shadow_beg);
 }
 
 void PoisonShadowPartialRightRedzone(uintptr_t addr,
@@ -108,7 +108,7 @@ void __asan_poison_memory_region(void const volatile *addr, size_t size) {
     }
     beg.chunk++;
   }
-  real_memset(beg.chunk, kAsanUserPoisonedMemoryMagic, end.chunk - beg.chunk);
+  REAL(memset)(beg.chunk, kAsanUserPoisonedMemoryMagic, end.chunk - beg.chunk);
   // Poison if byte in end.offset is unaddressable.
   if (end.value > 0 && end.value <= end.offset) {
     *end.chunk = kAsanUserPoisonedMemoryMagic;
@@ -140,7 +140,7 @@ void __asan_unpoison_memory_region(void const volatile *addr, size_t size) {
     *beg.chunk = 0;
     beg.chunk++;
   }
-  real_memset(beg.chunk, 0, end.chunk - beg.chunk);
+  REAL(memset)(beg.chunk, 0, end.chunk - beg.chunk);
   if (end.offset > 0 && end.value != 0) {
     *end.chunk = Max(end.value, end.offset);
   }

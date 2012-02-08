@@ -159,8 +159,8 @@ size_t internal_strlen(const char *s) {
 
 size_t internal_strnlen(const char *s, size_t maxlen) {
 #ifndef __APPLE__
-  if (real_strnlen != NULL) {
-    return real_strnlen(s, maxlen);
+  if (REAL(strnlen) != NULL) {
+    return REAL(strnlen)(s, maxlen);
   }
 #endif
   size_t i = 0;
@@ -264,12 +264,12 @@ INTERCEPTOR(int, pthread_create, pthread_t *thread,
   int current_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
   AsanThread *t = AsanThread::Create(current_tid, start_routine, arg, &stack);
   asanThreadRegistry().RegisterThread(t);
-  return real_pthread_create(thread, attr, asan_thread_start, t);
+  return REAL(pthread_create)(thread, attr, asan_thread_start, t);
 }
 
 INTERCEPTOR(void*, signal, int signum, void *handler) {
   if (!AsanInterceptsSignal(signum)) {
-    return real_signal(signum, handler);
+    return REAL(signal)(signum, handler);
   }
   return NULL;
 }
@@ -277,7 +277,7 @@ INTERCEPTOR(void*, signal, int signum, void *handler) {
 INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
                             struct sigaction *oldact) {
   if (!AsanInterceptsSignal(signum)) {
-    return real_sigaction(signum, act, oldact);
+    return REAL(sigaction)(signum, act, oldact);
   }
   return 0;
 }
@@ -295,17 +295,17 @@ static void UnpoisonStackFromHereToTop() {
 
 INTERCEPTOR(void, longjmp, void *env, int val) {
   UnpoisonStackFromHereToTop();
-  real_longjmp(env, val);
+  REAL(longjmp)(env, val);
 }
 
 INTERCEPTOR(void, _longjmp, void *env, int val) {
   UnpoisonStackFromHereToTop();
-  real__longjmp(env, val);
+  REAL(_longjmp)(env, val);
 }
 
 INTERCEPTOR(void, siglongjmp, void *env, int val) {
   UnpoisonStackFromHereToTop();
-  real_siglongjmp(env, val);
+  REAL(siglongjmp)(env, val);
 }
 
 #if ASAN_HAS_EXCEPTIONS == 1
@@ -314,9 +314,9 @@ extern "C" void __cxa_throw(void *a, void *b, void *c);
 #endif  // __APPLE__
 
 INTERCEPTOR(void, __cxa_throw, void *a, void *b, void *c) {
-  CHECK(&real___cxa_throw);
+  CHECK(REAL(__cxa_throw));
   UnpoisonStackFromHereToTop();
-  real___cxa_throw(a, b, c);
+  REAL(__cxa_throw)(a, b, c);
 }
 #endif
 
@@ -386,7 +386,7 @@ INTERCEPTOR(void*, memcpy, void *to, const void *from, size_t size) {
   // memcpy is called during __asan_init() from the internals
   // of printf(...).
   if (asan_init_is_running) {
-    return real_memcpy(to, from, size);
+    return REAL(memcpy)(to, from, size);
   }
   ENSURE_ASAN_INITED();
   if (FLAG_replace_intrin) {
@@ -398,7 +398,7 @@ INTERCEPTOR(void*, memcpy, void *to, const void *from, size_t size) {
     ASAN_WRITE_RANGE(from, size);
     ASAN_READ_RANGE(to, size);
   }
-  return real_memcpy(to, from, size);
+  return REAL(memcpy)(to, from, size);
 }
 
 INTERCEPTOR(void*, memmove, void *to, const void *from, size_t size) {
@@ -407,26 +407,26 @@ INTERCEPTOR(void*, memmove, void *to, const void *from, size_t size) {
     ASAN_WRITE_RANGE(from, size);
     ASAN_READ_RANGE(to, size);
   }
-  return real_memmove(to, from, size);
+  return REAL(memmove)(to, from, size);
 }
 
 INTERCEPTOR(void*, memset, void *block, int c, size_t size) {
   // memset is called inside INTERCEPT_FUNCTION on Mac.
   if (asan_init_is_running) {
-    return real_memset(block, c, size);
+    return REAL(memset)(block, c, size);
   }
   ENSURE_ASAN_INITED();
   if (FLAG_replace_intrin) {
     ASAN_WRITE_RANGE(block, size);
   }
-  return real_memset(block, c, size);
+  return REAL(memset)(block, c, size);
 }
 
 INTERCEPTOR(char*, strchr, const char *str, int c) {
   ENSURE_ASAN_INITED();
-  char *result = real_strchr(str, c);
+  char *result = REAL(strchr)(str, c);
   if (FLAG_replace_str) {
-    size_t bytes_read = (result ? result - str : real_strlen(str)) + 1;
+    size_t bytes_read = (result ? result - str : REAL(strlen)(str)) + 1;
     ASAN_READ_RANGE(str, bytes_read);
   }
   return result;
@@ -456,16 +456,16 @@ INTERCEPTOR(int, strcasecmp, const char *s1, const char *s2) {
 INTERCEPTOR(char*, strcat, char *to, const char *from) {  // NOLINT
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
-    size_t from_length = real_strlen(from);
+    size_t from_length = REAL(strlen)(from);
     ASAN_READ_RANGE(from, from_length + 1);
     if (from_length > 0) {
-      size_t to_length = real_strlen(to);
+      size_t to_length = REAL(strlen)(to);
       ASAN_READ_RANGE(to, to_length);
       ASAN_WRITE_RANGE(to + to_length, from_length + 1);
       CHECK_RANGES_OVERLAP("strcat", to, to_length + 1, from, from_length + 1);
     }
   }
-  return real_strcat(to, from);
+  return REAL(strcat)(to, from);  // NOLINT
 }
 
 INTERCEPTOR(int, strcmp, const char *s1, const char *s2) {
@@ -488,35 +488,35 @@ INTERCEPTOR(char*, strcpy, char *to, const char *from) {  // NOLINT
   // strcpy is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
   if (asan_init_is_running) {
-    return real_strcpy(to, from);
+    return REAL(strcpy)(to, from);  // NOLINT
   }
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
-    size_t from_size = real_strlen(from) + 1;
+    size_t from_size = REAL(strlen)(from) + 1;
     CHECK_RANGES_OVERLAP("strcpy", to, from_size, from, from_size);
     ASAN_READ_RANGE(from, from_size);
     ASAN_WRITE_RANGE(to, from_size);
   }
-  return real_strcpy(to, from);
+  return REAL(strcpy)(to, from);  // NOLINT
 }
 
 INTERCEPTOR(char*, strdup, const char *s) {
   ENSURE_ASAN_INITED();
   if (FLAG_replace_str) {
-    size_t length = real_strlen(s);
+    size_t length = REAL(strlen)(s);
     ASAN_READ_RANGE(s, length + 1);
   }
-  return real_strdup(s);
+  return REAL(strdup)(s);
 }
 
 INTERCEPTOR(size_t, strlen, const char *s) {
   // strlen is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
   if (asan_init_is_running) {
-    return real_strlen(s);
+    return REAL(strlen)(s);
   }
   ENSURE_ASAN_INITED();
-  size_t length = real_strlen(s);
+  size_t length = REAL(strlen)(s);
   if (FLAG_replace_str) {
     ASAN_READ_RANGE(s, length + 1);
   }
@@ -541,7 +541,7 @@ INTERCEPTOR(int, strncmp, const char *s1, const char *s2, size_t size) {
   // strncmp is called from malloc_default_purgeable_zone()
   // in __asan::ReplaceSystemAlloc() on Mac.
   if (asan_init_is_running) {
-    return real_strncmp(s1, s2, size);
+    return REAL(strncmp)(s1, s2, size);
   }
   unsigned char c1 = 0, c2 = 0;
   size_t i;
@@ -563,13 +563,13 @@ INTERCEPTOR(char*, strncpy, char *to, const char *from, size_t size) {
     ASAN_READ_RANGE(from, from_size);
     ASAN_WRITE_RANGE(to, size);
   }
-  return real_strncpy(to, from, size);
+  return REAL(strncpy)(to, from, size);
 }
 
 #ifndef __APPLE__
 INTERCEPTOR(size_t, strnlen, const char *s, size_t maxlen) {
   ENSURE_ASAN_INITED();
-  size_t length = real_strnlen(s, maxlen);
+  size_t length = REAL(strnlen)(s, maxlen);
   if (FLAG_replace_str) {
     ASAN_READ_RANGE(s, Min(length + 1, maxlen));
   }
@@ -596,7 +596,7 @@ void InitializeAsanInterceptors() {
   if (GetMacosVersion() == MACOS_VERSION_SNOW_LEOPARD) {
     INTERCEPT_FUNCTION(memcpy);
   } else {
-    real_memcpy = real_memmove;
+    REAL(memcpy) = REAL(memmove);
   }
 #else
   // Always wrap memcpy() on non-Darwin platforms.

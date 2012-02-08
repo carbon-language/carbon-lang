@@ -668,7 +668,7 @@ static uint8_t *Allocate(size_t alignment, size_t size, AsanStackTrace *stack) {
                                   size & (REDZONE - 1));
   }
   if (size <= FLAG_max_malloc_fill_size) {
-    real_memset((void*)addr, 0, rounded_size);
+    REAL(memset)((void*)addr, 0, rounded_size);
   }
   return (uint8_t*)addr;
 }
@@ -740,8 +740,8 @@ static uint8_t *Reallocate(uint8_t *old_ptr, size_t new_size,
   size_t memcpy_size = Min(new_size, old_size);
   uint8_t *new_ptr = Allocate(0, new_size, stack);
   if (new_ptr) {
-    CHECK(real_memcpy != NULL);
-    real_memcpy(new_ptr, old_ptr, memcpy_size);
+    CHECK(REAL(memcpy) != NULL);
+    REAL(memcpy)(new_ptr, old_ptr, memcpy_size);
     Deallocate(old_ptr, stack);
   }
   return new_ptr;
@@ -791,7 +791,7 @@ void *asan_malloc(size_t size, AsanStackTrace *stack) {
 void *asan_calloc(size_t nmemb, size_t size, AsanStackTrace *stack) {
   void *ptr = (void*)Allocate(0, nmemb * size, stack);
   if (ptr)
-    real_memset(ptr, 0, nmemb * size);
+    REAL(memset)(ptr, 0, nmemb * size);
   ASAN_NEW_HOOK(ptr, nmemb * size);
   return ptr;
 }
@@ -867,8 +867,8 @@ void asan_mz_force_unlock() {
 
 // ---------------------- Fake stack-------------------- {{{1
 FakeStack::FakeStack() {
-  CHECK(real_memset != NULL);
-  real_memset(this, 0, sizeof(*this));
+  CHECK(REAL(memset) != NULL);
+  REAL(memset)(this, 0, sizeof(*this));
 }
 
 bool FakeStack::AddrIsInSizeClass(uintptr_t addr, size_t size_class) {

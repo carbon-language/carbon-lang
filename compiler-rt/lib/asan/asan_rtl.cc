@@ -148,7 +148,7 @@ static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
   // where alloc_i looks like "offset size len ObjectName ".
   CHECK(frame_descr);
   // Report the function name and the offset.
-  const char *name_end = real_strchr(frame_descr, ' ');
+  const char *name_end = REAL(strchr)(frame_descr, ' ');
   CHECK(name_end);
   buf[0] = 0;
   internal_strncat(buf, frame_descr,
