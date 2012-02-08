@@ -1092,17 +1092,17 @@ let TargetPrefix = "x86" in {  // All intrinsics start with "llvm.x86.".
         Intrinsic<[llvm_v8i32_ty], [llvm_v8i32_ty,
                   llvm_v8i32_ty, llvm_i8_ty], [IntrNoMem]>;
 
-  def int_x86_avx_vpermil_pd : GCCBuiltin<"__builtin_ia32_vpermilpd">,
+  def int_x86_avx_vpermil_pd :
         Intrinsic<[llvm_v2f64_ty], [llvm_v2f64_ty,
                   llvm_i8_ty], [IntrNoMem]>;
-  def int_x86_avx_vpermil_ps : GCCBuiltin<"__builtin_ia32_vpermilps">,
+  def int_x86_avx_vpermil_ps :
         Intrinsic<[llvm_v4f32_ty], [llvm_v4f32_ty,
                   llvm_i8_ty], [IntrNoMem]>;
 
-  def int_x86_avx_vpermil_pd_256 : GCCBuiltin<"__builtin_ia32_vpermilpd256">,
+  def int_x86_avx_vpermil_pd_256 :
         Intrinsic<[llvm_v4f64_ty], [llvm_v4f64_ty,
                   llvm_i8_ty], [IntrNoMem]>;
-  def int_x86_avx_vpermil_ps_256 : GCCBuiltin<"__builtin_ia32_vpermilps256">,
+  def int_x86_avx_vpermil_ps_256 :
         Intrinsic<[llvm_v8f32_ty], [llvm_v8f32_ty,
                   llvm_i8_ty], [IntrNoMem]>;
 }

@@ -7129,8 +7129,8 @@ defm VMASKMOVPD : avx_movmask_rm<0x2D, 0x2F, "vmaskmovpd",
 //
 multiclass avx_permil<bits<8> opc_rm, bits<8> opc_rmi, string OpcodeStr,
                       RegisterClass RC, X86MemOperand x86memop_f,
-                      X86MemOperand x86memop_i, PatFrag f_frag, PatFrag i_frag,
-                      Intrinsic IntVar, Intrinsic IntImm> {
+                      X86MemOperand x86memop_i, PatFrag i_frag,
+                      Intrinsic IntVar, ValueType vt> {
   def rr  : AVX8I<opc_rm, MRMSrcReg, (outs RC:$dst),
              (ins RC:$src1, RC:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
@@ -7144,63 +7144,40 @@ multiclass avx_permil<bits<8> opc_rm, bits<8> opc_rmi, string OpcodeStr,
   def ri  : AVXAIi8<opc_rmi, MRMSrcReg, (outs RC:$dst),
              (ins RC:$src1, i8imm:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set RC:$dst, (IntImm RC:$src1, imm:$src2))]>, VEX;
+             [(set RC:$dst, (vt (X86VPermilp RC:$src1, (i8 imm:$src2))))]>, VEX;
   def mi  : AVXAIi8<opc_rmi, MRMSrcMem, (outs RC:$dst),
              (ins x86memop_f:$src1, i8imm:$src2),
              !strconcat(OpcodeStr, "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-             [(set RC:$dst, (IntImm (f_frag addr:$src1), imm:$src2))]>, VEX;
+             [(set RC:$dst,
+               (vt (X86VPermilp (memop addr:$src1), (i8 imm:$src2))))]>, VEX;
 }
 
 let ExeDomain = SSEPackedSingle in {
   defm VPERMILPS  : avx_permil<0x0C, 0x04, "vpermilps", VR128, f128mem, i128mem,
-                               memopv4f32, memopv2i64,
-                               int_x86_avx_vpermilvar_ps,
-                               int_x86_avx_vpermil_ps>;
+                               memopv2i64, int_x86_avx_vpermilvar_ps, v4f32>;
   defm VPERMILPSY : avx_permil<0x0C, 0x04, "vpermilps", VR256, f256mem, i256mem,
-                               memopv8f32, memopv4i64,
-                               int_x86_avx_vpermilvar_ps_256,
-                               int_x86_avx_vpermil_ps_256>;
+                              memopv4i64, int_x86_avx_vpermilvar_ps_256, v8f32>;
 }
 let ExeDomain = SSEPackedDouble in {
   defm VPERMILPD  : avx_permil<0x0D, 0x05, "vpermilpd", VR128, f128mem, i128mem,
-                               memopv2f64, memopv2i64,
-                               int_x86_avx_vpermilvar_pd,
-                               int_x86_avx_vpermil_pd>;
+                               memopv2i64, int_x86_avx_vpermilvar_pd, v2f64>;
   defm VPERMILPDY : avx_permil<0x0D, 0x05, "vpermilpd", VR256, f256mem, i256mem,
-                               memopv4f64, memopv4i64,
-                               int_x86_avx_vpermilvar_pd_256,
-                               int_x86_avx_vpermil_pd_256>;
+                              memopv4i64, int_x86_avx_vpermilvar_pd_256, v4f64>;
 }
 
 let Predicates = [HasAVX] in {
-def : Pat<(v8f32 (X86VPermilp VR256:$src1, (i8 imm:$imm))),
-          (VPERMILPSYri VR256:$src1, imm:$imm)>;
-def : Pat<(v4f64 (X86VPermilp VR256:$src1, (i8 imm:$imm))),
-          (VPERMILPDYri VR256:$src1, imm:$imm)>;
 def : Pat<(v8i32 (X86VPermilp VR256:$src1, (i8 imm:$imm))),
           (VPERMILPSYri VR256:$src1, imm:$imm)>;
 def : Pat<(v4i64 (X86VPermilp VR256:$src1, (i8 imm:$imm))),
           (VPERMILPDYri VR256:$src1, imm:$imm)>;
-def : Pat<(v8f32 (X86VPermilp (memopv8f32 addr:$src1), (i8 imm:$imm))),
-          (VPERMILPSYmi addr:$src1, imm:$imm)>;
-def : Pat<(v4f64 (X86VPermilp (memopv4f64 addr:$src1), (i8 imm:$imm))),
-          (VPERMILPDYmi addr:$src1, imm:$imm)>;
 def : Pat<(v8i32 (X86VPermilp (bc_v8i32 (memopv4i64 addr:$src1)),
                                (i8 imm:$imm))),
           (VPERMILPSYmi addr:$src1, imm:$imm)>;
 def : Pat<(v4i64 (X86VPermilp (memopv4i64 addr:$src1), (i8 imm:$imm))),
           (VPERMILPDYmi addr:$src1, imm:$imm)>;
 
-def : Pat<(v4f32 (X86VPermilp VR128:$src1, (i8 imm:$imm))),
-          (VPERMILPSri VR128:$src1, imm:$imm)>;
-def : Pat<(v2f64 (X86VPermilp VR128:$src1, (i8 imm:$imm))),
-          (VPERMILPDri VR128:$src1, imm:$imm)>;
 def : Pat<(v2i64 (X86VPermilp VR128:$src1, (i8 imm:$imm))),
           (VPERMILPDri VR128:$src1, imm:$imm)>;
-def : Pat<(v4f32 (X86VPermilp (memopv4f32 addr:$src1), (i8 imm:$imm))),
-          (VPERMILPSmi addr:$src1, imm:$imm)>;
-def : Pat<(v2f64 (X86VPermilp (memopv2f64 addr:$src1), (i8 imm:$imm))),
-          (VPERMILPDmi addr:$src1, imm:$imm)>;
 def : Pat<(v2i64 (X86VPermilp (memopv2i64 addr:$src1), (i8 imm:$imm))),
           (VPERMILPDmi addr:$src1, imm:$imm)>;
 }
