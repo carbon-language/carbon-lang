@@ -9722,8 +9722,6 @@ void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc,
       // of the copy/move done to move a __block variable to the heap.
       type.addConst();
 
-      // FIXME: Add an initialized entity for lambda capture.
-      // FIXME: Won't work for arrays, although we do need this behavior.
       Expr *declRef = new (Context) DeclRefExpr(var, type, VK_LValue, loc);
       ExprResult result =
         PerformCopyInitialization(

@@ -280,6 +280,9 @@ public:
   /// \brief The class that describes the lambda.
   CXXRecordDecl *Lambda;
 
+  /// \brief The class that describes the lambda.
+  CXXMethodDecl *CallOperator;
+
   /// \brief Source range covering the lambda introducer [...].
   SourceRange IntroducerRange;
 
@@ -292,9 +295,10 @@ public:
   /// \brief Whether the (empty) parameter list is explicit.
   bool ExplicitParams;
 
-  LambdaScopeInfo(DiagnosticsEngine &Diag, CXXRecordDecl *Lambda)
+  LambdaScopeInfo(DiagnosticsEngine &Diag, CXXRecordDecl *Lambda,
+                  CXXMethodDecl *CallOperator)
     : CapturingScopeInfo(Diag, ImpCap_None), Lambda(Lambda),
-      NumExplicitCaptures(0), Mutable(false)
+      CallOperator(CallOperator), NumExplicitCaptures(0), Mutable(false)
   {
     Kind = SK_Lambda;
   }
