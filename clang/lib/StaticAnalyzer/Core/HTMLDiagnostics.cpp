@@ -119,12 +119,13 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   if (noDir)
     return;
 
-  const SourceManager &SMgr = D.begin()->getLocation().getManager();
+  const SourceManager &SMgr = (*D.path.begin())->getLocation().getManager();
   FileID FID;
 
   // Verify that the entire path is from the same FileID.
-  for (PathDiagnostic::const_iterator I = D.begin(), E = D.end(); I != E; ++I) {
-    FullSourceLoc L = I->getLocation().asLocation().getExpansionLoc();
+  for (PathPieces::const_iterator I = D.path.begin(), E = D.path.end();
+       I != E; ++I) {
+    FullSourceLoc L = (*I)->getLocation().asLocation().getExpansionLoc();
 
     if (FID.isInvalid()) {
       FID = SMgr.getFileID(L);
@@ -132,16 +133,13 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
       return; // FIXME: Emit a warning?
 
     // Check the source ranges.
-    for (PathDiagnosticPiece::range_iterator RI=I->ranges_begin(),
-                                             RE=I->ranges_end(); RI!=RE; ++RI) {
-
+    for (PathDiagnosticPiece::range_iterator RI = (*I)->ranges_begin(),
+                                             RE = (*I)->ranges_end();
+                                             RI != RE; ++RI) {
       SourceLocation L = SMgr.getExpansionLoc(RI->getBegin());
-
       if (!L.isFileID() || SMgr.getFileID(L) != FID)
         return; // FIXME: Emit a warning?
-
       L = SMgr.getExpansionLoc(RI->getEnd());
-
       if (!L.isFileID() || SMgr.getFileID(L) != FID)
         return; // FIXME: Emit a warning?
     }
@@ -154,12 +152,12 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   Rewriter R(const_cast<SourceManager&>(SMgr), PP.getLangOptions());
 
   // Process the path.
-  unsigned n = D.size();
+  unsigned n = D.path.size();
   unsigned max = n;
 
-  for (PathDiagnostic::const_reverse_iterator I=D.rbegin(), E=D.rend();
-        I!=E; ++I, --n)
-    HandlePiece(R, FID, *I, n, max);
+  for (PathPieces::const_reverse_iterator I = D.path.rbegin(), E=D.path.rend();
+        I != E; ++I, --n)
+    HandlePiece(R, FID, **I, n, max);
 
   // Add line numbers, header, footer, etc.
 
@@ -202,9 +200,9 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
       << html::EscapeText(Entry->getName())
       << "</td></tr>\n<tr><td class=\"rowname\">Location:</td><td>"
          "<a href=\"#EndPath\">line "
-      << (*D.rbegin()).getLocation().asLocation().getExpansionLineNumber()
+      << (*D.path.rbegin())->getLocation().asLocation().getExpansionLineNumber()
       << ", column "
-      << (*D.rbegin()).getLocation().asLocation().getExpansionColumnNumber()
+      << (*D.path.rbegin())->getLocation().asLocation().getExpansionColumnNumber()
       << "</a></td></tr>\n"
          "<tr><td class=\"rowname\">Description:</td><td>"
       << D.getDescription() << "</td></tr>\n";
@@ -242,10 +240,10 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
     os << "\n<!-- BUGFILE " << DirName << Entry->getName() << " -->\n";
 
     os << "\n<!-- BUGLINE "
-       << D.back()->getLocation().asLocation().getExpansionLineNumber()
+       << D.path.back()->getLocation().asLocation().getExpansionLineNumber()
        << " -->\n";
 
-    os << "\n<!-- BUGPATHLENGTH " << D.size() << " -->\n";
+    os << "\n<!-- BUGPATHLENGTH " << D.path.size() << " -->\n";
 
     // Mark the end of the tags.
     os << "\n<!-- BUGMETAEND -->\n";
@@ -501,7 +499,7 @@ unsigned HTMLDiagnostics::ProcessMacroPiece(raw_ostream &os,
                                             const PathDiagnosticMacroPiece& P,
                                             unsigned num) {
 
-  for (PathDiagnosticMacroPiece::const_iterator I=P.begin(), E=P.end();
+  for (PathPieces::const_iterator I = P.subPieces.begin(), E=P.subPieces.end();
         I!=E; ++I) {
 
     if (const PathDiagnosticMacroPiece *MP =

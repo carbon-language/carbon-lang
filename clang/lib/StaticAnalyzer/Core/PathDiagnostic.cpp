@@ -24,15 +24,14 @@ using namespace clang;
 using namespace ento;
 
 bool PathDiagnosticMacroPiece::containsEvent() const {
-  for (const_iterator I = begin(), E = end(); I!=E; ++I) {
+  for (PathPieces::const_iterator I = subPieces.begin(), E = subPieces.end();
+       I!=E; ++I) {
     if (isa<PathDiagnosticEventPiece>(*I))
       return true;
-
     if (PathDiagnosticMacroPiece *MP = dyn_cast<PathDiagnosticMacroPiece>(*I))
       if (MP->containsEvent())
         return true;
   }
-
   return false;
 }
 
@@ -55,34 +54,14 @@ PathDiagnosticEventPiece::~PathDiagnosticEventPiece() {}
 PathDiagnosticCallEnterPiece::~PathDiagnosticCallEnterPiece() {}
 PathDiagnosticCallExitPiece::~PathDiagnosticCallExitPiece() {}
 PathDiagnosticControlFlowPiece::~PathDiagnosticControlFlowPiece() {}
-
-PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {
-  for (iterator I = begin(), E = end(); I != E; ++I) delete *I;
-}
-
-PathDiagnostic::PathDiagnostic() : Size(0) {}
-
-PathPieces::~PathPieces() {
-  for (iterator I = begin(), E = end(); I != E; ++I) delete *I;
-}
-
+PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {}
+PathDiagnostic::PathDiagnostic() {}
+PathPieces::~PathPieces() {}
 PathDiagnostic::~PathDiagnostic() {}
-
-void PathDiagnostic::resetPath(bool deletePieces) {
-  Size = 0;
-
-  if (deletePieces)
-    for (iterator I=begin(), E=end(); I!=E; ++I)
-      delete &*I;
-
-  path.clear();
-}
-
 
 PathDiagnostic::PathDiagnostic(StringRef bugtype, StringRef desc,
                                StringRef category)
-  : Size(0),
-    BugType(StripTrailingDots(bugtype)),
+  : BugType(StripTrailingDots(bugtype)),
     Desc(StripTrailingDots(desc)),
     Category(StripTrailingDots(category)) {}
 
@@ -100,7 +79,7 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
   if (!D)
     return;
   
-  if (D->empty()) {
+  if (D->path.empty()) {
     delete D;
     return;
   }
@@ -117,9 +96,9 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
 
   if (PathDiagnostic *orig = Diags.FindNodeOrInsertPos(profile, InsertPos)) {
     // Keep the PathDiagnostic with the shorter path.
-    if (orig->size() <= D->size()) {
+    if (orig->path.size() <= D->path.size()) {
       bool shouldKeepOriginal = true;
-      if (orig->size() == D->size()) {
+      if (orig->path.size() == D->path.size()) {
         // Here we break ties in a fairly arbitrary, but deterministic, way.
         llvm::FoldingSetNodeID fullProfile, fullProfileOrig;
         D->FullProfile(fullProfile);
@@ -476,12 +455,13 @@ void PathDiagnosticControlFlowPiece::Profile(llvm::FoldingSetNodeID &ID) const {
 
 void PathDiagnosticMacroPiece::Profile(llvm::FoldingSetNodeID &ID) const {
   PathDiagnosticSpotPiece::Profile(ID);
-  for (const_iterator I = begin(), E = end(); I != E; ++I)
+  for (PathPieces::const_iterator I = subPieces.begin(), E = subPieces.end();
+       I != E; ++I)
     ID.Add(**I);
 }
 
 void PathDiagnostic::Profile(llvm::FoldingSetNodeID &ID) const {
-  if (Size)
+  if (!path.empty())
     getLocation().Profile(ID);
   ID.AddString(BugType);
   ID.AddString(Desc);
@@ -490,8 +470,8 @@ void PathDiagnostic::Profile(llvm::FoldingSetNodeID &ID) const {
 
 void PathDiagnostic::FullProfile(llvm::FoldingSetNodeID &ID) const {
   Profile(ID);
-  for (const_iterator I = begin(), E = end(); I != E; ++I)
-    ID.Add(*I);
+  for (PathPieces::const_iterator I = path.begin(), E = path.end(); I != E; ++I)
+    ID.Add(**I);
   for (meta_iterator I = meta_begin(), E = meta_end(); I != E; ++I)
     ID.AddString(*I);
 }

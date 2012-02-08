@@ -58,11 +58,12 @@ void TextPathDiagnostics::FlushDiagnosticsImpl(
   for (std::vector<const PathDiagnostic *>::iterator it = Diags.begin(),
        et = Diags.end(); it != et; ++it) {
     const PathDiagnostic *D = *it;
-    for (PathDiagnostic::const_iterator I=D->begin(), E=D->end(); I != E; ++I) {
+    for (PathPieces::const_iterator I = D->path.begin(), E = D->path.end(); 
+         I != E; ++I) {
       unsigned diagID =
         Diag.getDiagnosticIDs()->getCustomDiagID(DiagnosticIDs::Note,
-                                                 I->getString());
-      Diag.Report(I->getLocation().asLocation(), diagID);
+                                                 (*I)->getString());
+      Diag.Report((*I)->getLocation().asLocation(), diagID);
     }
   }
 }

@@ -29,6 +29,7 @@
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include <queue>
 
 using namespace clang;
@@ -446,7 +447,7 @@ public:
       PathDiagnosticLocation L =
         PathDiagnosticLocation::createBegin(S, BR.getSourceManager(),
                                                    Pred->getLocationContext());
-      PD.push_front(new PathDiagnosticEventPiece(L, os.str()));
+      PD.path.push_front(new PathDiagnosticEventPiece(L, os.str()));
     }
 
     return true;
@@ -558,8 +559,8 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
 
           os << "Control jumps to line "
           << End.asLocation().getExpansionLineNumber();
-          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
-                                                           os.str()));
+          PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+                                                                os.str()));
           break;
         }
 
@@ -610,13 +611,13 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                 break;
               }
             }
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+            PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                              os.str()));
           }
           else {
             os << "'Default' branch taken. ";
             const PathDiagnosticLocation &End = PDB.ExecutionContinues(os, N);
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+            PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                              os.str()));
           }
 
@@ -628,7 +629,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
           std::string sbuf;
           llvm::raw_string_ostream os(sbuf);
           PathDiagnosticLocation End = PDB.ExecutionContinues(os, N);
-          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+          PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                            os.str()));
           break;
         }
@@ -650,7 +651,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
           if (const Stmt *S = End.asStmt())
             End = PDB.getEnclosingStmtLocation(S);
 
-          PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+          PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                            os.str()));
           break;
         }
@@ -673,14 +674,14 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
               PathDiagnosticLocation End(B->getLHS(), SMgr, LC);
               PathDiagnosticLocation Start =
                 PathDiagnosticLocation::createOperatorLoc(B, SMgr);
-              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+              PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                                os.str()));
             }
             else {
               os << "true";
               PathDiagnosticLocation Start(B->getLHS(), SMgr, LC);
               PathDiagnosticLocation End = PDB.ExecutionContinues(N);
-              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+              PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                                os.str()));
             }
           }
@@ -692,7 +693,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
               os << "false";
               PathDiagnosticLocation Start(B->getLHS(), SMgr, LC);
               PathDiagnosticLocation End = PDB.ExecutionContinues(N);
-              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+              PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                                os.str()));
             }
             else {
@@ -700,7 +701,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
               PathDiagnosticLocation End(B->getLHS(), SMgr, LC);
               PathDiagnosticLocation Start =
                 PathDiagnosticLocation::createOperatorLoc(B, SMgr);
-              PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+              PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                                os.str()));
             }
           }
@@ -719,7 +720,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
             if (const Stmt *S = End.asStmt())
               End = PDB.getEnclosingStmtLocation(S);
 
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+            PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                              os.str()));
           }
           else {
@@ -728,7 +729,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
             if (const Stmt *S = End.asStmt())
               End = PDB.getEnclosingStmtLocation(S);
 
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+            PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                               "Loop condition is false.  Exiting loop"));
           }
 
@@ -746,7 +747,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
             if (const Stmt *S = End.asStmt())
               End = PDB.getEnclosingStmtLocation(S);
 
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+            PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                              os.str()));
           }
           else {
@@ -754,7 +755,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
             if (const Stmt *S = End.asStmt())
               End = PDB.getEnclosingStmtLocation(S);
 
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+            PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                             "Loop condition is true.  Entering loop body"));
           }
 
@@ -768,10 +769,10 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
             End = PDB.getEnclosingStmtLocation(S);
 
           if (*(Src->succ_begin()+1) == Dst)
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+            PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                         "Taking false branch"));
           else
-            PD.push_front(new PathDiagnosticControlFlowPiece(Start, End,
+            PD.path.push_front(new PathDiagnosticControlFlowPiece(Start, End,
                                                          "Taking true branch"));
 
           break;
@@ -785,7 +786,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
       for (BugReport::visitor_iterator I = R->visitor_begin(),
            E = R->visitor_end(); I!=E; ++I) {
         if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *R))
-          PD.push_front(p);
+          PD.path.push_front(p);
       }
     }
 
@@ -906,8 +907,8 @@ public:
 
       // If the PathDiagnostic already has pieces, add the enclosing statement
       // of the first piece as a context as well.
-      if (!PD.empty()) {
-        PrevLoc = PD.begin()->getLocation();
+      if (!PD.path.empty()) {
+        PrevLoc = (*PD.path.begin())->getLocation();
 
         if (const Stmt *S = PrevLoc.asStmt())
           addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());
@@ -1018,7 +1019,7 @@ void EdgeBuilder::rawAddEdge(PathDiagnosticLocation NewLoc) {
       PrevLocClean.asLocation().getExpansionLoc())
     return;
 
-  PD.push_front(new PathDiagnosticControlFlowPiece(NewLocClean, PrevLocClean));
+  PD.path.push_front(new PathDiagnosticControlFlowPiece(NewLocClean, PrevLocClean));
   PrevLoc = NewLoc;
 }
 
@@ -1178,7 +1179,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
                                         "Looping back to the head of the loop");
 
           EB.addEdge(p->getLocation(), true);
-          PD.push_front(p);
+          PD.path.push_front(p);
 
           if (CS) {
             PathDiagnosticLocation BL =
@@ -1220,7 +1221,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       if (PathDiagnosticPiece *p = (*I)->VisitNode(N, NextNode, PDB, *R)) {
         const PathDiagnosticLocation &Loc = p->getLocation();
         EB.addEdge(Loc, true);
-        PD.push_front(p);
+        PD.path.push_front(p);
         if (const Stmt *S = Loc.asStmt())
           EB.addExtendedContext(PDB.getEnclosingStmtLocation(S).asStmt());
       }
@@ -1549,18 +1550,18 @@ MakeReportGraph(const ExplodedGraph* G,
 /// CompactPathDiagnostic - This function postprocesses a PathDiagnostic object
 ///  and collapses PathDiagosticPieces that are expanded by macros.
 static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
-  typedef std::vector<std::pair<PathDiagnosticMacroPiece*, SourceLocation> >
+  typedef std::vector<std::pair<llvm::IntrusiveRefCntPtr<PathDiagnosticMacroPiece>, SourceLocation> >
           MacroStackTy;
 
-  typedef std::vector<PathDiagnosticPiece*>
+  typedef std::vector<llvm::IntrusiveRefCntPtr<PathDiagnosticPiece> >
           PiecesTy;
 
   MacroStackTy MacroStack;
   PiecesTy Pieces;
 
-  for (PathDiagnostic::iterator I = PD.begin(), E = PD.end(); I!=E; ++I) {
+  for (PathPieces::iterator I = PD.path.begin(), E = PD.path.end(); I!=E; ++I) {
     // Get the location of the PathDiagnosticPiece.
-    const FullSourceLoc Loc = I->getLocation().asLocation();
+    const FullSourceLoc Loc = (*I)->getLocation().asLocation();
 
     // Determine the instantiation location, which is the location we group
     // related PathDiagnosticPieces.
@@ -1570,7 +1571,7 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
 
     if (Loc.isFileID()) {
       MacroStack.clear();
-      Pieces.push_back(&*I);
+      Pieces.push_back(*I);
       continue;
     }
 
@@ -1578,13 +1579,13 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
 
     // Is the PathDiagnosticPiece within the same macro group?
     if (!MacroStack.empty() && InstantiationLoc == MacroStack.back().second) {
-      MacroStack.back().first->push_back(&*I);
+      MacroStack.back().first->subPieces.push_back(*I);
       continue;
     }
 
     // We aren't in the same group.  Are we descending into a new macro
     // or are part of an old one?
-    PathDiagnosticMacroPiece *MacroGroup = 0;
+    llvm::IntrusiveRefCntPtr<PathDiagnosticMacroPiece> MacroGroup;
 
     SourceLocation ParentInstantiationLoc = InstantiationLoc.isMacroID() ?
                                           SM.getExpansionLoc(Loc) :
@@ -1609,10 +1610,10 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
       // Create a new macro group and add it to the stack.
       PathDiagnosticMacroPiece *NewGroup =
         new PathDiagnosticMacroPiece(
-          PathDiagnosticLocation::createSingleLocation(I->getLocation()));
+          PathDiagnosticLocation::createSingleLocation((*I)->getLocation()));
 
       if (MacroGroup)
-        MacroGroup->push_back(NewGroup);
+        MacroGroup->subPieces.push_back(NewGroup);
       else {
         assert(InstantiationLoc.isFileID());
         Pieces.push_back(NewGroup);
@@ -1623,11 +1624,11 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
     }
 
     // Finally, add the PathDiagnosticPiece to the group.
-    MacroGroup->push_back(&*I);
+    MacroGroup->subPieces.push_back(*I);
   }
 
   // Now take the pieces and construct a new PathDiagnostic.
-  PD.resetPath(false);
+  PD.path.clear();
 
   for (PiecesTy::iterator I=Pieces.begin(), E=Pieces.end(); I!=E; ++I) {
     if (PathDiagnosticMacroPiece *MP=dyn_cast<PathDiagnosticMacroPiece>(*I))
@@ -1636,7 +1637,7 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
         continue;
       }
 
-    PD.push_back(*I);
+    PD.path.push_back(*I);
   }
 }
 
@@ -1692,7 +1693,7 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
   if (!LastPiece)
     LastPiece = BugReporterVisitor::getDefaultEndPath(PDB, N, *R);
   if (LastPiece)
-    PD.push_back(LastPiece);
+    PD.path.push_back(LastPiece);
   else
     return;
 
@@ -1951,13 +1952,13 @@ void BugReporter::FlushReport(BugReportEquivClass& EQ) {
   if (!PD)
     return;
 
-  if (D->empty()) {
+  if (D->path.empty()) {
     PathDiagnosticPiece *piece = new PathDiagnosticEventPiece(
                                  exampleReport->getLocation(getSourceManager()),
                                  exampleReport->getDescription());
 
     for ( ; Beg != End; ++Beg) piece->addRange(*Beg);
-    D->push_back(piece);
+    D->path.push_back(piece);
   }
 
   PD->HandlePathDiagnostic(D.take());
