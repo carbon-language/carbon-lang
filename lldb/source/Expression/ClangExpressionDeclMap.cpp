@@ -969,7 +969,7 @@ ClangExpressionDeclMap::ReadTarget (uint8_t *data,
                     return false;
                 
                 Error err;
-                target->ReadMemory(file_addr, true, data, length, err);
+                target->ReadMemory(file_addr, false, data, length, err);
                 
                 return err.Success();
             }
@@ -1011,34 +1011,57 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
     
     if (expr_var_sp)
     {
-        if (!expr_var_sp->m_parser_vars.get() || !expr_var_sp->m_parser_vars->m_lldb_var)
+        if (!expr_var_sp->m_parser_vars.get())
             return Value();
         
         bool is_reference = expr_var_sp->m_flags & ClangExpressionVariable::EVTypeIsReference;
-        
-        std::auto_ptr<Value> value(GetVariableValue(exe_ctx, expr_var_sp->m_parser_vars->m_lldb_var, NULL));
-        
-        if (is_reference && value.get() && value->GetValueType() == Value::eValueTypeLoadAddress)
+
+        if (expr_var_sp->m_parser_vars->m_lldb_var)
         {
-            Process *process = m_parser_vars->m_exe_ctx->GetProcessPtr();
+            std::auto_ptr<Value> value(GetVariableValue(exe_ctx, expr_var_sp->m_parser_vars->m_lldb_var, NULL));
             
-            if (!process)
-                return Value();
-            
-            lldb::addr_t value_addr = value->GetScalar().ULongLong();
-            Error read_error;
-            addr_t ref_value = process->ReadPointerFromMemory (value_addr, read_error);
-            
-            if (!read_error.Success())
-                return Value();
-            
-            value->GetScalar() = (unsigned long long)ref_value;
-        }
+            if (is_reference && value.get() && value->GetValueType() == Value::eValueTypeLoadAddress)
+            {
+                Process *process = m_parser_vars->m_exe_ctx->GetProcessPtr();
+                
+                if (!process)
+                    return Value();
+                
+                lldb::addr_t value_addr = value->GetScalar().ULongLong();
+                Error read_error;
+                addr_t ref_value = process->ReadPointerFromMemory (value_addr, read_error);
+                
+                if (!read_error.Success())
+                    return Value();
+                
+                value->GetScalar() = (unsigned long long)ref_value;
+            }
         
-        if (value.get())
-            return *value;
+            if (value.get())
+                return *value;
+            else
+                return Value();
+        }
+        else if (expr_var_sp->m_parser_vars->m_lldb_sym)
+        {
+            const Address sym_address = expr_var_sp->m_parser_vars->m_lldb_sym->GetAddressRangeRef().GetBaseAddress();
+            
+            if (!sym_address.IsValid())
+                return Value();
+                        
+            Value ret;
+        
+            uint64_t symbol_addr = sym_address.GetFileAddress();
+
+            ret.GetScalar() = symbol_addr;
+            ret.SetValueType(Value::eValueTypeFileAddress);
+            
+            return ret;
+        }
         else
+        {
             return Value();
+        }
     }
     else if (persistent_var_sp)
     {
