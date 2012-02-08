@@ -19,5 +19,5 @@ void bar() {
   A a;
 }
 
-// B should only be emitted as a forward reference.
-// CHECK: metadata !"B", metadata !6, i32 3, i64 0, i64 0, i32 0, i32 4, null, null, i32 0, null, null} ; [ DW_TAG_class_type
+// B should only be emitted as a forward reference (i32 4).
+// CHECK: metadata !"B", metadata !6, i32 3, i32 0, i32 0, i32 0, i32 4} ; [ DW_TAG_class_type ]
