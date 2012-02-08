@@ -5368,6 +5368,32 @@ static void Write__prop_list_t_initializer(RewriteModernObjC &RewriteObj,
   }
 }
 
+static void Write__extendedMethodTypes_initializer(RewriteModernObjC &RewriteObj,
+                                           ASTContext *Context, std::string &Result,
+                                           ArrayRef<ObjCMethodDecl *> Methods,
+                                           StringRef VarName,
+                                           StringRef ProtocolName) {
+  if (Methods.size() == 0)
+    return;
+  
+  Result += "\nstatic const char *";
+  Result += VarName; Result += ProtocolName;
+  Result += " [] __attribute__ ((used, section (\"__DATA,__objc_const\"))) = \n";
+  Result += "{\n";
+  for (unsigned i = 0, e = Methods.size(); i < e; i++) {
+    ObjCMethodDecl *MD = Methods[i];
+    std::string MethodTypeString, QuoteMethodTypeString;
+    Context->getObjCEncodingForMethodDecl(MD, MethodTypeString, true);
+    RewriteObj.QuoteDoublequotes(MethodTypeString, QuoteMethodTypeString);
+    Result += "\t\""; Result += QuoteMethodTypeString; Result += "\"";
+    if (i == e-1)
+      Result += "\n};\n";
+    else {
+      Result += ",\n";
+    }
+  }
+}
+
 /// RewriteObjCProtocolMetaData - Rewrite protocols meta-data.
 void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl, 
                                                     std::string &Result) {
@@ -5409,7 +5435,20 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
       ClassMethods.push_back(MD);
     }
   }
-  
+  std::vector<ObjCMethodDecl *> AllMethods;
+  for (unsigned i = 0, e = InstanceMethods.size(); i < e; i++)
+    AllMethods.push_back(InstanceMethods[i]);
+  for (unsigned i = 0, e = ClassMethods.size(); i < e; i++)
+    AllMethods.push_back(ClassMethods[i]);
+  for (unsigned i = 0, e = OptInstanceMethods.size(); i < e; i++)
+    AllMethods.push_back(OptInstanceMethods[i]);
+  for (unsigned i = 0, e = OptClassMethods.size(); i < e; i++)
+    AllMethods.push_back(OptClassMethods[i]);
+
+  Write__extendedMethodTypes_initializer(*this, Context, Result,
+                                         AllMethods,
+                                         "_OBJC_PROTOCOL_METHOD_TYPES_",
+                                         PDecl->getNameAsString());
   // Protocol's super protocol list
   std::vector<ObjCProtocolDecl *> SuperProtocols;
   for (ObjCProtocolDecl::protocol_iterator I = PDecl->protocol_begin(),
@@ -5497,8 +5536,13 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
   Result += "\t"; Result += "sizeof(_protocol_t)"; Result += ",\n";
   Result += "\t0,\n";
   
-  // FIXME.  //   const char ** extendedMethodTypes;
-  Result += "\t0\n};\n";
+  if (AllMethods.size() > 0) {
+    Result += "\t(const char **)&"; Result += "_OBJC_PROTOCOL_METHOD_TYPES_";
+    Result += PDecl->getNameAsString();
+    Result += "\n};\n";
+  }
+  else
+    Result += "\t0\n};\n";
     
   // Mark this protocol as having been generated.
   if (!ObjCSynthesizedProtocols.insert(PDecl->getCanonicalDecl()))
