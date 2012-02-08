@@ -142,7 +142,7 @@ size_t ReadFileToBuffer(const char *file_name, char **buff,
 
 // asan_printf.cc
 void RawWrite(const char *buffer);
-int SNPrint(char *buffer, size_t length, const char *format, ...);
+int SNPrintf(char *buffer, size_t length, const char *format, ...);
 void Printf(const char *format, ...);
 int SScanf(const char *str, const char *format, ...);
 void Report(const char *format, ...);
