@@ -83,6 +83,16 @@ class MallocChecker : public Checker<check::DeadSymbols,
 
 public:
   MallocChecker() : II_malloc(0), II_free(0), II_realloc(0), II_calloc(0) {}
+
+  /// In pessimistic mode, the checker assumes that it does not know which
+  /// functions might free the memory.
+  struct ChecksFilter {
+    DefaultBool CMallocPessimistic;
+    DefaultBool CMallocOptimistic;
+  };
+
+  ChecksFilter Filter;
+
   void initIdentifierInfo(CheckerContext &C) const;
 
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
@@ -750,6 +760,10 @@ void MallocChecker::checkBind(SVal location, SVal val,
   }
 }
 
-void ento::registerMallocChecker(CheckerManager &mgr) {
-  mgr.registerChecker<MallocChecker>();
+#define REGISTER_CHECKER(name) \
+void ento::register##name(CheckerManager &mgr) {\
+  mgr.registerChecker<MallocChecker>()->Filter.C##name = true;\
 }
+
+REGISTER_CHECKER(MallocPessimistic)
+REGISTER_CHECKER(MallocOptimistic)

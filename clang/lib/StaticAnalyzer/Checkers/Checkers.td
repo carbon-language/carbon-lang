@@ -282,8 +282,12 @@ def ChrootChecker : Checker<"Chroot">,
   HelpText<"Check improper use of chroot">,
   DescFile<"ChrootChecker.cpp">;
 
-def MallocChecker : Checker<"Malloc">,
-  HelpText<"Check for potential memory leaks, double free, and use-after-free problems">,
+def MallocOptimistic : Checker<"MallocWithAnnotations">,
+  HelpText<"Check for memory leaks, double free, and use-after-free problems. Assumes that all user-defined functions which might free a pointer are annotated.">,
+  DescFile<"MallocChecker.cpp">;
+
+def MallocPessimistic : Checker<"Malloc">,
+  HelpText<"Check for memory leaks, double free, and use-after-free problems.">,
   DescFile<"MallocChecker.cpp">;
 
 def MallocSizeofChecker : Checker<"MallocSizeof">,
