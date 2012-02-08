@@ -66,10 +66,10 @@ public:
 
 class RegionState {};
 
-class MallocChecker : public Checker<eval::Call,
-                                     check::DeadSymbols,
+class MallocChecker : public Checker<check::DeadSymbols,
                                      check::EndPath,
                                      check::PreStmt<ReturnStmt>,
+                                     check::PostStmt<CallExpr>,
                                      check::Location,
                                      check::Bind,
                                      eval::Assume>
@@ -83,8 +83,9 @@ class MallocChecker : public Checker<eval::Call,
 
 public:
   MallocChecker() : II_malloc(0), II_free(0), II_realloc(0), II_calloc(0) {}
+  void initIdentifierInfo(CheckerContext &C) const;
 
-  bool evalCall(const CallExpr *CE, CheckerContext &C) const;
+  void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
   void checkEndPath(CheckerContext &C) const;
   void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
@@ -138,11 +139,7 @@ namespace ento {
 }
 }
 
-bool MallocChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
-  const FunctionDecl *FD = C.getCalleeDecl(CE);
-  if (!FD)
-    return false;
-
+void MallocChecker::initIdentifierInfo(CheckerContext &C) const {
   ASTContext &Ctx = C.getASTContext();
   if (!II_malloc)
     II_malloc = &Ctx.Idents.get("malloc");
@@ -152,30 +149,35 @@ bool MallocChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
     II_realloc = &Ctx.Idents.get("realloc");
   if (!II_calloc)
     II_calloc = &Ctx.Idents.get("calloc");
+}
+
+void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
+  const FunctionDecl *FD = C.getCalleeDecl(CE);
+  if (!FD)
+    return;
+  initIdentifierInfo(C);
 
   if (FD->getIdentifier() == II_malloc) {
     MallocMem(C, CE);
-    return true;
+    return;
   }
-
-  if (FD->getIdentifier() == II_free) {
-    FreeMem(C, CE);
-    return true;
-  }
-
   if (FD->getIdentifier() == II_realloc) {
     ReallocMem(C, CE);
-    return true;
+    return;
   }
 
   if (FD->getIdentifier() == II_calloc) {
     CallocMem(C, CE);
-    return true;
+    return;
+  }
+
+  if (FD->getIdentifier() == II_free) {
+    FreeMem(C, CE);
+    return;
   }
 
   // Check all the attributes, if there are any.
   // There can be multiple of these attributes.
-  bool rv = false;
   if (FD->hasAttrs()) {
     for (specific_attr_iterator<OwnershipAttr>
                   i = FD->specific_attr_begin<OwnershipAttr>(),
@@ -184,19 +186,16 @@ bool MallocChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
       switch ((*i)->getOwnKind()) {
       case OwnershipAttr::Returns: {
         MallocMemReturnsAttr(C, CE, *i);
-        rv = true;
         break;
       }
       case OwnershipAttr::Takes:
       case OwnershipAttr::Holds: {
         FreeMemAttr(C, CE, *i);
-        rv = true;
         break;
       }
       }
     }
   }
-  return rv;
 }
 
 void MallocChecker::MallocMem(CheckerContext &C, const CallExpr *CE) {
@@ -222,17 +221,14 @@ void MallocChecker::MallocMemReturnsAttr(CheckerContext &C, const CallExpr *CE,
   C.addTransition(state);
 }
 
-ProgramStateRef MallocChecker::MallocMemAux(CheckerContext &C,  
+ProgramStateRef MallocChecker::MallocMemAux(CheckerContext &C,
                                            const CallExpr *CE,
                                            SVal Size, SVal Init,
                                            ProgramStateRef state) {
-  unsigned Count = C.getCurrentBlockCount();
   SValBuilder &svalBuilder = C.getSValBuilder();
 
-  // Set the return value.
-  SVal retVal = svalBuilder.getConjuredSymbolVal(NULL, CE,
-                                                 CE->getType(), Count);
-  state = state->BindExpr(CE, C.getLocationContext(), retVal);
+  // Get the return value.
+  SVal retVal = state->getSVal(CE, C.getLocationContext());
 
   // Fill the region with the initialization value.
   state = state->bindDefault(retVal, Init);
@@ -288,7 +284,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
 
   // Check for null dereferences.
   if (!isa<Loc>(location))
-    return state;
+    return 0;
 
   // FIXME: Technically using 'Assume' here can result in a path
   //  bifurcation.  In such cases we need to return two states, not just one.
@@ -297,14 +293,14 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
 
   // The explicit NULL case, no operation is performed.
   if (nullState && !notNullState)
-    return nullState;
+    return 0;
 
   assert(notNullState);
 
   // Unknown values could easily be okay
   // Undefined values are handled elsewhere
   if (ArgVal.isUnknownOrUndef())
-    return notNullState;
+    return 0;
 
   const MemRegion *R = ArgVal.getAsRegion();
   
@@ -312,7 +308,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
   // Non-region locations (labels and fixed addresses) also shouldn't be freed.
   if (!R) {
     ReportBadFree(C, ArgVal, ArgExpr->getSourceRange());
-    return NULL;
+    return 0;
   }
   
   R = R->StripCasts();
@@ -320,11 +316,12 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
   // Blocks might show up as heap data, but should not be free()d
   if (isa<BlockDataRegion>(R)) {
     ReportBadFree(C, ArgVal, ArgExpr->getSourceRange());
-    return NULL;
+    return 0;
   }
   
   const MemSpaceRegion *MS = R->getMemorySpace();
   
+  // TODO: Pessimize this. should be behinds a flag!
   // Parameters, locals, statics, and globals shouldn't be freed.
   if (!(isa<UnknownSpaceRegion>(MS) || isa<HeapSpaceRegion>(MS))) {
     // FIXME: at the time this code was written, malloc() regions were
@@ -336,14 +333,14 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
     // False negatives are better than false positives.
     
     ReportBadFree(C, ArgVal, ArgExpr->getSourceRange());
-    return NULL;
+    return 0;
   }
   
   const SymbolicRegion *SR = dyn_cast<SymbolicRegion>(R);
   // Various cases could lead to non-symbol values here.
   // For now, ignore them.
   if (!SR)
-    return notNullState;
+    return 0;
 
   SymbolRef Sym = SR->getSymbol();
   const RefState *RS = state->get<RegionState>(Sym);
@@ -352,7 +349,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
   // called on a pointer that does not get its pointee directly from malloc(). 
   // Full support of this requires inter-procedural analysis.
   if (!RS)
-    return notNullState;
+    return 0;
 
   // Check double free.
   if (RS->isReleased()) {
@@ -366,7 +363,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
                                    BT_DoubleFree->getDescription(), N);
       C.EmitReport(R);
     }
-    return NULL;
+    return 0;
   }
 
   // Normal free.
