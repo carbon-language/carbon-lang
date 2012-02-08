@@ -317,7 +317,12 @@ ClangUserExpression::Parse (Stream &error_stream,
     }
     
     Process *process = exe_ctx.GetProcessPtr();
-    ClangExpressionParser parser(process, *this);
+    ExecutionContextScope *exe_scope = process;
+    
+    if (!exe_scope)
+        exe_scope = exe_ctx.GetTargetPtr();
+    
+    ClangExpressionParser parser(exe_scope, *this);
     
     unsigned num_errors = parser.Parse (error_stream);
     
