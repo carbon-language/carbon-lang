@@ -55,6 +55,9 @@ def note_constexpr_pointer_comparison_differing_access : Note<
   "specifiers (%1 vs %3) has unspecified value">;
 def note_constexpr_compare_virtual_mem_ptr : Note<
   "comparison of pointer to virtual member function %0 has unspecified value">;
+def note_constexpr_addr_of_incomplete : Note<
+  "cannot take address of object of incomplete class type %0 "
+  "in a constant expression">;
 def note_constexpr_past_end : Note<
   "dereferenced pointer past the end of %select{|subobject of }0"
   "%select{temporary|%2}1 is not a constant expression">;

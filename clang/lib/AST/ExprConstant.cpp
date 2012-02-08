@@ -2937,6 +2937,18 @@ bool PointerExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 }
 
 bool PointerExprEvaluator::VisitUnaryAddrOf(const UnaryOperator *E) {
+  QualType SrcTy = E->getSubExpr()->getType();
+  // In C++, taking the address of an object of incomplete class type has
+  // undefined behavior if the complete class type has an overloaded operator&.
+  // DR1458 makes such expressions non-constant.
+  if (Info.getLangOpts().CPlusPlus &&
+      SrcTy->isRecordType() && SrcTy->isIncompleteType()) {
+    const RecordType *RT = SrcTy->getAs<RecordType>();
+    Info.CCEDiag(E->getExprLoc(), diag::note_constexpr_addr_of_incomplete, 1)
+      << SrcTy;
+    Info.Note(RT->getDecl()->getLocation(), diag::note_forward_declaration)
+      << RT->getDecl();
+  }
   return EvaluateLValue(E->getSubExpr(), Result, Info);
 }
 

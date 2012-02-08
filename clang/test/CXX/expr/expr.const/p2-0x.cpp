@@ -109,6 +109,22 @@ namespace RecursionLimits {
   };
 }
 
+// DR1458: taking the address of an object of incomplete class type
+namespace IncompleteClassTypeAddr {
+  struct S; // expected-note {{forward}}
+  extern S s;
+  constexpr S *p = &s; // expected-error {{constant expression}} expected-note {{cannot take address of object of incomplete class type 'IncompleteClassTypeAddr::S' in a constant expression}}
+
+  extern S sArr[];
+  constexpr S (*p2)[] = &sArr; // ok
+
+  struct S {
+    constexpr S *operator&() { return nullptr; }
+  };
+  constexpr S *q = &s;
+  static_assert(!q, "");
+}
+
 // - an operation that would have undefined behavior [Note: including, for
 //   example, signed integer overflow (Clause 5 [expr]), certain pointer
 //   arithmetic (5.7 [expr.add]), division by zero (5.6 [expr.mul]), or certain

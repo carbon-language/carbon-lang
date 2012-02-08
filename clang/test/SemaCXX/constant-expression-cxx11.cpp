@@ -299,6 +299,7 @@ static_assert(&x > &x, "false"); // expected-error {{false}}
 constexpr S* sptr = &s;
 constexpr bool dyncast = sptr == dynamic_cast<S*>(sptr); // expected-error {{constant expression}} expected-note {{dynamic_cast}}
 
+struct U {};
 struct Str {
   int a : dynamic_cast<S*>(sptr) == dynamic_cast<S*>(sptr); // \
     expected-warning {{not an integral constant expression}} \
@@ -315,7 +316,7 @@ struct Str {
   int e : (Str*)(sptr) == (Str*)(sptr); // \
     expected-warning {{not an integral constant expression}} \
     expected-note {{cast which performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
-  int f : &(Str&)(*sptr) == &(Str&)(*sptr); // \
+  int f : &(U&)(*sptr) == &(U&)(*sptr); // \
     expected-warning {{not an integral constant expression}} \
     expected-note {{cast which performs the conversions of a reinterpret_cast is not allowed in a constant expression}}
   int g : (S*)(void*)(sptr) == sptr; // \
