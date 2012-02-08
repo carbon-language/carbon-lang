@@ -178,7 +178,7 @@ void TargetPassConfig::addMachinePasses() {
 
   // Pre-ra tail duplication.
   if (getOptLevel() != CodeGenOpt::None && !DisableEarlyTailDup) {
-    PM.add(createTailDuplicatePass(true));
+    PM.add(createTailDuplicatePass());
     printAndVerify("After Pre-RegAlloc TailDuplicate");
   }
 
@@ -250,7 +250,7 @@ void TargetPassConfig::addMachinePasses() {
 
   // Tail duplication.
   if (getOptLevel() != CodeGenOpt::None && !DisableTailDuplicate) {
-    PM.add(createTailDuplicatePass(false));
+    PM.add(createTailDuplicatePass());
     printNoVerify("After TailDuplicate");
   }
 

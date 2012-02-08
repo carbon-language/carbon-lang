@@ -284,7 +284,7 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
 
   // Pre-ra tail duplication.
   if (getOptLevel() != CodeGenOpt::None) {
-    PM.add(createTailDuplicatePass(true));
+    PM.add(createTailDuplicatePass());
     printAndVerify("After Pre-RegAlloc TailDuplicate");
   }
 
@@ -365,7 +365,7 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
 
   // Tail duplication.
   if (getOptLevel() != CodeGenOpt::None) {
-    PM.add(createTailDuplicatePass(false));
+    PM.add(createTailDuplicatePass());
     printNoVerify("After TailDuplicate");
   }
 

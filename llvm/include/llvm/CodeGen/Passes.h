@@ -272,7 +272,7 @@ namespace llvm {
 
   /// TailDuplicate Pass - Duplicate blocks with unconditional branches
   /// into tails of their predecessors.
-  FunctionPass *createTailDuplicatePass(bool PreRegAlloc = false);
+  FunctionPass *createTailDuplicatePass();
 
   /// IfConverter Pass - This pass performs machine code if conversion.
   FunctionPass *createIfConverterPass();

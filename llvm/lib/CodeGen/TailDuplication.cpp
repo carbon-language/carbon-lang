@@ -56,10 +56,10 @@ typedef std::vector<std::pair<MachineBasicBlock*,unsigned> > AvailableValsTy;
 namespace {
   /// TailDuplicatePass - Perform tail duplication.
   class TailDuplicatePass : public MachineFunctionPass {
-    bool PreRegAlloc;
     const TargetInstrInfo *TII;
     MachineModuleInfo *MMI;
     MachineRegisterInfo *MRI;
+    bool PreRegAlloc;
 
     // SSAUpdateVRs - A list of virtual registers for which to update SSA form.
     SmallVector<unsigned, 16> SSAUpdateVRs;
@@ -70,8 +70,8 @@ namespace {
 
   public:
     static char ID;
-    explicit TailDuplicatePass(bool PreRA) :
-      MachineFunctionPass(ID), PreRegAlloc(PreRA) {}
+    explicit TailDuplicatePass() :
+      MachineFunctionPass(ID), PreRegAlloc(false) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
     virtual const char *getPassName() const { return "Tail Duplication"; }
@@ -118,14 +118,15 @@ namespace {
   char TailDuplicatePass::ID = 0;
 }
 
-FunctionPass *llvm::createTailDuplicatePass(bool PreRegAlloc) {
-  return new TailDuplicatePass(PreRegAlloc);
+FunctionPass *llvm::createTailDuplicatePass() {
+  return new TailDuplicatePass();
 }
 
 bool TailDuplicatePass::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
   MRI = &MF.getRegInfo();
   MMI = getAnalysisIfAvailable<MachineModuleInfo>();
+  PreRegAlloc = MRI->isSSA();
 
   bool MadeChange = false;
   while (TailDuplicateBlocks(MF))
@@ -823,7 +824,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
   SmallVector<MachineOperand, 4> PriorCond;
   // This has to check PrevBB->succ_size() because EH edges are ignored by
   // AnalyzeBranch.
-  if (PrevBB->succ_size() == 1 && 
+  if (PrevBB->succ_size() == 1 &&
       !TII->AnalyzeBranch(*PrevBB, PriorTBB, PriorFBB, PriorCond, true) &&
       PriorCond.empty() && !PriorTBB && TailBB->pred_size() == 1 &&
       !TailBB->hasAddressTaken()) {
