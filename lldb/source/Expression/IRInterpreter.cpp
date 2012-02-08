@@ -538,35 +538,73 @@ public:
         return true;
     }
     
-    bool ResolveConstant (Memory::Region &region, const Constant *constant)
+    bool ResolveConstantValue (APInt &value, const Constant *constant)
     {
-        size_t constant_size = m_target_data.getTypeStoreSize(constant->getType());
-        
         if (const ConstantInt *constant_int = dyn_cast<ConstantInt>(constant))
         {
-            const uint64_t *raw_data = constant_int->getValue().getRawData();
-            return m_memory.Write(region.m_base, (const uint8_t*)raw_data, constant_size);
+            value = constant_int->getValue();
+            return true;
         }
         else if (const ConstantFP *constant_fp = dyn_cast<ConstantFP>(constant))
         {
-            const uint64_t *raw_data = constant_fp->getValueAPF().bitcastToAPInt().getRawData();
-            return m_memory.Write(region.m_base, (const uint8_t*)raw_data, constant_size);
+            value = constant_fp->getValueAPF().bitcastToAPInt();
+            return true;
         }
         else if (const ConstantExpr *constant_expr = dyn_cast<ConstantExpr>(constant))
         {
             switch (constant_expr->getOpcode())
             {
-            default:
-                return false;
-            case Instruction::IntToPtr:
-            case Instruction::BitCast:
-                return ResolveConstant(region, constant_expr->getOperand(0));
+                default:
+                    return false;
+                case Instruction::IntToPtr:
+                case Instruction::BitCast:
+                    return ResolveConstantValue(value, constant_expr->getOperand(0));
+                case Instruction::GetElementPtr:
+                {
+                    ConstantExpr::const_op_iterator op_cursor = constant_expr->op_begin();
+                    ConstantExpr::const_op_iterator op_end = constant_expr->op_end();
+                                    
+                    Constant *base = dyn_cast<Constant>(*op_cursor);
+                    
+                    if (!base)
+                        return false;
+                    
+                    if (!ResolveConstantValue(value, base))
+                        return false;
+                    
+                    op_cursor++;
+                    
+                    if (op_cursor == op_end)
+                        return true; // no offset to apply!
+                    
+                    SmallVector <Value *, 8> indices (op_cursor, op_end);
+                    
+                    uint64_t offset = m_target_data.getIndexedOffset(base->getType(), indices);
+                    
+                    const bool is_signed = true;
+                    value += APInt(value.getBitWidth(), offset, is_signed);
+                    
+                    return true;
+                }
             }
         }
         
         return false;
     }
     
+    bool ResolveConstant (Memory::Region &region, const Constant *constant)
+    {
+        APInt resolved_value;
+        
+        if (!ResolveConstantValue(resolved_value, constant))
+            return false;
+        
+        const uint64_t *raw_data = resolved_value.getRawData();
+            
+        size_t constant_size = m_target_data.getTypeStoreSize(constant->getType());
+        return m_memory.Write(region.m_base, (const uint8_t*)raw_data, constant_size);
+    }
+        
     Memory::Region ResolveValue (const Value *value, Module &module)
     {
         ValueMap::iterator i = m_values.find(value);
