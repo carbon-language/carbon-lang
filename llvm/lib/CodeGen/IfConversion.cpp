@@ -170,7 +170,6 @@ namespace {
     }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
-    virtual const char *getPassName() const { return "If Converter"; }
 
   private:
     bool ReverseBranchCondition(BBInfo &BBI);
@@ -253,11 +252,11 @@ namespace {
   char IfConverter::ID = 0;
 }
 
+char &llvm::IfConverterID = IfConverter::ID;
+
 INITIALIZE_PASS_BEGIN(IfConverter, "if-converter", "If Converter", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
 INITIALIZE_PASS_END(IfConverter, "if-converter", "If Converter", false, false)
-
-FunctionPass *llvm::createIfConverterPass() { return new IfConverter(); }
 
 bool IfConverter::runOnMachineFunction(MachineFunction &MF) {
   TLI = MF.getTarget().getTargetLowering();

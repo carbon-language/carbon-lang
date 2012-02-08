@@ -71,19 +71,15 @@ namespace {
       AU.setPreservesCFG();
       MachineFunctionPass::getAnalysisUsage(AU);
     }
-    const char *getPassName() const {
-      return "Local Stack Slot Allocation";
-    }
 
   private:
   };
 } // end anonymous namespace
 
 char LocalStackSlotPass::ID = 0;
-
-FunctionPass *llvm::createLocalStackSlotAllocationPass() {
-  return new LocalStackSlotPass();
-}
+char &llvm::LocalStackSlotAllocationID = LocalStackSlotPass::ID;
+INITIALIZE_PASS(LocalStackSlotPass, "localstackalloc",
+                "Local Stack Slot Allocation", false, false)
 
 bool LocalStackSlotPass::runOnMachineFunction(MachineFunction &MF) {
   MachineFrameInfo *MFI = MF.getFrameInfo();

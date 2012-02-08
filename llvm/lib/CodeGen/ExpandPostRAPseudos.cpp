@@ -36,10 +36,6 @@ public:
   static char ID; // Pass identification, replacement for typeid
   ExpandPostRA() : MachineFunctionPass(ID) {}
 
-  const char *getPassName() const {
-    return "Post-RA pseudo instruction expansion pass";
-  }
-
   virtual void getAnalysisUsage(AnalysisUsage &AU) const {
     AU.setPreservesCFG();
     AU.addPreservedID(MachineLoopInfoID);
@@ -61,10 +57,10 @@ private:
 } // end anonymous namespace
 
 char ExpandPostRA::ID = 0;
+char &llvm::ExpandPostRAPseudosID = ExpandPostRA::ID;
 
-FunctionPass *llvm::createExpandPostRAPseudosPass() {
-  return new ExpandPostRA();
-}
+INITIALIZE_PASS(ExpandPostRA, "postrapseudos",
+                "Post-RA pseudo instruction expansion pass", false, false)
 
 /// TransferDeadFlag - MI is a pseudo-instruction with DstReg dead,
 /// and the lowered replacement instructions immediately precede it.

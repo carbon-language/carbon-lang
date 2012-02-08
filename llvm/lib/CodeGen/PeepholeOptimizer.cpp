@@ -109,15 +109,12 @@ namespace {
 }
 
 char PeepholeOptimizer::ID = 0;
+char &llvm::PeepholeOptimizerID = PeepholeOptimizer::ID;
 INITIALIZE_PASS_BEGIN(PeepholeOptimizer, "peephole-opts",
                 "Peephole Optimizations", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_END(PeepholeOptimizer, "peephole-opts",
                 "Peephole Optimizations", false, false)
-
-FunctionPass *llvm::createPeepholeOptimizerPass() {
-  return new PeepholeOptimizer();
-}
 
 /// OptimizeExtInstr - If instruction is a copy-like instruction, i.e. it reads
 /// a single register and writes a single register and it does not modify the

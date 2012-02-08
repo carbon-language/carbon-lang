@@ -189,22 +189,22 @@ void TargetPassConfig::addMachinePasses() {
   printAndVerify("After Instruction Selection");
 
   // Expand pseudo-instructions emitted by ISel.
-  PM.add(createExpandISelPseudosPass());
+  addPass(ExpandISelPseudosID);
 
   // Pre-ra tail duplication.
   if (getOptLevel() != CodeGenOpt::None && !DisableEarlyTailDup) {
-    PM.add(createTailDuplicatePass());
+    addPass(TailDuplicateID);
     printAndVerify("After Pre-RegAlloc TailDuplicate");
   }
 
   // Optimize PHIs before DCE: removing dead PHI cycles may make more
   // instructions dead.
   if (getOptLevel() != CodeGenOpt::None)
-    PM.add(createOptimizePHIsPass());
+    addPass(OptimizePHIsID);
 
   // If the target requests it, assign local variables to stack slots relative
   // to one another and simplify frame index references where possible.
-  PM.add(createLocalStackSlotAllocationPass());
+  addPass(LocalStackSlotAllocationID);
 
   if (getOptLevel() != CodeGenOpt::None) {
     // With optimization, dead code should already be eliminated. However
@@ -212,18 +212,18 @@ void TargetPassConfig::addMachinePasses() {
     // used by tail calls, where the tail calls reuse the incoming stack
     // arguments directly (see t11 in test/CodeGen/X86/sibcall.ll).
     if (!DisableMachineDCE)
-      PM.add(createDeadMachineInstructionElimPass());
+      addPass(DeadMachineInstructionElimID);
     printAndVerify("After codegen DCE pass");
 
     if (!DisableMachineLICM)
-      PM.add(createMachineLICMPass());
+      addPass(MachineLICMID);
     if (!DisableMachineCSE)
-      PM.add(createMachineCSEPass());
+      addPass(MachineCSEID);
     if (!DisableMachineSink)
-      PM.add(createMachineSinkingPass());
+      addPass(MachineSinkingID);
     printAndVerify("After Machine LICM, CSE and Sinking passes");
 
-    PM.add(createPeepholeOptimizerPass());
+    addPass(PeepholeOptimizerID);
     printAndVerify("After codegen peephole optimization pass");
   }
 
@@ -240,11 +240,11 @@ void TargetPassConfig::addMachinePasses() {
     // FIXME: Re-enable coloring with register when it's capable of adding
     // kill markers.
     if (!DisableSSC)
-      PM.add(createStackSlotColoringPass());
+      addPass(StackSlotColoringID);
 
     // Run post-ra machine LICM to hoist reloads / remats.
     if (!DisablePostRAMachineLICM)
-      PM.add(createMachineLICMPass());
+      addPass(MachineLICMID);
 
     printAndVerify("After StackSlotColoring and postra Machine LICM");
   }
@@ -254,7 +254,7 @@ void TargetPassConfig::addMachinePasses() {
     printAndVerify("After PostRegAlloc passes");
 
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
-  PM.add(createPrologEpilogCodeInserter());
+  addPass(PrologEpilogCodeInserterID);
   printAndVerify("After PrologEpilogCodeInserter");
 
   // Branch folding must be run after regalloc and prolog/epilog insertion.
@@ -265,18 +265,18 @@ void TargetPassConfig::addMachinePasses() {
 
   // Tail duplication.
   if (getOptLevel() != CodeGenOpt::None && !DisableTailDuplicate) {
-    PM.add(createTailDuplicatePass());
+    addPass(TailDuplicateID);
     printNoVerify("After TailDuplicate");
   }
 
   // Copy propagation.
   if (getOptLevel() != CodeGenOpt::None && !DisableCopyProp) {
-    PM.add(createMachineCopyPropagationPass());
+    addPass(MachineCopyPropagationID);
     printNoVerify("After copy propagation pass");
   }
 
   // Expand pseudo instructions before second scheduling pass.
-  PM.add(createExpandPostRAPseudosPass());
+  addPass(ExpandPostRAPseudosID);
   printNoVerify("After ExpandPostRAPseudos");
 
   // Run pre-sched2 passes.
@@ -285,11 +285,11 @@ void TargetPassConfig::addMachinePasses() {
 
   // Second pass scheduler.
   if (getOptLevel() != CodeGenOpt::None && !DisablePostRA) {
-    PM.add(createPostRAScheduler());
+    addPass(PostRASchedulerID);
     printNoVerify("After PostRAScheduler");
   }
 
-  PM.add(createGCMachineCodeAnalysisPass());
+  addPass(GCMachineCodeAnalysisID);
 
   if (PrintGCInfo)
     PM.add(createGCInfoPrinter(dbgs()));
@@ -299,16 +299,16 @@ void TargetPassConfig::addMachinePasses() {
       // MachineBlockPlacement is an experimental pass which is disabled by
       // default currently. Eventually it should subsume CodePlacementOpt, so
       // when enabled, the other is disabled.
-      PM.add(createMachineBlockPlacementPass());
+      addPass(MachineBlockPlacementID);
       printNoVerify("After MachineBlockPlacement");
     } else {
-      PM.add(createCodePlacementOptPass());
+      addPass(CodePlacementOptID);
       printNoVerify("After CodePlacementOpt");
     }
 
     // Run a separate pass to collect block placement statistics.
     if (EnableBlockPlacementStats) {
-      PM.add(createMachineBlockPlacementStatsPass());
+      addPass(MachineBlockPlacementStatsID);
       printNoVerify("After MachineBlockPlacementStats");
     }
   }

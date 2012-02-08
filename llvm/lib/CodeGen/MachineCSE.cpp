@@ -103,14 +103,13 @@ namespace {
 } // end anonymous namespace
 
 char MachineCSE::ID = 0;
+char &llvm::MachineCSEID = MachineCSE::ID;
 INITIALIZE_PASS_BEGIN(MachineCSE, "machine-cse",
                 "Machine Common Subexpression Elimination", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(MachineCSE, "machine-cse",
                 "Machine Common Subexpression Elimination", false, false)
-
-FunctionPass *llvm::createMachineCSEPass() { return new MachineCSE(); }
 
 bool MachineCSE::PerformTrivialCoalescing(MachineInstr *MI,
                                           MachineBasicBlock *MBB) {

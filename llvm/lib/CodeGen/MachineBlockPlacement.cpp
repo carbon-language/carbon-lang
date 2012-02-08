@@ -224,12 +224,11 @@ public:
     AU.addRequired<MachineLoopInfo>();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
-
-  const char *getPassName() const { return "Block Placement"; }
 };
 }
 
 char MachineBlockPlacement::ID = 0;
+char &llvm::MachineBlockPlacementID = MachineBlockPlacement::ID;
 INITIALIZE_PASS_BEGIN(MachineBlockPlacement, "block-placement2",
                       "Branch Probability Basic Block Placement", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
@@ -237,10 +236,6 @@ INITIALIZE_PASS_DEPENDENCY(MachineBlockFrequencyInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_END(MachineBlockPlacement, "block-placement2",
                     "Branch Probability Basic Block Placement", false, false)
-
-FunctionPass *llvm::createMachineBlockPlacementPass() {
-  return new MachineBlockPlacement();
-}
 
 #ifndef NDEBUG
 /// \brief Helper to print the name of a MBB.
@@ -943,22 +938,17 @@ public:
     AU.setPreservesAll();
     MachineFunctionPass::getAnalysisUsage(AU);
   }
-
-  const char *getPassName() const { return "Block Placement Stats"; }
 };
 }
 
 char MachineBlockPlacementStats::ID = 0;
+char &llvm::MachineBlockPlacementStatsID = MachineBlockPlacementStats::ID;
 INITIALIZE_PASS_BEGIN(MachineBlockPlacementStats, "block-placement-stats",
                       "Basic Block Placement Stats", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineBranchProbabilityInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineBlockFrequencyInfo)
 INITIALIZE_PASS_END(MachineBlockPlacementStats, "block-placement-stats",
                     "Basic Block Placement Stats", false, false)
-
-FunctionPass *llvm::createMachineBlockPlacementStatsPass() {
-  return new MachineBlockPlacementStats();
-}
 
 bool MachineBlockPlacementStats::runOnMachineFunction(MachineFunction &F) {
   // Check for single-block functions and skip them.

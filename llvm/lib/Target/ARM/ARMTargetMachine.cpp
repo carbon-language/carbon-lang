@@ -170,7 +170,7 @@ bool ARMPassConfig::addPreSched2() {
 
   if (getOptLevel() != CodeGenOpt::None) {
     if (!getARMSubtarget().isThumb1Only())
-      PM.add(createIfConverterPass());
+      addPass(IfConverterID);
   }
   if (getARMSubtarget().isThumb2())
     PM.add(createThumb2ITBlockPass());
@@ -184,7 +184,7 @@ bool ARMPassConfig::addPreEmitPass() {
       PM.add(createThumb2SizeReductionPass());
 
     // Constant island pass work on unbundled instructions.
-    PM.add(createUnpackMachineBundlesPass());
+    addPass(UnpackMachineBundlesID);
   }
 
   PM.add(createARMConstantIslandPass());

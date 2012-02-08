@@ -102,6 +102,7 @@ namespace {
 } // end anonymous namespace
 
 char MachineSinking::ID = 0;
+char &llvm::MachineSinkingID = MachineSinking::ID;
 INITIALIZE_PASS_BEGIN(MachineSinking, "machine-sink",
                 "Machine code sinking", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
@@ -109,8 +110,6 @@ INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(MachineSinking, "machine-sink",
                 "Machine code sinking", false, false)
-
-FunctionPass *llvm::createMachineSinkingPass() { return new MachineSinking(); }
 
 bool MachineSinking::PerformTrivialForwardCoalescing(MachineInstr *MI,
                                                      MachineBasicBlock *MBB) {

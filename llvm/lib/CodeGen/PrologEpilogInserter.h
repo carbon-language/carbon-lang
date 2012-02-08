@@ -40,10 +40,6 @@ namespace llvm {
       initializePEIPass(*PassRegistry::getPassRegistry());
     }
 
-    const char *getPassName() const {
-      return "Prolog/Epilog Insertion & Frame Finalization";
-    }
-
     virtual void getAnalysisUsage(AnalysisUsage &AU) const;
 
     /// runOnMachineFunction - Insert prolog/epilog code and replace abstract

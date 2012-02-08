@@ -74,7 +74,6 @@ namespace {
       MachineFunctionPass(ID), PreRegAlloc(false) {}
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
-    virtual const char *getPassName() const { return "Tail Duplication"; }
 
   private:
     void AddSSAUpdateEntry(unsigned OrigReg, unsigned NewReg,
@@ -118,9 +117,10 @@ namespace {
   char TailDuplicatePass::ID = 0;
 }
 
-FunctionPass *llvm::createTailDuplicatePass() {
-  return new TailDuplicatePass();
-}
+char &llvm::TailDuplicateID = TailDuplicatePass::ID;
+
+INITIALIZE_PASS(TailDuplicatePass, "tailduplication", "Tail Duplication",
+                false, false)
 
 bool TailDuplicatePass::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();

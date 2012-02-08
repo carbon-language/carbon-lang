@@ -119,8 +119,6 @@ namespace {
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
 
-    const char *getPassName() const { return "Machine Instruction LICM"; }
-
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.addRequired<MachineLoopInfo>();
       AU.addRequired<MachineDominatorTree>();
@@ -289,6 +287,7 @@ namespace {
 } // end anonymous namespace
 
 char MachineLICM::ID = 0;
+char &llvm::MachineLICMID = MachineLICM::ID;
 INITIALIZE_PASS_BEGIN(MachineLICM, "machinelicm",
                 "Machine Loop Invariant Code Motion", false, false)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
@@ -296,10 +295,6 @@ INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(MachineLICM, "machinelicm",
                 "Machine Loop Invariant Code Motion", false, false)
-
-FunctionPass *llvm::createMachineLICMPass() {
-  return new MachineLICM();
-}
 
 /// LoopIsOuterMostWithPredecessor - Test if the given loop is the outer-most
 /// loop that has a unique predecessor.

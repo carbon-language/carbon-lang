@@ -280,37 +280,37 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
   printAndVerify("After Instruction Selection");
 
   // Expand pseudo-instructions emitted by ISel.
-  PM.add(createExpandISelPseudosPass());
+  addPass(ExpandISelPseudosID);
 
   // Pre-ra tail duplication.
   if (getOptLevel() != CodeGenOpt::None) {
-    PM.add(createTailDuplicatePass());
+    addPass(TailDuplicateID);
     printAndVerify("After Pre-RegAlloc TailDuplicate");
   }
 
   // Optimize PHIs before DCE: removing dead PHI cycles may make more
   // instructions dead.
   if (getOptLevel() != CodeGenOpt::None)
-    PM.add(createOptimizePHIsPass());
+    addPass(OptimizePHIsID);
 
   // If the target requests it, assign local variables to stack slots relative
   // to one another and simplify frame index references where possible.
-  PM.add(createLocalStackSlotAllocationPass());
+  addPass(LocalStackSlotAllocationID);
 
   if (getOptLevel() != CodeGenOpt::None) {
     // With optimization, dead code should already be eliminated. However
     // there is one known exception: lowered code for arguments that are only
     // used by tail calls, where the tail calls reuse the incoming stack
     // arguments directly (see t11 in test/CodeGen/X86/sibcall.ll).
-    PM.add(createDeadMachineInstructionElimPass());
+    addPass(DeadMachineInstructionElimID);
     printAndVerify("After codegen DCE pass");
 
-    PM.add(createMachineLICMPass());
-    PM.add(createMachineCSEPass());
-    PM.add(createMachineSinkingPass());
+    addPass(MachineLICMID);
+    addPass(MachineCSEID);
+    addPass(MachineSinkingID);
     printAndVerify("After Machine LICM, CSE and Sinking passes");
 
-    PM.add(createPeepholeOptimizerPass());
+    addPass(PeepholeOptimizerID);
     printAndVerify("After codegen peephole optimization pass");
   }
 
@@ -326,12 +326,12 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
   if (getOptLevel() != CodeGenOpt::None) {
     // FIXME: Re-enable coloring with register when it's capable of adding
     // kill markers.
-    PM.add(createStackSlotColoringPass());
+    addPass(StackSlotColoringID);
 
     // FIXME: Post-RA LICM has asserts that fire on virtual registers.
     // Run post-ra machine LICM to hoist reloads / remats.
     //if (!DisablePostRAMachineLICM)
-    //  PM.add(createMachineLICMPass(false));
+    //  addPass(MachineLICMPass(false));
 
     printAndVerify("After StackSlotColoring and postra Machine LICM");
   }
@@ -340,11 +340,11 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
   if (addPostRegAlloc())
     printAndVerify("After PostRegAlloc passes");
 
-  PM.add(createExpandPostRAPseudosPass());
+  addPass(ExpandPostRAPseudosID);
   printAndVerify("After ExpandPostRAPseudos");
 
   // Insert prolog/epilog code.  Eliminate abstract frame index references...
-  PM.add(createPrologEpilogCodeInserter());
+  addPass(PrologEpilogCodeInserterID);
   printAndVerify("After PrologEpilogCodeInserter");
 
   // Run pre-sched2 passes.
@@ -353,7 +353,7 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
 
   // Second pass scheduler.
   if (getOptLevel() != CodeGenOpt::None) {
-    PM.add(createPostRAScheduler());
+    addPass(PostRASchedulerID);
     printAndVerify("After PostRAScheduler");
   }
 
@@ -365,17 +365,17 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
 
   // Tail duplication.
   if (getOptLevel() != CodeGenOpt::None) {
-    PM.add(createTailDuplicatePass());
+    addPass(TailDuplicateID);
     printNoVerify("After TailDuplicate");
   }
 
-  PM.add(createGCMachineCodeAnalysisPass());
+  addPass(GCMachineCodeAnalysisID);
 
   //if (PrintGCInfo)
   //  PM.add(createGCInfoPrinter(dbgs()));
 
   if (getOptLevel() != CodeGenOpt::None) {
-    PM.add(createCodePlacementOptPass());
+    addPass(CodePlacementOptID);
     printNoVerify("After CodePlacementOpt");
   }
 

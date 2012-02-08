@@ -31,12 +31,9 @@ namespace {
 } // end anonymous namespace
 
 char UnpackMachineBundles::ID = 0;
+char &llvm::UnpackMachineBundlesID = UnpackMachineBundles::ID;
 INITIALIZE_PASS(UnpackMachineBundles, "unpack-mi-bundles",
                 "Unpack machine instruction bundles", false, false)
-
-FunctionPass *llvm::createUnpackMachineBundlesPass() {
-  return new UnpackMachineBundles();
-}
 
 bool UnpackMachineBundles::runOnMachineFunction(MachineFunction &MF) {
   bool Changed = false;
@@ -85,12 +82,9 @@ namespace {
 } // end anonymous namespace
 
 char FinalizeMachineBundles::ID = 0;
+char &llvm::FinalizeMachineBundlesID = FinalizeMachineBundles::ID;
 INITIALIZE_PASS(FinalizeMachineBundles, "finalize-mi-bundles",
                 "Finalize machine instruction bundles", false, false)
-
-FunctionPass *llvm::createFinalizeMachineBundlesPass() {
-  return new FinalizeMachineBundles();
-}
 
 bool FinalizeMachineBundles::runOnMachineFunction(MachineFunction &MF) {
   return llvm::finalizeBundles(MF);

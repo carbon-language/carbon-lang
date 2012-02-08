@@ -10,8 +10,8 @@
 // This file implements target- and collector-independent garbage collection
 // infrastructure.
 //
-// MachineCodeAnalysis identifies the GC safe points in the machine code. Roots
-// are identified in SelectionDAGISel.
+// GCMachineCodeAnalysis identifies the GC safe points in the machine code.
+// Roots are identified in SelectionDAGISel.
 //
 //===----------------------------------------------------------------------===//
 
@@ -60,11 +60,11 @@ namespace {
   };
 
 
-  /// MachineCodeAnalysis - This is a target-independent pass over the machine
+  /// GCMachineCodeAnalysis - This is a target-independent pass over the machine
   /// function representation to identify safe points for the garbage collector
   /// in the machine code. It inserts labels at safe points and populates a
   /// GCMetadata record for each function.
-  class MachineCodeAnalysis : public MachineFunctionPass {
+  class GCMachineCodeAnalysis : public MachineFunctionPass {
     const TargetMachine *TM;
     GCFunctionInfo *FI;
     MachineModuleInfo *MMI;
@@ -81,8 +81,7 @@ namespace {
   public:
     static char ID;
 
-    MachineCodeAnalysis();
-    const char *getPassName() const;
+    GCMachineCodeAnalysis();
     void getAnalysisUsage(AnalysisUsage &AU) const;
 
     bool runOnMachineFunction(MachineFunction &MF);
@@ -334,35 +333,31 @@ bool LowerIntrinsics::PerformDefaultLowering(Function &F, GCStrategy &S) {
 
 // -----------------------------------------------------------------------------
 
-FunctionPass *llvm::createGCMachineCodeAnalysisPass() {
-  return new MachineCodeAnalysis();
-}
+char GCMachineCodeAnalysis::ID = 0;
+char &llvm::GCMachineCodeAnalysisID = GCMachineCodeAnalysis::ID;
 
-char MachineCodeAnalysis::ID = 0;
+INITIALIZE_PASS(GCMachineCodeAnalysis, "gc-analysis",
+                "Analyze Machine Code For Garbage Collection", false, false)
 
-MachineCodeAnalysis::MachineCodeAnalysis()
+GCMachineCodeAnalysis::GCMachineCodeAnalysis()
   : MachineFunctionPass(ID) {}
 
-const char *MachineCodeAnalysis::getPassName() const {
-  return "Analyze Machine Code For Garbage Collection";
-}
-
-void MachineCodeAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
+void GCMachineCodeAnalysis::getAnalysisUsage(AnalysisUsage &AU) const {
   MachineFunctionPass::getAnalysisUsage(AU);
   AU.setPreservesAll();
   AU.addRequired<MachineModuleInfo>();
   AU.addRequired<GCModuleInfo>();
 }
 
-MCSymbol *MachineCodeAnalysis::InsertLabel(MachineBasicBlock &MBB,
-                                           MachineBasicBlock::iterator MI,
-                                           DebugLoc DL) const {
+MCSymbol *GCMachineCodeAnalysis::InsertLabel(MachineBasicBlock &MBB,
+                                             MachineBasicBlock::iterator MI,
+                                             DebugLoc DL) const {
   MCSymbol *Label = MBB.getParent()->getContext().CreateTempSymbol();
   BuildMI(MBB, MI, DL, TII->get(TargetOpcode::GC_LABEL)).addSym(Label);
   return Label;
 }
 
-void MachineCodeAnalysis::VisitCallPoint(MachineBasicBlock::iterator CI) {
+void GCMachineCodeAnalysis::VisitCallPoint(MachineBasicBlock::iterator CI) {
   // Find the return address (next instruction), too, so as to bracket the call
   // instruction.
   MachineBasicBlock::iterator RAI = CI;
@@ -379,7 +374,7 @@ void MachineCodeAnalysis::VisitCallPoint(MachineBasicBlock::iterator CI) {
   }
 }
 
-void MachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
+void GCMachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
   for (MachineFunction::iterator BBI = MF.begin(),
                                  BBE = MF.end(); BBI != BBE; ++BBI)
     for (MachineBasicBlock::iterator MI = BBI->begin(),
@@ -388,7 +383,7 @@ void MachineCodeAnalysis::FindSafePoints(MachineFunction &MF) {
         VisitCallPoint(MI);
 }
 
-void MachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
+void GCMachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
   const TargetFrameLowering *TFI = TM->getFrameLowering();
   assert(TFI && "TargetRegisterInfo not available!");
 
@@ -397,7 +392,7 @@ void MachineCodeAnalysis::FindStackOffsets(MachineFunction &MF) {
     RI->StackOffset = TFI->getFrameIndexOffset(MF, RI->Num);
 }
 
-bool MachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {
+bool GCMachineCodeAnalysis::runOnMachineFunction(MachineFunction &MF) {
   // Quick exit for functions that do not use GC.
   if (!MF.getFunction()->hasGC())
     return false;

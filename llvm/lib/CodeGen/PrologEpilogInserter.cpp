@@ -45,6 +45,7 @@
 using namespace llvm;
 
 char PEI::ID = 0;
+char &llvm::PrologEpilogCodeInserterID = PEI::ID;
 
 INITIALIZE_PASS_BEGIN(PEI, "prologepilog",
                 "Prologue/Epilogue Insertion", false, false)
@@ -52,17 +53,13 @@ INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_DEPENDENCY(MachineDominatorTree)
 INITIALIZE_PASS_DEPENDENCY(TargetPassConfig)
 INITIALIZE_PASS_END(PEI, "prologepilog",
-                "Prologue/Epilogue Insertion", false, false)
+                    "Prologue/Epilogue Insertion & Frame Finalization",
+                    false, false)
 
 STATISTIC(NumVirtualFrameRegs, "Number of virtual frame regs encountered");
 STATISTIC(NumScavengedRegs, "Number of frame index regs scavenged");
 STATISTIC(NumBytesStackSpace,
           "Number of bytes used for stack in all functions");
-
-/// createPrologEpilogCodeInserter - This function returns a pass that inserts
-/// prolog and epilog code, and eliminates abstract frame references.
-///
-FunctionPass *llvm::createPrologEpilogCodeInserter() { return new PEI(); }
 
 /// runOnMachineFunction - Insert prolog/epilog code and replace abstract
 /// frame indexes with appropriate references.

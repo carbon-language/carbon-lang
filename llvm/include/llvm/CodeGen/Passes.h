@@ -175,31 +175,25 @@ namespace llvm {
   createMachineFunctionPrinterPass(raw_ostream &OS,
                                    const std::string &Banner ="");
 
-  /// MachineLoopInfo pass - This pass is a loop analysis pass.
-  ///
+  /// MachineLoopInfo - This pass is a loop analysis pass.
   extern char &MachineLoopInfoID;
 
-  /// MachineLoopRanges pass - This pass is an on-demand loop coverage
-  /// analysis pass.
-  ///
+  /// MachineLoopRanges - This pass is an on-demand loop coverage analysis.
   extern char &MachineLoopRangesID;
 
-  /// MachineDominators pass - This pass is a machine dominators analysis pass.
-  ///
+  /// MachineDominators - This pass is a machine dominators analysis pass.
   extern char &MachineDominatorsID;
 
   /// EdgeBundles analysis - Bundle machine CFG edges.
-  ///
   extern char &EdgeBundlesID;
 
-  /// PHIElimination pass - This pass eliminates machine instruction PHI nodes
+  /// PHIElimination - This pass eliminates machine instruction PHI nodes
   /// by inserting copy instructions.  This destroys SSA information, but is the
   /// desired input for some register allocators.  This pass is "required" by
   /// these register allocator like this: AU.addRequiredID(PHIEliminationID);
-  ///
   extern char &PHIEliminationID;
 
-  /// StrongPHIElimination pass - This pass eliminates machine instruction PHI
+  /// StrongPHIElimination - This pass eliminates machine instruction PHI
   /// nodes by inserting copy instructions.  This destroys SSA information, but
   /// is the desired input for some register allocators.  This pass is
   /// "required" by these register allocator like this:
@@ -210,30 +204,27 @@ namespace llvm {
   /// LiveStacks pass. An analysis keeping track of the liveness of stack slots.
   extern char &LiveStacksID;
 
-  /// TwoAddressInstruction pass - This pass reduces two-address instructions to
+  /// TwoAddressInstruction - This pass reduces two-address instructions to
   /// use two operands. This destroys SSA information but it is desired by
   /// register allocators.
   extern char &TwoAddressInstructionPassID;
 
-  /// RegisteCoalescer pass - This pass merges live ranges to eliminate copies.
+  /// RegisteCoalescer - This pass merges live ranges to eliminate copies.
   extern char &RegisterCoalescerPassID;
 
-  /// MachineScheduler pass - This pass schedules machine instructions.
+  /// MachineScheduler - This pass schedules machine instructions.
   extern char &MachineSchedulerID;
 
   /// SpillPlacement analysis. Suggest optimal placement of spill code between
   /// basic blocks.
-  ///
   extern char &SpillPlacementID;
 
-  /// UnreachableMachineBlockElimination pass - This pass removes unreachable
+  /// UnreachableMachineBlockElimination - This pass removes unreachable
   /// machine basic blocks.
   extern char &UnreachableMachineBlockElimID;
 
-  /// DeadMachineInstructionElim pass - This pass removes dead machine
-  /// instructions.
-  ///
-  FunctionPass *createDeadMachineInstructionElimPass();
+  /// DeadMachineInstructionElim - This pass removes dead machine instructions.
+  extern char &DeadMachineInstructionElimID;
 
   /// Creates a register allocator as the user specified on the command line, or
   /// picks one that matches OptLevel.
@@ -260,55 +251,54 @@ namespace llvm {
   ///
   FunctionPass *createDefaultPBQPRegisterAllocator();
 
-  /// PrologEpilogCodeInserter Pass - This pass inserts prolog and epilog code,
+  /// PrologEpilogCodeInserter - This pass inserts prolog and epilog code,
   /// and eliminates abstract frame references.
-  ///
-  FunctionPass *createPrologEpilogCodeInserter();
+  extern char &PrologEpilogCodeInserterID;
 
-  /// ExpandPostRAPseudos Pass - This pass expands pseudo instructions after
+  /// ExpandPostRAPseudos - This pass expands pseudo instructions after
   /// register allocation.
-  ///
-  FunctionPass *createExpandPostRAPseudosPass();
+  extern char &ExpandPostRAPseudosID;
 
   /// createPostRAScheduler - This pass performs post register allocation
   /// scheduling.
-  FunctionPass *createPostRAScheduler();
+  extern char &PostRASchedulerID;
 
-  /// BranchFolding Pass - This pass performs machine code CFG based
+  /// BranchFolding - This pass performs machine code CFG based
   /// optimizations to delete branches to branches, eliminate branches to
   /// successor blocks (creating fall throughs), and eliminating branches over
   /// branches.
   extern char &BranchFolderPassID;
 
-  /// TailDuplicate Pass - Duplicate blocks with unconditional branches
+  /// TailDuplicate - Duplicate blocks with unconditional branches
   /// into tails of their predecessors.
-  FunctionPass *createTailDuplicatePass();
+  extern char &TailDuplicateID;
 
-  /// IfConverter Pass - This pass performs machine code if conversion.
-  FunctionPass *createIfConverterPass();
+  /// IfConverter - This pass performs machine code if conversion.
+  extern char &IfConverterID;
 
-  /// MachineBlockPlacement Pass - This pass places basic blocks based on branch
+  /// MachineBlockPlacement - This pass places basic blocks based on branch
   /// probabilities.
-  FunctionPass *createMachineBlockPlacementPass();
+  extern char &MachineBlockPlacementID;
 
-  /// MachineBlockPlacementStats Pass - This pass collects statistics about the
+  /// MachineBlockPlacementStats - This pass collects statistics about the
   /// basic block placement using branch probabilities and block frequency
   /// information.
-  FunctionPass *createMachineBlockPlacementStatsPass();
+  extern char &MachineBlockPlacementStatsID;
 
-  /// Code Placement Pass - This pass optimize code placement and aligns loop
+  /// Code Placement - This pass optimize code placement and aligns loop
   /// headers to target specific alignment boundary.
-  FunctionPass *createCodePlacementOptPass();
+  extern char &CodePlacementOptID;
 
-  /// IntrinsicLowering Pass - Performs target-independent LLVM IR
-  /// transformations for highly portable strategies.
+  /// GCLowering Pass - Performs target-independent LLVM IR transformations for
+  /// highly portable strategies.
+  ///
   FunctionPass *createGCLoweringPass();
 
-  /// MachineCodeAnalysis Pass - Target-independent pass to mark safe points in
-  /// machine code. Must be added very late during code generation, just prior
-  /// to output, and importantly after all CFG transformations (such as branch
-  /// folding).
-  FunctionPass *createGCMachineCodeAnalysisPass();
+  /// GCMachineCodeAnalysis - Target-independent pass to mark safe points
+  /// in machine code. Must be added very late during code generation, just
+  /// prior to output, and importantly after all CFG transformations (such as
+  /// branch folding).
+  extern char &GCMachineCodeAnalysisID;
 
   /// Deleter Pass - Releases GC metadata.
   ///
@@ -318,38 +308,37 @@ namespace llvm {
   ///
   FunctionPass *createGCInfoPrinter(raw_ostream &OS);
 
-  /// createMachineCSEPass - This pass performs global CSE on machine
-  /// instructions.
-  FunctionPass *createMachineCSEPass();
+  /// MachineCSE - This pass performs global CSE on machine instructions.
+  extern char &MachineCSEID;
 
-  /// createMachineLICMPass - This pass performs LICM on machine instructions.
-  ///
-  FunctionPass *createMachineLICMPass();
+  /// MachineLICM - This pass performs LICM on machine instructions.
+  extern char &MachineLICMID;
 
-  /// createMachineSinkingPass - This pass performs sinking on machine
-  /// instructions.
-  FunctionPass *createMachineSinkingPass();
+  /// MachineSinking - This pass performs sinking on machine instructions.
+  extern char &MachineSinkingID;
 
-  /// createMachineCopyPropagationPass - This pass performs copy propagation on
+  /// MachineCopyPropagation - This pass performs copy propagation on
   /// machine instructions.
-  FunctionPass *createMachineCopyPropagationPass();
+  extern char &MachineCopyPropagationID;
 
-  /// createPeepholeOptimizerPass - This pass performs peephole optimizations -
+  /// PeepholeOptimizer - This pass performs peephole optimizations -
   /// like extension and comparison eliminations.
-  FunctionPass *createPeepholeOptimizerPass();
+  extern char &PeepholeOptimizerID;
 
-  /// createOptimizePHIsPass - This pass optimizes machine instruction PHIs
+  /// OptimizePHIs - This pass optimizes machine instruction PHIs
   /// to take advantage of opportunities created during DAG legalization.
-  FunctionPass *createOptimizePHIsPass();
+  extern char &OptimizePHIsID;
 
-  /// createStackSlotColoringPass - This pass performs stack slot coloring.
-  FunctionPass *createStackSlotColoringPass();
+  /// StackSlotColoring - This pass performs stack slot coloring.
+  extern char &StackSlotColoringID;
 
   /// createStackProtectorPass - This pass adds stack protectors to functions.
+  ///
   FunctionPass *createStackProtectorPass(const TargetLowering *tli);
 
   /// createMachineVerifierPass - This pass verifies cenerated machine code
   /// instructions for correctness.
+  ///
   FunctionPass *createMachineVerifierPass(const char *Banner = 0);
 
   /// createDwarfEHPass - This pass mulches exception handling code into a form
@@ -358,18 +347,17 @@ namespace llvm {
 
   /// createSjLjEHPass - This pass adapts exception handling code to use
   /// the GCC-style builtin setjmp/longjmp (sjlj) to handling EH control flow.
+  ///
   FunctionPass *createSjLjEHPass(const TargetLowering *tli);
 
-  /// createLocalStackSlotAllocationPass - This pass assigns local frame
-  /// indices to stack slots relative to one another and allocates
-  /// base registers to access them when it is estimated by the target to
-  /// be out of range of normal frame pointer or stack pointer index
-  /// addressing.
-  FunctionPass *createLocalStackSlotAllocationPass();
+  /// LocalStackSlotAllocation - This pass assigns local frame indices to stack
+  /// slots relative to one another and allocates base registers to access them
+  /// when it is estimated by the target to be out of range of normal frame
+  /// pointer or stack pointer index addressing.
+  extern char &LocalStackSlotAllocationID;
 
-  /// createExpandISelPseudosPass - This pass expands pseudo-instructions.
-  ///
-  FunctionPass *createExpandISelPseudosPass();
+  /// ExpandISelPseudos - This pass expands pseudo-instructions.
+  extern char &ExpandISelPseudosID;
 
   /// createExecutionDependencyFixPass - This pass fixes execution time
   /// problems with dependent instructions, such as switching execution
@@ -379,14 +367,12 @@ namespace llvm {
   ///
   FunctionPass *createExecutionDependencyFixPass(const TargetRegisterClass *RC);
 
-  /// createUnpackMachineBundles - This pass unpack machine instruction bundles.
-  ///
-  FunctionPass *createUnpackMachineBundlesPass();
+  /// UnpackMachineBundles - This pass unpack machine instruction bundles.
+  extern char &UnpackMachineBundlesID;
 
-  /// createFinalizeMachineBundles - This pass finalize machine instruction
+  /// FinalizeMachineBundles - This pass finalize machine instruction
   /// bundles (created earlier, e.g. during pre-RA scheduling).
-  ///
-  FunctionPass *createFinalizeMachineBundlesPass();
+  extern char &FinalizeMachineBundlesID;
 
 } // End llvm namespace
 

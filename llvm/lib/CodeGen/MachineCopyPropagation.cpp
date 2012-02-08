@@ -50,13 +50,10 @@ namespace {
   };
 }
 char MachineCopyPropagation::ID = 0;
+char &llvm::MachineCopyPropagationID = MachineCopyPropagation::ID;
 
 INITIALIZE_PASS(MachineCopyPropagation, "machine-cp",
                 "Machine Copy Propagation Pass", false, false)
-
-FunctionPass *llvm::createMachineCopyPropagationPass() {
-  return new MachineCopyPropagation();
-}
 
 void
 MachineCopyPropagation::SourceNoLongerAvailable(unsigned Reg,

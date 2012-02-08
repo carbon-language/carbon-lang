@@ -86,10 +86,6 @@ namespace {
       MachineFunctionPass(ID), ColorWithRegs(false), NextColor(-1) {
         initializeStackSlotColoringPass(*PassRegistry::getPassRegistry());
       }
-    StackSlotColoring(bool RegColor) :
-      MachineFunctionPass(ID), ColorWithRegs(RegColor), NextColor(-1) {
-        initializeStackSlotColoringPass(*PassRegistry::getPassRegistry());
-      }
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
@@ -105,9 +101,6 @@ namespace {
     }
 
     virtual bool runOnMachineFunction(MachineFunction &MF);
-    virtual const char* getPassName() const {
-      return "Stack Slot Coloring";
-    }
 
   private:
     void InitializeSlots();
@@ -122,6 +115,7 @@ namespace {
 } // end anonymous namespace
 
 char StackSlotColoring::ID = 0;
+char &llvm::StackSlotColoringID = StackSlotColoring::ID;
 
 INITIALIZE_PASS_BEGIN(StackSlotColoring, "stack-slot-coloring",
                 "Stack Slot Coloring", false, false)
@@ -131,10 +125,6 @@ INITIALIZE_PASS_DEPENDENCY(VirtRegMap)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_END(StackSlotColoring, "stack-slot-coloring",
                 "Stack Slot Coloring", false, false)
-
-FunctionPass *llvm::createStackSlotColoringPass() {
-  return new StackSlotColoring(/*RegColor=*/false);
-}
 
 namespace {
   // IntervalSorter - Comparison predicate that sort live intervals by

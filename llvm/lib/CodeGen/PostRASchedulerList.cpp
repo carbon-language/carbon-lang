@@ -98,10 +98,6 @@ namespace {
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
-    const char *getPassName() const {
-      return "Post RA top-down list latency scheduler";
-    }
-
     bool runOnMachineFunction(MachineFunction &Fn);
   };
   char PostRAScheduler::ID = 0;
@@ -178,6 +174,11 @@ namespace {
     bool ToggleKillFlag(MachineInstr *MI, MachineOperand &MO);
   };
 }
+
+char &llvm::PostRASchedulerID = PostRAScheduler::ID;
+
+INITIALIZE_PASS(PostRAScheduler, "post-RA-sched",
+                "Post RA top-down list latency scheduler", false, false)
 
 SchedulePostRATDList::SchedulePostRATDList(
   MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
@@ -706,12 +707,4 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 #ifndef NDEBUG
   VerifySchedule(/*isBottomUp=*/false);
 #endif
-}
-
-//===----------------------------------------------------------------------===//
-//                         Public Constructor Functions
-//===----------------------------------------------------------------------===//
-
-FunctionPass *llvm::createPostRAScheduler() {
-  return new PostRAScheduler();
 }

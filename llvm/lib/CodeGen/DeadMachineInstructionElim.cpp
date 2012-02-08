@@ -45,13 +45,10 @@ namespace {
   };
 }
 char DeadMachineInstructionElim::ID = 0;
+char &llvm::DeadMachineInstructionElimID = DeadMachineInstructionElim::ID;
 
 INITIALIZE_PASS(DeadMachineInstructionElim, "dead-mi-elimination",
                 "Remove dead machine instructions", false, false)
-
-FunctionPass *llvm::createDeadMachineInstructionElimPass() {
-  return new DeadMachineInstructionElim();
-}
 
 bool DeadMachineInstructionElim::isDead(const MachineInstr *MI) const {
   // Technically speaking inline asm without side effects and no defs can still

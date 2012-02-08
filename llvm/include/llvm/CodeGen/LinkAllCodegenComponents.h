@@ -31,8 +31,6 @@ namespace {
       if (std::getenv("bar") != (char*) -1)
         return;
 
-      (void) llvm::createDeadMachineInstructionElimPass();
-
       (void) llvm::createFastRegisterAllocator();
       (void) llvm::createBasicRegisterAllocator();
       (void) llvm::createGreedyRegisterAllocator();
