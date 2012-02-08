@@ -79,6 +79,10 @@ extern "C" {
   // (un)poison memory in the same memory region simultaneously.
   void __asan_unpoison_memory_region(void const volatile *addr, size_t size);
 
+  // Performs cleanup before a NoReturn function. Must be called before things
+  // like _exit and execl to avoid false positives on stack.
+  void __asan_handle_no_return();
+
 // User code should use macro instead of functions.
 #if defined(__has_feature) && __has_feature(address_sanitizer)
 #define ASAN_POISON_MEMORY_REGION(addr, size) \

@@ -283,6 +283,15 @@ int __asan_set_error_exit_code(int exit_code) {
   return old;
 }
 
+void __asan_handle_no_return() {
+  int local_stack;
+  AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
+  CHECK(curr_thread);
+  uintptr_t top = curr_thread->stack_top();
+  uintptr_t bottom = ((uintptr_t)&local_stack - kPageSize) & ~(kPageSize-1);
+  PoisonShadow(bottom, top - bottom, 0);
+}
+
 void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
                          uintptr_t addr, bool is_write, size_t access_size) {
   // Do not print more than one report, otherwise they will mix up.

@@ -231,28 +231,18 @@ INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
 }
 #endif  // _WIN32
 
-
-static void UnpoisonStackFromHereToTop() {
-  int local_stack;
-  AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
-  CHECK(curr_thread);
-  uintptr_t top = curr_thread->stack_top();
-  uintptr_t bottom = ((uintptr_t)&local_stack - kPageSize) & ~(kPageSize-1);
-  PoisonShadow(bottom, top - bottom, 0);
-}
-
 INTERCEPTOR(void, longjmp, void *env, int val) {
-  UnpoisonStackFromHereToTop();
+  __asan_handle_no_return();
   REAL(longjmp)(env, val);
 }
 
 INTERCEPTOR(void, _longjmp, void *env, int val) {
-  UnpoisonStackFromHereToTop();
+  __asan_handle_no_return();
   REAL(_longjmp)(env, val);
 }
 
 INTERCEPTOR(void, siglongjmp, void *env, int val) {
-  UnpoisonStackFromHereToTop();
+  __asan_handle_no_return();
   REAL(siglongjmp)(env, val);
 }
 
@@ -263,7 +253,7 @@ extern "C" void __cxa_throw(void *a, void *b, void *c);
 
 INTERCEPTOR(void, __cxa_throw, void *a, void *b, void *c) {
   CHECK(REAL(__cxa_throw));
-  UnpoisonStackFromHereToTop();
+  __asan_handle_no_return();
   REAL(__cxa_throw)(a, b, c);
 }
 #endif
