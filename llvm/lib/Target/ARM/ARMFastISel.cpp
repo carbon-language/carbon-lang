@@ -1733,7 +1733,6 @@ bool ARMFastISel::SelectRem(const Instruction *I, bool isSigned) {
 }
 
 bool ARMFastISel::SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode) {
-  assert (ISDOpcode == ISD::ADD && "Expected an add.");
   EVT DestVT  = TLI.getValueType(I->getType(), true);
 
   // We can get here in the case when we have a binary operation on a non-legal
@@ -1741,6 +1740,17 @@ bool ARMFastISel::SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode) {
   if (DestVT != MVT::i16 && DestVT != MVT::i8 && DestVT != MVT::i1)
     return false;
   
+  unsigned Opc;
+  switch (ISDOpcode) {
+    default: return false;
+    case ISD::ADD:
+      Opc = isThumb2 ? ARM::t2ADDrr : ARM::ADDrr;
+      break;
+    case ISD::OR:
+      Opc = isThumb2 ? ARM::t2ORRrr : ARM::ORRrr;
+      break;
+  }
+
   unsigned SrcReg1 = getRegForValue(I->getOperand(0));
   if (SrcReg1 == 0) return false;
 
@@ -1749,7 +1759,6 @@ bool ARMFastISel::SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode) {
   unsigned SrcReg2 = getRegForValue(I->getOperand(1));
   if (SrcReg2 == 0) return false;
 
-  unsigned Opc = isThumb2 ? ARM::t2ADDrr : ARM::ADDrr;
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(MVT::i32));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                           TII.get(Opc), ResultReg)
@@ -2498,6 +2507,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectFPToI(I, /*isSigned*/ false);
     case Instruction::Add:
       return SelectBinaryIntOp(I, ISD::ADD);
+    case Instruction::Or:
+      return SelectBinaryIntOp(I, ISD::OR);
     case Instruction::FAdd:
       return SelectBinaryFPOp(I, ISD::FADD);
     case Instruction::FSub:
