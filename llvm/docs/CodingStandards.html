@@ -31,6 +31,7 @@
               Errors</a></li>
           <li><a href="#ci_portable_code">Write Portable Code</a></li>
           <li><a href="#ci_rtti_exceptions">Do not use RTTI or Exceptions</a></li>
+          <li><a href="#ci_static_ctors">Do not use Static Constructors</a></li>
           <li><a href="#ci_class_struct">Use of <tt>class</tt>/<tt>struct</tt> Keywords</a></li>
         </ol></li>
     </ol></li>
@@ -444,6 +445,51 @@ use templates like <a href="ProgrammersManual.html#isa"><tt>isa&lt;&gt;</tt>,
 <tt>cast&lt;&gt;</tt>, and <tt>dyn_cast&lt;&gt;</tt></a>.  This form of RTTI is
 opt-in and can be added to any class.  It is also substantially more efficient
 than <tt>dynamic_cast&lt;&gt;</tt>.</p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+<a name="ci_static_ctors">Do not use Static Constructors</a>
+</h4>
+<div>
+
+<p>Static constructors and destructors (e.g. global variables whose types have
+a constructor or destructor) should not be added to the code base, and should be
+removed wherever possible.  Besides <a 
+href="http://yosefk.com/c++fqa/ctors.html#fqa-10.12">well known problems</a>
+where the order of initialization is undefined between globals in different
+source files, the entire concept of static constructors is at odds with the
+common use case of LLVM as a library linked into a larger application.</p>
+  
+<p>Consider the use of LLVM as a JIT linked into another application (perhaps
+for <a href="http://llvm.org/Users.html">OpenGL, custom languages</a>,
+<a href="http://llvm.org/devmtg/2010-11/Gritz-OpenShadingLang.pdf">shaders in
+movies</a>, etc</a>).  Due to the design of static constructors, they must be
+executed at startup time of the entire application, regardless of whether or
+how LLVM is used in that larger application.  There are two problems with
+this:</p>
+  
+<ol>
+  <li>The time to run the static constructors impacts startup time of
+    applications &mdash; a critical time for GUI apps, among others.</li>
+  
+  <li>The static constructors cause the app to pull many extra pages of memory
+    off the disk: both the code for the constructor in each <tt>.o</tt> file and
+    the small amount of data that gets touched. In addition, touched/dirty pages
+    put more pressure on the VM system on low-memory machines.</li>
+</ol>
+
+<p>We would really like for there to be zero cost for linking in an additional
+LLVM target or other library into an application, but static constructors
+violate this goal.</p>
+  
+<p>That said, LLVM unfortunately does contain static constructors.  It would be
+a <a href="http://llvm.org/PR11944">great project</a> for someone to purge all
+static constructors from LLVM, and then enable the 
+<tt>-Wglobal-constructors</tt> warning flag (when building with Clang) to ensure
+we do not regress in the future.
+</p>
 
 </div>
 
@@ -1151,22 +1197,10 @@ prefer it.</p>
 <div>
 
 <p>The use of <tt>#include &lt;iostream&gt;</tt> in library files is
-hereby <b><em>forbidden</em></b>. The primary reason for doing this is to
-support clients using LLVM libraries as part of larger systems. In particular,
-we statically link LLVM into some dynamic libraries. Even if LLVM isn't used,
-the static constructors are run whenever an application starts up that uses the
-dynamic library. There are two problems with this:</p>
-
-<ol>
-  <li>The time to run the static c'tors impacts startup time of applications
-      &mdash; a critical time for GUI apps.</li>
-
-  <li>The static c'tors cause the app to pull many extra pages of memory off the
-      disk: both the code for the static c'tors in each <tt>.o</tt> file and the
-      small amount of data that gets touched. In addition, touched/dirty pages
-      put more pressure on the VM system on low-memory machines.</li>
-</ol>
-
+hereby <b><em>forbidden</em></b>, because many common implementations
+transparently inject a <a href="#ci_static_ctors">static constructor</a> into
+every translation unit that includes it.</p>
+  
 <p>Note that using the other stream headers (<tt>&lt;sstream&gt;</tt> for
 example) is not problematic in this regard &mdash;
 just <tt>&lt;iostream&gt;</tt>. However, <tt>raw_ostream</tt> provides various
