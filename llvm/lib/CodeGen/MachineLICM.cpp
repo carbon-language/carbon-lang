@@ -182,7 +182,7 @@ namespace {
     /// invariant. I.e., all virtual register operands are defined outside of
     /// the loop, physical registers aren't accessed (explicitly or implicitly),
     /// and the instruction is hoistable.
-    /// 
+    ///
     bool IsLoopInvariantInst(MachineInstr &I);
 
     /// HasAnyPHIUse - Return true if the specified register is used by any
@@ -586,7 +586,7 @@ void MachineLICM::HoistPostRA(MachineInstr *MI, unsigned Def) {
   MachineBasicBlock *MBB = MI->getParent();
   Preheader->splice(Preheader->getFirstTerminator(), MBB, MI);
 
-  // Add register to livein list to all the BBs in the current loop since a 
+  // Add register to livein list to all the BBs in the current loop since a
   // loop invariant must be kept live throughout the whole loop. This is
   // important to ensure later passes do not scavenge the def register.
   AddToLiveIns(Def);
@@ -600,7 +600,7 @@ void MachineLICM::HoistPostRA(MachineInstr *MI, unsigned Def) {
 bool MachineLICM::IsGuaranteedToExecute(MachineBasicBlock *BB) {
   if (SpeculationState != SpeculateUnknown)
     return SpeculationState == SpeculateFalse;
-    
+
   if (BB != CurLoop->getHeader()) {
     // Check loop exiting blocks.
     SmallVector<MachineBasicBlock*, 8> CurrentLoopExitingBlocks;
@@ -758,7 +758,7 @@ MachineLICM::getRegisterClassIDAndCost(const MachineInstr *MI,
     RCCost = TLI->getRepRegClassCostFor(VT);
   }
 }
-                                      
+
 /// InitRegPressure - Find all virtual register references that are liveout of
 /// the preheader to initialize the starting "register pressure". Note this
 /// does not count live through (livein but not used) registers.
@@ -842,16 +842,16 @@ void MachineLICM::UpdateRegPressure(const MachineInstr *MI) {
   }
 }
 
-/// isLoadFromGOTOrConstantPool - Return true if this machine instruction 
+/// isLoadFromGOTOrConstantPool - Return true if this machine instruction
 /// loads from global offset table or constant pool.
 static bool isLoadFromGOTOrConstantPool(MachineInstr &MI) {
   assert (MI.mayLoad() && "Expected MI that loads!");
   for (MachineInstr::mmo_iterator I = MI.memoperands_begin(),
-	 E = MI.memoperands_end(); I != E; ++I) {
+         E = MI.memoperands_end(); I != E; ++I) {
     if (const Value *V = (*I)->getValue()) {
       if (const PseudoSourceValue *PSV = dyn_cast<PseudoSourceValue>(V))
         if (PSV == PSV->getGOT() || PSV == PSV->getConstantPool())
-	  return true;
+          return true;
     }
   }
   return false;
@@ -872,7 +872,7 @@ bool MachineLICM::IsLICMCandidate(MachineInstr &I) {
   // from constant memory are not safe to speculate all the time, for example
   // indexed load from a jump table.
   // Stores and side effects are already checked by isSafeToMove.
-  if (I.mayLoad() && !isLoadFromGOTOrConstantPool(I) && 
+  if (I.mayLoad() && !isLoadFromGOTOrConstantPool(I) &&
       !IsGuaranteedToExecute(I.getParent()))
     return false;
 
@@ -883,7 +883,7 @@ bool MachineLICM::IsLICMCandidate(MachineInstr &I) {
 /// invariant. I.e., all virtual register operands are defined outside of the
 /// loop, physical registers aren't accessed explicitly, and there are no side
 /// effects that aren't captured by the operands or other flags.
-/// 
+///
 bool MachineLICM::IsLoopInvariantInst(MachineInstr &I) {
   if (!IsLICMCandidate(I))
     return false;
@@ -1021,7 +1021,7 @@ bool MachineLICM::IsCheapInstruction(MachineInstr &MI) const {
 bool MachineLICM::CanCauseHighRegPressure(DenseMap<unsigned, int> &Cost) {
   for (DenseMap<unsigned, int>::iterator CI = Cost.begin(), CE = Cost.end();
        CI != CE; ++CI) {
-    if (CI->second <= 0) 
+    if (CI->second <= 0)
       continue;
 
     unsigned RCId = CI->first;
@@ -1102,7 +1102,7 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
       return false;
   } else {
     // Estimate register pressure to determine whether to LICM the instruction.
-    // In low register pressure situation, we can be more aggressive about 
+    // In low register pressure situation, we can be more aggressive about
     // hoisting. Also, favors hoisting long latency instructions even in
     // moderately high pressure situation.
     // FIXME: If there are long latency loop-invariant instructions inside the
