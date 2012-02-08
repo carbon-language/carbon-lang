@@ -22,11 +22,29 @@
 namespace llvm {
 class Type;
 
+namespace Attribute {
+/// We use this proxy POD type to allow constructing Attributes constants
+/// using initializer lists. Do not use this class directly.
+struct AttrConst {
+  uint64_t v;
+  AttrConst operator | (const AttrConst Attrs) const {
+    AttrConst Res = {v | Attrs.v};
+    return Res;
+  }
+  AttrConst operator ~ () const {
+    AttrConst Res = {~v};
+    return Res;
+  }
+};
+}  // namespace Attribute
+
+
 /// Attributes - A bitset of attributes.
 class Attributes {
  public:
   Attributes() : Bits(0) { }
   explicit Attributes(uint64_t Val) : Bits(Val) { }
+  /*implicit*/ Attributes(Attribute::AttrConst Val) : Bits(Val.v) { }
   Attributes(const Attributes &Attrs) : Bits(Attrs.Bits) { }
   // This is a "safe bool() operator".
   operator const void *() const { return Bits ? this : 0; }
@@ -73,45 +91,55 @@ namespace Attribute {
 /// results or the function itself.
 /// @brief Function attributes.
 
-const Attributes None      (0);     ///< No attributes have been set
-const Attributes ZExt      (1<<0);  ///< Zero extended before/after call
-const Attributes SExt      (1<<1);  ///< Sign extended before/after call
-const Attributes NoReturn  (1<<2);  ///< Mark the function as not returning
-const Attributes InReg     (1<<3);  ///< Force argument to be passed in register
-const Attributes StructRet (1<<4);  ///< Hidden pointer to structure to return
-const Attributes NoUnwind  (1<<5);  ///< Function doesn't unwind stack
-const Attributes NoAlias   (1<<6);  ///< Considered to not alias after call
-const Attributes ByVal     (1<<7);  ///< Pass structure by value
-const Attributes Nest      (1<<8);  ///< Nested function static chain
-const Attributes ReadNone  (1<<9);  ///< Function does not access memory
-const Attributes ReadOnly  (1<<10); ///< Function only reads from memory
-const Attributes NoInline        (1<<11); ///< inline=never
-const Attributes AlwaysInline    (1<<12); ///< inline=always
-const Attributes OptimizeForSize (1<<13); ///< opt_size
-const Attributes StackProtect    (1<<14); ///< Stack protection.
-const Attributes StackProtectReq (1<<15); ///< Stack protection required.
-const Attributes Alignment (31<<16); ///< Alignment of parameter (5 bits)
+// We declare AttrConst objects that will be used throughout the code
+// and also raw uint64_t objects with _i suffix to be used below for other
+// constant declarations. This is done to avoid static CTORs and at the same
+// time to keep type-safety of Attributes.
+#define DECLARE_LLVM_ATTRIBUTE(name, value) \
+  const uint64_t name##_i = value; \
+  const AttrConst name = {value};
+
+DECLARE_LLVM_ATTRIBUTE(None,0)    ///< No attributes have been set
+DECLARE_LLVM_ATTRIBUTE(ZExt,1<<0) ///< Zero extended before/after call
+DECLARE_LLVM_ATTRIBUTE(SExt,1<<1) ///< Sign extended before/after call
+DECLARE_LLVM_ATTRIBUTE(NoReturn,1<<2) ///< Mark the function as not returning
+DECLARE_LLVM_ATTRIBUTE(InReg,1<<3) ///< Force argument to be passed in register
+DECLARE_LLVM_ATTRIBUTE(StructRet,1<<4) ///< Hidden pointer to structure to return
+DECLARE_LLVM_ATTRIBUTE(NoUnwind,1<<5) ///< Function doesn't unwind stack
+DECLARE_LLVM_ATTRIBUTE(NoAlias,1<<6) ///< Considered to not alias after call
+DECLARE_LLVM_ATTRIBUTE(ByVal,1<<7) ///< Pass structure by value
+DECLARE_LLVM_ATTRIBUTE(Nest,1<<8) ///< Nested function static chain
+DECLARE_LLVM_ATTRIBUTE(ReadNone,1<<9) ///< Function does not access memory
+DECLARE_LLVM_ATTRIBUTE(ReadOnly,1<<10) ///< Function only reads from memory
+DECLARE_LLVM_ATTRIBUTE(NoInline,1<<11) ///< inline=never
+DECLARE_LLVM_ATTRIBUTE(AlwaysInline,1<<12) ///< inline=always
+DECLARE_LLVM_ATTRIBUTE(OptimizeForSize,1<<13) ///< opt_size
+DECLARE_LLVM_ATTRIBUTE(StackProtect,1<<14) ///< Stack protection.
+DECLARE_LLVM_ATTRIBUTE(StackProtectReq,1<<15) ///< Stack protection required.
+DECLARE_LLVM_ATTRIBUTE(Alignment,31<<16) ///< Alignment of parameter (5 bits)
                                      // stored as log2 of alignment with +1 bias
                                      // 0 means unaligned different from align 1
-const Attributes NoCapture (1<<21); ///< Function creates no aliases of pointer
-const Attributes NoRedZone (1<<22); /// disable redzone
-const Attributes NoImplicitFloat (1<<23); /// disable implicit floating point
-                                          /// instructions.
-const Attributes Naked           (1<<24); ///< Naked function
-const Attributes InlineHint      (1<<25); ///< source said inlining was
-                                          ///desirable
-const Attributes StackAlignment  (7<<26); ///< Alignment of stack for
-                                          ///function (3 bits) stored as log2
-                                          ///of alignment with +1 bias
-                                          ///0 means unaligned (different from
-                                          ///alignstack(1))
-const Attributes ReturnsTwice    (1<<29); ///< Function can return twice
-const Attributes UWTable     (1<<30);     ///< Function must be in a unwind
-                                          ///table
-const Attributes NonLazyBind (1U<<31);    ///< Function is called early and/or
-                                          ///  often, so lazy binding isn't
-                                          ///  worthwhile.
-const Attributes AddressSafety(1ULL<<32); ///< Address safety checking is on.
+DECLARE_LLVM_ATTRIBUTE(NoCapture,1<<21) ///< Function creates no aliases of pointer
+DECLARE_LLVM_ATTRIBUTE(NoRedZone,1<<22) /// disable redzone
+DECLARE_LLVM_ATTRIBUTE(NoImplicitFloat,1<<23) /// disable implicit floating point
+                                           /// instructions.
+DECLARE_LLVM_ATTRIBUTE(Naked,1<<24) ///< Naked function
+DECLARE_LLVM_ATTRIBUTE(InlineHint,1<<25) ///< source said inlining was
+                                           ///desirable
+DECLARE_LLVM_ATTRIBUTE(StackAlignment,7<<26) ///< Alignment of stack for
+                                           ///function (3 bits) stored as log2
+                                           ///of alignment with +1 bias
+                                           ///0 means unaligned (different from
+                                           ///alignstack= {1))
+DECLARE_LLVM_ATTRIBUTE(ReturnsTwice,1<<29) ///< Function can return twice
+DECLARE_LLVM_ATTRIBUTE(UWTable,1<<30) ///< Function must be in a unwind
+                                           ///table
+DECLARE_LLVM_ATTRIBUTE(NonLazyBind,1U<<31) ///< Function is called early and/or
+                                            /// often, so lazy binding isn't
+                                            /// worthwhile.
+DECLARE_LLVM_ATTRIBUTE(AddressSafety,1ULL<<32) ///< Address safety checking is on.
+
+#undef DECLARE_LLVM_ATTRIBUTE
 
 /// Note that uwtable is about the ABI or the user mandating an entry in the
 /// unwind table. The nounwind attribute is about an exception passing by the
@@ -126,24 +154,26 @@ const Attributes AddressSafety(1ULL<<32); ///< Address safety checking is on.
 /// uwtable + nounwind = Needs an entry because the ABI says so.
 
 /// @brief Attributes that only apply to function parameters.
-const Attributes ParameterOnly = ByVal | Nest | StructRet | NoCapture;
+const AttrConst ParameterOnly = {ByVal_i | Nest_i |
+    StructRet_i | NoCapture_i};
 
 /// @brief Attributes that may be applied to the function itself.  These cannot
 /// be used on return values or function parameters.
-const Attributes FunctionOnly = NoReturn | NoUnwind | ReadNone | ReadOnly |
-  NoInline | AlwaysInline | OptimizeForSize | StackProtect | StackProtectReq |
-  NoRedZone | NoImplicitFloat | Naked | InlineHint | StackAlignment |
-  UWTable | NonLazyBind | ReturnsTwice | AddressSafety;
+const AttrConst FunctionOnly = {NoReturn_i | NoUnwind_i | ReadNone_i |
+  ReadOnly_i | NoInline_i | AlwaysInline_i | OptimizeForSize_i |
+  StackProtect_i | StackProtectReq_i | NoRedZone_i | NoImplicitFloat_i |
+  Naked_i | InlineHint_i | StackAlignment_i |
+  UWTable_i | NonLazyBind_i | ReturnsTwice_i | AddressSafety_i};
 
 /// @brief Parameter attributes that do not apply to vararg call arguments.
-const Attributes VarArgsIncompatible = StructRet;
+const AttrConst VarArgsIncompatible = {StructRet_i};
 
 /// @brief Attributes that are mutually incompatible.
-const Attributes MutuallyIncompatible[4] = {
-  ByVal | InReg | Nest | StructRet,
-  ZExt  | SExt,
-  ReadNone | ReadOnly,
-  NoInline | AlwaysInline
+const AttrConst MutuallyIncompatible[4] = {
+  {ByVal_i | InReg_i | Nest_i | StructRet_i},
+  {ZExt_i  | SExt_i},
+  {ReadNone_i | ReadOnly_i},
+  {NoInline_i | AlwaysInline_i}
 };
 
 /// @brief Which attributes cannot be applied to a type.
