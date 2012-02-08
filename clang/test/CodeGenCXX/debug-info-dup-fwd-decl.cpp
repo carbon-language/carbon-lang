@@ -3,16 +3,16 @@ class Test
 {
 public:
     Test () : reserved (new data()) {}
-    
+
     unsigned
     getID() const
     {
         return reserved->objectID;
     }
 protected:
-    struct data {   
+    struct data {
         unsigned objectID;
-    };  
+    };
     data* reserved;
 };
 
