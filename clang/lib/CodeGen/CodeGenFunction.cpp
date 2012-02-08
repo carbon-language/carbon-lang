@@ -16,7 +16,6 @@
 #include "CGCUDARuntime.h"
 #include "CGCXXABI.h"
 #include "CGDebugInfo.h"
-#include "CGException.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/Decl.h"
