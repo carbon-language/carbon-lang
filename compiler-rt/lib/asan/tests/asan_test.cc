@@ -564,7 +564,11 @@ void DoubleFree() {
 }
 
 TEST(AddressSanitizer, DoubleFreeTest) {
-  EXPECT_DEATH(DoubleFree(), "ERROR: AddressSanitizer attempting double-free");
+  EXPECT_DEATH(DoubleFree(), ASAN_PCRE_DOTALL
+               "ERROR: AddressSanitizer attempting double-free"
+               ".*is located 0 bytes inside of 400-byte region"
+               ".*freed by thread T0 here"
+               ".*previously allocated by thread T0 here");
 }
 
 template<int kSize>

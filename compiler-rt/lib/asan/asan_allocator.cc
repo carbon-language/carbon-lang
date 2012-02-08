@@ -686,7 +686,7 @@ static void Deallocate(uint8_t *ptr, AsanStackTrace *stack) {
   if (m->chunk_state == CHUNK_QUARANTINE) {
     Report("ERROR: AddressSanitizer attempting double-free on %p:\n", ptr);
     stack->PrintStack();
-    m->DescribeAddress((uintptr_t)ptr, 1);
+    Describe((uintptr_t)ptr, 1);
     ShowStatsAndAbort();
   } else if (m->chunk_state != CHUNK_ALLOCATED) {
     Report("ERROR: AddressSanitizer attempting free on address which was not"
