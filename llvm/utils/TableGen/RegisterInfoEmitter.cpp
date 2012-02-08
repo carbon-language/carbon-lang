@@ -187,6 +187,9 @@ RegisterInfoEmitter::EmitRegMapping(raw_ostream &OS,
       for (DwarfRegNumsMapTy::iterator
              I = DwarfRegNums.begin(), E = DwarfRegNums.end(); I != E; ++I) {
         int RegNo = I->second[i];
+        if (RegNo == -1) // -1 is the default value, don't emit a mapping.
+          continue;
+
         OS << "    ";
         if (!isCtor)
           OS << "RI->";
