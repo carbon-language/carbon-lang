@@ -293,8 +293,10 @@ bool MachineScheduler::runOnMachineFunction(MachineFunction &mf) {
         continue;
       }
       DEBUG(dbgs() << "MachineScheduling " << MF->getFunction()->getName()
-            << ":BB#" << MBB->getNumber() << "\n  From: " << *I << "    To: "
-            << *RegionEnd << " Remaining: " << RemainingCount << "\n");
+            << ":BB#" << MBB->getNumber() << "\n  From: " << *I << "    To: ";
+            if (RegionEnd != MBB->end()) dbgs() << *RegionEnd;
+            else dbgs() << "End";
+            dbgs() << " Remaining: " << RemainingCount << "\n");
 
       // Inform ScheduleDAGInstrs of the region being scheduled. It calls back
       // to our Schedule() method.
