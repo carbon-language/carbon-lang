@@ -4704,12 +4704,11 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         << RHS << E->getType() << LHS.getBitWidth();
     } else if (LHS.isSigned()) {
       // C++11 [expr.shift]p2: A signed left shift must have a non-negative
-      // operand, and must not overflow.
+      // operand, and must not overflow the corresponding unsigned type.
       if (LHS.isNegative())
         CCEDiag(E, diag::note_constexpr_lshift_of_negative) << LHS;
-      else if (LHS.countLeadingZeros() <= SA)
-        HandleOverflow(Info, E, LHS.extend(LHS.getBitWidth() + SA) << SA,
-                       E->getType());
+      else if (LHS.countLeadingZeros() < SA)
+        CCEDiag(E, diag::note_constexpr_lshift_discards);
     }
 
     return Success(LHS << SA, E);

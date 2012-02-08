@@ -984,13 +984,8 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body,
   // C++11 [dcl.constexpr]p4:
   //   - every constructor involved in initializing non-static data members and
   //     base class sub-objects shall be a constexpr constructor.
-  //
-  // FIXME: We currently disable this check inside system headers, to work
-  // around early STL implementations which contain constexpr functions which
-  // can't produce constant expressions.
   llvm::SmallVector<PartialDiagnosticAt, 8> Diags;
-  if (!Context.getSourceManager().isInSystemHeader(Dcl->getLocation()) &&
-      !IsInstantiation && !Expr::isPotentialConstantExpr(Dcl, Diags)) {
+  if (!IsInstantiation && !Expr::isPotentialConstantExpr(Dcl, Diags)) {
     Diag(Dcl->getLocation(), diag::err_constexpr_function_never_constant_expr)
       << isa<CXXConstructorDecl>(Dcl);
     for (size_t I = 0, N = Diags.size(); I != N; ++I)

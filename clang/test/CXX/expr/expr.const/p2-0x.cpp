@@ -144,8 +144,11 @@ namespace UndefinedBehavior {
   constexpr int shl_unsigned_overflow = 1024u << 31; // ok
   constexpr int shl_signed_negative = (-3) << 1; // expected-error {{constant expression}} expected-note {{left shift of negative value -3}}
   constexpr int shl_signed_ok = 1 << 30; // ok
-  constexpr int shl_signed_into_sign = 1 << 31; // expected-error {{constant expression}} expected-note {{value 2147483648 is outside the range}}
-  constexpr int shl_signed_overflow = 1024 << 31; // expected-error {{constant expression}} expected-note {{value 2199023255552 is outside the range}} expected-warning {{requires 43 bits to represent}}
+  constexpr int shl_signed_into_sign = 1 << 31; // ok (DR1457)
+  constexpr int shl_signed_into_sign_2 = 0x7fffffff << 1; // ok (DR1457)
+  constexpr int shl_signed_off_end = 2 << 31; // expected-error {{constant expression}} expected-note {{signed left shift discards bits}} expected-warning {{signed shift result (0x100000000) requires 34 bits to represent, but 'int' only has 32 bits}}
+  constexpr int shl_signed_off_end_2 = 0x7fffffff << 2; // expected-error {{constant expression}} expected-note {{signed left shift discards bits}} expected-warning {{signed shift result (0x1FFFFFFFC) requires 34 bits to represent, but 'int' only has 32 bits}}
+  constexpr int shl_signed_overflow = 1024 << 31; // expected-error {{constant expression}} expected-note {{signed left shift discards bits}} expected-warning {{requires 43 bits to represent}}
   constexpr int shl_signed_ok2 = 1024 << 20; // ok
 
   constexpr int shr_m1 = 0 >> -1; // expected-error {{constant expression}} expected-note {{negative shift count -1}} expected-warning {{negative}}
