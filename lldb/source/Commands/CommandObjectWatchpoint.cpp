@@ -853,6 +853,70 @@ CommandObjectWatchpointModify::Execute
 }
 
 //-------------------------------------------------------------------------
+// CommandObjectWatchpointSet::CommandOptions
+//-------------------------------------------------------------------------
+#pragma mark Set::CommandOptions
+
+CommandObjectWatchpointSet::CommandOptions::CommandOptions() :
+    OptionGroup()
+{
+}
+
+CommandObjectWatchpointSet::CommandOptions::~CommandOptions ()
+{
+}
+
+OptionDefinition
+CommandObjectWatchpointSet::CommandOptions::g_option_table[] =
+{
+{ LLDB_OPT_SET_1, true, "expression", 'e', no_argument, NULL, NULL, eArgTypeNone, "Watch an address with an expression specified at the end."},
+{ LLDB_OPT_SET_2, true, "variable",   'v', no_argument, NULL, NULL, eArgTypeNone, "Watch a variable name specified at the end."}
+};
+
+uint32_t
+CommandObjectWatchpointSet::CommandOptions::GetNumDefinitions ()
+{
+    return sizeof(g_option_table)/sizeof(OptionDefinition);
+}
+
+const OptionDefinition*
+CommandObjectWatchpointSet::CommandOptions::GetDefinitions ()
+{
+    return g_option_table;
+}
+
+Error
+CommandObjectWatchpointSet::CommandOptions::SetOptionValue (CommandInterpreter &interpreter,
+                                                            uint32_t option_idx,
+                                                            const char *option_arg)
+{
+    Error error;
+    char short_option = (char) g_option_table[option_idx].short_option;
+
+    switch (short_option)
+    {
+        case 'e':
+            m_do_expression = true;
+            break;
+        case 'v':
+            m_do_variable = true;
+            break;
+        default:
+            error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
+            break;
+    }
+
+    return error;
+}
+
+void
+CommandObjectWatchpointSet::CommandOptions::OptionParsingStarting (CommandInterpreter &interpreter)
+{
+    m_do_expression = false;
+    m_do_variable = false;
+}
+
+//-------------------------------------------------------------------------
 // CommandObjectWatchpointSet
 //-------------------------------------------------------------------------
 #pragma mark Set
@@ -861,45 +925,51 @@ CommandObjectWatchpointSet::CommandObjectWatchpointSet (CommandInterpreter &inte
     CommandObject (interpreter,
                    "watchpoint set",
                    "Set a watchpoint. "
-                   "You can choose to watch a variable in scope with just the '-w' option. "
-                   "If you use the '-x' option to specify the byte size, it is implied "
-                   "that the remaining string is evaluated as an expression with the result "
-                   "interpreted as an address to watch for, i.e., the pointee is watched. "
+                   "You can choose to watch a variable in scope with the '-v' option "
+                   "or to watch an address with the '-e' option by supplying an expression. "
+                   "Use the '-w' option to specify the type of watchpoint and "
+                   "the '-x' option to specify the byte size to watch for. "
                    "If no '-w' option is specified, it defaults to read_write. "
                    "Note that hardware resources for watching are often limited.",
                    NULL,
                    eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
     m_option_group (interpreter),
-    m_option_watchpoint()
+    m_option_watchpoint (),
+    m_command_options ()
 {
     SetHelpLong(
 "Examples: \n\
 \n\
-    watchpoint set -w read_wriate my_global_var \n\
-    # Watch my_global_var for read/write access.\n\
+    watchpoint set -w read_wriate -v my_global_var \n\
+    # Watch my_global_var for read/write access, with the region to watch corresponding to the byte size of the data type.\n\
 \n\
-    watchpoint set -w write -x 1 foo + 32\n\
-    # Watch write access for the 1-byte region pointed to by the address 'foo + 32'.\n");
+    watchpoint set -w write -x 1 -e foo + 32\n\
+    # Watch write access for the 1-byte region pointed to by the address 'foo + 32'.\n\
+    # If no '-x' option is specified, byte size defaults to 4.\n");
 
     CommandArgumentEntry arg;
     CommandArgumentData var_name_arg, expression_arg;
         
     // Define the first variant of this arg.
-    var_name_arg.arg_type = eArgTypeVarName;
-    var_name_arg.arg_repetition = eArgRepeatPlain;
-
-    // Define the second variant of this arg.
     expression_arg.arg_type = eArgTypeExpression;
     expression_arg.arg_repetition = eArgRepeatPlain;
+    expression_arg.arg_opt_set_association = LLDB_OPT_SET_1;
         
+    // Define the second variant of this arg.
+    var_name_arg.arg_type = eArgTypeVarName;
+    var_name_arg.arg_repetition = eArgRepeatPlain;
+    var_name_arg.arg_opt_set_association = LLDB_OPT_SET_2;
+
     // Push the two variants into the argument entry.
-    arg.push_back (var_name_arg);
     arg.push_back (expression_arg);
+    arg.push_back (var_name_arg);
         
-    // Push the data for the first argument into the m_arguments vector.
+    // Push the data for the only argument into the m_arguments vector.
     m_arguments.push_back (arg);
-        
-    m_option_group.Append (&m_option_watchpoint, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+
+    // Absorb the '-w' and '-x' options.
+    m_option_group.Append (&m_option_watchpoint, LLDB_OPT_SET_1, LLDB_OPT_SET_1|LLDB_OPT_SET_2);
+    m_option_group.Append (&m_command_options);
     m_option_group.Finalize();
 }
 
@@ -930,35 +1000,25 @@ CommandObjectWatchpointSet::Execute
         return false;
     }
 
-    // Be careful about the stack frame, if any summary formatter runs code, it might clear the StackFrameList
-    // for the thread.  So hold onto a shared pointer to the frame so it stays alive.
-    bool get_file_globals = true;
-    VariableList *variable_list = frame->GetVariableList (get_file_globals);
+    // If no argument is present, issue an error message.  There's no way to set a watchpoint.
+    if (command.GetArgumentCount() <= 0)
+    {
+        result.GetErrorStream().Printf("error: required argument missing; specify your program variable ('-v') or an address ('-e') to watch for\n");
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+    }
 
-    bool watch_address = (m_option_watchpoint.watch_size > 0);
-        
+    // It's either '-e' to watch an address with expression' or '-v' to watch a variable.
+    bool watch_address = m_command_options.m_do_expression;
+
     // If no '-w' is specified, default to '-w read_write'.
     if (!m_option_watchpoint.watch_variable)
     {
         m_option_watchpoint.watch_variable = true;
         m_option_watchpoint.watch_type = OptionGroupWatchpoint::eWatchReadWrite;
     }
-    // It's possible to specify an address to watch for with the '-x' option.
-    if (!variable_list && !watch_address)
-    {
-        result.GetErrorStream().Printf("error: no variables found, did you forget to use '-x' option to watch an address?\n");
-        result.SetStatus(eReturnStatusFailed);
-        return false;
-    }
-    // If thre's no argument, it is an error.
-    if (command.GetArgumentCount() <= 0)
-    {
-        result.GetErrorStream().Printf("error: specify your target variable (no '-x') or expression (with '-x') to watch for\n");
-        result.SetStatus(eReturnStatusFailed);
-        return false;
-    }        
 
-    // We passed the sanity check for the options.
+    // We passed the sanity check for the command.
     // Proceed to set the watchpoint now.
     lldb::addr_t addr = 0;
     size_t size = 0;
@@ -968,6 +1028,7 @@ CommandObjectWatchpointSet::Execute
     Stream &output_stream = result.GetOutputStream();
 
     if (watch_address) {
+        // Use expression evaluation to arrive at the address to watch.
         std::string expr_str;
         command.GetQuotedCommandString(expr_str);
         const bool coerce_to_id = true;
@@ -983,6 +1044,7 @@ CommandObjectWatchpointSet::Execute
                                                                    valobj_sp);
         if (expr_result != eExecutionCompleted) {
             result.GetErrorStream().Printf("error: expression evaluation of address to watch failed\n");
+            result.GetErrorStream().Printf("expression evaluated: %s\n", expr_str.c_str());
             result.SetStatus(eReturnStatusFailed);
         }
 
@@ -993,11 +1055,12 @@ CommandObjectWatchpointSet::Execute
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
-        size = m_option_watchpoint.watch_size;
+        size = m_option_watchpoint.watch_size == 0 ? 4 /* Could use a better default size? */
+                                                   : m_option_watchpoint.watch_size;
     } else {
         // A simple watch variable gesture allows only one argument.
-        if (m_option_watchpoint.watch_size == 0 && command.GetArgumentCount() != 1) {
-            result.GetErrorStream().Printf("error: specify exactly one variable with the '-w' option, i.e., no '-x'\n");
+        if (command.GetArgumentCount() != 1) {
+            result.GetErrorStream().Printf("error: specify exactly one variable with the '-v' option\n");
             result.SetStatus(eReturnStatusFailed);
             return false;
         }
@@ -1016,7 +1079,8 @@ CommandObjectWatchpointSet::Execute
             if (addr_type == eAddressTypeLoad) {
                 // We're in business.
                 // Find out the size of this variable.
-                size = valobj_sp->GetByteSize();
+                size = m_option_watchpoint.watch_size == 0 ? valobj_sp->GetByteSize()
+                                                           : m_option_watchpoint.watch_size;
             }
         } else {
             const char *error_cstr = error.AsCString(NULL);
@@ -1045,7 +1109,8 @@ CommandObjectWatchpointSet::Execute
         output_stream.EOL();
         result.SetStatus(eReturnStatusSuccessFinishResult);
     } else {
-        result.AppendErrorWithFormat("Watchpoint creation failed.\n");
+        result.AppendErrorWithFormat("Watchpoint creation failed (addr=0x%llx, size=%lu).\n",
+                                     addr, size);
         result.SetStatus(eReturnStatusFailed);
     }
 

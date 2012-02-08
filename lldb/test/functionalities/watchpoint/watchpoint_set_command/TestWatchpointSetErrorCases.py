@@ -51,9 +51,13 @@ class WatchpointSetErrorTestCase(TestBase):
 
         # No argument is an error.
         self.expect("watchpoint set", error=True,
-            substrs = ['specify your target variable',
-                       'or expression',
-                       'to watch for'])
+            startstr = 'error: invalid combination of options for the given command')
+        self.runCmd("watchpoint set -v -w read_write", check=False)
+
+        # 'watchpoint set' now takes a mandatory '-v' or '-e' option to
+        # indicate watching for either variable or address.
+        self.expect("watchpoint set -w write global", error=True,
+            startstr = 'error: invalid combination of options for the given command')
 
         # Wrong size parameter is an error.
         self.expect("watchpoint set -x -128", error=True,

@@ -121,6 +121,13 @@ class HelpCommandTestCase(TestBase):
         self.expect("help watchpt-id-list",
             substrs = ['<watchpt-id-list>'])
 
+    def test_help_watchpoint_set(self):
+        """Test that 'help watchpoint set' prints out <expr> for the '-e' option
+        and <variable-name> for the '-v' option."""
+        self.expect("help watchpoint set",
+            patterns = ['watchpoint set -e.*<expr>',
+                        'watchpoint set -v.*<variable-name>'])
+
 
 if __name__ == '__main__':
     import atexit

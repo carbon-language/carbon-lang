@@ -60,6 +60,12 @@ public:
     {
         lldb::CommandArgumentType arg_type;
         ArgumentRepetitionType arg_repetition;
+        uint32_t arg_opt_set_association; // This arg might be associated only with some particular option set(s).
+        CommandArgumentData():
+            arg_type(lldb::eArgTypeNone),
+            arg_repetition(eArgRepeatPlain),
+            arg_opt_set_association(LLDB_OPT_SET_ALL) // By default, the arg associates to all option sets.
+        {}
     };
     
     typedef std::vector<CommandArgumentData> CommandArgumentEntry; // Used to build individual command argument lists
@@ -171,8 +177,13 @@ public:
     static const char *
     GetArgumentName (lldb::CommandArgumentType arg_type);
 
+    // Generates a nicely formatted command args string for help command output.
+    // By default, all possible args are taken into account, for example,
+    // '<expr | variable-name>'.  This can be refined by passing a second arg
+    // specifying which option set(s) we are interested, which could then, for
+    // example, produce either '<expr>' or '<variable-name>'.
     void
-    GetFormattedCommandArguments (Stream &str);
+    GetFormattedCommandArguments (Stream &str, uint32_t opt_set_mask = LLDB_OPT_SET_ALL);
     
     bool
     IsPairType (ArgumentRepetitionType arg_repeat_type);

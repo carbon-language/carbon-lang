@@ -60,7 +60,7 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
         # with offset as 7.
         # The main.cpp, by design, misbehaves by not following the agreed upon
         # protocol of only accessing the allowable index range of [0, 6].
-        self.expect("watchpoint set -w write -x 1 g_char_ptr + 7", WATCHPOINT_CREATED,
+        self.expect("watchpoint set -w write -x 1 -e g_char_ptr + 7", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 1', 'type = w'])
         self.runCmd("expr unsigned val = g_char_ptr[7]; val")
         self.expect(self.res.GetOutput().splitlines()[0], exe=False,

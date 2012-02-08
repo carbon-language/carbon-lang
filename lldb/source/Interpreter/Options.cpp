@@ -437,6 +437,10 @@ Options::GenerateOptionUsage
             strm.Printf ("\n");
         strm.Indent (name);
 
+        // Different option sets may require different args.
+        StreamString args_str;
+        cmd->GetFormattedCommandArguments(args_str, opt_set_mask);
+
         // First go through and print all options that take no arguments as
         // a single string. If a command has "-a" "-b" and "-c", this will show
         // up as [-abc]
@@ -556,12 +560,12 @@ Options::GenerateOptionUsage
             }
         }
         
-        if (arguments_str.GetSize() > 0)
+        if (args_str.GetSize() > 0)
         {
             if (cmd->WantsRawCommandString())
                 strm.Printf(" --");
             
-            strm.Printf (" %s", arguments_str.GetData());
+            strm.Printf (" %s", args_str.GetData());
         }
     }
     

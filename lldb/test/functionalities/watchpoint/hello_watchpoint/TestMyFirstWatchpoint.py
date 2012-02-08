@@ -75,7 +75,7 @@ class HelloWatchpointTestCase(TestBase):
                 substrs = ['Watchpoint created', 'size = 4', 'type = w',
                            '%s:%d' % (self.source, self.decl)])
         else:
-            self.expect("watchpoint set -w write global", WATCHPOINT_CREATED,
+            self.expect("watchpoint set -w write -v global", WATCHPOINT_CREATED,
                 substrs = ['Watchpoint created', 'size = 4', 'type = w',
                            '%s:%d' % (self.source, self.decl)])
 

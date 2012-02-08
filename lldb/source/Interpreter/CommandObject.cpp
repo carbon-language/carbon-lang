@@ -535,15 +535,30 @@ CommandObject::IsPairType (ArgumentRepetitionType arg_repeat_type)
     return false;
 }
 
+static CommandObject::CommandArgumentEntry
+OptSetFiltered(uint32_t opt_set_mask, CommandObject::CommandArgumentEntry &cmd_arg_entry)
+{
+    CommandObject::CommandArgumentEntry ret_val;
+    for (unsigned i = 0; i < cmd_arg_entry.size(); ++i)
+        if (opt_set_mask & cmd_arg_entry[i].arg_opt_set_association)
+            ret_val.push_back(cmd_arg_entry[i]);
+    return ret_val;
+}
+
+// Default parameter value of opt_set_mask is LLDB_OPT_SET_ALL, which means take
+// all the argument data into account.  On rare cases where some argument sticks
+// with certain option sets, this function returns the option set filtered args.
 void
-CommandObject::GetFormattedCommandArguments (Stream &str)
+CommandObject::GetFormattedCommandArguments (Stream &str, uint32_t opt_set_mask)
 {
     int num_args = m_arguments.size();
     for (int i = 0; i < num_args; ++i)
     {
         if (i > 0)
             str.Printf (" ");
-        CommandArgumentEntry arg_entry = m_arguments[i];
+        CommandArgumentEntry arg_entry =
+            opt_set_mask == LLDB_OPT_SET_ALL ? m_arguments[i]
+                                             : OptSetFiltered(opt_set_mask, m_arguments[i]);
         int num_alternatives = arg_entry.size();
 
         if ((num_alternatives == 2)

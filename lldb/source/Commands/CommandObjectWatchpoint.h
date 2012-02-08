@@ -251,6 +251,36 @@ class CommandObjectWatchpointSet : public CommandObject
 {
 public:
 
+    class CommandOptions : public OptionGroup
+    {
+    public:
+
+        CommandOptions ();
+
+        virtual
+        ~CommandOptions ();
+
+        virtual uint32_t
+        GetNumDefinitions ();
+        
+        virtual const OptionDefinition*
+        GetDefinitions ();
+        
+        virtual Error
+        SetOptionValue (CommandInterpreter &interpreter,
+                        uint32_t option_idx,
+                        const char *option_value);
+        
+        virtual void
+        OptionParsingStarting (CommandInterpreter &interpreter);
+
+        // Options table: Required for subclasses of Options.
+
+        static OptionDefinition g_option_table[];
+        bool m_do_expression;
+        bool m_do_variable;
+    };
+
     CommandObjectWatchpointSet (CommandInterpreter &interpreter);
 
     virtual
@@ -266,6 +296,7 @@ public:
 private:
     OptionGroupOptions m_option_group;
     OptionGroupWatchpoint m_option_watchpoint;
+    CommandOptions m_command_options;
 };
 
 } // namespace lldb_private
