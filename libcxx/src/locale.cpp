@@ -1409,10 +1409,10 @@ codecvt<wchar_t, char, mbstate_t>::do_in(state_type& st,
                 case 0:
                     ++frm;
                     break;
-                case -1:
+                case size_t(-1):
                     frm_nxt = frm;
                     return error;
-                case -2:
+                case size_t(-2):
                     frm_nxt = frm;
                     return partial;
                 default:
@@ -1515,8 +1515,8 @@ codecvt<wchar_t, char, mbstate_t>::do_length(state_type& st,
             ++nbytes;
             ++frm;
             break;
-        case -1:
-        case -2:
+        case size_t(-1):
+        case size_t(-2):
             return nbytes;
         default:
             nbytes += n;
