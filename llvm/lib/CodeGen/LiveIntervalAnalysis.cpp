@@ -904,7 +904,7 @@ void LiveIntervals::moveInstr(MachineBasicBlock::iterator insertPt,
   assert((insertPt == mbb->end() || insertPt->getParent() == mbb) &&
          "Cannot handle moves across basic block boundaries.");
   assert(&*insertPt != mi && "No-op move requested?");
-  assert(!mi->isInsideBundle() && "Can't handle bundled instructions yet.");
+  assert(!mi->isBundled() && "Can't handle bundled instructions yet.");
 
   // Grab the original instruction index.
   SlotIndex origIdx = indexes_->getInstructionIndex(mi);

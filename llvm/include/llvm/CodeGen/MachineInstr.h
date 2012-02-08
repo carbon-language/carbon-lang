@@ -230,6 +230,10 @@ public:
       clearFlag(InsideBundle);
   }
 
+  /// isBundled - Return true if this instruction part of a bundle. This is true
+  /// if either itself or its following instruction is marked "InsideBundle".
+  bool isBundled() const;
+
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
   ///
   DebugLoc getDebugLoc() const { return debugLoc; }
