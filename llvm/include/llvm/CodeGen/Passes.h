@@ -271,7 +271,7 @@ namespace llvm {
 
   /// createPostRAScheduler - This pass performs post register allocation
   /// scheduling.
-  FunctionPass *createPostRAScheduler(CodeGenOpt::Level OptLevel);
+  FunctionPass *createPostRAScheduler();
 
   /// BranchFolding Pass - This pass performs machine code CFG based
   /// optimizations to delete branches to branches, eliminate branches to

@@ -285,7 +285,7 @@ void TargetPassConfig::addMachinePasses() {
 
   // Second pass scheduler.
   if (getOptLevel() != CodeGenOpt::None && !DisablePostRA) {
-    PM.add(createPostRAScheduler(getOptLevel()));
+    PM.add(createPostRAScheduler());
     printNoVerify("After PostRAScheduler");
   }
 

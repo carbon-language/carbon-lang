@@ -82,16 +82,15 @@ namespace {
     AliasAnalysis *AA;
     const TargetInstrInfo *TII;
     RegisterClassInfo RegClassInfo;
-    CodeGenOpt::Level OptLevel;
 
   public:
     static char ID;
-    PostRAScheduler(CodeGenOpt::Level ol) :
-      MachineFunctionPass(ID), OptLevel(ol) {}
+    PostRAScheduler() : MachineFunctionPass(ID) {}
 
     void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
       AU.addRequired<AliasAnalysis>();
+      AU.addRequired<TargetPassConfig>();
       AU.addRequired<MachineDominatorTree>();
       AU.addPreserved<MachineDominatorTree>();
       AU.addRequired<MachineLoopInfo>();
@@ -209,6 +208,8 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   MachineLoopInfo &MLI = getAnalysis<MachineLoopInfo>();
   MachineDominatorTree &MDT = getAnalysis<MachineDominatorTree>();
   AliasAnalysis *AA = &getAnalysis<AliasAnalysis>();
+  TargetPassConfig *PassConfig = &getAnalysis<TargetPassConfig>();
+
   RegClassInfo.runOnMachineFunction(Fn);
 
   // Check for explicit enable/disable of post-ra scheduling.
@@ -222,7 +223,8 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     // Check that post-RA scheduling is enabled for this target.
     // This may upgrade the AntiDepMode.
     const TargetSubtargetInfo &ST = Fn.getTarget().getSubtarget<TargetSubtargetInfo>();
-    if (!ST.enablePostRAScheduler(OptLevel, AntiDepMode, CriticalPathRCs))
+    if (!ST.enablePostRAScheduler(PassConfig->getOptLevel(), AntiDepMode,
+                                  CriticalPathRCs))
       return false;
   }
 
@@ -710,6 +712,6 @@ void SchedulePostRATDList::ListScheduleTopDown() {
 //                         Public Constructor Functions
 //===----------------------------------------------------------------------===//
 
-FunctionPass *llvm::createPostRAScheduler(CodeGenOpt::Level OptLevel) {
-  return new PostRAScheduler(OptLevel);
+FunctionPass *llvm::createPostRAScheduler() {
+  return new PostRAScheduler();
 }

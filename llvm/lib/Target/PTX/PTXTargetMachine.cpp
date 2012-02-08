@@ -353,7 +353,7 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
 
   // Second pass scheduler.
   if (getOptLevel() != CodeGenOpt::None) {
-    PM.add(createPostRAScheduler(getOptLevel()));
+    PM.add(createPostRAScheduler());
     printAndVerify("After PostRAScheduler");
   }
 
