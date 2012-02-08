@@ -74,7 +74,7 @@ void CGDebugInfo::setLocation(SourceLocation Loc) {
     llvm::DILexicalBlockFile LBF = llvm::DILexicalBlockFile(LB);
     llvm::DIDescriptor D
       = DBuilder.createLexicalBlockFile(LBF.getScope(),
-					getOrCreateFile(CurLoc));
+                                        getOrCreateFile(CurLoc));
     llvm::MDNode *N = D;
     LexicalBlockStack.pop_back();
     LexicalBlockStack.push_back(N);
@@ -482,7 +482,7 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
 
 // Creates a forward declaration for a RecordDecl in the given context.
 llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
-					      llvm::DIDescriptor Ctx) {
+                                              llvm::DIDescriptor Ctx) {
 
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
   unsigned Line = getLineNumber(RD->getLocation());
@@ -490,17 +490,17 @@ llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
   
   if (CXXDecl)
     return DBuilder.createClassType(Ctx, RD->getName(), DefUnit,
-				    Line, 0, 0, 0,
-				    llvm::DIType::FlagFwdDecl,
-				    llvm::DIType(), llvm::DIArray());
+                                    Line, 0, 0, 0,
+                                    llvm::DIType::FlagFwdDecl,
+                                    llvm::DIType(), llvm::DIArray());
   else if (RD->isStruct())
     return DBuilder.createStructType(Ctx, RD->getName(), DefUnit,
-				     Line, 0, 0, llvm::DIType::FlagFwdDecl,
-				     llvm::DIArray());
+                                     Line, 0, 0, llvm::DIType::FlagFwdDecl,
+                                     llvm::DIArray());
   else if (RD->isUnion())
     return DBuilder.createUnionType(Ctx, RD->getName(), DefUnit,
-				    Line, 0, 0, llvm::DIType::FlagFwdDecl,
-				    llvm::DIArray());
+                                    Line, 0, 0, llvm::DIType::FlagFwdDecl,
+                                    llvm::DIArray());
   else
     llvm_unreachable("Unknown RecordDecl type!");
 }
@@ -1370,7 +1370,7 @@ llvm::DIType CGDebugInfo::CreateType(const ObjCInterfaceType *Ty,
                                         getSelectorName(PD->getGetterName()),
                                         getSelectorName(PD->getSetterName()),
                                         PD->getPropertyAttributes());
-	}
+        }
       }
     }
     FieldTy = DBuilder.createObjCIVar(FieldName, FieldDefUnit,
@@ -1663,7 +1663,7 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
 /// getOrCreateLimitedType - Get the type from the cache or create a new
 /// limited type if necessary.
 llvm::DIType CGDebugInfo::getOrCreateLimitedType(QualType Ty,
-						 llvm::DIFile Unit) {
+                                                 llvm::DIFile Unit) {
   if (Ty.isNull())
     return llvm::DIType();
 
@@ -1980,11 +1980,11 @@ void CGDebugInfo::EmitLocation(CGBuilderTy &Builder, SourceLocation Loc) {
 void CGDebugInfo::CreateLexicalBlock(SourceLocation Loc) {
   llvm::DIDescriptor D =
     DBuilder.createLexicalBlock(LexicalBlockStack.empty() ?
-				llvm::DIDescriptor() :
-				llvm::DIDescriptor(LexicalBlockStack.back()),
-				getOrCreateFile(CurLoc),
-				getLineNumber(CurLoc),
-				getColumnNumber(CurLoc));
+                                llvm::DIDescriptor() :
+                                llvm::DIDescriptor(LexicalBlockStack.back()),
+                                getOrCreateFile(CurLoc),
+                                getLineNumber(CurLoc),
+                                getColumnNumber(CurLoc));
   llvm::MDNode *DN = D;
   LexicalBlockStack.push_back(DN);
 }
@@ -2000,8 +2000,8 @@ void CGDebugInfo::EmitLexicalBlockStart(CGBuilderTy &Builder, SourceLocation Loc
 
   // Emit a line table change for the current location inside the new scope.
   Builder.SetCurrentDebugLocation(llvm::DebugLoc::get(getLineNumber(Loc),
-  					      getColumnNumber(Loc),
-  					      LexicalBlockStack.back()));
+                                  getColumnNumber(Loc),
+                                  LexicalBlockStack.back()));
 }
 
 /// EmitLexicalBlockEnd - Constructs the debug code for exiting a declarative
