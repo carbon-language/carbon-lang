@@ -24,11 +24,11 @@ namespace {
   using llvm::sys::path::is_separator;
 
 #ifdef LLVM_ON_WIN32
-  const StringRef separators = "\\/";
-  const char      prefered_separator = '\\';
+  const char *separators = "\\/";
+  const char  prefered_separator = '\\';
 #else
-  const StringRef separators = "/";
-  const char      prefered_separator = '/';
+  const char  separators = '/';
+  const char  prefered_separator = '/';
 #endif
 
   const llvm::error_code success;
