@@ -72,6 +72,11 @@ class RABasic : public MachineFunctionPass, public RegAllocBase
   std::auto_ptr<Spiller> SpillerInstance;
   std::priority_queue<LiveInterval*, std::vector<LiveInterval*>,
                       CompSpillWeight> Queue;
+
+  // Scratch space.  Allocated here to avoid repeated malloc calls in
+  // selectOrSplit().
+  BitVector UsableRegs;
+
 public:
   RABasic();
 
@@ -234,6 +239,10 @@ bool RABasic::spillInterferences(LiveInterval &VirtReg, unsigned PhysReg,
 // selectOrSplit().
 unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
                                 SmallVectorImpl<LiveInterval*> &SplitVRegs) {
+  // Check for register mask interference.  When live ranges cross calls, the
+  // set of usable registers is reduced to the callee-saved ones.
+  bool CrossRegMasks = LIS->checkRegMaskInterference(VirtReg, UsableRegs);
+
   // Populate a list of physical register spill candidates.
   SmallVector<unsigned, 8> PhysRegSpillCands;
 
@@ -243,6 +252,11 @@ unsigned RABasic::selectOrSplit(LiveInterval &VirtReg,
   for (ArrayRef<unsigned>::iterator I = Order.begin(), E = Order.end(); I != E;
        ++I) {
     unsigned PhysReg = *I;
+
+    // If PhysReg is clobbered by a register mask, it isn't useful for
+    // allocation or spilling.
+    if (CrossRegMasks && !UsableRegs.test(PhysReg))
+      continue;
 
     // Check interference and as a side effect, intialize queries for this
     // VirtReg and its aliases.
