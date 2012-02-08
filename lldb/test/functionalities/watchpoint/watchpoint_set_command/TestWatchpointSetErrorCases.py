@@ -49,18 +49,20 @@ class WatchpointSetErrorTestCase(TestBase):
 
         # Try some error conditions:
 
-        # No argument is an error.
-        self.expect("watchpoint set", error=True,
-            startstr = 'error: invalid combination of options for the given command')
-        self.runCmd("watchpoint set -v -w read_write", check=False)
+        # 'watchpoint set' is now a multiword command.
+        self.expect("watchpoint set",
+            substrs = ['The following subcommands are supported:',
+                       'expression',
+                       'variable'])
+        self.runCmd("watchpoint set variable -w read_write", check=False)
 
-        # 'watchpoint set' now takes a mandatory '-v' or '-e' option to
-        # indicate watching for either variable or address.
-        self.expect("watchpoint set -w write global", error=True,
-            startstr = 'error: invalid combination of options for the given command')
+        # 'watchpoint set expression' with '-w' or '-x' specified now needs
+        # an option terminator and a raw expression after that.
+        self.expect("watchpoint set expression -w write --", error=True,
+            startstr = 'error: required argument missing; specify an expression to evaulate into the addres to watch for')
 
         # Wrong size parameter is an error.
-        self.expect("watchpoint set -x -128", error=True,
+        self.expect("watchpoint set variable -x -128", error=True,
             substrs = ['invalid enumeration value'])
 
 

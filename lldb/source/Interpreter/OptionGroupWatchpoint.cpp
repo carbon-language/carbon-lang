@@ -66,7 +66,7 @@ OptionGroupWatchpoint::SetOptionValue (CommandInterpreter &interpreter,
         case 'w':
             watch_type = (WatchType) Args::StringToOptionEnum(option_arg, g_option_table[option_idx].enum_values, 0, error);
             if (error.Success())
-                watch_variable = true;
+                watch_type_specified = true;
             break;
 
         case 'x':
@@ -84,7 +84,7 @@ OptionGroupWatchpoint::SetOptionValue (CommandInterpreter &interpreter,
 void
 OptionGroupWatchpoint::OptionParsingStarting (CommandInterpreter &interpreter)
 {
-    watch_variable = false;
+    watch_type_specified = false;
     watch_type = eWatchInvalid;
     watch_size = 0;
 }

@@ -433,7 +433,7 @@ public:
         if (variable_list)
         {
             // If watching a variable, there are certain restrictions to be followed.
-            if (m_option_watchpoint.watch_variable)
+            if (m_option_watchpoint.watch_type_specified)
             {
                 if (command.GetArgumentCount() != 1) {
                     result.GetErrorStream().Printf("error: specify exactly one variable when using the '-w' option\n");
@@ -544,7 +544,7 @@ public:
                                                           options,
                                                           format);
                             // Process watchpoint if necessary.
-                            if (m_option_watchpoint.watch_variable)
+                            if (m_option_watchpoint.watch_type_specified)
                             {
                                 AddressType addr_type;
                                 lldb::addr_t addr = 0;

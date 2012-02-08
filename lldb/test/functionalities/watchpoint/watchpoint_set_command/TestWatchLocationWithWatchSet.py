@@ -13,13 +13,13 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
 
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_watchlocation_with_dsym_using_watchpoint_set(self):
-        """Test watching a location with 'watchpoint set -w write -x size' option."""
+        """Test watching a location with 'watchpoint set expression -w write -x size' option."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.watchlocation_using_watchpoint_set()
 
     def test_watchlocation_with_dwarf_using_watchpoint_set(self):
-        """Test watching a location with 'watchpoint set -w write -x size' option."""
+        """Test watching a location with 'watchpoint set expression -w write -x size' option."""
         self.buildDwarf(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
         self.watchlocation_using_watchpoint_set()
@@ -60,7 +60,7 @@ class WatchLocationUsingWatchpointSetTestCase(TestBase):
         # with offset as 7.
         # The main.cpp, by design, misbehaves by not following the agreed upon
         # protocol of only accessing the allowable index range of [0, 6].
-        self.expect("watchpoint set -w write -x 1 -e g_char_ptr + 7", WATCHPOINT_CREATED,
+        self.expect("watchpoint set expression -w write -x 1 -- g_char_ptr + 7", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 1', 'type = w'])
         self.runCmd("expr unsigned val = g_char_ptr[7]; val")
         self.expect(self.res.GetOutput().splitlines()[0], exe=False,

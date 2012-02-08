@@ -247,44 +247,26 @@ private:
 // CommandObjectWatchpointSet
 //-------------------------------------------------------------------------
 
-class CommandObjectWatchpointSet : public CommandObject
+class CommandObjectWatchpointSet : public CommandObjectMultiword
 {
 public:
-
-    class CommandOptions : public OptionGroup
-    {
-    public:
-
-        CommandOptions ();
-
-        virtual
-        ~CommandOptions ();
-
-        virtual uint32_t
-        GetNumDefinitions ();
-        
-        virtual const OptionDefinition*
-        GetDefinitions ();
-        
-        virtual Error
-        SetOptionValue (CommandInterpreter &interpreter,
-                        uint32_t option_idx,
-                        const char *option_value);
-        
-        virtual void
-        OptionParsingStarting (CommandInterpreter &interpreter);
-
-        // Options table: Required for subclasses of Options.
-
-        static OptionDefinition g_option_table[];
-        bool m_do_expression;
-        bool m_do_variable;
-    };
 
     CommandObjectWatchpointSet (CommandInterpreter &interpreter);
 
     virtual
     ~CommandObjectWatchpointSet ();
+
+
+};
+
+class CommandObjectWatchpointSetVariable : public CommandObject
+{
+public:
+
+    CommandObjectWatchpointSetVariable (CommandInterpreter &interpreter);
+
+    virtual
+    ~CommandObjectWatchpointSetVariable ();
 
     virtual bool
     Execute (Args& command,
@@ -296,7 +278,39 @@ public:
 private:
     OptionGroupOptions m_option_group;
     OptionGroupWatchpoint m_option_watchpoint;
-    CommandOptions m_command_options;
+};
+
+class CommandObjectWatchpointSetExpression : public CommandObject
+{
+public:
+
+    CommandObjectWatchpointSetExpression (CommandInterpreter &interpreter);
+
+    virtual
+    ~CommandObjectWatchpointSetExpression ();
+
+    virtual bool
+    Execute (Args& command,
+             CommandReturnObject &result)
+    { return false; }
+
+    virtual bool
+    WantsRawCommandString() { return true; }
+
+    // Overrides base class's behavior where WantsCompletion = !WantsRawCommandString.
+    virtual bool
+    WantsCompletion() { return true; }
+
+    virtual bool
+    ExecuteRawCommandString (const char *raw_command,
+                             CommandReturnObject &result);
+
+    virtual Options *
+    GetOptions ();
+
+private:
+    OptionGroupOptions m_option_group;
+    OptionGroupWatchpoint m_option_watchpoint;
 };
 
 } // namespace lldb_private

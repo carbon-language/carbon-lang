@@ -26,13 +26,17 @@ class CommandLineCompletionTestCase(TestBase):
         """Test that 'frame variable -w ' completes to ['Available completions:', 'read', 'write', 'read_write']."""
         self.complete_from_to('frame variable -w ', ['Available completions:', 'read', 'write', 'read_write'])
 
-    def test_watchpoint_set_dash_x(self):
-        """Test that 'watchpoint set -x' completes to 'watchpoint set -x '."""
-        self.complete_from_to('watchpoint set -x', 'watchpoint set -x ')
+    def test_watchpoint_set_ex(self):
+        """Test that 'watchpoint set ex' completes to 'watchpoint set expression '."""
+        self.complete_from_to('watchpoint set ex', 'watchpoint set expression ')
 
-    def test_watchpoint_set_dash_w_read_underbar(self):
-        """Test that 'watchpoint set -w read_' completes to 'watchpoint set -w read_write'."""
-        self.complete_from_to('watchpoint set -w read_', 'watchpoint set -w read_write')
+    def test_watchpoint_set_var(self):
+        """Test that 'watchpoint set var' completes to 'watchpoint set variable '."""
+        self.complete_from_to('watchpoint set var', 'watchpoint set variable ')
+
+    def test_watchpoint_set_variable_dash_w_read_underbar(self):
+        """Test that 'watchpoint set variable -w read_' completes to 'watchpoint set variable -w read_write'."""
+        self.complete_from_to('watchpoint set variable -w read_', 'watchpoint set variable -w read_write')
 
     def test_help_fi(self):
         """Test that 'help fi' completes to ['Available completions:', 'file', 'finish']."""
