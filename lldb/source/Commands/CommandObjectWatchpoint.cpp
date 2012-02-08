@@ -967,7 +967,8 @@ CommandObjectWatchpointSet::CommandObjectWatchpointSet (CommandInterpreter &inte
     // Push the data for the only argument into the m_arguments vector.
     m_arguments.push_back (arg);
 
-    // Absorb the '-w' and '-x' options.
+    // Absorb the '-w' and '-x' options into the '-e' (LLDB_OPT_SET_1) set as
+    // well as the '-v' (LLDB_OPT_SET_2) set.
     m_option_group.Append (&m_option_watchpoint, LLDB_OPT_SET_1, LLDB_OPT_SET_1|LLDB_OPT_SET_2);
     m_option_group.Append (&m_command_options);
     m_option_group.Finalize();
