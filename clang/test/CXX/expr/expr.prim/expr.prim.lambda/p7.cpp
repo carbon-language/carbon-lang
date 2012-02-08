@@ -6,7 +6,8 @@ void analysis_based_warnings() {
   // expected-error{{lambda expressions are not supported yet}}
 }
 
-// Check that we get the right types of captured variables (the semantic-analysis part of 
+// Check that we get the right types of captured variables (the
+// semantic-analysis part of p7).
 int &check_const_int(int&);
 float &check_const_int(const int&);
 
