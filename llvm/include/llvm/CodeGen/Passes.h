@@ -93,6 +93,7 @@ public:
   /// Add the complete, standard set of LLVM CodeGen passes.
   /// Fully developed targets will not generally override this.
   virtual void addMachinePasses();
+
 protected:
   // Helper to verify the analysis is really immutable.
   void setOpt(bool &Opt, bool Val);
@@ -323,7 +324,7 @@ namespace llvm {
 
   /// createMachineLICMPass - This pass performs LICM on machine instructions.
   ///
-  FunctionPass *createMachineLICMPass(bool PreRegAlloc = true);
+  FunctionPass *createMachineLICMPass();
 
   /// createMachineSinkingPass - This pass performs sinking on machine
   /// instructions.

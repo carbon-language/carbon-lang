@@ -60,8 +60,6 @@ STATISTIC(NumPostRAHoisted,
 
 namespace {
   class MachineLICM : public MachineFunctionPass {
-    bool PreRegAlloc;
-
     const TargetMachine   *TM;
     const TargetInstrInfo *TII;
     const TargetLowering *TLI;
@@ -69,6 +67,7 @@ namespace {
     const MachineFrameInfo *MFI;
     MachineRegisterInfo *MRI;
     const InstrItineraryData *InstrItins;
+    bool PreRegAlloc;
 
     // Various analyses that we use...
     AliasAnalysis        *AA;      // Alias analysis info.
@@ -298,8 +297,8 @@ INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(MachineLICM, "machinelicm",
                 "Machine Loop Invariant Code Motion", false, false)
 
-FunctionPass *llvm::createMachineLICMPass(bool PreRegAlloc) {
-  return new MachineLICM(PreRegAlloc);
+FunctionPass *llvm::createMachineLICMPass() {
+  return new MachineLICM();
 }
 
 /// LoopIsOuterMostWithPredecessor - Test if the given loop is the outer-most
@@ -331,6 +330,8 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
   MFI = MF.getFrameInfo();
   MRI = &MF.getRegInfo();
   InstrItins = TM->getInstrItineraryData();
+
+  PreRegAlloc = MRI->isSSA();
 
   if (PreRegAlloc) {
     // Estimate register pressure during pre-regalloc pass.

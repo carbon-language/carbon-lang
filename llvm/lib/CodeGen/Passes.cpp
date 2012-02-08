@@ -244,7 +244,7 @@ void TargetPassConfig::addMachinePasses() {
 
     // Run post-ra machine LICM to hoist reloads / remats.
     if (!DisablePostRAMachineLICM)
-      PM.add(createMachineLICMPass(false));
+      PM.add(createMachineLICMPass());
 
     printAndVerify("After StackSlotColoring and postra Machine LICM");
   }
