@@ -242,8 +242,6 @@ void ScheduleTopDownLive::Schedule() {
         Begin = MI;
     }
 
-    // TODO: Update live intervals.
-
     // Release dependent instructions for scheduling.
     releaseSuccessors(SU);
   }
