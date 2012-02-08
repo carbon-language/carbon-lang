@@ -36,8 +36,6 @@
 
 namespace __asan {
 
-void *island_allocator_pos = NULL;
-
 void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
   ucontext_t *ucontext = (ucontext_t*)context;
 # if __WORDSIZE == 64
@@ -314,25 +312,26 @@ void AsanStackTrace::GetStackTrace(size_t max_s, uintptr_t pc, uintptr_t bp) {
   }
 }
 
-// The range of pages to be used by __asan_mach_override_ptr for escape
-// islands.
+// The range of pages to be used for escape islands.
 // TODO(glider): instead of mapping a fixed range we must find a range of
 // unmapped pages in vmmap and take them.
 // These constants were chosen empirically and may not work if the shadow
 // memory layout changes. Unfortunately they do necessarily depend on
 // kHighMemBeg or kHighMemEnd.
+static void *island_allocator_pos = NULL;
+
 #if __WORDSIZE == 32
-#define kIslandEnd (0xffdf0000 - kPageSize)
-#define kIslandBeg (kIslandEnd - 256 * kPageSize)
+# define kIslandEnd (0xffdf0000 - kPageSize)
+# define kIslandBeg (kIslandEnd - 256 * kPageSize)
 #else
-#define kIslandEnd (0x7fffffdf0000 - kPageSize)
-#define kIslandBeg (kIslandEnd - 256 * kPageSize)
+# define kIslandEnd (0x7fffffdf0000 - kPageSize)
+# define kIslandBeg (kIslandEnd - 256 * kPageSize)
 #endif
 
 extern "C"
-mach_error_t __asan_allocate_island(void **ptr,
-                                    size_t unused_size,
-                                    void *unused_hint) {
+mach_error_t __interception_allocate_island(void **ptr,
+                                            size_t unused_size,
+                                            void *unused_hint) {
   if (!island_allocator_pos) {
     island_allocator_pos =
         asan_mmap((void*)kIslandBeg, kIslandEnd - kIslandBeg,
@@ -349,7 +348,7 @@ mach_error_t __asan_allocate_island(void **ptr,
 }
 
 extern "C"
-mach_error_t __asan_deallocate_island(void *ptr) {
+mach_error_t __interception_deallocate_island(void *ptr) {
   // Do nothing.
   // TODO(glider): allow to free and reuse the island memory.
   return err_none;

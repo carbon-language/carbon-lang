@@ -178,6 +178,9 @@ RTL_HDR=asan_allocator.h \
 	asan_stats.h \
 	asan_thread.h \
 	asan_thread_registry.h \
+	interception/interception.h \
+	interception/interception_linux.h \
+	interception/interception_mac.h \
 	mach_override/mach_override.h
 
 LIBASAN_OBJ=$(BIN)/asan_rtl$(SUFF).o \
@@ -195,6 +198,8 @@ LIBASAN_OBJ=$(BIN)/asan_rtl$(SUFF).o \
 	    $(BIN)/asan_stats$(SUFF).o  \
 	    $(BIN)/asan_thread$(SUFF).o  \
 	    $(BIN)/asan_thread_registry$(SUFF).o  \
+	    $(BIN)/interception/interception_linux$(SUFF).o  \
+	    $(BIN)/interception/interception_mac$(SUFF).o  \
 	    $(BIN)/mach_override/mach_override$(SUFF).o
 
 GTEST_ROOT=third_party/googletest
@@ -215,9 +220,9 @@ t64: b64
 t32: b32
 	$(BIN)/asan_test32
 
-b64: | $(BIN)
+b64: | mk_bin_dir
 	$(MAKE) -f $(MAKEFILE) ARCH=x86_64 asan_test asan_benchmarks
-b32: | $(BIN)
+b32: | mk_bin_dir
 	$(MAKE) -f $(MAKEFILE) ARCH=i386 asan_test asan_benchmarks
 
 lib64:
@@ -225,8 +230,9 @@ lib64:
 lib32:
 	$(MAKE) $(MAKEFILE) ARCH=i386 lib
 
-$(BIN):
+mk_bin_dir:
 	mkdir -p $(BIN)
+	mkdir -p $(BIN)/interception
 	mkdir -p $(BIN)/mach_override
 
 clang:
@@ -330,6 +336,7 @@ ADDRESS_SANITIZER_CPP=../../../../lib/Transforms/Instrumentation/AddressSanitize
 lint:
 	third_party/cpplint/cpplint.py --filter=$(LLVM_LINT_FILTER) $(ADDRESS_SANITIZER_CPP)
 	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) asan_*.cc asan_*.h
+	third_party/cpplint/cpplint.py --filter=$(RTL_LINT_FITLER) interception/interception*.h interception/interception*.cc
 	third_party/cpplint/cpplint.py --filter=$(TEST_LINT_FITLER) tests/*.cc
 
 get_third_party:

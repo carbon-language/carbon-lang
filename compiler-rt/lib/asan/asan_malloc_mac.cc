@@ -310,7 +310,7 @@ extern bool kCFUseCollectableAllocator;  // is GC on?
 namespace __asan {
 void ReplaceSystemMalloc() {
   static malloc_introspection_t asan_introspection;
-  __asan::REAL(memset)(&asan_introspection, 0, sizeof(asan_introspection));
+  REAL(memset)(&asan_introspection, 0, sizeof(asan_introspection));
 
   asan_introspection.enumerator = &mi_enumerator;
   asan_introspection.good_size = &mi_good_size;
@@ -321,7 +321,7 @@ void ReplaceSystemMalloc() {
   asan_introspection.force_unlock = &mi_force_unlock;
 
   static malloc_zone_t asan_zone;
-  __asan::REAL(memset)(&asan_zone, 0, sizeof(malloc_zone_t));
+  REAL(memset)(&asan_zone, 0, sizeof(malloc_zone_t));
 
   // Start with a version 4 zone which is used for OS X 10.4 and 10.5.
   asan_zone.version = 4;
