@@ -2350,57 +2350,40 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         if (name == g_lldb_class_name)
         {
             // Clang is looking for the type of "this"
-            
-            if (!frame)
+                        
+            if (frame == NULL)
                 return;
             
-            VariableList *vars = frame->GetVariableList(false);
+            SymbolContext sym_ctx = frame->GetSymbolContext(lldb::eSymbolContextFunction);
             
-            if (!vars)
+            if (!sym_ctx.function)
                 return;
             
-            lldb::VariableSP this_var = vars->FindVariable(ConstString("this"));
+            clang::DeclContext *decl_context;
             
-            if (!this_var ||
-                !this_var->IsInScope(frame) || 
-                !this_var->LocationIsValidForFrame (frame))
+            if (sym_ctx.block && sym_ctx.block->GetInlinedFunctionInfo())
+                decl_context = sym_ctx.block->GetClangDeclContextForInlinedFunction();
+            else
+                decl_context = sym_ctx.function->GetClangDeclContext();
+            
+            if (!decl_context)
                 return;
             
-            Type *this_type = this_var->GetType();
+            clang::CXXMethodDecl *method_decl = llvm::dyn_cast<clang::CXXMethodDecl>(decl_context);
             
-            if (!this_type)
+            if (!method_decl)
                 return;
             
-            if (log && log->GetVerbose())
-            {
-                log->Printf ("  CEDM::FEVD[%u] Type for \"this\" is: ", current_id);
-                StreamString strm;
-                this_type->Dump(&strm, true);
-                log->PutCString (strm.GetData());
-            }
+            clang::CXXRecordDecl *class_decl = method_decl->getParent();
             
-            TypeFromUser this_user_type(this_type->GetClangFullType(),
-                                        this_type->GetClangAST());
+            QualType class_qual_type(class_decl->getTypeForDecl(), 0);
             
-            m_struct_vars->m_object_pointer_type = this_user_type;
-            
-            void *pointer_target_type = NULL;
-            
-            if (!ClangASTContext::IsPointerType(this_user_type.GetOpaqueQualType(),
-                                                &pointer_target_type))
-                return;
-            
-            clang::QualType pointer_target_qual_type = QualType::getFromOpaquePtr(pointer_target_type);
-            
-            if (pointer_target_qual_type.isConstQualified())
-                pointer_target_qual_type.removeLocalConst();
-            
-            TypeFromUser class_user_type(pointer_target_qual_type.getAsOpaquePtr(),
-                                         this_type->GetClangAST());
+            TypeFromUser class_user_type (class_qual_type.getAsOpaquePtr(),
+                                          &class_decl->getASTContext());
             
             if (log)
             {
-                ASTDumper ast_dumper(pointer_target_qual_type);
+                ASTDumper ast_dumper(class_qual_type);
                 log->Printf("  CEDM::FEVD[%u] Adding type for $__lldb_class: %s", current_id, ast_dumper.GetCString());
             }
             
@@ -2455,24 +2438,46 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
                 
             AddOneType(context, class_user_type, current_id, false);
             
+#if 0
             VariableList *vars = frame->GetVariableList(false);
             
             lldb::VariableSP self_var = vars->FindVariable(ConstString("self"));
             
-            if (!self_var || 
-                !self_var->IsInScope(frame) || 
-                !self_var->LocationIsValidForFrame (frame))
-                return;
+            if (self_var &&
+                self_var->IsInScope(frame) && 
+                self_var->LocationIsValidForFrame (frame)) {
+                Type *self_type = self_var->GetType();
+                
+                if (!self_type)
+                    return;
+                
+                TypeFromUser self_user_type(self_type->GetClangFullType(),
+                                            self_type->GetClangAST());
+            }
+#endif
             
-            Type *self_type = self_var->GetType();
+            if (method_decl->isInstanceMethod())
+            {
+                // self is a pointer to the object
+                
+                QualType class_pointer_type = method_decl->getASTContext().getObjCObjectPointerType(QualType(interface_type, 0));
             
-            if (!self_type)
-                return;
+                TypeFromUser self_user_type(class_pointer_type.getAsOpaquePtr(),
+                                            &method_decl->getASTContext());
             
-            TypeFromUser self_user_type(self_type->GetClangFullType(),
-                                        self_type->GetClangAST());
-            
-            m_struct_vars->m_object_pointer_type = self_user_type;
+                m_struct_vars->m_object_pointer_type = self_user_type;
+            }
+            else
+            {
+                // self is a Class pointer
+                QualType class_type = method_decl->getASTContext().getObjCClassType();
+                
+                TypeFromUser self_user_type(class_type.getAsOpaquePtr(),
+                                            &method_decl->getASTContext());
+                
+                m_struct_vars->m_object_pointer_type = self_user_type;
+            }
+
             return;
         }
         
