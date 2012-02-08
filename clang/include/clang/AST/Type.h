@@ -236,7 +236,7 @@ public:
     qs.removeObjCGCAttr();
     return qs;
   }
-  Qualifiers withoutObjCGLifetime() const {
+  Qualifiers withoutObjCLifetime() const {
     Qualifiers qs = *this;
     qs.removeObjCLifetime();
     return qs;
@@ -252,7 +252,8 @@ public:
   void removeObjCLifetime() { setObjCLifetime(OCL_None); }
   void addObjCLifetime(ObjCLifetime type) {
     assert(type);
-    setObjCLifetime(type);
+    assert(!hasObjCLifetime());
+    Mask |= (type << LifetimeShift);
   }
 
   /// True if the lifetime is neither None or ExplicitNone.
@@ -447,7 +448,32 @@ enum CallingConv {
   CC_AAPCS_VFP    // __attribute__((pcs("aapcs-vfp")))
 };
 
-typedef std::pair<const Type*, Qualifiers> SplitQualType;
+/// A std::pair-like structure for storing a qualified type split
+/// into its local qualifiers and its locally-unqualified type.
+struct SplitQualType {
+  /// The locally-unqualified type.
+  const Type *Ty;
+
+  /// The local qualifiers.
+  Qualifiers Quals;
+
+  SplitQualType() : Ty(0), Quals() {}
+  SplitQualType(const Type *ty, Qualifiers qs) : Ty(ty), Quals(qs) {}
+
+  SplitQualType getSingleStepDesugaredType() const; // end of this file
+
+  // Make llvm::tie work.
+  operator std::pair<const Type *,Qualifiers>() const {
+    return std::pair<const Type *,Qualifiers>(Ty, Quals);
+  }
+
+  friend bool operator==(SplitQualType a, SplitQualType b) {
+    return a.Ty == b.Ty && a.Quals == b.Quals;
+  }
+  friend bool operator!=(SplitQualType a, SplitQualType b) {
+    return a.Ty != b.Ty || a.Quals != b.Quals;
+  }
+};
 
 /// QualType - For efficiency, we don't store CV-qualified types as nodes on
 /// their own: instead each reference to a type stores the qualifiers.  This
@@ -769,7 +795,9 @@ public:
   ///
   /// This routine takes off the first typedef, typeof, etc. If the outer level
   /// of the type is already concrete, it returns it unmodified.
-  QualType getSingleStepDesugaredType(const ASTContext &Context) const;
+  QualType getSingleStepDesugaredType(const ASTContext &Context) const {
+    return getSingleStepDesugaredTypeImpl(*this, Context);
+  }
 
   /// IgnoreParens - Returns the specified type after dropping any
   /// outer-level parentheses.
@@ -791,7 +819,7 @@ public:
     return getAsString(split());
   }
   static std::string getAsString(SplitQualType split) {
-    return getAsString(split.first, split.second);
+    return getAsString(split.Ty, split.Quals);
   }
   static std::string getAsString(const Type *ty, Qualifiers qs);
 
@@ -806,7 +834,7 @@ public:
   }
   static void getAsStringInternal(SplitQualType split, std::string &out,
                                   const PrintingPolicy &policy) {
-    return getAsStringInternal(split.first, split.second, out, policy);
+    return getAsStringInternal(split.Ty, split.Quals, out, policy);
   }
   static void getAsStringInternal(const Type *ty, Qualifiers qs,
                                   std::string &out,
@@ -887,6 +915,8 @@ private:
   static QualType getDesugaredType(QualType T, const ASTContext &Context);
   static SplitQualType getSplitDesugaredType(QualType T);
   static SplitQualType getSplitUnqualifiedTypeImpl(QualType type);
+  static QualType getSingleStepDesugaredTypeImpl(QualType type,
+                                                 const ASTContext &C);
   static QualType IgnoreParens(QualType T);
   static DestructionKind isDestructedTypeImpl(QualType type);
 };
@@ -1332,6 +1362,11 @@ public:
   bool isCanonicalUnqualified() const {
     return CanonicalType == QualType(this, 0);
   }
+
+  /// Pull a single level of sugar off of this locally-unqualified type.
+  /// Users should generally prefer SplitQualType::getSingleStepDesugaredType()
+  /// or QualType::getSingleStepDesugaredType(const ASTContext&).
+  QualType getLocallyUnqualifiedSingleStepDesugaredType() const;
 
   /// Types are partitioned into 3 broad categories (C99 6.2.5p1):
   /// object types, function types, and incomplete types.
@@ -4406,6 +4441,13 @@ public:
 
 // Inline function definitions.
 
+inline SplitQualType SplitQualType::getSingleStepDesugaredType() const {
+  SplitQualType desugar =
+    Ty->getLocallyUnqualifiedSingleStepDesugaredType().split();
+  desugar.Quals.addConsistentQualifiers(Quals);
+  return desugar;
+}
+
 inline const Type *QualType::getTypePtr() const {
   return getCommonPtr()->BaseType;
 }
@@ -4490,7 +4532,7 @@ inline QualType QualType::getUnqualifiedType() const {
   if (!getTypePtr()->getCanonicalTypeInternal().hasLocalQualifiers())
     return QualType(getTypePtr(), 0);
 
-  return QualType(getSplitUnqualifiedTypeImpl(*this).first, 0);
+  return QualType(getSplitUnqualifiedTypeImpl(*this).Ty, 0);
 }
 
 inline SplitQualType QualType::getSplitUnqualifiedType() const {

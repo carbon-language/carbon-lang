@@ -2211,7 +2211,7 @@ bool Sema::isObjCWritebackConversion(QualType FromType, QualType ToType,
   Qualifiers ToQuals = ToPointee.getQualifiers();
   if (!ToPointee->isObjCLifetimeType() || 
       ToQuals.getObjCLifetime() != Qualifiers::OCL_Autoreleasing ||
-      !ToQuals.withoutObjCGLifetime().empty())
+      !ToQuals.withoutObjCLifetime().empty())
     return false;
   
   // Argument must be a pointer to __strong to __weak.

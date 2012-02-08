@@ -4982,9 +4982,9 @@ checkPointerTypesForAssignment(Sema &S, QualType LHSType, QualType RHSType) {
 
     // It's okay to add or remove GC or lifetime qualifiers when converting to
     // and from void*.
-    else if (lhq.withoutObjCGCAttr().withoutObjCGLifetime()
+    else if (lhq.withoutObjCGCAttr().withoutObjCLifetime()
                         .compatiblyIncludes(
-                                rhq.withoutObjCGCAttr().withoutObjCGLifetime())
+                                rhq.withoutObjCGCAttr().withoutObjCLifetime())
              && (lhptee->isVoidType() || rhptee->isVoidType()))
       ; // keep old
 

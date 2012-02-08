@@ -1655,8 +1655,8 @@ void CXXNameMangler::mangleType(QualType T) {
     } while (true);
   }
   SplitQualType split = T.split();
-  Qualifiers quals = split.second;
-  const Type *ty = split.first;
+  Qualifiers quals = split.Quals;
+  const Type *ty = split.Ty;
 
   bool isSubstitutable = quals || !isa<BuiltinType>(T);
   if (isSubstitutable && mangleSubstitution(T))

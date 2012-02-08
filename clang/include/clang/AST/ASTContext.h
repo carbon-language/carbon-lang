@@ -1134,6 +1134,11 @@ public:
     return getQualifiedType(T, Qualifiers::fromCVRMask(CVR));
   }
 
+  /// getQualifiedType - Un-split a SplitQualType.
+  QualType getQualifiedType(SplitQualType split) const {
+    return getQualifiedType(split.Ty, split.Quals);
+  }
+
   /// getQualifiedType - Returns a type with additional qualifiers.
   QualType getQualifiedType(QualType T, Qualifiers Qs) const {
     if (!Qs.hasNonFastQualifiers())

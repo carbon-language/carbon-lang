@@ -75,7 +75,7 @@ static void AppendTypeQualList(std::string &S, unsigned TypeQuals) {
 
 void TypePrinter::print(QualType t, std::string &buffer) {
   SplitQualType split = t.split();
-  print(split.first, split.second, buffer);
+  print(split.Ty, split.Quals, buffer);
 }
 
 void TypePrinter::print(const Type *T, Qualifiers Quals, std::string &buffer) {

@@ -3497,9 +3497,9 @@ namespace {
       SplitQualType SplitOld = Old.split();
 
       // As a special case, tail-recurse if there are no qualifiers.
-      if (SplitOld.second.empty())
-        return wrap(C, SplitOld.first, I);
-      return C.getQualifiedType(wrap(C, SplitOld.first, I), SplitOld.second);
+      if (SplitOld.Quals.empty())
+        return wrap(C, SplitOld.Ty, I);
+      return C.getQualifiedType(wrap(C, SplitOld.Ty, I), SplitOld.Quals);
     }
 
     QualType wrap(ASTContext &C, const Type *Old, unsigned I) {

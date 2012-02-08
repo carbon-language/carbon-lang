@@ -1387,8 +1387,8 @@ ASTContext::getExtQualType(const Type *baseType, Qualifiers quals) const {
   QualType canon;
   if (!baseType->isCanonicalUnqualified()) {
     SplitQualType canonSplit = baseType->getCanonicalTypeInternal().split();
-    canonSplit.second.addConsistentQualifiers(quals);
-    canon = getExtQualType(canonSplit.first, canonSplit.second);
+    canonSplit.Quals.addConsistentQualifiers(quals);
+    canon = getExtQualType(canonSplit.Ty, canonSplit.Quals);
 
     // Re-find the insert position.
     (void) ExtQualNodes.FindNodeOrInsertPos(ID, insertPos);
@@ -1690,9 +1690,9 @@ QualType ASTContext::getConstantArrayType(QualType EltTy,
   QualType Canon;
   if (!EltTy.isCanonical() || EltTy.hasLocalQualifiers()) {
     SplitQualType canonSplit = getCanonicalType(EltTy).split();
-    Canon = getConstantArrayType(QualType(canonSplit.first, 0), ArySize,
+    Canon = getConstantArrayType(QualType(canonSplit.Ty, 0), ArySize,
                                  ASM, IndexTypeQuals);
-    Canon = getQualifiedType(Canon, canonSplit.second);
+    Canon = getQualifiedType(Canon, canonSplit.Quals);
 
     // Get the new insert position for the node we care about.
     ConstantArrayType *NewIP =
@@ -1717,7 +1717,7 @@ QualType ASTContext::getVariableArrayDecayedType(QualType type) const {
   QualType result;
 
   SplitQualType split = type.getSplitDesugaredType();
-  const Type *ty = split.first;
+  const Type *ty = split.Ty;
   switch (ty->getTypeClass()) {
 #define TYPE(Class, Base)
 #define ABSTRACT_TYPE(Class, Base)
@@ -1836,7 +1836,7 @@ QualType ASTContext::getVariableArrayDecayedType(QualType type) const {
   }
 
   // Apply the top-level qualifiers from the original.
-  return getQualifiedType(result, split.second);
+  return getQualifiedType(result, split.Quals);
 }
 
 /// getVariableArrayType - Returns a non-unique reference to the type for a
@@ -1853,9 +1853,9 @@ QualType ASTContext::getVariableArrayType(QualType EltTy,
   // Be sure to pull qualifiers off the element type.
   if (!EltTy.isCanonical() || EltTy.hasLocalQualifiers()) {
     SplitQualType canonSplit = getCanonicalType(EltTy).split();
-    Canon = getVariableArrayType(QualType(canonSplit.first, 0), NumElts, ASM,
+    Canon = getVariableArrayType(QualType(canonSplit.Ty, 0), NumElts, ASM,
                                  IndexTypeQuals, Brackets);
-    Canon = getQualifiedType(Canon, canonSplit.second);
+    Canon = getQualifiedType(Canon, canonSplit.Quals);
   }
   
   VariableArrayType *New = new(*this, TypeAlignment)
@@ -1900,7 +1900,7 @@ QualType ASTContext::getDependentSizedArrayType(QualType elementType,
   void *insertPos = 0;
   llvm::FoldingSetNodeID ID;
   DependentSizedArrayType::Profile(ID, *this,
-                                   QualType(canonElementType.first, 0),
+                                   QualType(canonElementType.Ty, 0),
                                    ASM, elementTypeQuals, numElements);
 
   // Look for an existing type with these properties.
@@ -1910,7 +1910,7 @@ QualType ASTContext::getDependentSizedArrayType(QualType elementType,
   // If we don't have one, build one.
   if (!canonTy) {
     canonTy = new (*this, TypeAlignment)
-      DependentSizedArrayType(*this, QualType(canonElementType.first, 0),
+      DependentSizedArrayType(*this, QualType(canonElementType.Ty, 0),
                               QualType(), numElements, ASM, elementTypeQuals,
                               brackets);
     DependentSizedArrayTypes.InsertNode(canonTy, insertPos);
@@ -1919,11 +1919,11 @@ QualType ASTContext::getDependentSizedArrayType(QualType elementType,
 
   // Apply qualifiers from the element type to the array.
   QualType canon = getQualifiedType(QualType(canonTy,0),
-                                    canonElementType.second);
+                                    canonElementType.Quals);
 
   // If we didn't need extra canonicalization for the element type,
   // then just use that as our result.
-  if (QualType(canonElementType.first, 0) == elementType)
+  if (QualType(canonElementType.Ty, 0) == elementType)
     return canon;
 
   // Otherwise, we need to build a type which follows the spelling
@@ -1954,9 +1954,9 @@ QualType ASTContext::getIncompleteArrayType(QualType elementType,
 
   if (!elementType.isCanonical() || elementType.hasLocalQualifiers()) {
     SplitQualType canonSplit = getCanonicalType(elementType).split();
-    canon = getIncompleteArrayType(QualType(canonSplit.first, 0),
+    canon = getIncompleteArrayType(QualType(canonSplit.Ty, 0),
                                    ASM, elementTypeQuals);
-    canon = getQualifiedType(canon, canonSplit.second);
+    canon = getQualifiedType(canon, canonSplit.Quals);
 
     // Get the new insert position for the node we care about.
     IncompleteArrayType *existing =
@@ -3134,12 +3134,12 @@ QualType ASTContext::getUnqualifiedArrayType(QualType type,
   // We then have to strip that sugar back off with
   // getUnqualifiedDesugaredType(), which is silly.
   const ArrayType *AT =
-    dyn_cast<ArrayType>(splitType.first->getUnqualifiedDesugaredType());
+    dyn_cast<ArrayType>(splitType.Ty->getUnqualifiedDesugaredType());
 
   // If we don't have an array, just use the results in splitType.
   if (!AT) {
-    quals = splitType.second;
-    return QualType(splitType.first, 0);
+    quals = splitType.Quals;
+    return QualType(splitType.Ty, 0);
   }
 
   // Otherwise, recurse on the array's element type.
@@ -3150,13 +3150,13 @@ QualType ASTContext::getUnqualifiedArrayType(QualType type,
   // can just use the results in splitType.
   if (elementType == unqualElementType) {
     assert(quals.empty()); // from the recursive call
-    quals = splitType.second;
-    return QualType(splitType.first, 0);
+    quals = splitType.Quals;
+    return QualType(splitType.Ty, 0);
   }
 
   // Otherwise, add in the qualifiers from the outermost type, then
   // build the type back up.
-  quals.addConsistentQualifiers(splitType.second);
+  quals.addConsistentQualifiers(splitType.Quals);
 
   if (const ConstantArrayType *CAT = dyn_cast<ConstantArrayType>(AT)) {
     return getConstantArrayType(unqualElementType, CAT->getSize(),
@@ -3458,10 +3458,10 @@ const ArrayType *ASTContext::getAsArrayType(QualType T) const {
   // we must propagate them down into the element type.
 
   SplitQualType split = T.getSplitDesugaredType();
-  Qualifiers qs = split.second;
+  Qualifiers qs = split.Quals;
 
   // If we have a simple case, just return now.
-  const ArrayType *ATy = dyn_cast<ArrayType>(split.first);
+  const ArrayType *ATy = dyn_cast<ArrayType>(split.Ty);
   if (ATy == 0 || qs.empty())
     return ATy;
 
@@ -3548,11 +3548,11 @@ QualType ASTContext::getBaseElementType(QualType type) const {
   Qualifiers qs;
   while (true) {
     SplitQualType split = type.getSplitDesugaredType();
-    const ArrayType *array = split.first->getAsArrayTypeUnsafe();
+    const ArrayType *array = split.Ty->getAsArrayTypeUnsafe();
     if (!array) break;
 
     type = array->getElementType();
-    qs.addConsistentQualifiers(split.second);
+    qs.addConsistentQualifiers(split.Quals);
   }
 
   return getQualifiedType(type, qs);
