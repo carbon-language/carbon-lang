@@ -1749,6 +1749,9 @@ bool ARMFastISel::SelectBinaryIntOp(const Instruction *I, unsigned ISDOpcode) {
     case ISD::OR:
       Opc = isThumb2 ? ARM::t2ORRrr : ARM::ORRrr;
       break;
+    case ISD::SUB:
+      Opc = isThumb2 ? ARM::t2SUBrr : ARM::SUBrr;
+      break;
   }
 
   unsigned SrcReg1 = getRegForValue(I->getOperand(0));
@@ -2509,6 +2512,8 @@ bool ARMFastISel::TargetSelectInstruction(const Instruction *I) {
       return SelectBinaryIntOp(I, ISD::ADD);
     case Instruction::Or:
       return SelectBinaryIntOp(I, ISD::OR);
+    case Instruction::Sub:
+      return SelectBinaryIntOp(I, ISD::SUB);
     case Instruction::FAdd:
       return SelectBinaryFPOp(I, ISD::FADD);
     case Instruction::FSub:

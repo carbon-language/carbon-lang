@@ -76,3 +76,41 @@ entry:
   store i16 %0, i16* %a.addr, align 4
   ret void
 }
+
+; Test sub with non-legal types
+
+define void @sub_i1(i1 %a, i1 %b) nounwind ssp {
+entry:
+; ARM: sub_i1
+; THUMB: sub_i1
+  %a.addr = alloca i1, align 4
+  %0 = sub i1 %a, %b
+; ARM: sub r0, r0, r1
+; THUMB: subs r0, r0, r1
+  store i1 %0, i1* %a.addr, align 4
+  ret void
+}
+
+define void @sub_i8(i8 %a, i8 %b) nounwind ssp {
+entry:
+; ARM: sub_i8
+; THUMB: sub_i8
+  %a.addr = alloca i8, align 4
+  %0 = sub i8 %a, %b
+; ARM: sub r0, r0, r1
+; THUMB: subs r0, r0, r1
+  store i8 %0, i8* %a.addr, align 4
+  ret void
+}
+
+define void @sub_i16(i16 %a, i16 %b) nounwind ssp {
+entry:
+; ARM: sub_i16
+; THUMB: sub_i16
+  %a.addr = alloca i16, align 4
+  %0 = sub i16 %a, %b
+; ARM: sub r0, r0, r1
+; THUMB: subs r0, r0, r1
+  store i16 %0, i16* %a.addr, align 4
+  ret void
+}
