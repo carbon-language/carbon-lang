@@ -32,3 +32,11 @@ typedef __autoreleasing NSString * AUTORELEASEPNSString;
         __autoreleasing id *stuff = (__autoreleasing id *)addr;
 }
 @end
+
+// rdar://problem/10711456
+__strong I *__strong test1; // expected-error {{the type 'I *__strong' is already explicitly ownership-qualified}}
+__strong I *(__strong test2); // expected-error {{the type 'I *__strong' is already explicitly ownership-qualified}}
+__strong I *(__strong (test3)); // expected-error {{the type 'I *__strong' is already explicitly ownership-qualified}}
+__unsafe_unretained __typeof__(test3) test4;
+typedef __strong I *strong_I;
+__unsafe_unretained strong_I test5;

@@ -3236,6 +3236,36 @@ static void HandleAddressSpaceTypeAttribute(QualType &Type,
   Type = S.Context.getAddrSpaceQualType(Type, ASIdx);
 }
 
+/// Does this type have a "direct" ownership qualifier?  That is,
+/// is it written like "__strong id", as opposed to something like
+/// "typeof(foo)", where that happens to be strong?
+static bool hasDirectOwnershipQualifier(QualType type) {
+  // Fast path: no qualifier at all.
+  assert(type.getQualifiers().hasObjCLifetime());
+
+  while (true) {
+    // __strong id
+    if (const AttributedType *attr = dyn_cast<AttributedType>(type)) {
+      if (attr->getAttrKind() == AttributedType::attr_objc_ownership)
+        return true;
+
+      type = attr->getModifiedType();
+
+    // X *__strong (...)
+    } else if (const ParenType *paren = dyn_cast<ParenType>(type)) {
+      type = paren->getInnerType();
+   
+    // That's it for things we want to complain about.  In particular,
+    // we do not want to look through typedefs, typeof(expr),
+    // typeof(type), or any other way that the type is somehow
+    // abstracted.
+    } else {
+      
+      return false;
+    }
+  }
+}
+
 /// handleObjCOwnershipTypeAttr - Process an objc_ownership
 /// attribute on the specified type.
 ///
@@ -3264,18 +3294,17 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
   if (AttrLoc.isMacroID())
     AttrLoc = S.getSourceManager().getImmediateExpansionRange(AttrLoc).first;
 
-  if (type.getQualifiers().getObjCLifetime()) {
-    S.Diag(AttrLoc, diag::err_attr_objc_ownership_redundant)
-      << type;
-    return true;
-  }
-
   if (!attr.getParameterName()) {
     S.Diag(AttrLoc, diag::err_attribute_argument_n_not_string)
       << "objc_ownership" << 1;
     attr.setInvalid();
     return true;
   }
+
+  // Consume lifetime attributes without further comment outside of
+  // ARC mode.
+  if (!S.getLangOptions().ObjCAutoRefCount)
+    return true;
 
   Qualifiers::ObjCLifetime lifetime;
   if (attr.getParameterName()->isStr("none"))
@@ -3293,10 +3322,31 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
     return true;
   }
 
-  // Consume lifetime attributes without further comment outside of
-  // ARC mode.
-  if (!S.getLangOptions().ObjCAutoRefCount)
-    return true;
+  SplitQualType underlyingType = type.split();
+
+  // Check for redundant/conflicting ownership qualifiers.
+  if (Qualifiers::ObjCLifetime previousLifetime
+        = type.getQualifiers().getObjCLifetime()) {
+    // If it's written directly, that's an error.
+    if (hasDirectOwnershipQualifier(type)) {
+      S.Diag(AttrLoc, diag::err_attr_objc_ownership_redundant)
+        << type;
+      return true;
+    }
+
+    // Otherwise, if the qualifiers actually conflict, pull sugar off
+    // until we reach a type that is directly qualified.
+    if (previousLifetime != lifetime) {
+      // This should always terminate: the canonical type is
+      // qualified, so some bit of sugar must be hiding it.
+      while (!underlyingType.Quals.hasObjCLifetime()) {
+        underlyingType = underlyingType.getSingleStepDesugaredType();
+      }
+      underlyingType.Quals.removeObjCLifetime();
+    }
+  }
+
+  underlyingType.Quals.addObjCLifetime(lifetime);
 
   if (NonObjCPointer) {
     StringRef name = attr.getName()->getName();
@@ -3312,11 +3362,9 @@ static bool handleObjCOwnershipTypeAttr(TypeProcessingState &state,
       << name << type;
   }
 
-  Qualifiers qs;
-  qs.setObjCLifetime(lifetime);
   QualType origType = type;
   if (!NonObjCPointer)
-    type = S.Context.getQualifiedType(type, qs);
+    type = S.Context.getQualifiedType(underlyingType);
 
   // If we have a valid source location for the attribute, use an
   // AttributedType instead.

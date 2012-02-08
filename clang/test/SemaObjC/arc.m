@@ -39,8 +39,6 @@ void test1(A *a) {
 }
 @end
 
-__weak __strong id x; // expected-error {{the type '__strong id' already has retainment attributes}}
-
 // rdar://8843638
 
 @interface I
