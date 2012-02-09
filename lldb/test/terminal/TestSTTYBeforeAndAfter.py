@@ -37,6 +37,11 @@ class CommandLineCompletionTestCase(TestBase):
         if self.TraceOn():
             child.logfile = sys.stdout
 
+        child.sendline('set env(TERM) xterm')
+        child.expect(expect_prompt)
+        child.sendline('puts $env(TERM)')
+        child.expect(expect_prompt)
+
         # Turn on loggings for input/output to/from the child.
         with open('child_send1.txt', 'w') as f_send1:
             with open('child_read1.txt', 'w') as f_read1:
@@ -73,7 +78,7 @@ class CommandLineCompletionTestCase(TestBase):
         # stop further logging.
         child.logfile_send = None
         child.logfile_read = None
-        
+
         with open('child_send1.txt', 'r') as fs:
             if self.TraceOn():
                 print "\n\nContents of child_send1.txt:"
