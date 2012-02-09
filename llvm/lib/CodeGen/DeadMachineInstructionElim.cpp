@@ -33,6 +33,7 @@ namespace {
     const MachineRegisterInfo *MRI;
     const TargetInstrInfo *TII;
     BitVector LivePhysRegs;
+    BitVector ReservedRegs;
 
   public:
     static char ID; // Pass identification, replacement for typeid
@@ -67,10 +68,14 @@ bool DeadMachineInstructionElim::isDead(const MachineInstr *MI) const {
     const MachineOperand &MO = MI->getOperand(i);
     if (MO.isReg() && MO.isDef()) {
       unsigned Reg = MO.getReg();
-      if (TargetRegisterInfo::isPhysicalRegister(Reg) ?
-          LivePhysRegs[Reg] : !MRI->use_nodbg_empty(Reg)) {
-        // This def has a non-debug use. Don't delete the instruction!
-        return false;
+      if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
+        // Don't delete live physreg defs, or any reserved register defs.
+        if (LivePhysRegs.test(Reg) || ReservedRegs.test(Reg))
+          return false;
+      } else {
+        if (!MRI->use_nodbg_empty(Reg))
+          // This def has a non-debug use. Don't delete the instruction!
+          return false;
       }
     }
   }
@@ -86,7 +91,7 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
   TII = MF.getTarget().getInstrInfo();
 
   // Treat reserved registers as always live.
-  BitVector ReservedRegs = TRI->getReservedRegs(MF);
+  ReservedRegs = TRI->getReservedRegs(MF);
 
   // Loop over all instructions in all blocks, from bottom to top, so that it's
   // more likely that chains of dependent but ultimately dead instructions will
@@ -173,7 +178,6 @@ bool DeadMachineInstructionElim::runOnMachineFunction(MachineFunction &MF) {
         } else if (MO.isRegMask()) {
           // Register mask of preserved registers. All clobbers are dead.
           LivePhysRegs.clearBitsNotInMask(MO.getRegMask());
-          LivePhysRegs |= ReservedRegs;
         }
       }
       // Record the physreg uses, after the defs, in case a physreg is
