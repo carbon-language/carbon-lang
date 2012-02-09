@@ -109,6 +109,86 @@ DW_ACCESS_to_AccessType (uint32_t dwarf_accessibility)
     return eAccessNone;
 }
 
+#if defined(LLDB_CONFIGURATION_DEBUG) or defined(LLDB_CONFIGURATION_RELEASE)
+
+class DIEStack
+{
+public:
+    
+    void Push (DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die)
+    {
+        m_dies.push_back (DIEInfo(cu, die));
+    }
+
+    
+    void LogDIEs (Log *log, SymbolFileDWARF *dwarf)
+    {
+        StreamString log_strm;
+        const size_t n = m_dies.size();
+        log_strm.Printf("DIEStack[%zu]:\n", n);
+        for (size_t i=0; i<n; i++)
+        {
+            DWARFCompileUnit *cu = m_dies[i].cu;
+            const DWARFDebugInfoEntry *die = m_dies[i].die;
+            std::string qualified_name;
+            die->GetQualifiedName(dwarf, cu, qualified_name);
+            log_strm.Printf ("[%zu] 0x%8.8x: %s name='%s'\n", 
+                             i,
+                             die->GetOffset(), 
+                             DW_TAG_value_to_name(die->Tag()), 
+                             qualified_name.c_str());
+        }
+        log->PutCString(log_strm.GetData());
+    }
+    void Pop ()
+    {
+        m_dies.pop_back();
+    }
+    
+    class ScopedPopper
+    {
+    public:
+        ScopedPopper (DIEStack &die_stack) :
+            m_die_stack (die_stack),
+            m_valid (false)
+        {
+        }
+        
+        void
+        Push (DWARFCompileUnit *cu, const DWARFDebugInfoEntry *die)
+        {
+            m_valid = true;
+            m_die_stack.Push (cu, die);
+        }
+        
+        ~ScopedPopper ()
+        {
+            if (m_valid)
+                m_die_stack.Pop();
+        }
+        
+        
+        
+    protected:
+        DIEStack &m_die_stack;
+        bool m_valid;
+    };
+
+protected:
+    struct DIEInfo {
+        DIEInfo (DWARFCompileUnit *c, const DWARFDebugInfoEntry *d) :
+            cu(c),
+            die(d)
+        {
+        }
+        DWARFCompileUnit *cu;
+        const DWARFDebugInfoEntry *die;
+    };
+    typedef std::vector<DIEInfo> Stack;
+    Stack m_dies;
+};
+#endif
+
 void
 SymbolFileDWARF::Initialize()
 {
@@ -4349,15 +4429,11 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
     if (type_is_new_ptr)
         *type_is_new_ptr = false;
-   
-    static int depth = -1;
-    
-    class DepthTaker {
-    public:
-        DepthTaker (int &depth) : m_depth(depth) { ++m_depth; }
-        ~DepthTaker () { --m_depth; }
-        int &m_depth;
-    } depth_taker(depth);
+
+#if defined(LLDB_CONFIGURATION_DEBUG) or defined(LLDB_CONFIGURATION_RELEASE)
+    static DIEStack g_die_stack;
+    DIEStack::ScopedPopper scoped_die_logger(g_die_stack);
+#endif
 
     AccessType accessibility = eAccessNone;
     if (die != NULL)
@@ -4368,20 +4444,17 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
             const DWARFDebugInfoEntry *context_die;
             clang::DeclContext *context = GetClangDeclContextContainingDIE (dwarf_cu, die, &context_die);
             
-            std::string name_storage;
-            
-            const char* qual_name = die->GetQualifiedName(this, 
-                                                          dwarf_cu,
-                                                          name_storage);
-            
-            GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (depth = %d, die = 0x%8.8x, decl_ctx = %p (die 0x%8.8x)) %s '%s'='%s')", 
-                        depth,
+            GetObjectFile()->GetModule()->LogMessage (log.get(), "SymbolFileDWARF::ParseType (die = 0x%8.8x, decl_ctx = %p (die 0x%8.8x)) %s name = '%s')", 
                         die->GetOffset(),
                         context,
                         context_die->GetOffset(),
                         DW_TAG_value_to_name(die->Tag()), 
-                        die->GetName(this, dwarf_cu),
-                        qual_name);
+                        die->GetName(this, dwarf_cu));
+            
+#if defined(LLDB_CONFIGURATION_DEBUG) or defined(LLDB_CONFIGURATION_RELEASE)
+            scoped_die_logger.Push (dwarf_cu, die);
+            g_die_stack.LogDIEs(log.get(), this);
+#endif
         }
 //
 //        LogSP log (LogChannelDWARF::GetLogIfAll(DWARF_LOG_DEBUG_INFO));
