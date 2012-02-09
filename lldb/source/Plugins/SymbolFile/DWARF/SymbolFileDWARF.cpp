@@ -4887,7 +4887,9 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     clang_type = m_forward_decl_die_to_clang_type.lookup (die);
                     if (clang_type == NULL)
                     {
-                        clang::DeclContext *decl_ctx = GetClangDeclContextContainingDIE (dwarf_cu, die, NULL);
+                        const DWARFDebugInfoEntry *decl_ctx_die;
+                        
+                        clang::DeclContext *decl_ctx = GetClangDeclContextContainingDIE (dwarf_cu, die, &decl_ctx_die);
                         if (accessibility == eAccessNone && decl_ctx)
                         {
                             // Check the decl context that contains this class/struct/union.
