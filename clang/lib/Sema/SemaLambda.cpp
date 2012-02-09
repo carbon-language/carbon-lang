@@ -357,9 +357,28 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
   if (LambdaExprNeedsCleanups)
     ExprNeedsCleanups = true;
 
-  Expr *Lambda = LambdaExpr::Create(Context, Class, IntroducerRange, 
-                                    CaptureDefault, Captures, ExplicitParams, 
-                                    CaptureInits, Body->getLocEnd());
+  LambdaExpr *Lambda = LambdaExpr::Create(Context, Class, IntroducerRange, 
+                                          CaptureDefault, Captures, 
+                                          ExplicitParams, CaptureInits, 
+                                          Body->getLocEnd());
+
+  // C++11 [expr.prim.lambda]p2:
+  //   A lambda-expression shall not appear in an unevaluated operand
+  //   (Clause 5).
+  switch (ExprEvalContexts.back().Context) {
+  case Unevaluated:
+    // We don't actually diagnose this case immediately, because we
+    // could be within a context where we might find out later that
+    // the expression is potentially evaluated (e.g., for typeid).
+    ExprEvalContexts.back().Lambdas.push_back(Lambda);
+    break;
+
+  case ConstantEvaluated:
+  case PotentiallyEvaluated:
+  case PotentiallyEvaluatedIfUsed:
+    break;
+  }
+
   Diag(StartLoc, diag::err_lambda_unsupported);
 
   return MaybeBindToTemporary(Lambda);

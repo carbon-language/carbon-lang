@@ -4125,7 +4125,8 @@ def err_lambda_impcap : Error<
   "variable %0 cannot be implicitly captured in a lambda with no "
   "capture-default specified">;
 def note_lambda_decl : Note<"lambda expression begins here">;
-
+def err_lambda_unevaluated_operand : Error<
+  "lambda expression in an unevaluated operand">;
 
 def err_operator_arrow_circular : Error<
   "circular pointer delegation detected">;

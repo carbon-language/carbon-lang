@@ -102,6 +102,7 @@ namespace clang {
   class InitializedEntity;
   class IntegerLiteral;
   class LabelStmt;
+  class LambdaExpr;
   class LangOptions;
   class LocalInstantiationScope;
   class LookupResult;
@@ -559,6 +560,10 @@ public:
     unsigned NumCleanupObjects;
 
     llvm::SmallPtrSet<Expr*, 8> SavedMaybeODRUseExprs;
+
+    /// \brief The lambdas that are present within this context, if it
+    /// is indeed an unevaluated context.
+    llvm::SmallVector<LambdaExpr *, 2> Lambdas;
 
     ExpressionEvaluationContextRecord(ExpressionEvaluationContext Context,
                                       unsigned NumCleanupObjects,
