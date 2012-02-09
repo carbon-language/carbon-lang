@@ -98,7 +98,8 @@ public:
             m_named_decl (NULL),
             m_llvm_value (NULL),
             m_lldb_value (NULL),
-            m_lldb_var   ()
+            m_lldb_var   (),
+            m_lldb_sym   (NULL)
         {
         }
 
