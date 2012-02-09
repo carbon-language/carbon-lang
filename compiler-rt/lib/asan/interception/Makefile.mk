@@ -8,7 +8,7 @@
 #===------------------------------------------------------------------------===#
 
 ModuleName := asan
-SubDirs :=
+SubDirs := mach_override
 
 Sources := $(foreach file,$(wildcard $(Dir)/*.cc),$(notdir $(file)))
 ObjNames := $(Sources:%.cc=%.o)
@@ -17,6 +17,7 @@ Implementation := Generic
 
 # FIXME: use automatic dependencies?
 Dependencies := $(wildcard $(Dir)/*.h)
+Dependencies += $(wildcard $(Dir)/mach_override/*.h)
 
 # Define a convenience variable for all the asan functions.
 AsanFunctions += $(Sources:%.cc=%)

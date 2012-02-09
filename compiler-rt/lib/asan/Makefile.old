@@ -181,7 +181,7 @@ RTL_HDR=asan_allocator.h \
 	interception/interception.h \
 	interception/interception_linux.h \
 	interception/interception_mac.h \
-	mach_override/mach_override.h
+	interception/mach_override/mach_override.h
 
 LIBASAN_OBJ=$(BIN)/asan_rtl$(SUFF).o \
 	    $(BIN)/asan_allocator$(SUFF).o  \
@@ -200,7 +200,7 @@ LIBASAN_OBJ=$(BIN)/asan_rtl$(SUFF).o \
 	    $(BIN)/asan_thread_registry$(SUFF).o  \
 	    $(BIN)/interception/interception_linux$(SUFF).o  \
 	    $(BIN)/interception/interception_mac$(SUFF).o  \
-	    $(BIN)/mach_override/mach_override$(SUFF).o
+	    $(BIN)/interception/mach_override/mach_override$(SUFF).o
 
 GTEST_ROOT=third_party/googletest
 GTEST_INCLUDE=-I$(GTEST_ROOT)/include
@@ -233,7 +233,7 @@ lib32:
 mk_bin_dir:
 	mkdir -p $(BIN)
 	mkdir -p $(BIN)/interception
-	mkdir -p $(BIN)/mach_override
+	mkdir -p $(BIN)/interception/mach_override
 
 clang:
 	cd ../ && llvm/rebuild_clang_and_asan.sh > /dev/null

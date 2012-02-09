@@ -17,8 +17,7 @@
 #define INCLUDED_FROM_INTERCEPTION_LIB
 #include "interception_mac.h"
 #undef INCLUDED_FROM_INTERCEPTION_LIB
-// FIXME(samsonov): Put mach_override/ under interception/
-#include "../mach_override/mach_override.h"
+#include "mach_override/mach_override.h"
 
 namespace __interception {
 bool OverrideFunction(void *old_func, void *new_func, void **orig_old_func) {
