@@ -28,3 +28,26 @@
 
 @implementation MyClass1(CAT1)
 @end
+
+// rdar://10823023
+@class NSString;
+
+@protocol NSObject
+- (NSString *)meth_inprotocol;
+@end
+
+@interface NSObject <NSObject>
+- (NSString *)description;
++ (NSString *) cls_description;
+@end
+
+@protocol Foo 
+- (NSString *)description;
++ (NSString *) cls_description;
+@end
+
+@interface NSObject (FooConformance) <Foo>
+@end
+
+@implementation NSObject (FooConformance)
+@end

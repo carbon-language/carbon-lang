@@ -317,7 +317,8 @@ ObjCInterfaceDecl *ObjCInterfaceDecl::lookupInheritedClass(
 /// lookupMethod - This method returns an instance/class method by looking in
 /// the class, its categories, and its super classes (using a linear search).
 ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
-                                                bool isInstance) const {
+                                                bool isInstance,
+                                                bool noCategoryLookup) const {
   // FIXME: Should make sure no callers ever do this.
   if (!hasDefinition())
     return 0;
@@ -339,21 +340,22 @@ ObjCMethodDecl *ObjCInterfaceDecl::lookupMethod(Selector Sel,
          E = Protocols.end(); I != E; ++I)
       if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
         return MethodDecl;
-
-    // Didn't find one yet - now look through categories.
-    ObjCCategoryDecl *CatDecl = ClassDecl->getCategoryList();
-    while (CatDecl) {
-      if ((MethodDecl = CatDecl->getMethod(Sel, isInstance)))
-        return MethodDecl;
-
-      // Didn't find one yet - look through protocols.
-      const ObjCList<ObjCProtocolDecl> &Protocols =
-        CatDecl->getReferencedProtocols();
-      for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
-           E = Protocols.end(); I != E; ++I)
-        if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
+    if (!noCategoryLookup) {
+      // Didn't find one yet - now look through categories.
+      ObjCCategoryDecl *CatDecl = ClassDecl->getCategoryList();
+      while (CatDecl) {
+        if ((MethodDecl = CatDecl->getMethod(Sel, isInstance)))
           return MethodDecl;
-      CatDecl = CatDecl->getNextClassCategory();
+
+        // Didn't find one yet - look through protocols.
+        const ObjCList<ObjCProtocolDecl> &Protocols =
+          CatDecl->getReferencedProtocols();
+        for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+             E = Protocols.end(); I != E; ++I)
+          if ((MethodDecl = (*I)->lookupMethod(Sel, isInstance)))
+            return MethodDecl;
+        CatDecl = CatDecl->getNextClassCategory();
+      }
     }
     ClassDecl = ClassDecl->getSuperClass();
   }

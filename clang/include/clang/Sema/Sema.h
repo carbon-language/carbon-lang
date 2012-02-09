@@ -1964,7 +1964,7 @@ public:
                                   ObjCContainerDecl* IDecl,
                                   bool &IncompleteImpl,
                                   bool ImmediateClass,
-                                  bool WarnExactMatch=false);
+                                  bool WarnCategoryMethodImpl=false);
 
   /// CheckCategoryVsClassMethodMatches - Checks that methods implemented in
   /// category matches with those implemented in its primary class and

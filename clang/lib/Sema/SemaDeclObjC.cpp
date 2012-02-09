@@ -1465,11 +1465,9 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
                                    const llvm::DenseSet<Selector> &InsMap,
                                    const llvm::DenseSet<Selector> &ClsMap,
                                    ObjCContainerDecl *CDecl) {
-  ObjCInterfaceDecl *IDecl;
-  if (ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl))
-    IDecl = C->getClassInterface();
-  else
-    IDecl = dyn_cast<ObjCInterfaceDecl>(CDecl);
+  ObjCCategoryDecl *C = dyn_cast<ObjCCategoryDecl>(CDecl);
+  ObjCInterfaceDecl *IDecl = C ? C->getClassInterface() 
+                               : dyn_cast<ObjCInterfaceDecl>(CDecl);
   assert (IDecl && "CheckProtocolMethodDefs - IDecl is null");
   
   ObjCInterfaceDecl *Super = IDecl->getSuperClass();
@@ -1504,20 +1502,27 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
           !method->isSynthesized() && !InsMap.count(method->getSelector()) &&
           (!Super ||
            !Super->lookupInstanceMethod(method->getSelector()))) {
+            // If a method is not implemented in the category implementation but
+            // has been declared in its primary class, superclass,
+            // or in one of their protocols, no need to issue the warning. 
+            // This is because method will be implemented in the primary class 
+            // or one of its super class implementation.
+            
             // Ugly, but necessary. Method declared in protcol might have
             // have been synthesized due to a property declared in the class which
             // uses the protocol.
-            ObjCMethodDecl *MethodInClass =
-            IDecl->lookupInstanceMethod(method->getSelector());
-            if (!MethodInClass || !MethodInClass->isSynthesized()) {
-              unsigned DIAG = diag::warn_unimplemented_protocol_method;
-              if (Diags.getDiagnosticLevel(DIAG, ImpLoc)
-                      != DiagnosticsEngine::Ignored) {
-                WarnUndefinedMethod(ImpLoc, method, IncompleteImpl, DIAG);
-                Diag(method->getLocation(), diag::note_method_declared_at);
-                Diag(CDecl->getLocation(), diag::note_required_for_protocol_at)
-                  << PDecl->getDeclName();
-              }
+            if (ObjCMethodDecl *MethodInClass =
+                  IDecl->lookupInstanceMethod(method->getSelector(), 
+                                              true /*noCategoryLookup*/))
+              if (C || MethodInClass->isSynthesized())
+                continue;
+            unsigned DIAG = diag::warn_unimplemented_protocol_method;
+            if (Diags.getDiagnosticLevel(DIAG, ImpLoc)
+                != DiagnosticsEngine::Ignored) {
+              WarnUndefinedMethod(ImpLoc, method, IncompleteImpl, DIAG);
+              Diag(method->getLocation(), diag::note_method_declared_at);
+              Diag(CDecl->getLocation(), diag::note_required_for_protocol_at)
+                << PDecl->getDeclName();
             }
           }
     }
@@ -1529,6 +1534,10 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
     if (method->getImplementationControl() != ObjCMethodDecl::Optional &&
         !ClsMap.count(method->getSelector()) &&
         (!Super || !Super->lookupClassMethod(method->getSelector()))) {
+      // See above comment for instance method lookups.
+      if (C && IDecl->lookupClassMethod(method->getSelector(), 
+                                        true /*noCategoryLookup*/))
+        continue;
       unsigned DIAG = diag::warn_unimplemented_protocol_method;
       if (Diags.getDiagnosticLevel(DIAG, ImpLoc) !=
             DiagnosticsEngine::Ignored) {
@@ -1542,7 +1551,7 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
   // Check on this protocols's referenced protocols, recursively.
   for (ObjCProtocolDecl::protocol_iterator PI = PDecl->protocol_begin(),
        E = PDecl->protocol_end(); PI != E; ++PI)
-    CheckProtocolMethodDefs(ImpLoc, *PI, IncompleteImpl, InsMap, ClsMap, IDecl);
+    CheckProtocolMethodDefs(ImpLoc, *PI, IncompleteImpl, InsMap, ClsMap, CDecl);
 }
 
 /// MatchAllMethodDeclarations - Check methods declared in interface
@@ -1556,7 +1565,7 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
                                       ObjCContainerDecl* CDecl,
                                       bool &IncompleteImpl,
                                       bool ImmediateClass,
-                                      bool WarnExactMatch) {
+                                      bool WarnCategoryMethodImpl) {
   // Check and see if instance methods in class interface have been
   // implemented in the implementation class. If so, their types match.
   for (ObjCInterfaceDecl::instmeth_iterator I = CDecl->instmeth_begin(),
@@ -1578,12 +1587,12 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
       ObjCMethodDecl *MethodDecl = *I;
       // ImpMethodDecl may be null as in a @dynamic property.
       if (ImpMethodDecl) {
-        if (!WarnExactMatch)
+        if (!WarnCategoryMethodImpl)
           WarnConflictingTypedMethods(ImpMethodDecl, MethodDecl,
                                       isa<ObjCProtocolDecl>(CDecl));
         else if (!MethodDecl->isSynthesized())
           WarnExactTypedMethods(ImpMethodDecl, MethodDecl,
-                               isa<ObjCProtocolDecl>(CDecl));
+                                isa<ObjCProtocolDecl>(CDecl));
       }
     }
   }
@@ -1605,12 +1614,12 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
       assert(CDecl->getClassMethod((*I)->getSelector()) &&
              "Expected to find the method through lookup as well");
       ObjCMethodDecl *MethodDecl = *I;
-      if (!WarnExactMatch)
+      if (!WarnCategoryMethodImpl)
         WarnConflictingTypedMethods(ImpMethodDecl, MethodDecl, 
                                     isa<ObjCProtocolDecl>(CDecl));
       else
         WarnExactTypedMethods(ImpMethodDecl, MethodDecl,
-                             isa<ObjCProtocolDecl>(CDecl));
+                              isa<ObjCProtocolDecl>(CDecl));
     }
   }
   
@@ -1621,7 +1630,8 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
       MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
                                  IMPDecl,
                                  const_cast<ObjCCategoryDecl *>(ClsExtDecl), 
-                                 IncompleteImpl, false, WarnExactMatch);
+                                 IncompleteImpl, false, 
+                                 WarnCategoryMethodImpl);
     
     // Check for any implementation of a methods declared in protocol.
     for (ObjCInterfaceDecl::all_protocol_iterator
@@ -1629,11 +1639,12 @@ void Sema::MatchAllMethodDeclarations(const llvm::DenseSet<Selector> &InsMap,
           E = I->all_referenced_protocol_end(); PI != E; ++PI)
       MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
                                  IMPDecl,
-                                 (*PI), IncompleteImpl, false, WarnExactMatch);
+                                 (*PI), IncompleteImpl, false, 
+                                 WarnCategoryMethodImpl);
     
     // FIXME. For now, we are not checking for extact match of methods 
     // in category implementation and its primary class's super class. 
-    if (!WarnExactMatch && I->getSuperClass())
+    if (!WarnCategoryMethodImpl && I->getSuperClass())
       MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
                                  IMPDecl,
                                  I->getSuperClass(), IncompleteImpl, false);
@@ -1670,7 +1681,8 @@ void Sema::CheckCategoryVsClassMethodMatches(
   bool IncompleteImpl = false;
   MatchAllMethodDeclarations(InsMap, ClsMap, InsMapSeen, ClsMapSeen,
                              CatIMPDecl, IDecl,
-                             IncompleteImpl, false, true /*WarnExactMatch*/);
+                             IncompleteImpl, false, 
+                             true /*WarnCategoryMethodImpl*/);
 }
 
 void Sema::ImplMethodsVsClassMethods(Scope *S, ObjCImplDecl* IMPDecl,
