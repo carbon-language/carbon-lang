@@ -17,10 +17,9 @@ class X0 {
 
   void explicit_capture() {
     int variable; // expected-note {{declared here}}
-    (void)[&Overload] () {}; // expected-error {{does not name a variable}} expected-error {{not supported yet}}
-    (void)[&GlobalVar] () {}; // expected-error {{does not have automatic storage duration}} expected-error {{not supported yet}}
-    (void)[&AmbiguousVar] () {}; // expected-error {{reference to 'AmbiguousVar' is ambiguous}} expected-error {{not supported yet}}
-    (void)[&Variable] () {}; // expected-error {{use of undeclared identifier 'Variable'; did you mean 'variable'}} \
-    // expected-error{{lambda expressions are not supported yet}}
+    (void)[&Overload] () {}; // expected-error {{does not name a variable}} 
+    (void)[&GlobalVar] () {}; // expected-error {{does not have automatic storage duration}} 
+    (void)[&AmbiguousVar] () {}; // expected-error {{reference to 'AmbiguousVar' is ambiguous}} 
+    (void)[&Variable] () {}; // expected-error {{use of undeclared identifier 'Variable'; did you mean 'variable'}}
   }
 };

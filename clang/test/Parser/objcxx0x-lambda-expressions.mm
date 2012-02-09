@@ -11,12 +11,12 @@ class C {
     []; // expected-error {{expected body of lambda expression}}
     [=,foo+] {}; // expected-error {{expected ',' or ']' in lambda capture list}}
     [&this] {}; // expected-error {{address expression must be an lvalue}}
-    [] {}; // expected-error {{lambda expressions are not supported yet}}
-    [=] (int i) {}; // expected-error {{lambda expressions are not supported yet}}
-    [&] (int) mutable -> void {}; // expected-error {{lambda expressions are not supported yet}}
-    [foo,bar] () { return 3; }; // expected-error {{lambda expressions are not supported yet}}
-    [=,&foo] () {}; // expected-error {{lambda expressions are not supported yet}}
-    [this] () {}; // expected-error {{lambda expressions are not supported yet}}
+    [] {}; 
+    [=] (int i) {}; 
+    [&] (int) mutable -> void {}; 
+    [foo,bar] () { return 3; }; 
+    [=,&foo] () {}; 
+    [this] () {}; 
   }
 
 };

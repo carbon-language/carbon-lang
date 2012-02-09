@@ -379,7 +379,5 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
     break;
   }
 
-  Diag(StartLoc, diag::err_lambda_unsupported);
-
   return MaybeBindToTemporary(Lambda);
 }

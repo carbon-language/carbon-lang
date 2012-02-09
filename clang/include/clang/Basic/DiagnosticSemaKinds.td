@@ -4099,7 +4099,6 @@ def err_throw_incomplete_ptr : Error<
 def err_return_in_constructor_handler : Error<
   "return in the catch of a function try block of a constructor is illegal">;
 
-def err_lambda_unsupported : Error<"lambda expressions are not supported yet">;
 def err_capture_more_than_once : Error<
   "%0 can appear only once in a capture list">;
 def err_reference_capture_with_reference_default : Error<

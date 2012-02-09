@@ -8,10 +8,8 @@ class NonCopyable {
 
 void capture_by_copy(NonCopyable nc, NonCopyable &ncr) {
   // FIXME: error messages should talk about capture
-  (void)[nc] { }; // expected-error{{field of type 'NonCopyable' has private copy constructor}} \
-             // expected-error{{lambda expressions are not supported yet}}
-  (void)[ncr] { }; // expected-error{{field of type 'NonCopyable' has private copy constructor}} \
-             // expected-error{{lambda expressions are not supported yet}}
+  (void)[nc] { }; // expected-error{{field of type 'NonCopyable' has private copy constructor}}
+  (void)[ncr] { }; // expected-error{{field of type 'NonCopyable' has private copy constructor}}
 }
 
 struct NonTrivial {
@@ -28,7 +26,7 @@ struct CopyCtorDefault {
 };
 
 void capture_with_default_args(CopyCtorDefault cct) {
-  (void)[=] () -> void { cct.foo(); }; // expected-error{{lambda expressions are not supported yet}}
+  (void)[=] () -> void { cct.foo(); };
 }
 
 struct ExpectedArrayLayout {
@@ -37,7 +35,7 @@ struct ExpectedArrayLayout {
 
 void capture_array() {
   CopyCtorDefault array[3];
-  auto x = [=]() -> void { // expected-error{{lambda expressions are not supported yet}}
+  auto x = [=]() -> void {
     capture(array[0]);
   };
   static_assert(sizeof(x) == sizeof(ExpectedArrayLayout), "layout mismatch");
@@ -51,7 +49,7 @@ struct ExpectedLayout {
 };
 
 void test_layout(char a, short b) {
-  auto x = [=] () -> void { // expected-error{{lambda expressions are not supported yet}}
+  auto x = [=] () -> void {
     capture(a);
     capture(b);
   };

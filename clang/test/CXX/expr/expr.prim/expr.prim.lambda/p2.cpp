@@ -2,9 +2,8 @@
 
 // prvalue
 void prvalue() {
-  auto&& x = []()->void { }; // expected-error{{lambda expressions are not supported yet}}
-  auto& y = []()->void { }; // expected-error{{cannot bind to a temporary of type}} \
-  // expected-error{{lambda expressions are not supported yet}}
+  auto&& x = []()->void { };
+  auto& y = []()->void { }; // expected-error{{cannot bind to a temporary of type}}
 }
 
 namespace std {
@@ -16,11 +15,9 @@ struct P {
 };
 
 void unevaluated_operand(P &p, int i) {
-  int i2 = sizeof([]()->void{}()); // expected-error{{lambda expression in an unevaluated operand}} \
-  // expected-error{{lambda expressions are not supported yet}}
-  const std::type_info &ti1 = typeid([&]() -> P& { return p; }()); // expected-error{{lambda expressions are not supported yet}}
-  const std::type_info &ti2 = typeid([&]() -> int { return i; }());  // expected-error{{lambda expression in an unevaluated operand}} \
-  // expected-error{{lambda expressions are not supported yet}}
+  int i2 = sizeof([]()->void{}()); // expected-error{{lambda expression in an unevaluated operand}}
+  const std::type_info &ti1 = typeid([&]() -> P& { return p; }());
+  const std::type_info &ti2 = typeid([&]() -> int { return i; }());  // expected-error{{lambda expression in an unevaluated operand}}
 }
 
 template<typename T>
@@ -36,13 +33,10 @@ struct Boom {
 void odr_used(P &p, Boom<int> boom_int, Boom<float> boom_float,
               Boom<double> boom_double) {
   const std::type_info &ti1
-    = typeid([=,&p]() -> P& { boom_int.tickle(); return p; }()); // expected-error{{lambda expressions are not supported yet}} \
-  // expected-note{{in instantiation of member function 'Boom<int>::Boom' requested here}}
+    = typeid([=,&p]() -> P& { boom_int.tickle(); return p; }()); // expected-note{{in instantiation of member function 'Boom<int>::Boom' requested here}}
   const std::type_info &ti2
     = typeid([=]() -> int { boom_float.tickle(); return 0; }()); // expected-error{{lambda expression in an unevaluated operand}} \
-  // expected-error{{lambda expressions are not supported yet}} \
   // expected-note{{in instantiation of member function 'Boom<float>::Boom' requested here}}
 
-  auto foo = [=]() -> int { boom_double.tickle(); return 0; }; // expected-error{{lambda expressions are not supported yet}} \
-  // expected-note{{in instantiation of member function 'Boom<double>::Boom' requested here}}
+  auto foo = [=]() -> int { boom_double.tickle(); return 0; }; // expected-note{{in instantiation of member function 'Boom<double>::Boom' requested here}}
 }
