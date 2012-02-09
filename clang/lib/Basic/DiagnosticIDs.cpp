@@ -56,15 +56,11 @@ struct StaticDiagInfoRec {
   uint8_t  OptionGroupLen;
 
   uint16_t DescriptionLen;
-  uint16_t BriefExplanationLen;
-  uint16_t FullExplanationLen;
 
   const char *NameStr;
   const char *OptionGroupStr;
 
   const char *DescriptionStr;
-  const char *BriefExplanationStr;
-  const char *FullExplanationStr;
 
   StringRef getName() const {
     return StringRef(NameStr, NameLen);
@@ -75,12 +71,6 @@ struct StaticDiagInfoRec {
 
   StringRef getDescription() const {
     return StringRef(DescriptionStr, DescriptionLen);
-  }
-  StringRef getBriefExplanation() const {
-    return StringRef(BriefExplanationStr, BriefExplanationLen);
-  }
-  StringRef getFullExplanation() const {
-    return StringRef(FullExplanationStr, FullExplanationLen);
   }
 
   bool operator<(const StaticDiagInfoRec &RHS) const {
@@ -120,13 +110,12 @@ public:
 static const StaticDiagInfoRec StaticDiagInfo[] = {
 #define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,               \
              SFINAE,ACCESS,NOWERROR,SHOWINSYSHEADER,              \
-             CATEGORY,BRIEF,FULL)                                 \
+             CATEGORY)                                            \
   { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE, ACCESS,           \
     NOWERROR, SHOWINSYSHEADER, CATEGORY,                          \
     STR_SIZE(#ENUM, uint8_t), STR_SIZE(GROUP, uint8_t),           \
-    STR_SIZE(DESC, uint16_t), STR_SIZE(BRIEF, uint16_t),          \
-    STR_SIZE(FULL, uint16_t),                                     \
-    #ENUM, GROUP, DESC, BRIEF, FULL },
+    STR_SIZE(DESC, uint16_t),                                     \
+    #ENUM, GROUP, DESC },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -137,7 +126,7 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
 #include "clang/Basic/DiagnosticSemaKinds.inc"
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
 #undef DIAG
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
 static const unsigned StaticDiagInfoSize =
@@ -175,7 +164,7 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 
   // Search the diagnostic table with a binary search.
   StaticDiagInfoRec Find = { static_cast<unsigned short>(DiagID),
-                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   const StaticDiagInfoRec *Found =
     std::lower_bound(StaticDiagInfo, StaticDiagInfo + StaticDiagInfoSize, Find);
@@ -323,22 +312,6 @@ unsigned DiagnosticIDs::getIdFromName(StringRef Name) {
     return diag::DIAG_UPPER_LIMIT;
   
   return Found->DiagID;
-}
-
-/// getBriefExplanation - Given a diagnostic ID, return a brief explanation
-/// of the issue
-StringRef DiagnosticIDs::getBriefExplanation(unsigned DiagID) {
-  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->getBriefExplanation();
-  return StringRef();
-}
-
-/// getFullExplanation - Given a diagnostic ID, return a full explanation
-/// of the issue
-StringRef DiagnosticIDs::getFullExplanation(unsigned DiagID) {
-  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->getFullExplanation();
-  return StringRef();
 }
 
 /// getBuiltinDiagClass - Return the class field of the diagnostic.

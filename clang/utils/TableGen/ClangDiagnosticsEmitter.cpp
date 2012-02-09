@@ -194,14 +194,6 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
   
     // Category number.
     OS << ", " << CategoryIDs.getID(getDiagnosticCategory(&R, DGParentMap));
-
-    // Brief
-    OS << ", \"";
-    OS.write_escaped(R.getValueAsString("Brief")) << '"';
-
-    // Explanation 
-    OS << ", \"";
-    OS.write_escaped(R.getValueAsString("Explanation")) << '"';
     OS << ")\n";
   }
 }

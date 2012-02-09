@@ -50,7 +50,7 @@ namespace clang {
     // Get typedefs for common diagnostics.
     enum {
 #define DIAG(ENUM,FLAGS,DEFAULT_MAPPING,DESC,GROUP,\
-             SFINAE,ACCESS,CATEGORY,NOWERROR,SHOWINSYSHEADER,BRIEF,FULL) ENUM,
+             SFINAE,ACCESS,CATEGORY,NOWERROR,SHOWINSYSHEADER) ENUM,
 #include "clang/Basic/DiagnosticCommonKinds.inc"
       NUM_BUILTIN_COMMON_DIAGNOSTICS
 #undef DIAG
@@ -228,14 +228,6 @@ public:
   
   /// getIdFromName - Given a diagnostic name, return its ID, or 0
   static unsigned getIdFromName(StringRef Name);
-  
-  /// getBriefExplanation - Given a diagnostic ID, return a brief explanation
-  /// of the issue
-  static StringRef getBriefExplanation(unsigned DiagID);
-
-  /// getFullExplanation - Given a diagnostic ID, return a full explanation
-  /// of the issue
-  static StringRef getFullExplanation(unsigned DiagID);
   
   /// Iterator class used for traversing all statically declared
   /// diagnostics.
