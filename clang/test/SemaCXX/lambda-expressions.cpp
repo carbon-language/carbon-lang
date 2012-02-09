@@ -34,12 +34,12 @@ namespace ReturnDeduction {
     [](){ return 1; }; 
     [](){ return 1; }; 
     [](){ return ({return 1; 1;}); }; 
-    [](){ return ({return 'c'; 1;}); }; // expected-error {{must match previous return type}}
+    [](){ return ({return 'c'; 1;}); }; // expected-error {{must match previous return type}} \
+    // expected-warning{{omitted result type}}
     []()->int{ return 'c'; return 1; }; 
     [](){ return 'c'; return 1; };  // expected-error {{must match previous return type}}
     []() { return; return (void)0; }; 
-    // FIXME: Need to check structure of lambda body 
-    [](){ return 1; return 1; }; 
+    [](){ return 1; return 1; }; // expected-warning{{omitted result type}}
   }
 }
 
@@ -76,9 +76,11 @@ namespace ImplicitCapture {
 
     struct G { G(); G(G&); int a; }; // expected-note 6 {{not viable}}
     G g;
-    [=]() { const G* gg = &g; return gg->a; }; 
-    [=]() { return [=]{ const G* gg = &g; return gg->a; }(); }; // expected-error {{no matching constructor for initialization of 'const ImplicitCapture::G'}} 
-    (void)^{ return [=]{ const G* gg = &g; return gg->a; }(); }; // expected-error 2 {{no matching constructor for initialization of 'const ImplicitCapture::G'}} 
+    [=]() { const G* gg = &g; return gg->a; }; // expected-warning{{omitted result type}}
+    [=]() { return [=]{ const G* gg = &g; return gg->a; }(); }; // expected-error {{no matching constructor for initialization of 'const ImplicitCapture::G'}}  \
+    // expected-warning{{omitted result type}}
+    (void)^{ return [=]{ const G* gg = &g; return gg->a; }(); }; // expected-error 2 {{no matching constructor for initialization of 'const ImplicitCapture::G'}}  \
+    // expected-warning{{omitted result type}}
 
     const int h = a; // expected-note {{declared}}
     []() { return h; }; // expected-error {{variable 'h' cannot be implicitly captured in a lambda with no capture-default specified}} expected-note {{lambda expression begins here}} 

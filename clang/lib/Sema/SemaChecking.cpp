@@ -4185,7 +4185,7 @@ void AnalyzeImplicitConversions(Sema &S, Expr *OrigE, SourceLocation CC) {
   BinaryOperator *BO = dyn_cast<BinaryOperator>(E);
   bool IsLogicalOperator = BO && BO->isLogicalOp();
   for (Stmt::child_range I = E->children(); I; ++I) {
-    Expr *ChildExpr = dyn_cast<Expr>(*I);
+    Expr *ChildExpr = dyn_cast_or_null<Expr>(*I);
     if (!ChildExpr)
       continue;
 
