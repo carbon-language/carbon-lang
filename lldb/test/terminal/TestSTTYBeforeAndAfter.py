@@ -40,7 +40,10 @@ class CommandLineCompletionTestCase(TestBase):
         if self.TraceOn():
             child.logfile = sys.stdout
 
-        child.sendline('set env(TERM) xterm')
+        if sys.platform.startswith("darwin"):
+            child.sendline('set env(TERM) xterm')
+        else:
+            child.sendline('set env(TERM) vt100')
         child.expect(expect_prompt)
         child.sendline('puts $env(TERM)')
         child.expect(expect_prompt)
