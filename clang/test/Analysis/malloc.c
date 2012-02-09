@@ -233,10 +233,35 @@ void mallocFreeMalloc() {
   free(p);
 }
 
-void MallocFreeUse_params() {
+void mallocFreeUse_params() {
   int *p = malloc(12);
   free(p);
   myfoo(p); //expected-warning{{Use dynamically allocated memory after it is freed}}
   myfooint(*p); //expected-warning{{Use dynamically allocated memory after it is freed}}
 }
 
+int *Gl;
+struct GlStTy {
+  int *x;
+};
+
+struct GlStTy GlS = {0};
+
+void GlobalFree() {
+  free(Gl);
+}
+
+void GlobalMalloc() {
+  Gl = malloc(12);
+}
+
+void GlobalStructMalloc() {
+  int *a = malloc(12);
+  GlS.x = a;
+}
+
+void GlobalStructMallocFree() {
+  int *a = malloc(12);
+  GlS.x = a;
+  free(GlS.x);
+}
