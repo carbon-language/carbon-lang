@@ -49,8 +49,6 @@ DataStreamer::~DataStreamer() {}
 
 namespace {
 
-const static error_code success;
-
 // Very simple stream backed by a file. Mostly useful for stdin and debugging;
 // actual file access is probably still best done with mmap.
 class DataFileStreamer : public DataStreamer {
@@ -66,18 +64,20 @@ public:
   }
 
   error_code OpenFile(const std::string &Filename) {
+    if (Filename == "-") {
+      Fd = 0;
+      sys::Program::ChangeStdinToBinary();
+      return error_code();
+    }
+  
     int OpenFlags = O_RDONLY;
 #ifdef O_BINARY
     OpenFlags |= O_BINARY;  // Open input file in binary mode on win32.
 #endif
-    if (Filename == "-") {
-      Fd = 0;
-      sys::Program::ChangeStdinToBinary();
-    }
-    else
-      Fd = ::open(Filename.c_str(), OpenFlags);
-    if (Fd == -1) return error_code(errno, posix_category());
-      return success;
+    Fd = ::open(Filename.c_str(), OpenFlags);
+    if (Fd == -1)
+      return error_code(errno, posix_category());
+    return error_code();
   }
 };
 
@@ -87,8 +87,7 @@ namespace llvm {
 DataStreamer *getDataFileStreamer(const std::string &Filename,
                                   std::string *StrError) {
   DataFileStreamer *s = new DataFileStreamer();
-  error_code e = s->OpenFile(Filename);
-  if (e != success) {
+  if (error_code e = s->OpenFile(Filename)) {
     *StrError = std::string("Could not open ") + Filename + ": " +
         e.message() + "\n";
     return NULL;
