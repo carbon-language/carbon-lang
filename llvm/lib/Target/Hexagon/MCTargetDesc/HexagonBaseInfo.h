@@ -24,7 +24,7 @@ namespace llvm {
 ///
 namespace HexagonII {
 
-  // *** The code below must match HexagonInstrFormat*.td ***
+  // *** The code below must match HexagonInstrFormat*.td *** //
 
   // MCInstrDesc TSFlags
   enum {
@@ -34,7 +34,7 @@ namespace HexagonII {
     PredicatedMask = 0x1
   };
 
-  // *** The code above must match HexagonInstrFormat*.td ***
+  // *** The code above must match HexagonInstrFormat*.td *** //
 
 } // End namespace HexagonII.
 
