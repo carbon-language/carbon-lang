@@ -1222,7 +1222,7 @@ public:
   /// \brief Retrieve the first initialization argument for this
   /// lambda expression (which initializes the first capture field).
   capture_init_iterator capture_init_begin() const {
-    return reinterpret_cast<Expr **>(getStoredStmts() + 1);
+    return reinterpret_cast<Expr **>(getStoredStmts());
   }
 
   /// \brief Retrieve the iterator pointing one past the last
