@@ -1129,11 +1129,11 @@ CommandObjectWatchpointSetExpression::ExecuteRawCommandString
         return false;
     }
 
-    bool no_dash_w = !m_option_watchpoint.watch_type_specified;
-    bool no_dash_x = (m_option_watchpoint.watch_size == 0);
+    bool with_dash_w = m_option_watchpoint.watch_type_specified;
+    bool with_dash_x = (m_option_watchpoint.watch_size != 0);
 
     // If no '-w' is specified, default to '-w read_write'.
-    if (no_dash_w)
+    if (!with_dash_w)
     {
         m_option_watchpoint.watch_type = OptionGroupWatchpoint::eWatchReadWrite;
     }
@@ -1149,7 +1149,15 @@ CommandObjectWatchpointSetExpression::ExecuteRawCommandString
 
     // We will process the raw command string to rid of the '-w', '-x', or '--'
     llvm::StringRef raw_expr_str(raw_command);
-    std::string expr_str = StripOptionTerminator(raw_expr_str, !no_dash_w, !no_dash_x).str();
+    std::string expr_str = StripOptionTerminator(raw_expr_str, with_dash_w, with_dash_x).str();
+
+    // Sanity check for when the user forgets to terminate the option strings with a '--'.
+    if ((with_dash_w || with_dash_w) && expr_str.empty())
+    {
+        result.GetErrorStream().Printf("error: did you forget to enter the option terminator string \"--\"?\n");
+        result.SetStatus(eReturnStatusFailed);
+        return false;
+    }
 
     // Use expression evaluation to arrive at the address to watch.
     const bool coerce_to_id = true;
@@ -1167,6 +1175,7 @@ CommandObjectWatchpointSetExpression::ExecuteRawCommandString
         result.GetErrorStream().Printf("error: expression evaluation of address to watch failed\n");
         result.GetErrorStream().Printf("expression evaluated: %s\n", expr_str.c_str());
         result.SetStatus(eReturnStatusFailed);
+        return false;
     }
 
     // Get the address to watch.
@@ -1176,8 +1185,8 @@ CommandObjectWatchpointSetExpression::ExecuteRawCommandString
         result.SetStatus(eReturnStatusFailed);
         return false;
     }
-    size = no_dash_x ? target->GetArchitecture().GetAddressByteSize()
-                     : m_option_watchpoint.watch_size;
+    size = with_dash_x ? m_option_watchpoint.watch_size
+                       : target->GetArchitecture().GetAddressByteSize();
 
     // Now it's time to create the watchpoint.
     uint32_t watch_type = m_option_watchpoint.watch_type;

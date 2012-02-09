@@ -61,6 +61,10 @@ class WatchpointSetErrorTestCase(TestBase):
         self.expect("watchpoint set expression -w write --", error=True,
             startstr = 'error: required argument missing; specify an expression to evaulate into the addres to watch for')
 
+        # Check for missing option terminator '--'.
+        self.expect("watchpoint set expression -w write -x 1 g_char_ptr", error=True,
+            startstr = 'error: did you forget to enter the option terminator string "--"?')
+
         # Wrong size parameter is an error.
         self.expect("watchpoint set variable -x -128", error=True,
             substrs = ['invalid enumeration value'])
