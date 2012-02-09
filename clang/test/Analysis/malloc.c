@@ -240,6 +240,14 @@ void mallocFreeUse_params() {
   myfooint(*p); //expected-warning{{Use dynamically allocated memory after it is freed}}
 }
 
+void mallocFailedOrNot() {
+  int *p = malloc(12);
+  if (!p)
+    free(p);
+  else
+    free(p);
+}
+
 int *Gl;
 struct GlStTy {
   int *x;
