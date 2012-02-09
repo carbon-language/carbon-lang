@@ -651,12 +651,13 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   RegionStateTy::Factory &F = state->get_context<RegionState>();
 
   bool generateReport = false;
-  
+  llvm::SmallVector<SymbolRef, 2> Errors;
   for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
     if (SymReaper.isDead(I->first)) {
-      if (I->second.isAllocated())
+      if (I->second.isAllocated()) {
         generateReport = true;
-
+        Errors.push_back(I->first);
+      }
       // Remove the dead symbol from the map.
       RS = F.remove(RS, I->first);
 
@@ -665,17 +666,16 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   
   ExplodedNode *N = C.addTransition(state->set<RegionState>(RS));
 
-  // FIXME: This does not handle when we have multiple leaks at a single
-  // place.
-  // TODO: We don't have symbol info in the diagnostics here!
   if (N && generateReport) {
     if (!BT_Leak)
       BT_Leak.reset(new BuiltinBug("Memory leak",
-              "Allocated memory never released. Potential memory leak."));
-    // FIXME: where it is allocated.
-    BugReport *R = new BugReport(*BT_Leak, BT_Leak->getDescription(), N);
-    //Report->addVisitor(new MallocBugVisitor(Sym));
-    C.EmitReport(R);
+          "Allocated memory never released. Potential memory leak."));
+    for (llvm::SmallVector<SymbolRef, 2>::iterator
+          I = Errors.begin(), E = Errors.end(); I != E; ++I) {
+      BugReport *R = new BugReport(*BT_Leak, BT_Leak->getDescription(), N);
+      R->addVisitor(new MallocBugVisitor(*I));
+      C.EmitReport(R);
+    }
   }
 }
 
