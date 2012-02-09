@@ -154,7 +154,7 @@ MachineSchedOpt("misched",
 //===----------------------------------------------------------------------===//
 
 namespace {
-/// MachineScheduler is an implementation of ScheduleDAGInstrs that schedules
+/// ScheduleTopDownLive is an implementation of ScheduleDAGInstrs that schedules
 /// machine instructions while updating LiveIntervals.
 class ScheduleTopDownLive : public ScheduleDAGInstrs {
 protected:
