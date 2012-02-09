@@ -854,9 +854,21 @@ static void handleMoveECs(LiveIntervals& lis, SlotIndex origIdx,
   }
 }
 
+static void moveKillFlags(unsigned reg, SlotIndex oldIdx, SlotIndex newIdx,
+                          LiveIntervals& lis,
+                          const TargetRegisterInfo& tri) {
+  MachineInstr* oldKillMI = lis.getInstructionFromIndex(oldIdx);
+  MachineInstr* newKillMI = lis.getInstructionFromIndex(newIdx);
+  assert(oldKillMI->killsRegister(reg) && "Old 'kill' instr isn't a kill.");
+  assert(!newKillMI->killsRegister(reg) && "New kill instr is already a kill.");
+  oldKillMI->clearRegisterKills(reg, &tri);
+  newKillMI->addRegisterKilled(reg, &tri);
+}
+
 template <typename UseSetT>
 static void handleMoveUses(const MachineBasicBlock *mbb,
                            const MachineRegisterInfo& mri,
+                           const TargetRegisterInfo& tri,
                            const BitVector& reservedRegs, LiveIntervals &lis,
                            SlotIndex origIdx, SlotIndex miIdx,
                            const UseSetT &uses) {
@@ -887,10 +899,15 @@ static void handleMoveUses(const MachineBasicBlock *mbb,
           const MachineOperand& mop = useI.getOperand();
           SlotIndex instSlot = lis.getSlotIndexes()->getInstructionIndex(mopI);
           SlotIndex opSlot = instSlot.getRegSlot(mop.isEarlyClobber());
-          if (opSlot >= lastUseInRange && opSlot < origIdx) {
+          if (opSlot > lastUseInRange && opSlot < origIdx)
             lastUseInRange = opSlot;
-          }
         }
+
+        // If we found a new instr endpoint update the kill flags.
+        if (lastUseInRange != miIdx.getRegSlot())
+          moveKillFlags(use, miIdx, lastUseInRange, lis, tri);
+
+        // Fix up the range end.
         lr->end = lastUseInRange;
       }
     } else {
@@ -902,6 +919,7 @@ static void handleMoveUses(const MachineBasicBlock *mbb,
       } else {
         bool liveOut = lr->end >= lis.getSlotIndexes()->getMBBEndIdx(mbb);
         if (!liveOut && miIdx.getRegSlot() > lr->end) {
+          moveKillFlags(use, lr->end, miIdx, lis, tri);
           lr->end = miIdx.getRegSlot();
         }
       }
@@ -923,8 +941,7 @@ void LiveIntervals::moveInstr(MachineBasicBlock::iterator insertPt,
 
   // Move the machine instr and obtain its new index.
   indexes_->removeMachineInstrFromMaps(mi);
-  mbb->remove(mi);
-  mbb->insert(insertPt, mi);
+  mbb->splice(insertPt, mbb, mi);
   SlotIndex miIdx = indexes_->insertMachineInstrInMaps(mi);
 
   // Pick the direction.
@@ -961,7 +978,7 @@ void LiveIntervals::moveInstr(MachineBasicBlock::iterator insertPt,
   BitVector reservedRegs(tri_->getReservedRegs(*mbb->getParent()));
 
   if (movingUp) {
-    handleMoveUses(mbb, *mri_, reservedRegs, *this, origIdx, miIdx, uses);
+    handleMoveUses(mbb, *mri_, *tri_, reservedRegs, *this, origIdx, miIdx, uses);
     handleMoveECs(*this, origIdx, miIdx, ecs);
     handleMoveDeadDefs(*this, origIdx, miIdx, deadDefs);
     handleMoveDefs(*this, origIdx, miIdx, defs);
@@ -969,7 +986,7 @@ void LiveIntervals::moveInstr(MachineBasicBlock::iterator insertPt,
     handleMoveDefs(*this, origIdx, miIdx, defs);
     handleMoveDeadDefs(*this, origIdx, miIdx, deadDefs);
     handleMoveECs(*this, origIdx, miIdx, ecs);
-    handleMoveUses(mbb, *mri_, reservedRegs, *this, origIdx, miIdx, uses);
+    handleMoveUses(mbb, *mri_, *tri_, reservedRegs, *this, origIdx, miIdx, uses);
   }
 }
 
