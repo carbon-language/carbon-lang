@@ -18,10 +18,19 @@ extern int x;
 void *g = &x;
 int *h = &x;
 
+struct union_crash
+{
+    union
+    {
+    };
+};
+
 int test() {
-int a[10];
-int b[10] = a; // expected-error {{array initializer must be an initializer list}}
-int +; // expected-error {{expected identifier or '('}}
+  int a[10];
+  int b[10] = a; // expected-error {{array initializer must be an initializer list}}
+  int +; // expected-error {{expected identifier or '('}}
+
+  struct union_crash u = { .d = 1 }; // expected-error {{field designator 'd' does not refer to any field in type 'struct union_crash'}}
 }
 
 
