@@ -9534,6 +9534,90 @@ static bool shouldAddConstForScope(CapturingScopeInfo *CSI, VarDecl *VD) {
   return false;
 }
 
+/// \brief Capture the given variable in the given lambda expression.
+static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
+                                  VarDecl *Var, QualType Type, 
+                                  SourceLocation Loc, bool ByRef) {
+  CXXRecordDecl *Lambda = LSI->Lambda;
+  QualType FieldType;
+  if (ByRef) {
+    // C++11 [expr.prim.lambda]p15:
+    //   An entity is captured by reference if it is implicitly or
+    //   explicitly captured but not captured by copy. It is
+    //   unspecified whether additional unnamed non-static data
+    //   members are declared in the closure type for entities
+    //   captured by reference.
+    FieldType = S.Context.getLValueReferenceType(Type.getNonReferenceType());
+  } else {
+    // C++11 [expr.prim.lambda]p14:
+    //   For each entity captured by copy, an unnamed non-static
+    //   data member is declared in the closure type. The
+    //   declaration order of these members is unspecified. The type
+    //   of such a data member is the type of the corresponding
+    //   captured entity if the entity is not a reference to an
+    //   object, or the referenced type otherwise. [Note: If the
+    //   captured entity is a reference to a function, the
+    //   corresponding data member is also a reference to a
+    //   function. - end note ]
+    if (const ReferenceType *RefType = Type->getAs<ReferenceType>()) {
+      if (!RefType->getPointeeType()->isFunctionType())
+        FieldType = RefType->getPointeeType();
+      else
+        FieldType = Type;
+    } else {
+      FieldType = Type;
+    }
+  }
+
+  // Build the non-static data member.
+  FieldDecl *Field
+    = FieldDecl::Create(S.Context, Lambda, Loc, Loc, 0, FieldType,
+                        S.Context.getTrivialTypeSourceInfo(FieldType, Loc),
+                        0, false, false);
+  Field->setImplicit(true);
+  Field->setAccess(AS_private);
+
+  // C++11 [expr.prim.lambda]p21:
+  //   When the lambda-expression is evaluated, the entities that
+  //   are captured by copy are used to direct-initialize each
+  //   corresponding non-static data member of the resulting closure
+  //   object. (For array members, the array elements are
+  //   direct-initialized in increasing subscript order.) These
+  //   initializations are performed in the (unspecified) order in
+  //   which the non-static data members are declared.
+  //
+  // FIXME: Introduce an initialization entity for lambda captures.
+  // FIXME: Totally broken for arrays.
+      
+  // Introduce a new evaluation context for the initialization, so that
+  // temporaries introduced as part of the capture
+  S.PushExpressionEvaluationContext(Sema::PotentiallyEvaluated);
+
+  Expr *Ref = new (S.Context) DeclRefExpr(Var, Type.getNonReferenceType(),
+                                          VK_LValue, Loc);
+  InitializedEntity InitEntity
+    = InitializedEntity::InitializeMember(Field, /*Parent=*/0);
+  InitializationKind InitKind
+    = InitializationKind::CreateDirect(Loc, Loc, Loc);
+  InitializationSequence Init(S, InitEntity, InitKind, &Ref, 1);
+  ExprResult Result(true);
+  if (!Init.Diagnose(S, InitEntity, InitKind, &Ref, 1))
+    Result = Init.Perform(S, InitEntity, InitKind, 
+                          MultiExprArg(S, &Ref, 1));
+
+  // If this initialization requires any cleanups (e.g., due to a
+  // default argument to a copy constructor), note that for the
+  // lambda.
+  if (S.ExprNeedsCleanups)
+    LSI->ExprNeedsCleanups = true;
+
+  // Exit the expression evaluation context used for the capture.
+  S.CleanupVarDeclMarking();
+  S.DiscardCleanupsInEvaluationContext();
+  S.PopExpressionEvaluationContext();
+  return Result;
+}                           
+
 // Check if the variable needs to be captured; if so, try to perform
 // the capture.
 // FIXME: Add support for explicit captures.
@@ -9652,88 +9736,10 @@ void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc,
     Expr *copyExpr = 0;
     const RecordType *rtype;
     if (isLambda) {
-      LambdaScopeInfo *LSI = cast<LambdaScopeInfo>(CSI);
-      CXXRecordDecl *Lambda = LSI->Lambda;
-      QualType FieldType;
-      if (byRef) {
-        // C++11 [expr.prim.lambda]p15:
-        //   An entity is captured by reference if it is implicitly or
-        //   explicitly captured but not captured by copy. It is
-        //   unspecified whether additional unnamed non-static data
-        //   members are declared in the closure type for entities
-        //   captured by reference.
-        FieldType = Context.getLValueReferenceType(type.getNonReferenceType());
-      } else {
-        // C++11 [expr.prim.lambda]p14:
-        // 
-        //   For each entity captured by copy, an unnamed non-static
-        //   data member is declared in the closure type. The
-        //   declaration order of these members is unspecified. The type
-        //   of such a data member is the type of the corresponding
-        //   captured entity if the entity is not a reference to an
-        //   object, or the referenced type otherwise. [Note: If the
-        //   captured entity is a reference to a function, the
-        //   corresponding data member is also a reference to a
-        //   function. - end note ]
-        if (const ReferenceType *RefType
-                                      = type->getAs<ReferenceType>()) {
-          if (!RefType->getPointeeType()->isFunctionType())
-            FieldType = RefType->getPointeeType();
-          else
-            FieldType = type;
-        } else {
-          FieldType = type;
-        }
-      }
-
-      // Build the non-static data member.
-      FieldDecl *Field
-        = FieldDecl::Create(Context, Lambda, loc, loc, 0, FieldType,
-                            Context.getTrivialTypeSourceInfo(FieldType, loc),
-                            0, false, false);
-      Field->setImplicit(true);
-      Field->setAccess(AS_private);
-
-      // C++11 [expr.prim.lambda]p21:
-      //   When the lambda-expression is evaluated, the entities that
-      //   are captured by copy are used to direct-initialize each
-      //   corresponding non-static data member of the resulting closure
-      //   object. (For array members, the array elements are
-      //   direct-initialized in increasing subscript order.) These
-      //   initializations are performed in the (unspecified) order in
-      //   which the non-static data members are declared.
-      //
-      // FIXME: Introduce an initialization entity for lambda captures.
-      // FIXME: Totally broken for arrays.
-      
-      // Introduce a new evaluation context for the initialization, so that
-      // temporaries introduced as part of the capture
-      PushExpressionEvaluationContext(PotentiallyEvaluated);
-
-      Expr *Ref = new (Context) DeclRefExpr(var, type.getNonReferenceType(),
-                                            VK_LValue, loc);
-      InitializedEntity InitEntity
-        = InitializedEntity::InitializeMember(Field, /*Parent=*/0);
-      InitializationKind InitKind
-        = InitializationKind::CreateDirect(loc, loc, loc);
-      InitializationSequence Init(*this, InitEntity, InitKind, &Ref, 1);
-      if (!Init.Diagnose(*this, InitEntity, InitKind, &Ref, 1)) {
-        ExprResult Result = Init.Perform(*this, InitEntity, InitKind, 
-                                         MultiExprArg(*this, &Ref, 1));
-        if (!Result.isInvalid())
-          copyExpr = Result.take();
-      }
-
-      // If this initialization requires any cleanups (e.g., due to a
-      // default argument to a copy constructor), note that for the
-      // lambda.
-      if (ExprNeedsCleanups)
-        LSI->ExprNeedsCleanups = true;
-
-      // Exit the expression evaluation context used for the capture.
-      CleanupVarDeclMarking();
-      DiscardCleanupsInEvaluationContext();
-      PopExpressionEvaluationContext();
+      ExprResult Result = captureInLambda(*this, cast<LambdaScopeInfo>(CSI), 
+                                          var, type, loc, byRef);
+      if (!Result.isInvalid())
+        copyExpr = Result.take();
     } else if (!byRef && getLangOptions().CPlusPlus &&
         (rtype = type.getNonReferenceType()->getAs<RecordType>())) {
       // The capture logic needs the destructor, so make sure we mark it.
