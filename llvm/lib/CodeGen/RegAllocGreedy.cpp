@@ -175,6 +175,19 @@ class RAGreedy : public MachineFunctionPass,
     }
   };
 
+  // Register mask interference. The current VirtReg is checked for register
+  // mask interference on entry to selectOrSplit().  If there is no
+  // interference, UsableRegs is left empty.  If there is interference,
+  // UsableRegs has a bit mask of registers that can be used without register
+  // mask interference.
+  BitVector UsableRegs;
+
+  /// clobberedByRegMask - Returns true if PhysReg is not directly usable
+  /// because of register mask clobbers.
+  bool clobberedByRegMask(unsigned PhysReg) const {
+    return !UsableRegs.empty() && !UsableRegs.test(PhysReg);
+  }
+
   // splitting state.
   std::auto_ptr<SplitAnalysis> SA;
   std::auto_ptr<SplitEditor> SE;
@@ -450,9 +463,12 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
                              SmallVectorImpl<LiveInterval*> &NewVRegs) {
   Order.rewind();
   unsigned PhysReg;
-  while ((PhysReg = Order.next()))
+  while ((PhysReg = Order.next())) {
+    if (clobberedByRegMask(PhysReg))
+      continue;
     if (!checkPhysRegInterference(VirtReg, PhysReg))
       break;
+  }
   if (!PhysReg || Order.isHint(PhysReg))
     return PhysReg;
 
@@ -461,7 +477,7 @@ unsigned RAGreedy::tryAssign(LiveInterval &VirtReg,
   // If we missed a simple hint, try to cheaply evict interference from the
   // preferred register.
   if (unsigned Hint = MRI->getSimpleHint(VirtReg.reg))
-    if (Order.isHint(Hint)) {
+    if (Order.isHint(Hint) && !clobberedByRegMask(Hint)) {
       DEBUG(dbgs() << "missed hint " << PrintReg(Hint, TRI) << '\n');
       EvictionCost MaxCost(1);
       if (canEvictInterference(VirtReg, Hint, true, MaxCost)) {
@@ -633,6 +649,8 @@ unsigned RAGreedy::tryEvict(LiveInterval &VirtReg,
 
   Order.rewind();
   while (unsigned PhysReg = Order.next()) {
+    if (clobberedByRegMask(PhysReg))
+      continue;
     if (TRI->getCostPerUse(PhysReg) >= CostPerUseLimit)
       continue;
     // The first use of a callee-saved register in a function has cost 1.
@@ -1559,6 +1577,11 @@ unsigned RAGreedy::trySplit(LiveInterval &VirtReg, AllocationOrder &Order,
 
 unsigned RAGreedy::selectOrSplit(LiveInterval &VirtReg,
                                  SmallVectorImpl<LiveInterval*> &NewVRegs) {
+  // Check if VirtReg is live across any calls.
+  UsableRegs.clear();
+  if (LIS->checkRegMaskInterference(VirtReg, UsableRegs))
+    DEBUG(dbgs() << "Live across regmasks.\n");
+
   // First try assigning a free register.
   AllocationOrder Order(VirtReg.reg, *VRM, RegClassInfo);
   if (unsigned PhysReg = tryAssign(VirtReg, Order, NewVRegs))
