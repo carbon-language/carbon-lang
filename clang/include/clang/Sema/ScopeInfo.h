@@ -290,15 +290,20 @@ public:
   /// explicit captures.
   unsigned NumExplicitCaptures;
 
+  /// \brief Whether this is a mutable lambda.
   bool Mutable;
   
   /// \brief Whether the (empty) parameter list is explicit.
   bool ExplicitParams;
 
+  /// \brief Whether any of the capture expressions requires cleanups.
+  bool ExprNeedsCleanups;
+
   LambdaScopeInfo(DiagnosticsEngine &Diag, CXXRecordDecl *Lambda,
                   CXXMethodDecl *CallOperator)
     : CapturingScopeInfo(Diag, ImpCap_None), Lambda(Lambda),
-      CallOperator(CallOperator), NumExplicitCaptures(0), Mutable(false)
+      CallOperator(CallOperator), NumExplicitCaptures(0), Mutable(false),
+      ExprNeedsCleanups(false)
   {
     Kind = SK_Lambda;
   }

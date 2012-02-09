@@ -7,12 +7,12 @@ void f() {
     int& x2 = x; // expected-error{{reference to local variable 'x' declared in enclosing function 'f'}}
     int cc = c;
   };
-  []() mutable { // expected-error {{not supported yet}}
+  (void)[]() mutable { // expected-error {{not supported yet}}
     int x = 3; // expected-note{{'x' declared here}}
     struct C {
       int& x2 = x; // expected-error{{reference to local variable 'x' declared in enclosing lambda expression}}
     };
-  }
+  };
   C();
 }
 

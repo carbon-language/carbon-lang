@@ -103,13 +103,11 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   Method->setAccess(AS_public);
   Class->addDecl(Method);
   Method->setLexicalDeclContext(DC); // FIXME: Minor hack.
-  
+
+  // Attributes on the lambda apply to the method.  
   ProcessDeclAttributes(CurScope, Method, ParamInfo);
   
-  // Enter a new evaluation context to insulate the block from any
-  // cleanups from the enclosing full-expression.
-  PushExpressionEvaluationContext(PotentiallyEvaluated);
-  
+  // Introduce the function call operator as the current declaration context.
   PushDeclContext(CurScope, Method);
     
   // Introduce the lambda scope.
@@ -255,6 +253,9 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
 
   // FIXME: Check return type is complete, !isObjCObjectType
   
+  // Enter a new evaluation context to insulate the block from any
+  // cleanups from the enclosing full-expression.
+  PushExpressionEvaluationContext(PotentiallyEvaluated);  
 }
 
 void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope) {
@@ -273,8 +274,6 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
   DiscardCleanupsInEvaluationContext();
   PopExpressionEvaluationContext();
 
-  // FIXME: End-of-lambda checking
-
   // Collect information from the lambda scope.
   llvm::SmallVector<LambdaExpr::Capture, 4> Captures;
   llvm::SmallVector<Expr *, 4> CaptureInits;
@@ -282,11 +281,13 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
   CXXRecordDecl *Class;
   SourceRange IntroducerRange;
   bool ExplicitParams;
+  bool LambdaExprNeedsCleanups;
   {
     LambdaScopeInfo *LSI = getCurLambda();
     Class = LSI->Lambda;
     IntroducerRange = LSI->IntroducerRange;
     ExplicitParams = LSI->ExplicitParams;
+    LambdaExprNeedsCleanups = LSI->ExprNeedsCleanups;
 
     // Translate captures.
     for (unsigned I = 0, N = LSI->Captures.size(); I != N; ++I) {
@@ -331,16 +332,25 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
       break;
     }
 
+    // Finalize the lambda class.
+    SmallVector<Decl*, 4> Fields(Class->field_begin(), Class->field_end());
+    ActOnFields(0, Class->getLocation(), Class, Fields, 
+                SourceLocation(), SourceLocation(), 0);
+    CheckCompletedCXXClass(Class);
+
     // C++ [expr.prim.lambda]p7:
     //   The lambda-expression's compound-statement yields the
     //   function-body (8.4) of the function call operator [...].
     ActOnFinishFunctionBody(LSI->CallOperator, Body, /*IsInstantation=*/false);
   }
 
+  if (LambdaExprNeedsCleanups)
+    ExprNeedsCleanups = true;
+
   Expr *Lambda = LambdaExpr::Create(Context, Class, IntroducerRange, 
                                     CaptureDefault, Captures, ExplicitParams, 
                                     CaptureInits, Body->getLocEnd());
-  (void)Lambda;
   Diag(StartLoc, diag::err_lambda_unsupported);
-  return ExprError();
+
+  return MaybeBindToTemporary(Lambda);
 }

@@ -9652,7 +9652,8 @@ void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc,
     Expr *copyExpr = 0;
     const RecordType *rtype;
     if (isLambda) {
-      CXXRecordDecl *Lambda = cast<LambdaScopeInfo>(CSI)->Lambda;
+      LambdaScopeInfo *LSI = cast<LambdaScopeInfo>(CSI);
+      CXXRecordDecl *Lambda = LSI->Lambda;
       QualType FieldType;
       if (byRef) {
         // C++11 [expr.prim.lambda]p15:
@@ -9704,6 +9705,11 @@ void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc,
       //
       // FIXME: Introduce an initialization entity for lambda captures.
       // FIXME: Totally broken for arrays.
+      
+      // Introduce a new evaluation context for the initialization, so that
+      // temporaries introduced as part of the capture
+      PushExpressionEvaluationContext(PotentiallyEvaluated);
+
       Expr *Ref = new (Context) DeclRefExpr(var, type.getNonReferenceType(),
                                             VK_LValue, loc);
       InitializedEntity InitEntity
@@ -9717,6 +9723,17 @@ void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc,
         if (!Result.isInvalid())
           copyExpr = Result.take();
       }
+
+      // If this initialization requires any cleanups (e.g., due to a
+      // default argument to a copy constructor), note that for the
+      // lambda.
+      if (ExprNeedsCleanups)
+        LSI->ExprNeedsCleanups = true;
+
+      // Exit the expression evaluation context used for the capture.
+      CleanupVarDeclMarking();
+      DiscardCleanupsInEvaluationContext();
+      PopExpressionEvaluationContext();
     } else if (!byRef && getLangOptions().CPlusPlus &&
         (rtype = type.getNonReferenceType()->getAs<RecordType>())) {
       // The capture logic needs the destructor, so make sure we mark it.

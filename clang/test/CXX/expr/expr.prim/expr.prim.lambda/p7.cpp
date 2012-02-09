@@ -2,7 +2,7 @@
 
 // Check that analysis-based warnings work in lambda bodies.
 void analysis_based_warnings() {
-  []() -> int { }; // expected-warning{{control reaches end of non-void function}} \
+  (void)[]() -> int { }; // expected-warning{{control reaches end of non-void function}} \
   // expected-error{{lambda expressions are not supported yet}}
 }
 
@@ -12,32 +12,32 @@ int &check_const_int(int&);
 float &check_const_int(const int&);
 
 void test_capture_constness(int i, const int ic) {
-  [i,ic] ()->void { // expected-error{{lambda expressions are not supported yet}}
+  (void)[i,ic] ()->void { // expected-error{{lambda expressions are not supported yet}}
     float &fr1 = check_const_int(i);
     float &fr2 = check_const_int(ic);
   }; 
 
-  [=] ()->void { // expected-error{{lambda expressions are not supported yet}}
+  (void)[=] ()->void { // expected-error{{lambda expressions are not supported yet}}
     float &fr1 = check_const_int(i);
     float &fr2 = check_const_int(ic);
   }; 
 
-  [i,ic] () mutable ->void { // expected-error{{lambda expressions are not supported yet}}
+  (void)[i,ic] () mutable ->void { // expected-error{{lambda expressions are not supported yet}}
     int &ir = check_const_int(i);
     float &fr = check_const_int(ic);
   };
 
-  [=] () mutable ->void { // expected-error{{lambda expressions are not supported yet}}
+  (void)[=] () mutable ->void { // expected-error{{lambda expressions are not supported yet}}
     int &ir = check_const_int(i);
     float &fr = check_const_int(ic);
   };
 
-  [&i,&ic] ()->void { // expected-error{{lambda expressions are not supported yet}}
+  (void)[&i,&ic] ()->void { // expected-error{{lambda expressions are not supported yet}}
     int &ir = check_const_int(i);
     float &fr = check_const_int(ic);
   };
 
-  [&] ()->void { // expected-error{{lambda expressions are not supported yet}}
+  (void)[&] ()->void { // expected-error{{lambda expressions are not supported yet}}
     int &ir = check_const_int(i);
     float &fr = check_const_int(ic);
   };
