@@ -191,11 +191,11 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
 
     // Not a copy.
     SmallVector<unsigned, 2> Defs;
-    bool HasRegMask = false;
+    int RegMaskOpNum = -1;
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (MO.isRegMask())
-        HasRegMask = true;
+        RegMaskOpNum = i;
       if (!MO.isReg())
         continue;
       unsigned Reg = MO.getReg();
@@ -227,9 +227,21 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
     // a large set of registers.  It is possible to use the register mask to
     // prune the available copies, but treat it like a basic block boundary for
     // now.
-    if (HasRegMask) {
-      // FIXME: We could possibly erase some MaybeDeadCopies if their registers
-      // are clobbered by the mask.
+    if (RegMaskOpNum >= 0) {
+      // Erase any MaybeDeadCopies whose destination register is clobbered.
+      const MachineOperand &MaskMO = MI->getOperand(RegMaskOpNum);
+      for (SmallSetVector<MachineInstr*, 8>::iterator
+           DI = MaybeDeadCopies.begin(), DE = MaybeDeadCopies.end();
+           DI != DE; ++DI) {
+        unsigned Reg = (*DI)->getOperand(0).getReg();
+        if (ReservedRegs.test(Reg) || !MaskMO.clobbersPhysReg(Reg))
+          continue;
+        (*DI)->eraseFromParent();
+        Changed = true;
+        ++NumDeletes;
+      }
+
+      // Clear all data structures as if we were beginning a new basic block.
       MaybeDeadCopies.clear();
       AvailCopyMap.clear();
       CopyMap.clear();
