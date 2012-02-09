@@ -3065,9 +3065,10 @@ llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty) const {
   if (Ty->isComplexType())
     return CGT.ConvertType(Ty);
 
-  const RecordType *RT = Ty->getAsStructureType();
+  const RecordType *RT = Ty->getAs<RecordType>();
 
-  if (!RT)
+  // Unions are passed in integer registers.
+  if (!RT || !RT->isStructureOrClassType())
     return 0;
 
   const RecordDecl *RD = RT->getDecl();
@@ -3080,6 +3081,8 @@ llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty) const {
   llvm::IntegerType *I64 = llvm::IntegerType::get(getVMContext(), 64);
   SmallVector<llvm::Type*, 8> ArgList;
 
+  // Iterate over fields in the struct/class and check if there are any aligned
+  // double fields.
   for (RecordDecl::field_iterator i = RD->field_begin(), e = RD->field_end();
        i != e; ++i, ++idx) {
     const QualType Ty = (*i)->getType();
@@ -3101,7 +3104,7 @@ llvm::Type* MipsABIInfo::HandleAggregates(QualType Ty) const {
     LastOffset = Offset + 64;
   }
 
-  // This structure doesn't have an aligned double field.
+  // This struct/class doesn't have an aligned double field.
   if (!LastOffset)
     return 0;
 
