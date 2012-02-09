@@ -208,28 +208,40 @@ static ModRMDecisionType getDecisionType(ModRMDecision &decision)
 {
   bool satisfiesOneEntry = true;
   bool satisfiesSplitRM = true;
-  
+  bool satisfiesSplitReg = true;
+
   uint16_t index;
-  
+
   for (index = 0; index < 256; ++index) {
     if (decision.instructionIDs[index] != decision.instructionIDs[0])
       satisfiesOneEntry = false;
-    
+
     if (((index & 0xc0) == 0xc0) &&
        (decision.instructionIDs[index] != decision.instructionIDs[0xc0]))
       satisfiesSplitRM = false;
-    
+
     if (((index & 0xc0) != 0xc0) &&
        (decision.instructionIDs[index] != decision.instructionIDs[0x00]))
       satisfiesSplitRM = false;
+
+    if (((index & 0xc0) == 0xc0) &&
+       (decision.instructionIDs[index] != decision.instructionIDs[index&0xf8]))
+      satisfiesSplitReg = false;
+
+    if (((index & 0xc0) != 0xc0) &&
+       (decision.instructionIDs[index] != decision.instructionIDs[index&0x38]))
+      satisfiesSplitReg = false;
   }
-  
+
   if (satisfiesOneEntry)
     return MODRM_ONEENTRY;
-  
+
   if (satisfiesSplitRM)
     return MODRM_SPLITRM;
-  
+
+  if (satisfiesSplitReg)
+    return MODRM_SPLITREG;
+
   return MODRM_FULL;
 }
 
@@ -322,6 +334,12 @@ void DisassemblerTables::emitModRMDecision(raw_ostream &o1,
       emitOneID(o1, i1, decision.instructionIDs[0x00], true); // mod = 0b00
       emitOneID(o1, i1, decision.instructionIDs[0xc0], true); // mod = 0b11
       break;
+    case MODRM_SPLITREG:
+      for (index = 0; index < 64; index += 8)
+        emitOneID(o1, i1, decision.instructionIDs[index], true);
+      for (index = 0xc0; index < 256; index += 8)
+        emitOneID(o1, i1, decision.instructionIDs[index], true);
+      break;
     case MODRM_FULL:
       for (index = 0; index < 256; ++index)
         emitOneID(o1, i1, decision.instructionIDs[index], true);
@@ -347,6 +365,9 @@ void DisassemblerTables::emitModRMDecision(raw_ostream &o1,
       break;
     case MODRM_SPLITRM:
       sEntryNumber += 2;
+      break;
+    case MODRM_SPLITREG:
+      sEntryNumber += 16;
       break;
     case MODRM_FULL:
       sEntryNumber += 256;
