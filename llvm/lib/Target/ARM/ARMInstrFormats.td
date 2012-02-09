@@ -290,6 +290,14 @@ class InstTemplate<AddrMode am, int sz, IndexMode im,
 
 class Encoding {
   field bits<32> Inst;
+  // Mask of bits that cause an encoding to be UNPREDICTABLE.
+  // If a bit is set, then if the corresponding bit in the
+  // target encoding differs from its value in the "Inst" field,
+  // the instruction is UNPREDICTABLE (SoftFail in abstract parlance).
+  field bits<32> Unpredictable = 0;
+  // SoftFail is the generic name for this field, but we alias it so
+  // as to make it more obvious what it means in ARM-land.
+  field bits<32> SoftFail = Unpredictable;
 }
 
 class InstARM<AddrMode am, int sz, IndexMode im,

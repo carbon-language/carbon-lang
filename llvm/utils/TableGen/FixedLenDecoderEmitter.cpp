@@ -17,6 +17,7 @@
 #include "FixedLenDecoderEmitter.h"
 #include "CodeGenTarget.h"
 #include "llvm/TableGen/Record.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
@@ -285,8 +286,19 @@ protected:
   void insnWithID(insn_t &Insn, unsigned Opcode) const {
     BitsInit &Bits = getBitsField(*AllInstructions[Opcode]->TheDef, "Inst");
 
-    for (unsigned i = 0; i < BitWidth; ++i)
-      Insn.push_back(bitFromBits(Bits, i));
+    // We may have a SoftFail bitmask, which specifies a mask where an encoding
+    // may differ from the value in "Inst" and yet still be valid, but the
+    // disassembler should return SoftFail instead of Success.
+    //
+    // This is used for marking UNPREDICTABLE instructions in the ARM world.
+    BitsInit *SFBits = AllInstructions[Opcode]->TheDef->getValueAsBitsInit("SoftFail");
+
+    for (unsigned i = 0; i < BitWidth; ++i) {
+      if (SFBits && bitFromBits(*SFBits, i) == BIT_TRUE)
+        Insn.push_back(BIT_UNSET);
+      else
+        Insn.push_back(bitFromBits(Bits, i));
+    }
   }
 
   // Returns the record name.
@@ -333,6 +345,8 @@ protected:
   // Emits code to check the Predicates member of an instruction are true.
   // Returns true if predicate matches were emitted, false otherwise.
   bool emitPredicateMatch(raw_ostream &o, unsigned &Indentation,unsigned Opc);
+
+  void emitSoftFailCheck(raw_ostream &o, unsigned Indentation, unsigned Opc);
 
   // Emits code to decode the singleton.  Return true if we have matched all the
   // well-known bits.
@@ -800,6 +814,64 @@ bool FilterChooser::emitPredicateMatch(raw_ostream &o, unsigned &Indentation,
   return Predicates->getSize() > 0;
 }
 
+void FilterChooser::emitSoftFailCheck(raw_ostream &o, unsigned Indentation, unsigned Opc) {
+  BitsInit *SFBits = AllInstructions[Opc]->TheDef->getValueAsBitsInit("SoftFail");
+  if (!SFBits) return;
+  BitsInit *InstBits = AllInstructions[Opc]->TheDef->getValueAsBitsInit("Inst");
+
+  APInt PositiveMask(BitWidth, 0ULL);
+  APInt NegativeMask(BitWidth, 0ULL);
+  for (unsigned i = 0; i < BitWidth; ++i) {
+    bit_value_t B = bitFromBits(*SFBits, i);
+    bit_value_t IB = bitFromBits(*InstBits, i);
+
+    if (B != BIT_TRUE) continue;
+
+    switch (IB) {
+    case BIT_FALSE:
+      // The bit is meant to be false, so emit a check to see if it is true.
+      PositiveMask.setBit(i);
+      break;
+    case BIT_TRUE:
+      // The bit is meant to be true, so emit a check to see if it is false.
+      NegativeMask.setBit(i);
+      break;
+    default:
+      // The bit is not set; this must be an error!
+      StringRef Name = AllInstructions[Opc]->TheDef->getName();
+      errs() << "SoftFail Conflict: bit SoftFail{" << i << "} in "
+             << Name
+             << " is set but Inst{" << i <<"} is unset!\n"
+             << "  - You can only mark a bit as SoftFail if it is fully defined"
+             << " (1/0 - not '?') in Inst\n";
+      o << "#error SoftFail Conflict, " << Name << "::SoftFail{" << i 
+        << "} set but Inst{" << i << "} undefined!\n";
+    }
+  }
+
+  bool NeedPositiveMask = PositiveMask.getBoolValue();
+  bool NeedNegativeMask = NegativeMask.getBoolValue();
+
+  if (!NeedPositiveMask && !NeedNegativeMask)
+    return;
+
+  std::string PositiveMaskStr = PositiveMask.toString(16, /*signed=*/false);
+  std::string NegativeMaskStr = NegativeMask.toString(16, /*signed=*/false);
+  StringRef BitExt = "";
+  if (BitWidth > 32)
+    BitExt = "ULL";
+
+  o.indent(Indentation) << "if (";
+  if (NeedPositiveMask)
+    o << "insn & 0x" << PositiveMaskStr << BitExt;
+  if (NeedPositiveMask && NeedNegativeMask)
+    o << " || ";
+  if (NeedNegativeMask)
+    o << "~insn & 0x" << NegativeMaskStr << BitExt;
+  o << ")\n";
+  o.indent(Indentation+2) << "S = MCDisassembler::SoftFail;\n";
+}
+
 // Emits code to decode the singleton.  Return true if we have matched all the
 // well-known bits.
 bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
@@ -822,6 +894,7 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
     if (!emitPredicateMatch(o, Indentation, Opc))
       o << "1";
     o << ") {\n";
+    emitSoftFailCheck(o, Indentation+2, Opc);
     o.indent(Indentation) << "  MI.setOpcode(" << Opc << ");\n";
     std::vector<OperandInfo>& InsnOperands = Operands[Opc];
     for (std::vector<OperandInfo>::iterator
@@ -871,6 +944,7 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
     else
       o << ") {\n";
   }
+  emitSoftFailCheck(o, Indentation+2, Opc);
   o.indent(Indentation) << "  MI.setOpcode(" << Opc << ");\n";
   std::vector<OperandInfo>& InsnOperands = Operands[Opc];
   for (std::vector<OperandInfo>::iterator

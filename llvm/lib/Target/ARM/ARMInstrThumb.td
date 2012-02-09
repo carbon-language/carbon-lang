@@ -387,6 +387,7 @@ let isBranch = 1, isTerminator = 1, isBarrier = 1, isIndirectBranch = 1 in {
     bits<4> Rm;
     let Inst{6-3} = Rm;
     let Inst{2-0} = 0b000;
+    let Unpredictable{2-0} = 0b111;
   }
 }
 
