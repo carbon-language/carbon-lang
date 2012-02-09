@@ -2400,6 +2400,8 @@ public:
 
   void EmitCXXThrowExpr(const CXXThrowExpr *E);
 
+  void EmitLambdaExpr(const LambdaExpr *E, AggValueSlot Dest);
+
   RValue EmitAtomicExpr(AtomicExpr *E, llvm::Value *Dest = 0);
 
   //===--------------------------------------------------------------------===//

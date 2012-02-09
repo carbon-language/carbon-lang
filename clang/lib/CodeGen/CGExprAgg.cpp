@@ -142,12 +142,12 @@ public:
   }
   void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E);
   void VisitCXXConstructExpr(const CXXConstructExpr *E);
+  void VisitLambdaExpr(LambdaExpr *E);
   void VisitExprWithCleanups(ExprWithCleanups *E);
   void VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E);
   void VisitCXXTypeidExpr(CXXTypeidExpr *E) { EmitAggLoadOfLValue(E); }
   void VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E);
   void VisitOpaqueValueExpr(OpaqueValueExpr *E);
-  void VisitLambdaExpr(LambdaExpr *E) { EmitAggLoadOfLValue(E); }
 
   void VisitPseudoObjectExpr(PseudoObjectExpr *E) {
     if (E->isGLValue()) {
@@ -537,6 +537,12 @@ void
 AggExprEmitter::VisitCXXConstructExpr(const CXXConstructExpr *E) {
   AggValueSlot Slot = EnsureSlot(E->getType());
   CGF.EmitCXXConstructExpr(E, Slot);
+}
+
+void
+AggExprEmitter::VisitLambdaExpr(LambdaExpr *E) {
+  AggValueSlot Slot = EnsureSlot(E->getType());
+  CGF.EmitLambdaExpr(E, Slot);
 }
 
 void AggExprEmitter::VisitExprWithCleanups(ExprWithCleanups *E) {
