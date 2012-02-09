@@ -2,6 +2,7 @@
 
 %0 = type { i32, void ()* }
 %struct.A = type { i8 }
+%struct.B = type { }
 
 @a = global %struct.A zeroinitializer, align 1
 @__dso_handle = external global i8*
@@ -15,13 +16,14 @@ define internal void @__cxx_global_var_init() nounwind section "__TEXT,__StaticI
 }
 
 define linkonce_odr void @_ZN1AD1Ev(%struct.A* %this) nounwind align 2 {
-  call void @_ZN1AD2Ev(%struct.A* %this)
+  %t = bitcast %struct.A* %this to %struct.B*
+  call void @_ZN1BD1Ev(%struct.B* %t)
   ret void
 }
 
 declare i32 @__cxa_atexit(void (i8*)*, i8*, i8*)
 
-define linkonce_odr void @_ZN1AD2Ev(%struct.A* %this) nounwind align 2 {
+define linkonce_odr void @_ZN1BD1Ev(%struct.B* %this) nounwind align 2 {
   ret void
 }
 
