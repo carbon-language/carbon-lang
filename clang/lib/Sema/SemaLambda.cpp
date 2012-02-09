@@ -29,7 +29,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   // Start constructing the lambda class.
   CXXRecordDecl *Class = CXXRecordDecl::Create(Context, TTK_Class, DC,
                                                Intro.Range.getBegin(),
-                                               /*IdLoc=*/SourceLocation(),
+                                               /*IdLoc=*/Intro.Range.getBegin(),
                                                /*Id=*/0);
   Class->startDefinition();
   Class->setLambda(true);

@@ -3632,7 +3632,8 @@ void Sema::CheckCompletedCXXClass(CXXRecordDecl *Record) {
   // complain about any non-static data members of reference or const scalar
   // type, since they will never get initializers.
   if (!Record->isInvalidDecl() && !Record->isDependentType() &&
-      !Record->isAggregate() && !Record->hasUserDeclaredConstructor()) {
+      !Record->isAggregate() && !Record->hasUserDeclaredConstructor() &&
+      !Record->isLambda()) {
     bool Complained = false;
     for (RecordDecl::field_iterator F = Record->field_begin(), 
                                  FEnd = Record->field_end();
