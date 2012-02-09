@@ -29,3 +29,20 @@ void capture_with_default_args(CopyCtorDefault cct) {
 }
 
 // FIXME: arrays!
+
+// Check for the expected non-static data members.
+
+struct ExpectedLayout {
+  char a;
+  short b;
+};
+
+template<typename T> void capture(const T&);
+
+void test_layout(char a, short b) {
+  auto x = [=] () -> void { // expected-error{{lambda expressions are not supported yet}}
+    capture(a);
+    capture(b);
+  };
+  static_assert(sizeof(x) == sizeof(ExpectedLayout), "Layout mismatch!");
+}

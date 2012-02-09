@@ -9576,6 +9576,7 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
                         0, false, false);
   Field->setImplicit(true);
   Field->setAccess(AS_private);
+  Lambda->addDecl(Field);
 
   // C++11 [expr.prim.lambda]p21:
   //   When the lambda-expression is evaluated, the entities that
