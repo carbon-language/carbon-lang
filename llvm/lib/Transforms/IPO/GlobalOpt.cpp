@@ -2753,8 +2753,8 @@ static Function *FindCXAAtExit(Module &M) {
 /// destructor and can therefore be eliminated.
 /// Note that we assume that other optimization passes have already simplified
 /// the code so we only look for a function with a single basic block, where
-/// the only allowed instructions side-effect free, 'ret' or 'call' to empty
-/// C++ dtor.
+/// the only allowed instructions are 'ret', 'call' to an empty C++ dtor and
+/// other side-effect free instructions.
 static bool cxxDtorIsEmpty(const Function &Fn,
                            SmallPtrSet<const Function *, 8> &CalledFunctions) {
   // FIXME: We could eliminate C++ destructors if they're readonly/readnone and
