@@ -128,7 +128,7 @@
 # define INTERCEPT_FUNCTION(func) INTERCEPT_FUNCTION_MAC(func)
 #else  // defined(_WIN32)
   // FIXME: deal with interception on Win.
-# define INTERCEPT_FUNCTON(func) true
+# define INTERCEPT_FUNCTION(func) true
 #endif
 
 #undef INCLUDED_FROM_INTERCEPTION_LIB
