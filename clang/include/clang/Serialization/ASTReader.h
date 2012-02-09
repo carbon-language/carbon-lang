@@ -639,6 +639,12 @@ private:
   /// \brief Number of Decl/types that are currently deserializing.
   unsigned NumCurrentElementsDeserializing;
 
+  /// \brief Set true while we are in the process of passing deserialized
+  /// "interesting" decls to consumer inside FinishedDeserializing().
+  /// This is used as a guard to avoid recursively repeating the process of
+  /// passing decls to consumer.
+  bool PassingDeclsToConsumer;
+
   /// Number of CXX base specifiers currently loaded
   unsigned NumCXXBaseSpecifiersLoaded;
 

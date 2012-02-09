@@ -27,6 +27,7 @@
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLocVisitor.h"
+#include "clang/Analysis/Support/SaveAndRestore.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"
@@ -6246,33 +6247,27 @@ void ASTReader::FinishedDeserializing() {
   assert(NumCurrentElementsDeserializing &&
          "FinishedDeserializing not paired with StartedDeserializing");
   if (NumCurrentElementsDeserializing == 1) {
+    // We decrease NumCurrentElementsDeserializing only after pending actions
+    // are finished, to avoid recursively re-calling finishPendingActions().
+    finishPendingActions();
+  }
+  --NumCurrentElementsDeserializing;
 
-    while (Consumer && !InterestingDecls.empty()) {
-      finishPendingActions();
+  if (NumCurrentElementsDeserializing == 0 &&
+      Consumer && !PassingDeclsToConsumer) {
+    // Guard variable to avoid recursively redoing the process of passing
+    // decls to consumer.
+    SaveAndRestore<bool> GuardPassingDeclsToConsumer(PassingDeclsToConsumer,
+                                                     true);
 
+    while (!InterestingDecls.empty()) {
       // We are not in recursive loading, so it's safe to pass the "interesting"
       // decls to the consumer.
       Decl *D = InterestingDecls.front();
       InterestingDecls.pop_front();
-
-      // Fully load the interesting decls, including deserializing their
-      // bodies, so that any other declarations that get referenced in the
-      // body will be fully deserialized by the time we pass them to the
-      // consumer.
-      if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
-        if (FD->doesThisDeclarationHaveABody()) {
-          FD->getBody();
-          finishPendingActions();
-        }
-      }
-
       PassInterestingDeclToConsumer(D);
     }
-
-    finishPendingActions();
-    PendingDeclChainsKnown.clear();
   }
-  --NumCurrentElementsDeserializing;
 }
 
 ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
@@ -6293,6 +6288,7 @@ ASTReader::ASTReader(Preprocessor &PP, ASTContext &Context,
     NumLexicalDeclContextsRead(0), TotalLexicalDeclContexts(0), 
     NumVisibleDeclContextsRead(0), TotalVisibleDeclContexts(0),
     TotalModulesSizeInBits(0), NumCurrentElementsDeserializing(0),
+    PassingDeclsToConsumer(false),
     NumCXXBaseSpecifiersLoaded(0)
 {
   SourceMgr.setExternalSLocEntrySource(this);
