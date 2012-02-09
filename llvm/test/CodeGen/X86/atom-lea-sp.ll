@@ -1,5 +1,5 @@
-; RUN: llc < %s -mcpu=atom -march=x86  | FileCheck -check-prefix=atom %s
-; RUN: llc < %s -mcpu=core2 -march=x86 | FileCheck %s
+; RUN: llc < %s -mcpu=atom -mtriple=i686-linux  | FileCheck -check-prefix=atom %s
+; RUN: llc < %s -mcpu=core2 -mtriple=i686-linux | FileCheck %s
 
 declare void @use_arr(i8*)
 declare void @many_params(i32, i32, i32, i32, i32, i32)
