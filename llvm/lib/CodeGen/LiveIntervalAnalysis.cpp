@@ -940,9 +940,6 @@ void LiveIntervals::moveInstr(MachineBasicBlock::iterator insertPt,
     if (!mop.isReg() || mop.getReg() == 0)
       continue;
     unsigned reg = mop.getReg();
-    if (mop.isUse()) {
-      assert(mop.readsReg());
-    }
 
     if (mop.readsReg() && !ecs.count(reg)) {
       uses.insert(reg);
