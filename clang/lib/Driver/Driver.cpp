@@ -65,7 +65,7 @@ Driver::Driver(StringRef ClangExecutable,
     CCCUsePCH(true), SuppressMissingInputWarning(false) {
   if (IsProduction) {
     // In a "production" build, only use clang on architectures we expect to
-    // work, and don't use clang C++.
+    // work.
     //
     // During development its more convenient to always have the driver use
     // clang, but we don't want users to be confused when things don't work, or
