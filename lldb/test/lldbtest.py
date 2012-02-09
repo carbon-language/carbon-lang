@@ -240,6 +240,23 @@ def pointer_size():
     a_pointer = ctypes.c_void_p(0xffff)
     return 8 * ctypes.sizeof(a_pointer)
 
+def is_exe(fpath):
+    """Returns true if fpath is an executable."""
+    return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
+
+def which(program):
+    """Returns the full path to a program; None otherwise."""
+    fpath, fname = os.path.split(program)
+    if fpath:
+        if is_exe(program):
+            return program
+    else:
+        for path in os.environ["PATH"].split(os.pathsep):
+            exe_file = os.path.join(path, program)
+            if is_exe(exe_file):
+                return exe_file
+    return None
+
 class recording(StringIO.StringIO):
     """
     A nice little context manager for recording the debugger interactions into
