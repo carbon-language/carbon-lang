@@ -265,6 +265,16 @@ void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope) {
 
   // Leave the context of the lambda.
   PopDeclContext();
+
+  // Finalize the lambda.
+  LambdaScopeInfo *LSI = getCurLambda();
+  CXXRecordDecl *Class = LSI->Lambda;
+  Class->setInvalidDecl();
+  SmallVector<Decl*, 4> Fields(Class->field_begin(), Class->field_end());
+  ActOnFields(0, Class->getLocation(), Class, Fields, 
+              SourceLocation(), SourceLocation(), 0);
+  CheckCompletedCXXClass(Class);
+
   PopFunctionScopeInfo();
 }
 
