@@ -344,6 +344,8 @@ void ASTDeclReader::VisitDecl(Decl *D) {
   } else {
     DeclContext *SemaDC = ReadDeclAs<DeclContext>(Record, Idx);
     DeclContext *LexicalDC = ReadDeclAs<DeclContext>(Record, Idx);
+    // Avoid calling setLexicalDeclContext() directly because it uses
+    // Decl::getASTContext() internally which is unsafe during derialization.
     D->setDeclContextsImpl(SemaDC, LexicalDC, Reader.getContext());
   }
   D->setLocation(Reader.ReadSourceLocation(F, RawLocation));
@@ -351,6 +353,8 @@ void ASTDeclReader::VisitDecl(Decl *D) {
   if (Record[Idx++]) { // hasAttrs
     AttrVec Attrs;
     Reader.ReadAttributes(F, Attrs, Record, Idx);
+    // Avoid calling setAttrs() directly because it uses Decl::getASTContext()
+    // internally which is unsafe during derialization.
     D->setAttrsImpl(Attrs, Reader.getContext());
   }
   D->setImplicit(Record[Idx++]);
