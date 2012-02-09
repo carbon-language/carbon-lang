@@ -1419,6 +1419,8 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
     bool SeenDef = false;
     for (unsigned j = 0, e = Iter->getNumOperands(); j != e; ++j) {
       MachineOperand &MO = Iter->getOperand(j);
+      if (MO.isRegMask() && MO.clobbersPhysReg(X86::EFLAGS))
+        SeenDef = true;
       if (!MO.isReg())
         continue;
       if (MO.getReg() == X86::EFLAGS) {
@@ -1463,6 +1465,10 @@ static bool isSafeToClobberEFLAGS(MachineBasicBlock &MBB,
     bool SawKill = false;
     for (unsigned j = 0, e = Iter->getNumOperands(); j != e; ++j) {
       MachineOperand &MO = Iter->getOperand(j);
+      // A register mask may clobber EFLAGS, but we should still look for a
+      // live EFLAGS def.
+      if (MO.isRegMask() && MO.clobbersPhysReg(X86::EFLAGS))
+        SawKill = true;
       if (MO.isReg() && MO.getReg() == X86::EFLAGS) {
         if (MO.isDef()) return MO.isDead();
         if (MO.isKill()) SawKill = true;
