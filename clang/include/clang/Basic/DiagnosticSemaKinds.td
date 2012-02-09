@@ -163,7 +163,9 @@ def warn_parameter_size: Warning<
 def warn_return_value_size: Warning<
   "return value of %0 is a large (%1 bytes) pass-by-value object; "
   "pass it by reference instead ?">, InGroup<LargeByValueCopy>;
-
+def warn_return_value_udt: Warning<
+  "%0 has C-linkage specified, but returns user-defined type %1 which is "
+  "incompatible with C">, InGroup<ReturnType>;
 def warn_implicit_function_decl : Warning<
   "implicit declaration of function %0">,
   InGroup<ImplicitFunctionDeclare>, DefaultIgnore;
