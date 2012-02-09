@@ -2018,6 +2018,10 @@ Decl *ASTReader::ReadDeclRecord(DeclID ID) {
 
   assert(D && "Unknown declaration reading AST file");
   LoadedDecl(Index, D);
+  // Set the DeclContext before doing any deserialization, to make sure internal
+  // calls to Decl::getASTContext() by Decl's methods will find the
+  // TranslationUnitDecl without crashing.
+  D->setDeclContext(Context.getTranslationUnitDecl());
   Reader.Visit(D);
 
   // If this declaration is also a declaration context, get the
