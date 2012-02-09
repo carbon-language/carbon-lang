@@ -829,15 +829,17 @@ CGDebugInfo::getOrCreateMethodType(const CXXMethodDecl *Method,
       uint64_t Size = CGM.getContext().getTargetInfo().getPointerWidth(AS);
       uint64_t Align = CGM.getContext().getTypeAlign(ThisPtrTy);
       llvm::DIType PointeeType = getOrCreateType(PointeeTy, Unit);
-      llvm::DIType ThisPtrType =
-        DBuilder.createArtificialType
-        (DBuilder.createPointerType(PointeeType, Size, Align));
+      llvm::DIType ThisPtrType = DBuilder.createPointerType(PointeeType, Size, Align);
       TypeCache[ThisPtr.getAsOpaquePtr()] = ThisPtrType;
+      // TODO: This and the artificial type below are misleading, the
+      // types aren't artificial the argument is, but the current
+      // metadata doesn't represent that.
+      ThisPtrType = DBuilder.createArtificialType(ThisPtrType);
       Elts.push_back(ThisPtrType);
     } else {
-      llvm::DIType ThisPtrType =
-        DBuilder.createArtificialType(getOrCreateType(ThisPtr, Unit));
+      llvm::DIType ThisPtrType = getOrCreateType(ThisPtr, Unit);
       TypeCache[ThisPtr.getAsOpaquePtr()] = ThisPtrType;
+      ThisPtrType = DBuilder.createArtificialType(ThisPtrType);
       Elts.push_back(ThisPtrType);
     }
   }
