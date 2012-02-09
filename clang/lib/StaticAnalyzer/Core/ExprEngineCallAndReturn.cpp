@@ -309,6 +309,30 @@ ExprEngine::invalidateArguments(ProgramStateRef State,
 
 }
 
+// For now, skip inlining variadic functions.
+// We also don't inline blocks.
+static bool shouldInlineCall(const CallExpr *CE, ExprEngine &Eng) {
+  if (!Eng.getAnalysisManager().shouldInlineCall())
+    return false;
+  QualType callee = CE->getCallee()->getType();
+  const FunctionProtoType *FT = 0;
+  if (const PointerType *PT = callee->getAs<PointerType>())
+    FT = dyn_cast<FunctionProtoType>(PT->getPointeeType());
+  else if (const BlockPointerType *BT = callee->getAs<BlockPointerType>()) {
+    // FIXME: inline blocks.
+    // FT = dyn_cast<FunctionProtoType>(BT->getPointeeType());
+    (void) BT;
+    return false;
+  }
+
+  // If we have no prototype, assume the function is okay.
+  if (!FT)
+    return true;
+  
+  // Skip inlining of variadic functions.
+  return !FT->isVariadic();
+}
+
 void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
                                ExplodedNodeSet &dst) {
   // Perform the previsit of the CallExpr.
@@ -325,7 +349,7 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
     : Eng(eng), CE(ce) {}
     virtual void expandGraph(ExplodedNodeSet &Dst, ExplodedNode *Pred) {
       // Should we inline the call?
-      if (Eng.getAnalysisManager().shouldInlineCall() &&
+      if (shouldInlineCall(CE, Eng) &&
           Eng.InlineCall(Dst, CE, Pred)) {
         return;
       }
