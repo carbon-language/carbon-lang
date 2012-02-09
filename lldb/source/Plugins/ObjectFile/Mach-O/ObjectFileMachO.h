@@ -13,6 +13,7 @@
 #include "llvm/Support/MachO.h"
 
 #include "lldb/Core/Address.h"
+#include "lldb/Core/RangeMap.h"
 #include "lldb/Host/FileSpec.h"
 #include "lldb/Host/Mutex.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -126,6 +127,12 @@ public:
     virtual lldb_private::Address
     GetHeaderAddress ();
     
+    virtual uint32_t
+    GetNumThreadContexts ();
+    
+    virtual lldb::RegisterContextSP
+    GetThreadContextAtIndex (uint32_t idx, lldb_private::Thread &thread);
+
     virtual ObjectFile::Type
     CalculateType();
     
@@ -146,7 +153,10 @@ protected:
     llvm::MachO::dysymtab_command m_dysymtab;
     std::vector<llvm::MachO::segment_command_64> m_mach_segments;
     std::vector<llvm::MachO::section_64> m_mach_sections;
+    typedef lldb_private::RangeArray<uint32_t, uint32_t, 1> FileRangeArray;
     lldb_private::Address  m_entry_point_address;
+    FileRangeArray m_thread_context_offsets;
+    bool m_thread_context_offsets_valid;
 
     size_t
     ParseSections ();

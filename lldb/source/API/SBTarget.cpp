@@ -225,9 +225,9 @@ SBTarget::Launch
         else
         {
             if (listener.IsValid())
-                process_sp = target_sp->CreateProcess (listener.ref());
+                process_sp = target_sp->CreateProcess (listener.ref(), NULL, NULL);
             else
-                process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener());
+                process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), NULL, NULL);
         }
 
         if (process_sp)
@@ -346,9 +346,9 @@ SBTarget::AttachToProcessWithID
         else
         {
             if (listener.IsValid())
-                process_sp = target_sp->CreateProcess (listener.ref());
+                process_sp = target_sp->CreateProcess (listener.ref(), NULL, NULL);
             else
-                process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener());
+                process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), NULL, NULL);
         }
         if (process_sp)
         {
@@ -421,9 +421,9 @@ SBTarget::AttachToProcessWithName
         else
         {
             if (listener.IsValid())
-                process_sp = target_sp->CreateProcess (listener.ref());
+                process_sp = target_sp->CreateProcess (listener.ref(), NULL, NULL);
             else
-                process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener());
+                process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), NULL, NULL);
         }
 
         if (process_sp)
@@ -467,9 +467,9 @@ SBTarget::ConnectRemote
     {
         Mutex::Locker api_locker (target_sp->GetAPIMutex());
         if (listener.IsValid())
-            process_sp = target_sp->CreateProcess (listener.ref(), plugin_name);
+            process_sp = target_sp->CreateProcess (listener.ref(), plugin_name, NULL);
         else
-            process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), plugin_name);
+            process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), plugin_name, NULL);
         
         
         if (process_sp)

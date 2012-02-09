@@ -49,10 +49,15 @@ ProcessKDP::Terminate()
 }
 
 
-Process*
-ProcessKDP::CreateInstance (Target &target, Listener &listener)
+lldb::ProcessSP
+ProcessKDP::CreateInstance (Target &target, 
+                            Listener &listener,
+                            const FileSpec *crash_file_path)
 {
-    return new ProcessKDP (target, listener);
+    lldb::ProcessSP process_sp;
+    if (crash_file_path == NULL)
+        process_sp.reset(new ProcessKDP (target, listener));
+    return process_sp;
 }
 
 bool

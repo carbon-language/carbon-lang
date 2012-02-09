@@ -39,8 +39,10 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    static Process*
-    CreateInstance (lldb_private::Target& target, lldb_private::Listener &listener);
+    static lldb::ProcessSP
+    CreateInstance (lldb_private::Target& target, 
+                    lldb_private::Listener &listener,
+                    const lldb_private::FileSpec *crash_file_path);
 
     static void
     Initialize();

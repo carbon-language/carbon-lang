@@ -803,20 +803,25 @@ ModuleList::GetSharedModule
             // Make sure there are a module and an object file since we can specify
             // a valid file path with an architecture that might not be in that file.
             // By getting the object file we can guarantee that the architecture matches
-            if (module_sp && module_sp->GetObjectFile())
+            if (module_sp)
             {
-                // If we get in here we got the correct arch, now we just need
-                // to verify the UUID if one was given
-                if (uuid_ptr && *uuid_ptr != module_sp->GetUUID())
-                    module_sp.reset();
-                else
+                if (module_sp->GetObjectFile())
                 {
-                    if (did_create_ptr)
-                        *did_create_ptr = true;
-                    
-                    shared_module_list.Append(module_sp);
-                    return error;
+                    // If we get in here we got the correct arch, now we just need
+                    // to verify the UUID if one was given
+                    if (uuid_ptr && *uuid_ptr != module_sp->GetUUID())
+                        module_sp.reset();
+                    else
+                    {
+                        if (did_create_ptr)
+                            *did_create_ptr = true;
+                        
+                        shared_module_list.Append(module_sp);
+                        return error;
+                    }
                 }
+                else
+                    module_sp.reset();
             }
         }
     }

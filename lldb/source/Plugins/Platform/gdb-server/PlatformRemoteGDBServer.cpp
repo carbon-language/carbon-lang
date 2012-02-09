@@ -378,7 +378,7 @@ PlatformRemoteGDBServer::Attach (lldb_private::ProcessAttachInfo &attach_info,
                     
                     // The darwin always currently uses the GDB remote debugger plug-in
                     // so even when debugging locally we are debugging remotely!
-                    process_sp = target->CreateProcess (listener, "gdb-remote");
+                    process_sp = target->CreateProcess (listener, "gdb-remote", NULL);
                     
                     if (process_sp)
                     {

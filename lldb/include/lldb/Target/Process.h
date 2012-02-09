@@ -1479,8 +1479,11 @@ public:
     ///
     /// @see Process::CanDebug ()
     //------------------------------------------------------------------
-    static Process*
-    FindPlugin (Target &target, const char *plugin_name, Listener &listener);
+    static lldb::ProcessSP
+    FindPlugin (Target &target, 
+                const char *plugin_name, 
+                Listener &listener, 
+                const FileSpec *crash_file_path);
 
 
 
@@ -1587,6 +1590,17 @@ public:
     //------------------------------------------------------------------
     virtual Error
     Launch (const ProcessLaunchInfo &launch_info);
+
+    virtual Error
+    LoadCore ();
+
+    virtual Error
+    DoLoadCore ()
+    {
+        Error error;
+        error.SetErrorStringWithFormat("error: %s does not support loading core files.", GetShortPluginName());
+        return error;
+    }
 
     //------------------------------------------------------------------
     /// Attach to an existing process using the process attach info.
@@ -1844,7 +1858,12 @@ public:
     ///     LLDB_INVALID_PROCESS_ID if attaching fails.
     //------------------------------------------------------------------
     virtual Error
-    DoAttachToProcessWithID (lldb::pid_t pid) = 0;
+    DoAttachToProcessWithID (lldb::pid_t pid)
+    {
+        Error error;
+        error.SetErrorStringWithFormat("error: %s does not support attaching to a process by pid", GetShortPluginName());
+        return error;
+    }
 
     //------------------------------------------------------------------
     /// Attach to an existing process using a partial process name.
@@ -1940,7 +1959,13 @@ public:
     //------------------------------------------------------------------
     virtual Error
     DoLaunch (Module *exe_module,
-              const ProcessLaunchInfo &launch_info) = 0;
+              const ProcessLaunchInfo &launch_info)
+    {
+        Error error;
+        error.SetErrorStringWithFormat("error: %s does not support launching processes", GetShortPluginName());
+        return error;
+    }
+
     
     //------------------------------------------------------------------
     /// Called after launching a process.
@@ -1983,7 +2008,13 @@ public:
     /// @see Thread:Suspend()
     //------------------------------------------------------------------
     virtual Error
-    DoResume () = 0;
+    DoResume ()
+    {
+        Error error;
+        error.SetErrorStringWithFormat("error: %s does not support resuming processes", GetShortPluginName());
+        return error;
+    }
+
 
     //------------------------------------------------------------------
     /// Called after resuming a process.
@@ -2026,7 +2057,13 @@ public:
     ///     otherwise.
     //------------------------------------------------------------------
     virtual Error
-    DoHalt (bool &caused_stop) = 0;
+    DoHalt (bool &caused_stop)
+    {
+        Error error;
+        error.SetErrorStringWithFormat("error: %s does not support halting processes", GetShortPluginName());
+        return error;
+    }
+
 
     //------------------------------------------------------------------
     /// Called after halting a process.
@@ -2060,7 +2097,13 @@ public:
     ///     false otherwise.
     //------------------------------------------------------------------
     virtual Error
-    DoDetach () = 0;
+    DoDetach ()
+    {
+        Error error;
+        error.SetErrorStringWithFormat("error: %s does not support detaching from processes", GetShortPluginName());
+        return error;
+    }
+
 
     //------------------------------------------------------------------
     /// Called after detaching from a process.
@@ -2092,9 +2135,12 @@ public:
     ///     Returns an error object.
     //------------------------------------------------------------------
     virtual Error
-    DoSignal (int signal) = 0;
-
-
+    DoSignal (int signal)
+    {
+        Error error;
+        error.SetErrorStringWithFormat("error: %s does not support senging signals to processes", GetShortPluginName());
+        return error;
+    }
 
     virtual Error
     WillDestroy () { return Error(); }
@@ -2114,7 +2160,6 @@ public:
     //------------------------------------------------------------------
     virtual void
     DidSignal () {}
-
 
     //------------------------------------------------------------------
     /// Currently called as part of ShouldStop.
@@ -2445,7 +2490,12 @@ public:
     ///     The number of bytes that were actually written.
     //------------------------------------------------------------------
     virtual size_t
-    DoWriteMemory (lldb::addr_t vm_addr, const void *buf, size_t size, Error &error) = 0;
+    DoWriteMemory (lldb::addr_t vm_addr, const void *buf, size_t size, Error &error)
+    {
+        error.SetErrorStringWithFormat("error: %s does not support writing to processes", GetShortPluginName());
+        return 0;
+    }
+
 
     //------------------------------------------------------------------
     /// Write all or part of a scalar value to memory.
@@ -2537,7 +2587,12 @@ public:
     //------------------------------------------------------------------
 
     virtual lldb::addr_t
-    DoAllocateMemory (size_t size, uint32_t permissions, Error &error) = 0;
+    DoAllocateMemory (size_t size, uint32_t permissions, Error &error)
+    {
+        error.SetErrorStringWithFormat("error: %s does not support allocating in the debug process", GetShortPluginName());
+        return LLDB_INVALID_ADDRESS;
+    }
+
 
     //------------------------------------------------------------------
     /// The public interface to allocating memory in the process.
@@ -2660,7 +2715,13 @@ public:
     //------------------------------------------------------------------
 
     virtual Error
-    DoDeallocateMemory (lldb::addr_t ptr) = 0;
+    DoDeallocateMemory (lldb::addr_t ptr)
+    {
+        Error error;
+        error.SetErrorStringWithFormat("error: %s does not support deallocating in the debug process", GetShortPluginName());
+        return error;
+    }
+
 
     //------------------------------------------------------------------
     /// The public interface to deallocating memory in the process.
@@ -2741,10 +2802,22 @@ public:
     GetSoftwareBreakpointTrapOpcode (BreakpointSite* bp_site);
 
     virtual Error
-    EnableBreakpoint (BreakpointSite *bp_site) = 0;
+    EnableBreakpoint (BreakpointSite *bp_site)
+    {
+        Error error;
+        error.SetErrorStringWithFormat("error: %s does not support enabling breakpoints", GetShortPluginName());
+        return error;
+    }
+
 
     virtual Error
-    DisableBreakpoint (BreakpointSite *bp_site) = 0;
+    DisableBreakpoint (BreakpointSite *bp_site)
+    {
+        Error error;
+        error.SetErrorStringWithFormat("error: %s does not support disabling breakpoints", GetShortPluginName());
+        return error;
+    }
+
 
     // This is implemented completely using the lldb::Process API. Subclasses
     // don't need to implement this function unless the standard flow of

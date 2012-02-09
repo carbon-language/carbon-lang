@@ -682,6 +682,21 @@ namespace lldb_private {
             return NULL;
         }
         
+        Entry *
+        Back()
+        {
+            if (!m_entries.empty())
+                return &m_entries.back();
+            return NULL;
+        }
+
+        const Entry *
+        Back() const
+        {
+            if (!m_entries.empty())
+                return &m_entries.back();
+            return NULL;
+        }
 
     protected:
         Collection m_entries;

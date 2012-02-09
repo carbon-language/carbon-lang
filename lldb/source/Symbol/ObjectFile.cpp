@@ -156,7 +156,7 @@ ObjectFile::ObjectFile (Module* module,
     m_data (),
     m_unwind_table (*this),
     m_process_wp(),
-    m_in_memory (false)
+    m_memory_addr (LLDB_INVALID_ADDRESS)
 {    
     if (file_spec_ptr)
         m_file = *file_spec_ptr;
@@ -202,7 +202,7 @@ ObjectFile::ObjectFile (Module* module,
     m_data (),
     m_unwind_table (*this),
     m_process_wp (process_sp),
-    m_in_memory (true)
+    m_memory_addr (header_addr)
 {    
     if (header_data_sp)
         m_data.SetData (header_data_sp, 0, header_data_sp->GetByteSize());
@@ -382,7 +382,7 @@ ObjectFile::CopyData (off_t offset, size_t length, void *dst) const
 size_t
 ObjectFile::ReadSectionData (const Section *section, off_t section_offset, void *dst, size_t dst_len) const
 {
-    if (m_in_memory)
+    if (IsInMemory())
     {
         ProcessSP process_sp (m_process_wp.lock());
         if (process_sp)
@@ -404,7 +404,7 @@ ObjectFile::ReadSectionData (const Section *section, off_t section_offset, void 
 size_t
 ObjectFile::ReadSectionData (const Section *section, DataExtractor& section_data) const
 {
-    if (m_in_memory)
+    if (IsInMemory())
     {
         ProcessSP process_sp (m_process_wp.lock());
         if (process_sp)
@@ -431,7 +431,7 @@ ObjectFile::ReadSectionData (const Section *section, DataExtractor& section_data
 size_t
 ObjectFile::MemoryMapSectionData (const Section *section, DataExtractor& section_data) const
 {
-    if (m_in_memory)
+    if (IsInMemory())
     {
         return ReadSectionData (section, section_data);
     }

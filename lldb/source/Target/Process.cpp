@@ -708,30 +708,39 @@ ProcessInstanceInfoMatch::Clear()
     m_match_all_users = false;
 }
 
-Process*
-Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener)
+ProcessSP
+Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener, const FileSpec *crash_file_path)
 {
+    ProcessSP process_sp;
     ProcessCreateInstance create_callback = NULL;
     if (plugin_name)
     {
         create_callback  = PluginManager::GetProcessCreateCallbackForPluginName (plugin_name);
         if (create_callback)
         {
-            std::auto_ptr<Process> debugger_ap(create_callback(target, listener));
-            if (debugger_ap->CanDebug(target, true))
-                return debugger_ap.release();
+            process_sp = create_callback(target, listener, crash_file_path);
+            if (process_sp)
+            {
+                if (!process_sp->CanDebug(target, true))
+                    process_sp.reset();
+            }
         }
     }
     else
     {
         for (uint32_t idx = 0; (create_callback = PluginManager::GetProcessCreateCallbackAtIndex(idx)) != NULL; ++idx)
         {
-            std::auto_ptr<Process> debugger_ap(create_callback(target, listener));
-            if (debugger_ap->CanDebug(target, false))
-                return debugger_ap.release();
+            process_sp = create_callback(target, listener, crash_file_path);
+            if (process_sp)
+            {
+                if (!process_sp->CanDebug(target, false))
+                    process_sp.reset();
+                else
+                    break;
+            }
         }
     }
-    return NULL;
+    return process_sp;
 }
 
 
@@ -2327,6 +2336,30 @@ Process::Launch (const ProcessLaunchInfo &launch_info)
     }
     return error;
 }
+
+
+Error
+Process::LoadCore ()
+{
+    Error error = DoLoadCore();
+    if (error.Success())
+    {
+        if (PrivateStateThreadIsValid ())
+            ResumePrivateStateThread ();
+        else
+            StartPrivateStateThread ();
+
+        CompleteAttach ();
+        // We successfully loaded a core file, now pretend we stopped so we can
+        // show all of the threads in the core file and explore the crashed
+        // state.
+        SetPrivateState (eStateStopped);
+        
+    }
+    return error;
+}
+
+
 
 Process::NextEventAction::EventActionResult
 Process::AttachCompletionHandler::PerformAction (lldb::EventSP &event_sp)

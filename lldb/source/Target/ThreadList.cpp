@@ -77,7 +77,7 @@ ThreadList::SetStopID (uint32_t stop_id)
 
 
 void
-ThreadList::AddThread (ThreadSP &thread_sp)
+ThreadList::AddThread (const ThreadSP &thread_sp)
 {
     Mutex::Locker locker(m_threads_mutex);
     m_threads.push_back(thread_sp);

@@ -7,6 +7,9 @@
 //
 //===----------------------------------------------------------------------===//
 
+
+#include "llvm/Support/MachO.h"
+
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataBufferHeap.h"
@@ -211,7 +214,35 @@ bool
 DynamicLoaderMacOSXDYLD::LocateDYLD()
 {
     if (m_dyld_all_image_infos_addr == LLDB_INVALID_ADDRESS)
-        m_dyld_all_image_infos_addr = m_process->GetImageInfoAddress ();
+    {
+        // Check the image info addr as it might point to the 
+        // mach header for dyld, or it might point to the 
+        // dyld_all_image_infos struct
+        addr_t shlib_addr = m_process->GetImageInfoAddress ();
+
+        ByteOrder byte_order = m_process->GetTarget().GetArchitecture().GetByteOrder();
+        uint8_t buf[4];
+        DataExtractor data (buf, sizeof(buf), byte_order, 4);
+        Error error;
+        if (m_process->ReadMemory (shlib_addr, buf, 4, error) == 4)
+        {
+            uint32_t offset = 0;
+            uint32_t magic = data.GetU32 (&offset);
+            switch (magic)
+            {
+            case llvm::MachO::HeaderMagic32:
+            case llvm::MachO::HeaderMagic64:
+            case llvm::MachO::HeaderMagic32Swapped:
+            case llvm::MachO::HeaderMagic64Swapped:
+                return ReadDYLDInfoFromMemoryAndSetNotificationCallback(shlib_addr);
+                
+            default:
+                break;
+            }
+        }
+        // Maybe it points to the all image infos?
+        m_dyld_all_image_infos_addr = shlib_addr;
+    }
 
     if (m_dyld_all_image_infos_addr != LLDB_INVALID_ADDRESS)
     {

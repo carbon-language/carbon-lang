@@ -27,11 +27,109 @@
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
+#include "Plugins/Process/Utility/RegisterContextDarwin_x86_64.h"
 
 
 using namespace lldb;
 using namespace lldb_private;
 using namespace llvm::MachO;
+
+class RegisterContextDarwin_x86_64_Mach : public RegisterContextDarwin_x86_64 
+{
+public:
+    RegisterContextDarwin_x86_64_Mach (lldb_private::Thread &thread, const DataExtractor &data) :
+        RegisterContextDarwin_x86_64 (thread, 0)
+    {
+        SetRegisterDataFrom_LC_THREAD (data);
+    }
+
+    virtual void
+    InvalidateAllRegisters ()
+    {
+        // Do nothing... registers are always valid...
+    }
+
+    void
+    SetRegisterDataFrom_LC_THREAD (const DataExtractor &data)
+    {
+        int flavor;
+        uint32_t offset = 0;
+        SetError (GPRRegSet, Read, -1);
+        SetError (FPURegSet, Read, -1);
+        SetError (EXCRegSet, Read, -1);
+        while ((flavor = data.GetU32 (&offset)) > 0)
+        {
+            uint32_t i;
+            uint32_t count = data.GetU32 (&offset);
+            switch (flavor)
+            {
+                case 7:
+                case 8:
+                case 9:
+                    // Goofy extra flavor inside state...
+                    flavor = data.GetU32 (&offset);
+                    count = data.GetU32 (&offset);
+                default:
+                    break;
+            }
+
+            switch (flavor)
+            {
+                case GPRRegSet:
+                    for (i=0; i<count; ++i)
+                        (&gpr.rax)[i] = data.GetU64(&offset);
+                    SetError (GPRRegSet, Read, 0);
+                    break;
+                case FPURegSet:
+                    // TODO: fill in FPU regs....
+                    //SetError (FPURegSet, Read, -1);
+                    break;
+                case EXCRegSet:
+                    exc.trapno = data.GetU32(&offset);
+                    exc.err = data.GetU32(&offset);
+                    exc.faultvaddr = data.GetU64(&offset);
+                    SetError (EXCRegSet, Read, 0);
+                    break;
+            }
+        }
+    }
+protected:
+    virtual int
+    DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoReadFPU (lldb::tid_t tid, int flavor, FPU &fpu)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoWriteGPR (lldb::tid_t tid, int flavor, const GPR &gpr)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoWriteFPU (lldb::tid_t tid, int flavor, const FPU &fpu)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoWriteEXC (lldb::tid_t tid, int flavor, const EXC &exc)
+    {
+        return 0;
+    }
+};
 
 #define MACHO_NLIST_ARM_SYMBOL_IS_THUMB 0x0008
 
@@ -166,10 +264,13 @@ ObjectFileMachO::MagicBytesMatch (DataBufferSP& data_sp,
 ObjectFileMachO::ObjectFileMachO(Module* module, DataBufferSP& data_sp, const FileSpec* file, addr_t offset, addr_t length) :
     ObjectFile(module, file, offset, length, data_sp),
     m_mutex (Mutex::eMutexTypeRecursive),
-    m_header(),
     m_sections_ap(),
     m_symtab_ap(),
-    m_entry_point_address ()
+    m_mach_segments(),
+    m_mach_sections(),
+    m_entry_point_address(),
+    m_thread_context_offsets(),
+    m_thread_context_offsets_valid(false)
 {
     ::memset (&m_header, 0, sizeof(m_header));
     ::memset (&m_dysymtab, 0, sizeof(m_dysymtab));
@@ -181,10 +282,13 @@ ObjectFileMachO::ObjectFileMachO (lldb_private::Module* module,
                                   lldb::addr_t header_addr) :
     ObjectFile(module, process_sp, header_addr, header_data_sp),
     m_mutex (Mutex::eMutexTypeRecursive),
-    m_header(),
     m_sections_ap(),
     m_symtab_ap(),
-    m_entry_point_address ()
+    m_mach_segments(),
+    m_mach_sections(),
+    m_entry_point_address(),
+    m_thread_context_offsets(),
+    m_thread_context_offsets_valid(false)
 {
     ::memset (&m_header, 0, sizeof(m_header));
     ::memset (&m_dysymtab, 0, sizeof(m_dysymtab));
@@ -439,6 +543,7 @@ ObjectFileMachO::ParseSections ()
     struct segment_command_64 load_cmd;
     uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
     uint32_t i;
+    const bool is_core = GetType() == eTypeCoreFile;
     //bool dump_sections = false;
     for (i=0; i<m_header.ncmds; ++i)
     {
@@ -467,7 +572,7 @@ ObjectFileMachO::ParseSections ()
                     // Use a segment ID of the segment index shifted left by 8 so they
                     // never conflict with any of the sections.
                     SectionSP segment_sp;
-                    if (segment_name)
+                    if (segment_name || is_core)
                     {
                         segment_sp.reset(new Section (NULL,
                                                       GetModule(),            // Module to which this section belongs
@@ -1960,6 +2065,53 @@ ObjectFileMachO::GetHeaderAddress ()
         }
     }
     return header_addr;
+}
+
+uint32_t
+ObjectFileMachO::GetNumThreadContexts ()
+{
+    lldb_private::Mutex::Locker locker(m_mutex);
+    if (!m_thread_context_offsets_valid)
+    {
+        m_thread_context_offsets_valid = true;
+        uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+        FileRangeArray::Entry file_range;
+        thread_command thread_cmd;
+        for (uint32_t i=0; i<m_header.ncmds; ++i)
+        {
+            const uint32_t cmd_offset = offset;
+            if (m_data.GetU32(&offset, &thread_cmd, 2) == NULL)
+                break;
+            
+            if (thread_cmd.cmd == LoadCommandThread)
+            {
+                file_range.SetRangeBase (offset);
+                file_range.SetByteSize (thread_cmd.cmdsize - 8);
+                m_thread_context_offsets.Append (file_range);
+            }
+            offset = cmd_offset + thread_cmd.cmdsize;
+        }
+    }
+    return m_thread_context_offsets.GetSize();
+}
+
+lldb::RegisterContextSP
+ObjectFileMachO::GetThreadContextAtIndex (uint32_t idx, lldb_private::Thread &thread)
+{
+    lldb_private::Mutex::Locker locker(m_mutex);
+    if (!m_thread_context_offsets_valid)
+        GetNumThreadContexts ();
+
+    lldb::RegisterContextSP reg_ctx_sp;
+    const FileRangeArray::Entry *thread_context_file_range = m_thread_context_offsets.GetEntryAtIndex (idx);
+    if (thread_context_file_range)
+    {
+        DataExtractor data (m_data, 
+                            thread_context_file_range->GetRangeBase(), 
+                            thread_context_file_range->GetByteSize());
+        reg_ctx_sp.reset (new RegisterContextDarwin_x86_64_Mach (thread, data));
+    }
+    return reg_ctx_sp;
 }
 
 

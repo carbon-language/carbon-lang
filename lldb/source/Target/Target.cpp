@@ -136,10 +136,10 @@ Target::DeleteCurrentProcess ()
 }
 
 const lldb::ProcessSP &
-Target::CreateProcess (Listener &listener, const char *plugin_name)
+Target::CreateProcess (Listener &listener, const char *plugin_name, const FileSpec *crash_file)
 {
     DeleteCurrentProcess ();
-    m_process_sp.reset(Process::FindPlugin(*this, plugin_name, listener));
+    m_process_sp = Process::FindPlugin(*this, plugin_name, listener, crash_file);
     return m_process_sp;
 }
 

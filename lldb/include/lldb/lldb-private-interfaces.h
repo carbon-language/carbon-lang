@@ -27,7 +27,7 @@ namespace lldb_private
     typedef OperatingSystem* (*OperatingSystemCreateInstance) (Process *process, bool force);
     typedef LanguageRuntime *(*LanguageRuntimeCreateInstance) (Process *process, lldb::LanguageType language);
     typedef Platform* (*PlatformCreateInstance) ();
-    typedef Process* (*ProcessCreateInstance) (Target &target, Listener &listener);
+    typedef lldb::ProcessSP (*ProcessCreateInstance) (Target &target, Listener &listener, const FileSpec *crash_file_path);
     typedef SymbolFile* (*SymbolFileCreateInstance) (ObjectFile* obj_file);
     typedef SymbolVendor* (*SymbolVendorCreateInstance) (Module *module);   // Module can be NULL for default system symbol vendor
     typedef bool (*BreakpointHitCallback) (void *baton, StoppointCallbackContext *context, lldb::user_id_t break_id, lldb::user_id_t break_loc_id);

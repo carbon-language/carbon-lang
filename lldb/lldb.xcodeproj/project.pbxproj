@@ -334,6 +334,10 @@
 		26957D9A13D381C900670048 /* RegisterContextDarwin_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9413D381C900670048 /* RegisterContextDarwin_i386.cpp */; };
 		26957D9C13D381C900670048 /* RegisterContextDarwin_x86_64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9613D381C900670048 /* RegisterContextDarwin_x86_64.cpp */; };
 		2697A54D133A6305004E4240 /* PlatformDarwin.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2697A54B133A6305004E4240 /* PlatformDarwin.cpp */; };
+		26A527C114E24F5F00F3A14A /* ProcessMachCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A527BD14E24F5F00F3A14A /* ProcessMachCore.cpp */; };
+		26A527C214E24F5F00F3A14A /* ProcessMachCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26A527BE14E24F5F00F3A14A /* ProcessMachCore.h */; };
+		26A527C314E24F5F00F3A14A /* ThreadMachCore.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A527BF14E24F5F00F3A14A /* ThreadMachCore.cpp */; };
+		26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */ = {isa = PBXBuildFile; fileRef = 26A527C014E24F5F00F3A14A /* ThreadMachCore.h */; };
 		26A69C5F137A17A500262477 /* RegisterValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26C6886E137880C400407EDF /* RegisterValue.cpp */; };
 		26A7A035135E6E4200FB369E /* NamedOptionValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */; };
 		26B1FCB813381071002886E2 /* CoreFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C39010F3FA26009D5894 /* CoreFoundation.framework */; };
@@ -778,6 +782,10 @@
 		26A3B4AC1181454800381BC2 /* ObjectContainerBSDArchive.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ObjectContainerBSDArchive.cpp; sourceTree = "<group>"; };
 		26A3B4AD1181454800381BC2 /* ObjectContainerBSDArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ObjectContainerBSDArchive.h; sourceTree = "<group>"; };
 		26A4EEB511682AAC007A372A /* LLDBWrapPython.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; lineEnding = 0; name = LLDBWrapPython.cpp; path = source/LLDBWrapPython.cpp; sourceTree = "<group>"; xcLanguageSpecificationIdentifier = xcode.lang.cpp; };
+		26A527BD14E24F5F00F3A14A /* ProcessMachCore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ProcessMachCore.cpp; sourceTree = "<group>"; };
+		26A527BE14E24F5F00F3A14A /* ProcessMachCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ProcessMachCore.h; sourceTree = "<group>"; };
+		26A527BF14E24F5F00F3A14A /* ThreadMachCore.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ThreadMachCore.cpp; sourceTree = "<group>"; };
+		26A527C014E24F5F00F3A14A /* ThreadMachCore.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ThreadMachCore.h; sourceTree = "<group>"; };
 		26A7A034135E6E4200FB369E /* NamedOptionValue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NamedOptionValue.cpp; path = source/Interpreter/NamedOptionValue.cpp; sourceTree = "<group>"; };
 		26A7A036135E6E5300FB369E /* NamedOptionValue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = NamedOptionValue.h; path = include/lldb/Interpreter/NamedOptionValue.h; sourceTree = "<group>"; };
 		26B167A41123BF5500DC7B4F /* ThreadSafeValue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ThreadSafeValue.h; path = include/lldb/Core/ThreadSafeValue.h; sourceTree = "<group>"; };
@@ -1573,6 +1581,7 @@
 			children = (
 				4CEE62F71145F1C70064CF93 /* GDB Remote */,
 				2642FBA713D003B400ED6808 /* MacOSX-Kernel */,
+				26A527BC14E24F5F00F3A14A /* mach-core */,
 				26B4666E11A2080F00CF6220 /* Utility */,
 			);
 			path = Process;
@@ -1975,6 +1984,17 @@
 				26A3B4AD1181454800381BC2 /* ObjectContainerBSDArchive.h */,
 			);
 			path = "BSD-Archive";
+			sourceTree = "<group>";
+		};
+		26A527BC14E24F5F00F3A14A /* mach-core */ = {
+			isa = PBXGroup;
+			children = (
+				26A527BD14E24F5F00F3A14A /* ProcessMachCore.cpp */,
+				26A527BE14E24F5F00F3A14A /* ProcessMachCore.h */,
+				26A527BF14E24F5F00F3A14A /* ThreadMachCore.cpp */,
+				26A527C014E24F5F00F3A14A /* ThreadMachCore.h */,
+			);
+			path = "mach-core";
 			sourceTree = "<group>";
 		};
 		26AC3F441365F40E0065C7EF /* UnwindAssembly */ = {
@@ -2871,6 +2891,8 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				26A527C214E24F5F00F3A14A /* ProcessMachCore.h in Headers */,
+				26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3530,6 +3552,8 @@
 				494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */,
 				49DA65031485C92A005FF180 /* AppleObjCSymbolVendor.cpp in Sources */,
 				4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */,
+				26A527C114E24F5F00F3A14A /* ProcessMachCore.cpp in Sources */,
+				26A527C314E24F5F00F3A14A /* ThreadMachCore.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

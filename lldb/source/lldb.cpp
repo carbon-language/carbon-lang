@@ -51,6 +51,8 @@
 #include "Plugins/Platform/MacOSX/PlatformRemoteiOS.h"
 #endif
 
+#include "Plugins/Process/mach-core/ProcessMachCore.h"
+
 #if defined (__linux__)
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
 #include "Plugins/Platform/Linux/PlatformLinux.h"
@@ -113,6 +115,7 @@ lldb_private::Initialize ()
         ObjectFileMachO::Initialize();
         ProcessKDP::Initialize();
         ProcessGDBRemote::Initialize();
+        ProcessMachCore::Initialize();
         SymbolVendorMacOSX::Initialize();
         PlatformMacOSX::Initialize();
         PlatformRemoteiOS::Initialize();
@@ -183,6 +186,7 @@ lldb_private::Terminate ()
     AppleObjCRuntimeV1::Terminate();
     ObjectContainerUniversalMachO::Terminate();
     ObjectFileMachO::Terminate();
+    ProcessMachCore::Terminate();
     ProcessKDP::Terminate();
     ProcessGDBRemote::Terminate();
     SymbolVendorMacOSX::Terminate();

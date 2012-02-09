@@ -94,10 +94,13 @@ ProcessGDBRemote::Terminate()
 }
 
 
-Process*
-ProcessGDBRemote::CreateInstance (Target &target, Listener &listener)
+lldb::ProcessSP
+ProcessGDBRemote::CreateInstance (Target &target, Listener &listener, const FileSpec *crash_file_path)
 {
-    return new ProcessGDBRemote (target, listener);
+    lldb::ProcessSP process_sp;
+    if (crash_file_path == NULL)
+        process_sp.reset (new ProcessGDBRemote (target, listener));
+    return process_sp;
 }
 
 bool
@@ -109,7 +112,25 @@ ProcessGDBRemote::CanDebug (Target &target, bool plugin_specified_by_name)
     // For now we are just making sure the file exists for a given module
     Module *exe_module = target.GetExecutableModulePointer();
     if (exe_module)
+    {
+        ObjectFile *exe_objfile = exe_module->GetObjectFile();
+        // We can't debug core files...
+        switch (exe_objfile->GetType())
+        {
+            case ObjectFile::eTypeInvalid:
+            case ObjectFile::eTypeCoreFile:
+            case ObjectFile::eTypeDebugInfo:
+            case ObjectFile::eTypeObjectFile:
+            case ObjectFile::eTypeSharedLibrary:
+            case ObjectFile::eTypeStubLibrary:
+                return false;
+            case ObjectFile::eTypeExecutable:
+            case ObjectFile::eTypeDynamicLinker:
+            case ObjectFile::eTypeUnknown:
+                break;
+        }
         return exe_module->GetFileSpec().Exists();
+    }
     // However, if there is no executable module, we return true since we might be preparing to attach.
     return true;
 }

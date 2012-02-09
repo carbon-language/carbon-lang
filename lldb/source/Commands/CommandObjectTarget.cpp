@@ -148,7 +148,8 @@ public:
                        NULL),
         m_option_group (interpreter),
         m_arch_option (),
-        m_platform_options(true) // Do include the "--platform" option in the platform settings by passing true
+        m_platform_options(true), // Do include the "--platform" option in the platform settings by passing true
+        m_core_file (LLDB_OPT_SET_1, false, "core-file", 'c', 0, eArgTypePath, "Fullpath to a core file to use for this target.")
     {
         CommandArgumentEntry arg;
         CommandArgumentData file_arg;
@@ -165,6 +166,7 @@ public:
         
         m_option_group.Append (&m_arch_option, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_platform_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
+        m_option_group.Append (&m_core_file, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Finalize();
     }
 
@@ -182,11 +184,16 @@ public:
     Execute (Args& command, CommandReturnObject &result)
     {
         const int argc = command.GetArgumentCount();
-        if (argc == 1)
+        FileSpec core_file (m_core_file.GetOptionValue().GetCurrentValue());
+
+        if (argc == 1 || core_file)
         {
             const char *file_path = command.GetArgumentAtIndex(0);
             Timer scoped_timer(__PRETTY_FUNCTION__, "(lldb) target create '%s'", file_path);
-            FileSpec file_spec (file_path, true);
+            FileSpec file_spec;
+            
+            if (file_path)
+                file_spec.SetFile (file_path, true);
 
             TargetSP target_sp;
             Debugger &debugger = m_interpreter.GetDebugger();
@@ -202,8 +209,41 @@ public:
             if (target_sp)
             {
                 debugger.GetTargetList().SetSelectedTarget(target_sp.get());
-                result.AppendMessageWithFormat ("Current executable set to '%s' (%s).\n", file_path, target_sp->GetArchitecture().GetArchitectureName());
-                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                if (core_file)
+                {
+                    ProcessSP process_sp (target_sp->CreateProcess (m_interpreter.GetDebugger().GetListener(), NULL, &core_file));
+                    char core_path[PATH_MAX];
+                    core_file.GetPath(core_path, sizeof(core_path));
+
+                    if (process_sp)
+                    {
+                        // Seems wierd that we Launch a core file, but that is
+                        // what we do!
+                        error = process_sp->LoadCore();
+                        
+                        if (error.Fail())
+                        {
+                            result.AppendError(error.AsCString("can't find plug-in for core file"));
+                            result.SetStatus (eReturnStatusFailed);
+                            return false;
+                        }
+                        else
+                        {
+                            result.AppendMessageWithFormat ("Core file '%s' (%s) was loaded.\n", core_path, target_sp->GetArchitecture().GetArchitectureName());
+                            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                        }
+                    }
+                    else
+                    {
+                        result.AppendErrorWithFormat ("Unable to find process plug-in for core file '%s'\n", core_path);
+                        result.SetStatus (eReturnStatusFailed);
+                    }
+                }
+                else
+                {
+                    result.AppendMessageWithFormat ("Current executable set to '%s' (%s).\n", file_path, target_sp->GetArchitecture().GetArchitectureName());
+                    result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                }
             }
             else
             {
@@ -213,7 +253,7 @@ public:
         }
         else
         {
-            result.AppendErrorWithFormat("'%s' takes exactly one executable path argument.\n", m_cmd_name.c_str());
+            result.AppendErrorWithFormat("'%s' takes exactly one executable path argument, or use the --core-file option.\n", m_cmd_name.c_str());
             result.SetStatus (eReturnStatusFailed);
         }
         return result.Succeeded();
@@ -247,6 +287,7 @@ private:
     OptionGroupOptions m_option_group;
     OptionGroupArchitecture m_arch_option;
     OptionGroupPlatform m_platform_options;
+    OptionGroupFile m_core_file;
 
 };
 

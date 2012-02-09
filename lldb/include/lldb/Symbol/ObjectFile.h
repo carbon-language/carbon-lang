@@ -415,6 +415,18 @@ public:
     virtual lldb_private::Address
     GetHeaderAddress () { return Address();}
 
+    
+    virtual uint32_t
+    GetNumThreadContexts ()
+    {
+        return 0;
+    }
+
+    virtual lldb::RegisterContextSP
+    GetThreadContextAtIndex (uint32_t idx, lldb_private::Thread &thread)
+    {
+        return lldb::RegisterContextSP();
+    }
     //------------------------------------------------------------------
     /// The object file should be able to calculate its type by looking
     /// at its file header and possibly the sections or other data in
@@ -504,8 +516,13 @@ protected:
     DataExtractor m_data; ///< The data for this object file so things can be parsed lazily.
     lldb_private::UnwindTable m_unwind_table; /// < Table of FuncUnwinders objects created for this ObjectFile's functions
     lldb::ProcessWP m_process_wp;
-    const bool m_in_memory;
+    const lldb::addr_t m_memory_addr;
     
+    bool
+    IsInMemory () const
+    {
+        return m_memory_addr != LLDB_INVALID_ADDRESS;
+    }
     //------------------------------------------------------------------
     /// Sets the architecture for a module.  At present the architecture
     /// can only be set if it is invalid.  It is not allowed to switch from

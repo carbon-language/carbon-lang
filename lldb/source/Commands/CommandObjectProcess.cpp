@@ -189,7 +189,7 @@ public:
             else
             {
                 const char *plugin_name = m_options.launch_info.GetProcessPluginName();
-                process = target->CreateProcess (debugger.GetListener(), plugin_name).get();
+                process = target->CreateProcess (debugger.GetListener(), plugin_name, NULL).get();
                 if (process)
                     error = process->Launch (m_options.launch_info);
             }
@@ -501,7 +501,7 @@ public:
             if (state != eStateConnected)
             {
                 const char *plugin_name = m_options.attach_info.GetProcessPluginName();
-                process = target->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name).get();
+                process = target->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name, NULL).get();
             }
 
             if (process)
@@ -870,7 +870,7 @@ public:
                 plugin_name = m_options.plugin_name.c_str();
 
             const char *remote_url = command.GetArgumentAtIndex(0);
-            process = target_sp->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name).get();
+            process = target_sp->CreateProcess (m_interpreter.GetDebugger().GetListener(), plugin_name, NULL).get();
             
             if (process)
             {

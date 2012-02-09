@@ -43,7 +43,7 @@ public:
     GetSize(bool can_update = true);
 
     void
-    AddThread (lldb::ThreadSP &thread_sp);
+    AddThread (const lldb::ThreadSP &thread_sp);
 
     // Return the selected thread if there is one.  Otherwise, return the thread
     // selected at index 0.

@@ -21,7 +21,7 @@ class RegisterContextDarwin_x86_64 : public lldb_private::RegisterContext
 {
 public:
     RegisterContextDarwin_x86_64 (lldb_private::Thread &thread,
-                                uint32_t concrete_frame_idx);
+                                  uint32_t concrete_frame_idx);
 
     virtual
     ~RegisterContextDarwin_x86_64();
@@ -239,36 +239,35 @@ protected:
         return -1;
     }
     
-    int
+    virtual int
     DoReadFPU (lldb::tid_t tid, int flavor, FPU &fpu)
     {
         return -1;
     }
     
-    int
+    virtual int
     DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc)
     {
         return -1;
     }
     
-    int
+    virtual int
     DoWriteGPR (lldb::tid_t tid, int flavor, const GPR &gpr)
     {
         return -1;
     }
     
-    int
+    virtual int
     DoWriteFPU (lldb::tid_t tid, int flavor, const FPU &fpu)
     {
         return -1;
     }
     
-    int
+    virtual int
     DoWriteEXC (lldb::tid_t tid, int flavor, const EXC &exc)
     {
         return -1;
     }
-
     
     int
     ReadRegisterSet (uint32_t set, bool force);

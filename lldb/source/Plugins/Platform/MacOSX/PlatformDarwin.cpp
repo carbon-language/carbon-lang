@@ -447,7 +447,7 @@ PlatformDarwin::Attach (ProcessAttachInfo &attach_info,
         {
             debugger.GetTargetList().SetSelectedTarget(target);
 
-            process_sp = target->CreateProcess (listener, attach_info.GetProcessPluginName());
+            process_sp = target->CreateProcess (listener, attach_info.GetProcessPluginName(), NULL);
             
             if (process_sp)
                 error = process_sp->Attach (attach_info);
