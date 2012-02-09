@@ -850,7 +850,6 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
   const FunctionDecl *funDecl = CE->getDirectCallee();
   if (!funDecl)
     return 0;
-  StringRef funName = funDecl->getName();
 
   // Find out if this is an interesting point and what is the kind.
   const char *Msg = 0;
