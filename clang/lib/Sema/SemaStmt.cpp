@@ -1798,7 +1798,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   CapturingScopeInfo *CurCap = cast<CapturingScopeInfo>(getCurFunction());
   if (CurCap->HasImplicitReturnType) {
     QualType ReturnT;
-    if (RetValExp) {
+    if (RetValExp && !isa<InitListExpr>(RetValExp)) {
       ExprResult Result = DefaultFunctionArrayLvalueConversion(RetValExp);
       if (Result.isInvalid())
         return StmtError();
@@ -1808,7 +1808,15 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         ReturnT = RetValExp->getType();
       else
         ReturnT = Context.DependentTy;
-    } else {
+    } else { 
+      if (RetValExp) {
+        // C++11 [expr.lambda.prim]p4 bans inferring the result from an
+        // initializer list, because it is not an expression (even
+        // though we represent it as one). We still deduce 'void'.
+        Diag(ReturnLoc, diag::err_lambda_return_init_list)
+          << RetValExp->getSourceRange();
+      }
+
       ReturnT = Context.VoidTy;
     }
     // We require the return types to strictly match here.
