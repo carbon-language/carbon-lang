@@ -389,7 +389,9 @@ public:
   }
 
   bool hasAttrs() const { return HasAttrs; }
-  void setAttrs(const AttrVec& Attrs);
+  void setAttrs(const AttrVec& Attrs) {
+    return setAttrsImpl(Attrs, getASTContext());
+  }
   AttrVec &getAttrs() {
     return const_cast<AttrVec&>(const_cast<const Decl*>(this)->getAttrs());
   }
@@ -852,6 +854,9 @@ public:
 
 private:
   const Attr *getAttrsImpl() const;
+  void setAttrsImpl(const AttrVec& Attrs, ASTContext &Ctx);
+  void setDeclContextsImpl(DeclContext *SemaDC, DeclContext *LexicalDC,
+                           ASTContext &Ctx);
 
 protected:
   ASTMutationListener *getASTMutationListener() const;

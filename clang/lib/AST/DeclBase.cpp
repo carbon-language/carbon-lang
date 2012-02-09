@@ -203,12 +203,21 @@ void Decl::setLexicalDeclContext(DeclContext *DC) {
     return;
 
   if (isInSemaDC()) {
-    MultipleDC *MDC = new (getASTContext()) MultipleDC();
-    MDC->SemanticDC = getDeclContext();
-    MDC->LexicalDC = DC;
-    DeclCtx = MDC;
+    setDeclContextsImpl(getDeclContext(), DC, getASTContext());
   } else {
     getMultipleDC()->LexicalDC = DC;
+  }
+}
+
+void Decl::setDeclContextsImpl(DeclContext *SemaDC, DeclContext *LexicalDC,
+                               ASTContext &Ctx) {
+  if (SemaDC == LexicalDC) {
+    DeclCtx = SemaDC;
+  } else {
+    Decl::MultipleDC *MDC = new (Ctx) Decl::MultipleDC();
+    MDC->SemanticDC = SemaDC;
+    MDC->LexicalDC = LexicalDC;
+    DeclCtx = MDC;
   }
 }
 
@@ -532,10 +541,10 @@ unsigned Decl::getIdentifierNamespaceForKind(Kind DeclKind) {
   llvm_unreachable("Invalid DeclKind!");
 }
 
-void Decl::setAttrs(const AttrVec &attrs) {
+void Decl::setAttrsImpl(const AttrVec &attrs, ASTContext &Ctx) {
   assert(!HasAttrs && "Decl already contains attrs.");
 
-  AttrVec &AttrBlank = getASTContext().getDeclAttrs(this);
+  AttrVec &AttrBlank = Ctx.getDeclAttrs(this);
   assert(AttrBlank.empty() && "HasAttrs was wrong?");
 
   AttrBlank = attrs;
