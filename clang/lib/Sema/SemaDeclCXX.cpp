@@ -16,6 +16,7 @@
 #include "clang/Sema/Scope.h"
 #include "clang/Sema/Initialization.h"
 #include "clang/Sema/Lookup.h"
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/ASTMutationListener.h"
@@ -9222,6 +9223,9 @@ void Sema::AddCXXDirectInitializerToDecl(Decl *RealDecl,
     Diag(PrevInit->getLocation(), diag::note_previous_definition);
     return;
   } 
+
+  if (VDecl->hasLocalStorage())
+    getCurFunction()->setHasBranchProtectedScope();
 
   bool IsDependent = false;
   for (unsigned I = 0, N = Exprs.size(); I != N; ++I) {

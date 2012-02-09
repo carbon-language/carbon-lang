@@ -103,3 +103,15 @@ void f() {
  exit:
   return;
 }
+
+namespace PR10620 {
+  struct S {
+    ~S() {}
+  };
+  void g(const S& s) {
+    goto done; // expected-error {{goto into protected scope}}
+    const S s2(s); // expected-note {{jump bypasses variable initialization}}
+  done:
+    ;
+  }
+}
