@@ -85,6 +85,8 @@ def note_constexpr_ltor_volatile_type : Note<
 def note_constexpr_ltor_volatile_obj : Note<
   "read of volatile %select{temporary|object %1|member %1}0 is not allowed in "
   "a constant expression">;
+def note_constexpr_ltor_mutable : Note<
+  "read of mutable member %0 is not allowed in a constant expression">;
 def note_constexpr_ltor_non_const_int : Note<
   "read of non-const variable %0 is not allowed in a constant expression">;
 def note_constexpr_ltor_non_constexpr : Note<

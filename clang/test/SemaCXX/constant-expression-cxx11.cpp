@@ -1121,6 +1121,30 @@ namespace IndirectField {
   static_assert(s2.f == 7, "");
 }
 
+// DR1405: don't allow reading mutable members in constant expressions.
+namespace MutableMembers {
+  struct MM {
+    mutable int n; // expected-note 3{{declared here}}
+  } constexpr mm = { 4 };
+  constexpr int mmn = mm.n; // expected-error {{constant expression}} expected-note {{read of mutable member 'n' is not allowed in a constant expression}}
+  int x = (mm.n = 1, 3);
+  constexpr int mmn2 = mm.n; // expected-error {{constant expression}} expected-note {{read of mutable member 'n' is not allowed in a constant expression}}
+
+  // Here's one reason why allowing this would be a disaster...
+  template<int n> struct Id { int k = n; };
+  int f() {
+    constexpr MM m = { 0 };
+    ++m.n;
+    return Id<m.n>().k; // expected-error {{not a constant expression}} expected-note {{read of mutable member 'n' is not allowed in a constant expression}}
+  }
+
+  struct A { int n; };
+  struct B { mutable A a; }; // expected-note {{here}}
+  struct C { B b; };
+  constexpr C c[3] = {};
+  constexpr int k = c[1].b.a.n; // expected-error {{constant expression}} expected-note {{mutable}}
+}
+
 namespace Fold {
 
   // This macro forces its argument to be constant-folded, even if it's not

@@ -1453,6 +1453,13 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
         O = &O->getArrayFiller();
       ObjType = CAT->getElementType();
     } else if (const FieldDecl *Field = getAsField(Sub.Entries[I])) {
+      if (Field->isMutable()) {
+        Info.Diag(E->getExprLoc(), diag::note_constexpr_ltor_mutable, 1)
+          << Field;
+        Info.Note(Field->getLocation(), diag::note_declared_at);
+        return false;
+      }
+
       // Next subobject is a class, struct or union field.
       RecordDecl *RD = ObjType->castAs<RecordType>()->getDecl();
       if (RD->isUnion()) {

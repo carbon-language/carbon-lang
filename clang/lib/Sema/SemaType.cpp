@@ -4302,9 +4302,6 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
         Diag((*I)->getLocation(), diag::note_non_literal_field)
           << RD << (*I) << (*I)->getType();
         return true;
-      } else if ((*I)->isMutable()) {
-        Diag((*I)->getLocation(), diag::note_non_literal_mutable_field) << RD;
-        return true;
       }
     }
   } else if (!RD->hasTrivialDestructor()) {

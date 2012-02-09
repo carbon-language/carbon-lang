@@ -773,11 +773,15 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
         // emit it as a global instead.
         if (CGM.getCodeGenOpts().MergeAllConstants && Ty.isConstQualified() &&
             !NRVO && !isByRef && Ty->isLiteralType()) {
-          EmitStaticVarDecl(D, llvm::GlobalValue::InternalLinkage);
+          CXXRecordDecl *RD =
+            Ty->getBaseElementTypeUnsafe()->getAsCXXRecordDecl();
+          if (!RD || !RD->hasMutableFields()) {
+            EmitStaticVarDecl(D, llvm::GlobalValue::InternalLinkage);
 
-          emission.Address = 0; // signal this condition to later callbacks
-          assert(emission.wasEmittedAsGlobal());
-          return emission;
+            emission.Address = 0; // signal this condition to later callbacks
+            assert(emission.wasEmittedAsGlobal());
+            return emission;
+          }
         }
 
         // Otherwise, tell the initialization code that we're in this case.
