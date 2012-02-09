@@ -1511,8 +1511,8 @@ static IndirectFieldDecl *FindIndirectFieldDesignator(FieldDecl *AnonField,
                                                  IdentifierInfo *FieldName) {
   assert(AnonField->isAnonymousStructOrUnion());
   Decl *NextDecl = AnonField->getNextDeclInContext();
-  IndirectFieldDecl *IF = NULL;
-  while (NextDecl && (IF = dyn_cast<IndirectFieldDecl>(NextDecl))) {
+  while (IndirectFieldDecl *IF = 
+          dyn_cast_or_null<IndirectFieldDecl>(NextDecl)) {
     if (FieldName && FieldName == IF->getAnonField()->getIdentifier())
       return IF;
     NextDecl = NextDecl->getNextDeclInContext();
