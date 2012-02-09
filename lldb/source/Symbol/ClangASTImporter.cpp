@@ -418,10 +418,6 @@ clang::Decl
                         to,
                         from_named_decl->getName().str().c_str(),
                         from);
-            
-            if (!strcmp(from->getDeclKindName(), "ClassTemplateSpecialization") &&
-                !from_named_decl->getName().str().compare("rebind"))
-                fprintf(stderr, "This is the one!");
         }
         else
         {
