@@ -9588,7 +9588,6 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   //   which the non-static data members are declared.
   //
   // FIXME: Introduce an initialization entity for lambda captures.
-  // FIXME: Totally broken for arrays.
       
   // Introduce a new evaluation context for the initialization, so that
   // temporaries introduced as part of the capture
@@ -9596,14 +9595,74 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
 
   Expr *Ref = new (S.Context) DeclRefExpr(Var, Type.getNonReferenceType(),
                                           VK_LValue, Loc);
-  InitializedEntity InitEntity
-    = InitializedEntity::InitializeMember(Field, /*Parent=*/0);
+
+  // When the field has array type, create index variables for each
+  // dimension of the array. We use these index variables to subscript
+  // the source array, and other clients (e.g., CodeGen) will perform
+  // the necessary iteration with these index variables.
+  SmallVector<VarDecl *, 4> IndexVariables;
+  bool InitializingArray = false;
+  QualType BaseType = FieldType;
+  QualType SizeType = S.Context.getSizeType();
+  while (const ConstantArrayType *Array
+                        = S.Context.getAsConstantArrayType(BaseType)) {
+    InitializingArray = true;
+    
+    // Create the iteration variable for this array index.
+    IdentifierInfo *IterationVarName = 0;
+    {
+      SmallString<8> Str;
+      llvm::raw_svector_ostream OS(Str);
+      OS << "__i" << IndexVariables.size();
+      IterationVarName = &S.Context.Idents.get(OS.str());
+    }
+    VarDecl *IterationVar
+      = VarDecl::Create(S.Context, S.CurContext, Loc, Loc,
+                        IterationVarName, SizeType,
+                        S.Context.getTrivialTypeSourceInfo(SizeType, Loc),
+                        SC_None, SC_None);
+    IndexVariables.push_back(IterationVar);
+
+    // Create a reference to the iteration variable.
+    ExprResult IterationVarRef
+      = S.BuildDeclRefExpr(IterationVar, SizeType, VK_LValue, Loc);
+    assert(!IterationVarRef.isInvalid() &&
+           "Reference to invented variable cannot fail!");
+    IterationVarRef = S.DefaultLvalueConversion(IterationVarRef.take());
+    assert(!IterationVarRef.isInvalid() &&
+           "Conversion of invented variable cannot fail!");
+    
+    // Subscript the array with this iteration variable.
+    ExprResult Subscript = S.CreateBuiltinArraySubscriptExpr(
+                             Ref, Loc, IterationVarRef.take(), Loc);
+    if (Subscript.isInvalid()) {
+      S.CleanupVarDeclMarking();
+      S.DiscardCleanupsInEvaluationContext();
+      S.PopExpressionEvaluationContext();
+      return ExprError();
+    }
+
+    Ref = Subscript.take();
+    BaseType = Array->getElementType();
+  }
+
+  // Construct the entity that we will be initializing. For an array, this
+  // will be first element in the array, which may require several levels
+  // of array-subscript entities. 
+  SmallVector<InitializedEntity, 4> Entities;
+  Entities.reserve(1 + IndexVariables.size());
+  Entities.push_back(InitializedEntity::InitializeMember(Field));
+  for (unsigned I = 0, N = IndexVariables.size(); I != N; ++I)
+    Entities.push_back(InitializedEntity::InitializeElement(S.Context,
+                                                            0,
+                                                            Entities.back()));
+
   InitializationKind InitKind
     = InitializationKind::CreateDirect(Loc, Loc, Loc);
-  InitializationSequence Init(S, InitEntity, InitKind, &Ref, 1);
+  InitializationSequence Init(S, Entities.back(), InitKind, &Ref, 1);
   ExprResult Result(true);
-  if (!Init.Diagnose(S, InitEntity, InitKind, &Ref, 1))
-    Result = Init.Perform(S, InitEntity, InitKind, 
+  if (!Init.Diagnose(S, Entities.back(), InitKind, &Ref, 1))
+    Result = Init.Perform(S, Entities.back(), InitKind, 
                           MultiExprArg(S, &Ref, 1));
 
   // If this initialization requires any cleanups (e.g., due to a
@@ -9617,7 +9676,7 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   S.DiscardCleanupsInEvaluationContext();
   S.PopExpressionEvaluationContext();
   return Result;
-}                           
+}
 
 // Check if the variable needs to be captured; if so, try to perform
 // the capture.
