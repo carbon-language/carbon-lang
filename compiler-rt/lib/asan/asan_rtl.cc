@@ -465,8 +465,8 @@ void __asan_init() {
 
   {
     if (kLowShadowBeg != kLowShadowEnd) {
-      // mmap the low shadow plus one page.
-      ReserveShadowMemoryRange(kLowShadowBeg - kPageSize, kLowShadowEnd);
+      // mmap the low shadow plus at least one page.
+      ReserveShadowMemoryRange(kLowShadowBeg - kMmapGranularity, kLowShadowEnd);
     }
     // mmap the high shadow.
     ReserveShadowMemoryRange(kHighShadowBeg, kHighShadowEnd);

@@ -27,8 +27,12 @@
 #include <ctype.h>
 
 #ifndef _WIN32
-#include <pthread.h>
-#endif  // _WIN32
+# include <pthread.h>
+#else
+// FIXME: remove when we start intercepting on Windows. Currently it's needed to
+// define memset/memcpy intrinsics.
+# include <intrin.h>
+#endif
 
 #if defined(__APPLE__)
 // FIXME(samsonov): Gradually replace system headers with declarations of
@@ -558,6 +562,13 @@ void InitializeAsanInterceptors() {
   CHECK(INTERCEPT_FUNCTION(_longjmp));
   INTERCEPT_FUNCTION(__cxa_throw);
   CHECK(INTERCEPT_FUNCTION(pthread_create));
+
+#ifdef _WIN32
+  // FIXME: We don't intercept properly on Windows yet, so use the original
+  // functions for now.
+  REAL(memcpy) = memcpy;
+  REAL(memset) = memset;
+#endif
 
 #ifdef __APPLE__
   CHECK(INTERCEPT_FUNCTION(dispatch_async_f));
