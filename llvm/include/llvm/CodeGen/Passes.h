@@ -111,12 +111,19 @@ protected:
     return true;
   }
 
+  /// addMachineSSAOptimization - Add standard passes that optimize machine
+  /// instructions in SSA form.
+  virtual void addMachineSSAOptimization();
+
   /// addPreRegAlloc - This method may be implemented by targets that want to
   /// run passes immediately before register allocation. This should return
   /// true if -print-machineinstrs should print after these passes.
   virtual bool addPreRegAlloc() {
     return false;
   }
+
+  // addRegAlloc - Add standard passes related to register allocation.
+  virtual void addRegAlloc();
 
   /// addPostRegAlloc - This method may be implemented by targets that want
   /// to run passes after register allocation but before prolog-epilog
@@ -126,6 +133,9 @@ protected:
     return false;
   }
 
+  /// Add passes that optimize machine instructions after register allocation.
+  virtual void addMachineLateOptimization();
+
   /// addPreSched2 - This method may be implemented by targets that want to
   /// run passes after prolog-epilog insertion and before the second instruction
   /// scheduling pass.  This should return true if -print-machineinstrs should
@@ -133,6 +143,9 @@ protected:
   virtual bool addPreSched2() {
     return false;
   }
+
+  /// Add standard basic block placement passes.
+  virtual void addBlockPlacement();
 
   /// addPreEmitPass - This pass may be implemented by targets that want to run
   /// passes immediately before machine code is emitted.  This should return
