@@ -264,8 +264,7 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
   OS << Num << ",\t" << MinOperands << ",\t"
      << Inst.Operands.NumDefs << ",\t"
      << getItinClassNumber(Inst.TheDef) << ",\t"
-     << Inst.TheDef->getValueAsInt("Size") << ",\t\""
-     << Inst.TheDef->getName() << "\", 0";
+     << Inst.TheDef->getValueAsInt("Size") << ",\t0";
 
   // Emit all of the target indepedent flags...
   if (Inst.isPseudo)           OS << "|(1<<MCID::Pseudo)";
@@ -329,6 +328,8 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     OS << "0";
   else
     OS << "OperandInfo" << OpInfo.find(OperandInfo)->second;
+
+  OS << ", \"" << Inst.TheDef->getName() << '"';
 
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
 }

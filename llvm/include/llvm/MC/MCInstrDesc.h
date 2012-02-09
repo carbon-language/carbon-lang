@@ -137,12 +137,12 @@ public:
   unsigned short  NumDefs;       // Num of args that are definitions
   unsigned short  SchedClass;    // enum identifying instr sched class
   unsigned short  Size;          // Number of bytes in encoding.
-  const char *    Name;          // Name of the instruction record in td file
   unsigned        Flags;         // Flags identifying machine instr class
   uint64_t        TSFlags;       // Target Specific Flag values
   const unsigned *ImplicitUses;  // Registers implicitly read by this instr
   const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
   const MCOperandInfo *OpInfo;   // 'NumOperands' entries about operands
+  const char     *Name;          // Name of the instruction record in td file
 
   /// getOperandConstraint - Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
