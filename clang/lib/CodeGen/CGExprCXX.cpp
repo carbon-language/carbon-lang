@@ -1784,7 +1784,8 @@ namespace {
 }
 
 void CodeGenFunction::EmitLambdaExpr(const LambdaExpr *E, AggValueSlot Slot) {
-  EHScopeStack::stable_iterator CleanupDepth = EHStack.stable_begin();
+  RunCleanupsScope Scope(*this);
+
   CXXRecordDecl::field_iterator CurField = E->getLambdaClass()->field_begin();
   for (LambdaExpr::capture_init_iterator i = E->capture_init_begin(),
                                          e = E->capture_init_end();
@@ -1809,5 +1810,4 @@ void CodeGenFunction::EmitLambdaExpr(const LambdaExpr *E, AggValueSlot Slot) {
                                                 RD->getDestructor(),
                                                 Slot.getAddr());
   }
-  PopCleanupBlocks(CleanupDepth);
 }
