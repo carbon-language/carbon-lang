@@ -815,7 +815,11 @@ static void CheckConstexprCtorInitializer(Sema &SemaRef,
                                           bool &Diagnosed) {
   if (Field->isUnnamedBitfield())
     return;
-  
+
+  if (Field->isAnonymousStructOrUnion() &&
+      Field->getType()->getAsCXXRecordDecl()->isEmpty())
+    return;
+
   if (!Inits.count(Field)) {
     if (!Diagnosed) {
       SemaRef.Diag(Dcl->getLocation(), diag::err_constexpr_ctor_missing_init);
@@ -901,11 +905,14 @@ bool Sema::CheckConstexprFunctionBody(const FunctionDecl *Dcl, Stmt *Body,
   if (const CXXConstructorDecl *Constructor
         = dyn_cast<CXXConstructorDecl>(Dcl)) {
     const CXXRecordDecl *RD = Constructor->getParent();
-    // - every non-static data member and base class sub-object shall be
-    //   initialized;
+    // DR1359:
+    // - every non-variant non-static data member and base class sub-object
+    //   shall be initialized;
+    // - if the class is a non-empty union, or for each non-empty anonymous
+    //   union member of a non-union class, exactly one non-static data member
+    //   shall be initialized;
     if (RD->isUnion()) {
-      // DR1359: Exactly one member of a union shall be initialized.
-      if (Constructor->getNumCtorInitializers() == 0) {
+      if (Constructor->getNumCtorInitializers() == 0 && !RD->isEmpty()) {
         Diag(Dcl->getLocation(), diag::err_constexpr_union_ctor_no_init);
         return false;
       }

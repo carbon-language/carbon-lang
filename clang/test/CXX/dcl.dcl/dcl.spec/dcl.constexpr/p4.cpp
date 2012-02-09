@@ -151,6 +151,16 @@ struct AnonMembers {
   constexpr AnonMembers(int(&)[6]) {} // expected-error {{constexpr constructor must initialize all members}}
 };
 
+union Empty {
+  constexpr Empty() {} // ok
+} constexpr empty1;
+
+struct EmptyVariant {
+  union {};
+  struct {};
+  constexpr EmptyVariant() {} // ok
+} constexpr empty2;
+
 template<typename T> using Int = int;
 template<typename T>
 struct TemplateInit {
