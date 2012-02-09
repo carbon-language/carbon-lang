@@ -24,7 +24,7 @@ class CommandLineCompletionTestCase(TestBase):
         """Test that 'stty -a' displays the same output before and after running the lldb command."""
 
         # The expect prompt.
-        expect_prompt = "expect.*> "
+        expect_prompt = "expect[0-9.]+> "
         # The default lldb prompt.
         lldb_prompt = "(lldb) "
 
