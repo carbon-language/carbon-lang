@@ -131,14 +131,13 @@ static InstrUID decode(OpcodeType type,
     debug("Corrupt table!  Unknown modrm_type");
     return 0;
   case MODRM_ONEENTRY:
-    return dec->instructionIDs[0];
+    return modRMTable[dec->instructionIDs];
   case MODRM_SPLITRM:
     if (modFromModRM(modRM) == 0x3)
-      return dec->instructionIDs[1];
-    else
-      return dec->instructionIDs[0];
+      return modRMTable[dec->instructionIDs+1];
+    return modRMTable[dec->instructionIDs];
   case MODRM_FULL:
-    return dec->instructionIDs[modRM];
+    return modRMTable[dec->instructionIDs+modRM];
   }
 }
 

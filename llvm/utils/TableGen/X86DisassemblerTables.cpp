@@ -196,8 +196,7 @@ void DisassemblerTables::emitOneID(raw_ostream &o,
 /// @param i        - The indentation level for that output stream.
 static void emitEmptyTable(raw_ostream &o, uint32_t &i)
 {
-  o.indent(i * 2) << "static const InstrUID modRMEmptyTable[1] = { 0 };\n";
-  o << "\n";
+  o.indent(i * 2) << "0x0, /* EmptyTable */\n";
 }
 
 /// getDecisionType - Determines whether a ModRM decision with 255 entries can
@@ -293,71 +292,67 @@ void DisassemblerTables::emitModRMDecision(raw_ostream &o1,
                                            ModRMDecision &decision)
   const {
   static uint64_t sTableNumber = 0;
-  uint64_t thisTableNumber = sTableNumber;
+  static uint64_t sEntryNumber = 1;
   ModRMDecisionType dt = getDecisionType(decision);
   uint16_t index;
-  
+
   if (dt == MODRM_ONEENTRY && decision.instructionIDs[0] == 0)
   {
     o2.indent(i2) << "{ /* ModRMDecision */" << "\n";
     i2++;
-    
+
     o2.indent(i2) << stringForDecisionType(dt) << "," << "\n";
-    o2.indent(i2) << "modRMEmptyTable";
-    
+    o2.indent(i2) << 0 << " /* EmptyTable */\n";
+
     i2--;
     o2.indent(i2) << "}";
     return;
   }
-    
-  o1.indent(i1) << "static const InstrUID modRMTable" << thisTableNumber;
-    
-  switch (dt) {
-    default:
-      llvm_unreachable("Unknown decision type");
-    case MODRM_ONEENTRY:
-      o1 << "[1]";
-      break;
-    case MODRM_SPLITRM:
-      o1 << "[2]";
-      break;
-    case MODRM_FULL:
-      o1 << "[256]";
-      break;      
-  }
 
-  o1 << " = {" << "\n";
+  o1 << "/* Table" << sTableNumber << " */\n";
   i1++;
-    
+
   switch (dt) {
     default:
       llvm_unreachable("Unknown decision type");
     case MODRM_ONEENTRY:
-      emitOneID(o1, i1, decision.instructionIDs[0], false);
+      emitOneID(o1, i1, decision.instructionIDs[0], true);
       break;
     case MODRM_SPLITRM:
       emitOneID(o1, i1, decision.instructionIDs[0x00], true); // mod = 0b00
-      emitOneID(o1, i1, decision.instructionIDs[0xc0], false); // mod = 0b11
+      emitOneID(o1, i1, decision.instructionIDs[0xc0], true); // mod = 0b11
       break;
     case MODRM_FULL:
       for (index = 0; index < 256; ++index)
-        emitOneID(o1, i1, decision.instructionIDs[index], index < 255);
+        emitOneID(o1, i1, decision.instructionIDs[index], true);
       break;
   }
-    
+
   i1--;
-  o1.indent(i1) << "};" << "\n";
-  o1 << "\n";
-    
+
   o2.indent(i2) << "{ /* struct ModRMDecision */" << "\n";
   i2++;
-    
+
   o2.indent(i2) << stringForDecisionType(dt) << "," << "\n";
-  o2.indent(i2) << "modRMTable" << sTableNumber << "\n";
-    
+  o2.indent(i2) << sEntryNumber << " /* Table" << sTableNumber << " */\n";
+
   i2--;
   o2.indent(i2) << "}";
-    
+
+  switch (dt) {
+    default:
+      llvm_unreachable("Unknown decision type");
+    case MODRM_ONEENTRY:
+      sEntryNumber += 1;
+      break;
+    case MODRM_SPLITRM:
+      sEntryNumber += 2;
+      break;
+    case MODRM_FULL:
+      sEntryNumber += 256;
+      break;
+  }
+
   ++sTableNumber;
 }
 
@@ -598,11 +593,16 @@ void DisassemblerTables::emit(raw_ostream &o) const {
 
   emitContextTable(o, i2);
   o << "\n";
-  
+
+  o << "static const InstrUID modRMTable[] = {\n";
+  i1++;
   emitEmptyTable(o1, i1);
+  i1--;
   emitContextDecisions(o1, o2, i1, i2);
-  
+
   o << o1.str();
+  o << "  0x0\n";
+  o << "};\n";
   o << "\n";
   o << o2.str();
   o << "\n";
