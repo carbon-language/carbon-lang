@@ -512,7 +512,7 @@ private:
                 return false;
             }
             
-            ConstantArray *real_name = dyn_cast<ConstantArray>(metadata->getOperand(0));
+            ConstantDataArray *real_name = dyn_cast<ConstantDataArray>(metadata->getOperand(0));
             
             if (!real_name)
             {
@@ -528,11 +528,11 @@ private:
                 return false;
             }
             
-            if (log)
-                log->Printf("Found call to %s: %s\n", real_name->getAsString().c_str(), PrintValue(call_inst).c_str());
-            
             std::string name_str = real_name->getAsString();
             const char* name_cstr = name_str.c_str();
+            
+            if (log)
+                log->Printf("Found call to %s: %s\n", name_cstr, PrintValue(call_inst).c_str());
             
             if (name_str.find("objc_msgSend") == std::string::npos)
                 return true;
