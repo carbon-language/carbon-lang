@@ -147,6 +147,7 @@ public:
   void VisitCXXTypeidExpr(CXXTypeidExpr *E) { EmitAggLoadOfLValue(E); }
   void VisitMaterializeTemporaryExpr(MaterializeTemporaryExpr *E);
   void VisitOpaqueValueExpr(OpaqueValueExpr *E);
+  void VisitLambdaExpr(LambdaExpr *E) { EmitAggLoadOfLValue(E); }
 
   void VisitPseudoObjectExpr(PseudoObjectExpr *E) {
     if (E->isGLValue()) {
