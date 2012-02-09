@@ -36,7 +36,7 @@ class TargetRegisterClass {
 public:
   typedef const unsigned* iterator;
   typedef const unsigned* const_iterator;
-  typedef const EVT* vt_iterator;
+  typedef const MVT::SimpleValueType* vt_iterator;
   typedef const TargetRegisterClass* const * sc_iterator;
 private:
   virtual void anchor();
@@ -46,7 +46,8 @@ private:
   const sc_iterator SuperClasses;
   const sc_iterator SuperRegClasses;
 public:
-  TargetRegisterClass(const MCRegisterClass *MC, const EVT *vts,
+  TargetRegisterClass(const MCRegisterClass *MC,
+                      const MVT::SimpleValueType *vts,
                       const unsigned *subcm,
                       const TargetRegisterClass * const *supcs,
                       const TargetRegisterClass * const *superregcs)
@@ -110,7 +111,7 @@ public:
   ///
   bool hasType(EVT vt) const {
     for(int i = 0; VTs[i] != MVT::Other; ++i)
-      if (VTs[i] == vt)
+      if (EVT(VTs[i]) == vt)
         return true;
     return false;
   }
