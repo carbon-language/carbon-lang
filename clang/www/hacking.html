@@ -215,34 +215,49 @@
   the following:</p>
 
   <pre>
-  python (path to llvm)/llvm/utils/lit/lit.py -sv --no-progress-bar
- (path to llvm)/llvm/tools/clang/test
+  python (path to llvm)\llvm\utils\lit\lit.py -sv
+  --param=build_mode=Win32 --param=build_config=Debug
+  --param=clang_site_config=(build dir)\tools\clang\test\lit.site.cfg
+ (path to llvm)\llvm\tools\clang\test
 </pre>
 
   <p>For CMake builds e.g. on Windows with Visual Studio, you will need
   to specify your build configuration (Debug, Release, etc.) via
-  <tt>--param=build_config=(build config)</tt>.</p>
+  <tt>--param=build_config=(build config)</tt>.  You may also need to specify
+  the build mode (Win32, etc) via <tt>--param=build_mode=(build mode)</tt>.</p>
+
+  <p>Additionally, you will need to specify the lit site configuration which
+  lives in (build dir)\tools\clang\test, via
+  <tt>--param=clang_site_config=(build dir)\tools\clang\test\lit.site.cfg</tt>.
+  </p>
 
   <p>To run a single test:</p>
 
   <pre>
-  python (path to llvm)/llvm/utils/lit/lit.py -sv --no-progress-bar
- (path to llvm)/llvm/tools/clang/test/(dir)/(test)
+  python (path to llvm)\llvm\utils\lit\lit.py -sv
+  --param=build_mode=Win32 --param=build_config=Debug
+  --param=clang_site_config=(build dir)\tools\clang\test\lit.site.cfg
+  (path to llvm)\llvm\tools\clang\test\(dir)\(test)
 </pre>
 
   <p>For example:</p>
 
   <pre>
-  python C:/Tools/llvm/utils/lit/lit.py -sv --no-progress-bar
-  C:/Tools/llvm/tools/clang/test/Sema/wchar.c
+  python C:\Tool\llvm\utils\lit\lit.py -sv
+  --param=build_mode=Win32 --param=build_config=Debug
+  --param=clang_site_config=c:\Tools\build\tools\clang\test\lit.site.cfg
+  C:\Tools\llvm\tools\clang\test\Sema\wchar.c
 </pre>
 
   <p>The -sv option above tells the runner to show the test output if
   any tests failed, to help you determine the cause of failure.</p>
 
+  <p>You can also pass in the --no-progress-bar option if you wish to disable
+  progress indications while the tests are running.</p>
+
   <p>Your output might look something like this:</p>
 
-  <pre>lit.py: lit.cfg:152: note: using clang: 'C:/Tools/llvm/bin/Release\\clang.EXE'
+  <pre>lit.py: lit.cfg:152: note: using clang: 'C:\Tools\llvm\bin\Release\clang.EXE'
 -- Testing: Testing: 2534 tests, 4 threads --
 Testing: 0 .. 10.. 20.. 30.. 40.. 50.. 60.. 70.. 80.. 90..
 Testing Time: 81.52s
