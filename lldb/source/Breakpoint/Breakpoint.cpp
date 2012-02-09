@@ -524,6 +524,68 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
     }
 }
 
+void
+Breakpoint::GetResolverDescription (Stream *s)
+{
+    if (m_resolver_sp)
+        m_resolver_sp->GetDescription (s);
+}
+
+
+bool
+Breakpoint::GetMatchingFileLine (const ConstString &filename, uint32_t line_number, BreakpointLocationCollection &loc_coll)
+{
+    // TODO: To be correct, this method needs to fill the breakpoint location collection
+    //       with the location IDs which match the filename and line_number.
+    //
+
+    if (m_resolver_sp)
+    {
+        BreakpointResolverFileLine *resolverFileLine = dyn_cast<BreakpointResolverFileLine>(m_resolver_sp.get());
+        if (resolverFileLine &&
+            resolverFileLine->m_file_spec.GetFilename() == filename &&
+            resolverFileLine->m_line_number == line_number)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
+void
+Breakpoint::GetFilterDescription (Stream *s)
+{
+    m_filter_sp->GetDescription (s);
+}
+
+void
+Breakpoint::SendBreakpointChangedEvent (lldb::BreakpointEventType eventKind)
+{
+    if (!m_being_created
+        && !IsInternal() 
+        && GetTarget().EventTypeHasListeners(Target::eBroadcastBitBreakpointChanged))
+    {
+        BreakpointEventData *data = new Breakpoint::BreakpointEventData (eventKind, shared_from_this());
+            
+        GetTarget().BroadcastEvent (Target::eBroadcastBitBreakpointChanged, data);
+    }
+}
+
+void
+Breakpoint::SendBreakpointChangedEvent (BreakpointEventData *data)
+{
+
+    if (data == NULL)
+        return;
+        
+    if (!m_being_created
+        && !IsInternal() 
+        && GetTarget().EventTypeHasListeners(Target::eBroadcastBitBreakpointChanged))
+        GetTarget().BroadcastEvent (Target::eBroadcastBitBreakpointChanged, data);
+    else
+        delete data;
+}
+
 Breakpoint::BreakpointEventData::BreakpointEventData (BreakpointEventType sub_type, 
                                                       const BreakpointSP &new_breakpoint_sp) :
     EventData (),
@@ -624,67 +686,4 @@ Breakpoint::BreakpointEventData::GetBreakpointLocationAtIndexFromEvent (const ll
     }
 
     return bp_loc_sp;
-}
-
-
-void
-Breakpoint::GetResolverDescription (Stream *s)
-{
-    if (m_resolver_sp)
-        m_resolver_sp->GetDescription (s);
-}
-
-
-bool
-Breakpoint::GetMatchingFileLine (const ConstString &filename, uint32_t line_number, BreakpointLocationCollection &loc_coll)
-{
-    // TODO: To be correct, this method needs to fill the breakpoint location collection
-    //       with the location IDs which match the filename and line_number.
-    //
-
-    if (m_resolver_sp)
-    {
-        BreakpointResolverFileLine *resolverFileLine = dyn_cast<BreakpointResolverFileLine>(m_resolver_sp.get());
-        if (resolverFileLine &&
-            resolverFileLine->m_file_spec.GetFilename() == filename &&
-            resolverFileLine->m_line_number == line_number)
-        {
-            return true;
-        }
-    }
-    return false;
-}
-
-void
-Breakpoint::GetFilterDescription (Stream *s)
-{
-    m_filter_sp->GetDescription (s);
-}
-
-void
-Breakpoint::SendBreakpointChangedEvent (lldb::BreakpointEventType eventKind)
-{
-    if (!m_being_created
-        && !IsInternal() 
-        && GetTarget().EventTypeHasListeners(Target::eBroadcastBitBreakpointChanged))
-    {
-        BreakpointEventData *data = new Breakpoint::BreakpointEventData (eventKind, shared_from_this());
-            
-        GetTarget().BroadcastEvent (Target::eBroadcastBitBreakpointChanged, data);
-    }
-}
-
-void
-Breakpoint::SendBreakpointChangedEvent (BreakpointEventData *data)
-{
-
-    if (data == NULL)
-        return;
-        
-    if (!m_being_created
-        && !IsInternal() 
-        && GetTarget().EventTypeHasListeners(Target::eBroadcastBitBreakpointChanged))
-        GetTarget().BroadcastEvent (Target::eBroadcastBitBreakpointChanged, data);
-    else
-        delete data;
 }
