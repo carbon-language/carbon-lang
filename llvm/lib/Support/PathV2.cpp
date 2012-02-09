@@ -31,8 +31,6 @@ namespace {
   const char  prefered_separator = '/';
 #endif
 
-  const llvm::error_code success;
-
   StringRef find_first_component(StringRef path) {
     // Look for this first component in the following order.
     // * empty (in this case we return an empty string)
@@ -607,7 +605,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
 
   // Already absolute.
   if (rootName && rootDirectory)
-    return success;
+    return error_code::success();
 
   // All of the following conditions will need the current directory.
   SmallString<128> current_dir;
@@ -619,7 +617,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
     path::append(current_dir, p);
     // Set path to the result.
     path.swap(current_dir);
-    return success;
+    return error_code::success();
   }
 
   if (!rootName && rootDirectory) {
@@ -628,7 +626,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
     path::append(curDirRootName, p);
     // Set path to the result.
     path.swap(curDirRootName);
-    return success;
+    return error_code::success();
   }
 
   if (rootName && !rootDirectory) {
@@ -640,7 +638,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
     SmallString<128> res;
     path::append(res, pRootName, bRootDirectory, bRelativePath, pRelativePath);
     path.swap(res);
-    return success;
+    return error_code::success();
   }
 
   llvm_unreachable("All rootName and rootDirectory combinations should have "
@@ -679,7 +677,7 @@ error_code is_directory(const Twine &path, bool &result) {
   if (error_code ec = status(path, st))
     return ec;
   result = is_directory(st);
-  return success;
+  return error_code::success();
 }
 
 bool is_regular_file(file_status status) {
@@ -691,7 +689,7 @@ error_code is_regular_file(const Twine &path, bool &result) {
   if (error_code ec = status(path, st))
     return ec;
   result = is_regular_file(st);
-  return success;
+  return error_code::success();
 }
 
 bool is_symlink(file_status status) {
@@ -703,7 +701,7 @@ error_code is_symlink(const Twine &path, bool &result) {
   if (error_code ec = status(path, st))
     return ec;
   result = is_symlink(st);
-  return success;
+  return error_code::success();
 }
 
 bool is_other(file_status status) {
@@ -730,13 +728,13 @@ error_code has_magic(const Twine &path, const Twine &magic, bool &result) {
     if (ec == errc::value_too_large) {
       // Magic.size() > file_size(Path).
       result = false;
-      return success;
+      return error_code::success();
     }
     return ec;
   }
 
   result = Magic == Buffer;
-  return success;
+  return error_code::success();
 }
 
 /// @brief Identify the magic in magic.
@@ -857,7 +855,7 @@ error_code identify_magic(const Twine &path, file_magic &result) {
     return ec;
 
   result = identify_magic(Magic);
-  return success;
+  return error_code::success();
 }
 
 namespace {
@@ -884,7 +882,7 @@ error_code remove_all_r(StringRef path, file_type ft, uint32_t &count) {
     ++count;
   }
 
-  return success;
+  return error_code::success();
 }
 } // end unnamed namespace
 

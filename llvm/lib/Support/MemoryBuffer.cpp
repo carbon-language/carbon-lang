@@ -36,8 +36,6 @@
 #include <fcntl.h>
 using namespace llvm;
 
-namespace { const llvm::error_code success; }
-
 //===----------------------------------------------------------------------===//
 // MemoryBuffer implementation itself.
 //===----------------------------------------------------------------------===//
@@ -306,7 +304,7 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
                                                       RealMapOffset)) {
       result.reset(GetNamedBuffer<MemoryBufferMMapFile>(
           StringRef(Pages + Delta, MapSize), Filename, RequiresNullTerminator));
-      return success;
+      return error_code::success();
     }
   }
 
@@ -344,7 +342,7 @@ error_code MemoryBuffer::getOpenFile(int FD, const char *Filename,
   }
 
   result.swap(SB);
-  return success;
+  return error_code::success();
 }
 
 //===----------------------------------------------------------------------===//
@@ -373,5 +371,5 @@ error_code MemoryBuffer::getSTDIN(OwningPtr<MemoryBuffer> &result) {
   } while (ReadBytes != 0);
 
   result.reset(getMemBufferCopy(Buffer, "<stdin>"));
-  return success;
+  return error_code::success();
 }

@@ -87,7 +87,7 @@ namespace {
     result.clear();
     StringRef d(dir);
     result.append(d.begin(), d.end());
-    return success;
+    return error_code::success();
   }
 }
 
@@ -110,7 +110,7 @@ error_code current_path(SmallVectorImpl<char> &result) {
   }
 
   result.set_size(strlen(result.data()));
-  return success;
+  return error_code::success();
 }
 
 error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
@@ -169,7 +169,7 @@ error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
   if (sz_read < 0)
     return error_code(errno, system_category());
 
-  return success;
+  return error_code::success();
 }
 
 error_code create_directory(const Twine &path, bool &existed) {
@@ -183,7 +183,7 @@ error_code create_directory(const Twine &path, bool &existed) {
   } else
     existed = false;
 
-  return success;
+  return error_code::success();
 }
 
 error_code create_hard_link(const Twine &to, const Twine &from) {
@@ -196,7 +196,7 @@ error_code create_hard_link(const Twine &to, const Twine &from) {
   if (::link(t.begin(), f.begin()) == -1)
     return error_code(errno, system_category());
 
-  return success;
+  return error_code::success();
 }
 
 error_code create_symlink(const Twine &to, const Twine &from) {
@@ -209,7 +209,7 @@ error_code create_symlink(const Twine &to, const Twine &from) {
   if (::symlink(t.begin(), f.begin()) == -1)
     return error_code(errno, system_category());
 
-  return success;
+  return error_code::success();
 }
 
 error_code remove(const Twine &path, bool &existed) {
@@ -223,7 +223,7 @@ error_code remove(const Twine &path, bool &existed) {
   } else
     existed = true;
 
-  return success;
+  return error_code::success();
 }
 
 error_code rename(const Twine &from, const Twine &to) {
@@ -245,7 +245,7 @@ error_code rename(const Twine &from, const Twine &to) {
       return error_code(errno, system_category());
   }
 
-  return success;
+  return error_code::success();
 }
 
 error_code resize_file(const Twine &path, uint64_t size) {
@@ -255,7 +255,7 @@ error_code resize_file(const Twine &path, uint64_t size) {
   if (::truncate(p.begin(), size) == -1)
     return error_code(errno, system_category());
 
-  return success;
+  return error_code::success();
 }
 
 error_code exists(const Twine &path, bool &result) {
@@ -270,7 +270,7 @@ error_code exists(const Twine &path, bool &result) {
   } else
     result = true;
 
-  return success;
+  return error_code::success();
 }
 
 bool equivalent(file_status A, file_status B) {
@@ -284,7 +284,7 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
   if (error_code ec = status(A, fsA)) return ec;
   if (error_code ec = status(B, fsB)) return ec;
   result = equivalent(fsA, fsB);
-  return success;
+  return error_code::success();
 }
 
 error_code file_size(const Twine &path, uint64_t &result) {
@@ -298,7 +298,7 @@ error_code file_size(const Twine &path, uint64_t &result) {
     return make_error_code(errc::operation_not_permitted);
 
   result = status.st_size;
-  return success;
+  return error_code::success();
 }
 
 error_code status(const Twine &path, file_status &result) {
@@ -333,7 +333,7 @@ error_code status(const Twine &path, file_status &result) {
   result.st_dev = status.st_dev;
   result.st_ino = status.st_ino;
 
-  return success;
+  return error_code::success();
 }
 
 error_code unique_file(const Twine &model, int &result_fd,
@@ -428,7 +428,7 @@ rety_open_create:
   result_path.append(d.begin(), d.end());
 
   result_fd = RandomFD;
-  return success;
+  return error_code::success();
 }
 
 error_code detail::directory_iterator_construct(detail::DirIterState &it,
@@ -450,7 +450,7 @@ error_code detail::directory_iterator_destruct(detail::DirIterState &it) {
     ::closedir(reinterpret_cast<DIR *>(it.IterationHandle));
   it.IterationHandle = 0;
   it.CurrentEntry = directory_entry();
-  return success;
+  return error_code::success();
 }
 
 error_code detail::directory_iterator_increment(detail::DirIterState &it) {
@@ -467,7 +467,7 @@ error_code detail::directory_iterator_increment(detail::DirIterState &it) {
   } else
     return directory_iterator_destruct(it);
 
-  return success;
+  return error_code::success();
 }
 
 error_code get_magic(const Twine &path, uint32_t len,
@@ -498,7 +498,7 @@ error_code get_magic(const Twine &path, uint32_t len,
   }
   std::fclose(file);
   result.set_size(len);
-  return success;
+  return error_code::success();
 }
 
 } // end namespace fs

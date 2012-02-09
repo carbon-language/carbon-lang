@@ -62,7 +62,7 @@ namespace {
     utf16.push_back(0);
     utf16.pop_back();
 
-    return success;
+    return error_code::success();
   }
 
   error_code UTF16ToUTF8(const wchar_t *utf16, size_t utf16_len,
@@ -92,7 +92,7 @@ namespace {
     utf8.push_back(0);
     utf8.pop_back();
 
-    return success;
+    return error_code::success();
   }
 
   error_code TempDir(SmallVectorImpl<wchar_t> &result) {
@@ -108,7 +108,7 @@ namespace {
     }
 
     result.set_size(len);
-    return success;
+    return error_code::success();
   }
 
   bool is_separator(const wchar_t value) {
@@ -167,7 +167,7 @@ retry_cur_dir:
   if (len == 0)
     return windows_error(::GetLastError());
 
-  return success;
+  return error_code::success();
 }
 
 error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
@@ -190,7 +190,7 @@ error_code copy_file(const Twine &from, const Twine &to, copy_option copt) {
   if (res == 0)
     return windows_error(::GetLastError());
 
-  return success;
+  return error_code::success();
 }
 
 error_code create_directory(const Twine &path, bool &existed) {
@@ -210,7 +210,7 @@ error_code create_directory(const Twine &path, bool &existed) {
   } else
     existed = false;
 
-  return success;
+  return error_code::success();
 }
 
 error_code create_hard_link(const Twine &to, const Twine &from) {
@@ -229,7 +229,7 @@ error_code create_hard_link(const Twine &to, const Twine &from) {
   if (!::CreateHardLinkW(wide_from.begin(), wide_to.begin(), NULL))
     return windows_error(::GetLastError());
 
-  return success;
+  return error_code::success();
 }
 
 error_code create_symlink(const Twine &to, const Twine &from) {
@@ -252,7 +252,7 @@ error_code create_symlink(const Twine &to, const Twine &from) {
   if (!create_symbolic_link_api(wide_from.begin(), wide_to.begin(), 0))
     return windows_error(::GetLastError());
 
-  return success;
+  return error_code::success();
 }
 
 error_code remove(const Twine &path, bool &existed) {
@@ -285,7 +285,7 @@ error_code remove(const Twine &path, bool &existed) {
       existed = true;
   }
 
-  return success;
+  return error_code::success();
 }
 
 error_code rename(const Twine &from, const Twine &to) {
@@ -305,7 +305,7 @@ error_code rename(const Twine &from, const Twine &to) {
                      MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING))
     return windows_error(::GetLastError());
 
-  return success;
+  return error_code::success();
 }
 
 error_code resize_file(const Twine &path, uint64_t size) {
@@ -347,7 +347,7 @@ error_code exists(const Twine &path, bool &result) {
     result = false;
   } else
     result = true;
-  return success;
+  return error_code::success();
 }
 
 bool equivalent(file_status A, file_status B) {
@@ -366,7 +366,7 @@ error_code equivalent(const Twine &A, const Twine &B, bool &result) {
   if (error_code ec = status(A, fsA)) return ec;
   if (error_code ec = status(B, fsB)) return ec;
   result = equivalent(fsA, fsB);
-  return success;
+  return error_code::success();
 }
 
 error_code file_size(const Twine &path, uint64_t &result) {
@@ -387,7 +387,7 @@ error_code file_size(const Twine &path, uint64_t &result) {
     (uint64_t(FileData.nFileSizeHigh) << (sizeof(FileData.nFileSizeLow) * 8))
     + FileData.nFileSizeLow;
 
-  return success;
+  return error_code::success();
 }
 
 static bool isReservedName(StringRef path) {
@@ -420,7 +420,7 @@ error_code status(const Twine &path, file_status &result) {
   StringRef path8 = path.toStringRef(path_storage);
   if (isReservedName(path8)) {
     result = file_status(file_type::character_file);
-    return success;
+    return error_code::success();
   }
 
   if (error_code ec = UTF8ToUTF16(path8, path_utf16))
@@ -470,7 +470,7 @@ error_code status(const Twine &path, file_status &result) {
     result.VolumeSerialNumber = Info.dwVolumeSerialNumber;
   }
 
-  return success;
+  return error_code::success();
 
 handle_status_error:
   error_code ec = windows_error(::GetLastError());
@@ -484,7 +484,7 @@ handle_status_error:
     return ec;
   }
 
-  return success;
+  return error_code::success();
 }
 
 error_code unique_file(const Twine &model, int &result_fd,
@@ -611,7 +611,7 @@ retry_create_file:
   }
 
   result_fd = fd;
-  return success;
+  return error_code::success();
 }
 
 error_code get_magic(const Twine &path, uint32_t len,
@@ -653,7 +653,7 @@ error_code get_magic(const Twine &path, uint32_t len,
   }
 
   result.set_size(len);
-  return success;
+  return error_code::success();
 }
 
 error_code detail::directory_iterator_construct(detail::DirIterState &it,
@@ -705,7 +705,7 @@ error_code detail::directory_iterator_construct(detail::DirIterState &it,
   path::append(directory_entry_path, directory_entry_name_utf8.str());
   it.CurrentEntry = directory_entry(directory_entry_path.str());
 
-  return success;
+  return error_code::success();
 }
 
 error_code detail::directory_iterator_destruct(detail::DirIterState &it) {
@@ -714,7 +714,7 @@ error_code detail::directory_iterator_destruct(detail::DirIterState &it) {
     ScopedFindHandle close(HANDLE(it.IterationHandle));
   it.IterationHandle = 0;
   it.CurrentEntry = directory_entry();
-  return success;
+  return error_code::success();
 }
 
 error_code detail::directory_iterator_increment(detail::DirIterState &it) {
@@ -740,7 +740,7 @@ error_code detail::directory_iterator_increment(detail::DirIterState &it) {
     return ec;
 
   it.CurrentEntry.replace_filename(Twine(directory_entry_path_utf8));
-  return success;
+  return error_code::success();
 }
 
 } // end namespace fs

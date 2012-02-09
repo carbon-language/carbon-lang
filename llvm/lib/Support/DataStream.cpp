@@ -67,7 +67,7 @@ public:
     if (Filename == "-") {
       Fd = 0;
       sys::Program::ChangeStdinToBinary();
-      return error_code();
+      return error_code::success();
     }
   
     int OpenFlags = O_RDONLY;
@@ -77,7 +77,7 @@ public:
     Fd = ::open(Filename.c_str(), OpenFlags);
     if (Fd == -1)
       return error_code(errno, posix_category());
-    return error_code();
+    return error_code::success();
   }
 };
 
