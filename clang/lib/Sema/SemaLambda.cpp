@@ -351,7 +351,9 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
     // C++ [expr.prim.lambda]p7:
     //   The lambda-expression's compound-statement yields the
     //   function-body (8.4) of the function call operator [...].
-    ActOnFinishFunctionBody(LSI->CallOperator, Body, /*IsInstantation=*/false);
+    CXXMethodDecl *CallOperator = LSI->CallOperator;
+    ActOnFinishFunctionBody(CallOperator, Body, /*IsInstantation=*/false);
+    CallOperator->setLexicalDeclContext(Class);
   }
 
   if (LambdaExprNeedsCleanups)
