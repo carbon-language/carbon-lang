@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-#ifdef VIRTUAL
+#ifdef DO_VIRTUAL_INHERITANCE
 #define VIRTUAL virtual
 #else
 #define VIRTUAL 
