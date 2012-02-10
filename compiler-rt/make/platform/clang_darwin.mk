@@ -13,14 +13,9 @@ CheckArches = \
     result=""; \
     for arch in $(1); do \
       if $(CC) -arch $$arch -c \
-	  -integrated-as \
 	  $(ProjSrcRoot)/make/platform/clang_darwin_test_input.c \
-	  -isysroot $(ProjSrcRoot)/SDKs/darwin \
 	  -o /dev/null > /dev/null 2> /dev/null; then \
         result="$$result$$arch "; \
-      else \
-	printf 1>&2 \
-	  "warning: clang_darwin.mk: dropping arch '$$arch' from lib '$(2)'\n"; \
       fi; \
     done; \
     echo $$result)
@@ -36,40 +31,40 @@ UniversalArchs :=
 # still be referenced from Darwin system headers. This symbol is only ever
 # needed on i386.
 Configs += eprintf
-UniversalArchs.eprintf := $(call CheckArches,i386,eprintf)
+UniversalArchs.eprintf := $(call CheckArches,i386)
 
 # Configuration for targetting 10.4. We need a few functions missing from
 # libgcc_s.10.4.dylib. We only build x86 slices since clang doesn't really
 # support targetting PowerPC.
 Configs += 10.4
-UniversalArchs.10.4 := $(call CheckArches,i386 x86_64,10.4)
+UniversalArchs.10.4 := $(call CheckArches,i386 x86_64)
 
 # Configuration for targetting iOS, for some ARMv6 functions, which must be
 # in the same linkage unit, and for a couple of other functions that didn't
 # make it into libSystem.
 Configs += ios
-UniversalArchs.ios := $(call CheckArches,i386 x86_64 armv6 armv7,ios)
+UniversalArchs.ios := $(call CheckArches,i386 x86_64 armv6 armv7)
 
 # Configuration for targetting OSX. These functions may not be in libSystem
 # so we should provide our own.
 Configs += osx
-UniversalArchs.osx := $(call CheckArches,i386 x86_64,osx)
+UniversalArchs.osx := $(call CheckArches,i386 x86_64)
 
 # Configuration for use with kernel/kexts.
 Configs += cc_kext
-UniversalArchs.cc_kext := $(call CheckArches,armv6 armv7 i386 x86_64,cc_kext)
+UniversalArchs.cc_kext := $(call CheckArches,armv6 armv7 i386 x86_64)
 
 # Configurations which define the profiling support functions.
 Configs += profile_osx
-UniversalArchs.profile_osx := $(call CheckArches,i386 x86_64,profile_osx)
+UniversalArchs.profile_osx := $(call CheckArches,i386 x86_64)
 Configs += profile_ios
-UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv6 armv7,profile_ios)
+UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv6 armv7)
 
 # Configurations which define the ASAN support functions.
 #
 # Note that ASAN doesn't appear to currently support i386.
 Configs += asan_osx
-UniversalArchs.asan_osx := $(call CheckArches,i386 x86_64,asan_osx)
+UniversalArchs.asan_osx := $(call CheckArches,i386 x86_64)
 
 # If RC_SUPPORTED_ARCHS is defined, treat it as a list of the architectures we
 # are intended to support and limit what we try to build to that.
