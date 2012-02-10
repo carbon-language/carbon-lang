@@ -66,21 +66,13 @@ std::string ARM_MC::ParseARMTriple(StringRef TT) {
         // v7a: FeatureNEON, FeatureDB, FeatureDSPThumb2, FeatureT2XtPk
         ARMArchFeature = "+v7,+neon,+db,+t2dsp,+t2xtpk";
     } else if (SubVer == '6') {
-      Triple TheTriple(TT);
-      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2') {
+      if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == '2')
         ARMArchFeature = "+v6t2";
-        // On darwin, v6 implies VFP.
-        if (TheTriple.isOSDarwin())
-          ARMArchFeature += ",+vfp2";
-      } else if (Len >= Idx+2 && TT[Idx+1] == 'm')
+      else if (Len >= Idx+2 && TT[Idx+1] == 'm')
         // v6m: FeatureNoARM, FeatureMClass
         ARMArchFeature = "+v6t2,+noarm,+mclass";
-      else {
+      else
         ARMArchFeature = "+v6";
-        // On darwin, v6 implies VFP.
-        if (TheTriple.isOSDarwin())
-          ARMArchFeature += ",+vfp2";
-      }
     } else if (SubVer == '5') {
       if (Len >= Idx+3 && TT[Idx+1] == 't' && TT[Idx+2] == 'e')
         ARMArchFeature = "+v5te";
