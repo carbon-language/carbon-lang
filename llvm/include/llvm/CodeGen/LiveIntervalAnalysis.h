@@ -355,7 +355,7 @@ namespace llvm {
     /// handleLiveInRegister - Create interval for a livein register.
     void handleLiveInRegister(MachineBasicBlock* mbb,
                               SlotIndex MIIdx,
-                              LiveInterval &interval, bool isAlias = false);
+                              LiveInterval &interval);
 
     /// getReMatImplicitUse - If the remat definition MI has one (for now, we
     /// only allow one) virtual register operand, then its uses are implicitly

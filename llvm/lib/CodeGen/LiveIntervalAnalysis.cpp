@@ -455,7 +455,7 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
 
 void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
                                          SlotIndex MIIdx,
-                                         LiveInterval &interval, bool isAlias) {
+                                         LiveInterval &interval) {
   DEBUG(dbgs() << "\t\tlivein register: " << PrintReg(interval.reg, tri_));
 
   // Look for kills, if it reaches a def before it's killed, then it shouldn't
@@ -505,13 +505,8 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
 
   // Live-in register might not be used at all.
   if (!SeenDefUse) {
-    if (isAlias) {
-      DEBUG(dbgs() << " dead");
-      end = MIIdx.getDeadSlot();
-    } else {
-      DEBUG(dbgs() << " live through");
-      end = getMBBEndIdx(MBB);
-    }
+    DEBUG(dbgs() << " live through");
+    end = getMBBEndIdx(MBB);
   }
 
   SlotIndex defIdx = getMBBStartIdx(MBB);
