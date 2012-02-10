@@ -89,7 +89,7 @@ void MultiplexASTDeserializationListener::MacroDefinitionRead(
 class MultiplexASTMutationListener : public ASTMutationListener {
 public:
   // Does NOT take ownership of the elements in L.
-  MultiplexASTMutationListener(const std::vector<ASTMutationListener*>& L);
+  MultiplexASTMutationListener(ArrayRef<ASTMutationListener*> L);
   virtual void CompletedTagDefinition(const TagDecl *D);
   virtual void AddedVisibleDecl(const DeclContext *DC, const Decl *D);
   virtual void AddedCXXImplicitMember(const CXXRecordDecl *RD, const Decl *D);
@@ -109,8 +109,8 @@ private:
 };
 
 MultiplexASTMutationListener::MultiplexASTMutationListener(
-    const std::vector<ASTMutationListener*>& L)
-    : Listeners(L) {
+    ArrayRef<ASTMutationListener*> L)
+    : Listeners(L.begin(), L.end()) {
 }
 
 void MultiplexASTMutationListener::CompletedTagDefinition(const TagDecl *D) {
