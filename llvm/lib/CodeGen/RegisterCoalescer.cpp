@@ -193,7 +193,7 @@ namespace {
   };
 } /// end anonymous namespace
 
-char &llvm::RegisterCoalescerPassID = RegisterCoalescer::ID;
+char &llvm::RegisterCoalescerID = RegisterCoalescer::ID;
 
 INITIALIZE_PASS_BEGIN(RegisterCoalescer, "simple-register-coalescing",
                       "Simple Register Coalescing", false, false)
@@ -201,9 +201,6 @@ INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
 INITIALIZE_PASS_DEPENDENCY(LiveDebugVariables)
 INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
-INITIALIZE_PASS_DEPENDENCY(StrongPHIElimination)
-INITIALIZE_PASS_DEPENDENCY(PHIElimination)
-INITIALIZE_PASS_DEPENDENCY(TwoAddressInstructionPass)
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_END(RegisterCoalescer, "simple-register-coalescing",
                     "Simple Register Coalescing", false, false)
@@ -375,9 +372,6 @@ void RegisterCoalescer::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addRequired<MachineLoopInfo>();
   AU.addPreserved<MachineLoopInfo>();
   AU.addPreservedID(MachineDominatorsID);
-  AU.addPreservedID(StrongPHIEliminationID);
-  AU.addPreservedID(PHIEliminationID);
-  AU.addPreservedID(TwoAddressInstructionPassID);
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
@@ -527,7 +521,7 @@ bool RegisterCoalescer::AdjustCopiesBackFrom(const CoalescerPair &CP,
   if (UIdx != -1) {
     ValLREndInst->getOperand(UIdx).setIsKill(false);
   }
-  
+
   // Rewrite the copy. If the copy instruction was killing the destination
   // register before the merge, find the last use and trim the live range. That
   // will also add the isKill marker.

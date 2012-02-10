@@ -69,8 +69,6 @@ INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
 INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
 INITIALIZE_PASS_DEPENDENCY(LiveDebugVariables)
-INITIALIZE_PASS_DEPENDENCY(StrongPHIElimination)
-INITIALIZE_PASS_DEPENDENCY(RegisterCoalescer)
 INITIALIZE_PASS_END(MachineScheduler, "misched",
                     "Machine Instruction Scheduler", false, false)
 
@@ -91,12 +89,6 @@ void MachineScheduler::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveIntervals>();
   AU.addRequired<LiveDebugVariables>();
   AU.addPreserved<LiveDebugVariables>();
-  if (StrongPHIElim) {
-    AU.addRequiredID(StrongPHIEliminationID);
-    AU.addPreservedID(StrongPHIEliminationID);
-  }
-  AU.addRequiredID(RegisterCoalescerPassID);
-  AU.addPreservedID(RegisterCoalescerPassID);
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 

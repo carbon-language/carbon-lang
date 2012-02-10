@@ -22,8 +22,6 @@ using namespace llvm;
 //
 
 namespace llvm {
-  bool StrongPHIElim;
-  bool EnableMachineSched;
   bool HasDivModLibcall;
   bool AsmVerbosityDefault(false);
 }

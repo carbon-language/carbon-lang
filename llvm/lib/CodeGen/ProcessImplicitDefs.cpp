@@ -26,6 +26,8 @@
 using namespace llvm;
 
 char ProcessImplicitDefs::ID = 0;
+char &llvm::ProcessImplicitDefsID = ProcessImplicitDefs::ID;
+
 INITIALIZE_PASS_BEGIN(ProcessImplicitDefs, "processimpdefs",
                 "Process Implicit Definitions", false, false)
 INITIALIZE_PASS_DEPENDENCY(LiveVariables)
@@ -36,7 +38,6 @@ void ProcessImplicitDefs::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.setPreservesCFG();
   AU.addPreserved<AliasAnalysis>();
   AU.addPreserved<LiveVariables>();
-  AU.addRequired<LiveVariables>();
   AU.addPreservedID(MachineLoopInfoID);
   AU.addPreservedID(MachineDominatorsID);
   AU.addPreservedID(TwoAddressInstructionPassID);
@@ -87,7 +88,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
   TII = fn.getTarget().getInstrInfo();
   TRI = fn.getTarget().getRegisterInfo();
   MRI = &fn.getRegInfo();
-  LV = &getAnalysis<LiveVariables>();
+  LV = getAnalysisIfAvailable<LiveVariables>();
 
   SmallSet<unsigned, 8> ImpDefRegs;
   SmallVector<MachineInstr*, 8> ImpDefMIs;
@@ -122,7 +123,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
       if (MI->isCopy() && MI->getOperand(0).readsReg()) {
         MachineOperand &MO = MI->getOperand(1);
         if (MO.isUndef() || ImpDefRegs.count(MO.getReg())) {
-          if (MO.isKill()) {
+          if (LV && MO.isKill()) {
             LiveVariables::VarInfo& vi = LV->getVarInfo(MO.getReg());
             vi.removeKill(MI);
           }
@@ -156,8 +157,10 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
             MI->RemoveOperand(j);
           if (isKill) {
             ImpDefRegs.erase(Reg);
-            LiveVariables::VarInfo& vi = LV->getVarInfo(Reg);
-            vi.removeKill(MI);
+            if (LV) {
+              LiveVariables::VarInfo& vi = LV->getVarInfo(Reg);
+              vi.removeKill(MI);
+            }
           }
           ChangedToImpDef = true;
           Changed = true;
@@ -266,7 +269,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
           }
 
           // Update LiveVariables varinfo if the instruction is a kill.
-          if (isKill) {
+          if (LV && isKill) {
             LiveVariables::VarInfo& vi = LV->getVarInfo(Reg);
             vi.removeKill(RMI);
           }

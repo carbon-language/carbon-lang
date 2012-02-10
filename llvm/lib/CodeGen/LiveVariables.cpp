@@ -33,6 +33,7 @@
 #include "llvm/Support/Debug.h"
 #include "llvm/Target/TargetInstrInfo.h"
 #include "llvm/Target/TargetMachine.h"
+#include "llvm/Support/ErrorHandling.h"
 #include "llvm/ADT/DepthFirstIterator.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallSet.h"
@@ -41,6 +42,7 @@
 using namespace llvm;
 
 char LiveVariables::ID = 0;
+char &llvm::LiveVariablesID = LiveVariables::ID;
 INITIALIZE_PASS_BEGIN(LiveVariables, "livevars",
                 "Live Variable Analysis", false, false)
 INITIALIZE_PASS_DEPENDENCY(UnreachableMachineBlockElim)
@@ -510,6 +512,12 @@ bool LiveVariables::runOnMachineFunction(MachineFunction &mf) {
   std::fill(PhysRegDef,  PhysRegDef  + NumRegs, (MachineInstr*)0);
   std::fill(PhysRegUse,  PhysRegUse  + NumRegs, (MachineInstr*)0);
   PHIJoins.clear();
+
+  // FIXME: LiveIntervals will be updated to remove its dependence on
+  // LiveVariables to improve compilation time and eliminate bizarre pass
+  // dependencies. Until then, we can't change much in -O0.
+  if (!MRI->isSSA())
+    report_fatal_error("regalloc=... not currently supported with -O0");
 
   analyzePHINodes(mf);
 

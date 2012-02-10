@@ -49,10 +49,7 @@ namespace {
   public:
     static char ID;
     RAFast() : MachineFunctionPass(ID), StackSlotForVirtReg(-1),
-               isBulkSpilling(false) {
-      initializePHIEliminationPass(*PassRegistry::getPassRegistry());
-      initializeTwoAddressInstructionPassPass(*PassRegistry::getPassRegistry());
-    }
+               isBulkSpilling(false) {}
   private:
     const TargetMachine *TM;
     MachineFunction *MF;
@@ -137,8 +134,6 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
-      AU.addRequiredID(PHIEliminationID);
-      AU.addRequiredID(TwoAddressInstructionPassID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 
@@ -1088,6 +1083,8 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
   MRI->freezeReservedRegs(Fn);
   RegClassInfo.runOnMachineFunction(Fn);
   UsedInInstr.resize(TRI->getNumRegs());
+
+  assert(!MRI->isSSA() && "regalloc requires leaving SSA");
 
   // initialize the virtual->physical register map to have a 'null'
   // mapping for all virtual registers

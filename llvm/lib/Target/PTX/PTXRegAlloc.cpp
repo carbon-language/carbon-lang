@@ -24,10 +24,7 @@ namespace {
   class PTXRegAlloc : public MachineFunctionPass {
   public:
     static char ID;
-    PTXRegAlloc() : MachineFunctionPass(ID) {
-      initializePHIEliminationPass(*PassRegistry::getPassRegistry());
-      initializeTwoAddressInstructionPassPass(*PassRegistry::getPassRegistry());
-    }
+    PTXRegAlloc() : MachineFunctionPass(ID) {}
 
     virtual const char* getPassName() const {
       return "PTX Register Allocator";
@@ -35,8 +32,6 @@ namespace {
 
     virtual void getAnalysisUsage(AnalysisUsage &AU) const {
       AU.setPreservesCFG();
-      AU.addRequiredID(PHIEliminationID);
-      AU.addRequiredID(TwoAddressInstructionPassID);
       MachineFunctionPass::getAnalysisUsage(AU);
     }
 

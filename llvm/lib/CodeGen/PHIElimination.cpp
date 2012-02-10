@@ -92,10 +92,14 @@ STATISTIC(NumCriticalEdgesSplit, "Number of critical edges split");
 STATISTIC(NumReused, "Number of reused lowered phis");
 
 char PHIElimination::ID = 0;
-INITIALIZE_PASS(PHIElimination, "phi-node-elimination",
-                "Eliminate PHI nodes for register allocation", false, false)
-
 char& llvm::PHIEliminationID = PHIElimination::ID;
+
+INITIALIZE_PASS_BEGIN(PHIElimination, "phi-node-elimination",
+                      "Eliminate PHI nodes for register allocation",
+                      false, false)
+INITIALIZE_PASS_DEPENDENCY(LiveVariables)
+INITIALIZE_PASS_END(PHIElimination, "phi-node-elimination",
+                    "Eliminate PHI nodes for register allocation", false, false)
 
 void PHIElimination::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<LiveVariables>();

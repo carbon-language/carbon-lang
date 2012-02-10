@@ -76,6 +76,8 @@ public:
   bool getEnableTailMerge() const { return EnableTailMerge; }
   void setEnableTailMerge(bool Enable) { setOpt(EnableTailMerge, Enable); }
 
+  bool getOptimizeRegAlloc() const;
+
   /// Add common target configurable passes that perform LLVM IR to IR
   /// transforms following machine independent optimization.
   virtual void addIRPasses();
@@ -122,8 +124,17 @@ protected:
     return false;
   }
 
-  // addRegAlloc - Add standard passes related to register allocation.
-  virtual void addRegAlloc();
+  /// createTargetRegisterAllocator - Create the register allocator pass for
+  /// this target at the current optimization level.
+  virtual FunctionPass *createTargetRegisterAllocator(bool Optimized);
+
+  /// addFastRegAlloc - Add the minimum set of target-independent passes that
+  /// are required for fast register allocation.
+  virtual void addFastRegAlloc(FunctionPass *RegAllocPass);
+
+  // addOptimizedRegAlloc - Add passes related to register allocation.
+  // LLVMTargetMachine provides standard regalloc passes for most targets.
+  virtual void addOptimizedRegAlloc(FunctionPass *RegAllocPass);
 
   /// addPostRegAlloc - This method may be implemented by targets that want
   /// to run passes after register allocation but before prolog-epilog
@@ -159,6 +170,10 @@ protected:
 
   /// Add a target-independent CodeGen pass at this point in the pipeline.
   void addPass(char &ID);
+
+  /// addMachinePasses helper to create the target-selected or overriden
+  /// regalloc pass.
+  FunctionPass *createRegAllocPass(bool Optimized);
 
   /// printNoVerify - Add a pass to dump the machine function, if debugging is
   /// enabled.
@@ -200,6 +215,10 @@ namespace llvm {
   /// EdgeBundles analysis - Bundle machine CFG edges.
   extern char &EdgeBundlesID;
 
+  /// LiveVariables pass - This pass computes the set of blocks in which each
+  /// variable is life and sets machine operand kill flags.
+  extern char &LiveVariablesID;
+
   /// PHIElimination - This pass eliminates machine instruction PHI nodes
   /// by inserting copy instructions.  This destroys SSA information, but is the
   /// desired input for some register allocators.  This pass is "required" by
@@ -222,8 +241,11 @@ namespace llvm {
   /// register allocators.
   extern char &TwoAddressInstructionPassID;
 
-  /// RegisteCoalescer - This pass merges live ranges to eliminate copies.
-  extern char &RegisterCoalescerPassID;
+  /// ProcessImpicitDefs pass - This pass removes IMPLICIT_DEFs.
+  extern char &ProcessImplicitDefsID;
+
+  /// RegisterCoalescer - This pass merges live ranges to eliminate copies.
+  extern char &RegisterCoalescerID;
 
   /// MachineScheduler - This pass schedules machine instructions.
   extern char &MachineSchedulerID;
@@ -238,11 +260,6 @@ namespace llvm {
 
   /// DeadMachineInstructionElim - This pass removes dead machine instructions.
   extern char &DeadMachineInstructionElimID;
-
-  /// Creates a register allocator as the user specified on the command line, or
-  /// picks one that matches OptLevel.
-  ///
-  FunctionPass *createRegisterAllocator(CodeGenOpt::Level OptLevel);
 
   /// FastRegisterAllocation Pass - This pass register allocates as fast as
   /// possible. It is best suited for debug code where live ranges are short.

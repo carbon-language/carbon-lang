@@ -30,10 +30,6 @@ namespace llvm {
     };
   }
 
-  /// StrongPHIElim - This flag enables more aggressive PHI elimination
-  /// wth earlier copy coalescing.
-  extern bool StrongPHIElim;
-
   class TargetOptions {
   public:
     TargetOptions()

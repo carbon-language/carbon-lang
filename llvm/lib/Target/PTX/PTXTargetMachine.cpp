@@ -319,6 +319,8 @@ bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
     printAndVerify("After PreRegAlloc passes");
 
   // Perform register allocation.
+  addPass(PHIEliminationID);
+  addPass(TwoAddressInstructionPassID);
   PM.add(createPTXRegisterAllocator());
   printAndVerify("After Register Allocation");
 

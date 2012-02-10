@@ -253,13 +253,8 @@ EnableRealignStack("realign-stack",
   cl::init(true));
 
 static cl::opt<bool>
-DisableSwitchTables(cl::Hidden, "disable-jump-tables", 
+DisableSwitchTables(cl::Hidden, "disable-jump-tables",
   cl::desc("Do not generate jump tables."),
-  cl::init(false));
-
-static cl::opt<bool>
-EnableStrongPHIElim(cl::Hidden, "strong-phi-elim",
-  cl::desc("Use strong PHI elimination."),
   cl::init(false));
 
 static cl::opt<std::string>

@@ -51,6 +51,13 @@ static cl::opt<bool> DisableMachineLICM("disable-machine-licm", cl::Hidden,
     cl::desc("Disable Machine LICM"));
 static cl::opt<bool> DisableMachineCSE("disable-machine-cse", cl::Hidden,
     cl::desc("Disable Machine Common Subexpression Elimination"));
+static cl::opt<cl::boolOrDefault>
+OptimizeRegAlloc("optimize-regalloc", cl::Hidden,
+    cl::desc("Enable optimized register allocation compilation path."));
+static cl::opt<bool> EnableMachineSched("enable-misched", cl::Hidden,
+    cl::desc("Enable the machine instruction scheduling pass."));
+static cl::opt<bool> EnableStrongPHIElim("strong-phi-elim", cl::Hidden,
+    cl::desc("Use strong PHI elimination."));
 static cl::opt<bool> DisablePostRAMachineLICM("disable-postra-machine-licm",
     cl::Hidden,
     cl::desc("Disable Machine LICM"));
@@ -225,7 +232,10 @@ void TargetPassConfig::addMachinePasses() {
 
   // Run register allocation and passes that are tightly coupled with it,
   // including phi elimination and scheduling.
-  addRegAlloc();
+  if (getOptimizeRegAlloc())
+    addOptimizedRegAlloc(createRegAllocPass(true));
+  else
+    addFastRegAlloc(createRegAllocPass(false));
 
   // Run post-ra passes.
   if (addPostRegAlloc())
@@ -306,71 +316,138 @@ void TargetPassConfig::addMachineSSAOptimization() {
 /// Register Allocation Pass Configuration
 //===---------------------------------------------------------------------===//
 
+bool TargetPassConfig::getOptimizeRegAlloc() const {
+  switch (OptimizeRegAlloc) {
+  case cl::BOU_UNSET: return getOptLevel() != CodeGenOpt::None;
+  case cl::BOU_TRUE:  return true;
+  case cl::BOU_FALSE: return false;
+  }
+  llvm_unreachable("Invalid optimize-regalloc state");
+}
+
 /// RegisterRegAlloc's global Registry tracks allocator registration.
 MachinePassRegistry RegisterRegAlloc::Registry;
 
 /// A dummy default pass factory indicates whether the register allocator is
 /// overridden on the command line.
-static FunctionPass *createDefaultRegisterAllocator() { return 0; }
+static FunctionPass *useDefaultRegisterAllocator() { return 0; }
 static RegisterRegAlloc
 defaultRegAlloc("default",
                 "pick register allocator based on -O option",
-                createDefaultRegisterAllocator);
+                useDefaultRegisterAllocator);
 
 /// -regalloc=... command line option.
 static cl::opt<RegisterRegAlloc::FunctionPassCtor, false,
                RegisterPassParser<RegisterRegAlloc> >
 RegAlloc("regalloc",
-         cl::init(&createDefaultRegisterAllocator),
+         cl::init(&useDefaultRegisterAllocator),
          cl::desc("Register allocator to use"));
 
 
-/// createRegisterAllocator - choose the appropriate register allocator.
-FunctionPass *llvm::createRegisterAllocator(CodeGenOpt::Level OptLevel) {
+/// Instantiate the default register allocator pass for this target for either
+/// the optimized or unoptimized allocation path. This will be added to the pass
+/// manager by addFastRegAlloc in the unoptimized case or addOptimizedRegAlloc
+/// in the optimized case.
+///
+/// A target that uses the standard regalloc pass order for fast or optimized
+/// allocation may still override this for per-target regalloc
+/// selection. But -regalloc=... always takes precedence.
+FunctionPass *TargetPassConfig::createTargetRegisterAllocator(bool Optimized) {
+  if (Optimized)
+    return createGreedyRegisterAllocator();
+  else
+    return createFastRegisterAllocator();
+}
+
+/// Find and instantiate the register allocation pass requested by this target
+/// at the current optimization level.  Different register allocators are
+/// defined as separate passes because they may require different analysis.
+///
+/// This helper ensures that the regalloc= option is always available,
+/// even for targets that override the default allocator.
+///
+/// FIXME: When MachinePassRegistry register pass IDs instead of function ptrs,
+/// this can be folded into addPass.
+FunctionPass *TargetPassConfig::createRegAllocPass(bool Optimized) {
   RegisterRegAlloc::FunctionPassCtor Ctor = RegisterRegAlloc::getDefault();
 
+  // Initialize the global default.
   if (!Ctor) {
     Ctor = RegAlloc;
     RegisterRegAlloc::setDefault(RegAlloc);
   }
-
-  if (Ctor != createDefaultRegisterAllocator)
+  if (Ctor != useDefaultRegisterAllocator)
     return Ctor();
 
-  // When the 'default' allocator is requested, pick one based on OptLevel.
-  switch (OptLevel) {
-  case CodeGenOpt::None:
-    return createFastRegisterAllocator();
-  default:
-    return createGreedyRegisterAllocator();
-  }
+  // With no -regalloc= override, ask the target for a regalloc pass.
+  return createTargetRegisterAllocator(Optimized);
+}
+
+/// Add the minimum set of target-independent passes that are required for
+/// register allocation. No coalescing or scheduling.
+void TargetPassConfig::addFastRegAlloc(FunctionPass *RegAllocPass) {
+  addPass(PHIEliminationID);
+  addPass(TwoAddressInstructionPassID);
+
+  PM.add(RegAllocPass);
+  printAndVerify("After Register Allocation");
 }
 
 /// Add standard target-independent passes that are tightly coupled with
-/// register allocation, including coalescing, machine instruction scheduling,
-/// and register allocation itself.
-///
-/// FIXME: This will become the register allocation "super pass" pipeline.
-void TargetPassConfig::addRegAlloc() {
-  // Perform register allocation.
-  PM.add(createRegisterAllocator(getOptLevel()));
+/// optimized register allocation, including coalescing, machine instruction
+/// scheduling, and register allocation itself.
+void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
+  // LiveVariables currently requires pure SSA form.
+  //
+  // FIXME: Once TwoAddressInstruction pass no longer uses kill flags,
+  // LiveVariables can be removed completely, and LiveIntervals can be directly
+  // computed. (We still either need to regenerate kill flags after regalloc, or
+  // preferably fix the scavenger to not depend on them).
+  addPass(LiveVariablesID);
+
+  // Add passes that move from transformed SSA into conventional SSA. This is a
+  // "copy coalescing" problem.
+  //
+  if (!EnableStrongPHIElim) {
+    // Edge splitting is smarter with machine loop info.
+    addPass(MachineLoopInfoID);
+    addPass(PHIEliminationID);
+  }
+  addPass(TwoAddressInstructionPassID);
+
+  // FIXME: Either remove this pass completely, or fix it so that it works on
+  // SSA form. We could modify LiveIntervals to be independent of this pass, But
+  // it would be even better to simply eliminate *all* IMPLICIT_DEFs before
+  // leaving SSA.
+  addPass(ProcessImplicitDefsID);
+
+  if (EnableStrongPHIElim)
+    addPass(StrongPHIEliminationID);
+
+  addPass(RegisterCoalescerID);
+
+  // PreRA instruction scheduling.
+  if (EnableMachineSched)
+    addPass(MachineSchedulerID);
+
+  // Add the selected register allocation pass.
+  PM.add(RegAllocPass);
   printAndVerify("After Register Allocation");
 
   // Perform stack slot coloring and post-ra machine LICM.
-  if (getOptLevel() != CodeGenOpt::None) {
-    // FIXME: Re-enable coloring with register when it's capable of adding
-    // kill markers.
-    if (!DisableSSC)
-      addPass(StackSlotColoringID);
+  //
+  // FIXME: Re-enable coloring with register when it's capable of adding
+  // kill markers.
+  if (!DisableSSC)
+    addPass(StackSlotColoringID);
 
-    // Run post-ra machine LICM to hoist reloads / remats.
-    //
-    // FIXME: can this move into MachineLateOptimization?
-    if (!DisablePostRAMachineLICM)
-      addPass(MachineLICMID);
+  // Run post-ra machine LICM to hoist reloads / remats.
+  //
+  // FIXME: can this move into MachineLateOptimization?
+  if (!DisablePostRAMachineLICM)
+    addPass(MachineLICMID);
 
-    printAndVerify("After StackSlotColoring and postra Machine LICM");
-  }
+  printAndVerify("After StackSlotColoring and postra Machine LICM");
 }
 
 //===---------------------------------------------------------------------===//

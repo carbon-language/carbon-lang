@@ -85,7 +85,6 @@ public:
       : MachineFunctionPass(ID), builder(b), customPassID(cPassID) {
     initializeSlotIndexesPass(*PassRegistry::getPassRegistry());
     initializeLiveIntervalsPass(*PassRegistry::getPassRegistry());
-    initializeRegisterCoalescerPass(*PassRegistry::getPassRegistry());
     initializeCalculateSpillWeightsPass(*PassRegistry::getPassRegistry());
     initializeLiveStacksPass(*PassRegistry::getPassRegistry());
     initializeMachineLoopInfoPass(*PassRegistry::getPassRegistry());
@@ -446,7 +445,6 @@ void RegAllocPBQP::getAnalysisUsage(AnalysisUsage &au) const {
   au.addPreserved<SlotIndexes>();
   au.addRequired<LiveIntervals>();
   //au.addRequiredID(SplitCriticalEdgesID);
-  au.addRequiredID(RegisterCoalescerPassID);
   if (customPassID)
     au.addRequiredID(*customPassID);
   au.addRequired<CalculateSpillWeights>();
