@@ -21,7 +21,6 @@ namespace llvm {
 class InterferenceCache {
   const TargetRegisterInfo *TRI;
   LiveIntervalUnion *LIUArray;
-  SlotIndexes *Indexes;
   MachineFunction *MF;
 
   /// BlockInterference - information about the interference in a single basic
@@ -124,7 +123,7 @@ class InterferenceCache {
   Entry *get(unsigned PhysReg);
 
 public:
-  InterferenceCache() : TRI(0), LIUArray(0), Indexes(0), MF(0), RoundRobin(0) {}
+  InterferenceCache() : TRI(0), LIUArray(0), MF(0), RoundRobin(0) {}
 
   /// init - Prepare cache for a new function.
   void init(MachineFunction*, LiveIntervalUnion*, SlotIndexes*,
