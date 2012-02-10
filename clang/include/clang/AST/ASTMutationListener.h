@@ -74,6 +74,9 @@ public:
   virtual void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
                                             const ObjCPropertyDecl *OrigProp,
                                             const ObjCCategoryDecl *ClassExt) {}
+
+  // NOTE: If new methods are added they should also be added to
+  // MultiplexASTMutationListener.
 };
 
 } // end namespace clang

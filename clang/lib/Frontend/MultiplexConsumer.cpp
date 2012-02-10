@@ -99,6 +99,11 @@ public:
                                               const FunctionDecl *D);
   virtual void CompletedImplicitDefinition(const FunctionDecl *D);
   virtual void StaticDataMemberInstantiated(const VarDecl *D);
+  virtual void AddedObjCCategoryToInterface(const ObjCCategoryDecl *CatD,
+                                            const ObjCInterfaceDecl *IFD);
+  virtual void AddedObjCPropertyInClassExtension(const ObjCPropertyDecl *Prop,
+                                            const ObjCPropertyDecl *OrigProp,
+                                            const ObjCCategoryDecl *ClassExt);
 private:
   std::vector<ASTMutationListener*> Listeners;
 };
@@ -143,6 +148,19 @@ void MultiplexASTMutationListener::StaticDataMemberInstantiated(
                                                              const VarDecl *D) {
   for (size_t i = 0, e = Listeners.size(); i != e; ++i)
     Listeners[i]->StaticDataMemberInstantiated(D);
+}
+void MultiplexASTMutationListener::AddedObjCCategoryToInterface(
+                                                 const ObjCCategoryDecl *CatD,
+                                                 const ObjCInterfaceDecl *IFD) {
+  for (size_t i = 0, e = Listeners.size(); i != e; ++i)
+    Listeners[i]->AddedObjCCategoryToInterface(CatD, IFD);
+}
+void MultiplexASTMutationListener::AddedObjCPropertyInClassExtension(
+                                             const ObjCPropertyDecl *Prop,
+                                             const ObjCPropertyDecl *OrigProp,
+                                             const ObjCCategoryDecl *ClassExt) {
+  for (size_t i = 0, e = Listeners.size(); i != e; ++i)
+    Listeners[i]->AddedObjCPropertyInClassExtension(Prop, OrigProp, ClassExt);
 }
 
 }  // end namespace clang
