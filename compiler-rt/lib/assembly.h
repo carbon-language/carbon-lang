@@ -34,43 +34,26 @@
 #define GLUE(a, b) GLUE2(a, b)
 #define SYMBOL_NAME(name) GLUE(__USER_LABEL_PREFIX__, name)
 
-#if defined(VISIBILITY_HIDDEN)
+#ifdef VISIBILITY_HIDDEN
 #define DECLARE_SYMBOL_VISIBILITY(name)                    \
-  HIDDEN_DIRECTIVE name SEPARATOR
+  HIDDEN_DIRECTIVE SYMBOL_NAME(name) SEPARATOR
 #else
 #define DECLARE_SYMBOL_VISIBILITY(name)
 #endif
 
-#if defined(__APPLE__)
-#define THUMB_FUNC(name) .thumb_func name
-#else
-#define THUMB_FUNC(name) .thumb_func
-#endif
-
-#if defined(__thumb__)
-#define TARGET_FUNCTION_SETTINGS(name)                     \
-  THUMB_FUNC(name) SEPARATOR                               \
-  .code 16 SEPARATOR
-#else
-#define TARGET_FUNCTION_SETTINGS(name)
-#endif
-
 #define DEFINE_COMPILERRT_FUNCTION(name)                   \
   .globl SYMBOL_NAME(name) SEPARATOR                       \
-  DECLARE_SYMBOL_VISIBILITY(SYMBOL_NAME(name))             \
-  TARGET_FUNCTION_SETTINGS(SYMBOL_NAME(name))              \
+  DECLARE_SYMBOL_VISIBILITY(name)                          \
   SYMBOL_NAME(name):
 
 #define DEFINE_COMPILERRT_PRIVATE_FUNCTION(name)           \
   .globl SYMBOL_NAME(name) SEPARATOR                       \
   HIDDEN_DIRECTIVE SYMBOL_NAME(name) SEPARATOR             \
-  TARGET_FUNCTION_SETTINGS(SYMBOL_NAME(name))              \
   SYMBOL_NAME(name):
 
 #define DEFINE_COMPILERRT_PRIVATE_FUNCTION_UNMANGLED(name) \
   .globl name SEPARATOR                                    \
   HIDDEN_DIRECTIVE name SEPARATOR                          \
-  TARGET_FUNCTION_SETTINGS(name)                           \
   name:
 
 #define DEFINE_COMPILERRT_FUNCTION_ALIAS(name, target)     \
