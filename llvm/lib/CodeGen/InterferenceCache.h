@@ -18,6 +18,8 @@
 
 namespace llvm {
 
+class LiveIntervals;
+
 class InterferenceCache {
   const TargetRegisterInfo *TRI;
   LiveIntervalUnion *LIUArray;
@@ -51,6 +53,9 @@ class InterferenceCache {
     /// Indexes - Mapping block numbers to SlotIndex ranges.
     SlotIndexes *Indexes;
 
+    /// LIS - Used for accessing register mask interference maps.
+    LiveIntervals *LIS;
+
     /// PrevPos - The previous position the iterators were moved to.
     SlotIndex PrevPos;
 
@@ -70,13 +75,14 @@ class InterferenceCache {
     void update(unsigned MBBNum);
 
   public:
-    Entry() : PhysReg(0), Tag(0), RefCount(0), Indexes(0) {}
+    Entry() : PhysReg(0), Tag(0), RefCount(0), Indexes(0), LIS(0) {}
 
-    void clear(MachineFunction *mf, SlotIndexes *indexes) {
+    void clear(MachineFunction *mf, SlotIndexes *indexes, LiveIntervals *lis) {
       assert(!hasRefs() && "Cannot clear cache entry with references");
       PhysReg = 0;
       MF = mf;
       Indexes = indexes;
+      LIS = lis;
     }
 
     unsigned getPhysReg() const { return PhysReg; }
@@ -126,7 +132,7 @@ public:
   InterferenceCache() : TRI(0), LIUArray(0), MF(0), RoundRobin(0) {}
 
   /// init - Prepare cache for a new function.
-  void init(MachineFunction*, LiveIntervalUnion*, SlotIndexes*,
+  void init(MachineFunction*, LiveIntervalUnion*, SlotIndexes*, LiveIntervals*,
             const TargetRegisterInfo *);
 
   /// getMaxCursors - Return the maximum number of concurrent cursors that can

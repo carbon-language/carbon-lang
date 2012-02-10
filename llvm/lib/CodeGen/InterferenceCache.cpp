@@ -15,6 +15,7 @@
 #include "InterferenceCache.h"
 #include "llvm/Target/TargetRegisterInfo.h"
 #include "llvm/Support/ErrorHandling.h"
+#include "llvm/CodeGen/LiveIntervalAnalysis.h"
 
 using namespace llvm;
 
@@ -24,13 +25,14 @@ InterferenceCache::BlockInterference InterferenceCache::Cursor::NoInterference;
 void InterferenceCache::init(MachineFunction *mf,
                              LiveIntervalUnion *liuarray,
                              SlotIndexes *indexes,
+                             LiveIntervals *lis,
                              const TargetRegisterInfo *tri) {
   MF = mf;
   LIUArray = liuarray;
   TRI = tri;
   PhysRegEntries.assign(TRI->getNumRegs(), 0);
   for (unsigned i = 0; i != CacheEntries; ++i)
-    Entries[i].clear(mf, indexes);
+    Entries[i].clear(mf, indexes, lis);
 }
 
 InterferenceCache::Entry *InterferenceCache::get(unsigned PhysReg) {
@@ -104,6 +106,11 @@ bool InterferenceCache::Entry::valid(LiveIntervalUnion *LIUArray,
   return i == e;
 }
 
+// Test if a register mask clobbers PhysReg.
+static inline bool maskClobber(const uint32_t *Mask, unsigned PhysReg) {
+  return !(Mask[PhysReg/32] & (1u << PhysReg%32));
+}
+
 void InterferenceCache::Entry::update(unsigned MBBNum) {
   SlotIndex Start, Stop;
   tie(Start, Stop) = Indexes->getMBBRange(MBBNum);
@@ -121,6 +128,8 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
 
   MachineFunction::const_iterator MFI = MF->getBlockNumbered(MBBNum);
   BlockInterference *BI = &Blocks[MBBNum];
+  ArrayRef<SlotIndex> RegMaskSlots;
+  ArrayRef<const uint32_t*> RegMaskBits;
   for (;;) {
     BI->Tag = Tag;
     BI->First = BI->Last = SlotIndex();
@@ -136,6 +145,18 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
       if (!BI->First.isValid() || StartI < BI->First)
         BI->First = StartI;
     }
+
+    // Also check for register mask interference.
+    RegMaskSlots = LIS->getRegMaskSlotsInBlock(MBBNum);
+    RegMaskBits = LIS->getRegMaskBitsInBlock(MBBNum);
+    SlotIndex Limit = BI->First.isValid() ? BI->First : Stop;
+    for (unsigned i = 0, e = RegMaskSlots.size();
+         i != e && RegMaskSlots[i] < Limit; ++i)
+      if (maskClobber(RegMaskBits[i], PhysReg)) {
+        // Register mask i clobbers PhysReg before the LIU interference.
+        BI->First = RegMaskSlots[i];
+        break;
+      }
 
     PrevPos = Stop;
     if (BI->First.isValid())
@@ -166,4 +187,14 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
     if (Backup)
       ++I;
   }
+
+  // Also check for register mask interference.
+  SlotIndex Limit = BI->Last.isValid() ? BI->Last : Start;
+  for (unsigned i = RegMaskSlots.size(); i && RegMaskSlots[i-1] > Limit; --i)
+    if (maskClobber(RegMaskBits[i-1], PhysReg)) {
+      // Register mask i-1 clobbers PhysReg after the LIU interference.
+      // Model the regmask clobber as a dead def.
+      BI->Last = RegMaskSlots[i-1].getDeadSlot();
+      break;
+    }
 }

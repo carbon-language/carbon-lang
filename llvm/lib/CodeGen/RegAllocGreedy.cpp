@@ -1644,7 +1644,7 @@ bool RAGreedy::runOnMachineFunction(MachineFunction &mf) {
   ExtraRegInfo.clear();
   ExtraRegInfo.resize(MRI->getNumVirtRegs());
   NextCascade = 1;
-  IntfCache.init(MF, &getLiveUnion(0), Indexes, TRI);
+  IntfCache.init(MF, &getLiveUnion(0), Indexes, LIS, TRI);
   GlobalCand.resize(32);  // This will grow as needed.
 
   allocatePhysRegs();
