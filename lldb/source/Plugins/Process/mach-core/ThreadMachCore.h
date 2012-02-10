@@ -12,7 +12,6 @@
 
 #include <string>
 
-#include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 
 class ProcessMachCore;

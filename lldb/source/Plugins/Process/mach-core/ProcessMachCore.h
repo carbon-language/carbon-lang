@@ -17,18 +17,8 @@
 #include <vector>
 
 // Other libraries and framework includes
-#include "lldb/Core/ArchSpec.h"
-#include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Error.h"
-#include "lldb/Core/InputReader.h"
-#include "lldb/Core/StreamString.h"
-#include "lldb/Core/StringList.h"
-#include "lldb/Core/ThreadSafeValue.h"
 #include "lldb/Target/Process.h"
-#include "lldb/Target/Thread.h"
-
-#include "CommunicationKDP.h"
-#include "Utility/StringExtractor.h"
 
 class ThreadKDP;
 
