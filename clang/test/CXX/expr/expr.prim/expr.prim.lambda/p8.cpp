@@ -14,3 +14,12 @@ class X0 {
     (void)[&, this] () {};
   }
 };
+
+struct S2 { void f(int i); };
+
+void S2::f(int i) {
+  (void)[&, i]{ };
+  (void)[&, &i]{ }; // expected-error{{'&' cannot precede a capture when the capture default is '&'}}
+  (void)[=, this]{ }; // expected-error{{'this' cannot appear in a capture list when the capture default is '='}}
+  (void)[i, i]{ }; // expected-error{{'i' can appear only once in a capture list}}
+}
