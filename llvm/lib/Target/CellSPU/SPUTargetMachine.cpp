@@ -14,7 +14,6 @@
 #include "SPU.h"
 #include "SPUTargetMachine.h"
 #include "llvm/PassManager.h"
-#include "llvm/CodeGen/RegAllocRegistry.h"
 #include "llvm/CodeGen/SchedulerRegistry.h"
 #include "llvm/Support/DynamicLibrary.h"
 #include "llvm/Support/TargetRegistry.h"
