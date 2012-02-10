@@ -444,8 +444,7 @@ public:
   /// clobbersPhysReg - Returns true if this RegMask clobbers PhysReg.
   /// It is sometimes necessary to detach the register mask pointer from its
   /// machine operand. This static method can be used for such detached bit
-  /// mask pointers.  clobbersPhysReg - Returns true if this RegMask operand
-  /// clobbers PhysReg.
+  /// mask pointers.
   static bool clobbersPhysReg(const uint32_t *RegMask, unsigned PhysReg) {
     // See TargetRegisterInfo.h.
     assert(PhysReg < (1u << 30) && "Not a physical register");
