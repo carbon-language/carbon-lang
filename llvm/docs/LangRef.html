@@ -4681,7 +4681,7 @@ IfUnequal:
 
 <h5>Syntax:</h5>
 <pre>
-  &lt;result&gt; = load [volatile] &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;]
+  &lt;result&gt; = load [volatile] &lt;ty&gt;* &lt;pointer&gt;[, align &lt;alignment&gt;][, !nontemporal !&lt;index&gt;][, !invariant.load !&lt;index&gt;]
   &lt;result&gt; = load atomic [volatile] &lt;ty&gt;* &lt;pointer&gt; [singlethread] &lt;ordering&gt;, align &lt;alignment&gt;
   !&lt;index&gt; = !{ i32 1 }
 </pre>
@@ -4725,6 +4725,14 @@ IfUnequal:
    and code generator that this load is not expected to be reused in the cache.
    The code generator may select special instructions to save cache bandwidth,
    such as the <tt>MOVNT</tt> instruction on x86.</p>
+
+<p>The optional <tt>!invariant.load</tt> metadata must reference a single
+   metatadata name &lt;index&gt; corresponding to a metadata node with no
+   entries.  The existence of the <tt>!invariant.load</tt> metatadata on the
+   instruction tells the optimizer and code generator that this load address
+   points to memory which does not change value during program execution.
+   The optimizer may then move this load around, for example, by hoisting it
+   out of loops using loop invariant code motion.</p>
 
 <h5>Semantics:</h5>
 <p>The location of memory pointed to is loaded.  If the value being loaded is of
