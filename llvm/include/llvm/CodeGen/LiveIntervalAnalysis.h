@@ -255,9 +255,10 @@ namespace llvm {
                             const SmallVectorImpl<LiveInterval*> *SpillIs,
                             bool &isLoad);
 
-    /// intervalIsInOneMBB - Returns true if the specified interval is entirely
-    /// within a single basic block.
-    bool intervalIsInOneMBB(const LiveInterval &li) const;
+    /// intervalIsInOneMBB - If LI is confined to a single basic block, return
+    /// a pointer to that block.  If LI is live in to or out of any block,
+    /// return NULL.
+    MachineBasicBlock *intervalIsInOneMBB(const LiveInterval &LI) const;
 
     /// addKillFlags - Add kill flags to any instruction that kills a virtual
     /// register.
