@@ -34,6 +34,16 @@ void foo2(S &s) {
   s(3);
 }
 
+namespace NS {
+  namespace Inn {}
+  typedef int Foo;
+}
+
+using namespace NS;
+using namespace NS::Inn;
+using NS::Foo;
+
+
 // RUN: c-index-test -index-file %s | FileCheck %s
 // CHECK:      [indexDeclaration]: kind: namespace | name: NS
 // CHECK-NEXT: [indexDeclaration]: kind: variable | name: gx
@@ -58,3 +68,9 @@ void foo2(S &s) {
 // CHECK-NEXT: [indexEntityReference]: kind: c++-instance-method | name: operator=
 // CHECK-NEXT: [indexEntityReference]: kind: c++-instance-method | name: operator!=
 // CHECK-NEXT: [indexEntityReference]: kind: c++-instance-method | name: operator()
+
+// CHECK:      [indexEntityReference]: kind: namespace | name: NS | {{.*}} | loc: 42:17
+// CHECK-NEXT: [indexEntityReference]: kind: namespace | name: NS | {{.*}} | loc: 43:17
+// CHECK-NEXT: [indexEntityReference]: kind: namespace | name: Inn | {{.*}} | loc: 43:21
+// CHECK-NEXT: [indexEntityReference]: kind: namespace | name: NS | {{.*}} | loc: 44:7
+// CHECK-NEXT: [indexEntityReference]: kind: typedef | name: Foo | {{.*}} | loc: 44:11
