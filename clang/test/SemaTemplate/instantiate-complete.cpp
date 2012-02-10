@@ -28,7 +28,6 @@ void test_subscript(X<double> *ptr1, X<int(int)> *ptr2, int i) {
 void test_arith(X<signed char> *ptr1, X<unsigned char> *ptr2,
                 X<char(char)> *ptr3, X<short(short)> *ptr4) {
   (void)(ptr1 + 5);
-  // FIXME: if I drop the ')' after void, below, it still parses (!)
   (void)(5 + ptr2);
   (void)(ptr3 + 5); // expected-note{{in instantiation of template class 'X<char (char)>' requested here}}
   (void)(5 + ptr4); // expected-note{{in instantiation of template class 'X<short (short)>' requested here}}
@@ -145,4 +144,3 @@ namespace PR8425 {
     BaseT<int> bt(ft);
   }
 }
-
