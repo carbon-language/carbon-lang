@@ -197,6 +197,16 @@ void USRGenerator::VisitFunctionDecl(FunctionDecl *D) {
   if (!Ctx.getLangOptions().CPlusPlus || D->isExternC())
     return;
 
+  if (const TemplateArgumentList *
+        SpecArgs = D->getTemplateSpecializationArgs()) {
+    Out << '<';
+    for (unsigned I = 0, N = SpecArgs->size(); I != N; ++I) {
+      Out << '#';
+      VisitTemplateArgument(SpecArgs->get(I));
+    }
+    Out << '>';
+  }
+
   // Mangle in type information for the arguments.
   for (FunctionDecl::param_iterator I = D->param_begin(), E = D->param_end();
        I != E; ++I) {
