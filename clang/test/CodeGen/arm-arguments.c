@@ -159,9 +159,9 @@ struct s31 { char x; };
 void f31(struct s31 s) { }
 // AAPCS: @f31([1 x i32] %s.coerce)
 // AAPCS: %s = alloca %struct.s31, align 4
-// AAPCS: %tmp = alloca [1 x i32]
-// AAPCS: store [1 x i32] %s.coerce, [1 x i32]* %tmp
+// AAPCS: alloca [1 x i32]
+// AAPCS: store [1 x i32] %s.coerce, [1 x i32]*
 // APCS-GNU: @f31([1 x i32] %s.coerce)
 // APCS-GNU: %s = alloca %struct.s31, align 4
-// APCS-GNU: %tmp = alloca [1 x i32]
-// APCS-GNU: store [1 x i32] %s.coerce, [1 x i32]* %tmp
+// APCS-GNU: alloca [1 x i32]
+// APCS-GNU: store [1 x i32] %s.coerce, [1 x i32]*
