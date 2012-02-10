@@ -1013,7 +1013,7 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
         break;
       }
 
-      llvm::AllocaInst *Alloca = CreateMemTemp(Ty, "coerce");
+      llvm::AllocaInst *Alloca = CreateMemTemp(Ty, Arg->getName());
 
       // The alignment we need to use is the max of the requested alignment for
       // the argument plus the alignment required by our access code below.
@@ -1037,15 +1037,36 @@ void CodeGenFunction::EmitFunctionProlog(const CGFunctionInfo &FI,
       // If the coerce-to type is a first class aggregate, we flatten it and
       // pass the elements. Either way is semantically identical, but fast-isel
       // and the optimizer generally likes scalar values better than FCAs.
-      if (llvm::StructType *STy =
-            dyn_cast<llvm::StructType>(ArgI.getCoerceToType())) {
-        Ptr = Builder.CreateBitCast(Ptr, llvm::PointerType::getUnqual(STy));
+      llvm::StructType *STy = dyn_cast<llvm::StructType>(ArgI.getCoerceToType());
+      if (STy && STy->getNumElements() > 1) {
+        uint64_t SrcSize = CGM.getTargetData().getTypeAllocSize(STy);
+        llvm::Type *DstTy =
+          cast<llvm::PointerType>(Ptr->getType())->getElementType();
+        uint64_t DstSize = CGM.getTargetData().getTypeAllocSize(DstTy);
 
-        for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
-          assert(AI != Fn->arg_end() && "Argument mismatch!");
-          AI->setName(Arg->getName() + ".coerce" + Twine(i));
-          llvm::Value *EltPtr = Builder.CreateConstGEP2_32(Ptr, 0, i);
-          Builder.CreateStore(AI++, EltPtr);
+        if (SrcSize <= DstSize) {
+          Ptr = Builder.CreateBitCast(Ptr, llvm::PointerType::getUnqual(STy));
+
+          for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+            assert(AI != Fn->arg_end() && "Argument mismatch!");
+            AI->setName(Arg->getName() + ".coerce" + Twine(i));
+            llvm::Value *EltPtr = Builder.CreateConstGEP2_32(Ptr, 0, i);
+            Builder.CreateStore(AI++, EltPtr);
+          }
+        } else {
+          llvm::AllocaInst *TempAlloca =
+            CreateTempAlloca(ArgI.getCoerceToType(), "coerce");
+          TempAlloca->setAlignment(AlignmentToUse);
+          llvm::Value *TempV = TempAlloca;
+
+          for (unsigned i = 0, e = STy->getNumElements(); i != e; ++i) {
+            assert(AI != Fn->arg_end() && "Argument mismatch!");
+            AI->setName(Arg->getName() + ".coerce" + Twine(i));
+            llvm::Value *EltPtr = Builder.CreateConstGEP2_32(TempV, 0, i);
+            Builder.CreateStore(AI++, EltPtr);
+          }
+
+          Builder.CreateMemCpy(Ptr, TempV, DstSize, AlignmentToUse);
         }
       } else {
         // Simple case, just do a coerced store of the argument into the alloca.
