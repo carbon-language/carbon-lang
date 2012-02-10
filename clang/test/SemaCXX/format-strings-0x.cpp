@@ -10,4 +10,6 @@ void f(char **sp, float *fp) {
 
   printf("%a", 1.0);
   scanf("%afoobar", fp);
+  printf(nullptr);
+  printf(*sp); // expected-warning {{not a string literal}}
 }

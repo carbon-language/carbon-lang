@@ -47,6 +47,8 @@ extern "C" {
 
 void rdar8269537(const char *f)
 {
+  test_null_format(false); // expected-warning {{null from a constant boolean}}
+  test_null_format(0); // no-warning
   test_null_format(__null); // no-warning
   test_null_format(f); // expected-warning {{not a string literal}}
 }
