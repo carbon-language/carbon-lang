@@ -90,6 +90,7 @@ void LiveIntervals::releaseMemory() {
   r2iMap_.clear();
   RegMaskSlots.clear();
   RegMaskBits.clear();
+  RegMaskBlocks.clear();
 
   // Release VNInfo memory regions, VNInfo objects don't need to be dtor'd.
   VNInfoAllocator.Reset();
@@ -533,10 +534,14 @@ void LiveIntervals::computeIntervals() {
                << "********** Function: "
                << ((Value*)mf_->getFunction())->getName() << '\n');
 
+  RegMaskBlocks.resize(mf_->getNumBlockIDs());
+
   SmallVector<unsigned, 8> UndefUses;
   for (MachineFunction::iterator MBBI = mf_->begin(), E = mf_->end();
        MBBI != E; ++MBBI) {
     MachineBasicBlock *MBB = MBBI;
+    RegMaskBlocks[MBB->getNumber()].first = RegMaskSlots.size();
+
     if (MBB->empty())
       continue;
 
@@ -587,6 +592,10 @@ void LiveIntervals::computeIntervals() {
       // Move to the next instr slot.
       MIIndex = indexes_->getNextNonNullIndex(MIIndex);
     }
+
+    // Compute the number of register mask instructions in this block.
+    std::pair<unsigned, unsigned> &RMB = RegMaskBlocks[MBB->getNumber()];
+    RMB.second = RegMaskSlots.size() - RMB.first;;
   }
 
   // Create empty intervals for registers defined by implicit_def's (except

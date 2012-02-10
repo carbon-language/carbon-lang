@@ -82,6 +82,13 @@ namespace llvm {
     /// Also see the comment in LiveInterval::find().
     SmallVector<const uint32_t*, 8> RegMaskBits;
 
+    /// For each basic block number, keep (begin, size) pairs indexing into the
+    /// RegMaskSlots and RegMaskBits arrays.
+    /// Note that basic block numbers may not be layout contiguous, that's why
+    /// we can't just keep track of the first register mask in each basic
+    /// block.
+    SmallVector<std::pair<unsigned, unsigned>, 8> RegMaskBlocks;
+
   public:
     static char ID; // Pass identification, replacement for typeid
     LiveIntervals() : MachineFunctionPass(ID) {
@@ -280,9 +287,28 @@ namespace llvm {
     // LiveIntervalAnalysis maintains a sorted list of instructions with
     // register mask operands.
 
-    /// getRegMaskSlots - Returns asorted array of slot indices of all
+    /// getRegMaskSlots - Returns a sorted array of slot indices of all
     /// instructions with register mask operands.
     ArrayRef<SlotIndex> getRegMaskSlots() const { return RegMaskSlots; }
+
+    /// getRegMaskSlotsInBlock - Returns a sorted array of slot indices of all
+    /// instructions with register mask operands in the basic block numbered
+    /// MBBNum.
+    ArrayRef<SlotIndex> getRegMaskSlotsInBlock(unsigned MBBNum) const {
+      std::pair<unsigned, unsigned> P = RegMaskBlocks[MBBNum];
+      return getRegMaskSlots().slice(P.first, P.second);
+    }
+
+    /// getRegMaskBits() - Returns an array of register mask pointers
+    /// corresponding to getRegMaskSlots().
+    ArrayRef<const uint32_t*> getRegMaskBits() const { return RegMaskBits; }
+
+    /// getRegMaskBitsInBlock - Returns an array of mask pointers corresponding
+    /// to getRegMaskSlotsInBlock(MBBNum).
+    ArrayRef<const uint32_t*> getRegMaskBitsInBlock(unsigned MBBNum) const {
+      std::pair<unsigned, unsigned> P = RegMaskBlocks[MBBNum];
+      return getRegMaskBits().slice(P.first, P.second);
+    }
 
     /// checkRegMaskInterference - Test if LI is live across any register mask
     /// instructions, and compute a bit mask of physical registers that are not
