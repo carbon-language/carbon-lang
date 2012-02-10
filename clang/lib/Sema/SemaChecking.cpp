@@ -1381,6 +1381,7 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, Expr **Args,
                                  inFunctionCall);
   }
 
+  case Stmt::GNUNullExprClass:
   case Stmt::IntegerLiteralClass:
     // Technically -Wformat-nonliteral does not warn about this case.
     // The behavior of printf and friends in this case is implementation
