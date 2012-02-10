@@ -20,6 +20,10 @@ include "OptParser.td"
 
 def triple : Separate<"-triple">,
   HelpText<"Specify target triple (e.g. x86_64-pc-linux-gnu)">;
+def target_cpu : Separate<"-target-cpu">,
+  HelpText<"Target a specific cpu type">;
+def target_feature : Separate<"-target-feature">,
+  HelpText<"Target specific attributes">;
 
 //===----------------------------------------------------------------------===//
 // Language Options

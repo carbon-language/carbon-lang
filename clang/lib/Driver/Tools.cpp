@@ -2545,6 +2545,56 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
   Args.ClaimAllArgs(options::OPT_emit_llvm);
 }
 
+void ClangAs::AddARMTargetArgs(const ArgList &Args,
+                               ArgStringList &CmdArgs) const {
+  const Driver &D = getToolChain().getDriver();
+  llvm::Triple Triple = getToolChain().getTriple();
+
+  // Set the CPU based on -march= and -mcpu=.
+  CmdArgs.push_back("-target-cpu");
+  CmdArgs.push_back(getARMTargetCPU(Args, Triple));
+
+  // Honor -mfpu=.
+  //
+  // FIXME: Centralize feature selection, defaulting shouldn't be also in the
+  // frontend target.
+  if (const Arg *A = Args.getLastArg(options::OPT_mfpu_EQ)) {
+    StringRef FPU = A->getValue(Args);
+
+    // Set the target features based on the FPU.
+    if (FPU == "fpa" || FPU == "fpe2" || FPU == "fpe3" || FPU == "maverick") {
+      // Disable any default FPU support.
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-vfp2");
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-vfp3");
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-neon");
+    } else if (FPU == "vfp3-d16" || FPU == "vfpv3-d16") {
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("+vfp3");
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("+d16");
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-neon");
+    } else if (FPU == "vfp") {
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("+vfp2");
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-neon");
+    } else if (FPU == "vfp3" || FPU == "vfpv3") {
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("+vfp3");
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("-neon");
+    } else if (FPU == "neon") {
+      CmdArgs.push_back("-target-feature");
+      CmdArgs.push_back("+neon");
+    } else
+      D.Diag(diag::err_drv_clang_unsupported) << A->getAsString(Args);
+  }
+}
+
 void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
                            const InputInfo &Output,
                            const InputInfoList &Inputs,
@@ -2580,6 +2630,17 @@ void ClangAs::ConstructJob(Compilation &C, const JobAction &JA,
 
   if (UseRelaxAll(C, Args))
     CmdArgs.push_back("-relax-all");
+
+  // Add target specific cpu and features flags.
+  switch(getToolChain().getTriple().getArch()) {
+  default:
+    break;
+
+  case llvm::Triple::arm:
+  case llvm::Triple::thumb:
+    AddARMTargetArgs(Args, CmdArgs);
+    break;
+  }
 
   // Ignore explicit -force_cpusubtype_ALL option.
   (void) Args.hasArg(options::OPT_force__cpusubtype__ALL);
