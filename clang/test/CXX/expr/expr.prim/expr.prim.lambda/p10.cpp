@@ -23,3 +23,18 @@ class X0 {
     (void)[&Variable] () {}; // expected-error {{use of undeclared identifier 'Variable'; did you mean 'variable'}}
   }
 };
+
+void test_reaching_scope() {
+  int local; // expected-note{{declared here}}
+  static int local_static; // expected-note{{'local_static' declared here}}
+  (void)[=]() {
+    struct InnerLocal {
+      void member() {
+        (void)[local, // expected-error{{reference to local variable 'local' declared in enclosing function 'test_reaching_scope'}}
+               local_static]() { // expected-error{{'local_static' cannot be captured because it does not have automatic storage duration}}
+          return 0;
+        };
+      }
+    };
+  };
+}
