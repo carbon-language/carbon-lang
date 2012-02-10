@@ -255,6 +255,8 @@ ClangUserExpression::Parse (Stream &error_stream,
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
     
     Error err;
+ 
+    InstallContext(exe_ctx);
     
     ScanContext(exe_ctx, err);
     
@@ -385,6 +387,19 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
 {
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
+    lldb::TargetSP target;
+    lldb::ProcessSP process;
+    lldb::StackFrameSP frame;
+    
+    if (!LockAndCheckContext(exe_ctx,
+                             target,
+                             process, 
+                             frame))
+    {
+        error_stream.Printf("The context has changed before we could JIT the expression!");
+        return false;
+    }
+    
     if (m_jit_start_addr != LLDB_INVALID_ADDRESS)
     {
         Error materialize_error;
@@ -407,7 +422,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
                 return false;
             }
             
-            if (!(m_expr_decl_map->GetObjectPointer(object_ptr, object_name, exe_ctx, materialize_error)))
+            if (!(m_expr_decl_map->GetObjectPointer(object_ptr, object_name, materialize_error)))
             {
                 error_stream.Printf("warning: couldn't get required object pointer (substituting NULL): %s\n", materialize_error.AsCString());
                 object_ptr = 0;
@@ -417,7 +432,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
             {
                 ConstString cmd_name("_cmd");
                 
-                if (!(m_expr_decl_map->GetObjectPointer(cmd_ptr, cmd_name, exe_ctx, materialize_error, true)))
+                if (!(m_expr_decl_map->GetObjectPointer(cmd_ptr, cmd_name, materialize_error, true)))
                 {
                     error_stream.Printf("warning: couldn't get object pointer (substituting NULL): %s\n", materialize_error.AsCString());
                     cmd_ptr = 0;
@@ -425,7 +440,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
             }
         }
                 
-        if (!m_expr_decl_map->Materialize(exe_ctx, struct_address, materialize_error))
+        if (!m_expr_decl_map->Materialize(struct_address, materialize_error))
         {
             error_stream.Printf("Couldn't materialize struct: %s\n", materialize_error.AsCString());
             return false;
@@ -454,7 +469,7 @@ ClangUserExpression::PrepareToExecuteJITExpression (Stream &error_stream,
             
             if (struct_address)
             {
-                if (!m_expr_decl_map->DumpMaterializedStruct(exe_ctx, args, dump_error))
+                if (!m_expr_decl_map->DumpMaterializedStruct(args, dump_error))
                 {
                     log->Printf("  Couldn't extract variable values : %s", dump_error.AsCString("unknown error"));
                 }
@@ -511,7 +526,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
         
         Error dump_error;
         
-        if (!m_expr_decl_map->DumpMaterializedStruct(exe_ctx, args, dump_error))
+        if (!m_expr_decl_map->DumpMaterializedStruct(args, dump_error))
         {
             log->Printf("  Couldn't extract variable values : %s", dump_error.AsCString("unknown error"));
         }
@@ -524,7 +539,7 @@ ClangUserExpression::FinalizeJITExecution (Stream &error_stream,
     lldb::addr_t function_stack_bottom = function_stack_pointer - Host::GetPageSize();
     
         
-    if (!m_expr_decl_map->Dematerialize(exe_ctx, result, function_stack_pointer, function_stack_bottom, expr_error))
+    if (!m_expr_decl_map->Dematerialize(result, function_stack_pointer, function_stack_bottom, expr_error))
     {
         error_stream.Printf ("Couldn't dematerialize struct : %s\n", expr_error.AsCString("unknown error"));
         return false;

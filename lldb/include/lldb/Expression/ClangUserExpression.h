@@ -28,7 +28,7 @@
 #include "lldb/Expression/IRForTarget.h"
 #include "lldb/Expression/ProcessDataAllocator.h"
 #include "lldb/Symbol/TaggedASTType.h"
-#include "lldb/Target/Process.h"
+#include "lldb/Target/ExecutionContext.h"
 
 #include "llvm/ExecutionEngine/JITMemoryManager.h"
 
@@ -355,6 +355,36 @@ private:
     {
         return m_evaluated_statically;
     }
+    
+    void
+    InstallContext (ExecutionContext &exe_ctx)
+    {
+        m_process_wp = exe_ctx.GetProcessSP();
+        m_target_wp = exe_ctx.GetTargetSP();
+        m_frame_wp = exe_ctx.GetFrameSP();
+    }
+    
+    bool
+    LockAndCheckContext (ExecutionContext &exe_ctx,
+                         lldb::TargetSP &target_sp,
+                         lldb::ProcessSP &process_sp,
+                         lldb::StackFrameSP &frame_sp)
+    {
+        target_sp = m_target_wp.lock();
+        process_sp = m_process_wp.lock();
+        frame_sp = m_frame_wp.lock();
+        
+        if ((target_sp && target_sp.get() != exe_ctx.GetTargetPtr()) || 
+            (process_sp && process_sp.get() != exe_ctx.GetProcessPtr()) ||
+            (frame_sp && frame_sp.get() != exe_ctx.GetFramePtr()))
+            return false;
+        
+        return true;
+    }
+    
+    lldb::TargetWP                              m_target_wp;            ///< The target used as the context for the expression.
+    lldb::ProcessWP                             m_process_wp;           ///< The process used as the context for the expression.
+    lldb::StackFrameWP                          m_frame_wp;             ///< The stack frame used as context for the expression.
     
     std::string                                 m_expr_text;            ///< The text of the expression, as typed by the user
     std::string                                 m_expr_prefix;          ///< The text of the translation-level definitions, as provided by the user
