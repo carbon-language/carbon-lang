@@ -135,6 +135,15 @@ public:
   /// The default implementation forwards to HandleTopLevelDecl but we don't
   /// care about them when indexing, so have an empty definition.
   virtual void HandleInterestingDecl(DeclGroupRef D) {}
+
+  virtual void HandleTagDeclDefinition(TagDecl *D) {
+    if (IndexCtx.isTemplateImplicitInstantiation(D))
+      IndexCtx.indexDecl(D);
+  }
+
+  virtual void HandleCXXImplicitFunctionInstantiation(FunctionDecl *D) {
+    IndexCtx.indexDecl(D);
+  }
 };
 
 //===----------------------------------------------------------------------===//
@@ -185,7 +194,7 @@ public:
     indexDiagnostics(CXTU, IndexCtx);
   }
 
-  virtual TranslationUnitKind getTranslationUnitKind() { return TU_Prefix; }
+  virtual TranslationUnitKind getTranslationUnitKind() { return TU_Complete; }
   virtual bool hasCodeCompletionSupport() const { return false; }
 };
 

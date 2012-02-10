@@ -282,9 +282,23 @@ bool IndexingContext::handleDecl(const NamedDecl *D,
   DInfo.numAttributes = AttrList.getNumAttrs();
 
   getContainerInfo(D->getDeclContext(), DInfo.SemanticContainer);
-  getContainerInfo(D->getLexicalDeclContext(), DInfo.LexicalContainer);
   DInfo.semanticContainer = &DInfo.SemanticContainer;
-  DInfo.lexicalContainer = &DInfo.LexicalContainer;
+
+  if (D->getLexicalDeclContext() == D->getDeclContext()) {
+    DInfo.lexicalContainer = &DInfo.SemanticContainer;
+  } else if (isTemplateImplicitInstantiation(D)) {
+    // Implicit instantiations have the lexical context of where they were
+    // instantiated first. We choose instead the semantic context because:
+    // 1) at the time that we see the instantiation we have not seen the
+    //   function where it occurred yet.
+    // 2) the lexical context of the first instantiation is not useful
+    //   information anyway.
+    DInfo.lexicalContainer = &DInfo.SemanticContainer;
+  } else {
+    getContainerInfo(D->getLexicalDeclContext(), DInfo.LexicalContainer);
+    DInfo.lexicalContainer = &DInfo.LexicalContainer;
+  }
+
   if (DInfo.isContainer) {
     getContainerInfo(getEntityContainer(D), DInfo.DeclAsContainer);
     DInfo.declAsContainer = &DInfo.DeclAsContainer;
@@ -1035,4 +1049,15 @@ bool IndexingContext::shouldIgnoreIfImplicit(const Decl *D) {
   if (isa<ObjCMethodDecl>(D))
     return false;
   return true;
+}
+
+bool IndexingContext::isTemplateImplicitInstantiation(const Decl *D) {
+  if (const ClassTemplateSpecializationDecl *
+        SD = dyn_cast<ClassTemplateSpecializationDecl>(D)) {
+    return SD->getSpecializationKind() == TSK_ImplicitInstantiation;
+  }
+  if (const FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {
+    return FD->getTemplateSpecializationKind() == TSK_ImplicitInstantiation;
+  }
+  return false;
 }

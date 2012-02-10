@@ -224,6 +224,11 @@ void MultiplexConsumer::HandleTagDeclDefinition(TagDecl *D) {
     Consumers[i]->HandleTagDeclDefinition(D);
 }
 
+void MultiplexConsumer::HandleCXXImplicitFunctionInstantiation(FunctionDecl *D){
+  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
+    Consumers[i]->HandleCXXImplicitFunctionInstantiation(D);
+}
+
 void MultiplexConsumer::HandleTopLevelDeclInObjCContainer(DeclGroupRef D) {
   for (size_t i = 0, e = Consumers.size(); i != e; ++i)
     Consumers[i]->HandleTopLevelDeclInObjCContainer(D);

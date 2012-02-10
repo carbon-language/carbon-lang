@@ -220,6 +220,15 @@ public:
     return true;
   }
 
+  bool VisitClassTemplateSpecializationDecl(
+                                           ClassTemplateSpecializationDecl *D) {
+    // FIXME: Notify subsequent callbacks that info comes from implicit
+    // instantiation.
+    if (D->isThisDeclarationADefinition())
+      IndexCtx.indexTagDecl(D);
+    return true;
+  }
+
   bool VisitFunctionTemplateDecl(FunctionTemplateDecl *D) {
     IndexCtx.handleFunctionTemplate(D);
     FunctionDecl *FD = D->getTemplatedDecl();

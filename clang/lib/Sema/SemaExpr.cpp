@@ -18,6 +18,7 @@
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/AnalysisBasedWarnings.h"
 #include "clang/AST/ASTContext.h"
+#include "clang/AST/ASTConsumer.h"
 #include "clang/AST/ASTMutationListener.h"
 #include "clang/AST/CXXInheritance.h"
 #include "clang/AST/DeclObjC.h"
@@ -9483,8 +9484,11 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
         // expression evaluator needing to call back into Sema if it sees a
         // call to such a function.
         InstantiateFunctionDefinition(Loc, Func);
-      else
+      else {
         PendingInstantiations.push_back(std::make_pair(Func, Loc));
+        // Notify the consumer that a function was implicitly instantiated.
+        Consumer.HandleCXXImplicitFunctionInstantiation(Func);
+      }
     }
   } else {
     // Walk redefinitions, as some of them may be instantiable.

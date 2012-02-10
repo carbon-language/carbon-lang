@@ -20,6 +20,7 @@ namespace clang {
   class ClassTemplateDecl;
   class FunctionTemplateDecl;
   class TypeAliasTemplateDecl;
+  class ClassTemplateSpecializationDecl;
 
 namespace cxindex {
   class IndexingContext;
@@ -425,6 +426,8 @@ public:
 
   CXIdxClientEntity getClientEntity(const Decl *D) const;
   void setClientEntity(const Decl *D, CXIdxClientEntity client);
+
+  static bool isTemplateImplicitInstantiation(const Decl *D);
 
 private:
   bool handleDecl(const NamedDecl *D,
