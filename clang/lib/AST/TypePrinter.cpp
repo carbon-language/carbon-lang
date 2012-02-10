@@ -500,7 +500,12 @@ void TypePrinter::printFunctionProto(const FunctionProtoType *T,
     break;
   }
   T->printExceptionSpecification(S, Policy);
-  print(T->getResultType(), S);
+  if (T->hasTrailingReturn()) {
+    std::string ResultS;
+    print(T->getResultType(), ResultS);
+    S = "auto " + S + " -> " + ResultS;
+  } else
+    print(T->getResultType(), S);
 }
 
 void TypePrinter::printFunctionNoProto(const FunctionNoProtoType *T, 

@@ -46,6 +46,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     //   If a lambda-expression does not include a lambda-declarator, it is as 
     //   if the lambda-declarator were ().
     FunctionProtoType::ExtProtoInfo EPI;
+    EPI.HasTrailingReturn = true;
     EPI.TypeQuals |= DeclSpec::TQ_const;
     MethodTy = Context.getFunctionType(Context.DependentTy,
                                        /*Args=*/0, /*NumArgs=*/0, EPI);

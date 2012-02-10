@@ -1197,9 +1197,6 @@ protected:
     /// regparm and the calling convention.
     unsigned ExtInfo : 8;
 
-    /// Whether the function is variadic.  Only used by FunctionProtoType.
-    unsigned Variadic : 1;
-
     /// TypeQuals - Used only by FunctionProtoType, put here to pack with the
     /// other bitfields.
     /// The qualifiers are part of FunctionProtoType because...
@@ -2615,7 +2612,7 @@ class FunctionType : public Type {
   };
 
 protected:
-  FunctionType(TypeClass tc, QualType res, bool variadic,
+  FunctionType(TypeClass tc, QualType res,
                unsigned typeQuals, RefQualifierKind RefQualifier,
                QualType Canonical, bool Dependent,
                bool InstantiationDependent,
@@ -2625,11 +2622,9 @@ protected:
            ContainsUnexpandedParameterPack),
       ResultType(res) {
     FunctionTypeBits.ExtInfo = Info.Bits;
-    FunctionTypeBits.Variadic = variadic;
     FunctionTypeBits.TypeQuals = typeQuals;
     FunctionTypeBits.RefQualifier = static_cast<unsigned>(RefQualifier);
   }
-  bool isVariadic() const { return FunctionTypeBits.Variadic; }
   unsigned getTypeQuals() const { return FunctionTypeBits.TypeQuals; }
 
   RefQualifierKind getRefQualifier() const {
@@ -2665,7 +2660,7 @@ public:
 /// no information available about its arguments.
 class FunctionNoProtoType : public FunctionType, public llvm::FoldingSetNode {
   FunctionNoProtoType(QualType Result, QualType Canonical, ExtInfo Info)
-    : FunctionType(FunctionNoProto, Result, false, 0, RQ_None, Canonical,
+    : FunctionType(FunctionNoProto, Result, 0, RQ_None, Canonical,
                    /*Dependent=*/false, /*InstantiationDependent=*/false,
                    Result->isVariablyModifiedType(),
                    /*ContainsUnexpandedParameterPack=*/false, Info) {}
@@ -2703,12 +2698,13 @@ public:
   /// ExtProtoInfo - Extra information about a function prototype.
   struct ExtProtoInfo {
     ExtProtoInfo() :
-      Variadic(false), ExceptionSpecType(EST_None), TypeQuals(0),
-      RefQualifier(RQ_None), NumExceptions(0), Exceptions(0), NoexceptExpr(0),
-      ConsumedArguments(0) {}
+      Variadic(false), HasTrailingReturn(false), ExceptionSpecType(EST_None),
+      TypeQuals(0), RefQualifier(RQ_None), NumExceptions(0), Exceptions(0),
+      NoexceptExpr(0), ConsumedArguments(0) {}
 
     FunctionType::ExtInfo ExtInfo;
     bool Variadic;
+    bool HasTrailingReturn;
     ExceptionSpecificationType ExceptionSpecType;
     unsigned char TypeQuals;
     RefQualifierKind RefQualifier;
@@ -2734,7 +2730,7 @@ private:
                     QualType canonical, const ExtProtoInfo &epi);
 
   /// NumArgs - The number of arguments this function has, not counting '...'.
-  unsigned NumArgs : 19;
+  unsigned NumArgs : 17;
 
   /// NumExceptions - The number of types in the exception spec, if any.
   unsigned NumExceptions : 9;
@@ -2744,6 +2740,12 @@ private:
 
   /// HasAnyConsumedArgs - Whether this function has any consumed arguments.
   unsigned HasAnyConsumedArgs : 1;
+
+  /// Variadic - Whether the function is variadic.
+  unsigned Variadic : 1;
+
+  /// HasTrailingReturn - Whether this function has a trailing return type.
+  unsigned HasTrailingReturn : 1;
 
   // ArgInfo - There is an variable size array after the class in memory that
   // holds the argument types.
@@ -2784,6 +2786,7 @@ public:
     ExtProtoInfo EPI;
     EPI.ExtInfo = getExtInfo();
     EPI.Variadic = isVariadic();
+    EPI.HasTrailingReturn = hasTrailingReturn();
     EPI.ExceptionSpecType = getExceptionSpecType();
     EPI.TypeQuals = static_cast<unsigned char>(getTypeQuals());
     EPI.RefQualifier = getRefQualifier();
@@ -2845,15 +2848,17 @@ public:
     return getNoexceptSpec(Ctx) == NR_Nothrow;
   }
 
-  using FunctionType::isVariadic;
+  bool isVariadic() const { return Variadic; }
 
   /// \brief Determines whether this function prototype contains a
   /// parameter pack at the end.
   ///
   /// A function template whose last parameter is a parameter pack can be
   /// called with an arbitrary number of arguments, much like a variadic
-  /// function. However,
+  /// function.
   bool isTemplateVariadic() const;
+
+  bool hasTrailingReturn() const { return HasTrailingReturn; }
 
   unsigned getTypeQuals() const { return FunctionType::getTypeQuals(); }
 

@@ -1434,6 +1434,8 @@ QualType Sema::BuildExtVectorType(QualType T, Expr *ArraySize,
 ///
 /// \param Variadic Whether this is a variadic function type.
 ///
+/// \param HasTrailingReturn Whether this function has a trailing return type.
+///
 /// \param Quals The cvr-qualifiers to be applied to the function type.
 ///
 /// \param Loc The location of the entity whose type involves this
@@ -1448,7 +1450,8 @@ QualType Sema::BuildExtVectorType(QualType T, Expr *ArraySize,
 QualType Sema::BuildFunctionType(QualType T,
                                  QualType *ParamTypes,
                                  unsigned NumParamTypes,
-                                 bool Variadic, unsigned Quals,
+                                 bool Variadic, bool HasTrailingReturn,
+                                 unsigned Quals,
                                  RefQualifierKind RefQualifier,
                                  SourceLocation Loc, DeclarationName Entity,
                                  FunctionType::ExtInfo Info) {
@@ -1487,6 +1490,7 @@ QualType Sema::BuildFunctionType(QualType T,
 
   FunctionProtoType::ExtProtoInfo EPI;
   EPI.Variadic = Variadic;
+  EPI.HasTrailingReturn = HasTrailingReturn;
   EPI.TypeQuals = Quals;
   EPI.RefQualifier = RefQualifier;
   EPI.ExtInfo = Info;
@@ -1498,7 +1502,6 @@ QualType Sema::BuildFunctionType(QualType T,
 ///
 /// \param T the type to which the member pointer refers.
 /// \param Class the class type into which the member pointer points.
-/// \param CVR Qualifiers applied to the member pointer type
 /// \param Loc the location where this type begins
 /// \param Entity the name of the entity that will have this member pointer type
 ///
@@ -2185,6 +2188,7 @@ static TypeSourceInfo *GetFullTypeForDeclarator(TypeProcessingState &state,
 
         FunctionProtoType::ExtProtoInfo EPI;
         EPI.Variadic = FTI.isVariadic;
+        EPI.HasTrailingReturn = FTI.TrailingReturnType;
         EPI.TypeQuals = FTI.TypeQuals;
         EPI.RefQualifier = !FTI.hasRefQualifier()? RQ_None
                     : FTI.RefQualifierIsLValueRef? RQ_LValue
