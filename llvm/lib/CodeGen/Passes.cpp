@@ -205,7 +205,7 @@ void TargetPassConfig::addISelPrepare() {
 /// technique has maintainability tradeoffs because alternate pass orders are
 /// not well supported. addPre/Post works better if the target pass is easily
 /// tied to a common pass. But if it has subtle dependencies on multiple passes,
-/// overriding the stage instead.
+/// the target should override the stage instead.
 ///
 /// TODO: We could use a single addPre/Post(ID) hook to allow pass injection
 /// before/after any target-independent pass. But it's currently overkill.
