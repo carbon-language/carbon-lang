@@ -162,9 +162,9 @@ void test (BD &br) {
   aPtr = br; // expected-error {{assigning to 'AD *' from incompatible type 'BD'; take the address with &}}
 }
 
-void foo1() const {} // expected-error {{type qualifier is not allowed on this function}}
-void foo2() volatile {} // expected-error {{type qualifier is not allowed on this function}}
-void foo3() const volatile {} // expected-error {{type qualifier is not allowed on this function}}
+void foo1() const {} // expected-error {{non-member function cannot have 'const' qualifier}}
+void foo2() volatile {} // expected-error {{non-member function cannot have 'volatile' qualifier}}
+void foo3() const volatile {} // expected-error {{non-member function cannot have 'const volatile' qualifier}}
 
 struct S { void f(int, char); };
 int itsAComma,

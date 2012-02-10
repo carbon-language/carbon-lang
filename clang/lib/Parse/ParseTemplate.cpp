@@ -498,9 +498,10 @@ Decl *Parser::ParseTypeParameter(unsigned Depth, unsigned Position) {
   ParsedType DefaultArg;
   if (Tok.is(tok::equal)) {
     EqualLoc = ConsumeToken();
-    DefaultArg = ParseTypeName().get();
+    DefaultArg = ParseTypeName(/*Range=*/0,
+                               Declarator::TemplateTypeArgContext).get();
   }
-  
+
   return Actions.ActOnTypeParameter(getCurScope(), TypenameKeyword, Ellipsis, 
                                     EllipsisLoc, KeyLoc, ParamName, NameLoc,
                                     Depth, Position, EqualLoc, DefaultArg);

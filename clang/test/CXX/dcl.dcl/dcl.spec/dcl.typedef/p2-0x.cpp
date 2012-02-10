@@ -15,8 +15,7 @@ namespace IllegalTypeIds {
   using C = virtual void(int n); // expected-error {{type name does not allow function specifier}}
   using D = explicit void(int n); // expected-error {{type name does not allow function specifier}}
   using E = void(int n) throw(); // expected-error {{exception specifications are not allowed in type aliases}}
-  // FIXME: this is illegal; we incorrectly accept it for typedefs too.
-  using F = void(*)(int n) &&; // expected-err
+  using F = void(*)(int n) &&; // expected-error {{pointer to function type cannot have '&&' qualifier}}
   using G = __thread void(int n); // expected-error {{type name does not allow storage class to be specified}}
 
   using H = void(int n); // ok

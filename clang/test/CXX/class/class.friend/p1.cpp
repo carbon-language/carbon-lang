@@ -58,7 +58,7 @@ class A {
   friend A operator|(const A& r); // expected-error {{overloaded 'operator|' must be a binary operator (has 1 parameter)}}
 
   friend operator bool() const; // expected-error {{must use a qualified name when declaring a conversion operator as a friend}} \
-       // expected-error{{type qualifier is not allowed on this function}}
+       // expected-error{{non-member function cannot have 'const' qualifier}}
 
   typedef void ftypedef();
   friend ftypedef typedeffed_function; // okay (because it's not declared as a member)

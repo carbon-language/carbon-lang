@@ -4341,24 +4341,6 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD,
     return false;
   }
 
-  // Function pointers and references cannot have qualified function type, only
-  // function pointer-to-members can do that.
-  QualType Pointee;
-  unsigned PtrOrRef = 0;
-  if (const PointerType *Ptr = T->getAs<PointerType>())
-    Pointee = Ptr->getPointeeType();
-  else if (const ReferenceType *Ref = T->getAs<ReferenceType>()) {
-    Pointee = Ref->getPointeeType();
-    PtrOrRef = 1;
-  }
-  if (!Pointee.isNull() && Pointee->isFunctionProtoType() &&
-      Pointee->getAs<FunctionProtoType>()->getTypeQuals() != 0) {
-    Diag(NewVD->getLocation(), diag::err_invalid_qualified_function_pointer)
-        << PtrOrRef;
-    NewVD->setInvalidDecl();
-    return false;
-  }
-
   if (!Previous.empty()) {
     MergeVarDecl(NewVD, Previous);
     return true;

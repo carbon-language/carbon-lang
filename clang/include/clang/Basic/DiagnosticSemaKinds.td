@@ -3720,22 +3720,11 @@ def err_invalid_this_use : Error<
 def err_invalid_member_use_in_static_method : Error<
   "invalid use of member %0 in static member function">;
 def err_invalid_qualified_function_type : Error<
-  "type qualifier is not allowed on this function">;
-def err_invalid_ref_qualifier_function_type : Error<
-  "ref-qualifier '%select{&&|&}0' is only allowed on non-static member functions,"
-  " member function pointers, and typedefs of function types">;
-def ext_qualified_function_type_template_arg : ExtWarn<
-  "template argument of '%0' qualified function type is a GNU extension">, 
-  InGroup<GNU>;
-
-def err_invalid_qualified_function_pointer : Error<
-  "type qualifier is not allowed on this function %select{pointer|reference}0">;
-def err_invalid_qualified_typedef_function_type_use : Error<
-  "a qualified function type cannot be used to declare a "
-  "%select{static member|nonmember}0 function">;
-def err_invalid_ref_qualifier_typedef_function_type_use : Error<
-  "%select{static member|nonmember}0 function cannot have a ref-qualifier "
-  "'%select{&&|&}1'">;
+  "%select{static |non-}0member function %select{of type %2 |}1"
+  "cannot have '%3' qualifier">;
+def err_compound_qualified_function_type : Error<
+  "%select{block pointer|pointer|reference}0 to function type %select{%2 |}1"
+  "cannot have '%3' qualifier">;
 
 def err_ref_qualifier_overload : Error<
   "cannot overload a member function %select{without a ref-qualifier|with "

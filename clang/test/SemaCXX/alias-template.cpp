@@ -12,8 +12,7 @@ namespace IllegalTypeIds {
   template<typename U> using C = virtual void(int n); // expected-error {{type name does not allow function specifier}}
   template<typename U> using D = explicit void(int n); // expected-error {{type name does not allow function specifier}}
   template<typename U> using E = void(int n) throw(); // expected-error {{exception specifications are not allowed in type aliases}}
-  // FIXME: this is illegal; we incorrectly accept it for typedefs too.
-  template<typename U> using F = void(*)(int n) &&; // expected-err
+  template<typename U> using F = void(*)(int n) &&; // expected-error {{pointer to function type cannot have '&&' qualifier}}
   template<typename U> using G = __thread void(int n); // expected-error {{type name does not allow storage class to be specified}}
 
   template<typename U> using H = void(int n); // ok

@@ -11,17 +11,17 @@ struct classify_function<R(Args...)> {
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args...) const> { // expected-warning{{template argument of 'const' qualified function type is a GNU extension}}
+struct classify_function<R(Args...) const> {
   static const unsigned value = 2;
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args...) volatile> { // expected-warning{{template argument of 'volatile' qualified function type is a GNU extension}}
+struct classify_function<R(Args...) volatile> {
   static const unsigned value = 3;
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args...) const volatile> { // expected-warning{{template argument of 'const volatile' qualified function type is a GNU extension}}
+struct classify_function<R(Args...) const volatile> {
   static const unsigned value = 4;
 };
 
@@ -31,27 +31,27 @@ struct classify_function<R(Args......)> {
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args......) const> { // expected-warning{{template argument of 'const' qualified function type is a GNU extension}}
+struct classify_function<R(Args......) const> {
   static const unsigned value = 6;
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args......) volatile> { // expected-warning{{template argument of 'volatile' qualified function type is a GNU extension}}
+struct classify_function<R(Args......) volatile> {
   static const unsigned value = 7;
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args......) const volatile> { // expected-warning{{template argument of 'const volatile' qualified function type is a GNU extension}}
+struct classify_function<R(Args......) const volatile> {
   static const unsigned value = 8;
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args......) &&> { // expected-warning{{template argument of '&&' qualified function type is a GNU extension}}
+struct classify_function<R(Args......) &&> {
   static const unsigned value = 9;
 };
 
 template<typename R, typename ...Args>
-struct classify_function<R(Args......) const &> { // expected-warning{{template argument of 'const &' qualified function type is a GNU extension}}
+struct classify_function<R(Args......) const &> {
   static const unsigned value = 10;
 };
 
