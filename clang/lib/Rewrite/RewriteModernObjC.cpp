@@ -5215,8 +5215,8 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 
 /// struct _ivar_t {
 ///   unsigned long int *offset;  // pointer to ivar offset location
-///   char *name;
-///   char *type;
+///   const char *name;
+///   const char *type;
 ///   uint32_t alignment;
 ///   uint32_t size;
 /// }
@@ -5224,7 +5224,7 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 /// struct _ivar_list_t {
 ///   uint32 entsize;  // sizeof(struct _ivar_t)
 ///   uint32 count;
-///   struct _iver_t list[count];
+///   struct _ivar_t list[count];
 /// }
 
 /// struct _class_ro_t {
@@ -5304,8 +5304,8 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
   
   Result += "\nstruct _ivar_t {\n";
   Result += "\tunsigned long int *offset;  // pointer to ivar offset location\n";
-  Result += "\tchar *name;\n";
-  Result += "\tchar *type;\n";
+  Result += "\tconst char *name;\n";
+  Result += "\tconst char *type;\n";
   Result += "\tunsigned int alignment;\n";
   Result += "\tunsigned int  size;\n";
   Result += "};\n";
@@ -5370,6 +5370,16 @@ static void Write__prop_list_t_TypeDecl(std::string &Result,
   Result += "\tunsigned int count_of_properties;\n";
   Result += "\tstruct _prop_t prop_list[";
   Result += utostr(property_count); Result += "];\n";
+  Result += "}";
+}
+
+static void Write__ivar_list_t_TypeDecl(std::string &Result,
+                                        unsigned int ivar_count) {
+  Result += "struct /*_ivar_list_t*/"; Result += " {\n";
+  Result += "\tunsigned int entsize;  // sizeof(struct _prop_t)\n";
+  Result += "\tunsigned int count;\n";
+  Result += "\tstruct _ivar_t ivar_list[";
+  Result += utostr(ivar_count); Result += "];\n";
   Result += "}";
 }
 
@@ -5487,6 +5497,50 @@ static void Write__extendedMethodTypes_initializer(RewriteModernObjC &RewriteObj
     else {
       Result += ",\n";
     }
+  }
+}
+
+static void Write__ivar_list_t_initializer(RewriteModernObjC &RewriteObj,
+                                           ASTContext *Context, std::string &Result,
+                                           ArrayRef<ObjCIvarDecl *> Ivars,
+                                           StringRef VarName,
+                                           StringRef ClassName) {
+  if (Ivars.size() > 0) {
+    Result += "\nstatic ";
+    Write__ivar_list_t_TypeDecl(Result, Ivars.size());
+    Result += " "; Result += VarName;
+    Result += ClassName;
+    Result += " __attribute__ ((used, section (\"__DATA,__objc_const\"))) = {\n";
+    Result += "\t"; Result += "sizeof(_ivar_t)"; Result += ",\n";
+    Result += "\t"; Result += utostr(Ivars.size()); Result += ",\n";
+    for (unsigned i =0, e = Ivars.size(); i < e; i++) {
+      ObjCIvarDecl *IvarDecl = Ivars[i];
+      if (i == 0)
+        Result += "\t{{";
+      else
+        Result += "\t {";
+      // FIXME: // pointer to ivar offset location
+      Result += "(unsigned long int *)0, ";
+      
+      Result += "\""; Result += IvarDecl->getName(); Result += "\", ";
+      std::string IvarTypeString, QuoteIvarTypeString;
+      Context->getObjCEncodingForType(IvarDecl->getType(), IvarTypeString,
+                                      IvarDecl);
+      RewriteObj.QuoteDoublequotes(IvarTypeString, QuoteIvarTypeString);
+      Result += "\""; Result += QuoteIvarTypeString; Result += "\", ";
+      
+      // FIXME: what should the alignment be?
+      unsigned Align = 0;  
+      Result += llvm::utostr(Align); Result += ", ";
+      unsigned Size = Context->getTypeSize(IvarDecl->getType());
+      Size >>= 3;
+      Result += llvm::utostr(Size);
+      if (i  == e-1)
+        Result += "}}\n";
+      else
+        Result += "},\n";
+    }
+    Result += "};\n";
   }
 }
 
@@ -5693,33 +5747,29 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   ObjCInterfaceDecl *CDecl = IDecl->getClassInterface();
   
   // Explicitly declared @interface's are already synthesized.
-  if (CDecl->isImplicitInterfaceDecl()) {
-    // FIXME: Implementation of a class with no @interface (legacy) does not
-    // produce correct synthesis as yet.
-    RewriteObjCInternalStruct(CDecl, Result);
+  if (CDecl->isImplicitInterfaceDecl())
+    assert(false && 
+           "Legacy implicit interface rewriting not supported in moder abi");
+  WriteModernMetadataDeclarations(Result);
+  SmallVector<ObjCIvarDecl *, 8> IVars;
+  
+  for (ObjCIvarDecl *IVD = CDecl->all_declared_ivar_begin();
+      IVD; IVD = IVD->getNextIvar()) {
+    // Ignore unnamed bit-fields.
+    if (!IVD->getDeclName())
+      continue;
+    IVars.push_back(IVD);
   }
   
+  Write__ivar_list_t_initializer(*this, Context, Result, IVars, 
+                                 "_OBJC_INSTANCE_VARIABLES_",
+                                 CDecl->getNameAsString());
+  
+  // FIXME. Handle modern abi's private ivars declared in @implementation.
   // Build _objc_ivar_list metadata for classes ivars if needed
-  unsigned NumIvars = !IDecl->ivar_empty()
-  ? IDecl->ivar_size()
-  : (CDecl ? CDecl->ivar_size() : 0);
+  unsigned NumIvars = CDecl->ivar_size();
+  
   if (NumIvars > 0) {
-    static bool objc_ivar = false;
-    if (!objc_ivar) {
-      /* struct _objc_ivar {
-       char *ivar_name;
-       char *ivar_type;
-       int ivar_offset;
-       };
-       */
-      Result += "\nstruct _objc_ivar {\n";
-      Result += "\tchar *ivar_name;\n";
-      Result += "\tchar *ivar_type;\n";
-      Result += "\tint ivar_offset;\n";
-      Result += "};\n";
-      
-      objc_ivar = true;
-    }
     
     /* struct {
      int ivar_count;
