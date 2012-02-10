@@ -969,6 +969,35 @@ bool CXXRecordDecl::isCLike() const {
   return isPOD() && data().HasOnlyCMembers;
 }
 
+void CXXRecordDecl::setLambda(LambdaExpr *Lambda) {
+  if (!Lambda)
+    return;
+
+  data().IsLambda = true;
+  getASTContext().Lambdas[this] = Lambda;
+}
+
+void CXXRecordDecl::getCaptureFields(
+       llvm::DenseMap<const VarDecl *, FieldDecl *> &Captures,
+       FieldDecl *&ThisCapture) {
+  Captures.clear();
+  ThisCapture = 0;
+
+  LambdaExpr *Lambda = getASTContext().Lambdas[this];
+  RecordDecl::field_iterator Field = field_begin();
+  for (LambdaExpr::capture_iterator C = Lambda->capture_begin(), 
+                                 CEnd = Lambda->capture_end();
+       C != CEnd; ++C, ++Field) {
+    if (C->capturesThis()) {
+      ThisCapture = *Field;
+      continue;
+    }
+
+    Captures[C->getCapturedVar()] = *Field;
+  }
+}
+
+
 static CanQualType GetConversionType(ASTContext &Context, NamedDecl *Conv) {
   QualType T;
   if (isa<UsingShadowDecl>(Conv))

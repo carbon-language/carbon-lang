@@ -19,6 +19,7 @@
 #include "clang/AST/Decl.h"
 #include "clang/AST/TypeLoc.h"
 #include "clang/AST/UnresolvedSet.h"
+#include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/PointerIntPair.h"
 #include "llvm/ADT/SmallPtrSet.h"
 
@@ -37,6 +38,7 @@ class CXXMemberLookupCriteria;
 class CXXFinalOverriderMap;
 class CXXIndirectPrimaryBaseSet;
 class FriendDecl;
+class LambdaExpr;
 
 /// \brief Represents any kind of function declaration, whether it is a
 /// concrete function or a function template.
@@ -925,7 +927,23 @@ public:
   /// \brief Determine whether this class describes a lambda function object.
   bool isLambda() const { return hasDefinition() && data().IsLambda; }
   
-  void setLambda(bool Lambda = true) { data().IsLambda = Lambda; }
+  /// \brief Mark this as a closure type from a lambda expression.
+  void makeLambda() { data().IsLambda = true; }
+
+  /// \brief Set the lambda expression associated with this closure type.
+  void setLambda(LambdaExpr *Lambda);
+
+  /// \brief For a closure type, retrieve the mapping from captured
+  /// variables and this to the non-static data members that store the
+  /// values or references of the captures.
+  ///
+  /// \param Captures Will be populated with the mapping from captured
+  /// variables to the corresponding fields.
+  ///
+  /// \param ThisCapture Will be set to the field declaration for the
+  /// 'this' capture.
+  void getCaptureFields(llvm::DenseMap<const VarDecl *, FieldDecl *> &Captures,
+                        FieldDecl *&ThisCapture);
 
   /// getConversions - Retrieve the overload set containing all of the
   /// conversion functions in this class.

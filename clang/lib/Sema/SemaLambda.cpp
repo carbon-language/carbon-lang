@@ -32,7 +32,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
                                                /*IdLoc=*/Intro.Range.getBegin(),
                                                /*Id=*/0);
   Class->startDefinition();
-  Class->setLambda(true);
+  Class->makeLambda();
   CurContext->addDecl(Class);
 
   // Build the call operator; we don't really have all the relevant information
@@ -408,6 +408,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
                                           CaptureDefault, Captures, 
                                           ExplicitParams, CaptureInits, 
                                           Body->getLocEnd());
+  Class->setLambda(Lambda);
 
   // C++11 [expr.prim.lambda]p2:
   //   A lambda-expression shall not appear in an unevaluated operand
