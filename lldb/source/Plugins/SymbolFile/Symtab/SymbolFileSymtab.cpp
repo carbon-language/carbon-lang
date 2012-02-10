@@ -332,7 +332,7 @@ SymbolFileSymtab::FindGlobalVariables(const RegularExpression& regex, bool appen
 }
 
 uint32_t
-SymbolFileSymtab::FindFunctions(const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
+SymbolFileSymtab::FindFunctions(const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool include_inlines,  bool append, SymbolContextList& sc_list)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileSymtab::FindFunctions (name = '%s')",
@@ -346,7 +346,7 @@ SymbolFileSymtab::FindFunctions(const ConstString &name, const ClangNamespaceDec
 }
 
 uint32_t
-SymbolFileSymtab::FindFunctions(const RegularExpression& regex, bool append, SymbolContextList& sc_list)
+SymbolFileSymtab::FindFunctions(const RegularExpression& regex, bool include_inlines, bool append, SymbolContextList& sc_list)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileSymtab::FindFunctions (regex = '%s')",

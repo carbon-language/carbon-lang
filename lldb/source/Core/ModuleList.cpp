@@ -186,6 +186,7 @@ uint32_t
 ModuleList::FindFunctions (const ConstString &name, 
                            uint32_t name_type_mask, 
                            bool include_symbols,
+                           bool include_inlines,
                            bool append, 
                            SymbolContextList &sc_list)
 {
@@ -196,7 +197,7 @@ ModuleList::FindFunctions (const ConstString &name,
     collection::const_iterator pos, end = m_modules.end();
     for (pos = m_modules.begin(); pos != end; ++pos)
     {
-        (*pos)->FindFunctions (name, NULL, name_type_mask, include_symbols, true, sc_list);
+        (*pos)->FindFunctions (name, NULL, name_type_mask, include_symbols, include_inlines, true, sc_list);
     }
     
     return sc_list.GetSize();

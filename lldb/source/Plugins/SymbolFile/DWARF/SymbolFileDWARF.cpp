@@ -2910,7 +2910,8 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
 uint32_t
 SymbolFileDWARF::FindFunctions (const ConstString &name, 
                                 const lldb_private::ClangNamespaceDecl *namespace_decl, 
-                                uint32_t name_type_mask, 
+                                uint32_t name_type_mask,
+                                bool include_inlines,
                                 bool append, 
                                 SymbolContextList& sc_list)
 {
@@ -3020,6 +3021,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                         if (namespace_decl && !DIEIsInNamespace (namespace_decl, dwarf_cu, die))
                             continue;
                         
+                        if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
+                            continue;
+                        
                         ResolveFunction (dwarf_cu, die, sc_list);
                     }
                     else
@@ -3048,7 +3052,12 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                         {
                             const char *die_name = die->GetName(this, dwarf_cu);
                             if (ObjCLanguageRuntime::IsPossibleObjCMethodName(die_name))
+                            {
+                                if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
+                                    continue;
+                                
                                 ResolveFunction (dwarf_cu, die, sc_list);
+                            }
                         }
                         else
                         {
@@ -3089,6 +3098,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                                                                name_cstr, 
                                                                base_name_start, 
                                                                base_name_end))
+                                continue;
+                            
+                            if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
                                 continue;
                                 
                             // If we get to here, the die is good, and we should add it:
@@ -3139,6 +3151,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                                                        base_name_end))
                         continue;
                     
+                    if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
+                        continue;
+                    
                     // If we get to here, the die is good, and we should add it:
                     ResolveFunction (dwarf_cu, die, sc_list);
                 }
@@ -3166,6 +3181,9 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
                                                            base_name_end))
                             continue;
                         
+                        if (!include_inlines && die->Tag() == DW_TAG_inlined_subroutine)
+                            continue;
+                        
                         // If we get to here, the die is good, and we should add it:
                         ResolveFunction (dwarf_cu, die, sc_list);
                     }
@@ -3186,7 +3204,7 @@ SymbolFileDWARF::FindFunctions (const ConstString &name,
 }
 
 uint32_t
-SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool append, SymbolContextList& sc_list)
+SymbolFileDWARF::FindFunctions(const RegularExpression& regex, bool include_inlines, bool append, SymbolContextList& sc_list)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileDWARF::FindFunctions (regex = '%s')",

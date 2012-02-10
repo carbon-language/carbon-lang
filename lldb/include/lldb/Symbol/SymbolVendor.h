@@ -113,12 +113,14 @@ public:
     virtual uint32_t
     FindFunctions (const ConstString &name,
                    const ClangNamespaceDecl *namespace_decl,
-                   uint32_t name_type_mask, 
+                   uint32_t name_type_mask,
+                   bool include_inlines,
                    bool append,
                    SymbolContextList& sc_list);
 
     virtual uint32_t
     FindFunctions (const RegularExpression& regex,
+                   bool include_inlines,
                    bool append,
                    SymbolContextList& sc_list);
 

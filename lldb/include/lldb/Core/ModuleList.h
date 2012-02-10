@@ -182,6 +182,7 @@ public:
     FindFunctions (const ConstString &name,
                    uint32_t name_type_mask,
                    bool include_symbols,
+                   bool include_inlines,
                    bool append,
                    SymbolContextList &sc_list);
 

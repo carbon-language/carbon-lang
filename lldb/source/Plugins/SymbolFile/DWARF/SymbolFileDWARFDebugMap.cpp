@@ -882,7 +882,7 @@ RemoveFunctionsWithModuleNotEqualTo (Module *module, SymbolContextList &sc_list,
 }
 
 uint32_t
-SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
+SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool include_inlines, bool append, SymbolContextList& sc_list)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileDWARFDebugMap::FindFunctions (name = %s)",
@@ -899,7 +899,7 @@ SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, const ClangNames
     while ((oso_dwarf = GetSymbolFileByOSOIndex (oso_idx++)) != NULL)
     {
         uint32_t sc_idx = sc_list.GetSize();
-        if (oso_dwarf->FindFunctions(name, namespace_decl, name_type_mask, true, sc_list))
+        if (oso_dwarf->FindFunctions(name, namespace_decl, name_type_mask, include_inlines, true, sc_list))
         {
             RemoveFunctionsWithModuleNotEqualTo (m_obj_file->GetModule(), sc_list, sc_idx);
         }
@@ -910,7 +910,7 @@ SymbolFileDWARFDebugMap::FindFunctions(const ConstString &name, const ClangNames
 
 
 uint32_t
-SymbolFileDWARFDebugMap::FindFunctions (const RegularExpression& regex, bool append, SymbolContextList& sc_list)
+SymbolFileDWARFDebugMap::FindFunctions (const RegularExpression& regex, bool include_inlines, bool append, SymbolContextList& sc_list)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolFileDWARFDebugMap::FindFunctions (regex = '%s')",
@@ -928,7 +928,7 @@ SymbolFileDWARFDebugMap::FindFunctions (const RegularExpression& regex, bool app
     {
         uint32_t sc_idx = sc_list.GetSize();
         
-        if (oso_dwarf->FindFunctions(regex, true, sc_list))
+        if (oso_dwarf->FindFunctions(regex, include_inlines, true, sc_list))
         {
             RemoveFunctionsWithModuleNotEqualTo (m_obj_file->GetModule(), sc_list, sc_idx);
         }

@@ -504,7 +504,8 @@ uint32_t
 Module::FindFunctions (const ConstString &name,
                        const ClangNamespaceDecl *namespace_decl,
                        uint32_t name_type_mask, 
-                       bool include_symbols, 
+                       bool include_symbols,
+                       bool include_inlines,
                        bool append, 
                        SymbolContextList& sc_list)
 {
@@ -516,7 +517,7 @@ Module::FindFunctions (const ConstString &name,
     // Find all the functions (not symbols, but debug information functions...
     SymbolVendor *symbols = GetSymbolVendor ();
     if (symbols)
-        symbols->FindFunctions(name, namespace_decl, name_type_mask, append, sc_list);
+        symbols->FindFunctions(name, namespace_decl, name_type_mask, include_inlines, append, sc_list);
 
     // Now check our symbol table for symbols that are code symbols if requested
     if (include_symbols)
@@ -548,7 +549,8 @@ Module::FindFunctions (const ConstString &name,
 
 uint32_t
 Module::FindFunctions (const RegularExpression& regex, 
-                       bool include_symbols, 
+                       bool include_symbols,
+                       bool include_inlines,
                        bool append, 
                        SymbolContextList& sc_list)
 {
@@ -559,7 +561,7 @@ Module::FindFunctions (const RegularExpression& regex,
     
     SymbolVendor *symbols = GetSymbolVendor ();
     if (symbols)
-        symbols->FindFunctions(regex, append, sc_list);
+        symbols->FindFunctions(regex, include_inlines, append, sc_list);
     // Now check our symbol table for symbols that are code symbols if requested
     if (include_symbols)
     {

@@ -165,6 +165,7 @@ Disassembler::Disassemble
     if (name)
     {
         const bool include_symbols = true;
+        const bool include_inlines = true;
         if (module)
         {
             module->FindFunctions (name,
@@ -174,6 +175,7 @@ Disassembler::Disassemble
                                    eFunctionNameTypeMethod | 
                                    eFunctionNameTypeSelector, 
                                    include_symbols,
+                                   include_inlines,
                                    true,
                                    sc_list);
         }
@@ -184,7 +186,8 @@ Disassembler::Disassemble
                                                                eFunctionNameTypeFull | 
                                                                eFunctionNameTypeMethod | 
                                                                eFunctionNameTypeSelector,
-                                                               include_symbols, 
+                                                               include_symbols,
+                                                               include_inlines,
                                                                false,
                                                                sc_list);
         }

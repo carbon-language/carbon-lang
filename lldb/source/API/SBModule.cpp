@@ -327,10 +327,12 @@ SBModule::FindFunctions (const char *name,
     {
         const bool append = true;
         const bool symbols_ok = true;
+        const bool inlines_ok = true;
         m_opaque_sp->FindFunctions (ConstString(name),
                                     NULL,
                                     name_type_mask, 
-                                    symbols_ok, 
+                                    symbols_ok,
+                                    inlines_ok,
                                     append, 
                                     *sb_sc_list);
     }

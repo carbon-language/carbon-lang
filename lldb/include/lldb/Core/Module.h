@@ -271,7 +271,8 @@ public:
     FindFunctions (const ConstString &name,
                    const ClangNamespaceDecl *namespace_decl,
                    uint32_t name_type_mask, 
-                   bool symbols_ok, 
+                   bool symbols_ok,
+                   bool inlines_ok,
                    bool append, 
                    SymbolContextList& sc_list);
 
@@ -300,6 +301,7 @@ public:
     uint32_t
     FindFunctions (const RegularExpression& regex, 
                    bool symbols_ok, 
+                   bool inlines_ok,
                    bool append, 
                    SymbolContextList& sc_list);
 

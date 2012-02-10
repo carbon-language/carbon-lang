@@ -30,11 +30,13 @@ bool lldb_private::InferiorCallMmap(Process *process, addr_t &allocated_addr,
 
     const bool append = true;
     const bool include_symbols = true;
+    const bool include_inlines = false;
     SymbolContextList sc_list;
     const uint32_t count
       = process->GetTarget().GetImages().FindFunctions (ConstString ("mmap"), 
                                                         eFunctionNameTypeFull,
-                                                        include_symbols, 
+                                                        include_symbols,
+                                                        include_inlines,
                                                         append, 
                                                         sc_list);
     if (count > 0)
@@ -128,11 +130,13 @@ bool lldb_private::InferiorCallMunmap(Process *process, addr_t addr,
    
    const bool append = true;
    const bool include_symbols = true;
+   const bool include_inlines = false;
    SymbolContextList sc_list;
    const uint32_t count
      = process->GetTarget().GetImages().FindFunctions (ConstString ("munmap"), 
                                                        eFunctionNameTypeFull,
                                                        include_symbols, 
+                                                       include_inlines,
                                                        append, 
                                                        sc_list);
    if (count > 0)

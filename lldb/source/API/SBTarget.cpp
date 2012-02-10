@@ -1262,10 +1262,12 @@ SBTarget::FindFunctions (const char *name, uint32_t name_type_mask)
         if (target_sp)
         {
             const bool symbols_ok = true;
+            const bool inlines_ok = true;
             const bool append = true;
             target_sp->GetImages().FindFunctions (ConstString(name), 
                                                   name_type_mask, 
-                                                  symbols_ok, 
+                                                  symbols_ok,
+                                                  inlines_ok,
                                                   append, 
                                                   *sb_sc_list);
         }

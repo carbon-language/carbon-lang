@@ -120,6 +120,7 @@ BreakpointResolverName::SearchCallback
     }
     
     const bool include_symbols = false;
+    const bool include_inlines = true;
     const bool append = false;
     bool filter_by_cu = (filter.GetFilterRequiredItems() & eSymbolContextCompUnit) != 0;
 
@@ -131,7 +132,8 @@ BreakpointResolverName::SearchCallback
                 uint32_t num_functions = context.module_sp->FindFunctions (m_func_name, 
                                                                            NULL,
                                                                            m_func_name_type_mask, 
-                                                                           include_symbols, 
+                                                                           include_symbols,
+                                                                           include_inlines, 
                                                                            append, 
                                                                            func_list);
                 // If the search filter specifies a Compilation Unit, then we don't need to bother to look in plain
@@ -150,7 +152,8 @@ BreakpointResolverName::SearchCallback
                 if (!filter_by_cu)
                     context.module_sp->FindSymbolsMatchingRegExAndType (m_regex, eSymbolTypeCode, sym_list);
                 context.module_sp->FindFunctions (m_regex, 
-                                                  include_symbols, 
+                                                  include_symbols,
+                                                  include_inlines, 
                                                   append, 
                                                   func_list);
             }

@@ -667,6 +667,7 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
     SymbolContextList sc_list;
     
     const bool include_symbols = false;
+    const bool include_inlines = false;
     const bool append = false;
     
     std::string interface_name = interface_decl->getNameAsString();
@@ -678,7 +679,7 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
         ms.Flush();
         ConstString instance_method_name(ms.GetData());
         
-        m_target->GetImages().FindFunctions(instance_method_name, lldb::eFunctionNameTypeFull, include_symbols, append, sc_list);
+        m_target->GetImages().FindFunctions(instance_method_name, lldb::eFunctionNameTypeFull, include_symbols, include_inlines, append, sc_list);
         
         if (sc_list.GetSize())
             break;
@@ -688,7 +689,7 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
         ms.Flush();
         ConstString class_method_name(ms.GetData());
         
-        m_target->GetImages().FindFunctions(class_method_name, lldb::eFunctionNameTypeFull, include_symbols, append, sc_list);
+        m_target->GetImages().FindFunctions(class_method_name, lldb::eFunctionNameTypeFull, include_symbols, include_inlines, append, sc_list);
         
         if (sc_list.GetSize())
             break;
@@ -698,7 +699,7 @@ ClangASTSource::FindObjCMethodDecls (NameSearchContext &context)
         
         SymbolContextList candidate_sc_list;
         
-        m_target->GetImages().FindFunctions(selector_name, lldb::eFunctionNameTypeSelector, include_symbols, append, candidate_sc_list);
+        m_target->GetImages().FindFunctions(selector_name, lldb::eFunctionNameTypeSelector, include_symbols, include_inlines, append, candidate_sc_list);
         
         for (uint32_t ci = 0, ce = candidate_sc_list.GetSize();
              ci != ce;

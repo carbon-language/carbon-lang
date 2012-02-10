@@ -234,20 +234,20 @@ SymbolVendor::FindGlobalVariables (const RegularExpression& regex, bool append, 
 }
 
 uint32_t
-SymbolVendor::FindFunctions(const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool append, SymbolContextList& sc_list)
+SymbolVendor::FindFunctions(const ConstString &name, const ClangNamespaceDecl *namespace_decl, uint32_t name_type_mask, bool include_inlines, bool append, SymbolContextList& sc_list)
 {
     Mutex::Locker locker(m_mutex);
     if (m_sym_file_ap.get())
-        return m_sym_file_ap->FindFunctions(name, namespace_decl, name_type_mask, append, sc_list);
+        return m_sym_file_ap->FindFunctions(name, namespace_decl, name_type_mask, include_inlines, append, sc_list);
     return 0;
 }
 
 uint32_t
-SymbolVendor::FindFunctions(const RegularExpression& regex, bool append, SymbolContextList& sc_list)
+SymbolVendor::FindFunctions(const RegularExpression& regex, bool include_inlines, bool append, SymbolContextList& sc_list)
 {
     Mutex::Locker locker(m_mutex);
     if (m_sym_file_ap.get())
-        return m_sym_file_ap->FindFunctions(regex, append, sc_list);
+        return m_sym_file_ap->FindFunctions(regex, include_inlines, append, sc_list);
     return 0;
 }
 

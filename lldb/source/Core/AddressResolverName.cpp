@@ -104,6 +104,7 @@ AddressResolverName::SearchCallback
     }
 
     const bool include_symbols = false;
+    const bool include_inlines = true;
     const bool append = false;
     switch (m_match_type)
     {
@@ -117,6 +118,7 @@ AddressResolverName::SearchCallback
                                               NULL,
                                               eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector,
                                               include_symbols,
+                                              include_inlines,
                                               append, 
                                               func_list);
         }
@@ -130,6 +132,7 @@ AddressResolverName::SearchCallback
                                                                 sym_list);
             context.module_sp->FindFunctions (m_regex, 
                                               include_symbols,
+                                              include_inlines,
                                               append, 
                                               func_list);
         }

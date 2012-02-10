@@ -1521,6 +1521,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *m
     {
         SymbolContextList sc_list;
         const bool include_symbols = false;
+        const bool include_inlines = true;
         const bool append = true;
         uint32_t num_matches = 0;
         if (name_is_regex)
@@ -1528,6 +1529,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *m
             RegularExpression function_name_regex (name);
             num_matches = module->FindFunctions (function_name_regex, 
                                                  include_symbols,
+                                                 include_inlines, 
                                                  append, 
                                                  sc_list);
         }
@@ -1538,6 +1540,7 @@ LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *m
                                                  NULL,
                                                  eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeMethod | eFunctionNameTypeSelector, 
                                                  include_symbols,
+                                                 include_inlines, 
                                                  append, 
                                                  sc_list);
         }
