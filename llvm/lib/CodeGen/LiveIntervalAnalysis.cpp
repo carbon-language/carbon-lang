@@ -1161,11 +1161,21 @@ bool LiveIntervals::checkRegMaskInterference(LiveInterval &LI,
                                              BitVector &UsableRegs) {
   if (LI.empty())
     return false;
+  LiveInterval::iterator LiveI = LI.begin(), LiveE = LI.end();
+
+  // Use a smaller arrays for local live ranges.
+  ArrayRef<SlotIndex> Slots;
+  ArrayRef<const uint32_t*> Bits;
+  if (MachineBasicBlock *MBB = intervalIsInOneMBB(LI)) {
+    Slots = getRegMaskSlotsInBlock(MBB->getNumber());
+    Bits = getRegMaskBitsInBlock(MBB->getNumber());
+  } else {
+    Slots = getRegMaskSlots();
+    Bits = getRegMaskBits();
+  }
 
   // We are going to enumerate all the register mask slots contained in LI.
   // Start with a binary search of RegMaskSlots to find a starting point.
-  LiveInterval::iterator LiveI = LI.begin(), LiveE = LI.end();
-  ArrayRef<SlotIndex> Slots = getRegMaskSlots();
   ArrayRef<SlotIndex>::iterator SlotI =
     std::lower_bound(Slots.begin(), Slots.end(), LiveI->start);
   ArrayRef<SlotIndex>::iterator SlotE = Slots.end();
@@ -1187,7 +1197,7 @@ bool LiveIntervals::checkRegMaskInterference(LiveInterval &LI,
         Found = true;
       }
       // Remove usable registers clobbered by this mask.
-      UsableRegs.clearBitsNotInMask(RegMaskBits[SlotI-Slots.begin()]);
+      UsableRegs.clearBitsNotInMask(Bits[SlotI-Slots.begin()]);
       if (++SlotI == SlotE)
         return Found;
     }
