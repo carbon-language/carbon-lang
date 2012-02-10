@@ -163,7 +163,7 @@ PBQP::Graph::NodeItr PBQPRAProblem::getNodeForVReg(unsigned vreg) const {
   VReg2Node::const_iterator nodeItr = vreg2Node.find(vreg);
   assert(nodeItr != vreg2Node.end() && "No node for vreg.");
   return nodeItr->second;
-  
+
 }
 
 const PBQPRAProblem::AllowedSet&
@@ -190,7 +190,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
   typedef std::vector<const LiveInterval*> LIVector;
 
   MachineRegisterInfo *mri = &mf->getRegInfo();
-  const TargetRegisterInfo *tri = mf->getTarget().getRegisterInfo();  
+  const TargetRegisterInfo *tri = mf->getTarget().getRegisterInfo();
 
   std::auto_ptr<PBQPRAProblem> p(new PBQPRAProblem());
   PBQP::Graph &g = p->getGraph();
@@ -207,7 +207,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
 
   BitVector reservedRegs = tri->getReservedRegs(*mf);
 
-  // Iterate over vregs. 
+  // Iterate over vregs.
   for (RegSet::const_iterator vregItr = vregs.begin(), vregEnd = vregs.end();
        vregItr != vregEnd; ++vregItr) {
     unsigned vreg = *vregItr;
@@ -263,7 +263,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
     }
 
     // Construct the node.
-    PBQP::Graph::NodeItr node = 
+    PBQP::Graph::NodeItr node =
       g.addNode(PBQP::Vector(vrAllowed.size() + 1, 0));
 
     // Record the mapping and allowed set in the problem.
@@ -364,7 +364,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilderWithCoalescing::build(
 
       const float copyFactor = 0.5; // Cost of copy relative to load. Current
       // value plucked randomly out of the air.
-                                      
+
       PBQP::PBQPNum cBenefit =
         copyFactor * LiveIntervals::getSpillWeight(false, true,
                                                    loopInfo->getLoopDepth(mbb));
@@ -375,7 +375,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilderWithCoalescing::build(
         }
 
         const PBQPRAProblem::AllowedSet &allowed = p->getAllowedSet(src);
-        unsigned pregOpt = 0;  
+        unsigned pregOpt = 0;
         while (pregOpt < allowed.size() && allowed[pregOpt] != dst) {
           ++pregOpt;
         }
@@ -400,7 +400,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilderWithCoalescing::build(
             std::swap(allowed1, allowed2);
           }
         }
-            
+
         addVirtRegCoalesce(g.getEdgeCosts(edge), *allowed1, *allowed2,
                            cBenefit);
       }
@@ -432,7 +432,7 @@ void PBQPBuilderWithCoalescing::addVirtRegCoalesce(
 
       if (preg1 == preg2) {
         costMat[i + 1][j + 1] += -benefit;
-      } 
+      }
     }
   }
 }
@@ -502,10 +502,10 @@ bool RegAllocPBQP::mapPBQPToRegAlloc(const PBQPRAProblem &problem,
     unsigned alloc = solution.getSelection(node);
 
     if (problem.isPRegOption(vreg, alloc)) {
-      unsigned preg = problem.getPRegForOption(vreg, alloc);    
+      unsigned preg = problem.getPRegForOption(vreg, alloc);
       DEBUG(dbgs() << "VREG " << vreg << " -> " << tri->getName(preg) << "\n");
       assert(preg != 0 && "Invalid preg selected.");
-      vrm->assignVirt2Phys(vreg, preg);      
+      vrm->assignVirt2Phys(vreg, preg);
     } else if (problem.isSpillOption(vreg, alloc)) {
       vregsToAlloc.erase(vreg);
       SmallVector<LiveInterval*, 8> newSpills;
@@ -609,7 +609,7 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   tm = &mf->getTarget();
   tri = tm->getRegisterInfo();
   tii = tm->getInstrInfo();
-  mri = &mf->getRegInfo(); 
+  mri = &mf->getRegInfo();
 
   lis = &getAnalysis<LiveIntervals>();
   lss = &getAnalysis<LiveStacks>();
