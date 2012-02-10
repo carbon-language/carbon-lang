@@ -102,7 +102,6 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
                             /*isConstExpr=*/false,
                             EndLoc);
   Method->setAccess(AS_public);
-  Class->addDecl(Method);
 
   // Temporarily set the lexical declaration context to the current
   // context, so that the Scope stack matches the lexical nesting.
@@ -393,17 +392,63 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
       CallOperator->setType(FunctionTy);
     }
 
-    // Finalize the lambda class.
-    SmallVector<Decl*, 4> Fields(Class->field_begin(), Class->field_end());
-    ActOnFields(0, Class->getLocation(), Class, Fields, 
-                SourceLocation(), SourceLocation(), 0);
-    CheckCompletedCXXClass(Class);
+    // C++11 [expr.prim.lambda]p6:
+    //   The closure type for a lambda-expression with no lambda-capture
+    //   has a public non-virtual non-explicit const conversion function
+    //   to pointer to function having the same parameter and return
+    //   types as the closure type's function call operator.
+    if (Captures.empty() && CaptureDefault == LCD_None) {
+      const FunctionProtoType *Proto
+        = CallOperator->getType()->getAs<FunctionProtoType>(); 
+      QualType FunctionPtrTy;
+      {
+        FunctionProtoType::ExtProtoInfo ExtInfo = Proto->getExtProtoInfo();
+        ExtInfo.TypeQuals = 0;
+        QualType FunctionTy
+          = Context.getFunctionType(Proto->getResultType(),
+                                    Proto->arg_type_begin(),
+                                    Proto->getNumArgs(),
+                                    ExtInfo);
+        FunctionPtrTy = Context.getPointerType(FunctionTy);
+      }
+
+      FunctionProtoType::ExtProtoInfo ExtInfo;
+      ExtInfo.TypeQuals = Qualifiers::Const;
+      QualType ConvTy = Context.getFunctionType(FunctionPtrTy, 0, 0, ExtInfo);
+
+      SourceLocation Loc = IntroducerRange.getBegin();
+      DeclarationName Name
+        = Context.DeclarationNames.getCXXConversionFunctionName(
+            Context.getCanonicalType(FunctionPtrTy));
+      DeclarationNameLoc NameLoc;
+      NameLoc.NamedType.TInfo = Context.getTrivialTypeSourceInfo(FunctionPtrTy,
+                                                                 Loc);
+      CXXConversionDecl *Conversion 
+        = CXXConversionDecl::Create(Context, Class, Loc, 
+                                    DeclarationNameInfo(Name, Loc, NameLoc),
+                                    ConvTy, 
+                                    Context.getTrivialTypeSourceInfo(ConvTy, 
+                                                                     Loc),
+                                    /*isInline=*/false, /*isExplicit=*/false,
+                                    /*isConstexpr=*/false, Body->getLocEnd());
+      Conversion->setAccess(AS_public);
+      Conversion->setImplicit(true);
+      Class->addDecl(Conversion);
+    }
 
     // C++ [expr.prim.lambda]p7:
     //   The lambda-expression's compound-statement yields the
     //   function-body (8.4) of the function call operator [...].
     ActOnFinishFunctionBody(CallOperator, Body, /*IsInstantation=*/false);
+
+    // Finalize the lambda class.
+    SmallVector<Decl*, 4> Fields(Class->field_begin(), Class->field_end());
     CallOperator->setLexicalDeclContext(Class);
+    Class->addDecl(CallOperator);
+    ActOnFields(0, Class->getLocation(), Class, Fields, 
+                SourceLocation(), SourceLocation(), 0);
+    CheckCompletedCXXClass(Class);
+
   }
 
   if (LambdaExprNeedsCleanups)
@@ -430,49 +475,6 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
   case PotentiallyEvaluated:
   case PotentiallyEvaluatedIfUsed:
     break;
-  }
-
-  // C++11 [expr.prim.lambda]p6:
-  //   The closure type for a lambda-expression with no lambda-capture
-  //   has a public non-virtual non-explicit const conversion function
-  //   to pointer to function having the same parameter and return
-  //   types as the closure type's function call operator.
-  if (Captures.empty() && CaptureDefault == LCD_None) {
-    const FunctionProtoType *Proto
-      = CallOperator->getType()->getAs<FunctionProtoType>(); 
-    QualType FunctionPtrTy;
-    {
-      FunctionProtoType::ExtProtoInfo ExtInfo = Proto->getExtProtoInfo();
-      ExtInfo.TypeQuals = 0;
-      QualType FunctionTy
-        = Context.getFunctionType(Proto->getResultType(),
-                                  Proto->arg_type_begin(),
-                                  Proto->getNumArgs(),
-                                  ExtInfo);
-      FunctionPtrTy = Context.getPointerType(FunctionTy);
-    }
-
-    FunctionProtoType::ExtProtoInfo ExtInfo;
-    ExtInfo.TypeQuals = Qualifiers::Const;
-    QualType ConvTy = Context.getFunctionType(FunctionPtrTy, 0, 0, ExtInfo);
-
-    SourceLocation Loc = IntroducerRange.getBegin();
-    DeclarationName Name
-      = Context.DeclarationNames.getCXXConversionFunctionName(
-          Context.getCanonicalType(FunctionPtrTy));
-    DeclarationNameLoc NameLoc;
-    NameLoc.NamedType.TInfo = Context.getTrivialTypeSourceInfo(FunctionPtrTy,
-                                                               Loc);
-    CXXConversionDecl *Conversion 
-      = CXXConversionDecl::Create(Context, Class, Loc, 
-                                  DeclarationNameInfo(Name, Loc, NameLoc),
-                                  ConvTy, 
-                                  Context.getTrivialTypeSourceInfo(ConvTy, Loc),
-                                  /*isInline=*/false, /*isExplicit=*/false,
-                                  /*isConstexpr=*/false, Body->getLocEnd());
-    Conversion->setAccess(AS_public);
-    Conversion->setImplicit(true);
-    Class->addDecl(Conversion);
   }
 
   return MaybeBindToTemporary(Lambda);

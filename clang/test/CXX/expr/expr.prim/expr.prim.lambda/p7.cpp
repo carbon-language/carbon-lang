@@ -43,3 +43,12 @@ void test_capture_constness(int i, const int ic) {
 }
 
 
+struct S1 {
+  int x, y;
+  int operator()(int);
+  void f() {
+    [&]()->int {
+      return operator()(this->x + y);
+    }(); 
+  }
+};
