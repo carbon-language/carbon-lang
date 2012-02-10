@@ -15,9 +15,9 @@ typedef int BOOL;
 typedef unsigned NSUInteger;
 
 @protocol NSObject
-- (id)retain NS_AUTOMATED_REFCOUNT_UNAVAILABLE; // expected-note {{unavailable here}}
+- (id)retain NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 - (NSUInteger)retainCount NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
-- (oneway void)release NS_AUTOMATED_REFCOUNT_UNAVAILABLE; // expected-note 4 {{unavailable here}}
+- (oneway void)release NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 - (id)autorelease NS_AUTOMATED_REFCOUNT_UNAVAILABLE;
 @end
 
@@ -75,20 +75,16 @@ id global_foo;
 
 void test1(A *a, BOOL b, struct UnsafeS *unsafeS) {
   [[a delegate] release]; // expected-error {{it is not safe to remove 'retain' message on the result of a 'delegate' message; the object that was passed to 'setDelegate:' may not be properly retained}} \
-                          // expected-error {{ARC forbids explicit message send}} \
-                          // expected-error {{unavailable}}
+                          // expected-error {{ARC forbids explicit message send}}
   [a.delegate release]; // expected-error {{it is not safe to remove 'retain' message on the result of a 'delegate' message; the object that was passed to 'setDelegate:' may not be properly retained}} \
-                        // expected-error {{ARC forbids explicit message send}} \
-                        // expected-error {{unavailable}}
+                        // expected-error {{ARC forbids explicit message send}}
   [unsafeS->unsafeObj retain]; // expected-error {{it is not safe to remove 'retain' message on an __unsafe_unretained type}} \
                                // expected-error {{ARC forbids explicit message send}}
   id foo = [unsafeS->unsafeObj retain]; // no warning.
   [global_foo retain]; // expected-error {{it is not safe to remove 'retain' message on a global variable}} \
-                       // expected-error {{ARC forbids explicit message send}} \
-                       // expected-error {{unavailable}}
+                       // expected-error {{ARC forbids explicit message send}}
   [global_foo release]; // expected-error {{it is not safe to remove 'release' message on a global variable}} \
-                        // expected-error {{ARC forbids explicit message send}} \
-                        // expected-error {{unavailable}}
+                        // expected-error {{ARC forbids explicit message send}}
   [a dealloc];
   [a retain];
   [a retainCount]; // expected-error {{ARC forbids explicit message send of 'retainCount'}}
@@ -302,8 +298,7 @@ void rdar9491791(int p) {
 
 // rdar://9504750
 void rdar9504750(id p) {
-  RELEASE_MACRO(p); // expected-error {{ARC forbids explicit message send of 'release'}} \
-                    // expected-error {{unavailable}}
+  RELEASE_MACRO(p); // expected-error {{ARC forbids explicit message send of 'release'}}
 }
 
 // rdar://8939557
