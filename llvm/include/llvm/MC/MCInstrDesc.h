@@ -142,7 +142,6 @@ public:
   const unsigned *ImplicitUses;  // Registers implicitly read by this instr
   const unsigned *ImplicitDefs;  // Registers implicitly defined by this instr
   const MCOperandInfo *OpInfo;   // 'NumOperands' entries about operands
-  const char     *Name;          // Name of the instruction record in td file
 
   /// getOperandConstraint - Returns the value of the specific constraint if
   /// it is set. Returns -1 if it is not set.
@@ -159,12 +158,6 @@ public:
   /// getOpcode - Return the opcode number for this descriptor.
   unsigned getOpcode() const {
     return Opcode;
-  }
-
-  /// getName - Return the name of the record in the .td file for this
-  /// instruction, for example "ADD8ri".
-  const char *getName() const {
-    return Name;
   }
 
   /// getNumOperands - Return the number of declared MachineOperands for this

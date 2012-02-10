@@ -14,6 +14,7 @@
 
 #include "InstrInfoEmitter.h"
 #include "CodeGenTarget.h"
+#include "StringToOffsetTable.h"
 #include "llvm/TableGen/Record.h"
 #include "llvm/ADT/StringExtras.h"
 #include <algorithm>
@@ -212,10 +213,26 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
                OperandInfoIDs, OS);
   OS << "};\n\n";
 
+  OS << "extern const unsigned " << TargetName <<"InstrNameIndices[] = {\n    ";
+  StringToOffsetTable StringTable;
+  for (unsigned i = 0, e = NumberedInstructions.size(); i != e; ++i) {
+    const CodeGenInstruction *Instr = NumberedInstructions[i];
+    OS << StringTable.GetOrAddStringOffset(Instr->TheDef->getName()) << "U, ";
+    if (i % 8 == 0)
+      OS << "\n    ";
+  }
+
+  OS << "\n};\n\n";
+
+  OS << "const char *" << TargetName << "InstrNameData =\n";
+  StringTable.EmitString(OS);
+  OS << ";\n\n";
+
   // MCInstrInfo initialization routine.
   OS << "static inline void Init" << TargetName
      << "MCInstrInfo(MCInstrInfo *II) {\n";
   OS << "  II->InitMCInstrInfo(" << TargetName << "Insts, "
+     << TargetName << "InstrNameIndices, " << TargetName << "InstrNameData, "
      << NumberedInstructions.size() << ");\n}\n\n";
 
   OS << "} // End llvm namespace \n";
@@ -240,9 +257,12 @@ void InstrInfoEmitter::run(raw_ostream &OS) {
 
   OS << "namespace llvm {\n";
   OS << "extern const MCInstrDesc " << TargetName << "Insts[];\n";
+  OS << "extern const unsigned " << TargetName << "InstrNameIndices[];\n";
+  OS << "extern const char *" << TargetName << "InstrNameData;\n";
   OS << ClassName << "::" << ClassName << "(int SO, int DO)\n"
      << "  : TargetInstrInfoImpl(SO, DO) {\n"
      << "  InitMCInstrInfo(" << TargetName << "Insts, "
+     << TargetName << "InstrNameIndices, " << TargetName << "InstrNameData, "
      << NumberedInstructions.size() << ");\n}\n";
   OS << "} // End llvm namespace \n";
 
@@ -328,8 +348,6 @@ void InstrInfoEmitter::emitRecord(const CodeGenInstruction &Inst, unsigned Num,
     OS << "0";
   else
     OS << "OperandInfo" << OpInfo.find(OperandInfo)->second;
-
-  OS << ", \"" << Inst.TheDef->getName() << '"';
 
   OS << " },  // Inst #" << Num << " = " << Inst.TheDef->getName() << "\n";
 }
