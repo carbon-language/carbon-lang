@@ -46,3 +46,33 @@ void immediately_enclosing(int i) { // expected-note{{'i' declared here}}
     [i] {}(); // expected-error{{variable 'i' cannot be implicitly captured in a lambda with no capture-default specified}}
   }();
 }
+
+void f1(int i) { // expected-note{{declared here}}
+  int const N = 20;
+  auto m1 = [=]{
+    int const M = 30;
+    auto m2 = [i]{
+      // FIXME: We odr-use here, but we shouldn't.
+      //      int x[N][M];
+      //      x[0][0] = i;
+    }; 
+    (void)N;
+    (void)M;
+    (void)m2;
+  };
+  struct s1 {
+    int f;
+    void work(int n) { // expected-note{{declared here}}
+      int m = n*n;
+      int j = 40; // expected-note{{declared here}}
+      auto m3 = [this,m] { // expected-note 2{{lambda expression begins here}}
+        auto m4 = [&,j] { // expected-error{{variable 'j' cannot be implicitly captured in a lambda with no capture-default specified}}
+          int x = n; // expected-error{{variable 'n' cannot be implicitly captured in a lambda with no capture-default specified}}
+          x += m;
+          x += i; // expected-error{{reference to local variable 'i' declared in enclosing function 'f1'}}
+          x += f;
+        };
+      };
+    } 
+  };
+}

@@ -9345,9 +9345,6 @@ void Sema::PopExpressionEvaluationContext() {
     ExprNeedsCleanups = Rec.ParentNeedsCleanups;
     CleanupVarDeclMarking();
     std::swap(MaybeODRUseExprs, Rec.SavedMaybeODRUseExprs);
-
-    if (Rec.Context == Unevaluated) {
-    }
   // Otherwise, merge the contexts together.
   } else {
     ExprNeedsCleanups |= Rec.ParentNeedsCleanups;
