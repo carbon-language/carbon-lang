@@ -1903,7 +1903,7 @@ bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N) const {
     return false;
 
   unsigned NumCopies = 0;
-  SDNode* Copies[2];
+  SDNode* Copies[2] = { 0, 0 };
   SDNode *Use = *N->use_begin();
   if (Use->getOpcode() == ISD::CopyToReg) {
     Copies[NumCopies++] = Use;
@@ -1938,7 +1938,7 @@ bool ARMTargetLowering::isUsedByReturnOnly(SDNode *N) const {
          UI != UE; ++UI) {
       if (UI->getOpcode() == ISD::CopyToReg) {
         SDNode *Use = *UI;
-        if (Use == Copies[0] || Use == Copies[1])
+        if (Use == Copies[0] || ((NumCopies == 2) && (Use == Copies[1])))
           continue;
         return false;
       }
