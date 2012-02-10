@@ -222,7 +222,18 @@ protected:
   }
 public:
   DragonFlyBSDTargetInfo(const std::string &triple)
-    : OSTargetInfo<Target>(triple) {}
+    : OSTargetInfo<Target>(triple) {
+      this->UserLabelPrefix = "";
+
+      llvm::Triple Triple(triple);
+      switch (Triple.getArch()) {
+        default:
+        case llvm::Triple::x86:
+        case llvm::Triple::x86_64:
+          this->MCountName = ".mcount";
+          break;
+      }
+  }
 };
 
 // FreeBSD Target
