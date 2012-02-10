@@ -476,6 +476,11 @@ static Value *ThreadCmpOverSelect(CmpInst::Predicate Pred, Value *LHS,
   // the original comparison.
   if (TCmp == FCmp)
     return TCmp;
+
+  // The remaining cases only make sense if the select condition has the same
+  // type as the result of the comparison, so bail out if this is not so.
+  if (Cond->getType()->isVectorTy() != RHS->getType()->isVectorTy())
+    return 0;
   // If the false value simplified to false, then the result of the compare
   // is equal to "Cond && TCmp".  This also catches the case when the false
   // value simplified to false and the true value to true, returning "Cond".

@@ -415,3 +415,10 @@ define <2 x i1> @vectorselect1(<2 x i1> %cond) {
   ret <2 x i1> %c
 ; CHECK: ret <2 x i1> %cond
 }
+
+define <2 x i1> @vectorselectcrash(i32 %arg1) { ; PR11948
+  %tobool40 = icmp ne i32 %arg1, 0
+  %cond43 = select i1 %tobool40, <2 x i16> <i16 -5, i16 66>, <2 x i16> <i16 46, i16 1>
+  %cmp45 = icmp ugt <2 x i16> %cond43, <i16 73, i16 21>
+  ret <2 x i1> %cmp45
+}
