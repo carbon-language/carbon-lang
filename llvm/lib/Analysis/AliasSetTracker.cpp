@@ -189,7 +189,9 @@ bool AliasSet::aliasesUnknownInst(Instruction *Inst, AliasAnalysis &AA) const {
   }
 
   for (iterator I = begin(), E = end(); I != E; ++I)
-    if (AA.getModRefInfo(Inst, I.getPointer(), I.getSize()) !=
+    if (AA.getModRefInfo(Inst, AliasAnalysis::Location(I.getPointer(),
+                                                       I.getSize(),
+                                                       I.getTBAAInfo())) !=
            AliasAnalysis::NoModRef)
       return true;
 
