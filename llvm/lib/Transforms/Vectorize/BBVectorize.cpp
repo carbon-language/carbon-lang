@@ -692,16 +692,10 @@ namespace {
       } else {
         for (AliasSetTracker::iterator W = WriteSet.begin(),
              WE = WriteSet.end(); W != WE; ++W) {
-          for (AliasSet::iterator A = W->begin(), AE = W->end();
-               A != AE; ++A) {
-            AliasAnalysis::Location ptrLoc(A->getValue(), A->getSize(),
-                                           A->getTBAAInfo());
-            if (AA->getModRefInfo(J, ptrLoc) != AliasAnalysis::NoModRef) {
-              UsesI = true;
-              break;
-            }
+          if (W->aliasesUnknownInst(J, *AA)) {
+            UsesI = true;
+            break;
           }
-          if (UsesI) break;
         }
       }
     }
