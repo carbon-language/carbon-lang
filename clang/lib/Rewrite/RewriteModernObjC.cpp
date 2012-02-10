@@ -5213,6 +5213,63 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 ///   const char ** extendedMethodTypes;
 /// }
 
+/// struct _ivar_t {
+///   unsigned long int *offset;  // pointer to ivar offset location
+///   char *name;
+///   char *type;
+///   uint32_t alignment;
+///   uint32_t size;
+/// }
+
+/// struct _ivar_list_t {
+///   uint32 entsize;  // sizeof(struct _ivar_t)
+///   uint32 count;
+///   struct _iver_t list[count];
+/// }
+
+/// struct _class_ro_t {
+///   uint32_t const flags;
+///   uint32_t const instanceStart;
+///   uint32_t const instanceSize;
+///   uint32_t const reserved;  // only when building for 64bit targets
+///   const uint8_t * const ivarLayout;
+///   const char *const name;
+///   const struct _method_list_t * const baseMethods;
+///   const struct _objc_protocol_list *const baseProtocols;
+///   const struct _ivar_list_t *const ivars;
+///   const uint8_t * const weakIvarLayout;
+///   const struct _prop_list_t * const properties;
+/// }
+
+/// struct _class_t {
+///   struct _class_t *isa;
+///   struct _class_t * const superclass;
+///   void *cache;
+///   IMP *vtable;
+///   struct class_ro_t *ro;
+/// }
+
+/// struct _category_t {
+///   const char * const name;
+///   struct _class_t *const cls;
+///   const struct _method_list_t * const instance_methods;
+///   const struct _method_list_t * const class_methods;
+///   const struct _protocol_list_t * const protocols;
+///   const struct _prop_list_t * const properties;
+/// }
+
+/// MessageRefTy - LLVM for:
+/// struct _message_ref_t {
+///   IMP messenger;
+///   SEL name;
+/// };
+
+/// SuperMessageRefTy - LLVM for:
+/// struct _super_message_ref_t {
+///   SUPER_IMP messenger;
+///   SEL name;
+/// };
+
 static void WriteModernMetadataDeclarations(std::string &Result) {
   static bool meta_data_declared = false;
   if (meta_data_declared)
@@ -5243,6 +5300,45 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
   Result += "\tconst unsigned int size;  // sizeof(struct _protocol_t)\n";
   Result += "\tconst unsigned int flags;  // = 0\n";
   Result += "\tconst char ** extendedMethodTypes;\n";
+  Result += "};\n";
+  
+  Result += "\nstruct _ivar_t {\n";
+  Result += "\tunsigned long int *offset;  // pointer to ivar offset location\n";
+  Result += "\tchar *name;\n";
+  Result += "\tchar *type;\n";
+  Result += "\tunsigned int alignment;\n";
+  Result += "\tunsigned int  size;\n";
+  Result += "};\n";
+  
+  Result += "\nstruct _class_ro_t {\n";
+  Result += "\tunsigned int const flags;\n";
+  Result += "\tunsigned int instanceStart;\n";
+  Result += "\tunsigned int const instanceSize;\n";
+  Result += "\tunsigned int const reserved;  // only when building for 64bit targets\n";
+  Result += "\tconst unsigned char * const ivarLayout;\n";
+  Result += "\tconst char *const name;\n";
+  Result += "\tconst struct _method_list_t * const baseMethods;\n";
+  Result += "\tconst struct _objc_protocol_list *const baseProtocols;\n";
+  Result += "\tconst struct _ivar_list_t *const ivars;\n";
+  Result += "\tconst unsigned char *const weakIvarLayout;\n";
+  Result += "\tconst struct _prop_list_t *const properties;\n";
+  Result += "};\n";
+  
+  Result += "\nstruct _class_t {\n";
+  Result += "\tstruct _class_t *isa;\n";
+  Result += "\tstruct _class_t *const superclass;\n";
+  Result += "\tvoid *cache;\n";
+  Result += "\tvoid *vtable;\n";
+  Result += "\tstruct class_ro_t *ro;\n";
+  Result += "};\n";
+  
+  Result += "\nstruct _category_t {\n";
+  Result += "\tconst char * const name;\n";
+  Result += "\tstruct _class_t *const cls;\n";
+  Result += "\tconst struct _method_list_t *const instance_methods;\n";
+  Result += "\tconst struct _method_list_t *const class_methods;\n";
+  Result += "\tconst struct _protocol_list_t *const protocols;\n";
+  Result += "\tconst struct _prop_list_t *const properties;\n";
   Result += "};\n";
   
   meta_data_declared = true;
