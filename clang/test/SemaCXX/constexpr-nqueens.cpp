@@ -62,7 +62,7 @@ constexpr bool Board::check(const char *p, int Row, int Col) {
     *p == 0 ? true :
     false;
 }
-constexpr bool check = q8.check(
+static_assert(q8.check(
     "o-------\n"
     "------o-\n"
     "----o---\n"
@@ -70,7 +70,4 @@ constexpr bool check = q8.check(
     "-o------\n"
     "---o----\n"
     "-----o--\n"
-    "--o-----\n");
-
-typedef int check_it[1];
-typedef int check_it[check];
+    "--o-----\n"), "");
