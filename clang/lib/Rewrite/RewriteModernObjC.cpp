@@ -3132,122 +3132,51 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   if (ObjCSynthesizedStructs.count(CDecl))
     return;
   ObjCInterfaceDecl *RCDecl = CDecl->getSuperClass();
-  int NumIvars = CDecl->ivar_size();
+  SmallVector<ObjCIvarDecl *, 8> IVars;
+  for (ObjCIvarDecl *IVD = CDecl->all_declared_ivar_begin();
+       IVD; IVD = IVD->getNextIvar()) {
+    // Ignore unnamed bit-fields.
+    if (!IVD->getDeclName())
+      continue;
+    IVars.push_back(IVD);
+  }
   SourceLocation LocStart = CDecl->getLocStart();
   SourceLocation LocEnd = CDecl->getEndOfDefinitionLoc();
-
+  
   const char *startBuf = SM->getCharacterData(LocStart);
   const char *endBuf = SM->getCharacterData(LocEnd);
-
+  
   // If no ivars and no root or if its root, directly or indirectly,
   // have no ivars (thus not synthesized) then no need to synthesize this class.
-  if ((!CDecl->isThisDeclarationADefinition() || NumIvars == 0) &&
+  if ((!CDecl->isThisDeclarationADefinition() || IVars.size() == 0) &&
       (!RCDecl || !ObjCSynthesizedStructs.count(RCDecl))) {
     endBuf += Lexer::MeasureTokenLength(LocEnd, *SM, LangOpts);
     ReplaceText(LocStart, endBuf-startBuf, Result);
     return;
   }
-
-  // FIXME: This has potential of causing problem. If
-  // SynthesizeObjCInternalStruct is ever called recursively.
+  
   Result += "\nstruct ";
   Result += CDecl->getNameAsString();
-  if (LangOpts.MicrosoftExt)
-    Result += "_IMPL";
-
-  if (NumIvars > 0) {
-    const char *cursor = strchr(startBuf, '{');
-    assert((cursor && endBuf)
-           && "SynthesizeObjCInternalStruct - malformed @interface");
-    // If the buffer contains preprocessor directives, we do more fine-grained
-    // rewrites. This is intended to fix code that looks like (which occurs in
-    // NSURL.h, for example):
-    //
-    // #ifdef XYZ
-    // @interface Foo : NSObject
-    // #else
-    // @interface FooBar : NSObject
-    // #endif
-    // {
-    //    int i;
-    // }
-    // @end
-    //
-    // This clause is segregated to avoid breaking the common case.
-    if (BufferContainsPPDirectives(startBuf, cursor)) {
-      SourceLocation L = RCDecl ? CDecl->getSuperClassLoc() :
-                                  CDecl->getAtStartLoc();
-      const char *endHeader = SM->getCharacterData(L);
-      endHeader += Lexer::MeasureTokenLength(L, *SM, LangOpts);
-
-      if (CDecl->protocol_begin() != CDecl->protocol_end()) {
-        // advance to the end of the referenced protocols.
-        while (endHeader < cursor && *endHeader != '>') endHeader++;
-        endHeader++;
-      }
-      // rewrite the original header
-      ReplaceText(LocStart, endHeader-startBuf, Result);
-    } else {
-      // rewrite the original header *without* disturbing the '{'
-      ReplaceText(LocStart, cursor-startBuf, Result);
-    }
-    if (RCDecl && ObjCSynthesizedStructs.count(RCDecl)) {
-      Result = "\n    struct ";
-      Result += RCDecl->getNameAsString();
-      Result += "_IMPL ";
-      Result += RCDecl->getNameAsString();
-      Result += "_IVARS;\n";
-
-      // insert the super class structure definition.
-      SourceLocation OnePastCurly =
-        LocStart.getLocWithOffset(cursor-startBuf+1);
-      InsertText(OnePastCurly, Result);
-    }
-    cursor++; // past '{'
-
-    // Now comment out any visibility specifiers.
-    while (cursor < endBuf) {
-      if (*cursor == '@') {
-        SourceLocation atLoc = LocStart.getLocWithOffset(cursor-startBuf);
-        // Skip whitespace.
-        for (++cursor; cursor[0] == ' ' || cursor[0] == '\t'; ++cursor)
-          /*scan*/;
-
-        // FIXME: presence of @public, etc. inside comment results in
-        // this transformation as well, which is still correct c-code.
-        if (!strncmp(cursor, "public", strlen("public")) ||
-            !strncmp(cursor, "private", strlen("private")) ||
-            !strncmp(cursor, "package", strlen("package")) ||
-            !strncmp(cursor, "protected", strlen("protected")))
-          InsertText(atLoc, "// ");
-      }
-      // FIXME: If there are cases where '<' is used in ivar declaration part
-      // of user code, then scan the ivar list and use needToScanForQualifiers
-      // for type checking.
-      else if (*cursor == '<') {
-        SourceLocation atLoc = LocStart.getLocWithOffset(cursor-startBuf);
-        InsertText(atLoc, "/* ");
-        cursor = strchr(cursor, '>');
-        cursor++;
-        atLoc = LocStart.getLocWithOffset(cursor-startBuf);
-        InsertText(atLoc, " */");
-      } else if (*cursor == '^') { // rewrite block specifier.
-        SourceLocation caretLoc = LocStart.getLocWithOffset(cursor-startBuf);
-        ReplaceText(caretLoc, 1, "*");
-      }
-      cursor++;
-    }
-    // Don't forget to add a ';'!!
-    InsertText(LocEnd.getLocWithOffset(1), ";");
-  } else { // we don't have any instance variables - insert super struct.
-    endBuf += Lexer::MeasureTokenLength(LocEnd, *SM, LangOpts);
-    Result += " {\n    struct ";
-    Result += RCDecl->getNameAsString();
-    Result += "_IMPL ";
-    Result += RCDecl->getNameAsString();
-    Result += "_IVARS;\n};\n";
-    ReplaceText(LocStart, endBuf-startBuf, Result);
+  Result += "_IMPL {\n";
+  
+  if (RCDecl) {
+    Result += "\tstruct "; Result += RCDecl->getNameAsString();
+    Result += "_IMPL "; Result += RCDecl->getNameAsString();
+    Result += "_IVARS;\n";
   }
+  
+  for (unsigned i = 0, e = IVars.size(); i < e; i++) {
+    ObjCIvarDecl *IvarDecl = IVars[i];
+    QualType Type = IvarDecl->getType();
+    std::string TypeString(Type.getAsString(Context->getPrintingPolicy()));
+    Result += "\t";
+    Result += TypeString; Result += " "; Result += IvarDecl->getNameAsString();
+    Result += ";\n";
+  }
+  Result += "};\n";
+  endBuf += Lexer::MeasureTokenLength(LocEnd, *SM, LangOpts);
+  ReplaceText(LocStart, endBuf-startBuf, Result);
+
   // Mark this struct as having been generated.
   if (!ObjCSynthesizedStructs.insert(CDecl))
     llvm_unreachable("struct already synthesize- SynthesizeObjCInternalStruct");
@@ -5532,9 +5461,8 @@ static void Write__ivar_list_t_initializer(RewriteModernObjC &RewriteObj,
       // FIXME: what should the alignment be?
       unsigned Align = 0;  
       Result += llvm::utostr(Align); Result += ", ";
-      unsigned Size = Context->getTypeSize(IvarDecl->getType());
-      Size >>= 3;
-      Result += llvm::utostr(Size);
+      CharUnits Size = Context->getTypeSizeInChars(IvarDecl->getType());
+      Result += llvm::utostr(Size.getQuantity());
       if (i  == e-1)
         Result += "}}\n";
       else
