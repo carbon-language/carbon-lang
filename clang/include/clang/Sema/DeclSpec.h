@@ -1933,6 +1933,7 @@ struct LambdaCapture {
 /// LambdaIntroducer - Represents a complete lambda introducer.
 struct LambdaIntroducer {
   SourceRange Range;
+  SourceLocation DefaultLoc;
   LambdaCaptureDefault Default;
   llvm::SmallVector<LambdaCapture, 4> Captures;
 

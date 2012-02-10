@@ -686,11 +686,10 @@ void Sema::CheckCXXThisCapture(SourceLocation Loc, bool Explicit) {
       }
       
       if (CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_LambdaByref ||
+          CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_LambdaByval ||
           CSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_Block ||
           Explicit) {
         // This closure can capture 'this'; continue looking upwards.
-        // FIXME: Is this check correct?  The rules in the standard are a bit
-        // unclear.
         NumClosures++;
         Explicit = false;
         continue;

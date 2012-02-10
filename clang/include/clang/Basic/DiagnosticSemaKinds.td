@@ -4093,7 +4093,7 @@ def err_capture_more_than_once : Error<
 def err_reference_capture_with_reference_default : Error<
   "'&' cannot precede a capture when the capture default is '&'">;
 def err_this_capture_with_copy_default : Error<
-  "'this' cannot appear in a capture list when the capture default is '='">;
+  "'this' cannot be explicitly captured when the capture default is '='">;
 def err_copy_capture_with_copy_default : Error<
   "'&' must precede a capture when the capture default is '='">;
 def err_capture_does_not_name_variable : Error<

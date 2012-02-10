@@ -15,6 +15,7 @@
 #include "clang/Sema/Lookup.h"
 #include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/SemaInternal.h"
+#include "clang/Lex/Preprocessor.h"
 #include "clang/AST/ExprCXX.h"
 using namespace clang;
 using namespace sema;
@@ -125,10 +126,13 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   LSI->Mutable = (Method->getTypeQualifiers() & Qualifiers::Const) == 0;
  
   // Handle explicit captures.
+  SourceLocation PrevCaptureLoc
+    = Intro.Default == LCD_None? Intro.Range.getBegin() : Intro.DefaultLoc;
   for (llvm::SmallVector<LambdaCapture, 4>::const_iterator
          C = Intro.Captures.begin(), 
          E = Intro.Captures.end(); 
-       C != E; ++C) {
+       C != E; 
+       PrevCaptureLoc = C->Loc, ++C) {
     if (C->Kind == LCK_This) {
       // C++11 [expr.prim.lambda]p8:
       //   An identifier or this shall not appear more than once in a 
@@ -136,7 +140,9 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       if (LSI->isCXXThisCaptured()) {
         Diag(C->Loc, diag::err_capture_more_than_once) 
           << "'this'"
-          << SourceRange(LSI->getCXXThisCapture().getLocation());
+          << SourceRange(LSI->getCXXThisCapture().getLocation())
+          << FixItHint::CreateRemoval(
+               SourceRange(PP.getLocForEndOfToken(PrevCaptureLoc), C->Loc));
         continue;
       }
 
@@ -144,7 +150,9 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       //   If a lambda-capture includes a capture-default that is =, the 
       //   lambda-capture shall not contain this [...].
       if (Intro.Default == LCD_ByCopy) {
-        Diag(C->Loc, diag::err_this_capture_with_copy_default);
+        Diag(C->Loc, diag::err_this_capture_with_copy_default)
+          << FixItHint::CreateRemoval(
+               SourceRange(PP.getLocForEndOfToken(PrevCaptureLoc), C->Loc));
         continue;
       }
 
@@ -169,10 +177,14 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     //   If a lambda-capture includes a capture-default that is =, [...]
     //   each identifier it contains shall be preceded by &.
     if (C->Kind == LCK_ByRef && Intro.Default == LCD_ByRef) {
-      Diag(C->Loc, diag::err_reference_capture_with_reference_default);
+      Diag(C->Loc, diag::err_reference_capture_with_reference_default)
+        << FixItHint::CreateRemoval(
+             SourceRange(PP.getLocForEndOfToken(PrevCaptureLoc), C->Loc));
       continue;
     } else if (C->Kind == LCK_ByCopy && Intro.Default == LCD_ByCopy) {
-      Diag(C->Loc, diag::err_copy_capture_with_copy_default);
+      Diag(C->Loc, diag::err_copy_capture_with_copy_default)
+        << FixItHint::CreateRemoval(
+             SourceRange(PP.getLocForEndOfToken(PrevCaptureLoc), C->Loc));
       continue;
     }
 
@@ -213,7 +225,9 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     if (LSI->isCaptured(Var)) {
       Diag(C->Loc, diag::err_capture_more_than_once) 
         << C->Id
-        << SourceRange(LSI->getCapture(Var).getLocation());
+        << SourceRange(LSI->getCapture(Var).getLocation())
+        << FixItHint::CreateRemoval(
+             SourceRange(PP.getLocForEndOfToken(PrevCaptureLoc), C->Loc));
       continue;
     }
 
