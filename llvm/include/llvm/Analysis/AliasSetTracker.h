@@ -264,6 +264,7 @@ private:
   }
   void setVolatile() { Volatile = true; }
 
+public:
   /// aliasesPointer - Return true if the specified pointer "may" (or must)
   /// alias one of the members in the set.
   ///
