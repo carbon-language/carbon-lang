@@ -7583,9 +7583,11 @@ OverloadCandidateKind ClassifyOverloadCandidate(Sema &S,
     if (Meth->isMoveAssignmentOperator())
       return oc_implicit_move_assignment;
 
-    assert(Meth->isCopyAssignmentOperator()
-           && "implicit method is not copy assignment operator?");
-    return oc_implicit_copy_assignment;
+    if (Meth->isCopyAssignmentOperator())
+      return oc_implicit_copy_assignment;
+
+    assert(isa<CXXConversionDecl>(Meth) && "expected conversion");
+    return oc_method;
   }
 
   return isTemplate ? oc_function_template : oc_function;

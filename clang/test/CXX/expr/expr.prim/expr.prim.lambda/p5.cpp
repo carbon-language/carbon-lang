@@ -15,13 +15,13 @@ void test_quals() {
   // This function call operator is declared const (9.3.1) if and only
   // if the lambda- expression's parameter-declaration-clause is not
   // followed by mutable.
-  auto l = [](){}; // expected-note{{method is not marked volatile}}
+  auto l = [=](){}; // expected-note{{method is not marked volatile}}
   const decltype(l) lc = l;
   l();
   lc();
 
-  auto ml = []() mutable{}; // expected-note{{method is not marked const}} \
-                            // expected-note{{method is not marked volatile}} 
+  auto ml = [=]() mutable{}; // expected-note{{method is not marked const}} \
+                             // expected-note{{method is not marked volatile}} 
   const decltype(ml) mlc = ml;
   ml();
   mlc(); // expected-error{{no matching function for call to object of type}}
