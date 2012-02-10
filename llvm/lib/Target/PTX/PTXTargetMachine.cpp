@@ -117,8 +117,11 @@ public:
   }
 
   bool addInstSelector();
+  FunctionPass *createTargetRegisterAllocator(bool);
+  void addOptimizedRegAlloc(FunctionPass *RegAllocPass);
   bool addPostRegAlloc();
-  bool addCodeGenPasses(MCContext *&OutContext);
+  void addMachineLateOptimization();
+  bool addPreEmitPass();
 };
 } // namespace
 
@@ -131,263 +134,32 @@ bool PTXPassConfig::addInstSelector() {
   return false;
 }
 
+FunctionPass *PTXPassConfig::createTargetRegisterAllocator(bool /*Optimized*/) {
+  return createPTXRegisterAllocator();
+}
+
+// Modify the optimized compilation path to bypass optimized register alloction.
+void PTXPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
+  addFastRegAlloc(RegAllocPass);
+}
+
 bool PTXPassConfig::addPostRegAlloc() {
   // PTXMFInfoExtract must after register allocation!
   //PM.add(createPTXMFInfoExtract(getPTXTargetMachine()));
   return false;
 }
 
-bool PTXTargetMachine::addPassesToEmitFile(PassManagerBase &PM,
-                                           formatted_raw_ostream &Out,
-                                           CodeGenFileType FileType,
-                                           bool DisableVerify) {
-  // This is mostly based on LLVMTargetMachine::addPassesToEmitFile
+/// Add passes that optimize machine instructions after register allocation.
+void PTXPassConfig::addMachineLateOptimization() {
+  addPass(BranchFolderPassID);
+  printNoVerify("After BranchFolding");
 
-  // Add common CodeGen passes.
-  MCContext *Context = 0;
-
-  // FIXME: soon this will be converted to use the exposed TargetPassConfig API.
-  PTXPassConfig *PassConfig =
-    static_cast<PTXPassConfig*>(createPassConfig(PM));
-
-  PassConfig->setDisableVerify(DisableVerify);
-
-  PM.add(PassConfig);
-
-  if (PassConfig->addCodeGenPasses(Context))
-    return true;
-  assert(Context != 0 && "Failed to get MCContext");
-
-  if (hasMCSaveTempLabels())
-    Context->setAllowTemporaryLabels(false);
-
-  const MCAsmInfo &MAI = *getMCAsmInfo();
-  const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
-  OwningPtr<MCStreamer> AsmStreamer;
-
-  switch (FileType) {
-  case CGFT_AssemblyFile: {
-    MCInstPrinter *InstPrinter =
-      getTarget().createMCInstPrinter(MAI.getAssemblerDialect(), MAI, STI);
-
-    // Create a code emitter if asked to show the encoding.
-    MCCodeEmitter *MCE = 0;
-    MCAsmBackend *MAB = 0;
-
-    MCStreamer *S = getTarget().createAsmStreamer(*Context, Out,
-                                                  true, /* verbose asm */
-                                                  hasMCUseLoc(),
-                                                  hasMCUseCFI(),
-                                                  hasMCUseDwarfDirectory(),
-                                                  InstPrinter,
-                                                  MCE, MAB,
-                                                  false /* show MC encoding */);
-    AsmStreamer.reset(S);
-    break;
-  }
-  case CGFT_ObjectFile: {
-    llvm_unreachable("Object file emission is not supported with PTX");
-  }
-  case CGFT_Null:
-    // The Null output is intended for use for performance analysis and testing,
-    // not real users.
-    AsmStreamer.reset(createNullStreamer(*Context));
-    break;
-  }
-
-  // Create the AsmPrinter, which takes ownership of AsmStreamer if successful.
-  FunctionPass *Printer = getTarget().createAsmPrinter(*this, *AsmStreamer);
-  if (Printer == 0)
-    return true;
-
-  // If successful, createAsmPrinter took ownership of AsmStreamer.
-  AsmStreamer.take();
-
-  PM.add(Printer);
-
-  PM.add(createGCInfoDeleter());
-  return false;
+  addPass(TailDuplicateID);
+  printNoVerify("After TailDuplicate");
 }
 
-bool PTXPassConfig::addCodeGenPasses(MCContext *&OutContext) {
-  // Add standard LLVM codegen passes.
-  // This is derived from LLVMTargetMachine::addCommonCodeGenPasses, with some
-  // modifications for the PTX target.
-
-  // Standard LLVM-Level Passes.
-
-  // Basic AliasAnalysis support.
-  // Add TypeBasedAliasAnalysis before BasicAliasAnalysis so that
-  // BasicAliasAnalysis wins if they disagree. This is intended to help
-  // support "obvious" type-punning idioms.
-  PM.add(createTypeBasedAliasAnalysisPass());
-  PM.add(createBasicAliasAnalysisPass());
-
-  // Before running any passes, run the verifier to determine if the input
-  // coming from the front-end and/or optimizer is valid.
-  if (!DisableVerify)
-    PM.add(createVerifierPass());
-
-  // Run loop strength reduction before anything else.
-  if (getOptLevel() != CodeGenOpt::None) {
-    PM.add(createLoopStrengthReducePass(getTargetLowering()));
-    //PM.add(createPrintFunctionPass("\n\n*** Code after LSR ***\n", &dbgs()));
-  }
-
-  PM.add(createGCLoweringPass());
-
-  // Make sure that no unreachable blocks are instruction selected.
-  PM.add(createUnreachableBlockEliminationPass());
-
-  PM.add(createLowerInvokePass(getTargetLowering()));
-  // The lower invoke pass may create unreachable code. Remove it.
-  PM.add(createUnreachableBlockEliminationPass());
-
-  if (getOptLevel() != CodeGenOpt::None)
-    PM.add(createCodeGenPreparePass(getTargetLowering()));
-
-  PM.add(createStackProtectorPass(getTargetLowering()));
-
-  addPreISel();
-
-  //PM.add(createPrintFunctionPass("\n\n"
-  //                               "*** Final LLVM Code input to ISel ***\n",
-  //                               &dbgs()));
-
-  // All passes which modify the LLVM IR are now complete; run the verifier
-  // to ensure that the IR is valid.
-  if (!DisableVerify)
-    PM.add(createVerifierPass());
-
-  // Standard Lower-Level Passes.
-
-  // Install a MachineModuleInfo class, which is an immutable pass that holds
-  // all the per-module stuff we're generating, including MCContext.
-  MachineModuleInfo *MMI = new MachineModuleInfo(*TM->getMCAsmInfo(),
-                                                 *TM->getRegisterInfo(),
-                                    &getTargetLowering()->getObjFileLowering());
-  PM.add(MMI);
-  OutContext = &MMI->getContext(); // Return the MCContext specifically by-ref.
-
-  // Set up a MachineFunction for the rest of CodeGen to work on.
-  PM.add(new MachineFunctionAnalysis(*TM));
-
-  // Ask the target for an isel.
-  if (addInstSelector())
-    return true;
-
-  // Print the instruction selected machine code...
-  printAndVerify("After Instruction Selection");
-
-  // Expand pseudo-instructions emitted by ISel.
-  addPass(ExpandISelPseudosID);
-
-  // Pre-ra tail duplication.
-  if (getOptLevel() != CodeGenOpt::None) {
-    addPass(TailDuplicateID);
-    printAndVerify("After Pre-RegAlloc TailDuplicate");
-  }
-
-  // Optimize PHIs before DCE: removing dead PHI cycles may make more
-  // instructions dead.
-  if (getOptLevel() != CodeGenOpt::None)
-    addPass(OptimizePHIsID);
-
-  // If the target requests it, assign local variables to stack slots relative
-  // to one another and simplify frame index references where possible.
-  addPass(LocalStackSlotAllocationID);
-
-  if (getOptLevel() != CodeGenOpt::None) {
-    // With optimization, dead code should already be eliminated. However
-    // there is one known exception: lowered code for arguments that are only
-    // used by tail calls, where the tail calls reuse the incoming stack
-    // arguments directly (see t11 in test/CodeGen/X86/sibcall.ll).
-    addPass(DeadMachineInstructionElimID);
-    printAndVerify("After codegen DCE pass");
-
-    addPass(MachineLICMID);
-    addPass(MachineCSEID);
-    addPass(MachineSinkingID);
-    printAndVerify("After Machine LICM, CSE and Sinking passes");
-
-    addPass(PeepholeOptimizerID);
-    printAndVerify("After codegen peephole optimization pass");
-  }
-
-  // Run pre-ra passes.
-  if (addPreRegAlloc())
-    printAndVerify("After PreRegAlloc passes");
-
-  // Perform register allocation.
-  addPass(PHIEliminationID);
-  addPass(TwoAddressInstructionPassID);
-  PM.add(createPTXRegisterAllocator());
-  printAndVerify("After Register Allocation");
-
-  // Perform stack slot coloring and post-ra machine LICM.
-  if (getOptLevel() != CodeGenOpt::None) {
-    // FIXME: Re-enable coloring with register when it's capable of adding
-    // kill markers.
-    addPass(StackSlotColoringID);
-
-    // FIXME: Post-RA LICM has asserts that fire on virtual registers.
-    // Run post-ra machine LICM to hoist reloads / remats.
-    //if (!DisablePostRAMachineLICM)
-    //  addPass(MachineLICMPass(false));
-
-    printAndVerify("After StackSlotColoring and postra Machine LICM");
-  }
-
-  // Run post-ra passes.
-  if (addPostRegAlloc())
-    printAndVerify("After PostRegAlloc passes");
-
-  addPass(ExpandPostRAPseudosID);
-  printAndVerify("After ExpandPostRAPseudos");
-
-  // Insert prolog/epilog code.  Eliminate abstract frame index references...
-  addPass(PrologEpilogCodeInserterID);
-  printAndVerify("After PrologEpilogCodeInserter");
-
-  // Run pre-sched2 passes.
-  if (addPreSched2())
-    printAndVerify("After PreSched2 passes");
-
-  // Second pass scheduler.
-  if (getOptLevel() != CodeGenOpt::None) {
-    addPass(PostRASchedulerID);
-    printAndVerify("After PostRAScheduler");
-  }
-
-  // Branch folding must be run after regalloc and prolog/epilog insertion.
-  if (getOptLevel() != CodeGenOpt::None) {
-    addPass(BranchFolderPassID);
-    printNoVerify("After BranchFolding");
-  }
-
-  // Tail duplication.
-  if (getOptLevel() != CodeGenOpt::None) {
-    addPass(TailDuplicateID);
-    printNoVerify("After TailDuplicate");
-  }
-
-  addPass(GCMachineCodeAnalysisID);
-
-  //if (PrintGCInfo)
-  //  PM.add(createGCInfoPrinter(dbgs()));
-
-  if (getOptLevel() != CodeGenOpt::None) {
-    addPass(CodePlacementOptID);
-    printNoVerify("After CodePlacementOpt");
-  }
-
-  if (addPreEmitPass())
-    printNoVerify("After PreEmit passes");
-
+bool PTXPassConfig::addPreEmitPass() {
   PM.add(createPTXMFInfoExtract(getPTXTargetMachine(), getOptLevel()));
   PM.add(createPTXFPRoundingModePass(getPTXTargetMachine(), getOptLevel()));
-
-  setInitialized();
-
-  return false;
+  return true;
 }

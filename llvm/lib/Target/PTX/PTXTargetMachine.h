@@ -59,12 +59,6 @@ class PTXTargetMachine : public LLVMTargetMachine {
 
     virtual const PTXSubtarget *getSubtargetImpl() const { return &Subtarget; }
 
-    // We override this method to supply our own set of codegen passes.
-    virtual bool addPassesToEmitFile(PassManagerBase &,
-                                     formatted_raw_ostream &,
-                                     CodeGenFileType,
-                                     bool = true);
-
     // Emission of machine code through JITCodeEmitter is not supported.
     virtual bool addPassesToEmitMachineCode(PassManagerBase &,
                                             JITCodeEmitter &,
