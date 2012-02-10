@@ -317,7 +317,6 @@ def Most : DiagGroup<"most", [
     Reorder,
     ReturnType,
     SelfAssignment,
-    Switch,
     SizeofArrayArgument,
     Trigraphs,
     Uninitialized,
@@ -331,8 +330,8 @@ def Most : DiagGroup<"most", [
 // Thread Safety warnings 
 def ThreadSafety : DiagGroup<"thread-safety">;
 
-// -Wall is -Wmost -Wparentheses -Wdangling-else
-def : DiagGroup<"all", [DanglingElse, Most, Parentheses]>;
+// -Wall is -Wmost -Wparentheses -Wdangling-else -Wswitch
+def : DiagGroup<"all", [DanglingElse, Most, Parentheses, Switch]>;
 
 // Aliases.
 def : DiagGroup<"", [Extra]>;                   // -W = -Wextra
