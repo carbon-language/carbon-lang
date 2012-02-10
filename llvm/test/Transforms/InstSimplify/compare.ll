@@ -406,3 +406,12 @@ define i1 @mul3(i32 %X, i32 %Y) {
   ret i1 %C
 ; CHECK: ret i1 true
 }
+
+define <2 x i1> @vectorselect1(<2 x i1> %cond) {
+; CHECK: @vectorselect1
+  %invert = xor <2 x i1> %cond, <i1 1, i1 1>
+  %s = select <2 x i1> %invert, <2 x i32> <i32 0, i32 0>, <2 x i32> <i32 1, i32 1>
+  %c = icmp ne <2 x i32> %s, <i32 0, i32 0>
+  ret <2 x i1> %c
+; CHECK: ret <2 x i1> %cond
+}
