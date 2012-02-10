@@ -4121,6 +4121,8 @@ def ext_lambda_implies_void_return : ExtWarn<
   InGroup<DiagGroup<"lambda-return">>;
 def err_lambda_return_init_list : Error<
   "cannot deduce lambda return type from initializer list">;
+def err_lambda_capture_default_arg : Error<
+  "lambda expression in default argument cannot capture any entity">;
 
 def err_operator_arrow_circular : Error<
   "circular pointer delegation detected">;
