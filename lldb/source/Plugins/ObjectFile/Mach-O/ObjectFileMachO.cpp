@@ -2180,12 +2180,24 @@ ObjectFileMachO::CalculateStrata()
         case HeaderFileTypeExecutable:                                     // 0x2u MH_EXECUTE
             // Check for the MH_DYLDLINK bit in the flags
             if (m_header.flags & HeaderFlagBitIsDynamicLinkObject)
+            {
                 return eStrataUser;
-            return eStrataKernel;
+            }
+            else 
+            {
+                SectionList *section_list = GetSectionList();
+                if (section_list)
+                {
+                    static ConstString g_kld_section_name ("__KLD");
+                    if (section_list->FindSectionByName(g_kld_section_name))
+                        return eStrataKernel;
+                }
+            }
+            return eStrataRawImage;
 
         case HeaderFileTypeFixedVMShlib:        return eStrataUser;         // 0x3u MH_FVMLIB
         case HeaderFileTypeCore:                return eStrataUnknown;      // 0x4u MH_CORE
-        case HeaderFileTypePreloadedExecutable: return eStrataUser;         // 0x5u MH_PRELOAD
+        case HeaderFileTypePreloadedExecutable: return eStrataRawImage;     // 0x5u MH_PRELOAD
         case HeaderFileTypeDynamicShlib:        return eStrataUser;         // 0x6u MH_DYLIB
         case HeaderFileTypeDynamicLinkEditor:   return eStrataUser;         // 0x7u MH_DYLINKER
         case HeaderFileTypeBundle:              return eStrataUser;         // 0x8u MH_BUNDLE

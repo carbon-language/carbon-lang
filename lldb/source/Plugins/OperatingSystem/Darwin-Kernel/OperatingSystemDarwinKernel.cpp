@@ -68,14 +68,9 @@ OperatingSystemDarwinKernel::CreateInstance (Process *process, bool force)
             ObjectFile *object_file = exe_module->GetObjectFile();
             if (object_file)
             {
-                SectionList *section_list = object_file->GetSectionList();
-                if (section_list)
+                if (object_file->GetStrata() != ObjectFile::eStrataKernel)
                 {
-                    static ConstString g_kld_section_name ("__KLD");
-                    if (section_list->FindSectionByName (g_kld_section_name))
-                    {
-                        create = true;
-                    }
+                    return NULL;
                 }
             }
         }

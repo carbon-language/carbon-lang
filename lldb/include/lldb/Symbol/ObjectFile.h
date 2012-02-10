@@ -75,7 +75,8 @@ public:
         eStrataInvalid = 0,
         eStrataUnknown,
         eStrataUser,
-        eStrataKernel
+        eStrataKernel,
+        eStrataRawImage
     } Strata;
         
     //------------------------------------------------------------------
