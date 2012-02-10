@@ -441,12 +441,20 @@ public:
     return Contents.OffsetedInfo.Val.SymbolName;
   }
 
-  /// clobbersPhysReg - Returns true if this RegMask operand clobbers PhysReg.
-  bool clobbersPhysReg(unsigned PhysReg) const {
-    assert(isRegMask() && "Wrong MachineOperand accessor");
+  /// clobbersPhysReg - Returns true if this RegMask clobbers PhysReg.
+  /// It is sometimes necessary to detach the register mask pointer from its
+  /// machine operand. This static method can be used for such detached bit
+  /// mask pointers.  clobbersPhysReg - Returns true if this RegMask operand
+  /// clobbers PhysReg.
+  static bool clobbersPhysReg(const uint32_t *RegMask, unsigned PhysReg) {
     // See TargetRegisterInfo.h.
     assert(PhysReg < (1u << 30) && "Not a physical register");
-    return !(Contents.RegMask[PhysReg / 32] & (1u << PhysReg % 32));
+    return !(RegMask[PhysReg / 32] & (1u << PhysReg % 32));
+  }
+
+  /// clobbersPhysReg - Returns true if this RegMask operand clobbers PhysReg.
+  bool clobbersPhysReg(unsigned PhysReg) const {
+     return clobbersPhysReg(getRegMask(), PhysReg);
   }
 
   /// getRegMask - Returns a bit mask of registers preserved by this RegMask
