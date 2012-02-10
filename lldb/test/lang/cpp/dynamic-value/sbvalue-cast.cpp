@@ -67,7 +67,9 @@ private:
 int
 main(int argc, char **argv)
 {
-    Base *array[2] = {new DerivedA(10), new DerivedB(12)};
+	DerivedA* dA = new DerivedA(10);
+	DerivedB* dB = new DerivedB(12);
+	Base *array[2] = {dA, dB};
     Base *teller = NULL;
     for (int i = 0; i < 2; ++i) {
         teller = array[i];

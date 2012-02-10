@@ -54,7 +54,7 @@ class CppValueCastTestCase(TestBase):
         self.source = 'sbvalue-cast.cpp';
         self.line = line_number(self.source, '// Set breakpoint here.')
         self.exe_name = self.testMethodName
-        self.d_virtual = {'CXX_SOURCES': self.source, 'EXE': self.exe_name, 'CFLAGS_EXTRAS': '-DDO_VIRTUAL_VIRTUAL'}
+        self.d_virtual = {'CXX_SOURCES': self.source, 'EXE': self.exe_name, 'CFLAGS_EXTRAS': '-DDO_VIRTUAL_INHERITANCE'}
         self.d_regular = {'CXX_SOURCES': self.source, 'EXE': self.exe_name}
 
     def do_sbvalue_cast (self, exe_name):
