@@ -255,7 +255,7 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
       if (A->getType().getTypePtr()->isAnyPointerType()) {
         SymbolRef Sym = State->getSVal(A, C.getLocationContext()).getAsSymbol();
         if (!Sym)
-          return;
+          continue;
         checkEscape(Sym, A, C);
         checkUseAfterFree(Sym, C, A);
       }
@@ -299,7 +299,11 @@ ProgramStateRef MallocChecker::MallocMemAux(CheckerContext &C,
   state = state->bindDefault(retVal, Init);
 
   // Set the region's extent equal to the Size parameter.
-  const SymbolicRegion *R = cast<SymbolicRegion>(retVal.getAsRegion());
+  const SymbolicRegion *R =
+      dyn_cast_or_null<SymbolicRegion>(retVal.getAsRegion());
+  if (!R || !isa<DefinedOrUnknownSVal>(Size))
+    return 0;
+
   DefinedOrUnknownSVal Extent = R->getExtent(svalBuilder);
   DefinedOrUnknownSVal DefinedSize = cast<DefinedOrUnknownSVal>(Size);
   DefinedOrUnknownSVal extentMatchesSize =
@@ -338,13 +342,14 @@ void MallocChecker::FreeMemAttr(CheckerContext &C, const CallExpr *CE,
 }
 
 ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
-                                              const CallExpr *CE,
-                                              ProgramStateRef state,
-                                              unsigned Num,
-                                              bool Hold) const {
+                                          const CallExpr *CE,
+                                          ProgramStateRef state,
+                                          unsigned Num,
+                                          bool Hold) const {
   const Expr *ArgExpr = CE->getArg(Num);
   SVal ArgVal = state->getSVal(ArgExpr, C.getLocationContext());
-
+  if (!isa<DefinedOrUnknownSVal>(ArgVal))
+    return 0;
   DefinedOrUnknownSVal location = cast<DefinedOrUnknownSVal>(ArgVal);
 
   // Check for null dereferences.
@@ -565,8 +570,10 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
   const Expr *arg0Expr = CE->getArg(0);
   const LocationContext *LCtx = C.getLocationContext();
-  DefinedOrUnknownSVal arg0Val 
-    = cast<DefinedOrUnknownSVal>(state->getSVal(arg0Expr, LCtx));
+  SVal Arg0Val = state->getSVal(arg0Expr, LCtx);
+  if (!isa<DefinedOrUnknownSVal>(Arg0Val))
+    return;
+  DefinedOrUnknownSVal arg0Val = cast<DefinedOrUnknownSVal>(Arg0Val);
 
   SValBuilder &svalBuilder = C.getSValBuilder();
 
@@ -579,8 +586,10 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
     return;
 
   // Get the value of the size argument.
-  DefinedOrUnknownSVal Arg1Val = 
-    cast<DefinedOrUnknownSVal>(state->getSVal(Arg1, LCtx));
+  SVal Arg1ValG = state->getSVal(Arg1, LCtx);
+  if (!isa<DefinedOrUnknownSVal>(Arg1ValG))
+    return;
+  DefinedOrUnknownSVal Arg1Val = cast<DefinedOrUnknownSVal>(Arg1ValG);
 
   // Compare the size argument to 0.
   DefinedOrUnknownSVal SizeZero =
@@ -749,7 +758,7 @@ bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
   if (RS && RS->isReleased()) {
     if (ExplodedNode *N = C.addTransition()) {
       if (!BT_UseFree)
-        BT_UseFree.reset(new BuiltinBug("Use dynamically allocated memory "
+        BT_UseFree.reset(new BuiltinBug("Use of dynamically allocated memory "
             "after it is freed."));
 
       BugReport *R = new BugReport(*BT_UseFree, BT_UseFree->getDescription(),N);
@@ -779,6 +788,8 @@ void MallocChecker::checkBind(SVal location, SVal val,
   // structure does not transfer ownership.
 
   ProgramStateRef state = C.getState();
+  if (!isa<DefinedOrUnknownSVal>(location))
+    return;
   DefinedOrUnknownSVal l = cast<DefinedOrUnknownSVal>(location);
 
   // Check for null dereferences.

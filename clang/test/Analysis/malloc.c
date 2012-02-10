@@ -84,13 +84,13 @@ void pr6293() {
 void f7() {
   char *x = (char*) malloc(4);
   free(x);
-  x[0] = 'a'; // expected-warning{{Use dynamically allocated memory after it is freed.}}
+  x[0] = 'a'; // expected-warning{{Use of dynamically allocated memory after it is freed.}}
 }
 
 void f7_realloc() {
   char *x = (char*) malloc(4);
   realloc(x,0);
-  x[0] = 'a'; // expected-warning{{Use dynamically allocated memory after it is freed.}}
+  x[0] = 'a'; // expected-warning{{Use of dynamically allocated memory after it is freed.}}
 }
 
 void PR6123() {
@@ -186,7 +186,7 @@ void mallocEscapeFreeUse() {
   int *p = malloc(12);
   myfoo(p);
   free(p);
-  myfoo(p); // expected-warning{{Use dynamically allocated memory after it is freed.}}
+  myfoo(p); // expected-warning{{Use of dynamically allocated memory after it is freed.}}
 }
 
 int *myalloc();
@@ -212,7 +212,7 @@ void mallocBindFreeUse() {
   int *x = malloc(12);
   int *y = x;
   free(y);
-  myfoo(x); // expected-warning{{Use dynamically allocated memory after it is freed.}}
+  myfoo(x); // expected-warning{{Use of dynamically allocated memory after it is freed.}}
 }
 
 void mallocEscapeMalloc() {
@@ -236,8 +236,8 @@ void mallocFreeMalloc() {
 void mallocFreeUse_params() {
   int *p = malloc(12);
   free(p);
-  myfoo(p); //expected-warning{{Use dynamically allocated memory after it is freed}}
-  myfooint(*p); //expected-warning{{Use dynamically allocated memory after it is freed}}
+  myfoo(p); //expected-warning{{Use of dynamically allocated memory after it is freed}}
+  myfooint(*p); //expected-warning{{Use of dynamically allocated memory after it is freed}}
 }
 
 void mallocFailedOrNot() {
@@ -247,6 +247,18 @@ void mallocFailedOrNot() {
   else
     free(p);
 }
+
+struct StructWithInt {
+  int g;
+};
+void nonSymbolAsFirstArg(int *pp, struct StructWithInt *p);
+
+void mallocEscapeFooNonSymbolArg() {
+  struct StructWithInt *p = malloc(sizeof(struct StructWithInt));
+  nonSymbolAsFirstArg(&p->g, p);
+  return; // no warning
+}
+
 
 int *Gl;
 struct GlStTy {
