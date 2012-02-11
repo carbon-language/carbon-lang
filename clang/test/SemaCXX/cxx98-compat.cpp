@@ -39,7 +39,8 @@ void Lambda() {
 }
 
 int InitList() {
-  (void)new int {}; // expected-warning {{generalized initializer lists are incompatible with C++98}}
+  (void)new int {}; // expected-warning {{generalized initializer lists are incompatible with C++98}} \
+                    // expected-warning {{scalar initialized from empty initializer list is incompatible with C++98}}
   (void)int{}; // expected-warning {{generalized initializer lists are incompatible with C++98}}
   int x { 0 }; // expected-warning {{generalized initializer lists are incompatible with C++98}}
   return { 0 }; // expected-warning {{generalized initializer lists are incompatible with C++98}}

@@ -2750,6 +2750,76 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType,
   return UnwrappedAnyPointer && Context.hasSameUnqualifiedType(FromType,ToType);
 }
 
+static OverloadingResult
+IsInitializerListConstructorConversion(Sema &S, Expr *From, QualType ToType,
+                                       CXXRecordDecl *To,
+                                       UserDefinedConversionSequence &User,
+                                       OverloadCandidateSet &CandidateSet,
+                                       bool AllowExplicit) {
+  DeclContext::lookup_iterator Con, ConEnd;
+  for (llvm::tie(Con, ConEnd) = S.LookupConstructors(To);
+       Con != ConEnd; ++Con) {
+    NamedDecl *D = *Con;
+    DeclAccessPair FoundDecl = DeclAccessPair::make(D, D->getAccess());
+
+    // Find the constructor (which may be a template).
+    CXXConstructorDecl *Constructor = 0;
+    FunctionTemplateDecl *ConstructorTmpl
+      = dyn_cast<FunctionTemplateDecl>(D);
+    if (ConstructorTmpl)
+      Constructor
+        = cast<CXXConstructorDecl>(ConstructorTmpl->getTemplatedDecl());
+    else
+      Constructor = cast<CXXConstructorDecl>(D);
+
+    bool Usable = !Constructor->isInvalidDecl() &&
+                  S.isInitListConstructor(Constructor) &&
+                  (AllowExplicit || !Constructor->isExplicit());
+    if (Usable) {
+      if (ConstructorTmpl)
+        S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
+                                       /*ExplicitArgs*/ 0,
+                                       &From, 1, CandidateSet,
+                                       /*SuppressUserConversions=*/true);
+      else
+        S.AddOverloadCandidate(Constructor, FoundDecl,
+                               &From, 1, CandidateSet,
+                               /*SuppressUserConversions=*/true);
+    }
+  }
+
+  bool HadMultipleCandidates = (CandidateSet.size() > 1);
+
+  OverloadCandidateSet::iterator Best;
+  switch (CandidateSet.BestViableFunction(S, From->getLocStart(), Best, true)) {
+  case OR_Success: {
+    // Record the standard conversion we used and the conversion function.
+    CXXConstructorDecl *Constructor = cast<CXXConstructorDecl>(Best->Function);
+    S.MarkFunctionReferenced(From->getLocStart(), Constructor);
+
+    QualType ThisType = Constructor->getThisType(S.Context);
+    // Initializer lists don't have conversions as such.
+    User.Before.setAsIdentityConversion();
+    User.HadMultipleCandidates = HadMultipleCandidates;
+    User.ConversionFunction = Constructor;
+    User.FoundConversionFunction = Best->FoundDecl;
+    User.After.setAsIdentityConversion();
+    User.After.setFromType(ThisType->getAs<PointerType>()->getPointeeType());
+    User.After.setAllToTypes(ToType);
+    return OR_Success;
+  }
+
+  case OR_No_Viable_Function:
+    return OR_No_Viable_Function;
+  case OR_Deleted:
+    return OR_Deleted;
+  case OR_Ambiguous:
+    return OR_Ambiguous;
+  }
+
+  llvm_unreachable("Invalid OverloadResult!");
+}
+
 /// Determines whether there is a user-defined conversion sequence
 /// (C++ [over.ics.user]) that converts expression From to the type
 /// ToType. If such a conversion exists, User will contain the
@@ -2762,8 +2832,8 @@ Sema::IsQualificationConversion(QualType FromType, QualType ToType,
 /// functions (C++0x [class.conv.fct]p2).
 static OverloadingResult
 IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
-                        UserDefinedConversionSequence& User,
-                        OverloadCandidateSet& CandidateSet,
+                        UserDefinedConversionSequence &User,
+                        OverloadCandidateSet &CandidateSet,
                         bool AllowExplicit) {
   // Whether we will only visit constructors.
   bool ConstructorsOnly = false;
@@ -2796,9 +2866,17 @@ IsUserDefinedConversion(Sema &S, Expr *From, QualType ToType,
       Expr **Args = &From;
       unsigned NumArgs = 1;
       bool ListInitializing = false;
-      // If we're list-initializing, we pass the individual elements as
-      // arguments, not the entire list.
       if (InitListExpr *InitList = dyn_cast<InitListExpr>(From)) {
+        // But first, see if there is an init-list-contructor that will work.
+        OverloadingResult Result = IsInitializerListConstructorConversion(
+            S, From, ToType, ToRecordDecl, User, CandidateSet, AllowExplicit);
+        if (Result != OR_No_Viable_Function)
+          return Result;
+        // Never mind.
+        CandidateSet.clear();
+
+        // If we're list-initializing, we pass the individual elements as
+        // arguments, not the entire list.
         Args = InitList->getInits();
         NumArgs = InitList->getNumInits();
         ListInitializing = true;

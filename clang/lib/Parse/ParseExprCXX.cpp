@@ -2182,8 +2182,10 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
   } else if (Tok.is(tok::l_brace) && getLang().CPlusPlus0x) {
     Diag(Tok.getLocation(),
          diag::warn_cxx98_compat_generalized_initializer_lists);
-    // FIXME: Have to communicate the init-list to ActOnCXXNew.
-    ParseBraceInitializer();
+    ExprResult InitList = ParseBraceInitializer();
+    if (InitList.isInvalid())
+      return InitList;
+    ConstructorArgs.push_back(InitList.take());
   }
 
   return Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
