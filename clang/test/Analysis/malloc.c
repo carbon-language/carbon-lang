@@ -340,21 +340,15 @@ int **RegInvalidationDetect2(int **pp) {
   return 0;// expected-warning {{Allocated memory never released. Potential memory leak.}}
 }
 
-// Below are the known false positives.
-
 extern void exit(int) __attribute__ ((__noreturn__));
 void mallocExit(int *g) {
   struct xx *p = malloc(12);
-
-  if (g != 0) {
-    exit(1); // expected-warning{{Allocated memory never released. Potential memory leak}}
-  }
+  if (g != 0)
+    exit(1);
   free(p);
   return;
 }
 
-
-// TODO: There should be no warning here.
 extern void __assert_fail (__const char *__assertion, __const char *__file,
     unsigned int __line, __const char *__function)
      __attribute__ ((__noreturn__));
@@ -363,10 +357,12 @@ extern void __assert_fail (__const char *__assertion, __const char *__file,
 void mallocAssert(int *g) {
   struct xx *p = malloc(12);
 
-  assert(g != 0); // expected-warning{{Allocated memory never released. Potential memory leak}}
+  assert(g != 0);
   free(p);
   return;
 }
+
+// Below are the known false positives.
 
 // TODO: There should be no warning here.
 void reallocFails(int *g, int f) {

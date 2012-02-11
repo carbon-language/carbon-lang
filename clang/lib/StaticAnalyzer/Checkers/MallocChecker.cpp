@@ -148,6 +148,8 @@ private:
   static bool SummarizeRegion(raw_ostream &os, const MemRegion *MR);
   void ReportBadFree(CheckerContext &C, SVal ArgVal, SourceRange range) const;
 
+  void reportLeak(SymbolRef Sym, ExplodedNode *N, CheckerContext &C) const;
+
   /// The bug visitor which allows us to print extra diagnostics along the
   /// BugReport path. For example, showing the allocation site of the leaked
   /// region.
@@ -672,6 +674,25 @@ void MallocChecker::CallocMem(CheckerContext &C, const CallExpr *CE) {
   C.addTransition(MallocMemAux(C, CE, TotalSize, zeroVal, state));
 }
 
+void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
+                               CheckerContext &C) const {
+  assert(N);
+  if (!BT_Leak) {
+    BT_Leak.reset(new BuiltinBug("Memory leak",
+        "Allocated memory never released. Potential memory leak."));
+    // Leaks should not be reported if they are post-dominated by a sink:
+    // (1) Sinks are higher importance bugs.
+    // (2) NoReturnFunctionChecker uses sink nodes to represent paths ending
+    //     with __noreturn functions such as assert() or exit(). We choose not
+    //     to report leaks on such paths.
+    BT_Leak->setSuppressOnSink(true);
+  }
+
+  BugReport *R = new BugReport(*BT_Leak, BT_Leak->getDescription(), N);
+  R->addVisitor(new MallocBugVisitor(Sym));
+  C.EmitReport(R);
+}
+
 void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
                                      CheckerContext &C) const
 {
@@ -699,34 +720,23 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   ExplodedNode *N = C.addTransition(state->set<RegionState>(RS));
 
   if (N && generateReport) {
-    if (!BT_Leak)
-      BT_Leak.reset(new BuiltinBug("Memory leak",
-          "Allocated memory never released. Potential memory leak."));
     for (llvm::SmallVector<SymbolRef, 2>::iterator
-          I = Errors.begin(), E = Errors.end(); I != E; ++I) {
-      BugReport *R = new BugReport(*BT_Leak, BT_Leak->getDescription(), N);
-      R->addVisitor(new MallocBugVisitor(*I));
-      C.EmitReport(R);
+         I = Errors.begin(), E = Errors.end(); I != E; ++I) {
+      reportLeak(*I, N, C);
     }
   }
 }
 
-void MallocChecker::checkEndPath(CheckerContext &Ctx) const {
-  ProgramStateRef state = Ctx.getState();
+void MallocChecker::checkEndPath(CheckerContext &C) const {
+  ProgramStateRef state = C.getState();
   RegionStateTy M = state->get<RegionState>();
 
   for (RegionStateTy::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     RefState RS = I->second;
     if (RS.isAllocated()) {
-      ExplodedNode *N = Ctx.addTransition(state);
-      if (N) {
-        if (!BT_Leak)
-          BT_Leak.reset(new BuiltinBug("Memory leak",
-                    "Allocated memory never released. Potential memory leak."));
-        BugReport *R = new BugReport(*BT_Leak, BT_Leak->getDescription(), N);
-        R->addVisitor(new MallocBugVisitor(I->first));
-        Ctx.EmitReport(R);
-      }
+      ExplodedNode *N = C.addTransition(state);
+      if (N)
+        reportLeak(I->first, N, C);
     }
   }
 }
