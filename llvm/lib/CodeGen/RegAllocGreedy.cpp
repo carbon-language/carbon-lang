@@ -1352,6 +1352,26 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     dbgs() << '\n';
   });
 
+  // If VirtReg is live across any register mask operands, compute a list of
+  // gaps with register masks.
+  SmallVector<unsigned, 8> RegMaskGaps;
+  if (!UsableRegs.empty()) {
+    // Get regmask slots for the whole block.
+    ArrayRef<SlotIndex> RMS = LIS->getRegMaskSlotsInBlock(BI.MBB->getNumber());
+    // Constrain to VirtReg's live range.
+    unsigned ri = std::lower_bound(RMS.begin(), RMS.end(), Uses.front())
+      - RMS.begin();
+    unsigned re = RMS.size();
+    for (unsigned i = 0; i != NumGaps && ri != re; ++i) {
+      assert(Uses[i] <= RMS[ri]);
+      if (Uses[i+1] <= RMS[ri])
+        continue;
+      RegMaskGaps.push_back(i);
+      do ++ri;
+      while (ri != re && RMS[ri] < Uses[i+1]);
+    }
+  }
+
   // Since we allow local split results to be split again, there is a risk of
   // creating infinite loops. It is tempting to require that the new live
   // ranges have less instructions than the original. That would guarantee
@@ -1385,6 +1405,11 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
     // Keep track of the largest spill weight that would need to be evicted in
     // order to make use of PhysReg between UseSlots[i] and UseSlots[i+1].
     calcGapWeights(PhysReg, GapWeight);
+
+    // Remove any gaps with regmask clobbers.
+    if (clobberedByRegMask(PhysReg))
+      for (unsigned i = 0, e = RegMaskGaps.size(); i != e; ++i)
+        GapWeight[RegMaskGaps[i]] = HUGE_VALF;
 
     // Try to find the best sequence of gaps to close.
     // The new spill weight must be larger than any gap interference.
