@@ -372,17 +372,6 @@ def INSERT_get_vinsertf128_imm : SDNodeXForm<insert_subvector, [{
   return getI8Imm(X86::getInsertVINSERTF128Immediate(N));
 }]>;
 
-def splat_lo : PatFrag<(ops node:$lhs, node:$rhs),
-                       (vector_shuffle node:$lhs, node:$rhs), [{
-  ShuffleVectorSDNode *SVOp = cast<ShuffleVectorSDNode>(N);
-  return SVOp->isSplat() && SVOp->getSplatIndex() == 0;
-}]>;
-
-def movddup : PatFrag<(ops node:$lhs, node:$rhs),
-                      (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isMOVDDUPMask(cast<ShuffleVectorSDNode>(N));
-}]>;
-
 def movhlps : PatFrag<(ops node:$lhs, node:$rhs),
                       (vector_shuffle node:$lhs, node:$rhs), [{
   return X86::isMOVHLPSMask(cast<ShuffleVectorSDNode>(N));

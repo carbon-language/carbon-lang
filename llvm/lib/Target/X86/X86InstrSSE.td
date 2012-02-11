@@ -1324,11 +1324,6 @@ let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
 let Predicates = [HasAVX] in {
   // MOVLHPS patterns
   let AddedComplexity = 20 in {
-    def : Pat<(v4f32 (movddup VR128:$src, (undef))),
-              (VMOVLHPSrr (v4f32 VR128:$src), (v4f32 VR128:$src))>;
-    def : Pat<(v2i64 (movddup VR128:$src, (undef))),
-              (VMOVLHPSrr (v2i64 VR128:$src), (v2i64 VR128:$src))>;
-
     // vector_shuffle v1, v2 <0, 1, 4, 5> using MOVLHPS
     def : Pat<(v4i32 (movlhps VR128:$src1, VR128:$src2)),
               (VMOVLHPSrr VR128:$src1, VR128:$src2)>;
@@ -1362,11 +1357,6 @@ let Predicates = [HasAVX] in {
 let Predicates = [HasSSE1] in {
   // MOVLHPS patterns
   let AddedComplexity = 20 in {
-    def : Pat<(v4f32 (movddup VR128:$src, (undef))),
-              (MOVLHPSrr (v4f32 VR128:$src), (v4f32 VR128:$src))>;
-    def : Pat<(v2i64 (movddup VR128:$src, (undef))),
-              (MOVLHPSrr (v2i64 VR128:$src), (v2i64 VR128:$src))>;
-
     // vector_shuffle v1, v2 <0, 1, 4, 5> using MOVLHPS
     def : Pat<(v4i32 (movlhps VR128:$src1, VR128:$src2)),
               (MOVLHPSrr VR128:$src1, VR128:$src2)>;
@@ -2553,9 +2543,6 @@ let Predicates = [HasAVX], AddedComplexity = 1 in {
   // time and the fold opportunity reappears.
   def : Pat<(v2f64 (X86Movddup VR128:$src)),
             (VUNPCKLPDrr VR128:$src, VR128:$src)>;
-  let AddedComplexity = 10 in
-  def : Pat<(splat_lo (v2f64 VR128:$src), (undef)),
-            (VUNPCKLPDrr VR128:$src, VR128:$src)>;
 }
 
 let Predicates = [HasSSE1] in {
@@ -2584,10 +2571,6 @@ let Predicates = [HasSSE2] in {
   // fold cause it has two uses through a bitcast. One use disappears at isel
   // time and the fold opportunity reappears.
   def : Pat<(v2f64 (X86Movddup VR128:$src)),
-            (UNPCKLPDrr VR128:$src, VR128:$src)>;
-
-  let AddedComplexity = 10 in
-  def : Pat<(splat_lo (v2f64 VR128:$src), (undef)),
             (UNPCKLPDrr VR128:$src, VR128:$src)>;
 }
 
@@ -4213,14 +4196,6 @@ let Predicates = [HasAVX] in {
             (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>;
 }
 
-// Splat v2f64 / v2i64
-let AddedComplexity = 10 in {
-  def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
-            (VPUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasAVX]>;
-  def : Pat<(splat_lo (v2i64 VR128:$src), (undef)),
-            (PUNPCKLQDQrr VR128:$src, VR128:$src)>, Requires<[HasSSE2]>;
-}
-
 //===---------------------------------------------------------------------===//
 // SSE2 - Packed Integer Extract and Insert
 //===---------------------------------------------------------------------===//
@@ -4818,51 +4793,42 @@ let Predicates = [HasSSE3] in {
 //===---------------------------------------------------------------------===//
 
 multiclass sse3_replicate_dfp<string OpcodeStr> {
+let neverHasSideEffects = 1 in
 def rr  : S3DI<0x12, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                    [(set VR128:$dst,(v2f64 (movddup VR128:$src, (undef))))]>;
+                    []>;
 def rm  : S3DI<0x12, MRMSrcMem, (outs VR128:$dst), (ins f64mem:$src),
                     !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
                     [(set VR128:$dst,
-                      (v2f64 (movddup (scalar_to_vector (loadf64 addr:$src)),
-                                      (undef))))]>;
+                      (v2f64 (X86Movddup
+                              (scalar_to_vector (loadf64 addr:$src)))))]>;
 }
 
 // FIXME: Merge with above classe when there're patterns for the ymm version
 multiclass sse3_replicate_dfp_y<string OpcodeStr> {
+def rr  : S3DI<0x12, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
+                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                    [(set VR256:$dst, (v4f64 (X86Movddup VR256:$src)))]>;
+def rm  : S3DI<0x12, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
+                    !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
+                    [(set VR256:$dst,
+                      (v4f64 (X86Movddup
+                              (scalar_to_vector (loadf64 addr:$src)))))]>;
+}
+
 let Predicates = [HasAVX] in {
-  def rr  : S3DI<0x12, MRMSrcReg, (outs VR256:$dst), (ins VR256:$src),
-                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                      []>;
-  def rm  : S3DI<0x12, MRMSrcMem, (outs VR256:$dst), (ins f256mem:$src),
-                      !strconcat(OpcodeStr, "\t{$src, $dst|$dst, $src}"),
-                      []>;
-  }
+  defm VMOVDDUP  : sse3_replicate_dfp<"vmovddup">, VEX;
+  defm VMOVDDUPY : sse3_replicate_dfp_y<"vmovddup">, VEX;
 }
 
 defm MOVDDUP : sse3_replicate_dfp<"movddup">;
-defm VMOVDDUP  : sse3_replicate_dfp<"vmovddup">, VEX;
-defm VMOVDDUPY : sse3_replicate_dfp_y<"vmovddup">, VEX;
 
 let Predicates = [HasAVX] in {
-  def : Pat<(movddup (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src)))),
-                   (undef)),
-            (VMOVDDUPrm addr:$src)>;
-  let AddedComplexity = 5 in {
-  def : Pat<(movddup (memopv2f64 addr:$src), (undef)), (VMOVDDUPrm addr:$src)>;
-  def : Pat<(movddup (bc_v4f32 (memopv2f64 addr:$src)), (undef)),
-            (VMOVDDUPrm addr:$src)>;
-  def : Pat<(movddup (memopv2i64 addr:$src), (undef)), (VMOVDDUPrm addr:$src)>;
-  def : Pat<(movddup (bc_v4i32 (memopv2i64 addr:$src)), (undef)),
-            (VMOVDDUPrm addr:$src)>;
-  }
   def : Pat<(X86Movddup (memopv2f64 addr:$src)),
             (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
   def : Pat<(X86Movddup (bc_v2f64 (memopv4f32 addr:$src))),
             (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
   def : Pat<(X86Movddup (bc_v2f64 (memopv2i64 addr:$src))),
-            (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
-  def : Pat<(X86Movddup (v2f64 (scalar_to_vector (loadf64 addr:$src)))),
             (VMOVDDUPrm addr:$src)>, Requires<[HasAVX]>;
   def : Pat<(X86Movddup (bc_v2f64
                              (v2i64 (scalar_to_vector (loadi64 addr:$src))))),
@@ -4873,35 +4839,18 @@ let Predicates = [HasAVX] in {
             (VMOVDDUPYrm addr:$src)>;
   def : Pat<(X86Movddup (memopv4i64 addr:$src)),
             (VMOVDDUPYrm addr:$src)>;
-  def : Pat<(X86Movddup (v4f64 (scalar_to_vector (loadf64 addr:$src)))),
-            (VMOVDDUPYrm addr:$src)>;
   def : Pat<(X86Movddup (v4i64 (scalar_to_vector (loadi64 addr:$src)))),
             (VMOVDDUPYrm addr:$src)>;
-  def : Pat<(X86Movddup (v4f64 VR256:$src)),
-            (VMOVDDUPYrr VR256:$src)>;
   def : Pat<(X86Movddup (v4i64 VR256:$src)),
             (VMOVDDUPYrr VR256:$src)>;
 }
 
 let Predicates = [HasSSE3] in {
-  def : Pat<(movddup (bc_v2f64 (v2i64 (scalar_to_vector (loadi64 addr:$src)))),
-                   (undef)),
-            (MOVDDUPrm addr:$src)>;
-  let AddedComplexity = 5 in {
-  def : Pat<(movddup (memopv2f64 addr:$src), (undef)), (MOVDDUPrm addr:$src)>;
-  def : Pat<(movddup (bc_v4f32 (memopv2f64 addr:$src)), (undef)),
-            (MOVDDUPrm addr:$src)>;
-  def : Pat<(movddup (memopv2i64 addr:$src), (undef)), (MOVDDUPrm addr:$src)>;
-  def : Pat<(movddup (bc_v4i32 (memopv2i64 addr:$src)), (undef)),
-            (MOVDDUPrm addr:$src)>;
-  }
   def : Pat<(X86Movddup (memopv2f64 addr:$src)),
             (MOVDDUPrm addr:$src)>;
   def : Pat<(X86Movddup (bc_v2f64 (memopv4f32 addr:$src))),
             (MOVDDUPrm addr:$src)>;
   def : Pat<(X86Movddup (bc_v2f64 (memopv2i64 addr:$src))),
-            (MOVDDUPrm addr:$src)>;
-  def : Pat<(X86Movddup (v2f64 (scalar_to_vector (loadf64 addr:$src)))),
             (MOVDDUPrm addr:$src)>;
   def : Pat<(X86Movddup (bc_v2f64
                              (v2i64 (scalar_to_vector (loadi64 addr:$src))))),
