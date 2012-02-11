@@ -128,12 +128,10 @@ void af3() {
   free(p); // no-warning
 }
 
-// This case would inflict a double-free elsewhere.
-// However, this case is considered an analyzer bug since it causes false-positives.
 int * af4() {
   int *p = my_malloc(12);
   my_free(p);
-  return p; // no-warning
+  return p; // expected-warning{{Use of dynamically allocated}}
 }
 
 // This case is (possibly) ok, be conservative

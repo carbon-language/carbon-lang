@@ -251,6 +251,20 @@ void mallocFailedOrNot() {
 struct StructWithInt {
   int g;
 };
+
+int *mallocReturnFreed() {
+  int *p = malloc(12);
+  free(p);
+  return p; // expected-warning {{Use of dynamically allocated}}
+}
+
+int useAfterFreeStruct() {
+  struct StructWithInt *px= malloc(sizeof(struct StructWithInt));
+  px->g = 5;
+  free(px);
+  return px->g; // expected-warning {{Use of dynamically allocated}}
+}
+
 void nonSymbolAsFirstArg(int *pp, struct StructWithInt *p);
 
 void mallocEscapeFooNonSymbolArg() {

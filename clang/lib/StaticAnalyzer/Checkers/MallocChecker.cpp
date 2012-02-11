@@ -760,10 +760,16 @@ void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
   const Expr *E = S->getRetValue();
   if (!E)
     return;
+
+  // Check if we are returning a symbol.
   SymbolRef Sym = C.getState()->getSVal(E, C.getLocationContext()).getAsSymbol();
   if (!Sym)
     return;
 
+  // Check if we are returning freed memory.
+  checkUseAfterFree(Sym, C, S);
+
+  // Check if the symbol is escaping.
   checkEscape(Sym, S, C);
 }
 
