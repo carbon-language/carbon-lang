@@ -4245,23 +4245,12 @@ static SDValue getOnesVector(EVT VT, bool HasAVX2, SelectionDAG &DAG,
 
 /// NormalizeMask - V2 is a splat, modify the mask (if needed) so all elements
 /// that point to V2 points to its first element.
-static SDValue NormalizeMask(ShuffleVectorSDNode *SVOp, SelectionDAG &DAG) {
-  EVT VT = SVOp->getValueType(0);
-  unsigned NumElems = VT.getVectorNumElements();
-
-  bool Changed = false;
-  SmallVector<int, 8> MaskVec(SVOp->getMask().begin(), SVOp->getMask().end());
-
+static void NormalizeMask(SmallVectorImpl<int> &Mask, unsigned NumElems) {
   for (unsigned i = 0; i != NumElems; ++i) {
-    if (MaskVec[i] > (int)NumElems) {
-      MaskVec[i] = NumElems;
-      Changed = true;
+    if (Mask[i] > (int)NumElems) {
+      Mask[i] = NumElems;
     }
   }
-  if (Changed)
-    return DAG.getVectorShuffle(VT, SVOp->getDebugLoc(), SVOp->getOperand(0),
-                                SVOp->getOperand(1), &MaskVec[0]);
-  return SDValue(SVOp, 0);
 }
 
 /// getMOVLMask - Returns a vector_shuffle mask for an movs{s|d}, movd
@@ -6535,17 +6524,15 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   V1IsSplat = isSplatVector(V1.getNode());
   V2IsSplat = isSplatVector(V2.getNode());
 
+  SmallVector<int, 8> M(SVOp->getMask().begin(), SVOp->getMask().end());
+
   // Canonicalize the splat or undef, if present, to be on the RHS.
-  if (V1IsSplat && !V2IsSplat) {
-    Op = CommuteVectorShuffle(SVOp, DAG);
-    SVOp = cast<ShuffleVectorSDNode>(Op);
-    V1 = SVOp->getOperand(0);
-    V2 = SVOp->getOperand(1);
+  if (!V2IsUndef && V1IsSplat && !V2IsSplat) {
+    CommuteVectorShuffleMask(M, NumElems);
+    std::swap(V1, V2);
     std::swap(V1IsSplat, V2IsSplat);
     Commuted = true;
   }
-
-  ArrayRef<int> M = SVOp->getMask();
 
   if (isCommutedMOVLMask(M, VT, V2IsSplat, V2IsUndef)) {
     // Shuffling low element of v1 into undef, just return v1.
@@ -6566,29 +6553,29 @@ X86TargetLowering::LowerVECTOR_SHUFFLE(SDValue Op, SelectionDAG &DAG) const {
   if (V2IsSplat) {
     // Normalize mask so all entries that point to V2 points to its first
     // element then try to match unpck{h|l} again. If match, return a
-    // new vector_shuffle with the corrected mask.
-    SDValue NewMask = NormalizeMask(SVOp, DAG);
-    ShuffleVectorSDNode *NSVOp = cast<ShuffleVectorSDNode>(NewMask);
-    if (NSVOp != SVOp) {
-      if (X86::isUNPCKLMask(NSVOp, HasAVX2, true)) {
-        return NewMask;
-      } else if (X86::isUNPCKHMask(NSVOp, HasAVX2, true)) {
-        return NewMask;
-      }
+    // new vector_shuffle with the corrected mask.p
+    SmallVector<int, 8> NewMask(M.begin(), M.end());
+    NormalizeMask(NewMask, NumElems);
+    if (isUNPCKLMask(NewMask, VT, HasAVX2, true)) {
+      return getTargetShuffleNode(X86ISD::UNPCKL, dl, VT, V1, V2, DAG);
+    } else if (isUNPCKHMask(NewMask, VT, HasAVX2, true)) {
+      return getTargetShuffleNode(X86ISD::UNPCKH, dl, VT, V1, V2, DAG);
     }
   }
 
   if (Commuted) {
     // Commute is back and try unpck* again.
     // FIXME: this seems wrong.
-    SDValue NewOp = CommuteVectorShuffle(SVOp, DAG);
-    ShuffleVectorSDNode *NewSVOp = cast<ShuffleVectorSDNode>(NewOp);
+    CommuteVectorShuffleMask(M, NumElems);
+    std::swap(V1, V2);
+    std::swap(V1IsSplat, V2IsSplat);
+    Commuted = false;
 
-    if (X86::isUNPCKLMask(NewSVOp, HasAVX2))
-      return getTargetShuffleNode(X86ISD::UNPCKL, dl, VT, V2, V1, DAG);
+    if (isUNPCKLMask(M, VT, HasAVX2))
+      return getTargetShuffleNode(X86ISD::UNPCKL, dl, VT, V1, V2, DAG);
 
-    if (X86::isUNPCKHMask(NewSVOp, HasAVX2))
-      return getTargetShuffleNode(X86ISD::UNPCKH, dl, VT, V2, V1, DAG);
+    if (isUNPCKHMask(M, VT, HasAVX2))
+      return getTargetShuffleNode(X86ISD::UNPCKH, dl, VT, V1, V2, DAG);
   }
 
   // Normalize the node to match x86 shuffle ops if needed
