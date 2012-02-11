@@ -108,6 +108,10 @@
       </li>
     </ol>
   </li>
+  <li><a href="#module_flags">Module Flags Metadata</a>
+    <ol>
+    </ol>
+  </li>
   <li><a href="#intrinsic_globals">Intrinsic Global Variables</a>
     <ol>
       <li><a href="#intg_used">The '<tt>llvm.used</tt>' Global Variable</a></li>
@@ -3026,6 +3030,128 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 </div>
 
 </div>
+
+</div>
+
+<!-- *********************************************************************** -->
+<h2>
+  <a name="module_flags">Module Flags Metadata</a>
+</h2>
+<!-- *********************************************************************** -->
+
+<div>
+
+<p>Information about the module as a whole is difficult to convey to LLVM's
+   subsystems. The LLVM IR isn't sufficient to transmit this
+   information. The <tt>llvm.module.flags</tt> named metadata exists in order to
+   facilitate this. These flags are in the form of key / value pairs &mdash;
+   much like a dictionary &mdash; making it easy for any subsystem who cares
+   about a flag to look it up.</p>
+
+<p>The <tt>llvm.module.flags</tt> metadata contains a list of metadata
+   triplets. Each triplet has the following form:</p>
+
+<ul>
+  <li>The first element is a <i>behavior</i> flag, which specifies the behavior
+      when two (or more) modules are merged together, and it encounters two (or
+      more) metadata with the same ID. The supported behaviors are described
+      below.</li>
+
+  <li>The second element is a metadata string that is a unique ID for the
+      metadata. How each ID is interpreted is documented below.</li>
+
+  <li>The third element is the value of the flag.</li>
+</ul>
+
+<p>When two (or more) modules are merged together, the resulting
+   <tt>llvm.module.flags</tt> metadata is the union of the
+   modules' <tt>llvm.module.flags</tt> metadata. The only exception being a flag
+   with the <i>Override</i> behavior, which may override another flag's value
+   (see below).</p>
+
+<p>The following behaviors are supported:</p>
+
+<table border="1" cellspacing="0" cellpadding="4">
+  <tbody>
+    <tr>
+      <th>Value</th>
+      <th>Behavior</th>
+    </tr>
+    <tr>
+      <td>1</td>
+      <td align="left">
+        <dt><b>Error</b></dt>
+        <dd>Emits an error if two values disagree. It is an error to have an ID
+            with both an Error and a Warning behavior.</dd>
+      </td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td align="left">
+        <dt><b>Warning</b></dt>
+        <dd>Emits a warning if two values disagree.</dd>
+      </td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td align="left">
+        <dt><b>Require</b></dt>
+        <dd>Emits an error when the specified value is not present or doesn't
+            have the specified value. It is an error for two (or more)
+            <tt>llvm.module.flags</tt> with the same ID to have the Require
+            behavior but different values. There may be multiple Require flags
+            per ID.</dd>
+      </td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td align="left">
+        <dt><b>Override</b></dt>
+        <dd>Uses the specified value if the two values disagree. It is an error
+            for two (or more) <tt>llvm.module.flags</tt> with the same ID to
+            have the Override behavior but different values.</dd>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+<p>An example of module flags:</p>
+
+<pre class="doc_code">
+!0 = metadata !{ i32 1, metadata !"foo", i32 1 }
+!1 = metadata !{ i32 4, metadata !"bar", i32 37 }
+!2 = metadata !{ i32 2, metadata !"qux", i32 42 }
+!3 = metadata !{ i32 3, metadata !"qux",
+  metadata !{
+    metadata !"foo", i32 1
+  }
+}
+!llvm.module.flags = !{ !0, !1, !2, !3 }
+</pre>
+
+<ul>
+  <li><p>Metadata <tt>!0</tt> has the ID <tt>!"foo"</tt> and the value '1'. The
+         behavior if two or more <tt>!"foo"</tt> flags are seen is to emit an
+         error if their values are not equal.</p></li>
+
+  <li><p>Metadata <tt>!1</tt> has the ID <tt>!"bar"</tt> and the value '37'. The
+         behavior if two or more <tt>!"bar"</tt> flags are seen is to use the
+         value '37' if their values are not equal.</p></li>
+
+  <li><p>Metadata <tt>!2</tt> has the ID <tt>!"qux"</tt> and the value '42'. The
+         behavior if two or more <tt>!"qux"</tt> flags are seen is to emit a
+         warning if their values are not equal.</p></li>
+
+  <li><p>Metadata <tt>!3</tt> has the ID <tt>!"qux"</tt> and the value:</p>
+
+<pre class="doc_code">
+metadata !{ metadata !"foo", i32 1 }
+</pre>
+      <p>The behavior is to emit an error if the <tt>llvm.module.flags</tt> does
+         not contain a flag with the ID <tt>!"foo"</tt> that has the value
+         '1'. If two or more <tt>!"qux"</tt> flags exist, then they must have
+         the same value or an error will be issued.</p></li>
+</ul>
 
 </div>
 
