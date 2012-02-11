@@ -87,6 +87,10 @@ def StackAddrEscapeChecker : Checker<"StackAddressEscape">,
 
 let ParentPackage = CoreExperimental in {
 
+def BoolAssignmentChecker : Checker<"BoolAssignment">,
+  HelpText<"Warn about assigning non-{0,1} values to Boolean variables">,
+  DescFile<"BoolAssignmentChecker.cpp">;
+
 def CastSizeChecker : Checker<"CastSize">,
   HelpText<"Check when casting a malloc'ed type T, whether the size is a multiple of the size of T">,
   DescFile<"CastSizeChecker.cpp">;
