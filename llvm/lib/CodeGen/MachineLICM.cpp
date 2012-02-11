@@ -68,6 +68,7 @@ namespace {
     MachineRegisterInfo *MRI;
     const InstrItineraryData *InstrItins;
     bool PreRegAlloc;
+    BitVector ReservedRegs;
 
     // Various analyses that we use...
     AliasAnalysis        *AA;      // Alias analysis info.
@@ -337,6 +338,8 @@ bool MachineLICM::runOnMachineFunction(MachineFunction &MF) {
     for (TargetRegisterInfo::regclass_iterator I = TRI->regclass_begin(),
            E = TRI->regclass_end(); I != E; ++I)
       RegLimit[(*I)->getID()] = TRI->getRegPressureLimit(*I, MF);
+  } else {
+    ReservedRegs = TRI->getReservedRegs(MF);
   }
 
   // Get our Loop information...
@@ -426,6 +429,9 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
            "Not expecting virtual register!");
 
     if (!MO.isDef()) {
+      // Allow reserved register reads to be hoisted.
+      if (ReservedRegs.test(Reg))
+        continue;
       if (Reg && (PhysRegDefs.test(Reg) || PhysRegClobbers.test(Reg)))
         // If it's using a non-loop-invariant register, then it's obviously not
         // safe to hoist.
@@ -530,6 +536,11 @@ void MachineLICM::HoistRegionPostRA() {
       for (unsigned j = 0, ee = MI->getNumOperands(); j != ee; ++j) {
         const MachineOperand &MO = MI->getOperand(j);
         if (!MO.isReg() || MO.isDef() || !MO.getReg())
+          continue;
+        // Allow hoisting of reserved register reads that aren't call preserved.
+        // For example %rip.
+        // IsLoopInvariantInst() already checks MRI->isConstantPhysReg().
+        if (ReservedRegs.test(MO.getReg()))
           continue;
         if (PhysRegDefs.test(MO.getReg()) ||
             PhysRegClobbers.test(MO.getReg())) {
