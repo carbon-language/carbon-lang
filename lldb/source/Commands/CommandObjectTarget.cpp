@@ -1524,13 +1524,12 @@ DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolCont
 }
 
 static uint32_t
-LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, const char *name, bool name_is_regex, bool verbose)
+LookupFunctionInModule (CommandInterpreter &interpreter, Stream &strm, Module *module, const char *name, bool name_is_regex, bool include_inlines, bool verbose)
 {
     if (module && name && name[0])
     {
         SymbolContextList sc_list;
         const bool include_symbols = false;
-        const bool include_inlines = true;
         const bool append = true;
         uint32_t num_matches = 0;
         if (name_is_regex)
@@ -3132,7 +3131,7 @@ public:
                     break;
                     
                 case 'i':
-                    m_check_inlines = false;
+                    m_include_inlines = false;
                     break;
                     
                 case 'l':
@@ -3176,7 +3175,7 @@ public:
             m_offset = 0;
             m_line_number = 0;
             m_use_regex = false;
-            m_check_inlines = true;
+            m_include_inlines = true;
             m_verbose = false;
         }
         
@@ -3196,7 +3195,7 @@ public:
         lldb::addr_t    m_offset;       // Subtract this offset from m_addr before doing lookups.
         uint32_t        m_line_number;  // Line number for file+line lookups
         bool            m_use_regex;    // Name lookups in m_str are regular expressions.
-        bool            m_check_inlines;// Check for inline entries when looking up by file/line.
+        bool            m_include_inlines;// Check for inline entries when looking up by file/line.
         bool            m_verbose;      // Enable verbose lookup info
         
     };
@@ -3276,7 +3275,7 @@ public:
                                                    module,
                                                    m_options.m_file,
                                                    m_options.m_line_number,
-                                                   m_options.m_check_inlines,
+                                                   m_options.m_include_inlines,
                                                    m_options.m_verbose))
                     {
                         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -3293,6 +3292,7 @@ public:
                                                 module,
                                                 m_options.m_str.c_str(),
                                                 m_options.m_use_regex,
+                                                m_options.m_include_inlines,
                                                 m_options.m_verbose))
                     {
                         result.SetStatus(eReturnStatusSuccessFinishResult);
@@ -3420,7 +3420,8 @@ CommandObjectTargetModulesLookup::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_2,   true,  "symbol",     's', required_argument, NULL, 0, eArgTypeSymbol,       "Lookup a symbol by name in the symbol tables in one or more target modules."},
     { LLDB_OPT_SET_3,   true,  "file",       'f', required_argument, NULL, 0, eArgTypeFilename,     "Lookup a file by fullpath or basename in one or more target modules."},
     { LLDB_OPT_SET_3,   false, "line",       'l', required_argument, NULL, 0, eArgTypeLineNum,      "Lookup a line number in a file (must be used in conjunction with --file)."},
-    { LLDB_OPT_SET_3,   false, "no-inlines", 'i', no_argument,       NULL, 0, eArgTypeNone,         "Check inline line entries (must be used in conjunction with --file)."},
+    { LLDB_OPT_SET_3|
+      LLDB_OPT_SET_4,   false, "no-inlines", 'i', no_argument,       NULL, 0, eArgTypeNone,         "Ignore inline entries (must be used in conjunction with --file or --function)."},
     { LLDB_OPT_SET_4,   true,  "function",   'n', required_argument, NULL, 0, eArgTypeFunctionName, "Lookup a function by name in the debug symbols in one or more target modules."},
     { LLDB_OPT_SET_5,   true,  "type",       't', required_argument, NULL, 0, eArgTypeName,         "Lookup a type by name in the debug symbols in one or more target modules."},
     { LLDB_OPT_SET_ALL, false, "verbose",    'v', no_argument,       NULL, 0, eArgTypeNone,         "Enable verbose lookup information."},
@@ -3564,6 +3565,10 @@ public:
                     }
                     m_sym_ctx_specified = true;
                 break;
+                    
+                case 'i':
+                    m_no_inlines = true;
+                break;
                 
                 case 'n':
                     m_function_name = option_arg;
@@ -3628,7 +3633,8 @@ public:
             m_thread_index = UINT32_MAX;
             m_thread_name.clear();
             m_queue_name.clear();
-
+            
+            m_no_inlines = false;
             m_sym_ctx_specified = false;
             m_thread_specified = false;
 
@@ -3651,6 +3657,7 @@ public:
         std::string m_thread_name;
         std::string m_queue_name;
         bool        m_sym_ctx_specified;
+        bool        m_no_inlines;
         bool        m_thread_specified;
         // Instance variables to hold the values for one_liner options.
         bool m_use_one_liner;
