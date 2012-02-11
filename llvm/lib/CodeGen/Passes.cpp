@@ -54,7 +54,8 @@ static cl::opt<bool> DisableMachineCSE("disable-machine-cse", cl::Hidden,
 static cl::opt<cl::boolOrDefault>
 OptimizeRegAlloc("optimize-regalloc", cl::Hidden,
     cl::desc("Enable optimized register allocation compilation path."));
-static cl::opt<bool> EnableMachineSched("enable-misched", cl::Hidden,
+static cl::opt<cl::boolOrDefault>
+EnableMachineSched("enable-misched", cl::Hidden,
     cl::desc("Enable the machine instruction scheduling pass."));
 static cl::opt<bool> EnableStrongPHIElim("strong-phi-elim", cl::Hidden,
     cl::desc("Use strong PHI elimination."));
@@ -79,6 +80,30 @@ static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
     cl::desc("Verify generated machine code"),
     cl::init(getenv("LLVM_VERIFY_MACHINEINSTRS")!=NULL));
 
+// Allow Pass selection to be overriden by command line options.
+//
+// DefaultID is the default pass to run which may be NoPassID, or may be
+// overriden by the target.
+//
+// OptionalID is a pass that may be forcibly enabled by the user when the
+// default is NoPassID.
+char &enablePass(char &DefaultID, cl::boolOrDefault Override,
+                 char *OptionalIDPtr = &NoPassID) {
+  switch (Override) {
+  case cl::BOU_UNSET:
+    return DefaultID;
+  case cl::BOU_TRUE:
+    if (&DefaultID != &NoPassID)
+      return DefaultID;
+    if (OptionalIDPtr == &NoPassID)
+      report_fatal_error("Target cannot enable pass");
+    return *OptionalIDPtr;
+  case cl::BOU_FALSE:
+    return NoPassID;
+  }
+  llvm_unreachable("Invalid command line option state");
+}
+
 //===---------------------------------------------------------------------===//
 /// TargetPassConfig
 //===---------------------------------------------------------------------===//
@@ -86,6 +111,9 @@ static cl::opt<bool> VerifyMachineCode("verify-machineinstrs", cl::Hidden,
 INITIALIZE_PASS(TargetPassConfig, "targetpassconfig",
                 "Target Pass Configuration", false, false)
 char TargetPassConfig::ID = 0;
+
+static char NoPassIDAnchor = 0;
+char &llvm::NoPassID = NoPassIDAnchor;
 
 // Out of line virtual method.
 TargetPassConfig::~TargetPassConfig() {}
@@ -122,6 +150,9 @@ void TargetPassConfig::setOpt(bool &Opt, bool Val) {
 }
 
 void TargetPassConfig::addPass(char &ID) {
+  if (&ID == &NoPassID)
+    return;
+
   // FIXME: check user overrides
   Pass *P = Pass::createPass(ID);
   if (!P)
@@ -427,12 +458,19 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
   addPass(RegisterCoalescerID);
 
   // PreRA instruction scheduling.
-  if (EnableMachineSched)
-    addPass(MachineSchedulerID);
+  addPass(enablePass(getSchedPass(), EnableMachineSched, &MachineSchedulerID));
 
   // Add the selected register allocation pass.
   PM.add(RegAllocPass);
   printAndVerify("After Register Allocation");
+
+  // FinalizeRegAlloc is convenient until MachineInstrBundles is more mature,
+  // but eventually, all users of it should probably be moved to addPostRA and
+  // it can go away.  Currently, it's the intended place for targets to run
+  // FinalizeMachineBundles, because passes other than MachineScheduling an
+  // RegAlloc itself may not be aware of bundles.
+  if (addFinalizeRegAlloc())
+    printAndVerify("After RegAlloc finalization");
 
   // Perform stack slot coloring and post-ra machine LICM.
   //

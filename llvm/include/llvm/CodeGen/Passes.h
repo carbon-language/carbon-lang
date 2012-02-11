@@ -31,6 +31,8 @@ namespace llvm {
 
 namespace llvm {
 
+extern char &NoPassID; // Allow targets to choose not to run a pass.
+
 /// Target-Independent Code Generator Pass Configuration Options.
 ///
 /// This is an ImmutablePass solely for the purpose of exposing CodeGen options
@@ -136,10 +138,26 @@ protected:
   /// LLVMTargetMachine provides standard regalloc passes for most targets.
   virtual void addOptimizedRegAlloc(FunctionPass *RegAllocPass);
 
-  /// addPostRegAlloc - This method may be implemented by targets that want
-  /// to run passes after register allocation but before prolog-epilog
-  /// insertion.  This should return true if -print-machineinstrs should print
-  /// after these passes.
+  /// getSchedPass - This method may be implemented by target that want to
+  /// completely override the MachineScheduler pass with a new pass, rather than
+  /// inheriting from ScheduleDAGInstrs.
+  virtual char &getSchedPass() { return NoPassID; }
+
+  /// addFinalizeRegAlloc - This method may be implemented by targets that want
+  /// to run passes within the regalloc pipeline, immediately after the register
+  /// allocation pass itself. These passes run as soon as virtual regisiters
+  /// have been rewritten to physical registers but before and other postRA
+  /// optimization happens. Targets that have marked instructions for bundling
+  /// must have finalized those bundles by the time these passes have run,
+  /// because subsequent passes are not guaranteed to be bundle-aware.
+  virtual bool addFinalizeRegAlloc() {
+    return false;
+  }
+
+  /// addPostRegAlloc - This method may be implemented by targets that want to
+  /// run passes after register allocation pass pipeline but before
+  /// prolog-epilog insertion.  This should return true if -print-machineinstrs
+  /// should print after these passes.
   virtual bool addPostRegAlloc() {
     return false;
   }
