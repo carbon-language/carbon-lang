@@ -132,8 +132,8 @@ protected:
   /// are required for fast register allocation.
   virtual void addFastRegAlloc(FunctionPass *RegAllocPass);
 
-  // addOptimizedRegAlloc - Add passes related to register allocation.
-  // LLVMTargetMachine provides standard regalloc passes for most targets.
+  /// addOptimizedRegAlloc - Add passes related to register allocation.
+  /// LLVMTargetMachine provides standard regalloc passes for most targets.
   virtual void addOptimizedRegAlloc(FunctionPass *RegAllocPass);
 
   /// addPostRegAlloc - This method may be implemented by targets that want
