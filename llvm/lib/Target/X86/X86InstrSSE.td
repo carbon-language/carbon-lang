@@ -1299,13 +1299,13 @@ let AddedComplexity = 20 in {
                                        (ins VR128:$src1, VR128:$src2),
                       "movlhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                       [(set VR128:$dst,
-                        (v4f32 (movlhps VR128:$src1, VR128:$src2)))]>,
+                        (v4f32 (X86Movlhps VR128:$src1, VR128:$src2)))]>,
                       VEX_4V;
   def VMOVHLPSrr : VPSI<0x12, MRMSrcReg, (outs VR128:$dst),
                                        (ins VR128:$src1, VR128:$src2),
                       "movhlps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
                       [(set VR128:$dst,
-                        (v4f32 (movhlps VR128:$src1, VR128:$src2)))]>,
+                        (v4f32 (X86Movhlps VR128:$src1, VR128:$src2)))]>,
                       VEX_4V;
 }
 let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
@@ -1313,76 +1313,34 @@ let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
                                        (ins VR128:$src1, VR128:$src2),
                       "movlhps\t{$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst,
-                        (v4f32 (movlhps VR128:$src1, VR128:$src2)))]>;
+                        (v4f32 (X86Movlhps VR128:$src1, VR128:$src2)))]>;
   def MOVHLPSrr : PSI<0x12, MRMSrcReg, (outs VR128:$dst),
                                        (ins VR128:$src1, VR128:$src2),
                       "movhlps\t{$src2, $dst|$dst, $src2}",
                       [(set VR128:$dst,
-                        (v4f32 (movhlps VR128:$src1, VR128:$src2)))]>;
+                        (v4f32 (X86Movhlps VR128:$src1, VR128:$src2)))]>;
 }
 
 let Predicates = [HasAVX] in {
   // MOVLHPS patterns
-  let AddedComplexity = 20 in {
-    // vector_shuffle v1, v2 <0, 1, 4, 5> using MOVLHPS
-    def : Pat<(v4i32 (movlhps VR128:$src1, VR128:$src2)),
-              (VMOVLHPSrr VR128:$src1, VR128:$src2)>;
-  }
-  def : Pat<(v4f32 (X86Movlhps VR128:$src1, VR128:$src2)),
-            (VMOVLHPSrr VR128:$src1, VR128:$src2)>;
   def : Pat<(v4i32 (X86Movlhps VR128:$src1, VR128:$src2)),
             (VMOVLHPSrr VR128:$src1, VR128:$src2)>;
   def : Pat<(v2i64 (X86Movlhps VR128:$src1, VR128:$src2)),
             (VMOVLHPSrr (v2i64 VR128:$src1), VR128:$src2)>;
 
   // MOVHLPS patterns
-  let AddedComplexity = 20 in {
-    // vector_shuffle v1, v2 <6, 7, 2, 3> using MOVHLPS
-    def : Pat<(v4i32 (movhlps VR128:$src1, VR128:$src2)),
-              (VMOVHLPSrr VR128:$src1, VR128:$src2)>;
-
-    // vector_shuffle v1, undef <2, ?, ?, ?> using MOVHLPS
-    def : Pat<(v4f32 (movhlps_undef VR128:$src1, (undef))),
-              (VMOVHLPSrr VR128:$src1, VR128:$src1)>;
-    def : Pat<(v4i32 (movhlps_undef VR128:$src1, (undef))),
-              (VMOVHLPSrr VR128:$src1, VR128:$src1)>;
-  }
-
-  def : Pat<(v4f32 (X86Movhlps VR128:$src1, VR128:$src2)),
-            (VMOVHLPSrr VR128:$src1, VR128:$src2)>;
   def : Pat<(v4i32 (X86Movhlps VR128:$src1, VR128:$src2)),
             (VMOVHLPSrr VR128:$src1, VR128:$src2)>;
 }
 
 let Predicates = [HasSSE1] in {
   // MOVLHPS patterns
-  let AddedComplexity = 20 in {
-    // vector_shuffle v1, v2 <0, 1, 4, 5> using MOVLHPS
-    def : Pat<(v4i32 (movlhps VR128:$src1, VR128:$src2)),
-              (MOVLHPSrr VR128:$src1, VR128:$src2)>;
-  }
-  def : Pat<(v4f32 (X86Movlhps VR128:$src1, VR128:$src2)),
-            (MOVLHPSrr VR128:$src1, VR128:$src2)>;
   def : Pat<(v4i32 (X86Movlhps VR128:$src1, VR128:$src2)),
             (MOVLHPSrr VR128:$src1, VR128:$src2)>;
   def : Pat<(v2i64 (X86Movlhps VR128:$src1, VR128:$src2)),
             (MOVLHPSrr (v2i64 VR128:$src1), VR128:$src2)>;
 
   // MOVHLPS patterns
-  let AddedComplexity = 20 in {
-    // vector_shuffle v1, v2 <6, 7, 2, 3> using MOVHLPS
-    def : Pat<(v4i32 (movhlps VR128:$src1, VR128:$src2)),
-              (MOVHLPSrr VR128:$src1, VR128:$src2)>;
-
-    // vector_shuffle v1, undef <2, ?, ?, ?> using MOVHLPS
-    def : Pat<(v4f32 (movhlps_undef VR128:$src1, (undef))),
-              (MOVHLPSrr VR128:$src1, VR128:$src1)>;
-    def : Pat<(v4i32 (movhlps_undef VR128:$src1, (undef))),
-              (MOVHLPSrr VR128:$src1, VR128:$src1)>;
-  }
-
-  def : Pat<(v4f32 (X86Movhlps VR128:$src1, VR128:$src2)),
-            (MOVHLPSrr VR128:$src1, VR128:$src2)>;
   def : Pat<(v4i32 (X86Movhlps VR128:$src1, VR128:$src2)),
             (MOVHLPSrr VR128:$src1, VR128:$src2)>;
 }
