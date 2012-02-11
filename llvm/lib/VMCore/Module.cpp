@@ -321,11 +321,51 @@ NamedMDNode *Module::getOrInsertNamedMetadata(StringRef Name) {
   return NMD;
 }
 
+/// eraseNamedMetadata - Remove the given NamedMDNode from this module and
+/// delete it.
 void Module::eraseNamedMetadata(NamedMDNode *NMD) {
   static_cast<StringMap<NamedMDNode *> *>(NamedMDSymTab)->erase(NMD->getName());
   NamedMDList.erase(NMD);
 }
 
+/// getModuleFlagsMetadata - Returns the NamedMDNode in the module that
+/// represents module-level flags. This method returns null if there are no
+/// module-level flags.
+NamedMDNode *Module::getModuleFlagsMetadata() const {
+  return getNamedMetadata("llvm.module.flags");
+}
+
+/// getOrInsertModuleFlagsMetadata - Returns the NamedMDNode in the module that
+/// represents module-level flags. If module-level flags aren't found, it
+/// creates the named metadata that contains them.
+NamedMDNode *Module::getOrInsertModuleFlagsMetadata() {
+  return getOrInsertNamedMetadata("llvm.module.flags");
+}
+
+/// addModuleFlag - Add a module-level flag to the module-level flags
+/// metadata. It will create the module-level flags named metadata if it doesn't
+/// already exist.
+void Module::addModuleFlag(ModAttrBehavior Behavior, StringRef Key,
+                           Value *Val) {
+  Type *Int32Ty = Type::getInt32Ty(Context);
+  Value *Ops[3] = {
+    ConstantInt::get(Int32Ty, Behavior), MDString::get(Context, Key), Val
+  };
+  getOrInsertModuleFlagsMetadata()->addOperand(MDNode::get(Context, Ops));
+}
+void Module::addModuleFlag(ModAttrBehavior Behavior, StringRef Key,
+                           uint32_t Val) {
+  Type *Int32Ty = Type::getInt32Ty(Context);
+  addModuleFlag(Behavior, Key, ConstantInt::get(Int32Ty, Val));
+}
+void Module::addModuleFlag(MDNode *Node) {
+  assert(Node->getNumOperands() == 3 &&
+         "Invalid number of operands for module flag!");
+  assert(isa<ConstantInt>(Node->getOperand(0)) &&
+         isa<MDString>(Node->getOperand(1)) &&
+         "Invalid operand types for module flag!");
+  getOrInsertModuleFlagsMetadata()->addOperand(Node);
+}
 
 //===----------------------------------------------------------------------===//
 // Methods to control the materialization of GlobalValues in the Module.

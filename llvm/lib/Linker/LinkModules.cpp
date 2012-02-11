@@ -16,8 +16,10 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Instructions.h"
 #include "llvm/Module.h"
-#include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/Optional.h"
+#include "llvm/ADT/SetVector.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Transforms/Utils/Cloning.h"
@@ -406,11 +408,19 @@ namespace {
     }
     
     void computeTypeMapping();
+    bool categorizeModuleFlagNodes(const NamedMDNode *ModFlags,
+                                   DenseMap<MDString*, MDNode*> &ErrorNode,
+                                   DenseMap<MDString*, MDNode*> &WarningNode,
+                                   DenseMap<MDString*, MDNode*> &OverrideNode,
+                                   DenseMap<MDString*,
+                                   SmallSetVector<MDNode*, 8> > &RequireNodes,
+                                   SmallSetVector<MDString*, 16> &SeenIDs);
     
     bool linkAppendingVarProto(GlobalVariable *DstGV, GlobalVariable *SrcGV);
     bool linkGlobalProto(GlobalVariable *SrcGV);
     bool linkFunctionProto(Function *SrcF);
     bool linkAliasProto(GlobalAlias *SrcA);
+    bool linkModuleFlagsMetadata();
     
     void linkAppendingVarInit(const AppendingVarInfo &AVI);
     void linkGlobalInits();
@@ -938,8 +948,11 @@ void ModuleLinker::linkAliasBodies() {
 /// linkNamedMDNodes - Insert all of the named mdnodes in Src into the Dest
 /// module.
 void ModuleLinker::linkNamedMDNodes() {
+  const NamedMDNode *SrcModFlags = SrcM->getModuleFlagsMetadata();
   for (Module::const_named_metadata_iterator I = SrcM->named_metadata_begin(),
        E = SrcM->named_metadata_end(); I != E; ++I) {
+    // Don't link module flags here. Do them separately.
+    if (&*I == SrcModFlags) continue;
     NamedMDNode *DestNMD = DstM->getOrInsertNamedMetadata(I->getName());
     // Add Src elements into Dest node.
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i)
@@ -947,10 +960,175 @@ void ModuleLinker::linkNamedMDNodes() {
                                    RF_None, &TypeMap));
   }
 }
+
+/// categorizeModuleFlagNodes -
+bool ModuleLinker::
+categorizeModuleFlagNodes(const NamedMDNode *ModFlags,
+                          DenseMap<MDString*, MDNode*> &ErrorNode,
+                          DenseMap<MDString*, MDNode*> &WarningNode,
+                          DenseMap<MDString*, MDNode*> &OverrideNode,
+                          DenseMap<MDString*,
+                            SmallSetVector<MDNode*, 8> > &RequireNodes,
+                          SmallSetVector<MDString*, 16> &SeenIDs) {
+  bool HasErr = false;
+
+  for (unsigned I = 0, E = ModFlags->getNumOperands(); I != E; ++I) {
+    MDNode *Op = ModFlags->getOperand(I);
+    assert(Op->getNumOperands() == 3 && "Invalid module flag metadata!");
+    assert(isa<ConstantInt>(Op->getOperand(0)) &&
+           "Module flag's first operand must be an integer!");
+    assert(isa<MDString>(Op->getOperand(1)) &&
+           "Module flag's second operand must be an MDString!");
+
+    ConstantInt *Behavior = cast<ConstantInt>(Op->getOperand(0));
+    MDString *ID = cast<MDString>(Op->getOperand(1));
+    Value *Val = Op->getOperand(2);
+    switch (Behavior->getZExtValue()) {
+    default:
+      assert(false && "Invalid behavior in module flag metadata!");
+      break;
+    case Module::Error: {
+      MDNode *&ErrNode = ErrorNode[ID];
+      if (!ErrNode) ErrNode = Op;
+      if (ErrNode->getOperand(2) != Val)
+        HasErr = emitError("Linking module flags '" + ID->getString() +
+                           "': IDs have conflicting values!");
+      break;
+    }
+    case Module::Warning: {
+      MDNode *&WarnNode = WarningNode[ID];
+      if (!WarnNode) WarnNode = Op;
+      if (WarnNode->getOperand(2) != Val)
+        errs() << "WARNING: Linking module flags '" << ID->getString()
+               << "': IDs have conflicting values!";
+      break;
+    }
+    case Module::Require:  RequireNodes[ID].insert(Op);     break;
+    case Module::Override: {
+      MDNode *&OvrNode = OverrideNode[ID];
+      if (!OvrNode) OvrNode = Op;
+      if (OvrNode->getOperand(2) != Val)
+        HasErr = emitError("Linking module flags '" + ID->getString() +
+                           "': IDs have conflicting override values!");
+      break;
+    }
+    }
+
+    SeenIDs.insert(ID);
+  }
+
+  return HasErr;
+}
+
+/// linkModuleFlagsMetadata - Merge the linker flags in Src into the Dest
+/// module.
+bool ModuleLinker::linkModuleFlagsMetadata() {
+  const NamedMDNode *SrcModFlags = SrcM->getModuleFlagsMetadata();
+  if (!SrcModFlags) return false;
+
+  NamedMDNode *DstModFlags = DstM->getOrInsertModuleFlagsMetadata();
+
+  // If the destination module doesn't have module flags yet, then just copy
+  // over the source module's flags.
+  if (DstModFlags->getNumOperands() == 0) {
+    for (unsigned I = 0, E = SrcModFlags->getNumOperands(); I != E; ++I)
+      DstModFlags->addOperand(SrcModFlags->getOperand(I));
+
+    return false;
+  }
+
+  bool HasErr = false;
+
+  // Otherwise, we have to merge them based on their behaviors. First,
+  // categorize all of the nodes in the modules' module flags. If an error or
+  // warning occurs, then emit the appropriate message(s).
+  DenseMap<MDString*, MDNode*> ErrorNode;
+  DenseMap<MDString*, MDNode*> WarningNode;
+  DenseMap<MDString*, MDNode*> OverrideNode;
+  DenseMap<MDString*, SmallSetVector<MDNode*, 8> > RequireNodes;
+  SmallSetVector<MDString*, 16> SeenIDs;
+
+  HasErr |= categorizeModuleFlagNodes(SrcModFlags, ErrorNode, WarningNode,
+                                      OverrideNode, RequireNodes, SeenIDs);
+  HasErr |= categorizeModuleFlagNodes(DstModFlags, ErrorNode, WarningNode,
+                                      OverrideNode, RequireNodes, SeenIDs);
+
+  // Check that there isn't both an error and warning node for a flag.
+  for (SmallSetVector<MDString*, 16>::iterator
+         I = SeenIDs.begin(), E = SeenIDs.end(); I != E; ++I) {
+    MDString *ID = *I;
+    if (ErrorNode[ID] && WarningNode[ID])
+      HasErr = emitError("Linking module flags '" + ID->getString() +
+                         "': IDs have conflicting behaviors");
+  }
+
+  // Early exit if we had an error.
+  if (HasErr) return true;
+
+  // Get the destination's module flags ready for new operands.
+  DstModFlags->dropAllReferences();
+
+  // Add all of the module flags to the destination module.
+  DenseMap<MDString*, SmallVector<MDNode*, 4> > AddedNodes;
+  for (SmallSetVector<MDString*, 16>::iterator
+         I = SeenIDs.begin(), E = SeenIDs.end(); I != E; ++I) {
+    MDString *ID = *I;
+    if (OverrideNode[ID]) {
+      DstModFlags->addOperand(OverrideNode[ID]);
+      AddedNodes[ID].push_back(OverrideNode[ID]);
+    } else if (ErrorNode[ID]) {
+      DstModFlags->addOperand(ErrorNode[ID]);
+      AddedNodes[ID].push_back(ErrorNode[ID]);
+    } else if (WarningNode[ID]) {
+      DstModFlags->addOperand(WarningNode[ID]);
+      AddedNodes[ID].push_back(WarningNode[ID]);
+    }
+
+    for (SmallSetVector<MDNode*, 8>::iterator
+           II = RequireNodes[ID].begin(), IE = RequireNodes[ID].end();
+         II != IE; ++II)
+      DstModFlags->addOperand(*II);
+  }
+
+  // Now check that all of the requirements have been satisfied.
+  for (SmallSetVector<MDString*, 16>::iterator
+         I = SeenIDs.begin(), E = SeenIDs.end(); I != E; ++I) {
+    MDString *ID = *I;
+    SmallSetVector<MDNode*, 8> &Set = RequireNodes[ID];
+
+    for (SmallSetVector<MDNode*, 8>::iterator
+           II = Set.begin(), IE = Set.end(); II != IE; ++II) {
+      MDNode *Node = *II;
+      assert(isa<MDNode>(Node->getOperand(2)) &&
+             "Module flag's third operand must be an MDNode!");
+      MDNode *Val = cast<MDNode>(Node->getOperand(2));
+
+      MDString *ReqID = cast<MDString>(Val->getOperand(0));
+      Value *ReqVal = Val->getOperand(1);
+
+      bool HasValue = false;
+      for (SmallVectorImpl<MDNode*>::iterator
+             RI = AddedNodes[ReqID].begin(), RE = AddedNodes[ReqID].end();
+           RI != RE; ++RI) {
+        MDNode *ReqNode = *RI;
+        if (ReqNode->getOperand(2) == ReqVal) {
+          HasValue = true;
+          break;
+        }
+      }
+
+      if (!HasValue)
+        HasErr = emitError("Linking module flags '" + ReqID->getString() +
+                           "': does not have the required value!");
+    }
+  }
+
+  return HasErr;
+}
   
 bool ModuleLinker::run() {
-  assert(DstM && "Null Destination module");
-  assert(SrcM && "Null Source Module");
+  assert(DstM && "Null destination module");
+  assert(SrcM && "Null source module");
 
   // Inherit the target data from the source module if the destination module
   // doesn't have one already.
@@ -1030,7 +1208,6 @@ bool ModuleLinker::run() {
   // Link in the function bodies that are defined in the source module into
   // DstM.
   for (Module::iterator SF = SrcM->begin(), E = SrcM->end(); SF != E; ++SF) {
-    
     // Skip if not linking from source.
     if (DoNotLinkFromSource.count(SF)) continue;
     
@@ -1048,10 +1225,14 @@ bool ModuleLinker::run() {
   // Resolve all uses of aliases with aliasees.
   linkAliasBodies();
 
-  // Remap all of the named mdnoes in Src into the DstM module. We do this
+  // Remap all of the named MDNodes in Src into the DstM module. We do this
   // after linking GlobalValues so that MDNodes that reference GlobalValues
   // are properly remapped.
   linkNamedMDNodes();
+
+  // Merge the module flags into the DstM module.
+  if (linkModuleFlagsMetadata())
+    return true;
 
   // Process vector of lazily linked in functions.
   bool LinkedInAnyFunctions;
