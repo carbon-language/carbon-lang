@@ -734,7 +734,7 @@ void ARMCXXABI::EmitInstanceFunctionProlog(CodeGenFunction &CGF) {
   /// Initialize the return slot to 'this' at the start of the
   /// function.
   if (HasThisReturn(CGF.CurGD))
-    CGF.Builder.CreateStore(CGF.LoadCXXThis(), CGF.ReturnValue);
+    CGF.Builder.CreateStore(getThisValue(CGF), CGF.ReturnValue);
 }
 
 void ARMCXXABI::EmitReturnFromThunk(CodeGenFunction &CGF,

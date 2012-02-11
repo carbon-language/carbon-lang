@@ -49,10 +49,10 @@ protected:
 
 protected:
   ImplicitParamDecl *&getThisDecl(CodeGenFunction &CGF) {
-    return CGF.CXXThisDecl;
+    return CGF.CXXABIThisDecl;
   }
   llvm::Value *&getThisValue(CodeGenFunction &CGF) {
-    return CGF.CXXThisValue;
+    return CGF.CXXABIThisValue;
   }
 
   ImplicitParamDecl *&getVTTDecl(CodeGenFunction &CGF) {

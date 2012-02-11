@@ -329,6 +329,7 @@ void CodeGenFunction::GenerateThunk(llvm::Function *Fn,
                 SourceLocation());
 
   CGM.getCXXABI().EmitInstanceFunctionProlog(*this);
+  CXXThisValue = CXXABIThisValue;
 
   // Adjust the 'this' pointer if necessary.
   llvm::Value *AdjustedThisPtr = 

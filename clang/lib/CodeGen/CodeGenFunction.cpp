@@ -29,15 +29,16 @@ using namespace CodeGen;
 
 CodeGenFunction::CodeGenFunction(CodeGenModule &cgm)
   : CodeGenTypeCache(cgm), CGM(cgm),
-    Target(CGM.getContext().getTargetInfo()), Builder(cgm.getModule().getContext()),
+    Target(CGM.getContext().getTargetInfo()),
+    Builder(cgm.getModule().getContext()),
     AutoreleaseResult(false), BlockInfo(0), BlockPointer(0),
-    NormalCleanupDest(0), NextCleanupDestIndex(1), FirstBlockInfo(0), 
-    EHResumeBlock(0), ExceptionSlot(0), EHSelectorSlot(0),
+    LambdaThisCaptureField(0), NormalCleanupDest(0), NextCleanupDestIndex(1),
+    FirstBlockInfo(0), EHResumeBlock(0), ExceptionSlot(0), EHSelectorSlot(0),
     DebugInfo(0), DisableDebugInfo(false), DidCallStackSave(false),
     IndirectBranch(0), SwitchInsn(0), CaseRangeBlock(0), UnreachableBlock(0),
-    CXXThisDecl(0), CXXThisValue(0), CXXVTTDecl(0), CXXVTTValue(0),
-    OutermostConditional(0), TerminateLandingPad(0), TerminateHandler(0),
-    TrapBB(0) {
+    CXXABIThisDecl(0), CXXABIThisValue(0), CXXThisValue(0), CXXVTTDecl(0),
+    CXXVTTValue(0), OutermostConditional(0), TerminateLandingPad(0),
+    TerminateHandler(0), TrapBB(0) {
 
   CatchUndefined = getContext().getLangOptions().CatchUndefined;
   CGM.getCXXABI().getMangleContext().startNewFunction();
@@ -350,8 +351,27 @@ void CodeGenFunction::StartFunction(GlobalDecl GD, QualType RetTy,
   PrologueCleanupDepth = EHStack.stable_begin();
   EmitFunctionProlog(*CurFnInfo, CurFn, Args);
 
-  if (D && isa<CXXMethodDecl>(D) && cast<CXXMethodDecl>(D)->isInstance())
+  if (D && isa<CXXMethodDecl>(D) && cast<CXXMethodDecl>(D)->isInstance()) {
     CGM.getCXXABI().EmitInstanceFunctionProlog(*this);
+    const CXXMethodDecl *MD = cast<CXXMethodDecl>(D);
+    if (MD->getParent()->isLambda() &&
+        MD->getOverloadedOperator() == OO_Call) {
+      // We're in a lambda; figure out the captures.
+      MD->getParent()->getCaptureFields(LambdaCaptureFields,
+                                        LambdaThisCaptureField);
+      if (LambdaThisCaptureField) {
+        // If this lambda captures this, load it.
+        LValue ThisLValue = EmitLValueForField(CXXABIThisValue,
+                                               LambdaThisCaptureField, 0);
+        CXXThisValue = EmitLoadOfLValue(ThisLValue).getScalarVal();
+      }
+    } else {
+      // Not in a lambda; just use 'this' from the method.
+      // FIXME: Should we generate a new load for each use of 'this'?  The
+      // fast register allocator would be happier...
+      CXXThisValue = CXXABIThisValue;
+    }
+  }
 
   // If any of the arguments have a variably modified type, make sure to
   // emit the type size.

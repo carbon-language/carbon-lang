@@ -1396,6 +1396,12 @@ LValue CodeGenFunction::EmitDeclRefLValue(const DeclRefExpr *E) {
     llvm::Value *V = LocalDeclMap[VD];
     if (!V && VD->isStaticLocal()) 
       V = CGM.getStaticLocalDeclAddress(VD);
+
+    // Use special handling for lambdas.
+    if (!V)
+      if (FieldDecl *FD = LambdaCaptureFields.lookup(VD))
+        return EmitLValueForField(CXXABIThisValue, FD, 0);
+
     assert(V && "DeclRefExpr not entered in LocalDeclMap?");
 
     if (VD->hasAttr<BlocksAttr>())
