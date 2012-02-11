@@ -42,3 +42,26 @@ namespace PR6757 {
     f(foo);
   }
 }
+
+namespace DR5 {
+  // Core issue 5: if a temporary is created in copy-initialization, it is of
+  // the cv-unqualified version of the destination type.
+  namespace Ex1 {
+    struct C { };
+    C c;
+    struct A {
+        A(const A&);
+        A(const C&);
+    };
+    const volatile A a = c; // ok
+  }
+
+  namespace Ex2 {
+    struct S {
+      S(S&&); // expected-warning {{C++11}}
+      S(int);
+    };
+    const S a(0);
+    const S b = 0;
+  }
+}
