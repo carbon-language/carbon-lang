@@ -4402,12 +4402,14 @@ QualType Sema::BuildUnaryTransformType(QualType BaseType,
 
 QualType Sema::BuildAtomicType(QualType T, SourceLocation Loc) {
   if (!T->isDependentType()) {
+    // FIXME: It isn't entirely clear whether incomplete atomic types
+    // are allowed or not; for simplicity, ban them for the moment.
+    if (RequireCompleteType(Loc, T,
+                            PDiag(diag::err_atomic_specifier_bad_type) << 0))
+      return QualType();
+
     int DisallowedKind = -1;
-    if (T->isIncompleteType())
-      // FIXME: It isn't entirely clear whether incomplete atomic types
-      // are allowed or not; for simplicity, ban them for the moment.
-      DisallowedKind = 0;
-    else if (T->isArrayType())
+    if (T->isArrayType())
       DisallowedKind = 1;
     else if (T->isFunctionType())
       DisallowedKind = 2;

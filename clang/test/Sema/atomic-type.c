@@ -16,7 +16,7 @@ extern _Atomic(int (*)(int(*)[10], int(*)[])) mergetest;
 extern _Atomic(int (*)(int(*)[10], int(*)[10])) mergetest;
 
 _Atomic(int()) error1; // expected-error {{_Atomic cannot be applied to function type}}
-_Atomic(struct ErrorS) error2; // expected-error {{_Atomic cannot be applied to incomplete type}}
+_Atomic(struct ErrorS) error2; // expected-error {{_Atomic cannot be applied to incomplete type}} expected-note {{forward declaration}}
 _Atomic(int[10]) error3; // expected-error {{_Atomic cannot be applied to array type}}
 _Atomic(const int) error4; // expected-error {{_Atomic cannot be applied to qualified type}}
 _Atomic(_Atomic(int)) error5; // expected-error {{_Atomic cannot be applied to atomic type}}
