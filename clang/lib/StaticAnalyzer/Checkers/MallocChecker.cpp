@@ -20,6 +20,7 @@
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
+#include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
@@ -260,20 +261,41 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
       switch ((*i)->getOwnKind()) {
       case OwnershipAttr::Returns: {
         MallocMemReturnsAttr(C, CE, *i);
-        break;
+        return;
       }
       case OwnershipAttr::Takes:
       case OwnershipAttr::Holds: {
         FreeMemAttr(C, CE, *i);
-        break;
+        return;
       }
       }
     }
   }
 
+  // Check use after free, when a freed pointer is passed to a call.
+  ProgramStateRef State = C.getState();
+  for (CallExpr::const_arg_iterator I = CE->arg_begin(),
+                                    E = CE->arg_end(); I != E; ++I) {
+    const Expr *A = *I;
+    if (A->getType().getTypePtr()->isAnyPointerType()) {
+      SymbolRef Sym = State->getSVal(A, C.getLocationContext()).getAsSymbol();
+      if (!Sym)
+        continue;
+      if (checkUseAfterFree(Sym, C, A))
+        return;
+    }
+  }
+
+  // The pointer might escape through a function call.
+  // TODO: This should be rewritten to take into account inlining.
   if (Filter.CMallocPessimistic) {
+    SourceLocation FLoc = FD->getLocation();
+    // We assume that the pointers cannot escape through calls to system
+    // functions.
+    if (C.getSourceManager().isInSystemHeader(FLoc))
+      return;
+
     ProgramStateRef State = C.getState();
-    // The pointer might escape through a function call.
     for (CallExpr::const_arg_iterator I = CE->arg_begin(),
                                       E = CE->arg_end(); I != E; ++I) {
       const Expr *A = *I;
@@ -282,7 +304,6 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
         if (!Sym)
           continue;
         checkEscape(Sym, A, C);
-        checkUseAfterFree(Sym, C, A);
       }
     }
   }
@@ -767,7 +788,8 @@ void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
     return;
 
   // Check if we are returning freed memory.
-  checkUseAfterFree(Sym, C, S);
+  if (checkUseAfterFree(Sym, C, S))
+    return;
 
   // Check if the symbol is escaping.
   checkEscape(Sym, S, C);
@@ -778,7 +800,7 @@ bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
   assert(Sym);
   const RefState *RS = C.getState()->get<RegionState>(Sym);
   if (RS && RS->isReleased()) {
-    if (ExplodedNode *N = C.addTransition()) {
+    if (ExplodedNode *N = C.generateSink()) {
       if (!BT_UseFree)
         BT_UseFree.reset(new BuiltinBug("Use of dynamically allocated memory "
             "after it is freed."));

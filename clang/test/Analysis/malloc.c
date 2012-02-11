@@ -1,4 +1,6 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core,experimental.deadcode.UnreachableCode,experimental.core.CastSize,experimental.unix.Malloc -analyzer-store=region -verify %s
+#include "system-header-simulator.h"
+
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
 void free(void *);
@@ -237,6 +239,11 @@ void mallocFreeUse_params() {
   int *p = malloc(12);
   free(p);
   myfoo(p); //expected-warning{{Use of dynamically allocated memory after it is freed}}
+}
+
+void mallocFreeUse_params2() {
+  int *p = malloc(12);
+  free(p);
   myfooint(*p); //expected-warning{{Use of dynamically allocated memory after it is freed}}
 }
 
@@ -374,6 +381,12 @@ void mallocAssert(int *g) {
   assert(g != 0);
   free(p);
   return;
+}
+
+void doNotInvalidateWhenPassedToSystemCalls(char *s) {
+  char *p = malloc(12);
+  strlen(p);
+  strcpy(p, s); // expected-warning {{leak}}
 }
 
 // Below are the known false positives.

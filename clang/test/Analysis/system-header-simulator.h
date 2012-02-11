@@ -8,3 +8,6 @@ int fscanf(FILE *restrict stream, const char *restrict format, ...);
 extern int errno;
 
 unsigned long strlen(const char *);
+
+char *strcpy(char *restrict s1, const char *restrict s2);
+
