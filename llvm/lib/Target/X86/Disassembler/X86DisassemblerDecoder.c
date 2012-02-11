@@ -826,7 +826,7 @@ static int getID(struct InternalInstruction* insn, void *miiArg) {
     
     const struct InstructionSpecifier *spec;
     uint16_t instructionIDWithOpsize;
-    const struct InstructionSpecifier *specWithOpsize;
+    const char *specName, *specWithOpSizeName;
     
     spec = specifierForUID(instructionID);
     
@@ -843,15 +843,13 @@ static int getID(struct InternalInstruction* insn, void *miiArg) {
       return 0;
     }
     
-    specWithOpsize = specifierForUID(instructionIDWithOpsize);
-
-    const char *specName = x86DisassemblerGetInstrName(instructionID, miiArg);
-    const char *specWithOpSizeSizeName =
+    specName = x86DisassemblerGetInstrName(instructionID, miiArg);
+    specWithOpSizeName =
       x86DisassemblerGetInstrName(instructionIDWithOpsize, miiArg);
 
-    if (is16BitEquvalent(specName, specWithOpSizeSizeName)) {
+    if (is16BitEquvalent(specName, specWithOpSizeName)) {
       insn->instructionID = instructionIDWithOpsize;
-      insn->spec = specWithOpsize;
+      insn->spec = specifierForUID(instructionIDWithOpsize);
     } else {
       insn->instructionID = instructionID;
       insn->spec = spec;

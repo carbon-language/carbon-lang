@@ -20,7 +20,7 @@
 extern "C" {
 #endif
   
-#define INSTRUCTION_SPECIFIER_FIELDS  \
+#define INSTRUCTION_SPECIFIER_FIELDS
 
 #define INSTRUCTION_IDS     \
   unsigned instructionIDs;
