@@ -109,7 +109,7 @@ protected:
   const MCSection *TLSExtraDataSection;
   
   /// TLSDataSection - Section directive for Thread Local data.
-  /// ELF and MachO only.
+  /// ELF, MachO and COFF.
   const MCSection *TLSDataSection;        // Defaults to ".tdata".
 
   /// TLSBSSSection - Section directive for Thread Local uninitialized data.

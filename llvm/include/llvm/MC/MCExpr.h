@@ -162,6 +162,7 @@ public:
     VK_TPOFF,
     VK_DTPOFF,
     VK_TLVP,      // Mach-O thread local variable relocation
+    VK_SECREL,
     // FIXME: We'd really like to use the generic Kinds listed above for these.
     VK_ARM_PLT,   // ARM-style PLT references. i.e., (PLT) instead of @PLT
     VK_ARM_TLSGD, //   ditto for TLSGD, GOT, GOTOFF, TPOFF and GOTTPOFF

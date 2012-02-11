@@ -154,6 +154,7 @@ MCOperand X86MCInstLower::LowerSymbolOperand(const MachineOperand &MO,
                                                            Ctx),
                                    Ctx);
     break;
+  case X86II::MO_SECREL:    RefKind = MCSymbolRefExpr::VK_SECREL; break;
   case X86II::MO_TLSGD:     RefKind = MCSymbolRefExpr::VK_TLSGD; break;
   case X86II::MO_GOTTPOFF:  RefKind = MCSymbolRefExpr::VK_GOTTPOFF; break;
   case X86II::MO_INDNTPOFF: RefKind = MCSymbolRefExpr::VK_INDNTPOFF; break;
@@ -230,7 +231,8 @@ static void LowerUnaryToTwoAddr(MCInst &OutMI, unsigned NewOpc) {
 /// a short fixed-register form.
 static void SimplifyShortImmForm(MCInst &Inst, unsigned Opcode) {
   unsigned ImmOp = Inst.getNumOperands() - 1;
-  assert(Inst.getOperand(0).isReg() && Inst.getOperand(ImmOp).isImm() &&
+  assert(Inst.getOperand(0).isReg() &&
+         (Inst.getOperand(ImmOp).isImm() || Inst.getOperand(ImmOp).isExpr()) &&
          ((Inst.getNumOperands() == 3 && Inst.getOperand(1).isReg() &&
            Inst.getOperand(0).getReg() == Inst.getOperand(1).getReg()) ||
           Inst.getNumOperands() == 2) && "Unexpected instruction!");

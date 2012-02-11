@@ -495,6 +495,12 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         COFF::IMAGE_SCN_MEM_READ |
                         COFF::IMAGE_SCN_MEM_WRITE,
                         SectionKind::getDataRel());
+  TLSDataSection =
+    Ctx->getCOFFSection(".tls$",
+                        COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                        COFF::IMAGE_SCN_MEM_READ |
+                        COFF::IMAGE_SCN_MEM_WRITE,
+                        SectionKind::getDataRel());
 }
 
 void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,

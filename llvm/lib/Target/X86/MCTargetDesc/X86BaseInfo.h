@@ -164,7 +164,13 @@ namespace X86II {
     /// is some TLS offset from the picbase.
     ///
     /// This is the 32-bit TLS offset for Darwin TLS in PIC mode.
-    MO_TLVP_PIC_BASE
+    MO_TLVP_PIC_BASE,
+
+    /// MO_SECREL - On a symbol operand this indicates that the immediate is
+    /// the offset from beginning of section.
+    ///
+    /// This is the TLS offset for the COFF/Windows TLS mechanism.
+    MO_SECREL
   };
 
   enum {

@@ -222,6 +222,7 @@ EmitImmediate(const MCOperand &DispOp, SMLoc Loc, unsigned Size,
 
   // If we have an immoffset, add it to the expression.
   if ((FixupKind == FK_Data_4 ||
+       FixupKind == FK_Data_8 ||
        FixupKind == MCFixupKind(X86::reloc_signed_4byte))) {
     GlobalOffsetTableExprKind Kind = StartsWithGlobalOffsetTable(Expr);
     if (Kind != GOT_None) {
@@ -230,6 +231,11 @@ EmitImmediate(const MCOperand &DispOp, SMLoc Loc, unsigned Size,
       FixupKind = MCFixupKind(X86::reloc_global_offset_table);
       if (Kind == GOT_Normal)
         ImmOffset = CurByte;
+    } else if (Expr->getKind() == MCExpr::SymbolRef) {
+      const MCSymbolRefExpr *Ref = static_cast<const MCSymbolRefExpr*>(Expr);
+      if (Ref->getKind() == MCSymbolRefExpr::VK_SECREL) {
+        FixupKind = MCFixupKind(FK_SecRel_4);
+      }
     }
   }
 

@@ -588,6 +588,11 @@ getCOFFSectionFlags(SectionKind K) {
       COFF::IMAGE_SCN_CNT_UNINITIALIZED_DATA |
       COFF::IMAGE_SCN_MEM_READ |
       COFF::IMAGE_SCN_MEM_WRITE;
+  else if (K.isThreadLocal())
+    Flags |=
+      COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+      COFF::IMAGE_SCN_MEM_READ |
+      COFF::IMAGE_SCN_MEM_WRITE;
   else if (K.isReadOnly())
     Flags |=
       COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
@@ -614,6 +619,8 @@ static const char *getCOFFSectionPrefixForUniqueGlobal(SectionKind Kind) {
     return ".text$";
   if (Kind.isBSS ())
     return ".bss$";
+  if (Kind.isThreadLocal())
+    return ".tls$";
   if (Kind.isWriteable())
     return ".data$";
   return ".rdata$";
@@ -623,7 +630,6 @@ static const char *getCOFFSectionPrefixForUniqueGlobal(SectionKind Kind) {
 const MCSection *TargetLoweringObjectFileCOFF::
 SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                        Mangler *Mang, const TargetMachine &TM) const {
-  assert(!Kind.isThreadLocal() && "Doesn't support TLS");
 
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
@@ -643,6 +649,9 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
 
   if (Kind.isText())
     return getTextSection();
+
+  if (Kind.isThreadLocal())
+    return getTLSDataSection();
 
   return getDataSection();
 }

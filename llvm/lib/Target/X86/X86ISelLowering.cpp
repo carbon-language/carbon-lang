@@ -7355,6 +7355,68 @@ X86TargetLowering::LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const {
     unsigned Reg = Subtarget->is64Bit() ? X86::RAX : X86::EAX;
     return DAG.getCopyFromReg(Chain, DL, Reg, getPointerTy(),
                               Chain.getValue(1));
+  } else if (Subtarget->isTargetWindows()) {
+    // Just use the implicit TLS architecture
+    // Need to generate someting similar to:
+    //   mov     rdx, qword [gs:abs 58H]; Load pointer to ThreadLocalStorage
+    //                                  ; from TEB
+    //   mov     ecx, dword [rel _tls_index]: Load index (from C runtime)
+    //   mov     rcx, qword [rdx+rcx*8]
+    //   mov     eax, .tls$:tlsvar
+    //   [rax+rcx] contains the address
+    // Windows 64bit: gs:0x58
+    // Windows 32bit: fs:__tls_array
+
+    // If GV is an alias then use the aliasee for determining
+    // thread-localness.
+    if (const GlobalAlias *GA = dyn_cast<GlobalAlias>(GV))
+      GV = GA->resolveAliasedGlobal(false);
+    DebugLoc dl = GA->getDebugLoc();
+    SDValue Chain = DAG.getEntryNode();
+
+    // Get the Thread Pointer, which is %fs:__tls_array (32-bit) or
+    // %gs:0x58 (64-bit).
+    Value *Ptr = Constant::getNullValue(Subtarget->is64Bit()
+                                        ? Type::getInt8PtrTy(*DAG.getContext(),
+                                                             256)
+                                        : Type::getInt32PtrTy(*DAG.getContext(),
+                                                              257));
+
+    SDValue ThreadPointer = DAG.getLoad(getPointerTy(), dl, Chain,
+                                        Subtarget->is64Bit()
+                                        ? DAG.getIntPtrConstant(0x58)
+                                        : DAG.getExternalSymbol("_tls_array",
+                                                                getPointerTy()),
+                                        MachinePointerInfo(Ptr),
+                                        false, false, false, 0);
+
+    // Load the _tls_index variable
+    SDValue IDX = DAG.getExternalSymbol("_tls_index", getPointerTy());
+    if (Subtarget->is64Bit())
+      IDX = DAG.getExtLoad(ISD::ZEXTLOAD, dl, getPointerTy(), Chain,
+                           IDX, MachinePointerInfo(), MVT::i32,
+                           false, false, 0);
+    else
+      IDX = DAG.getLoad(getPointerTy(), dl, Chain, IDX, MachinePointerInfo(),
+                        false, false, false, 0);
+
+    SDValue Scale = DAG.getConstant(Log2_64_Ceil(TD->getPointerSize()),
+		                            getPointerTy());
+    IDX = DAG.getNode(ISD::SHL, dl, getPointerTy(), IDX, Scale);
+
+    SDValue res = DAG.getNode(ISD::ADD, dl, getPointerTy(), ThreadPointer, IDX);
+    res = DAG.getLoad(getPointerTy(), dl, Chain, res, MachinePointerInfo(),
+                      false, false, false, 0);
+
+    // Get the offset of start of .tls section
+    SDValue TGA = DAG.getTargetGlobalAddress(GA->getGlobal(), dl,
+                                             GA->getValueType(0),
+                                             GA->getOffset(), X86II::MO_SECREL);
+    SDValue Offset = DAG.getNode(X86ISD::Wrapper, dl, getPointerTy(), TGA);
+
+    // The address of the thread local variable is the add of the thread
+    // pointer with the offset of the variable.
+    return DAG.getNode(ISD::ADD, dl, getPointerTy(), res, Offset);
   }
 
   llvm_unreachable("TLS not implemented for this target.");
