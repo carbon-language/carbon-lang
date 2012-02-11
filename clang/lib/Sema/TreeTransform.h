@@ -1646,10 +1646,9 @@ public:
   /// By default, performs semantic analysis to build the new expression.
   /// Subclasses may override this routine to provide different behavior.
   ExprResult RebuildParenListExpr(SourceLocation LParenLoc,
-                                        MultiExprArg SubExprs,
-                                        SourceLocation RParenLoc) {
-    return getSema().ActOnParenOrParenListExpr(LParenLoc, RParenLoc, 
-                                               move(SubExprs));
+                                  MultiExprArg SubExprs,
+                                  SourceLocation RParenLoc) {
+    return getSema().ActOnParenListExpr(LParenLoc, RParenLoc, move(SubExprs));
   }
 
   /// \brief Build a new address-of-label expression.

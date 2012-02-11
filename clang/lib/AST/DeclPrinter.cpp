@@ -621,16 +621,20 @@ void DeclPrinter::VisitVarDecl(VarDecl *D) {
   Out << Name;
   Expr *Init = D->getInit();
   if (!Policy.SuppressInitializers && Init) {
-    if (D->hasCXXDirectInitializer())
-      Out << "(";
-    else {
-        CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(Init);
-        if (!CCE || CCE->getConstructor()->isCopyOrMoveConstructor())
-          Out << " = ";
+    bool ImplicitInit = false;
+    if (CXXConstructExpr *Construct = dyn_cast<CXXConstructExpr>(Init))
+      ImplicitInit = D->getInitStyle() == VarDecl::CallInit &&
+          Construct->getNumArgs() == 0 && !Construct->isListInitialization();
+    if (!ImplicitInit) {
+      if (D->getInitStyle() == VarDecl::CallInit)
+        Out << "(";
+      else if (D->getInitStyle() == VarDecl::CInit) {
+        Out << " = ";
+      }
+      Init->printPretty(Out, Context, 0, Policy, Indentation);
+      if (D->getInitStyle() == VarDecl::CallInit)
+        Out << ")";
     }
-    Init->printPretty(Out, Context, 0, Policy, Indentation);
-    if (D->hasCXXDirectInitializer())
-      Out << ")";
   }
   prettyPrintAttributes(D);
 }

@@ -877,7 +877,7 @@ void ASTDeclReader::VisitVarDecl(VarDecl *VD) {
   VD->VarDeclBits.SClass = (StorageClass)Record[Idx++];
   VD->VarDeclBits.SClassAsWritten = (StorageClass)Record[Idx++];
   VD->VarDeclBits.ThreadSpecified = Record[Idx++];
-  VD->VarDeclBits.HasCXXDirectInit = Record[Idx++];
+  VD->VarDeclBits.InitStyle = Record[Idx++];
   VD->VarDeclBits.ExceptionVar = Record[Idx++];
   VD->VarDeclBits.NRVOVariable = Record[Idx++];
   VD->VarDeclBits.CXXForRangeDecl = Record[Idx++];

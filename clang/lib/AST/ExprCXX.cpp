@@ -653,7 +653,7 @@ CXXTemporaryObjectExpr::CXXTemporaryObjectExpr(ASTContext &C,
                      Type->getType().getNonReferenceType(), 
                      Type->getTypeLoc().getBeginLoc(),
                      Cons, false, Args, NumArgs,
-                     HadMultipleCandidates, ZeroInitialization,
+                     HadMultipleCandidates, /*FIXME*/false, ZeroInitialization,
                      CXXConstructExpr::CK_Complete, parenRange),
     Type(Type) {
 }
@@ -668,13 +668,15 @@ CXXConstructExpr *CXXConstructExpr::Create(ASTContext &C, QualType T,
                                            CXXConstructorDecl *D, bool Elidable,
                                            Expr **Args, unsigned NumArgs,
                                            bool HadMultipleCandidates,
+                                           bool ListInitialization,
                                            bool ZeroInitialization,
                                            ConstructionKind ConstructKind,
                                            SourceRange ParenRange) {
   return new (C) CXXConstructExpr(C, CXXConstructExprClass, T, Loc, D, 
                                   Elidable, Args, NumArgs,
-                                  HadMultipleCandidates, ZeroInitialization,
-                                  ConstructKind, ParenRange);
+                                  HadMultipleCandidates, ListInitialization,
+                                  ZeroInitialization, ConstructKind,
+                                  ParenRange);
 }
 
 CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
@@ -682,6 +684,7 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
                                    CXXConstructorDecl *D, bool elidable,
                                    Expr **args, unsigned numargs,
                                    bool HadMultipleCandidates,
+                                   bool ListInitialization,
                                    bool ZeroInitialization,
                                    ConstructionKind ConstructKind,
                                    SourceRange ParenRange)
@@ -691,6 +694,7 @@ CXXConstructExpr::CXXConstructExpr(ASTContext &C, StmtClass SC, QualType T,
          T->containsUnexpandedParameterPack()),
     Constructor(D), Loc(Loc), ParenRange(ParenRange),  NumArgs(numargs),
     Elidable(elidable), HadMultipleCandidates(HadMultipleCandidates),
+    ListInitialization(ListInitialization),
     ZeroInitialization(ZeroInitialization),
     ConstructKind(ConstructKind), Args(0)
 {

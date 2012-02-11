@@ -681,6 +681,13 @@ public:
   /// It is illegal to call this function with SC == None.
   static const char *getStorageClassSpecifierString(StorageClass SC);
 
+  /// \brief Initialization styles.
+  enum InitializationStyle {
+    CInit,    ///< C-style initialization with assignment
+    CallInit, ///< Call-style initialization (C++98)
+    ListInit  ///< Direct list-initialization (C++11)
+  };
+
 protected:
   /// \brief Placeholder type used in Init to denote an unparsed C++ default
   /// argument.
@@ -706,7 +713,7 @@ private:
     unsigned SClass : 3;
     unsigned SClassAsWritten : 3;
     unsigned ThreadSpecified : 1;
-    unsigned HasCXXDirectInit : 1;
+    unsigned InitStyle : 2;
 
     /// \brief Whether this variable is the exception variable in a C++ catch
     /// or an Objective-C @catch statement.
@@ -728,7 +735,7 @@ private:
     /// \brief Whether this variable is (C++0x) constexpr.
     unsigned IsConstexpr : 1;
   };
-  enum { NumVarDeclBits = 13 };
+  enum { NumVarDeclBits = 14 };
 
   friend class ASTDeclReader;
   friend class StmtIteratorBase;
@@ -756,7 +763,7 @@ protected:
     /// Otherwise, the number of function parameter scopes enclosing
     /// the function parameter scope in which this parameter was
     /// declared.
-    unsigned ScopeDepthOrObjCQuals : 8;
+    unsigned ScopeDepthOrObjCQuals : 7;
 
     /// The number of parameters preceding this parameter in the
     /// function parameter scope in which it was declared.
@@ -1073,16 +1080,27 @@ public:
   /// declaration is an integral constant expression.
   bool checkInitIsICE() const;
 
-  void setCXXDirectInitializer(bool T) { VarDeclBits.HasCXXDirectInit = T; }
+  void setInitStyle(InitializationStyle Style) {
+    VarDeclBits.InitStyle = Style;
+  }
 
-  /// hasCXXDirectInitializer - If true, the initializer was a direct
-  /// initializer, e.g: "int x(1);". The Init expression will be the expression
-  /// inside the parens or a "ClassType(a,b,c)" class constructor expression for
-  /// class types. Clients can distinguish between "int x(1);" and "int x=1;"
-  /// by checking hasCXXDirectInitializer.
+  /// \brief The style of initialization for this declaration.
   ///
-  bool hasCXXDirectInitializer() const {
-    return VarDeclBits.HasCXXDirectInit;
+  /// C-style initialization is "int x = 1;". Call-style initialization is
+  /// a C++98 direct-initializer, e.g. "int x(1);". The Init expression will be
+  /// the expression inside the parens or a "ClassType(a,b,c)" class constructor
+  /// expression for class types. List-style initialization is C++11 syntax,
+  /// e.g. "int x{1};". Clients can distinguish between different forms of
+  /// initialization by checking this value. In particular, "int x = {1};" is
+  /// C-style, "int x({1})" is call-style, and "int x{1};" is list-style; the
+  /// Init expression in all three cases is an InitListExpr.
+  InitializationStyle getInitStyle() const {
+    return static_cast<InitializationStyle>(VarDeclBits.InitStyle);
+  }
+
+  /// \brief Whether the initializer is a direct-initializer (list or call).
+  bool isDirectInit() const {
+    return getInitStyle() != CInit;
   }
 
   /// \brief Determine whether this variable is the exception variable in a

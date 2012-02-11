@@ -1344,10 +1344,11 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
         ExitScope();
       }
 
-      Actions.AddCXXDirectInitializerToDecl(ThisDecl, T.getOpenLocation(),
-                                            move_arg(Exprs),
-                                            T.getCloseLocation(),
-                                            TypeContainsAuto);
+      ExprResult Initializer = Actions.ActOnParenListExpr(T.getOpenLocation(),
+                                                          T.getCloseLocation(),
+                                                          move_arg(Exprs));
+      Actions.AddInitializerToDecl(ThisDecl, Initializer.take(),
+                                   /*DirectInit=*/true, TypeContainsAuto);
     }
   } else if (getLang().CPlusPlus0x && Tok.is(tok::l_brace)) {
     // Parse C++0x braced-init-list.

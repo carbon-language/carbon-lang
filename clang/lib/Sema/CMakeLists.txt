@@ -8,7 +8,6 @@ add_clang_library(clangSema
   DelayedDiagnostic.cpp
   IdentifierResolver.cpp
   JumpDiagnostics.cpp
-  MultiInitializer.cpp
   Scope.cpp
   Sema.cpp
   SemaAccess.cpp

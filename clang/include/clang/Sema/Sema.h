@@ -22,7 +22,6 @@
 #include "clang/Sema/DeclSpec.h"
 #include "clang/Sema/ExternalSemaSource.h"
 #include "clang/Sema/LocInfoType.h"
-#include "clang/Sema/MultiInitializer.h"
 #include "clang/Sema/TypoCorrection.h"
 #include "clang/Sema/Weak.h"
 #include "clang/AST/Expr.h"
@@ -2387,9 +2386,9 @@ public:
   ExprResult ActOnNumericConstant(const Token &Tok);
   ExprResult ActOnCharacterConstant(const Token &Tok);
   ExprResult ActOnParenExpr(SourceLocation L, SourceLocation R, Expr *E);
-  ExprResult ActOnParenOrParenListExpr(SourceLocation L,
-                                       SourceLocation R,
-                                       MultiExprArg Val);
+  ExprResult ActOnParenListExpr(SourceLocation L,
+                                SourceLocation R,
+                                MultiExprArg Val);
 
   /// ActOnStringLiteral - The specified tokens were lexed as pasted string
   /// fragments (e.g. "foo" "bar" L"baz").
@@ -2768,15 +2767,6 @@ public:
                               SourceLocation UsingLoc,
                               UnqualifiedId &Name,
                               TypeResult Type);
-
-  /// AddCXXDirectInitializerToDecl - This action is called immediately after
-  /// ActOnDeclarator, when a C++ direct initializer is present.
-  /// e.g: "int x(1);"
-  void AddCXXDirectInitializerToDecl(Decl *Dcl,
-                                     SourceLocation LParenLoc,
-                                     MultiExprArg Exprs,
-                                     SourceLocation RParenLoc,
-                                     bool TypeMayContainAuto);
 
   /// InitializeVarWithConstructor - Creates an CXXConstructExpr
   /// and sets it as the initializer for the the passed in VarDecl.
@@ -3574,21 +3564,21 @@ public:
                                     ParsedType TemplateTypeTy,
                                     const DeclSpec &DS,
                                     SourceLocation IdLoc,
-                                    const MultiInitializer &Init,
+                                    Expr *Init,
                                     SourceLocation EllipsisLoc);
 
   MemInitResult BuildMemberInitializer(ValueDecl *Member,
-                                       const MultiInitializer &Args,
+                                       Expr *Init,
                                        SourceLocation IdLoc);
 
   MemInitResult BuildBaseInitializer(QualType BaseType,
                                      TypeSourceInfo *BaseTInfo,
-                                     const MultiInitializer &Args,
+                                     Expr *Init,
                                      CXXRecordDecl *ClassDecl,
                                      SourceLocation EllipsisLoc);
 
   MemInitResult BuildDelegatingInitializer(TypeSourceInfo *TInfo,
-                                           const MultiInitializer &Args,
+                                           Expr *Init,
                                            CXXRecordDecl *ClassDecl);
 
   bool SetDelegatingInitializer(CXXConstructorDecl *Constructor,
@@ -5186,6 +5176,10 @@ public:
   Decl *SubstDecl(Decl *D, DeclContext *Owner,
                   const MultiLevelTemplateArgumentList &TemplateArgs);
 
+  ExprResult SubstInitializer(Expr *E,
+                       const MultiLevelTemplateArgumentList &TemplateArgs,
+                       bool CXXDirectInit);
+
   bool
   SubstBaseSpecifiers(CXXRecordDecl *Instantiation,
                       CXXRecordDecl *Pattern,
@@ -5259,11 +5253,6 @@ public:
   void InstantiateMemInitializers(CXXConstructorDecl *New,
                                   const CXXConstructorDecl *Tmpl,
                             const MultiLevelTemplateArgumentList &TemplateArgs);
-  bool InstantiateInitializer(Expr *Init,
-                            const MultiLevelTemplateArgumentList &TemplateArgs,
-                              SourceLocation &LParenLoc,
-                              ASTOwningVector<Expr*> &NewArgs,
-                              SourceLocation &RParenLoc);
 
   NamedDecl *FindInstantiatedDecl(SourceLocation Loc, NamedDecl *D,
                           const MultiLevelTemplateArgumentList &TemplateArgs);

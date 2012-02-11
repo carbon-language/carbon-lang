@@ -4708,6 +4708,13 @@ InitializationSequence::Perform(Sema &S,
 
       }
     }
+    if (Kind.getKind() == InitializationKind::IK_Direct &&
+        !Kind.isExplicitCast()) {
+      // Rebuild the ParenListExpr.
+      SourceRange ParenRange = Kind.getParenRange();
+      return S.ActOnParenListExpr(ParenRange.getBegin(), ParenRange.getEnd(),
+                                  move(Args));
+    }
     assert(Kind.getKind() == InitializationKind::IK_Copy ||
            Kind.isExplicitCast());
     return ExprResult(Args.release()[0]);

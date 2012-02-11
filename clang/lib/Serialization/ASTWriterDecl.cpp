@@ -656,7 +656,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
   Record.push_back(D->getStorageClass()); // FIXME: stable encoding
   Record.push_back(D->getStorageClassAsWritten());
   Record.push_back(D->isThreadSpecified());
-  Record.push_back(D->hasCXXDirectInitializer());
+  Record.push_back(D->getInitStyle());
   Record.push_back(D->isExceptionVariable());
   Record.push_back(D->isNRVOVariable());
   Record.push_back(D->isCXXForRangeDecl());
@@ -688,7 +688,7 @@ void ASTDeclWriter::VisitVarDecl(VarDecl *D) {
       D->getDeclName().getNameKind() == DeclarationName::Identifier &&
       !D->hasExtInfo() &&
       D->getFirstDeclaration() == D->getMostRecentDecl() &&
-      !D->hasCXXDirectInitializer() &&
+      D->getInitStyle() == VarDecl::CInit &&
       D->getInit() == 0 &&
       !isa<ParmVarDecl>(D) &&
       !SpecInfo)
@@ -728,7 +728,7 @@ void ASTDeclWriter::VisitParmVarDecl(ParmVarDecl *D) {
       D->getAccess() == AS_none &&
       !D->isModulePrivate() &&
       D->getStorageClass() == 0 &&
-      !D->hasCXXDirectInitializer() && // Can params have this ever?
+      D->getInitStyle() == VarDecl::CInit && // Can params have anything else?
       D->getFunctionScopeDepth() == 0 &&
       D->getObjCDeclQualifier() == 0 &&
       !D->isKNRPromoted() &&

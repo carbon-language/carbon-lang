@@ -461,7 +461,13 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     if (D->getStorageClass() != SC_None)
       set("storage",
           VarDecl::getStorageClassSpecifierString(D->getStorageClass()));
-    setFlag("directinit", D->hasCXXDirectInitializer());
+    StringRef initStyle = "";
+    switch (D->getInitStyle()) {
+    case VarDecl::CInit: initStyle = "c"; break;
+    case VarDecl::CallInit: initStyle = "call"; break;
+    case VarDecl::ListInit: initStyle = "list"; break;
+    }
+    set("initstyle", initStyle);
     setFlag("nrvo", D->isNRVOVariable());
     // TODO: instantiation, etc.
   }

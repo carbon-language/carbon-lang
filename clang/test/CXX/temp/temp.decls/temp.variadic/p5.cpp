@@ -185,7 +185,7 @@ struct alignas(Types) TestUnexpandedDecls : T{ // expected-error{{expression con
 
   void test_initializers() {
     T copy_init = static_cast<Types>(0); // expected-error{{initializer contains unexpanded parameter pack 'Types'}}
-    T direct_init(0, static_cast<Types>(0)); // expected-error{{expression contains unexpanded parameter pack 'Types'}}
+    T direct_init(0, static_cast<Types>(0)); // expected-error{{initializer contains unexpanded parameter pack 'Types'}}
     T list_init = { static_cast<Types>(0) }; // expected-error{{initializer contains unexpanded parameter pack 'Types'}}
   }
 

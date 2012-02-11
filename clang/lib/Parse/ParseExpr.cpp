@@ -2006,8 +2006,8 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
 
     if (!ParseExpressionList(ArgExprs, CommaLocs)) {
       ExprType = SimpleExpr;
-      Result = Actions.ActOnParenOrParenListExpr(OpenLoc, Tok.getLocation(),
-                                                 move_arg(ArgExprs));
+      Result = Actions.ActOnParenListExpr(OpenLoc, Tok.getLocation(),
+                                          move_arg(ArgExprs));
     }
   } else {
     InMessageExpressionRAIIObject InMessage(*this, false);

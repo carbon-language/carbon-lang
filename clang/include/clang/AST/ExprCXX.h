@@ -812,6 +812,7 @@ private:
   unsigned NumArgs : 16;
   bool Elidable : 1;
   bool HadMultipleCandidates : 1;
+  bool ListInitialization : 1;
   bool ZeroInitialization : 1;
   unsigned ConstructKind : 2;
   Stmt **Args;
@@ -822,32 +823,36 @@ protected:
                    CXXConstructorDecl *d, bool elidable,
                    Expr **args, unsigned numargs,
                    bool HadMultipleCandidates,
-                   bool ZeroInitialization = false,
-                   ConstructionKind ConstructKind = CK_Complete,
-                   SourceRange ParenRange = SourceRange());
+                   bool ListInitialization,
+                   bool ZeroInitialization,
+                   ConstructionKind ConstructKind,
+                   SourceRange ParenRange);
 
   /// \brief Construct an empty C++ construction expression.
   CXXConstructExpr(StmtClass SC, EmptyShell Empty)
-    : Expr(SC, Empty), Constructor(0), NumArgs(0), Elidable(0),
-      HadMultipleCandidates(false), ZeroInitialization(0),
-      ConstructKind(0), Args(0) { }
+    : Expr(SC, Empty), Constructor(0), NumArgs(0), Elidable(false),
+      HadMultipleCandidates(false), ListInitialization(false),
+      ZeroInitialization(false), ConstructKind(0), Args(0)
+  { }
 
 public:
   /// \brief Construct an empty C++ construction expression.
   explicit CXXConstructExpr(EmptyShell Empty)
     : Expr(CXXConstructExprClass, Empty), Constructor(0),
-      NumArgs(0), Elidable(0), HadMultipleCandidates(false),
-      ZeroInitialization(0), ConstructKind(0), Args(0) { }
+      NumArgs(0), Elidable(false), HadMultipleCandidates(false),
+      ListInitialization(false), ZeroInitialization(false),
+      ConstructKind(0), Args(0)
+  { }
 
   static CXXConstructExpr *Create(ASTContext &C, QualType T,
                                   SourceLocation Loc,
                                   CXXConstructorDecl *D, bool Elidable,
                                   Expr **Args, unsigned NumArgs,
                                   bool HadMultipleCandidates,
-                                  bool ZeroInitialization = false,
-                                  ConstructionKind ConstructKind = CK_Complete,
-                                  SourceRange ParenRange = SourceRange());
-
+                                  bool ListInitialization,
+                                  bool ZeroInitialization,
+                                  ConstructionKind ConstructKind,
+                                  SourceRange ParenRange);
 
   CXXConstructorDecl* getConstructor() const { return Constructor; }
   void setConstructor(CXXConstructorDecl *C) { Constructor = C; }
@@ -863,6 +868,10 @@ public:
   /// an overloaded set having size greater than 1.
   bool hadMultipleCandidates() const { return HadMultipleCandidates; }
   void setHadMultipleCandidates(bool V) { HadMultipleCandidates = V; }
+
+  /// \brief Whether this constructor call was written as list-initialization.
+  bool isListInitialization() const { return ListInitialization; }
+  void setListInitialization(bool V) { ListInitialization = V; }
 
   /// \brief Whether this construction first requires
   /// zero-initialization before the initializer is called.

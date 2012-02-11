@@ -3977,7 +3977,7 @@ class ParenListExpr : public Expr {
 
 public:
   ParenListExpr(ASTContext& C, SourceLocation lparenloc, Expr **exprs,
-                unsigned numexprs, SourceLocation rparenloc, QualType T);
+                unsigned numexprs, SourceLocation rparenloc);
 
   /// \brief Build an empty paren list.
   explicit ParenListExpr(EmptyShell Empty) : Expr(ParenListExprClass, Empty) { }

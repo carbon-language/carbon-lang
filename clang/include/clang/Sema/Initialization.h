@@ -326,20 +326,22 @@ class InitializationKind {
 public:
   /// \brief The kind of initialization being performed.
   enum InitKind {
-    IK_Direct,  ///< Direct initialization
-    IK_Copy,    ///< Copy initialization
-    IK_Default, ///< Default initialization
-    IK_Value    ///< Value initialization
+    IK_Direct,     ///< Direct initialization
+    IK_DirectList, ///< Direct list-initialization
+    IK_Copy,       ///< Copy initialization
+    IK_Default,    ///< Default initialization
+    IK_Value       ///< Value initialization
   };
   
 private:
   /// \brief The kind of initialization that we're storing.
   enum StoredInitKind {
-    SIK_Direct = IK_Direct,   ///< Direct initialization
-    SIK_Copy = IK_Copy,       ///< Copy initialization
-    SIK_Default = IK_Default, ///< Default initialization
-    SIK_Value = IK_Value,     ///< Value initialization
-    SIK_ImplicitValue,        ///< Implicit value initialization
+    SIK_Direct = IK_Direct,         ///< Direct initialization
+    SIK_DirectList = IK_DirectList, ///< Direct list-initialization
+    SIK_Copy = IK_Copy,             ///< Copy initialization
+    SIK_Default = IK_Default,       ///< Default initialization
+    SIK_Value = IK_Value,           ///< Value initialization
+    SIK_ImplicitValue,              ///< Implicit value initialization
     SIK_DirectCast,  ///< Direct initialization due to a cast
     /// \brief Direct initialization due to a C-style cast.
     SIK_DirectCStyleCast,
@@ -368,6 +370,10 @@ public:
                                          SourceLocation LParenLoc,
                                          SourceLocation RParenLoc) {
     return InitializationKind(SIK_Direct, InitLoc, LParenLoc, RParenLoc);
+  }
+
+  static InitializationKind CreateDirectList(SourceLocation InitLoc) {
+    return InitializationKind(SIK_DirectList, InitLoc, InitLoc, InitLoc);
   }
 
   /// \brief Create a direct initialization due to a cast that isn't a C-style 

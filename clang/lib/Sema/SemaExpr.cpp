@@ -2920,6 +2920,11 @@ Sema::ActOnPostfixUnaryOp(Scope *S, SourceLocation OpLoc,
   case tok::minusminus: Opc = UO_PostDec; break;
   }
 
+  // Since this might is a postfix expression, get rid of ParenListExprs.
+  ExprResult Result = MaybeConvertParenListExprToParenExpr(S, Input);
+  if (Result.isInvalid()) return ExprError();
+  Input = Result.take();
+
   return BuildUnaryOp(S, OpLoc, Opc, Input);
 }
 
@@ -4251,8 +4256,8 @@ ExprResult Sema::BuildVectorLiteral(SourceLocation LParenLoc,
   return BuildCompoundLiteralExpr(LParenLoc, TInfo, RParenLoc, initE);
 }
 
-/// This is not an AltiVec-style cast, so turn the ParenListExpr into a sequence
-/// of comma binary operators.
+/// This is not an AltiVec-style cast or or C++ direct-initialization, so turn
+/// the ParenListExpr into a sequence of comma binary operators.
 ExprResult
 Sema::MaybeConvertParenListExprToParenExpr(Scope *S, Expr *OrigExpr) {
   ParenListExpr *E = dyn_cast<ParenListExpr>(OrigExpr);
@@ -4270,18 +4275,13 @@ Sema::MaybeConvertParenListExprToParenExpr(Scope *S, Expr *OrigExpr) {
   return ActOnParenExpr(E->getLParenLoc(), E->getRParenLoc(), Result.get());
 }
 
-ExprResult Sema::ActOnParenOrParenListExpr(SourceLocation L,
-                                           SourceLocation R,
-                                           MultiExprArg Val) {
+ExprResult Sema::ActOnParenListExpr(SourceLocation L,
+                                    SourceLocation R,
+                                    MultiExprArg Val) {
   unsigned nexprs = Val.size();
   Expr **exprs = reinterpret_cast<Expr**>(Val.release());
   assert((exprs != 0) && "ActOnParenOrParenListExpr() missing expr list");
-  Expr *expr;
-  if (nexprs == 1)
-    expr = new (Context) ParenExpr(L, R, exprs[0]);
-  else
-    expr = new (Context) ParenListExpr(Context, L, exprs, nexprs, R,
-                                       exprs[nexprs-1]->getType());
+  Expr *expr = new (Context) ParenListExpr(Context, L, exprs, nexprs, R);
   return Owned(expr);
 }
 
