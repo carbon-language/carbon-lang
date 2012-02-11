@@ -492,7 +492,7 @@ static unsigned getOPCODE(uint32_t insn) {
   }
 }
 
-EDInstInfo *MBlazeDisassembler::getEDInfo() const {
+const EDInstInfo *MBlazeDisassembler::getEDInfo() const {
   return instInfoMBlaze;
 }
 

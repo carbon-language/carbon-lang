@@ -52,7 +52,7 @@ public:
                               raw_ostream &cStream) const;
 
   /// getEDInfo - See MCDisassembler.
-  EDInstInfo *getEDInfo() const;
+  const EDInstInfo *getEDInfo() const;
 private:
 };
 
@@ -77,7 +77,7 @@ public:
                               raw_ostream &cStream) const;
 
   /// getEDInfo - See MCDisassembler.
-  EDInstInfo *getEDInfo() const;
+  const EDInstInfo *getEDInfo() const;
 private:
   mutable std::vector<unsigned> ITBlock;
   DecodeStatus AddThumbPredicate(MCInst&) const;
@@ -332,11 +332,11 @@ static MCDisassembler *createThumbDisassembler(const Target &T, const MCSubtarge
   return new ThumbDisassembler(STI);
 }
 
-EDInstInfo *ARMDisassembler::getEDInfo() const {
+const EDInstInfo *ARMDisassembler::getEDInfo() const {
   return instInfoARM;
 }
 
-EDInstInfo *ThumbDisassembler::getEDInfo() const {
+const EDInstInfo *ThumbDisassembler::getEDInfo() const {
   return instInfoARM;
 }
 

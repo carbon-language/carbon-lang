@@ -82,7 +82,7 @@ X86GenericDisassembler::~X86GenericDisassembler() {
   delete MII;
 }
 
-EDInstInfo *X86GenericDisassembler::getEDInfo() const {
+const EDInstInfo *X86GenericDisassembler::getEDInfo() const {
   return instInfoX86;
 }
 

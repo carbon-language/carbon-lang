@@ -980,11 +980,7 @@ void EDEmitter::run(raw_ostream &o) {
 
   emitCommonEnums(o, i);
 
-  o << "namespace {\n";
-
-  o << "llvm::EDInstInfo instInfo" << target.getName().c_str() << "[] = ";
+  o << "static const llvm::EDInstInfo instInfo" << target.getName() << "[] = ";
   infoArray.emit(o, i);
   o << ";" << "\n";
-
-  o << "}\n";
 }

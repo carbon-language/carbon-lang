@@ -90,7 +90,7 @@ public:
   /// @return         - An array of instruction information, with one entry for
   ///                   each MCInst opcode this disassembler returns.
   ///                   NULL if there is no info for this target.
-  virtual EDInstInfo   *getEDInfo() const { return (EDInstInfo*)0; }
+  virtual const EDInstInfo   *getEDInfo() const { return (EDInstInfo*)0; }
 
 private:
   //

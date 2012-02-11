@@ -46,7 +46,7 @@ public:
                       raw_ostream &cStream) const;
 
   /// getEDInfo - See MCDisassembler.
-  EDInstInfo *getEDInfo() const;
+  const EDInstInfo *getEDInfo() const;
 };
 
 } // namespace llvm
