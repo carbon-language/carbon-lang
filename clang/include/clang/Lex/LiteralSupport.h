@@ -199,6 +199,7 @@ public:
 private:
   void init(const Token *StringToks, unsigned NumStringToks);
   bool CopyStringFragment(StringRef Fragment);
+  bool DiagnoseBadString(const Token& Tok);
 };
 
 }  // end namespace clang

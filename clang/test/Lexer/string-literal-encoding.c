@@ -12,4 +12,7 @@ void f() {
     wchar_t const *d = LR"(Àéîõü)"; // expected-error {{illegal character encoding in string literal}}
     char16_t const *e = uR"(Àéîõü)"; // expected-error {{illegal character encoding in string literal}}
     char32_t const *f = UR"(Àéîõü)"; // expected-error {{illegal character encoding in string literal}}
+
+    char const *g = "Àéîõü"; // expected-warning {{illegal character encoding in string literal}}
+    char const *h = u8"Àéîõü"; // expected-error {{illegal character encoding in string literal}}
 }

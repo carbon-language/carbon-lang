@@ -822,17 +822,32 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
         ++begin;
       } while (begin != end && *begin != '\\');
 
-      uint32_t *tmp_begin = buffer_begin;
+      char const *tmp_in_start = start;
+      uint32_t *tmp_out_start = buffer_begin;
       ConversionResult res =
       ConvertUTF8toUTF32(reinterpret_cast<UTF8 const **>(&start),
                          reinterpret_cast<UTF8 const *>(begin),
                          &buffer_begin,buffer_end,strictConversion);
       if (res!=conversionOK) {
-        PP.Diag(Loc, diag::err_bad_character_encoding);
-        HadError = true;
+        // If we see bad encoding for unprefixed character literals, warn and 
+        // simply copy the byte values, for compatibility with gcc and 
+        // older versions of clang.
+        bool NoErrorOnBadEncoding = isAscii();
+        unsigned Msg = diag::err_bad_character_encoding;
+        if (NoErrorOnBadEncoding)
+          Msg = diag::warn_bad_character_encoding;
+        PP.Diag(Loc, Msg);
+        if (NoErrorOnBadEncoding) {
+          start = tmp_in_start;
+          buffer_begin = tmp_out_start;
+          for ( ; start != begin; ++start, ++buffer_begin)
+            *buffer_begin = static_cast<uint8_t>(*start);
+        } else {
+          HadError = true;
+        }
       } else {
-        for (; tmp_begin<buffer_begin; ++tmp_begin) {
-          if (*tmp_begin > largest_character_for_kind) {
+        for (; tmp_out_start <buffer_begin; ++tmp_out_start) {
+          if (*tmp_out_start > largest_character_for_kind) {
             HadError = true;
             PP.Diag(Loc, diag::err_character_too_large);
           }
@@ -1097,10 +1112,8 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
       // Copy the string over
       if (CopyStringFragment(StringRef(ThisTokBuf,ThisTokEnd-ThisTokBuf)))
       {
-        if (Diags)
-          Diags->Report(FullSourceLoc(StringToks[i].getLocation(), SM),
-                        diag::err_bad_string_encoding);
-        hadError = true;
+        if (DiagnoseBadString(StringToks[i]))
+          hadError = true;
       }
 
     } else {
@@ -1131,10 +1144,8 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
           // Copy the character span over.
           if (CopyStringFragment(StringRef(InStart,ThisTokBuf-InStart)))
           {
-            if (Diags)
-              Diags->Report(FullSourceLoc(StringToks[i].getLocation(), SM),
-                            diag::err_bad_string_encoding);
-            hadError = true;
+            if (DiagnoseBadString(StringToks[i]))
+              hadError = true;
           }
           continue;
         }
@@ -1219,6 +1230,9 @@ bool StringLiteralParser::CopyStringFragment(StringRef Fragment) {
   ConversionResult result = conversionOK;
   // Copy the character span over.
   if (CharByteWidth == 1) {
+    if (!isLegalUTF8Sequence(reinterpret_cast<const UTF8*>(Fragment.begin()),
+                             reinterpret_cast<const UTF8*>(Fragment.end())))
+      result = sourceIllegal;
     memcpy(ResultPtr, Fragment.data(), Fragment.size());
     ResultPtr += Fragment.size();
   } else if (CharByteWidth == 2) {
@@ -1226,7 +1240,7 @@ bool StringLiteralParser::CopyStringFragment(StringRef Fragment) {
     // FIXME: Make the type of the result buffer correct instead of
     // using reinterpret_cast.
     UTF16 *targetStart = reinterpret_cast<UTF16*>(ResultPtr);
-    ConversionFlags flags = lenientConversion;
+    ConversionFlags flags = strictConversion;
     result = ConvertUTF8toUTF16(
 	    &sourceStart,sourceStart + Fragment.size(),
         &targetStart,targetStart + 2*Fragment.size(),flags);
@@ -1237,7 +1251,7 @@ bool StringLiteralParser::CopyStringFragment(StringRef Fragment) {
     // FIXME: Make the type of the result buffer correct instead of
     // using reinterpret_cast.
     UTF32 *targetStart = reinterpret_cast<UTF32*>(ResultPtr);
-    ConversionFlags flags = lenientConversion;
+    ConversionFlags flags = strictConversion;
     result = ConvertUTF8toUTF32(
         &sourceStart,sourceStart + Fragment.size(),
         &targetStart,targetStart + 4*Fragment.size(),flags);
@@ -1249,6 +1263,17 @@ bool StringLiteralParser::CopyStringFragment(StringRef Fragment) {
   return result != conversionOK;
 }
 
+bool StringLiteralParser::DiagnoseBadString(const Token &Tok) {
+  // If we see bad encoding for unprefixed string literals, warn and
+  // simply copy the byte values, for compatibility with gcc and older
+  // versions of clang.
+  bool NoErrorOnBadEncoding = isAscii();
+  unsigned Msg = NoErrorOnBadEncoding ? diag::warn_bad_string_encoding :
+                                        diag::err_bad_string_encoding;
+  if (Diags)
+    Diags->Report(FullSourceLoc(Tok.getLocation(), SM), Msg);
+  return !NoErrorOnBadEncoding;
+}
 
 /// getOffsetOfStringByte - This function returns the offset of the
 /// specified byte of the string data represented by Token.  This handles
