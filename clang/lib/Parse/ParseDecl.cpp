@@ -1282,8 +1282,8 @@ Decl *Parser::ParseDeclarationAfterDeclaratorAndAttributes(Declarator &D,
         Diag(ConsumeToken(), diag::err_deleted_non_function);
     } else if (Tok.is(tok::kw_default)) {
       if (D.isFunctionDeclarator())
-        Diag(Tok, diag::err_default_delete_in_multiple_declaration)
-          << 1 /* delete */;
+        Diag(ConsumeToken(), diag::err_default_delete_in_multiple_declaration)
+          << 0 /* default */;
       else
         Diag(ConsumeToken(), diag::err_default_special_members);
     } else {
