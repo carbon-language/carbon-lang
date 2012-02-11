@@ -1485,12 +1485,21 @@ DumpSymbolContextList (CommandInterpreter &interpreter, Stream &strm, SymbolCont
                     strm.PutCString(" in ");
                 }
             }
+            
+            AddressRange range;
+            
+            sc.GetAddressRange(eSymbolContextEverything, 
+                               0, 
+                               true, 
+                               range);
+            
             sc.DumpStopContext(&strm, 
                                exe_scope, 
-                               sc.line_entry.range.GetBaseAddress(), 
+                               range.GetBaseAddress(), 
                                true, 
                                true, 
                                false);
+
             strm.EOL();
             if (verbose)
             {
