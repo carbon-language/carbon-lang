@@ -979,7 +979,7 @@ void CXXRecordDecl::setLambda(LambdaExpr *Lambda) {
 
 void CXXRecordDecl::getCaptureFields(
        llvm::DenseMap<const VarDecl *, FieldDecl *> &Captures,
-       FieldDecl *&ThisCapture) {
+       FieldDecl *&ThisCapture) const {
   Captures.clear();
   ThisCapture = 0;
 

@@ -943,7 +943,7 @@ public:
   /// \param ThisCapture Will be set to the field declaration for the
   /// 'this' capture.
   void getCaptureFields(llvm::DenseMap<const VarDecl *, FieldDecl *> &Captures,
-                        FieldDecl *&ThisCapture);
+                        FieldDecl *&ThisCapture) const;
 
   /// getConversions - Retrieve the overload set containing all of the
   /// conversion functions in this class.
