@@ -2001,12 +2001,7 @@ Linux::Linux(const Driver &D, const llvm::Triple &Triple)
   // to the link paths.
   path_list &Paths = getFilePaths();
 
-  const bool Is32Bits = (Arch == llvm::Triple::x86 ||
-                         Arch == llvm::Triple::mips ||
-                         Arch == llvm::Triple::mipsel ||
-                         Arch == llvm::Triple::ppc);
-
-  const std::string Multilib = Is32Bits ? "lib32" : "lib64";
+  const std::string Multilib = Triple.isArch32Bit() ? "lib32" : "lib64";
   const std::string MultiarchTriple = getMultiarchTriple(Triple, SysRoot);
 
   // Add the multilib suffixed paths where they are available.

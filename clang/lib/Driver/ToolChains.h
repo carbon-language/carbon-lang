@@ -134,13 +134,10 @@ protected:
   /// @{
 
   /// \brief Check whether the target triple's architecture is 64-bits.
-  bool isTarget64Bit() const {
-    return (getTriple().getArch() == llvm::Triple::x86_64 ||
-            getTriple().getArch() == llvm::Triple::ppc64);
-  }
+  bool isTarget64Bit() const { return getTriple().isArch64Bit(); }
+
   /// \brief Check whether the target triple's architecture is 32-bits.
-  /// FIXME: This should likely do more than just negate the 64-bit query.
-  bool isTarget32Bit() const { return !isTarget64Bit(); }
+  bool isTarget32Bit() const { return getTriple().isArch32Bit(); }
 
   /// @}
 };
