@@ -72,7 +72,8 @@ class MallocChecker : public Checker<check::DeadSymbols,
                                      check::PostStmt<CallExpr>,
                                      check::Location,
                                      check::Bind,
-                                     eval::Assume>
+                                     eval::Assume,
+                                     check::RegionChanges>
 {
   mutable OwningPtr<BuiltinBug> BT_DoubleFree;
   mutable OwningPtr<BuiltinBug> BT_Leak;
@@ -105,6 +106,14 @@ public:
                      CheckerContext &C) const;
   void checkBind(SVal location, SVal val, const Stmt*S,
                  CheckerContext &C) const;
+  ProgramStateRef
+  checkRegionChanges(ProgramStateRef state,
+                     const StoreManager::InvalidatedSymbols *invalidated,
+                     ArrayRef<const MemRegion *> ExplicitRegions,
+                     ArrayRef<const MemRegion *> Regions) const;
+  bool wantsRegionChangeUpdate(ProgramStateRef state) const {
+    return true;
+  }
 
 private:
   static void MallocMem(CheckerContext &C, const CallExpr *CE);
@@ -186,6 +195,20 @@ namespace ento {
   };
 }
 }
+
+namespace {
+class StopTrackingCallback : public SymbolVisitor {
+  ProgramStateRef state;
+public:
+  StopTrackingCallback(ProgramStateRef st) : state(st) {}
+  ProgramStateRef getState() const { return state; }
+
+  bool VisitSymbol(SymbolRef sym) {
+    state = state->remove<RegionState>(sym);
+    return true;
+  }
+};
+} // end anonymous namespace
 
 void MallocChecker::initIdentifierInfo(CheckerContext &C) const {
   ASTContext &Ctx = C.getASTContext();
@@ -734,23 +757,6 @@ void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
   checkEscape(Sym, S, C);
 }
 
-ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
-                                              SVal Cond, 
-                                              bool Assumption) const {
-  // If a symbolic region is assumed to NULL, set its state to AllocateFailed.
-  // FIXME: should also check symbols assumed to non-null.
-
-  RegionStateTy RS = state->get<RegionState>();
-
-  for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
-    // If the symbol is assumed to NULL, this will return an APSInt*.
-    if (state->getSymVal(I.getKey()))
-      state = state->set<RegionState>(I.getKey(),RefState::getAllocateFailed());
-  }
-
-  return state;
-}
-
 bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
                                       const Stmt *S) const {
   assert(Sym);
@@ -780,65 +786,91 @@ void MallocChecker::checkLocation(SVal l, bool isLoad, const Stmt *S,
     checkUseAfterFree(Sym, C);
 }
 
-void MallocChecker::checkBind(SVal location, SVal val,
-                              const Stmt *BindS, CheckerContext &C) const {
-  // The PreVisitBind implements the same algorithm as already used by the 
-  // Objective C ownership checker: if the pointer escaped from this scope by 
-  // assignment, let it go.  However, assigning to fields of a stack-storage 
-  // structure does not transfer ownership.
+//===----------------------------------------------------------------------===//
+// Check various ways a symbol can be invalidated.
+// TODO: This logic (the next 3 functions) is copied/similar to the
+// RetainRelease checker. We might want to factor this out.
+//===----------------------------------------------------------------------===//
 
+// Stop tracking symbols when a value escapes as a result of checkBind.
+// A value escapes in three possible cases:
+// (1) we are binding to something that is not a memory region.
+// (2) we are binding to a memregion that does not have stack storage
+// (3) we are binding to a memregion with stack storage that the store
+//     does not understand.
+void MallocChecker::checkBind(SVal loc, SVal val, const Stmt *S,
+                              CheckerContext &C) const {
+  // Are we storing to something that causes the value to "escape"?
+  bool escapes = true;
   ProgramStateRef state = C.getState();
-  if (!isa<DefinedOrUnknownSVal>(location))
-    return;
-  DefinedOrUnknownSVal l = cast<DefinedOrUnknownSVal>(location);
 
-  // Check for null dereferences.
-  if (!isa<Loc>(l))
-    return;
+  if (loc::MemRegionVal *regionLoc = dyn_cast<loc::MemRegionVal>(&loc)) {
+    escapes = !regionLoc->getRegion()->hasStackStorage();
 
-  // Before checking if the state is null, check if 'val' has a RefState.
-  // Only then should we check for null and bifurcate the state.
-  SymbolRef Sym = val.getLocSymbolInBase();
-  if (Sym) {
-    if (const RefState *RS = state->get<RegionState>(Sym)) {
-      // If ptr is NULL, no operation is performed.
-      ProgramStateRef notNullState, nullState;
-      llvm::tie(notNullState, nullState) = state->assume(l);
-
-      // Generate a transition for 'nullState' to record the assumption
-      // that the state was null.
-      if (nullState)
-        C.addTransition(nullState);
-
-      if (!notNullState)
-        return;
-
-      if (RS->isAllocated()) {
-        // Something we presently own is being assigned somewhere.
-        const MemRegion *AR = location.getAsRegion();
-        if (!AR)
-          return;
-        AR = AR->StripCasts()->getBaseRegion();
-        do {
-          // If it is on the stack, we still own it.
-          if (AR->hasStackNonParametersStorage())
-            break;
-
-          // If the state can't represent this binding, we still own it.
-          if (notNullState == (notNullState->bindLoc(cast<Loc>(location),
-                                                     UnknownVal())))
-            break;
-
-          // We no longer own this pointer.
-          notNullState =
-            notNullState->set<RegionState>(Sym,
-                                        RefState::getRelinquished(BindS));
-        }
-        while (false);
-      }
-      C.addTransition(notNullState);
+    if (!escapes) {
+      // To test (3), generate a new state with the binding added.  If it is
+      // the same state, then it escapes (since the store cannot represent
+      // the binding).
+      escapes = (state == (state->bindLoc(*regionLoc, val)));
     }
   }
+
+  // If our store can represent the binding and we aren't storing to something
+  // that doesn't have local storage then just return and have the simulation
+  // state continue as is.
+  if (!escapes)
+      return;
+
+  // Otherwise, find all symbols referenced by 'val' that we are tracking
+  // and stop tracking them.
+  state = state->scanReachableSymbols<StopTrackingCallback>(val).getState();
+  C.addTransition(state);
+}
+
+// If a symbolic region is assumed to NULL (or another constant), stop tracking
+// it - assuming that allocation failed on this path.
+ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
+                                              SVal Cond,
+                                              bool Assumption) const {
+  RegionStateTy RS = state->get<RegionState>();
+
+  for (RegionStateTy::iterator I = RS.begin(), E = RS.end(); I != E; ++I) {
+    // If the symbol is assumed to NULL or another constant, this will
+    // return an APSInt*.
+    if (state->getSymVal(I.getKey()))
+      state = state->remove<RegionState>(I.getKey());
+  }
+
+  return state;
+}
+
+// If the symbol we are tracking is invalidated, but not explicitly (ex: the &p
+// escapes, when we are tracking p), do not track the symbol as we cannot reason
+// about it anymore.
+ProgramStateRef
+MallocChecker::checkRegionChanges(ProgramStateRef state,
+                            const StoreManager::InvalidatedSymbols *invalidated,
+                                    ArrayRef<const MemRegion *> ExplicitRegions,
+                                    ArrayRef<const MemRegion *> Regions) const {
+  if (!invalidated)
+    return state;
+
+  llvm::SmallPtrSet<SymbolRef, 8> WhitelistedSymbols;
+  for (ArrayRef<const MemRegion *>::iterator I = ExplicitRegions.begin(),
+       E = ExplicitRegions.end(); I != E; ++I) {
+    if (const SymbolicRegion *SR = (*I)->StripCasts()->getAs<SymbolicRegion>())
+      WhitelistedSymbols.insert(SR->getSymbol());
+  }
+
+  for (StoreManager::InvalidatedSymbols::const_iterator I=invalidated->begin(),
+       E = invalidated->end(); I!=E; ++I) {
+    SymbolRef sym = *I;
+    if (WhitelistedSymbols.count(sym))
+      continue;
+    // Don't track the symbol.
+    state = state->remove<RegionState>(sym);
+  }
+  return state;
 }
 
 PathDiagnosticPiece *

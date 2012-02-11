@@ -259,6 +259,13 @@ void mallocEscapeFooNonSymbolArg() {
   return; // no warning
 }
 
+void mallocFailedOrNotLeak() {
+  int *p = malloc(12);
+  if (p == 0)
+    return; // no warning
+  else
+    return; // expected-warning {{Allocated memory never released. Potential memory leak.}}
+}
 
 int *Gl;
 struct GlStTy {
@@ -286,10 +293,55 @@ void GlobalStructMallocFree() {
   free(GlS.x);
 }
 
+// Region escape testing.
+
+unsigned takePtrToPtr(int **p);
+void PassTheAddrOfAllocatedData(int f) {
+  int *p = malloc(12);
+  // We don't know what happens after the call. Should stop tracking here.
+  if (takePtrToPtr(&p))
+    f++;
+  free(p); // no warning
+}
+
+struct X {
+  int *p;
+};
+unsigned takePtrToStruct(struct X *s);
+int ** foo2(int *g, int f) {
+  int *p = malloc(12);
+  struct X *px= malloc(sizeof(struct X));
+  px->p = p;
+  // We don't know what happens after this call. Should not track px nor p.
+  if (takePtrToStruct(px))
+    f++;
+  free(p);
+  return 0;
+}
+
+struct X* RegInvalidationDetect1(struct X *s2) {
+  struct X *px= malloc(sizeof(struct X));
+  px->p = 0;
+  px = s2;
+  return px; // expected-warning {{Allocated memory never released. Potential memory leak.}}
+}
+
+struct X* RegInvalidationGiveUp1() {
+  int *p = malloc(12);
+  struct X *px= malloc(sizeof(struct X));
+  px->p = p;
+  return px;
+}
+
+int **RegInvalidationDetect2(int **pp) {
+  int *p = malloc(12);
+  pp = &p;
+  pp++;
+  return 0;// expected-warning {{Allocated memory never released. Potential memory leak.}}
+}
 
 // Below are the known false positives.
 
-// TODO: There should be no warning here.
 extern void exit(int) __attribute__ ((__noreturn__));
 void mallocExit(int *g) {
   struct xx *p = malloc(12);
@@ -314,16 +366,6 @@ void mallocAssert(int *g) {
   assert(g != 0); // expected-warning{{Allocated memory never released. Potential memory leak}}
   free(p);
   return;
-}
-
-// TODO: There should be no warning here.
-unsigned takePtrToPtr(int **p);
-void PassTheAddrOfAllocatedData(int *g, int f) {
-  int *p = malloc(12);
-  // This call is causing the problem.
-  if (takePtrToPtr(&p))
-    f++; // expected-warning{{Allocated memory never released. Potential memory leak}}
-  free(p); // expected-warning{{Allocated memory never released. Potential memory leak}}
 }
 
 // TODO: There should be no warning here.
