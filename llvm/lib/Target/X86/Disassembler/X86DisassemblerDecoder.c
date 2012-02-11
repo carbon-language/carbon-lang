@@ -712,7 +712,7 @@ static BOOL is16BitEquvalent(const char* orig, const char* equiv) {
  * @return      - 0 if the ModR/M could be read when needed or was not needed;
  *                nonzero otherwise.
  */
-static int getID(struct InternalInstruction* insn) {  
+static int getID(struct InternalInstruction* insn, void *miiArg) {
   uint8_t attrMask;
   uint16_t instructionID;
   
@@ -844,8 +844,12 @@ static int getID(struct InternalInstruction* insn) {
     }
     
     specWithOpsize = specifierForUID(instructionIDWithOpsize);
-    
-    if (is16BitEquvalent(spec->name, specWithOpsize->name)) {
+
+    const char *specName = x86DisassemblerGetInstrName(instructionID, miiArg);
+    const char *specWithOpSizeSizeName =
+      x86DisassemblerGetInstrName(instructionIDWithOpsize, miiArg);
+
+    if (is16BitEquvalent(specName, specWithOpSizeSizeName)) {
       insn->instructionID = instructionIDWithOpsize;
       insn->spec = specWithOpsize;
     } else {
@@ -1608,6 +1612,7 @@ int decodeInstruction(struct InternalInstruction* insn,
                       void* readerArg,
                       dlog_t logger,
                       void* loggerArg,
+                      void* miiArg,
                       uint64_t startLoc,
                       DisassemblerMode mode) {
   memset(insn, 0, sizeof(struct InternalInstruction));
@@ -1623,7 +1628,7 @@ int decodeInstruction(struct InternalInstruction* insn,
   
   if (readPrefixes(insn)       ||
       readOpcode(insn)         ||
-      getID(insn)              ||
+      getID(insn, miiArg)      ||
       insn->instructionID == 0 ||
       readOperands(insn))
     return -1;

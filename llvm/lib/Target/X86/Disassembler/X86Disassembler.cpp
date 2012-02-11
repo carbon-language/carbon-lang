@@ -21,6 +21,7 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
+#include "llvm/MC/MCInstrInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/MemoryObject.h"
@@ -40,6 +41,11 @@ void x86DisassemblerDebug(const char *file,
                           unsigned line,
                           const char *s) {
   dbgs() << file << ":" << line << ": " << s;
+}
+
+const char *x86DisassemblerGetInstrName(unsigned Opcode, void *mii) {
+  const MCInstrInfo *MII = static_cast<const MCInstrInfo *>(mii);
+  return MII->getName(Opcode);
 }
 
 #define debug(s) DEBUG(x86DisassemblerDebug(__FILE__, __LINE__, s));
@@ -67,12 +73,13 @@ extern Target TheX86_32Target, TheX86_64Target;
 static bool translateInstruction(MCInst &target,
                                 InternalInstruction &source);
 
-X86GenericDisassembler::X86GenericDisassembler(const MCSubtargetInfo &STI, DisassemblerMode mode) :
-    MCDisassembler(STI),
-    fMode(mode) {
-}
+X86GenericDisassembler::X86GenericDisassembler(const MCSubtargetInfo &STI,
+                                               DisassemblerMode mode,
+                                               const MCInstrInfo *MII)
+  : MCDisassembler(STI), MII(MII), fMode(mode) {}
 
 X86GenericDisassembler::~X86GenericDisassembler() {
+  delete MII;
 }
 
 EDInstInfo *X86GenericDisassembler::getEDInfo() const {
@@ -127,6 +134,7 @@ X86GenericDisassembler::getInstruction(MCInst &instr,
                               (void*)&region,
                               loggerFn,
                               (void*)&vStream,
+                              (void*)MII,
                               address,
                               fMode);
 
@@ -590,12 +598,16 @@ static bool translateInstruction(MCInst &mcInst,
   return false;
 }
 
-static MCDisassembler *createX86_32Disassembler(const Target &T, const MCSubtargetInfo &STI) {
-  return new X86Disassembler::X86GenericDisassembler(STI, MODE_32BIT);
+static MCDisassembler *createX86_32Disassembler(const Target &T,
+                                                const MCSubtargetInfo &STI) {
+  return new X86Disassembler::X86GenericDisassembler(STI, MODE_32BIT,
+                                                     T.createMCInstrInfo());
 }
 
-static MCDisassembler *createX86_64Disassembler(const Target &T, const MCSubtargetInfo &STI) {
-  return new X86Disassembler::X86GenericDisassembler(STI, MODE_64BIT);
+static MCDisassembler *createX86_64Disassembler(const Target &T,
+                                                const MCSubtargetInfo &STI) {
+  return new X86Disassembler::X86GenericDisassembler(STI, MODE_64BIT,
+                                                     T.createMCInstrInfo());
 }
 
 extern "C" void LLVMInitializeX86Disassembler() { 

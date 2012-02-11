@@ -486,7 +486,7 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o, uint32_t &i)
     i--;
     o.indent(i * 2) << "}," << "\n";
     
-    o.indent(i * 2) << "\"" << InstructionSpecifiers[index].name << "\"";
+    o.indent(i * 2) << "/* " << InstructionSpecifiers[index].name << " */";
     o << "\n";
 
     i--;
