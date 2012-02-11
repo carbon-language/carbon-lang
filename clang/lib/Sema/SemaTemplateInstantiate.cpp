@@ -1863,6 +1863,7 @@ Sema::InstantiateClass(SourceLocation PointOfInstantiation,
     ActOnFinishDelayedMemberInitializers(Instantiation);
 
   if (TSK == TSK_ImplicitInstantiation) {
+    Instantiation->setLocation(Pattern->getLocation());
     Instantiation->setLocStart(Pattern->getInnerLocStart());
     Instantiation->setRBraceLoc(Pattern->getRBraceLoc());
   }
