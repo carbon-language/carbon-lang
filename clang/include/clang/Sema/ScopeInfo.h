@@ -156,8 +156,8 @@ public:
         CopyExprAndNested(Cpy, isNested) {}
 
     enum IsThisCapture { ThisCapture };
-    Capture(IsThisCapture, bool isNested, SourceLocation Loc)
-      : VarAndKind(0, Cap_This), CopyExprAndNested(0, isNested), Loc(Loc) {
+    Capture(IsThisCapture, bool isNested, SourceLocation Loc, Expr *Cpy)
+      : VarAndKind(0, Cap_This), CopyExprAndNested(Cpy, isNested), Loc(Loc) {
     }
 
     bool isThisCapture() const { return VarAndKind.getInt() == Cap_This; }
@@ -208,8 +208,8 @@ public:
     CaptureMap[Var] = Captures.size();
   }
 
-  void AddThisCapture(bool isNested, SourceLocation Loc) {
-    Captures.push_back(Capture(Capture::ThisCapture, isNested, Loc));
+  void AddThisCapture(bool isNested, SourceLocation Loc, Expr *Cpy) {
+    Captures.push_back(Capture(Capture::ThisCapture, isNested, Loc, Cpy));
     CXXThisCaptureIndex = Captures.size();
   }
 

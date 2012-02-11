@@ -55,3 +55,11 @@ void test_layout(char a, short b) {
   };
   static_assert(sizeof(x) == sizeof(ExpectedLayout), "Layout mismatch!");
 }
+
+struct ExpectedThisLayout {
+  ExpectedThisLayout* a;
+  void f() {
+    auto x = [this]() -> void {};
+    static_assert(sizeof(x) == sizeof(ExpectedThisLayout), "Layout mismatch!");
+  }
+};
