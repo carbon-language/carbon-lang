@@ -2226,15 +2226,13 @@ multiclass sse12_shuffle<RegisterClass RC, X86MemOperand x86memop,
                          Domain d, bit IsConvertibleToThreeAddress = 0> {
   def rmi : PIi8<0xC6, MRMSrcMem, (outs RC:$dst),
                    (ins RC:$src1, x86memop:$src2, i8imm:$src3), asm,
-                   [(set RC:$dst, (vt (shufp:$src3
-                            RC:$src1, (mem_frag addr:$src2))))],
-                            IIC_DEFAULT, d>;
+                   [(set RC:$dst, (vt (X86Shufp RC:$src1, (mem_frag addr:$src2),
+                                       (i8 imm:$src3))))], IIC_DEFAULT, d>;
   let isConvertibleToThreeAddress = IsConvertibleToThreeAddress in
     def rri : PIi8<0xC6, MRMSrcReg, (outs RC:$dst),
                    (ins RC:$src1, RC:$src2, i8imm:$src3), asm,
-                   [(set RC:$dst,
-                            (vt (shufp:$src3 RC:$src1, RC:$src2)))],
-                            IIC_DEFAULT, d>;
+                   [(set RC:$dst, (vt (X86Shufp RC:$src1, RC:$src2,
+                                       (i8 imm:$src3))))], IIC_DEFAULT, d>;
 }
 
 defm VSHUFPS  : sse12_shuffle<VR128, f128mem, v4f32,
@@ -2262,11 +2260,6 @@ let Constraints = "$src1 = $dst" in {
 }
 
 let Predicates = [HasAVX] in {
-  def : Pat<(v4f32 (X86Shufp VR128:$src1,
-                       (memopv4f32 addr:$src2), (i8 imm:$imm))),
-            (VSHUFPSrmi VR128:$src1, addr:$src2, imm:$imm)>;
-  def : Pat<(v4f32 (X86Shufp VR128:$src1, VR128:$src2, (i8 imm:$imm))),
-            (VSHUFPSrri VR128:$src1, VR128:$src2, imm:$imm)>;
   def : Pat<(v4i32 (X86Shufp VR128:$src1,
                        (bc_v4i32 (memopv2i64 addr:$src2)), (i8 imm:$imm))),
             (VSHUFPSrmi VR128:$src1, addr:$src2, imm:$imm)>;
@@ -2281,14 +2274,6 @@ let Predicates = [HasAVX] in {
   def : Pat<(v4f32 (pshufd:$src3 VR128:$src1, (undef))),
             (VSHUFPSrri VR128:$src1, VR128:$src1,
                         (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  // Special binary v4i32 shuffle cases with SHUFPS.
-  def : Pat<(v4i32 (shufp:$src3 VR128:$src1, (v4i32 VR128:$src2))),
-            (VSHUFPSrri VR128:$src1, VR128:$src2,
-                        (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  def : Pat<(v4i32 (shufp:$src3 VR128:$src1,
-                                (bc_v4i32 (memopv2i64 addr:$src2)))),
-            (VSHUFPSrmi VR128:$src1, addr:$src2,
-                        (SHUFFLE_get_shuf_imm VR128:$src3))>;
   // Special unary SHUFPDrri cases.
   def : Pat<(v2i64 (pshufd:$src3 VR128:$src1, (undef))),
             (VSHUFPDrri VR128:$src1, VR128:$src1,
@@ -2296,20 +2281,11 @@ let Predicates = [HasAVX] in {
   def : Pat<(v2f64 (pshufd:$src3 VR128:$src1, (undef))),
             (VSHUFPDrri VR128:$src1, VR128:$src1,
                         (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  // Special binary v2i64 shuffle cases using SHUFPDrri.
-  def : Pat<(v2i64 (shufp:$src3 VR128:$src1, VR128:$src2)),
-            (VSHUFPDrri VR128:$src1, VR128:$src2,
-                        (SHUFFLE_get_shuf_imm VR128:$src3))>;
 
   def : Pat<(v2i64 (X86Shufp VR128:$src1,
                        (memopv2i64 addr:$src2), (i8 imm:$imm))),
             (VSHUFPDrmi VR128:$src1, addr:$src2, imm:$imm)>;
-  def : Pat<(v2f64 (X86Shufp VR128:$src1,
-                       (memopv2f64 addr:$src2), (i8 imm:$imm))),
-            (VSHUFPDrmi VR128:$src1, addr:$src2, imm:$imm)>;
   def : Pat<(v2i64 (X86Shufp VR128:$src1, VR128:$src2, (i8 imm:$imm))),
-            (VSHUFPDrri VR128:$src1, VR128:$src2, imm:$imm)>;
-  def : Pat<(v2f64 (X86Shufp VR128:$src1, VR128:$src2, (i8 imm:$imm))),
             (VSHUFPDrri VR128:$src1, VR128:$src2, imm:$imm)>;
 
   // 256-bit patterns
@@ -2319,31 +2295,14 @@ let Predicates = [HasAVX] in {
                       (bc_v8i32 (memopv4i64 addr:$src2)), (i8 imm:$imm))),
             (VSHUFPSYrmi VR256:$src1, addr:$src2, imm:$imm)>;
 
-  def : Pat<(v8f32 (X86Shufp VR256:$src1, VR256:$src2, (i8 imm:$imm))),
-            (VSHUFPSYrri VR256:$src1, VR256:$src2, imm:$imm)>;
-  def : Pat<(v8f32 (X86Shufp VR256:$src1,
-                              (memopv8f32 addr:$src2), (i8 imm:$imm))),
-            (VSHUFPSYrmi VR256:$src1, addr:$src2, imm:$imm)>;
-
   def : Pat<(v4i64 (X86Shufp VR256:$src1, VR256:$src2, (i8 imm:$imm))),
             (VSHUFPDYrri VR256:$src1, VR256:$src2, imm:$imm)>;
   def : Pat<(v4i64 (X86Shufp VR256:$src1,
                               (memopv4i64 addr:$src2), (i8 imm:$imm))),
             (VSHUFPDYrmi VR256:$src1, addr:$src2, imm:$imm)>;
-
-  def : Pat<(v4f64 (X86Shufp VR256:$src1, VR256:$src2, (i8 imm:$imm))),
-            (VSHUFPDYrri VR256:$src1, VR256:$src2, imm:$imm)>;
-  def : Pat<(v4f64 (X86Shufp VR256:$src1,
-                              (memopv4f64 addr:$src2), (i8 imm:$imm))),
-            (VSHUFPDYrmi VR256:$src1, addr:$src2, imm:$imm)>;
 }
 
 let Predicates = [HasSSE1] in {
-  def : Pat<(v4f32 (X86Shufp VR128:$src1,
-                       (memopv4f32 addr:$src2), (i8 imm:$imm))),
-            (SHUFPSrmi VR128:$src1, addr:$src2, imm:$imm)>;
-  def : Pat<(v4f32 (X86Shufp VR128:$src1, VR128:$src2, (i8 imm:$imm))),
-            (SHUFPSrri VR128:$src1, VR128:$src2, imm:$imm)>;
   def : Pat<(v4i32 (X86Shufp VR128:$src1,
                        (bc_v4i32 (memopv2i64 addr:$src2)), (i8 imm:$imm))),
             (SHUFPSrmi VR128:$src1, addr:$src2, imm:$imm)>;
@@ -2354,42 +2313,14 @@ let Predicates = [HasSSE1] in {
   def : Pat<(v4f32 (movlp:$src3 VR128:$src1, (v4f32 VR128:$src2))),
             (SHUFPSrri VR128:$src2, VR128:$src1,
                        (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  // Special unary SHUFPSrri case.
-  def : Pat<(v4f32 (pshufd:$src3 VR128:$src1, (undef))),
-            (SHUFPSrri VR128:$src1, VR128:$src1,
-                       (SHUFFLE_get_shuf_imm VR128:$src3))>;
 }
 
 let Predicates = [HasSSE2] in {
-  // Special binary v4i32 shuffle cases with SHUFPS.
-  def : Pat<(v4i32 (shufp:$src3 VR128:$src1, (v4i32 VR128:$src2))),
-            (SHUFPSrri VR128:$src1, VR128:$src2,
-                       (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  def : Pat<(v4i32 (shufp:$src3 VR128:$src1,
-                                (bc_v4i32 (memopv2i64 addr:$src2)))),
-            (SHUFPSrmi VR128:$src1, addr:$src2,
-                      (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  // Special unary SHUFPDrri cases.
-  def : Pat<(v2i64 (pshufd:$src3 VR128:$src1, (undef))),
-            (SHUFPDrri VR128:$src1, VR128:$src1,
-                       (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  def : Pat<(v2f64 (pshufd:$src3 VR128:$src1, (undef))),
-            (SHUFPDrri VR128:$src1, VR128:$src1,
-                       (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  // Special binary v2i64 shuffle cases using SHUFPDrri.
-  def : Pat<(v2i64 (shufp:$src3 VR128:$src1, VR128:$src2)),
-            (SHUFPDrri VR128:$src1, VR128:$src2,
-                       (SHUFFLE_get_shuf_imm VR128:$src3))>;
   // Generic SHUFPD patterns
   def : Pat<(v2i64 (X86Shufp VR128:$src1,
                        (memopv2i64 addr:$src2), (i8 imm:$imm))),
             (SHUFPDrmi VR128:$src1, addr:$src2, imm:$imm)>;
-  def : Pat<(v2f64 (X86Shufp VR128:$src1,
-                       (memopv2f64 addr:$src2), (i8 imm:$imm))),
-            (SHUFPDrmi VR128:$src1, addr:$src2, imm:$imm)>;
   def : Pat<(v2i64 (X86Shufp VR128:$src1, VR128:$src2, (i8 imm:$imm))),
-            (SHUFPDrri VR128:$src1, VR128:$src2, imm:$imm)>;
-  def : Pat<(v2f64 (X86Shufp VR128:$src1, VR128:$src2, (i8 imm:$imm))),
             (SHUFPDrri VR128:$src1, VR128:$src2, imm:$imm)>;
 }
 

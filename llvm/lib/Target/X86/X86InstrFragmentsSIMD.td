@@ -412,11 +412,6 @@ def pshufd : PatFrag<(ops node:$lhs, node:$rhs),
   return X86::isPSHUFDMask(cast<ShuffleVectorSDNode>(N));
 }], SHUFFLE_get_shuf_imm>;
 
-def shufp : PatFrag<(ops node:$lhs, node:$rhs),
-                    (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isSHUFPMask(cast<ShuffleVectorSDNode>(N), Subtarget->hasAVX());
-}], SHUFFLE_get_shuf_imm>;
-
 def pshufhw : PatFrag<(ops node:$lhs, node:$rhs),
                       (vector_shuffle node:$lhs, node:$rhs), [{
   return X86::isPSHUFHWMask(cast<ShuffleVectorSDNode>(N));
