@@ -82,6 +82,9 @@ namespace {
                                const SmallPtrSet<const PHINode*, 16> &PHIUsers,
                                const GlobalStatus &GS);
     bool OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn);
+
+    TargetData *TD;
+    TargetLibraryInfo *TLI;
   };
 }
 
@@ -295,7 +298,8 @@ static bool AnalyzeGlobal(const Value *V, GlobalStatus &GS,
 /// users of the global, cleaning up the obvious ones.  This is largely just a
 /// quick scan over the use list to clean up the easy and obvious cruft.  This
 /// returns true if it made a change.
-static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
+static bool CleanupConstantGlobalUsers(Value *V, Constant *Init,
+                                       TargetData *TD, TargetLibraryInfo *TLI) {
   bool Changed = false;
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E;) {
     User *U = *UI++;
@@ -316,11 +320,11 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
         Constant *SubInit = 0;
         if (Init)
           SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
-        Changed |= CleanupConstantGlobalUsers(CE, SubInit);
+        Changed |= CleanupConstantGlobalUsers(CE, SubInit, TD, TLI);
       } else if (CE->getOpcode() == Instruction::BitCast &&
                  CE->getType()->isPointerTy()) {
         // Pointer cast, delete any stores and memsets to the global.
-        Changed |= CleanupConstantGlobalUsers(CE, 0);
+        Changed |= CleanupConstantGlobalUsers(CE, 0, TD, TLI);
       }
 
       if (CE->use_empty()) {
@@ -333,13 +337,12 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
       // and will invalidate our notion of what Init is.
       Constant *SubInit = 0;
       if (!isa<ConstantExpr>(GEP->getOperand(0))) {
-        // FIXME: use TargetData/TargetLibraryInfo for smarter constant folding.
         ConstantExpr *CE =
-          dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP));
+          dyn_cast_or_null<ConstantExpr>(ConstantFoldInstruction(GEP, TD, TLI));
         if (Init && CE && CE->getOpcode() == Instruction::GetElementPtr)
           SubInit = ConstantFoldLoadThroughGEPConstantExpr(Init, CE);
       }
-      Changed |= CleanupConstantGlobalUsers(GEP, SubInit);
+      Changed |= CleanupConstantGlobalUsers(GEP, SubInit, TD, TLI);
 
       if (GEP->use_empty()) {
         GEP->eraseFromParent();
@@ -357,7 +360,7 @@ static bool CleanupConstantGlobalUsers(Value *V, Constant *Init) {
       if (SafeToDestroyConstant(C)) {
         C->destroyConstant();
         // This could have invalidated UI, start over from scratch.
-        CleanupConstantGlobalUsers(V, Init);
+        CleanupConstantGlobalUsers(V, Init, TD, TLI);
         return true;
       }
     }
@@ -757,7 +760,9 @@ static bool OptimizeAwayTrappingUsesOfValue(Value *V, Constant *NewV) {
 /// value stored into it.  If there are uses of the loaded value that would trap
 /// if the loaded value is dynamically null, then we know that they cannot be
 /// reachable with a null optimize away the load.
-static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
+static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV,
+                                            TargetData *TD,
+                                            TargetLibraryInfo *TLI) {
   bool Changed = false;
 
   // Keep track of whether we are able to remove all the uses of the global
@@ -800,7 +805,7 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
   // nor is the global.
   if (AllNonStoreUsesGone) {
     DEBUG(dbgs() << "  *** GLOBAL NOW DEAD!\n");
-    CleanupConstantGlobalUsers(GV, 0);
+    CleanupConstantGlobalUsers(GV, 0, TD, TLI);
     if (GV->use_empty()) {
       GV->eraseFromParent();
       ++NumDeleted;
@@ -812,11 +817,11 @@ static bool OptimizeAwayTrappingUsesOfLoads(GlobalVariable *GV, Constant *LV) {
 
 /// ConstantPropUsersOf - Walk the use list of V, constant folding all of the
 /// instructions that are foldable.
-static void ConstantPropUsersOf(Value *V) {
+static void ConstantPropUsersOf(Value *V,
+                                TargetData *TD, TargetLibraryInfo *TLI) {
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end(); UI != E; )
     if (Instruction *I = dyn_cast<Instruction>(*UI++))
-      // FIXME: use TargetData/TargetLibraryInfo for smarter constant folding.
-      if (Constant *NewC = ConstantFoldInstruction(I)) {
+      if (Constant *NewC = ConstantFoldInstruction(I, TD, TLI)) {
         I->replaceAllUsesWith(NewC);
 
         // Advance UI to the next non-I use to avoid invalidating it!
@@ -836,7 +841,8 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
                                                      CallInst *CI,
                                                      Type *AllocTy,
                                                      ConstantInt *NElements,
-                                                     TargetData *TD) {
+                                                     TargetData *TD,
+                                                     TargetLibraryInfo *TLI) {
   DEBUG(errs() << "PROMOTING GLOBAL: " << *GV << "  CALL = " << *CI << '\n');
 
   Type *GlobalType;
@@ -954,9 +960,9 @@ static GlobalVariable *OptimizeGlobalAddressOfMalloc(GlobalVariable *GV,
   // To further other optimizations, loop over all users of NewGV and try to
   // constant prop them.  This will promote GEP instructions with constant
   // indices into GEP constant-exprs, which will allow global-opt to hack on it.
-  ConstantPropUsersOf(NewGV);
+  ConstantPropUsersOf(NewGV, TD, TLI);
   if (RepValue != NewGV)
-    ConstantPropUsersOf(RepValue);
+    ConstantPropUsersOf(RepValue, TD, TLI);
 
   return NewGV;
 }
@@ -1475,7 +1481,8 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
                                                Type *AllocTy,
                                                AtomicOrdering Ordering,
                                                Module::global_iterator &GVI,
-                                               TargetData *TD) {
+                                               TargetData *TD,
+                                               TargetLibraryInfo *TLI) {
   if (!TD)
     return false;
 
@@ -1515,7 +1522,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
     // (2048 bytes currently), as we don't want to introduce a 16M global or
     // something.
     if (NElements->getZExtValue() * TD->getTypeAllocSize(AllocTy) < 2048) {
-      GVI = OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElements, TD);
+      GVI = OptimizeGlobalAddressOfMalloc(GV, CI, AllocTy, NElements, TD, TLI);
       return true;
     }
 
@@ -1570,7 +1577,7 @@ static bool TryToOptimizeStoreOfMallocToGlobal(GlobalVariable *GV,
 static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
                                      AtomicOrdering Ordering,
                                      Module::global_iterator &GVI,
-                                     TargetData *TD) {
+                                     TargetData *TD, TargetLibraryInfo *TLI) {
   // Ignore no-op GEPs and bitcasts.
   StoredOnceVal = StoredOnceVal->stripPointerCasts();
 
@@ -1585,12 +1592,13 @@ static bool OptimizeOnceStoredGlobal(GlobalVariable *GV, Value *StoredOnceVal,
         SOVC = ConstantExpr::getBitCast(SOVC, GV->getInitializer()->getType());
 
       // Optimize away any trapping uses of the loaded value.
-      if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC))
+      if (OptimizeAwayTrappingUsesOfLoads(GV, SOVC, TD, TLI))
         return true;
     } else if (CallInst *CI = extractMallocCall(StoredOnceVal)) {
       Type *MallocType = getMallocAllocatedType(CI);
-      if (MallocType && TryToOptimizeStoreOfMallocToGlobal(GV, CI, MallocType,
-                                                           Ordering, GVI, TD))
+      if (MallocType &&
+          TryToOptimizeStoreOfMallocToGlobal(GV, CI, MallocType, Ordering, GVI,
+                                             TD, TLI))
         return true;
     }
   }
@@ -1775,7 +1783,8 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
 
     // Delete any stores we can find to the global.  We may not be able to
     // make it completely dead though.
-    bool Changed = CleanupConstantGlobalUsers(GV, GV->getInitializer());
+    bool Changed = CleanupConstantGlobalUsers(GV, GV->getInitializer(),
+                                              TD, TLI);
 
     // If the global is dead now, delete it.
     if (GV->use_empty()) {
@@ -1790,7 +1799,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     GV->setConstant(true);
 
     // Clean up any obviously simplifiable users now.
-    CleanupConstantGlobalUsers(GV, GV->getInitializer());
+    CleanupConstantGlobalUsers(GV, GV->getInitializer(), TD, TLI);
 
     // If the global is dead now, just nuke it.
     if (GV->use_empty()) {
@@ -1819,7 +1828,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
         GV->setInitializer(SOVConstant);
 
         // Clean up any obviously simplifiable users now.
-        CleanupConstantGlobalUsers(GV, GV->getInitializer());
+        CleanupConstantGlobalUsers(GV, GV->getInitializer(), TD, TLI);
 
         if (GV->use_empty()) {
           DEBUG(dbgs() << "   *** Substituting initializer allowed us to "
@@ -1836,7 +1845,7 @@ bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
     // Try to optimize globals based on the knowledge that only one value
     // (besides its initializer) is ever stored to the global.
     if (OptimizeOnceStoredGlobal(GV, GS.StoredOnceValue, GS.Ordering, GVI,
-                                 getAnalysisIfAvailable<TargetData>()))
+                                 TD, TLI))
       return true;
 
     // Otherwise, if the global was not a boolean, we can shrink it to be a
@@ -2843,6 +2852,9 @@ bool GlobalOpt::OptimizeEmptyGlobalCXXDtors(Function *CXAAtExitFn) {
 
 bool GlobalOpt::runOnModule(Module &M) {
   bool Changed = false;
+
+  TD = getAnalysisIfAvailable<TargetData>();
+  TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
 
   // Try to find the llvm.globalctors list.
   GlobalVariable *GlobalCtors = FindGlobalCtors(M);
