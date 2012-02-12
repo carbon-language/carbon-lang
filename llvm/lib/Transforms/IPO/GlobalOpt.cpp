@@ -1698,8 +1698,8 @@ static bool TryToShrinkGlobalToBoolean(GlobalVariable *GV, Constant *OtherVal) {
 }
 
 
-/// ProcessInternalGlobal - Analyze the specified global variable and optimize
-/// it if possible.  If we make a change, return true.
+/// ProcessGlobal - Analyze the specified global variable and optimize it if
+/// possible.  If we make a change, return true.
 bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
                               Module::global_iterator &GVI) {
   if (!GV->hasLocalLinkage())
@@ -1736,7 +1736,7 @@ bool GlobalOpt::ProcessGlobal(GlobalVariable *GV,
 /// it if possible.  If we make a change, return true.
 bool GlobalOpt::ProcessInternalGlobal(GlobalVariable *GV,
                                       Module::global_iterator &GVI,
-                                      const SmallPtrSet<const PHINode*, 16> &PHIUsers,
+                                const SmallPtrSet<const PHINode*, 16> &PHIUsers,
                                       const GlobalStatus &GS) {
   // If this is a first class global and has only one accessing function
   // and this function is main (which we know is not recursive we can make
@@ -2518,7 +2518,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 
   CallStack.push_back(F);
 
-  /// Values - As we compute SSA register values, we store their contents here.
+  // Values - As we compute SSA register values, we store their contents here.
   DenseMap<Value*, Constant*> Values;
 
   // Initialize arguments to the incoming values specified.
@@ -2576,23 +2576,23 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 /// we can.  Return true if we can, false otherwise.
 static bool EvaluateStaticConstructor(Function *F, const TargetData *TD,
                                       const TargetLibraryInfo *TLI) {
-  /// MutatedMemory - For each store we execute, we update this map.  Loads
-  /// check this to get the most up-to-date value.  If evaluation is successful,
-  /// this state is committed to the process.
+  // MutatedMemory - For each store we execute, we update this map.  Loads
+  // check this to get the most up-to-date value.  If evaluation is successful,
+  // this state is committed to the process.
   DenseMap<Constant*, Constant*> MutatedMemory;
 
-  /// AllocaTmps - To 'execute' an alloca, we create a temporary global variable
-  /// to represent its body.  This vector is needed so we can delete the
-  /// temporary globals when we are done.
+  // AllocaTmps - To 'execute' an alloca, we create a temporary global variable
+  // to represent its body.  This vector is needed so we can delete the
+  // temporary globals when we are done.
   std::vector<GlobalVariable*> AllocaTmps;
 
-  /// CallStack - This is used to detect recursion.  In pathological situations
-  /// we could hit exponential behavior, but at least there is nothing
-  /// unbounded.
+  // CallStack - This is used to detect recursion.  In pathological situations
+  // we could hit exponential behavior, but at least there is nothing
+  // unbounded.
   std::vector<Function*> CallStack;
 
-  /// SimpleConstants - These are constants we have checked and know to be
-  /// simple enough to live in a static initializer of a global.
+  // SimpleConstants - These are constants we have checked and know to be
+  // simple enough to live in a static initializer of a global.
   SmallPtrSet<Constant*, 8> SimpleConstants;
   
   // Call the function.
