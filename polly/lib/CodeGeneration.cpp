@@ -112,8 +112,6 @@ static void createLoop(IRBuilder<> *Builder, Value *LB, Value *UB, APInt Stride,
   Builder->CreateBr(HeaderBB);
   DT->addNewBlock(HeaderBB, PreheaderBB);
 
-  Builder->SetInsertPoint(BodyBB);
-
   Builder->SetInsertPoint(HeaderBB);
 
   // Use the type of upper and lower bound.
