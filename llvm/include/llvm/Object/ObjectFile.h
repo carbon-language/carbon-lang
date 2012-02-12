@@ -338,8 +338,7 @@ public:
 
 public:
   static ObjectFile *createCOFFObjectFile(MemoryBuffer *Object);
-  static ObjectFile *createELFObjectFile(MemoryBuffer *Object,
-      bool doDyld = false, std::vector<uint8_t*> *MemoryMap = 0);
+  static ObjectFile *createELFObjectFile(MemoryBuffer *Object);
   static ObjectFile *createMachOObjectFile(MemoryBuffer *Object);
 };
 
