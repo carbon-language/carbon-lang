@@ -218,13 +218,11 @@ const char *Triple::getArchNameForAssembler() {
 //
 
 Triple::ArchType Triple::ParseArch(StringRef ArchName) {
-  // Handle some unusual patterns.
-  // FIXME: It would be good to replace these with explicit names for all the
-  // various suffixes supported.
-  if (ArchName.startswith("armv")) return arm;
-  if (ArchName.startswith("thumbv")) return thumb;
-
   return StringSwitch<ArchType>(ArchName)
+    // FIXME: It would be good to replace these with explicit names for all the
+    // various suffixes supported.
+    .StartsWith("armv", arm)
+    .StartsWith("thumbv", thumb)
     .Cases("i386", "i486", "i586", "i686", x86)
     .Cases("i786", "i886", "i986", x86) // FIXME: Do we need to support these?
     .Cases("amd64", "x86_64", x86_64)
@@ -260,65 +258,39 @@ Triple::VendorType Triple::ParseVendor(StringRef VendorName) {
 }
 
 Triple::OSType Triple::ParseOS(StringRef OSName) {
-  if (OSName.startswith("auroraux"))
-    return AuroraUX;
-  else if (OSName.startswith("cygwin"))
-    return Cygwin;
-  else if (OSName.startswith("darwin"))
-    return Darwin;
-  else if (OSName.startswith("dragonfly"))
-    return DragonFly;
-  else if (OSName.startswith("freebsd"))
-    return FreeBSD;
-  else if (OSName.startswith("ios"))
-    return IOS;
-  else if (OSName.startswith("kfreebsd"))
-    return KFreeBSD;
-  else if (OSName.startswith("linux"))
-    return Linux;
-  else if (OSName.startswith("lv2"))
-    return Lv2;
-  else if (OSName.startswith("macosx"))
-    return MacOSX;
-  else if (OSName.startswith("mingw32"))
-    return MinGW32;
-  else if (OSName.startswith("netbsd"))
-    return NetBSD;
-  else if (OSName.startswith("openbsd"))
-    return OpenBSD;
-  else if (OSName.startswith("psp"))
-    return Psp;
-  else if (OSName.startswith("solaris"))
-    return Solaris;
-  else if (OSName.startswith("win32"))
-    return Win32;
-  else if (OSName.startswith("haiku"))
-    return Haiku;
-  else if (OSName.startswith("minix"))
-    return Minix;
-  else if (OSName.startswith("rtems"))
-    return RTEMS;
-  else if (OSName.startswith("nacl"))
-    return NativeClient;
-  else
-    return UnknownOS;
+  return StringSwitch<OSType>(OSName)
+    .StartsWith("auroraux", AuroraUX)
+    .StartsWith("cygwin", Cygwin)
+    .StartsWith("darwin", Darwin)
+    .StartsWith("dragonfly", DragonFly)
+    .StartsWith("freebsd", FreeBSD)
+    .StartsWith("ios", IOS)
+    .StartsWith("kfreebsd", KFreeBSD)
+    .StartsWith("linux", Linux)
+    .StartsWith("lv2", Lv2)
+    .StartsWith("macosx", MacOSX)
+    .StartsWith("mingw32", MinGW32)
+    .StartsWith("netbsd", NetBSD)
+    .StartsWith("openbsd", OpenBSD)
+    .StartsWith("psp", Psp)
+    .StartsWith("solaris", Solaris)
+    .StartsWith("win32", Win32)
+    .StartsWith("haiku", Haiku)
+    .StartsWith("minix", Minix)
+    .StartsWith("rtems", RTEMS)
+    .StartsWith("nacl", NativeClient)
+    .Default(UnknownOS);
 }
 
 Triple::EnvironmentType Triple::ParseEnvironment(StringRef EnvironmentName) {
-  if (EnvironmentName.startswith("eabi"))
-    return EABI;
-  else if (EnvironmentName.startswith("gnueabihf"))
-    return GNUEABIHF;
-  else if (EnvironmentName.startswith("gnueabi"))
-    return GNUEABI;
-  else if (EnvironmentName.startswith("gnu"))
-    return GNU;
-  else if (EnvironmentName.startswith("macho"))
-    return MachO;
-  else if (EnvironmentName.startswith("androideabi"))
-    return ANDROIDEABI;
-  else
-    return UnknownEnvironment;
+  return StringSwitch<EnvironmentType>(EnvironmentName)
+    .StartsWith("eabi", EABI)
+    .StartsWith("gnueabihf", GNUEABIHF)
+    .StartsWith("gnueabi", GNUEABI)
+    .StartsWith("gnu", GNU)
+    .StartsWith("macho", MachO)
+    .StartsWith("androideabi", ANDROIDEABI)
+    .Default(UnknownEnvironment);
 }
 
 void Triple::Parse() const {
