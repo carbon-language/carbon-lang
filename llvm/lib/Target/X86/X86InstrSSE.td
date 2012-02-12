@@ -2270,17 +2270,6 @@ let Predicates = [HasAVX] in {
   def : Pat<(v4f32 (movlp:$src3 VR128:$src1, (v4f32 VR128:$src2))),
             (VSHUFPSrri VR128:$src2, VR128:$src1,
                         (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  // Special unary SHUFPSrri case.
-  def : Pat<(v4f32 (pshufd:$src3 VR128:$src1, (undef))),
-            (VSHUFPSrri VR128:$src1, VR128:$src1,
-                        (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  // Special unary SHUFPDrri cases.
-  def : Pat<(v2i64 (pshufd:$src3 VR128:$src1, (undef))),
-            (VSHUFPDrri VR128:$src1, VR128:$src1,
-                        (SHUFFLE_get_shuf_imm VR128:$src3))>;
-  def : Pat<(v2f64 (pshufd:$src3 VR128:$src1, (undef))),
-            (VSHUFPDrri VR128:$src1, VR128:$src1,
-                        (SHUFFLE_get_shuf_imm VR128:$src3))>;
 
   def : Pat<(v2i64 (X86Shufp VR128:$src1,
                        (memopv2i64 addr:$src2), (i8 imm:$imm))),
@@ -3848,21 +3837,19 @@ defm PACKUSWB : PDI_binop_rm_int<0x67, "packuswb", int_x86_sse2_packuswb_128,
 //===---------------------------------------------------------------------===//
 
 let ExeDomain = SSEPackedInt in {
-multiclass sse2_pshuffle<string OpcodeStr, ValueType vt, PatFrag pshuf_frag,
-                         PatFrag bc_frag> {
+multiclass sse2_pshuffle<string OpcodeStr, ValueType vt, SDNode OpNode> {
 def ri : Ii8<0x70, MRMSrcReg,
               (outs VR128:$dst), (ins VR128:$src1, i8imm:$src2),
               !strconcat(OpcodeStr,
                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-              [(set VR128:$dst, (vt (pshuf_frag:$src2 VR128:$src1,
-                                                      (undef))))]>;
+              [(set VR128:$dst, (vt (OpNode VR128:$src1, (i8 imm:$src2))))]>;
 def mi : Ii8<0x70, MRMSrcMem,
               (outs VR128:$dst), (ins i128mem:$src1, i8imm:$src2),
               !strconcat(OpcodeStr,
                          "\t{$src2, $src1, $dst|$dst, $src1, $src2}"),
-              [(set VR128:$dst, (vt (pshuf_frag:$src2
-                                      (bc_frag (memopv2i64 addr:$src1)),
-                                      (undef))))]>;
+              [(set VR128:$dst,
+                (vt (OpNode (bitconvert (memopv2i64 addr:$src1)),
+                             (i8 imm:$src2))))]>;
 }
 
 multiclass sse2_pshuffle_y<string OpcodeStr, ValueType vt, SDNode OpNode> {
@@ -3883,43 +3870,18 @@ def Ymi : Ii8<0x70, MRMSrcMem,
 
 let Predicates = [HasAVX] in {
   let AddedComplexity = 5 in
-  defm VPSHUFD : sse2_pshuffle<"vpshufd", v4i32, pshufd, bc_v4i32>, TB, OpSize,
-                               VEX;
+  defm VPSHUFD : sse2_pshuffle<"vpshufd", v4i32, X86PShufd>, TB, OpSize, VEX;
 
   // SSE2 with ImmT == Imm8 and XS prefix.
-  defm VPSHUFHW : sse2_pshuffle<"vpshufhw", v8i16, pshufhw, bc_v8i16>, XS,
-                               VEX;
+  defm VPSHUFHW : sse2_pshuffle<"vpshufhw", v8i16, X86PShufhw>, XS, VEX;
 
   // SSE2 with ImmT == Imm8 and XD prefix.
-  defm VPSHUFLW : sse2_pshuffle<"vpshuflw", v8i16, pshuflw, bc_v8i16>, XD,
-                               VEX;
+  defm VPSHUFLW : sse2_pshuffle<"vpshuflw", v8i16, X86PShuflw>, XD, VEX;
 
-  let AddedComplexity = 5 in
-  def : Pat<(v4f32 (pshufd:$src2 VR128:$src1, (undef))),
-            (VPSHUFDri VR128:$src1, (SHUFFLE_get_shuf_imm VR128:$src2))>;
-  // Unary v4f32 shuffle with VPSHUF* in order to fold a load.
-  def : Pat<(pshufd:$src2 (bc_v4i32 (memopv4f32 addr:$src1)), (undef)),
-            (VPSHUFDmi addr:$src1, (SHUFFLE_get_shuf_imm VR128:$src2))>;
-
-  def : Pat<(v4i32 (X86PShufd (bc_v4i32 (memopv2i64 addr:$src1)),
-                                   (i8 imm:$imm))),
-            (VPSHUFDmi addr:$src1, imm:$imm)>;
   def : Pat<(v4f32 (X86PShufd (memopv4f32 addr:$src1), (i8 imm:$imm))),
             (VPSHUFDmi addr:$src1, imm:$imm)>;
   def : Pat<(v4f32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
             (VPSHUFDri VR128:$src1, imm:$imm)>;
-  def : Pat<(v4i32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
-            (VPSHUFDri VR128:$src1, imm:$imm)>;
-  def : Pat<(v8i16 (X86PShufhw VR128:$src, (i8 imm:$imm))),
-            (VPSHUFHWri VR128:$src, imm:$imm)>;
-  def : Pat<(v8i16 (X86PShufhw (bc_v8i16 (memopv2i64 addr:$src)),
-                               (i8 imm:$imm))),
-            (VPSHUFHWmi addr:$src, imm:$imm)>;
-  def : Pat<(v8i16 (X86PShuflw VR128:$src, (i8 imm:$imm))),
-            (VPSHUFLWri VR128:$src, imm:$imm)>;
-  def : Pat<(v8i16 (X86PShuflw (bc_v8i16 (memopv2i64 addr:$src)),
-                               (i8 imm:$imm))),
-            (VPSHUFLWmi addr:$src, imm:$imm)>;
 }
 
 let Predicates = [HasAVX2] in {
@@ -3930,40 +3892,18 @@ let Predicates = [HasAVX2] in {
 
 let Predicates = [HasSSE2] in {
   let AddedComplexity = 5 in
-  defm PSHUFD : sse2_pshuffle<"pshufd", v4i32, pshufd, bc_v4i32>, TB, OpSize;
+  defm PSHUFD : sse2_pshuffle<"pshufd", v4i32, X86PShufd>, TB, OpSize;
 
   // SSE2 with ImmT == Imm8 and XS prefix.
-  defm PSHUFHW : sse2_pshuffle<"pshufhw", v8i16, pshufhw, bc_v8i16>, XS;
+  defm PSHUFHW : sse2_pshuffle<"pshufhw", v8i16, X86PShufhw>, XS;
 
   // SSE2 with ImmT == Imm8 and XD prefix.
-  defm PSHUFLW : sse2_pshuffle<"pshuflw", v8i16, pshuflw, bc_v8i16>, XD;
+  defm PSHUFLW : sse2_pshuffle<"pshuflw", v8i16, X86PShuflw>, XD;
 
-  let AddedComplexity = 5 in
-  def : Pat<(v4f32 (pshufd:$src2 VR128:$src1, (undef))),
-            (PSHUFDri VR128:$src1, (SHUFFLE_get_shuf_imm VR128:$src2))>;
-  // Unary v4f32 shuffle with PSHUF* in order to fold a load.
-  def : Pat<(pshufd:$src2 (bc_v4i32 (memopv4f32 addr:$src1)), (undef)),
-            (PSHUFDmi addr:$src1, (SHUFFLE_get_shuf_imm VR128:$src2))>;
-
-  def : Pat<(v4i32 (X86PShufd (bc_v4i32 (memopv2i64 addr:$src1)),
-                                   (i8 imm:$imm))),
-            (PSHUFDmi addr:$src1, imm:$imm)>;
   def : Pat<(v4f32 (X86PShufd (memopv4f32 addr:$src1), (i8 imm:$imm))),
             (PSHUFDmi addr:$src1, imm:$imm)>;
   def : Pat<(v4f32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
             (PSHUFDri VR128:$src1, imm:$imm)>;
-  def : Pat<(v4i32 (X86PShufd VR128:$src1, (i8 imm:$imm))),
-            (PSHUFDri VR128:$src1, imm:$imm)>;
-  def : Pat<(v8i16 (X86PShufhw VR128:$src, (i8 imm:$imm))),
-            (PSHUFHWri VR128:$src, imm:$imm)>;
-  def : Pat<(v8i16 (X86PShufhw (bc_v8i16 (memopv2i64 addr:$src)),
-                               (i8 imm:$imm))),
-            (PSHUFHWmi addr:$src, imm:$imm)>;
-  def : Pat<(v8i16 (X86PShuflw VR128:$src, (i8 imm:$imm))),
-            (PSHUFLWri VR128:$src, imm:$imm)>;
-  def : Pat<(v8i16 (X86PShuflw (bc_v8i16 (memopv2i64 addr:$src)),
-                               (i8 imm:$imm))),
-            (PSHUFLWmi addr:$src, imm:$imm)>;
 }
 
 //===---------------------------------------------------------------------===//
