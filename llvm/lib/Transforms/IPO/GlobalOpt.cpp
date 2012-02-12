@@ -2734,7 +2734,7 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
 
 static Function *FindCXAAtExit(Module &M, TargetLibraryInfo *TLI) {
   if (!TLI->has(LibFunc::cxa_atexit))
-    return false;
+    return 0;
 
   Function *Fn = M.getFunction(TLI->getName(LibFunc::cxa_atexit));
   
