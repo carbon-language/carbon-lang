@@ -4340,6 +4340,13 @@ bool Sema::ShouldDeleteSpecialMember(CXXMethodDecl *MD, CXXSpecialMember CSM) {
   switch (CSM) {
   case CXXDefaultConstructor:
     IsConstructor = true;
+
+    // C++11 [expr.lambda.prim]p19:
+    //   The closure type associated with a lambda-expression has a
+    //   deleted (8.4.3) default constructor.
+    if (RD->isLambda())
+      return true;
+
     break;
   case CXXCopyConstructor:
     IsConstructor = true;
@@ -4620,6 +4627,12 @@ bool Sema::ShouldDeleteCopyAssignmentOperator(CXXMethodDecl *MD) {
   assert(!RD->isDependentType() && "do deletion after instantiation");
   if (!LangOpts.CPlusPlus0x || RD->isInvalidDecl())
     return false;
+
+  // C++11 [expr.lambda.prim]p19:
+  //   The closure type associated with a lambda-expression has a
+  //   [...] deleted copy assignment operator.
+  if (RD->isLambda())
+    return true;
 
   SourceLocation Loc = MD->getLocation();
 

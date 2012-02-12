@@ -406,6 +406,13 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
       CallOperator->setType(FunctionTy);
     }
 
+    // C++ [expr.prim.lambda]p7:
+    //   The lambda-expression's compound-statement yields the
+    //   function-body (8.4) of the function call operator [...].
+    ActOnFinishFunctionBody(CallOperator, Body, /*IsInstantation=*/false);
+    CallOperator->setLexicalDeclContext(Class);
+    Class->addDecl(CallOperator);
+
     // C++11 [expr.prim.lambda]p6:
     //   The closure type for a lambda-expression with no lambda-capture
     //   has a public non-virtual non-explicit const conversion function
@@ -450,15 +457,8 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
       Class->addDecl(Conversion);
     }
 
-    // C++ [expr.prim.lambda]p7:
-    //   The lambda-expression's compound-statement yields the
-    //   function-body (8.4) of the function call operator [...].
-    ActOnFinishFunctionBody(CallOperator, Body, /*IsInstantation=*/false);
-
     // Finalize the lambda class.
     SmallVector<Decl*, 4> Fields(Class->field_begin(), Class->field_end());
-    CallOperator->setLexicalDeclContext(Class);
-    Class->addDecl(CallOperator);
     ActOnFields(0, Class->getLocation(), Class, Fields, 
                 SourceLocation(), SourceLocation(), 0);
     CheckCompletedCXXClass(Class);

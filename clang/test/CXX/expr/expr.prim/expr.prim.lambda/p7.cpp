@@ -45,9 +45,11 @@ void test_capture_constness(int i, const int ic) {
 
 struct S1 {
   int x, y;
+  S1 &operator=(int*);
   int operator()(int);
   void f() {
     [&]()->int {
+      S1 &s1 = operator=(&this->x);
       return operator()(this->x + y);
     }(); 
   }

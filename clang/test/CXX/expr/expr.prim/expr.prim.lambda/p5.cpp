@@ -8,6 +8,7 @@ void test_attributes() {
 
 template<typename T>
 struct bogus_override_if_virtual : public T {
+  bogus_override_if_virtual() : T(*(T*)0) { }
   int operator()() const;
 };
 
