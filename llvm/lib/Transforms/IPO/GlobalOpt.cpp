@@ -2403,18 +2403,19 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
                                               UndefValue::get(Ty),
                                               AI->getName()));
       InstResult = AllocaTmps.back();
-    } else if (CallInst *CI = dyn_cast<CallInst>(CurInst)) {
+    } else if (isa<CallInst>(CurInst) || isa<InvokeInst>(CurInst)) {
+      CallSite CS(CurInst);
 
       // Debug info can safely be ignored here.
-      if (isa<DbgInfoIntrinsic>(CI)) {
+      if (isa<DbgInfoIntrinsic>(CS.getInstruction())) {
         ++CurInst;
         continue;
       }
 
       // Cannot handle inline asm.
-      if (isa<InlineAsm>(CI->getCalledValue())) return false;
+      if (isa<InlineAsm>(CS.getCalledValue())) return false;
 
-      if (MemSetInst *MSI = dyn_cast<MemSetInst>(CI)) {
+      if (MemSetInst *MSI = dyn_cast<MemSetInst>(CS.getInstruction())) {
         if (MSI->isVolatile()) return false;
         Constant *Ptr = getVal(Values, MSI->getDest());
         Constant *Val = getVal(Values, MSI->getValue());
@@ -2430,13 +2431,12 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
 
       // Resolve function pointers.
       Function *Callee = dyn_cast<Function>(getVal(Values,
-                                                   CI->getCalledValue()));
-      if (!Callee) return false;  // Cannot resolve.
+                                                   CS.getCalledValue()));
+      if (!Callee || Callee->mayBeOverridden())
+        return false;  // Cannot resolve.
 
       SmallVector<Constant*, 8> Formals;
-      CallSite CS(CI);
-      for (User::op_iterator i = CS.arg_begin(), e = CS.arg_end();
-           i != e; ++i)
+      for (User::op_iterator i = CS.arg_begin(), e = CS.arg_end(); i != e; ++i)
         Formals.push_back(getVal(Values, *i));
 
       if (Callee->isDeclaration()) {
@@ -2457,6 +2457,11 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
                               TLI))
           return false;
         InstResult = RetVal;
+
+        if (InvokeInst *II = dyn_cast<InvokeInst>(CurInst)) {
+          NextBB = II->getNormalDest();
+          return true;
+        }
       }
     } else if (isa<TerminatorInst>(CurInst)) {
       if (BranchInst *BI = dyn_cast<BranchInst>(CurInst)) {
