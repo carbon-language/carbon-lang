@@ -3174,9 +3174,13 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   for (unsigned i = 0, e = IVars.size(); i < e; i++) {
     ObjCIvarDecl *IvarDecl = IVars[i];
     QualType Type = IvarDecl->getType();
-    std::string TypeString(Type.getAsString(Context->getPrintingPolicy()));
+    std::string Name = IvarDecl->getNameAsString();
+
     Result += "\t";
-    Result += TypeString; Result += " "; Result += IvarDecl->getNameAsString();
+    convertToUnqualifiedObjCType(Type);
+    convertBlockPointerToFunctionPointer(Type);
+    Type.getAsStringInternal(Name, Context->getPrintingPolicy());
+    Result += Name;
     if (IvarDecl->isBitField()) {
       Result += " : "; Result += utostr(IvarDecl->getBitWidthValue(*Context));
     }
