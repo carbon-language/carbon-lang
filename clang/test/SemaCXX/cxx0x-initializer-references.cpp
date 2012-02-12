@@ -71,4 +71,9 @@ namespace reference {
     static_assert(sizeof(h({1, 2})) == sizeof(two), "bad overload resolution");
   }
 
+  void edge_cases() {
+    // FIXME: very poor error message
+    int const &b({0}); // expected-error {{could not bind}}
+  }
+
 }

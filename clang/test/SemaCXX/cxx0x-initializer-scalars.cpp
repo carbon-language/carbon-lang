@@ -55,4 +55,9 @@ namespace integral {
     emptylist({});
     emptylist({}, {}, {});
   }
+
+  void edge_cases() {
+    // FIXME: very poor error message
+    int a({0}); // expected-error {{cannot initialize}}
+  }
 }

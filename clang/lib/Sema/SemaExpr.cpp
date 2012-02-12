@@ -3809,7 +3809,8 @@ Sema::BuildCompoundLiteralExpr(SourceLocation LParenLoc, TypeSourceInfo *TInfo,
     = InitializedEntity::InitializeTemporary(literalType);
   InitializationKind Kind
     = InitializationKind::CreateCStyleCast(LParenLoc, 
-                                           SourceRange(LParenLoc, RParenLoc));
+                                           SourceRange(LParenLoc, RParenLoc),
+                                           /*InitList=*/true);
   InitializationSequence InitSeq(*this, Entity, Kind, &LiteralExpr, 1);
   ExprResult Result = InitSeq.Perform(*this, Entity, Kind,
                                        MultiExprArg(*this, &LiteralExpr, 1),

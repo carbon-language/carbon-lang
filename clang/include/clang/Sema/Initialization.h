@@ -334,30 +334,27 @@ public:
   };
   
 private:
-  /// \brief The kind of initialization that we're storing.
-  enum StoredInitKind {
-    SIK_Direct = IK_Direct,         ///< Direct initialization
-    SIK_DirectList = IK_DirectList, ///< Direct list-initialization
-    SIK_Copy = IK_Copy,             ///< Copy initialization
-    SIK_Default = IK_Default,       ///< Default initialization
-    SIK_Value = IK_Value,           ///< Value initialization
-    SIK_ImplicitValue,              ///< Implicit value initialization
-    SIK_DirectCast,  ///< Direct initialization due to a cast
-    /// \brief Direct initialization due to a C-style cast.
-    SIK_DirectCStyleCast,
-    /// \brief Direct initialization due to a functional-style cast.
-    SIK_DirectFunctionalCast
+  /// \brief The context of the initialization.
+  enum InitContext {
+    IC_Normal,         ///< Normal context
+    IC_Implicit,       ///< Implicit context (value initialization)
+    IC_StaticCast,     ///< Static cast context
+    IC_CStyleCast,     ///< C-style cast context
+    IC_FunctionalCast  ///< Functional cast context
   };
   
   /// \brief The kind of initialization being performed.
-  StoredInitKind Kind;
+  InitKind Kind : 8;
+
+  /// \brief The context of the initialization.
+  InitContext Context : 8;
   
   /// \brief The source locations involved in the initialization.
   SourceLocation Locations[3];
   
-  InitializationKind(StoredInitKind Kind, SourceLocation Loc1, 
+  InitializationKind(InitKind Kind, InitContext Context, SourceLocation Loc1, 
                      SourceLocation Loc2, SourceLocation Loc3)
-    : Kind(Kind) 
+    : Kind(Kind), Context(Context)
   {
     Locations[0] = Loc1;
     Locations[1] = Loc2;
@@ -369,45 +366,50 @@ public:
   static InitializationKind CreateDirect(SourceLocation InitLoc,
                                          SourceLocation LParenLoc,
                                          SourceLocation RParenLoc) {
-    return InitializationKind(SIK_Direct, InitLoc, LParenLoc, RParenLoc);
+    return InitializationKind(IK_Direct, IC_Normal,
+                              InitLoc, LParenLoc, RParenLoc);
   }
 
   static InitializationKind CreateDirectList(SourceLocation InitLoc) {
-    return InitializationKind(SIK_DirectList, InitLoc, InitLoc, InitLoc);
+    return InitializationKind(IK_DirectList, IC_Normal,
+                              InitLoc, InitLoc, InitLoc);
   }
 
   /// \brief Create a direct initialization due to a cast that isn't a C-style 
   /// or functional cast.
   static InitializationKind CreateCast(SourceRange TypeRange) {
-    return InitializationKind(SIK_DirectCast,
-                              TypeRange.getBegin(), TypeRange.getBegin(), 
-                              TypeRange.getEnd());
+    return InitializationKind(IK_Direct, IC_StaticCast, TypeRange.getBegin(),
+                              TypeRange.getBegin(), TypeRange.getEnd());
   }
   
   /// \brief Create a direct initialization for a C-style cast.
   static InitializationKind CreateCStyleCast(SourceLocation StartLoc,
-                                             SourceRange TypeRange) {
-    return InitializationKind(SIK_DirectCStyleCast,
-                              StartLoc, TypeRange.getBegin(), 
+                                             SourceRange TypeRange,
+                                             bool InitList) {
+    // C++ cast syntax doesn't permit init lists, but C compound literals are
+    // exactly that.
+    return InitializationKind(InitList ? IK_DirectList : IK_Direct,
+                              IC_CStyleCast, StartLoc, TypeRange.getBegin(),
                               TypeRange.getEnd());
   }
 
   /// \brief Create a direct initialization for a functional cast.
-  static InitializationKind CreateFunctionalCast(SourceRange TypeRange) {
-    return InitializationKind(SIK_DirectFunctionalCast,
-                              TypeRange.getBegin(), TypeRange.getBegin(), 
-                              TypeRange.getEnd());
+  static InitializationKind CreateFunctionalCast(SourceRange TypeRange,
+                                                 bool InitList) {
+    return InitializationKind(InitList ? IK_DirectList : IK_Direct,
+                              IC_FunctionalCast, TypeRange.getBegin(),
+                              TypeRange.getBegin(), TypeRange.getEnd());
   }
 
   /// \brief Create a copy initialization.
   static InitializationKind CreateCopy(SourceLocation InitLoc,
                                        SourceLocation EqualLoc) {
-    return InitializationKind(SIK_Copy, InitLoc, EqualLoc, EqualLoc);
+    return InitializationKind(IK_Copy, IC_Normal, InitLoc, EqualLoc, EqualLoc);
   }
   
   /// \brief Create a default initialization.
   static InitializationKind CreateDefault(SourceLocation InitLoc) {
-    return InitializationKind(SIK_Default, InitLoc, InitLoc, InitLoc);
+    return InitializationKind(IK_Default, IC_Normal, InitLoc, InitLoc, InitLoc);
   }
   
   /// \brief Create a value initialization.
@@ -415,46 +417,39 @@ public:
                                         SourceLocation LParenLoc,
                                         SourceLocation RParenLoc,
                                         bool isImplicit = false) {
-    return InitializationKind(isImplicit? SIK_ImplicitValue : SIK_Value, 
+    return InitializationKind(IK_Value, isImplicit ? IC_Implicit : IC_Normal,
                               InitLoc, LParenLoc, RParenLoc);
   }
   
   /// \brief Determine the initialization kind.
   InitKind getKind() const {
-    if (Kind > SIK_ImplicitValue)
-      return IK_Direct;
-    if (Kind == SIK_ImplicitValue)
-      return IK_Value;
-
-    return (InitKind)Kind;
+    return Kind;
   }
   
   /// \brief Determine whether this initialization is an explicit cast.
   bool isExplicitCast() const {
-    return Kind == SIK_DirectCast || 
-           Kind == SIK_DirectCStyleCast ||
-           Kind == SIK_DirectFunctionalCast;
+    return Context >= IC_StaticCast;
   }
   
   /// \brief Determine whether this initialization is a C-style cast.
   bool isCStyleOrFunctionalCast() const { 
-    return Kind == SIK_DirectCStyleCast || Kind == SIK_DirectFunctionalCast; 
+    return Context >= IC_CStyleCast; 
   }
 
-  /// brief Determine whether this is a C-style cast.
+  /// \brief Determine whether this is a C-style cast.
   bool isCStyleCast() const {
-    return Kind == SIK_DirectCStyleCast;
+    return Context == IC_CStyleCast;
   }
 
-  /// brief Determine whether this is a functional-style cast.
+  /// \brief Determine whether this is a functional-style cast.
   bool isFunctionalCast() const {
-    return Kind == SIK_DirectFunctionalCast;
+    return Context == IC_FunctionalCast;
   }
 
   /// \brief Determine whether this initialization is an implicit
   /// value-initialization, e.g., as occurs during aggregate
   /// initialization.
-  bool isImplicitValueInit() const { return Kind == SIK_ImplicitValue; }
+  bool isImplicitValueInit() const { return Context == IC_Implicit; }
 
   /// \brief Retrieve the location at which initialization is occurring.
   SourceLocation getLocation() const { return Locations[0]; }
@@ -467,11 +462,11 @@ public:
   /// \brief Retrieve the location of the equal sign for copy initialization
   /// (if present).
   SourceLocation getEqualLoc() const {
-    assert(Kind == SIK_Copy && "Only copy initialization has an '='");
+    assert(Kind == IK_Copy && "Only copy initialization has an '='");
     return Locations[1];
   }
 
-  bool isCopyInit() const { return Kind == SIK_Copy; }
+  bool isCopyInit() const { return Kind == IK_Copy; }
 
   /// \brief Retrieve whether this initialization allows the use of explicit
   ///        constructors.
@@ -480,7 +475,7 @@ public:
   /// \brief Retrieve the source range containing the locations of the open
   /// and closing parentheses for value and direct initializations.
   SourceRange getParenRange() const {
-    assert((getKind() == IK_Direct || Kind == SIK_Value) &&
+    assert((Kind == IK_Direct || Kind == IK_Value) &&
            "Only direct- and value-initialization have parentheses");
     return SourceRange(Locations[1], Locations[2]);
   }

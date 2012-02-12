@@ -3970,11 +3970,13 @@ InitializationSequence::InitializationSequence(Sema &S,
       SourceType = Initializer->getType();
   }
 
-  //     - If the initializer is a braced-init-list, the object is
-  //       list-initialized (8.5.4).
-  if (InitListExpr *InitList = dyn_cast_or_null<InitListExpr>(Initializer)) {
-    TryListInitialization(S, Entity, Kind, InitList, *this);
-    return;
+  //     - If the initializer is a (non-parenthesized) braced-init-list, the
+  //       object is list-initialized (8.5.4).
+  if (Kind.getKind() != InitializationKind::IK_Direct) {
+    if (InitListExpr *InitList = dyn_cast_or_null<InitListExpr>(Initializer)) {
+      TryListInitialization(S, Entity, Kind, InitList, *this);
+      return;
+    }
   }
 
   //     - If the destination type is a reference type, see 8.5.3.

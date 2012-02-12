@@ -56,4 +56,6 @@ namespace aggregate {
     // String is not default-constructible
     static_assert(sizeof(overloaded({1})) == sizeof(one), "bad overload");
   }
+
+  struct C { int a[2]; C():a({1, 2}) { } }; // expected-error {{array initializer must be an initializer list}}
 }

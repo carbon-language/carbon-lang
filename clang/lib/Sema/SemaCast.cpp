@@ -320,11 +320,13 @@ static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
   if (!destType->isRecordType() && !srcType->isRecordType())
     return false;
 
+  bool initList = isa<InitListExpr>(src);
   InitializedEntity entity = InitializedEntity::InitializeTemporary(destType);
   InitializationKind initKind
     = (CT == CT_CStyle)? InitializationKind::CreateCStyleCast(range.getBegin(),
-                                                              range)
-    : (CT == CT_Functional)? InitializationKind::CreateFunctionalCast(range)
+                                                              range, initList)
+    : (CT == CT_Functional)? InitializationKind::CreateFunctionalCast(range,
+                                                                      initList)
     : InitializationKind::CreateCast(/*type range?*/ range);
   InitializationSequence sequence(S, entity, initKind, &src, 1);
 
@@ -1301,13 +1303,16 @@ TryStaticImplicitCast(Sema &Self, ExprResult &SrcExpr, QualType DestType,
       return TC_Failed;
     }
   }
-  
+
+  // FIXME: doesn't correctly identify T({1})
+  bool InitList = isa<InitListExpr>(SrcExpr.get());
   InitializedEntity Entity = InitializedEntity::InitializeTemporary(DestType);
   InitializationKind InitKind
     = (CCK == Sema::CCK_CStyleCast)
-        ? InitializationKind::CreateCStyleCast(OpRange.getBegin(), OpRange)
+        ? InitializationKind::CreateCStyleCast(OpRange.getBegin(), OpRange,
+                                               InitList)
     : (CCK == Sema::CCK_FunctionalCast)
-        ? InitializationKind::CreateFunctionalCast(OpRange)
+        ? InitializationKind::CreateFunctionalCast(OpRange, InitList)
     : InitializationKind::CreateCast(OpRange);
   Expr *SrcExprRaw = SrcExpr.get();
   InitializationSequence InitSeq(Self, Entity, InitKind, &SrcExprRaw, 1);
