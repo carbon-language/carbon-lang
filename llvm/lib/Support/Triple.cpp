@@ -9,6 +9,7 @@
 
 #include "llvm/ADT/Triple.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/StringSwitch.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <cstring>
@@ -134,54 +135,31 @@ const char *Triple::getEnvironmentTypeName(EnvironmentType Kind) {
 }
 
 Triple::ArchType Triple::getArchTypeForLLVMName(StringRef Name) {
-  if (Name == "arm")
-    return arm;
-  if (Name == "cellspu")
-    return cellspu;
-  if (Name == "mips")
-    return mips;
-  if (Name == "mipsel")
-    return mipsel;
-  if (Name == "mips64")
-    return mips64;
-  if (Name == "mips64el")
-    return mips64el;
-  if (Name == "msp430")
-    return msp430;
-  if (Name == "ppc64")
-    return ppc64;
-  if (Name == "ppc32")
-    return ppc;
-  if (Name == "ppc")
-    return ppc;
-  if (Name == "mblaze")
-    return mblaze;
-  if (Name == "hexagon")
-    return hexagon;
-  if (Name == "sparc")
-    return sparc;
-  if (Name == "sparcv9")
-    return sparcv9;
-  if (Name == "tce")
-    return tce;
-  if (Name == "thumb")
-    return thumb;
-  if (Name == "x86")
-    return x86;
-  if (Name == "x86-64")
-    return x86_64;
-  if (Name == "xcore")
-    return xcore;
-  if (Name == "ptx32")
-    return ptx32;
-  if (Name == "ptx64")
-    return ptx64;
-  if (Name == "le32")
-    return le32;
-  if (Name == "amdil")
-      return amdil;
-
-  return UnknownArch;
+  return StringSwitch<Triple::ArchType>(Name)
+    .Case("arm", arm)
+    .Case("cellspu", cellspu)
+    .Case("mips", mips)
+    .Case("mipsel", mipsel)
+    .Case("mips64", mips64)
+    .Case("mips64el", mips64el)
+    .Case("msp430", msp430)
+    .Case("ppc64", ppc64)
+    .Case("ppc32", ppc)
+    .Case("ppc", ppc)
+    .Case("mblaze", mblaze)
+    .Case("hexagon", hexagon)
+    .Case("sparc", sparc)
+    .Case("sparcv9", sparcv9)
+    .Case("tce", tce)
+    .Case("thumb", thumb)
+    .Case("x86", x86)
+    .Case("x86-64", x86_64)
+    .Case("xcore", xcore)
+    .Case("ptx32", ptx32)
+    .Case("ptx64", ptx64)
+    .Case("le32", le32)
+    .Case("amdil", amdil)
+    .Default(UnknownArch);
 }
 
 Triple::ArchType Triple::getArchTypeForDarwinArchName(StringRef Str) {
@@ -197,36 +175,21 @@ Triple::ArchType Triple::getArchTypeForDarwinArchName(StringRef Str) {
   // This code must be kept in sync with Clang's Darwin specific argument
   // translation.
 
-  if (Str == "ppc" || Str == "ppc601" || Str == "ppc603" || Str == "ppc604" ||
-      Str == "ppc604e" || Str == "ppc750" || Str == "ppc7400" ||
-      Str == "ppc7450" || Str == "ppc970")
-    return Triple::ppc;
-
-  if (Str == "ppc64")
-    return Triple::ppc64;
-
-  if (Str == "i386" || Str == "i486" || Str == "i486SX" || Str == "pentium" ||
-      Str == "i586" || Str == "pentpro" || Str == "i686" || Str == "pentIIm3" ||
-      Str == "pentIIm5" || Str == "pentium4")
-    return Triple::x86;
-
-  if (Str == "x86_64")
-    return Triple::x86_64;
-
-  // This is derived from the driver driver.
-  if (Str == "arm" || Str == "armv4t" || Str == "armv5" || Str == "xscale" ||
-      Str == "armv6" || Str == "armv7" || Str == "armv7f" || Str == "armv7k" ||
-      Str == "armv7s")
-    return Triple::arm;
-
-  if (Str == "ptx32")
-    return Triple::ptx32;
-  if (Str == "ptx64")
-    return Triple::ptx64;
-  if (Str == "amdil")
-      return Triple::amdil;
-
-  return Triple::UnknownArch;
+  return StringSwitch<ArchType>(Str)
+    .Cases("ppc", "ppc601", "ppc603", "ppc604", "ppc604e", Triple::ppc)
+    .Cases("ppc750", "ppc7400", "ppc7450", "ppc970", Triple::ppc)
+    .Case("ppc64", Triple::ppc64)
+    .Cases("i386", "i486", "i486SX", "i586", "i686", Triple::x86)
+    .Cases("pentium", "pentpro", "pentIIm3", "pentIIm5", "pentium4",
+           Triple::x86)
+    .Case("x86_64", Triple::x86_64)
+    // This is derived from the driver driver.
+    .Cases("arm", "armv4t", "armv5", "armv6", Triple::arm)
+    .Cases("armv7", "armv7f", "armv7k", "armv7s", "xscale", Triple::arm)
+    .Case("ptx32", Triple::ptx32)
+    .Case("ptx64", Triple::ptx64)
+    .Case("amdil", Triple::amdil)
+    .Default(Triple::UnknownArch);
 }
 
 // Returns architecture name that is understood by the target assembler.
@@ -234,106 +197,66 @@ const char *Triple::getArchNameForAssembler() {
   if (!isOSDarwin() && getVendor() != Triple::Apple)
     return NULL;
 
-  StringRef Str = getArchName();
-  if (Str == "i386")
-    return "i386";
-  if (Str == "x86_64")
-    return "x86_64";
-  if (Str == "powerpc")
-    return "ppc";
-  if (Str == "powerpc64")
-    return "ppc64";
-  if (Str == "mblaze" || Str == "microblaze")
-    return "mblaze";
-  if (Str == "arm")
-    return "arm";
-  if (Str == "armv4t" || Str == "thumbv4t")
-    return "armv4t";
-  if (Str == "armv5" || Str == "armv5e" || Str == "thumbv5"
-      || Str == "thumbv5e")
-    return "armv5";
-  if (Str == "armv6" || Str == "thumbv6")
-    return "armv6";
-  if (Str == "armv7" || Str == "thumbv7")
-    return "armv7";
-  if (Str == "ptx32")
-    return "ptx32";
-  if (Str == "ptx64")
-    return "ptx64";
-  if (Str == "le32")
-    return "le32";
-  if (Str == "amdil")
-      return "amdil";
-  return NULL;
+  return StringSwitch<const char*>(getArchName())
+    .Case("i386", "i386")
+    .Case("x86_64", "x86_64")
+    .Case("powerpc", "ppc")
+    .Case("powerpc64", "ppc64")
+    .Cases("mblaze", "microblaze", "mblaze")
+    .Case("arm", "arm")
+    .Cases("armv4t", "thumbv4t", "armv4t")
+    .Cases("armv5", "armv5e", "thumbv5", "thumbv5e", "armv5")
+    .Cases("armv6", "thumbv6", "armv6")
+    .Cases("armv7", "thumbv7", "armv7")
+    .Case("ptx32", "ptx32")
+    .Case("ptx64", "ptx64")
+    .Case("le32", "le32")
+    .Case("amdil", "amdil")
+    .Default(NULL);
 }
 
 //
 
 Triple::ArchType Triple::ParseArch(StringRef ArchName) {
-  if (ArchName.size() == 4 && ArchName[0] == 'i' &&
-      ArchName[2] == '8' && ArchName[3] == '6' &&
-      ArchName[1] - '3' < 6) // i[3-9]86
-    return x86;
-  else if (ArchName == "amd64" || ArchName == "x86_64")
-    return x86_64;
-  else if (ArchName == "powerpc")
-    return ppc;
-  else if ((ArchName == "powerpc64") || (ArchName == "ppu"))
-    return ppc64;
-  else if (ArchName == "mblaze")
-    return mblaze;
-  else if (ArchName == "arm" ||
-           ArchName.startswith("armv") ||
-           ArchName == "xscale")
-    return arm;
-  else if (ArchName == "thumb" ||
-           ArchName.startswith("thumbv"))
-    return thumb;
-  else if (ArchName == "spu" || ArchName == "cellspu")
-    return cellspu;
-  else if (ArchName == "msp430")
-    return msp430;
-  else if (ArchName == "mips" || ArchName == "mipseb" ||
-           ArchName == "mipsallegrex")
-    return mips;
-  else if (ArchName == "mipsel" || ArchName == "mipsallegrexel" ||
-           ArchName == "psp")
-    return mipsel;
-  else if (ArchName == "mips64" || ArchName == "mips64eb")
-    return mips64;
-  else if (ArchName == "mips64el")
-    return mips64el;
-  else if (ArchName == "hexagon")
-    return hexagon;
-  else if (ArchName == "sparc")
-    return sparc;
-  else if (ArchName == "sparcv9")
-    return sparcv9;
-  else if (ArchName == "tce")
-    return tce;
-  else if (ArchName == "xcore")
-    return xcore;
-  else if (ArchName == "ptx32")
-    return ptx32;
-  else if (ArchName == "ptx64")
-    return ptx64;
-  else if (ArchName == "le32")
-    return le32;
-  else if (ArchName == "amdil")
-      return amdil;
-  else
-    return UnknownArch;
+  // Handle some unusual patterns.
+  // FIXME: It would be good to replace these with explicit names for all the
+  // various suffixes supported.
+  if (ArchName.startswith("armv")) return arm;
+  if (ArchName.startswith("thumbv")) return thumb;
+
+  return StringSwitch<ArchType>(ArchName)
+    .Cases("i386", "i486", "i586", "i686", x86)
+    .Cases("i786", "i886", "i986", x86) // FIXME: Do we need to support these?
+    .Cases("amd64", "x86_64", x86_64)
+    .Case("powerpc", ppc)
+    .Cases("powerpc64", "ppu", ppc64)
+    .Case("mblaze", mblaze)
+    .Cases("arm", "xscale", arm)
+    .Case("thumb", thumb)
+    .Cases("spu", "cellspu", cellspu)
+    .Case("msp430", msp430)
+    .Cases("mips", "mipseb", "mipsallegrex", mips)
+    .Cases("mipsel", "mipsallegrexel", "psp", mipsel)
+    .Cases("mips64", "mips64eb", mips64)
+    .Case("mips64el", mips64el)
+    .Case("hexagon", hexagon)
+    .Case("sparc", sparc)
+    .Case("sparcv9", sparcv9)
+    .Case("tce", tce)
+    .Case("xcore", xcore)
+    .Case("ptx32", ptx32)
+    .Case("ptx64", ptx64)
+    .Case("le32", le32)
+    .Case("amdil", amdil)
+    .Default(UnknownArch);
 }
 
 Triple::VendorType Triple::ParseVendor(StringRef VendorName) {
-  if (VendorName == "apple")
-    return Apple;
-  else if (VendorName == "pc")
-    return PC;
-  else if (VendorName == "scei")
-    return SCEI;
-  else
-    return UnknownVendor;
+  return StringSwitch<VendorType>(VendorName)
+    .Case("apple", Apple)
+    .Case("pc", PC)
+    .Case("scei", SCEI)
+    .Default(UnknownVendor);
 }
 
 Triple::OSType Triple::ParseOS(StringRef OSName) {
