@@ -1631,53 +1631,50 @@ class CodeGeneration : public ScopPass {
   // Create a split block that branches either to the old code or to a new basic
   // block where the new code can be inserted.
   //
-  // @param builder A builder that will be set to point to a basic block, where
+  // @param Builder A builder that will be set to point to a basic block, where
   //                the new code can be generated.
   // @return The split basic block.
-  BasicBlock *addSplitAndStartBlock(IRBuilder<> *builder) {
-    BasicBlock *splitBlock = splitEdgeAdvanced(region);
+  BasicBlock *addSplitAndStartBlock(IRBuilder<> *Builder) {
+    BasicBlock *StartBlock, *SplitBlock;
 
-    splitBlock->setName("polly.split_new_and_old");
-
-    Function *function = splitBlock->getParent();
-    BasicBlock *startBlock = BasicBlock::Create(function->getContext(),
-                                                "polly.start", function);
-    splitBlock->getTerminator()->eraseFromParent();
-    builder->SetInsertPoint(splitBlock);
-    builder->CreateCondBr(builder->getTrue(), startBlock, region->getEntry());
-    DT->addNewBlock(startBlock, splitBlock);
-
-    // Start code generation here.
-    builder->SetInsertPoint(startBlock);
-    return splitBlock;
+    SplitBlock = splitEdgeAdvanced(region);
+    SplitBlock->setName("polly.split_new_and_old");
+    Function *F = SplitBlock->getParent();
+    StartBlock = BasicBlock::Create(F->getContext(), "polly.start", F);
+    SplitBlock->getTerminator()->eraseFromParent();
+    Builder->SetInsertPoint(SplitBlock);
+    Builder->CreateCondBr(Builder->getTrue(), StartBlock, region->getEntry());
+    DT->addNewBlock(StartBlock, SplitBlock);
+    Builder->SetInsertPoint(StartBlock);
+    return SplitBlock;
   }
 
   // Merge the control flow of the newly generated code with the existing code.
   //
-  // @param splitBlock The basic block where the control flow was split between
+  // @param SplitBlock The basic block where the control flow was split between
   //                   old and new version of the Scop.
-  // @param builder    An IRBuilder that points to the last instruction of the
+  // @param Builder    An IRBuilder that points to the last instruction of the
   //                   newly generated code.
-  void mergeControlFlow(BasicBlock *splitBlock, IRBuilder<> *builder) {
-    BasicBlock *mergeBlock;
+  void mergeControlFlow(BasicBlock *SplitBlock, IRBuilder<> *Builder) {
+    BasicBlock *MergeBlock;
     Region *R = region;
 
     if (R->getExit()->getSinglePredecessor())
       // No splitEdge required.  A block with a single predecessor cannot have
       // PHI nodes that would complicate life.
-      mergeBlock = R->getExit();
+      MergeBlock = R->getExit();
     else {
-      mergeBlock = SplitEdge(R->getExitingBlock(), R->getExit(), this);
+      MergeBlock = SplitEdge(R->getExitingBlock(), R->getExit(), this);
       // SplitEdge will never split R->getExit(), as R->getExit() has more than
       // one predecessor. Hence, mergeBlock is always a newly generated block.
-      mergeBlock->setName("polly.merge_new_and_old");
-      R->replaceExit(mergeBlock);
+      MergeBlock->setName("polly.merge_new_and_old");
+      R->replaceExit(MergeBlock);
     }
 
-    builder->CreateBr(mergeBlock);
+    Builder->CreateBr(MergeBlock);
 
-    if (DT->dominates(splitBlock, mergeBlock))
-      DT->changeImmediateDominator(mergeBlock, splitBlock);
+    if (DT->dominates(SplitBlock, MergeBlock))
+      DT->changeImmediateDominator(MergeBlock, SplitBlock);
   }
 
   bool runOnScop(Scop &scop) {
