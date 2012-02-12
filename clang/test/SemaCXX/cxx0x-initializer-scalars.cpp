@@ -25,7 +25,7 @@ namespace integral {
   }
 
   void inline_init() {
-    (void) int{1};
+    auto v = int{1};
     (void) new int{1};
   }
 
@@ -59,5 +59,7 @@ namespace integral {
   void edge_cases() {
     // FIXME: very poor error message
     int a({0}); // expected-error {{cannot initialize}}
+    (void) int({0}); // expected-error {{functional-style cast}}
+    new int({0});  // expected-error {{cannot initialize}}
   }
 }

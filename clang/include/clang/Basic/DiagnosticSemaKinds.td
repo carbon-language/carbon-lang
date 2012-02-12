@@ -1232,6 +1232,8 @@ def err_auto_var_requires_init : Error<
   "declaration of variable %0 with type %1 requires an initializer">;
 def err_auto_new_requires_ctor_arg : Error<
   "new expression for type %0 requires a constructor argument">;
+def err_auto_new_requires_parens : Error<
+  "new expression for type %0 cannot use list-initialization">;
 def err_auto_var_init_no_expression : Error<
   "initializer for variable %0 with type %1 is empty">;
 def err_auto_var_init_multiple_expressions : Error<
@@ -1257,6 +1259,10 @@ def err_implied_std_initializer_list_not_found : Error<
   "not found; include <initializer_list>">;
 def err_malformed_std_initializer_list : Error<
   "std::initializer_list must be a class template with a single type parameter">;
+def warn_dangling_std_initializer_list : Warning<
+  "array backing the initializer list will be destroyed at the end of "
+  "%select{the full-expression|the constructor}0">,
+  InGroup<DiagGroup<"dangling-initializer-list">>;
 
 // C++11 override control
 def override_keyword_only_allowed_on_virtual_member_functions : Error<

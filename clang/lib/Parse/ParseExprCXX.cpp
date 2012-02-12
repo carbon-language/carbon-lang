@@ -1151,10 +1151,13 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
          && "Expected '(' or '{'!");
 
   if (Tok.is(tok::l_brace)) {
-
-    // FIXME: Convert to a proper type construct expression.
-    return ParseBraceInitializer();
-
+    ExprResult Init = ParseBraceInitializer();
+    if (Init.isInvalid())
+      return Init;
+    Expr *InitList = Init.take();
+    return Actions.ActOnCXXTypeConstructExpr(TypeRep, SourceLocation(),
+                                             MultiExprArg(&InitList, 1),
+                                             SourceLocation());
   } else {
     GreaterThanIsOperatorScope G(GreaterThanIsOperator, true);
 

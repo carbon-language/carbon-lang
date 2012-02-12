@@ -27,6 +27,13 @@ namespace aggregate {
     S s5{ {1, 2}, {3, 4}, { {5}, {6} }, {7, 8} }; // expected-error {{cannot omit braces}}
   }
 
+  void bracing_new() {
+    new S{ {1, 2}, {3, 4}, { {5}, {6} }, { {7, 8} } }; // completely braced
+    new S{ 1, 2, 3, 4, 5, 6 }; // expected-error 5 {{cannot omit braces}}
+    new S{ {1, 2}, {3, 4}, {5, 6}, { {7, 8} } }; // expected-error 2 {{cannot omit braces}}
+    new S{ {1, 2}, {3, 4}, { {5}, {6} }, {7, 8} }; // expected-error {{cannot omit braces}}
+  }
+
   struct String {
     String(const char*);
   };
