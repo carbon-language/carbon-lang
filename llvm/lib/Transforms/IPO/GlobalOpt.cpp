@@ -1938,8 +1938,6 @@ bool GlobalOpt::OptimizeGlobalVars(Module &M) {
     // Simplify the initializer.
     if (GV->hasInitializer())
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(GV->getInitializer())) {
-        TargetData *TD = getAnalysisIfAvailable<TargetData>();
-        TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
         Constant *New = ConstantFoldConstantExpression(CE, TD, TLI);
         if (New && New != CE)
           GV->setInitializer(New);
@@ -2645,9 +2643,6 @@ bool GlobalOpt::OptimizeGlobalCtorsList(GlobalVariable *&GCL) {
   bool MadeChange = false;
   if (Ctors.empty()) return false;
 
-  const TargetData *TD = getAnalysisIfAvailable<TargetData>();
-  const TargetLibraryInfo *TLI = &getAnalysis<TargetLibraryInfo>();
-
   // Loop over global ctors, optimizing them when we can.
   for (unsigned i = 0; i != Ctors.size(); ++i) {
     Function *F = Ctors[i];
@@ -2737,12 +2732,15 @@ bool GlobalOpt::OptimizeGlobalAliases(Module &M) {
   return Changed;
 }
 
-static Function *FindCXAAtExit(Module &M) {
-  Function *Fn = M.getFunction("__cxa_atexit");
+static Function *FindCXAAtExit(Module &M, TargetLibraryInfo *TLI) {
+  if (!TLI->has(LibFunc::cxa_atexit))
+    return false;
+
+  Function *Fn = M.getFunction(TLI->getName(LibFunc::cxa_atexit));
   
   if (!Fn)
     return 0;
-  
+
   FunctionType *FTy = Fn->getFunctionType();
   
   // Checking that the function has the right return type, the right number of 
@@ -2854,12 +2852,12 @@ bool GlobalOpt::runOnModule(Module &M) {
   bool Changed = false;
 
   TD = getAnalysisIfAvailable<TargetData>();
-  TLI = getAnalysisIfAvailable<TargetLibraryInfo>();
+  TLI = &getAnalysis<TargetLibraryInfo>();
 
   // Try to find the llvm.globalctors list.
   GlobalVariable *GlobalCtors = FindGlobalCtors(M);
 
-  Function *CXAAtExitFn = FindCXAAtExit(M);
+  Function *CXAAtExitFn = FindCXAAtExit(M, TLI);
 
   bool LocalChange = true;
   while (LocalChange) {
