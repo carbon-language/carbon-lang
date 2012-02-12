@@ -7253,7 +7253,7 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   // same source type and all of the inputs must be any or zero extend.
   // Scalar sizes must be a power of two.
   EVT OutScalarTy = N->getValueType(0).getScalarType();
-  bool validTypes = SourceType != MVT::Other &&
+  bool ValidTypes = SourceType != MVT::Other &&
                  isPowerOf2_32(OutScalarTy.getSizeInBits()) &&
                  isPowerOf2_32(SourceType.getSizeInBits());
 
@@ -7263,7 +7263,8 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
   // will be type-legalized to complex code sequences.
   // We perform this optimization only before the operation legalizer because we
   // may introduce illegal operations.
-  if (LegalTypes && !LegalOperations && validTypes) {
+  if ((Level == AfterLegalizeVectorOps || Level == AfterLegalizeTypes) &&
+      ValidTypes) {
     bool isLE = TLI.isLittleEndian();
     unsigned ElemRatio = OutScalarTy.getSizeInBits()/SourceType.getSizeInBits();
     assert(ElemRatio > 1 && "Invalid element size ratio");
@@ -7322,15 +7323,8 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
       break;
     }
 
-    // If the input vector type disagrees with the result of the build_vector,
-    // we can't make a shuffle.
+    // We allow up to two distinct input vectors.
     SDValue ExtractedFromVec = N->getOperand(i).getOperand(0);
-    if (ExtractedFromVec.getValueType() != VT) {
-      VecIn1 = VecIn2 = SDValue(0, 0);
-      break;
-    }
-
-    // Otherwise, remember this.  We allow up to two distinct input vectors.
     if (ExtractedFromVec == VecIn1 || ExtractedFromVec == VecIn2)
       continue;
 
@@ -7345,7 +7339,7 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     }
   }
 
-  // If everything is good, we can make a shuffle operation.
+    // If everything is good, we can make a shuffle operation.
   if (VecIn1.getNode()) {
     SmallVector<int, 8> Mask;
     for (unsigned i = 0; i != NumInScalars; ++i) {
@@ -7371,14 +7365,35 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
       Mask.push_back(Idx+NumInScalars);
     }
 
-    // Add count and size info.
-    if (!isTypeLegal(VT))
+    // We can't generate a shuffle node with mismatched input and output types.
+    // Attempt to transform a single input vector to the correct type.
+    if ((VT != VecIn1.getValueType())) {
+      // We don't support shuffeling between TWO values of different types.
+      if (VecIn2.getNode() != 0)
+        return SDValue();
+
+      // We only support widening of vectors which are half the size of the
+      // output registers. For example XMM->YMM widening on X86 with AVX.
+      if (VecIn1.getValueType().getSizeInBits()*2 != VT.getSizeInBits())
+        return SDValue();
+
+      // Widen the input vector by adding undef values.
+      VecIn1 = DAG.getNode(ISD::CONCAT_VECTORS, N->getDebugLoc(), VT,
+                           VecIn1, DAG.getUNDEF(VecIn1.getValueType()));
+    }
+
+    // If VecIn2 is unused then change it to undef.
+    VecIn2 = VecIn2.getNode() ? VecIn2 : DAG.getUNDEF(VT);
+
+    // Only type-legal BUILD_VECTOR nodes are converted to shuffle nodes.
+    if (!isTypeLegal(VT) || !isTypeLegal(VecIn1.getValueType()) ||
+        !isTypeLegal(VecIn2.getValueType()))
       return SDValue();
 
     // Return the new VECTOR_SHUFFLE node.
     SDValue Ops[2];
     Ops[0] = VecIn1;
-    Ops[1] = VecIn2.getNode() ? VecIn2 : DAG.getUNDEF(VT);
+    Ops[1] = VecIn2;
     return DAG.getVectorShuffle(VT, N->getDebugLoc(), Ops[0], Ops[1], &Mask[0]);
   }
 
