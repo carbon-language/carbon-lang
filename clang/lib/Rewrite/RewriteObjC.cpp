@@ -4922,6 +4922,9 @@ void RewriteObjC::HandleDeclInMainFile(Decl *D) {
       // definitions using the same code.
       RewriteBlocksInFunctionProtoType(FD->getType(), FD);
 
+      if (!FD->isThisDeclarationADefinition())
+        break;
+
       // FIXME: If this should support Obj-C++, support CXXTryStmt
       if (CompoundStmt *Body = dyn_cast_or_null<CompoundStmt>(FD->getBody())) {
         CurFunctionDef = FD;
