@@ -3928,8 +3928,10 @@ QualType ASTReader::readTypeRecord(unsigned Index) {
     return Context.getTypeOfType(UnderlyingType);
   }
 
-  case TYPE_DECLTYPE:
-    return Context.getDecltypeType(ReadExpr(*Loc.F));
+  case TYPE_DECLTYPE: {
+    QualType UnderlyingType = readType(*Loc.F, Record, Idx);
+    return Context.getDecltypeType(ReadExpr(*Loc.F), UnderlyingType);
+  }
 
   case TYPE_UNARY_TRANSFORM: {
     QualType BaseType = readType(*Loc.F, Record, Idx);

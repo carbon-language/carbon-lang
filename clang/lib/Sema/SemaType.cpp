@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "clang/Sema/ScopeInfo.h"
 #include "clang/Sema/SemaInternal.h"
 #include "clang/Sema/Template.h"
 #include "clang/Basic/OpenCL.h"
@@ -4368,12 +4369,98 @@ QualType Sema::BuildTypeofExprType(Expr *E, SourceLocation Loc) {
   return Context.getTypeOfExprType(E);
 }
 
+/// getDecltypeForExpr - Given an expr, will return the decltype for
+/// that expression, according to the rules in C++11
+/// [dcl.type.simple]p4 and C++11 [expr.lambda.prim]p18.
+static QualType getDecltypeForExpr(Sema &S, Expr *E) {
+  if (E->isTypeDependent())
+    return S.Context.DependentTy;
+
+  // If e is an id expression or a class member access, decltype(e) is defined
+  // as the type of the entity named by e.
+  if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
+    if (const ValueDecl *VD = dyn_cast<ValueDecl>(DRE->getDecl()))
+      return VD->getType();
+  }
+  if (const MemberExpr *ME = dyn_cast<MemberExpr>(E)) {
+    if (const FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl()))
+      return FD->getType();
+  }
+  // If e is a function call or an invocation of an overloaded operator,
+  // (parentheses around e are ignored), decltype(e) is defined as the
+  // return type of that function.
+  if (const CallExpr *CE = dyn_cast<CallExpr>(E->IgnoreParens()))
+    return CE->getCallReturnType();
+
+  // C++11 [expr.lambda.prim]p18:
+  //   Every occurrence of decltype((x)) where x is a possibly
+  //   parenthesized id-expression that names an entity of automatic
+  //   storage duration is treated as if x were transformed into an
+  //   access to a corresponding data member of the closure type that
+  //   would have been declared if x were an odr-use of the denoted
+  //   entity.
+  using namespace sema;
+  if (S.getCurLambda()) {
+    if (isa<ParenExpr>(E)) {
+      if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->IgnoreParens())) {
+        if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl())) {
+          QualType T = Var->getType();
+          unsigned FunctionScopesIndex;
+          bool Nested;
+          // Determine whether we can capture this variable.
+          if (S.canCaptureVariable(Var, DRE->getLocation(), 
+                                   /*Explicit=*/false, /*Diagnose=*/false, 
+                                   T, FunctionScopesIndex, Nested)) {
+            // Outer lambda scopes may have an effect on the type of a
+            // capture. Walk the captures outside-in to determine
+            // whether they can add 'const' to a capture by copy.
+            if (FunctionScopesIndex == S.FunctionScopes.size())
+              --FunctionScopesIndex;
+            for (unsigned I = FunctionScopesIndex, 
+                          E = S.FunctionScopes.size();
+                 I != E; ++I) {
+              LambdaScopeInfo *LSI
+                = dyn_cast<LambdaScopeInfo>(S.FunctionScopes[I]);
+              if (!LSI)
+                continue;
+
+              bool ByRef = false;
+              if (LSI->isCaptured(Var))
+                ByRef = LSI->getCapture(Var).isReferenceCapture();
+              else
+                ByRef = (LSI->ImpCaptureStyle
+                           == CapturingScopeInfo::ImpCap_LambdaByref);
+
+              T = S.getLambdaCaptureFieldType(T, ByRef);
+              if (!ByRef && !LSI->Mutable)
+                T.addConst();
+            }
+
+            if (!T->isReferenceType())
+              T = S.Context.getLValueReferenceType(T);
+            return T;
+          }
+        }
+      }
+    }
+  }
+
+  QualType T = E->getType();
+
+  // Otherwise, where T is the type of e, if e is an lvalue, decltype(e) is
+  // defined as T&, otherwise decltype(e) is defined as T.
+  if (E->isLValue())
+    T = S.Context.getLValueReferenceType(T);
+
+  return T;
+}
+
 QualType Sema::BuildDecltypeType(Expr *E, SourceLocation Loc) {
   ExprResult ER = CheckPlaceholderExpr(E);
   if (ER.isInvalid()) return QualType();
   E = ER.take();
   
-  return Context.getDecltypeType(E);
+  return Context.getDecltypeType(E, getDecltypeForExpr(*this, E));
 }
 
 QualType Sema::BuildUnaryTransformType(QualType BaseType,

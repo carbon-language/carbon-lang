@@ -876,7 +876,7 @@ public:
   QualType getTypeOfType(QualType t) const;
 
   /// getDecltypeType - C++0x decltype.
-  QualType getDecltypeType(Expr *e) const;
+  QualType getDecltypeType(Expr *e, QualType UnderlyingType) const;
 
   /// getUnaryTransformType - unary type transforms
   QualType getUnaryTransformType(QualType BaseType, QualType UnderlyingType,

@@ -1581,7 +1581,11 @@ QualType ASTNodeImporter::VisitDecltypeType(const DecltypeType *T) {
   if (!ToExpr)
     return QualType();
   
-  return Importer.getToContext().getDecltypeType(ToExpr);
+  QualType UnderlyingType = Importer.Import(T->getUnderlyingType());
+  if (UnderlyingType.isNull())
+    return QualType();
+
+  return Importer.getToContext().getDecltypeType(ToExpr, UnderlyingType);
 }
 
 QualType ASTNodeImporter::VisitUnaryTransformType(const UnaryTransformType *T) {

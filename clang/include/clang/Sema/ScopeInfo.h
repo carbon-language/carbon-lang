@@ -22,11 +22,13 @@
 namespace clang {
 
 class BlockDecl;
+class CXXMethodDecl;
 class IdentifierInfo;
 class LabelDecl;
 class ReturnStmt;
 class Scope;
 class SwitchStmt;
+class VarDecl;
 
 namespace sema {
 

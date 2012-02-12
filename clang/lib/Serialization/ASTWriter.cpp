@@ -222,6 +222,7 @@ void ASTTypeWriter::VisitTypeOfType(const TypeOfType *T) {
 }
 
 void ASTTypeWriter::VisitDecltypeType(const DecltypeType *T) {
+  Writer.AddTypeRef(T->getUnderlyingType(), Record);
   Writer.AddStmt(T->getUnderlyingExpr());
   Code = TYPE_DECLTYPE;
 }

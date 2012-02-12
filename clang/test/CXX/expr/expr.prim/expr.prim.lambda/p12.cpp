@@ -65,11 +65,11 @@ void f1(int i) { // expected-note{{declared here}}
     void work(int n) { // expected-note{{declared here}}
       int m = n*n;
       int j = 40; // expected-note{{declared here}}
-      auto m3 = [this,m] { // expected-note 2{{lambda expression begins here}}
+      auto m3 = [this,m] { // expected-note 3{{lambda expression begins here}}
         auto m4 = [&,j] { // expected-error{{variable 'j' cannot be implicitly captured in a lambda with no capture-default specified}}
           int x = n; // expected-error{{variable 'n' cannot be implicitly captured in a lambda with no capture-default specified}}
           x += m;
-          x += i; // expected-error{{reference to local variable 'i' declared in enclosing function 'f1'}}
+          x += i; // expected-error{{variable 'i' cannot be implicitly captured in a lambda with no capture-default specified}}
           x += f;
         };
       };

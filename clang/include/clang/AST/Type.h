@@ -3040,10 +3040,6 @@ public:
 /// DecltypeType (C++0x)
 class DecltypeType : public Type {
   Expr *E;
-
-  // FIXME: We could get rid of UnderlyingType if we wanted to: We would have to
-  // Move getDesugaredType to ASTContext so that it can call getDecltypeForExpr
-  // from it.
   QualType UnderlyingType;
 
 protected:
