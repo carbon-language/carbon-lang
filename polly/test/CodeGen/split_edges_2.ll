@@ -26,8 +26,8 @@ bb5:
 
 }
 
-; CHECK: polly.enterScop
-; CHECK-NOT: polly.finalMerge
+; CHECK: polly.split_new_and_old
+; CHECK-NOT: polly.merge_new_and_old
 
 
 

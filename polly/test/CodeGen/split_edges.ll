@@ -30,7 +30,5 @@ bb5:
 
 }
 
-; CHECK: polly.enterScop
-; CHECK: polly.finalMerge
-; CHECK: polly.enterScop
-; CHECK: polly.finalMerge
+; CHECK: polly.split_new_and_old
+; CHECK: polly.merge_new_and_old
