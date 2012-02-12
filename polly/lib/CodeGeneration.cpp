@@ -1555,52 +1555,46 @@ class CodeGeneration : public ScopPass {
   // OpenMP mode.
   void addOpenMPDeclarations(Module *M)
   {
-    LLVMContext &Context = M->getContext();
-    IRBuilder<> Builder(Context);
-    IntegerType *IntPtrTy = TD->getIntPtrType(Context);
+    IRBuilder<> Builder(M->getContext());
+    IntegerType *LongTy = TD->getIntPtrType(M->getContext());
+
+    llvm::GlobalValue::LinkageTypes Linkage = Function::ExternalLinkage;
 
     if (!M->getFunction("GOMP_parallel_end")) {
-      FunctionType *FT = FunctionType::get(Type::getVoidTy(Context), false);
-      Function::Create(FT, Function::ExternalLinkage, "GOMP_parallel_end", M);
+      FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), false);
+      Function::Create(Ty, Linkage, "GOMP_parallel_end", M);
     }
 
     if (!M->getFunction("GOMP_parallel_loop_runtime_start")) {
-      // Type of first argument.
-      std::vector<Type*> Args(1, Builder.getInt8PtrTy());
-      FunctionType *FnArgTy = FunctionType::get(Builder.getVoidTy(), Args,
-                                                false);
-      PointerType *FnPtrTy = PointerType::getUnqual(FnArgTy);
+      Type *Params[] = {
+        PointerType::getUnqual(FunctionType::get(Builder.getVoidTy(),
+                                                 Builder.getInt8PtrTy(),
+                                                 false)),
+        Builder.getInt8PtrTy(),
+        Builder.getInt32Ty(),
+        LongTy,
+        LongTy,
+        LongTy,
+      };
 
-      Args.clear();
-      Args.push_back(FnPtrTy);
-      Args.push_back(Builder.getInt8PtrTy());
-      Args.push_back(Builder.getInt32Ty());
-      Args.push_back(IntPtrTy);
-      Args.push_back(IntPtrTy);
-      Args.push_back(IntPtrTy);
-
-      FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), Args, false);
-      Function::Create(Ty, Function::ExternalLinkage,
-                       "GOMP_parallel_loop_runtime_start", M);
+      FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), Params, false);
+      Function::Create(Ty, Linkage, "GOMP_parallel_loop_runtime_start", M);
     }
 
     if (!M->getFunction("GOMP_loop_runtime_next")) {
-      PointerType *IntLongPtrTy = PointerType::getUnqual(IntPtrTy);
+      PointerType *LongPtrTy = PointerType::getUnqual(LongTy);
+      Type *Params[] = {
+        LongPtrTy,
+        LongPtrTy,
+      };
 
-      std::vector<Type*> Args;
-      Args.push_back(IntLongPtrTy);
-      Args.push_back(IntLongPtrTy);
-
-      FunctionType *Ty = FunctionType::get(Builder.getInt8Ty(), Args, false);
-      Function::Create(Ty, Function::ExternalLinkage,
-                       "GOMP_loop_runtime_next", M);
+      FunctionType *Ty = FunctionType::get(Builder.getInt8Ty(), Params, false);
+      Function::Create(Ty, Linkage, "GOMP_loop_runtime_next", M);
     }
 
     if (!M->getFunction("GOMP_loop_end_nowait")) {
-      FunctionType *FT = FunctionType::get(Builder.getVoidTy(),
-                                           std::vector<Type*>(), false);
-      Function::Create(FT, Function::ExternalLinkage,
-		       "GOMP_loop_end_nowait", M);
+      FunctionType *Ty = FunctionType::get(Builder.getVoidTy(), false);
+      Function::Create(Ty, Linkage, "GOMP_loop_end_nowait", M);
     }
   }
 
@@ -1702,8 +1696,7 @@ class CodeGeneration : public ScopPass {
 
     Module *M = region->getEntry()->getParent()->getParent();
 
-    if (OpenMP)
-      addOpenMPDeclarations(M);
+    if (OpenMP) addOpenMPDeclarations(M);
 
     // In the CFG the optimized code of the SCoP is generated next to the
     // original code. Both the new and the original version of the code remain
