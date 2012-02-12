@@ -2294,7 +2294,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 /// EvaluateBlock - Evaluate all instructions in block BB, returning true if
 /// successful, false if we can't evaluate it.  NewBB returns the next BB that
 /// control flows into, or null upon return.
-static bool EvaluateBlock(BasicBlock *BB, BasicBlock *&NextBB,
+static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
                           std::vector<Function*> &CallStack,
                           DenseMap<Value*, Constant*> &Values,
                           DenseMap<Constant*, Constant*> &MutatedMemory,
@@ -2302,9 +2302,6 @@ static bool EvaluateBlock(BasicBlock *BB, BasicBlock *&NextBB,
                           SmallPtrSet<Constant*, 8> &SimpleConstants,
                           const TargetData *TD,
                           const TargetLibraryInfo *TLI) {
-  // CurInst - The current instruction we're evaluating.
-  BasicBlock::iterator CurInst = BB->getFirstNonPHI();
-
   // This is the main evaluation loop.
   while (1) {
     Constant *InstResult = 0;
@@ -2538,9 +2535,11 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
   // CurBB - The current basic block we're evaluating.
   BasicBlock *CurBB = F->begin();
 
+  BasicBlock::iterator CurInst = CurBB->begin();
+
   while (1) {
     BasicBlock *NextBB;
-    if (!EvaluateBlock(CurBB, NextBB, CallStack, Values, MutatedMemory,
+    if (!EvaluateBlock(CurInst, NextBB, CallStack, Values, MutatedMemory,
                        AllocaTmps, SimpleConstants, TD, TLI))
       return false;
 
@@ -2564,8 +2563,8 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
     // are any PHI nodes.  If so, evaluate them with information about where
     // we came from.
     PHINode *PN = 0;
-    for (BasicBlock::iterator Inst = NextBB->begin();
-         (PN = dyn_cast<PHINode>(Inst)); ++Inst)
+    for (CurInst = NextBB->begin();
+         (PN = dyn_cast<PHINode>(CurInst)); ++CurInst)
       Values[PN] = getVal(Values, PN->getIncomingValueForBlock(CurBB));
 
     // Advance to the next block.
