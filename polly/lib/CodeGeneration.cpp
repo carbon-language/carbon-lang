@@ -1667,11 +1667,11 @@ class CodeGeneration : public ScopPass {
       MergeBlock = SplitEdge(R->getExitingBlock(), R->getExit(), this);
       // SplitEdge will never split R->getExit(), as R->getExit() has more than
       // one predecessor. Hence, mergeBlock is always a newly generated block.
-      MergeBlock->setName("polly.merge_new_and_old");
       R->replaceExit(MergeBlock);
     }
 
     Builder->CreateBr(MergeBlock);
+    MergeBlock->setName("polly.merge_new_and_old");
 
     if (DT->dominates(SplitBlock, MergeBlock))
       DT->changeImmediateDominator(MergeBlock, SplitBlock);
