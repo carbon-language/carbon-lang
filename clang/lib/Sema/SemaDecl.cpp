@@ -6143,9 +6143,12 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
   if (!VDecl->isInvalidDecl()) {
     InitializedEntity Entity = InitializedEntity::InitializeVariable(VDecl);
     InitializationKind Kind
-      = DirectInit ? InitializationKind::CreateDirect(VDecl->getLocation(),
-                                                      Init->getLocStart(),
-                                                      Init->getLocEnd())
+      = DirectInit ?
+          CXXDirectInit ? InitializationKind::CreateDirect(VDecl->getLocation(),
+                                                           Init->getLocStart(),
+                                                           Init->getLocEnd())
+                        : InitializationKind::CreateDirectList(
+                                                          VDecl->getLocation())
                    : InitializationKind::CreateCopy(VDecl->getLocation(),
                                                     Init->getLocStart());
 

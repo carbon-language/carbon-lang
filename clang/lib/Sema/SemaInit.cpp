@@ -2860,9 +2860,7 @@ static void TryConstructorInitialization(Sema &S,
 
   // Determine whether we are allowed to call explicit constructors or
   // explicit conversion operators.
-  bool AllowExplicit = (Kind.getKind() == InitializationKind::IK_Direct ||
-                        Kind.getKind() == InitializationKind::IK_Value ||
-                        Kind.getKind() == InitializationKind::IK_Default);
+  bool AllowExplicit = Kind.AllowExplicit();
   bool CopyInitialization = Kind.getKind() == InitializationKind::IK_Copy;
 
   //   - Otherwise, if T is a class type, constructors are considered. The
@@ -3065,8 +3063,10 @@ static void TryListInitialization(Sema &S,
   if (DestType->isRecordType() && !DestType->isAggregateType()) {
     if (S.getLangOptions().CPlusPlus0x) {
       Expr *Arg = InitList;
+      // A direct-initializer is not list-syntax, i.e. there's no special
+      // treatment of "A a({1, 2});".
       TryConstructorInitialization(S, Entity, Kind, &Arg, 1, DestType,
-                                   Sequence, /*InitListSyntax=*/true);
+                    Sequence, Kind.getKind() != InitializationKind::IK_Direct);
     } else
       Sequence.SetFailed(InitializationSequence::FK_InitListBadDestinationType);
     return;
@@ -3074,7 +3074,7 @@ static void TryListInitialization(Sema &S,
 
   InitListChecker CheckInitList(S, Entity, InitList,
           DestType, /*VerifyOnly=*/true,
-          Kind.getKind() != InitializationKind::IK_Direct ||
+          Kind.getKind() != InitializationKind::IK_DirectList ||
             !S.getLangOptions().CPlusPlus0x);
   if (CheckInitList.HadError()) {
     Sequence.SetFailed(InitializationSequence::FK_ListInitializationFailed);
@@ -3118,7 +3118,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
 
   // Determine whether we are allowed to call explicit constructors or
   // explicit conversion operators.
-  bool AllowExplicit = Kind.getKind() == InitializationKind::IK_Direct;
+  bool AllowExplicit = Kind.AllowExplicit();
 
   const RecordType *T1RecordType = 0;
   if (AllowRValues && (T1RecordType = T1->getAs<RecordType>()) &&
@@ -3480,7 +3480,7 @@ static void TryReferenceInitializationCore(Sema &S,
 
   // Determine whether we are allowed to call explicit constructors or
   // explicit conversion operators.
-  bool AllowExplicit = (Kind.getKind() == InitializationKind::IK_Direct);
+  bool AllowExplicit = Kind.AllowExplicit();
 
   InitializedEntity TempEntity = InitializedEntity::InitializeTemporary(cv1T1);
 
@@ -3643,7 +3643,7 @@ static void TryUserDefinedConversion(Sema &S,
 
   // Determine whether we are allowed to call explicit constructors or
   // explicit conversion operators.
-  bool AllowExplicit = Kind.getKind() == InitializationKind::IK_Direct;
+  bool AllowExplicit = Kind.AllowExplicit();
 
   if (const RecordType *DestRecordType = DestType->getAs<RecordType>()) {
     // The type we're converting to is a class type. Enumerate its constructors
@@ -5028,7 +5028,7 @@ InitializationSequence::Perform(Sema &S,
       InitializedEntity TempEntity = InitializedEntity::InitializeTemporary(Ty);
       InitListChecker PerformInitList(S, IsTemporary ? TempEntity : Entity,
           InitList, Ty, /*VerifyOnly=*/false,
-          Kind.getKind() != InitializationKind::IK_Direct ||
+          Kind.getKind() != InitializationKind::IK_DirectList ||
             !S.getLangOptions().CPlusPlus0x);
       if (PerformInitList.HadError())
         return ExprError();
@@ -5050,10 +5050,19 @@ InitializationSequence::Perform(Sema &S,
     }
 
     case SK_ListConstructorCall: {
+      // When an initializer list is passed for a parameter of type "reference
+      // to object", we don't get an EK_Temporary entity, but instead an
+      // EK_Parameter entity with reference type.
+      // FIXME: This is a hack. Why is this necessary here, but not in other
+      // places where implicit temporaries are created?
+      InitializedEntity TempEntity = InitializedEntity::InitializeTemporary(
+                                        Entity.getType().getNonReferenceType());
+      bool UseTemporary = Entity.getType()->isReferenceType();
       InitListExpr *InitList = cast<InitListExpr>(CurInit.get());
       MultiExprArg Arg(InitList->getInits(), InitList->getNumInits());
-      CurInit = PerformConstructorInitialization(S, Entity, Kind,
-                                                 move(Arg), *Step,
+      CurInit = PerformConstructorInitialization(S, UseTemporary ? TempEntity :
+                                                                   Entity,
+                                                 Kind, move(Arg), *Step,
                                                ConstructorInitRequiresZeroInit);
       break;
     }
@@ -5549,7 +5558,7 @@ bool InitializationSequence::Diagnose(Sema &S,
     QualType DestType = Entity.getType();
     InitListChecker DiagnoseInitList(S, Entity, InitList,
             DestType, /*VerifyOnly=*/false,
-            Kind.getKind() != InitializationKind::IK_Direct ||
+            Kind.getKind() != InitializationKind::IK_DirectList ||
               !S.getLangOptions().CPlusPlus0x);
     assert(DiagnoseInitList.HadError() &&
            "Inconsistent init list check result.");

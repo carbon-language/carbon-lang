@@ -146,4 +146,33 @@ namespace objects {
     static_assert(sizeof(ov2({1})) == sizeof(one), "bad overload"); // list -> int ranks as identity
     static_assert(sizeof(ov2({1, 2, 3})) == sizeof(two), "bad overload"); // list -> F only viable
   }
+
+  struct G { // expected-note 2 {{not viable}}
+    // This is not an initializer-list constructor.
+    template<typename ...T>
+    G(std::initializer_list<int>, T ...);  // expected-note {{not viable}}
+  };
+
+  struct H { // expected-note 2 {{not viable}}
+    explicit H(int, int); // expected-note {{not viable}}
+    H(int, void*); // expected-note {{not viable}}
+  };
+
+  void edge_cases() {
+    // invalid (the first phase only considers init-list ctors)
+    // (for the second phase, no constructor is viable)
+    G g1{1, 2, 3}; // expected-error {{no matching constructor}}
+
+    // valid (T deduced to <>).
+    G g2({1, 2, 3});
+
+    // invalid
+    H h1({1, 2}); // expected-error {{no matching constructor}}
+
+    // valid (by copy constructor).
+    H h2({1, nullptr});
+
+    // valid
+    H h3{1, 2};
+  }
 }

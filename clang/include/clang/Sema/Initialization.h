@@ -470,9 +470,13 @@ public:
     assert(Kind == SIK_Copy && "Only copy initialization has an '='");
     return Locations[1];
   }
-  
+
   bool isCopyInit() const { return Kind == SIK_Copy; }
-  
+
+  /// \brief Retrieve whether this initialization allows the use of explicit
+  ///        constructors.
+  bool AllowExplicit() const { return !isCopyInit(); }
+
   /// \brief Retrieve the source range containing the locations of the open
   /// and closing parentheses for value and direct initializations.
   SourceRange getParenRange() const {

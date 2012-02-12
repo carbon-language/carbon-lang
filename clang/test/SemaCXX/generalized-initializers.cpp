@@ -49,27 +49,4 @@ namespace litb {
   // invalid
   int const &b({0}); // expected-error {{}}
 
-  struct C { explicit C(int, int); C(int, long); };
-
-  // invalid
-  C c({1, 2}); // expected-error {{}}
-
-  // valid (by copy constructor).
-  C d({1, 2L});
-
-  // valid
-  C e{1, 2};
-
-  struct B { 
-    template<typename ...T>
-    B(std::initializer_list<int>, T ...); 
-  };
-
-  // invalid (the first phase only considers init-list ctors)
-  // (for the second phase, no constructor is viable)
-  B f{1, 2, 3};
-
-  // valid (T deduced to <>).
-  B g({1, 2, 3});
-
 }
