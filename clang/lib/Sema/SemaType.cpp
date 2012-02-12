@@ -4376,8 +4376,13 @@ static QualType getDecltypeForExpr(Sema &S, Expr *E) {
   if (E->isTypeDependent())
     return S.Context.DependentTy;
 
-  // If e is an id expression or a class member access, decltype(e) is defined
-  // as the type of the entity named by e.
+  // C++11 [dcl.type.simple]p4:
+  //   The type denoted by decltype(e) is defined as follows:
+  //
+  //     - if e is an unparenthesized id-expression or an unparenthesized class
+  //       member access (5.2.5), decltype(e) is the type of the entity named 
+  //       by e. If there is no such entity, or if e names a set of overloaded 
+  //       functions, the program is ill-formed;
   if (const DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E)) {
     if (const ValueDecl *VD = dyn_cast<ValueDecl>(DRE->getDecl()))
       return VD->getType();
@@ -4386,12 +4391,7 @@ static QualType getDecltypeForExpr(Sema &S, Expr *E) {
     if (const FieldDecl *FD = dyn_cast<FieldDecl>(ME->getMemberDecl()))
       return FD->getType();
   }
-  // If e is a function call or an invocation of an overloaded operator,
-  // (parentheses around e are ignored), decltype(e) is defined as the
-  // return type of that function.
-  if (const CallExpr *CE = dyn_cast<CallExpr>(E->IgnoreParens()))
-    return CE->getCallReturnType();
-
+  
   // C++11 [expr.lambda.prim]p18:
   //   Every occurrence of decltype((x)) where x is a possibly
   //   parenthesized id-expression that names an entity of automatic
@@ -4445,13 +4445,21 @@ static QualType getDecltypeForExpr(Sema &S, Expr *E) {
     }
   }
 
+
+  // C++11 [dcl.type.simple]p4:
+  //   [...]
   QualType T = E->getType();
-
-  // Otherwise, where T is the type of e, if e is an lvalue, decltype(e) is
-  // defined as T&, otherwise decltype(e) is defined as T.
-  if (E->isLValue())
-    T = S.Context.getLValueReferenceType(T);
-
+  switch (E->getValueKind()) {
+  //     - otherwise, if e is an xvalue, decltype(e) is T&&, where T is the 
+  //       type of e;
+  case VK_XValue: T = S.Context.getRValueReferenceType(T); break;
+  //     - otherwise, if e is an lvalue, decltype(e) is T&, where T is the 
+  //       type of e;
+  case VK_LValue: T = S.Context.getLValueReferenceType(T); break;
+  //  - otherwise, decltype(e) is the type of e.
+  case VK_RValue: break;
+  }
+  
   return T;
 }
 
