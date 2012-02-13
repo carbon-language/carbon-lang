@@ -125,8 +125,9 @@ void ReplaceSystemMalloc();
 
 void OutOfMemoryMessageAndDie(const char *mem_type, size_t size);
 
-// asan_linux.cc / asan_mac.cc
+// asan_linux.cc / asan_mac.cc / asan_win.cc
 void *AsanDoesNotSupportStaticLinkage();
+bool AsanShadowRangeIsAvailable();
 int AsanOpenReadonly(const char* filename);
 const char *AsanGetEnv(const char *name);
 

@@ -43,6 +43,11 @@ void *AsanDoesNotSupportStaticLinkage() {
   return &_DYNAMIC;  // defined in link.h
 }
 
+bool AsanShadowRangeIsAvailable() {
+  // FIXME: shall we need anything here on Linux?
+  return true;
+}
+
 void GetPcSpBp(void *context, uintptr_t *pc, uintptr_t *sp, uintptr_t *bp) {
 #ifdef ANDROID
   *pc = *sp = *bp = 0;

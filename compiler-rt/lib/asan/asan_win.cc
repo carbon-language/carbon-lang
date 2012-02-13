@@ -223,6 +223,11 @@ void *AsanDoesNotSupportStaticLinkage() {
   return NULL;
 }
 
+bool AsanShadowRangeIsAvailable() {
+  // FIXME: shall we do anything here on Windows?
+  return true;
+}
+
 int AtomicInc(int *a) {
   return InterlockedExchangeAdd((LONG*)a, 1) + 1;
 }

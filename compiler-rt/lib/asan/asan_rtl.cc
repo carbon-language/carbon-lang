@@ -118,42 +118,6 @@ static void ReserveShadowMemoryRange(uintptr_t beg, uintptr_t end) {
   CHECK(res == (void*)beg && "ReserveShadowMemoryRange failed");
 }
 
-inline bool IntervalsAreSeparate(uintptr_t start1, uintptr_t end1,
-                                 uintptr_t start2, uintptr_t end2) {
-  CHECK(start1 <= end1);
-  CHECK(start2 <= end2);
-  if (start1 == start2) {
-    return false;
-  } else {
-    if (start1 < start2) {
-      return (end1 < start2);
-    } else {
-      return (end2 < start1);
-    }
-  }
-  return false;
-}
-
-// FIXME: this is thread-unsafe, but should not cause problems most of the time.
-// When the shadow is mapped only a single thread usually exists (plus maybe
-// several worker threads on Mac, which aren't expected to map big chunks of
-// memory.
-bool AsanShadowRangeIsAvailable() {
-  AsanProcMaps procmaps;
-  uintptr_t start, end;
-  bool available = true;
-  while (procmaps.Next(&start, &end,
-                       /*offset*/NULL, /*filename*/NULL, /*size*/NULL)) {
-    if (!IntervalsAreSeparate(start, end,
-                              kLowShadowBeg - kMmapGranularity,
-                              kHighShadowEnd)) {
-      available = false;
-      break;
-    }
-  }
-  return available;
-}
-
 // ---------------------- LowLevelAllocator ------------- {{{1
 void *LowLevelAllocator::Allocate(size_t size) {
   CHECK((size & (size - 1)) == 0 && "size must be a power of two");
