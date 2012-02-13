@@ -388,7 +388,7 @@ int main(int argc_, const char **argv_) {
   // the installed path. We do this manually, because we want to support that
   // path being a symlink.
   {
-    llvm::SmallString<128> InstalledPath(argv[0]);
+    SmallString<128> InstalledPath(argv[0]);
 
     // Do a PATH lookup, if there are no directory components.
     if (llvm::sys::path::filename(InstalledPath) == InstalledPath) {

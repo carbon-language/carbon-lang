@@ -994,7 +994,7 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
     EntityInfo.name = 0; // anonymous tag/field/namespace.
 
   } else {
-    llvm::SmallString<256> StrBuf;
+    SmallString<256> StrBuf;
     {
       llvm::raw_svector_ostream OS(StrBuf);
       D->printName(OS);
@@ -1003,7 +1003,7 @@ void IndexingContext::getEntityInfo(const NamedDecl *D,
   }
 
   {
-    llvm::SmallString<512> StrBuf;
+    SmallString<512> StrBuf;
     bool Ignore = getDeclCursorUSR(D, StrBuf);
     if (Ignore) {
       EntityInfo.USR = 0;

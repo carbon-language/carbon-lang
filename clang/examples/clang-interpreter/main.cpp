@@ -93,7 +93,7 @@ int main(int argc, const char **argv, char * const *envp) {
   // failed. Extract that job from the compilation.
   const driver::JobList &Jobs = C->getJobs();
   if (Jobs.size() != 1 || !isa<driver::Command>(*Jobs.begin())) {
-    llvm::SmallString<256> Msg;
+    SmallString<256> Msg;
     llvm::raw_svector_ostream OS(Msg);
     C->PrintJob(OS, C->getJobs(), "; ", true);
     Diags.Report(diag::err_fe_expected_compiler_job) << OS.str();

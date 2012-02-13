@@ -30,7 +30,7 @@ using namespace clang::cxstring;
 
 namespace {
 class USRGenerator : public DeclVisitor<USRGenerator> {
-  OwningPtr<llvm::SmallString<128> > OwnedBuf;
+  OwningPtr<SmallString<128> > OwnedBuf;
   SmallVectorImpl<char> &Buf;
   llvm::raw_svector_ostream Out;
   bool IgnoreResults;
@@ -41,7 +41,7 @@ class USRGenerator : public DeclVisitor<USRGenerator> {
   
 public:
   explicit USRGenerator(ASTContext *Ctx = 0, SmallVectorImpl<char> *extBuf = 0)
-  : OwnedBuf(extBuf ? 0 : new llvm::SmallString<128>()),
+  : OwnedBuf(extBuf ? 0 : new SmallString<128>()),
     Buf(extBuf ? *extBuf : *OwnedBuf.get()),
     Out(Buf),
     IgnoreResults(false),

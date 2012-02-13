@@ -126,7 +126,7 @@ CXString clang_formatDiagnostic(CXDiagnostic Diagnostic, unsigned Options) {
 
   CXDiagnosticSeverity Severity = clang_getDiagnosticSeverity(Diagnostic);
 
-  llvm::SmallString<256> Str;
+  SmallString<256> Str;
   llvm::raw_svector_ostream Out(Str);
   
   if (Options & CXDiagnostic_DisplaySourceLocation) {

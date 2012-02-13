@@ -97,7 +97,7 @@ TEST_F(SourceManagerTest, isBeforeInTranslationUnit) {
   ASSERT_TRUE(macroExpStartLoc.isFileID());
   ASSERT_TRUE(macroExpEndLoc.isFileID());
 
-  llvm::SmallString<32> str;
+  SmallString<32> str;
   ASSERT_EQ("M", PP.getSpelling(macroExpStartLoc, str));
   ASSERT_EQ(")", PP.getSpelling(macroExpEndLoc, str));
 

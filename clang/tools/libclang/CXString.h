@@ -23,7 +23,7 @@ namespace clang {
 namespace cxstring {
   
 struct CXStringBuf {
-  llvm::SmallString<128> Data;
+  SmallString<128> Data;
   CXTranslationUnit TU;
   CXStringBuf(CXTranslationUnit tu) : TU(tu) {}
 };

@@ -698,7 +698,7 @@ void clang_codeCompleteAt_Impl(void *UserData) {
 #ifdef UDP_CODE_COMPLETION_LOGGER
 #ifdef UDP_CODE_COMPLETION_LOGGER_PORT
   const llvm::TimeRecord &EndTime =  llvm::TimeRecord::getCurrentTime();
-  llvm::SmallString<256> LogResult;
+  SmallString<256> LogResult;
   llvm::raw_svector_ostream os(LogResult);
 
   // Figure out the language and whether or not it uses PCH.
@@ -718,7 +718,7 @@ void clang_codeCompleteAt_Impl(void *UserData) {
     else if (strcmp(*I, "-include") == 0) {
       if (I+1 != E) {
         const char *arg = *(++I);
-        llvm::SmallString<512> pchName;
+        SmallString<512> pchName;
         {
           llvm::raw_svector_ostream os(pchName);
           os << arg << ".pth";
@@ -883,7 +883,7 @@ CXString clang_codeCompleteGetObjCSelector(CXCodeCompleteResults *ResultsIn) {
 /// \param Buffer A buffer that stores the actual, concatenated string. It will
 /// be used if the old string is already-non-empty.
 static void AppendToString(StringRef &Old, StringRef New,
-                           llvm::SmallString<256> &Buffer) {
+                           SmallString<256> &Buffer) {
   if (Old.empty()) {
     Old = New;
     return;
@@ -903,7 +903,7 @@ static void AppendToString(StringRef &Old, StringRef New,
 ///
 /// \param Buffer A buffer used for storage of the completed name.
 static StringRef GetTypedName(CodeCompletionString *String,
-                                    llvm::SmallString<256> &Buffer) {
+                                    SmallString<256> &Buffer) {
   StringRef Result;
   for (CodeCompletionString::iterator C = String->begin(), CEnd = String->end();
        C != CEnd; ++C) {
@@ -923,9 +923,9 @@ namespace {
       CodeCompletionString *Y
         = (CodeCompletionString *)YR.CompletionString;
       
-      llvm::SmallString<256> XBuffer;
+      SmallString<256> XBuffer;
       StringRef XText = GetTypedName(X, XBuffer);
-      llvm::SmallString<256> YBuffer;      
+      SmallString<256> YBuffer;
       StringRef YText = GetTypedName(Y, YBuffer);
       
       if (XText.empty() || YText.empty())

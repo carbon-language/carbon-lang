@@ -205,7 +205,7 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
 static std::string getDiagCategoryEnum(llvm::StringRef name) {
   if (name.empty())
     return "DiagCat_None";
-  llvm::SmallString<256> enumName = llvm::StringRef("DiagCat_");
+  SmallString<256> enumName = llvm::StringRef("DiagCat_");
   for (llvm::StringRef::iterator I = name.begin(), E = name.end(); I != E; ++I)
     enumName += isalnum(*I) ? *I : '_';
   return enumName.str();

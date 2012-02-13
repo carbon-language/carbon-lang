@@ -2898,7 +2898,7 @@ static CXString getDeclSpelling(Decl *D) {
   if (isa<UsingDirectiveDecl>(D))
     return createCXString("");
   
-  llvm::SmallString<1024> S;
+  SmallString<1024> S;
   llvm::raw_svector_ostream os(S);
   ND->printName(os);
   
@@ -3040,7 +3040,7 @@ CXString clang_getCursorDisplayName(CXCursor C) {
     D = FunTmpl->getTemplatedDecl();
   
   if (FunctionDecl *Function = dyn_cast<FunctionDecl>(D)) {
-    llvm::SmallString<64> Str;
+    SmallString<64> Str;
     llvm::raw_svector_ostream OS(Str);
     OS << *Function;
     if (Function->getPrimaryTemplate())
@@ -3062,7 +3062,7 @@ CXString clang_getCursorDisplayName(CXCursor C) {
   }
   
   if (ClassTemplateDecl *ClassTemplate = dyn_cast<ClassTemplateDecl>(D)) {
-    llvm::SmallString<64> Str;
+    SmallString<64> Str;
     llvm::raw_svector_ostream OS(Str);
     OS << *ClassTemplate;
     OS << "<";
@@ -3098,7 +3098,7 @@ CXString clang_getCursorDisplayName(CXCursor C) {
     if (TypeSourceInfo *TSInfo = ClassSpec->getTypeAsWritten())
       return createCXString(TSInfo->getType().getAsString(Policy));
     
-    llvm::SmallString<64> Str;
+    SmallString<64> Str;
     llvm::raw_svector_ostream OS(Str);
     OS << *ClassSpec;
     OS << TemplateSpecializationType::PrintTemplateArgumentList(
