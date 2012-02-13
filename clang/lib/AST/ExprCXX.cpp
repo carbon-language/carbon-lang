@@ -781,13 +781,10 @@ LambdaExpr *LambdaExpr::Create(ASTContext &Context,
   // Determine the type of the expression (i.e., the type of the
   // function object we're creating).
   QualType T = Context.getTypeDeclType(Class);
-  size_t Size = sizeof(LambdaExpr) + sizeof(Capture) * Captures.size()
-              + sizeof(Stmt *) * (Captures.size() + 1);
 
-  void *Mem = Context.Allocate(Size, llvm::alignOf<LambdaExpr>());
-  return new (Mem) LambdaExpr(T, IntroducerRange, CaptureDefault, 
-                              Captures, ExplicitParams, CaptureInits,
-                              ClosingBrace);
+  return new (Context) LambdaExpr(T, IntroducerRange, CaptureDefault, 
+                                  Captures, ExplicitParams, CaptureInits,
+                                  ClosingBrace);
 }
 
 LambdaExpr::capture_iterator LambdaExpr::capture_begin() const {
