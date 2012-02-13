@@ -106,4 +106,10 @@
 /* Installation prefix directory */
 #undef LLVM_PREFIX
 
+/* Major version of the LLVM API */
+#undef LLVM_VERSION_MAJOR
+
+/* Minor version of the LLVM API */
+#undef LLVM_VERSION_MINOR
+
 #endif

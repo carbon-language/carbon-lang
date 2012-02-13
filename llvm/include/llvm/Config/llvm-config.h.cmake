@@ -106,4 +106,10 @@
 /* Installation prefix directory */
 #cmakedefine LLVM_PREFIX "${LLVM_PREFIX}"
 
+/* Major version of the LLVM API */
+#cmakedefine LLVM_VERSION_MAJOR ${LLVM_VERSION_MAJOR}
+
+/* Minor version of the LLVM API */
+#cmakedefine LLVM_VERSION_MINOR ${LLVM_VERSION_MINOR}
+
 #endif

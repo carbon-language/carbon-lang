@@ -1,5 +1,7 @@
 # This file provides information and services to the final user.
 
+set(LLVM_VERSION_MAJOR @LLVM_VERSION_MAJOR@)
+set(LLVM_VERSION_MINOR @LLVM_VERSION_MINOR@)
 set(LLVM_PACKAGE_VERSION @PACKAGE_VERSION@)
 
 set(LLVM_COMMON_DEPENDS @LLVM_COMMON_DEPENDS@)

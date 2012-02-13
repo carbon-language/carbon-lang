@@ -1898,6 +1898,16 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
+cat >>confdefs.h <<\_ACEOF
+#define LLVM_VERSION_MAJOR 3
+_ACEOF
+
+
+cat >>confdefs.h <<\_ACEOF
+#define LLVM_VERSION_MINOR 1
+_ACEOF
+
+
 LLVM_COPYRIGHT="Copyright (c) 2003-2012 University of Illinois at Urbana-Champaign."
 
 
@@ -10453,7 +10463,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 10456 "configure"
+#line 10466 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
