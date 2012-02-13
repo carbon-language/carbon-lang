@@ -670,18 +670,22 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
   if (PrtIsNull && SizeIsZero)
     return;
 
+  // Get the from and to pointer symbols as in toPtr = realloc(fromPtr, size).
   assert(!PrtIsNull);
+  SymbolRef FromPtr = arg0Val.getAsSymbol();
+  SVal RetVal = state->getSVal(CE, LCtx);
+  SymbolRef ToPtr = RetVal.getAsSymbol();
+  if (!FromPtr || !ToPtr)
+    return;
 
   // If the size is 0, free the memory.
   if (SizeIsZero)
     if (ProgramStateRef stateFree = FreeMemAux(C, CE, StateSizeIsZero,0,false)){
-      // Bind the return value to NULL because it is now free.
-      // TODO: This is tricky. Does not currently work.
       // The semantics of the return value are:
       // If size was equal to 0, either NULL or a pointer suitable to be passed
       // to free() is returned.
-      C.addTransition(stateFree->BindExpr(CE, LCtx,
-          svalBuilder.makeNull(), true));
+      stateFree = stateFree->set<ReallocPairs>(ToPtr, FromPtr);
+      C.addTransition(stateFree);
       return;
     }
 
@@ -690,10 +694,7 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
     // FIXME: We should copy the content of the original buffer.
     ProgramStateRef stateRealloc = MallocMemAux(C, CE, CE->getArg(1),
                                                 UnknownVal(), stateFree);
-    SymbolRef FromPtr = arg0Val.getAsSymbol();
-    SVal RetVal = state->getSVal(CE, LCtx);
-    SymbolRef ToPtr = RetVal.getAsSymbol();
-    if (!stateRealloc || !FromPtr || !ToPtr)
+    if (!stateRealloc)
       return;
     stateRealloc = stateRealloc->set<ReallocPairs>(ToPtr, FromPtr);
     C.addTransition(stateRealloc);
