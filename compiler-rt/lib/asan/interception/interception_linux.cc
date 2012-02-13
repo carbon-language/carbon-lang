@@ -14,8 +14,8 @@
 
 #ifdef __linux__
 
-#include <stddef.h> // for NULL
-#include <dlfcn.h>  // for dlsym
+#include <stddef.h>  // for NULL
+#include <dlfcn.h>   // for dlsym
 
 namespace __interception {
 bool GetRealFunctionAddress(const char *func_name, void **func_addr) {
