@@ -5473,6 +5473,39 @@ static void Write__extendedMethodTypes_initializer(RewriteModernObjC &RewriteObj
   }
 }
 
+static void Write_IvarOffsetVar(RewriteModernObjC &RewriteObj, 
+                                ASTContext *Context, std::string &Result, 
+                                ArrayRef<ObjCIvarDecl *> Ivars, 
+                                StringRef VarName, 
+                                StringRef ClassName) {
+  // FIXME. visibilty of offset symbols may have to be set; for Darwin
+  // this is what happens:
+  /**
+   if (Ivar->getAccessControl() == ObjCIvarDecl::Private ||
+       Ivar->getAccessControl() == ObjCIvarDecl::Package ||
+       Class->getVisibility() == HiddenVisibility)
+     Visibility shoud be: HiddenVisibility;
+   else
+     Visibility shoud be: DefaultVisibility;
+  */
+  
+  if (Ivars.size() > 0) {
+    Result += "\n";
+    for (unsigned i =0, e = Ivars.size(); i < e; i++) {
+      ObjCIvarDecl *IvarDecl = Ivars[i];
+      Result += "unsigned long int "; Result += VarName;
+      Result += ClassName; Result += "_";
+      Result += IvarDecl->getName(); 
+      Result += " __attribute__ ((used, section (\"__DATA,__objc_ivar\")))";
+      Result += " = ";
+      Result += "__OFFSETOFIVAR__(struct ";
+      Result += ClassName;
+      Result += "_IMPL, "; 
+      Result += IvarDecl->getName(); Result += ");\n";
+    }
+  }
+}
+
 static void Write__ivar_list_t_initializer(RewriteModernObjC &RewriteObj,
                                            ASTContext *Context, std::string &Result,
                                            ArrayRef<ObjCIvarDecl *> Ivars,
@@ -5492,8 +5525,10 @@ static void Write__ivar_list_t_initializer(RewriteModernObjC &RewriteObj,
         Result += "\t{{";
       else
         Result += "\t {";
-      // FIXME: // pointer to ivar offset location
-      Result += "(unsigned long int *)0, ";
+      
+      Result += "(unsigned long int *)&OBJC_IVAR_$_";
+      Result += ClassName; Result += "_"; Result += IvarDecl->getName();
+      Result += ", ";
       
       Result += "\""; Result += IvarDecl->getName(); Result += "\", ";
       std::string IvarTypeString, QuoteIvarTypeString;
@@ -5735,6 +5770,9 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
       continue;
     IVars.push_back(IVD);
   }
+  
+  Write_IvarOffsetVar(*this, Context, Result, IVars, "OBJC_IVAR_$_", 
+                      CDecl->getNameAsString());
   
   Write__ivar_list_t_initializer(*this, Context, Result, IVars, 
                                  "_OBJC_INSTANCE_VARIABLES_",
