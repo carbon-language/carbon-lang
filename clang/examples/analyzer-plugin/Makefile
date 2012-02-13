@@ -11,7 +11,7 @@ CLANG_LEVEL := ../..
 LIBRARYNAME = SampleAnalyzerPlugin
 
 LINK_LIBS_IN_SHARED = 0
-SHARED_LIBRARY = 1
+LOADABLE_MODULE = 1
 
 include $(CLANG_LEVEL)/Makefile
 
