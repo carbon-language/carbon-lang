@@ -16,6 +16,9 @@ __attribute__((noinline))
 void Func2(char *x) {
   fprintf(stderr, "2: %p\n", x);
   *x = 1;
+  // CHECK: {{WRITE of size 1 .* thread T0}}
+  // CHECK: {{    #0.*Func2.*stack-use-after-return.cc:18}}
+  // CHECK: {{is located in frame <.*Func1.*> of T0's stack}}
 }
 
 int main(int argc, char **argv) {

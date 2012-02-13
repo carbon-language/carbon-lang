@@ -39,10 +39,14 @@ check_program a.out $C_TEST.c CHECKSLEEP
 export ASAN_OPTIONS=""
 rm ./a.out
 
-for t in  *.tmpl; do
+for t in  *.cc; do
   for b in 32 64; do
     for O in 0 1 2 3; do
-      c=`basename $t .tmpl`
+      c=`basename $t .cc`
+      if [[ "$c" == *"-so" ]]
+      then
+        continue
+      fi
       c_so=$c-so
       exe=$c.$b.O$O
       so=$c.$b.O$O-so.so
@@ -52,14 +56,14 @@ for t in  *.tmpl; do
       $build_command
       [ -e "$c_so.cc" ] && $CXX $CXXFLAGS -g -m$b -faddress-sanitizer -O$O $c_so.cc -fPIC -shared -o $so
       # If there's an OS-specific template, use it.
-      # Please minimize the use of OS-specific templates.
-      if [ -e "$t.$OS" ]
+      # Otherwise use default template.
+      if [ `grep -c "$OS" $c.cc` -gt 0 ]
       then
-        actual_t="$t.$OS"
+        check_prefix="$OS"
       else
-        actual_t="$t"
+        check_prefix="CHECK"
       fi
-      ./$exe 2>&1 | $SYMBOLIZER 2> /dev/null | c++filt | ./match_output.py $actual_t
+      check_program $exe $c.cc $check_prefix
       rm ./$exe
       [ -e "$so" ] && rm ./$so
     done
