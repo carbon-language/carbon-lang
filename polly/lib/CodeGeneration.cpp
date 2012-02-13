@@ -86,7 +86,6 @@ typedef DenseMap<const Value*, Value*> ValueMapT;
 typedef DenseMap<const char*, Value*> CharMapT;
 typedef std::vector<ValueMapT> VectorValueMapT;
 typedef struct {
-  Value *BaseAddress;
   Value *Result;
   IRBuilder<> *Builder;
 }IslPwAffUserInfo;
@@ -218,7 +217,7 @@ public:
   static int mergeIslAffValues(__isl_take isl_set *Set,
                                __isl_take isl_aff *Aff, void *User);
 
-  Value* islPwAffToValue(__isl_take isl_pw_aff *PwAff, Value *BaseAddress);
+  Value* islPwAffToValue(__isl_take isl_pw_aff *PwAff);
 
   /// @brief Get the memory access offset to be added to the base address
   std::vector <Value*> getMemoryAccessIndex(__isl_keep isl_map *AccessRelation,
@@ -449,10 +448,8 @@ int BlockGenerator::mergeIslAffValues(__isl_take isl_set *Set,
   return 0;
 }
 
-Value *BlockGenerator::islPwAffToValue(__isl_take isl_pw_aff *PwAff,
-                                       Value *BaseAddress) {
+Value *BlockGenerator::islPwAffToValue(__isl_take isl_pw_aff *PwAff) {
   IslPwAffUserInfo UserInfo;
-  UserInfo.BaseAddress = BaseAddress;
   UserInfo.Result = NULL;
   UserInfo.Builder = &Builder;
   isl_pw_aff_foreach_piece(PwAff, mergeIslAffValues, &UserInfo);
@@ -468,7 +465,7 @@ std::vector <Value*> BlockGenerator::getMemoryAccessIndex(
          && "Only single dimensional access functions supported");
 
   isl_pw_aff *PwAff = isl_map_dim_max(isl_map_copy(AccessRelation), 0);
-  Value *OffsetValue = islPwAffToValue(PwAff, BaseAddress);
+  Value *OffsetValue = islPwAffToValue(PwAff);
 
   PointerType *BaseAddressType = dyn_cast<PointerType>(
     BaseAddress->getType());
