@@ -91,7 +91,6 @@ resolveARMRelocation(uintptr_t Address, uintptr_t Value, bool isPCRel,
   default:
     llvm_unreachable("Invalid relocation type!");
   case macho::RIT_Vanilla: {
-    llvm_unreachable("Invalid relocation type!");
     // Mask in the target value a byte at a time (we don't have an alignment
     // guarantee for the target address, so this is safest).
     uint8_t *p = (uint8_t*)Address;

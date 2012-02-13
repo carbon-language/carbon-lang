@@ -300,7 +300,10 @@ extern "C" {
     SIZE(X86CompilationCallback_SSE)
   );
 # else
-  void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr);
+  // the following function is called only from this translation unit,
+  // unless we are under 64bit Windows with MSC, where there is
+  // no support for inline assembly
+  static void X86CompilationCallback2(intptr_t *StackPtr, intptr_t RetAddr);
 
   _declspec(naked) void X86CompilationCallback(void) {
     __asm {

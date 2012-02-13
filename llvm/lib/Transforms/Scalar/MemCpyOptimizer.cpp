@@ -816,9 +816,8 @@ bool MemCpyOpt::processMemCpy(MemCpyInst *M) {
       }
     }
   }
-  
-  AliasAnalysis &AA = getAnalysis<AliasAnalysis>();
-  AliasAnalysis::Location SrcLoc = AA.getLocationForSource(M);
+
+  AliasAnalysis::Location SrcLoc = AliasAnalysis::getLocationForSource(M);
   MemDepResult SrcDepInfo = MD->getPointerDependencyFrom(SrcLoc, true,
                                                          M, M->getParent());
   if (SrcDepInfo.isClobber()) {

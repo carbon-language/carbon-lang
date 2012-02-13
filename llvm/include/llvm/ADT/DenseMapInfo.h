@@ -59,7 +59,7 @@ template<> struct DenseMapInfo<char> {
   
 // Provide DenseMapInfo for unsigned ints.
 template<> struct DenseMapInfo<unsigned> {
-  static inline unsigned getEmptyKey() { return ~0; }
+  static inline unsigned getEmptyKey() { return ~0U; }
   static inline unsigned getTombstoneKey() { return ~0U - 1; }
   static unsigned getHashValue(const unsigned& Val) { return Val * 37U; }
   static bool isEqual(const unsigned& LHS, const unsigned& RHS) {

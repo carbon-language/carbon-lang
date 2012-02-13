@@ -193,8 +193,8 @@ bool GlobalMerge::doInitialization(Module &M) {
       continue;
 
     if (TD->getTypeAllocSize(Ty) < MaxOffset) {
-      const TargetLoweringObjectFile &TLOF = TLI->getObjFileLowering();
-      if (TLOF.getKindForGlobal(I, TLI->getTargetMachine()).isBSSLocal())
+      if (TargetLoweringObjectFile::getKindForGlobal(I, TLI->getTargetMachine())
+          .isBSSLocal())
         BSSGlobals.push_back(I);
       else if (I->isConstant())
         ConstGlobals.push_back(I);
