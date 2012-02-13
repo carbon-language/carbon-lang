@@ -61,6 +61,7 @@ CLANG_FLAGS=
 CLANG_BUILD=$(ROOT)/../../../../build/Release+Asserts
 CLANG_CC=$(CLANG_BUILD)/bin/clang $(CLANG_FLAGS)
 CLANG_CXX=$(CLANG_BUILD)/bin/clang++ $(CLANG_FLAGS)
+FILE_CHECK=$(CLANG_BUILD)/bin/FileCheck
 
 CC=$(CLANG_CC)
 CXX=$(CLANG_CXX)
@@ -213,7 +214,7 @@ test: t64 t32 output_tests lint
 	@echo "ALL TESTS PASSED"
 
 output_tests: b32 b64
-	cd output_tests && ./test_output.sh $(CLANG_CXX) $(CLANG_CC)
+	cd output_tests && ./test_output.sh $(CLANG_CXX) $(CLANG_CC) $(FILE_CHECK)
 
 t64: b64
 	$(BIN)/asan_test64

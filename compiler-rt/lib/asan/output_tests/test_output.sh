@@ -5,9 +5,9 @@ set -e # fail on any error
 OS=`uname`
 CXX=$1
 CC=$2
+FILE_CHECK=$3
 CXXFLAGS="-mno-omit-leaf-frame-pointer -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 SYMBOLIZER=../scripts/asan_symbolize.py
-FILE_CHECK=../../../../../build/Release+Asserts/bin/FileCheck
 
 # check_program exe_file src_file [check_prefix]
 check_program() {
