@@ -857,11 +857,11 @@ LambdaExpr::capture_iterator LambdaExpr::implicit_capture_end() const {
 
 ArrayRef<VarDecl *> 
 LambdaExpr::getCaptureInitIndexVars(capture_init_iterator Iter) const {
-  CXXRecordDecl::LambdaDefinitionData &Data = getLambdaClass()->getLambdaData();
   assert(HasArrayIndexVars && "No array index-var data?");
   
   unsigned Index = Iter - capture_init_begin();
-  assert(Index < Data.NumCaptures && "Capture index out-of-range");
+  assert(Index < getLambdaClass()->getLambdaData().NumCaptures &&
+         "Capture index out-of-range");
   VarDecl **IndexVars = getArrayIndexVars();
   unsigned *IndexStarts = getArrayIndexStarts();
   return ArrayRef<VarDecl *>(IndexVars + IndexStarts[Index],
