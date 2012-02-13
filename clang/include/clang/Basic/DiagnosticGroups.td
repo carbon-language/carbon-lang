@@ -142,7 +142,8 @@ def PoundPragmaMessage : DiagGroup<"#pragma-messages">,
                          DiagCategory<"#pragma message Directive">;
 def : DiagGroup<"pointer-to-int-cast">;
 def : DiagGroup<"redundant-decls">;
-def ReturnType : DiagGroup<"return-type">;
+def ReturnTypeCLinkage : DiagGroup<"return-type-c-linkage">;
+def ReturnType : DiagGroup<"return-type", [ReturnTypeCLinkage]>;
 def BindToTemporaryCopy : DiagGroup<"bind-to-temporary-copy",
                                     [CXX98CompatBindToTemporaryCopy]>;
 def SelfAssignment : DiagGroup<"self-assign">;
