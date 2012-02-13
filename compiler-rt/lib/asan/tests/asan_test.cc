@@ -1643,6 +1643,7 @@ TEST(AddressSanitizer, ThreadedStressStackReuseTest) {
 
 static void *PthreadExit(void *a) {
   pthread_exit(0);
+  return 0;
 }
 
 TEST(AddressSanitizer, PthreadExitTest) {
