@@ -69,6 +69,6 @@ int main(int argc, char *argv[]) {
   }
   addr[1] = 2;  // BOOM (if the bug is not fixed).
   printf("PASS\n");
-  // CHECK: PASS
+  // Check-Common: PASS
   return 0;
 }

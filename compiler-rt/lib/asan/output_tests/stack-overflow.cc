@@ -6,6 +6,6 @@ int main(int argc, char **argv) {
   return res;
 }
 
-// CHECK: {{READ of size 1 at 0x.* thread T0}}
-// CHECK: {{    #0 0x.* in main .*stack-overflow.cc:5}}
-// CHECK: {{Address 0x.* is .* frame <main>}}
+// Check-Common: {{READ of size 1 at 0x.* thread T0}}
+// Check-Common: {{    #0 0x.* in main .*stack-overflow.cc:5}}
+// Check-Common: {{Address 0x.* is .* frame <main>}}

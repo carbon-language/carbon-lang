@@ -8,28 +8,27 @@ CC=$2
 FILE_CHECK=$3
 CXXFLAGS="-mno-omit-leaf-frame-pointer -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 SYMBOLIZER=../scripts/asan_symbolize.py
+TMP_ASAN_REPORT=/tmp/asan_report
 
-# check_program exe_file src_file [check_prefix]
+run_program() {
+  ./$1 2>&1 | $SYMBOLIZER 2> /dev/null | c++filt > $TMP_ASAN_REPORT
+}
+
+# check_program exe_file source_file check_prefix
 check_program() {
-  exe=$1
-  src=$2
-  prefix="CHECK"
-  if [ "z$3" != "z" ] ; then
-    prefix=$3
-  fi
-  ./$exe 2>&1 | $SYMBOLIZER 2> /dev/null | c++filt | \
-        $FILE_CHECK $src --check-prefix=$prefix
+  run_program $1
+  $FILE_CHECK $2 --check-prefix=$3 < $TMP_ASAN_REPORT
 }
 
 C_TEST=use-after-free
 echo "Sanity checking a test in pure C"
 $CC -g -faddress-sanitizer -O2 $C_TEST.c
-check_program a.out $C_TEST.c
+check_program a.out $C_TEST.c CHECK
 rm ./a.out
 
 echo "Sanity checking a test in pure C with -pie"
 $CC -g -faddress-sanitizer -O2 $C_TEST.c -pie
-check_program a.out $C_TEST.c
+check_program a.out $C_TEST.c CHECK
 rm ./a.out
 
 echo "Testing sleep_before_dying"
@@ -55,15 +54,14 @@ for t in  *.cc; do
       [ "$DEBUG" == "1" ] && echo $build_command
       $build_command
       [ -e "$c_so.cc" ] && $CXX $CXXFLAGS -g -m$b -faddress-sanitizer -O$O $c_so.cc -fPIC -shared -o $so
-      # If there's an OS-specific template, use it.
-      # Otherwise use default template.
-      if [ `grep -c "$OS" $c.cc` -gt 0 ]
+      run_program $exe
+      # Check common expected lines for OS.
+      $FILE_CHECK $c.cc --check-prefix="Check-Common" < $TMP_ASAN_REPORT
+      # Check OS-specific lines.
+      if [ `grep -c "Check-$OS" $c.cc` -gt 0 ]
       then
-        check_prefix="$OS"
-      else
-        check_prefix="CHECK"
+        $FILE_CHECK $c.cc --check-prefix="Check-$OS" < $TMP_ASAN_REPORT
       fi
-      check_program $exe $c.cc $check_prefix
       rm ./$exe
       [ -e "$so" ] && rm ./$so
     done

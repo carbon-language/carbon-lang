@@ -29,6 +29,6 @@ int main(int argc, char **argv) {
 #include <stdio.h>
 int main() {
   printf("PASSED\n");
-  // CHECK: PASSED
+  // Check-Common: PASSED
 }
 #endif

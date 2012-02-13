@@ -32,11 +32,11 @@ int main(int argc, char **argv) {
   delete x;
 }
 
-// CHECK: {{.*ERROR: AddressSanitizer heap-buffer-overflow on address 0x.* at pc 0x.* bp 0x.* sp 0x.*}}
-// CHECK: {{READ of size 4 at 0x.* thread T0}}
-// CHECK: {{    #0 0x.* in LargeFunction .*large_func_test.cc:15}}
-// CHECK: {{    #1 0x.* in main .*large_func_test.cc:3[012]}}
-// CHECK: {{0x.* is located 44 bytes to the right of 400-byte region}}
-// CHECK: {{allocated by thread T0 here:}}
-// CHECK: {{    #0 0x.* in operator new.*}}
-// CHECK: {{    #1 0x.* in main .*large_func_test.cc:30}}
+// Check-Common: {{.*ERROR: AddressSanitizer heap-buffer-overflow on address 0x.* at pc 0x.* bp 0x.* sp 0x.*}}
+// Check-Common: {{READ of size 4 at 0x.* thread T0}}
+// Check-Common: {{    #0 0x.* in LargeFunction .*large_func_test.cc:15}}
+// Check-Common: {{    #1 0x.* in main .*large_func_test.cc:3[012]}}
+// Check-Common: {{0x.* is located 44 bytes to the right of 400-byte region}}
+// Check-Common: {{allocated by thread T0 here:}}
+// Check-Common: {{    #0 0x.* in operator new.*}}
+// Check-Common: {{    #1 0x.* in main .*large_func_test.cc:30}}

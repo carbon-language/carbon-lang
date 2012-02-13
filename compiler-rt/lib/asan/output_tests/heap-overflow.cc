@@ -8,18 +8,15 @@ int main(int argc, char **argv) {
   return res;
 }
 
-// CHECK: {{READ of size 1 at 0x.* thread T0}}
-// CHECK: {{    #0 0x.* in main .*heap-overflow.cc:6}}
-// CHECK: {{0x.* is located 0 bytes to the right of 10-byte region}}
-// CHECK: {{allocated by thread T0 here:}}
-// CHECK: {{    #0 0x.* in malloc}}
-// CHECK: {{    #1 0x.* in main .*heap-overflow.cc:[45]}}
+// Check-Common: {{READ of size 1 at 0x.* thread T0}}
+// Check-Common: {{    #0 0x.* in main .*heap-overflow.cc:6}}
+// Check-Common: {{0x.* is located 0 bytes to the right of 10-byte region}}
+// Check-Common: {{allocated by thread T0 here:}}
 
-// Darwin: {{READ of size 1 at 0x.* thread T0}}
-// Darwin: {{    #0 0x.* in main .*heap-overflow.cc:6}}
-// Darwin: {{0x.* is located 0 bytes to the right of 10-byte region}}
-// Darwin: {{allocated by thread T0 here:}}
-// Darwin: {{    #0 0x.* in .*mz_malloc.*}}
-// Darwin: {{    #1 0x.* in malloc_zone_malloc.*}}
-// Darwin: {{    #2 0x.* in malloc.*}}
-// Darwin: {{    #3 0x.* in main heap-overflow.cc:[45]}}
+// Check-Linux: {{    #0 0x.* in malloc}}
+// Check-Linux: {{    #1 0x.* in main .*heap-overflow.cc:[45]}}
+
+// Check-Darwin: {{    #0 0x.* in .*mz_malloc.*}}
+// Check-Darwin: {{    #1 0x.* in malloc_zone_malloc.*}}
+// Check-Darwin: {{    #2 0x.* in malloc.*}}
+// Check-Darwin: {{    #3 0x.* in main heap-overflow.cc:[45]}}

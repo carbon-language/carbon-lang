@@ -8,20 +8,17 @@ int main(int argc, char **argv) {
   return short_buffer[8];
 }
 
-// CHECK: {{WRITE of size 1 at 0x.* thread T0}}
-// CHECK: {{    #0 0x.* in strncpy}}
-// CHECK: {{    #1 0x.* in main .*strncpy-overflow.cc:[78]}}
-// CHECK: {{0x.* is located 0 bytes to the right of 9-byte region}}
-// CHECK: {{allocated by thread T0 here:}}
-// CHECK: {{    #0 0x.* in malloc}}
-// CHECK: {{    #1 0x.* in main .*strncpy-overflow.cc:6}}
+// Check-Common: {{WRITE of size 1 at 0x.* thread T0}}
+// Check-Linux: {{    #0 0x.* in strncpy}}
+// Check-Darwin: {{    #0 0x.* in wrap_strncpy}}
+// Check-Common: {{    #1 0x.* in main .*strncpy-overflow.cc:[78]}}
+// Check-Common: {{0x.* is located 0 bytes to the right of 9-byte region}}
+// Check-Common: {{allocated by thread T0 here:}}
 
-// Darwin: {{WRITE of size 1 at 0x.* thread T0}}
-// Darwin: {{    #0 0x.* in wrap_strncpy}}
-// Darwin: {{    #1 0x.* in main .*strncpy-overflow.cc:[78]}}
-// Darwin: {{0x.* is located 0 bytes to the right of 9-byte region}}
-// Darwin: {{allocated by thread T0 here:}}
-// Darwin: {{    #0 0x.* in .*mz_malloc.*}}
-// Darwin: {{    #1 0x.* in malloc_zone_malloc.*}}
-// Darwin: {{    #2 0x.* in malloc.*}}
-// Darwin: {{    #3 0x.* in main .*strncpy-overflow.cc:6}}
+// Check-Linux: {{    #0 0x.* in malloc}}
+// Check-Linux: {{    #1 0x.* in main .*strncpy-overflow.cc:6}}
+
+// Check-Darwin: {{    #0 0x.* in .*mz_malloc.*}}
+// Check-Darwin: {{    #1 0x.* in malloc_zone_malloc.*}}
+// Check-Darwin: {{    #2 0x.* in malloc.*}}
+// Check-Darwin: {{    #3 0x.* in main .*strncpy-overflow.cc:6}}
