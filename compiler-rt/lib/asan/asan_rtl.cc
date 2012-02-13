@@ -283,6 +283,7 @@ int __asan_set_error_exit_code(int exit_code) {
   return old;
 }
 
+NOINLINE ASAN_INTERFACE_ATTRIBUTE
 void __asan_handle_no_return() {
   int local_stack;
   AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
