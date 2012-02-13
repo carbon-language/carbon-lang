@@ -802,7 +802,7 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   // If the expression list is a single expression, the type conversion
   // expression is equivalent (in definedness, and if defined in meaning) to the
   // corresponding cast expression.
-  if (NumExprs == 1) {
+  if (NumExprs == 1 && !ListInitialization) {
     Expr *Arg = Exprs[0];
     exprs.release();
     return BuildCXXFunctionalCastExpr(TInfo, LParenLoc, Arg, RParenLoc);
@@ -810,12 +810,27 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
 
   InitializedEntity Entity = InitializedEntity::InitializeTemporary(TInfo);
   InitializationKind Kind
-    = NumExprs ? InitializationKind::CreateDirect(TyBeginLoc,
-                                                  LParenLoc, RParenLoc)
+    = NumExprs ? ListInitialization
+                    ? InitializationKind::CreateDirectList(TyBeginLoc)
+                    : InitializationKind::CreateDirect(TyBeginLoc,
+                                                       LParenLoc, RParenLoc)
                : InitializationKind::CreateValue(TyBeginLoc,
                                                  LParenLoc, RParenLoc);
   InitializationSequence InitSeq(*this, Entity, Kind, Exprs, NumExprs);
   ExprResult Result = InitSeq.Perform(*this, Entity, Kind, move(exprs));
+
+  if (!Result.isInvalid() && ListInitialization &&
+      isa<InitListExpr>(Result.get())) {
+    // If the list-initialization doesn't involve a constructor call, we'll get
+    // the initializer-list (with corrected type) back, but that's not what we
+    // want, since it will be treated as an initializer list in further
+    // processing. Explicitly insert a cast here.
+    InitListExpr *List = cast<InitListExpr>(Result.take());
+    Result = Owned(CXXFunctionalCastExpr::Create(Context, List->getType(),
+                                    Expr::getValueKindForType(TInfo->getType()),
+                                                 TInfo, TyBeginLoc, CK_NoOp,
+                                                 List, /*Path=*/0, RParenLoc));
+  }
 
   // FIXME: Improve AST representation?
   return move(Result);

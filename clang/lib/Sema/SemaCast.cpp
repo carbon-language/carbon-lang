@@ -301,7 +301,8 @@ Sema::BuildCXXNamedCast(SourceLocation OpLoc, tok::TokenKind Kind,
 /// diagnostics were emitted.
 static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
                                       SourceRange range, Expr *src,
-                                      QualType destType) {
+                                      QualType destType,
+                                      bool listInitialization) {
   switch (CT) {
   // These cast kinds don't consider user-defined conversions.
   case CT_Const:
@@ -320,13 +321,12 @@ static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
   if (!destType->isRecordType() && !srcType->isRecordType())
     return false;
 
-  bool initList = isa<InitListExpr>(src);
   InitializedEntity entity = InitializedEntity::InitializeTemporary(destType);
   InitializationKind initKind
     = (CT == CT_CStyle)? InitializationKind::CreateCStyleCast(range.getBegin(),
-                                                              range, initList)
+                                                      range, listInitialization)
     : (CT == CT_Functional)? InitializationKind::CreateFunctionalCast(range,
-                                                                      initList)
+                                                             listInitialization)
     : InitializationKind::CreateCast(/*type range?*/ range);
   InitializationSequence sequence(S, entity, initKind, &src, 1);
 
@@ -376,14 +376,16 @@ static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
 
 /// Diagnose a failed cast.
 static void diagnoseBadCast(Sema &S, unsigned msg, CastType castType,
-                            SourceRange opRange, Expr *src, QualType destType) {
+                            SourceRange opRange, Expr *src, QualType destType,
+                            bool listInitialization) {
   if (src->getType() == S.Context.BoundMemberTy) {
     (void) S.CheckPlaceholderExpr(src); // will always fail
     return;
   }
 
   if (msg == diag::err_bad_cxx_cast_generic &&
-      tryDiagnoseOverloadedCast(S, castType, opRange, src, destType))
+      tryDiagnoseOverloadedCast(S, castType, opRange, src, destType,
+                                listInitialization))
     return;
 
   S.Diag(opRange.getBegin(), msg) << castType
@@ -705,7 +707,8 @@ void CastOperation::CheckReinterpretCast() {
       Self.NoteAllOverloadCandidates(SrcExpr.get());
 
     } else {
-      diagnoseBadCast(Self, msg, CT_Reinterpret, OpRange, SrcExpr.get(), DestType);
+      diagnoseBadCast(Self, msg, CT_Reinterpret, OpRange, SrcExpr.get(),
+                      DestType, /*listInitialization=*/false);
     }
   } else if (tcr == TC_Success && Self.getLangOptions().ObjCAutoRefCount) {
     checkObjCARCConversion(Sema::CCK_OtherCast);
@@ -763,7 +766,8 @@ void CastOperation::CheckStaticCast() {
         << oe->getQualifierLoc().getSourceRange();
       Self.NoteAllOverloadCandidates(SrcExpr.get());
     } else {
-      diagnoseBadCast(Self, msg, CT_Static, OpRange, SrcExpr.get(), DestType);
+      diagnoseBadCast(Self, msg, CT_Static, OpRange, SrcExpr.get(), DestType,
+                      /*listInitialization=*/false);
     }
   } else if (tcr == TC_Success) {
     if (Kind == CK_BitCast)
@@ -1867,7 +1871,7 @@ void CastOperation::CheckCXXCStyleCast(bool FunctionalStyle,
 
     } else {
       diagnoseBadCast(Self, msg, (FunctionalStyle ? CT_Functional : CT_CStyle),
-                      OpRange, SrcExpr.get(), DestType);
+                      OpRange, SrcExpr.get(), DestType, ListInitialization);
     }
   } else if (Kind == CK_BitCast) {
     checkCastAlign();
@@ -2090,14 +2094,12 @@ ExprResult Sema::BuildCXXFunctionalCastExpr(TypeSourceInfo *CastTypeInfo,
                                             SourceLocation LPLoc,
                                             Expr *CastExpr,
                                             SourceLocation RPLoc) {
-  bool ListInitialization = LPLoc.isInvalid();
-  assert((!ListInitialization || isa<InitListExpr>(CastExpr)) &&
-         "List initialization must have initializer list as expression.");
+  assert(LPLoc.isValid() && "List-initialization shouldn't get here.");
   CastOperation Op(*this, CastTypeInfo->getType(), CastExpr);
   Op.DestRange = CastTypeInfo->getTypeLoc().getSourceRange();
   Op.OpRange = SourceRange(Op.DestRange.getBegin(), CastExpr->getLocEnd());
 
-  Op.CheckCXXCStyleCast(/*FunctionalStyle=*/ true, ListInitialization);
+  Op.CheckCXXCStyleCast(/*FunctionalStyle=*/true, /*ListInit=*/false);
   if (Op.SrcExpr.isInvalid())
     return ExprError();
 
