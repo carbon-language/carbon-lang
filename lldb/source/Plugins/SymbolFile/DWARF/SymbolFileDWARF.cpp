@@ -4972,6 +4972,7 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                     unique_ast_entry.m_cu = dwarf_cu;
                     unique_ast_entry.m_die = die;
                     unique_ast_entry.m_declaration = decl;
+                    unique_ast_entry.m_byte_size = byte_size;
                     GetUniqueDWARFASTTypeMap().Insert (type_name_const_str, 
                                                        unique_ast_entry);
                     
