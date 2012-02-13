@@ -55,6 +55,22 @@ CFCBundle::SetPath (const char *path)
     return get() != NULL;
 }
 
+bool
+CFCBundle::GetPath (char *dst, size_t dst_len)
+{
+    CFBundleRef bundle = get();
+    if (bundle)
+    {
+        CFCReleaser<CFURLRef> bundle_url (CFBundleCopyBundleURL (bundle));
+        if (bundle_url.get())
+        {
+            Boolean resolveAgainstBase = 0;
+            return ::CFURLGetFileSystemRepresentation (bundle_url.get(), resolveAgainstBase, (UInt8 *)dst, dst_len) != 0;
+        }
+    }
+    return false;
+}   
+
 CFStringRef
 CFCBundle::GetIdentifier () const
 {

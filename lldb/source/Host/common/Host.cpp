@@ -754,6 +754,14 @@ Host::GetModuleFileSpecForHostAddress (const void *host_addr)
 }
 
 #if !defined (__APPLE__) // see Host.mm
+
+bool
+Host::GetBundleDirectory (const FileSpec &file, FileSpec &bundle)
+{
+    bundle.Clear();
+    return false;
+}
+
 bool
 Host::ResolveExecutableInBundle (FileSpec &file)
 {

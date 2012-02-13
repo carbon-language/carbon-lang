@@ -869,6 +869,7 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
                                                       NULL, 
                                                       0, 
                                                       executable_sp, 
+                                                      &GetExecutableSearchPaths(),
                                                       NULL, 
                                                       NULL);
                                           
@@ -1227,7 +1228,15 @@ Target::GetSharedModule
         if (m_image_search_paths.RemapPath (file_spec.GetDirectory(), transformed_spec.GetDirectory()))
         {
             transformed_spec.GetFilename() = file_spec.GetFilename();
-            error = ModuleList::GetSharedModule (transformed_spec, arch, uuid_ptr, object_name, object_offset, module_sp, &old_module_sp, &did_create_module);
+            error = ModuleList::GetSharedModule (transformed_spec, 
+                                                 arch, 
+                                                 uuid_ptr, 
+                                                 object_name, 
+                                                 object_offset, 
+                                                 module_sp, 
+                                                 &GetExecutableSearchPaths(),
+                                                 &old_module_sp, 
+                                                 &did_create_module);
         }
     }
 
@@ -1242,6 +1251,7 @@ Target::GetSharedModule
                                                 object_name, 
                                                 object_offset, 
                                                 module_sp, 
+                                                &GetExecutableSearchPaths(),
                                                 &old_module_sp, 
                                                 &did_create_module);
     }
@@ -1394,6 +1404,20 @@ Target::GetSettingsController ()
     }
     return g_settings_controller_sp;
 }
+
+FileSpecList
+Target::GetDefaultExecutableSearchPaths ()
+{
+    lldb::UserSettingsControllerSP settings_controller_sp (GetSettingsController());
+    if (settings_controller_sp)
+    {
+        lldb::InstanceSettingsSP instance_settings_sp (settings_controller_sp->GetDefaultInstanceSettings ());
+        if (instance_settings_sp)
+            return static_cast<TargetInstanceSettings *>(instance_settings_sp.get())->GetExecutableSearchPaths ();
+    }
+    return FileSpecList();
+}
+
 
 ArchSpec
 Target::GetDefaultArchitecture ()
@@ -2016,6 +2040,7 @@ Target::SettingsController::CreateInstanceSettings (const char *instance_name)
 #define TSC_PREFER_DYNAMIC      "prefer-dynamic-value"
 #define TSC_SKIP_PROLOGUE       "skip-prologue"
 #define TSC_SOURCE_MAP          "source-map"
+#define TSC_EXE_SEARCH_PATHS    "exec-search-paths"
 #define TSC_MAX_CHILDREN        "max-children-count"
 #define TSC_MAX_STRLENSUMMARY   "max-string-summary-length"
 #define TSC_PLATFORM_AVOID      "breakpoints-use-platform-avoid-list"
@@ -2054,6 +2079,13 @@ static const ConstString &
 GetSettingNameForSourcePathMap ()
 {
     static ConstString g_const_string (TSC_SOURCE_MAP);
+    return g_const_string;
+}
+
+static const ConstString &
+GetSettingNameForExecutableSearchPaths ()
+{
+    static ConstString g_const_string (TSC_EXE_SEARCH_PATHS);
     return g_const_string;
 }
 
@@ -2193,6 +2225,7 @@ TargetInstanceSettings::TargetInstanceSettings
     m_prefer_dynamic_value (2),
     m_skip_prologue (true, true),
     m_source_map (NULL, NULL),
+    m_exe_search_paths (),
     m_max_children_display(256),
     m_max_strlen_length(1024),
     m_breakpoints_use_platform_avoid (true, true),
@@ -2231,6 +2264,7 @@ TargetInstanceSettings::TargetInstanceSettings (const TargetInstanceSettings &rh
     m_prefer_dynamic_value (rhs.m_prefer_dynamic_value),
     m_skip_prologue (rhs.m_skip_prologue),
     m_source_map (rhs.m_source_map),
+    m_exe_search_paths (rhs.m_exe_search_paths),
     m_max_children_display (rhs.m_max_children_display),
     m_max_strlen_length (rhs.m_max_strlen_length),
     m_breakpoints_use_platform_avoid (rhs.m_breakpoints_use_platform_avoid),
@@ -2265,6 +2299,7 @@ TargetInstanceSettings::operator= (const TargetInstanceSettings &rhs)
         m_prefer_dynamic_value = rhs.m_prefer_dynamic_value;
         m_skip_prologue = rhs.m_skip_prologue;
         m_source_map = rhs.m_source_map;
+        m_exe_search_paths = rhs.m_exe_search_paths;
         m_max_children_display = rhs.m_max_children_display;
         m_max_strlen_length = rhs.m_max_strlen_length;
         m_breakpoints_use_platform_avoid = rhs.m_breakpoints_use_platform_avoid;
@@ -2356,6 +2391,49 @@ TargetInstanceSettings::UpdateInstanceSettingsVariable (const ConstString &var_n
         uint32_t new_value = Args::StringToUInt32(value, 0, 10, &ok);
         if (ok)
             m_max_strlen_length = new_value;
+    }
+    else if (var_name == GetSettingNameForExecutableSearchPaths())
+    {
+        switch (op)
+        {
+            case eVarSetOperationReplace:
+            case eVarSetOperationInsertBefore:
+            case eVarSetOperationInsertAfter:
+            case eVarSetOperationRemove:
+            default:
+                break;
+            case eVarSetOperationAssign:
+                m_exe_search_paths.Clear();
+                // Fall through to append....
+            case eVarSetOperationAppend:
+            {   
+                Args args(value);
+                const uint32_t argc = args.GetArgumentCount();
+                if (argc > 0)
+                {
+                    const char *exe_search_path_dir;
+                    for (uint32_t idx = 0; (exe_search_path_dir = args.GetArgumentAtIndex(idx)) != NULL; ++idx)
+                    {
+                        FileSpec file_spec;
+                        file_spec.GetDirectory().SetCString(exe_search_path_dir);
+                        FileSpec::FileType file_type = file_spec.GetFileType();
+                        if (file_type == FileSpec::eFileTypeDirectory || file_type == FileSpec::eFileTypeInvalid)
+                        {
+                            m_exe_search_paths.Append(file_spec);
+                        }
+                        else
+                        {
+                            err.SetErrorStringWithFormat("executable search path '%s' exists, but it does not resolve to a directory", exe_search_path_dir);
+                        }
+                    }
+                }
+            }
+                break;
+                
+            case eVarSetOperationClear:
+                m_exe_search_paths.Clear();
+                break;
+        }
     }
     else if (var_name == GetSettingNameForSourcePathMap ())
     {
@@ -2486,6 +2564,16 @@ TargetInstanceSettings::GetInstanceSettingsValue (const SettingEntry &entry,
             value.AppendString ("true");
         else
             value.AppendString ("false");
+    }
+    else if (var_name == GetSettingNameForExecutableSearchPaths())
+    {
+        if (m_exe_search_paths.GetSize())
+        {
+            for (size_t i = 0, n = m_exe_search_paths.GetSize(); i < n; ++i) 
+            {
+                value.AppendString(m_exe_search_paths.GetFileSpecAtIndex (i).GetDirectory().AsCString());
+            }
+        }
     }
     else if (var_name == GetSettingNameForSourcePathMap ())
     {
@@ -2670,6 +2758,7 @@ Target::SettingsController::instance_settings_table[] =
     { TSC_PREFER_DYNAMIC    , eSetVarTypeEnum   , NULL          , g_dynamic_value_types, false, false, "Should printed values be shown as their dynamic value." },
     { TSC_SKIP_PROLOGUE     , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Skip function prologues when setting breakpoints by name." },
     { TSC_SOURCE_MAP        , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Source path remappings to use when locating source files from debug information." },
+    { TSC_EXE_SEARCH_PATHS  , eSetVarTypeArray  , NULL          , NULL,                  false, false, "Executable search paths to use when locating executable files whose paths don't match the local file system." },
     { TSC_MAX_CHILDREN      , eSetVarTypeInt    , "256"         , NULL,                  true,  false, "Maximum number of children to expand in any level of depth." },
     { TSC_MAX_STRLENSUMMARY , eSetVarTypeInt    , "1024"        , NULL,                  true,  false, "Maximum number of characters to show when using %s in summary strings." },
     { TSC_PLATFORM_AVOID    , eSetVarTypeBoolean, "true"        , NULL,                  false, false, "Consult the platform module avoid list when setting non-module specific breakpoints." },

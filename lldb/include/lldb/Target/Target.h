@@ -87,6 +87,19 @@ public:
         return m_source_map;
     }
     
+    FileSpecList &
+    GetExecutableSearchPaths ()
+    {
+        return m_exe_search_paths;
+    }
+
+    const FileSpecList &
+    GetExecutableSearchPaths () const
+    {
+        return m_exe_search_paths;
+    }
+
+    
     uint32_t
     GetMaximumNumberOfChildrenToDisplay()
     {
@@ -225,6 +238,7 @@ protected:
     int m_prefer_dynamic_value;
     OptionValueBoolean m_skip_prologue;
     PathMappingList m_source_map;
+    FileSpecList m_exe_search_paths;
     uint32_t m_max_children_display;
     uint32_t m_max_strlen_length;
     OptionValueBoolean m_breakpoints_use_platform_avoid;
@@ -272,6 +286,9 @@ public:
 
     static lldb::UserSettingsControllerSP &
     GetSettingsController ();
+
+    static FileSpecList
+    GetDefaultExecutableSearchPaths ();
 
     static ArchSpec
     GetDefaultArchitecture ();

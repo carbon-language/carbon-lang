@@ -68,6 +68,9 @@ public:
     virtual lldb_private::Error
     DoLoadCore ();
     
+    virtual lldb_private::DynamicLoader *
+    GetDynamicLoader ();
+
     //------------------------------------------------------------------
     // PluginInterface protocol
     //------------------------------------------------------------------
@@ -99,6 +102,9 @@ public:
     // Process Memory
     //------------------------------------------------------------------
     virtual size_t
+    ReadMemory (lldb::addr_t addr, void *buf, size_t size, lldb_private::Error &error);
+    
+    virtual size_t
     DoReadMemory (lldb::addr_t addr, void *buf, size_t size, lldb_private::Error &error);
     
     virtual lldb::addr_t
@@ -120,6 +126,9 @@ protected:
         return m_core_module_sp->GetObjectFile();
     }
 private:
+    bool 
+    GetDynamicLoaderAddress (lldb::addr_t addr);
+
     //------------------------------------------------------------------
     // For ProcessMachCore only
     //------------------------------------------------------------------
@@ -129,7 +138,8 @@ private:
     VMRangeToFileOffset m_core_aranges;
     lldb::ModuleSP m_core_module_sp;
     lldb_private::FileSpec m_core_file;
-    lldb::addr_t m_shlib_addr;
+    lldb::addr_t m_dyld_addr;
+    std::string  m_dyld_plugin_name;
     DISALLOW_COPY_AND_ASSIGN (ProcessMachCore);
     
 };

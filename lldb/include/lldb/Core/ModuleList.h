@@ -416,6 +416,7 @@ public:
                      const ConstString *object_name,
                      off_t object_offset,
                      lldb::ModuleSP &module_sp,
+                     const FileSpecList *module_search_paths_ptr,
                      lldb::ModuleSP *old_module_sp_ptr,
                      bool *did_create_ptr,
                      bool always_create = false);

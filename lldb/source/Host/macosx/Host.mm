@@ -137,6 +137,28 @@ Host::ThreadCreated (const char *thread_name)
     }
 }
 
+bool
+Host::GetBundleDirectory (const FileSpec &file, FileSpec &bundle_directory)
+{
+#if defined (__APPLE__)
+    if (file.GetFileType () == FileSpec::eFileTypeDirectory)
+    {
+        char path[PATH_MAX];
+        if (file.GetPath(path, sizeof(path)))
+        {
+            CFCBundle bundle (path);
+            if (bundle.GetPath (path, sizeof(path)))
+            {
+                bundle_directory.SetFile (path, false);
+                return true;
+            }
+        }
+    }
+#endif
+    bundle_directory.Clear();
+    return false;
+}
+
 
 bool
 Host::ResolveExecutableInBundle (FileSpec &file)
@@ -1215,7 +1237,8 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
         lldb::ModuleSP exe_module_sp;
         error = host_platform_sp->ResolveExecutable (exe_spec,
                                                      arch_spec,
-                                                     exe_module_sp);
+                                                     exe_module_sp,
+                                                     NULL);
     
         if (error.Fail())
             return error;

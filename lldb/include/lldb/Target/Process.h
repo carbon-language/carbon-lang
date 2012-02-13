@@ -1601,6 +1601,18 @@ public:
         error.SetErrorStringWithFormat("error: %s does not support loading core files.", GetShortPluginName());
         return error;
     }
+    
+    //------------------------------------------------------------------
+    /// Get the dynamic loader plug-in for this process. 
+    ///
+    /// The default action is to let the DynamicLoader plug-ins check
+    /// the main executable and the DynamicLoader will select itself
+    /// automatically. Subclasses can override this if inspecting the
+    /// executable is not desired, or if Process subclasses can only
+    /// use a specific DynamicLoader plug-in.
+    //------------------------------------------------------------------
+    virtual DynamicLoader *
+    GetDynamicLoader ();
 
     //------------------------------------------------------------------
     /// Attach to an existing process using the process attach info.
@@ -2400,7 +2412,7 @@ public:
     ///     vm_addr, \a buf, and \a size updated appropriately. Zero is
     ///     returned to indicate an error.
     //------------------------------------------------------------------
-    size_t
+    virtual size_t
     ReadMemory (lldb::addr_t vm_addr, 
                 void *buf, 
                 size_t size,
@@ -2631,7 +2643,9 @@ public:
 
     lldb::ModuleSP
     ReadModuleFromMemory (const FileSpec& file_spec, 
-                          lldb::addr_t header_addr);
+                          lldb::addr_t header_addr,
+                          bool add_image_to_target,
+                          bool load_sections_in_target);
 
     //------------------------------------------------------------------
     /// Attempt to get the attributes for a region of memory in the process.
@@ -2975,12 +2989,6 @@ protected:
 public:
     const lldb::ABISP &
     GetABI ();
-
-    DynamicLoader *
-    GetDynamicLoader ()
-    {
-        return m_dyld_ap.get();
-    }
 
     OperatingSystem *
     GetOperatingSystem ()

@@ -94,6 +94,7 @@ Platform::GetSharedModule (const FileSpec &platform_file,
                            const ConstString *object_name_ptr,
                            off_t object_offset,
                            ModuleSP &module_sp,
+                           const FileSpecList *module_search_paths_ptr,
                            ModuleSP *old_module_sp_ptr,
                            bool *did_create_ptr)
 {
@@ -111,6 +112,7 @@ Platform::GetSharedModule (const FileSpec &platform_file,
                                         object_name_ptr, 
                                         object_offset, 
                                         module_sp,
+                                        module_search_paths_ptr,
                                         old_module_sp_ptr,
                                         did_create_ptr,
                                         always_create);
@@ -403,7 +405,8 @@ Platform::SetOSVersion (uint32_t major,
 Error
 Platform::ResolveExecutable (const FileSpec &exe_file,
                              const ArchSpec &exe_arch,
-                             lldb::ModuleSP &exe_module_sp)
+                             lldb::ModuleSP &exe_module_sp,
+                             const FileSpecList *module_search_paths_ptr)
 {
     Error error;
     if (exe_file.Exists())
@@ -416,6 +419,7 @@ Platform::ResolveExecutable (const FileSpec &exe_file,
                                                  NULL, 
                                                  0, 
                                                  exe_module_sp, 
+                                                 module_search_paths_ptr,
                                                  NULL, 
                                                  NULL);
         }
@@ -433,6 +437,7 @@ Platform::ResolveExecutable (const FileSpec &exe_file,
                                                      NULL, 
                                                      0, 
                                                      exe_module_sp, 
+                                                     module_search_paths_ptr,
                                                      NULL, 
                                                      NULL);
                 // Did we find an executable using one of the 

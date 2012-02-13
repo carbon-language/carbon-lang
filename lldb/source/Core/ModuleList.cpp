@@ -729,6 +729,7 @@ ModuleList::GetSharedModule
     const ConstString *object_name_ptr,
     off_t object_offset,
     ModuleSP &module_sp,
+    const FileSpecList *module_search_paths_ptr,
     ModuleSP *old_module_sp_ptr,
     bool *did_create_ptr,
     bool always_create

@@ -367,7 +367,8 @@ LocateMacOSXFilesUsingDebugSymbols
 
                     if (out_exec_fspec)
                     {
-                        CFCReleaser<CFDictionaryRef> dict(::DBGCopyDSYMPropertyLists (dsym_url.get()));;
+                        CFCReleaser<CFDictionaryRef> dict(::DBGCopyDSYMPropertyLists (dsym_url.get()));
+                        bool success = false;
                         if (dict.get())
                         {
                             char uuid_cstr_buf[64];
@@ -381,10 +382,13 @@ LocateMacOSXFilesUsingDebugSymbols
                                 {
                                     ++items_found;
                                     out_exec_fspec->SetFile(path, path[0] == '~');
+                                    if (out_exec_fspec->Exists())
+                                        success = true;
                                 }
                             }
                         }
-                        else
+
+                        if (!success)
                         {
                             // No dictionary, check near the dSYM bundle for an executable that matches...
                             if (::CFURLGetFileSystemRepresentation (dsym_url.get(), true, (UInt8*)path, sizeof(path)-1))

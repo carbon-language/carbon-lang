@@ -34,6 +34,9 @@ public:
     GetValueForInfoDictionaryKey(CFStringRef key) const;
 
     bool
+    GetPath (char *dst, size_t dst_len);
+
+    bool
     SetPath (const char *path);
 
 private:

@@ -505,6 +505,12 @@ public:
     size_t
     MemoryMapSectionData (const Section *section, 
                           DataExtractor& section_data) const;
+    
+    bool
+    IsInMemory () const
+    {
+        return m_memory_addr != LLDB_INVALID_ADDRESS;
+    }
 protected:
     //------------------------------------------------------------------
     // Member variables.
@@ -519,11 +525,6 @@ protected:
     lldb::ProcessWP m_process_wp;
     const lldb::addr_t m_memory_addr;
     
-    bool
-    IsInMemory () const
-    {
-        return m_memory_addr != LLDB_INVALID_ADDRESS;
-    }
     //------------------------------------------------------------------
     /// Sets the architecture for a module.  At present the architecture
     /// can only be set if it is invalid.  It is not allowed to switch from

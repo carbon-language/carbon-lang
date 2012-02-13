@@ -128,53 +128,6 @@ PlatformMacOSX::GetFile (const FileSpec &platform_file,
     return Error();
 }
 
-Error
-PlatformMacOSX::GetSharedModule (const FileSpec &platform_file, 
-                                 const ArchSpec &arch,
-                                 const UUID *uuid_ptr,
-                                 const ConstString *object_name_ptr,
-                                 off_t object_offset,
-                                 ModuleSP &module_sp,
-                                 ModuleSP *old_module_sp_ptr,
-                                 bool *did_create_ptr)
-{
-    Error error;
-    module_sp.reset();
-
-    if (IsRemote())
-    {
-        // If we have a remote platform always, let it try and locate
-        // the shared module first.
-        if (m_remote_platform_sp)
-        {
-            error = m_remote_platform_sp->GetSharedModule (platform_file,
-                                                           arch,
-                                                           uuid_ptr,
-                                                           object_name_ptr,
-                                                           object_offset,
-                                                           module_sp,
-                                                           old_module_sp_ptr,
-                                                           did_create_ptr);
-        }
-    }
-    
-    if (!module_sp)
-    {
-        // Fall back to the local platform and find the file locally
-        error = Platform::GetSharedModule (platform_file,
-                                           arch,
-                                           uuid_ptr,
-                                           object_name_ptr,
-                                           object_offset,
-                                           module_sp,
-                                           old_module_sp_ptr,
-                                           did_create_ptr);
-    }
-    if (module_sp)
-        module_sp->SetPlatformFileSpec(platform_file);
-    return error;
-}
-
 bool
 PlatformMacOSX::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {

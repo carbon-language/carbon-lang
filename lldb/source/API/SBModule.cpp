@@ -46,7 +46,14 @@ SBModule::SBModule (lldb::SBProcess &process, lldb::addr_t header_addr) :
 {
     ProcessSP process_sp (process.GetSP());
     if (process_sp)
-        m_opaque_sp = process_sp->ReadModuleFromMemory (FileSpec(), header_addr);
+    {
+        const bool add_image_to_target = true;
+        const bool load_image_sections_in_target = true;
+        m_opaque_sp = process_sp->ReadModuleFromMemory (FileSpec(), 
+                                                        header_addr, 
+                                                        add_image_to_target,
+                                                        load_image_sections_in_target);
+    }
 }
 
 const SBModule &

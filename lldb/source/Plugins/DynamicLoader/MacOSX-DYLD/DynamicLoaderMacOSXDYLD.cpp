@@ -210,7 +210,7 @@ DynamicLoaderMacOSXDYLD::LocateDYLD()
         // Check the image info addr as it might point to the 
         // mach header for dyld, or it might point to the 
         // dyld_all_image_infos struct
-        addr_t shlib_addr = m_process->GetImageInfoAddress ();
+        const addr_t shlib_addr = m_process->GetImageInfoAddress ();
 
         ByteOrder byte_order = m_process->GetTarget().GetArchitecture().GetByteOrder();
         uint8_t buf[4];
@@ -310,8 +310,14 @@ DynamicLoaderMacOSXDYLD::FindTargetModuleForDYLDImageInfo (const DYLDImageInfo &
                                                                     arch,
                                                                     image_info_uuid_is_valid ? &image_info.uuid : NULL);
                 if (!module_sp || module_sp->GetObjectFile() == NULL)
+                {
+                    const bool add_image_to_target = true;
+                    const bool load_image_sections_in_target = false;
                     module_sp = m_process->ReadModuleFromMemory (image_info.file_spec,
-                                                                 image_info.address);
+                                                                 image_info.address,
+                                                                 add_image_to_target,
+                                                                 load_image_sections_in_target);
+                }
 
                 if (did_create_ptr)
                     *did_create_ptr = module_sp;
@@ -434,14 +440,22 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& 
                 {
                     SectionSP section_sp(section_list->FindSectionByName(info.segments[i].name));
                     const addr_t new_section_load_addr = info.segments[i].vmaddr + info.slide;
+                    static ConstString g_section_name_LINKEDIT ("__LINKEDIT");
+
                     if (section_sp)
                     {
-                        const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
-                        if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
-                            old_section_load_addr != new_section_load_addr)
+                        // Don't ever load any __LINKEDIT sections since the ones in the shared
+                        // cached will be coalesced into a single section and we will get warnings
+                        // about multiple sections mapping to the same address.
+                        if (section_sp->GetName() != g_section_name_LINKEDIT)
                         {
-                            if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), new_section_load_addr))
-                                changed = true;
+                            const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
+                            if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
+                                old_section_load_addr != new_section_load_addr)
+                            {
+                                if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), new_section_load_addr))
+                                    changed = true;
+                            }
                         }
                     }
                     else
@@ -780,10 +794,14 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfos (DYLDImageInfo::collection &i
                                                                               &commpage_dbstr,
                                                                               objfile->GetOffset() + commpage_section->GetFileOffset());
                             if (!commpage_image_module_sp || commpage_image_module_sp->GetObjectFile() == NULL)
+                            {
+                                const bool add_image_to_target = true;
+                                const bool load_image_sections_in_target = false;
                                 commpage_image_module_sp = m_process->ReadModuleFromMemory (image_infos[idx].file_spec,
-                                                                                            image_infos[idx].address);
-                            
-
+                                                                                            image_infos[idx].address,
+                                                                                            add_image_to_target,
+                                                                                            load_image_sections_in_target);
+                            }
                         }
                         if (commpage_image_module_sp)
                             UpdateCommPageLoadAddress (commpage_image_module_sp.get());
@@ -1249,8 +1267,14 @@ DynamicLoaderMacOSXDYLD::UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::co
                                                                     exe_arch_spec,
                                                                     &image_infos[exe_idx].uuid);
             if (!exe_module_sp || exe_module_sp->GetObjectFile() == NULL)
+            {
+                const bool add_image_to_target = true;
+                const bool load_image_sections_in_target = false;
                 exe_module_sp = m_process->ReadModuleFromMemory (image_infos[exe_idx].file_spec,
-                                                                 image_infos[exe_idx].address);
+                                                                 image_infos[exe_idx].address,
+                                                                 add_image_to_target,
+                                                                 load_image_sections_in_target);                
+            }
         }
         
         if (exe_module_sp)

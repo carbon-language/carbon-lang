@@ -27,6 +27,8 @@
 #include "lldb/Symbol/ClangNamespaceDecl.h"
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Target/Process.h"
+#include "Plugins/Process/Utility/RegisterContextDarwin_arm.h"
+#include "Plugins/Process/Utility/RegisterContextDarwin_i386.h"
 #include "Plugins/Process/Utility/RegisterContextDarwin_x86_64.h"
 
 
@@ -52,45 +54,244 @@ public:
     void
     SetRegisterDataFrom_LC_THREAD (const DataExtractor &data)
     {
-        int flavor;
         uint32_t offset = 0;
         SetError (GPRRegSet, Read, -1);
         SetError (FPURegSet, Read, -1);
         SetError (EXCRegSet, Read, -1);
-        while ((flavor = data.GetU32 (&offset)) > 0)
+        bool done = false;
+        
+        while (!done)
         {
-            uint32_t i;
-            uint32_t count = data.GetU32 (&offset);
-            switch (flavor)
+            int flavor = data.GetU32 (&offset);
+            if (flavor == 0)
+                done = true;
+            else
             {
-                case 7:
-                case 8:
-                case 9:
-                    // Goofy extra flavor inside state...
-                    flavor = data.GetU32 (&offset);
-                    count = data.GetU32 (&offset);
-                default:
-                    break;
+                uint32_t i;
+                uint32_t count = data.GetU32 (&offset);
+                switch (flavor)
+                {
+                    case GPRRegSet:
+                        for (i=0; i<count; ++i)
+                            (&gpr.rax)[i] = data.GetU64(&offset);
+                        SetError (GPRRegSet, Read, 0);
+                        done = true;
+                        
+                        break;
+                    case FPURegSet:
+                        // TODO: fill in FPU regs....
+                        //SetError (FPURegSet, Read, -1);
+                        done = true;
+                        
+                        break;
+                    case EXCRegSet:
+                        exc.trapno = data.GetU32(&offset);
+                        exc.err = data.GetU32(&offset);
+                        exc.faultvaddr = data.GetU64(&offset);
+                        SetError (EXCRegSet, Read, 0);
+                        done = true;
+                        break;
+                    case 7:
+                    case 8:
+                    case 9:
+                        // fancy flavors that encapsulate of the the above
+                        // falvors...
+                        break;
+                        
+                    default:
+                        done = true;
+                        break;
+                }
             }
+        }
+    }
+protected:
+    virtual int
+    DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoReadFPU (lldb::tid_t tid, int flavor, FPU &fpu)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoWriteGPR (lldb::tid_t tid, int flavor, const GPR &gpr)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoWriteFPU (lldb::tid_t tid, int flavor, const FPU &fpu)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoWriteEXC (lldb::tid_t tid, int flavor, const EXC &exc)
+    {
+        return 0;
+    }
+};
 
-            switch (flavor)
+
+class RegisterContextDarwin_i386_Mach : public RegisterContextDarwin_i386 
+{
+public:
+    RegisterContextDarwin_i386_Mach (lldb_private::Thread &thread, const DataExtractor &data) :
+    RegisterContextDarwin_i386 (thread, 0)
+    {
+        SetRegisterDataFrom_LC_THREAD (data);
+    }
+    
+    virtual void
+    InvalidateAllRegisters ()
+    {
+        // Do nothing... registers are always valid...
+    }
+    
+    void
+    SetRegisterDataFrom_LC_THREAD (const DataExtractor &data)
+    {
+        uint32_t offset = 0;
+        SetError (GPRRegSet, Read, -1);
+        SetError (FPURegSet, Read, -1);
+        SetError (EXCRegSet, Read, -1);
+        bool done = false;
+        
+        while (!done)
+        {
+            int flavor = data.GetU32 (&offset);
+            if (flavor == 0)
+                done = true;
+            else
             {
-                case GPRRegSet:
-                    for (i=0; i<count; ++i)
-                        (&gpr.rax)[i] = data.GetU64(&offset);
-                    SetError (GPRRegSet, Read, 0);
-                    break;
-                case FPURegSet:
-                    // TODO: fill in FPU regs....
-                    //SetError (FPURegSet, Read, -1);
-                    break;
-                case EXCRegSet:
-                    exc.trapno = data.GetU32(&offset);
-                    exc.err = data.GetU32(&offset);
-                    exc.faultvaddr = data.GetU64(&offset);
-                    SetError (EXCRegSet, Read, 0);
-                    break;
+                uint32_t i;
+                uint32_t count = data.GetU32 (&offset);
+                switch (flavor)
+                {
+                    case GPRRegSet:
+                        for (i=0; i<count; ++i)
+                            (&gpr.eax)[i] = data.GetU32(&offset);
+                        SetError (GPRRegSet, Read, 0);
+                        done = true;
+
+                        break;
+                    case FPURegSet:
+                        // TODO: fill in FPU regs....
+                        //SetError (FPURegSet, Read, -1);
+                        done = true;
+
+                        break;
+                    case EXCRegSet:
+                        exc.trapno = data.GetU32(&offset);
+                        exc.err = data.GetU32(&offset);
+                        exc.faultvaddr = data.GetU32(&offset);
+                        SetError (EXCRegSet, Read, 0);
+                        done = true;
+                        break;
+                    case 7:
+                    case 8:
+                    case 9:
+                        // fancy flavors that encapsulate of the the above
+                        // falvors...
+                        break;
+                        
+                    default:
+                        done = true;
+                        break;
+                }
             }
+        }
+    }
+protected:
+    virtual int
+    DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoReadFPU (lldb::tid_t tid, int flavor, FPU &fpu)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoWriteGPR (lldb::tid_t tid, int flavor, const GPR &gpr)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoWriteFPU (lldb::tid_t tid, int flavor, const FPU &fpu)
+    {
+        return 0;
+    }
+    
+    virtual int
+    DoWriteEXC (lldb::tid_t tid, int flavor, const EXC &exc)
+    {
+        return 0;
+    }
+};
+
+class RegisterContextDarwin_arm_Mach : public RegisterContextDarwin_arm 
+{
+public:
+    RegisterContextDarwin_arm_Mach (lldb_private::Thread &thread, const DataExtractor &data) :
+    RegisterContextDarwin_arm (thread, 0)
+    {
+        SetRegisterDataFrom_LC_THREAD (data);
+    }
+    
+    virtual void
+    InvalidateAllRegisters ()
+    {
+        // Do nothing... registers are always valid...
+    }
+    
+    void
+    SetRegisterDataFrom_LC_THREAD (const DataExtractor &data)
+    {
+        uint32_t offset = 0;
+        SetError (GPRRegSet, Read, -1);
+        SetError (FPURegSet, Read, -1);
+        SetError (EXCRegSet, Read, -1);
+        int flavor = data.GetU32 (&offset);
+        uint32_t count = data.GetU32 (&offset);
+        switch (flavor)
+        {
+            case GPRRegSet:
+                for (uint32_t i=0; i<count; ++i)
+                    gpr.r[i] = data.GetU32(&offset);
+                SetError (GPRRegSet, Read, 0);
+                break;
+            case FPURegSet:
+                // TODO: fill in FPU regs....
+                //SetError (FPURegSet, Read, -1);
+                break;
+            case EXCRegSet:
+                exc.exception = data.GetU32(&offset);
+                exc.fsr = data.GetU32(&offset);
+                exc.far = data.GetU32(&offset);
+                SetError (EXCRegSet, Read, 0);
+                break;
         }
     }
 protected:
@@ -1017,9 +1218,11 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                         const addr_t symoff_addr = linkedit_load_addr + symtab_load_command.symoff - linkedit_file_offset;
                         const addr_t stroff_addr = linkedit_load_addr + symtab_load_command.stroff - linkedit_file_offset;
                         DataBufferSP nlist_data_sp (ReadMemory (process_sp, symoff_addr, nlist_data_byte_size));
+                        if (nlist_data_sp)
+                            nlist_data.SetData (nlist_data_sp, 0, nlist_data_sp->GetByteSize());
                         DataBufferSP strtab_data_sp (ReadMemory (process_sp, stroff_addr, strtab_data_byte_size));
-                        nlist_data.SetData (nlist_data_sp, 0, nlist_data_sp->GetByteSize());
-                        strtab_data.SetData (strtab_data_sp, 0, strtab_data_sp->GetByteSize());
+                        if (strtab_data_sp)
+                            strtab_data.SetData (strtab_data_sp, 0, strtab_data_sp->GetByteSize());
                     }
                 }
                 else
@@ -2104,12 +2307,24 @@ ObjectFileMachO::GetThreadContextAtIndex (uint32_t idx, lldb_private::Thread &th
 
     lldb::RegisterContextSP reg_ctx_sp;
     const FileRangeArray::Entry *thread_context_file_range = m_thread_context_offsets.GetEntryAtIndex (idx);
-    if (thread_context_file_range)
+    
+    DataExtractor data (m_data, 
+                        thread_context_file_range->GetRangeBase(), 
+                        thread_context_file_range->GetByteSize());
+
+    switch (m_header.cputype)
     {
-        DataExtractor data (m_data, 
-                            thread_context_file_range->GetRangeBase(), 
-                            thread_context_file_range->GetByteSize());
-        reg_ctx_sp.reset (new RegisterContextDarwin_x86_64_Mach (thread, data));
+        case llvm::MachO::CPUTypeARM:
+            reg_ctx_sp.reset (new RegisterContextDarwin_arm_Mach (thread, data));
+            break;
+            
+        case llvm::MachO::CPUTypeI386:
+            reg_ctx_sp.reset (new RegisterContextDarwin_i386_Mach (thread, data));
+            break;
+            
+        case llvm::MachO::CPUTypeX86_64:
+            reg_ctx_sp.reset (new RegisterContextDarwin_x86_64_Mach (thread, data));
+            break;
     }
     return reg_ctx_sp;
 }

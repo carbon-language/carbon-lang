@@ -262,6 +262,12 @@ public:
     FinalizeSettingsController (lldb::UserSettingsControllerSP &controller_sp);
 
 
+    lldb::InstanceSettingsSP
+    GetDefaultInstanceSettings ()
+    {
+        return m_default_settings;
+    }
+
 protected:
 
     // -------------------------------------------------------------------------

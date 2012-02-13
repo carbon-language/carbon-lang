@@ -108,7 +108,8 @@ namespace lldb_private {
         virtual Error
         ResolveExecutable (const FileSpec &exe_file,
                            const ArchSpec &arch,
-                           lldb::ModuleSP &module_sp);
+                           lldb::ModuleSP &module_sp,
+                           const FileSpecList *module_search_paths_ptr);
 
         //------------------------------------------------------------------
         /// Resolves the FileSpec to a (possibly) remote path. Remote
@@ -237,6 +238,7 @@ namespace lldb_private {
                          const ConstString *object_name_ptr,
                          off_t object_offset,
                          lldb::ModuleSP &module_sp,
+                         const FileSpecList *module_search_paths_ptr,
                          lldb::ModuleSP *old_module_sp_ptr,
                          bool *did_create_ptr);
 

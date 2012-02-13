@@ -92,6 +92,16 @@ TargetList::CreateTarget (Debugger &debugger,
                                       get_dependent_files,
                                       platform_sp,
                                       target_sp);
+
+    if (target_sp)
+    {
+        if (file.GetDirectory())
+        {
+            FileSpec file_dir;
+            file_dir.GetDirectory() = file.GetDirectory();
+            target_sp->GetExecutableSearchPaths ().Append (file_dir);
+        }
+    }
     return error;
 }
 
@@ -120,7 +130,12 @@ TargetList::CreateTarget
         FileSpec resolved_file(file);
         
         if (platform_sp)
-            error = platform_sp->ResolveExecutable (file, arch, exe_module_sp);
+        {
+            FileSpecList executable_search_paths (Target::GetDefaultExecutableSearchPaths());
+            error = platform_sp->ResolveExecutable (file, arch, 
+                                                    exe_module_sp, 
+                                                    executable_search_paths.GetSize() ? &executable_search_paths : NULL);
+        }
 
         if (error.Success() && exe_module_sp)
         {

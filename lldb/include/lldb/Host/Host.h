@@ -298,6 +298,28 @@ public:
     GetModuleFileSpecForHostAddress (const void *host_addr);
 
 
+    
+    //------------------------------------------------------------------
+    /// If you have an executable that is in a bundle and want to get
+    /// back to the bundle directory from the path itself, this 
+    /// function will change a path to a file within a bundle to the
+    /// bundle directory itself.
+    ///
+    /// @param[in] file
+    ///     A file spec that might point to a file in a bundle. 
+    ///
+    /// @param[out] bundle_directory
+    ///     An object will be filled in with the bundle directory for
+    ///     the bundle when \b true is returned. Otherwise \a file is 
+    ///     left untouched and \b false is returned.
+    ///
+    /// @return
+    ///     \b true if \a file was resolved in \a bundle_directory,
+    ///     \b false otherwise.
+    //------------------------------------------------------------------
+    static bool
+    GetBundleDirectory (const FileSpec &file, FileSpec &bundle_directory);
+
     //------------------------------------------------------------------
     /// When executable files may live within a directory, where the 
     /// directory represents an executable bundle (like the MacOSX 

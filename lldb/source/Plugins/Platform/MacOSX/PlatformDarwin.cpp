@@ -46,7 +46,8 @@ PlatformDarwin::~PlatformDarwin()
 Error
 PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
                                    const ArchSpec &exe_arch,
-                                   lldb::ModuleSP &exe_module_sp)
+                                   lldb::ModuleSP &exe_module_sp,
+                                   const FileSpecList *module_search_paths_ptr)
 {
     Error error;
     // Nothing special to do here, just use the actual file and architecture
@@ -84,7 +85,8 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
         {
             error = m_remote_platform_sp->ResolveExecutable (exe_file, 
                                                              exe_arch,
-                                                             exe_module_sp);
+                                                             exe_module_sp,
+                                                             module_search_paths_ptr);
         }
         else
         {
@@ -111,6 +113,7 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
                                                  NULL, 
                                                  0, 
                                                  exe_module_sp, 
+                                                 module_search_paths_ptr,
                                                  NULL, 
                                                  NULL);
         
@@ -139,6 +142,7 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
                                                      NULL, 
                                                      0, 
                                                      exe_module_sp, 
+                                                     module_search_paths_ptr,
                                                      NULL, 
                                                      NULL);
                 // Did we find an executable using one of the 
@@ -170,6 +174,100 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
     return error;
 }
 
+
+
+Error
+PlatformDarwin::GetSharedModule (const FileSpec &platform_file, 
+                                 const ArchSpec &arch,
+                                 const UUID *uuid_ptr,
+                                 const ConstString *object_name_ptr,
+                                 off_t object_offset,
+                                 ModuleSP &module_sp,
+                                 const FileSpecList *module_search_paths_ptr,
+                                 ModuleSP *old_module_sp_ptr,
+                                 bool *did_create_ptr)
+{
+    Error error;
+    module_sp.reset();
+    
+    if (IsRemote())
+    {
+        // If we have a remote platform always, let it try and locate
+        // the shared module first.
+        if (m_remote_platform_sp)
+        {
+            error = m_remote_platform_sp->GetSharedModule (platform_file,
+                                                           arch,
+                                                           uuid_ptr,
+                                                           object_name_ptr,
+                                                           object_offset,
+                                                           module_sp,
+                                                           module_search_paths_ptr,
+                                                           old_module_sp_ptr,
+                                                           did_create_ptr);
+        }
+    }
+    
+    if (!module_sp)
+    {
+        // Fall back to the local platform and find the file locally
+        error = Platform::GetSharedModule (platform_file,
+                                           arch,
+                                           uuid_ptr,
+                                           object_name_ptr,
+                                           object_offset,
+                                           module_sp,
+                                           module_search_paths_ptr,
+                                           old_module_sp_ptr,
+                                           did_create_ptr);
+        
+        if (!module_sp && module_search_paths_ptr && platform_file)
+        {
+            // We can try to pull off part of the file path up to the bundle
+            // directory level and try any module search paths...
+            FileSpec bundle_directory;
+            if (Host::GetBundleDirectory (platform_file, bundle_directory))
+            {
+                char platform_path[PATH_MAX];
+                char bundle_dir[PATH_MAX];
+                platform_file.GetPath (platform_path, sizeof(platform_path));
+                const size_t bundle_directory_len = bundle_directory.GetPath (bundle_dir, sizeof(bundle_dir));
+                char new_path[PATH_MAX];
+                size_t num_module_search_paths = module_search_paths_ptr->GetSize();
+                for (size_t i=0; i<num_module_search_paths; ++i)
+                {
+                    const size_t search_path_len = module_search_paths_ptr->GetFileSpecAtIndex(i).GetPath(new_path, sizeof(new_path));
+                    if (search_path_len < sizeof(new_path))
+                    {
+                        snprintf (new_path + search_path_len, sizeof(new_path) - search_path_len, "/%s", platform_path + bundle_directory_len);
+                        FileSpec new_file_spec (new_path, false);
+                        if (new_file_spec.Exists())
+                        {
+                            Error new_error (Platform::GetSharedModule (new_file_spec,
+                                                                        arch,
+                                                                        uuid_ptr,
+                                                                        object_name_ptr,
+                                                                        object_offset,
+                                                                        module_sp,
+                                                                        NULL,
+                                                                        old_module_sp_ptr,
+                                                                        did_create_ptr));
+                            
+                            if (module_sp)
+                            {
+                                module_sp->SetPlatformFileSpec(new_file_spec);
+                                return new_error;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    if (module_sp)
+        module_sp->SetPlatformFileSpec(platform_file);
+    return error;
+}
 
 size_t
 PlatformDarwin::GetSoftwareBreakpointTrapOpcode (Target &target, BreakpointSite *bp_site)

@@ -74,6 +74,9 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
                      load_addr);
     }
 
+    if (section->GetByteSize() == 0)
+        return false; // No change
+
     Mutex::Locker locker(m_mutex);
     sect_to_addr_collection::iterator sta_pos = m_sect_to_addr.find(section);
     if (sta_pos != m_sect_to_addr.end())
@@ -89,7 +92,19 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
     addr_to_sect_collection::iterator ats_pos = m_addr_to_sect.find(load_addr);
     if (ats_pos != m_addr_to_sect.end())
     {
-        assert (section != ats_pos->second);
+        if (section != ats_pos->second)
+        {
+            Module *module = section->GetModule();
+            if (module)
+            {
+                module->ReportWarning ("address 0x%16.16llx maps to more than one section: %s.%s and %s.%s",
+                                       load_addr, 
+                                       module->GetFileSpec().GetFilename().GetCString(), 
+                                       section->GetName().GetCString(),
+                                       ats_pos->second->GetModule()->GetFileSpec().GetFilename().GetCString(), 
+                                       ats_pos->second->GetName().GetCString());
+            }
+        }
         ats_pos->second = section;
     }
     else

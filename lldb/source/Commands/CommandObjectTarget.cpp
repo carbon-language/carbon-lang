@@ -211,31 +211,43 @@ public:
                 debugger.GetTargetList().SetSelectedTarget(target_sp.get());
                 if (core_file)
                 {
-                    ProcessSP process_sp (target_sp->CreateProcess (m_interpreter.GetDebugger().GetListener(), NULL, &core_file));
                     char core_path[PATH_MAX];
                     core_file.GetPath(core_path, sizeof(core_path));
-
-                    if (process_sp)
+                    if (core_file.Exists())
                     {
-                        // Seems wierd that we Launch a core file, but that is
-                        // what we do!
-                        error = process_sp->LoadCore();
+                        FileSpec core_file_dir;
+                        core_file_dir.GetDirectory() = core_file.GetDirectory();
+                        target_sp->GetExecutableSearchPaths ().Append (core_file_dir);
                         
-                        if (error.Fail())
+                        ProcessSP process_sp (target_sp->CreateProcess (m_interpreter.GetDebugger().GetListener(), NULL, &core_file));
+
+                        if (process_sp)
                         {
-                            result.AppendError(error.AsCString("can't find plug-in for core file"));
-                            result.SetStatus (eReturnStatusFailed);
-                            return false;
+                            // Seems wierd that we Launch a core file, but that is
+                            // what we do!
+                            error = process_sp->LoadCore();
+                            
+                            if (error.Fail())
+                            {
+                                result.AppendError(error.AsCString("can't find plug-in for core file"));
+                                result.SetStatus (eReturnStatusFailed);
+                                return false;
+                            }
+                            else
+                            {
+                                result.AppendMessageWithFormat ("Core file '%s' (%s) was loaded.\n", core_path, target_sp->GetArchitecture().GetArchitectureName());
+                                result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                            }
                         }
                         else
                         {
-                            result.AppendMessageWithFormat ("Core file '%s' (%s) was loaded.\n", core_path, target_sp->GetArchitecture().GetArchitectureName());
-                            result.SetStatus (eReturnStatusSuccessFinishNoResult);
+                            result.AppendErrorWithFormat ("Unable to find process plug-in for core file '%s'\n", core_path);
+                            result.SetStatus (eReturnStatusFailed);
                         }
                     }
                     else
                     {
-                        result.AppendErrorWithFormat ("Unable to find process plug-in for core file '%s'\n", core_path);
+                        result.AppendErrorWithFormat ("Core file '%s' does not exist\n", core_path);
                         result.SetStatus (eReturnStatusFailed);
                     }
                 }

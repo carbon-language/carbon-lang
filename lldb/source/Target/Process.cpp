@@ -2193,14 +2193,23 @@ Process::DeallocateMemory (addr_t ptr)
 }
 
 ModuleSP
-Process::ReadModuleFromMemory (const FileSpec& file_spec, lldb::addr_t header_addr)
+Process::ReadModuleFromMemory (const FileSpec& file_spec, 
+                               lldb::addr_t header_addr, 
+                               bool add_image_to_target,
+                               bool load_sections_in_target)
 {
     ModuleSP module_sp (new Module (file_spec, shared_from_this(), header_addr));
     if (module_sp)
     {
-        m_target.GetImages().Append(module_sp);
-        bool changed = false;
-        module_sp->SetLoadAddress (m_target, 0, changed);
+        if (add_image_to_target)
+        {
+            m_target.GetImages().Append(module_sp);
+            if (load_sections_in_target)
+            {
+                bool changed = false;
+                module_sp->SetLoadAddress (m_target, 0, changed);
+            }
+        }
     }
     return module_sp;
 }
@@ -2306,9 +2315,9 @@ Process::Launch (const ProcessLaunchInfo &launch_info)
 
                         DidLaunch ();
 
-                        m_dyld_ap.reset (DynamicLoader::FindPlugin (this, NULL));
-                        if (m_dyld_ap.get())
-                            m_dyld_ap->DidLaunch();
+                        DynamicLoader *dyld = GetDynamicLoader ();
+                        if (dyld)
+                            dyld->DidLaunch();
 
                         m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
                         // This delays passing the stopped event to listeners till DidLaunch gets
@@ -2349,7 +2358,11 @@ Process::LoadCore ()
         else
             StartPrivateStateThread ();
 
-        CompleteAttach ();
+        DynamicLoader *dyld = GetDynamicLoader ();
+        if (dyld)
+            dyld->DidAttach();
+        
+        m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
         // We successfully loaded a core file, now pretend we stopped so we can
         // show all of the threads in the core file and explore the crashed
         // state.
@@ -2359,6 +2372,13 @@ Process::LoadCore ()
     return error;
 }
 
+DynamicLoader *
+Process::GetDynamicLoader ()
+{
+    if (m_dyld_ap.get() == NULL)
+        m_dyld_ap.reset (DynamicLoader::FindPlugin(this, NULL));
+    return m_dyld_ap.get();
+}
 
 
 Process::NextEventAction::EventActionResult
@@ -2622,9 +2642,9 @@ Process::CompleteAttach ()
 
     // We have completed the attach, now it is time to find the dynamic loader
     // plug-in
-    m_dyld_ap.reset (DynamicLoader::FindPlugin(this, NULL));
-    if (m_dyld_ap.get())
-        m_dyld_ap->DidAttach();
+    DynamicLoader *dyld = GetDynamicLoader ();
+    if (dyld)
+        dyld->DidAttach();
 
     m_os_ap.reset (OperatingSystem::FindPlugin (this, NULL));
     // Figure out which one is the executable, and set that in our target:
