@@ -107,7 +107,9 @@ public:
   /// checker does not require any custom initialization.
   template <class T>
   void addChecker(StringRef fullName, StringRef desc) {
-    addChecker(&initializeManager<T>, fullName, desc);
+    // Avoid MSVC's Compiler Error C2276:
+    // http://msdn.microsoft.com/en-us/library/850cstw1(v=VS.80).aspx
+    addChecker(&CheckerRegistry::initializeManager<T>, fullName, desc);
   }
 
   /// Initializes a CheckerManager by calling the initialization functions for
