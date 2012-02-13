@@ -1048,12 +1048,6 @@ class LambdaExpr : public Expr {
   /// \brief The source range that covers the lambda introducer ([...]).
   SourceRange IntroducerRange;
 
-  /// \brief The number of captures in this lambda.
-  unsigned NumCaptures : 16;
-
-  /// \brief The number of explicit captures in this lambda.
-  unsigned NumExplicitCaptures : 13;
-
   /// \brief The default capture kind, which is a value of type
   /// LambdaCaptureDefault.
   unsigned CaptureDefault : 2;
@@ -1163,12 +1157,6 @@ private:
              ArrayRef<Expr *> CaptureInits,
              SourceLocation ClosingBrace);
 
-  Stmt **getStoredStmts() const {
-    LambdaExpr *This = const_cast<LambdaExpr *>(this);
-    return reinterpret_cast<Stmt **>(reinterpret_cast<Capture *>(This + 1)
-                                     + NumCaptures);
-  }
-
 public:
   /// \brief Construct a new lambda expression.
   static LambdaExpr *Create(ASTContext &C, 
@@ -1190,39 +1178,27 @@ public:
   typedef const Capture *capture_iterator;
 
   /// \brief Retrieve an iterator pointing to the first lambda capture.
-  capture_iterator capture_begin() const {
-    return reinterpret_cast<const Capture *>(this + 1);
-  }
+  capture_iterator capture_begin() const;
 
   /// \brief Retrieve an iterator pointing past the end of the
   /// sequence of lambda captures.
-  capture_iterator capture_end() const {
-    return capture_begin() + NumCaptures;
-  }
+  capture_iterator capture_end() const;
 
   /// \brief Retrieve an iterator pointing to the first explicit
   /// lambda capture.
-  capture_iterator explicit_capture_begin() const {
-    return capture_begin();
-  }
+  capture_iterator explicit_capture_begin() const;
 
   /// \brief Retrieve an iterator pointing past the end of the sequence of
   /// explicit lambda captures.
-  capture_iterator explicit_capture_end() const {
-    return capture_begin() + NumExplicitCaptures;
-  }
+  capture_iterator explicit_capture_end() const;
 
   /// \brief Retrieve an iterator pointing to the first implicit
   /// lambda capture.
-  capture_iterator implicit_capture_begin() const {
-    return explicit_capture_end();
-  }
+  capture_iterator implicit_capture_begin() const;
 
   /// \brief Retrieve an iterator pointing past the end of the sequence of
   /// implicit lambda captures.
-  capture_iterator implicit_capture_end() const {
-    return capture_end();
-  }
+  capture_iterator implicit_capture_end() const;
 
   /// \brief Iterator that walks over the capture initialization
   /// arguments.
@@ -1230,15 +1206,11 @@ public:
 
   /// \brief Retrieve the first initialization argument for this
   /// lambda expression (which initializes the first capture field).
-  capture_init_iterator capture_init_begin() const {
-    return reinterpret_cast<Expr **>(getStoredStmts());
-  }
+  capture_init_iterator capture_init_begin() const;
 
   /// \brief Retrieve the iterator pointing one past the last
   /// initialization argument for this lambda expression.
-  capture_init_iterator capture_init_end() const {
-    return capture_init_begin() + NumCaptures;
-  }
+  capture_init_iterator capture_init_end() const;
 
   /// \brief Retrieve the source range covering the lambda introducer,
   /// which contains the explicit capture list surrounded by square
@@ -1255,9 +1227,7 @@ public:
   CXXMethodDecl *getCallOperator() const;
 
   /// \brief Retrieve the body of the lambda.
-  CompoundStmt *getBody() const {
-    return reinterpret_cast<CompoundStmt *>(getStoredStmts()[NumCaptures]);
-  }
+  CompoundStmt *getBody() const;
 
   /// \brief Determine whether the lambda is mutable, meaning that any
   /// captures values can be modified.
@@ -1276,9 +1246,7 @@ public:
     return SourceRange(IntroducerRange.getBegin(), ClosingBrace);
   }
 
-  child_range children() { 
-    return child_range(getStoredStmts(), getStoredStmts() + NumCaptures + 1);
-  }
+  child_range children();
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;

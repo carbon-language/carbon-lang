@@ -28,12 +28,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     DC = DC->getParent();
 
   // Start constructing the lambda class.
-  CXXRecordDecl *Class = CXXRecordDecl::Create(Context, TTK_Class, DC,
-                                               Intro.Range.getBegin(),
-                                               /*IdLoc=*/Intro.Range.getBegin(),
-                                               /*Id=*/0);
-  Class->startDefinition();
-  Class->makeLambda();
+  CXXRecordDecl *Class = CXXRecordDecl::CreateLambda(Context, DC, 
+                                                     Intro.Range.getBegin());
   CurContext->addDecl(Class);
 
   // Build the call operator; we don't really have all the relevant information
@@ -472,7 +468,6 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
                                           CaptureDefault, Captures, 
                                           ExplicitParams, CaptureInits, 
                                           Body->getLocEnd());
-  Class->setLambda(Lambda);
 
   // C++11 [expr.prim.lambda]p2:
   //   A lambda-expression shall not appear in an unevaluated operand

@@ -35,6 +35,35 @@ AccessSpecDecl *AccessSpecDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   return new (Mem) AccessSpecDecl(EmptyShell());
 }
 
+void CXXRecordDecl::LambdaDefinitionData::allocateExtra(
+       ArrayRef<LambdaExpr::Capture> Captures,
+       ArrayRef<Expr *> CaptureInits,
+       Stmt *Body) {
+  NumCaptures = Captures.size();
+  NumExplicitCaptures = 0;
+  
+  ASTContext &Context = Definition->getASTContext();
+  this->Extra = Context.Allocate(sizeof(Capture) * Captures.size() +
+                                 sizeof(Stmt*) * (Captures.size() + 1));
+  
+  // Copy captures.
+  Capture *ToCapture = getCaptures();
+  for (unsigned I = 0, N = Captures.size(); I != N; ++I) {
+    if (Captures[I].isExplicit())
+      ++NumExplicitCaptures;
+    
+    *ToCapture++ = Captures[I];
+  }
+  
+  // Copy initialization expressions for the non-static data members.
+  Stmt **Stored = getStoredStmts();
+  for (unsigned I = 0, N = CaptureInits.size(); I != N; ++I)
+    *Stored++ = CaptureInits[I];
+  
+  // Copy the body of the lambda.
+  *Stored++ = Body;
+}
+
 
 CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
   : UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
@@ -80,6 +109,16 @@ CXXRecordDecl *CXXRecordDecl::Create(const ASTContext &C, TagKind TK,
   // FIXME: DelayTypeCreation seems like such a hack
   if (!DelayTypeCreation)
     C.getTypeDeclType(R, PrevDecl);
+  return R;
+}
+
+CXXRecordDecl *CXXRecordDecl::CreateLambda(const ASTContext &C, DeclContext *DC,
+                                           SourceLocation Loc) {
+  CXXRecordDecl* R = new (C) CXXRecordDecl(CXXRecord, TTK_Class, DC, Loc, Loc,
+                                           0, 0);
+  R->IsBeingDefined = true;
+  R->DefinitionData = new (C) struct LambdaDefinitionData(R);
+  C.getTypeDeclType(R, /*PrevDecl=*/0);
   return R;
 }
 
@@ -969,24 +1008,16 @@ bool CXXRecordDecl::isCLike() const {
   return isPOD() && data().HasOnlyCMembers;
 }
 
-void CXXRecordDecl::setLambda(LambdaExpr *Lambda) {
-  if (!Lambda)
-    return;
-
-  data().IsLambda = true;
-  getASTContext().Lambdas[this] = Lambda;
-}
-
 void CXXRecordDecl::getCaptureFields(
        llvm::DenseMap<const VarDecl *, FieldDecl *> &Captures,
        FieldDecl *&ThisCapture) const {
   Captures.clear();
   ThisCapture = 0;
 
-  LambdaExpr *Lambda = getASTContext().Lambdas[this];
+  LambdaDefinitionData &Lambda = getLambdaData();
   RecordDecl::field_iterator Field = field_begin();
-  for (LambdaExpr::capture_iterator C = Lambda->capture_begin(), 
-                                 CEnd = Lambda->capture_end();
+  for (LambdaExpr::Capture *C = Lambda.getCaptures(), 
+                        *CEnd = C + Lambda.NumCaptures;
        C != CEnd; ++C, ++Field) {
     if (C->capturesThis()) {
       ThisCapture = *Field;

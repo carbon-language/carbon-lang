@@ -2387,9 +2387,11 @@ private:
   /// a definition until the definition has been fully processed.
   bool IsCompleteDefinition : 1;
 
+protected:
   /// IsBeingDefined - True if this is currently being defined.
   bool IsBeingDefined : 1;
 
+private:
   /// IsEmbeddedInDeclarator - True if this tag declaration is
   /// "embedded" (i.e., defined or declared for the very first time)
   /// in the syntax of a declarator.

@@ -758,30 +758,16 @@ LambdaExpr::LambdaExpr(QualType T,
          T->isDependentType(), T->isDependentType(), T->isDependentType(),
          /*ContainsUnexpandedParameterPack=*/false),
     IntroducerRange(IntroducerRange),
-    NumCaptures(Captures.size()),
-    NumExplicitCaptures(0),
     CaptureDefault(CaptureDefault),
     ExplicitParams(ExplicitParams),
     ClosingBrace(ClosingBrace)
 {
   assert(CaptureInits.size() == Captures.size() && "Wrong number of arguments");
-
-  // Copy captures.
-  // FIXME: Do we need to update "contains unexpanded parameter pack" here?
-  Capture *ToCapture = reinterpret_cast<Capture *>(this + 1);
-  for (unsigned I = 0, N = Captures.size(); I != N; ++I) {
-    if (Captures[I].isExplicit())
-      ++NumExplicitCaptures;
-    *ToCapture++ = Captures[I];
-  }
-
-  // Copy initialization expressions for the non-static data members.
-  Stmt **Stored = getStoredStmts();
-  for (unsigned I = 0, N = CaptureInits.size(); I != N; ++I)
-    *Stored++ = CaptureInits[I];
-
-  // Copy the body of the lambda.
-  *Stored++ = getCallOperator()->getBody();
+  CXXRecordDecl *Class = getLambdaClass();
+  CXXRecordDecl::LambdaDefinitionData &Data = Class->getLambdaData();
+  Data.allocateExtra(Captures, CaptureInits, getCallOperator()->getBody());
+  
+  // FIXME: Propagate "has unexpanded parameter pack" bit.
 }
 
 LambdaExpr *LambdaExpr::Create(ASTContext &Context, 
@@ -804,6 +790,45 @@ LambdaExpr *LambdaExpr::Create(ASTContext &Context,
                               ClosingBrace);
 }
 
+LambdaExpr::capture_iterator LambdaExpr::capture_begin() const {
+  return getLambdaClass()->getLambdaData().getCaptures();
+}
+
+LambdaExpr::capture_iterator LambdaExpr::capture_end() const {
+  struct CXXRecordDecl::LambdaDefinitionData &Data
+    = getLambdaClass()->getLambdaData();
+  return Data.getCaptures() + Data.NumCaptures;
+}
+
+LambdaExpr::capture_iterator LambdaExpr::explicit_capture_begin() const {
+  return capture_begin();
+}
+
+LambdaExpr::capture_iterator LambdaExpr::explicit_capture_end() const {
+  struct CXXRecordDecl::LambdaDefinitionData &Data
+    = getLambdaClass()->getLambdaData();
+  return Data.getCaptures() + Data.NumExplicitCaptures;
+}
+
+LambdaExpr::capture_iterator LambdaExpr::implicit_capture_begin() const {
+  return explicit_capture_end();
+}
+
+LambdaExpr::capture_iterator LambdaExpr::implicit_capture_end() const {
+  return capture_end();
+}
+
+LambdaExpr::capture_init_iterator LambdaExpr::capture_init_begin() const {
+  return reinterpret_cast<Expr **>(
+           getLambdaClass()->getLambdaData().getStoredStmts());
+}
+
+LambdaExpr::capture_init_iterator LambdaExpr::capture_init_end() const {
+  struct CXXRecordDecl::LambdaDefinitionData &Data
+    = getLambdaClass()->getLambdaData();
+  return reinterpret_cast<Expr **>(Data.getStoredStmts() + Data.NumCaptures);
+}
+
 CXXRecordDecl *LambdaExpr::getLambdaClass() const {
   return getType()->getAsCXXRecordDecl();
 }
@@ -819,8 +844,20 @@ CXXMethodDecl *LambdaExpr::getCallOperator() const {
   return Result;
 }
 
+/// \brief Retrieve the body of the lambda.
+CompoundStmt *LambdaExpr::getBody() const {
+  return cast<CompoundStmt>(*capture_init_end());
+}
+
 bool LambdaExpr::isMutable() const {
   return (getCallOperator()->getTypeQualifiers() & Qualifiers::Const) == 0;
+}
+
+Stmt::child_range LambdaExpr::children() {
+  struct CXXRecordDecl::LambdaDefinitionData &Data
+    = getLambdaClass()->getLambdaData();
+  return child_range(Data.getStoredStmts(), 
+                     Data.getStoredStmts() + Data.NumCaptures + 1);
 }
 
 ExprWithCleanups::ExprWithCleanups(Expr *subexpr,

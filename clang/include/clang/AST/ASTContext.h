@@ -59,7 +59,6 @@ namespace clang {
   class CXXRecordDecl;
   class Decl;
   class FieldDecl;
-  class LambdaExpr;
   class MangleContext;
   class ObjCIvarDecl;
   class ObjCIvarRefExpr;
@@ -163,10 +162,6 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   ///  template patterns.
   llvm::DenseMap<const FunctionDecl*, FunctionDecl*>
     ClassScopeSpecializationPattern;
-
-  /// \brief Mapping from closure types to the lambda expressions that
-  /// create instances of them.
-  llvm::DenseMap<const CXXRecordDecl *, LambdaExpr *> Lambdas;
 
   /// \brief Representation of a "canonical" template template parameter that
   /// is used in canonical template names.
