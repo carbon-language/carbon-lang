@@ -4,3 +4,6 @@ int main() {
   free(x);
   return x[5];
 }
+
+// CHECK: heap-use-after-free
+// CHECKSLEEP: Sleeping for 1 second

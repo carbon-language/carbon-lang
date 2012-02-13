@@ -7,22 +7,37 @@ CXX=$1
 CC=$2
 CXXFLAGS="-mno-omit-leaf-frame-pointer -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 SYMBOLIZER=../scripts/asan_symbolize.py
+FILE_CHECK=../../../../../build/Release+Asserts/bin/FileCheck
+
+# check_program exe_file src_file [check_prefix]
+check_program() {
+  exe=$1
+  src=$2
+  prefix="CHECK"
+  if [ "z$3" != "z" ] ; then
+    prefix=$3
+  fi
+  ./$exe 2>&1 | $SYMBOLIZER 2> /dev/null | c++filt | \
+        $FILE_CHECK $src --check-prefix=$prefix
+}
 
 C_TEST=use-after-free
 echo "Sanity checking a test in pure C"
 $CC -g -faddress-sanitizer -O2 $C_TEST.c
-./a.out 2>&1 | grep "heap-use-after-free" > /dev/null
+check_program a.out $C_TEST.c
 rm ./a.out
 
 echo "Sanity checking a test in pure C with -pie"
 $CC -g -faddress-sanitizer -O2 $C_TEST.c -pie
-./a.out 2>&1 | grep "heap-use-after-free" > /dev/null
+check_program a.out $C_TEST.c
 rm ./a.out
 
 echo "Testing sleep_before_dying"
 $CC -g -faddress-sanitizer -O2 $C_TEST.c
-ASAN_OPTIONS=sleep_before_dying=1 ./a.out 2>&1 | grep "Sleeping for 1 second" > /dev/null
-rm a.out
+export ASAN_OPTIONS="sleep_before_dying=1"
+check_program a.out $C_TEST.c CHECKSLEEP
+export ASAN_OPTIONS=""
+rm ./a.out
 
 for t in  *.tmpl; do
   for b in 32 64; do
