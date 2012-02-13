@@ -14,6 +14,7 @@
 
 #ifdef __linux__
 
+#include <stddef.h> // for NULL
 #include <dlfcn.h>  // for dlsym
 
 namespace __interception {
