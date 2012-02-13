@@ -561,13 +561,13 @@ unsigned MachineModuleInfo::getPersonalityIndex() const {
   const Function* Personality = NULL;
 
   // Scan landing pads. If there is at least one non-NULL personality - use it.
-  for (unsigned i = 0; i != LandingPads.size(); ++i)
+  for (unsigned i = 0, e = LandingPads.size(); i != e; ++i)
     if (LandingPads[i].Personality) {
       Personality = LandingPads[i].Personality;
       break;
     }
 
-  for (unsigned i = 0; i < Personalities.size(); ++i) {
+  for (unsigned i = 0, e = Personalities.size(); i < e; ++i) {
     if (Personalities[i] == Personality)
       return i;
   }
