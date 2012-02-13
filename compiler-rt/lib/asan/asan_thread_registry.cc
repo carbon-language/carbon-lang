@@ -73,7 +73,7 @@ AsanThread *AsanThreadRegistry::GetCurrent() {
     // limits, so only do this magic on Android, and only if the found thread is
     // the main thread.
     AsanThread* thread = FindThreadByStackAddress((uintptr_t)&summary);
-    if (thread->tid() == 0) {
+    if (thread && thread->tid() == 0) {
       SetCurrent(thread);
       return thread;
     }
