@@ -4869,11 +4869,13 @@ def  VCNTq    : N2VQInt<0b11, 0b11, 0b00, 0b00, 0b01010, 0,
 
 // Vector Swap
 def  VSWPd    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 0, 0,
-                     (outs DPR:$Vd), (ins DPR:$Vm), NoItinerary,
-                     "vswp", "$Vd, $Vm", "", []>;
+                     (outs DPR:$Vd, DPR:$Vd1), (ins DPR:$Vm, DPR:$Vm1),
+                     NoItinerary, "vswp", "$Vd, $Vm", "$Vm = $Vd1, $Vm1 = $Vd",
+                     []>;
 def  VSWPq    : N2VX<0b11, 0b11, 0b00, 0b10, 0b00000, 1, 0,
-                     (outs QPR:$Vd), (ins QPR:$Vm), NoItinerary,
-                     "vswp", "$Vd, $Vm", "", []>;
+                     (outs QPR:$Vd, QPR:$Vd1), (ins QPR:$Vm, QPR:$Vm1),
+                     NoItinerary, "vswp", "$Vd, $Vm", "$Vm = $Vd1, $Vm1 = $Vd",
+                     []>;
 
 // Vector Move Operations.
 
