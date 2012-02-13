@@ -2714,6 +2714,17 @@ Instruction *InstCombiner::FoldFCmp_IntToFP_Cst(FCmpInst &I,
         return ReplaceInstUsesWith(I, ConstantInt::getTrue(I.getContext()));
       return ReplaceInstUsesWith(I, ConstantInt::getFalse(I.getContext()));
     }
+  } else {
+    // See if the RHS value is < UnsignedMin.
+    APFloat SMin(RHS.getSemantics(), APFloat::fcZero, false);
+    SMin.convertFromAPInt(APInt::getMinValue(IntWidth), true,
+                          APFloat::rmNearestTiesToEven);
+    if (SMin.compare(RHS) == APFloat::cmpGreaterThan) { // umin > 12312.0
+      if (Pred == ICmpInst::ICMP_NE || Pred == ICmpInst::ICMP_UGT ||
+          Pred == ICmpInst::ICMP_UGE)
+        return ReplaceInstUsesWith(I, ConstantInt::getTrue(I.getContext()));
+      return ReplaceInstUsesWith(I, ConstantInt::getFalse(I.getContext()));
+    }
   }
 
   // Okay, now we know that the FP constant fits in the range [SMIN, SMAX] or
