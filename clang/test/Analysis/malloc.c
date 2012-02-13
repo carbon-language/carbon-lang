@@ -32,6 +32,32 @@ void f2_realloc_1() {
   int *q = realloc(p,0); // no-warning
 }
 
+void reallocNotNullPtr(unsigned sizeIn) {
+  unsigned size = 12;
+  char *p = (char*)malloc(size);
+  if (p) {
+    char *q = (char*)realloc(p, sizeIn);
+    char x = *q; // expected-warning {{Allocated memory never released.}}
+  }
+}
+
+int *realloctest1() {
+  int *q = malloc(12);
+  q = realloc(q, 20);
+  return q; // no warning - returning the allocated value
+}
+
+// p should be freed if realloc fails.
+void reallocFails() {
+  char *p = malloc(12);
+  char *r = realloc(p, 12+1);
+  if (!r) {
+    free(p);
+  } else {
+    free(r);
+  }
+}
+
 // This case tests that storing malloc'ed memory to a static variable which is
 // then returned is not leaked.  In the absence of known contracts for functions
 // or inter-procedural analysis, this is a conservative answer.
@@ -390,17 +416,6 @@ void doNotInvalidateWhenPassedToSystemCalls(char *s) {
 }
 
 // Below are the known false positives.
-
-// TODO: There should be no warning here.
-void reallocFails(int *g, int f) {
-  char *p = malloc(12);
-  char *r = realloc(p, 12+1);
-  if (!r) {
-    free(p); // expected-warning {{Try to free a memory block that has been released}}
-  } else {
-    free(r);
-  }
-}
 
 // TODO: There should be no warning here. This one might be difficult to get rid of.
 void dependsOnValueOfPtr(int *g, unsigned f) {

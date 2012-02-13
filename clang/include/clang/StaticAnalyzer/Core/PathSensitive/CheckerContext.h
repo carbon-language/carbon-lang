@@ -195,8 +195,7 @@ private:
                                  bool MarkAsSink,
                                  ExplodedNode *P = 0,
                                  const ProgramPointTag *Tag = 0) {
-    assert(State);
-    if (State == Pred->getState() && !Tag && !MarkAsSink)
+    if (!State || (State == Pred->getState() && !Tag && !MarkAsSink))
       return Pred;
 
     Changed = true;
