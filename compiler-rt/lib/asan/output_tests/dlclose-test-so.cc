@@ -1,4 +1,4 @@
-//===-- asan_rtl.cc ------------*- C++ -*-===//
+//===----------- dlclose-test-so.cc -----------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
