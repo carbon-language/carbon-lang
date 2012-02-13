@@ -196,6 +196,14 @@ CodeGenFunction::CreateStaticVarDecl(const VarDecl &D,
   return GV;
 }
 
+/// hasNontrivialDestruction - Determine whether a type's destruction is
+/// non-trivial. If so, and the variable uses static initialization, we must
+/// register its destructor to run on exit.
+static bool hasNontrivialDestruction(QualType T) {
+  CXXRecordDecl *RD = T->getBaseElementTypeUnsafe()->getAsCXXRecordDecl();
+  return RD && !RD->hasTrivialDestructor();
+}
+
 /// AddInitializerToStaticVarDecl - Add the initializer for 'D' to the
 /// global variable that has already been created for it.  If the initializer
 /// has a different type than GV does, this may free GV and return a different
@@ -215,7 +223,7 @@ CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
       // be constant.
       GV->setConstant(false);
 
-      EmitCXXGuardedInit(D, GV);
+      EmitCXXGuardedInit(D, GV, /*PerformInit*/true);
     }
     return GV;
   }
@@ -248,6 +256,16 @@ CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
   }
 
   GV->setInitializer(Init);
+
+  if (hasNontrivialDestruction(D.getType())) {
+    // We have a constant initializer, but a nontrivial destructor. We still
+    // need to perform a guarded "initialization" in order to register the
+    // destructor. Since we're running a destructor on this variable, it can't
+    // be a constant even if it's const.
+    GV->setConstant(false);
+    EmitCXXGuardedInit(D, GV, /*PerformInit*/false);
+  }
+
   return GV;
 }
 

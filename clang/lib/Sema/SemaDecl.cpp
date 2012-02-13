@@ -3991,15 +3991,8 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                            TemplateParamLists.release());
     }
 
-    if (D.getDeclSpec().isConstexprSpecified()) {
+    if (D.getDeclSpec().isConstexprSpecified())
       NewVD->setConstexpr(true);
-      SourceLocation ConstexprLoc = D.getDeclSpec().getConstexprSpecLoc();
-      if (!NewVD->isInvalidDecl() && !R->isDependentType() &&
-          RequireLiteralType(NewVD->getLocation(), R,
-                             PDiag(diag::err_constexpr_var_non_literal)
-                               << SourceRange(ConstexprLoc)))
-        NewVD->setInvalidDecl();
-    }
   }
 
   // Set the lexical context. If the declarator has a C++ scope specifier, the
@@ -4343,6 +4336,13 @@ bool Sema::CheckVariableDeclaration(VarDecl *NewVD,
 
   if (isVM && NewVD->hasAttr<BlocksAttr>()) {
     Diag(NewVD->getLocation(), diag::err_block_on_vm);
+    NewVD->setInvalidDecl();
+    return false;
+  }
+
+  if (NewVD->isConstexpr() && !T->isDependentType() &&
+      RequireLiteralType(NewVD->getLocation(), T,
+                         PDiag(diag::err_constexpr_var_non_literal))) {
     NewVD->setInvalidDecl();
     return false;
   }

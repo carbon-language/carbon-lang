@@ -102,17 +102,21 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
 }
 
 void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
-                                               llvm::Constant *DeclPtr) {
+                                               llvm::Constant *DeclPtr,
+                                               bool PerformInit) {
 
   const Expr *Init = D.getInit();
   QualType T = D.getType();
 
   if (!T->isReferenceType()) {
-    EmitDeclInit(*this, D, DeclPtr);
+    if (PerformInit)
+      EmitDeclInit(*this, D, DeclPtr);
     EmitDeclDestroy(*this, D, DeclPtr);
     return;
   }
 
+  assert(PerformInit && "cannot have constant initializer which needs "
+         "destruction for reference");
   unsigned Alignment = getContext().getDeclAlign(&D).getQuantity();
   RValue RV = EmitReferenceBindingToExpr(Init, &D);
   EmitStoreOfScalar(RV.getScalarVal(), DeclPtr, false, Alignment, T);
@@ -152,7 +156,8 @@ CodeGenFunction::EmitCXXGlobalDtorRegistration(llvm::Constant *DtorFn,
 }
 
 void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
-                                         llvm::GlobalVariable *DeclPtr) {
+                                         llvm::GlobalVariable *DeclPtr,
+                                         bool PerformInit) {
   // If we've been asked to forbid guard variables, emit an error now.
   // This diagnostic is hard-coded for Darwin's use case;  we can find
   // better phrasing if someone else needs it.
@@ -161,7 +166,7 @@ void CodeGenFunction::EmitCXXGuardedInit(const VarDecl &D,
               "this initialization requires a guard variable, which "
               "the kernel does not support");
 
-  CGM.getCXXABI().EmitGuardedInit(*this, D, DeclPtr);
+  CGM.getCXXABI().EmitGuardedInit(*this, D, DeclPtr, PerformInit);
 }
 
 static llvm::Function *
@@ -186,14 +191,16 @@ CreateGlobalInitOrDestructFunction(CodeGenModule &CGM,
 
 void
 CodeGenModule::EmitCXXGlobalVarDeclInitFunc(const VarDecl *D,
-                                            llvm::GlobalVariable *Addr) {
+                                            llvm::GlobalVariable *Addr,
+                                            bool PerformInit) {
   llvm::FunctionType *FTy = llvm::FunctionType::get(VoidTy, false);
 
   // Create a variable initialization function.
   llvm::Function *Fn =
     CreateGlobalInitOrDestructFunction(*this, FTy, "__cxx_global_var_init");
 
-  CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D, Addr);
+  CodeGenFunction(*this).GenerateCXXGlobalVarDeclInitFunc(Fn, D, Addr,
+                                                          PerformInit);
 
   if (D->hasAttr<InitPriorityAttr>()) {
     unsigned int order = D->getAttr<InitPriorityAttr>()->getPriority();
@@ -267,7 +274,8 @@ void CodeGenModule::EmitCXXGlobalDtorFunc() {
 /// Emit the code necessary to initialize the given global variable.
 void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
                                                        const VarDecl *D,
-                                                 llvm::GlobalVariable *Addr) {
+                                                 llvm::GlobalVariable *Addr,
+                                                       bool PerformInit) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
                 getTypes().getNullaryFunctionInfo(),
                 FunctionArgList(), SourceLocation());
@@ -277,9 +285,9 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
   // definitions explicitly marked weak.
   if (Addr->getLinkage() == llvm::GlobalValue::WeakODRLinkage ||
       Addr->getLinkage() == llvm::GlobalValue::WeakAnyLinkage) {
-    EmitCXXGuardedInit(*D, Addr);
+    EmitCXXGuardedInit(*D, Addr, PerformInit);
   } else {
-    EmitCXXGlobalVarDeclInit(*D, Addr);
+    EmitCXXGlobalVarDeclInit(*D, Addr, PerformInit);
   }
 
   FinishFunction();
@@ -357,4 +365,3 @@ CodeGenFunction::generateDestroyHelper(llvm::Constant *addr,
   
   return fn;
 }
-

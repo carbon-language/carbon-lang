@@ -226,12 +226,14 @@ public:
 
   /// Emits the guarded initializer and destructor setup for the given
   /// variable, given that it couldn't be emitted as a constant.
+  /// If \p PerformInit is false, the initialization has been folded to a
+  /// constant and should not be performed.
   ///
   /// The variable may be:
   ///   - a static local variable
   ///   - a static data member of a class template instantiation
   virtual void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
-                               llvm::GlobalVariable *DeclPtr);
+                               llvm::GlobalVariable *DeclPtr, bool PerformInit);
 
 };
 

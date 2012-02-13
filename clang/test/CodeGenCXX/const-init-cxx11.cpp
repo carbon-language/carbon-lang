@@ -185,8 +185,92 @@ namespace MemberPtr {
   extern constexpr void (B2::*b2m)() = (void(B2::*)())&D::m;
 }
 
+namespace LiteralReference {
+  struct Lit {
+    constexpr Lit() : n(5) {}
+    int n;
+  };
+  // FIXME: This should have static initialization, but we do not implement
+  // that yet. For now, just check that we don't set the (pointer) value of
+  // the reference to 5!
+  //
+  // CHECK: @_ZN16LiteralReference3litE = global {{.*}} null
+  const Lit &lit = Lit();
+}
+
+namespace NonLiteralConstexpr {
+  constexpr int factorial(int n) {
+    return n ? factorial(n-1) * n : 1;
+  }
+  extern void f(int *p);
+
+  struct NonTrivialDtor {
+    constexpr NonTrivialDtor() : n(factorial(5)), p(&n) {}
+    ~NonTrivialDtor() {
+      f(p);
+    }
+
+    int n;
+    int *p;
+  };
+  static_assert(!__is_literal(NonTrivialDtor), "");
+  // CHECK: @_ZN19NonLiteralConstexpr3ntdE = global {{.*}} { i32 120, i32* getelementptr
+  NonTrivialDtor ntd;
+
+  struct VolatileMember {
+    constexpr VolatileMember() : n(5) {}
+    volatile int n;
+  };
+  static_assert(!__is_literal(VolatileMember), "");
+  // CHECK: @_ZN19NonLiteralConstexpr2vmE = global {{.*}} { i32 5 }
+  VolatileMember vm;
+
+  struct Both {
+    constexpr Both() : n(10) {}
+    ~Both();
+    volatile int n;
+  };
+  // CHECK: @_ZN19NonLiteralConstexpr1bE = global {{.*}} { i32 10 }
+  Both b;
+
+  void StaticVars() {
+    // CHECK: @_ZZN19NonLiteralConstexpr10StaticVarsEvE3ntd = {{.*}} { i32 120, i32* getelementptr {{.*}}
+    // CHECK: @_ZGVZN19NonLiteralConstexpr10StaticVarsEvE3ntd =
+    static NonTrivialDtor ntd;
+    // CHECK: @_ZZN19NonLiteralConstexpr10StaticVarsEvE2vm = {{.*}} { i32 5 }
+    // CHECK-NOT: @_ZGVZN19NonLiteralConstexpr10StaticVarsEvE2vm =
+    static VolatileMember vm;
+    // CHECK: @_ZZN19NonLiteralConstexpr10StaticVarsEvE1b = {{.*}} { i32 10 }
+    // CHECK: @_ZGVZN19NonLiteralConstexpr10StaticVarsEvE1b =
+    static Both b;
+  }
+}
+
 // Constant initialization tests go before this point,
 // dynamic initialization tests go after.
+
+// We must emit a constant initializer for NonLiteralConstexpr::ntd, but also
+// emit an initializer to register its destructor.
+// CHECK: define {{.*}}cxx_global_var_init{{.*}}
+// CHECK-NOT: NonLiteralConstexpr
+// CHECK: call {{.*}}cxa_atexit{{.*}} @_ZN19NonLiteralConstexpr14NonTrivialDtorD1Ev {{.*}} @_ZN19NonLiteralConstexpr3ntdE
+// CHECK-NEXT: ret void
+
+// We don't need to emit any dynamic initialization for NonLiteralConstexpr::vm.
+// CHECK-NOT: NonLiteralConstexpr2vm
+
+// We must emit a constant initializer for NonLiteralConstexpr::b, but also
+// emit an initializer to register its destructor.
+// CHECK: define {{.*}}cxx_global_var_init{{.*}}
+// CHECK-NOT: NonLiteralConstexpr
+// CHECK: call {{.*}}cxa_atexit{{.*}} @_ZN19NonLiteralConstexpr4BothD1Ev {{.*}} @_ZN19NonLiteralConstexpr1bE
+// CHECK-NEXT: ret void
+
+// CHECK: define {{.*}}NonLiteralConstexpr10StaticVars
+// CHECK-NOT: }
+// CHECK: call {{.*}}cxa_atexit{{.*}}@_ZN19NonLiteralConstexpr14NonTrivialDtorD1Ev
+// CHECK-NOT: }
+// CHECK: call {{.*}}cxa_atexit{{.*}}@_ZN19NonLiteralConstexpr4BothD1Ev
 
 namespace CrossFuncLabelDiff {
   // Make sure we refuse to constant-fold the variable b.

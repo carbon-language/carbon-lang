@@ -939,6 +939,15 @@ llvm::Constant *CodeGenModule::EmitConstantInit(const VarDecl &D,
   if (const APValue *Value = D.evaluateValue())
     return EmitConstantValue(*Value, D.getType(), CGF);
 
+  // FIXME: Implement C++11 [basic.start.init]p2: if the initializer of a
+  // reference is a constant expression, and the reference binds to a temporary,
+  // then constant initialization is performed. ConstExprEmitter will
+  // incorrectly emit a prvalue constant in this case, and the calling code
+  // interprets that as the (pointer) value of the reference, rather than the
+  // desired value of the referee.
+  if (D.getType()->isReferenceType())
+    return 0;
+
   const Expr *E = D.getInit();
   assert(E && "No initializer to emit");
 

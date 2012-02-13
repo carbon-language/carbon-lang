@@ -121,7 +121,7 @@ public:
                        llvm::Value *&AllocPtr, CharUnits &CookieSize);
 
   void EmitGuardedInit(CodeGenFunction &CGF, const VarDecl &D,
-                       llvm::GlobalVariable *DeclPtr);
+                       llvm::GlobalVariable *DeclPtr, bool PerformInit);
 };
 
 class ARMCXXABI : public ItaniumCXXABI {
@@ -1016,7 +1016,8 @@ namespace {
 /// just special-case it at particular places.
 void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
                                     const VarDecl &D,
-                                    llvm::GlobalVariable *GV) {
+                                    llvm::GlobalVariable *GV,
+                                    bool PerformInit) {
   CGBuilderTy &Builder = CGF.Builder;
 
   // We only need to use thread-safe statics for local variables;
@@ -1129,7 +1130,7 @@ void ItaniumCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
   }
 
   // Emit the initializer and add a global destructor if appropriate.
-  CGF.EmitCXXGlobalVarDeclInit(D, GV);
+  CGF.EmitCXXGlobalVarDeclInit(D, GV, PerformInit);
 
   if (threadsafe) {
     // Pop the guard-abort cleanup if we pushed one.

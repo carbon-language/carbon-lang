@@ -855,7 +855,8 @@ static bool Evaluate(CCValue &Result, EvalInfo &Info, const Expr *E);
 static bool EvaluateConstantExpression(APValue &Result, EvalInfo &Info,
                                        const LValue &This, const Expr *E,
                                        CheckConstantExpressionKind CCEK
-                                        = CCEK_Constant);
+                                        = CCEK_Constant,
+                                       bool AllowNonLiteralTypes = false);
 static bool EvaluateLValue(const Expr *E, LValue &Result, EvalInfo &Info);
 static bool EvaluatePointer(const Expr *E, LValue &Result, EvalInfo &Info);
 static bool EvaluateMemberPointer(const Expr *E, MemberPtr &Result,
@@ -5829,8 +5830,9 @@ static bool Evaluate(CCValue &Result, EvalInfo &Info, const Expr *E) {
 /// which were initialized earlier.
 static bool EvaluateConstantExpression(APValue &Result, EvalInfo &Info,
                                        const LValue &This, const Expr *E,
-                                       CheckConstantExpressionKind CCEK) {
-  if (!CheckLiteralType(Info, E))
+                                       CheckConstantExpressionKind CCEK,
+                                       bool AllowNonLiteralTypes) {
+  if (!AllowNonLiteralTypes && !CheckLiteralType(Info, E))
     return false;
 
   if (E->isRValue()) {
@@ -5941,9 +5943,6 @@ bool Expr::EvaluateAsInitializer(APValue &Value, const ASTContext &Ctx,
   EvalInfo InitInfo(Ctx, EStatus);
   InitInfo.setEvaluatingDecl(VD, Value);
 
-  if (!CheckLiteralType(InitInfo, this))
-    return false;
-
   LValue LVal;
   LVal.set(VD);
 
@@ -5954,11 +5953,13 @@ bool Expr::EvaluateAsInitializer(APValue &Value, const ASTContext &Ctx,
   if (Ctx.getLangOptions().CPlusPlus && !VD->hasLocalStorage() &&
       !VD->getType()->isReferenceType()) {
     ImplicitValueInitExpr VIE(VD->getType());
-    if (!EvaluateConstantExpression(Value, InitInfo, LVal, &VIE))
+    if (!EvaluateConstantExpression(Value, InitInfo, LVal, &VIE, CCEK_Constant,
+                                    /*AllowNonLiteralTypes=*/true))
       return false;
   }
 
-  return EvaluateConstantExpression(Value, InitInfo, LVal, this) &&
+  return EvaluateConstantExpression(Value, InitInfo, LVal, this, CCEK_Constant,
+                                    /*AllowNonLiteralTypes=*/true) &&
          !EStatus.HasSideEffects;
 }
 
