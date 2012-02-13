@@ -199,6 +199,16 @@ TEST(AddressSanitizerInterface, ExitCode) {
               ::testing::ExitedWithCode(original_exit_code), "");
 }
 
+static void MyDeathCallback() {
+  fprintf(stderr, "MyDeathCallback\n");
+}
+
+TEST(AddressSanitizerInterface, DeathCallbackTest) {
+  __asan_set_death_callback(MyDeathCallback);
+  EXPECT_DEATH(DoDoubleFree(), "MyDeathCallback");
+  __asan_set_death_callback(NULL);
+}
+
 static const char* kUseAfterPoisonErrorMessage = "use-after-poison";
 
 #define ACCESS(ptr, offset) Ident(*(ptr + offset))

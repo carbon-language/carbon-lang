@@ -48,7 +48,6 @@ void *AsanMprotect(uintptr_t fixed_addr, size_t size) {
 void AsanUnmapOrDie(void *addr, size_t size) {
   UNIMPLEMENTED();
 }
-// }}}
 
 // ---------------------- IO ---------------- {{{1
 size_t AsanWrite(int fd, const void *buf, size_t count) {
@@ -75,7 +74,6 @@ int AsanClose(int fd) {
   UNIMPLEMENTED();
   return -1;
 }
-// }}}
 
 // ---------------------- Stacktraces, symbols, etc. ---------------- {{{1
 static AsanLock dbghelp_lock(LINKER_INITIALIZED);
@@ -156,7 +154,6 @@ bool WinSymbolize(const void *addr, char *out_buffer, int buffer_size) {
   }
   return true;
 }
-// }}}
 
 // ---------------------- AsanLock ---------------- {{{1
 enum LockState {
@@ -193,7 +190,6 @@ void AsanLock::Unlock() {
   owner_ = LOCK_READY;
   LeaveCriticalSection((LPCRITICAL_SECTION)opaque_storage_);
 }
-// }}}
 
 // ---------------------- TSD ---------------- {{{1
 static bool tsd_key_inited = false;
@@ -215,7 +211,6 @@ void AsanTSDSet(void *tsd) {
   CHECK(tsd_key_inited);
   fake_tsd = tsd;
 }
-// }}}
 
 // ---------------------- Various stuff ---------------- {{{1
 void *AsanDoesNotSupportStaticLinkage() {
@@ -253,15 +248,13 @@ void AsanDisableCoreDumper() {
   UNIMPLEMENTED();
 }
 
-void AsanDie() {
-  // FIXME: AsanDie() should be the same on all platforms.
-  if (FLAG_sleep_before_dying) {
-    Report("Sleeping for %d second(s)\n", FLAG_sleep_before_dying);
-    Sleep(FLAG_sleep_before_dying * 1000);
-  }
-  _exit(FLAG_exitcode);
+void SleepForSeconds(int seconds) {
+  Sleep(seconds * 1000);
 }
-// }}}
+
+void Exit(int exitcode) {
+  _exit(exitcode);
+}
 
 }  // namespace __asan
 

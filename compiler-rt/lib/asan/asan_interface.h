@@ -81,7 +81,7 @@ extern "C" {
 
   // Performs cleanup before a NoReturn function. Must be called before things
   // like _exit and execl to avoid false positives on stack.
-  void __asan_handle_no_return();
+  void __asan_handle_no_return() ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 
 // User code should use macro instead of functions.
 #if defined(__has_feature) && __has_feature(address_sanitizer)
@@ -109,7 +109,13 @@ extern "C" {
 
   // Sets the exit code to use when reporting an error.
   // Returns the old value.
-  int __asan_set_error_exit_code(int exit_code);
+  int __asan_set_error_exit_code(int exit_code)
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
+
+  // Sets the callback to be called right before death on error.
+  // Passing NULL will unset the callback.
+  void __asan_set_death_callback(void (*callback)(void))
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 
   // Returns the estimated number of bytes that will be reserved by allocator
   // for request of "size" bytes. If ASan allocator can't allocate that much

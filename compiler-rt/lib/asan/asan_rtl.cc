@@ -52,6 +52,7 @@ int    FLAG_sleep_before_dying;
 // -------------------------- Globals --------------------- {{{1
 int asan_inited;
 bool asan_init_is_running;
+static void (*death_callback)(void);
 
 // -------------------------- Misc ---------------- {{{1
 void ShowStatsAndAbort() {
@@ -98,6 +99,16 @@ size_t ReadFileToBuffer(const char *file_name, char **buff,
       break;
   }
   return read_len;
+}
+
+void AsanDie() {
+  if (FLAG_sleep_before_dying) {
+    Report("Sleeping for %d second(s)\n", FLAG_sleep_before_dying);
+    SleepForSeconds(FLAG_sleep_before_dying);
+  }
+  if (death_callback)
+    death_callback();
+  Exit(FLAG_exitcode);
 }
 
 // ---------------------- mmap -------------------- {{{1
@@ -283,7 +294,6 @@ int __asan_set_error_exit_code(int exit_code) {
   return old;
 }
 
-NOINLINE ASAN_INTERFACE_ATTRIBUTE
 void __asan_handle_no_return() {
   int local_stack;
   AsanThread *curr_thread = asanThreadRegistry().GetCurrent();
@@ -291,6 +301,10 @@ void __asan_handle_no_return() {
   uintptr_t top = curr_thread->stack_top();
   uintptr_t bottom = ((uintptr_t)&local_stack - kPageSize) & ~(kPageSize-1);
   PoisonShadow(bottom, top - bottom, 0);
+}
+
+void __asan_set_death_callback(void (*callback)(void)) {
+  death_callback = callback;
 }
 
 void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,

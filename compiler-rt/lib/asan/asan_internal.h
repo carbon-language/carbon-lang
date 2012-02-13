@@ -210,6 +210,8 @@ extern bool asan_init_is_running;
 enum LinkerInitialized { LINKER_INITIALIZED = 0 };
 
 void AsanDie();
+void SleepForSeconds(int seconds);
+void Exit(int exitcode);
 
 #define CHECK(cond) do { if (!(cond)) { \
   CheckFailed(#cond, __FILE__, __LINE__); \

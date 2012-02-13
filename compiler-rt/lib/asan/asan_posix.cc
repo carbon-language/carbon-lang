@@ -69,20 +69,20 @@ void AsanDisableCoreDumper() {
   setrlimit(RLIMIT_CORE, &nocore);
 }
 
-void AsanDie() {
-  if (FLAG_sleep_before_dying) {
-    Report("Sleeping for %d second(s)\n", FLAG_sleep_before_dying);
-    sleep(FLAG_sleep_before_dying);
-  }
-  _exit(FLAG_exitcode);
-}
-
 int GetPid() {
   return getpid();
 }
 
 uintptr_t GetThreadSelf() {
   return (uintptr_t)pthread_self();
+}
+
+void SleepForSeconds(int seconds) {
+  sleep(seconds);
+}
+
+void Exit(int exitcode) {
+  return _exit(exitcode);
 }
 
 int AtomicInc(int *a) {
