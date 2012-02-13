@@ -1190,6 +1190,31 @@ static void CheckForLiveRegDef(SUnit *SU, unsigned Reg,
   }
 }
 
+/// CheckForLiveRegDefMasked - Check for any live physregs that are clobbered
+/// by RegMask, and add them to LRegs.
+static void CheckForLiveRegDefMasked(SUnit *SU, const uint32_t *RegMask,
+                                     std::vector<SUnit*> &LiveRegDefs,
+                                     SmallSet<unsigned, 4> &RegAdded,
+                                     SmallVector<unsigned, 4> &LRegs) {
+  // Look at all live registers. Skip Reg0 and the special CallResource.
+  for (unsigned i = 1, e = LiveRegDefs.size()-1; i != e; ++i) {
+    if (!LiveRegDefs[i]) continue;
+    if (LiveRegDefs[i] == SU) continue;
+    if (!MachineOperand::clobbersPhysReg(RegMask, i)) continue;
+    if (RegAdded.insert(i))
+      LRegs.push_back(i);
+  }
+}
+
+/// getNodeRegMask - Returns the register mask attached to an SDNode, if any.
+static const uint32_t *getNodeRegMask(const SDNode *N) {
+  for (unsigned i = 0, e = N->getNumOperands(); i != e; ++i)
+    if (const RegisterMaskSDNode *Op =
+        dyn_cast<RegisterMaskSDNode>(N->getOperand(i).getNode()))
+      return Op->getRegMask();
+  return NULL;
+}
+
 /// DelayForLiveRegsBottomUp - Returns true if it is necessary to delay
 /// scheduling of the given node to satisfy live physical register dependencies.
 /// If the specific node is the last one that's available to schedule, do
@@ -1255,6 +1280,9 @@ DelayForLiveRegsBottomUp(SUnit *SU, SmallVector<unsigned, 4> &LRegs) {
           LRegs.push_back(CallResource);
       }
     }
+    if (const uint32_t *RegMask = getNodeRegMask(Node))
+      CheckForLiveRegDefMasked(SU, RegMask, LiveRegDefs, RegAdded, LRegs);
+
     const MCInstrDesc &MCID = TII->get(Node->getMachineOpcode());
     if (!MCID.ImplicitDefs)
       continue;
@@ -2635,7 +2663,8 @@ static bool canClobberReachingPhysRegUse(const SUnit *DepSU, const SUnit *SU,
                                          const TargetRegisterInfo *TRI) {
   const unsigned *ImpDefs
     = TII->get(SU->getNode()->getMachineOpcode()).getImplicitDefs();
-  if(!ImpDefs)
+  const uint32_t *RegMask = getNodeRegMask(SU->getNode());
+  if(!ImpDefs && !RegMask)
     return false;
 
   for (SUnit::const_succ_iterator SI = SU->Succs.begin(), SE = SU->Succs.end();
@@ -2646,14 +2675,18 @@ static bool canClobberReachingPhysRegUse(const SUnit *DepSU, const SUnit *SU,
       if (!PI->isAssignedRegDep())
         continue;
 
-      for (const unsigned *ImpDef = ImpDefs; *ImpDef; ++ImpDef) {
-        // Return true if SU clobbers this physical register use and the
-        // definition of the register reaches from DepSU. IsReachable queries a
-        // topological forward sort of the DAG (following the successors).
-        if (TRI->regsOverlap(*ImpDef, PI->getReg()) &&
-            scheduleDAG->IsReachable(DepSU, PI->getSUnit()))
-          return true;
-      }
+      if (RegMask && MachineOperand::clobbersPhysReg(RegMask, PI->getReg()) &&
+          scheduleDAG->IsReachable(DepSU, PI->getSUnit()))
+        return true;
+
+      if (ImpDefs)
+        for (const unsigned *ImpDef = ImpDefs; *ImpDef; ++ImpDef)
+          // Return true if SU clobbers this physical register use and the
+          // definition of the register reaches from DepSU. IsReachable queries
+          // a topological forward sort of the DAG (following the successors).
+          if (TRI->regsOverlap(*ImpDef, PI->getReg()) &&
+              scheduleDAG->IsReachable(DepSU, PI->getSUnit()))
+            return true;
     }
   }
   return false;
@@ -2674,8 +2707,9 @@ static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
       continue;
     const unsigned *SUImpDefs =
       TII->get(SUNode->getMachineOpcode()).getImplicitDefs();
-    if (!SUImpDefs)
-      return false;
+    const uint32_t *SURegMask = getNodeRegMask(SUNode);
+    if (!SUImpDefs && !SURegMask)
+      continue;
     for (unsigned i = NumDefs, e = N->getNumValues(); i != e; ++i) {
       EVT VT = N->getValueType(i);
       if (VT == MVT::Glue || VT == MVT::Other)
@@ -2683,6 +2717,10 @@ static bool canClobberPhysRegDefs(const SUnit *SuccSU, const SUnit *SU,
       if (!N->hasAnyUseOfValue(i))
         continue;
       unsigned Reg = ImpDefs[i - NumDefs];
+      if (SURegMask && MachineOperand::clobbersPhysReg(SURegMask, Reg))
+        return true;
+      if (!SUImpDefs)
+        continue;
       for (;*SUImpDefs; ++SUImpDefs) {
         unsigned SUReg = *SUImpDefs;
         if (TRI->regsOverlap(Reg, SUReg))
