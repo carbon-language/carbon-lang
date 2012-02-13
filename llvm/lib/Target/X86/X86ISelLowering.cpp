@@ -6186,8 +6186,11 @@ bool CanXFormVExtractWithShuffleIntoLoad(SDValue V, SelectionDAG &DAG,
     return false;
 
   // Skip one more bit_convert if necessary
-  if (V.getOpcode() == ISD::BITCAST)
+  if (V.getOpcode() == ISD::BITCAST) {
+    if (!V.hasOneUse())
+      return false;
     V = V.getOperand(0);
+  }
 
   if (!ISD::isNormalLoad(V.getNode()))
     return false;
