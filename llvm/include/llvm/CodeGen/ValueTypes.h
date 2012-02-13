@@ -53,6 +53,9 @@ namespace llvm {
       f128           =  11,   // This is a 128 bit floating point value
       ppcf128        =  12,   // This is a PPC 128-bit floating point value
 
+      FIRST_FP_VALUETYPE = f16,
+      LAST_FP_VALUETYPE  = ppcf128,
+
       v2i8           =  13,   //  2 x i8
       v4i8           =  14,   //  4 x i8
       v8i8           =  15,   //  8 x i8
@@ -79,6 +82,8 @@ namespace llvm {
 
       FIRST_VECTOR_VALUETYPE = v2i8,
       LAST_VECTOR_VALUETYPE  = v4f64,
+      FIRST_FP_VECTOR_VALUETYPE = v2f16,
+      LAST_FP_VECTOR_VALUETYPE = v4f64,
 
       x86mmx         =  35,   // This is an X86 MMX value
 
@@ -146,8 +151,10 @@ namespace llvm {
 
     /// isFloatingPoint - Return true if this is a FP, or a vector FP type.
     bool isFloatingPoint() const {
-      return ((SimpleTy >= MVT::f16 && SimpleTy <= MVT::ppcf128) ||
-	      (SimpleTy >= MVT::v2f32 && SimpleTy <= MVT::v4f64));
+      return ((SimpleTy >= MVT::FIRST_FP_VALUETYPE &&
+               SimpleTy <= MVT::LAST_FP_VALUETYPE) ||
+	      (SimpleTy >= MVT::FIRST_FP_VECTOR_VALUETYPE &&
+         SimpleTy <= MVT::LAST_FP_VECTOR_VALUETYPE));
     }
 
     /// isInteger - Return true if this is an integer, or a vector integer type.
