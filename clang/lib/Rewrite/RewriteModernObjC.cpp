@@ -428,6 +428,8 @@ namespace {
       return false;
     }
     
+    bool convertObjCTypeToCStyleType(QualType &T);
+    
     bool needToScanForQualifiers(QualType T);
     QualType getSuperStructType();
     QualType getConstantStringStructType();
@@ -3177,8 +3179,8 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     std::string Name = IvarDecl->getNameAsString();
 
     Result += "\t";
-    convertToUnqualifiedObjCType(Type);
-    convertBlockPointerToFunctionPointer(Type);
+    convertObjCTypeToCStyleType(Type);
+    
     Type.getAsStringInternal(Name, Context->getPrintingPolicy());
     Result += Name;
     if (IvarDecl->isBitField()) {
@@ -3697,6 +3699,27 @@ void RewriteModernObjC::GetInnerBlockDeclRefExprs(Stmt *S,
   return;
 }
 
+/// convertObjCTypeToCStyleType - This routine converts such objc types
+/// as qualified objects, and blocks to their closest c/c++ types that
+/// it can. It returns true if input type was modified.
+bool RewriteModernObjC::convertObjCTypeToCStyleType(QualType &T) {
+  QualType oldT = T;
+  convertBlockPointerToFunctionPointer(T);
+  if (T->isFunctionPointerType()) {
+    QualType PointeeTy;
+    if (const PointerType* PT = T->getAs<PointerType>()) {
+      PointeeTy = PT->getPointeeType();
+      if (const FunctionType *FT = PointeeTy->getAs<FunctionType>()) {
+        T = convertFunctionTypeOfBlocks(FT);
+        T = Context->getPointerType(T);
+      }
+    }
+  }
+  
+  convertToUnqualifiedObjCType(T);
+  return T != oldT;
+}
+
 /// convertFunctionTypeOfBlocks - This routine converts a function type
 /// whose result type may be a block pointer or whose argument type(s)
 /// might be block pointers to an equivalent function type replacing
@@ -3707,22 +3730,20 @@ QualType RewriteModernObjC::convertFunctionTypeOfBlocks(const FunctionType *FT) 
   // Generate a funky cast.
   SmallVector<QualType, 8> ArgTypes;
   QualType Res = FT->getResultType();
-  bool HasBlockType = convertBlockPointerToFunctionPointer(Res);
+  bool modified = convertObjCTypeToCStyleType(Res);
   
   if (FTP) {
     for (FunctionProtoType::arg_type_iterator I = FTP->arg_type_begin(),
          E = FTP->arg_type_end(); I && (I != E); ++I) {
       QualType t = *I;
       // Make sure we convert "t (^)(...)" to "t (*)(...)".
-      if (convertBlockPointerToFunctionPointer(t))
-        HasBlockType = true;
+      if (convertObjCTypeToCStyleType(t))
+        modified = true;
       ArgTypes.push_back(t);
     }
   }
   QualType FuncType;
-  // FIXME. Does this work if block takes no argument but has a return type
-  // which is of block type?
-  if (HasBlockType)
+  if (modified)
     FuncType = getSimpleFunctionType(Res, &ArgTypes[0], ArgTypes.size());
   else FuncType = QualType(FT, 0);
   return FuncType;
