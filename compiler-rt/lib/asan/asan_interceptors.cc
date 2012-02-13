@@ -218,7 +218,9 @@ INTERCEPTOR(int, pthread_create, pthread_t *thread,
   asanThreadRegistry().RegisterThread(t);
   return REAL(pthread_create)(thread, attr, asan_thread_start, t);
 }
+#endif  // !_WIN32
 
+#if !defined(ANDROID) && !defined(_WIN32)
 INTERCEPTOR(void*, signal, int signum, void *handler) {
   if (!AsanInterceptsSignal(signum)) {
     return REAL(signal)(signum, handler);
@@ -233,7 +235,7 @@ INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
   }
   return 0;
 }
-#endif  // _WIN32
+#endif  // !ANDROID && !_WIN32
 
 INTERCEPTOR(void, longjmp, void *env, int val) {
   __asan_handle_no_return();
@@ -379,6 +381,11 @@ INTERCEPTOR(void*, index, const char *string, int c)
   ALIAS(WRAPPER_NAME(strchr));
 #else
 DEFINE_REAL(void*, index, const char *string, int c);
+#endif
+
+#ifdef ANDROID
+DEFINE_REAL(int, sigaction, int signum, const struct sigaction *act,
+    struct sigaction *oldact);
 #endif
 
 INTERCEPTOR(int, strcasecmp, const char *s1, const char *s2) {
@@ -556,8 +563,11 @@ void InitializeAsanInterceptors() {
   CHECK(INTERCEPT_FUNCTION(strncmp));
   CHECK(INTERCEPT_FUNCTION(strncpy));
 
+#ifndef ANDROID
   CHECK(INTERCEPT_FUNCTION(sigaction));
   CHECK(INTERCEPT_FUNCTION(signal));
+#endif
+
   CHECK(INTERCEPT_FUNCTION(longjmp));
   CHECK(INTERCEPT_FUNCTION(_longjmp));
   INTERCEPT_FUNCTION(__cxa_throw);
