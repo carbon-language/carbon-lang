@@ -98,8 +98,6 @@ def err_drv_mg_requires_m_or_mm : Error<
 
 def warn_c_kext : Warning<
   "ignoring -fapple-kext which is valid for c++ and objective-c++ only">;
-def warn_drv_unsupported_option_argument : Warning<
-  "ignoring unsupported argument '%1' to option '%0'">;
 def warn_drv_input_file_unused : Warning<
   "%0: '%1' input unused when '%2' is present">;
 def warn_drv_preprocessed_input_file_unused : Warning<
@@ -107,8 +105,6 @@ def warn_drv_preprocessed_input_file_unused : Warning<
 def warn_drv_unused_argument : Warning<
   "argument unused during compilation: '%0'">,
   InGroup<DiagGroup<"unused-command-line-argument">>;
-def warn_drv_pipe_ignored_with_save_temps : Warning<
-  "-pipe ignored because -save-temps specified">;
 def warn_drv_not_using_clang_cpp : Warning<
   "not using the clang preprocessor due to user override">;
 def warn_drv_not_using_clang_cxx : Warning<
@@ -121,8 +117,6 @@ def warn_drv_assuming_mfloat_abi_is : Warning<
   "unknown platform, assuming -mfloat-abi=%0">;
 def warn_ignoring_ftabstop_value : Warning<
   "ignoring invalid -ftabstop value '%0', using default value %1">;
-def warn_drv_conflicting_deployment_targets : Warning<
-  "conflicting deployment targets, both MACOSX_DEPLOYMENT_TARGET '%0' and IPHONEOS_DEPLOYMENT_TARGET '%1' are present in environment">;
 def warn_drv_treating_input_as_cxx : Warning<
   "treating '%0' input as '%1' when in C++ mode, this behavior is deprecated">,
   InGroup<Deprecated>;

@@ -195,8 +195,6 @@ def err_address_of_label_outside_fn : Error<
 def err_expected_string_literal : Error<"expected string literal">;
 def err_asm_operand_wide_string_literal : Error<
   "cannot use wide string literal in 'asm'">;
-def err_expected_asm_operand : Error<
-  "expected string literal or '[' for asm operand">, CatInlineAsm;
 def err_expected_selector_for_method : Error<
   "expected selector for Objective-C method">;
 def err_expected_property_name : Error<"expected property name">;
@@ -300,8 +298,6 @@ def err_templated_using_directive : Error<
   "cannot template a using directive">;
 def err_templated_using_declaration : Error<
   "cannot template a using declaration">;
-def err_expected_ident_in_using : Error<
-  "expected an identifier in using directive">;
 def err_unexected_colon_in_nested_name_spec : Error<
   "unexpected ':' in nested name specifier">;
 def err_bool_redeclaration : Error<
@@ -358,11 +354,6 @@ def err_objc_directive_only_in_protocol : Error<
 def err_missing_catch_finally : Error<
   "@try statement without a @catch and @finally clause">;
 def err_objc_concat_string : Error<"unexpected token after Objective-C string">;
-def err_missing_sel_definition : Error<"cannot find definition of 'SEL'">;
-def err_missing_id_definition : Error<"cannot find definition of 'id'">;
-def err_missing_proto_definition : Error<
-  "cannot find definition of 'Protocol'">;
-def err_missing_class_definition : Error<"cannot find definition of 'Class'">;
 def err_expected_objc_container : Error<
   "'@end' must appear in an Objective-C context">;
 def error_property_ivar_decl : Error<
@@ -461,7 +452,6 @@ def err_unknown_template_name : Error<
   "unknown template name %0">;
 def err_expected_comma_greater : Error<
   "expected ',' or '>' in template-parameter-list">;
-def err_expected_type_id_after : Error<"expected type-id after '%0'">;
 def err_expected_class_before : Error<"expected 'class' before '%0'">;
 def err_template_spec_syntax_non_template : Error<
   "identifier followed by '<' indicates a class template specialization but "
@@ -469,10 +459,6 @@ def err_template_spec_syntax_non_template : Error<
   "template|<unused>|refers to a template template parameter}1">;
 def err_id_after_template_in_nested_name_spec : Error<
   "expected template name after 'template' keyword in nested name specifier">;
-def err_id_after_template_in_typename_spec : Error<
-  "expected template name after 'template' keyword in typename specifier">;
-def err_less_after_template_name_in_nested_name_spec : Error<
-  "expected '<' after 'template %0' in nested name specifier">;
 def err_two_right_angle_brackets_need_space : Error<
   "a space is required between consecutive right angle brackets (use '> >')">;
 def warn_cxx0x_right_shift_in_template_arg : Warning<
@@ -588,8 +574,6 @@ def warn_cxx98_compat_override_control_keyword : Warning<
 
 def err_duplicate_virt_specifier : Error<
   "class member already marked '%0'">;
-def err_duplicate_class_virt_specifier : Error<
-  "class already marked '%0'">;
 
 def err_scoped_enum_missing_identifier : Error<
   "scoped enumeration requires a name">;
@@ -655,8 +639,6 @@ def warn_pragma_align_invalid_option : Warning<
 // - #pragma pack
 def warn_pragma_pack_invalid_action : Warning<
   "unknown action for '#pragma pack' - ignored">;
-def warn_pragma_pack_invalid_constant : Warning<
-  "invalid constant for '#pragma pack', expected %0 - ignored">;
 def warn_pragma_pack_malformed : Warning<
   "expected integer or identifier in '#pragma pack' - ignored">;
 // - #pragma unused

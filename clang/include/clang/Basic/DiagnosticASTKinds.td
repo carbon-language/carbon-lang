@@ -10,8 +10,6 @@
 let Component = "AST" in {
 
 // Constant expression diagnostics. These (and their users) belong in Sema.
-//def note_comma_in_ice : Note<
-//  "C does not permit evaluated commas in an integer constant expression">;
 def note_expr_divide_by_zero : Note<"division by zero">;
 def note_constexpr_invalid_cast : Note<
   "%select{reinterpret_cast|dynamic_cast|cast which performs the conversions of"
@@ -44,9 +42,6 @@ def note_constexpr_array_index : Note<"cannot refer to element %0 of "
   "%select{array of %2 elements|non-array object}1 in a constant expression">;
 def note_constexpr_float_arithmetic : Note<
   "floating point arithmetic produces %select{an infinity|a NaN}0">;
-def note_constexpr_pointer_arithmetic : Note<
-  "cannot refer to element %0 of non-array object in a constant "
-  "expression">;
 def note_constexpr_pointer_subtraction_not_same_array : Note<
   "subtracted pointers are not elements of the same array">;
 def note_constexpr_pointer_comparison_base_classes : Note<
@@ -79,7 +74,6 @@ def note_constexpr_typeid_polymorphic : Note<
 def note_constexpr_void_comparison : Note<
   "comparison between unequal pointers to void has unspecified result">;
 def note_constexpr_temporary_here : Note<"temporary created here">;
-def note_constexpr_literal_here : Note<"literal written here">;
 def note_constexpr_depth_limit_exceeded : Note<
   "constexpr evaluation exceeded maximum depth of %0 calls">;
 def note_constexpr_ltor_volatile_type : Note<

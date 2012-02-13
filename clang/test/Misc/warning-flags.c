@@ -17,8 +17,7 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (266):
-CHECK-NEXT:   ext_anon_param_requires_type_specifier
+CHECK: Warnings without flags (258):
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
 CHECK-NEXT:   ext_array_init_copy
 CHECK-NEXT:   ext_binary_literal
@@ -145,16 +144,13 @@ CHECK-NEXT:   warn_division_by_zero
 CHECK-NEXT:   warn_double_const_requires_fp64
 CHECK-NEXT:   warn_drv_assuming_mfloat_abi_is
 CHECK-NEXT:   warn_drv_clang_unsupported
-CHECK-NEXT:   warn_drv_conflicting_deployment_targets
 CHECK-NEXT:   warn_drv_input_file_unused
 CHECK-NEXT:   warn_drv_not_using_clang_arch
 CHECK-NEXT:   warn_drv_not_using_clang_cpp
 CHECK-NEXT:   warn_drv_not_using_clang_cxx
 CHECK-NEXT:   warn_drv_objc_gc_unsupported
 CHECK-NEXT:   warn_drv_pch_not_first_include
-CHECK-NEXT:   warn_drv_pipe_ignored_with_save_temps
 CHECK-NEXT:   warn_drv_preprocessed_input_file_unused
-CHECK-NEXT:   warn_drv_unsupported_option_argument
 CHECK-NEXT:   warn_dup_category_def
 CHECK-NEXT:   warn_duplicate_protocol_def
 CHECK-NEXT:   warn_enum_too_large
@@ -185,7 +181,6 @@ CHECK-NEXT:   warn_instance_method_on_class_found
 CHECK-NEXT:   warn_integer_too_large
 CHECK-NEXT:   warn_integer_too_large_for_signed
 CHECK-NEXT:   warn_invalid_asm_cast_lvalue
-CHECK-NEXT:   warn_label_attribute_not_unused
 CHECK-NEXT:   warn_many_braces_around_scalar_init
 CHECK-NEXT:   warn_maynot_respond
 CHECK-NEXT:   warn_member_extra_qualification
@@ -231,7 +226,6 @@ CHECK-NEXT:   warn_pragma_options_align_unsupported_option
 CHECK-NEXT:   warn_pragma_options_expected_align
 CHECK-NEXT:   warn_pragma_pack_invalid_action
 CHECK-NEXT:   warn_pragma_pack_invalid_alignment
-CHECK-NEXT:   warn_pragma_pack_invalid_constant
 CHECK-NEXT:   warn_pragma_pack_malformed
 CHECK-NEXT:   warn_pragma_pack_pop_failed
 CHECK-NEXT:   warn_pragma_pack_pop_identifer_and_alignment
@@ -269,14 +263,12 @@ CHECK-NEXT:   warn_transparent_union_attribute_field_size_align
 CHECK-NEXT:   warn_transparent_union_attribute_floating
 CHECK-NEXT:   warn_transparent_union_attribute_not_definition
 CHECK-NEXT:   warn_transparent_union_attribute_zero_fields
-CHECK-NEXT:   warn_transparent_union_nonpointer
 CHECK-NEXT:   warn_typecheck_function_qualifiers
 CHECK-NEXT:   warn_unavailable_fwdclass_message
 CHECK-NEXT:   warn_undef_interface
 CHECK-NEXT:   warn_undef_interface_suggest
 CHECK-NEXT:   warn_undef_protocolref
 CHECK-NEXT:   warn_undefined_internal
-CHECK-NEXT:   warn_uninit_val
 CHECK-NEXT:   warn_unknown_analyzer_checker
 CHECK-NEXT:   warn_unknown_method_family
 CHECK-NEXT:   warn_unterminated_char

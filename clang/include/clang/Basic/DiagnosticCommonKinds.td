@@ -59,8 +59,6 @@ def warn_cxx98_compat_variadic_templates :
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_default_special_members : Error<
   "only special member functions may be defaulted">;
-def err_friends_define_only_namespace_scope : Error<
-  "cannot define a function with non-namespace scope in a friend declaration">;
 def err_deleted_non_function : Error<
   "only functions can have deleted definitions">;
 def err_module_not_found : Error<"module '%0' not found">, DefaultFatal;

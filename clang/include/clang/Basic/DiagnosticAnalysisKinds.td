@@ -9,7 +9,4 @@
 
 let Component = "Analysis" in {
 
-// CHECK: use of uninitialized values
-def warn_uninit_val : Warning<"use of uninitialized variable">;
-
 }
