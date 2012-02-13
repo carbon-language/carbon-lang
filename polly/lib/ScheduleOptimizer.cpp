@@ -418,23 +418,23 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   Dependences *D = &getAnalysis<Dependences>();
 
   // Build input data.
-  int dependencyKinds = Dependences::TYPE_RAW
+  int DependencyKinds = Dependences::TYPE_RAW
                           | Dependences::TYPE_WAR
                           | Dependences::TYPE_WAW;
 
-  isl_union_map *dependences = D->getDependences(dependencyKinds);
-  isl_union_set *domain = NULL;
+  isl_union_map *Dependences = D->getDependences(DependencyKinds);
+  isl_union_set *Domain = NULL;
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI)
     if ((*SI)->isFinalRead())
       continue;
-    else if (!domain)
-      domain = isl_union_set_from_set((*SI)->getDomain());
+    else if (!Domain)
+      Domain = isl_union_set_from_set((*SI)->getDomain());
     else
-      domain = isl_union_set_union(domain,
+      Domain = isl_union_set_union(Domain,
         isl_union_set_from_set((*SI)->getDomain()));
 
-  if (!domain)
+  if (!Domain)
     return false;
 
   // Simplify the dependences by removing the constraints introduced by the
@@ -445,24 +445,24 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   // interesting anyway. In some cases this option may stop the scheduler to
   // find any schedule.
   if (SimplifyDeps == "yes") {
-    dependences = isl_union_map_gist_domain(dependences,
-                                            isl_union_set_copy(domain));
-    dependences = isl_union_map_gist_range(dependences,
-                                           isl_union_set_copy(domain));
+    Dependences = isl_union_map_gist_domain(Dependences,
+                                            isl_union_set_copy(Domain));
+    Dependences = isl_union_map_gist_range(Dependences,
+                                           isl_union_set_copy(Domain));
   } else if (SimplifyDeps != "no") {
     errs() << "warning: Option -polly-opt-simplify-deps should either be 'yes' "
               "or 'no'. Falling back to default: 'yes'\n";
   }
 
-  isl_schedule *schedule;
-  isl_union_map *proximity = isl_union_map_copy(dependences);
-  isl_union_map *validity = dependences;
+  isl_schedule *Schedule;
+  isl_union_map *Proximity = isl_union_map_copy(Dependences);
+  isl_union_map *Validity = Dependences;
 
   DEBUG(dbgs() << "\n\nCompute schedule from: ");
-  DEBUG(dbgs() << "Domain := "; isl_union_set_dump(domain); dbgs() << ";\n");
-  DEBUG(dbgs() << "Proximity := "; isl_union_map_dump(proximity);
+  DEBUG(dbgs() << "Domain := "; isl_union_set_dump(Domain); dbgs() << ";\n");
+  DEBUG(dbgs() << "Proximity := "; isl_union_map_dump(Proximity);
         dbgs() << ";\n");
-  DEBUG(dbgs() << "Validity := "; isl_union_map_dump(validity);
+  DEBUG(dbgs() << "Validity := "; isl_union_map_dump(Validity);
         dbgs() << ";\n");
 
   int IslFusionStrategy;
@@ -493,41 +493,41 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), IslMaximizeBands);
 
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_CONTINUE);
-  schedule  = isl_union_set_compute_schedule(domain, validity, proximity);
+  Schedule  = isl_union_set_compute_schedule(Domain, Validity, Proximity);
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_ABORT);
 
   // In cases the scheduler is not able to optimize the code, we just do not
   // touch the schedule.
-  if (!schedule)
+  if (!Schedule)
     return false;
 
-  isl_union_map *ScheduleMap = getScheduleMap(schedule);
+  isl_union_map *ScheduleMap = getScheduleMap(Schedule);
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
-    ScopStmt *stmt = *SI;
+    ScopStmt *Stmt = *SI;
 
-    if (stmt->isFinalRead())
+    if (Stmt->isFinalRead())
       continue;
 
-    isl_set *domain = stmt->getDomain();
-    isl_union_map *stmtBand;
-    stmtBand = isl_union_map_intersect_domain(isl_union_map_copy(ScheduleMap),
-					      isl_union_set_from_set(domain));
-    isl_map *stmtSchedule;
-    isl_union_map_foreach_map(stmtBand, getSingleMap, &stmtSchedule);
-    stmt->setScattering(stmtSchedule);
-    isl_union_map_free(stmtBand);
+    isl_set *Domain = Stmt->getDomain();
+    isl_union_map *StmtBand;
+    StmtBand = isl_union_map_intersect_domain(isl_union_map_copy(ScheduleMap),
+					      isl_union_set_from_set(Domain));
+    isl_map *StmtSchedule;
+    isl_union_map_foreach_map(StmtBand, getSingleMap, &StmtSchedule);
+    Stmt->setScattering(StmtSchedule);
+    isl_union_map_free(StmtBand);
   }
 
   isl_union_map_free(ScheduleMap);
-  isl_schedule_free(schedule);
+  isl_schedule_free(Schedule);
 
-  unsigned maxScatDims = 0;
+  unsigned MaxScatDims = 0;
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI)
-    maxScatDims = std::max((*SI)->getNumScattering(), maxScatDims);
+    MaxScatDims = std::max((*SI)->getNumScattering(), MaxScatDims);
 
-  extendScattering(S, maxScatDims);
+  extendScattering(S, MaxScatDims);
   return false;
 }
 
