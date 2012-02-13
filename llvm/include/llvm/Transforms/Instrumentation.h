@@ -17,6 +17,7 @@
 namespace llvm {
 
 class ModulePass;
+class FunctionPass;
 
 // Insert edge profiling instrumentation
 ModulePass *createEdgeProfilerPass();
@@ -34,6 +35,8 @@ ModulePass *createGCOVProfilerPass(bool EmitNotes = true, bool EmitData = true,
 
 // Insert AddressSanitizer (address sanity checking) instrumentation
 ModulePass *createAddressSanitizerPass();
+// Insert ThreadSanitizer (race detection) instrumentation
+FunctionPass *createThreadSanitizerPass();
 
 } // End llvm namespace
 

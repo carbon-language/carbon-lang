@@ -6,4 +6,5 @@ add_llvm_library(LLVMInstrumentation
   OptimalEdgeProfiling.cpp
   PathProfiling.cpp
   ProfilingUtils.cpp
+  ThreadSanitizer.cpp
   )
