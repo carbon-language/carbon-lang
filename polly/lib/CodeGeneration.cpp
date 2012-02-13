@@ -97,18 +97,18 @@ typedef struct {
 // @param UB      The upper bound of the loop iv.
 // @param Stride  The number by which the loop iv is incremented after every
 //                iteration.
-static Value *createLoop(IRBuilder<> *Builder, Value *LB, Value *UB,
-                         APInt Stride, DominatorTree *DT, Pass *P) {
+static void createLoop(IRBuilder<> *Builder, Value *LB, Value *UB, APInt Stride,
+                PHINode*& IV, BasicBlock*& AfterBB, Value*& IncrementedIV,
+                DominatorTree *DT) {
   Function *F = Builder->GetInsertBlock()->getParent();
   LLVMContext &Context = F->getContext();
 
   BasicBlock *PreheaderBB = Builder->GetInsertBlock();
   BasicBlock *HeaderBB = BasicBlock::Create(Context, "polly.loop_header", F);
   BasicBlock *BodyBB = BasicBlock::Create(Context, "polly.loop_body", F);
-  BasicBlock *AfterBB = SplitBlock(PreheaderBB, Builder->GetInsertPoint()++, P);
-  AfterBB->setName("polly.loop_after");
+  AfterBB = BasicBlock::Create(Context, "polly.after_loop", F);
 
-  PreheaderBB->getTerminator()->setSuccessor(0, HeaderBB);
+  Builder->CreateBr(HeaderBB);
   DT->addNewBlock(HeaderBB, PreheaderBB);
 
   Builder->SetInsertPoint(HeaderBB);
@@ -121,35 +121,27 @@ static Value *createLoop(IRBuilder<> *Builder, Value *LB, Value *UB,
   assert(LoopIVType && "UB is not integer?");
 
   // IV
-  PHINode *IV = Builder->CreatePHI(LoopIVType, 2, "polly.loopiv");
+  IV = Builder->CreatePHI(LoopIVType, 2, "polly.loopiv");
   IV->addIncoming(LB, PreheaderBB);
 
   // IV increment.
   Value *StrideValue = ConstantInt::get(LoopIVType,
                                         Stride.zext(LoopIVType->getBitWidth()));
-  Value *IncrementedIV = Builder->CreateAdd(IV, StrideValue,
-                                            "polly.next_loopiv");
+  IncrementedIV = Builder->CreateAdd(IV, StrideValue, "polly.next_loopiv");
 
   // Exit condition.
-  Value *CMP;
   if (AtLeastOnce) { // At least on iteration.
     UB = Builder->CreateAdd(UB, Builder->getInt64(1));
-    CMP = Builder->CreateICmpNE(IV, UB);
+    Value *CMP = Builder->CreateICmpEQ(IV, UB);
+    Builder->CreateCondBr(CMP, AfterBB, BodyBB);
   } else { // Maybe not executed at all.
-    CMP = Builder->CreateICmpSLE(IV, UB);
+    Value *CMP = Builder->CreateICmpSLE(IV, UB);
+    Builder->CreateCondBr(CMP, BodyBB, AfterBB);
   }
-
-  Builder->CreateCondBr(CMP, BodyBB, AfterBB);
   DT->addNewBlock(BodyBB, HeaderBB);
+  DT->addNewBlock(AfterBB, HeaderBB);
 
   Builder->SetInsertPoint(BodyBB);
-  Builder->CreateBr(HeaderBB);
-  IV->addIncoming(IncrementedIV, BodyBB);
-  DT->changeImmediateDominator(AfterBB, HeaderBB);
-
-  Builder->SetInsertPoint(BodyBB->begin());
-
-  return IV;
 }
 
 class BlockGenerator {
@@ -271,7 +263,7 @@ public:
   //                is used to update the operands of the statements.
   //                For new statements a relation old->new is inserted in this
   //                map.
-  void copyBB(BasicBlock *BB, Pass *P);
+  void copyBB(BasicBlock *BB, DominatorTree *DT);
 };
 
 BlockGenerator::BlockGenerator(IRBuilder<> &B, ValueMapT &vmap,
@@ -699,11 +691,15 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
   copyInstScalar(Inst, BBMap);
 }
 
-void BlockGenerator::copyBB(BasicBlock *BB, Pass *P) {
-  BasicBlock *CopyBB = SplitBlock(Builder.GetInsertBlock(),
-                                  Builder.GetInsertPoint(), P);
-  CopyBB->setName("polly." + BB->getName() + ".stmt");
-  Builder.SetInsertPoint(CopyBB->begin());
+void BlockGenerator::copyBB(BasicBlock *BB, DominatorTree *DT) {
+  Function *F = Builder.GetInsertBlock()->getParent();
+  LLVMContext &Context = F->getContext();
+  BasicBlock *CopyBB = BasicBlock::Create(Context,
+                                          "polly." + BB->getName() + ".stmt",
+                                          F);
+  Builder.CreateBr(CopyBB);
+  DT->addNewBlock(CopyBB, Builder.GetInsertBlock());
+  Builder.SetInsertPoint(CopyBB);
 
   // Create two maps that store the mapping from the original instructions of
   // the old basic block to their copies in the new basic block. Those maps
@@ -893,7 +889,6 @@ class ClastStmtCodeGen {
   ScopDetection *SD;
   Dependences *DP;
   TargetData *TD;
-  Pass *P;
 
   // The Builder specifies the current location to code generate at.
   IRBuilder<> &Builder;
@@ -1003,7 +998,7 @@ public:
 
   ClastStmtCodeGen(Scop *scop, ScalarEvolution &se, DominatorTree *dt,
                    ScopDetection *sd, Dependences *dp, TargetData *td,
-                   IRBuilder<> &B, Pass *P);
+                   IRBuilder<> &B);
 };
 }
 
@@ -1074,7 +1069,7 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
 
   BlockGenerator Generator(Builder, ValueMap, VectorValueMap, *Statement,
                            scatteringDomain);
-  Generator.copyBB(BB, P);
+  Generator.copyBB(BB, DT);
 }
 
 void ClastStmtCodeGen::codegen(const clast_block *b) {
@@ -1086,6 +1081,9 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f,
                                             Value *LowerBound,
                                             Value *UpperBound) {
   APInt Stride;
+  PHINode *IV;
+  Value *IncrementedIV;
+  BasicBlock *AfterBB, *HeaderBB, *LastBodyBB;
   Type *IntPtrTy;
 
   Stride = APInt_from_MPZ(f->stride);
@@ -1101,7 +1099,8 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f,
     UpperBound = ExpGen.codegen(f->UB, IntPtrTy);
   }
 
-  Value *IV = createLoop(&Builder, LowerBound, UpperBound, Stride, DT, P);
+  createLoop(&Builder, LowerBound, UpperBound, Stride, IV, AfterBB,
+             IncrementedIV, DT);
 
   // Add loop iv to symbols.
   (*clastVars)[f->iterator] = IV;
@@ -1111,6 +1110,12 @@ void ClastStmtCodeGen::codegenForSequential(const clast_for *f,
 
   // Loop is finished, so remove its iv from the live symbols.
   clastVars->erase(f->iterator);
+
+  HeaderBB = *pred_begin(AfterBB);
+  LastBodyBB = Builder.GetInsertBlock();
+  Builder.CreateBr(HeaderBB);
+  IV->addIncoming(IncrementedIV, LastBodyBB);
+  Builder.SetInsertPoint(AfterBB);
 }
 
 Function *ClastStmtCodeGen::addOpenMPSubfunction(Module *M) {
@@ -1197,7 +1202,6 @@ void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
   IntegerType *intPtrTy = TD->getIntPtrType(Context);
 
   // Store the previous basic block.
-  BasicBlock::iterator PrevInsertPoint = Builder.GetInsertPoint();
   BasicBlock *PrevBB = Builder.GetInsertBlock();
 
   // Create basic blocks.
@@ -1251,13 +1255,13 @@ void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
   clastVars = &clastVarsOMP;
   ExpGen.setIVS(&clastVarsOMP);
 
-  Builder.CreateBr(checkNextBB);
-  Builder.SetInsertPoint(--Builder.GetInsertPoint());
   codegenForSequential(f, lowerBound, upperBound);
 
   // Restore the old clastVars.
   clastVars = oldClastVars;
   ExpGen.setIVS(oldClastVars);
+
+  Builder.CreateBr(checkNextBB);
 
   // Add code to terminate this openmp subfunction.
   Builder.SetInsertPoint(ExitBB);
@@ -1265,8 +1269,8 @@ void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
   Builder.CreateCall(endnowaitFunction);
   Builder.CreateRetVoid();
 
-  // Restore the previous insert point.
-  Builder.SetInsertPoint(PrevInsertPoint);
+  // Restore the builder back to previous basic block.
+  Builder.SetInsertPoint(PrevBB);
 }
 
 void ClastStmtCodeGen::codegenForOpenMP(const clast_for *f) {
@@ -1440,20 +1444,10 @@ Value *ClastStmtCodeGen::codegen(const clast_equation *eq) {
 void ClastStmtCodeGen::codegen(const clast_guard *g) {
   Function *F = Builder.GetInsertBlock()->getParent();
   LLVMContext &Context = F->getContext();
-
-  BasicBlock *CondBB = SplitBlock(Builder.GetInsertBlock(),
-                                      Builder.GetInsertPoint(), P);
-  CondBB->setName("polly.cond");
-  BasicBlock *MergeBB = SplitBlock(CondBB, CondBB->begin(), P);
-  MergeBB->setName("polly.merge");
   BasicBlock *ThenBB = BasicBlock::Create(Context, "polly.then", F);
-
-  DT->addNewBlock(ThenBB, CondBB);
-  DT->changeImmediateDominator(MergeBB, CondBB);
-
-  CondBB->getTerminator()->eraseFromParent();
-
-  Builder.SetInsertPoint(CondBB);
+  BasicBlock *MergeBB = BasicBlock::Create(Context, "polly.merge", F);
+  DT->addNewBlock(ThenBB, Builder.GetInsertBlock());
+  DT->addNewBlock(MergeBB, Builder.GetInsertBlock());
 
   Value *Predicate = codegen(&(g->eq[0]));
 
@@ -1464,10 +1458,11 @@ void ClastStmtCodeGen::codegen(const clast_guard *g) {
 
   Builder.CreateCondBr(Predicate, ThenBB, MergeBB);
   Builder.SetInsertPoint(ThenBB);
-  Builder.CreateBr(MergeBB);
-  Builder.SetInsertPoint(ThenBB->begin());
 
   codegen(g->then);
+
+  Builder.CreateBr(MergeBB);
+  Builder.SetInsertPoint(MergeBB);
 }
 
 void ClastStmtCodeGen::codegen(const clast_stmt *stmt) {
@@ -1490,6 +1485,12 @@ void ClastStmtCodeGen::codegen(const clast_stmt *stmt) {
 
 void ClastStmtCodeGen::addParameters(const CloogNames *names) {
   SCEVExpander Rewriter(SE, "polly");
+
+  // Create an instruction that specifies the location where the parameters
+  // are expanded.
+  CastInst::CreateIntegerCast(ConstantInt::getTrue(Builder.getContext()),
+                              Builder.getInt16Ty(), false, "insertInst",
+                              Builder.GetInsertBlock());
 
   int i = 0;
   for (Scop::param_iterator PI = S->param_begin(), PE = S->param_end();
@@ -1524,8 +1525,8 @@ void ClastStmtCodeGen::codegen(const clast_root *r) {
 ClastStmtCodeGen::ClastStmtCodeGen(Scop *scop, ScalarEvolution &se,
                                    DominatorTree *dt, ScopDetection *sd,
                                    Dependences *dp, TargetData *td,
-                                  IRBuilder<> &B, Pass *P) :
-    S(scop), SE(se), DT(dt), SD(sd), DP(dp), TD(td), P(P), Builder(B),
+                                  IRBuilder<> &B) :
+    S(scop), SE(se), DT(dt), SD(sd), DP(dp), TD(td), Builder(B),
     ExpGen(Builder, NULL) {}
 
 namespace {
@@ -1721,18 +1722,16 @@ class CodeGeneration : public ScopPass {
 
     // The builder will be set to startBlock.
     BasicBlock *splitBlock = addSplitAndStartBlock(&builder);
-    BasicBlock *StartBlock = builder.GetInsertBlock();
 
-    mergeControlFlow(splitBlock, &builder);
-    builder.SetInsertPoint(StartBlock->begin());
-
-    ClastStmtCodeGen CodeGen(S, *SE, DT, SD, DP, TD, builder, this);
+    ClastStmtCodeGen CodeGen(S, *SE, DT, SD, DP, TD, builder);
     CloogInfo &C = getAnalysis<CloogInfo>();
     CodeGen.codegen(C.getClast());
 
     parallelLoops.insert(parallelLoops.begin(),
                          CodeGen.getParallelLoops().begin(),
                          CodeGen.getParallelLoops().end());
+
+    mergeControlFlow(splitBlock, &builder);
 
     return true;
   }
