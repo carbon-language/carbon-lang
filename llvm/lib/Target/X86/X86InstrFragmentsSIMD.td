@@ -385,16 +385,6 @@ def movl : PatFrag<(ops node:$lhs, node:$rhs),
   return X86::isMOVLMask(cast<ShuffleVectorSDNode>(N));
 }]>;
 
-def unpckl : PatFrag<(ops node:$lhs, node:$rhs),
-                     (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isUNPCKLMask(cast<ShuffleVectorSDNode>(N), Subtarget->hasAVX2());
-}]>;
-
-def unpckh : PatFrag<(ops node:$lhs, node:$rhs),
-                     (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isUNPCKHMask(cast<ShuffleVectorSDNode>(N), Subtarget->hasAVX2());
-}]>;
-
 def vextractf128_extract : PatFrag<(ops node:$bigvec, node:$index),
                                    (extract_subvector node:$bigvec,
                                                       node:$index), [{

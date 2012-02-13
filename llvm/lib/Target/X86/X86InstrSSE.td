@@ -1192,24 +1192,24 @@ let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
 def VMOVHPSmr : VPSI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movhps\t{$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract
-                                 (unpckh (bc_v2f64 (v4f32 VR128:$src)),
-                                         (undef)), (iPTR 0))), addr:$dst)]>,
-                   VEX;
+                                 (X86Unpckh (bc_v2f64 (v4f32 VR128:$src)),
+                                            (bc_v2f64 (v4f32 VR128:$src))),
+                                 (iPTR 0))), addr:$dst)]>, VEX;
 def VMOVHPDmr : VPDI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movhpd\t{$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract
-                                 (v2f64 (unpckh VR128:$src, (undef))),
-                                 (iPTR 0))), addr:$dst)]>,
-                   VEX;
+                                 (v2f64 (X86Unpckh VR128:$src, VR128:$src)),
+                                 (iPTR 0))), addr:$dst)]>, VEX;
 def MOVHPSmr : PSI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movhps\t{$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract
-                                 (unpckh (bc_v2f64 (v4f32 VR128:$src)),
-                                         (undef)), (iPTR 0))), addr:$dst)]>;
+                                 (X86Unpckh (bc_v2f64 (v4f32 VR128:$src)),
+                                            (bc_v2f64 (v4f32 VR128:$src))),
+                                 (iPTR 0))), addr:$dst)]>;
 def MOVHPDmr : PDI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                    "movhpd\t{$src, $dst|$dst, $src}",
                    [(store (f64 (vector_extract
-                                 (v2f64 (unpckh VR128:$src, (undef))),
+                                 (v2f64 (X86Unpckh VR128:$src, VR128:$src)),
                                  (iPTR 0))), addr:$dst)]>;
 
 let Predicates = [HasAVX] in {
@@ -1238,15 +1238,6 @@ let Predicates = [HasAVX] in {
   def : Pat<(v2f64 (X86Movlhpd VR128:$src1,
                       (scalar_to_vector (loadf64 addr:$src2)))),
             (VMOVHPDrm VR128:$src1, addr:$src2)>;
-
-  // Store patterns
-  def : Pat<(store (f64 (vector_extract
-            (X86Unpckh (bc_v2f64 (v4f32 VR128:$src)),
-                       (bc_v2f64 (v4f32 VR128:$src))), (iPTR 0))), addr:$dst),
-            (VMOVHPSmr addr:$dst, VR128:$src)>;
-  def : Pat<(store (f64 (vector_extract
-            (v2f64 (X86Unpckh VR128:$src, VR128:$src)), (iPTR 0))), addr:$dst),
-            (VMOVHPDmr addr:$dst, VR128:$src)>;
 }
 
 let Predicates = [HasSSE1] in {
@@ -1262,12 +1253,6 @@ let Predicates = [HasSSE1] in {
   def : Pat<(X86Movlhps VR128:$src1,
                  (bc_v4f32 (v2i64 (X86vzload addr:$src2)))),
             (MOVHPSrm VR128:$src1, addr:$src2)>;
-
-  // Store patterns
-  def : Pat<(store (f64 (vector_extract
-            (X86Unpckh (bc_v2f64 (v4f32 VR128:$src)),
-                       (bc_v2f64 (v4f32 VR128:$src))), (iPTR 0))), addr:$dst),
-            (MOVHPSmr addr:$dst, VR128:$src)>;
 }
 
 let Predicates = [HasSSE2] in {
@@ -1283,11 +1268,6 @@ let Predicates = [HasSSE2] in {
   def : Pat<(v2f64 (X86Movlhpd VR128:$src1,
                       (scalar_to_vector (loadf64 addr:$src2)))),
             (MOVHPDrm VR128:$src1, addr:$src2)>;
-
-  // Store patterns
-  def : Pat<(store (f64 (vector_extract
-            (v2f64 (X86Unpckh VR128:$src, VR128:$src)), (iPTR 0))),addr:$dst),
-            (MOVHPDmr addr:$dst, VR128:$src)>;
 }
 
 //===----------------------------------------------------------------------===//
