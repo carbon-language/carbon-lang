@@ -732,6 +732,14 @@ namespace {
     /// this declaration.
     Decl *TransformDecl(SourceLocation Loc, Decl *D);
 
+    void transformAttrs(Decl *Old, Decl *New) { 
+      SemaRef.InstantiateAttrs(TemplateArgs, Old, New);
+    }
+
+    void transformedLocalDecl(Decl *Old, Decl *New) {
+      SemaRef.CurrentInstantiationScope->InstantiatedLocal(Old, New);
+    }
+    
     /// \brief Transform the definition of the given declaration by
     /// instantiating it.
     Decl *TransformDefinition(SourceLocation Loc, Decl *D);

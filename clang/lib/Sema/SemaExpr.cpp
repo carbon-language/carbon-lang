@@ -9283,8 +9283,6 @@ namespace {
       return BaseTransform::TransformUnaryOperator(E);
     }
 
-    /// \brief Transform the capture expressions in the lambda
-    /// expression.
     ExprResult TransformLambdaExpr(LambdaExpr *E) {
       // Lambdas never need to be transformed.
       return E;

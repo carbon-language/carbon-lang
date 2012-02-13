@@ -1059,6 +1059,11 @@ class LambdaExpr : public Expr {
   /// implicit (and empty) parameter list.
   unsigned ExplicitParams : 1;
 
+  /// \brief Whether this lambda had the result type explicitly specified.
+  unsigned ExplicitResultType : 1;
+  
+  /// \brief Whether there are any array index variables stored at the end of
+  /// this lambda expression.
   unsigned HasArrayIndexVars : 1;
   
   /// \brief The location of the closing brace ('}') that completes
@@ -1157,6 +1162,7 @@ private:
              LambdaCaptureDefault CaptureDefault,
              ArrayRef<Capture> Captures,
              bool ExplicitParams,
+             bool ExplicitResultType,
              ArrayRef<Expr *> CaptureInits,
              ArrayRef<VarDecl *> ArrayIndexVars,
              ArrayRef<unsigned> ArrayIndexStarts,
@@ -1186,6 +1192,7 @@ public:
                             LambdaCaptureDefault CaptureDefault,
                             ArrayRef<Capture> Captures,
                             bool ExplicitParams,
+                            bool ExplicitResultType,
                             ArrayRef<Expr *> CaptureInits,
                             ArrayRef<VarDecl *> ArrayIndexVars,
                             ArrayRef<unsigned> ArrayIndexStarts,
@@ -1276,6 +1283,9 @@ public:
   /// list vs. an implicit (empty) parameter list.
   bool hasExplicitParameters() const { return ExplicitParams; }
 
+  /// \brief Whether this lambda had its result type explicitly specified.
+  bool hasExplicitResultType() const { return ExplicitResultType; }
+  
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == LambdaExprClass;
   }

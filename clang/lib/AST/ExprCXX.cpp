@@ -752,6 +752,7 @@ LambdaExpr::LambdaExpr(QualType T,
                        LambdaCaptureDefault CaptureDefault,
                        ArrayRef<Capture> Captures, 
                        bool ExplicitParams,
+                       bool ExplicitResultType,
                        ArrayRef<Expr *> CaptureInits,
                        ArrayRef<VarDecl *> ArrayIndexVars,
                        ArrayRef<unsigned> ArrayIndexStarts,
@@ -763,6 +764,7 @@ LambdaExpr::LambdaExpr(QualType T,
     NumCaptures(Captures.size()),
     CaptureDefault(CaptureDefault),
     ExplicitParams(ExplicitParams),
+    ExplicitResultType(ExplicitResultType),
     ClosingBrace(ClosingBrace)
 {
   assert(CaptureInits.size() == Captures.size() && "Wrong number of arguments");
@@ -810,6 +812,7 @@ LambdaExpr *LambdaExpr::Create(ASTContext &Context,
                                LambdaCaptureDefault CaptureDefault,
                                ArrayRef<Capture> Captures, 
                                bool ExplicitParams,
+                               bool ExplicitResultType,
                                ArrayRef<Expr *> CaptureInits,
                                ArrayRef<VarDecl *> ArrayIndexVars,
                                ArrayRef<unsigned> ArrayIndexStarts,
@@ -824,8 +827,8 @@ LambdaExpr *LambdaExpr::Create(ASTContext &Context,
           + sizeof(unsigned) * (Captures.size() + 1);
   void *Mem = Context.Allocate(Size);
   return new (Mem) LambdaExpr(T, IntroducerRange, CaptureDefault, 
-                              Captures, ExplicitParams, CaptureInits,
-                              ArrayIndexVars, ArrayIndexStarts,
+                              Captures, ExplicitParams, ExplicitResultType,
+                              CaptureInits, ArrayIndexVars, ArrayIndexStarts,
                               ClosingBrace);
 }
 

@@ -20,23 +20,115 @@
 using namespace clang;
 using namespace sema;
 
-void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
-                                        Declarator &ParamInfo,
-                                        Scope *CurScope) {
+CXXRecordDecl *Sema::createLambdaClosureType(SourceRange IntroducerRange) {
   DeclContext *DC = CurContext;
   while (!(DC->isFunctionOrMethod() || DC->isRecord() || DC->isFileContext()))
     DC = DC->getParent();
-
+  
   // Start constructing the lambda class.
   CXXRecordDecl *Class = CXXRecordDecl::CreateLambda(Context, DC, 
-                                                     Intro.Range.getBegin());
+                                                     IntroducerRange.getBegin());
   CurContext->addDecl(Class);
+  
+  return Class;
+}
 
-  // Build the call operator; we don't really have all the relevant information
-  // at this point, but we need something to attach child declarations to.
-  QualType MethodTy;
+CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
+                                           SourceRange IntroducerRange,
+                                           TypeSourceInfo *MethodType,
+                                           SourceLocation EndLoc) {
+  // C++11 [expr.prim.lambda]p5:
+  //   The closure type for a lambda-expression has a public inline function 
+  //   call operator (13.5.4) whose parameters and return type are described by
+  //   the lambda-expression's parameter-declaration-clause and 
+  //   trailing-return-type respectively.
+  DeclarationName MethodName
+    = Context.DeclarationNames.getCXXOperatorName(OO_Call);
+  DeclarationNameLoc MethodNameLoc;
+  MethodNameLoc.CXXOperatorName.BeginOpNameLoc
+    = IntroducerRange.getBegin().getRawEncoding();
+  MethodNameLoc.CXXOperatorName.EndOpNameLoc
+    = IntroducerRange.getEnd().getRawEncoding();
+  CXXMethodDecl *Method
+    = CXXMethodDecl::Create(Context, Class, EndLoc,
+                            DeclarationNameInfo(MethodName, 
+                                                IntroducerRange.getBegin(),
+                                                MethodNameLoc),
+                            MethodType->getType(), MethodType,
+                            /*isStatic=*/false,
+                            SC_None,
+                            /*isInline=*/true,
+                            /*isConstExpr=*/false,
+                            EndLoc);
+  Method->setAccess(AS_public);
+  
+  // Temporarily set the lexical declaration context to the current
+  // context, so that the Scope stack matches the lexical nesting.
+  Method->setLexicalDeclContext(Class->getDeclContext());  
+  
+  return Method;
+}
+
+LambdaScopeInfo *Sema::enterLambdaScope(CXXMethodDecl *CallOperator,
+                                        SourceRange IntroducerRange,
+                                        LambdaCaptureDefault CaptureDefault,
+                                        bool ExplicitParams,
+                                        bool ExplicitResultType,
+                                        bool Mutable) {
+  PushLambdaScope(CallOperator->getParent(), CallOperator);
+  LambdaScopeInfo *LSI = getCurLambda();
+  if (CaptureDefault == LCD_ByCopy)
+    LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByval;
+  else if (CaptureDefault == LCD_ByRef)
+    LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByref;
+  LSI->IntroducerRange = IntroducerRange;
+  LSI->ExplicitParams = ExplicitParams;
+  LSI->Mutable = Mutable;
+
+  if (ExplicitResultType) {
+    LSI->ReturnType = CallOperator->getResultType();
+  } else {
+    LSI->HasImplicitReturnType = true;
+  }
+
+  return LSI;
+}
+
+void Sema::finishLambdaExplicitCaptures(LambdaScopeInfo *LSI) {
+  LSI->finishedExplicitCaptures();
+}
+
+void Sema::addLambdaParameters(CXXMethodDecl *CallOperator, Scope *CurScope,
+                               llvm::ArrayRef<ParmVarDecl *> Params) {
+  CallOperator->setParams(Params);
+  CheckParmsForFunctionDef(const_cast<ParmVarDecl **>(Params.begin()), 
+                           const_cast<ParmVarDecl **>(Params.end()),
+                           /*CheckParameterNames=*/false);
+  
+  // Introduce our parameters into the function scope
+  for (unsigned p = 0, NumParams = CallOperator->getNumParams(); 
+       p < NumParams; ++p) {
+    ParmVarDecl *Param = CallOperator->getParamDecl(p);
+    Param->setOwningFunction(CallOperator);
+    
+    // If this has an identifier, add it to the scope stack.
+    if (CurScope && Param->getIdentifier()) {
+      CheckShadow(CurScope, Param);
+      
+      PushOnScopeChains(Param, CurScope);
+    }
+  }
+}
+
+void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
+                                        Declarator &ParamInfo,
+                                        Scope *CurScope) {
+  CXXRecordDecl *Class = createLambdaClosureType(Intro.Range);
+  
+  // Determine the signature of the call operator.
   TypeSourceInfo *MethodTyInfo;
   bool ExplicitParams = true;
+  bool ExplicitResultType = true;
   SourceLocation EndLoc;
   if (ParamInfo.getNumTypeObjects() == 0) {
     // C++11 [expr.prim.lambda]p4:
@@ -45,10 +137,11 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     FunctionProtoType::ExtProtoInfo EPI;
     EPI.HasTrailingReturn = true;
     EPI.TypeQuals |= DeclSpec::TQ_const;
-    MethodTy = Context.getFunctionType(Context.DependentTy,
-                                       /*Args=*/0, /*NumArgs=*/0, EPI);
+    QualType MethodTy = Context.getFunctionType(Context.DependentTy,
+                                                /*Args=*/0, /*NumArgs=*/0, EPI);
     MethodTyInfo = Context.getTrivialTypeSourceInfo(MethodTy);
     ExplicitParams = false;
+    ExplicitResultType = false;
     EndLoc = Intro.Range.getEnd();
   } else {
     assert(ParamInfo.isFunctionDeclarator() &&
@@ -70,40 +163,16 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
     // FIXME: Can these asserts actually fail?
     assert(MethodTyInfo && "no type from lambda-declarator");
-    MethodTy = MethodTyInfo->getType();
-    assert(!MethodTy.isNull() && "no type from lambda declarator");
     EndLoc = ParamInfo.getSourceRange().getEnd();
+    
+    ExplicitResultType
+      = MethodTyInfo->getType()->getAs<FunctionType>()->getResultType() 
+                                                        != Context.DependentTy;
   }
   
-  // C++11 [expr.prim.lambda]p5:
-  //   The closure type for a lambda-expression has a public inline function 
-  //   call operator (13.5.4) whose parameters and return type are described by
-  //   the lambda-expression's parameter-declaration-clause and 
-  //   trailing-return-type respectively.
-  DeclarationName MethodName
-    = Context.DeclarationNames.getCXXOperatorName(OO_Call);
-  DeclarationNameLoc MethodNameLoc;
-  MethodNameLoc.CXXOperatorName.BeginOpNameLoc
-    = Intro.Range.getBegin().getRawEncoding();
-  MethodNameLoc.CXXOperatorName.EndOpNameLoc
-    = Intro.Range.getEnd().getRawEncoding();
-  CXXMethodDecl *Method
-    = CXXMethodDecl::Create(Context, Class, EndLoc,
-                            DeclarationNameInfo(MethodName, 
-                                                Intro.Range.getBegin(),
-                                                MethodNameLoc),
-                            MethodTy, MethodTyInfo,
-                            /*isStatic=*/false,
-                            SC_None,
-                            /*isInline=*/true,
-                            /*isConstExpr=*/false,
-                            EndLoc);
-  Method->setAccess(AS_public);
-
-  // Temporarily set the lexical declaration context to the current
-  // context, so that the Scope stack matches the lexical nesting.
-  Method->setLexicalDeclContext(DC);
-
+  CXXMethodDecl *Method = startLambdaDefinition(Class, Intro.Range, 
+                                                MethodTyInfo, EndLoc);
+  
   // Attributes on the lambda apply to the method.  
   ProcessDeclAttributes(CurScope, Method, ParamInfo);
   
@@ -111,15 +180,10 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   PushDeclContext(CurScope, Method);
     
   // Introduce the lambda scope.
-  PushLambdaScope(Class, Method);
-  LambdaScopeInfo *LSI = getCurLambda();
-  if (Intro.Default == LCD_ByCopy)
-    LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByval;
-  else if (Intro.Default == LCD_ByRef)
-    LSI->ImpCaptureStyle = LambdaScopeInfo::ImpCap_LambdaByref;
-  LSI->IntroducerRange = Intro.Range;
-  LSI->ExplicitParams = ExplicitParams;
-  LSI->Mutable = (Method->getTypeQualifiers() & Qualifiers::Const) == 0;
+  LambdaScopeInfo *LSI
+    = enterLambdaScope(Method, Intro.Range, Intro.Default, ExplicitParams,
+                       ExplicitResultType,
+                       (Method->getTypeQualifiers() & Qualifiers::Const) == 0);
  
   // Handle explicit captures.
   SourceLocation PrevCaptureLoc
@@ -231,53 +295,31 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
                                                  TryCapture_ExplicitByVal;
     TryCaptureVar(Var, C->Loc, Kind);
   }
-  LSI->finishedExplicitCaptures();
+  finishLambdaExplicitCaptures(LSI);
 
   // Set the parameters on the decl, if specified.
   if (isa<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc())) {
-    FunctionProtoTypeLoc Proto =
-    cast<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc());
-    Method->setParams(Proto.getParams());
-    CheckParmsForFunctionDef(Method->param_begin(),
-                             Method->param_end(),
-                             /*CheckParameterNames=*/false);
-    
-    // Introduce our parameters into the function scope
-    for (unsigned p = 0, NumParams = Method->getNumParams(); p < NumParams; ++p) {
-      ParmVarDecl *Param = Method->getParamDecl(p);
-      Param->setOwningFunction(Method);
-      
-      // If this has an identifier, add it to the scope stack.
-      if (Param->getIdentifier()) {
-        CheckShadow(CurScope, Param);
-        
-        PushOnScopeChains(Param, CurScope);
-      }
-    }
-  }
-
-  const FunctionType *Fn = MethodTy->getAs<FunctionType>();
-  QualType RetTy = Fn->getResultType();
-  if (RetTy != Context.DependentTy) {
-    LSI->ReturnType = RetTy;
-  } else {
-    LSI->HasImplicitReturnType = true;
+    FunctionProtoTypeLoc Proto
+      = cast<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc());
+    addLambdaParameters(Method, CurScope, Proto.getParams());
   }
 
   // FIXME: Check return type is complete, !isObjCObjectType
   
-  // Enter a new evaluation context to insulate the block from any
+  // Enter a new evaluation context to insulate the lambda from any
   // cleanups from the enclosing full-expression.
   PushExpressionEvaluationContext(PotentiallyEvaluated);  
 }
 
-void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope) {
+void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope,
+                            bool IsInstantiation) {
   // Leave the expression-evaluation context.
   DiscardCleanupsInEvaluationContext();
   PopExpressionEvaluationContext();
 
   // Leave the context of the lambda.
-  PopDeclContext();
+  if (!IsInstantiation)
+    PopDeclContext();
 
   // Finalize the lambda.
   LambdaScopeInfo *LSI = getCurLambda();
@@ -291,8 +333,8 @@ void Sema::ActOnLambdaError(SourceLocation StartLoc, Scope *CurScope) {
   PopFunctionScopeInfo();
 }
 
-ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
-                                 Stmt *Body, Scope *CurScope) {
+ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body, 
+                                 Scope *CurScope, bool IsInstantiation) {
   // Leave the expression-evaluation context.
   DiscardCleanupsInEvaluationContext();
   PopExpressionEvaluationContext();
@@ -305,6 +347,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
   CXXMethodDecl *CallOperator;
   SourceRange IntroducerRange;
   bool ExplicitParams;
+  bool ExplicitResultType;
   bool LambdaExprNeedsCleanups;
   llvm::SmallVector<VarDecl *, 4> ArrayIndexVars;
   llvm::SmallVector<unsigned, 4> ArrayIndexStarts;
@@ -314,6 +357,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
     Class = LSI->Lambda;
     IntroducerRange = LSI->IntroducerRange;
     ExplicitParams = LSI->ExplicitParams;
+    ExplicitResultType = !LSI->HasImplicitReturnType;
     LambdaExprNeedsCleanups = LSI->ExprNeedsCleanups;
     ArrayIndexVars.swap(LSI->ArrayIndexVars);
     ArrayIndexStarts.swap(LSI->ArrayIndexStarts);
@@ -409,7 +453,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
     // C++ [expr.prim.lambda]p7:
     //   The lambda-expression's compound-statement yields the
     //   function-body (8.4) of the function call operator [...].
-    ActOnFinishFunctionBody(CallOperator, Body, /*IsInstantation=*/false);
+    ActOnFinishFunctionBody(CallOperator, Body, IsInstantiation);
     CallOperator->setLexicalDeclContext(Class);
     Class->addDecl(CallOperator);
 
@@ -470,9 +514,9 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
 
   LambdaExpr *Lambda = LambdaExpr::Create(Context, Class, IntroducerRange, 
                                           CaptureDefault, Captures, 
-                                          ExplicitParams, CaptureInits, 
-                                          ArrayIndexVars, ArrayIndexStarts,
-                                          Body->getLocEnd());
+                                          ExplicitParams, ExplicitResultType,
+                                          CaptureInits, ArrayIndexVars, 
+                                          ArrayIndexStarts, Body->getLocEnd());
 
   // C++11 [expr.prim.lambda]p2:
   //   A lambda-expression shall not appear in an unevaluated operand

@@ -1344,9 +1344,9 @@ void StmtPrinter::VisitLambdaExpr(LambdaExpr *Node) {
 
     // FIXME: Attributes
 
-    // FIXME: Suppress trailing return type if it wasn't specified in
-    // the source.
-    OS << " -> " << Proto->getResultType().getAsString(Policy);
+    // Print the trailing return type if it was specified in the source.
+    if (Node->hasExplicitResultType())
+      OS << " -> " << Proto->getResultType().getAsString(Policy);
   }
 
   // Print the body.
