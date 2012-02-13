@@ -618,11 +618,21 @@ static bool DoesObjCBlockEscape(const Value *BlockPtr) {
       // to be an escape.
       if (isa<CallInst>(UUser) || isa<InvokeInst>(UUser))
         continue;
+      // Use by an instruction which copies the value is an escape if the
+      // result is an escape.
       if (isa<BitCastInst>(UUser) || isa<GetElementPtrInst>(UUser) ||
           isa<PHINode>(UUser) || isa<SelectInst>(UUser)) {
         Worklist.push_back(UUser);
         continue;
       }
+      // Use by a load is not an escape.
+      if (isa<LoadInst>(UUser))
+        continue;
+      // Use by a store is not an escape if the use is the address.
+      if (const StoreInst *SI = dyn_cast<StoreInst>(UUser))
+        if (V != SI->getValueOperand())
+          continue;
+      // Otherwise, conservatively assume an escape.
       return true;
     }
   } while (!Worklist.empty());
