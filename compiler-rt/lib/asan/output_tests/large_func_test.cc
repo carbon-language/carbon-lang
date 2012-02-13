@@ -32,7 +32,8 @@ int main(int argc, char **argv) {
   delete x;
 }
 
-// Check-Common: {{.*ERROR: AddressSanitizer heap-buffer-overflow on address 0x.* at pc 0x.* bp 0x.* sp 0x.*}}
+// Check-Common: {{.*ERROR: AddressSanitizer heap-buffer-overflow on address}}
+// Check-Common:   {{0x.* at pc 0x.* bp 0x.* sp 0x.*}}
 // Check-Common: {{READ of size 4 at 0x.* thread T0}}
 // Check-Common: {{    #0 0x.* in LargeFunction .*large_func_test.cc:15}}
 // Check-Common: {{    #1 0x.* in main .*large_func_test.cc:3[012]}}

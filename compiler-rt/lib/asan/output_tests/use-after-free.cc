@@ -5,7 +5,8 @@ int main() {
   return x[5];
 }
 
-// Check-Common: {{.*ERROR: AddressSanitizer heap-use-after-free on address 0x.* at pc 0x.* bp 0x.* sp 0x.*}}
+// Check-Common: {{.*ERROR: AddressSanitizer heap-use-after-free on address}}
+// Check-Common:   {{0x.* at pc 0x.* bp 0x.* sp 0x.*}}
 // Check-Common: {{READ of size 1 at 0x.* thread T0}}
 // Check-Common: {{    #0 0x.* in main .*use-after-free.cc:5}}
 // Check-Common: {{0x.* is located 5 bytes inside of 10-byte region .0x.*,0x.*}}

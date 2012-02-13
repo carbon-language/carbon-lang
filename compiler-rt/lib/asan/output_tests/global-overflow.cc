@@ -9,7 +9,8 @@ int main(int argc, char **argv) {
   int res = YYY[argc * 10];  // BOOOM
   // Check-Common: {{READ of size 1 at 0x.* thread T0}}
   // Check-Common: {{    #0 0x.* in main .*global-overflow.cc:9}}
-  // Check-Common: {{0x.* is located 0 bytes to the right of global variable .*YYY.* of size 10}}
+  // Check-Common: {{0x.* is located 0 bytes to the right of global variable}}
+  // Check-Common:   {{.*YYY.* of size 10}}
   res += XXX[argc] + ZZZ[argc];
   return res;
 }
