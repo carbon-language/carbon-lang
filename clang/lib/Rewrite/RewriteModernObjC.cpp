@@ -5473,8 +5473,7 @@ static void Write__extendedMethodTypes_initializer(RewriteModernObjC &RewriteObj
   }
 }
 
-static void Write_IvarOffsetVar(RewriteModernObjC &RewriteObj, 
-                                ASTContext *Context, std::string &Result, 
+static void Write_IvarOffsetVar(std::string &Result, 
                                 ArrayRef<ObjCIvarDecl *> Ivars, 
                                 StringRef VarName, 
                                 StringRef ClassName) {
@@ -5489,15 +5488,20 @@ static void Write_IvarOffsetVar(RewriteModernObjC &RewriteObj,
      Visibility shoud be: DefaultVisibility;
   */
   
-  if (Ivars.size() > 0) {
-    Result += "\n";
-    for (unsigned i =0, e = Ivars.size(); i < e; i++) {
-      ObjCIvarDecl *IvarDecl = Ivars[i];
-      Result += "unsigned long int "; Result += VarName;
-      Result += ClassName; Result += "_";
-      Result += IvarDecl->getName(); 
-      Result += " __attribute__ ((used, section (\"__DATA,__objc_ivar\")))";
-      Result += " = ";
+  Result += "\n";
+  for (unsigned i =0, e = Ivars.size(); i < e; i++) {
+    ObjCIvarDecl *IvarDecl = Ivars[i];
+    Result += "unsigned long int "; Result += VarName;
+    Result += ClassName; Result += "_";
+    Result += IvarDecl->getName(); 
+    Result += " __attribute__ ((used, section (\"__DATA,__objc_ivar\")))";
+    Result += " = ";
+    if (IvarDecl->isBitField()) {
+      // FIXME: The hack below doesn't work for bitfields. For now, we simply
+      // place all bitfields at offset 0.
+      Result += "0;\n";
+    }
+    else {
       Result += "__OFFSETOFIVAR__(struct ";
       Result += ClassName;
       Result += "_IMPL, "; 
@@ -5512,6 +5516,8 @@ static void Write__ivar_list_t_initializer(RewriteModernObjC &RewriteObj,
                                            StringRef VarName,
                                            StringRef ClassName) {
   if (Ivars.size() > 0) {
+    Write_IvarOffsetVar(Result, Ivars, "OBJC_IVAR_$_", ClassName);
+    
     Result += "\nstatic ";
     Write__ivar_list_t_TypeDecl(Result, Ivars.size());
     Result += " "; Result += VarName;
@@ -5770,9 +5776,6 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
       continue;
     IVars.push_back(IVD);
   }
-  
-  Write_IvarOffsetVar(*this, Context, Result, IVars, "OBJC_IVAR_$_", 
-                      CDecl->getNameAsString());
   
   Write__ivar_list_t_initializer(*this, Context, Result, IVars, 
                                  "_OBJC_INSTANCE_VARIABLES_",
