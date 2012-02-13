@@ -82,6 +82,10 @@ class CommandLineCompletionTestCase(TestBase):
         """Test that 'settings set ta' completes to 'settings set target.'."""
         self.complete_from_to('settings set ta', 'settings set target.')
 
+    def test_settings_set_target_exec(self):
+        """Test that 'settings set target.exec' completes to 'settings set target.exec-search-paths '."""
+        self.complete_from_to('settings set target.exec', 'settings set target.exec-search-paths ')
+
     def test_settings_set_target_pr(self):
         """Test that 'settings set target.pr' completes to ['Available completions:',
         'target.prefer-dynamic-value', 'target.process.']."""
