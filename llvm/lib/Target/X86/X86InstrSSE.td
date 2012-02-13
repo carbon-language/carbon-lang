@@ -2265,11 +2265,6 @@ let Predicates = [HasAVX] in {
             (VSHUFPSrmi VR128:$src1, addr:$src2, imm:$imm)>;
   def : Pat<(v4i32 (X86Shufp VR128:$src1, VR128:$src2, (i8 imm:$imm))),
             (VSHUFPSrri VR128:$src1, VR128:$src2, imm:$imm)>;
-  // vector_shuffle v1, v2 <4, 5, 2, 3> using SHUFPSrri (we prefer movsd, but
-  // fall back to this for SSE1)
-  def : Pat<(v4f32 (movlp:$src3 VR128:$src1, (v4f32 VR128:$src2))),
-            (VSHUFPSrri VR128:$src2, VR128:$src1,
-                        (SHUFFLE_get_shuf_imm VR128:$src3))>;
 
   def : Pat<(v2i64 (X86Shufp VR128:$src1,
                        (memopv2i64 addr:$src2), (i8 imm:$imm))),
@@ -2297,11 +2292,6 @@ let Predicates = [HasSSE1] in {
             (SHUFPSrmi VR128:$src1, addr:$src2, imm:$imm)>;
   def : Pat<(v4i32 (X86Shufp VR128:$src1, VR128:$src2, (i8 imm:$imm))),
             (SHUFPSrri VR128:$src1, VR128:$src2, imm:$imm)>;
-  // vector_shuffle v1, v2 <4, 5, 2, 3> using SHUFPSrri (we prefer movsd, but
-  // fall back to this for SSE1)
-  def : Pat<(v4f32 (movlp:$src3 VR128:$src1, (v4f32 VR128:$src2))),
-            (SHUFPSrri VR128:$src2, VR128:$src1,
-                       (SHUFFLE_get_shuf_imm VR128:$src3))>;
 }
 
 let Predicates = [HasSSE2] in {
@@ -2318,7 +2308,7 @@ let Predicates = [HasSSE2] in {
 //===----------------------------------------------------------------------===//
 
 /// sse12_unpack_interleave - sse 1 & 2 unpack and interleave
-multiclass sse12_unpack_interleave<bits<8> opc, PatFrag OpNode, ValueType vt,
+multiclass sse12_unpack_interleave<bits<8> opc, SDNode OpNode, ValueType vt,
                                    PatFrag mem_frag, RegisterClass RC,
                                    X86MemOperand x86memop, string asm,
                                    Domain d> {
@@ -2335,86 +2325,48 @@ multiclass sse12_unpack_interleave<bits<8> opc, PatFrag OpNode, ValueType vt,
                                        IIC_DEFAULT, d>;
 }
 
-let AddedComplexity = 10 in {
-  defm VUNPCKHPS: sse12_unpack_interleave<0x15, unpckh, v4f32, memopv4f32,
-        VR128, f128mem, "unpckhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedSingle>, TB, VEX_4V;
-  defm VUNPCKHPD: sse12_unpack_interleave<0x15, unpckh, v2f64, memopv2f64,
-        VR128, f128mem, "unpckhpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedDouble>, TB, OpSize, VEX_4V;
-  defm VUNPCKLPS: sse12_unpack_interleave<0x14, unpckl, v4f32, memopv4f32,
-        VR128, f128mem, "unpcklps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedSingle>, TB, VEX_4V;
-  defm VUNPCKLPD: sse12_unpack_interleave<0x14, unpckl, v2f64, memopv2f64,
-        VR128, f128mem, "unpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedDouble>, TB, OpSize, VEX_4V;
+defm VUNPCKHPS: sse12_unpack_interleave<0x15, X86Unpckh, v4f32, memopv4f32,
+      VR128, f128mem, "unpckhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     SSEPackedSingle>, TB, VEX_4V;
+defm VUNPCKHPD: sse12_unpack_interleave<0x15, X86Unpckh, v2f64, memopv2f64,
+      VR128, f128mem, "unpckhpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     SSEPackedDouble>, TB, OpSize, VEX_4V;
+defm VUNPCKLPS: sse12_unpack_interleave<0x14, X86Unpckl, v4f32, memopv4f32,
+      VR128, f128mem, "unpcklps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     SSEPackedSingle>, TB, VEX_4V;
+defm VUNPCKLPD: sse12_unpack_interleave<0x14, X86Unpckl, v2f64, memopv2f64,
+      VR128, f128mem, "unpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     SSEPackedDouble>, TB, OpSize, VEX_4V;
 
-  defm VUNPCKHPSY: sse12_unpack_interleave<0x15, unpckh, v8f32, memopv8f32,
-        VR256, f256mem, "unpckhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedSingle>, TB, VEX_4V;
-  defm VUNPCKHPDY: sse12_unpack_interleave<0x15, unpckh, v4f64, memopv4f64,
-        VR256, f256mem, "unpckhpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedDouble>, TB, OpSize, VEX_4V;
-  defm VUNPCKLPSY: sse12_unpack_interleave<0x14, unpckl, v8f32, memopv8f32,
-        VR256, f256mem, "unpcklps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedSingle>, TB, VEX_4V;
-  defm VUNPCKLPDY: sse12_unpack_interleave<0x14, unpckl, v4f64, memopv4f64,
-        VR256, f256mem, "unpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
-                       SSEPackedDouble>, TB, OpSize, VEX_4V;
+defm VUNPCKHPSY: sse12_unpack_interleave<0x15, X86Unpckh, v8f32, memopv8f32,
+      VR256, f256mem, "unpckhps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     SSEPackedSingle>, TB, VEX_4V;
+defm VUNPCKHPDY: sse12_unpack_interleave<0x15, X86Unpckh, v4f64, memopv4f64,
+      VR256, f256mem, "unpckhpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     SSEPackedDouble>, TB, OpSize, VEX_4V;
+defm VUNPCKLPSY: sse12_unpack_interleave<0x14, X86Unpckl, v8f32, memopv8f32,
+      VR256, f256mem, "unpcklps\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     SSEPackedSingle>, TB, VEX_4V;
+defm VUNPCKLPDY: sse12_unpack_interleave<0x14, X86Unpckl, v4f64, memopv4f64,
+      VR256, f256mem, "unpcklpd\t{$src2, $src1, $dst|$dst, $src1, $src2}",
+                     SSEPackedDouble>, TB, OpSize, VEX_4V;
 
-  let Constraints = "$src1 = $dst" in {
-    defm UNPCKHPS: sse12_unpack_interleave<0x15, unpckh, v4f32, memopv4f32,
-          VR128, f128mem, "unpckhps\t{$src2, $dst|$dst, $src2}",
-                         SSEPackedSingle>, TB;
-    defm UNPCKHPD: sse12_unpack_interleave<0x15, unpckh, v2f64, memopv2f64,
-          VR128, f128mem, "unpckhpd\t{$src2, $dst|$dst, $src2}",
-                         SSEPackedDouble>, TB, OpSize;
-    defm UNPCKLPS: sse12_unpack_interleave<0x14, unpckl, v4f32, memopv4f32,
-          VR128, f128mem, "unpcklps\t{$src2, $dst|$dst, $src2}",
-                         SSEPackedSingle>, TB;
-    defm UNPCKLPD: sse12_unpack_interleave<0x14, unpckl, v2f64, memopv2f64,
-          VR128, f128mem, "unpcklpd\t{$src2, $dst|$dst, $src2}",
-                         SSEPackedDouble>, TB, OpSize;
-  } // Constraints = "$src1 = $dst"
-} // AddedComplexity
+let Constraints = "$src1 = $dst" in {
+  defm UNPCKHPS: sse12_unpack_interleave<0x15, X86Unpckh, v4f32, memopv4f32,
+        VR128, f128mem, "unpckhps\t{$src2, $dst|$dst, $src2}",
+                       SSEPackedSingle>, TB;
+  defm UNPCKHPD: sse12_unpack_interleave<0x15, X86Unpckh, v2f64, memopv2f64,
+        VR128, f128mem, "unpckhpd\t{$src2, $dst|$dst, $src2}",
+                       SSEPackedDouble>, TB, OpSize;
+  defm UNPCKLPS: sse12_unpack_interleave<0x14, X86Unpckl, v4f32, memopv4f32,
+        VR128, f128mem, "unpcklps\t{$src2, $dst|$dst, $src2}",
+                       SSEPackedSingle>, TB;
+  defm UNPCKLPD: sse12_unpack_interleave<0x14, X86Unpckl, v2f64, memopv2f64,
+        VR128, f128mem, "unpcklpd\t{$src2, $dst|$dst, $src2}",
+                       SSEPackedDouble>, TB, OpSize;
+} // Constraints = "$src1 = $dst"
 
 let Predicates = [HasAVX], AddedComplexity = 1 in {
-  def : Pat<(v4f32 (X86Unpckl VR128:$src1, (memopv4f32 addr:$src2))),
-            (VUNPCKLPSrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v4f32 (X86Unpckl VR128:$src1, VR128:$src2)),
-            (VUNPCKLPSrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4f32 (X86Unpckh VR128:$src1, (memopv4f32 addr:$src2))),
-            (VUNPCKHPSrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v4f32 (X86Unpckh VR128:$src1, VR128:$src2)),
-            (VUNPCKHPSrr VR128:$src1, VR128:$src2)>;
-
-  def : Pat<(v8f32 (X86Unpckl VR256:$src1, (memopv8f32 addr:$src2))),
-            (VUNPCKLPSYrm VR256:$src1, addr:$src2)>;
-  def : Pat<(v8f32 (X86Unpckl VR256:$src1, VR256:$src2)),
-            (VUNPCKLPSYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v8f32 (X86Unpckh VR256:$src1, (memopv8f32 addr:$src2))),
-            (VUNPCKHPSYrm VR256:$src1, addr:$src2)>;
-  def : Pat<(v8f32 (X86Unpckh VR256:$src1, VR256:$src2)),
-            (VUNPCKHPSYrr VR256:$src1, VR256:$src2)>;
-
-  def : Pat<(v2f64 (X86Unpckl VR128:$src1, (memopv2f64 addr:$src2))),
-            (VUNPCKLPDrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v2f64 (X86Unpckl VR128:$src1, VR128:$src2)),
-            (VUNPCKLPDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v2f64 (X86Unpckh VR128:$src1, (memopv2f64 addr:$src2))),
-            (VUNPCKHPDrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v2f64 (X86Unpckh VR128:$src1, VR128:$src2)),
-            (VUNPCKHPDrr VR128:$src1, VR128:$src2)>;
-
-  def : Pat<(v4f64 (X86Unpckl VR256:$src1, (memopv4f64 addr:$src2))),
-            (VUNPCKLPDYrm VR256:$src1, addr:$src2)>;
-  def : Pat<(v4f64 (X86Unpckl VR256:$src1, VR256:$src2)),
-            (VUNPCKLPDYrr VR256:$src1, VR256:$src2)>;
-  def : Pat<(v4f64 (X86Unpckh VR256:$src1, (memopv4f64 addr:$src2))),
-            (VUNPCKHPDYrm VR256:$src1, addr:$src2)>;
-  def : Pat<(v4f64 (X86Unpckh VR256:$src1, VR256:$src2)),
-            (VUNPCKHPDYrr VR256:$src1, VR256:$src2)>;
-
   // FIXME: Instead of X86Movddup, there should be a X86Unpckl here, the
   // problem is during lowering, where it's not possible to recognize the load
   // fold cause it has two uses through a bitcast. One use disappears at isel
@@ -2423,27 +2375,7 @@ let Predicates = [HasAVX], AddedComplexity = 1 in {
             (VUNPCKLPDrr VR128:$src, VR128:$src)>;
 }
 
-let Predicates = [HasSSE1] in {
-  def : Pat<(v4f32 (X86Unpckl VR128:$src1, (memopv4f32 addr:$src2))),
-            (UNPCKLPSrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v4f32 (X86Unpckl VR128:$src1, VR128:$src2)),
-            (UNPCKLPSrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v4f32 (X86Unpckh VR128:$src1, (memopv4f32 addr:$src2))),
-            (UNPCKHPSrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v4f32 (X86Unpckh VR128:$src1, VR128:$src2)),
-            (UNPCKHPSrr VR128:$src1, VR128:$src2)>;
-}
-
 let Predicates = [HasSSE2] in {
-  def : Pat<(v2f64 (X86Unpckl VR128:$src1, (memopv2f64 addr:$src2))),
-            (UNPCKLPDrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v2f64 (X86Unpckl VR128:$src1, VR128:$src2)),
-            (UNPCKLPDrr VR128:$src1, VR128:$src2)>;
-  def : Pat<(v2f64 (X86Unpckh VR128:$src1, (memopv2f64 addr:$src2))),
-            (UNPCKHPDrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v2f64 (X86Unpckh VR128:$src1, VR128:$src2)),
-            (UNPCKHPDrr VR128:$src1, VR128:$src2)>;
-
   // FIXME: Instead of X86Movddup, there should be a X86Unpckl here, the
   // problem is during lowering, where it's not possible to recognize the load
   // fold cause it has two uses through a bitcast. One use disappears at isel
