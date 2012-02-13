@@ -2378,6 +2378,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
         Chain->getOpcode() != ISD::LOAD ||
         StoredVal->getOpcode() != X86ISD::DEC ||
         StoredVal.getResNo() != 0 ||
+        !StoredVal.getNode()->hasNUsesOfValue(1, 0) ||
         StoredVal->getOperand(0).getNode() != Chain.getNode())
       break;
 
