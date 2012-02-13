@@ -483,26 +483,27 @@ llvm::DIType CGDebugInfo::CreateType(const PointerType *Ty,
 // Creates a forward declaration for a RecordDecl in the given context.
 llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
                                               llvm::DIDescriptor Ctx) {
-
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
   unsigned Line = getLineNumber(RD->getLocation());
+  StringRef RDName = RD->getName();
+
+  // Get the tag.
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
-  
-  if (CXXDecl)
-    return DBuilder.createClassType(Ctx, getClassName(RD), DefUnit,
-                                    Line, 0, 0, 0,
-                                    llvm::DIType::FlagFwdDecl,
-                                    llvm::DIType(), llvm::DIArray());
+  unsigned Tag = 0;
+  if (CXXDecl) {
+    RDName = getClassName(RD);
+    Tag = llvm::dwarf::DW_TAG_class_type;
+  }
   else if (RD->isStruct())
-    return DBuilder.createStructType(Ctx, RD->getName(), DefUnit,
-                                     Line, 0, 0, llvm::DIType::FlagFwdDecl,
-                                     llvm::DIArray());
+    Tag = llvm::dwarf::DW_TAG_structure_type;
   else if (RD->isUnion())
-    return DBuilder.createUnionType(Ctx, RD->getName(), DefUnit,
-                                    Line, 0, 0, llvm::DIType::FlagFwdDecl,
-                                    llvm::DIArray());
+    Tag = llvm::dwarf::DW_TAG_union_type;
   else
     llvm_unreachable("Unknown RecordDecl type!");
+
+  // Create the type.
+  return DBuilder.createForwardDecl(Tag, RDName, DefUnit,
+				    Line);
 }
 
 // Walk up the context chain and create forward decls for record decls,
