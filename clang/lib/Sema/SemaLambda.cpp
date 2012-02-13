@@ -306,6 +306,8 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
   SourceRange IntroducerRange;
   bool ExplicitParams;
   bool LambdaExprNeedsCleanups;
+  llvm::SmallVector<VarDecl *, 4> ArrayIndexVars;
+  llvm::SmallVector<unsigned, 4> ArrayIndexStarts;
   {
     LambdaScopeInfo *LSI = getCurLambda();
     CallOperator = LSI->CallOperator;
@@ -313,7 +315,9 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
     IntroducerRange = LSI->IntroducerRange;
     ExplicitParams = LSI->ExplicitParams;
     LambdaExprNeedsCleanups = LSI->ExprNeedsCleanups;
-
+    ArrayIndexVars.swap(LSI->ArrayIndexVars);
+    ArrayIndexStarts.swap(LSI->ArrayIndexStarts);
+    
     // Translate captures.
     for (unsigned I = 0, N = LSI->Captures.size(); I != N; ++I) {
       LambdaScopeInfo::Capture From = LSI->Captures[I];
@@ -467,6 +471,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc,
   LambdaExpr *Lambda = LambdaExpr::Create(Context, Class, IntroducerRange, 
                                           CaptureDefault, Captures, 
                                           ExplicitParams, CaptureInits, 
+                                          ArrayIndexVars, ArrayIndexStarts,
                                           Body->getLocEnd());
 
   // C++11 [expr.prim.lambda]p2:

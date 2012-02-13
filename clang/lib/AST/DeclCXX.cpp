@@ -38,13 +38,23 @@ AccessSpecDecl *AccessSpecDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
 void CXXRecordDecl::LambdaDefinitionData::allocateExtra(
        ArrayRef<LambdaExpr::Capture> Captures,
        ArrayRef<Expr *> CaptureInits,
+       ArrayRef<VarDecl *> ArrayIndexVars,
+       ArrayRef<unsigned> ArrayIndexStarts,
        Stmt *Body) {
   NumCaptures = Captures.size();
   NumExplicitCaptures = 0;
   
   ASTContext &Context = Definition->getASTContext();
+  unsigned ArrayIndexSize = 0;
+  if (ArrayIndexVars.size() > 0) {
+    HasArrayIndexVars = true;
+    ArrayIndexSize = sizeof(unsigned) * (Captures.size() + 1)
+                   + sizeof(VarDecl *) * ArrayIndexVars.size();
+  }
+  
   this->Extra = Context.Allocate(sizeof(Capture) * Captures.size() +
-                                 sizeof(Stmt*) * (Captures.size() + 1));
+                                 sizeof(Stmt*) * (Captures.size() + 1) +
+                                 ArrayIndexSize);
   
   // Copy captures.
   Capture *ToCapture = getCaptures();
@@ -62,6 +72,15 @@ void CXXRecordDecl::LambdaDefinitionData::allocateExtra(
   
   // Copy the body of the lambda.
   *Stored++ = Body;
+  
+  if (ArrayIndexVars.size() > 0) {
+    assert(ArrayIndexStarts.size() == Captures.size());
+    memcpy(getArrayIndexVars(), ArrayIndexVars.data(),
+           sizeof(VarDecl *) * ArrayIndexVars.size());
+    memcpy(getArrayIndexStarts(), ArrayIndexStarts.data(), 
+           sizeof(unsigned) * Captures.size());
+    getArrayIndexStarts()[Captures.size()] = ArrayIndexVars.size();
+  }
 }
 
 

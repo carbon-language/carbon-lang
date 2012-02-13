@@ -753,6 +753,8 @@ LambdaExpr::LambdaExpr(QualType T,
                        ArrayRef<Capture> Captures, 
                        bool ExplicitParams,
                        ArrayRef<Expr *> CaptureInits,
+                       ArrayRef<VarDecl *> ArrayElementVars,
+                       ArrayRef<unsigned> ArrayElementStarts,
                        SourceLocation ClosingBrace)
   : Expr(LambdaExprClass, T, VK_RValue, OK_Ordinary,
          T->isDependentType(), T->isDependentType(), T->isDependentType(),
@@ -765,7 +767,8 @@ LambdaExpr::LambdaExpr(QualType T,
   assert(CaptureInits.size() == Captures.size() && "Wrong number of arguments");
   CXXRecordDecl *Class = getLambdaClass();
   CXXRecordDecl::LambdaDefinitionData &Data = Class->getLambdaData();
-  Data.allocateExtra(Captures, CaptureInits, getCallOperator()->getBody());
+  Data.allocateExtra(Captures, CaptureInits, ArrayElementVars, 
+                     ArrayElementStarts, getCallOperator()->getBody());
   
   // FIXME: Propagate "has unexpanded parameter pack" bit.
 }
@@ -777,6 +780,8 @@ LambdaExpr *LambdaExpr::Create(ASTContext &Context,
                                ArrayRef<Capture> Captures, 
                                bool ExplicitParams,
                                ArrayRef<Expr *> CaptureInits,
+                               ArrayRef<VarDecl *> ArrayElementVars,
+                               ArrayRef<unsigned> ArrayElementStarts,
                                SourceLocation ClosingBrace) {
   // Determine the type of the expression (i.e., the type of the
   // function object we're creating).
@@ -784,6 +789,7 @@ LambdaExpr *LambdaExpr::Create(ASTContext &Context,
 
   return new (Context) LambdaExpr(T, IntroducerRange, CaptureDefault, 
                                   Captures, ExplicitParams, CaptureInits,
+                                  ArrayElementVars, ArrayElementStarts,
                                   ClosingBrace);
 }
 
@@ -824,6 +830,19 @@ LambdaExpr::capture_init_iterator LambdaExpr::capture_init_end() const {
   struct CXXRecordDecl::LambdaDefinitionData &Data
     = getLambdaClass()->getLambdaData();
   return reinterpret_cast<Expr **>(Data.getStoredStmts() + Data.NumCaptures);
+}
+
+ArrayRef<VarDecl *> 
+LambdaExpr::getCaptureInitIndexVars(capture_init_iterator Iter) const {
+  CXXRecordDecl::LambdaDefinitionData &Data = getLambdaClass()->getLambdaData();
+  assert(Data.HasArrayIndexVars && "No array index-var data?");
+  
+  unsigned Index = Iter - capture_init_begin();
+  assert(Index < Data.NumCaptures && "Capture index out-of-range");
+  VarDecl **IndexVars = Data.getArrayIndexVars();
+  unsigned *IndexStarts = Data.getArrayIndexStarts();
+  return ArrayRef<VarDecl *>(IndexVars + IndexStarts[Index],
+                             IndexVars + IndexStarts[Index + 1]);
 }
 
 CXXRecordDecl *LambdaExpr::getLambdaClass() const {

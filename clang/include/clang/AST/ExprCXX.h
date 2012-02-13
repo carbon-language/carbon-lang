@@ -1066,22 +1066,16 @@ class LambdaExpr : public Expr {
   /// module file just to determine the source range.
   SourceLocation ClosingBrace;
 
-  // Note: The Create method allocates storage after the LambdaExpr
-  // object, which contains the captures, followed by the capture
-  // initializers, and finally the body of the lambda. The capture
-  // initializers and lambda body are placed next to each other so
-  // that the children() function can visit all of them easily.
-
 public:
   /// \brief Describes the capture of either a variable or 'this'.
   class Capture {
     llvm::PointerIntPair<VarDecl *, 2> VarAndBits;
     SourceLocation Loc;
     SourceLocation EllipsisLoc;
-
+    
     friend class ASTStmtReader;
     friend class ASTStmtWriter;
-
+    
   public:
     /// \brief Create a new capture.
     ///
@@ -1155,6 +1149,8 @@ private:
              ArrayRef<Capture> Captures,
              bool ExplicitParams,
              ArrayRef<Expr *> CaptureInits,
+             ArrayRef<VarDecl *> ArrayIndexVars,
+             ArrayRef<unsigned> ArrayIndexStarts,
              SourceLocation ClosingBrace);
 
 public:
@@ -1166,6 +1162,8 @@ public:
                             ArrayRef<Capture> Captures,
                             bool ExplicitParams,
                             ArrayRef<Expr *> CaptureInits,
+                            ArrayRef<VarDecl *> ArrayIndexVars,
+                            ArrayRef<unsigned> ArrayIndexStarts,
                             SourceLocation ClosingBrace);
 
   /// \brief Determine the default capture kind for this lambda.
@@ -1212,6 +1210,13 @@ public:
   /// initialization argument for this lambda expression.
   capture_init_iterator capture_init_end() const;
 
+  /// \brief Retrieve the set of index variables used in the capture 
+  /// initializer of an array captured by copy.
+  ///
+  /// \param Iter The iterator that points at the capture initializer for 
+  /// which we are extracting the corresponding index variables.
+  ArrayRef<VarDecl *> getCaptureInitIndexVars(capture_init_iterator Iter) const;
+  
   /// \brief Retrieve the source range covering the lambda introducer,
   /// which contains the explicit capture list surrounded by square
   /// brackets ([...]).
