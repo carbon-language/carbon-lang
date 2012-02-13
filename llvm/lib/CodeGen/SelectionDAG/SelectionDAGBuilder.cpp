@@ -1851,6 +1851,12 @@ void SelectionDAGBuilder::visitLandingPad(const LandingPadInst &LP) {
   MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
   AddLandingPadInfo(LP, MMI, MBB);
 
+  // If there aren't registers to copy the values into (e.g., during SjLj
+  // exceptions), then don't bother to create these DAG nodes.
+  if (TLI.getExceptionAddressRegister() == 0 &&
+      TLI.getExceptionSelectorRegister() == 0)
+    return;
+
   SmallVector<EVT, 2> ValueVTs;
   ComputeValueVTs(TLI, LP.getType(), ValueVTs);
 

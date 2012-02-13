@@ -647,10 +647,15 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::VAEND,              MVT::Other, Expand);
   setOperationAction(ISD::STACKSAVE,          MVT::Other, Expand);
   setOperationAction(ISD::STACKRESTORE,       MVT::Other, Expand);
-  setOperationAction(ISD::EHSELECTION,        MVT::i32,   Expand);
-  setOperationAction(ISD::EXCEPTIONADDR,      MVT::i32,   Expand);
-  setExceptionPointerRegister(ARM::R0);
-  setExceptionSelectorRegister(ARM::R1);
+
+  if (!Subtarget->isTargetDarwin()) {
+    // Non-Darwin platforms may return values in these registers via the
+    // personality function.
+    setOperationAction(ISD::EHSELECTION,      MVT::i32,   Expand);
+    setOperationAction(ISD::EXCEPTIONADDR,    MVT::i32,   Expand);
+    setExceptionPointerRegister(ARM::R0);
+    setExceptionSelectorRegister(ARM::R1);
+  }
 
   setOperationAction(ISD::DYNAMIC_STACKALLOC, MVT::i32, Expand);
   // ARMv6 Thumb1 (except for CPUs that support dmb / dsb) and earlier use
