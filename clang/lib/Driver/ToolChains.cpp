@@ -1091,18 +1091,6 @@ bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
   return false;
 }
 
-// FIXME: Factor this helper into llvm::Triple itself.
-static llvm::Triple getMultiarchAlternateTriple(llvm::Triple Triple) {
-  switch (Triple.getArch()) {
-  default: break;
-  case llvm::Triple::x86:    Triple.setArchName("x86_64");    break;
-  case llvm::Triple::x86_64: Triple.setArchName("i386");      break;
-  case llvm::Triple::ppc:    Triple.setArchName("powerpc64"); break;
-  case llvm::Triple::ppc64:  Triple.setArchName("powerpc");   break;
-  }
-  return Triple;
-}
-
 /// \brief Construct a GCCInstallationDetector from the driver.
 ///
 /// This performs all of the autodetection and sets up the various paths.
@@ -1116,7 +1104,9 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
     const Driver &D,
     const llvm::Triple &TargetTriple)
     : IsValid(false) {
-  llvm::Triple MultiarchTriple = getMultiarchAlternateTriple(TargetTriple);
+  llvm::Triple MultiarchTriple
+    = TargetTriple.isArch32Bit() ? TargetTriple.get64BitArchVariant()
+                                 : TargetTriple.get32BitArchVariant();
   llvm::Triple::ArchType TargetArch = TargetTriple.getArch();
   // The library directories which may contain GCC installations.
   SmallVector<StringRef, 4> CandidateLibDirs, CandidateMultiarchLibDirs;
