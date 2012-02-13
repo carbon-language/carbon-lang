@@ -17,6 +17,7 @@
 #include "asan_mac.h"
 
 #include "asan_internal.h"
+#include "asan_mapping.h"
 #include "asan_procmaps.h"
 #include "asan_stack.h"
 #include "asan_thread.h"
