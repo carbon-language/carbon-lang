@@ -7385,9 +7385,13 @@ SDValue DAGCombiner::visitBUILD_VECTOR(SDNode *N) {
     // If VecIn2 is unused then change it to undef.
     VecIn2 = VecIn2.getNode() ? VecIn2 : DAG.getUNDEF(VT);
 
+    // Check that we were able to transform all incoming values to the same type.
+    if (VecIn2.getValueType() != VecIn1.getValueType() ||
+        VecIn1.getValueType() != VT)
+          return SDValue();
+
     // Only type-legal BUILD_VECTOR nodes are converted to shuffle nodes.
-    if (!isTypeLegal(VT) || !isTypeLegal(VecIn1.getValueType()) ||
-        !isTypeLegal(VecIn2.getValueType()))
+    if (!isTypeLegal(VT))
       return SDValue();
 
     // Return the new VECTOR_SHUFFLE node.
