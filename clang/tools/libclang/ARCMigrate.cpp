@@ -56,7 +56,7 @@ CXRemapping clang_getRemappings(const char *migrate_dir_path) {
   }
 
   TextDiagnosticBuffer diagBuffer;
-  llvm::OwningPtr<Remap> remap(new Remap());
+  OwningPtr<Remap> remap(new Remap());
 
   bool err = arcmt::getFileRemappings(remap->Vec, migrate_dir_path,&diagBuffer);
 

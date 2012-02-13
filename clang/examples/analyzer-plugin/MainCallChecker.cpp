@@ -8,7 +8,7 @@ using namespace ento;
 
 namespace {
 class MainCallChecker : public Checker < check::PreStmt<CallExpr> > {
-  mutable llvm::OwningPtr<BugType> BT;
+  mutable OwningPtr<BugType> BT;
 
 public:
   void checkPreStmt(const CallExpr *CE, CheckerContext &C) const;

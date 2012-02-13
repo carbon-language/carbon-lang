@@ -177,7 +177,7 @@ static bool performTransformations(StringRef resourcesPath,
                                  origCI.getMigratorOpts().NoFinalizeRemoval);
   assert(!transforms.empty());
 
-  llvm::OwningPtr<PrintTransforms> transformPrinter;
+  OwningPtr<PrintTransforms> transformPrinter;
   if (OutputTransformations)
     transformPrinter.reset(new PrintTransforms(llvm::outs()));
 

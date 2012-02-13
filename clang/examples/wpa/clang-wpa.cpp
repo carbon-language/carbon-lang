@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     = CompilerInstance::createDiagnostics(DiagOpts, argc, argv);
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];
-    llvm::OwningPtr<ASTUnit> AST(ASTUnit::LoadFromASTFile(InFile, Diags,
+    OwningPtr<ASTUnit> AST(ASTUnit::LoadFromASTFile(InFile, Diags,
                                                           FileSystemOptions(),
                                                           false, 0, 0, true));
     if (!AST)
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
   }
 
   if (ViewCallGraph) {
-    llvm::OwningPtr<CallGraph> CG;
+    OwningPtr<CallGraph> CG;
     CG.reset(new CallGraph(Prog));
 
     for (unsigned i = 0, e = ASTUnits.size(); i != e; ++i)
@@ -154,7 +154,7 @@ int main(int argc, char **argv) {
   if (PP.getLangOptions().ObjC1)
     Opts.CheckersControlList.push_back(std::make_pair("cocoa", true));
 
-  llvm::OwningPtr<ento::CheckerManager> checkerMgr;
+  OwningPtr<ento::CheckerManager> checkerMgr;
   checkerMgr.reset(ento::registerCheckers(Opts, PP.getLangOptions(),
                                           PP.getDiagnostics()));
 

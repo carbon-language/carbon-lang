@@ -280,7 +280,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
     llvm::CrashRecoveryContextReleaseRefCleanup<DiagnosticsEngine> >
     DiagCleanup(Diags.getPtr());
   
-  llvm::OwningPtr<std::vector<const char *> > 
+  OwningPtr<std::vector<const char *> >
     Args(new std::vector<const char*>());
 
   // Recover resources if we crash before exiting this method.
@@ -312,7 +312,7 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   if (CInvok->getFrontendOpts().Inputs.empty())
     return;
 
-  llvm::OwningPtr<MemBufferOwner> BufOwner(new MemBufferOwner());
+  OwningPtr<MemBufferOwner> BufOwner(new MemBufferOwner());
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<MemBufferOwner>
@@ -337,13 +337,13 @@ static void clang_indexSourceFile_Impl(void *UserData) {
 
   ASTUnit *Unit = ASTUnit::create(CInvok.getPtr(), Diags,
                                   /*CaptureDiagnostics=*/true);
-  llvm::OwningPtr<CXTUOwner> CXTU(new CXTUOwner(MakeCXTranslationUnit(Unit)));
+  OwningPtr<CXTUOwner> CXTU(new CXTUOwner(MakeCXTranslationUnit(Unit)));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<CXTUOwner>
     CXTUCleanup(CXTU.get());
 
-  llvm::OwningPtr<IndexingFrontendAction> IndexAction;
+  OwningPtr<IndexingFrontendAction> IndexAction;
   IndexAction.reset(new IndexingFrontendAction(client_data, CB,
                                                index_options, CXTU->getTU()));
 
@@ -496,14 +496,14 @@ static void clang_indexTranslationUnit_Impl(void *UserData) {
                                   ? index_callbacks_size : sizeof(CB);
   memcpy(&CB, client_index_callbacks, ClientCBSize);
 
-  llvm::OwningPtr<IndexingContext> IndexCtx;
+  OwningPtr<IndexingContext> IndexCtx;
   IndexCtx.reset(new IndexingContext(client_data, CB, index_options, TU));
 
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<IndexingContext>
     IndexCtxCleanup(IndexCtx.get());
 
-  llvm::OwningPtr<IndexingConsumer> IndexConsumer;
+  OwningPtr<IndexingConsumer> IndexConsumer;
   IndexConsumer.reset(new IndexingConsumer(*IndexCtx));
 
   // Recover resources if we crash before exiting this method.
