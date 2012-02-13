@@ -1,4 +1,5 @@
 // RUN: %clang  -emit-llvm -g -S %s -o - | FileCheck %s
+// XFAIL: *
 
 class B {
 public:

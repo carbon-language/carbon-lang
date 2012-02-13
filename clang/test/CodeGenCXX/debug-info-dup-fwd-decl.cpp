@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -emit-llvm -g -triple x86_64-apple-darwin %s -o - | FileCheck %s
+// XFAIL: *
 class Test
 {
 public:

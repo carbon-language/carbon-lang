@@ -486,25 +486,23 @@ llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
 
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
   unsigned Line = getLineNumber(RD->getLocation());
-  StringRef RDName = RD->getName();
-
-  // Get the tag.
   const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
-  unsigned Tag = 0;
-  if (CXXDecl) {
-    RDName = getClassName(RD);
-    Tag = llvm::dwarf::DW_TAG_class_type;
-  }
+  
+  if (CXXDecl)
+    return DBuilder.createClassType(Ctx, getClassName(RD), DefUnit,
+                                    Line, 0, 0, 0,
+                                    llvm::DIType::FlagFwdDecl,
+                                    llvm::DIType(), llvm::DIArray());
   else if (RD->isStruct())
-    Tag = llvm::dwarf::DW_TAG_structure_type;
+    return DBuilder.createStructType(Ctx, RD->getName(), DefUnit,
+                                     Line, 0, 0, llvm::DIType::FlagFwdDecl,
+                                     llvm::DIArray());
   else if (RD->isUnion())
-    Tag = llvm::dwarf::DW_TAG_union_type;
+    return DBuilder.createUnionType(Ctx, RD->getName(), DefUnit,
+                                    Line, 0, 0, llvm::DIType::FlagFwdDecl,
+                                    llvm::DIArray());
   else
     llvm_unreachable("Unknown RecordDecl type!");
-
-  // Create the type.
-  return DBuilder.createForwardDecl(Tag, RDName, DefUnit,
-                                    Line);
 }
 
 // Walk up the context chain and create forward decls for record decls,
@@ -528,7 +526,7 @@ llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
       llvm::DIDescriptor FDContext =
         createContextChain(cast<Decl>(RD->getDeclContext()));
       llvm::DIType Ty = createRecordFwdDecl(RD, FDContext);
-      TypeCache[QualType(RD->getTypeForDecl(),0).getAsOpaquePtr()] = Ty;
+
       RegionMap[Context] = llvm::WeakVH(Ty);
       return llvm::DIDescriptor(Ty);
     }
@@ -558,10 +556,10 @@ llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
     RecordDecl *RD = RTy->getDecl();
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
-    llvm::DIType DTy = createRecordFwdDecl(RD, FDContext);
-    TypeCache[PointeeTy.getAsOpaquePtr()] = DTy;
+    return createRecordFwdDecl(RD, FDContext);
   }
   return getOrCreateType(PointeeTy, Unit);
+
 }
 
 llvm::DIType CGDebugInfo::CreatePointerLikeType(unsigned Tag,
@@ -674,12 +672,8 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   if (isa<FunctionNoProtoType>(Ty))
     EltTys.push_back(DBuilder.createUnspecifiedParameter());
   else if (const FunctionProtoType *FTP = dyn_cast<FunctionProtoType>(Ty)) {
-    for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i) {
-      if (CGM.getCodeGenOpts().LimitDebugInfo)
-        EltTys.push_back(getOrCreateLimitedType(FTP->getArgType(i), Unit));
-      else
-        EltTys.push_back(getOrCreateType(FTP->getArgType(i), Unit));
-    }
+    for (unsigned i = 0, e = FTP->getNumArgs(); i != e; ++i)
+      EltTys.push_back(getOrCreateType(FTP->getArgType(i), Unit));
   }
 
   llvm::DIArray EltTypeArray = DBuilder.getOrCreateArray(EltTys);
@@ -687,6 +681,7 @@ llvm::DIType CGDebugInfo::CreateType(const FunctionType *Ty,
   llvm::DIType DbgTy = DBuilder.createSubroutineType(Unit, EltTypeArray);
   return DbgTy;
 }
+
 
 void CGDebugInfo::
 CollectRecordStaticVars(const RecordDecl *RD, llvm::DIType FwdDecl) {
@@ -1155,14 +1150,9 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
 
   // If this is just a forward declaration, construct an appropriately
   // marked node and just return it.
-  if (!RD->getDefinition()) {
-    llvm::DIType FwdTy = createRecordFwdDecl(RD, RDContext);
-    TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdTy;
-    return FwdTy;
-  }
+  if (!RD->getDefinition())
+    return createRecordFwdDecl(RD, RDContext);
 
-  // Create a temporary type here - different than normal forward declared
-  // types.
   llvm::DIType FwdDecl = DBuilder.createTemporaryType(DefUnit);
 
   llvm::MDNode *MN = FwdDecl;
@@ -1633,7 +1623,7 @@ llvm::DIType CGDebugInfo::getTypeOrNull(QualType Ty) {
 
   // Unwrap the type as needed for debug information.
   Ty = UnwrapTypeForDebugInfo(Ty);
-
+  
   // Check for existing entry.
   llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
     TypeCache.find(Ty.getAsOpaquePtr());
@@ -1654,79 +1644,18 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
 
   // Unwrap the type as needed for debug information.
   Ty = UnwrapTypeForDebugInfo(Ty);
-
-  // Check if we already have the type. If we've gotten here and
-  // have a forward declaration of the type we may want the full type.
-  // Go ahead and create it if that's the case.
+  
   llvm::DIType T = getTypeOrNull(Ty);
-  if (T.Verify() && !T.isForwardDecl()) return T;
+  if (T.Verify()) return T;
 
   // Otherwise create the type.
   llvm::DIType Res = CreateTypeNode(Ty, Unit);
 
   // And update the type cache.
-  TypeCache[Ty.getAsOpaquePtr()] = Res;
+  TypeCache[Ty.getAsOpaquePtr()] = Res;  
   return Res;
 }
 
-/// getOrCreateLimitedType - Get the type from the cache or create a new
-/// limited type if necessary.
-llvm::DIType CGDebugInfo::getOrCreateLimitedType(QualType Ty,
-                                                 llvm::DIFile Unit) {
-  if (Ty.isNull())
-    return llvm::DIType();
-
-  // Unwrap the type as needed for debug information.
-  Ty = UnwrapTypeForDebugInfo(Ty);
-
-  llvm::DIType T = getTypeOrNull(Ty);
-  if (T.Verify()) return T;
-
-  // Otherwise create the type.
-  llvm::DIType Res = CreateLimitedTypeNode(Ty, Unit);
-
-  // And update the type cache.
-  TypeCache[Ty.getAsOpaquePtr()] = Res;
-  return Res;
-}
-
-// TODO: Not safe to use for inner types or for fields. Currently only
-// used for by value arguments to functions anything else needs to be
-// audited carefully.
-llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
-  RecordDecl *RD = Ty->getDecl();
-
-  // For templated records we want the full type information and
-  // our forward decls don't handle this correctly.
-  if (isa<ClassTemplateSpecializationDecl>(RD))
-    return CreateType(Ty);
-
-  llvm::DIDescriptor RDContext
-    = createContextChain(cast<Decl>(RD->getDeclContext()));
-
-  return createRecordFwdDecl(RD, RDContext);
-}
-
-/// CreateLimitedTypeNode - Create a new debug type node, but only forward
-/// declare composite types that haven't been processed yet.
-llvm::DIType CGDebugInfo::CreateLimitedTypeNode(QualType Ty,llvm::DIFile Unit) {
-
-  // Work out details of type.
-  switch (Ty->getTypeClass()) {
-#define TYPE(Class, Base)
-#define ABSTRACT_TYPE(Class, Base)
-#define NON_CANONICAL_TYPE(Class, Base)
-#define DEPENDENT_TYPE(Class, Base) case Type::Class:
-    #include "clang/AST/TypeNodes.def"
-    llvm_unreachable("Dependent types cannot show up in debug information");
-
-  case Type::Record:
-    return CreateLimitedType(cast<RecordType>(Ty));
-  default:
-    return CreateTypeNode(Ty, Unit);
-  }
-}
- 
 /// CreateTypeNode - Create a new debug type node.
 llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   // Handle qualifiers, which recursively handles what they refer to.
