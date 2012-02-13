@@ -1426,6 +1426,14 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
       return true;
     }
 
+    // Check if a register mask clobbers DstReg.
+    BitVector UsableRegs;
+    if (LIS->checkRegMaskInterference(RHS, UsableRegs) &&
+        !UsableRegs.test(CP.getDstReg())) {
+      DEBUG(dbgs() << "\t\tRegister mask interference.\n");
+      return false;
+    }
+
     for (const unsigned *AS = TRI->getAliasSet(CP.getDstReg()); *AS; ++AS){
       if (!LIS->hasInterval(*AS))
         continue;
