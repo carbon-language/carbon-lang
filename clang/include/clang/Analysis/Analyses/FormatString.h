@@ -368,7 +368,7 @@ public:
   bool isObjCArg() const { return kind >= ObjCBeg && kind <= ObjCEnd; }
   bool isIntArg() const { return kind >= IntArgBeg && kind <= IntArgEnd; }
   bool isDoubleArg() const { return kind >= DoubleArgBeg &&
-                                    kind <= DoubleArgBeg; }
+                                    kind <= DoubleArgEnd; }
   unsigned getLength() const {
       // Conversion specifiers currently only are represented by
       // single characters, but we be flexible.
