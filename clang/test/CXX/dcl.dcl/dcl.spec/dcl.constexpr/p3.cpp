@@ -8,7 +8,7 @@ namespace M {
   typedef double D;
 }
 
-struct NonLiteral { // expected-note 4{{no constexpr constructors}}
+struct NonLiteral { // expected-note 2{{no constexpr constructors}}
   NonLiteral() {}
   NonLiteral(int) {}
 };
@@ -24,31 +24,28 @@ struct SS : S {
   int ImplicitlyVirtual() const;
 };
 
-// Note, the wording applies constraints to the definition of constexpr
-// functions, but we intentionally apply all that we can to the declaration
-// instead. See DR1360.
-
 // The definition of a constexpr function shall satisfy the following
 // constraints:
 struct T : SS, NonLiteral { // expected-note {{base class 'NonLiteral' of non-literal type}}
-  constexpr T(); // expected-error {{non-literal type 'T' cannot have constexpr members}}
+  constexpr T();
+  constexpr int f(); // expected-error {{non-literal type 'T' cannot have constexpr members}}
 
   //  - it shall not be virtual;
-  virtual constexpr int ExplicitlyVirtual(); // expected-error {{virtual function cannot be constexpr}}
+  virtual constexpr int ExplicitlyVirtual() { return 0; } // expected-error {{virtual function cannot be constexpr}}
 
-  constexpr int ImplicitlyVirtual(); // expected-error {{virtual function cannot be constexpr}}
+  constexpr int ImplicitlyVirtual() { return 0; } // expected-error {{virtual function cannot be constexpr}}
 
   //  - its return type shall be a literal type;
-  constexpr NonLiteral NonLiteralReturn(); // expected-error {{constexpr function's return type 'NonLiteral' is not a literal type}}
-  constexpr void VoidReturn(); // expected-error {{constexpr function's return type 'void' is not a literal type}}
+  constexpr NonLiteral NonLiteralReturn() { return {}; } // expected-error {{constexpr function's return type 'NonLiteral' is not a literal type}}
+  constexpr void VoidReturn() { return; } // expected-error {{constexpr function's return type 'void' is not a literal type}}
   constexpr ~T(); // expected-error {{destructor cannot be marked constexpr}}
   typedef NonLiteral F();
-  constexpr F NonLiteralReturn2; // expected-error {{constexpr function's return type 'NonLiteral' is not a literal type}}
+  constexpr F NonLiteralReturn2; // ok until definition
 
   //  - each of its parameter types shall be a literal type;
-  constexpr int NonLiteralParam(NonLiteral); // expected-error {{constexpr function's 1st parameter type 'NonLiteral' is not a literal type}}
+  constexpr int NonLiteralParam(NonLiteral) { return 0; } // expected-error {{constexpr function's 1st parameter type 'NonLiteral' is not a literal type}}
   typedef int G(NonLiteral);
-  constexpr G NonLiteralParam2; // expected-error {{constexpr function's 1st parameter type 'NonLiteral' is not a literal type}}
+  constexpr G NonLiteralParam2; // ok until definition
 
   //  - its function-body shall be = delete, = default,
   constexpr int Deleted() = delete;
@@ -65,7 +62,7 @@ struct U {
 };
 
 struct V : virtual U { // expected-note {{here}}
-  constexpr int F(); // expected-error {{constexpr member function not allowed in struct with virtual base class}}
+  constexpr int F() { return 0; } // expected-error {{constexpr member function not allowed in struct with virtual base class}}
 };
 
 //  or a compound-statememt that contains only

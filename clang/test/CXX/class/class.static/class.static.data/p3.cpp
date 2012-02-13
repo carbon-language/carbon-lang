@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
-struct NonLit {
+struct NonLit { // expected-note {{no constexpr constructors}}
   NonLit();
 };
 
@@ -29,15 +29,14 @@ template<typename T>
 struct U {
   static constexpr int a = 0;
   static constexpr int b; // expected-error {{declaration of constexpr static data member 'b' requires an initializer}}
-  // FIXME: It'd be nice to error on this at template definition time.
-  static constexpr NonLit h = NonLit(); // expected-error 2{{must be initialized by a constant expression}} expected-note 2{{non-literal type}}
+  static constexpr NonLit h = NonLit(); // expected-error {{cannot have non-literal type 'const NonLit'}}
   static constexpr T c = T(); // expected-error {{must be initialized by a constant expression}} expected-note {{non-literal type}}
   static const T d;
 };
 
 template<typename T> constexpr T U<T>::d = T(); // expected-error {{must be initialized by a constant expression}} expected-note {{non-literal type 'const NonLit'}}
 
-U<int> u1; // expected-note {{here}}
+U<int> u1;
 U<NonLit> u2; // expected-note {{here}}
 
 static_assert(U<int>::a == 0, "");

@@ -1,6 +1,6 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
-struct notlit {
+struct notlit { // expected-note {{not literal because}}
   notlit() {}
 };
 struct notlit2 {
@@ -20,7 +20,7 @@ constexpr int s1::mi2 = 0;
 // not a definition of an object
 constexpr extern int i2; // expected-error {{constexpr variable declaration must be a definition}}
 // not a literal type
-constexpr notlit nl1; // expected-error {{constexpr variable 'nl1' must be initialized by a constant expression}} expected-note {{non-literal type 'const notlit' cannot be used in a constant expression}}
+constexpr notlit nl1; // expected-error {{constexpr variable cannot have non-literal type 'const notlit'}}
 // function parameters
 void f2(constexpr int i) {} // expected-error {{function parameter cannot be constexpr}}
 // non-static member
@@ -77,11 +77,11 @@ struct S {
 // explicit specialization can differ in constepxr
 // FIXME: When checking the explicit specialization, we implicitly instantiate
 // the primary template then claim a constexpr mismatch.
-template <> notlit ft(notlit nl) { return nl; }
+template <> notlit ft(notlit nl) { return nl; } // unexpected-error {{follows constexpr declaration}} unexpected-note {{here}}
 template <> char ft(char c) { return c; } // desired-note {{previous}} unexpected-error {{follows constexpr declaration}} unexpected-note {{here}}
 template <> constexpr char ft(char nl); // desired-error {{constexpr declaration of 'ft<char>' follows non-constexpr declaration}}
 template <> constexpr int gt(int nl) { return nl; } // unexpected-error {{follows non-constexpr declaration}} unexpected-note {{here}}
-template <> notlit S::f() const { return notlit(); }
+template <> notlit S::f() const { return notlit(); } // unexpected-error {{follows constexpr declaration}} unexpected-note {{here}}
 template <> constexpr int S::g() { return 0; } // desired-note {{previous}} unexpected-error {{follows non-constexpr declaration}} unexpected-note {{here}}
 template <> int S::g() const; // desired-error {{non-constexpr declaration of 'g<int>' follows constexpr declaration}}
 // specializations can drop the 'constexpr' but not the implied 'const'.

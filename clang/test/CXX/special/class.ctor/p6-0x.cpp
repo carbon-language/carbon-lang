@@ -11,7 +11,7 @@ struct NonConstexpr2 { // expected-note {{here}}
 struct NonConstexpr2a : NonConstexpr1 { };
 constexpr NonConstexpr1 nc1 = NonConstexpr1(); // ok, does not call constructor
 constexpr NonConstexpr2 nc2 = NonConstexpr2(); // ok, does not call constructor
-constexpr NonConstexpr2a nc2a = NonConstexpr2a(); // expected-error {{constant expression}} expected-note {{non-literal type 'const NonConstexpr2a'}}
+constexpr NonConstexpr2a nc2a = NonConstexpr2a(); // ok, does not call constructor
 constexpr int nc2_a = NonConstexpr2().nl.a; // ok
 constexpr int nc2a_a = NonConstexpr2a().a; // ok
 struct Helper {
@@ -21,8 +21,8 @@ struct Helper {
 
 struct Constexpr1 {};
 constexpr Constexpr1 c1 = Constexpr1(); // ok
-struct NonConstexpr3 : virtual Constexpr1 {};
-constexpr NonConstexpr3 nc3 = NonConstexpr3(); // expected-error {{constant expression}} expected-note {{non-literal type 'const NonConstexpr3'}}
+struct NonConstexpr3 : virtual Constexpr1 {}; // expected-note {{struct with virtual base}} expected-note {{declared here}}
+constexpr NonConstexpr3 nc3 = NonConstexpr3(); // expected-error {{non-literal type 'const NonConstexpr3'}}
 
 struct Constexpr2 {
   int a = 0;

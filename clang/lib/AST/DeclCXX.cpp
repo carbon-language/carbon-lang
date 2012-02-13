@@ -799,8 +799,8 @@ NotASpecialMember:;
       data().IsStandardLayout = false;
     }
 
-    // Record if this field is the first non-literal field or base.
-    if (!hasNonLiteralTypeFieldsOrBases() && !T->isLiteralType())
+    // Record if this field is the first non-literal or volatile field or base.
+    if (!T->isLiteralType() || T.isVolatileQualified())
       data().HasNonLiteralTypeFieldsOrBases = true;
 
     if (Field->hasInClassInitializer()) {

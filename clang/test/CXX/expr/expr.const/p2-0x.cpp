@@ -288,7 +288,7 @@ namespace LValueToRValue {
   //   non-volatile const object with a preceding initialization, initialized
   //   with a constant expression  [Note: a string literal (2.14.5 [lex.string])
   //   corresponds to an array of such objects. -end note], or
-  volatile const int vi = 1; // expected-note {{here}}
+  volatile const int vi = 1; // expected-note 2{{here}}
   const int ci = 1;
   volatile const int &vrci = ci;
   static_assert(vi, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
@@ -298,18 +298,23 @@ namespace LValueToRValue {
   // - a non-volatile glvalue of literal type that refers to a non-volatile
   //   object defined with constexpr, or that refers to a sub-object of such an
   //   object, or
-  struct S {
-    constexpr S(int=0) : i(1), v(1) {}
-    constexpr S(const S &s) : i(2), v(2) {}
-    int i;
-    volatile int v; // expected-note {{here}}
+  struct V {
+    constexpr V() : v(1) {}
+    volatile int v; // expected-note {{not literal because}}
   };
-  constexpr S s;
+  constexpr V v; // expected-error {{non-literal type}}
+  struct S {
+    constexpr S(int=0) : i(1), v(const_cast<volatile int&>(vi)) {}
+    constexpr S(const S &s) : i(2), v(const_cast<volatile int&>(vi)) {}
+    int i;
+    volatile int &v;
+  };
+  constexpr S s; // ok
   constexpr volatile S vs; // expected-note {{here}}
-  constexpr const volatile S &vrs = s;
+  constexpr const volatile S &vrs = s; // ok
   static_assert(s.i, "");
   static_assert(s.v, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
-  static_assert(const_cast<int&>(s.v), ""); // expected-error {{constant expression}} expected-note {{read of volatile member 'v'}}
+  static_assert(const_cast<int&>(s.v), ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vi'}}
   static_assert(vs.i, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}
   static_assert(const_cast<int&>(vs.i), ""); // expected-error {{constant expression}} expected-note {{read of volatile object 'vs'}}
   static_assert(vrs.i, ""); // expected-error {{constant expression}} expected-note {{read of volatile-qualified type}}

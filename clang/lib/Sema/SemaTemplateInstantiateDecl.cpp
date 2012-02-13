@@ -1034,7 +1034,7 @@ Decl *TemplateDeclInstantiator::VisitFunctionDecl(FunctionDecl *D,
                            D->getLocation(), D->getDeclName(), T, TInfo,
                            D->getStorageClass(), D->getStorageClassAsWritten(),
                            D->isInlineSpecified(), D->hasWrittenPrototype(),
-                           /*isConstexpr*/ false);
+                           D->isConstexpr());
 
   if (QualifierLoc)
     Function->setQualifierInfo(QualifierLoc);
@@ -1379,7 +1379,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                         StartLoc, NameInfo, T, TInfo,
                                         Constructor->isExplicit(),
                                         Constructor->isInlineSpecified(),
-                                        false, /*isConstexpr*/ false);
+                                        false, Constructor->isConstexpr());
   } else if (CXXDestructorDecl *Destructor = dyn_cast<CXXDestructorDecl>(D)) {
     Method = CXXDestructorDecl::Create(SemaRef.Context, Record,
                                        StartLoc, NameInfo, T, TInfo,
@@ -1390,7 +1390,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                        StartLoc, NameInfo, T, TInfo,
                                        Conversion->isInlineSpecified(),
                                        Conversion->isExplicit(),
-                                       /*isConstexpr*/ false,
+                                       Conversion->isConstexpr(),
                                        Conversion->getLocEnd());
   } else {
     Method = CXXMethodDecl::Create(SemaRef.Context, Record,
@@ -1398,7 +1398,7 @@ TemplateDeclInstantiator::VisitCXXMethodDecl(CXXMethodDecl *D,
                                    D->isStatic(),
                                    D->getStorageClassAsWritten(),
                                    D->isInlineSpecified(),
-                                   /*isConstexpr*/ false, D->getLocEnd());
+                                   D->isConstexpr(), D->getLocEnd());
   }
 
   if (QualifierLoc)
@@ -2304,13 +2304,6 @@ TemplateDeclInstantiator::InitFunctionInstantiation(FunctionDecl *New,
                                                  NewProto->getNumArgs(),
                                                  EPI));
   }
-
-  // C++0x [dcl.constexpr]p6: If the instantiated template specialization of
-  // a constexpr function template satisfies the requirements for a constexpr
-  // function, then it is a constexpr function.
-  if (Tmpl->isConstexpr() &&
-      SemaRef.CheckConstexprFunctionDecl(New, Sema::CCK_Instantiation))
-    New->setConstexpr(true);
 
   const FunctionDecl* Definition = Tmpl;
 

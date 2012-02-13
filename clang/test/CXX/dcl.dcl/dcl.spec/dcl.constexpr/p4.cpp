@@ -18,16 +18,12 @@ struct Literal {
   operator int() const { return 0; }
 };
 
-// Note, the wording applies constraints to the definition of constexpr
-// constructors, but we intentionally apply all that we can to the declaration
-// instead. See DR1360.
-
 // In the definition of a constexpr constructor, each of the parameter types
 // shall be a literal type.
 struct S {
-  constexpr S(int, N::C);
-  constexpr S(int, NonLiteral, N::C); // expected-error {{constexpr constructor's 2nd parameter type 'NonLiteral' is not a literal type}}
-  constexpr S(int, NonLiteral = 42); // expected-error {{constexpr constructor's 2nd parameter type 'NonLiteral' is not a literal type}}
+  constexpr S(int, N::C) {}
+  constexpr S(int, NonLiteral, N::C) {} // expected-error {{constexpr constructor's 2nd parameter type 'NonLiteral' is not a literal type}}
+  constexpr S(int, NonLiteral = 42) {} // expected-error {{constexpr constructor's 2nd parameter type 'NonLiteral' is not a literal type}}
 
   // In addition, either its function-body shall be = delete or = default
   constexpr S() = default;
@@ -38,14 +34,14 @@ struct S {
 
 // - the class shall not have any virtual base classes;
 struct T : virtual S { // expected-note {{here}}
-  constexpr T(); // expected-error {{constexpr constructor not allowed in struct with virtual base class}}
+  constexpr T() {} // expected-error {{constexpr constructor not allowed in struct with virtual base class}}
 };
 namespace IndirectVBase {
   struct A {};
   struct B : virtual A {}; // expected-note {{here}}
   class C : public B {
   public:
-    constexpr C(); // expected-error {{constexpr constructor not allowed in class with virtual base class}}
+    constexpr C() {} // expected-error {{constexpr constructor not allowed in class with virtual base class}}
   };
 }
 

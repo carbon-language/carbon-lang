@@ -2033,6 +2033,12 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
   if (!Info.CheckCallLimit(CallLoc))
     return false;
 
+  const CXXRecordDecl *RD = Definition->getParent();
+  if (RD->getNumVBases()) {
+    Info.Diag(CallLoc, diag::note_constexpr_virtual_base) << RD;
+    return false;
+  }
+
   CallStackFrame Frame(Info, CallLoc, Definition, &This, ArgValues.data());
 
   // If it's a delegating constructor, just delegate.
@@ -2044,7 +2050,6 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
   // For a trivial copy or move constructor, perform an APValue copy. This is
   // essential for unions, where the operations performed by the constructor
   // cannot be represented by ctor-initializers.
-  const CXXRecordDecl *RD = Definition->getParent();
   if (Definition->isDefaulted() &&
       ((Definition->isCopyConstructor() && RD->hasTrivialCopyConstructor()) ||
        (Definition->isMoveConstructor() && RD->hasTrivialMoveConstructor()))) {
@@ -2083,7 +2088,7 @@ static bool HandleConstructorCall(SourceLocation CallLoc, const LValue &This,
       QualType BaseType((*I)->getBaseClass(), 0);
 #ifndef NDEBUG
       // Non-virtual base classes are initialized in the order in the class
-      // definition. We cannot have a virtual base class for a literal type.
+      // definition. We have already checked for virtual base classes.
       assert(!BaseIt->isVirtual() && "virtual base for literal type");
       assert(Info.Ctx.hasSameType(BaseIt->getType(), BaseType) &&
              "base class initializers not in expected order");
@@ -2414,6 +2419,7 @@ public:
     const FunctionDecl *FD = 0;
     LValue *This = 0, ThisVal;
     llvm::ArrayRef<const Expr*> Args(E->getArgs(), E->getNumArgs());
+    bool HasQualifier = false;
 
     // Extract function decl and 'this' pointer from the callee.
     if (CalleeType->isSpecificBuiltinType(BuiltinType::BoundMember)) {
@@ -2424,6 +2430,7 @@ public:
           return false;
         Member = ME->getMemberDecl();
         This = &ThisVal;
+        HasQualifier = ME->hasQualifier();
       } else if (const BinaryOperator *BE = dyn_cast<BinaryOperator>(Callee)) {
         // Indirect bound member calls ('.*' or '->*').
         Member = HandleMemberPointerAccess(Info, BE, ThisVal, false);
@@ -2471,6 +2478,12 @@ public:
 
     if (This && !This->checkSubobject(Info, E, CSK_This))
       return false;
+
+    // DR1358 allows virtual constexpr functions in some cases. Don't allow
+    // calls to such functions in constant expressions.
+    if (This && !HasQualifier &&
+        isa<CXXMethodDecl>(FD) && cast<CXXMethodDecl>(FD)->isVirtual())
+      return Error(E, diag::note_constexpr_virtual_call);
 
     const FunctionDecl *Definition = 0;
     Stmt *Body = FD->getBody(Definition);

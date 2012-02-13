@@ -3991,8 +3991,15 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
                                            TemplateParamLists.release());
     }
 
-    if (D.getDeclSpec().isConstexprSpecified())
+    if (D.getDeclSpec().isConstexprSpecified()) {
       NewVD->setConstexpr(true);
+      SourceLocation ConstexprLoc = D.getDeclSpec().getConstexprSpecLoc();
+      if (!NewVD->isInvalidDecl() && !R->isDependentType() &&
+          RequireLiteralType(NewVD->getLocation(), R,
+                             PDiag(diag::err_constexpr_var_non_literal)
+                               << SourceRange(ConstexprLoc)))
+        NewVD->setInvalidDecl();
+    }
   }
 
   // Set the lexical context. If the declarator has a C++ scope specifier, the
@@ -5347,10 +5354,6 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
             Previous.getResultKind() != LookupResult::FoundOverloaded) &&
            "previous declaration set still overloaded");
 
-    if (NewFD->isConstexpr() && !NewFD->isInvalidDecl() &&
-        !CheckConstexprFunctionDecl(NewFD, CCK_Declaration))
-      NewFD->setInvalidDecl();
-
     NamedDecl *PrincipalDecl = (FunctionTemplate
                                 ? cast<NamedDecl>(FunctionTemplate)
                                 : NewFD);
@@ -6223,8 +6226,8 @@ void Sema::AddInitializerToDecl(Decl *RealDecl, Expr *Init,
     if (DclT->isDependentType()) {
 
     // Allow any 'static constexpr' members, whether or not they are of literal
-    // type. We separately check that the initializer is a constant expression,
-    // which implicitly requires the member to be of literal type.
+    // type. We separately check that every constexpr variable is of literal
+    // type.
     } else if (VDecl->isConstexpr()) {
 
     // Require constness.
@@ -7350,8 +7353,9 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
       ActivePolicy = &WP;
     }
 
-    if (FD && FD->isConstexpr() && !FD->isInvalidDecl() &&
-        !CheckConstexprFunctionBody(FD, Body, IsInstantiation))
+    if (!IsInstantiation && FD && FD->isConstexpr() && !FD->isInvalidDecl() &&
+        (!CheckConstexprFunctionDecl(FD) ||
+         !CheckConstexprFunctionBody(FD, Body)))
       FD->setInvalidDecl();
 
     assert(ExprCleanupObjects.empty() && "Leftover temporaries in function");

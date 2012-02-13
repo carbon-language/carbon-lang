@@ -4243,19 +4243,14 @@ bool Sema::RequireCompleteType(SourceLocation Loc, QualType T,
 /// @param PD The partial diagnostic that will be printed out if T is not a
 /// literal type.
 ///
-/// @param AllowIncompleteType If true, an incomplete type will be considered
-/// acceptable.
-///
 /// @returns @c true if @p T is not a literal type and a diagnostic was emitted,
 /// @c false otherwise.
 bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
-                              const PartialDiagnostic &PD,
-                              bool AllowIncompleteType) {
+                              const PartialDiagnostic &PD) {
   assert(!T->isDependentType() && "type should not be dependent");
 
-  bool Incomplete = RequireCompleteType(Loc, T, 0);
-  if (T->isLiteralType() ||
-      (AllowIncompleteType && Incomplete && !T->isVoidType()))
+  RequireCompleteType(Loc, T, 0);
+  if (T->isLiteralType())
     return false;
 
   if (PD.getDiagID() == 0)
@@ -4273,8 +4268,9 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
   const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
 
   // If the class has virtual base classes, then it's not an aggregate, and
-  // cannot have any constexpr constructors, so is non-literal. This is better
-  // to diagnose than the resulting absence of constexpr constructors.
+  // cannot have any constexpr constructors or a trivial default constructor,
+  // so is non-literal. This is better to diagnose than the resulting absence
+  // of constexpr constructors.
   if (RD->getNumVBases()) {
     Diag(RD->getLocation(), diag::note_non_literal_virtual_base)
       << RD->isStruct() << RD->getNumVBases();
@@ -4282,29 +4278,9 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
            E = RD->vbases_end(); I != E; ++I)
       Diag(I->getSourceRange().getBegin(),
            diag::note_constexpr_virtual_base_here) << I->getSourceRange();
-  } else if (!RD->isAggregate() && !RD->hasConstexprNonCopyMoveConstructor()) {
+  } else if (!RD->isAggregate() && !RD->hasConstexprNonCopyMoveConstructor() &&
+             !RD->hasTrivialDefaultConstructor()) {
     Diag(RD->getLocation(), diag::note_non_literal_no_constexpr_ctors) << RD;
-
-    switch (RD->getTemplateSpecializationKind()) {
-    case TSK_Undeclared:
-    case TSK_ExplicitSpecialization:
-      break;
-
-    case TSK_ImplicitInstantiation:
-    case TSK_ExplicitInstantiationDeclaration:
-    case TSK_ExplicitInstantiationDefinition:
-      // If the base template had constexpr constructors which were
-      // instantiated as non-constexpr constructors, explain why.
-      for (CXXRecordDecl::ctor_iterator I = RD->ctor_begin(),
-           E = RD->ctor_end(); I != E; ++I) {
-        if ((*I)->isCopyConstructor() || (*I)->isMoveConstructor())
-          continue;
-
-        FunctionDecl *Base = (*I)->getInstantiatedFromMemberFunction();
-        if (Base && Base->isConstexpr())
-          CheckConstexprFunctionDecl(*I, CCK_NoteNonConstexprInstantiation);
-      }
-    }
   } else if (RD->hasNonLiteralTypeFieldsOrBases()) {
     for (CXXRecordDecl::base_class_const_iterator I = RD->bases_begin(),
          E = RD->bases_end(); I != E; ++I) {
@@ -4317,9 +4293,11 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
     }
     for (CXXRecordDecl::field_iterator I = RD->field_begin(),
          E = RD->field_end(); I != E; ++I) {
-      if (!(*I)->getType()->isLiteralType()) {
+      if (!(*I)->getType()->isLiteralType() ||
+          (*I)->getType().isVolatileQualified()) {
         Diag((*I)->getLocation(), diag::note_non_literal_field)
-          << RD << (*I) << (*I)->getType();
+          << RD << (*I) << (*I)->getType()
+          << (*I)->getType().isVolatileQualified();
         return true;
       }
     }

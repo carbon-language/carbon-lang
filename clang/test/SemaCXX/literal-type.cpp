@@ -23,6 +23,8 @@ static_assert(__is_literal(VectorExt), "fail");
 //           a constant expression,
 //        -- it is an aggregate type or has at least one constexpr constructor
 //           or constructor template that is not a copy or move constructor, and
+//           [DR1452 adds class types with trivial default constructors to
+//            this list]
 //        -- it has all non-static data members and base classes of literal
 //           types
 struct Empty {};
@@ -36,25 +38,26 @@ struct LiteralType {
 struct HasDtor { ~HasDtor(); };
 
 class NonAggregate { int x; };
-struct HasNonLiteralBase : NonAggregate {};
+struct NonLiteral { NonLiteral(); };
+struct HasNonLiteralBase : NonLiteral {};
 struct HasNonLiteralMember { HasDtor x; };
 
 static_assert(__is_literal(Empty), "fail");
 static_assert(__is_literal(LiteralType), "fail");
+static_assert(__is_literal(NonAggregate), "fail");
+static_assert(!__is_literal(NonLiteral), "fail");
 static_assert(!__is_literal(HasDtor), "fail");
-static_assert(!__is_literal(NonAggregate), "fail");
 static_assert(!__is_literal(HasNonLiteralBase), "fail");
 static_assert(!__is_literal(HasNonLiteralMember), "fail");
 
-// FIXME: Test constexpr constructors and non-static members with initializers
-// when Clang supports them:
-#if 0
-extern int f();
+// DR1361 removes the brace-or-equal-initializer bullet so that we can allow:
+extern int f(); // expected-note {{here}}
 struct HasNonConstExprMemInit {
-  int x = f();
-  constexpr HasNonConstExprMemInit(int y) {}
+  int x = f(); // expected-note {{non-constexpr function}}
+  constexpr HasNonConstExprMemInit() {} // expected-error {{never produces a constant expression}}
+  constexpr HasNonConstExprMemInit(int y) : x(y) {} // ok
 };
-static_assert(!__is_literal(HasNonConstExprMemInit), "fail");
+static_assert(__is_literal(HasNonConstExprMemInit), "fail");
 
 class HasConstExprCtor {
   int x;
@@ -66,6 +69,9 @@ template <typename T> class HasConstExprCtorTemplate {
 public:
   template <typename U> constexpr HasConstExprCtorTemplate(U y) : x(y) {}
 };
+template <typename T> class HasConstExprCtorT {
+  constexpr HasConstExprCtorT(T) {}
+};
 static_assert(__is_literal(HasConstExprCtor), "fail");
-static_assert(__is_literal(HasConstExprCtorTemplate), "fail");
-#endif
+static_assert(__is_literal(HasConstExprCtorTemplate<int>), "fail");
+static_assert(__is_literal(HasConstExprCtorT<NonLiteral>), "fail");
