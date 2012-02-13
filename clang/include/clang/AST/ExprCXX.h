@@ -1048,6 +1048,9 @@ class LambdaExpr : public Expr {
   /// \brief The source range that covers the lambda introducer ([...]).
   SourceRange IntroducerRange;
 
+  /// \brief The number of captures.
+  unsigned NumCaptures : 16;
+  
   /// \brief The default capture kind, which is a value of type
   /// LambdaCaptureDefault.
   unsigned CaptureDefault : 2;
@@ -1056,6 +1059,8 @@ class LambdaExpr : public Expr {
   /// implicit (and empty) parameter list.
   unsigned ExplicitParams : 1;
 
+  unsigned HasArrayIndexVars : 1;
+  
   /// \brief The location of the closing brace ('}') that completes
   /// the lambda.
   /// 
@@ -1065,6 +1070,10 @@ class LambdaExpr : public Expr {
   /// to avoid having to deserialize the function call operator from a
   /// module file just to determine the source range.
   SourceLocation ClosingBrace;
+
+  // Note: The capture initializers are stored directly after the lambda
+  // expression, along with the index variables used to initialize by-copy
+  // array captures.
 
 public:
   /// \brief Describes the capture of either a variable or 'this'.
@@ -1153,6 +1162,22 @@ private:
              ArrayRef<unsigned> ArrayIndexStarts,
              SourceLocation ClosingBrace);
 
+  Stmt **getStoredStmts() const {
+    return reinterpret_cast<Stmt **>(const_cast<LambdaExpr *>(this) + 1);
+  }
+  
+  /// \brief Retrieve the mapping from captures to the first array index
+  /// variable.
+  unsigned *getArrayIndexStarts() const {
+    return reinterpret_cast<unsigned *>(getStoredStmts() + NumCaptures + 1);
+  }
+  
+  /// \brief Retrieve the complete set of array-index variables.
+  VarDecl **getArrayIndexVars() const {
+    return reinterpret_cast<VarDecl **>(
+             getArrayIndexStarts() + NumCaptures + 1);
+  }
+
 public:
   /// \brief Construct a new lambda expression.
   static LambdaExpr *Create(ASTContext &C, 
@@ -1182,6 +1207,9 @@ public:
   /// sequence of lambda captures.
   capture_iterator capture_end() const;
 
+  /// \brief Determine the number of captures in this lambda.
+  unsigned capture_size() const { return NumCaptures; }
+  
   /// \brief Retrieve an iterator pointing to the first explicit
   /// lambda capture.
   capture_iterator explicit_capture_begin() const;
@@ -1204,11 +1232,15 @@ public:
 
   /// \brief Retrieve the first initialization argument for this
   /// lambda expression (which initializes the first capture field).
-  capture_init_iterator capture_init_begin() const;
+  capture_init_iterator capture_init_begin() const {
+    return reinterpret_cast<Expr **>(getStoredStmts());
+  }
 
   /// \brief Retrieve the iterator pointing one past the last
   /// initialization argument for this lambda expression.
-  capture_init_iterator capture_init_end() const;
+  capture_init_iterator capture_init_end() const {
+    return capture_init_begin() + NumCaptures;    
+  }
 
   /// \brief Retrieve the set of index variables used in the capture 
   /// initializer of an array captured by copy.
@@ -1232,7 +1264,9 @@ public:
   CXXMethodDecl *getCallOperator() const;
 
   /// \brief Retrieve the body of the lambda.
-  CompoundStmt *getBody() const;
+  CompoundStmt *getBody() const {
+    return reinterpret_cast<CompoundStmt *>(getStoredStmts()[NumCaptures]);
+  }
 
   /// \brief Determine whether the lambda is mutable, meaning that any
   /// captures values can be modified.
@@ -1251,7 +1285,9 @@ public:
     return SourceRange(IntroducerRange.getBegin(), ClosingBrace);
   }
 
-  child_range children();
+  child_range children() {
+    return child_range(getStoredStmts(), getStoredStmts() + NumCaptures + 1);
+  }
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;

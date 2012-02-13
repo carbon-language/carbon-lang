@@ -35,55 +35,6 @@ AccessSpecDecl *AccessSpecDecl::CreateDeserialized(ASTContext &C, unsigned ID) {
   return new (Mem) AccessSpecDecl(EmptyShell());
 }
 
-void CXXRecordDecl::LambdaDefinitionData::allocateExtra(
-       ArrayRef<LambdaExpr::Capture> Captures,
-       ArrayRef<Expr *> CaptureInits,
-       ArrayRef<VarDecl *> ArrayIndexVars,
-       ArrayRef<unsigned> ArrayIndexStarts,
-       Stmt *Body) {
-  NumCaptures = Captures.size();
-  NumExplicitCaptures = 0;
-  
-  ASTContext &Context = Definition->getASTContext();
-  unsigned ArrayIndexSize = 0;
-  if (ArrayIndexVars.size() > 0) {
-    HasArrayIndexVars = true;
-    ArrayIndexSize = sizeof(unsigned) * (Captures.size() + 1)
-                   + sizeof(VarDecl *) * ArrayIndexVars.size();
-  }
-  
-  this->Extra = Context.Allocate(sizeof(Capture) * Captures.size() +
-                                 sizeof(Stmt*) * (Captures.size() + 1) +
-                                 ArrayIndexSize);
-  
-  // Copy captures.
-  Capture *ToCapture = getCaptures();
-  for (unsigned I = 0, N = Captures.size(); I != N; ++I) {
-    if (Captures[I].isExplicit())
-      ++NumExplicitCaptures;
-    
-    *ToCapture++ = Captures[I];
-  }
-  
-  // Copy initialization expressions for the non-static data members.
-  Stmt **Stored = getStoredStmts();
-  for (unsigned I = 0, N = CaptureInits.size(); I != N; ++I)
-    *Stored++ = CaptureInits[I];
-  
-  // Copy the body of the lambda.
-  *Stored++ = Body;
-  
-  if (ArrayIndexVars.size() > 0) {
-    assert(ArrayIndexStarts.size() == Captures.size());
-    memcpy(getArrayIndexVars(), ArrayIndexVars.data(),
-           sizeof(VarDecl *) * ArrayIndexVars.size());
-    memcpy(getArrayIndexStarts(), ArrayIndexStarts.data(), 
-           sizeof(unsigned) * Captures.size());
-    getArrayIndexStarts()[Captures.size()] = ArrayIndexVars.size();
-  }
-}
-
-
 CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
   : UserDeclaredConstructor(false), UserDeclaredCopyConstructor(false),
     UserDeclaredMoveConstructor(false), UserDeclaredCopyAssignment(false),
@@ -1035,8 +986,7 @@ void CXXRecordDecl::getCaptureFields(
 
   LambdaDefinitionData &Lambda = getLambdaData();
   RecordDecl::field_iterator Field = field_begin();
-  for (LambdaExpr::Capture *C = Lambda.getCaptures(), 
-                        *CEnd = C + Lambda.NumCaptures;
+  for (LambdaExpr::Capture *C = Lambda.Captures, *CEnd = C + Lambda.NumCaptures;
        C != CEnd; ++C, ++Field) {
     if (C->capturesThis()) {
       ThisCapture = *Field;

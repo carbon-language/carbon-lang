@@ -561,8 +561,7 @@ class CXXRecordDecl : public RecordDecl {
     typedef LambdaExpr::Capture Capture;
     
     LambdaDefinitionData(CXXRecordDecl *D) 
-      : DefinitionData(D), NumCaptures(0), NumExplicitCaptures(0), 
-        HasArrayIndexVars(false), Extra(0) { 
+      : DefinitionData(D), NumCaptures(0), NumExplicitCaptures(0), Captures(0) { 
       IsLambda = true;
     }
 
@@ -572,42 +571,10 @@ class CXXRecordDecl : public RecordDecl {
     /// \brief The number of explicit captures in this lambda.
     unsigned NumExplicitCaptures : 15;
 
-    /// \brief Whether This lambda has any by-copy array captures, and therefore
-    /// has array index variables.
-    unsigned HasArrayIndexVars : 1;
-    
     /// \brief The "extra" data associated with the lambda, including
     /// captures, capture initializers, the body of the lambda, and the
     /// array-index variables for array captures.
-    void *Extra;
-    
-    /// \brief Allocate the "extra" data associated with a lambda definition.
-    void allocateExtra(ArrayRef<Capture> Captures,
-                       ArrayRef<Expr *> CaptureInits,
-                       ArrayRef<VarDecl *> ArrayIndexVars,
-                       ArrayRef<unsigned> ArrayIndexStarts,
-                       Stmt *Body);
-    
-    /// \brief Retrieve the set of captures.
-    Capture *getCaptures() const { return reinterpret_cast<Capture *>(Extra); }
-    
-    /// \brief Retrieve the set of stored statements, which contains the capture
-    /// initializers followed by the body of the lambda.
-    Stmt **getStoredStmts() const {
-      return reinterpret_cast<Stmt **>(getCaptures() + NumCaptures);
-    }
-
-    /// \brief Retrieve the mapping from captures to the first array index
-    /// variable.
-    unsigned *getArrayIndexStarts() const {
-      return reinterpret_cast<unsigned *>(getStoredStmts() + NumCaptures + 1);
-    }
-
-    /// \brief Retrieve the complete set of array-index variables.
-    VarDecl **getArrayIndexVars() const {
-      return reinterpret_cast<VarDecl **>(
-               getArrayIndexStarts() + NumCaptures + 1);
-    }
+    Capture *Captures;    
   };
 
   struct DefinitionData &data() {
