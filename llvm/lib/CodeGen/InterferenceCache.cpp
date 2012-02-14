@@ -185,7 +185,8 @@ void InterferenceCache::Entry::update(unsigned MBBNum) {
 
   // Also check for register mask interference.
   SlotIndex Limit = BI->Last.isValid() ? BI->Last : Start;
-  for (unsigned i = RegMaskSlots.size(); i && RegMaskSlots[i-1] > Limit; --i)
+  for (unsigned i = RegMaskSlots.size();
+       i && RegMaskSlots[i-1].getDeadSlot() > Limit; --i)
     if (MachineOperand::clobbersPhysReg(RegMaskBits[i-1], PhysReg)) {
       // Register mask i-1 clobbers PhysReg after the LIU interference.
       // Model the regmask clobber as a dead def.
