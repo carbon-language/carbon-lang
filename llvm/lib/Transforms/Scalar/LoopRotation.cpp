@@ -19,6 +19,7 @@
 #include "llvm/Analysis/LoopPass.h"
 #include "llvm/Analysis/InstructionSimplify.h"
 #include "llvm/Analysis/ScalarEvolution.h"
+#include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Transforms/Utils/BasicBlockUtils.h"
 #include "llvm/Transforms/Utils/SSAUpdater.h"
@@ -52,6 +53,7 @@ namespace {
     }
 
     bool runOnLoop(Loop *L, LPPassManager &LPM);
+    void simplifyLoopLatch(Loop *L);
     bool rotateLoop(Loop *L);
 
   private:
@@ -72,6 +74,11 @@ Pass *llvm::createLoopRotatePass() { return new LoopRotate(); }
 /// the loop is rotated at least once.
 bool LoopRotate::runOnLoop(Loop *L, LPPassManager &LPM) {
   LI = &getAnalysis<LoopInfo>();
+
+  // Simplify the loop latch before attempting to rotate the header
+  // upward. Rotation may not be needed if the loop tail can be folded into the
+  // loop exit.
+  simplifyLoopLatch(L);
 
   // One loop can be rotated multiple times.
   bool MadeChange = false;
@@ -144,6 +151,102 @@ static void RewriteUsesOfClonedInstructions(BasicBlock *OrigHeader,
       SSA.RewriteUse(U);
     }
   }
+}
+
+/// Determine whether the instructions in this range my be safely and cheaply
+/// speculated. This is not an important enough situation to develop complex
+/// heuristics. We handle a single arithmetic instruction along with any type
+/// conversions.
+static bool shouldSpeculateInstrs(BasicBlock::iterator Begin,
+                                  BasicBlock::iterator End) {
+  bool seenIncrement = false;
+  for (BasicBlock::iterator I = Begin; I != End; ++I) {
+
+    if (!isSafeToSpeculativelyExecute(I))
+      return false;
+
+    if (isa<DbgInfoIntrinsic>(I))
+      continue;
+
+    switch (I->getOpcode()) {
+    default:
+      return false;
+    case Instruction::GetElementPtr:
+      // GEPs are cheap if all indices are constant.
+      if (!cast<GEPOperator>(I)->hasAllConstantIndices())
+        return false;
+      // fall-thru to increment case
+    case Instruction::Add:
+    case Instruction::Sub:
+    case Instruction::And:
+    case Instruction::Or:
+    case Instruction::Xor:
+    case Instruction::Shl:
+    case Instruction::LShr:
+    case Instruction::AShr:
+      if (seenIncrement)
+        return false;
+      seenIncrement = true;
+      break;
+    case Instruction::Trunc:
+    case Instruction::ZExt:
+    case Instruction::SExt:
+      // ignore type conversions
+      break;
+    }
+  }
+  return true;
+}
+
+/// Fold the loop tail into the loop exit by speculating the loop tail
+/// instructions. Typically, this is a single post-increment. In the case of a
+/// simple 2-block loop, hoisting the increment can be much better than
+/// duplicating the entire loop header. In the cast of loops with early exits,
+/// rotation will not work anyway, but simplifyLoopLatch will put the loop in
+/// canonical form so downstream passes can handle it.
+///
+/// I don't believe this invalidates SCEV.
+void LoopRotate::simplifyLoopLatch(Loop *L) {
+  BasicBlock *Latch = L->getLoopLatch();
+  if (!Latch || Latch->hasAddressTaken())
+    return;
+
+  BranchInst *Jmp = dyn_cast<BranchInst>(Latch->getTerminator());
+  if (!Jmp || !Jmp->isUnconditional())
+    return;
+
+  BasicBlock *LastExit = Latch->getSinglePredecessor();
+  if (!LastExit || !L->isLoopExiting(LastExit))
+    return;
+
+  BranchInst *BI = dyn_cast<BranchInst>(LastExit->getTerminator());
+  if (!BI)
+    return;
+
+  if (!shouldSpeculateInstrs(Latch->begin(), Jmp))
+    return;
+
+  DEBUG(dbgs() << "Folding loop latch " << Latch->getName() << " into "
+        << LastExit->getName() << "\n");
+
+  // Hoist the instructions from Latch into LastExit.
+  LastExit->getInstList().splice(BI, Latch->getInstList(), Latch->begin(), Jmp);
+
+  unsigned FallThruPath = BI->getSuccessor(0) == Latch ? 0 : 1;
+  BasicBlock *Header = Jmp->getSuccessor(0);
+  assert(Header == L->getHeader() && "expected a backward branch");
+
+  // Remove Latch from the CFG so that LastExit becomes the new Latch.
+  BI->setSuccessor(FallThruPath, Header);
+  Latch->replaceSuccessorsPhiUsesWith(LastExit);
+  Jmp->eraseFromParent();
+
+  // Nuke the Latch block.
+  assert(Latch->empty() && "unable to evacuate Latch");
+  LI->removeBlock(Latch);
+  if (DominatorTree *DT = getAnalysisIfAvailable<DominatorTree>())
+    DT->eraseNode(Latch);
+  Latch->eraseFromParent();
 }
 
 /// Rotate loop LP. Return true if the loop is rotated.
