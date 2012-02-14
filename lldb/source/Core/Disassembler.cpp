@@ -510,7 +510,8 @@ Disassembler::Disassemble
 Instruction::Instruction(const Address &address, AddressClass addr_class) :
     m_address (address),
     m_address_class (addr_class),
-    m_opcode()
+    m_opcode(),
+    m_calculated_strings(false)
 {
 }
 
