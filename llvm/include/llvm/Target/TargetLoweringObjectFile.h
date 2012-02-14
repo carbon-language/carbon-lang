@@ -29,6 +29,7 @@ namespace llvm {
   class MCSectionMachO;
   class MCSymbol;
   class MCStreamer;
+  class NamedMDNode;
   class GlobalValue;
   class TargetMachine;
   
@@ -53,7 +54,12 @@ public:
   virtual void emitPersonalityValue(MCStreamer &Streamer,
                                     const TargetMachine &TM,
                                     const MCSymbol *Sym) const;
-  
+
+  /// emitModuleFlags - Emit the module flags that the platform cares about.
+  virtual void emitModuleFlags(MCStreamer &, NamedMDNode *, Mangler *,
+                               const TargetMachine &) const {
+  }
+
   /// shouldEmitUsedDirectiveFor - This hook allows targets to selectively
   /// decide not to emit the UsedDirective for some symbols in llvm.used.
   /// FIXME: REMOVE this (rdar://7071300)
@@ -86,9 +92,7 @@ public:
                                     const TargetMachine &TM) const {
     return SectionForGlobal(GV, getKindForGlobal(GV, TM), Mang, TM);
   }
-  
-  
-  
+
   /// getExplicitSectionGlobal - Targets should implement this method to assign
   /// a section to globals with an explicit section specfied.  The
   /// implementation of this method can assume that GV->hasSection() is true.

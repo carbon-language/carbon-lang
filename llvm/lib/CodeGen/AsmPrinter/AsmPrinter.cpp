@@ -857,6 +857,10 @@ bool AsmPrinter::doFinalization(Module &M) {
     EmitVisibility(Name, V, false);
   }
 
+  // Emit module flags.
+  if (NamedMDNode *ModFlags = M.getModuleFlagsMetadata())
+    getObjFileLowering().emitModuleFlags(OutStreamer, ModFlags, Mang, TM);
+
   // Finalize debug and EH information.
   if (DE) {
     {

@@ -78,6 +78,11 @@ class TargetLoweringObjectFileMachO : public TargetLoweringObjectFile {
 public:
   virtual ~TargetLoweringObjectFileMachO() {}
 
+  /// emitModuleFlags - Emit the module flags that specify the garbage
+  /// collection information.
+  virtual void emitModuleFlags(MCStreamer &Streamer, NamedMDNode *ModFlags,
+                               Mangler *Mang, const TargetMachine &TM) const;
+
   virtual const MCSection *
   SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
                          Mangler *Mang, const TargetMachine &TM) const;

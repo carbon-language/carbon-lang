@@ -17,6 +17,7 @@
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
 #include "llvm/GlobalVariable.h"
+#include "llvm/Module.h"
 #include "llvm/CodeGen/MachineModuleInfoImpls.h"
 #include "llvm/MC/MCContext.h"
 #include "llvm/MC/MCExpr.h"
@@ -369,6 +370,65 @@ TargetLoweringObjectFileELF::getStaticDtorSection(unsigned Priority) const {
 //===----------------------------------------------------------------------===//
 //                                 MachO
 //===----------------------------------------------------------------------===//
+
+/// emitModuleFlags - Emit the module flags that specify the garbage collection
+/// information.
+void TargetLoweringObjectFileMachO::
+emitModuleFlags(MCStreamer &Streamer, NamedMDNode *ModFlags,
+                Mangler *Mang, const TargetMachine &TM) const {
+  StringRef Version("Objective-C Image Info Version");
+  StringRef SectionSpec("Objective-C Image Info Section");
+  StringRef GC("Objective-C Garbage Collection");
+  StringRef GCOnly("Objective-C GC Only");
+
+  unsigned VersionVal = 0;
+  unsigned GCFlags = 0;
+  StringRef Section;
+
+  for (unsigned i = 0, e = ModFlags->getNumOperands(); i != e; ++i) {
+    MDNode *Flag = ModFlags->getOperand(i);
+    Value *Behavior = Flag->getOperand(0);
+
+    // Ignore flags with 'Require' behavior.
+    if (cast<ConstantInt>(Behavior)->getZExtValue() == Module::Require)
+      continue;
+
+    Value *Key = Flag->getOperand(1);
+    Value *Val = Flag->getOperand(2);
+
+    StringRef KeyStr = cast<MDString>(Key)->getString();
+
+    if (KeyStr == Version)
+      VersionVal = cast<ConstantInt>(Val)->getZExtValue();
+    else if (KeyStr == GC || KeyStr == GCOnly)
+      GCFlags |= cast<ConstantInt>(Val)->getZExtValue();
+    else if (KeyStr == SectionSpec)
+      Section = cast<MDString>(Val)->getString();
+  }
+
+  // The section is mandatory. If we don't have it, then we don't have image
+  // info information.
+  if (Section.empty()) return;
+
+  uint32_t Values[2] = { VersionVal, GCFlags };
+  Module *M = ModFlags->getParent();
+  Constant *Init = ConstantDataArray::get(M->getContext(), Values);
+  GlobalVariable *GV = new GlobalVariable(*M, Init->getType(), false,
+                                          GlobalValue::InternalLinkage, Init,
+                                          "\01L_OBJC_IMAGE_INFO");
+  GV->setSection(Section);
+
+  MCSymbol *GVSym = Mang->getSymbol(GV);
+  SectionKind GVKind = TargetLoweringObjectFile::getKindForGlobal(GV, TM);
+  const MCSection *TheSection = SectionForGlobal(GV, GVKind, Mang, TM);
+
+  Streamer.SwitchSection(TheSection);
+  Streamer.EmitLabel(GVSym);
+
+  Streamer.EmitIntValue(VersionVal, 4);
+  Streamer.EmitIntValue(GCFlags, 4);
+  Streamer.AddBlankLine();
+}
 
 const MCSection *TargetLoweringObjectFileMachO::
 getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
