@@ -43,6 +43,7 @@ struct isl_map;
 struct isl_basic_map;
 struct isl_id;
 struct isl_set;
+struct isl_union_set;
 struct isl_space;
 struct isl_constraint;
 
@@ -572,6 +573,9 @@ public:
   ///
   /// @return The isl context of this static control part.
   isl_ctx *getIslCtx() const;
+
+  /// @brief Get a union set containing the iteration domains of all statements.
+  __isl_give isl_union_set *getDomains();
 };
 
 /// @brief Print Scop scop to raw_ostream O.

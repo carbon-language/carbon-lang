@@ -423,16 +423,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
                           | Dependences::TYPE_WAW;
 
   isl_union_map *Dependences = D->getDependences(DependencyKinds);
-  isl_union_set *Domain = NULL;
-
-  for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI)
-    if ((*SI)->isFinalRead())
-      continue;
-    else if (!Domain)
-      Domain = isl_union_set_from_set((*SI)->getDomain());
-    else
-      Domain = isl_union_set_union(Domain,
-        isl_union_set_from_set((*SI)->getDomain()));
+  isl_union_set *Domain = S.getDomains();
 
   if (!Domain)
     return false;

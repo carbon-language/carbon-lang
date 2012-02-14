@@ -938,6 +938,21 @@ void Scop::dump() const { print(dbgs()); }
 
 isl_ctx *Scop::getIslCtx() const { return IslCtx; }
 
+__isl_give isl_union_set *Scop::getDomains() {
+  isl_union_set *Domain = NULL;
+
+  for (Scop::iterator SI = begin(), SE = end(); SI != SE; ++SI)
+    if ((*SI)->isFinalRead())
+      continue;
+    else if (!Domain)
+      Domain = isl_union_set_from_set((*SI)->getDomain());
+    else
+      Domain = isl_union_set_union(Domain,
+        isl_union_set_from_set((*SI)->getDomain()));
+
+  return Domain;
+}
+
 ScalarEvolution *Scop::getSE() const { return SE; }
 
 bool Scop::isTrivialBB(BasicBlock *BB, TempScop &tempScop) {
