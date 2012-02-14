@@ -64,7 +64,7 @@ class WatchpointForMultipleThreadsTestCase(TestBase):
         # The main.cpp, by design, misbehaves by not following the agreed upon
         # protocol of using a mutex while accessing the global pool and by not
         # writing to the variable.
-        self.expect("frame variable -w write -g g_val", WATCHPOINT_CREATED,
+        self.expect("watchpoint set variable -w write g_val", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = w'])
 
         # Use the '-v' option to do verbose listing of the watchpoint.

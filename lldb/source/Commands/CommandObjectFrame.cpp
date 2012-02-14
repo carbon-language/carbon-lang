@@ -14,7 +14,6 @@
 #include <string>
 // Other libraries and framework includes
 // Project includes
-#include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Module.h"
@@ -32,7 +31,6 @@
 #include "lldb/Interpreter/OptionGroupFormat.h"
 #include "lldb/Interpreter/OptionGroupValueObjectDisplay.h"
 #include "lldb/Interpreter/OptionGroupVariable.h"
-#include "lldb/Interpreter/OptionGroupWatchpoint.h"
 #include "lldb/Symbol/ClangASTType.h"
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/ObjectFile.h"
@@ -330,20 +328,12 @@ public:
                        "If any arguments are specified, they can be names of "
                        "argument, local, file static and file global variables. "
                        "Children of aggregate variables can be specified such as "
-                       "'var->child.x'. "
-                       "You can choose to watch a variable with the '-w' option; "
-                       "with the additional '-x' option to specify the region size, "
-                       "the variable's value will be used as the starting address of "
-                       "the region to watch for, instead. "
-                       "Note that hardware resources for watching are often limited. "
-                       "See alo 'watchpoint set' where you can use an expression to "
-                       "specify the address to watch for.",
+                       "'var->child.x'.",
                        NULL,
                        eFlagProcessMustBeLaunched | eFlagProcessMustBePaused),
         m_option_group (interpreter),
         m_option_variable(true), // Include the frame specific options by passing "true"
         m_option_format (eFormatDefault),
-        m_option_watchpoint(),
         m_varobj_options()
     {
         CommandArgumentEntry arg;
@@ -361,7 +351,6 @@ public:
         
         m_option_group.Append (&m_option_variable, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_option_format, OptionGroupFormat::OPTION_GROUP_FORMAT | OptionGroupFormat::OPTION_GROUP_GDB_FMT, LLDB_OPT_SET_1);
-        m_option_group.Append (&m_option_watchpoint, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Append (&m_varobj_options, LLDB_OPT_SET_ALL, LLDB_OPT_SET_1);
         m_option_group.Finalize();
     }
@@ -432,23 +421,6 @@ public:
         
         if (variable_list)
         {
-            // If watching a variable, there are certain restrictions to be followed.
-            if (m_option_watchpoint.watch_type_specified)
-            {
-                if (command.GetArgumentCount() != 1) {
-                    result.GetErrorStream().Printf("error: specify exactly one variable when using the '-w' option\n");
-                    result.SetStatus(eReturnStatusFailed);
-                    return false;
-                } else if (m_option_variable.use_regex) {
-                    result.GetErrorStream().Printf("error: specify your variable name exactly (no regex) when using the '-w' option\n");
-                    result.SetStatus(eReturnStatusFailed);
-                    return false;
-                }
-
-                // Things have checked out ok...
-                // m_option_watchpoint.watch_type specifies the type of watching.
-            }
-            
             const Format format = m_option_format.GetFormat();
 
             if (command.GetArgumentCount() > 0)
@@ -543,49 +515,6 @@ public:
                                                           valobj_sp->GetParent() ? name_cstr : NULL,
                                                           options,
                                                           format);
-                            // Process watchpoint if necessary.
-                            if (m_option_watchpoint.watch_type_specified)
-                            {
-                                AddressType addr_type;
-                                lldb::addr_t addr = 0;
-                                size_t size = 0;
-                                if (m_option_watchpoint.watch_size == 0) {
-                                    addr = valobj_sp->GetAddressOf(false, &addr_type);
-                                    if (addr_type == eAddressTypeLoad) {
-                                        // We're in business.
-                                        // Find out the size of this variable.
-                                        size = valobj_sp->GetByteSize();
-                                    }
-                                } else {
-                                    // The '-xsize'/'-x' option means to treat the value object as
-                                    // a pointer and to watch the pointee with the specified size.
-                                    addr = valobj_sp->GetValueAsUnsigned(0);
-                                    size = m_option_watchpoint.watch_size;
-                                }
-                                uint32_t watch_type = m_option_watchpoint.watch_type;
-                                Watchpoint *wp = exe_ctx.GetTargetRef().CreateWatchpoint(addr, size, watch_type).get();
-                                if (wp)
-                                {
-                                    if (var_sp && var_sp->GetDeclaration().GetFile())
-                                    {
-                                        StreamString ss;
-                                        // True to show fullpath for declaration file.
-                                        var_sp->GetDeclaration().DumpStopContext(&ss, true);
-                                        wp->SetDeclInfo(ss.GetString());
-                                    }
-                                    StreamString ss;
-                                    output_stream.Printf("Watchpoint created: ");
-                                    wp->GetDescription(&output_stream, lldb::eDescriptionLevelFull);
-                                    output_stream.EOL();
-                                    result.SetStatus(eReturnStatusSuccessFinishResult);
-                                }
-                                else
-                                {
-                                    result.AppendErrorWithFormat("Watchpoint creation failed.\n");
-                                    result.SetStatus(eReturnStatusFailed);
-                                }
-                                return (wp != NULL);
-                            }
                         }
                         else
                         {
@@ -688,7 +617,6 @@ protected:
     OptionGroupOptions m_option_group;
     OptionGroupVariable m_option_variable;
     OptionGroupFormat m_option_format;
-    OptionGroupWatchpoint m_option_watchpoint;
     OptionGroupValueObjectDisplay m_varobj_options;
 };
 

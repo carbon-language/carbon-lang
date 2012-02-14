@@ -111,7 +111,7 @@ class WatchpointCommandsTestCase(TestBase):
 
         # Now let's set a read_write-type watchpoint for 'global'.
         # There should be two watchpoint hits (see main.c).
-        self.expect("frame variable -w read_write -g -L global", WATCHPOINT_CREATED,
+        self.expect("watchpoint set variable -w read_write global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = rw',
                        '%s:%d' % (self.source, self.decl)])
 
@@ -167,7 +167,7 @@ class WatchpointCommandsTestCase(TestBase):
 
         # Now let's set a read_write-type watchpoint for 'global'.
         # There should be two watchpoint hits (see main.c).
-        self.expect("frame variable -w read_write -g -L global", WATCHPOINT_CREATED,
+        self.expect("watchpoint set variable -w read_write global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = rw',
                        '%s:%d' % (self.source, self.decl)])
 
@@ -209,7 +209,7 @@ class WatchpointCommandsTestCase(TestBase):
 
         # Now let's set a read_write-type watchpoint for 'global'.
         # There should be two watchpoint hits (see main.c).
-        self.expect("frame variable -w read_write -g -L global", WATCHPOINT_CREATED,
+        self.expect("watchpoint set variable -w read_write global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = rw',
                        '%s:%d' % (self.source, self.decl)])
 
@@ -255,7 +255,7 @@ class WatchpointCommandsTestCase(TestBase):
 
         # Now let's set a read_write-type watchpoint for 'global'.
         # There should be two watchpoint hits (see main.c).
-        self.expect("frame variable -w read_write -g -L global", WATCHPOINT_CREATED,
+        self.expect("watchpoint set variable -w read_write global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = rw',
                        '%s:%d' % (self.source, self.decl)])
 
@@ -314,7 +314,7 @@ class WatchpointCommandsTestCase(TestBase):
 
         # Now let's set a read_write-type watchpoint for 'global'.
         # There should be two watchpoint hits (see main.c).
-        self.expect("frame variable -w read_write -g -L global", WATCHPOINT_CREATED,
+        self.expect("watchpoint set variable -w read_write global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = rw',
                        '%s:%d' % (self.source, self.decl)])
 

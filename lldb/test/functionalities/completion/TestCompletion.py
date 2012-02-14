@@ -18,13 +18,13 @@ class CommandLineCompletionTestCase(TestBase):
         system(["/bin/sh", "-c", "rm -f child_send.txt"])
         system(["/bin/sh", "-c", "rm -f child_read.txt"])
 
-    def test_frame_variable_dash_w(self):
-        """Test that 'frame variable -w' completes to 'frame variable -w '."""
-        self.complete_from_to('frame variable -w', 'frame variable -w ')
+    def test_watchpoint_set_variable_dash_w(self):
+        """Test that 'watchpoint set variable -w' completes to 'watchpoint set variable -w '."""
+        self.complete_from_to('watchpoint set variable -w', 'watchpoint set variable -w ')
 
-    def test_frame_variable_dash_w_space(self):
-        """Test that 'frame variable -w ' completes to ['Available completions:', 'read', 'write', 'read_write']."""
-        self.complete_from_to('frame variable -w ', ['Available completions:', 'read', 'write', 'read_write'])
+    def test_watchpoint_set_variable_dash_w_space(self):
+        """Test that 'watchpoint set variable -w ' completes to ['Available completions:', 'read', 'write', 'read_write']."""
+        self.complete_from_to('watchpoint set variable -w ', ['Available completions:', 'read', 'write', 'read_write'])
 
     def test_watchpoint_set_ex(self):
         """Test that 'watchpoint set ex' completes to 'watchpoint set expression '."""

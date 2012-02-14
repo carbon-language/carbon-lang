@@ -58,7 +58,7 @@ class WatchpointConditionCmdTestCase(TestBase):
 
         # Now let's set a write-type watchpoint for 'global'.
         # With a condition of 'global==5'.
-        self.expect("frame variable -w write -g -L global", WATCHPOINT_CREATED,
+        self.expect("watchpoint set variable -w write global", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 4', 'type = w',
                        '%s:%d' % (self.source, self.decl)])
 

@@ -11,30 +11,17 @@ class HelloWatchpointTestCase(TestBase):
 
     mydir = os.path.join("functionalities", "watchpoint", "hello_watchpoint")
 
-    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    def test_hello_watchpoint_with_dsym_using_frame_var(self):
-        """Test a simple sequence of watchpoint creation and watchpoint hit."""
-        self.buildDsym(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.hello_watchpoint()
-
-    def test_hello_watchpoint_with_dwarf_using_frame_var(self):
-        """Test a simple sequence of watchpoint creation and watchpoint hit."""
-        self.buildDwarf(dictionary=self.d)
-        self.setTearDownCleanup(dictionary=self.d)
-        self.hello_watchpoint()
-
     def test_hello_watchpoint_with_dsym_using_watchpoint_set(self):
         """Test a simple sequence of watchpoint creation and watchpoint hit."""
         self.buildDsym(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
-        self.hello_watchpoint(use_frame_var=False)
+        self.hello_watchpoint()
 
     def test_hello_watchpoint_with_dwarf_using_watchpoint_set(self):
         """Test a simple sequence of watchpoint creation and watchpoint hit."""
         self.buildDwarf(dictionary=self.d)
         self.setTearDownCleanup(dictionary=self.d)
-        self.hello_watchpoint(use_frame_var=False)
+        self.hello_watchpoint()
 
     def setUp(self):
         # Call super's setUp().
@@ -49,7 +36,7 @@ class HelloWatchpointTestCase(TestBase):
         self.exe_name = self.testMethodName
         self.d = {'C_SOURCES': self.source, 'EXE': self.exe_name}
 
-    def hello_watchpoint(self, use_frame_var=True):
+    def hello_watchpoint(self):
         """Test a simple sequence of watchpoint creation and watchpoint hit."""
         exe = os.path.join(os.getcwd(), self.exe_name)
         self.runCmd("file " + exe, CURRENT_EXECUTABLE_SET)
@@ -70,14 +57,9 @@ class HelloWatchpointTestCase(TestBase):
 
         # Now let's set a write-type watchpoint for 'global'.
         # There should be only one watchpoint hit (see main.c).
-        if use_frame_var:
-            self.expect("frame variable -w write -g -L global", WATCHPOINT_CREATED,
-                substrs = ['Watchpoint created', 'size = 4', 'type = w',
-                           '%s:%d' % (self.source, self.decl)])
-        else:
-            self.expect("watchpoint set variable -w write global", WATCHPOINT_CREATED,
-                substrs = ['Watchpoint created', 'size = 4', 'type = w',
-                           '%s:%d' % (self.source, self.decl)])
+        self.expect("watchpoint set variable -w write global", WATCHPOINT_CREATED,
+            substrs = ['Watchpoint created', 'size = 4', 'type = w',
+                       '%s:%d' % (self.source, self.decl)])
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should be 0 initially.

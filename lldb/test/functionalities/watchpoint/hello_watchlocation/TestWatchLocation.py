@@ -60,7 +60,7 @@ class HelloWatchLocationTestCase(TestBase):
         # The main.cpp, by design, misbehaves by not following the agreed upon
         # protocol of using a mutex while accessing the global pool and by not
         # incrmenting the global pool by 2.
-        self.expect("frame variable -w write -x 1 -g g_char_ptr", WATCHPOINT_CREATED,
+        self.expect("watchpoint set expression -w write -x 1 -- g_char_ptr", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 1', 'type = w'])
         self.runCmd("expr unsigned val = *g_char_ptr; val")
         self.expect(self.res.GetOutput().splitlines()[0], exe=False,
