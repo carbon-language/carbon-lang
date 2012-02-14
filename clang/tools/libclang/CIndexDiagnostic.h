@@ -54,7 +54,8 @@ public:
 
 class CXDiagnosticImpl {
 public:
-  enum Kind { StoredDiagnosticKind, LoadedDiagnosticKind };
+  enum Kind { StoredDiagnosticKind, LoadedDiagnosticKind,
+              CustomNoteDiagnosticKind };
   
   virtual ~CXDiagnosticImpl();
   

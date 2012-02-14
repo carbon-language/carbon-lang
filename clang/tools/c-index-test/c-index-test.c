@@ -418,13 +418,21 @@ void PrintDiagnostic(CXDiagnostic Diagnostic) {
   }
 }
 
-void PrintDiagnostics(CXTranslationUnit TU) {
-  int i, n = clang_getNumDiagnostics(TU);
-  for (i = 0; i != n; ++i) {
-    CXDiagnostic Diag = clang_getDiagnostic(TU, i);
+void PrintDiagnosticSet(CXDiagnosticSet Set) {
+  int i = 0, n = clang_getNumDiagnosticsInSet(Set);
+  for ( ; i != n ; ++i) {
+    CXDiagnostic Diag = clang_getDiagnosticInSet(Set, i);
+    CXDiagnosticSet ChildDiags = clang_getChildDiagnostics(Diag);
     PrintDiagnostic(Diag);
-    clang_disposeDiagnostic(Diag);
-  }
+    if (ChildDiags)
+      PrintDiagnosticSet(ChildDiags);
+  }  
+}
+
+void PrintDiagnostics(CXTranslationUnit TU) {
+  CXDiagnosticSet TUSet = clang_getDiagnosticSetFromTU(TU);
+  PrintDiagnosticSet(TUSet);
+  clang_disposeDiagnosticSet(TUSet);
 }
 
 void PrintMemoryUsage(CXTranslationUnit TU) {
