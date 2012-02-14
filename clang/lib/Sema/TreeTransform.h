@@ -7706,6 +7706,49 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
       continue;
     }
     
+    // Determine the capture kind for Sema.
+    Sema::TryCaptureKind Kind
+      = C->isImplicit()? Sema::TryCapture_Implicit
+                       : C->getCaptureKind() == LCK_ByCopy
+                           ? Sema::TryCapture_ExplicitByVal
+                           : Sema::TryCapture_ExplicitByRef;
+    SourceLocation EllipsisLoc;
+    if (C->isPackExpansion()) {
+      UnexpandedParameterPack Unexpanded(C->getCapturedVar(), C->getLocation());
+      bool ShouldExpand = false;
+      bool RetainExpansion = false;
+      llvm::Optional<unsigned> NumExpansions;
+      if (getDerived().TryExpandParameterPacks(C->getEllipsisLoc(), 
+                                               C->getLocation(), 
+                                               Unexpanded,
+                                               ShouldExpand, RetainExpansion,
+                                               NumExpansions))
+        return ExprError();
+      
+      if (ShouldExpand) {
+        // The transform has determined that we should perform an expansion;
+        // transform and capture each of the arguments.
+        // expansion of the pattern. Do so.
+        VarDecl *Pack = C->getCapturedVar();
+        for (unsigned I = 0; I != *NumExpansions; ++I) {
+          Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), I);
+          VarDecl *CapturedVar
+            = cast_or_null<VarDecl>(getDerived().TransformDecl(C->getLocation(), 
+                                                               Pack));
+          if (!CapturedVar) {
+            Invalid = true;
+            continue;
+          }
+          
+          // Capture the transformed variable.
+          getSema().TryCaptureVar(CapturedVar, C->getLocation(), Kind);          
+        }          
+        continue;
+      }
+      
+      EllipsisLoc = C->getEllipsisLoc();
+    }
+    
     // Transform the captured variable.
     VarDecl *CapturedVar
       = cast_or_null<VarDecl>(getDerived().TransformDecl(C->getLocation(), 
@@ -7714,13 +7757,9 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
       Invalid = true;
       continue;
     }
-    
+  
     // Capture the transformed variable.
-    getSema().TryCaptureVar(CapturedVar, C->getLocation(),
-                            C->isImplicit()? Sema::TryCapture_Implicit
-                                           : C->getCaptureKind() == LCK_ByCopy
-                                             ? Sema::TryCapture_ExplicitByVal
-                                             : Sema::TryCapture_ExplicitByRef);
+    getSema().TryCaptureVar(CapturedVar, C->getLocation(), Kind);
   }
   if (!FinishedExplicitCaptures)
     getSema().finishLambdaExplicitCaptures(LSI);

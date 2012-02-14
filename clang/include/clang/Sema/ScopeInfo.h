@@ -151,16 +151,19 @@ public:
     /// \brief The source location at which the first capture occurred..
     SourceLocation Loc;
     
+    /// \brief The location of the ellipsis that expands a parameter pack.
+    SourceLocation EllipsisLoc;
+    
   public:
     Capture(VarDecl *Var, bool block, bool byRef, bool isNested, 
-            SourceLocation Loc, Expr *Cpy)
+            SourceLocation Loc, SourceLocation EllipsisLoc, Expr *Cpy)
       : VarAndKind(Var, block ? Cap_Block : byRef ? Cap_ByRef : Cap_ByCopy),
-        CopyExprAndNested(Cpy, isNested) {}
+        CopyExprAndNested(Cpy, isNested), Loc(Loc), EllipsisLoc(EllipsisLoc) {}
 
     enum IsThisCapture { ThisCapture };
     Capture(IsThisCapture, bool isNested, SourceLocation Loc, Expr *Cpy)
-      : VarAndKind(0, Cap_This), CopyExprAndNested(Cpy, isNested), Loc(Loc) {
-    }
+      : VarAndKind(0, Cap_This), CopyExprAndNested(Cpy, isNested), Loc(Loc),
+        EllipsisLoc() { }
 
     bool isThisCapture() const { return VarAndKind.getInt() == Cap_This; }
     bool isVariableCapture() const { return !isThisCapture(); }
@@ -175,6 +178,10 @@ public:
     
     /// \brief Retrieve the location at which this variable was captured.
     SourceLocation getLocation() const { return Loc; }
+    
+    /// \brief Retrieve the source location of the ellipsis, whose presence
+    /// indicates that the capture is a pack expansion.
+    SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
     
     Expr *getCopyExpr() const {
       return CopyExprAndNested.getPointer();
@@ -205,8 +212,9 @@ public:
   QualType ReturnType;
 
   void AddCapture(VarDecl *Var, bool isBlock, bool isByref, bool isNested,
-                  SourceLocation Loc, Expr *Cpy) {
-    Captures.push_back(Capture(Var, isBlock, isByref, isNested, Loc, Cpy));
+                  SourceLocation Loc, SourceLocation EllipsisLoc, Expr *Cpy) {
+    Captures.push_back(Capture(Var, isBlock, isByref, isNested, Loc, 
+                               EllipsisLoc, Cpy));
     CaptureMap[Var] = Captures.size();
   }
 

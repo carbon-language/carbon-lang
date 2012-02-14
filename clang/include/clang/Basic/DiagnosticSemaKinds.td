@@ -4032,7 +4032,9 @@ def err_lambda_return_init_list : Error<
   "cannot deduce lambda return type from initializer list">;
 def err_lambda_capture_default_arg : Error<
   "lambda expression in default argument cannot capture any entity">;
-
+def err_lambda_unexpanded_pack : Error<
+  "unexpanded function parameter pack capture is unsupported">;
+  
 def err_operator_arrow_circular : Error<
   "circular pointer delegation detected">;
 def err_pseudo_dtor_base_not_scalar : Error<

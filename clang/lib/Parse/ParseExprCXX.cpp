@@ -651,7 +651,8 @@ llvm::Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro) 
     LambdaCaptureKind Kind = LCK_ByCopy;
     SourceLocation Loc;
     IdentifierInfo* Id = 0;
-
+    SourceLocation EllipsisLoc;
+    
     if (Tok.is(tok::kw_this)) {
       Kind = LCK_This;
       Loc = ConsumeToken();
@@ -664,6 +665,9 @@ llvm::Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro) 
       if (Tok.is(tok::identifier)) {
         Id = Tok.getIdentifierInfo();
         Loc = ConsumeToken();
+        
+        if (Tok.is(tok::ellipsis))
+          EllipsisLoc = ConsumeToken();
       } else if (Tok.is(tok::kw_this)) {
         // FIXME: If we want to suggest a fixit here, will need to return more
         // than just DiagnosticID. Perhaps full DiagnosticBuilder that can be
@@ -674,7 +678,7 @@ llvm::Optional<unsigned> Parser::ParseLambdaIntroducer(LambdaIntroducer &Intro) 
       }
     }
 
-    Intro.addCapture(Kind, Loc, Id);
+    Intro.addCapture(Kind, Loc, Id, EllipsisLoc);
   }
 
   T.consumeClose();

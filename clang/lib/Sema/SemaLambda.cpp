@@ -291,9 +291,26 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
       continue;
     }
 
+    // C++11 [expr.prim.lambda]p23:
+    //   A capture followed by an ellipsis is a pack expansion (14.5.3).
+    SourceLocation EllipsisLoc;
+    if (C->EllipsisLoc.isValid()) {
+      if (Var->isParameterPack()) {
+        EllipsisLoc = C->EllipsisLoc;
+      } else {
+        Diag(C->EllipsisLoc, diag::err_pack_expansion_without_parameter_packs)
+          << SourceRange(C->Loc);
+        
+        // Just ignore the ellipsis.
+      }
+    } else if (Var->isParameterPack()) {
+      Diag(C->Loc, diag::err_lambda_unexpanded_pack);
+      continue;
+    }
+    
     TryCaptureKind Kind = C->Kind == LCK_ByRef ? TryCapture_ExplicitByRef :
                                                  TryCapture_ExplicitByVal;
-    TryCaptureVar(Var, C->Loc, Kind);
+    TryCaptureVar(Var, C->Loc, Kind, EllipsisLoc);
   }
   finishLambdaExplicitCaptures(LSI);
 
@@ -380,10 +397,9 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
       }
 
       VarDecl *Var = From.getVariable();
-      // FIXME: Handle pack expansions.
       LambdaCaptureKind Kind = From.isCopyCapture()? LCK_ByCopy : LCK_ByRef;
       Captures.push_back(LambdaExpr::Capture(From.getLocation(), IsImplicit, 
-                                             Kind, Var));
+                                             Kind, Var, From.getEllipsisLoc()));
       CaptureInits.push_back(From.getCopyExpr());
     }
 

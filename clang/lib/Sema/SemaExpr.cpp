@@ -9831,7 +9831,7 @@ bool Sema::canCaptureVariable(VarDecl *Var, SourceLocation Loc, bool Explicit,
 // Check if the variable needs to be captured; if so, try to perform
 // the capture.
 void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc,
-                         TryCaptureKind Kind) {
+                         TryCaptureKind Kind, SourceLocation EllipsisLoc) {
   QualType type;
   unsigned functionScopesIndex;
   bool Nested;
@@ -9909,7 +9909,8 @@ void Sema::TryCaptureVar(VarDecl *var, SourceLocation loc,
       }
     }
 
-    CSI->AddCapture(var, hasBlocksAttr, byRef, Nested, loc, copyExpr);
+    CSI->AddCapture(var, hasBlocksAttr, byRef, Nested, loc, EllipsisLoc, 
+                    copyExpr);
 
     Nested = true;
     if (shouldAddConstForScope(CSI, var))

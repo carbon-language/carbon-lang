@@ -2298,7 +2298,8 @@ public:
     TryCapture_Implicit, TryCapture_ExplicitByVal, TryCapture_ExplicitByRef
   };
   void TryCaptureVar(VarDecl *var, SourceLocation loc,
-                     TryCaptureKind Kind = TryCapture_Implicit);
+                     TryCaptureKind Kind = TryCapture_Implicit,
+                     SourceLocation EllipsisLoc = SourceLocation());
 
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
   void MarkDeclarationsReferencedInExpr(Expr *E);
