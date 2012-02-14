@@ -4612,6 +4612,16 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     return Success(E->getOpcode() == BO_EQ ? Equal : !Equal, E);
   }
 
+  if (LHSTy->isNullPtrType()) {
+    assert(E->isComparisonOp() && "unexpected nullptr operation");
+    assert(RHSTy->isNullPtrType() && "missing pointer conversion");
+    // C++11 [expr.rel]p4, [expr.eq]p3: If two operands of type std::nullptr_t
+    // are compared, the result is true of the operator is <=, >= or ==, and
+    // false otherwise.
+    BinaryOperator::Opcode Opcode = E->getOpcode();
+    return Success(Opcode == BO_EQ || Opcode == BO_LE || Opcode == BO_GE, E);
+  }
+
   if (!LHSTy->isIntegralOrEnumerationType() ||
       !RHSTy->isIntegralOrEnumerationType()) {
     // We can't continue from here for non-integral types.
