@@ -1322,6 +1322,18 @@ template <class _Tp>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if
 <
+    !is_convertible<_Tp, __rv<_Tp> >::value,
+    const _Tp&
+>::type
+move(const _Tp& __t)
+{
+    return __t;
+}
+
+template <class _Tp>
+inline _LIBCPP_INLINE_VISIBILITY
+typename enable_if
+<
     is_convertible<_Tp, __rv<_Tp> >::value,
     _Tp
 >::type
