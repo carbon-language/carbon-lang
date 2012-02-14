@@ -63,6 +63,9 @@ namespace llvm {
     /// allocatableRegs_ - A bit vector of allocatable registers.
     BitVector allocatableRegs_;
 
+    /// reservedRegs_ - A bit vector of reserved registers.
+    BitVector reservedRegs_;
+
     /// RegMaskSlots - Sorted list of instructions with register mask operands.
     /// Always use the 'r' slot, RegMasks are normal clobbers, not early
     /// clobbers.
@@ -126,6 +129,12 @@ namespace llvm {
     /// function?
     bool isAllocatable(unsigned reg) const {
       return allocatableRegs_.test(reg);
+    }
+
+    /// isReserved - is the physical register reg reserved in the current
+    /// function
+    bool isReserved(unsigned reg) const {
+      return reservedRegs_.test(reg);
     }
 
     /// getScaledIntervalSize - get the size of an interval in "units,"

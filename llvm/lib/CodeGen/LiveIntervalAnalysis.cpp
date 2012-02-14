@@ -94,6 +94,7 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
   lv_ = &getAnalysis<LiveVariables>();
   indexes_ = &getAnalysis<SlotIndexes>();
   allocatableRegs_ = tri_->getAllocatableSet(fn);
+  reservedRegs_ = tri_->getReservedRegs(fn);
 
   computeIntervals();
 
@@ -347,13 +348,24 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   DEBUG(dbgs() << '\n');
 }
 
+#ifndef NDEBUG
+static bool isRegLiveOutOf(const MachineBasicBlock *MBB, unsigned Reg) {
+  for (MachineBasicBlock::const_succ_iterator SI = MBB->succ_begin(),
+                                              SE = MBB->succ_end();
+       SI != SE; ++SI) {
+    const MachineBasicBlock* succ = *SI;
+    if (succ->isLiveIn(Reg))
+      return true;
+  }
+  return false;
+}
+#endif
+
 void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               MachineBasicBlock::iterator mi,
                                               SlotIndex MIIdx,
                                               MachineOperand& MO,
                                               LiveInterval &interval) {
-  // A physical register cannot be live across basic block, so its
-  // lifetime must end somewhere in its defining basic block.
   DEBUG(dbgs() << "\t\tregister: " << PrintReg(interval.reg, tri_));
 
   SlotIndex baseIndex = MIIdx;
@@ -407,12 +419,19 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
     baseIndex = baseIndex.getNextIndex();
   }
 
-  // The only case we should have a dead physreg here without a killing or
-  // instruction where we know it's dead is if it is live-in to the function
-  // and never used. Another possible case is the implicit use of the
-  // physical register has been deleted by two-address pass.
-  end = start.getDeadSlot();
+  // If we get here the register *should* be live out.
+  assert(!isAllocatable(interval.reg) && "Physregs shouldn't be live out!");
 
+  // FIXME: We need saner rules for reserved regs.
+  if (isReserved(interval.reg)) {
+    assert(!isRegLiveOutOf(MBB, interval.reg) && "Reserved reg live-out?");
+    end = start.getDeadSlot();
+  } else {
+    // Unreserved, unallocable registers like EFLAGS can be live across basic
+    // block boundaries.
+    assert(isRegLiveOutOf(MBB, interval.reg) && "Unreserved reg not live-out?");
+    end = getMBBEndIdx(MBB);
+  }
 exit:
   assert(start < end && "did not find end of interval?");
 
@@ -442,6 +461,12 @@ void LiveIntervals::handleRegisterDef(MachineBasicBlock *MBB,
 void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
                                          SlotIndex MIIdx,
                                          LiveInterval &interval) {
+  assert(TargetRegisterInfo::isPhysicalRegister(interval.reg) &&
+         "Only physical registers can be live in.");
+  assert((!isAllocatable(interval.reg) || MBB->getParent()->begin() ||
+          MBB->isLandingPad()) &&
+          "Allocatable live-ins only valid for entry blocks and landing pads.");
+
   DEBUG(dbgs() << "\t\tlivein register: " << PrintReg(interval.reg, tri_));
 
   // Look for kills, if it reaches a def before it's killed, then it shouldn't
@@ -491,8 +516,17 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
 
   // Live-in register might not be used at all.
   if (!SeenDefUse) {
-    DEBUG(dbgs() << " live through");
-    end = getMBBEndIdx(MBB);
+    if (isAllocatable(interval.reg) || isReserved(interval.reg)) {
+      // This must be an entry block or landing pad - we asserted so on entry
+      // to the function. For these blocks the interval is dead on entry.
+      DEBUG(dbgs() << " dead");
+      end = start.getDeadSlot();
+    } else {
+      assert(isRegLiveOutOf(MBB, interval.reg) &&
+             "Live in reg untouched in block should be be live through.");
+      DEBUG(dbgs() << " live through");
+      end = getMBBEndIdx(MBB);
+    }
   }
 
   SlotIndex defIdx = getMBBStartIdx(MBB);
