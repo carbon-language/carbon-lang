@@ -28,7 +28,7 @@ bar& bar::operator = (const bar&) = default;
 bar& bar::operator = (bar&) = default;
 bar::~bar() = default;
 
-// FIXME: static_assert(__is_trivial(foo), "foo should be trivial");
+static_assert(__is_trivial(foo), "foo should be trivial");
 
 static_assert(!__has_trivial_destructor(bar), "bar's destructor isn't trivial");
 static_assert(!__has_trivial_constructor(bar),
@@ -43,3 +43,11 @@ void tester() {
   b = c;
 }
 
+template<typename T> struct S : T {
+  constexpr S() = default;
+  constexpr S(const S&) = default;
+  constexpr S(S&&) = default;
+};
+struct lit { constexpr lit() {} };
+S<lit> s_lit; // ok
+S<bar> s_bar; // ok

@@ -3832,7 +3832,10 @@ void Sema::CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *CD) {
   // C++11 [dcl.fct.def.default]p2:
   //   An explicitly-defaulted function may be declared constexpr only if it
   //   would have been implicitly declared as constexpr,
-  if (CD->isConstexpr()) {
+  // Do not apply this rule to templates, since core issue 1358 makes such
+  // functions always instantiate to constexpr functions.
+  if (CD->isConstexpr() &&
+      CD->getTemplatedKind() == FunctionDecl::TK_NonTemplate) {
     if (!CD->getParent()->defaultedDefaultConstructorIsConstexpr()) {
       Diag(CD->getLocStart(), diag::err_incorrect_defaulted_constexpr)
         << CXXDefaultConstructor;
@@ -3920,7 +3923,10 @@ void Sema::CheckExplicitlyDefaultedCopyConstructor(CXXConstructorDecl *CD) {
   // C++11 [dcl.fct.def.default]p2:
   //   An explicitly-defaulted function may be declared constexpr only if it
   //   would have been implicitly declared as constexpr,
-  if (CD->isConstexpr()) {
+  // Do not apply this rule to templates, since core issue 1358 makes such
+  // functions always instantiate to constexpr functions.
+  if (CD->isConstexpr() &&
+      CD->getTemplatedKind() == FunctionDecl::TK_NonTemplate) {
     if (!CD->getParent()->defaultedCopyConstructorIsConstexpr()) {
       Diag(CD->getLocStart(), diag::err_incorrect_defaulted_constexpr)
         << CXXCopyConstructor;
@@ -4097,7 +4103,10 @@ void Sema::CheckExplicitlyDefaultedMoveConstructor(CXXConstructorDecl *CD) {
   // C++11 [dcl.fct.def.default]p2:
   //   An explicitly-defaulted function may be declared constexpr only if it
   //   would have been implicitly declared as constexpr,
-  if (CD->isConstexpr()) {
+  // Do not apply this rule to templates, since core issue 1358 makes such
+  // functions always instantiate to constexpr functions.
+  if (CD->isConstexpr() &&
+      CD->getTemplatedKind() == FunctionDecl::TK_NonTemplate) {
     if (!CD->getParent()->defaultedMoveConstructorIsConstexpr()) {
       Diag(CD->getLocStart(), diag::err_incorrect_defaulted_constexpr)
         << CXXMoveConstructor;
