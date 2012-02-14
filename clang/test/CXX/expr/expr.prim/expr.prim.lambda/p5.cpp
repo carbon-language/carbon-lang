@@ -38,9 +38,10 @@ void test_quals() {
 
 // Default arguments (8.3.6) shall not be specified in the
 // parameter-declaration-clause of a lambda- declarator.
+// Note: Removed by core issue 974.
 int test_default_args() {
-  return [](int i = 5,  // expected-error{{default arguments can only be specified for parameters in a function declaration}}
-            int j = 17) { return i+j;}(5, 6); // expected-error{{default arguments can only be specified for parameters in a function declaration}}
+  return [](int i = 5,  // expected-warning{{C++11 forbids default arguments for lambda expressions}}
+            int j = 17) { return i+j;}(5, 6);
 }
 
 // Any exception-specification specified on a lambda-expression

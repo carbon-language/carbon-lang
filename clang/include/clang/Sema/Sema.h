@@ -3515,7 +3515,8 @@ public:
   CXXMethodDecl *startLambdaDefinition(CXXRecordDecl *Class,
                                        SourceRange IntroducerRange,
                                        TypeSourceInfo *MethodType,
-                                       SourceLocation EndLoc);
+                                       SourceLocation EndLoc,
+                                       llvm::ArrayRef<ParmVarDecl *> Params);
   
   /// \brief Introduce the scope for a lambda expression.
   sema::LambdaScopeInfo *enterLambdaScope(CXXMethodDecl *CallOperator,
@@ -3530,8 +3531,7 @@ public:
   void finishLambdaExplicitCaptures(sema::LambdaScopeInfo *LSI);
   
   /// \brief Introduce the lambda parameters into scope.
-  void addLambdaParameters(CXXMethodDecl *CallOperator, Scope *CurScope,
-                           llvm::ArrayRef<ParmVarDecl *> Params);
+  void addLambdaParameters(CXXMethodDecl *CallOperator, Scope *CurScope);
   
   /// ActOnStartOfLambdaDefinition - This is called just before we start
   /// parsing the body of a lambda; it analyzes the explicit captures and 

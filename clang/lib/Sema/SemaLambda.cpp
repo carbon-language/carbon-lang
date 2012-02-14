@@ -36,7 +36,8 @@ CXXRecordDecl *Sema::createLambdaClosureType(SourceRange IntroducerRange) {
 CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
                                            SourceRange IntroducerRange,
                                            TypeSourceInfo *MethodType,
-                                           SourceLocation EndLoc) {
+                                           SourceLocation EndLoc,
+                 llvm::ArrayRef<ParmVarDecl *> Params) {
   // C++11 [expr.prim.lambda]p5:
   //   The closure type for a lambda-expression has a public inline function 
   //   call operator (13.5.4) whose parameters and return type are described by
@@ -65,6 +66,19 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
   // Temporarily set the lexical declaration context to the current
   // context, so that the Scope stack matches the lexical nesting.
   Method->setLexicalDeclContext(Class->getDeclContext());  
+  
+  // Add parameters.
+  if (!Params.empty()) {
+    Method->setParams(Params);
+    CheckParmsForFunctionDef(const_cast<ParmVarDecl **>(Params.begin()),
+                             const_cast<ParmVarDecl **>(Params.end()),
+                             /*CheckParameterNames=*/false);
+    
+    for (CXXMethodDecl::param_iterator P = Method->param_begin(), 
+                                    PEnd = Method->param_end();
+         P != PEnd; ++P)
+      (*P)->setOwningFunction(Method);
+  }
   
   return Method;
 }
@@ -109,18 +123,11 @@ void Sema::finishLambdaExplicitCaptures(LambdaScopeInfo *LSI) {
   LSI->finishedExplicitCaptures();
 }
 
-void Sema::addLambdaParameters(CXXMethodDecl *CallOperator, Scope *CurScope,
-                               llvm::ArrayRef<ParmVarDecl *> Params) {
-  CallOperator->setParams(Params);
-  CheckParmsForFunctionDef(const_cast<ParmVarDecl **>(Params.begin()), 
-                           const_cast<ParmVarDecl **>(Params.end()),
-                           /*CheckParameterNames=*/false);
-  
+void Sema::addLambdaParameters(CXXMethodDecl *CallOperator, Scope *CurScope) {  
   // Introduce our parameters into the function scope
   for (unsigned p = 0, NumParams = CallOperator->getNumParams(); 
        p < NumParams; ++p) {
     ParmVarDecl *Param = CallOperator->getParamDecl(p);
-    Param->setOwningFunction(CallOperator);
     
     // If this has an identifier, add it to the scope stack.
     if (CurScope && Param->getIdentifier()) {
@@ -141,6 +148,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   bool ExplicitParams = true;
   bool ExplicitResultType = true;
   SourceLocation EndLoc;
+  llvm::ArrayRef<ParmVarDecl *> Params;
   if (ParamInfo.getNumTypeObjects() == 0) {
     // C++11 [expr.prim.lambda]p4:
     //   If a lambda-expression does not include a lambda-declarator, it is as 
@@ -166,11 +174,6 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     if (!FTI.hasMutableQualifier())
       FTI.TypeQuals |= DeclSpec::TQ_const;
     
-    // C++11 [expr.prim.lambda]p5:
-    //   [...] Default arguments (8.3.6) shall not be specified in the 
-    //   parameter-declaration-clause of a lambda-declarator.
-    CheckExtraCXXDefaultArguments(ParamInfo);
-    
     MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
     assert(MethodTyInfo && "no type from lambda-declarator");
     EndLoc = ParamInfo.getSourceRange().getEnd();
@@ -178,10 +181,18 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     ExplicitResultType
       = MethodTyInfo->getType()->getAs<FunctionType>()->getResultType() 
                                                         != Context.DependentTy;
+    
+    TypeLoc TL = MethodTyInfo->getTypeLoc();
+    FunctionProtoTypeLoc Proto = cast<FunctionProtoTypeLoc>(TL);
+    Params = llvm::ArrayRef<ParmVarDecl *>(Proto.getParmArray(), 
+                                           Proto.getNumArgs());
   }
   
   CXXMethodDecl *Method = startLambdaDefinition(Class, Intro.Range, 
-                                                MethodTyInfo, EndLoc);
+                                                MethodTyInfo, EndLoc, Params);
+  
+  if (ExplicitParams)
+    CheckCXXDefaultArguments(Method);
   
   // Attributes on the lambda apply to the method.  
   ProcessDeclAttributes(CurScope, Method, ParamInfo);
@@ -325,12 +336,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
   }
   finishLambdaExplicitCaptures(LSI);
 
-  // Set the parameters on the decl, if specified.
-  if (isa<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc())) {
-    FunctionProtoTypeLoc Proto
-      = cast<FunctionProtoTypeLoc>(MethodTyInfo->getTypeLoc());
-    addLambdaParameters(Method, CurScope, Proto.getParams());
-  }
+  // Add lambda parameters into scope.
+  addLambdaParameters(Method, CurScope);
 
   // Enter a new evaluation context to insulate the lambda from any
   // cleanups from the enclosing full-expression.

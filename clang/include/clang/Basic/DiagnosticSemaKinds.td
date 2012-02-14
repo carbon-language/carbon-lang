@@ -4031,7 +4031,7 @@ let CategoryName = "Lambda Issue" in {
   def ext_lambda_implies_void_return : ExtWarn<
     "C++11 requires lambda with omitted result type to consist of a single "
     "return statement">,
-    InGroup<DiagGroup<"lambda-return">>;
+    InGroup<LambdaExtensions>;
   def err_lambda_return_init_list : Error<
     "cannot deduce lambda return type from initializer list">;
   def err_lambda_capture_default_arg : Error<
@@ -4042,6 +4042,9 @@ let CategoryName = "Lambda Issue" in {
     "incomplete result type %0 in lambda expression">;
   def err_lambda_objc_object_result : Error<
     "non-pointer Objective-C class type %0 in lambda expression result">;
+  def ext_lambda_default_arguments : ExtWarn<
+    "C++11 forbids default arguments for lambda expressions">,
+    InGroup<LambdaExtensions>;
 }
 
 def err_operator_arrow_circular : Error<

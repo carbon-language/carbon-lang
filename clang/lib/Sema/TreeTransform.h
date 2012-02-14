@@ -7667,11 +7667,22 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
   if (!MethodTy)
     return ExprError();
 
+  // Transform lambda parameters.
+  bool Invalid = false;
+  llvm::SmallVector<QualType, 4> ParamTypes;
+  llvm::SmallVector<ParmVarDecl *, 4> Params;
+  if (getDerived().TransformFunctionTypeParams(E->getLocStart(),
+        E->getCallOperator()->param_begin(),
+        E->getCallOperator()->param_size(),
+        0, ParamTypes, &Params))
+    Invalid = true;  
+
   // Build the call operator.
   CXXMethodDecl *CallOperator
     = getSema().startLambdaDefinition(Class, E->getIntroducerRange(),
                                       MethodTy, 
-                                      E->getCallOperator()->getLocEnd());
+                                      E->getCallOperator()->getLocEnd(),
+                                      Params);
   getDerived().transformAttrs(E->getCallOperator(), CallOperator);
   
   // FIXME: Instantiation-specific.
@@ -7690,7 +7701,6 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
                                  E->isMutable());
   
   // Transform captures.
-  bool Invalid = false;
   bool FinishedExplicitCaptures = false;
   for (LambdaExpr::capture_iterator C = E->capture_begin(), 
                                  CEnd = E->capture_end();
@@ -7766,17 +7776,6 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
   if (!FinishedExplicitCaptures)
     getSema().finishLambdaExplicitCaptures(LSI);
 
-  // Transform lambda parameters.
-  llvm::SmallVector<QualType, 4> ParamTypes;
-  llvm::SmallVector<ParmVarDecl *, 4> Params;
-  if (!getDerived().TransformFunctionTypeParams(E->getLocStart(),
-         E->getCallOperator()->param_begin(),
-         E->getCallOperator()->param_size(),
-         0, ParamTypes, &Params))
-    getSema().addLambdaParameters(CallOperator, /*CurScope=*/0, Params);
-  else
-    Invalid = true;
-  
 
   // Enter a new evaluation context to insulate the lambda from any
   // cleanups from the enclosing full-expression.
