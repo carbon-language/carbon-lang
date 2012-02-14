@@ -1358,18 +1358,28 @@ unsigned RAGreedy::tryLocalSplit(LiveInterval &VirtReg, AllocationOrder &Order,
   if (!UsableRegs.empty()) {
     // Get regmask slots for the whole block.
     ArrayRef<SlotIndex> RMS = LIS->getRegMaskSlotsInBlock(BI.MBB->getNumber());
+    DEBUG(dbgs() << RMS.size() << " regmasks in block:");
     // Constrain to VirtReg's live range.
-    unsigned ri = std::lower_bound(RMS.begin(), RMS.end(), Uses.front())
-      - RMS.begin();
+    unsigned ri = std::lower_bound(RMS.begin(), RMS.end(),
+                                   Uses.front().getRegSlot()) - RMS.begin();
     unsigned re = RMS.size();
     for (unsigned i = 0; i != NumGaps && ri != re; ++i) {
-      assert(Uses[i] <= RMS[ri]);
-      if (Uses[i+1] <= RMS[ri])
+      // Look for Uses[i] <= RMS <= Uses[i+1].
+      assert(!SlotIndex::isEarlierInstr(RMS[ri], Uses[i]));
+      if (SlotIndex::isEarlierInstr(Uses[i+1], RMS[ri]))
         continue;
+      // Skip a regmask on the same instruction as the last use. It doesn't
+      // overlap the live range.
+      if (SlotIndex::isSameInstr(Uses[i+1], RMS[ri]) && i+1 == NumGaps)
+        break;
+      DEBUG(dbgs() << ' ' << RMS[ri] << ':' << Uses[i] << '-' << Uses[i+1]);
       RegMaskGaps.push_back(i);
-      do ++ri;
-      while (ri != re && RMS[ri] < Uses[i+1]);
+      // Advance ri to the next gap. A regmask on one of the uses counts in
+      // both gaps.
+      while (ri != re && SlotIndex::isEarlierInstr(RMS[ri], Uses[i+1]))
+        ++ri;
     }
+    DEBUG(dbgs() << '\n');
   }
 
   // Since we allow local split results to be split again, there is a risk of
