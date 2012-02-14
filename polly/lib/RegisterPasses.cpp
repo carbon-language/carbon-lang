@@ -130,7 +130,7 @@ void registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
   PM.add(llvm::createReassociatePass());           // Reassociate expressions
   PM.add(llvm::createLoopRotatePass());            // Rotate Loop
   PM.add(llvm::createInstructionCombiningPass());
-  PM.add(llvm::createIndVarSimplifyPass());        // Canonicalize indvars
+  PM.add(polly::createIndVarSimplifyPass());        // Canonicalize indvars
 
   PM.add(polly::createCodePreparationPass());
   PM.add(polly::createRegionSimplifyPass());
@@ -145,7 +145,7 @@ void registerPollyPreoptPasses(llvm::PassManagerBase &PM) {
   //           the regioninfo pass does currently not recover simple regions.
   //           As a result we need to run the RegionSimplify pass again to
   //           recover them
-  PM.add(llvm::createIndVarSimplifyPass());
+  PM.add(polly::createIndVarSimplifyPass());
   PM.add(polly::createRegionSimplifyPass());
 }
 
