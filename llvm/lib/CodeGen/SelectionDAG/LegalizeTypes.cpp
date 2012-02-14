@@ -748,7 +748,11 @@ void DAGTypeLegalizer::SetSoftenedFloat(SDValue Op, SDValue Result) {
 }
 
 void DAGTypeLegalizer::SetScalarizedVector(SDValue Op, SDValue Result) {
-  assert(Result.getValueType() == Op.getValueType().getVectorElementType() &&
+  // Note that in some cases vector operation operands may be greater than
+  // the vector element type. For example BUILD_VECTOR of type <1 x i1> with
+  // a constant i8 operand.
+  assert(Result.getValueType().getSizeInBits() >=
+         Op.getValueType().getVectorElementType().getSizeInBits() &&
          "Invalid type for scalarized vector");
   AnalyzeNewValue(Result);
 
