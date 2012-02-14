@@ -339,7 +339,7 @@ TextDiagnostic::emitDiagnosticMessage(SourceLocation Loc,
                                       DiagnosticsEngine::Level Level,
                                       StringRef Message,
                                       ArrayRef<clang::CharSourceRange> Ranges,
-                                      const Diagnostic *Info) {
+                                      DiagOrStoredDiag D) {
   uint64_t StartOfLocationInfo = OS.tell();
 
   // Emit the location of this particular diagnostic.

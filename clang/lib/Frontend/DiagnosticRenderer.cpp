@@ -133,9 +133,9 @@ void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
                                         StringRef Message,
                                         ArrayRef<CharSourceRange> Ranges,
                                         ArrayRef<FixItHint> FixItHints,
-                                        const Diagnostic *Info) {
+                                        DiagOrStoredDiag D) {
   
-  beginDiagnostic(Info, Level);
+  beginDiagnostic(D, Level);
   
   PresumedLoc PLoc = getDiagnosticPresumedLoc(SM, Loc);
   
@@ -144,7 +144,7 @@ void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
   emitIncludeStack(PLoc.getIncludeLoc(), Level);
   
   // Next, emit the actual diagnostic message.
-  emitDiagnosticMessage(Loc, PLoc, Level, Message, Ranges, Info);
+  emitDiagnosticMessage(Loc, PLoc, Level, Message, Ranges, D);
   
   // Only recurse if we have a valid location.
   if (Loc.isValid()) {
@@ -166,7 +166,14 @@ void DiagnosticRenderer::emitDiagnostic(SourceLocation Loc,
   LastLoc = Loc;
   LastLevel = Level;
   
-  endDiagnostic(Info, Level);
+  endDiagnostic(D, Level);
+}
+
+
+void DiagnosticRenderer::emitStoredDiagnostic(StoredDiagnostic &Diag) {
+  emitDiagnostic(Diag.getLocation(), Diag.getLevel(), Diag.getMessage(),
+                 Diag.getRanges(), Diag.getFixIts(),
+                 &Diag);
 }
 
 /// \brief Prints an include stack when appropriate for a particular
@@ -302,5 +309,21 @@ void DiagnosticRenderer::emitMacroExpansionsAndCarets(
   emitDiagnostic(SM.getSpellingLoc(Loc), DiagnosticsEngine::Note,
                  Message.str(),
                  Ranges, ArrayRef<FixItHint>());
+}
+
+DiagnosticNoteRenderer::~DiagnosticNoteRenderer() {}
+
+void DiagnosticNoteRenderer::emitIncludeLocation(SourceLocation Loc,
+                                                 PresumedLoc PLoc) {
+  // Generate a note indicating the include location.
+  SmallString<200> MessageStorage;
+  llvm::raw_svector_ostream Message(MessageStorage);
+  Message << "in file included from " << PLoc.getFilename() << ':'
+          << PLoc.getLine() << ":";
+  emitNote(Loc, Message.str());
+}
+
+void DiagnosticNoteRenderer::emitBasicNote(StringRef Message) {
+  emitNote(SourceLocation(), Message);  
 }
 

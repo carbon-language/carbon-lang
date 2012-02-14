@@ -81,7 +81,7 @@ protected:
                                      DiagnosticsEngine::Level Level,
                                      StringRef Message,
                                      ArrayRef<CharSourceRange> Ranges,
-                                     const Diagnostic *Info);
+                                     DiagOrStoredDiag D);
 
   virtual void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
                                  DiagnosticsEngine::Level Level,

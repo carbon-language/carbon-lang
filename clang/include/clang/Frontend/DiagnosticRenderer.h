@@ -19,12 +19,17 @@
 #include "clang/Basic/Diagnostic.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/Basic/SourceLocation.h"
+#include "llvm/ADT/PointerUnion.h"
 
 namespace clang {
-  class DiagnosticOptions;
-  class LangOptions;
-  class SourceManager;
 
+class DiagnosticOptions;
+class LangOptions;
+class SourceManager;
+
+typedef llvm::PointerUnion<const Diagnostic *,
+                           const StoredDiagnostic *> DiagOrStoredDiag;
+  
 /// \brief Class to encapsulate the logic for formatting a diagnostic message.
 ///  Actual "printing" logic is implemented by subclasses.
 ///
@@ -71,7 +76,7 @@ protected:
                                      DiagnosticsEngine::Level Level,
                                      StringRef Message,
                                      ArrayRef<CharSourceRange> Ranges,
-                                     const Diagnostic *Info) = 0;
+                                     DiagOrStoredDiag Info) = 0;
   
   virtual void emitDiagnosticLoc(SourceLocation Loc, PresumedLoc PLoc,
                                  DiagnosticsEngine::Level Level,
@@ -86,9 +91,9 @@ protected:
   
   virtual void emitIncludeLocation(SourceLocation Loc, PresumedLoc PLoc) = 0;
   
-  virtual void beginDiagnostic(const Diagnostic *Info,
+  virtual void beginDiagnostic(DiagOrStoredDiag D,
                                DiagnosticsEngine::Level Level) {}
-  virtual void endDiagnostic(const Diagnostic *Info,
+  virtual void endDiagnostic(DiagOrStoredDiag D,
                              DiagnosticsEngine::Level Level) {}
 
   
@@ -117,7 +122,28 @@ public:
   void emitDiagnostic(SourceLocation Loc, DiagnosticsEngine::Level Level,
                       StringRef Message, ArrayRef<CharSourceRange> Ranges,
                       ArrayRef<FixItHint> FixItHints,
-                      const Diagnostic *Info = 0);
+                      DiagOrStoredDiag D = (Diagnostic *)0);
+
+  void emitStoredDiagnostic(StoredDiagnostic &Diag);
+};
+  
+/// Subclass of DiagnosticRender that turns all subdiagostics into explicit
+/// notes.  It is up to subclasses to further define the behavior.
+class DiagnosticNoteRenderer : public DiagnosticRenderer {
+public:
+  DiagnosticNoteRenderer(const SourceManager &SM,
+                         const LangOptions &LangOpts,
+                         const DiagnosticOptions &DiagOpts)
+    : DiagnosticRenderer(SM, LangOpts, DiagOpts) {}
+  
+  virtual ~DiagnosticNoteRenderer();
+  
+  virtual void emitBasicNote(StringRef Message);
+    
+  virtual void emitIncludeLocation(SourceLocation Loc,
+                                   PresumedLoc PLoc);
+  
+  virtual void emitNote(SourceLocation Loc, StringRef Message) = 0;
 };
 } // end clang namespace
 #endif
