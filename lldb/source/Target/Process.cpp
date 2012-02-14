@@ -780,7 +780,7 @@ Process::Process(Target &target, Listener &listener) :
     m_allocated_memory_cache (*this),
     m_should_detach (false),
     m_next_event_action_ap(),
-    m_can_jit(eCanJITYes)
+    m_can_jit(eCanJITDontKnow)
 {
     UpdateInstanceName();
 
@@ -2160,6 +2160,22 @@ Process::AllocateMemory(size_t size, uint32_t permissions, Error &error)
 bool
 Process::CanJIT ()
 {
+    if (m_can_jit == eCanJITDontKnow)
+    {
+        Error err;
+        
+        uint64_t allocated_memory = AllocateMemory(8, 
+                                                   ePermissionsReadable | ePermissionsWritable | ePermissionsExecutable, 
+                                                   err);
+        
+        if (err.Success())
+            m_can_jit = eCanJITYes;
+        else
+            m_can_jit = eCanJITNo;
+        
+        DeallocateMemory (allocated_memory);
+    }
+    
     return m_can_jit == eCanJITYes;
 }
 
