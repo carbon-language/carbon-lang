@@ -3024,7 +3024,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
     break;
   }
   case ISD::EXCEPTIONADDR: {
-    unsigned Reg = TLI.getExceptionAddressRegister();
+    unsigned Reg = TLI.getExceptionPointerRegister();
     assert(Reg && "Can't expand to unknown register!");
     Results.push_back(DAG.getCopyFromReg(Node->getOperand(0), dl, Reg,
                                          Node->getValueType(0)));

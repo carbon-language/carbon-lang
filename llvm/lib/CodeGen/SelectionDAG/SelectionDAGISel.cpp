@@ -780,7 +780,7 @@ void SelectionDAGISel::PrepareEHLandingPad() {
     .addSym(Label);
 
   // Mark exception register as live in.
-  unsigned Reg = TLI.getExceptionAddressRegister();
+  unsigned Reg = TLI.getExceptionPointerRegister();
   if (Reg) MBB->addLiveIn(Reg);
 
   // Mark exception selector register as live in.

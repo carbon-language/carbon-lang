@@ -688,10 +688,10 @@ public:
     return StackPointerRegisterToSaveRestore;
   }
 
-  /// getExceptionAddressRegister - If a physical register, this returns
+  /// getExceptionPointerRegister - If a physical register, this returns
   /// the register that receives the exception address on entry to a landing
   /// pad.
-  unsigned getExceptionAddressRegister() const {
+  unsigned getExceptionPointerRegister() const {
     return ExceptionPointerRegister;
   }
 
