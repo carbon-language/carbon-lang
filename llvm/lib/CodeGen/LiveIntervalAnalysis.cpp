@@ -994,8 +994,7 @@ unsigned LiveIntervals::getReMatImplicitUse(const LiveInterval &li,
     if (Reg == 0 || Reg == li.reg)
       continue;
 
-    if (TargetRegisterInfo::isPhysicalRegister(Reg) &&
-        !allocatableRegs_[Reg])
+    if (TargetRegisterInfo::isPhysicalRegister(Reg) && !isAllocatable(Reg))
       continue;
     RegOp = MO.getReg();
     break; // Found vreg operand - leave the loop.
