@@ -569,25 +569,19 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
       break;
     case UO_Real: {
       const Expr *Ex = U->getSubExpr()->IgnoreParens();
-      ExplodedNodeSet Tmp;
-      Visit(Ex, Pred, Tmp);
-      
-      for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
         
-        // FIXME: We don't have complex SValues yet.
-        if (Ex->getType()->isAnyComplexType()) {
-          // Just report "Unknown."
-          continue;
-        }
-        
-        // For all other types, UO_Real is an identity operation.
-        assert (U->getType() == Ex->getType());
-        ProgramStateRef state = (*I)->getState();
-        const LocationContext *LCtx = (*I)->getLocationContext();
-        Bldr.generateNode(U, *I, state->BindExpr(U, LCtx,
-                                                 state->getSVal(Ex, LCtx)));
+      // FIXME: We don't have complex SValues yet.
+      if (Ex->getType()->isAnyComplexType()) {
+        // Just report "Unknown."
+        break;
       }
-      
+        
+      // For all other types, UO_Real is an identity operation.
+      assert (U->getType() == Ex->getType());
+      ProgramStateRef state = Pred->getState();
+      const LocationContext *LCtx = Pred->getLocationContext();
+      Bldr.generateNode(U, Pred, state->BindExpr(U, LCtx,
+                                                 state->getSVal(Ex, LCtx)));
       break;
     }
       
