@@ -24,10 +24,17 @@ entry:
 ; CHECK: @test_widening_bad
 ; CHECK: __asan_report_load1
 ; CHECK: __asan_report_load1
-; CHECK-ret i32
+; CHECK-NOT: __asan_report
+; We can not use check for "ret" here because __asan_report_load1 calls live after ret.
+; CHECK: end_test_widening_bad
 }
 
-;; Accessing byets 4 and 5. Ok to widen to i16.
+define void @end_test_widening_bad() {
+  entry:
+  ret void
+}
+
+;; Accessing bytes 4 and 5. Ok to widen to i16.
 
 define i32 @test_widening_ok(i8* %P) nounwind ssp noredzone address_safety {
 entry:
@@ -38,6 +45,12 @@ entry:
   %add = add nsw i32 %conv, %conv2
   ret i32 %add
 ; CHECK: @test_widening_ok
-; CHECK: __asan_report_load1
-; CHECK-ret i32
+; CHECK: __asan_report_load2
+; CHECK-NOT: __asan_report
+; CHECK: end_test_widening_ok
+}
+
+define void @end_test_widening_ok() {
+  entry:
+  ret void
 }
