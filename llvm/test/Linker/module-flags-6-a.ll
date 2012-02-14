@@ -2,7 +2,7 @@
 
 ; Test module flags error messages.
 
-; CHECK: Linking module flags 'foo': IDs have conflicting values
+; CHECK: linking module flags 'foo': IDs have conflicting values
 
 !0 = metadata !{ i32 1, metadata !"foo", i32 37 }
 

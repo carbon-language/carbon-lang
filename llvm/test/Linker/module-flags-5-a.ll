@@ -2,7 +2,7 @@
 
 ; Test the 'override' error.
 
-; CHECK: Linking module flags 'foo': IDs have conflicting override values
+; CHECK: linking module flags 'foo': IDs have conflicting override values
 
 !0 = metadata !{ i32 4, metadata !"foo", i32 927 }
 
