@@ -109,6 +109,47 @@ void reallocPtrZero3() {
   free(r);
 }
 
+void reallocRadar6337483_1() {
+    char *buf = malloc(100);
+    buf = (char*)realloc(buf, 0x1000000);
+    if (!buf) {
+        return;// expected-warning {{Allocated memory never released.}}
+    }
+    free(buf);
+}
+
+void reallocRadar6337483_2() {
+    char *buf = malloc(100);
+    char *buf2 = (char*)realloc(buf, 0x1000000);
+    if (!buf2) { // expected-warning {{Allocated memory never released.}}
+      ;
+    } else {
+      free(buf2);
+    }
+}
+
+void reallocRadar6337483_3() {
+    char * buf = malloc(100);
+    char * tmp;
+    tmp = (char*)realloc(buf, 0x1000000);
+    if (!tmp) {
+        free(buf);
+        return;
+    }
+    buf = tmp;
+    free(buf);
+}
+
+void reallocRadar6337483_4() {
+    char *buf = malloc(100);
+    char *buf2 = (char*)realloc(buf, 0x1000000);
+    if (!buf2) {
+      return;  // expected-warning {{Allocated memory never released.}}
+    } else {
+      free(buf2);
+    }
+}
+
 // This case tests that storing malloc'ed memory to a static variable which is
 // then returned is not leaked.  In the absence of known contracts for functions
 // or inter-procedural analysis, this is a conservative answer.

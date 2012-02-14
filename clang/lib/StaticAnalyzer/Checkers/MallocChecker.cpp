@@ -409,16 +409,11 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
   if (!isa<Loc>(location))
     return 0;
 
-  // FIXME: Technically using 'Assume' here can result in a path
-  //  bifurcation.  In such cases we need to return two states, not just one.
+  // The explicit NULL case, no operation is performed.
   ProgramStateRef notNullState, nullState;
   llvm::tie(notNullState, nullState) = state->assume(location);
-
-  // The explicit NULL case, no operation is performed.
   if (nullState && !notNullState)
     return 0;
-
-  assert(notNullState);
 
   // Unknown values could easily be okay
   // Undefined values are handled elsewhere
@@ -490,8 +485,8 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
 
   // Normal free.
   if (Hold)
-    return notNullState->set<RegionState>(Sym, RefState::getRelinquished(CE));
-  return notNullState->set<RegionState>(Sym, RefState::getReleased(CE));
+    return state->set<RegionState>(Sym, RefState::getRelinquished(CE));
+  return state->set<RegionState>(Sym, RefState::getReleased(CE));
 }
 
 bool MallocChecker::SummarizeValue(raw_ostream &os, SVal V) {
@@ -685,6 +680,7 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
       // If size was equal to 0, either NULL or a pointer suitable to be passed
       // to free() is returned.
       stateFree = stateFree->set<ReallocPairs>(ToPtr, FromPtr);
+      C.getSymbolManager().addSymbolDependency(ToPtr, FromPtr);
       C.addTransition(stateFree);
       return;
     }
@@ -697,6 +693,7 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
     if (!stateRealloc)
       return;
     stateRealloc = stateRealloc->set<ReallocPairs>(ToPtr, FromPtr);
+    C.getSymbolManager().addSymbolDependency(ToPtr, FromPtr);
     C.addTransition(stateRealloc);
     return;
   }
@@ -918,7 +915,7 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
         if (RS->isReleased())
           state = state->set<RegionState>(I.getData(),
                              RefState::getAllocateUnchecked(RS->getStmt()));
-        if (RS->isAllocated())
+        else if (RS->isAllocated())
           state = state->set<RegionState>(I.getData(),
                              RefState::getReleased(RS->getStmt()));
       }
