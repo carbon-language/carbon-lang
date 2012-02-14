@@ -2635,9 +2635,11 @@ Decl *Parser::ParseLexedObjCMethodDefs(LexedMethod &LM) {
   StmtResult FnBody(ParseCompoundStatementBody());
     
   // If the function body could not be parsed, make a bogus compoundstmt.
-  if (FnBody.isInvalid())
+  if (FnBody.isInvalid()) {
+    Sema::CompoundScopeRAII CompoundScope(Actions);
     FnBody = Actions.ActOnCompoundStmt(BraceLoc, BraceLoc,
                                        MultiStmtArg(Actions), false);
+  }
     
   // Leave the function body scope.
   BodyScope.Exit();

@@ -861,6 +861,17 @@ void Sema::PopFunctionScopeInfo(const AnalysisBasedWarnings::Policy *WP,
   }
 }
 
+void Sema::PushCompoundScope() {
+  getCurFunction()->CompoundScopes.push_back(CompoundScopeInfo());
+}
+
+void Sema::PopCompoundScope() {
+  FunctionScopeInfo *CurFunction = getCurFunction();
+  assert(!CurFunction->CompoundScopes.empty() && "mismatched push/pop");
+
+  CurFunction->CompoundScopes.pop_back();
+}
+
 /// \brief Determine whether any errors occurred within this function/method/
 /// block.
 bool Sema::hasAnyUnrecoverableErrorsInThisFunction() const {

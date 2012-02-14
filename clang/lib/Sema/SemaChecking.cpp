@@ -4827,3 +4827,130 @@ void Sema::checkUnsafeExprAssigns(SourceLocation Loc,
     }
   }
 }
+
+//===--- CHECK: Empty statement body (-Wempty-body) ---------------------===//
+
+namespace {
+bool ShouldDiagnoseEmptyStmtBody(const SourceManager &SourceMgr,
+                                 SourceLocation StmtLoc,
+                                 const NullStmt *Body) {
+  // Do not warn if the body is a macro that expands to nothing, e.g:
+  //
+  // #define CALL(x)
+  // if (condition)
+  //   CALL(0);
+  //
+  if (Body->hasLeadingEmptyMacro())
+    return false;
+
+  // Get line numbers of statement and body.
+  bool StmtLineInvalid;
+  unsigned StmtLine = SourceMgr.getSpellingLineNumber(StmtLoc,
+                                                      &StmtLineInvalid);
+  if (StmtLineInvalid)
+    return false;
+
+  bool BodyLineInvalid;
+  unsigned BodyLine = SourceMgr.getSpellingLineNumber(Body->getSemiLoc(),
+                                                      &BodyLineInvalid);
+  if (BodyLineInvalid)
+    return false;
+
+  // Warn if null statement and body are on the same line.
+  if (StmtLine != BodyLine)
+    return false;
+
+  return true;
+}
+} // Unnamed namespace
+
+void Sema::DiagnoseEmptyStmtBody(SourceLocation StmtLoc,
+                                 const Stmt *Body,
+                                 unsigned DiagID) {
+  // Since this is a syntactic check, don't emit diagnostic for template
+  // instantiations, this just adds noise.
+  if (CurrentInstantiationScope)
+    return;
+
+  // The body should be a null statement.
+  const NullStmt *NBody = dyn_cast<NullStmt>(Body);
+  if (!NBody)
+    return;
+
+  // Do the usual checks.
+  if (!ShouldDiagnoseEmptyStmtBody(SourceMgr, StmtLoc, NBody))
+    return;
+
+  Diag(NBody->getSemiLoc(), DiagID);
+  Diag(NBody->getSemiLoc(), diag::note_empty_body_on_separate_line);
+}
+
+void Sema::DiagnoseEmptyLoopBody(const Stmt *S,
+                                 const Stmt *PossibleBody) {
+  assert(!CurrentInstantiationScope); // Ensured by caller
+
+  SourceLocation StmtLoc;
+  const Stmt *Body;
+  unsigned DiagID;
+  if (const ForStmt *FS = dyn_cast<ForStmt>(S)) {
+    StmtLoc = FS->getRParenLoc();
+    Body = FS->getBody();
+    DiagID = diag::warn_empty_for_body;
+  } else if (const WhileStmt *WS = dyn_cast<WhileStmt>(S)) {
+    StmtLoc = WS->getCond()->getSourceRange().getEnd();
+    Body = WS->getBody();
+    DiagID = diag::warn_empty_while_body;
+  } else
+    return; // Neither `for' nor `while'.
+
+  // The body should be a null statement.
+  const NullStmt *NBody = dyn_cast<NullStmt>(Body);
+  if (!NBody)
+    return;
+
+  // Skip expensive checks if diagnostic is disabled.
+  if (Diags.getDiagnosticLevel(DiagID, NBody->getSemiLoc()) ==
+          DiagnosticsEngine::Ignored)
+    return;
+
+  // Do the usual checks.
+  if (!ShouldDiagnoseEmptyStmtBody(SourceMgr, StmtLoc, NBody))
+    return;
+
+  // `for(...);' and `while(...);' are popular idioms, so in order to keep
+  // noise level low, emit diagnostics only if for/while is followed by a
+  // CompoundStmt, e.g.:
+  //    for (int i = 0; i < n; i++);
+  //    {
+  //      a(i);
+  //    }
+  // or if for/while is followed by a statement with more indentation
+  // than for/while itself:
+  //    for (int i = 0; i < n; i++);
+  //      a(i);
+  bool ProbableTypo = isa<CompoundStmt>(PossibleBody);
+  if (!ProbableTypo) {
+    bool BodyColInvalid;
+    unsigned BodyCol = SourceMgr.getPresumedColumnNumber(
+                             PossibleBody->getLocStart(),
+                             &BodyColInvalid);
+    if (BodyColInvalid)
+      return;
+
+    bool StmtColInvalid;
+    unsigned StmtCol = SourceMgr.getPresumedColumnNumber(
+                             S->getLocStart(),
+                             &StmtColInvalid);
+    if (StmtColInvalid)
+      return;
+
+    if (BodyCol > StmtCol)
+      ProbableTypo = true;
+  }
+
+  if (ProbableTypo) {
+    Diag(NBody->getSemiLoc(), DiagID);
+    Diag(NBody->getSemiLoc(), diag::note_empty_body_on_separate_line);
+  }
+}
+

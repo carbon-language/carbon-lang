@@ -5006,6 +5006,8 @@ template<typename Derived>
 StmtResult
 TreeTransform<Derived>::TransformCompoundStmt(CompoundStmt *S,
                                               bool IsStmtExpr) {
+  Sema::CompoundScopeRAII CompoundScope(getSema());
+
   bool SubStmtInvalid = false;
   bool SubStmtChanged = false;
   ASTOwningVector<Stmt*> Statements(getSema());

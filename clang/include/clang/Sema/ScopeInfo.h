@@ -32,6 +32,22 @@ class VarDecl;
 
 namespace sema {
 
+/// \brief Contains information about the compound statement currently being
+/// parsed.
+class CompoundScopeInfo {
+public:
+  CompoundScopeInfo()
+    : HasEmptyLoopBodies(false) { }
+
+  /// \brief Whether this compound stamement contains `for' or `while' loops
+  /// with empty bodies.
+  bool HasEmptyLoopBodies;
+
+  void setHasEmptyLoopBodies() {
+    HasEmptyLoopBodies = true;
+  }
+};
+
 class PossiblyUnreachableDiag {
 public:
   PartialDiagnostic PD;
@@ -79,7 +95,11 @@ public:
   /// block, if there is any chance of applying the named return value
   /// optimization.
   SmallVector<ReturnStmt*, 4> Returns;
-  
+
+  /// \brief The stack of currently active compound stamement scopes in the
+  /// function.
+  SmallVector<CompoundScopeInfo, 4> CompoundScopes;
+
   /// \brief A list of PartialDiagnostics created but delayed within the
   /// current function scope.  These diagnostics are vetted for reachability
   /// prior to being emitted.

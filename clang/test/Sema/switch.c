@@ -24,7 +24,9 @@ void foo(int X) {
 
 void test3(void) { 
   // empty switch;
-  switch (0); // expected-warning {{no case matching constant switch condition '0'}}
+  switch (0); // expected-warning {{no case matching constant switch condition '0'}} \
+              // expected-warning {{switch statement has empty body}} \
+              // expected-note{{put the semicolon on a separate line to silence this warning}}
 }
 
 extern int g();

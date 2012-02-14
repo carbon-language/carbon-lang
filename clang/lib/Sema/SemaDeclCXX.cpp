@@ -8218,10 +8218,14 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
     CopyAssignOperator->setInvalidDecl();
     return;
   }
-  
-  StmtResult Body = ActOnCompoundStmt(Loc, Loc, move_arg(Statements),
-                                            /*isStmtExpr=*/false);
-  assert(!Body.isInvalid() && "Compound statement creation cannot fail");
+
+  StmtResult Body;
+  {
+    CompoundScopeRAII CompoundScope(*this);
+    Body = ActOnCompoundStmt(Loc, Loc, move_arg(Statements),
+                             /*isStmtExpr=*/false);
+    assert(!Body.isInvalid() && "Compound statement creation cannot fail");
+  }
   CopyAssignOperator->setBody(Body.takeAs<Stmt>());
 
   if (ASTMutationListener *L = getASTMutationListener()) {
@@ -8650,10 +8654,14 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
     MoveAssignOperator->setInvalidDecl();
     return;
   }
-  
-  StmtResult Body = ActOnCompoundStmt(Loc, Loc, move_arg(Statements),
-                                            /*isStmtExpr=*/false);
-  assert(!Body.isInvalid() && "Compound statement creation cannot fail");
+
+  StmtResult Body;
+  {
+    CompoundScopeRAII CompoundScope(*this);
+    Body = ActOnCompoundStmt(Loc, Loc, move_arg(Statements),
+                             /*isStmtExpr=*/false);
+    assert(!Body.isInvalid() && "Compound statement creation cannot fail");
+  }
   MoveAssignOperator->setBody(Body.takeAs<Stmt>());
 
   if (ASTMutationListener *L = getASTMutationListener()) {
@@ -8852,9 +8860,10 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
       << CXXCopyConstructor << Context.getTagDeclType(ClassDecl);
     CopyConstructor->setInvalidDecl();
   }  else {
+    Sema::CompoundScopeRAII CompoundScope(*this);
     CopyConstructor->setBody(ActOnCompoundStmt(CopyConstructor->getLocation(),
                                                CopyConstructor->getLocation(),
-                                               MultiStmtArg(*this, 0, 0), 
+                                               MultiStmtArg(*this, 0, 0),
                                                /*isStmtExpr=*/false)
                                                               .takeAs<Stmt>());
     CopyConstructor->setImplicitlyDefined(true);
@@ -9006,9 +9015,10 @@ void Sema::DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
       << CXXMoveConstructor << Context.getTagDeclType(ClassDecl);
     MoveConstructor->setInvalidDecl();
   }  else {
+    Sema::CompoundScopeRAII CompoundScope(*this);
     MoveConstructor->setBody(ActOnCompoundStmt(MoveConstructor->getLocation(),
                                                MoveConstructor->getLocation(),
-                                               MultiStmtArg(*this, 0, 0), 
+                                               MultiStmtArg(*this, 0, 0),
                                                /*isStmtExpr=*/false)
                                                               .takeAs<Stmt>());
     MoveConstructor->setImplicitlyDefined(true);

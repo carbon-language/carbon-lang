@@ -163,6 +163,7 @@ namespace clang {
 namespace sema {
   class AccessedEntity;
   class BlockScopeInfo;
+  class CompoundScopeInfo;
   class DelayedDiagnostic;
   class FunctionScopeInfo;
   class LambdaScopeInfo;
@@ -743,6 +744,11 @@ public:
   sema::FunctionScopeInfo *getCurFunction() const {
     return FunctionScopes.back();
   }
+
+  void PushCompoundScope();
+  void PopCompoundScope();
+
+  sema::CompoundScopeInfo &getCurCompoundScope() const;
 
   bool hasAnyUnrecoverableErrorsInThisFunction() const;
 
@@ -2053,9 +2059,28 @@ public:
 
   StmtResult ActOnNullStmt(SourceLocation SemiLoc,
                            bool HasLeadingEmptyMacro = false);
+
+  void ActOnStartOfCompoundStmt();
+  void ActOnFinishOfCompoundStmt();
   StmtResult ActOnCompoundStmt(SourceLocation L, SourceLocation R,
                                        MultiStmtArg Elts,
                                        bool isStmtExpr);
+
+  /// \brief A RAII object to enter scope of a compound statement.
+  class CompoundScopeRAII {
+  public:
+    CompoundScopeRAII(Sema &S): S(S) {
+      S.ActOnStartOfCompoundStmt();
+    }
+
+    ~CompoundScopeRAII() {
+      S.ActOnFinishOfCompoundStmt();
+    }
+
+  private:
+    Sema &S;
+  };
+
   StmtResult ActOnDeclStmt(DeclGroupPtrTy Decl,
                                    SourceLocation StartLoc,
                                    SourceLocation EndLoc);
@@ -2203,6 +2228,21 @@ public:
   /// whose result is unused, warn.
   void DiagnoseUnusedExprResult(const Stmt *S);
   void DiagnoseUnusedDecl(const NamedDecl *ND);
+
+  /// Emit \p DiagID if statement located on \p StmtLoc has a suspicious null
+  /// statement as a \p Body, and it is located on the same line.
+  ///
+  /// This helps prevent bugs due to typos, such as:
+  ///     if (condition);
+  ///       do_stuff();
+  void DiagnoseEmptyStmtBody(SourceLocation StmtLoc,
+                             const Stmt *Body,
+                             unsigned DiagID);
+
+  /// Warn if a for/while loop statement \p S, which is followed by
+  /// \p PossibleBody, has a suspicious null statement as a body.
+  void DiagnoseEmptyLoopBody(const Stmt *S,
+                             const Stmt *PossibleBody);
 
   ParsingDeclState PushParsingDeclaration() {
     return DelayedDiagnostics.pushParsingDecl();

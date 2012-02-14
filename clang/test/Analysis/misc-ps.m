@@ -1248,7 +1248,7 @@ void pr9269() {
   struct s { char *bar[10]; } baz[2] = { 0 };
   unsigned i = 0;
   for (i = 0;
-  (* ({ while(0); ({ &baz[0]; }); })).bar[0] != 0;
+  (* ({ while(0); ({ &baz[0]; }); })).bar[0] != 0; // expected-warning {{while loop has empty body}} expected-note {{put the semicolon on a separate line to silence this warning}}
        ++i) {}
 }
 

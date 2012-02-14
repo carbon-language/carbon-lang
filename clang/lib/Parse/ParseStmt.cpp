@@ -700,7 +700,6 @@ StmtResult Parser::ParseCompoundStatement(ParsedAttributes &attrs,
   return ParseCompoundStatementBody(isStmtExpr);
 }
 
-
 /// ParseCompoundStatementBody - Parse a sequence of statements and invoke the
 /// ActOnCompoundStmt action.  This expects the '{' to be the current token, and
 /// consume the '}' at the end of the block.  It does not manipulate the scope
@@ -713,6 +712,8 @@ StmtResult Parser::ParseCompoundStatementBody(bool isStmtExpr) {
   BalancedDelimiterTracker T(*this, tok::l_brace);
   if (T.consumeOpen())
     return StmtError();
+
+  Sema::CompoundScopeRAII CompoundScope(Actions);
 
   StmtVector Stmts(Actions);
 
@@ -1084,9 +1085,14 @@ StmtResult Parser::ParseSwitchStatement(ParsedAttributes &attrs,
   InnerScope.Exit();
   SwitchScope.Exit();
 
-  if (Body.isInvalid())
+  if (Body.isInvalid()) {
     // FIXME: Remove the case statement list from the Switch statement.
-    Body = Actions.ActOnNullStmt(Tok.getLocation());
+
+    // Put the synthesized null statement on the same line as the end of switch
+    // condition.
+    SourceLocation SynthesizedNullStmtLocation = Cond.get()->getLocEnd();
+    Body = Actions.ActOnNullStmt(SynthesizedNullStmtLocation);
+  }
 
   return Actions.ActOnFinishSwitchStmt(SwitchLoc, Switch.get(), Body.get());
 }
@@ -1956,9 +1962,11 @@ Decl *Parser::ParseFunctionStatementBody(Decl *Decl, ParseScope &BodyScope) {
   StmtResult FnBody(ParseCompoundStatementBody());
 
   // If the function body could not be parsed, make a bogus compoundstmt.
-  if (FnBody.isInvalid())
+  if (FnBody.isInvalid()) {
+    Sema::CompoundScopeRAII CompoundScope(Actions);
     FnBody = Actions.ActOnCompoundStmt(LBraceLoc, LBraceLoc,
                                        MultiStmtArg(Actions), false);
+  }
 
   BodyScope.Exit();
   return Actions.ActOnFinishFunctionBody(Decl, FnBody.take());
@@ -1993,9 +2001,11 @@ Decl *Parser::ParseFunctionTryBlock(Decl *Decl, ParseScope &BodyScope) {
   StmtResult FnBody(ParseCXXTryBlockCommon(TryLoc));
   // If we failed to parse the try-catch, we just give the function an empty
   // compound statement as the body.
-  if (FnBody.isInvalid())
+  if (FnBody.isInvalid()) {
+    Sema::CompoundScopeRAII CompoundScope(Actions);
     FnBody = Actions.ActOnCompoundStmt(LBraceLoc, LBraceLoc,
                                        MultiStmtArg(Actions), false);
+  }
 
   BodyScope.Exit();
   return Actions.ActOnFinishFunctionBody(Decl, FnBody.take());

@@ -20,7 +20,8 @@ void test() {
   while (struct S {} *x=0) ; // expected-error {{types may not be defined in conditions}}
   while (struct {} *x=0) ; // expected-error {{types may not be defined in conditions}}
   switch (enum {E} x=0) ; // expected-error {{types may not be defined in conditions}} expected-error {{cannot initialize}} \
-  // expected-warning{{enumeration value 'E' not handled in switch}}
+  // expected-warning{{enumeration value 'E' not handled in switch}} expected-warning {{switch statement has empty body}} \
+  // expected-note{{put the semicolon on a separate line}}
 
   if (int x=0) { // expected-note 2 {{previous definition is here}}
     int x;  // expected-error {{redefinition of 'x'}}

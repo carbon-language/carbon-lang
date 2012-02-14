@@ -4966,8 +4966,20 @@ def err_switch_explicit_conversion : Error<
   "switch condition type %0 requires explicit conversion to %1">;
 def err_switch_incomplete_class_type : Error<
   "switch condition has incomplete class type %0">;
+
 def warn_empty_if_body : Warning<
   "if statement has empty body">, InGroup<EmptyBody>;
+def warn_empty_for_body : Warning<
+  "for loop has empty body">, InGroup<EmptyBody>;
+def warn_empty_range_based_for_body : Warning<
+  "range-based for loop has empty body">, InGroup<EmptyBody>;
+def warn_empty_while_body : Warning<
+  "while loop has empty body">, InGroup<EmptyBody>;
+def warn_empty_switch_body : Warning<
+  "switch statement has empty body">, InGroup<EmptyBody>;
+def note_empty_body_on_separate_line : Note<
+  "put the semicolon on a separate line to silence this warning">,
+  InGroup<EmptyBody>;
 
 def err_va_start_used_in_non_variadic_function : Error<
   "'va_start' used in function with fixed args">;

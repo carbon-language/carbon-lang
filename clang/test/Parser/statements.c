@@ -31,20 +31,20 @@ void test3() {
 }
 
 void test4() {
-  if (0);  // expected-warning {{if statement has empty body}}
+  if (0);  // expected-warning {{if statement has empty body}} expected-note {{put the semicolon on a separate line to silence this warning}}
   
   int X;  // declaration in a block.
   
-foo:  if (0); // expected-warning {{if statement has empty body}}
+foo:  if (0); // expected-warning {{if statement has empty body}} expected-note {{put the semicolon on a separate line to silence this warning}}
 }
 
 typedef int t;
 void test5() {
-  if (0);   // expected-warning {{if statement has empty body}}
+  if (0);   // expected-warning {{if statement has empty body}} expected-note {{put the semicolon on a separate line to silence this warning}}
 
   t x = 0;
 
-  if (0);  // expected-warning {{if statement has empty body}}
+  if (0);  // expected-warning {{if statement has empty body}} expected-note {{put the semicolon on a separate line to silence this warning}}
 }
 
 
