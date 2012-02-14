@@ -701,9 +701,9 @@ public:
     // Copy initializer elements.
     std::vector<llvm::Constant*> Elts;
     Elts.reserve(NumInitableElts + NumElements);
-    unsigned i = 0;
+
     bool RewriteType = false;
-    for (; i < NumInitableElts; ++i) {
+    for (unsigned i = 0; i < NumInitableElts; ++i) {
       Expr *Init = ILE->getInit(i);
       llvm::Constant *C = CGM.EmitConstantExpr(Init, Init->getType(), CGF);
       if (!C)
@@ -722,8 +722,7 @@ public:
     if (!fillC)
       return 0;
     RewriteType |= (fillC->getType() != ElemTy);
-    for (; i < NumElements; ++i)
-      Elts.push_back(fillC);
+    Elts.resize(NumElements, fillC);
 
     if (RewriteType) {
       // FIXME: Try to avoid packing the array

@@ -1181,11 +1181,9 @@ void CodeGenFunction::EmitStoreThroughExtVectorComponentLValue(RValue Src,
       // FIXME: since we're shuffling with undef, can we just use the indices
       //        into that?  This could be simpler.
       SmallVector<llvm::Constant*, 4> ExtMask;
-      unsigned i;
-      for (i = 0; i != NumSrcElts; ++i)
+      for (unsigned i = 0; i != NumSrcElts; ++i)
         ExtMask.push_back(Builder.getInt32(i));
-      for (; i != NumDstElts; ++i)
-        ExtMask.push_back(llvm::UndefValue::get(Int32Ty));
+      ExtMask.resize(NumDstElts, llvm::UndefValue::get(Int32Ty));
       llvm::Value *ExtMaskV = llvm::ConstantVector::get(ExtMask);
       llvm::Value *ExtSrcVal =
         Builder.CreateShuffleVector(SrcVal,

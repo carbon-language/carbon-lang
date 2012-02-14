@@ -895,8 +895,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
           if (CurIdx == 0) {
             // insert into undef -> shuffle (src, undef)
             Args.push_back(C);
-            for (unsigned j = 1; j != ResElts; ++j)
-              Args.push_back(llvm::UndefValue::get(CGF.Int32Ty));
+            Args.resize(ResElts, llvm::UndefValue::get(CGF.Int32Ty));
 
             LHS = EI->getVectorOperand();
             RHS = V;
@@ -907,9 +906,8 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
             for (unsigned j = 0; j != CurIdx; ++j)
               Args.push_back(getMaskElt(SVV, j, 0, CGF.Int32Ty));
             Args.push_back(Builder.getInt32(ResElts + C->getZExtValue()));
-            for (unsigned j = CurIdx + 1; j != ResElts; ++j)
-              Args.push_back(llvm::UndefValue::get(CGF.Int32Ty));
-            
+            Args.resize(ResElts, llvm::UndefValue::get(CGF.Int32Ty));
+
             LHS = cast<llvm::ShuffleVectorInst>(V)->getOperand(0);
             RHS = EI->getVectorOperand();
             VIsUndefShuffle = false;
@@ -953,8 +951,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
         }
         for (unsigned j = 0, je = InitElts; j != je; ++j)
           Args.push_back(getMaskElt(SVI, j, Offset, CGF.Int32Ty));
-        for (unsigned j = CurIdx + InitElts; j != ResElts; ++j)
-          Args.push_back(llvm::UndefValue::get(CGF.Int32Ty));
+        Args.resize(ResElts, llvm::UndefValue::get(CGF.Int32Ty));
 
         if (VIsUndefShuffle)
           V = cast<llvm::ShuffleVectorInst>(V)->getOperand(0);
@@ -968,8 +965,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
     if (Args.empty()) {
       for (unsigned j = 0; j != InitElts; ++j)
         Args.push_back(Builder.getInt32(j));
-      for (unsigned j = InitElts; j != ResElts; ++j)
-        Args.push_back(llvm::UndefValue::get(CGF.Int32Ty));
+      Args.resize(ResElts, llvm::UndefValue::get(CGF.Int32Ty));
       llvm::Constant *Mask = llvm::ConstantVector::get(Args);
       Init = Builder.CreateShuffleVector(Init, llvm::UndefValue::get(VVT),
                                          Mask, "vext");
@@ -979,8 +975,7 @@ Value *ScalarExprEmitter::VisitInitListExpr(InitListExpr *E) {
         Args.push_back(Builder.getInt32(j));
       for (unsigned j = 0; j != InitElts; ++j)
         Args.push_back(Builder.getInt32(j+Offset));
-      for (unsigned j = CurIdx + InitElts; j != ResElts; ++j)
-        Args.push_back(llvm::UndefValue::get(CGF.Int32Ty));
+      Args.resize(ResElts, llvm::UndefValue::get(CGF.Int32Ty));
     }
 
     // If V is undef, make sure it ends up on the RHS of the shuffle to aid

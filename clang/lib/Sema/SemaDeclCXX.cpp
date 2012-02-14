@@ -9159,8 +9159,7 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
   bool Invalid = GatherArgumentsForCall(Loc, Constructor,
                                         Proto, 0, Args, NumArgs, AllArgs, 
                                         CallType);
-  for (unsigned i =0, size = AllArgs.size(); i < size; i++)
-    ConvertedArgs.push_back(AllArgs[i]);
+  ConvertedArgs.append(AllArgs.begin(), AllArgs.end());
   return Invalid;
 }
 

@@ -4227,8 +4227,7 @@ ExprResult Sema::BuildVectorLiteral(SourceLocation LParenLoc,
       return ExprError();
     }
     else
-      for (unsigned i = 0, e = numExprs; i != e; ++i)
-        initExprs.push_back(exprs[i]);
+      initExprs.append(exprs, exprs + numExprs);
   }
   else {
     // For OpenCL, when the number of initializers is a single value,
@@ -4245,8 +4244,7 @@ ExprResult Sema::BuildVectorLiteral(SourceLocation LParenLoc,
         return BuildCStyleCastExpr(LParenLoc, TInfo, RParenLoc, Literal.take());
     }
     
-    for (unsigned i = 0, e = numExprs; i != e; ++i)
-      initExprs.push_back(exprs[i]);
+    initExprs.append(exprs, exprs + numExprs);
   }
   // FIXME: This means that pretty-printing the final AST will produce curly
   // braces instead of the original commas.
