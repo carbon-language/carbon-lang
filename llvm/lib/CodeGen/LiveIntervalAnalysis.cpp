@@ -507,7 +507,7 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
       end = baseIndex.getRegSlot();
       SeenDefUse = true;
       break;
-    } else if (mi->definesRegister(interval.reg, tri_)) {
+    } else if (mi->modifiesRegister(interval.reg, tri_)) {
       // Another instruction redefines the register before it is ever read.
       // Then the register is essentially dead at the instruction that defines
       // it. Hence its interval is:
