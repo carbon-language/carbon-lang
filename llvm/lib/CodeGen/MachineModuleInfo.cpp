@@ -503,8 +503,7 @@ void MachineModuleInfo::TidyLandingPads(DenseMap<MCSymbol*, uintptr_t> *LPMap) {
 /// indexes.
 void MachineModuleInfo::setCallSiteLandingPad(MCSymbol *Sym,
                                               ArrayRef<unsigned> Sites) {
-  for (unsigned I = 0, E = Sites.size(); I != E; ++I)
-    LPadToCallSiteMap[Sym].push_back(Sites[I]);
+  LPadToCallSiteMap[Sym].append(Sites.begin(), Sites.end());
 }
 
 /// getTypeIDFor - Return the type id for the specified typeinfo.  This is
@@ -541,8 +540,7 @@ try_next:;
   // Add the new filter.
   int FilterID = -(1 + FilterIds.size());
   FilterIds.reserve(FilterIds.size() + TyIds.size() + 1);
-  for (unsigned I = 0, N = TyIds.size(); I != N; ++I)
-    FilterIds.push_back(TyIds[I]);
+  FilterIds.insert(FilterIds.end(), TyIds.begin(), TyIds.end());
   FilterEnds.push_back(FilterIds.size());
   FilterIds.push_back(0); // terminator
   return FilterID;
