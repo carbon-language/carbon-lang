@@ -52,7 +52,7 @@ struct ThreadSanitizer : public FunctionPass {
   Value *TsanFuncEntry;
   Value *TsanFuncExit;
   // Accesses sizes are powers of two: 1, 2, 4, 8, 16.
-  static const int kNumberOfAccessSizes = 5;
+  static const size_t kNumberOfAccessSizes = 5;
   Value *TsanRead[kNumberOfAccessSizes];
   Value *TsanWrite[kNumberOfAccessSizes];
 };
@@ -87,7 +87,7 @@ bool ThreadSanitizer::doInitialization(Module &M) {
                                         IRB.getInt8PtrTy(), NULL);
   TsanFuncExit = M.getOrInsertFunction("__tsan_func_exit", IRB.getVoidTy(),
                                        NULL);
-  for (int i = 0; i < kNumberOfAccessSizes; ++i) {
+  for (size_t i = 0; i < kNumberOfAccessSizes; ++i) {
     SmallString<32> ReadName("__tsan_read");
     ReadName += itostr(1 << i);
     TsanRead[i] = M.getOrInsertFunction(ReadName, IRB.getVoidTy(),
@@ -161,7 +161,7 @@ bool ThreadSanitizer::instrumentLoadOrStore(Instruction *I) {
     // Ignore all unusual sizes.
     return false;
   }
-  uint32_t Idx = CountTrailingZeros_32(TypeSize / 8);
+  size_t Idx = CountTrailingZeros_32(TypeSize / 8);
   assert(Idx < kNumberOfAccessSizes);
   Value *OnAccessFunc = IsWrite ? TsanWrite[Idx] : TsanRead[Idx];
   IRB.CreateCall(OnAccessFunc, IRB.CreatePointerCast(Addr, IRB.getInt8PtrTy()));
