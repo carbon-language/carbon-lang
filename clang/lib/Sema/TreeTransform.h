@@ -7672,6 +7672,13 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
                                       E->getCallOperator()->getLocEnd());
   getDerived().transformAttrs(E->getCallOperator(), CallOperator);
   
+  // FIXME: Instantiation-specific.
+  CallOperator->setInstantiationOfMemberFunction(E->getCallOperator(), 
+                                                 TSK_ImplicitInstantiation);
+
+  // Introduce the context of the call operator.
+  Sema::ContextRAII SavedContext(getSema(), CallOperator);
+
   // Enter the scope of the lambda.
   sema::LambdaScopeInfo *LSI
     = getSema().enterLambdaScope(CallOperator, E->getIntroducerRange(),
@@ -7741,17 +7748,12 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
   }
 
   // Instantiate the body of the lambda expression.
-  StmtResult Body;
-  {
-    Sema::ContextRAII SavedContext(getSema(), CallOperator);
-    
-    Body = getDerived().TransformStmt(E->getBody());
-    if (Body.isInvalid()) {
-      getSema().ActOnLambdaError(E->getLocStart(), /*CurScope=*/0, 
-                                 /*IsInstantiation=*/true);
-      return ExprError();    
-    }
-  } 
+  StmtResult Body = getDerived().TransformStmt(E->getBody());
+  if (Body.isInvalid()) {
+    getSema().ActOnLambdaError(E->getLocStart(), /*CurScope=*/0, 
+                               /*IsInstantiation=*/true);
+    return ExprError();    
+  }
   
   return getSema().ActOnLambdaExpr(E->getLocStart(), Body.take(), 
                                    /*CurScope=*/0, 
