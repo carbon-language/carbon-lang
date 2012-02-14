@@ -297,9 +297,13 @@ GenericValue Interpreter::callExternalFunction(Function *F,
 //  Functions "exported" to the running application...
 //
 
-// Visual Studio warns about returning GenericValue in extern "C" linkage
+// Visual Studio and Clang warn about returning GenericValue in extern "C" linkage
 #ifdef _MSC_VER
     #pragma warning(disable : 4190)
+#endif
+#ifdef __clang__
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wreturn-type"
 #endif
 
 extern "C" {  // Don't add C++ manglings to llvm mangling :)
@@ -471,7 +475,10 @@ GenericValue lle_X_fprintf(FunctionType *FT,
 
 } // End extern "C"
 
-// Done with externals; turn the warning back on
+// Done with externals; turn the warning back on for Clang and Visual Studio
+#ifdef __clang__
+    #pragma clang diagnostic pop
+#endif
 #ifdef _MSC_VER
     #pragma warning(default: 4190)
 #endif
