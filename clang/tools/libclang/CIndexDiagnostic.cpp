@@ -44,16 +44,14 @@ CXDiagnosticImpl::~CXDiagnosticImpl() {}
 
 namespace {
 class CXDiagnosticCustomNoteImpl : public CXDiagnosticImpl {
-  CXString Message;
+  std::string Message;
   CXSourceLocation Loc;
 public:
   CXDiagnosticCustomNoteImpl(StringRef Msg, CXSourceLocation L)
     : CXDiagnosticImpl(CustomNoteDiagnosticKind),
-      Message(createCXString(Msg)), Loc(L) {}
+      Message(Msg), Loc(L) {}
 
-  virtual ~CXDiagnosticCustomNoteImpl() {
-    clang_disposeString(Message);
-  }
+  virtual ~CXDiagnosticCustomNoteImpl() {}
   
   CXDiagnosticSeverity getSeverity() const {
     return CXDiagnostic_Note;
@@ -64,7 +62,7 @@ public:
   }
   
   CXString getSpelling() const {
-    return Message;
+    return createCXString(StringRef(Message), false);
   }
   
   CXString getDiagnosticOption(CXString *Disable) const {
