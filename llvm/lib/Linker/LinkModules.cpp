@@ -991,16 +991,16 @@ categorizeModuleFlagNodes(const NamedMDNode *ModFlags,
       MDNode *&ErrNode = ErrorNode[ID];
       if (!ErrNode) ErrNode = Op;
       if (ErrNode->getOperand(2) != Val)
-        HasErr = emitError("Linking module flags '" + ID->getString() +
-                           "': IDs have conflicting values!");
+        HasErr = emitError("linking module flags '" + ID->getString() +
+                           "': IDs have conflicting values");
       break;
     }
     case Module::Warning: {
       MDNode *&WarnNode = WarningNode[ID];
       if (!WarnNode) WarnNode = Op;
       if (WarnNode->getOperand(2) != Val)
-        errs() << "WARNING: Linking module flags '" << ID->getString()
-               << "': IDs have conflicting values!";
+        errs() << "WARNING: linking module flags '" << ID->getString()
+               << "': IDs have conflicting values";
       break;
     }
     case Module::Require:  RequireNodes[ID].insert(Op);     break;
@@ -1008,8 +1008,8 @@ categorizeModuleFlagNodes(const NamedMDNode *ModFlags,
       MDNode *&OvrNode = OverrideNode[ID];
       if (!OvrNode) OvrNode = Op;
       if (OvrNode->getOperand(2) != Val)
-        HasErr = emitError("Linking module flags '" + ID->getString() +
-                           "': IDs have conflicting override values!");
+        HasErr = emitError("linking module flags '" + ID->getString() +
+                           "': IDs have conflicting override values");
       break;
     }
     }
@@ -1058,7 +1058,7 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
          I = SeenIDs.begin(), E = SeenIDs.end(); I != E; ++I) {
     MDString *ID = *I;
     if (ErrorNode[ID] && WarningNode[ID])
-      HasErr = emitError("Linking module flags '" + ID->getString() +
+      HasErr = emitError("linking module flags '" + ID->getString() +
                          "': IDs have conflicting behaviors");
   }
 
@@ -1118,8 +1118,8 @@ bool ModuleLinker::linkModuleFlagsMetadata() {
       }
 
       if (!HasValue)
-        HasErr = emitError("Linking module flags '" + ReqID->getString() +
-                           "': does not have the required value!");
+        HasErr = emitError("linking module flags '" + ReqID->getString() +
+                           "': does not have the required value");
     }
   }
 
