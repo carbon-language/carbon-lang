@@ -534,10 +534,6 @@ static bool hasTrivialCopyOrMoveConstructor(const CXXRecordDecl *Record,
                   Record->hasTrivialCopyConstructor();
 }
 
-static void EmitInitializerForField(CodeGenFunction &CGF, FieldDecl *Field,
-                                    LValue LHS, Expr *Init,
-                                    ArrayRef<VarDecl *> ArrayIndexes);
-
 static void EmitMemberInitializer(CodeGenFunction &CGF,
                                   const CXXRecordDecl *ClassDecl,
                                   CXXCtorInitializer *MemberInit,
@@ -594,54 +590,52 @@ static void EmitMemberInitializer(CodeGenFunction &CGF,
   ArrayRef<VarDecl *> ArrayIndexes;
   if (MemberInit->getNumArrayIndices())
     ArrayIndexes = MemberInit->getArrayIndexes();
-  EmitInitializerForField(CGF, Field, LHS, MemberInit->getInit(), ArrayIndexes);
+  CGF.EmitInitializerForField(Field, LHS, MemberInit->getInit(), ArrayIndexes);
 }
 
-static void EmitInitializerForField(CodeGenFunction &CGF, FieldDecl *Field,
-                                    LValue LHS, Expr *Init,
-                                    ArrayRef<VarDecl *> ArrayIndexes) {
+void CodeGenFunction::EmitInitializerForField(FieldDecl *Field,
+                                              LValue LHS, Expr *Init,
+                                             ArrayRef<VarDecl *> ArrayIndexes) {
   QualType FieldType = Field->getType();
-  if (!CGF.hasAggregateLLVMType(FieldType)) {
+  if (!hasAggregateLLVMType(FieldType)) {
     if (LHS.isSimple()) {
-      CGF.EmitExprAsInit(Init, Field, LHS, false);
+      EmitExprAsInit(Init, Field, LHS, false);
     } else {
-      RValue RHS = RValue::get(CGF.EmitScalarExpr(Init));
-      CGF.EmitStoreThroughLValue(RHS, LHS);
+      RValue RHS = RValue::get(EmitScalarExpr(Init));
+      EmitStoreThroughLValue(RHS, LHS);
     }
   } else if (FieldType->isAnyComplexType()) {
-    CGF.EmitComplexExprIntoAddr(Init, LHS.getAddress(),
-                                LHS.isVolatileQualified());
+    EmitComplexExprIntoAddr(Init, LHS.getAddress(), LHS.isVolatileQualified());
   } else {
     llvm::Value *ArrayIndexVar = 0;
     if (ArrayIndexes.size()) {
-      llvm::Type *SizeTy
-        = CGF.ConvertType(CGF.getContext().getSizeType());
+      llvm::Type *SizeTy = ConvertType(getContext().getSizeType());
       
       // The LHS is a pointer to the first object we'll be constructing, as
       // a flat array.
-      QualType BaseElementTy = CGF.getContext().getBaseElementType(FieldType);
-      llvm::Type *BasePtr = CGF.ConvertType(BaseElementTy);
+      QualType BaseElementTy = getContext().getBaseElementType(FieldType);
+      llvm::Type *BasePtr = ConvertType(BaseElementTy);
       BasePtr = llvm::PointerType::getUnqual(BasePtr);
-      llvm::Value *BaseAddrPtr = CGF.Builder.CreateBitCast(LHS.getAddress(), 
-                                                           BasePtr);
-      LHS = CGF.MakeAddrLValue(BaseAddrPtr, BaseElementTy);
+      llvm::Value *BaseAddrPtr = Builder.CreateBitCast(LHS.getAddress(), 
+                                                       BasePtr);
+      LHS = MakeAddrLValue(BaseAddrPtr, BaseElementTy);
       
       // Create an array index that will be used to walk over all of the
       // objects we're constructing.
-      ArrayIndexVar = CGF.CreateTempAlloca(SizeTy, "object.index");
+      ArrayIndexVar = CreateTempAlloca(SizeTy, "object.index");
       llvm::Value *Zero = llvm::Constant::getNullValue(SizeTy);
-      CGF.Builder.CreateStore(Zero, ArrayIndexVar);
+      Builder.CreateStore(Zero, ArrayIndexVar);
       
       
       // Emit the block variables for the array indices, if any.
       for (unsigned I = 0, N = ArrayIndexes.size(); I != N; ++I)
-        CGF.EmitAutoVarDecl(*ArrayIndexes[I]);
+        EmitAutoVarDecl(*ArrayIndexes[I]);
     }
     
-    EmitAggMemberInitializer(CGF, LHS, Init, ArrayIndexVar, FieldType,
+    EmitAggMemberInitializer(*this, LHS, Init, ArrayIndexVar, FieldType,
                              ArrayIndexes, 0);
     
-    if (!CGF.CGM.getLangOptions().Exceptions)
+    if (!CGM.getLangOptions().Exceptions)
       return;
 
     // FIXME: If we have an array of classes w/ non-trivial destructors, 
@@ -653,8 +647,8 @@ static void EmitInitializerForField(CodeGenFunction &CGF, FieldDecl *Field,
     
     CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
     if (!RD->hasTrivialDestructor())
-      CGF.EHStack.pushCleanup<CallMemberDtor>(EHCleanup, LHS.getAddress(),
-                                              RD->getDestructor());
+      EHStack.pushCleanup<CallMemberDtor>(EHCleanup, LHS.getAddress(),
+                                          RD->getDestructor());
   }
 }
 
