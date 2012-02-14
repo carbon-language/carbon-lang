@@ -210,37 +210,34 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
                     SectionList *memory_section_list = memory_object_file->GetSectionList ();
                     if (memory_section_list && ondisk_section_list)
                     {
-                        const uint32_t num_sections = ondisk_section_list->GetSize();
+                        const uint32_t num_ondisk_sections = ondisk_section_list->GetSize();
                         // There may be CTF sections in the memory image so we can't
                         // always just compare the number of sections (which are actually
                         // segments in mach-o parlance)
                         uint32_t sect_idx = 0;
-                        const Section *memory_section;
-                        const Section *ondisk_section;
-                        // Always use the number of sections from the on disk file
-                        // in case there are extra sections added to the memory image.
-                        for (sect_idx=0; sect_idx<num_sections; ++sect_idx)
+                        
+                        
+                        // We now iterate through all sections in the file module 
+                        // and look to see if the memory module has a load address
+                        // for that section.
+                        uint32_t num_sections_loaded = 0;
+                        for (sect_idx=0; sect_idx<num_ondisk_sections; ++sect_idx)
                         {
-                            memory_section = memory_section_list->GetSectionAtIndex(sect_idx).get();
-                            ondisk_section = ondisk_section_list->GetSectionAtIndex(sect_idx).get();
-                            if (memory_section->GetName() != ondisk_section->GetName())
+                            const Section *ondisk_section = ondisk_section_list->GetSectionAtIndex(sect_idx).get();
+                            if (ondisk_section)
                             {
-                                // Section count was the same, but the sections themselves do not match
-                                module_sp.reset();
-                                break;
+                                const Section *memory_section = memory_section_list->FindSectionByName(ondisk_section->GetName()).get();
+                                if (memory_section)
+                                {
+                                    target.GetSectionLoadList().SetSectionLoadAddress (ondisk_section, memory_section->GetFileAddress());
+                                    ++num_sections_loaded;
+                                }
                             }
                         }
-                        if (module_sp)
-                        {
-                            for (sect_idx=0; sect_idx<num_sections; ++sect_idx)
-                            {
-                                memory_section = memory_section_list->GetSectionAtIndex(sect_idx).get();
-                                ondisk_section = ondisk_section_list->GetSectionAtIndex(sect_idx).get();
-                                target.GetSectionLoadList().SetSectionLoadAddress (ondisk_section, memory_section->GetFileAddress());
-                            }
-                            if (num_sections > 0)
-                                load_process_stop_id = process->GetStopID();
-                        }
+                        if (num_sections_loaded > 0)
+                            load_process_stop_id = process->GetStopID();
+                        else
+                            module_sp.reset(); // No sections were loaded
                     }
                     else
                         module_sp.reset(); // One or both section lists
@@ -569,14 +566,14 @@ DynamicLoaderDarwinKernel::ReadKextSummaries (const Address &kext_summary_addr,
             {
                 image_infos[i].reference_list = 0;
             }
-            printf ("[%3u] %*.*s: address=0x%16.16llx, size=0x%16.16llx, version=0x%16.16llx, load_tag=0x%8.8x, flags=0x%8.8x\n", 
-                    i,
-                    KERNEL_MODULE_MAX_NAME, KERNEL_MODULE_MAX_NAME,  (char *)name_data, 
-                    image_infos[i].address, 
-                    image_infos[i].size,
-                    image_infos[i].version,
-                    image_infos[i].load_tag,
-                    image_infos[i].flags);
+//            printf ("[%3u] %*.*s: address=0x%16.16llx, size=0x%16.16llx, version=0x%16.16llx, load_tag=0x%8.8x, flags=0x%8.8x\n", 
+//                    i,
+//                    KERNEL_MODULE_MAX_NAME, KERNEL_MODULE_MAX_NAME,  (char *)name_data, 
+//                    image_infos[i].address, 
+//                    image_infos[i].size,
+//                    image_infos[i].version,
+//                    image_infos[i].load_tag,
+//                    image_infos[i].flags);
         }
         if (i < image_infos.size())
             image_infos.resize(i);
