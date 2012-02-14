@@ -4274,6 +4274,7 @@ void ASTWriter::AddCXXCtorInitializers(
 void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Record) {
   assert(D->DefinitionData);
   struct CXXRecordDecl::DefinitionData &Data = *D->DefinitionData;
+  Record.push_back(Data.IsLambda);
   Record.push_back(Data.UserDeclaredConstructor);
   Record.push_back(Data.UserDeclaredCopyConstructor);
   Record.push_back(Data.UserDeclaredMoveConstructor);
@@ -4325,6 +4326,24 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
   AddUnresolvedSet(Data.VisibleConversions, Record);
   // Data.Definition is the owning decl, no need to write it. 
   AddDeclRef(Data.FirstFriend, Record);
+  
+  // Add lambda-specific data.
+  if (Data.IsLambda) {
+    CXXRecordDecl::LambdaDefinitionData &Lambda = D->getLambdaData();
+    Record.push_back(Lambda.NumCaptures);
+    Record.push_back(Lambda.NumExplicitCaptures);
+    for (unsigned I = 0, N = Lambda.NumCaptures; I != N; ++I) {
+      LambdaExpr::Capture &Capture = Lambda.Captures[I];
+      AddSourceLocation(Capture.getLocation(), Record);
+      Record.push_back(Capture.isImplicit());
+      Record.push_back(Capture.getCaptureKind()); // FIXME: stable!
+      VarDecl *Var = Capture.capturesVariable()? Capture.getCapturedVar() : 0;
+      AddDeclRef(Var, Record);
+      AddSourceLocation(Capture.isPackExpansion()? Capture.getEllipsisLoc()
+                                                 : SourceLocation(), 
+                        Record);
+    }
+  }
 }
 
 void ASTWriter::ReaderInitialized(ASTReader *Reader) {

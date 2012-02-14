@@ -1168,6 +1168,14 @@ private:
              ArrayRef<unsigned> ArrayIndexStarts,
              SourceLocation ClosingBrace);
 
+  /// \brief Construct an empty lambda expression.
+  LambdaExpr(EmptyShell Empty, unsigned NumCaptures, bool HasArrayIndexVars)
+    : Expr(LambdaExprClass, Empty),
+      NumCaptures(NumCaptures), CaptureDefault(LCD_None), ExplicitParams(false),
+      ExplicitResultType(false), HasArrayIndexVars(true) { 
+    getStoredStmts()[NumCaptures] = 0;
+  }
+  
   Stmt **getStoredStmts() const {
     return reinterpret_cast<Stmt **>(const_cast<LambdaExpr *>(this) + 1);
   }
@@ -1198,6 +1206,11 @@ public:
                             ArrayRef<unsigned> ArrayIndexStarts,
                             SourceLocation ClosingBrace);
 
+  /// \brief Construct a new lambda expression that will be deserialized from
+  /// an external source.
+  static LambdaExpr *CreateDeserialized(ASTContext &C, unsigned NumCaptures,
+                                        unsigned NumArrayIndexVars);
+  
   /// \brief Determine the default capture kind for this lambda.
   LambdaCaptureDefault getCaptureDefault() const {
     return static_cast<LambdaCaptureDefault>(CaptureDefault);
@@ -1271,9 +1284,7 @@ public:
   CXXMethodDecl *getCallOperator() const;
 
   /// \brief Retrieve the body of the lambda.
-  CompoundStmt *getBody() const {
-    return reinterpret_cast<CompoundStmt *>(getStoredStmts()[NumCaptures]);
-  }
+  CompoundStmt *getBody() const;
 
   /// \brief Determine whether the lambda is mutable, meaning that any
   /// captures values can be modified.

@@ -832,6 +832,16 @@ LambdaExpr *LambdaExpr::Create(ASTContext &Context,
                               ClosingBrace);
 }
 
+LambdaExpr *LambdaExpr::CreateDeserialized(ASTContext &C, unsigned NumCaptures,
+                                           unsigned NumArrayIndexVars) {
+  unsigned Size = sizeof(LambdaExpr) + sizeof(Stmt *) * (NumCaptures + 1);
+  if (NumArrayIndexVars)
+    Size += sizeof(VarDecl) * NumArrayIndexVars
+          + sizeof(unsigned) * (NumCaptures + 1);
+  void *Mem = C.Allocate(Size);
+  return new (Mem) LambdaExpr(EmptyShell(), NumCaptures, NumArrayIndexVars > 0);
+}
+
 LambdaExpr::capture_iterator LambdaExpr::capture_begin() const {
   return getLambdaClass()->getLambdaData().Captures;
 }
@@ -884,6 +894,13 @@ CXXMethodDecl *LambdaExpr::getCallOperator() const {
   CXXMethodDecl *Result = cast<CXXMethodDecl>(*Calls.first++);
   assert(Calls.first == Calls.second && "More than lambda one call operator?");
   return Result;
+}
+
+CompoundStmt *LambdaExpr::getBody() const {
+  if (!getStoredStmts()[NumCaptures])
+    getStoredStmts()[NumCaptures] = getCallOperator()->getBody();
+    
+  return reinterpret_cast<CompoundStmt *>(getStoredStmts()[NumCaptures]);
 }
 
 bool LambdaExpr::isMutable() const {

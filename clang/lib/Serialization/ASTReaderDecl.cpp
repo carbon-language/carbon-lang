@@ -1050,6 +1050,7 @@ void ASTDeclReader::VisitUnresolvedUsingTypenameDecl(
 void ASTDeclReader::ReadCXXDefinitionData(
                                    struct CXXRecordDecl::DefinitionData &Data,
                                    const RecordData &Record, unsigned &Idx) {
+  // Note: the caller has deserialized the IsLambda bit already.
   Data.UserDeclaredConstructor = Record[Idx++];
   Data.UserDeclaredCopyConstructor = Record[Idx++];
   Data.UserDeclaredMoveConstructor = Record[Idx++];
@@ -1097,6 +1098,25 @@ void ASTDeclReader::ReadCXXDefinitionData(
   Reader.ReadUnresolvedSet(F, Data.VisibleConversions, Record, Idx);
   assert(Data.Definition && "Data.Definition should be already set!");
   Data.FirstFriend = ReadDeclAs<FriendDecl>(Record, Idx);
+  
+  if (Data.IsLambda) {
+    typedef LambdaExpr::Capture Capture;
+    CXXRecordDecl::LambdaDefinitionData &Lambda
+      = static_cast<CXXRecordDecl::LambdaDefinitionData &>(Data);
+    Lambda.NumCaptures = Record[Idx++];
+    Lambda.NumExplicitCaptures = Record[Idx++];
+    Lambda.Captures 
+      = (Capture*)Reader.Context.Allocate(sizeof(Capture)*Lambda.NumCaptures);
+    Capture *ToCapture = Lambda.Captures;
+    for (unsigned I = 0, N = Lambda.NumCaptures; I != N; ++I) {
+      SourceLocation Loc = ReadSourceLocation(Record, Idx);
+      bool IsImplicit = Record[Idx++];
+      LambdaCaptureKind Kind = static_cast<LambdaCaptureKind>(Record[Idx++]);
+      VarDecl *Var = ReadDeclAs<VarDecl>(Record, Idx);
+      SourceLocation EllipsisLoc = ReadSourceLocation(Record, Idx);
+      *ToCapture++ = Capture(Loc, IsImplicit, Kind, Var, EllipsisLoc);
+    }
+  }
 }
 
 void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
@@ -1104,7 +1124,13 @@ void ASTDeclReader::VisitCXXRecordDecl(CXXRecordDecl *D) {
 
   ASTContext &C = Reader.getContext();
   if (Record[Idx++]) {
-    D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(D);
+    // Determine whether this is a lambda closure type, so that we can
+    // allocate the appropriate DefinitionData structure.
+    bool IsLambda = Record[Idx++];
+    if (IsLambda)
+      D->DefinitionData = new (C) CXXRecordDecl::LambdaDefinitionData(D);
+    else
+      D->DefinitionData = new (C) struct CXXRecordDecl::DefinitionData(D);
     
     // Propagate the DefinitionData pointer to the canonical declaration, so
     // that all other deserialized declarations will see it.
