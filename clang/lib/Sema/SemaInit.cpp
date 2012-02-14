@@ -2699,9 +2699,14 @@ static bool TryListConstructionSpecialCases(Sema &S,
                                             QualType DestType,
                                             InitializationSequence &Sequence) {
   // C++11 [dcl.init.list]p3:
-  //   List-initialization of an object of type T is defined as follows:
-  //   - If the initializer list has no elements and T is a class type with
-  //     a default constructor, the object is value-initialized.
+  //   List-initialization of an object or reference of type T is defined as
+  //   follows:
+  //   - If T is an aggregate, aggregate initialization is performed.
+  if (DestType->isAggregateType())
+    return false;
+
+  //   - Otherwise, if the initializer list has no elements and T is a class
+  //     type with a default constructor, the object is value-initialized.
   if (List->getNumInits() == 0) {
     if (CXXConstructorDecl *DefaultConstructor =
             S.LookupDefaultConstructor(DestRecordDecl)) {
@@ -3549,31 +3554,42 @@ static void TryValueInitialization(Sema &S,
                                    const InitializedEntity &Entity,
                                    const InitializationKind &Kind,
                                    InitializationSequence &Sequence) {
-  // C++ [dcl.init]p5:
+  // C++98 [dcl.init]p5, C++11 [dcl.init]p7:
   //
   //   To value-initialize an object of type T means:
   QualType T = Entity.getType();
 
   //     -- if T is an array type, then each element is value-initialized;
-  while (const ArrayType *AT = S.Context.getAsArrayType(T))
-    T = AT->getElementType();
+  T = S.Context.getBaseElementType(T);
 
   if (const RecordType *RT = T->getAs<RecordType>()) {
     if (CXXRecordDecl *ClassDecl = dyn_cast<CXXRecordDecl>(RT->getDecl())) {
+      // C++98:
       // -- if T is a class type (clause 9) with a user-declared
       //    constructor (12.1), then the default constructor for T is
       //    called (and the initialization is ill-formed if T has no
       //    accessible default constructor);
-      //
-      // FIXME: we really want to refer to a single subobject of the array,
-      // but Entity doesn't have a way to capture that (yet).
-      if (ClassDecl->hasUserDeclaredConstructor())
-        return TryConstructorInitialization(S, Entity, Kind, 0, 0, T, Sequence);
+      if (!S.getLangOptions().CPlusPlus0x) {
+        if (ClassDecl->hasUserDeclaredConstructor())
+          // FIXME: we really want to refer to a single subobject of the array,
+          // but Entity doesn't have a way to capture that (yet).
+          return TryConstructorInitialization(S, Entity, Kind, 0, 0,
+                                              T, Sequence);
+      } else {
+        // C++11:
+        // -- if T is a class type (clause 9) with either no default constructor
+        //    (12.1 [class.ctor]) or a default constructor that is user-provided
+        //    or deleted, then the object is default-initialized;
+        CXXConstructorDecl *CD = S.LookupDefaultConstructor(ClassDecl);
+        if (!CD || !CD->getCanonicalDecl()->isDefaulted() || CD->isDeleted())
+          return TryConstructorInitialization(S, Entity, Kind, 0, 0,
+                                              T, Sequence);
+      }
 
-      // -- if T is a (possibly cv-qualified) non-union class type
-      //    without a user-provided constructor, then the object is
-      //    zero-initialized and, if T's implicitly-declared default
-      //    constructor is non-trivial, that constructor is called.
+      // -- if T is a (possibly cv-qualified) non-union class type without a
+      //    user-provided or deleted default constructor, then the object is
+      //    zero-initialized and, if T has a non-trivial default constructor,
+      //    default-initialized;
       if ((ClassDecl->getTagKind() == TTK_Class ||
            ClassDecl->getTagKind() == TTK_Struct)) {
         Sequence.AddZeroInitializationStep(Entity.getType());
