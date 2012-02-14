@@ -28,12 +28,10 @@ inline int sum_array(int n) {
 }
 #else
 
-// CHECK-PRINT: float add_slowly
+// CHECK-PRINT: T add_slowly
 // CHECK-PRINT: return [=, &y]
 template float add_slowly(const float&, const float&);
 
-// CHECK-PRINT: int add_slowly
-// CHECK-PRINT: return [=, &y]
 int add(int x, int y) {
   return add_int_slowly_twice(x, y) + sum_array(4);
 }
