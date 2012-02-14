@@ -680,90 +680,85 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
                                                  ExplodedNodeSet &Dst) {
   // Handle ++ and -- (both pre- and post-increment).
   assert (U->isIncrementDecrementOp());
-  ExplodedNodeSet Tmp;
   const Expr *Ex = U->getSubExpr()->IgnoreParens();
-  Visit(Ex, Pred, Tmp);
   
-  for (ExplodedNodeSet::iterator I = Tmp.begin(), E = Tmp.end(); I!=E; ++I) {
-    const LocationContext *LCtx = (*I)->getLocationContext();
-    ProgramStateRef state = (*I)->getState();
-    SVal loc = state->getSVal(Ex, LCtx);
+  const LocationContext *LCtx = Pred->getLocationContext();
+  ProgramStateRef state = Pred->getState();
+  SVal loc = state->getSVal(Ex, LCtx);
+  
+  // Perform a load.
+  ExplodedNodeSet Tmp;
+  evalLoad(Tmp, Ex, Pred, state, loc);
+  
+  ExplodedNodeSet Dst2;
+  StmtNodeBuilder Bldr(Tmp, Dst2, *currentBuilderContext);
+  for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end();I!=E;++I) {
     
-    // Perform a load.
-    ExplodedNodeSet Tmp2;
-    evalLoad(Tmp2, Ex, *I, state, loc);
+    state = (*I)->getState();
+    assert(LCtx == (*I)->getLocationContext());
+    SVal V2_untested = state->getSVal(Ex, LCtx);
     
-    ExplodedNodeSet Dst2;
-    StmtNodeBuilder Bldr(Tmp2, Dst2, *currentBuilderContext);
-    for (ExplodedNodeSet::iterator I2=Tmp2.begin(), E2=Tmp2.end();I2!=E2;++I2) {
+    // Propagate unknown and undefined values.
+    if (V2_untested.isUnknownOrUndef()) {
+      Bldr.generateNode(U, *I, state->BindExpr(U, LCtx, V2_untested));
+      continue;
+    }
+    DefinedSVal V2 = cast<DefinedSVal>(V2_untested);
+    
+    // Handle all other values.
+    BinaryOperator::Opcode Op = U->isIncrementOp() ? BO_Add : BO_Sub;
+    
+    // If the UnaryOperator has non-location type, use its type to create the
+    // constant value. If the UnaryOperator has location type, create the
+    // constant with int type and pointer width.
+    SVal RHS;
+    
+    if (U->getType()->isAnyPointerType())
+      RHS = svalBuilder.makeArrayIndex(1);
+    else
+      RHS = svalBuilder.makeIntVal(1, U->getType());
+    
+    SVal Result = evalBinOp(state, Op, V2, RHS, U->getType());
+    
+    // Conjure a new symbol if necessary to recover precision.
+    if (Result.isUnknown()){
+      DefinedOrUnknownSVal SymVal =
+      svalBuilder.getConjuredSymbolVal(NULL, Ex,
+                               currentBuilderContext->getCurrentBlockCount());
+      Result = SymVal;
       
-      state = (*I2)->getState();
-      assert(LCtx == (*I2)->getLocationContext());
-      SVal V2_untested = state->getSVal(Ex, LCtx);
-      
-      // Propagate unknown and undefined values.
-      if (V2_untested.isUnknownOrUndef()) {
-        Bldr.generateNode(U, *I2, state->BindExpr(U, LCtx, V2_untested));
-        continue;
-      }
-      DefinedSVal V2 = cast<DefinedSVal>(V2_untested);
-      
-      // Handle all other values.
-      BinaryOperator::Opcode Op = U->isIncrementOp() ? BO_Add
-      : BO_Sub;
-      
-      // If the UnaryOperator has non-location type, use its type to create the
-      // constant value. If the UnaryOperator has location type, create the
-      // constant with int type and pointer width.
-      SVal RHS;
-      
-      if (U->getType()->isAnyPointerType())
-        RHS = svalBuilder.makeArrayIndex(1);
-      else
-        RHS = svalBuilder.makeIntVal(1, U->getType());
-      
-      SVal Result = evalBinOp(state, Op, V2, RHS, U->getType());
-      
-      // Conjure a new symbol if necessary to recover precision.
-      if (Result.isUnknown()){
-        DefinedOrUnknownSVal SymVal =
-        svalBuilder.getConjuredSymbolVal(NULL, Ex,
-                                 currentBuilderContext->getCurrentBlockCount());
-        Result = SymVal;
+      // If the value is a location, ++/-- should always preserve
+      // non-nullness.  Check if the original value was non-null, and if so
+      // propagate that constraint.
+      if (Loc::isLocType(U->getType())) {
+        DefinedOrUnknownSVal Constraint =
+        svalBuilder.evalEQ(state, V2,svalBuilder.makeZeroVal(U->getType()));
         
-        // If the value is a location, ++/-- should always preserve
-        // non-nullness.  Check if the original value was non-null, and if so
-        // propagate that constraint.
-        if (Loc::isLocType(U->getType())) {
-          DefinedOrUnknownSVal Constraint =
-          svalBuilder.evalEQ(state, V2,svalBuilder.makeZeroVal(U->getType()));
+        if (!state->assume(Constraint, true)) {
+          // It isn't feasible for the original value to be null.
+          // Propagate this constraint.
+          Constraint = svalBuilder.evalEQ(state, SymVal,
+                                       svalBuilder.makeZeroVal(U->getType()));
           
-          if (!state->assume(Constraint, true)) {
-            // It isn't feasible for the original value to be null.
-            // Propagate this constraint.
-            Constraint = svalBuilder.evalEQ(state, SymVal,
-                                         svalBuilder.makeZeroVal(U->getType()));
-            
-            
-            state = state->assume(Constraint, false);
-            assert(state);
-          }
+          
+          state = state->assume(Constraint, false);
+          assert(state);
         }
       }
-      
-      // Since the lvalue-to-rvalue conversion is explicit in the AST,
-      // we bind an l-value if the operator is prefix and an lvalue (in C++).
-      if (U->isLValue())
-        state = state->BindExpr(U, LCtx, loc);
-      else
-        state = state->BindExpr(U, LCtx, U->isPostfix() ? V2 : Result);
-      
-      // Perform the store.
-      Bldr.takeNodes(*I2);
-      ExplodedNodeSet Dst4;
-      evalStore(Dst4, NULL, U, *I2, state, loc, Result);
-      Bldr.addNodes(Dst4);
     }
-    Dst.insert(Dst2);
+    
+    // Since the lvalue-to-rvalue conversion is explicit in the AST,
+    // we bind an l-value if the operator is prefix and an lvalue (in C++).
+    if (U->isLValue())
+      state = state->BindExpr(U, LCtx, loc);
+    else
+      state = state->BindExpr(U, LCtx, U->isPostfix() ? V2 : Result);
+    
+    // Perform the store.
+    Bldr.takeNodes(*I);
+    ExplodedNodeSet Dst3;
+    evalStore(Dst3, NULL, U, *I, state, loc, Result);
+    Bldr.addNodes(Dst3);
   }
+  Dst.insert(Dst2);
 }
