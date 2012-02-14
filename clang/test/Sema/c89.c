@@ -89,3 +89,5 @@ extern int printf(__const char *__restrict __format, ...);
 void test16() {
   printg("Hello, world!\n"); /* expected-warning {{implicit declaration of function 'printg'}} */
 }
+
+void main() {} /* expected-error {{'main' must return 'int'}} */

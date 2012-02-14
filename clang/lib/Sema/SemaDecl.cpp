@@ -5794,9 +5794,23 @@ void Sema::CheckMain(FunctionDecl* FD, const DeclSpec& DS) {
 
   QualType T = FD->getType();
   assert(T->isFunctionType() && "function decl is not of function type");
-  const FunctionType* FT = T->getAs<FunctionType>();
+  const FunctionType* FT = T->castAs<FunctionType>();
 
-  if (!Context.hasSameUnqualifiedType(FT->getResultType(), Context.IntTy)) {
+  // All the standards say that main() should should return 'int'.
+  if (Context.hasSameUnqualifiedType(FT->getResultType(), Context.IntTy)) {
+    // In C and C++, main magically returns 0 if you fall off the end;
+    // set the flag which tells us that.
+    // This is C++ [basic.start.main]p5 and C99 5.1.2.2.3.
+    FD->setHasImplicitReturnZero(true);
+
+  // In C with GNU extensions we allow main() to have non-integer return
+  // type, but we should warn about the extension, and we disable the
+  // implicit-return-zero rule.
+  } else if (getLangOptions().GNUMode && !getLangOptions().CPlusPlus) {
+    Diag(FD->getTypeSpecStartLoc(), diag::ext_main_returns_nonint);
+
+  // Otherwise, this is just a flat-out error.
+  } else {
     Diag(FD->getTypeSpecStartLoc(), diag::err_main_returns_nonint);
     FD->setInvalidDecl(true);
   }
@@ -7259,16 +7273,11 @@ Decl *Sema::ActOnFinishFunctionBody(Decl *dcl, Stmt *Body,
 
   if (FD) {
     FD->setBody(Body);
-    if (FD->isMain()) {
-      // C and C++ allow for main to automagically return 0.
-      // Implements C++ [basic.start.main]p5 and C99 5.1.2.2.3.
-      FD->setHasImplicitReturnZero(true);
+
+    // If the function implicitly returns zero (like 'main') or is naked,
+    // don't complain about missing return statements.
+    if (FD->hasImplicitReturnZero() || FD->hasAttr<NakedAttr>())
       WP.disableCheckFallThrough();
-    } else if (FD->hasAttr<NakedAttr>()) {
-      // If the function is marked 'naked', don't complain about missing return
-      // statements.
-      WP.disableCheckFallThrough();
-    }
 
     // MSVC permits the use of pure specifier (=0) on function definition,
     // defined at class scope, warn about this non standard construct.

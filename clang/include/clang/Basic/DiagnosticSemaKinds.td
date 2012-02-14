@@ -346,6 +346,8 @@ def err_constexpr_main : Error<
   "'main' is not allowed to be declared constexpr">;
 def err_main_template_decl : Error<"'main' cannot be a template">;
 def err_main_returns_nonint : Error<"'main' must return 'int'">;
+def ext_main_returns_nonint : ExtWarn<"return type of 'main' is not 'int'">,
+    InGroup<MainReturnType>;
 def err_main_surplus_args : Error<"too many parameters (%0) for 'main': "
     "must be 0, 2, or 3">;
 def warn_main_one_arg : Warning<"only one parameter on 'main' declaration">,
