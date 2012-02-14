@@ -107,6 +107,20 @@ AppleObjCRuntime::GetObjectDescription (Stream &strm, Value &value, ExecutionCon
     Value ret;
     ret.SetContext(Value::eContextTypeClangType, return_qualtype);
     
+    if (exe_ctx.GetFramePtr() == NULL)
+    {
+        Thread *thread = exe_ctx.GetThreadPtr();
+        if (thread == NULL)
+        {
+            exe_ctx.SetThreadSP(process->GetThreadList().GetSelectedThread());
+            thread = exe_ctx.GetThreadPtr();
+        }
+        if (thread)
+        {
+            exe_ctx.SetFrameSP(thread->GetSelectedFrame());
+        }
+    }
+    
     // Now we're ready to call the function:
     ClangFunction func (*exe_ctx.GetBestExecutionContextScope(),
                         ast_context, 
