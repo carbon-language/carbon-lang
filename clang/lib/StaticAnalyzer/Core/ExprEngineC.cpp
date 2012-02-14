@@ -606,23 +606,18 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
     case UO_Deref:
     case UO_AddrOf:
     case UO_Extension: {
-      
+      // FIXME: We can probably just have some magic in Environment::getSVal()
+      // that propagates values, instead of creating a new node here.
+      //
       // Unary "+" is a no-op, similar to a parentheses.  We still have places
       // where it may be a block-level expression, so we need to
       // generate an extra node that just propagates the value of the
-      // subexpression.
-      
+      // subexpression.      
       const Expr *Ex = U->getSubExpr()->IgnoreParens();
-      ExplodedNodeSet Tmp;
-      Visit(Ex, Pred, Tmp);
-      
-      for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-        ProgramStateRef state = (*I)->getState();
-        const LocationContext *LCtx = (*I)->getLocationContext();
-        Bldr.generateNode(U, *I, state->BindExpr(U, LCtx,
+      ProgramStateRef state = Pred->getState();
+      const LocationContext *LCtx = Pred->getLocationContext();
+      Bldr.generateNode(U, Pred, state->BindExpr(U, LCtx,
                                                  state->getSVal(Ex, LCtx)));
-      }
-      
       break;
     }
       
