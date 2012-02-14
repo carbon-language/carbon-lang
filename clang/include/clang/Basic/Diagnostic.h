@@ -1057,11 +1057,20 @@ public:
   range_iterator range_begin() const { return Ranges.begin(); }
   range_iterator range_end() const { return Ranges.end(); }
   unsigned range_size() const { return Ranges.size(); }
+  
+  ArrayRef<CharSourceRange> getRanges() const {
+    return llvm::makeArrayRef(Ranges);
+  }
+
 
   typedef std::vector<FixItHint>::const_iterator fixit_iterator;
   fixit_iterator fixit_begin() const { return FixIts.begin(); }
   fixit_iterator fixit_end() const { return FixIts.end(); }
   unsigned fixit_size() const { return FixIts.size(); }
+  
+  ArrayRef<FixItHint> getFixIts() const {
+    return llvm::makeArrayRef(FixIts);
+  }
 };
 
 /// DiagnosticConsumer - This is an abstract interface implemented by clients of
