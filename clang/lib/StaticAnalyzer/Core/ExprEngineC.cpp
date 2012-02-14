@@ -626,60 +626,49 @@ void ExprEngine::VisitUnaryOperator(const UnaryOperator* U,
     case UO_Not: {
       assert (!U->isLValue());
       const Expr *Ex = U->getSubExpr()->IgnoreParens();
-      ExplodedNodeSet Tmp;
-      Visit(Ex, Pred, Tmp);
-      
-      for (ExplodedNodeSet::iterator I=Tmp.begin(), E=Tmp.end(); I!=E; ++I) {
-        ProgramStateRef state = (*I)->getState();
-        const LocationContext *LCtx = (*I)->getLocationContext();
+      ProgramStateRef state = Pred->getState();
+      const LocationContext *LCtx = Pred->getLocationContext();
         
-        // Get the value of the subexpression.
-        SVal V = state->getSVal(Ex, LCtx);
+      // Get the value of the subexpression.
+      SVal V = state->getSVal(Ex, LCtx);
         
-        if (V.isUnknownOrUndef()) {
-          Bldr.generateNode(U, *I, state->BindExpr(U, LCtx, V));
-          continue;
-        }
-        
-        switch (U->getOpcode()) {
-          default:
-            llvm_unreachable("Invalid Opcode.");
-            
-          case UO_Not:
-            // FIXME: Do we need to handle promotions?
-            state = state->BindExpr(U, LCtx, evalComplement(cast<NonLoc>(V)));
-            break;
-            
-          case UO_Minus:
-            // FIXME: Do we need to handle promotions?
-            state = state->BindExpr(U, LCtx, evalMinus(cast<NonLoc>(V)));
-            break;
-            
-          case UO_LNot:
-            
-            // C99 6.5.3.3: "The expression !E is equivalent to (0==E)."
-            //
-            //  Note: technically we do "E == 0", but this is the same in the
-            //    transfer functions as "0 == E".
-            SVal Result;
-            
-            if (isa<Loc>(V)) {
-              Loc X = svalBuilder.makeNull();
-              Result = evalBinOp(state, BO_EQ, cast<Loc>(V), X,
-                                 U->getType());
-            }
-            else {
-              nonloc::ConcreteInt X(getBasicVals().getValue(0, Ex->getType()));
-              Result = evalBinOp(state, BO_EQ, cast<NonLoc>(V), X,
-                                 U->getType());
-            }
-            
-            state = state->BindExpr(U, LCtx, Result);
-            
-            break;
-        }
-        Bldr.generateNode(U, *I, state);
+      if (V.isUnknownOrUndef()) {
+        Bldr.generateNode(U, Pred, state->BindExpr(U, LCtx, V));
+        break;
       }
+        
+      switch (U->getOpcode()) {
+        default:
+          llvm_unreachable("Invalid Opcode.");
+        case UO_Not:
+          // FIXME: Do we need to handle promotions?
+          state = state->BindExpr(U, LCtx, evalComplement(cast<NonLoc>(V)));
+          break;
+        case UO_Minus:
+          // FIXME: Do we need to handle promotions?
+          state = state->BindExpr(U, LCtx, evalMinus(cast<NonLoc>(V)));
+          break;
+        case UO_LNot:
+          // C99 6.5.3.3: "The expression !E is equivalent to (0==E)."
+          //
+          //  Note: technically we do "E == 0", but this is the same in the
+          //    transfer functions as "0 == E".
+          SVal Result;          
+          if (isa<Loc>(V)) {
+            Loc X = svalBuilder.makeNull();
+            Result = evalBinOp(state, BO_EQ, cast<Loc>(V), X,
+                               U->getType());
+          }
+          else {
+            nonloc::ConcreteInt X(getBasicVals().getValue(0, Ex->getType()));
+            Result = evalBinOp(state, BO_EQ, cast<NonLoc>(V), X,
+                               U->getType());
+          }
+          
+          state = state->BindExpr(U, LCtx, Result);          
+          break;
+      }
+      Bldr.generateNode(U, Pred, state);
       break;
     }
   }
