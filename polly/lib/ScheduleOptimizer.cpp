@@ -48,6 +48,11 @@ DisableTiling("polly-no-tiling",
               cl::location(polly::DisablePollyTiling), cl::init(false));
 
 static cl::opt<std::string>
+OptimizeDeps("polly-opt-optimize-only",
+             cl::desc("Only a certain kind of dependences (all/raw)"),
+             cl::Hidden, cl::init("all"));
+
+static cl::opt<std::string>
 SimplifyDeps("polly-opt-simplify-deps",
              cl::desc("Dependences should be simplified (yes/no)"),
              cl::Hidden, cl::init("yes"));
@@ -420,8 +425,22 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   // Build input data.
   int ValidityKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR
                       | Dependences::TYPE_WAW;
-  int ProximityKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR
-                       | Dependences::TYPE_WAW;
+  int ProximityKinds;
+
+  if (OptimizeDeps == "all")
+    ProximityKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR
+                     | Dependences::TYPE_WAW;
+  else if (OptimizeDeps == "raw")
+    ProximityKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR
+                     | Dependences::TYPE_WAW;
+  else {
+    errs() << "Do not know how to optimize for '" << OptimizeDeps << "'"
+        << " Falling back to optimizing all dependences.\n";
+    ProximityKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR
+                     | Dependences::TYPE_WAW;
+
+  }
+
 
   isl_union_map *Validity = D->getDependences(ValidityKinds);
   isl_union_map *Proximity = D->getDependences(ProximityKinds);
