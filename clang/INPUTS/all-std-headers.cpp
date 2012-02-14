@@ -49,3 +49,36 @@
 #include <utility>
 #include <valarray>
 #include <vector>
+
+#if __cplusplus >= 201103
+#include <array>
+#if __has_include(<atomic>)
+#include <atomic>
+#endif
+#include <chrono>
+#if __has_include(<codecvt>)
+#include <codecvt>
+#endif
+#include <condition_variable>
+#include <forward_list>
+#if __has_include(<future>)
+#include <future>
+#endif
+#include <initializer_list>
+#include <mutex>
+#include <random>
+#include <ratio>
+#include <regex>
+#if __has_include(<scoped_allocator>)
+#include <scoped_allocator>
+#endif
+#include <system_error>
+#include <thread>
+#include <tuple>
+#include <type_traits>
+#if __has_include(<typeindex>)
+#include <typeindex>
+#endif
+#include <unordered_map>
+#include <unordered_set>
+#endif
