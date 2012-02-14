@@ -35,7 +35,7 @@ IndexingContext::ObjCProtocolListInfo::ObjCProtocolListInfo(
                                 IdxCtx.getIndexLoc(Loc) };
     ProtInfos.push_back(ProtInfo);
 
-    if (IdxCtx.suppressRefs())
+    if (IdxCtx.shouldSuppressRefs())
       IdxCtx.markEntityOccurrenceInFile(PD, Loc);
   }
 
@@ -265,11 +265,11 @@ bool IndexingContext::handleDecl(const NamedDecl *D,
 
   ScratchAlloc SA(*this);
   getEntityInfo(D, DInfo.EntInfo, SA);
-  if ((!indexFunctionLocalSymbols() && !DInfo.EntInfo.USR)
+  if ((!shouldIndexFunctionLocalSymbols() && !DInfo.EntInfo.USR)
       || Loc.isInvalid())
     return false;
 
-  if (suppressRefs())
+  if (shouldSuppressRefs())
     markEntityOccurrenceInFile(D, Loc);
   
   DInfo.entityInfo = &DInfo.EntInfo;
@@ -357,7 +357,7 @@ bool IndexingContext::handleTypedefName(const TypedefNameDecl *D) {
 bool IndexingContext::handleObjCInterface(const ObjCInterfaceDecl *D) {
   // For @class forward declarations, suppress them the same way as references.
   if (!D->isThisDeclarationADefinition()) {
-    if (suppressRefs() && markEntityOccurrenceInFile(D, D->getLocation()))
+    if (shouldSuppressRefs() && markEntityOccurrenceInFile(D, D->getLocation()))
       return false; // already occurred.
 
     // FIXME: This seems like the wrong definition for redeclaration.
@@ -382,7 +382,7 @@ bool IndexingContext::handleObjCInterface(const ObjCInterfaceDecl *D) {
     BaseClass.cursor = MakeCursorObjCSuperClassRef(SuperD, SuperLoc, CXTU);
     BaseClass.loc = getIndexLoc(SuperLoc);
 
-    if (suppressRefs())
+    if (shouldSuppressRefs())
       markEntityOccurrenceInFile(SuperD, SuperLoc);
   }
   
@@ -411,7 +411,7 @@ bool IndexingContext::handleObjCImplementation(
 
 bool IndexingContext::handleObjCProtocol(const ObjCProtocolDecl *D) {
   if (!D->isThisDeclarationADefinition()) {
-    if (suppressRefs() && markEntityOccurrenceInFile(D, D->getLocation()))
+    if (shouldSuppressRefs() && markEntityOccurrenceInFile(D, D->getLocation()))
       return false; // already occurred.
     
     // FIXME: This seems like the wrong definition for redeclaration.
@@ -448,7 +448,7 @@ bool IndexingContext::handleObjCCategory(const ObjCCategoryDecl *D) {
                                                      : D->getCategoryNameLoc();
   getEntityInfo(IFaceD, ClassEntity, SA);
 
-  if (suppressRefs())
+  if (shouldSuppressRefs())
     markEntityOccurrenceInFile(IFaceD, ClassLoc);
 
   ObjCProtocolListInfo ProtInfo(D->getReferencedProtocols(), *this, SA);
@@ -479,7 +479,7 @@ bool IndexingContext::handleObjCCategoryImpl(const ObjCCategoryImplDecl *D) {
   SourceLocation CategoryLoc = D->getCategoryNameLoc();
   getEntityInfo(IFaceD, ClassEntity, SA);
 
-  if (suppressRefs())
+  if (shouldSuppressRefs())
     markEntityOccurrenceInFile(IFaceD, ClassLoc);
 
   CatDInfo.ObjCCatDeclInfo.containerInfo = &CatDInfo.ObjCContDeclInfo;
@@ -573,14 +573,14 @@ bool IndexingContext::handleReference(const NamedDecl *D, SourceLocation Loc,
     return false;
   if (Loc.isInvalid())
     return false;
-  if (!indexFunctionLocalSymbols() && D->getParentFunctionOrMethod())
+  if (!shouldIndexFunctionLocalSymbols() && D->getParentFunctionOrMethod())
     return false;
   if (isNotFromSourceFile(D->getLocation()))
     return false;
   if (D->isImplicit() && shouldIgnoreIfImplicit(D))
     return false;
 
-  if (suppressRefs()) {
+  if (shouldSuppressRefs()) {
     if (markEntityOccurrenceInFile(D, Loc))
       return false; // already occurred.
   }
@@ -660,7 +660,7 @@ bool IndexingContext::handleCXXRecordDecl(const CXXRecordDecl *RD,
     CXXDInfo.CXXClassInfo.bases = BaseList.getBases();
     CXXDInfo.CXXClassInfo.numBases = BaseList.getNumBases();
 
-    if (suppressRefs()) {
+    if (shouldSuppressRefs()) {
       // Go through bases and mark them as referenced.
       for (unsigned i = 0, e = BaseList.getNumBases(); i != e; ++i) {
         const CXIdxBaseClassInfo *baseInfo = BaseList.getBases()[i];

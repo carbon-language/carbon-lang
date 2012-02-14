@@ -137,11 +137,17 @@ public:
   virtual void HandleInterestingDecl(DeclGroupRef D) {}
 
   virtual void HandleTagDeclDefinition(TagDecl *D) {
+    if (!IndexCtx.shouldIndexImplicitTemplateInsts())
+      return;
+
     if (IndexCtx.isTemplateImplicitInstantiation(D))
       IndexCtx.indexDecl(D);
   }
 
   virtual void HandleCXXImplicitFunctionInstantiation(FunctionDecl *D) {
+    if (!IndexCtx.shouldIndexImplicitTemplateInsts())
+      return;
+
     IndexCtx.indexDecl(D);
   }
 };
@@ -194,7 +200,12 @@ public:
     indexDiagnostics(CXTU, IndexCtx);
   }
 
-  virtual TranslationUnitKind getTranslationUnitKind() { return TU_Complete; }
+  virtual TranslationUnitKind getTranslationUnitKind() {
+    if (IndexCtx.shouldIndexImplicitTemplateInsts())
+      return TU_Complete;
+    else
+      return TU_Prefix;
+  }
   virtual bool hasCodeCompletionSupport() const { return false; }
 };
 

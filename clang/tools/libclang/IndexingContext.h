@@ -322,12 +322,16 @@ public:
   void setASTContext(ASTContext &ctx);
   void setPreprocessor(Preprocessor &PP);
 
-  bool suppressRefs() const {
+  bool shouldSuppressRefs() const {
     return IndexOptions & CXIndexOpt_SuppressRedundantRefs;
   }
 
-  bool indexFunctionLocalSymbols() const {
+  bool shouldIndexFunctionLocalSymbols() const {
     return IndexOptions & CXIndexOpt_IndexFunctionLocalSymbols;
+  }
+
+  bool shouldIndexImplicitTemplateInsts() const {
+    return IndexOptions & CXIndexOpt_IndexImplicitTemplateInstantiations;
   }
 
   bool shouldAbort();

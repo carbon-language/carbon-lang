@@ -4461,7 +4461,13 @@ typedef enum {
    * \brief Function-local symbols should be indexed. If this is not set
    * function-local symbols will be ignored.
    */
-  CXIndexOpt_IndexFunctionLocalSymbols = 0x2
+  CXIndexOpt_IndexFunctionLocalSymbols = 0x2,
+
+  /**
+   * \brief Implicit function/class template instantiations should be indexed.
+   * If this is not set, implicit instantiations will be ignored.
+   */
+  CXIndexOpt_IndexImplicitTemplateInstantiations = 0x4
 } CXIndexOptFlags;
 
 /**

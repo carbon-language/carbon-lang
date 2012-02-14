@@ -26,7 +26,7 @@ public:
   void handleDeclarator(DeclaratorDecl *D, const NamedDecl *Parent = 0) {
     if (!Parent) Parent = D;
 
-    if (!IndexCtx.indexFunctionLocalSymbols()) {
+    if (!IndexCtx.shouldIndexFunctionLocalSymbols()) {
       IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), Parent);
       IndexCtx.indexNestedNameSpecifierLoc(D->getQualifierLoc(), Parent);
     } else {
@@ -245,9 +245,11 @@ public:
 
   bool VisitClassTemplateSpecializationDecl(
                                            ClassTemplateSpecializationDecl *D) {
-    // FIXME: Notify subsequent callbacks that info comes from implicit
+    // FIXME: Notify subsequent callbacks if info comes from implicit
     // instantiation.
-    if (D->isThisDeclarationADefinition())
+    if (D->isThisDeclarationADefinition() &&
+        (IndexCtx.shouldIndexImplicitTemplateInsts() ||
+         !IndexCtx.isTemplateImplicitInstantiation(D)))
       IndexCtx.indexTagDecl(D);
     return true;
   }
