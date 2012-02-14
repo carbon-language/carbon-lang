@@ -418,11 +418,13 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   Dependences *D = &getAnalysis<Dependences>();
 
   // Build input data.
-  int DependencyKinds = Dependences::TYPE_RAW
-                          | Dependences::TYPE_WAR
-                          | Dependences::TYPE_WAW;
+  int ValidityKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR
+                      | Dependences::TYPE_WAW;
+  int ProximityKinds = Dependences::TYPE_RAW | Dependences::TYPE_WAR
+                       | Dependences::TYPE_WAW;
 
-  isl_union_map *Dependences = D->getDependences(DependencyKinds);
+  isl_union_map *Validity = D->getDependences(ValidityKinds);
+  isl_union_map *Proximity = D->getDependences(ProximityKinds);
   isl_union_set *Domain = S.getDomains();
 
   if (!Domain)
@@ -436,18 +438,15 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   // interesting anyway. In some cases this option may stop the scheduler to
   // find any schedule.
   if (SimplifyDeps == "yes") {
-    Dependences = isl_union_map_gist_domain(Dependences,
-                                            isl_union_set_copy(Domain));
-    Dependences = isl_union_map_gist_range(Dependences,
-                                           isl_union_set_copy(Domain));
+    Validity = isl_union_map_gist_domain(Validity, isl_union_set_copy(Domain));
+    Validity = isl_union_map_gist_range(Validity, isl_union_set_copy(Domain));
+    Proximity = isl_union_map_gist_domain(Proximity,
+                                          isl_union_set_copy(Domain));
+    Proximity = isl_union_map_gist_range(Proximity, isl_union_set_copy(Domain));
   } else if (SimplifyDeps != "no") {
     errs() << "warning: Option -polly-opt-simplify-deps should either be 'yes' "
               "or 'no'. Falling back to default: 'yes'\n";
   }
-
-  isl_schedule *Schedule;
-  isl_union_map *Proximity = isl_union_map_copy(Dependences);
-  isl_union_map *Validity = Dependences;
 
   DEBUG(dbgs() << "\n\nCompute schedule from: ");
   DEBUG(dbgs() << "Domain := "; isl_union_set_dump(Domain); dbgs() << ";\n");
@@ -484,6 +483,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), IslMaximizeBands);
 
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_CONTINUE);
+  isl_schedule *Schedule;
   Schedule  = isl_union_set_compute_schedule(Domain, Validity, Proximity);
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_ABORT);
 
