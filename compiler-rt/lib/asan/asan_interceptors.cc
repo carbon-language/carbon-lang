@@ -120,6 +120,16 @@ size_t internal_strnlen(const char *s, size_t maxlen) {
   return i;
 }
 
+char* internal_strchr(const char *s, int c) {
+  while (true) {
+    if (*s == (char)c)
+      return (char*)s;
+    if (*s == 0)
+      return NULL;
+    s++;
+  }
+}
+
 void* internal_memchr(const void* s, int c, size_t n) {
   const char* t = (char*)s;
   for (size_t i = 0; i < n; ++i, ++t)
