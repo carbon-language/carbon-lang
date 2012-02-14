@@ -23,32 +23,46 @@ namespace clang {
 /// @brief Simple class containing the result of Sema::CorrectTypo
 class TypoCorrection {
 public:
+  // "Distance" for unusable corrections
+  static const unsigned InvalidDistance = ~0U;
+  // The largest distance still considered valid (larger edit distances are
+  // mapped to InvalidDistance by getEditDistance).
+  static const unsigned MaximumDistance = 10000U;
+
+  // Relative weightings of the "edit distance" components. The higher the
+  // weight, the more of a penalty to fitness the component will give (higher
+  // weights mean greater contribution to the total edit distance, with the
+  // best correction candidates having the lowest edit distance).
+  static const unsigned CharDistanceWeight = 100U;
+  static const unsigned QualifierDistanceWeight = 110U;
+  static const unsigned CallbackDistanceWeight = 150U;
+
   TypoCorrection(const DeclarationName &Name, NamedDecl *NameDecl,
-                 NestedNameSpecifier *NNS=0, unsigned distance=0)
-      : CorrectionName(Name),
-        CorrectionNameSpec(NNS),
-        EditDistance(distance) {
+                 NestedNameSpecifier *NNS=0, unsigned CharDistance=0,
+                 unsigned QualifierDistance=0)
+      : CorrectionName(Name), CorrectionNameSpec(NNS),
+      CharDistance(CharDistance), QualifierDistance(QualifierDistance),
+      CallbackDistance(0) {
     if (NameDecl)
       CorrectionDecls.push_back(NameDecl);
   }
 
   TypoCorrection(NamedDecl *Name, NestedNameSpecifier *NNS=0,
-                 unsigned distance=0)
-      : CorrectionName(Name->getDeclName()),
-        CorrectionNameSpec(NNS),
-        EditDistance(distance) {
+                 unsigned CharDistance=0)
+      : CorrectionName(Name->getDeclName()), CorrectionNameSpec(NNS),
+      CharDistance(CharDistance), QualifierDistance(0), CallbackDistance(0) {
     if (Name)
       CorrectionDecls.push_back(Name);
   }
 
   TypoCorrection(DeclarationName Name, NestedNameSpecifier *NNS=0,
-                 unsigned distance=0)
-      : CorrectionName(Name),
-        CorrectionNameSpec(NNS),
-        EditDistance(distance) {}
+                 unsigned CharDistance=0)
+      : CorrectionName(Name), CorrectionNameSpec(NNS),
+      CharDistance(CharDistance), QualifierDistance(0), CallbackDistance(0) {}
 
   TypoCorrection()
-      : CorrectionNameSpec(0), EditDistance(0) {}
+      : CorrectionNameSpec(0), CharDistance(0), QualifierDistance(0),
+      CallbackDistance(0) {}
 
   /// \brief Gets the DeclarationName of the typo correction
   DeclarationName getCorrection() const { return CorrectionName; }
@@ -64,8 +78,41 @@ public:
     CorrectionNameSpec = NNS;
   }
 
-  /// \brief Gets the "edit distance" of the typo correction from the typo
-  unsigned getEditDistance() const { return EditDistance; }
+  void setQualifierDistance(unsigned ED) {
+    QualifierDistance = ED;
+  }
+
+  void setCallbackDistance(unsigned ED) {
+    CallbackDistance = ED;
+  }
+
+  // Convert the given weighted edit distance to a roughly equivalent number of
+  // single-character edits (typically for comparison to the length of the
+  // string being edited).
+  static unsigned NormalizeEditDistance(unsigned ED) {
+    if (ED > MaximumDistance)
+      return InvalidDistance;
+    return (ED + CharDistanceWeight / 2) / CharDistanceWeight;
+  }
+
+  /// \brief Gets the "edit distance" of the typo correction from the typo.
+  /// If Normalized is true, scale the distance down by the CharDistanceWeight
+  /// to return the edit distance in terms of single-character edits.
+  unsigned getEditDistance(bool Normalized = true) const {
+    if (CharDistance > MaximumDistance || QualifierDistance > MaximumDistance ||
+        CallbackDistance > MaximumDistance)
+      return InvalidDistance;
+    unsigned ED =
+        CharDistance * CharDistanceWeight +
+        QualifierDistance * QualifierDistanceWeight +
+        CallbackDistance * CallbackDistanceWeight;
+    if (ED > MaximumDistance)
+      return InvalidDistance;
+    // Half the CharDistanceWeight is added to ED to simulate rounding since
+    // integer division truncates the value (i.e. round-to-nearest-int instead
+    // of round-to-zero).
+    return Normalized ? NormalizeEditDistance(ED) : ED;
+  }
 
   /// \brief Gets the pointer to the declaration of the typo correction
   NamedDecl* getCorrectionDecl() const {
@@ -143,13 +190,17 @@ private:
   DeclarationName CorrectionName;
   NestedNameSpecifier *CorrectionNameSpec;
   llvm::SmallVector<NamedDecl*, 1> CorrectionDecls;
-  unsigned EditDistance;
+  unsigned CharDistance;
+  unsigned QualifierDistance;
+  unsigned CallbackDistance;
 };
 
 /// @brief Base class for callback objects used by Sema::CorrectTypo to check
 /// the validity of a potential typo correction.
 class CorrectionCandidateCallback {
  public:
+  static const unsigned InvalidDistance = TypoCorrection::InvalidDistance;
+
   CorrectionCandidateCallback()
       : WantTypeSpecifiers(true), WantExpressionKeywords(true),
         WantCXXNamedCasts(true), WantRemainingKeywords(true),
@@ -158,8 +209,24 @@ class CorrectionCandidateCallback {
 
   virtual ~CorrectionCandidateCallback() {}
 
+  /// \brief Simple predicate used by the default RankCandidate to
+  /// determine whether to return an edit distance of 0 or InvalidDistance.
+  /// This can be overrided by validators that only need to determine if a
+  /// candidate is viable, without ranking potentially viable candidates.
+  /// Only ValidateCandidate or RankCandidate need to be overriden by a
+  /// callback wishing to check the viability of correction candidates.
   virtual bool ValidateCandidate(const TypoCorrection &candidate) {
     return true;
+  }
+
+  /// \brief Method used by Sema::CorrectTypo to assign an "edit distance" rank
+  /// to a candidate (where a lower value represents a better candidate), or
+  /// returning InvalidDistance if the candidate is not at all viable. For
+  /// validation callbacks that only need to determine if a candidate is viable,
+  /// the default RankCandidate returns either 0 or InvalidDistance depending
+  /// whether ValidateCandidate returns true or false.
+  virtual unsigned RankCandidate(const TypoCorrection &candidate) {
+    return ValidateCandidate(candidate) ? 0 : InvalidDistance;
   }
 
   // Flags for context-dependent keywords.

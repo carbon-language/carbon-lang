@@ -74,3 +74,24 @@ void bar() {
  (void)new llvm::GraphWriter; // expected-error {{expected a type}}
  (void)new llvm::Graphwriter<S>; // expected-error {{no template named 'Graphwriter' in namespace 'llvm'; did you mean 'GraphWriter'?}}
 }
+
+// If namespace prefixes and character edits have the same weight, correcting
+// "fimish" to "N::famish" would have the same edit distance as correcting
+// "fimish" to "Finish". The result would be no correction being suggested
+// unless one of the corrections is given precedence (e.g. by filtering out
+// suggestions with added namespace qualifiers).
+namespace N { void famish(int); }
+void Finish(int); // expected-note {{'Finish' declared here}}
+void Start() {
+  fimish(7); // expected-error {{use of undeclared identifier 'fimish'; did you mean 'Finish'?}}
+}
+
+// But just eliminating the corrections containing added namespace qualifiers
+// won't work if both of the tied corrections have namespace qualifiers added.
+namespace N {
+void someCheck(int); // expected-note {{'N::someCheck' declared here}}
+namespace O { void somechock(int); }
+}
+void confusing() {
+  somechick(7); // expected-error {{use of undeclared identifier 'somechick'; did you mean 'N::someCheck'?}}
+}

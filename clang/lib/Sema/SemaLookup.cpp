@@ -3109,9 +3109,12 @@ public:
     return (*BestResults.begin()->second)[Name];
   }
 
-  unsigned getBestEditDistance() {
-    return (BestResults.empty()) ?
-        (std::numeric_limits<unsigned>::max)() : BestResults.begin()->first;
+  unsigned getBestEditDistance(bool Normalized) {
+    if (BestResults.empty())
+      return (std::numeric_limits<unsigned>::max)();
+
+    unsigned BestED = BestResults.begin()->first;
+    return Normalized ? TypoCorrection::NormalizeEditDistance(BestED) : BestED;
   }
 };
 
@@ -3167,7 +3170,7 @@ void TypoCorrectionConsumer::addName(StringRef Name,
 
 void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
   StringRef Name = Correction.getCorrectionAsIdentifierInfo()->getName();
-  TypoResultsMap *& Map = BestResults[Correction.getEditDistance()];
+  TypoResultsMap *& Map = BestResults[Correction.getEditDistance(false)];
   if (!Map)
     Map = new TypoResultsMap;
 
@@ -3478,6 +3481,12 @@ static void AddKeywordsToConsumer(Sema &SemaRef,
   }
 }
 
+static bool isCandidateViable(CorrectionCandidateCallback &CCC,
+                              TypoCorrection &Candidate) {
+  Candidate.setCallbackDistance(CCC.RankCandidate(Candidate));
+  return Candidate.getEditDistance(false) != TypoCorrection::InvalidDistance;
+}
+
 /// \brief Try to "correct" a typo in the source code by finding
 /// visible declarations whose names are similar to the name that was
 /// present in the source code.
@@ -3545,10 +3554,10 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
   TypoCorrectionConsumer Consumer(*this, Typo);
 
-  // If a callback object returns true for an empty typo correction candidate,
-  // assume it does not do any actual validation of the candidates.
+  // If a callback object considers an empty typo correction candidate to be
+  // viable, assume it does not do any actual validation of the candidates.
   TypoCorrection EmptyCorrection;
-  bool ValidatingCallback = !CCC.ValidateCandidate(EmptyCorrection);
+  bool ValidatingCallback = !isCandidateViable(CCC, EmptyCorrection);
 
   // Perform name lookup to find visible, similarly-named entities.
   bool IsUnqualifiedLookup = false;
@@ -3584,7 +3593,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       // keyword case, we'll end up adding the keyword below.
       if (Cached->second) {
         if (!Cached->second.isKeyword() &&
-            CCC.ValidateCandidate(Cached->second))
+            isCandidateViable(CCC, Cached->second))
           Consumer.addCorrection(Cached->second);
       } else {
         // Only honor no-correction cache hits when a callback that will validate
@@ -3637,7 +3646,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
   // Make sure that the user typed at least 3 characters for each correction
   // made. Otherwise, we don't even both looking at the results.
-  unsigned ED = Consumer.getBestEditDistance();
+  unsigned ED = Consumer.getBestEditDistance(true);
   if (ED > 0 && Typo->getName().size() / ED < 3) {
     // If this was an unqualified lookup, note that no correction was found.
     if (IsUnqualifiedLookup)
@@ -3666,7 +3675,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
   // Weed out any names that could not be found by name lookup or, if a
   // CorrectionCandidateCallback object was provided, failed validation.
-  llvm::SmallPtrSet<IdentifierInfo*, 16> QualifiedResults;
+  llvm::SmallVector<TypoCorrection, 16> QualifiedResults;
   LookupResult TmpRes(*this, TypoName, LookupKind);
   TmpRes.suppressDiagnostics();
   while (!Consumer.empty()) {
@@ -3681,7 +3690,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       if (I->second.isResolved()) {
         TypoCorrectionConsumer::result_iterator Prev = I;
         ++I;
-        if (!CCC.ValidateCandidate(Prev->second))
+        if (!isCandidateViable(CCC, Prev->second))
           DI->second->erase(Prev);
         continue;
       }
@@ -3695,7 +3704,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       case LookupResult::NotFound:
       case LookupResult::NotFoundInCurrentInstantiation:
       case LookupResult::FoundUnresolvedValue:
-        QualifiedResults.insert(Name);
+        QualifiedResults.push_back(I->second);
         // We didn't find this name in our scope, or didn't like what we found;
         // ignore it.
         {
@@ -3718,7 +3727,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
              TRD != TRDEnd; ++TRD)
           I->second.addCorrectionDecl(*TRD);
         ++I;
-        if (!CCC.ValidateCandidate(Prev->second))
+        if (!isCandidateViable(CCC, Prev->second))
           DI->second->erase(Prev);
         break;
       }
@@ -3727,7 +3736,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         TypoCorrectionConsumer::result_iterator Prev = I;
         I->second.setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
         ++I;
-        if (!CCC.ValidateCandidate(Prev->second))
+        if (!isCandidateViable(CCC, Prev->second))
           DI->second->erase(Prev);
         break;
       }
@@ -3744,7 +3753,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
     // Only perform the qualified lookups for C++
     if (getLangOptions().CPlusPlus) {
       TmpRes.suppressDiagnostics();
-      for (llvm::SmallPtrSet<IdentifierInfo*,
+      for (llvm::SmallVector<TypoCorrection,
                              16>::iterator QRI = QualifiedResults.begin(),
                                         QRIEnd = QualifiedResults.end();
            QRI != QRIEnd; ++QRI) {
@@ -3752,33 +3761,33 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
                                           NIEnd = Namespaces.end();
              NI != NIEnd; ++NI) {
           DeclContext *Ctx = NI->DeclCtx;
-          unsigned QualifiedED = ED + NI->EditDistance;
 
           // FIXME: Stop searching once the namespaces are too far away to create
           // acceptable corrections for this identifier (since the namespaces
           // are sorted in ascending order by edit distance).
 
           TmpRes.clear();
-          TmpRes.setLookupName(*QRI);
+          TmpRes.setLookupName(QRI->getCorrectionAsIdentifierInfo());
           if (!LookupQualifiedName(TmpRes, Ctx)) continue;
 
           // Any corrections added below will be validated in subsequent
           // iterations of the main while() loop over the Consumer's contents.
           switch (TmpRes.getResultKind()) {
           case LookupResult::Found:
-            Consumer.addName((*QRI)->getName(), TmpRes.getAsSingle<NamedDecl>(),
-                             QualifiedED, NI->NameSpecifier);
+            QRI->setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
+            QRI->setCorrectionSpecifier(NI->NameSpecifier);
+            QRI->setQualifierDistance(NI->EditDistance);
+            Consumer.addCorrection(*QRI);
             break;
-          case LookupResult::FoundOverloaded: {
-            TypoCorrection corr(&Context.Idents.get((*QRI)->getName()), NULL,
-                                NI->NameSpecifier, QualifiedED);
+          case LookupResult::FoundOverloaded:
+            QRI->setCorrectionSpecifier(NI->NameSpecifier);
+            QRI->setQualifierDistance(NI->EditDistance);
             for (LookupResult::iterator TRD = TmpRes.begin(),
                                      TRDEnd = TmpRes.end();
                  TRD != TRDEnd; ++TRD)
-              corr.addCorrectionDecl(*TRD);
-            Consumer.addCorrection(corr);
+              QRI->addCorrectionDecl(*TRD);
+            Consumer.addCorrection(*QRI);
             break;
-          }
           case LookupResult::NotFound:
           case LookupResult::NotFoundInCurrentInstantiation:
           case LookupResult::Ambiguous:
@@ -3796,7 +3805,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   if (Consumer.empty()) return TypoCorrection();
 
   TypoResultsMap &BestResults = *Consumer.begin()->second;
-  ED = Consumer.begin()->first;
+  ED = TypoCorrection::NormalizeEditDistance(Consumer.begin()->first);
 
   if (ED > 0 && Typo->getName().size() / ED < 3) {
     // If this was an unqualified lookup and we believe the callback
@@ -3806,22 +3815,6 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       (void)UnqualifiedTyposCorrected[Typo];
 
     return TypoCorrection();
-  }
-
-  // If we have multiple possible corrections, eliminate the ones where we
-  // added namespace qualifiers to try to resolve the ambiguity (and to favor
-  // corrections without additional namespace qualifiers)
-  if (getLangOptions().CPlusPlus && BestResults.size() > 1) {
-    TypoCorrectionConsumer::distance_iterator DI = Consumer.begin();
-    for (TypoCorrectionConsumer::result_iterator I = DI->second->begin(),
-                                              IEnd = DI->second->end();
-         I != IEnd; /* Increment in loop. */) {
-      if (I->second.getCorrectionSpecifier() != NULL) {
-        TypoCorrectionConsumer::result_iterator Cur = I;
-        ++I;
-        DI->second->erase(Cur);
-      } else ++I;
-    }
   }
 
   // If only a single name remains, return that result.
