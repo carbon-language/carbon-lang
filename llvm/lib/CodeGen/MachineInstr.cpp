@@ -1045,6 +1045,10 @@ MachineInstr::findRegisterDefOperandIdx(unsigned Reg, bool isDead, bool Overlap,
   bool isPhys = TargetRegisterInfo::isPhysicalRegister(Reg);
   for (unsigned i = 0, e = getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = getOperand(i);
+    // Accept regmask operands when Overlap is set.
+    // Ignore them when looking for a specific def operand (Overlap == false).
+    if (isPhys && Overlap && MO.isRegMask() && MO.clobbersPhysReg(Reg))
+      return i;
     if (!MO.isReg() || !MO.isDef())
       continue;
     unsigned MOReg = MO.getReg();

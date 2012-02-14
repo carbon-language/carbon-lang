@@ -702,6 +702,7 @@ public:
   /// that are not dead are skipped. If Overlap is true, then it also looks for
   /// defs that merely overlap the specified register. If TargetRegisterInfo is
   /// non-null, then it also checks if there is a def of a super-register.
+  /// This may also return a register mask operand when Overlap is true.
   int findRegisterDefOperandIdx(unsigned Reg,
                                 bool isDead = false, bool Overlap = false,
                                 const TargetRegisterInfo *TRI = NULL) const;
