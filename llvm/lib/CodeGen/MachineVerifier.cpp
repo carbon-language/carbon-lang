@@ -75,6 +75,7 @@ namespace {
     const MachineInstr *FirstTerminator;
 
     BitVector regsReserved;
+    BitVector regsAllocatable;
     RegSet regsLive;
     RegVector regsDefined, regsDead, regsKilled;
     RegSet regsLiveInButUnused;
@@ -173,6 +174,10 @@ namespace {
 
     bool isReserved(unsigned Reg) {
       return Reg < regsReserved.size() && regsReserved.test(Reg);
+    }
+
+    bool isAllocatable(unsigned Reg) {
+      return Reg < regsAllocatable.size() && regsAllocatable.test(Reg);
     }
 
     // Analysis information if available
@@ -380,6 +385,9 @@ void MachineVerifier::visitMachineFunctionBefore() {
       regsReserved.set(*Sub);
     }
   }
+
+  regsAllocatable = TRI->getAllocatableSet(*MF);
+
   markReachable(&MF->front());
 }
 
@@ -396,6 +404,20 @@ static bool matchPair(MachineBasicBlock::const_succ_iterator i,
 void
 MachineVerifier::visitMachineBasicBlockBefore(const MachineBasicBlock *MBB) {
   FirstTerminator = 0;
+
+  if (MRI->isSSA()) {
+    // If this block has allocatable physical registers live-in, check that
+    // it is an entry block or landing pad.
+    for (MachineBasicBlock::livein_iterator LI = MBB->livein_begin(),
+           LE = MBB->livein_end();
+         LI != LE; ++LI) {
+      unsigned reg = *LI;
+      if (isAllocatable(reg) && !MBB->isLandingPad() &&
+          MBB != MBB->getParent()->begin()) {
+        report("MBB has allocable live-in, but isn't entry or landing-pad.", MBB);
+      }
+    }
+  }
 
   // Count the number of landing pad successors.
   SmallPtrSet<MachineBasicBlock*, 4> LandingPadSuccs;
