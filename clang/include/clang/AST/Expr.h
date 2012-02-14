@@ -423,6 +423,10 @@ public:
                              bool isEvaluated = true) const;
   bool isIntegerConstantExpr(ASTContext &Ctx, SourceLocation *Loc = 0) const;
 
+  /// isCXX98IntegralConstantExpr - Return true if this expression is an
+  /// integral constant expression in C++98. Can only be used in C++.
+  bool isCXX98IntegralConstantExpr(ASTContext &Ctx) const;
+
   /// isCXX11ConstantExpr - Return true if this expression is a constant
   /// expression in C++11. Can only be used in C++.
   ///

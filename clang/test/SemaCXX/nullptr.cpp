@@ -161,3 +161,14 @@ namespace templates {
   
   X2<nullptr, nullptr, nullptr, nullptr> x2;
 }
+
+namespace null_pointer_constant {
+
+// Pending implementation of core issue 903, ensure we don't allow any of the
+// C++11 constant evaluation semantics in null pointer constants.
+struct S { int n; };
+constexpr int null() { return 0; }
+void *p = S().n; // expected-error {{cannot initialize}}
+void *q = null(); // expected-error {{cannot initialize}}
+
+}

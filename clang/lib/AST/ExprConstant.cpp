@@ -6435,12 +6435,17 @@ bool Expr::isIntegerConstantExpr(llvm::APSInt &Value, ASTContext &Ctx,
   return true;
 }
 
+bool Expr::isCXX98IntegralConstantExpr(ASTContext &Ctx) const {
+  return CheckICE(this, Ctx).Val == 0;
+}
+
 bool Expr::isCXX11ConstantExpr(ASTContext &Ctx, APValue *Result,
                                SourceLocation *Loc) const {
   // We support this checking in C++98 mode in order to diagnose compatibility
   // issues.
   assert(Ctx.getLangOptions().CPlusPlus);
 
+  // Build evaluation settings.
   Expr::EvalStatus Status;
   llvm::SmallVector<PartialDiagnosticAt, 8> Diags;
   Status.Diag = &Diags;
