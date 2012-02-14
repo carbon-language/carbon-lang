@@ -1809,6 +1809,11 @@ public:
     assert(I < getNumArrayIndices() && "Out of bounds member array index");
     reinterpret_cast<VarDecl **>(this + 1)[I] = Index;
   }
+  ArrayRef<VarDecl *> getArrayIndexes() {
+    assert(getNumArrayIndices() != 0 && "Getting indexes for non-array init");
+    return ArrayRef<VarDecl *>(reinterpret_cast<VarDecl **>(this + 1),
+                               getNumArrayIndices());
+  }
 
   /// \brief Get the initializer. This is 0 if this is an in-class initializer
   /// for a non-static data member which has not yet been parsed.
