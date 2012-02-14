@@ -33,11 +33,7 @@
 
 #include <cstdlib> // ::getenv
 
-#ifdef HAVE_CLANG_CONFIG_H
-# include "clang/Config/config.h"
-#endif
-
-#include "llvm/Config/config.h" // for GCC_INSTALL_PREFIX
+#include "clang/Config/config.h" // for GCC_INSTALL_PREFIX
 
 using namespace clang::driver;
 using namespace clang::driver::toolchains;

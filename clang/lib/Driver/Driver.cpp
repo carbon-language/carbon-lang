@@ -36,12 +36,9 @@
 #include "InputInfo.h"
 #include "ToolChains.h"
 
-#ifdef HAVE_CLANG_CONFIG_H
-# include "clang/Config/config.h"
-#endif
-#include "llvm/Config/config.h"
-
 #include <map>
+
+#include "clang/Config/config.h"
 
 using namespace clang::driver;
 using namespace clang;
