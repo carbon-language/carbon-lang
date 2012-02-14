@@ -3999,44 +3999,51 @@ def err_throw_incomplete_ptr : Error<
 def err_return_in_constructor_handler : Error<
   "return in the catch of a function try block of a constructor is illegal">;
 
-def err_capture_more_than_once : Error<
-  "%0 can appear only once in a capture list">;
-def err_reference_capture_with_reference_default : Error<
-  "'&' cannot precede a capture when the capture default is '&'">;
-def err_this_capture_with_copy_default : Error<
-  "'this' cannot be explicitly captured when the capture default is '='">;
-def err_copy_capture_with_copy_default : Error<
-  "'&' must precede a capture when the capture default is '='">;
-def err_capture_does_not_name_variable : Error<
-  "%0 in capture list does not name a variable">;
-def err_capture_non_automatic_variable : Error<
-  "%0 cannot be captured because it does not have automatic storage duration">;
-def err_this_capture : Error<
-  "'this' cannot be %select{implicitly |}0captured in this context">;
-def err_lambda_capture_block : Error<
-  "__block variable %0 cannot be captured in a lambda expression">;
-def err_lambda_capture_anonymous_var : Error<
-  "unnamed variable cannot be implicitly captured in a lambda expression">;
-def err_lambda_capture_vm_type : Error<
-  "variable %0 with variably modified type cannot be captured in "
-  "a lambda expression">;
-def err_lambda_impcap : Error<
-  "variable %0 cannot be implicitly captured in a lambda with no "
-  "capture-default specified">;
-def note_lambda_decl : Note<"lambda expression begins here">;
-def err_lambda_unevaluated_operand : Error<
-  "lambda expression in an unevaluated operand">;
-def ext_lambda_implies_void_return : ExtWarn<
-  "C++11 requires lambda with omitted result type to consist of a single "
-  "return statement">,
-  InGroup<DiagGroup<"lambda-return">>;
-def err_lambda_return_init_list : Error<
-  "cannot deduce lambda return type from initializer list">;
-def err_lambda_capture_default_arg : Error<
-  "lambda expression in default argument cannot capture any entity">;
-def err_lambda_unexpanded_pack : Error<
-  "unexpanded function parameter pack capture is unsupported">;
-  
+let CategoryName = "Lambda Issue" in {
+  def err_capture_more_than_once : Error<
+    "%0 can appear only once in a capture list">;
+  def err_reference_capture_with_reference_default : Error<
+    "'&' cannot precede a capture when the capture default is '&'">;
+  def err_this_capture_with_copy_default : Error<
+    "'this' cannot be explicitly captured when the capture default is '='">;
+  def err_copy_capture_with_copy_default : Error<
+    "'&' must precede a capture when the capture default is '='">;
+  def err_capture_does_not_name_variable : Error<
+    "%0 in capture list does not name a variable">;
+  def err_capture_non_automatic_variable : Error<
+    "%0 cannot be captured because it does not have automatic storage "
+    "duration">;
+  def err_this_capture : Error<
+    "'this' cannot be %select{implicitly |}0captured in this context">;
+  def err_lambda_capture_block : Error<
+    "__block variable %0 cannot be captured in a lambda expression">;
+  def err_lambda_capture_anonymous_var : Error<
+    "unnamed variable cannot be implicitly captured in a lambda expression">;
+  def err_lambda_capture_vm_type : Error<
+    "variable %0 with variably modified type cannot be captured in "
+    "a lambda expression">;
+  def err_lambda_impcap : Error<
+    "variable %0 cannot be implicitly captured in a lambda with no "
+    "capture-default specified">;
+  def note_lambda_decl : Note<"lambda expression begins here">;
+  def err_lambda_unevaluated_operand : Error<
+    "lambda expression in an unevaluated operand">;
+  def ext_lambda_implies_void_return : ExtWarn<
+    "C++11 requires lambda with omitted result type to consist of a single "
+    "return statement">,
+    InGroup<DiagGroup<"lambda-return">>;
+  def err_lambda_return_init_list : Error<
+    "cannot deduce lambda return type from initializer list">;
+  def err_lambda_capture_default_arg : Error<
+    "lambda expression in default argument cannot capture any entity">;
+  def err_lambda_unexpanded_pack : Error<
+    "unexpanded function parameter pack capture is unsupported">;
+  def err_lambda_incomplete_result : Error<
+    "incomplete result type %0 in lambda expression">;
+  def err_lambda_objc_object_result : Error<
+    "non-pointer Objective-C class type %0 in lambda expression result">;
+}
+
 def err_operator_arrow_circular : Error<
   "circular pointer delegation detected">;
 def err_pseudo_dtor_base_not_scalar : Error<

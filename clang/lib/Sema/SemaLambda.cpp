@@ -87,6 +87,17 @@ LambdaScopeInfo *Sema::enterLambdaScope(CXXMethodDecl *CallOperator,
 
   if (ExplicitResultType) {
     LSI->ReturnType = CallOperator->getResultType();
+    
+    if (!LSI->ReturnType->isDependentType() &&
+        !LSI->ReturnType->isVoidType()) {
+      if (RequireCompleteType(CallOperator->getLocStart(), LSI->ReturnType,
+                              diag::err_lambda_incomplete_result)) {
+        // Do nothing.
+      } else if (LSI->ReturnType->isObjCObjectOrInterfaceType()) {
+        Diag(CallOperator->getLocStart(), diag::err_lambda_objc_object_result)
+          << LSI->ReturnType;
+      }
+    }
   } else {
     LSI->HasImplicitReturnType = true;
   }
@@ -161,7 +172,6 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     CheckExtraCXXDefaultArguments(ParamInfo);
     
     MethodTyInfo = GetTypeForDeclarator(ParamInfo, CurScope);
-    // FIXME: Can these asserts actually fail?
     assert(MethodTyInfo && "no type from lambda-declarator");
     EndLoc = ParamInfo.getSourceRange().getEnd();
     
@@ -266,7 +276,8 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     //   for unqualified name lookup (3.4.1); each such lookup shall find a 
     //   variable with automatic storage duration declared in the reaching 
     //   scope of the local lambda expression.
-    // FIXME: Check reaching scope. 
+    // 
+    // Note that the 'reaching scope' check happens in TryCaptureVar.
     VarDecl *Var = R.getAsSingle<VarDecl>();
     if (!Var) {
       Diag(C->Loc, diag::err_capture_does_not_name_variable) << C->Id;
@@ -321,8 +332,6 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     addLambdaParameters(Method, CurScope, Proto.getParams());
   }
 
-  // FIXME: Check return type is complete, !isObjCObjectType
-  
   // Enter a new evaluation context to insulate the lambda from any
   // cleanups from the enclosing full-expression.
   PushExpressionEvaluationContext(PotentiallyEvaluated);  

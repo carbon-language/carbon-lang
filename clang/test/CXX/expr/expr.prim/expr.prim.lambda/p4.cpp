@@ -41,3 +41,11 @@ X infer_X_return_type_fail(X x) {
       return x; // expected-error{{return type 'const X' must match previous return type 'X' when block literal has unspecified explicit return type}}
   }(5);
 }
+
+struct Incomplete; // expected-note{{forward declaration of 'Incomplete'}}
+void test_result_type(int N) {
+  auto l1 = [] () -> Incomplete { }; // expected-error{{incomplete result type 'Incomplete' in lambda expression}}
+
+  typedef int vla[N];
+  auto l2 = [] () -> vla { }; // expected-error{{function cannot return array type 'vla' (aka 'int [N]')}}
+}
