@@ -1989,11 +1989,12 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         // declarator is followed by an initializer. 
         //
         // A brace-or-equal-initializer for a member-declarator is not an
-        // initializer in the gramamr, so this is ill-formed.
+        // initializer in the grammar, so this is ill-formed.
         Diag(Tok, diag::err_incomplete_array_member_init);
         SkipUntil(tok::comma, true, true);
-        // Avoid later warnings about a class member of incomplete type.
-        ThisDecl->setInvalidDecl();
+        if (ThisDecl)
+          // Avoid later warnings about a class member of incomplete type.
+          ThisDecl->setInvalidDecl();
       } else
         ParseCXXNonStaticMemberInitializer(ThisDecl);
     } else if (HasInitializer) {
