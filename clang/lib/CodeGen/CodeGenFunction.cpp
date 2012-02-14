@@ -636,29 +636,24 @@ void CodeGenFunction::EmitBranchOnBoolExpr(const Expr *Cond,
   }
 
   if (const ConditionalOperator *CondOp = dyn_cast<ConditionalOperator>(Cond)) {
-    // Handle ?: operator.
+    // br(c ? x : y, t, f) -> br(c, br(x, t, f), br(y, t, f))
+    llvm::BasicBlock *LHSBlock = createBasicBlock("cond.true");
+    llvm::BasicBlock *RHSBlock = createBasicBlock("cond.false");
 
-    // Just ignore GNU ?: extension.
-    if (CondOp->getLHS()) {
-      // br(c ? x : y, t, f) -> br(c, br(x, t, f), br(y, t, f))
-      llvm::BasicBlock *LHSBlock = createBasicBlock("cond.true");
-      llvm::BasicBlock *RHSBlock = createBasicBlock("cond.false");
+    ConditionalEvaluation cond(*this);
+    EmitBranchOnBoolExpr(CondOp->getCond(), LHSBlock, RHSBlock);
 
-      ConditionalEvaluation cond(*this);
-      EmitBranchOnBoolExpr(CondOp->getCond(), LHSBlock, RHSBlock);
+    cond.begin(*this);
+    EmitBlock(LHSBlock);
+    EmitBranchOnBoolExpr(CondOp->getLHS(), TrueBlock, FalseBlock);
+    cond.end(*this);
 
-      cond.begin(*this);
-      EmitBlock(LHSBlock);
-      EmitBranchOnBoolExpr(CondOp->getLHS(), TrueBlock, FalseBlock);
-      cond.end(*this);
+    cond.begin(*this);
+    EmitBlock(RHSBlock);
+    EmitBranchOnBoolExpr(CondOp->getRHS(), TrueBlock, FalseBlock);
+    cond.end(*this);
 
-      cond.begin(*this);
-      EmitBlock(RHSBlock);
-      EmitBranchOnBoolExpr(CondOp->getRHS(), TrueBlock, FalseBlock);
-      cond.end(*this);
-
-      return;
-    }
+    return;
   }
 
   // Emit the code with the fully general case.
