@@ -108,7 +108,6 @@ namespace {
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCSynthesizedStructs;
     llvm::SmallPtrSet<ObjCProtocolDecl*, 8> ObjCSynthesizedProtocols;
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCForwardDecls;
-    llvm::DenseMap<ObjCMethodDecl*, std::string> MethodInternalNames;
     SmallVector<Stmt *, 32> Stmts;
     SmallVector<int, 8> ObjCBcLabelNo;
     // Remember all the @protocol(<expr>) expressions.
@@ -161,7 +160,7 @@ namespace {
     void InitializeCommon(ASTContext &context);
 
   public:
-
+    llvm::DenseMap<ObjCMethodDecl*, std::string> MethodInternalNames;
     // Top Level Driver code.
     virtual bool HandleTopLevelDecl(DeclGroupRef D) {
       for (DeclGroupRef::iterator I = D.begin(), E = D.end(); I != E; ++I) {
@@ -5258,7 +5257,7 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
   Result += "\nstruct _objc_method {\n";
   Result += "\tstruct objc_selector * _cmd;\n";
   Result += "\tconst char *method_type;\n";
-  Result += "\tchar *_imp;\n";
+  Result += "\tvoid  *_imp;\n";
   Result += "};\n";
   
   Result += "\nstruct _protocol_t {\n";
@@ -5379,15 +5378,17 @@ static void Write_protocol_list_initializer(ASTContext *Context, std::string &Re
   }
 }
 
-static void Write_method_list_t_initializer(ASTContext *Context, std::string &Result,
+static void Write_method_list_t_initializer(RewriteModernObjC &RewriteObj,
+                                            ASTContext *Context, std::string &Result,
                                             ArrayRef<ObjCMethodDecl *> Methods,
                                             StringRef VarName,
-                                            StringRef ProtocolName) {
+                                            StringRef TopLevelDeclName,
+                                            bool MethodImpl) {
   if (Methods.size() > 0) {
     Result += "\nstatic ";
     Write_method_list_t_TypeDecl(Result, Methods.size());
     Result += " "; Result += VarName;
-    Result += ProtocolName; 
+    Result += TopLevelDeclName; 
     Result += " __attribute__ ((used, section (\"__DATA,__objc_const\"))) = {\n";
     Result += "\t"; Result += "sizeof(_objc_method)"; Result += ",\n";
     Result += "\t"; Result += utostr(Methods.size()); Result += ",\n";
@@ -5403,11 +5404,16 @@ static void Write_method_list_t_initializer(ASTContext *Context, std::string &Re
       Context->getObjCEncodingForMethodDecl(MD, MethodTypeString);
       Result += "\""; Result += MethodTypeString; Result += "\"";
       Result += ", ";
-      // FIXME is _imp always null here?
+      if (!MethodImpl)
+        Result += "0";
+      else {
+        Result += "(void *)";
+        Result += RewriteObj.MethodInternalNames[MD];
+      }
       if (i  == e-1)
-        Result += "0}}\n";
+        Result += "}}\n";
       else
-        Result += "0},\n";
+        Result += "},\n";
     }
     Result += "};\n";
   }
@@ -5624,21 +5630,21 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
                                   "_OBJC_PROTOCOL_REFS_",
                                   PDecl->getNameAsString());
   
-  Write_method_list_t_initializer(Context, Result, InstanceMethods, 
+  Write_method_list_t_initializer(*this, Context, Result, InstanceMethods, 
                                   "_OBJC_PROTOCOL_INSTANCE_METHODS_",
-                                  PDecl->getNameAsString());
+                                  PDecl->getNameAsString(), false);
   
-  Write_method_list_t_initializer(Context, Result, ClassMethods, 
+  Write_method_list_t_initializer(*this, Context, Result, ClassMethods, 
                                   "_OBJC_PROTOCOL_CLASS_METHODS_",
-                                  PDecl->getNameAsString());
+                                  PDecl->getNameAsString(), false);
 
-  Write_method_list_t_initializer(Context, Result, OptInstanceMethods, 
+  Write_method_list_t_initializer(*this, Context, Result, OptInstanceMethods, 
                                   "_OBJC_PROTOCOL_OPT_INSTANCE_METHODS_",
-                                  PDecl->getNameAsString());
+                                  PDecl->getNameAsString(), false);
   
-  Write_method_list_t_initializer(Context, Result, OptClassMethods, 
+  Write_method_list_t_initializer(*this, Context, Result, OptClassMethods, 
                                   "_OBJC_PROTOCOL_OPT_CLASS_METHODS_",
-                                  PDecl->getNameAsString());
+                                  PDecl->getNameAsString(), false);
   
   // Protocol's property metadata.
   std::vector<ObjCPropertyDecl *> ProtocolProperties;
@@ -5780,6 +5786,44 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   Write__ivar_list_t_initializer(*this, Context, Result, IVars, 
                                  "_OBJC_INSTANCE_VARIABLES_",
                                  CDecl->getNameAsString());
+  
+  // Build _objc_method_list for class's instance methods if needed
+  SmallVector<ObjCMethodDecl *, 32>
+    InstanceMethods(IDecl->instmeth_begin(), IDecl->instmeth_end());
+  
+  // If any of our property implementations have associated getters or
+  // setters, produce metadata for them as well.
+  for (ObjCImplDecl::propimpl_iterator Prop = IDecl->propimpl_begin(),
+       PropEnd = IDecl->propimpl_end();
+       Prop != PropEnd; ++Prop) {
+    if ((*Prop)->getPropertyImplementation() == ObjCPropertyImplDecl::Dynamic)
+      continue;
+    if (!(*Prop)->getPropertyIvarDecl())
+      continue;
+    ObjCPropertyDecl *PD = (*Prop)->getPropertyDecl();
+    if (!PD)
+      continue;
+    if (ObjCMethodDecl *Getter = PD->getGetterMethodDecl())
+      if (!Getter->isDefined())
+        InstanceMethods.push_back(Getter);
+    if (PD->isReadOnly())
+      continue;
+    if (ObjCMethodDecl *Setter = PD->getSetterMethodDecl())
+      if (!Setter->isDefined())
+        InstanceMethods.push_back(Setter);
+  }
+  
+  Write_method_list_t_initializer(*this, Context, Result, InstanceMethods,
+                                  "_OBJC_$_INSTANCE_METHODS_",
+                                  IDecl->getNameAsString(), true);
+  
+  SmallVector<ObjCMethodDecl *, 32>
+    ClassMethods(IDecl->classmeth_begin(), IDecl->classmeth_end());
+  
+  Write_method_list_t_initializer(*this, Context, Result, ClassMethods,
+                                  "_OBJC_$_CLASS_METHODS_",
+                                  IDecl->getNameAsString(), true);
+
 }
 
 void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
