@@ -217,3 +217,12 @@ int no_unicode_literals();
 
 // CHECK-0X: has_unicode_literals
 // CHECK-NO-0X: no_unicode_literals
+
+#if __has_feature(cxx_constexpr)
+int has_constexpr();
+#else
+int no_constexpr();
+#endif
+
+// CHECK-0X: has_constexpr
+// CHECK-NO-0X: no_constexpr
