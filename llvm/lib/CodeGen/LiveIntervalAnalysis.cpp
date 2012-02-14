@@ -999,10 +999,8 @@ void LiveIntervals::moveInstr(MachineBasicBlock::iterator insertPt,
     }
   }
 
-  BitVector reservedRegs(tri_->getReservedRegs(*mbb->getParent()));
-
   if (movingUp) {
-    handleMoveUses(mbb, *mri_, *tri_, reservedRegs, *this, origIdx, miIdx, uses);
+    handleMoveUses(mbb, *mri_, *tri_, reservedRegs_, *this, origIdx, miIdx, uses);
     handleMoveECs(*this, origIdx, miIdx, ecs);
     handleMoveDeadDefs(*this, origIdx, miIdx, deadDefs);
     handleMoveDefs(*this, origIdx, miIdx, defs);
@@ -1010,7 +1008,7 @@ void LiveIntervals::moveInstr(MachineBasicBlock::iterator insertPt,
     handleMoveDefs(*this, origIdx, miIdx, defs);
     handleMoveDeadDefs(*this, origIdx, miIdx, deadDefs);
     handleMoveECs(*this, origIdx, miIdx, ecs);
-    handleMoveUses(mbb, *mri_, *tri_, reservedRegs, *this, origIdx, miIdx, uses);
+    handleMoveUses(mbb, *mri_, *tri_, reservedRegs_, *this, origIdx, miIdx, uses);
   }
 }
 
