@@ -13,7 +13,6 @@ class ObjectDescriptionAPITestCase(TestBase):
     mydir = os.path.join("lang", "objc", "foundation")
 
     # rdar://problem/10857337
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     def test_find_global_variables_then_object_description_with_dsym(self):
@@ -24,7 +23,6 @@ class ObjectDescriptionAPITestCase(TestBase):
         self.find_global_variables_then_object_description('a.out')
 
     # rdar://problem/10857337
-    @unittest2.expectedFailure
     @python_api_test
     def test_find_global_variables_then_object_description_with_dwarf(self):
         """Exercise SBTarget.FindGlobalVariables() API."""
@@ -64,6 +62,7 @@ class ObjectDescriptionAPITestCase(TestBase):
         # Note my_global_str's object description prints fine here.
         value_list1 = frame0.GetVariables(True, True, True, True)
         for v in value_list1:
+            self.DebugSBValue(v)
             if self.TraceOn():
                 print "val:", v
                 print "object description:", v.GetObjectDescription()
@@ -73,6 +72,7 @@ class ObjectDescriptionAPITestCase(TestBase):
         # But not here!
         value_list2 = target.FindGlobalVariables('my_global_str', 3)
         for v in value_list2:
+            self.DebugSBValue(v)
             if self.TraceOn():
                 print "val:", v
                 print "object description:", v.GetObjectDescription()
