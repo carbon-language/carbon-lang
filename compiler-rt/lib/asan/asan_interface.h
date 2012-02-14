@@ -69,7 +69,8 @@ extern "C" {
   // to ASan alignment restrictions.
   // Method is NOT thread-safe in the sense that no two threads can
   // (un)poison memory in the same memory region simultaneously.
-  void __asan_poison_memory_region(void const volatile *addr, size_t size);
+  void __asan_poison_memory_region(void const volatile *addr, size_t size)
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
   // Marks memory region [addr, addr+size) as addressable.
   // This memory must be previously allocated by the user program. Accessing
   // addresses in this region is allowed until this region is poisoned again.
@@ -77,7 +78,8 @@ extern "C" {
   // ASan alignment restrictions.
   // Method is NOT thread-safe in the sense that no two threads can
   // (un)poison memory in the same memory region simultaneously.
-  void __asan_unpoison_memory_region(void const volatile *addr, size_t size);
+  void __asan_unpoison_memory_region(void const volatile *addr, size_t size)
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 
   // Performs cleanup before a NoReturn function. Must be called before things
   // like _exit and execl to avoid false positives on stack.
@@ -98,7 +100,8 @@ extern "C" {
 
   // Returns true iff addr is poisoned (i.e. 1-byte read/write access to this
   // address will result in error report from AddressSanitizer).
-  bool __asan_address_is_poisoned(void const volatile *addr);
+  bool __asan_address_is_poisoned(void const volatile *addr)
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 
   // This is an internal function that is called to report an error.
   // However it is still a part of the interface because users may want to
@@ -121,30 +124,38 @@ extern "C" {
   // for request of "size" bytes. If ASan allocator can't allocate that much
   // memory, returns the maximal possible allocation size, otherwise returns
   // "size".
-  size_t __asan_get_estimated_allocated_size(size_t size);
+  size_t __asan_get_estimated_allocated_size(size_t size)
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
   // Returns true if p was returned by the ASan allocator and
   // is not yet freed.
-  bool __asan_get_ownership(const void *p);
+  bool __asan_get_ownership(const void *p)
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
   // Returns the number of bytes reserved for the pointer p.
   // Requires (get_ownership(p) == true) or (p == NULL).
-  size_t __asan_get_allocated_size(const void *p);
+  size_t __asan_get_allocated_size(const void *p)
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
   // Number of bytes, allocated and not yet freed by the application.
-  size_t __asan_get_current_allocated_bytes();
+  size_t __asan_get_current_allocated_bytes()
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
   // Number of bytes, mmaped by asan allocator to fulfill allocation requests.
   // Generally, for request of X bytes, allocator can reserve and add to free
   // lists a large number of chunks of size X to use them for future requests.
   // All these chunks count toward the heap size. Currently, allocator never
   // releases memory to OS (instead, it just puts freed chunks to free lists).
-  size_t __asan_get_heap_size();
+  size_t __asan_get_heap_size()
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
   // Number of bytes, mmaped by asan allocator, which can be used to fulfill
   // allocation requests. When a user program frees memory chunk, it can first
   // fall into quarantine and will count toward __asan_get_free_bytes() later.
-  size_t __asan_get_free_bytes();
+  size_t __asan_get_free_bytes()
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
   // Number of bytes in unmapped pages, that are released to OS. Currently,
   // always returns 0.
-  size_t __asan_get_unmapped_bytes();
+  size_t __asan_get_unmapped_bytes()
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
   // Prints accumulated stats to stderr. Used for debugging.
-  void __asan_print_accumulated_stats();
+  void __asan_print_accumulated_stats()
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 }  // namespace
 
 #undef ASAN_INTERFACE_FUNCTION_ATTRIBUTE
