@@ -303,7 +303,7 @@ GenericValue Interpreter::callExternalFunction(Function *F,
 #endif
 #ifdef __clang__
     #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wreturn-type"
+    #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
 #endif
 
 extern "C" {  // Don't add C++ manglings to llvm mangling :)
