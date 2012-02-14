@@ -5207,7 +5207,7 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 ///   const uint8_t * const ivarLayout;
 ///   const char *const name;
 ///   const struct _method_list_t * const baseMethods;
-///   const struct _objc_protocol_list *const baseProtocols;
+///   const struct _protocol_list_t *const baseProtocols;
 ///   const struct _ivar_list_t *const ivars;
 ///   const uint8_t * const weakIvarLayout;
 ///   const struct _prop_list_t * const properties;
@@ -5823,6 +5823,24 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   Write_method_list_t_initializer(*this, Context, Result, ClassMethods,
                                   "_OBJC_$_CLASS_METHODS_",
                                   IDecl->getNameAsString(), true);
+  
+  // Protocols referenced in class declaration?
+  // Protocol's super protocol list
+  std::vector<ObjCProtocolDecl *> RefedProtocols;
+  const ObjCList<ObjCProtocolDecl> &Protocols = CDecl->getReferencedProtocols();
+  for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+       E = Protocols.end();
+       I != E; ++I) {
+    RefedProtocols.push_back(*I);
+    // Must write out all protocol definitions in current qualifier list,
+    // and in their nested qualifiers before writing out current definition.
+    RewriteObjCProtocolMetaData(*I, Result);
+  }
+  
+  Write_protocol_list_initializer(Context, Result, 
+                                  RefedProtocols,
+                                  "_OBJC_CLASS_PROTOCOLS_$_",
+                                  IDecl->getNameAsString());
 
 }
 
