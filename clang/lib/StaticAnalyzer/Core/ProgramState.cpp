@@ -179,7 +179,7 @@ ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
       = Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, IS,
                                         Call, &Invalidated);
     ProgramStateRef newState = makeWithStore(newStore);
-    return Eng->processRegionChanges(newState, &IS, Regions, Invalidated);
+    return Eng->processRegionChanges(newState, &IS, Regions, Invalidated, Call);
   }
 
   const StoreRef &newStore =

@@ -17,6 +17,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
+#include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramStateTrait.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SymbolManager.h"
@@ -69,6 +70,7 @@ public:
 class MallocChecker : public Checker<check::DeadSymbols,
                                      check::EndPath,
                                      check::PreStmt<ReturnStmt>,
+                                     check::PreStmt<CallExpr>,
                                      check::PostStmt<CallExpr>,
                                      check::Location,
                                      check::Bind,
@@ -94,8 +96,7 @@ public:
 
   ChecksFilter Filter;
 
-  void initIdentifierInfo(CheckerContext &C) const;
-
+  void checkPreStmt(const CallExpr *S, CheckerContext &C) const;
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SymReaper, CheckerContext &C) const;
   void checkEndPath(CheckerContext &C) const;
@@ -110,12 +111,19 @@ public:
   checkRegionChanges(ProgramStateRef state,
                      const StoreManager::InvalidatedSymbols *invalidated,
                      ArrayRef<const MemRegion *> ExplicitRegions,
-                     ArrayRef<const MemRegion *> Regions) const;
+                     ArrayRef<const MemRegion *> Regions,
+                     const CallOrObjCMessage *Call) const;
   bool wantsRegionChangeUpdate(ProgramStateRef state) const {
     return true;
   }
 
 private:
+  void initIdentifierInfo(ASTContext &C) const;
+
+  /// Check if this is one of the functions which can allocate/reallocate memory 
+  /// pointed to by one of its arguments.
+  bool isMemFunction(const FunctionDecl *FD, ASTContext &C) const;
+
   static void MallocMem(CheckerContext &C, const CallExpr *CE);
   static void MallocMemReturnsAttr(CheckerContext &C, const CallExpr *CE,
                                    const OwnershipAttr* Att);
@@ -143,6 +151,10 @@ private:
   bool checkEscape(SymbolRef Sym, const Stmt *S, CheckerContext &C) const;
   bool checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
                          const Stmt *S = 0) const;
+
+  /// Check if the function is not known to us. So, for example, we could
+  /// conservatively assume it can free/reallocate it's pointer arguments.
+  bool hasUnknownBehavior(const FunctionDecl *FD, ProgramStateRef State) const;
 
   static bool SummarizeValue(raw_ostream &os, SVal V);
   static bool SummarizeRegion(raw_ostream &os, const MemRegion *MR);
@@ -220,8 +232,7 @@ public:
 };
 } // end anonymous namespace
 
-void MallocChecker::initIdentifierInfo(CheckerContext &C) const {
-  ASTContext &Ctx = C.getASTContext();
+void MallocChecker::initIdentifierInfo(ASTContext &Ctx) const {
   if (!II_malloc)
     II_malloc = &Ctx.Idents.get("malloc");
   if (!II_free)
@@ -232,11 +243,31 @@ void MallocChecker::initIdentifierInfo(CheckerContext &C) const {
     II_calloc = &Ctx.Idents.get("calloc");
 }
 
+bool MallocChecker::isMemFunction(const FunctionDecl *FD, ASTContext &C) const {
+  initIdentifierInfo(C);
+  IdentifierInfo *FunI = FD->getIdentifier();
+  if (!FunI)
+    return false;
+
+  // TODO: Add more here : ex: reallocf!
+  if (FunI == II_malloc || FunI == II_free ||
+      FunI == II_realloc || FunI == II_calloc)
+    return true;
+
+  if (Filter.CMallocOptimistic && FD->hasAttrs() &&
+      FD->specific_attr_begin<OwnershipAttr>() !=
+          FD->specific_attr_end<OwnershipAttr>())
+    return true;
+
+
+  return false;
+}
+
 void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
   const FunctionDecl *FD = C.getCalleeDecl(CE);
   if (!FD)
     return;
-  initIdentifierInfo(C);
+  initIdentifierInfo(C.getASTContext());
 
   if (FD->getIdentifier() == II_malloc) {
     MallocMem(C, CE);
@@ -275,42 +306,6 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
         FreeMemAttr(C, CE, *i);
         return;
       }
-      }
-    }
-  }
-
-  // Check use after free, when a freed pointer is passed to a call.
-  ProgramStateRef State = C.getState();
-  for (CallExpr::const_arg_iterator I = CE->arg_begin(),
-                                    E = CE->arg_end(); I != E; ++I) {
-    const Expr *A = *I;
-    if (A->getType().getTypePtr()->isAnyPointerType()) {
-      SymbolRef Sym = State->getSVal(A, C.getLocationContext()).getAsSymbol();
-      if (!Sym)
-        continue;
-      if (checkUseAfterFree(Sym, C, A))
-        return;
-    }
-  }
-
-  // The pointer might escape through a function call.
-  // TODO: This should be rewritten to take into account inlining.
-  if (Filter.CMallocPessimistic) {
-    SourceLocation FLoc = FD->getLocation();
-    // We assume that the pointers cannot escape through calls to system
-    // functions.
-    if (C.getSourceManager().isInSystemHeader(FLoc))
-      return;
-
-    ProgramStateRef State = C.getState();
-    for (CallExpr::const_arg_iterator I = CE->arg_begin(),
-                                      E = CE->arg_end(); I != E; ++I) {
-      const Expr *A = *I;
-      if (A->getType().getTypePtr()->isAnyPointerType()) {
-        SymbolRef Sym = State->getSVal(A, C.getLocationContext()).getAsSymbol();
-        if (!Sym)
-          continue;
-        checkEscape(Sym, A, C);
       }
     }
   }
@@ -802,6 +797,25 @@ bool MallocChecker::checkEscape(SymbolRef Sym, const Stmt *S,
   return false;
 }
 
+void MallocChecker::checkPreStmt(const CallExpr *CE, CheckerContext &C) const {
+  if (isMemFunction(C.getCalleeDecl(CE), C.getASTContext()))
+    return;
+
+  // Check use after free, when a freed pointer is passed to a call.
+  ProgramStateRef State = C.getState();
+  for (CallExpr::const_arg_iterator I = CE->arg_begin(),
+                                    E = CE->arg_end(); I != E; ++I) {
+    const Expr *A = *I;
+    if (A->getType().getTypePtr()->isAnyPointerType()) {
+      SymbolRef Sym = State->getSVal(A, C.getLocationContext()).getAsSymbol();
+      if (!Sym)
+        continue;
+      if (checkUseAfterFree(Sym, C, A))
+        return;
+    }
+  }
+}
+
 void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
   const Expr *E = S->getRetValue();
   if (!E)
@@ -926,22 +940,54 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
   return state;
 }
 
+// Check if the function is not known to us. So, for example, we could
+// conservatively assume it can free/reallocate it's pointer arguments.
+// (We assume that the pointers cannot escape through calls to system
+// functions not handled by this checker.)
+bool MallocChecker::hasUnknownBehavior(const FunctionDecl *FD,
+                                       ProgramStateRef State) const {
+  ASTContext &ASTC = State->getStateManager().getContext();
+
+  // If it's one of the allocation functions we can reason about, we model it's
+  // behavior explicitly.
+  if (isMemFunction(FD, ASTC)) {
+    return false;
+  }
+
+  // If it's a system call, we know it does not free the memory.
+  SourceManager &SM = ASTC.getSourceManager();
+  if (SM.isInSystemHeader(FD->getLocation())) {
+    return false;
+  }
+
+  // Otherwise, assume that the function can free memory.
+  return true;
+}
+
 // If the symbol we are tracking is invalidated, but not explicitly (ex: the &p
 // escapes, when we are tracking p), do not track the symbol as we cannot reason
 // about it anymore.
 ProgramStateRef
-MallocChecker::checkRegionChanges(ProgramStateRef state,
+MallocChecker::checkRegionChanges(ProgramStateRef State,
                             const StoreManager::InvalidatedSymbols *invalidated,
                                     ArrayRef<const MemRegion *> ExplicitRegions,
-                                    ArrayRef<const MemRegion *> Regions) const {
+                                    ArrayRef<const MemRegion *> Regions,
+                                    const CallOrObjCMessage *Call) const {
   if (!invalidated)
-    return state;
-
+    return State;
   llvm::SmallPtrSet<SymbolRef, 8> WhitelistedSymbols;
-  for (ArrayRef<const MemRegion *>::iterator I = ExplicitRegions.begin(),
-       E = ExplicitRegions.end(); I != E; ++I) {
-    if (const SymbolicRegion *SR = (*I)->StripCasts()->getAs<SymbolicRegion>())
-      WhitelistedSymbols.insert(SR->getSymbol());
+
+  const FunctionDecl *FD = (Call ? dyn_cast<FunctionDecl>(Call->getDecl()) : 0);
+
+  // If it's a call which might free or reallocate memory, we assume that all
+  // regions (explicit and implicit) escaped. Otherwise, whitelist explicit
+  // pointers; we still can track them.
+  if (!(FD && hasUnknownBehavior(FD, State))) {
+    for (ArrayRef<const MemRegion *>::iterator I = ExplicitRegions.begin(),
+        E = ExplicitRegions.end(); I != E; ++I) {
+      if (const SymbolicRegion *R = (*I)->StripCasts()->getAs<SymbolicRegion>())
+        WhitelistedSymbols.insert(R->getSymbol());
+    }
   }
 
   for (StoreManager::InvalidatedSymbols::const_iterator I=invalidated->begin(),
@@ -949,10 +995,11 @@ MallocChecker::checkRegionChanges(ProgramStateRef state,
     SymbolRef sym = *I;
     if (WhitelistedSymbols.count(sym))
       continue;
-    // Don't track the symbol.
-    state = state->remove<RegionState>(sym);
+    // The symbol escaped.
+    if (const RefState *RS = State->get<RegionState>(sym))
+      State = State->set<RegionState>(sym, RefState::getEscaped(RS->getStmt()));
   }
-  return state;
+  return State;
 }
 
 PathDiagnosticPiece *

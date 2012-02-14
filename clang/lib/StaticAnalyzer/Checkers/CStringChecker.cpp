@@ -64,7 +64,8 @@ public:
     checkRegionChanges(ProgramStateRef state,
                        const StoreManager::InvalidatedSymbols *,
                        ArrayRef<const MemRegion *> ExplicitRegions,
-                       ArrayRef<const MemRegion *> Regions) const;
+                       ArrayRef<const MemRegion *> Regions,
+                       const CallOrObjCMessage *Call) const;
 
   typedef void (CStringChecker::*FnCheck)(CheckerContext &,
                                           const CallExpr *) const;
@@ -1807,7 +1808,8 @@ ProgramStateRef
 CStringChecker::checkRegionChanges(ProgramStateRef state,
                                    const StoreManager::InvalidatedSymbols *,
                                    ArrayRef<const MemRegion *> ExplicitRegions,
-                                   ArrayRef<const MemRegion *> Regions) const {
+                                   ArrayRef<const MemRegion *> Regions,
+                                   const CallOrObjCMessage *Call) const {
   CStringLength::EntryMap Entries = state->get<CStringLength>();
   if (Entries.isEmpty())
     return state;

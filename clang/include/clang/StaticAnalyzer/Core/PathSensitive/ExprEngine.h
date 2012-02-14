@@ -212,7 +212,8 @@ public:
   processRegionChanges(ProgramStateRef state,
                        const StoreManager::InvalidatedSymbols *invalidated,
                        ArrayRef<const MemRegion *> ExplicitRegions,
-                       ArrayRef<const MemRegion *> Regions);
+                       ArrayRef<const MemRegion *> Regions,
+                       const CallOrObjCMessage *Call);
 
   /// printState - Called by ProgramStateManager to print checker-specific data.
   void printState(raw_ostream &Out, ProgramStateRef State,

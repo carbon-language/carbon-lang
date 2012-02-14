@@ -265,9 +265,10 @@ class RegionChanges {
                       ProgramStateRef state,
                       const StoreManager::InvalidatedSymbols *invalidated,
                       ArrayRef<const MemRegion *> Explicits,
-                      ArrayRef<const MemRegion *> Regions) {
+                      ArrayRef<const MemRegion *> Regions,
+                      const CallOrObjCMessage *Call) {
     return ((const CHECKER *)checker)->checkRegionChanges(state, invalidated,
-                                                          Explicits, Regions);
+                                                      Explicits, Regions, Call);
   }
   template <typename CHECKER>
   static bool _wantsRegionChangeUpdate(void *checker,

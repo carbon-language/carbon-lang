@@ -176,9 +176,10 @@ ProgramStateRef
 ExprEngine::processRegionChanges(ProgramStateRef state,
                             const StoreManager::InvalidatedSymbols *invalidated,
                                  ArrayRef<const MemRegion *> Explicits,
-                                 ArrayRef<const MemRegion *> Regions) {
+                                 ArrayRef<const MemRegion *> Regions,
+                                 const CallOrObjCMessage *Call) {
   return getCheckerManager().runCheckersForRegionChanges(state, invalidated,
-                                                         Explicits, Regions);
+                                                      Explicits, Regions, Call);
 }
 
 void ExprEngine::printState(raw_ostream &Out, ProgramStateRef State,

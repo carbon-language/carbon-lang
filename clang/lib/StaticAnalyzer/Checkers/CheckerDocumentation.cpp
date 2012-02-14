@@ -184,13 +184,27 @@ public:
   /// check::LiveSymbols
   void checkLiveSymbols(ProgramStateRef State, SymbolReaper &SR) const {}
 
-  /// check::RegionChanges
+
   bool wantsRegionChangeUpdate(ProgramStateRef St) const { return true; }
+  
+  /// check::RegionChanges
+  /// Allows tracking regions which get invalidated.
+  /// \param state The current program state.
+  /// \param invalidated A set of all symbols potentially touched by the change.
+  /// \param ExplicitRegions The regions explicitly requested for invalidation.
+  ///   For example, in the case of a function call, these would be arguments.
+  /// \param Regions The transitive closure of accessible regions,
+  ///   i.e. all regions that may have been touched by this change.
+  /// \param The call expression wrapper if the regions are invalidated by a
+  ///   call, 0 otherwise.
+  /// Note, in order to be notified, the checker should also implement 
+  /// wantsRegionChangeUpdate callback.
   ProgramStateRef 
     checkRegionChanges(ProgramStateRef State,
                        const StoreManager::InvalidatedSymbols *,
                        ArrayRef<const MemRegion *> ExplicitRegions,
-                       ArrayRef<const MemRegion *> Regions) const {
+                       ArrayRef<const MemRegion *> Regions,
+                       const CallOrObjCMessage *Call) const {
     return State;
   }
 

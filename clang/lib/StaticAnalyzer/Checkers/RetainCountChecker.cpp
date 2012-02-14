@@ -2439,7 +2439,8 @@ public:
   checkRegionChanges(ProgramStateRef state,
                      const StoreManager::InvalidatedSymbols *invalidated,
                      ArrayRef<const MemRegion *> ExplicitRegions,
-                     ArrayRef<const MemRegion *> Regions) const;
+                     ArrayRef<const MemRegion *> Regions,
+                     const CallOrObjCMessage *Call) const;
                                         
   bool wantsRegionChangeUpdate(ProgramStateRef state) const {
     return true;
@@ -3303,7 +3304,8 @@ ProgramStateRef
 RetainCountChecker::checkRegionChanges(ProgramStateRef state,
                             const StoreManager::InvalidatedSymbols *invalidated,
                                     ArrayRef<const MemRegion *> ExplicitRegions,
-                                    ArrayRef<const MemRegion *> Regions) const {
+                                    ArrayRef<const MemRegion *> Regions,
+                                    const CallOrObjCMessage *Call) const {
   if (!invalidated)
     return state;
 

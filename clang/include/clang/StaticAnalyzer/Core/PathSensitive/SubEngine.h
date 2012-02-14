@@ -97,19 +97,20 @@ public:
   ///  region change should trigger a processRegionChanges update.
   virtual bool wantsRegionChangeUpdate(ProgramStateRef state) = 0;
 
-  /// processRegionChanges - Called by ProgramStateManager whenever a change is made
-  ///  to the store. Used to update checkers that track region values.
+  /// processRegionChanges - Called by ProgramStateManager whenever a change is
+  /// made to the store. Used to update checkers that track region values.
   virtual ProgramStateRef 
   processRegionChanges(ProgramStateRef state,
                        const StoreManager::InvalidatedSymbols *invalidated,
                        ArrayRef<const MemRegion *> ExplicitRegions,
-                       ArrayRef<const MemRegion *> Regions) = 0;
+                       ArrayRef<const MemRegion *> Regions,
+                       const CallOrObjCMessage *Call) = 0;
 
 
   inline ProgramStateRef 
   processRegionChange(ProgramStateRef state,
                       const MemRegion* MR) {
-    return processRegionChanges(state, 0, MR, MR);
+    return processRegionChanges(state, 0, MR, MR, 0);
   }
 
   /// printState - Called by ProgramStateManager to print checker-specific data.
