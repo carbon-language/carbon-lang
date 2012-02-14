@@ -345,9 +345,10 @@ let isReMaterializable = 1, isAsCheapAsAMove = 1, canFoldAsLoad = 1,
 // in terms of a copy, and just mentioned, we don't use movss/movsd for copies.
 //===----------------------------------------------------------------------===//
 
-class sse12_move_rr<RegisterClass RC, ValueType vt, string asm> :
+class sse12_move_rr<RegisterClass RC, SDNode OpNode, ValueType vt, string asm> :
       SI<0x10, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src1, RC:$src2), asm,
-      [(set (vt VR128:$dst), (movl VR128:$src1, (scalar_to_vector RC:$src2)))]>;
+      [(set VR128:$dst, (vt (OpNode VR128:$src1,
+                             (scalar_to_vector RC:$src2))))]>;
 
 // Loading from memory automatically zeroing upper bits.
 class sse12_move_rm<RegisterClass RC, X86MemOperand x86memop,
@@ -357,10 +358,10 @@ class sse12_move_rm<RegisterClass RC, X86MemOperand x86memop,
                         [(set RC:$dst, (mem_pat addr:$src))]>;
 
 // AVX
-def VMOVSSrr : sse12_move_rr<FR32, v4f32,
+def VMOVSSrr : sse12_move_rr<FR32, X86Movss, v4f32,
                 "movss\t{$src2, $src1, $dst|$dst, $src1, $src2}">, XS, VEX_4V,
                 VEX_LIG;
-def VMOVSDrr : sse12_move_rr<FR64, v2f64,
+def VMOVSDrr : sse12_move_rr<FR64, X86Movsd, v2f64,
                 "movsd\t{$src2, $src1, $dst|$dst, $src1, $src2}">, XD, VEX_4V,
                 VEX_LIG;
 
@@ -393,9 +394,9 @@ def VMOVSDmr : SI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
 
 // SSE1 & 2
 let Constraints = "$src1 = $dst" in {
-  def MOVSSrr : sse12_move_rr<FR32, v4f32,
+  def MOVSSrr : sse12_move_rr<FR32, X86Movss, v4f32,
                           "movss\t{$src2, $dst|$dst, $src2}">, XS;
-  def MOVSDrr : sse12_move_rr<FR64, v2f64,
+  def MOVSDrr : sse12_move_rr<FR64, X86Movsd, v2f64,
                           "movsd\t{$src2, $dst|$dst, $src2}">, XD;
 
   // For the disassembler
@@ -426,28 +427,6 @@ def MOVSDmr : SDI<0x11, MRMDestMem, (outs), (ins f64mem:$dst, FR64:$src),
 // Patterns
 let Predicates = [HasAVX] in {
   let AddedComplexity = 15 in {
-  // Extract the low 32-bit value from one vector and insert it into another.
-  def : Pat<(v4f32 (movl VR128:$src1, VR128:$src2)),
-            (VMOVSSrr (v4f32 VR128:$src1),
-                      (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_ss))>;
-  def : Pat<(v4i32 (movl VR128:$src1, VR128:$src2)),
-            (VMOVSSrr (v4i32 VR128:$src1),
-                      (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_ss))>;
-
-  // Extract the low 64-bit value from one vector and insert it into another.
-  def : Pat<(v2f64 (movl VR128:$src1, VR128:$src2)),
-            (VMOVSDrr (v2f64 VR128:$src1),
-                      (EXTRACT_SUBREG (v2f64 VR128:$src2), sub_sd))>;
-  def : Pat<(v2i64 (movl VR128:$src1, VR128:$src2)),
-            (VMOVSDrr (v2i64 VR128:$src1),
-                      (EXTRACT_SUBREG (v2i64 VR128:$src2), sub_sd))>;
-
-  // vector_shuffle v1, v2 <4, 5, 2, 3> using movsd
-  def : Pat<(v4f32 (movlp VR128:$src1, VR128:$src2)),
-            (VMOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>;
-  def : Pat<(v4i32 (movlp VR128:$src1, VR128:$src2)),
-            (VMOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>;
-
   // Move scalar to XMM zero-extended, zeroing a VR128 then do a
   // MOVS{S,D} to the lower bits.
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
@@ -543,8 +522,6 @@ let Predicates = [HasAVX] in {
                      (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd))>;
 
   // Shuffle with VMOVSS
-  def : Pat<(v4f32 (X86Movss VR128:$src1, (scalar_to_vector FR32:$src2))),
-            (VMOVSSrr VR128:$src1, FR32:$src2)>;
   def : Pat<(v4i32 (X86Movss VR128:$src1, VR128:$src2)),
             (VMOVSSrr (v4i32 VR128:$src1),
                       (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_ss))>;
@@ -563,8 +540,6 @@ let Predicates = [HasAVX] in {
                           (EXTRACT_SUBREG (v8f32 VR256:$src2), sub_ss)), sub_xmm)>;
 
   // Shuffle with VMOVSD
-  def : Pat<(v2f64 (X86Movsd VR128:$src1, (scalar_to_vector FR64:$src2))),
-            (VMOVSDrr VR128:$src1, FR64:$src2)>;
   def : Pat<(v2i64 (X86Movsd VR128:$src1, VR128:$src2)),
             (VMOVSDrr (v2i64 VR128:$src1),
                      (EXTRACT_SUBREG (v2i64 VR128:$src2), sub_sd))>;
@@ -609,14 +584,6 @@ let Predicates = [HasAVX] in {
 
 let Predicates = [HasSSE1] in {
   let AddedComplexity = 15 in {
-  // Extract the low 32-bit value from one vector and insert it into another.
-  def : Pat<(v4f32 (movl VR128:$src1, VR128:$src2)),
-            (MOVSSrr (v4f32 VR128:$src1),
-                     (EXTRACT_SUBREG (v4f32 VR128:$src2), sub_ss))>;
-  def : Pat<(v4i32 (movl VR128:$src1, VR128:$src2)),
-            (MOVSSrr (v4i32 VR128:$src1),
-                     (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_ss))>;
-
   // Move scalar to XMM zero-extended, zeroing a VR128 then do a
   // MOVSS to the lower bits.
   def : Pat<(v4f32 (X86vzmovl (v4f32 (scalar_to_vector FR32:$src)))),
@@ -647,8 +614,6 @@ let Predicates = [HasSSE1] in {
                      (EXTRACT_SUBREG (v4f32 VR128:$src), sub_ss))>;
 
   // Shuffle with MOVSS
-  def : Pat<(v4f32 (X86Movss VR128:$src1, (scalar_to_vector FR32:$src2))),
-            (MOVSSrr VR128:$src1, FR32:$src2)>;
   def : Pat<(v4i32 (X86Movss VR128:$src1, VR128:$src2)),
             (MOVSSrr (v4i32 VR128:$src1),
                      (EXTRACT_SUBREG (v4i32 VR128:$src2), sub_ss))>;
@@ -659,20 +624,6 @@ let Predicates = [HasSSE1] in {
 
 let Predicates = [HasSSE2] in {
   let AddedComplexity = 15 in {
-  // Extract the low 64-bit value from one vector and insert it into another.
-  def : Pat<(v2f64 (movl VR128:$src1, VR128:$src2)),
-            (MOVSDrr (v2f64 VR128:$src1),
-                     (EXTRACT_SUBREG (v2f64 VR128:$src2), sub_sd))>;
-  def : Pat<(v2i64 (movl VR128:$src1, VR128:$src2)),
-            (MOVSDrr (v2i64 VR128:$src1),
-                     (EXTRACT_SUBREG (v2i64 VR128:$src2), sub_sd))>;
-
-  // vector_shuffle v1, v2 <4, 5, 2, 3> using movsd
-  def : Pat<(v4f32 (movlp VR128:$src1, VR128:$src2)),
-            (MOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>;
-  def : Pat<(v4i32 (movlp VR128:$src1, VR128:$src2)),
-            (MOVSDrr VR128:$src1, (EXTRACT_SUBREG VR128:$src2, sub_sd))>;
-
   // Move scalar to XMM zero-extended, zeroing a VR128 then do a
   // MOVSD to the lower bits.
   def : Pat<(v2f64 (X86vzmovl (v2f64 (scalar_to_vector FR64:$src)))),
@@ -701,8 +652,6 @@ let Predicates = [HasSSE2] in {
                      (EXTRACT_SUBREG (v2f64 VR128:$src), sub_sd))>;
 
   // Shuffle with MOVSD
-  def : Pat<(v2f64 (X86Movsd VR128:$src1, (scalar_to_vector FR64:$src2))),
-            (MOVSDrr VR128:$src1, FR64:$src2)>;
   def : Pat<(v2i64 (X86Movsd VR128:$src1, VR128:$src2)),
             (MOVSDrr (v2i64 VR128:$src1),
                      (EXTRACT_SUBREG (v2i64 VR128:$src2), sub_sd))>;

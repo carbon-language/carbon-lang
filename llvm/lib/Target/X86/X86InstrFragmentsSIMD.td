@@ -380,11 +380,6 @@ def movlp : PatFrag<(ops node:$lhs, node:$rhs),
   return X86::isMOVLPMask(cast<ShuffleVectorSDNode>(N));
 }]>;
 
-def movl : PatFrag<(ops node:$lhs, node:$rhs),
-                   (vector_shuffle node:$lhs, node:$rhs), [{
-  return X86::isMOVLMask(cast<ShuffleVectorSDNode>(N));
-}]>;
-
 def vextractf128_extract : PatFrag<(ops node:$bigvec, node:$index),
                                    (extract_subvector node:$bigvec,
                                                       node:$index), [{
