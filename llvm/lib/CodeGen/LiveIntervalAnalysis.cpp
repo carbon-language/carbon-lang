@@ -107,10 +107,21 @@ bool LiveIntervals::runOnMachineFunction(MachineFunction &fn) {
 /// print - Implement the dump method.
 void LiveIntervals::print(raw_ostream &OS, const Module* ) const {
   OS << "********** INTERVALS **********\n";
-  for (const_iterator I = begin(), E = end(); I != E; ++I) {
-    I->second->print(OS, tri_);
-    OS << "\n";
-  }
+
+  // Dump the physregs.
+  for (unsigned Reg = 1, RegE = tri_->getNumRegs(); Reg != RegE; ++Reg)
+    if (const LiveInterval *LI = r2iMap_.lookup(Reg)) {
+      LI->print(OS, tri_);
+      OS << '\n';
+    }
+
+  // Dump the virtregs.
+  for (unsigned Reg = 0, RegE = mri_->getNumVirtRegs(); Reg != RegE; ++Reg)
+    if (const LiveInterval *LI =
+        r2iMap_.lookup(TargetRegisterInfo::index2VirtReg(Reg))) {
+      LI->print(OS, tri_);
+      OS << '\n';
+    }
 
   printInstrs(OS);
 }
