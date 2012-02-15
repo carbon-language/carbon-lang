@@ -18,7 +18,7 @@ def : Pat <(i32 (selectcc IntRegs:$lhs, IntRegs:$rhs, IntRegs:$tval,
 
 def : Pat <(i32 (selectcc IntRegs:$lhs, IntRegs:$rhs, IntRegs:$tval,
                           IntRegs:$fval, SETNE)),
-      (i32 (MUX_rr (i1 (NOT_Ps (CMPEQrr IntRegs:$lhs, IntRegs:$rhs))),
+      (i32 (MUX_rr (i1 (NOT_p (CMPEQrr IntRegs:$lhs, IntRegs:$rhs))),
                    IntRegs:$tval, IntRegs:$fval))>;
 
 def : Pat <(i32 (selectcc IntRegs:$lhs, IntRegs:$rhs, IntRegs:$tval,
@@ -35,24 +35,24 @@ def : Pat <(i32 (selectcc IntRegs:$lhs, IntRegs:$rhs, IntRegs:$tval,
 
 def : Pat <(i32 (selectcc IntRegs:$lhs, IntRegs:$rhs, IntRegs:$tval,
                           IntRegs:$fval, SETULT)),
-      (i32 (MUX_rr (i1 (NOT_Ps (CMPGTUrr IntRegs:$lhs,
+      (i32 (MUX_rr (i1 (NOT_p (CMPGTUrr IntRegs:$lhs,
                                          (ADD_ri IntRegs:$rhs, -1)))),
                    IntRegs:$tval, IntRegs:$fval))>;
 
 def : Pat <(i32 (selectcc IntRegs:$lhs, IntRegs:$rhs, IntRegs:$tval,
                           IntRegs:$fval, SETLT)),
-      (i32 (MUX_rr (i1 (NOT_Ps (CMPGTrr IntRegs:$lhs,
+      (i32 (MUX_rr (i1 (NOT_p (CMPGTrr IntRegs:$lhs,
                                         (ADD_ri IntRegs:$rhs, -1)))),
                    IntRegs:$tval, IntRegs:$fval))>;
 
 def : Pat <(i32 (selectcc IntRegs:$lhs, IntRegs:$rhs, IntRegs:$tval,
                           IntRegs:$fval, SETLE)),
-      (i32 (MUX_rr (i1 (NOT_Ps (CMPGTrr IntRegs:$lhs, IntRegs:$rhs))),
+      (i32 (MUX_rr (i1 (NOT_p (CMPGTrr IntRegs:$lhs, IntRegs:$rhs))),
                    IntRegs:$tval, IntRegs:$fval))>;
 
 def : Pat <(i32 (selectcc IntRegs:$lhs, IntRegs:$rhs, IntRegs:$tval,
                           IntRegs:$fval, SETULE)),
-      (i32 (MUX_rr (i1 (NOT_Ps (CMPGTUrr IntRegs:$lhs, IntRegs:$rhs))),
+      (i32 (MUX_rr (i1 (NOT_p (CMPGTUrr IntRegs:$lhs, IntRegs:$rhs))),
                    IntRegs:$tval, IntRegs:$fval))>;
 
 
@@ -86,7 +86,7 @@ def : Pat <(i32 (selectcc PredRegs:$lhs, PredRegs:$rhs, IntRegs:$tval,
 
 def : Pat <(i32 (selectcc PredRegs:$lhs, PredRegs:$rhs, IntRegs:$tval,
                           IntRegs:$fval, SETEQ)),
-      (i32 (MUX_rr (i1 (NOT_pp (XOR_pp PredRegs:$lhs, PredRegs:$rhs))),
+      (i32 (MUX_rr (i1 (NOT_p (XOR_pp PredRegs:$lhs, PredRegs:$rhs))),
                    IntRegs:$tval, IntRegs:$fval))>;
 
 

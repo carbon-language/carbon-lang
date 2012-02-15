@@ -163,6 +163,7 @@ public:
   bool isConditionalALU32 (const MachineInstr* MI) const;
   bool isConditionalLoad (const MachineInstr* MI) const;
   bool isDeallocRet(const MachineInstr *MI) const;
+  unsigned getInvertedPredicatedOpcode(const int Opc) const;
 
 private:
   int getMatchingCondBranchOpcode(int Opc, bool sense) const;

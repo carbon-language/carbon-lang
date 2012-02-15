@@ -2231,6 +2231,181 @@ def POST_STwri_cdnNotPt_nv_V4 : NVInstPI_V4<(outs IntRegs:$dst),
 // NV/ST -
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// NV/J +
+//===----------------------------------------------------------------------===//
+
+multiclass NVJ_type_basic_reg<string NotStr, string OpcStr, string TakenStr> {
+  def _ie_nv_V4 : NVInst_V4<(outs),
+            (ins IntRegs:$src1, IntRegs:$src2, brtarget:$offset),
+            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
+            !strconcat("($src1.new, $src2)) jump:",
+            !strconcat(TakenStr, " $offset"))))),
+            []>,
+            Requires<[HasV4T]>;
+
+  def _nv_V4 : NVInst_V4<(outs),
+            (ins IntRegs:$src1, IntRegs:$src2, brtarget:$offset),
+            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
+            !strconcat("($src1.new, $src2)) jump:",
+            !strconcat(TakenStr, " $offset"))))),
+            []>,
+            Requires<[HasV4T]>;
+}
+
+multiclass NVJ_type_basic_2ndDotNew<string NotStr, string OpcStr, string TakenStr> {
+  def _ie_nv_V4 : NVInst_V4<(outs),
+            (ins IntRegs:$src1, IntRegs:$src2, brtarget:$offset),
+            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
+            !strconcat("($src1, $src2.new)) jump:",
+            !strconcat(TakenStr, " $offset"))))),
+            []>,
+            Requires<[HasV4T]>;
+
+  def _nv_V4 : NVInst_V4<(outs),
+            (ins IntRegs:$src1, IntRegs:$src2, brtarget:$offset),
+            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
+            !strconcat("($src1, $src2.new)) jump:",
+            !strconcat(TakenStr, " $offset"))))),
+            []>,
+            Requires<[HasV4T]>;
+}
+
+multiclass NVJ_type_basic_imm<string NotStr, string OpcStr, string TakenStr> {
+  def _ie_nv_V4 : NVInst_V4<(outs),
+            (ins IntRegs:$src1, u5Imm:$src2, brtarget:$offset),
+            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
+            !strconcat("($src1.new, #$src2)) jump:",
+            !strconcat(TakenStr, " $offset"))))),
+            []>,
+            Requires<[HasV4T]>;
+
+  def _nv_V4 : NVInst_V4<(outs),
+            (ins IntRegs:$src1, u5Imm:$src2, brtarget:$offset),
+            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
+            !strconcat("($src1.new, #$src2)) jump:",
+            !strconcat(TakenStr, " $offset"))))),
+            []>,
+            Requires<[HasV4T]>;
+}
+
+multiclass NVJ_type_basic_neg<string NotStr, string OpcStr, string TakenStr> {
+  def _ie_nv_V4 : NVInst_V4<(outs),
+            (ins IntRegs:$src1, nOneImm:$src2, brtarget:$offset),
+            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
+            !strconcat("($src1.new, #$src2)) jump:",
+            !strconcat(TakenStr, " $offset"))))),
+            []>,
+            Requires<[HasV4T]>;
+
+  def _nv_V4 : NVInst_V4<(outs),
+            (ins IntRegs:$src1, nOneImm:$src2, brtarget:$offset),
+            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
+            !strconcat("($src1.new, #$src2)) jump:",
+            !strconcat(TakenStr, " $offset"))))),
+            []>,
+            Requires<[HasV4T]>;
+}
+
+multiclass NVJ_type_basic_tstbit<string NotStr, string OpcStr, string TakenStr> {
+  def _ie_nv_V4 : NVInst_V4<(outs),
+            (ins IntRegs:$src1, u1Imm:$src2, brtarget:$offset),
+            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
+            !strconcat("($src1.new, #$src2)) jump:",
+            !strconcat(TakenStr, " $offset"))))),
+            []>,
+            Requires<[HasV4T]>;
+
+  def _nv_V4 : NVInst_V4<(outs),
+            (ins IntRegs:$src1, u1Imm:$src2, brtarget:$offset),
+            !strconcat("if (", !strconcat(NotStr, !strconcat(OpcStr,
+            !strconcat("($src1.new, #$src2)) jump:",
+            !strconcat(TakenStr, " $offset"))))),
+            []>,
+            Requires<[HasV4T]>;
+}
+
+// Multiclass for regular dot new of Ist operand register.
+multiclass NVJ_type_br_pred_reg<string NotStr, string OpcStr> {
+  defm Pt  : NVJ_type_basic_reg<NotStr, OpcStr, "t">;
+  defm Pnt : NVJ_type_basic_reg<NotStr, OpcStr, "nt">;
+}
+
+// Multiclass for dot new of 2nd operand register.
+multiclass NVJ_type_br_pred_2ndDotNew<string NotStr, string OpcStr> {
+  defm Pt  : NVJ_type_basic_2ndDotNew<NotStr, OpcStr, "t">;
+  defm Pnt : NVJ_type_basic_2ndDotNew<NotStr, OpcStr, "nt">;
+}
+
+// Multiclass for 2nd operand immediate, including -1.
+multiclass NVJ_type_br_pred_imm<string NotStr, string OpcStr> {
+  defm Pt     : NVJ_type_basic_imm<NotStr, OpcStr, "t">;
+  defm Pnt    : NVJ_type_basic_imm<NotStr, OpcStr, "nt">;
+  defm Ptneg  : NVJ_type_basic_neg<NotStr, OpcStr, "t">;
+  defm Pntneg : NVJ_type_basic_neg<NotStr, OpcStr, "nt">;
+}
+
+// Multiclass for 2nd operand immediate, excluding -1.
+multiclass NVJ_type_br_pred_imm_only<string NotStr, string OpcStr> {
+  defm Pt     : NVJ_type_basic_imm<NotStr, OpcStr, "t">;
+  defm Pnt    : NVJ_type_basic_imm<NotStr, OpcStr, "nt">;
+}
+
+// Multiclass for tstbit, where 2nd operand is always #0.
+multiclass NVJ_type_br_pred_tstbit<string NotStr, string OpcStr> {
+  defm Pt     : NVJ_type_basic_tstbit<NotStr, OpcStr, "t">;
+  defm Pnt    : NVJ_type_basic_tstbit<NotStr, OpcStr, "nt">;
+}
+
+// Multiclass for GT.
+multiclass NVJ_type_rr_ri<string OpcStr> {
+  defm rrNot   : NVJ_type_br_pred_reg<"!", OpcStr>;
+  defm rr      : NVJ_type_br_pred_reg<"",  OpcStr>;
+  defm rrdnNot : NVJ_type_br_pred_2ndDotNew<"!", OpcStr>;
+  defm rrdn    : NVJ_type_br_pred_2ndDotNew<"",  OpcStr>;
+  defm riNot   : NVJ_type_br_pred_imm<"!", OpcStr>;
+  defm ri      : NVJ_type_br_pred_imm<"",  OpcStr>;
+}
+
+// Multiclass for EQ.
+multiclass NVJ_type_rr_ri_no_2ndDotNew<string OpcStr> {
+  defm rrNot   : NVJ_type_br_pred_reg<"!", OpcStr>;
+  defm rr      : NVJ_type_br_pred_reg<"",  OpcStr>;
+  defm riNot   : NVJ_type_br_pred_imm<"!", OpcStr>;
+  defm ri      : NVJ_type_br_pred_imm<"",  OpcStr>;
+}
+
+// Multiclass for GTU.
+multiclass NVJ_type_rr_ri_no_nOne<string OpcStr> {
+  defm rrNot   : NVJ_type_br_pred_reg<"!", OpcStr>;
+  defm rr      : NVJ_type_br_pred_reg<"",  OpcStr>;
+  defm rrdnNot : NVJ_type_br_pred_2ndDotNew<"!", OpcStr>;
+  defm rrdn    : NVJ_type_br_pred_2ndDotNew<"",  OpcStr>;
+  defm riNot   : NVJ_type_br_pred_imm_only<"!", OpcStr>;
+  defm ri      : NVJ_type_br_pred_imm_only<"",  OpcStr>;
+}
+
+// Multiclass for tstbit.
+multiclass NVJ_type_r0<string OpcStr> {
+  defm r0Not : NVJ_type_br_pred_tstbit<"!", OpcStr>;
+  defm r0    : NVJ_type_br_pred_tstbit<"",  OpcStr>;
+ }
+
+// Base Multiclass for New Value Jump.
+multiclass NVJ_type {
+  defm GT     : NVJ_type_rr_ri<"cmp.gt">;
+  defm EQ     : NVJ_type_rr_ri_no_2ndDotNew<"cmp.eq">;
+  defm GTU    : NVJ_type_rr_ri_no_nOne<"cmp.gtu">;
+  defm TSTBIT : NVJ_type_r0<"tstbit">;
+}
+
+let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC] in {
+  defm JMP_ : NVJ_type;
+}
+
+//===----------------------------------------------------------------------===//
+// NV/J -
+//===----------------------------------------------------------------------===//
 
 //===----------------------------------------------------------------------===//
 // XTYPE/ALU +

@@ -20,7 +20,7 @@ add_llvm_target(HexagonCodeGen
   HexagonInstrInfo.cpp
   HexagonISelDAGToDAG.cpp
   HexagonISelLowering.cpp
-  HexagonOptimizeSZExtends.cpp
+  HexagonPeephole.cpp
   HexagonRegisterInfo.cpp
   HexagonRemoveSZExtArgs.cpp
   HexagonSelectionDAGInfo.cpp
