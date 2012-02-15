@@ -100,7 +100,7 @@ void DFAPacketizer::reserveResources(llvm::MachineInstr *MI) {
   reserveResources(&MID);
 }
 
-namespace llvm {
+namespace {
 // DefaultVLIWScheduler - This class extends ScheduleDAGInstrs and overrides
 // Schedule method to build the dependence graph.
 class DefaultVLIWScheduler : public ScheduleDAGInstrs {
