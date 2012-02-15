@@ -35,7 +35,7 @@ namespace llvm {
   FunctionPass* createHexagonExpandPredSpillCode(HexagonTargetMachine &TM);
 
   FunctionPass *createHexagonHardwareLoops();
-  FunctionPass *createHexagonOptimizeSZExtends();
+  FunctionPass *createHexagonPeephole();
   FunctionPass *createHexagonFixupHwLoops();
 
 } // end namespace llvm;

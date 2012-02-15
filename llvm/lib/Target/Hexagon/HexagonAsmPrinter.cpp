@@ -125,6 +125,11 @@ namespace {
       O << -value;
     }
 
+    void printHexagonNOneImmOperand(const MachineInstr *MI, unsigned OpNo,
+                                    raw_ostream &O) const {
+      O << -1;
+    }
+
     void printHexagonMEMriOperand(const MachineInstr *MI, unsigned OpNo,
                                   raw_ostream &O) {
       const MachineOperand &MO1 = MI->getOperand(OpNo);

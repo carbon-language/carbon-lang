@@ -238,7 +238,7 @@ static unsigned doesIntrinsicContainPredicate(unsigned ID)
     case Intrinsic::hexagon_C2_or:
       return Hexagon::OR_pp;
     case Intrinsic::hexagon_C2_not:
-      return Hexagon::NOT_pp;
+      return Hexagon::NOT_p;
     case Intrinsic::hexagon_C2_any8:
       return Hexagon::ANY_pp;
     case Intrinsic::hexagon_C2_all8:
@@ -1178,7 +1178,7 @@ SDNode *HexagonDAGToDAGISel::SelectConstant(SDNode *N) {
                                           SDValue(IntRegTFR, 0));
 
       // not(Pd)
-      SDNode* NotPd = CurDAG->getMachineNode(Hexagon::NOT_pp, dl, MVT::i1,
+      SDNode* NotPd = CurDAG->getMachineNode(Hexagon::NOT_p, dl, MVT::i1,
                                              SDValue(Pd, 0));
 
       // xor(not(Pd))

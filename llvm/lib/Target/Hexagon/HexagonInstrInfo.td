@@ -695,10 +695,6 @@ def AND_pnotp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1,
                 "$dst = and($src1, !$src2)",
                 []>;
 
-def NOT_pp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1),
-             "$dst = not($src1)",
-             [(set PredRegs:$dst, (not PredRegs:$src1))]>;
-
 def ANY_pp : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1),
              "$dst = any8($src1)",
              []>;
@@ -728,7 +724,7 @@ def MASK_p : SInst<(outs DoubleRegs:$dst), (ins PredRegs:$src1),
              "$dst = mask($src1)",
              []>;
 
-def NOT_Ps : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1),
+def NOT_p : SInst<(outs PredRegs:$dst), (ins PredRegs:$src1),
              "$dst = not($src1)",
              [(set PredRegs:$dst, (not PredRegs:$src1))]>;
 
@@ -761,7 +757,7 @@ let isBranch = 1, isTerminator=1, isBarrier = 1, isPredicable = 1 in {
 // if (p0) jump
 let isBranch = 1, isTerminator=1, Defs = [PC],
     isPredicated = 1 in {
-  def JMP_Pred : JInst< (outs),
+  def JMP_c : JInst< (outs),
                  (ins PredRegs:$src, brtarget:$offset),
                  "if ($src) jump $offset",
                  [(brcond PredRegs:$src, bb:$offset)]>;
@@ -770,7 +766,7 @@ let isBranch = 1, isTerminator=1, Defs = [PC],
 // if (!p0) jump
 let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
     isPredicated = 1 in {
-  def JMP_PredNot : JInst< (outs),
+  def JMP_cNot : JInst< (outs),
                     (ins PredRegs:$src, brtarget:$offset),
                     "if (!$src) jump $offset",
                     []>;
@@ -787,7 +783,7 @@ let isTerminator = 1, isBranch = 1, neverHasSideEffects = 1, Defs = [PC],
 // if (p0) jump:t
 let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
     isPredicated = 1 in {
-  def JMP_PredPt : JInst< (outs),
+  def JMP_cdnPt : JInst< (outs),
                    (ins PredRegs:$src, brtarget:$offset),
                    "if ($src.new) jump:t $offset",
                    []>;
@@ -796,7 +792,7 @@ let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
 // if (!p0) jump:t
 let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
     isPredicated = 1 in {
-  def JMP_PredNotPt : JInst< (outs),
+  def JMP_cdnNotPt : JInst< (outs),
                       (ins PredRegs:$src, brtarget:$offset),
                       "if (!$src.new) jump:t $offset",
                       []>;
@@ -805,7 +801,7 @@ let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
 // Not taken.
 let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
     isPredicated = 1 in {
-  def JMP_PredPnt : JInst< (outs),
+  def JMP_cdnPnt : JInst< (outs),
                     (ins PredRegs:$src, brtarget:$offset),
                     "if ($src.new) jump:nt $offset",
                     []>;
@@ -814,7 +810,7 @@ let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
 // Not taken.
 let isBranch = 1, isTerminator=1, neverHasSideEffects = 1, Defs = [PC],
     isPredicated = 1 in {
-  def JMP_PredNotPnt : JInst< (outs),
+  def JMP_cdnNotPnt : JInst< (outs),
                        (ins PredRegs:$src, brtarget:$offset),
                        "if (!$src.new) jump:nt $offset",
                        []>;
@@ -2268,6 +2264,20 @@ def TFR_condset_rr : ALU32_rr<(outs IntRegs:$dst), (ins PredRegs:$src1,
                                                  IntRegs:$src3))]>;
 
 let AddedComplexity = 100 in
+def TFR_condset_ri : ALU32_rr<(outs IntRegs:$dst),
+            (ins PredRegs:$src1, IntRegs:$src2, s12Imm:$src3),
+            "Error; should not emit",
+            [(set IntRegs:$dst,
+            (select PredRegs:$src1, IntRegs:$src2, s12ImmPred:$src3))]>;
+
+let AddedComplexity = 100 in
+def TFR_condset_ir : ALU32_rr<(outs IntRegs:$dst),
+            (ins PredRegs:$src1, s12Imm:$src2, IntRegs:$src3),
+            "Error; should not emit",
+            [(set IntRegs:$dst,
+            (select PredRegs:$src1, s12ImmPred:$src2, IntRegs:$src3))]>;
+
+let AddedComplexity = 100 in
 def TFR_condset_ii : ALU32_rr<(outs IntRegs:$dst),
                               (ins PredRegs:$src1, s12Imm:$src2, s12Imm:$src3),
                      "Error; should not emit",
@@ -2460,7 +2470,7 @@ def : Pat <(and IntRegs:$src1, 255),
 //     Add(p1, false) should never be produced,
 //     if it does, it got to be mapped to NOOP.
 def : Pat <(add PredRegs:$src1, -1),
-      (NOT_pp PredRegs:$src1)>;
+      (NOT_p PredRegs:$src1)>;
 
 // Map from p0 = setlt(r0, r1) r2 = mux(p0, r3, r4) =>
 //   p0 = cmp.lt(r0, r1), r0 = mux(p0, r2, r1).
@@ -2475,7 +2485,7 @@ def : Pat <(select (not PredRegs:$src1), s8ImmPred:$src2, s8ImmPred:$src3),
 
 // Map from p0 = pnot(p0); if (p0) jump => if (!p0) jump.
 def : Pat <(brcond (not PredRegs:$src1), bb:$offset),
-      (JMP_PredNot PredRegs:$src1, bb:$offset)>;
+      (JMP_cNot PredRegs:$src1, bb:$offset)>;
 
 // Map from p2 = pnot(p2); p1 = and(p0, p2) => p1 = and(p0, !p2).
 def : Pat <(and PredRegs:$src1, (not PredRegs:$src2)),
@@ -2674,39 +2684,39 @@ def : Pat <(i64 (sext_inreg DoubleRegs:$src1, i8)),
       (i64 (SXTW (SXTB (EXTRACT_SUBREG DoubleRegs:$src1, subreg_loreg))))>;
 
 // We want to prevent emiting pnot's as much as possible.
-// Map brcond with an unsupported setcc to a JMP_PredNot.
+// Map brcond with an unsupported setcc to a JMP_cNot.
 def : Pat <(brcond (i1 (setne IntRegs:$src1, IntRegs:$src2)), bb:$offset),
-      (JMP_PredNot (CMPEQrr IntRegs:$src1, IntRegs:$src2), bb:$offset)>;
+      (JMP_cNot (CMPEQrr IntRegs:$src1, IntRegs:$src2), bb:$offset)>;
 
 def : Pat <(brcond (i1 (setne IntRegs:$src1, s10ImmPred:$src2)), bb:$offset),
-      (JMP_PredNot (CMPEQri IntRegs:$src1, s10ImmPred:$src2), bb:$offset)>;
+      (JMP_cNot (CMPEQri IntRegs:$src1, s10ImmPred:$src2), bb:$offset)>;
 
 def : Pat <(brcond (i1 (setne PredRegs:$src1, (i1 -1))), bb:$offset),
-      (JMP_PredNot PredRegs:$src1, bb:$offset)>;
+      (JMP_cNot PredRegs:$src1, bb:$offset)>;
 
 def : Pat <(brcond (i1 (setne PredRegs:$src1, (i1 0))), bb:$offset),
-      (JMP_Pred PredRegs:$src1, bb:$offset)>;
+      (JMP_c PredRegs:$src1, bb:$offset)>;
 
 def : Pat <(brcond (i1 (setlt IntRegs:$src1, s8ImmPred:$src2)), bb:$offset),
-      (JMP_PredNot (CMPGEri IntRegs:$src1, s8ImmPred:$src2), bb:$offset)>;
+      (JMP_cNot (CMPGEri IntRegs:$src1, s8ImmPred:$src2), bb:$offset)>;
 
 def : Pat <(brcond (i1 (setlt IntRegs:$src1, IntRegs:$src2)), bb:$offset),
-      (JMP_Pred (CMPLTrr IntRegs:$src1, IntRegs:$src2), bb:$offset)>;
+      (JMP_c (CMPLTrr IntRegs:$src1, IntRegs:$src2), bb:$offset)>;
 
 def : Pat <(brcond (i1 (setuge DoubleRegs:$src1, DoubleRegs:$src2)),
                    bb:$offset),
-      (JMP_PredNot (CMPGTU64rr DoubleRegs:$src2, DoubleRegs:$src1),
+      (JMP_cNot (CMPGTU64rr DoubleRegs:$src2, DoubleRegs:$src1),
                    bb:$offset)>;
 
 def : Pat <(brcond (i1 (setule IntRegs:$src1, IntRegs:$src2)), bb:$offset),
-      (JMP_PredNot (CMPGTUrr IntRegs:$src1, IntRegs:$src2), bb:$offset)>;
+      (JMP_cNot (CMPGTUrr IntRegs:$src1, IntRegs:$src2), bb:$offset)>;
 
 def : Pat <(brcond (i1 (setule DoubleRegs:$src1, DoubleRegs:$src2)),
                    bb:$offset),
-      (JMP_PredNot (CMPGTU64rr DoubleRegs:$src1, DoubleRegs:$src2),
+      (JMP_cNot (CMPGTU64rr DoubleRegs:$src1, DoubleRegs:$src2),
                    bb:$offset)>;
 
-// Map from a 64-bit select to an emulated 64-bit mux.  
+// Map from a 64-bit select to an emulated 64-bit mux.
 // Hexagon does not support 64-bit MUXes; so emulate with combines.
 def : Pat <(select PredRegs:$src1, DoubleRegs:$src2, DoubleRegs:$src3),
       (COMBINE_rr
@@ -2721,7 +2731,7 @@ def : Pat <(select PredRegs:$src1, DoubleRegs:$src2, DoubleRegs:$src3),
 // From LegalizeDAG.cpp: (B1 ? B2 : B3) <=> (B1 & B2)|(!B1&B3).
 def : Pat <(select PredRegs:$src1, PredRegs:$src2, PredRegs:$src3),
       (OR_pp (AND_pp PredRegs:$src1, PredRegs:$src2),
-             (AND_pp (NOT_pp PredRegs:$src1), PredRegs:$src3))>;
+             (AND_pp (NOT_p PredRegs:$src1), PredRegs:$src3))>;
 
 // Map Pd = load(addr) -> Rs = load(addr); Pd = Rs.
 def : Pat<(i1 (load ADDRriS11_2:$addr)),
@@ -2773,26 +2783,26 @@ def : Pat<(i64 (anyext IntRegs:$src1)),
 // Map cmple -> cmpgt.
 // rs <= rt -> !(rs > rt).
 def : Pat<(i1 (setle IntRegs:$src1, s10ImmPred:$src2)),
-      (i1 (NOT_Ps (CMPGTri IntRegs:$src1, s10ImmPred:$src2)))>;
+      (i1 (NOT_p (CMPGTri IntRegs:$src1, s10ImmPred:$src2)))>;
 
 // rs <= rt -> !(rs > rt).
 def : Pat<(i1 (setle IntRegs:$src1, IntRegs:$src2)),
-      (i1 (NOT_Ps (CMPGTrr IntRegs:$src1, IntRegs:$src2)))>;
+      (i1 (NOT_p (CMPGTrr IntRegs:$src1, IntRegs:$src2)))>;
 
 // Rss <= Rtt -> !(Rss > Rtt).
 def : Pat<(i1 (setle DoubleRegs:$src1, DoubleRegs:$src2)),
-      (i1 (NOT_Ps (CMPGT64rr DoubleRegs:$src1, DoubleRegs:$src2)))>;
+      (i1 (NOT_p (CMPGT64rr DoubleRegs:$src1, DoubleRegs:$src2)))>;
 
 // Map cmpne -> cmpeq.
 // Hexagon_TODO: We should improve on this.
 // rs != rt -> !(rs == rt).
 def : Pat <(i1 (setne IntRegs:$src1, s10ImmPred:$src2)),
-      (i1 (NOT_Ps(i1 (CMPEQri IntRegs:$src1, s10ImmPred:$src2))))>;
+      (i1 (NOT_p(i1 (CMPEQri IntRegs:$src1, s10ImmPred:$src2))))>;
 
 // Map cmpne(Rs) -> !cmpeqe(Rs).
 // rs != rt -> !(rs == rt).
 def : Pat <(i1 (setne IntRegs:$src1, IntRegs:$src2)),
-      (i1 (NOT_Ps(i1 (CMPEQrr IntRegs:$src1, IntRegs:$src2))))>;
+      (i1 (NOT_p(i1 (CMPEQrr IntRegs:$src1, IntRegs:$src2))))>;
 
 // Convert setne back to xor for hexagon since we compute w/ pred registers.
 def : Pat <(i1 (setne PredRegs:$src1, PredRegs:$src2)),
@@ -2801,12 +2811,12 @@ def : Pat <(i1 (setne PredRegs:$src1, PredRegs:$src2)),
 // Map cmpne(Rss) -> !cmpew(Rss).
 // rs != rt -> !(rs == rt).
 def : Pat <(i1 (setne DoubleRegs:$src1, DoubleRegs:$src2)),
-      (i1 (NOT_Ps(i1 (CMPEHexagon4rr DoubleRegs:$src1, DoubleRegs:$src2))))>;
+      (i1 (NOT_p(i1 (CMPEHexagon4rr DoubleRegs:$src1, DoubleRegs:$src2))))>;
 
 // Map cmpge(Rs, Rt) -> !(cmpgt(Rs, Rt).
 // rs >= rt -> !(rt > rs).
 def : Pat <(i1 (setge IntRegs:$src1, IntRegs:$src2)),
-      (i1 (NOT_Ps(i1 (CMPGTrr IntRegs:$src2, IntRegs:$src1))))>;
+      (i1 (NOT_p(i1 (CMPGTrr IntRegs:$src2, IntRegs:$src1))))>;
 
 def : Pat <(i1 (setge IntRegs:$src1, s8ImmPred:$src2)),
       (i1 (CMPGEri IntRegs:$src1, s8ImmPred:$src2))>;
@@ -2814,12 +2824,12 @@ def : Pat <(i1 (setge IntRegs:$src1, s8ImmPred:$src2)),
 // Map cmpge(Rss, Rtt) -> !cmpgt(Rtt, Rss).
 // rss >= rtt -> !(rtt > rss).
 def : Pat <(i1 (setge DoubleRegs:$src1, DoubleRegs:$src2)),
-      (i1 (NOT_Ps(i1 (CMPGT64rr DoubleRegs:$src2, DoubleRegs:$src1))))>;
+      (i1 (NOT_p(i1 (CMPGT64rr DoubleRegs:$src2, DoubleRegs:$src1))))>;
 
 // Map cmplt(Rs, Imm) -> !cmpge(Rs, Imm).
 // rs < rt -> !(rs >= rt).
 def : Pat <(i1 (setlt IntRegs:$src1, s8ImmPred:$src2)),
-      (i1 (NOT_Ps (CMPGEri IntRegs:$src1, s8ImmPred:$src2)))>;
+      (i1 (NOT_p (CMPGEri IntRegs:$src1, s8ImmPred:$src2)))>;
 
 // Map cmplt(Rs, Rt) -> cmplt(Rs, Rt).
 // rs < rt -> rs < rt. Let assembler map it.
@@ -2844,22 +2854,22 @@ def : Pat <(i1 (setult DoubleRegs:$src1, DoubleRegs:$src2)),
 // Map from Rs >= Rt -> !(Rt > Rs).
 // rs >= rt -> !(rt > rs).
 def : Pat <(i1 (setuge IntRegs:$src1, IntRegs:$src2)),
-      (i1 (NOT_Ps (CMPGTUrr IntRegs:$src2, IntRegs:$src1)))>;
+      (i1 (NOT_p (CMPGTUrr IntRegs:$src2, IntRegs:$src1)))>;
 
 // Map from Rs >= Rt -> !(Rt > Rs).
 // rs >= rt -> !(rt > rs).
 def : Pat <(i1 (setuge DoubleRegs:$src1, DoubleRegs:$src2)),
-      (i1 (NOT_Ps (CMPGTU64rr DoubleRegs:$src2, DoubleRegs:$src1)))>;
+      (i1 (NOT_p (CMPGTU64rr DoubleRegs:$src2, DoubleRegs:$src1)))>;
 
 // Map from cmpleu(Rs, Rs) -> !cmpgtu(Rs, Rs).
 // Map from (Rs <= Rt) -> !(Rs > Rt).
 def : Pat <(i1 (setule IntRegs:$src1, IntRegs:$src2)),
-      (i1 (NOT_Ps (CMPGTUrr IntRegs:$src1, IntRegs:$src2)))>;
+      (i1 (NOT_p (CMPGTUrr IntRegs:$src1, IntRegs:$src2)))>;
 
 // Map from cmpleu(Rss, Rtt) -> !cmpgtu(Rss, Rtt-1).
 // Map from (Rs <= Rt) -> !(Rs > Rt).
 def : Pat <(i1 (setule DoubleRegs:$src1, DoubleRegs:$src2)),
-      (i1 (NOT_Ps (CMPGTU64rr DoubleRegs:$src1, DoubleRegs:$src2)))>;
+      (i1 (NOT_p (CMPGTU64rr DoubleRegs:$src1, DoubleRegs:$src2)))>;
 
 // Sign extends.
 // i1 -> i32
