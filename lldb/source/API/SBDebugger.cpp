@@ -25,6 +25,15 @@
 #include "lldb/API/SBStringList.h"
 #include "lldb/API/SBTarget.h"
 #include "lldb/API/SBThread.h"
+#include "lldb/API/SBTypeCategory.h"
+#include "lldb/API/SBTypeFormat.h"
+#include "lldb/API/SBTypeFilter.h"
+#include "lldb/API/SBTypeNameSpecifier.h"
+#include "lldb/API/SBTypeSummary.h"
+#include "lldb/API/SBTypeSynthetic.h"
+
+
+#include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/State.h"
 #include "lldb/Interpreter/Args.h"
@@ -1054,3 +1063,140 @@ SBDebugger::SetCloseInputOnEOF (bool b)
     if (m_opaque_sp)
         m_opaque_sp->SetCloseInputOnEOF (b);
 }
+
+SBTypeCategory
+SBDebugger::GetCategory (const char* category_name)
+{
+    if (!category_name || *category_name == 0)
+        return SBTypeCategory();
+    
+    TypeCategoryImplSP category_sp;
+    
+    if (DataVisualization::Categories::GetCategory(ConstString(category_name), category_sp, false))
+        return SBTypeCategory(category_sp);
+    else
+        return SBTypeCategory();
+}
+
+SBTypeCategory
+SBDebugger::CreateCategory (const char* category_name)
+{
+    if (!category_name || *category_name == 0)
+        return SBTypeCategory();
+    
+    TypeCategoryImplSP category_sp;
+    
+    if (DataVisualization::Categories::GetCategory(ConstString(category_name), category_sp, true))
+        return SBTypeCategory(category_sp);
+    else
+        return SBTypeCategory();
+}
+
+bool
+SBDebugger::DeleteCategory (const char* category_name)
+{
+    if (!category_name || *category_name == 0)
+        return false;
+    
+    return DataVisualization::Categories::Delete(ConstString(category_name));
+}
+
+uint32_t
+SBDebugger::GetNumCategories()
+{
+    return DataVisualization::Categories::GetCount();
+}
+
+SBTypeCategory
+SBDebugger::GetCategoryAtIndex (uint32_t index)
+{
+    return SBTypeCategory(DataVisualization::Categories::GetCategoryAtIndex(index));
+}
+
+SBTypeCategory
+SBDebugger::GetDefaultCategory()
+{
+    return GetCategory("default");
+}
+
+SBTypeFormat
+SBDebugger::GetFormatForType (SBTypeNameSpecifier type_name)
+{
+    SBTypeCategory default_category_sb = GetDefaultCategory();
+    if (default_category_sb.GetEnabled())
+        return default_category_sb.GetFormatForType(type_name);
+    return SBTypeFormat();
+}
+
+SBTypeSummary
+SBDebugger::GetSummaryForType (SBTypeNameSpecifier type_name)
+{
+    SBTypeSummary summary_chosen;
+    uint32_t num_categories = GetNumCategories();
+    SBTypeCategory category_sb;
+    uint32_t prio_category = UINT32_MAX;
+    for (uint32_t category_id = 0;
+         category_id < num_categories;
+         category_id++)
+    {
+        category_sb = GetCategoryAtIndex(category_id);
+        if (category_sb.GetEnabled() == false)
+            continue;
+        SBTypeSummary summary_current = category_sb.GetSummaryForType(type_name);
+        if (summary_current.IsValid() && (summary_chosen.IsValid() == false || (prio_category > category_sb.m_opaque_sp->GetEnabledPosition())))
+        {
+            prio_category = category_sb.m_opaque_sp->GetEnabledPosition();
+            summary_chosen = summary_current;
+        }
+    }
+    return summary_chosen;
+}
+
+SBTypeFilter
+SBDebugger::GetFilterForType (SBTypeNameSpecifier type_name)
+{
+    SBTypeFilter filter_chosen;
+    uint32_t num_categories = GetNumCategories();
+    SBTypeCategory category_sb;
+    uint32_t prio_category = UINT32_MAX;
+    for (uint32_t category_id = 0;
+         category_id < num_categories;
+         category_id++)
+    {
+        category_sb = GetCategoryAtIndex(category_id);
+        if (category_sb.GetEnabled() == false)
+            continue;
+        SBTypeFilter filter_current = category_sb.GetFilterForType(type_name);
+        if (filter_current.IsValid() && (filter_chosen.IsValid() == false || (prio_category > category_sb.m_opaque_sp->GetEnabledPosition())))
+        {
+            prio_category = category_sb.m_opaque_sp->GetEnabledPosition();
+            filter_chosen = filter_current;
+        }
+    }
+    return filter_chosen;
+}
+
+SBTypeSynthetic
+SBDebugger::GetSyntheticForType (SBTypeNameSpecifier type_name)
+{
+    SBTypeSynthetic synth_chosen;
+    uint32_t num_categories = GetNumCategories();
+    SBTypeCategory category_sb;
+    uint32_t prio_category = UINT32_MAX;
+    for (uint32_t category_id = 0;
+         category_id < num_categories;
+         category_id++)
+    {
+        category_sb = GetCategoryAtIndex(category_id);
+        if (category_sb.GetEnabled() == false)
+            continue;
+        SBTypeSynthetic synth_current = category_sb.GetSyntheticForType(type_name);
+        if (synth_current.IsValid() && (synth_chosen.IsValid() == false || (prio_category > category_sb.m_opaque_sp->GetEnabledPosition())))
+        {
+            prio_category = category_sb.m_opaque_sp->GetEnabledPosition();
+            synth_chosen = synth_current;
+        }
+    }
+    return synth_chosen;
+}
+

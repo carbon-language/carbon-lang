@@ -1140,7 +1140,7 @@ ScriptInterpreterPython::GenerateFunction(std::string& signature, StringList &in
 // this implementation is identical to GenerateBreakpointCommandCallbackData (apart from the name
 // given to generated functions, of course)
 bool
-ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, StringList &output)
+ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, StringList &output, void* name_token)
 {
     static int num_created_functions = 0;
     user_input.RemoveBlankLines ();
@@ -1154,7 +1154,10 @@ ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, Str
     // Take what the user wrote, wrap it all up inside one big auto-generated Python function, passing in the
     // ValueObject as parameter to the function.
     
-    sstr.Printf ("lldb_autogen_python_type_print_func_%d", num_created_functions);
+    if (!name_token)
+        sstr.Printf ("lldb_autogen_python_type_print_func_%d", num_created_functions);
+    else
+        sstr.Printf ("lldb_gen_python_type_print_func_%p", name_token);        
     ++num_created_functions;
     std::string auto_generated_function_name = sstr.GetData();
     
@@ -1267,7 +1270,7 @@ ScriptInterpreterPython::GenerateScriptAliasFunction (StringList &user_input, St
 
 
 bool
-ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, StringList &output)
+ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, StringList &output, void* name_token)
 {
     static int num_created_classes = 0;
     user_input.RemoveBlankLines ();
@@ -1280,7 +1283,10 @@ ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, StringL
     
     // Wrap all user input into a Python class
     
-    sstr.Printf ("lldb_autogen_python_type_synth_class_%d", num_created_classes);
+    if (!name_token)
+        sstr.Printf ("lldb_autogen_python_type_synth_class_%d", num_created_classes);
+    else
+        sstr.Printf ("lldb_gen_python_type_synth_class_%p", name_token);        
     ++num_created_classes;
     std::string auto_generated_class_name = sstr.GetData();
     
@@ -1349,11 +1355,21 @@ ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name
 }
 
 bool
-ScriptInterpreterPython::GenerateTypeScriptFunction (const char* oneliner, StringList &output)
+ScriptInterpreterPython::GenerateTypeScriptFunction (const char* oneliner, StringList &output, void* name_token)
 {
-    StringList input(oneliner);
-    return GenerateTypeScriptFunction(input, output);
+    StringList input;
+    input.SplitIntoLines(oneliner, strlen(oneliner));
+    return GenerateTypeScriptFunction(input, output, name_token);
 }
+
+bool
+ScriptInterpreterPython::GenerateTypeSynthClass (const char* oneliner, StringList &output, void* name_token)
+{
+    StringList input;
+    input.SplitIntoLines(oneliner, strlen(oneliner));
+    return GenerateTypeSynthClass(input, output, name_token);
+}
+
 
 bool
 ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user_input, StringList &callback_data)
@@ -1775,12 +1791,12 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
             return false;
         }
         
-        // call __lldb_module_init(debugger,dict)
+        // call __lldb_init_module(debugger,dict)
         if (!g_swig_call_module_init (basename,
                                         m_dictionary_name.c_str(),
                                         debugger_sp))
         {
-            error.SetErrorString("calling __lldb_module_init failed");
+            error.SetErrorString("calling __lldb_init_module failed");
             return false;
         }
         return true;

@@ -963,7 +963,7 @@ public:
     }
     
     void
-    SetCustomSummaryFormat(lldb::SummaryFormatSP format)
+    SetCustomSummaryFormat(lldb::TypeSummaryImplSP format)
     {
         m_forced_summary_format = format;
         m_user_id_of_forced_summary = m_update_point.GetModID();
@@ -971,7 +971,7 @@ public:
         m_is_getting_summary = false;
     }
     
-    lldb::SummaryFormatSP
+    lldb::TypeSummaryImplSP
     GetCustomSummaryFormat()
     {
         return m_forced_summary_format;
@@ -990,7 +990,7 @@ public:
         return (m_forced_summary_format.get());
     }
     
-    lldb::SummaryFormatSP
+    lldb::TypeSummaryImplSP
     GetSummaryFormat()
     {
         UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
@@ -1000,7 +1000,7 @@ public:
     }
     
     void
-    SetSummaryFormat(lldb::SummaryFormatSP format)
+    SetSummaryFormat(lldb::TypeSummaryImplSP format)
     {
         m_last_summary_format = format;
         m_summary_str.clear();
@@ -1008,13 +1008,13 @@ public:
     }
     
     void
-    SetValueFormat(lldb::ValueFormatSP format)
+    SetValueFormat(lldb::TypeFormatImplSP format)
     {
         m_last_value_format = format;
         m_value_str.clear();
     }
     
-    lldb::ValueFormatSP
+    lldb::TypeFormatImplSP
     GetValueFormat()
     {
         UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
@@ -1110,9 +1110,9 @@ protected:
     lldb::Format                m_format;
     uint32_t                    m_last_format_mgr_revision;
     lldb::DynamicValueType      m_last_format_mgr_dynamic;
-    lldb::SummaryFormatSP       m_last_summary_format;
-    lldb::SummaryFormatSP       m_forced_summary_format;
-    lldb::ValueFormatSP         m_last_value_format;
+    lldb::TypeSummaryImplSP     m_last_summary_format;
+    lldb::TypeSummaryImplSP     m_forced_summary_format;
+    lldb::TypeFormatImplSP      m_last_value_format;
     lldb::SyntheticChildrenSP   m_last_synthetic_filter;
     ProcessModID                m_user_id_of_forced_summary;
     AddressType                 m_address_type_of_ptr_or_ref_children;

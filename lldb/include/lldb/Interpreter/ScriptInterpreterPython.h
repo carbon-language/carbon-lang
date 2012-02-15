@@ -56,14 +56,17 @@ public:
     ExportFunctionDefinitionToInterpreter (StringList &function_def);
 
     bool
-    GenerateTypeScriptFunction (StringList &input, StringList &output);
+    GenerateTypeScriptFunction (StringList &input, StringList &output, void* name_token = NULL);
     
     bool
-    GenerateTypeSynthClass (StringList &input, StringList &output);
+    GenerateTypeSynthClass (StringList &input, StringList &output, void* name_token = NULL);
+    
+    bool
+    GenerateTypeSynthClass (const char* oneliner, StringList &output, void* name_token = NULL);
     
     // use this if the function code is just a one-liner script
     bool
-    GenerateTypeScriptFunction (const char* oneliner, StringList &output);
+    GenerateTypeScriptFunction (const char* oneliner, StringList &output, void* name_token = NULL);
     
     virtual bool
     GenerateScriptAliasFunction (StringList &input, StringList &output);

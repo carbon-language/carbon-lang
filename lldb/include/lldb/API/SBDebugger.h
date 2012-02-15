@@ -241,6 +241,36 @@ public:
     void
     SetCloseInputOnEOF (bool b);
 
+    SBTypeCategory
+    GetCategory (const char* category_name);
+
+    SBTypeCategory
+    CreateCategory (const char* category_name);
+    
+    bool
+    DeleteCategory (const char* category_name);
+    
+    uint32_t
+    GetNumCategories ();
+    
+    SBTypeCategory
+    GetCategoryAtIndex (uint32_t);
+    
+    SBTypeCategory
+    GetDefaultCategory();
+    
+    SBTypeFormat
+    GetFormatForType (SBTypeNameSpecifier);
+
+    SBTypeSummary
+    GetSummaryForType (SBTypeNameSpecifier);
+
+    SBTypeFilter
+    GetFilterForType (SBTypeNameSpecifier);
+
+    SBTypeSynthetic
+    GetSyntheticForType (SBTypeNameSpecifier);
+
 private:
 
     friend class SBInputReader;

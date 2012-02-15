@@ -321,6 +321,37 @@ public:
     
     void
     SetCloseInputOnEOF (bool b);
+    
+    lldb::SBTypeCategory
+    GetCategory (const char* category_name);
+    
+    lldb::SBTypeCategory
+    CreateCategory (const char* category_name);
+    
+    bool
+    DeleteCategory (const char* category_name);
+    
+    uint32_t
+    GetNumCategories ();
+    
+    lldb::SBTypeCategory
+    GetCategoryAtIndex (uint32_t);
+    
+    lldb::SBTypeCategory
+    GetDefaultCategory();
+    
+    lldb::SBTypeFormat
+    GetFormatForType (lldb::SBTypeNameSpecifier);
+
+    lldb::SBTypeSummary
+    GetSummaryForType (lldb::SBTypeNameSpecifier);
+
+    lldb::SBTypeFilter
+    GetFilterForType (lldb::SBTypeNameSpecifier);
+
+    lldb::SBTypeSynthetic
+    GetSyntheticForType (lldb::SBTypeNameSpecifier);
+                
 }; // class SBDebugger
 
 } // namespace lldb

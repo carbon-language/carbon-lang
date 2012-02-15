@@ -128,9 +128,9 @@ public:
         const ValueSP& entry)
     {
         if (listener)
-            entry->m_my_revision = listener->GetCurrentRevision();
+            entry->GetRevision() = listener->GetCurrentRevision();
         else
-            entry->m_my_revision = 0;
+            entry->GetRevision() = 0;
 
         Mutex::Locker(m_map_mutex);
         m_map[name] = entry;
@@ -194,6 +194,38 @@ public:
         return m_map.size();
     }
     
+    ValueSP
+    GetValueAtIndex (uint32_t index)
+    {
+        Mutex::Locker(m_map_mutex);
+        MapIterator iter = m_map.begin();
+        MapIterator end = m_map.end();
+        while (index > 0)
+        {
+            iter++;
+            index--;
+            if (end == iter)
+                return ValueSP();
+        }
+        return iter->second;
+    }
+    
+    KeyType
+    GetKeyAtIndex (uint32_t index)
+    {
+        Mutex::Locker(m_map_mutex);
+        MapIterator iter = m_map.begin();
+        MapIterator end = m_map.end();
+        while (index > 0)
+        {
+            iter++;
+            index--;
+            if (end == iter)
+                return KeyType();
+        }
+        return iter->first;
+    }
+    
 protected:
     MapType m_map;    
     Mutex m_map_mutex;
@@ -234,7 +266,7 @@ public:
         
     typedef typename std::tr1::shared_ptr<FormatNavigator<KeyType, ValueType> > SharedPointer;
     
-    friend class FormatCategory;
+    friend class TypeCategoryImpl;
 
     FormatNavigator(std::string name,
                     IFormatChangeListener* lst) :
@@ -272,6 +304,30 @@ public:
         if (why)
             *why = value;
         return ret;
+    }
+    
+    bool
+    Get (ConstString type, MapValueType& entry)
+    {
+        return Get_Impl(type, entry, Types<KeyType,ValueType>());
+    }
+    
+    bool
+    GetExact (ConstString type, MapValueType& entry)
+    {
+        return GetExact_Impl(type, entry, Types<KeyType,ValueType>());
+    }
+    
+    MapValueType
+    GetAtIndex (uint32_t index)
+    {
+        return m_format_map.GetValueAtIndex(index);
+    }
+    
+    lldb::TypeNameSpecifierImplSP
+    GetTypeNameSpecifierAtIndex (uint32_t index)
+    {
+        return GetTypeNameSpecifierAtIndex_Impl(index, Types<KeyType,ValueType>());
     }
     
     void
@@ -350,12 +406,42 @@ protected:
        return m_format_map.Get(type, entry);
     }
 
+    template<typename K, typename V>
+    bool
+    GetExact_Impl (ConstString type, MapValueType& entry, Types<K,V> dummy)
+    {
+        return Get_Impl(type,entry,dummy);
+    }
+    
+    template<typename K, typename V>
+    lldb::TypeNameSpecifierImplSP
+    GetTypeNameSpecifierAtIndex_Impl (uint32_t index, Types<K,V> dummy)
+    {
+        ConstString key = m_format_map.GetKeyAtIndex(index);
+        if (key)
+            return lldb::TypeNameSpecifierImplSP(new TypeNameSpecifierImpl(key.AsCString(),
+                                                                           false));
+        else
+            return lldb::TypeNameSpecifierImplSP();
+    }
+    
+    template<typename V>
+    lldb::TypeNameSpecifierImplSP
+    GetTypeNameSpecifierAtIndex_Impl (uint32_t index, Types<lldb::RegularExpressionSP,V> dummy)
+    {
+        lldb::RegularExpressionSP regex = m_format_map.GetKeyAtIndex(index);
+        if (regex.get() == NULL)
+            return lldb::TypeNameSpecifierImplSP();
+        return lldb::TypeNameSpecifierImplSP(new TypeNameSpecifierImpl(regex->GetText(),
+                                                                       true));
+    }
+
     template<typename V>
     bool
     Get_Impl (ConstString key, MapValueType& value, Types<lldb::RegularExpressionSP,V>)
     {
-        Mutex& x_mutex = m_format_map.mutex();
-        lldb_private::Mutex::Locker locker(x_mutex);
+       Mutex& x_mutex = m_format_map.mutex();
+       lldb_private::Mutex::Locker locker(x_mutex);
        MapIterator pos, end = m_format_map.map().end();
        for (pos = m_format_map.map().begin(); pos != end; pos++)
        {
@@ -368,11 +454,24 @@ protected:
        }
        return false;
     }
-
+    
+    template<typename V>
     bool
-    Get (ConstString type, MapValueType& entry)
+    GetExact_Impl (ConstString key, MapValueType& value, Types<lldb::RegularExpressionSP,V>)
     {
-        return Get_Impl(type, entry, Types<KeyType,ValueType>());
+        Mutex& x_mutex = m_format_map.mutex();
+        lldb_private::Mutex::Locker locker(x_mutex);
+        MapIterator pos, end = m_format_map.map().end();
+        for (pos = m_format_map.map().begin(); pos != end; pos++)
+        {
+            lldb::RegularExpressionSP regex = pos->first;
+            if (strcmp(regex->GetText(),key.AsCString()) == 0)
+            {
+                value = pos->second;
+                return true;
+            }
+        }
+        return false;
     }
     
     #define LLDB_MAX_REASONABLE_OBJC_CLASS_DEPTH 100

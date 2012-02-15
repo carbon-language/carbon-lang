@@ -44,29 +44,39 @@ struct PyObject;
 using namespace lldb;
 using namespace lldb_private;
 
-ValueFormat::ValueFormat (lldb::Format f,
-                          bool casc,
-                          bool skipptr,
-                          bool skipref) : 
-    m_cascades(casc),
-    m_skip_pointers(skipptr),
-    m_skip_references(skipref),
+TypeFormatImpl::TypeFormatImpl (lldb::Format f,
+                          const Flags& flags) : 
+    m_flags(flags),
     m_format (f)
 {
 }
 
-SummaryFormat::SummaryFormat(const SummaryFormat::Flags& flags) :
+std::string
+TypeFormatImpl::GetDescription()
+{
+    StreamString sstr;
+    sstr.Printf ("%s%s%s%s\n", 
+                 FormatManager::GetFormatAsCString (GetFormat()),
+                 Cascades() ? "" : " (not cascading)",
+                 SkipsPointers() ? " (skip pointers)" : "",
+                 SkipsReferences() ? " (skip references)" : "");
+    return sstr.GetString();
+}
+
+TypeSummaryImpl::TypeSummaryImpl(const TypeSummaryImpl::Flags& flags) :
     m_flags(flags)
 {
 }
 
-StringSummaryFormat::StringSummaryFormat(const SummaryFormat::Flags& flags,
-                                         std::string f) :
-    SummaryFormat(flags),
-    m_format(f)
-{
-}
 
+StringSummaryFormat::StringSummaryFormat(const TypeSummaryImpl::Flags& flags,
+                                         const char *format_cstr) :
+    TypeSummaryImpl(flags),
+    m_format()
+{
+  if (format_cstr)
+    m_format.assign(format_cstr);
+}
 
 std::string
 StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
@@ -141,15 +151,19 @@ StringSummaryFormat::GetDescription()
 
 #ifndef LLDB_DISABLE_PYTHON
 
-ScriptSummaryFormat::ScriptSummaryFormat(const SummaryFormat::Flags& flags,
-                                         std::string fname,
-                                         std::string pscri) :
-    SummaryFormat(flags),
-    m_function_name(fname),
-    m_python_script(pscri)
-{
-}
 
+ScriptSummaryFormat::ScriptSummaryFormat(const TypeSummaryImpl::Flags& flags,
+                                         const char * function_name,
+                                         const char * python_script) :
+    TypeSummaryImpl(flags),
+    m_function_name(),
+    m_python_script()
+{
+   if (function_name)
+     m_function_name.assign(function_name);
+   if (python_script)
+     m_python_script.assign(python_script);
+}
 
 std::string
 ScriptSummaryFormat::FormatObject(lldb::ValueObjectSP object)
@@ -177,18 +191,18 @@ ScriptSummaryFormat::GetDescription()
 #endif // #ifndef LLDB_DISABLE_PYTHON
 
 std::string
-SyntheticFilter::GetDescription()
+TypeFilterImpl::GetDescription()
 {
     StreamString sstr;
     sstr.Printf("%s%s%s {\n",
-                m_cascades ? "" : " (not cascading)",
-                m_skip_pointers ? " (skip pointers)" : "",
-                m_skip_references ? " (skip references)" : "");
+                Cascades() ? "" : " (not cascading)",
+                SkipsPointers() ? " (skip pointers)" : "",
+                SkipsReferences() ? " (skip references)" : "");
     
     for (int i = 0; i < GetCount(); i++)
     {
         sstr.Printf("    %s\n",
-                    GetExpressionPathAtIndex(i).c_str());
+                    GetExpressionPathAtIndex(i));
     }
                     
     sstr.Printf("}");
@@ -200,9 +214,10 @@ SyntheticArrayView::GetDescription()
 {
     StreamString sstr;
     sstr.Printf("%s%s%s {\n",
-                m_cascades ? "" : " (not cascading)",
-                m_skip_pointers ? " (skip pointers)" : "",
-                m_skip_references ? " (skip references)" : "");
+                Cascades() ? "" : " (not cascading)",
+                SkipsPointers() ? " (skip pointers)" : "",
+                SkipsReferences() ? " (skip references)" : "");
+    
     SyntheticArrayRange* ptr = &m_head;
     while (ptr && ptr != m_tail)
     {
@@ -222,7 +237,7 @@ SyntheticArrayView::GetDescription()
 
 #ifndef LLDB_DISABLE_PYTHON
 
-SyntheticScriptProvider::FrontEnd::FrontEnd(std::string pclass,
+TypeSyntheticImpl::FrontEnd::FrontEnd(std::string pclass,
                                             lldb::ValueObjectSP be) :
     SyntheticChildrenFrontEnd(be),
     m_python_class(pclass)
@@ -242,13 +257,13 @@ SyntheticScriptProvider::FrontEnd::FrontEnd(std::string pclass,
         m_wrapper = m_interpreter->CreateSyntheticScriptedProvider(m_python_class, m_backend);
 }
 
-SyntheticScriptProvider::FrontEnd::~FrontEnd()
+TypeSyntheticImpl::FrontEnd::~FrontEnd()
 {
     Py_XDECREF((PyObject*)m_wrapper);
 }
 
 lldb::ValueObjectSP
-SyntheticScriptProvider::FrontEnd::GetChildAtIndex (uint32_t idx, bool can_create)
+TypeSyntheticImpl::FrontEnd::GetChildAtIndex (uint32_t idx, bool can_create)
 {
     if (m_wrapper == NULL || m_interpreter == NULL)
         return lldb::ValueObjectSP();
@@ -257,13 +272,13 @@ SyntheticScriptProvider::FrontEnd::GetChildAtIndex (uint32_t idx, bool can_creat
 }
 
 std::string
-SyntheticScriptProvider::GetDescription()
+TypeSyntheticImpl::GetDescription()
 {
     StreamString sstr;
     sstr.Printf("%s%s%s Python class %s",
-                m_cascades ? "" : " (not cascading)",
-                m_skip_pointers ? " (skip pointers)" : "",
-                m_skip_references ? " (skip references)" : "",
+                Cascades() ? "" : " (not cascading)",
+                SkipsPointers() ? " (skip pointers)" : "",
+                SkipsReferences() ? " (skip references)" : "",
                 m_python_class.c_str());
     
     return sstr.GetString();

@@ -322,8 +322,92 @@
                     return PyString_FromString("");
         }
 }
+%extend lldb::SBTypeCategory {
+        PyObject *lldb::SBTypeCategory::__str__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description, lldb::eDescriptionLevelBrief);
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                else
+                    return PyString_FromString("");
+        }
+}
+%extend lldb::SBTypeFilter {
+        PyObject *lldb::SBTypeFilter::__str__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description, lldb::eDescriptionLevelBrief);
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                else
+                    return PyString_FromString("");
+        }
+}
+%extend lldb::SBTypeFormat {
+        PyObject *lldb::SBTypeFormat::__str__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description, lldb::eDescriptionLevelBrief);
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                else
+                    return PyString_FromString("");
+        }
+}
 %extend lldb::SBTypeMember {
         PyObject *lldb::SBTypeMember::__str__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description, lldb::eDescriptionLevelBrief);
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                else
+                    return PyString_FromString("");
+        }
+}
+%extend lldb::SBTypeNameSpecifier {
+        PyObject *lldb::SBTypeNameSpecifier::__str__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description, lldb::eDescriptionLevelBrief);
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                else
+                    return PyString_FromString("");
+        }
+}
+%extend lldb::SBTypeSummary {
+        PyObject *lldb::SBTypeSummary::__str__ (){
+                lldb::SBStream description;
+                $self->GetDescription (description, lldb::eDescriptionLevelBrief);
+                const char *desc = description.GetData();
+                size_t desc_len = description.GetSize();
+                if (desc_len > 0 && (desc[desc_len-1] == '\n' || desc[desc_len-1] == '\r'))
+                    --desc_len;
+                if (desc_len > 0)
+                    return PyString_FromStringAndSize (desc, desc_len);
+                else
+                    return PyString_FromString("");
+        }
+}
+%extend lldb::SBTypeSynthetic {
+        PyObject *lldb::SBTypeSynthetic::__str__ (){
                 lldb::SBStream description;
                 $self->GetDescription (description, lldb::eDescriptionLevelBrief);
                 const char *desc = description.GetData();

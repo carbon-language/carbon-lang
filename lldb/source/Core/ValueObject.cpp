@@ -575,7 +575,7 @@ ValueObject::GetSummaryAsCString ()
     {        
         if (m_summary_str.empty())
         {
-            SummaryFormat *summary_format = GetSummaryFormat().get();
+            TypeSummaryImpl *summary_format = GetSummaryFormat().get();
 
             if (summary_format)
             {
@@ -1771,7 +1771,7 @@ ValueObject::GetSyntheticArrayRangeChild (uint32_t from, uint32_t to, bool can_c
             
             // We haven't made a synthetic array member for INDEX yet, so
             // lets make one and cache it for any future reference.
-            SyntheticArrayView *view = new SyntheticArrayView();
+            SyntheticArrayView *view = new SyntheticArrayView(SyntheticChildren::Flags());
             view->AddRange(from,to);
             SyntheticChildrenSP view_sp(view);
             synthetic_child = new ValueObjectSynthetic(*this, view_sp);
@@ -3075,7 +3075,7 @@ ValueObject::DumpValueObject
         std::string value_str;
         const char *val_cstr = NULL;
         const char *sum_cstr = NULL;
-        SummaryFormat* entry = valobj->GetSummaryFormat().get();
+        TypeSummaryImpl* entry = valobj->GetSummaryFormat().get();
         
         if (omit_summary_depth > 0)
             entry = NULL;

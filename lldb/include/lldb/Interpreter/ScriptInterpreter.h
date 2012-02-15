@@ -109,7 +109,13 @@ public:
     }
     
     virtual bool
-    GenerateTypeScriptFunction (StringList &input, StringList &output)
+    GenerateTypeScriptFunction (const char* oneliner, StringList &output, void* name_token = NULL)
+    {
+        return false;
+    }
+    
+    virtual bool
+    GenerateTypeScriptFunction (StringList &input, StringList &output, void* name_token = NULL)
     {
         return false;
     }
@@ -121,7 +127,13 @@ public:
     }
     
     virtual bool
-    GenerateTypeSynthClass (StringList &input, StringList &output)
+    GenerateTypeSynthClass (StringList &input, StringList &output, void* name_token = NULL)
+    {
+        return false;
+    }
+    
+    virtual bool
+    GenerateTypeSynthClass (const char* oneliner, StringList &output, void* name_token = NULL)
     {
         return false;
     }
@@ -131,13 +143,6 @@ public:
                                      lldb::ValueObjectSP valobj)
     {
         return NULL;
-    }
-    
-    // use this if the function code is just a one-liner script
-    virtual bool
-    GenerateTypeScriptFunction (const char* oneliner, StringList &output)
-    {
-        return false;
     }
     
     virtual bool

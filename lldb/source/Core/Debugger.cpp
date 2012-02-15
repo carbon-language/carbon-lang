@@ -729,6 +729,27 @@ Debugger::GetAsyncErrorStream ()
                                                CommandInterpreter::eBroadcastBitAsynchronousErrorData));
 }    
 
+uint32_t
+Debugger::GetNumDebuggers()
+{
+    Mutex::Locker locker (GetDebuggerListMutex ());
+    return GetDebuggerList().size();
+}
+
+lldb::DebuggerSP
+Debugger::GetDebuggerAtIndex (uint32_t index)
+{
+    DebuggerSP debugger_sp;
+    
+    Mutex::Locker locker (GetDebuggerListMutex ());
+    DebuggerList &debugger_list = GetDebuggerList();
+    
+    if (index < debugger_list.size())
+        debugger_sp = debugger_list[index];
+        
+    return debugger_sp;
+}
+
 DebuggerSP
 Debugger::FindDebuggerWithID (lldb::user_id_t id)
 {

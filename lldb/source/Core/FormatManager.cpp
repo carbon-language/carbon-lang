@@ -157,8 +157,8 @@ FormatManager::GetFormatAsCString (Format format)
     return NULL;
 }
 
-FormatCategory::FormatCategory(IFormatChangeListener* clist,
-                               std::string name) :
+TypeCategoryImpl::TypeCategoryImpl(IFormatChangeListener* clist,
+                                   ConstString name) :
     m_summary_nav(new SummaryNavigator("summary",clist)),
     m_regex_summary_nav(new RegexSummaryNavigator("regex-summary",clist)),
     m_filter_nav(new FilterNavigator("filter",clist)),
@@ -174,8 +174,8 @@ FormatCategory::FormatCategory(IFormatChangeListener* clist,
 {}
 
 bool
-FormatCategory::Get (ValueObject& valobj,
-                     lldb::SummaryFormatSP& entry,
+TypeCategoryImpl::Get (ValueObject& valobj,
+                     lldb::TypeSummaryImplSP& entry,
                      lldb::DynamicValueType use_dynamic,
                      uint32_t* reason)
 {
@@ -190,14 +190,14 @@ FormatCategory::Get (ValueObject& valobj,
 }
 
 bool
-FormatCategory::Get(ValueObject& valobj,
+TypeCategoryImpl::Get(ValueObject& valobj,
                     lldb::SyntheticChildrenSP& entry_sp,
                     lldb::DynamicValueType use_dynamic,
                     uint32_t* reason)
 {
     if (!IsEnabled())
         return false;
-    SyntheticFilter::SharedPointer filter_sp;
+    TypeFilterImpl::SharedPointer filter_sp;
     uint32_t reason_filter = 0;
     bool regex_filter = false;
     // first find both Filter and Synth, and then check which is most recent
@@ -209,7 +209,7 @@ FormatCategory::Get(ValueObject& valobj,
     bool regex_synth = false;
     uint32_t reason_synth = 0;    
     bool pick_synth = false;
-    SyntheticScriptProvider::SharedPointer synth;
+    TypeSyntheticImpl::SharedPointer synth;
     if (!GetSyntheticNavigator()->Get(valobj, synth, use_dynamic, &reason_synth))
         regex_synth = GetRegexSyntheticNavigator()->Get (valobj, synth, use_dynamic, &reason_synth);
     if (!filter_sp.get() && !synth.get())
@@ -222,7 +222,7 @@ FormatCategory::Get(ValueObject& valobj,
     
     else /*if (filter_sp.get() && synth.get())*/
     {
-        if (filter_sp->m_my_revision > synth->m_my_revision)
+        if (filter_sp->GetRevision() > synth->GetRevision())
             pick_synth = false;
         else
             pick_synth = true;
@@ -255,7 +255,7 @@ FormatCategory::Get(ValueObject& valobj,
 }
 
 void
-FormatCategory::Clear (FormatCategoryItems items)
+TypeCategoryImpl::Clear (FormatCategoryItems items)
 {
     if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
         m_summary_nav->Clear();
@@ -274,7 +274,7 @@ FormatCategory::Clear (FormatCategoryItems items)
 }
 
 bool
-FormatCategory::Delete (ConstString name,
+TypeCategoryImpl::Delete (ConstString name,
                         FormatCategoryItems items)
 {
     bool success = false;
@@ -296,7 +296,7 @@ FormatCategory::Delete (ConstString name,
 }
 
 uint32_t
-FormatCategory::GetCount (FormatCategoryItems items)
+TypeCategoryImpl::GetCount (FormatCategoryItems items)
 {
     uint32_t count = 0;
     if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
@@ -317,7 +317,7 @@ FormatCategory::GetCount (FormatCategoryItems items)
 }
 
 bool
-FormatCategory::AnyMatches(ConstString type_name,
+TypeCategoryImpl::AnyMatches(ConstString type_name,
                            FormatCategoryItems items,
                            bool only_enabled,
                            const char** matching_category,
@@ -326,10 +326,10 @@ FormatCategory::AnyMatches(ConstString type_name,
     if (!IsEnabled() && only_enabled)
         return false;
     
-    lldb::SummaryFormatSP summary;
-    SyntheticFilter::SharedPointer filter;
+    lldb::TypeSummaryImplSP summary;
+    TypeFilterImpl::SharedPointer filter;
 #ifndef LLDB_DISABLE_PYTHON
-    SyntheticScriptProvider::SharedPointer synth;
+    TypeSyntheticImpl::SharedPointer synth;
 #endif
     
     if ( (items & eFormatCategoryItemSummary) == eFormatCategoryItemSummary )
@@ -337,7 +337,7 @@ FormatCategory::AnyMatches(ConstString type_name,
         if (m_summary_nav->Get(type_name, summary))
         {
             if (matching_category)
-                *matching_category = m_name.c_str();
+                *matching_category = m_name.GetCString();
             if (matching_type)
                 *matching_type = eFormatCategoryItemSummary;
             return true;
@@ -348,7 +348,7 @@ FormatCategory::AnyMatches(ConstString type_name,
         if (m_regex_summary_nav->Get(type_name, summary))
         {
             if (matching_category)
-                *matching_category = m_name.c_str();
+                *matching_category = m_name.GetCString();
             if (matching_type)
                 *matching_type = eFormatCategoryItemRegexSummary;
             return true;
@@ -359,7 +359,7 @@ FormatCategory::AnyMatches(ConstString type_name,
         if (m_filter_nav->Get(type_name, filter))
         {
             if (matching_category)
-                *matching_category = m_name.c_str();
+                *matching_category = m_name.GetCString();
             if (matching_type)
                 *matching_type = eFormatCategoryItemFilter;
             return true;
@@ -370,7 +370,7 @@ FormatCategory::AnyMatches(ConstString type_name,
         if (m_regex_filter_nav->Get(type_name, filter))
         {
             if (matching_category)
-                *matching_category = m_name.c_str();
+                *matching_category = m_name.GetCString();
             if (matching_type)
                 *matching_type = eFormatCategoryItemRegexFilter;
             return true;
@@ -382,7 +382,7 @@ FormatCategory::AnyMatches(ConstString type_name,
         if (m_synth_nav->Get(type_name, synth))
         {
             if (matching_category)
-                *matching_category = m_name.c_str();
+                *matching_category = m_name.GetCString();
             if (matching_type)
                 *matching_type = eFormatCategoryItemSynth;
             return true;
@@ -393,7 +393,7 @@ FormatCategory::AnyMatches(ConstString type_name,
         if (m_regex_synth_nav->Get(type_name, synth))
         {
             if (matching_category)
-                *matching_category = m_name.c_str();
+                *matching_category = m_name.GetCString();
             if (matching_type)
                 *matching_type = eFormatCategoryItemRegexSynth;
             return true;
@@ -405,10 +405,10 @@ FormatCategory::AnyMatches(ConstString type_name,
 
 bool
 CategoryMap::AnyMatches (ConstString type_name,
-                                    FormatCategory::FormatCategoryItems items,
-                                    bool only_enabled,
-                                    const char** matching_category,
-                                    FormatCategory::FormatCategoryItems* matching_type)
+                         TypeCategoryImpl::FormatCategoryItems items,
+                         bool only_enabled,
+                         const char** matching_category,
+                         TypeCategoryImpl::FormatCategoryItems* matching_type)
 {
     Mutex::Locker(m_map_mutex);
     
@@ -425,7 +425,7 @@ CategoryMap::AnyMatches (ConstString type_name,
     return false;
 }
 
-lldb::SummaryFormatSP
+lldb::TypeSummaryImplSP
 CategoryMap::GetSummaryFormat (ValueObject& valobj,
                                lldb::DynamicValueType use_dynamic)
 {
@@ -436,13 +436,13 @@ CategoryMap::GetSummaryFormat (ValueObject& valobj,
     
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
-        lldb::FormatCategorySP category = *begin;
-        lldb::SummaryFormatSP current_format;
+        lldb::TypeCategoryImplSP category = *begin;
+        lldb::TypeSummaryImplSP current_format;
         if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
             continue;
         return current_format;
     }
-    return lldb::SummaryFormatSP();
+    return lldb::TypeSummaryImplSP();
 }
 
 lldb::SyntheticChildrenSP
@@ -457,7 +457,7 @@ CategoryMap::GetSyntheticChildren (ValueObject& valobj,
     
     for (begin = m_active_categories.begin(); begin != end; begin++)
     {
-        lldb::FormatCategorySP category = *begin;
+        lldb::TypeCategoryImplSP category = *begin;
         lldb::SyntheticChildrenSP current_format;
         if (!category->Get(valobj, current_format, use_dynamic, &reason_why))
             continue;
@@ -478,8 +478,8 @@ CategoryMap::LoopThrough(CallbackType callback, void* param)
             ActiveCategoriesIterator begin, end = m_active_categories.end();
             for (begin = m_active_categories.begin(); begin != end; begin++)
             {
-                lldb::FormatCategorySP category = *begin;
-                ConstString type = ConstString(category->GetName().c_str());
+                lldb::TypeCategoryImplSP category = *begin;
+                ConstString type = ConstString(category->GetName());
                 if (!callback(param, category))
                     break;
             }
@@ -500,20 +500,39 @@ CategoryMap::LoopThrough(CallbackType callback, void* param)
     }
 }
 
-lldb::FormatCategorySP
+TypeCategoryImplSP
+CategoryMap::GetAtIndex (uint32_t index)
+{
+    Mutex::Locker(m_map_mutex);
+    
+    if (index < m_map.size())
+    {
+        MapIterator pos, end = m_map.end();
+        for (pos = m_map.begin(); pos != end; pos++)
+        {
+            if (index == 0)
+                return pos->second;
+            index--;
+        }
+    }
+    
+    return TypeCategoryImplSP();
+}
+
+lldb::TypeCategoryImplSP
 FormatManager::GetCategory (const ConstString& category_name,
                          bool can_create)
 {
     if (!category_name)
         return GetCategory(m_default_category_name);
-    lldb::FormatCategorySP category;
+    lldb::TypeCategoryImplSP category;
     if (m_categories_map.Get(category_name, category))
         return category;
     
     if (!can_create)
-        return lldb::FormatCategorySP();
+        return lldb::TypeCategoryImplSP();
     
-    m_categories_map.Add(category_name,lldb::FormatCategorySP(new FormatCategory(this, category_name.AsCString())));
+    m_categories_map.Add(category_name,lldb::TypeCategoryImplSP(new TypeCategoryImpl(this, category_name)));
     return GetCategory(category_name);
 }
 
@@ -566,34 +585,32 @@ FormatManager::FormatManager() :
     
     // add some default stuff
     // most formats, summaries, ... actually belong to the users' lldbinit file rather than here
-    lldb::SummaryFormatSP string_format(new StringSummaryFormat(SummaryFormat::Flags().SetCascades(false)
-                                                                .SetSkipPointers(true)
-                                                                .SetSkipReferences(false)
-                                                                .SetDontShowChildren(true)
-                                                                .SetDontShowValue(false)
-                                                                .SetShowMembersOneLiner(false)
-                                                                .SetHideItemNames(false),
-                                                                "${var%s}"));
+    lldb::TypeSummaryImplSP string_format(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(false)
+                                                                  .SetSkipPointers(true)
+                                                                  .SetSkipReferences(false)
+                                                                  .SetDontShowChildren(true)
+                                                                  .SetDontShowValue(false)
+                                                                  .SetShowMembersOneLiner(false)
+                                                                  .SetHideItemNames(false),
+                                                                  "${var%s}"));
     
     
-    lldb::SummaryFormatSP string_array_format(new StringSummaryFormat(SummaryFormat::Flags().SetCascades(false)
-                                                                      .SetSkipPointers(true)
-                                                                      .SetSkipReferences(false)
-                                                                      .SetDontShowChildren(false)
-                                                                      .SetDontShowValue(true)
-                                                                      .SetShowMembersOneLiner(false)
-                                                                      .SetHideItemNames(false),
-                                                                      "${var%s}"));
+    lldb::TypeSummaryImplSP string_array_format(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(false)
+                                                                        .SetSkipPointers(true)
+                                                                        .SetSkipReferences(false)
+                                                                        .SetDontShowChildren(false)
+                                                                        .SetDontShowValue(true)
+                                                                        .SetShowMembersOneLiner(false)
+                                                                        .SetHideItemNames(false),
+                                                                        "${var%s}"));
     
     lldb::RegularExpressionSP any_size_char_arr(new RegularExpression("char \\[[0-9]+\\]"));
     
-    FormatCategory::SharedPointer sys_category_sp = GetCategory(m_system_category_name);
+    TypeCategoryImpl::SharedPointer sys_category_sp = GetCategory(m_system_category_name);
     
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("char *"), string_format);
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("const char *"), string_format);
     sys_category_sp->GetRegexSummaryNavigator()->Add(any_size_char_arr, string_array_format);
-    
-    GetCategory(m_default_category_name); // this call is there to force LLDB into creating an empty "default" category
     
     // WARNING: temporary code!!
     // The platform should be responsible for initializing its own formatters
@@ -602,16 +619,16 @@ FormatManager::FormatManager() :
     // the GNU libstdc++ are defined regardless, and enabled by default
     // This is going to be moved to some platform-dependent location
     // (in the meanwhile, these formatters should work for Mac OS X & Linux)
-    lldb::SummaryFormatSP std_string_summary_sp(new StringSummaryFormat(SummaryFormat::Flags().SetCascades(true)
-                                                                        .SetSkipPointers(false)
-                                                                        .SetSkipReferences(false)
-                                                                        .SetDontShowChildren(true)
-                                                                        .SetDontShowValue(true)
-                                                                        .SetShowMembersOneLiner(false)
-                                                                        .SetHideItemNames(false),
-                                                                        "${var._M_dataplus._M_p}"));
+    lldb::TypeSummaryImplSP std_string_summary_sp(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(true)
+                                                                          .SetSkipPointers(false)
+                                                                          .SetSkipReferences(false)
+                                                                          .SetDontShowChildren(true)
+                                                                          .SetDontShowValue(true)
+                                                                          .SetShowMembersOneLiner(false)
+                                                                          .SetHideItemNames(false),
+                                                                          "${var._M_dataplus._M_p}"));
     
-    FormatCategory::SharedPointer gnu_category_sp = GetCategory(m_gnu_cpp_category_name);
+    TypeCategoryImpl::SharedPointer gnu_category_sp = GetCategory(m_gnu_cpp_category_name);
     
     gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::string"),
                                                 std_string_summary_sp);
@@ -624,40 +641,34 @@ FormatManager::FormatManager() :
 
     
 #ifndef LLDB_DISABLE_PYTHON
+    
+    SyntheticChildren::Flags stl_synth_flags;
+    stl_synth_flags.SetCascades(true).SetSkipPointers(false).SetSkipReferences(false);
+    
     gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?vector<.+>$")),
-                                     SyntheticChildrenSP(new SyntheticScriptProvider(true,
-                                                                                     false,
-                                                                                     false,
-                                                                                     "gnu_libstdcpp.StdVectorSynthProvider")));
+                                     SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
+                                                                               "gnu_libstdcpp.StdVectorSynthProvider")));
     gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?map<.+> >$")),
-                                     SyntheticChildrenSP(new SyntheticScriptProvider(true,
-                                                                                     false,
-                                                                                     false,
-                                                                                     "gnu_libstdcpp.StdMapSynthProvider")));
+                                     SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
+                                                                               "gnu_libstdcpp.StdMapSynthProvider")));
     gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?list<.+>$")),
-                                     SyntheticChildrenSP(new SyntheticScriptProvider(true,
-                                                                                     false,
-                                                                                     false,
-                                                                                     "gnu_libstdcpp.StdListSynthProvider")));
+                                     SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
+                                                                               "gnu_libstdcpp.StdListSynthProvider")));
 
-    lldb::SummaryFormatSP ObjC_BOOL_summary(new ScriptSummaryFormat(SummaryFormat::Flags().SetCascades(false)
-                                                                    .SetSkipPointers(false)
-                                                                    .SetSkipReferences(false)
-                                                                    .SetDontShowChildren(true)
-                                                                    .SetDontShowValue(true)
-                                                                    .SetShowMembersOneLiner(false)
-                                                                    .SetHideItemNames(false),
-                                                                    "objc.BOOL_SummaryProvider",
-                                                                    ""));
-    FormatCategory::SharedPointer objc_category_sp = GetCategory(m_objc_category_name);
+    lldb::TypeSummaryImplSP ObjC_BOOL_summary(new ScriptSummaryFormat(TypeSummaryImpl::Flags().SetCascades(false)
+                                                                      .SetSkipPointers(false)
+                                                                      .SetSkipReferences(false)
+                                                                      .SetDontShowChildren(true)
+                                                                      .SetDontShowValue(true)
+                                                                      .SetShowMembersOneLiner(false)
+                                                                      .SetHideItemNames(false),
+                                                                      "objc.BOOL_SummaryProvider",
+                                                                      ""));
+    TypeCategoryImpl::SharedPointer objc_category_sp = GetCategory(m_objc_category_name);
     objc_category_sp->GetSummaryNavigator()->Add(ConstString("BOOL"),
                                                  ObjC_BOOL_summary);
 #endif
-    
-    // DO NOT change the order of these calls, unless you WANT a change in the priority of these categories
-    EnableCategory(m_system_category_name);
-    EnableCategory(m_objc_category_name);
-    EnableCategory(m_gnu_cpp_category_name);
-    EnableCategory(m_default_category_name);
-    
+    EnableCategory(m_objc_category_name,CategoryMap::Last);
+    EnableCategory(m_gnu_cpp_category_name,CategoryMap::Last);
+    EnableCategory(m_system_category_name,CategoryMap::Last);
 }

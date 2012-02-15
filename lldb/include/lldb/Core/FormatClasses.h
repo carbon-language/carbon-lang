@@ -45,47 +45,193 @@ struct PyObject;
 
 namespace lldb_private {
 
-struct ValueFormat
+class TypeFormatImpl
 {
-    uint32_t m_my_revision;
-    bool m_cascades;
-    bool m_skip_pointers;
-    bool m_skip_references;
-    lldb::Format m_format;
-    ValueFormat (lldb::Format f = lldb::eFormatInvalid,
-                 bool casc = false,
-                 bool skipptr = false,
-                 bool skipref = false);
+public:
+    class Flags
+    {
+    public:
+        
+        Flags () :
+        m_flags (lldb::eTypeOptionCascade)
+        {}
+        
+        Flags (const Flags& other) :
+        m_flags (other.m_flags)
+        {}
+        
+        Flags (uint32_t value) :
+        m_flags (value)
+        {}
+        
+        Flags&
+        operator = (const Flags& rhs)
+        {
+            if (&rhs != this)
+                m_flags = rhs.m_flags;
+            
+            return *this;
+        }
+        
+        Flags&
+        operator = (const uint32_t& rhs)
+        {
+            m_flags = rhs;
+            return *this;
+        }
+        
+        Flags&
+        Clear()
+        {
+            m_flags = 0;
+            return *this;
+        }
+        
+        bool
+        GetCascades () const
+        {
+            return (m_flags & lldb::eTypeOptionCascade) == lldb::eTypeOptionCascade;
+        }
+        
+        Flags&
+        SetCascades (bool value = true)
+        {
+            if (value)
+                m_flags |= lldb::eTypeOptionCascade;
+            else
+                m_flags &= ~lldb::eTypeOptionCascade;
+            return *this;
+        }
+        
+        bool
+        GetSkipPointers () const
+        {
+            return (m_flags & lldb::eTypeOptionSkipPointers) == lldb::eTypeOptionSkipPointers;
+        }
+        
+        Flags&
+        SetSkipPointers (bool value = true)
+        {
+            if (value)
+                m_flags |= lldb::eTypeOptionSkipPointers;
+            else
+                m_flags &= ~lldb::eTypeOptionSkipPointers;
+            return *this;
+        }
+        
+        bool
+        GetSkipReferences () const
+        {
+            return (m_flags & lldb::eTypeOptionSkipReferences) == lldb::eTypeOptionSkipReferences;
+        }
+        
+        Flags&
+        SetSkipReferences (bool value = true)
+        {
+            if (value)
+                m_flags |= lldb::eTypeOptionSkipReferences;
+            else
+                m_flags &= ~lldb::eTypeOptionSkipReferences;
+            return *this;
+        }
+        
+        uint32_t
+        GetValue ()
+        {
+            return m_flags;
+        }
+        
+        void
+        SetValue (uint32_t value)
+        {
+            m_flags = value;
+        }
+
+    private:
+        uint32_t m_flags;
+    };
     
-    typedef SHARED_PTR(ValueFormat) SharedPointer;
-    typedef bool(*ValueCallback)(void*, ConstString, const lldb::ValueFormatSP&);
+    TypeFormatImpl (lldb::Format f = lldb::eFormatInvalid,
+                 const Flags& flags = Flags());
     
-    ~ValueFormat()
+    typedef SHARED_PTR(TypeFormatImpl) SharedPointer;
+    typedef bool(*ValueCallback)(void*, ConstString, const lldb::TypeFormatImplSP&);
+    
+    ~TypeFormatImpl ()
     {
     }
     
     bool
-    Cascades() const
+    Cascades () const
     {
-        return m_cascades;
+        return m_flags.GetCascades();
     }
     bool
-    SkipsPointers() const
+    SkipsPointers () const
     {
-        return m_skip_pointers;
+        return m_flags.GetSkipPointers();
     }
     bool
-    SkipsReferences() const
+    SkipsReferences () const
     {
-        return m_skip_references;
+        return m_flags.GetSkipReferences();
+    }
+    
+    void
+    SetCascades (bool value)
+    {
+        m_flags.SetCascades(value);
+    }
+    
+    void
+    SetSkipsPointers (bool value)
+    {
+        m_flags.SetSkipPointers(value);
+    }
+    
+    void
+    SetSkipsReferences (bool value)
+    {
+        m_flags.SetSkipReferences(value);
     }
     
     lldb::Format
-    GetFormat() const
+    GetFormat () const
     {
         return m_format;
     }
-        
+    
+    void
+    SetFormat (lldb::Format fmt)
+    {
+        m_format = fmt;
+    }
+    
+    uint32_t
+    GetOptions ()
+    {
+        return m_flags.GetValue();
+    }
+    
+    void
+    SetOptions (uint32_t value)
+    {
+        m_flags.SetValue(value);
+    }
+    
+    uint32_t&
+    GetRevision ()
+    {
+        return m_my_revision;
+    }
+    
+    std::string
+    GetDescription();
+    
+protected:
+    Flags m_flags;
+    lldb::Format m_format;
+    uint32_t m_my_revision;
 };
     
 class SyntheticChildrenFrontEnd
@@ -122,69 +268,231 @@ public:
 class SyntheticChildren
 {
 public:
-    uint32_t m_my_revision;
-    bool m_cascades;
-    bool m_skip_pointers;
-    bool m_skip_references;
-public:
-    SyntheticChildren(bool casc = false,
-                      bool skipptr = false,
-                      bool skipref = false) :
-    m_cascades(casc),
-    m_skip_pointers(skipptr),
-    m_skip_references(skipref)
+    
+    class Flags
+    {
+    public:
+        
+        Flags () :
+        m_flags (lldb::eTypeOptionCascade)
+        {}
+        
+        Flags (const Flags& other) :
+        m_flags (other.m_flags)
+        {}
+        
+        Flags (uint32_t value) :
+        m_flags (value)
+        {}
+        
+        Flags&
+        operator = (const Flags& rhs)
+        {
+            if (&rhs != this)
+                m_flags = rhs.m_flags;
+            
+            return *this;
+        }
+        
+        Flags&
+        operator = (const uint32_t& rhs)
+        {
+            m_flags = rhs;
+            return *this;
+        }
+        
+        Flags&
+        Clear()
+        {
+            m_flags = 0;
+            return *this;
+        }
+        
+        bool
+        GetCascades () const
+        {
+            return (m_flags & lldb::eTypeOptionCascade) == lldb::eTypeOptionCascade;
+        }
+        
+        Flags&
+        SetCascades (bool value = true)
+        {
+            if (value)
+                m_flags |= lldb::eTypeOptionCascade;
+            else
+                m_flags &= ~lldb::eTypeOptionCascade;
+            return *this;
+        }
+        
+        bool
+        GetSkipPointers () const
+        {
+            return (m_flags & lldb::eTypeOptionSkipPointers) == lldb::eTypeOptionSkipPointers;
+        }
+        
+        Flags&
+        SetSkipPointers (bool value = true)
+        {
+            if (value)
+                m_flags |= lldb::eTypeOptionSkipPointers;
+            else
+                m_flags &= ~lldb::eTypeOptionSkipPointers;
+            return *this;
+        }
+        
+        bool
+        GetSkipReferences () const
+        {
+            return (m_flags & lldb::eTypeOptionSkipReferences) == lldb::eTypeOptionSkipReferences;
+        }
+        
+        Flags&
+        SetSkipReferences (bool value = true)
+        {
+            if (value)
+                m_flags |= lldb::eTypeOptionSkipReferences;
+            else
+                m_flags &= ~lldb::eTypeOptionSkipReferences;
+            return *this;
+        }
+        
+        uint32_t
+        GetValue ()
+        {
+            return m_flags;
+        }
+        
+        void
+        SetValue (uint32_t value)
+        {
+            m_flags = value;
+        }
+        
+    private:
+        uint32_t m_flags;
+    };
+    
+    SyntheticChildren (const Flags& flags) :
+        m_flags(flags)
     {
     }
     
     virtual
-    ~SyntheticChildren()
+    ~SyntheticChildren ()
     {
     }
     
     bool
-    Cascades() const
+    Cascades () const
     {
-        return m_cascades;
+        return m_flags.GetCascades();
     }
     bool
-    SkipsPointers() const
+    SkipsPointers () const
     {
-        return m_skip_pointers;
+        return m_flags.GetSkipPointers();
     }
     bool
-    SkipsReferences() const
+    SkipsReferences () const
     {
-        return m_skip_references;
+        return m_flags.GetSkipReferences();
+    }
+    
+    void
+    SetCascades (bool value)
+    {
+        m_flags.SetCascades(value);
+    }
+    
+    void
+    SetSkipsPointers (bool value)
+    {
+        m_flags.SetSkipPointers(value);
+    }
+    
+    void
+    SetSkipsReferences (bool value)
+    {
+        m_flags.SetSkipReferences(value);
+    }
+    
+    uint32_t
+    GetOptions ()
+    {
+        return m_flags.GetValue();
+    }
+    
+    void
+    SetOptions (uint32_t value)
+    {
+        m_flags.SetValue(value);
     }
     
     virtual bool
-    IsScripted() = 0;
+    IsScripted () = 0;
     
     virtual std::string
-    GetDescription() = 0;
+    GetDescription () = 0;
     
     virtual SyntheticChildrenFrontEnd::SharedPointer
-    GetFrontEnd(lldb::ValueObjectSP backend) = 0;
+    GetFrontEnd (lldb::ValueObjectSP backend) = 0;
     
     typedef SHARED_PTR(SyntheticChildren) SharedPointer;
     typedef bool(*SyntheticChildrenCallback)(void*, ConstString, const SyntheticChildren::SharedPointer&);
     
+    uint32_t&
+    GetRevision ()
+    {
+        return m_my_revision;
+    }
+    
+protected:
+    uint32_t m_my_revision;
+    Flags m_flags;
 };
 
-class SyntheticFilter : public SyntheticChildren
+class TypeFilterImpl : public SyntheticChildren
 {
     std::vector<std::string> m_expression_paths;
 public:
-    SyntheticFilter(bool casc = false,
-                    bool skipptr = false,
-                    bool skipref = false) :
-    SyntheticChildren(casc, skipptr, skipref),
-    m_expression_paths()
+    TypeFilterImpl(const SyntheticChildren::Flags& flags) :
+        SyntheticChildren(flags),
+        m_expression_paths()
     {
     }
     
     void
-    AddExpressionPath(std::string path)
+    AddExpressionPath (const char* path)
+    {
+        AddExpressionPath(std::string(path));
+    }
+        
+    void
+    Clear()
+    {
+        m_expression_paths.clear();
+    }
+    
+    int
+    GetCount() const
+    {
+        return m_expression_paths.size();
+    }
+    
+    const char*
+    GetExpressionPathAtIndex(int i) const
+    {
+        return m_expression_paths[i].c_str();
+    }
+    
+    bool
+    SetExpressionPathAtIndex (int i, const char* path)
+    {
+        return SetExpressionPathAtIndex(i, std::string(path));
+    }
+    
+    void
+    AddExpressionPath (std::string path)
     {
         bool need_add_dot = true;
         if (path[0] == '.' ||
@@ -197,17 +505,23 @@ public:
         else
             m_expression_paths.push_back(std::string(".") + path);
     }
-        
-    int
-    GetCount() const
-    {
-        return m_expression_paths.size();
-    }
     
-    const std::string&
-    GetExpressionPathAtIndex(int i) const
+    bool
+    SetExpressionPathAtIndex (int i, std::string path)
     {
-        return m_expression_paths[i];
+        if (i >= GetCount())
+            return false;
+        bool need_add_dot = true;
+        if (path[0] == '.' ||
+            (path[0] == '-' && path[1] == '>') ||
+            path[0] == '[')
+            need_add_dot = false;
+        // add a '.' symbol to help forgetful users
+        if(!need_add_dot)
+            m_expression_paths[i] = path;
+        else
+            m_expression_paths[i] = std::string(".") + path;
+        return true;
     }
     
     bool
@@ -222,10 +536,10 @@ public:
     class FrontEnd : public SyntheticChildrenFrontEnd
     {
     private:
-        SyntheticFilter* filter;
+        TypeFilterImpl* filter;
     public:
         
-        FrontEnd(SyntheticFilter* flt,
+        FrontEnd(TypeFilterImpl* flt,
                  lldb::ValueObjectSP be) :
         SyntheticChildrenFrontEnd(be),
         filter(flt)
@@ -247,7 +561,7 @@ public:
         {
             if (idx >= filter->GetCount())
                 return lldb::ValueObjectSP();
-            return m_backend->GetSyntheticExpressionPathChild(filter->GetExpressionPathAtIndex(idx).c_str(), can_create);
+            return m_backend->GetSyntheticExpressionPathChild(filter->GetExpressionPathAtIndex(idx), can_create);
         }
         
         virtual void
@@ -259,7 +573,7 @@ public:
             const char* name_cstr = name.GetCString();
             for (int i = 0; i < filter->GetCount(); i++)
             {
-                const char* expr_cstr = filter->GetExpressionPathAtIndex(i).c_str();
+                const char* expr_cstr = filter->GetExpressionPathAtIndex(i);
                 if (::strcmp(name_cstr, expr_cstr))
                     return i;
             }
@@ -280,24 +594,48 @@ public:
 
 #ifndef LLDB_DISABLE_PYTHON
 
-class SyntheticScriptProvider : public SyntheticChildren
+class TypeSyntheticImpl : public SyntheticChildren
 {
     std::string m_python_class;
+    std::string m_python_code;
 public:
-    SyntheticScriptProvider(bool casc = false,
-                            bool skipptr = false,
-                            bool skipref = false,
-                            std::string pclass = "") :
-    SyntheticChildren(casc, skipptr, skipref),
-    m_python_class(pclass)
+    
+    TypeSyntheticImpl(const SyntheticChildren::Flags& flags,
+                      const char* pclass,
+                      const char* pcode = NULL) :
+        SyntheticChildren(flags),
+        m_python_class(),
+        m_python_code()
     {
+        if (pclass)
+                m_python_class = pclass;
+        if (pcode)
+                m_python_code = pcode;
     }
-    
-    
-    std::string
+
+    const char*
     GetPythonClassName()
     {
-        return m_python_class;
+        return m_python_class.c_str();
+    }
+
+    const char*
+    GetPythonCode()
+    {
+        return m_python_code.c_str();
+    }
+    
+    void
+    SetPythonClassName (const char* fname)
+    {
+        m_python_class.assign(fname);
+        m_python_code.clear();
+    }
+    
+    void
+    SetPythonCode (const char* script)
+    {
+        m_python_code.assign(script);
     }
     
     std::string
@@ -477,12 +815,10 @@ public:
         
     };
     
-    SyntheticArrayView(bool casc = false,
-                       bool skipptr = false,
-                       bool skipref = false) :
-    SyntheticChildren(casc, skipptr, skipref),
-    m_head(),
-    m_tail(&m_head)
+    SyntheticArrayView(const SyntheticChildren::Flags& flags) :
+        SyntheticChildren(flags),
+        m_head(),
+        m_tail(&m_head)
     {
     }
     
@@ -566,7 +902,7 @@ private:
 };
 
 
-class SummaryFormat
+class TypeSummaryImpl
 {
 public:
     class Flags
@@ -574,11 +910,15 @@ public:
     public:
         
         Flags () :
-            m_flags (FVCascades)
+            m_flags (lldb::eTypeOptionCascade)
         {}
         
         Flags (const Flags& other) :
             m_flags (other.m_flags)
+        {}
+        
+        Flags (uint32_t value) :
+            m_flags (value)
         {}
         
         Flags&
@@ -587,6 +927,13 @@ public:
             if (&rhs != this)
                 m_flags = rhs.m_flags;
             
+            return *this;
+        }
+        
+        Flags&
+        operator = (const uint32_t& rhs)
+        {
+            m_flags = rhs;
             return *this;
         }
         
@@ -600,203 +947,278 @@ public:
         bool
         GetCascades () const
         {
-            return (m_flags & FVCascades) == FVCascades;
+            return (m_flags & lldb::eTypeOptionCascade) == lldb::eTypeOptionCascade;
         }
         
         Flags&
         SetCascades (bool value = true)
         {
             if (value)
-                m_flags |= FVCascades;
+                m_flags |= lldb::eTypeOptionCascade;
             else
-                m_flags &= ~FVCascades;
+                m_flags &= ~lldb::eTypeOptionCascade;
             return *this;
         }
 
         bool
         GetSkipPointers () const
         {
-            return (m_flags & FVSkipPointers) == FVSkipPointers;
+            return (m_flags & lldb::eTypeOptionSkipPointers) == lldb::eTypeOptionSkipPointers;
         }
 
         Flags&
         SetSkipPointers (bool value = true)
         {
             if (value)
-                m_flags |= FVSkipPointers;
+                m_flags |= lldb::eTypeOptionSkipPointers;
             else
-                m_flags &= ~FVSkipPointers;
+                m_flags &= ~lldb::eTypeOptionSkipPointers;
             return *this;
         }
         
         bool
         GetSkipReferences () const
         {
-            return (m_flags & FVSkipReferences) == FVSkipReferences;
+            return (m_flags & lldb::eTypeOptionSkipReferences) == lldb::eTypeOptionSkipReferences;
         }
         
         Flags&
         SetSkipReferences (bool value = true)
         {
             if (value)
-                m_flags |= FVSkipReferences;
+                m_flags |= lldb::eTypeOptionSkipReferences;
             else
-                m_flags &= ~FVSkipReferences;
+                m_flags &= ~lldb::eTypeOptionSkipReferences;
             return *this;
         }
         
         bool
         GetDontShowChildren () const
         {
-            return (m_flags & FVDontShowChildren) == FVDontShowChildren;
+            return (m_flags & lldb::eTypeOptionHideChildren) == lldb::eTypeOptionHideChildren;
         }
         
         Flags&
         SetDontShowChildren (bool value = true)
         {
             if (value)
-                m_flags |= FVDontShowChildren;
+                m_flags |= lldb::eTypeOptionHideChildren;
             else
-                m_flags &= ~FVDontShowChildren;
+                m_flags &= ~lldb::eTypeOptionHideChildren;
             return *this;
         }
         
         bool
         GetDontShowValue () const
         {
-            return (m_flags & FVDontShowValue) == FVDontShowValue;
+            return (m_flags & lldb::eTypeOptionHideValue) == lldb::eTypeOptionHideValue;
         }
         
         Flags&
         SetDontShowValue (bool value = true)
         {
             if (value)
-                m_flags |= FVDontShowValue;
+                m_flags |= lldb::eTypeOptionHideValue;
             else
-                m_flags &= ~FVDontShowValue;
+                m_flags &= ~lldb::eTypeOptionHideValue;
             return *this;
         }
         
         bool
         GetShowMembersOneLiner () const
         {
-            return (m_flags & FVShowMembersOneLiner) == FVShowMembersOneLiner;
+            return (m_flags & lldb::eTypeOptionShowOneLiner) == lldb::eTypeOptionShowOneLiner;
         }
         
         Flags&
         SetShowMembersOneLiner (bool value = true)
         {
             if (value)
-                m_flags |= FVShowMembersOneLiner;
+                m_flags |= lldb::eTypeOptionShowOneLiner;
             else
-                m_flags &= ~FVShowMembersOneLiner;
+                m_flags &= ~lldb::eTypeOptionShowOneLiner;
             return *this;
         }
         
         bool
         GetHideItemNames () const
         {
-            return (m_flags & FVHideItemNames) == FVHideItemNames;
+            return (m_flags & lldb::eTypeOptionHideNames) == lldb::eTypeOptionHideNames;
         }
         
         Flags&
         SetHideItemNames (bool value = true)
         {
             if (value)
-                m_flags |= FVHideItemNames;
+                m_flags |= lldb::eTypeOptionHideNames;
             else
-                m_flags &= ~FVHideItemNames;
+                m_flags &= ~lldb::eTypeOptionHideNames;
             return *this;
+        }
+        
+        uint32_t
+        GetValue ()
+        {
+            return m_flags;
+        }
+        
+        void
+        SetValue (uint32_t value)
+        {
+            m_flags = value;
         }
                 
     private:
         uint32_t m_flags;
-        enum FlagValues
-        {
-            FVCascades            = 0x0001u,
-            FVSkipPointers        = 0x0002u,
-            FVSkipReferences      = 0x0004u,
-            FVDontShowChildren    = 0x0008u,
-            FVDontShowValue       = 0x0010u,
-            FVShowMembersOneLiner = 0x0020u,
-            FVHideItemNames       = 0x0040u
-        };
     };
     
-    uint32_t m_my_revision;
-    Flags m_flags;
-    
-    SummaryFormat(const SummaryFormat::Flags& flags);
+    TypeSummaryImpl (const TypeSummaryImpl::Flags& flags);
     
     bool
-    Cascades() const
+    Cascades () const
     {
         return m_flags.GetCascades();
     }
     bool
-    SkipsPointers() const
+    SkipsPointers () const
     {
         return m_flags.GetSkipPointers();
     }
     bool
-    SkipsReferences() const
+    SkipsReferences () const
     {
         return m_flags.GetSkipReferences();
     }
     
     bool
-    DoesPrintChildren() const
+    DoesPrintChildren () const
     {
         return !m_flags.GetDontShowChildren();
     }
     
     bool
-    DoesPrintValue() const
+    DoesPrintValue () const
     {
         return !m_flags.GetDontShowValue();
     }
     
     bool
-    IsOneliner() const
+    IsOneliner () const
     {
         return m_flags.GetShowMembersOneLiner();
     }
     
     bool
-    HideNames() const
+    HideNames () const
     {
         return m_flags.GetHideItemNames();
     }
-            
+    
+    void
+    SetCascades (bool value)
+    {
+        m_flags.SetCascades(value);
+    }
+    
+    void
+    SetSkipsPointers (bool value)
+    {
+        m_flags.SetSkipPointers(value);
+    }
+    
+    void
+    SetSkipsReferences (bool value)
+    {
+        m_flags.SetSkipReferences(value);
+    }
+    
+    void
+    SetDoesPrintChildren (bool value)
+    {
+        m_flags.SetDontShowChildren(!value);
+    }
+    
+    void
+    SetDoesPrintValue (bool value)
+    {
+        m_flags.SetDontShowValue(!value);
+    }
+    
+    void
+    SetIsOneliner (bool value)
+    {
+        m_flags.SetShowMembersOneLiner(value);
+    }
+    
+    void
+    SetHideNames (bool value)
+    {
+        m_flags.SetHideItemNames(value);
+    }
+    
+    uint32_t
+    GetOptions ()
+    {
+        return m_flags.GetValue();
+    }
+    
+    void
+    SetOptions (uint32_t value)
+    {
+        m_flags.SetValue(value);
+    }
+    
     virtual
-    ~SummaryFormat()
+    ~TypeSummaryImpl ()
     {
     }
     
     virtual std::string
-    FormatObject(lldb::ValueObjectSP object) = 0;
+    FormatObject (lldb::ValueObjectSP object) = 0;
     
     virtual std::string
-    GetDescription() = 0;
+    GetDescription () = 0;
     
-    typedef SHARED_PTR(SummaryFormat) SharedPointer;
-    typedef bool(*SummaryCallback)(void*, ConstString, const lldb::SummaryFormatSP&);
-    typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const lldb::SummaryFormatSP&);
+    virtual bool
+    IsScripted() = 0;
     
+    uint32_t&
+    GetRevision ()
+    {
+        return m_my_revision;
+    }
+    
+    typedef SHARED_PTR(TypeSummaryImpl) SharedPointer;
+    typedef bool(*SummaryCallback)(void*, ConstString, const lldb::TypeSummaryImplSP&);
+    typedef bool(*RegexSummaryCallback)(void*, lldb::RegularExpressionSP, const lldb::TypeSummaryImplSP&);
+
+protected:
+    uint32_t m_my_revision;
+    Flags m_flags;
+
 };
 
 // simple string-based summaries, using ${var to show data
-struct StringSummaryFormat : public SummaryFormat
+struct StringSummaryFormat : public TypeSummaryImpl
 {
     std::string m_format;
     
-    StringSummaryFormat(const SummaryFormat::Flags& flags,
-                        std::string f);
+    StringSummaryFormat(const TypeSummaryImpl::Flags& flags,
+                        const char* f);
     
-    std::string
-    GetFormat() const
+    const char*
+    GetSummaryString () const
     {
-        return m_format;
+        return m_format.c_str();
+    }
+    
+    void
+    SetSummaryString (const char* data)
+    {
+        if (data)
+                m_format.assign(data);
+        else
+                m_format.clear();
     }
     
     virtual
@@ -809,31 +1231,56 @@ struct StringSummaryFormat : public SummaryFormat
     
     virtual std::string
     GetDescription();
+    
+    virtual bool
+    IsScripted()
+    {
+        return false;
+    }
         
 };
     
 #ifndef LLDB_DISABLE_PYTHON
 
 // Python-based summaries, running script code to show data
-struct ScriptSummaryFormat : public SummaryFormat
+struct ScriptSummaryFormat : public TypeSummaryImpl
 {
     std::string m_function_name;
     std::string m_python_script;
     
-    ScriptSummaryFormat(const SummaryFormat::Flags& flags,
-                        std::string fname,
-                        std::string pscri);
+    ScriptSummaryFormat(const TypeSummaryImpl::Flags& flags,
+                        const char *function_name,
+                        const char* python_script = NULL);
     
-    std::string
-    GetFunctionName() const
+    const char*
+    GetFunctionName () const
     {
-        return m_function_name;
+        return m_function_name.c_str();
     }
     
-    std::string
-    GetPythonScript() const
+    const char*
+    GetPythonScript () const
     {
-        return m_python_script;
+        return m_python_script.c_str();
+    }
+    
+    void
+    SetFunctionName (const char* function_name)
+    {
+        if (function_name)
+                m_function_name.assign(function_name);
+        else
+                m_function_name.clear();
+        m_python_script.clear();
+    }
+    
+    void
+    SetPythonScript (const char* script)
+    {
+        if (script)
+                m_python_script.assign(script);
+        else
+                m_python_script.clear();
     }
     
     virtual
@@ -847,12 +1294,56 @@ struct ScriptSummaryFormat : public SummaryFormat
     virtual std::string
     GetDescription();
     
+    virtual bool
+    IsScripted()
+    {
+        return true;
+    }
+    
     typedef SHARED_PTR(ScriptSummaryFormat) SharedPointer;
 
 };
 
 #endif // #ifndef LLDB_DISABLE_PYTHON
 
+// TODO: at the moment, this class is only used as a backing store for SBTypeNameSpecifier in the public API
+// In the future, this might be used as the basic unit for typename-to-formatter matching, replacing
+// the current plain/regexp distinction in FormatNavigator<>
+class TypeNameSpecifierImpl
+{
+public:
+    
+    TypeNameSpecifierImpl() :
+    m_name(),
+    m_is_regex(false)
+    {
+    }
+    
+    TypeNameSpecifierImpl (const char* name, bool is_regex) :
+    m_name(),
+    m_is_regex(is_regex)
+    {
+        if (name)
+                m_name.assign(name);
+    }
+    
+    const char*
+    GetName()
+    {
+        return m_name.c_str();
+    }
+    
+    bool
+    IsRegex()
+    {
+        return m_is_regex;
+    }
+    
+private:
+    std::string m_name;
+    bool m_is_regex;
+};
+    
 } // namespace lldb_private
 
 #endif	// lldb_FormatClasses_h_

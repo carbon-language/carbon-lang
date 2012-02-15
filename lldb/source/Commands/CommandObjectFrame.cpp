@@ -399,7 +399,7 @@ public:
         const char *name_cstr = NULL;
         size_t idx;
         
-        SummaryFormatSP summary_format_sp;
+        TypeSummaryImplSP summary_format_sp;
         if (!m_option_variable.summary.empty())
             DataVisualization::NamedSummaryFormats::GetSummaryFormat(ConstString(m_option_variable.summary.c_str()), summary_format_sp);
         

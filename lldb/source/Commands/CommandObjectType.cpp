@@ -37,7 +37,7 @@ class ScriptAddOptions
     
 public:
     
-    SummaryFormat::Flags m_flags;
+    TypeSummaryImpl::Flags m_flags;
     
     StringList m_target_types;
     StringList m_user_source;
@@ -48,7 +48,7 @@ public:
     
     std::string m_category;
     
-    ScriptAddOptions(const SummaryFormat::Flags& flags,
+    ScriptAddOptions(const TypeSummaryImpl::Flags& flags,
                      bool regx,
                      const ConstString& name,
                      std::string catg) :
@@ -133,7 +133,7 @@ private:
         
         // Instance variables to hold the values for command options.
         
-        SummaryFormat::Flags m_flags;
+        TypeSummaryImpl::Flags m_flags;
         bool m_regex;
         std::string m_format_string;
         ConstString m_name;
@@ -181,7 +181,7 @@ public:
     
     static bool
     AddSummary(const ConstString& type_name,
-               lldb::SummaryFormatSP entry,
+               lldb::TypeSummaryImplSP entry,
                SummaryFormatType type,
                std::string category,
                Error* error = NULL);
@@ -496,12 +496,12 @@ public:
             return false;
         }
         
-        ValueFormatSP entry;
+        TypeFormatImplSP entry;
         
-        entry.reset(new ValueFormat(format,
-                                    m_command_options.m_cascade,
-                                    m_command_options.m_skip_pointers,
-                                    m_command_options.m_skip_references));
+        entry.reset(new TypeFormatImpl(format,
+                                    TypeFormatImpl::Flags().SetCascades(m_command_options.m_cascade).
+                                    SetSkipPointers(m_command_options.m_skip_pointers).
+                                    SetSkipReferences(m_command_options.m_skip_references)));
 
         // now I have a valid format, let's add it to every type
         
@@ -641,7 +641,7 @@ public:
 // CommandObjectTypeFormatList
 //-------------------------------------------------------------------------
 
-bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const lldb::ValueFormatSP& entry);
+bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const lldb::TypeFormatImplSP& entry);
 
 class CommandObjectTypeFormatList;
 
@@ -702,22 +702,19 @@ private:
     
     bool
     LoopCallback (ConstString type,
-                  const lldb::ValueFormatSP& entry,
+                  const lldb::TypeFormatImplSP& entry,
                   RegularExpression* regex,
                   CommandReturnObject *result)
     {
         if (regex == NULL || regex->Execute(type.AsCString())) 
         {
-            result->GetOutputStream().Printf ("%s: %s%s%s%s\n", type.AsCString(), 
-                                              FormatManager::GetFormatAsCString (entry->m_format),
-                                              entry->m_cascades ? "" : " (not cascading)",
-                                              entry->m_skip_pointers ? " (skip pointers)" : "",
-                                              entry->m_skip_references ? " (skip references)" : "");
+            result->GetOutputStream().Printf ("%s: %s\n", type.AsCString(), 
+                                              entry->GetDescription().c_str());
         }
         return true;
     }
     
-    friend bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const lldb::ValueFormatSP& entry);
+    friend bool CommandObjectTypeFormatList_LoopCallback(void* pt2self, ConstString type, const lldb::TypeFormatImplSP& entry);
     
 };
 
@@ -725,7 +722,7 @@ bool
 CommandObjectTypeFormatList_LoopCallback (
                                     void* pt2self,
                                     ConstString type,
-                                    const lldb::ValueFormatSP& entry)
+                                    const lldb::TypeFormatImplSP& entry)
 {
     CommandObjectTypeFormatList_LoopCallbackParam* param = (CommandObjectTypeFormatList_LoopCallbackParam*)pt2self;
     return param->self->LoopCallback(type, entry, param->regex, param->result);
@@ -850,10 +847,10 @@ public:
         }
         // now I have a valid function name, let's add this as script for every type in the list
         
-        SummaryFormatSP script_format;
+        TypeSummaryImplSP script_format;
         script_format.reset(new ScriptSummaryFormat(options->m_flags,
-                                                    std::string(funct_name),
-                                                    options->m_user_source.CopyList("     ")));
+                                                    funct_name,
+                                                    options->m_user_source.CopyList("     ").c_str()));
         
         Error error;
         
@@ -1035,7 +1032,7 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
         return false;
     }
     
-    SummaryFormatSP script_format;
+    TypeSummaryImplSP script_format;
     
     if (!m_options.m_python_function.empty()) // we have a Python function ready to use
     {
@@ -1054,9 +1051,11 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
             return false;
         }
         
+        std::string code = ("     " + m_options.m_python_function + "(valobj,dict)");
+        
         script_format.reset(new ScriptSummaryFormat(m_options.m_flags,
-                                                    std::string(funct_name),
-                                                    "     " + m_options.m_python_function + "(valobj,dict)"));
+                                                    funct_name,
+                                                    code.c_str()));
     }
     else if (!m_options.m_python_script.empty()) // we have a quick 1-line script, just use it
     {
@@ -1091,9 +1090,11 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
             return false;
         }
         
+        std::string code = "     " + m_options.m_python_script;
+        
         script_format.reset(new ScriptSummaryFormat(m_options.m_flags,
-                                                    std::string(funct_name),
-                                                    "     " + m_options.m_python_script));
+                                                    funct_name,
+                                                    code.c_str()));
     }
     else // use an InputReader to grab Python code from the user
     {        
@@ -1189,7 +1190,7 @@ CommandObjectTypeSummaryAdd::Execute_StringSummary (Args& command, CommandReturn
     
     Error error;
     
-    lldb::SummaryFormatSP entry(new StringSummaryFormat(m_options.m_flags,
+    lldb::TypeSummaryImplSP entry(new StringSummaryFormat(m_options.m_flags,
                                                         format_cstr));
     
     if (error.Fail())
@@ -1343,12 +1344,12 @@ CommandObjectTypeSummaryAdd::Execute (Args& command, CommandReturnObject &result
 
 bool
 CommandObjectTypeSummaryAdd::AddSummary(const ConstString& type_name,
-                                        SummaryFormatSP entry,
+                                        TypeSummaryImplSP entry,
                                         SummaryFormatType type,
                                         std::string category_name,
                                         Error* error)
 {
-    lldb::FormatCategorySP category;
+    lldb::TypeCategoryImplSP category;
     DataVisualization::Categories::GetCategory(ConstString(category_name.c_str()), category);
     
     if (type == eRegexSummary)
@@ -1475,11 +1476,11 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const lldb::FormatCategorySP& cate)
+                        const lldb::TypeCategoryImplSP& category_sp)
     {
-        ConstString *name = (ConstString*)param;
-        cate->Delete(*name, eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
-        return true;
+		ConstString *name = (ConstString*)param;
+		category_sp->Delete(*name, eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary);
+		return true;
     }
 
 public:
@@ -1534,7 +1535,7 @@ public:
             return result.Succeeded();
         }
         
-        lldb::FormatCategorySP category;
+        lldb::TypeCategoryImplSP category;
         DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
         
         bool delete_category = category->Delete(typeCS,
@@ -1631,7 +1632,7 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const lldb::FormatCategorySP& cate)
+                        const lldb::TypeCategoryImplSP& cate)
     {
         cate->GetSummaryNavigator()->Clear();
         cate->GetRegexSummaryNavigator()->Clear();
@@ -1661,7 +1662,7 @@ public:
         
         else
         {        
-            lldb::FormatCategorySP category;
+            lldb::TypeCategoryImplSP category;
             if (command.GetArgumentCount() > 0)
             {
                 const char* cat_name = command.GetArgumentAtIndex(0);
@@ -1840,14 +1841,14 @@ private:
     
     static bool
     PerCategoryCallback(void* param_vp,
-                        const lldb::FormatCategorySP& cate)
+                        const lldb::TypeCategoryImplSP& cate)
     {
         
         CommandObjectTypeSummaryList_LoopCallbackParam* param = 
             (CommandObjectTypeSummaryList_LoopCallbackParam*)param_vp;
         CommandReturnObject* result = param->result;
         
-        const char* cate_name = cate->GetName().c_str();
+        const char* cate_name = cate->GetName();
         
         // if the category is disabled or empty and there is no regex, just skip it
         if ((cate->IsEnabled() == false || cate->GetCount(eFormatCategoryItemSummary | eFormatCategoryItemRegexSummary) == 0) && param->cate_regex == NULL)
@@ -1874,7 +1875,7 @@ private:
     
     bool
     LoopCallback (const char* type,
-                  const lldb::SummaryFormatSP& entry,
+                  const lldb::TypeSummaryImplSP& entry,
                   RegularExpression* regex,
                   CommandReturnObject *result)
     {
@@ -1883,15 +1884,15 @@ private:
         return true;
     }
     
-    friend bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, ConstString type, const lldb::SummaryFormatSP& entry);
-    friend bool CommandObjectTypeRXSummaryList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const lldb::SummaryFormatSP& entry);
+    friend bool CommandObjectTypeSummaryList_LoopCallback(void* pt2self, ConstString type, const lldb::TypeSummaryImplSP& entry);
+    friend bool CommandObjectTypeRXSummaryList_LoopCallback(void* pt2self, lldb::RegularExpressionSP regex, const lldb::TypeSummaryImplSP& entry);
 };
 
 bool
 CommandObjectTypeSummaryList_LoopCallback (
                                           void* pt2self,
                                           ConstString type,
-                                          const lldb::SummaryFormatSP& entry)
+                                          const lldb::TypeSummaryImplSP& entry)
 {
     CommandObjectTypeSummaryList_LoopCallbackParam* param = (CommandObjectTypeSummaryList_LoopCallbackParam*)pt2self;
     return param->self->LoopCallback(type.AsCString(), entry, param->regex, param->result);
@@ -1901,7 +1902,7 @@ bool
 CommandObjectTypeRXSummaryList_LoopCallback (
                                            void* pt2self,
                                            lldb::RegularExpressionSP regex,
-                                           const lldb::SummaryFormatSP& entry)
+                                           const lldb::TypeSummaryImplSP& entry)
 {
     CommandObjectTypeSummaryList_LoopCallbackParam* param = (CommandObjectTypeSummaryList_LoopCallbackParam*)pt2self;
     return param->self->LoopCallback(regex->GetText(), entry, param->regex, param->result);
@@ -1967,7 +1968,7 @@ public:
                 return false;
             }
             DataVisualization::Categories::Enable(typeCS);
-            lldb::FormatCategorySP cate;
+            lldb::TypeCategoryImplSP cate;
             if (DataVisualization::Categories::GetCategory(typeCS, cate) && cate.get())
             {
                 if (cate->GetCount() == 0)
@@ -2141,14 +2142,14 @@ private:
     
     static bool
     PerCategoryCallback(void* param_vp,
-                        const lldb::FormatCategorySP& cate)
+                        const lldb::TypeCategoryImplSP& cate)
     {
         CommandObjectTypeCategoryList_CallbackParam* param =
             (CommandObjectTypeCategoryList_CallbackParam*)param_vp;
         CommandReturnObject* result = param->result;
         RegularExpression* regex = param->regex;
         
-        const char* cate_name = cate->GetName().c_str();
+        const char* cate_name = cate->GetName();
         
         if (regex == NULL || regex->Execute(cate_name))
             result->GetOutputStream().Printf("Category %s is%s enabled\n",
@@ -2346,10 +2347,10 @@ private:
     
     static bool
     PerCategoryCallback(void* param_vp,
-                        const lldb::FormatCategorySP& cate)
+                        const lldb::TypeCategoryImplSP& cate)
     {
         
-        const char* cate_name = cate->GetName().c_str();
+        const char* cate_name = cate->GetName();
         
         CommandObjectTypeFilterList_LoopCallbackParam* param = 
         (CommandObjectTypeFilterList_LoopCallbackParam*)param_vp;
@@ -2558,14 +2559,14 @@ private:
     
     static bool
     PerCategoryCallback(void* param_vp,
-                        const lldb::FormatCategorySP& cate)
+                        const lldb::TypeCategoryImplSP& cate)
     {
         
         CommandObjectTypeSynthList_LoopCallbackParam* param = 
         (CommandObjectTypeSynthList_LoopCallbackParam*)param_vp;
         CommandReturnObject* result = param->result;
         
-        const char* cate_name = cate->GetName().c_str();
+        const char* cate_name = cate->GetName();
         
         // if the category is disabled or empty and there is no regex, just skip it
         if ((cate->IsEnabled() == false || cate->GetCount(eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth) == 0) && param->cate_regex == NULL)
@@ -2707,7 +2708,7 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const lldb::FormatCategorySP& cate)
+                        const lldb::TypeCategoryImplSP& cate)
     {
         ConstString *name = (ConstString*)param;
         return cate->Delete(*name, eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
@@ -2765,7 +2766,7 @@ public:
             return result.Succeeded();
         }
         
-        lldb::FormatCategorySP category;
+        lldb::TypeCategoryImplSP category;
         DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
         
         bool delete_category = category->GetFilterNavigator()->Delete(typeCS);
@@ -2871,7 +2872,7 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const lldb::FormatCategorySP& cate)
+                        const lldb::TypeCategoryImplSP& cate)
     {
         ConstString* name = (ConstString*)param;
         return cate->Delete(*name, eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
@@ -2929,7 +2930,7 @@ public:
             return result.Succeeded();
         }
         
-        lldb::FormatCategorySP category;
+        lldb::TypeCategoryImplSP category;
         DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
         
         bool delete_category = category->GetSyntheticNavigator()->Delete(typeCS);
@@ -3031,7 +3032,7 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const lldb::FormatCategorySP& cate)
+                        const lldb::TypeCategoryImplSP& cate)
     {
         cate->Clear(eFormatCategoryItemFilter | eFormatCategoryItemRegexFilter);
         return true;
@@ -3060,7 +3061,7 @@ public:
         
         else
         {        
-            lldb::FormatCategorySP category;
+            lldb::TypeCategoryImplSP category;
             if (command.GetArgumentCount() > 0)
             {
                 const char* cat_name = command.GetArgumentAtIndex(0);
@@ -3158,7 +3159,7 @@ private:
     
     static bool
     PerCategoryCallback(void* param,
-                        const lldb::FormatCategorySP& cate)
+                        const lldb::TypeCategoryImplSP& cate)
     {
         cate->Clear(eFormatCategoryItemSynth | eFormatCategoryItemRegexSynth);
         return true;
@@ -3187,7 +3188,7 @@ public:
         
         else
         {        
-            lldb::FormatCategorySP category;
+            lldb::TypeCategoryImplSP category;
             if (command.GetArgumentCount() > 0)
             {
                 const char* cat_name = command.GetArgumentAtIndex(0);
@@ -3338,13 +3339,13 @@ public:
         // everything should be fine now, let's add the synth provider class
         
         SyntheticChildrenSP synth_provider;
-        synth_provider.reset(new SyntheticScriptProvider(options->m_cascade,
-                                                         options->m_skip_pointers,
-                                                         options->m_skip_references,
-                                                         std::string(class_name)));
+        synth_provider.reset(new TypeSyntheticImpl(SyntheticChildren::Flags().SetCascades(options->m_cascade).
+                                                         SetSkipPointers(options->m_skip_pointers).
+                                                         SetSkipReferences(options->m_skip_references),
+                                                         class_name));
         
         
-        lldb::FormatCategorySP category;
+        lldb::TypeCategoryImplSP category;
         DataVisualization::Categories::GetCategory(ConstString(options->m_category.c_str()), category);
         
         Error error;
@@ -3457,16 +3458,17 @@ CommandObjectTypeSynthAdd::Execute_PythonClass (Args& command, CommandReturnObje
     
     SyntheticChildrenSP entry;
     
-    SyntheticScriptProvider* impl = new SyntheticScriptProvider(m_options.m_cascade,
-                                                                m_options.m_skip_pointers,
-                                                                m_options.m_skip_references,
-                                                                m_options.m_class_name);
+    TypeSyntheticImpl* impl = new TypeSyntheticImpl(SyntheticChildren::Flags().
+                                                    SetCascades(m_options.m_cascade).
+                                                    SetSkipPointers(m_options.m_skip_pointers).
+                                                    SetSkipReferences(m_options.m_skip_references),
+                                                    m_options.m_class_name.c_str());
     
     entry.reset(impl);
     
     // now I have a valid provider, let's add it to every type
     
-    lldb::FormatCategorySP category;
+    lldb::TypeCategoryImplSP category;
     DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
     
     Error error;
@@ -3525,7 +3527,7 @@ CommandObjectTypeSynthAdd::AddSynth(const ConstString& type_name,
          std::string category_name,
          Error* error)
 {
-    lldb::FormatCategorySP category;
+    lldb::TypeCategoryImplSP category;
     DataVisualization::Categories::GetCategory(ConstString(category_name.c_str()), category);
     
     if (category->AnyMatches(type_name,
@@ -3704,7 +3706,7 @@ private:
               std::string category_name,
               Error* error)
     {
-        lldb::FormatCategorySP category;
+        lldb::TypeCategoryImplSP category;
         DataVisualization::Categories::GetCategory(ConstString(category_name.c_str()), category);
         
         if (category->AnyMatches(type_name,
@@ -3811,9 +3813,9 @@ public:
         
         SyntheticChildrenSP entry;
         
-        SyntheticFilter* impl = new SyntheticFilter(m_options.m_cascade,
-                                                    m_options.m_skip_pointers,
-                                                    m_options.m_skip_references);
+        TypeFilterImpl* impl = new TypeFilterImpl(SyntheticChildren::Flags().SetCascades(m_options.m_cascade).
+                                                    SetSkipPointers(m_options.m_skip_pointers).
+                                                    SetSkipReferences(m_options.m_skip_references));
         
         entry.reset(impl);
         
@@ -3826,7 +3828,7 @@ public:
         
         // now I have a valid provider, let's add it to every type
         
-        lldb::FormatCategorySP category;
+        lldb::TypeCategoryImplSP category;
         DataVisualization::Categories::GetCategory(ConstString(m_options.m_category.c_str()), category);
         
         Error error;
