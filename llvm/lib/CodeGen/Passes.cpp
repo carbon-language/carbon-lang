@@ -582,14 +582,8 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
   //
   // FIXME: Re-enable coloring with register when it's capable of adding
   // kill markers.
-  addPass(StackSlotColoringID);
-
-  // Run post-ra machine LICM to hoist reloads / remats.
-  //
-  // FIXME: can this move into MachineLateOptimization?
-  addPass(PostRAMachineLICMID);
-
-  printAndVerify("After StackSlotColoring and postra Machine LICM");
+  if (addPass(StackSlotColoringID) != &NoPassID)
+    printAndVerify("After StackSlotColoring");
 }
 
 //===---------------------------------------------------------------------===//
@@ -598,6 +592,10 @@ void TargetPassConfig::addOptimizedRegAlloc(FunctionPass *RegAllocPass) {
 
 /// Add passes that optimize machine instructions after register allocation.
 void TargetPassConfig::addMachineLateOptimization() {
+  // Run post-ra machine LICM to hoist reloads / remats.
+  if (addPass(PostRAMachineLICMID) != &NoPassID)
+    printAndVerify("After postra Machine LICM");
+
   // Branch folding must be run after regalloc and prolog/epilog insertion.
   if (addPass(BranchFolderPassID) != &NoPassID)
     printNoVerify("After BranchFolding");
