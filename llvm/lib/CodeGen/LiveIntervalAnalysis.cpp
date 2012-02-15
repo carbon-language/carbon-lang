@@ -435,7 +435,6 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
 
   // FIXME: We need saner rules for reserved regs.
   if (isReserved(interval.reg)) {
-    assert(!isRegLiveOutOf(MBB, interval.reg) && "Reserved reg live-out?");
     end = start.getDeadSlot();
   } else {
     // Unreserved, unallocable registers like EFLAGS can be live across basic
