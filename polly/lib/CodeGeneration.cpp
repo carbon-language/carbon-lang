@@ -704,7 +704,7 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
 void BlockGenerator::copyBB(BasicBlock *BB, Pass *P) {
   BasicBlock *CopyBB = SplitBlock(Builder.GetInsertBlock(),
                                   Builder.GetInsertPoint(), P);
-  CopyBB->setName("polly." + BB->getName() + ".stmt");
+  CopyBB->setName("polly.stmt." + BB->getName());
   Builder.SetInsertPoint(CopyBB->begin());
 
   // Create two maps that store the mapping from the original instructions of
