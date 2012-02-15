@@ -138,14 +138,14 @@ public:
   APValue(const APValue &RHS) : Kind(Uninitialized) {
     *this = RHS;
   }
-  APValue(LValueBase B, const CharUnits &O, NoLValuePath N)
+  APValue(LValueBase B, const CharUnits &O, NoLValuePath N, unsigned CallIndex)
       : Kind(Uninitialized) {
-    MakeLValue(); setLValue(B, O, N);
+    MakeLValue(); setLValue(B, O, N, CallIndex);
   }
   APValue(LValueBase B, const CharUnits &O, ArrayRef<LValuePathEntry> Path,
-          bool OnePastTheEnd)
+          bool OnePastTheEnd, unsigned CallIndex)
       : Kind(Uninitialized) {
-    MakeLValue(); setLValue(B, O, Path, OnePastTheEnd);
+    MakeLValue(); setLValue(B, O, Path, OnePastTheEnd, CallIndex);
   }
   APValue(UninitArray, unsigned InitElts, unsigned Size) : Kind(Uninitialized) {
     MakeArray(InitElts, Size);
@@ -246,6 +246,7 @@ public:
   bool isLValueOnePastTheEnd() const;
   bool hasLValuePath() const;
   ArrayRef<LValuePathEntry> getLValuePath() const;
+  unsigned getLValueCallIndex() const;
 
   APValue &getVectorElt(unsigned I) {
     assert(isVector() && "Invalid accessor");
@@ -365,9 +366,11 @@ public:
     ((ComplexAPFloat*)(char*)Data)->Real = R;
     ((ComplexAPFloat*)(char*)Data)->Imag = I;
   }
-  void setLValue(LValueBase B, const CharUnits &O, NoLValuePath);
+  void setLValue(LValueBase B, const CharUnits &O, NoLValuePath,
+                 unsigned CallIndex);
   void setLValue(LValueBase B, const CharUnits &O,
-                 ArrayRef<LValuePathEntry> Path, bool OnePastTheEnd);
+                 ArrayRef<LValuePathEntry> Path, bool OnePastTheEnd,
+                 unsigned CallIndex);
   void setUnion(const FieldDecl *Field, const APValue &Value) {
     assert(isUnion() && "Invalid accessor");
     ((UnionData*)(char*)Data)->Field = Field;

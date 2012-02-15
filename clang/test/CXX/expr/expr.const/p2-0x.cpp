@@ -49,25 +49,23 @@ struct UndefinedConstexpr {
 };
 
 // - an invocation of a constexpr function with arguments that, when substituted
-//   by function invocation substitution (7.1.5), do not produce a constant
+//   by function invocation substitution (7.1.5), do not produce a core constant
 //   expression;
 namespace NonConstExprReturn {
   static constexpr const int &id_ref(const int &n) {
-    return n; // expected-note {{reference to temporary cannot be returned from a constexpr function}}
+    return n;
   }
   struct NonConstExprFunction {
-    int n : id_ref( // expected-error {{constant expression}} expected-note {{in call to 'id_ref(16)'}}
-        16 // expected-note {{temporary created here}}
-        );
+    int n : id_ref(16); // ok
   };
   constexpr const int *address_of(const int &a) {
-    return &a; // expected-note {{pointer to 'n' cannot be returned from a constexpr function}}
+    return &a;
   }
   constexpr const int *return_param(int n) { // expected-note {{declared here}}
-    return address_of(n); // expected-note {{in call to 'address_of(n)'}}
+    return address_of(n);
   }
   struct S {
-    int n : *return_param(0); // expected-error {{constant expression}} expected-note {{in call to 'return_param(0)'}}
+    int n : *return_param(0); // expected-error {{constant expression}} expected-note {{read of variable whose lifetime has ended}}
   };
 }
 
@@ -78,16 +76,16 @@ namespace NonConstExprReturn {
 namespace NonConstExprCtor {
   struct T {
     constexpr T(const int &r) :
-      r(r) { // expected-note 2{{reference to temporary cannot be used to initialize a member in a constant expression}}
+      r(r) {
     }
     const int &r;
   };
   constexpr int n = 0;
   constexpr T t1(n); // ok
-  constexpr T t2(0); // expected-error {{must be initialized by a constant expression}} expected-note {{temporary created here}} expected-note {{in call to 'T(0)'}}
+  constexpr T t2(0); // expected-error {{must be initialized by a constant expression}} expected-note {{temporary created here}} expected-note {{reference to temporary is not a constant expression}}
 
   struct S {
-    int n : T(4).r; // expected-error {{constant expression}} expected-note {{temporary created here}} expected-note {{in call to 'T(4)'}}
+    int n : T(4).r; // ok
   };
 }
 
@@ -176,12 +174,12 @@ namespace UndefinedBehavior {
   struct S {
     int m;
   };
-  constexpr S s = { 5 }; // expected-note {{declared here}}
+  constexpr S s = { 5 };
   constexpr const int *p = &s.m + 1;
   constexpr const int &f(const int *q) {
-    return q[0]; // expected-note {{dereferenced pointer past the end of subobject of 's' is not a constant expression}}
+    return q[0];
   }
-  constexpr int n = (f(p), 0); // expected-error {{constant expression}} expected-note {{in call to 'f(&s.m + 1)'}}
+  constexpr int n = (f(p), 0); // ok
   struct T {
     int n : f(p); // expected-error {{not an integral constant expression}} expected-note {{read of dereferenced one-past-the-end pointer}}
   };

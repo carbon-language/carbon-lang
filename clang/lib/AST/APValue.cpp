@@ -28,6 +28,7 @@ namespace {
     llvm::PointerIntPair<APValue::LValueBase, 1, bool> BaseAndIsOnePastTheEnd;
     CharUnits Offset;
     unsigned PathLength;
+    unsigned CallIndex;
   };
 }
 
@@ -166,9 +167,10 @@ const APValue &APValue::operator=(const APValue &RHS) {
   else if (isLValue()) {
     if (RHS.hasLValuePath())
       setLValue(RHS.getLValueBase(), RHS.getLValueOffset(), RHS.getLValuePath(),
-                RHS.isLValueOnePastTheEnd());
+                RHS.isLValueOnePastTheEnd(), RHS.getLValueCallIndex());
     else
-      setLValue(RHS.getLValueBase(), RHS.getLValueOffset(), NoLValuePath());
+      setLValue(RHS.getLValueBase(), RHS.getLValueOffset(), NoLValuePath(),
+                RHS.getLValueCallIndex());
   } else if (isArray()) {
     for (unsigned I = 0, N = RHS.getArrayInitializedElts(); I != N; ++I)
       getArrayInitializedElt(I) = RHS.getArrayInitializedElt(I);
@@ -525,22 +527,31 @@ ArrayRef<APValue::LValuePathEntry> APValue::getLValuePath() const {
   return ArrayRef<LValuePathEntry>(LVal.getPath(), LVal.PathLength);
 }
 
-void APValue::setLValue(LValueBase B, const CharUnits &O, NoLValuePath) {
+unsigned APValue::getLValueCallIndex() const {
+  assert(isLValue() && "Invalid accessor");
+  return ((const LV*)(const char*)Data)->CallIndex;
+}
+
+void APValue::setLValue(LValueBase B, const CharUnits &O, NoLValuePath,
+                        unsigned CallIndex) {
   assert(isLValue() && "Invalid accessor");
   LV &LVal = *((LV*)(char*)Data);
   LVal.BaseAndIsOnePastTheEnd.setPointer(B);
   LVal.BaseAndIsOnePastTheEnd.setInt(false);
   LVal.Offset = O;
+  LVal.CallIndex = CallIndex;
   LVal.resizePath((unsigned)-1);
 }
 
 void APValue::setLValue(LValueBase B, const CharUnits &O,
-                        ArrayRef<LValuePathEntry> Path, bool IsOnePastTheEnd) {
+                        ArrayRef<LValuePathEntry> Path, bool IsOnePastTheEnd,
+                        unsigned CallIndex) {
   assert(isLValue() && "Invalid accessor");
   LV &LVal = *((LV*)(char*)Data);
   LVal.BaseAndIsOnePastTheEnd.setPointer(B);
   LVal.BaseAndIsOnePastTheEnd.setInt(IsOnePastTheEnd);
   LVal.Offset = O;
+  LVal.CallIndex = CallIndex;
   LVal.resizePath(Path.size());
   memcpy(LVal.getPath(), Path.data(), Path.size() * sizeof(LValuePathEntry));
 }

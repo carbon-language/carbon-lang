@@ -190,26 +190,21 @@ namespace StaticMemberFunction {
 namespace ParameterScopes {
 
   const int k = 42;
-  constexpr const int &ObscureTheTruth(const int &a) { return a; } // expected-note 3{{reference to 'a' cannot be returned from a constexpr function}}
+  constexpr const int &ObscureTheTruth(const int &a) { return a; }
   constexpr const int &MaybeReturnJunk(bool b, const int a) { // expected-note 2{{declared here}}
-    return ObscureTheTruth(b ? a : k); // expected-note 2{{in call to 'ObscureTheTruth(a)'}}
+    return ObscureTheTruth(b ? a : k);
   }
   static_assert(MaybeReturnJunk(false, 0) == 42, ""); // ok
-  constexpr int a = MaybeReturnJunk(true, 0); // expected-error {{constant expression}} expected-note {{in call to 'MaybeReturnJunk(1, 0)'}}
+  constexpr int a = MaybeReturnJunk(true, 0); // expected-error {{constant expression}} expected-note {{read of variable whose lifetime has ended}}
 
-  constexpr const int MaybeReturnNonstaticRef(bool b, const int a) { // expected-note {{here}}
-    // If ObscureTheTruth returns a reference to 'a', the result is not a
-    // constant expression even though 'a' is still in scope.
-    return ObscureTheTruth(b ? a : k); // expected-note {{in call to 'ObscureTheTruth(a)'}}
+  constexpr const int MaybeReturnNonstaticRef(bool b, const int a) {
+    return ObscureTheTruth(b ? a : k);
   }
   static_assert(MaybeReturnNonstaticRef(false, 0) == 42, ""); // ok
-  constexpr int b = MaybeReturnNonstaticRef(true, 0); // expected-error {{constant expression}} expected-note {{in call to 'MaybeReturnNonstaticRef(1, 0)'}}
+  constexpr int b = MaybeReturnNonstaticRef(true, 0); // ok
 
   constexpr int InternalReturnJunk(int n) {
-    // TODO: We could reject this: it never produces a constant expression.
-    // However, we currently don't evaluate function calls while testing for
-    // potential constant expressions, for performance.
-    return MaybeReturnJunk(true, n); // expected-note {{in call to 'MaybeReturnJunk(1, 0)'}}
+    return MaybeReturnJunk(true, n); // expected-note {{read of variable whose lifetime has ended}}
   }
   constexpr int n3 = InternalReturnJunk(0); // expected-error {{must be initialized by a constant expression}} expected-note {{in call to 'InternalReturnJunk(0)'}}
 
@@ -528,10 +523,10 @@ struct D {
 static_assert(D().c.n == 42, "");
 
 struct E {
-  constexpr E() : p(&p) {} // expected-note {{pointer to subobject of temporary cannot be used to initialize a member in a constant expression}}
+  constexpr E() : p(&p) {}
   void *p;
 };
-constexpr const E &e1 = E(); // expected-error {{constant expression}} expected-note {{in call to 'E()'}} expected-note {{temporary created here}}
+constexpr const E &e1 = E(); // expected-error {{constant expression}} expected-note {{reference to temporary is not a constant expression}} expected-note {{temporary created here}}
 // This is a constant expression if we elide the copy constructor call, and
 // is not a constant expression if we don't! But we do, so it is.
 constexpr E e2 = E();
@@ -1156,5 +1151,21 @@ namespace Fold {
   static_assert(m == 123, "");
 
   #undef fold
+
+}
+
+namespace DR1454 {
+
+constexpr const int &f(const int &n) { return n; }
+constexpr int k1 = f(0); // ok
+
+struct Wrap {
+  const int &value;
+};
+constexpr const Wrap &g(const Wrap &w) { return w; }
+constexpr int k2 = g({0}).value; // ok
+
+constexpr const int &i = 0; // expected-error {{constant expression}} expected-note {{temporary}} expected-note 2{{here}}
+constexpr const int j = i; // expected-error {{constant expression}} expected-note {{initializer of 'i' is not a constant expression}}
 
 }

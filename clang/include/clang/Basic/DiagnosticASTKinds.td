@@ -35,9 +35,7 @@ def note_constexpr_nonliteral : Note<
   "non-literal type %0 cannot be used in a constant expression">;
 def note_constexpr_non_global : Note<
   "%select{pointer|reference}0 to %select{|subobject of }1"
-  "%select{temporary|%4}2 %select{is not a constant expression|"
-  "cannot be returned from a constexpr function|"
-  "cannot be used to initialize a member in a constant expression}3">;
+  "%select{temporary|%3}2 is not a constant expression">;
 def note_constexpr_array_index : Note<"cannot refer to element %0 of "
   "%select{array of %2 elements|non-array object}1 in a constant expression">;
 def note_constexpr_float_arithmetic : Note<
@@ -76,6 +74,10 @@ def note_constexpr_void_comparison : Note<
 def note_constexpr_temporary_here : Note<"temporary created here">;
 def note_constexpr_depth_limit_exceeded : Note<
   "constexpr evaluation exceeded maximum depth of %0 calls">;
+def note_constexpr_call_limit_exceeded : Note<
+  "constexpr evaluation hit maximum call limit">;
+def note_constexpr_lifetime_ended : Note<
+  "read of %select{temporary|variable}0 whose lifetime has ended">;
 def note_constexpr_ltor_volatile_type : Note<
   "read of volatile-qualified type %0 is not allowed in a constant expression">;
 def note_constexpr_ltor_volatile_obj : Note<
