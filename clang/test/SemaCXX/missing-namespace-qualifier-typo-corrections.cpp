@@ -95,3 +95,28 @@ namespace O { void somechock(int); }
 void confusing() {
   somechick(7); // expected-error {{use of undeclared identifier 'somechick'; did you mean 'N::someCheck'?}}
 }
+
+
+class Message {};
+namespace extra {
+  namespace util {
+    namespace MessageUtils {
+      bool Equivalent(const Message&, const Message&); // expected-note {{'extra::util::MessageUtils::Equivalent' declared here}} \
+                                                       // expected-note {{'::extra::util::MessageUtils::Equivalent' declared here}}
+    }
+  }
+}
+namespace util { namespace MessageUtils {} }
+bool nstest () {
+  Message a, b;
+  return util::MessageUtils::Equivalent(a, b); // expected-error {{no member named 'Equivalent' in namespace 'util::MessageUtils'; did you mean 'extra::util::MessageUtils::Equivalent'?}}
+}
+
+namespace util {
+  namespace extra {
+    bool nstest () {
+      Message a, b;
+      return MessageUtils::Equivalent(a, b); // expected-error {{no member named 'Equivalent' in namespace 'util::MessageUtils'; did you mean '::extra::util::MessageUtils::Equivalent'?}}
+    }
+  }
+}

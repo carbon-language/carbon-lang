@@ -37,6 +37,7 @@
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
 #include "llvm/ADT/TinyPtrVector.h"
+#include "llvm/ADT/edit_distance.h"
 #include "llvm/Support/ErrorHandling.h"
 #include <limits>
 #include <list>
@@ -3191,6 +3192,47 @@ void TypoCorrectionConsumer::addCorrection(TypoCorrection Correction) {
   }
 }
 
+// Fill the supplied vector with the IdentifierInfo pointers for each piece of
+// the given NestedNameSpecifier (i.e. given a NestedNameSpecifier "foo::bar::",
+// fill the vector with the IdentifierInfo pointers for "foo" and "bar").
+static void getNestedNameSpecifierIdentifiers(
+    NestedNameSpecifier *NNS,
+    SmallVectorImpl<const IdentifierInfo*> &Identifiers) {
+  if (NestedNameSpecifier *Prefix = NNS->getPrefix())
+    getNestedNameSpecifierIdentifiers(Prefix, Identifiers);
+  else
+    Identifiers.clear();
+
+  const IdentifierInfo *II = NULL;
+
+  switch (NNS->getKind()) {
+  case NestedNameSpecifier::Identifier:
+    II = NNS->getAsIdentifier();
+    break;
+
+  case NestedNameSpecifier::Namespace:
+    if (NNS->getAsNamespace()->isAnonymousNamespace())
+      return;
+    II = NNS->getAsNamespace()->getIdentifier();
+    break;
+
+  case NestedNameSpecifier::NamespaceAlias:
+    II = NNS->getAsNamespaceAlias()->getIdentifier();
+    break;
+
+  case NestedNameSpecifier::TypeSpecWithTemplate:
+  case NestedNameSpecifier::TypeSpec:
+    II = QualType(NNS->getAsType(), 0).getBaseTypeIdentifier();
+    break;
+
+  case NestedNameSpecifier::Global:
+    return;
+  }
+
+  if (II)
+    Identifiers.push_back(II);
+}
+
 namespace {
 
 class SpecifierInfo {
@@ -3209,6 +3251,8 @@ typedef SmallVector<SpecifierInfo, 16> SpecifierInfoList;
 class NamespaceSpecifierSet {
   ASTContext &Context;
   DeclContextList CurContextChain;
+  SmallVector<const IdentifierInfo*, 4> CurContextIdentifiers;
+  SmallVector<const IdentifierInfo*, 4> CurNameSpecifierIdentifiers;
   bool isSorted;
 
   SpecifierInfoList Specifiers;
@@ -3222,9 +3266,23 @@ class NamespaceSpecifierSet {
   void SortNamespaces();
 
  public:
-  explicit NamespaceSpecifierSet(ASTContext &Context, DeclContext *CurContext)
+  NamespaceSpecifierSet(ASTContext &Context, DeclContext *CurContext,
+                        CXXScopeSpec *CurScopeSpec)
       : Context(Context), CurContextChain(BuildContextChain(CurContext)),
-        isSorted(true) {}
+        isSorted(true) {
+    if (CurScopeSpec && CurScopeSpec->getScopeRep())
+      getNestedNameSpecifierIdentifiers(CurScopeSpec->getScopeRep(),
+                                        CurNameSpecifierIdentifiers);
+    // Build the list of identifiers that would be used for an absolute
+    // (from the global context) NestedNameSpecifier refering to the current
+    // context.
+    for (DeclContextList::reverse_iterator C = CurContextChain.rbegin(),
+                                        CEnd = CurContextChain.rend();
+         C != CEnd; ++C) {
+      if (NamespaceDecl *ND = dyn_cast_or_null<NamespaceDecl>(*C))
+        CurContextIdentifiers.push_back(ND->getIdentifier());
+    }
+  }
 
   /// \brief Add the namespace to the set, computing the corresponding
   /// NestedNameSpecifier and its distance in the process.
@@ -3262,7 +3320,7 @@ void NamespaceSpecifierSet::SortNamespaces() {
 
   Specifiers.clear();
   for (SmallVector<unsigned, 4>::iterator DI = sortedDistances.begin(),
-                                             DIEnd = sortedDistances.end();
+                                       DIEnd = sortedDistances.end();
        DI != DIEnd; ++DI) {
     SpecifierInfoList &SpecList = DistanceMap[*DI];
     Specifiers.append(SpecList.begin(), SpecList.end());
@@ -3276,13 +3334,30 @@ void NamespaceSpecifierSet::AddNamespace(NamespaceDecl *ND) {
   NestedNameSpecifier *NNS = NULL;
   unsigned NumSpecifiers = 0;
   DeclContextList NamespaceDeclChain(BuildContextChain(Ctx));
+  DeclContextList FullNamespaceDeclChain(NamespaceDeclChain);
+  // The full size of NamespaceDeclChain before any common elements are removed
+  DeclContextList::size_type FullSize = NamespaceDeclChain.size();
 
-  // Eliminate common elements from the two DeclContext chains
+  // Eliminate common elements from the two DeclContext chains.
   for (DeclContextList::reverse_iterator C = CurContextChain.rbegin(),
                                       CEnd = CurContextChain.rend();
        C != CEnd && !NamespaceDeclChain.empty() &&
        NamespaceDeclChain.back() == *C; ++C) {
     NamespaceDeclChain.pop_back();
+  }
+
+  // Add an explicit leading '::' specifier if needed.
+  if (NamespaceDecl *ND =
+      dyn_cast<NamespaceDecl>(NamespaceDeclChain.back())) {
+    IdentifierInfo *Name = ND->getIdentifier();
+    if (std::find(CurContextIdentifiers.begin(), CurContextIdentifiers.end(),
+                  Name) != CurContextIdentifiers.end() ||
+        std::find(CurNameSpecifierIdentifiers.begin(),
+                  CurNameSpecifierIdentifiers.end(),
+                  Name) != CurNameSpecifierIdentifiers.end()) {
+      NamespaceDeclChain = FullNamespaceDeclChain;
+      NNS = NestedNameSpecifier::GlobalSpecifier(Context);
+    }
   }
 
   // Build the NestedNameSpecifier from what is left of the NamespaceDeclChain
@@ -3294,6 +3369,18 @@ void NamespaceSpecifierSet::AddNamespace(NamespaceDecl *ND) {
       NNS = NestedNameSpecifier::Create(Context, NNS, ND);
       ++NumSpecifiers;
     }
+  }
+
+  // If the built NestedNameSpecifier would be replacing an existing
+  // NestedNameSpecifier, use the number of component identifiers that
+  // would need to be changed as the edit distance instead of the number
+  // of components in the built NestedNameSpecifier.
+  if (NNS && !CurNameSpecifierIdentifiers.empty()) {
+    SmallVector<const IdentifierInfo*, 4> NewNameSpecifierIdentifiers;
+    getNestedNameSpecifierIdentifiers(NNS, NewNameSpecifierIdentifiers);
+    NumSpecifiers = llvm::ComputeEditDistance(
+      llvm::ArrayRef<const IdentifierInfo*>(CurNameSpecifierIdentifiers),
+      llvm::ArrayRef<const IdentifierInfo*>(NewNameSpecifierIdentifiers));
   }
 
   isSorted = false;
@@ -3550,7 +3637,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
   if (!ActiveTemplateInstantiations.empty())
     return TypoCorrection();
 
-  NamespaceSpecifierSet Namespaces(Context, CurContext);
+  NamespaceSpecifierSet Namespaces(Context, CurContext, SS);
 
   TypoCorrectionConsumer Consumer(*this, Typo);
 
@@ -3561,6 +3648,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
 
   // Perform name lookup to find visible, similarly-named entities.
   bool IsUnqualifiedLookup = false;
+  DeclContext *QualifiedDC = MemberContext;
   if (MemberContext) {
     LookupVisibleDecls(MemberContext, LookupKind, Consumer);
 
@@ -3572,8 +3660,8 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
         LookupVisibleDecls(*I, LookupKind, Consumer);
     }
   } else if (SS && SS->isSet()) {
-    DeclContext *DC = computeDeclContext(*SS, EnteringContext);
-    if (!DC)
+    QualifiedDC = computeDeclContext(*SS, EnteringContext);
+    if (!QualifiedDC)
       return TypoCorrection();
 
     // Provide a stop gap for files that are just seriously broken.  Trying
@@ -3583,7 +3671,7 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       return TypoCorrection();
     ++TyposCorrected;
 
-    LookupVisibleDecls(DC, LookupKind, Consumer);
+    LookupVisibleDecls(QualifiedDC, LookupKind, Consumer);
   } else {
     IsUnqualifiedLookup = true;
     UnqualifiedTyposCorrectedMap::iterator Cached
@@ -3609,7 +3697,9 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
       if (TyposCorrected + UnqualifiedTyposCorrected.size() >= 20)
         return TypoCorrection();
     }
+  }
 
+  if (IsUnqualifiedLookup || (QualifiedDC && QualifiedDC->isNamespace())) {
     // For unqualified lookup, look through all of the names that we have
     // seen in this translation unit.
     // FIXME: Re-add the ability to skip very unlikely potential corrections.
@@ -3773,21 +3863,25 @@ TypoCorrection Sema::CorrectTypo(const DeclarationNameInfo &TypoName,
           // Any corrections added below will be validated in subsequent
           // iterations of the main while() loop over the Consumer's contents.
           switch (TmpRes.getResultKind()) {
-          case LookupResult::Found:
-            QRI->setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
-            QRI->setCorrectionSpecifier(NI->NameSpecifier);
-            QRI->setQualifierDistance(NI->EditDistance);
-            Consumer.addCorrection(*QRI);
+          case LookupResult::Found: {
+            TypoCorrection TC(*QRI);
+            TC.setCorrectionDecl(TmpRes.getAsSingle<NamedDecl>());
+            TC.setCorrectionSpecifier(NI->NameSpecifier);
+            TC.setQualifierDistance(NI->EditDistance);
+            Consumer.addCorrection(TC);
             break;
-          case LookupResult::FoundOverloaded:
-            QRI->setCorrectionSpecifier(NI->NameSpecifier);
-            QRI->setQualifierDistance(NI->EditDistance);
+          }
+          case LookupResult::FoundOverloaded: {
+            TypoCorrection TC(*QRI);
+            TC.setCorrectionSpecifier(NI->NameSpecifier);
+            TC.setQualifierDistance(NI->EditDistance);
             for (LookupResult::iterator TRD = TmpRes.begin(),
                                      TRDEnd = TmpRes.end();
                  TRD != TRDEnd; ++TRD)
-              QRI->addCorrectionDecl(*TRD);
-            Consumer.addCorrection(*QRI);
+              TC.addCorrectionDecl(*TRD);
+            Consumer.addCorrection(TC);
             break;
+          }
           case LookupResult::NotFound:
           case LookupResult::NotFoundInCurrentInstantiation:
           case LookupResult::Ambiguous:

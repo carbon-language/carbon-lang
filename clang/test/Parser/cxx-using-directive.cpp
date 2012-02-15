@@ -3,7 +3,7 @@
 class A {};
 
 namespace B {
-  namespace A {}
+  namespace A {} // expected-note{{namespace '::B::A' defined here}}
   using namespace A ;
 }
 
@@ -19,8 +19,7 @@ namespace D {
   namespace B {}
   
   using namespace C ;
-  using namespace B::A ; // expected-error{{expected namespace name}}
-  //FIXME: would be nice to note, that A is not member of D::B
+  using namespace B::A ; // expected-error{{no namespace named 'A' in namespace 'D::B'; did you mean '::B::A'?}}
   using namespace ::B::A ;
   using namespace ::D::C ; // expected-error{{expected namespace name}}
 }
@@ -37,4 +36,3 @@ void test_nslookup() {
   using namespace B;
   using namespace C;
 }
-
