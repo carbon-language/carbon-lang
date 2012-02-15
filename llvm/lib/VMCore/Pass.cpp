@@ -189,8 +189,8 @@ const PassInfo *Pass::lookupPassInfo(StringRef Arg) {
   return PassRegistry::getPassRegistry()->getPassInfo(Arg);
 }
 
-Pass *Pass::createPass(char &TI) {
-  const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(&TI);
+Pass *Pass::createPass(AnalysisID ID) {
+  const PassInfo *PI = PassRegistry::getPassRegistry()->getPassInfo(ID);
   if (!PI)
     return NULL;
   return PI->createPass();

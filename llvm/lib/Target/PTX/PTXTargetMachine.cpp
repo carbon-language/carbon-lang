@@ -151,11 +151,11 @@ bool PTXPassConfig::addPostRegAlloc() {
 
 /// Add passes that optimize machine instructions after register allocation.
 void PTXPassConfig::addMachineLateOptimization() {
-  addPass(BranchFolderPassID);
-  printNoVerify("After BranchFolding");
+  if (addPass(BranchFolderPassID) != &NoPassID)
+    printNoVerify("After BranchFolding");
 
-  addPass(TailDuplicateID);
-  printNoVerify("After TailDuplicate");
+  if (addPass(TailDuplicateID) != &NoPassID)
+    printNoVerify("After TailDuplicate");
 }
 
 bool PTXPassConfig::addPreEmitPass() {

@@ -33,6 +33,8 @@ namespace llvm {
 
 extern char &NoPassID; // Allow targets to choose not to run a pass.
 
+class PassConfigImpl;
+
 /// Target-Independent Code Generator Pass Configuration Options.
 ///
 /// This is an ImmutablePass solely for the purpose of exposing CodeGen options
@@ -41,7 +43,8 @@ class TargetPassConfig : public ImmutablePass {
 protected:
   TargetMachine *TM;
   PassManagerBase &PM;
-  bool Initialized; // Flagged after all passes are configured.
+  PassConfigImpl *Impl; // Internal data structures
+  bool Initialized;     // Flagged after all passes are configured.
 
   // Target Pass Options
   // Targets provide a default setting, user flags override.
@@ -69,6 +72,7 @@ public:
     return TM->getTargetLowering();
   }
 
+  //
   void setInitialized() { Initialized = true; }
 
   CodeGenOpt::Level getOptLevel() const { return TM->getOptLevel(); }
@@ -77,6 +81,18 @@ public:
 
   bool getEnableTailMerge() const { return EnableTailMerge; }
   void setEnableTailMerge(bool Enable) { setOpt(EnableTailMerge, Enable); }
+
+  /// Allow the target to override a specific pass without overriding the pass
+  /// pipeline. When passes are added to the standard pipeline at the
+  /// point where StadardID is expected, add TargetID in its place.
+  void substitutePass(char &StandardID, char &TargetID);
+
+  /// Allow the target to disable a specific standard pass.
+  void disablePass(char &ID) { substitutePass(ID, NoPassID); }
+
+  /// Return the pass ssubtituted for StandardID by the target.
+  /// If no substitution exists, return StandardID.
+  AnalysisID getPassSubstitution(AnalysisID StandardID) const;
 
   /// Return true if the optimized regalloc pipeline is enabled.
   bool getOptimizeRegAlloc() const;
@@ -187,8 +203,9 @@ protected:
   /// Utilities for targets to add passes to the pass manager.
   ///
 
-  /// Add a target-independent CodeGen pass at this point in the pipeline.
-  void addPass(char &ID);
+  /// Add a CodeGen pass at this point in the pipeline after checking overrides.
+  /// Return the pass that was added, or NoPassID.
+  AnalysisID addPass(char &ID);
 
   /// addMachinePasses helper to create the target-selected or overriden
   /// regalloc pass.

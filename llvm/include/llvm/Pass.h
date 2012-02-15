@@ -177,7 +177,7 @@ public:
 
   // createPass - Create a object for the specified pass class,
   // or null if it is not known.
-  static Pass *createPass(char &TI);
+  static Pass *createPass(AnalysisID ID);
 
   /// getAnalysisIfAvailable<AnalysisType>() - Subclasses use this function to
   /// get analysis information that might be around, for example to update it.

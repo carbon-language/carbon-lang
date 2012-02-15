@@ -115,15 +115,33 @@ char TargetPassConfig::ID = 0;
 static char NoPassIDAnchor = 0;
 char &llvm::NoPassID = NoPassIDAnchor;
 
+namespace llvm {
+class PassConfigImpl {
+public:
+  // List of passes explicitly substituted by this target. Normally this is
+  // empty, but it is a convenient way to suppress or replace specific passes
+  // that are part of a standard pass pipeline without overridding the entire
+  // pipeline. This mechanism allows target options to inherit a standard pass's
+  // user interface. For example, a target may disable a standard pass by
+  // default by substituting NoPass, and the user may still enable that standard
+  // pass with an explicit command line option.
+  DenseMap<AnalysisID,AnalysisID> TargetPasses;
+};
+} // namespace llvm
+
 // Out of line virtual method.
-TargetPassConfig::~TargetPassConfig() {}
+TargetPassConfig::~TargetPassConfig() {
+  delete Impl;
+}
 
 // Out of line constructor provides default values for pass options and
 // registers all common codegen passes.
 TargetPassConfig::TargetPassConfig(TargetMachine *tm, PassManagerBase &pm)
-  : ImmutablePass(ID), TM(tm), PM(pm), Initialized(false),
+  : ImmutablePass(ID), TM(tm), PM(pm), Impl(0), Initialized(false),
     DisableVerify(false),
     EnableTailMerge(true) {
+
+  Impl = new PassConfigImpl();
 
   // Register all target independent codegen passes to activate their PassIDs,
   // including this pass itself.
@@ -149,15 +167,33 @@ void TargetPassConfig::setOpt(bool &Opt, bool Val) {
   Opt = Val;
 }
 
-void TargetPassConfig::addPass(char &ID) {
-  if (&ID == &NoPassID)
-    return;
+void TargetPassConfig::substitutePass(char &StandardID, char &TargetID) {
+  Impl->TargetPasses[&StandardID] = &TargetID;
+}
 
+AnalysisID TargetPassConfig::getPassSubstitution(AnalysisID ID) const {
+  DenseMap<AnalysisID, AnalysisID>::const_iterator
+    I = Impl->TargetPasses.find(ID);
+  if (I == Impl->TargetPasses.end())
+    return ID;
+  return I->second;
+}
+
+/// Add a CodeGen pass at this point in the pipeline after checking for target
+/// and command line overrides.
+AnalysisID TargetPassConfig::addPass(char &ID) {
+  assert(!Initialized && "PassConfig is immutable");
+
+  AnalysisID FinalID = getPassSubstitution(&ID);
   // FIXME: check user overrides
-  Pass *P = Pass::createPass(ID);
+  if (FinalID == &NoPassID)
+    return FinalID;
+
+  Pass *P = Pass::createPass(FinalID);
   if (!P)
     llvm_unreachable("Pass ID not registered");
   PM.add(P);
+  return FinalID;
 }
 
 void TargetPassConfig::printNoVerify(const char *Banner) const {
