@@ -4045,6 +4045,14 @@ let CategoryName = "Lambda Issue" in {
   def ext_lambda_default_arguments : ExtWarn<
     "C++11 forbids default arguments for lambda expressions">,
     InGroup<LambdaExtensions>;
+  def err_noreturn_lambda_has_return_expr : Error<
+    "lambda declared 'noreturn' should not return">;
+  def warn_maybe_falloff_nonvoid_lambda : Warning<
+    "control may reach end of non-void lambda">,
+    InGroup<ReturnType>;
+  def warn_falloff_nonvoid_lambda : Warning<
+    "control reaches end of non-void lambda">,
+    InGroup<ReturnType>;
 }
 
 def err_operator_arrow_circular : Error<

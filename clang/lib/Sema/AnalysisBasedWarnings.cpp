@@ -218,7 +218,8 @@ struct CheckFallThroughDiagnostics {
   unsigned diag_AlwaysFallThrough_HasNoReturn;
   unsigned diag_AlwaysFallThrough_ReturnsNonVoid;
   unsigned diag_NeverFallThroughOrReturn;
-  bool funMode;
+  enum { Function, Block, Lambda } funMode;
+  bool IsLambda;
   SourceLocation FuncLoc;
 
   static CheckFallThroughDiagnostics MakeForFunction(const Decl *Func) {
@@ -250,7 +251,7 @@ struct CheckFallThroughDiagnostics {
     else
       D.diag_NeverFallThroughOrReturn = 0;
     
-    D.funMode = true;
+    D.funMode = Function;
     return D;
   }
 
@@ -266,13 +267,28 @@ struct CheckFallThroughDiagnostics {
       diag::err_falloff_nonvoid_block;
     D.diag_NeverFallThroughOrReturn =
       diag::warn_suggest_noreturn_block;
-    D.funMode = false;
+    D.funMode = Block;
+    return D;
+  }
+
+  static CheckFallThroughDiagnostics MakeForLambda() {
+    CheckFallThroughDiagnostics D;
+    D.diag_MaybeFallThrough_HasNoReturn =
+      diag::err_noreturn_lambda_has_return_expr;
+    D.diag_MaybeFallThrough_ReturnsNonVoid =
+      diag::warn_maybe_falloff_nonvoid_lambda;
+    D.diag_AlwaysFallThrough_HasNoReturn =
+      diag::err_noreturn_lambda_has_return_expr;
+    D.diag_AlwaysFallThrough_ReturnsNonVoid =
+      diag::warn_falloff_nonvoid_lambda;
+    D.diag_NeverFallThroughOrReturn = 0;
+    D.funMode = Lambda;
     return D;
   }
 
   bool checkDiagnostics(DiagnosticsEngine &D, bool ReturnsVoid,
                         bool HasNoReturn) const {
-    if (funMode) {
+    if (funMode == Function) {
       return (ReturnsVoid ||
               D.getDiagnosticLevel(diag::warn_maybe_falloff_nonvoid_function,
                                    FuncLoc) == DiagnosticsEngine::Ignored)
@@ -284,9 +300,9 @@ struct CheckFallThroughDiagnostics {
               == DiagnosticsEngine::Ignored);
     }
 
-    // For blocks.
-    return  ReturnsVoid && !HasNoReturn
-            && (!ReturnsVoid ||
+    // For blocks / lambdas.
+    return ReturnsVoid && !HasNoReturn
+            && ((funMode == Lambda) ||
                 D.getDiagnosticLevel(diag::warn_suggest_noreturn_block, FuncLoc)
                   == DiagnosticsEngine::Ignored);
   }
@@ -888,7 +904,11 @@ AnalysisBasedWarnings::IssueWarnings(sema::AnalysisBasedWarnings::Policy P,
   if (P.enableCheckFallThrough) {
     const CheckFallThroughDiagnostics &CD =
       (isa<BlockDecl>(D) ? CheckFallThroughDiagnostics::MakeForBlock()
-                         : CheckFallThroughDiagnostics::MakeForFunction(D));
+       : (isa<CXXMethodDecl>(D) &&
+          cast<CXXMethodDecl>(D)->getOverloadedOperator() == OO_Call &&
+          cast<CXXMethodDecl>(D)->getParent()->isLambda())
+            ? CheckFallThroughDiagnostics::MakeForLambda()
+            : CheckFallThroughDiagnostics::MakeForFunction(D));
     CheckFallThroughForBody(S, D, Body, blkExpr, CD, AC);
   }
 

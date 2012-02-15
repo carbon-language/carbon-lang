@@ -1857,12 +1857,18 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
   QualType FnRetType = CurCap->ReturnType;
   assert(!FnRetType.isNull());
 
-  if (BlockScopeInfo *CurBlock = dyn_cast<BlockScopeInfo>(CurCap))
+  if (BlockScopeInfo *CurBlock = dyn_cast<BlockScopeInfo>(CurCap)) {
     if (CurBlock->FunctionType->getAs<FunctionType>()->getNoReturnAttr()) {
       Diag(ReturnLoc, diag::err_noreturn_block_has_return_expr);
       return StmtError();
     }
-  // FIXME: [[noreturn]] for lambdas!
+  } else {
+    LambdaScopeInfo *LSI = cast<LambdaScopeInfo>(CurCap);
+    if (LSI->CallOperator->getType()->getAs<FunctionType>()->getNoReturnAttr()){
+      Diag(ReturnLoc, diag::err_noreturn_lambda_has_return_expr);
+      return StmtError();
+    }
+  }
 
   // Otherwise, verify that this result type matches the previous one.  We are
   // pickier with blocks than for normal functions because we don't have GCC

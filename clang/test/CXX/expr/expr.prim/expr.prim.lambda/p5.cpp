@@ -3,7 +3,9 @@
 // An attribute-specifier-seq in a lambda-declarator appertains to the
 // type of the corresponding function call operator.
 void test_attributes() {
-  auto nrl = []() [[noreturn]] {}; // expected-warning{{function declared 'noreturn' should not return}}
+  auto nrl = [](int x) -> int { if (x > 0) return x; }; // expected-warning{{control may reach end of non-void lambda}}
+
+  auto nrl2 = []() [[noreturn]] { return; }; // expected-error{{lambda declared 'noreturn' should not return}}
 }
 
 template<typename T>

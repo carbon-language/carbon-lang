@@ -2,7 +2,7 @@
 
 template<typename T>
 void test_attributes() {
-  auto nrl = []() [[noreturn]] {}; // expected-warning{{function declared 'noreturn' should not return}}
+  auto nrl = []() [[noreturn]] {}; // expected-error{{lambda declared 'noreturn' should not return}}
 }
 
 template void test_attributes<int>(); // expected-note{{in instantiation of function}}
