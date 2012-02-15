@@ -529,9 +529,10 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
   if (!SeenDefUse) {
     if (isAllocatable(interval.reg) || isReserved(interval.reg)) {
       // This must be an entry block or landing pad - we asserted so on entry
-      // to the function. For these blocks the interval is dead on entry.
+      // to the function. For these blocks the interval is dead on entry, so
+      // we won't emit a live-range for it.
       DEBUG(dbgs() << " dead");
-      end = start.getDeadSlot();
+      return;
     } else {
       assert(isRegLiveOutOf(MBB, interval.reg) &&
              "Live in reg untouched in block should be be live through.");
