@@ -52,16 +52,13 @@ struct StaticDiagInfoRec {
   unsigned WarnShowInSystemHeader : 1;
   unsigned Category : 5;
 
-  uint8_t  OptionGroupLen;
+  uint16_t OptionGroupIndex;
 
   uint16_t DescriptionLen;
-
-  const char *OptionGroupStr;
-
   const char *DescriptionStr;
 
-  StringRef getOptionGroup() const {
-    return StringRef(OptionGroupStr, OptionGroupLen);
+  unsigned getOptionGroupIndex() const {
+    return OptionGroupIndex;
   }
 
   StringRef getDescription() const {
@@ -89,10 +86,8 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
              SFINAE,ACCESS,NOWERROR,SHOWINSYSHEADER,              \
              CATEGORY)                                            \
   { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE, ACCESS,           \
-    NOWERROR, SHOWINSYSHEADER, CATEGORY,                          \
-    STR_SIZE(GROUP, uint8_t),           \
-    STR_SIZE(DESC, uint16_t),                                     \
-    GROUP, DESC },
+    NOWERROR, SHOWINSYSHEADER, CATEGORY, GROUP,                   \
+    STR_SIZE(DESC, uint16_t), DESC },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -103,7 +98,7 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
 #include "clang/Basic/DiagnosticSemaKinds.inc"
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
 #undef DIAG
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
 static const unsigned StaticDiagInfoSize =
@@ -130,7 +125,7 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 
   // Search the diagnostic table with a binary search.
   StaticDiagInfoRec Find = { static_cast<unsigned short>(DiagID),
-                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   const StaticDiagInfoRec *Found =
     std::lower_bound(StaticDiagInfo, StaticDiagInfo + StaticDiagInfoSize, Find);
@@ -162,15 +157,6 @@ static DiagnosticMappingInfo GetDefaultDiagMappingInfo(unsigned DiagID) {
   }
 
   return Info;
-}
-
-/// getWarningOptionForDiag - Return the lowest-level warning option that
-/// enables the specified diagnostic.  If there is no -Wfoo flag that controls
-/// the diagnostic, this returns null.
-StringRef DiagnosticIDs::getWarningOptionForDiag(unsigned DiagID) {
-  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->getOptionGroup();
-  return StringRef();
 }
 
 /// getCategoryNumberForDiag - Return the category number that a specified
@@ -529,6 +515,15 @@ sizeof(OptionTable) / sizeof(OptionTable[0]);
 static bool WarningOptionCompare(const WarningOption &LHS,
                                  const WarningOption &RHS) {
   return LHS.getName() < RHS.getName();
+}
+
+/// getWarningOptionForDiag - Return the lowest-level warning option that
+/// enables the specified diagnostic.  If there is no -Wfoo flag that controls
+/// the diagnostic, this returns null.
+StringRef DiagnosticIDs::getWarningOptionForDiag(unsigned DiagID) {
+  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
+    return OptionTable[Info->getOptionGroupIndex()].getName();
+  return StringRef();
 }
 
 void DiagnosticIDs::getDiagnosticsInGroup(

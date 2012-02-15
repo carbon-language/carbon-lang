@@ -21,6 +21,7 @@
 #include <map>
 #include <algorithm>
 #include <functional>
+#include <set>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -138,7 +139,21 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
 
   const std::vector<Record*> &Diags =
     Records.getAllDerivedDefinitions("Diagnostic");
-  
+
+  // Make a sorted set of all warning opts so we can get the index.
+  std::set<std::string> WarningOpts;
+  for (unsigned i = 0, e = Diags.size(); i != e; ++i) {
+    const Record *R = Diags[i];
+    DefInit *DI = dynamic_cast<DefInit*>(R->getValueInit("Group"));
+    if (DI)
+      WarningOpts.insert(DI->getDef()->getValueAsString("GroupName"));
+  }
+
+  std::vector<Record*> DiagGroups
+    = Records.getAllDerivedDefinitions("DiagGroup");
+  for (unsigned i = 0, e = DiagGroups.size(); i != e; ++i)
+    WarningOpts.insert(DiagGroups[i]->getValueAsString("GroupName"));
+
   DiagCategoryIDMap CategoryIDs(Records);
   DiagGroupParentMap DGParentMap(Records);
 
@@ -156,12 +171,15 @@ void ClangDiagsDefsEmitter::run(raw_ostream &OS) {
     OS << ", \"";
     OS.write_escaped(R.getValueAsString("Text")) << '"';
     
-    // Warning associated with the diagnostic.
+    // Warning associated with the diagnostic. This is stored as an index into
+    // the alphabetically sorted warning table.
     if (DefInit *DI = dynamic_cast<DefInit*>(R.getValueInit("Group"))) {
-      OS << ", \"";
-      OS.write_escaped(DI->getDef()->getValueAsString("GroupName")) << '"';
+      std::set<std::string>::iterator I =
+        WarningOpts.find(DI->getDef()->getValueAsString("GroupName"));
+      assert(I != WarningOpts.end());
+      OS << ", " << std::distance(WarningOpts.begin(), I);
     } else {
-      OS << ", \"\"";
+      OS << ", 0";
     }
 
     // SFINAE bit
