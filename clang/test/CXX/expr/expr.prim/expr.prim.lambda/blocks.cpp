@@ -6,3 +6,10 @@ void block_capture_errors() {
 
   (void)[=] { var = 17; }; // expected-error{{__block variable 'var' cannot be captured in a lambda}}
 }
+
+void conversion_to_block(int captured) {
+  int (^b1)(int) = [=](int x) { return x + captured; };
+
+  const auto lambda = [=](int x) { return x + captured; };
+  int (^b2)(int) = lambda;
+}

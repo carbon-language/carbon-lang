@@ -411,6 +411,48 @@ static void addFunctionPointerConversion(Sema &S,
   Class->addDecl(Conversion);
 }
 
+/// \brief Add a lambda's conversion to block pointer.
+static void addBlockPointerConversion(Sema &S, 
+                                      SourceRange IntroducerRange,
+                                      CXXRecordDecl *Class,
+                                      CXXMethodDecl *CallOperator) {
+  const FunctionProtoType *Proto
+    = CallOperator->getType()->getAs<FunctionProtoType>(); 
+  QualType BlockPtrTy;
+  {
+    FunctionProtoType::ExtProtoInfo ExtInfo = Proto->getExtProtoInfo();
+    ExtInfo.TypeQuals = 0;
+    QualType FunctionTy
+      = S.Context.getFunctionType(Proto->getResultType(),
+                                  Proto->arg_type_begin(),
+                                  Proto->getNumArgs(),
+                                  ExtInfo);
+    BlockPtrTy = S.Context.getBlockPointerType(FunctionTy);
+  }
+  
+  FunctionProtoType::ExtProtoInfo ExtInfo;
+  ExtInfo.TypeQuals = Qualifiers::Const;
+  QualType ConvTy = S.Context.getFunctionType(BlockPtrTy, 0, 0, ExtInfo);
+  
+  SourceLocation Loc = IntroducerRange.getBegin();
+  DeclarationName Name
+    = S.Context.DeclarationNames.getCXXConversionFunctionName(
+        S.Context.getCanonicalType(BlockPtrTy));
+  DeclarationNameLoc NameLoc;
+  NameLoc.NamedType.TInfo = S.Context.getTrivialTypeSourceInfo(BlockPtrTy, Loc);
+  CXXConversionDecl *Conversion 
+    = CXXConversionDecl::Create(S.Context, Class, Loc, 
+                                DeclarationNameInfo(Name, Loc, NameLoc),
+                                ConvTy, 
+                                S.Context.getTrivialTypeSourceInfo(ConvTy, Loc),
+                                /*isInline=*/false, /*isExplicit=*/false,
+                                /*isConstexpr=*/false, 
+                                CallOperator->getBody()->getLocEnd());
+  Conversion->setAccess(AS_public);
+  Conversion->setImplicit(true);
+  Class->addDecl(Conversion);
+}
+
 ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body, 
                                  Scope *CurScope, bool IsInstantiation) {
   // Leave the expression-evaluation context.
@@ -543,6 +585,14 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
       addFunctionPointerConversion(*this, IntroducerRange, Class,
                                    CallOperator);
 
+    // Objective-C++:
+    //   The closure type for a lambda-expression has a public non-virtual
+    //   non-explicit const conversion function to a block pointer having the
+    //   same parameter and return types as the closure type's function call
+    //   operator.
+    if (getLangOptions().Blocks)
+      addBlockPointerConversion(*this, IntroducerRange, Class, CallOperator);
+    
     // Finalize the lambda class.
     SmallVector<Decl*, 4> Fields(Class->field_begin(), Class->field_end());
     ActOnFields(0, Class->getLocation(), Class, Fields, 
