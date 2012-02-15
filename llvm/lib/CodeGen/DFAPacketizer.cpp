@@ -103,12 +103,26 @@ void DFAPacketizer::reserveResources(llvm::MachineInstr *MI) {
 namespace {
 // DefaultVLIWScheduler - This class extends ScheduleDAGInstrs and overrides
 // Schedule method to build the dependence graph.
+//
+// ScheduleDAGInstrs has LLVM_LIBRARY_VISIBILITY so cannot be exposed to the
+// VLIWPacketizerImpl interface, even as an undefined pointer.
 class DefaultVLIWScheduler : public ScheduleDAGInstrs {
 public:
   DefaultVLIWScheduler(MachineFunction &MF, MachineLoopInfo &MLI,
-                   MachineDominatorTree &MDT, bool IsPostRA);
+                       MachineDominatorTree &MDT, bool IsPostRA);
   // Schedule - Actual scheduling work.
   void Schedule();
+};
+}
+
+namespace llvm {
+// Wrapper for holding library-local data types.
+class VLIWPacketizerImpl {
+public:
+  DefaultVLIWScheduler DAGBuilder;
+  VLIWPacketizerImpl(MachineFunction &MF, MachineLoopInfo &MLI,
+                     MachineDominatorTree &MDT, bool IsPostRA)
+    : DAGBuilder(MF, MLI, MDT, IsPostRA) {}
 };
 }
 
@@ -129,12 +143,12 @@ VLIWPacketizerList::VLIWPacketizerList(
   bool IsPostRA) : TM(MF.getTarget()), MF(MF)  {
   TII = TM.getInstrInfo();
   ResourceTracker = TII->CreateTargetScheduleState(&TM, 0);
-  VLIWScheduler = new DefaultVLIWScheduler(MF, MLI, MDT, IsPostRA);
+  Impl = new VLIWPacketizerImpl(MF, MLI, MDT, IsPostRA);
 }
 
 // VLIWPacketizerList Dtor
 VLIWPacketizerList::~VLIWPacketizerList() {
-  delete VLIWScheduler;
+  delete Impl;
   delete ResourceTracker;
 }
 
@@ -181,11 +195,10 @@ void VLIWPacketizerList::endPacket(MachineBasicBlock *MBB,
 void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator BeginItr,
                                       MachineBasicBlock::iterator EndItr) {
-  assert(VLIWScheduler && "VLIW Scheduler is not initialized!");
-  VLIWScheduler->Run(MBB, BeginItr, EndItr, MBB->size());
+  Impl->DAGBuilder.Run(MBB, BeginItr, EndItr, MBB->size());
 
   // Remember scheduling units.
-  SUnits = VLIWScheduler->SUnits;
+  SUnits = Impl->DAGBuilder.SUnits;
 
   // Generate MI -> SU map.
   std::map <MachineInstr*, SUnit*> MIToSUnit;
