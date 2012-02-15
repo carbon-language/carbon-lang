@@ -180,10 +180,10 @@ public:
   enum ModAttrBehavior { Error = 1, Warning  = 2, Require = 3, Override = 4 };
 
   struct ModuleFlagEntry {
-    unsigned Behavior;
+    ModAttrBehavior Behavior;
     MDString *Key;
     Value *Val;
-    ModuleFlagEntry(unsigned B, MDString *K, Value *V)
+    ModuleFlagEntry(ModAttrBehavior B, MDString *K, Value *V)
       : Behavior(B), Key(K), Val(V) {}
   };
 

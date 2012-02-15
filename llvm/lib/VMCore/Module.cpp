@@ -339,7 +339,8 @@ getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const {
     ConstantInt *Behavior = cast<ConstantInt>(Flag->getOperand(0));
     MDString *Key = cast<MDString>(Flag->getOperand(1));
     Value *Val = Flag->getOperand(2);
-    Flags.push_back(ModuleFlagEntry(Behavior->getZExtValue(), Key, Val));
+    Flags.push_back(ModuleFlagEntry(ModAttrBehavior(Behavior->getZExtValue()),
+                                    Key, Val));
   }
 }
 
