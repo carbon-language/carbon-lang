@@ -135,6 +135,9 @@ public:
   /// deleteTemporary - Deallocate a node created by getTemporary. The
   /// node must not have any users.
   static void deleteTemporary(MDNode *N);
+
+  /// replaceOperandWith - Replace a specific operand.
+  void replaceOperandWith(unsigned i, Value *NewVal);
   
   /// getOperand - Return specified operand.
   Value *getOperand(unsigned i) const;

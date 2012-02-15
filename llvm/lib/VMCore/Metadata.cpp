@@ -87,6 +87,11 @@ static MDNodeOperand *getOperandPtr(MDNode *N, unsigned Op) {
   return reinterpret_cast<MDNodeOperand*>(N+1)+Op;
 }
 
+void MDNode::replaceOperandWith(unsigned i, Value *Val) {
+  MDNodeOperand *Op = getOperandPtr(this, i);
+  replaceOperand(Op, Val);
+}
+
 MDNode::MDNode(LLVMContext &C, ArrayRef<Value*> Vals, bool isFunctionLocal)
 : Value(Type::getMetadataTy(C), Value::MDNodeVal) {
   NumOperands = Vals.size();
