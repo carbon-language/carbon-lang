@@ -1141,24 +1141,24 @@ def err_temp_copy_no_viable : Error<
   "no viable constructor %select{copying variable|copying parameter|"
   "returning object|throwing object|copying member subobject|copying array "
   "element|allocating object|copying temporary|initializing base subobject|"
-  "initializing vector element}0 of type %1">;
+  "initializing vector element|capturing value}0 of type %1">;
 def ext_rvalue_to_reference_temp_copy_no_viable : ExtWarn<
   "no viable constructor %select{copying variable|copying parameter|"
   "returning object|throwing object|copying member subobject|copying array "
   "element|allocating object|copying temporary|initializing base subobject|"
-  "initializing vector element}0 of type %1; C++98 requires a copy "
+  "initializing vector element|capturing value}0 of type %1; C++98 requires a copy "
   "constructor when binding a reference to a temporary">,
   InGroup<BindToTemporaryCopy>;
 def err_temp_copy_ambiguous : Error<
   "ambiguous constructor call when %select{copying variable|copying "
   "parameter|returning object|throwing object|copying member subobject|copying "
   "array element|allocating object|copying temporary|initializing base subobject|"
-  "initializing vector element}0 of type %1">;
+  "initializing vector element|capturing value}0 of type %1">;
 def err_temp_copy_deleted : Error<
   "%select{copying variable|copying parameter|returning object|throwing "
   "object|copying member subobject|copying array element|allocating object|"
   "copying temporary|initializing base subobject|initializing vector element}0 "
-  "of type %1 invokes deleted constructor">;
+  "of type %1 invokes deleted constructor|capturing value">;
 def err_temp_copy_incomplete : Error<
   "copying a temporary object of incomplete type %0">;
 def warn_cxx98_compat_temp_copy : Warning<

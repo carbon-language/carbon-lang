@@ -8,11 +8,18 @@ public:
   void foo() const;
 };
 
-void capture_by_copy(NonCopyable nc, NonCopyable &ncr) {
+class NonConstCopy {
+public:
+  NonConstCopy(NonConstCopy&); // expected-note{{would lose const}}
+};
+
+void capture_by_copy(NonCopyable nc, NonCopyable &ncr, const NonConstCopy nco) {
   (void)[nc] { }; // expected-error{{capture of variable 'nc' as type 'NonCopyable' calls private copy constructor}}
   (void)[=] {
     ncr.foo(); // expected-error{{capture of variable 'ncr' as type 'NonCopyable' calls private copy constructor}} 
   }();
+
+  [nco] {}(); // expected-error{{no matching constructor for initialization of 'const NonConstCopy'}}
 }
 
 struct NonTrivial {
