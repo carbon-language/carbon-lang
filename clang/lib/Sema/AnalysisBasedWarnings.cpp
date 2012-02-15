@@ -219,7 +219,6 @@ struct CheckFallThroughDiagnostics {
   unsigned diag_AlwaysFallThrough_ReturnsNonVoid;
   unsigned diag_NeverFallThroughOrReturn;
   enum { Function, Block, Lambda } funMode;
-  bool IsLambda;
   SourceLocation FuncLoc;
 
   static CheckFallThroughDiagnostics MakeForFunction(const Decl *Func) {

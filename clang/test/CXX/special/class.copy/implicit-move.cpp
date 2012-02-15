@@ -54,7 +54,7 @@ void test_basic_exclusion() {
 
   static_assert(noexcept(HasMoveConstructor((HasMoveConstructor()))), "");
   HasMoveConstructor hmc;
-  hmc = HasMoveConstructor(); // expected-error {{selected deleted operator}}
+  hmc = HasMoveConstructor(); // expected-error {{selected implicitly-deleted copy assignment}}
 
   (HasMoveAssignment(HasMoveAssignment())); // expected-error {{uses deleted function}}
   HasMoveAssignment hma;
@@ -87,8 +87,8 @@ private:
   ~PrivateDestructor() noexcept;
 };
 
-struct InheritsPrivateDestructor : PrivateDestructor {}; // expected-note {{explicitly marked deleted}}
-struct ContainsPrivateDestructor { // expected-note {{explicitly marked deleted}}
+struct InheritsPrivateDestructor : PrivateDestructor {}; // expected-note{{defined here}}
+struct ContainsPrivateDestructor { // expected-note{{defined here}}
   PrivateDestructor pd;
 };
 
@@ -131,8 +131,8 @@ void test_deletion_exclusion() {
   ContainsPrivateMove cpm;
   static_assert(!noexcept(cpm = ContainsPrivateMove()), "");
 
-  (InheritsPrivateDestructor(InheritsPrivateDestructor())); // expected-error {{call to deleted constructor}}
-  (ContainsPrivateDestructor(ContainsPrivateDestructor())); // expected-error {{call to deleted constructor}}
+  (InheritsPrivateDestructor(InheritsPrivateDestructor())); // expected-error {{call to implicitly-deleted default constructor}}
+  (ContainsPrivateDestructor(ContainsPrivateDestructor())); // expected-error {{call to implicitly-deleted default constructor}}
 
   static_assert(!noexcept(InheritsNonTrivialCopyOnly(InheritsNonTrivialCopyOnly())), "");
   static_assert(!noexcept(ContainsNonTrivialCopyOnly(ContainsNonTrivialCopyOnly())), "");

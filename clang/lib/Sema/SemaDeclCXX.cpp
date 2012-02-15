@@ -9045,6 +9045,12 @@ void Sema::DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
   }
 }
 
+bool Sema::isImplicitlyDeleted(FunctionDecl *FD) {
+  return FD->isDeleted() && 
+         (FD->isDefaulted() || FD->isImplicit()) &&
+         isa<CXXMethodDecl>(FD);
+}
+    
 ExprResult
 Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor,

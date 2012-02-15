@@ -5273,6 +5273,26 @@ InitializationSequence::Perform(Sema &S,
   return move(CurInit);
 }
 
+/// \brief Provide some notes that detail why a function was implicitly
+/// deleted.
+static void diagnoseImplicitlyDeletedFunction(Sema &S, CXXMethodDecl *Method) {
+  // FIXME: This is a work in progress. It should dig deeper to figure out
+  // why the function was deleted (e.g., because one of its members doesn't
+  // have a copy constructor, for the copy-constructor case).
+  if (!Method->isImplicit()) {
+    S.Diag(Method->getLocation(), diag::note_callee_decl)
+      << Method->getDeclName();
+  }
+  
+  if (Method->getParent()->isLambda()) {
+    S.Diag(Method->getParent()->getLocation(), diag::note_lambda_decl);
+    return;
+  }
+  
+  S.Diag(Method->getParent()->getLocation(), diag::note_defined_here)
+    << Method->getParent();
+}
+
 //===----------------------------------------------------------------------===//
 // Diagnose initialization failures
 //===----------------------------------------------------------------------===//
@@ -5536,17 +5556,33 @@ bool InitializationSequence::Diagnose(Sema &S,
         break;
 
       case OR_Deleted: {
-        S.Diag(Kind.getLocation(), diag::err_ovl_deleted_init)
-          << true << DestType << ArgsRange;
         OverloadCandidateSet::iterator Best;
         OverloadingResult Ovl
           = FailedCandidateSet.BestViableFunction(S, Kind.getLocation(), Best);
-        if (Ovl == OR_Deleted) {
-          S.Diag(Best->Function->getLocation(), diag::note_unavailable_here)
-            << 1 << Best->Function->isDeleted();
-        } else {
+        if (Ovl != OR_Deleted) {
+          S.Diag(Kind.getLocation(), diag::err_ovl_deleted_init)
+            << true << DestType << ArgsRange;
           llvm_unreachable("Inconsistent overload resolution?");
+          break;
         }
+       
+        // If this is a defaulted or implicitly-declared function, then
+        // it was implicitly deleted. Make it clear that the deletion was
+        // implicit.
+        if (S.isImplicitlyDeleted(Best->Function)) {
+          S.Diag(Kind.getLocation(), diag::err_ovl_deleted_special_init)
+            << S.getSpecialMember(cast<CXXMethodDecl>(Best->Function)) 
+            << DestType << ArgsRange;
+        
+          diagnoseImplicitlyDeletedFunction(S, 
+            cast<CXXMethodDecl>(Best->Function));            
+          break;
+        }
+        
+        S.Diag(Kind.getLocation(), diag::err_ovl_deleted_init)
+          << true << DestType << ArgsRange;
+        S.Diag(Best->Function->getLocation(), diag::note_unavailable_here)
+          << 1 << Best->Function->isDeleted();
         break;
       }
 

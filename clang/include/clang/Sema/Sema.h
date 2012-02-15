@@ -3068,6 +3068,10 @@ public:
   /// class.
   void ForceDeclarationOfImplicitMembers(CXXRecordDecl *Class);
 
+  /// \brief Determine whether the given function is an implicitly-deleted
+  /// special member function.
+  bool isImplicitlyDeleted(FunctionDecl *FD);
+  
   /// MaybeBindToTemporary - If the passed in expression has a record type with
   /// a non-trivial destructor, this will return CXXBindTemporaryExpr. Otherwise
   /// it simply returns the passed in expression.

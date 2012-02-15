@@ -672,8 +672,14 @@ void TypePrinter::printTag(TagDecl *D, std::string &InnerString) {
     // Make an unambiguous representation for anonymous types, e.g.
     //   <anonymous enum at /usr/include/string.h:120:9>
     llvm::raw_string_ostream OS(Buffer);
-    OS << "<anonymous";
-
+    
+    if (isa<CXXRecordDecl>(D) && cast<CXXRecordDecl>(D)->isLambda()) {
+      OS << "<lambda";
+      HasKindDecoration = true;
+    } else {
+      OS << "<anonymous";
+    }
+    
     if (Policy.AnonymousTagLocations) {
       // Suppress the redundant tag keyword if we just printed one.
       // We don't have to worry about ElaboratedTypes here because you can't

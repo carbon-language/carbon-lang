@@ -9984,11 +9984,24 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
       return ExprError();
 
     case OR_Deleted:
-      Diag(OpLoc, diag::err_ovl_deleted_oper)
-        << Best->Function->isDeleted()
-        << BinaryOperator::getOpcodeStr(Opc)
-        << getDeletedOrUnavailableSuffix(Best->Function)
-        << Args[0]->getSourceRange() << Args[1]->getSourceRange();
+      if (isImplicitlyDeleted(Best->Function)) {
+        CXXMethodDecl *Method = cast<CXXMethodDecl>(Best->Function);
+        Diag(OpLoc, diag::err_ovl_deleted_special_oper)
+          << getSpecialMember(Method)
+          << BinaryOperator::getOpcodeStr(Opc)
+          << getDeletedOrUnavailableSuffix(Best->Function);
+        
+        if (Method->getParent()->isLambda()) {
+          Diag(Method->getParent()->getLocation(), diag::note_lambda_decl);
+          return ExprError();
+        }
+      } else {
+        Diag(OpLoc, diag::err_ovl_deleted_oper)
+          << Best->Function->isDeleted()
+          << BinaryOperator::getOpcodeStr(Opc)
+          << getDeletedOrUnavailableSuffix(Best->Function)
+          << Args[0]->getSourceRange() << Args[1]->getSourceRange();
+      }
       CandidateSet.NoteCandidates(*this, OCD_AllCandidates, Args, 2,
                                   BinaryOperator::getOpcodeStr(Opc), OpLoc);
       return ExprError();

@@ -54,9 +54,9 @@ struct NonAggr5 : Aggr { // expected-note 3 {{candidate constructor}}
 };
 NonAggr5 na5 = { b }; // expected-error {{no matching constructor for initialization of 'NonAggr5'}}
 template<typename...BaseList>
-struct MaybeAggr5a : BaseList... {}; // expected-note {{explicitly marked deleted}}
+struct MaybeAggr5a : BaseList... {}; // expected-note {{defined here}}
 MaybeAggr5a<> ma5a0 = {}; // ok
-MaybeAggr5a<Aggr> ma5a1 = {}; // expected-error {{call to deleted constructor of 'MaybeAggr5a<Aggr>'}}
+MaybeAggr5a<Aggr> ma5a1 = {}; // expected-error {{call to implicitly-deleted default constructor of 'MaybeAggr5a<Aggr>'}}
 
 // and no virtual functions.
 struct NonAggr6 { // expected-note 3 {{candidate constructor}}

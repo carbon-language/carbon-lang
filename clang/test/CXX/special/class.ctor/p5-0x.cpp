@@ -21,19 +21,22 @@ int n;
 
 // - X is a union-like class that has a variant member with a non-trivial
 // default constructor,
-union Deleted1a { UserProvidedDefCtor u; }; // expected-note {{deleted here}}
-Deleted1a d1a; // expected-error {{deleted constructor}}
+union Deleted1a { UserProvidedDefCtor u; }; // expected-note {{defined here}}
+Deleted1a d1a; // expected-error {{implicitly-deleted default constructor}}
 union NotDeleted1a { DefaultedDefCtor1 nu; };
 NotDeleted1a nd1a;
 // FIXME: clang implements the pre-FDIS rule, under which DefaultedDefCtor2's
 // default constructor is non-trivial.
-union NotDeleted1b { DefaultedDefCtor2 nu; }; // unexpected-note {{deleted here}}
-NotDeleted1b nd1b; // unexpected-error {{deleted constructor}}
+union NotDeleted1b { DefaultedDefCtor2 nu; }; // unexpected-note {{defined here}}
+NotDeleted1b nd1b; // unexpected-error {{implicitly-deleted default constructor}}
 
 // - any non-static data member with no brace-or-equal-initializer is of
 // reference type,
-class Deleted2a { Deleted2a() = default; int &a; }; // expected-note {{deleted here}}
-Deleted2a d2a; // expected-error {{deleted constructor}}
+class Deleted2a {  // expected-note {{defined here}}
+  Deleted2a() = default;  // expected-note {{declared here}}
+  int &a; 
+}; 
+Deleted2a d2a; // expected-error {{implicitly-deleted default constructor}}
 class NotDeleted2a { int &a = n; };
 NotDeleted2a nd2a;
 class NotDeleted2b { int &a = error; }; // expected-error {{undeclared identifier}}
@@ -45,11 +48,11 @@ NotDeleted2b nd2b;
 class Deleted3a { const int a; }; // expected-note {{here}} \
                                      expected-warning {{does not declare any constructor}} \
                                      expected-note {{will never be initialized}}
-Deleted3a d3a; // expected-error {{deleted constructor}}
+Deleted3a d3a; // expected-error {{implicitly-deleted default constructor}}
 class Deleted3b { const DefaultedDefCtor1 a[42]; }; // expected-note {{here}}
-Deleted3b d3b; // expected-error {{deleted constructor}}
-class Deleted3c { const DefaultedDefCtor2 a; }; // expected-note {{deleted}}
-Deleted3c d3c; // expected-error {{deleted constructor}}
+Deleted3b d3b; // expected-error {{implicitly-deleted default constructor}}
+class Deleted3c { const DefaultedDefCtor2 a; }; // expected-note {{defined here}}
+Deleted3c d3c; // expected-error {{implicitly-deleted default constructor}}
 class NotDeleted3a { const int a = 0; };
 NotDeleted3a nd3a;
 class NotDeleted3b { const DefaultedDefCtor1 a[42] = {}; };
@@ -60,23 +63,23 @@ union NotDeleted3d { const int a; int b; };
 NotDeleted3d nd3d;
 // FIXME: this class should not have a deleted default constructor.
 union NotDeleted3e { const DefaultedDefCtor1 a[42]; int b; }; // unexpected-note {{here}}
-NotDeleted3e nd3e; // unexpected-error {{deleted constructor}}
+NotDeleted3e nd3e; // unexpected-error {{implicitly-deleted default constructor}}
 // FIXME: clang implements the pre-FDIS rule, under which DefaultedDefCtor2 is
 // non-trivial.
 union NotDeleted3f { const DefaultedDefCtor2 a; int b; }; // unexpected-note {{here}}
-NotDeleted3f nd3f; // unexpected-error {{deleted constructor}}
+NotDeleted3f nd3f; // unexpected-error {{implicitly-deleted default constructor}}
 
 // - X is a union and all of its variant members are of const-qualified type (or
 // array thereof),
 union Deleted4a { const int a; const int b; const UserProvidedDefCtor c; }; // expected-note {{here}}
-Deleted4a d4a; // expected-error {{deleted constructor}}
+Deleted4a d4a; // expected-error {{implicitly-deleted default constructor}}
 union Deleted4b { const int a; int b; };
 Deleted4b d4b;
 
 // - X is a non-union class and all members of any anonymous union member are of
 // const-qualified type (or array thereof),
 struct Deleted5a { union { const int a; }; union { int b; }; }; // expected-note {{here}}
-Deleted5a d5a; // expected-error {{deleted constructor}}
+Deleted5a d5a; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted5b { union { const int a; int b; }; union { const int c; int d; }; };
 Deleted5b d5b;
 
@@ -86,17 +89,17 @@ Deleted5b d5b;
 // constructor results in an ambiguity or in a function that is deleted or
 // inaccessible from the defaulted default constructor, or
 struct Deleted6a : Deleted2a {}; // expected-note {{here}}
-Deleted6a d6a; // expected-error {{deleted constructor}}
+Deleted6a d6a; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted6b : virtual Deleted2a {}; // expected-note {{here}}
-Deleted6b d6b; // expected-error {{deleted constructor}}
+Deleted6b d6b; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted6c { Deleted2a a; }; // expected-note {{here}}
-Deleted6c d6c; // expected-error {{deleted constructor}}
+Deleted6c d6c; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted6d { DeletedDefCtor a; }; // expected-note {{here}}
-Deleted6d d6d; // expected-error {{deleted constructor}}
+Deleted6d d6d; // expected-error {{implicitly-deleted default constructor}}
 struct NotDeleted6a { DeletedDefCtor a = 0; };
 NotDeleted6a nd6a;
 struct Deleted6e { PrivateDefCtor a; }; // expected-note {{here}}
-Deleted6e d6e; // expected-error {{deleted constructor}}
+Deleted6e d6e; // expected-error {{implicitly-deleted default constructor}}
 struct NotDeleted6b { PrivateDefCtor a = 0; };
 NotDeleted6b nd6b;
 struct NotDeleted6c { Friend a; };
@@ -106,21 +109,21 @@ NotDeleted6c nd6c;
 // a destructor that is deleted or inaccessible from the defaulted default
 // constructor.
 struct Deleted7a : DeletedDtor {}; // expected-note {{here}}
-Deleted7a d7a; // expected-error {{deleted constructor}}
+Deleted7a d7a; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted7b : virtual DeletedDtor {}; // expected-note {{here}}
-Deleted7b d7b; // expected-error {{deleted constructor}}
+Deleted7b d7b; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted7c { DeletedDtor a; }; // expected-note {{here}}
-Deleted7c d7c; // expected-error {{deleted constructor}}
+Deleted7c d7c; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted7d { DeletedDtor a = {}; }; // expected-note {{here}}
-Deleted7d d7d; // expected-error {{deleted constructor}}
+Deleted7d d7d; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted7e : PrivateDtor {}; // expected-note {{here}}
-Deleted7e d7e; // expected-error {{deleted constructor}}
+Deleted7e d7e; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted7f : virtual PrivateDtor {}; // expected-note {{here}}
-Deleted7f d7f; // expected-error {{deleted constructor}}
+Deleted7f d7f; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted7g { PrivateDtor a; }; // expected-note {{here}}
-Deleted7g d7g; // expected-error {{deleted constructor}}
+Deleted7g d7g; // expected-error {{implicitly-deleted default constructor}}
 struct Deleted7h { PrivateDtor a = {}; }; // expected-note {{here}}
-Deleted7h d7h; // expected-error {{deleted constructor}}
+Deleted7h d7h; // expected-error {{implicitly-deleted default constructor}}
 struct NotDeleted7i : Friend {};
 NotDeleted7i d7i;
 struct NotDeleted7j : virtual Friend {};

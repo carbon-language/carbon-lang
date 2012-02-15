@@ -9,7 +9,7 @@ union DeletedNTVariant { // expected-note{{here}}
   DeletedNTVariant();
 };
 DeletedNTVariant DVa;
-DeletedNTVariant DVb(DVa); // expected-error{{call to deleted constructor}}
+DeletedNTVariant DVb(DVa); // expected-error{{call to implicitly-deleted copy constructor}}
 
 struct DeletedNTVariant2 { // expected-note{{here}}
   union {
@@ -18,7 +18,7 @@ struct DeletedNTVariant2 { // expected-note{{here}}
   DeletedNTVariant2();
 };
 DeletedNTVariant2 DV2a;
-DeletedNTVariant2 DV2b(DV2a); // expected-error{{call to deleted constructor}}
+DeletedNTVariant2 DV2b(DV2a); // expected-error{{call to implicitly-deleted copy constructor}}
 
 struct NoAccess {
   NoAccess() = default;
@@ -32,7 +32,7 @@ struct HasNoAccess { // expected-note{{here}}
   NoAccess NA;
 };
 HasNoAccess HNAa;
-HasNoAccess HNAb(HNAa); // expected-error{{call to deleted constructor}}
+HasNoAccess HNAb(HNAa); // expected-error{{call to implicitly-deleted copy constructor}}
 
 struct HasAccess {
   NoAccess NA;
@@ -55,13 +55,13 @@ struct IsAmbiguous { // expected-note{{here}}
   IsAmbiguous();
 };
 IsAmbiguous IAa;
-IsAmbiguous IAb(IAa); // expected-error{{call to deleted constructor}}
+IsAmbiguous IAb(IAa); // expected-error{{call to implicitly-deleted copy constructor}}
 
 struct Deleted { // expected-note{{here}}
   IsAmbiguous IA;
 };
 Deleted Da;
-Deleted Db(Da); // expected-error{{call to deleted constructor}}
+Deleted Db(Da); // expected-error{{call to implicitly-deleted copy constructor}}
 
 struct NoAccessDtor {
 private:
@@ -75,7 +75,7 @@ struct HasNoAccessDtor { // expected-note{{here}}
   ~HasNoAccessDtor();
 };
 HasNoAccessDtor HNADa;
-HasNoAccessDtor HNADb(HNADa); // expected-error{{call to deleted constructor}}
+HasNoAccessDtor HNADb(HNADa); // expected-error{{call to implicitly-deleted copy constructor}}
 
 struct HasAccessDtor {
   NoAccessDtor NAD;
@@ -87,4 +87,4 @@ struct RValue { // expected-note{{here}}
   int && ri = 1;
 };
 RValue RVa;
-RValue RVb(RVa); // expected-error{{call to deleted constructor}}
+RValue RVb(RVa); // expected-error{{call to implicitly-deleted copy constructor}}

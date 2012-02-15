@@ -1157,8 +1157,8 @@ def err_temp_copy_ambiguous : Error<
 def err_temp_copy_deleted : Error<
   "%select{copying variable|copying parameter|returning object|throwing "
   "object|copying member subobject|copying array element|allocating object|"
-  "copying temporary|initializing base subobject|initializing vector element}0 "
-  "of type %1 invokes deleted constructor|capturing value">;
+  "copying temporary|initializing base subobject|initializing vector element|"
+  "capturing value}0 of type %1 invokes deleted constructor">;
 def err_temp_copy_incomplete : Error<
   "copying a temporary object of incomplete type %0">;
 def warn_cxx98_compat_temp_copy : Warning<
@@ -2104,6 +2104,10 @@ def err_ref_init_ambiguous : Error<
   "reference initialization of type %0 with initializer of type %1 is ambiguous">;
 def err_ovl_deleted_init : Error<
   "call to %select{unavailable|deleted}0 constructor of %1">;
+def err_ovl_deleted_special_init : Error<
+  "call to implicitly-deleted %select{default constructor|copy constructor|"
+  "move constructor|copy assignment operator|move assignment operator|"
+  "destructor|function}0 of %1">;
 def err_ovl_ambiguous_oper_unary : Error<
   "use of overloaded operator '%0' is ambiguous (operand type %1)">;
 def err_ovl_ambiguous_oper_binary : Error<
@@ -2111,6 +2115,10 @@ def err_ovl_ambiguous_oper_binary : Error<
 def err_ovl_no_viable_oper : Error<"no viable overloaded '%0'">;
 def err_ovl_deleted_oper : Error<
   "overload resolution selected %select{unavailable|deleted}0 operator '%1'%2">;
+def err_ovl_deleted_special_oper : Error<
+  "overload resolution selected implicitly-deleted %select{default constructor|"
+  "copy constructor|move constructor|copy assignment operator|move assignment "
+  "operator|destructor|'%1'}0%2">;
 def err_ovl_no_viable_subscript :
     Error<"no viable overloaded operator[] for type %0">;
 def err_ovl_no_oper :
@@ -4307,6 +4315,8 @@ def err_typecheck_call_too_many_args_at_most : Error<
   "expected at most %1, have %2">;
 def note_callee_decl : Note<
   "%0 declared here">;
+def note_defined_here : Note<"%0 defined here">;
+
 def warn_call_wrong_number_of_arguments : Warning<
   "too %select{few|many}0 arguments in call to %1">;
 def err_atomic_builtin_must_be_pointer : Error<
