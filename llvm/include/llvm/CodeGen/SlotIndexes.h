@@ -648,6 +648,8 @@ namespace llvm {
     /// instructions, create the new index after the null indexes instead of
     /// before them.
     SlotIndex insertMachineInstrInMaps(MachineInstr *mi, bool Late = false) {
+      assert(!mi->isInsideBundle() &&
+             "Instructions inside bundles should use bundle start's slot.");
       assert(mi2iMap.find(mi) == mi2iMap.end() && "Instr already indexed.");
       // Numbering DBG_VALUE instructions could cause code generation to be
       // affected by debug information.
