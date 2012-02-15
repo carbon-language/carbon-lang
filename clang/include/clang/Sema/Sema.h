@@ -6304,6 +6304,8 @@ public:
   void CodeCompleteConstructorInitializer(Decl *Constructor,
                                           CXXCtorInitializer** Initializers,
                                           unsigned NumInitializers);
+  void CodeCompleteLambdaIntroducer(Scope *S, LambdaIntroducer &Intro,
+                                    bool AfterAmpersand);
 
   void CodeCompleteObjCAtDirective(Scope *S);
   void CodeCompleteObjCAtVisibility(Scope *S);

@@ -274,9 +274,9 @@ namespace {
     /// of the shadow maps), or replace an existing result (for, e.g., a 
     /// redeclaration).
     ///
-    /// \param CurContext the result to add (if it is unique).
+    /// \param R the result to add (if it is unique).
     ///
-    /// \param R the context in which this result will be named.
+    /// \param CurContext the context in which this result will be named.
     void MaybeAddResult(Result R, DeclContext *CurContext = 0);
     
     /// \brief Add a new result to this result set, where we already know
@@ -325,6 +325,7 @@ namespace {
     bool IsMember(NamedDecl *ND) const;
     bool IsObjCIvar(NamedDecl *ND) const;
     bool IsObjCMessageReceiver(NamedDecl *ND) const;
+    bool IsObjCMessageReceiverOrLambdaCapture(NamedDecl *ND) const;
     bool IsObjCCollection(NamedDecl *ND) const;
     bool IsImpossibleToSatisfy(NamedDecl *ND) const;
     //@}    
@@ -1152,6 +1153,17 @@ bool ResultBuilder::IsObjCMessageReceiver(NamedDecl *ND) const {
   return isObjCReceiverType(SemaRef.Context, T);
 }
 
+bool ResultBuilder::IsObjCMessageReceiverOrLambdaCapture(NamedDecl *ND) const {
+  if (IsObjCMessageReceiver(ND))
+    return true;
+  
+  VarDecl *Var = dyn_cast<VarDecl>(ND);
+  if (!Var)
+    return false;
+  
+  return Var->hasLocalStorage() && !Var->hasAttr<BlocksAttr>();
+}
+
 bool ResultBuilder::IsObjCCollection(NamedDecl *ND) const {
   if ((SemaRef.getLangOptions().CPlusPlus && !IsOrdinaryName(ND)) ||
       (!SemaRef.getLangOptions().CPlusPlus && !IsOrdinaryNonTypeName(ND)))
@@ -1421,6 +1433,23 @@ static const char *GetCompletionTypeString(QualType T,
   std::string Result;
   T.getAsStringInternal(Result, Policy);
   return Allocator.CopyString(Result);
+}
+
+/// \brief Add a completion for "this", if we're in a member function.
+static void addThisCompletion(Sema &S, ResultBuilder &Results) {
+  QualType ThisTy = S.getCurrentThisType();
+  if (ThisTy.isNull())
+    return;
+  
+  CodeCompletionAllocator &Allocator = Results.getAllocator();
+  CodeCompletionBuilder Builder(Allocator);
+  PrintingPolicy Policy = getCompletionPrintingPolicy(S);
+  Builder.AddResultTypeChunk(GetCompletionTypeString(ThisTy, 
+                                                     S.Context, 
+                                                     Policy,
+                                                     Allocator));
+  Builder.AddTypedTextChunk("this");
+  Results.AddResult(CodeCompletionResult(Builder.TakeString()));            
 }
 
 /// \brief Add language constructs that show up for "ordinary" names.
@@ -1758,15 +1787,7 @@ static void AddOrdinaryNameResults(Sema::ParserCompletionContext CCC,
   case Sema::PCC_Expression: {
     if (SemaRef.getLangOptions().CPlusPlus) {
       // 'this', if we're in a non-static member function.
-      QualType ThisTy = SemaRef.getCurrentThisType();
-      if (!ThisTy.isNull()) {
-        Builder.AddResultTypeChunk(GetCompletionTypeString(ThisTy, 
-                                                           SemaRef.Context, 
-                                                           Policy,
-                                                           Allocator));
-        Builder.AddTypedTextChunk("this");
-        Results.AddResult(Result(Builder.TakeString()));      
-      }
+      addThisCompletion(SemaRef, Results);
       
       // true
       Builder.AddResultTypeChunk("bool");
@@ -3665,7 +3686,6 @@ void Sema::CodeCompleteCase(Scope *S) {
     kind = CodeCompletionContext::CCC_OtherWithMacros;
   }
   
-  
   HandleCodeCompleteResults(this, CodeCompleter, 
                             kind,
                             Results.data(),Results.size());
@@ -4175,6 +4195,60 @@ void Sema::CodeCompleteConstructorInitializer(Decl *ConstructorD,
                                            CXCursor_MemberRef));
     SawLastInitializer = false;
   }
+  Results.ExitScope();
+  
+  HandleCodeCompleteResults(this, CodeCompleter, Results.getCompletionContext(),
+                            Results.data(), Results.size());
+}
+
+/// \brief Determine whether this scope denotes a namespace.
+static bool isNamespaceScope(Scope *S) {
+  DeclContext *DC = static_cast<DeclContext *>(S->getEntity());
+  if (!DC)
+    return false;
+
+  return DC->isFileContext();
+}
+
+void Sema::CodeCompleteLambdaIntroducer(Scope *S, LambdaIntroducer &Intro,
+                                        bool AfterAmpersand) {
+  ResultBuilder Results(*this, CodeCompleter->getAllocator(),
+                        CodeCompletionContext::CCC_Other);
+  Results.EnterNewScope();
+
+  // Note what has already been captured.
+  llvm::SmallPtrSet<IdentifierInfo *, 4> Known;
+  bool IncludedThis = false;
+  for (SmallVectorImpl<LambdaCapture>::iterator C = Intro.Captures.begin(),
+                                             CEnd = Intro.Captures.end();
+       C != CEnd; ++C) {
+    if (C->Kind == LCK_This) {
+      IncludedThis = true;
+      continue;
+    }
+    
+    Known.insert(C->Id);
+  }
+  
+  // Look for other capturable variables.
+  for (; S && !isNamespaceScope(S); S = S->getParent()) {
+    for (Scope::decl_iterator D = S->decl_begin(), DEnd = S->decl_end();
+         D != DEnd; ++D) {
+      VarDecl *Var = dyn_cast<VarDecl>(*D);
+      if (!Var ||
+          !Var->hasLocalStorage() ||
+          Var->hasAttr<BlocksAttr>())
+        continue;
+      
+      if (Known.insert(Var->getIdentifier()))
+        Results.AddResult(CodeCompletionResult(Var), CurContext, 0, false);
+    }
+  }
+
+  // Add 'this', if it would be valid.
+  if (!IncludedThis && !AfterAmpersand && Intro.Default != LCD_ByCopy)
+    addThisCompletion(*this, Results);
+  
   Results.ExitScope();
   
   HandleCodeCompleteResults(this, CodeCompleter, Results.getCompletionContext(),
@@ -4980,7 +5054,9 @@ void Sema::CodeCompleteObjCMessageReceiver(Scope *S) {
   typedef CodeCompletionResult Result;
   ResultBuilder Results(*this, CodeCompleter->getAllocator(),
                         CodeCompletionContext::CCC_ObjCMessageReceiver,
-                        &ResultBuilder::IsObjCMessageReceiver);
+                        getLangOptions().CPlusPlus0x
+                          ? &ResultBuilder::IsObjCMessageReceiverOrLambdaCapture
+                          : &ResultBuilder::IsObjCMessageReceiver);
   
   CodeCompletionDeclConsumer Consumer(Results, CurContext);
   Results.EnterNewScope();
@@ -4996,6 +5072,9 @@ void Sema::CodeCompleteObjCMessageReceiver(Scope *S) {
         
         AddSuperSendCompletion(*this, /*NeedSuperKeyword=*/true, 0, 0, Results);
       }
+  
+  if (getLangOptions().CPlusPlus0x)
+    addThisCompletion(*this, Results);
   
   Results.ExitScope();
   
