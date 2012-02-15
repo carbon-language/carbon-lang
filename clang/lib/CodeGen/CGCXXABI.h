@@ -100,11 +100,16 @@ public:
                                                     llvm::Value *MemPtr,
                                             const MemberPointerType *MPT);
 
-  /// Perform a derived-to-base or base-to-derived member pointer
-  /// conversion.
+  /// Perform a derived-to-base, base-to-derived, or bitcast member
+  /// pointer conversion.
   virtual llvm::Value *EmitMemberPointerConversion(CodeGenFunction &CGF,
                                                    const CastExpr *E,
                                                    llvm::Value *Src);
+
+  /// Perform a derived-to-base, base-to-derived, or bitcast member
+  /// pointer conversion on a constant value.
+  virtual llvm::Constant *EmitMemberPointerConversion(const CastExpr *E,
+                                                      llvm::Constant *Src);
 
   /// Return true if the given member pointer can be zero-initialized
   /// (in the C++ sense) with an LLVM zeroinitializer.
@@ -137,6 +142,15 @@ public:
                              llvm::Value *MemPtr,
                              const MemberPointerType *MPT);
 
+protected:
+  /// A utility method for computing the offset required for the given
+  /// base-to-derived or derived-to-base member-pointer conversion.
+  /// Does not handle virtual conversions (in case we ever fully
+  /// support an ABI that allows this).  Returns null if no adjustment
+  /// is required.
+  llvm::Constant *getMemberPointerAdjustment(const CastExpr *E);
+
+public:
   /// Build the signature of the given constructor variant by adding
   /// any required parameters.  For convenience, ResTy has been
   /// initialized to 'void', and ArgTys has been initialized with the

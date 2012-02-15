@@ -289,6 +289,7 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
       case CK_NullToMemberPointer:
       case CK_BaseToDerivedMemberPointer:
       case CK_DerivedToBaseMemberPointer:
+      case CK_ReinterpretMemberPointer:
       case CK_UserDefinedConversion:
       case CK_ConstructorConversion:
       case CK_VectorSplat:

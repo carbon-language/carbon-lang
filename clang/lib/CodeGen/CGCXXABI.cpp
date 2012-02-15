@@ -71,6 +71,11 @@ llvm::Value *CGCXXABI::EmitMemberPointerConversion(CodeGenFunction &CGF,
   return GetBogusMemberPointer(CGM, E->getType());
 }
 
+llvm::Constant *CGCXXABI::EmitMemberPointerConversion(const CastExpr *E,
+                                                      llvm::Constant *Src) {
+  return GetBogusMemberPointer(CGM, E->getType());
+}
+
 llvm::Value *
 CGCXXABI::EmitMemberPointerComparison(CodeGenFunction &CGF,
                                       llvm::Value *L,
@@ -171,4 +176,25 @@ void CGCXXABI::EmitGuardedInit(CodeGenFunction &CGF,
                                llvm::GlobalVariable *GV,
                                bool PerformInit) {
   ErrorUnsupportedABI(CGF, "static local variable initialization");
+}
+
+/// Returns the adjustment, in bytes, required for the given
+/// member-pointer operation.  Returns null if no adjustment is
+/// required.
+llvm::Constant *CGCXXABI::getMemberPointerAdjustment(const CastExpr *E) {
+  assert(E->getCastKind() == CK_DerivedToBaseMemberPointer ||
+         E->getCastKind() == CK_BaseToDerivedMemberPointer);
+
+  QualType derivedType;
+  if (E->getCastKind() == CK_DerivedToBaseMemberPointer)
+    derivedType = E->getSubExpr()->getType();
+  else
+    derivedType = E->getType();
+
+  const CXXRecordDecl *derivedClass =
+    derivedType->castAs<MemberPointerType>()->getClass()->getAsCXXRecordDecl();
+
+  return CGM.GetNonVirtualBaseClassOffset(derivedClass,
+                                          E->path_begin(),
+                                          E->path_end());
 }

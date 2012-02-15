@@ -360,6 +360,7 @@ void AggExprEmitter::VisitCastExpr(CastExpr *E) {
   case CK_BaseToDerivedMemberPointer:
   case CK_DerivedToBaseMemberPointer:
   case CK_MemberPointerToBoolean:
+  case CK_ReinterpretMemberPointer:
   case CK_IntegralToPointer:
   case CK_PointerToIntegral:
   case CK_PointerToBoolean:

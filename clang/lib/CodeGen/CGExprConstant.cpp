@@ -620,6 +620,11 @@ public:
 
     case CK_Dependent: llvm_unreachable("saw dependent cast!");
 
+    case CK_ReinterpretMemberPointer:
+    case CK_DerivedToBaseMemberPointer:
+    case CK_BaseToDerivedMemberPointer:
+      return CGM.getCXXABI().EmitMemberPointerConversion(E, C);
+
     // These will never be supported.
     case CK_ObjCObjectLValueCast:
     case CK_ARCProduceObject:
@@ -630,18 +635,16 @@ public:
 
     // These don't need to be handled here because Evaluate knows how to
     // evaluate them in the cases where they can be folded.
+    case CK_BitCast:
     case CK_ToVoid:
     case CK_Dynamic:
     case CK_LValueBitCast:
     case CK_NullToMemberPointer:
-    case CK_DerivedToBaseMemberPointer:
-    case CK_BaseToDerivedMemberPointer:
     case CK_UserDefinedConversion:
     case CK_ConstructorConversion:
     case CK_CPointerToObjCPointerCast:
     case CK_BlockPointerToObjCPointerCast:
     case CK_AnyPointerToBlockPointerCast:
-    case CK_BitCast:
     case CK_ArrayToPointerDecay:
     case CK_FunctionToPointerDecay:
     case CK_BaseToDerived:

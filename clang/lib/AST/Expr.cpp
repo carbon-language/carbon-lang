@@ -1053,6 +1053,11 @@ void CastExpr::CheckCastConsistency() const {
     assert(getSubExpr()->getType()->isBlockPointerType());
     goto CheckNoBasePath;
 
+  case CK_ReinterpretMemberPointer:
+    assert(getType()->isMemberPointerType());
+    assert(getSubExpr()->getType()->isMemberPointerType());
+    goto CheckNoBasePath;
+
   case CK_BitCast:
     // Arbitrary casts to C pointer types count as bitcasts.
     // Otherwise, we should only have block and ObjC pointer casts
@@ -1156,6 +1161,8 @@ const char *CastExpr::getCastKindName() const {
     return "BaseToDerivedMemberPointer";
   case CK_DerivedToBaseMemberPointer:
     return "DerivedToBaseMemberPointer";
+  case CK_ReinterpretMemberPointer:
+    return "ReinterpretMemberPointer";
   case CK_UserDefinedConversion:
     return "UserDefinedConversion";
   case CK_ConstructorConversion:

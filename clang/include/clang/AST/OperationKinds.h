@@ -117,6 +117,15 @@ enum CastKind {
   /// against the null member pointer.
   CK_MemberPointerToBoolean,
 
+  /// CK_ReinterpretMemberPointer - Reinterpret a member pointer as a
+  /// different kind of member pointer.  C++ forbids this from
+  /// crossing between function and object types, but otherwise does
+  /// not restrict it.  However, the only operation that is permitted
+  /// on a "punned" member pointer is casting it back to the original
+  /// type, which is required to be a lossless operation (although
+  /// many ABIs do not guarantee this on all possible intermediate types).
+  CK_ReinterpretMemberPointer,
+
   /// CK_UserDefinedConversion - Conversion using a user defined type
   /// conversion function.
   ///    struct A { operator int(); }; int i = int(A());

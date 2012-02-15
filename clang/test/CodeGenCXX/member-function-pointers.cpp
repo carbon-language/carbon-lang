@@ -28,6 +28,16 @@ void (C::*pc2)() = &C::f;
 // CHECK: @pc3 = global { i64, i64 } { i64 1, i64 0 }, align 8
 void (A::*pc3)() = &A::vf1;
 
+// Tests for test10.
+// CHECK: @_ZN6test101aE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 0 }, align 8
+// CHECK: @_ZN6test101bE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 8 }, align 8
+// CHECK: @_ZN6test101cE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 8 }, align 8
+// CHECK: @_ZN6test101dE = global { i64, i64 } { i64 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i64), i64 16 }, align 8
+// CHECK-LP32: @_ZN6test101aE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 0 }, align 4
+// CHECK-LP32: @_ZN6test101bE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 4 }, align 4
+// CHECK-LP32: @_ZN6test101cE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 4 }, align 4
+// CHECK-LP32: @_ZN6test101dE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 8 }, align 4
+
 void f() {
   // CHECK: store { i64, i64 } zeroinitializer, { i64, i64 }* @pa
   pa = 0;
@@ -232,3 +242,33 @@ namespace test9 {
     static S array[] = { (fooptr) &B::foo };
   }
 }
+
+// rdar://problem/10815683 - Verify that we can emit reinterprets of
+// member pointers as constant initializers.  For added trickiness,
+// we also add some non-trivial adjustments.
+namespace test10 {
+  struct A {
+    int nonEmpty;
+    void foo();
+  };
+  struct B : public A {
+    virtual void requireNonZeroAdjustment();
+  };
+  struct C {
+    int nonEmpty;
+  };
+  struct D : public C {
+    virtual void requireNonZeroAdjustment();
+  };
+
+  // Non-ARM tests at top of file.
+  void (A::*a)() = &A::foo;
+  void (B::*b)() = (void (B::*)()) &A::foo;
+  void (C::*c)() = (void (C::*)()) (void (B::*)()) &A::foo;
+  void (D::*d)() = (void (C::*)()) (void (B::*)()) &A::foo;
+}
+// It's not that the offsets are doubled on ARM, it's that they're left-shifted by 1.
+// CHECK-ARM: @_ZN6test101aE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 0 }, align 4
+// CHECK-ARM: @_ZN6test101bE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 8 }, align 4
+// CHECK-ARM: @_ZN6test101cE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 8 }, align 4
+// CHECK-ARM: @_ZN6test101dE = global { i32, i32 } { i32 ptrtoint (void (%"struct.test10::A"*)* @_ZN6test101A3fooEv to i32), i32 16 }, align 4
