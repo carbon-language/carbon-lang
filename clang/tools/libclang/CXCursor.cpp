@@ -226,7 +226,6 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
   case Stmt::UnaryExprOrTypeTraitExprClass:
   case Stmt::UnaryTypeTraitExprClass:
   case Stmt::VAArgExprClass:
-  case Stmt::LambdaExprClass:
     K = CXCursor_UnexposedExpr;
     break;
 
@@ -441,6 +440,10 @@ CXCursor cxcursor::MakeCXCursor(Stmt *S, Decl *Parent, CXTranslationUnit TU,
     K = CXCursor_CallExpr;
     break;
       
+  case Stmt::LambdaExprClass:
+    K = CXCursor_LambdaExpr;
+    break;
+      
   case Stmt::ObjCMessageExprClass: {
     K = CXCursor_ObjCMessageExpr;
     int SelectorIdIndex = -1;
@@ -571,6 +574,23 @@ cxcursor::getCursorNamespaceRef(CXCursor C) {
   return std::make_pair(static_cast<NamedDecl *>(C.data[0]),
                         SourceLocation::getFromRawEncoding(
                                        reinterpret_cast<uintptr_t>(C.data[1])));  
+}
+
+CXCursor cxcursor::MakeCursorVariableRef(const VarDecl *Var, SourceLocation Loc, 
+                                         CXTranslationUnit TU) {
+  
+  assert(Var && TU && "Invalid arguments!");
+  void *RawLoc = reinterpret_cast<void *>(Loc.getRawEncoding());
+  CXCursor C = { CXCursor_VariableRef, 0, { (void*)Var, RawLoc, TU } };
+  return C;
+}
+
+std::pair<VarDecl *, SourceLocation> 
+cxcursor::getCursorVariableRef(CXCursor C) {
+  assert(C.kind == CXCursor_VariableRef);
+  return std::make_pair(static_cast<VarDecl *>(C.data[0]),
+                        SourceLocation::getFromRawEncoding(
+                          reinterpret_cast<uintptr_t>(C.data[1])));
 }
 
 CXCursor cxcursor::MakeCursorMemberRef(const FieldDecl *Field, SourceLocation Loc, 

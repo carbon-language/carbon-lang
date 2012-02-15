@@ -1035,7 +1035,9 @@ CXCursor IndexingContext::getRefCursor(const NamedDecl *D, SourceLocation Loc) {
     return MakeCursorNamespaceRef(Namespace, Loc, CXTU);
   if (const FieldDecl *Field = dyn_cast<FieldDecl>(D))
     return MakeCursorMemberRef(Field, Loc, CXTU);
-
+  if (const VarDecl *Var = dyn_cast<VarDecl>(D))
+    return MakeCursorVariableRef(Var, Loc, CXTU);
+  
   return clang_getNullCursor();
 }
 

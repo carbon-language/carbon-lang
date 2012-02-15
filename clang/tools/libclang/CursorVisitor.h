@@ -31,7 +31,8 @@ public:
               ExplicitTemplateArgsVisitKind,
               NestedNameSpecifierLocVisitKind,
               DeclarationNameInfoVisitKind,
-              MemberRefVisitKind, SizeOfPackExprPartsKind };
+              MemberRefVisitKind, SizeOfPackExprPartsKind,
+              LambdaExprPartsKind };
 protected:
   void *data[3];
   CXCursor parent;

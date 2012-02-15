@@ -41,6 +41,7 @@ class Stmt;
 class TemplateDecl;
 class TemplateName;
 class TypeDecl;
+class VarDecl;
   
 namespace cxcursor {
 
@@ -110,6 +111,14 @@ CXCursor MakeCursorNamespaceRef(const NamedDecl *NS, SourceLocation Loc,
 /// \brief Unpack a NamespaceRef cursor into the namespace or namespace alias
 /// it references and the location where the reference occurred.
 std::pair<NamedDecl *, SourceLocation> getCursorNamespaceRef(CXCursor C);
+
+/// \brief Create a reference to a variable at the given location.
+CXCursor MakeCursorVariableRef(const VarDecl *Var, SourceLocation Loc, 
+                               CXTranslationUnit TU);
+
+/// \brief Unpack a VariableRef cursor into the variable it references and the
+/// location where the where the reference occurred.
+std::pair<VarDecl *, SourceLocation> getCursorVariableRef(CXCursor C); 
 
 /// \brief Create a reference to a field at the given location.
 CXCursor MakeCursorMemberRef(const FieldDecl *Field, SourceLocation Loc, 

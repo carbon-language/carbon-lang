@@ -101,6 +101,17 @@ public:
       IndexCtx.indexDeclGroupRef(S->getDeclGroup());
     return true;
   }
+  
+  bool TraverseLambdaCapture(LambdaExpr::Capture C) {
+    if (C.capturesThis())
+      return true;
+    
+    if (IndexCtx.indexFunctionLocalSymbols())
+      IndexCtx.handleReference(C.getCapturedVar(), C.getLocation(),
+                               Parent, ParentDC);
+    return true;
+  }
+
 };
 
 } // anonymous namespace

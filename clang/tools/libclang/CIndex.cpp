@@ -1615,6 +1615,7 @@ DEF_JOB(OverloadExprParts, OverloadExpr, OverloadExprPartsKind)
 DEF_JOB(ExplicitTemplateArgsVisit, ASTTemplateArgumentListInfo, 
         ExplicitTemplateArgsVisitKind)
 DEF_JOB(SizeOfPackExprParts, SizeOfPackExpr, SizeOfPackExprPartsKind)
+DEF_JOB(LambdaExprParts, LambdaExpr, LambdaExprPartsKind)
 #undef DEF_JOB
 
 class DeclVisit : public VisitorJob {
@@ -1761,6 +1762,7 @@ public:
   void VisitSizeOfPackExpr(SizeOfPackExpr *E);
   void VisitPseudoObjectExpr(PseudoObjectExpr *E);
   void VisitOpaqueValueExpr(OpaqueValueExpr *E);
+  void VisitLambdaExpr(LambdaExpr *E);
   
 private:
   void AddDeclarationNameInfo(Stmt *S);
@@ -2081,6 +2083,10 @@ void EnqueueVisitor::VisitOpaqueValueExpr(OpaqueValueExpr *E) {
   if (Expr *SourceExpr = E->getSourceExpr())
     return Visit(SourceExpr);
 }
+void EnqueueVisitor::VisitLambdaExpr(LambdaExpr *E) {
+  AddStmt(E->getBody());
+  WL.push_back(LambdaExprParts(E, Parent));
+}
 void EnqueueVisitor::VisitPseudoObjectExpr(PseudoObjectExpr *E) {
   // Treat the expression like its syntactic form.
   Visit(E->getSyntacticForm());
@@ -2257,6 +2263,45 @@ bool CursorVisitor::RunVisitorWorkList(VisitorWorkList &WL) {
         // Non-type template parameter packs and function parameter packs are
         // treated like DeclRefExpr cursors.
         continue;
+      }
+        
+      case VisitorJob::LambdaExprPartsKind: {
+        // Visit captures.
+        LambdaExpr *E = cast<LambdaExprParts>(&LI)->get();
+        for (LambdaExpr::capture_iterator C = E->explicit_capture_begin(),
+                                       CEnd = E->explicit_capture_end();
+             C != CEnd; ++C) {
+          if (C->capturesThis())
+            continue;
+          
+          if (Visit(MakeCursorVariableRef(C->getCapturedVar(),
+                                          C->getLocation(),
+                                          TU)))
+            return true;
+        }
+        
+        // Visit parameters and return type, if present.
+        if (E->hasExplicitParameters() || E->hasExplicitResultType()) {
+          TypeLoc TL = E->getCallOperator()->getTypeSourceInfo()->getTypeLoc();
+          if (E->hasExplicitParameters() && E->hasExplicitResultType()) {
+            // Visit the whole type.
+            if (Visit(TL))
+              return true;
+          } else if (isa<FunctionProtoTypeLoc>(TL)) {
+            FunctionProtoTypeLoc Proto = cast<FunctionProtoTypeLoc>(TL);
+            if (E->hasExplicitParameters()) {
+              // Visit parameters.
+              for (unsigned I = 0, N = Proto.getNumArgs(); I != N; ++I)
+                if (Visit(MakeCXCursor(Proto.getArg(I), TU)))
+                  return true;
+            } else {
+              // Visit result type.
+              if (Visit(Proto.getResultLoc()))
+                return true;
+            }
+          }
+        }
+        break;
       }
     }
   }
@@ -2980,6 +3025,13 @@ CXString clang_getCursorSpelling(CXCursor C) {
       return createCXString((*Ovl->begin())->getNameAsString());
     }
         
+    case CXCursor_VariableRef: {
+      VarDecl *Var = getCursorVariableRef(C).first;
+      assert(Var && "Missing variable decl");
+      
+      return createCXString(Var->getNameAsString());
+    }
+        
     default:
       return createCXString("<not implemented>");
     }
@@ -3173,6 +3225,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
     return createCXString("LabelRef");
   case CXCursor_OverloadedDeclRef:
     return createCXString("OverloadedDeclRef");
+  case CXCursor_VariableRef:
+    return createCXString("VariableRef");
   case CXCursor_IntegerLiteral:
       return createCXString("IntegerLiteral");
   case CXCursor_FloatingLiteral:
@@ -3251,6 +3305,8 @@ CXString clang_getCursorKindSpelling(enum CXCursorKind Kind) {
       return createCXString("PackExpansionExpr");
   case CXCursor_SizeOfPackExpr:
       return createCXString("SizeOfPackExpr");
+  case CXCursor_LambdaExpr:
+    return createCXString("LambdaExpr");
   case CXCursor_UnexposedExpr:
       return createCXString("UnexposedExpr");
   case CXCursor_DeclRefExpr:
@@ -3626,6 +3682,11 @@ CXSourceLocation clang_getCursorLocation(CXCursor C) {
       return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
     }
 
+    case CXCursor_VariableRef: {
+      std::pair<VarDecl *, SourceLocation> P = getCursorVariableRef(C);
+      return cxloc::translateSourceLocation(P.first->getASTContext(), P.second);
+    }
+
     case CXCursor_CXXBaseSpecifier: {
       CXXBaseSpecifier *BaseSpec = getCursorCXXBaseSpecifier(C);
       if (!BaseSpec)
@@ -3768,6 +3829,9 @@ static SourceRange getRawCursorExtent(CXCursor C) {
     case CXCursor_OverloadedDeclRef:
       return getCursorOverloadedDeclRef(C).second;
 
+    case CXCursor_VariableRef:
+      return getCursorVariableRef(C).second;
+        
     default:
       // FIXME: Need a way to enumerate all non-reference cases.
       llvm_unreachable("Missed a reference kind");
@@ -3975,6 +4039,9 @@ CXCursor clang_getCursorReferenced(CXCursor C) {
 
     case CXCursor_OverloadedDeclRef:
       return C;
+      
+    case CXCursor_VariableRef:
+      return MakeCXCursor(getCursorVariableRef(C).first, tu);
 
     default:
       // We would prefer to enumerate all non-reference cursor kinds here.
