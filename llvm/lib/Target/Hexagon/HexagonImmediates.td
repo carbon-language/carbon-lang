@@ -52,12 +52,12 @@ def s10Imm : Operand<i32> {
   let PrintMethod = "printHexagonImmOperand";
 }
 
-def s9Imm : Operand<i32> {
+def s8Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
   let PrintMethod = "printHexagonImmOperand";
 }
 
-def s8Imm : Operand<i32> {
+def s9Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
   let PrintMethod = "printHexagonImmOperand";
 }
@@ -197,11 +197,6 @@ def u2Imm : Operand<i32> {
   let PrintMethod = "printHexagonImmOperand";
 }
 
-def u1Imm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonImmOperand";
-}
-
 def n8Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
   let PrintMethod = "printHexagonImmOperand";
@@ -210,11 +205,6 @@ def n8Imm : Operand<i32> {
 def m6Imm : Operand<i32> {
   // For now, we use a generic print function for all operands.
   let PrintMethod = "printHexagonImmOperand";
-}
-
-def nOneImm : Operand<i32> {
-  // For now, we use a generic print function for all operands.
-  let PrintMethod = "printHexagonNOneImmOperand";
 }
 
 //
@@ -499,10 +489,3 @@ def n8ImmPred  : PatLeaf<(i32 imm), [{
   int64_t v = (int64_t)N->getSExtValue();
   return (-255 <= v && v <= 0);
 }]>;
-
-def nOneImmPred  : PatLeaf<(i32 imm), [{
-  // nOneImmPred predicate - True if the immediate is -1.
-  int64_t v = (int64_t)N->getSExtValue();
-  return (-1 == v);
-}]>;
-
