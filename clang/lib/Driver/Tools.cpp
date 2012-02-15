@@ -4271,7 +4271,7 @@ void solaris::Link::ConstructJob(Compilation &C, const JobAction &JA,
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
     CmdArgs.push_back("-lgcc");
-    CmdArgs.push_back("-lgcc_eh");
+    CmdArgs.push_back("-lgcc_s");
     if (!Args.hasArg(options::OPT_shared))
       CmdArgs.push_back("-lc");
 
