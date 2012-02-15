@@ -963,13 +963,15 @@ static void handleMoveUses(const MachineBasicBlock *mbb,
   }
 }
 
-void LiveIntervals::handleMove(MachineInstr *mi) {
+
+
+void LiveIntervals::handleMove(MachineInstr* mi) {
   SlotIndex origIdx = indexes_->getInstructionIndex(mi);
   indexes_->removeMachineInstrFromMaps(mi);
-  SlotIndex miIdx = indexes_->insertMachineInstrInMaps(mi);
-
+  SlotIndex miIdx = mi->isInsideBundle() ?
+                     indexes_->getInstructionIndex(mi->getBundleStart()) :
+                     indexes_->insertMachineInstrInMaps(mi);
   MachineBasicBlock* mbb = mi->getParent();
-  
   assert(getMBBStartIdx(mbb) <= origIdx && origIdx < getMBBEndIdx(mbb) &&
          "Cannot handle moves across basic block boundaries.");
   assert(!mi->isBundled() && "Can't handle bundled instructions yet.");
