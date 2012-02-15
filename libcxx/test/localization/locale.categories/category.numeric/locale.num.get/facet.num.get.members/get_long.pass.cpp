@@ -144,6 +144,18 @@ int main()
         assert(err == ios.goodbit);
         assert(v == 83);
     }
+    {
+        const char str[] = "2-";
+        ios.setf(0, ios.basefield);
+        std::ios_base::iostate err = ios.goodbit;
+        input_iterator<const char*> iter =
+            f.get(input_iterator<const char*>(str),
+                  input_iterator<const char*>(str+sizeof(str)),
+                  ios, err, v);
+        assert(iter.base() == str+1);
+        assert(err == ios.goodbit);
+        assert(v == 2);
+    }
     dec(ios);
     ios.imbue(std::locale(std::locale(), new my_numpunct));
     {

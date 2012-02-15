@@ -665,6 +665,15 @@ __num_get<_CharT>::__stage2_float_loop(_CharT __ct, bool& __in_units, char& __ex
     if (__f >= 32)
         return -1;
     char __x = __src[__f];
+    if (__x == '-' || __x == '+')
+    {
+        if (__a_end == __a || (__a_end[-1] & 0xDF) == __exp)
+        {
+            *__a_end++ = __x;
+            return 0;
+        }
+        return -1;
+    }
     if (__a_end-__a < __num_get_buf_sz - 1)
         *__a_end++ = __x;
     if (__x == 'x' || __x == 'X')
