@@ -510,7 +510,7 @@ namespace solaris {
                               const ArgList &TCArgs,
                               const char *LinkingOutput) const;
   };
-} // end namespace auroraux
+} // end namespace solaris
 
   /// auroraux -- Directly call GNU Binutils assembler and linker
 namespace auroraux {
