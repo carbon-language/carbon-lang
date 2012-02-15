@@ -179,6 +179,14 @@ public:
   ///                   values.
   enum ModAttrBehavior { Error = 1, Warning  = 2, Require = 3, Override = 4 };
 
+  struct ModuleFlagEntry {
+    unsigned Behavior;
+    MDString *Key;
+    Value *Val;
+    ModuleFlagEntry(unsigned B, MDString *K, Value *V)
+      : Behavior(B), Key(K), Val(V) {}
+  };
+
 /// @}
 /// @name Member Variables
 /// @{
@@ -400,6 +408,9 @@ public:
 /// @}
 /// @name Module Flags Accessors
 /// @{
+
+  /// getModuleFlagsMetadata - Returns the module flags in the provided vector.
+  void getModuleFlagsMetadata(SmallVectorImpl<ModuleFlagEntry> &Flags) const;
 
   /// getModuleFlagsMetadata - Returns the NamedMDNode in the module that
   /// represents module-level flags. This method returns null if there are no
