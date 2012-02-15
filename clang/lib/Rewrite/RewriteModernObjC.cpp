@@ -1222,9 +1222,6 @@ void RewriteModernObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
   // Lastly, comment out the @end.
   ReplaceText(ClassDecl->getAtEndRange().getBegin(), strlen("@end"), 
               "/* @end */");
-  // Mark this struct as having been generated.
-  if (!ObjCSynthesizedStructs.insert(ClassDecl))
-    llvm_unreachable("struct already synthesize- RewriteInterfaceDecl");
 }
 
 Stmt *RewriteModernObjC::RewritePropertyOrImplicitSetter(PseudoObjectExpr *PseudoOp) {
@@ -3166,7 +3163,7 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   Result += CDecl->getNameAsString();
   Result += "_IMPL {\n";
   
-  if (RCDecl) {
+  if (RCDecl && ObjCSynthesizedStructs.count(RCDecl)) {
     Result += "\tstruct "; Result += RCDecl->getNameAsString();
     Result += "_IMPL "; Result += RCDecl->getNameAsString();
     Result += "_IVARS;\n";
@@ -3190,6 +3187,9 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
   Result += "};\n";
   endBuf += Lexer::MeasureTokenLength(LocEnd, *SM, LangOpts);
   ReplaceText(LocStart, endBuf-startBuf, Result);
+  // Mark this struct as having been generated.
+  if (!ObjCSynthesizedStructs.insert(CDecl))
+    llvm_unreachable("struct already synthesize- RewriteObjCInternalStruct");
 }
 
 //===----------------------------------------------------------------------===//
@@ -5419,7 +5419,7 @@ static void Write_method_list_t_initializer(RewriteModernObjC &RewriteObj,
   }
 }
 
-static void Write__prop_list_t_initializer(RewriteModernObjC &RewriteObj,
+static void Write_prop_list_t_initializer(RewriteModernObjC &RewriteObj,
                                            ASTContext *Context, std::string &Result,
                                            ArrayRef<ObjCPropertyDecl *> Properties,
                                            const Decl *Container,
@@ -5451,6 +5451,68 @@ static void Write__prop_list_t_initializer(RewriteModernObjC &RewriteObj,
     }
     Result += "};\n";
   }
+}
+
+static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Result, 
+                                          unsigned int flags, 
+                                          const std::string &InstanceStart, 
+                                          const std::string &InstanceSize,
+                                          ArrayRef<ObjCMethodDecl *>baseMethods,
+                                          ArrayRef<ObjCProtocolDecl *>baseProtocols,
+                                          ArrayRef<ObjCIvarDecl *>ivars,
+                                          ArrayRef<ObjCPropertyDecl *>Properties,
+                                          StringRef VarName,
+                                          StringRef ClassName) {
+                      
+  WriteModernMetadataDeclarations(Result);
+  Result += "\nstatic struct _class_ro_t ";
+  Result += VarName; Result += ClassName;
+  Result += " __attribute__ ((used, section (\"__DATA,__objc_const\"))) = {\n";
+  Result += "\t"; 
+  Result += llvm::utostr(flags); Result += ", "; 
+  Result += InstanceStart; Result += ", ";
+  Result += InstanceSize; Result += ", \n";
+  Result += "\t";
+  // uint32_t const reserved; // only when building for 64bit targets
+  Result += "(unsigned int)0, \n\t";
+  // const uint8_t * const ivarLayout;
+  Result += "0, \n\t";
+  Result += "\""; Result += ClassName; Result += "\",\n\t";
+  if (baseMethods.size() > 0) {
+    Result += "(const struct _method_list_t *)&";
+    Result += "_OBJC_$_INSTANCE_METHODS_"; Result += ClassName;
+    Result += ",\n\t";
+  }
+  else
+    Result += "0, \n\t";
+
+  if (baseProtocols.size() > 0) {
+    Result += "(const struct _objc_protocol_list *)&";
+    Result += "_OBJC_CLASS_PROTOCOLS_$_"; Result += ClassName;
+    Result += ",\n\t";
+  }
+  else
+    Result += "0, \n\t";
+
+  if (ivars.size() > 0) {
+    Result += "(const struct _ivar_list_t *)&";
+    Result += "_OBJC_$_INSTANCE_VARIABLES_"; Result += ClassName;
+    Result += ",\n\t";
+  }
+  else
+    Result += "0, \n\t";
+
+  // weakIvarLayout
+  Result += "0, \n\t";
+  if (Properties.size() > 0) {
+    Result += "(const struct _prop_list_t *)&";
+    Result += "_OBJC_CLASS_PROPERTIES_$_"; Result += ClassName;
+    Result += ",\n";
+  }
+  else
+    Result += "0, \n";
+
+  Result += "};\n";
 }
 
 static void Write__extendedMethodTypes_initializer(RewriteModernObjC &RewriteObj,
@@ -5652,7 +5714,7 @@ void RewriteModernObjC::RewriteObjCProtocolMetaData(ObjCProtocolDecl *PDecl,
        E = PDecl->prop_end(); I != E; ++I)
     ProtocolProperties.push_back(*I);
   
-  Write__prop_list_t_initializer(*this, Context, Result, ProtocolProperties,
+  Write_prop_list_t_initializer(*this, Context, Result, ProtocolProperties,
                                  /* Container */0,
                                  "_OBJC_PROTOCOL_PROPERTIES_",
                                  PDecl->getNameAsString());
@@ -5763,6 +5825,20 @@ void RewriteModernObjC::RewriteObjCProtocolListMetaData(
   Result += "\t }\n};\n";
 }
 
+// Metadata flags
+enum MetaDataDlags {
+  CLS = 0x0,
+  CLS_META = 0x1,
+  CLS_ROOT = 0x2,
+  OBJC2_CLS_HIDDEN = 0x10,
+  CLS_EXCEPTION = 0x20,
+  
+  /// (Obsolete) ARC-specific: this class has a .release_ivars method
+  CLS_HAS_IVAR_RELEASER = 0x40,
+  /// class was compiled with -fobjc-arr
+  CLS_COMPILED_BY_ARC = 0x80  // (1<<7)
+};
+
 void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                            std::string &Result) {
   ObjCInterfaceDecl *CDecl = IDecl->getClassInterface();
@@ -5784,7 +5860,7 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   }
   
   Write__ivar_list_t_initializer(*this, Context, Result, IVars, 
-                                 "_OBJC_INSTANCE_VARIABLES_",
+                                 "_OBJC_$_INSTANCE_VARIABLES_",
                                  CDecl->getNameAsString());
   
   // Build _objc_method_list for class's instance methods if needed
@@ -5841,7 +5917,57 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                   RefedProtocols,
                                   "_OBJC_CLASS_PROTOCOLS_$_",
                                   IDecl->getNameAsString());
+  
+  // Protocol's property metadata.
+  std::vector<ObjCPropertyDecl *> ClassProperties;
+  for (ObjCContainerDecl::prop_iterator I = CDecl->prop_begin(),
+       E = CDecl->prop_end(); I != E; ++I)
+    ClassProperties.push_back(*I);
+  
+  Write_prop_list_t_initializer(*this, Context, Result, ClassProperties,
+                                 /* Container */0,
+                                 "_OBJC_CLASS_PROPERTIES_$_",
+                                 CDecl->getNameAsString());
 
+  
+  // Data for initializing _class_ro_t meta-data
+  uint32_t flags = CLS;
+  // FIXME. condition for class visibility hidden
+  // flags |= OBJC2_CLS_HIDDEN;
+  if (!CDecl->getSuperClass())
+    // class is root
+    flags |= CLS_ROOT;
+  
+  std::string InstanceSize;
+  std::string InstanceStart;
+  if (!ObjCSynthesizedStructs.count(CDecl)) {
+    InstanceSize = "0";
+    InstanceStart = "0";
+  }
+  else {
+    InstanceSize = "sizeof(struct ";
+    InstanceSize += CDecl->getNameAsString();
+    InstanceSize += "_IMPL)";
+    
+    ObjCIvarDecl *IVD = CDecl->all_declared_ivar_begin();
+    if (IVD) {
+      InstanceStart += "__OFFSETOFIVAR__(struct ";
+      InstanceStart += CDecl->getNameAsString();
+      InstanceStart += "_IMPL, ";
+      InstanceStart += IVD->getNameAsString();
+      InstanceStart += ")";
+    }
+    else 
+      InstanceStart = InstanceSize;
+  }
+  Write__class_ro_t_initializer(Context, Result, flags, 
+                                InstanceStart, InstanceSize,
+                                InstanceMethods,
+                                RefedProtocols,
+                                IVars,
+                                ClassProperties,
+                                "_OBJC_CLASS_RO_$_",
+                                CDecl->getNameAsString());
 }
 
 void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
