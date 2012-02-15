@@ -11,12 +11,9 @@ LEVEL = ..
 PARALLEL_DIRS := FileCheck FileUpdate TableGen PerfectShuffle \
 	      count fpcmp llvm-lit not unittest json-bench
 
-EXTRA_DIST := cgiplotNLT.pl check-each-file codegen-diff countloc.sh \
+EXTRA_DIST := check-each-file codegen-diff countloc.sh \
               DSAclean.py DSAextract.py emacs findsym.pl GenLibDeps.pl \
-	      getsrcs.sh importNLT.pl llvmdo llvmgrep llvm-native-gcc \
-	      llvm-native-gxx makellvm NightlyTest.gnuplot NightlyTest.pl \
-	      NightlyTestTemplate.html NLT.schema \
-	      parseNLT.pl plotNLT.pl profile.pl \
-	      webNLT.pl vim
+	      getsrcs.sh llvmdo llvmgrep llvm-native-gcc \
+	      llvm-native-gxx makellvm profile.pl vim
 
 include $(LEVEL)/Makefile.common
