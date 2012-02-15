@@ -1477,6 +1477,9 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
   bool IsDef = false;
   for (unsigned i = 0, e = PI->getNumOperands(); !IsDef && i != e; ++i) {
     const MachineOperand &MO = PI->getOperand(i);
+    // If PI has a regmask operand, it is probably a call. Separate away.
+    if (MO.isRegMask())
+      return Loc;
     if (!MO.isReg() || MO.isUse())
       continue;
     unsigned Reg = MO.getReg();
@@ -1589,6 +1592,11 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
     bool IsSafe = true;
     for (unsigned i = 0, e = TIB->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = TIB->getOperand(i);
+      // Don't attempt to hoist instructions with register masks.
+      if (MO.isRegMask()) {
+        IsSafe = false;
+        break;
+      }
       if (!MO.isReg())
         continue;
       unsigned Reg = MO.getReg();
