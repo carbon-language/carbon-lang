@@ -301,10 +301,10 @@ unsigned ARMFastISel::FastEmitInst_r(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
-  if (II.getNumDefs() >= 1)
+  if (II.getNumDefs() >= 1) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
                    .addReg(Op0, Op0IsKill * RegState::Kill));
-  else {
+  } else {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
                    .addReg(Op0, Op0IsKill * RegState::Kill));
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -321,11 +321,11 @@ unsigned ARMFastISel::FastEmitInst_rr(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
-  if (II.getNumDefs() >= 1)
+  if (II.getNumDefs() >= 1) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
                    .addReg(Op0, Op0IsKill * RegState::Kill)
                    .addReg(Op1, Op1IsKill * RegState::Kill));
-  else {
+  } else {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
                    .addReg(Op0, Op0IsKill * RegState::Kill)
                    .addReg(Op1, Op1IsKill * RegState::Kill));
@@ -344,12 +344,12 @@ unsigned ARMFastISel::FastEmitInst_rrr(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
-  if (II.getNumDefs() >= 1)
+  if (II.getNumDefs() >= 1) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
                    .addReg(Op0, Op0IsKill * RegState::Kill)
                    .addReg(Op1, Op1IsKill * RegState::Kill)
                    .addReg(Op2, Op2IsKill * RegState::Kill));
-  else {
+  } else {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
                    .addReg(Op0, Op0IsKill * RegState::Kill)
                    .addReg(Op1, Op1IsKill * RegState::Kill)
@@ -368,11 +368,11 @@ unsigned ARMFastISel::FastEmitInst_ri(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
-  if (II.getNumDefs() >= 1)
+  if (II.getNumDefs() >= 1) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
                    .addReg(Op0, Op0IsKill * RegState::Kill)
                    .addImm(Imm));
-  else {
+  } else {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
                    .addReg(Op0, Op0IsKill * RegState::Kill)
                    .addImm(Imm));
@@ -390,11 +390,11 @@ unsigned ARMFastISel::FastEmitInst_rf(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
-  if (II.getNumDefs() >= 1)
+  if (II.getNumDefs() >= 1) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
                    .addReg(Op0, Op0IsKill * RegState::Kill)
                    .addFPImm(FPImm));
-  else {
+  } else {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
                    .addReg(Op0, Op0IsKill * RegState::Kill)
                    .addFPImm(FPImm));
@@ -413,12 +413,12 @@ unsigned ARMFastISel::FastEmitInst_rri(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
-  if (II.getNumDefs() >= 1)
+  if (II.getNumDefs() >= 1) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
                    .addReg(Op0, Op0IsKill * RegState::Kill)
                    .addReg(Op1, Op1IsKill * RegState::Kill)
                    .addImm(Imm));
-  else {
+  } else {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
                    .addReg(Op0, Op0IsKill * RegState::Kill)
                    .addReg(Op1, Op1IsKill * RegState::Kill)
@@ -436,10 +436,10 @@ unsigned ARMFastISel::FastEmitInst_i(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
-  if (II.getNumDefs() >= 1)
+  if (II.getNumDefs() >= 1) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
                    .addImm(Imm));
-  else {
+  } else {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
                    .addImm(Imm));
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -455,10 +455,10 @@ unsigned ARMFastISel::FastEmitInst_ii(unsigned MachineInstOpcode,
   unsigned ResultReg = createResultReg(RC);
   const MCInstrDesc &II = TII.get(MachineInstOpcode);
 
-  if (II.getNumDefs() >= 1)
+  if (II.getNumDefs() >= 1) {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II, ResultReg)
                     .addImm(Imm1).addImm(Imm2));
-  else {
+  } else {
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, II)
                     .addImm(Imm1).addImm(Imm2));
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -475,9 +475,10 @@ unsigned ARMFastISel::FastEmitInst_extractsubreg(MVT RetVT,
   unsigned ResultReg = createResultReg(TLI.getRegClassFor(RetVT));
   assert(TargetRegisterInfo::isVirtualRegister(Op0) &&
          "Cannot yet extract from physregs");
+
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt,
-                         DL, TII.get(TargetOpcode::COPY), ResultReg)
-                 .addReg(Op0, getKillRegState(Op0IsKill), Idx));
+                          DL, TII.get(TargetOpcode::COPY), ResultReg)
+                  .addReg(Op0, getKillRegState(Op0IsKill), Idx));
   return ResultReg;
 }
 
