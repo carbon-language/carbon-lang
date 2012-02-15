@@ -102,6 +102,8 @@ public:
                                     unsigned MaxBytesToEmit = 0);
   virtual void EmitCodeAlignment(unsigned ByteAlignment,
                                  unsigned MaxBytesToEmit = 0);
+  virtual void EmitValueImpl(const MCExpr *Value, unsigned Size,
+                             unsigned AddrSpace);
 
   virtual void EmitFileDirective(StringRef Filename);
 
@@ -386,6 +388,13 @@ void MCELFStreamer::EmitCodeAlignment(unsigned ByteAlignment,
   if (ByteAlignment > getCurrentSectionData()->getAlignment())
     getCurrentSectionData()->setAlignment(ByteAlignment);
 }
+
+void MCELFStreamer::EmitValueImpl(const MCExpr *Value, unsigned Size,
+                                  unsigned AddrSpace) {
+  fixSymbolsInTLSFixups(Value);
+  MCObjectStreamer::EmitValueImpl(Value, Size, AddrSpace);
+}
+
 
 // Add a symbol for the file name of this module. This is the second
 // entry in the module's symbol table (the first being the null symbol).
