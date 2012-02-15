@@ -2417,6 +2417,7 @@ void InitializationSequence::Step::Destroy() {
   case SK_StringInit:
   case SK_ObjCObjectConversion:
   case SK_ArrayInit:
+  case SK_ParenthesizedArrayInit:
   case SK_PassByIndirectCopyRestore:
   case SK_PassByIndirectRestore:
   case SK_ProduceObjCObject:
@@ -2614,6 +2615,13 @@ void InitializationSequence::AddObjCObjectConversionStep(QualType T) {
 void InitializationSequence::AddArrayInitStep(QualType T) {
   Step S;
   S.Kind = SK_ArrayInit;
+  S.Type = T;
+  Steps.push_back(S);
+}
+
+void InitializationSequence::AddParenthesizedArrayInitStep(QualType T) {
+  Step S;
+  S.Kind = SK_ParenthesizedArrayInit;
   S.Type = T;
   Steps.push_back(S);
 }
@@ -4058,6 +4066,15 @@ InitializationSequence::InitializationSequence(Sema &S,
       else {
         AddArrayInitStep(DestType);
       }
+    }
+    // Note: as a GNU C++ extension, we allow initialization of a
+    // class member from a parenthesized initializer list.
+    else if (S.getLangOptions().CPlusPlus &&
+             Entity.getKind() == InitializedEntity::EK_Member &&
+             Initializer && isa<InitListExpr>(Initializer)) {
+      TryListInitialization(S, Entity, Kind, cast<InitListExpr>(Initializer),
+                            *this);
+      AddParenthesizedArrayInitStep(DestType);
     } else if (DestAT->getElementType()->isAnyCharacterType())
       SetFailed(FK_ArrayNeedsInitListOrStringLiteral);
     else
@@ -4787,6 +4804,7 @@ InitializationSequence::Perform(Sema &S,
   case SK_StringInit:
   case SK_ObjCObjectConversion:
   case SK_ArrayInit:
+  case SK_ParenthesizedArrayInit:
   case SK_PassByIndirectCopyRestore:
   case SK_PassByIndirectRestore:
   case SK_ProduceObjCObject:
@@ -5211,6 +5229,13 @@ InitializationSequence::Perform(Sema &S,
           }
         }
       }
+      break;
+
+    case SK_ParenthesizedArrayInit:
+      // Okay: we checked everything before creating this step. Note that
+      // this is a GNU extension.
+      S.Diag(Kind.getLocation(), diag::ext_array_init_parens)
+        << CurInit.get()->getSourceRange();
       break;
 
     case SK_PassByIndirectCopyRestore:
@@ -5887,6 +5912,10 @@ void InitializationSequence::dump(raw_ostream &OS) const {
 
     case SK_ArrayInit:
       OS << "array initialization";
+      break;
+
+    case SK_ParenthesizedArrayInit:
+      OS << "parenthesized array initialization";
       break;
 
     case SK_PassByIndirectCopyRestore:

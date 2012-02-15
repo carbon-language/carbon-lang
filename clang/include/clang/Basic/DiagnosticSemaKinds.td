@@ -3550,7 +3550,10 @@ def err_array_init_non_constant_array : Error<
   "cannot initialize array of type %0 with non-constant array of type %1">;
 def ext_array_init_copy : Extension<
   "initialization of an array of type %0 from a compound literal of type %1 is "
-  "a GNU extension">;
+  "a GNU extension">, InGroup<GNU>;
+def ext_array_init_parens : ExtWarn<
+  "parenthesized initialization of a member array is a GNU extension">,
+  InGroup<GNU>;
 def warn_deprecated_string_literal_conversion : Warning<
   "conversion from string literal to %0 is deprecated">, InGroup<DeprecatedWritableStr>;
 def err_realimag_invalid_type : Error<"invalid type %0 to %1 operator">;

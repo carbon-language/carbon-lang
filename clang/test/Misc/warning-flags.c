@@ -17,9 +17,8 @@ This test serves two purposes:
 
 The list of warnings below should NEVER grow.  It should gradually shrink to 0.
 
-CHECK: Warnings without flags (258):
+CHECK: Warnings without flags (257):
 CHECK-NEXT:   ext_anonymous_struct_union_qualified
-CHECK-NEXT:   ext_array_init_copy
 CHECK-NEXT:   ext_binary_literal
 CHECK-NEXT:   ext_cast_fn_obj
 CHECK-NEXT:   ext_delete_void_ptr_operand

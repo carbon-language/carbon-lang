@@ -592,6 +592,9 @@ public:
     /// \brief Array initialization (from an array rvalue).
     /// This is a GNU C extension.
     SK_ArrayInit,
+    /// \brief Array initialization from a parenthesized initializer list.
+    /// This is a GNU C++ extension.
+    SK_ParenthesizedArrayInit,
     /// \brief Pass an object by indirect copy-and-restore.
     SK_PassByIndirectCopyRestore,
     /// \brief Pass an object by indirect restore.
@@ -911,6 +914,9 @@ public:
 
   /// \brief Add an array initialization step.
   void AddArrayInitStep(QualType T);
+
+  /// \brief Add a parenthesized array initialization step.
+  void AddParenthesizedArrayInitStep(QualType T);
 
   /// \brief Add a step to pass an object by indirect copy-restore.
   void AddPassByIndirectCopyRestoreStep(QualType T, bool shouldCopy);
