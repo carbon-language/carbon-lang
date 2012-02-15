@@ -17,31 +17,13 @@
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/StringMap.h"
 #include "clang/AST/ASTDiagnostic.h"
-#include "clang/Analysis/AnalysisDiagnostic.h"
-#include "clang/Driver/DriverDiagnostic.h"
-#include "clang/Frontend/FrontendDiagnostic.h"
-#include "clang/Lex/LexDiagnostic.h"
-#include "clang/Parse/ParseDiagnostic.h"
-#include "clang/Sema/SemaDiagnostic.h"
-#include "clang/Serialization/SerializationDiagnostic.h"
+#include "clang/Basic/AllDiagnostics.h"
 
 DEF_DIAGTOOL("list-warnings",
              "List warnings and their corresponding flags",
              ListWarnings)
   
 using namespace clang;
-
-namespace {
-template <size_t SizeOfStr, typename FieldType>
-class StringSizerHelper {
-  char FIELD_TOO_SMALL[SizeOfStr <= FieldType(~0U) ? 1 : -1];
-public:
-  enum { Size = SizeOfStr };
-};
-
-} // namespace anonymous
-
-#define STR_SIZE(str, fieldTy) StringSizerHelper<sizeof(str)-1, fieldTy>::Size 
 
 namespace {
 struct StaticDiagNameIndexRec {

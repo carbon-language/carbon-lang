@@ -11,17 +11,10 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/AST/ASTDiagnostic.h"
-#include "clang/Analysis/AnalysisDiagnostic.h"
 #include "clang/Basic/DiagnosticIDs.h"
+#include "clang/Basic/AllDiagnostics.h"
 #include "clang/Basic/DiagnosticCategories.h"
 #include "clang/Basic/SourceManager.h"
-#include "clang/Driver/DriverDiagnostic.h"
-#include "clang/Frontend/FrontendDiagnostic.h"
-#include "clang/Lex/LexDiagnostic.h"
-#include "clang/Parse/ParseDiagnostic.h"
-#include "clang/Sema/SemaDiagnostic.h"
-#include "clang/Serialization/SerializationDiagnostic.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/ErrorHandling.h"
 
@@ -70,16 +63,7 @@ struct StaticDiagInfoRec {
   }
 };
 
-template <size_t SizeOfStr, typename FieldType>
-class StringSizerHelper {
-  char FIELD_TOO_SMALL[SizeOfStr <= FieldType(~0U) ? 1 : -1];
-public:
-  enum { Size = SizeOfStr };
-};
-
 } // namespace anonymous
-
-#define STR_SIZE(str, fieldTy) StringSizerHelper<sizeof(str)-1, fieldTy>::Size 
 
 static const StaticDiagInfoRec StaticDiagInfo[] = {
 #define DIAG(ENUM,CLASS,DEFAULT_MAPPING,DESC,GROUP,               \
