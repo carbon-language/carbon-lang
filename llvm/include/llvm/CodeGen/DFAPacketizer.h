@@ -26,13 +26,18 @@
 #ifndef LLVM_CODEGEN_DFAPACKETIZER_H
 #define LLVM_CODEGEN_DFAPACKETIZER_H
 
+#include "llvm/CodeGen/MachineBasicBlock.h"
 #include "llvm/ADT/DenseMap.h"
 
 namespace llvm {
 
 class MCInstrDesc;
 class MachineInstr;
+class MachineLoopInfo;
+class MachineDominatorTree;
 class InstrItineraryData;
+class DefaultVLIWScheduler;
+class SUnit;
 
 class DFAPacketizer {
 private:
@@ -72,6 +77,70 @@ public:
   // reserveResources - Reserve the resources occupied by a machine
   // instruction and change the current state to reflect that change.
   void reserveResources(llvm::MachineInstr *MI);
+};
+
+// VLIWPacketizerList - Implements a simple VLIW packetizer using DFA. The
+// packetizer works on machine basic blocks. For each instruction I in BB, the
+// packetizer consults the DFA to see if machine resources are available to
+// execute I. If so, the packetizer checks if I depends on any instruction J in
+// the current packet. If no dependency is found, I is added to current packet
+// and machine resource is marked as taken. If any dependency is found, a target
+// API call is made to prune the dependence.
+class VLIWPacketizerList {
+  const TargetMachine &TM;
+  const MachineFunction &MF;
+  const TargetInstrInfo *TII;
+
+  // The VLIW Scheduler.
+  DefaultVLIWScheduler *VLIWScheduler;
+
+protected:
+  // Vector of instructions assigned to the current packet.
+  std::vector<MachineInstr*> CurrentPacketMIs;
+  // DFA resource tracker.
+  DFAPacketizer *ResourceTracker;
+  // Scheduling units.
+  std::vector<SUnit> SUnits;
+
+public:
+  VLIWPacketizerList(
+    MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
+    bool IsPostRA);
+
+  virtual ~VLIWPacketizerList();
+
+  // PacketizeMIs - Implement this API in the backend to bundle instructions.
+  void PacketizeMIs(MachineBasicBlock *MBB,
+                    MachineBasicBlock::iterator BeginItr,
+                    MachineBasicBlock::iterator EndItr);
+
+  // getResourceTracker - return ResourceTracker
+  DFAPacketizer *getResourceTracker() {return ResourceTracker;}
+
+  // addToPacket - Add MI to the current packet.
+  void addToPacket(MachineInstr *MI);
+
+  // endPacket - End the current packet.
+  void endPacket(MachineBasicBlock *MBB, MachineInstr *I);
+
+  // ignorePseudoInstruction - Ignore bundling of pseudo instructions.
+  bool ignorePseudoInstruction(MachineInstr *I, MachineBasicBlock *MBB);
+
+  // isSoloInstruction - return true if instruction I must end previous
+  // packet.
+  bool isSoloInstruction(MachineInstr *I);
+
+  // isLegalToPacketizeTogether - Is it legal to packetize SUI and SUJ
+  // together.
+  virtual bool isLegalToPacketizeTogether(SUnit *SUI, SUnit *SUJ) {
+    return false;
+  }
+
+  // isLegalToPruneDependencies - Is it legal to prune dependece between SUI
+  // and SUJ.
+  virtual bool isLegalToPruneDependencies(SUnit *SUI, SUnit *SUJ) {
+    return false;
+  }
 };
 }
 
