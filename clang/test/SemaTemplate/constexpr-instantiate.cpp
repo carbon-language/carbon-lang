@@ -57,3 +57,11 @@ namespace OverloadResolution {
   S<4> &k = g(0);
   int *p, *q = h(p);
 }
+
+namespace DataMember {
+  template<typename T> struct S { static const int k; };
+  const int n = S<int>::k; // expected-note {{here}}
+  template<typename T> const int S<T>::k = 0;
+  constexpr int m = S<int>::k; // ok
+  constexpr int o = n; // expected-error {{constant expression}} expected-note {{initializer of 'n'}}
+}

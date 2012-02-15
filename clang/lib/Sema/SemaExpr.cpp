@@ -9988,22 +9988,26 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
     return;
 
   // Implicit instantiation of static data members of class templates.
-  if (Var->isStaticDataMember() &&
-      Var->getInstantiatedFromStaticDataMember()) {
+  if (Var->isStaticDataMember() && Var->getInstantiatedFromStaticDataMember()) {
     MemberSpecializationInfo *MSInfo = Var->getMemberSpecializationInfo();
     assert(MSInfo && "Missing member specialization information?");
-    if (MSInfo->getPointOfInstantiation().isInvalid() &&
-        MSInfo->getTemplateSpecializationKind()== TSK_ImplicitInstantiation) {
-      MSInfo->setPointOfInstantiation(Loc);
-      // This is a modification of an existing AST node. Notify listeners.
-      if (ASTMutationListener *L = SemaRef.getASTMutationListener())
-        L->StaticDataMemberInstantiated(Var);
+    bool AlreadyInstantiated = !MSInfo->getPointOfInstantiation().isInvalid();
+    if (MSInfo->getTemplateSpecializationKind() == TSK_ImplicitInstantiation &&
+        (!AlreadyInstantiated || Var->isUsableInConstantExpressions())) {
+      if (!AlreadyInstantiated) {
+        // This is a modification of an existing AST node. Notify listeners.
+        if (ASTMutationListener *L = SemaRef.getASTMutationListener())
+          L->StaticDataMemberInstantiated(Var);
+        MSInfo->setPointOfInstantiation(Loc);
+      }
+      SourceLocation PointOfInstantiation = MSInfo->getPointOfInstantiation();
       if (Var->isUsableInConstantExpressions())
         // Do not defer instantiations of variables which could be used in a
         // constant expression.
-        SemaRef.InstantiateStaticDataMemberDefinition(Loc, Var);
+        SemaRef.InstantiateStaticDataMemberDefinition(PointOfInstantiation,Var);
       else
-        SemaRef.PendingInstantiations.push_back(std::make_pair(Var, Loc));
+        SemaRef.PendingInstantiations.push_back(
+            std::make_pair(Var, PointOfInstantiation));
     }
   }
 
