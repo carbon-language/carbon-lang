@@ -434,11 +434,15 @@ public:
     /// @param[in] decl
     ///     The Decl whose value is to be found.
     ///
+    /// @param[out] flags
+    ///     The flags for the found variable.
+    ///
     /// @return
     ///     The value, or NULL.
     //------------------------------------------------------------------
     lldb_private::Value
-    LookupDecl (clang::NamedDecl *decl);
+    LookupDecl (clang::NamedDecl *decl,
+                ClangExpressionVariable::FlagType &flags);
     
     //------------------------------------------------------------------
     /// [Used by IRInterpreter] Get the Value for "this", "self", or

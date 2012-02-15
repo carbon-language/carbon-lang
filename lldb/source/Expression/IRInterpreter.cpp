@@ -11,6 +11,7 @@
 #include "lldb/Core/Log.h"
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Expression/ClangExpressionDeclMap.h"
+#include "lldb/Expression/ClangExpressionVariable.h"
 #include "lldb/Expression/IRForTarget.h"
 #include "lldb/Expression/IRInterpreter.h"
 
@@ -633,6 +634,7 @@ public:
             lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
 
             lldb_private::Value resolved_value;
+            lldb_private::ClangExpressionVariable::FlagType flags;
             
             if (global_value)
             {            
@@ -649,7 +651,7 @@ public:
                     return Memory::Region();
                 }
                 
-                resolved_value = m_decl_map.LookupDecl(decl);
+                resolved_value = m_decl_map.LookupDecl(decl, flags);
             }
             else
             {
@@ -669,6 +671,11 @@ public:
             {
                 if (resolved_value.GetContextType() == lldb_private::Value::eContextTypeRegisterInfo)
                 {
+                    bool bare_register = (flags & lldb_private::ClangExpressionVariable::EVBareRegister);
+
+                    if (bare_register)
+                        indirect_variable = false;
+                    
                     Memory::Region data_region = m_memory.Malloc(value->getType());
                     data_region.m_allocation->m_origin = resolved_value;
                     Memory::Region ref_region = m_memory.Malloc(value->getType());

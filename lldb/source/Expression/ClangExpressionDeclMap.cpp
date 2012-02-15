@@ -992,7 +992,7 @@ ClangExpressionDeclMap::ReadTarget (uint8_t *data,
 }
 
 lldb_private::Value
-ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
+ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl, ClangExpressionVariable::FlagType &flags)
 {
     assert (m_parser_vars.get());
             
@@ -1001,6 +1001,8 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
     
     if (expr_var_sp)
     {
+        flags = expr_var_sp->m_flags;
+
         if (!expr_var_sp->m_parser_vars.get())
             return Value();
         
@@ -1048,6 +1050,28 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
             
             return ret;
         }
+        else if (RegisterInfo *reg_info = expr_var_sp->GetRegisterInfo())
+        {
+            StackFrame *frame = m_parser_vars->m_exe_ctx.GetFramePtr();
+            
+            if (!frame)
+                return Value();
+            
+            RegisterContextSP reg_context_sp(frame->GetRegisterContextSP());
+            
+            RegisterValue reg_value;
+            
+            if (!reg_context_sp->ReadRegister(reg_info, reg_value))
+                return Value();
+            
+            Value ret;
+            
+            ret.SetContext(Value::eContextTypeRegisterInfo, reg_info);
+            if (!reg_value.GetScalarValue(ret.GetScalar()))
+                return Value();
+            
+            return ret;
+        }
         else
         {
             return Value();
@@ -1055,6 +1079,8 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl)
     }
     else if (persistent_var_sp)
     {
+        flags = persistent_var_sp->m_flags;
+        
         if ((persistent_var_sp->m_flags & ClangExpressionVariable::EVIsProgramReference ||
              persistent_var_sp->m_flags & ClangExpressionVariable::EVIsLLDBAllocated) &&
             persistent_var_sp->m_live_sp &&
@@ -3024,8 +3050,9 @@ ClangExpressionDeclMap::AddOneRegister (NameSearchContext &context,
     entity->m_parser_vars->m_named_decl  = var_decl;
     entity->m_parser_vars->m_llvm_value  = NULL;
     entity->m_parser_vars->m_lldb_value  = NULL;
+    entity->m_flags |= ClangExpressionVariable::EVBareRegister;
     
-    if (log && log->GetVerbose())
+    if (log)
     {
         ASTDumper ast_dumper(var_decl);
         log->Printf("  CEDM::FEVD[%d] Added register %s, returned %s", current_id, context.m_decl_name.getAsString().c_str(), ast_dumper.GetCString());
