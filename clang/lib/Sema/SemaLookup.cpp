@@ -3335,8 +3335,6 @@ void NamespaceSpecifierSet::AddNamespace(NamespaceDecl *ND) {
   unsigned NumSpecifiers = 0;
   DeclContextList NamespaceDeclChain(BuildContextChain(Ctx));
   DeclContextList FullNamespaceDeclChain(NamespaceDeclChain);
-  // The full size of NamespaceDeclChain before any common elements are removed
-  DeclContextList::size_type FullSize = NamespaceDeclChain.size();
 
   // Eliminate common elements from the two DeclContext chains.
   for (DeclContextList::reverse_iterator C = CurContextChain.rbegin(),
@@ -3348,7 +3346,8 @@ void NamespaceSpecifierSet::AddNamespace(NamespaceDecl *ND) {
 
   // Add an explicit leading '::' specifier if needed.
   if (NamespaceDecl *ND =
-      dyn_cast<NamespaceDecl>(NamespaceDeclChain.back())) {
+        NamespaceDeclChain.empty() ? NULL :
+          dyn_cast_or_null<NamespaceDecl>(NamespaceDeclChain.back())) {
     IdentifierInfo *Name = ND->getIdentifier();
     if (std::find(CurContextIdentifiers.begin(), CurContextIdentifiers.end(),
                   Name) != CurContextIdentifiers.end() ||
