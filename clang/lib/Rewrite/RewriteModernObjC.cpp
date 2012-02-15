@@ -1202,26 +1202,26 @@ void RewriteModernObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
     ResultStr += "typedef struct objc_object ";
     ResultStr += ClassDecl->getNameAsString();
     ResultStr += ";\n#endif\n";
+    RewriteObjCInternalStruct(ClassDecl, ResultStr);
     // Mark this typedef as having been generated.
     ObjCForwardDecls.insert(ClassDecl->getCanonicalDecl());
-  }
-  RewriteObjCInternalStruct(ClassDecl, ResultStr);
-
-  for (ObjCInterfaceDecl::prop_iterator I = ClassDecl->prop_begin(),
+  
+    for (ObjCInterfaceDecl::prop_iterator I = ClassDecl->prop_begin(),
          E = ClassDecl->prop_end(); I != E; ++I)
-    RewriteProperty(*I);
-  for (ObjCInterfaceDecl::instmeth_iterator
+      RewriteProperty(*I);
+    for (ObjCInterfaceDecl::instmeth_iterator
          I = ClassDecl->instmeth_begin(), E = ClassDecl->instmeth_end();
-       I != E; ++I)
-    RewriteMethodDeclaration(*I);
-  for (ObjCInterfaceDecl::classmeth_iterator
+         I != E; ++I)
+      RewriteMethodDeclaration(*I);
+    for (ObjCInterfaceDecl::classmeth_iterator
          I = ClassDecl->classmeth_begin(), E = ClassDecl->classmeth_end();
-       I != E; ++I)
-    RewriteMethodDeclaration(*I);
+         I != E; ++I)
+      RewriteMethodDeclaration(*I);
 
-  // Lastly, comment out the @end.
-  ReplaceText(ClassDecl->getAtEndRange().getBegin(), strlen("@end"), 
-              "/* @end */");
+    // Lastly, comment out the @end.
+    ReplaceText(ClassDecl->getAtEndRange().getBegin(), strlen("@end"), 
+                "/* @end */");
+  }
 }
 
 Stmt *RewriteModernObjC::RewritePropertyOrImplicitSetter(PseudoObjectExpr *PseudoOp) {
