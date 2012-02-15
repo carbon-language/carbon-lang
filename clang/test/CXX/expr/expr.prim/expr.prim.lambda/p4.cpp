@@ -37,8 +37,8 @@ X infer_X_return_type_fail(X x) {
   return [x](int y) { // expected-warning{{omitted result type}}
     if (y > 0)
       return X();
-    else // FIXME: shouldn't mention blocks
-      return x; // expected-error{{return type 'const X' must match previous return type 'X' when block literal has unspecified explicit return type}}
+    else 
+      return x; // expected-error{{return type 'const X' must match previous return type 'X' when lambda expression has unspecified explicit return type}}
   }(5);
 }
 

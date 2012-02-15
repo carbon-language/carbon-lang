@@ -1847,9 +1847,9 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         !CurCap->ReturnType->isDependentType() &&
         !ReturnT->isDependentType() &&
         !Context.hasSameType(ReturnT, CurCap->ReturnType)) { 
-      // FIXME: Adapt diagnostic for lambdas.
       Diag(ReturnLoc, diag::err_typecheck_missing_return_type_incompatible) 
-          << ReturnT << CurCap->ReturnType;
+          << ReturnT << CurCap->ReturnType
+          << getCurLambda() != 0;
       return StmtError();
     }
     CurCap->ReturnType = ReturnT;

@@ -4142,8 +4142,8 @@ def err_typecheck_convert_incompatible : Error<
   "%select{none|const|restrict|const and restrict|volatile|const and volatile|"
   "volatile and restrict|const, volatile, and restrict}6)}4">;
 def err_typecheck_missing_return_type_incompatible : Error<
-  "return type %0 must match previous return type %1 when block"
-  " literal has unspecified explicit return type">;
+  "return type %0 must match previous return type %1 when %select{block "
+  "literal|lambda expression}2 has unspecified explicit return type">;
 
 def warn_incompatible_qualified_id : Warning<
   "%select{assigning to|passing|returning|converting|initializing|sending|casting}2"
