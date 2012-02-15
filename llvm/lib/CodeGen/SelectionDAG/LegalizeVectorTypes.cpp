@@ -404,6 +404,10 @@ void DAGTypeLegalizer::SplitVectorResult(SDNode *N, unsigned ResNo) {
         N->dump(&DAG);
         dbgs() << "\n");
   SDValue Lo, Hi;
+  
+  // See if the target wants to custom expand this node.
+  if (CustomLowerNode(N, N->getValueType(ResNo), true))
+    return;
 
   switch (N->getOpcode()) {
   default:
