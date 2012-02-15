@@ -77,20 +77,11 @@ void *AsanDoesNotSupportStaticLinkage() {
   return NULL;
 }
 
-inline bool IntervalsAreSeparate(uintptr_t start1, uintptr_t end1,
-                                 uintptr_t start2, uintptr_t end2) {
+static inline bool IntervalsAreSeparate(uintptr_t start1, uintptr_t end1,
+                                        uintptr_t start2, uintptr_t end2) {
   CHECK(start1 <= end1);
   CHECK(start2 <= end2);
-  if (start1 == start2) {
-    return false;
-  } else {
-    if (start1 < start2) {
-      return (end1 < start2);
-    } else {
-      return (end2 < start1);
-    }
-  }
-  return false;
+  return (end1 < start2) || (end2 < start1);
 }
 
 // FIXME: this is thread-unsafe, but should not cause problems most of the time.
