@@ -10,6 +10,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/edit_distance.h"
 #include <bitset>
 
 using namespace llvm;
@@ -84,57 +85,10 @@ int StringRef::compare_numeric(StringRef RHS) const {
 unsigned StringRef::edit_distance(llvm::StringRef Other,
                                   bool AllowReplacements,
                                   unsigned MaxEditDistance) {
-  // The algorithm implemented below is the "classic"
-  // dynamic-programming algorithm for computing the Levenshtein
-  // distance, which is described here:
-  //
-  //   http://en.wikipedia.org/wiki/Levenshtein_distance
-  //
-  // Although the algorithm is typically described using an m x n
-  // array, only two rows are used at a time, so this implemenation
-  // just keeps two separate vectors for those two rows.
-  size_type m = size();
-  size_type n = Other.size();
-
-  const unsigned SmallBufferSize = 64;
-  unsigned SmallBuffer[SmallBufferSize];
-  llvm::OwningArrayPtr<unsigned> Allocated;
-  unsigned *previous = SmallBuffer;
-  if (2*(n + 1) > SmallBufferSize) {
-    previous = new unsigned [2*(n+1)];
-    Allocated.reset(previous);
-  }
-  unsigned *current = previous + (n + 1);
-
-  for (unsigned i = 0; i <= n; ++i)
-    previous[i] = i;
-
-  for (size_type y = 1; y <= m; ++y) {
-    current[0] = y;
-    unsigned BestThisRow = current[0];
-
-    for (size_type x = 1; x <= n; ++x) {
-      if (AllowReplacements) {
-        current[x] = min(previous[x-1] + ((*this)[y-1] == Other[x-1]? 0u:1u),
-                         min(current[x-1], previous[x])+1);
-      }
-      else {
-        if ((*this)[y-1] == Other[x-1]) current[x] = previous[x-1];
-        else current[x] = min(current[x-1], previous[x]) + 1;
-      }
-      BestThisRow = min(BestThisRow, current[x]);
-    }
-
-    if (MaxEditDistance && BestThisRow > MaxEditDistance)
-      return MaxEditDistance + 1;
-
-    unsigned *tmp = current;
-    current = previous;
-    previous = tmp;
-  }
-
-  unsigned Result = previous[n];
-  return Result;
+  return llvm::ComputeEditDistance(
+      llvm::ArrayRef<char>(data(), size()),
+      llvm::ArrayRef<char>(Other.data(), Other.size()),
+      AllowReplacements, MaxEditDistance);
 }
 
 //===----------------------------------------------------------------------===//
