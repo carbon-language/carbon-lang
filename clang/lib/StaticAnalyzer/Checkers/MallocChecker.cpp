@@ -67,6 +67,20 @@ public:
   }
 };
 
+struct ReallocPair {
+  SymbolRef ReallocatedSym;
+  bool IsFreeOnFailure;
+  ReallocPair(SymbolRef S, bool F) : ReallocatedSym(S), IsFreeOnFailure(F) {}
+  void Profile(llvm::FoldingSetNodeID &ID) const {
+    ID.AddInteger(IsFreeOnFailure);
+    ID.AddPointer(ReallocatedSym);
+  }
+  bool operator==(const ReallocPair &X) const {
+    return ReallocatedSym == X.ReallocatedSym &&
+           IsFreeOnFailure == X.IsFreeOnFailure;
+  }
+};
+
 class MallocChecker : public Checker<check::DeadSymbols,
                                      check::EndPath,
                                      check::PreStmt<ReturnStmt>,
@@ -83,11 +97,11 @@ class MallocChecker : public Checker<check::DeadSymbols,
   mutable OwningPtr<BuiltinBug> BT_UseRelinquished;
   mutable OwningPtr<BuiltinBug> BT_BadFree;
   mutable IdentifierInfo *II_malloc, *II_free, *II_realloc, *II_calloc,
-                         *II_valloc;
+                         *II_valloc, *II_reallocf;
 
 public:
   MallocChecker() : II_malloc(0), II_free(0), II_realloc(0), II_calloc(0),
-                    II_valloc(0) {}
+                    II_valloc(0), II_reallocf(0) {}
 
   /// In pessimistic mode, the checker assumes that it does not know which
   /// functions might free the memory.
@@ -147,7 +161,8 @@ private:
                                  ProgramStateRef state, unsigned Num,
                                  bool Hold) const;
 
-  void ReallocMem(CheckerContext &C, const CallExpr *CE) const;
+  void ReallocMem(CheckerContext &C, const CallExpr *CE,
+                  bool FreesMemOnFailure) const;
   static void CallocMem(CheckerContext &C, const CallExpr *CE);
   
   bool checkEscape(SymbolRef Sym, const Stmt *S, CheckerContext &C) const;
@@ -201,7 +216,7 @@ private:
 } // end anonymous namespace
 
 typedef llvm::ImmutableMap<SymbolRef, RefState> RegionStateTy;
-typedef llvm::ImmutableMap<SymbolRef, SymbolRef> SymRefToSymRefTy;
+typedef llvm::ImmutableMap<SymbolRef, ReallocPair > ReallocMap;
 class RegionState {};
 class ReallocPairs {};
 namespace clang {
@@ -214,7 +229,7 @@ namespace ento {
 
   template <>
   struct ProgramStateTrait<ReallocPairs>
-    : public ProgramStatePartialTrait<SymRefToSymRefTy> {
+    : public ProgramStatePartialTrait<ReallocMap> {
     static void *GDMIndex() { static int x; return &x; }
   };
 }
@@ -241,6 +256,8 @@ void MallocChecker::initIdentifierInfo(ASTContext &Ctx) const {
     II_free = &Ctx.Idents.get("free");
   if (!II_realloc)
     II_realloc = &Ctx.Idents.get("realloc");
+  if (!II_reallocf)
+    II_reallocf = &Ctx.Idents.get("reallocf");
   if (!II_calloc)
     II_calloc = &Ctx.Idents.get("calloc");
   if (!II_valloc)
@@ -254,8 +271,8 @@ bool MallocChecker::isMemFunction(const FunctionDecl *FD, ASTContext &C) const {
     return false;
 
   // TODO: Add more here : ex: reallocf!
-  if (FunI == II_malloc || FunI == II_free ||
-      FunI == II_realloc || FunI == II_calloc || FunI == II_valloc)
+  if (FunI == II_malloc || FunI == II_free || FunI == II_realloc ||
+      FunI == II_reallocf || FunI == II_calloc || FunI == II_valloc)
     return true;
 
   if (Filter.CMallocOptimistic && FD->hasAttrs() &&
@@ -281,7 +298,10 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
     MallocMem(C, CE);
     return;
   } else if (FunI == II_realloc) {
-    ReallocMem(C, CE);
+    ReallocMem(C, CE, false);
+    return;
+  } else if (FunI == II_reallocf) {
+    ReallocMem(C, CE, true);
     return;
   } else if (FunI == II_calloc) {
     CallocMem(C, CE);
@@ -616,7 +636,8 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
   }
 }
 
-void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
+void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE,
+                               bool FreesOnFail) const {
   ProgramStateRef state = C.getState();
   const Expr *arg0Expr = CE->getArg(0);
   const LocationContext *LCtx = C.getLocationContext();
@@ -681,7 +702,8 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
       // The semantics of the return value are:
       // If size was equal to 0, either NULL or a pointer suitable to be passed
       // to free() is returned.
-      stateFree = stateFree->set<ReallocPairs>(ToPtr, FromPtr);
+      stateFree = stateFree->set<ReallocPairs>(ToPtr,
+                                            ReallocPair(FromPtr, FreesOnFail));
       C.getSymbolManager().addSymbolDependency(ToPtr, FromPtr);
       C.addTransition(stateFree);
       return;
@@ -694,7 +716,8 @@ void MallocChecker::ReallocMem(CheckerContext &C, const CallExpr *CE) const {
                                                 UnknownVal(), stateFree);
     if (!stateRealloc)
       return;
-    stateRealloc = stateRealloc->set<ReallocPairs>(ToPtr, FromPtr);
+    stateRealloc = stateRealloc->set<ReallocPairs>(ToPtr,
+                                            ReallocPair(FromPtr, FreesOnFail));
     C.getSymbolManager().addSymbolDependency(ToPtr, FromPtr);
     C.addTransition(stateRealloc);
     return;
@@ -758,9 +781,10 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
   }
   
   // Cleanup the Realloc Pairs Map.
-  SymRefToSymRefTy RP = state->get<ReallocPairs>();
-  for (SymRefToSymRefTy::iterator I = RP.begin(), E = RP.end(); I != E; ++I) {
-    if (SymReaper.isDead(I->first) || SymReaper.isDead(I->second)) {
+  ReallocMap RP = state->get<ReallocPairs>();
+  for (ReallocMap::iterator I = RP.begin(), E = RP.end(); I != E; ++I) {
+    if (SymReaper.isDead(I->first) ||
+        SymReaper.isDead(I->second.ReallocatedSym)) {
       state = state->remove<ReallocPairs>(I->first);
     }
   }
@@ -926,19 +950,17 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
 
   // Realloc returns 0 when reallocation fails, which means that we should
   // restore the state of the pointer being reallocated.
-  SymRefToSymRefTy RP = state->get<ReallocPairs>();
-  for (SymRefToSymRefTy::iterator I = RP.begin(), E = RP.end(); I != E; ++I) {
+  ReallocMap RP = state->get<ReallocPairs>();
+  for (ReallocMap::iterator I = RP.begin(), E = RP.end(); I != E; ++I) {
     // If the symbol is assumed to NULL or another constant, this will
     // return an APSInt*.
     if (state->getSymVal(I.getKey())) {
-      const RefState *RS = state->get<RegionState>(I.getData());
+      SymbolRef ReallocSym = I.getData().ReallocatedSym;
+      const RefState *RS = state->get<RegionState>(ReallocSym);
       if (RS) {
-        if (RS->isReleased())
-          state = state->set<RegionState>(I.getData(),
+        if (RS->isReleased() && ! I.getData().IsFreeOnFailure)
+          state = state->set<RegionState>(ReallocSym,
                              RefState::getAllocateUnchecked(RS->getStmt()));
-        else if (RS->isAllocated())
-          state = state->set<RegionState>(I.getData(),
-                             RefState::getReleased(RS->getStmt()));
       }
       state = state->remove<ReallocPairs>(I.getKey());
     }

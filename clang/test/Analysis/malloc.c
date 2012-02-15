@@ -6,6 +6,7 @@ void *malloc(size_t);
 void *valloc(size_t);
 void free(void *);
 void *realloc(void *ptr, size_t size);
+void *reallocf(void *ptr, size_t size);
 void *calloc(size_t nmemb, size_t size);
 
 void myfoo(int *p);
@@ -150,6 +151,39 @@ void reallocRadar6337483_4() {
       free(buf2);
     }
 }
+
+int *reallocfTest1() {
+  int *q = malloc(12);
+  q = reallocf(q, 20);
+  return q; // no warning - returning the allocated value
+}
+
+void reallocfRadar6337483_4() {
+    char *buf = malloc(100);
+    char *buf2 = (char*)reallocf(buf, 0x1000000);
+    if (!buf2) {
+      return;  // no warning - reallocf frees even on failure
+    } else {
+      free(buf2);
+    }
+}
+
+void reallocfRadar6337483_3() {
+    char * buf = malloc(100);
+    char * tmp;
+    tmp = (char*)reallocf(buf, 0x1000000);
+    if (!tmp) {
+        free(buf); // expected-warning {{Try to free a memory block that has been released}}
+        return;
+    }
+    buf = tmp;
+    free(buf);
+}
+
+void reallocfPtrZero1() {
+  char *r = reallocf(0, 12); // expected-warning {{Allocated memory never released.}}
+}
+
 
 // This case tests that storing malloc'ed memory to a static variable which is
 // then returned is not leaked.  In the absence of known contracts for functions
