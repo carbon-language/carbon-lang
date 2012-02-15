@@ -26,17 +26,16 @@
 #include <new>
 #include <ctype.h>
 
-#ifndef _WIN32
-# include <pthread.h>
-#else
+#if defined(_WIN32)
 // FIXME: remove when we start intercepting on Windows. Currently it's needed to
 // define memset/memcpy intrinsics.
 # include <intrin.h>
-#endif
+#endif  // _WIN32
 
 #if defined(__APPLE__)
 // FIXME(samsonov): Gradually replace system headers with declarations of
 // intercepted functions.
+#include <pthread.h>
 #include <signal.h>
 #include <string.h>
 #include <strings.h>
