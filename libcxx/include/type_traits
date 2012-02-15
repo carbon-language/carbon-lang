@@ -772,6 +772,14 @@ template <class _Tp> struct _LIBCPP_VISIBLE is_empty : public __libcpp_empty<_Tp
 
 // is_polymorphic
 
+#if __has_feature(is_polymorphic)
+
+template <class _Tp>
+struct _LIBCPP_VISIBLE is_polymorphic
+    : public integral_constant<bool, __is_polymorphic(_Tp)> {};
+
+#else
+
 template <class _Tp> struct __is_polymorphic1 : public _Tp {};
 template <class _Tp> struct __is_polymorphic2 : public _Tp {virtual ~__is_polymorphic2() throw();};
 
@@ -783,6 +791,8 @@ template <class _Tp> struct __libcpp_polymorphic<_Tp, false> : public false_type
 
 template <class _Tp> struct _LIBCPP_VISIBLE is_polymorphic
     : public __libcpp_polymorphic<_Tp> {};
+
+#endif // __has_feature(is_polymorphic)
 
 // has_virtual_destructor
 
