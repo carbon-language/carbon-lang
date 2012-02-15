@@ -16,6 +16,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/DenseSet.h"
+#include "llvm/ADT/StringExtras.h"
 
 
 namespace lld {
@@ -57,16 +58,27 @@ public:
   const Atom *replacement(const Atom *);
 
 private:
-  typedef std::map<llvm::StringRef, const Atom *> NameToAtom;
-  typedef std::map<const Atom *, const Atom *> AtomToAtom;
-  struct MyMappingInfo {
+  typedef llvm::DenseMap<const Atom *, const Atom *> AtomToAtom;
+
+  struct StringRefMappingInfo {
+    static llvm::StringRef getEmptyKey() { return llvm::StringRef(); }
+    static llvm::StringRef getTombstoneKey() { return llvm::StringRef(" ", 0); }
+    static unsigned getHashValue(llvm::StringRef const val) {
+                                               return llvm::HashString(val); }
+    static bool isEqual(llvm::StringRef const lhs, 
+                        llvm::StringRef const rhs) { return lhs.equals(rhs); }
+  };
+	typedef llvm::DenseMap<llvm::StringRef, const Atom *, 
+                                           StringRefMappingInfo> NameToAtom;
+  
+  struct AtomMappingInfo {
     static const DefinedAtom * getEmptyKey() { return NULL; }
     static const DefinedAtom * getTombstoneKey() { return (DefinedAtom*)(-1); }
     static unsigned getHashValue(const DefinedAtom * const Val);
     static bool isEqual(const DefinedAtom * const LHS, 
                         const DefinedAtom * const RHS);
   };
-  typedef llvm::DenseSet<const DefinedAtom*, MyMappingInfo> AtomContentSet;
+  typedef llvm::DenseSet<const DefinedAtom*, AtomMappingInfo> AtomContentSet;
 
   void addByName(const Atom &);
   void addByContent(const DefinedAtom &);

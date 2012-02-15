@@ -165,7 +165,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
 }
 
 
-unsigned SymbolTable::MyMappingInfo::getHashValue(const DefinedAtom * const atom) {
+unsigned SymbolTable::AtomMappingInfo::getHashValue(const DefinedAtom * const atom) {
   unsigned hash = atom->size();
   if ( atom->contentType() != DefinedAtom::typeZeroFill ) {
     llvm::ArrayRef<uint8_t> content = atom->rawContent();
@@ -180,7 +180,7 @@ unsigned SymbolTable::MyMappingInfo::getHashValue(const DefinedAtom * const atom
 }
 
 
-bool SymbolTable::MyMappingInfo::isEqual(const DefinedAtom * const l, 
+bool SymbolTable::AtomMappingInfo::isEqual(const DefinedAtom * const l, 
                                          const DefinedAtom * const r) {
   if ( l == r )
     return true;
