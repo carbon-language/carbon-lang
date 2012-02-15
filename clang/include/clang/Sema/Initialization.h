@@ -70,7 +70,10 @@ public:
     EK_BlockElement,
     /// \brief The entity being initialized is the real or imaginary part of a
     /// complex number.
-    EK_ComplexElement
+    EK_ComplexElement,
+    /// \brief The entity being initialized is the field that captures a 
+    /// variable in a lambda.
+    EK_LambdaCapture
   };
   
 private:
@@ -85,7 +88,7 @@ private:
   QualType Type;
   
   union {
-    /// \brief When Kind == EK_Variable or EK_Member, the VarDecl or
+    /// \brief When Kind == EK_Variable, or EK_Member, the VarDecl or
     /// FieldDecl, respectively.
     DeclaratorDecl *VariableOrMember;
 
@@ -98,7 +101,7 @@ private:
     TypeSourceInfo *TypeInfo;
     
     struct {
-      /// \brief When Kind == EK_Result, EK_Exception, or EK_New, the
+      /// \brief When Kind == EK_Result, EK_Exception, EK_New, the
       /// location of the 'return', 'throw', or 'new' keyword,
       /// respectively. When Kind == EK_Temporary, the location where
       /// the temporary is being created.
@@ -118,6 +121,14 @@ private:
     /// EK_ComplexElement, the index of the array or vector element being
     /// initialized. 
     unsigned Index;
+    
+    struct {
+      /// \brief The variable being captured by an EK_LambdaCapture.
+      VarDecl *Var;
+      
+      /// \brief The source location at which the capture occurs.
+      unsigned Location;
+    } Capture;
   };
 
   InitializedEntity() { }
@@ -147,6 +158,14 @@ private:
   InitializedEntity(ASTContext &Context, unsigned Index, 
                     const InitializedEntity &Parent);
 
+  /// \brief Create the initialization entity for a lambda capture.
+  InitializedEntity(VarDecl *Var, FieldDecl *Field, SourceLocation Loc)
+    : Kind(EK_LambdaCapture), Parent(0), Type(Field->getType()) 
+  {
+    Capture.Var = Var;
+    Capture.Location = Loc.getRawEncoding();
+  }
+  
 public:
   /// \brief Create the initialization entity for a variable.
   static InitializedEntity InitializeVariable(VarDecl *Var) {
@@ -246,6 +265,13 @@ public:
     return InitializedEntity(Context, Index, Parent);
   }
 
+  /// \brief Create the initialization entity for a lambda capture.
+  static InitializedEntity InitializeLambdaCapture(VarDecl *Var,
+                                                   FieldDecl *Field,
+                                                   SourceLocation Loc) {
+    return InitializedEntity(Var, Field, Loc);
+  }
+                                                   
   /// \brief Determine the kind of initialization.
   EntityKind getKind() const { return Kind; }
   
@@ -316,6 +342,19 @@ public:
     assert(getKind() == EK_ArrayElement || getKind() == EK_VectorElement ||
            EK_ComplexElement);
     this->Index = Index;
+  }
+
+  /// \brief Retrieve the variable for a captured variable in a lambda.
+  VarDecl *getCapturedVar() const {
+    assert(getKind() == EK_LambdaCapture && "Not a lambda capture!");
+    return Capture.Var;
+  }
+  
+  /// \brief Determine the location of the capture when initializing
+  /// field from a captured variable in a lambda.
+  SourceLocation getCaptureLoc() const {
+    assert(getKind() == EK_LambdaCapture && "Not a lambda capture!");
+    return SourceLocation::getFromRawEncoding(Capture.Location);
   }
 };
   

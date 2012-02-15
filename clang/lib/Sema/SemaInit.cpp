@@ -2321,6 +2321,9 @@ DeclarationName InitializedEntity::getName() const {
   case EK_Member:
     return VariableOrMember->getDeclName();
 
+  case EK_LambdaCapture:
+    return Capture.Var->getDeclName();
+      
   case EK_Result:
   case EK_Exception:
   case EK_New:
@@ -2356,6 +2359,7 @@ DeclaratorDecl *InitializedEntity::getDecl() const {
   case EK_VectorElement:
   case EK_ComplexElement:
   case EK_BlockElement:
+  case EK_LambdaCapture:
     return 0;
   }
 
@@ -2379,6 +2383,7 @@ bool InitializedEntity::allowsNRVO() const {
   case EK_VectorElement:
   case EK_ComplexElement:
   case EK_BlockElement:
+  case EK_LambdaCapture:
     break;
   }
 
@@ -4210,6 +4215,7 @@ getAssignmentAction(const InitializedEntity &Entity) {
   case InitializedEntity::EK_VectorElement:
   case InitializedEntity::EK_ComplexElement:
   case InitializedEntity::EK_BlockElement:
+  case InitializedEntity::EK_LambdaCapture:
     return Sema::AA_Initializing;
   }
 
@@ -4231,6 +4237,7 @@ static bool shouldBindAsTemporary(const InitializedEntity &Entity) {
   case InitializedEntity::EK_ComplexElement:
   case InitializedEntity::EK_Exception:
   case InitializedEntity::EK_BlockElement:
+  case InitializedEntity::EK_LambdaCapture:
     return false;
 
   case InitializedEntity::EK_Parameter:
@@ -4253,6 +4260,7 @@ static bool shouldDestroyTemporary(const InitializedEntity &Entity) {
     case InitializedEntity::EK_VectorElement:
     case InitializedEntity::EK_ComplexElement:
     case InitializedEntity::EK_BlockElement:
+    case InitializedEntity::EK_LambdaCapture:
       return false;
 
     case InitializedEntity::EK_Variable:
@@ -4323,6 +4331,9 @@ static SourceLocation getInitializationLoc(const InitializedEntity &Entity,
   case InitializedEntity::EK_Variable:
     return Entity.getDecl()->getLocation();
 
+  case InitializedEntity::EK_LambdaCapture:
+    return Entity.getCaptureLoc();
+      
   case InitializedEntity::EK_ArrayElement:
   case InitializedEntity::EK_Member:
   case InitializedEntity::EK_Parameter:

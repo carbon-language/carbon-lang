@@ -4,12 +4,15 @@ template<typename T> void capture(const T&);
 
 class NonCopyable {
   NonCopyable(const NonCopyable&); // expected-note 2 {{implicitly declared private here}}
+public:
+  void foo() const;
 };
 
 void capture_by_copy(NonCopyable nc, NonCopyable &ncr) {
-  // FIXME: error messages should talk about capture
-  (void)[nc] { }; // expected-error{{field of type 'NonCopyable' has private copy constructor}}
-  (void)[ncr] { }; // expected-error{{field of type 'NonCopyable' has private copy constructor}}
+  (void)[nc] { }; // expected-error{{capture of variable 'nc' as type 'NonCopyable' calls private copy constructor}}
+  (void)[=] {
+    ncr.foo(); // expected-error{{capture of variable 'ncr' as type 'NonCopyable' calls private copy constructor}} 
+  }();
 }
 
 struct NonTrivial {

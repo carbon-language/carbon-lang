@@ -4053,6 +4053,12 @@ let CategoryName = "Lambda Issue" in {
   def warn_falloff_nonvoid_lambda : Warning<
     "control reaches end of non-void lambda">,
     InGroup<ReturnType>;
+  def err_access_lambda_capture : Error<
+    // The ERRORs represent other special members that aren't constructors, in
+    // hopes that someone will bother noticing and reporting if they appear
+    "capture of variable '%0' as type %1 calls %select{private|protected}3 "
+    "%select{default |copy |move |*ERROR* |*ERROR* |*ERROR* |}2constructor">,
+    AccessControl;
 }
 
 def err_operator_arrow_circular : Error<

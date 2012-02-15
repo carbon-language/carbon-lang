@@ -9625,8 +9625,6 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   //   direct-initialized in increasing subscript order.) These
   //   initializations are performed in the (unspecified) order in
   //   which the non-static data members are declared.
-  //
-  // FIXME: Introduce an initialization entity for lambda captures.
       
   // Introduce a new evaluation context for the initialization, so
   // that temporaries introduced as part of the capture are retained
@@ -9697,7 +9695,8 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   // of array-subscript entities. 
   SmallVector<InitializedEntity, 4> Entities;
   Entities.reserve(1 + IndexVariables.size());
-  Entities.push_back(InitializedEntity::InitializeMember(Field));
+  Entities.push_back(
+    InitializedEntity::InitializeLambdaCapture(Var, Field, Loc));
   for (unsigned I = 0, N = IndexVariables.size(); I != N; ++I)
     Entities.push_back(InitializedEntity::InitializeElement(S.Context,
                                                             0,
