@@ -1613,7 +1613,7 @@ class CodeGeneration : public ScopPass {
 
       // Update ScopInfo.
       for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI)
-        if ((*SI)->getBasicBlock() == newBlock) {
+        if ((*SI)->getBasicBlock() == OldBlock) {
           (*SI)->setBasicBlock(newBlock);
           break;
         }
