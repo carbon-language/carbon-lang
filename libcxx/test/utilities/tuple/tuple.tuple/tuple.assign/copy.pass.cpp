@@ -42,7 +42,7 @@ int main()
     }
     {
         typedef std::tuple<int, char, std::string> T;
-        T t0(2, 'a', "some text");
+        const T t0(2, 'a', "some text");
         T t;
         t = t0;
         assert(std::get<0>(t) == 2);

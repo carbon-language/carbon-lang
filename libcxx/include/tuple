@@ -500,6 +500,14 @@ struct __tuple_impl<__tuple_indices<_Indx...>, _Tp...>
             return *this;
         }
 
+        _LIBCPP_INLINE_VISIBILITY
+        __tuple_impl&
+        operator=(const __tuple_impl& __t)
+        {
+            __swallow(__tuple_leaf<_Indx, _Tp>::operator=(static_cast<const __tuple_leaf<_Indx, _Tp>&>(__t).get())...);
+            return *this;
+        }
+
     _LIBCPP_INLINE_VISIBILITY
     void swap(__tuple_impl& __t)
         _NOEXCEPT_(__all<__is_nothrow_swappable<_Tp>::value...>::value)
