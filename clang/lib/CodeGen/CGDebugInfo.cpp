@@ -524,11 +524,8 @@ llvm::DIDescriptor CGDebugInfo::createContextChain(const Decl *Context) {
 
   if (const RecordDecl *RD = dyn_cast<RecordDecl>(Context)) {
     if (!RD->isDependentType()) {
-      llvm::DIDescriptor FDContext =
-        createContextChain(cast<Decl>(RD->getDeclContext()));
-      llvm::DIType Ty = createRecordFwdDecl(RD, FDContext);
-
-      RegionMap[Context] = llvm::WeakVH(Ty);
+      llvm::DIType Ty = getOrCreateLimitedType(CGM.getContext().getTypeDeclType(RD),
+					       getOrCreateMainFile());
       return llvm::DIDescriptor(Ty);
     }
   }
@@ -557,7 +554,9 @@ llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
     RecordDecl *RD = RTy->getDecl();
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
-    return createRecordFwdDecl(RD, FDContext);
+    llvm::DIType RetTy = createRecordFwdDecl(RD, FDContext);
+    TypeCache[PointeeTy.getAsOpaquePtr()] = RetTy;
+    return RetTy;
   }
   return getOrCreateType(PointeeTy, Unit);
 
@@ -654,10 +653,11 @@ llvm::DIType CGDebugInfo::CreateType(const TypedefType *Ty, llvm::DIFile Unit) {
   // declared.
   unsigned Line = getLineNumber(Ty->getDecl()->getLocation());
   const TypedefNameDecl *TyDecl = Ty->getDecl();
+  
   llvm::DIDescriptor TypedefContext =
     getContextDescriptor(cast<Decl>(Ty->getDecl()->getDeclContext()));
-
-  return  
+  
+  return
     DBuilder.createTypedef(Src, TyDecl->getName(), Unit, Line, TypedefContext);
 }
 
@@ -1133,8 +1133,6 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
 
   // Get overall information about the record type for the debug info.
   llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
-  unsigned Line = getLineNumber(RD->getLocation());
-  StringRef RDName = RD->getName();
 
   // Records and classes and unions can all be recursive.  To handle them, we
   // first generate a debug descriptor for the struct as a forward declaration.
@@ -1143,27 +1141,20 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   // may refer to the forward decl if the struct is recursive) and replace all
   // uses of the forward declaration with the final definition.
 
-  llvm::DIDescriptor RDContext;
-  if (CGM.getCodeGenOpts().LimitDebugInfo)
-    RDContext = createContextChain(cast<Decl>(RD->getDeclContext()));
-  else
-    RDContext = getContextDescriptor(cast<Decl>(RD->getDeclContext()));
+  llvm::DIType FwdDecl = getOrCreateLimitedType(QualType(Ty, 0), DefUnit);
 
-  // If this is just a forward declaration, construct an appropriately
-  // marked node and just return it.
-  if (!RD->getDefinition())
-    return createRecordFwdDecl(RD, RDContext);
-
-  llvm::DIType FwdDecl = DBuilder.createTemporaryType(DefUnit);
-
+  if (FwdDecl.isForwardDecl())
+    return FwdDecl;
+  
   llvm::MDNode *MN = FwdDecl;
   llvm::TrackingVH<llvm::MDNode> FwdDeclNode = MN;
-  // Otherwise, insert it into the TypeCache so that recursive uses will find
-  // it.
-  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl;
+  
   // Push the struct on region stack.
   LexicalBlockStack.push_back(FwdDeclNode);
   RegionMap[Ty->getDecl()] = llvm::WeakVH(FwdDecl);
+
+  // Add this to the completed types cache since we're completing it.
+  CompletedTypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl;
 
   // Convert all the elements.
   SmallVector<llvm::Value *, 16> EltTys;
@@ -1196,50 +1187,20 @@ llvm::DIType CGDebugInfo::CreateType(const RecordType *Ty) {
   if (RI != RegionMap.end())
     RegionMap.erase(RI);
 
-  uint64_t Size = CGM.getContext().getTypeSize(Ty);
-  uint64_t Align = CGM.getContext().getTypeAlign(Ty);
   llvm::DIArray Elements = DBuilder.getOrCreateArray(EltTys);
-  llvm::MDNode *RealDecl = NULL;
-
+  // FIXME: Magic numbers ahoy! These should be changed when we
+  // get some enums in llvm/Analysis/DebugInfo.h to refer to
+  // them.
   if (RD->isUnion())
-    RealDecl = DBuilder.createUnionType(RDContext, RDName, DefUnit, Line,
-                                        Size, Align, 0, Elements);
+    MN->replaceOperandWith(10, Elements);
   else if (CXXDecl) {
-    RDName = getClassName(RD);
-     // A class's primary base or the class itself contains the vtable.
-    llvm::MDNode *ContainingType = NULL;
-    const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
-    if (const CXXRecordDecl *PBase = RL.getPrimaryBase()) {
-      // Seek non virtual primary base root.
-      while (1) {
-        const ASTRecordLayout &BRL = CGM.getContext().getASTRecordLayout(PBase);
-        const CXXRecordDecl *PBT = BRL.getPrimaryBase();
-        if (PBT && !BRL.isPrimaryBaseVirtual())
-          PBase = PBT;
-        else 
-          break;
-      }
-      ContainingType = 
-        getOrCreateType(QualType(PBase->getTypeForDecl(), 0), DefUnit);
-    }
-    else if (CXXDecl->isDynamicClass()) 
-      ContainingType = FwdDecl;
-
-    // FIXME: This could be a struct type giving a default visibility different
-    // than C++ class type, but needs llvm metadata changes first.
-    RealDecl = DBuilder.createClassType(RDContext, RDName, DefUnit, Line,
-                                        Size, Align, 0, 0, llvm::DIType(),
-                                        Elements, ContainingType,
-                                        TParamsArray);
+    MN->replaceOperandWith(10, Elements);
+    MN->replaceOperandWith(13, TParamsArray);
   } else
-    RealDecl = DBuilder.createStructType(RDContext, RDName, DefUnit, Line,
-                                         Size, Align, 0, Elements);
+    MN->replaceOperandWith(10, Elements);
 
-  // Now that we have a real decl for the struct, replace anything using the
-  // old decl with the new one.  This will recursively update the debug info.
-  llvm::DIType(FwdDeclNode).replaceAllUsesWith(RealDecl);
-  RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
-  return llvm::DIType(RealDecl);
+  RegionMap[Ty->getDecl()] = llvm::WeakVH(MN);
+  return llvm::DIType(MN);
 }
 
 /// CreateType - get objective-c object type.
@@ -1637,6 +1598,26 @@ llvm::DIType CGDebugInfo::getTypeOrNull(QualType Ty) {
   return llvm::DIType();
 }
 
+/// getCompletedTypeOrNull - Get the type from the cache or return null if it
+/// doesn't exist.
+llvm::DIType CGDebugInfo::getCompletedTypeOrNull(QualType Ty) {
+
+  // Unwrap the type as needed for debug information.
+  Ty = UnwrapTypeForDebugInfo(Ty);
+
+  // Check for existing entry.
+  llvm::DenseMap<void *, llvm::WeakVH>::iterator it =
+    CompletedTypeCache.find(Ty.getAsOpaquePtr());
+  if (it != CompletedTypeCache.end()) {
+    // Verify that the debug info still exists.
+    if (&*it->second)
+      return llvm::DIType(cast<llvm::MDNode>(it->second));
+  }
+
+  return llvm::DIType();
+}
+
+
 /// getOrCreateType - Get the type from the cache or create a new
 /// one if necessary.
 llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
@@ -1646,14 +1627,21 @@ llvm::DIType CGDebugInfo::getOrCreateType(QualType Ty, llvm::DIFile Unit) {
   // Unwrap the type as needed for debug information.
   Ty = UnwrapTypeForDebugInfo(Ty);
   
-  llvm::DIType T = getTypeOrNull(Ty);
+  llvm::DIType T = getCompletedTypeOrNull(Ty);
+
   if (T.Verify()) return T;
 
   // Otherwise create the type.
   llvm::DIType Res = CreateTypeNode(Ty, Unit);
 
+  if (T.Verify() && T.isForwardDecl())
+    T.replaceAllUsesWith(Res);
+  
   // And update the type cache.
-  TypeCache[Ty.getAsOpaquePtr()] = Res;  
+  TypeCache[Ty.getAsOpaquePtr()] = Res;
+
+  if (!Res.isForwardDecl())
+    CompletedTypeCache[Ty.getAsOpaquePtr()] = Res;
   return Res;
 }
 
@@ -1735,6 +1723,127 @@ llvm::DIType CGDebugInfo::CreateTypeNode(QualType Ty, llvm::DIFile Unit) {
   CGM.getDiags().Report(DiagID)
     << Diag;
   return llvm::DIType();
+}
+
+/// getOrCreateLimitedType - Get the type from the cache or create a new
+/// limited type if necessary.
+llvm::DIType CGDebugInfo::getOrCreateLimitedType(QualType Ty,
+						 llvm::DIFile Unit) {
+  if (Ty.isNull())
+    return llvm::DIType();
+
+  // Unwrap the type as needed for debug information.
+  Ty = UnwrapTypeForDebugInfo(Ty);
+
+  llvm::DIType T = getTypeOrNull(Ty);
+  if (T.Verify() && !T.isForwardDecl()) return T;
+
+  // Otherwise create the type.
+  llvm::DIType Res = CreateLimitedTypeNode(Ty, Unit);
+
+  if (T.Verify() && T.isForwardDecl())
+    T.replaceAllUsesWith(Res);
+  
+  // And update the type cache.
+  TypeCache[Ty.getAsOpaquePtr()] = Res;
+  return Res;
+}
+
+// TODO: Currently used for context chains when limiting debug info.
+llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
+  RecordDecl *RD = Ty->getDecl();
+  
+  // Get overall information about the record type for the debug info.
+  llvm::DIFile DefUnit = getOrCreateFile(RD->getLocation());
+  unsigned Line = getLineNumber(RD->getLocation());
+  StringRef RDName = RD->getName();
+
+  llvm::DIDescriptor RDContext;
+  if (CGM.getCodeGenOpts().LimitDebugInfo)
+    RDContext = createContextChain(cast<Decl>(RD->getDeclContext()));
+  else
+    RDContext = getContextDescriptor(cast<Decl>(RD->getDeclContext()));
+
+  // If this is just a forward declaration, construct an appropriately
+  // marked node and just return it.
+  if (!RD->getDefinition()) {
+    llvm::DIType RTy = createRecordFwdDecl(RD, RDContext);
+    TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = RTy;
+    return RTy;
+  }
+
+  // Create a temporary type here - different than normal forward declared
+  // types.
+  llvm::DIType FwdDecl = DBuilder.createTemporaryType(DefUnit);
+  
+  llvm::MDNode *MN = FwdDecl;
+  llvm::TrackingVH<llvm::MDNode> FwdDeclNode = MN;
+  // Otherwise, insert it into the TypeCache so that recursive uses will find
+  // it.
+  TypeCache[QualType(Ty, 0).getAsOpaquePtr()] = FwdDecl;
+  
+  uint64_t Size = CGM.getContext().getTypeSize(Ty);
+  uint64_t Align = CGM.getContext().getTypeAlign(Ty);
+  const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(RD);
+  llvm::MDNode *RealDecl = NULL;
+  
+  if (RD->isUnion())
+    RealDecl = DBuilder.createUnionType(RDContext, RDName, DefUnit, Line,
+					Size, Align, 0, llvm::DIArray());
+  else if (CXXDecl) {
+    RDName = getClassName(RD);
+    // A class's primary base or the class itself contains the vtable.
+    llvm::MDNode *ContainingType = NULL;
+    const ASTRecordLayout &RL = CGM.getContext().getASTRecordLayout(RD);
+    if (const CXXRecordDecl *PBase = RL.getPrimaryBase()) {
+      // Seek non virtual primary base root.
+      while (1) {
+	const ASTRecordLayout &BRL = CGM.getContext().getASTRecordLayout(PBase);
+	const CXXRecordDecl *PBT = BRL.getPrimaryBase();
+	if (PBT && !BRL.isPrimaryBaseVirtual())
+	  PBase = PBT;
+	else
+	  break;
+      }
+      ContainingType =
+	getOrCreateType(QualType(PBase->getTypeForDecl(), 0), DefUnit);
+    }
+    else if (CXXDecl->isDynamicClass())
+      ContainingType = FwdDecl;
+    
+    // FIXME: This could be a struct type giving a default visibility different
+    // than C++ class type, but needs llvm metadata changes first.
+    RealDecl = DBuilder.createClassType(RDContext, RDName, DefUnit, Line,
+					Size, Align, 0, 0, llvm::DIType(),
+					llvm::DIArray(), ContainingType,
+					llvm::DIArray());
+  } else
+    RealDecl = DBuilder.createStructType(RDContext, RDName, DefUnit, Line,
+					 Size, Align, 0, llvm::DIArray());
+
+  llvm::DIType(FwdDeclNode).replaceAllUsesWith(RealDecl);
+  RegionMap[Ty->getDecl()] = llvm::WeakVH(RealDecl);
+  return llvm::DIType(RealDecl);
+}
+
+/// CreateLimitedTypeNode - Create a new debug type node, but only forward
+/// declare composite types that haven't been processed yet.
+llvm::DIType CGDebugInfo::CreateLimitedTypeNode(QualType Ty,llvm::DIFile Unit) {
+
+  // Work out details of type.
+  switch (Ty->getTypeClass()) {
+#define TYPE(Class, Base)
+#define ABSTRACT_TYPE(Class, Base)
+#define NON_CANONICAL_TYPE(Class, Base)
+#define DEPENDENT_TYPE(Class, Base) case Type::Class:
+        #include "clang/AST/TypeNodes.def"
+    llvm_unreachable("Dependent types cannot show up in debug information");
+
+  case Type::Record:
+    return CreateLimitedType(cast<RecordType>(Ty));
+  default:
+    return CreateTypeNode(Ty, Unit);
+  }
 }
 
 /// CreateMemberType - Create new member and increase Offset by FType's size.
