@@ -229,7 +229,8 @@ void ScheduleTopDownLive::Schedule() {
     if (&*InsertPos == MI)
       ++InsertPos;
     else {
-      Pass->LIS->moveInstr(InsertPos, MI);
+      BB->splice(InsertPos, BB, MI);
+      Pass->LIS->handleMove(MI);
       if (Begin == InsertPos)
         Begin = MI;
     }

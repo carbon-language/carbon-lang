@@ -963,21 +963,16 @@ static void handleMoveUses(const MachineBasicBlock *mbb,
   }
 }
 
-void LiveIntervals::moveInstr(MachineBasicBlock::iterator insertPt,
-                              MachineInstr *mi) {
-  MachineBasicBlock* mbb = mi->getParent();
-  assert((insertPt == mbb->end() || insertPt->getParent() == mbb) &&
-         "Cannot handle moves across basic block boundaries.");
-  assert(&*insertPt != mi && "No-op move requested?");
-  assert(!mi->isBundled() && "Can't handle bundled instructions yet.");
-
-  // Grab the original instruction index.
+void LiveIntervals::handleMove(MachineInstr *mi) {
   SlotIndex origIdx = indexes_->getInstructionIndex(mi);
-
-  // Move the machine instr and obtain its new index.
   indexes_->removeMachineInstrFromMaps(mi);
-  mbb->splice(insertPt, mbb, mi);
   SlotIndex miIdx = indexes_->insertMachineInstrInMaps(mi);
+
+  MachineBasicBlock* mbb = mi->getParent();
+  
+  assert(getMBBFromIndex(origIdx) == mbb &&
+         "Cannot handle moves across basic block boundaries.");
+  assert(!mi->isBundled() && "Can't handle bundled instructions yet.");
 
   // Pick the direction.
   bool movingUp = miIdx < origIdx;
