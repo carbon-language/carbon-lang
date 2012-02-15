@@ -70,6 +70,22 @@ private:
   void markLive(const Atom &atom, WhyLiveBackChain *previous);
   void addAtoms(const std::vector<const DefinedAtom *>&);
 
+
+  // helper to update targets for use with forEachReference()
+  class MarkLiveReferences : public DefinedAtom::ReferenceHandler {
+  public:
+             MarkLiveReferences(Resolver& resolver, WhyLiveBackChain* chain) 
+                  : _resolver(resolver), _chain(chain) { }
+    
+    virtual void doReference(const Reference& ref) {
+    _resolver.markLive(*ref.target(), _chain);
+    }
+
+  private:
+    Resolver&          _resolver;
+    WhyLiveBackChain*  _chain;
+  };
+
   Platform &_platform;
   const InputFiles &_inputFiles;
   SymbolTable _symbolTable;

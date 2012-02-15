@@ -34,7 +34,7 @@ class File;
 /// Here are some example attribute sets for common atoms. If a particular
 /// attribute is not listed, the default values are:  definition=regular,
 /// sectionChoice=basedOnContent, scope=translationUnit, merge=no, 
-/// internalName=false, deadStrip=normal, interposable=no
+/// deadStrip=normal, interposable=no
 ///
 ///  C function:  void foo() {} <br>
 ///    name=foo, type=code, perm=r_x, scope=global
@@ -71,16 +71,16 @@ class File;
 ///    mergeDupes=asAddressedWeak
 ///
 ///  literal c-string:  "hello" <br>
-///    name=L0, internalName=true, type=cstring, perm=r__, scope=linkageUnit
+///    name="" type=cstring, perm=r__, scope=linkageUnit
 ///
 ///  literal double:  1.234 <br>
-///    name=L0, internalName=true, type=literal8, perm=r__, scope=linkageUnit
+///    name="" type=literal8, perm=r__, scope=linkageUnit
 ///
 ///  constant:  { 1,2,3 } <br>
-///    name=L0, internalName=true, type=constant, perm=r__, scope=linkageUnit
+///    name="" type=constant, perm=r__, scope=linkageUnit
 ///
 ///  Pointer to initializer function:  <br>
-///    name=_init, internalName=true, type=initializer, perm=rw_l,
+///    name="" type=initializer, perm=rw_l,
 ///    sectionChoice=customRequired
 ///
 ///  C function place in custom section:  __attribute__((section("__foo"))) 
@@ -195,15 +195,18 @@ public:
     uint16_t modulus;
   };
 
+  /// for use iterating over this Atom's References
+  class ReferenceHandler {
+  public:
+    virtual ~ReferenceHandler() {}
+    virtual void doReference(const Reference &) = 0;
+  };
+
   /// ordinal - returns a value for the order of this Atom within its file.
   /// This is used by the linker to order the layout of Atoms so that
   /// the resulting image is stable and reproducible.
   virtual uint64_t ordinal() const = 0;
-    
-  /// internalName - If the name is just a temporary label that should
-  /// not show up in the final linked image.
-  virtual bool internalName() const = 0;
-  
+
   /// size - the number of bytes of space this atom's content will occupy
   /// in the final linked image.  For a function atom, it is the number
   /// of bytes of code in the function.
@@ -264,12 +267,9 @@ public:
   /// this Atom's content.
   virtual llvm::ArrayRef<uint8_t> rawContent() const = 0;
 
-  /// referencesBegin - used to start iterating this Atom's References
-  virtual Reference::iterator referencesBegin() const = 0;
-
-  /// referencesEnd - used to end iterating this Atom's References
-  virtual Reference::iterator referencesEnd() const = 0;
-
+  /// iterator over this Atom's References
+  virtual void forEachReference(ReferenceHandler&) const = 0;
+  
 protected:
   /// DefinedAtom is an abstract base class.  
   /// Only subclasses can access constructor.

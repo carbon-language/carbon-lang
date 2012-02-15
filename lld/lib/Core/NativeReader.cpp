@@ -44,10 +44,6 @@ public:
   
   virtual llvm::StringRef name() const;
   
-  virtual bool internalName() const {
-    return attributes().internalName;
-  }
-  
   virtual uint64_t size() const {
     return _ivarData->contentSize;
   }
@@ -88,23 +84,17 @@ public:
   }
   
   virtual bool isThumb() const {
-     return (attributes().thumb != 0);
+     return false; //(attributes().thumb != 0);
   }
     
   virtual bool isAlias() const {
      return (attributes().alias != 0);
   }
   
-  llvm::ArrayRef<uint8_t> rawContent() const;
+  virtual llvm::ArrayRef<uint8_t> rawContent() const;
     
-  virtual Reference::iterator referencesBegin() const {
-     return 0;
-  }
-  
-  virtual Reference::iterator referencesEnd() const {
-    return 0;
-  }
-
+  virtual void forEachReference(ReferenceHandler&) const;
+   
 private:
   const NativeAtomAttributesV1& attributes() const;
   
@@ -134,6 +124,35 @@ public:
 private:
   const NativeFile*                 _file;
   const NativeUndefinedAtomIvarsV1* _ivarData;
+};
+
+
+
+//
+// An object of this class is instantied for each NativeReferenceIvarsV1
+// struct in the NCS_ReferencesArrayV1 chunk.
+//
+class NativeReferenceV1 : public Reference {
+public:
+       NativeReferenceV1(const NativeFile& f, 
+                             const NativeReferenceIvarsV1* ivarData)
+        : _file(&f), _ivarData(ivarData) { } 
+
+  virtual uint64_t offsetInAtom() const {
+    return _ivarData->offsetInAtom;
+  }
+  
+  virtual Kind kind() const {
+    return _ivarData->kind;
+  }
+  
+  virtual const Atom* target() const;
+  virtual Addend addend() const;
+  virtual void setTarget(const Atom* newAtom);
+   
+private:
+  const NativeFile*                 _file;
+  const NativeReferenceIvarsV1*     _ivarData;
 };
 
 
@@ -187,6 +206,15 @@ public:
         case NCS_UndefinedAtomsV1:
           ec = file->processUndefinedAtomsV1(base, chunk);
           break;
+        case NCS_ReferencesArrayV1:
+          ec = file->processReferencesV1(base, chunk);
+          break;
+        case NCS_TargetsTable:
+          ec = file->processTargetsTable(base, chunk);
+          break;
+        case NCS_AddendsTable:
+          ec = file->processAddendsTable(base, chunk);
+          break;
         case NCS_Content:
           ec = file->processContent(base, chunk);
           break;
@@ -219,6 +247,8 @@ public:
     // to just delete the memory.
     delete _definedAtoms.arrayStart;
     delete _undefinedAtoms.arrayStart;
+    delete _references.arrayStart;
+    delete _targetsTable;
   }
   
   // visits each atom in the file
@@ -245,6 +275,7 @@ public:
 private:
   friend class NativeDefinedAtomV1;
   friend class NativeUndefinedAtomV1;
+  friend class NativeReferenceV1;
   
   // instantiate array of DefinedAtoms from v1 ivar data in file
   llvm::error_code processDefinedAtomsV1(const uint8_t* base, 
@@ -272,6 +303,7 @@ private:
     this->_definedAtoms.arrayStart = atomsStart;
     this->_definedAtoms.arrayEnd = atomsEnd;
     this->_definedAtoms.elementSize = atomSize;
+    this->_definedAtoms.elementCount = chunk->elementCount;
     return make_error_code(native_reader_error::success);
   }
   
@@ -307,6 +339,77 @@ private:
     this->_undefinedAtoms.arrayStart = atomsStart;
     this->_undefinedAtoms.arrayEnd = atomsEnd;
     this->_undefinedAtoms.elementSize = atomSize;
+    this->_undefinedAtoms.elementCount = chunk->elementCount;
+    return make_error_code(native_reader_error::success);
+  }
+  
+  
+  // instantiate array of Referemces from v1 ivar data in file
+  llvm::error_code processReferencesV1(const uint8_t* base, 
+                                                const NativeChunk* chunk) {
+    if ( chunk->elementCount == 0 )
+      return make_error_code(native_reader_error::success);
+    const size_t refSize = sizeof(NativeReferenceV1);
+    size_t refsArraySize = chunk->elementCount * refSize;
+    uint8_t* refsStart = reinterpret_cast<uint8_t*>
+                                (operator new(refsArraySize, std::nothrow));
+    if (refsStart == NULL )
+      return make_error_code(native_reader_error::memory_error);
+    const size_t ivarElementSize = chunk->fileSize
+                                          / chunk->elementCount;
+    if ( ivarElementSize != sizeof(NativeReferenceIvarsV1) )
+      return make_error_code(native_reader_error::file_malformed);
+    uint8_t* refsEnd = refsStart + refsArraySize;
+    const NativeReferenceIvarsV1* ivarData = 
+                             reinterpret_cast<const NativeReferenceIvarsV1*>
+                                                  (base + chunk->fileOffset);
+    for(uint8_t* s = refsStart; s != refsEnd; s += refSize) {
+      NativeReferenceV1* atomAllocSpace = 
+                  reinterpret_cast<NativeReferenceV1*>(s);
+      new (atomAllocSpace) NativeReferenceV1(*this, ivarData);
+      ++ivarData;
+    }
+    this->_references.arrayStart = refsStart;
+    this->_references.arrayEnd = refsEnd;
+    this->_references.elementSize = refSize;
+    this->_references.elementCount = chunk->elementCount;
+    return make_error_code(native_reader_error::success);
+  }
+  
+  // set up pointers to target table
+  llvm::error_code processTargetsTable(const uint8_t* base, 
+                                                const NativeChunk* chunk) {
+    const uint32_t* targetIndexes = reinterpret_cast<const uint32_t*>
+                                                  (base + chunk->fileOffset);
+    this->_targetsTableCount = chunk->elementCount;
+    this->_targetsTable = new const Atom*[chunk->elementCount];
+    for (uint32_t i=0; i < chunk->elementCount; ++i) {
+      const uint32_t index = targetIndexes[i];
+      if ( index < _definedAtoms.elementCount ) {
+        const uint8_t* p = _definedAtoms.arrayStart 
+                                    + index * _definedAtoms.elementSize;
+        this->_targetsTable[i] = reinterpret_cast<const DefinedAtom*>(p);
+        continue;
+      }
+      const uint32_t undefIndex = index - _definedAtoms.elementCount;
+      if ( undefIndex < _undefinedAtoms.elementCount ) {
+        const uint8_t* p = _undefinedAtoms.arrayStart 
+                                    + undefIndex * _undefinedAtoms.elementSize;
+        this->_targetsTable[i] = reinterpret_cast<const UndefinedAtom*>(p);
+        continue;
+      }
+      return make_error_code(native_reader_error::file_malformed);
+    }
+    return make_error_code(native_reader_error::success);
+  }
+  
+  
+  // set up pointers to addend pool in file
+  llvm::error_code processAddendsTable(const uint8_t* base, 
+                                                const NativeChunk* chunk) {
+    this->_addends = reinterpret_cast<const Reference::Addend*>
+                                                  (base + chunk->fileOffset);
+    this->_addendsMaxIndex = chunk->elementCount;
     return make_error_code(native_reader_error::success);
   }
   
@@ -331,9 +434,16 @@ private:
     return llvm::StringRef(&_strings[offset]);
   }
   
-  const NativeAtomAttributesV1& attribute(uint32_t offset) const {
-    assert(offset < _attributesMaxOffset);
-    return *reinterpret_cast<const NativeAtomAttributesV1*>(_attributes + offset);
+  Reference::Addend addend(uint32_t index) const {
+    if ( index == 0 )
+      return 0; // addend index zero is used to mean "no addend"
+    assert(index <= _addendsMaxIndex);
+    return _addends[index-1]; // one-based indexing
+  }
+
+  const NativeAtomAttributesV1& attribute(uint32_t off) const {
+    assert(off < _attributesMaxOffset);
+    return *reinterpret_cast<const NativeAtomAttributesV1*>(_attributes + off);
   }
 
   const uint8_t* content(uint32_t offset, uint32_t size) const {
@@ -342,44 +452,75 @@ private:
     return result;
   }
 
-
+  void forEachReference(DefinedAtom::ReferenceHandler& handler, 
+                                        uint32_t start, uint32_t count) const {
+    assert(start < _references.elementCount);
+    assert(start+count <= _references.elementCount);
+    const uint8_t* arrStart = _references.arrayStart 
+                                   + start * _references.elementSize;
+    const uint8_t* arrEnd = arrStart + count * _references.elementSize;
+    for(const uint8_t* p=arrStart; p != arrEnd; p += _references.elementSize) {
+      const NativeReferenceV1* ref 
+                              = reinterpret_cast<const NativeReferenceV1*>(p);
+      handler.doReference(*ref);
+    }
+  }
+  
+  const Atom* target(uint32_t index) const {
+    assert(index < _targetsTableCount);
+    return _targetsTable[index];
+  }
+  
+  void setTarget(uint32_t index, const Atom* newAtom) const {
+    assert(index > _targetsTableCount);
+    _targetsTable[index] = newAtom;
+  }
+ 
+  
   // private constructor, only called by make()
   NativeFile(llvm::OwningPtr<llvm::MemoryBuffer>& mb, llvm::StringRef path) :
     lld::File(path), 
     _buffer(mb.take()),  // NativeFile now takes ownership of buffer
     _header(NULL), 
+    _targetsTable(NULL), 
+    _targetsTableCount(0),
     _strings(NULL), 
     _stringsMaxOffset(0),
+    _addends(NULL), 
+    _addendsMaxIndex(0),
     _contentStart(NULL), 
     _contentEnd(NULL)
   {
     _header = reinterpret_cast<const NativeFileHeader*>(_buffer->getBufferStart());
-    _definedAtoms.arrayStart = NULL;
-    _undefinedAtoms.arrayStart = NULL;
   }
 
-  struct AtomArray {
-                      AtomArray() : arrayStart(NULL), arrayEnd(NULL), 
-                                    elementSize(0) { }
+  struct IvarArray {
+                      IvarArray() : arrayStart(NULL), arrayEnd(NULL), 
+                                    elementSize(0), elementCount(0) { }
     const uint8_t*     arrayStart;
     const uint8_t*     arrayEnd;
     uint32_t           elementSize;
-  };
+    uint32_t           elementCount;
+ };
 
   llvm::OwningPtr<llvm::MemoryBuffer>  _buffer;
   const NativeFileHeader*         _header;
-  AtomArray                       _definedAtoms;
-  AtomArray                       _undefinedAtoms;
+  IvarArray                       _definedAtoms;
+  IvarArray                       _undefinedAtoms;
   const uint8_t*                  _attributes;
   uint32_t                        _attributesMaxOffset;
+  IvarArray                       _references;
+  const Atom**                    _targetsTable;
+  uint32_t                        _targetsTableCount;
   const char*                     _strings;
   uint32_t                        _stringsMaxOffset;
+  const Reference::Addend*        _addends;
+  uint32_t                        _addendsMaxIndex;
   const uint8_t*                  _contentStart;
   const uint8_t*                  _contentEnd;
 };
 
-
-
+ 
 inline const class File& NativeDefinedAtomV1::file() const {
   return *_file;
 }
@@ -410,8 +551,12 @@ inline llvm::StringRef NativeDefinedAtomV1::customSectionName() const {
   return _file->string(offset);
 }
 
-
-
+inline void NativeDefinedAtomV1::forEachReference(ReferenceHandler& hnd) const {
+  if ( _ivarData->referencesCount == 0 )
+    return;
+  _file->forEachReference(hnd, _ivarData->referencesStartIndex, 
+                               _ivarData->referencesCount);
+}
 
 inline const class File& NativeUndefinedAtomV1::file() const {
   return *_file;
@@ -422,6 +567,17 @@ inline llvm::StringRef NativeUndefinedAtomV1::name() const {
 }
 
 
+inline const Atom* NativeReferenceV1::target() const {
+  return _file->target(_ivarData->targetIndex);
+}
+
+inline Reference::Addend NativeReferenceV1::addend() const {
+  return _file->addend(_ivarData->addendIndex);
+}
+
+inline void NativeReferenceV1::setTarget(const Atom* newAtom) {
+  return _file->setTarget(_ivarData->targetIndex, newAtom);
+}
 
 
 //

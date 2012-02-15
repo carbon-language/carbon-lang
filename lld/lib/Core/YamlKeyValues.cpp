@@ -18,12 +18,12 @@ namespace yaml {
 
 
 const char* const KeyValues::nameKeyword            = "name";
+const char* const KeyValues::refNameKeyword         = "ref-name";
 const char* const KeyValues::definitionKeyword      = "definition";
 const char* const KeyValues::scopeKeyword           = "scope";
 const char* const KeyValues::contentTypeKeyword     = "type";
 const char* const KeyValues::deadStripKindKeyword   = "dead-strip";
 const char* const KeyValues::sectionChoiceKeyword   = "section-choice";
-const char* const KeyValues::internalNameKeyword    = "internal-name";
 const char* const KeyValues::interposableKeyword    = "interposable";
 const char* const KeyValues::mergeKeyword           = "merge";
 const char* const KeyValues::isThumbKeyword         = "is-thumb";
@@ -31,8 +31,14 @@ const char* const KeyValues::isAliasKeyword         = "is-alias";
 const char* const KeyValues::sectionNameKeyword     = "section-name";
 const char* const KeyValues::contentKeyword         = "content";
 const char* const KeyValues::sizeKeyword            = "size";
+const char* const KeyValues::fixupsKeyword          = "fixups";
 const char* const KeyValues::permissionsKeyword     = "permissions";
 const char* const KeyValues::weakImportKeyword      = "weak-import";
+const char* const KeyValues::fixupsKindKeyword      = "kind";
+const char* const KeyValues::fixupsOffsetKeyword    = "offset";
+const char* const KeyValues::fixupsTargetKeyword    = "target";
+const char* const KeyValues::fixupsAddendKeyword    = "addend";
+
 
 
 const DefinedAtom::Definition         KeyValues::definitionDefault = Atom::definitionRegular;
@@ -43,7 +49,6 @@ const DefinedAtom::SectionChoice      KeyValues::sectionChoiceDefault = DefinedA
 const DefinedAtom::Interposable       KeyValues::interposableDefault = DefinedAtom::interposeNo;
 const DefinedAtom::Merge              KeyValues::mergeDefault = DefinedAtom::mergeNo;
 const DefinedAtom::ContentPermissions KeyValues::permissionsDefault = DefinedAtom::permR__;
-const bool                            KeyValues::internalNameDefault = false;
 const bool                            KeyValues::isThumbDefault = false;
 const bool                            KeyValues::isAliasDefault = false;
 const bool                            KeyValues::weakImportDefault = false;
@@ -348,22 +353,6 @@ const char* KeyValues::permissions(DefinedAtom::ContentPermissions s) {
 
 
 
-
-
-
-
-bool KeyValues::internalName(const char* s)
-{
-  if ( strcmp(s, "true") == 0 )
-    return true;
-  else if ( strcmp(s, "false") == 0 )
-    return false;
-  llvm::report_fatal_error("bad internal-name value");
-}
-
-const char* KeyValues::internalName(bool b) {
-  return b ? "true" : "false";
-}
 
 
 

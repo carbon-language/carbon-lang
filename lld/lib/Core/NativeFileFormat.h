@@ -80,6 +80,7 @@ struct NativeFileHeader {
   uint32_t    architecture;
   uint32_t    fileSize;
   uint32_t    chunkCount;
+  // NativeChunk chunks[]
 };
 
 //
@@ -90,8 +91,11 @@ enum NativeChunkSignatures {
   NCS_AttributesArrayV1 = 2,
   NCS_UndefinedAtomsV1 = 3,
   NCS_Strings = 4,
-  NCS_Content = 5,
-  NCS_ReferencesArray = 6,
+  NCS_ReferencesArrayV1 = 5,
+  NCS_ReferencesArrayV2 = 6,
+  NCS_TargetsTable = 7,
+  NCS_AddendsTable = 8,
+  NCS_Content = 9,
 }; 
 
 //
@@ -125,6 +129,8 @@ enum {
 struct NativeDefinedAtomIvarsV1 {
   uint32_t  nameOffset;
   uint32_t  attributesOffset;
+  uint32_t  referencesStartIndex;
+  uint32_t  referencesCount;
   uint32_t  contentOffset;
   uint32_t  contentSize;
 };
@@ -137,7 +143,6 @@ struct NativeAtomAttributesV1 {
   uint32_t  sectionNameOffset;
   uint16_t  align2;
   uint16_t  alignModulus;
-  uint8_t   internalName;
   uint8_t   scope;
   uint8_t   interposable;
   uint8_t   merge;
@@ -145,10 +150,7 @@ struct NativeAtomAttributesV1 {
   uint8_t   sectionChoice;
   uint8_t   deadStrip;
   uint8_t   permissions;
-  uint8_t   thumb;
   uint8_t   alias;
-  uint8_t   pad1;
-  uint8_t   pad2;
 };
 
 
@@ -163,6 +165,51 @@ struct NativeUndefinedAtomIvarsV1 {
 
 
 
+
+//
+// The NCS_ReferencesArrayV1 chunk contains an array of these structs
+//
+struct NativeReferenceIvarsV1 {
+  uint16_t  offsetInAtom;
+   int16_t  kind;
+  uint16_t  targetIndex;
+  uint16_t  addendIndex;
+};
+
+
+
+//
+// The NCS_ReferencesArrayV2 chunk contains an array of these structs
+//
+struct NativeReferenceIvarsV2 {
+  uint64_t  offsetInAtom;
+  int64_t   addend;
+  int32_t   kind;
+  uint32_t  targetIndex;
+};
+
+
+//
+// The NCS_TargetsTable chunk contains an array of uint32_t entries.
+// The C++ class Reference has a target() method that returns a 
+// pointer to another Atom.  We can't have pointers in object files,
+// so instead  NativeReferenceIvarsV1 contains an index to the target.
+// The index is into this NCS_TargetsTable of uint32_t entries.  
+// The values in this table are the index of the (target) atom in this file.
+// For DefinedAtoms the value is from 0 to NCS_DefinedAtomsV1.elementCount.
+// For UndefinedAtoms the value is from NCS_DefinedAtomsV1.elementCount to
+// NCS_DefinedAtomsV1.elementCount+NCS_UndefinedAtomsV1.elementCount.
+//
+
+
+//
+// The NCS_AddendsTable chunk contains an array of int64_t entries.
+// If we allocated space for addends directly in NativeReferenceIvarsV1
+// it would double the size of that struct.  But since addends are rare,
+// we instead just keep a pool of addends and have NativeReferenceIvarsV1
+// (if it needs an addend) just store the index (into the pool) of the 
+// addend it needs.
+//
 
 
 

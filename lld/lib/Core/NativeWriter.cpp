@@ -12,6 +12,7 @@
 
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/DenseMap.h"
 
 #include "lld/Core/File.h"
 #include "lld/Core/NativeWriter.h"
@@ -25,10 +26,13 @@ namespace lld {
 ///
 /// Class for writing native object files.
 ///
-class NativeWriter : public File::AtomHandler {
+class NativeWriter : public File::AtomHandler, 
+                     public DefinedAtom::ReferenceHandler {
 public:
   /// construct writer for an lld::File object
   NativeWriter(const lld::File& file) : _file(file) { 
+    // reserve first byte for unnamed atoms
+    _stringPool.push_back('\0');
     // visit all atoms
     _file.forEachAtom(*this);
     // construct file header based on atom information accumulated
@@ -37,36 +41,73 @@ public:
 
   // write the lld::File in native format to the specified stream
   void write(llvm::raw_ostream& out) {
+    assert( out.tell() == 0 );
     out.write((char*)_headerBuffer, _headerBufferSize);
-    if (!_definedAtomIvars.empty())
+    
+    if (!_definedAtomIvars.empty()) {
+      assert( out.tell() == findChunk(NCS_DefinedAtomsV1).fileOffset );
       out.write((char*)&_definedAtomIvars[0],
                 _definedAtomIvars.size()*sizeof(NativeDefinedAtomIvarsV1));
-    if (!_attributes.empty())
+    }
+    
+    if (!_attributes.empty()) {
+      assert( out.tell() == findChunk(NCS_AttributesArrayV1).fileOffset );
       out.write((char*)&_attributes[0],
                 _attributes.size()*sizeof(NativeAtomAttributesV1));
-    if ( !_undefinedAtomIvars.empty() ) 
+    }
+                
+    if ( !_undefinedAtomIvars.empty() ) {
+      assert( out.tell() == findChunk(NCS_UndefinedAtomsV1).fileOffset );
       out.write((char*)&_undefinedAtomIvars[0], 
               _undefinedAtomIvars.size()*sizeof(NativeUndefinedAtomIvarsV1));
-    if (!_stringPool.empty())
+    }
+              
+    if (!_stringPool.empty()) {
+      assert( out.tell() == findChunk(NCS_Strings).fileOffset );
       out.write(&_stringPool[0], _stringPool.size());
-    if (!_contentPool.empty())
+    }
+    
+    if ( !_references.empty() ) {
+      assert( out.tell() == findChunk(NCS_ReferencesArrayV1).fileOffset );
+      out.write((char*)&_references[0], 
+              _references.size()*sizeof(NativeReferenceIvarsV1));
+    }
+    
+    if ( !_targetsTableIndex.empty() ) {
+      assert( out.tell() == findChunk(NCS_TargetsTable).fileOffset );
+      writeTargetTable(out);
+    }
+  
+    if ( !_addendsTableIndex.empty() ) {
+      assert( out.tell() == findChunk(NCS_AddendsTable).fileOffset );
+      writeAddendTable(out);
+    }
+  
+    if (!_contentPool.empty()) {
+      assert( out.tell() == findChunk(NCS_Content).fileOffset );
       out.write((char*)&_contentPool[0], _contentPool.size());
+    }
   }
 
 private:
 
   // visitor routine called by forEachAtom() 
-  virtual void doDefinedAtom(const class DefinedAtom& atom) {
+  virtual void doDefinedAtom(const DefinedAtom& atom) {
+    _definedAtomIndex[&atom] = _definedAtomIvars.size();
     NativeDefinedAtomIvarsV1 ivar;
+    unsigned refsCount;
     ivar.nameOffset = getNameOffset(atom);
     ivar.attributesOffset = getAttributeOffset(atom);
+    ivar.referencesStartIndex = getReferencesIndex(atom, refsCount);
+    ivar.referencesCount = refsCount;
     ivar.contentOffset = getContentOffset(atom);
     ivar.contentSize = atom.size();
     _definedAtomIvars.push_back(ivar);
   }
   
   // visitor routine called by forEachAtom() 
-  virtual void doUndefinedAtom(const class UndefinedAtom& atom) {
+  virtual void doUndefinedAtom(const UndefinedAtom& atom) {
+    _undefinedAtomIndex[&atom] = _undefinedAtomIvars.size();
     NativeUndefinedAtomIvarsV1 ivar;
     ivar.nameOffset = getNameOffset(atom);
     ivar.flags = (atom.weakImport() ? 1 : 0);
@@ -74,13 +115,18 @@ private:
   }
   
   // visitor routine called by forEachAtom() 
-  virtual void doFile(const class File &) {
+  virtual void doFile(const File &) {
   }
 
   // fill out native file header and chunk directory
   void makeHeader() {
     const bool hasUndefines = !_undefinedAtomIvars.empty();
-    const int chunkCount = hasUndefines ? 5 : 4;
+    const bool hasTargetsTable = !_targetsTableIndex.empty();
+    const bool hasAddendTable = !_addendsTableIndex.empty();
+    int chunkCount = 5;
+    if ( hasUndefines ) ++chunkCount;
+    if ( hasTargetsTable ) ++chunkCount;
+    if ( hasAddendTable ) ++chunkCount;
     _headerBufferSize = sizeof(NativeFileHeader) 
                          + chunkCount*sizeof(NativeChunk);
     _headerBuffer = reinterpret_cast<NativeFileHeader*>
@@ -124,12 +170,43 @@ private:
     }
     
     // create chunk for symbol strings
+    // pad end of string pool to 4-bytes 
+    while ( (_stringPool.size() % 4) != 0 )
+      _stringPool.push_back('\0');
     NativeChunk& chs = chunks[nextIndex++];
     chs.signature = NCS_Strings;
     chs.fileOffset = nextFileOffset;
     chs.fileSize = _stringPool.size();
     chs.elementCount = _stringPool.size();
     nextFileOffset = chs.fileOffset + chs.fileSize;
+    
+    // create chunk for references 
+    NativeChunk& chr = chunks[nextIndex++];
+    chr.signature = NCS_ReferencesArrayV1;
+    chr.fileOffset = nextFileOffset;
+    chr.fileSize = _references.size() * sizeof(NativeReferenceIvarsV1);
+    chr.elementCount = _references.size();
+    nextFileOffset = chr.fileOffset + chr.fileSize;
+
+    // create chunk for target table 
+    if ( hasTargetsTable ) {
+      NativeChunk& cht = chunks[nextIndex++];
+      cht.signature = NCS_TargetsTable;
+      cht.fileOffset = nextFileOffset;
+      cht.fileSize = _targetsTableIndex.size() * sizeof(uint32_t);
+      cht.elementCount = _targetsTableIndex.size();
+      nextFileOffset = cht.fileOffset + cht.fileSize;
+    }
+
+    // create chunk for addend table 
+    if ( hasAddendTable ) {
+      NativeChunk& chad = chunks[nextIndex++];
+      chad.signature = NCS_AddendsTable;
+      chad.fileOffset = nextFileOffset;
+      chad.fileSize = _addendsTableIndex.size() * sizeof(Reference::Addend);
+      chad.elementCount = _addendsTableIndex.size();
+      nextFileOffset = chad.fileOffset + chad.fileSize;
+    }
     
     // create chunk for content 
     NativeChunk& chc = chunks[nextIndex++];
@@ -142,6 +219,18 @@ private:
     _headerBuffer->fileSize = nextFileOffset;
   }
 
+  // scan header to find particular chunk
+  NativeChunk& findChunk(uint32_t signature) {
+    const uint32_t chunkCount = _headerBuffer->chunkCount;
+    NativeChunk* chunks =
+      reinterpret_cast<NativeChunk*>(reinterpret_cast<char*>(_headerBuffer)
+                                     + sizeof(NativeFileHeader));
+    for (uint32_t i=0; i < chunkCount; ++i) {
+      if ( chunks[i].signature == signature )
+        return chunks[i];
+    }
+    assert(0 && "findChunk() signature not found");
+  }
 
   // append atom name to string pool and return offset
   uint32_t getNameOffset(const Atom& atom) {
@@ -150,6 +239,8 @@ private:
   
  // append atom name to string pool and return offset
   uint32_t getNameOffset(llvm::StringRef name) {
+    if ( name.empty() )
+      return 0;
     uint32_t result = _stringPool.size();
     _stringPool.insert(_stringPool.end(), name.size()+1, 0);
     strcpy(&_stringPool[result], name.data());
@@ -206,7 +297,6 @@ private:
     attrs.sectionNameOffset = sectionNameOffset(atom);
     attrs.align2            = atom.alignment().powerOf2;
     attrs.alignModulus      = atom.alignment().modulus;
-    attrs.internalName      = atom.internalName(); 
     attrs.scope             = atom.scope(); 
     attrs.interposable      = atom.interposable(); 
     attrs.merge             = atom.merge(); 
@@ -214,11 +304,98 @@ private:
     attrs.sectionChoice     = atom.sectionChoice(); 
     attrs.deadStrip         = atom.deadStrip(); 
     attrs.permissions       = atom.permissions(); 
-    attrs.thumb             = atom.isThumb(); 
+    //attrs.thumb             = atom.isThumb(); 
     attrs.alias             = atom.isAlias(); 
   }
 
+  // add references for this atom in a contiguous block in NCS_ReferencesArrayV1
+  uint32_t getReferencesIndex(const DefinedAtom& atom, unsigned& count) {
+    count = 0;
+    size_t startRefSize = _references.size();
+    uint32_t result = startRefSize;
+    atom.forEachReference(*this);
+    count = _references.size() - startRefSize;
+    if ( count == 0 )
+      return 0;
+    else
+      return result;
+  }
+  
+  void doReference(const Reference& ref) {
+    NativeReferenceIvarsV1 nref;
+    nref.offsetInAtom = ref.offsetInAtom();
+    nref.kind = ref.kind();
+    nref.targetIndex = this->getTargetIndex(ref.target());
+    nref.addendIndex = this->getAddendIndex(ref.addend());
+    _references.push_back(nref);
+  }
+  
+  uint32_t getTargetIndex(const Atom* target) {
+    TargetToIndex::const_iterator pos = _targetsTableIndex.find(target);
+    if ( pos != _targetsTableIndex.end() ) {
+      return pos->second;
+    }
+    uint32_t result = _targetsTableIndex.size();
+    _targetsTableIndex[target] = result;
+    return result;
+  }
+  
+  void writeTargetTable(llvm::raw_ostream& out) {
+    // Build table of target indexes  
+    uint32_t maxTargetIndex = _targetsTableIndex.size();
+    uint32_t targetIndexes[maxTargetIndex];
+    for (TargetToIndex::iterator it = _targetsTableIndex.begin(); 
+                                 it != _targetsTableIndex.end(); ++it) {
+      const Atom* atom = it->first;
+      uint32_t targetIndex = it->second;
+      assert(targetIndex < maxTargetIndex);
+      uint32_t atomIndex = 0;
+      TargetToIndex::iterator pos = _definedAtomIndex.find(atom);
+      if ( pos != _definedAtomIndex.end() ) {
+        atomIndex = pos->second;
+      }
+      else {
+        pos = _undefinedAtomIndex.find(atom);
+        assert(pos != _undefinedAtomIndex.end());
+        atomIndex = pos->second + _definedAtomIvars.size();
+      }
+      targetIndexes[targetIndex] = atomIndex;
+    }
+    // write table
+    out.write((char*)&targetIndexes[0], maxTargetIndex*sizeof(uint32_t));
+  }
+  
+  uint32_t getAddendIndex(Reference::Addend addend) { 
+    if ( addend == 0 )
+      return 0; // addend index zero is used to mean "no addend"
+    AddendToIndex::const_iterator pos = _addendsTableIndex.find(addend);
+    if ( pos != _addendsTableIndex.end() ) {
+      return pos->second;
+    }
+    uint32_t result = _addendsTableIndex.size() + 1; // one-based index
+    _addendsTableIndex[addend] = result;
+    return result;
+  }
+ 
+  void writeAddendTable(llvm::raw_ostream& out) {
+    // Build table of addends  
+    uint32_t maxAddendIndex = _addendsTableIndex.size();
+    Reference::Addend addends[maxAddendIndex];
+    for (AddendToIndex::iterator it = _addendsTableIndex.begin(); 
+                                 it != _addendsTableIndex.end(); ++it) {
+      Reference::Addend addend = it->first;
+      uint32_t index = it->second;
+      assert(index <= maxAddendIndex);
+      addends[index-1] = addend;
+    }
+    // write table
+    out.write((char*)&addends[0], maxAddendIndex*sizeof(Reference::Addend));
+  }
+
   typedef std::vector<std::pair<llvm::StringRef, uint32_t> > NameToOffsetVector;
+
+  typedef llvm::DenseMap<const Atom*, uint32_t> TargetToIndex;
+  typedef llvm::DenseMap<Reference::Addend, uint32_t> AddendToIndex;
 
   const lld::File&                        _file;
   NativeFileHeader*                       _headerBuffer;
@@ -228,6 +405,11 @@ private:
   std::vector<NativeDefinedAtomIvarsV1>   _definedAtomIvars;
   std::vector<NativeAtomAttributesV1>     _attributes;
   std::vector<NativeUndefinedAtomIvarsV1> _undefinedAtomIvars;
+  std::vector<NativeReferenceIvarsV1>     _references;
+  TargetToIndex                           _targetsTableIndex;
+  TargetToIndex                           _definedAtomIndex;
+  TargetToIndex                           _undefinedAtomIndex;
+  AddendToIndex                           _addendsTableIndex;
   NameToOffsetVector                      _sectionNames;
 };
 

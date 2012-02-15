@@ -20,10 +20,12 @@ namespace yaml {
 class KeyValues {
 public:
   static const char* const                nameKeyword;
+  static const char* const                refNameKeyword;
   static const char* const                sectionNameKeyword;
   static const char* const                contentKeyword;
   static const char* const                sizeKeyword;
-  
+  static const char* const                fixupsKeyword;
+ 
   static const char* const                definitionKeyword;
   static const Atom::Definition           definitionDefault;
   static Atom::Definition                 definition(const char*);
@@ -64,11 +66,6 @@ public:
   static DefinedAtom::ContentPermissions        permissions(const char*);
   static const char*                            permissions(DefinedAtom::ContentPermissions);
 
-  static const char* const                internalNameKeyword;
-  static const bool                       internalNameDefault;
-  static bool                             internalName(const char*);
-  static const char*                      internalName(bool);
-
   static const char* const                isThumbKeyword;
   static const bool                       isThumbDefault;
   static bool                             isThumb(const char*);
@@ -83,6 +80,12 @@ public:
   static const bool                       weakImportDefault;
   static bool                             weakImport(const char*);
   static const char*                      weakImport(bool);
+
+
+  static const char* const                fixupsKindKeyword;
+  static const char* const                fixupsOffsetKeyword;
+  static const char* const                fixupsTargetKeyword;
+  static const char* const                fixupsAddendKeyword;
 
 };
 

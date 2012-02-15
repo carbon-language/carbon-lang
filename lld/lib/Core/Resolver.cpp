@@ -199,19 +199,33 @@ void Resolver::resolveUndefines() {
   }
 }
 
+// helper to update targets for use with forEachReference()
+class ReferenceUpdater : public DefinedAtom::ReferenceHandler {
+public:
+		           ReferenceUpdater(SymbolTable& sym) : _symbolTable(sym) { }
+	
+	virtual void doReference(const Reference& ref) {
+    const Atom* newTarget = _symbolTable.replacement(ref.target());
+    (const_cast<Reference*>(&ref))->setTarget(newTarget);
+  }
+
+private:
+	SymbolTable&  _symbolTable;
+};
+
+
 // switch all references to undefined or coalesced away atoms
 // to the new defined atom
 void Resolver::updateReferences() {
+  ReferenceUpdater updater(_symbolTable);
   for (std::vector<const Atom *>::iterator it = _atoms.begin();
        it != _atoms.end(); ++it) {
     if ( const DefinedAtom* defAtom = (*it)->definedAtom() ) {
-      for (Reference::iterator rit = defAtom->referencesBegin(),
-         end = defAtom->referencesEnd(); rit != end; ++rit) {
-        rit->target = _symbolTable.replacement(rit->target);
-      }
+      defAtom->forEachReference(updater);
     }
   }
 }
+
 
 // for dead code stripping, recursively mark atom "live"
 void Resolver::markLive(const Atom &atom, WhyLiveBackChain *previous) {
@@ -240,10 +254,8 @@ void Resolver::markLive(const Atom &atom, WhyLiveBackChain *previous) {
   thisChain.previous = previous;
   thisChain.referer = &atom;
   if ( const DefinedAtom* defAtom = atom.definedAtom() ) {
-    for (Reference::iterator rit = defAtom->referencesBegin(),
-        end = defAtom->referencesEnd(); rit != end; ++rit) {
-      this->markLive(*(rit->target), &thisChain);
-    }
+    MarkLiveReferences markRefs(*this, &thisChain);
+    defAtom->forEachReference(markRefs);
   }
 }
 

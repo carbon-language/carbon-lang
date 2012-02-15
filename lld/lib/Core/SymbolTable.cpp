@@ -38,7 +38,7 @@ void SymbolTable::add(const UndefinedAtom &atom) {
 
 void SymbolTable::add(const DefinedAtom &atom) {
   assert(atom.scope() != DefinedAtom::scopeTranslationUnit);
-  if ( !atom.internalName() ) {
+  if ( !atom.name().empty() ) {
     this->addByName(atom);
   }
   else {

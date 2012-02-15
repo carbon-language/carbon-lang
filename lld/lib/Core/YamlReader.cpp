@@ -7,6 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include <string.h>
+
 #include "YamlKeyValues.h"
 
 #include "lld/Core/YamlReader.h"
@@ -29,6 +31,8 @@
 
 namespace lld {
 namespace yaml {
+
+namespace {
 
 class YAML {
 public:
@@ -214,7 +218,7 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
         sequenceBytes->push_back(contentByte);
         state = inValueSequenceEnd;
       }
-      else if (c == ' ') {
+      else if ( (c == ' ') || (c == '\n') ) {
         // eat white space
       }
       else if (c == ',') {
@@ -245,6 +249,44 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
   }
 }
 
+
+
+class YAMLReference : public Reference {
+public: 
+                YAMLReference() : _target(NULL), _targetName(NULL), 
+                                   _offsetInAtom(0), _addend(0), _kind(0) { }
+
+  virtual uint64_t offsetInAtom() const {
+    return _offsetInAtom;
+  }
+  
+  virtual Kind kind() const {
+    return _kind;
+  }
+  
+  virtual const Atom* target() const {
+    return _target;
+  }
+  
+  virtual Addend addend() const {
+    return _addend;
+  }
+
+  virtual void setTarget(const Atom* newAtom) {
+    _target = newAtom;
+  }
+
+  const Atom*  _target;
+  const char*  _targetName;
+  uint64_t     _offsetInAtom;
+  Addend       _addend;
+  Kind         _kind;
+};
+
+
+
+class YAMLDefinedAtom;
+
 class YAMLFile : public File {
 public:
   YAMLFile()
@@ -255,29 +297,24 @@ public:
   virtual bool justInTimeforEachAtom(llvm::StringRef name,
                                      File::AtomHandler &) const;
 
-  std::vector<DefinedAtom*> _definedAtoms;
-  std::vector<UndefinedAtom*> _undefinedAtoms;
-  std::vector<Reference> _references;
-  unsigned int _lastRefIndex;
+  void bindTargetReferences();
+  void addDefinedAtom(YAMLDefinedAtom* atom, const char* refName);
+  void addUndefinedAtom(UndefinedAtom* atom);
+  Atom* findAtom(const char* name);
+  
+  struct NameAtomPair {
+                 NameAtomPair(const char* n, Atom* a) : name(n), atom(a) {}
+    const char*  name;
+    Atom*        atom;
+  };
+
+  std::vector<YAMLDefinedAtom*>   _definedAtoms;
+  std::vector<UndefinedAtom*>     _undefinedAtoms;
+  std::vector<YAMLReference>      _references;
+  std::vector<NameAtomPair>       _nameToAtomMapping;
+  unsigned int                    _lastRefIndex;
 };
 
-bool YAMLFile::forEachAtom(File::AtomHandler &handler) const {
-  handler.doFile(*this);
-  for (std::vector<DefinedAtom *>::const_iterator it = _definedAtoms.begin();
-       it != _definedAtoms.end(); ++it) {
-    handler.doDefinedAtom(**it);
-  }
-  for (std::vector<UndefinedAtom *>::const_iterator it = _undefinedAtoms.begin();
-       it != _undefinedAtoms.end(); ++it) {
-    handler.doUndefinedAtom(**it);
-  }
-  return true;
-}
-
-bool YAMLFile::justInTimeforEachAtom(llvm::StringRef name,
-                                     File::AtomHandler &handler) const {
-  return false;
-}
 
 
 class YAMLDefinedAtom : public DefinedAtom {
@@ -291,7 +328,6 @@ public:
           , DefinedAtom::Merge merge
           , DefinedAtom::DeadStripKind deadStrip
           , DefinedAtom::ContentPermissions perms
-          , bool internalName
           , bool isThumb
           , bool isAlias
           , DefinedAtom::Alignment alignment
@@ -313,7 +349,6 @@ public:
     , _merge(merge)
     , _deadStrip(deadStrip)
     , _permissions(perms)
-    , _internalName(internalName)
     , _isThumb(isThumb)
     , _isAlias(isAlias)
     , _refStartIndex(file._lastRefIndex)
@@ -326,13 +361,12 @@ public:
   }
 
   virtual llvm::StringRef name() const {
-    return _name;
+    if ( _name == NULL )
+      return llvm::StringRef();
+    else
+      return _name;
   }
 
-  virtual bool internalName() const {
-    return _internalName;
-  }
-  
  virtual uint64_t size() const {
     return (_content ? _content->size() : _size);
   }
@@ -393,16 +427,18 @@ public:
   }
 
   
-  virtual Reference::iterator referencesBegin() const {
-    if (_file._references.size() < _refStartIndex)
-      return (Reference::iterator)&_file._references[_refStartIndex];
-    return 0;
+  virtual void forEachReference(ReferenceHandler& handler) const {
+    for (uint32_t i=_refStartIndex; i < _refEndIndex; ++i) {
+      handler.doReference(_file._references[i]);
+    }
   }
-  
-  virtual Reference::iterator referencesEnd() const {
-    if (_file._references.size() < _refEndIndex)
-      return (Reference::iterator)&_file._references[_refEndIndex];
-    return 0;
+    
+  void bindTargetReferences() {
+    for (unsigned int i=_refStartIndex; i < _refEndIndex; ++i) {
+      const char* targetName = _file._references[i]._targetName;
+      Atom* targetAtom = _file.findAtom(targetName);
+      _file._references[i]._target = targetAtom;
+    }
   }
   
 private:
@@ -420,7 +456,6 @@ private:
   DefinedAtom::Merge          _merge;
   DefinedAtom::DeadStripKind  _deadStrip;
   DefinedAtom::ContentPermissions _permissions;
-  bool                        _internalName;
   bool                        _isThumb;
   bool                        _isAlias;
   unsigned int                _refStartIndex;
@@ -453,22 +488,71 @@ private:
 };
 
 
+bool YAMLFile::forEachAtom(File::AtomHandler &handler) const {
+  handler.doFile(*this);
+  for (std::vector<YAMLDefinedAtom *>::const_iterator it = _definedAtoms.begin();
+       it != _definedAtoms.end(); ++it) {
+    handler.doDefinedAtom(**it);
+  }
+  for (std::vector<UndefinedAtom *>::const_iterator it = _undefinedAtoms.begin();
+       it != _undefinedAtoms.end(); ++it) {
+    handler.doUndefinedAtom(**it);
+  }
+  return true;
+}
+
+bool YAMLFile::justInTimeforEachAtom(llvm::StringRef name,
+                                     File::AtomHandler &handler) const {
+  return false;
+}
+
+void YAMLFile::bindTargetReferences() {
+    for (std::vector<YAMLDefinedAtom *>::const_iterator 
+         it = _definedAtoms.begin(); it != _definedAtoms.end(); ++it) {
+      YAMLDefinedAtom* atom = *it;   
+      atom->bindTargetReferences();
+    }
+}
+
+Atom* YAMLFile::findAtom(const char* name) {
+  for (std::vector<NameAtomPair>::const_iterator it = _nameToAtomMapping.begin();
+                                    it != _nameToAtomMapping.end(); ++it) {
+    if ( strcmp(name, it->name) == 0 )
+      return it->atom;
+  }
+  llvm::report_fatal_error("reference to atom that does not exist");
+}
+
+void YAMLFile::addDefinedAtom(YAMLDefinedAtom* atom, const char* refName) {
+  _definedAtoms.push_back(atom);
+  assert(refName != NULL);
+  _nameToAtomMapping.push_back(NameAtomPair(refName, atom));
+}
+
+void YAMLFile::addUndefinedAtom(UndefinedAtom* atom) {
+  _undefinedAtoms.push_back(atom);
+  _nameToAtomMapping.push_back(NameAtomPair(atom->name().data(), atom));
+}
+
 
 class YAMLAtomState {
 public:
   YAMLAtomState();
 
   void setName(const char *n);
+  void setRefName(const char *n);
   void setAlign2(const char *n);
 
   void setFixupKind(const char *n);
   void setFixupOffset(const char *n);
   void setFixupTarget(const char *n);
+  void setFixupAddend(const char *n);
   void addFixup(YAMLFile *f);
 
   void makeAtom(YAMLFile&);
 
   const char *                _name;
+  const char *                _refName;
   const char *                _sectionName;
   unsigned long long          _size;
   uint32_t                    _ordinal;
@@ -482,16 +566,16 @@ public:
   DefinedAtom::Merge          _merge;
   DefinedAtom::DeadStripKind  _deadStrip;
   DefinedAtom::ContentPermissions _permissions;
-  bool                        _internalName;
   bool                        _isThumb;
   bool                        _isAlias;
   bool                        _weakImport;
-  Reference                   _ref;
+  YAMLReference               _ref;
 };
 
 
 YAMLAtomState::YAMLAtomState()
   : _name(NULL)
+  , _refName(NULL)
   , _sectionName(NULL)
   , _size(0)
   , _ordinal(0)
@@ -505,38 +589,31 @@ YAMLAtomState::YAMLAtomState()
   , _merge(KeyValues::mergeDefault)
   , _deadStrip(KeyValues::deadStripKindDefault)
   , _permissions(KeyValues::permissionsDefault)
-  , _internalName(KeyValues::internalNameDefault)
   , _isThumb(KeyValues::isThumbDefault)
   , _isAlias(KeyValues::isAliasDefault) 
   , _weakImport(false)
   {
-  _ref.target       = NULL;
-  _ref.addend       = 0;
-  _ref.offsetInAtom = 0;
-  _ref.kind         = 0;
-  _ref.flags        = 0;
-}
+  }
 
 
 void YAMLAtomState::makeAtom(YAMLFile& f) {
   if ( _definition == Atom::definitionRegular ) {
-    DefinedAtom *a = new YAMLDefinedAtom(_ordinal, f, _scope, _type,
+    YAMLDefinedAtom *a = new YAMLDefinedAtom(_ordinal, f, _scope, _type,
                           _sectionChoice, _interpose, _merge, _deadStrip,
-                          _permissions,  _internalName, _isThumb, _isAlias, 
+                          _permissions, _isThumb, _isAlias, 
                           _alignment, _name, _sectionName, _size, _content);
-
-    f._definedAtoms.push_back(a);
+    f.addDefinedAtom(a, _refName ? _refName : _name);
     ++_ordinal;
   }
   else if ( _definition == Atom::definitionUndefined ) {
     UndefinedAtom *a = new YAMLUndefinedAtom(f, _ordinal, _name, _weakImport);
-
-    f._undefinedAtoms.push_back(a);
+    f.addUndefinedAtom(a);
     ++_ordinal;
   }
   
   // reset state for next atom
   _name             = NULL;
+  _refName          = NULL;
   _sectionName      = NULL;
   _size             = 0;
   _ordinal          = 0;
@@ -554,17 +631,20 @@ void YAMLAtomState::makeAtom(YAMLFile& f) {
   _isThumb          = KeyValues::isThumbDefault;
   _isAlias          = KeyValues::isAliasDefault;
   _weakImport       = KeyValues::weakImportDefault;
-  _ref.target       = NULL;
-  _ref.addend       = 0;
-  _ref.offsetInAtom = 0;
-  _ref.kind         = 0;
-  _ref.flags        = 0;
+  _ref._target       = NULL;
+  _ref._targetName   = NULL;
+  _ref._addend       = 0;
+  _ref._offsetInAtom = 0;
+  _ref._kind         = 0;
 }
 
 void YAMLAtomState::setName(const char *n) {
   _name = n;
 }
 
+void YAMLAtomState::setRefName(const char *n) {
+  _refName = n;
+}
 
 void YAMLAtomState::setAlign2(const char *s) {
   llvm::StringRef str(s);
@@ -576,33 +656,54 @@ void YAMLAtomState::setAlign2(const char *s) {
 
 void YAMLAtomState::setFixupKind(const char *s) {
   if (strcmp(s, "pcrel32") == 0)
-    _ref.kind = 1;
+    _ref._kind = 1;
   else if (strcmp(s, "call32") == 0)
-    _ref.kind = 2;
-  else
-    llvm::report_fatal_error("bad fixup kind value");
+    _ref._kind = 2;
+  else {
+    int k;
+    llvm::StringRef(s).getAsInteger(10, k);
+    _ref._kind = k;
+  }
 }
 
 void YAMLAtomState::setFixupOffset(const char *s) {
   if ((s[0] == '0') && (s[1] == 'x'))
-    llvm::StringRef(s).getAsInteger(16, _ref.offsetInAtom);
+    llvm::StringRef(s).getAsInteger(16, _ref._offsetInAtom);
   else
-    llvm::StringRef(s).getAsInteger(10, _ref.offsetInAtom);
+    llvm::StringRef(s).getAsInteger(10, _ref._offsetInAtom);
 }
 
 void YAMLAtomState::setFixupTarget(const char *s) {
+  _ref._targetName = s;
 }
+
+void YAMLAtomState::setFixupAddend(const char *s) {
+  if ((s[0] == '0') && (s[1] == 'x'))
+    llvm::StringRef(s).getAsInteger(16, _ref._addend);
+  else
+    llvm::StringRef(s).getAsInteger(10, _ref._addend);
+}
+
 
 void YAMLAtomState::addFixup(YAMLFile *f) {
   f->_references.push_back(_ref);
   // clear for next ref
-  _ref.target       = NULL;
-  _ref.addend       = 0;
-  _ref.offsetInAtom = 0;
-  _ref.kind         = 0;
-  _ref.flags        = 0;
+  _ref._target       = NULL;
+  _ref._targetName   = NULL;
+  _ref._addend       = 0;
+  _ref._offsetInAtom = 0;
+  _ref._kind         = 0;
 }
 
+
+} // anonymous namespace
+
+
+
+
+
+/// parseObjectText - Parse the specified YAML formatted MemoryBuffer
+/// into lld::File object(s) and append each to the specified vector<File*>.
 llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
                                 , std::vector<File *> &result) {
   std::vector<const YAML::Entry *> entries;
@@ -628,6 +729,7 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           atomState.makeAtom(*file);
           haveAtom = false;
         }
+        file->bindTargetReferences();
         result.push_back(file);
       }
       file = new YAMLFile();
@@ -663,10 +765,10 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           atomState.setName(entry->value);
           haveAtom = true;
         } 
-        else if (strcmp(entry->key, KeyValues::internalNameKeyword) == 0) {
-          atomState._internalName = KeyValues::internalName(entry->value);
+        else if (strcmp(entry->key, KeyValues::refNameKeyword) == 0) {
+          atomState.setRefName(entry->value);
           haveAtom = true;
-        }
+        } 
         else if (strcmp(entry->key, KeyValues::definitionKeyword) == 0) {
           atomState._definition = KeyValues::definition(entry->value);
           haveAtom = true;
@@ -725,8 +827,9 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           atomState.setAlign2(entry->value);
           haveAtom = true;
         } 
-        else if (strcmp(entry->key, "fixups") == 0) {
+        else if (strcmp(entry->key, KeyValues::fixupsKeyword) == 0) {
           inFixups = true;
+          
         }
         else {
           return make_error_code(yaml_reader_error::unknown_keyword);
@@ -739,14 +842,20 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
             haveFixup = false;
           }
         }
-        if (strcmp(entry->key, "kind") == 0) {
+        if (strcmp(entry->key, KeyValues::fixupsKindKeyword) == 0) {
           atomState.setFixupKind(entry->value);
           haveFixup = true;
-        } else if (strcmp(entry->key, "offset") == 0) {
+        } 
+        else if (strcmp(entry->key, KeyValues::fixupsOffsetKeyword) == 0) {
           atomState.setFixupOffset(entry->value);
           haveFixup = true;
-        } else if (strcmp(entry->key, "target") == 0) {
+        } 
+        else if (strcmp(entry->key, KeyValues::fixupsTargetKeyword) == 0) {
           atomState.setFixupTarget(entry->value);
+          haveFixup = true;
+        }
+        else if (strcmp(entry->key, KeyValues::fixupsAddendKeyword) == 0) {
+          atomState.setFixupAddend(entry->value);
           haveFixup = true;
         }
       }
@@ -757,9 +866,11 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
     atomState.makeAtom(*file);
   }
 
+  file->bindTargetReferences();
   result.push_back(file);
   return make_error_code(yaml_reader_error::success);
 }
+
 
 //
 // Fill in vector<File*> from path to input text file.

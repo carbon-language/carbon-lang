@@ -234,8 +234,9 @@ int main(int argc, const char *argv[]) {
 
   // read native file
   llvm::OwningPtr<lld::File> natFile;
-  parseNativeObjectFileOrSTDIN(tempPath, natFile);
-
+  if ( error(parseNativeObjectFileOrSTDIN(tempPath, natFile)) ) 
+	return 1;
+	
   // write new atom graph out as YAML doc
   yaml::writeObjectText(*natFile, out);
 
