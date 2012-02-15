@@ -15,9 +15,9 @@
 #ifndef LLVM_CODEGEN_TARGETLOWERINGOBJECTFILEIMPL_H
 #define LLVM_CODEGEN_TARGETLOWERINGOBJECTFILEIMPL_H
 
-#include "llvm/ADT/StringRef.h"
 #include "llvm/MC/SectionKind.h"
 #include "llvm/Target/TargetLoweringObjectFile.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
   class MachineModuleInfo;
@@ -80,7 +80,8 @@ public:
 
   /// emitModuleFlags - Emit the module flags that specify the garbage
   /// collection information.
-  virtual void emitModuleFlags(MCStreamer &Streamer, NamedMDNode *ModFlags,
+  virtual void emitModuleFlags(MCStreamer &Streamer,
+                               ArrayRef<Module::ModuleFlagEntry> ModuleFlags,
                                Mangler *Mang, const TargetMachine &TM) const;
 
   virtual const MCSection *

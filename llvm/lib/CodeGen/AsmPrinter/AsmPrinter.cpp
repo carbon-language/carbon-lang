@@ -858,8 +858,10 @@ bool AsmPrinter::doFinalization(Module &M) {
   }
 
   // Emit module flags.
-  if (NamedMDNode *ModFlags = M.getModuleFlagsMetadata())
-    getObjFileLowering().emitModuleFlags(OutStreamer, ModFlags, Mang, TM);
+  SmallVector<Module::ModuleFlagEntry, 8> ModuleFlags;
+  M.getModuleFlagsMetadata(ModuleFlags);
+  if (!ModuleFlags.empty())
+    getObjFileLowering().emitModuleFlags(OutStreamer, ModuleFlags, Mang, TM);
 
   // Finalize debug and EH information.
   if (DE) {

@@ -15,9 +15,11 @@
 #ifndef LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
 #define LLVM_TARGET_TARGETLOWERINGOBJECTFILE_H
 
-#include "llvm/ADT/StringRef.h"
+#include "llvm/Module.h"
 #include "llvm/MC/MCObjectFileInfo.h"
 #include "llvm/MC/SectionKind.h"
+#include "llvm/ADT/ArrayRef.h"
+#include "llvm/ADT/StringRef.h"
 
 namespace llvm {
   class MachineModuleInfo;
@@ -56,8 +58,9 @@ public:
                                     const MCSymbol *Sym) const;
 
   /// emitModuleFlags - Emit the module flags that the platform cares about.
-  virtual void emitModuleFlags(MCStreamer &, NamedMDNode *, Mangler *,
-                               const TargetMachine &) const {
+  virtual void emitModuleFlags(MCStreamer &,
+                               ArrayRef<Module::ModuleFlagEntry>,
+                               Mangler *, const TargetMachine &) const {
   }
 
   /// shouldEmitUsedDirectiveFor - This hook allows targets to selectively
