@@ -78,6 +78,7 @@ public:
   bool getEnableTailMerge() const { return EnableTailMerge; }
   void setEnableTailMerge(bool Enable) { setOpt(EnableTailMerge, Enable); }
 
+  /// Return true if the optimized regalloc pipeline is enabled.
   bool getOptimizeRegAlloc() const;
 
   /// Add common target configurable passes that perform LLVM IR to IR
