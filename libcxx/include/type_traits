@@ -1165,7 +1165,7 @@ private:
     static _Up&& __u();
     static bool __f();
 public:
-    typedef decltype(__f() ? __t() : __u()) type;
+    typedef typename remove_reference<decltype(__f() ? __t() : __u())>::type type;
 };
 
 template <class _Tp, class _Up, class ..._Vp>
