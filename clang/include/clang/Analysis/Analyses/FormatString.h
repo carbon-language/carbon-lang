@@ -467,10 +467,11 @@ public:
   const OptionalFlag &hasSpacePrefix() const { return HasSpacePrefix; }
   bool usesPositionalArg() const { return UsesPositionalArg; }
 
-    /// Changes the specifier and length according to a QualType, retaining any
-    /// flags or options. Returns true on success, or false when a conversion
-    /// was not successful.
-  bool fixType(QualType QT, const LangOptions &LangOpt);
+  /// Changes the specifier and length according to a QualType, retaining any
+  /// flags or options. Returns true on success, or false when a conversion
+  /// was not successful.
+  bool fixType(QualType QT, const LangOptions &LangOpt, ASTContext &Ctx,
+               bool IsObjCLiteral);
 
   void toString(raw_ostream &os) const;
 
@@ -567,7 +568,7 @@ public:
 
   ScanfArgTypeResult getArgType(ASTContext &Ctx) const;
 
-  bool fixType(QualType QT, const LangOptions &LangOpt);
+  bool fixType(QualType QT, const LangOptions &LangOpt, ASTContext &Ctx);
 
   void toString(raw_ostream &os) const;
 

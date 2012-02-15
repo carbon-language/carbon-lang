@@ -336,7 +336,8 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx,
   return ArgTypeResult();
 }
 
-bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt) {
+bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
+                              ASTContext &Ctx, bool IsObjCLiteral) {
   // Handle strings first (char *, wchar_t *)
   if (QT->isPointerType() && (QT->getPointeeType()->isAnyCharacterType())) {
     CS.setKind(ConversionSpecifier::sArg);
@@ -432,6 +433,11 @@ bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt) {
     }
   }
 
+  // If fixing the length modifier was enough, we are done.
+  const analyze_printf::ArgTypeResult &ATR = getArgType(Ctx, IsObjCLiteral);
+  if (hasValidLengthModifier() && ATR.isValid() && ATR.matchesType(Ctx, QT))
+    return true;
+
   // Set conversion specifier and disable any flags which do not apply to it.
   // Let typedefs to char fall through to int, as %c is silly for uint8_t.
   if (isa<TypedefType>(QT) && QT->isAnyCharacterType()) {
@@ -451,9 +457,7 @@ bool PrintfSpecifier::fixType(QualType QT, const LangOptions &LangOpt) {
     HasAlternativeForm = 0;
   }
   else if (QT->isUnsignedIntegerType()) {
-    // Preserve the original formatting, e.g. 'X', 'o'.
-    if (!cast<PrintfConversionSpecifier>(CS).isUIntArg())
-      CS.setKind(ConversionSpecifier::uArg);
+    CS.setKind(ConversionSpecifier::uArg);
     HasAlternativeForm = 0;
     HasPlusPrefix = 0;
   } else {

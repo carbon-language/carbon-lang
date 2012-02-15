@@ -307,8 +307,8 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
   return ScanfArgTypeResult();
 }
 
-bool ScanfSpecifier::fixType(QualType QT, const LangOptions &LangOpt)
-{
+bool ScanfSpecifier::fixType(QualType QT, const LangOptions &LangOpt,
+                             ASTContext &Ctx) {
   if (!QT->isPointerType())
     return false;
 
@@ -390,17 +390,19 @@ bool ScanfSpecifier::fixType(QualType QT, const LangOptions &LangOpt)
     }
   }
 
+  // If fixing the length modifier was enough, we are done.
+  const analyze_scanf::ScanfArgTypeResult &ATR = getArgType(Ctx);
+  if (hasValidLengthModifier() && ATR.isValid() && ATR.matchesType(Ctx, QT))
+    return true;
+
   // Figure out the conversion specifier.
   if (PT->isRealFloatingType())
     CS.setKind(ConversionSpecifier::fArg);
   else if (PT->isSignedIntegerType())
     CS.setKind(ConversionSpecifier::dArg);
-  else if (PT->isUnsignedIntegerType()) {
-    // Preserve the original formatting, e.g. 'X', 'o'.
-    if (!CS.isUIntArg()) {
-      CS.setKind(ConversionSpecifier::uArg);
-    }
-  } else
+  else if (PT->isUnsignedIntegerType())
+    CS.setKind(ConversionSpecifier::uArg);
+  else
     llvm_unreachable("Unexpected type");
 
   return true;

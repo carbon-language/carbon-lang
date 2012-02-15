@@ -48,7 +48,7 @@ void test() {
   printf("%hhs", "foo");
   printf("%1$zp", (void *)0);
 
-  // Perserve the original formatting for unsigned integers.
+  // Preserve the original formatting for unsigned integers.
   unsigned long val = 42;
   printf("%X", val);
 
@@ -60,6 +60,21 @@ void test() {
 
   // string
   printf("%ld", "foo");
+
+  // Preserve the original choice of conversion specifier.
+  printf("%o", (long) 42);
+  printf("%u", (long) 42);
+  printf("%x", (long) 42);
+  printf("%X", (long) 42);
+  printf("%i", (unsigned long) 42);
+  printf("%d", (unsigned long) 42);
+  printf("%F", (long double) 42);
+  printf("%e", (long double) 42);
+  printf("%E", (long double) 42);
+  printf("%g", (long double) 42);
+  printf("%G", (long double) 42);
+  printf("%a", (long double) 42);
+  printf("%A", (long double) 42);
 }
 
 int scanf(char const *, ...);
@@ -101,20 +116,30 @@ void test2() {
   scanf("%f", &uIntmaxVar);
   scanf("%f", &ptrdiffVar);
 
-  // Perserve the original formatting for unsigned integers.
-  scanf("%o", &uLongVar);
-  scanf("%x", &uLongVar);
-  scanf("%X", &uLongVar);
+  // Preserve the original formatting.
+  scanf("%o", &longVar);
+  scanf("%u", &longVar);
+  scanf("%x", &longVar);
+  scanf("%X", &longVar);
+  scanf("%i", &uLongVar);
+  scanf("%d", &uLongVar);
+  scanf("%F", &longDoubleVar);
+  scanf("%e", &longDoubleVar);
+  scanf("%E", &longDoubleVar);
+  scanf("%g", &longDoubleVar);
+  scanf("%G", &longDoubleVar);
+  scanf("%a", &longDoubleVar);
+  scanf("%A", &longDoubleVar);
 }
 
-// Validate the fixes...
+// Validate the fixes.
 // CHECK: printf("%d", (int) 123);
 // CHECK: printf("abc%s", "testing testing 123");
-// CHECK: printf("%ld", (long) -12);
+// CHECK: printf("%lu", (long) -12);
 // CHECK: printf("%d", 123);
 // CHECK: printf("%s\n", "x");
 // CHECK: printf("%f\n", 1.23);
-// CHECK: printf("%.2llu", (unsigned long long) 123456);
+// CHECK: printf("%+.2lld", (unsigned long long) 123456);
 // CHECK: printf("%1Lf", (long double) 1.23);
 // CHECK: printf("%0u", (unsigned) 31337);
 // CHECK: printf("%p", (void *) 0);
@@ -132,6 +157,19 @@ void test2() {
 // CHECK: printf("%ju", (uintmax_t) 42);
 // CHECK: printf("%td", (ptrdiff_t) 42);
 // CHECK: printf("%s", "foo");
+// CHECK: printf("%lo", (long) 42);
+// CHECK: printf("%lu", (long) 42);
+// CHECK: printf("%lx", (long) 42);
+// CHECK: printf("%lX", (long) 42);
+// CHECK: printf("%li", (unsigned long) 42);
+// CHECK: printf("%ld", (unsigned long) 42);
+// CHECK: printf("%LF", (long double) 42);
+// CHECK: printf("%Le", (long double) 42);
+// CHECK: printf("%LE", (long double) 42);
+// CHECK: printf("%Lg", (long double) 42);
+// CHECK: printf("%LG", (long double) 42);
+// CHECK: printf("%La", (long double) 42);
+// CHECK: printf("%LA", (long double) 42);
 
 // CHECK: scanf("%s", str);
 // CHECK: scanf("%hd", &shortVar);
@@ -149,6 +187,16 @@ void test2() {
 // CHECK: scanf("%jd", &intmaxVar);
 // CHECK: scanf("%ju", &uIntmaxVar);
 // CHECK: scanf("%td", &ptrdiffVar);
-// CHECK: scanf("%lo", &uLongVar);
-// CHECK: scanf("%lx", &uLongVar);
-// CHECK: scanf("%lX", &uLongVar);
+// CHECK: scanf("%lo", &longVar);
+// CHECK: scanf("%lu", &longVar);
+// CHECK: scanf("%lx", &longVar);
+// CHECK: scanf("%lX", &longVar);
+// CHECK: scanf("%li", &uLongVar);
+// CHECK: scanf("%ld", &uLongVar);
+// CHECK: scanf("%LF", &longDoubleVar);
+// CHECK: scanf("%Le", &longDoubleVar);
+// CHECK: scanf("%LE", &longDoubleVar);
+// CHECK: scanf("%Lg", &longDoubleVar);
+// CHECK: scanf("%LG", &longDoubleVar);
+// CHECK: scanf("%La", &longDoubleVar);
+// CHECK: scanf("%LA", &longDoubleVar);

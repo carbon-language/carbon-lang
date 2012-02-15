@@ -2181,7 +2181,8 @@ CheckPrintfHandler::HandlePrintfSpecifier(const analyze_printf::PrintfSpecifier
 
     // We may be able to offer a FixItHint if it is a supported type.
     PrintfSpecifier fixedFS = FS;
-    bool success = fixedFS.fixType(Ex->getType(), S.getLangOptions());
+    bool success = fixedFS.fixType(Ex->getType(), S.getLangOptions(),
+                                   S.Context, IsObjCLiteral);
 
     if (success) {
       // Get the fix string from the fixed format specifier
@@ -2340,7 +2341,8 @@ bool CheckScanfHandler::HandleScanfSpecifier(
   const analyze_scanf::ScanfArgTypeResult &ATR = FS.getArgType(S.Context);
   if (ATR.isValid() && !ATR.matchesType(S.Context, Ex->getType())) {
     ScanfSpecifier fixedFS = FS;
-    bool success = fixedFS.fixType(Ex->getType(), S.getLangOptions());
+    bool success = fixedFS.fixType(Ex->getType(), S.getLangOptions(),
+                                   S.Context);
 
     if (success) {
       // Get the fix string from the fixed format specifier.
