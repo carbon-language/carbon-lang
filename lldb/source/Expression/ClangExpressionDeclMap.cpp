@@ -2611,12 +2611,13 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
         
         if (!context.m_found.variable)
         {
-            const bool include_symbols = true;
             const bool include_inlines = false;
             const bool append = false;
             
             if (namespace_decl && module_sp)
             {
+                const bool include_symbols = false;
+
                 module_sp->FindFunctions(name,
                                          &namespace_decl,
                                          eFunctionNameTypeBase, 
@@ -2627,6 +2628,8 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             }
             else
             {
+                const bool include_symbols = true;
+                
                 target->GetImages().FindFunctions(name,
                                                   eFunctionNameTypeBase,
                                                   include_symbols,
