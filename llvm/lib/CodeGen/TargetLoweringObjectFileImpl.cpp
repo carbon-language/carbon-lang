@@ -410,16 +410,15 @@ emitModuleFlags(MCStreamer &Streamer,
   std::string ErrorCode =
     MCSectionMachO::ParseSectionSpecifier(SectionVal, Segment, Section,
                                           TAA, TAAParsed, StubSize);
-  if (!ErrorCode.empty()) {
+  if (!ErrorCode.empty())
     // If invalid, report the error with report_fatal_error.
-    report_fatal_error("Invalid section specifier '" +
-                       Section + "': " + ErrorCode + ".");
-  }
+    report_fatal_error("Invalid section specifier '" + Section + "': " +
+                       ErrorCode + ".");
 
   // Get the section.
   const MCSectionMachO *S =
     getContext().getMachOSection(Segment, Section, TAA, StubSize,
-                                 SectionKind::getDataRel());
+                                 SectionKind::getDataNoRel());
   Streamer.SwitchSection(S);
   Streamer.EmitLabel(getContext().
                      GetOrCreateSymbol(StringRef("L_OBJC_IMAGE_INFO")));
