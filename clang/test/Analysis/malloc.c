@@ -3,6 +3,7 @@
 
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);
+void *valloc(size_t);
 void free(void *);
 void *realloc(void *ptr, size_t size);
 void *calloc(size_t nmemb, size_t size);
@@ -404,6 +405,18 @@ void mallocFailedOrNotLeak() {
     return; // no warning
   else
     return; // expected-warning {{Allocated memory never released. Potential memory leak.}}
+}
+
+int vallocTest() {
+  char *mem = valloc(12);
+  return 0; // expected-warning {{Allocated memory never released. Potential memory leak.}}
+}
+
+void vallocEscapeFreeUse() {
+  int *p = valloc(12);
+  myfoo(p);
+  free(p);
+  myfoo(p); // expected-warning{{Use of dynamically allocated memory after it is freed.}}
 }
 
 int *Gl;

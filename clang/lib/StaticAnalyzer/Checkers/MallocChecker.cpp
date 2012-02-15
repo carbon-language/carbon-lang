@@ -82,10 +82,12 @@ class MallocChecker : public Checker<check::DeadSymbols,
   mutable OwningPtr<BuiltinBug> BT_UseFree;
   mutable OwningPtr<BuiltinBug> BT_UseRelinquished;
   mutable OwningPtr<BuiltinBug> BT_BadFree;
-  mutable IdentifierInfo *II_malloc, *II_free, *II_realloc, *II_calloc;
+  mutable IdentifierInfo *II_malloc, *II_free, *II_realloc, *II_calloc,
+                         *II_valloc;
 
 public:
-  MallocChecker() : II_malloc(0), II_free(0), II_realloc(0), II_calloc(0) {}
+  MallocChecker() : II_malloc(0), II_free(0), II_realloc(0), II_calloc(0),
+                    II_valloc(0) {}
 
   /// In pessimistic mode, the checker assumes that it does not know which
   /// functions might free the memory.
@@ -241,6 +243,8 @@ void MallocChecker::initIdentifierInfo(ASTContext &Ctx) const {
     II_realloc = &Ctx.Idents.get("realloc");
   if (!II_calloc)
     II_calloc = &Ctx.Idents.get("calloc");
+  if (!II_valloc)
+    II_valloc = &Ctx.Idents.get("valloc");
 }
 
 bool MallocChecker::isMemFunction(const FunctionDecl *FD, ASTContext &C) const {
@@ -251,7 +255,7 @@ bool MallocChecker::isMemFunction(const FunctionDecl *FD, ASTContext &C) const {
 
   // TODO: Add more here : ex: reallocf!
   if (FunI == II_malloc || FunI == II_free ||
-      FunI == II_realloc || FunI == II_calloc)
+      FunI == II_realloc || FunI == II_calloc || FunI == II_valloc)
     return true;
 
   if (Filter.CMallocOptimistic && FD->hasAttrs() &&
@@ -267,23 +271,22 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
   const FunctionDecl *FD = C.getCalleeDecl(CE);
   if (!FD)
     return;
-  initIdentifierInfo(C.getASTContext());
 
-  if (FD->getIdentifier() == II_malloc) {
+  initIdentifierInfo(C.getASTContext());
+  IdentifierInfo *FunI = FD->getIdentifier();
+  if (!FunI)
+    return;
+
+  if (FunI == II_malloc || FunI == II_valloc) {
     MallocMem(C, CE);
     return;
-  }
-  if (FD->getIdentifier() == II_realloc) {
+  } else if (FunI == II_realloc) {
     ReallocMem(C, CE);
     return;
-  }
-
-  if (FD->getIdentifier() == II_calloc) {
+  } else if (FunI == II_calloc) {
     CallocMem(C, CE);
     return;
-  }
-
-  if (FD->getIdentifier() == II_free) {
+  }else if (FunI == II_free) {
     FreeMem(C, CE);
     return;
   }
@@ -342,6 +345,10 @@ ProgramStateRef MallocChecker::MallocMemAux(CheckerContext &C,
 
   // Get the return value.
   SVal retVal = state->getSVal(CE, C.getLocationContext());
+
+  // We expect the malloc functions to return a pointer.
+  if (!isa<Loc>(retVal))
+    return 0;
 
   // Fill the region with the initialization value.
   state = state->bindDefault(retVal, Init);
