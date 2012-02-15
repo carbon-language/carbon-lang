@@ -970,7 +970,7 @@ void LiveIntervals::handleMove(MachineInstr *mi) {
 
   MachineBasicBlock* mbb = mi->getParent();
   
-  assert(getMBBFromIndex(origIdx) == mbb &&
+  assert(getMBBStartIdx(mbb) <= origIdx && origIdx < getMBBEndIdx(mbb) &&
          "Cannot handle moves across basic block boundaries.");
   assert(!mi->isBundled() && "Can't handle bundled instructions yet.");
 
