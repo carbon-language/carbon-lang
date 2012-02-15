@@ -1849,7 +1849,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
         !Context.hasSameType(ReturnT, CurCap->ReturnType)) { 
       Diag(ReturnLoc, diag::err_typecheck_missing_return_type_incompatible) 
           << ReturnT << CurCap->ReturnType
-          << getCurLambda() != 0;
+          << (getCurLambda() != 0);
       return StmtError();
     }
     CurCap->ReturnType = ReturnT;
