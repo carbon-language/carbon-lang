@@ -1608,6 +1608,9 @@ class CodeGeneration : public ScopPass {
     newBlock = SplitEdge(region->getEnteringBlock(), region->getEntry(), this);
 
     if (DT->dominates(region->getEntry(), newBlock)) {
+      BasicBlock *OldBlock = region->getEntry();
+      std::string OldName = OldBlock->getName();
+
       // Update ScopInfo.
       for (Scop::iterator SI = S->begin(), SE = S->end(); SI != SE; ++SI)
         if ((*SI)->getBasicBlock() == newBlock) {
@@ -1616,7 +1619,9 @@ class CodeGeneration : public ScopPass {
         }
 
       // Update RegionInfo.
-      splitBlock = region->getEntry();
+      splitBlock = OldBlock;
+      OldBlock->setName("polly.split");
+      newBlock->setName(OldName);
       region->replaceEntry(newBlock);
       RI->setRegionFor(newBlock, region);
     } else {
