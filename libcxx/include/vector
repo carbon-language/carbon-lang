@@ -366,7 +366,7 @@ protected:
 
     _LIBCPP_INLINE_VISIBILITY
     void __destruct_at_end(const_pointer __new_last) _NOEXCEPT
-        {__destruct_at_end(__new_last, is_trivially_destructible<value_type>());}
+        {__destruct_at_end(__new_last, false_type());}
     _LIBCPP_INLINE_VISIBILITY
     void __destruct_at_end(const_pointer __new_last, false_type) _NOEXCEPT;
     _LIBCPP_INLINE_VISIBILITY
@@ -439,7 +439,7 @@ _LIBCPP_INLINE_VISIBILITY inline
 void
 __vector_base<_Tp, _Allocator>::__destruct_at_end(const_pointer __new_last, false_type) _NOEXCEPT
 {
-    while (__new_last < __end_)
+    while (__new_last != __end_)
         __alloc_traits::destroy(__alloc(), const_cast<pointer>(--__end_));
 }
 
@@ -676,7 +676,7 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY void push_back(const_reference __x);
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
-    void push_back(value_type&& __x);
+    _LIBCPP_INLINE_VISIBILITY void push_back(value_type&& __x);
 #ifndef _LIBCPP_HAS_NO_VARIADICS
     template <class... _Args>
         void emplace_back(_Args&&... __args);
@@ -789,14 +789,20 @@ private:
 #endif
         __base::__destruct_at_end(__new_last);
     }
+    template <class _Up>
+        void
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+        __push_back_slow_path(_Up&& __x);
+#else
+        __push_back_slow_path(_Up& __x);
+#endif
 };
 
 template <class _Tp, class _Allocator>
 void
 vector<_Tp, _Allocator>::__swap_out_circular_buffer(__split_buffer<value_type, allocator_type&>& __v)
 {
-    for (pointer __p = this->__end_; this->__begin_ < __p;)
-        __v.push_front(_VSTD::move_if_noexcept(*--__p));
+    __alloc_traits::__construct_backward(this->__alloc(), this->__begin_, this->__end_, __v.__begin_);
     _VSTD::swap(this->__begin_, __v.__begin_);
     _VSTD::swap(this->__end_, __v.__end_);
     _VSTD::swap(this->__end_cap(), __v.__end_cap());
@@ -809,10 +815,8 @@ typename vector<_Tp, _Allocator>::pointer
 vector<_Tp, _Allocator>::__swap_out_circular_buffer(__split_buffer<value_type, allocator_type&>& __v, pointer __p)
 {
     pointer __r = __v.__begin_;
-    for (pointer __i = __p; this->__begin_ < __i;)
-        __v.push_front(_VSTD::move_if_noexcept(*--__i));
-    for (pointer __i = __p; __i < this->__end_; ++__i)
-        __v.push_back(_VSTD::move_if_noexcept(*__i));
+    __alloc_traits::__construct_backward(this->__alloc(), this->__begin_, __p, __v.__begin_);
+    __alloc_traits::__construct_forward(this->__alloc(), __p, this->__end_, __v.__end_);
     _VSTD::swap(this->__begin_, __v.__begin_);
     _VSTD::swap(this->__end_, __v.__end_);
     _VSTD::swap(this->__end_cap(), __v.__end_cap());
@@ -1438,27 +1442,40 @@ vector<_Tp, _Allocator>::shrink_to_fit() _NOEXCEPT
 }
 
 template <class _Tp, class _Allocator>
+template <class _Up>
+void
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+vector<_Tp, _Allocator>::__push_back_slow_path(_Up&& __x)
+#else
+vector<_Tp, _Allocator>::__push_back_slow_path(_Up& __x)
+#endif
+{
+    allocator_type& __a = this->__alloc();
+    __split_buffer<value_type, allocator_type&> __v(__recommend(size() + 1), size(), __a);
+    // __v.push_back(_VSTD::forward<_Up>(__x));
+    __alloc_traits::construct(__a, _VSTD::__to_raw_pointer(__v.__end_++), _VSTD::forward<_Up>(__x));
+    __swap_out_circular_buffer(__v);
+}
+
+template <class _Tp, class _Allocator>
+_LIBCPP_INLINE_VISIBILITY inline
 void
 vector<_Tp, _Allocator>::push_back(const_reference __x)
 {
-    if (this->__end_ < this->__end_cap())
+    if (this->__end_ != this->__end_cap())
     {
         __alloc_traits::construct(this->__alloc(),
                                   _VSTD::__to_raw_pointer(this->__end_), __x);
         ++this->__end_;
     }
     else
-    {
-        allocator_type& __a = this->__alloc();
-        __split_buffer<value_type, allocator_type&> __v(__recommend(size() + 1), size(), __a);
-        __v.push_back(__x);
-        __swap_out_circular_buffer(__v);
-    }
+        __push_back_slow_path(__x);
 }
 
 #ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
 
 template <class _Tp, class _Allocator>
+_LIBCPP_INLINE_VISIBILITY inline
 void
 vector<_Tp, _Allocator>::push_back(value_type&& __x)
 {
@@ -1470,12 +1487,7 @@ vector<_Tp, _Allocator>::push_back(value_type&& __x)
         ++this->__end_;
     }
     else
-    {
-        allocator_type& __a = this->__alloc();
-        __split_buffer<value_type, allocator_type&> __v(__recommend(size() + 1), size(), __a);
-        __v.push_back(_VSTD::move(__x));
-        __swap_out_circular_buffer(__v);
-    }
+        __push_back_slow_path(_VSTD::move(__x));
 }
 
 #ifndef _LIBCPP_HAS_NO_VARIADICS

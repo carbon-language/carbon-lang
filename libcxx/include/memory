@@ -597,6 +597,7 @@ void* align(size_t alignment, size_t size, void*& ptr, size_t& space);
 #include <__functional_base>
 #include <iosfwd>
 #include <tuple>
+#include <cstring>
 #if defined(_LIBCPP_NO_EXCEPTIONS)
     #include <cassert>
 #endif
@@ -1395,6 +1396,14 @@ struct __has_construct
 {
 };
 
+#else  // _LIBCPP_HAS_NO_VARIADICS
+
+template <class _Alloc, class _Pointer, class _Args>
+struct __has_construct
+    : false_type
+{
+};
+
 #endif  // _LIBCPP_HAS_NO_VARIADICS
 
 template <class _Alloc, class _Pointer>
@@ -1523,6 +1532,60 @@ struct _LIBCPP_VISIBLE allocator_traits
             {return select_on_container_copy_construction(
                 __has_select_on_container_copy_construction<const allocator_type>(),
                 __a);}
+
+    template <class _Ptr>
+        _LIBCPP_INLINE_VISIBILITY
+        static
+        void
+        __construct_forward(allocator_type& __a, _Ptr __begin1, _Ptr __end1, _Ptr& __begin2)
+        {
+            for (; __begin1 != __end1; ++__begin1, ++__begin2)
+                construct(__a, _VSTD::__to_raw_pointer(__begin2), _VSTD::move_if_noexcept(*__begin1));
+        }
+
+    template <class _Tp>
+        _LIBCPP_INLINE_VISIBILITY
+        static
+        typename enable_if
+        <
+            (is_same<allocator_type, allocator<_Tp> >::value
+                || !__has_construct<allocator_type, _Tp*, _Tp>::value) &&
+             is_trivially_move_constructible<_Tp>::value,
+            void
+        >::type
+        __construct_forward(allocator_type& __a, _Tp* __begin1, _Tp* __end1, _Tp*& __begin2)
+        {
+            ptrdiff_t _Np = __end1 - __begin1;
+            _VSTD::memcpy(__begin2, __begin1, _Np * sizeof(_Tp));
+            __begin2 += _Np;
+        }
+
+    template <class _Ptr>
+        _LIBCPP_INLINE_VISIBILITY
+        static
+        void
+        __construct_backward(allocator_type& __a, _Ptr __begin1, _Ptr __end1, _Ptr& __end2)
+        {
+            while (__end1 != __begin1)
+                construct(__a, _VSTD::__to_raw_pointer(--__end2), _VSTD::move_if_noexcept(*--__end1));
+        }
+
+    template <class _Tp>
+        _LIBCPP_INLINE_VISIBILITY
+        static
+        typename enable_if
+        <
+            (is_same<allocator_type, allocator<_Tp> >::value
+                || !__has_construct<allocator_type, _Tp*, _Tp>::value) &&
+             is_trivially_move_constructible<_Tp>::value,
+            void
+        >::type
+        __construct_backward(allocator_type& __a, _Tp* __begin1, _Tp* __end1, _Tp*& __end2)
+        {
+            ptrdiff_t _Np = __end1 - __begin1;
+            __end2 -= _Np;
+            _VSTD::memcpy(__end2, __begin1, _Np * sizeof(_Tp));
+        }
 
 private:
 

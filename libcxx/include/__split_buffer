@@ -95,7 +95,7 @@ public:
     void reserve(size_type __n);
     void shrink_to_fit() _NOEXCEPT;
     void push_front(const_reference __x);
-    void push_back(const_reference __x);
+    _LIBCPP_INLINE_VISIBILITY void push_back(const_reference __x);
 #if !defined(_LIBCPP_HAS_NO_RVALUE_REFERENCES)
     void push_front(value_type&& __x);
     void push_back(value_type&& __x);
@@ -133,8 +133,10 @@ public:
 
     _LIBCPP_INLINE_VISIBILITY
     void __destruct_at_end(pointer __new_last) _NOEXCEPT
-        {__destruct_at_end(__new_last, is_trivially_destructible<value_type>());}
+        {__destruct_at_end(__new_last, false_type());}
+    _LIBCPP_INLINE_VISIBILITY
         void __destruct_at_end(pointer __new_last, false_type) _NOEXCEPT;
+    _LIBCPP_INLINE_VISIBILITY
         void __destruct_at_end(pointer __new_last, true_type) _NOEXCEPT;
 
     void swap(__split_buffer& __x)
@@ -287,7 +289,7 @@ _LIBCPP_INLINE_VISIBILITY inline
 void
 __split_buffer<_Tp, _Allocator>::__destruct_at_begin(pointer __new_begin, false_type)
 {
-    while (__begin_ < __new_begin)
+    while (__begin_ != __new_begin)
         __alloc_traits::destroy(__alloc(), __begin_++);
 }
 
@@ -304,7 +306,7 @@ _LIBCPP_INLINE_VISIBILITY inline
 void
 __split_buffer<_Tp, _Allocator>::__destruct_at_end(pointer __new_last, false_type) _NOEXCEPT
 {
-    while (__new_last < __end_)
+    while (__new_last != __end_)
         __alloc_traits::destroy(__alloc(), --__end_);
 }
 
