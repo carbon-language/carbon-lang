@@ -265,10 +265,13 @@ void MallocChecker::initIdentifierInfo(ASTContext &Ctx) const {
 }
 
 bool MallocChecker::isMemFunction(const FunctionDecl *FD, ASTContext &C) const {
-  initIdentifierInfo(C);
+  if (!FD)
+    return false;
   IdentifierInfo *FunI = FD->getIdentifier();
   if (!FunI)
     return false;
+
+  initIdentifierInfo(C);
 
   // TODO: Add more here : ex: reallocf!
   if (FunI == II_malloc || FunI == II_free || FunI == II_realloc ||
@@ -1006,7 +1009,8 @@ MallocChecker::checkRegionChanges(ProgramStateRef State,
     return State;
   llvm::SmallPtrSet<SymbolRef, 8> WhitelistedSymbols;
 
-  const FunctionDecl *FD = (Call ? dyn_cast<FunctionDecl>(Call->getDecl()) : 0);
+  const FunctionDecl *FD = (Call ?
+                            dyn_cast_or_null<FunctionDecl>(Call->getDecl()) :0);
 
   // If it's a call which might free or reallocate memory, we assume that all
   // regions (explicit and implicit) escaped. Otherwise, whitelist explicit
