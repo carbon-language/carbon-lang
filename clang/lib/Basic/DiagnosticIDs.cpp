@@ -52,19 +52,14 @@ struct StaticDiagInfoRec {
   unsigned WarnShowInSystemHeader : 1;
   unsigned Category : 5;
 
-  uint8_t  NameLen;
   uint8_t  OptionGroupLen;
 
   uint16_t DescriptionLen;
 
-  const char *NameStr;
   const char *OptionGroupStr;
 
   const char *DescriptionStr;
 
-  StringRef getName() const {
-    return StringRef(NameStr, NameLen);
-  }
   StringRef getOptionGroup() const {
     return StringRef(OptionGroupStr, OptionGroupLen);
   }
@@ -75,24 +70,6 @@ struct StaticDiagInfoRec {
 
   bool operator<(const StaticDiagInfoRec &RHS) const {
     return DiagID < RHS.DiagID;
-  }
-};
-
-struct StaticDiagNameIndexRec {
-  const char *NameStr;
-  unsigned short DiagID;
-  uint8_t NameLen;
-
-  StringRef getName() const {
-    return StringRef(NameStr, NameLen);
-  }
-
-  bool operator<(const StaticDiagNameIndexRec &RHS) const {
-    return getName() < RHS.getName();
-  }
-  
-  bool operator==(const StaticDiagNameIndexRec &RHS) const {
-    return getName() == RHS.getName();
   }
 };
 
@@ -113,9 +90,9 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
              CATEGORY)                                            \
   { diag::ENUM, DEFAULT_MAPPING, CLASS, SFINAE, ACCESS,           \
     NOWERROR, SHOWINSYSHEADER, CATEGORY,                          \
-    STR_SIZE(#ENUM, uint8_t), STR_SIZE(GROUP, uint8_t),           \
+    STR_SIZE(GROUP, uint8_t),           \
     STR_SIZE(DESC, uint16_t),                                     \
-    #ENUM, GROUP, DESC },
+    GROUP, DESC },
 #include "clang/Basic/DiagnosticCommonKinds.inc"
 #include "clang/Basic/DiagnosticDriverKinds.inc"
 #include "clang/Basic/DiagnosticFrontendKinds.inc"
@@ -126,22 +103,11 @@ static const StaticDiagInfoRec StaticDiagInfo[] = {
 #include "clang/Basic/DiagnosticSemaKinds.inc"
 #include "clang/Basic/DiagnosticAnalysisKinds.inc"
 #undef DIAG
-  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
+  { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
 };
 
 static const unsigned StaticDiagInfoSize =
   sizeof(StaticDiagInfo)/sizeof(StaticDiagInfo[0])-1;
-
-/// To be sorted before first use (since it's splitted among multiple files)
-static const StaticDiagNameIndexRec StaticDiagNameIndex[] = {
-#define DIAG_NAME_INDEX(ENUM) { #ENUM, diag::ENUM, STR_SIZE(#ENUM, uint8_t) },
-#include "clang/Basic/DiagnosticIndexName.inc"
-#undef DIAG_NAME_INDEX
-  { 0, 0, 0 }
-};
-
-static const unsigned StaticDiagNameIndexSize =
-  sizeof(StaticDiagNameIndex)/sizeof(StaticDiagNameIndex[0])-1;
 
 /// GetDiagInfo - Return the StaticDiagInfoRec entry for the specified DiagID,
 /// or null if the ID is invalid.
@@ -164,7 +130,7 @@ static const StaticDiagInfoRec *GetDiagInfo(unsigned DiagID) {
 
   // Search the diagnostic table with a binary search.
   StaticDiagInfoRec Find = { static_cast<unsigned short>(DiagID),
-                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+                             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 
   const StaticDiagInfoRec *Found =
     std::lower_bound(StaticDiagInfo, StaticDiagInfo + StaticDiagInfoSize, Find);
@@ -286,69 +252,12 @@ DiagnosticIDs::getDiagnosticSFINAEResponse(unsigned DiagID) {
   return SFINAE_Report;
 }
 
-/// getName - Given a diagnostic ID, return its name
-StringRef DiagnosticIDs::getName(unsigned DiagID) {
-  if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
-    return Info->getName();
-  return StringRef();
-}
-
-/// getIdFromName - Given a diagnostic name, return its ID, or 0
-unsigned DiagnosticIDs::getIdFromName(StringRef Name) {
-  const StaticDiagNameIndexRec *StaticDiagNameIndexEnd =
-    StaticDiagNameIndex + StaticDiagNameIndexSize;
-  
-  if (Name.empty()) { return diag::DIAG_UPPER_LIMIT; }
-  
-  assert(Name.size() == static_cast<uint8_t>(Name.size()) &&
-         "Name is too long");
-  StaticDiagNameIndexRec Find = { Name.data(), 0,
-                                  static_cast<uint8_t>(Name.size()) };
-  
-  const StaticDiagNameIndexRec *Found =
-    std::lower_bound( StaticDiagNameIndex, StaticDiagNameIndexEnd, Find);
-  if (Found == StaticDiagNameIndexEnd ||
-      Found->getName() != Name)
-    return diag::DIAG_UPPER_LIMIT;
-  
-  return Found->DiagID;
-}
-
 /// getBuiltinDiagClass - Return the class field of the diagnostic.
 ///
 static unsigned getBuiltinDiagClass(unsigned DiagID) {
   if (const StaticDiagInfoRec *Info = GetDiagInfo(DiagID))
     return Info->Class;
   return ~0U;
-}
-
-//===----------------------------------------------------------------------===//
-// diag_iterator
-//===----------------------------------------------------------------------===//
-
-llvm::StringRef DiagnosticIDs::diag_iterator::getDiagName() const {
-  return static_cast<const StaticDiagNameIndexRec*>(impl)->getName();
-}
-
-unsigned DiagnosticIDs::diag_iterator::getDiagID() const {
-  return static_cast<const StaticDiagNameIndexRec*>(impl)->DiagID;
-}
-
-DiagnosticIDs::diag_iterator &DiagnosticIDs::diag_iterator::operator++() {
-  const StaticDiagNameIndexRec* ptr =
-    static_cast<const StaticDiagNameIndexRec*>(impl);;
-  ++ptr;
-  impl = ptr;
-  return *this;
-}
-
-DiagnosticIDs::diag_iterator DiagnosticIDs::diags_begin() {
-  return DiagnosticIDs::diag_iterator(StaticDiagNameIndex);
-}
-
-DiagnosticIDs::diag_iterator DiagnosticIDs::diags_end() {
-  return DiagnosticIDs::diag_iterator(StaticDiagNameIndex +
-                                      StaticDiagNameIndexSize);
 }
 
 //===----------------------------------------------------------------------===//

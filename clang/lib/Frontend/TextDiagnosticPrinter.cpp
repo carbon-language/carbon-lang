@@ -46,16 +46,6 @@ void TextDiagnosticPrinter::EndSourceFile() {
   TextDiag.reset(0);
 }
 
-/// \brief Print the diagnostic name to a raw_ostream.
-///
-/// This prints the diagnostic name to a raw_ostream if it has one. It formats
-/// the name according to the expected diagnostic message formatting:
-///   " [diagnostic_name_here]"
-static void printDiagnosticName(raw_ostream &OS, const Diagnostic &Info) {
-  if (!DiagnosticIDs::isBuiltinNote(Info.getID()))
-    OS << " [" << DiagnosticIDs::getName(Info.getID()) << "]";
-}
-
 /// \brief Print any diagnostic option information to a raw_ostream.
 ///
 /// This implements all of the logic for adding diagnostic options to a message
@@ -136,8 +126,6 @@ void TextDiagnosticPrinter::HandleDiagnostic(DiagnosticsEngine::Level Level,
   Info.FormatDiagnostic(OutStr);
 
   llvm::raw_svector_ostream DiagMessageStream(OutStr);
-  if (DiagOpts->ShowNames)
-    printDiagnosticName(DiagMessageStream, Info);
   printDiagnosticOptions(DiagMessageStream, Level, Info, *DiagOpts);
 
   // Keeps track of the the starting position of the location

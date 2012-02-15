@@ -223,31 +223,6 @@ public:
   /// are not SFINAE errors.
   static SFINAEResponse getDiagnosticSFINAEResponse(unsigned DiagID);
 
-  /// getName - Given a diagnostic ID, return its name
-  static StringRef getName(unsigned DiagID);
-  
-  /// getIdFromName - Given a diagnostic name, return its ID, or 0
-  static unsigned getIdFromName(StringRef Name);
-  
-  /// Iterator class used for traversing all statically declared
-  /// diagnostics.
-  class diag_iterator {
-    const void *impl;
-
-    friend class DiagnosticIDs;    
-    diag_iterator(const void *im) : impl(im) {}
-  public:
-    diag_iterator &operator++();
-    bool operator==(const diag_iterator &x) const { return impl == x.impl; }
-    bool operator!=(const diag_iterator &x) const { return impl != x.impl; }
-    
-    llvm::StringRef getDiagName() const;
-    unsigned getDiagID() const;    
-  };
-
-  static diag_iterator diags_begin();
-  static diag_iterator diags_end();
-
   /// \brief Get the set of all diagnostic IDs in the group with the given name.
   ///
   /// \param Diags [out] - On return, the diagnostics in the group.

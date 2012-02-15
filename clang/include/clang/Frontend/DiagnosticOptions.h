@@ -31,7 +31,6 @@ public:
   unsigned ShowFixits : 1;       /// Show fixit information.
   unsigned ShowSourceRanges : 1; /// Show source ranges in numeric form.
   unsigned ShowParseableFixits : 1; /// Show machine parseable fix-its.
-  unsigned ShowNames : 1;        /// Show the diagnostic name
   unsigned ShowOptionNames : 1;  /// Show the option name for mappable
                                  /// diagnostics.
   unsigned ShowNoteIncludeStack : 1; /// Show include stacks for notes.
@@ -91,7 +90,6 @@ public:
     ShowColumn = 1;
     ShowFixits = 1;
     ShowLocation = 1;
-    ShowNames = 0;
     ShowOptionNames = 0;
     ShowCategories = 0;
     Format = Clang;

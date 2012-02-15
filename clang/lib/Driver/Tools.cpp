@@ -2350,11 +2350,6 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                     options::OPT_fno_diagnostics_fixit_info))
     CmdArgs.push_back("-fno-diagnostics-fixit-info");
 
-  // Enable -fdiagnostics-show-name by default.
-  if (Args.hasFlag(options::OPT_fdiagnostics_show_name,
-                   options::OPT_fno_diagnostics_show_name, false))
-    CmdArgs.push_back("-fdiagnostics-show-name");
-
   // Enable -fdiagnostics-show-option by default.
   if (Args.hasFlag(options::OPT_fdiagnostics_show_option,
                    options::OPT_fno_diagnostics_show_option))

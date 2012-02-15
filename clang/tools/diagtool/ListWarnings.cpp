@@ -16,6 +16,14 @@
 #include "clang/Basic/Diagnostic.h"
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/StringMap.h"
+#include "clang/AST/ASTDiagnostic.h"
+#include "clang/Analysis/AnalysisDiagnostic.h"
+#include "clang/Driver/DriverDiagnostic.h"
+#include "clang/Frontend/FrontendDiagnostic.h"
+#include "clang/Lex/LexDiagnostic.h"
+#include "clang/Parse/ParseDiagnostic.h"
+#include "clang/Sema/SemaDiagnostic.h"
+#include "clang/Serialization/SerializationDiagnostic.h"
 
 DEF_DIAGTOOL("list-warnings",
              "List warnings and their corresponding flags",
@@ -23,6 +31,39 @@ DEF_DIAGTOOL("list-warnings",
   
 using namespace clang;
 
+namespace {
+template <size_t SizeOfStr, typename FieldType>
+class StringSizerHelper {
+  char FIELD_TOO_SMALL[SizeOfStr <= FieldType(~0U) ? 1 : -1];
+public:
+  enum { Size = SizeOfStr };
+};
+
+} // namespace anonymous
+
+#define STR_SIZE(str, fieldTy) StringSizerHelper<sizeof(str)-1, fieldTy>::Size 
+
+namespace {
+struct StaticDiagNameIndexRec {
+  const char *NameStr;
+  unsigned short DiagID;
+  uint8_t NameLen;
+
+  StringRef getName() const {
+    return StringRef(NameStr, NameLen);
+  }
+};
+}
+
+static const StaticDiagNameIndexRec StaticDiagNameIndex[] = {
+#define DIAG_NAME_INDEX(ENUM) { #ENUM, diag::ENUM, STR_SIZE(#ENUM, uint8_t) },
+#include "clang/Basic/DiagnosticIndexName.inc"
+#undef DIAG_NAME_INDEX
+  { 0, 0, 0 }
+};
+
+static const unsigned StaticDiagNameIndexSize =
+  sizeof(StaticDiagNameIndex)/sizeof(StaticDiagNameIndex[0])-1;
 
 namespace {
 struct Entry {
@@ -47,16 +88,13 @@ static void printEntries(std::vector<Entry> &entries, llvm::raw_ostream &out) {
 }
 
 int ListWarnings::run(unsigned int argc, char **argv, llvm::raw_ostream &out) {
-  llvm::IntrusiveRefCntPtr<DiagnosticIDs> Diags(new DiagnosticIDs);
-  DiagnosticsEngine D(Diags);
-  
   std::vector<Entry> Flagged, Unflagged;
   llvm::StringMap<std::vector<unsigned> > flagHistogram;
   
-  for (DiagnosticIDs::diag_iterator di = DiagnosticIDs::diags_begin(),
-       de = DiagnosticIDs::diags_end(); di != de; ++di) {
+  for (const StaticDiagNameIndexRec *di = StaticDiagNameIndex, *de = StaticDiagNameIndex + StaticDiagNameIndexSize;
+       di != de; ++di) {
     
-    unsigned diagID = di.getDiagID();
+    unsigned diagID = di->DiagID;
     
     if (DiagnosticIDs::isBuiltinNote(diagID))
       continue;
@@ -64,7 +102,7 @@ int ListWarnings::run(unsigned int argc, char **argv, llvm::raw_ostream &out) {
     if (!DiagnosticIDs::isBuiltinWarningOrExtension(diagID))
       continue;
   
-    Entry entry(di.getDiagName(),
+    Entry entry(di->getName(),
                 DiagnosticIDs::getWarningOptionForDiag(diagID));
     
     if (entry.Flag.empty())
