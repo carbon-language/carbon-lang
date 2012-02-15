@@ -1144,7 +1144,7 @@ private:
     static _Up __u();
 #endif  // _LIBCPP_HAS_NO_RVALUE_REFERENCES
 public:
-    typedef decltype(true ? __t() : __u()) type;
+    typedef typename remove_reference<decltype(true ? __t() : __u())>::type type;
 };
 
 #else  // _LIBCPP_HAS_NO_VARIADICS
