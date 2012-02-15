@@ -483,6 +483,35 @@ namespace minix {
   };
 } // end namespace minix
 
+  /// solaris -- Directly call Solaris assembler and linker
+namespace solaris {
+  class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {
+  public:
+    Assemble(const ToolChain &TC) : Tool("solaris::Assemble", "assembler",
+                                         TC) {}
+
+    virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
+                              const char *LinkingOutput) const;
+  };
+  class LLVM_LIBRARY_VISIBILITY Link : public Tool  {
+  public:
+    Link(const ToolChain &TC) : Tool("solaris::Link", "linker", TC) {}
+
+    virtual bool hasIntegratedCPP() const { return false; }
+
+    virtual void ConstructJob(Compilation &C, const JobAction &JA,
+                              const InputInfo &Output,
+                              const InputInfoList &Inputs,
+                              const ArgList &TCArgs,
+                              const char *LinkingOutput) const;
+  };
+} // end namespace auroraux
+
   /// auroraux -- Directly call GNU Binutils assembler and linker
 namespace auroraux {
   class LLVM_LIBRARY_VISIBILITY Assemble : public Tool  {

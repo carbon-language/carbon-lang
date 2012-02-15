@@ -449,6 +449,17 @@ public:
                            const ActionList &Inputs) const;
 };
 
+class LLVM_LIBRARY_VISIBILITY Solaris : public Generic_GCC {
+public:
+  Solaris(const Driver &D, const llvm::Triple& Triple);
+
+  virtual Tool &SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const;
+
+  virtual bool IsIntegratedAssemblerDefault() const { return true; }
+};
+
+
 class LLVM_LIBRARY_VISIBILITY OpenBSD : public Generic_ELF {
 public:
   OpenBSD(const Driver &D, const llvm::Triple& Triple);

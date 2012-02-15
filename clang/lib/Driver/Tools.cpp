@@ -4170,6 +4170,126 @@ void darwin::VerifyDebug::ConstructJob(Compilation &C, const JobAction &JA,
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
 
+void solaris::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
+                                      const InputInfo &Output,
+                                      const InputInfoList &Inputs,
+                                      const ArgList &Args,
+                                      const char *LinkingOutput) const {
+  ArgStringList CmdArgs;
+
+  Args.AddAllArgValues(CmdArgs, options::OPT_Wa_COMMA,
+                       options::OPT_Xassembler);
+
+  CmdArgs.push_back("-o");
+  CmdArgs.push_back(Output.getFilename());
+
+  for (InputInfoList::const_iterator
+         it = Inputs.begin(), ie = Inputs.end(); it != ie; ++it) {
+    const InputInfo &II = *it;
+    CmdArgs.push_back(II.getFilename());
+  }
+
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath("as"));
+  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}
+
+
+void solaris::Link::ConstructJob(Compilation &C, const JobAction &JA,
+                                  const InputInfo &Output,
+                                  const InputInfoList &Inputs,
+                                  const ArgList &Args,
+                                  const char *LinkingOutput) const {
+  // FIXME: Find a real GCC, don't hard-code versions here
+  std::string GCCLibPath = "/usr/gcc/4.5/lib/gcc/";
+  const llvm::Triple &T = getToolChain().getTriple();
+  std::string LibPath = "/usr/lib/";
+  llvm::Triple::ArchType Arch = T.getArch();
+  switch (Arch) {
+        case llvm::Triple::x86:
+          GCCLibPath += ("i386-" + T.getVendorName() + "-" +
+              T.getOSName()).str() + "/4.5.2/";
+          break;
+        case llvm::Triple::x86_64:
+          GCCLibPath += ("i386-" + T.getVendorName() + "-" +
+              T.getOSName()).str();
+          GCCLibPath += "/4.5.2/amd64/";
+          LibPath += "amd64/";
+          break;
+        default:
+          assert(0 && "Unsupported architecture");
+  }
+
+  ArgStringList CmdArgs;
+
+  if ((!Args.hasArg(options::OPT_nostdlib)) &&
+      (!Args.hasArg(options::OPT_shared))) {
+    CmdArgs.push_back("-e");
+    CmdArgs.push_back("_start");
+  }
+
+  if (Args.hasArg(options::OPT_static)) {
+    CmdArgs.push_back("-Bstatic");
+    CmdArgs.push_back("-dn");
+  } else {
+    CmdArgs.push_back("-Bdynamic");
+    if (Args.hasArg(options::OPT_shared)) {
+      CmdArgs.push_back("-shared");
+    } else {
+      CmdArgs.push_back("--dynamic-linker");
+      CmdArgs.push_back(Args.MakeArgString(LibPath + "ld.so.1"));
+    }
+  }
+
+  if (Output.isFilename()) {
+    CmdArgs.push_back("-o");
+    CmdArgs.push_back(Output.getFilename());
+  } else {
+    assert(Output.isNothing() && "Invalid output.");
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles)) {
+    if (!Args.hasArg(options::OPT_shared)) {
+      CmdArgs.push_back(Args.MakeArgString(LibPath + "crt1.o"));
+      CmdArgs.push_back(Args.MakeArgString(LibPath + "crti.o"));
+      CmdArgs.push_back(Args.MakeArgString(GCCLibPath + "crtbegin.o"));
+    } else {
+      CmdArgs.push_back(Args.MakeArgString(LibPath + "crti.o"));
+    }
+    CmdArgs.push_back(Args.MakeArgString(LibPath + "crtn.o"));
+  }
+
+  CmdArgs.push_back(Args.MakeArgString("-L" + GCCLibPath));
+
+  Args.AddAllArgs(CmdArgs, options::OPT_L);
+  Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
+  Args.AddAllArgs(CmdArgs, options::OPT_e);
+
+  AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nodefaultlibs)) {
+    CmdArgs.push_back("-lgcc");
+    CmdArgs.push_back("-lgcc_eh");
+    if (!Args.hasArg(options::OPT_shared))
+      CmdArgs.push_back("-lc");
+
+  }
+
+  if (!Args.hasArg(options::OPT_nostdlib) &&
+      !Args.hasArg(options::OPT_nostartfiles)) {
+    if (!Args.hasArg(options::OPT_shared))
+      CmdArgs.push_back(Args.MakeArgString(GCCLibPath + "crtend.o"));
+  }
+
+  addProfileRT(getToolChain(), Args, CmdArgs, getToolChain().getTriple());
+
+  const char *Exec =
+    Args.MakeArgString(getToolChain().GetProgramPath("ld"));
+  C.addCommand(new Command(JA, *this, Exec, CmdArgs));
+}
+
 void auroraux::Assemble::ConstructJob(Compilation &C, const JobAction &JA,
                                       const InputInfo &Output,
                                       const InputInfoList &Inputs,

@@ -1755,6 +1755,41 @@ Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA,
   return *T;
 }
 
+/// Solaris - Solaris tool chain which can call as(1) and ld(1) directly.
+
+Solaris::Solaris(const Driver &D, const llvm::Triple& Triple)
+  : Generic_GCC(D, Triple) {
+
+  getProgramPaths().push_back(getDriver().getInstalledDir());
+  if (getDriver().getInstalledDir() != getDriver().Dir)
+    getProgramPaths().push_back(getDriver().Dir);
+
+  getFilePaths().push_back(getDriver().Dir + "/../lib");
+  getFilePaths().push_back("/usr/lib");
+}
+
+Tool &Solaris::SelectTool(const Compilation &C, const JobAction &JA,
+                           const ActionList &Inputs) const {
+  Action::ActionClass Key;
+  if (getDriver().ShouldUseClangCompiler(C, JA, getTriple()))
+    Key = Action::AnalyzeJobClass;
+  else
+    Key = JA.getKind();
+
+  Tool *&T = Tools[Key];
+  if (!T) {
+    switch (Key) {
+    case Action::AssembleJobClass:
+      T = new tools::solaris::Assemble(*this); break;
+    case Action::LinkJobClass:
+      T = new tools::solaris::Link(*this); break;
+    default:
+      T = &Generic_GCC::SelectTool(C, JA, Inputs);
+    }
+  }
+
+  return *T;
+}
 
 /// Linux toolchain (very bare-bones at the moment).
 
