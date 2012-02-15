@@ -43,6 +43,20 @@ store i32 %lor.ext.i, i32* @a, align 4, !tbaa !3
 ret i32 0
 }
 
+; CHECK: test2
+define i32 @test2() nounwind uwtable ssp {
+entry:
+; CHECK-NOT: decq ({{.*}})
+%0 = load i64* @c, align 8, !tbaa !0
+%dec.i = add nsw i64 %0, -1
+store i64 %dec.i, i64* @c, align 8, !tbaa !0
+%tobool.i = icmp ne i64 %0, 0
+%lor.ext.i = zext i1 %tobool.i to i32
+store i32 %lor.ext.i, i32* @a, align 4, !tbaa !3
+%call = tail call i32 (i8*, ...)* @printf(i8* getelementptr inbounds ([5 x i8]* @.str, i64 0, i64 0), i64 %dec.i) nounwind
+ret i32 0
+}
+
 declare i32 @printf(i8* nocapture, ...) nounwind
 
 declare void @free(i8* nocapture) nounwind
