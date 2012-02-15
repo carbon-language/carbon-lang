@@ -11,6 +11,7 @@ void *calloc(size_t nmemb, size_t size);
 
 void myfoo(int *p);
 void myfooint(int p);
+char *fooRetPtr();
 
 void f1() {
   int *p = malloc(12);
@@ -441,6 +442,11 @@ void mallocFailedOrNotLeak() {
     return; // expected-warning {{Allocated memory never released. Potential memory leak.}}
 }
 
+void mallocAssignment() {
+  char *p = malloc(12);
+  p = fooRetPtr(); // expected-warning {{leak}}
+}
+
 int vallocTest() {
   char *mem = valloc(12);
   return 0; // expected-warning {{Allocated memory never released. Potential memory leak.}}
@@ -586,3 +592,11 @@ static void *specialMalloc(int n){
   }
   return p;// expected-warning {{Allocated memory never released. Potential memory leak.}}
 }
+
+// TODO: This is a false positve that should be fixed by making CString checker smarter.
+void symbolLostWithStrcpy(char *s) {
+  char *p = malloc(12);
+  p = strcpy(p, s);
+  free(p);// expected-warning {{leak}}
+}
+
