@@ -1158,25 +1158,20 @@ void ASTStmtWriter::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
 void ASTStmtWriter::VisitCXXNewExpr(CXXNewExpr *E) {
   VisitExpr(E);
   Record.push_back(E->isGlobalNew());
-  Record.push_back(E->hasInitializer());
-  Record.push_back(E->doesUsualArrayDeleteWantSize());
   Record.push_back(E->isArray());
-  Record.push_back(E->hadMultipleCandidates());
+  Record.push_back(E->doesUsualArrayDeleteWantSize());
   Record.push_back(E->getNumPlacementArgs());
-  Record.push_back(E->getNumConstructorArgs());
+  Record.push_back(E->StoredInitializationStyle);
   Writer.AddDeclRef(E->getOperatorNew(), Record);
   Writer.AddDeclRef(E->getOperatorDelete(), Record);
-  Writer.AddDeclRef(E->getConstructor(), Record);
   Writer.AddTypeSourceInfo(E->getAllocatedTypeSourceInfo(), Record);
   Writer.AddSourceRange(E->getTypeIdParens(), Record);
   Writer.AddSourceLocation(E->getStartLoc(), Record);
-  Writer.AddSourceLocation(E->getEndLoc(), Record);
-  Writer.AddSourceLocation(E->getConstructorLParen(), Record);
-  Writer.AddSourceLocation(E->getConstructorRParen(), Record);
+  Writer.AddSourceRange(E->getDirectInitRange(), Record);
   for (CXXNewExpr::arg_iterator I = E->raw_arg_begin(), e = E->raw_arg_end();
        I != e; ++I)
     Writer.AddStmt(*I);
-  
+
   Code = serialization::EXPR_CXX_NEW;
 }
 

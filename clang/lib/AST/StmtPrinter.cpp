@@ -1390,17 +1390,13 @@ void StmtPrinter::VisitCXXNewExpr(CXXNewExpr *E) {
   if (E->isParenTypeId())
     OS << ")";
 
-  if (E->hasInitializer()) {
-    OS << "(";
-    unsigned NumCons = E->getNumConstructorArgs();
-    if (NumCons > 0) {
-      PrintExpr(E->getConstructorArg(0));
-      for (unsigned i = 1; i < NumCons; ++i) {
-        OS << ", ";
-        PrintExpr(E->getConstructorArg(i));
-      }
-    }
-    OS << ")";
+  CXXNewExpr::InitializationStyle InitStyle = E->getInitializationStyle();
+  if (InitStyle) {
+    if (InitStyle == CXXNewExpr::CallInit)
+      OS << "(";
+    PrintExpr(E->getInitializer());
+    if (InitStyle == CXXNewExpr::CallInit)
+      OS << ")";
   }
 }
 

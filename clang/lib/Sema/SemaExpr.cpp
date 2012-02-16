@@ -10148,15 +10148,13 @@ namespace {
     }
     
     void VisitCXXNewExpr(CXXNewExpr *E) {
-      if (E->getConstructor())
-        S.MarkFunctionReferenced(E->getLocStart(), E->getConstructor());
       if (E->getOperatorNew())
         S.MarkFunctionReferenced(E->getLocStart(), E->getOperatorNew());
       if (E->getOperatorDelete())
         S.MarkFunctionReferenced(E->getLocStart(), E->getOperatorDelete());
       Inherited::VisitCXXNewExpr(E);
     }
-    
+
     void VisitCXXDeleteExpr(CXXDeleteExpr *E) {
       if (E->getOperatorDelete())
         S.MarkFunctionReferenced(E->getLocStart(), E->getOperatorDelete());

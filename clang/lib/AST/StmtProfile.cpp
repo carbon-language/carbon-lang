@@ -825,13 +825,11 @@ void StmtProfiler::VisitCXXNewExpr(const CXXNewExpr *S) {
   VisitType(S->getAllocatedType());
   VisitDecl(S->getOperatorNew());
   VisitDecl(S->getOperatorDelete());
-  VisitDecl(S->getConstructor());
   ID.AddBoolean(S->isArray());
   ID.AddInteger(S->getNumPlacementArgs());
   ID.AddBoolean(S->isGlobalNew());
   ID.AddBoolean(S->isParenTypeId());
-  ID.AddBoolean(S->hasInitializer());
-  ID.AddInteger(S->getNumConstructorArgs());
+  ID.AddInteger(S->getInitializationStyle());
 }
 
 void
