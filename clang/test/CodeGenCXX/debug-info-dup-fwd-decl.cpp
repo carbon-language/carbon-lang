@@ -19,6 +19,6 @@ protected:
 
 Test t;
 
-// CHECK: metadata !"data", metadata !7, i32 13, i64 32, i64 32, i32 0, i32 0
+// CHECK: metadata !"data", metadata !7, i32 14, i64 32, i64 32, i32 0, i32 0
 // CHECK: metadata !"", null, i32 0, i64 64, i64 64, i64 0, i32 0, metadata !5} ; [ DW_TAG_pointer_type ]
 // CHECK-NOT: metadata !"data", metadata !7, i32 13, i64 0, i64 0, i32 0, i32 4,

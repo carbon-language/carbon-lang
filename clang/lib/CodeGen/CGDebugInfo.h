@@ -53,6 +53,9 @@ class CGDebugInfo {
   /// TypeCache - Cache of previously constructed Types.
   llvm::DenseMap<void *, llvm::WeakVH> TypeCache;
 
+  /// CompleteTypeCache - Cache of previously constructed complete RecordTypes.
+  llvm::DenseMap<void *, llvm::WeakVH> CompletedTypeCache;
+
   bool BlockLiteralGenericSet;
   llvm::DIType BlockLiteralGeneric;
 
@@ -84,6 +87,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const BlockPointerType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const FunctionType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const RecordType *Ty);
+  llvm::DIType CreateLimitedType(const RecordType *Ty);
   llvm::DIType CreateType(const ObjCInterfaceType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const ObjCObjectType *Ty, llvm::DIFile F);
   llvm::DIType CreateType(const VectorType *Ty, llvm::DIFile F);
@@ -94,6 +98,7 @@ class CGDebugInfo {
   llvm::DIType CreateType(const AtomicType *Ty, llvm::DIFile F);
   llvm::DIType CreateEnumType(const EnumDecl *ED);
   llvm::DIType getTypeOrNull(const QualType);
+  llvm::DIType getCompletedTypeOrNull(const QualType);
   llvm::DIType getOrCreateMethodType(const CXXMethodDecl *Method,
                                      llvm::DIFile F);
   llvm::DIType getOrCreateFunctionType(const Decl *D, QualType FnType,
@@ -257,8 +262,16 @@ private:
   /// necessary.
   llvm::DIType getOrCreateType(QualType Ty, llvm::DIFile F);
 
+  /// getOrCreateLimitedType - Get the type from the cache or create a new
+  /// partial type if necessary.
+  llvm::DIType getOrCreateLimitedType(QualType Ty, llvm::DIFile F);
+
   /// CreateTypeNode - Create type metadata for a source language type.
   llvm::DIType CreateTypeNode(QualType Ty, llvm::DIFile F);
+
+  /// CreateLimitedTypeNode - Create type metadata for a source language
+  /// type, but only partial types for records.
+  llvm::DIType CreateLimitedTypeNode(QualType Ty, llvm::DIFile F);
 
   /// CreateMemberType - Create new member and increase Offset by FType's size.
   llvm::DIType CreateMemberType(llvm::DIFile Unit, QualType FType,
