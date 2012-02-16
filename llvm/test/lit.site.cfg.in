@@ -7,6 +7,8 @@ config.lit_tools_dir = "@LLVM_LIT_TOOLS_DIR@"
 config.python_executable = "@PYTHON_EXECUTABLE@"
 config.enable_shared = @ENABLE_SHARED@
 config.enable_assertions = @ENABLE_ASSERTIONS@
+config.targets_to_build = "@TARGETS_TO_BUILD@"
+config.llvm_bindings = "@LLVM_BINDINGS@"
 
 # Support substitution of the tools_dir with user parameters. This is
 # used when we can't determine the tool dir at configuration time.
