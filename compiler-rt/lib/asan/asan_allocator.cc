@@ -43,10 +43,16 @@ namespace __asan {
 
 #define  REDZONE FLAG_redzone
 static const size_t kMinAllocSize = REDZONE * 2;
-static const size_t kMinMmapSize  = 4UL << 20;  // 4M
 static const uint64_t kMaxAvailableRam = 128ULL << 30;  // 128G
 static const size_t kMaxThreadLocalQuarantine = 1 << 20;  // 1M
-static const size_t kMaxSizeForThreadLocalFreeList = 1 << 17;
+
+#if ASAN_LOW_MEMORY==1
+static const size_t kMinMmapSize  = 4UL << 17;  // 128K
+  static const size_t kMaxSizeForThreadLocalFreeList = 1 << 15; // 32K
+#else
+static const size_t kMinMmapSize  = 4UL << 20;  // 4M
+  static const size_t kMaxSizeForThreadLocalFreeList = 1 << 17; // 128K
+#endif
 
 // Size classes less than kMallocSizeClassStep are powers of two.
 // All other size classes are multiples of kMallocSizeClassStep.

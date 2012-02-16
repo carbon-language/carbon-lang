@@ -39,6 +39,10 @@ using std::map;
 # error "please define ASAN_NEEDS_SEGV"
 #endif
 
+#ifndef ASAN_LOW_MEMORY
+#define ASAN_LOW_MEMORY 0
+#endif
+
 #define ASAN_PCRE_DOTALL ""
 
 #endif  // ASAN_TEST_CONFIG_H

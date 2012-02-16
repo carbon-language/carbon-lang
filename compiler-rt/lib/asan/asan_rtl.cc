@@ -419,7 +419,15 @@ void __asan_init() {
 
   FLAG_v = IntFlagValue(options, "verbosity=", 0);
 
+#if ASAN_LOW_MEMORY == 1
+  FLAG_quarantine_size =
+    IntFlagValue(options, "quarantine_size=", 1UL << 24); // 16M
+  FLAG_redzone = IntFlagValue(options, "redzone=", 64);
+#else
+  FLAG_quarantine_size =
+    IntFlagValue(options, "quarantine_size=", 1UL << 28); // 256M
   FLAG_redzone = IntFlagValue(options, "redzone=", 128);
+#endif
   CHECK(FLAG_redzone >= 32);
   CHECK((FLAG_redzone & (FLAG_redzone - 1)) == 0);
 
@@ -442,9 +450,6 @@ void __asan_init() {
   if (FLAG_atexit) {
     atexit(asan_atexit);
   }
-
-  FLAG_quarantine_size =
-      IntFlagValue(options, "quarantine_size=", 1UL << 28);
 
   // interceptors
   InitializeAsanInterceptors();

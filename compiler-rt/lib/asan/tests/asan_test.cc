@@ -453,7 +453,11 @@ static void MallocStress(size_t n) {
 }
 
 TEST(AddressSanitizer, MallocStressTest) {
+#if ASAN_LOW_MEMORY==1
+  MallocStress(20000);
+#else
   MallocStress(200000);
+#endif
 }
 
 static void TestLargeMalloc(size_t size) {
@@ -468,6 +472,7 @@ TEST(AddressSanitizer, LargeMallocTest) {
   }
 }
 
+#if ASAN_LOW_MEMORY != 1
 TEST(AddressSanitizer, HugeMallocTest) {
 #ifdef __APPLE__
   // It was empirically found out that 1215 megabytes is the maximum amount of
@@ -480,12 +485,17 @@ TEST(AddressSanitizer, HugeMallocTest) {
 #endif
   TestLargeMalloc(n_megs << 20);
 }
+#endif
 
 TEST(AddressSanitizer, ThreadedMallocStressTest) {
   const int kNumThreads = 4;
   pthread_t t[kNumThreads];
   for (int i = 0; i < kNumThreads; i++) {
+#if ASAN_LOW_MEMORY==1
+    pthread_create(&t[i], 0, (void* (*)(void *x))MallocStress, (void*)10000);
+#else
     pthread_create(&t[i], 0, (void* (*)(void *x))MallocStress, (void*)100000);
+#endif
   }
   for (int i = 0; i < kNumThreads; i++) {
     pthread_join(t[i], 0);
