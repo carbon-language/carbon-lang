@@ -316,6 +316,11 @@ W: http://vladimir_prus.blogspot.com
 E: ghost@cs.msu.su
 D: Made inst_iterator behave like a proper iterator, LowerConstantExprs pass
 
+N: Chad Rosier
+E: mcrosier@apple.com
+D: ARM fast-isel improvements
+D: Performance monitoring
+
 N: Roman Samoilov
 E: roman@codedgers.com
 D: MSIL backend
