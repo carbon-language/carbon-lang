@@ -313,12 +313,13 @@ Mutex wmu;
 
 // Test diagnostics for other method names.
 class WeirdMethods {
+  // FIXME: can't currently check inside constructors and destructors.
   WeirdMethods() {
-    wmu.Lock(); // expected-note {{mutex acquired here}}
-  } // expected-warning {{mutex 'wmu' is still locked at the end of function}}
+    wmu.Lock(); // EXPECTED-NOTE {{mutex acquired here}}
+  } // EXPECTED-WARNING {{mutex 'wmu' is still locked at the end of function}}
   ~WeirdMethods() {
-    wmu.Lock(); // expected-note {{mutex acquired here}}
-  } // expected-warning {{mutex 'wmu' is still locked at the end of function}}
+    wmu.Lock(); // EXPECTED-NOTE {{mutex acquired here}}
+  } // EXPECTED-WARNING {{mutex 'wmu' is still locked at the end of function}}
   void operator++() {
     wmu.Lock(); // expected-note {{mutex acquired here}}
   } // expected-warning {{mutex 'wmu' is still locked at the end of function}}
@@ -2077,6 +2078,22 @@ public:
       // expected-warning {{writing variable 'foo' requires locking 'this' exclusively}}
   }
 };
+
+
+class LOCKABLE MyLock2 {
+public:
+  Mutex mu_;
+  int foo GUARDED_BY(this);
+
+  // don't check inside lock and unlock functions
+  void lock()   EXCLUSIVE_LOCK_FUNCTION() { mu_.Lock();   }
+  void unlock() UNLOCK_FUNCTION()         { mu_.Unlock(); }
+
+  // don't check inside constructors and destructors
+  MyLock2()  { foo = 1; }
+  ~MyLock2() { foo = 0; }
+};
+
 
 } // end namespace SelfLockingTest
 
