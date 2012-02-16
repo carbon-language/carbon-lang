@@ -5218,7 +5218,7 @@ void RewriteModernObjC::RewriteIvarOffsetComputation(ObjCIvarDecl *ivar,
 ///   struct _class_t * const superclass;
 ///   void *cache;
 ///   IMP *vtable;
-///   struct class_ro_t *ro;
+///   struct _class_ro_t *ro;
 /// }
 
 /// struct _category_t {
@@ -5301,7 +5301,7 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
   Result += "\tstruct _class_t *const superclass;\n";
   Result += "\tvoid *cache;\n";
   Result += "\tvoid *vtable;\n";
-  Result += "\tstruct class_ro_t *ro;\n";
+  Result += "\tstruct _class_ro_t *ro;\n";
   Result += "};\n";
   
   Result += "\nstruct _category_t {\n";
@@ -5312,6 +5312,9 @@ static void WriteModernMetadataDeclarations(std::string &Result) {
   Result += "\tconst struct _protocol_list_t *const protocols;\n";
   Result += "\tconst struct _prop_list_t *const properties;\n";
   Result += "};\n";
+  
+  Result += "extern void *_objc_empty_cache;\n";
+  Result += "extern void *_objc_empty_vtable;\n";
   
   meta_data_declared = true;
 }
@@ -5532,6 +5535,66 @@ static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Resu
     Result += "0, \n";
 
   Result += "};\n";
+}
+
+static void Write_class_t(ASTContext *Context, std::string &Result,
+                          StringRef VarName,
+                          const ObjCInterfaceDecl *CDecl, bool metadata) {
+  WriteModernMetadataDeclarations(Result);
+  
+  if (metadata && !CDecl->getSuperClass()) {
+    // Need to handle a case of use of forward declaration.
+    Result += "\nextern struct _class_t OBJC_CLASS_$_";
+    Result += CDecl->getNameAsString();
+    Result += ";\n";
+  }
+  // Also, for possibility of 'super' metadata class not having been defined yet.
+  if (CDecl->getSuperClass()) {
+    Result += "\nextern struct _class_t "; Result += VarName;
+    Result += CDecl->getSuperClass()->getNameAsString();
+    Result += ";\n";
+  }
+  
+  Result += "\nstruct _class_t "; Result += VarName; Result += CDecl->getNameAsString();
+  Result += " __attribute__ ((used, section (\"__DATA,__objc_data\"))) = {\n";
+  Result += "\t";
+  if (metadata) {
+    if (CDecl->getSuperClass()) {
+      Result += "&"; Result += VarName;
+      Result += CDecl->getSuperClass()->getNameAsString();
+      Result += ",\n\t";
+      Result += "&"; Result += VarName;
+      Result += CDecl->getSuperClass()->getNameAsString();
+      Result += ",\n\t";
+    }
+    else {
+      Result += "&"; Result += VarName; 
+      Result += CDecl->getNameAsString();
+      Result += ",\n\t";
+      Result += "&OBJC_CLASS_$_"; Result += CDecl->getNameAsString();
+      Result += ",\n\t";
+    }
+  }
+  else {
+    Result += "&OBJC_METACLASS_$_"; 
+    Result += CDecl->getNameAsString();
+    Result += ",\n\t";
+    if (CDecl->getSuperClass()) {
+      Result += "&"; Result += VarName;
+      Result += CDecl->getSuperClass()->getNameAsString();
+      Result += ",\n\t";
+    }
+    else 
+      Result += "0,\n\t";
+  }
+  Result += "(void *)&_objc_empty_cache,\n\t";
+  Result += "(void *)&_objc_empty_vtable,\n\t";
+  if (metadata)
+    Result += "&_OBJC_METACLASS_RO_$_";
+  else
+    Result += "&_OBJC_CLASS_RO_$_";
+  Result += CDecl->getNameAsString();
+  Result += ",\n};\n";
 }
 
 static void Write__extendedMethodTypes_initializer(RewriteModernObjC &RewriteObj,
@@ -6014,6 +6077,15 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                 ClassProperties,
                                 "_OBJC_CLASS_RO_$_",
                                 CDecl->getNameAsString());
+  
+  Write_class_t(Context, Result,
+                "OBJC_METACLASS_$_",
+                CDecl, /*metaclass*/true);
+  
+  Write_class_t(Context, Result,
+                "OBJC_CLASS_$_",
+                CDecl, /*metaclass*/false);
+                
 }
 
 void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
