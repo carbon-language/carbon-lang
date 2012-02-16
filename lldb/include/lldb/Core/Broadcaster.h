@@ -20,9 +20,190 @@
 // Project includes
 #include "lldb/lldb-private.h"
 //#include "lldb/Core/Flags.h"
+#include "lldb/Core/ConstString.h"
 #include "lldb/Core/Listener.h"
 
 namespace lldb_private {
+
+//----------------------------------------------------------------------
+// lldb::BroadcastEventSpec
+//
+// This class is used to specify a kind of event to register for.  The Debugger
+// maintains a list of BroadcastEventSpec's and when it is made
+//----------------------------------------------------------------------
+class BroadcastEventSpec
+{
+public:
+    BroadcastEventSpec (const ConstString &broadcaster_class, uint32_t event_bits) :
+        m_broadcaster_class (broadcaster_class),
+        m_event_bits (event_bits)
+    {
+    }
+    
+    BroadcastEventSpec (const BroadcastEventSpec &rhs);
+    
+    ~BroadcastEventSpec() {}
+        
+    const ConstString &GetBroadcasterClass() const
+    {
+        return m_broadcaster_class;
+    }
+    
+    uint32_t GetEventBits () const
+    {
+        return m_event_bits;
+    }
+    
+    // Tell whether this BroadcastEventSpec is contained in in_spec.
+    // That is: 
+    // (a) the two spec's share the same broadcaster class
+    // (b) the event bits of this spec are wholly contained in those of in_spec.
+    bool IsContainedIn (BroadcastEventSpec in_spec) const
+    {
+        if (m_broadcaster_class != in_spec.GetBroadcasterClass())
+            return false;
+        uint32_t in_bits = in_spec.GetEventBits();
+        if (in_bits == m_event_bits)
+            return true;
+        else
+        {
+            if ((m_event_bits & in_bits) != 0
+                && (m_event_bits & ~in_bits) == 0)
+                    return true;
+        }
+        return false;
+    }
+    
+    bool operator< (const BroadcastEventSpec &rhs) const;
+    const BroadcastEventSpec &operator= (const BroadcastEventSpec &rhs);
+    
+private:
+    ConstString m_broadcaster_class;
+    uint32_t m_event_bits;
+};
+
+class BroadcasterManager
+{
+public:
+    BroadcasterManager ();
+    
+    ~BroadcasterManager () {};
+    
+    uint32_t
+    RegisterListenerForEvents (Listener &listener, BroadcastEventSpec event_spec);
+    
+    bool
+    UnregisterListenerForEvents (Listener &listener, BroadcastEventSpec event_spec);
+    
+    Listener *
+    GetListenerForEventSpec (BroadcastEventSpec event_spec) const;
+    
+    void
+    SignUpListenersForBroadcaster (Broadcaster &broadcaster);
+    
+    void
+    RemoveListener (Listener &Listener);
+
+protected:
+    void Clear();
+    
+private:
+    typedef std::pair<BroadcastEventSpec, Listener *> event_listener_key;
+    typedef std::map<BroadcastEventSpec, Listener *> collection;
+    typedef std::set<Listener *> listener_collection;
+    collection m_event_map;
+    listener_collection m_listeners;
+    
+    Mutex m_manager_mutex;
+
+    // A couple of comparator classes for find_if:
+    
+    class BroadcasterClassMatches
+    {
+    public:
+        BroadcasterClassMatches (const ConstString &broadcaster_class) : 
+            m_broadcaster_class (broadcaster_class) 
+        {
+        }
+        
+        ~BroadcasterClassMatches () {}
+        
+        bool operator() (const event_listener_key input) const 
+        {
+            return (input.first.GetBroadcasterClass() == m_broadcaster_class);
+        }
+        
+    private:
+        ConstString m_broadcaster_class;
+    };
+
+    class BroadcastEventSpecMatches
+    {
+    public:
+        BroadcastEventSpecMatches (BroadcastEventSpec broadcaster_spec) : 
+            m_broadcaster_spec (broadcaster_spec) 
+        {
+        }
+        
+        ~BroadcastEventSpecMatches () {}
+        
+        bool operator() (const event_listener_key input) const 
+        {
+            return (input.first.IsContainedIn (m_broadcaster_spec));
+        }
+        
+    private:
+        BroadcastEventSpec m_broadcaster_spec;
+    };
+    
+    class ListenerMatchesAndSharedBits
+    {
+    public:
+        ListenerMatchesAndSharedBits (BroadcastEventSpec broadcaster_spec, 
+                                                   const Listener &listener) : 
+            m_broadcaster_spec (broadcaster_spec),
+            m_listener (&listener) 
+        {
+        }
+        
+        ~ListenerMatchesAndSharedBits () {}
+        
+        bool operator() (const event_listener_key input) const 
+        {
+            return (input.first.GetBroadcasterClass() == m_broadcaster_spec.GetBroadcasterClass()
+                    && (input.first.GetEventBits() & m_broadcaster_spec.GetEventBits()) != 0
+                    && input.second == m_listener);
+        }
+        
+    private:
+        BroadcastEventSpec m_broadcaster_spec;
+        const Listener *m_listener;
+    };
+    
+    class ListenerMatches
+    {
+    public:
+        ListenerMatches (const Listener &in_listener) :
+            m_listener (&in_listener)
+        {
+        }
+        
+        ~ListenerMatches() {}
+        
+        bool operator () (const event_listener_key input) const
+        {
+            if (input.second == m_listener)
+                return true;
+            else
+                return false;
+        }
+        
+    private:
+        const Listener *m_listener;
+    
+    };
+    
+};
 
 //----------------------------------------------------------------------
 /// @class Broadcaster Broadcaster.h "lldb/Core/Broadcaster.h"
@@ -66,7 +247,7 @@ public:
     ///     A NULL terminated C string that contains the name of the
     ///     broadcaster object.
     //------------------------------------------------------------------
-    Broadcaster (const char *name);
+    Broadcaster (BroadcasterManager *manager, const char *name);
 
     //------------------------------------------------------------------
     /// Destructor.
@@ -76,6 +257,9 @@ public:
     virtual
     ~Broadcaster();
 
+    void
+    CheckInWithManager ();
+    
     //------------------------------------------------------------------
     /// Broadcast an event which has no associated data.
     ///
@@ -245,6 +429,10 @@ public:
     //------------------------------------------------------------------
     void
     RestoreBroadcaster ();
+    
+    virtual ConstString &GetBroadcasterClass() const;
+    
+    BroadcasterManager *GetManager();
 
 protected:
 
@@ -266,6 +454,7 @@ protected:
     std::vector<Listener *> m_hijacking_listeners;  // A simple mechanism to intercept events from a broadcaster 
     std::vector<uint32_t> m_hijacking_masks;        // At some point we may want to have a stack or Listener
                                                     // collections, but for now this is just for private hijacking.
+    BroadcasterManager *m_manager;
     
 private:
     //------------------------------------------------------------------

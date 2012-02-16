@@ -55,6 +55,15 @@ public:
         eCommandTypesAllThem = 0xFFFF   // all commands
     };
 
+    // These two functions fill out the Broadcaster interface:
+    
+    static ConstString &GetStaticBroadcasterClass ();
+
+    virtual ConstString &GetBroadcasterClass() const
+    {
+        return GetStaticBroadcasterClass();
+    }
+
     void
     SourceInitFile (bool in_cwd, 
                     CommandReturnObject &result);
@@ -437,7 +446,7 @@ public:
     {
         return "*** Some of your variables have more members than the debugger will show by default. To show all of them, you can either use the --show-all-children option to %s or raise the limit by changing the target.max-children-count setting.\n";
     }
-
+    
 protected:
     friend class Debugger;
 
@@ -468,6 +477,7 @@ private:
     char m_repeat_char;
     bool m_batch_command_mode;
     ChildrenTruncatedWarningStatus m_truncation_warning;    // Whether we truncated children and whether the user has been told
+    
 };
 
 

@@ -9,9 +9,11 @@
 
 #include "lldb/API/SBListener.h"
 #include "lldb/API/SBBroadcaster.h"
+#include "lldb/API/SBDebugger.h"
 #include "lldb/API/SBEvent.h"
 #include "lldb/API/SBStream.h"
 #include "lldb/Core/Broadcaster.h"
+#include "lldb/Core/Debugger.h"
 #include "lldb/Core/Listener.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/StreamString.h"
@@ -90,6 +92,40 @@ SBListener::Clear ()
         m_opaque_ptr->Clear ();
 }
 
+    uint32_t
+    SBListener::StartListeningForEventClass (SBDebugger &debugger,
+                                 const char *broadcaster_class, 
+                                 uint32_t event_mask)
+    {
+        if (m_opaque_ptr)
+        {
+            Debugger *lldb_debugger = debugger.get();
+            if (!lldb_debugger)
+                return 0;
+            BroadcastEventSpec event_spec (ConstString (broadcaster_class), event_mask);
+            return m_opaque_ptr->StartListeningForEventSpec (*lldb_debugger, event_spec);
+        }
+        else
+            return 0;
+    }
+                                 
+    bool
+    SBListener::StopListeningForEventClass (SBDebugger &debugger,
+                                const char *broadcaster_class,
+                                uint32_t event_mask)
+    {
+        if (m_opaque_ptr)
+        {
+            Debugger *lldb_debugger = debugger.get();
+            if (!lldb_debugger)
+                return false;
+            BroadcastEventSpec event_spec (ConstString (broadcaster_class), event_mask);
+            return m_opaque_ptr->StopListeningForEventSpec (*lldb_debugger, event_spec);
+        }
+        else
+            return false;
+    }
+    
 uint32_t
 SBListener::StartListeningForEvents (const SBBroadcaster& broadcaster, uint32_t event_mask)
 {

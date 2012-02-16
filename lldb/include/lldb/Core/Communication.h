@@ -332,6 +332,13 @@ public:
         m_close_on_eof = b;
     }
 
+    static ConstString &GetStaticBroadcasterClass ();
+
+    virtual ConstString &GetBroadcasterClass() const
+    {
+        return GetStaticBroadcasterClass();
+    }
+
 private:
     //------------------------------------------------------------------
     // For Communication only

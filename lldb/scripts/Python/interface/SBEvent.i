@@ -134,6 +134,9 @@ public:
     lldb::SBBroadcaster
     GetBroadcaster () const;
 
+    const char *
+    GetBroadcasterClass () const;
+
     bool
     BroadcasterMatchesRef (const lldb::SBBroadcaster &broadcaster);
 

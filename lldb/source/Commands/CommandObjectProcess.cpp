@@ -30,7 +30,7 @@ using namespace lldb_private;
 //-------------------------------------------------------------------------
 // CommandObjectProcessLaunch
 //-------------------------------------------------------------------------
-#pragma mark CommandObjectProjectLaunch
+#pragma mark CommandObjectProcessLaunch
 class CommandObjectProcessLaunch : public CommandObject
 {
 public:

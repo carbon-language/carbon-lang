@@ -52,6 +52,9 @@ public:
 
     bool
     IsValid() const;
+    
+    static const char *
+    GetBroadcasterClassName ();
 
     lldb::SBProcess
     GetProcess ();

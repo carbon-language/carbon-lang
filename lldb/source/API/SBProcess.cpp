@@ -74,6 +74,12 @@ SBProcess::~SBProcess()
 {
 }
 
+const char *
+SBProcess::GetBroadcasterClassName ()
+{
+    return Process::GetStaticBroadcasterClass().AsCString();
+}
+
 lldb::ProcessSP
 SBProcess::GetSP() const
 {
@@ -743,7 +749,7 @@ SBProcess::GetProcessFromEvent (const SBEvent &event)
 bool
 SBProcess::EventIsProcessEvent (const SBEvent &event)
 {
-    return Process::ProcessEventData::GetEventDataFromEvent(event.get()) != NULL;
+    return strcmp (event.GetBroadcasterClass(), SBProcess::GetBroadcasterClass()) == 0;
 }
 
 SBBroadcaster
@@ -760,6 +766,12 @@ SBProcess::GetBroadcaster () const
                      broadcaster.get());
 
     return broadcaster;
+}
+
+const char *
+SBProcess::GetBroadcasterClass ()
+{
+    return Process::GetStaticBroadcasterClass().AsCString();
 }
 
 size_t

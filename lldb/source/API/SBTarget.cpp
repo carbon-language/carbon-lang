@@ -87,6 +87,12 @@ SBTarget::~SBTarget()
 {
 }
 
+const char *
+SBTarget::GetBroadcasterClassName ()
+{
+    return Target::GetStaticBroadcasterClass().AsCString();
+}
+
 bool
 SBTarget::IsValid () const
 {
@@ -1234,7 +1240,6 @@ SBTarget::GetBroadcaster () const
 
     return broadcaster;
 }
-
 
 bool
 SBTarget::GetDescription (SBStream &description, lldb::DescriptionLevel description_level)

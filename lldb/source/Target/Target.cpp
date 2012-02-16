@@ -41,11 +41,18 @@
 using namespace lldb;
 using namespace lldb_private;
 
+ConstString &
+Target::GetStaticBroadcasterClass ()
+{
+    static ConstString class_name ("lldb.target");
+    return class_name;
+}
+
 //----------------------------------------------------------------------
 // Target constructor
 //----------------------------------------------------------------------
 Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::PlatformSP &platform_sp) :
-    Broadcaster ("lldb.target"),
+    Broadcaster (&debugger, "lldb.target"),
     ExecutionContextScope (),
     TargetInstanceSettings (GetSettingsController()),
     m_debugger (debugger),
@@ -72,6 +79,8 @@ Target::Target(Debugger &debugger, const ArchSpec &target_arch, const lldb::Plat
     SetEventName (eBroadcastBitBreakpointChanged, "breakpoint-changed");
     SetEventName (eBroadcastBitModulesLoaded, "modules-loaded");
     SetEventName (eBroadcastBitModulesUnloaded, "modules-unloaded");
+    
+    CheckInWithManager();
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
@@ -2773,3 +2782,58 @@ Target::SettingsController::instance_settings_table[] =
     { TSC_DISABLE_STDIO     , eSetVarTypeBoolean, "false"       , NULL,                  false,  false,  "Disable stdin/stdout for process (e.g. for a GUI application)" },
     { NULL                  , eSetVarTypeNone   , NULL          , NULL,                  false, false, NULL }
 };
+
+const ConstString &
+Target::TargetEventData::GetFlavorString ()
+{
+    static ConstString g_flavor ("Target::TargetEventData");
+    return g_flavor;
+}
+
+const ConstString &
+Target::TargetEventData::GetFlavor () const
+{
+    return TargetEventData::GetFlavorString ();
+}
+
+Target::TargetEventData::TargetEventData (const lldb::TargetSP &new_target_sp) :
+    EventData(),
+    m_target_sp (new_target_sp)
+{
+}
+
+Target::TargetEventData::~TargetEventData()
+{
+
+}
+
+void
+Target::TargetEventData::Dump (Stream *s) const
+{
+
+}
+
+const TargetSP
+Target::TargetEventData::GetTargetFromEvent (const lldb::EventSP &event_sp)
+{
+    TargetSP target_sp;
+
+    const TargetEventData *data = GetEventDataFromEvent (event_sp.get());
+    if (data)
+        target_sp = data->m_target_sp;
+
+    return target_sp;
+}
+
+const Target::TargetEventData *
+Target::TargetEventData::GetEventDataFromEvent (const Event *event_ptr)
+{
+    if (event_ptr)
+    {
+        const EventData *event_data = event_ptr->GetData();
+        if (event_data && event_data->GetFlavor() == TargetEventData::GetFlavorString())
+            return static_cast <const TargetEventData *> (event_ptr->GetData());
+    }
+    return NULL;
+}
+

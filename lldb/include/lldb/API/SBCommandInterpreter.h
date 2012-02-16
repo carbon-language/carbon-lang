@@ -50,6 +50,9 @@ public:
 
     lldb::SBBroadcaster
     GetBroadcaster ();
+    
+    static const char *
+    GetBroadcasterClass ();
 
     bool
     HasCommands ();

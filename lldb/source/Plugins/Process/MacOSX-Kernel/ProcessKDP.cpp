@@ -89,7 +89,7 @@ ProcessKDP::CanDebug(Target &target, bool plugin_specified_by_name)
 ProcessKDP::ProcessKDP(Target& target, Listener &listener) :
     Process (target, listener),
     m_comm("lldb.process.kdp-remote.communication"),
-    m_async_broadcaster ("lldb.process.kdp-remote.async-broadcaster"),
+    m_async_broadcaster (NULL, "lldb.process.kdp-remote.async-broadcaster"),
     m_async_thread (LLDB_INVALID_HOST_THREAD)
 {
 //    m_async_broadcaster.SetEventName (eBroadcastBitAsyncThreadShouldExit,   "async thread should exit");

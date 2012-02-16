@@ -21,12 +21,13 @@
 using namespace lldb;
 using namespace lldb_private;
 
-Broadcaster::Broadcaster (const char *name) :
+Broadcaster::Broadcaster (BroadcasterManager *manager, const char *name) :
     m_broadcaster_name (name),
     m_listeners (),
     m_listeners_mutex (Mutex::eMutexTypeRecursive),
     m_hijacking_listeners(),
-    m_hijacking_masks()
+    m_hijacking_masks(),
+    m_manager (manager)
 {
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
@@ -41,6 +42,15 @@ Broadcaster::~Broadcaster()
         log->Printf ("%p Broadcaster::~Broadcaster(\"%s\")", this, m_broadcaster_name.AsCString());
 
     Clear();
+}
+
+void
+Broadcaster::CheckInWithManager ()
+{
+    if (m_manager != NULL)
+    {
+        m_manager->SignUpListenersForBroadcaster(*this);
+    }
 }
 
 void
@@ -297,3 +307,173 @@ Broadcaster::RestoreBroadcaster ()
     m_hijacking_masks.pop_back();
 }
 
+ConstString &
+Broadcaster::GetBroadcasterClass() const
+{
+    static ConstString class_name ("lldb.anonymous");
+    return class_name;
+}
+
+BroadcastEventSpec::BroadcastEventSpec (const BroadcastEventSpec &rhs) :
+    m_broadcaster_class (rhs.m_broadcaster_class), 
+    m_event_bits (rhs.m_event_bits)
+{
+}
+
+bool 
+BroadcastEventSpec::operator< (const BroadcastEventSpec &rhs) const
+{
+    if (GetBroadcasterClass() == rhs.GetBroadcasterClass())
+    {
+        return GetEventBits() < rhs.GetEventBits();
+    }
+    else
+    {
+        return GetBroadcasterClass() < rhs.GetBroadcasterClass();
+    }
+}
+
+const BroadcastEventSpec &
+BroadcastEventSpec::operator= (const BroadcastEventSpec &rhs)
+{
+    m_broadcaster_class = rhs.m_broadcaster_class;
+    m_event_bits = rhs.m_event_bits;
+    return *this;
+}
+
+BroadcasterManager::BroadcasterManager() :
+    m_manager_mutex(Mutex::eMutexTypeRecursive)
+{
+    
+}
+
+uint32_t
+BroadcasterManager::RegisterListenerForEvents (Listener &listener, BroadcastEventSpec event_spec)
+{
+    Mutex::Locker locker(m_manager_mutex);
+    
+    collection::iterator iter = m_event_map.begin(), end_iter = m_event_map.end();
+    uint32_t available_bits = event_spec.GetEventBits();
+    
+    while (iter != end_iter 
+           && (iter = find_if (iter, end_iter, BroadcasterClassMatches(event_spec.GetBroadcasterClass()))) != end_iter)
+    {
+        available_bits &= ~((*iter).first.GetEventBits());
+        iter++;  
+    }
+    
+    if (available_bits != 0)
+    {
+        m_event_map.insert (event_listener_key (BroadcastEventSpec (event_spec.GetBroadcasterClass(), available_bits), &listener));
+        m_listeners.insert(&listener);
+    }
+    
+    return available_bits;
+}
+
+bool
+BroadcasterManager::UnregisterListenerForEvents (Listener &listener, BroadcastEventSpec event_spec)
+{
+    Mutex::Locker locker(m_manager_mutex);
+    bool removed_some = false;
+    
+    if (m_listeners.erase(&listener) == 0)
+        return false;
+    
+    ListenerMatchesAndSharedBits predicate (event_spec, listener);
+    std::vector<BroadcastEventSpec> to_be_readded;
+    uint32_t event_bits_to_remove = event_spec.GetEventBits();
+    
+    // Go through the map and delete the exact matches, and build a list of matches that weren't exact to re-add:
+    while (1)
+    {
+        collection::iterator iter, end_iter = m_event_map.end();
+        iter = find_if (m_event_map.begin(), end_iter, predicate);
+        if (iter == end_iter)
+        {
+            break;
+        }  
+        else 
+        {
+            uint32_t iter_event_bits = (*iter).first.GetEventBits();
+            removed_some = true;
+
+            if (event_bits_to_remove != iter_event_bits)
+            {
+                uint32_t new_event_bits = iter_event_bits & ~event_bits_to_remove;
+                to_be_readded.push_back(BroadcastEventSpec (event_spec.GetBroadcasterClass(), new_event_bits));
+            } 
+            m_event_map.erase (iter);
+        }
+    }
+    
+    // Okay now add back the bits that weren't completely removed:
+    for (size_t i = 0; i < to_be_readded.size(); i++)
+    {
+        m_event_map.insert (event_listener_key (to_be_readded[i], &listener));
+    }
+    
+    return removed_some;
+}
+    
+Listener *
+BroadcasterManager::GetListenerForEventSpec (BroadcastEventSpec event_spec) const
+{
+    Mutex::Locker locker(*(const_cast<Mutex *> (&m_manager_mutex)));
+    
+    collection::const_iterator iter, end_iter = m_event_map.end();
+    iter = find_if (m_event_map.begin(), end_iter, BroadcastEventSpecMatches (event_spec));
+    if (iter != end_iter)
+        return (*iter).second;
+    else
+        return NULL;
+}
+
+void
+BroadcasterManager::RemoveListener (Listener &listener)
+{
+    Mutex::Locker locker(m_manager_mutex);
+    ListenerMatches predicate (listener);
+
+
+    if (m_listeners.erase (&listener) == 0)
+        return;
+        
+    while (1)
+    {
+        collection::iterator iter, end_iter = m_event_map.end();
+        iter = find_if (m_event_map.begin(), end_iter, predicate);
+        if (iter == end_iter)
+            break;
+        else
+            m_event_map.erase(iter);
+    }
+}
+    
+void
+BroadcasterManager::SignUpListenersForBroadcaster (Broadcaster &broadcaster)
+{
+    Mutex::Locker locker(m_manager_mutex);
+    
+    collection::iterator iter = m_event_map.begin(), end_iter = m_event_map.end();
+    
+    while (iter != end_iter 
+           && (iter = find_if (iter, end_iter, BroadcasterClassMatches(broadcaster.GetBroadcasterClass()))) != end_iter)
+    {
+        (*iter).second->StartListeningForEvents (&broadcaster, (*iter).first.GetEventBits());
+        iter++;
+    }
+}
+
+void
+BroadcasterManager::Clear ()
+{
+    Mutex::Locker locker(m_manager_mutex);
+    listener_collection::iterator end_iter = m_listeners.end();
+    
+    for (listener_collection::iterator iter = m_listeners.begin(); iter != end_iter; iter++)
+        (*iter)->BroadcasterManagerWillDestruct(this);
+    m_listeners.clear();
+    m_event_map.clear();
+    
+}

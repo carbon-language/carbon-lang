@@ -59,13 +59,20 @@
 using namespace lldb;
 using namespace lldb_private;
 
+ConstString &
+CommandInterpreter::GetStaticBroadcasterClass ()
+{
+    static ConstString class_name ("lldb.commandInterpreter");
+    return class_name;
+}
+
 CommandInterpreter::CommandInterpreter
 (
     Debugger &debugger,
     ScriptLanguage script_language,
     bool synchronous_execution
 ) :
-    Broadcaster ("lldb.command-interpreter"),
+    Broadcaster (&debugger, "lldb.command-interpreter"),
     m_debugger (debugger),
     m_synchronous_execution (synchronous_execution),
     m_skip_lldbinit_files (false),
@@ -86,6 +93,8 @@ CommandInterpreter::CommandInterpreter
     SetEventName (eBroadcastBitThreadShouldExit, "thread-should-exit");
     SetEventName (eBroadcastBitResetPrompt, "reset-prompt");
     SetEventName (eBroadcastBitQuitCommandReceived, "quit");
+    
+    CheckInWithManager ();
 }
 
 void

@@ -1296,7 +1296,16 @@ public:
         eBroadcastInternalStateControlPause = (1<<1),
         eBroadcastInternalStateControlResume = (1<<2)
     };
-        
+    
+    // These two functions fill out the Broadcaster interface:
+    
+    static ConstString &GetStaticBroadcasterClass ();
+
+    virtual ConstString &GetBroadcasterClass() const
+    {
+        return GetStaticBroadcasterClass();
+    }
+
     //------------------------------------------------------------------
     /// A notification structure that can be used by clients to listen
     /// for changes in a process's lifetime.

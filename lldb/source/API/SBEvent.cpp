@@ -109,6 +109,16 @@ SBEvent::GetBroadcaster () const
     return broadcaster;
 }
 
+const char *
+SBEvent::GetBroadcasterClass () const
+{
+    const Event *lldb_event = get();
+    if (lldb_event)
+        return lldb_event->GetBroadcaster()->GetBroadcasterClass().AsCString();
+    else
+        return "unknown class";
+}
+
 bool
 SBEvent::BroadcasterMatchesPtr (const SBBroadcaster *broadcaster)
 {

@@ -42,6 +42,9 @@ public:
 
     ~SBProcess();
 
+    static const char *
+    GetBroadcasterClassName ();
+    
     void
     Clear ();
 
@@ -177,6 +180,9 @@ public:
 
     lldb::SBBroadcaster
     GetBroadcaster () const;
+
+    static const char *
+    GetBroadcasterClass ();
 
     bool
     GetDescription (lldb::SBStream &description);

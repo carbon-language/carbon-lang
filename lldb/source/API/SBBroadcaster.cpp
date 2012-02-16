@@ -25,7 +25,7 @@ SBBroadcaster::SBBroadcaster () :
 }
 
 SBBroadcaster::SBBroadcaster (const char *name) :
-    m_opaque_sp (new Broadcaster (name)),
+    m_opaque_sp (new Broadcaster (NULL, name)),
     m_opaque_ptr (NULL)
 {
     m_opaque_ptr = m_opaque_sp.get();

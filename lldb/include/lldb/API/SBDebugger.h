@@ -277,6 +277,7 @@ private:
     friend class SBProcess;
     friend class SBSourceManager;
     friend class SBTarget;
+    friend class SBListener;
     
     lldb::SBTarget
     FindTargetWithLLDBProcess (const lldb::ProcessSP &processSP);

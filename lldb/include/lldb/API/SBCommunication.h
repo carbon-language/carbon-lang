@@ -39,6 +39,8 @@ public:
 
     lldb::SBBroadcaster
     GetBroadcaster ();
+    
+    static const char *GetBroadcasterClass();
 
     lldb::ConnectionStatus
     AdoptFileDesriptor (int fd, bool owns_fd);

@@ -23,11 +23,18 @@
 using namespace lldb;
 using namespace lldb_private;
 
+ConstString &
+Communication::GetStaticBroadcasterClass ()
+{
+    static ConstString class_name ("lldb.communication");
+    return class_name;
+}
+
 //----------------------------------------------------------------------
 // Constructor
 //----------------------------------------------------------------------
 Communication::Communication(const char *name) :
-    Broadcaster (name),
+    Broadcaster (NULL, name),
     m_connection_sp (),
     m_read_thread (LLDB_INVALID_HOST_THREAD),
     m_read_thread_enabled (false),
@@ -48,6 +55,8 @@ Communication::Communication(const char *name) :
     SetEventName (eBroadcastBitReadThreadDidExit, "read thread did exit");
     SetEventName (eBroadcastBitReadThreadShouldExit, "read thread should exit");
     SetEventName (eBroadcastBitPacketAvailable, "packet available");
+    
+    CheckInWithManager();
 }
 
 //----------------------------------------------------------------------

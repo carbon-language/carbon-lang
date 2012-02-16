@@ -333,7 +333,7 @@ Debugger::Debugger () :
     m_input_file (),
     m_output_file (),
     m_error_file (),
-    m_target_list (),
+    m_target_list (*this),
     m_platform_list (),
     m_listener ("lldb.Debugger"),
     m_source_manager(*this),
@@ -374,6 +374,7 @@ Debugger::Clear()
             target_sp->Destroy();
         }
     }
+    BroadcasterManager::Clear ();
     DisconnectInput();
 
 }

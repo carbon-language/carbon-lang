@@ -255,6 +255,11 @@ SBCommunication::GetBroadcaster ()
     return broadcaster;
 }
 
+const char *
+SBCommunication::GetBroadcasterClass ()
+{
+    return Communication::GetStaticBroadcasterClass().AsCString();
+}
 
 //
 //void

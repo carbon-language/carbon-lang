@@ -292,6 +292,12 @@ SBCommandInterpreter::GetBroadcaster ()
     return broadcaster;
 }
 
+const char *
+SBCommandInterpreter::GetBroadcasterClass ()
+{
+    return Communication::GetStaticBroadcasterClass().AsCString();
+}
+
 const char * 
 SBCommandInterpreter::GetArgumentTypeAsCString (const lldb::CommandArgumentType arg_type)
 {

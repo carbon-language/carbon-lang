@@ -146,7 +146,7 @@ ProcessGDBRemote::ProcessGDBRemote(Target& target, Listener &listener) :
     m_last_stop_packet (),
     m_last_stop_packet_mutex (Mutex::eMutexTypeNormal),
     m_register_info (),
-    m_async_broadcaster ("lldb.process.gdb-remote.async-broadcaster"),
+    m_async_broadcaster (NULL, "lldb.process.gdb-remote.async-broadcaster"),
     m_async_thread (LLDB_INVALID_HOST_THREAD),
     m_continue_c_tids (),
     m_continue_C_tids (),

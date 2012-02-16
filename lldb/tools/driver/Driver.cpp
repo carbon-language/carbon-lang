@@ -1233,6 +1233,9 @@ Driver::MainLoop ()
     m_debugger.PushInputReader (m_editline_reader);
 
     SBListener listener(m_debugger.GetListener());
+    listener.StartListeningForEventClass(m_debugger, 
+                                         SBTarget::GetBroadcasterClassName(), 
+                                         SBTarget::eBroadcastBitBreakpointChanged);
     if (listener.IsValid())
     {
 

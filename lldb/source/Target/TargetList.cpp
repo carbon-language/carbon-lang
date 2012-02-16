@@ -25,16 +25,23 @@
 using namespace lldb;
 using namespace lldb_private;
 
+ConstString &
+TargetList::GetStaticBroadcasterClass ()
+{
+    static ConstString class_name ("lldb.targetList");
+    return class_name;
+}
 
 //----------------------------------------------------------------------
 // TargetList constructor
 //----------------------------------------------------------------------
-TargetList::TargetList() :
-    Broadcaster("TargetList"),
+TargetList::TargetList(Debugger &debugger) :
+    Broadcaster(&debugger, "TargetList"),
     m_target_list(),
     m_target_list_mutex (Mutex::eMutexTypeRecursive),
     m_selected_target_idx (0)
 {
+    CheckInWithManager();
 }
 
 //----------------------------------------------------------------------
@@ -176,9 +183,6 @@ TargetList::CreateTarget
         Mutex::Locker locker(m_target_list_mutex);
         m_selected_target_idx = m_target_list.size();
         m_target_list.push_back(target_sp);
-        
-        // Now sign the Debugger up to listen to target events for this target:
-        debugger.GetListener().StartListeningForEvents(target_sp.get(), Target::eBroadcastBitBreakpointChanged);
     }
 
     return error;

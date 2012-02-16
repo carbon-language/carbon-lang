@@ -16,6 +16,7 @@
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
 
 
 // Other libraries and framework includes
@@ -32,6 +33,7 @@ public:
     typedef bool (*HandleBroadcastCallback) (lldb::EventSP &event_sp, void *baton);
 
     friend class Broadcaster;
+    friend class BroadcasterManager;
 
     //------------------------------------------------------------------
     // Constructors and Destructors
@@ -53,9 +55,17 @@ public:
     }
 
     uint32_t
-    StartListeningForEvents (Broadcaster* broadcaster,
+    StartListeningForEventSpec (BroadcasterManager &manager, 
+                                 const BroadcastEventSpec &event_spec);
+    
+    bool
+    StopListeningForEventSpec (BroadcasterManager &manager, 
+                                 const BroadcastEventSpec &event_spec);
+    
+    uint32_t
+    StartListeningForEvents (Broadcaster* broadcaster, 
                              uint32_t event_mask);
-
+    
     uint32_t
     StartListeningForEvents (Broadcaster* broadcaster,
                              uint32_t event_mask,
@@ -128,6 +138,7 @@ protected:
 
     typedef std::multimap<Broadcaster*, BroadcasterInfo> broadcaster_collection;
     typedef std::list<lldb::EventSP> event_collection;
+    typedef std::vector<BroadcasterManager *> broadcaster_manager_collection;
 
     bool
     FindNextEventInternal (Broadcaster *broadcaster,   // NULL for any broadcaster
@@ -158,9 +169,14 @@ protected:
     event_collection m_events;
     Mutex m_events_mutex; // Protects m_broadcasters and m_events
     Predicate<bool> m_cond_wait;
+    broadcaster_manager_collection m_broadcaster_managers;
 
     void
     BroadcasterWillDestruct (Broadcaster *);
+    
+    void
+    BroadcasterManagerWillDestruct (BroadcasterManager *manager);
+    
 private:
 
 //    broadcaster_collection::iterator

@@ -52,6 +52,9 @@ public:
 
     ~SBProcess();
 
+    static const char *
+    GetBroadcasterClassName ();
+
     void
     Clear ();
 

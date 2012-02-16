@@ -47,6 +47,9 @@ public:
     lldb::SBBroadcaster
     GetBroadcaster () const;
 
+    const char *
+    GetBroadcasterClass () const;
+
     bool
     BroadcasterMatchesPtr (const lldb::SBBroadcaster *broadcaster);
 

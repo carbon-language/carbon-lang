@@ -18,6 +18,7 @@
 #include <stack>
 
 #include "lldb/lldb-public.h"
+#include "lldb/Core/Broadcaster.h"
 #include "lldb/Core/Communication.h"
 #include "lldb/Core/FormatManager.h"
 #include "lldb/Core/InputReaderStack.h"
@@ -253,7 +254,8 @@ private:
 class Debugger :
     public std::tr1::enable_shared_from_this<Debugger>,
     public UserID,
-    public DebuggerInstanceSettings
+    public DebuggerInstanceSettings,
+    public BroadcasterManager
 {
 friend class SourceManager;  // For GetSourceFileCache.
 

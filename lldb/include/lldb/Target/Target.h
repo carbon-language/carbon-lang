@@ -278,6 +278,52 @@ public:
         eBroadcastBitModulesUnloaded    = (1 << 2)
     };
     
+    // These two functions fill out the Broadcaster interface:
+    
+    static ConstString &GetStaticBroadcasterClass ();
+
+    virtual ConstString &GetBroadcasterClass() const
+    {
+        return GetStaticBroadcasterClass();
+    }
+
+    // This event data class is for use by the TargetList to broadcast new target notifications.
+    class TargetEventData : public EventData
+    {
+    public:
+
+        static const ConstString &
+        GetFlavorString ();
+
+        virtual const ConstString &
+        GetFlavor () const;
+
+        TargetEventData (const lldb::TargetSP &new_target_sp);
+        
+        lldb::TargetSP &
+        GetTarget()
+        {
+            return m_target_sp;
+        }
+
+        virtual
+        ~TargetEventData();
+        
+        virtual void
+        Dump (Stream *s) const;
+
+        static const lldb::TargetSP
+        GetTargetFromEvent (const lldb::EventSP &event_sp);
+        
+        static const TargetEventData *
+        GetEventDataFromEvent (const Event *event_sp);
+
+    private:
+        lldb::TargetSP m_target_sp;
+
+        DISALLOW_COPY_AND_ASSIGN (TargetEventData);
+    };
+    
     static void
     SettingsInitialize ();
 

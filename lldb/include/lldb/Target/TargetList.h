@@ -34,7 +34,7 @@ private:
     ///
     /// @see static TargetList& lldb_private::Debugger::GetTargetList().
     //------------------------------------------------------------------
-    TargetList();
+    TargetList(Debugger &debugger);
 
 public:
 
@@ -47,7 +47,16 @@ public:
     };
 
 
-    ~TargetList();
+    // These two functions fill out the Broadcaster interface:
+    
+    static ConstString &GetStaticBroadcasterClass ();
+
+    virtual ConstString &GetBroadcasterClass() const
+    {
+        return GetStaticBroadcasterClass();
+    }
+
+    virtual ~TargetList();
 
     //------------------------------------------------------------------
     /// Create a new Target.

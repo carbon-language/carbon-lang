@@ -743,19 +743,25 @@ Process::FindPlugin (Target &target, const char *plugin_name, Listener &listener
     return process_sp;
 }
 
+ConstString &
+Process::GetStaticBroadcasterClass ()
+{
+    static ConstString class_name ("lldb.process");
+    return class_name;
+}
 
 //----------------------------------------------------------------------
 // Process constructor
 //----------------------------------------------------------------------
 Process::Process(Target &target, Listener &listener) :
     UserID (LLDB_INVALID_PROCESS_ID),
-    Broadcaster ("lldb.process"),
+    Broadcaster (&(target.GetDebugger()), "lldb.process"),
     ProcessInstanceSettings (GetSettingsController()),
     m_target (target),
     m_public_state (eStateUnloaded),
     m_private_state (eStateUnloaded),
-    m_private_state_broadcaster ("lldb.process.internal_state_broadcaster"),
-    m_private_state_control_broadcaster ("lldb.process.internal_state_control_broadcaster"),
+    m_private_state_broadcaster (NULL, "lldb.process.internal_state_broadcaster"),
+    m_private_state_control_broadcaster (NULL, "lldb.process.internal_state_control_broadcaster"),
     m_private_state_listener ("lldb.process.internal_state_listener"),
     m_private_state_control_wait(),
     m_private_state_thread (LLDB_INVALID_HOST_THREAD),
@@ -783,6 +789,8 @@ Process::Process(Target &target, Listener &listener) :
     m_can_jit(eCanJITDontKnow)
 {
     UpdateInstanceName();
+    
+    CheckInWithManager ();
 
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)

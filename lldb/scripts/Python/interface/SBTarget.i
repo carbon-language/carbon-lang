@@ -72,6 +72,9 @@ public:
     //------------------------------------------------------------------
     ~SBTarget();
 
+    static const char *
+    GetBroadcasterClassName ();
+    
     bool
     IsValid() const;
 
