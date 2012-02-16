@@ -30,6 +30,7 @@
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Lex/Preprocessor.h"
 #include "TypeLocBuilder.h"
+#include "llvm/ADT/APInt.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace clang;
@@ -976,7 +977,8 @@ Sema::ActOnCXXNew(SourceLocation StartLoc, bool UseGlobal,
                      TypeContainsAuto);
 }
 
-static bool isLegalArrayNewInitializer(Expr *Init) {
+static bool isLegalArrayNewInitializer(CXXNewExpr::InitializationStyle Style,
+                                       Expr *Init) {
   if (!Init)
     return true;
   if (ParenListExpr *PLE = dyn_cast<ParenListExpr>(Init)) {
@@ -989,6 +991,11 @@ static bool isLegalArrayNewInitializer(Expr *Init) {
   else if (CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(Init))
     return !CCE->isListInitialization() &&
            CCE->getConstructor()->isDefaultConstructor();
+  else if (Style == CXXNewExpr::ListInit) {
+    assert(isa<InitListExpr>(Init) &&
+           "Shouldn't create list CXXConstructExprs for arrays.");
+    return true;
+  }
   return false;
 }
 
@@ -1240,14 +1247,26 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     }
   }
 
+  QualType InitType = AllocType;
   // Array 'new' can't have any initializers except empty parentheses.
-  if (!isLegalArrayNewInitializer(Initializer) &&
-      (ResultType->isArrayType() || ArraySize)) {
-    SourceRange InitRange(Inits[0]->getLocStart(),
-                          Inits[NumInits - 1]->getLocEnd());
-
-    Diag(StartLoc, diag::err_new_array_init_args) << InitRange;
-    return ExprError();
+  // Initializer lists are also allowed, in C++11. Rely on the parser for the
+  // dialect distinction.
+  if (ResultType->isArrayType() || ArraySize) {
+    if (!isLegalArrayNewInitializer(initStyle, Initializer)) {
+      SourceRange InitRange(Inits[0]->getLocStart(),
+                            Inits[NumInits - 1]->getLocEnd());
+      Diag(StartLoc, diag::err_new_array_init_args) << InitRange;
+      return ExprError();
+    }
+    if (InitListExpr *ILE = dyn_cast_or_null<InitListExpr>(Initializer)) {
+      // We do the initialization typechecking against the array type
+      // corresponding to the number of initializers + 1 (to also check
+      // default-initialization).
+      unsigned NumElements = ILE->getNumInits() + 1;
+      InitType = Context.getConstantArrayType(AllocType,
+          llvm::APInt(Context.getTypeSize(Context.getSizeType()), NumElements),
+                                              ArrayType::Normal, 0);
+    }
   }
 
   if (!AllocType->isDependentType() &&
@@ -1270,7 +1289,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
                                                  DirectInitRange.getEnd());
 
     InitializedEntity Entity
-      = InitializedEntity::InitializeNew(StartLoc, AllocType);
+      = InitializedEntity::InitializeNew(StartLoc, InitType);
     InitializationSequence InitSeq(*this, Entity, Kind, Inits, NumInits);
     ExprResult FullInit = InitSeq.Perform(*this, Entity, Kind,
                                           MultiExprArg(Inits, NumInits));
