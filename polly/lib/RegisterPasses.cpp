@@ -57,6 +57,10 @@ ExportJScop("polly-run-export-jscop",
             cl::desc("Export the JScop description of the detected Scops"),
             cl::Hidden, cl::init(false));
 static cl::opt<bool>
+ExportCLooG("polly-run-export-cloog",
+            cl::desc("Export the CLooG input files for the detected Scops"),
+            cl::Hidden, cl::init(false));
+static cl::opt<bool>
 PollyViewer("polly-show",
        cl::desc("Enable the Polly DOT viewer in -O3"), cl::Hidden,
        cl::value_desc("Run the Polly DOT viewer at -O3"),
@@ -194,6 +198,9 @@ void registerPollyPasses(llvm::PassManagerBase &PM, bool DisableScheduler,
 
   if (ExportJScop)
     PM.add(polly::createJSONExporterPass());
+
+  if (ExportCLooG)
+    PM.add(polly::createCloogExporterPass());
 
   if (RunCodegen)
     PM.add(polly::createCodeGenerationPass());
