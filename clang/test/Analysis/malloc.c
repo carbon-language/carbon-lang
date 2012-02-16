@@ -485,6 +485,13 @@ void GlobalStructMallocFree() {
   free(GlS.x);
 }
 
+char *ArrayG[12];
+
+void globalArrayTest() {
+  char *p = (char*)malloc(12);
+  ArrayG[0] = p;
+}
+
 // Make sure that we properly handle a pointer stored into a local struct/array.
 typedef struct _StructWithPtr {
   int *memP;
@@ -635,3 +642,11 @@ void testMalloc5() {
   StructWithPtr *pSt = &St;
   pSt->memP = malloc(12);
 }
+
+// TODO: This should produce a warning, similar to the previous issue.
+void localArrayTest() {
+  char *p = (char*)malloc(12);
+  char *ArrayL[12];
+  ArrayL[0] = p;
+}
+
