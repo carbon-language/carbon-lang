@@ -2,6 +2,9 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fobjc-arc -fblocks -fexceptions -fobjc-exceptions -O0 -disable-llvm-optzns -o - %s | FileCheck -check-prefix=NO-METADATA %s
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10 -emit-llvm -fobjc-arc -fblocks -fexceptions -fobjc-exceptions -O2 -disable-llvm-optzns -o - %s -fobjc-arc-exceptions | FileCheck -check-prefix=NO-METADATA %s
 
+// FIXME: This test is -Asserts-intolerant.
+// REQUIRES: asserts
+
 // The front-end should emit clang.arc.no_objc_arc_exceptions in -fobjc-arc-exceptions
 // mode when optimization is enabled, and not otherwise.
 
