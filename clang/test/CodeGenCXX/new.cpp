@@ -239,3 +239,14 @@ namespace PR11523 {
   // CHECK: store i64 -1
   NewTy* f() { return new NewTy[2](); }
 }
+
+namespace PR11757 {
+  // Make sure we elide the copy construction.
+  struct X { X(); X(const X&); };
+  X* a(X* x) { return new X(X()); }
+  // CHECK: define {{.*}} @_ZN7PR117571aEPNS_1XE
+  // CHECK: [[CALL:%.*]] = call noalias i8* @_Znwm
+  // CHECK-NEXT: [[CASTED:%.*]] = bitcast i8* [[CALL]] to
+  // CHECK-NEXT: call void @_ZN7PR117571XC1Ev({{.*}}* [[CASTED]])
+  // CHECK-NEXT: ret {{.*}} [[CASTED]]
+}

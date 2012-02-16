@@ -14,8 +14,6 @@ namespace test0 {
   // CHECK-NEXT: call noalias i8* @_Znwm(
   // CHECK-NEXT: bitcast
   // CHECK-NEXT: bitcast
-  // CHECK-NEXT: call void @llvm.memset.p0i8.i64(
-  // CHECK-NEXT: bitcast
   // CHECK-NEXT: bitcast
   // CHECK-NEXT: call void @llvm.memcpy.p0i8.p0i8.i64(
   // CHECK-NEXT: ret

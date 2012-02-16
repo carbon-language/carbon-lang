@@ -7,8 +7,8 @@ public:
   int z;
 };
 
-A *foo () {
-  A *a = new A();
+A *foo (A* x) {
+  A *a = new A(*x);
   return a;
 }
 

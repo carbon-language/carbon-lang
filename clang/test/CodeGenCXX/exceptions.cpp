@@ -194,12 +194,9 @@ namespace test3 {
     // CHECK:      [[SAVED0:%.*]] = alloca i8*
     // CHECK-NEXT: [[SAVED1:%.*]] = alloca i8*
     // CHECK-NEXT: [[CLEANUPACTIVE:%.*]] = alloca i1
-    // CHECK-NEXT: [[TMP:%.*]] = alloca [[A]], align 8
-    // CHECK:      [[TMPACTIVE:%.*]] = alloca i1
 
     // CHECK:      [[COND:%.*]] = trunc i8 {{.*}} to i1
     // CHECK-NEXT: store i1 false, i1* [[CLEANUPACTIVE]]
-    // CHECK-NEXT: store i1 false, i1* [[TMPACTIVE]]
     // CHECK-NEXT: br i1 [[COND]]
     return (cond ?
 
@@ -209,24 +206,18 @@ namespace test3 {
     // CHECK-NEXT: store i8* [[FOO]], i8** [[SAVED1]]
     // CHECK-NEXT: store i1 true, i1* [[CLEANUPACTIVE]]
     // CHECK-NEXT: [[CAST:%.*]] = bitcast i8* [[NEW]] to [[A]]*
-    // CHECK-NEXT: invoke void @_ZN5test35makeAEv([[A]]* sret [[TMP]])
-    // CHECK:      store i1 true, i1* [[TMPACTIVE]]
-    // CHECK-NEXT: invoke void @_ZN5test31AC1ERKS0_([[A]]* [[CAST]], [[A]]* [[TMP]])
-    // CHECK:      store i1 false, i1* [[CLEANUPACTIVE]]
-    // CHECK-NEXT: br label
+    // CHECK-NEXT: invoke void @_ZN5test35makeAEv([[A]]* sret [[CAST]])
+    // CHECK: br label
     //   -> cond.end
             new(foo(),10.0) A(makeA()) :
 
-    // CHECK:      [[MAKE:%.*]] = invoke [[A]]* @_ZN5test38makeAPtrEv()
+    // CHECK:      [[MAKE:%.*]] = call [[A]]* @_ZN5test38makeAPtrEv()
     // CHECK:      br label
     //   -> cond.end
             makeAPtr());
 
     // cond.end:
     // CHECK:      [[RESULT:%.*]] = phi [[A]]* {{.*}}[[CAST]]{{.*}}[[MAKE]]
-    // CHECK-NEXT: [[ISACTIVE:%.*]] = load i1* [[TMPACTIVE]]
-    // CHECK-NEXT: br i1 [[ISACTIVE]]
-    // CHECK:      invoke void @_ZN5test31AD1Ev
     // CHECK:      ret [[A]]* [[RESULT]]
 
     // in the EH path:

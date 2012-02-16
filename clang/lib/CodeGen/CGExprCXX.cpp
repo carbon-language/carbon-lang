@@ -890,20 +890,6 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
     return;
   }
 
-  if (const CXXConstructExpr *CCE = dyn_cast_or_null<CXXConstructExpr>(Init)) {
-    CXXConstructorDecl *Ctor = CCE->getConstructor();
-    // Per C++ [expr.new]p15, if we have an initializer, then we're performing
-    // direct initialization. C++ [dcl.init]p5 requires that we 
-    // zero-initialize storage if there are no user-declared constructors.
-    if (!Ctor->getParent()->hasUserDeclaredConstructor() &&
-        !Ctor->getParent()->isEmpty())
-      CGF.EmitNullInitialization(NewPtr, ElementType);
-
-    CGF.EmitCXXConstructorCall(Ctor, Ctor_Complete, /*ForVirtualBase=*/false,
-                               NewPtr, CCE->arg_begin(), CCE->arg_end());
-    return;
-  }
-  // We have a POD type.
   if (!Init)
     return;
 
