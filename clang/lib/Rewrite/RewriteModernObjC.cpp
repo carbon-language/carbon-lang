@@ -5528,7 +5528,7 @@ static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Resu
   Result += "0, \n\t";
   if (!metaclass && Properties.size() > 0) {
     Result += "(const struct _prop_list_t *)&";
-    Result += "_OBJC_CLASS_PROPERTIES_$_"; Result += ClassName;
+    Result += "_OBJC_$_PROP_LIST_"; Result += ClassName;
     Result += ",\n";
   }
   else
@@ -6006,7 +6006,7 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
   
   Write_prop_list_t_initializer(*this, Context, Result, ClassProperties,
                                  /* Container */0,
-                                 "_OBJC_CLASS_PROPERTIES_$_",
+                                 "_OBJC_$_PROP_LIST_",
                                  CDecl->getNameAsString());
 
   
