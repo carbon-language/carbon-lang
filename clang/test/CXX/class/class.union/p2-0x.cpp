@@ -34,3 +34,15 @@ union U3 {
   static const int k;
   U3() : k(0) {} // expected-error {{does not name a non-static data member}}
 };
+
+struct S {
+  union {
+    static const int n; // expected-error {{static members cannot be declared in an anonymous union}}
+    int a;
+    int b;
+  };
+};
+static union {
+  static const int k; // expected-error {{static members cannot be declared in an anonymous union}}
+  int n;
+};
