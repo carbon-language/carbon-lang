@@ -1889,6 +1889,68 @@ KnownName(Sema &S, const char *name) {
   return S.LookupName(R, S.TUScope, false);
 }
 
+static void addFixitForObjCARCConversion(Sema &S,
+                                         DiagnosticBuilder &DiagB,
+                                         Sema::CheckedConversionKind CCK,
+                                         SourceLocation afterLParen,
+                                         QualType castType,
+                                         Expr *castExpr,
+                                         const char *bridgeKeyword,
+                                         const char *CFBridgeName) {
+  // We handle C-style and implicit casts here.
+  switch (CCK) {
+  case Sema::CCK_ImplicitConversion:
+  case Sema::CCK_CStyleCast:
+    break;
+  case Sema::CCK_FunctionalCast:
+  case Sema::CCK_OtherCast:
+    return;
+  }
+
+  if (CFBridgeName) {
+    Expr *castedE = castExpr;
+    if (CStyleCastExpr *CCE = dyn_cast<CStyleCastExpr>(castedE))
+      castedE = CCE->getSubExpr();
+    castedE = castedE->IgnoreImpCasts();
+    SourceRange range = castedE->getSourceRange();
+    if (isa<ParenExpr>(castedE)) {
+      DiagB.AddFixItHint(FixItHint::CreateInsertion(range.getBegin(),
+                         CFBridgeName));
+    } else {
+      std::string namePlusParen = CFBridgeName;
+      namePlusParen += "(";
+      DiagB.AddFixItHint(FixItHint::CreateInsertion(range.getBegin(),
+                                                    namePlusParen));
+      DiagB.AddFixItHint(FixItHint::CreateInsertion(
+                                       S.PP.getLocForEndOfToken(range.getEnd()),
+                                       ")"));
+    }
+    return;
+  }
+
+  if (CCK == Sema::CCK_CStyleCast) {
+    DiagB.AddFixItHint(FixItHint::CreateInsertion(afterLParen, bridgeKeyword));
+  } else {
+    std::string castCode = "(";
+    castCode += bridgeKeyword;
+    castCode += castType.getAsString();
+    castCode += ")";
+    Expr *castedE = castExpr->IgnoreImpCasts();
+    SourceRange range = castedE->getSourceRange();
+    if (isa<ParenExpr>(castedE)) {
+      DiagB.AddFixItHint(FixItHint::CreateInsertion(range.getBegin(),
+                         castCode));
+    } else {
+      castCode += "(";
+      DiagB.AddFixItHint(FixItHint::CreateInsertion(range.getBegin(),
+                                                    castCode));
+      DiagB.AddFixItHint(FixItHint::CreateInsertion(
+                                       S.PP.getLocForEndOfToken(range.getEnd()),
+                                       ")"));
+    }
+  }
+}
+
 static void
 diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
                           QualType castType, ARCConversionTypeClass castACTC,
@@ -1934,14 +1996,18 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
       << castRange
       << castExpr->getSourceRange();
     bool br = KnownName(S, "CFBridgingRelease");
-    S.Diag(noteLoc, diag::note_arc_bridge)
-      << (CCK != Sema::CCK_CStyleCast ? FixItHint() :
-            FixItHint::CreateInsertion(afterLParen, "__bridge "));
-    S.Diag(noteLoc, diag::note_arc_bridge_transfer)
-      << castExprType << br 
-      << (CCK != Sema::CCK_CStyleCast ? FixItHint() :
-          FixItHint::CreateInsertion(afterLParen, 
-                                br ? "CFBridgingRelease " : "__bridge_transfer "));
+    {
+      DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge);
+      addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
+                                   castType, castExpr, "__bridge ", 0);
+    }
+    {
+      DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge_transfer)
+        << castExprType << br;
+      addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
+                                   castType, castExpr, "__bridge_transfer ",
+                                   br ? "CFBridgingRelease" : 0);
+    }
 
     return;
   }
@@ -1958,14 +2024,18 @@ diagnoseObjCARCConversion(Sema &S, SourceRange castRange,
       << castRange
       << castExpr->getSourceRange();
 
-    S.Diag(noteLoc, diag::note_arc_bridge)
-      << (CCK != Sema::CCK_CStyleCast ? FixItHint() :
-            FixItHint::CreateInsertion(afterLParen, "__bridge "));
-    S.Diag(noteLoc, diag::note_arc_bridge_retained)
-      << castType << br
-      << (CCK != Sema::CCK_CStyleCast ? FixItHint() :
-          FixItHint::CreateInsertion(afterLParen, 
-                              br ? "CFBridgingRetain " : "__bridge_retained"));
+    {
+      DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge);
+      addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
+                                   castType, castExpr, "__bridge ", 0);
+    }
+    {
+      DiagnosticBuilder DiagB = S.Diag(noteLoc, diag::note_arc_bridge_retained)
+        << castType << br;
+      addFixitForObjCARCConversion(S, DiagB, CCK, afterLParen,
+                                   castType, castExpr, "__bridge_retained ",
+                                   br ? "CFBridgingRetain" : 0);
+    }
 
     return;
   }
