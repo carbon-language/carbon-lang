@@ -24,7 +24,9 @@ DECLARE_REAL(char*, strchr, const char *str, int c);
 DECLARE_REAL(size_t, strlen, const char *s);
 DECLARE_REAL(char*, strncpy, char *to, const char *from, size_t size);
 DECLARE_REAL(size_t, strnlen, const char *s, size_t maxlen);
-DECLARE_REAL(int, sigaction, int signum, const void *act, void *oldact);
+struct sigaction;
+DECLARE_REAL(int, sigaction, int signum, const struct sigaction *act,
+                             struct sigaction *oldact);
 
 namespace __asan {
 
