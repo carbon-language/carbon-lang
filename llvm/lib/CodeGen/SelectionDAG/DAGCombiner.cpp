@@ -35,7 +35,6 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
-#include <set>
 using namespace llvm;
 
 STATISTIC(NodesCombined   , "Number of dag nodes combined");
@@ -101,7 +100,7 @@ namespace {
     SDValue visit(SDNode *N);
 
   public:
-    /// AddToWorkList - Add to the work list making sure i'ts instance is at the
+    /// AddToWorkList - Add to the work list making sure its instance is at the
     /// back (next to be processed.)
     void AddToWorkList(SDNode *N) {
       WorkListContents.insert(N);
