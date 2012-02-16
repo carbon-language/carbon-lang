@@ -85,6 +85,12 @@ Clang's support for those languages.</p>
 <h4 id="majorfeature1">Feature 1</h4>
 ...
 
+<h4 id="diagnostics">New and better diagnostics</h4>
+
+<p>New: <code>-Wdangling-else</code>, ...</p>
+
+<p>Improved: <code>-Wformat</code>, ...</p>
+
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="cchanges">C Language Changes in Clang</h3>
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
@@ -126,8 +132,9 @@ following are now considered to be of production quality:
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 Clang 3.1 introduces several new Objective-C language features and improvements.
 
-<h4 id="objcfeature1">Feature 1</h4>
-...
+<h4 id="objcwformat">Format string checking for NSString literals</h4>
+
+<code>-Wformat</code> now checks <code>@"nsstring literals"</code>.
 
 <!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
 <h3 id="apichanges">Internal API Changes</h3>
