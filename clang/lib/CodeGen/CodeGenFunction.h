@@ -2566,6 +2566,8 @@ private:
   CodeGenModule::ByrefHelpers *
   buildByrefHelpers(llvm::StructType &byrefType,
                     const AutoVarEmission &emission);
+
+  void AddObjCARCExceptionMetadata(llvm::Instruction *Inst);
 };
 
 /// Helper class with most of the code for saving a value for a

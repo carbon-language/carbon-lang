@@ -233,6 +233,7 @@ class CodeGenModule : public CodeGenTypeCache {
   CGCUDARuntime* CUDARuntime;
   CGDebugInfo* DebugInfo;
   ARCEntrypoints *ARCData;
+  llvm::MDNode *NoObjCARCExceptionsMetadata;
   RREntrypoints *RRData;
 
   // WeakRefReferences - A set of references that have only been seen via
@@ -420,6 +421,14 @@ public:
   }
 
   CGDebugInfo *getModuleDebugInfo() { return DebugInfo; }
+
+  llvm::MDNode *getNoObjCARCExceptionsMetadata() {
+    if (!NoObjCARCExceptionsMetadata)
+      NoObjCARCExceptionsMetadata =
+        llvm::MDNode::get(getLLVMContext(),
+                          SmallVector<llvm::Value*,1>());
+    return NoObjCARCExceptionsMetadata;
+  }
 
   ASTContext &getContext() const { return Context; }
   const CodeGenOptions &getCodeGenOpts() const { return CodeGenOpts; }

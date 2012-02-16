@@ -1593,6 +1593,16 @@ void CodeGenFunction::EmitCallArg(CallArgList &args, const Expr *E,
   args.add(EmitAnyExprToTemp(E), type);
 }
 
+// In ObjC ARC mode with no ObjC ARC exception safety, tell the ARC
+// optimizer it can aggressively ignore unwind edges.
+void
+CodeGenFunction::AddObjCARCExceptionMetadata(llvm::Instruction *Inst) {
+  if (CGM.getCodeGenOpts().OptimizationLevel != 0 &&
+      !CGM.getCodeGenOpts().ObjCAutoRefCountExceptions)
+    Inst->setMetadata("clang.arc.no_objc_arc_exceptions",
+                      CGM.getNoObjCARCExceptionsMetadata());
+}
+
 /// Emits a call or invoke instruction to the given function, depending
 /// on the current state of the EH stack.
 llvm::CallSite
@@ -1600,14 +1610,22 @@ CodeGenFunction::EmitCallOrInvoke(llvm::Value *Callee,
                                   ArrayRef<llvm::Value *> Args,
                                   const Twine &Name) {
   llvm::BasicBlock *InvokeDest = getInvokeDest();
-  if (!InvokeDest)
-    return Builder.CreateCall(Callee, Args, Name);
 
-  llvm::BasicBlock *ContBB = createBasicBlock("invoke.cont");
-  llvm::InvokeInst *Invoke = Builder.CreateInvoke(Callee, ContBB, InvokeDest,
-                                                  Args, Name);
-  EmitBlock(ContBB);
-  return Invoke;
+  llvm::Instruction *Inst;
+  if (!InvokeDest)
+    Inst = Builder.CreateCall(Callee, Args, Name);
+  else {
+    llvm::BasicBlock *ContBB = createBasicBlock("invoke.cont");
+    Inst = Builder.CreateInvoke(Callee, ContBB, InvokeDest, Args, Name);
+    EmitBlock(ContBB);
+  }
+
+  // In ObjC ARC mode with no ObjC ARC exception safety, tell the ARC
+  // optimizer it can aggressively ignore unwind edges.
+  if (CGM.getLangOptions().ObjCAutoRefCount)
+    AddObjCARCExceptionMetadata(Inst);
+
+  return Inst;
 }
 
 llvm::CallSite
@@ -1915,6 +1933,11 @@ RValue CodeGenFunction::EmitCall(const CGFunctionInfo &CallInfo,
 
   CS.setAttributes(Attrs);
   CS.setCallingConv(static_cast<llvm::CallingConv::ID>(CallingConv));
+
+  // In ObjC ARC mode with no ObjC ARC exception safety, tell the ARC
+  // optimizer it can aggressively ignore unwind edges.
+  if (CGM.getLangOptions().ObjCAutoRefCount)
+    AddObjCARCExceptionMetadata(CS.getInstruction());
 
   // If the call doesn't return, finish the basic block and clear the
   // insertion point; this allows the rest of IRgen to discard
