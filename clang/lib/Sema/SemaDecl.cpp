@@ -4439,11 +4439,26 @@ namespace {
 namespace {
 
 // Callback to only accept typo corrections that have a non-zero edit distance.
+// Also only accept corrections that have the same parent decl.
 class DifferentNameValidatorCCC : public CorrectionCandidateCallback {
  public:
+  DifferentNameValidatorCCC(CXXRecordDecl *Parent)
+      : ExpectedParent(Parent ? Parent->getCanonicalDecl() : 0) {}
+
   virtual bool ValidateCandidate(const TypoCorrection &candidate) {
-    return candidate.getEditDistance() > 0;
+    if (candidate.getEditDistance() == 0)
+      return false;
+
+    if (CXXMethodDecl *MD = candidate.getCorrectionDeclAs<CXXMethodDecl>()) {
+      CXXRecordDecl *Parent = MD->getParent();
+      return Parent && Parent->getCanonicalDecl() == ExpectedParent;
+    }
+
+    return !ExpectedParent;
   }
+
+ private:
+  CXXRecordDecl *ExpectedParent;
 };
 
 }
@@ -4477,7 +4492,8 @@ static NamedDecl* DiagnoseInvalidRedeclaration(
   SemaRef.LookupQualifiedName(Prev, NewDC);
   assert(!Prev.isAmbiguous() &&
          "Cannot have an ambiguity in previous-declaration lookup");
-  DifferentNameValidatorCCC Validator;
+  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(NewFD);
+  DifferentNameValidatorCCC Validator(MD ? MD->getParent() : 0);
   if (!Prev.empty()) {
     for (LookupResult::iterator Func = Prev.begin(), FuncEnd = Prev.end();
          Func != FuncEnd; ++Func) {

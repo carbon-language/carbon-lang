@@ -157,3 +157,13 @@ bool begun(R);
 void RangeTest() {
   for (auto b : R()) {} // expected-error {{use of undeclared identifier 'begin'}} expected-note {{range has type}}
 }
+
+// PR 12019 - Avoid infinite mutual recursion in DiagnoseInvalidRedeclaration
+// by not trying to typo-correct a method redeclaration to declarations not
+// in the current record.
+class Parent {
+ void set_types(int index, int value);
+ void add_types(int value);
+};
+class Child: public Parent {};
+void Child::add_types(int value) {} // expected-error{{out-of-line definition of 'add_types' does not match any declaration in 'Child'}}
