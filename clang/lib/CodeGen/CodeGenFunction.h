@@ -1376,6 +1376,9 @@ public:
   void EmitDestructorBody(FunctionArgList &Args);
   void EmitFunctionBody(FunctionArgList &Args);
 
+  void EmitLambdaToBlockPointerBody(FunctionArgList &Args);
+  void EmitLambdaToFunctionPointerBody(FunctionArgList &Args);
+
   /// EmitReturnBlock - Emit the unified return block, trying to avoid its
   /// emission when possible.
   void EmitReturnBlock();

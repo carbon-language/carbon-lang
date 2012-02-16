@@ -1720,3 +1720,11 @@ CodeGenFunction::EmitCXXOperatorMemberCallee(const CXXOperatorCallExpr *E,
 
   return CGM.GetAddrOfFunction(MD, Ty);
 }
+
+void CodeGenFunction::EmitLambdaToBlockPointerBody(FunctionArgList &Args) {
+  CGM.ErrorUnsupported(CurFuncDecl, "lambda conversion to block");
+}
+
+void CodeGenFunction::EmitLambdaToFunctionPointerBody(FunctionArgList &Args) {
+  CGM.ErrorUnsupported(CurFuncDecl, "lambda conversion to function");
+}

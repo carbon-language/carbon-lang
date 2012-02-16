@@ -447,6 +447,15 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
            !CGM.getCodeGenOpts().CUDAIsDevice &&
            FD->hasAttr<CUDAGlobalAttr>())
     CGM.getCUDARuntime().EmitDeviceStubBody(*this, Args);
+  else if (isa<CXXConversionDecl>(FD) &&
+           cast<CXXConversionDecl>(FD)->getParent()->isLambda()) {
+    // The lambda conversion operators are special; the semantics can't be
+    // expressed in the AST, so IRGen needs to special-case them.
+    if (cast<CXXConversionDecl>(FD)->isLambdaToBlockPointerConversion())
+      EmitLambdaToBlockPointerBody(Args);
+    else
+      EmitLambdaToFunctionPointerBody(Args);
+  }
   else
     EmitFunctionBody(Args);
 
