@@ -45,8 +45,10 @@ void ExplodedNode::SetAuditor(ExplodedNode::Auditor* A) {
 // Cleanup.
 //===----------------------------------------------------------------------===//
 
+static const unsigned CounterTop = 1000;
+
 ExplodedGraph::ExplodedGraph()
-  : NumNodes(0), reclaimNodes(false) {}
+  : NumNodes(0), reclaimNodes(false), reclaimCounter(CounterTop) {}
 
 ExplodedGraph::~ExplodedGraph() {}
 
@@ -125,12 +127,19 @@ void ExplodedGraph::collectNode(ExplodedNode *node) {
   node->~ExplodedNode();  
 }
 
-void ExplodedGraph::reclaimChangedNodes() {
+void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
   if (ChangedNodes.empty())
     return;
 
-  for (llvm::DenseSet<ExplodedNode*>::iterator it =
-       ChangedNodes.begin(), et = ChangedNodes.end();
+  // Only periodically relcaim nodes so that we can build up a set of
+  // nodes that meet the reclamation criteria.  Freshly created nodes
+  // by definition have no successor, and thus cannot be reclaimed (see below).
+  assert(reclaimCounter > 0);
+  if (--reclaimCounter != 0)
+    return;
+  reclaimCounter = CounterTop;
+
+  for (NodeVector::iterator it = ChangedNodes.begin(), et = ChangedNodes.end();
        it != et; ++it) {
     ExplodedNode *node = *it;
     if (shouldCollect(node))
@@ -151,12 +160,6 @@ void ExplodedNode::addPredecessor(ExplodedNode *V, ExplodedGraph &G) {
   assert (!V->isSink());
   Preds.addNode(V, G);
   V->Succs.addNode(this, G);
-  if (G.reclaimNodes) {
-    if (Succs.size() == 1 && Preds.size() == 1)
-      G.ChangedNodes.insert(this);
-    if (V->Succs.size() == 1 && V->Preds.size() == 1)
-      G.ChangedNodes.insert(V);
-  }  
 #ifndef NDEBUG
   if (NodeAuditor) NodeAuditor->AddEdge(V, this);
 #endif
@@ -252,6 +255,9 @@ ExplodedNode *ExplodedGraph::getNode(const ProgramPoint &L,
     }
 
     new (V) NodeTy(L, State, IsSink);
+
+    if (reclaimNodes)
+      ChangedNodes.push_back(V);
 
     // Insert the node into the node set and return it.
     Nodes.InsertNode(V, InsertPos);

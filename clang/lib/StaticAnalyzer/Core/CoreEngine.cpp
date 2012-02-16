@@ -192,7 +192,6 @@ bool CoreEngine::ExecuteWorkList(const LocationContext *L, unsigned Steps,
       --Steps;
     }
 
-    getGraph().reclaimChangedNodes();
     const WorkListUnit& WU = WList->dequeue();
 
     // Set the current block counter.
