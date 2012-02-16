@@ -67,7 +67,7 @@ public:
     AsShort,      // 'h'
     AsLong,       // 'l'
     AsLongLong,   // 'll'
-    AsQuad,       // 'q' (BSD, deprecated, same as 'll')
+    AsQuad,       // 'q' (BSD, deprecated, same as PRI?64)
     AsIntMax,     // 'j'
     AsSizeT,      // 'z'
     AsPtrDiff,    // 't'
