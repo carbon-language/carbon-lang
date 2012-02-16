@@ -12391,22 +12391,6 @@ X86TargetLowering::EmitInstrWithCustomInserter(MachineInstr *MI,
   case X86::TCRETURNdi64:
   case X86::TCRETURNri64:
   case X86::TCRETURNmi64:
-    // Defs of TCRETURNxx64 has Win64's callee-saved registers, as subset.
-    // On AMD64, additional defs should be added before register allocation.
-    if (!Subtarget->isTargetWin64()) {
-      MI->addRegisterDefined(X86::RSI);
-      MI->addRegisterDefined(X86::RDI);
-      MI->addRegisterDefined(X86::XMM6);
-      MI->addRegisterDefined(X86::XMM7);
-      MI->addRegisterDefined(X86::XMM8);
-      MI->addRegisterDefined(X86::XMM9);
-      MI->addRegisterDefined(X86::XMM10);
-      MI->addRegisterDefined(X86::XMM11);
-      MI->addRegisterDefined(X86::XMM12);
-      MI->addRegisterDefined(X86::XMM13);
-      MI->addRegisterDefined(X86::XMM14);
-      MI->addRegisterDefined(X86::XMM15);
-    }
     return BB;
   case X86::WIN_ALLOCA:
     return EmitLoweredWinAlloca(MI, BB);

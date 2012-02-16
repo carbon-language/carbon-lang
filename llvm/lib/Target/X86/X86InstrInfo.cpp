@@ -274,7 +274,6 @@ X86InstrInfo::X86InstrInfo(X86TargetMachine &tm)
     { X86::BT64ri8,     X86::BT64mi8,       TB_FOLDED_LOAD },
     { X86::CALL32r,     X86::CALL32m,       TB_FOLDED_LOAD },
     { X86::CALL64r,     X86::CALL64m,       TB_FOLDED_LOAD },
-    { X86::WINCALL64r,  X86::WINCALL64m,    TB_FOLDED_LOAD },
     { X86::CMP16ri,     X86::CMP16mi,       TB_FOLDED_LOAD },
     { X86::CMP16ri8,    X86::CMP16mi8,      TB_FOLDED_LOAD },
     { X86::CMP16rr,     X86::CMP16mr,       TB_FOLDED_LOAD },

@@ -945,14 +945,9 @@ def : Pat<(load (i64 (X86Wrapper tglobaltlsaddr :$dst))),
 // Direct PC relative function call for small code model. 32-bit displacement
 // sign extended to 64-bit.
 def : Pat<(X86call (i64 tglobaladdr:$dst)),
-          (CALL64pcrel32 tglobaladdr:$dst)>, Requires<[NotWin64]>;
+          (CALL64pcrel32 tglobaladdr:$dst)>;
 def : Pat<(X86call (i64 texternalsym:$dst)),
-          (CALL64pcrel32 texternalsym:$dst)>, Requires<[NotWin64]>;
-
-def : Pat<(X86call (i64 tglobaladdr:$dst)),
-          (WINCALL64pcrel32 tglobaladdr:$dst)>, Requires<[IsWin64]>;
-def : Pat<(X86call (i64 texternalsym:$dst)),
-          (WINCALL64pcrel32 texternalsym:$dst)>, Requires<[IsWin64]>;
+          (CALL64pcrel32 texternalsym:$dst)>;
 
 // tailcall stuff
 def : Pat<(X86tcret GR32_TC:$dst, imm:$off),

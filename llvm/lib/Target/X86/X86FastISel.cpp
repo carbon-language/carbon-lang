@@ -1793,9 +1793,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   if (CalleeOp) {
     // Register-indirect call.
     unsigned CallOpc;
-    if (Subtarget->isTargetWin64())
-      CallOpc = X86::WINCALL64r;
-    else if (Subtarget->is64Bit())
+    if (Subtarget->is64Bit())
       CallOpc = X86::CALL64r;
     else
       CallOpc = X86::CALL32r;
@@ -1806,9 +1804,7 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
     // Direct call.
     assert(GV && "Not a direct call");
     unsigned CallOpc;
-    if (Subtarget->isTargetWin64())
-      CallOpc = X86::WINCALL64pcrel32;
-    else if (Subtarget->is64Bit())
+    if (Subtarget->is64Bit())
       CallOpc = X86::CALL64pcrel32;
     else
       CallOpc = X86::CALLpcrel32;
