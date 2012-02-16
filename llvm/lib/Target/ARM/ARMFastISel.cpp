@@ -1442,14 +1442,11 @@ bool ARMFastISel::ARMEmitCmp(const Value *Src1Value, const Value *Src2Value,
 
   // We have i1, i8, or i16, we need to either zero extend or sign extend.
   if (needsExt) {
-    unsigned ResultReg;
-    ResultReg = ARMEmitIntExt(SrcVT, SrcReg1, MVT::i32, isZExt);
-    if (ResultReg == 0) return false;
-    SrcReg1 = ResultReg;
+    SrcReg1 = ARMEmitIntExt(SrcVT, SrcReg1, MVT::i32, isZExt);
+    if (SrcReg1 == 0) return false;
     if (!UseImm) {
-      ResultReg = ARMEmitIntExt(SrcVT, SrcReg2, MVT::i32, isZExt);
-      if (ResultReg == 0) return false;
-      SrcReg2 = ResultReg;
+      SrcReg2 = ARMEmitIntExt(SrcVT, SrcReg2, MVT::i32, isZExt);
+      if (SrcReg2 == 0) return false;
     }
   }
 
@@ -1566,10 +1563,9 @@ bool ARMFastISel::SelectIToFP(const Instruction *I, bool isSigned) {
   // Handle sign-extension.
   if (SrcVT == MVT::i16 || SrcVT == MVT::i8) {
     EVT DestVT = MVT::i32;
-    unsigned ResultReg = ARMEmitIntExt(SrcVT, SrcReg, DestVT,
+    SrcReg = ARMEmitIntExt(SrcVT, SrcReg, DestVT,
                                        /*isZExt*/!isSigned);
-    if (ResultReg == 0) return false;
-    SrcReg = ResultReg;
+    if (SrcReg == 0) return false;
   }
 
   // The conversion routine works on fp-reg to fp-reg and the operand above
@@ -2047,9 +2043,8 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
       assert(DestVT == MVT::i32 && "ARM should always ext to i32");
 
       bool isZExt = Outs[0].Flags.isZExt();
-      unsigned ResultReg = ARMEmitIntExt(RVVT, SrcReg, DestVT, isZExt);
-      if (ResultReg == 0) return false;
-      SrcReg = ResultReg;
+      SrcReg = ARMEmitIntExt(RVVT, SrcReg, DestVT, isZExt);
+      if (SrcReg == 0) return false;
     }
 
     // Make the copy.
