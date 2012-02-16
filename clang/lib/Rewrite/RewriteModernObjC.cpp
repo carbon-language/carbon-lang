@@ -5453,6 +5453,20 @@ static void Write_prop_list_t_initializer(RewriteModernObjC &RewriteObj,
   }
 }
 
+// Metadata flags
+enum MetaDataDlags {
+  CLS = 0x0,
+  CLS_META = 0x1,
+  CLS_ROOT = 0x2,
+  OBJC2_CLS_HIDDEN = 0x10,
+  CLS_EXCEPTION = 0x20,
+  
+  /// (Obsolete) ARC-specific: this class has a .release_ivars method
+  CLS_HAS_IVAR_RELEASER = 0x40,
+  /// class was compiled with -fobjc-arr
+  CLS_COMPILED_BY_ARC = 0x80  // (1<<7)
+};
+
 static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Result, 
                                           unsigned int flags, 
                                           const std::string &InstanceStart, 
@@ -5478,15 +5492,20 @@ static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Resu
   // const uint8_t * const ivarLayout;
   Result += "0, \n\t";
   Result += "\""; Result += ClassName; Result += "\",\n\t";
+  bool metaclass = ((flags & CLS_META) != 0);
   if (baseMethods.size() > 0) {
     Result += "(const struct _method_list_t *)&";
-    Result += "_OBJC_$_INSTANCE_METHODS_"; Result += ClassName;
+    if (metaclass)
+      Result += "_OBJC_$_CLASS_METHODS_";
+    else
+      Result += "_OBJC_$_INSTANCE_METHODS_";
+    Result += ClassName;
     Result += ",\n\t";
   }
   else
     Result += "0, \n\t";
 
-  if (baseProtocols.size() > 0) {
+  if (!metaclass && baseProtocols.size() > 0) {
     Result += "(const struct _objc_protocol_list *)&";
     Result += "_OBJC_CLASS_PROTOCOLS_$_"; Result += ClassName;
     Result += ",\n\t";
@@ -5494,7 +5513,7 @@ static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Resu
   else
     Result += "0, \n\t";
 
-  if (ivars.size() > 0) {
+  if (!metaclass && ivars.size() > 0) {
     Result += "(const struct _ivar_list_t *)&";
     Result += "_OBJC_$_INSTANCE_VARIABLES_"; Result += ClassName;
     Result += ",\n\t";
@@ -5504,7 +5523,7 @@ static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Resu
 
   // weakIvarLayout
   Result += "0, \n\t";
-  if (Properties.size() > 0) {
+  if (!metaclass && Properties.size() > 0) {
     Result += "(const struct _prop_list_t *)&";
     Result += "_OBJC_CLASS_PROPERTIES_$_"; Result += ClassName;
     Result += ",\n";
@@ -5825,19 +5844,17 @@ void RewriteModernObjC::RewriteObjCProtocolListMetaData(
   Result += "\t }\n};\n";
 }
 
-// Metadata flags
-enum MetaDataDlags {
-  CLS = 0x0,
-  CLS_META = 0x1,
-  CLS_ROOT = 0x2,
-  OBJC2_CLS_HIDDEN = 0x10,
-  CLS_EXCEPTION = 0x20,
-  
-  /// (Obsolete) ARC-specific: this class has a .release_ivars method
-  CLS_HAS_IVAR_RELEASER = 0x40,
-  /// class was compiled with -fobjc-arr
-  CLS_COMPILED_BY_ARC = 0x80  // (1<<7)
-};
+/// hasObjCExceptionAttribute - Return true if this class or any super
+/// class has the __objc_exception__ attribute.
+/// FIXME. Move this to ASTContext.cpp as it is also used for IRGen.
+static bool hasObjCExceptionAttribute(ASTContext &Context,
+                                      const ObjCInterfaceDecl *OID) {
+  if (OID->hasAttr<ObjCExceptionAttr>())
+    return true;
+  if (const ObjCInterfaceDecl *Super = OID->getSuperClass())
+    return hasObjCExceptionAttribute(Context, Super);
+  return false;
+}
 
 void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                            std::string &Result) {
@@ -5930,16 +5947,45 @@ void RewriteModernObjC::RewriteObjCClassMetaData(ObjCImplementationDecl *IDecl,
                                  CDecl->getNameAsString());
 
   
+  // Data for initializing _class_ro_t  metaclass meta-data
+  uint32_t flags = CLS_META;
+  std::string InstanceSize;
+  std::string InstanceStart;
+  
+  
+  bool classIsHidden = CDecl->getVisibility() == HiddenVisibility;
+  if (classIsHidden)
+    flags |= OBJC2_CLS_HIDDEN;
+  
+  if (!CDecl->getSuperClass())
+    // class is root
+    flags |= CLS_ROOT;
+  InstanceSize = "sizeof(struct _class_t)";
+  InstanceStart = InstanceSize;
+  Write__class_ro_t_initializer(Context, Result, flags, 
+                                InstanceStart, InstanceSize,
+                                ClassMethods,
+                                0,
+                                0,
+                                0,
+                                "_OBJC_METACLASS_RO_$_",
+                                CDecl->getNameAsString());
+
+  
   // Data for initializing _class_ro_t meta-data
-  uint32_t flags = CLS;
-  // FIXME. condition for class visibility hidden
-  // flags |= OBJC2_CLS_HIDDEN;
+  flags = CLS;
+  if (classIsHidden)
+    flags |= OBJC2_CLS_HIDDEN;
+  
+  if (hasObjCExceptionAttribute(*Context, CDecl))
+    flags |= CLS_EXCEPTION;
+
   if (!CDecl->getSuperClass())
     // class is root
     flags |= CLS_ROOT;
   
-  std::string InstanceSize;
-  std::string InstanceStart;
+  InstanceSize.clear();
+  InstanceStart.clear();
   if (!ObjCSynthesizedStructs.count(CDecl)) {
     InstanceSize = "0";
     InstanceStart = "0";
