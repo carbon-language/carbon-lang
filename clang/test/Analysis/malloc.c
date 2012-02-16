@@ -485,6 +485,33 @@ void GlobalStructMallocFree() {
   free(GlS.x);
 }
 
+// Make sure that we properly handle a pointer stored into a local struct/array.
+typedef struct _StructWithPtr {
+  int *memP;
+} StructWithPtr;
+
+static StructWithPtr arrOfStructs[10];
+
+void testMalloc() {
+  int *x = malloc(12);
+  StructWithPtr St;
+  St.memP = x;
+  arrOfStructs[0] = St;
+}
+
+StructWithPtr testMalloc2() {
+  int *x = malloc(12);
+  StructWithPtr St;
+  St.memP = x;
+  return St;
+}
+
+int *testMalloc3() {
+  int *x = malloc(12);
+  int *y = x;
+  return y;
+}
+
 // Region escape testing.
 
 unsigned takePtrToPtr(int **p);
@@ -600,3 +627,11 @@ void symbolLostWithStrcpy(char *s) {
   free(p);// expected-warning {{leak}}
 }
 
+// False negatives.
+
+// TODO: This requires tracking symbols stored inside the structs/arrays.
+void testMalloc5() {
+  StructWithPtr St;
+  StructWithPtr *pSt = &St;
+  pSt->memP = malloc(12);
+}
