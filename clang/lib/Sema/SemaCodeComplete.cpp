@@ -3869,12 +3869,14 @@ void Sema::CodeCompleteAfterIf(Scope *S) {
   // "else" block
   CodeCompletionBuilder Builder(Results.getAllocator());
   Builder.AddTypedTextChunk("else");
-  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
-  Builder.AddChunk(CodeCompletionString::CK_LeftBrace);
-  Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
-  Builder.AddPlaceholderChunk("statements");
-  Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
-  Builder.AddChunk(CodeCompletionString::CK_RightBrace);
+  if (Results.includeCodePatterns()) {
+    Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Builder.AddChunk(CodeCompletionString::CK_LeftBrace);
+    Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
+    Builder.AddPlaceholderChunk("statements");
+    Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
+    Builder.AddChunk(CodeCompletionString::CK_RightBrace);
+  }
   Results.AddResult(Builder.TakeString());
 
   // "else if" block
@@ -3888,12 +3890,14 @@ void Sema::CodeCompleteAfterIf(Scope *S) {
   else
     Builder.AddPlaceholderChunk("expression");
   Builder.AddChunk(CodeCompletionString::CK_RightParen);
-  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
-  Builder.AddChunk(CodeCompletionString::CK_LeftBrace);
-  Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
-  Builder.AddPlaceholderChunk("statements");
-  Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
-  Builder.AddChunk(CodeCompletionString::CK_RightBrace);
+  if (Results.includeCodePatterns()) {
+    Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+    Builder.AddChunk(CodeCompletionString::CK_LeftBrace);
+    Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
+    Builder.AddPlaceholderChunk("statements");
+    Builder.AddChunk(CodeCompletionString::CK_VerticalSpace);
+    Builder.AddChunk(CodeCompletionString::CK_RightBrace);
+  }
   Results.AddResult(Builder.TakeString());
 
   Results.ExitScope();
