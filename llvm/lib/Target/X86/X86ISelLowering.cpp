@@ -44,7 +44,6 @@
 #include "llvm/ADT/StringExtras.h"
 #include "llvm/ADT/VariadicFunction.h"
 #include "llvm/Support/CallSite.h"
-#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -56,9 +55,6 @@ using namespace llvm;
 using namespace dwarf;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
-
-static cl::opt<bool> UseRegMask("x86-use-regmask",
-                                cl::desc("Use register masks for x86 calls"));
 
 // Forward declarations.
 static SDValue getMOVL(SelectionDAG &DAG, DebugLoc dl, EVT VT, SDValue V1,
@@ -2510,13 +2506,11 @@ X86TargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (Is64Bit && isVarArg && !IsWin64)
     Ops.push_back(DAG.getRegister(X86::AL, MVT::i8));
 
-  // Experimental: Add a register mask operand representing the call-preserved
-  // registers.
-  if (UseRegMask) {
-    const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
-    if (const uint32_t *Mask = TRI->getCallPreservedMask(CallConv))
-      Ops.push_back(DAG.getRegisterMask(Mask));
-  }
+  // Add a register mask operand representing the call-preserved registers.
+  const TargetRegisterInfo *TRI = getTargetMachine().getRegisterInfo();
+  const uint32_t *Mask = TRI->getCallPreservedMask(CallConv);
+  assert(Mask && "Missing call preserved mask for calling convention");
+  Ops.push_back(DAG.getRegisterMask(Mask));
 
   if (InFlag.getNode())
     Ops.push_back(InFlag);
@@ -12227,17 +12221,23 @@ X86TargetLowering::EmitLoweredSegAlloca(MachineInstr *MI, MachineBasicBlock *BB,
   BuildMI(bumpMBB, DL, TII->get(X86::JMP_4)).addMBB(continueMBB);
 
   // Calls into a routine in libgcc to allocate more space from the heap.
+  const uint32_t *RegMask =
+    getTargetMachine().getRegisterInfo()->getCallPreservedMask(CallingConv::C);
   if (Is64Bit) {
     BuildMI(mallocMBB, DL, TII->get(X86::MOV64rr), X86::RDI)
       .addReg(sizeVReg);
     BuildMI(mallocMBB, DL, TII->get(X86::CALL64pcrel32))
-    .addExternalSymbol("__morestack_allocate_stack_space").addReg(X86::RDI);
+      .addExternalSymbol("__morestack_allocate_stack_space").addReg(X86::RDI)
+      .addRegMask(RegMask)
+      .addReg(X86::RAX, RegState::ImplicitDefine);
   } else {
     BuildMI(mallocMBB, DL, TII->get(X86::SUB32ri), physSPReg).addReg(physSPReg)
       .addImm(12);
     BuildMI(mallocMBB, DL, TII->get(X86::PUSH32r)).addReg(sizeVReg);
     BuildMI(mallocMBB, DL, TII->get(X86::CALLpcrel32))
-      .addExternalSymbol("__morestack_allocate_stack_space");
+      .addExternalSymbol("__morestack_allocate_stack_space")
+      .addRegMask(RegMask)
+      .addReg(X86::EAX, RegState::ImplicitDefine);
   }
 
   if (!Is64Bit)
@@ -12335,6 +12335,11 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
   assert(Subtarget->isTargetDarwin() && "Darwin only instr emitted?");
   assert(MI->getOperand(3).isGlobal() && "This should be a global");
 
+  // Get a register mask for the lowered call.
+  // FIXME: The 32-bit calls have non-standard calling conventions. Use a
+  // proper register mask.
+  const uint32_t *RegMask =
+    getTargetMachine().getRegisterInfo()->getCallPreservedMask(CallingConv::C);
   if (Subtarget->is64Bit()) {
     MachineInstrBuilder MIB = BuildMI(*BB, MI, DL,
                                       TII->get(X86::MOV64rm), X86::RDI)
@@ -12345,6 +12350,7 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
     .addReg(0);
     MIB = BuildMI(*BB, MI, DL, TII->get(X86::CALL64m));
     addDirectMem(MIB, X86::RDI);
+    MIB.addReg(X86::RAX, RegState::ImplicitDefine).addRegMask(RegMask);
   } else if (getTargetMachine().getRelocationModel() != Reloc::PIC_) {
     MachineInstrBuilder MIB = BuildMI(*BB, MI, DL,
                                       TII->get(X86::MOV32rm), X86::EAX)
@@ -12355,6 +12361,7 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
     .addReg(0);
     MIB = BuildMI(*BB, MI, DL, TII->get(X86::CALL32m));
     addDirectMem(MIB, X86::EAX);
+    MIB.addReg(X86::EAX, RegState::ImplicitDefine).addRegMask(RegMask);
   } else {
     MachineInstrBuilder MIB = BuildMI(*BB, MI, DL,
                                       TII->get(X86::MOV32rm), X86::EAX)
@@ -12365,6 +12372,7 @@ X86TargetLowering::EmitLoweredTLSCall(MachineInstr *MI,
     .addReg(0);
     MIB = BuildMI(*BB, MI, DL, TII->get(X86::CALL32m));
     addDirectMem(MIB, X86::EAX);
+    MIB.addReg(X86::EAX, RegState::ImplicitDefine).addRegMask(RegMask);
   }
 
   MI->eraseFromParent(); // The pseudo instruction is gone now.

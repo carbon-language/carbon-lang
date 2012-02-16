@@ -141,11 +141,7 @@ let isCall = 1 in
   // a use to prevent stack-pointer assignments that appear immediately
   // before calls from potentially appearing dead. Uses for argument
   // registers are added manually.
-  let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
-              MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-              XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
-      Uses = [ESP] in {
+  let Uses = [ESP] in {
     def CALLpcrel32 : Ii32PCRel<0xE8, RawFrm,
                            (outs), (ins i32imm_pcrel:$dst,variable_ops),
                            "call{l}\t$dst", [], IIC_CALL_RI>, Requires<[In32BitMode]>;
@@ -182,11 +178,7 @@ let isCall = 1 in
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
     isCodeGenOnly = 1 in
-  let Defs = [EAX, ECX, EDX, FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0,
-              MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-              XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
-      Uses = [ESP] in {
+  let Uses = [ESP] in {
   def TCRETURNdi : PseudoI<(outs),
                      (ins i32imm_pcrel:$dst, i32imm:$offset, variable_ops), []>;
   def TCRETURNri : PseudoI<(outs),
@@ -217,12 +209,7 @@ let isCall = 1 in
   // a use to prevent stack-pointer assignments that appear immediately
   // before calls from potentially appearing dead. Uses for argument
   // registers are added manually.
-  let Defs = [RAX, RCX, RDX, RSI, RDI, R8, R9, R10, R11,
-              FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0, ST1,
-              MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, XMM6, XMM7,
-              XMM8, XMM9, XMM10, XMM11, XMM12, XMM13, XMM14, XMM15, EFLAGS],
-      Uses = [RSP] in {
+  let Uses = [RSP] in {
 
     // NOTE: this pattern doesn't match "X86call imm", because we do not know
     // that the offset between an arbitrary immediate and the call will fit in
@@ -251,11 +238,7 @@ let isCall = 1, isCodeGenOnly = 1 in
   // a use to prevent stack-pointer assignments that appear immediately
   // before calls from potentially appearing dead. Uses for argument
   // registers are added manually.
-  let Defs = [RAX, RCX, RDX, R8, R9, R10, R11,
-              FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0, ST1,
-              MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, YMM_HI_6_15, EFLAGS],
-      Uses = [RSP] in {
+  let Uses = [RSP] in {
     def WINCALL64pcrel32 : Ii32PCRel<0xE8, RawFrm,
                              (outs), (ins i64i32imm_pcrel:$dst, variable_ops),
                              "call{q}\t$dst", [], IIC_CALL_RI>,
@@ -284,12 +267,7 @@ let isCall = 1, isCodeGenOnly = 1 in
 
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1,
     isCodeGenOnly = 1 in
-  // AMD64 cc clobbers RSI, RDI, XMM6-XMM15.
-  let Defs = [RAX, RCX, RDX, R8, R9, R10, R11,
-              FP0, FP1, FP2, FP3, FP4, FP5, FP6, ST0, ST1,
-              MM0, MM1, MM2, MM3, MM4, MM5, MM6, MM7,
-              XMM0, XMM1, XMM2, XMM3, XMM4, XMM5, EFLAGS],
-      Uses = [RSP],
+  let Uses = [RSP],
       usesCustomInserter = 1 in {
   def TCRETURNdi64 : PseudoI<(outs),
                       (ins i64i32imm_pcrel:$dst, i32imm:$offset, variable_ops),

@@ -1853,6 +1853,10 @@ bool X86FastISel::DoSelectCall(const Instruction *I, const char *MemIntName) {
   for (unsigned i = 0, e = RegArgs.size(); i != e; ++i)
     MIB.addReg(RegArgs[i]);
 
+  // Add a register mask with the call-preserved registers.
+  // Proper defs for return values will be added by setPhysRegsDeadExcept().
+  MIB.addRegMask(TRI.getCallPreservedMask(CS.getCallingConv()));
+
   // Issue CALLSEQ_END
   unsigned AdjStackUp = TII.getCallFrameDestroyOpcode();
   unsigned NumBytesCallee = 0;
