@@ -1768,73 +1768,73 @@ DataExtractor::Dump (Stream *s,
 // implementation details they should not care about ||
         case eFormatVectorOfChar:               //   ||
             s->PutChar('{');                    //   \/   
-            offset = Dump (s, start_offset, eFormatCharArray, 1, item_byte_size, item_byte_size, LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatCharArray, 1, item_byte_size, item_byte_size, LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 
         case eFormatVectorOfSInt8:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatDecimal, 1, item_byte_size, item_byte_size, LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatDecimal, 1, item_byte_size, item_byte_size, LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 
         case eFormatVectorOfUInt8:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatHex, 1, item_byte_size, item_byte_size, LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatHex, 1, item_byte_size, item_byte_size, LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 
         case eFormatVectorOfSInt16:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatDecimal, sizeof(uint16_t), item_byte_size / sizeof(uint16_t), item_byte_size / sizeof(uint16_t), LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatDecimal, sizeof(uint16_t), item_byte_size / sizeof(uint16_t), item_byte_size / sizeof(uint16_t), LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 
         case eFormatVectorOfUInt16:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatHex,     sizeof(uint16_t), item_byte_size / sizeof(uint16_t), item_byte_size / sizeof(uint16_t), LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatHex,     sizeof(uint16_t), item_byte_size / sizeof(uint16_t), item_byte_size / sizeof(uint16_t), LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 
         case eFormatVectorOfSInt32:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatDecimal, sizeof(uint32_t), item_byte_size / sizeof(uint32_t), item_byte_size / sizeof(uint32_t), LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatDecimal, sizeof(uint32_t), item_byte_size / sizeof(uint32_t), item_byte_size / sizeof(uint32_t), LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 
         case eFormatVectorOfUInt32:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatHex,     sizeof(uint32_t), item_byte_size / sizeof(uint32_t), item_byte_size / sizeof(uint32_t), LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatHex,     sizeof(uint32_t), item_byte_size / sizeof(uint32_t), item_byte_size / sizeof(uint32_t), LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 
         case eFormatVectorOfSInt64:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatDecimal, sizeof(uint64_t), item_byte_size / sizeof(uint64_t), item_byte_size / sizeof(uint64_t), LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatDecimal, sizeof(uint64_t), item_byte_size / sizeof(uint64_t), item_byte_size / sizeof(uint64_t), LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 
         case eFormatVectorOfUInt64:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatHex,     sizeof(uint32_t), item_byte_size / sizeof(uint32_t), item_byte_size / sizeof(uint32_t), LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatHex,     sizeof(uint32_t), item_byte_size / sizeof(uint32_t), item_byte_size / sizeof(uint32_t), LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 
         case eFormatVectorOfFloat32:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatFloat,       4, item_byte_size / 4, item_byte_size / 4, LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatFloat,       4, item_byte_size / 4, item_byte_size / 4, LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 
         case eFormatVectorOfFloat64:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatFloat,       8, item_byte_size / 8, item_byte_size / 8, LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatFloat,       8, item_byte_size / 8, item_byte_size / 8, LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
 
         case eFormatVectorOfUInt128:
             s->PutChar('{');
-            offset = Dump (s, start_offset, eFormatHex, 16, item_byte_size / 16, item_byte_size / 16, LLDB_INVALID_ADDRESS, 0, 0);
+            offset = Dump (s, offset, eFormatHex, 16, item_byte_size / 16, item_byte_size / 16, LLDB_INVALID_ADDRESS, 0, 0);
             s->PutChar('}');
             break;
         }
