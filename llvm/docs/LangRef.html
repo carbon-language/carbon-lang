@@ -110,6 +110,7 @@
   </li>
   <li><a href="#module_flags">Module Flags Metadata</a>
     <ol>
+      <li><a href="#objc_gc_flags">Objective-C Garbage Collection Module Flags Metadata</a></li>
     </ol>
   </li>
   <li><a href="#intrinsic_globals">Intrinsic Global Variables</a>
@@ -3147,11 +3148,83 @@ call void @llvm.dbg.value(metadata !24, i64 0, metadata !25)
 <pre class="doc_code">
 metadata !{ metadata !"foo", i32 1 }
 </pre>
+
       <p>The behavior is to emit an error if the <tt>llvm.module.flags</tt> does
          not contain a flag with the ID <tt>!"foo"</tt> that has the value
          '1'. If two or more <tt>!"qux"</tt> flags exist, then they must have
          the same value or an error will be issued.</p></li>
 </ul>
+
+
+<!-- ======================================================================= -->
+<h3>
+<a name="objc_gc_flags">Objective-C Garbage Collection Module Flags Metadata</a>
+</h3>
+
+<div>
+
+<p>On the Mach-O platform, Objective-C stores metadata about garbage collection
+   in a special section called "image info". The metadata consists of a version
+   number and a bitmask specifying what types of garbage collection are
+   supported (if any) by the file. If two or more modules are linked together
+   their garbage collection metadata needs to be merged rather than appended
+   together.</p>
+
+<p>The Objective-C garbage collection module flags metadata consists of the
+   following key-value pairs:</p>
+
+<table border="1" cellspacing="0" cellpadding="4">
+  <tbody>
+    <tr>
+      <th width="30%">Key</th>
+      <th>Value</th>
+    </tr>
+    <tr>
+      <td><tt>Objective-C&nbsp;Version</tt></td>
+      <td align="left"><b>[Required]</b> &mdash; The Objective-C ABI
+         version. Valid values are 1 and 2.</td>
+    </tr>
+    <tr>
+      <td><tt>Objective-C&nbsp;Image&nbsp;Info&nbsp;Version</tt></td>
+      <td align="left"><b>[Required]</b> &mdash; The version of the image info
+         section. Currently always 0.</td>
+    </tr>
+    <tr>
+      <td><tt>Objective-C&nbsp;Image&nbsp;Info&nbsp;Section</tt></td>
+      <td align="left"><b>[Required]</b> &mdash; The section to place the
+         metadata. Valid values are <tt>"__OBJC, __image_info, regular"</tt> for
+         Objective-C ABI version 1, and <tt>"__DATA,__objc_imageinfo, regular,
+         no_dead_strip"</tt> for Objective-C ABI version 2.</td>
+    </tr>
+    <tr>
+      <td><tt>Objective-C&nbsp;Garbage&nbsp;Collection</tt></td>
+      <td align="left"><b>[Required]</b> &mdash; Specifies whether garbage
+          collection is supported or not. Valid values are 0, for no garbage
+          collection, and 2, for garbage collection supported.</td>
+    </tr>
+    <tr>
+      <td><tt>Objective-C&nbsp;GC&nbsp;Only</tt></td>
+      <td align="left"><b>[Optional]</b> &mdash; Specifies that only garbage
+         collection is supported. If present, its value must be 6. This flag
+         requires that the <tt>Objective-C Garbage Collection</tt> flag have the
+         value 2.</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Some important flag interactions:</p>
+
+<ul>
+  <li>If a module with <tt>Objective-C Garbage Collection</tt> set to 0 is
+      merged with a module with <tt>Objective-C Garbage Collection</tt> set to
+      2, then the resulting module has the <tt>Objective-C Garbage
+      Collection</tt> flag set to 0.</li>
+
+  <li>A module with <tt>Objective-C Garbage Collection</tt> set to 0 cannot be
+      merged with a module with <tt>Objective-C GC Only</tt> set to 6.</li>
+</ul>
+
+</div>
 
 </div>
 
