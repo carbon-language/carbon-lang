@@ -239,8 +239,8 @@ void CoreEngine::ExecuteWorkListWithInitialState(const LocationContext *L,
                                                  ProgramStateRef InitState, 
                                                  ExplodedNodeSet &Dst) {
   ExecuteWorkList(L, Steps, InitState);
-  for (SmallVectorImpl<ExplodedNode*>::iterator I = G->EndNodes.begin(), 
-                                           E = G->EndNodes.end(); I != E; ++I) {
+  for (ExplodedGraph::eop_iterator I = G->eop_begin(), 
+                                   E = G->eop_end(); I != E; ++I) {
     Dst.Add(*I);
   }
 }

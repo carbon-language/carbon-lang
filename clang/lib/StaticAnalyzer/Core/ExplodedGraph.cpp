@@ -45,22 +45,12 @@ void ExplodedNode::SetAuditor(ExplodedNode::Auditor* A) {
 // Cleanup.
 //===----------------------------------------------------------------------===//
 
-typedef std::vector<ExplodedNode*> NodeList;
-static inline NodeList*& getNodeList(void *&p) { return (NodeList*&) p; }
-
 static const unsigned CounterTop = 1000;
 
 ExplodedGraph::ExplodedGraph()
-  : NumNodes(0), recentlyAllocatedNodes(0),
-    freeNodes(0), reclaimNodes(false),
-    reclaimCounter(CounterTop) {}
+  : NumNodes(0), reclaimNodes(false), reclaimCounter(CounterTop) {}
 
-ExplodedGraph::~ExplodedGraph() {
-  if (reclaimNodes) {
-    delete getNodeList(recentlyAllocatedNodes);
-    delete getNodeList(freeNodes);
-  }
-}
+ExplodedGraph::~ExplodedGraph() {}
 
 //===----------------------------------------------------------------------===//
 // Node reclamation.
@@ -131,16 +121,14 @@ void ExplodedGraph::collectNode(ExplodedNode *node) {
   ExplodedNode *succ = *(node->succ_begin());
   pred->replaceSuccessor(succ);
   succ->replacePredecessor(pred);
-  if (!freeNodes)
-    freeNodes = new NodeList();
-  getNodeList(freeNodes)->push_back(node);
+  FreeNodes.push_back(node);
   Nodes.RemoveNode(node);
   --NumNodes;
   node->~ExplodedNode();  
 }
 
 void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
-  if (!recentlyAllocatedNodes)
+  if (ChangedNodes.empty())
     return;
 
   // Only periodically relcaim nodes so that we can build up a set of
@@ -150,16 +138,14 @@ void ExplodedGraph::reclaimRecentlyAllocatedNodes() {
   if (--reclaimCounter != 0)
     return;
   reclaimCounter = CounterTop;
-  
-  NodeList &nl = *getNodeList(recentlyAllocatedNodes);
-  
-  for (NodeList::iterator i = nl.begin(), e = nl.end() ; i != e; ++i) {
-    ExplodedNode *node = *i;    
+
+  for (NodeVector::iterator it = ChangedNodes.begin(), et = ChangedNodes.end();
+       it != et; ++it) {
+    ExplodedNode *node = *it;
     if (shouldCollect(node))
       collectNode(node);
   }
-  
-  nl.clear();
+  ChangedNodes.clear();
 }
 
 //===----------------------------------------------------------------------===//
@@ -259,10 +245,9 @@ ExplodedNode *ExplodedGraph::getNode(const ProgramPoint &L,
   NodeTy* V = Nodes.FindNodeOrInsertPos(profile, InsertPos);
 
   if (!V) {
-    if (freeNodes && !getNodeList(freeNodes)->empty()) {
-      NodeList *nl = getNodeList(freeNodes);
-      V = nl->back();
-      nl->pop_back();
+    if (!FreeNodes.empty()) {
+      V = FreeNodes.back();
+      FreeNodes.pop_back();
     }
     else {
       // Allocate a new node.
@@ -271,15 +256,11 @@ ExplodedNode *ExplodedGraph::getNode(const ProgramPoint &L,
 
     new (V) NodeTy(L, State, IsSink);
 
-    if (reclaimNodes) {
-      if (!recentlyAllocatedNodes)
-        recentlyAllocatedNodes = new NodeList();
-      getNodeList(recentlyAllocatedNodes)->push_back(V);
-    }
+    if (reclaimNodes)
+      ChangedNodes.push_back(V);
 
     // Insert the node into the node set and return it.
     Nodes.InsertNode(V, InsertPos);
-
     ++NumNodes;
 
     if (IsNew) *IsNew = true;

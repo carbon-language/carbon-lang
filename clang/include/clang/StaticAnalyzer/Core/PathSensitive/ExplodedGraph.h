@@ -32,6 +32,7 @@
 #include "llvm/Support/Casting.h"
 #include "clang/Analysis/Support/BumpVector.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ProgramState.h"
+#include <vector>
 
 namespace clang {
 
@@ -241,18 +242,17 @@ protected:
   friend class CoreEngine;
 
   // Type definitions.
-  typedef SmallVector<ExplodedNode*,2>    RootsTy;
-  typedef SmallVector<ExplodedNode*,10>   EndNodesTy;
+  typedef std::vector<ExplodedNode *> NodeVector;
 
-  /// Roots - The roots of the simulation graph. Usually there will be only
+  /// The roots of the simulation graph. Usually there will be only
   /// one, but clients are free to establish multiple subgraphs within a single
   /// SimulGraph. Moreover, these subgraphs can often merge when paths from
   /// different roots reach the same state at the same program location.
-  RootsTy Roots;
+  NodeVector Roots;
 
-  /// EndNodes - The nodes in the simulation graph which have been
-  ///  specially marked as the endpoint of an abstract simulation path.
-  EndNodesTy EndNodes;
+  /// The nodes in the simulation graph which have been
+  /// specially marked as the endpoint of an abstract simulation path.
+  NodeVector EndNodes;
 
   /// Nodes - The nodes in the graph.
   llvm::FoldingSet<ExplodedNode> Nodes;
@@ -265,10 +265,10 @@ protected:
   unsigned NumNodes;
   
   /// A list of recently allocated nodes that can potentially be recycled.
-  void *recentlyAllocatedNodes;
+  NodeVector ChangedNodes;
   
   /// A list of nodes that can be reused.
-  void *freeNodes;
+  NodeVector FreeNodes;
   
   /// A flag that indicates whether nodes should be recycled.
   bool reclaimNodes;
@@ -315,10 +315,10 @@ public:
   // Iterators.
   typedef ExplodedNode                        NodeTy;
   typedef llvm::FoldingSet<ExplodedNode>      AllNodesTy;
-  typedef NodeTy**                            roots_iterator;
-  typedef NodeTy* const *                     const_roots_iterator;
-  typedef NodeTy**                            eop_iterator;
-  typedef NodeTy* const *                     const_eop_iterator;
+  typedef NodeVector::iterator                roots_iterator;
+  typedef NodeVector::const_iterator          const_roots_iterator;
+  typedef NodeVector::iterator                eop_iterator;
+  typedef NodeVector::const_iterator          const_eop_iterator;
   typedef AllNodesTy::iterator                node_iterator;
   typedef AllNodesTy::const_iterator          const_node_iterator;
 
