@@ -2193,10 +2193,11 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
     return ExprError();
   }
 
-  ExprVector ConstructorArgs(Actions);
-  SourceLocation ConstructorLParen, ConstructorRParen;
+  ExprResult Initializer;
 
   if (Tok.is(tok::l_paren)) {
+    SourceLocation ConstructorLParen, ConstructorRParen;
+    ExprVector ConstructorArgs(Actions);
     BalancedDelimiterTracker T(*this, tok::l_paren);
     T.consumeOpen();
     ConstructorLParen = T.getOpenLocation();
@@ -2213,19 +2214,20 @@ Parser::ParseCXXNewExpression(bool UseGlobal, SourceLocation Start) {
       SkipUntil(tok::semi, /*StopAtSemi=*/true, /*DontConsume=*/true);
       return ExprError();
     }
+    Initializer = Actions.ActOnParenListExpr(ConstructorLParen,
+                                             ConstructorRParen,
+                                             move_arg(ConstructorArgs));
   } else if (Tok.is(tok::l_brace) && getLang().CPlusPlus0x) {
     Diag(Tok.getLocation(),
          diag::warn_cxx98_compat_generalized_initializer_lists);
-    ExprResult InitList = ParseBraceInitializer();
-    if (InitList.isInvalid())
-      return InitList;
-    ConstructorArgs.push_back(InitList.take());
+    Initializer = ParseBraceInitializer();
   }
+  if (Initializer.isInvalid())
+    return Initializer;
 
   return Actions.ActOnCXXNew(Start, UseGlobal, PlacementLParen,
                              move_arg(PlacementArgs), PlacementRParen,
-                             TypeIdParens, DeclaratorInfo, ConstructorLParen,
-                             move_arg(ConstructorArgs), ConstructorRParen);
+                             TypeIdParens, DeclaratorInfo, Initializer.take());
 }
 
 /// ParseDirectNewDeclarator - Parses a direct-new-declarator. Intended to be

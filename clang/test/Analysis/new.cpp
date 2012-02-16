@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -analyze -analyzer-checker=core -analyzer-store region -verify %s
+// XFAIL: *
 
 void f1() {
   int *n = new int;

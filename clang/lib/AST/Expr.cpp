@@ -2041,10 +2041,7 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
     if (isTypeDependent())
       CT = CT_Dependent;
     else
-      CT = MergeCanThrow(
-        CanCalleeThrow(C, this, cast<CXXNewExpr>(this)->getOperatorNew()),
-        CanCalleeThrow(C, this, cast<CXXNewExpr>(this)->getConstructor(),
-                       /*NullThrows*/false));
+      CT = CanCalleeThrow(C, this, cast<CXXNewExpr>(this)->getOperatorNew());
     if (CT == CT_Can)
       return CT;
     return MergeCanThrow(CT, CanSubExprsThrow(C, this));

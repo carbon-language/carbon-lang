@@ -1167,27 +1167,24 @@ void ASTStmtReader::VisitCXXScalarValueInitExpr(CXXScalarValueInitExpr *E) {
 void ASTStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
   VisitExpr(E);
   E->GlobalNew = Record[Idx++];
-  E->Initializer = Record[Idx++];
-  E->UsualArrayDeleteWantsSize = Record[Idx++];
   bool isArray = Record[Idx++];
-  E->setHadMultipleCandidates(Record[Idx++]);
+  E->UsualArrayDeleteWantsSize = Record[Idx++];
   unsigned NumPlacementArgs = Record[Idx++];
-  unsigned NumCtorArgs = Record[Idx++];
+  E->StoredInitializationStyle = Record[Idx++];
   E->setOperatorNew(ReadDeclAs<FunctionDecl>(Record, Idx));
   E->setOperatorDelete(ReadDeclAs<FunctionDecl>(Record, Idx));
-  E->setConstructor(ReadDeclAs<CXXConstructorDecl>(Record, Idx));
   E->AllocatedTypeInfo = GetTypeSourceInfo(Record, Idx);
   SourceRange TypeIdParens;
   TypeIdParens.setBegin(ReadSourceLocation(Record, Idx));
   TypeIdParens.setEnd(ReadSourceLocation(Record, Idx));
   E->TypeIdParens = TypeIdParens;
   E->StartLoc = ReadSourceLocation(Record, Idx);
-  E->EndLoc = ReadSourceLocation(Record, Idx);
-  E->ConstructorLParen = ReadSourceLocation(Record, Idx);
-  E->ConstructorRParen = ReadSourceLocation(Record, Idx);
+  SourceRange DirectInitRange;
+  DirectInitRange.setBegin(ReadSourceLocation(Record, Idx));
+  DirectInitRange.setEnd(ReadSourceLocation(Record, Idx));
 
   E->AllocateArgsArray(Reader.getContext(), isArray, NumPlacementArgs,
-                       NumCtorArgs);
+                       E->StoredInitializationStyle != 0);
 
   // Install all the subexpressions.
   for (CXXNewExpr::raw_arg_iterator I = E->raw_arg_begin(),e = E->raw_arg_end();
