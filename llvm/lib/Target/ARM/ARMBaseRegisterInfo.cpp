@@ -79,7 +79,6 @@ getReservedRegs(const MachineFunction &MF) const {
   BitVector Reserved(getNumRegs());
   Reserved.set(ARM::SP);
   Reserved.set(ARM::PC);
-  Reserved.set(ARM::FPSCR);
   if (TFI->hasFP(MF))
     Reserved.set(FramePtr);
   if (hasBasePointer(MF))
