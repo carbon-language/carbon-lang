@@ -20,6 +20,7 @@
 #include "polly/TempScopInfo.h"
 
 #include "llvm/Analysis/Passes.h"
+#include "llvm/Analysis/CFGPrinter.h"
 #include "llvm/InitializePasses.h"
 #include "llvm/PassManager.h"
 #include "llvm/PassRegistry.h"
@@ -87,6 +88,12 @@ PollyOnlyPrinter("polly-dot-only",
        cl::desc("Enable the Polly DOT printer in -O3 (no BB content)"),
        cl::Hidden,
        cl::value_desc("Run the Polly DOT printer at -O3 (no BB content"),
+       cl::init(false));
+
+static cl::opt<bool>
+CFGPrinter("polly-view-cfg",
+       cl::desc("Show the Polly CFG right after code generation"),
+       cl::Hidden,
        cl::init(false));
 
 void initializePollyPasses(PassRegistry &Registry) {
@@ -204,6 +211,9 @@ void registerPollyPasses(llvm::PassManagerBase &PM, bool DisableScheduler,
 
   if (RunCodegen)
     PM.add(polly::createCodeGenerationPass());
+
+  if (CFGPrinter)
+    PM.add(llvm::createCFGPrinterPass());
 }
 
 static
