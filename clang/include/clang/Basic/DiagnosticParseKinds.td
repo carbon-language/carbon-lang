@@ -151,6 +151,9 @@ def err_at_in_class : Error<"unexpected '@' in member specification">;
 
 def err_expected_fn_body : Error<
   "expected function body after function declarator">;
+def warn_attribute_on_function_definition : Warning<
+  "GCC does not allow %0 attribute in this position on a function definition">, 
+  InGroup<GccCompat>;
 def err_expected_method_body : Error<"expected method body">;
 def err_invalid_token_after_toplevel_declarator : Error<
   "expected ';' after top level declarator">;

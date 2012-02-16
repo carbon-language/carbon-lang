@@ -132,14 +132,15 @@ void Parser::ParseGNUAttributes(ParsedAttributes &attrs,
 
       if (Tok.is(tok::l_paren)) {
         // handle "parameterized" attributes
-        if (LateAttrs && !ClassStack.empty() &&
-            isAttributeLateParsed(*AttrName)) {
-          // Delayed parsing is only available for attributes that occur
-          // in certain locations within a class scope.
+        if (LateAttrs && isAttributeLateParsed(*AttrName)) {
           LateParsedAttribute *LA =
             new LateParsedAttribute(this, *AttrName, AttrNameLoc);
           LateAttrs->push_back(LA);
-          getCurrentClass().LateParsedDeclarations.push_back(LA);
+
+          // Attributes in a class are parsed at the end of the class, along
+          // with other late-parsed declarations.
+          if (!ClassStack.empty())
+            getCurrentClass().LateParsedDeclarations.push_back(LA);
 
           // consume everything up to and including the matching right parens
           ConsumeAndStoreUntil(tok::r_paren, LA->Toks, true, false);
@@ -711,7 +712,7 @@ void Parser::LateParsedClass::ParseLexedAttributes() {
 }
 
 void Parser::LateParsedAttribute::ParseLexedAttributes() {
-  Self->ParseLexedAttribute(*this);
+  Self->ParseLexedAttribute(*this, true, false);
 }
 
 /// Wrapper class which calls ParseLexedAttribute, after setting up the
@@ -736,12 +737,25 @@ void Parser::ParseLexedAttributes(ParsingClass &Class) {
   }
 }
 
+
+/// \brief Parse all attributes in LAs, and attach them to Decl D.
+void Parser::ParseLexedAttributeList(LateParsedAttrList &LAs, Decl *D,
+                                     bool EnterScope, bool OnDefinition) {
+  for (unsigned i = 0, ni = LAs.size(); i < ni; ++i) {
+    LAs[i]->setDecl(D);
+    ParseLexedAttribute(*LAs[i], EnterScope, OnDefinition);
+  }
+  LAs.clear();
+}
+
+
 /// \brief Finish parsing an attribute for which parsing was delayed.
 /// This will be called at the end of parsing a class declaration
 /// for each LateParsedAttribute. We consume the saved tokens and
 /// create an attribute with the arguments filled in. We add this 
 /// to the Attribute list for the decl.
-void Parser::ParseLexedAttribute(LateParsedAttribute &LA) {
+void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
+                                 bool EnterScope, bool OnDefinition) {
   // Save the current token position.
   SourceLocation OrigLoc = Tok.getLocation();
 
@@ -752,17 +766,23 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA) {
   // Consume the previously pushed token.
   ConsumeAnyToken();
 
+  if (OnDefinition && !IsThreadSafetyAttribute(LA.AttrName.getName())) {
+    Diag(Tok, diag::warn_attribute_on_function_definition)
+      << LA.AttrName.getName();
+  }
+
   ParsedAttributes Attrs(AttrFactory);
   SourceLocation endLoc;
 
   // If the Decl is templatized, add template parameters to scope.
-  bool HasTemplateScope = LA.D && LA.D->isTemplateDecl();
+  bool HasTemplateScope = EnterScope && LA.D && LA.D->isTemplateDecl();
   ParseScope TempScope(this, Scope::TemplateParamScope, HasTemplateScope);
   if (HasTemplateScope)
     Actions.ActOnReenterTemplateScope(Actions.CurScope, LA.D);
 
   // If the Decl is on a function, add function parameters to the scope.
-  bool HasFunctionScope = LA.D && LA.D->isFunctionOrFunctionTemplate();
+  bool HasFunctionScope = EnterScope && LA.D &&
+                          LA.D->isFunctionOrFunctionTemplate();
   ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope, HasFunctionScope);
   if (HasFunctionScope)
     Actions.ActOnReenterFunctionContext(Actions.CurScope, LA.D);
@@ -1064,6 +1084,12 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     return DeclGroupPtrTy();
   }
 
+  // Save late-parsed attributes for now; they need to be parsed in the
+  // appropriate function scope after the function Decl has been constructed.
+  LateParsedAttrList LateParsedAttrs;
+  if (D.isFunctionDeclarator())
+    MaybeParseGNUAttributes(D, &LateParsedAttrs);
+
   // Check to see if we have a function *definition* which must have a body.
   if (AllowFunctionDefinitions && D.isFunctionDeclarator() &&
       // Look at the next token to make sure that this isn't a function
@@ -1079,7 +1105,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
         DS.ClearStorageClassSpecs();
       }
 
-      Decl *TheDecl = ParseFunctionDefinition(D);
+      Decl *TheDecl =
+        ParseFunctionDefinition(D, ParsedTemplateInfo(), &LateParsedAttrs);
       return Actions.ConvertDeclToDeclGroup(TheDecl);
     }
     
@@ -1096,7 +1123,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
     }
   }
 
-  if (ParseAttributesAfterDeclarator(D))
+  if (ParseAsmAttributesAfterDeclarator(D))
     return DeclGroupPtrTy();
 
   // C++0x [stmt.iter]p1: Check if we have a for-range-declarator. If so, we
@@ -1117,6 +1144,8 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
 
   SmallVector<Decl *, 8> DeclsInGroup;
   Decl *FirstDecl = ParseDeclarationAfterDeclaratorAndAttributes(D);
+  if (LateParsedAttrs.size() > 0)
+    ParseLexedAttributeList(LateParsedAttrs, FirstDecl, true, false);
   D.complete(FirstDecl);
   if (FirstDecl)
     DeclsInGroup.push_back(FirstDecl);
@@ -1185,7 +1214,7 @@ Parser::DeclGroupPtrTy Parser::ParseDeclGroup(ParsingDeclSpec &DS,
 
 /// Parse an optional simple-asm-expr and attributes, and attach them to a
 /// declarator. Returns true on an error.
-bool Parser::ParseAttributesAfterDeclarator(Declarator &D) {
+bool Parser::ParseAsmAttributesAfterDeclarator(Declarator &D) {
   // If a simple-asm-expr is present, parse it.
   if (Tok.is(tok::kw_asm)) {
     SourceLocation Loc;
@@ -1227,7 +1256,7 @@ bool Parser::ParseAttributesAfterDeclarator(Declarator &D) {
 ///
 Decl *Parser::ParseDeclarationAfterDeclarator(Declarator &D,
                                      const ParsedTemplateInfo &TemplateInfo) {
-  if (ParseAttributesAfterDeclarator(D))
+  if (ParseAsmAttributesAfterDeclarator(D))
     return 0;
 
   return ParseDeclarationAfterDeclaratorAndAttributes(D, TemplateInfo);

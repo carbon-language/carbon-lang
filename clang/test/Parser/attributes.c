@@ -61,3 +61,38 @@ int aligned(int);
 int __attribute__((vec_type_hint(char, aligned(16) )) missing_rparen_1; // expected-error {{expected ')'}}
 int __attribute__((mode(x aligned(16) )) missing_rparen_2; // expected-error {{expected ')'}}
 int __attribute__((format(printf, 0 aligned(16) )) missing_rparen_3; // expected-error {{expected ')'}}
+
+
+
+int testFundef1(int *a) __attribute__((nonnull(1))) { // \
+    // expected-warning {{GCC does not allow nonnull attribute in this position on a function definition}}
+  return *a;
+}
+
+// noreturn is lifted to type qualifier
+void testFundef2() __attribute__((noreturn)) { // \
+    // expected-warning {{GCC does not allow noreturn attribute in this position on a function definition}}
+  testFundef2();
+}
+
+int testFundef3(int *a) __attribute__((nonnull(1), // \
+    // expected-warning {{GCC does not allow nonnull attribute in this position on a function definition}}
+                                     pure)) { // \
+    // expected-warning {{GCC does not allow pure attribute in this position on a function definition}}
+  return *a;
+}
+
+int testFundef4(int *a) __attribute__((nonnull(1))) // \
+    // expected-warning {{GCC does not allow nonnull attribute in this position on a function definition}}
+                      __attribute((pure)) { // \
+    // expected-warning {{GCC does not allow pure attribute in this position on a function definition}}
+  return *a;
+}
+
+// GCC allows these
+void testFundef5() __attribute__(()) { }
+
+__attribute__((pure)) int testFundef6(int a) { return a; }
+
+
+

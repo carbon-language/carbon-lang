@@ -1936,3 +1936,118 @@ namespace GoingNative {
   }
 
 }
+
+
+
+namespace FunctionDefinitionTest {
+
+class Foo {
+public:
+  void foo1();
+  void foo2();
+  void foo3(Foo *other);
+
+  template<class T>
+  void fooT1(const T& dummy1);
+
+  template<class T>
+  void fooT2(const T& dummy2) EXCLUSIVE_LOCKS_REQUIRED(mu_);
+
+  Mutex mu_;
+  int a GUARDED_BY(mu_);
+};
+
+template<class T>
+class FooT {
+public:
+  void foo();
+
+  Mutex mu_;
+  T a GUARDED_BY(mu_);
+};
+
+
+void Foo::foo1() NO_THREAD_SAFETY_ANALYSIS {
+  a = 1;
+}
+
+void Foo::foo2() EXCLUSIVE_LOCKS_REQUIRED(mu_) {
+  a = 2;
+}
+
+void Foo::foo3(Foo *other) EXCLUSIVE_LOCKS_REQUIRED(other->mu_) {
+  other->a = 3;
+}
+
+template<class T>
+void Foo::fooT1(const T& dummy1) EXCLUSIVE_LOCKS_REQUIRED(mu_) {
+  a = dummy1;
+}
+
+/* TODO -- uncomment with template instantiation of attributes.
+template<class T>
+void Foo::fooT2(const T& dummy2) {
+  a = dummy2;
+}
+*/
+
+void fooF1(Foo *f) EXCLUSIVE_LOCKS_REQUIRED(f->mu_) {
+  f->a = 1;
+}
+
+void fooF2(Foo *f);
+void fooF2(Foo *f) EXCLUSIVE_LOCKS_REQUIRED(f->mu_) {
+  f->a = 2;
+}
+
+void fooF3(Foo *f) EXCLUSIVE_LOCKS_REQUIRED(f->mu_);
+void fooF3(Foo *f) {
+  f->a = 3;
+}
+
+template<class T>
+void FooT<T>::foo() EXCLUSIVE_LOCKS_REQUIRED(mu_) {
+  a = 0;
+}
+
+void test() {
+  int dummy = 0;
+  Foo myFoo;
+
+  myFoo.foo2();        // \
+    // expected-warning {{calling function 'foo2' requires exclusive lock on 'mu_'}}
+  myFoo.foo3(&myFoo);  // \
+    // expected-warning {{calling function 'foo3' requires exclusive lock on 'mu_'}}
+  myFoo.fooT1(dummy);  // \
+    // expected-warning {{calling function 'fooT1' requires exclusive lock on 'mu_'}}
+
+  // FIXME: uncomment with template instantiation of attributes patch
+  // myFoo.fooT2(dummy);  // expected warning
+
+  fooF1(&myFoo);  // \
+    // expected-warning {{calling function 'fooF1' requires exclusive lock on 'mu_'}}
+  fooF2(&myFoo);  // \
+    // expected-warning {{calling function 'fooF2' requires exclusive lock on 'mu_'}}
+  fooF3(&myFoo);  // \
+    // expected-warning {{calling function 'fooF3' requires exclusive lock on 'mu_'}}
+
+  myFoo.mu_.Lock();
+  myFoo.foo2();
+  myFoo.foo3(&myFoo);
+  myFoo.fooT1(dummy);
+
+  // FIXME: uncomment with template instantiation of attributes patch
+  // myFoo.fooT2(dummy);
+
+  fooF1(&myFoo);
+  fooF2(&myFoo);
+  fooF3(&myFoo);
+  myFoo.mu_.Unlock();
+
+  FooT<int> myFooT;
+  myFooT.foo();  // \
+    // expected-warning {{calling function 'foo' requires exclusive lock on 'mu_'}}
+}
+
+};
+

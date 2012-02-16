@@ -241,6 +241,10 @@ Parser::ParseSingleDeclarationAfterTemplate(
     return 0;
   }
 
+  LateParsedAttrList LateParsedAttrs;
+  if (DeclaratorInfo.isFunctionDeclarator())
+    MaybeParseGNUAttributes(DeclaratorInfo, &LateParsedAttrs);
+
   // If we have a declaration or declarator list, handle it.
   if (isDeclarationAfterDeclarator()) {
     // Parse this declaration.
@@ -256,6 +260,8 @@ Parser::ParseSingleDeclarationAfterTemplate(
 
     // Eat the semi colon after the declaration.
     ExpectAndConsume(tok::semi, diag::err_expected_semi_declaration);
+    if (LateParsedAttrs.size() > 0)
+      ParseLexedAttributeList(LateParsedAttrs, ThisDecl, true, false);
     DeclaratorInfo.complete(ThisDecl);
     return ThisDecl;
   }
@@ -270,7 +276,8 @@ Parser::ParseSingleDeclarationAfterTemplate(
         << FixItHint::CreateRemoval(DS.getStorageClassSpecLoc());
       DS.ClearStorageClassSpecs();
     }
-    return ParseFunctionDefinition(DeclaratorInfo, TemplateInfo);
+    return ParseFunctionDefinition(DeclaratorInfo, TemplateInfo,
+                                   &LateParsedAttrs);
   }
 
   if (DeclaratorInfo.isFunctionDeclarator())

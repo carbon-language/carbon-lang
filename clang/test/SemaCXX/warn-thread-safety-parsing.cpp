@@ -1262,3 +1262,30 @@ class __attribute__((lockable)) EmptyArgListsTest {
   void unlock() __attribute__((unlock_function())) { }
 };
 
+
+namespace FunctionDefinitionParseTest {
+// Test parsing of attributes on function definitions.
+
+class Foo {
+public:
+  Mu mu_;
+  void foo1();
+  void foo2(Foo *f);
+};
+
+template <class T>
+class Bar {
+public:
+  Mu mu_;
+  void bar();
+};
+
+void Foo::foo1()       __attribute__((exclusive_locks_required(mu_))) { }
+void Foo::foo2(Foo *f) __attribute__((exclusive_locks_required(f->mu_))) { }
+
+template <class T>
+void Bar<T>::bar() __attribute__((exclusive_locks_required(mu_))) { }
+
+void baz(Foo *f) __attribute__((exclusive_locks_required(f->mu_))) { }
+};
+

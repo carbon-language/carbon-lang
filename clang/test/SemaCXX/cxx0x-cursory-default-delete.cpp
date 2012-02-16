@@ -67,3 +67,9 @@ struct except_spec_d_mismatch : except_spec_a, except_spec_b {
 struct except_spec_d_match : except_spec_a, except_spec_b {
   except_spec_d_match() throw(A, B) = default;
 };  
+
+// gcc-compatibility: allow attributes on default definitions
+// (but not normal definitions)
+struct S { S(); };
+S::S() __attribute((pure)) = default;
+
