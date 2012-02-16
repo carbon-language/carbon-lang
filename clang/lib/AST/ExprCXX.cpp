@@ -120,6 +120,7 @@ SourceLocation CXXNewExpr::getEndLoc() const {
   case ListInit:
     return getInitializer()->getSourceRange().getEnd();
   }
+  llvm_unreachable("bogus initialization style");
 }
 
 // CXXDeleteExpr
