@@ -4252,7 +4252,6 @@ void solaris::Link::ConstructJob(Compilation &C, const JobAction &JA,
     } else {
       CmdArgs.push_back(Args.MakeArgString(LibPath + "crti.o"));
     }
-    CmdArgs.push_back(Args.MakeArgString(LibPath + "crtn.o"));
   }
 
   CmdArgs.push_back(Args.MakeArgString("-L" + GCCLibPath));
@@ -4277,6 +4276,7 @@ void solaris::Link::ConstructJob(Compilation &C, const JobAction &JA,
     if (!Args.hasArg(options::OPT_shared))
       CmdArgs.push_back(Args.MakeArgString(GCCLibPath + "crtend.o"));
   }
+  CmdArgs.push_back(Args.MakeArgString(LibPath + "crtn.o"));
 
   addProfileRT(getToolChain(), Args, CmdArgs, getToolChain().getTriple());
 
