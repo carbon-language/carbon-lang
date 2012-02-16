@@ -238,10 +238,7 @@ static bool shouldRemoveDeadBindings(AnalysisManager &AMgr,
 }
 
 void ExprEngine::ProcessStmt(const CFGStmt S,
-                             ExplodedNode *Pred) {
-  // Reclaim any unnecessary nodes in the ExplodedGraph.
-  G.reclaimRecentlyAllocatedNodes();
-  
+                             ExplodedNode *Pred) {  
   currentStmt = S.getStmt();
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),
                                 currentStmt->getLocStart(),

@@ -25,6 +25,7 @@
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
+#include "llvm/ADT/DenseSet.h"
 #include "llvm/Support/Allocator.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/GraphTraits.h"
@@ -240,6 +241,7 @@ public:
 class ExplodedGraph {
 protected:
   friend class CoreEngine;
+  friend class ExplodedNode;
 
   // Type definitions.
   typedef std::vector<ExplodedNode *> NodeVector;
@@ -265,16 +267,13 @@ protected:
   unsigned NumNodes;
   
   /// A list of recently allocated nodes that can potentially be recycled.
-  NodeVector ChangedNodes;
+  llvm::DenseSet<ExplodedNode*> ChangedNodes;
   
   /// A list of nodes that can be reused.
   NodeVector FreeNodes;
   
   /// A flag that indicates whether nodes should be recycled.
   bool reclaimNodes;
-  
-  /// Counter to determine when to reclaim nodes.
-  unsigned reclaimCounter;
 
 public:
 
@@ -361,12 +360,12 @@ public:
                     llvm::DenseMap<const void*, const void*> *InverseMap) const;
 
   /// Enable tracking of recently allocated nodes for potential reclamation
-  /// when calling reclaimRecentlyAllocatedNodes().
+  /// when calling reclaimChangedNodes().
   void enableNodeReclamation() { reclaimNodes = true; }
 
   /// Reclaim "uninteresting" nodes created since the last time this method
   /// was called.
-  void reclaimRecentlyAllocatedNodes();
+  void reclaimChangedNodes();
 
 private:
   bool shouldCollect(const ExplodedNode *node);
