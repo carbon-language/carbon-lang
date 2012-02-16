@@ -198,7 +198,7 @@ clang::analyze_format_string::ParseLengthModifier(FormatSpecifier &FS,
     case 'z': lmKind = LengthModifier::AsSizeT;      ++I; break;
     case 't': lmKind = LengthModifier::AsPtrDiff;    ++I; break;
     case 'L': lmKind = LengthModifier::AsLongDouble; ++I; break;
-    case 'q': lmKind = LengthModifier::AsLongLong;   ++I; break;
+    case 'q': lmKind = LengthModifier::AsQuad;       ++I; break;
     case 'a':
       if (IsScanf && !LO.C99 && !LO.CPlusPlus0x) {
         // For scanf in C90, look at the next character to see if this should
@@ -417,6 +417,8 @@ analyze_format_string::LengthModifier::toString() const {
     return "l";
   case AsLongLong:
     return "ll";
+  case AsQuad:
+    return "q";
   case AsIntMax:
     return "j";
   case AsSizeT:
@@ -506,10 +508,11 @@ bool FormatSpecifier::hasValidLengthModifier() const {
     case LengthModifier::None:
       return true;
       
-        // Handle most integer flags
+    // Handle most integer flags
     case LengthModifier::AsChar:
     case LengthModifier::AsShort:
     case LengthModifier::AsLongLong:
+    case LengthModifier::AsQuad:
     case LengthModifier::AsIntMax:
     case LengthModifier::AsSizeT:
     case LengthModifier::AsPtrDiff:
@@ -526,7 +529,7 @@ bool FormatSpecifier::hasValidLengthModifier() const {
           return false;
       }
       
-        // Handle 'l' flag
+    // Handle 'l' flag
     case LengthModifier::AsLong:
       switch (CS.getKind()) {
         case ConversionSpecifier::dArg:

@@ -117,3 +117,7 @@ void test_longlong(long long *x, unsigned long long *y) {
   scanf("%Ls", "hello"); // expected-warning {{length modifier 'L' results in undefined behavior or no effect with 's' conversion specifier}}
 }
 
+void test_quad(int *x, long long *llx) {
+  scanf("%qd", x); // expected-warning{{format specifies type 'long long *' but the argument has type 'int *'}}
+  scanf("%qd", llx); // no-warning
+}

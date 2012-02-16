@@ -266,7 +266,9 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx,
       case LengthModifier::AsChar: return ArgTypeResult::AnyCharTy;
       case LengthModifier::AsShort: return Ctx.ShortTy;
       case LengthModifier::AsLong: return Ctx.LongTy;
-      case LengthModifier::AsLongLong: return Ctx.LongLongTy;
+      case LengthModifier::AsLongLong:
+      case LengthModifier::AsQuad:
+        return Ctx.LongLongTy;
       case LengthModifier::AsIntMax:
         return ArgTypeResult(Ctx.getIntMaxType(), "intmax_t");
       case LengthModifier::AsSizeT:
@@ -288,7 +290,9 @@ ArgTypeResult PrintfSpecifier::getArgType(ASTContext &Ctx,
       case LengthModifier::AsChar: return Ctx.UnsignedCharTy;
       case LengthModifier::AsShort: return Ctx.UnsignedShortTy;
       case LengthModifier::AsLong: return Ctx.UnsignedLongTy;
-      case LengthModifier::AsLongLong: return Ctx.UnsignedLongLongTy;
+      case LengthModifier::AsLongLong:
+      case LengthModifier::AsQuad:
+        return Ctx.UnsignedLongLongTy;
       case LengthModifier::AsIntMax:
         return ArgTypeResult(Ctx.getUIntMaxType(), "uintmax_t");
       case LengthModifier::AsSizeT:

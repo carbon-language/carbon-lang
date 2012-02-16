@@ -210,7 +210,9 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
           return ArgTypeResult(ArgTypeResult::AnyCharTy);
         case LengthModifier::AsShort: return ArgTypeResult(Ctx.ShortTy);
         case LengthModifier::AsLong: return ArgTypeResult(Ctx.LongTy);
-        case LengthModifier::AsLongLong: return ArgTypeResult(Ctx.LongLongTy);
+        case LengthModifier::AsLongLong:
+        case LengthModifier::AsQuad:
+          return ArgTypeResult(Ctx.LongLongTy);
         case LengthModifier::AsIntMax:
           return ScanfArgTypeResult(Ctx.getIntMaxType(), "intmax_t *");
         case LengthModifier::AsSizeT:
@@ -236,6 +238,7 @@ ScanfArgTypeResult ScanfSpecifier::getArgType(ASTContext &Ctx) const {
         case LengthModifier::AsShort: return ArgTypeResult(Ctx.UnsignedShortTy);
         case LengthModifier::AsLong: return ArgTypeResult(Ctx.UnsignedLongTy);
         case LengthModifier::AsLongLong:
+        case LengthModifier::AsQuad:
           return ArgTypeResult(Ctx.UnsignedLongLongTy);
         case LengthModifier::AsIntMax:
           return ScanfArgTypeResult(Ctx.getUIntMaxType(), "uintmax_t *");
