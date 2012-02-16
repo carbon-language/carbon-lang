@@ -24,19 +24,19 @@ struct stuff myglobalstuff;
 
 void f1() {
   int *p = malloc(12);
-  return; // expected-warning{{Allocated memory never released. Potential memory leak.}}
+  return; // expected-warning{{Memory is never released; potential memory leak}}
 }
 
 void f2() {
   int *p = malloc(12);
   free(p);
-  free(p); // expected-warning{{Try to free a memory block that has been released}}
+  free(p); // expected-warning{{Attempt to free released memory}}
 }
 
 void f2_realloc_0() {
   int *p = malloc(12);
   realloc(p,0);
-  realloc(p,0); // expected-warning{{Try to free a memory block that has been released}}
+  realloc(p,0); // expected-warning{{Attempt to free released memory}}
 }
 
 void f2_realloc_1() {
@@ -52,16 +52,16 @@ void naf1() {
 
 void n2af1() {
   int *p = my_malloc2(12);
-  return; // expected-warning{{Allocated memory never released. Potential memory leak.}}
+  return; // expected-warning{{Memory is never released; potential memory leak}}
 }
 
 void af1() {
   int *p = my_malloc(12);
-  return; // expected-warning{{Allocated memory never released. Potential memory leak.}}
+  return; // expected-warning{{Memory is never released; potential memory leak}}
 }
 
 void af1_b() {
-  int *p = my_malloc(12); // expected-warning{{Allocated memory never released. Potential memory leak.}}
+  int *p = my_malloc(12); // expected-warning{{Memory is never released; potential memory leak}}
 }
 
 void af1_c() {
@@ -92,25 +92,25 @@ void af1_g(struct stuff **pps) {
 void af2() {
   int *p = my_malloc(12);
   my_free(p);
-  free(p); // expected-warning{{Try to free a memory block that has been released}}
+  free(p); // expected-warning{{Attempt to free released memory}}
 }
 
 void af2b() {
   int *p = my_malloc(12);
   free(p);
-  my_free(p); // expected-warning{{Try to free a memory block that has been released}}
+  my_free(p); // expected-warning{{Attempt to free released memory}}
 }
 
 void af2c() {
   int *p = my_malloc(12);
   free(p);
-  my_hold(p); // expected-warning{{Try to free a memory block that has been released}}
+  my_hold(p); // expected-warning{{Attempt to free released memory}}
 }
 
 void af2d() {
   int *p = my_malloc(12);
   free(p);
-  my_hold2(0, 0, p); // expected-warning{{Try to free a memory block that has been released}}
+  my_hold2(0, 0, p); // expected-warning{{Attempt to free released memory}}
 }
 
 // No leak if malloc returns null.
@@ -132,7 +132,7 @@ void af3() {
 int * af4() {
   int *p = my_malloc(12);
   my_free(p);
-  return p; // expected-warning{{Use of dynamically allocated}}
+  return p; // expected-warning{{Use of memory after it is freed}}
 }
 
 // This case is (possibly) ok, be conservative
@@ -198,13 +198,13 @@ void pr6293() {
 void f7() {
   char *x = (char*) malloc(4);
   free(x);
-  x[0] = 'a'; // expected-warning{{Use of dynamically allocated memory after it is freed.}}
+  x[0] = 'a'; // expected-warning{{Use of memory after it is freed}}
 }
 
 void f7_realloc() {
   char *x = (char*) malloc(4);
   realloc(x,0);
-  x[0] = 'a'; // expected-warning{{Use of dynamically allocated memory after it is freed.}}
+  x[0] = 'a'; // expected-warning{{Use of memory after it is freed}}
 }
 
 void PR6123() {

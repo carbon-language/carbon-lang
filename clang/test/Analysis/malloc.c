@@ -15,19 +15,19 @@ char *fooRetPtr();
 
 void f1() {
   int *p = malloc(12);
-  return; // expected-warning{{Allocated memory never released. Potential memory leak.}}
+  return; // expected-warning{{Memory is never released; potential memory leak}}
 }
 
 void f2() {
   int *p = malloc(12);
   free(p);
-  free(p); // expected-warning{{Try to free a memory block that has been released}}
+  free(p); // expected-warning{{Attempt to free released memory}}
 }
 
 void f2_realloc_0() {
   int *p = malloc(12);
   realloc(p,0);
-  realloc(p,0); // expected-warning{{Try to free a memory block that has been released}}
+  realloc(p,0); // expected-warning{{Attempt to free released memory}}
 }
 
 void f2_realloc_1() {
@@ -40,7 +40,7 @@ void reallocNotNullPtr(unsigned sizeIn) {
   char *p = (char*)malloc(size);
   if (p) {
     char *q = (char*)realloc(p, sizeIn);
-    char x = *q; // expected-warning {{Allocated memory never released.}}
+    char x = *q; // expected-warning {{Memory is never released; potential memory leak}}
   }
 }
 
@@ -79,7 +79,7 @@ void reallocSizeZero2() {
   } else {
     free(r);
   }
-  free(p); // expected-warning {{Try to free a memory block that has been released}}
+  free(p); // expected-warning {{Attempt to free released memory}}
 }
 
 void reallocSizeZero3() {
@@ -98,7 +98,7 @@ void reallocSizeZero5() {
 }
 
 void reallocPtrZero1() {
-  char *r = realloc(0, 12); // expected-warning {{Allocated memory never released.}}
+  char *r = realloc(0, 12); // expected-warning {{Memory is never released; potential memory leak}}
 }
 
 void reallocPtrZero2() {
@@ -116,7 +116,7 @@ void reallocRadar6337483_1() {
     char *buf = malloc(100);
     buf = (char*)realloc(buf, 0x1000000);
     if (!buf) {
-        return;// expected-warning {{Allocated memory never released.}}
+        return;// expected-warning {{Memory is never released; potential memory leak}}
     }
     free(buf);
 }
@@ -124,7 +124,7 @@ void reallocRadar6337483_1() {
 void reallocRadar6337483_2() {
     char *buf = malloc(100);
     char *buf2 = (char*)realloc(buf, 0x1000000);
-    if (!buf2) { // expected-warning {{Allocated memory never released.}}
+    if (!buf2) { // expected-warning {{Memory is never released; potential memory leak}}
       ;
     } else {
       free(buf2);
@@ -147,7 +147,7 @@ void reallocRadar6337483_4() {
     char *buf = malloc(100);
     char *buf2 = (char*)realloc(buf, 0x1000000);
     if (!buf2) {
-      return;  // expected-warning {{Allocated memory never released.}}
+      return;  // expected-warning {{Memory is never released; potential memory leak}}
     } else {
       free(buf2);
     }
@@ -174,7 +174,7 @@ void reallocfRadar6337483_3() {
     char * tmp;
     tmp = (char*)reallocf(buf, 0x1000000);
     if (!tmp) {
-        free(buf); // expected-warning {{Try to free a memory block that has been released}}
+        free(buf); // expected-warning {{Attempt to free released memory}}
         return;
     }
     buf = tmp;
@@ -182,7 +182,7 @@ void reallocfRadar6337483_3() {
 }
 
 void reallocfPtrZero1() {
-  char *r = reallocf(0, 12); // expected-warning {{Allocated memory never released.}}
+  char *r = reallocf(0, 12); // expected-warning {{Memory is never released; potential memory leak}}
 }
 
 
@@ -240,13 +240,13 @@ void pr6293() {
 void f7() {
   char *x = (char*) malloc(4);
   free(x);
-  x[0] = 'a'; // expected-warning{{Use of dynamically allocated memory after it is freed.}}
+  x[0] = 'a'; // expected-warning{{Use of memory after it is freed}}
 }
 
 void f7_realloc() {
   char *x = (char*) malloc(4);
   realloc(x,0);
-  x[0] = 'a'; // expected-warning{{Use of dynamically allocated memory after it is freed.}}
+  x[0] = 'a'; // expected-warning{{Use of memory after it is freed}}
 }
 
 void PR6123() {
@@ -335,14 +335,14 @@ void mallocEscapeFreeFree() {
   int *p = malloc(12);
   myfoo(p);
   free(p);
-  free(p); // expected-warning{{Try to free a memory block that has been released}}
+  free(p); // expected-warning{{Attempt to free released memory}}
 }
 
 void mallocEscapeFreeUse() {
   int *p = malloc(12);
   myfoo(p);
   free(p);
-  myfoo(p); // expected-warning{{Use of dynamically allocated memory after it is freed.}}
+  myfoo(p); // expected-warning{{Use of memory after it is freed}}
 }
 
 int *myalloc();
@@ -368,18 +368,18 @@ void mallocBindFreeUse() {
   int *x = malloc(12);
   int *y = x;
   free(y);
-  myfoo(x); // expected-warning{{Use of dynamically allocated memory after it is freed.}}
+  myfoo(x); // expected-warning{{Use of memory after it is freed}}
 }
 
 void mallocEscapeMalloc() {
   int *p = malloc(12);
   myfoo(p);
-  p = malloc(12); // expected-warning{{Allocated memory never released. Potential memory leak.}}
+  p = malloc(12); // expected-warning{{Memory is never released; potential memory leak}}
 }
 
 void mallocMalloc() {
   int *p = malloc(12);
-  p = malloc(12); // expected-warning{{Allocated memory never released. Potential memory leak}}
+  p = malloc(12); // expected-warning{{Memory is never released; potential memory leak}}
 }
 
 void mallocFreeMalloc() {
@@ -392,13 +392,13 @@ void mallocFreeMalloc() {
 void mallocFreeUse_params() {
   int *p = malloc(12);
   free(p);
-  myfoo(p); //expected-warning{{Use of dynamically allocated memory after it is freed}}
+  myfoo(p); //expected-warning{{Use of memory after it is freed}}
 }
 
 void mallocFreeUse_params2() {
   int *p = malloc(12);
   free(p);
-  myfooint(*p); //expected-warning{{Use of dynamically allocated memory after it is freed}}
+  myfooint(*p); //expected-warning{{Use of memory after it is freed}}
 }
 
 void mallocFailedOrNot() {
@@ -416,14 +416,14 @@ struct StructWithInt {
 int *mallocReturnFreed() {
   int *p = malloc(12);
   free(p);
-  return p; // expected-warning {{Use of dynamically allocated}}
+  return p; // expected-warning {{Use of memory after it is freed}}
 }
 
 int useAfterFreeStruct() {
   struct StructWithInt *px= malloc(sizeof(struct StructWithInt));
   px->g = 5;
   free(px);
-  return px->g; // expected-warning {{Use of dynamically allocated}}
+  return px->g; // expected-warning {{Use of memory after it is freed}}
 }
 
 void nonSymbolAsFirstArg(int *pp, struct StructWithInt *p);
@@ -439,7 +439,7 @@ void mallocFailedOrNotLeak() {
   if (p == 0)
     return; // no warning
   else
-    return; // expected-warning {{Allocated memory never released. Potential memory leak.}}
+    return; // expected-warning {{Memory is never released; potential memory leak}}
 }
 
 void mallocAssignment() {
@@ -449,14 +449,14 @@ void mallocAssignment() {
 
 int vallocTest() {
   char *mem = valloc(12);
-  return 0; // expected-warning {{Allocated memory never released. Potential memory leak.}}
+  return 0; // expected-warning {{Memory is never released; potential memory leak}}
 }
 
 void vallocEscapeFreeUse() {
   int *p = valloc(12);
   myfoo(p);
   free(p);
-  myfoo(p); // expected-warning{{Use of dynamically allocated memory after it is freed.}}
+  myfoo(p); // expected-warning{{Use of memory after it is freed}}
 }
 
 int *Gl;
@@ -542,7 +542,7 @@ struct X* RegInvalidationDetect1(struct X *s2) {
   struct X *px= malloc(sizeof(struct X));
   px->p = 0;
   px = s2;
-  return px; // expected-warning {{Allocated memory never released. Potential memory leak.}}
+  return px; // expected-warning {{Memory is never released; potential memory leak}}
 }
 
 struct X* RegInvalidationGiveUp1() {
@@ -556,7 +556,7 @@ int **RegInvalidationDetect2(int **pp) {
   int *p = malloc(12);
   pp = &p;
   pp++;
-  return 0;// expected-warning {{Allocated memory never released. Potential memory leak.}}
+  return 0;// expected-warning {{Memory is never released; potential memory leak}}
 }
 
 extern void exit(int) __attribute__ ((__noreturn__));
@@ -602,7 +602,7 @@ void dependsOnValueOfPtr(int *g, unsigned f) {
   if (p != g)
     free(p);
   else
-    return; // expected-warning{{Allocated memory never released. Potential memory leak}}
+    return; // expected-warning{{Memory is never released; potential memory leak}}
   return;
 }
 
@@ -617,7 +617,7 @@ static void *specialMalloc(int n){
     p[0] = n;
     p++;
   }
-  return p;// expected-warning {{Allocated memory never released. Potential memory leak.}}
+  return p;// expected-warning {{Memory is never released; potential memory leak}}
 }
 
 // TODO: This is a false positve that should be fixed by making CString checker smarter.

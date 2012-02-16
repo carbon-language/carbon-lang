@@ -91,11 +91,10 @@ class MallocChecker : public Checker<check::DeadSymbols,
                                      eval::Assume,
                                      check::RegionChanges>
 {
-  mutable OwningPtr<BuiltinBug> BT_DoubleFree;
-  mutable OwningPtr<BuiltinBug> BT_Leak;
-  mutable OwningPtr<BuiltinBug> BT_UseFree;
-  mutable OwningPtr<BuiltinBug> BT_UseRelinquished;
-  mutable OwningPtr<BuiltinBug> BT_BadFree;
+  mutable OwningPtr<BugType> BT_DoubleFree;
+  mutable OwningPtr<BugType> BT_Leak;
+  mutable OwningPtr<BugType> BT_UseFree;
+  mutable OwningPtr<BugType> BT_BadFree;
   mutable IdentifierInfo *II_malloc, *II_free, *II_realloc, *II_calloc,
                          *II_valloc, *II_reallocf;
 
@@ -519,10 +518,9 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
     if (ExplodedNode *N = C.generateSink()) {
       if (!BT_DoubleFree)
         BT_DoubleFree.reset(
-          new BuiltinBug("Double free",
-                         "Try to free a memory block that has been released"));
+          new BugType("Double free", "Memory Error"));
       BugReport *R = new BugReport(*BT_DoubleFree, 
-                                   BT_DoubleFree->getDescription(), N);
+                        "Attempt to free released memory", N);
       R->addRange(ArgExpr->getSourceRange());
       R->addVisitor(new MallocBugVisitor(Sym));
       C.EmitReport(R);
@@ -627,7 +625,7 @@ void MallocChecker::ReportBadFree(CheckerContext &C, SVal ArgVal,
                                   SourceRange range) const {
   if (ExplodedNode *N = C.generateSink()) {
     if (!BT_BadFree)
-      BT_BadFree.reset(new BuiltinBug("Bad free"));
+      BT_BadFree.reset(new BugType("Bad free", "Memory Error"));
     
     SmallString<100> buf;
     llvm::raw_svector_ostream os(buf);
@@ -766,8 +764,7 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
                                CheckerContext &C) const {
   assert(N);
   if (!BT_Leak) {
-    BT_Leak.reset(new BuiltinBug("Memory leak",
-        "Allocated memory never released. Potential memory leak."));
+    BT_Leak.reset(new BugType("Memory leak", "Memory Error"));
     // Leaks should not be reported if they are post-dominated by a sink:
     // (1) Sinks are higher importance bugs.
     // (2) NoReturnFunctionChecker uses sink nodes to represent paths ending
@@ -776,7 +773,8 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
     BT_Leak->setSuppressOnSink(true);
   }
 
-  BugReport *R = new BugReport(*BT_Leak, BT_Leak->getDescription(), N);
+  BugReport *R = new BugReport(*BT_Leak,
+                  "Memory is never released; potential memory leak", N);
   R->addVisitor(new MallocBugVisitor(Sym));
   C.EmitReport(R);
 }
@@ -897,10 +895,10 @@ bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
   if (RS && RS->isReleased()) {
     if (ExplodedNode *N = C.generateSink()) {
       if (!BT_UseFree)
-        BT_UseFree.reset(new BuiltinBug("Use of dynamically allocated memory "
-            "after it is freed."));
+        BT_UseFree.reset(new BugType("Use-after-free", "Memory Error"));
 
-      BugReport *R = new BugReport(*BT_UseFree, BT_UseFree->getDescription(),N);
+      BugReport *R = new BugReport(*BT_UseFree,
+                                   "Use of memory after it is freed",N);
       if (S)
         R->addRange(S->getSourceRange());
       R->addVisitor(new MallocBugVisitor(Sym));

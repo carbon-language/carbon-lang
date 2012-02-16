@@ -36,7 +36,6 @@ void reallocDiagnostics() {
 // CHECK: <dict>
 // CHECK:  <key>files</key>
 // CHECK:  <array>
-// CHECK:   <string>/Users/zaks/workspace/llvmgit/llvm/tools/clang/test/Analysis/malloc-plist.c</string>
 // CHECK:  </array>
 // CHECK:  <key>diagnostics</key>
 // CHECK:  <array>
@@ -259,13 +258,13 @@ void reallocDiagnostics() {
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Allocated memory never released. Potential memory leak</string>
+// CHECK:      <string>Memory is never released; potential memory leak</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Allocated memory never released. Potential memory leak</string>
+// CHECK: <string>Memory is never released; potential memory leak</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Allocated memory never released. Potential memory leak</string>
-// CHECK:    <key>category</key><string>Logic error</string>
+// CHECK:    <key>description</key><string>Memory is never released; potential memory leak</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
@@ -416,13 +415,13 @@ void reallocDiagnostics() {
 // CHECK:       <key>file</key><integer>0</integer>
 // CHECK:      </dict>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Allocated memory never released. Potential memory leak</string>
+// CHECK:      <string>Memory is never released; potential memory leak</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Allocated memory never released. Potential memory leak</string>
+// CHECK: <string>Memory is never released; potential memory leak</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Allocated memory never released. Potential memory leak</string>
-// CHECK:    <key>category</key><string>Logic error</string>
+// CHECK:    <key>description</key><string>Memory is never released; potential memory leak</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
@@ -774,13 +773,13 @@ void reallocDiagnostics() {
 // CHECK:        </array>
 // CHECK:      </array>
 // CHECK:      <key>extended_message</key>
-// CHECK:      <string>Allocated memory never released. Potential memory leak</string>
+// CHECK:      <string>Memory is never released; potential memory leak</string>
 // CHECK:      <key>message</key>
-// CHECK: <string>Allocated memory never released. Potential memory leak</string>
+// CHECK: <string>Memory is never released; potential memory leak</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Allocated memory never released. Potential memory leak</string>
-// CHECK:    <key>category</key><string>Logic error</string>
+// CHECK:    <key>description</key><string>Memory is never released; potential memory leak</string>
+// CHECK:    <key>category</key><string>Memory Error</string>
 // CHECK:    <key>type</key><string>Memory leak</string>
 // CHECK:   <key>location</key>
 // CHECK:   <dict>
