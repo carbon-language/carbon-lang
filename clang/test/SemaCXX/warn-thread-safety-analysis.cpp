@@ -1847,6 +1847,7 @@ class CellDelayed {
 public:
   // Test dependent guarded_by
   T data GUARDED_BY(mu_);
+  static T static_data GUARDED_BY(static_mu_);
 
   void fooEx(CellDelayed<T> *other) EXCLUSIVE_LOCKS_REQUIRED(mu_, other->mu_) {
     this->data = other->data;
@@ -1864,6 +1865,7 @@ public:
   }
 
   Mutex mu_;
+  static Mutex static_mu_;
 };
 
 void testDelayed() {

@@ -326,7 +326,7 @@ Decl *TemplateDeclInstantiator::VisitVarDecl(VarDecl *D) {
     if (Owner->isFunctionOrMethod())
       SemaRef.CurrentInstantiationScope->InstantiatedLocal(D, Var);
   }
-  SemaRef.InstantiateAttrs(TemplateArgs, D, Var);
+  SemaRef.InstantiateAttrs(TemplateArgs, D, Var, LateAttrs, StartingScope);
 
   // Link instantiations of static data members back to the template from
   // which they were instantiated.
