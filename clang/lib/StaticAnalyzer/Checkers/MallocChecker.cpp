@@ -184,11 +184,18 @@ private:
   /// region.
   class MallocBugVisitor : public BugReporterVisitor {
   protected:
+    enum NotificationMode {
+      Normal,
+      Complete,
+      ReallocationFailed
+    };
+
     // The allocated region symbol tracked by the main analysis.
     SymbolRef Sym;
+    NotificationMode Mode;
 
   public:
-    MallocBugVisitor(SymbolRef S) : Sym(S) {}
+    MallocBugVisitor(SymbolRef S) : Sym(S), Mode(Normal) {}
     virtual ~MallocBugVisitor() {}
 
     void Profile(llvm::FoldingSetNodeID &ID) const {
@@ -197,14 +204,28 @@ private:
       ID.AddPointer(Sym);
     }
 
-    inline bool isAllocated(const RefState *S, const RefState *SPrev) {
+    inline bool isAllocated(const RefState *S, const RefState *SPrev,
+                            const Stmt *Stmt) {
       // Did not track -> allocated. Other state (released) -> allocated.
-      return ((S && S->isAllocated()) && (!SPrev || !SPrev->isAllocated()));
+      return (Stmt && isa<CallExpr>(Stmt) &&
+              (S && S->isAllocated()) && (!SPrev || !SPrev->isAllocated()));
     }
 
-    inline bool isReleased(const RefState *S, const RefState *SPrev) {
+    inline bool isReleased(const RefState *S, const RefState *SPrev,
+                           const Stmt *Stmt) {
       // Did not track -> released. Other state (allocated) -> released.
-      return ((S && S->isReleased()) && (!SPrev || !SPrev->isReleased()));
+      return (Stmt && isa<CallExpr>(Stmt) &&
+              (S && S->isReleased()) && (!SPrev || !SPrev->isReleased()));
+    }
+
+    inline bool isReallocFailedCheck(const RefState *S, const RefState *SPrev,
+                                     const Stmt *Stmt) {
+      // If the expression is not a call, and the state change is
+      // released -> allocated, it must be the realloc return value
+      // check. If we have to handle more cases here, it might be cleaner just
+      // to track this extra bit in the state itself.
+      return ((!Stmt || !isa<CallExpr>(Stmt)) &&
+              (S && S->isAllocated()) && (SPrev && !SPrev->isAllocated()));
     }
 
     PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
@@ -502,6 +523,7 @@ ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
                          "Try to free a memory block that has been released"));
       BugReport *R = new BugReport(*BT_DoubleFree, 
                                    BT_DoubleFree->getDescription(), N);
+      R->addRange(ArgExpr->getSourceRange());
       R->addVisitor(new MallocBugVisitor(Sym));
       C.EmitReport(R);
     }
@@ -861,11 +883,11 @@ void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
     return;
 
   // Check if we are returning freed memory.
-  if (checkUseAfterFree(Sym, C, S))
+  if (checkUseAfterFree(Sym, C, E))
     return;
 
   // Check if the symbol is escaping.
-  checkEscape(Sym, S, C);
+  checkEscape(Sym, E, C);
 }
 
 bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
@@ -1051,28 +1073,58 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
   if (!RS && !RSPrev)
     return 0;
 
-  // We expect the interesting locations be StmtPoints corresponding to call
-  // expressions. We do not support indirect function calls as of now.
-  const CallExpr *CE = 0;
-  if (isa<StmtPoint>(N->getLocation()))
-    CE = dyn_cast<CallExpr>(cast<StmtPoint>(N->getLocation()).getStmt());
-  if (!CE)
-    return 0;
-  const FunctionDecl *funDecl = CE->getDirectCallee();
-  if (!funDecl)
+  const Stmt *S = 0;
+  const char *Msg = 0;
+
+  // Retrieve the associated statement.
+  ProgramPoint ProgLoc = N->getLocation();
+  if (isa<StmtPoint>(ProgLoc))
+    S = cast<StmtPoint>(ProgLoc).getStmt();
+  // If an assumption was made on a branch, it should be caught
+  // here by looking at the state transition.
+  if (isa<BlockEdge>(ProgLoc)) {
+    const CFGBlock *srcBlk = cast<BlockEdge>(ProgLoc).getSrc();
+    S = srcBlk->getTerminator();
+  }
+  if (!S)
     return 0;
 
   // Find out if this is an interesting point and what is the kind.
-  const char *Msg = 0;
-  if (isAllocated(RS, RSPrev))
-    Msg = "Memory is allocated here";
-  else if (isReleased(RS, RSPrev))
-    Msg = "Memory is released here";
+  if (Mode == Normal) {
+    if (isAllocated(RS, RSPrev, S))
+      Msg = "Memory is allocated";
+    else if (isReleased(RS, RSPrev, S))
+      Msg = "Memory is released";
+    else if (isReallocFailedCheck(RS, RSPrev, S)) {
+      Mode = ReallocationFailed;
+      Msg = "Reallocation failed";
+    }
+
+  // We are in a special mode if a reallocation failed later in the path.
+  } else if (Mode == ReallocationFailed) {
+    // Generate a special diagnostic for the first realloc we find.
+    if (!isAllocated(RS, RSPrev, S) && !isReleased(RS, RSPrev, S))
+      return 0;
+
+    // Check that the name of the function is realloc.
+    const CallExpr *CE = dyn_cast<CallExpr>(S);
+    if (!CE)
+      return 0;
+    const FunctionDecl *funDecl = CE->getDirectCallee();
+    if (!funDecl)
+      return 0;
+    StringRef FunName = funDecl->getName();
+    if (!(FunName.equals("realloc") || FunName.equals("reallocf")))
+      return 0;
+    Msg = "Attempt to reallocate memory";
+    Mode = Normal;
+  }
+
   if (!Msg)
     return 0;
 
   // Generate the extra diagnostic.
-  PathDiagnosticLocation Pos(CE, BRC.getSourceManager(),
+  PathDiagnosticLocation Pos(S, BRC.getSourceManager(),
                              N->getLocationContext());
   return new PathDiagnosticEventPiece(Pos, Msg);
 }
