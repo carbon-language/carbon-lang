@@ -283,6 +283,9 @@ static bool checkForLockableRecord(Sema &S, Decl *D, const AttributeList &Attr,
       << Attr.getName();
     return false;
   }
+  // Don't check for lockable if the class hasn't been defined yet. 
+  if (RT->isIncompleteType())
+    return true;
   // Flag error if the type is not lockable.
   if (!RT->getDecl()->getAttr<LockableAttr>()) {
     S.Diag(Attr.getLoc(), diag::err_attribute_argument_not_lockable)
