@@ -590,9 +590,14 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::CXXBoolLiteralExprClass:
     case Stmt::FloatingLiteralClass:
     case Stmt::SizeOfPackExprClass:
-    case Stmt::CXXNullPtrLiteralExprClass:
-      // No-op. Simply propagate the current state unchanged.
+    case Stmt::CXXNullPtrLiteralExprClass: {
+      Bldr.takeNodes(Pred);
+      ExplodedNodeSet preVisit;
+      getCheckerManager().runCheckersForPreStmt(preVisit, Pred, S, *this);
+      getCheckerManager().runCheckersForPostStmt(Dst, preVisit, S, *this);
+      Bldr.addNodes(Dst);
       break;
+    }
 
     case Stmt::ArraySubscriptExprClass:
       Bldr.takeNodes(Pred);
