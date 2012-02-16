@@ -34,8 +34,7 @@ namespace TemplateParsing {
 }
 
 void Lambda() {
-  // FIXME: Enable when lambdas are minimally working.
-  //[]{}; // FIXME-warning {{lambda expressions are incompatible with C++98}}
+  []{}(); // expected-warning {{lambda expressions are incompatible with C++98}}
 }
 
 int InitList() {
@@ -238,6 +237,11 @@ namespace UnionOrAnonStructMembers {
       NonTrivCopy ntcp; // expected-warning {{anonymous struct member 'ntcp' with a non-trivial copy constructor is incompatible with C++98}}
       NonTrivDtor ntd; // expected-warning {{anonymous struct member 'ntd' with a non-trivial destructor is incompatible with C++98}}
     };
+  };
+  union WithStaticDataMember {
+    static constexpr double d = 0.0; // expected-warning {{static data member 'd' in union is incompatible with C++98}} expected-warning {{'constexpr' specifier is incompatible with C++98}}
+    static const int n = 0; // expected-warning {{static data member 'n' in union is incompatible with C++98}}
+    static int k; // expected-warning {{static data member 'k' in union is incompatible with C++98}}
   };
 }
 

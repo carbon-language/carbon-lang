@@ -973,8 +973,13 @@ def note_nontrivial_user_defined : Note<
   "because type %0 has a user-declared %select{constructor|copy constructor|"
   "move constructor|copy assignment operator|move assignment operator|"
   "destructor}1">;
-def err_static_data_member_not_allowed_in_union_or_anon_struct : Error<
-  "static data member %0 not allowed in %select{anonymous struct|union}1">; 
+def err_static_data_member_not_allowed_in_anon_struct : Error<
+  "static data member %0 not allowed in anonymous struct">;
+def ext_static_data_member_in_union : ExtWarn<
+  "static data member %0 in union is a C++11 extension">, InGroup<CXX11>;
+def warn_cxx98_compat_static_data_member_in_union : Warning<
+  "static data member %0 in union is incompatible with C++98">,
+  InGroup<CXX98Compat>, DefaultIgnore;
 def err_union_member_of_reference_type : Error<
   "union member %0 has reference type %1">;
 def ext_anonymous_struct_union_qualified : Extension<

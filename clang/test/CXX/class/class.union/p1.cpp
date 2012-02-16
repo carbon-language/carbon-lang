@@ -91,8 +91,9 @@ union U3 {
 };
 
 union U4 {
-  static int i1; // expected-error {{static data member 'i1' not allowed in union}}
+  static int i1; // expected-warning {{static data member 'i1' in union is a C++11 extension}}
 };
+int U4::i1 = 10;
 
 union U5 {
   int& i1; // expected-error {{union member 'i1' has reference type 'int &'}}

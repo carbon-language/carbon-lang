@@ -11,8 +11,13 @@ union u {
   non_trivial nt;
 };
 
+union static_data_member {
+  static int i;
+};
+int static_data_member::i;
+
 union bad {
-  static int i; // expected-error {{static data member}}
+  int &i; // expected-error {{union member 'i' has reference type 'int &'}}
 };
 
 struct s {

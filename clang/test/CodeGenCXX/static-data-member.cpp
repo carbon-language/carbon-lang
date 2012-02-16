@@ -5,6 +5,12 @@
 // CHECK: @_ZN5test31AIiE1xE = weak_odr global i32 0, align 4
 // CHECK: @_ZGVN5test31AIiE1xE = weak_odr global i64 0
 
+// CHECK: _ZN5test51U2k0E = global i32 0
+// CHECK: _ZN5test51U2k1E = global i32 0
+// CHECK: _ZN5test51U2k2E = constant i32 76
+// CHECK-NOT: test51U2k3E
+// CHECK-NOT: test51U2k4E
+
 // PR5564.
 namespace test1 {
   struct A {
@@ -77,4 +83,22 @@ namespace test4 {
     // CHECK: ret i32 76
     return a->n;
   }
+}
+
+// Test that static data members in unions behave properly.
+namespace test5 {
+  union U {
+    static int k0;
+    static const int k1;
+    static const int k2 = 76;
+    static const int k3;
+    static const int k4 = 81;
+  };
+  int U::k0;
+  const int U::k1 = (k0 = 9, 42);
+  const int U::k2;
+
+  // CHECK: store i32 9, i32* @_ZN5test51U2k0E
+  // CHECK: store i32 {{.*}}, i32* @_ZN5test51U2k1E
+  // CHECK-NOT: store {{.*}} i32* @_ZN5test51U2k2E
 }
