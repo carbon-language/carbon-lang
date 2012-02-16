@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -fms-extensions %s
+// RUN: %clang_cc1 -fsyntax-only -fms-compatibility %s
 
 template<typename T>
 struct X {
