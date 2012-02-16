@@ -34,11 +34,11 @@
 
 #if defined(__APPLE__)
 // FIXME(samsonov): Gradually replace system headers with declarations of
-// intercepted functions.
-#include <pthread.h>
-#include <signal.h>
+// intercepted functions. We need these declarations on Mac to get addresses of
+// the functions to intercept.
 #include <string.h>
 #include <strings.h>
+
 #endif  // __APPLE__
 
 namespace __asan {
@@ -218,8 +218,10 @@ static void *asan_thread_start(void *arg) {
 }
 
 #ifndef _WIN32
-INTERCEPTOR(int, pthread_create, pthread_t *thread,
-                                 const pthread_attr_t *attr,
+extern "C"
+int pthread_create(void *thread, const void *attr,
+                   void *(*start_routine)(void*), void *arg);
+INTERCEPTOR(int, pthread_create, void *thread, const void *attr,
                                  void *(*start_routine)(void*), void *arg) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   int current_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
@@ -237,8 +239,9 @@ INTERCEPTOR(void*, signal, int signum, void *handler) {
   return NULL;
 }
 
-INTERCEPTOR(int, sigaction, int signum, const struct sigaction *act,
-                            struct sigaction *oldact) {
+extern "C"
+int sigaction(int signum, const void *act, void *oldact);
+INTERCEPTOR(int, sigaction, int signum, const void *act, void *oldact) {
   if (!AsanInterceptsSignal(signum)) {
     return REAL(sigaction)(signum, act, oldact);
   }
@@ -393,8 +396,7 @@ DEFINE_REAL(char*, index, const char *string, int c);
 #endif
 
 #ifdef ANDROID
-DEFINE_REAL(int, sigaction, int signum, const struct sigaction *act,
-    struct sigaction *oldact);
+DEFINE_REAL(int, sigaction, int signum, const void *act, void *oldact);
 #endif
 
 INTERCEPTOR(int, strcasecmp, const char *s1, const char *s2) {
