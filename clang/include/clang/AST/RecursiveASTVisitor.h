@@ -1663,7 +1663,9 @@ DEF_TRAVERSE_DECL(CXXDestructorDecl, {
 template<typename Derived>
 bool RecursiveASTVisitor<Derived>::TraverseVarHelper(VarDecl *D) {
   TRY_TO(TraverseDeclaratorHelper(D));
-  TRY_TO(TraverseStmt(D->getInit()));
+  // Default params are taken care of when we traverse the ParmVarDecl.
+  if (!isa<ParmVarDecl>(D))
+    TRY_TO(TraverseStmt(D->getInit()));
   return true;
 }
 

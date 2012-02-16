@@ -107,3 +107,4 @@ void foo4(int p = default_param);
 
 // CHECK:      [indexEntityReference]: kind: variable | name: array_size | {{.*}} | loc: 59:22
 // CHECK:      [indexEntityReference]: kind: variable | name: default_param | {{.*}} | loc: 62:19
+// CHECK-NOT:  [indexEntityReference]: kind: variable | name: default_param | {{.*}} | loc: 62:19
