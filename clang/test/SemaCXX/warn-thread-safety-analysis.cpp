@@ -2049,5 +2049,35 @@ void test() {
     // expected-warning {{calling function 'foo' requires exclusive lock on 'mu_'}}
 }
 
+} // end namespace FunctionDefinitionTest
+
+
+namespace SelfLockingTest {
+
+class LOCKABLE MyLock {
+public:
+  int foo GUARDED_BY(this);
+
+  void lock()   EXCLUSIVE_LOCK_FUNCTION();
+  void unlock() UNLOCK_FUNCTION();
+
+  void doSomething() {
+    this->lock();  // allow 'this' as a lock expression
+    foo = 0;
+    doSomethingElse();
+    this->unlock();
+  }
+
+  void doSomethingElse() EXCLUSIVE_LOCKS_REQUIRED(this) {
+    foo = 1;
+  };
+
+  void test() {
+    foo = 2;  // \
+      // expected-warning {{writing variable 'foo' requires locking 'this' exclusively}}
+  }
 };
+
+} // end namespace SelfLockingTest
+
 

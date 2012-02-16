@@ -62,11 +62,11 @@ namespace {
 ///
 /// Clang introduces an additional wrinkle, which is that it is difficult to
 /// derive canonical expressions, or compare expressions directly for equality.
-/// Thus, we identify a mutex not by an Expr, but by the set of named
+/// Thus, we identify a mutex not by an Expr, but by the list of named
 /// declarations that are referenced by the Expr.  In other words,
 /// x->foo->bar.mu will be a four element vector with the Decls for
 /// mu, bar, and foo, and x.  The vector will uniquely identify the expression
-/// for all practical purposes.
+/// for all practical purposes.  Null is used to denote 'this'.
 ///
 /// Note we will need to perform substitution on "this" and function parameter
 /// names when constructing a lock expression.
@@ -122,8 +122,10 @@ class MutexID {
     } else if (isa<CXXThisExpr>(Exp)) {
       if (Parent)
         buildMutexID(Parent, D, 0, 0, 0);
-      else
+      else {
+        DeclSeq.push_back(0);  // Use 0 to represent 'this'.
         return;  // mutexID is still valid in this case
+      }
     } else if (UnaryOperator *UOE = dyn_cast<UnaryOperator>(Exp))
       buildMutexID(UOE->getSubExpr(), D, Parent, NumArgs, FunArgs);
     else if (CastExpr *CE = dyn_cast<CastExpr>(Exp))
@@ -233,6 +235,8 @@ public:
   /// We do not want to output the entire expression text for security reasons.
   StringRef getName() const {
     assert(isValid());
+    if (!DeclSeq.front())
+      return "this";  // Use 0 to represent 'this'.
     return DeclSeq.front()->getName();
   }
 
