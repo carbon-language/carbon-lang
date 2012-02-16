@@ -305,8 +305,9 @@ PathDiagnosticLocation
       return PathDiagnosticLocation(PS->getStmt(), SM, LC);
     else if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {
       const Stmt *Term = BE->getSrc()->getTerminator();
-      assert(Term);
-      return PathDiagnosticLocation(Term, SM, LC);
+      if (Term) {
+        return PathDiagnosticLocation(Term, SM, LC);
+      }
     }
     NI = NI->succ_empty() ? 0 : *(NI->succ_begin());
   }

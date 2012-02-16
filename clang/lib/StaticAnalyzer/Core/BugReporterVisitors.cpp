@@ -85,26 +85,8 @@ PathDiagnosticPiece*
 BugReporterVisitor::getDefaultEndPath(BugReporterContext &BRC,
                                       const ExplodedNode *EndPathNode,
                                       BugReport &BR) {
-  const ProgramPoint &PP = EndPathNode->getLocation();
-  PathDiagnosticLocation L;
-
-  if (const BlockEntrance *BE = dyn_cast<BlockEntrance>(&PP)) {
-    const CFGBlock *block = BE->getBlock();
-    if (block->getBlockID() == 0) {
-      L = PathDiagnosticLocation::createDeclEnd(PP.getLocationContext(),
-                                                BRC.getSourceManager());
-    }
-  }
-
-  if (!L.isValid()) {
-    const Stmt *S = BR.getStmt();
-
-    if (!S)
-      return NULL;
-
-    L = PathDiagnosticLocation(S, BRC.getSourceManager(),
-                                  PP.getLocationContext());
-  }
+  PathDiagnosticLocation L =
+    PathDiagnosticLocation::createEndOfPath(EndPathNode,BRC.getSourceManager());
 
   BugReport::ranges_iterator Beg, End;
   llvm::tie(Beg, End) = BR.getRanges();
