@@ -961,6 +961,8 @@ void ASTDeclWriter::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
 void ASTDeclWriter::VisitCXXConversionDecl(CXXConversionDecl *D) {
   VisitCXXMethodDecl(D);
   Record.push_back(D->IsExplicitSpecified);
+  if (D->isLambdaToBlockPointerConversion())
+    Writer.AddStmt(D->getLambdaToBlockPointerCopyInit());
   Code = serialization::DECL_CXX_CONVERSION;
 }
 

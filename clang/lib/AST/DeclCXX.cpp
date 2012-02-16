@@ -1759,6 +1759,21 @@ CXXConversionDecl::Create(ASTContext &C, CXXRecordDecl *RD,
                                    EndLocation);
 }
 
+bool CXXConversionDecl::isLambdaToBlockPointerConversion() const {
+  return isImplicit() && getParent()->isLambda() &&
+         getConversionType()->isBlockPointerType();
+}
+
+Expr *CXXConversionDecl::getLambdaToBlockPointerCopyInit() const {
+  assert(isLambdaToBlockPointerConversion());
+  return getASTContext().LambdaBlockPointerInits[this];
+}
+
+void CXXConversionDecl::setLambdaToBlockPointerCopyInit(Expr *Init) {
+  assert(isLambdaToBlockPointerConversion());
+  getASTContext().LambdaBlockPointerInits[this] = Init;
+}
+
 void LinkageSpecDecl::anchor() { }
 
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,

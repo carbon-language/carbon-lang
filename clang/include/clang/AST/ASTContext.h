@@ -55,6 +55,7 @@ namespace clang {
   class CXXABI;
   // Decls
   class DeclContext;
+  class CXXConversionDecl;
   class CXXMethodDecl;
   class CXXRecordDecl;
   class Decl;
@@ -321,6 +322,12 @@ class ASTContext : public llvm::RefCountedBase<ASTContext> {
   typedef UsuallyTinyPtrVector<const CXXMethodDecl> CXXMethodVector;
   llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector> OverriddenMethods;
 
+  /// \brief Mapping from lambda-to-block-pointer conversion functions to the
+  /// expression used to copy the lambda object.
+  llvm::DenseMap<const CXXConversionDecl *, Expr *> LambdaBlockPointerInits;
+  
+  friend class CXXConversionDecl;
+  
   /// \brief Mapping that stores parameterIndex values for ParmVarDecls
   /// when that value exceeds the bitfield size of
   /// ParmVarDeclBits.ParameterIndex.

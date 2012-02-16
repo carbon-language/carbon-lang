@@ -4071,6 +4071,9 @@ let CategoryName = "Lambda Issue" in {
     "capture of variable '%0' as type %1 calls %select{private|protected}3 "
     "%select{default |copy |move |*ERROR* |*ERROR* |*ERROR* |}2constructor">,
     AccessControl;
+  def note_lambda_to_block_conv : Note<
+    "implicit capture of lambda object due to conversion to block pointer "
+    "here">;
 }
 
 def err_operator_arrow_circular : Error<

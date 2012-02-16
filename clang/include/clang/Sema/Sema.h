@@ -3554,6 +3554,26 @@ public:
   ExprResult ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                              Scope *CurScope, bool IsInstantiation = false);
 
+  /// \brief Define the "body" of the conversion from a lambda object to a 
+  /// function pointer.
+  ///
+  /// This routine doesn't actually define a sensible body; rather, it fills
+  /// in the initialization expression needed to copy the lambda object into
+  /// the block, and IR generation actually generates the real body of the
+  /// block pointer conversion.
+  void DefineImplicitLambdaToFunctionPointerConversion(
+         SourceLocation CurrentLoc, CXXConversionDecl *Conv);
+
+  /// \brief Define the "body" of the conversion from a lambda object to a 
+  /// block pointer.
+  ///
+  /// This routine doesn't actually define a sensible body; rather, it fills
+  /// in the initialization expression needed to copy the lambda object into
+  /// the block, and IR generation actually generates the real body of the
+  /// block pointer conversion.
+  void DefineImplicitLambdaToBlockPointerConversion(SourceLocation CurrentLoc,
+                                                    CXXConversionDecl *Conv);
+  
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs,
                                     Expr **Strings,

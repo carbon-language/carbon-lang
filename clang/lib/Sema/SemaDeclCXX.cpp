@@ -9050,7 +9050,60 @@ bool Sema::isImplicitlyDeleted(FunctionDecl *FD) {
          (FD->isDefaulted() || FD->isImplicit()) &&
          isa<CXXMethodDecl>(FD);
 }
-    
+
+void Sema::DefineImplicitLambdaToFunctionPointerConversion(
+       SourceLocation CurrentLocation,
+       CXXConversionDecl *Conv) 
+{
+  Conv->setUsed();
+  
+  ImplicitlyDefinedFunctionScope Scope(*this, Conv);
+  DiagnosticErrorTrap Trap(Diags);
+  
+  // Introduce a bogus body, which IR generation will override anyway.
+  Conv->setBody(new (Context) CompoundStmt(Context, 0, 0, Conv->getLocation(),
+                                           Conv->getLocation()));
+  
+  if (ASTMutationListener *L = getASTMutationListener()) {
+    L->CompletedImplicitDefinition(Conv);
+  }
+}
+
+void Sema::DefineImplicitLambdaToBlockPointerConversion(
+       SourceLocation CurrentLocation,
+       CXXConversionDecl *Conv) 
+{
+  Conv->setUsed();
+  
+  ImplicitlyDefinedFunctionScope Scope(*this, Conv);
+  DiagnosticErrorTrap Trap(Diags);
+  
+  // Copy-initialize the lambda object as needed to capture
+  Expr *This = ActOnCXXThis(CurrentLocation).take();
+  Expr *DerefThis =CreateBuiltinUnaryOp(CurrentLocation, UO_Deref, This).take();
+  ExprResult Init = PerformCopyInitialization(
+                      InitializedEntity::InitializeBlock(CurrentLocation, 
+                                                         DerefThis->getType(), 
+                                                         /*NRVO=*/false),
+                      CurrentLocation, DerefThis);
+  if (!Init.isInvalid())
+    Init = ActOnFinishFullExpr(Init.take());
+  
+  if (!Init.isInvalid())
+    Conv->setLambdaToBlockPointerCopyInit(Init.take());
+  else {
+    Diag(CurrentLocation, diag::note_lambda_to_block_conv);
+  }
+  
+  // Introduce a bogus body, which IR generation will override anyway.
+  Conv->setBody(new (Context) CompoundStmt(Context, 0, 0, Conv->getLocation(),
+                                           Conv->getLocation()));
+  
+  if (ASTMutationListener *L = getASTMutationListener()) {
+    L->CompletedImplicitDefinition(Conv);
+  }
+}
+
 ExprResult
 Sema::BuildCXXConstructExpr(SourceLocation ConstructLoc, QualType DeclInitType,
                             CXXConstructorDecl *Constructor,

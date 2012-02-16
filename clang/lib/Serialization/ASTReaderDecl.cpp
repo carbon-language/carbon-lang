@@ -1206,6 +1206,8 @@ void ASTDeclReader::VisitCXXDestructorDecl(CXXDestructorDecl *D) {
 void ASTDeclReader::VisitCXXConversionDecl(CXXConversionDecl *D) {
   VisitCXXMethodDecl(D);
   D->IsExplicitSpecified = Record[Idx++];
+  if (D->isLambdaToBlockPointerConversion())
+    D->setLambdaToBlockPointerCopyInit(Reader.ReadExpr(F));
 }
 
 void ASTDeclReader::VisitImportDecl(ImportDecl *D) {

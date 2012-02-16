@@ -9447,6 +9447,13 @@ void Sema::MarkFunctionReferenced(SourceLocation Loc, FunctionDecl *Func) {
         else
           DefineImplicitMoveAssignment(Loc, MethodDecl);
       }
+    } else if (isa<CXXConversionDecl>(MethodDecl) &&
+               MethodDecl->getParent()->isLambda()) {
+      CXXConversionDecl *Conversion = cast<CXXConversionDecl>(MethodDecl);
+      if (Conversion->isLambdaToBlockPointerConversion())
+        DefineImplicitLambdaToBlockPointerConversion(Loc, Conversion);
+      else
+        DefineImplicitLambdaToFunctionPointerConversion(Loc, Conversion);
     } else if (MethodDecl->isVirtual())
       MarkVTableUsed(Loc, MethodDecl->getParent());
   }
@@ -10041,7 +10048,7 @@ static void MarkExprReferenced(Sema &SemaRef, SourceLocation Loc,
   }
 
   SemaRef.MarkAnyDeclReferenced(Loc, D);
-}
+} 
 
 /// \brief Perform reference-marking and odr-use handling for a
 /// BlockDeclRefExpr.
