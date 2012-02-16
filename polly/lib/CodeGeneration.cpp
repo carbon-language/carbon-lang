@@ -1487,6 +1487,8 @@ void ClastStmtCodeGen::codegen(const clast_guard *g) {
   Builder.SetInsertPoint(ThenBB->begin());
 
   codegen(g->then);
+
+  Builder.SetInsertPoint(MergeBB->begin());
 }
 
 void ClastStmtCodeGen::codegen(const clast_stmt *stmt) {
