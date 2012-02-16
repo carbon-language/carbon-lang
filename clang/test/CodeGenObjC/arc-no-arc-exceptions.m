@@ -9,8 +9,8 @@ void thrower(void);
 void not(void) __attribute__((nothrow));
 
 // CHECK: define void @test0(
-// CHECK: call void @thrower(), !clang.arc.no_objc_arc_exceptions !0
-// CHECK: call void @not() nounwind, !clang.arc.no_objc_arc_exceptions !0
+// CHECK: call void @thrower(), !clang.arc.no_objc_arc_exceptions !4
+// CHECK: call void @not() nounwind, !clang.arc.no_objc_arc_exceptions !4
 // NO-METADATA: define void @test0(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }
@@ -20,8 +20,8 @@ void test0(void) {
 }
 
 // CHECK: define void @test1(
-// CHECK: call void @thrower(), !clang.arc.no_objc_arc_exceptions !0
-// CHECK: call void @not() nounwind, !clang.arc.no_objc_arc_exceptions !0
+// CHECK: call void @thrower(), !clang.arc.no_objc_arc_exceptions !4
+// CHECK: call void @not() nounwind, !clang.arc.no_objc_arc_exceptions !4
 // NO-METADATA: define void @test1(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }
@@ -35,7 +35,7 @@ void NSLog(id, ...);
 
 // CHECK: define void @test2(
 // CHECK: invoke void (i8*, ...)* @NSLog(i8* bitcast (%struct.NSConstantString* @_unnamed_cfstring_ to i8*), i32* %x2)
-// CHECK:   to label %invoke.cont unwind label %lpad, !clang.arc.no_objc_arc_exceptions !0
+// CHECK:   to label %invoke.cont unwind label %lpad, !clang.arc.no_objc_arc_exceptions !4
 // NO-METADATA: define void @test2(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }
@@ -48,7 +48,7 @@ void test2(void) {
 
 // CHECK: define void @test3(
 // CHECK: invoke void %9(i8* %7)
-// CHECK:   to label %invoke.cont unwind label %lpad, !clang.arc.no_objc_arc_exceptions !0
+// CHECK:   to label %invoke.cont unwind label %lpad, !clang.arc.no_objc_arc_exceptions !4
 // NO-METADATA: define void @test3(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }
@@ -63,7 +63,7 @@ void test3(void) {
 
 // CHECK: define void @test4(
 // CHECK: invoke void %13(i8* %11)
-// CHECK:   to label %invoke.cont unwind label %lpad, !clang.arc.no_objc_arc_exceptions !0
+// CHECK:   to label %invoke.cont unwind label %lpad, !clang.arc.no_objc_arc_exceptions !4
 // NO-METADATA: define void @test4(
 // NO-METADATA-NOT: !clang.arc.no_objc_arc_exceptions
 // NO-METADATA: }
