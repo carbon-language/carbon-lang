@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 | FileCheck %s
+; RUN: llc < %s -mcpu=generic -march=x86-64 | FileCheck %s
 ; Verify that we are using the efficient uitofp --> sitofp lowering illustrated
 ; by the compiler_rt implementation of __floatundisf.
 ; <rdar://problem/8493982>
