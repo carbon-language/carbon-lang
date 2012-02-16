@@ -3568,32 +3568,47 @@ enum ImageInfoFlags {
 
 void CGObjCCommonMac::EmitImageInfo() {
   unsigned version = 0; // Version is unused?
-  unsigned flags = 0;
+  const char *Section = (ObjCABI == 1) ?
+    "__OBJC, __image_info,regular" :
+    "__DATA, __objc_imageinfo, regular, no_dead_strip";
 
-  // FIXME: Fix and continue?
-  if (CGM.getLangOptions().getGC() != LangOptions::NonGC)
-    flags |= eImageInfo_GarbageCollected;
-  if (CGM.getLangOptions().getGC() == LangOptions::GCOnly)
-    flags |= eImageInfo_GCOnly;
+  // Generate module-level named metadata to convey this information to the
+  // linker and code-gen.
+  llvm::Module &Mod = CGM.getModule();
 
-  // We never allow @synthesize of a superclass property.
-  flags |= eImageInfo_CorrectedSynthesize;
+  // Add the ObjC ABI version to the module flags.
+  Mod.addModuleFlag(llvm::Module::Error, "Objective-C Version", ObjCABI);
+  Mod.addModuleFlag(llvm::Module::Error, "Objective-C Image Info Version",
+                    version);
+  Mod.addModuleFlag(llvm::Module::Error, "Objective-C Image Info Section",
+                    llvm::MDString::get(VMContext,Section));
 
-  // Emitted as int[2];
-  uint32_t Values[2] = { version, flags };
+  if (CGM.getLangOptions().getGC() == LangOptions::NonGC) {
+    // Non-GC overrides those files which specify GC.
+    Mod.addModuleFlag(llvm::Module::Override,
+                      "Objective-C Garbage Collection", (uint32_t)0);
+  } else {
+    // Add the ObjC garbage collection value.
+    Mod.addModuleFlag(llvm::Module::Error,
+                      "Objective-C Garbage Collection",
+                      eImageInfo_GarbageCollected);
 
-  const char *Section;
-  if (ObjCABI == 1)
-    Section = "__OBJC, __image_info,regular";
-  else
-    Section = "__DATA, __objc_imageinfo, regular, no_dead_strip";
-  llvm::GlobalVariable *GV =
-    CreateMetadataVar("\01L_OBJC_IMAGE_INFO",
-                      llvm::ConstantDataArray::get(VMContext, Values),
-                      Section, 0, true);
-  GV->setConstant(true);
+    if (CGM.getLangOptions().getGC() == LangOptions::GCOnly) {
+      // Add the ObjC GC Only value.
+      Mod.addModuleFlag(llvm::Module::Error, "Objective-C GC Only",
+                        eImageInfo_GCOnly);
+
+      // Require that GC be specified and set to eImageInfo_GarbageCollected.
+      llvm::Value *Ops[2] = {
+        llvm::MDString::get(VMContext, "Objective-C Garbage Collection"),
+        llvm::ConstantInt::get(llvm::Type::getInt32Ty(VMContext),
+                               eImageInfo_GarbageCollected)
+      };
+      Mod.addModuleFlag(llvm::Module::Require, "Objective-C GC Only",
+                        llvm::MDNode::get(VMContext, Ops));
+    }
+  }
 }
-
 
 // struct objc_module {
 //   unsigned long version;

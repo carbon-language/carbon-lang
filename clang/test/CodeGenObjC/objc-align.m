@@ -6,7 +6,6 @@
 // RUN: grep '@"\\01L_OBJC_CLASS_A" = internal global .*, section "__OBJC,__class,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_CLASS_C" = internal global .*, section "__OBJC,__class,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_CLASS_PROTOCOLS_C" = internal global .*, section "__OBJC,__cat_cls_meth,regular,no_dead_strip", align 4' %t
-// RUN: grep '@"\\01L_OBJC_IMAGE_INFO" = internal constant .*, section "__OBJC, __image_info,regular"' %t
 // RUN: grep '@"\\01L_OBJC_METACLASS_A" = internal global .*, section "__OBJC,__meta_class,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_METACLASS_C" = internal global .*, section "__OBJC,__meta_class,regular,no_dead_strip", align 4' %t
 // RUN: grep '@"\\01L_OBJC_MODULES" = internal global .*, section "__OBJC,__module_info,regular,no_dead_strip", align 4' %t
@@ -20,7 +19,6 @@
 // RUNX: grep '@"OBJC_METACLASS_$_A" = global' %t &&
 // RUNX: grep '@"OBJC_METACLASS_$_C" = global' %t &&
 // RUNX: grep '@"\\01L_OBJC_CLASSLIST_REFERENCES_$_0" = internal global .*, section "__DATA, __objc_classrefs, regular, no_dead_strip", align 8' %t &&
-// RUNX: grep '@"\\01L_OBJC_IMAGE_INFO" = internal constant .*, section "__DATA, __objc_imageinfo, regular, no_dead_strip"' %t &&
 // RUNX: grep '@"\\01L_OBJC_LABEL_CATEGORY_$" = internal global .*, section "__DATA, __objc_catlist, regular, no_dead_strip", align 8' %t &&
 // RUNX: grep '@"\\01L_OBJC_LABEL_CLASS_$" = internal global .*, section "__DATA, __objc_classlist, regular, no_dead_strip", align 8' %t &&
 // RUNX: grep '@"\\01l_OBJC_$_CATEGORY_A_$_Cat" = internal global .*, section "__DATA, __objc_const", align 8' %t &&
