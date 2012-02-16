@@ -339,7 +339,8 @@ bool LoopRotate::rotateLoop(Loop *L) {
     // memory (without proving that the loop doesn't write).
     if (L->hasLoopInvariantOperands(Inst) &&
         !Inst->mayReadFromMemory() && !Inst->mayWriteToMemory() &&
-        !isa<TerminatorInst>(Inst) && !isa<DbgInfoIntrinsic>(Inst)) {
+        !isa<TerminatorInst>(Inst) && !isa<DbgInfoIntrinsic>(Inst) &&
+        !isa<AllocaInst>(Inst)) {
       Inst->moveBefore(LoopEntryBranch);
       continue;
     }
