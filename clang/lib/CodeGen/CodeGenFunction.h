@@ -1378,6 +1378,10 @@ public:
 
   void EmitLambdaToBlockPointerBody(FunctionArgList &Args);
   void EmitLambdaToFunctionPointerBody(FunctionArgList &Args);
+  llvm::Constant *EmitLambdaConvertedFnPtr(const CXXMethodDecl *MD);
+  void EmitLambdaThunkBody(llvm::Function *Fn,
+                           const CGFunctionInfo &FnInfo,
+                           const CXXRecordDecl *Lambda);
 
   /// EmitReturnBlock - Emit the unified return block, trying to avoid its
   /// emission when possible.

@@ -1725,6 +1725,98 @@ void CodeGenFunction::EmitLambdaToBlockPointerBody(FunctionArgList &Args) {
   CGM.ErrorUnsupported(CurFuncDecl, "lambda conversion to block");
 }
 
+void CodeGenFunction::EmitLambdaThunkBody(llvm::Function *Fn,
+                                          const CGFunctionInfo &FnInfo,
+                                          const CXXRecordDecl *Lambda) {
+  DeclarationName Name
+    = getContext().DeclarationNames.getCXXOperatorName(OO_Call);
+  DeclContext::lookup_const_result Calls = Lambda->lookup(Name);
+  CXXMethodDecl *MD = cast<CXXMethodDecl>(*Calls.first++);
+  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+  QualType ResultType = FPT->getResultType();
+
+  // Begin function
+  FunctionArgList FunctionArgs;
+  for (FunctionDecl::param_const_iterator I = MD->param_begin(),
+       E = MD->param_end(); I != E; ++I) {
+    ParmVarDecl *Param = *I;
+    FunctionArgs.push_back(Param);
+  }
+  StartFunction(GlobalDecl(), ResultType, Fn, FnInfo, FunctionArgs,
+                SourceLocation());
+
+  // Start building arguments for forwarding call
+  CallArgList CallArgs;
+
+  QualType ThisType = getContext().getPointerType(getContext().getRecordType(Lambda));
+  llvm::Value *ThisPtr = llvm::UndefValue::get(getTypes().ConvertType(ThisType));
+  CallArgs.add(RValue::get(ThisPtr), ThisType);
+
+  // Add the rest of the parameters.
+  for (FunctionDecl::param_const_iterator I = MD->param_begin(),
+       E = MD->param_end(); I != E; ++I) {
+    ParmVarDecl *param = *I;
+    EmitDelegateCallArg(CallArgs, param);
+  }
+
+  // Get the address of the call operator.
+  GlobalDecl GD(MD);
+  const CGFunctionInfo &CalleeFnInfo = CGM.getTypes().getFunctionInfo(GD);
+  llvm::Type *Ty =
+    CGM.getTypes().GetFunctionType(CalleeFnInfo, FPT->isVariadic());
+  llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty);
+
+  // Determine whether we have a return value slot to use.
+  ReturnValueSlot Slot;
+  if (!ResultType->isVoidType() &&
+      FnInfo.getReturnInfo().getKind() == ABIArgInfo::Indirect &&
+      hasAggregateLLVMType(CurFnInfo->getReturnType()))
+    Slot = ReturnValueSlot(ReturnValue, ResultType.isVolatileQualified());
+  
+  // Now emit our call.
+  RValue RV = EmitCall(CalleeFnInfo, Callee, Slot, CallArgs, MD);
+
+  // Forward the returned value
+  if (!ResultType->isVoidType() && Slot.isNull())
+    EmitReturnOfRValue(RV, ResultType);
+
+  // End the function.
+  FinishFunction();
+}
+
+llvm::Constant *
+CodeGenFunction::EmitLambdaConvertedFnPtr(const CXXMethodDecl *MD) {
+  QualType FnTy = MD->getResultType()->getPointeeType();
+  CanQual<FunctionProtoType> CanFnTy =
+      CGM.getContext().getCanonicalType(FnTy)->getAs<FunctionProtoType>();
+  llvm::FunctionType *FnLLVMTy = cast<llvm::FunctionType>(CGM.getTypes().ConvertType(FnTy));
+  const CXXRecordDecl *Lambda = MD->getParent();
+  const CGFunctionInfo &FnInfo = CGM.getTypes().getFunctionInfo(CanFnTy);
+
+  if (CanFnTy->isVariadic()) {
+    // FIXME: Making this work correctly is nasty because it requires either
+    // cloning the body of the call operator or making the call operator forward.
+    CGM.ErrorUnsupported(MD, "lambda conversion to variadic function");
+    return llvm::UndefValue::get(FnLLVMTy->getPointerTo());
+  }
+
+  // Build a declaration for the function which this function will
+  // return a pointer to.
+  // FIXME: Should the "thunk" actually be part of the AST?  That would allow
+  // the conversion to function pointer to be constexpr...
+  std::string MangledName =
+      (llvm::Twine(CurFn->getName()) + "_lambdacallthunk").str();
+  llvm::Function *Fn =
+      llvm::Function::Create(FnLLVMTy, llvm::Function::InternalLinkage,
+                            MangledName, &CGM.getModule());
+
+  // Emit the definition of the new function.
+  CodeGenFunction(CGM).EmitLambdaThunkBody(Fn, FnInfo, Lambda);
+  return Fn;
+}
+
 void CodeGenFunction::EmitLambdaToFunctionPointerBody(FunctionArgList &Args) {
-  CGM.ErrorUnsupported(CurFuncDecl, "lambda conversion to function");
+  const CXXMethodDecl *MD = cast<CXXMethodDecl>(CurFuncDecl);
+  EmitReturnOfRValue(RValue::get(EmitLambdaConvertedFnPtr(MD)),
+                     MD->getResultType());
 }
