@@ -3551,9 +3551,10 @@ def err_array_init_non_constant_array : Error<
 def ext_array_init_copy : Extension<
   "initialization of an array of type %0 from a compound literal of type %1 is "
   "a GNU extension">, InGroup<GNU>;
+// This is intentionally not disabled by -Wno-gnu.
 def ext_array_init_parens : ExtWarn<
   "parenthesized initialization of a member array is a GNU extension">,
-  InGroup<GNU>;
+  InGroup<DiagGroup<"gnu-array-member-paren-init">>, DefaultError;
 def warn_deprecated_string_literal_conversion : Warning<
   "conversion from string literal to %0 is deprecated">, InGroup<DeprecatedWritableStr>;
 def err_realimag_invalid_type : Error<"invalid type %0 to %1 operator">;
