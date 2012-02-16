@@ -20,6 +20,8 @@ class C {
     [&,foo] () {}; 
     [this] () {}; 
 
+    [] -> int { return 0; }; // expected-error{{lambda requires '()' before return type}}
+    [] mutable -> int { return 0; }; // expected-error{{lambda requires '()' before 'mutable'}}
     return 1;
   }
 

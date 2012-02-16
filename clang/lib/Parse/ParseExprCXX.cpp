@@ -820,7 +820,53 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
                                            DeclLoc, DeclEndLoc, D,
                                            TrailingReturnType),
                   Attr, DeclEndLoc);
+  } else if (Tok.is(tok::kw_mutable) || Tok.is(tok::arrow)) {
+    // It's common to forget that one needs '()' before 'mutable' or the 
+    // result type. Deal with this.
+    Diag(Tok, diag::err_lambda_missing_parens)
+      << Tok.is(tok::arrow)
+      << FixItHint::CreateInsertion(Tok.getLocation(), "() ");
+    SourceLocation DeclLoc = Tok.getLocation();
+    SourceLocation DeclEndLoc = DeclLoc;
+    
+    // Parse 'mutable', if it's there.
+    SourceLocation MutableLoc;
+    if (Tok.is(tok::kw_mutable)) {
+      MutableLoc = ConsumeToken();
+      DeclEndLoc = MutableLoc;
+    }
+    
+    // Parse the return type, if there is one.
+    ParsedType TrailingReturnType;
+    if (Tok.is(tok::arrow)) {
+      SourceRange Range;
+      TrailingReturnType = ParseTrailingReturnType(Range).get();
+      if (Range.getEnd().isValid())
+        DeclEndLoc = Range.getEnd();      
+    }
+
+    ParsedAttributes Attr(AttrFactory);
+    D.AddTypeInfo(DeclaratorChunk::getFunction(/*hasProto=*/true,
+                     /*isVariadic=*/false,
+                     /*EllipsisLoc=*/SourceLocation(),
+                     /*Params=*/0, /*NumParams=*/0,
+                     /*TypeQuals=*/0,
+                     /*RefQualifierIsLValueRef=*/true,
+                     /*RefQualifierLoc=*/SourceLocation(),
+                     /*ConstQualifierLoc=*/SourceLocation(),
+                     /*VolatileQualifierLoc=*/SourceLocation(),
+                     MutableLoc,
+                     EST_None, 
+                     /*ESpecLoc=*/SourceLocation(),
+                     /*Exceptions=*/0,
+                     /*ExceptionRanges=*/0,
+                     /*NumExceptions=*/0,
+                     /*NoexceptExpr=*/0,
+                     DeclLoc, DeclEndLoc, D,
+                     TrailingReturnType),
+                  Attr, DeclEndLoc);
   }
+  
 
   // FIXME: Rename BlockScope -> ClosureScope if we decide to continue using
   // it.
