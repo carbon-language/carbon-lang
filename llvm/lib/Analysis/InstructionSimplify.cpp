@@ -1542,10 +1542,6 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   Type *ITy = GetCompareTy(LHS); // The return type.
   Type *OpTy = LHS->getType();   // The operand type.
 
-  // Remove pointer casts that don't change the value.
-  LHS = LHS->stripPointerCasts();
-  RHS = RHS->stripPointerCasts();
-
   // icmp X, X -> true/false
   // X icmp undef -> true/false.  For example, icmp ugt %X, undef -> false
   // because X could be 0.
@@ -1595,8 +1591,11 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   // to the case where LHS is a global variable address or null is pointless,
   // since if both LHS and RHS are constants then we already constant folded
   // the compare, and if only one of them is then we moved it to RHS already.
-  if (isa<AllocaInst>(LHS) && (isa<GlobalValue>(RHS) || isa<AllocaInst>(RHS) ||
-                               isa<ConstantPointerNull>(RHS)))
+  Value *LHSPtr = LHS->stripPointerCasts();
+  Value *RHSPtr = RHS->stripPointerCasts();
+  if (isa<AllocaInst>(LHSPtr) && (isa<GlobalValue>(RHSPtr) ||
+                                  isa<AllocaInst>(RHSPtr)  ||
+                                  isa<ConstantPointerNull>(RHSPtr)))
     // We already know that LHS != RHS.
     return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
 
