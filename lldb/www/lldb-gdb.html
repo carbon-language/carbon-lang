@@ -255,6 +255,17 @@
                         </td>
                     </tr>
 
+                    <tr><td class="header" colspan="2">Set a breakpoint at and object C function: <b>-[NSString stringWithFormat:]</b>.</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> breakpoint set --name "-[NSString stringWithFormat:]"<br>
+                            <b>(lldb)</b> b -[NSString stringWithFormat:]<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> break -[NSString stringWithFormat:]<br>
+                        </td>
+                    </tr>
+
                     <tr><td class="header" colspan="2">Set a breakpoint at all Objective C methods whose selector is <b>count</b>.</td></tr>
                     <tr>
                         <td class="content">
@@ -502,6 +513,9 @@
                         <td class="content">
                             <b>(lldb)</b> register read --format i<br>
                             <b>(lldb)</b> re r -f i<br>
+							<br>
+							<i>LLDB now supports the GDB shorthand format syntax but there can't be space after the command:</i><br>
+                            <b>(lldb)</b> register read/d<br>
                         </td>
                         <td class="content">
                         </td>
@@ -533,6 +547,10 @@
                         <td class="content">
                             <b>(lldb)</b> register read --format binary rax<br>
                             <b>(lldb)</b> re r -f b rax<br>
+							<br>
+							<i>LLDB now supports the GDB shorthand format syntax but there can't be space after the command:</i><br>
+							<b>(lldb)</b> register read/t rax<br>
+							<b>(lldb)</b> p/t $rax<br>
                         </td>
                         <td class="content">
                             <b>(gdb)</b> p/t $rax<br>
@@ -545,9 +563,26 @@
                             <b>(lldb)</b> memory read --size 4 --format x --count 4 0xbffff3c0<br>
                             <b>(lldb)</b> me r -s4 -fx -c4 0xbffff3c0<br>
                             <b>(lldb)</b> x -s4 -fx -c4 0xbffff3c0<br>
+							<br>
+							<i>LLDB now supports the GDB shorthand format syntax but there can't be space after the command:</i><br>
+                            <b>(lldb)</b> memory read/4xw 0xbffff3c0<br>
+                            <b>(lldb)</b> x/4xw 0xbffff3c0<br>
+                            <b>(lldb)</b> memory read --gdb-format 4xw 0xbffff3c0<br>
                         </td>
                         <td class="content">
                             <b>(gdb)</b> x/4xw 0xbffff3c0<br>
+                        </td>
+                    </tr>
+
+                    <tr><td class="header" colspan="2">Read memory starting at the expression "argv[0]".</td></tr>
+                    <tr>
+                        <td class="content">
+                            <b>(lldb)</b> memory read `argv[0]`<br>
+							<i><b>NOTE:</b> any command can inline a scalar expression result (as long as the target is stopped) using backticks around any expression:</i><br>
+                            <b>(lldb)</b> memory read --size `sizeof(int)` `argv[0]`<br>
+                        </td>
+                        <td class="content">
+                            <b>(gdb)</b> x argv[0]<br>
                         </td>
                     </tr>
 
@@ -556,6 +591,7 @@
                         <td class="content">
                             <b>(lldb)</b> memory read --outfile /tmp/mem.txt --count 512 0xbffff3c0<br>
                             <b>(lldb)</b> me r -o/tmp/mem.txt -c512 0xbffff3c0<br>
+                            <b>(lldb)</b> x/512bx -o/tmp/mem.txt 0xbffff3c0<br>
                         </td>
                         <td class="content">
                           <b>(gdb)</b> set logging on<br>
