@@ -68,3 +68,20 @@ void test5(Test5* t5) {
   if (t5->count < 2) { }
 }
 
+
+@interface Test6
++ (Class)class;
+- (Class)class;
+@end
+
+void test6(Test6 *t6) {
+  Class x = t6.class;
+  Class x2 = Test6.class;
+}
+
+template<typename T>
+void test6_template(T *t6) {
+  Class x = t6.class;
+}
+
+template void test6_template(Test6*);
