@@ -10,6 +10,26 @@ define i1 @ptrtoint() {
 ; CHECK: ret i1 false
 }
 
+define i1 @bitcast() {
+; CHECK: @bitcast
+  %a = alloca i32
+  %b = alloca i64
+  %x = bitcast i32* %a to i8*
+  %y = bitcast i64* %b to i8*
+  %cmp = icmp eq i8* %x, %y
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 false
+}
+
+define i1 @gep() {
+; CHECK: @gep
+  %a = alloca [3 x i8], align 8
+  %x = getelementptr inbounds [3 x i8]* %a, i32 0, i32 0
+  %cmp = icmp eq i8* %x, null
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 false
+}
+
 define i1 @zext(i32 %x) {
 ; CHECK: @zext
   %e1 = zext i32 %x to i64
