@@ -35,6 +35,7 @@
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <set>
 using namespace llvm;
 
 STATISTIC(NodesCombined   , "Number of dag nodes combined");
@@ -63,7 +64,24 @@ namespace {
     bool LegalTypes;
 
     // Worklist of all of the nodes that need to be simplified.
-    std::vector<SDNode*> WorkList;
+    //
+    // This has the semantics that when adding to the worklist,
+    // the item added must be next to be processed. It should
+    // also only appear once. The naive approach to this takes
+    // linear time.
+    //
+    // To reduce the insert/remove time to logarithmic, we use
+    // a set and a vector to maintain our worklist.
+    //
+    // The set contains the items on the worklist, but does not
+    // maintain the order they should be visited.
+    //
+    // The vector maintains the order nodes should be visited, but may
+    // contain duplicate or removed nodes. When choosing a node to
+    // visit, we pop off the order stack until we find an item that is
+    // also in the contents set. All operations are O(log N).
+    SmallPtrSet<SDNode*, 64> WorkListContents;
+    std::vector<SDNode*> WorkListOrder;
 
     // AA - Used for DAG load/store alias analysis.
     AliasAnalysis &AA;
@@ -83,18 +101,17 @@ namespace {
     SDValue visit(SDNode *N);
 
   public:
-    /// AddToWorkList - Add to the work list making sure it's instance is at the
-    /// the back (next to be processed.)
+    /// AddToWorkList - Add to the work list making sure i'ts instance is at the
+    /// back (next to be processed.)
     void AddToWorkList(SDNode *N) {
-      removeFromWorkList(N);
-      WorkList.push_back(N);
+      WorkListContents.insert(N);
+      WorkListOrder.push_back(N);
     }
 
     /// removeFromWorkList - remove all instances of N from the worklist.
     ///
     void removeFromWorkList(SDNode *N) {
-      WorkList.erase(std::remove(WorkList.begin(), WorkList.end(), N),
-                     WorkList.end());
+      WorkListContents.erase(N);
     }
 
     SDValue CombineTo(SDNode *N, const SDValue *To, unsigned NumTo,
@@ -959,10 +976,9 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
   LegalTypes = Level >= AfterLegalizeTypes;
 
   // Add all the dag nodes to the worklist.
-  WorkList.reserve(DAG.allnodes_size());
   for (SelectionDAG::allnodes_iterator I = DAG.allnodes_begin(),
        E = DAG.allnodes_end(); I != E; ++I)
-    WorkList.push_back(I);
+    AddToWorkList(I);
 
   // Create a dummy node (which is not added to allnodes), that adds a reference
   // to the root node, preventing it from being deleted, and tracking any
@@ -973,11 +989,18 @@ void DAGCombiner::Run(CombineLevel AtLevel) {
   // done.  Set it to null to avoid confusion.
   DAG.setRoot(SDValue());
 
-  // while the worklist isn't empty, inspect the node on the end of it and
+  // while the worklist isn't empty, find a node and
   // try and combine it.
-  while (!WorkList.empty()) {
-    SDNode *N = WorkList.back();
-    WorkList.pop_back();
+  while (!WorkListContents.empty()) {
+    SDNode *N;
+    // The WorkListOrder holds the SDNodes in order, but it may contain duplicates.
+    // In order to avoid a linear scan, we use a set (O(log N)) to hold what the
+    // worklist *should* contain, and check the node we want to visit is should
+    // actually be visited.
+    do {
+      N = WorkListOrder.back();
+      WorkListOrder.pop_back();
+    } while (!WorkListContents.erase(N));
 
     // If N has no uses, it is dead.  Make sure to revisit all N's operands once
     // N is deleted from the DAG, since they too may now be dead or may have a
