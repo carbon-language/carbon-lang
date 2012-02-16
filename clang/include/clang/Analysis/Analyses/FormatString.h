@@ -67,7 +67,7 @@ public:
     AsShort,      // 'h'
     AsLong,       // 'l'
     AsLongLong,   // 'll'
-    AsQuad,       // 'q' (BSD, deprecated, same as PRI?64)
+    AsQuad,       // 'q' (BSD, deprecated, for 64-bit integer types)
     AsIntMax,     // 'j'
     AsSizeT,      // 'z'
     AsPtrDiff,    // 't'
