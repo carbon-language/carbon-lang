@@ -1756,7 +1756,7 @@ DataExtractor::Dump (Stream *s,
                 s->Printf ("%s", float_cstr);
                 break;
             }
-            else if (sizeof(long double) * 2 == item_byte_size)
+            else
             {
                 s->Printf ("unsupported hex float byte size %u", item_byte_size);
                 return start_offset;
