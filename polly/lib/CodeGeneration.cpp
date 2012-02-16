@@ -802,43 +802,25 @@ Value *ClastExpCodeGen::codegen(const clast_binary *e, Type *Ty) {
     return Builder.CreateSRem(LHS, RHS);
   case clast_bin_fdiv:
     {
-      // floord(N,D) ((N<0) ? -((-N+D-1)/D) : N/D)
-      Value *N = LHS;
-      Value *D = RHS;
-
+      // floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
       Value *One = ConstantInt::get(Ty, 1);
       Value *Zero = ConstantInt::get(Ty, 0);
-
-      Value *NegativeCase = Builder.CreateNeg(N);
-      NegativeCase = Builder.CreateAdd(NegativeCase, D);
-      NegativeCase = Builder.CreateSub(NegativeCase, One);
-      NegativeCase = Builder.CreateSDiv(NegativeCase, NegativeCase);
-
-      Value *PositiveCase = Builder.CreateSDiv(N, D);
-
-      Value *IsNegative = Builder.CreateICmpSLT(N, Zero);
-      return Builder.CreateSelect(IsNegative, NegativeCase, PositiveCase);
-
+      Value *Sum1 = Builder.CreateSub(LHS, RHS);
+      Value *Sum2 = Builder.CreateAdd(Sum1, One);
+      Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
+      Value *Dividend = Builder.CreateSelect(isNegative, Sum2, LHS);
+      return Builder.CreateSDiv(Dividend, RHS);
     }
   case clast_bin_cdiv:
     {
-      // ceild(N,D)  ( (N<0) ? -((-N)/D) : (N+D-1)/D)
-      Value *N = LHS;
-      Value *D = RHS;
-
+      // ceild(n,d) ((n < 0) ? n : (n + d - 1)) / d
+      Value *One = ConstantInt::get(Ty, 1);
       Value *Zero = ConstantInt::get(Ty, 0);
-      Value *MinusOne = ConstantInt::getSigned(Ty, -1);
-
-      Value *NegativeCase = Builder.CreateNeg(N);
-      NegativeCase = Builder.CreateSDiv(NegativeCase, D);
-      NegativeCase = Builder.CreateNeg(NegativeCase);
-
-      Value *PositiveCase = Builder.CreateAdd(N, D);
-      PositiveCase = Builder.CreateAdd(PositiveCase, MinusOne);
-      PositiveCase = Builder.CreateSDiv(PositiveCase, D);
-
-      Value *IsNegative = Builder.CreateICmpSLT(N, Zero);
-      return Builder.CreateSelect(IsNegative, NegativeCase, PositiveCase);
+      Value *Sum1 = Builder.CreateAdd(LHS, RHS);
+      Value *Sum2 = Builder.CreateSub(Sum1, One);
+      Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
+      Value *Dividend = Builder.CreateSelect(isNegative, LHS, Sum2);
+      return Builder.CreateSDiv(Dividend, RHS);
     }
   case clast_bin_div:
     return Builder.CreateSDiv(LHS, RHS);
