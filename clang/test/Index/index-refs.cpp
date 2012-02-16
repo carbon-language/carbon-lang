@@ -55,6 +55,12 @@ void foo3() {
   TS<int, int> s;
 }
 
+const int array_size = 3;
+typedef int some_arr[array_size];
+
+const int default_param = 3;
+void foo4(int p = default_param);
+
 // RUN: c-index-test -index-file %s | FileCheck %s
 // CHECK:      [indexDeclaration]: kind: namespace | name: NS
 // CHECK-NEXT: [indexDeclaration]: kind: variable | name: gx
@@ -98,3 +104,6 @@ void foo3() {
   [indexEntityReference]: kind: struct-template-spec | name: TS | USR: c:@S@TS>#I | {{.*}} | loc: 55:3
 */
 // CHECK-NEXT: [indexEntityReference]: kind: c++-class-template | name: TS | USR: c:@ST>2#T#T@TS | {{.*}} | loc: 55:3
+
+// CHECK:      [indexEntityReference]: kind: variable | name: array_size | {{.*}} | loc: 59:22
+// CHECK:      [indexEntityReference]: kind: variable | name: default_param | {{.*}} | loc: 62:19

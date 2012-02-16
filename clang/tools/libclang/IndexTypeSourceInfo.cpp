@@ -85,6 +85,11 @@ public:
     }
     return true;
   }
+
+  bool TraverseStmt(Stmt *S) {
+    IndexCtx.indexBody(S, Parent, ParentDC);
+    return true;
+  }
 };
 
 } // anonymous namespace
