@@ -1169,3 +1169,26 @@ constexpr const int &i = 0; // expected-error {{constant expression}} expected-n
 constexpr const int j = i; // expected-error {{constant expression}} expected-note {{initializer of 'i' is not a constant expression}}
 
 }
+
+namespace RecursiveOpaqueExpr {
+  template<typename Iter>
+  constexpr auto LastNonzero(Iter p, Iter q) -> decltype(+*p) {
+    return p != q ? (LastNonzero(p+1, q) ?: *p) : 0; // expected-warning {{GNU}}
+  }
+
+  constexpr int arr1[] = { 1, 0, 0, 3, 0, 2, 0, 4, 0, 0 };
+  static_assert(LastNonzero(begin(arr1), end(arr1)) == 4, "");
+
+  constexpr int arr2[] = { 1, 0, 0, 3, 0, 2, 0, 4, 0, 5 };
+  static_assert(LastNonzero(begin(arr2), end(arr2)) == 5, "");
+}
+
+namespace VLASizeof {
+
+  void f(int k) {
+    int arr[k]; // expected-warning {{C99}}
+    constexpr int n = 1 +
+        sizeof(arr) // expected-error {{constant expression}}
+        * 3;
+  }
+}

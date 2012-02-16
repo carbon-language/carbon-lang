@@ -544,7 +544,8 @@ namespace {
     /// Should we continue evaluation as much as possible after encountering a
     /// construct which can't be folded?
     bool keepEvaluatingAfterFailure() {
-      return CheckingPotentialConstantExpression && EvalStatus.Diag->empty();
+      return CheckingPotentialConstantExpression &&
+             EvalStatus.Diag && EvalStatus.Diag->empty();
     }
   };
 
@@ -561,6 +562,24 @@ namespace {
       if (Enabled && !Info.EvalStatus.Diag->empty() &&
           !Info.EvalStatus.HasSideEffects)
         Info.EvalStatus.Diag->clear();
+    }
+  };
+
+  /// RAII object used to suppress diagnostics and side-effects from a
+  /// speculative evaluation.
+  class SpeculativeEvaluationRAII {
+    EvalInfo &Info;
+    Expr::EvalStatus Old;
+
+  public:
+    SpeculativeEvaluationRAII(EvalInfo &Info,
+                              llvm::SmallVectorImpl<PartialDiagnosticAt>
+                                *NewDiag = 0)
+      : Info(Info), Old(Info.EvalStatus) {
+      Info.EvalStatus.Diag = NewDiag;
+    }
+    ~SpeculativeEvaluationRAII() {
+      Info.EvalStatus = Old;
     }
   };
 }
@@ -1357,7 +1376,8 @@ static void HandleLValueIndirectMember(EvalInfo &Info, const Expr *E,
 }
 
 /// Get the size of the given type in char units.
-static bool HandleSizeof(EvalInfo &Info, QualType Type, CharUnits &Size) {
+static bool HandleSizeof(EvalInfo &Info, SourceLocation Loc,
+                         QualType Type, CharUnits &Size) {
   // sizeof(void), __alignof__(void), sizeof(function) = 1 as a gcc
   // extension.
   if (Type->isVoidType() || Type->isFunctionType()) {
@@ -1367,7 +1387,8 @@ static bool HandleSizeof(EvalInfo &Info, QualType Type, CharUnits &Size) {
 
   if (!Type->isConstantSizeType()) {
     // sizeof(vla) is not a constantexpr: C99 6.5.3.4p2.
-    // FIXME: Diagnostic.
+    // FIXME: Better diagnostic.
+    Info.Diag(Loc);
     return false;
   }
 
@@ -1385,7 +1406,7 @@ static bool HandleLValueArrayAdjustment(EvalInfo &Info, const Expr *E,
                                         LValue &LVal, QualType EltTy,
                                         int64_t Adjustment) {
   CharUnits SizeOfPointee;
-  if (!HandleSizeof(Info, EltTy, SizeOfPointee))
+  if (!HandleSizeof(Info, E->getExprLoc(), EltTy, SizeOfPointee))
     return false;
 
   // Compute the new offset in the appropriate width.
@@ -2330,8 +2351,9 @@ public:
   bool hasError() const { return opaqueValue == 0; }
 
   ~OpaqueValueEvaluation() {
-    // FIXME: This will not work for recursive constexpr functions using opaque
-    // values. Restore the former value.
+    // FIXME: For a recursive constexpr call, an outer stack frame might have
+    // been using this opaque value too, and will now have to re-evaluate the
+    // source expression.
     if (opaqueValue) info.OpaqueValues.erase(opaqueValue);
   }
 };
@@ -2353,6 +2375,45 @@ private:
   }
   RetTy DerivedZeroInitialization(const Expr *E) {
     return static_cast<Derived*>(this)->ZeroInitialization(E);
+  }
+
+  // Check whether a conditional operator with a non-constant condition is a
+  // potential constant expression. If neither arm is a potential constant
+  // expression, then the conditional operator is not either.
+  template<typename ConditionalOperator>
+  void CheckPotentialConstantConditional(const ConditionalOperator *E) {
+    assert(Info.CheckingPotentialConstantExpression);
+
+    // Speculatively evaluate both arms.
+    {
+      llvm::SmallVector<PartialDiagnosticAt, 8> Diag;
+      SpeculativeEvaluationRAII Speculate(Info, &Diag);
+
+      StmtVisitorTy::Visit(E->getFalseExpr());
+      if (Diag.empty())
+        return;
+
+      Diag.clear();
+      StmtVisitorTy::Visit(E->getTrueExpr());
+      if (Diag.empty())
+        return;
+    }
+
+    Error(E, diag::note_constexpr_conditional_never_const);
+  }
+
+
+  template<typename ConditionalOperator>
+  bool HandleConditionalOperator(const ConditionalOperator *E) {
+    bool BoolResult;
+    if (!EvaluateAsBooleanCondition(E->getCond(), BoolResult, Info)) {
+      if (Info.CheckingPotentialConstantExpression)
+        CheckPotentialConstantConditional(E);
+      return false;
+    }
+
+    Expr *EvalExpr = BoolResult ? E->getTrueExpr() : E->getFalseExpr();
+    return StmtVisitorTy::Visit(EvalExpr);
   }
 
 protected:
@@ -2437,15 +2498,12 @@ public:
   }
 
   RetTy VisitBinaryConditionalOperator(const BinaryConditionalOperator *E) {
+    // Cache the value of the common expression.
     OpaqueValueEvaluation opaque(Info, E->getOpaqueValue(), E->getCommon());
     if (opaque.hasError())
       return false;
 
-    bool cond;
-    if (!EvaluateAsBooleanCondition(E->getCond(), cond, Info))
-      return false;
-
-    return StmtVisitorTy::Visit(cond ? E->getTrueExpr() : E->getFalseExpr());
+    return HandleConditionalOperator(E);
   }
 
   RetTy VisitConditionalOperator(const ConditionalOperator *E) {
@@ -2466,12 +2524,7 @@ public:
 
     FoldConstant Fold(Info);
 
-    bool BoolResult;
-    if (!EvaluateAsBooleanCondition(E->getCond(), BoolResult, Info))
-      return false;
-
-    Expr *EvalExpr = BoolResult ? E->getTrueExpr() : E->getFalseExpr();
-    if (!StmtVisitorTy::Visit(EvalExpr))
+    if (!HandleConditionalOperator(E))
       return false;
 
     if (IsBcpCall)
@@ -4365,7 +4418,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 
   if (E->isLogicalOp()) {
     // These need to be handled specially because the operands aren't
-    // necessarily integral
+    // necessarily integral nor evaluated.
     bool lhsResult, rhsResult;
 
     if (EvaluateAsBooleanCondition(E->getLHS(), lhsResult, Info)) {
@@ -4381,19 +4434,17 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
           return Success(lhsResult && rhsResult, E);
       }
     } else {
-      // FIXME: If both evaluations fail, we should produce the diagnostic from
-      // the LHS. If the LHS is non-constant and the RHS is unevaluatable, it's
-      // less clear how to diagnose this.
+      // Since we weren't able to evaluate the left hand side, it
+      // must have had side effects.
+      Info.EvalStatus.HasSideEffects = true;
+
+      // Suppress diagnostics from this arm.
+      SpeculativeEvaluationRAII Speculative(Info);
       if (EvaluateAsBooleanCondition(E->getRHS(), rhsResult, Info)) {
         // We can't evaluate the LHS; however, sometimes the result
         // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
-        if (rhsResult == (E->getOpcode() == BO_LOr)) {
-          // Since we weren't able to evaluate the left hand side, it
-          // must have had side effects.
-          Info.EvalStatus.HasSideEffects = true;
-
+        if (rhsResult == (E->getOpcode() == BO_LOr))
           return Success(rhsResult, E);
-        }
       }
     }
 
@@ -4561,7 +4612,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
         QualType ElementType = Type->getAs<PointerType>()->getPointeeType();
 
         CharUnits ElementSize;
-        if (!HandleSizeof(Info, ElementType, ElementSize))
+        if (!HandleSizeof(Info, E->getExprLoc(), ElementType, ElementSize))
           return false;
 
         // FIXME: LLVM and GCC both compute LHSOffset - RHSOffset at runtime,
@@ -4851,8 +4902,6 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
 }
 
 CharUnits IntExprEvaluator::GetAlignOfType(QualType T) {
-  // C++ [expr.sizeof]p2: "When applied to a reference or a reference type,
-  //   the result is the size of the referenced type."
   // C++ [expr.alignof]p3: "When alignof is applied to a reference type, the
   //   result shall be the alignment of the referenced type."
   if (const ReferenceType *Ref = T->getAs<ReferenceType>())
@@ -4912,13 +4961,11 @@ bool IntExprEvaluator::VisitUnaryExprOrTypeTraitExpr(
     QualType SrcTy = E->getTypeOfArgument();
     // C++ [expr.sizeof]p2: "When applied to a reference or a reference type,
     //   the result is the size of the referenced type."
-    // C++ [expr.alignof]p3: "When alignof is applied to a reference type, the
-    //   result shall be the alignment of the referenced type."
     if (const ReferenceType *Ref = SrcTy->getAs<ReferenceType>())
       SrcTy = Ref->getPointeeType();
 
     CharUnits Sizeof;
-    if (!HandleSizeof(Info, SrcTy, Sizeof))
+    if (!HandleSizeof(Info, E->getExprLoc(), SrcTy, Sizeof))
       return false;
     return Success(Sizeof, E);
   }

@@ -51,7 +51,7 @@ constexpr int Comma(int n) { return // expected-error {{constexpr function never
   0;
 }
 
-int ng; // expected-note 5{{here}}
+int ng; // expected-note 6{{here}}
 constexpr int BinaryOp1(int n) { return n + ng; } // expected-error {{never produces}} expected-note {{read}}
 constexpr int BinaryOp2(int n) { return ng + n; } // expected-error {{never produces}} expected-note {{read}}
 
@@ -64,13 +64,18 @@ constexpr int FunctionArgs(int a) { return Add(a, ng, a); } // expected-error {{
 
 struct S { int a; int b; int c[2]; };
 constexpr S InitList(int a) { return { a, ng }; }; // expected-error {{never produces}} expected-note {{read}}
+constexpr S InitList1a(int a) { return S{ a, ng }; }; // expected-error {{never produces}} expected-note {{read}}
 constexpr S InitList2(int a) { return { a, a, { ng } }; }; // expected-error {{never produces}} expected-note {{read}}
+constexpr S InitList3(int a) { return a ? S{ a, a } : S{ a, ng }; }; // ok
 
-constexpr S InitList3(int a) { return a ? (S){ a, a } : (S){ a, ng }; }; // ok
+constexpr int LogicalAnd1(int n) { return n && (throw, 0); } // ok
+constexpr int LogicalAnd2(int n) { return 1 && (throw, 0); } // expected-error {{never produces}} expected-note {{subexpression}}
 
-// FIXME: Check both arms of a ?: if the conditional is a potential constant
-// expression with an unknown value, and diagnose if neither is constant.
-constexpr S InitList4(int a) { return a ? (S){ a, ng } : (S){ a, ng }; };
+constexpr int LogicalOr1(int n) { return n || (throw, 0); } // ok
+constexpr int LogicalOr2(int n) { return 0 || (throw, 0); } // expected-error {{never produces}} expected-note {{subexpression}}
+
+constexpr int Conditional1(bool b, int n) { return b ? n : ng; } // ok
+constexpr int Conditional2(bool b, int n) { return b ? n * ng : n + ng; } // expected-error {{never produces}} expected-note {{both arms of conditional operator are unable to produce a constant expression}}
 
 // __builtin_constant_p ? : is magical, and is always a potential constant.
 constexpr bool BcpCall(int n) {

@@ -72,6 +72,9 @@ def note_constexpr_typeid_polymorphic : Note<
 def note_constexpr_void_comparison : Note<
   "comparison between unequal pointers to void has unspecified result">;
 def note_constexpr_temporary_here : Note<"temporary created here">;
+def note_constexpr_conditional_never_const : Note<
+  "both arms of conditional operator are unable to produce a "
+  "constant expression">;
 def note_constexpr_depth_limit_exceeded : Note<
   "constexpr evaluation exceeded maximum depth of %0 calls">;
 def note_constexpr_call_limit_exceeded : Note<
