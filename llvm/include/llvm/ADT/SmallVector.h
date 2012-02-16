@@ -194,6 +194,23 @@ protected:
   /// grow - double the size of the allocated memory, guaranteeing space for at
   /// least one more element or MinSize if specified.
   void grow(size_t MinSize = 0);
+  
+public:
+  void push_back(const T &Elt) {
+    if (this->EndX < this->CapacityX) {
+    Retry:
+      new (this->end()) T(Elt);
+      this->setEnd(this->end()+1);
+      return;
+    }
+    this->grow();
+    goto Retry;
+  }
+  
+  void pop_back() {
+    this->setEnd(this->end()-1);
+    this->end()->~T();
+  }
 };
 
 // Define this out-of-line to dissuade the C++ compiler from inlining it.
@@ -254,6 +271,21 @@ protected:
   /// least one more element or MinSize if specified.
   void grow(size_t MinSize = 0) {
     this->grow_pod(MinSize*sizeof(T), sizeof(T));
+  }
+public:
+  void push_back(const T &Elt) {
+    if (this->EndX < this->CapacityX) {
+    Retry:
+      *this->end() = Elt;
+      this->setEnd(this->end()+1);
+      return;
+    }
+    this->grow();
+    goto Retry;
+  }
+  
+  void pop_back() {
+    this->setEnd(this->end()-1);
   }
 };
 
@@ -321,25 +353,9 @@ public:
       this->grow(N);
   }
 
-  void push_back(const T &Elt) {
-    if (this->EndX < this->CapacityX) {
-    Retry:
-      new (this->end()) T(Elt);
-      this->setEnd(this->end()+1);
-      return;
-    }
-    this->grow();
-    goto Retry;
-  }
-
-  void pop_back() {
-    this->setEnd(this->end()-1);
-    this->end()->~T();
-  }
-
   T pop_back_val() {
     T Result = this->back();
-    pop_back();
+    this->pop_back();
     return Result;
   }
 
@@ -386,7 +402,7 @@ public:
     // Shift all elts down one.
     std::copy(I+1, this->end(), I);
     // Drop the last elt.
-    pop_back();
+    this->pop_back();
     return(N);
   }
 
@@ -402,7 +418,7 @@ public:
 
   iterator insert(iterator I, const T &Elt) {
     if (I == this->end()) {  // Important special case for empty vector.
-      push_back(Elt);
+      this->push_back(Elt);
       return this->end()-1;
     }
 
