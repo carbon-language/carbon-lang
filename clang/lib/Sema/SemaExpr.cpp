@@ -3128,6 +3128,7 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
       //   the semantic constraints are checked, at the point where the
       //   default argument expression appears.
       ContextRAII SavedContext(*this, FD);
+      LocalInstantiationScope Local(*this);
       Result = SubstExpr(UninstExpr, ArgList);
     }
     if (Result.isInvalid())
