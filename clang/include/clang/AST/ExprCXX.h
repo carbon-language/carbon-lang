@@ -1359,24 +1359,34 @@ public:
 class CXXNewExpr : public Expr {
   // Was the usage ::new, i.e. is the global new to be used?
   bool GlobalNew : 1;
+  // Is there an initializer? If not, built-ins are uninitialized, else they're
+  // value-initialized.
+  bool Initializer : 1;
   // Do we allocate an array? If so, the first SubExpr is the size expression.
   bool Array : 1;
   // If this is an array allocation, does the usual deallocation
   // function for the allocated type want to know the allocated size?
   bool UsualArrayDeleteWantsSize : 1;
+  // Whether the referred constructor (if any) was resolved from an
+  // overload set having size greater than 1.
+  bool HadMultipleCandidates : 1;
   // The number of placement new arguments.
   unsigned NumPlacementArgs : 13;
-  // What kind of initializer do we have? Could be none, parens, or braces.
-  // In storage, we distinguish between "none, and no initializer expr", and
-  // "none, but an implicit initializer expr".
-  unsigned StoredInitializationStyle : 2;
-  // Contains an optional array size expression, an optional initialization
-  // expression, and any number of optional placement arguments, in that order.
+  // The number of constructor arguments. This may be 1 even for non-class
+  // types; use the pseudo copy constructor.
+  unsigned NumConstructorArgs : 14;
+  // Contains an optional array size expression, any number of optional
+  // placement arguments, and any number of optional constructor arguments,
+  // in that order.
   Stmt **SubExprs;
   // Points to the allocation function used.
   FunctionDecl *OperatorNew;
   // Points to the deallocation function used in case of error. May be null.
   FunctionDecl *OperatorDelete;
+  // Points to the constructor used. Cannot be null if AllocType is a record;
+  // it would still point at the default constructor (even an implicit one).
+  // Must be null for all other types.
+  CXXConstructorDecl *Constructor;
 
   /// \brief The allocated type-source information, as written in the source.
   TypeSourceInfo *AllocatedTypeInfo;
@@ -1385,33 +1395,29 @@ class CXXNewExpr : public Expr {
   /// the source range covering the parenthesized type-id.
   SourceRange TypeIdParens;
 
-  /// \brief Location of the first token.
   SourceLocation StartLoc;
-
-  /// \brief Source-range of a paren-delimited initializer.
-  SourceRange DirectInitRange;
+  SourceLocation EndLoc;
+  SourceLocation ConstructorLParen;
+  SourceLocation ConstructorRParen;
 
   friend class ASTStmtReader;
-  friend class ASTStmtWriter;
 public:
-  enum InitializationStyle {
-    NoInit,   ///< New-expression has no initializer as written.
-    CallInit, ///< New-expression has a C++98 paren-delimited initializer.
-    ListInit  ///< New-expression has a C++11 list-initializer.
-  };
-
   CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
-             FunctionDecl *operatorDelete, bool usualArrayDeleteWantsSize,
              Expr **placementArgs, unsigned numPlaceArgs,
-             SourceRange typeIdParens, Expr *arraySize,
-             InitializationStyle initializationStyle, Expr *initializer,
+             SourceRange TypeIdParens,
+             Expr *arraySize, CXXConstructorDecl *constructor, bool initializer,
+             Expr **constructorArgs, unsigned numConsArgs,
+             bool HadMultipleCandidates,
+             FunctionDecl *operatorDelete, bool usualArrayDeleteWantsSize,
              QualType ty, TypeSourceInfo *AllocatedTypeInfo,
-             SourceLocation startLoc, SourceRange directInitRange);
+             SourceLocation startLoc, SourceLocation endLoc,
+             SourceLocation constructorLParen,
+             SourceLocation constructorRParen);
   explicit CXXNewExpr(EmptyShell Shell)
     : Expr(CXXNewExprClass, Shell), SubExprs(0) { }
 
   void AllocateArgsArray(ASTContext &C, bool isArray, unsigned numPlaceArgs,
-                         bool hasInitializer);
+                         unsigned numConsArgs);
 
   QualType getAllocatedType() const {
     assert(getType()->isPointerType());
@@ -1437,6 +1443,8 @@ public:
   void setOperatorNew(FunctionDecl *D) { OperatorNew = D; }
   FunctionDecl *getOperatorDelete() const { return OperatorDelete; }
   void setOperatorDelete(FunctionDecl *D) { OperatorDelete = D; }
+  CXXConstructorDecl *getConstructor() const { return Constructor; }
+  void setConstructor(CXXConstructorDecl *D) { Constructor = D; }
 
   bool isArray() const { return Array; }
   Expr *getArraySize() {
@@ -1448,40 +1456,23 @@ public:
 
   unsigned getNumPlacementArgs() const { return NumPlacementArgs; }
   Expr **getPlacementArgs() {
-    return reinterpret_cast<Expr **>(SubExprs + Array + hasInitializer());
+    return reinterpret_cast<Expr **>(SubExprs + Array);
   }
 
   Expr *getPlacementArg(unsigned i) {
     assert(i < NumPlacementArgs && "Index out of range");
-    return getPlacementArgs()[i];
+    return cast<Expr>(SubExprs[Array + i]);
   }
   const Expr *getPlacementArg(unsigned i) const {
     assert(i < NumPlacementArgs && "Index out of range");
-    return const_cast<CXXNewExpr*>(this)->getPlacementArg(i);
+    return cast<Expr>(SubExprs[Array + i]);
   }
 
   bool isParenTypeId() const { return TypeIdParens.isValid(); }
   SourceRange getTypeIdParens() const { return TypeIdParens; }
 
   bool isGlobalNew() const { return GlobalNew; }
-
-  /// \brief Whether this new-expression has any initializer at all.
-  bool hasInitializer() const { return StoredInitializationStyle > 0; }
-
-  /// \brief The kind of initializer this new-expression has.
-  InitializationStyle getInitializationStyle() const {
-    if (StoredInitializationStyle == 0)
-      return NoInit;
-    return static_cast<InitializationStyle>(StoredInitializationStyle-1);
-  }
-
-  /// \brief The initializer of this new-expression.
-  Expr *getInitializer() {
-    return hasInitializer() ? cast<Expr>(SubExprs[Array]) : 0;
-  }
-  const Expr *getInitializer() const {
-    return hasInitializer() ? cast<Expr>(SubExprs[Array]) : 0;
-  }
+  bool hasInitializer() const { return Initializer; }
 
   /// Answers whether the usual array deallocation function for the
   /// allocated type expects the size of the allocation as a
@@ -1490,39 +1481,71 @@ public:
     return UsualArrayDeleteWantsSize;
   }
 
+  unsigned getNumConstructorArgs() const { return NumConstructorArgs; }
+
+  Expr **getConstructorArgs() {
+    return reinterpret_cast<Expr **>(SubExprs + Array + NumPlacementArgs);
+  }
+
+  Expr *getConstructorArg(unsigned i) {
+    assert(i < NumConstructorArgs && "Index out of range");
+    return cast<Expr>(SubExprs[Array + NumPlacementArgs + i]);
+  }
+  const Expr *getConstructorArg(unsigned i) const {
+    assert(i < NumConstructorArgs && "Index out of range");
+    return cast<Expr>(SubExprs[Array + NumPlacementArgs + i]);
+  }
+
+  /// \brief Whether the new expression refers a constructor that was
+  /// resolved from an overloaded set having size greater than 1.
+  bool hadMultipleCandidates() const { return HadMultipleCandidates; }
+  void setHadMultipleCandidates(bool V) { HadMultipleCandidates = V; }
+
   typedef ExprIterator arg_iterator;
   typedef ConstExprIterator const_arg_iterator;
 
   arg_iterator placement_arg_begin() {
-    return SubExprs + Array + hasInitializer();
+    return SubExprs + Array;
   }
   arg_iterator placement_arg_end() {
-    return SubExprs + Array + hasInitializer() + getNumPlacementArgs();
+    return SubExprs + Array + getNumPlacementArgs();
   }
   const_arg_iterator placement_arg_begin() const {
-    return SubExprs + Array + hasInitializer();
+    return SubExprs + Array;
   }
   const_arg_iterator placement_arg_end() const {
-    return SubExprs + Array + hasInitializer() + getNumPlacementArgs();
+    return SubExprs + Array + getNumPlacementArgs();
+  }
+
+  arg_iterator constructor_arg_begin() {
+    return SubExprs + Array + getNumPlacementArgs();
+  }
+  arg_iterator constructor_arg_end() {
+    return SubExprs + Array + getNumPlacementArgs() + getNumConstructorArgs();
+  }
+  const_arg_iterator constructor_arg_begin() const {
+    return SubExprs + Array + getNumPlacementArgs();
+  }
+  const_arg_iterator constructor_arg_end() const {
+    return SubExprs + Array + getNumPlacementArgs() + getNumConstructorArgs();
   }
 
   typedef Stmt **raw_arg_iterator;
   raw_arg_iterator raw_arg_begin() { return SubExprs; }
   raw_arg_iterator raw_arg_end() {
-    return SubExprs + Array + hasInitializer() + getNumPlacementArgs();
+    return SubExprs + Array + getNumPlacementArgs() + getNumConstructorArgs();
   }
   const_arg_iterator raw_arg_begin() const { return SubExprs; }
-  const_arg_iterator raw_arg_end() const {
-    return SubExprs + Array + hasInitializer() + getNumPlacementArgs();
-  }
+  const_arg_iterator raw_arg_end() const { return constructor_arg_end(); }
 
   SourceLocation getStartLoc() const { return StartLoc; }
-  SourceLocation getEndLoc() const;
+  SourceLocation getEndLoc() const { return EndLoc; }
 
-  SourceRange getDirectInitRange() const { return DirectInitRange; }
+  SourceLocation getConstructorLParen() const { return ConstructorLParen; }
+  SourceLocation getConstructorRParen() const { return ConstructorRParen; }
 
   SourceRange getSourceRange() const {
-    return SourceRange(getStartLoc(), getEndLoc());
+    return SourceRange(StartLoc, EndLoc);
   }
 
   static bool classof(const Stmt *T) {
@@ -1532,7 +1555,9 @@ public:
 
   // Iterators
   child_range children() {
-    return child_range(raw_arg_begin(), raw_arg_end());
+    return child_range(&SubExprs[0],
+                       &SubExprs[0] + Array + getNumPlacementArgs()
+                         + getNumConstructorArgs());
   }
 };
 

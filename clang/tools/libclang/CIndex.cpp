@@ -1856,8 +1856,9 @@ VisitCXXDependentScopeMemberExpr(CXXDependentScopeMemberExpr *E) {
     AddStmt(E->getBase());
 }
 void EnqueueVisitor::VisitCXXNewExpr(CXXNewExpr *E) {
-  // Enqueue the initializer , if any.
-  AddStmt(E->getInitializer());
+  // Enqueue the initializer or constructor arguments.
+  for (unsigned I = E->getNumConstructorArgs(); I > 0; --I)
+    AddStmt(E->getConstructorArg(I-1));
   // Enqueue the array size, if any.
   AddStmt(E->getArraySize());
   // Enqueue the allocated type.

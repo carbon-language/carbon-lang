@@ -743,8 +743,11 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
 
 static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
                                     llvm::Value *NewPtr) {
-
-  const Expr *Init = E->getInitializer();
+  
+  assert(E->getNumConstructorArgs() == 1 &&
+         "Can only have one argument to initializer of POD type.");
+  
+  const Expr *Init = E->getConstructorArg(0);
   QualType AllocType = E->getAllocatedType();
 
   CharUnits Alignment = CGF.getContext().getTypeAlignInChars(AllocType);
@@ -770,8 +773,9 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
                                          QualType elementType,
                                          llvm::Value *beginPtr,
                                          llvm::Value *numElements) {
-  if (!E->hasInitializer())
-    return; // We have a POD type.
+  // We have a POD type.
+  if (E->getNumConstructorArgs() == 0)
+    return;
 
   // Check if the number of elements is constant.
   bool checkZero = true;
@@ -854,15 +858,13 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
                                llvm::Value *NewPtr,
                                llvm::Value *NumElements,
                                llvm::Value *AllocSizeWithoutCookie) {
-  const Expr *Init = E->getInitializer();
   if (E->isArray()) {
-    if (const CXXConstructExpr *CCE = dyn_cast_or_null<CXXConstructExpr>(Init)){
-      CXXConstructorDecl *Ctor = CCE->getConstructor();
+    if (CXXConstructorDecl *Ctor = E->getConstructor()) {
       bool RequiresZeroInitialization = false;
       if (Ctor->getParent()->hasTrivialDefaultConstructor()) {
         // If new expression did not specify value-initialization, then there
         // is no initialization.
-        if (!CCE->requiresZeroInitialization() || Ctor->getParent()->isEmpty())
+        if (!E->hasInitializer() || Ctor->getParent()->isEmpty())
           return;
       
         if (CGF.CGM.getTypes().isZeroInitializable(ElementType)) {
@@ -875,38 +877,43 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
         RequiresZeroInitialization = true;
       }
 
-      CGF.EmitCXXAggrConstructorCall(Ctor, NumElements, NewPtr,
-                                     CCE->arg_begin(),  CCE->arg_end(),
+      CGF.EmitCXXAggrConstructorCall(Ctor, NumElements, NewPtr, 
+                                     E->constructor_arg_begin(), 
+                                     E->constructor_arg_end(),
                                      RequiresZeroInitialization);
       return;
-    } else if (Init && isa<ImplicitValueInitExpr>(Init) &&
+    } else if (E->getNumConstructorArgs() == 1 &&
+               isa<ImplicitValueInitExpr>(E->getConstructorArg(0)) &&
                CGF.CGM.getTypes().isZeroInitializable(ElementType)) {
       // Optimization: since zero initialization will just set the memory
       // to all zeroes, generate a single memset to do it in one shot.
       EmitZeroMemSet(CGF, ElementType, NewPtr, AllocSizeWithoutCookie);
       return;
+    } else {
+      CGF.EmitNewArrayInitializer(E, ElementType, NewPtr, NumElements);
+      return;
     }
-    CGF.EmitNewArrayInitializer(E, ElementType, NewPtr, NumElements);
-    return;
   }
 
-  if (const CXXConstructExpr *CCE = dyn_cast_or_null<CXXConstructExpr>(Init)) {
-    CXXConstructorDecl *Ctor = CCE->getConstructor();
+  if (CXXConstructorDecl *Ctor = E->getConstructor()) {
     // Per C++ [expr.new]p15, if we have an initializer, then we're performing
     // direct initialization. C++ [dcl.init]p5 requires that we 
     // zero-initialize storage if there are no user-declared constructors.
-    if (!Ctor->getParent()->hasUserDeclaredConstructor() &&
+    if (E->hasInitializer() && 
+        !Ctor->getParent()->hasUserDeclaredConstructor() &&
         !Ctor->getParent()->isEmpty())
       CGF.EmitNullInitialization(NewPtr, ElementType);
+      
+    CGF.EmitCXXConstructorCall(Ctor, Ctor_Complete, /*ForVirtualBase=*/false, 
+                               NewPtr, E->constructor_arg_begin(),
+                               E->constructor_arg_end());
 
-    CGF.EmitCXXConstructorCall(Ctor, Ctor_Complete, /*ForVirtualBase=*/false,
-                               NewPtr, CCE->arg_begin(), CCE->arg_end());
     return;
   }
   // We have a POD type.
-  if (!Init)
+  if (E->getNumConstructorArgs() == 0)
     return;
-
+  
   StoreAnyExprIntoOneUnit(CGF, E, NewPtr);
 }
 
@@ -1138,7 +1145,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // CXXNewExpr::shouldNullCheckAllocation()) and we have an
   // interesting initializer.
   bool nullCheck = allocatorType->isNothrow(getContext()) &&
-    (!allocType.isPODType(getContext()) || E->hasInitializer());
+    !(allocType.isPODType(getContext()) && !E->hasInitializer());
 
   llvm::BasicBlock *nullCheckBB = 0;
   llvm::BasicBlock *contBB = 0;
@@ -1204,7 +1211,7 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
     DeactivateCleanupBlock(operatorDeleteCleanup, cleanupDominator);
     cleanupDominator->eraseFromParent();
   }
-
+  
   if (nullCheck) {
     conditional.end(*this);
 

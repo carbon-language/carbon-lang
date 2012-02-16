@@ -2351,20 +2351,10 @@ recurse:
     Out << '_';
     mangleType(New->getAllocatedType());
     if (New->hasInitializer()) {
-      // FIXME: Does this mean "parenthesized initializer"?
       Out << "pi";
-      const Expr *Init = New->getInitializer();
-      if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(Init)) {
-        // Directly inline the initializers.
-        for (CXXConstructExpr::const_arg_iterator I = CCE->arg_begin(),
-                                                  E = CCE->arg_end();
-             I != E; ++I)
-          mangleExpression(*I);
-      } else if (const ParenListExpr *PLE = dyn_cast<ParenListExpr>(Init)) {
-        for (unsigned i = 0, e = PLE->getNumExprs(); i != e; ++i)
-          mangleExpression(PLE->getExpr(i));
-      } else
-        mangleExpression(Init);
+      for (CXXNewExpr::const_arg_iterator I = New->constructor_arg_begin(),
+             E = New->constructor_arg_end(); I != E; ++I)
+        mangleExpression(*I);
     }
     Out << 'E';
     break;

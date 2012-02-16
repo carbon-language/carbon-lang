@@ -1976,8 +1976,9 @@ public:
                                QualType AllocatedType,
                                TypeSourceInfo *AllocatedTypeInfo,
                                Expr *ArraySize,
-                               SourceRange DirectInitRange,
-                               Expr *Initializer) {
+                               SourceLocation ConstructorLParen,
+                               MultiExprArg ConstructorArgs,
+                               SourceLocation ConstructorRParen) {
     return getSema().BuildCXXNew(StartLoc, UseGlobal,
                                  PlacementLParen,
                                  move(PlacementArgs),
@@ -1986,8 +1987,9 @@ public:
                                  AllocatedType,
                                  AllocatedTypeInfo,
                                  ArraySize,
-                                 DirectInitRange,
-                                 Initializer);
+                                 ConstructorLParen,
+                                 move(ConstructorArgs),
+                                 ConstructorRParen);
   }
 
   /// \brief Build a new C++ "delete" expression.
@@ -7104,17 +7106,29 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   if (getDerived().TransformExprs(E->getPlacementArgs(), 
                                   E->getNumPlacementArgs(), true,
                                   PlacementArgs, &ArgumentChanged))
-    return ExprError();
+    return ExprError();  
 
-  // Transform the initializer (if any).
-  Expr *OldInit = E->getInitializer();
-  ExprResult NewInit;
-  if (OldInit)
-    NewInit = getDerived().TransformExpr(OldInit);
-  if (NewInit.isInvalid())
-    return ExprError();
+  // Transform the constructor arguments (if any).
+  // As an annoying corner case, we may have introduced an implicit value-
+  // initialization expression when allocating a new array, which we implicitly
+  // drop. It will be re-created during type checking.
+  ASTOwningVector<Expr*> ConstructorArgs(SemaRef);
+  if (!(E->isArray() && E->getNumConstructorArgs() == 1 &&
+        isa<ImplicitValueInitExpr>(E->getConstructorArgs()[0])) &&
+      TransformExprs(E->getConstructorArgs(), E->getNumConstructorArgs(), true,
+                     ConstructorArgs, &ArgumentChanged))
+    return ExprError();  
 
-  // Transform new operator and delete operator.
+  // Transform constructor, new operator, and delete operator.
+  CXXConstructorDecl *Constructor = 0;
+  if (E->getConstructor()) {
+    Constructor = cast_or_null<CXXConstructorDecl>(
+                                   getDerived().TransformDecl(E->getLocStart(),
+                                                         E->getConstructor()));
+    if (!Constructor)
+      return ExprError();
+  }
+
   FunctionDecl *OperatorNew = 0;
   if (E->getOperatorNew()) {
     OperatorNew = cast_or_null<FunctionDecl>(
@@ -7136,18 +7150,21 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
   if (!getDerived().AlwaysRebuild() &&
       AllocTypeInfo == E->getAllocatedTypeSourceInfo() &&
       ArraySize.get() == E->getArraySize() &&
-      NewInit.get() == OldInit &&
+      Constructor == E->getConstructor() &&
       OperatorNew == E->getOperatorNew() &&
       OperatorDelete == E->getOperatorDelete() &&
       !ArgumentChanged) {
     // Mark any declarations we need as referenced.
     // FIXME: instantiation-specific.
+    if (Constructor)
+      SemaRef.MarkFunctionReferenced(E->getLocStart(), Constructor);
     if (OperatorNew)
       SemaRef.MarkFunctionReferenced(E->getLocStart(), OperatorNew);
     if (OperatorDelete)
       SemaRef.MarkFunctionReferenced(E->getLocStart(), OperatorDelete);
     
-    if (E->isArray() && !E->getAllocatedType()->isDependentType()) {
+    if (E->isArray() && Constructor && 
+        !E->getAllocatedType()->isDependentType()) {
       QualType ElementType
         = SemaRef.Context.getBaseElementType(E->getAllocatedType());
       if (const RecordType *RecordT = ElementType->getAs<RecordType>()) {
@@ -7157,7 +7174,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
         }
       }
     }
-
+    
     return SemaRef.Owned(E);
   }
 
@@ -7187,7 +7204,7 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
       }
     }
   }
-
+  
   return getDerived().RebuildCXXNewExpr(E->getLocStart(),
                                         E->isGlobalNew(),
                                         /*FIXME:*/E->getLocStart(),
@@ -7197,8 +7214,9 @@ TreeTransform<Derived>::TransformCXXNewExpr(CXXNewExpr *E) {
                                         AllocType,
                                         AllocTypeInfo,
                                         ArraySize.get(),
-                                        E->getDirectInitRange(),
-                                        NewInit.take());
+                                        E->getConstructorLParen(),
+                                        move_arg(ConstructorArgs),
+                                        E->getConstructorRParen());
 }
 
 template<typename Derived>

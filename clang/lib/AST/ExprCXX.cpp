@@ -45,26 +45,30 @@ SourceRange CXXScalarValueInitExpr::getSourceRange() const {
 
 // CXXNewExpr
 CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
-                       FunctionDecl *operatorDelete,
-                       bool usualArrayDeleteWantsSize,
                        Expr **placementArgs, unsigned numPlaceArgs,
-                       SourceRange typeIdParens, Expr *arraySize,
-                       InitializationStyle initializationStyle,
-                       Expr *initializer, QualType ty,
-                       TypeSourceInfo *allocatedTypeInfo,
-                       SourceLocation startLoc, SourceRange directInitRange)
+                       SourceRange TypeIdParens, Expr *arraySize,
+                       CXXConstructorDecl *constructor, bool initializer,
+                       Expr **constructorArgs, unsigned numConsArgs,
+                       bool HadMultipleCandidates,
+                       FunctionDecl *operatorDelete,
+                       bool usualArrayDeleteWantsSize, QualType ty,
+                       TypeSourceInfo *AllocatedTypeInfo,
+                       SourceLocation startLoc, SourceLocation endLoc,
+                       SourceLocation constructorLParen,
+                       SourceLocation constructorRParen)
   : Expr(CXXNewExprClass, ty, VK_RValue, OK_Ordinary,
          ty->isDependentType(), ty->isDependentType(),
          ty->isInstantiationDependentType(),
          ty->containsUnexpandedParameterPack()),
-    GlobalNew(globalNew), UsualArrayDeleteWantsSize(usualArrayDeleteWantsSize),
-    SubExprs(0), OperatorNew(operatorNew), OperatorDelete(operatorDelete),
-    AllocatedTypeInfo(allocatedTypeInfo), TypeIdParens(typeIdParens),
-    StartLoc(startLoc), DirectInitRange(directInitRange) {
-  assert((initializer != 0 || initializationStyle == NoInit) &&
-         "Only NoInit can have no initializer.");
-  StoredInitializationStyle = initializer ? initializationStyle + 1 : 0;
-  AllocateArgsArray(C, arraySize != 0, numPlaceArgs, initializer != 0);
+    GlobalNew(globalNew), Initializer(initializer),
+    UsualArrayDeleteWantsSize(usualArrayDeleteWantsSize),
+    HadMultipleCandidates(HadMultipleCandidates),
+    SubExprs(0), OperatorNew(operatorNew),
+    OperatorDelete(operatorDelete), Constructor(constructor),
+    AllocatedTypeInfo(AllocatedTypeInfo), TypeIdParens(TypeIdParens),
+    StartLoc(startLoc), EndLoc(endLoc), ConstructorLParen(constructorLParen),
+    ConstructorRParen(constructorRParen) {
+  AllocateArgsArray(C, arraySize != 0, numPlaceArgs, numConsArgs);
   unsigned i = 0;
   if (Array) {
     if (arraySize->isInstantiationDependent())
@@ -76,16 +80,6 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
     SubExprs[i++] = arraySize;
   }
 
-  if (initializer) {
-    if (initializer->isInstantiationDependent())
-      ExprBits.InstantiationDependent = true;
-
-    if (initializer->containsUnexpandedParameterPack())
-      ExprBits.ContainsUnexpandedParameterPack = true;
-
-    SubExprs[i++] = initializer;
-  }
-
   for (unsigned j = 0; j < NumPlacementArgs; ++j) {
     if (placementArgs[j]->isInstantiationDependent())
       ExprBits.InstantiationDependent = true;
@@ -94,32 +88,31 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
 
     SubExprs[i++] = placementArgs[j];
   }
+
+  for (unsigned j = 0; j < NumConstructorArgs; ++j) {
+    if (constructorArgs[j]->isInstantiationDependent())
+      ExprBits.InstantiationDependent = true;
+    if (constructorArgs[j]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
+    SubExprs[i++] = constructorArgs[j];
+  }
 }
 
 void CXXNewExpr::AllocateArgsArray(ASTContext &C, bool isArray,
-                                   unsigned numPlaceArgs, bool hasInitializer){
+                                   unsigned numPlaceArgs, unsigned numConsArgs){
   assert(SubExprs == 0 && "SubExprs already allocated");
   Array = isArray;
   NumPlacementArgs = numPlaceArgs;
-
-  unsigned TotalSize = Array + hasInitializer + NumPlacementArgs;
+  NumConstructorArgs = numConsArgs; 
+  
+  unsigned TotalSize = Array + NumPlacementArgs + NumConstructorArgs;
   SubExprs = new (C) Stmt*[TotalSize];
 }
 
 bool CXXNewExpr::shouldNullCheckAllocation(ASTContext &Ctx) const {
   return getOperatorNew()->getType()->
     castAs<FunctionProtoType>()->isNothrow(Ctx);
-}
-
-SourceLocation CXXNewExpr::getEndLoc() const {
-  switch (getInitializationStyle()) {
-  case NoInit:
-    return AllocatedTypeInfo->getTypeLoc().getEndLoc();
-  case CallInit:
-    return DirectInitRange.getEnd();
-  case ListInit:
-    return getInitializer()->getSourceRange().getEnd();
-  }
 }
 
 // CXXDeleteExpr

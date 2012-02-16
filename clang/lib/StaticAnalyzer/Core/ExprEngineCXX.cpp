@@ -268,8 +268,6 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
     return;
   }
 
-  // FIXME: Update for AST changes.
-#if 0
   // Evaluate constructor arguments.
   const FunctionProtoType *FnType = NULL;
   const CXXConstructorDecl *CD = CNE->getConstructor();
@@ -329,7 +327,6 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
                             loc::MemRegionVal(EleReg));
     Bldr.generateNode(CNE, *I, state);
   }
-#endif
 }
 
 void ExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE, 
