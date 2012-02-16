@@ -803,10 +803,8 @@ Value *ClastExpCodeGen::codegen(const clast_binary *e, Type *Ty) {
   case clast_bin_fdiv:
     {
       // floord(n,d) ((n < 0) ? (n - d + 1) : n) / d
-      Value *One = ConstantInt::get(Builder.getInt1Ty(), 1);
-      Value *Zero = ConstantInt::get(Builder.getInt1Ty(), 0);
-      One = Builder.CreateZExtOrBitCast(One, Ty);
-      Zero = Builder.CreateZExtOrBitCast(Zero, Ty);
+      Value *One = ConstantInt::get(Ty, 1);
+      Value *Zero = ConstantInt::get(Ty, 0);
       Value *Sum1 = Builder.CreateSub(LHS, RHS);
       Value *Sum2 = Builder.CreateAdd(Sum1, One);
       Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
@@ -816,10 +814,8 @@ Value *ClastExpCodeGen::codegen(const clast_binary *e, Type *Ty) {
   case clast_bin_cdiv:
     {
       // ceild(n,d) ((n < 0) ? n : (n + d - 1)) / d
-      Value *One = ConstantInt::get(Builder.getInt1Ty(), 1);
-      Value *Zero = ConstantInt::get(Builder.getInt1Ty(), 0);
-      One = Builder.CreateZExtOrBitCast(One, Ty);
-      Zero = Builder.CreateZExtOrBitCast(Zero, Ty);
+      Value *One = ConstantInt::get(Ty, 1);
+      Value *Zero = ConstantInt::get(Ty, 0);
       Value *Sum1 = Builder.CreateAdd(LHS, RHS);
       Value *Sum2 = Builder.CreateSub(Sum1, One);
       Value *isNegative = Builder.CreateICmpSLT(LHS, Zero);
