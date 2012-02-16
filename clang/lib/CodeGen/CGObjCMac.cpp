@@ -1730,6 +1730,10 @@ static Qualifiers::GC GetGCAttrTypeForType(ASTContext &Ctx, QualType FQT) {
   if (FQT.isObjCGCWeak() || FQT.getObjCLifetime() == Qualifiers::OCL_Weak)
     return Qualifiers::Weak;
   
+  // check for __unsafe_unretained
+  if (FQT.getObjCLifetime() == Qualifiers::OCL_ExplicitNone)
+    return Qualifiers::GCNone;
+  
   if (FQT->isObjCObjectPointerType() || FQT->isBlockPointerType())
     return Qualifiers::Strong;
   

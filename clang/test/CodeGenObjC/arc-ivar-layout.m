@@ -42,3 +42,14 @@
 // CHECK-LP64: L_OBJC_CLASS_NAME_15:
 // CHECK-LP64-NEXT: .asciz	"\022"
 
+@interface UnsafePerson {
+@public
+    __unsafe_unretained id name;
+    __unsafe_unretained id age;
+    id value;
+}
+@end
+
+@implementation UnsafePerson @end
+// CHECK-LP64: L_OBJC_CLASS_NAME_20:
+// CHECK-LP64-NEXT: .asciz      "!"
