@@ -142,6 +142,14 @@ void MCObjectFileInfo::InitMachOMCObjectFileInfo(Triple T) {
   }
 
   // Exception Handling.
+  EHFrameSection =
+    Ctx->getMachOSection("__TEXT", "__eh_frame",
+                         MCSectionMachO::S_COALESCED |
+                         MCSectionMachO::S_ATTR_NO_TOC |
+                         MCSectionMachO::S_ATTR_STRIP_STATIC_SYMS |
+                         MCSectionMachO::S_ATTR_LIVE_SUPPORT,
+                         SectionKind::getReadOnly());
+
   LSDASection = Ctx->getMachOSection("__TEXT", "__gcc_except_tab", 0,
                                      SectionKind::getReadOnlyWithRel());
 
@@ -339,6 +347,17 @@ void MCObjectFileInfo::InitELFMCObjectFileInfo(Triple T) {
 
   // Exception Handling Sections.
 
+  // Solaris requires different flags for .eh_frame to seemingly every other
+  // platform.
+  unsigned EHSectionFlags = ELF::SHF_ALLOC;
+  if (T.getOS() == Triple::Solaris)
+    EHSectionFlags |= ELF::SHF_WRITE;
+
+  EHFrameSection =
+    Ctx->getELFSection(".eh_frame", ELF::SHT_PROGBITS, 
+                       EHSectionFlags,
+                       SectionKind::getDataRel());
+
   // FIXME: We're emitting LSDA info into a readonly section on ELF, even though
   // it contains relocatable pointers.  In PIC mode, this is probably a big
   // runtime hit for C++ apps.  Either the contents of the LSDA need to be
@@ -410,6 +429,13 @@ void MCObjectFileInfo::InitCOFFMCObjectFileInfo(Triple T) {
                         SectionKind::getDataRel());
   StaticDtorSection =
     Ctx->getCOFFSection(".dtors",
+                        COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
+                        COFF::IMAGE_SCN_MEM_READ |
+                        COFF::IMAGE_SCN_MEM_WRITE,
+                        SectionKind::getDataRel());
+
+  EHFrameSection =
+    Ctx->getCOFFSection(".eh_frame",
                         COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
                         COFF::IMAGE_SCN_MEM_READ |
                         COFF::IMAGE_SCN_MEM_WRITE,
@@ -547,25 +573,3 @@ void MCObjectFileInfo::InitMCObjectFileInfo(StringRef TT, Reloc::Model relocm,
   }
 }
 
-void MCObjectFileInfo::InitEHFrameSection() {
-  if (Env == IsMachO)
-    EHFrameSection =
-      Ctx->getMachOSection("__TEXT", "__eh_frame",
-                           MCSectionMachO::S_COALESCED |
-                           MCSectionMachO::S_ATTR_NO_TOC |
-                           MCSectionMachO::S_ATTR_STRIP_STATIC_SYMS |
-                           MCSectionMachO::S_ATTR_LIVE_SUPPORT,
-                           SectionKind::getReadOnly());
-  else if (Env == IsELF)
-    EHFrameSection =
-      Ctx->getELFSection(".eh_frame", ELF::SHT_PROGBITS,
-                         ELF::SHF_ALLOC,
-                         SectionKind::getDataRel());
-  else
-    EHFrameSection =
-      Ctx->getCOFFSection(".eh_frame",
-                          COFF::IMAGE_SCN_CNT_INITIALIZED_DATA |
-                          COFF::IMAGE_SCN_MEM_READ |
-                          COFF::IMAGE_SCN_MEM_WRITE,
-                          SectionKind::getDataRel());
-}
