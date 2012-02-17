@@ -519,6 +519,23 @@ int *testMalloc3() {
   return y;
 }
 
+void testElemRegion1() {
+  char *x = (void*)malloc(2);
+  int *ix = (int*)x;
+  free(&(x[0]));
+}
+
+void testElemRegion2(int **pp) {
+  int *p = malloc(12);
+  *pp = p;
+  free(pp[0]);
+}
+
+void testElemRegion3(int **pp) {
+  int *p = malloc(12);
+  *pp = p;
+  free(*pp);
+}
 // Region escape testing.
 
 unsigned takePtrToPtr(int **p);
