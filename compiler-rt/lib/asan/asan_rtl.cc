@@ -421,11 +421,11 @@ void __asan_init() {
 
 #if ASAN_LOW_MEMORY == 1
   FLAG_quarantine_size =
-    IntFlagValue(options, "quarantine_size=", 1UL << 24); // 16M
+    IntFlagValue(options, "quarantine_size=", 1UL << 24);  // 16M
   FLAG_redzone = IntFlagValue(options, "redzone=", 64);
 #else
   FLAG_quarantine_size =
-    IntFlagValue(options, "quarantine_size=", 1UL << 28); // 256M
+    IntFlagValue(options, "quarantine_size=", 1UL << 28);  // 256M
   FLAG_redzone = IntFlagValue(options, "redzone=", 128);
 #endif
   CHECK(FLAG_redzone >= 32);
