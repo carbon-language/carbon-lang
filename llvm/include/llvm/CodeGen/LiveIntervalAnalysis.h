@@ -391,6 +391,8 @@ namespace llvm {
 
     void printInstrs(raw_ostream &O) const;
     void dumpInstrs() const;
+
+    class HMEditor;
   };
 } // End llvm namespace
 
