@@ -446,3 +446,17 @@ namespace r150682 {
   }
 
 }
+
+namespace P12023 {
+  struct CopyCounter
+  {
+      CopyCounter();
+      CopyCounter(const CopyCounter&);
+  };
+
+  int main()
+  {
+    CopyCounter* f = new CopyCounter[10](CopyCounter()); // expected-error {{cannot have initialization arguments}}
+      return 0;
+  }
+}

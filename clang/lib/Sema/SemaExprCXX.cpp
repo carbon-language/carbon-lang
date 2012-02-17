@@ -981,11 +981,8 @@ static bool isLegalArrayNewInitializer(CXXNewExpr::InitializationStyle Style,
                                        Expr *Init) {
   if (!Init)
     return true;
-  if (ParenListExpr *PLE = dyn_cast<ParenListExpr>(Init)) {
-    if (PLE->getNumExprs() != 1)
-      return PLE->getNumExprs() == 0;
-    Init = PLE->getExpr(0);
-  }
+  if (ParenListExpr *PLE = dyn_cast<ParenListExpr>(Init))
+    return PLE->getNumExprs() == 0;
   if (isa<ImplicitValueInitExpr>(Init))
     return true;
   else if (CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(Init))
