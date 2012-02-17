@@ -2037,14 +2037,14 @@ bool ARMFastISel::SelectRet(const Instruction *I) {
       if (RVVT != MVT::i1 && RVVT != MVT::i8 && RVVT != MVT::i16)
         return false;
 
-      if (!Outs[0].Flags.isZExt() && !Outs[0].Flags.isSExt())
-        return false;
-
       assert(DestVT == MVT::i32 && "ARM should always ext to i32");
 
-      bool isZExt = Outs[0].Flags.isZExt();
-      SrcReg = ARMEmitIntExt(RVVT, SrcReg, DestVT, isZExt);
-      if (SrcReg == 0) return false;
+      // Perform extension if flagged as either zext or sext.  Otherwise, do
+      // nothing.
+      if (Outs[0].Flags.isZExt() || Outs[0].Flags.isSExt()) {
+        SrcReg = ARMEmitIntExt(RVVT, SrcReg, DestVT, Outs[0].Flags.isZExt());
+        if (SrcReg == 0) return false;
+      }
     }
 
     // Make the copy.

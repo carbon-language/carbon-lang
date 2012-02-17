@@ -46,3 +46,12 @@ entry:
 ; CHECK: bx lr
   ret i16 %a
 }
+
+define i16 @ret6(i16 %a) nounwind uwtable ssp {
+entry:
+; CHECK: ret6
+; CHECK-NOT: uxth
+; CHECK-NOT: sxth
+; CHECK: bx lr
+  ret i16 %a
+}
