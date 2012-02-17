@@ -23,7 +23,6 @@ define void @ctor2() {
   store i32 -1, i32* @object2
   %A = bitcast i32* @object2 to i8*
   %B = call {}* @llvm.invariant.start(i64 -1, i8* %A)
-  ; Why in the world does this pass the verifier?
   %C = bitcast {}* %B to i8*
   ret void
 }
