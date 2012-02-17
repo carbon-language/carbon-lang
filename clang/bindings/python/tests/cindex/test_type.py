@@ -1,4 +1,8 @@
-from clang.cindex import Index, CursorKind, TypeKind
+from clang.cindex import CursorKind
+from clang.cindex import Index
+from clang.cindex import TypeKind
+from nose.tools import ok_
+from nose.tools import raises
 
 kInput = """\
 
@@ -115,3 +119,31 @@ def test_is_pod():
 
     assert i.type.is_pod()
     assert not f.type.is_pod()
+
+def test_element_type():
+    index = Index.create()
+    tu = index.parse('t.c', unsaved_files=[('t.c', 'int i[5];')])
+    assert tu is not None
+
+    for cursor in tu.cursor.get_children():
+        if cursor.spelling == 'i':
+            i = cursor
+            break
+
+    assert i.type.kind == TypeKind.CONSTANTARRAY
+    assert i.type.element_type.kind == TypeKind.INT
+
+@raises(Exception)
+def test_invalid_element_type():
+    """Ensure Type.element_type raises if type doesn't have elements."""
+    index = Index.create()
+    tu = index.parse('t.c', unsaved_files=[('t.c', 'int i;')])
+
+    i = None
+    for cursor in tu.cursor.get_children():
+        if cursor.spelling == 'i':
+            i = cursor
+            break
+
+    ok_(i is not None)
+    i.element_type

@@ -1137,6 +1137,19 @@ class Type(Structure):
         """Return the kind of this type."""
         return TypeKind.from_id(self._kind_id)
 
+    @property
+    def element_type(self):
+        """Retrieve the Type of elements within this Type.
+
+        If accessed on a type that is not an array, complex, or vector type, an
+        exception will be raised.
+        """
+        result = Type_get_element_type(self)
+        if result.kind == TypeKind.INVALID:
+            raise Exception('Element type not available on this type.')
+
+        return result
+
     @staticmethod
     def from_result(res, fn, args):
         assert isinstance(res, Type)
@@ -1880,6 +1893,11 @@ Type_get_result = lib.clang_getResultType
 Type_get_result.argtypes = [Type]
 Type_get_result.restype = Type
 Type_get_result.errcheck = Type.from_result
+
+Type_get_element_type = lib.clang_getElementType
+Type_get_element_type.argtypes = [Type]
+Type_get_element_type.restype = Type
+Type_get_element_type.errcheck = Type.from_result
 
 Type_get_array_element = lib.clang_getArrayElementType
 Type_get_array_element.argtypes = [Type]
