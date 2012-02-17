@@ -3387,6 +3387,11 @@ bool RecordExprEvaluator::ZeroInitialization(const Expr *E) {
     return EvaluateInPlace(Result.getUnionValue(), Info, Subobject, &VIE);
   }
 
+  if (isa<CXXRecordDecl>(RD) && cast<CXXRecordDecl>(RD)->getNumVBases()) {
+    Info.Diag(E->getExprLoc(), diag::note_constexpr_virtual_base) << RD;
+    return false;
+  }
+
   return HandleClassZeroInitialization(Info, E, RD, This, Result);
 }
 

@@ -29,3 +29,9 @@ constexpr D d1; // expected-error {{requires a user-provided default constructor
 constexpr D d2 = D(); // ok with DR1452
 static_assert(D().c == 0, "");
 static_assert(D().d == 0, "");
+
+struct V : virtual C {};
+template<typename T> struct Z : T {
+  constexpr Z() : V() {}
+};
+constexpr int n = Z<V>().c; // expected-error {{constant expression}} expected-note {{virtual base class}}

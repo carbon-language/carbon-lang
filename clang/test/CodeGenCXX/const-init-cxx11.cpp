@@ -279,3 +279,17 @@ namespace CrossFuncLabelDiff {
   // CHECK: sub nsw i64 ptrtoint (i8* blockaddress(@_ZN18CrossFuncLabelDiff4testEv, {{.*}}) to i64),
   // CHECK: store i64 {{.*}}, i64* @_ZZN18CrossFuncLabelDiff4testEvE1b, align 8
 }
+
+// PR12012
+namespace VirtualBase {
+  struct B {};
+  struct D : virtual B {};
+  D d;
+  // CHECK: call {{.*}}@_ZN11VirtualBase1DC1Ev
+
+  template<typename T> struct X : T {
+    constexpr X() : T() {}
+  };
+  X<D> x;
+  // CHECK: call {{.*}}@_ZN11VirtualBase1XINS_1DEEC1Ev
+}
