@@ -188,6 +188,7 @@ public:
   virtual StoreRef invalidateRegions(Store store,
                                      ArrayRef<const MemRegion *> Regions,
                                      const Expr *E, unsigned Count,
+                                     const LocationContext *LCtx,
                                      InvalidatedSymbols &IS,
                                      const CallOrObjCMessage *Call,
                                      InvalidatedRegions *Invalidated) = 0;

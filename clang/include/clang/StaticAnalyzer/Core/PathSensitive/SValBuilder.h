@@ -142,15 +142,19 @@ public:
 
   // Forwarding methods to SymbolManager.
 
-  const SymbolConjured* getConjuredSymbol(const Stmt *stmt, QualType type,
+  const SymbolConjured* getConjuredSymbol(const Stmt *stmt,
+					  const LocationContext *LCtx,
+					  QualType type,
                                           unsigned visitCount,
                                           const void *symbolTag = 0) {
-    return SymMgr.getConjuredSymbol(stmt, type, visitCount, symbolTag);
+    return SymMgr.getConjuredSymbol(stmt, LCtx, type, visitCount, symbolTag);
   }
 
-  const SymbolConjured* getConjuredSymbol(const Expr *expr, unsigned visitCount,
+  const SymbolConjured* getConjuredSymbol(const Expr *expr,
+					  const LocationContext *LCtx,
+					  unsigned visitCount,
                                           const void *symbolTag = 0) {
-    return SymMgr.getConjuredSymbol(expr, visitCount, symbolTag);
+    return SymMgr.getConjuredSymbol(expr, LCtx, visitCount, symbolTag);
   }
 
   /// Construct an SVal representing '0' for the specified type.
@@ -166,9 +170,13 @@ public:
   /// preserve the relation between related(or even equivalent) expressions, so
   /// conjured symbols should be used sparingly.
   DefinedOrUnknownSVal getConjuredSymbolVal(const void *symbolTag,
-                                            const Expr *expr, unsigned count);
+                                            const Expr *expr,
+					    const LocationContext *LCtx,
+					    unsigned count);
   DefinedOrUnknownSVal getConjuredSymbolVal(const void *symbolTag,
-                                            const Expr *expr, QualType type,
+                                            const Expr *expr,
+					    const LocationContext *LCtx,
+					    QualType type,
                                             unsigned count);
 
   DefinedOrUnknownSVal getDerivedRegionValueSymbolVal(

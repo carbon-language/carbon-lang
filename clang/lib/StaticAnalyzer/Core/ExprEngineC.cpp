@@ -46,7 +46,7 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
       // FIXME: Handle structs.
       if (RightV.isUnknown()) {
         unsigned Count = currentBuilderContext->getCurrentBlockCount();
-        RightV = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), Count);
+        RightV = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), LCtx, Count);
       }
       // Simulate the effects of a "store":  bind the value of the RHS
       // to the L-Value represented by the LHS.
@@ -131,8 +131,8 @@ void ExprEngine::VisitBinaryOperator(const BinaryOperator* B,
         // The symbolic value is actually for the type of the left-hand side
         // expression, not the computation type, as this is the value the
         // LValue on the LHS will bind to.
-        LHSVal = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), LTy,
-                                                  Count);
+        LHSVal = svalBuilder.getConjuredSymbolVal(NULL, B->getRHS(), LCtx,
+						  LTy, Count);
         
         // However, we need to convert the symbol to the computation type.
         Result = svalBuilder.evalCast(LHSVal, CTy, LTy);
@@ -298,12 +298,10 @@ void ExprEngine::VisitCast(const CastExpr *CastE, const Expr *Ex,
         QualType resultType = CastE->getType();
         if (CastE->isLValue())
           resultType = getContext().getPointerType(resultType);
-        
-        SVal result =
-        svalBuilder.getConjuredSymbolVal(NULL, CastE, resultType,
-                               currentBuilderContext->getCurrentBlockCount());
-        
         const LocationContext *LCtx = Pred->getLocationContext();
+        SVal result =
+	  svalBuilder.getConjuredSymbolVal(NULL, CastE, LCtx, resultType,
+                               currentBuilderContext->getCurrentBlockCount());
         ProgramStateRef state = Pred->getState()->BindExpr(CastE, LCtx,
                                                                result);
         Bldr.generateNode(CastE, Pred, state);
@@ -376,7 +374,7 @@ void ExprEngine::VisitDeclStmt(const DeclStmt *DS, ExplodedNode *Pred,
       // Recover some path-sensitivity if a scalar value evaluated to
       // UnknownVal.
       if (InitVal.isUnknown()) {
-        InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx,
+        InitVal = svalBuilder.getConjuredSymbolVal(NULL, InitEx, LC,
                                  currentBuilderContext->getCurrentBlockCount());
       }
       B.takeNodes(N);
@@ -724,7 +722,7 @@ void ExprEngine::VisitIncrementDecrementOperator(const UnaryOperator* U,
     // Conjure a new symbol if necessary to recover precision.
     if (Result.isUnknown()){
       DefinedOrUnknownSVal SymVal =
-      svalBuilder.getConjuredSymbolVal(NULL, Ex,
+	svalBuilder.getConjuredSymbolVal(NULL, Ex, LCtx,
                                currentBuilderContext->getCurrentBlockCount());
       Result = SymVal;
       

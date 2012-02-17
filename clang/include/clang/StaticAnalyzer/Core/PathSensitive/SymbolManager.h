@@ -156,12 +156,15 @@ class SymbolConjured : public SymbolData {
   const Stmt *S;
   QualType T;
   unsigned Count;
+  const LocationContext *LCtx;
   const void *SymbolTag;
 
 public:
-  SymbolConjured(SymbolID sym, const Stmt *s, QualType t, unsigned count,
+  SymbolConjured(SymbolID sym, const Stmt *s, const LocationContext *lctx,
+		 QualType t, unsigned count,
                  const void *symbolTag)
     : SymbolData(ConjuredKind, sym), S(s), T(t), Count(count),
+      LCtx(lctx),
       SymbolTag(symbolTag) {}
 
   const Stmt *getStmt() const { return S; }
@@ -173,16 +176,18 @@ public:
   virtual void dumpToStream(raw_ostream &os) const;
 
   static void Profile(llvm::FoldingSetNodeID& profile, const Stmt *S,
-                      QualType T, unsigned Count, const void *SymbolTag) {
+                      QualType T, unsigned Count, const LocationContext *LCtx,
+                      const void *SymbolTag) {
     profile.AddInteger((unsigned) ConjuredKind);
     profile.AddPointer(S);
+    profile.AddPointer(LCtx);
     profile.Add(T);
     profile.AddInteger(Count);
     profile.AddPointer(SymbolTag);
   }
 
   virtual void Profile(llvm::FoldingSetNodeID& profile) {
-    Profile(profile, S, T, Count, SymbolTag);
+    Profile(profile, S, T, Count, LCtx, SymbolTag);
   }
 
   // Implement isa<T> support.
@@ -488,13 +493,18 @@ public:
   /// \brief Make a unique symbol for MemRegion R according to its kind.
   const SymbolRegionValue* getRegionValueSymbol(const TypedValueRegion* R);
 
-  const SymbolConjured* getConjuredSymbol(const Stmt *E, QualType T,
+  const SymbolConjured* getConjuredSymbol(const Stmt *E,
+					  const LocationContext *LCtx,
+					  QualType T,
                                           unsigned VisitCount,
                                           const void *SymbolTag = 0);
 
-  const SymbolConjured* getConjuredSymbol(const Expr *E, unsigned VisitCount,
+  const SymbolConjured* getConjuredSymbol(const Expr *E,
+					  const LocationContext *LCtx,
+					  unsigned VisitCount,
                                           const void *SymbolTag = 0) {
-    return getConjuredSymbol(E, E->getType(), VisitCount, SymbolTag);
+    return getConjuredSymbol(E, LCtx, E->getType(),
+			     VisitCount, SymbolTag);
   }
 
   const SymbolDerived *getDerivedSymbol(SymbolRef parentSymbol,

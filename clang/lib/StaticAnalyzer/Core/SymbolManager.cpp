@@ -181,16 +181,17 @@ SymbolManager::getRegionValueSymbol(const TypedValueRegion* R) {
 }
 
 const SymbolConjured*
-SymbolManager::getConjuredSymbol(const Stmt *E, QualType T, unsigned Count,
+SymbolManager::getConjuredSymbol(const Stmt *E, const LocationContext *LCtx,
+                                 QualType T, unsigned Count,
                                  const void *SymbolTag) {
 
   llvm::FoldingSetNodeID profile;
-  SymbolConjured::Profile(profile, E, T, Count, SymbolTag);
+  SymbolConjured::Profile(profile, E, T, Count, LCtx, SymbolTag);
   void *InsertPos;
   SymExpr *SD = DataSet.FindNodeOrInsertPos(profile, InsertPos);
   if (!SD) {
     SD = (SymExpr*) BPAlloc.Allocate<SymbolConjured>();
-    new (SD) SymbolConjured(SymbolCounter, E, T, Count, SymbolTag);
+    new (SD) SymbolConjured(SymbolCounter, E, LCtx, T, Count, SymbolTag);
     DataSet.InsertNode(SD, InsertPos);
     ++SymbolCounter;
   }

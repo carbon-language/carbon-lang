@@ -221,8 +221,9 @@ void StreamChecker::OpenFileAux(CheckerContext &C, const CallExpr *CE) const {
   ProgramStateRef state = C.getState();
   unsigned Count = C.getCurrentBlockCount();
   SValBuilder &svalBuilder = C.getSValBuilder();
+  const LocationContext *LCtx = C.getPredecessor()->getLocationContext();
   DefinedSVal RetVal =
-    cast<DefinedSVal>(svalBuilder.getConjuredSymbolVal(0, CE, Count));
+    cast<DefinedSVal>(svalBuilder.getConjuredSymbolVal(0, CE, LCtx, Count));
   state = state->BindExpr(CE, C.getLocationContext(), RetVal);
   
   ConstraintManager &CM = C.getConstraintManager();

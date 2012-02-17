@@ -155,19 +155,21 @@ ProgramStateRef ProgramState::bindDefault(SVal loc, SVal V) const {
 ProgramStateRef 
 ProgramState::invalidateRegions(ArrayRef<const MemRegion *> Regions,
                                 const Expr *E, unsigned Count,
+                                const LocationContext *LCtx,
                                 StoreManager::InvalidatedSymbols *IS,
                                 const CallOrObjCMessage *Call) const {
   if (!IS) {
     StoreManager::InvalidatedSymbols invalidated;
-    return invalidateRegionsImpl(Regions, E, Count,
+    return invalidateRegionsImpl(Regions, E, Count, LCtx,
                                  invalidated, Call);
   }
-  return invalidateRegionsImpl(Regions, E, Count, *IS, Call);
+  return invalidateRegionsImpl(Regions, E, Count, LCtx, *IS, Call);
 }
 
 ProgramStateRef 
 ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
                                     const Expr *E, unsigned Count,
+                                    const LocationContext *LCtx,
                                     StoreManager::InvalidatedSymbols &IS,
                                     const CallOrObjCMessage *Call) const {
   ProgramStateManager &Mgr = getStateManager();
@@ -176,14 +178,14 @@ ProgramState::invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
   if (Eng && Eng->wantsRegionChangeUpdate(this)) {
     StoreManager::InvalidatedRegions Invalidated;
     const StoreRef &newStore
-      = Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, IS,
+      = Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, LCtx, IS,
                                         Call, &Invalidated);
     ProgramStateRef newState = makeWithStore(newStore);
     return Eng->processRegionChanges(newState, &IS, Regions, Invalidated, Call);
   }
 
   const StoreRef &newStore =
-    Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, IS,
+    Mgr.StoreMgr->invalidateRegions(getStore(), Regions, E, Count, LCtx, IS,
                                     Call, NULL);
   return makeWithStore(newStore);
 }

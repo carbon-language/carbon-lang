@@ -108,19 +108,21 @@ SValBuilder::getRegionValueSymbolVal(const TypedValueRegion* region) {
 
 DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *symbolTag,
                                                        const Expr *expr,
+						       const LocationContext *LCtx,
                                                        unsigned count) {
   QualType T = expr->getType();
-  return getConjuredSymbolVal(symbolTag, expr, T, count);
+  return getConjuredSymbolVal(symbolTag, expr, LCtx, T, count);
 }
 
 DefinedOrUnknownSVal SValBuilder::getConjuredSymbolVal(const void *symbolTag,
                                                        const Expr *expr,
+						       const LocationContext *LCtx,
                                                        QualType type,
                                                        unsigned count) {
   if (!SymbolManager::canSymbolicate(type))
     return UnknownVal();
 
-  SymbolRef sym = SymMgr.getConjuredSymbol(expr, type, count, symbolTag);
+  SymbolRef sym = SymMgr.getConjuredSymbol(expr, LCtx, type, count, symbolTag);
 
   if (Loc::isLocType(type))
     return loc::MemRegionVal(MemMgr.getSymbolicRegion(sym));

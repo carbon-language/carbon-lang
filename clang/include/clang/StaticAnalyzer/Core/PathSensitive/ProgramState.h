@@ -218,6 +218,7 @@ public:
   ///  from Begin to End. Optionally invalidates global regions as well.
   ProgramStateRef invalidateRegions(ArrayRef<const MemRegion *> Regions,
                                const Expr *E, unsigned BlockCount,
+                               const LocationContext *LCtx,
                                StoreManager::InvalidatedSymbols *IS = 0,
                                const CallOrObjCMessage *Call = 0) const;
 
@@ -378,6 +379,7 @@ private:
   ProgramStateRef 
   invalidateRegionsImpl(ArrayRef<const MemRegion *> Regions,
                         const Expr *E, unsigned BlockCount,
+                        const LocationContext *LCtx,
                         StoreManager::InvalidatedSymbols &IS,
                         const CallOrObjCMessage *Call) const;
 };

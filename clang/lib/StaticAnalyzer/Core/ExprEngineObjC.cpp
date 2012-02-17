@@ -113,7 +113,7 @@ void ExprEngine::VisitObjCForCollectionStmt(const ObjCForCollectionStmt *S,
         QualType T = R->getValueType();
         assert(Loc::isLocType(T));
         unsigned Count = currentBuilderContext->getCurrentBlockCount();
-        SymbolRef Sym = SymMgr.getConjuredSymbol(elem, T, Count);
+        SymbolRef Sym = SymMgr.getConjuredSymbol(elem, LCtx, T, Count);
         SVal V = svalBuilder.makeLoc(Sym);
         hasElems = hasElems->bindLoc(elementV, V);
         
@@ -255,7 +255,8 @@ void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
     QualType ResultTy = msg.getResultType(getContext());
     unsigned Count = currentBuilderContext->getCurrentBlockCount();
     const Expr *CurrentE = cast<Expr>(currentStmt);
-    ReturnValue = SVB.getConjuredSymbolVal(NULL, CurrentE, ResultTy, Count);
+    const LocationContext *LCtx = Pred->getLocationContext();
+    ReturnValue = SVB.getConjuredSymbolVal(NULL, CurrentE, LCtx, ResultTy, Count);
   }
 
   // Bind the return value.

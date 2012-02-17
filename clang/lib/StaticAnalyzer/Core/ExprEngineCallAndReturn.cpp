@@ -304,7 +304,7 @@ ExprEngine::invalidateArguments(ProgramStateRef State,
   // NOTE: Even if RegionsToInvalidate is empty, we may still invalidate
   //  global variables.
   return State->invalidateRegions(RegionsToInvalidate,
-                                  Call.getOriginExpr(), Count,
+                                  Call.getOriginExpr(), Count, LC,
                                   &IS, &Call);
 
 }
@@ -375,10 +375,10 @@ void ExprEngine::VisitCallExpr(const CallExpr *CE, ExplodedNode *Pred,
       // Conjure a symbol value to use as the result.
       SValBuilder &SVB = Eng.getSValBuilder();
       unsigned Count = Eng.currentBuilderContext->getCurrentBlockCount();
-      SVal RetVal = SVB.getConjuredSymbolVal(0, CE, ResultTy, Count);
+      const LocationContext *LCtx = Pred->getLocationContext();
+      SVal RetVal = SVB.getConjuredSymbolVal(0, CE, LCtx, ResultTy, Count);
 
       // Generate a new state with the return value set.
-      const LocationContext *LCtx = Pred->getLocationContext();
       state = state->BindExpr(CE, LCtx, RetVal);
 
       // Invalidate the arguments.
