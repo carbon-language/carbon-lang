@@ -1271,8 +1271,8 @@ void LiveIntervals::handleMove(MachineInstr* mi) {
   SlotIndex newIndex = mi->isInsideBundle() ?
                         indexes_->getInstructionIndex(mi->getBundleStart()) :
                         indexes_->insertMachineInstrInMaps(mi);
-  MachineBasicBlock* mbb = mi->getParent();
-  assert(getMBBStartIdx(mbb) <= oldIndex && oldIndex < getMBBEndIdx(mbb) &&
+  assert(getMBBStartIdx(mi->getParent()) <= oldIndex &&
+         oldIndex < getMBBEndIdx(mi->getParent()) &&
          "Cannot handle moves across basic block boundaries.");
   assert(!mi->isBundled() && "Can't handle bundled instructions yet.");
 
