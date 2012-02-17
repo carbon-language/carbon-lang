@@ -107,7 +107,8 @@ namespace {
     SmallVector<ObjCCategoryImplDecl *, 8> CategoryImplementation;
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCSynthesizedStructs;
     llvm::SmallPtrSet<ObjCProtocolDecl*, 8> ObjCSynthesizedProtocols;
-    llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCForwardDecls;
+    llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCWrittenInterfaces;
+    SmallVector<ObjCInterfaceDecl*, 32> ObjCInterfacesSeen;
     SmallVector<Stmt *, 32> Stmts;
     SmallVector<int, 8> ObjCBcLabelNo;
     // Remember all the @protocol(<expr>) expressions.
@@ -167,6 +168,10 @@ namespace {
         if (ObjCInterfaceDecl *Class = dyn_cast<ObjCInterfaceDecl>(*I)) {
           if (!Class->isThisDeclarationADefinition()) {
             RewriteForwardClassDecl(D);
+            break;
+          } else {
+            // Keep track of all interface declarations seen.
+            ObjCInterfacesSeen.push_back(Class->getCanonicalDecl());
             break;
           }
         }
@@ -1191,7 +1196,7 @@ void RewriteModernObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
     SuperClass = SuperClass->getSuperClass();
   }
   std::string ResultStr;
-  if (!ObjCForwardDecls.count(ClassDecl->getCanonicalDecl())) {
+  if (!ObjCWrittenInterfaces.count(ClassDecl->getCanonicalDecl())) {
     // we haven't seen a forward decl - generate a typedef.
     ResultStr = "#ifndef _REWRITER_typedef_";
     ResultStr += ClassDecl->getNameAsString();
@@ -1203,8 +1208,8 @@ void RewriteModernObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
     ResultStr += ClassDecl->getNameAsString();
     ResultStr += ";\n#endif\n";
     RewriteObjCInternalStruct(ClassDecl, ResultStr);
-    // Mark this typedef as having been generated.
-    ObjCForwardDecls.insert(ClassDecl->getCanonicalDecl());
+    // Mark this typedef as having been written into its c++ equivalent.
+    ObjCWrittenInterfaces.insert(ClassDecl->getCanonicalDecl());
   
     for (ObjCInterfaceDecl::prop_iterator I = ClassDecl->prop_begin(),
          E = ClassDecl->prop_end(); I != E; ++I)
@@ -3201,6 +3206,16 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
 /// and emits meta-data.
 
 void RewriteModernObjC::RewriteImplementations() {
+  
+  for (unsigned i = 0, e = ObjCInterfacesSeen.size(); i < e; i++) {
+    ObjCInterfaceDecl *CDecl = ObjCInterfacesSeen[i];
+    // Write struct declaration for the class matching its ivar declarations.
+    // Note that for modern abi, this is postponed until the end of TU
+    // because class extensions and the implementation might declare their own
+    // private ivars.
+    RewriteInterfaceDecl(CDecl);
+  }
+  
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
 
@@ -3209,13 +3224,8 @@ void RewriteModernObjC::RewriteImplementations() {
     ObjCImplementationDecl *OIMP = ClassImplementation[i];
     ObjCInterfaceDecl *CDecl = OIMP->getClassInterface();
     if (CDecl->isImplicitInterfaceDecl())
-    assert(false &&
-           "Legacy implicit interface rewriting not supported in moder abi");
-    // Write struct declaration for the class matching its ivar declarations.
-    // Note that for modern abi, this is postponed until implementation decl.
-    // because class extensions and the implementation might declare their own
-    // private ivars.
-    RewriteInterfaceDecl(CDecl);
+      assert(false &&
+             "Legacy implicit interface rewriting not supported in moder abi");
     RewriteImplementationDecl(OIMP);
   }
 
@@ -3225,11 +3235,6 @@ void RewriteModernObjC::RewriteImplementations() {
     if (CDecl->isImplicitInterfaceDecl())
       assert(false &&
              "Legacy implicit interface rewriting not supported in moder abi");
-    // Write struct declaration for the class matching its ivar declarations.
-    // Note that for modern abi, this is postponed until implementation decl.
-    // because class extensions and the implementation might declare their own
-    // private ivars.
-    RewriteInterfaceDecl(CDecl);
     RewriteImplementationDecl(CIMP);
   }
 }
