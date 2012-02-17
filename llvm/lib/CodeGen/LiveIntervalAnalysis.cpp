@@ -360,7 +360,7 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
 }
 
 #ifndef NDEBUG
-static bool isRegLiveOutOf(const MachineBasicBlock *MBB, unsigned Reg) {
+static bool isRegLiveIntoSuccessor(const MachineBasicBlock *MBB, unsigned Reg) {
   for (MachineBasicBlock::const_succ_iterator SI = MBB->succ_begin(),
                                               SE = MBB->succ_end();
        SI != SE; ++SI) {
@@ -439,7 +439,8 @@ void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
   } else {
     // Unreserved, unallocable registers like EFLAGS can be live across basic
     // block boundaries.
-    assert(isRegLiveOutOf(MBB, interval.reg) && "Unreserved reg not live-out?");
+    assert(isRegLiveIntoSuccessor(MBB, interval.reg) &&
+           "Unreserved reg not live-out?");
     end = getMBBEndIdx(MBB);
   }
 exit:
@@ -526,15 +527,16 @@ void LiveIntervals::handleLiveInRegister(MachineBasicBlock *MBB,
 
   // Live-in register might not be used at all.
   if (!SeenDefUse) {
-    if (isAllocatable(interval.reg) || isReserved(interval.reg)) {
-      // This must be an entry block or landing pad - we asserted so on entry
-      // to the function. For these blocks the interval is dead on entry, so
-      // we won't emit a live-range for it.
+    if (isAllocatable(interval.reg) ||
+        !isRegLiveIntoSuccessor(MBB, interval.reg)) {
+      // Allocatable registers are never live through.
+      // Non-allocatable registers that aren't live into any successors also
+      // aren't live through.
       DEBUG(dbgs() << " dead");
       return;
     } else {
-      assert(isRegLiveOutOf(MBB, interval.reg) &&
-             "Live in reg untouched in block should be be live through.");
+      // If we get here the register is non-allocatable and live into some
+      // successor. We'll conservatively assume it's live-through.
       DEBUG(dbgs() << " live through");
       end = getMBBEndIdx(MBB);
     }
