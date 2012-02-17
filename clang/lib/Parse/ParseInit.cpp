@@ -21,15 +21,86 @@
 using namespace clang;
 
 
-/// MayBeDesignationStart - Return true if this token might be the start of a
-/// designator.  If we can tell it is impossible that it is a designator, return
-/// false.
-static bool MayBeDesignationStart(tok::TokenKind K, Preprocessor &PP) {
-  switch (K) {
-  default: return false;
+/// MayBeDesignationStart - Return true if the current token might be the start 
+/// of a designator.  If we can tell it is impossible that it is a designator, 
+/// return false.
+bool Parser::MayBeDesignationStart() {
+  switch (Tok.getKind()) {
+  default: 
+    return false;
+      
   case tok::period:      // designator: '.' identifier
-  case tok::l_square:    // designator: array-designator
+    return true;
+      
+  case tok::l_square: {  // designator: array-designator
+    if (!PP.getLangOptions().CPlusPlus0x)
       return true;
+    
+    // C++11 lambda expressions and C99 designators can be ambiguous all the
+    // way through the closing ']' and to the next character. Handle the easy
+    // cases here, and fall back to tentative parsing if those fail.
+    switch (PP.LookAhead(0).getKind()) {
+    case tok::equal:
+    case tok::r_square:
+      // Definitely starts a lambda expression.
+      return false;
+      
+    case tok::amp:
+    case tok::kw_this:
+    case tok::identifier:
+      // We have to do additional analysis, because these could be the
+      // start of a constant expression or a lambda capture list.
+      break;
+        
+    default:
+      // Anything not mentioned above cannot occur following a '[' in a 
+      // lambda expression.
+      return true;        
+    }
+    
+    // Parse up to (at most) the token after the closing ']' to determine 
+    // whether this is a C99 designator or a lambda.
+    TentativeParsingAction Tentative(*this);
+    ConsumeBracket();
+    while (true) {
+      switch (Tok.getKind()) {
+      case tok::equal:
+      case tok::amp:
+      case tok::identifier:
+      case tok::kw_this:
+        // These tokens can occur in a capture list or a constant-expression.
+        // Keep looking.
+        ConsumeToken();
+        continue;
+          
+      case tok::comma:
+        // Since a comma cannot occur in a constant-expression, this must
+        // be a lambda.
+        Tentative.Revert();
+        return false;
+          
+      case tok::r_square: {
+        // Once we hit the closing square bracket, we look at the next
+        // token. If it's an '=', this is a designator. Otherwise, it's a
+        // lambda expression. This decision favors lambdas over the older
+        // GNU designator syntax, which allows one to omit the '=', but is
+        // consistent with GCC.
+        ConsumeBracket();
+        tok::TokenKind Kind = Tok.getKind();
+        Tentative.Revert();
+        return Kind == tok::equal;
+      }
+          
+      default:
+        // Anything else cannot occur in a lambda capture list, so it
+        // must be a designator.
+        Tentative.Revert();
+        return true;
+      }
+    }
+    
+    return true;
+  }
   case tok::identifier:  // designation: identifier ':'
     return PP.LookAhead(0).is(tok::colon);
   }
@@ -356,7 +427,7 @@ ExprResult Parser::ParseBraceInitializer() {
     // If we know that this cannot be a designation, just parse the nested
     // initializer directly.
     ExprResult SubElt;
-    if (MayBeDesignationStart(Tok.getKind(), PP))
+    if (MayBeDesignationStart())
       SubElt = ParseInitializerWithPotentialDesignator();
     else
       SubElt = ParseInitializer();
@@ -439,7 +510,7 @@ bool Parser::ParseMicrosoftIfExistsBraceInitializer(ExprVector &InitExprs,
     // If we know that this cannot be a designation, just parse the nested
     // initializer directly.
     ExprResult SubElt;
-    if (MayBeDesignationStart(Tok.getKind(), PP))
+    if (MayBeDesignationStart())
       SubElt = ParseInitializerWithPotentialDesignator();
     else
       SubElt = ParseInitializer();

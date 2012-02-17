@@ -25,5 +25,16 @@ class C {
     return 1;
   }
 
+  void designator_or_lambda() {
+    typedef int T; 
+    const int b = 0; 
+    const int c = 1;
+    int a1[1] = {[b] (T()) {}}; // expected-error{{no viable conversion from 'C::<lambda}}
+    int a2[1] = {[b] = 1 };
+    int a3[1] = {[b,c] = 1 }; // expected-error{{expected body of lambda expression}}
+    int a4[1] = {[&b] = 1 }; // expected-error{{integral constant expression must have integral or unscoped enumeration type, not 'const int *'}}
+    int a5[3] = { []{return 0;}() };
+    int a6[1] = {[this] = 1 }; // expected-error{{integral constant expression must have integral or unscoped enumeration type, not 'C *'}}
+  }
 };
 
