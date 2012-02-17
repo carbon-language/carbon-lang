@@ -490,6 +490,10 @@ protected:
     Builder.defineMacro("__ELF__");
     Builder.defineMacro("__svr4__");
     Builder.defineMacro("__SVR4");
+    Builder.defineMacro("_XOPEN_SOURCE", "500");
+    Builder.defineMacro("_LARGEFILE_SOURCE");
+    Builder.defineMacro("_LARGEFILE64_SOURCE");
+    Builder.defineMacro("__EXTENSIONS__");
   }
 public:
   SolarisTargetInfo(const std::string& triple)
