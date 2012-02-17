@@ -104,6 +104,10 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
 /// Emit code to cause the variable at the given address to be considered as
 /// constant from this point onwards.
 static void EmitDeclInvariant(CodeGenFunction &CGF, llvm::Constant *Addr) {
+  // Don't emit the intrinsic if we're not optimizing.
+  if (!CGF.CGM.getCodeGenOpts().OptimizationLevel)
+    return;
+
   // Grab the llvm.invariant.start intrinsic.
   llvm::Intrinsic::ID InvStartID = llvm::Intrinsic::invariant_start;
   llvm::Constant *InvariantStart = CGF.CGM.getIntrinsic(InvStartID);

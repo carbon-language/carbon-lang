@@ -1,11 +1,15 @@
-// RUN: %clang_cc1 -triple i686-linux-gnu -emit-llvm %s -o - | FileCheck %s
+// RUN: %clang_cc1 -triple i686-linux-gnu -emit-llvm %s -O0 -o - | FileCheck %s --check-prefix=CHECK-O0
+// RUN: %clang_cc1 -triple i686-linux-gnu -emit-llvm %s -O1 -o - | FileCheck %s
 
 // Check that we add an llvm.invariant.start to mark when a global becomes
 // read-only. If globalopt can fold the initializer, it will then mark the
 // variable as constant.
 
+// Do not produce markers at -O0.
+// CHECK-O0-NOT: llvm.invariant.start
+
 struct A {
-  A() : n(42) {}
+  A();
   int n;
 };
 
@@ -13,7 +17,7 @@ struct A {
 extern const A a = A();
 
 struct B {
-  B() : n(76) {}
+  B();
   mutable int n;
 };
 
@@ -21,7 +25,7 @@ struct B {
 extern const B b = B();
 
 struct C {
-  C() : n(81) {}
+  C();
   ~C();
   int n;
 };
@@ -29,7 +33,7 @@ struct C {
 // CHECK: @c = global {{.*}} zeroinitializer
 extern const C c = C();
 
-int f() { return 5; }
+int f();
 // CHECK: @d = global i32 0
 extern const int d = f();
 
@@ -37,19 +41,15 @@ void e() {
   static const A a = A();
 }
 
-// CHECK: define internal void @__cxx_global_var_init
 // CHECK: call void @_ZN1AC1Ev({{.*}}* @a)
-// CHECK-NEXT: call {{.*}}@llvm.invariant.start(i64 -1, i8* bitcast ({{.*}} @a to i8*))
+// CHECK: call {{.*}}@llvm.invariant.start(i64 -1, i8* bitcast ({{.*}} @a to i8*))
 
-// CHECK: define internal void @__cxx_global_var_init
 // CHECK: call void @_ZN1BC1Ev({{.*}}* @b)
 // CHECK-NOT: call {{.*}}@llvm.invariant.start(i64 -1, i8* bitcast ({{.*}} @b to i8*))
 
-// CHECK: define internal void @__cxx_global_var_init
 // CHECK: call void @_ZN1CC1Ev({{.*}}* @c)
 // CHECK-NOT: call {{.*}}@llvm.invariant.start(i64 -1, i8* bitcast ({{.*}} @c to i8*))
 
-// CHECK: define internal void @__cxx_global_var_init
 // CHECK: call i32 @_Z1fv(
 // CHECK: store {{.*}}, i32* @d
 // CHECK: call {{.*}}@llvm.invariant.start(i64 -1, i8* bitcast ({{.*}} @d to i8*))
