@@ -9575,8 +9575,13 @@ static bool shouldAddConstForScope(CapturingScopeInfo *CSI, VarDecl *VD) {
     return false;
   if (isa<BlockScopeInfo>(CSI))
     return true;
-  if (LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(CSI))
-    return !LSI->Mutable;
+  if (LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(CSI)) {
+    if (LSI->isCaptured(VD))
+      return LSI->getCapture(VD).isCopyCapture() && !LSI->Mutable;
+    
+    return LSI->ImpCaptureStyle == LambdaScopeInfo::ImpCap_LambdaByval &&
+           !LSI->Mutable;
+  }
   return false;
 }
 

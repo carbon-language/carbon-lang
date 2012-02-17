@@ -38,4 +38,8 @@ void f3() {
                     "should be const float&");
     }();
   }();
+
+  [&i] {
+    static_assert(is_same<decltype((i)), int&>::value, "should be int&");
+  }();
 }
