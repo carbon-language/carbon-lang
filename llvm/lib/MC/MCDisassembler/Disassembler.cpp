@@ -40,7 +40,7 @@ LLVMDisasmContextRef LLVMCreateDisasm(const char *TripleName, void *DisInfo,
   // FIXME: Clients are responsible for initializing the targets. And this
   // would be done by calling routines in "llvm-c/Target.h" which are static
   // line functions. But the current use of LLVMCreateDisasm() is to dynamically
-  // load libLTO with ldopen() and then lookup the symbols using dlsym().
+  // load libLTO with dlopen() and then lookup the symbols using dlsym().
   // And since these initialize routines are static that does not work which
   // is why the call to them in this 'C' library API was added back.
   llvm::InitializeAllTargetInfos();
