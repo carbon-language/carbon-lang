@@ -904,9 +904,9 @@ MachineInstr* MachineInstr::getBundleStart() {
   if (!isInsideBundle())
     return this;
   MachineBasicBlock::reverse_instr_iterator MII(this);
-  --MII;
+  ++MII;
   while (MII->isInsideBundle())
-    --MII;
+    ++MII;
   return &*MII;
 }
 
