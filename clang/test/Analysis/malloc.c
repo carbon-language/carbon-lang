@@ -594,6 +594,26 @@ void doNotInvalidateWhenPassedToSystemCalls(char *s) {
   strcpy(p, s); // expected-warning {{leak}}
 }
 
+// Rely on the CString checker evaluation of the strcpy API to convey that the result of strcpy is equal to p.
+void symbolLostWithStrcpy(char *s) {
+  char *p = malloc(12);
+  p = strcpy(p, s);
+  free(p);
+}
+
+
+// The same test as the one above, but with what is actually generated on a mac.
+static __inline char *
+__inline_strcpy_chk (char *restrict __dest, const char *restrict __src)
+{
+  return __builtin___strcpy_chk (__dest, __src, __builtin_object_size (__dest, 2 > 1));
+}
+
+void symbolLostWithStrcpy_InlineStrcpyVersion(char *s) {
+  char *p = malloc(12);
+  p = ((__builtin_object_size (p, 0) != (size_t) -1) ? __builtin___strcpy_chk (p, s, __builtin_object_size (p, 2 > 1)) : __inline_strcpy_chk (p, s));
+  free(p);
+}
 // Below are the known false positives.
 
 // TODO: There should be no warning here. This one might be difficult to get rid of.
@@ -625,13 +645,6 @@ static void *specialMalloc(int n){
     p++;
   }
   return p;// expected-warning {{Memory is never released; potential memory leak}}
-}
-
-// TODO: This is a false positve that should be fixed by making CString checker smarter.
-void symbolLostWithStrcpy(char *s) {
-  char *p = malloc(12);
-  p = strcpy(p, s);
-  free(p);// expected-warning {{leak}}
 }
 
 // False negatives.

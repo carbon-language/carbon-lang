@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ClangSACheckers.h"
+#include "InterCheckerAPI.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/CheckerContext.h"
@@ -1130,6 +1131,7 @@ MallocChecker::MallocBugVisitor::VisitNode(const ExplodedNode *N,
 
 #define REGISTER_CHECKER(name) \
 void ento::register##name(CheckerManager &mgr) {\
+  registerCStringCheckerBasic(mgr); \
   mgr.registerChecker<MallocChecker>()->Filter.C##name = true;\
 }
 
