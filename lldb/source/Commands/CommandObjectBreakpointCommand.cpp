@@ -23,7 +23,6 @@
 #include "lldb/Breakpoint/BreakpointLocation.h"
 #include "lldb/Breakpoint/StoppointCallbackContext.h"
 #include "lldb/Core/State.h"
-#include "lldb/Core/StreamAsynchronousIO.h"
 
 using namespace lldb;
 using namespace lldb_private;

@@ -22,7 +22,6 @@
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/Event.h"
 #include "lldb/Core/Log.h"
-#include "lldb/Core/StreamAsynchronousIO.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
