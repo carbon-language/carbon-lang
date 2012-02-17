@@ -172,16 +172,16 @@ static bool DescribeStackAddress(uintptr_t addr, uintptr_t access_size) {
          addr, offset, buf, t->tid());
   // Report the number of stack objects.
   char *p;
-  size_t n_objects = strtol(name_end, &p, 10);
+  size_t n_objects = internal_simple_strtoll(name_end, &p, 10);
   CHECK(n_objects > 0);
   Printf("  This frame has %ld object(s):\n", n_objects);
   // Report all objects in this frame.
   for (size_t i = 0; i < n_objects; i++) {
     size_t beg, size;
     intptr_t len;
-    beg  = strtol(p, &p, 10);
-    size = strtol(p, &p, 10);
-    len  = strtol(p, &p, 10);
+    beg  = internal_simple_strtoll(p, &p, 10);
+    size = internal_simple_strtoll(p, &p, 10);
+    len  = internal_simple_strtoll(p, &p, 10);
     if (beg <= 0 || size <= 0 || len < 0 || *p != ' ') {
       Printf("AddressSanitizer can't parse the stack frame descriptor: |%s|\n",
              frame_descr);
@@ -258,20 +258,12 @@ static void force_interface_symbols() {
 }
 
 // -------------------------- Init ------------------- {{{1
-#if defined(_WIN32)
-// atoll is not defined on Windows.
-int64_t atoll(const char *str) {
-  UNIMPLEMENTED();
-  return -1;
-}
-#endif
-
 static int64_t IntFlagValue(const char *flags, const char *flag,
                             int64_t default_val) {
   if (!flags) return default_val;
   const char *str = internal_strstr(flags, flag);
   if (!str) return default_val;
-  return atoll(str + internal_strlen(flag));
+  return internal_atoll(str + internal_strlen(flag));
 }
 
 static void asan_atexit() {

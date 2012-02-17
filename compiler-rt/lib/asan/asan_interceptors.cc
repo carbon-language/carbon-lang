@@ -24,7 +24,7 @@
 #include "interception/interception.h"
 
 #include <new>
-#include <ctype.h>
+#include <limits.h>
 
 #if defined(_WIN32)
 // FIXME: remove when we start intercepting on Windows. Currently it's needed to
@@ -101,6 +101,56 @@ static inline bool RangesOverlap(const char *offset1, size_t length1,
     __asan_init(); \
   } \
 } while (0)
+
+static inline bool IsSpace(int c) {
+  return (c == ' ') || (c == '\n') || (c == '\t') ||
+         (c == '\f') || (c == '\r') || (c == '\v');
+}
+
+static inline bool IsDigit(int c) {
+  return (c >= '0') && (c <= '9');
+}
+
+static inline int ToLower(int c) {
+  return (c >= 'A' && c <= 'Z') ? (c + 'a' - 'A') : c;
+}
+
+// ---------------------- Internal string functions ---------------- {{{1
+
+int64_t internal_simple_strtoll(const char *nptr, char **endptr, int base) {
+  CHECK(base == 10);
+  while (IsSpace(*nptr)) nptr++;
+  int sgn = 1;
+  uint64_t res = 0;
+  bool have_digits = false;
+  char *old_nptr = (char*)nptr;
+  if (*nptr == '+') {
+    sgn = 1;
+    nptr++;
+  } else if (*nptr == '-') {
+    sgn = -1;
+    nptr++;
+  }
+  while (IsDigit(*nptr)) {
+    res = (res <= ULLONG_MAX / 10) ? res * 10 : ULLONG_MAX;
+    int digit = ((*nptr) - '0');
+    res = (res <= ULLONG_MAX - digit) ? res + digit : ULLONG_MAX;
+    have_digits = true;
+    nptr++;
+  }
+  if (endptr != NULL) {
+    *endptr = (have_digits) ? (char*)nptr : old_nptr;
+  }
+  if (sgn > 0) {
+    return (int64_t)(Min((uint64_t)LLONG_MAX, res));
+  } else {
+    return (res > LLONG_MAX) ? LLONG_MIN : ((int64_t)res * -1);
+  }
+}
+
+int64_t internal_atoll(const char *nptr) {
+  return internal_simple_strtoll(nptr, (char**)NULL, 10);
+}
 
 size_t internal_strlen(const char *s) {
   size_t i = 0;
@@ -314,8 +364,8 @@ static inline int CharCmp(unsigned char c1, unsigned char c2) {
 }
 
 static inline int CharCaseCmp(unsigned char c1, unsigned char c2) {
-  int c1_low = tolower(c1);
-  int c2_low = tolower(c2);
+  int c1_low = ToLower(c1);
+  int c2_low = ToLower(c2);
   return c1_low - c2_low;
 }
 
