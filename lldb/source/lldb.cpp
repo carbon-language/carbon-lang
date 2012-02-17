@@ -26,6 +26,7 @@
 #include "Plugins/ABI/MacOSX-arm/ABIMacOSX_arm.h"
 #include "Plugins/ABI/SysV-x86_64/ABISysV_x86_64.h"
 #include "Plugins/Disassembler/llvm/DisassemblerLLVM.h"
+#include "Plugins/Disassembler/llvm/DisassemblerLLVMC.h"
 #include "Plugins/Instruction/ARM/EmulateInstructionARM.h"
 #include "Plugins/SymbolVendor/MacOSX/SymbolVendorMacOSX.h"
 #include "Plugins/ObjectContainer/BSD-Archive/ObjectContainerBSDArchive.h"
@@ -72,6 +73,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
+//#define USE_NEW_DISASSEMBLER
 
 void
 lldb_private::Initialize ()
@@ -91,7 +93,11 @@ lldb_private::Initialize ()
         ABIMacOSX_i386::Initialize();
         ABIMacOSX_arm::Initialize();
         ABISysV_x86_64::Initialize();
+#if defined (USE_NEW_DISASSEMBLER)
+        DisassemblerLLVMC::Initialize();
+#else
         DisassemblerLLVM::Initialize();
+#endif
         ObjectContainerBSDArchive::Initialize();
         ObjectFileELF::Initialize();
         SymbolFileDWARF::Initialize();
@@ -166,7 +172,11 @@ lldb_private::Terminate ()
     ABIMacOSX_i386::Terminate();
     ABIMacOSX_arm::Terminate();
     ABISysV_x86_64::Terminate();
+#if defined (USE_NEW_DISASSEMBLER)
+    DisassemblerLLVMC::Terminate();
+#else
     DisassemblerLLVM::Terminate();
+#endif
     ObjectContainerBSDArchive::Terminate();
     ObjectFileELF::Terminate();
     SymbolFileDWARF::Terminate();
