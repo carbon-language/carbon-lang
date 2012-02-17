@@ -3219,8 +3219,19 @@ void RewriteModernObjC::RewriteImplementations() {
     RewriteImplementationDecl(OIMP);
   }
 
-  for (int i = 0; i < CatDefCount; i++)
-    RewriteImplementationDecl(CategoryImplementation[i]);
+  for (int i = 0; i < CatDefCount; i++) {
+    ObjCCategoryImplDecl *CIMP = CategoryImplementation[i];
+    ObjCInterfaceDecl *CDecl = CIMP->getClassInterface();
+    if (CDecl->isImplicitInterfaceDecl())
+      assert(false &&
+             "Legacy implicit interface rewriting not supported in moder abi");
+    // Write struct declaration for the class matching its ivar declarations.
+    // Note that for modern abi, this is postponed until implementation decl.
+    // because class extensions and the implementation might declare their own
+    // private ivars.
+    RewriteInterfaceDecl(CDecl);
+    RewriteImplementationDecl(CIMP);
+  }
 }
 
 void RewriteModernObjC::RewriteByRefString(std::string &ResultStr, 
@@ -5480,8 +5491,6 @@ static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Resu
                                           ArrayRef<ObjCPropertyDecl *>Properties,
                                           StringRef VarName,
                                           StringRef ClassName) {
-                      
-  WriteModernMetadataDeclarations(Result);
   Result += "\nstatic struct _class_ro_t ";
   Result += VarName; Result += ClassName;
   Result += " __attribute__ ((used, section (\"__DATA,__objc_const\"))) = {\n";
@@ -5540,7 +5549,6 @@ static void Write__class_ro_t_initializer(ASTContext *Context, std::string &Resu
 static void Write_class_t(ASTContext *Context, std::string &Result,
                           StringRef VarName,
                           const ObjCInterfaceDecl *CDecl, bool metadata) {
-  WriteModernMetadataDeclarations(Result);
   
   if (metadata && !CDecl->getSuperClass()) {
     // Need to handle a case of use of forward declaration.
@@ -5605,7 +5613,12 @@ static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context,
                              ArrayRef<ObjCMethodDecl *> ClassMethods,
                              ArrayRef<ObjCProtocolDecl *> RefedProtocols,
                              ArrayRef<ObjCPropertyDecl *> ClassProperties) {
-  WriteModernMetadataDeclarations(Result);
+  // must declare an extern class object in case this class is not implemented 
+  // in this TU.
+  Result += "\nextern struct _class_t ";
+  Result += "OBJC_CLASS_$_"; Result += ClassName;
+  Result += ";\n";
+  
   Result += "\nstatic struct _category_t ";
   Result += "_OBJC_$_CATEGORY_";
   Result += ClassName; Result += "_$_"; Result += CatName;
@@ -6191,6 +6204,7 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
 /// implementation.
 void RewriteModernObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
                                               std::string &Result) {
+  WriteModernMetadataDeclarations(Result);
   ObjCInterfaceDecl *ClassDecl = IDecl->getClassInterface();
   // Find category declaration for this implementation.
   ObjCCategoryDecl *CDecl=0;
