@@ -147,3 +147,25 @@ def test_invalid_element_type():
 
     ok_(i is not None)
     i.element_type
+
+def test_element_count():
+    index = Index.create()
+    tu = index.parse('t.c', unsaved_files=[('t.c', 'int i[5]; int j;')])
+    assert tu is not None
+
+    for cursor in tu.cursor.get_children():
+        if cursor.spelling == 'i':
+            i = cursor
+        elif cursor.spelling == 'j':
+            j = cursor
+
+    assert i is not None
+    assert j is not None
+
+    assert i.type.element_count == 5
+
+    try:
+        j.type.element_count
+        assert False
+    except:
+        assert True

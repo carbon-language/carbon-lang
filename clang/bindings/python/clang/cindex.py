@@ -1150,6 +1150,20 @@ class Type(Structure):
 
         return result
 
+    @property
+    def element_count(self):
+        """Retrieve the number of elements in this type.
+
+        Returns an int.
+
+        If the Type is not an array or vector, this raises.
+        """
+        result = Type_get_num_elements(self)
+        if result < 0:
+            raise Exception('Type does not have elements.')
+
+        return result
+
     @staticmethod
     def from_result(res, fn, args):
         assert isinstance(res, Type)
@@ -1898,6 +1912,10 @@ Type_get_element_type = lib.clang_getElementType
 Type_get_element_type.argtypes = [Type]
 Type_get_element_type.restype = Type
 Type_get_element_type.errcheck = Type.from_result
+
+Type_get_num_elements = lib.clang_getNumElements
+Type_get_num_elements.argtypes = [Type]
+Type_get_num_elements.restype = c_longlong
 
 Type_get_array_element = lib.clang_getArrayElementType
 Type_get_array_element.argtypes = [Type]
