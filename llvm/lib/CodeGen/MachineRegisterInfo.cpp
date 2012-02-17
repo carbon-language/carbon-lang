@@ -22,7 +22,8 @@ MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI)
   VRegInfo.reserve(256);
   RegAllocHints.reserve(256);
   UsedPhysRegs.resize(TRI.getNumRegs());
-  
+  UsedPhysRegMask.resize(TRI.getNumRegs());
+
   // Create the physreg use/def lists.
   PhysRegUseDefLists = new MachineOperand*[TRI.getNumRegs()];
   memset(PhysRegUseDefLists, 0, sizeof(MachineOperand*)*TRI.getNumRegs());
@@ -242,15 +243,6 @@ MachineRegisterInfo::EmitLiveInCopies(MachineBasicBlock *EntryMBB,
       // Add the register to the entry block live-in set.
       EntryMBB->addLiveIn(LiveIns[i].first);
     }
-}
-
-void MachineRegisterInfo::closePhysRegsUsed(const TargetRegisterInfo &TRI) {
-  for (int i = UsedPhysRegs.find_first(); i >= 0;
-       i = UsedPhysRegs.find_next(i))
-         for (const unsigned *SS = TRI.getSubRegisters(i);
-              unsigned SubReg = *SS; ++SS)
-           if (SubReg > unsigned(i))
-             UsedPhysRegs.set(SubReg);
 }
 
 #ifndef NDEBUG

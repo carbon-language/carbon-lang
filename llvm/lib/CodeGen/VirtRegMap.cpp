@@ -127,6 +127,11 @@ void VirtRegMap::rewrite(SlotIndexes *Indexes) {
       for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
            MOE = MI->operands_end(); MOI != MOE; ++MOI) {
         MachineOperand &MO = *MOI;
+
+        // Make sure MRI knows about registers clobbered by regmasks.
+        if (MO.isRegMask())
+          MRI->addPhysRegsUsedFromRegMask(MO.getRegMask());
+
         if (!MO.isReg() || !TargetRegisterInfo::isVirtualRegister(MO.getReg()))
           continue;
         unsigned VirtReg = MO.getReg();

@@ -1097,9 +1097,6 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
     AllocateBasicBlock();
   }
 
-  // Make sure the set of used physregs is closed under subreg operations.
-  MRI->closePhysRegsUsed(*TRI);
-
   // Add the clobber lists for all the instructions we skipped earlier.
   for (SmallPtrSet<const MCInstrDesc*, 4>::const_iterator
        I = SkippedInstrs.begin(), E = SkippedInstrs.end(); I != E; ++I)

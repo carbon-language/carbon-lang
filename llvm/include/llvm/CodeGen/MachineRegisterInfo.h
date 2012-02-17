@@ -56,7 +56,12 @@ class MachineRegisterInfo {
   /// register allocation (though most don't modify this).  This is used
   /// so that the code generator knows which callee save registers to save and
   /// for other target specific uses.
+  /// This vector only has bits set for registers explicitly used, not their
+  /// aliases.
   BitVector UsedPhysRegs;
+
+  /// UsedPhysRegMask - Additional used physregs, but including aliases.
+  BitVector UsedPhysRegMask;
 
   /// ReservedRegs - This is a bit vector of reserved registers.  The target
   /// may change its mind about which registers should be reserved.  This
@@ -296,32 +301,41 @@ public:
   
   /// isPhysRegUsed - Return true if the specified register is used in this
   /// function.  This only works after register allocation.
-  bool isPhysRegUsed(unsigned Reg) const { return UsedPhysRegs[Reg]; }
+  bool isPhysRegUsed(unsigned Reg) const {
+    return UsedPhysRegs.test(Reg) || UsedPhysRegMask.test(Reg);
+  }
 
   /// isPhysRegOrOverlapUsed - Return true if Reg or any overlapping register
   /// is used in this function.
   bool isPhysRegOrOverlapUsed(unsigned Reg) const {
+    if (UsedPhysRegMask.test(Reg))
+      return true;
     for (const unsigned *AI = TRI->getOverlaps(Reg); *AI; ++AI)
-      if (isPhysRegUsed(*AI))
+      if (UsedPhysRegs.test(*AI))
         return true;
     return false;
   }
 
   /// setPhysRegUsed - Mark the specified register used in this function.
   /// This should only be called during and after register allocation.
-  void setPhysRegUsed(unsigned Reg) { UsedPhysRegs[Reg] = true; }
+  void setPhysRegUsed(unsigned Reg) { UsedPhysRegs.set(Reg); }
 
   /// addPhysRegsUsed - Mark the specified registers used in this function.
   /// This should only be called during and after register allocation.
   void addPhysRegsUsed(const BitVector &Regs) { UsedPhysRegs |= Regs; }
 
+  /// addPhysRegsUsedFromRegMask - Mark any registers not in RegMask as used.
+  /// This corresponds to the bit mask attached to register mask operands.
+  void addPhysRegsUsedFromRegMask(const uint32_t *RegMask) {
+    UsedPhysRegMask.setBitsNotInMask(RegMask);
+  }
+
   /// setPhysRegUnused - Mark the specified register unused in this function.
   /// This should only be called during and after register allocation.
-  void setPhysRegUnused(unsigned Reg) { UsedPhysRegs[Reg] = false; }
-
-  /// closePhysRegsUsed - Expand UsedPhysRegs to its transitive closure over
-  /// subregisters. That means that if R is used, so are all subregisters.
-  void closePhysRegsUsed(const TargetRegisterInfo&);
+  void setPhysRegUnused(unsigned Reg) {
+    UsedPhysRegs.reset(Reg);
+    UsedPhysRegMask.reset(Reg);
+  }
 
 
   //===--------------------------------------------------------------------===//
