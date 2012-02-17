@@ -108,6 +108,8 @@ public:
   /// or a derived class thereof, a NULL canonical type.
   template<typename U> CanProxy<U> getAs() const;
 
+  template<typename U> CanProxy<U> castAs() const;
+
   /// \brief Overloaded arrow operator that produces a canonical type
   /// proxy.
   CanProxy<T> operator->() const;
@@ -750,6 +752,13 @@ CanProxy<U> CanQual<T>::getAs() const {
     return CanQual<U>::CreateUnsafe(Stored);
 
   return CanProxy<U>();
+}
+
+template<typename T>
+template<typename U>
+CanProxy<U> CanQual<T>::castAs() const {
+  assert(!Stored.isNull() && isa<U>(Stored.getTypePtr()));
+  return CanQual<U>::CreateUnsafe(Stored);
 }
 
 template<typename T>
