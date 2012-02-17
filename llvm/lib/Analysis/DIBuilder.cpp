@@ -405,7 +405,7 @@ DIType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
                                   uint64_t SizeInBits, uint64_t AlignInBits,
                                   uint64_t OffsetInBits, unsigned Flags,
                                   DIType DerivedFrom, DIArray Elements,
-                                  MDNode *VTableHoder, MDNode *TemplateParams) {
+                                  MDNode *VTableHolder, MDNode *TemplateParams) {
  // TAG_class_type is encoded in DICompositeType format.
   Value *Elts[] = {
     GetTagConstant(VMContext, dwarf::DW_TAG_class_type),
@@ -420,7 +420,7 @@ DIType DIBuilder::createClassType(DIDescriptor Context, StringRef Name,
     DerivedFrom,
     Elements,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
-    VTableHoder,
+    VTableHolder,
     TemplateParams
   };
   return DIType(MDNode::get(VMContext, Elts));
