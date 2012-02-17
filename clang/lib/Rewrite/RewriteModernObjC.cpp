@@ -6100,88 +6100,18 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
   for (int i = 0; i < CatDefCount; i++)
     RewriteObjCCategoryImplDecl(CategoryImplementation[i], Result);
   
-  // Write objc_symtab metadata
-  /*
-   struct _objc_symtab
-   {
-   long sel_ref_cnt;
-   SEL *refs;
-   short cls_def_cnt;
-   short cat_def_cnt;
-   void *defs[cls_def_cnt + cat_def_cnt];
-   };
-   */
-  
-  Result += "\nstruct _objc_symtab {\n";
-  Result += "\tlong sel_ref_cnt;\n";
-  Result += "\tSEL *refs;\n";
-  Result += "\tshort cls_def_cnt;\n";
-  Result += "\tshort cat_def_cnt;\n";
-  Result += "\tvoid *defs[" + utostr(ClsDefCount + CatDefCount)+ "];\n";
-  Result += "};\n\n";
-  
-  Result += "static struct _objc_symtab "
-  "_OBJC_SYMBOLS __attribute__((used, section (\"__OBJC, __symbols\")))= {\n";
-  Result += "\t0, 0, " + utostr(ClsDefCount)
-  + ", " + utostr(CatDefCount) + "\n";
-  for (int i = 0; i < ClsDefCount; i++) {
-    Result += "\t,&_OBJC_CLASS_";
-    Result += ClassImplementation[i]->getNameAsString();
-    Result += "\n";
-  }
-  
-  for (int i = 0; i < CatDefCount; i++) {
-    Result += "\t,&_OBJC_CATEGORY_";
-    Result += CategoryImplementation[i]->getClassInterface()->getNameAsString();
-    Result += "_";
-    Result += CategoryImplementation[i]->getNameAsString();
-    Result += "\n";
-  }
-  
-  Result += "};\n\n";
-  
-  // Write objc_module metadata
-  
-  /*
-   struct _objc_module {
-   long version;
-   long size;
-   const char *name;
-   struct _objc_symtab *symtab;
-   }
-   */
-  
-  Result += "\nstruct _objc_module {\n";
-  Result += "\tlong version;\n";
-  Result += "\tlong size;\n";
-  Result += "\tconst char *name;\n";
-  Result += "\tstruct _objc_symtab *symtab;\n";
-  Result += "};\n\n";
-  Result += "static struct _objc_module "
-  "_OBJC_MODULES __attribute__ ((used, section (\"__OBJC, __module_info\")))= {\n";
-  Result += "\t" + utostr(OBJC_ABI_VERSION) +
-  ", sizeof(struct _objc_module), \"\", &_OBJC_SYMBOLS\n";
-  Result += "};\n\n";
-  
-  if (LangOpts.MicrosoftExt) {
-    if (ProtocolExprDecls.size()) {
-      Result += "#pragma section(\".objc_protocol$B\",long,read,write)\n";
-      Result += "#pragma data_seg(push, \".objc_protocol$B\")\n";
-      for (llvm::SmallPtrSet<ObjCProtocolDecl *,8>::iterator I = ProtocolExprDecls.begin(),
-           E = ProtocolExprDecls.end(); I != E; ++I) {
-        Result += "static struct _objc_protocol *_POINTER_OBJC_PROTOCOL_";
-        Result += (*I)->getNameAsString();
-        Result += " = &_OBJC_PROTOCOL_";
-        Result += (*I)->getNameAsString();
-        Result += ";\n";
-      }
-      Result += "#pragma data_seg(pop)\n\n";
+  if (ClsDefCount > 0) {
+    Result += "static struct _class_t *L_OBJC_LABEL_CLASS_$ [";
+    Result += llvm::utostr(ClsDefCount); Result += "]";
+    Result += 
+      " __attribute__((used, section (\"__DATA, __objc_classlist,"
+      "regular,no_dead_strip\")))= {\n";
+    for (int i = 0; i < ClsDefCount; i++) {
+      Result += "\t&OBJC_CLASS_$_";
+      Result += ClassImplementation[i]->getNameAsString();
+      Result += ",\n";
     }
-    Result += "#pragma section(\".objc_module_info$B\",long,read,write)\n";
-    Result += "#pragma data_seg(push, \".objc_module_info$B\")\n";
-    Result += "static struct _objc_module *_POINTER_OBJC_MODULES = ";
-    Result += "&_OBJC_MODULES;\n";
-    Result += "#pragma data_seg(pop)\n\n";
+    Result += "};\n";
   }
 }
 
