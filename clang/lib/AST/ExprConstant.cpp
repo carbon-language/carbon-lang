@@ -1499,6 +1499,20 @@ static unsigned getBaseIndex(const CXXRecordDecl *Derived,
   llvm_unreachable("base class missing from derived class's bases list");
 }
 
+/// Extract the value of a character from a string literal.
+static APSInt ExtractStringLiteralCharacter(EvalInfo &Info, const Expr *Lit,
+                                            uint64_t Index) {
+  // FIXME: Support PredefinedExpr, ObjCEncodeExpr, MakeStringConstant
+  const StringLiteral *S = dyn_cast<StringLiteral>(Lit);
+  assert(S && "unexpected string literal expression kind");
+
+  APSInt Value(S->getCharByteWidth() * Info.Ctx.getCharWidth(),
+    Lit->getType()->getArrayElementTypeNoTypeQual()->isUnsignedIntegerType());
+  if (Index < S->getLength())
+    Value = S->getCodeUnit(Index);
+  return Value;
+}
+
 /// Extract the designated sub-object of an rvalue.
 static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
                              CCValue &Obj, QualType ObjType,
@@ -1518,7 +1532,6 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
     // This object might be initialized later.
     return false;
 
-  assert(!Obj.isLValue() && "extracting subobject of lvalue");
   const APValue *O = &Obj;
   // Walk the designator's path to find the subobject.
   for (unsigned I = 0, N = Sub.Entries.size(); I != N; ++I) {
@@ -1535,7 +1548,15 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
                     (unsigned)diag::note_invalid_subexpr_in_const_expr);
         return false;
       }
-      if (O->getArrayInitializedElts() > Index)
+      // An array object is represented as either an Array APValue or as an
+      // LValue which refers to a string literal.
+      if (O->isLValue()) {
+        assert(I == N - 1 && "extracting subobject of character?");
+        assert(!O->hasLValuePath() || O->getLValuePath().empty());
+        Obj = CCValue(ExtractStringLiteralCharacter(
+          Info, O->getLValueBase().get<const Expr*>(), Index));
+        return true;
+      } else if (O->getArrayInitializedElts() > Index)
         O = &O->getArrayInitializedElt(Index);
       else
         O = &O->getArrayFiller();
@@ -1800,33 +1821,6 @@ static bool HandleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
     return false;
   }
 
-  // FIXME: Support PredefinedExpr, ObjCEncodeExpr, MakeStringConstant
-  if (const StringLiteral *S = dyn_cast<StringLiteral>(Base)) {
-    const SubobjectDesignator &Designator = LVal.Designator;
-    if (Designator.Invalid || Designator.Entries.size() != 1) {
-      Info.Diag(Conv->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
-      return false;
-    }
-
-    assert(Type->isIntegerType() && "string element not integer type");
-    uint64_t Index = Designator.Entries[0].ArrayIndex;
-    const ConstantArrayType *CAT =
-        Info.Ctx.getAsConstantArrayType(S->getType());
-    if (Index >= CAT->getSize().getZExtValue()) {
-      // Note, it should not be possible to form a pointer which points more
-      // than one past the end of the array without producing a prior const expr
-      // diagnostic.
-      Info.Diag(Loc, diag::note_constexpr_read_past_end);
-      return false;
-    }
-    APSInt Value(S->getCharByteWidth() * Info.Ctx.getCharWidth(),
-                 Type->isUnsignedIntegerType());
-    if (Index < S->getLength())
-      Value = S->getCodeUnit(Index);
-    RVal = CCValue(Value);
-    return true;
-  }
-
   if (Frame) {
     // If this is a temporary expression with a nontrivial initializer, grab the
     // value from the relevant stack frame.
@@ -1839,6 +1833,13 @@ static bool HandleLValueToRValueConversion(EvalInfo &Info, const Expr *Conv,
     assert(!Info.getLangOpts().CPlusPlus && "lvalue compound literal in c++?");
     if (!Evaluate(RVal, Info, CLE->getInitializer()))
       return false;
+  } else if (isa<StringLiteral>(Base)) {
+    // We represent a string literal array as an lvalue pointing at the
+    // corresponding expression, rather than building an array of chars.
+    // FIXME: Support PredefinedExpr, ObjCEncodeExpr, MakeStringConstant
+    RVal = CCValue(Info.Ctx,
+                   APValue(Base, CharUnits::Zero(), APValue::NoLValuePath(), 0),
+                   CCValue::GlobalValue());
   } else {
     Info.Diag(Conv->getExprLoc(), diag::note_invalid_subexpr_in_const_expr);
     return false;
@@ -3777,7 +3778,8 @@ namespace {
       : ExprEvaluatorBaseTy(Info), This(This), Result(Result) {}
 
     bool Success(const APValue &V, const Expr *E) {
-      assert(V.isArray() && "Expected array type");
+      assert((V.isArray() || V.isLValue()) &&
+             "expected array or string literal");
       Result = V;
       return true;
     }
@@ -3822,22 +3824,9 @@ bool ArrayExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
     LValue LV;
     if (!EvaluateLValue(E->getInit(0), LV, Info))
       return false;
-    uint64_t NumElements = CAT->getSize().getZExtValue();
-    Result = APValue(APValue::UninitArray(), NumElements, NumElements);
-
-    // Copy the string literal into the array. FIXME: Do this better.
-    LV.addArray(Info, E, CAT);
-    for (uint64_t I = 0; I < NumElements; ++I) {
-      CCValue Char;
-      if (!HandleLValueToRValueConversion(Info, E->getInit(0),
-                                          CAT->getElementType(), LV, Char))
-        return false;
-      Result.getArrayInitializedElt(I) = Char.toAPValue();
-      if (!HandleLValueArrayAdjustment(Info, E->getInit(0), LV,
-                                       CAT->getElementType(), 1))
-        return false;
-    }
-    return true;
+    CCValue Val;
+    LV.moveInto(Val);
+    return Success(Val, E);
   }
 
   bool Success = true;

@@ -94,6 +94,14 @@ namespace Array {
 
   // CHECK: @_ZN5Array1dE = constant {{.*}} { [2 x i32] [i32 1, i32 2], [3 x i32] [i32 3, i32 4, i32 5] }
   struct D { int n[2]; int m[3]; } extern constexpr d = { 1, 2, 3, 4, 5 };
+
+  struct E {
+    char c[4];
+    char d[4];
+    constexpr E() : c("foo"), d("x") {}
+  };
+  // CHECK: @_ZN5Array1eE = global {{.*}} { [4 x i8] c"foo\00", [4 x i8] c"x\00\00\00" }
+  extern constexpr E e = E();
 }
 
 namespace MemberPtr {

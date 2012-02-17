@@ -408,6 +408,12 @@ struct U {
 } constexpr u = { { L"test" }, 0 };
 static_assert(u.chars[2] == L's', "");
 
+struct V {
+  char c[4];
+  constexpr V() : c("hi!") {}
+};
+static_assert(V().c[1] == "i"[0], "");
+
 }
 
 namespace Array {
