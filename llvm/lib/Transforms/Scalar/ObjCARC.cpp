@@ -1655,6 +1655,10 @@ namespace {
     /// metadata.
     unsigned CopyOnEscapeMDKind;
 
+    /// NoObjCARCExceptionsMDKind - The Metadata Kind for
+    /// clang.arc.no_objc_arc_exceptions metadata.
+    unsigned NoObjCARCExceptionsMDKind;
+
     Constant *getRetainRVCallee(Module *M);
     Constant *getAutoreleaseRVCallee(Module *M);
     Constant *getReleaseCallee(Module *M);
@@ -2406,7 +2410,15 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       bool SomeSuccHasSame = false;
       bool AllSuccsHaveSame = true;
       PtrState &S = MyStates.getPtrTopDownState(Arg);
-      for (succ_const_iterator SI(TI), SE(TI, false); SI != SE; ++SI) {
+      succ_const_iterator SI(TI), SE(TI, false);
+
+      // If the terminator is an invoke marked with the
+      // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
+      // ignored, for ARC purposes.
+      if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind))
+        --SE;
+
+      for (; SI != SE; ++SI) {
         PtrState &SuccS = BBStates[*SI].getPtrBottomUpState(Arg);
         switch (SuccS.GetSeq()) {
         case S_None:
@@ -2441,7 +2453,15 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       bool SomeSuccHasSame = false;
       bool AllSuccsHaveSame = true;
       PtrState &S = MyStates.getPtrTopDownState(Arg);
-      for (succ_const_iterator SI(TI), SE(TI, false); SI != SE; ++SI) {
+      succ_const_iterator SI(TI), SE(TI, false);
+
+      // If the terminator is an invoke marked with the
+      // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
+      // ignored, for ARC purposes.
+      if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind))
+        --SE;
+
+      for (; SI != SE; ++SI) {
         PtrState &SuccS = BBStates[*SI].getPtrBottomUpState(Arg);
         switch (SuccS.GetSeq()) {
         case S_None: {
@@ -2486,7 +2506,13 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
   succ_const_iterator SI(TI), SE(TI, false);
   if (SI == SE)
     MyStates.SetAsExit();
-  else
+  else {
+    // If the terminator is an invoke marked with the
+    // clang.arc.no_objc_arc_exceptions metadata, the unwind edge can be
+    // ignored, for ARC purposes.
+    if (isa<InvokeInst>(TI) && TI->getMetadata(NoObjCARCExceptionsMDKind))
+      --SE;
+
     do {
       const BasicBlock *Succ = *SI++;
       if (Succ == BB)
@@ -2507,6 +2533,7 @@ ObjCARCOpt::VisitBottomUp(BasicBlock *BB,
       }
       break;
     } while (SI != SE);
+  }
 
   // Visit all the instructions, bottom-up.
   for (BasicBlock::iterator I = BB->end(), E = BB->begin(); I != E; --I) {
@@ -2668,7 +2695,18 @@ ObjCARCOpt::VisitTopDown(BasicBlock *BB,
     MyStates.SetAsEntry();
   else
     do {
-      const BasicBlock *Pred = *PI++;
+      unsigned OperandNo = PI.getOperandNo();
+      const Use &Us = PI.getUse();
+      ++PI;
+
+      // Skip invoke unwind edges on invoke instructions marked with
+      // clang.arc.no_objc_arc_exceptions.
+      if (const InvokeInst *II = dyn_cast<InvokeInst>(Us.getUser()))
+        if (OperandNo == II->getNumArgOperands() + 2 &&
+            II->getMetadata(NoObjCARCExceptionsMDKind))
+          continue;
+
+      const BasicBlock *Pred = cast<TerminatorInst>(Us.getUser())->getParent();
       if (Pred == BB)
         continue;
       DenseMap<const BasicBlock *, BBState>::iterator I = BBStates.find(Pred);
@@ -2850,7 +2888,8 @@ ComputePostOrders(Function &F,
   OnStack.insert(EntryBB);
   do {
   dfs_next_succ:
-    succ_iterator End = succ_end(SuccStack.back().first);
+    TerminatorInst *TI = cast<TerminatorInst>(&SuccStack.back().first->back());
+    succ_iterator End = succ_iterator(TI, true);
     while (SuccStack.back().second != End) {
       BasicBlock *BB = *SuccStack.back().second++;
       if (Visited.insert(BB)) {
@@ -2871,7 +2910,7 @@ ComputePostOrders(Function &F,
   SmallVector<BasicBlock *, 4> Exits;
   for (Function::iterator I = F.begin(), E = F.end(); I != E; ++I) {
     BasicBlock *BB = I;
-    if (BB->getTerminator()->getNumSuccessors() == 0)
+    if (cast<TerminatorInst>(&BB->back())->getNumSuccessors() == 0)
       Exits.push_back(BB);
   }
 
@@ -3507,6 +3546,8 @@ bool ObjCARCOpt::doInitialization(Module &M) {
     M.getContext().getMDKindID("clang.imprecise_release");
   CopyOnEscapeMDKind =
     M.getContext().getMDKindID("clang.arc.copy_on_escape");
+  NoObjCARCExceptionsMDKind =
+    M.getContext().getMDKindID("clang.arc.no_objc_arc_exceptions");
 
   // Intuitively, objc_retain and others are nocapture, however in practice
   // they are not, because they return their argument value. And objc_release

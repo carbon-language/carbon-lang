@@ -71,6 +71,12 @@ public:
   unsigned getOperandNo() const {
     return It.getOperandNo();
   }
+
+  /// getUse - Return the operand Use in the predecessor's terminator
+  /// of the successor.
+  Use &getUse() const {
+    return It.getUse();
+  }
 };
 
 typedef PredIterator<BasicBlock, Value::use_iterator> pred_iterator;
