@@ -1715,31 +1715,47 @@ void CStringChecker::evalStrcmpCommon(CheckerContext &C, const CallExpr *CE,
 //===----------------------------------------------------------------------===//
 
 bool CStringChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
-  StringRef Name = C.getCalleeName(CE);
-  if (Name.empty())
+  const FunctionDecl *FDecl = C.getCalleeDecl(CE);
+
+  if (!FDecl)
     return false;
-  if (Name.startswith("__builtin_"))
-    Name = Name.substr(10);
 
-  FnCheck evalFunction = llvm::StringSwitch<FnCheck>(Name)
-    .Cases("memcpy", "__memcpy_chk", &CStringChecker::evalMemcpy)
-    .Cases("mempcpy", "__mempcpy_chk", &CStringChecker::evalMempcpy)
-    .Cases("memcmp", "bcmp", &CStringChecker::evalMemcmp)
-    .Cases("memmove", "__memmove_chk", &CStringChecker::evalMemmove)
-    .Cases("strcpy", "__strcpy_chk", &CStringChecker::evalStrcpy)
-    .Cases("strncpy", "__strncpy_chk", &CStringChecker::evalStrncpy)
-    .Cases("stpcpy", "__stpcpy_chk", &CStringChecker::evalStpcpy)
-    .Cases("strcat", "__strcat_chk", &CStringChecker::evalStrcat)
-    .Cases("strncat", "__strncat_chk", &CStringChecker::evalStrncat)
-    .Case("strlen", &CStringChecker::evalstrLength)
-    .Case("strnlen", &CStringChecker::evalstrnLength)
-    .Case("strcmp", &CStringChecker::evalStrcmp)
-    .Case("strncmp", &CStringChecker::evalStrncmp)
-    .Case("strcasecmp", &CStringChecker::evalStrcasecmp)
-    .Case("strncasecmp", &CStringChecker::evalStrncasecmp)
-    .Case("bcopy", &CStringChecker::evalBcopy)
-    .Default(NULL);
-
+  FnCheck evalFunction = 0;
+  if (C.isCLibraryFunction(FDecl, "memcpy"))
+    evalFunction =  &CStringChecker::evalMemcpy;
+  else if (C.isCLibraryFunction(FDecl, "mempcpy"))
+    evalFunction =  &CStringChecker::evalMempcpy;
+  else if (C.isCLibraryFunction(FDecl, "memcmp"))
+    evalFunction =  &CStringChecker::evalMemcmp;
+  else if (C.isCLibraryFunction(FDecl, "memmove"))
+    evalFunction =  &CStringChecker::evalMemmove;
+  else if (C.isCLibraryFunction(FDecl, "strcpy"))
+    evalFunction =  &CStringChecker::evalStrcpy;
+  else if (C.isCLibraryFunction(FDecl, "strncpy"))
+    evalFunction =  &CStringChecker::evalStrncpy;
+  else if (C.isCLibraryFunction(FDecl, "stpcpy"))
+    evalFunction =  &CStringChecker::evalStpcpy;
+  else if (C.isCLibraryFunction(FDecl, "strcat"))
+    evalFunction =  &CStringChecker::evalStrcat;
+  else if (C.isCLibraryFunction(FDecl, "strncat"))
+    evalFunction =  &CStringChecker::evalStrncat;
+  else if (C.isCLibraryFunction(FDecl, "strlen"))
+    evalFunction =  &CStringChecker::evalstrLength;
+  else if (C.isCLibraryFunction(FDecl, "strnlen"))
+    evalFunction =  &CStringChecker::evalstrnLength;
+  else if (C.isCLibraryFunction(FDecl, "strcmp"))
+    evalFunction =  &CStringChecker::evalStrcmp;
+  else if (C.isCLibraryFunction(FDecl, "strncmp"))
+    evalFunction =  &CStringChecker::evalStrncmp;
+  else if (C.isCLibraryFunction(FDecl, "strcasecmp"))
+    evalFunction =  &CStringChecker::evalStrcasecmp;
+  else if (C.isCLibraryFunction(FDecl, "strncasecmp"))
+    evalFunction =  &CStringChecker::evalStrncasecmp;
+  else if (C.isCLibraryFunction(FDecl, "bcopy"))
+    evalFunction =  &CStringChecker::evalBcopy;
+  else if (C.isCLibraryFunction(FDecl, "bcmp"))
+    evalFunction =  &CStringChecker::evalMemcmp;
+  
   // If the callee isn't a string function, let another checker handle it.
   if (!evalFunction)
     return false;

@@ -60,10 +60,14 @@ bool CheckerContext::isCLibraryFunction(const FunctionDecl *FD,
     return false;
 
   StringRef FName = II->getName();
-  if (FName.startswith("__inline"))
-    return (FName.find(Name) != StringRef::npos);
+  if (FName.equals(Name))
+    return true;
 
-  if (FD->isExternC() && FName.equals(Name))
+  if (FName.startswith("__inline") && (FName.find(Name) != StringRef::npos))
+    return true;
+
+  if (FName.startswith("__") && FName.endswith("_chk") &&
+      FName.find(Name) != StringRef::npos)
     return true;
 
   return false;
