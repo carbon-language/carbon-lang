@@ -15,7 +15,6 @@
 #define DEBUG_TYPE "misched"
 
 #include "ScheduleDAGInstrs.h"
-#include "LiveDebugVariables.h"
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/MachinePassRegistry.h"
 #include "llvm/CodeGen/Passes.h"
@@ -68,7 +67,6 @@ INITIALIZE_PASS_BEGIN(MachineScheduler, "misched",
 INITIALIZE_AG_DEPENDENCY(AliasAnalysis)
 INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
 INITIALIZE_PASS_DEPENDENCY(LiveIntervals)
-INITIALIZE_PASS_DEPENDENCY(LiveDebugVariables)
 INITIALIZE_PASS_END(MachineScheduler, "misched",
                     "Machine Instruction Scheduler", false, false)
 
@@ -87,8 +85,6 @@ void MachineScheduler::getAnalysisUsage(AnalysisUsage &AU) const {
   AU.addPreserved<SlotIndexes>();
   AU.addRequired<LiveIntervals>();
   AU.addPreserved<LiveIntervals>();
-  AU.addRequired<LiveDebugVariables>();
-  AU.addPreserved<LiveDebugVariables>();
   MachineFunctionPass::getAnalysisUsage(AU);
 }
 
