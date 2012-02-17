@@ -10,6 +10,7 @@
 #include "lldb/API/SBTypeNameSpecifier.h"
 
 #include "lldb/API/SBStream.h"
+#include "lldb/API/SBType.h"
 
 #include "lldb/Core/DataVisualization.h"
 
@@ -27,6 +28,13 @@ m_opaque_sp(new TypeNameSpecifierImpl(name, is_regex))
 {
     if (name == NULL || (*name) == 0)
         m_opaque_sp.reset();
+}
+
+SBTypeNameSpecifier::SBTypeNameSpecifier (SBType type) :
+m_opaque_sp()
+{
+    if (type.IsValid())
+        m_opaque_sp = TypeNameSpecifierImplSP(new TypeNameSpecifierImpl(type.m_opaque_sp->GetClangASTType()));
 }
 
 SBTypeNameSpecifier::SBTypeNameSpecifier (const lldb::SBTypeNameSpecifier &rhs) :
@@ -50,6 +58,17 @@ SBTypeNameSpecifier::GetName ()
         return NULL;
     
     return m_opaque_sp->GetName();
+}
+
+SBType
+SBTypeNameSpecifier::GetType ()
+{
+    if (!IsValid())
+        return SBType();
+    lldb_private::ClangASTType c_type = m_opaque_sp->GetClangASTType();
+    if (c_type.IsValid())
+        return SBType(c_type);
+    return SBType();
 }
 
 bool

@@ -49,42 +49,25 @@ class Radar10642615DataFormatterTestCase(TestBase):
         # clean slate for the next test case.
         def cleanup():
             self.runCmd('type summary clear', check=False)
+            self.runCmd('type category disable VectorTypes', check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
-        self.expect('frame variable value',
-            substrs = ['[0] = 1', '[2] = 4'])
+        self.runCmd('type category enable VectorTypes')
 
-        self.runCmd("type summary add vFloat --inline-children")
-     
-        self.expect('frame variable value',
-            substrs = ['[0]=1, [1]', ', [2]=4'])
-
-        self.runCmd("type summary add vFloat --inline-children --omit-names")
-
-        self.expect('frame variable value',
-            substrs = ['1, 0, 4, 0'])
-
-        self.runCmd("type summary add vFloat --inline-children")
-
-        self.expect('frame variable value',
-	            substrs = ['[0]=1, [1]', ', [2]=4'])
-
-        self.runCmd("type summary delete vFloat")
-
-        self.expect('frame variable value',
-            substrs = ['[0] = 1', '[2] = 4'])
-
-        self.runCmd("type summary add vFloat --omit-names", check=False) # should not work since we're not inlining children
-
-        self.expect('frame variable value',
-            substrs = ['[0] = 1', '[2] = 4'])
-
-        self.runCmd("type summary add vFloat --inline-children --omit-names")
-
-        self.expect('frame variable value',
-            substrs = ['1, 0, 4, 0'])
+        self.expect('frame variable',
+            substrs = ['(vFloat) valueFL = (1, 0, 4, 0)',
+                       '(int16_t [8]) valueI16 = (1, 0, 4, 0, 0, 1, 0, 4)',
+                       '(int32_t [4]) valueI32 = (1, 0, 4, 0)',
+                       '(vDouble) valueDL = (1, 4)',
+                       "(vUInt8) valueU8 = ('\\x01', '\\0', '\\x04', '\\0', '\\0', '\\x01', '\\0', '\\x04', '\\0', '\\0', '\\0', '\\0', '\\0', '\\0', '\\0', '\\0')",
+                       '(vUInt16) valueU16 = (1, 0, 4, 0, 0, 1, 0, 4)',
+                       '(vUInt32) valueU32 = (1, 2, 3, 4)',
+                       "(vSInt8) valueS8 = ('\\x01', '\\0', '\\x04', '\\0', '\\0', '\\x01', '\\0', '\\x04', '\\0', '\\0', '\\0', '\\0', '\\0', '\\0', '\\0', '\\0')",
+                       '(vSInt16) valueS16 = (1, 0, 4, 0, 0, 1, 0, 4)',
+                       '(vSInt32) valueS32 = (4, 3, 2, 1)',
+                       '(vBool32) valueBool32 = (0, 1, 0, 1)'])
 
 if __name__ == '__main__':
     import atexit

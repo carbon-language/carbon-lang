@@ -251,8 +251,23 @@ class SBFormattersAPITestCase(TestBase):
         self.expect("frame variable foo", matching=True,
              substrs = ['hello scripted world'])
 
+        frame = self.dbg.GetSelectedTarget().GetProcess().GetSelectedThread().GetSelectedFrame()
+        foo_ptr = frame.FindVariable("foo_ptr")
+        summary = foo_ptr.GetTypeSummary()
+
+        self.assertFalse(summary.IsValid(), "summary found for foo* when none was planned")
+
         self.expect("frame variable foo_ptr", matching=False,
              substrs = ['hello scripted world'])
+
+        new_category.AddTypeSummary(lldb.SBTypeNameSpecifier("JustAStruct"),
+             lldb.SBTypeSummary.CreateWithSummaryString("hello static world",
+             lldb.eTypeOptionNone))
+
+        summary = foo_ptr.GetTypeSummary()
+
+        self.assertTrue(summary.IsValid(), "no summary found for foo* when one was in place")
+        self.assertTrue(summary.GetData() == "hello static world", "wrong summary found for foo*")
 
 if __name__ == '__main__':
     import atexit

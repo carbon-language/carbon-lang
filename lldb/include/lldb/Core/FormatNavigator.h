@@ -476,7 +476,7 @@ protected:
     
     #define LLDB_MAX_REASONABLE_OBJC_CLASS_DEPTH 100
     
-    bool Get_ObjC(ValueObject& valobj,
+    bool Get_ObjC(const lldb::ProcessSP &process_sp,
              ObjCLanguageRuntime::ObjCISA isa,
              std::set<ObjCLanguageRuntime::ObjCISA> &found_values,
              MapValueType& entry,
@@ -485,7 +485,9 @@ protected:
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
         if (log)
             log->Printf("going to an Objective-C dynamic scanning");
-        Process* process = valobj.GetUpdatePoint().GetProcessSP().get();
+        if (!process_sp)
+            return false;
+        Process* process = process_sp.get();
         ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
         if (runtime == NULL)
         {
@@ -540,10 +542,155 @@ protected:
             return false;
         }
                 
-        if (Get_ObjC(valobj, parent, found_values, entry, reason))
+        if (Get_ObjC(process_sp, parent, found_values, entry, reason))
         {
             reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
             return true;
+        }
+        return false;
+    }
+    
+    bool
+    Get_CXXClass (ValueObject& valobj,
+                  const clang::Type* typePtr,
+                  MapValueType& entry,
+                  lldb::DynamicValueType use_dynamic,
+                  uint32_t& reason)
+    {
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+        if (log)
+            log->Printf("working with C++");
+        clang::CXXRecordDecl* record = typePtr->getAsCXXRecordDecl();
+        if (record)
+        {
+            if (!record->hasDefinition())
+                ClangASTContext::GetCompleteType(valobj.GetClangAST(), valobj.GetClangType());
+            if (record->hasDefinition())
+            {
+                clang::CXXRecordDecl::base_class_iterator pos,end;
+                if (record->getNumBases() > 0)
+                {
+                    if (log)
+                        log->Printf("look into bases");
+                    end = record->bases_end();
+                    for (pos = record->bases_begin(); pos != end; pos++)
+                    {
+                        if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->Cascades())
+                        {
+                            reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
+                            return true;
+                        }
+                    }
+                }
+                if (record->getNumVBases() > 0)
+                {
+                    if (log)
+                        log->Printf("look into VBases");
+                    end = record->vbases_end();
+                    for (pos = record->vbases_begin(); pos != end; pos++)
+                    {
+                        if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->Cascades())
+                        {
+                            reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+    
+    bool
+    Get_BitfieldMatch (ValueObject& valobj,
+                       ConstString typeName,
+                       MapValueType& entry,
+                       uint32_t& reason)
+    {
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+        // for bitfields, append size to the typename so one can custom format them
+        StreamString sstring;
+        sstring.Printf("%s:%d",typeName.AsCString(),valobj.GetBitfieldBitSize());
+        ConstString bitfieldname = ConstString(sstring.GetData());
+        if (log)
+            log->Printf("appended bitfield info, final result is %s", bitfieldname.GetCString());
+        if (Get(bitfieldname, entry))
+        {
+            if (log)
+                log->Printf("bitfield direct match found, returning");
+            return true;
+        }
+        else
+        {
+            reason |= lldb_private::eFormatterChoiceCriterionStrippedBitField;
+            if (log)
+                log->Printf("no bitfield direct match");
+            return false;
+        }
+    }
+    
+    bool
+    Get_ObjCDynamic(lldb::ProcessSP process_sp,
+                    ValueObject& valobj,
+                    MapValueType& entry,
+                    uint32_t& reason)
+    {
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+        if (!process_sp)
+            return false;
+        if (log)
+            log->Printf("this is an ObjC 'id', let's do dynamic search");
+        Process* process = process_sp.get();
+        ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
+        if (runtime == NULL)
+        {
+            if (log)
+                log->Printf("no valid ObjC runtime, skipping dynamic");
+        }
+        else
+        {
+            std::set<ObjCLanguageRuntime::ObjCISA> found_values;
+            if (Get_ObjC(process_sp, runtime->GetISA(valobj), found_values, entry, reason))
+            {
+                reason |= lldb_private::eFormatterChoiceCriterionDynamicObjCHierarchy;
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    bool
+    Get_ObjCStatic(const clang::ObjCObjectType *objc_class_type,
+                   ValueObject& valobj,
+                   clang::QualType type,
+                   MapValueType& entry,
+                   lldb::DynamicValueType use_dynamic,
+                   uint32_t& reason)
+    {
+        LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_TYPES));
+        if (log)
+            log->Printf("working with ObjC");
+        clang::ASTContext *ast = valobj.GetClangAST();
+        if (ClangASTContext::GetCompleteType(ast, valobj.GetClangType()) && !objc_class_type->isObjCId())
+        {
+            clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
+            if (class_interface_decl)
+            {
+                if (log)
+                    log->Printf("got an ObjCInterfaceDecl");
+                clang::ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
+                if (superclass_interface_decl)
+                {
+                    if (log)
+                        log->Printf("got a parent class for this ObjC class");
+                    clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
+                    if (Get(valobj, ivar_qual_type, entry, use_dynamic, reason) && entry->Cascades())
+                    {
+                        reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
+                        return true;
+                    }
+                }
+            }
         }
         return false;
     }
@@ -571,32 +718,19 @@ protected:
             return false;
         }
         ConstString typeName(ClangASTType::GetTypeNameForQualType(type).c_str());
+        
         if (valobj.GetBitfieldBitSize() > 0)
         {
-            // for bitfields, append size to the typename so one can custom format them
-            StreamString sstring;
-            sstring.Printf("%s:%d",typeName.AsCString(),valobj.GetBitfieldBitSize());
-            ConstString bitfieldname = ConstString(sstring.GetData());
-            if (log)
-                log->Printf("appended bitfield info, final result is %s", bitfieldname.GetCString());
-            if (Get(bitfieldname, entry))
-            {
-                if (log)
-                    log->Printf("bitfield direct match found, returning");
+            if (Get_BitfieldMatch(valobj, typeName, entry, reason))
                 return true;
-            }
-            else
-            {
-                reason |= lldb_private::eFormatterChoiceCriterionStrippedBitField;
-                if (log)
-                    log->Printf("no bitfield direct match");
-            }
         }
+        
         if (log)
             log->Printf("trying to get %s for VO name %s of type %s",
                         m_name.c_str(),
                         valobj.GetName().AsCString(),
                         typeName.AsCString());
+        
         if (Get(typeName, entry))
         {
             if (log)
@@ -616,28 +750,14 @@ protected:
                 return true;
             }
         }
+        
+        lldb::ProcessSP process_sp = valobj.GetUpdatePoint().GetProcessSP();
+        
         if (use_dynamic != lldb::eNoDynamicValues &&
-            (/*strstr(typeName, "id") == typeName ||*/
-             ClangASTType::GetMinimumLanguage(valobj.GetClangAST(), valobj.GetClangType()) == lldb::eLanguageTypeObjC))
+             ClangASTType::GetMinimumLanguage(valobj.GetClangAST(), valobj.GetClangType()) == lldb::eLanguageTypeObjC)
         {
-            if (log)
-                log->Printf("this is an ObjC 'id', let's do dynamic search");
-            Process* process = valobj.GetUpdatePoint().GetProcessSP().get();
-            ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
-            if (runtime == NULL)
-            {
-                if (log)
-                    log->Printf("no valid ObjC runtime, skipping dynamic");
-            }
-            else
-            {
-                std::set<ObjCLanguageRuntime::ObjCISA> found_values;
-                if (Get_ObjC(valobj, runtime->GetISA(valobj), found_values, entry, reason))
-                {
-                    reason |= lldb_private::eFormatterChoiceCriterionDynamicObjCHierarchy;
-                    return true;
-                }
-            }
+            if (Get_ObjCDynamic(process_sp, valobj, entry, reason))
+                return true;
         }
         else if (use_dynamic != lldb::eNoDynamicValues && log)
         {
@@ -664,24 +784,8 @@ protected:
             if (use_dynamic != lldb::eNoDynamicValues &&
                 typeName == m_id_cs)
             {
-                if (log)
-                    log->Printf("this is an ObjC 'id', let's do dynamic search");
-                Process* process = valobj.GetUpdatePoint().GetProcessSP().get();
-                ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
-                if (runtime == NULL)
-                {
-                    if (log)
-                        log->Printf("no valid ObjC runtime, skipping dynamic");
-                }
-                else
-                {
-                    std::set<ObjCLanguageRuntime::ObjCISA> found_values;
-                    if (Get_ObjC(valobj, runtime->GetISA(valobj), found_values, entry, reason))
-                    {
-                        reason |= lldb_private::eFormatterChoiceCriterionDynamicObjCHierarchy;
-                        return true;
-                    }
-                }
+                if (Get_ObjCDynamic(process_sp, valobj, entry, reason))
+                    return true;
             }
             if (log)
                 log->Printf("stripping ObjC pointer");
@@ -704,74 +808,19 @@ protected:
         const clang::ObjCObjectType *objc_class_type = typePtr->getAs<clang::ObjCObjectType>();
         if (objc_class_type)
         {
-            if (log)
-                log->Printf("working with ObjC");
-            clang::ASTContext *ast = valobj.GetClangAST();
-            if (ClangASTContext::GetCompleteType(ast, valobj.GetClangType()) && !objc_class_type->isObjCId())
-            {
-                clang::ObjCInterfaceDecl *class_interface_decl = objc_class_type->getInterface();
-                if (class_interface_decl)
-                {
-                    if (log)
-                        log->Printf("got an ObjCInterfaceDecl");
-                    clang::ObjCInterfaceDecl *superclass_interface_decl = class_interface_decl->getSuperClass();
-                    if (superclass_interface_decl)
-                    {
-                        if (log)
-                            log->Printf("got a parent class for this ObjC class");
-                        clang::QualType ivar_qual_type(ast->getObjCInterfaceType(superclass_interface_decl));
-                        if (Get(valobj, ivar_qual_type, entry, use_dynamic, reason) && entry->Cascades())
-                        {
-                            reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
-                            return true;
-                        }
-                    }
-                }
-            }
+            if (Get_ObjCStatic(objc_class_type,
+                              valobj,
+                              type,
+                              entry,
+                              use_dynamic,
+                              reason))
+            return true;
         }
         // for C++ classes, navigate up the hierarchy
         if (typePtr->isRecordType())
         {
-            if (log)
-                log->Printf("working with C++");
-            clang::CXXRecordDecl* record = typePtr->getAsCXXRecordDecl();
-            if (record)
-            {
-                if (!record->hasDefinition())
-                    ClangASTContext::GetCompleteType(valobj.GetClangAST(), valobj.GetClangType());
-                if (record->hasDefinition())
-                {
-                    clang::CXXRecordDecl::base_class_iterator pos,end;
-                    if (record->getNumBases() > 0)
-                    {
-                        if (log)
-                            log->Printf("look into bases");
-                        end = record->bases_end();
-                        for (pos = record->bases_begin(); pos != end; pos++)
-                        {
-                            if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->Cascades())
-                            {
-                                reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
-                                return true;
-                            }
-                        }
-                    }
-                    if (record->getNumVBases() > 0)
-                    {
-                        if (log)
-                            log->Printf("look into VBases");
-                        end = record->vbases_end();
-                        for (pos = record->vbases_begin(); pos != end; pos++)
-                        {
-                            if ((Get(valobj, pos->getType(), entry, use_dynamic, reason)) && entry->Cascades())
-                            {
-                                reason |= lldb_private::eFormatterChoiceCriterionNavigatedBaseClasses;
-                                return true;
-                            }
-                        }
-                    }
-                }
-            }
+            if (Get_CXXClass(valobj, typePtr, entry, use_dynamic, reason))
+                return true;
         }
         // try to strip typedef chains
         const clang::TypedefType* type_tdef = type->getAs<clang::TypedefType>();

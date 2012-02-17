@@ -8,10 +8,16 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/API/SBValue.h"
+
 #include "lldb/API/SBStream.h"
+#include "lldb/API/SBTypeFilter.h"
+#include "lldb/API/SBTypeFormat.h"
+#include "lldb/API/SBTypeSummary.h"
+#include "lldb/API/SBTypeSynthetic.h"
 
 #include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/DataVisualization.h"
 #include "lldb/Core/Log.h"
 #include "lldb/Core/Module.h"
 #include "lldb/Core/Scalar.h"
@@ -369,6 +375,86 @@ SBValue::SetValueFromCString (const char *value_str)
         }
     }
     return success;
+}
+
+lldb::SBTypeFormat
+SBValue::GetTypeFormat ()
+{
+    lldb::SBTypeFormat format;
+    lldb::ValueObjectSP value_sp(GetSP());
+    if (value_sp)
+    {
+        Mutex::Locker api_locker (value_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
+        if (value_sp->UpdateValueIfNeeded(true))
+        {
+            lldb::TypeFormatImplSP format_sp = value_sp->GetValueFormat();
+            if (format_sp)
+                format.SetSP(format_sp);
+        }
+    }
+    return format;
+}
+
+lldb::SBTypeSummary
+SBValue::GetTypeSummary ()
+{
+    lldb::SBTypeSummary summary;
+    lldb::ValueObjectSP value_sp(GetSP());
+    if (value_sp)
+    {
+        Mutex::Locker api_locker (value_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
+        if (value_sp->UpdateValueIfNeeded(true))
+        {
+            lldb::TypeSummaryImplSP summary_sp = value_sp->GetSummaryFormat();
+            if (summary_sp)
+                summary.SetSP(summary_sp);
+        }
+    }
+    return summary;
+}
+
+lldb::SBTypeFilter
+SBValue::GetTypeFilter ()
+{
+    lldb::SBTypeFilter filter;
+    lldb::ValueObjectSP value_sp(GetSP());
+    if (value_sp)
+    {
+        Mutex::Locker api_locker (value_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
+        if (value_sp->UpdateValueIfNeeded(true))
+        {
+            lldb::SyntheticChildrenSP synthetic_sp = value_sp->GetSyntheticChildren();
+            
+            if (synthetic_sp && !synthetic_sp->IsScripted())
+            {
+                TypeFilterImplSP filter_sp = std::tr1::static_pointer_cast<TypeFilterImpl>(synthetic_sp);
+                filter.SetSP(filter_sp);
+            }
+        }
+    }
+    return filter;
+}
+
+lldb::SBTypeSynthetic
+SBValue::GetTypeSynthetic ()
+{
+    lldb::SBTypeSynthetic synthetic;
+    lldb::ValueObjectSP value_sp(GetSP());
+    if (value_sp)
+    {
+        Mutex::Locker api_locker (value_sp->GetUpdatePoint().GetTargetSP()->GetAPIMutex());
+        if (value_sp->UpdateValueIfNeeded(true))
+        {
+            lldb::SyntheticChildrenSP children_sp = value_sp->GetSyntheticChildren();
+            
+            if (children_sp && children_sp->IsScripted())
+            {
+                TypeSyntheticImplSP synth_sp = std::tr1::static_pointer_cast<TypeSyntheticImpl>(children_sp);
+                synthetic.SetSP(synth_sp);
+            }
+        }
+    }
+    return synthetic;
 }
 
 lldb::SBValue

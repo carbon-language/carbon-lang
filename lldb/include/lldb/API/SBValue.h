@@ -100,6 +100,18 @@ public:
 
     bool
     SetValueFromCString (const char *value_str);
+    
+    lldb::SBTypeFormat
+    GetTypeFormat ();
+    
+    lldb::SBTypeSummary
+    GetTypeSummary ();
+    
+    lldb::SBTypeFilter
+    GetTypeFilter ();
+    
+    lldb::SBTypeSynthetic
+    GetTypeSynthetic ();
 
     lldb::SBValue
     GetChildAtIndex (uint32_t idx);

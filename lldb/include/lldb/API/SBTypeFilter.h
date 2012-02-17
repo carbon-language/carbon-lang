@@ -69,6 +69,7 @@ namespace lldb {
     protected:
         friend class SBDebugger;
         friend class SBTypeCategory;
+        friend class SBValue;
         
         lldb::TypeFilterImplSP
         GetSP ();

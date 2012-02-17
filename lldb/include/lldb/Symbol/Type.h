@@ -386,6 +386,12 @@ public:
     lldb::clang_type_t
     GetOpaqueQualType();    
 
+    lldb::TypeSP
+    GetTypeSP ()
+    {
+        return m_type_sp;
+    }
+
     bool
     GetDescription (lldb_private::Stream &strm, 
                     lldb::DescriptionLevel description_level);

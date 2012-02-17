@@ -580,11 +580,70 @@ FormatManager::FormatManager() :
     m_default_category_name(ConstString("default")),
     m_system_category_name(ConstString("system")), 
     m_gnu_cpp_category_name(ConstString("gnu-libstdc++")),
-    m_objc_category_name(ConstString("objc"))
+    m_objc_category_name(ConstString("objc")),
+    m_corefoundation_category_name(ConstString("CoreFoundation")),
+    m_coregraphics_category_name(ConstString("CoreGraphics")),
+    m_coreservices_category_name(ConstString("CoreServices")),
+    m_vectortypes_category_name(ConstString("VectorTypes"))
 {
     
-    // add some default stuff
-    // most formats, summaries, ... actually belong to the users' lldbinit file rather than here
+    LoadSystemFormatters();
+    LoadSTLFormatters();
+    LoadObjCFormatters();
+    
+    EnableCategory(m_objc_category_name,CategoryMap::Last);
+    //EnableCategory(m_corefoundation_category_name,CategoryMap::Last);
+    //EnableCategory(m_coreservices_category_name,CategoryMap::Last);
+    //EnableCategory(m_coregraphics_category_name,CategoryMap::Last);
+    EnableCategory(m_gnu_cpp_category_name,CategoryMap::Last);
+    //EnableCategory(m_vectortypes_category_name,CategoryMap::Last);
+    EnableCategory(m_system_category_name,CategoryMap::Last);
+}
+
+void
+FormatManager::LoadSTLFormatters()
+{
+    lldb::TypeSummaryImplSP std_string_summary_sp(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(true)
+                                                                          .SetSkipPointers(false)
+                                                                          .SetSkipReferences(false)
+                                                                          .SetDontShowChildren(true)
+                                                                          .SetDontShowValue(true)
+                                                                          .SetShowMembersOneLiner(false)
+                                                                          .SetHideItemNames(false),
+                                                                          "${var._M_dataplus._M_p}"));
+    
+    TypeCategoryImpl::SharedPointer gnu_category_sp = GetCategory(m_gnu_cpp_category_name);
+    
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::string"),
+                                                std_string_summary_sp);
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char>"),
+                                                std_string_summary_sp);
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char,std::char_traits<char>,std::allocator<char> >"),
+                                                std_string_summary_sp);
+    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char, class std::char_traits<char>, class std::allocator<char> >"),
+                                                std_string_summary_sp);
+    
+    
+#ifndef LLDB_DISABLE_PYTHON
+    
+    SyntheticChildren::Flags stl_synth_flags;
+    stl_synth_flags.SetCascades(true).SetSkipPointers(false).SetSkipReferences(false);
+    
+    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?vector<.+>$")),
+                                                       SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
+                                                                                                 "gnu_libstdcpp.StdVectorSynthProvider")));
+    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?map<.+> >$")),
+                                                       SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
+                                                                                                 "gnu_libstdcpp.StdMapSynthProvider")));
+    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?list<.+>$")),
+                                                       SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
+                                                                                                 "gnu_libstdcpp.StdListSynthProvider")));
+#endif
+}
+
+void
+FormatManager::LoadSystemFormatters()
+{
     lldb::TypeSummaryImplSP string_format(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(false)
                                                                   .SetSkipPointers(true)
                                                                   .SetSkipReferences(false)
@@ -611,64 +670,183 @@ FormatManager::FormatManager() :
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("char *"), string_format);
     sys_category_sp->GetSummaryNavigator()->Add(ConstString("const char *"), string_format);
     sys_category_sp->GetRegexSummaryNavigator()->Add(any_size_char_arr, string_array_format);
-    
-    // WARNING: temporary code!!
-    // The platform should be responsible for initializing its own formatters
-    // (e.g. to handle versioning, different runtime libraries, ...)
-    // Currently, basic formatters for std:: objects as implemented by
-    // the GNU libstdc++ are defined regardless, and enabled by default
-    // This is going to be moved to some platform-dependent location
-    // (in the meanwhile, these formatters should work for Mac OS X & Linux)
-    lldb::TypeSummaryImplSP std_string_summary_sp(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(true)
-                                                                          .SetSkipPointers(false)
-                                                                          .SetSkipReferences(false)
-                                                                          .SetDontShowChildren(true)
-                                                                          .SetDontShowValue(true)
-                                                                          .SetShowMembersOneLiner(false)
-                                                                          .SetHideItemNames(false),
-                                                                          "${var._M_dataplus._M_p}"));
-    
-    TypeCategoryImpl::SharedPointer gnu_category_sp = GetCategory(m_gnu_cpp_category_name);
-    
-    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::string"),
-                                                std_string_summary_sp);
-    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char>"),
-                                                std_string_summary_sp);
-    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char,std::char_traits<char>,std::allocator<char> >"),
-                                                std_string_summary_sp);
-    gnu_category_sp->GetSummaryNavigator()->Add(ConstString("std::basic_string<char, class std::char_traits<char>, class std::allocator<char> >"),
-                                                std_string_summary_sp);
+}
 
-    
-#ifndef LLDB_DISABLE_PYTHON
-    
-    SyntheticChildren::Flags stl_synth_flags;
-    stl_synth_flags.SetCascades(true).SetSkipPointers(false).SetSkipReferences(false);
-    
-    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?vector<.+>$")),
-                                     SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
-                                                                               "gnu_libstdcpp.StdVectorSynthProvider")));
-    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?map<.+> >$")),
-                                     SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
-                                                                               "gnu_libstdcpp.StdMapSynthProvider")));
-    gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?list<.+>$")),
-                                     SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
-                                                                               "gnu_libstdcpp.StdListSynthProvider")));
+static void
+AddSummary(TypeCategoryImpl::SharedPointer category_sp,
+           const char* string,
+           ConstString type_name,
+           TypeSummaryImpl::Flags flags)
+{
+    lldb::TypeSummaryImplSP summary_sp(new StringSummaryFormat(flags,
+                                                               string));
+    category_sp->GetSummaryNavigator()->Add(type_name,
+                                            summary_sp);
+}
 
-    lldb::TypeSummaryImplSP ObjC_BOOL_summary(new ScriptSummaryFormat(TypeSummaryImpl::Flags().SetCascades(false)
-                                                                      .SetSkipPointers(false)
-                                                                      .SetSkipReferences(false)
-                                                                      .SetDontShowChildren(true)
-                                                                      .SetDontShowValue(true)
-                                                                      .SetShowMembersOneLiner(false)
-                                                                      .SetHideItemNames(false),
+void
+FormatManager::LoadObjCFormatters()
+{
+    TypeSummaryImpl::Flags objc_flags;
+    objc_flags.SetCascades(false)
+    .SetSkipPointers(false)
+    .SetSkipReferences(false)
+    .SetDontShowChildren(true)
+    .SetDontShowValue(true)
+    .SetShowMembersOneLiner(false)
+    .SetHideItemNames(false);
+    
+    lldb::TypeSummaryImplSP ObjC_BOOL_summary(new ScriptSummaryFormat(objc_flags,
                                                                       "objc.BOOL_SummaryProvider",
                                                                       ""));
     TypeCategoryImpl::SharedPointer objc_category_sp = GetCategory(m_objc_category_name);
     objc_category_sp->GetSummaryNavigator()->Add(ConstString("BOOL"),
                                                  ObjC_BOOL_summary);
-#endif
-    EnableCategory(m_objc_category_name,CategoryMap::Last);
-    EnableCategory(m_gnu_cpp_category_name,CategoryMap::Last);
-    EnableCategory(m_system_category_name,CategoryMap::Last);
+    
+    
+    TypeCategoryImpl::SharedPointer corefoundation_category_sp = GetCategory(m_corefoundation_category_name);
+
+    AddSummary(corefoundation_category_sp,
+               "${var.years} years, ${var.months} months, ${var.days} days, ${var.hours} hours, ${var.minutes} minutes ${var.seconds} seconds",
+               ConstString("CFGregorianUnits"),
+               objc_flags);
+    AddSummary(corefoundation_category_sp,
+               "location=${var.location} length=${var.length}",
+               ConstString("CFRange"),
+               objc_flags);
+    AddSummary(corefoundation_category_sp,
+               "x=${var.x}, y=${var.y}",
+               ConstString("NSPoint"),
+               objc_flags);
+    AddSummary(corefoundation_category_sp,
+               "location=${var.location}, length=${var.length}",
+               ConstString("NSRange"),
+               objc_flags);
+    AddSummary(corefoundation_category_sp,
+               "${var.origin}, ${var.size}",
+               ConstString("NSRect"),
+               objc_flags);
+    AddSummary(corefoundation_category_sp,
+               "(${var.origin}, ${var.size}), ...",
+               ConstString("NSRectArray"),
+               objc_flags);
+    AddSummary(objc_category_sp,
+               "width=${var.width}, height=${var.height}",
+               ConstString("NSSize"),
+               objc_flags);
+    
+    TypeCategoryImpl::SharedPointer coregraphics_category_sp = GetCategory(m_coregraphics_category_name);
+    
+    AddSummary(coregraphics_category_sp,
+               "(width=${var.width}, height=${var.height})",
+               ConstString("CGSize"),
+               objc_flags);
+    AddSummary(coregraphics_category_sp,
+               "(x=${var.x}, y=${var.y})",
+               ConstString("CGPoint"),
+               objc_flags);
+    AddSummary(coregraphics_category_sp,
+               "origin=${var.origin} size=${var.size}",
+               ConstString("CGRect"),
+               objc_flags);
+    
+    TypeCategoryImpl::SharedPointer coreservices_category_sp = GetCategory(m_coreservices_category_name);
+    
+    AddSummary(coreservices_category_sp,
+               "red=${var.red} green=${var.green} blue=${var.blue}",
+               ConstString("RGBColor"),
+               objc_flags);
+    AddSummary(coreservices_category_sp,
+               "(t=${var.top}, l=${var.left}, b=${var.bottom}, r=${var.right})",
+               ConstString("Rect"),
+               objc_flags);
+    AddSummary(coreservices_category_sp,
+               "(v=${var.v}, h=${var.h})",
+               ConstString("Point"),
+               objc_flags);
+    AddSummary(coreservices_category_sp,
+               "${var.month}/${var.day}/${var.year}  ${var.hour} :${var.minute} :${var.second} dayOfWeek:${var.dayOfWeek}",
+               ConstString("DateTimeRect *"),
+               objc_flags);
+    AddSummary(coreservices_category_sp,
+               "${var.ld.month}/${var.ld.day}/${var.ld.year} ${var.ld.hour} :${var.ld.minute} :${var.ld.second} dayOfWeek:${var.ld.dayOfWeek}",
+               ConstString("LongDateRect"),
+               objc_flags);
+    AddSummary(coreservices_category_sp,
+               "(x=${var.x}, y=${var.y})",
+               ConstString("HIPoint"),
+               objc_flags);
+    AddSummary(coreservices_category_sp,
+               "origin=${var.origin} size=${var.size}",
+               ConstString("HIRect"),
+               objc_flags);
+    
+    TypeCategoryImpl::SharedPointer vectors_category_sp = GetCategory(m_vectortypes_category_name);
+
+    TypeSummaryImpl::Flags vector_flags;
+    vector_flags.SetCascades(true)
+    .SetSkipPointers(true)
+    .SetSkipReferences(false)
+    .SetDontShowChildren(true)
+    .SetDontShowValue(false)
+    .SetShowMembersOneLiner(true)
+    .SetHideItemNames(true);
+    
+    AddSummary(vectors_category_sp,
+               "${var.uint128}",
+               ConstString("builtin_type_vec128"),
+               objc_flags);
+
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("float [4]"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("int32_t [4]"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("int16_t [8]"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("vDouble"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("vFloat"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("vSInt8"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("vSInt16"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("vSInt32"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("vUInt16"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("vUInt8"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("vUInt16"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("vUInt32"),
+               vector_flags);
+    AddSummary(vectors_category_sp,
+               "",
+               ConstString("vBool32"),
+               vector_flags);
 }

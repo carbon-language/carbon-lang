@@ -171,6 +171,7 @@ protected:
     friend class SBFunction;
     friend class SBModule;
     friend class SBTarget;
+    friend class SBTypeNameSpecifier;
     friend class SBTypeMember;
     friend class SBTypeList;
     friend class SBValue;

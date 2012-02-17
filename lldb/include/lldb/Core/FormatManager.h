@@ -671,12 +671,29 @@ private:
     ConstString m_system_category_name;
     ConstString m_gnu_cpp_category_name;
     ConstString m_objc_category_name;
+    ConstString m_corefoundation_category_name;
+    ConstString m_coregraphics_category_name;
+    ConstString m_coreservices_category_name;
+    ConstString m_vectortypes_category_name;
     
     CategoryMap&
     GetCategories ()
     {
         return m_categories_map;
     }
+    
+    // WARNING: these are temporary functions that setup formatters
+    // while a few of these actually should be globally available and setup by LLDB itself
+    // most would actually belong to the users' lldbinit file or to some other form of configurable
+    // storage
+    void
+    LoadSTLFormatters();
+    
+    void
+    LoadSystemFormatters();
+    
+    void
+    LoadObjCFormatters();
     
 };
     

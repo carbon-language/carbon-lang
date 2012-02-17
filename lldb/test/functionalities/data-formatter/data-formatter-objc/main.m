@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #import <Foundation/Foundation.h>
+#include <Carbon/Carbon.h>
 
 @interface MyClass : NSObject
 {
@@ -86,9 +87,9 @@ int main (int argc, const char * argv[])
     
     NSString *str4 = [NSString stringWithFormat:@"This is string number %ld right here", (long)4];
     
-    NSRect rect = {{1,1},{5,5}};
+    NSRect ns_rect = {{1,1},{5,5}};
     
-    NSString* str5 = NSStringFromRect(rect);
+    NSString* str5 = NSStringFromRect(ns_rect);
     
     NSString* str6 = [@"/usr/doc/README.1ST" pathExtension];
     
@@ -119,6 +120,31 @@ int main (int argc, const char * argv[])
     
     id dyn_test = str12;
     
+	CFGregorianUnits cf_greg_units = {1,3,5,12,5,7};
+	CFRange cf_range = {4,4};
+	NSPoint ns_point = {4,4};
+	NSRange ns_range = {4,4};
+	NSRect* ns_rect_ptr = &ns_rect;
+	NSRectArray ns_rect_arr = &ns_rect;
+	NSSize ns_size = {5,7};
+	NSSize* ns_size_ptr = &ns_size;
+	
+	CGSize cg_size = {1,6};
+	CGPoint cg_point = {2,7};
+	CGRect cg_rect = {{1,2}, {7,7}};
+	
+	RGBColor rgb_color = {3,56,35};
+	RGBColor* rgb_color_ptr = &rgb_color;
+	
+	Rect rect = {4,8,4,7};
+	Rect* rect_ptr = &rect;
+	
+	Point point = {7,12};
+	Point* point_ptr = &point;
+	
+	HIPoint hi_point = {7,12};
+	HIRect hi_rect = {{3,5},{4,6}};
+
     // Set break point at this line.
     [pool drain];
     return 0;
