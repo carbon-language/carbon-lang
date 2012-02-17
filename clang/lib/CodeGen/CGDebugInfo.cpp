@@ -1798,7 +1798,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
     else if (CXXDecl->isDynamicClass())
       ContainingType = RealDecl;
 
-    RealDecl->replaceOperandWith(9, ContainingType);
+    RealDecl->replaceOperandWith(12, ContainingType);
   }
   return llvm::DIType(RealDecl);
 }
