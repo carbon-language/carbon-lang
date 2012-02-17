@@ -726,13 +726,6 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
 // public API
 
 /*
-A foreign exception is defined by by one with an exceptionClass that doesn't
-have 'C++' in the 3 low order bytes 3 - 1:
-
-  big end  |   | ... | C | + | + |1/0|  little end
-
-The lowest order byte may be 0 or 1.
-
 The personality function branches on actions like so:
 
 _UA_SEARCH_PHASE
