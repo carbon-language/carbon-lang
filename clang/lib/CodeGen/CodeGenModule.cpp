@@ -66,7 +66,7 @@ CodeGenModule::CodeGenModule(ASTContext &C, const CodeGenOptions &CGO,
   : Context(C), Features(C.getLangOptions()), CodeGenOpts(CGO), TheModule(M),
     TheTargetData(TD), TheTargetCodeGenInfo(0), Diags(diags),
     ABI(createCXXABI(*this)), 
-    Types(C, M, TD, getTargetCodeGenInfo().getABIInfo(), ABI, CGO),
+    Types(*this),
     TBAA(0),
     VTables(*this), ObjCRuntime(0), OpenCLRuntime(0), CUDARuntime(0),
     DebugInfo(0), ARCData(0), NoObjCARCExceptionsMetadata(0),
@@ -580,7 +580,7 @@ void CodeGenModule::SetFunctionAttributes(GlobalDecl GD,
   const FunctionDecl *FD = cast<FunctionDecl>(GD.getDecl());
 
   if (!IsIncompleteFunction)
-    SetLLVMFunctionAttributes(FD, getTypes().getFunctionInfo(GD), F);
+    SetLLVMFunctionAttributes(FD, getTypes().arrangeGlobalDeclaration(GD), F);
 
   // Only a few attributes are set on declarations; these may later be
   // overridden by a definition.
@@ -1600,11 +1600,8 @@ void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());
 
   // Compute the function info and LLVM type.
-  const CGFunctionInfo &FI = getTypes().getFunctionInfo(GD);
-  bool variadic = false;
-  if (const FunctionProtoType *fpt = D->getType()->getAs<FunctionProtoType>())
-    variadic = fpt->isVariadic();
-  llvm::FunctionType *Ty = getTypes().GetFunctionType(FI, variadic);
+  const CGFunctionInfo &FI = getTypes().arrangeGlobalDeclaration(GD);
+  llvm::FunctionType *Ty = getTypes().GetFunctionType(FI);
 
   // Get or create the prototype for the function.
   llvm::Constant *Entry = GetAddrOfFunction(GD, Ty);

@@ -218,8 +218,8 @@ ItaniumCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
     cast<CXXRecordDecl>(MPT->getClass()->getAs<RecordType>()->getDecl());
 
   llvm::FunctionType *FTy = 
-    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(RD, FPT),
-                                   FPT->isVariadic());
+    CGM.getTypes().GetFunctionType(
+      CGM.getTypes().arrangeCXXMethodType(RD, FPT));
 
   llvm::IntegerType *ptrdiff = getPtrDiffTy();
   llvm::Constant *ptrdiff_1 = llvm::ConstantInt::get(ptrdiff, 1);
@@ -511,8 +511,7 @@ llvm::Constant *ItaniumCXXABI::BuildMemberPointer(const CXXMethodDecl *MD,
     // Check whether the function has a computable LLVM signature.
     if (Types.isFuncTypeConvertible(FPT)) {
       // The function has a computable LLVM signature; use the correct type.
-      Ty = Types.GetFunctionType(Types.getFunctionInfo(MD),
-                                 FPT->isVariadic());
+      Ty = Types.GetFunctionType(Types.arrangeCXXMethodDeclaration(MD));
     } else {
       // Use an arbitrary non-function type to tell GetAddrOfFunction that the
       // function type is incomplete.

@@ -49,9 +49,8 @@ llvm::Value *CGCXXABI::EmitLoadOfMemberFunctionPointer(CodeGenFunction &CGF,
     MPT->getPointeeType()->getAs<FunctionProtoType>();
   const CXXRecordDecl *RD = 
     cast<CXXRecordDecl>(MPT->getClass()->getAs<RecordType>()->getDecl());
-  llvm::FunctionType *FTy = 
-    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(RD, FPT),
-                                   FPT->isVariadic());
+  llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(
+                              CGM.getTypes().arrangeCXXMethodType(RD, FPT));
   return llvm::Constant::getNullValue(FTy->getPointerTo());
 }
 

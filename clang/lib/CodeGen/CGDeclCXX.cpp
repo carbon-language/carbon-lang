@@ -277,7 +277,7 @@ void CodeGenFunction::GenerateCXXGlobalVarDeclInitFunc(llvm::Function *Fn,
                                                  llvm::GlobalVariable *Addr,
                                                        bool PerformInit) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
-                getTypes().getNullaryFunctionInfo(),
+                getTypes().arrangeNullaryFunction(),
                 FunctionArgList(), SourceLocation());
 
   // Use guarded initialization if the global variable is weak. This
@@ -297,7 +297,7 @@ void CodeGenFunction::GenerateCXXGlobalInitFunc(llvm::Function *Fn,
                                                 llvm::Constant **Decls,
                                                 unsigned NumDecls) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
-                getTypes().getNullaryFunctionInfo(),
+                getTypes().arrangeNullaryFunction(),
                 FunctionArgList(), SourceLocation());
 
   RunCleanupsScope Scope(*this);
@@ -322,7 +322,7 @@ void CodeGenFunction::GenerateCXXGlobalDtorFunc(llvm::Function *Fn,
                   const std::vector<std::pair<llvm::WeakVH, llvm::Constant*> >
                                                 &DtorsAndObjects) {
   StartFunction(GlobalDecl(), getContext().VoidTy, Fn,
-                getTypes().getNullaryFunctionInfo(),
+                getTypes().arrangeNullaryFunction(),
                 FunctionArgList(), SourceLocation());
 
   // Emit the dtors, in reverse order from construction.
@@ -350,9 +350,10 @@ CodeGenFunction::generateDestroyHelper(llvm::Constant *addr,
   args.push_back(&dst);
   
   const CGFunctionInfo &FI = 
-    CGM.getTypes().getFunctionInfo(getContext().VoidTy, args, 
-                                   FunctionType::ExtInfo());
-  llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI, false);
+    CGM.getTypes().arrangeFunctionDeclaration(getContext().VoidTy, args,
+                                              FunctionType::ExtInfo(),
+                                              /*variadic*/ false);
+  llvm::FunctionType *FTy = CGM.getTypes().GetFunctionType(FI);
   llvm::Function *fn = 
     CreateGlobalInitOrDestructFunction(CGM, FTy, "__cxx_global_array_dtor");
 

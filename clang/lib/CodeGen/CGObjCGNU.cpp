@@ -103,8 +103,6 @@ class LazyRuntimeFunction {
 /// GNUstep).
 class CGObjCGNU : public CGObjCRuntime {
 protected:
-  /// The module that is using this class
-  CodeGenModule &CGM;
   /// The LLVM module into which output is inserted
   llvm::Module &TheModule;
   /// strut objc_super.  Used for sending messages to super.  This structure
@@ -688,9 +686,9 @@ static std::string SymbolNameForMethod(const StringRef &ClassName,
 
 CGObjCGNU::CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
     unsigned protocolClassVersion)
-  : CGM(cgm), TheModule(CGM.getModule()), VMContext(cgm.getLLVMContext()),
-  ClassPtrAlias(0), MetaClassPtrAlias(0), RuntimeVersion(runtimeABIVersion),
-  ProtocolVersion(protocolClassVersion) {
+  : CGObjCRuntime(cgm), TheModule(CGM.getModule()),
+    VMContext(cgm.getLLVMContext()), ClassPtrAlias(0), MetaClassPtrAlias(0),
+    RuntimeVersion(runtimeABIVersion), ProtocolVersion(protocolClassVersion) {
 
   msgSendMDKind = VMContext.getMDKindID("GNUObjCMessageSend");
 
@@ -1037,9 +1035,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
   ActualArgs.add(RValue::get(cmd), CGF.getContext().getObjCSelType());
   ActualArgs.addFrom(CallArgs);
 
-  CodeGenTypes &Types = CGM.getTypes();
-  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
-                                                       FunctionType::ExtInfo());
+  MessageSendInfo MSI = getMessageSendInfo(Method, ResultType, ActualArgs);
 
   llvm::Value *ReceiverClass = 0;
   if (isCategoryImpl) {
@@ -1092,12 +1088,10 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
   Builder.CreateStore(ReceiverClass, Builder.CreateStructGEP(ObjCSuper, 1));
 
   ObjCSuper = EnforceType(Builder, ObjCSuper, PtrToObjCSuperTy);
-  llvm::FunctionType *impType =
-    Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
 
   // Get the IMP
   llvm::Value *imp = LookupIMPSuper(CGF, ObjCSuper, cmd);
-  imp = EnforceType(Builder, imp, llvm::PointerType::getUnqual(impType));
+  imp = EnforceType(Builder, imp, MSI.MessengerType);
 
   llvm::Value *impMD[] = {
       llvm::MDString::get(VMContext, Sel.getAsString()),
@@ -1107,8 +1101,7 @@ CGObjCGNU::GenerateMessageSendSuper(CodeGenFunction &CGF,
   llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD);
 
   llvm::Instruction *call;
-  RValue msgRet = CGF.EmitCall(FnInfo, imp, Return, ActualArgs,
-      0, &call);
+  RValue msgRet = CGF.EmitCall(MSI.CallInfo, imp, Return, ActualArgs, 0, &call);
   call->setMetadata(msgSendMDKind, node);
   return msgRet;
 }
@@ -1181,13 +1174,13 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
    };
   llvm::MDNode *node = llvm::MDNode::get(VMContext, impMD);
 
-  CodeGenTypes &Types = CGM.getTypes();
   CallArgList ActualArgs;
   ActualArgs.add(RValue::get(Receiver), ASTIdTy);
   ActualArgs.add(RValue::get(cmd), CGF.getContext().getObjCSelType());
   ActualArgs.addFrom(CallArgs);
-  const CGFunctionInfo &FnInfo = Types.getFunctionInfo(ResultType, ActualArgs,
-                                                       FunctionType::ExtInfo());
+
+  MessageSendInfo MSI = getMessageSendInfo(Method, ResultType, ActualArgs);
+
   // Get the IMP to call
   llvm::Value *imp;
 
@@ -1203,7 +1196,7 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
       if (CGM.ReturnTypeUsesFPRet(ResultType)) {
         imp = CGM.CreateRuntimeFunction(llvm::FunctionType::get(IdTy, IdTy, true),
                                   "objc_msgSend_fpret");
-      } else if (CGM.ReturnTypeUsesSRet(FnInfo)) {
+      } else if (CGM.ReturnTypeUsesSRet(MSI.CallInfo)) {
         // The actual types here don't matter - we're going to bitcast the
         // function anyway
         imp = CGM.CreateRuntimeFunction(llvm::FunctionType::get(IdTy, IdTy, true),
@@ -1217,12 +1210,10 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
   // Reset the receiver in case the lookup modified it
   ActualArgs[0] = CallArg(RValue::get(Receiver), ASTIdTy, false);
 
-  llvm::FunctionType *impType =
-    Types.GetFunctionType(FnInfo, Method ? Method->isVariadic() : false);
-  imp = EnforceType(Builder, imp, llvm::PointerType::getUnqual(impType));
+  imp = EnforceType(Builder, imp, MSI.MessengerType);
 
   llvm::Instruction *call;
-  RValue msgRet = CGF.EmitCall(FnInfo, imp, Return, ActualArgs,
+  RValue msgRet = CGF.EmitCall(MSI.CallInfo, imp, Return, ActualArgs,
       0, &call);
   call->setMetadata(msgSendMDKind, node);
 
@@ -2418,7 +2409,7 @@ llvm::Function *CGObjCGNU::GenerateMethod(const ObjCMethodDecl *OMD,
 
   CodeGenTypes &Types = CGM.getTypes();
   llvm::FunctionType *MethodTy =
-    Types.GetFunctionType(Types.getFunctionInfo(OMD), OMD->isVariadic());
+    Types.GetFunctionType(Types.arrangeObjCMethodDeclaration(OMD));
   std::string FunctionName = SymbolNameForMethod(ClassName, CategoryName,
       MethodName, isClassMethod);
 

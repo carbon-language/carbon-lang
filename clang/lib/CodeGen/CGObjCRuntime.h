@@ -63,6 +63,9 @@ namespace CodeGen {
 /// Implements runtime-specific code generation functions.
 class CGObjCRuntime {
 protected:
+  CodeGen::CodeGenModule &CGM;
+  CGObjCRuntime(CodeGen::CodeGenModule &CGM) : CGM(CGM) {}
+
   // Utility functions for unified ivar access. These need to
   // eventually be folded into other places (the structure layout
   // code).
@@ -255,6 +258,19 @@ public:
   virtual llvm::Constant *BuildGCBlockLayout(CodeGen::CodeGenModule &CGM,
                                   const CodeGen::CGBlockInfo &blockInfo) = 0;
   virtual llvm::GlobalVariable *GetClassGlobal(const std::string &Name) = 0;
+
+  struct MessageSendInfo {
+    const CGFunctionInfo &CallInfo;
+    llvm::PointerType *MessengerType;
+
+    MessageSendInfo(const CGFunctionInfo &callInfo,
+                    llvm::PointerType *messengerType)
+      : CallInfo(callInfo), MessengerType(messengerType) {}
+  };
+
+  MessageSendInfo getMessageSendInfo(const ObjCMethodDecl *method,
+                                     QualType resultType,
+                                     CallArgList &callArgs);
 };
 
 /// Creates an instance of an Objective-C runtime class.

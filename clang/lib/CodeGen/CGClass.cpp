@@ -1289,7 +1289,7 @@ CodeGenFunction::EmitSynthesizedCXXCopyCtorCall(const CXXConstructorDecl *D,
     EmitCallArg(Args, *Arg, ArgType);
   }
   
-  EmitCall(CGM.getTypes().getFunctionInfo(Args, FPT), Callee,
+  EmitCall(CGM.getTypes().arrangeFunctionCall(Args, FPT), Callee,
            ReturnValueSlot(), Args, D);
 }
 
@@ -1325,7 +1325,7 @@ CodeGenFunction::EmitDelegateCXXConstructorCall(const CXXConstructorDecl *Ctor,
     EmitDelegateCallArg(DelegateArgs, param);
   }
 
-  EmitCall(CGM.getTypes().getFunctionInfo(Ctor, CtorType),
+  EmitCall(CGM.getTypes().arrangeCXXConstructorDeclaration(Ctor, CtorType),
            CGM.GetAddrOfCXXConstructor(Ctor, CtorType), 
            ReturnValueSlot(), DelegateArgs, Ctor);
 }
@@ -1710,15 +1710,14 @@ llvm::Value *
 CodeGenFunction::EmitCXXOperatorMemberCallee(const CXXOperatorCallExpr *E,
                                              const CXXMethodDecl *MD,
                                              llvm::Value *This) {
-  const FunctionProtoType *FPT = MD->getType()->castAs<FunctionProtoType>();
-  llvm::Type *Ty =
-    CGM.getTypes().GetFunctionType(CGM.getTypes().getFunctionInfo(MD),
-                                   FPT->isVariadic());
+  llvm::FunctionType *fnType =
+    CGM.getTypes().GetFunctionType(
+                             CGM.getTypes().arrangeCXXMethodDeclaration(MD));
 
   if (UseVirtualCall(getContext(), E, MD))
-    return BuildVirtualCall(MD, This, Ty);
+    return BuildVirtualCall(MD, This, fnType);
 
-  return CGM.GetAddrOfFunction(MD, Ty);
+  return CGM.GetAddrOfFunction(MD, fnType);
 }
 
 void CodeGenFunction::EmitLambdaToBlockPointerBody(FunctionArgList &Args) {
@@ -1750,9 +1749,10 @@ void CodeGenFunction::EmitLambdaDelegatingInvokeBody(const CXXMethodDecl *MD) {
 
   // Get the address of the call operator.
   GlobalDecl GD(CallOperator);
-  const CGFunctionInfo &CalleeFnInfo = CGM.getTypes().getFunctionInfo(GD);
-  llvm::Type *Ty =
-    CGM.getTypes().GetFunctionType(CalleeFnInfo, FPT->isVariadic());
+  const CGFunctionInfo &CalleeFnInfo =
+    CGM.getTypes().arrangeFunctionCall(ResultType, CallArgs, FPT->getExtInfo(),
+                                       RequiredArgs::forPrototypePlus(FPT, 1));
+  llvm::Type *Ty = CGM.getTypes().GetFunctionType(CalleeFnInfo);
   llvm::Value *Callee = CGM.GetAddrOfFunction(GD, Ty);
 
   // Determine whether we have a return value slot to use.

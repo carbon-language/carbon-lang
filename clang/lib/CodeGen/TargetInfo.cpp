@@ -98,8 +98,8 @@ unsigned TargetCodeGenInfo::getSizeOfUnwindException() const {
   return 32;
 }
 
-bool TargetCodeGenInfo::isNoProtoCallVariadic(
-                                       const CodeGen::CGFunctionInfo &) const {
+bool TargetCodeGenInfo::isNoProtoCallVariadic(const CallArgList &args,
+                                     const FunctionNoProtoType *fnType) const {
   // The following conventions are known to require this to be false:
   //   x86_stdcall
   //   MIPS
@@ -935,6 +935,17 @@ public:
   X86_64ABIInfo(CodeGen::CodeGenTypes &CGT, bool hasavx) :
       ABIInfo(CGT), HasAVX(hasavx) {}
 
+  bool isPassedUsingAVXType(QualType type) const {
+    unsigned neededInt, neededSSE;
+    ABIArgInfo info = classifyArgumentType(type, neededInt, neededSSE);
+    if (info.isDirect()) {
+      llvm::Type *ty = info.getCoerceToType();
+      if (llvm::VectorType *vectorTy = dyn_cast_or_null<llvm::VectorType>(ty))
+        return (vectorTy->getBitWidth() > 128);
+    }
+    return false;
+  }
+
   virtual void computeInfo(CGFunctionInfo &FI) const;
 
   virtual llvm::Value *EmitVAArg(llvm::Value *VAListAddr, QualType Ty,
@@ -960,6 +971,10 @@ public:
   X86_64TargetCodeGenInfo(CodeGen::CodeGenTypes &CGT, bool HasAVX)
     : TargetCodeGenInfo(new X86_64ABIInfo(CGT, HasAVX)) {}
 
+  const X86_64ABIInfo &getABIInfo() const {
+    return static_cast<const X86_64ABIInfo&>(TargetCodeGenInfo::getABIInfo());
+  }
+
   int getDwarfEHStackPointer(CodeGen::CodeGenModule &CGM) const {
     return 7;
   }
@@ -980,33 +995,29 @@ public:
     return X86AdjustInlineAsmType(CGF, Constraint, Ty);
   }
 
-  bool isNoProtoCallVariadic(const CodeGen::CGFunctionInfo &FI) const {
+  bool isNoProtoCallVariadic(const CallArgList &args,
+                             const FunctionNoProtoType *fnType) const {
     // The default CC on x86-64 sets %al to the number of SSA
     // registers used, and GCC sets this when calling an unprototyped
     // function, so we override the default behavior.  However, don't do
     // that when AVX types are involved: the ABI explicitly states it is
     // undefined, and it doesn't work in practice because of how the ABI
     // defines varargs anyway.
-    if (FI.getCallingConvention() == llvm::CallingConv::C) {
+    if (fnType->getCallConv() == CC_Default || fnType->getCallConv() == CC_C) {
       bool HasAVXType = false;
-      for (CGFunctionInfo::const_arg_iterator it = FI.arg_begin(),
-                                              ie = FI.arg_end();
-           it != ie; ++it) {
-        if (it->info.isDirect()) {
-          llvm::Type *Ty = it->info.getCoerceToType();
-          if (llvm::VectorType *VTy = dyn_cast_or_null<llvm::VectorType>(Ty)) {
-            if (VTy->getBitWidth() > 128) {
-              HasAVXType = true;
-              break;
-            }
-          }
+      for (CallArgList::const_iterator
+             it = args.begin(), ie = args.end(); it != ie; ++it) {
+        if (getABIInfo().isPassedUsingAVXType(it->Ty)) {
+          HasAVXType = true;
+          break;
         }
       }
+
       if (!HasAVXType)
         return true;
     }
 
-    return TargetCodeGenInfo::isNoProtoCallVariadic(FI);
+    return TargetCodeGenInfo::isNoProtoCallVariadic(args, fnType);
   }
 
 };

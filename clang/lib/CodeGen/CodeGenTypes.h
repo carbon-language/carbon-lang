@@ -52,10 +52,13 @@ namespace clang {
 namespace CodeGen {
   class CGCXXABI;
   class CGRecordLayout;
+  class CodeGenModule;
+  class RequiredArgs;
 
 /// CodeGenTypes - This class organizes the cross-module state that is used
 /// while lowering AST types to LLVM types.
 class CodeGenTypes {
+  // Some of this stuff should probably be left on the CGM.
   ASTContext &Context;
   const TargetInfo &Target;
   llvm::Module &TheModule;
@@ -63,6 +66,7 @@ class CodeGenTypes {
   const ABIInfo &TheABIInfo;
   CGCXXABI &TheCXXABI;
   const CodeGenOptions &CodeGenOpts;
+  CodeGenModule &CGM;
 
   /// The opaque type map for Objective-C interfaces. All direct
   /// manipulation is done by the runtime interfaces, which are
@@ -101,9 +105,7 @@ private:
   llvm::DenseMap<const Type *, llvm::Type *> TypeCache;
 
 public:
-  CodeGenTypes(ASTContext &Ctx, llvm::Module &M, const llvm::TargetData &TD,
-               const ABIInfo &Info, CGCXXABI &CXXABI,
-               const CodeGenOptions &Opts);
+  CodeGenTypes(CodeGenModule &CGM);
   ~CodeGenTypes();
 
   const llvm::TargetData &getTargetData() const { return TheTargetData; }
@@ -124,8 +126,7 @@ public:
   llvm::Type *ConvertTypeForMem(QualType T);
 
   /// GetFunctionType - Get the LLVM function type for \arg Info.
-  llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info,
-                                      bool IsVariadic);
+  llvm::FunctionType *GetFunctionType(const CGFunctionInfo &Info);
 
   llvm::FunctionType *GetFunctionType(GlobalDecl GD);
 
@@ -148,50 +149,66 @@ public:
 
   /// getNullaryFunctionInfo - Get the function info for a void()
   /// function with standard CC.
-  const CGFunctionInfo &getNullaryFunctionInfo();
+  const CGFunctionInfo &arrangeNullaryFunction();
 
-  /// getFunctionInfo - Get the function info for the specified function decl.
-  const CGFunctionInfo &getFunctionInfo(GlobalDecl GD);
+  // The arrangement methods are split into three families:
+  //   - those meant to drive the signature and prologue/epilogue
+  //     of a function declaration or definition,
+  //   - those meant for the computation of the LLVM type for an abstract
+  //     appearance of a function, and
+  //   - those meant for performing the IR-generation of a call.
+  // They differ mainly in how they deal with optional (i.e. variadic)
+  // arguments, as well as unprototyped functions.
+  //
+  // Key points:
+  // - The CGFunctionInfo for emitting a specific call site must include
+  //   entries for the optional arguments.
+  // - The function type used at the call site must reflect the formal
+  //   signature of the declaration being called, or else the call will
+  //   go awry.
+  // - For the most part, unprototyped functions are called by casting to
+  //   a formal signature inferred from the specific argument types used
+  //   at the call-site.  However, some targets (e.g. x86-64) screw with
+  //   this for compatibility reasons.
 
-  const CGFunctionInfo &getFunctionInfo(const FunctionDecl *FD);
-  const CGFunctionInfo &getFunctionInfo(const CXXMethodDecl *MD);
-  const CGFunctionInfo &getFunctionInfo(const ObjCMethodDecl *MD);
-  const CGFunctionInfo &getFunctionInfo(const CXXConstructorDecl *D,
-                                        CXXCtorType Type);
-  const CGFunctionInfo &getFunctionInfo(const CXXDestructorDecl *D,
-                                        CXXDtorType Type);
+  const CGFunctionInfo &arrangeGlobalDeclaration(GlobalDecl GD);
+  const CGFunctionInfo &arrangeFunctionDeclaration(const FunctionDecl *FD);
+  const CGFunctionInfo &arrangeFunctionDeclaration(QualType ResTy,
+                                                   const FunctionArgList &Args,
+                                             const FunctionType::ExtInfo &Info,
+                                                   bool isVariadic);
 
-  const CGFunctionInfo &getFunctionInfo(const CallArgList &Args,
-                                        const FunctionType *Ty) {
-    return getFunctionInfo(Ty->getResultType(), Args,
-                           Ty->getExtInfo());
-  }
+  const CGFunctionInfo &arrangeObjCMethodDeclaration(const ObjCMethodDecl *MD);
+  const CGFunctionInfo &arrangeObjCMessageSendSignature(const ObjCMethodDecl *MD,
+                                                        QualType receiverType);
 
-  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionProtoType> Ty);
-  const CGFunctionInfo &getFunctionInfo(CanQual<FunctionNoProtoType> Ty);
+  const CGFunctionInfo &arrangeCXXMethodDeclaration(const CXXMethodDecl *MD);
+  const CGFunctionInfo &arrangeCXXConstructorDeclaration(
+                                                    const CXXConstructorDecl *D,
+                                                    CXXCtorType Type);
+  const CGFunctionInfo &arrangeCXXDestructor(const CXXDestructorDecl *D,
+                                             CXXDtorType Type);
 
-  /// getFunctionInfo - Get the function info for a member function of
-  /// the given type.  This is used for calls through member function
-  /// pointers.
-  const CGFunctionInfo &getFunctionInfo(const CXXRecordDecl *RD,
-                                        const FunctionProtoType *FTP);
+  const CGFunctionInfo &arrangeFunctionCall(const CallArgList &Args,
+                                            const FunctionType *Ty);
+  const CGFunctionInfo &arrangeFunctionCall(QualType ResTy,
+                                            const CallArgList &args,
+                                            const FunctionType::ExtInfo &info,
+                                            RequiredArgs required);
 
-  /// getFunctionInfo - Get the function info for a function described by a
-  /// return type and argument types. If the calling convention is not
-  /// specified, the "C" calling convention will be used.
-  const CGFunctionInfo &getFunctionInfo(QualType ResTy,
-                                        const CallArgList &Args,
-                                        const FunctionType::ExtInfo &Info);
-  const CGFunctionInfo &getFunctionInfo(QualType ResTy,
-                                        const FunctionArgList &Args,
-                                        const FunctionType::ExtInfo &Info);
+  const CGFunctionInfo &arrangeFunctionType(CanQual<FunctionProtoType> Ty);
+  const CGFunctionInfo &arrangeFunctionType(CanQual<FunctionNoProtoType> Ty);
+  const CGFunctionInfo &arrangeCXXMethodType(const CXXRecordDecl *RD,
+                                             const FunctionProtoType *FTP);
 
   /// Retrieves the ABI information for the given function signature.
+  /// This is the "core" routine to which all the others defer.
   ///
-  /// \param ArgTys - must all actually be canonical as params
-  const CGFunctionInfo &getFunctionInfo(CanQualType RetTy,
-                               const SmallVectorImpl<CanQualType> &ArgTys,
-                                        const FunctionType::ExtInfo &Info);
+  /// \param argTypes - must all actually be canonical as params
+  const CGFunctionInfo &arrangeFunctionType(CanQualType returnType,
+                                            ArrayRef<CanQualType> argTypes,
+                                            const FunctionType::ExtInfo &info,
+                                            RequiredArgs args);
 
   /// \brief Compute a new LLVM record layout object for the given record.
   CGRecordLayout *ComputeRecordLayout(const RecordDecl *D,

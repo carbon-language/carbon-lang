@@ -30,6 +30,7 @@ namespace clang {
   class Decl;
 
   namespace CodeGen {
+    class CallArgList;
     class CodeGenModule;
     class CodeGenFunction;
     class CGFunctionInfo;
@@ -161,7 +162,8 @@ namespace clang {
     /// same way and some out-of-band information is passed for the
     /// benefit of variadic callees, as is the case for x86-64.
     /// In this case the ABI should be consulted.
-    virtual bool isNoProtoCallVariadic(const CodeGen::CGFunctionInfo &) const;
+    virtual bool isNoProtoCallVariadic(const CodeGen::CallArgList &args,
+                                       const FunctionNoProtoType *fnType) const;
   };
 }
 

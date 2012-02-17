@@ -855,11 +855,11 @@ RValue CodeGenFunction::EmitBlockCallExpr(const CallExpr* E,
   llvm::Value *Func = Builder.CreateLoad(FuncPtr);
 
   const FunctionType *FuncTy = FnType->castAs<FunctionType>();
-  const CGFunctionInfo &FnInfo = CGM.getTypes().getFunctionInfo(Args, FuncTy);
+  const CGFunctionInfo &FnInfo =
+    CGM.getTypes().arrangeFunctionCall(Args, FuncTy);
 
   // Cast the function pointer to the right type.
-  llvm::Type *BlockFTy =
-    CGM.getTypes().GetFunctionType(FnInfo, false);
+  llvm::Type *BlockFTy = CGM.getTypes().GetFunctionType(FnInfo);
 
   llvm::Type *BlockFTyPtr = llvm::PointerType::getUnqual(BlockFTy);
   Func = Builder.CreateBitCast(Func, BlockFTyPtr);
@@ -1013,16 +1013,15 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
     args.push_back(*i);
 
   // Create the function declaration.
-  const FunctionProtoType *fnType =
-    cast<FunctionProtoType>(blockInfo.getBlockExpr()->getFunctionType());
+  const FunctionProtoType *fnType = blockInfo.getBlockExpr()->getFunctionType();
   const CGFunctionInfo &fnInfo =
-    CGM.getTypes().getFunctionInfo(fnType->getResultType(), args,
-                                   fnType->getExtInfo());
+    CGM.getTypes().arrangeFunctionDeclaration(fnType->getResultType(), args,
+                                              fnType->getExtInfo(),
+                                              fnType->isVariadic());
   if (CGM.ReturnTypeUsesSRet(fnInfo))
     blockInfo.UsesStret = true;
 
-  llvm::FunctionType *fnLLVMType =
-    CGM.getTypes().GetFunctionType(fnInfo, fnType->isVariadic());
+  llvm::FunctionType *fnLLVMType = CGM.getTypes().GetFunctionType(fnInfo);
 
   MangleBuffer name;
   CGM.getBlockMangledName(GD, name, blockDecl);
@@ -1164,11 +1163,13 @@ CodeGenFunction::GenerateCopyHelperFunction(const CGBlockInfo &blockInfo) {
   args.push_back(&srcDecl);
 
   const CGFunctionInfo &FI =
-      CGM.getTypes().getFunctionInfo(C.VoidTy, args, FunctionType::ExtInfo());
+    CGM.getTypes().arrangeFunctionDeclaration(C.VoidTy, args,
+                                              FunctionType::ExtInfo(),
+                                              /*variadic*/ false);
 
   // FIXME: it would be nice if these were mergeable with things with
   // identical semantics.
-  llvm::FunctionType *LTy = CGM.getTypes().GetFunctionType(FI, false);
+  llvm::FunctionType *LTy = CGM.getTypes().GetFunctionType(FI);
 
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
@@ -1279,11 +1280,13 @@ CodeGenFunction::GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo) {
   args.push_back(&srcDecl);
 
   const CGFunctionInfo &FI =
-      CGM.getTypes().getFunctionInfo(C.VoidTy, args, FunctionType::ExtInfo());
+    CGM.getTypes().arrangeFunctionDeclaration(C.VoidTy, args,
+                                              FunctionType::ExtInfo(),
+                                              /*variadic*/ false);
 
   // FIXME: We'd like to put these into a mergable by content, with
   // internal linkage.
-  llvm::FunctionType *LTy = CGM.getTypes().GetFunctionType(FI, false);
+  llvm::FunctionType *LTy = CGM.getTypes().GetFunctionType(FI);
 
   llvm::Function *Fn =
     llvm::Function::Create(LTy, llvm::GlobalValue::InternalLinkage,
@@ -1557,10 +1560,12 @@ generateByrefCopyHelper(CodeGenFunction &CGF,
   args.push_back(&src);
 
   const CGFunctionInfo &FI =
-    CGF.CGM.getTypes().getFunctionInfo(R, args, FunctionType::ExtInfo());
+    CGF.CGM.getTypes().arrangeFunctionDeclaration(R, args,
+                                                  FunctionType::ExtInfo(),
+                                                  /*variadic*/ false);
 
   CodeGenTypes &Types = CGF.CGM.getTypes();
-  llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
+  llvm::FunctionType *LTy = Types.GetFunctionType(FI);
 
   // FIXME: We'd like to put these into a mergable by content, with
   // internal linkage.
@@ -1625,10 +1630,12 @@ generateByrefDisposeHelper(CodeGenFunction &CGF,
   args.push_back(&src);
 
   const CGFunctionInfo &FI =
-    CGF.CGM.getTypes().getFunctionInfo(R, args, FunctionType::ExtInfo());
+    CGF.CGM.getTypes().arrangeFunctionDeclaration(R, args,
+                                                  FunctionType::ExtInfo(),
+                                                  /*variadic*/ false);
 
   CodeGenTypes &Types = CGF.CGM.getTypes();
-  llvm::FunctionType *LTy = Types.GetFunctionType(FI, false);
+  llvm::FunctionType *LTy = Types.GetFunctionType(FI);
 
   // FIXME: We'd like to put these into a mergable by content, with
   // internal linkage.

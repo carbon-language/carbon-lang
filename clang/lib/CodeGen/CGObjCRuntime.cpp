@@ -327,3 +327,48 @@ void CGObjCRuntime::EmitAtSynchronizedStmt(CodeGenFunction &CGF,
   // Emit the body of the statement.
   CGF.EmitStmt(S.getSynchBody());
 }
+
+/// Compute the pointer-to-function type to which a message send
+/// should be casted in order to correctly call the given method
+/// with the given arguments.
+///
+/// \param method - may be null
+/// \param resultType - the result type to use if there's no method
+/// \param argInfo - the actual arguments, including implicit ones
+CGObjCRuntime::MessageSendInfo
+CGObjCRuntime::getMessageSendInfo(const ObjCMethodDecl *method,
+                                  QualType resultType,
+                                  CallArgList &callArgs) {
+  // If there's a method, use information from that.
+  if (method) {
+    const CGFunctionInfo &signature =
+      CGM.getTypes().arrangeObjCMessageSendSignature(method, callArgs[0].Ty);
+
+    llvm::PointerType *signatureType =
+      CGM.getTypes().GetFunctionType(signature)->getPointerTo();
+
+    // If that's not variadic, there's no need to recompute the ABI
+    // arrangement.
+    if (!signature.isVariadic())
+      return MessageSendInfo(signature, signatureType);
+
+    // Otherwise, there is.
+    FunctionType::ExtInfo einfo = signature.getExtInfo();
+    const CGFunctionInfo &argsInfo =
+      CGM.getTypes().arrangeFunctionCall(resultType, callArgs, einfo,
+                                         signature.getRequiredArgs());
+
+    return MessageSendInfo(argsInfo, signatureType);
+  }
+
+  // There's no method;  just use a default CC.
+  const CGFunctionInfo &argsInfo =
+    CGM.getTypes().arrangeFunctionCall(resultType, callArgs, 
+                                       FunctionType::ExtInfo(),
+                                       RequiredArgs::All);
+
+  // Derive the signature to call from that.
+  llvm::PointerType *signatureType =
+    CGM.getTypes().GetFunctionType(argsInfo)->getPointerTo();
+  return MessageSendInfo(argsInfo, signatureType);
+}

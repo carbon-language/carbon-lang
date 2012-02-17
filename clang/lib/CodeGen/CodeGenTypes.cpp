@@ -15,6 +15,7 @@
 #include "CGCall.h"
 #include "CGCXXABI.h"
 #include "CGRecordLayout.h"
+#include "TargetInfo.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
@@ -26,11 +27,12 @@
 using namespace clang;
 using namespace CodeGen;
 
-CodeGenTypes::CodeGenTypes(ASTContext &Ctx, llvm::Module& M,
-                           const llvm::TargetData &TD, const ABIInfo &Info,
-                           CGCXXABI &CXXABI, const CodeGenOptions &CGO)
-  : Context(Ctx), Target(Ctx.getTargetInfo()), TheModule(M), TheTargetData(TD),
-    TheABIInfo(Info), TheCXXABI(CXXABI), CodeGenOpts(CGO) {
+CodeGenTypes::CodeGenTypes(CodeGenModule &CGM)
+  : Context(CGM.getContext()), Target(Context.getTargetInfo()),
+    TheModule(CGM.getModule()), TheTargetData(CGM.getTargetData()),
+    TheABIInfo(CGM.getTargetCodeGenInfo().getABIInfo()),
+    TheCXXABI(CGM.getCXXABI()),
+    CodeGenOpts(CGM.getCodeGenOpts()), CGM(CGM) {
   SkippedLayout = false;
 }
 
@@ -473,16 +475,13 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     // The function type can be built; call the appropriate routines to
     // build it.
     const CGFunctionInfo *FI;
-    bool isVariadic;
     if (const FunctionProtoType *FPT = dyn_cast<FunctionProtoType>(FT)) {
-      FI = &getFunctionInfo(
+      FI = &arrangeFunctionType(
                    CanQual<FunctionProtoType>::CreateUnsafe(QualType(FPT, 0)));
-      isVariadic = FPT->isVariadic();
     } else {
       const FunctionNoProtoType *FNPT = cast<FunctionNoProtoType>(FT);
-      FI = &getFunctionInfo(
+      FI = &arrangeFunctionType(
                 CanQual<FunctionNoProtoType>::CreateUnsafe(QualType(FNPT, 0)));
-      isVariadic = true;
     }
     
     // If there is something higher level prodding our CGFunctionInfo, then
@@ -494,7 +493,7 @@ llvm::Type *CodeGenTypes::ConvertType(QualType T) {
     } else {
 
       // Otherwise, we're good to go, go ahead and convert it.
-      ResultType = GetFunctionType(*FI, isVariadic);
+      ResultType = GetFunctionType(*FI);
     }
 
     RecordsBeingLaidOut.erase(Ty);
