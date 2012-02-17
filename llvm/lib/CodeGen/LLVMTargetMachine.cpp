@@ -130,7 +130,7 @@ static MCContext *addPassesToGenerateCode(LLVMTargetMachine *TM,
     new MachineModuleInfo(*TM->getMCAsmInfo(), *TM->getRegisterInfo(),
                           &TM->getTargetLowering()->getObjFileLowering());
   PM.add(MMI);
-  MCContext *Context = &MMI->getContext(); // Return the MCContext specifically by-ref.
+  MCContext *Context = &MMI->getContext(); // Return the MCContext by-ref.
 
   // Set up a MachineFunction for the rest of CodeGen to work on.
   PM.add(new MachineFunctionAnalysis(*TM));
@@ -270,7 +270,8 @@ bool LLVMTargetMachine::addPassesToEmitMC(PassManagerBase &PM,
   // Create the code emitter for the target if it exists.  If not, .o file
   // emission fails.
   const MCSubtargetInfo &STI = getSubtarget<MCSubtargetInfo>();
-  MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(),STI, *Ctx);
+  MCCodeEmitter *MCE = getTarget().createMCCodeEmitter(*getInstrInfo(),STI,
+                                                       *Ctx);
   MCAsmBackend *MAB = getTarget().createMCAsmBackend(getTargetTriple());
   if (MCE == 0 || MAB == 0)
     return true;

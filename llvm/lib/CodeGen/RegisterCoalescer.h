@@ -1,4 +1,4 @@
-//===-- RegisterCoalescer.h - Register Coalescing Interface ------*- C++ -*-===//
+//===-- RegisterCoalescer.h - Register Coalescing Interface -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the abstract interface for register coalescers, 
+// This file contains the abstract interface for register coalescers,
 // allowing them to interact with and query register allocators.
 //
 //===----------------------------------------------------------------------===//

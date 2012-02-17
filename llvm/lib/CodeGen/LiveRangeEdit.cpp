@@ -1,4 +1,4 @@
-//===--- LiveRangeEdit.cpp - Basic tools for editing a register live range --===//
+//===-- LiveRangeEdit.cpp - Basic tools for editing a register live range -===//
 //
 //                     The LLVM Compiler Infrastructure
 //
