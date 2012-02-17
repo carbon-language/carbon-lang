@@ -945,30 +945,30 @@ def FsMOVAPDrm : PDI<0x28, MRMSrcMem, (outs FR64:$dst), (ins f128mem:$src),
 //===----------------------------------------------------------------------===//
 
 multiclass sse12_mov_hilo_packed<bits<8>opc, RegisterClass RC,
-                                 PatFrag mov_frag, string base_opc,
+                                 SDNode psnode, SDNode pdnode, string base_opc,
                                  string asm_opr> {
   def PSrm : PI<opc, MRMSrcMem,
          (outs VR128:$dst), (ins VR128:$src1, f64mem:$src2),
          !strconcat(base_opc, "s", asm_opr),
      [(set RC:$dst,
-       (mov_frag RC:$src1,
+       (psnode RC:$src1,
               (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))))],
               IIC_DEFAULT, SSEPackedSingle>, TB;
 
   def PDrm : PI<opc, MRMSrcMem,
          (outs RC:$dst), (ins RC:$src1, f64mem:$src2),
          !strconcat(base_opc, "d", asm_opr),
-     [(set RC:$dst, (v2f64 (mov_frag RC:$src1,
+     [(set RC:$dst, (v2f64 (pdnode RC:$src1,
                               (scalar_to_vector (loadf64 addr:$src2)))))],
               IIC_DEFAULT, SSEPackedDouble>, TB, OpSize;
 }
 
 let AddedComplexity = 20 in {
-  defm VMOVL : sse12_mov_hilo_packed<0x12, VR128, movlp, "movlp",
+  defm VMOVL : sse12_mov_hilo_packed<0x12, VR128, X86Movlps, X86Movlpd, "movlp",
                      "\t{$src2, $src1, $dst|$dst, $src1, $src2}">, VEX_4V;
 }
 let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
-  defm MOVL : sse12_mov_hilo_packed<0x12, VR128, movlp, "movlp",
+  defm MOVL : sse12_mov_hilo_packed<0x12, VR128, X86Movlps, X86Movlpd, "movlp",
                                    "\t{$src2, $dst|$dst, $src2}">;
 }
 
@@ -990,48 +990,16 @@ def MOVLPDmr : PDI<0x13, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
                                  (iPTR 0))), addr:$dst)]>;
 
 let Predicates = [HasAVX] in {
-  let AddedComplexity = 20 in {
-    // vector_shuffle v1, (load v2) <4, 5, 2, 3> using MOVLPS
-    def : Pat<(v4f32 (movlp VR128:$src1, (load addr:$src2))),
-              (VMOVLPSrm VR128:$src1, addr:$src2)>;
-    def : Pat<(v4i32 (movlp VR128:$src1, (load addr:$src2))),
-              (VMOVLPSrm VR128:$src1, addr:$src2)>;
-    // vector_shuffle v1, (load v2) <2, 1> using MOVLPS
-    def : Pat<(v2f64 (movlp VR128:$src1, (load addr:$src2))),
-              (VMOVLPDrm VR128:$src1, addr:$src2)>;
-    def : Pat<(v2i64 (movlp VR128:$src1, (load addr:$src2))),
-              (VMOVLPDrm VR128:$src1, addr:$src2)>;
-  }
-
-  // (store (vector_shuffle (load addr), v2, <4, 5, 2, 3>), addr) using MOVLPS
-  def : Pat<(store (v4f32 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
-            (VMOVLPSmr addr:$src1, VR128:$src2)>;
-  def : Pat<(store (v4i32 (movlp (bc_v4i32 (loadv2i64 addr:$src1)),
-                                 VR128:$src2)), addr:$src1),
-            (VMOVLPSmr addr:$src1, VR128:$src2)>;
-
-  // (store (vector_shuffle (load addr), v2, <2, 1>), addr) using MOVLPS
-  def : Pat<(store (v2f64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
-            (VMOVLPDmr addr:$src1, VR128:$src2)>;
-  def : Pat<(store (v2i64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
-            (VMOVLPDmr addr:$src1, VR128:$src2)>;
-
   // Shuffle with VMOVLPS
   def : Pat<(v4f32 (X86Movlps VR128:$src1, (load addr:$src2))),
             (VMOVLPSrm VR128:$src1, addr:$src2)>;
   def : Pat<(v4i32 (X86Movlps VR128:$src1, (load addr:$src2))),
-            (VMOVLPSrm VR128:$src1, addr:$src2)>;
-  def : Pat<(X86Movlps VR128:$src1,
-                      (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
             (VMOVLPSrm VR128:$src1, addr:$src2)>;
 
   // Shuffle with VMOVLPD
   def : Pat<(v2f64 (X86Movlpd VR128:$src1, (load addr:$src2))),
             (VMOVLPDrm VR128:$src1, addr:$src2)>;
   def : Pat<(v2i64 (X86Movlpd VR128:$src1, (load addr:$src2))),
-            (VMOVLPDrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v2f64 (X86Movlpd VR128:$src1,
-                              (scalar_to_vector (loadf64 addr:$src2)))),
             (VMOVLPDrm VR128:$src1, addr:$src2)>;
 
   // Store patterns
@@ -1050,31 +1018,15 @@ let Predicates = [HasAVX] in {
 }
 
 let Predicates = [HasSSE1] in {
-  let AddedComplexity = 20 in {
-    // vector_shuffle v1, (load v2) <4, 5, 2, 3> using MOVLPS
-    def : Pat<(v4f32 (movlp VR128:$src1, (load addr:$src2))),
-              (MOVLPSrm VR128:$src1, addr:$src2)>;
-    def : Pat<(v4i32 (movlp VR128:$src1, (load addr:$src2))),
-              (MOVLPSrm VR128:$src1, addr:$src2)>;
-  }
-
   // (store (vector_shuffle (load addr), v2, <4, 5, 2, 3>), addr) using MOVLPS
   def : Pat<(store (i64 (vector_extract (bc_v2i64 (v4f32 VR128:$src2)),
                                  (iPTR 0))), addr:$src1),
-            (MOVLPSmr addr:$src1, VR128:$src2)>;
-  def : Pat<(store (v4f32 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
-            (MOVLPSmr addr:$src1, VR128:$src2)>;
-  def : Pat<(store (v4i32 (movlp (bc_v4i32 (loadv2i64 addr:$src1)),
-                                 VR128:$src2)), addr:$src1),
             (MOVLPSmr addr:$src1, VR128:$src2)>;
 
   // Shuffle with MOVLPS
   def : Pat<(v4f32 (X86Movlps VR128:$src1, (load addr:$src2))),
             (MOVLPSrm VR128:$src1, addr:$src2)>;
   def : Pat<(v4i32 (X86Movlps VR128:$src1, (load addr:$src2))),
-            (MOVLPSrm VR128:$src1, addr:$src2)>;
-  def : Pat<(X86Movlps VR128:$src1,
-                      (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
             (MOVLPSrm VR128:$src1, addr:$src2)>;
   def : Pat<(X86Movlps VR128:$src1,
                       (bc_v4f32 (v2i64 (scalar_to_vector (loadi64 addr:$src2))))),
@@ -1091,27 +1043,10 @@ let Predicates = [HasSSE1] in {
 }
 
 let Predicates = [HasSSE2] in {
-  let AddedComplexity = 20 in {
-    // vector_shuffle v1, (load v2) <2, 1> using MOVLPS
-    def : Pat<(v2f64 (movlp VR128:$src1, (load addr:$src2))),
-              (MOVLPDrm VR128:$src1, addr:$src2)>;
-    def : Pat<(v2i64 (movlp VR128:$src1, (load addr:$src2))),
-              (MOVLPDrm VR128:$src1, addr:$src2)>;
-  }
-
-  // (store (vector_shuffle (load addr), v2, <2, 1>), addr) using MOVLPS
-  def : Pat<(store (v2f64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
-            (MOVLPDmr addr:$src1, VR128:$src2)>;
-  def : Pat<(store (v2i64 (movlp (load addr:$src1), VR128:$src2)), addr:$src1),
-            (MOVLPDmr addr:$src1, VR128:$src2)>;
-
   // Shuffle with MOVLPD
   def : Pat<(v2f64 (X86Movlpd VR128:$src1, (load addr:$src2))),
             (MOVLPDrm VR128:$src1, addr:$src2)>;
   def : Pat<(v2i64 (X86Movlpd VR128:$src1, (load addr:$src2))),
-            (MOVLPDrm VR128:$src1, addr:$src2)>;
-  def : Pat<(v2f64 (X86Movlpd VR128:$src1,
-                              (scalar_to_vector (loadf64 addr:$src2)))),
             (MOVLPDrm VR128:$src1, addr:$src2)>;
 
   // Store patterns
@@ -1128,11 +1063,11 @@ let Predicates = [HasSSE2] in {
 //===----------------------------------------------------------------------===//
 
 let AddedComplexity = 20 in {
-  defm VMOVH : sse12_mov_hilo_packed<0x16, VR128, movlhps, "movhp",
+  defm VMOVH : sse12_mov_hilo_packed<0x16, VR128, X86Movlhps, X86Movlhpd, "movhp",
                      "\t{$src2, $src1, $dst|$dst, $src1, $src2}">, VEX_4V;
 }
 let Constraints = "$src1 = $dst", AddedComplexity = 20 in {
-  defm MOVH : sse12_mov_hilo_packed<0x16, VR128, movlhps, "movhp",
+  defm MOVH : sse12_mov_hilo_packed<0x16, VR128, X86Movlhps, X86Movlhpd, "movhp",
                                    "\t{$src2, $dst|$dst, $src2}">;
 }
 
@@ -1163,11 +1098,6 @@ def MOVHPDmr : PDI<0x17, MRMDestMem, (outs), (ins f64mem:$dst, VR128:$src),
 
 let Predicates = [HasAVX] in {
   // VMOVHPS patterns
-  def : Pat<(movlhps VR128:$src1, (bc_v4i32 (v2i64 (X86vzload addr:$src2)))),
-            (VMOVHPSrm (v4i32 VR128:$src1), addr:$src2)>;
-  def : Pat<(X86Movlhps VR128:$src1,
-                 (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
-            (VMOVHPSrm VR128:$src1, addr:$src2)>;
   def : Pat<(X86Movlhps VR128:$src1,
                  (bc_v4f32 (v2i64 (scalar_to_vector (loadi64 addr:$src2))))),
             (VMOVHPSrm VR128:$src1, addr:$src2)>;
@@ -1182,20 +1112,10 @@ let Predicates = [HasAVX] in {
   def : Pat<(v2f64 (X86Unpckl VR128:$src1,
                       (scalar_to_vector (loadf64 addr:$src2)))),
             (VMOVHPDrm VR128:$src1, addr:$src2)>;
-
-  // FIXME: This should be matched by a X86Movhpd instead. Same as above
-  def : Pat<(v2f64 (X86Movlhpd VR128:$src1,
-                      (scalar_to_vector (loadf64 addr:$src2)))),
-            (VMOVHPDrm VR128:$src1, addr:$src2)>;
 }
 
 let Predicates = [HasSSE1] in {
   // MOVHPS patterns
-  def : Pat<(movlhps VR128:$src1, (bc_v4i32 (v2i64 (X86vzload addr:$src2)))),
-            (MOVHPSrm (v4i32 VR128:$src1), addr:$src2)>;
-  def : Pat<(X86Movlhps VR128:$src1,
-                 (bc_v4f32 (v2f64 (scalar_to_vector (loadf64 addr:$src2))))),
-            (MOVHPSrm VR128:$src1, addr:$src2)>;
   def : Pat<(X86Movlhps VR128:$src1,
                  (bc_v4f32 (v2i64 (scalar_to_vector (loadi64 addr:$src2))))),
             (MOVHPSrm VR128:$src1, addr:$src2)>;
@@ -1210,11 +1130,6 @@ let Predicates = [HasSSE2] in {
   // cause it has two uses through a bitcast. One use disappears at isel time
   // and the fold opportunity reappears.
   def : Pat<(v2f64 (X86Unpckl VR128:$src1,
-                      (scalar_to_vector (loadf64 addr:$src2)))),
-            (MOVHPDrm VR128:$src1, addr:$src2)>;
-
-  // FIXME: This should be matched by a X86Movhpd instead. Same as above
-  def : Pat<(v2f64 (X86Movlhpd VR128:$src1,
                       (scalar_to_vector (loadf64 addr:$src2)))),
             (MOVHPDrm VR128:$src1, addr:$src2)>;
 }
