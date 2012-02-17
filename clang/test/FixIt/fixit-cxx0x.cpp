@@ -57,4 +57,6 @@ void S2::f(int i) {
   (void)[=, this]{ this->g(5); }; // expected-error{{'this' cannot be explicitly captured}}
   (void)[i, i]{ }; // expected-error{{'i' can appear only once in a capture list}}
   (void)[&, i, i]{ }; // expected-error{{'i' can appear only once in a capture list}}
+  (void)[] mutable { }; // expected-error{{lambda requires '()' before 'mutable'}}
+  (void)[] -> int { }; // expected-error{{lambda requires '()' before return type}}
 }
