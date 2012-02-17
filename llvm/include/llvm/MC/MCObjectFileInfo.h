@@ -284,6 +284,8 @@ public:
   const MCSection *getXDataSection() const { return XDataSection; }
 
   const MCSection *getEHFrameSection() {
+    if (!EHFrameSection)
+      InitEHFrameSection();
     return EHFrameSection;
   }
 
@@ -298,6 +300,9 @@ private:
   void InitELFMCObjectFileInfo(Triple T);
   void InitCOFFMCObjectFileInfo(Triple T);
 
+  /// InitEHFrameSection - Initialize EHFrameSection on demand.
+  ///
+  void InitEHFrameSection();
 };
 
 } // end namespace llvm
