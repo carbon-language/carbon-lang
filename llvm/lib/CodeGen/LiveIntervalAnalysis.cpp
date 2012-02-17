@@ -1069,7 +1069,6 @@ public:
     assert(intervalRangesSane(li) && "Broke live interval moving use.");
   }
 
-  // Returns the new
   void moveUseUp(SlotIndex oldIdx, LiveRange& lr, LiveInterval& li) {
     bool liveThrough = lr.end > oldIdx.getRegSlot();
     if (liveThrough)
@@ -1098,7 +1097,7 @@ public:
   }
 
   // Update intervals for all operands of mi from oldIndex to newIndex.
-  void moveAllOperands(MachineInstr* mi, SlotIndex oldIdx) {
+  void moveAllOperandsFrom(MachineInstr* mi, SlotIndex oldIdx) {
     // Figure out the direction we're moving.
     bool movingUp = newIdx < oldIdx;
 
@@ -1108,6 +1107,11 @@ public:
                                     mopEnd = mi->operands_end();
          mopItr != mopEnd; ++mopItr) {
       const MachineOperand& mop = *mopItr;
+
+      if (mop.isRegMask()) {
+        updateRegMaskSlots(oldIdx);
+        continue;
+      }
 
       if (!mop.isReg() || mop.getReg() == 0)
         continue;
@@ -1249,6 +1253,16 @@ private:
       moveUseDown(oldIdx, *lr, li, mbb);
     }
   }
+
+  void updateRegMaskSlots(SlotIndex oldIdx) {
+    SmallVectorImpl<SlotIndex>::iterator rmItr =
+      std::lower_bound(lis.RegMaskSlots.begin(), lis.RegMaskSlots.end(),
+                       oldIdx);
+    assert(*rmItr == oldIdx && "No RegMask at oldIdx.");
+    *rmItr = newIdx;
+    assert(*prior(rmItr) < *rmItr && *rmItr < *next(rmItr) &&
+           "RegSlots out of order. Did you move one call across another?");
+  }
 };
 
 void LiveIntervals::handleMove(MachineInstr* mi) {
@@ -1263,5 +1277,5 @@ void LiveIntervals::handleMove(MachineInstr* mi) {
   assert(!mi->isBundled() && "Can't handle bundled instructions yet.");
 
   HMEditor hme(*this, newIndex);
-  hme.moveAllOperands(mi, oldIndex);
+  hme.moveAllOperandsFrom(mi, oldIndex);
 }
