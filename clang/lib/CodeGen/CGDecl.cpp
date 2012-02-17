@@ -255,14 +255,13 @@ CodeGenFunction::AddInitializerToStaticVarDecl(const VarDecl &D,
     OldGV->eraseFromParent();
   }
 
+  GV->setConstant(CGM.isTypeConstant(D.getType(), true));
   GV->setInitializer(Init);
 
   if (hasNontrivialDestruction(D.getType())) {
     // We have a constant initializer, but a nontrivial destructor. We still
     // need to perform a guarded "initialization" in order to register the
-    // destructor. Since we're running a destructor on this variable, it can't
-    // be a constant even if it's const.
-    GV->setConstant(false);
+    // destructor.
     EmitCXXGuardedInit(D, GV, /*PerformInit*/false);
   }
 
@@ -775,7 +774,7 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
       // If this value is a POD array or struct with a statically
       // determinable constant initializer, there are optimizations we can do.
       //
-      // TODO: we should constant-evaluate any variable of literal type
+      // TODO: We should constant-evaluate the initializer of any variable,
       // as long as it is initialized by a constant expression. Currently,
       // isConstantInitializer produces wrong answers for structs with
       // reference or bitfield members, and a few other cases, and checking
@@ -789,17 +788,13 @@ CodeGenFunction::EmitAutoVarAlloca(const VarDecl &D) {
         // If the variable's a const type, and it's neither an NRVO
         // candidate nor a __block variable and has no mutable members,
         // emit it as a global instead.
-        if (CGM.getCodeGenOpts().MergeAllConstants && Ty.isConstQualified() &&
-            !NRVO && !isByRef && Ty->isLiteralType()) {
-          CXXRecordDecl *RD =
-            Ty->getBaseElementTypeUnsafe()->getAsCXXRecordDecl();
-          if (!RD || !RD->hasMutableFields()) {
-            EmitStaticVarDecl(D, llvm::GlobalValue::InternalLinkage);
+        if (CGM.getCodeGenOpts().MergeAllConstants && !NRVO && !isByRef &&
+            CGM.isTypeConstant(Ty, true)) {
+          EmitStaticVarDecl(D, llvm::GlobalValue::InternalLinkage);
 
-            emission.Address = 0; // signal this condition to later callbacks
-            assert(emission.wasEmittedAsGlobal());
-            return emission;
-          }
+          emission.Address = 0; // signal this condition to later callbacks
+          assert(emission.wasEmittedAsGlobal());
+          return emission;
         }
 
         // Otherwise, tell the initialization code that we're in this case.

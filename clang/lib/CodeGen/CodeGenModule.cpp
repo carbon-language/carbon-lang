@@ -1101,18 +1101,23 @@ CodeGenModule::CreateRuntimeFunction(llvm::FunctionType *FTy,
                                  ExtraAttrs);
 }
 
-static bool DeclIsConstantGlobal(ASTContext &Context, const VarDecl *D,
-                                 bool ConstantInit) {
-  if (!D->getType().isConstant(Context) && !D->getType()->isReferenceType())
+/// isTypeConstant - Determine whether an object of this type can be emitted
+/// as a constant.
+///
+/// If ExcludeCtor is true, the duration when the object's constructor runs
+/// will not be considered. The caller will need to verify that the object is
+/// not written to during its construction.
+bool CodeGenModule::isTypeConstant(QualType Ty, bool ExcludeCtor) {
+  if (!Ty.isConstant(Context) && !Ty->isReferenceType())
     return false;
-  
+
   if (Context.getLangOptions().CPlusPlus) {
-    if (const RecordType *Record 
-          = Context.getBaseElementType(D->getType())->getAs<RecordType>())
-      return ConstantInit && 
-             !cast<CXXRecordDecl>(Record->getDecl())->hasMutableFields();
+    if (const CXXRecordDecl *Record
+          = Context.getBaseElementType(Ty)->getAsCXXRecordDecl())
+      return ExcludeCtor && !Record->hasMutableFields() &&
+             Record->hasTrivialDestructor();
   }
-  
+
   return true;
 }
 
@@ -1169,7 +1174,7 @@ CodeGenModule::GetOrCreateLLVMGlobal(StringRef MangledName,
   if (D) {
     // FIXME: This code is overly simple and should be merged with other global
     // handling.
-    GV->setConstant(DeclIsConstantGlobal(Context, D, false));
+    GV->setConstant(isTypeConstant(D->getType(), false));
 
     // Set linkage and visibility in case we never see a definition.
     NamedDecl::LinkageInfo LV = D->getLinkageAndVisibility();
@@ -1450,13 +1455,11 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   GV->setInitializer(Init);
 
   // If it is safe to mark the global 'constant', do so now.
-  GV->setConstant(false);
-  if (!NeedsGlobalCtor && !NeedsGlobalDtor &&
-      DeclIsConstantGlobal(Context, D, true))
-    GV->setConstant(true);
+  GV->setConstant(!NeedsGlobalCtor && !NeedsGlobalDtor &&
+                  isTypeConstant(D->getType(), true));
 
   GV->setAlignment(getContext().getDeclAlign(D).getQuantity());
-  
+
   // Set the llvm linkage type as appropriate.
   llvm::GlobalValue::LinkageTypes Linkage = 
     GetLLVMLinkageVarDefinition(D, GV);

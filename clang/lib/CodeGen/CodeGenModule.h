@@ -448,6 +448,8 @@ public:
 
   llvm::MDNode *getTBAAInfo(QualType QTy);
 
+  bool isTypeConstant(QualType QTy, bool ExcludeCtorDtor);
+
   static void DecorateInstruction(llvm::Instruction *Inst,
                                   llvm::MDNode *TBAAInfo);
 
