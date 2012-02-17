@@ -359,7 +359,6 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
   DEBUG(dbgs() << '\n');
 }
 
-#ifndef NDEBUG
 static bool isRegLiveIntoSuccessor(const MachineBasicBlock *MBB, unsigned Reg) {
   for (MachineBasicBlock::const_succ_iterator SI = MBB->succ_begin(),
                                               SE = MBB->succ_end();
@@ -370,7 +369,6 @@ static bool isRegLiveIntoSuccessor(const MachineBasicBlock *MBB, unsigned Reg) {
   }
   return false;
 }
-#endif
 
 void LiveIntervals::handlePhysicalRegisterDef(MachineBasicBlock *MBB,
                                               MachineBasicBlock::iterator mi,
