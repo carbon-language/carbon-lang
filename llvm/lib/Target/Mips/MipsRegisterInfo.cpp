@@ -1,4 +1,4 @@
-//===- MipsRegisterInfo.cpp - MIPS Register Information -== -----*- C++ -*-===//
+//===-- MipsRegisterInfo.cpp - MIPS Register Information -== --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//=== MipsMCInstLower.cpp - Convert Mips MachineInstr to MCInst -*- C++ -*-===//
+//===-- MipsMCInstLower.cpp - Convert Mips MachineInstr to MCInst ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

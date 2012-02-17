@@ -1,4 +1,4 @@
-//===-- MipsSelectionDAGInfo.cpp - Mips SelectionDAG Info ------*- C++ -*--===//
+//===-- MipsSelectionDAGInfo.cpp - Mips SelectionDAG Info -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

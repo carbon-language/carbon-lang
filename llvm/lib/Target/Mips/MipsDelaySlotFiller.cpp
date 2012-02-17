@@ -1,4 +1,4 @@
-//===-- DelaySlotFiller.cpp - Mips Delay Slot Filler -----------*- C++ -*--===//
+//===-- DelaySlotFiller.cpp - Mips Delay Slot Filler ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

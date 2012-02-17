@@ -1,4 +1,4 @@
-//===-- MipsAnalyzeImmediate.cpp - Analyze Immediates ----------*- C++ -*--===//
+//===-- MipsAnalyzeImmediate.cpp - Analyze Immediates ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

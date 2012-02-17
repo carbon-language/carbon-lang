@@ -1,4 +1,4 @@
-//=== MipsISelDAGToDAG.cpp - A Dag to Dag Inst Selector for Mips -*- C++ -*-==//
+//===-- MipsISelDAGToDAG.cpp - A Dag to Dag Inst Selector for Mips --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

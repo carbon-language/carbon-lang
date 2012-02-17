@@ -1,4 +1,4 @@
-//===-- MipsAsmPrinter.cpp - Mips LLVM Assembly Printer --------*- C++ -*--===//
+//===-- MipsAsmPrinter.cpp - Mips LLVM Assembly Printer -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

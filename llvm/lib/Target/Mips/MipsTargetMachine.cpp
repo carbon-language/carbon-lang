@@ -1,4 +1,4 @@
-//===-- MipsTargetMachine.cpp - Define TargetMachine for Mips --*- C++ -*--===//
+//===-- MipsTargetMachine.cpp - Define TargetMachine for Mips -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- MipsInstrInfo.cpp - Mips Instruction Information ---------*- C++ -*-===//
+//===-- MipsInstrInfo.cpp - Mips Instruction Information ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

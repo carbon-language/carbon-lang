@@ -1,4 +1,4 @@
-//===--  MipsExpandPseudo.cpp - Expand Pseudo Instructions -----*- C++ -*--===//
+//===--  MipsExpandPseudo.cpp - Expand Pseudo Instructions ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//=======- MipsFrameLowering.cpp - Mips Frame Information ------*- C++ -*-====//
+//===-- MipsFrameLowering.cpp - Mips Frame Information --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

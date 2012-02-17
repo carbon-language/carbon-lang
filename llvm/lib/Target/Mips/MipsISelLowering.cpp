@@ -1,4 +1,4 @@
-//=== MipsISelLowering.cpp - Mips DAG Lowering Implementation --*- C++ -*--===//
+//=== --MipsISelLowering.cpp - Mips DAG Lowering Implementation -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

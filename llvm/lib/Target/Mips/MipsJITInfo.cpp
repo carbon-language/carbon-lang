@@ -1,4 +1,4 @@
-//===-- MipsJITInfo.cpp - Implement the Mips JIT Interface -----*- C++ -*--===//
+//===-- MipsJITInfo.cpp - Implement the Mips JIT Interface ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

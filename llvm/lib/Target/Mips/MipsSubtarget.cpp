@@ -1,4 +1,4 @@
-//===- MipsSubtarget.cpp - Mips Subtarget Information -----------*- C++ -*-===//
+//===-- MipsSubtarget.cpp - Mips Subtarget Information --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

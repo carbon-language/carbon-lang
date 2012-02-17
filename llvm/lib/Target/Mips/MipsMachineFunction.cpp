@@ -1,4 +1,4 @@
-//===-- MipsMachineFunctionInfo.cpp - Private data used for Mips --*- C++ -*-=//
+//===-- MipsMachineFunctionInfo.cpp - Private data used for Mips ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//== MipsInstPrinter.cpp - Convert Mips MCInst to assembly syntax -*- C++ -*-=//
+//===-- MipsInstPrinter.cpp - Convert Mips MCInst to assembly syntax ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- MipsMCTargetDesc.cpp - Mips Target Descriptions ---------*- C++ -*-===//
+//===-- MipsMCTargetDesc.cpp - Mips Target Descriptions -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- MipsASMBackend.cpp - Mips Asm Backend  -----------------*- C++ -*--===//
+//===-- MipsASMBackend.cpp - Mips Asm Backend  ----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
