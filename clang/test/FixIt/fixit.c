@@ -1,3 +1,4 @@
+// RUN: %clang_cc1 -pedantic -Wunused-label -verify -x c %s
 // RUN: cp %s %t
 // RUN: not %clang_cc1 -pedantic -Wunused-label -fixit -x c %t
 // RUN: grep -v CHECK %t > %t2
@@ -12,22 +13,24 @@
 // FIXME: FIX-IT should add #include <string.h>?
 int strcmp(const char *s1, const char *s2);
 
-void f0(void) { };
+void f0(void) { }; // expected-warning {{';'}}
 
 struct s {
-  int x, y;;
+  int x, y;; // expected-warning {{extra ';'}}
 };
 
 // CHECK: _Complex double cd;
-_Complex cd;
+_Complex cd; // expected-warning {{assuming '_Complex double'}}
 
 // CHECK: struct s s0 = { .y = 5 };
-struct s s0 = { y: 5 };
+struct s s0 = { y: 5 }; // expected-warning {{GNU old-style}}
 
 // CHECK: int array0[5] = { [3] = 3 };
-int array0[5] = { [3] 3 };
+int array0[5] = { [3] 3 }; // expected-warning {{GNU 'missing ='}}
 
-void f1(x, y)
+// CHECK: int x
+// CHECK: int y
+void f1(x, y) // expected-warning 2{{defaulting to type 'int'}}
 {
 }
 
@@ -36,16 +39,16 @@ int i0 = { 17 };
 #define ONE 1
 #define TWO 2
 
-int test_cond(int y, int fooBar) {
+int test_cond(int y, int fooBar) { // expected-note {{here}}
 // CHECK: int x = y ? 1 : 4+fooBar;
-  int x = y ? 1 4+foobar;
+  int x = y ? 1 4+foobar; // expected-error {{expected ':'}} expected-error {{undeclared identifier}} expected-note {{to match}}
 // CHECK: x = y ? ONE : TWO;
-  x = y ? ONE TWO;
+  x = y ? ONE TWO; // expected-error {{':'}} expected-note {{to match}}
   return x;
 }
 
-// CHECK: typedef int int_t;
-typedef typedef int int_t;
+// CHECK: const typedef int int_t;
+const typedef typedef int int_t; // expected-warning {{duplicate 'typedef'}}
 
 // <rdar://problem/7159693>
 enum Color { 
@@ -61,19 +64,39 @@ struct test_struct {
 };
 
 void removeUnusedLabels(char c) {
-  L0 /*removed comment*/:        c++;
+  L0 /*removed comment*/:        c++; // expected-warning {{unused label}}
   removeUnusedLabels(c);
-  L1:
+  L1: // expected-warning {{unused label}}
   c++;
-  /*preserved comment*/ L2  :        c++;
-  LL
+  /*preserved comment*/ L2  :        c++; // expected-warning {{unused label}}
+  LL // expected-warning {{unused label}}
   : c++;
-  c = c + 3; L4: return;
+  c = c + 3; L4: return; // expected-warning {{unused label}}
 }
 
-int oopsAComma = 0,
+int oopsAComma = 0, // expected-error {{';'}}
 void oopsMoreCommas() {
-  static int a[] = { 0, 1, 2 },
-  static int b[] = { 3, 4, 5 },
+  static int a[] = { 0, 1, 2 }, // expected-error {{';'}}
+  static int b[] = { 3, 4, 5 }, // expected-error {{';'}}
   &a == &b ? oopsMoreCommas() : removeUnusedLabels(a[0]);
+}
+
+int noSemiAfterLabel(int n) {
+  switch (n) {
+    default:
+      return n % 4;
+    case 0:
+    case 1:
+    case 2:
+    // CHECK: /*FOO*/ case 3: ;
+    /*FOO*/ case 3: // expected-error {{expected statement}}
+  }
+  switch (n) {
+    case 1:
+    case 2:
+      return 0;
+    // CHECK: /*BAR*/ default: ;
+    /*BAR*/ default: // expected-error {{expected statement}}
+  }
+  return 1;
 }

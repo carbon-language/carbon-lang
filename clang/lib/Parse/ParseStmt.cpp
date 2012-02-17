@@ -596,7 +596,8 @@ StmtResult Parser::ParseCaseStatement(ParsedAttributes &attrs, bool MissingCase,
     // Nicely diagnose the common error "switch (X) { case 4: }", which is
     // not valid.
     SourceLocation AfterColonLoc = PP.getLocForEndOfToken(ColonLoc);
-    Diag(AfterColonLoc, diag::err_label_end_of_compound_statement);
+    Diag(AfterColonLoc, diag::err_label_end_of_compound_statement)
+      << FixItHint::CreateInsertion(AfterColonLoc, " ;");
     SubStmt = true;
   }
 
@@ -638,16 +639,22 @@ StmtResult Parser::ParseDefaultStatement(ParsedAttributes &attrs) {
     ColonLoc = ExpectedLoc;
   }
 
-  // Diagnose the common error "switch (X) {... default: }", which is not valid.
-  if (Tok.is(tok::r_brace)) {
+  StmtResult SubStmt;
+
+  if (Tok.isNot(tok::r_brace)) {
+    SubStmt = ParseStatement();
+  } else {
+    // Diagnose the common error "switch (X) {... default: }", which is
+    // not valid.
     SourceLocation AfterColonLoc = PP.getLocForEndOfToken(ColonLoc);
-    Diag(AfterColonLoc, diag::err_label_end_of_compound_statement);
-    return StmtError();
+    Diag(AfterColonLoc, diag::err_label_end_of_compound_statement)
+      << FixItHint::CreateInsertion(AfterColonLoc, " ;");
+    SubStmt = true;
   }
 
-  StmtResult SubStmt(ParseStatement());
+  // Broken sub-stmt shouldn't prevent forming the case statement properly.
   if (SubStmt.isInvalid())
-    return StmtError();
+    SubStmt = Actions.ActOnNullStmt(ColonLoc);
 
   return Actions.ActOnDefaultStmt(DefaultLoc, ColonLoc,
                                   SubStmt.get(), getCurScope());

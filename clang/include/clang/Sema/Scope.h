@@ -57,7 +57,7 @@ public:
     /// BlockScope - This is a scope that corresponds to a block/closure object.
     /// Blocks serve as top-level scopes for some objects like labels, they
     /// also prevent things like break and continue.  BlockScopes always have
-    /// the FnScope, BreakScope, ContinueScope, and DeclScope flags set as well.
+    /// the FnScope and DeclScope flags set as well.
     BlockScope = 0x40,
 
     /// TemplateParamScope - This is a scope that corresponds to the
@@ -114,15 +114,11 @@ private:
   /// pointer is non-null and points to it.  This is used for label processing.
   Scope *FnParent;
 
-  /// BreakParent/ContinueParent - This is a direct link to the immediately
-  /// preceding BreakParent/ContinueParent if this scope is not one, or null if
-  /// there is no containing break/continue scope.
+  /// BreakParent/ContinueParent - This is a direct link to the innermost
+  /// BreakScope/ContinueScope which contains the contents of this scope
+  /// for control flow purposes (and might be this scope itself), or null
+  /// if there is no such scope.
   Scope *BreakParent, *ContinueParent;
-
-  /// ControlParent - This is a direct link to the immediately
-  /// preceding ControlParent if this scope is not one, or null if
-  /// there is no containing control scope.
-  Scope *ControlParent;
 
   /// BlockParent - This is a direct link to the immediately containing
   /// BlockScope if this scope is not one, or null if there is none.
@@ -180,12 +176,9 @@ public:
   Scope *getFnParent() { return FnParent; }
 
   /// getContinueParent - Return the closest scope that a continue statement
-  /// would be affected by.  If the closest scope is a closure scope, we know
-  /// that there is no loop *inside* the closure.
+  /// would be affected by.
   Scope *getContinueParent() {
-    if (ContinueParent && !ContinueParent->isBlockScope())
-      return ContinueParent;
-    return 0;
+    return ContinueParent;
   }
 
   const Scope *getContinueParent() const {
@@ -193,19 +186,13 @@ public:
   }
 
   /// getBreakParent - Return the closest scope that a break statement
-  /// would be affected by.  If the closest scope is a block scope, we know
-  /// that there is no loop *inside* the block.
+  /// would be affected by.
   Scope *getBreakParent() {
-    if (BreakParent && !BreakParent->isBlockScope())
-      return BreakParent;
-    return 0;
+    return BreakParent;
   }
   const Scope *getBreakParent() const {
     return const_cast<Scope*>(this)->getBreakParent();
   }
-
-  Scope *getControlParent() { return ControlParent; }
-  const Scope *getControlParent() const { return ControlParent; }
 
   Scope *getBlockParent() { return BlockParent; }
   const Scope *getBlockParent() const { return BlockParent; }

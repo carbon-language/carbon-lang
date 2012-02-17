@@ -19,23 +19,28 @@ using namespace clang;
 void Scope::Init(Scope *parent, unsigned flags) {
   AnyParent = parent;
   Flags = flags;
-    
+
+  if (parent && !(flags & FnScope)) {
+    BreakParent    = parent->BreakParent;
+    ContinueParent = parent->ContinueParent;
+  } else {
+    // Control scopes do not contain the contents of nested function scopes for
+    // control flow purposes.
+    BreakParent = ContinueParent = 0;
+  }
+
   if (parent) {
     Depth = parent->Depth + 1;
     PrototypeDepth = parent->PrototypeDepth;
     PrototypeIndex = 0;
     FnParent       = parent->FnParent;
-    BreakParent    = parent->BreakParent;
-    ContinueParent = parent->ContinueParent;
-    ControlParent  = parent->ControlParent;
     BlockParent    = parent->BlockParent;
     TemplateParamParent = parent->TemplateParamParent;
   } else {
     Depth = 0;
     PrototypeDepth = 0;
     PrototypeIndex = 0;
-    FnParent = BreakParent = ContinueParent = BlockParent = 0;
-    ControlParent = 0;
+    FnParent = BlockParent = 0;
     TemplateParamParent = 0;
   }
 
@@ -43,7 +48,6 @@ void Scope::Init(Scope *parent, unsigned flags) {
   if (flags & FnScope)            FnParent = this;
   if (flags & BreakScope)         BreakParent = this;
   if (flags & ContinueScope)      ContinueParent = this;
-  if (flags & ControlScope)       ControlParent = this;
   if (flags & BlockScope)         BlockParent = this;
   if (flags & TemplateParamScope) TemplateParamParent = this;
 

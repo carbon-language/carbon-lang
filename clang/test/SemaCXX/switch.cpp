@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -verify %s
+// RUN: %clang_cc1 -fsyntax-only -verify -std=c++11 %s
 
 void test() {
   bool x = true;
@@ -62,5 +62,26 @@ namespace test3 {
 void click_check_header_sizes() {
   switch (0 == 8) {  // expected-warning {{switch condition has boolean value}}
   case 0: ;
+  }
+}
+
+void local_class(int n) {
+  for (;;) switch (n) {
+  case 0:
+    struct S {
+      void f() {
+        case 1: // expected-error {{'case' statement not in switch statement}}
+        break; // expected-error {{'break' statement not in loop or switch statement}}
+        default: // expected-error {{'default' statement not in switch statement}}
+        continue; // expected-error {{'continue' statement not in loop statement}}
+      }
+    };
+    S().f();
+    []{
+      case 2: // expected-error {{'case' statement not in switch statement}}
+      break; // expected-error {{'break' statement not in loop or switch statement}}
+      default: // expected-error {{'default' statement not in switch statement}}
+      continue; // expected-error {{'continue' statement not in loop statement}}
+    }();
   }
 }
