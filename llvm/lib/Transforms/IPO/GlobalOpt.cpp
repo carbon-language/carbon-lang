@@ -2295,6 +2295,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
                              DenseMap<Constant*, Constant*> &MutatedMemory,
                              std::vector<GlobalVariable*> &AllocaTmps,
                              SmallPtrSet<Constant*, 8> &SimpleConstants,
+                             SmallPtrSet<GlobalVariable*, 8> &Invariants,
                              const TargetData *TD,
                              const TargetLibraryInfo *TLI);
 
@@ -2307,6 +2308,7 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
                           DenseMap<Constant*, Constant*> &MutatedMemory,
                           std::vector<GlobalVariable*> &AllocaTmps,
                           SmallPtrSet<Constant*, 8> &SimpleConstants,
+                          SmallPtrSet<GlobalVariable*, 8> &Invariants,
                           const TargetData *TD,
                           const TargetLibraryInfo *TLI) {
   // This is the main evaluation loop.
@@ -2415,14 +2417,39 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
       // Cannot handle inline asm.
       if (isa<InlineAsm>(CS.getCalledValue())) return false;
 
-      if (MemSetInst *MSI = dyn_cast<MemSetInst>(CS.getInstruction())) {
-        if (MSI->isVolatile()) return false;
-        Constant *Ptr = getVal(Values, MSI->getDest());
-        Constant *Val = getVal(Values, MSI->getValue());
-        Constant *DestVal = ComputeLoadResult(getVal(Values, Ptr),
-                                              MutatedMemory);
-        if (Val->isNullValue() && DestVal && DestVal->isNullValue()) {
-          // This memset is a no-op.
+      if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction())) {
+        if (MemSetInst *MSI = dyn_cast<MemSetInst>(II)) {
+          if (MSI->isVolatile()) return false;
+          Constant *Ptr = getVal(Values, MSI->getDest());
+          Constant *Val = getVal(Values, MSI->getValue());
+          Constant *DestVal = ComputeLoadResult(getVal(Values, Ptr),
+                                                MutatedMemory);
+          if (Val->isNullValue() && DestVal && DestVal->isNullValue()) {
+            // This memset is a no-op.
+            ++CurInst;
+            continue;
+          }
+        }
+
+        if (II->getIntrinsicID() == Intrinsic::lifetime_start ||
+            II->getIntrinsicID() == Intrinsic::lifetime_end) {
+          ++CurInst;
+          continue;
+        }
+
+        if (II->getIntrinsicID() == Intrinsic::invariant_start) {
+          // We don't insert an entry into Values, as it doesn't have a
+          // meaningful return value.
+          if (!II->use_empty())
+            return false;
+          ConstantInt *Size = cast<ConstantInt>(II->getArgOperand(0));
+          if (Size->isAllOnesValue()) {
+            Value *PtrArg = getVal(Values, II->getArgOperand(1));
+            Value *Ptr = PtrArg->stripPointerCasts();
+            if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr))
+              Invariants.insert(GV);
+          }
+          // Continue even if we do nothing.
           ++CurInst;
           continue;
         }
@@ -2453,8 +2480,8 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
         Constant *RetVal;
         // Execute the call, if successful, use the return value.
         if (!EvaluateFunction(Callee, RetVal, Formals, CallStack,
-                              MutatedMemory, AllocaTmps, SimpleConstants, TD,
-                              TLI))
+                              MutatedMemory, AllocaTmps, SimpleConstants,
+                              Invariants, TD, TLI))
           return false;
         InstResult = RetVal;
 
@@ -2521,6 +2548,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
                              DenseMap<Constant*, Constant*> &MutatedMemory,
                              std::vector<GlobalVariable*> &AllocaTmps,
                              SmallPtrSet<Constant*, 8> &SimpleConstants,
+                             SmallPtrSet<GlobalVariable*, 8> &Invariants,
                              const TargetData *TD,
                              const TargetLibraryInfo *TLI) {
   // Check to see if this function is already executing (recursion).  If so,
@@ -2552,7 +2580,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
   while (1) {
     BasicBlock *NextBB;
     if (!EvaluateBlock(CurInst, NextBB, CallStack, Values, MutatedMemory,
-                       AllocaTmps, SimpleConstants, TD, TLI))
+                       AllocaTmps, SimpleConstants, Invariants, TD, TLI))
       return false;
 
     if (NextBB == 0) {
@@ -2607,12 +2635,16 @@ static bool EvaluateStaticConstructor(Function *F, const TargetData *TD,
   // simple enough to live in a static initializer of a global.
   SmallPtrSet<Constant*, 8> SimpleConstants;
   
+  // Invariants - These global variables have been marked invariant by the
+  // static constructor.
+  SmallPtrSet<GlobalVariable*, 8> Invariants;
+
   // Call the function.
   Constant *RetValDummy;
   bool EvalSuccess = EvaluateFunction(F, RetValDummy,
                                       SmallVector<Constant*, 0>(), CallStack,
                                       MutatedMemory, AllocaTmps,
-                                      SimpleConstants, TD, TLI);
+                                      SimpleConstants, Invariants, TD, TLI);
   
   if (EvalSuccess) {
     // We succeeded at evaluation: commit the result.
@@ -2622,6 +2654,9 @@ static bool EvaluateStaticConstructor(Function *F, const TargetData *TD,
     for (DenseMap<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
          E = MutatedMemory.end(); I != E; ++I)
       CommitValueTo(I->second, I->first);
+    for (SmallPtrSet<GlobalVariable*, 8>::iterator I = Invariants.begin(),
+         E = Invariants.end(); I != E; ++I)
+      (*I)->setConstant(true);
   }
 
   // At this point, we are done interpreting.  If we created any 'alloca'
