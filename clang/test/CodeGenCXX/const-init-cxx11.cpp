@@ -16,10 +16,10 @@ namespace StructUnion {
     constexpr A(int n, double d, const char *y) : n(n), d(d), u(y) {}
   };
 
-  // CHECK: @_ZN11StructUnion1aE = global {{.*}} { i32 1, double 2.000000e+00, {{.*}} { i32 3, [4 x i8] undef } }
+  // CHECK: @_ZN11StructUnion1aE = constant {{.*}} { i32 1, double 2.000000e+00, {{.*}} { i32 3, [4 x i8] undef } }
   extern constexpr A a(1, 2.0, 3);
 
-  // CHECK: @_ZN11StructUnion1bE = global {{.*}} { i32 4, double 5.000000e+00, {{.*}} { i8* getelementptr inbounds ([6 x i8]* @{{.*}}, i32 0, i32 0) } }
+  // CHECK: @_ZN11StructUnion1bE = constant {{.*}} { i32 4, double 5.000000e+00, {{.*}} { i8* getelementptr inbounds ([6 x i8]* @{{.*}}, i32 0, i32 0) } }
   extern constexpr A b(4, 5, "hello");
 
   struct B {
@@ -62,21 +62,21 @@ namespace BaseClass {
   struct Test : Ts... { constexpr Test() : Ts()..., n(5) {} int n; };
 
   using Test1 = Test<N, C, Cs<1,2>, D, X<C,1>>;
-  // CHECK: @_ZN9BaseClass2t1E = global {{.*}} { i32 3, i8 1, i8 1, i8 1, double 4.000000e+00, i8 1, i32 5 }, align 8
+  // CHECK: @_ZN9BaseClass2t1E = constant {{.*}} { i32 3, i8 1, i8 1, i8 1, double 4.000000e+00, i8 1, i32 5 }, align 8
   extern constexpr Test1 t1 = Test1();
 
   struct DN : D, N {};
   struct DND : DN, X<D,0> {};
   struct DNN : DN, X<N,0> {};
-  // CHECK: @_ZN9BaseClass3dndE = global {{.*}} { double 4.000000e+00, i32 3, double 4.000000e+00 }
+  // CHECK: @_ZN9BaseClass3dndE = constant {{.*}} { double 4.000000e+00, i32 3, double 4.000000e+00 }
   extern constexpr DND dnd = DND();
   // Note, N subobject is laid out in DN subobject's tail padding.
-  // CHECK: @_ZN9BaseClass3dnnE = global {{.*}} { double 4.000000e+00, i32 3, i32 3 }
+  // CHECK: @_ZN9BaseClass3dnnE = constant {{.*}} { double 4.000000e+00, i32 3, i32 3 }
   extern constexpr DNN dnn = DNN();
 
   struct E {};
   struct Test2 : X<E,0>, X<E,1>, X<E,2>, X<E,3> {};
-  // CHECK: @_ZN9BaseClass2t2E = global {{.*}} undef
+  // CHECK: @_ZN9BaseClass2t2E = constant {{.*}} undef
   extern constexpr Test2 t2 = Test2();
 }
 
@@ -88,7 +88,7 @@ namespace Array {
   extern constexpr char c[6][4] = { "foo", "a", { "bar" }, { 'x', 'y', 'z' }, { "b" }, '1', '2', '3' };
 
   struct C { constexpr C() : n(5) {} int n, m = 3 * n + 1; };
-  // CHECK: @_ZN5Array5ctorsE = global [3 x {{.*}}] [{{.*}} { i32 5, i32 16 }, {{.*}} { i32 5, i32 16 }, {{.*}} { i32 5, i32 16 }]
+  // CHECK: @_ZN5Array5ctorsE = constant [3 x {{.*}}] [{{.*}} { i32 5, i32 16 }, {{.*}} { i32 5, i32 16 }, {{.*}} { i32 5, i32 16 }]
   extern const C ctors[3];
   constexpr C ctors[3];
 
@@ -100,7 +100,7 @@ namespace Array {
     char d[4];
     constexpr E() : c("foo"), d("x") {}
   };
-  // CHECK: @_ZN5Array1eE = global {{.*}} { [4 x i8] c"foo\00", [4 x i8] c"x\00\00\00" }
+  // CHECK: @_ZN5Array1eE = constant {{.*}} { [4 x i8] c"foo\00", [4 x i8] c"x\00\00\00" }
   extern constexpr E e = E();
 }
 
