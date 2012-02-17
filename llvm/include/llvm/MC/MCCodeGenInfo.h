@@ -20,7 +20,7 @@
 namespace llvm {
 
   class MCCodeGenInfo {
-    /// RelocationModel - Relocation model: statcic, pic, etc.
+    /// RelocationModel - Relocation model: static, pic, etc.
     ///
     Reloc::Model RelocationModel;
 
