@@ -101,6 +101,19 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
   CGF.EmitCXXGlobalDtorRegistration(function, argument);
 }
 
+/// Emit code to cause the variable at the given address to be considered as
+/// constant from this point onwards.
+static void EmitDeclInvariant(CodeGenFunction &CGF, llvm::Constant *Addr) {
+  // Grab the llvm.invariant.start intrinsic.
+  llvm::Intrinsic::ID InvStartID = llvm::Intrinsic::invariant_start;
+  llvm::Constant *InvariantStart = CGF.CGM.getIntrinsic(InvStartID);
+
+  // Emit a call, with size -1 signifying the whole object.
+  llvm::Value *Args[2] = { llvm::ConstantInt::getSigned(CGF.Int64Ty, -1),
+                           llvm::ConstantExpr::getBitCast(Addr, CGF.Int8PtrTy)};
+  CGF.Builder.CreateCall(InvariantStart, Args);
+}
+
 void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
                                                llvm::Constant *DeclPtr,
                                                bool PerformInit) {
@@ -111,7 +124,10 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
   if (!T->isReferenceType()) {
     if (PerformInit)
       EmitDeclInit(*this, D, DeclPtr);
-    EmitDeclDestroy(*this, D, DeclPtr);
+    if (CGM.isTypeConstant(D.getType(), true))
+      EmitDeclInvariant(*this, DeclPtr);
+    else
+      EmitDeclDestroy(*this, D, DeclPtr);
     return;
   }
 
