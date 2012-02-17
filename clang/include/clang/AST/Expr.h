@@ -4233,7 +4233,7 @@ public:
   }
 
   /// getFunctionType - Return the underlying function type for this block.
-  const FunctionType *getFunctionType() const;
+  const FunctionProtoType *getFunctionType() const;
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == BlockExprClass;

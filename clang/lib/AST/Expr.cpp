@@ -1512,9 +1512,10 @@ SourceRange InitListExpr::getSourceRange() const {
 
 /// getFunctionType - Return the underlying function type for this block.
 ///
-const FunctionType *BlockExpr::getFunctionType() const {
-  return getType()->getAs<BlockPointerType>()->
-                    getPointeeType()->getAs<FunctionType>();
+const FunctionProtoType *BlockExpr::getFunctionType() const {
+  // The block pointer is never sugared, but the function type might be.
+  return cast<BlockPointerType>(getType())
+           ->getPointeeType()->castAs<FunctionProtoType>();
 }
 
 SourceLocation BlockExpr::getCaretLocation() const {
