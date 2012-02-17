@@ -53,13 +53,14 @@ ValueObjectConstResultImpl::DerefOnTarget()
     if (m_load_addr_backend.get() == NULL)
     {
         lldb::addr_t tgt_address = m_impl_backend->GetPointerValue();
-        m_load_addr_backend = ValueObjectConstResult::Create (m_impl_backend->GetExecutionContextScope(),
+        ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
+        m_load_addr_backend = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
                                                               m_impl_backend->GetClangAST(),
                                                               m_impl_backend->GetClangType(),
                                                               m_impl_backend->GetName(),
                                                               tgt_address,
                                                               eAddressTypeLoad,
-                                                              m_impl_backend->GetUpdatePoint().GetProcessSP()->GetAddressByteSize());
+                                                              exe_ctx.GetAddressByteSize());
     }
     return m_load_addr_backend;
 }
@@ -107,8 +108,7 @@ ValueObjectConstResultImpl::CreateChildAtIndex (uint32_t idx, bool synthetic_arr
     lldb::clang_type_t clang_type = m_impl_backend->GetClangType();
     lldb::clang_type_t child_clang_type;
     
-    ExecutionContext exe_ctx;
-    m_impl_backend->GetExecutionContextScope()->CalculateExecutionContext (exe_ctx);
+    ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
     
     child_clang_type = ClangASTContext::GetChildClangTypeAtIndex (&exe_ctx,
                                                                   clang_ast,
@@ -184,14 +184,14 @@ ValueObjectConstResultImpl::AddressOf (Error &error)
         
         std::string new_name("&");
         new_name.append(m_impl_backend->GetName().AsCString(""));
-        
-        m_address_of_backend = ValueObjectConstResult::Create(m_impl_backend->GetExecutionContextScope(),
-                                                              type.GetASTContext(),
-                                                              type.GetPointerType(),
-                                                              ConstString(new_name.c_str()),
-                                                              buffer,
-                                                              lldb::endian::InlHostByteOrder(), 
-                                                              m_impl_backend->GetExecutionContextScope()->CalculateProcess()->GetAddressByteSize());
+        ExecutionContext exe_ctx (m_impl_backend->GetExecutionContextRef());
+        m_address_of_backend = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(),
+                                                               type.GetASTContext(),
+                                                               type.GetPointerType(),
+                                                               ConstString(new_name.c_str()),
+                                                               buffer,
+                                                               lldb::endian::InlHostByteOrder(), 
+                                                               exe_ctx.GetAddressByteSize());
         
         m_address_of_backend->GetValue().SetValueType(Value::eValueTypeScalar);
         m_address_of_backend->GetValue().GetScalar() = m_live_address;

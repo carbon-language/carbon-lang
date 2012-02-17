@@ -117,7 +117,7 @@ ValueObjectCast::UpdateValue ()
             // say we are changed if our location has changed.
             SetValueDidChange (m_value.GetValueType() != old_value.GetValueType() || m_value.GetScalar() != old_value.GetScalar());
         } 
-        ExecutionContext exe_ctx (GetExecutionContextScope());
+        ExecutionContext exe_ctx (GetExecutionContextRef());
         m_error = m_value.GetValueAsData(&exe_ctx, GetClangAST(), m_data, 0, GetModule());
         SetValueDidChange (m_parent->GetValueDidChange());
         return true;
@@ -235,7 +235,7 @@ ValueObjectDynamicValue::UpdateValue ()
         return true;
     }
     
-    ExecutionContext exe_ctx (GetExecutionContextScope());
+    ExecutionContext exe_ctx (GetExecutionContextRef());
     Target *target = exe_ctx.GetTargetPtr();
     if (target)
     {
@@ -244,7 +244,7 @@ ValueObjectDynamicValue::UpdateValue ()
     }
     
     // First make sure our Type and/or Address haven't changed:
-    Process *process = m_update_point.GetProcessSP().get();
+    Process *process = exe_ctx.GetProcessPtr();
     if (!process)
         return false;
     
@@ -311,7 +311,8 @@ ValueObjectDynamicValue::UpdateValue ()
             
         // We've moved, so we should be fine...
         m_address = dynamic_address;
-        lldb::addr_t load_address = m_address.GetLoadAddress(m_update_point.GetTargetSP().get());
+        lldb::TargetSP target_sp (GetTargetSP());
+        lldb::addr_t load_address = m_address.GetLoadAddress(target_sp.get());
         m_value.GetScalar() = load_address;
     }
     

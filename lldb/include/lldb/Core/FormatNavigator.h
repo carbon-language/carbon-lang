@@ -487,8 +487,7 @@ protected:
             log->Printf("going to an Objective-C dynamic scanning");
         if (!process_sp)
             return false;
-        Process* process = process_sp.get();
-        ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
+        ObjCLanguageRuntime* runtime = process_sp->GetObjCLanguageRuntime();
         if (runtime == NULL)
         {
             if (log)
@@ -640,8 +639,7 @@ protected:
             return false;
         if (log)
             log->Printf("this is an ObjC 'id', let's do dynamic search");
-        Process* process = process_sp.get();
-        ObjCLanguageRuntime* runtime = process->GetObjCLanguageRuntime();
+        ObjCLanguageRuntime* runtime = process_sp->GetObjCLanguageRuntime();
         if (runtime == NULL)
         {
             if (log)
@@ -751,7 +749,7 @@ protected:
             }
         }
         
-        lldb::ProcessSP process_sp = valobj.GetUpdatePoint().GetProcessSP();
+        lldb::ProcessSP process_sp = valobj.GetProcessSP();
         
         if (use_dynamic != lldb::eNoDynamicValues &&
              ClangASTType::GetMinimumLanguage(valobj.GetClangAST(), valobj.GetClangType()) == lldb::eLanguageTypeObjC)

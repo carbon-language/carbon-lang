@@ -237,8 +237,9 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
                                               Address &address)
 {
     // The Runtime is attached to a particular process, you shouldn't pass in a value from another process.
-    assert (in_value.GetUpdatePoint().GetProcessSP().get() == m_process);
-    
+    assert (in_value.GetProcessSP().get() == m_process);
+    assert (m_process != NULL);
+
     // Make sure we can have a dynamic value before starting...
     if (CouldHaveDynamicValue (in_value))
     {
@@ -309,10 +310,10 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
             // If the class address didn't point into the binary, or
             // it points into the right section but there wasn't a symbol
             // there, try to look it up by calling the class method in the target.
-            ExecutionContextScope *exe_scope = in_value.GetExecutionContextScope();
-            Thread *thread_to_use;
-            if (exe_scope)
-                thread_to_use = exe_scope->CalculateThread();
+            
+            ExecutionContext exe_ctx (in_value.GetExecutionContextRef());
+            
+            Thread *thread_to_use = exe_ctx.GetThreadPtr();
             
             if (thread_to_use == NULL)
                 thread_to_use = m_process->GetThreadList().GetSelectedThread().get();
@@ -592,15 +593,20 @@ AppleObjCRuntimeV2::GetISA(ValueObject& valobj)
     if (IsTaggedPointer(isa_pointer))
         return g_objc_Tagged_ISA;
 
-    uint8_t pointer_size = valobj.GetUpdatePoint().GetProcessSP()->GetAddressByteSize();
+    ExecutionContext exe_ctx (valobj.GetExecutionContextRef());
+
+    Process *process = exe_ctx.GetProcessPtr();
+    if (process)
+    {
+        uint8_t pointer_size = process->GetAddressByteSize();
     
-    Error error;
-    ObjCLanguageRuntime::ObjCISA isa = 
-    valobj.GetUpdatePoint().GetProcessSP()->ReadUnsignedIntegerFromMemory(isa_pointer,
-                                                                          pointer_size,
-                                                                          0,
-                                                                          error);
-    return isa;
+        Error error;
+        return process->ReadUnsignedIntegerFromMemory (isa_pointer,
+                                                       pointer_size,
+                                                       0,
+                                                       error);
+    }
+    return 0;
 }
 
 // TODO: should we have a transparent_kvo parameter here to say if we 

@@ -12,8 +12,121 @@
 #define liblldb_ExecutionContext_h_
 
 #include "lldb/lldb-private.h"
+#include "lldb/Target/StackID.h"
 
 namespace lldb_private {
+
+class ExecutionContextRef
+{
+public:
+    //------------------------------------------------------------------
+    /// Default Constructor.
+    ///
+    /// Initialize with NULL process and thread, and invalid frame
+    /// index.
+    //------------------------------------------------------------------
+    ExecutionContextRef();
+
+    ExecutionContextRef (const ExecutionContextRef &rhs);
+
+    ExecutionContextRef (const ExecutionContext *exe_ctx);
+    
+    ExecutionContextRef (const ExecutionContext &exe_ctx);
+
+    ExecutionContextRef &
+    operator =(const ExecutionContextRef &rhs);
+
+    ExecutionContextRef &
+    operator =(const ExecutionContext &exe_ctx);
+
+    // Init using the target and all the selected items inside of it
+    // (the process and its selected thread, and the thread's selected
+    // frame). If there is no selected thread, default to the first thread
+    // If there is no selected frame, default to the first frame.
+    ExecutionContextRef (Target *target, bool adopt_selected);
+
+    ExecutionContextRef (ExecutionContextScope *exe_scope);
+
+    ExecutionContextRef (ExecutionContextScope &exe_scope);
+
+    ~ExecutionContextRef();
+    //------------------------------------------------------------------
+    /// Clear the object's state.
+    ///
+    /// Sets the process and thread to NULL, and the frame index to an
+    /// invalid value.
+    //------------------------------------------------------------------
+    void
+    Clear ();
+
+    void
+    SetTargetSP (const lldb::TargetSP &target_sp);
+    
+    void
+    SetProcessSP (const lldb::ProcessSP &process_sp);
+    
+    void
+    SetThreadSP (const lldb::ThreadSP &thread_sp);
+    
+    void
+    SetFrameSP (const lldb::StackFrameSP &frame_sp);
+
+    void
+    SetTargetPtr (Target* target, bool adopt_selected);
+    
+    void
+    SetProcessPtr (Process *process);
+    
+    void
+    SetThreadPtr (Thread *thread);
+    
+    void
+    SetFramePtr (StackFrame *frame);
+
+    lldb::TargetSP
+    GetTargetSP () const
+    {
+        return m_target_wp.lock();
+    }
+    
+    lldb::ProcessSP
+    GetProcessSP () const
+    {
+        return m_process_wp.lock();
+    }
+    
+    lldb::ThreadSP
+    GetThreadSP () const;
+    
+    lldb::StackFrameSP
+    GetFrameSP () const;
+
+    ExecutionContext
+    Lock () const;
+
+    bool
+    HasThreadRef () const
+    {
+        return m_tid != LLDB_INVALID_THREAD_ID;
+    }
+
+    bool
+    HasFrameRef () const
+    {
+        return m_stack_id.IsValid();
+    }
+
+protected:
+    //------------------------------------------------------------------
+    // Member variables
+    //------------------------------------------------------------------
+    lldb::TargetWP m_target_wp;     ///< The target that owns the process/thread/frame
+    lldb::ProcessWP m_process_wp;   ///< The process that owns the thread/frame
+    mutable lldb::ThreadWP m_thread_wp;     ///< The thread that owns the frame
+    mutable lldb::StackFrameWP m_frame_wp;  ///< The stack frame in thread.
+    lldb::tid_t m_tid;
+    StackID m_stack_id;
+};
 
 //----------------------------------------------------------------------
 /// @class ExecutionContext ExecutionContext.h "lldb/Target/ExecutionContext.h"
@@ -41,10 +154,27 @@ public:
 
     ExecutionContext (const ExecutionContext &rhs);
 
+    ExecutionContext (Target* t, bool fill_current_process_thread_frame = true);
+    
+    ExecutionContext (const lldb::TargetSP &target_sp, bool get_process);
+    ExecutionContext (const lldb::ProcessSP &process_sp);
+    ExecutionContext (const lldb::ThreadSP &thread_sp);
+    ExecutionContext (const lldb::StackFrameSP &frame_sp);
+    ExecutionContext (const ExecutionContextRef &exe_ctx_ref);
+    ExecutionContext (const ExecutionContextRef *exe_ctx_ref);
+    ExecutionContext (ExecutionContextScope *exe_scope);
+    ExecutionContext (ExecutionContextScope &exe_scope);
+    
+
     ExecutionContext &
     operator =(const ExecutionContext &rhs);
 
-    ExecutionContext (Target* t, bool fill_current_process_thread_frame = true);
+    bool
+    operator ==(const ExecutionContext &rhs) const;
+    
+    bool
+    operator !=(const ExecutionContext &rhs) const;
+
     //------------------------------------------------------------------
     /// Construct with process, thread, and frame index.
     ///
@@ -64,10 +194,6 @@ public:
                       StackFrame * frame = NULL);
 
 
-    ExecutionContext (ExecutionContextScope *exe_scope);
-
-    ExecutionContext (ExecutionContextScope &exe_scope);
-
     ~ExecutionContext();
     //------------------------------------------------------------------
     /// Clear the object's state.
@@ -83,6 +209,9 @@ public:
 
     ExecutionContextScope *
     GetBestExecutionContextScope () const;
+
+    uint32_t
+    GetAddressByteSize() const;
 
     Target *
     GetTargetPtr () const;
@@ -115,25 +244,25 @@ public:
     GetFrameRef () const;
     
     const lldb::TargetSP &
-    GetTargetSP ()
+    GetTargetSP () const
     {
         return m_target_sp;
     }
     
     const lldb::ProcessSP &
-    GetProcessSP ()
+    GetProcessSP () const
     {
         return m_process_sp;
     }
 
     const lldb::ThreadSP &
-    GetThreadSP ()
+    GetThreadSP () const
     {
         return m_thread_sp;
     }
         
     const lldb::StackFrameSP &
-    GetFrameSP ()
+    GetFrameSP () const
     {
         return m_frame_sp;
     }
@@ -162,6 +291,47 @@ public:
     void
     SetFramePtr (StackFrame *frame);
 
+    //------------------------------------------------------------------
+    // Set the execution context using a target shared pointer. 
+    //
+    // If "target_sp" is valid, sets the target context to match and
+    // if "get_process" is true, sets the process shared pointer if
+    // the target currently has a process.
+    //------------------------------------------------------------------
+    void
+    SetContext (const lldb::TargetSP &target_sp, bool get_process);
+    
+    //------------------------------------------------------------------
+    // Set the execution context using a process shared pointer.
+    //
+    // If "process_sp" is valid, then set the process and target in this
+    // context. Thread and frame contexts will be cleared.
+    // If "process_sp" is not valid, all shared pointers are reset.
+    //------------------------------------------------------------------
+    void
+    SetContext (const lldb::ProcessSP &process_sp);
+    
+    //------------------------------------------------------------------
+    // Set the execution context using a thread shared pointer.
+    //
+    // If "thread_sp" is valid, then set the thread, process and target
+    // in this context. The frame context will be cleared. 
+    // If "thread_sp" is not valid, all shared pointers are reset.
+    //------------------------------------------------------------------
+    void
+    SetContext (const lldb::ThreadSP &thread_sp);
+    
+    //------------------------------------------------------------------
+    // Set the execution context using a thread shared pointer.
+    //
+    // If "frame_sp" is valid, then set the frame, thread, process and 
+    // target in this context
+    // If "frame_sp" is not valid, all shared pointers are reset.
+    //------------------------------------------------------------------
+    void
+    SetContext (const lldb::StackFrameSP &frame_sp);
+    
+
 protected:
     //------------------------------------------------------------------
     // Member variables
@@ -171,7 +341,6 @@ protected:
     lldb::ThreadSP m_thread_sp;     ///< The thread that owns the frame
     lldb::StackFrameSP m_frame_sp;  ///< The stack frame in thread.
 };
-
 } // namespace lldb_private
 
 #endif  // liblldb_ExecutionContext_h_

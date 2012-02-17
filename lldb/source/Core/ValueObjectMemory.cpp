@@ -64,7 +64,8 @@ ValueObjectMemory::ValueObjectMemory (ExecutionContextScope *exe_scope,
     assert (m_type_sp.get() != NULL);
     SetName (ConstString(name));
     m_value.SetContext(Value::eContextTypeLLDBType, m_type_sp.get());
-    lldb::addr_t load_address = m_address.GetLoadAddress(m_update_point.GetTargetSP().get());
+    TargetSP target_sp (GetTargetSP());
+    lldb::addr_t load_address = m_address.GetLoadAddress(target_sp.get());
     if (load_address != LLDB_INVALID_ADDRESS)
     {
         m_value.SetValueType(Value::eValueTypeLoadAddress);
@@ -99,9 +100,11 @@ ValueObjectMemory::ValueObjectMemory (ExecutionContextScope *exe_scope,
     assert (m_clang_type.GetASTContext());
     assert (m_clang_type.GetOpaqueQualType());
     
+    TargetSP target_sp (GetTargetSP());
+
     SetName (ConstString(name));
     m_value.SetContext(Value::eContextTypeClangType, m_clang_type.GetOpaqueQualType());
-    lldb::addr_t load_address = m_address.GetLoadAddress(m_update_point.GetTargetSP().get());
+    lldb::addr_t load_address = m_address.GetLoadAddress (target_sp.get());
     if (load_address != LLDB_INVALID_ADDRESS)
     {
         m_value.SetValueType(Value::eValueTypeLoadAddress);
@@ -183,7 +186,7 @@ ValueObjectMemory::UpdateValue ()
     SetValueIsValid (false);
     m_error.Clear();
 
-    ExecutionContext exe_ctx (GetExecutionContextScope());
+    ExecutionContext exe_ctx (GetExecutionContextRef());
     
     Target *target = exe_ctx.GetTargetPtr();
     if (target)

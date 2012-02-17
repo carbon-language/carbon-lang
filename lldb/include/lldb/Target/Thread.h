@@ -339,7 +339,7 @@ public:
     GetFrameWithConcreteFrameIndex (uint32_t unwind_idx);
     
     virtual lldb::StackFrameSP
-    GetFrameWithStackID(StackID &stack_id)
+    GetFrameWithStackID (const StackID &stack_id)
     {
         return GetStackFrameList().GetFrameWithStackID (stack_id);
     }

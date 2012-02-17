@@ -332,7 +332,7 @@ StackFrameList::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
 }
 
 StackFrameSP
-StackFrameList::GetFrameWithStackID (StackID &stack_id)
+StackFrameList::GetFrameWithStackID (const StackID &stack_id)
 {
     uint32_t frame_idx = 0;
     StackFrameSP frame_sp;

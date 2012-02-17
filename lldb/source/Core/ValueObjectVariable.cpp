@@ -127,7 +127,7 @@ ValueObjectVariable::UpdateValue ()
     else
     {
         lldb::addr_t loclist_base_load_addr = LLDB_INVALID_ADDRESS;
-        ExecutionContext exe_ctx (GetExecutionContextScope());
+        ExecutionContext exe_ctx (GetExecutionContextRef());
         
         Target *target = exe_ctx.GetTargetPtr();
         if (target)
@@ -242,15 +242,27 @@ ValueObjectVariable::UpdateValue ()
 bool
 ValueObjectVariable::IsInScope ()
 {
-    ExecutionContextScope *exe_scope = GetExecutionContextScope();
-    if (!exe_scope)
-        return true;
-        
-    StackFrame *frame = exe_scope->CalculateStackFrame();
-    if (!frame)
-        return true;
+    const ExecutionContextRef &exe_ctx_ref = GetExecutionContextRef();
+    if (exe_ctx_ref.HasFrameRef())
+    {
+        ExecutionContext exe_ctx (exe_ctx_ref);
+        StackFrame *frame = exe_ctx.GetFramePtr();
+        if (frame)
+        {
+            return m_variable_sp->IsInScope (frame);
+        }
+        else
+        {
+            // This ValueObject had a frame at one time, but now we
+            // can't locate it, so return false since we probably aren't
+            // in scope.
+            return false;
+        }
+    }
+    // We have a variable that wasn't tied to a frame, which
+    // means it is a global and is always in scope.
+    return true;
          
-    return m_variable_sp->IsInScope (frame);
 }
 
 Module *

@@ -84,12 +84,9 @@ public:
     }
     
     bool
-    IsValid ()
+    IsValid () const
     {
-        if (m_pc == LLDB_INVALID_ADDRESS && m_cfa == LLDB_INVALID_ADDRESS)
-            return false;
-        else
-            return true;
+        return m_pc != LLDB_INVALID_ADDRESS || m_cfa != LLDB_INVALID_ADDRESS;
     }
     
     void

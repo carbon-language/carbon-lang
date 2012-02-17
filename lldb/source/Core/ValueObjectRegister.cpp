@@ -77,8 +77,8 @@ bool
 ValueObjectRegisterContext::UpdateValue ()
 {
     m_error.Clear();
-    ExecutionContextScope *exe_scope = GetExecutionContextScope();
-    StackFrame *frame = exe_scope->CalculateStackFrame();
+    ExecutionContext exe_ctx(GetExecutionContextRef());
+    StackFrame *frame = exe_ctx.GetFramePtr();
     if (frame)
         m_reg_ctx_sp = frame->GetRegisterContext();
     else
@@ -102,7 +102,10 @@ ValueObjectRegisterContext::CreateChildAtIndex (uint32_t idx, bool synthetic_arr
     
     const uint32_t num_children = GetNumChildren();
     if (idx < num_children)
-        new_valobj = new ValueObjectRegisterSet(GetExecutionContextScope(), m_reg_ctx_sp, idx);
+    {
+        ExecutionContext exe_ctx(GetExecutionContextRef());
+        new_valobj = new ValueObjectRegisterSet(exe_ctx.GetBestExecutionContextScope(), m_reg_ctx_sp, idx);
+    }
     
     return new_valobj;
 }
@@ -174,8 +177,8 @@ ValueObjectRegisterSet::UpdateValue ()
 {
     m_error.Clear();
     SetValueDidChange (false);
-    ExecutionContextScope *exe_scope = GetExecutionContextScope();
-    StackFrame *frame = exe_scope->CalculateStackFrame();
+    ExecutionContext exe_ctx(GetExecutionContextRef());
+    StackFrame *frame = exe_ctx.GetFramePtr();
     if (frame == NULL)
         m_reg_ctx_sp.reset();
     else
@@ -355,8 +358,8 @@ bool
 ValueObjectRegister::UpdateValue ()
 {
     m_error.Clear();
-    ExecutionContextScope *exe_scope = GetExecutionContextScope();
-    StackFrame *frame = exe_scope->CalculateStackFrame();
+    ExecutionContext exe_ctx(GetExecutionContextRef());
+    StackFrame *frame = exe_ctx.GetFramePtr();
     if (frame == NULL)
     {
         m_reg_ctx_sp.reset();

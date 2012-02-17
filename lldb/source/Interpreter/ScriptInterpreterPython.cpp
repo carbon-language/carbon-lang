@@ -1330,7 +1330,8 @@ ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name
     if (!valobj.get())
         return NULL;
     
-    Target *target = valobj->GetUpdatePoint().GetTargetSP().get();
+    ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
+    Target *target = exe_ctx.GetTargetPtr();
     
     if (!target)
         return NULL;
@@ -1448,7 +1449,8 @@ ScriptInterpreterPython::CallPythonScriptFunction (const char *python_function_n
     if (!valobj.get())
         return "<no object>";
         
-    Target *target = valobj->GetUpdatePoint().GetTargetSP().get();
+    ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
+    Target *target = exe_ctx.GetTargetPtr();
     
     if (!target)
         return "<no target>";

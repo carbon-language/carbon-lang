@@ -1394,7 +1394,7 @@ Debugger::FormatPrompt
                                     if (index_higher < 0)
                                         index_higher = valobj->GetNumChildren() - 1;
                                     
-                                    uint32_t max_num_children = target->GetUpdatePoint().GetTargetSP()->GetMaximumNumberOfChildrenToDisplay();
+                                    uint32_t max_num_children = target->GetTargetSP()->GetMaximumNumberOfChildrenToDisplay();
                                     
                                     for (;index_lower<=index_higher;index_lower++)
                                     {

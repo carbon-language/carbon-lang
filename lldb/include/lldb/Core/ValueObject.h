@@ -338,7 +338,7 @@ public:
 
     };
 
-    class EvaluationPoint : public ExecutionContextScope
+    class EvaluationPoint
     {
     public:
         
@@ -350,25 +350,19 @@ public:
         
         ~EvaluationPoint ();
         
-        const lldb::TargetSP &
-        GetTargetSP () const
+        const ExecutionContextRef &
+        GetExecutionContextRef() const
         {
-            return m_target_sp;
+            return m_exe_ctx_ref;
         }
-        
-        const lldb::ProcessSP &
-        GetProcessSP () const
-        {
-            return m_process_sp;
-        }
-                
+
         // Set the EvaluationPoint to the values in exe_scope,
         // Return true if the Evaluation Point changed.
         // Since the ExecutionContextScope is always going to be valid currently, 
         // the Updated Context will also always be valid.
         
-        bool
-        SetContext (ExecutionContextScope *exe_scope);
+//        bool
+//        SetContext (ExecutionContextScope *exe_scope);
         
         void
         SetIsConstant ()
@@ -442,39 +436,14 @@ public:
             
         }
         
-        // If this EvaluationPoint is created without a target, then we could have it
-        // hand out a NULL ExecutionContextScope.  But then everybody would have to check that before
-        // calling through it, which is annoying.  So instead, we make the EvaluationPoint BE an
-        // ExecutionContextScope, and it hands out the right things.
-        virtual Target *CalculateTarget ();
-        
-        virtual Process *CalculateProcess ();
-        
-        virtual Thread *CalculateThread ();
-        
-        virtual StackFrame *CalculateStackFrame ();
-        
-        virtual void CalculateExecutionContext (ExecutionContext &exe_ctx);
-        
     private:
         bool
-        SyncWithProcessState ()
-        {
-            ExecutionContextScope *exe_scope;
-            return SyncWithProcessState(exe_scope);
-        }
-        
-        bool
-        SyncWithProcessState (ExecutionContextScope *&exe_scope);
+        SyncWithProcessState ();
                 
-        bool             m_needs_update;
-        bool             m_first_update;
-
-        lldb::TargetSP   m_target_sp;
-        lldb::ProcessSP  m_process_sp;
-        lldb::user_id_t  m_thread_id;
-        StackID          m_stack_id;
-        ProcessModID     m_mod_id; // This is the stop id when this ValueObject was last evaluated.
+        ProcessModID m_mod_id; // This is the stop id when this ValueObject was last evaluated.
+        ExecutionContextRef m_exe_ctx_ref;
+        bool m_needs_update;
+        bool m_first_update;
     };
 
     const EvaluationPoint &
@@ -489,12 +458,36 @@ public:
         return m_update_point;
     }
     
-    ExecutionContextScope *
-    GetExecutionContextScope ()
+    const ExecutionContextRef &
+    GetExecutionContextRef() const
     {
-        return &m_update_point;
+        return m_update_point.GetExecutionContextRef();
     }
-    
+
+    lldb::TargetSP
+    GetTargetSP() const
+    {
+        return m_update_point.GetExecutionContextRef().GetTargetSP();
+    }
+
+    lldb::ProcessSP
+    GetProcessSP() const
+    {
+        return m_update_point.GetExecutionContextRef().GetProcessSP();
+    }
+
+    lldb::ThreadSP
+    GetThreadSP() const
+    {
+        return m_update_point.GetExecutionContextRef().GetThreadSP();
+    }
+
+    lldb::StackFrameSP
+    GetFrameSP() const
+    {
+        return m_update_point.GetExecutionContextRef().GetFrameSP();
+    }
+
     void
     SetNeedsUpdate ();
     

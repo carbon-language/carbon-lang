@@ -85,8 +85,7 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
         return "NULL";
     
     StreamString s;
-    ExecutionContext exe_ctx;
-    object->GetExecutionContextScope()->CalculateExecutionContext(exe_ctx);
+    ExecutionContext exe_ctx (object->GetExecutionContextRef());
     SymbolContext sc;
     StackFrame *frame = exe_ctx.GetFramePtr();
     if (frame)
@@ -237,8 +236,7 @@ SyntheticArrayView::GetDescription()
 
 #ifndef LLDB_DISABLE_PYTHON
 
-TypeSyntheticImpl::FrontEnd::FrontEnd(std::string pclass,
-                                            lldb::ValueObjectSP be) :
+TypeSyntheticImpl::FrontEnd::FrontEnd(std::string pclass, lldb::ValueObjectSP be) :
     SyntheticChildrenFrontEnd(be),
     m_python_class(pclass)
 {
@@ -249,7 +247,7 @@ TypeSyntheticImpl::FrontEnd::FrontEnd(std::string pclass,
         return;
     }
     
-    m_interpreter = m_backend->GetUpdatePoint().GetTargetSP()->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
+    m_interpreter = m_backend->GetTargetSP()->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
     
     if (m_interpreter == NULL)
         m_wrapper = NULL;

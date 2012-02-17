@@ -129,10 +129,13 @@ ValueObjectChild::UpdateValue ()
                     switch (addr_type)
                     {
                         case eAddressTypeFile:
-                            if (m_update_point.GetProcessSP().get() != NULL && m_update_point.GetProcessSP()->IsAlive() == true)
-                                m_value.SetValueType (Value::eValueTypeLoadAddress);
-                            else
-                                m_value.SetValueType(Value::eValueTypeFileAddress);
+                            {
+                                lldb::ProcessSP process_sp (GetProcessSP());
+                                if (process_sp && process_sp->IsAlive() == true)
+                                    m_value.SetValueType (Value::eValueTypeLoadAddress);
+                                else
+                                    m_value.SetValueType(Value::eValueTypeFileAddress);
+                            }
                             break;
                         case eAddressTypeLoad:
                             m_value.SetValueType (Value::eValueTypeLoadAddress);
@@ -186,7 +189,7 @@ ValueObjectChild::UpdateValue ()
 
             if (m_error.Success())
             {
-                ExecutionContext exe_ctx (GetExecutionContextScope());
+                ExecutionContext exe_ctx (GetExecutionContextRef().Lock());
                 m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST (), m_data, 0, GetModule());
             }
         }

@@ -84,6 +84,8 @@ class   Error;
 class   Event;
 class   EventData;
 class   ExecutionContext;
+class   ExecutionContextRef;
+class   ExecutionContextRefLocker;
 class   ExecutionContextScope;
 class   FileSpec;
 class   FileSpecList;

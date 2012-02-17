@@ -65,9 +65,11 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
         lldb::addr_t original_ptr = in_value.GetPointerValue(&address_type);
         if (original_ptr == LLDB_INVALID_ADDRESS)
             return false;
-            
-        Target *target = in_value.GetUpdatePoint().GetTargetSP().get();
-        Process *process = in_value.GetUpdatePoint().GetProcessSP().get();
+        
+        ExecutionContext exe_ctx (in_value.GetExecutionContextRef());
+
+        Target *target = exe_ctx.GetTargetPtr();
+        Process *process = exe_ctx.GetProcessPtr();
 
         char memory_buffer[16];
         DataExtractor data(memory_buffer, sizeof(memory_buffer), 
