@@ -6,21 +6,12 @@
 // License. See LICENSE.TXT for details.
 //
 //===----------------------------------------------------------------------===//
-//
-// This file provide the function DemoteRegToStack().  This function takes a
-// virtual register computed by an Instruction and replaces it with a slot in
-// the stack frame, allocated via alloca. It returns the pointer to the
-// AllocaInst inserted.  After this function is called on an instruction, we are
-// guaranteed that the only user of the instruction is a store that is
-// immediately after it.
-//
-//===----------------------------------------------------------------------===//
 
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/Function.h"
 #include "llvm/Instructions.h"
 #include "llvm/Type.h"
-#include <map>
+#include "llvm/ADT/DenseMap.h"
 using namespace llvm;
 
 /// DemoteRegToStack - This function takes a virtual register computed by an
@@ -28,7 +19,7 @@ using namespace llvm;
 /// alloca.  This allows the CFG to be changed around without fear of
 /// invalidating the SSA information for the value.  It returns the pointer to
 /// the alloca inserted to create a stack slot for I.
-AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
+AllocaInst *llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
                                    Instruction *AllocaPoint) {
   if (I.use_empty()) {
     I.eraseFromParent();
@@ -59,7 +50,7 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
       // resulting PHI node will have multiple values (from each load) coming in
       // from the same block, which is illegal SSA form. For this reason, we
       // keep track of and reuse loads we insert.
-      std::map<BasicBlock*, Value*> Loads;
+      DenseMap<BasicBlock*, Value*> Loads;
       for (unsigned i = 0, e = PN->getNumIncomingValues(); i != e; ++i)
         if (PN->getIncomingValue(i) == &I) {
           Value *&V = Loads[PN->getIncomingBlock(i)];
@@ -105,7 +96,7 @@ AllocaInst* llvm::DemoteRegToStack(Instruction &I, bool VolatileLoads,
 /// DemotePHIToStack - This function takes a virtual register computed by a PHI
 /// node and replaces it with a slot in the stack frame allocated via alloca.
 /// The PHI node is deleted. It returns the pointer to the alloca inserted.
-AllocaInst* llvm::DemotePHIToStack(PHINode *P, Instruction *AllocaPoint) {
+AllocaInst *llvm::DemotePHIToStack(PHINode *P, Instruction *AllocaPoint) {
   if (P->use_empty()) {
     P->eraseFromParent();
     return 0;
