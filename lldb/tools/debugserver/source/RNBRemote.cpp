@@ -2512,8 +2512,11 @@ RNBRemote::HandlePacket_G (const char *p)
         if (packet.GetHexBytes (reg_value.value.v_sint8, reg_entry->gdb_size, 0xcc) != reg_entry->gdb_size)
             break;
 
-        if (!DNBThreadSetRegisterValueByID (pid, tid, reg_entry->nub_info.set, reg_entry->nub_info.reg, &reg_value))
-            return SendPacket ("E15");
+        if (reg_entry->fail_value == NULL)
+        {
+            if (!DNBThreadSetRegisterValueByID (pid, tid, reg_entry->nub_info.set, reg_entry->nub_info.reg, &reg_value))
+                return SendPacket ("E15");
+        }
     }
     return SendPacket ("OK");
 }
