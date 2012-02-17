@@ -5597,6 +5597,61 @@ static void Write_class_t(ASTContext *Context, std::string &Result,
   Result += ",\n};\n";
 }
 
+static void Write_category_t(RewriteModernObjC &RewriteObj, ASTContext *Context, 
+                             std::string &Result,
+                             StringRef CatName,
+                             StringRef ClassName,
+                             ArrayRef<ObjCMethodDecl *> InstanceMethods,
+                             ArrayRef<ObjCMethodDecl *> ClassMethods,
+                             ArrayRef<ObjCProtocolDecl *> RefedProtocols,
+                             ArrayRef<ObjCPropertyDecl *> ClassProperties) {
+  WriteModernMetadataDeclarations(Result);
+  Result += "\nstatic struct _category_t ";
+  Result += "_OBJC_$_CATEGORY_";
+  Result += ClassName; Result += "_$_"; Result += CatName;
+  Result += " __attribute__ ((used, section (\"__DATA,__objc_const\"))) = \n";
+  Result += "{\n";
+  Result += "\t\""; Result += ClassName; Result += "\",\n";
+  Result += "\t&"; Result += "OBJC_CLASS_$_"; Result += ClassName;
+  Result += ",\n";
+  if (InstanceMethods.size() > 0) {
+    Result += "\t(const struct _method_list_t *)&";  
+    Result += "_OBJC_$_CATEGORY_INSTANCE_METHODS_";
+    Result += ClassName; Result += "_$_"; Result += CatName;
+    Result += ",\n";
+  }
+  else
+    Result += "\t0,\n";
+  
+  if (ClassMethods.size() > 0) {
+    Result += "\t(const struct _method_list_t *)&";  
+    Result += "_OBJC_$_CATEGORY_CLASS_METHODS_";
+    Result += ClassName; Result += "_$_"; Result += CatName;
+    Result += ",\n";
+  }
+  else
+    Result += "\t0,\n";
+  
+  if (RefedProtocols.size() > 0) {
+    Result += "\t(const struct _protocol_list_t *)&";  
+    Result += "_OBJC_CATEGORY_PROTOCOLS_$_";
+    Result += ClassName; Result += "_$_"; Result += CatName;
+    Result += ",\n";
+  }
+  else
+    Result += "\t0,\n";
+  
+  if (ClassProperties.size() > 0) {
+    Result += "\t(const struct _prop_list_t *)&";  Result += "_OBJC_$_PROP_LIST_";
+    Result += ClassName; Result += "_$_"; Result += CatName;
+    Result += ",\n";
+  }
+  else
+    Result += "\t0,\n";
+  
+  Result += "};\n";
+}
+
 static void Write__extendedMethodTypes_initializer(RewriteModernObjC &RewriteObj,
                                            ASTContext *Context, std::string &Result,
                                            ArrayRef<ObjCMethodDecl *> Methods,
@@ -6113,6 +6168,23 @@ void RewriteModernObjC::RewriteMetaDataIntoBuffer(std::string &Result) {
     }
     Result += "};\n";
   }
+  
+  if (CatDefCount > 0) {
+    Result += "static struct _category_t *L_OBJC_LABEL_CATEGORY_$ [";
+    Result += llvm::utostr(CatDefCount); Result += "]";
+    Result += 
+    " __attribute__((used, section (\"__DATA, __objc_catlist,"
+    "regular,no_dead_strip\")))= {\n";
+    for (int i = 0; i < CatDefCount; i++) {
+      Result += "\t&_OBJC_$_CATEGORY_";
+      Result += 
+        CategoryImplementation[i]->getClassInterface()->getNameAsString(); 
+      Result += "_$_";
+      Result += CategoryImplementation[i]->getNameAsString();
+      Result += ",\n";
+    }
+    Result += "};\n";
+  }
 }
 
 /// RewriteObjCCategoryImplDecl - Rewrite metadata for each category
@@ -6121,15 +6193,15 @@ void RewriteModernObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
                                               std::string &Result) {
   ObjCInterfaceDecl *ClassDecl = IDecl->getClassInterface();
   // Find category declaration for this implementation.
-  ObjCCategoryDecl *CDecl;
+  ObjCCategoryDecl *CDecl=0;
   for (CDecl = ClassDecl->getCategoryList(); CDecl;
        CDecl = CDecl->getNextClassCategory())
     if (CDecl->getIdentifier() == IDecl->getIdentifier())
       break;
   
   std::string FullCategoryName = ClassDecl->getNameAsString();
-  FullCategoryName += '_';
-  FullCategoryName += IDecl->getNameAsString();
+  FullCategoryName += "_$_";
+  FullCategoryName += CDecl->getNameAsString();
   
   // Build _objc_method_list for class's instance methods if needed
   SmallVector<ObjCMethodDecl *, 32>
@@ -6154,79 +6226,55 @@ void RewriteModernObjC::RewriteObjCCategoryImplDecl(ObjCCategoryImplDecl *IDecl,
     if (ObjCMethodDecl *Setter = PD->getSetterMethodDecl())
       InstanceMethods.push_back(Setter);
   }
-  RewriteObjCMethodsMetaData(InstanceMethods.begin(), InstanceMethods.end(),
-                             true, "CATEGORY_", FullCategoryName.c_str(),
-                             Result);
   
-  // Build _objc_method_list for class's class methods if needed
-  RewriteObjCMethodsMetaData(IDecl->classmeth_begin(), IDecl->classmeth_end(),
-                             false, "CATEGORY_", FullCategoryName.c_str(),
-                             Result);
+  Write_method_list_t_initializer(*this, Context, Result, InstanceMethods,
+                                  "_OBJC_$_CATEGORY_INSTANCE_METHODS_",
+                                  FullCategoryName, true);
+  
+  SmallVector<ObjCMethodDecl *, 32>
+    ClassMethods(IDecl->classmeth_begin(), IDecl->classmeth_end());
+  
+  Write_method_list_t_initializer(*this, Context, Result, ClassMethods,
+                                  "_OBJC_$_CATEGORY_CLASS_METHODS_",
+                                  FullCategoryName, true);
   
   // Protocols referenced in class declaration?
-  // Null CDecl is case of a category implementation with no category interface
-  if (CDecl)
-    RewriteObjCProtocolListMetaData(CDecl->getReferencedProtocols(), "CATEGORY",
-                                    FullCategoryName, Result);
-  /* struct _objc_category {
-   char *category_name;
-   char *class_name;
-   struct _objc_method_list *instance_methods;
-   struct _objc_method_list *class_methods;
-   struct _objc_protocol_list *protocols;
-   // Objective-C 1.0 extensions
-   uint32_t size;     // sizeof (struct _objc_category)
-   struct _objc_property_list *instance_properties;  // category's own
-   // @property decl.
-   };
-   */
+  // Protocol's super protocol list
+  std::vector<ObjCProtocolDecl *> RefedProtocols;
+  const ObjCList<ObjCProtocolDecl> &Protocols = CDecl->getReferencedProtocols();
+  for (ObjCList<ObjCProtocolDecl>::iterator I = Protocols.begin(),
+       E = Protocols.end();
+       I != E; ++I) {
+    RefedProtocols.push_back(*I);
+    // Must write out all protocol definitions in current qualifier list,
+    // and in their nested qualifiers before writing out current definition.
+    RewriteObjCProtocolMetaData(*I, Result);
+  }
   
-  static bool objc_category = false;
-  if (!objc_category) {
-    Result += "\nstruct _objc_category {\n";
-    Result += "\tchar *category_name;\n";
-    Result += "\tchar *class_name;\n";
-    Result += "\tstruct _objc_method_list *instance_methods;\n";
-    Result += "\tstruct _objc_method_list *class_methods;\n";
-    Result += "\tstruct _objc_protocol_list *protocols;\n";
-    Result += "\tunsigned int size;\n";
-    Result += "\tstruct _objc_property_list *instance_properties;\n";
-    Result += "};\n";
-    objc_category = true;
-  }
-  Result += "\nstatic struct _objc_category _OBJC_CATEGORY_";
-  Result += FullCategoryName;
-  Result += " __attribute__ ((used, section (\"__OBJC, __category\")))= {\n\t\"";
-  Result += IDecl->getNameAsString();
-  Result += "\"\n\t, \"";
-  Result += ClassDecl->getNameAsString();
-  Result += "\"\n";
+  Write_protocol_list_initializer(Context, Result, 
+                                  RefedProtocols,
+                                  "_OBJC_CATEGORY_PROTOCOLS_$_",
+                                  FullCategoryName);
   
-  if (IDecl->instmeth_begin() != IDecl->instmeth_end()) {
-    Result += "\t, (struct _objc_method_list *)"
-    "&_OBJC_CATEGORY_INSTANCE_METHODS_";
-    Result += FullCategoryName;
-    Result += "\n";
-  }
-  else
-    Result += "\t, 0\n";
-  if (IDecl->classmeth_begin() != IDecl->classmeth_end()) {
-    Result += "\t, (struct _objc_method_list *)"
-    "&_OBJC_CATEGORY_CLASS_METHODS_";
-    Result += FullCategoryName;
-    Result += "\n";
-  }
-  else
-    Result += "\t, 0\n";
+  // Protocol's property metadata.
+  std::vector<ObjCPropertyDecl *> ClassProperties;
+  for (ObjCContainerDecl::prop_iterator I = CDecl->prop_begin(),
+       E = CDecl->prop_end(); I != E; ++I)
+    ClassProperties.push_back(*I);
   
-  if (CDecl && CDecl->protocol_begin() != CDecl->protocol_end()) {
-    Result += "\t, (struct _objc_protocol_list *)&_OBJC_CATEGORY_PROTOCOLS_";
-    Result += FullCategoryName;
-    Result += "\n";
-  }
-  else
-    Result += "\t, 0\n";
-  Result += "\t, sizeof(struct _objc_category), 0\n};\n";
+  Write_prop_list_t_initializer(*this, Context, Result, ClassProperties,
+                                /* Container */0,
+                                "_OBJC_$_PROP_LIST_",
+                                FullCategoryName);
+  
+  Write_category_t(*this, Context, Result,
+                   CDecl->getNameAsString(),
+                   ClassDecl->getNameAsString(),
+                   InstanceMethods,
+                   ClassMethods,
+                   RefedProtocols,
+                   ClassProperties);
+  
 }
 
 // RewriteObjCMethodsMetaData - Rewrite methods metadata for instance or
