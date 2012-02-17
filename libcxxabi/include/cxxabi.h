@@ -170,5 +170,6 @@ extern bool __cxa_uncaught_exception() throw();
 
 #endif // __cplusplus
 
+namespace abi = __cxxabiv1;
 
 #endif // __CXXABI_H 
