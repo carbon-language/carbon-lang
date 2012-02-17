@@ -15,6 +15,7 @@
 #include <cstdint>
 #include <cstddef>
 #include "system_error"
+#include <cxxabi.h>
 
 // Note:  optimize for size
 
@@ -113,6 +114,8 @@ logic_error::operator=(const logic_error& le) _NOEXCEPT
     return *this;
 }
 
+#ifndef _LIBCPPABI_VERSION
+
 logic_error::~logic_error() _NOEXCEPT
 {
     __libcpp_nmstr& s = (__libcpp_nmstr&)__imp_;
@@ -125,6 +128,8 @@ logic_error::what() const _NOEXCEPT
     __libcpp_nmstr& s = (__libcpp_nmstr&)__imp_;
     return s.c_str();
 }
+
+#endif
 
 runtime_error::runtime_error(const string& msg)
 {
@@ -153,6 +158,8 @@ runtime_error::operator=(const runtime_error& le) _NOEXCEPT
     return *this;
 }
 
+#ifndef _LIBCPPABI_VERSION
+
 runtime_error::~runtime_error() _NOEXCEPT
 {
     __libcpp_nmstr& s = (__libcpp_nmstr&)__imp_;
@@ -174,5 +181,7 @@ out_of_range::~out_of_range() _NOEXCEPT {}
 range_error::~range_error() _NOEXCEPT {}
 overflow_error::~overflow_error() _NOEXCEPT {}
 underflow_error::~underflow_error() _NOEXCEPT {}
+
+#endif
 
 }  // std
