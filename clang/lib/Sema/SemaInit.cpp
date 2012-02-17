@@ -5282,6 +5282,7 @@ InitializationSequence::Perform(Sema &S,
                        Converted.data(), NumInits, ILE->getRBraceLoc());
       Semantic->setSyntacticForm(ILE);
       Semantic->setType(Dest);
+      Semantic->setInitializesStdInitializerList();
       CurInit = S.Owned(Semantic);
       break;
     }

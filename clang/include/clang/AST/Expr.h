@@ -3483,10 +3483,6 @@ class InitListExpr : public Expr {
   ///  field within the union will be initialized.
   llvm::PointerUnion<Expr *, FieldDecl *> ArrayFillerOrUnionFieldInit;
 
-  /// Whether this initializer list originally had a GNU array-range
-  /// designator in it. This is a temporary marker used by CodeGen.
-  bool HadArrayRangeDesignator;
-
 public:
   InitListExpr(ASTContext &C, SourceLocation lbraceloc,
                Expr **initexprs, unsigned numinits,
@@ -3585,9 +3581,18 @@ public:
   InitListExpr *getSyntacticForm() const { return SyntacticForm; }
   void setSyntacticForm(InitListExpr *Init) { SyntacticForm = Init; }
 
-  bool hadArrayRangeDesignator() const { return HadArrayRangeDesignator; }
+  bool hadArrayRangeDesignator() const {
+    return InitListExprBits.HadArrayRangeDesignator != 0;
+  }
   void sawArrayRangeDesignator(bool ARD = true) {
-    HadArrayRangeDesignator = ARD;
+    InitListExprBits.HadArrayRangeDesignator = ARD;
+  }
+
+  bool initializesStdInitializerList() const {
+    return InitListExprBits.InitializesStdInitializerList != 0;
+  }
+  void setInitializesStdInitializerList(bool ISIL = true) {
+    InitListExprBits.InitializesStdInitializerList = ISIL;
   }
 
   SourceRange getSourceRange() const;

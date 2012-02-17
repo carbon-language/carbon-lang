@@ -213,6 +213,20 @@ protected:
     unsigned ShouldCopy : 1;
   };
 
+  class InitListExprBitfields {
+    friend class InitListExpr;
+
+    unsigned : NumExprBits;
+
+    /// Whether this initializer list originally had a GNU array-range
+    /// designator in it. This is a temporary marker used by CodeGen.
+    unsigned HadArrayRangeDesignator : 1;
+
+    /// Whether this initializer list initializes a std::initializer_list
+    /// object.
+    unsigned InitializesStdInitializerList : 1;
+  };
+
   union {
     // FIXME: this is wasteful on 64-bit platforms.
     void *Aligner;
@@ -226,6 +240,7 @@ protected:
     ExprWithCleanupsBitfields ExprWithCleanupsBits;
     PseudoObjectExprBitfields PseudoObjectExprBits;
     ObjCIndirectCopyRestoreExprBitfields ObjCIndirectCopyRestoreExprBits;
+    InitListExprBitfields InitListExprBits;
   };
 
   friend class ASTStmtReader;

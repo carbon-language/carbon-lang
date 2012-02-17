@@ -16,6 +16,7 @@
 #include "CGObjCRuntime.h"
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/DeclCXX.h"
+#include "clang/AST/DeclTemplate.h"
 #include "clang/AST/StmtVisitor.h"
 #include "llvm/Constants.h"
 #include "llvm/Function.h"
@@ -78,6 +79,10 @@ public:
                          unsigned Alignment = 0);
 
   void EmitMoveFromReturnSlot(const Expr *E, RValue Src);
+
+  void EmitStdInitializerList(InitListExpr *InitList);
+  void EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
+                     QualType elementType, InitListExpr *E);
 
   AggValueSlot::NeedsGCBarriers_t needsGC(QualType T) {
     if (CGF.getLangOptions().getGC() && TypeRequiresGCollection(T))
@@ -269,6 +274,218 @@ void AggExprEmitter::EmitFinalDestCopy(const Expr *E, LValue Src, bool Ignore) {
 
   CharUnits Alignment = std::min(Src.getAlignment(), Dest.getAlignment());
   EmitFinalDestCopy(E, Src.asAggregateRValue(), Ignore, Alignment.getQuantity());
+}
+
+static QualType GetStdInitializerListElementType(QualType T) {
+  // Just assume that this is really std::initializer_list.
+  ClassTemplateSpecializationDecl *specialization =
+      cast<ClassTemplateSpecializationDecl>(T->castAs<RecordType>()->getDecl());
+  return specialization->getTemplateArgs()[0].getAsType();
+}
+
+/// \brief Prepare cleanup for the temporary array.
+static void EmitStdInitializerListCleanup(CodeGenFunction &CGF,
+                                          QualType arrayType,
+                                          llvm::Value *addr,
+                                          const InitListExpr *initList) {
+  QualType::DestructionKind dtorKind = arrayType.isDestructedType();
+  if (!dtorKind)
+    return; // Type doesn't need destroying.
+  if (dtorKind != QualType::DK_cxx_destructor) {
+    CGF.ErrorUnsupported(initList, "ObjC ARC type in initializer_list");
+    return;
+  }
+
+  CodeGenFunction::Destroyer *destroyer = CGF.getDestroyer(dtorKind);
+  CGF.pushDestroy(NormalAndEHCleanup, addr, arrayType, destroyer,
+                  /*EHCleanup=*/true);
+}
+
+/// \brief Emit the initializer for a std::initializer_list initialized with a
+/// real initializer list.
+void AggExprEmitter::EmitStdInitializerList(InitListExpr *initList) {
+  // We emit an array containing the elements, then have the init list point
+  // at the array.
+  ASTContext &ctx = CGF.getContext();
+  unsigned numInits = initList->getNumInits();
+  QualType element = GetStdInitializerListElementType(initList->getType());
+  llvm::APInt size(ctx.getTypeSize(ctx.getSizeType()), numInits);
+  QualType array = ctx.getConstantArrayType(element, size, ArrayType::Normal,0);
+  llvm::Type *LTy = CGF.ConvertTypeForMem(array);
+  llvm::AllocaInst *alloc = CGF.CreateTempAlloca(LTy);
+  alloc->setAlignment(ctx.getTypeAlignInChars(array).getQuantity());
+  alloc->setName(".initlist.");
+
+  EmitArrayInit(alloc, cast<llvm::ArrayType>(LTy), element, initList);
+
+  // FIXME: The diagnostics are somewhat out of place here.
+  RecordDecl *record = initList->getType()->castAs<RecordType>()->getDecl();
+  RecordDecl::field_iterator field = record->field_begin();
+  if (field == record->field_end()) {
+    CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+  }
+
+  QualType elementPtr = ctx.getPointerType(element.withConst());
+  llvm::Value *destPtr = Dest.getAddr();
+
+  // Start pointer.
+  if (!ctx.hasSameType(field->getType(), elementPtr)) {
+    CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+  }
+  LValue start = CGF.EmitLValueForFieldInitialization(destPtr, *field, 0);
+  llvm::Value *arrayStart = Builder.CreateStructGEP(alloc, 0, "arraystart");
+  CGF.EmitStoreThroughLValue(RValue::get(arrayStart), start);
+  ++field;
+
+  if (field == record->field_end()) {
+    CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+  }
+  LValue endOrLength = CGF.EmitLValueForFieldInitialization(destPtr, *field, 0);
+  if (ctx.hasSameType(field->getType(), elementPtr)) {
+    // End pointer.
+    llvm::Value *arrayEnd = Builder.CreateStructGEP(alloc,numInits, "arrayend");
+    CGF.EmitStoreThroughLValue(RValue::get(arrayEnd), endOrLength);
+  } else if(ctx.hasSameType(field->getType(), ctx.getSizeType())) {
+    // Length.
+    CGF.EmitStoreThroughLValue(RValue::get(Builder.getInt(size)), endOrLength);
+  } else {
+    CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+  }
+
+  if (!Dest.isExternallyDestructed())
+    EmitStdInitializerListCleanup(CGF, array, alloc, initList);
+}
+
+/// \brief Emit initialization of an array from an initializer list.
+void AggExprEmitter::EmitArrayInit(llvm::Value *DestPtr, llvm::ArrayType *AType,
+                                   QualType elementType, InitListExpr *E) {
+  uint64_t NumInitElements = E->getNumInits();
+
+  uint64_t NumArrayElements = AType->getNumElements();
+  assert(NumInitElements <= NumArrayElements);
+
+  // DestPtr is an array*.  Construct an elementType* by drilling
+  // down a level.
+  llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, 0);
+  llvm::Value *indices[] = { zero, zero };
+  llvm::Value *begin =
+    Builder.CreateInBoundsGEP(DestPtr, indices, "arrayinit.begin");
+
+  // Exception safety requires us to destroy all the
+  // already-constructed members if an initializer throws.
+  // For that, we'll need an EH cleanup.
+  QualType::DestructionKind dtorKind = elementType.isDestructedType();
+  llvm::AllocaInst *endOfInit = 0;
+  EHScopeStack::stable_iterator cleanup;
+  llvm::Instruction *cleanupDominator = 0;
+  if (CGF.needsEHCleanup(dtorKind)) {
+    // In principle we could tell the cleanup where we are more
+    // directly, but the control flow can get so varied here that it
+    // would actually be quite complex.  Therefore we go through an
+    // alloca.
+    endOfInit = CGF.CreateTempAlloca(begin->getType(),
+                                     "arrayinit.endOfInit");
+    cleanupDominator = Builder.CreateStore(begin, endOfInit);
+    CGF.pushIrregularPartialArrayCleanup(begin, endOfInit, elementType,
+                                         CGF.getDestroyer(dtorKind));
+    cleanup = CGF.EHStack.stable_begin();
+
+  // Otherwise, remember that we didn't need a cleanup.
+  } else {
+    dtorKind = QualType::DK_none;
+  }
+
+  llvm::Value *one = llvm::ConstantInt::get(CGF.SizeTy, 1);
+
+  // The 'current element to initialize'.  The invariants on this
+  // variable are complicated.  Essentially, after each iteration of
+  // the loop, it points to the last initialized element, except
+  // that it points to the beginning of the array before any
+  // elements have been initialized.
+  llvm::Value *element = begin;
+
+  // Emit the explicit initializers.
+  for (uint64_t i = 0; i != NumInitElements; ++i) {
+    // Advance to the next element.
+    if (i > 0) {
+      element = Builder.CreateInBoundsGEP(element, one, "arrayinit.element");
+
+      // Tell the cleanup that it needs to destroy up to this
+      // element.  TODO: some of these stores can be trivially
+      // observed to be unnecessary.
+      if (endOfInit) Builder.CreateStore(element, endOfInit);
+    }
+
+    LValue elementLV = CGF.MakeAddrLValue(element, elementType);
+    EmitInitializationToLValue(E->getInit(i), elementLV);
+  }
+
+  // Check whether there's a non-trivial array-fill expression.
+  // Note that this will be a CXXConstructExpr even if the element
+  // type is an array (or array of array, etc.) of class type.
+  Expr *filler = E->getArrayFiller();
+  bool hasTrivialFiller = true;
+  if (CXXConstructExpr *cons = dyn_cast_or_null<CXXConstructExpr>(filler)) {
+    assert(cons->getConstructor()->isDefaultConstructor());
+    hasTrivialFiller = cons->getConstructor()->isTrivial();
+  }
+
+  // Any remaining elements need to be zero-initialized, possibly
+  // using the filler expression.  We can skip this if the we're
+  // emitting to zeroed memory.
+  if (NumInitElements != NumArrayElements &&
+      !(Dest.isZeroed() && hasTrivialFiller &&
+        CGF.getTypes().isZeroInitializable(elementType))) {
+
+    // Use an actual loop.  This is basically
+    //   do { *array++ = filler; } while (array != end);
+
+    // Advance to the start of the rest of the array.
+    if (NumInitElements) {
+      element = Builder.CreateInBoundsGEP(element, one, "arrayinit.start");
+      if (endOfInit) Builder.CreateStore(element, endOfInit);
+    }
+
+    // Compute the end of the array.
+    llvm::Value *end = Builder.CreateInBoundsGEP(begin,
+                      llvm::ConstantInt::get(CGF.SizeTy, NumArrayElements),
+                                                 "arrayinit.end");
+
+    llvm::BasicBlock *entryBB = Builder.GetInsertBlock();
+    llvm::BasicBlock *bodyBB = CGF.createBasicBlock("arrayinit.body");
+
+    // Jump into the body.
+    CGF.EmitBlock(bodyBB);
+    llvm::PHINode *currentElement =
+      Builder.CreatePHI(element->getType(), 2, "arrayinit.cur");
+    currentElement->addIncoming(element, entryBB);
+
+    // Emit the actual filler expression.
+    LValue elementLV = CGF.MakeAddrLValue(currentElement, elementType);
+    if (filler)
+      EmitInitializationToLValue(filler, elementLV);
+    else
+      EmitNullInitializationToLValue(elementLV);
+
+    // Move on to the next element.
+    llvm::Value *nextElement =
+      Builder.CreateInBoundsGEP(currentElement, one, "arrayinit.next");
+
+    // Tell the EH cleanup that we finished with the last element.
+    if (endOfInit) Builder.CreateStore(nextElement, endOfInit);
+
+    // Leave the loop if we're done.
+    llvm::Value *done = Builder.CreateICmpEQ(nextElement, end,
+                                             "arrayinit.done");
+    llvm::BasicBlock *endBB = CGF.createBasicBlock("arrayinit.end");
+    Builder.CreateCondBr(done, endBB, bodyBB);
+    currentElement->addIncoming(nextElement, Builder.GetInsertBlock());
+
+    CGF.EmitBlock(endBB);
+  }
+
+  // Leave the partial-array cleanup if we entered one.
+  if (dtorKind) CGF.DeactivateCleanupBlock(cleanup, cleanupDominator);
 }
 
 //===----------------------------------------------------------------------===//
@@ -657,17 +874,15 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
   if (E->hadArrayRangeDesignator())
     CGF.ErrorUnsupported(E, "GNU array range designator extension");
 
+  if (E->initializesStdInitializerList()) {
+    EmitStdInitializerList(E);
+    return;
+  }
+
   llvm::Value *DestPtr = Dest.getAddr();
 
   // Handle initialization of an array.
   if (E->getType()->isArrayType()) {
-    llvm::PointerType *APType =
-      cast<llvm::PointerType>(DestPtr->getType());
-    llvm::ArrayType *AType =
-      cast<llvm::ArrayType>(APType->getElementType());
-
-    uint64_t NumInitElements = E->getNumInits();
-
     if (E->getNumInits() > 0) {
       QualType T1 = E->getType();
       QualType T2 = E->getInit(0)->getType();
@@ -677,137 +892,17 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       }
     }
 
-    uint64_t NumArrayElements = AType->getNumElements();
-    assert(NumInitElements <= NumArrayElements);
-
     QualType elementType = E->getType().getCanonicalType();
     elementType = CGF.getContext().getQualifiedType(
                     cast<ArrayType>(elementType)->getElementType(),
                     elementType.getQualifiers() + Dest.getQualifiers());
 
-    // DestPtr is an array*.  Construct an elementType* by drilling
-    // down a level.
-    llvm::Value *zero = llvm::ConstantInt::get(CGF.SizeTy, 0);
-    llvm::Value *indices[] = { zero, zero };
-    llvm::Value *begin =
-      Builder.CreateInBoundsGEP(DestPtr, indices, "arrayinit.begin");
+    llvm::PointerType *APType =
+      cast<llvm::PointerType>(DestPtr->getType());
+    llvm::ArrayType *AType =
+      cast<llvm::ArrayType>(APType->getElementType());
 
-    // Exception safety requires us to destroy all the
-    // already-constructed members if an initializer throws.
-    // For that, we'll need an EH cleanup.
-    QualType::DestructionKind dtorKind = elementType.isDestructedType();
-    llvm::AllocaInst *endOfInit = 0;
-    EHScopeStack::stable_iterator cleanup;
-    llvm::Instruction *cleanupDominator = 0;
-    if (CGF.needsEHCleanup(dtorKind)) {
-      // In principle we could tell the cleanup where we are more
-      // directly, but the control flow can get so varied here that it
-      // would actually be quite complex.  Therefore we go through an
-      // alloca.
-      endOfInit = CGF.CreateTempAlloca(begin->getType(),
-                                       "arrayinit.endOfInit");
-      cleanupDominator = Builder.CreateStore(begin, endOfInit);
-      CGF.pushIrregularPartialArrayCleanup(begin, endOfInit, elementType,
-                                           CGF.getDestroyer(dtorKind));
-      cleanup = CGF.EHStack.stable_begin();
-
-    // Otherwise, remember that we didn't need a cleanup.
-    } else {
-      dtorKind = QualType::DK_none;
-    }
-
-    llvm::Value *one = llvm::ConstantInt::get(CGF.SizeTy, 1);
-
-    // The 'current element to initialize'.  The invariants on this
-    // variable are complicated.  Essentially, after each iteration of
-    // the loop, it points to the last initialized element, except
-    // that it points to the beginning of the array before any
-    // elements have been initialized.
-    llvm::Value *element = begin;
-
-    // Emit the explicit initializers.
-    for (uint64_t i = 0; i != NumInitElements; ++i) {
-      // Advance to the next element.
-      if (i > 0) {
-        element = Builder.CreateInBoundsGEP(element, one, "arrayinit.element");
-
-        // Tell the cleanup that it needs to destroy up to this
-        // element.  TODO: some of these stores can be trivially
-        // observed to be unnecessary.
-        if (endOfInit) Builder.CreateStore(element, endOfInit);
-      }
-
-      LValue elementLV = CGF.MakeAddrLValue(element, elementType);
-      EmitInitializationToLValue(E->getInit(i), elementLV);
-    }
-
-    // Check whether there's a non-trivial array-fill expression.
-    // Note that this will be a CXXConstructExpr even if the element
-    // type is an array (or array of array, etc.) of class type.
-    Expr *filler = E->getArrayFiller();
-    bool hasTrivialFiller = true;
-    if (CXXConstructExpr *cons = dyn_cast_or_null<CXXConstructExpr>(filler)) {
-      assert(cons->getConstructor()->isDefaultConstructor());
-      hasTrivialFiller = cons->getConstructor()->isTrivial();
-    }
-
-    // Any remaining elements need to be zero-initialized, possibly
-    // using the filler expression.  We can skip this if the we're
-    // emitting to zeroed memory.
-    if (NumInitElements != NumArrayElements &&
-        !(Dest.isZeroed() && hasTrivialFiller &&
-          CGF.getTypes().isZeroInitializable(elementType))) {
-
-      // Use an actual loop.  This is basically
-      //   do { *array++ = filler; } while (array != end);
-
-      // Advance to the start of the rest of the array.
-      if (NumInitElements) {
-        element = Builder.CreateInBoundsGEP(element, one, "arrayinit.start");
-        if (endOfInit) Builder.CreateStore(element, endOfInit);
-      }
-
-      // Compute the end of the array.
-      llvm::Value *end = Builder.CreateInBoundsGEP(begin,
-                        llvm::ConstantInt::get(CGF.SizeTy, NumArrayElements),
-                                                   "arrayinit.end");
-
-      llvm::BasicBlock *entryBB = Builder.GetInsertBlock();
-      llvm::BasicBlock *bodyBB = CGF.createBasicBlock("arrayinit.body");
-
-      // Jump into the body.
-      CGF.EmitBlock(bodyBB);
-      llvm::PHINode *currentElement =
-        Builder.CreatePHI(element->getType(), 2, "arrayinit.cur");
-      currentElement->addIncoming(element, entryBB);
-
-      // Emit the actual filler expression.
-      LValue elementLV = CGF.MakeAddrLValue(currentElement, elementType);
-      if (filler)
-        EmitInitializationToLValue(filler, elementLV);
-      else
-        EmitNullInitializationToLValue(elementLV);
-
-      // Move on to the next element.
-      llvm::Value *nextElement =
-        Builder.CreateInBoundsGEP(currentElement, one, "arrayinit.next");
-
-      // Tell the EH cleanup that we finished with the last element.
-      if (endOfInit) Builder.CreateStore(nextElement, endOfInit);
-
-      // Leave the loop if we're done.
-      llvm::Value *done = Builder.CreateICmpEQ(nextElement, end,
-                                               "arrayinit.done");
-      llvm::BasicBlock *endBB = CGF.createBasicBlock("arrayinit.end");
-      Builder.CreateCondBr(done, endBB, bodyBB);
-      currentElement->addIncoming(nextElement, Builder.GetInsertBlock());
-
-      CGF.EmitBlock(endBB);
-    }
-
-    // Leave the partial-array cleanup if we entered one.
-    if (dtorKind) CGF.DeactivateCleanupBlock(cleanup, cleanupDominator);
-
+    EmitArrayInit(DestPtr, AType, elementType, E);
     return;
   }
 
@@ -1159,4 +1254,39 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                        llvm::ConstantInt::get(IntPtrTy, 
                                               TypeInfo.first.getQuantity()),
                        Alignment, isVolatile);
+}
+
+void CodeGenFunction::MaybeEmitStdInitializerListCleanup(LValue lvalue,
+                                                    const Expr *init) {
+  const ExprWithCleanups *cleanups = dyn_cast<ExprWithCleanups>(init);
+  if (!cleanups)
+    return; // Nothing interesting here.
+  init = cleanups->getSubExpr();
+
+  if (isa<InitListExpr>(init) &&
+      cast<InitListExpr>(init)->initializesStdInitializerList()) {
+    // We initialized this std::initializer_list with an initializer list.
+    // A backing array was created. Push a cleanup for it.
+    EmitStdInitializerListCleanup(lvalue, cast<InitListExpr>(init));
+  }
+}
+
+void CodeGenFunction::EmitStdInitializerListCleanup(LValue lvalue,
+                                                    const InitListExpr *init) {
+  ASTContext &ctx = getContext();
+  QualType element = GetStdInitializerListElementType(init->getType());
+  unsigned numInits = init->getNumInits();
+  llvm::APInt size(ctx.getTypeSize(ctx.getSizeType()), numInits);
+  QualType array =ctx.getConstantArrayType(element, size, ArrayType::Normal, 0);
+  QualType arrayPtr = ctx.getPointerType(array);
+  llvm::Type *arrayPtrType = ConvertType(arrayPtr);
+
+  // lvalue is the location of a std::initializer_list, which as its first
+  // element has a pointer to the array we want to destroy.
+  llvm::Value *startPointer = Builder.CreateStructGEP(lvalue.getAddress(), 0,
+                                                      "startPointer");
+  llvm::Value *arrayAddress =
+      Builder.CreateBitCast(startPointer, arrayPtrType, "arrayAddress");
+
+  ::EmitStdInitializerListCleanup(*this, array, arrayAddress, init);
 }
