@@ -448,13 +448,15 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
            FD->hasAttr<CUDAGlobalAttr>())
     CGM.getCUDARuntime().EmitDeviceStubBody(*this, Args);
   else if (isa<CXXConversionDecl>(FD) &&
-           cast<CXXConversionDecl>(FD)->getParent()->isLambda()) {
-    // The lambda conversion operators are special; the semantics can't be
-    // expressed in the AST, so IRGen needs to special-case them.
-    if (cast<CXXConversionDecl>(FD)->isLambdaToBlockPointerConversion())
-      EmitLambdaToBlockPointerBody(Args);
-    else
-      EmitLambdaToFunctionPointerBody(Args);
+           cast<CXXConversionDecl>(FD)->isLambdaToBlockPointerConversion()) {
+    // The lambda conversion to block pointer is special; the semantics can't be
+    // expressed in the AST, so IRGen needs to special-case it.
+    EmitLambdaToBlockPointerBody(Args);
+  } else if (isa<CXXMethodDecl>(FD) &&
+             cast<CXXMethodDecl>(FD)->isLambdaStaticInvoker()) {
+    // The lambda "__invoke" function is special, because it forwards or
+    // clones the body of the function call operator (but is actually static).
+    EmitLambdaStaticInvokeFunction(cast<CXXMethodDecl>(FD));
   }
   else
     EmitFunctionBody(Args);

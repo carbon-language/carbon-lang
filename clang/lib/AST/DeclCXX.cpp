@@ -1455,6 +1455,12 @@ bool CXXMethodDecl::hasInlineBody() const {
   return CheckFn->hasBody(fn) && !fn->isOutOfLine();
 }
 
+bool CXXMethodDecl::isLambdaStaticInvoker() const {
+  return getParent()->isLambda() && 
+         getIdentifier() && getIdentifier()->getName() == "__invoke";
+}
+
+
 CXXCtorInitializer::CXXCtorInitializer(ASTContext &Context,
                                        TypeSourceInfo *TInfo, bool IsVirtual,
                                        SourceLocation L, Expr *Init,

@@ -47,8 +47,26 @@ int e(E a, E b, bool cond) { [a,b,cond](){ return (cond ? a : b).x; }(); }
 // CHECK: invoke i32 @"_ZZ1e1ES_bENK3$_4clEv"
 // CHECK: call void @"_ZZ1e1ES_bEN3$_4D1Ev"
 // CHECK: call void @"_ZZ1e1ES_bEN3$_4D1Ev"
+
 // CHECK: define internal i32 @"_ZZ1e1ES_bENK3$_4clEv"
 // CHECK: trunc i8
 // CHECK: load i32*
 // CHECK: ret i32
+
+void f() {
+  // CHECK: define void @_Z1fv()
+  // CHECK: {{call.*_5cvPFiiiEEv}}
+  // CHECK-NEXT: store i32 (i32, i32)*
+  // CHECK-NEXT: ret void
+  int (*fp)(int, int) = [](int x, int y){ return x + y; };
+}
+
+// CHECK: define internal i32 @"_ZZ1fvEN3$_58__invokeEii"
+// CHECK: store i32
+// CHECK-NEXT: store i32
+// CHECK-NEXT: load i32*
+// CHECK-NEXT: load i32*
+// CHECK-NEXT: call i32 @"_ZZ1fvENK3$_5clEii"
+// CHECK-NEXT: ret i32
+
 // CHECK: define internal void @"_ZZ1e1ES_bEN3$_4D2Ev"

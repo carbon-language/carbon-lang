@@ -9051,21 +9051,52 @@ bool Sema::isImplicitlyDeleted(FunctionDecl *FD) {
          isa<CXXMethodDecl>(FD);
 }
 
+/// \brief Mark the call operator of the given lambda closure type as "used".
+static void markLambdaCallOperatorUsed(Sema &S, CXXRecordDecl *Lambda) {
+  CXXMethodDecl *CallOperator 
+  = cast<CXXMethodDecl>(
+      *Lambda->lookup(
+        S.Context.DeclarationNames.getCXXOperatorName(OO_Call)).first);
+  CallOperator->setReferenced();
+  CallOperator->setUsed();
+}
+
 void Sema::DefineImplicitLambdaToFunctionPointerConversion(
        SourceLocation CurrentLocation,
        CXXConversionDecl *Conv) 
 {
+  CXXRecordDecl *Lambda = Conv->getParent();
+  
+  // Make sure that the lambda call operator is marked used.
+  markLambdaCallOperatorUsed(*this, Lambda);
+  
   Conv->setUsed();
   
   ImplicitlyDefinedFunctionScope Scope(*this, Conv);
   DiagnosticErrorTrap Trap(Diags);
   
-  // Introduce a bogus body, which IR generation will override anyway.
-  Conv->setBody(new (Context) CompoundStmt(Context, 0, 0, Conv->getLocation(),
+  // Return the address of the __invoke function.
+  DeclarationName InvokeName = &Context.Idents.get("__invoke");
+  CXXMethodDecl *Invoke 
+    = cast<CXXMethodDecl>(*Lambda->lookup(InvokeName).first);
+  Expr *FunctionRef = BuildDeclRefExpr(Invoke, Invoke->getType(),
+                                       VK_LValue, Conv->getLocation()).take();
+  assert(FunctionRef && "Can't refer to __invoke function?");
+  Stmt *Return = ActOnReturnStmt(Conv->getLocation(), FunctionRef).take();
+  Conv->setBody(new (Context) CompoundStmt(Context, &Return, 1, 
+                                           Conv->getLocation(),
                                            Conv->getLocation()));
+    
+  // Fill in the __invoke function with a dummy implementation. IR generation
+  // will fill in the actual details.
+  Invoke->setUsed();
+  Invoke->setReferenced();
+  Invoke->setBody(new (Context) CompoundStmt(Context, 0, 0, Conv->getLocation(),
+                                             Conv->getLocation()));
   
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(Conv);
+    L->CompletedImplicitDefinition(Invoke);
   }
 }
 
@@ -9073,6 +9104,8 @@ void Sema::DefineImplicitLambdaToBlockPointerConversion(
        SourceLocation CurrentLocation,
        CXXConversionDecl *Conv) 
 {
+  // Make sure that the lambda call operator is marked used.
+  markLambdaCallOperatorUsed(*this, Conv->getParent());
   Conv->setUsed();
   
   ImplicitlyDefinedFunctionScope Scope(*this, Conv);

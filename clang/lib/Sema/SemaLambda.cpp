@@ -372,17 +372,18 @@ static void addFunctionPointerConversion(Sema &S,
                                          SourceRange IntroducerRange,
                                          CXXRecordDecl *Class,
                                          CXXMethodDecl *CallOperator) {
+  // Add the conversion to function pointer.
   const FunctionProtoType *Proto
     = CallOperator->getType()->getAs<FunctionProtoType>(); 
   QualType FunctionPtrTy;
+  QualType FunctionTy;
   {
     FunctionProtoType::ExtProtoInfo ExtInfo = Proto->getExtProtoInfo();
     ExtInfo.TypeQuals = 0;
-    QualType FunctionTy
-      = S.Context.getFunctionType(Proto->getResultType(),
-                                  Proto->arg_type_begin(),
-                                  Proto->getNumArgs(),
-                                  ExtInfo);
+    FunctionTy = S.Context.getFunctionType(Proto->getResultType(),
+                                           Proto->arg_type_begin(),
+                                           Proto->getNumArgs(),
+                                           ExtInfo);
     FunctionPtrTy = S.Context.getPointerType(FunctionTy);
   }
   
@@ -409,6 +410,34 @@ static void addFunctionPointerConversion(Sema &S,
   Conversion->setAccess(AS_public);
   Conversion->setImplicit(true);
   Class->addDecl(Conversion);
+  
+  // Add a non-static member function "__invoke" that will be the result of
+  // the conversion.
+  Name = &S.Context.Idents.get("__invoke");
+  CXXMethodDecl *Invoke
+    = CXXMethodDecl::Create(S.Context, Class, Loc, 
+                            DeclarationNameInfo(Name, Loc), FunctionTy, 
+                            CallOperator->getTypeSourceInfo(),
+                            /*IsStatic=*/true, SC_Static, /*IsInline=*/true,
+                            /*IsConstexpr=*/false, 
+                            CallOperator->getBody()->getLocEnd());
+  SmallVector<ParmVarDecl *, 4> InvokeParams;
+  for (unsigned I = 0, N = CallOperator->getNumParams(); I != N; ++I) {
+    ParmVarDecl *From = CallOperator->getParamDecl(I);
+    InvokeParams.push_back(ParmVarDecl::Create(S.Context, Invoke,
+                                               From->getLocStart(),
+                                               From->getLocation(),
+                                               From->getIdentifier(),
+                                               From->getType(),
+                                               From->getTypeSourceInfo(),
+                                               From->getStorageClass(),
+                                               From->getStorageClassAsWritten(),
+                                               /*DefaultArg=*/0));
+  }
+  Invoke->setParams(InvokeParams);
+  Invoke->setAccess(AS_private);
+  Invoke->setImplicit(true);
+  Class->addDecl(Invoke);
 }
 
 /// \brief Add a lambda's conversion to block pointer.

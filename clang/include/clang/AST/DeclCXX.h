@@ -1565,6 +1565,15 @@ public:
 
   bool hasInlineBody() const;
 
+  /// \brief Determine whether this is a lambda closure type's static member
+  /// function that is used for the result of the lambda's conversion to
+  /// function pointer (for a lambda with no captures).
+  ///
+  /// The function itself, if used, will have a placeholder body that will be
+  /// supplied by IR generation to either forward to the function call operator
+  /// or clone the function call operator.
+  bool isLambdaStaticInvoker() const;
+  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const CXXMethodDecl *D) { return true; }
