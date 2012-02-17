@@ -1,4 +1,4 @@
-//===-- MipsMCInstLower.h - Lower MachineInstr to MCInst -------------------==//
+//===-- MipsMCInstLower.h - Lower MachineInstr to MCInst -------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- MipsMCCodeEmitter.cpp - Convert Mips code to machine code ---------===//
+//=== MipsMCCodeEmitter.cpp - Convert Mips Code to Machine Code -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

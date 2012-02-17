@@ -1,4 +1,4 @@
-//===-- MipsAsmParser.cpp - Parse Mips assembly to MCInst instructions ----===//
+// MipsAsmParser.cpp - Parse Mips assembly to MCInst instructions -*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //

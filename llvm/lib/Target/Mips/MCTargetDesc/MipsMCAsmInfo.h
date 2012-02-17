@@ -1,4 +1,4 @@
-//=====-- MipsMCAsmInfo.h - Mips asm properties ---------------*- C++ -*--====//
+//=====-- MipsMCAsmInfo.h - Mips Asm Info ---------------------*- C++ -*--====//
 //
 //                     The LLVM Compiler Infrastructure
 //
