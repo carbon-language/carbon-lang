@@ -60,6 +60,7 @@ add_llvm_unittest(ADT
   ADT/DenseMapTest.cpp
   ADT/DenseSetTest.cpp
   ADT/FoldingSet.cpp
+  ADT/HashingTest.cpp
   ADT/ilistTest.cpp
   ADT/ImmutableSetTest.cpp
   ADT/IntEqClassesTest.cpp
