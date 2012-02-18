@@ -56,6 +56,10 @@ class CGDebugInfo {
   /// CompleteTypeCache - Cache of previously constructed complete RecordTypes.
   llvm::DenseMap<void *, llvm::WeakVH> CompletedTypeCache;
 
+  /// ReplaceMap - Cache of forward declared types to RAUW at the end of
+  /// compilation.
+  std::vector<std::pair<void *, llvm::WeakVH> >ReplaceMap;
+
   bool BlockLiteralGenericSet;
   llvm::DIType BlockLiteralGeneric;
 
@@ -160,7 +164,8 @@ class CGDebugInfo {
 public:
   CGDebugInfo(CodeGenModule &CGM);
   ~CGDebugInfo();
-  void finalize() { DBuilder.finalize(); }
+
+  void finalize(void);
 
   /// setLocation - Update the current source location. If \arg loc is
   /// invalid it is ignored.
