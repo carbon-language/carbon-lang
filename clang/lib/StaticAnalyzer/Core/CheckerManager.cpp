@@ -190,8 +190,10 @@ namespace {
                     NodeBuilder &Bldr, ExplodedNode *Pred) {
       ProgramPoint::Kind K =  IsPreVisit ? ProgramPoint::PreStmtKind :
                                            ProgramPoint::PostStmtKind;
-      const ProgramPoint &L = ProgramPoint::getProgramPoint(Msg.getOriginExpr(),
-                                K, Pred->getLocationContext(), checkFn.Checker);
+      const ProgramPoint &L =
+        ProgramPoint::getProgramPoint(Msg.getMessageExpr(),
+                                      K, Pred->getLocationContext(),
+                                      checkFn.Checker);
       CheckerContext C(Bldr, Eng, Pred, L);
 
       checkFn(Msg, C);

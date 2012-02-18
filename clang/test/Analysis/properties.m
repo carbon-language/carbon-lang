@@ -143,3 +143,26 @@ void rdar6611873() {
   return super.name;
 }
 @end
+
+// <rdar://problem/9241180> Static analyzer doesn't detect uninitialized variable issues for property accesses
+@interface RDar9241180
+@property (readwrite,assign) id x;
+-(id)testAnalyzer1:(int) y;
+-(void)testAnalyzer2;
+@end
+
+@implementation RDar9241180
+@synthesize x;
+-(id)testAnalyzer1:(int)y {
+    RDar9241180 *o;
+    if (y && o.x) // expected-warning {{Property access on an uninitialized object pointer}}
+      return o;
+    return o; // expected-warning {{Undefined or garbage value returned to caller}}
+}
+-(void)testAnalyzer2 {
+  id y;
+  self.x = y;  // expected-warning {{Argument for property setter is an uninitialized value}}
+}
+@end
+
+

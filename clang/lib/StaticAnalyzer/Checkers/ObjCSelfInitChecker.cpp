@@ -196,7 +196,7 @@ void ObjCSelfInitChecker::checkPostObjCMessage(ObjCMessage msg,
     // value out when we return from this method.
     state = state->set<CalledInit>(true);
     
-    SVal V = state->getSVal(msg.getOriginExpr(), C.getLocationContext());
+    SVal V = state->getSVal(msg.getMessageExpr(), C.getLocationContext());
     addSelfFlag(state, V, SelfFlag_InitRes, C);
     return;
   }

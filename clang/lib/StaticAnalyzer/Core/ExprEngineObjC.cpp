@@ -267,7 +267,7 @@ void ExprEngine::evalObjCMessage(StmtNodeBuilder &Bldr,
   state = invalidateArguments(state, CallOrObjCMessage(msg, state, LCtx), LCtx);
 
   // And create the new node.
-  Bldr.generateNode(msg.getOriginExpr(), Pred, state, GenSink);
+  Bldr.generateNode(msg.getMessageExpr(), Pred, state, GenSink);
   assert(Bldr.hasGeneratedNodes());
 }
 

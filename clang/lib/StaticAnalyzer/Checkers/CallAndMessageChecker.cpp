@@ -32,6 +32,7 @@ class CallAndMessageChecker
   mutable OwningPtr<BugType> BT_call_undef;
   mutable OwningPtr<BugType> BT_call_arg;
   mutable OwningPtr<BugType> BT_msg_undef;
+  mutable OwningPtr<BugType> BT_objc_prop_undef;
   mutable OwningPtr<BugType> BT_msg_arg;
   mutable OwningPtr<BugType> BT_msg_ret;
 public:
@@ -228,11 +229,21 @@ void CallAndMessageChecker::checkPreObjCMessage(ObjCMessage msg,
     SVal recVal = state->getSVal(receiver, LCtx);
     if (recVal.isUndef()) {
       if (ExplodedNode *N = C.generateSink()) {
-        if (!BT_msg_undef)
-          BT_msg_undef.reset(new BuiltinBug("Receiver in message expression is "
-                                            "an uninitialized value"));
+        BugType *BT = 0;
+        if (msg.isPureMessageExpr()) {
+          if (!BT_msg_undef)
+            BT_msg_undef.reset(new BuiltinBug("Receiver in message expression "
+                                              "is an uninitialized value"));
+          BT = BT_msg_undef.get();
+        }
+        else {
+          if (!BT_objc_prop_undef)
+            BT_objc_prop_undef.reset(new BuiltinBug("Property access on an "
+                                              "uninitialized object pointer"));
+          BT = BT_objc_prop_undef.get();
+        }
         BugReport *R =
-          new BugReport(*BT_msg_undef, BT_msg_undef->getName(), N);
+          new BugReport(*BT, BT->getName(), N);
         R->addRange(receiver->getSourceRange());
         R->addVisitor(bugreporter::getTrackNullOrUndefValueVisitor(N,
                                                                    receiver));
@@ -306,13 +317,13 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
   if (CanRetTy->isStructureOrClassType()) {
     // Structure returns are safe since the compiler zeroes them out.
     SVal V = C.getSValBuilder().makeZeroVal(msg.getType(Ctx));
-    C.addTransition(state->BindExpr(msg.getOriginExpr(), LCtx, V));
+    C.addTransition(state->BindExpr(msg.getMessageExpr(), LCtx, V));
     return;
   }
 
   // Other cases: check if sizeof(return type) > sizeof(void*)
   if (CanRetTy != Ctx.VoidTy && C.getLocationContext()->getParentMap()
-                                  .isConsumedExpr(msg.getOriginExpr())) {
+                                  .isConsumedExpr(msg.getMessageExpr())) {
     // Compute: sizeof(void *) and sizeof(return type)
     const uint64_t voidPtrSize = Ctx.getTypeSize(Ctx.VoidPtrTy);
     const uint64_t returnTypeSize = Ctx.getTypeSize(CanRetTy);
@@ -343,7 +354,7 @@ void CallAndMessageChecker::HandleNilReceiver(CheckerContext &C,
     // of this case unless we have *a lot* more knowledge.
     //
     SVal V = C.getSValBuilder().makeZeroVal(msg.getType(Ctx));
-    C.addTransition(state->BindExpr(msg.getOriginExpr(), LCtx, V));
+    C.addTransition(state->BindExpr(msg.getMessageExpr(), LCtx, V));
     return;
   }
 

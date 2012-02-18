@@ -808,11 +808,33 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
       Bldr.addNodes(Dst);
       break;
 
-    case Stmt::ObjCMessageExprClass:
+    case Stmt::ObjCMessageExprClass: {
       Bldr.takeNodes(Pred);
-      VisitObjCMessage(cast<ObjCMessageExpr>(S), Pred, Dst);
+      // Is this a property access?
+      const ParentMap &PM = Pred->getLocationContext()->getParentMap();
+      const ObjCMessageExpr *ME = cast<ObjCMessageExpr>(S);
+      bool evaluated = false;
+      
+      if (const PseudoObjectExpr *PO =
+          dyn_cast_or_null<PseudoObjectExpr>(PM.getParent(S))) {
+        const Expr *syntactic = PO->getSyntacticForm();
+        if (const ObjCPropertyRefExpr *PR =
+              dyn_cast<ObjCPropertyRefExpr>(syntactic)) {
+          bool isSetter = ME->getNumArgs() > 0;
+          VisitObjCMessage(ObjCMessage(ME, PR, isSetter), Pred, Dst);
+          evaluated = true;
+        }
+        else if (isa<BinaryOperator>(syntactic)) {
+          VisitObjCMessage(ObjCMessage(ME, 0, true), Pred, Dst);
+        }
+      }
+      
+      if (!evaluated)
+        VisitObjCMessage(ME, Pred, Dst);
+
       Bldr.addNodes(Dst);
       break;
+    }
 
     case Stmt::ObjCAtThrowStmtClass: {
       // FIXME: This is not complete.  We basically treat @throw as
@@ -1439,9 +1461,7 @@ void ExprEngine::evalStore(ExplodedNodeSet &Dst, const Expr *AssignE,
   const Expr *StoreE = AssignE ? AssignE : LocationE;
 
   if (isa<loc::ObjCPropRef>(location)) {
-    loc::ObjCPropRef prop = cast<loc::ObjCPropRef>(location);
-    return VisitObjCMessage(ObjCPropertySetter(prop.getPropRefExpr(),
-                                               StoreE, Val), Pred, Dst);
+    assert(false);
   }
 
   // Evaluate the location (checks for bad dereferences).
@@ -1466,9 +1486,7 @@ void ExprEngine::evalLoad(ExplodedNodeSet &Dst, const Expr *Ex,
   assert(!isa<NonLoc>(location) && "location cannot be a NonLoc.");
 
   if (isa<loc::ObjCPropRef>(location)) {
-    loc::ObjCPropRef prop = cast<loc::ObjCPropRef>(location);
-    return VisitObjCMessage(ObjCPropertyGetter(prop.getPropRefExpr(), Ex),
-                            Pred, Dst);
+    assert(false);
   }
 
   // Are we loading from a region?  This actually results in two loads; one
