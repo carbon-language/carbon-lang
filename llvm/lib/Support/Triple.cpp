@@ -219,10 +219,6 @@ const char *Triple::getArchNameForAssembler() {
 
 Triple::ArchType Triple::ParseArch(StringRef ArchName) {
   return StringSwitch<ArchType>(ArchName)
-    // FIXME: It would be good to replace these with explicit names for all the
-    // various suffixes supported.
-    .StartsWith("armv", arm)
-    .StartsWith("thumbv", thumb)
     .Cases("i386", "i486", "i586", "i686", x86)
     .Cases("i786", "i886", "i986", x86) // FIXME: Do we need to support these?
     .Cases("amd64", "x86_64", x86_64)
@@ -230,7 +226,11 @@ Triple::ArchType Triple::ParseArch(StringRef ArchName) {
     .Cases("powerpc64", "ppu", ppc64)
     .Case("mblaze", mblaze)
     .Cases("arm", "xscale", arm)
+    // FIXME: It would be good to replace these with explicit names for all the
+    // various suffixes supported.
+    .StartsWith("armv", arm)
     .Case("thumb", thumb)
+    .StartsWith("thumbv", thumb)
     .Cases("spu", "cellspu", cellspu)
     .Case("msp430", msp430)
     .Cases("mips", "mipseb", "mipsallegrex", mips)
