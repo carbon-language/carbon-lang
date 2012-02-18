@@ -1866,7 +1866,7 @@ Parser::ParseParenExpression(ParenParseOption &ExprType, bool stopIfCastExpr,
     StringRef BridgeCastName = Tok.getName();
     SourceLocation BridgeKeywordLoc = ConsumeToken();
     if (!PP.getSourceManager().isInSystemHeader(BridgeKeywordLoc))
-      Diag(BridgeKeywordLoc, diag::err_arc_bridge_cast_nonarc)
+      Diag(BridgeKeywordLoc, diag::warn_arc_bridge_cast_nonarc)
         << BridgeCastName
         << FixItHint::CreateReplacement(BridgeKeywordLoc, "");
     BridgeCast = false;

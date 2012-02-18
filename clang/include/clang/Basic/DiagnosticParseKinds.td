@@ -330,8 +330,8 @@ let CategoryName = "ARC Parse Issue" in {
 def err_arc_bridge_retain : Error<
   "unknown cast annotation __bridge_retain; did you mean __bridge_retained?">;
 // To be default mapped to an error later.
-def err_arc_bridge_cast_nonarc : Warning<
-  "'%0' casts are only allowed when using ARC">,
+def warn_arc_bridge_cast_nonarc : Warning<
+  "'%0' casts have no effect when not using ARC">,
   InGroup<DiagGroup<"arc-bridge-casts-disallowed-in-nonarc">>;
 }
   
