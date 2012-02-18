@@ -26,6 +26,10 @@ static void BuildParentMap(MapTy& M, Stmt* S) {
       M[*I] = S;
       BuildParentMap(M, *I);
     }
+  
+  // Also include the source expr tree of an OpaqueValueExpr in the map.
+  if (const OpaqueValueExpr *OVE = dyn_cast<OpaqueValueExpr>(S))
+    BuildParentMap(M, OVE->getSourceExpr());
 }
 
 ParentMap::ParentMap(Stmt* S) : Impl(0) {
