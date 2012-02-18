@@ -1208,9 +1208,12 @@ ClangExpressionDeclMap::GetObjectPointer
         return false;
     }
     
+    const bool ignore_const = true;
+    
     VariableSP object_ptr_var = FindVariableInScope (*frame,
                                                      object_name, 
-                                                     (suppress_type_check ? NULL : &m_struct_vars->m_object_pointer_type));
+                                                     (suppress_type_check ? NULL : &m_struct_vars->m_object_pointer_type),
+                                                     ignore_const);
     
     if (!object_ptr_var)
     {
@@ -2158,7 +2161,8 @@ ClangExpressionDeclMap::FindVariableInScope
 (
     StackFrame &frame,
     const ConstString &name,
-    TypeFromUser *type
+    TypeFromUser *type,
+    bool ignore_const
 )
 {    
     lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
@@ -2183,7 +2187,10 @@ ClangExpressionDeclMap::FindVariableInScope
     {
         if (type->GetASTContext() == var_sp->GetType()->GetClangAST())
         {
-            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), type->GetOpaqueQualType(), var_sp->GetType()->GetClangFullType()))
+            if (!ClangASTContext::AreTypesSame(type->GetASTContext(), 
+                                               type->GetOpaqueQualType(), 
+                                               var_sp->GetType()->GetClangFullType(), 
+                                               ignore_const))
                 return lldb::VariableSP();
         }
         else

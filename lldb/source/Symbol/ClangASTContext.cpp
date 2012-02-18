@@ -1031,10 +1031,20 @@ ClangASTContext::CopyDecl (ASTContext *dst_ast,
 bool
 ClangASTContext::AreTypesSame(ASTContext *ast,
              clang_type_t type1,
-             clang_type_t type2)
+             clang_type_t type2,
+             bool ignore_qualifiers)
 {
-    return ast->hasSameType (QualType::getFromOpaquePtr(type1),
-                             QualType::getFromOpaquePtr(type2));
+    QualType type1_qual = QualType::getFromOpaquePtr(type1);
+    QualType type2_qual = QualType::getFromOpaquePtr(type2);
+    
+    if (ignore_qualifiers)
+    {
+        type1_qual = type1_qual.getUnqualifiedType();
+        type2_qual = type2_qual.getUnqualifiedType();
+    }
+    
+    return ast->hasSameType (type1_qual,
+                             type2_qual);
 }
 
 #pragma mark CVR modifiers

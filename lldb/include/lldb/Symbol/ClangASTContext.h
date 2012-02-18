@@ -217,13 +217,15 @@ public:
     static bool
     AreTypesSame(clang::ASTContext *ast,
                  lldb::clang_type_t type1,
-                 lldb::clang_type_t type2);
+                 lldb::clang_type_t type2,
+                 bool ignore_qualifiers = false);
     
     bool
     AreTypesSame(lldb::clang_type_t type1,
-                 lldb::clang_type_t type2)
+                 lldb::clang_type_t type2,
+                 bool ignore_qualifiers = false)
     {
-        return ClangASTContext::AreTypesSame(getASTContext(), type1, type2);
+        return ClangASTContext::AreTypesSame(getASTContext(), type1, type2, ignore_qualifiers);
     }
     
     

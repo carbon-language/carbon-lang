@@ -815,7 +815,8 @@ private:
     lldb::VariableSP
     FindVariableInScope (StackFrame &frame,
                          const ConstString &name,
-                         TypeFromUser *type = NULL);
+                         TypeFromUser *type = NULL,
+                         bool ignore_const = false);
     
     //------------------------------------------------------------------
     /// Given a target, find a data symbol that has the given name.
