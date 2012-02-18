@@ -1228,6 +1228,11 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
     NumPlaceArgs = AllPlaceArgs.size();
     if (NumPlaceArgs > 0)
       PlaceArgs = &AllPlaceArgs[0];
+
+    DiagnoseSentinelCalls(OperatorNew, PlacementLParen,
+                          PlaceArgs, NumPlaceArgs);
+
+    // FIXME: Missing call to CheckFunctionCall or equivalent
   }
 
   // Warn if the type is over-aligned and is being allocated by global operator

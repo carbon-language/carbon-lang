@@ -8973,6 +8973,11 @@ Sema::CompleteConstructorCall(CXXConstructorDecl *Constructor,
                                         Proto, 0, Args, NumArgs, AllArgs, 
                                         CallType);
   ConvertedArgs.append(AllArgs.begin(), AllArgs.end());
+
+  DiagnoseSentinelCalls(Constructor, Loc, AllArgs.data(), AllArgs.size());
+
+  // FIXME: Missing call to CheckFunctionCall or equivalent
+
   return Invalid;
 }
 

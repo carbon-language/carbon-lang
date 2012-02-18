@@ -10398,6 +10398,8 @@ Sema::BuildCallToMemberFunction(Scope *S, Expr *MemExprE,
                               RParenLoc))
     return ExprError();
 
+  DiagnoseSentinelCalls(Method, LParenLoc, Args, NumArgs);
+
   if (CheckFunctionCall(Method, TheCall))
     return ExprError();
 
@@ -10700,6 +10702,8 @@ Sema::BuildCallToObjectOfClassType(Scope *S, Expr *Obj,
   }
 
   if (IsError) return true;
+
+  DiagnoseSentinelCalls(Method, LParenLoc, Args, NumArgs);
 
   if (CheckFunctionCall(Method, TheCall))
     return true;
