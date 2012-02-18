@@ -62,6 +62,7 @@ struct _LIBCPP_VISIBLE nullptr_t
 
     struct __nat {int __for_bool_;};
 
+    _LIBCPP_ALWAYS_INLINE nullptr_t() {}
     _LIBCPP_ALWAYS_INLINE nullptr_t(int __nat::*) {}
 
     _LIBCPP_ALWAYS_INLINE operator int __nat::*() const {return 0;}
