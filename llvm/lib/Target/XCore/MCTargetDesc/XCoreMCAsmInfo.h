@@ -1,4 +1,4 @@
-//=====-- XCoreMCAsmInfo.h - XCore asm properties -------------*- C++ -*--====//
+//===-- XCoreMCAsmInfo.h - XCore asm properties ----------------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

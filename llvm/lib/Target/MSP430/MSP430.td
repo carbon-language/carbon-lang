@@ -1,4 +1,4 @@
-//===- MSP430.td - Describe the MSP430 Target Machine ---------*- tblgen -*-==//
+//===-- MSP430.td - Describe the MSP430 Target Machine -----*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

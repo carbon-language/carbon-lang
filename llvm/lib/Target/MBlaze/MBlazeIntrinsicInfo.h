@@ -1,4 +1,4 @@
-//===- MBlazeIntrinsicInfo.h - MBlaze Intrinsic Information -----*- C++ -*-===//
+//===-- MBlazeIntrinsicInfo.h - MBlaze Intrinsic Information ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

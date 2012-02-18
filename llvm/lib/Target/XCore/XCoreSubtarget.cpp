@@ -1,4 +1,4 @@
-//===- XCoreSubtarget.cpp - XCore Subtarget Information -----------*- C++ -*-=//
+//===-- XCoreSubtarget.cpp - XCore Subtarget Information ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

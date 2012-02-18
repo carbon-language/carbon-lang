@@ -1,4 +1,4 @@
-//====-- PTXSubtarget.h - Define Subtarget for the PTX ---------*- C++ -*--===//
+//===-- PTXSubtarget.h - Define Subtarget for the PTX -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

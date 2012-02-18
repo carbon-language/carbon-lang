@@ -1,4 +1,4 @@
-//===-- HexagonTargetObjectFile.cpp - Hexagon asm properties ----*- C++ -*-===//
+//===-- HexagonTargetObjectFile.cpp - Hexagon asm properties --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

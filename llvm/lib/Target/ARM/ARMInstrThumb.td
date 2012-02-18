@@ -1,4 +1,4 @@
-//===- ARMInstrThumb.td - Thumb support for ARM ------------*- tablegen -*-===//
+//===-- ARMInstrThumb.td - Thumb support for ARM -----------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

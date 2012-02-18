@@ -1,4 +1,4 @@
-//=====-- PTXMCAsmInfo.h - PTX asm properties -----------------*- C++ -*--====//
+//===-- PTXMCAsmInfo.h - PTX asm properties --------------------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

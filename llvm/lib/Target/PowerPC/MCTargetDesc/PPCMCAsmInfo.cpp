@@ -1,4 +1,4 @@
-//===-- PPCMCAsmInfo.cpp - PPC asm properties -------------------*- C++ -*-===//
+//===-- PPCMCAsmInfo.cpp - PPC asm properties -----------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

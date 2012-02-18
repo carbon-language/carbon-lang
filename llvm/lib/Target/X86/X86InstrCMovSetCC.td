@@ -1,10 +1,10 @@
-//===- X86InstrCMovSetCC.td - Conditional Move and SetCC ---*- tablegen -*-===//
-// 
+//===-- X86InstrCMovSetCC.td - Conditional Move and SetCC --*- tablegen -*-===//
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the X86 conditional move and set on condition

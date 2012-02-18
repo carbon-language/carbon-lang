@@ -1,4 +1,4 @@
-//===- XCoreInstrInfo.td - Target Description for XCore ----*- tablegen -*-===//
+//===-- XCoreInstrInfo.td - Target Description for XCore ---*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- MBlazeInstrFPU.td - MBlaze FPU Instruction defs -----*- tablegen -*-===//
+//===-- MBlazeInstrFPU.td - MBlaze FPU Instruction defs ----*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

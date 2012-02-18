@@ -1,4 +1,4 @@
-//===-- llvm/Target/X86/X86TargetObjectFile.h - X86 Object Info -*- C++ -*-===//
+//===-- X86TargetObjectFile.h - X86 Object Info -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

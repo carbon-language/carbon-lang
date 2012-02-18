@@ -1,4 +1,4 @@
-//====-- MSP430Subtarget.h - Define Subtarget for the MSP430 ---*- C++ -*--===//
+//===-- MSP430Subtarget.h - Define Subtarget for the MSP430 ----*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

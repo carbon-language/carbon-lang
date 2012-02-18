@@ -1,4 +1,4 @@
-//===-- ARMInstPrinter.h - Convert ARM MCInst to assembly syntax ----------===//
+//===- ARMInstPrinter.h - Convert ARM MCInst to assembly syntax -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

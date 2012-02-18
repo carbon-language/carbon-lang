@@ -1,4 +1,4 @@
-//===- PTX.td - Describe the PTX Target Machine ---------------*- tblgen -*-==//
+//===-- PTX.td - Describe the PTX Target Machine -----------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

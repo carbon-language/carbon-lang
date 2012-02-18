@@ -1,4 +1,4 @@
-//===- PTXInstrInfo.h - PTX Instruction Information -------------*- C++ -*-===//
+//===-- PTXInstrInfo.h - PTX Instruction Information ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

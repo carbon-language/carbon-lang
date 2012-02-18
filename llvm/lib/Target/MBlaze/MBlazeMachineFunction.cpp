@@ -1,4 +1,4 @@
-//===-- MBlazeMachineFunctionInfo.cpp - Private data --------------*- C++ -*-=//
+//===-- MBlazeMachineFunctionInfo.cpp - Private data ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

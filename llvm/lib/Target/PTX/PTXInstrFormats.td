@@ -1,4 +1,4 @@
-//===- PTXInstrFormats.td - PTX Instruction Formats ----------*- tblgen -*-===//
+//===-- PTXInstrFormats.td - PTX Instruction Formats -------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

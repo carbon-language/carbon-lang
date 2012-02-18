@@ -1,9 +1,9 @@
-//===--- SPU128InstrInfo.td - Cell SPU 128-bit operations -*- tablegen -*--===//
+//===-- SPU128InstrInfo.td - Cell SPU 128-bit operations --*- tablegen -*--===//
 //
 //                     Cell SPU 128-bit operations
 //
 //===----------------------------------------------------------------------===//
-                                  
+
 // zext 32->128: Zero extend 32-bit to 128-bit
 def : Pat<(i128 (zext R32C:$rSrc)),
           (ROTQMBYIr128_zext_r32 R32C:$rSrc, 12)>;

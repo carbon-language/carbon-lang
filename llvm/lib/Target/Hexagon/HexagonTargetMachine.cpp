@@ -1,4 +1,4 @@
-//===- HexagonTargetMachine.cpp - Define TargetMachine for Hexagon --------===//
+//===-- HexagonTargetMachine.cpp - Define TargetMachine for Hexagon -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// Implements the info about Hexagon target spec.
 //
 //===----------------------------------------------------------------------===//
 

@@ -1,10 +1,10 @@
-//====- X86MachineFuctionInfo.h - X86 machine function info -----*- C++ -*-===//
-// 
+//===-- X86MachineFuctionInfo.h - X86 machine function info -----*- C++ -*-===//
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file declares X86-specific per-machine-function information.

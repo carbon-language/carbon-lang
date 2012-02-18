@@ -1,10 +1,10 @@
-//===- SPUOperands.td - Cell SPU Instruction Operands ------*- tablegen -*-===//
-// 
+//===-- SPUOperands.td - Cell SPU Instruction Operands -----*- tablegen -*-===//
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 // Cell SPU Instruction Operands:
 //===----------------------------------------------------------------------===//

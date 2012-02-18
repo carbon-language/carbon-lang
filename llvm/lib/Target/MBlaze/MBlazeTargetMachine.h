@@ -1,4 +1,4 @@
-//===-- MBlazeTargetMachine.h - Define TargetMachine for MBlaze --- C++ ---===//
+//===-- MBlazeTargetMachine.h - Define TargetMachine for MBlaze -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

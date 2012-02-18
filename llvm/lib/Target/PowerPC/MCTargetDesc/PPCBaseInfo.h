@@ -1,4 +1,4 @@
-//===-- PPCBaseInfo.h - Top level definitions for PPC -------- --*- C++ -*-===//
+//===-- PPCBaseInfo.h - Top level definitions for PPC -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

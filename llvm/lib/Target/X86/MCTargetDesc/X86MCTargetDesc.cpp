@@ -1,4 +1,4 @@
-//===-- X86MCTargetDesc.cpp - X86 Target Descriptions -----------*- C++ -*-===//
+//===-- X86MCTargetDesc.cpp - X86 Target Descriptions ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

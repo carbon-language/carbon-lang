@@ -1,4 +1,4 @@
-//====--- SPU64InstrInfo.td - Cell SPU 64-bit operations -*- tablegen -*--====//
+//====-- SPU64InstrInfo.td - Cell SPU 64-bit operations ---*- tablegen -*--===//
 //
 //                     Cell SPU 64-bit operations
 //

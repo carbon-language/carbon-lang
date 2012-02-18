@@ -1,4 +1,4 @@
-//===- PTXMachineFuctionInfo.h - PTX machine function info -------*- C++ -*-==//
+//===-- PTXMachineFuctionInfo.h - PTX machine function info ------*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //

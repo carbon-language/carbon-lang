@@ -1,4 +1,4 @@
-//=====-- X86MCAsmInfo.h - X86 asm properties -----------------*- C++ -*--====//
+//===-- X86MCAsmInfo.h - X86 asm properties --------------------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

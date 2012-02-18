@@ -1,4 +1,4 @@
-//===- X86JITInfo.h - X86 implementation of the JIT interface  --*- C++ -*-===//
+//===-- X86JITInfo.h - X86 implementation of the JIT interface --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

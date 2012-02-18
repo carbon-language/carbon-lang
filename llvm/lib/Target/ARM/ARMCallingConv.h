@@ -1,4 +1,4 @@
-//===-- ARMCallingConv.h - ARM Custom Calling Convention Routines ---------===//
+//=== ARMCallingConv.h - ARM Custom Calling Convention Routines -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

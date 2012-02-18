@@ -1,4 +1,4 @@
-//=-- HexagonSelectionDAGInfo.h - Hexagon SelectionDAG Info ------*- C++ -*-=//
+//===-- HexagonSelectionDAGInfo.h - Hexagon SelectionDAG Info ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

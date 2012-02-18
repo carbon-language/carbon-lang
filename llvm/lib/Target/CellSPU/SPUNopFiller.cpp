@@ -1,4 +1,4 @@
-//===-- SPUNopFiller.cpp - Add nops/lnops to align the pipelines---===//
+//===-- SPUNopFiller.cpp - Add nops/lnops to align the pipelines ----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

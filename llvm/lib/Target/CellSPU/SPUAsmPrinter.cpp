@@ -1,4 +1,4 @@
-//===-- SPUAsmPrinter.cpp - Print machine instrs to Cell SPU assembly -------=//
+//===-- SPUAsmPrinter.cpp - Print machine instrs to Cell SPU assembly -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- MSP430InstrInfo.td - MSP430 Instruction defs -----------*- tblgen-*-===//
+//===-- MSP430InstrInfo.td - MSP430 Instruction defs -------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

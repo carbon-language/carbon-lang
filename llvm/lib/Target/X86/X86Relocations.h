@@ -1,4 +1,4 @@
-//===- X86Relocations.h - X86 Code Relocations ------------------*- C++ -*-===//
+//===-- X86Relocations.h - X86 Code Relocations -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

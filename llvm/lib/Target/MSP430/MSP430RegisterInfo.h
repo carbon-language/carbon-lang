@@ -1,4 +1,4 @@
-//===- MSP430RegisterInfo.h - MSP430 Register Information Impl --*- C++ -*-===//
+//===-- MSP430RegisterInfo.h - MSP430 Register Information Impl -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- MSP430RegisterInfo.cpp - MSP430 Register Information ---------------===//
+//===-- MSP430RegisterInfo.cpp - MSP430 Register Information --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

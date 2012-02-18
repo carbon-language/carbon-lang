@@ -1,4 +1,4 @@
-//===-- ARMLoadStoreOptimizer.cpp - ARM load / store opt. pass ----*- C++ -*-=//
+//===-- ARMLoadStoreOptimizer.cpp - ARM load / store opt. pass ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

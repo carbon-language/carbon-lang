@@ -1,4 +1,4 @@
-//===- HexagonRegisterInfo.td - Hexagon Register defs ------*- tablegen -*-===//
+//===-- HexagonRegisterInfo.td - Hexagon Register defs -----*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

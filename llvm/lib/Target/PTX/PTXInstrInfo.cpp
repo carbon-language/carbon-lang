@@ -1,4 +1,4 @@
-//===- PTXInstrInfo.cpp - PTX Instruction Information ---------------------===//
+//===-- PTXInstrInfo.cpp - PTX Instruction Information --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

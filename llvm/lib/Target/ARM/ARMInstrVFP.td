@@ -1,4 +1,4 @@
-//===- ARMInstrVFP.td - VFP support for ARM ----------------*- tablegen -*-===//
+//===-- ARMInstrVFP.td - VFP support for ARM ---------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

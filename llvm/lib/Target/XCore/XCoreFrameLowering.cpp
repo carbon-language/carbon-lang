@@ -1,4 +1,4 @@
-//===-- XCoreFrameLowering.cpp - Frame info for XCore Target -----*- C++ -*-==//
+//===-- XCoreFrameLowering.cpp - Frame info for XCore Target --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

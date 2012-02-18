@@ -1,4 +1,4 @@
-//===- MSP430InstrInfo.h - MSP430 Instruction Information -------*- C++ -*-===//
+//===-- MSP430InstrInfo.h - MSP430 Instruction Information ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

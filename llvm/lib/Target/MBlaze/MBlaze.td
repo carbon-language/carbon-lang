@@ -1,4 +1,4 @@
-//===- MBlaze.td - Describe the MBlaze Target Machine ------*- tablegen -*-===//
+//===-- MBlaze.td - Describe the MBlaze Target Machine -----*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

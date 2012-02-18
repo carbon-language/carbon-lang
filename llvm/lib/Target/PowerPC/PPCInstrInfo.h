@@ -1,4 +1,4 @@
-//===- PPCInstrInfo.h - PowerPC Instruction Information ---------*- C++ -*-===//
+//===-- PPCInstrInfo.h - PowerPC Instruction Information --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef POWERPC32_INSTRUCTIONINFO_H
-#define POWERPC32_INSTRUCTIONINFO_H
+#ifndef POWERPC_INSTRUCTIONINFO_H
+#define POWERPC_INSTRUCTIONINFO_H
 
 #include "PPC.h"
 #include "llvm/Target/TargetInstrInfo.h"

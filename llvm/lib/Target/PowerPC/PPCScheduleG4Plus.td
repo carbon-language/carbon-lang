@@ -1,10 +1,10 @@
-//===- PPCScheduleG4Plus.td - PPC G4+ Scheduling Defs. -----*- tablegen -*-===//
-// 
+//===-- PPCScheduleG4Plus.td - PPC G4+ Scheduling Defs. ----*- tablegen -*-===//
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the itinerary class data for the G4+ (7450) processor.

@@ -1,5 +1,5 @@
-//===- SPU.td - Describe the STI Cell SPU Target Machine ----*- tablegen -*-===//
-// 
+//===-- SPU.td - Describe the STI Cell SPU Target Machine --*- tablegen -*-===//
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source

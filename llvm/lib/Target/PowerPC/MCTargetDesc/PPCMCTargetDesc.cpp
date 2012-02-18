@@ -1,4 +1,4 @@
-//===-- PPCMCTargetDesc.cpp - PowerPC Target Descriptions -------*- C++ -*-===//
+//===-- PPCMCTargetDesc.cpp - PowerPC Target Descriptions -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

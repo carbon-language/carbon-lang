@@ -1,4 +1,4 @@
-//===- ARM.td - Describe the ARM Target Machine ------------*- tablegen -*-===//
+//===-- ARM.td - Describe the ARM Target Machine -----------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

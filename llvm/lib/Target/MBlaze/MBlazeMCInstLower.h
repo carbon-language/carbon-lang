@@ -1,4 +1,4 @@
-//===-- MBlazeMCInstLower.h - Lower MachineInstr to MCInst ----------------===//
+//===-- MBlazeMCInstLower.h - Lower MachineInstr to MCInst ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

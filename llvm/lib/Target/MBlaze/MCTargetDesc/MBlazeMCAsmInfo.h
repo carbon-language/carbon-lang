@@ -1,4 +1,4 @@
-//=====-- MBlazeMCAsmInfo.h - MBlaze asm properties -----------*- C++ -*--====//
+//===-- MBlazeMCAsmInfo.h - MBlaze asm properties --------------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

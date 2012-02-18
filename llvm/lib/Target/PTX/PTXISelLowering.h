@@ -1,4 +1,4 @@
-//==-- PTXISelLowering.h - PTX DAG Lowering Interface ------------*- C++ -*-==//
+//===-- PTXISelLowering.h - PTX DAG Lowering Interface ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- XCoreInstrFormats.td - XCore Instruction Formats ----*- tablegen -*-===//
+//===-- XCoreInstrFormats.td - XCore Instruction Formats ---*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

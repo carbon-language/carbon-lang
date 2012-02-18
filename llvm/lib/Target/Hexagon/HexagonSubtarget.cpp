@@ -1,4 +1,4 @@
-//===- HexagonSubtarget.cpp - Hexagon Subtarget Information ---------------===//
+//===-- HexagonSubtarget.cpp - Hexagon Subtarget Information --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- PPCTargetMachine.h - Define TargetMachine for PowerPC -----*- C++ -*-=//
+//===-- PPCTargetMachine.h - Define TargetMachine for PowerPC ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

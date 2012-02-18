@@ -1,4 +1,4 @@
-//===- MBlazeInstrInfo.h - MBlaze Instruction Information -------*- C++ -*-===//
+//===-- MBlazeInstrInfo.h - MBlaze Instruction Information ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

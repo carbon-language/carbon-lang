@@ -1,10 +1,10 @@
-//======- X86InstrFragmentsSIMD.td - x86 ISA -------------*- tablegen -*-=====//
+//===-- X86InstrFragmentsSIMD.td - x86 ISA -----------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file provides pattern fragments useful for SIMD instructions.

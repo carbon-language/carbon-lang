@@ -1,4 +1,4 @@
-//===- MBlazeRelocations.h - MBlaze Code Relocations ------------*- C++ -*-===//
+//===-- MBlazeRelocations.h - MBlaze Code Relocations -----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

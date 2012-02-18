@@ -1,4 +1,4 @@
-//===-- PPCCodeEmitter.cpp - JIT Code Emitter for PowerPC32 -------*- C++ -*-=//
+//===-- PPCCodeEmitter.cpp - JIT Code Emitter for PowerPC -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

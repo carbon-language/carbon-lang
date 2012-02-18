@@ -1,4 +1,4 @@
-//===- XCoreRegisterInfo.td - XCore Register defs ----------*- tablegen -*-===//
+//===-- XCoreRegisterInfo.td - XCore Register defs ---------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

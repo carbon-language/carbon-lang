@@ -1,4 +1,4 @@
-//===- XCoreRegisterInfo.h - XCore Register Information Impl ----*- C++ -*-===//
+//===-- XCoreRegisterInfo.h - XCore Register Information Impl ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

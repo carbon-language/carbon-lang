@@ -1,4 +1,4 @@
-//===-- ARMMCExpr.h - ARM specific MC expression classes ------------------===//
+//===-- ARMMCExpr.h - ARM specific MC expression classes --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

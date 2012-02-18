@@ -1,4 +1,4 @@
-//===- MSP430Subtarget.cpp - MSP430 Subtarget Information ---------*- C++ -*-=//
+//===-- MSP430Subtarget.cpp - MSP430 Subtarget Information ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

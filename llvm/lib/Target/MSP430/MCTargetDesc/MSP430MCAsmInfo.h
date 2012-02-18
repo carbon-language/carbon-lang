@@ -1,4 +1,4 @@
-//=====-- MSP430MCAsmInfo.h - MSP430 asm properties -----------*- C++ -*--====//
+//===-- MSP430MCAsmInfo.h - MSP430 asm properties --------------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

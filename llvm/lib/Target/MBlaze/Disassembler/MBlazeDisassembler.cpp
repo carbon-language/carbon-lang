@@ -1,4 +1,4 @@
-//===- MBlazeDisassembler.cpp - Disassembler for MicroBlaze  ----*- C++ -*-===//
+//===-- MBlazeDisassembler.cpp - Disassembler for MicroBlaze  -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

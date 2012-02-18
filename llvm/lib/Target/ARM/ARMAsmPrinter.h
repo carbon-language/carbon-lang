@@ -1,4 +1,4 @@
-//===-- ARMAsmPrinter.h - Print machine code to an ARM .s file ------------===//
+//===-- ARMAsmPrinter.h - Print machine code to an ARM .s file --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===--- PTXFrameLowering.h - Define frame lowering for PTX --*- C++ -*----===//
+//===-- PTXFrameLowering.h - Define frame lowering for PTX -----*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

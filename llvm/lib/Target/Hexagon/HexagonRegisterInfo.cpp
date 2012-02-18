@@ -1,4 +1,4 @@
-//===- HexagonRegisterInfo.cpp - Hexagon Register Information -------------===//
+//===-- HexagonRegisterInfo.cpp - Hexagon Register Information ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//=====-- SPUFrameLowering.h - SPU Frame Lowering stuff -*- C++ -*----========//
+//===-- SPUFrameLowering.h - SPU Frame Lowering stuff ----------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

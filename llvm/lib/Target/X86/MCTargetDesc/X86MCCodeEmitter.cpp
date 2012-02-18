@@ -1,4 +1,4 @@
-//===-- X86/X86MCCodeEmitter.cpp - Convert X86 code to machine code -------===//
+//===-- X86MCCodeEmitter.cpp - Convert X86 code to machine code -----------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

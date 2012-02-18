@@ -1,4 +1,4 @@
-//===- X86Schedule.td - X86 Scheduling Definitions ---------*- tablegen -*-===//
+//===-- X86Schedule.td - X86 Scheduling Definitions --------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

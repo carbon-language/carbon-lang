@@ -1,4 +1,4 @@
-//===- MBlazeSubtarget.cpp - MBlaze Subtarget Information -------*- C++ -*-===//
+//===-- MBlazeSubtarget.cpp - MBlaze Subtarget Information ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,11 +1,11 @@
-//===- HexagonExpandPredSpillCode.cpp - Expand Predicate Spill Code -------===//
+//===-- HexagonExpandPredSpillCode.cpp - Expand Predicate Spill Code ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===----------------------------------------------------------------------===////
+//===----------------------------------------------------------------------===//
 // The Hexagon processor has no instructions that load or store predicate
 // registers directly.  So, when these registers must be spilled a general 
 // purpose register must be found and the value copied to/from it from/to 

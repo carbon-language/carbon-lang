@@ -1,4 +1,4 @@
-//===- HexagonInstrInfo.cpp - Hexagon Instruction Information -------------===//
+//===-- HexagonInstrInfo.cpp - Hexagon Instruction Information ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

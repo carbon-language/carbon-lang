@@ -1,4 +1,4 @@
-//===- PTXRegisterInfo.cpp - PTX Register Information ---------------------===//
+//===-- PTXRegisterInfo.cpp - PTX Register Information --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

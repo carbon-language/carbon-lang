@@ -1,4 +1,4 @@
-//===- MBlazeSchedule3.td - MBlaze Scheduling Definitions --*- tablegen -*-===//
+//===-- MBlazeSchedule3.td - MBlaze Scheduling Definitions -*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

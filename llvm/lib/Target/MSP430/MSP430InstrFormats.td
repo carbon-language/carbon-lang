@@ -1,4 +1,4 @@
-//===- MSP430InstrFormats.td - MSP430 Instruction Formats-----*- tblgen -*-===//
+//===-- MSP430InstrFormats.td - MSP430 Instruction Formats -*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

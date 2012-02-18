@@ -1,4 +1,4 @@
-//===- PTXInstrInfo.td - PTX Instruction defs -----------------*- tblgen-*-===//
+//===-- PTXInstrInfo.td - PTX Instruction defs --------------*- tablegen-*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//==-- HexagonSubtarget.h - Define Subtarget for the Hexagon ----*- C++ -*-==//
+//===-- HexagonSubtarget.h - Define Subtarget for the Hexagon ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

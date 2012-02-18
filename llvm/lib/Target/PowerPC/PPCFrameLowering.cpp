@@ -1,4 +1,4 @@
-//=====- PPCFrameLowering.cpp - PPC Frame Information -----------*- C++ -*-===//
+//===-- PPCFrameLowering.cpp - PPC Frame Information ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

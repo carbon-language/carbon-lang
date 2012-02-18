@@ -1,4 +1,4 @@
-//===-- XCoreMCTargetDesc.cpp - XCore Target Descriptions -------*- C++ -*-===//
+//===-- XCoreMCTargetDesc.cpp - XCore Target Descriptions -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

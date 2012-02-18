@@ -1,4 +1,4 @@
-//===-- MSP430InstPrinter.h - Convert MSP430 MCInst to assembly syntax ----===//
+//= MSP430InstPrinter.h - Convert MSP430 MCInst to assembly syntax -*- C++ -*-//
 //
 //                     The LLVM Compiler Infrastructure
 //

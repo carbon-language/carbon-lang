@@ -1,4 +1,4 @@
-//===-- X86/X86FixupKinds.h - X86 Specific Fixup Entries --------*- C++ -*-===//
+//===-- X86FixupKinds.h - X86 Specific Fixup Entries ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,10 +1,10 @@
-//===- PPCInstr64Bit.td - The PowerPC 64-bit Support -------*- tablegen -*-===//
-// 
+//===-- PPCInstr64Bit.td - The PowerPC 64-bit Support ------*- tablegen -*-===//
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the PowerPC 64-bit instructions.  These patterns are used

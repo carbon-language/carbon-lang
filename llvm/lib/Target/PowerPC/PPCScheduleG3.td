@@ -1,10 +1,10 @@
-//===- PPCScheduleG3.td - PPC G3 Scheduling Definitions ----*- tablegen -*-===//
-// 
+//===-- PPCScheduleG3.td - PPC G3 Scheduling Definitions ---*- tablegen -*-===//
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file defines the itinerary class data for the G3 (750) processor.

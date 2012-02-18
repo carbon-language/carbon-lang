@@ -1,4 +1,4 @@
-//===-- PTXInstPrinter.h - Convert PTX MCInst to assembly syntax ----------===//
+//===- PTXInstPrinter.h - Convert PTX MCInst to assembly syntax -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//=-HexagoSelectCCInfo.td - Selectcc mappings ----------------*- tablegen -*-=//
+//===-- HexagoSelectCCInfo.td - Selectcc mappings ----------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

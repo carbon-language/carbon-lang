@@ -1,4 +1,4 @@
-//===- SPUInstrInfo.cpp - Cell SPU Instruction Information ----------------===//
+//===-- SPUInstrInfo.cpp - Cell SPU Instruction Information ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

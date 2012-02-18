@@ -1,4 +1,4 @@
-//===- X86InstrControl.td - Control Flow Instructions ------*- tablegen -*-===//
+//===-- X86InstrControl.td - Control Flow Instructions -----*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

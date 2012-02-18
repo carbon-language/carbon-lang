@@ -1,4 +1,4 @@
-//===-- PTXMCTargetDesc.cpp - PTX Target Descriptions -----------*- C++ -*-===//
+//===-- PTXMCTargetDesc.cpp - PTX Target Descriptions ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

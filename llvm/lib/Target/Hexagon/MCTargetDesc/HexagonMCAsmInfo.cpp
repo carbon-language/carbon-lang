@@ -1,4 +1,4 @@
-//===-- HexagonMCAsmInfo.cpp - Hexagon asm properties -----------*- C++ -*-===//
+//===-- HexagonMCAsmInfo.cpp - Hexagon asm properties ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

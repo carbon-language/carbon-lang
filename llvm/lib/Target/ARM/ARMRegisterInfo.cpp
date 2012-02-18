@@ -1,4 +1,4 @@
-//===- ARMRegisterInfo.cpp - ARM Register Information -----------*- C++ -*-===//
+//===-- ARMRegisterInfo.cpp - ARM Register Information --------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

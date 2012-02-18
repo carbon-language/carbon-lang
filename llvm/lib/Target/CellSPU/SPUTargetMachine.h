@@ -1,4 +1,4 @@
-//===-- SPUTargetMachine.h - Define TargetMachine for Cell SPU ----*- C++ -*-=//
+//===-- SPUTargetMachine.h - Define TargetMachine for Cell SPU --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

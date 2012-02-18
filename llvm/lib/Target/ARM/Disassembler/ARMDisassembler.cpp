@@ -1,4 +1,4 @@
-//===- ARMDisassembler.cpp - Disassembler for ARM/Thumb ISA -----*- C++ -*-===//
+//===-- ARMDisassembler.cpp - Disassembler for ARM/Thumb ISA --------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

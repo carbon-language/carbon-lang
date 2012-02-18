@@ -1,4 +1,4 @@
-//===-- MSP430MCInstLower.cpp - Convert MSP430 MachineInstr to an MCInst---===//
+//===-- MSP430MCInstLower.cpp - Convert MSP430 MachineInstr to an MCInst --===//
 //
 //                     The LLVM Compiler Infrastructure
 //

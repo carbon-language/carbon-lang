@@ -1,4 +1,4 @@
-//===- PTXInstrLoadStore.td - PTX Load/Store Instruction Defs -*- tblgen-*-===//
+//===- PTXInstrLoadStore.td - PTX Load/Store Instruction Defs -*- tablegen-*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //

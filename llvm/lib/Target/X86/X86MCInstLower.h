@@ -1,4 +1,4 @@
-//===-- X86MCInstLower.h - Lower MachineInstr to MCInst -------------------===//
+//===-- X86MCInstLower.h - Lower MachineInstr to MCInst ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

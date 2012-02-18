@@ -1,4 +1,4 @@
-//=======- PTXFrameLowering.cpp - PTX Frame Information -------*- C++ -*-=====//
+//===-- PTXFrameLowering.cpp - PTX Frame Information ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

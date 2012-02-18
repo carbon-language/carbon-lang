@@ -1,4 +1,4 @@
-//======--- SPUMathInst.td - Cell SPU math operations -*- tablegen -*---======//
+//===-- SPUMathInst.td - Cell SPU math operations ---------*- tablegen -*--===//
 //
 //                     Cell SPU math operations
 //

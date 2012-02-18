@@ -1,10 +1,10 @@
 //==- X86InstrFPStack.td - Describe the X86 Instruction Set --*- tablegen -*-=//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the X86 x87 FPU instruction set, defining the

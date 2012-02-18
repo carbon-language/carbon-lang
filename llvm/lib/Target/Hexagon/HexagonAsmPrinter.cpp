@@ -1,4 +1,4 @@
-//===-- HexagonAsmPrinter.cpp - Print machine instrs to Hexagon assembly ----=//
+//===-- HexagonAsmPrinter.cpp - Print machine instrs to Hexagon assembly --===//
 //
 //                     The LLVM Compiler Infrastructure
 //

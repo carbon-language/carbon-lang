@@ -1,4 +1,4 @@
-//===- ARMInstrFormats.td - ARM Instruction Formats ----------*- tablegen -*-=//
+//===-- ARMInstrFormats.td - ARM Instruction Formats -------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

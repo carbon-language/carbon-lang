@@ -1,4 +1,4 @@
-//===---- HexagonSplitTFRCondSets.cpp - split TFR condsets into xfers -----===//
+//===-- HexagonSplitTFRCondSets.cpp - split TFR condsets into xfers -------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -6,7 +6,7 @@
 // License. See LICENSE.TXT for details.
 //
 //
-//===----------------------------------------------------------------------===////
+//===----------------------------------------------------------------------===//
 // This pass tries to provide opportunities for better optimization of muxes.
 // The default code generated for something like: flag = (a == b) ? 1 : 3;
 // would be:

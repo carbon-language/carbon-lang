@@ -1,4 +1,4 @@
-//===-- PPCPerfectShuffle.h - Altivec Perfect Shuffle Table ---------------===//
+//===-- PPCPerfectShuffle.h - Altivec Perfect Shuffle Table -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

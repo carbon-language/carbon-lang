@@ -1,4 +1,4 @@
-//===- SparcRegisterInfo.cpp - SPARC Register Information -------*- C++ -*-===//
+//===-- SparcRegisterInfo.cpp - SPARC Register Information ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

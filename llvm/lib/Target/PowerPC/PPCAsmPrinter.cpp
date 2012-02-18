@@ -1,4 +1,4 @@
-//===-- PPCAsmPrinter.cpp - Print machine instrs to PowerPC assembly --------=//
+//===-- PPCAsmPrinter.cpp - Print machine instrs to PowerPC assembly ------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- XCore.td - Describe the XCore Target Machine --------*- tablegen -*-===//
+//===-- XCore.td - Describe the XCore Target Machine -------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// This is the top level entry point for the XCore target.
 //
 //===----------------------------------------------------------------------===//
 

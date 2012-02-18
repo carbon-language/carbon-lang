@@ -1,4 +1,4 @@
-//====- X86Instr3DNow.td - The 3DNow! Instruction Set ------*- tablegen -*-===//
+//===-- X86Instr3DNow.td - The 3DNow! Instruction Set ------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

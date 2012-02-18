@@ -1,10 +1,10 @@
-//===- PPCInstrInfo.td - The PowerPC Instruction Set -------*- tablegen -*-===//
-// 
+//===-- PPCInstrInfo.td - The PowerPC Instruction Set ------*- tablegen -*-===//
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the subset of the 32-bit PowerPC instruction set, as used

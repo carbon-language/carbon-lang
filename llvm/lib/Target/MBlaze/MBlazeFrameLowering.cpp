@@ -1,4 +1,4 @@
-//===- MBlazeFrameLowering.cpp - MBlaze Frame Information ------*- C++ -*-====//
+//===-- MBlazeFrameLowering.cpp - MBlaze Frame Information ---------------====//
 //
 //                     The LLVM Compiler Infrastructure
 //

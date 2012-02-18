@@ -1,4 +1,4 @@
-//===- ARMJITInfo.h - ARM implementation of the JIT interface  --*- C++ -*-===//
+//===-- ARMJITInfo.h - ARM implementation of the JIT interface  -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

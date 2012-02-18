@@ -1,4 +1,4 @@
-//===- PTXSubtarget.cpp - PTX Subtarget Information ---------------*- C++ -*-=//
+//===-- PTXSubtarget.cpp - PTX Subtarget Information ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

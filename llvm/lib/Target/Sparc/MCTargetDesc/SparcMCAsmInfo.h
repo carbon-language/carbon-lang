@@ -1,4 +1,4 @@
-//=====-- SparcMCAsmInfo.h - Sparc asm properties -------------*- C++ -*--====//
+//===-- SparcMCAsmInfo.h - Sparc asm properties ----------------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

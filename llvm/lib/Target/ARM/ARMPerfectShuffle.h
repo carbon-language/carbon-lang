@@ -1,4 +1,4 @@
-//===-- ARMPerfectShuffle.h - NEON Perfect Shuffle Table ------------------===//
+//===-- ARMPerfectShuffle.h - NEON Perfect Shuffle Table --------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

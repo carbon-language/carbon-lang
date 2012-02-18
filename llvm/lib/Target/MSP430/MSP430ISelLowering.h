@@ -1,4 +1,4 @@
-//==-- MSP430ISelLowering.h - MSP430 DAG Lowering Interface ------*- C++ -*-==//
+//===-- MSP430ISelLowering.h - MSP430 DAG Lowering Interface ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- MBlazeRegisterInfo.h - MBlaze Register Information Impl --*- C++ -*-===//
+//===-- MBlazeRegisterInfo.h - MBlaze Register Information Impl -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

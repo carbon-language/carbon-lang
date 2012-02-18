@@ -1,4 +1,4 @@
-//===- IntrinsicsMBlaze.td - Defines MBlaze intrinsics -----*- tablegen -*-===//
+//===-- IntrinsicsMBlaze.td - Defines MBlaze intrinsics ----*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- Hexagon.td - Describe the Hexagon Target Machine ---------*- C++ -*-===//
+//===-- Hexagon.td - Describe the Hexagon Target Machine --*- tablegen -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
+// This is the top level entry point for the Hexagon target.
 //
 //===----------------------------------------------------------------------===//
 
@@ -18,8 +19,7 @@ include "llvm/Target/Target.td"
 
 //===----------------------------------------------------------------------===//
 // Hexagon Subtarget features.
-//
-
+//===----------------------------------------------------------------------===//
 
 // Hexagon Archtectures
 def ArchV2       : SubtargetFeature<"v2", "HexagonArchVersion", "V2",

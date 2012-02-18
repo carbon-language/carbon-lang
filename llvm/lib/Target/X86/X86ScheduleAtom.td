@@ -1,4 +1,4 @@
-//=- X86ScheduleAtom.td - X86 Atom Scheduling Definitions -*- tablegen    -*-=//
+//===- X86ScheduleAtom.td - X86 Atom Scheduling Definitions -*- tablegen -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //

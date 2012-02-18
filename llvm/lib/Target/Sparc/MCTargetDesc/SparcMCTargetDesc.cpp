@@ -1,4 +1,4 @@
-//===-- SparcMCTargetDesc.cpp - Sparc Target Descriptions --------*- C++ -*-===//
+//===-- SparcMCTargetDesc.cpp - Sparc Target Descriptions -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

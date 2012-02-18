@@ -1,15 +1,15 @@
-//====- X86InstrXOP.td - Describe the X86 Instruction Set --*- tablegen -*-====//
+//===-- X86InstrXOP.td - Describe the X86 Instruction Set --*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===-----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // This file describes XOP (eXtended OPerations)
 //
-//===-----------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 multiclass xop2op<bits<8> opc, string OpcodeStr, Intrinsic Int, PatFrag memop> {
   def rr : IXOP<opc, MRMSrcReg, (outs VR128:$dst), (ins VR128:$src),

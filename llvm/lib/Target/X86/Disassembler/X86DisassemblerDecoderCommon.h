@@ -1,4 +1,4 @@
-/*===- X86DisassemblerDecoderCommon.h - Disassembler decoder -------*- C -*-==*
+/*===-- X86DisassemblerDecoderCommon.h - Disassembler decoder -----*- C -*-===*
  *
  *                     The LLVM Compiler Infrastructure
  *

@@ -1,4 +1,4 @@
-//===- PTXParamManager.cpp - Manager for .param variables -------*- C++ -*-===//
+//===-- PTXParamManager.cpp - Manager for .param variables ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

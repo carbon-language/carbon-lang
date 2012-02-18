@@ -1,4 +1,4 @@
-//===- HexagonFrameLowering.cpp - Define frame lowering -------------------===//
+//===-- HexagonFrameLowering.cpp - Define frame lowering ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

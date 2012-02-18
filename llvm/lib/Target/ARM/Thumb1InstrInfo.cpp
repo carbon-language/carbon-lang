@@ -1,4 +1,4 @@
-//===- Thumb1InstrInfo.cpp - Thumb-1 Instruction Information ----*- C++ -*-===//
+//===-- Thumb1InstrInfo.cpp - Thumb-1 Instruction Information -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

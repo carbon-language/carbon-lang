@@ -1,4 +1,4 @@
-//===- SparcSubtarget.cpp - SPARC Subtarget Information -------------------===//
+//===-- SparcSubtarget.cpp - SPARC Subtarget Information ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

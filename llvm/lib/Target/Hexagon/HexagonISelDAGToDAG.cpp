@@ -1,4 +1,4 @@
-//==-- HexagonISelDAGToDAG.cpp - A dag to dag inst selector for Hexagon ----==//
+//===-- HexagonISelDAGToDAG.cpp - A dag to dag inst selector for Hexagon --===//
 //
 //                     The LLVM Compiler Infrastructure
 //

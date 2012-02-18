@@ -1,4 +1,4 @@
-//======- Thumb1FrameLowering.cpp - Thumb1 Frame Information ---*- C++ -*-====//
+//===-- Thumb1FrameLowering.cpp - Thumb1 Frame Information ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

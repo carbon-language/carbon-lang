@@ -1,4 +1,4 @@
-//===-- MSP430MCTargetDesc.cpp - MSP430 Target Descriptions -----*- C++ -*-===//
+//===-- MSP430MCTargetDesc.cpp - MSP430 Target Descriptions ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

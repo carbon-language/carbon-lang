@@ -1,4 +1,4 @@
-//===-- ARMMCTargetDesc.cpp - ARM Target Descriptions -----------*- C++ -*-===//
+//===-- ARMMCTargetDesc.cpp - ARM Target Descriptions ---------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

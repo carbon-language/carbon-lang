@@ -1,4 +1,4 @@
-//=-- X86TargetFrameLowering.h - Define frame lowering for X86 ---*- C++ -*-===//
+//===-- X86TargetFrameLowering.h - Define frame lowering for X86 -*- C++ -*-==//
 //
 //                     The LLVM Compiler Infrastructure
 //

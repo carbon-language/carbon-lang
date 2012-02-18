@@ -1,4 +1,4 @@
-//====- SparcFrameLowering.cpp - Sparc Frame Information -------*- C++ -*-====//
+//===-- SparcFrameLowering.cpp - Sparc Frame Information ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

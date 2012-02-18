@@ -1,4 +1,4 @@
-//===- X86Disassembler.cpp - Disassembler for x86 and x86_64 ----*- C++ -*-===//
+//===-- X86Disassembler.cpp - Disassembler for x86 and x86_64 -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

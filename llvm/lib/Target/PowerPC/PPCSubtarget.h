@@ -1,4 +1,4 @@
-//=====-- PPCSubtarget.h - Define Subtarget for the PPC -------*- C++ -*--====//
+//===-- PPCSubtarget.h - Define Subtarget for the PPC ----------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

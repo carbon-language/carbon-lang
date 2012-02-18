@@ -1,4 +1,4 @@
-//===- ARMRelocations.h - ARM Code Relocations ------------------*- C++ -*-===//
+//===-- ARMRelocations.h - ARM Code Relocations -----------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

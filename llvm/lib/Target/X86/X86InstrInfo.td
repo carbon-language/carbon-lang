@@ -1,4 +1,4 @@
-//===- X86InstrInfo.td - Main X86 Instruction Definition ---*- tablegen -*-===//
+//===-- X86InstrInfo.td - Main X86 Instruction Definition --*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

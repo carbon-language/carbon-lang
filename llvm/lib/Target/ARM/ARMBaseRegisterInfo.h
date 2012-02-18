@@ -1,4 +1,4 @@
-//===- ARMBaseRegisterInfo.h - ARM Register Information Impl ----*- C++ -*-===//
+//===-- ARMBaseRegisterInfo.h - ARM Register Information Impl ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===-- HexagonBaseInfo.h - Top level definitions for Hexagon -------------===//
+//===-- HexagonBaseInfo.h - Top level definitions for Hexagon --*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

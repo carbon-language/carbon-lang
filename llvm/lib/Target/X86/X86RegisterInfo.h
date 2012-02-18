@@ -1,4 +1,4 @@
-//===- X86RegisterInfo.h - X86 Register Information Impl --------*- C++ -*-===//
+//===-- X86RegisterInfo.h - X86 Register Information Impl -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

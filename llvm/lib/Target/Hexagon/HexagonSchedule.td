@@ -1,4 +1,4 @@
-//===-HexagonSchedule.td - Hexagon Scheduling Definitions -------*- C++ -*-===//
+//===- HexagonSchedule.td - Hexagon Scheduling Definitions -*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

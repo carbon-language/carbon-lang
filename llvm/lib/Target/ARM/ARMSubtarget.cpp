@@ -1,4 +1,4 @@
-//===-- ARMSubtarget.cpp - ARM Subtarget Information ------------*- C++ -*-===//
+//===-- ARMSubtarget.cpp - ARM Subtarget Information ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

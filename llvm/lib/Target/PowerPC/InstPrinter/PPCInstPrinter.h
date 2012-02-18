@@ -1,4 +1,4 @@
-//===-- PPCInstPrinter.h - Convert PPC MCInst to assembly syntax ----------===//
+//===- PPCInstPrinter.h - Convert PPC MCInst to assembly syntax -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

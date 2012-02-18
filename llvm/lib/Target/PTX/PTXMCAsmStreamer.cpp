@@ -1,4 +1,4 @@
-//===- lib/Target/PTX/PTXMCAsmStreamer.cpp - PTX Text Assembly Output -----===//
+//===-- PTXMCAsmStreamer.cpp - PTX Text Assembly Output -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

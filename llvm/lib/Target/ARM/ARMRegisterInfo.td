@@ -1,4 +1,4 @@
-//===- ARMRegisterInfo.td - ARM Register defs --------------*- tablegen -*-===//
+//===-- ARMRegisterInfo.td - ARM Register defs -------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

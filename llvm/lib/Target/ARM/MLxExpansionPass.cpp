@@ -1,4 +1,4 @@
-//===-- MLxExpansionPass.cpp - Expand MLx instrs to avoid hazards ----------=//
+//===-- MLxExpansionPass.cpp - Expand MLx instrs to avoid hazards ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

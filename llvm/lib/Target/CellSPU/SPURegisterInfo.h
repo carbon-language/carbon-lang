@@ -1,4 +1,4 @@
-//===- SPURegisterInfo.h - Cell SPU Register Information Impl ----*- C++ -*-==//
+//===-- SPURegisterInfo.h - Cell SPU Register Information Impl --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

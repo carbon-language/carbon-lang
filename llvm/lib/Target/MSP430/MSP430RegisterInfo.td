@@ -1,4 +1,4 @@
-//===- MSP430RegisterInfo.td - MSP430 Register defs ----------*- tblgen -*-===//
+//===-- MSP430RegisterInfo.td - MSP430 Register defs -------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

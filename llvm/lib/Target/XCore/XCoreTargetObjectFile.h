@@ -1,4 +1,4 @@
-//===-- llvm/Target/XCoreTargetObjectFile.h - XCore Object Info -*- C++ -*-===//
+//===-- XCoreTargetObjectFile.h - XCore Object Info -------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

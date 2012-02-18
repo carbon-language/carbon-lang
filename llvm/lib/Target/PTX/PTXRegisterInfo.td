@@ -1,5 +1,4 @@
-
-//===- PTXRegisterInfo.td - PTX Register defs ----------------*- tblgen -*-===//
+//===-- PTXRegisterInfo.td - PTX Register defs -------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//=====-- ARMMCAsmInfo.h - ARM asm properties -------------*- C++ -*--====//
+//===-- ARMMCAsmInfo.h - ARM asm properties --------------------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- XCoreInstrInfo.cpp - XCore Instruction Information -------*- C++ -*-===//
+//===-- XCoreInstrInfo.cpp - XCore Instruction Information ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- SparcFrameLowering.h - Define frame lowering for Sparc --*- C++ -*--===//
+//===-- SparcFrameLowering.h - Define frame lowering for Sparc --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

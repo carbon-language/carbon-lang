@@ -1,10 +1,10 @@
-//===- X86CallingConv.td - Calling Conventions X86 32/64 ---*- tablegen -*-===//
-// 
+//===-- X86CallingConv.td - Calling Conventions X86 32/64 --*- tablegen -*-===//
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This describes the calling conventions for the X86-32 and X86-64

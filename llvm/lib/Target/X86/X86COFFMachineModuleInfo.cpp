@@ -1,4 +1,4 @@
-//===-- llvm/CodeGen/X86COFFMachineModuleInfo.cpp -------------------------===//
+//===-- X86COFFMachineModuleInfo.cpp --------------------------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

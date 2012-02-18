@@ -1,4 +1,4 @@
-//=-- PPCMachineFunctionInfo.cpp - Private data used for PowerPC --*- C++ -*-=//
+//===-- PPCMachineFunctionInfo.cpp - Private data used for PowerPC --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

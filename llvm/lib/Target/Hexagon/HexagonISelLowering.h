@@ -1,4 +1,4 @@
-//==-- HexagonISelLowering.h - Hexagon DAG Lowering Interface ----*- C++ -*-==//
+//===-- HexagonISelLowering.h - Hexagon DAG Lowering Interface --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

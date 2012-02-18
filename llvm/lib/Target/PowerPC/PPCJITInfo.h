@@ -1,4 +1,4 @@
-//===- PPCJITInfo.h - PowerPC impl. of the JIT interface --------*- C++ -*-===//
+//===-- PPCJITInfo.h - PowerPC impl. of the JIT interface -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//==-- PPCFrameLowering.h - Define frame lowering for PowerPC ----*- C++ -*-==//
+//===-- PPCFrameLowering.h - Define frame lowering for PowerPC --*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

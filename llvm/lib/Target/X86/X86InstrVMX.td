@@ -1,10 +1,10 @@
-//===- X86InstrVMX.td - VMX Instruction Set Extension ------*- tablegen -*-===//
-// 
+//===-- X86InstrVMX.td - VMX Instruction Set Extension -----*- tablegen -*-===//
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the instructions that make up the Intel VMX instruction

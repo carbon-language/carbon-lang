@@ -1,4 +1,4 @@
-//====- ARMMachineFuctionInfo.h - ARM machine function info -----*- C++ -*-===//
+//===-- ARMMachineFuctionInfo.h - ARM machine function info -----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//==- SparcMachineFunctionInfo.cpp - Sparc Machine Function Info -*- C++ -*-==//
+//===-- SparcMachineFunctionInfo.cpp - Sparc Machine Function Info --------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

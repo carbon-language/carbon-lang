@@ -1,4 +1,4 @@
-//=====-- SparcSubtarget.h - Define Subtarget for the SPARC ----*- C++ -*-====//
+//===-- SparcSubtarget.h - Define Subtarget for the SPARC -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

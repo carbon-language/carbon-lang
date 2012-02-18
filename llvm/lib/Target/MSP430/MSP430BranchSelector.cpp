@@ -1,4 +1,4 @@
-//===-- MSP430BranchSelector.cpp - Emit long conditional branches--*- C++ -*-=//
+//===-- MSP430BranchSelector.cpp - Emit long conditional branches ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

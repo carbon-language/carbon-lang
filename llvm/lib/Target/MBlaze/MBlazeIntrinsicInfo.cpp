@@ -1,4 +1,4 @@
-//===- MBlazeIntrinsicInfo.cpp - Intrinsic Information -00-------*- C++ -*-===//
+//===-- MBlazeIntrinsicInfo.cpp - Intrinsic Information -------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

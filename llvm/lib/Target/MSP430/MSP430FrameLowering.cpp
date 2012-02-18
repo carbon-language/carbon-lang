@@ -1,4 +1,4 @@
-//======-- MSP430FrameLowering.cpp - MSP430 Frame Information -------=========//
+//===-- MSP430FrameLowering.cpp - MSP430 Frame Information ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

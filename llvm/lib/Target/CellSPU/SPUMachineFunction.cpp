@@ -1,4 +1,4 @@
-//==-- SPUMachineFunctionInfo.cpp - Private data used for CellSPU -*- C++ -*-=//
+//==-- SPUMachineFunctionInfo.cpp - Private data used for CellSPU ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

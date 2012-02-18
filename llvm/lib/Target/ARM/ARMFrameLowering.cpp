@@ -1,4 +1,4 @@
-//=======- ARMFrameLowering.cpp - ARM Frame Information --------*- C++ -*-====//
+//===-- ARMFrameLowering.cpp - ARM Frame Information ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

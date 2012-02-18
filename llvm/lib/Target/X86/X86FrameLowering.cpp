@@ -1,4 +1,4 @@
-//=======- X86FrameLowering.cpp - X86 Frame Information --------*- C++ -*-====//
+//===-- X86FrameLowering.cpp - X86 Frame Information ----------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

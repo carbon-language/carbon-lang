@@ -1,4 +1,4 @@
-//===-- SPU.h - Top-level interface for Cell SPU Target ----------*- C++ -*-==//
+//===-- SPU.h - Top-level interface for Cell SPU Target ---------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

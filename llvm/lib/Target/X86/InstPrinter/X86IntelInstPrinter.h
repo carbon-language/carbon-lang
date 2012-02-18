@@ -1,4 +1,4 @@
-//===-- X86IntelInstPrinter.h - Convert X86 MCInst to assembly syntax -----===//
+//= X86IntelInstPrinter.h - Convert X86 MCInst to assembly syntax -*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //

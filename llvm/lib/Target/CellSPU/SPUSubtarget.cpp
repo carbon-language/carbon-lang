@@ -1,4 +1,4 @@
-//===- SPUSubtarget.cpp - STI Cell SPU Subtarget Information --------------===//
+//===-- SPUSubtarget.cpp - STI Cell SPU Subtarget Information -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

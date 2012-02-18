@@ -1,4 +1,4 @@
-//==-- HexagonVarargsCallingConvention.h - Calling Conventions ---*- C++ -*-==//
+//===-- HexagonVarargsCallingConvention.h - Calling Conventions -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

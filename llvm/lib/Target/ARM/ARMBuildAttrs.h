@@ -1,4 +1,4 @@
-//===-------- ARMBuildAttrs.h - ARM Build Attributes ------------*- C++ -*-===//
+//===-- ARMBuildAttrs.h - ARM Build Attributes ------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

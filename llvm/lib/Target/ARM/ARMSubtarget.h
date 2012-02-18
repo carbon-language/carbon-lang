@@ -1,4 +1,4 @@
-//=====---- ARMSubtarget.h - Define Subtarget for the ARM -----*- C++ -*--====//
+//===-- ARMSubtarget.h - Define Subtarget for the ARM ----------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

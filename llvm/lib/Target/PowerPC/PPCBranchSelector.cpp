@@ -1,4 +1,4 @@
-//===-- PPCBranchSelector.cpp - Emit long conditional branches-----*- C++ -*-=//
+//===-- PPCBranchSelector.cpp - Emit long conditional branches ------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===- PPCRegisterInfo.h - PowerPC Register Information Impl -----*- C++ -*-==//
+//===-- PPCRegisterInfo.h - PowerPC Register Information Impl ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

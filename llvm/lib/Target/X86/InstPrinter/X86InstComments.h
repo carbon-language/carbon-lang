@@ -1,4 +1,4 @@
-//===-- X86InstComments.h - Generate verbose-asm comments for instrs ------===//
+//=- X86InstComments.h - Generate verbose-asm comments for instrs -*- C++ -*-=//
 //
 //                     The LLVM Compiler Infrastructure
 //

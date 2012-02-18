@@ -1,4 +1,4 @@
-//===- HexagonIntrinsics.td - Instruction intrinsics -------*- tablegen -*-===//
+//===-- HexagonIntrinsics.td - Instruction intrinsics ------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

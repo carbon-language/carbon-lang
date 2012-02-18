@@ -1,4 +1,4 @@
-//===- SPUNodes.td - Specialized SelectionDAG nodes used for CellSPU ------===//
+//=== SPUNodes.td - Specialized SelectionDAG nodes by CellSPU -*- tablegen -*-//
 //
 //                     The LLVM Compiler Infrastructure
 //

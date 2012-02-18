@@ -1,4 +1,4 @@
-//===- ARMInstrNEON.td - NEON support for ARM -----------------------------===//
+//===-- ARMInstrNEON.td - NEON support for ARM -------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

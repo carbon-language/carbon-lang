@@ -1,4 +1,4 @@
-//=====-- MBlazeSubtarget.h - Define Subtarget for the MBlaze -*- C++ -*--====//
+//===-- MBlazeSubtarget.h - Define Subtarget for the MBlaze ----*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

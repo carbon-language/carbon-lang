@@ -1,4 +1,4 @@
-//===-- HexagonTargetAsmInfo.h - Hexagon asm properties ---------*- C++ -*--==//
+//===-- HexagonTargetAsmInfo.h - Hexagon asm properties --------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

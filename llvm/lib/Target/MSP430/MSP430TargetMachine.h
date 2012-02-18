@@ -1,4 +1,4 @@
-//==-- MSP430TargetMachine.h - Define TargetMachine for MSP430 ---*- C++ -*-==//
+//===-- MSP430TargetMachine.h - Define TargetMachine for MSP430 -*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

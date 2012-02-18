@@ -1,4 +1,4 @@
-//==-- SPUInstrBuilder.h - Aides for building Cell SPU insts -----*- C++ -*-==//
+//===-- SPUInstrBuilder.h - Aides for building Cell SPU insts ---*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

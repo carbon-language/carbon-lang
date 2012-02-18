@@ -1,4 +1,4 @@
-//===-- MBlazeMCTargetDesc.cpp - MBlaze Target Descriptions -----*- C++ -*-===//
+//===-- MBlazeMCTargetDesc.cpp - MBlaze Target Descriptions ---------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

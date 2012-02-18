@@ -1,4 +1,4 @@
-//===- Thumb2RegisterInfo.cpp - Thumb-2 Register Information ----*- C++ -*-===//
+//===-- Thumb2RegisterInfo.cpp - Thumb-2 Register Information -------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

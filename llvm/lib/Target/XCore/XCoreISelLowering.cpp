@@ -1,4 +1,4 @@
-//===-- XCoreISelLowering.cpp - XCore DAG Lowering Implementation   ------===//
+//===-- XCoreISelLowering.cpp - XCore DAG Lowering Implementation ---------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

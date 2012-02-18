@@ -1,4 +1,4 @@
-//===-- SPUMCTargetDesc.cpp - Cell SPU Target Descriptions -----*- C++ -*-===//
+//===-- SPUMCTargetDesc.cpp - Cell SPU Target Descriptions ----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

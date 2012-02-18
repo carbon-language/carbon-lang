@@ -1,4 +1,4 @@
-//===- ARMConstantPoolValue.cpp - ARM constantpool value --------*- C++ -*-===//
+//===-- ARMConstantPoolValue.cpp - ARM constantpool value -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

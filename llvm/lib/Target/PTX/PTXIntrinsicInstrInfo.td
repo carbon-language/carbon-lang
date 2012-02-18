@@ -1,4 +1,4 @@
-//===- PTXIntrinsicInstrInfo.td - Defines PTX intrinsics ---*- tablegen -*-===//
+//===-- PTXIntrinsicInstrInfo.td - Defines PTX intrinsics --*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

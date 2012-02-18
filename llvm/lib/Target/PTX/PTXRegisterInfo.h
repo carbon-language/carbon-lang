@@ -1,4 +1,4 @@
-//===- PTXRegisterInfo.h - PTX Register Information Impl --------*- C++ -*-===//
+//===-- PTXRegisterInfo.h - PTX Register Information Impl -------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
