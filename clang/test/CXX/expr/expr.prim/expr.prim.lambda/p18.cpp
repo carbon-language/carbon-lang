@@ -17,12 +17,12 @@ void f3() {
   const int &irc = i;
 
   [=,&irc,&ir] {
+    static_assert(is_same<decltype(((r))), float const&>::value, 
+                  "should be const float&");
     static_assert(is_same<decltype(x), float>::value, "should be float");
     static_assert(is_same<decltype((x)), const float&>::value, 
                   "should be const float&");
     static_assert(is_same<decltype(r), float&>::value, "should be float&");
-    static_assert(is_same<decltype(((r))), float const&>::value, 
-                  "should be const float&");
     static_assert(is_same<decltype(ir), int&>::value, "should be int&");
     static_assert(is_same<decltype((ir)), int&>::value, "should be int&");
     static_assert(is_same<decltype(irc), const int&>::value, 

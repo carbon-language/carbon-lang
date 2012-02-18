@@ -4382,42 +4382,9 @@ static QualType getDecltypeForExpr(Sema &S, Expr *E) {
     if (isa<ParenExpr>(E)) {
       if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(E->IgnoreParens())) {
         if (VarDecl *Var = dyn_cast<VarDecl>(DRE->getDecl())) {
-          QualType T = Var->getType();
-          unsigned FunctionScopesIndex;
-          bool Nested;
-          // Determine whether we can capture this variable.
-          if (S.canCaptureVariable(Var, DRE->getLocation(), 
-                                   /*Explicit=*/false, /*Diagnose=*/false, 
-                                   T, FunctionScopesIndex, Nested)) {
-            // Outer lambda scopes may have an effect on the type of a
-            // capture. Walk the captures outside-in to determine
-            // whether they can add 'const' to a capture by copy.
-            if (FunctionScopesIndex == S.FunctionScopes.size())
-              --FunctionScopesIndex;
-            for (unsigned I = FunctionScopesIndex, 
-                          E = S.FunctionScopes.size();
-                 I != E; ++I) {
-              LambdaScopeInfo *LSI
-                = dyn_cast<LambdaScopeInfo>(S.FunctionScopes[I]);
-              if (!LSI)
-                continue;
-
-              bool ByRef = false;
-              if (LSI->isCaptured(Var))
-                ByRef = LSI->getCapture(Var).isReferenceCapture();
-              else
-                ByRef = (LSI->ImpCaptureStyle
-                           == CapturingScopeInfo::ImpCap_LambdaByref);
-
-              T = S.getLambdaCaptureFieldType(T, ByRef);
-              if (!ByRef && !LSI->Mutable)
-                T.addConst();
-            }
-
-            if (!T->isReferenceType())
-              T = S.Context.getLValueReferenceType(T);
-            return T;
-          }
+          QualType T = S.getCapturedDeclRefType(Var, DRE->getLocation());
+          if (!T.isNull())
+            return S.Context.getLValueReferenceType(T);
         }
       }
     }

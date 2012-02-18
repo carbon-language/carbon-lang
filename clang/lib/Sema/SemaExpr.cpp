@@ -2094,42 +2094,6 @@ static bool shouldBuildBlockDeclRef(ValueDecl *D, Sema &S) {
   return S.getCurBlock() != 0;
 }
 
-/// \brief Determine whether the given lambda would capture the given
-/// variable by copy.
-static bool willCaptureByCopy(LambdaScopeInfo *LSI, VarDecl *Var) {
-  if (LSI->isCaptured(Var))
-    return LSI->getCapture(Var).isCopyCapture();
-
-  return LSI->ImpCaptureStyle == CapturingScopeInfo::ImpCap_LambdaByval;
-}
-
-static bool shouldAddConstQualToVarRef(ValueDecl *D, Sema &S) {
-  VarDecl *var = dyn_cast<VarDecl>(D);
-  if (!var)
-    return false;
-  if (var->getDeclContext() == S.CurContext)
-    return false;
-  if (!var->hasLocalStorage())
-    return false;
-
-  LambdaScopeInfo *LSI = S.getCurLambda();
-  if (!LSI)
-    return false;
-
-  // We don't actually allow capturing a __block variable in a lambda, but
-  // this way gives better diagnostics.
-  if (var->hasAttr<BlocksAttr>())
-    return false;
-
-  // FIXME: Does the addition of const really only apply in
-  // potentially-evaluated contexts?  The text in the lambda spec
-  // about decltype hints that it might apply in unevaluated contexts
-  // as well... and there's precent in our blocks implementation.
-  return !LSI->Mutable &&
-         S.ExprEvalContexts.back().Context != Sema::Unevaluated &&
-         willCaptureByCopy(LSI, var);
-}
-
 static ExprResult BuildBlockDeclRefExpr(Sema &S, ValueDecl *VD,
                                         const DeclarationNameInfo &NameInfo) {
   VarDecl *var = cast<VarDecl>(VD);
@@ -2269,7 +2233,7 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
       // fallthrough
 
     case Decl::ImplicitParam:
-    case Decl::ParmVar:
+    case Decl::ParmVar: {
       // These are always l-values.
       valueKind = VK_LValue;
       type = type.getNonReferenceType();
@@ -2277,11 +2241,18 @@ Sema::BuildDeclarationNameExpr(const CXXScopeSpec &SS,
       if (shouldBuildBlockDeclRef(VD, *this))
         return BuildBlockDeclRefExpr(*this, VD, NameInfo);
 
-      if (shouldAddConstQualToVarRef(VD, *this))
-        type.addConst();
-
+      // FIXME: Does the addition of const really only apply in
+      // potentially-evaluated contexts? Since the variable isn't actually
+      // captured in an unevaluated context, it seems that the answer is no.
+      if (ExprEvalContexts.back().Context != Sema::Unevaluated) {
+        QualType CapturedType = getCapturedDeclRefType(cast<VarDecl>(VD), Loc);
+        if (!CapturedType.isNull())
+          type = CapturedType;
+      }
+      
       break;
-
+    }
+        
     case Decl::Function: {
       const FunctionType *fty = type->castAs<FunctionType>();
 
@@ -9848,6 +9819,34 @@ bool Sema::canCaptureVariable(VarDecl *Var, SourceLocation Loc, bool Explicit,
 
   ++FunctionScopesIndex;
   return !Type->isVariablyModifiedType();
+}
+
+QualType Sema::getCapturedDeclRefType(VarDecl *Var, SourceLocation Loc) {
+  QualType T = Var->getType().getNonReferenceType();
+  unsigned FunctionScopesIndex;
+  bool Nested;
+  // Determine whether we can capture this variable.
+  if (!canCaptureVariable(Var, Loc, /*Explicit=*/false, /*Diagnose=*/false, 
+                          T, FunctionScopesIndex, Nested))
+    return QualType();
+    
+  // Outer lambda scopes may have an effect on the type of a
+  // capture. Walk the captures outside-in to determine
+  // whether they can add 'const' to a capture by copy.
+  T = Var->getType().getNonReferenceType();
+  if (FunctionScopesIndex == FunctionScopes.size())
+    --FunctionScopesIndex;
+  for (unsigned I = FunctionScopesIndex, E = FunctionScopes.size();
+       I != E; ++I) {
+    CapturingScopeInfo *CSI = dyn_cast<LambdaScopeInfo>(FunctionScopes[I]);
+    if (!CSI)
+      break;
+    
+    if (shouldAddConstForScope(CSI, Var))
+      T.addConst();
+  }
+  
+  return T;
 }
 
 // Check if the variable needs to be captured; if so, try to perform

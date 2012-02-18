@@ -2327,6 +2327,10 @@ public:
                           bool Diagnose, QualType &Type, 
                           unsigned &FunctionScopesIndex, bool &Nested);
 
+  /// \brief Given a variable, determine the type that a reference to that
+  /// variable will have in the given scope.
+  QualType getCapturedDeclRefType(VarDecl *Var, SourceLocation Loc);
+  
   /// \brief Determine the type of the field that will capture the
   /// given variable in a lambda expression.
   ///
