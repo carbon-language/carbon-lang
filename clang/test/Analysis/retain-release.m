@@ -672,13 +672,22 @@ void rdar6704930(unsigned char *s, unsigned int length) {
 //===----------------------------------------------------------------------===//
 // <rdar://problem/6257780> clang checker fails to catch use-after-release
 //===----------------------------------------------------------------------===//
-                                 
+
 int rdar_6257780_Case1() {
   NSAutoreleasePool * pool = [[NSAutoreleasePool alloc] init];
   NSArray *array = [NSArray array];
   [array release]; // expected-warning{{Incorrect decrement of the reference count of an object that is not owned at this point by the caller}}
   [pool drain];
   return 0;
+}
+
+//===----------------------------------------------------------------------===//
+// <rdar://problem/10640253> Analyzer is confused about NSAutoreleasePool -allocWithZone:.
+//===----------------------------------------------------------------------===//
+
+void rdar_10640253_autorelease_allocWithZone() {
+    NSAutoreleasePool *pool = [[NSAutoreleasePool allocWithZone:(NSZone*)0] init];
+    (void) pool;
 }
 
 //===----------------------------------------------------------------------===//
