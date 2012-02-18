@@ -1642,7 +1642,10 @@ Value *ScalarExprEmitter::VisitUnaryImag(const UnaryOperator *E) {
 
   // __imag on a scalar returns zero.  Emit the subexpr to ensure side
   // effects are evaluated, but not the actual value.
-  CGF.EmitScalarExpr(Op, true);
+  if (Op->isGLValue())
+    CGF.EmitLValue(Op);
+  else
+    CGF.EmitScalarExpr(Op, true);
   return llvm::Constant::getNullValue(ConvertType(E->getType()));
 }
 

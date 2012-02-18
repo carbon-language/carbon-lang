@@ -1465,9 +1465,10 @@ LValue CodeGenFunction::EmitUnaryOpLValue(const UnaryOperator *E) {
     assert(LV.isSimple() && "real/imag on non-ordinary l-value");
     llvm::Value *Addr = LV.getAddress();
 
-    // real and imag are valid on scalars.  This is a faster way of
-    // testing that.
-    if (!cast<llvm::PointerType>(Addr->getType())
+    // __real is valid on scalars.  This is a faster way of testing that.
+    // __imag can only produce an rvalue on scalars.
+    if (E->getOpcode() == UO_Real &&
+        !cast<llvm::PointerType>(Addr->getType())
            ->getElementType()->isStructTy()) {
       assert(E->getSubExpr()->getType()->isArithmeticType());
       return LV;

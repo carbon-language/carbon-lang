@@ -8095,11 +8095,17 @@ ExprResult Sema::CreateBuiltinUnaryOp(SourceLocation OpLoc,
   case UO_Real:
   case UO_Imag:
     resultType = CheckRealImagOperand(*this, Input, OpLoc, Opc == UO_Real);
-    // _Real and _Imag map ordinary l-values into ordinary l-values.
+    // _Real maps ordinary l-values into ordinary l-values. _Imag maps ordinary
+    // complex l-values to ordinary l-values and all other values to r-values.
     if (Input.isInvalid()) return ExprError();
-    if (Input.get()->getValueKind() != VK_RValue &&
-        Input.get()->getObjectKind() == OK_Ordinary)
-      VK = Input.get()->getValueKind();
+    if (Opc == UO_Real || Input.get()->getType()->isAnyComplexType()) {
+      if (Input.get()->getValueKind() != VK_RValue &&
+          Input.get()->getObjectKind() == OK_Ordinary)
+        VK = Input.get()->getValueKind();
+    } else if (!getLangOptions().CPlusPlus) {
+      // In C, a volatile scalar is read by __imag. In C++, it is not.
+      Input = DefaultLvalueConversion(Input.take());
+    }
     break;
   case UO_Extension:
     resultType = Input.get()->getType();
