@@ -31,6 +31,12 @@ using namespace llvm;
 Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
                                        Instruction::CastOps Op,
                                        BasicBlock::iterator IP) {
+  // All new or reused instructions must strictly dominate the Builder's
+  // InsertPt to ensure that the expression's expansion dominates its uses.
+  // Assert that the requested insertion point works at least for new
+  // instructions.
+  assert(SE.DT->dominates(IP, Builder.GetInsertPoint()));
+
   // Check to see if there is already a cast!
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
        UI != E; ++UI) {
@@ -38,9 +44,7 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
     if (U->getType() == Ty)
       if (CastInst *CI = dyn_cast<CastInst>(U))
         if (CI->getOpcode() == Op) {
-          // If the cast isn't where we want it, fix it. All new or reused
-          // instructions must strictly dominate the Builder's InsertPt to
-          // ensure that the expression's expansion dominates its uses.
+          // If the cast isn't where we want it, fix it.
           if (BasicBlock::iterator(CI) != IP
               || IP == Builder.GetInsertPoint()) {
             // Create a new cast, and leave the old cast in place in case
@@ -124,8 +128,7 @@ Value *SCEVExpander::InsertNoopCastOfTo(Value *V, Type *Ty) {
   BasicBlock::iterator IP = I; ++IP;
   if (InvokeInst *II = dyn_cast<InvokeInst>(I))
     IP = II->getNormalDest()->begin();
-  while (isa<PHINode>(IP) || isa<DbgInfoIntrinsic>(IP) ||
-         isa<LandingPadInst>(IP))
+  while (isa<PHINode>(IP) || isa<LandingPadInst>(IP))
     ++IP;
   return ReuseOrCreateCast(I, Ty, Op, IP);
 }
