@@ -30,6 +30,16 @@ define i1 @gep() {
 ; CHECK-NEXT: ret i1 false
 }
 
+define i1 @gep2() {
+; CHECK: @gep2
+  %a = alloca [3 x i8], align 8
+  %x = getelementptr inbounds [3 x i8]* %a, i32 0, i32 0
+  %y = getelementptr inbounds [3 x i8]* %a, i32 0, i32 0
+  %cmp = icmp eq i8* %x, %y
+  ret i1 %cmp
+; CHECK-NEXT: ret i1 true
+}
+
 define i1 @zext(i32 %x) {
 ; CHECK: @zext
   %e1 = zext i32 %x to i64

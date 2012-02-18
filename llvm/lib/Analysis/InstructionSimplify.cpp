@@ -1593,10 +1593,11 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   // the compare, and if only one of them is then we moved it to RHS already.
   Value *LHSPtr = LHS->stripPointerCasts();
   Value *RHSPtr = RHS->stripPointerCasts();
+  if (LHSPtr == RHSPtr)
+    return ConstantInt::get(ITy, CmpInst::isTrueWhenEqual(Pred));
   if (isa<AllocaInst>(LHSPtr) && (isa<GlobalValue>(RHSPtr) ||
                                   isa<AllocaInst>(RHSPtr)  ||
                                   isa<ConstantPointerNull>(RHSPtr)))
-    // We already know that LHS != RHS.
     return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
 
   // If we are comparing with zero then try hard since this is a common case.
