@@ -690,18 +690,24 @@ const BlockDataRegion *
 MemRegionManager::getBlockDataRegion(const BlockTextRegion *BC,
                                      const LocationContext *LC) {
   const MemRegion *sReg = 0;
-
-  if (LC) {
-    // FIXME: Once we implement scope handling, we want the parent region
-    // to be the scope.
-    const StackFrameContext *STC = LC->getCurrentStackFrame();
-    assert(STC);
-    sReg = getStackLocalsRegion(STC);
+  const BlockDecl *BD = BC->getDecl();
+  if (!BD->hasCaptures()) {
+    // This handles 'static' blocks.
+    sReg = getGlobalsRegion(MemRegion::GlobalImmutableSpaceRegionKind);
   }
   else {
-    // We allow 'LC' to be NULL for cases where want BlockDataRegions
-    // without context-sensitivity.
-    sReg = getUnknownRegion();
+    if (LC) {
+      // FIXME: Once we implement scope handling, we want the parent region
+      // to be the scope.
+      const StackFrameContext *STC = LC->getCurrentStackFrame();
+      assert(STC);
+      sReg = getStackLocalsRegion(STC);
+    }
+    else {
+      // We allow 'LC' to be NULL for cases where want BlockDataRegions
+      // without context-sensitivity.
+      sReg = getUnknownRegion();
+    }
   }
 
   return getSubRegion<BlockDataRegion>(BC, LC, sReg);
