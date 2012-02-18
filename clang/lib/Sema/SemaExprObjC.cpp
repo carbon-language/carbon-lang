@@ -247,7 +247,7 @@ ObjCMethodDecl *Sema::tryCaptureObjCSelf(SourceLocation Loc) {
   if (!method)
     return 0;
 
-  TryCaptureVar(method->getSelfDecl(), Loc);
+  tryCaptureVariable(method->getSelfDecl(), Loc);
 
   return method;
 }

@@ -710,9 +710,9 @@ void Sema::CheckCXXThisCapture(SourceLocation Loc, bool Explicit) {
        NumClosures; --idx, --NumClosures) {
     CapturingScopeInfo *CSI = cast<CapturingScopeInfo>(FunctionScopes[idx]);
     Expr *ThisExpr = 0;
+    QualType ThisTy = getCurrentThisType();
     if (LambdaScopeInfo *LSI = dyn_cast<LambdaScopeInfo>(CSI)) {
       // For lambda expressions, build a field and an initializing expression.
-      QualType ThisTy = getCurrentThisType();
       CXXRecordDecl *Lambda = LSI->Lambda;
       FieldDecl *Field
         = FieldDecl::Create(Context, Lambda, Loc, Loc, 0, ThisTy,
@@ -724,7 +724,7 @@ void Sema::CheckCXXThisCapture(SourceLocation Loc, bool Explicit) {
       ThisExpr = new (Context) CXXThisExpr(Loc, ThisTy, /*isImplicit=*/true);
     }
     bool isNested = NumClosures > 1;
-    CSI->AddThisCapture(isNested, Loc, ThisExpr);
+    CSI->addThisCapture(isNested, Loc, ThisTy, ThisExpr);
   }
 }
 

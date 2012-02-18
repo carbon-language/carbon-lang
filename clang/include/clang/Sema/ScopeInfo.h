@@ -174,16 +174,23 @@ public:
     /// \brief The location of the ellipsis that expands a parameter pack.
     SourceLocation EllipsisLoc;
     
+    /// \brief The type as it was captured, which is in effect the type of the
+    /// non-static data member that would hold the capture.
+    QualType CaptureType;
+    
   public:
     Capture(VarDecl *Var, bool block, bool byRef, bool isNested, 
-            SourceLocation Loc, SourceLocation EllipsisLoc, Expr *Cpy)
+            SourceLocation Loc, SourceLocation EllipsisLoc, 
+            QualType CaptureType, Expr *Cpy)
       : VarAndKind(Var, block ? Cap_Block : byRef ? Cap_ByRef : Cap_ByCopy),
-        CopyExprAndNested(Cpy, isNested), Loc(Loc), EllipsisLoc(EllipsisLoc) {}
+        CopyExprAndNested(Cpy, isNested), Loc(Loc), EllipsisLoc(EllipsisLoc),
+        CaptureType(CaptureType){}
 
     enum IsThisCapture { ThisCapture };
-    Capture(IsThisCapture, bool isNested, SourceLocation Loc, Expr *Cpy)
+    Capture(IsThisCapture, bool isNested, SourceLocation Loc, 
+            QualType CaptureType, Expr *Cpy)
       : VarAndKind(0, Cap_This), CopyExprAndNested(Cpy, isNested), Loc(Loc),
-        EllipsisLoc() { }
+        EllipsisLoc(), CaptureType(CaptureType) { }
 
     bool isThisCapture() const { return VarAndKind.getInt() == Cap_This; }
     bool isVariableCapture() const { return !isThisCapture(); }
@@ -202,6 +209,11 @@ public:
     /// \brief Retrieve the source location of the ellipsis, whose presence
     /// indicates that the capture is a pack expansion.
     SourceLocation getEllipsisLoc() const { return EllipsisLoc; }
+    
+    /// \brief Retrieve the capture type for this capture, which is effectively
+    /// the type of the non-static data member in the lambda/block structure
+    /// that would store this capture.
+    QualType getCaptureType() const { return CaptureType; }
     
     Expr *getCopyExpr() const {
       return CopyExprAndNested.getPointer();
@@ -231,15 +243,18 @@ public:
   /// or null if unknown.
   QualType ReturnType;
 
-  void AddCapture(VarDecl *Var, bool isBlock, bool isByref, bool isNested,
-                  SourceLocation Loc, SourceLocation EllipsisLoc, Expr *Cpy) {
+  void addCapture(VarDecl *Var, bool isBlock, bool isByref, bool isNested,
+                  SourceLocation Loc, SourceLocation EllipsisLoc, 
+                  QualType CaptureType, Expr *Cpy) {
     Captures.push_back(Capture(Var, isBlock, isByref, isNested, Loc, 
-                               EllipsisLoc, Cpy));
+                               EllipsisLoc, CaptureType, Cpy));
     CaptureMap[Var] = Captures.size();
   }
 
-  void AddThisCapture(bool isNested, SourceLocation Loc, Expr *Cpy) {
-    Captures.push_back(Capture(Capture::ThisCapture, isNested, Loc, Cpy));
+  void addThisCapture(bool isNested, SourceLocation Loc, QualType CaptureType,
+                      Expr *Cpy) {
+    Captures.push_back(Capture(Capture::ThisCapture, isNested, Loc, CaptureType,
+                               Cpy));
     CXXThisCaptureIndex = Captures.size();
   }
 

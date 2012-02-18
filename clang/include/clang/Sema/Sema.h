@@ -2306,45 +2306,51 @@ public:
   void UpdateMarkingForLValueToRValue(Expr *E);
   void CleanupVarDeclMarking();
 
-  /// \brief Determine whether we can capture the given variable in
-  /// the given scope.
-  ///
-  /// \param Explicit Whether this is an explicit capture (vs. an
-  /// implicit capture).
-  ///
-  /// \param Diagnose Diagnose errors that occur when attempting to perform
-  /// the capture.
-  ///
-  /// \param Var The variable to check for capture.
-  ///
-  /// \param Type Will be set to the type used to perform the capture.
-  ///
-  /// \param FunctionScopesIndex Will be set to the index of the first 
-  /// scope in which capture will need to be performed.
-  ///
-  /// \param Nested Whether this will be a nested capture.
-  bool canCaptureVariable(VarDecl *Var, SourceLocation Loc, bool Explicit,
-                          bool Diagnose, QualType &Type, 
-                          unsigned &FunctionScopesIndex, bool &Nested);
+  enum TryCaptureKind {
+    TryCapture_Implicit, TryCapture_ExplicitByVal, TryCapture_ExplicitByRef
+  };
 
+  /// \brief Try to capture the given variable.
+  ///
+  /// \param Var The variable to capture.
+  ///
+  /// \param Loc The location at which the capture occurs.
+  ///
+  /// \param Kind The kind of capture, which may be implicit (for either a 
+  /// block or a lambda), or explicit by-value or by-reference (for a lambda).
+  ///
+  /// \param EllipsisLoc The location of the ellipsis, if one is provided in
+  /// an explicit lambda capture.
+  ///
+  /// \param BuildAndDiagnose Whether we are actually supposed to add the 
+  /// captures or diagnose errors. If false, this routine merely check whether
+  /// the capture can occur without performing the capture itself or complaining
+  /// if the variable cannot be captured.
+  ///
+  /// \param CaptureType Will be set to the type of the field used to capture
+  /// this variable in the innermost block or lambda. Only valid when the
+  /// variable can be captured.
+  ///
+  /// \param DeclRefType Will be set to the type of a refernce to the capture
+  /// from within the current scope. Only valid when the variable can be 
+  /// captured.
+  ///
+  /// \returns true if an error occurred (i.e., the variable cannot be
+  /// captured) and false if the capture succeeded.
+  bool tryCaptureVariable(VarDecl *Var, SourceLocation Loc, TryCaptureKind Kind,
+                          SourceLocation EllipsisLoc, bool BuildAndDiagnose, 
+                          QualType &CaptureType,
+                          QualType &DeclRefType);
+
+  /// \brief Try to capture the given variable.
+  bool tryCaptureVariable(VarDecl *Var, SourceLocation Loc,
+                          TryCaptureKind Kind = TryCapture_Implicit,
+                          SourceLocation EllipsisLoc = SourceLocation());
+  
   /// \brief Given a variable, determine the type that a reference to that
   /// variable will have in the given scope.
   QualType getCapturedDeclRefType(VarDecl *Var, SourceLocation Loc);
   
-  /// \brief Determine the type of the field that will capture the
-  /// given variable in a lambda expression.
-  ///
-  /// \param T The type of the variable being captured.
-  /// \param ByRef Whether we are capturing by reference or by value.
-  QualType getLambdaCaptureFieldType(QualType T, bool ByRef);
-
-  enum TryCaptureKind {
-    TryCapture_Implicit, TryCapture_ExplicitByVal, TryCapture_ExplicitByRef
-  };
-  void TryCaptureVar(VarDecl *var, SourceLocation loc,
-                     TryCaptureKind Kind = TryCapture_Implicit,
-                     SourceLocation EllipsisLoc = SourceLocation());
-
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
   void MarkDeclarationsReferencedInExpr(Expr *E);
 

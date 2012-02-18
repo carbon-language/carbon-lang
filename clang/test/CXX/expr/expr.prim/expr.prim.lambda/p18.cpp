@@ -34,8 +34,8 @@ void f3() {
   [=] {
     [=] () mutable {
       static_assert(is_same<decltype(x), float>::value, "should be float");
-      static_assert(is_same<decltype((x)), const float&>::value, 
-                    "should be const float&");
+      static_assert(is_same<decltype((x)), float&>::value, 
+                    "should be float&");
     }();
   }();
 

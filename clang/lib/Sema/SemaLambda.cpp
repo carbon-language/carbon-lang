@@ -288,7 +288,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     //   variable with automatic storage duration declared in the reaching 
     //   scope of the local lambda expression.
     // 
-    // Note that the 'reaching scope' check happens in TryCaptureVar.
+    // Note that the 'reaching scope' check happens in tryCaptureVariable().
     VarDecl *Var = R.getAsSingle<VarDecl>();
     if (!Var) {
       Diag(C->Loc, diag::err_capture_does_not_name_variable) << C->Id;
@@ -332,7 +332,7 @@ void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
     
     TryCaptureKind Kind = C->Kind == LCK_ByRef ? TryCapture_ExplicitByRef :
                                                  TryCapture_ExplicitByVal;
-    TryCaptureVar(Var, C->Loc, Kind, EllipsisLoc);
+    tryCaptureVariable(Var, C->Loc, Kind, EllipsisLoc);
   }
   finishLambdaExplicitCaptures(LSI);
 

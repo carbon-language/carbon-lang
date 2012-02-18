@@ -33,3 +33,25 @@ void conversion_to_block_init(ConstCopyConstructorBoom<int> boom,
   const auto& lambda2([=] { boom2.foo(); }); // expected-note{{in instantiation of member function}}
   void (^block)(void) = lambda2;
 }
+
+
+void nesting() {
+  int array[7]; // expected-note 2{{'array' declared here}}
+  [=] () mutable {
+    [&] {
+      ^ {
+        int i = array[2];
+        i += array[3];
+      }();
+    }();
+  }();
+
+  [&] {
+    [=] () mutable {
+      ^ {
+        int i = array[2]; // expected-error{{cannot refer to declaration with an array type inside block}}
+        i += array[3]; // expected-error{{cannot refer to declaration with an array type inside block}}
+      }();
+    }();
+  }();
+}

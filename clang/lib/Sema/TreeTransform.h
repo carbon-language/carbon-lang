@@ -7735,7 +7735,7 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
           }
           
           // Capture the transformed variable.
-          getSema().TryCaptureVar(CapturedVar, C->getLocation(), Kind);          
+          getSema().tryCaptureVariable(CapturedVar, C->getLocation(), Kind);          
         }          
         continue;
       }
@@ -7753,7 +7753,7 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
     }
   
     // Capture the transformed variable.
-    getSema().TryCaptureVar(CapturedVar, C->getLocation(), Kind);
+    getSema().tryCaptureVariable(CapturedVar, C->getLocation(), Kind);
   }
   if (!FinishedExplicitCaptures)
     getSema().finishLambdaExplicitCaptures(LSI);
