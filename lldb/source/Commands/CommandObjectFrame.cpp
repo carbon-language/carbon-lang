@@ -278,8 +278,9 @@ public:
 
                     bool show_frame_info = true;
                     bool show_source = !already_shown;
-                    uint32_t source_lines_before = 3;
-                    uint32_t source_lines_after = 3;
+                    Debugger &debugger = m_interpreter.GetDebugger();
+                    const uint32_t source_lines_before = debugger.GetStopSourceLineCount(true);
+                    const uint32_t source_lines_after = debugger.GetStopSourceLineCount(false);
                     if (frame->GetStatus (result.GetOutputStream(),
                                           show_frame_info,
                                           show_source,

@@ -54,7 +54,7 @@ namespace lldb_private {
         {
             if (frame_sp)
             {
-                m_thread_wp = frame_sp->GetThread().shared_from_this();
+                m_thread_wp = frame_sp->GetThread();
                 m_stack_id = frame_sp->GetStackID();
             }
         }
@@ -81,11 +81,11 @@ namespace lldb_private {
                     // Our frame is still alive, make sure that our thread
                     // still has this exact frame...
                     lldb::StackFrameSP tmp_frame_sp (thread_sp->GetStackFrameAtIndex (frame_sp->GetFrameIndex()));
-                    if (tmp_frame_sp.get() == frame_sp.get())
+                    if (tmp_frame_sp == frame_sp)
                         return frame_sp;
                 }
                 // The original stack frame might have gone away,
-                // we need to check for the stac
+                // we need to check for the frame by stack ID
                 frame_sp = thread_sp->GetFrameWithStackID (m_stack_id);
                 m_frame_wp = frame_sp;
             }
@@ -98,7 +98,7 @@ namespace lldb_private {
             if (frame_sp)
             {
                 m_frame_wp = frame_sp;
-                m_thread_wp = frame_sp->GetThread().shared_from_this();
+                m_thread_wp = frame_sp->GetThread();
                 m_stack_id = frame_sp->GetStackID();
             }
             else
@@ -203,17 +203,19 @@ SBFrame::GetSymbolContext (uint32_t resolve_scope) const
 {
 
     SBSymbolContext sb_sym_ctx;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_sym_ctx.SetSymbolContext(&frame_sp->GetSymbolContext (resolve_scope));
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        sb_sym_ctx.SetSymbolContext(&frame->GetSymbolContext (resolve_scope));
     }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetSymbolContext (resolve_scope=0x%8.8x) => SBSymbolContext(%p)", 
-                     frame_sp.get(), resolve_scope, sb_sym_ctx.get());
+                     frame, resolve_scope, sb_sym_ctx.get());
 
     return sb_sym_ctx;
 }
@@ -223,18 +225,20 @@ SBFrame::GetModule () const
 {
     SBModule sb_module;
     ModuleSP module_sp;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        module_sp = frame_sp->GetSymbolContext (eSymbolContextModule).module_sp;
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        module_sp = frame->GetSymbolContext (eSymbolContextModule).module_sp;
         sb_module.SetSP (module_sp);
     }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetModule () => SBModule(%p)", 
-                     frame_sp.get(), module_sp.get());
+                     frame, module_sp.get());
 
     return sb_module;
 }
@@ -243,16 +247,18 @@ SBCompileUnit
 SBFrame::GetCompileUnit () const
 {
     SBCompileUnit sb_comp_unit;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_comp_unit.reset (frame_sp->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        sb_comp_unit.reset (frame->GetSymbolContext (eSymbolContextCompUnit).comp_unit);
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetModule () => SBCompileUnit(%p)", 
-                     frame_sp.get(), sb_comp_unit.get());
+                     frame, sb_comp_unit.get());
 
     return sb_comp_unit;
 }
@@ -261,16 +267,18 @@ SBFunction
 SBFrame::GetFunction () const
 {
     SBFunction sb_function;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_function.reset(frame_sp->GetSymbolContext (eSymbolContextFunction).function);
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        sb_function.reset(frame->GetSymbolContext (eSymbolContextFunction).function);
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFunction () => SBFunction(%p)", 
-                     frame_sp.get(), sb_function.get());
+                     frame, sb_function.get());
 
     return sb_function;
 }
@@ -279,16 +287,18 @@ SBSymbol
 SBFrame::GetSymbol () const
 {
     SBSymbol sb_symbol;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_symbol.reset(frame_sp->GetSymbolContext (eSymbolContextSymbol).symbol);
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        sb_symbol.reset(frame->GetSymbolContext (eSymbolContextSymbol).symbol);
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetSymbol () => SBSymbol(%p)", 
-                     frame_sp.get(), sb_symbol.get());
+                     frame, sb_symbol.get());
     return sb_symbol;
 }
 
@@ -296,16 +306,18 @@ SBBlock
 SBFrame::GetBlock () const
 {
     SBBlock sb_block;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_block.SetPtr (frame_sp->GetSymbolContext (eSymbolContextBlock).block);
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        sb_block.SetPtr (frame->GetSymbolContext (eSymbolContextBlock).block);
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetBlock () => SBBlock(%p)", 
-                     frame_sp.get(), sb_block.GetPtr());
+                     frame, sb_block.GetPtr());
     return sb_block;
 }
 
@@ -313,16 +325,18 @@ SBBlock
 SBFrame::GetFrameBlock () const
 {
     SBBlock sb_block;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_block.SetPtr(frame_sp->GetFrameBlock ());
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        sb_block.SetPtr(frame->GetFrameBlock ());
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFrameBlock () => SBBlock(%p)", 
-                     frame_sp.get(), sb_block.GetPtr());
+                     frame, sb_block.GetPtr());
     return sb_block;    
 }
 
@@ -330,16 +344,18 @@ SBLineEntry
 SBFrame::GetLineEntry () const
 {
     SBLineEntry sb_line_entry;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_line_entry.SetLineEntry (frame_sp->GetSymbolContext (eSymbolContextLineEntry).line_entry);
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        sb_line_entry.SetLineEntry (frame->GetSymbolContext (eSymbolContextLineEntry).line_entry);
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetLineEntry () => SBLineEntry(%p)", 
-                     frame_sp.get(), sb_line_entry.get());
+                     frame, sb_line_entry.get());
     return sb_line_entry;
 }
 
@@ -349,14 +365,16 @@ SBFrame::GetFrameID () const
     uint32_t frame_idx = UINT32_MAX;
     
     
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
-        frame_idx = frame_sp->GetFrameIndex ();
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
+        frame_idx = frame->GetFrameIndex ();
     
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::GetFrameID () => %u", 
-                     frame_sp.get(), frame_idx);
+                     frame, frame_idx);
     return frame_idx;
 }
 
@@ -364,16 +382,18 @@ addr_t
 SBFrame::GetPC () const
 {
     addr_t addr = LLDB_INVALID_ADDRESS;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        addr = frame_sp->GetFrameCodeAddress().GetOpcodeLoadAddress (&frame_sp->GetThread().GetProcess().GetTarget());
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        addr = frame->GetFrameCodeAddress().GetOpcodeLoadAddress (target);
     }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBFrame(%p)::GetPC () => 0x%llx", frame_sp.get(), addr);
+        log->Printf ("SBFrame(%p)::GetPC () => 0x%llx", frame, addr);
 
     return addr;
 }
@@ -382,17 +402,19 @@ bool
 SBFrame::SetPC (addr_t new_pc)
 {
     bool ret_val = false;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        ret_val = frame_sp->GetRegisterContext()->SetPC (new_pc);
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        ret_val = frame->GetRegisterContext()->SetPC (new_pc);
     }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::SetPC (new_pc=0x%llx) => %i", 
-                     frame_sp.get(), new_pc, ret_val);
+                     frame, new_pc, ret_val);
 
     return ret_val;
 }
@@ -401,15 +423,17 @@ addr_t
 SBFrame::GetSP () const
 {
     addr_t addr = LLDB_INVALID_ADDRESS;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        addr = frame_sp->GetRegisterContext()->GetSP();
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        addr = frame->GetRegisterContext()->GetSP();
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBFrame(%p)::GetSP () => 0x%llx", frame_sp.get(), addr);
+        log->Printf ("SBFrame(%p)::GetSP () => 0x%llx", frame, addr);
 
     return addr;
 }
@@ -419,16 +443,18 @@ addr_t
 SBFrame::GetFP () const
 {
     addr_t addr = LLDB_INVALID_ADDRESS;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        addr = frame_sp->GetRegisterContext()->GetFP();
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        addr = frame->GetRegisterContext()->GetFP();
     }
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBFrame(%p)::GetFP () => 0x%llx", frame_sp.get(), addr);
+        log->Printf ("SBFrame(%p)::GetFP () => 0x%llx", frame, addr);
     return addr;
 }
 
@@ -437,15 +463,17 @@ SBAddress
 SBFrame::GetPCAddress () const
 {
     SBAddress sb_addr;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        sb_addr.SetAddress (&frame_sp->GetFrameCodeAddress());
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        sb_addr.SetAddress (&frame->GetFrameCodeAddress());
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
-        log->Printf ("SBFrame(%p)::GetPCAddress () => SBAddress(%p)", frame_sp.get(), sb_addr.get());
+        log->Printf ("SBFrame(%p)::GetPCAddress () => SBAddress(%p)", frame, sb_addr.get());
     return sb_addr;
 }
 
@@ -459,10 +487,12 @@ lldb::SBValue
 SBFrame::GetValueForVariablePath (const char *var_path)
 {
     SBValue sb_value;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        lldb::DynamicValueType  use_dynamic = frame_sp->CalculateTarget()->GetPreferDynamicValue();
+        lldb::DynamicValueType  use_dynamic = frame->CalculateTarget()->GetPreferDynamicValue();
         sb_value = GetValueForVariablePath (var_path, use_dynamic);
     }
     return sb_value;
@@ -472,17 +502,19 @@ lldb::SBValue
 SBFrame::GetValueForVariablePath (const char *var_path, DynamicValueType use_dynamic)
 {
     SBValue sb_value;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp && var_path && var_path[0])
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target && var_path && var_path[0])
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
+        Mutex::Locker api_locker (target->GetAPIMutex());
         VariableSP var_sp;
         Error error;
-        ValueObjectSP value_sp (frame_sp->GetValueForVariableExpressionPath (var_path, 
-                                                                             use_dynamic,
-                                                                             StackFrame::eExpressionPathOptionCheckPtrVsMember,
-                                                                             var_sp,
-                                                                             error));
+        ValueObjectSP value_sp (frame->GetValueForVariableExpressionPath (var_path, 
+                                                                          use_dynamic,
+                                                                          StackFrame::eExpressionPathOptionCheckPtrVsMember,
+                                                                          var_sp,
+                                                                          error));
         sb_value.SetSP(value_sp);
     }
     return sb_value;
@@ -492,10 +524,12 @@ SBValue
 SBFrame::FindVariable (const char *name)
 {
     SBValue value;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        lldb::DynamicValueType  use_dynamic = frame_sp->CalculateTarget()->GetPreferDynamicValue();
+        lldb::DynamicValueType  use_dynamic = frame->CalculateTarget()->GetPreferDynamicValue();
         value = FindVariable (name, use_dynamic);
     }
     return value;
@@ -508,12 +542,14 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
     VariableSP var_sp;
     SBValue sb_value;
     ValueObjectSP value_sp;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp && name && name[0])
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target && name && name[0])
     {
         VariableList variable_list;
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        SymbolContext sc (frame_sp->GetSymbolContext (eSymbolContextBlock));
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        SymbolContext sc (frame->GetSymbolContext (eSymbolContextBlock));
 
         if (sc.block)
         {
@@ -532,7 +568,7 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
 
         if (var_sp)
         {
-            value_sp = frame_sp->GetValueObjectForFrameVariable(var_sp, use_dynamic);
+            value_sp = frame->GetValueObjectForFrameVariable(var_sp, use_dynamic);
             sb_value.SetSP(value_sp);
         }
         
@@ -541,7 +577,7 @@ SBFrame::FindVariable (const char *name, lldb::DynamicValueType use_dynamic)
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::FindVariable (name=\"%s\") => SBValue(%p)", 
-                     frame_sp.get(), name, value_sp.get());
+                     frame, name, value_sp.get());
 
     return sb_value;
 }
@@ -550,10 +586,12 @@ SBValue
 SBFrame::FindValue (const char *name, ValueType value_type)
 {
     SBValue value;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        lldb::DynamicValueType use_dynamic = frame_sp->CalculateTarget()->GetPreferDynamicValue();
+        lldb::DynamicValueType use_dynamic = frame->CalculateTarget()->GetPreferDynamicValue();
         value = FindValue (name, value_type, use_dynamic);
     }
     return value;
@@ -564,10 +602,12 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
 {
     SBValue sb_value;
     ValueObjectSP value_sp;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp && name && name[0])
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target && name && name[0])
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
+        Mutex::Locker api_locker (target->GetAPIMutex());
     
         switch (value_type)
         {
@@ -576,9 +616,9 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
         case eValueTypeVariableArgument:    // function argument variables
         case eValueTypeVariableLocal:       // function local variables
             {
-                VariableList *variable_list = frame_sp->GetVariableList(true);
+                VariableList *variable_list = frame->GetVariableList(true);
 
-                SymbolContext sc (frame_sp->GetSymbolContext (eSymbolContextBlock));
+                SymbolContext sc (frame->GetSymbolContext (eSymbolContextBlock));
 
                 const bool can_create = true;
                 const bool get_parent_variables = true;
@@ -598,7 +638,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
                             variable_sp->GetScope() == value_type &&
                             variable_sp->GetName() == const_name)
                         {
-                            value_sp = frame_sp->GetValueObjectForFrameVariable (variable_sp, use_dynamic);
+                            value_sp = frame->GetValueObjectForFrameVariable (variable_sp, use_dynamic);
                             sb_value.SetSP (value_sp);
                             break;
                         }
@@ -609,7 +649,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
 
         case eValueTypeRegister:            // stack frame register value
             {
-                RegisterContextSP reg_ctx (frame_sp->GetRegisterContext());
+                RegisterContextSP reg_ctx (frame->GetRegisterContext());
                 if (reg_ctx)
                 {
                     const uint32_t num_regs = reg_ctx->GetRegisterCount();
@@ -620,7 +660,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
                             ((reg_info->name && strcasecmp (reg_info->name, name) == 0) ||
                              (reg_info->alt_name && strcasecmp (reg_info->alt_name, name) == 0)))
                         {
-                            value_sp = ValueObjectRegister::Create (frame_sp.get(), reg_ctx, reg_idx);
+                            value_sp = ValueObjectRegister::Create (frame, reg_ctx, reg_idx);
                             sb_value.SetSP (value_sp);
                             break;
                         }
@@ -631,7 +671,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
 
         case eValueTypeRegisterSet:         // A collection of stack frame register values
             {
-                RegisterContextSP reg_ctx (frame_sp->GetRegisterContext());
+                RegisterContextSP reg_ctx (frame->GetRegisterContext());
                 if (reg_ctx)
                 {
                     const uint32_t num_sets = reg_ctx->GetRegisterSetCount();
@@ -642,7 +682,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
                             ((reg_set->name && strcasecmp (reg_set->name, name) == 0) ||
                              (reg_set->short_name && strcasecmp (reg_set->short_name, name) == 0)))
                         {
-                            value_sp = ValueObjectRegisterSet::Create (frame_sp.get(), reg_ctx, set_idx);
+                            value_sp = ValueObjectRegisterSet::Create (frame, reg_ctx, set_idx);
                             sb_value.SetSP (value_sp);
                             break;
                         }
@@ -654,7 +694,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
         case eValueTypeConstResult:         // constant result variables
             {
                 ConstString const_name(name);
-                ClangExpressionVariableSP expr_var_sp (frame_sp->GetThread().GetProcess().GetTarget().GetPersistentVariables().GetVariable (const_name));
+                ClangExpressionVariableSP expr_var_sp (target->GetPersistentVariables().GetVariable (const_name));
                 if (expr_var_sp)
                 {
                     value_sp = expr_var_sp->GetValueObject();
@@ -671,7 +711,7 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
     if (log)
         log->Printf ("SBFrame(%p)::FindVariableInScope (name=\"%s\", value_type=%i) => SBValue(%p)", 
-                     frame_sp.get(), name, value_type, value_sp.get());
+                     frame, name, value_type, value_sp.get());
 
     
     return sb_value;
@@ -694,22 +734,18 @@ SBFrame::GetThread () const
 {
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
-    SBThread sb_thread;
-    ThreadSP thread_sp;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
-    {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        thread_sp = frame_sp->GetThread().shared_from_this();
-        sb_thread.SetThread (thread_sp);
-    }
+    ExecutionContext exe_ctx(GetFrameSP());
+    ThreadSP thread_sp (exe_ctx.GetThreadSP());
+    SBThread sb_thread (thread_sp);
 
     if (log)
     {
         SBStream sstr;
         sb_thread.GetDescription (sstr);
-        log->Printf ("SBFrame(%p)::GetThread () => SBThread(%p): %s", frame_sp.get(), 
-                     thread_sp.get(), sstr.GetData());
+        log->Printf ("SBFrame(%p)::GetThread () => SBThread(%p): %s", 
+                     exe_ctx.GetFramePtr(), 
+                     thread_sp.get(), 
+                     sstr.GetData());
     }
 
     return sb_thread;
@@ -719,16 +755,18 @@ const char *
 SBFrame::Disassemble () const
 {
     const char *disassembly = NULL;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        disassembly = frame_sp->Disassemble();
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        disassembly = frame->Disassemble();
     }
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     if (log)
-        log->Printf ("SBFrame(%p)::Disassemble () => %s", frame_sp.get(), disassembly);
+        log->Printf ("SBFrame(%p)::Disassemble () => %s", frame, disassembly);
 
     return disassembly;
 }
@@ -741,10 +779,12 @@ SBFrame::GetVariables (bool arguments,
                        bool in_scope_only)
 {
     SBValueList value_list;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        lldb::DynamicValueType use_dynamic = frame_sp->CalculateTarget()->GetPreferDynamicValue();
+        lldb::DynamicValueType use_dynamic = frame->CalculateTarget()->GetPreferDynamicValue();
         value_list = GetVariables (arguments, locals, statics, in_scope_only, use_dynamic);
     }
     return value_list;
@@ -760,25 +800,27 @@ SBFrame::GetVariables (bool arguments,
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBValueList value_list;
-    StackFrameSP frame_sp(GetFrameSP());
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
 
     if (log)
         log->Printf ("SBFrame(%p)::GetVariables (arguments=%i, locals=%i, statics=%i, in_scope_only=%i)", 
-                     frame_sp.get(), 
+                     frame, 
                      arguments,
                      locals,
                      statics,
                      in_scope_only);
     
-    if (frame_sp)
+    if (frame && target)
     {
 
         size_t i;
         VariableList *variable_list = NULL;
         // Scope for locker
         {
-            Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-            variable_list = frame_sp->GetVariableList(true);
+            Mutex::Locker api_locker (target->GetAPIMutex());
+            variable_list = frame->GetVariableList(true);
         }
         if (variable_list)
         {
@@ -811,10 +853,10 @@ SBFrame::GetVariables (bool arguments,
                         }
                         if (add_variable)
                         {
-                            if (in_scope_only && !variable_sp->IsInScope(frame_sp.get()))
+                            if (in_scope_only && !variable_sp->IsInScope(frame))
                                 continue;
 
-                            value_list.Append(frame_sp->GetValueObjectForFrameVariable (variable_sp, use_dynamic));
+                            value_list.Append(frame->GetValueObjectForFrameVariable (variable_sp, use_dynamic));
                         }
                     }
                 }
@@ -824,7 +866,7 @@ SBFrame::GetVariables (bool arguments,
 
     if (log)
     {
-        log->Printf ("SBFrame(%p)::GetVariables (...) => SBValueList(%p)", frame_sp.get(),
+        log->Printf ("SBFrame(%p)::GetVariables (...) => SBValueList(%p)", frame,
                      value_list.get());
     }
 
@@ -837,23 +879,25 @@ SBFrame::GetRegisters ()
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBValueList value_list;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        RegisterContextSP reg_ctx (frame_sp->GetRegisterContext());
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        RegisterContextSP reg_ctx (frame->GetRegisterContext());
         if (reg_ctx)
         {
             const uint32_t num_sets = reg_ctx->GetRegisterSetCount();
             for (uint32_t set_idx = 0; set_idx < num_sets; ++set_idx)
             {
-                value_list.Append(ValueObjectRegisterSet::Create (frame_sp.get(), reg_ctx, set_idx));
+                value_list.Append(ValueObjectRegisterSet::Create (frame, reg_ctx, set_idx));
             }
         }
     }
 
     if (log)
-        log->Printf ("SBFrame(%p)::Registers () => SBValueList(%p)", frame_sp.get(), value_list.get());
+        log->Printf ("SBFrame(%p)::Registers () => SBValueList(%p)", frame, value_list.get());
 
     return value_list;
 }
@@ -863,11 +907,13 @@ SBFrame::GetDescription (SBStream &description)
 {
     Stream &strm = description.ref();
 
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
-        frame_sp->DumpUsingSettingsFormat (&strm);
+        Mutex::Locker api_locker (target->GetAPIMutex());
+        frame->DumpUsingSettingsFormat (&strm);
     }
     else
         strm.PutCString ("No value");
@@ -879,10 +925,12 @@ SBValue
 SBFrame::EvaluateExpression (const char *expr)
 {
     SBValue result;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        lldb::DynamicValueType use_dynamic = frame_sp->CalculateTarget()->GetPreferDynamicValue();
+        lldb::DynamicValueType use_dynamic = frame->CalculateTarget()->GetPreferDynamicValue();
         result = EvaluateExpression (expr, use_dynamic);
     }
     return result;
@@ -899,17 +947,19 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
     SBValue expr_result;
     ValueObjectSP expr_value_sp;
 
-    StackFrameSP frame_sp(GetFrameSP());
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
     if (log)
-        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\")...", frame_sp.get(), expr);
+        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\")...", frame, expr);
 
-    if (frame_sp)
+    if (frame && target)
     {
-        Mutex::Locker api_locker (frame_sp->GetThread().GetProcess().GetTarget().GetAPIMutex());
+        Mutex::Locker api_locker (target->GetAPIMutex());
         
         
         StreamString frame_description;
-        frame_sp->DumpUsingSettingsFormat (&frame_description);
+        frame->DumpUsingSettingsFormat (&frame_description);
 
         Host::SetCrashDescriptionWithFormat ("SBFrame::EvaluateExpression (expr = \"%s\", fetch_dynamic_value = %u) %s",
                                              expr, fetch_dynamic_value, frame_description.GetString().c_str());
@@ -918,14 +968,14 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
         const bool unwind_on_error = true;
         const bool keep_in_memory = false;
 
-        exe_results = frame_sp->GetThread().GetProcess().GetTarget().EvaluateExpression(expr, 
-                                                                                        frame_sp.get(),
-                                                                                        eExecutionPolicyOnlyWhenNeeded,
-                                                                                        coerce_to_id,
-                                                                                        unwind_on_error, 
-                                                                                        keep_in_memory, 
-                                                                                        fetch_dynamic_value, 
-                                                                                        expr_value_sp);
+        exe_results = target->EvaluateExpression (expr, 
+                                                  frame,
+                                                  eExecutionPolicyOnlyWhenNeeded,
+                                                  coerce_to_id,
+                                                  unwind_on_error, 
+                                                  keep_in_memory, 
+                                                  fetch_dynamic_value, 
+                                                  expr_value_sp);
         expr_result.SetSP(expr_value_sp);
         Host::SetCrashDescription (NULL);
     }
@@ -936,7 +986,8 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
                          expr_result.GetSummary());
     
     if (log)
-        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p) (execution result=%d)", frame_sp.get(), 
+        log->Printf ("SBFrame(%p)::EvaluateExpression (expr=\"%s\") => SBValue(%p) (execution result=%d)", 
+                     frame, 
                      expr, 
                      expr_value_sp.get(),
                      exe_results);
@@ -947,10 +998,12 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
 bool
 SBFrame::IsInlined()
 {
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        Block *block = frame_sp->GetSymbolContext(eSymbolContextBlock).block;
+        Block *block = frame->GetSymbolContext(eSymbolContextBlock).block;
         if (block)
             return block->GetContainingInlinedBlock () != NULL;
     }
@@ -961,10 +1014,12 @@ const char *
 SBFrame::GetFunctionName()
 {
     const char *name = NULL;
-    StackFrameSP frame_sp(GetFrameSP());
-    if (frame_sp)
+    ExecutionContext exe_ctx(GetFrameSP());
+    StackFrame *frame = exe_ctx.GetFramePtr();
+    Target *target = exe_ctx.GetTargetPtr();
+    if (frame && target)
     {
-        SymbolContext sc (frame_sp->GetSymbolContext(eSymbolContextFunction | eSymbolContextBlock | eSymbolContextSymbol));
+        SymbolContext sc (frame->GetSymbolContext(eSymbolContextFunction | eSymbolContextBlock | eSymbolContextSymbol));
         if (sc.block)
         {
             Block *inlined_block = sc.block->GetContainingInlinedBlock ();

@@ -307,10 +307,11 @@ ValueObjectRegister::GetClangType ()
 {
     if (m_clang_type == NULL)
     {
-        Process *process = m_reg_ctx_sp->CalculateProcess ();
-        if (process)
+        ExecutionContext exe_ctx (GetExecutionContextRef());
+        Target *target = exe_ctx.GetTargetPtr();
+        if (target)
         {
-            Module *exe_module = process->GetTarget().GetExecutableModulePointer();
+            Module *exe_module = target->GetExecutableModulePointer();
             if (exe_module)
             {
                 m_clang_type = exe_module->GetClangASTContext().GetBuiltinTypeForEncodingAndBitSize (m_reg_info.encoding, 
@@ -338,10 +339,11 @@ ValueObjectRegister::CalculateNumChildren()
 clang::ASTContext *
 ValueObjectRegister::GetClangAST ()
 {
-    Process *process = m_reg_ctx_sp->CalculateProcess ();
-    if (process)
+    ExecutionContext exe_ctx (GetExecutionContextRef());
+    Target *target = exe_ctx.GetTargetPtr();
+    if (target)
     {
-        Module *exe_module = process->GetTarget().GetExecutableModulePointer();
+        Module *exe_module = target->GetExecutableModulePointer();
         if (exe_module)
             return exe_module->GetClangASTContext().getASTContext();
     }

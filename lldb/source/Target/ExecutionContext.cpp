@@ -343,7 +343,7 @@ ExecutionContext::SetContext (const lldb::StackFrameSP &frame_sp)
     m_frame_sp = frame_sp;
     if (frame_sp)
     {
-        m_thread_sp = frame_sp->GetThread().shared_from_this();
+        m_thread_sp = frame_sp->CalculateThread();
         if (m_thread_sp)
         {
             m_process_sp = m_thread_sp->GetProcess().shared_from_this();

@@ -89,9 +89,9 @@ StackFrameList::GetNumFrames (bool can_create)
                     {
                         cfa = m_thread.m_reg_context_sp->GetSP();
                         m_thread.GetRegisterContext();
-                        unwind_frame_sp.reset (new StackFrame (m_frames.size(), 
+                        unwind_frame_sp.reset (new StackFrame (m_thread.shared_from_this(),
+                                                               m_frames.size(), 
                                                                idx, 
-                                                               m_thread, 
                                                                m_thread.m_reg_context_sp, 
                                                                cfa, 
                                                                m_thread.m_reg_context_sp->GetPC(), 
@@ -108,7 +108,7 @@ StackFrameList::GetNumFrames (bool can_create)
                 {
                     const bool success = unwinder->GetFrameInfoAtIndex(idx, cfa, pc);
                     assert (success);
-                    unwind_frame_sp.reset (new StackFrame (m_frames.size(), idx, m_thread, cfa, pc, NULL));
+                    unwind_frame_sp.reset (new StackFrame (m_thread.shared_from_this(), m_frames.size(), idx, cfa, pc, NULL));
                     m_frames.push_back (unwind_frame_sp);
                 }
 
@@ -130,9 +130,9 @@ StackFrameList::GetNumFrames (bool can_create)
                     
                     while (unwind_sc.GetParentOfInlinedScope(curr_frame_address, next_frame_sc, next_frame_address))
                     {
-                            StackFrameSP frame_sp(new StackFrame (m_frames.size(),
+                            StackFrameSP frame_sp(new StackFrame (m_thread.shared_from_this(),
+                                                                  m_frames.size(),
                                                                   idx,
-                                                                  m_thread,
                                                                   unwind_frame_sp->GetRegisterContextSP (),
                                                                   cfa,
                                                                   next_frame_address,
@@ -264,9 +264,9 @@ StackFrameList::GetFrameAtIndex (uint32_t idx)
         // context with the stack frame at index zero.
         m_thread.GetRegisterContext();
         assert (m_thread.m_reg_context_sp.get());
-        frame_sp.reset (new StackFrame (0, 
+        frame_sp.reset (new StackFrame (m_thread.shared_from_this(), 
                                         0, 
-                                        m_thread, 
+                                        0,
                                         m_thread.m_reg_context_sp, 
                                         m_thread.m_reg_context_sp->GetSP(), 
                                         m_thread.m_reg_context_sp->GetPC(), 
@@ -289,7 +289,7 @@ StackFrameList::GetFrameAtIndex (uint32_t idx)
                 addr_t pc, cfa;
                 if (unwinder->GetFrameInfoAtIndex(idx, cfa, pc))
                 {
-                    frame_sp.reset (new StackFrame (idx, idx, m_thread, cfa, pc, NULL));
+                    frame_sp.reset (new StackFrame (m_thread.shared_from_this(), idx, idx, cfa, pc, NULL));
                     
                     Function *function = frame_sp->GetSymbolContext (eSymbolContextFunction).function;
                     if (function)

@@ -3064,28 +3064,25 @@ public:
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
-    virtual Target *
-    CalculateTarget ()
-    {
-        return &m_target;
-    }
-
-    virtual Process *
+    virtual lldb::TargetSP
+    CalculateTarget ();
+    
+    virtual lldb::ProcessSP
     CalculateProcess ()
     {
-        return this;
+        return shared_from_this();
     }
-
-    virtual Thread *
+    
+    virtual lldb::ThreadSP
     CalculateThread ()
     {
-        return NULL;
+        return lldb::ThreadSP();
     }
-
-    virtual StackFrame *
+    
+    virtual lldb::StackFrameSP
     CalculateStackFrame ()
     {
-        return NULL;
+        return lldb::StackFrameSP();
     }
 
     virtual void

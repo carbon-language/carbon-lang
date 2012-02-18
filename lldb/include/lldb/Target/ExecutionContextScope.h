@@ -42,16 +42,16 @@ public:
     virtual
     ~ExecutionContextScope () {}
 
-    virtual Target *
+    virtual lldb::TargetSP
     CalculateTarget () = 0;
 
-    virtual Process *
+    virtual lldb::ProcessSP
     CalculateProcess () = 0;
 
-    virtual Thread *
+    virtual lldb::ThreadSP
     CalculateThread () = 0;
 
-    virtual StackFrame *
+    virtual lldb::StackFrameSP
     CalculateStackFrame () = 0;
 
     //------------------------------------------------------------------

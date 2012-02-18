@@ -28,12 +28,12 @@ ReadBytes (ExecutionContextScope *exe_scope, const Address &address, void *dst, 
     if (exe_scope == NULL)
         return 0;
 
-    Target *target = exe_scope->CalculateTarget();
-    if (target)
+    TargetSP target_sp (exe_scope->CalculateTarget());
+    if (target_sp)
     {
         Error error;
         bool prefer_file_cache = false;
-        return target->ReadMemory (address, prefer_file_cache, dst, dst_len, error);
+        return target_sp->ReadMemory (address, prefer_file_cache, dst, dst_len, error);
     }
     return 0;
 }
@@ -46,11 +46,11 @@ GetByteOrderAndAddressSize (ExecutionContextScope *exe_scope, const Address &add
     if (exe_scope == NULL)
         return false;
 
-    Target *target = exe_scope->CalculateTarget();
-    if (target)
+    TargetSP target_sp (exe_scope->CalculateTarget());
+    if (target_sp)
     {
-        byte_order = target->GetArchitecture().GetByteOrder();
-        addr_size = target->GetArchitecture().GetAddressByteSize();
+        byte_order = target_sp->GetArchitecture().GetByteOrder();
+        addr_size = target_sp->GetArchitecture().GetAddressByteSize();
     }
 
     if (byte_order == eByteOrderInvalid || addr_size == 0)
@@ -362,18 +362,13 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
     if (m_section == NULL)
         style = DumpStyleLoadAddress;
 
-    Target *target = NULL;
-    Process *process = NULL;
-    if (exe_scope)
-    {
-        target = exe_scope->CalculateTarget();
-        process = exe_scope->CalculateProcess();
-    }
+    ExecutionContext exe_ctx (exe_scope);
+    Target *target = exe_ctx.GetTargetPtr();
     // If addr_byte_size is UINT32_MAX, then determine the correct address
     // byte size for the process or default to the size of addr_t
     if (addr_size == UINT32_MAX)
     {
-        if (process)
+        if (target)
             addr_size = target->GetArchitecture().GetAddressByteSize ();
         else
             addr_size = sizeof(addr_t);
@@ -517,8 +512,8 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                             {
                                 SymbolContext func_sc;
                                 target->GetImages().ResolveSymbolContextForAddress (so_addr,
-                                                                                    eSymbolContextEverything,
-                                                                                    func_sc);
+                                                                                             eSymbolContextEverything,
+                                                                                             func_sc);
                                 if (func_sc.function || func_sc.symbol)
                                 {
                                     showed_info = true;
@@ -608,8 +603,8 @@ Address::Dump (Stream *s, ExecutionContextScope *exe_scope, DumpStyle style, Dum
                                 if (target)
                                 {
                                     target->GetImages().ResolveSymbolContextForAddress (so_addr,
-                                                                                        eSymbolContextEverything,
-                                                                                        pointer_sc);
+                                                                                                 eSymbolContextEverything,
+                                                                                                 pointer_sc);
                                     if (pointer_sc.function || pointer_sc.symbol)
                                     {
                                         s->PutCString(": ");

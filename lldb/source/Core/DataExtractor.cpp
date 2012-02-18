@@ -1354,17 +1354,17 @@ DataExtractor::Dump (Stream *s,
 
     if (item_format == eFormatInstruction)
     {
-        Target *target = NULL;
+        TargetSP target_sp;
         if (exe_scope)
-            target = exe_scope->CalculateTarget();
-        if (target)
+            target_sp = exe_scope->CalculateTarget();
+        if (target_sp)
         {
-            DisassemblerSP disassembler_sp (Disassembler::FindPlugin(target->GetArchitecture(), NULL));
+            DisassemblerSP disassembler_sp (Disassembler::FindPlugin(target_sp->GetArchitecture(), NULL));
             if (disassembler_sp)
             {
                 lldb::addr_t addr = base_addr + start_offset;
                 lldb_private::Address so_addr;
-                if (!target->GetSectionLoadList().ResolveLoadAddress(addr, so_addr))
+                if (!target_sp->GetSectionLoadList().ResolveLoadAddress(addr, so_addr))
                 {
                     so_addr.SetOffset(addr);
                     so_addr.SetSection(NULL);
@@ -1724,9 +1724,9 @@ DataExtractor::Dump (Stream *s,
                 s->Printf("0x%*.*llx", 2 * item_byte_size, 2 * item_byte_size, addr);
                 if (exe_scope)
                 {
-                    Target *target = exe_scope->CalculateTarget();
+                    TargetSP target_sp (exe_scope->CalculateTarget());
                     lldb_private::Address so_addr;
-                    if (target && target->GetSectionLoadList().ResolveLoadAddress(addr, so_addr))
+                    if (target_sp && target_sp->GetSectionLoadList().ResolveLoadAddress(addr, so_addr))
                     {
                         s->PutChar(' ');
                         so_addr.Dump (s, 

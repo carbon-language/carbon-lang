@@ -194,13 +194,13 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
             if (sc.function)
             {
                 func_start_address = sc.function->GetAddressRange().GetBaseAddress();
-                if (curr_addr == func_start_address.GetLoadAddress(m_thread.CalculateTarget()))
+                if (curr_addr == func_start_address.GetLoadAddress(m_thread.CalculateTarget().get()))
                     bytes_to_skip = sc.function->GetPrologueByteSize();
             }
             else if (sc.symbol)
             {
                 func_start_address = sc.symbol->GetValue();
-                if (curr_addr == func_start_address.GetLoadAddress(m_thread.CalculateTarget()))
+                if (curr_addr == func_start_address.GetLoadAddress(m_thread.CalculateTarget().get()))
                     bytes_to_skip = sc.symbol->GetPrologueByteSize();
             }
             

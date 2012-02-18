@@ -106,19 +106,22 @@ PadString(Stream *s, const std::string &str, size_t width)
         s->Printf("%s ", str.c_str());
 }
 static void
-AddSymbolicInfo (ExecutionContextScope *exe_scope, 
+AddSymbolicInfo (const ExecutionContext *exe_ctx, 
                  StreamString &comment, 
                  uint64_t operand_value, 
                  const Address &inst_addr)
 {
     Address so_addr;
     Target *target = NULL;
-    if (exe_scope)
-        target = exe_scope->CalculateTarget();
+    if (exe_ctx)
+        target = exe_ctx->GetTargetPtr();
     if (target && !target->GetSectionLoadList().IsEmpty())
     {
         if (target->GetSectionLoadList().ResolveLoadAddress(operand_value, so_addr))
-            so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
+            so_addr.Dump (&comment, 
+                          exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL, 
+                          Address::DumpStyleResolvedDescriptionNoModule, 
+                          Address::DumpStyleSectionNameOffset);
     }
     else
     {
@@ -126,7 +129,10 @@ AddSymbolicInfo (ExecutionContextScope *exe_scope,
         if (module)
         {
             if (module->ResolveFileAddress(operand_value, so_addr))
-                so_addr.Dump(&comment, exe_scope, Address::DumpStyleResolvedDescriptionNoModule, Address::DumpStyleSectionNameOffset);
+                so_addr.Dump (&comment, 
+                              exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL, 
+                              Address::DumpStyleResolvedDescriptionNoModule, 
+                              Address::DumpStyleSectionNameOffset);
         }
     }
 }
@@ -166,7 +172,7 @@ InstructionLLVM::Dump
     uint32_t max_opcode_byte_size,
     bool show_address,
     bool show_bytes,
-    const lldb_private::ExecutionContext* exe_ctx,
+    const ExecutionContext* exe_ctx,
     bool raw
 )
 {
@@ -336,7 +342,7 @@ InstructionLLVM::Dump
                                         comment.Printf("0x%*.*llx ", addr_nibble_size, addr_nibble_size, operand_value);
                                     }
 
-                                    AddSymbolicInfo(exe_scope, comment, operand_value, GetAddress());
+                                    AddSymbolicInfo(exe_ctx, comment, operand_value, GetAddress());
                                 } // EDEvaluateOperand
                             } // EDOperandIsMemory
                         } // EDGetOperand
@@ -365,7 +371,7 @@ InstructionLLVM::Dump
                     uint64_t operand_value = PC + atoi(++pos);
                     // Put the address value into the operands.
                     operands.Printf("0x%8.8llx ", operand_value);
-                    AddSymbolicInfo(exe_scope, comment, operand_value, GetAddress());
+                    AddSymbolicInfo(exe_ctx, comment, operand_value, GetAddress());
                 }
             }
             // Yet more workaround for "bl #..." and "blx #...".
@@ -387,7 +393,7 @@ InstructionLLVM::Dump
                     llvm::StringRef Str(pos - 1);
                     RStrip(Str, '\n');
                     operands.PutCString(Str.str().c_str());
-                    AddSymbolicInfo(exe_scope, comment, operand_value, GetAddress());
+                    AddSymbolicInfo(exe_ctx, comment, operand_value, GetAddress());
                 }
             }
             // END of workaround.
@@ -446,10 +452,9 @@ InstructionLLVM::CalculateMnemonicOperandsAndComment (ExecutionContextScope *exe
         int currentOpIndex = -1;
         StreamString comment;
         uint32_t addr_nibble_size = 8;
-        addr_t base_addr = LLDB_INVALID_ADDRESS;        
-        Target *target = NULL;
-        if (exe_scope)
-            target = exe_scope->CalculateTarget();
+        addr_t base_addr = LLDB_INVALID_ADDRESS;
+        ExecutionContext exe_ctx (exe_scope);
+        Target *target = exe_ctx.GetTargetPtr();
         if (target && !target->GetSectionLoadList().IsEmpty())
             base_addr = GetAddress().GetLoadAddress (target);
         if (base_addr == LLDB_INVALID_ADDRESS)
@@ -501,7 +506,7 @@ InstructionLLVM::CalculateMnemonicOperandsAndComment (ExecutionContextScope *exe
                                 if (!EDEvaluateOperand(&operand_value, operand, IPRegisterReader, &rra))
                                 {
                                     comment.Printf("0x%*.*llx ", addr_nibble_size, addr_nibble_size, operand_value);                                    
-                                    AddSymbolicInfo (exe_scope, comment, operand_value, GetAddress());
+                                    AddSymbolicInfo (&exe_ctx, comment, operand_value, GetAddress());
                                 }
                             }
                         }
@@ -526,7 +531,7 @@ InstructionLLVM::CalculateMnemonicOperandsAndComment (ExecutionContextScope *exe
                 uint64_t operand_value = PC + atoi(++pos);
                 // Put the address value into the operands.
                 comment.Printf("0x%*.*llx ", addr_nibble_size, addr_nibble_size, operand_value);
-                AddSymbolicInfo (exe_scope, comment, operand_value, GetAddress());
+                AddSymbolicInfo (&exe_ctx, comment, operand_value, GetAddress());
             }
         }
         // Yet more workaround for "bl #..." and "blx #...".
@@ -551,7 +556,7 @@ InstructionLLVM::CalculateMnemonicOperandsAndComment (ExecutionContextScope *exe
 //                llvm::StringRef Str(pos - 1);
 //                RStrip(Str, '\n');
 //                operands.PutCString(Str.str().c_str());
-                AddSymbolicInfo (exe_scope, comment, operand_value, GetAddress());
+                AddSymbolicInfo (&exe_ctx, comment, operand_value, GetAddress());
             }
         }
         // END of workaround.

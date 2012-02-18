@@ -1286,28 +1286,28 @@ Target::GetSharedModule
 }
 
 
-Target *
+TargetSP
 Target::CalculateTarget ()
 {
-    return this;
+    return shared_from_this();
 }
 
-Process *
+ProcessSP
 Target::CalculateProcess ()
 {
-    return NULL;
+    return ProcessSP();
 }
 
-Thread *
+ThreadSP
 Target::CalculateThread ()
 {
-    return NULL;
+    return ThreadSP();
 }
 
-StackFrame *
+StackFrameSP
 Target::CalculateStackFrame ()
 {
-    return NULL;
+    return StackFrameSP();
 }
 
 void

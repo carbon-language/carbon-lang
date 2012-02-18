@@ -3490,6 +3490,12 @@ Process::ProcessEventData::SetUpdateStateOnRemoval (Event *event_ptr)
     return false;
 }
 
+lldb::TargetSP
+Process::CalculateTarget ()
+{
+    return m_target.shared_from_this();
+}
+
 void
 Process::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {

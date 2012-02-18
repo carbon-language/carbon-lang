@@ -216,19 +216,19 @@ Variable::LocationIsValidForFrame (StackFrame *frame)
 
     if (frame)
     {
-        Target *target = &frame->GetThread().GetProcess().GetTarget();
-        
         Function *function = frame->GetSymbolContext(eSymbolContextFunction).function;
         if (function)
         {
-            addr_t loclist_base_load_addr = function->GetAddressRange().GetBaseAddress().GetLoadAddress (target);
+            TargetSP target_sp (frame->CalculateTarget());
+            
+            addr_t loclist_base_load_addr = function->GetAddressRange().GetBaseAddress().GetLoadAddress (target_sp.get());
             if (loclist_base_load_addr == LLDB_INVALID_ADDRESS)
                 return false;
             // It is a location list. We just need to tell if the location
             // list contains the current address when converted to a load
             // address
             return m_location.LocationListContainsAddress (loclist_base_load_addr, 
-                                                           frame->GetFrameCodeAddress().GetLoadAddress (target));
+                                                           frame->GetFrameCodeAddress().GetLoadAddress (target_sp.get()));
         }
     }
     return false;

@@ -1015,28 +1015,28 @@ Thread::DumpThreadPlans (lldb_private::Stream *s) const
 
 }
 
-Target *
+TargetSP
 Thread::CalculateTarget ()
 {
     return m_process.CalculateTarget();
 }
 
-Process *
+ProcessSP
 Thread::CalculateProcess ()
 {
-    return &m_process;
+    return m_process.shared_from_this();
 }
 
-Thread *
+ThreadSP
 Thread::CalculateThread ()
 {
-    return this;
+    return shared_from_this();
 }
 
-StackFrame *
+StackFrameSP
 Thread::CalculateStackFrame ()
 {
-    return NULL;
+    return StackFrameSP();
 }
 
 void

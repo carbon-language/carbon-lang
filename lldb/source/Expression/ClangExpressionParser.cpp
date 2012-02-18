@@ -224,15 +224,15 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
         break;
     }
     
-    Process *process = NULL;
+    lldb::ProcessSP process_sp;
     if (exe_scope)
-        process = exe_scope->CalculateProcess();
+        process_sp = exe_scope->CalculateProcess();
 
-    if (process && m_compiler->getLangOpts().ObjC1)
+    if (process_sp && m_compiler->getLangOpts().ObjC1)
     {
-        if (process->GetObjCLanguageRuntime())
+        if (process_sp->GetObjCLanguageRuntime())
         {
-            if (process->GetObjCLanguageRuntime()->GetRuntimeVersion() == eAppleObjC_V2)
+            if (process_sp->GetObjCLanguageRuntime()->GetRuntimeVersion() == eAppleObjC_V2)
             {
                 m_compiler->getLangOpts().ObjCNonFragileABI = true;     // NOT i386
                 m_compiler->getLangOpts().ObjCNonFragileABI2 = true;    // NOT i386
@@ -256,18 +256,18 @@ ClangExpressionParser::ClangExpressionParser (ExecutionContextScope *exe_scope,
     m_compiler->getDiagnosticOpts().Warnings.push_back("no-unused-value");
     
     // Set the target triple.
-    Target *target = NULL;
+    lldb::TargetSP target_sp;
     if (exe_scope)
-        target = exe_scope->CalculateTarget();
+        target_sp = exe_scope->CalculateTarget();
 
     // TODO: figure out what to really do when we don't have a valid target.
     // Sometimes this will be ok to just use the host target triple (when we
     // evaluate say "2+3", but other expressions like breakpoint conditions
     // and other things that _are_ target specific really shouldn't just be 
     // using the host triple. This needs to be fixed in a better way.
-    if (target && target->GetArchitecture().IsValid())
+    if (target_sp && target_sp->GetArchitecture().IsValid())
     {
-        std::string triple = target->GetArchitecture().GetTriple().str();
+        std::string triple = target_sp->GetArchitecture().GetTriple().str();
         
         int dash_count = 0;
         for (size_t i = 0; i < triple.size(); ++i)

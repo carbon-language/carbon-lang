@@ -356,32 +356,32 @@ RegisterContext::WriteRegisterValueToMemory (const RegisterInfo *reg_info,
 
 }
 
-Target *
+TargetSP
 RegisterContext::CalculateTarget ()
 {
     return m_thread.CalculateTarget();
 }
 
 
-Process *
+ProcessSP
 RegisterContext::CalculateProcess ()
 {
     return m_thread.CalculateProcess ();
 }
 
-Thread *
+ThreadSP
 RegisterContext::CalculateThread ()
 {
-    return &m_thread;
+    return m_thread.shared_from_this();
 }
 
-StackFrame *
+StackFrameSP
 RegisterContext::CalculateStackFrame ()
 {
     // Register contexts might belong to many frames if we have inlined 
     // functions inside a frame since all inlined functions share the
     // same registers, so we can't definitively say which frame we come from...
-    return NULL;
+    return StackFrameSP();
 }
 
 void

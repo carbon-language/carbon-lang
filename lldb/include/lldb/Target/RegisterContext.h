@@ -157,16 +157,16 @@ public:
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
-    virtual Target *
+    virtual lldb::TargetSP
     CalculateTarget ();
-
-    virtual Process *
+    
+    virtual lldb::ProcessSP
     CalculateProcess ();
-
-    virtual Thread *
+    
+    virtual lldb::ThreadSP
     CalculateThread ();
-
-    virtual StackFrame *
+    
+    virtual lldb::StackFrameSP
     CalculateStackFrame ();
 
     virtual void

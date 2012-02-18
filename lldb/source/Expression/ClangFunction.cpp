@@ -66,11 +66,9 @@ ClangFunction::ClangFunction
     m_compiled (false),
     m_JITted (false)
 {
-    Process *process = exe_scope.CalculateProcess();
+    m_jit_process_sp = exe_scope.CalculateProcess();
     // Can't make a ClangFunction without a process.
-    assert (process != NULL);
-        
-    m_jit_process_sp = process->shared_from_this();
+    assert (m_jit_process_sp);
 }
 
 ClangFunction::ClangFunction
@@ -91,11 +89,9 @@ ClangFunction::ClangFunction
     m_compiled (false),
     m_JITted (false)
 {
-    Process *process = exe_scope.CalculateProcess();
+    m_jit_process_sp = exe_scope.CalculateProcess();
     // Can't make a ClangFunction without a process.
-    assert (process != NULL);
-        
-    m_jit_process_sp = process->shared_from_this();
+    assert (m_jit_process_sp);
 
     m_function_addr = m_function_ptr->GetAddressRange().GetBaseAddress();
     m_function_return_qual_type = m_function_ptr->GetReturnClangType();

@@ -10,7 +10,6 @@
 #include "lldb/Core/EmulateInstruction.h"
 
 #include "lldb/Core/Address.h"
-#include "lldb/Core/DataBufferHeap.h"
 #include "lldb/Core/DataExtractor.h"
 #include "lldb/Core/Error.h"
 #include "lldb/Core/PluginManager.h"
@@ -287,24 +286,20 @@ EmulateInstruction::ReadMemoryFrame (EmulateInstruction *instruction,
                                      const Context &context, 
                                      lldb::addr_t addr, 
                                      void *dst,
-                                     size_t length)
+                                     size_t dst_len)
 {
-    if (!baton)
+    if (!baton || dst == NULL || dst_len == 0)
         return 0;
-    
-    
+
     StackFrame *frame = (StackFrame *) baton;
 
-    DataBufferSP data_sp (new DataBufferHeap (length, '\0'));
-    Error error;
-    
-    size_t bytes_read = frame->GetThread().GetProcess().ReadMemory (addr, data_sp->GetBytes(), data_sp->GetByteSize(),
-                                                                    error);
-    
-    if (bytes_read > 0)
-        ((DataBufferHeap *) data_sp.get())->CopyData (dst, length);
-        
-    return bytes_read;
+    ProcessSP process_sp (frame->CalculateProcess());
+    if (process_sp)
+    {
+        Error error;
+        return process_sp->ReadMemory (addr, dst, dst_len, error);
+    }
+    return 0;
 }
 
 size_t 
@@ -312,26 +307,19 @@ EmulateInstruction::WriteMemoryFrame (EmulateInstruction *instruction,
                                       void *baton,
                                       const Context &context, 
                                       lldb::addr_t addr, 
-                                      const void *dst,
-                                      size_t length)
+                                      const void *src,
+                                      size_t src_len)
 {
-    if (!baton)
+    if (!baton || src == NULL || src_len == 0)
         return 0;
     
     StackFrame *frame = (StackFrame *) baton;
 
-    lldb::DataBufferSP data_sp (new DataBufferHeap (dst, length));
-    if (data_sp)
+    ProcessSP process_sp (frame->CalculateProcess());
+    if (process_sp)
     {
-        length = data_sp->GetByteSize();
-        if (length > 0)
-        {
-            Error error;
-            size_t bytes_written = frame->GetThread().GetProcess().WriteMemory (addr, data_sp->GetBytes(), length, 
-                                                                                error);
-            
-            return bytes_written;
-        }
+        Error error;
+        return process_sp->WriteMemory (addr, src, src_len, error);
     }
     
     return 0;

@@ -630,14 +630,16 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         
         lldb::StackFrameSP thread_cur_frame = thread.GetStackFrameAtIndex(0);
         
-        Process *process = thread.CalculateProcess();
-        const ABI *abi = process->GetABI().get();
+        const ABI *abi = NULL;
+        ProcessSP process_sp (thread.CalculateProcess());
+        if (process_sp)
+            abi = process_sp->GetABI().get();
         if (abi == NULL)
             return ret_plan_sp;
             
-        Target *target = thread.CalculateTarget();
+        TargetSP target_sp (thread.CalculateTarget());
         
-        ClangASTContext *clang_ast_context = target->GetScratchClangASTContext();
+        ClangASTContext *clang_ast_context = target_sp->GetScratchClangASTContext();
         ValueList argument_values;
         Value void_ptr_value;
         lldb::clang_type_t clang_void_ptr_type = clang_ast_context->GetVoidPtrType(false);
@@ -671,9 +673,8 @@ AppleObjCTrampolineHandler::GetStepThroughDispatchPlan (Thread &thread, bool sto
         if (!success)
             return ret_plan_sp;
             
-        ExecutionContext exe_ctx;
-        thread.CalculateExecutionContext (exe_ctx);
-
+        ExecutionContext exe_ctx (thread.shared_from_this());
+        Process *process = exe_ctx.GetProcessPtr();
         // isa_addr will store the class pointer that the method is being dispatched to - so either the class
         // directly or the super class if this is one of the objc_msgSendSuper flavors.  That's mostly used to
         // look up the class/selector pair in our cache.

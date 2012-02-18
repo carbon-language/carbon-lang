@@ -41,24 +41,24 @@ public:
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    StackFrame (lldb::user_id_t frame_idx, 
+    StackFrame (const lldb::ThreadSP &thread_sp,
+                lldb::user_id_t frame_idx, 
                 lldb::user_id_t concrete_frame_idx, 
-                Thread &thread, 
                 lldb::addr_t cfa, 
                 lldb::addr_t pc, 
                 const SymbolContext *sc_ptr);
 
-    StackFrame (lldb::user_id_t frame_idx, 
+    StackFrame (const lldb::ThreadSP &thread_sp,
+                lldb::user_id_t frame_idx, 
                 lldb::user_id_t concrete_frame_idx, 
-                Thread &thread, 
                 const lldb::RegisterContextSP &reg_context_sp, 
                 lldb::addr_t cfa, 
                 lldb::addr_t pc, 
                 const SymbolContext *sc_ptr);
     
-    StackFrame (lldb::user_id_t frame_idx, 
+    StackFrame (const lldb::ThreadSP &thread_sp,
+                lldb::user_id_t frame_idx, 
                 lldb::user_id_t concrete_frame_idx, 
-                Thread &thread, 
                 const lldb::RegisterContextSP &reg_context_sp, 
                 lldb::addr_t cfa, 
                 const Address& pc, 
@@ -66,13 +66,11 @@ public:
 
     virtual ~StackFrame ();
 
-    Thread &
-    GetThread()
-    { return m_thread; }
-
-    const Thread &
-    GetThread() const
-    { return m_thread; }
+    lldb::ThreadSP
+    GetThread () const
+    {
+        return m_thread_wp.lock();
+    }
 
     StackID&
     GetStackID();
@@ -151,16 +149,16 @@ public:
     //------------------------------------------------------------------
     // lldb::ExecutionContextScope pure virtual functions
     //------------------------------------------------------------------
-    virtual Target *
+    virtual lldb::TargetSP
     CalculateTarget ();
-
-    virtual Process *
+    
+    virtual lldb::ProcessSP
     CalculateProcess ();
-
-    virtual Thread *
+    
+    virtual lldb::ThreadSP
     CalculateThread ();
-
-    virtual StackFrame *
+    
+    virtual lldb::StackFrameSP
     CalculateStackFrame ();
 
     virtual void
@@ -187,11 +185,12 @@ protected:
 
     bool
     HasCachedData () const;
+    
 private:
     //------------------------------------------------------------------
     // For StackFrame only
     //------------------------------------------------------------------
-    Thread &m_thread;
+    lldb::ThreadWP m_thread_wp;
     uint32_t m_frame_index;
     uint32_t m_concrete_frame_index;
     lldb::RegisterContextSP m_reg_context_sp;
