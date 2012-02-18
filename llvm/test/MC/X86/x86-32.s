@@ -41,7 +41,32 @@
 // CHECK: swapgs
 // CHECK: encoding: [0x0f,0x01,0xf8]
 
-rdtscp
+	vmrun %eax
+// CHECK: vmrun %eax
+// CHECK: encoding: [0x0f,0x01,0xd8]
+	vmmcall
+// CHECK: vmmcall
+// CHECK: encoding: [0x0f,0x01,0xd9]
+	vmload %eax
+// CHECK: vmload %eax
+// CHECK: encoding: [0x0f,0x01,0xda]
+	vmsave %eax
+// CHECK: vmsave %eax
+// CHECK: encoding: [0x0f,0x01,0xdb]
+	stgi
+// CHECK: stgi
+// CHECK: encoding: [0x0f,0x01,0xdc]
+	clgi
+// CHECK: clgi
+// CHECK: encoding: [0x0f,0x01,0xdd]
+	skinit %eax
+// CHECK: skinit %eax
+// CHECK: encoding: [0x0f,0x01,0xde]
+	invlpga %ecx, %eax
+// CHECK: invlpga %ecx, %eax
+// CHECK: encoding: [0x0f,0x01,0xdf]
+
+	rdtscp
 // CHECK: rdtscp
 // CHECK:  encoding: [0x0f,0x01,0xf9]
 

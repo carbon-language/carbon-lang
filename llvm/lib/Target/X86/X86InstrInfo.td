@@ -1538,6 +1538,7 @@ include "X86InstrMMX.td"
 include "X86Instr3DNow.td"
 
 include "X86InstrVMX.td"
+include "X86InstrSVM.td"
 
 // System instructions.
 include "X86InstrSystem.td"

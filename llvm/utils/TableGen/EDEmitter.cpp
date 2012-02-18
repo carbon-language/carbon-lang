@@ -519,6 +519,8 @@ static void X86ExtractSemantics(
       // ignore (doesn't go anywhere we know about)
     } else if (name.find("VMCALL") != name.npos) {
       // ignore (rather different semantics than a regular call)
+    } else if (name.find("VMMCALL") != name.npos) {
+      // ignore (rather different semantics than a regular call)
     } else if (name.find("FAR") != name.npos && name.find("i") != name.npos) {
       CALL("off");
     } else {

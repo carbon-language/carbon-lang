@@ -18465,6 +18465,30 @@
 // CHECK: 	vmxon	305419896
         	vmxon	0x12345678
 
+// CHECK: 	vmrun %eax
+        	vmrun %eax
+
+// CHECK: 	vmmcall
+        	vmmcall
+
+// CHECK: 	vmload %eax
+        	vmload %eax
+
+// CHECK: 	vmsave %eax
+        	vmsave %eax
+
+// CHECK: 	stgi
+        	stgi
+
+// CHECK: 	clgi
+        	clgi
+
+// CHECK: 	skinit %eax
+        	skinit %eax
+
+// CHECK: 	invlpga %ecx, %eax
+        	invlpga %ecx, %eax
+
 // CHECK: 	phaddw	3735928559(%ebx,%ecx,8), %mm3
         	phaddw	0xdeadbeef(%ebx,%ecx,8),%mm3
 
