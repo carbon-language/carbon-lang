@@ -122,11 +122,10 @@ late_delete::late_delete() = default; // expected-error {{would delete it}}
 // See also rdar://problem/8125400.
 namespace empty {
   static union {}; // expected-error {{implicitly-deleted default constructor}} expected-note {{here}}
-  static union { union {}; };
+  static union { union {}; }; // expected-error {{implicitly-deleted default constructor}} expected-note {{here}}
   static union { struct {}; };
-  static union { union { union {}; }; };
+  static union { union { union {}; }; }; // expected-error {{implicitly-deleted default constructor}} expected-note {{here}}
   static union { union { struct {}; }; };
   static union { struct { union {}; }; }; // expected-error {{implicitly-deleted default constructor}} expected-note {{here}}
   static union { struct { struct {}; }; };
 }
-

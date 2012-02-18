@@ -2276,7 +2276,7 @@ Sema::SpecialMemberOverloadResult *Sema::LookupSpecialMember(CXXRecordDecl *RD,
     CXXDestructorDecl *DD = RD->getDestructor();
     assert(DD && "record without a destructor");
     Result->setMethod(DD);
-    Result->setSuccess(DD->isDeleted());
+    Result->setSuccess(!DD->isDeleted());
     Result->setConstParamMatch(false);
     return Result;
   }
