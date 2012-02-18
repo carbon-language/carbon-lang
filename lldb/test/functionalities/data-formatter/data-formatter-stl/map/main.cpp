@@ -19,7 +19,7 @@ int main()
     ii[5] = 1;
     ii[6] = 0;
     ii[7] = 1;
-    ii[8] = 0;
+    ii[85] = 1234567;
     
     ii.clear();
     
@@ -35,7 +35,7 @@ int main()
     
     intstr_map is;
     
-    is[0] = "goofy";
+    is[85] = "goofy";
     is[1] = "is";
     is[2] = "smart";
     is[3] = "!!!";

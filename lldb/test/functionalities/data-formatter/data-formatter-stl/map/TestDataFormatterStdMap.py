@@ -115,9 +115,13 @@ class StdMapDataFormatterTestCase(TestBase):
                     substrs = ['first =',
                                'second =']);
         
-        # but check that expression does not rely on us
-        self.expect("expression ii[0]", matching=False, error=True,
-                    substrs = ['first = 0'])
+        self.expect("frame variable ii[8]", matching=True,
+                    substrs = ['1234567'])
+
+        # check that the expression parser does not make use of
+        # synthetic children instead of running code
+        self.expect("expression ii[8]", matching=False, error=True,
+                    substrs = ['1234567'])
 
         self.runCmd("n")
         
@@ -186,7 +190,8 @@ class StdMapDataFormatterTestCase(TestBase):
                     substrs = ['first = ', 'four',
                                'second = 4']);
         
-        # but check that expression does not rely on us
+        # check that the expression parser does not make use of
+        # synthetic children instead of running code
         self.expect("expression si[0]", matching=False, error=True,
                     substrs = ['first = ', 'zero'])
 
@@ -212,7 +217,7 @@ class StdMapDataFormatterTestCase(TestBase):
                     substrs = ['map has 4 items',
                                '[0] = ',
                                'second = \"goofy\"',
-                               'first = 0',
+                               'first = 85',
                                '[1] = ',
                                'second = \"is\"',
                                'first = 1',
@@ -227,7 +232,7 @@ class StdMapDataFormatterTestCase(TestBase):
                     substrs = ['map has 4 items',
                                '[0] = ',
                                'second = \"goofy\"',
-                               'first = 0',
+                               'first = 85',
                                '[1] = ',
                                'second = \"is\"',
                                'first = 1',
@@ -240,10 +245,11 @@ class StdMapDataFormatterTestCase(TestBase):
 
         # check access-by-index
         self.expect("frame variable is[0]",
-                    substrs = ['first = ', '0',
-                               'second =', 'goofy']);
+                    substrs = ['first = ',
+                               'second =']);
         
-        # but check that expression does not rely on us
+        # check that the expression parser does not make use of
+        # synthetic children instead of running code
         self.expect("expression is[0]", matching=False, error=True,
                     substrs = ['first = ', 'goofy'])
 
@@ -296,7 +302,8 @@ class StdMapDataFormatterTestCase(TestBase):
         self.expect("frame variable ss[3]",
                     substrs = ['gatto', 'cat']);
         
-        # but check that expression does not rely on us
+        # check that the expression parser does not make use of
+        # synthetic children instead of running code
         self.expect("expression ss[3]", matching=False, error=True,
                     substrs = ['gatto'])
 
