@@ -62,5 +62,16 @@ int main()
     assert(p->get_int() == 67);
     assert(p->get_char() == 'e');
     }
+#ifndef _LIBCPP_HAS_NO_RVALUE_REFERENCES
+    nc = new_count;
+    {
+    char c = 'e';
+    std::shared_ptr<A> p = std::make_shared<A>(67, c);
+    assert(new_count == nc+1);
+    assert(A::count == 1);
+    assert(p->get_int() == 67);
+    assert(p->get_char() == 'e');
+    }
+#endif
     assert(A::count == 0);
 }
