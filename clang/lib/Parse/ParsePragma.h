@@ -90,6 +90,16 @@ public:
                             Token &FirstToken);
 };
 
+class PragmaRedefineExtnameHandler : public PragmaHandler {
+  Sema &Actions;
+public:
+  explicit PragmaRedefineExtnameHandler(Sema &A)
+    : PragmaHandler("redefine_extname"), Actions(A) {}
+
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &FirstToken);
+};
+
 class PragmaOpenCLExtensionHandler : public PragmaHandler {
   Sema &Actions;
   Parser &parser;

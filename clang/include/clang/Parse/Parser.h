@@ -162,6 +162,7 @@ class Parser : public CodeCompletionHandler {
   OwningPtr<PragmaHandler> MSStructHandler;
   OwningPtr<PragmaHandler> UnusedHandler;
   OwningPtr<PragmaHandler> WeakHandler;
+  OwningPtr<PragmaHandler> RedefineExtnameHandler;
   OwningPtr<PragmaHandler> FPContractHandler;
   OwningPtr<PragmaHandler> OpenCLExtensionHandler;
 

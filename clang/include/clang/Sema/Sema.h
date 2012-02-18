@@ -469,6 +469,13 @@ public:
   /// identifier, declared or undeclared
   llvm::DenseMap<IdentifierInfo*,WeakInfo> WeakUndeclaredIdentifiers;
 
+  /// ExtnameUndeclaredIdentifiers - Identifiers contained in
+  /// #pragma redefine_extname before declared.  Used in Solaris system headers
+  /// to define functions that occur in multiple standards to call the version
+  /// in the currently selected standard.
+  llvm::DenseMap<IdentifierInfo*,AsmLabelAttr*> ExtnameUndeclaredIdentifiers;
+
+
   /// \brief Load weak undeclared identifiers from the external source.
   void LoadExternalWeakUndeclaredIdentifiers();
 
@@ -5718,6 +5725,14 @@ public:
   void ActOnPragmaWeakID(IdentifierInfo* WeakName,
                          SourceLocation PragmaLoc,
                          SourceLocation WeakNameLoc);
+
+  /// ActOnPragmaRedefineExtname - Called on well formed 
+  /// #pragma redefine_extname oldname newname.
+  void ActOnPragmaRedefineExtname(IdentifierInfo* WeakName,
+                                  IdentifierInfo* AliasName,
+                                  SourceLocation PragmaLoc,
+                                  SourceLocation WeakNameLoc,
+                                  SourceLocation AliasNameLoc);
 
   /// ActOnPragmaWeakAlias - Called on well formed #pragma weak ident = ident.
   void ActOnPragmaWeakAlias(IdentifierInfo* WeakName,

@@ -4059,6 +4059,13 @@ Sema::ActOnVariableDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
     NewVD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0),
                                                 Context, Label));
+  } else if (!ExtnameUndeclaredIdentifiers.empty()) {
+    llvm::DenseMap<IdentifierInfo*,AsmLabelAttr*>::iterator I =
+      ExtnameUndeclaredIdentifiers.find(NewVD->getIdentifier());
+    if (I != ExtnameUndeclaredIdentifiers.end()) {
+      NewVD->addAttr(I->second);
+      ExtnameUndeclaredIdentifiers.erase(I);
+    }
   }
 
   // Diagnose shadowed variables before filtering for scope.
@@ -5157,6 +5164,13 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
     StringLiteral *SE = cast<StringLiteral>(E);
     NewFD->addAttr(::new (Context) AsmLabelAttr(SE->getStrTokenLoc(0), Context,
                                                 SE->getString()));
+  } else if (!ExtnameUndeclaredIdentifiers.empty()) {
+    llvm::DenseMap<IdentifierInfo*,AsmLabelAttr*>::iterator I =
+      ExtnameUndeclaredIdentifiers.find(NewFD->getIdentifier());
+    if (I != ExtnameUndeclaredIdentifiers.end()) {
+      NewFD->addAttr(I->second);
+      ExtnameUndeclaredIdentifiers.erase(I);
+    }
   }
 
   // Copy the parameter declarations from the declarator D to the function
@@ -10150,6 +10164,24 @@ DeclResult Sema::ActOnModuleImport(SourceLocation AtLoc,
                                           Mod, IdentifierLocs);
   Context.getTranslationUnitDecl()->addDecl(Import);
   return Import;
+}
+
+void Sema::ActOnPragmaRedefineExtname(IdentifierInfo* Name,
+                                      IdentifierInfo* AliasName,
+                                      SourceLocation PragmaLoc,
+                                      SourceLocation NameLoc,
+                                      SourceLocation AliasNameLoc) {
+  Decl *PrevDecl = LookupSingleName(TUScope, Name, NameLoc,
+                                    LookupOrdinaryName);
+  AsmLabelAttr *Attr =
+     ::new (Context) AsmLabelAttr(AliasNameLoc, Context, AliasName->getName());
+  fprintf(stderr, "Alias name: %s\n", AliasName->getName().str().c_str());
+
+  if (PrevDecl) 
+    PrevDecl->addAttr(Attr);
+  else 
+    (void)ExtnameUndeclaredIdentifiers.insert(
+      std::pair<IdentifierInfo*,AsmLabelAttr*>(Name, Attr));
 }
 
 void Sema::ActOnPragmaWeakID(IdentifierInfo* Name,

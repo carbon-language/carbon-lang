@@ -333,6 +333,9 @@ static void InitializePredefinedMacros(const TargetInfo &TI,
   Builder.defineMacro("__ATOMIC_ACQ_REL", "4");
   Builder.defineMacro("__ATOMIC_SEQ_CST", "5");
 
+  // Support for #pragma redefine_extname (Sun compatibility)
+  Builder.defineMacro("__PRAGMA_REDEFINE_EXTNAME", "1");
+
   // As sad as it is, enough software depends on the __VERSION__ for version
   // checks that it is necessary to report 4.2.1 (the base GCC version we claim
   // compatibility with) first.

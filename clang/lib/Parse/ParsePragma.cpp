@@ -426,6 +426,44 @@ void PragmaWeakHandler::HandlePragma(Preprocessor &PP,
   }
 }
 
+// #pragma redefine_extname identifier identifier
+void PragmaRedefineExtnameHandler::HandlePragma(Preprocessor &PP, 
+                                               PragmaIntroducerKind Introducer,
+                                                Token &RedefToken) {
+  SourceLocation RedefLoc = RedefToken.getLocation();
+
+  Token Tok;
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::identifier)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier) <<
+      "redefine_extname";
+    return;
+  }
+
+  IdentifierInfo *RedefName = Tok.getIdentifierInfo(), *AliasName = 0;
+  SourceLocation RedefNameLoc = Tok.getLocation(), AliasNameLoc;
+
+  PP.Lex(Tok);
+  if (Tok.isNot(tok::identifier)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_expected_identifier)
+        << "redefine_extname";
+    return;
+  }
+  AliasName = Tok.getIdentifierInfo();
+  AliasNameLoc = Tok.getLocation();
+  PP.Lex(Tok);
+
+  if (Tok.isNot(tok::eod)) {
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol) <<
+      "redefine_extname";
+    return;
+  }
+
+  Actions.ActOnPragmaRedefineExtname(RedefName, AliasName, RedefLoc,
+      RedefNameLoc, AliasNameLoc);
+}
+
+
 void
 PragmaFPContractHandler::HandlePragma(Preprocessor &PP, 
                                       PragmaIntroducerKind Introducer,
