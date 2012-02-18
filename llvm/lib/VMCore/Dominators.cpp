@@ -84,23 +84,23 @@ void DominatorTree::print(raw_ostream &OS, const Module *) const {
 // special checks necessary if A and B are in the same basic block.
 bool DominatorTree::dominates(const Instruction *A, const Instruction *B) const{
   const BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
-  
+
   // If A is an invoke instruction, its value is only available in this normal
   // successor block.
   if (const InvokeInst *II = dyn_cast<InvokeInst>(A))
     BBA = II->getNormalDest();
-  
+
   if (BBA != BBB) return dominates(BBA, BBB);
-  
-  // It is not possible to determine dominance between two PHI nodes 
+
+  // It is not possible to determine dominance between two PHI nodes
   // based on their ordering.
-  if (isa<PHINode>(A) && isa<PHINode>(B)) 
+  if (isa<PHINode>(A) && isa<PHINode>(B))
     return false;
-  
+
   // Loop through the basic block until we find A or B.
   BasicBlock::const_iterator I = BBA->begin();
   for (; &*I != A && &*I != B; ++I)
     /*empty*/;
-  
+
   return &*I == A;
 }
