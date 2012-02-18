@@ -1122,6 +1122,13 @@ public:
   // (C++ [class.dtor]p3)
   bool hasTrivialDestructor() const { return data().HasTrivialDestructor; }
 
+  // hasIrrelevantDestructor - Whether this class has a destructor which has no
+  // semantic effect. Any such destructor will be trivial, public, defaulted
+  // and not deleted.
+  bool hasIrrelevantDestructor() const {
+    return hasTrivialDestructor() && !hasUserDeclaredDestructor();
+  }
+
   // hasNonLiteralTypeFieldsOrBases - Whether this class has a non-literal or
   // volatile type non-static data member or base class.
   bool hasNonLiteralTypeFieldsOrBases() const {

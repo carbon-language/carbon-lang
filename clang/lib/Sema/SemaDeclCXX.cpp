@@ -3282,7 +3282,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     CXXRecordDecl *FieldClassDecl = cast<CXXRecordDecl>(RT->getDecl());
     if (FieldClassDecl->isInvalidDecl())
       continue;
-    if (FieldClassDecl->hasTrivialDestructor())
+    if (FieldClassDecl->hasIrrelevantDestructor())
       continue;
 
     CXXDestructorDecl *Dtor = LookupDestructor(FieldClassDecl);
@@ -3293,6 +3293,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
                             << FieldType);
 
     MarkFunctionReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
+    DiagnoseUseOfDecl(Dtor, Location);
   }
 
   llvm::SmallPtrSet<const RecordType *, 8> DirectVirtualBases;
@@ -3311,8 +3312,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     // If our base class is invalid, we probably can't get its dtor anyway.
     if (BaseClassDecl->isInvalidDecl())
       continue;
-    // Ignore trivial destructors.
-    if (BaseClassDecl->hasTrivialDestructor())
+    if (BaseClassDecl->hasIrrelevantDestructor())
       continue;
 
     CXXDestructorDecl *Dtor = LookupDestructor(BaseClassDecl);
@@ -3325,6 +3325,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
                             << Base->getSourceRange());
     
     MarkFunctionReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
+    DiagnoseUseOfDecl(Dtor, Location);
   }
   
   // Virtual bases.
@@ -3342,8 +3343,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
     // If our base class is invalid, we probably can't get its dtor anyway.
     if (BaseClassDecl->isInvalidDecl())
       continue;
-    // Ignore trivial destructors.
-    if (BaseClassDecl->hasTrivialDestructor())
+    if (BaseClassDecl->hasIrrelevantDestructor())
       continue;
 
     CXXDestructorDecl *Dtor = LookupDestructor(BaseClassDecl);
@@ -3353,6 +3353,7 @@ Sema::MarkBaseAndMemberDestructorsReferenced(SourceLocation Location,
                             << VBase->getType());
 
     MarkFunctionReferenced(Location, const_cast<CXXDestructorDecl*>(Dtor));
+    DiagnoseUseOfDecl(Dtor, Location);
   }
 }
 
@@ -8918,7 +8919,7 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
 
   CXXRecordDecl *ClassDecl = cast<CXXRecordDecl>(Record->getDecl());
   if (ClassDecl->isInvalidDecl()) return;
-  if (ClassDecl->hasTrivialDestructor()) return;
+  if (ClassDecl->hasIrrelevantDestructor()) return;
   if (ClassDecl->isDependentContext()) return;
 
   CXXDestructorDecl *Destructor = LookupDestructor(ClassDecl);
@@ -8927,6 +8928,7 @@ void Sema::FinalizeVarWithDestructor(VarDecl *VD, const RecordType *Record) {
                         PDiag(diag::err_access_dtor_var)
                         << VD->getDeclName()
                         << VD->getType());
+  DiagnoseUseOfDecl(Destructor, VD->getLocation());
 
   if (!VD->hasGlobalStorage()) return;
 
