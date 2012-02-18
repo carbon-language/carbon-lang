@@ -10175,7 +10175,6 @@ void Sema::ActOnPragmaRedefineExtname(IdentifierInfo* Name,
                                     LookupOrdinaryName);
   AsmLabelAttr *Attr =
      ::new (Context) AsmLabelAttr(AliasNameLoc, Context, AliasName->getName());
-  fprintf(stderr, "Alias name: %s\n", AliasName->getName().str().c_str());
 
   if (PrevDecl) 
     PrevDecl->addAttr(Attr);
