@@ -105,6 +105,11 @@ namespace {
         Type = CAT->getElementType();
         ArraySize = CAT->getSize().getZExtValue();
         MostDerivedLength = I + 1;
+      } else if (Type->isAnyComplexType()) {
+        const ComplexType *CT = Type->castAs<ComplexType>();
+        Type = CT->getElementType();
+        ArraySize = 2;
+        MostDerivedLength = I + 1;
       } else if (const FieldDecl *FD = getAsField(Path[I])) {
         Type = FD->getType();
         ArraySize = 0;
@@ -120,7 +125,7 @@ namespace {
   // The order of this enum is important for diagnostics.
   enum CheckSubobjectKind {
     CSK_Base, CSK_Derived, CSK_Field, CSK_ArrayToPointer, CSK_ArrayIndex,
-    CSK_This
+    CSK_This, CSK_Real, CSK_Imag
   };
 
   /// A path from a glvalue to a subobject of that glvalue.
@@ -220,6 +225,18 @@ namespace {
         MostDerivedArraySize = 0;
         MostDerivedPathLength = Entries.size();
       }
+    }
+    /// Update this designator to refer to the given complex component.
+    void addComplexUnchecked(QualType EltTy, bool Imag) {
+      PathEntry Entry;
+      Entry.ArrayIndex = Imag;
+      Entries.push_back(Entry);
+
+      // This is technically a most-derived object, though in practice this
+      // is unlikely to matter.
+      MostDerivedType = EltTy;
+      MostDerivedArraySize = 2;
+      MostDerivedPathLength = Entries.size();
     }
     void diagnosePointerArithmetic(EvalInfo &Info, const Expr *E, uint64_t N);
     /// Add N to the address of this subobject.
@@ -791,6 +808,10 @@ namespace {
     void addArray(EvalInfo &Info, const Expr *E, const ConstantArrayType *CAT) {
       checkSubobject(Info, E, CSK_ArrayToPointer);
       Designator.addArrayUnchecked(CAT);
+    }
+    void addComplex(EvalInfo &Info, const Expr *E, QualType EltTy, bool Imag) {
+      checkSubobject(Info, E, Imag ? CSK_Imag : CSK_Real);
+      Designator.addComplexUnchecked(EltTy, Imag);
     }
     void adjustIndex(EvalInfo &Info, const Expr *E, uint64_t N) {
       if (!checkNullPointer(Info, E, CSK_ArrayIndex))
@@ -1420,6 +1441,24 @@ static bool HandleLValueArrayAdjustment(EvalInfo &Info, const Expr *E,
   return true;
 }
 
+/// Update an lvalue to refer to a component of a complex number.
+/// \param Info - Information about the ongoing evaluation.
+/// \param LVal - The lvalue to be updated.
+/// \param EltTy - The complex number's component type.
+/// \param Imag - False for the real component, true for the imaginary.
+static bool HandleLValueComplexElement(EvalInfo &Info, const Expr *E,
+                                       LValue &LVal, QualType EltTy,
+                                       bool Imag) {
+  if (Imag) {
+    CharUnits SizeOfComponent;
+    if (!HandleSizeof(Info, E->getExprLoc(), EltTy, SizeOfComponent))
+      return false;
+    LVal.Offset += SizeOfComponent;
+  }
+  LVal.addComplex(Info, E, EltTy, Imag);
+  return true;
+}
+
 /// Try to evaluate the initializer for a variable declaration.
 static bool EvaluateVarDeclInit(EvalInfo &Info, const Expr *E,
                                 const VarDecl *VD,
@@ -1566,6 +1605,25 @@ static bool ExtractSubobject(EvalInfo &Info, const Expr *E,
       else
         O = &O->getArrayFiller();
       ObjType = CAT->getElementType();
+    } else if (ObjType->isAnyComplexType()) {
+      // Next subobject is a complex number.
+      uint64_t Index = Sub.Entries[I].ArrayIndex;
+      if (Index > 1) {
+        Info.Diag(E->getExprLoc(), Info.getLangOpts().CPlusPlus0x ?
+                    (unsigned)diag::note_constexpr_read_past_end :
+                    (unsigned)diag::note_invalid_subexpr_in_const_expr);
+        return false;
+      }
+      assert(I == N - 1 && "extracting subobject of scalar?");
+      if (O->isComplexInt()) {
+        Obj = CCValue(Index ? O->getComplexIntImag()
+                            : O->getComplexIntReal());
+      } else {
+        assert(O->isComplexFloat());
+        Obj = CCValue(Index ? O->getComplexFloatImag()
+                            : O->getComplexFloatReal());
+      }
+      return true;
     } else if (const FieldDecl *Field = getAsField(Sub.Entries[I])) {
       if (Field->isMutable()) {
         Info.Diag(E->getExprLoc(), diag::note_constexpr_ltor_mutable, 1)
@@ -1628,13 +1686,17 @@ static unsigned FindDesignatorMismatch(QualType ObjType,
                                        bool &WasArrayIndex) {
   unsigned I = 0, N = std::min(A.Entries.size(), B.Entries.size());
   for (/**/; I != N; ++I) {
-    if (!ObjType.isNull() && ObjType->isArrayType()) {
+    if (!ObjType.isNull() &&
+        (ObjType->isArrayType() || ObjType->isAnyComplexType())) {
       // Next subobject is an array element.
       if (A.Entries[I].ArrayIndex != B.Entries[I].ArrayIndex) {
         WasArrayIndex = true;
         return I;
       }
-      ObjType = ObjType->castAsArrayTypeUnsafe()->getElementType();
+      if (ObjType->isAnyComplexType())
+        ObjType = ObjType->castAs<ComplexType>()->getElementType();
+      else
+        ObjType = ObjType->castAsArrayTypeUnsafe()->getElementType();
     } else {
       if (A.Entries[I].BaseOrMember != B.Entries[I].BaseOrMember) {
         WasArrayIndex = false;
@@ -2870,6 +2932,8 @@ public:
   bool VisitCXXTypeidExpr(const CXXTypeidExpr *E);
   bool VisitArraySubscriptExpr(const ArraySubscriptExpr *E);
   bool VisitUnaryDeref(const UnaryOperator *E);
+  bool VisitUnaryReal(const UnaryOperator *E);
+  bool VisitUnaryImag(const UnaryOperator *E);
 
   bool VisitCastExpr(const CastExpr *E) {
     switch (E->getCastKind()) {
@@ -2889,9 +2953,6 @@ public:
       return HandleBaseToDerivedCast(Info, E, Result);
     }
   }
-
-  // FIXME: Missing: __real__, __imag__
-
 };
 } // end anonymous namespace
 
@@ -3013,6 +3074,24 @@ bool LValueExprEvaluator::VisitArraySubscriptExpr(const ArraySubscriptExpr *E) {
 
 bool LValueExprEvaluator::VisitUnaryDeref(const UnaryOperator *E) {
   return EvaluatePointer(E->getSubExpr(), Result, Info);
+}
+
+bool LValueExprEvaluator::VisitUnaryReal(const UnaryOperator *E) {
+  if (!Visit(E->getSubExpr()))
+    return false;
+  // __real is a no-op on scalar lvalues.
+  if (E->getSubExpr()->getType()->isAnyComplexType())
+    HandleLValueComplexElement(Info, E, Result, E->getType(), false);
+  return true;
+}
+
+bool LValueExprEvaluator::VisitUnaryImag(const UnaryOperator *E) {
+  assert(E->getSubExpr()->getType()->isAnyComplexType() &&
+         "lvalue __imag__ on scalar?");
+  if (!Visit(E->getSubExpr()))
+    return false;
+  HandleLValueComplexElement(Info, E, Result, E->getType(), true);
+  return true;
 }
 
 //===----------------------------------------------------------------------===//

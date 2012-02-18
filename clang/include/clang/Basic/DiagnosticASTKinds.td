@@ -58,12 +58,14 @@ def note_constexpr_past_end : Note<
   "%select{temporary|%2}1 is not a constant expression">;
 def note_constexpr_past_end_subobject : Note<
   "cannot %select{access base class of|access derived class of|access field of|"
-  "access array element of|ERROR|call member function on}0 "
+  "access array element of|ERROR|call member function on|"
+  "access real component of|access imaginary component of}0 "
   "pointer past the end of object">;
 def note_constexpr_null_subobject : Note<
   "cannot %select{access base class of|access derived class of|access field of|"
   "access array element of|perform pointer arithmetic on|"
-  "call member function on}0 null pointer">;
+  "call member function on|access real component of|"
+  "access imaginary component of}0 null pointer">;
 def note_constexpr_var_init_non_constant : Note<
   "initializer of %0 is not a constant expression">;
 def note_constexpr_typeid_polymorphic : Note<
