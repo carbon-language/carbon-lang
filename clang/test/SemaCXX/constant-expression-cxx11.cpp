@@ -1198,3 +1198,13 @@ namespace VLASizeof {
         * 3;
   }
 }
+
+namespace CompoundLiteral {
+  // FIXME:
+  // We don't model the semantics of this correctly: the compound literal is
+  // represented as a prvalue in the AST, but actually behaves like an lvalue.
+  // We treat the compound literal as a temporary and refuse to produce a
+  // pointer to it. This is OK: we're not required to treat this as a constant
+  // in C++, and in C we model compound literals as lvalues.
+  constexpr int *p = (int*)(int[1]){0}; // expected-warning {{C99}} expected-error {{constant expression}} expected-note 2{{temporary}}
+}

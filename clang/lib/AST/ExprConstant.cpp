@@ -952,8 +952,10 @@ static bool IsGlobalLValue(APValue::LValueBase B) {
   switch (E->getStmtClass()) {
   default:
     return false;
-  case Expr::CompoundLiteralExprClass:
-    return cast<CompoundLiteralExpr>(E)->isFileScope();
+  case Expr::CompoundLiteralExprClass: {
+    const CompoundLiteralExpr *CLE = cast<CompoundLiteralExpr>(E);
+    return CLE->isFileScope() && CLE->isLValue();
+  }
   // A string literal has static storage duration.
   case Expr::StringLiteralClass:
   case Expr::PredefinedExprClass:
@@ -1002,6 +1004,9 @@ static bool CheckLValueConstantExpression(EvalInfo &Info, SourceLocation Loc,
   APValue::LValueBase Base = LVal.getLValueBase();
   const SubobjectDesignator &Designator = LVal.getLValueDesignator();
 
+  // Check that the object is a global. Note that the fake 'this' object we
+  // manufacture when checking potential constant expressions is conservatively
+  // assumed to be global here.
   if (!IsGlobalLValue(Base)) {
     if (Info.getLangOpts().CPlusPlus0x) {
       const ValueDecl *VD = Base.dyn_cast<const ValueDecl*>();
