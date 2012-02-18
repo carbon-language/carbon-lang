@@ -428,9 +428,8 @@ void CodeGenFunction::GenerateCode(GlobalDecl GD, llvm::Function *Fn,
   if (isa<CXXMethodDecl>(FD) && cast<CXXMethodDecl>(FD)->isInstance())
     CGM.getCXXABI().BuildInstanceFunctionParams(*this, ResTy, Args);
 
-  if (FD->getNumParams())
-    for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i)
-      Args.push_back(FD->getParamDecl(i));
+  for (unsigned i = 0, e = FD->getNumParams(); i != e; ++i)
+    Args.push_back(FD->getParamDecl(i));
 
   SourceRange BodyRange;
   if (Stmt *Body = FD->getBody()) BodyRange = Body->getSourceRange();
