@@ -9582,14 +9582,11 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   // the source array, and other clients (e.g., CodeGen) will perform
   // the necessary iteration with these index variables.
   SmallVector<VarDecl *, 4> IndexVariables;
-  bool InitializingArray = false;
   QualType BaseType = FieldType;
   QualType SizeType = S.Context.getSizeType();
   LSI->ArrayIndexStarts.push_back(LSI->ArrayIndexVars.size());
   while (const ConstantArrayType *Array
                         = S.Context.getAsConstantArrayType(BaseType)) {
-    InitializingArray = true;
-    
     // Create the iteration variable for this array index.
     IdentifierInfo *IterationVarName = 0;
     {
