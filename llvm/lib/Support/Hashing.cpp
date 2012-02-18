@@ -14,7 +14,7 @@ namespace llvm {
 // Add a possibly unaligned sequence of bytes.
 void GeneralHash::addUnaligned(const uint8_t *I, const uint8_t *E) {
   ptrdiff_t Length = E - I;
-  if (uintptr_t(I) & 3 == 0) {
+  if ((uintptr_t(I) & 3) == 0) {
     while (Length > 3) {
       mix(*reinterpret_cast<const uint32_t *>(I));
       I += 4;
