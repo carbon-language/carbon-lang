@@ -29,3 +29,20 @@ char Test1_harness_b(Test1 *p) {
   return [p foo];
 }
 
+// Basic test of C++ references with Objective-C pointers.
+@interface RDar10569024
+@property(readonly) int x;
+@end
+
+typedef RDar10569024* RDar10569024Ref;
+
+void rdar10569024_aux(RDar10569024Ref o);
+
+int rdar10569024(id p, id collection) {
+  for (id elem in collection) {
+    const RDar10569024Ref &o = (RDar10569024Ref) elem;
+    rdar10569024_aux(o); // no-warning
+    return o.x; // no-warning
+  }
+  return 0;
+}
