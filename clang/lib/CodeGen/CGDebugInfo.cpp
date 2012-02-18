@@ -502,8 +502,7 @@ llvm::DIType CGDebugInfo::createRecordFwdDecl(const RecordDecl *RD,
     llvm_unreachable("Unknown RecordDecl type!");
 
   // Create the type.
-  return DBuilder.createForwardDecl(Tag, RDName, DefUnit,
-				    Line);
+  return DBuilder.createForwardDecl(Tag, RDName, DefUnit, Line);
 }
 
 // Walk up the context chain and create forward decls for record decls,
