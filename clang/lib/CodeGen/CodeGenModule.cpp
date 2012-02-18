@@ -173,8 +173,6 @@ void CodeGenModule::Release() {
 void CodeGenModule::UpdateCompletedType(const TagDecl *TD) {
   // Make sure that this type is translated.
   Types.UpdateCompletedType(TD);
-  if (DebugInfo)
-    DebugInfo->UpdateCompletedType(TD);
 }
 
 llvm::MDNode *CodeGenModule::getTBAAInfo(QualType QTy) {

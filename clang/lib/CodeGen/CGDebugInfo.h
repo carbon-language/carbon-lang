@@ -178,10 +178,6 @@ public:
   /// EmitFunctionEnd - Constructs the debug code for exiting a function.
   void EmitFunctionEnd(CGBuilderTy &Builder);
 
-  /// UpdateCompletedType - Update type cache because the type is now
-  /// translated.
-  void UpdateCompletedType(const TagDecl *TD);
-
   /// EmitLexicalBlockStart - Emit metadata to indicate the beginning of a
   /// new lexical block and push the block onto the stack.
   void EmitLexicalBlockStart(CGBuilderTy &Builder, SourceLocation Loc);
