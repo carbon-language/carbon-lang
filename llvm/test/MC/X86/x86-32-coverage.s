@@ -18408,6 +18408,9 @@
 // CHECK: 	vmcall
         	vmcall
 
+// CHECK: 	vmfunc
+        	vmfunc
+
 // CHECK: 	vmclear	3735928559(%ebx,%ecx,8)
         	vmclear	0xdeadbeef(%ebx,%ecx,8)
 

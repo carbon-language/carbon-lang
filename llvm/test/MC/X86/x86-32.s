@@ -28,6 +28,9 @@
 	vmcall
 // CHECK: vmcall
 // CHECK: encoding: [0x0f,0x01,0xc1]
+	vmfunc
+// CHECK: vmfunc
+// CHECK: encoding: [0x0f,0x01,0xd4]
 	vmlaunch
 // CHECK: vmlaunch
 // CHECK: encoding: [0x0f,0x01,0xc2]

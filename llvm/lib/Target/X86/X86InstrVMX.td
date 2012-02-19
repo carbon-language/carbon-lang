@@ -33,6 +33,8 @@ def INVVPID64 : I<0x81, MRMSrcMem, (outs), (ins GR64:$src1, i128mem:$src2),
 def VMCALL : I<0x01, MRM_C1, (outs), (ins), "vmcall", []>, TB;
 def VMCLEARm : I<0xC7, MRM6m, (outs), (ins i64mem:$vmcs),
   "vmclear\t$vmcs", []>, OpSize, TB;
+// OF 01 D4
+def VMFUNC : I<0x01, MRM_D4, (outs), (ins), "vmfunc", []>, TB;
 // 0F 01 C2
 def VMLAUNCH : I<0x01, MRM_C2, (outs), (ins), "vmlaunch", []>, TB;
 // 0F 01 C3
