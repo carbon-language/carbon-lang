@@ -136,3 +136,31 @@ void fn7() {
   // CHECK: call void @_ZN10destroyme2D1Ev
   // CHECK: call void @_ZN10wantslist1D1Ev
 }
+
+void fn8() {
+  // CHECK: define void @_Z3fn8v
+  void target(std::initializer_list<std::initializer_list<destroyme1>>);
+  // objects should be destroyed before dm2, after call returns
+  // CHECK: call void @_Z6targetSt16initializer_listIS_I10destroyme1EE
+  std::initializer_list<destroyme1> inner;
+  target({ inner, { destroyme1() } });
+  // CHECK: call void @_ZN10destroyme1D1Ev
+  // Only one destroy loop, since only one inner init list is directly inited.
+  // CHECK-NOT: call void @_ZN10destroyme1D1Ev
+  destroyme2 dm2;
+  // CHECK: call void @_ZN10destroyme2D1Ev
+}
+
+void fn9() {
+  // CHECK: define void @_Z3fn9v
+  // objects should be destroyed after dm2
+  std::initializer_list<destroyme1> inner;
+  std::initializer_list<std::initializer_list<destroyme1>> list =
+      { inner, { destroyme1() } };
+  destroyme2 dm2;
+  // CHECK: call void @_ZN10destroyme2D1Ev
+  // CHECK: call void @_ZN10destroyme1D1Ev
+  // Only one destroy loop, since only one inner init list is directly inited.
+  // CHECK-NOT: call void @_ZN10destroyme1D1Ev
+  // CHECK: ret void
+}
