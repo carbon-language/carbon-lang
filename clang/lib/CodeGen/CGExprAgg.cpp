@@ -1263,19 +1263,17 @@ void CodeGenFunction::EmitAggregateCopy(llvm::Value *DestPtr,
                        Alignment, isVolatile);
 }
 
-void CodeGenFunction::MaybeEmitStdInitializerListCleanup(LValue lvalue,
-                                                    const Expr *init) {
+void CodeGenFunction::MaybeEmitStdInitializerListCleanup(llvm::Value *loc,
+                                                         const Expr *init) {
   const ExprWithCleanups *cleanups = dyn_cast<ExprWithCleanups>(init);
-  if (!cleanups)
-    return; // Nothing interesting here.
-  init = cleanups->getSubExpr();
+  if (cleanups)
+    init = cleanups->getSubExpr();
 
   if (isa<InitListExpr>(init) &&
       cast<InitListExpr>(init)->initializesStdInitializerList()) {
     // We initialized this std::initializer_list with an initializer list.
     // A backing array was created. Push a cleanup for it.
-    EmitStdInitializerListCleanup(lvalue.getAddress(),
-                                  cast<InitListExpr>(init));
+    EmitStdInitializerListCleanup(loc, cast<InitListExpr>(init));
   }
 }
 

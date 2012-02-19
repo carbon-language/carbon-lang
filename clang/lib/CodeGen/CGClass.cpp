@@ -456,7 +456,7 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
 
     // Now, outside of the initializer cleanup scope, destroy the backing array
     // for a std::initializer_list member.
-    CGF.MaybeEmitStdInitializerListCleanup(LV, Init);
+    CGF.MaybeEmitStdInitializerListCleanup(LV.getAddress(), Init);
 
     return;
   }

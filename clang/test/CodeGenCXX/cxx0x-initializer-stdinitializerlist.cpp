@@ -195,3 +195,23 @@ haslist2::haslist2()
   // CHECK: call void @_ZN10destroyme2D1Ev
   // CHECK: call void @_ZN10destroyme1D1Ev
 }
+
+void fn10() {
+  // CHECK: define void @_Z4fn10v
+  // CHECK: alloca [3 x i32]
+  // CHECK: call noalias i8* @_Znwm
+  // CHECK: store i32 1
+  // CHECK: store i32 2
+  // CHECK: store i32 3
+  // CHECK: store i32*
+  // CHECK: store i{{32|64}} 3
+  (void) new std::initializer_list<int> {1, 2, 3};
+}
+
+void fn11() {
+  // CHECK: define void @_Z4fn11v
+  (void) new std::initializer_list<destroyme1> {destroyme1(), destroyme1()};
+  // CHECK: call void @_ZN10destroyme1D1Ev
+  destroyme2 dm2;
+  // CHECK: call void @_ZN10destroyme2D1Ev
+}

@@ -1093,7 +1093,7 @@ void CodeGenFunction::EmitExprAsInit(const Expr *init,
                                               AggValueSlot::IsDestructed,
                                          AggValueSlot::DoesNotNeedGCBarriers,
                                               AggValueSlot::IsNotAliased));
-    MaybeEmitStdInitializerListCleanup(lvalue, init);
+    MaybeEmitStdInitializerListCleanup(lvalue.getAddress(), init);
   }
 }
 
