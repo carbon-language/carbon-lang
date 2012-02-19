@@ -1358,7 +1358,7 @@ private:
       // Becoming a new entering range.
       assert(BR[LI->reg].Dead == 0 && BR[LI->reg].Def == 0 &&
              "Bundle shouldn't be re-defining reg mid-range.");
-      assert(BR[LI->reg].Use == 0 || BR[LI->reg].Use == LR &&
+      assert((BR[LI->reg].Use == 0 || BR[LI->reg].Use == LR) &&
              "Bundle shouldn't have different use range for same reg.");
       LR->end = LastUse.getRegSlot();
       BR[LI->reg].Use = LR;
