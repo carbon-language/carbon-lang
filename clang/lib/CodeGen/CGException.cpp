@@ -1204,14 +1204,10 @@ static void emitCatchDispatchBlock(CodeGenFunction &CGF,
     if (nextIsEnd) {
       CGF.Builder.restoreIP(savedIP);
       return;
-
-    // Otherwise we need to emit and continue at that block.
-    } else {
-      CGF.EmitBlock(nextBlock);
     }
+    // Otherwise we need to emit and continue at that block.
+    CGF.EmitBlock(nextBlock);
   }
-
-  llvm_unreachable("fell out of loop!");
 }
 
 void CodeGenFunction::popCatchScope() {

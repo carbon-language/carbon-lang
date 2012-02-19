@@ -2137,11 +2137,6 @@ static CachedProperties computeCachedProperties(const Type *T) {
   }
 
   llvm_unreachable("unhandled type class");
-
-  // C++ [basic.link]p8:
-  //   Names not covered by these rules have no linkage.
-  NamedDecl::LinkageInfo LV(NoLinkage, DefaultVisibility, false);
-  return CachedProperties(LV, false);
 }
 
 /// \brief Determine the linkage of this type.

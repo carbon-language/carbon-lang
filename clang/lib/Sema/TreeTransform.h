@@ -878,7 +878,6 @@ public:
       case LookupResult::FoundOverloaded:
       case LookupResult::FoundUnresolvedValue:
         llvm_unreachable("Tag lookup cannot find non-tags");
-        return QualType();
         
       case LookupResult::Ambiguous:
         // Let the LookupResult structure handle ambiguities.
@@ -1783,8 +1782,6 @@ public:
     default:
       llvm_unreachable("Invalid C++ named cast");
     }
-
-    return ExprError();
   }
 
   /// \brief Build a new C++ static_cast expression.
@@ -2854,7 +2851,6 @@ TreeTransform<Derived>::TransformTemplateName(CXXScopeSpec &SS,
   
   // These should be getting filtered out before they reach the AST.
   llvm_unreachable("overloaded function decl survived to here");
-  return TemplateName();
 }
 
 template<typename Derived>
@@ -3255,7 +3251,6 @@ TreeTransform<Derived>::TransformType(TypeLocBuilder &TLB, TypeLoc T) {
   }
 
   llvm_unreachable("unhandled type loc!");
-  return QualType();
 }
 
 /// FIXME: By default, this routine adds type qualifiers only to types
@@ -6737,7 +6732,6 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
   case OO_Array_New:
   case OO_Array_Delete:
     llvm_unreachable("new and delete operators cannot use CXXOperatorCallExpr");
-    return ExprError();
     
   case OO_Call: {
     // This is a call to an object's operator().
@@ -6774,12 +6768,10 @@ TreeTransform<Derived>::TransformCXXOperatorCallExpr(CXXOperatorCallExpr *E) {
 
   case OO_Conditional:
     llvm_unreachable("conditional operator is not actually overloadable");
-    return ExprError();
 
   case OO_None:
   case NUM_OVERLOADED_OPERATORS:
     llvm_unreachable("not an overloaded operator?");
-    return ExprError();
   }
 
   ExprResult Callee = getDerived().TransformExpr(E->getCallee());
