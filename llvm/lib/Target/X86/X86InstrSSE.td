@@ -1,4 +1,4 @@
-//===-- X86InstrSSE.td - Describe the X86 Instruction Set --*- tablegen -*-===//
+//===-- X86InstrSSE.td - SSE Instruction Set ---------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

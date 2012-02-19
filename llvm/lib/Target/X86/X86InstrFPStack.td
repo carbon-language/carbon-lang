@@ -1,4 +1,4 @@
-//==- X86InstrFPStack.td - Describe the X86 Instruction Set --*- tablegen -*-=//
+//===- X86InstrFPStack.td - FPU Instruction Set ------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

@@ -1,4 +1,4 @@
-//===---- X86Subtarget.h - Define Subtarget for the X86 --------*- C++ -*--===//
+//===-- X86Subtarget.h - Define Subtarget for the X86 ----------*- C++ -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

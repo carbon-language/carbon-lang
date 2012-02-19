@@ -1,4 +1,4 @@
-//===-- X86InstrXOP.td - Describe the X86 Instruction Set --*- tablegen -*-===//
+//===-- X86InstrXOP.td - XOP Instruction Set ---------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

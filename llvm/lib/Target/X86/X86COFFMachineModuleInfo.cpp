@@ -1,4 +1,4 @@
-//===-- X86COFFMachineModuleInfo.cpp --------------------------------------===//
+//===-- X86COFFMachineModuleInfo.cpp - X86 COFF MMI Impl ------------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //

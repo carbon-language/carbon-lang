@@ -1,4 +1,4 @@
-//===-- X86InstrFragmentsSIMD.td - x86 ISA -----------------*- tablegen -*-===//
+//===-- X86InstrFragmentsSIMD.td - x86 SIMD ISA ------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

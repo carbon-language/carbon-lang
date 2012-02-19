@@ -1,4 +1,4 @@
-//===-- X86InstrFMA.td - Describe the X86 Instruction Set --*- tablegen -*-===//
+//===-- X86InstrFMA.td - FMA Instruction Set ---------------*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
