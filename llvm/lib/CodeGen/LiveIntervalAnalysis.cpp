@@ -1036,6 +1036,15 @@ private:
   typedef std::pair<LiveInterval*, LiveRange*> IntRangePair;
   typedef DenseSet<IntRangePair> RangeSet;
 
+  struct RegRanges {
+    LiveRange* Use;
+    LiveRange* EC;
+    LiveRange* Dead;
+    LiveRange* Def;
+    RegRanges() : Use(0), EC(0), Dead(0), Def(0) {}
+  };
+  typedef DenseMap<unsigned, RegRanges> BundleRanges;
+
 public:
   HMEditor(LiveIntervals& LIS, const MachineRegisterInfo& MRI,
            const TargetRegisterInfo& TRI, SlotIndex NewIdx)
@@ -1045,6 +1054,8 @@ public:
   // This assumes that MI used to be at OldIdx, and now resides at
   // NewIdx.
   void moveAllOperandsFrom(MachineInstr* MI, SlotIndex OldIdx) {
+    assert(NewIdx != OldIdx && "No-op move? That's a bit strange.");
+
     // Collect the operands.
     RangeSet Entering, Internal, Exiting;
     bool hasRegMaskOp = false;
@@ -1062,9 +1073,33 @@ public:
     std::for_each(Entering.begin(), Entering.end(), validator);
     std::for_each(Internal.begin(), Internal.end(), validator);
     std::for_each(Exiting.begin(), Exiting.end(), validator);
-    assert(validator.rangesOk() && "moveOperandsFrom broke liveness.");
+    assert(validator.rangesOk() && "moveAllOperandsFrom broke liveness.");
 #endif
 
+  }
+
+  void moveAllOperandsInto(MachineInstr* MI, MachineInstr* BundleStart,
+                           SlotIndex OldIdx) {
+    if (MI == BundleStart)
+      return; // Bundling instr with itself - nothing to do.
+
+    BundleRanges BR = createBundleRanges(BundleStart);
+
+    RangeSet Entering, Internal, Exiting;
+    bool hasRegMaskOp = false;
+    collectRanges(MI, Entering, Internal, Exiting, hasRegMaskOp, OldIdx);
+
+    moveAllEnteringFromInto(OldIdx, Entering, BR);
+    moveAllInternalFromInto(OldIdx, Internal, BR);
+    moveAllExitingFromInto(OldIdx, Exiting, BR);
+
+#ifndef NDEBUG
+    LIValidator validator;
+    std::for_each(Entering.begin(), Entering.end(), validator);
+    std::for_each(Internal.begin(), Internal.end(), validator);
+    std::for_each(Exiting.begin(), Exiting.end(), validator);
+    assert(validator.rangesOk() && "moveAllOperandsInto broke liveness.");
+#endif
   }
 
 private:
@@ -1154,6 +1189,45 @@ private:
     }
   }
 
+  BundleRanges createBundleRanges(MachineInstr* BundleMI) {
+    BundleRanges BR;
+
+    MachineBasicBlock::instr_iterator BII(BundleMI);
+    RangeSet Entering, Internal, Exiting;
+    bool hasRegMaskOp = false;
+    collectRanges(BII, Entering, Internal, Exiting, hasRegMaskOp, NewIdx);
+    for (++BII; BII->isInsideBundle(); ++BII) {
+      collectRanges(BII, Entering, Internal, Exiting, hasRegMaskOp, NewIdx);
+    }
+
+    for (RangeSet::iterator EI = Entering.begin(), EE = Entering.end();
+         EI == EE; ++EI) {
+      LiveInterval* LI = EI->first;
+      LiveRange* LR = EI->second;
+      BR[LI->reg].Use = LR;
+    }
+
+    for (RangeSet::iterator II = Internal.begin(), IE = Internal.end();
+         II == IE; ++II) {
+      LiveInterval* LI = II->first;
+      LiveRange* LR = II->second;
+      if (LR->end.isDead()) {
+        BR[LI->reg].Dead = LR;
+      } else {
+        BR[LI->reg].EC = LR;
+      }
+    }
+
+    for (RangeSet::iterator EI = Exiting.begin(), EE = Exiting.end();
+         EI == EE; ++EI) {
+      LiveInterval* LI = EI->first;
+      LiveRange* LR = EI->second;
+      BR[LI->reg].Def = LR;
+    }
+
+    return BR;
+  }
+
   void moveKillFlags(unsigned reg, SlotIndex OldIdx, SlotIndex newKillIdx) {
     MachineInstr* OldKillMI = LIS.getInstructionFromIndex(OldIdx);
     if (!OldKillMI->killsRegister(reg))
@@ -1199,7 +1273,7 @@ private:
     SlotIndex LastUse = findLastUseBefore(LI->reg, OldIdx);
     if (LastUse != NewIdx)
       moveKillFlags(LI->reg, NewIdx, LastUse);
-    LR->end = LastUse.getRegSlot(LR->end.isEarlyClobber());
+    LR->end = LastUse.getRegSlot();
   }
 
   void moveEnteringDownFrom(SlotIndex OldIdx, IntRangePair& P) {
@@ -1259,6 +1333,137 @@ private:
     for (RangeSet::iterator EI = Exiting.begin(), EE = Exiting.end();
          EI != EE; ++EI)
       moveExitingFrom(OldIdx, *EI);
+  }
+
+  void moveEnteringUpFromInto(SlotIndex OldIdx, IntRangePair& P,
+                              BundleRanges& BR) {
+    LiveInterval* LI = P.first;
+    LiveRange* LR = P.second;
+    bool LiveThrough = LR->end > OldIdx.getRegSlot();
+    if (LiveThrough) {
+      assert((LR->start < NewIdx || BR[LI->reg].Def == LR) &&
+             "Def in bundle should be def range.");
+      assert((BR[LI->reg].Use == 0 || BR[LI->reg].Use == LR) &&
+             "If bundle has use for this reg it should be LR.");
+      BR[LI->reg].Use = LR;
+      return;
+    }
+
+    SlotIndex LastUse = findLastUseBefore(LI->reg, OldIdx);
+    // TODO: Kill flag transfer is broken. For "Into" methods NewIdx is the
+    // bundle start, so we need another way to find MI.
+    moveKillFlags(LI->reg, NewIdx, LastUse);
+
+    if (LR->start < NewIdx) {
+      // Becoming a new entering range.
+      assert(BR[LI->reg].Dead == 0 && BR[LI->reg].Def == 0 &&
+             "Bundle shouldn't be re-defining reg mid-range.");
+      assert(BR[LI->reg].Use == 0 || BR[LI->reg].Use == LR &&
+             "Bundle shouldn't have different use range for same reg.");
+      LR->end = LastUse.getRegSlot();
+      BR[LI->reg].Use = LR;
+    } else {
+      // Becoming a new Dead-def.
+      assert(LR->start == NewIdx.getRegSlot(LR->start.isEarlyClobber()) &&
+             "Live range starting at unexpected slot.");
+      assert(BR[LI->reg].Def == LR && "Reg should have def range.");
+      assert(BR[LI->reg].Dead == 0 &&
+               "Can't have def and dead def of same reg in a bundle.");
+      LR->end = LastUse.getDeadSlot();
+      BR[LI->reg].Dead = BR[LI->reg].Def;
+      BR[LI->reg].Def = 0;
+    }
+  }
+
+  void moveEnteringDownFromInto(SlotIndex OldIdx, IntRangePair& P,
+                                BundleRanges& BR) {
+    LiveInterval* LI = P.first;
+    LiveRange* LR = P.second;
+    if (NewIdx > LR->end) {
+      // Range extended to bundle. Add to bundle uses.
+      // Note: Currently adds kill flags to bundle start.
+      assert(BR[LI->reg].Use == 0 &&
+             "Bundle already has use range for reg.");
+      moveKillFlags(LI->reg, LR->end, NewIdx);
+      LR->end = NewIdx.getRegSlot();
+      BR[LI->reg].Use = LR;
+    } else {
+      assert(BR[LI->reg].Use != 0 &&
+             "Bundle should already have a use range for reg.");
+    }
+  }
+
+  void moveAllEnteringFromInto(SlotIndex OldIdx, RangeSet& Entering,
+                               BundleRanges& BR) {
+    bool GoingUp = NewIdx < OldIdx;
+
+    if (GoingUp) {
+      for (RangeSet::iterator EI = Entering.begin(), EE = Entering.end();
+           EI != EE; ++EI)
+        moveEnteringUpFromInto(OldIdx, *EI, BR);
+    } else {
+      for (RangeSet::iterator EI = Entering.begin(), EE = Entering.end();
+           EI != EE; ++EI)
+        moveEnteringDownFromInto(OldIdx, *EI, BR);
+    }
+  }
+
+  void moveInternalFromInto(SlotIndex OldIdx, IntRangePair& P,
+                            BundleRanges& BR) {
+    // TODO: Sane rules for moving ranges into bundles.
+  }
+
+  void moveAllInternalFromInto(SlotIndex OldIdx, RangeSet& Internal,
+                               BundleRanges& BR) {
+    for (RangeSet::iterator II = Internal.begin(), IE = Internal.end();
+         II != IE; ++II)
+      moveInternalFromInto(OldIdx, *II, BR);
+  }
+
+  void moveExitingFromInto(SlotIndex OldIdx, IntRangePair& P,
+                           BundleRanges& BR) {
+    LiveInterval* LI = P.first;
+    LiveRange* LR = P.second;
+
+    assert(LR->start.isRegister() &&
+           "Don't know how to merge exiting ECs into bundles yet.");
+
+    if (LR->end > NewIdx.getDeadSlot()) {
+      // This range is becoming an exiting range on the bundle.
+      // If there was an old dead-def of this reg, delete it.
+      if (BR[LI->reg].Dead != 0) {
+        LI->removeRange(*BR[LI->reg].Dead);
+        BR[LI->reg].Dead = 0;
+      }
+      assert(BR[LI->reg].Def == 0 &&
+             "Can't have two defs for the same variable exiting a bundle.");
+      LR->start = NewIdx.getRegSlot();
+      LR->valno->def = LR->start;
+      BR[LI->reg].Def = LR;
+    } else {
+      // This range is becoming internal to the bundle.
+      assert(LR->end == NewIdx.getRegSlot() &&
+             "Can't bundle def whose kill is before the bundle");
+      if (BR[LI->reg].Dead || BR[LI->reg].Def) {
+        // Already have a def for this. Just delete range.
+        LI->removeRange(*LR);
+      } else {
+        // Make range dead, record.
+        LR->end = NewIdx.getDeadSlot();
+        BR[LI->reg].Dead = LR;
+        assert(BR[LI->reg].Use == LR &&
+               "Range becoming dead should currently be use.");
+      }
+      // In both cases the range is no longer a use on the bundle.
+      BR[LI->reg].Use = 0;
+    }
+  }
+
+  void moveAllExitingFromInto(SlotIndex OldIdx, RangeSet& Exiting,
+                              BundleRanges& BR) {
+    for (RangeSet::iterator EI = Exiting.begin(), EE = Exiting.end();
+         EI != EE; ++EI)
+      moveExitingFromInto(OldIdx, *EI, BR);
   }
 
 };
