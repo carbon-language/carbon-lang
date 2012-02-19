@@ -4551,7 +4551,7 @@ template <>
 string
 __time_get_storage<char>::__analyze(char fmt, const ctype<char>& ct)
 {
-    tm t;
+    tm t = {0};
     t.tm_sec = 59;
     t.tm_min = 55;
     t.tm_hour = 23;
@@ -4698,7 +4698,7 @@ template <>
 wstring
 __time_get_storage<wchar_t>::__analyze(char fmt, const ctype<wchar_t>& ct)
 {
-    tm t;
+    tm t = {0};
     t.tm_sec = 59;
     t.tm_min = 55;
     t.tm_hour = 23;
