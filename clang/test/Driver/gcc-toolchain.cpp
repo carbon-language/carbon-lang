@@ -20,8 +20,8 @@
 // CHECK: "-internal-externc-isystem"
 // CHECK: "/usr/include"
 // CHECK: "{{.*}}/ld
-// CHECK: "[[TOOLCHAIN]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/crtbegin.o"
-// CHECK: "-L[[TOOLCHAIN]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5"
-// CHECK: "-L[[TOOLCHAIN]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../.."
+// CHECK: "[[TOOLCHAIN2:.*]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/crtbegin.o"
+// CHECK: "-L[[TOOLCHAIN2]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5"
+// CHECK: "-L[[TOOLCHAIN2]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../.."
 // CHECK: "-L/lib"
 // CHECK: "-L/usr/lib"
