@@ -1,7 +1,6 @@
 from clang.cindex import CursorKind
 from clang.cindex import Index
 from clang.cindex import TypeKind
-from nose.tools import ok_
 from nose.tools import raises
 
 kInput = """\
@@ -21,9 +20,18 @@ struct teststruct {
 
 """
 
-def test_a_struct():
+def get_tu(source=kInput, lang='c'):
+    name = 't.c'
+    if lang == 'cpp':
+        name = 't.cpp'
+
     index = Index.create()
-    tu = index.parse('t.c', unsaved_files = [('t.c',kInput)])
+    tu = index.parse(name, unsaved_files=[(name, source)])
+    assert tu is not None
+    return tu
+
+def test_a_struct():
+    tu = get_tu(kInput)
 
     for n in tu.cursor.get_children():
         if n.spelling == 'teststruct':
@@ -86,8 +94,7 @@ struct teststruct {
 };
 """
 def testConstantArray():
-    index = Index.create()
-    tu = index.parse('t.c', unsaved_files = [('t.c',constarrayInput)])
+    tu = get_tu(constarrayInput)
 
     for n in tu.cursor.get_children():
         if n.spelling == 'teststruct':
@@ -103,9 +110,7 @@ def testConstantArray():
         assert False, "Didn't find teststruct??"
 
 def test_is_pod():
-    index = Index.create()
-    tu = index.parse('t.c', unsaved_files=[('t.c', 'int i; void f();')])
-    assert tu is not None
+    tu = get_tu('int i; void f();')
     i, f = None, None
 
     for cursor in tu.cursor.get_children():
@@ -120,15 +125,40 @@ def test_is_pod():
     assert i.type.is_pod()
     assert not f.type.is_pod()
 
-def test_element_type():
-    index = Index.create()
-    tu = index.parse('t.c', unsaved_files=[('t.c', 'int i[5];')])
-    assert tu is not None
+def test_function_variadic():
+    """Ensure Type.is_function_variadic works."""
 
+    source ="""
+#include <stdarg.h>
+
+void foo(int a, ...);
+void bar(int a, int b);
+"""
+
+    tu = get_tu(source)
+    foo, bar = None, None
+    for cursor in tu.cursor.get_children():
+        if cursor.spelling == 'foo':
+            foo = cursor
+        elif cursor.spelling == 'bar':
+            bar = cursor
+
+    assert foo is not None
+    assert bar is not None
+
+    assert isinstance(foo.type.is_function_variadic(), bool)
+    assert foo.type.is_function_variadic()
+    assert not bar.type.is_function_variadic()
+
+def test_element_type():
+    tu = get_tu('int i[5];')
+    i = None
     for cursor in tu.cursor.get_children():
         if cursor.spelling == 'i':
             i = cursor
             break
+
+    assert i is not None
 
     assert i.type.kind == TypeKind.CONSTANTARRAY
     assert i.type.element_type.kind == TypeKind.INT
@@ -136,8 +166,7 @@ def test_element_type():
 @raises(Exception)
 def test_invalid_element_type():
     """Ensure Type.element_type raises if type doesn't have elements."""
-    index = Index.create()
-    tu = index.parse('t.c', unsaved_files=[('t.c', 'int i;')])
+    tu = get_tu('int i;')
 
     i = None
     for cursor in tu.cursor.get_children():
@@ -145,13 +174,11 @@ def test_invalid_element_type():
             i = cursor
             break
 
-    ok_(i is not None)
+    assert i is not None
     i.element_type
 
 def test_element_count():
-    index = Index.create()
-    tu = index.parse('t.c', unsaved_files=[('t.c', 'int i[5]; int j;')])
-    assert tu is not None
+    tu = get_tu('int i[5]; int j;')
 
     for cursor in tu.cursor.get_children():
         if cursor.spelling == 'i':

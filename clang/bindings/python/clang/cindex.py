@@ -1205,6 +1205,12 @@ class Type(Structure):
         """
         return Type_is_restrict_qualified(self)
 
+    def is_function_variadic(self):
+        """Determine whether this function Type is a variadic function type."""
+        assert self.kind == TypeKind.FUNCTIONPROTO
+
+        return Type_is_variadic(self)
+
     def is_pod(self):
         """Determine whether this Type represents plain old data (POD)."""
         return Type_is_pod(self)
@@ -1892,6 +1898,10 @@ Type_is_restrict_qualified.restype = bool
 Type_is_pod = lib.clang_isPODType
 Type_is_pod.argtypes = [Type]
 Type_is_pod.restype = bool
+
+Type_is_variadic = lib.clang_isFunctionTypeVariadic
+Type_is_variadic.argtypes = [Type]
+Type_is_variadic.restype = bool
 
 Type_get_pointee = lib.clang_getPointeeType
 Type_get_pointee.argtypes = [Type]
