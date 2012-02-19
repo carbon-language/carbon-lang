@@ -3340,7 +3340,7 @@ namespace {
     // Rounding down is just a truncation, except we also want to drop
     // trailing zeros from the new result.
     if (buffer[FirstSignificant - 1] < '5') {
-      while (buffer[FirstSignificant] == '0')
+      while (FirstSignificant < N && buffer[FirstSignificant] == '0')
         FirstSignificant++;
 
       exp += FirstSignificant;
