@@ -1181,7 +1181,7 @@ private:
     for (MachineRegisterInfo::use_nodbg_iterator
            UI = MRI.use_nodbg_begin(Reg),
            UE = MRI.use_nodbg_end();
-         UI != UE; ++UI) {
+         UI != UE; UI.skipInstruction()) {
       const MachineInstr* MI = &*UI;
       SlotIndex InstSlot = LIS.getSlotIndexes()->getInstructionIndex(MI);
       if (InstSlot > LastUse && InstSlot < OldIdx)
