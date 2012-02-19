@@ -13,9 +13,9 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "x86-isel"
+#include "X86ISelLowering.h"
 #include "X86.h"
 #include "X86InstrBuilder.h"
-#include "X86ISelLowering.h"
 #include "X86TargetMachine.h"
 #include "X86TargetObjectFile.h"
 #include "Utils/X86ShuffleDecode.h"
@@ -45,14 +45,11 @@
 #include "llvm/ADT/VariadicFunction.h"
 #include "llvm/Support/CallSite.h"
 #include "llvm/Support/Debug.h"
-#include "llvm/Support/Dwarf.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
-#include "llvm/Support/raw_ostream.h"
 #include "llvm/Target/TargetOptions.h"
 #include <bitset>
 using namespace llvm;
-using namespace dwarf;
 
 STATISTIC(NumTailCalls, "Number of tail calls");
 
