@@ -1714,6 +1714,7 @@ bool Parser::ParseUnqualifiedIdTemplateId(CXXScopeSpec &SS,
     }
 
     TemplateId->SS = SS;
+    TemplateId->TemplateKWLoc = TemplateKWLoc;
     TemplateId->Template = Template;
     TemplateId->Kind = TNK;
     TemplateId->LAngleLoc = LAngleLoc;
