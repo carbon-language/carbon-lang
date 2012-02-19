@@ -58,12 +58,17 @@ struct destroyme1 {
 struct destroyme2 {
   ~destroyme2();
 };
+struct witharg1 {
+  witharg1(const destroyme1&);
+  ~witharg1();
+};
 
 
 void fn2() {
   // CHECK: define void @_Z3fn2v
   void target(std::initializer_list<destroyme1>);
   // objects should be destroyed before dm2, after call returns
+  // CHECK: call void @_Z6targetSt16initializer_listI10destroyme1E
   target({ destroyme1(), destroyme1() });
   // CHECK: call void @_ZN10destroyme1D1Ev
   destroyme2 dm2;
@@ -77,4 +82,29 @@ void fn3() {
   destroyme2 dm2;
   // CHECK: call void @_ZN10destroyme2D1Ev
   // CHECK: call void @_ZN10destroyme1D1Ev
+}
+
+void fn4() {
+  // CHECK: define void @_Z3fn4v
+  void target(std::initializer_list<witharg1>);
+  // objects should be destroyed before dm2, after call returns
+  // CHECK: call void @_ZN8witharg1C1ERK10destroyme1
+  // CHECK: call void @_Z6targetSt16initializer_listI8witharg1E
+  target({ witharg1(destroyme1()), witharg1(destroyme1()) });
+  // CHECK: call void @_ZN8witharg1D1Ev
+  // CHECK: call void @_ZN10destroyme1D1Ev
+  destroyme2 dm2;
+  // CHECK: call void @_ZN10destroyme2D1Ev
+}
+
+void fn5() {
+  // CHECK: define void @_Z3fn5v
+  // temps should be destroyed before dm2
+  // objects should be destroyed after dm2
+  // CHECK: call void @_ZN8witharg1C1ERK10destroyme1
+  auto list = { witharg1(destroyme1()), witharg1(destroyme1()) };
+  // CHECK: call void @_ZN10destroyme1D1Ev
+  destroyme2 dm2;
+  // CHECK: call void @_ZN10destroyme2D1Ev
+  // CHECK: call void @_ZN8witharg1D1Ev
 }
