@@ -368,77 +368,6 @@ namespace llvm {
 
   /// Define some predicates that are used for node matching.
   namespace X86 {
-    /// isPSHUFDMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to PSHUFD.
-    bool isPSHUFDMask(ShuffleVectorSDNode *N);
-
-    /// isPSHUFHWMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to PSHUFD.
-    bool isPSHUFHWMask(ShuffleVectorSDNode *N);
-
-    /// isPSHUFLWMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to PSHUFD.
-    bool isPSHUFLWMask(ShuffleVectorSDNode *N);
-
-    /// isSHUFPMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to SHUFP*.
-    bool isSHUFPMask(ShuffleVectorSDNode *N, bool HasAVX);
-
-    /// isMOVHLPSMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to MOVHLPS.
-    bool isMOVHLPSMask(ShuffleVectorSDNode *N);
-
-    /// isMOVHLPS_v_undef_Mask - Special case of isMOVHLPSMask for canonical form
-    /// of vector_shuffle v, v, <2, 3, 2, 3>, i.e. vector_shuffle v, undef,
-    /// <2, 3, 2, 3>
-    bool isMOVHLPS_v_undef_Mask(ShuffleVectorSDNode *N);
-
-    /// isMOVLPMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for MOVLP{S|D}.
-    bool isMOVLPMask(ShuffleVectorSDNode *N);
-
-    /// isMOVHPMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for MOVHP{S|D}.
-    /// as well as MOVLHPS.
-    bool isMOVLHPSMask(ShuffleVectorSDNode *N);
-
-    /// isUNPCKLMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to UNPCKL.
-    bool isUNPCKLMask(ShuffleVectorSDNode *N, bool HasAVX2,
-                      bool V2IsSplat = false);
-
-    /// isUNPCKHMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to UNPCKH.
-    bool isUNPCKHMask(ShuffleVectorSDNode *N, bool HasAVX2,
-                      bool V2IsSplat = false);
-
-    /// isUNPCKL_v_undef_Mask - Special case of isUNPCKLMask for canonical form
-    /// of vector_shuffle v, v, <0, 4, 1, 5>, i.e. vector_shuffle v, undef,
-    /// <0, 0, 1, 1>
-    bool isUNPCKL_v_undef_Mask(ShuffleVectorSDNode *N, bool HasAVX2);
-
-    /// isUNPCKH_v_undef_Mask - Special case of isUNPCKHMask for canonical form
-    /// of vector_shuffle v, v, <2, 6, 3, 7>, i.e. vector_shuffle v, undef,
-    /// <2, 2, 3, 3>
-    bool isUNPCKH_v_undef_Mask(ShuffleVectorSDNode *N, bool HasAVX2);
-
-    /// isMOVLMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to MOVSS,
-    /// MOVSD, and MOVD, i.e. setting the lowest element.
-    bool isMOVLMask(ShuffleVectorSDNode *N);
-
-    /// isMOVSHDUPMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to MOVSHDUP.
-    bool isMOVSHDUPMask(ShuffleVectorSDNode *N, const X86Subtarget *Subtarget);
-
-    /// isMOVSLDUPMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to MOVSLDUP.
-    bool isMOVSLDUPMask(ShuffleVectorSDNode *N, const X86Subtarget *Subtarget);
-
-    /// isMOVDDUPMask - Return true if the specified VECTOR_SHUFFLE operand
-    /// specifies a shuffle of elements that is suitable for input to MOVDDUP.
-    bool isMOVDDUPMask(ShuffleVectorSDNode *N);
-
     /// isVEXTRACTF128Index - Return true if the specified
     /// EXTRACT_SUBVECTOR operand specifies a vector extract that is
     /// suitable for input to VEXTRACTF128.
@@ -448,19 +377,6 @@ namespace llvm {
     /// INSERT_SUBVECTOR operand specifies a subvector insert that is
     /// suitable for input to VINSERTF128.
     bool isVINSERTF128Index(SDNode *N);
-
-    /// getShuffleSHUFImmediate - Return the appropriate immediate to shuffle
-    /// the specified isShuffleMask VECTOR_SHUFFLE mask with PSHUF* and SHUFP*
-    /// instructions. Handles 128-bit and 256-bit.
-    unsigned getShuffleSHUFImmediate(ShuffleVectorSDNode *N);
-
-    /// getShufflePSHUFHWImmediate - Return the appropriate immediate to shuffle
-    /// the specified VECTOR_SHUFFLE mask with PSHUFHW instruction.
-    unsigned getShufflePSHUFHWImmediate(SDNode *N);
-
-    /// getShufflePSHUFLWImmediate - Return the appropriate immediate to shuffle
-    /// the specified VECTOR_SHUFFLE mask with PSHUFLW instruction.
-    unsigned getShufflePSHUFLWImmediate(SDNode *N);
 
     /// getExtractVEXTRACTF128Immediate - Return the appropriate
     /// immediate to extract the specified EXTRACT_SUBVECTOR index
