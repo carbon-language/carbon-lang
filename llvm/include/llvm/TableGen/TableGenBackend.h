@@ -16,7 +16,6 @@
 #define LLVM_TABLEGEN_TABLEGENBACKEND_H
 
 #include "llvm/Support/raw_ostream.h"
-#include <string>
 
 namespace llvm {
 
@@ -35,7 +34,7 @@ struct TableGenBackend {
 public:   // Useful helper routines...
   /// EmitSourceFileHeader - Output a LLVM style file header to the specified
   /// ostream.
-  void EmitSourceFileHeader(const std::string &Desc, raw_ostream &OS) const;
+  void EmitSourceFileHeader(StringRef Desc, raw_ostream &OS) const;
 
 };
 
