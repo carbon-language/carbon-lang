@@ -1033,89 +1033,82 @@ private:
   const TargetRegisterInfo& TRI;
   SlotIndex NewIdx;
 
+  typedef std::pair<LiveInterval*, LiveRange*> IntRangePair;
+  typedef DenseSet<IntRangePair> RangeSet;
+
 public:
   HMEditor(LiveIntervals& LIS, const MachineRegisterInfo& MRI,
            const TargetRegisterInfo& TRI, SlotIndex NewIdx)
     : LIS(LIS), MRI(MRI), TRI(TRI), NewIdx(NewIdx) {}
 
-  // Update lr to be defined at NewIdx. Preserves lr.
-  void moveDef(LiveRange& LR, LiveInterval& LI) {
-    LR.start = NewIdx.getRegSlot();
-    LR.valno->def = NewIdx.getRegSlot();
-    assert(intervalRangesSane(LI) && "Broke live interval moving def.");
+  // Update intervals for all operands of MI from OldIdx to NewIdx.
+  // This assumes that MI used to be at OldIdx, and now resides at
+  // NewIdx.
+  void moveAllOperandsFrom(MachineInstr* MI, SlotIndex OldIdx) {
+    // Collect the operands.
+    RangeSet Entering, Internal, Exiting;
+    collectRanges(MI, Entering, Internal, Exiting, OldIdx);
+
+    moveAllEnteringFrom(OldIdx, Entering);
+    moveAllInternalFrom(OldIdx, Internal);
+    moveAllExitingFrom(OldIdx, Exiting);
+
+#ifndef NDEBUG
+    LIValidator validator;
+    std::for_each(Entering.begin(), Entering.end(), validator);
+    std::for_each(Internal.begin(), Internal.end(), validator);
+    std::for_each(Exiting.begin(), Exiting.end(), validator);
+    assert(validator.rangesOk() && "moveOperandsFrom broke liveness.");
+#endif
+
+// TODO: Update reg mask slots.
+//      assert((OldIdx == SlotIndex() || !MO.isRegMask()) &&
+//             "Unexpected RegMask operand.");
+//       if (MO.isRegMask()) {
+//         updateRegMaskSlots(OldIdx);
+//         continue;
+//       }
   }
 
-  // Removes lr from li, inserting a new dead-def range starting at NewIdx.
-  void moveDeadDefOrEC(LiveRange& LR, LiveInterval& LI, bool isEC) {
-    LiveRange T(LR);
-    T.start = NewIdx.getRegSlot(isEC);
-    T.valno->def = NewIdx.getRegSlot(isEC);
-    T.end = isEC ? NewIdx.getRegSlot() : NewIdx.getDeadSlot();
-    LI.removeRange(LR);
-    LI.addRange(T);
-    assert(intervalRangesSane(LI) && "Broke live interval moving dead def.");
-  }
+private:
 
-  void moveUseDown(SlotIndex OldIdx, LiveRange& LR, LiveInterval& LI,
-                   const MachineBasicBlock* MBB) {
-    bool LiveThrough = LR.end > OldIdx.getRegSlot();
-    if (!LiveThrough) {
-      // Easy fix - just update the range endpoint.
-      LR.end = NewIdx.getRegSlot();
-    } else {
-      bool LiveOut = LR.end >= LIS.getSlotIndexes()->getMBBEndIdx(MBB);
-      if (!LiveOut) {
-        moveKillFlags(LI.reg, LR.end, NewIdx);
-        LR.end = NewIdx.getRegSlot();
+#ifndef NDEBUG
+  class LIValidator {
+  private:
+    DenseSet<const LiveInterval*> Checked, Bogus;
+  public:
+    void operator()(const IntRangePair& P) {
+      const LiveInterval* LI = P.first;
+      if (Checked.count(LI))
+        return;
+      Checked.insert(LI);
+      if (LI->empty())
+        return;
+      SlotIndex LastEnd = LI->begin()->start;
+      for (LiveInterval::const_iterator LRI = LI->begin(), LRE = LI->end();
+           LRI != LRE; ++LRI) {
+        const LiveRange& LR = *LRI;
+        if (LastEnd > LR.start || LR.start >= LR.end)
+          Bogus.insert(LI);
+        LastEnd = LR.end;
       }
     }
-    assert(intervalRangesSane(LI) && "Broke live interval moving use.");
-  }
 
-  void moveUseUp(SlotIndex OldIdx, LiveRange& LR, LiveInterval& LI) {
-    bool LiveThrough = LR.end > OldIdx.getRegSlot();
-    if (LiveThrough)
-      return; // If we moving up and live through there's nothing to do.
-    SlotIndex LastUseInRange = NewIdx.getRegSlot();
-    for (MachineRegisterInfo::use_nodbg_iterator
-           UI = MRI.use_nodbg_begin(LI.reg),
-           UE = MRI.use_nodbg_end();
-         UI != UE; ++UI) {
-      const MachineInstr* MI = &*UI;
-      const MachineOperand& MO = UI.getOperand();
-      SlotIndex InstSlot = LIS.getSlotIndexes()->getInstructionIndex(MI);
-      SlotIndex OpSlot = InstSlot.getRegSlot(MO.isEarlyClobber());
-      if (OpSlot > LastUseInRange && OpSlot < OldIdx)
-        LastUseInRange = OpSlot;
+    bool rangesOk() const {
+      return Bogus.empty();
     }
+  };
+#endif
 
-    // If we found a new instr endpoint update the kill flags.
-    if (LastUseInRange != NewIdx.getRegSlot())
-      moveKillFlags(LI.reg, NewIdx, LastUseInRange);
-
-    // Fix up the range end.
-    LR.end = LastUseInRange;
-
-    assert(intervalRangesSane(LI) && "Broke live interval moving use.");
-  }
-
-  // Update intervals for all operands of mi from oldIndex to newIndex.
-  void moveAllOperandsFrom(MachineInstr* MI, SlotIndex OldIdx) {
-    // Figure out the direction we're moving.
-    bool MovingUp = NewIdx < OldIdx;
-
-    // Collect the operands.
-    DenseSet<unsigned> Uses, Defs, DeadDefs, ECs;
+  // Collect IntRangePairs for all operands of MI that may need fixing.
+  // Treat's MI's index as OldIdx (regardless of what it is in SlotIndexes'
+  // maps).
+  void collectRanges(MachineInstr* MI, RangeSet& Entering, RangeSet& Internal,
+                     RangeSet& Exiting, SlotIndex OldIdx) {
     for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
                                     MOE = MI->operands_end();
          MOI != MOE; ++MOI) {
       const MachineOperand& MO = *MOI;
-
-      if (MO.isRegMask()) {
-        updateRegMaskSlots(OldIdx);
-        continue;
-      }
-
       if (!MO.isReg() || MO.getReg() == 0)
         continue;
 
@@ -1128,56 +1121,34 @@ public:
           (TargetRegisterInfo::isPhysicalRegister(Reg) && LIS.isReserved(Reg)))
         continue;
 
-      if (MO.readsReg() && !ECs.count(Reg)) {
-        Uses.insert(Reg);
+      LiveInterval* LI = &LIS.getInterval(Reg);
+
+      if (MO.readsReg()) {
+        LiveRange* LR = LI->getLiveRangeContaining(OldIdx);
+        if (LR != 0)
+          Entering.insert(std::make_pair(LI, LR));
       }
       if (MO.isDef()) {
-        if (MO.isDead()) {
-          assert(!Defs.count(Reg) && "Can't mix defs with dead-defs.");
-          DeadDefs.insert(Reg);
-        } else if (MO.isEarlyClobber()) {
-          Uses.erase(Reg);
-          ECs.insert(Reg);
+        if (MO.isEarlyClobber()) {
+          LiveRange* LR = LI->getLiveRangeContaining(OldIdx.getRegSlot(true));
+          assert(LR != 0 && "No EC range?");
+          if (LR->end > OldIdx.getDeadSlot())
+            Exiting.insert(std::make_pair(LI, LR));
+          else
+            Internal.insert(std::make_pair(LI, LR));         
+        } else if (MO.isDead()) {
+          LiveRange* LR = LI->getLiveRangeContaining(OldIdx.getRegSlot());
+          assert(LR != 0 && "No dead-def range?");
+          Internal.insert(std::make_pair(LI, LR));
         } else {
-          assert(!DeadDefs.count(Reg) && "Can't mix defs with dead-defs.");
-          Defs.insert(Reg);
+          LiveRange* LR = LI->getLiveRangeContaining(OldIdx.getDeadSlot());
+          assert(LR && LR->end > OldIdx.getDeadSlot() &&
+                 "Non-dead-def should have live range exiting.");
+          Exiting.insert(std::make_pair(LI, LR));
         }
       }
     }
-
-    if (MovingUp) {
-      moveUsesUp(OldIdx, Uses);
-      moveECs(OldIdx, ECs);
-      moveDeadDefs(OldIdx, DeadDefs);
-      moveDefs(OldIdx, Defs);
-    } else {
-      moveDefs(OldIdx, Defs);
-      moveDeadDefs(OldIdx, DeadDefs);
-      moveECs(OldIdx, ECs);
-      moveUsesDown(OldIdx, Uses, MI->getParent());
-    }
   }
-
-private:
-
-#ifndef NDEBUG
-    bool intervalRangesSane(const LiveInterval& LI) {
-    if (LI.empty()) {
-      return true;
-    }
-
-    SlotIndex LastEnd = LI.begin()->start;
-    for (LiveInterval::const_iterator LRI = LI.begin(), LRE = LI.end();
-         LRI != LRE; ++LRI) {
-      const LiveRange& LR = *LRI;
-      if (LastEnd > LR.start || LR.start >= LR.end)
-        return false;
-      LastEnd = LR.end;
-    }
-
-    return true;
-  }
-#endif
 
   void moveKillFlags(unsigned reg, SlotIndex OldIdx, SlotIndex newKillIdx) {
     MachineInstr* OldKillMI = LIS.getInstructionFromIndex(OldIdx);
@@ -1190,73 +1161,6 @@ private:
     NewKillMI->addRegisterKilled(reg, &TRI);
   }
 
-  template <typename DefSetT>
-  void moveDefs(SlotIndex OldIdx, const DefSetT& Defs) {
-    typedef typename DefSetT::const_iterator DefItr;
-    for (DefItr DI = Defs.begin(), DE = Defs.end(); DI != DE; ++DI) {
-      unsigned Def = *DI;
-      LiveInterval& LI = LIS.getInterval(Def);
-      LiveRange* LR = LI.getLiveRangeContaining(OldIdx.getRegSlot());
-      assert(LR != 0 && "No range?");
-      moveDef(*LR, LI);
-    }
-  }
-
-  template <typename DeadDefSetT>
-  void moveDeadDefs(SlotIndex OldIdx, const DeadDefSetT& DeadDefs) {
-    typedef typename DeadDefSetT::const_iterator DeadDefItr;
-    for (DeadDefItr DI = DeadDefs.begin(),DE = DeadDefs.end(); DI != DE; ++DI) {
-      unsigned DeadDef = *DI;
-      LiveInterval& LI = LIS.getInterval(DeadDef);
-      LiveRange* LR = LI.getLiveRangeContaining(OldIdx.getRegSlot());
-      assert(LR != 0 && "No range for dead def?");
-      assert(LR->start == OldIdx.getRegSlot() && "Bad dead range start?");
-      assert(LR->end == OldIdx.getDeadSlot() && "Bad dead range end?");
-      assert(LR->valno->def == OldIdx.getRegSlot() && "Bad dead valno def.");
-      moveDeadDefOrEC(*LR, LI, false);
-    }
-  }
-
-  template <typename ECSetT>
-  void moveECs(SlotIndex OldIdx, const ECSetT& ECs) {
-    typedef typename ECSetT::const_iterator ECItr;
-    for (ECItr EI = ECs.begin(), EE = ECs.end(); EI != EE; ++EI) {
-      unsigned EC = *EI;
-      LiveInterval& LI = LIS.getInterval(EC);
-      LiveRange* LR = LI.getLiveRangeContaining(OldIdx.getRegSlot(true));
-      assert(LR != 0 && "No range for early clobber?");
-      assert(LR->start == OldIdx.getRegSlot(true) && "Bad EC range start?");
-      assert(LR->end == OldIdx.getRegSlot() && "Bad EC range end.");
-      assert(LR->valno->def == OldIdx.getRegSlot(true) && "Bad EC valno def.");
-      moveDeadDefOrEC(*LR, LI, true);
-    }
-  }
-
-  template <typename UsesetT>
-  void moveUsesUp(SlotIndex OldIdx, const UsesetT &Uses) {
-    typedef typename UsesetT::const_iterator UseItr;
-    for (UseItr UI = Uses.begin(), UE = Uses.end(); UI != UE; ++UI) {
-      unsigned Use = *UI;
-      LiveInterval& LI = LIS.getInterval(Use);
-      LiveRange* LR = LI.getLiveRangeBefore(OldIdx.getRegSlot());
-      assert(LR != 0 && "No range for use?");
-      moveUseUp(OldIdx, *LR, LI);
-    }
-  }
-
-  template <typename UsesetT>
-  void moveUsesDown(SlotIndex OldIdx, const UsesetT &Uses,
-                    const MachineBasicBlock* MBB) {
-    typedef typename UsesetT::const_iterator UseItr;
-    for (UseItr UI = Uses.begin(), UE = Uses.end(); UI != UE; ++UI) {
-      unsigned Use = *UI;
-      LiveInterval& LI = LIS.getInterval(Use);
-      LiveRange* LR = LI.getLiveRangeBefore(OldIdx.getRegSlot());
-      assert(LR != 0 && "No range for use?");
-      moveUseDown(OldIdx, *LR, LI, MBB);
-    }
-  }
-
   void updateRegMaskSlots(SlotIndex OldIdx) {
     SmallVectorImpl<SlotIndex>::iterator RI =
       std::lower_bound(LIS.RegMaskSlots.begin(), LIS.RegMaskSlots.end(),
@@ -1266,6 +1170,101 @@ private:
     assert(*prior(RI) < *RI && *RI < *next(RI) &&
            "RegSlots out of order. Did you move one call across another?");
   }
+
+  // Return the last use of reg between NewIdx and OldIdx.
+  SlotIndex findLastUseBefore(unsigned Reg, SlotIndex OldIdx) {
+    SlotIndex LastUse = NewIdx;
+    for (MachineRegisterInfo::use_nodbg_iterator
+           UI = MRI.use_nodbg_begin(Reg),
+           UE = MRI.use_nodbg_end();
+         UI != UE; ++UI) {
+      const MachineInstr* MI = &*UI;
+      SlotIndex InstSlot = LIS.getSlotIndexes()->getInstructionIndex(MI);
+      if (InstSlot > LastUse && InstSlot < OldIdx)
+        LastUse = InstSlot;
+    }
+    return LastUse;
+  }
+
+  void moveEnteringUpFrom(SlotIndex OldIdx, IntRangePair& P) {
+    LiveInterval* LI = P.first;
+    LiveRange* LR = P.second;
+    bool LiveThrough = LR->end > OldIdx.getRegSlot();
+    if (LiveThrough)
+      return;
+    SlotIndex LastUse = findLastUseBefore(LI->reg, OldIdx);
+    if (LastUse != NewIdx)
+      moveKillFlags(LI->reg, NewIdx, LastUse);
+    LR->end = LastUse.getRegSlot(LR->end.isEarlyClobber());
+  }
+
+  void moveEnteringDownFrom(SlotIndex OldIdx, IntRangePair& P) {
+    LiveInterval* LI = P.first;
+    LiveRange* LR = P.second;
+    bool LiveThrough = LR->end > OldIdx.getRegSlot();
+    if (LiveThrough) {
+      MachineBasicBlock* MBB = LIS.getInstructionFromIndex(NewIdx)->getParent();
+      bool LiveOut = LR->end >= LIS.getSlotIndexes()->getMBBEndIdx(MBB);
+      if (!LiveOut) {
+        moveKillFlags(LI->reg, LR->end, NewIdx);
+        LR->end = NewIdx.getRegSlot(LR->end.isEarlyClobber());
+      }
+    } else {
+      // Not live through. Easy - just update the range endpoint.
+      LR->end = NewIdx.getRegSlot(LR->end.isEarlyClobber());
+    }
+  }
+
+  void moveAllEnteringFrom(SlotIndex OldIdx, RangeSet& Entering) {
+    bool GoingUp = NewIdx < OldIdx;
+
+    if (GoingUp) {
+      for (RangeSet::iterator EI = Entering.begin(), EE = Entering.end();
+           EI != EE; ++EI)
+        moveEnteringUpFrom(OldIdx, *EI);
+    } else {
+      for (RangeSet::iterator EI = Entering.begin(), EE = Entering.end();
+           EI != EE; ++EI)
+        moveEnteringDownFrom(OldIdx, *EI);
+    }
+  }
+
+  void moveInternalFrom(SlotIndex OldIdx, IntRangePair& P) {
+    LiveInterval* LI = P.first;
+    LiveRange* LR = P.second;
+    assert(OldIdx < LR->start && LR->start < OldIdx.getDeadSlot() &&
+           LR->end <= OldIdx.getDeadSlot() &&
+           "Range should be internal to OldIdx.");
+    LiveRange Tmp(*LR);
+    Tmp.start = NewIdx.getRegSlot(LR->start.isEarlyClobber());
+    Tmp.valno->def = Tmp.start;
+    Tmp.end = LR->end.isDead() ? NewIdx.getDeadSlot() : NewIdx.getRegSlot();
+    LI->removeRange(*LR);
+    LI->addRange(Tmp);
+  }
+
+  void moveAllInternalFrom(SlotIndex OldIdx, RangeSet& Internal) {
+    for (RangeSet::iterator II = Internal.begin(), IE = Internal.end();
+         II != IE; ++II)
+      moveInternalFrom(OldIdx, *II);
+  }
+
+  void moveExitingFrom(SlotIndex OldIdx, IntRangePair& P) {
+    LiveRange* LR = P.second;
+    assert(OldIdx < LR->start && LR->start < OldIdx.getDeadSlot() &&
+           "Range should start in OldIdx.");
+    assert(LR->end > OldIdx.getDeadSlot() && "Range should exit OldIdx.");
+    SlotIndex NewStart = NewIdx.getRegSlot(LR->start.isEarlyClobber());
+    LR->start = NewStart;
+    LR->valno->def = NewStart;
+  }
+
+  void moveAllExitingFrom(SlotIndex OldIdx, RangeSet& Exiting) {
+    for (RangeSet::iterator EI = Exiting.begin(), EE = Exiting.end();
+         EI != EE; ++EI)
+      moveExitingFrom(OldIdx, *EI);
+  }
+
 };
 
 void LiveIntervals::handleMove(MachineInstr* MI) {
