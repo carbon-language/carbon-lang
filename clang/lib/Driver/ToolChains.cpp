@@ -1087,6 +1087,13 @@ bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
   return false;
 }
 
+static StringRef getGCCToolchainDir(const ArgList &Args) {
+  const Arg *A = Args.getLastArg(options::OPT_gcc_toolchain);
+  if (A)
+    return A->getValue(Args);
+  return GCC_INSTALL_PREFIX;
+}
+
 /// \brief Construct a GCCInstallationDetector from the driver.
 ///
 /// This performs all of the autodetection and sets up the various paths.
@@ -1098,7 +1105,8 @@ bool Generic_GCC::GCCVersion::operator<(const GCCVersion &RHS) const {
 /// triple.
 Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
     const Driver &D,
-    const llvm::Triple &TargetTriple)
+    const llvm::Triple &TargetTriple,
+    const ArgList &Args)
     : IsValid(false) {
   llvm::Triple MultiarchTriple
     = TargetTriple.isArch32Bit() ? TargetTriple.get64BitArchVariant()
@@ -1118,12 +1126,12 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
   SmallVector<std::string, 8> Prefixes(D.PrefixDirs.begin(),
                                        D.PrefixDirs.end());
 
-  SmallString<128> CxxInstallRoot(GCC_INSTALL_PREFIX);
-  if (CxxInstallRoot != "") {
-    if (CxxInstallRoot.back() == '/')
-      llvm::sys::path::remove_filename(CxxInstallRoot); // remove the /
+  StringRef GCCToolchainDir = getGCCToolchainDir(Args);
+  if (GCCToolchainDir != "") {
+    if (GCCToolchainDir.back() == '/')
+      GCCToolchainDir = GCCToolchainDir.drop_back(); // remove the /
 
-    Prefixes.push_back(CxxInstallRoot.str());
+    Prefixes.push_back(GCCToolchainDir);
   } else {
     Prefixes.push_back(D.SysRoot);
     Prefixes.push_back(D.SysRoot + "/usr");
@@ -1356,8 +1364,9 @@ void Generic_GCC::GCCInstallationDetector::ScanLibDirForGCCTriple(
   }
 }
 
-Generic_GCC::Generic_GCC(const Driver &D, const llvm::Triple& Triple)
-  : ToolChain(D, Triple), GCCInstallation(getDriver(), Triple) {
+Generic_GCC::Generic_GCC(const Driver &D, const llvm::Triple& Triple,
+                         const ArgList &Args)
+  : ToolChain(D, Triple), GCCInstallation(getDriver(), Triple, Args) {
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
     getProgramPaths().push_back(getDriver().Dir);
@@ -1550,8 +1559,8 @@ Tool &TCEToolChain::SelectTool(const Compilation &C,
 
 /// OpenBSD - OpenBSD tool chain which can call as(1) and ld(1) directly.
 
-OpenBSD::OpenBSD(const Driver &D, const llvm::Triple& Triple)
-  : Generic_ELF(D, Triple) {
+OpenBSD::OpenBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
+  : Generic_ELF(D, Triple, Args) {
   getFilePaths().push_back(getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
 }
@@ -1590,8 +1599,8 @@ Tool &OpenBSD::SelectTool(const Compilation &C, const JobAction &JA,
 
 /// FreeBSD - FreeBSD tool chain which can call as(1) and ld(1) directly.
 
-FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple)
-  : Generic_ELF(D, Triple) {
+FreeBSD::FreeBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
+  : Generic_ELF(D, Triple, Args) {
 
   // When targeting 32-bit platforms, look for '/usr/lib32/crt1.o' and fall
   // back to '/usr/lib' if it doesn't exist.
@@ -1636,8 +1645,8 @@ Tool &FreeBSD::SelectTool(const Compilation &C, const JobAction &JA,
 
 /// NetBSD - NetBSD tool chain which can call as(1) and ld(1) directly.
 
-NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple)
-  : Generic_ELF(D, Triple) {
+NetBSD::NetBSD(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
+  : Generic_ELF(D, Triple, Args) {
 
   if (getDriver().UseStdLib) {
     // When targeting a 32-bit platform, try the special directory used on
@@ -1686,8 +1695,8 @@ Tool &NetBSD::SelectTool(const Compilation &C, const JobAction &JA,
 
 /// Minix - Minix tool chain which can call as(1) and ld(1) directly.
 
-Minix::Minix(const Driver &D, const llvm::Triple& Triple)
-  : Generic_ELF(D, Triple) {
+Minix::Minix(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
+  : Generic_ELF(D, Triple, Args) {
   getFilePaths().push_back(getDriver().Dir + "/../lib");
   getFilePaths().push_back("/usr/lib");
 }
@@ -1717,8 +1726,9 @@ Tool &Minix::SelectTool(const Compilation &C, const JobAction &JA,
 
 /// AuroraUX - AuroraUX tool chain which can call as(1) and ld(1) directly.
 
-AuroraUX::AuroraUX(const Driver &D, const llvm::Triple& Triple)
-  : Generic_GCC(D, Triple) {
+AuroraUX::AuroraUX(const Driver &D, const llvm::Triple& Triple,
+                   const ArgList &Args)
+  : Generic_GCC(D, Triple, Args) {
 
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
@@ -1757,8 +1767,9 @@ Tool &AuroraUX::SelectTool(const Compilation &C, const JobAction &JA,
 
 /// Solaris - Solaris tool chain which can call as(1) and ld(1) directly.
 
-Solaris::Solaris(const Driver &D, const llvm::Triple& Triple)
-  : Generic_GCC(D, Triple) {
+Solaris::Solaris(const Driver &D, const llvm::Triple& Triple,
+                 const ArgList &Args)
+  : Generic_GCC(D, Triple, Args) {
 
   getProgramPaths().push_back(getDriver().getInstalledDir());
   if (getDriver().getInstalledDir() != getDriver().Dir)
@@ -1958,8 +1969,8 @@ static void addPathIfExists(Twine Path, ToolChain::path_list &Paths) {
   if (llvm::sys::fs::exists(Path)) Paths.push_back(Path.str());
 }
 
-Linux::Linux(const Driver &D, const llvm::Triple &Triple)
-  : Generic_ELF(D, Triple) {
+Linux::Linux(const Driver &D, const llvm::Triple &Triple, const ArgList &Args)
+  : Generic_ELF(D, Triple, Args) {
   llvm::Triple::ArchType Arch = Triple.getArch();
   const std::string &SysRoot = getDriver().SysRoot;
 
@@ -2244,8 +2255,8 @@ void Linux::AddClangCXXStdlibIncludeArgs(const ArgList &DriverArgs,
 
 /// DragonFly - DragonFly tool chain which can call as(1) and ld(1) directly.
 
-DragonFly::DragonFly(const Driver &D, const llvm::Triple& Triple)
-  : Generic_ELF(D, Triple) {
+DragonFly::DragonFly(const Driver &D, const llvm::Triple& Triple, const ArgList &Args)
+  : Generic_ELF(D, Triple, Args) {
 
   // Path mangling to find libexec
   getProgramPaths().push_back(getDriver().getInstalledDir());
