@@ -935,6 +935,13 @@ void RewriteModernObjC::RewriteCategoryDecl(ObjCCategoryDecl *CatDecl) {
   // FIXME: handle category headers that are declared across multiple lines.
   ReplaceText(LocStart, 0, "// ");
 
+  for (ObjCCategoryDecl::ivar_iterator
+       I = CatDecl->ivar_begin(), E = CatDecl->ivar_end(); I != E; ++I) {
+    ObjCIvarDecl *Ivar = (*I);
+    SourceLocation LocStart = Ivar->getLocStart();
+    ReplaceText(LocStart, 0, "// ");
+  } 
+
   for (ObjCCategoryDecl::prop_iterator I = CatDecl->prop_begin(),
        E = CatDecl->prop_end(); I != E; ++I)
     RewriteProperty(*I);
@@ -1144,7 +1151,17 @@ void RewriteModernObjC::RewriteImplementationDecl(Decl *OID) {
   ObjCImplementationDecl *IMD = dyn_cast<ObjCImplementationDecl>(OID);
   ObjCCategoryImplDecl *CID = dyn_cast<ObjCCategoryImplDecl>(OID);
 
-  InsertText(IMD ? IMD->getLocStart() : CID->getLocStart(), "// ");
+  if (IMD) {
+    InsertText(IMD->getLocStart(), "// ");
+      for (ObjCImplementationDecl::ivar_iterator
+           I = IMD->ivar_begin(), E = IMD->ivar_end(); I != E; ++I) {
+        ObjCIvarDecl *Ivar = (*I);
+        SourceLocation LocStart = Ivar->getLocStart();
+        ReplaceText(LocStart, 0, "// ");
+    }
+  }
+  else
+    InsertText(CID->getLocStart(), "// ");
 
   for (ObjCCategoryImplDecl::instmeth_iterator
        I = IMD ? IMD->instmeth_begin() : CID->instmeth_begin(),
