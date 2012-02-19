@@ -2059,13 +2059,6 @@ static GlobalVariable *InstallGlobalCtors(GlobalVariable *GCL,
 }
 
 
-static Constant *getVal(DenseMap<Value*, Constant*> &ComputedValues, Value *V) {
-  if (Constant *CV = dyn_cast<Constant>(V)) return CV;
-  Constant *R = ComputedValues[V];
-  assert(R && "Reference to an uncomputed value!");
-  return R;
-}
-
 static inline bool 
 isSimpleEnoughValueToCommit(Constant *C,
                             SmallPtrSet<Constant*, 8> &SimpleConstants,
@@ -2260,15 +2253,105 @@ static void CommitValueTo(Constant *Val, Constant *Addr) {
   GV->setInitializer(EvaluateStoreInto(GV->getInitializer(), Val, CE, 2));
 }
 
+/// Evaluate - This class evaluates LLVM IR, producing the Constant representing
+/// each SSA instruction.  Changes to global variables are stored in a mapping
+/// that can be iterated over after the evaluation is complete.  Once an
+/// evaluation call fails, the evaluation object should not be reused.
+class Evaluate {
+public:
+  Evaluate(const TargetData *TD, const TargetLibraryInfo *TLI)
+    : TD(TD), TLI(TLI) {
+    ValueStack.push_back(new DenseMap<Value*, Constant*>);
+  }
+
+  ~Evaluate() {
+    DeleteContainerPointers(ValueStack);
+    while (!AllocaTmps.empty()) {
+      GlobalVariable *Tmp = AllocaTmps.back();
+      AllocaTmps.pop_back();
+
+      // If there are still users of the alloca, the program is doing something
+      // silly, e.g. storing the address of the alloca somewhere and using it
+      // later.  Since this is undefined, we'll just make it be null.
+      if (!Tmp->use_empty())
+        Tmp->replaceAllUsesWith(Constant::getNullValue(Tmp->getType()));
+      delete Tmp;
+    }
+  }
+
+  /// EvaluateFunction - Evaluate a call to function F, returning true if
+  /// successful, false if we can't evaluate it.  ActualArgs contains the formal
+  /// arguments for the function.
+  bool EvaluateFunction(Function *F, Constant *&RetVal,
+                        const SmallVectorImpl<Constant*> &ActualArgs);
+
+  /// EvaluateBlock - Evaluate all instructions in block BB, returning true if
+  /// successful, false if we can't evaluate it.  NewBB returns the next BB that
+  /// control flows into, or null upon return.
+  bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB);
+
+  Constant *getVal(Value *V) {
+    if (Constant *CV = dyn_cast<Constant>(V)) return CV;
+    Constant *R = ValueStack.back()->lookup(V);
+    assert(R && "Reference to an uncomputed value!");
+    return R;
+  }
+
+  void setVal(Value *V, Constant *C) {
+    ValueStack.back()->operator[](V) = C;
+  }
+
+  const DenseMap<Constant*, Constant*> &getMutatedMemory() const {
+    return MutatedMemory;
+  }
+
+  const SmallPtrSet<GlobalVariable*, 8> &getInvariants() const {
+    return Invariants;
+  }
+
+private:
+  Constant *ComputeLoadResult(Constant *P);
+
+  /// ValueStack - As we compute SSA register values, we store their contents
+  /// here. The back of the vector contains the current function and the stack
+  /// contains the values in the calling frames.
+  SmallVector<DenseMap<Value*, Constant*>*, 4> ValueStack;
+
+  /// CallStack - This is used to detect recursion.  In pathological situations
+  /// we could hit exponential behavior, but at least there is nothing
+  /// unbounded.
+  SmallVector<Function*, 4> CallStack;
+
+  /// MutatedMemory - For each store we execute, we update this map.  Loads
+  /// check this to get the most up-to-date value.  If evaluation is successful,
+  /// this state is committed to the process.
+  DenseMap<Constant*, Constant*> MutatedMemory;
+
+  /// AllocaTmps - To 'execute' an alloca, we create a temporary global variable
+  /// to represent its body.  This vector is needed so we can delete the
+  /// temporary globals when we are done.
+  SmallVector<GlobalVariable*, 32> AllocaTmps;
+
+  /// Invariants - These global variables have been marked invariant by the
+  /// static constructor.
+  SmallPtrSet<GlobalVariable*, 8> Invariants;
+
+  /// SimpleConstants - These are constants we have checked and know to be
+  /// simple enough to live in a static initializer of a global.
+  SmallPtrSet<Constant*, 8> SimpleConstants;
+
+  const TargetData *TD;
+  const TargetLibraryInfo *TLI;
+};
+
 /// ComputeLoadResult - Return the value that would be computed by a load from
 /// P after the stores reflected by 'memory' have been performed.  If we can't
 /// decide, return null.
-static Constant *ComputeLoadResult(Constant *P,
-                                const DenseMap<Constant*, Constant*> &Memory) {
+Constant *Evaluate::ComputeLoadResult(Constant *P) {
   // If this memory location has been recently stored, use the stored value: it
   // is the most up-to-date.
-  DenseMap<Constant*, Constant*>::const_iterator I = Memory.find(P);
-  if (I != Memory.end()) return I->second;
+  DenseMap<Constant*, Constant*>::const_iterator I = MutatedMemory.find(P);
+  if (I != MutatedMemory.end()) return I->second;
 
   // Access it.
   if (GlobalVariable *GV = dyn_cast<GlobalVariable>(P)) {
@@ -2289,40 +2372,22 @@ static Constant *ComputeLoadResult(Constant *P,
   return 0;  // don't know how to evaluate.
 }
 
-static bool EvaluateFunction(Function *F, Constant *&RetVal,
-                             const SmallVectorImpl<Constant*> &ActualArgs,
-                             std::vector<Function*> &CallStack,
-                             DenseMap<Constant*, Constant*> &MutatedMemory,
-                             std::vector<GlobalVariable*> &AllocaTmps,
-                             SmallPtrSet<Constant*, 8> &SimpleConstants,
-                             SmallPtrSet<GlobalVariable*, 8> &Invariants,
-                             const TargetData *TD,
-                             const TargetLibraryInfo *TLI);
-
 /// EvaluateBlock - Evaluate all instructions in block BB, returning true if
 /// successful, false if we can't evaluate it.  NewBB returns the next BB that
 /// control flows into, or null upon return.
-static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
-                          std::vector<Function*> &CallStack,
-                          DenseMap<Value*, Constant*> &Values,
-                          DenseMap<Constant*, Constant*> &MutatedMemory,
-                          std::vector<GlobalVariable*> &AllocaTmps,
-                          SmallPtrSet<Constant*, 8> &SimpleConstants,
-                          SmallPtrSet<GlobalVariable*, 8> &Invariants,
-                          const TargetData *TD,
-                          const TargetLibraryInfo *TLI) {
+bool Evaluate::EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB){
   // This is the main evaluation loop.
   while (1) {
     Constant *InstResult = 0;
 
     if (StoreInst *SI = dyn_cast<StoreInst>(CurInst)) {
       if (!SI->isSimple()) return false;  // no volatile/atomic accesses.
-      Constant *Ptr = getVal(Values, SI->getOperand(1));
+      Constant *Ptr = getVal(SI->getOperand(1));
       if (!isSimpleEnoughPointerToCommit(Ptr))
         // If this is too complex for us to commit, reject it.
         return false;
       
-      Constant *Val = getVal(Values, SI->getOperand(0));
+      Constant *Val = getVal(SI->getOperand(0));
 
       // If this might be too difficult for the backend to handle (e.g. the addr
       // of one global variable divided by another) then we can't commit it.
@@ -2369,33 +2434,32 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
       MutatedMemory[Ptr] = Val;
     } else if (BinaryOperator *BO = dyn_cast<BinaryOperator>(CurInst)) {
       InstResult = ConstantExpr::get(BO->getOpcode(),
-                                     getVal(Values, BO->getOperand(0)),
-                                     getVal(Values, BO->getOperand(1)));
+                                     getVal(BO->getOperand(0)),
+                                     getVal(BO->getOperand(1)));
     } else if (CmpInst *CI = dyn_cast<CmpInst>(CurInst)) {
       InstResult = ConstantExpr::getCompare(CI->getPredicate(),
-                                            getVal(Values, CI->getOperand(0)),
-                                            getVal(Values, CI->getOperand(1)));
+                                            getVal(CI->getOperand(0)),
+                                            getVal(CI->getOperand(1)));
     } else if (CastInst *CI = dyn_cast<CastInst>(CurInst)) {
       InstResult = ConstantExpr::getCast(CI->getOpcode(),
-                                         getVal(Values, CI->getOperand(0)),
+                                         getVal(CI->getOperand(0)),
                                          CI->getType());
     } else if (SelectInst *SI = dyn_cast<SelectInst>(CurInst)) {
-      InstResult = ConstantExpr::getSelect(getVal(Values, SI->getOperand(0)),
-                                           getVal(Values, SI->getOperand(1)),
-                                           getVal(Values, SI->getOperand(2)));
+      InstResult = ConstantExpr::getSelect(getVal(SI->getOperand(0)),
+                                           getVal(SI->getOperand(1)),
+                                           getVal(SI->getOperand(2)));
     } else if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(CurInst)) {
-      Constant *P = getVal(Values, GEP->getOperand(0));
+      Constant *P = getVal(GEP->getOperand(0));
       SmallVector<Constant*, 8> GEPOps;
       for (User::op_iterator i = GEP->op_begin() + 1, e = GEP->op_end();
            i != e; ++i)
-        GEPOps.push_back(getVal(Values, *i));
+        GEPOps.push_back(getVal(*i));
       InstResult =
         ConstantExpr::getGetElementPtr(P, GEPOps,
                                        cast<GEPOperator>(GEP)->isInBounds());
     } else if (LoadInst *LI = dyn_cast<LoadInst>(CurInst)) {
       if (!LI->isSimple()) return false;  // no volatile/atomic accesses.
-      InstResult = ComputeLoadResult(getVal(Values, LI->getOperand(0)),
-                                     MutatedMemory);
+      InstResult = ComputeLoadResult(getVal(LI->getOperand(0)));
       if (InstResult == 0) return false; // Could not evaluate load.
     } else if (AllocaInst *AI = dyn_cast<AllocaInst>(CurInst)) {
       if (AI->isArrayAllocation()) return false;  // Cannot handle array allocs.
@@ -2420,10 +2484,9 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
       if (IntrinsicInst *II = dyn_cast<IntrinsicInst>(CS.getInstruction())) {
         if (MemSetInst *MSI = dyn_cast<MemSetInst>(II)) {
           if (MSI->isVolatile()) return false;
-          Constant *Ptr = getVal(Values, MSI->getDest());
-          Constant *Val = getVal(Values, MSI->getValue());
-          Constant *DestVal = ComputeLoadResult(getVal(Values, Ptr),
-                                                MutatedMemory);
+          Constant *Ptr = getVal(MSI->getDest());
+          Constant *Val = getVal(MSI->getValue());
+          Constant *DestVal = ComputeLoadResult(getVal(Ptr));
           if (Val->isNullValue() && DestVal && DestVal->isNullValue()) {
             // This memset is a no-op.
             ++CurInst;
@@ -2444,7 +2507,7 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
             return false;
           ConstantInt *Size = cast<ConstantInt>(II->getArgOperand(0));
           if (Size->isAllOnesValue()) {
-            Value *PtrArg = getVal(Values, II->getArgOperand(1));
+            Value *PtrArg = getVal(II->getArgOperand(1));
             Value *Ptr = PtrArg->stripPointerCasts();
             if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr))
               Invariants.insert(GV);
@@ -2457,14 +2520,13 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
       }
 
       // Resolve function pointers.
-      Function *Callee = dyn_cast<Function>(getVal(Values,
-                                                   CS.getCalledValue()));
+      Function *Callee = dyn_cast<Function>(getVal(CS.getCalledValue()));
       if (!Callee || Callee->mayBeOverridden())
         return false;  // Cannot resolve.
 
       SmallVector<Constant*, 8> Formals;
       for (User::op_iterator i = CS.arg_begin(), e = CS.arg_end(); i != e; ++i)
-        Formals.push_back(getVal(Values, *i));
+        Formals.push_back(getVal(*i));
 
       if (Callee->isDeclaration()) {
         // If this is a function we can constant fold, do it.
@@ -2479,10 +2541,10 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
 
         Constant *RetVal;
         // Execute the call, if successful, use the return value.
-        if (!EvaluateFunction(Callee, RetVal, Formals, CallStack,
-                              MutatedMemory, AllocaTmps, SimpleConstants,
-                              Invariants, TD, TLI))
+        ValueStack.push_back(new DenseMap<Value*, Constant*>);
+        if (!EvaluateFunction(Callee, RetVal, Formals))
           return false;
+        ValueStack.pop_back();
         InstResult = RetVal;
 
         if (InvokeInst *II = dyn_cast<InvokeInst>(CurInst)) {
@@ -2496,19 +2558,19 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
           NextBB = BI->getSuccessor(0);
         } else {
           ConstantInt *Cond =
-            dyn_cast<ConstantInt>(getVal(Values, BI->getCondition()));
+            dyn_cast<ConstantInt>(getVal(BI->getCondition()));
           if (!Cond) return false;  // Cannot determine.
 
           NextBB = BI->getSuccessor(!Cond->getZExtValue());
         }
       } else if (SwitchInst *SI = dyn_cast<SwitchInst>(CurInst)) {
         ConstantInt *Val =
-          dyn_cast<ConstantInt>(getVal(Values, SI->getCondition()));
+          dyn_cast<ConstantInt>(getVal(SI->getCondition()));
         if (!Val) return false;  // Cannot determine.
         unsigned ValTISucc = SI->resolveSuccessorIndex(SI->findCaseValue(Val));
         NextBB = SI->getSuccessor(ValTISucc);
       } else if (IndirectBrInst *IBI = dyn_cast<IndirectBrInst>(CurInst)) {
-        Value *Val = getVal(Values, IBI->getAddress())->stripPointerCasts();
+        Value *Val = getVal(IBI->getAddress())->stripPointerCasts();
         if (BlockAddress *BA = dyn_cast<BlockAddress>(Val))
           NextBB = BA->getBasicBlock();
         else
@@ -2531,7 +2593,7 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
       if (ConstantExpr *CE = dyn_cast<ConstantExpr>(InstResult))
         InstResult = ConstantFoldConstantExpression(CE, TD, TLI);
       
-      Values[CurInst] = InstResult;
+      setVal(CurInst, InstResult);
     }
 
     // Advance program counter.
@@ -2542,15 +2604,8 @@ static bool EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB,
 /// EvaluateFunction - Evaluate a call to function F, returning true if
 /// successful, false if we can't evaluate it.  ActualArgs contains the formal
 /// arguments for the function.
-static bool EvaluateFunction(Function *F, Constant *&RetVal,
-                             const SmallVectorImpl<Constant*> &ActualArgs,
-                             std::vector<Function*> &CallStack,
-                             DenseMap<Constant*, Constant*> &MutatedMemory,
-                             std::vector<GlobalVariable*> &AllocaTmps,
-                             SmallPtrSet<Constant*, 8> &SimpleConstants,
-                             SmallPtrSet<GlobalVariable*, 8> &Invariants,
-                             const TargetData *TD,
-                             const TargetLibraryInfo *TLI) {
+bool Evaluate::EvaluateFunction(Function *F, Constant *&RetVal,
+                                const SmallVectorImpl<Constant*> &ActualArgs) {
   // Check to see if this function is already executing (recursion).  If so,
   // bail out.  TODO: we might want to accept limited recursion.
   if (std::find(CallStack.begin(), CallStack.end(), F) != CallStack.end())
@@ -2558,14 +2613,11 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 
   CallStack.push_back(F);
 
-  // Values - As we compute SSA register values, we store their contents here.
-  DenseMap<Value*, Constant*> Values;
-
   // Initialize arguments to the incoming values specified.
   unsigned ArgNo = 0;
   for (Function::arg_iterator AI = F->arg_begin(), E = F->arg_end(); AI != E;
        ++AI, ++ArgNo)
-    Values[AI] = ActualArgs[ArgNo];
+    setVal(AI, ActualArgs[ArgNo]);
 
   // ExecutedBlocks - We only handle non-looping, non-recursive code.  As such,
   // we can only evaluate any one basic block at most once.  This set keeps
@@ -2579,8 +2631,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 
   while (1) {
     BasicBlock *NextBB;
-    if (!EvaluateBlock(CurInst, NextBB, CallStack, Values, MutatedMemory,
-                       AllocaTmps, SimpleConstants, Invariants, TD, TLI))
+    if (!EvaluateBlock(CurInst, NextBB))
       return false;
 
     if (NextBB == 0) {
@@ -2588,7 +2639,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
       // the return.  Fill it the return value and pop the call stack.
       ReturnInst *RI = cast<ReturnInst>(CurBB->getTerminator());
       if (RI->getNumOperands())
-        RetVal = getVal(Values, RI->getOperand(0));
+        RetVal = getVal(RI->getOperand(0));
       CallStack.pop_back();
       return true;
     }
@@ -2605,7 +2656,7 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
     PHINode *PN = 0;
     for (CurInst = NextBB->begin();
          (PN = dyn_cast<PHINode>(CurInst)); ++CurInst)
-      Values[PN] = getVal(Values, PN->getIncomingValueForBlock(CurBB));
+      setVal(PN, getVal(PN->getIncomingValueForBlock(CurBB)));
 
     // Advance to the next block.
     CurBB = NextBB;
@@ -2616,61 +2667,25 @@ static bool EvaluateFunction(Function *F, Constant *&RetVal,
 /// we can.  Return true if we can, false otherwise.
 static bool EvaluateStaticConstructor(Function *F, const TargetData *TD,
                                       const TargetLibraryInfo *TLI) {
-  // MutatedMemory - For each store we execute, we update this map.  Loads
-  // check this to get the most up-to-date value.  If evaluation is successful,
-  // this state is committed to the process.
-  DenseMap<Constant*, Constant*> MutatedMemory;
-
-  // AllocaTmps - To 'execute' an alloca, we create a temporary global variable
-  // to represent its body.  This vector is needed so we can delete the
-  // temporary globals when we are done.
-  std::vector<GlobalVariable*> AllocaTmps;
-
-  // CallStack - This is used to detect recursion.  In pathological situations
-  // we could hit exponential behavior, but at least there is nothing
-  // unbounded.
-  std::vector<Function*> CallStack;
-
-  // SimpleConstants - These are constants we have checked and know to be
-  // simple enough to live in a static initializer of a global.
-  SmallPtrSet<Constant*, 8> SimpleConstants;
-  
-  // Invariants - These global variables have been marked invariant by the
-  // static constructor.
-  SmallPtrSet<GlobalVariable*, 8> Invariants;
-
   // Call the function.
+  Evaluate Eval(TD, TLI);
   Constant *RetValDummy;
-  bool EvalSuccess = EvaluateFunction(F, RetValDummy,
-                                      SmallVector<Constant*, 0>(), CallStack,
-                                      MutatedMemory, AllocaTmps,
-                                      SimpleConstants, Invariants, TD, TLI);
+  bool EvalSuccess = Eval.EvaluateFunction(F, RetValDummy,
+                                           SmallVector<Constant*, 0>());
   
   if (EvalSuccess) {
     // We succeeded at evaluation: commit the result.
     DEBUG(dbgs() << "FULLY EVALUATED GLOBAL CTOR FUNCTION '"
-          << F->getName() << "' to " << MutatedMemory.size()
+          << F->getName() << "' to " << Eval.getMutatedMemory().size()
           << " stores.\n");
-    for (DenseMap<Constant*, Constant*>::iterator I = MutatedMemory.begin(),
-         E = MutatedMemory.end(); I != E; ++I)
+    for (DenseMap<Constant*, Constant*>::const_iterator I =
+           Eval.getMutatedMemory().begin(), E = Eval.getMutatedMemory().end();
+	 I != E; ++I)
       CommitValueTo(I->second, I->first);
-    for (SmallPtrSet<GlobalVariable*, 8>::iterator I = Invariants.begin(),
-         E = Invariants.end(); I != E; ++I)
+    for (SmallPtrSet<GlobalVariable*, 8>::const_iterator I =
+           Eval.getInvariants().begin(), E = Eval.getInvariants().end();
+         I != E; ++I)
       (*I)->setConstant(true);
-  }
-
-  // At this point, we are done interpreting.  If we created any 'alloca'
-  // temporaries, release them now.
-  while (!AllocaTmps.empty()) {
-    GlobalVariable *Tmp = AllocaTmps.back();
-    AllocaTmps.pop_back();
-
-    // If there are still users of the alloca, the program is doing something
-    // silly, e.g. storing the address of the alloca somewhere and using it
-    // later.  Since this is undefined, we'll just make it be null.
-    if (!Tmp->use_empty())
-      Tmp->replaceAllUsesWith(Constant::getNullValue(Tmp->getType()));
-    delete Tmp;
   }
 
   return EvalSuccess;
