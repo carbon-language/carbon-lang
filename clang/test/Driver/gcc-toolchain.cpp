@@ -24,5 +24,3 @@
 // CHECK: "{{.*}}/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/crtbegin.o"
 // CHECK: "-L{{.*}}/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5"
 // CHECK: "-L{{.*}}/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../.."
-// CHECK: "-L/lib"
-// CHECK: "-L/usr/lib"
