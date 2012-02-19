@@ -62,7 +62,10 @@ struct witharg1 {
   witharg1(const destroyme1&);
   ~witharg1();
 };
-
+struct wantslist1 {
+  wantslist1(std::initializer_list<destroyme1>);
+  ~wantslist1();
+};
 
 void fn2() {
   // CHECK: define void @_Z3fn2v
@@ -107,4 +110,29 @@ void fn5() {
   destroyme2 dm2;
   // CHECK: call void @_ZN10destroyme2D1Ev
   // CHECK: call void @_ZN8witharg1D1Ev
+}
+
+void fn6() {
+  // CHECK: define void @_Z3fn6v
+  void target(const wantslist1&);
+  // objects should be destroyed before dm2, after call returns
+  // CHECK: call void @_ZN10wantslist1C1ESt16initializer_listI10destroyme1E
+  // CHECK: call void @_Z6targetRK10wantslist1
+  target({ destroyme1(), destroyme1() });
+  // CHECK: call void @_ZN10wantslist1D1Ev
+  // CHECK: call void @_ZN10destroyme1D1Ev
+  destroyme2 dm2;
+  // CHECK: call void @_ZN10destroyme2D1Ev
+}
+
+void fn7() {
+  // CHECK: define void @_Z3fn7v
+  // temps should be destroyed before dm2
+  // object should be destroyed after dm2
+  // CHECK: call void @_ZN10wantslist1C1ESt16initializer_listI10destroyme1E
+  wantslist1 wl = { destroyme1(), destroyme1() };
+  // CHECK: call void @_ZN10destroyme1D1Ev
+  destroyme2 dm2;
+  // CHECK: call void @_ZN10destroyme2D1Ev
+  // CHECK: call void @_ZN10wantslist1D1Ev
 }

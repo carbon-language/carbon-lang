@@ -5109,8 +5109,9 @@ InitializationSequence::Perform(Sema &S,
       // When an initializer list is passed for a parameter of type "reference
       // to object", we don't get an EK_Temporary entity, but instead an
       // EK_Parameter entity with reference type.
-      // FIXME: This is a hack. Why is this necessary here, but not in other
-      // places where implicit temporaries are created?
+      // FIXME: This is a hack. What we really should do is create a user
+      // conversion step for this case, but this makes it considerably more
+      // complicated. For now, this will do.
       InitializedEntity TempEntity = InitializedEntity::InitializeTemporary(
                                         Entity.getType().getNonReferenceType());
       bool UseTemporary = Entity.getType()->isReferenceType();
@@ -5139,11 +5140,22 @@ InitializationSequence::Perform(Sema &S,
       break;
     }
 
-    case SK_ConstructorInitialization:
-      CurInit = PerformConstructorInitialization(S, Entity, Kind, move(Args),
-                                                 *Step,
+    case SK_ConstructorInitialization: {
+      // When an initializer list is passed for a parameter of type "reference
+      // to object", we don't get an EK_Temporary entity, but instead an
+      // EK_Parameter entity with reference type.
+      // FIXME: This is a hack. What we really should do is create a user
+      // conversion step for this case, but this makes it considerably more
+      // complicated. For now, this will do.
+      InitializedEntity TempEntity = InitializedEntity::InitializeTemporary(
+                                        Entity.getType().getNonReferenceType());
+      bool UseTemporary = Entity.getType()->isReferenceType();
+      CurInit = PerformConstructorInitialization(S, UseTemporary ? TempEntity
+                                                                 : Entity,
+                                                 Kind, move(Args), *Step,
                                                ConstructorInitRequiresZeroInit);
       break;
+    }
 
     case SK_ZeroInitialization: {
       step_iterator NextStep = Step;
