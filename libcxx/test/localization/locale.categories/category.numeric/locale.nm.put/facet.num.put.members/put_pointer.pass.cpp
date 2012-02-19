@@ -38,6 +38,6 @@ int main()
         char str[50];
         output_iterator<char*> iter = f.put(output_iterator<char*>(str), ios, '*', v);
         std::string ex(str, iter.base());
-        assert(ex == "0x0");
+        assert(ex == "0x0" || ex == "(nil)");
     }
 }
