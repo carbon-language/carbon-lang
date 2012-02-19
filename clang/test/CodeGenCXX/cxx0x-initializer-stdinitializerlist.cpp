@@ -164,3 +164,34 @@ void fn9() {
   // CHECK-NOT: call void @_ZN10destroyme1D1Ev
   // CHECK: ret void
 }
+
+struct haslist1 {
+  std::initializer_list<int> il;
+  haslist1();
+};
+
+// CHECK: define void @_ZN8haslist1C2Ev
+haslist1::haslist1()
+// CHECK: alloca [3 x i32]
+// CHECK: store i32 1
+// CHECK: store i32 2
+// CHECK: store i32 3
+// CHECK: store i{{32|64}} 3
+  : il{1, 2, 3}
+{
+  destroyme2 dm2;
+}
+
+struct haslist2 {
+  std::initializer_list<destroyme1> il;
+  haslist2();
+};
+
+// CHECK: define void @_ZN8haslist2C2Ev
+haslist2::haslist2()
+  : il{destroyme1(), destroyme1()}
+{
+  destroyme2 dm2;
+  // CHECK: call void @_ZN10destroyme2D1Ev
+  // CHECK: call void @_ZN10destroyme1D1Ev
+}

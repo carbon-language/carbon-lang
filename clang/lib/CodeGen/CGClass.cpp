@@ -418,40 +418,46 @@ static void EmitAggMemberInitializer(CodeGenFunction &CGF,
                                      ArrayRef<VarDecl *> ArrayIndexes,
                                      unsigned Index) {
   if (Index == ArrayIndexes.size()) {
-    CodeGenFunction::RunCleanupsScope Cleanups(CGF);
-
     LValue LV = LHS;
-    if (ArrayIndexVar) {
-      // If we have an array index variable, load it and use it as an offset.
-      // Then, increment the value.
-      llvm::Value *Dest = LHS.getAddress();
-      llvm::Value *ArrayIndex = CGF.Builder.CreateLoad(ArrayIndexVar);
-      Dest = CGF.Builder.CreateInBoundsGEP(Dest, ArrayIndex, "destaddress");
-      llvm::Value *Next = llvm::ConstantInt::get(ArrayIndex->getType(), 1);
-      Next = CGF.Builder.CreateAdd(ArrayIndex, Next, "inc");
-      CGF.Builder.CreateStore(Next, ArrayIndexVar);    
+    { // Scope for Cleanups.
+      CodeGenFunction::RunCleanupsScope Cleanups(CGF);
 
-      // Update the LValue.
-      LV.setAddress(Dest);
-      CharUnits Align = CGF.getContext().getTypeAlignInChars(T);
-      LV.setAlignment(std::min(Align, LV.getAlignment()));
+      if (ArrayIndexVar) {
+        // If we have an array index variable, load it and use it as an offset.
+        // Then, increment the value.
+        llvm::Value *Dest = LHS.getAddress();
+        llvm::Value *ArrayIndex = CGF.Builder.CreateLoad(ArrayIndexVar);
+        Dest = CGF.Builder.CreateInBoundsGEP(Dest, ArrayIndex, "destaddress");
+        llvm::Value *Next = llvm::ConstantInt::get(ArrayIndex->getType(), 1);
+        Next = CGF.Builder.CreateAdd(ArrayIndex, Next, "inc");
+        CGF.Builder.CreateStore(Next, ArrayIndexVar);    
+
+        // Update the LValue.
+        LV.setAddress(Dest);
+        CharUnits Align = CGF.getContext().getTypeAlignInChars(T);
+        LV.setAlignment(std::min(Align, LV.getAlignment()));
+      }
+
+      if (!CGF.hasAggregateLLVMType(T)) {
+        CGF.EmitScalarInit(Init, /*decl*/ 0, LV, false);
+      } else if (T->isAnyComplexType()) {
+        CGF.EmitComplexExprIntoAddr(Init, LV.getAddress(),
+                                    LV.isVolatileQualified());
+      } else {
+        AggValueSlot Slot =
+          AggValueSlot::forLValue(LV,
+                                  AggValueSlot::IsDestructed,
+                                  AggValueSlot::DoesNotNeedGCBarriers,
+                                  AggValueSlot::IsNotAliased);
+
+        CGF.EmitAggExpr(Init, Slot);
+      }
     }
 
-    if (!CGF.hasAggregateLLVMType(T)) {
-      CGF.EmitScalarInit(Init, /*decl*/ 0, LV, false);
-    } else if (T->isAnyComplexType()) {
-      CGF.EmitComplexExprIntoAddr(Init, LV.getAddress(),
-                                  LV.isVolatileQualified());
-    } else {
-      AggValueSlot Slot =
-        AggValueSlot::forLValue(LV,
-                                AggValueSlot::IsDestructed,
-                                AggValueSlot::DoesNotNeedGCBarriers,
-                                AggValueSlot::IsNotAliased);
-      
-      CGF.EmitAggExpr(Init, Slot);
-    }
-    
+    // Now, outside of the initializer cleanup scope, destroy the backing array
+    // for a std::initializer_list member.
+    CGF.MaybeEmitStdInitializerListCleanup(LV, Init);
+
     return;
   }
   
