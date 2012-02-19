@@ -1047,11 +1047,15 @@ public:
   void moveAllOperandsFrom(MachineInstr* MI, SlotIndex OldIdx) {
     // Collect the operands.
     RangeSet Entering, Internal, Exiting;
-    collectRanges(MI, Entering, Internal, Exiting, OldIdx);
+    bool hasRegMaskOp = false;
+    collectRanges(MI, Entering, Internal, Exiting, hasRegMaskOp, OldIdx);
 
     moveAllEnteringFrom(OldIdx, Entering);
     moveAllInternalFrom(OldIdx, Internal);
     moveAllExitingFrom(OldIdx, Exiting);
+
+    if (hasRegMaskOp)
+      updateRegMaskSlots(OldIdx);
 
 #ifndef NDEBUG
     LIValidator validator;
@@ -1061,13 +1065,6 @@ public:
     assert(validator.rangesOk() && "moveOperandsFrom broke liveness.");
 #endif
 
-// TODO: Update reg mask slots.
-//      assert((OldIdx == SlotIndex() || !MO.isRegMask()) &&
-//             "Unexpected RegMask operand.");
-//       if (MO.isRegMask()) {
-//         updateRegMaskSlots(OldIdx);
-//         continue;
-//       }
   }
 
 private:
@@ -1104,11 +1101,18 @@ private:
   // Treat's MI's index as OldIdx (regardless of what it is in SlotIndexes'
   // maps).
   void collectRanges(MachineInstr* MI, RangeSet& Entering, RangeSet& Internal,
-                     RangeSet& Exiting, SlotIndex OldIdx) {
+                     RangeSet& Exiting, bool& hasRegMaskOp, SlotIndex OldIdx) {
+    hasRegMaskOp = false;
     for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
                                     MOE = MI->operands_end();
          MOI != MOE; ++MOI) {
       const MachineOperand& MO = *MOI;
+
+      if (MO.isRegMask()) {
+        hasRegMaskOp = true;
+        continue;
+      }
+
       if (!MO.isReg() || MO.getReg() == 0)
         continue;
 
@@ -1135,7 +1139,7 @@ private:
           if (LR->end > OldIdx.getDeadSlot())
             Exiting.insert(std::make_pair(LI, LR));
           else
-            Internal.insert(std::make_pair(LI, LR));         
+            Internal.insert(std::make_pair(LI, LR));
         } else if (MO.isDead()) {
           LiveRange* LR = LI->getLiveRangeContaining(OldIdx.getRegSlot());
           assert(LR != 0 && "No dead-def range?");
