@@ -79,7 +79,6 @@ static const char *getStateSpaceName(unsigned addressSpace) {
   case PTXStateSpace::Parameter: return "param";
   case PTXStateSpace::Shared:    return "shared";
   }
-  return NULL;
 }
 
 static const char *getTypeName(Type* type) {

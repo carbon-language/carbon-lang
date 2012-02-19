@@ -673,7 +673,6 @@ void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
     case 8:  O << "nzcvq"; return;
     case 12: O << "nzcvqg"; return;
     }
-    llvm_unreachable("Unexpected mask value!");
   }
 
   if (SpecRegRBit)

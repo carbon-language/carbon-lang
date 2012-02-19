@@ -211,19 +211,6 @@ static error_code GetFileNameFromHandle(HANDLE FileHandle,
   }
 }
 
-static std::string QuoteProgramPathIfNeeded(StringRef Command) {
-  if (Command.find_first_of(' ') == StringRef::npos)
-    return Command;
-  else {
-    std::string ret;
-    ret.reserve(Command.size() + 3);
-    ret.push_back('"');
-    ret.append(Command.begin(), Command.end());
-    ret.push_back('"');
-    return ret;
-  }
-}
-
 /// @brief Find program using shell lookup rules.
 /// @param Program This is either an absolute path, relative path, or simple a
 ///        program name. Look in PATH for any programs that match. If no
@@ -267,39 +254,6 @@ static std::string FindProgram(const std::string &Program, error_code &ec) {
   // Make sure PathName is valid.
   PathName[MAX_PATH] = 0;
   return PathName;
-}
-
-static error_code EnableDebugPrivileges() {
-  HANDLE TokenHandle;
-  BOOL success = ::OpenProcessToken(::GetCurrentProcess(),
-                                    TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY,
-                                    &TokenHandle);
-  if (!success)
-    return windows_error(::GetLastError());
-
-  TokenScopedHandle Token(TokenHandle);
-  TOKEN_PRIVILEGES  TokenPrivileges;
-  LUID              LocallyUniqueID;
-
-  success = ::LookupPrivilegeValueA(NULL,
-                                    SE_DEBUG_NAME,
-                                    &LocallyUniqueID);
-  if (!success)
-    return windows_error(::GetLastError());
-
-  TokenPrivileges.PrivilegeCount = 1;
-  TokenPrivileges.Privileges[0].Luid = LocallyUniqueID;
-  TokenPrivileges.Privileges[0].Attributes = SE_PRIVILEGE_ENABLED;
-
-  success = ::AdjustTokenPrivileges(Token,
-                                    FALSE,
-                                    &TokenPrivileges,
-                                    sizeof(TOKEN_PRIVILEGES),
-                                    NULL,
-                                    NULL);
-  // The value of success is basically useless. Either way we are just returning
-  // the value of ::GetLastError().
-  return windows_error(::GetLastError());
 }
 
 static StringRef ExceptionCodeToString(DWORD ExceptionCode) {

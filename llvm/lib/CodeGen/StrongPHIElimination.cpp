@@ -228,7 +228,6 @@ static MachineOperand *findLastUse(MachineBasicBlock *MBB, unsigned Reg) {
         return &MO;
     }
   }
-  return NULL;
 }
 
 bool StrongPHIElimination::runOnMachineFunction(MachineFunction &MF) {

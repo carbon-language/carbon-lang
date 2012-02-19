@@ -112,7 +112,7 @@ bool GCStrategy::initializeCustomLowering(Module &M) { return false; }
 
 bool GCStrategy::performCustomLowering(Function &F) {
   dbgs() << "gc " << getName() << " must override performCustomLowering.\n";
-  llvm_unreachable(0);
+  llvm_unreachable("must override performCustomLowering");
 }
 
 

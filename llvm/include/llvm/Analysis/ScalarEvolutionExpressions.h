@@ -491,7 +491,6 @@ namespace llvm {
 
     RetVal visitCouldNotCompute(const SCEVCouldNotCompute *S) {
       llvm_unreachable("Invalid use of SCEVCouldNotCompute!");
-      return RetVal();
     }
   };
 }

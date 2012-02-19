@@ -920,7 +920,6 @@ Instruction *WidenIV::CloneIVUser(NarrowIVDefUse DU) {
     }
     return WideBO;
   }
-  llvm_unreachable(0);
 }
 
 /// No-wrap operations can transfer sign extension of their result to their

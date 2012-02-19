@@ -140,8 +140,6 @@ static inline const char* stringForContext(InstructionContext insnContext) {
   INSTRUCTION_CONTEXTS
 #undef ENUM_ENTRY
   }
-
-  return 0;
 }
 
 /// stringForOperandType - Like stringForContext, but for OperandTypes.

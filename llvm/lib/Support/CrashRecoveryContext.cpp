@@ -165,7 +165,6 @@ static LONG CALLBACK ExceptionHandler(PEXCEPTION_POINTERS ExceptionInfo)
   // Note that we don't actually get here because HandleCrash calls
   // longjmp, which means the HandleCrash function never returns.
   llvm_unreachable("Handled the crash, should have longjmp'ed out of here");
-  return EXCEPTION_CONTINUE_SEARCH;
 }
 
 // Because the Enable and Disable calls are static, it means that

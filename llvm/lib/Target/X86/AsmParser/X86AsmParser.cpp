@@ -1444,7 +1444,6 @@ processInstruction(MCInst &Inst,
     return true;
   }
   }
-  return false;
 }
 
 bool X86AsmParser::

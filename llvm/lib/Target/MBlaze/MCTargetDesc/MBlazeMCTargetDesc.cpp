@@ -83,12 +83,10 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
 
   if (TheTriple.isOSDarwin()) {
     llvm_unreachable("MBlaze does not support Darwin MACH-O format");
-    return NULL;
   }
 
   if (TheTriple.isOSWindows()) {
     llvm_unreachable("MBlaze does not support Windows COFF format");
-    return NULL;
   }
 
   return createELFStreamer(Ctx, MAB, _OS, _Emitter, RelaxAll, NoExecStack);

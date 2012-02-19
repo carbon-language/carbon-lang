@@ -104,27 +104,22 @@ EDDisassembler *EDDisassembler::getDisassembler(StringRef str,
   CPUKey key;
   key.Triple = str.str();
   key.Syntax = syntax;
-  
+
   EDDisassembler::DisassemblerMap_t::iterator i = sDisassemblers.find(key);
-    
+
   if (i != sDisassemblers.end()) {
     return i->second;  
   }
-  else {
-    EDDisassembler *sdd = new EDDisassembler(key);
-    if (!sdd->valid()) {
-      delete sdd;
-      return NULL;
-    }
-    
-    sDisassemblers[key] = sdd;
-    
-    return sdd;
+
+  EDDisassembler *sdd = new EDDisassembler(key);
+  if (!sdd->valid()) {
+    delete sdd;
+    return NULL;
   }
-  
-  return NULL;
-    
-  return getDisassembler(Triple(str).getArch(), syntax);
+
+  sDisassemblers[key] = sdd;
+
+  return sdd;
 }
 
 EDDisassembler::EDDisassembler(CPUKey &key) : 

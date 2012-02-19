@@ -176,7 +176,6 @@ SDNode *SparcDAGToDAGISel::Select(SDNode *N) {
                                          MulLHS, MulRHS);
     // The high part is in the Y register.
     return CurDAG->SelectNodeTo(N, SP::RDY, MVT::i32, SDValue(Mul, 1));
-    return NULL;
   }
   }
 

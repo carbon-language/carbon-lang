@@ -82,11 +82,9 @@ static int modRMRequired(OpcodeType type,
     decision = &THREEBYTEA7_SYM;
     break;
   }
-  
+
   return decision->opcodeDecisions[insnContext].modRMDecisions[opcode].
     modrm_type != MODRM_ONEENTRY;
-  
-  return 0;
 }
 
 /*

@@ -155,7 +155,6 @@ static MCStreamer *createMCStreamer(const Target &T, StringRef TT,
 
   if (TheTriple.isOSWindows()) {
     llvm_unreachable("ARM does not support Windows COFF format");
-    return NULL;
   }
 
   return createELFStreamer(Ctx, MAB, OS, Emitter, RelaxAll, NoExecStack);

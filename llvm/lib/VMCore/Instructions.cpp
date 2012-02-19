@@ -2559,9 +2559,8 @@ CastInst::getCastOpcode(
       assert(DestBits == SrcBits &&
              "Casting vector to floating point of different width");
       return BitCast;                             // same size, no-op cast
-    } else {
-      llvm_unreachable("Casting pointer or non-first class to float");
     }
+    llvm_unreachable("Casting pointer or non-first class to float");
   } else if (DestTy->isVectorTy()) {
     assert(DestBits == SrcBits &&
            "Illegal cast to vector (wrong type or size)");
@@ -2571,24 +2570,16 @@ CastInst::getCastOpcode(
       return BitCast;                               // ptr -> ptr
     } else if (SrcTy->isIntegerTy()) {
       return IntToPtr;                              // int -> ptr
-    } else {
-      llvm_unreachable("Casting pointer to other than pointer or int");
     }
+    llvm_unreachable("Casting pointer to other than pointer or int");
   } else if (DestTy->isX86_MMXTy()) {
     if (SrcTy->isVectorTy()) {
       assert(DestBits == SrcBits && "Casting vector of wrong width to X86_MMX");
       return BitCast;                               // 64-bit vector to MMX
-    } else {
-      llvm_unreachable("Illegal cast to X86_MMX");
     }
-  } else {
-    llvm_unreachable("Casting to type that is not first-class");
+    llvm_unreachable("Illegal cast to X86_MMX");
   }
-
-  // If we fall through to here we probably hit an assertion cast above
-  // and assertions are not turned on. Anything we return is an error, so
-  // BitCast is as good a choice as any.
-  return BitCast;
+  llvm_unreachable("Casting to type that is not first-class");
 }
 
 //===----------------------------------------------------------------------===//

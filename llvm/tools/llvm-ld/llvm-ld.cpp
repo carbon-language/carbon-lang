@@ -423,7 +423,7 @@ static void EmitShellScript(char **argv, Module *M) {
     PrintAndExit(ErrMsg, M);
 
   return;
-#endif
+#else
 
   // Output the script to start the program...
   std::string ErrorInfo;
@@ -469,6 +469,7 @@ static void EmitShellScript(char **argv, Module *M) {
   }
   Out2.os() << "    "  << BitcodeOutputFilename << " ${1+\"$@\"}\n";
   Out2.keep();
+#endif
 }
 
 // BuildLinkItems -- This function generates a LinkItemList for the LinkItems

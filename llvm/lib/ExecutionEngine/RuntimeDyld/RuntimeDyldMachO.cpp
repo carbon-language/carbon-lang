@@ -34,7 +34,6 @@ resolveRelocation(uint8_t *Address, uint64_t Value, bool isPCRel,
     return resolveARMRelocation((uintptr_t)Address, (uintptr_t)Value,
                                 isPCRel, Type, Size, Addend);
   }
-  llvm_unreachable("");
 }
 
 bool RuntimeDyldMachO::

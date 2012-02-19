@@ -1235,7 +1235,7 @@ GenericValue Interpreter::getConstantExprValue (ConstantExpr *CE,
     break;
   default:
     dbgs() << "Unhandled ConstantExpr: " << *CE << "\n";
-    llvm_unreachable(0);
+    llvm_unreachable("Unhandled ConstantExpr");
   }
   return Dest;
 }
