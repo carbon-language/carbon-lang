@@ -3078,16 +3078,25 @@ static void TryListInitialization(Sema &S,
     TryReferenceListInitialization(S, Entity, Kind, InitList, Sequence);
     return;
   }
-  if (DestType->isRecordType() && !DestType->isAggregateType()) {
-    if (S.getLangOptions().CPlusPlus0x) {
-      Expr *Arg = InitList;
-      // A direct-initializer is not list-syntax, i.e. there's no special
-      // treatment of "A a({1, 2});".
-      TryConstructorInitialization(S, Entity, Kind, &Arg, 1, DestType,
-                    Sequence, Kind.getKind() != InitializationKind::IK_Direct);
-    } else
-      Sequence.SetFailed(InitializationSequence::FK_InitListBadDestinationType);
-    return;
+  if (DestType->isRecordType()) {
+    if (S.RequireCompleteType(InitList->getLocStart(), DestType, S.PDiag())) {
+      Sequence.SetFailed(InitializationSequence::FK_Incomplete);
+      return;
+    }
+
+    if (!DestType->isAggregateType()) {
+      if (S.getLangOptions().CPlusPlus0x) {
+        Expr *Arg = InitList;
+        // A direct-initializer is not list-syntax, i.e. there's no special
+        // treatment of "A a({1, 2});".
+        TryConstructorInitialization(S, Entity, Kind, &Arg, 1, DestType, 
+                                     Sequence,
+                               Kind.getKind() != InitializationKind::IK_Direct);
+      } else
+        Sequence.SetFailed(
+            InitializationSequence::FK_InitListBadDestinationType);
+      return;
+    }
   }
 
   InitListChecker CheckInitList(S, Entity, InitList,
