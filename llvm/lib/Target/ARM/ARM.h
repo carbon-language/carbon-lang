@@ -1,4 +1,4 @@
-//===-- ARM.h - Top-level interface for ARM representation-------*- C++ -*-===//
+//===-- ARM.h - Top-level interface for ARM representation ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
