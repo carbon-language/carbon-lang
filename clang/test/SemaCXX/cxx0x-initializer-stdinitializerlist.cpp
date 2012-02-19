@@ -127,3 +127,12 @@ void dangle() {
   new auto{1, 2, 3}; // expected-error {{cannot use list-initialization}}
   new std::initializer_list<int>{1, 2, 3}; // expected-warning {{at the end of the full-expression}}
 }
+
+struct haslist1 {
+  std::initializer_list<int> il = {1, 2, 3}; // expected-warning{{at the end of the constructor}}
+  haslist1();
+};
+
+haslist1::haslist1()
+: il{1, 2, 3} // expected-warning{{at the end of the constructor}}
+{}

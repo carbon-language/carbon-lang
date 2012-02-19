@@ -1643,6 +1643,10 @@ Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation EqualLoc,
 
   ExprResult Init = InitExpr;
   if (!FD->getType()->isDependentType() && !InitExpr->isTypeDependent()) {
+    if (isa<InitListExpr>(InitExpr) && isStdInitializerList(FD->getType(), 0)) {
+    Diag(FD->getLocation(), diag::warn_dangling_std_initializer_list)
+        << /*at end of ctor*/1 << InitExpr->getSourceRange();
+    }
     // FIXME: if there is no EqualLoc, this is list-initialization.
     Init = PerformCopyInitialization(
       InitializedEntity::InitializeMember(FD), EqualLoc, InitExpr);
@@ -2112,6 +2116,11 @@ Sema::BuildMemberInitializer(ValueDecl *Member, Expr *Init,
       InitList = true;
       Args = &Init;
       NumArgs = 1;
+
+      if (isStdInitializerList(Member->getType(), 0)) {
+        Diag(IdLoc, diag::warn_dangling_std_initializer_list)
+            << /*at end of ctor*/1 << InitRange;
+      }
     }
 
     // Initialize the member.

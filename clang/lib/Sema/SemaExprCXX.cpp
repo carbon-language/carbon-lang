@@ -1087,7 +1087,7 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   if (initStyle == CXXNewExpr::ListInit && isStdInitializerList(AllocType, 0)) {
     Diag(AllocTypeInfo->getTypeLoc().getBeginLoc(),
          diag::warn_dangling_std_initializer_list)
-      << /*at end of FE*/0 << Inits[0]->getSourceRange();
+        << /*at end of FE*/0 << Inits[0]->getSourceRange();
   }
 
   // In ARC, infer 'retaining' for the allocated 
