@@ -1205,17 +1205,9 @@ private:
   void moveEnteringDownFrom(SlotIndex OldIdx, IntRangePair& P) {
     LiveInterval* LI = P.first;
     LiveRange* LR = P.second;
-    bool LiveThrough = LR->end > OldIdx.getRegSlot();
-    if (LiveThrough) {
-      MachineBasicBlock* MBB = LIS.getInstructionFromIndex(NewIdx)->getParent();
-      bool LiveOut = LR->end >= LIS.getSlotIndexes()->getMBBEndIdx(MBB);
-      if (!LiveOut) {
-        moveKillFlags(LI->reg, LR->end, NewIdx);
-        LR->end = NewIdx.getRegSlot(LR->end.isEarlyClobber());
-      }
-    } else {
-      // Not live through. Easy - just update the range endpoint.
-      LR->end = NewIdx.getRegSlot(LR->end.isEarlyClobber());
+    if (NewIdx > LR->end) {
+      moveKillFlags(LI->reg, LR->end, NewIdx);
+      LR->end = NewIdx.getRegSlot();
     }
   }
 
