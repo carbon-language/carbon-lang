@@ -3513,6 +3513,10 @@ bool RecordExprEvaluator::VisitCastExpr(const CastExpr *E) {
 }
 
 bool RecordExprEvaluator::VisitInitListExpr(const InitListExpr *E) {
+  // Cannot constant-evaluate std::initializer_list inits.
+  if (E->initializesStdInitializerList())
+    return false;
+
   const RecordDecl *RD = E->getType()->castAs<RecordType>()->getDecl();
   const ASTRecordLayout &Layout = Info.Ctx.getASTRecordLayout(RD);
 
