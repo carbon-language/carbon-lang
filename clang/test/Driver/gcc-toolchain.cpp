@@ -6,7 +6,7 @@
 // RUN:   | FileCheck %s
 
 // CHECK: "-internal-isystem"
-// CHECK: "[[TOOLCHAIN:.*]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../../../include/c++/4.5"
+// CHECK: "[[TOOLCHAIN:[^"]+]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../../../include/c++/4.5"
 // CHECK: "-internal-isystem"
 // CHECK: "[[TOOLCHAIN]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../../../include/c++/4.5/i686-linux-gnu"
 // CHECK: "-internal-isystem"
@@ -19,8 +19,7 @@
 // CHECK: "/include"
 // CHECK: "-internal-externc-isystem"
 // CHECK: "/usr/include"
-// CHECK: "{{.*}}/ld{{(.exe)?}}"
-// CHECK: "{{.*}}crti.o"
-// CHECK: "{{.*}}/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/crtbegin.o"
-// CHECK: "-L{{.*}}/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5"
-// CHECK: "-L{{.*}}/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../.."
+// CHECK: "{{[^"]*}}ld{{(.exe)?}}"
+// CHECK: "{{[^"]*}}/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/crtbegin.o"
+// CHECK: "-L{{[^"]*}}/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5"
+// CHECK: "-L{{[^"]*}}/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../.."
