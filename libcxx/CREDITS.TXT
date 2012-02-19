@@ -39,3 +39,8 @@ D: Implemented Cityhash as the string hash function on 64-bit machines
 
 N: Google Inc.
 D: Copyright owner and contributor of the CityHash algorithm
+
+N: Jeffrey Yasskin
+E: jyasskin@gmail.com
+E: jyasskin@google.com
+D: Linux fixes.
