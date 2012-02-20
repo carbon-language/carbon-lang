@@ -1221,26 +1221,26 @@ class Type(Structure):
         return Type_get_canonical(self)
 
     def is_const_qualified(self):
-        """
-        Determine whether a Type has the "const" qualifier set,
-        without looking through typedefs that may have added "const"
+        """Determine whether a Type has the "const" qualifier set.
+
+        This does not look through typedefs that may have added "const"
         at a different level.
         """
         return Type_is_const_qualified(self)
 
     def is_volatile_qualified(self):
-        """
-        Determine whether a Type has the "volatile" qualifier set,
-        without looking through typedefs that may have added
-        "volatile" at a different level.
+        """Determine whether a Type has the "volatile" qualifier set.
+
+        This does not look through typedefs that may have added "volatile"
+        at a different level.
         """
         return Type_is_volatile_qualified(self)
 
     def is_restrict_qualified(self):
-        """
-        Determine whether a Type has the "restrict" qualifier set,
-        without looking through typedefs that may have added
-        "restrict" at a different level.
+        """Determine whether a Type has the "restrict" qualifier set.
+
+        This does not look through typedefs that may have added "restrict" at
+        a different level.
         """
         return Type_is_restrict_qualified(self)
 

@@ -200,6 +200,7 @@ def test_argument_types_invalid_type():
     i.type.argument_types()
 
 def test_is_pod():
+    """Ensure Type.is_pod() works."""
     tu = get_tu('int i; void f();')
     i = get_cursor(tu, 'i')
     f = get_cursor(tu, 'f')
@@ -232,6 +233,7 @@ void bar(int a, int b);
     assert not bar.type.is_function_variadic()
 
 def test_element_type():
+    """Ensure Type.element_type works."""
     tu = get_tu('int i[5];')
     i = get_cursor(tu, 'i')
     assert i is not None
@@ -248,6 +250,7 @@ def test_invalid_element_type():
     i.element_type
 
 def test_element_count():
+    """Ensure Type.element_count works."""
     tu = get_tu('int i[5]; int j;')
     i = get_cursor(tu, 'i')
     j = get_cursor(tu, 'j')
