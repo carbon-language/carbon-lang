@@ -30,63 +30,63 @@ def get_tu(source=kInput, lang='c'):
     assert tu is not None
     return tu
 
+def get_cursor(tu, spelling):
+    for cursor in tu.cursor.get_children():
+        if cursor.spelling == spelling:
+            return cursor
+
+    return None
+
 def test_a_struct():
     tu = get_tu(kInput)
 
-    for n in tu.cursor.get_children():
-        if n.spelling == 'teststruct':
-            fields = list(n.get_children())
+    teststruct = get_cursor(tu, 'teststruct')
+    assert teststruct is not None, "Could not find teststruct."
+    fields = list(teststruct.get_children())
+    assert all(x.kind == CursorKind.FIELD_DECL for x in fields)
 
-            assert all(x.kind == CursorKind.FIELD_DECL for x in fields)
+    assert fields[0].spelling == 'a'
+    assert not fields[0].type.is_const_qualified()
+    assert fields[0].type.kind == TypeKind.INT
+    assert fields[0].type.get_canonical().kind == TypeKind.INT
 
-            assert fields[0].spelling == 'a'
-            assert not fields[0].type.is_const_qualified()
-            assert fields[0].type.kind == TypeKind.INT
-            assert fields[0].type.get_canonical().kind == TypeKind.INT
+    assert fields[1].spelling == 'b'
+    assert not fields[1].type.is_const_qualified()
+    assert fields[1].type.kind == TypeKind.TYPEDEF
+    assert fields[1].type.get_canonical().kind == TypeKind.INT
+    assert fields[1].type.get_declaration().spelling == 'I'
 
-            assert fields[1].spelling == 'b'
-            assert not fields[1].type.is_const_qualified()
-            assert fields[1].type.kind == TypeKind.TYPEDEF
-            assert fields[1].type.get_canonical().kind == TypeKind.INT
-            assert fields[1].type.get_declaration().spelling == 'I'
+    assert fields[2].spelling == 'c'
+    assert not fields[2].type.is_const_qualified()
+    assert fields[2].type.kind == TypeKind.LONG
+    assert fields[2].type.get_canonical().kind == TypeKind.LONG
 
-            assert fields[2].spelling == 'c'
-            assert not fields[2].type.is_const_qualified()
-            assert fields[2].type.kind == TypeKind.LONG
-            assert fields[2].type.get_canonical().kind == TypeKind.LONG
+    assert fields[3].spelling == 'd'
+    assert not fields[3].type.is_const_qualified()
+    assert fields[3].type.kind == TypeKind.ULONG
+    assert fields[3].type.get_canonical().kind == TypeKind.ULONG
 
-            assert fields[3].spelling == 'd'
-            assert not fields[3].type.is_const_qualified()
-            assert fields[3].type.kind == TypeKind.ULONG
-            assert fields[3].type.get_canonical().kind == TypeKind.ULONG
+    assert fields[4].spelling == 'e'
+    assert not fields[4].type.is_const_qualified()
+    assert fields[4].type.kind == TypeKind.LONG
+    assert fields[4].type.get_canonical().kind == TypeKind.LONG
 
-            assert fields[4].spelling == 'e'
-            assert not fields[4].type.is_const_qualified()
-            assert fields[4].type.kind == TypeKind.LONG
-            assert fields[4].type.get_canonical().kind == TypeKind.LONG
+    assert fields[5].spelling == 'f'
+    assert fields[5].type.is_const_qualified()
+    assert fields[5].type.kind == TypeKind.INT
+    assert fields[5].type.get_canonical().kind == TypeKind.INT
 
-            assert fields[5].spelling == 'f'
-            assert fields[5].type.is_const_qualified()
-            assert fields[5].type.kind == TypeKind.INT
-            assert fields[5].type.get_canonical().kind == TypeKind.INT
+    assert fields[6].spelling == 'g'
+    assert not fields[6].type.is_const_qualified()
+    assert fields[6].type.kind == TypeKind.POINTER
+    assert fields[6].type.get_pointee().kind == TypeKind.INT
 
-            assert fields[6].spelling == 'g'
-            assert not fields[6].type.is_const_qualified()
-            assert fields[6].type.kind == TypeKind.POINTER
-            assert fields[6].type.get_pointee().kind == TypeKind.INT
-
-            assert fields[7].spelling == 'h'
-            assert not fields[7].type.is_const_qualified()
-            assert fields[7].type.kind == TypeKind.POINTER
-            assert fields[7].type.get_pointee().kind == TypeKind.POINTER
-            assert fields[7].type.get_pointee().get_pointee().kind == TypeKind.POINTER
-            assert fields[7].type.get_pointee().get_pointee().get_pointee().kind == TypeKind.INT
-
-            break
-
-    else:
-        assert False, "Didn't find teststruct??"
-
+    assert fields[7].spelling == 'h'
+    assert not fields[7].type.is_const_qualified()
+    assert fields[7].type.kind == TypeKind.POINTER
+    assert fields[7].type.get_pointee().kind == TypeKind.POINTER
+    assert fields[7].type.get_pointee().get_pointee().kind == TypeKind.POINTER
+    assert fields[7].type.get_pointee().get_pointee().get_pointee().kind == TypeKind.INT
 
 constarrayInput="""
 struct teststruct {
@@ -96,33 +96,23 @@ struct teststruct {
 def testConstantArray():
     tu = get_tu(constarrayInput)
 
-    for n in tu.cursor.get_children():
-        if n.spelling == 'teststruct':
-            fields = list(n.get_children())
-            assert fields[0].spelling == 'A'
-            assert fields[0].type.kind == TypeKind.CONSTANTARRAY
-            assert fields[0].type.get_array_element_type() is not None
-            assert fields[0].type.get_array_element_type().kind == TypeKind.POINTER
-            assert fields[0].type.get_array_size() == 2
-
-            break
-    else:
-        assert False, "Didn't find teststruct??"
+    teststruct = get_cursor(tu, 'teststruct')
+    assert teststruct is not None, "Didn't find teststruct??"
+    fields = list(teststruct.get_children())
+    assert fields[0].spelling == 'A'
+    assert fields[0].type.kind == TypeKind.CONSTANTARRAY
+    assert fields[0].type.get_array_element_type() is not None
+    assert fields[0].type.get_array_element_type().kind == TypeKind.POINTER
+    assert fields[0].type.get_array_size() == 2
 
 def test_equal():
     """Ensure equivalence operators work on Type."""
     source = 'int a; int b; void *v;'
     tu = get_tu(source)
 
-    a, b, v = None, None, None
-
-    for cursor in tu.cursor.get_children():
-        if cursor.spelling == 'a':
-            a = cursor
-        elif cursor.spelling == 'b':
-            b = cursor
-        elif cursor.spelling == 'v':
-            v = cursor
+    a = get_cursor(tu, 'a')
+    b = get_cursor(tu, 'b')
+    v = get_cursor(tu, 'v')
 
     assert a is not None
     assert b is not None
@@ -134,15 +124,72 @@ def test_equal():
     assert a.type != None
     assert a.type != 'foo'
 
+def test_function_argument_types():
+    """Ensure that Type.argument_types() works as expected."""
+    tu = get_tu('void f(int, int);')
+    f = get_cursor(tu, 'f')
+    assert f is not None
+
+    args = f.type.argument_types()
+    assert args is not None
+    assert len(args) == 2
+
+    t0 = args[0]
+    assert t0 is not None
+    assert t0.kind == TypeKind.INT
+
+    t1 = args[1]
+    assert t1 is not None
+    assert t1.kind == TypeKind.INT
+
+    args2 = list(args)
+    assert len(args2) == 2
+    assert t0 == args2[0]
+    assert t1 == args2[1]
+
+@raises(TypeError)
+def test_argument_types_string_key():
+    """Ensure that non-int keys raise a TypeError."""
+    tu = get_tu('void f(int, int);')
+    f = get_cursor(tu, 'f')
+    assert f is not None
+
+    args = f.type.argument_types()
+    assert len(args) == 2
+
+    args['foo']
+
+@raises(IndexError)
+def test_argument_types_negative_index():
+    """Ensure that negative indexes on argument_types Raises an IndexError."""
+    tu = get_tu('void f(int, int);')
+    f = get_cursor(tu, 'f')
+    args = f.type.argument_types()
+
+    args[-1]
+
+@raises(IndexError)
+def test_argument_types_overflow_index():
+    """Ensure that indexes beyond the length of Type.argument_types() raise."""
+    tu = get_tu('void f(int, int);')
+    f = get_cursor(tu, 'f')
+    args = f.type.argument_types()
+
+    args[2]
+
+@raises(Exception)
+def test_argument_types_invalid_type():
+    """Ensure that obtaining argument_types on a Type without them raises."""
+    tu = get_tu('int i;')
+    i = get_cursor(tu, 'i')
+    assert i is not None
+
+    i.type.argument_types()
+
 def test_is_pod():
     tu = get_tu('int i; void f();')
-    i, f = None, None
-
-    for cursor in tu.cursor.get_children():
-        if cursor.spelling == 'i':
-            i = cursor
-        elif cursor.spelling == 'f':
-            f = cursor
+    i = get_cursor(tu, 'i')
+    f = get_cursor(tu, 'f')
 
     assert i is not None
     assert f is not None
@@ -161,12 +208,8 @@ void bar(int a, int b);
 """
 
     tu = get_tu(source)
-    foo, bar = None, None
-    for cursor in tu.cursor.get_children():
-        if cursor.spelling == 'foo':
-            foo = cursor
-        elif cursor.spelling == 'bar':
-            bar = cursor
+    foo = get_cursor(tu, 'foo')
+    bar = get_cursor(tu, 'bar')
 
     assert foo is not None
     assert bar is not None
@@ -177,12 +220,7 @@ void bar(int a, int b);
 
 def test_element_type():
     tu = get_tu('int i[5];')
-    i = None
-    for cursor in tu.cursor.get_children():
-        if cursor.spelling == 'i':
-            i = cursor
-            break
-
+    i = get_cursor(tu, 'i')
     assert i is not None
 
     assert i.type.kind == TypeKind.CONSTANTARRAY
@@ -192,24 +230,14 @@ def test_element_type():
 def test_invalid_element_type():
     """Ensure Type.element_type raises if type doesn't have elements."""
     tu = get_tu('int i;')
-
-    i = None
-    for cursor in tu.cursor.get_children():
-        if cursor.spelling == 'i':
-            i = cursor
-            break
-
+    i = get_cursor(tu, 'i')
     assert i is not None
     i.element_type
 
 def test_element_count():
     tu = get_tu('int i[5]; int j;')
-
-    for cursor in tu.cursor.get_children():
-        if cursor.spelling == 'i':
-            i = cursor
-        elif cursor.spelling == 'j':
-            j = cursor
+    i = get_cursor(tu, 'i')
+    j = get_cursor(tu, 'j')
 
     assert i is not None
     assert j is not None
