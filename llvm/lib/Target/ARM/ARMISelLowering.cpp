@@ -533,9 +533,13 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setOperationAction(ISD::SETCC, MVT::v1i64, Expand);
     setOperationAction(ISD::SETCC, MVT::v2i64, Expand);
     // Neon does not have single instruction SINT_TO_FP and UINT_TO_FP with
-    // a destination type that is wider than the source.
+    // a destination type that is wider than the source, and nor does
+    // it have a FP_TO_[SU]INT instruction with a narrower destination than
+    // source.
     setOperationAction(ISD::SINT_TO_FP, MVT::v4i16, Custom);
     setOperationAction(ISD::UINT_TO_FP, MVT::v4i16, Custom);
+    setOperationAction(ISD::FP_TO_UINT, MVT::v4i16, Custom);
+    setOperationAction(ISD::FP_TO_SINT, MVT::v4i16, Custom);
 
     setTargetDAGCombine(ISD::INTRINSIC_VOID);
     setTargetDAGCombine(ISD::INTRINSIC_W_CHAIN);
@@ -555,7 +559,15 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setTargetDAGCombine(ISD::FP_TO_UINT);
     setTargetDAGCombine(ISD::FDIV);
 
-    setLoadExtAction(ISD::EXTLOAD, MVT::v4i8, Expand);
+    // It is legal to extload from v4i8 to v4i16 or v4i32.
+    MVT Tys[6] = {MVT::v8i8, MVT::v4i8, MVT::v2i8,
+                  MVT::v4i16, MVT::v2i16,
+                  MVT::v2i32};
+    for (unsigned i = 0; i < 6; ++i) {
+      setLoadExtAction(ISD::EXTLOAD, Tys[i], Legal);
+      setLoadExtAction(ISD::ZEXTLOAD, Tys[i], Legal);
+      setLoadExtAction(ISD::SEXTLOAD, Tys[i], Legal);
+    }
   }
 
   computeRegisterProperties();
@@ -3058,12 +3070,22 @@ SDValue ARMTargetLowering::LowerBR_JT(SDValue Op, SelectionDAG &DAG) const {
 }
 
 static SDValue LowerVectorFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
-  assert(Op.getValueType().getVectorElementType() == MVT::i32 
-         && "Unexpected custom lowering");
+  EVT VT = Op.getValueType();
+  DebugLoc dl = Op.getDebugLoc();
 
-  if (Op.getOperand(0).getValueType().getVectorElementType() == MVT::f32)
-    return Op;
-  return DAG.UnrollVectorOp(Op.getNode());
+  if (Op.getValueType().getVectorElementType() == MVT::i32) {
+    if (Op.getOperand(0).getValueType().getVectorElementType() == MVT::f32)
+      return Op;
+    return DAG.UnrollVectorOp(Op.getNode());
+  }
+
+  assert(Op.getOperand(0).getValueType() == MVT::v4f32 &&
+         "Invalid type for custom lowering!");
+  if (VT != MVT::v4i16)
+    return DAG.UnrollVectorOp(Op.getNode());
+
+  Op = DAG.getNode(Op.getOpcode(), dl, MVT::v4i32, Op.getOperand(0));
+  return DAG.getNode(ISD::TRUNCATE, dl, VT, Op);
 }
 
 static SDValue LowerFP_TO_INT(SDValue Op, SelectionDAG &DAG) {
