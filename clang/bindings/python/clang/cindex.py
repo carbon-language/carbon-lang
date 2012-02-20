@@ -1245,6 +1245,15 @@ class Type(Structure):
         """
         return Type_get_array_size(self)
 
+    def __eq__(self, other):
+        if type(other) != type(self):
+            return False
+
+        return Type_equal(self, other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
 ## CIndex Objects ##
 
 # CIndex objects (derived from ClangObject) are essentially lightweight
@@ -1935,6 +1944,10 @@ Type_get_array_element.errcheck = Type.from_result
 Type_get_array_size = lib.clang_getArraySize
 Type_get_array_size.argtype = [Type]
 Type_get_array_size.restype = c_longlong
+
+Type_equal = lib.clang_equalTypes
+Type_equal.argtypes = [Type, Type]
+Type_equal.restype = bool
 
 # Index Functions
 Index_create = lib.clang_createIndex

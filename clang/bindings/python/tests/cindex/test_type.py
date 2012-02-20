@@ -109,6 +109,31 @@ def testConstantArray():
     else:
         assert False, "Didn't find teststruct??"
 
+def test_equal():
+    """Ensure equivalence operators work on Type."""
+    source = 'int a; int b; void *v;'
+    tu = get_tu(source)
+
+    a, b, v = None, None, None
+
+    for cursor in tu.cursor.get_children():
+        if cursor.spelling == 'a':
+            a = cursor
+        elif cursor.spelling == 'b':
+            b = cursor
+        elif cursor.spelling == 'v':
+            v = cursor
+
+    assert a is not None
+    assert b is not None
+    assert v is not None
+
+    assert a.type == b.type
+    assert a.type != v.type
+
+    assert a.type != None
+    assert a.type != 'foo'
+
 def test_is_pod():
     tu = get_tu('int i; void f();')
     i, f = None, None
