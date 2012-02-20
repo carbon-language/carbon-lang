@@ -2511,10 +2511,13 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
           if (!II->use_empty())
             return false;
           ConstantInt *Size = cast<ConstantInt>(II->getArgOperand(0));
-          if (Size->isAllOnesValue()) {
-            Value *PtrArg = getVal(II->getArgOperand(1));
-            Value *Ptr = PtrArg->stripPointerCasts();
-            if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr))
+          Value *PtrArg = getVal(II->getArgOperand(1));
+          Value *Ptr = PtrArg->stripPointerCasts();
+          if (GlobalVariable *GV = dyn_cast<GlobalVariable>(Ptr)) {
+            Type *ElemTy = cast<PointerType>(GV->getType())->getElementType();
+            if (!Size->isAllOnesValue() &&
+                Size->getValue().getLimitedValue() >=
+                TD->getTypeStoreSize(ElemTy))
               Invariants.insert(GV);
           }
           // Continue even if we do nothing.
