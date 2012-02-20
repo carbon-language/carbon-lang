@@ -516,6 +516,9 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   if (!Schedule)
     return false;
 
+  DEBUG(dbgs() << "Schedule := "; isl_schedule_dump(Schedule);
+        dbgs() << ";\n");
+
   isl_union_map *ScheduleMap = getScheduleMap(Schedule);
 
   for (Scop::iterator SI = S.begin(), SE = S.end(); SI != SE; ++SI) {
