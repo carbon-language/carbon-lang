@@ -1520,6 +1520,15 @@ static Value *ExtractEquivalentCondition(Value *V, CmpInst::Predicate Pred,
   return 0;
 }
 
+/// stripPointerAdjustments - This is like Value::stripPointerCasts, but also
+/// removes inbounds gep operations, regardless of their indices.
+static Value *stripPointerAdjustments(Value *V) {
+  if (GEPOperator *GEP = dyn_cast<GEPOperator>(V))
+    if (GEP->isInBounds())
+      return stripPointerAdjustments(GEP->getOperand(0)->stripPointerCasts());
+  return V;
+}
+
 /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
 /// fold the result.  If not, this returns null.
 static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
@@ -1595,10 +1604,18 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   Value *RHSPtr = RHS->stripPointerCasts();
   if (LHSPtr == RHSPtr)
     return ConstantInt::get(ITy, CmpInst::isTrueWhenEqual(Pred));
-  if (isa<AllocaInst>(LHSPtr) && (isa<GlobalValue>(RHSPtr) ||
-                                  isa<AllocaInst>(RHSPtr)  ||
-                                  isa<ConstantPointerNull>(RHSPtr)))
-    return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
+  
+  // Be more aggressive about stripping pointer adjustments when checking a
+  // comparison of an alloca address to another object.  We can rip off all
+  // inbounds GEP operations, even if they are variable.
+  LHSPtr = stripPointerAdjustments(LHSPtr);
+  if (isa<AllocaInst>(LHSPtr)) {
+    RHSPtr = stripPointerAdjustments(RHSPtr);
+    if (LHSPtr != RHSPtr &&
+        (isa<GlobalValue>(RHSPtr) || isa<AllocaInst>(RHSPtr)  ||
+         isa<ConstantPointerNull>(RHSPtr)))
+      return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
+  }
 
   // If we are comparing with zero then try hard since this is a common case.
   if (match(RHS, m_Zero())) {
