@@ -7769,8 +7769,9 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
     return ExprError();    
   }
   
+  unsigned ManglingNumber = E->getLambdaClass()->getLambdaManglingNumber();
   return getSema().ActOnLambdaExpr(E->getLocStart(), Body.take(), 
-                                   /*CurScope=*/0, 
+                                   /*CurScope=*/0, ManglingNumber,
                                    /*IsInstantiation=*/true);
 }
 

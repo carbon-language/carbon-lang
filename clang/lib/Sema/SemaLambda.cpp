@@ -483,7 +483,9 @@ static void addBlockPointerConversion(Sema &S,
 }
 
 ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body, 
-                                 Scope *CurScope, bool IsInstantiation) {
+                                 Scope *CurScope, 
+                                 llvm::Optional<unsigned> ManglingNumber,
+                                 bool IsInstantiation) {
   // Leave the expression-evaluation context.
   DiscardCleanupsInEvaluationContext();
   PopExpressionEvaluationContext();
@@ -633,11 +635,19 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
   if (LambdaExprNeedsCleanups)
     ExprNeedsCleanups = true;
 
+  // If we don't already have a mangling number for this lambda expression,
+  // allocate one now.
+  if (!ManglingNumber) {
+    // FIXME: Default arguments, data member initializers are special.
+    ManglingNumber = Context.getLambdaManglingNumber(CallOperator);
+  }
+  
   LambdaExpr *Lambda = LambdaExpr::Create(Context, Class, IntroducerRange, 
                                           CaptureDefault, Captures, 
                                           ExplicitParams, ExplicitResultType,
                                           CaptureInits, ArrayIndexVars, 
-                                          ArrayIndexStarts, Body->getLocEnd());
+                                          ArrayIndexStarts, Body->getLocEnd(),
+                                          *ManglingNumber);
 
   // C++11 [expr.prim.lambda]p2:
   //   A lambda-expression shall not appear in an unevaluated operand

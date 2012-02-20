@@ -1105,6 +1105,7 @@ void ASTDeclReader::ReadCXXDefinitionData(
       = static_cast<CXXRecordDecl::LambdaDefinitionData &>(Data);
     Lambda.NumCaptures = Record[Idx++];
     Lambda.NumExplicitCaptures = Record[Idx++];
+    Lambda.ManglingNumber = Record[Idx++];
     Lambda.Captures 
       = (Capture*)Reader.Context.Allocate(sizeof(Capture)*Lambda.NumCaptures);
     Capture *ToCapture = Lambda.Captures;

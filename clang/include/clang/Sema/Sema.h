@@ -3555,7 +3555,10 @@ public:
   /// ActOnLambdaExpr - This is called when the body of a lambda expression
   /// was successfully completed.
   ExprResult ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
-                             Scope *CurScope, bool IsInstantiation = false);
+                             Scope *CurScope, 
+                             llvm::Optional<unsigned> ManglingNumber 
+                               = llvm::Optional<unsigned>(),
+                             bool IsInstantiation = false);
 
   /// \brief Define the "body" of the conversion from a lambda object to a 
   /// function pointer.

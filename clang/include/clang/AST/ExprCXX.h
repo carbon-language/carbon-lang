@@ -1166,7 +1166,8 @@ private:
              ArrayRef<Expr *> CaptureInits,
              ArrayRef<VarDecl *> ArrayIndexVars,
              ArrayRef<unsigned> ArrayIndexStarts,
-             SourceLocation ClosingBrace);
+             SourceLocation ClosingBrace,
+             unsigned ManglingNumber);
 
   /// \brief Construct an empty lambda expression.
   LambdaExpr(EmptyShell Empty, unsigned NumCaptures, bool HasArrayIndexVars)
@@ -1204,7 +1205,8 @@ public:
                             ArrayRef<Expr *> CaptureInits,
                             ArrayRef<VarDecl *> ArrayIndexVars,
                             ArrayRef<unsigned> ArrayIndexStarts,
-                            SourceLocation ClosingBrace);
+                            SourceLocation ClosingBrace,
+                            unsigned ManglingNumber);
 
   /// \brief Construct a new lambda expression that will be deserialized from
   /// an external source.
@@ -1296,7 +1298,7 @@ public:
 
   /// \brief Whether this lambda had its result type explicitly specified.
   bool hasExplicitResultType() const { return ExplicitResultType; }
-  
+    
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == LambdaExprClass;
   }

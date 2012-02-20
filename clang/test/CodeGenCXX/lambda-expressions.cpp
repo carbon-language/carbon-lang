@@ -2,8 +2,8 @@
 
 int a() { return []{ return 1; }(); }
 // CHECK: define i32 @_Z1av
-// CHECK: call i32 @"_ZZ1avENK3$_0clEv"
-// CHECK: define internal i32 @"_ZZ1avENK3$_0clEv"
+// CHECK: call i32 @_ZZ1avENKUlvE_clEv
+// CHECK: define internal i32 @_ZZ1avENKUlvE_clEv
 // CHECK: ret i32 1
 
 int b(int x) { return [x]{return x;}(); }
@@ -11,8 +11,8 @@ int b(int x) { return [x]{return x;}(); }
 // CHECK: store i32
 // CHECK: load i32*
 // CHECK: store i32
-// CHECK: call i32 @"_ZZ1biENK3$_1clEv"
-// CHECK: define internal i32 @"_ZZ1biENK3$_1clEv"
+// CHECK: call i32 @_ZZ1biENKUlvE_clEv
+// CHECK: define internal i32 @_ZZ1biENKUlvE_clEv
 // CHECK: load i32*
 // CHECK: ret i32
 
@@ -20,8 +20,8 @@ int c(int x) { return [&x]{return x;}(); }
 // CHECK: define i32 @_Z1ci
 // CHECK: store i32
 // CHECK: store i32*
-// CHECK: call i32 @"_ZZ1ciENK3$_2clEv"
-// CHECK: define internal i32 @"_ZZ1ciENK3$_2clEv"
+// CHECK: call i32 @_ZZ1ciENKUlvE_clEv
+// CHECK: define internal i32 @_ZZ1ciENKUlvE_clEv
 // CHECK: load i32**
 // CHECK: load i32*
 // CHECK: ret i32
@@ -33,8 +33,8 @@ int d(int x) { D y[10]; [x,y] { return y[x].x; }(); }
 // CHECK: call void @_ZN1DC1Ev
 // CHECK: icmp ult i64 %{{.*}}, 10
 // CHECK: call void @_ZN1DC1ERKS_
-// CHECK: call i32 @"_ZZ1diENK3$_3clEv"
-// CHECK: define internal i32 @"_ZZ1diENK3$_3clEv"
+// CHECK: call i32 @_ZZ1diENKUlvE_clEv
+// CHECK: define internal i32 @_ZZ1diENKUlvE_clEv
 // CHECK: load i32*
 // CHECK: load i32*
 // CHECK: ret i32
@@ -44,29 +44,29 @@ int e(E a, E b, bool cond) { [a,b,cond](){ return (cond ? a : b).x; }(); }
 // CHECK: define i32 @_Z1e1ES_b
 // CHECK: call void @_ZN1EC1ERKS_
 // CHECK: invoke void @_ZN1EC1ERKS_
-// CHECK: invoke i32 @"_ZZ1e1ES_bENK3$_4clEv"
-// CHECK: call void @"_ZZ1e1ES_bEN3$_4D1Ev"
-// CHECK: call void @"_ZZ1e1ES_bEN3$_4D1Ev"
+// CHECK: invoke i32 @_ZZ1e1ES_bENKUlvE_clEv
+// CHECK: call void @_ZZ1e1ES_bENUlvE_D1Ev
+// CHECK: call void @_ZZ1e1ES_bENUlvE_D1Ev
 
-// CHECK: define internal i32 @"_ZZ1e1ES_bENK3$_4clEv"
+// CHECK: define internal i32 @_ZZ1e1ES_bENKUlvE_clEv
 // CHECK: trunc i8
 // CHECK: load i32*
 // CHECK: ret i32
 
 void f() {
   // CHECK: define void @_Z1fv()
-  // CHECK: {{call.*_5cvPFiiiEEv}}
+  // CHECK: {{call.*@_ZZ1fvENKUliiE_cvPFiiiEEv}}
   // CHECK-NEXT: store i32 (i32, i32)*
   // CHECK-NEXT: ret void
   int (*fp)(int, int) = [](int x, int y){ return x + y; };
 }
 
-// CHECK: define internal i32 @"_ZZ1fvEN3$_58__invokeEii"
+// CHECK: define internal i32 @_ZZ1fvENUliiE_8__invokeEii
 // CHECK: store i32
 // CHECK-NEXT: store i32
 // CHECK-NEXT: load i32*
 // CHECK-NEXT: load i32*
-// CHECK-NEXT: call i32 @"_ZZ1fvENK3$_5clEii"
+// CHECK-NEXT: call i32 @_ZZ1fvENKUliiE_clEii
 // CHECK-NEXT: ret i32
 
-// CHECK: define internal void @"_ZZ1e1ES_bEN3$_4D2Ev"
+// CHECK: define internal void @_ZZ1e1ES_bENUlvE_D2Ev

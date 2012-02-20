@@ -122,6 +122,13 @@ public:
   }
 
   bool getNextDiscriminator(const NamedDecl *ND, unsigned &disc) {
+    // Lambda closure types with external linkage (indicated by a 
+    // non-zero lambda mangling number) have their own numbering scheme, so
+    // they do not need a discriminator.
+    if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(ND))
+      if (RD->isLambda() && RD->getLambdaManglingNumber() > 0)
+        return false;
+        
     unsigned &discriminator = Uniquifier[ND];
     if (!discriminator)
       discriminator = ++Discriminator;
@@ -1076,6 +1083,38 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       break;
     }
 
+    // <unnamed-type-name> ::= <closure-type-name>
+    // 
+    // <closure-type-name> ::= Ul <lambda-sig> E [ <nonnegative number> ] _
+    // <lambda-sig> ::= <parameter-type>+   # Parameter types or 'v' for 'void'.
+    if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(TD)) {
+      if (Record->isLambda()) {
+        // FIXME: Figure out if we're in a function body, default argument,
+        // or initializer for a class member.
+        
+        Out << "Ul";
+        DeclarationName Name
+          = getASTContext().DeclarationNames.getCXXOperatorName(OO_Call);
+        const FunctionProtoType *Proto
+          = cast<CXXMethodDecl>(*Record->lookup(Name).first)->getType()->
+              getAs<FunctionProtoType>();
+        mangleBareFunctionType(Proto, /*MangleReturnType=*/false);        
+        Out << "E";
+        
+        // The number is omitted for the first closure type with a given 
+        // <lambda-sig> in a given context; it is n-2 for the nth closure type 
+        // (in lexical order) with that same <lambda-sig> and context.
+        //
+        // The AST keeps track of the number for us.
+        if (unsigned Number = Record->getLambdaManglingNumber()) {
+          if (Number > 1)
+            mangleNumber(Number - 2);
+        }
+        Out << '_';
+        break;
+      }
+    }
+        
     // Get a unique id for the anonymous struct.
     uint64_t AnonStructId = Context.getAnonymousStructId(TD);
 

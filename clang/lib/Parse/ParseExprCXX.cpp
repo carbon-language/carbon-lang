@@ -886,8 +886,7 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
   BodyScope.Exit();
 
   if (!Stmt.isInvalid())
-    return Actions.ActOnLambdaExpr(LambdaBeginLoc, Stmt.take(),
-                                   getCurScope());
+    return Actions.ActOnLambdaExpr(LambdaBeginLoc, Stmt.take(), getCurScope());
  
   Actions.ActOnLambdaError(LambdaBeginLoc, getCurScope());
   return ExprError();
