@@ -57,6 +57,11 @@ SimplifyDeps("polly-opt-simplify-deps",
              cl::desc("Dependences should be simplified (yes/no)"),
              cl::Hidden, cl::init("yes"));
 
+static cl::opt<int>
+MaxConstantTerm("polly-opt-max-constant-term",
+                cl::desc("The maximal constant term allowed (-1 is unlimited)"),
+                cl::Hidden, cl::init(20));
+
 static cl::opt<std::string>
 FusionStrategy("polly-opt-fusion",
                cl::desc("The fusion strategy to choose (min/max)"),
@@ -499,6 +504,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
 
   isl_options_set_schedule_fuse(S.getIslCtx(), IslFusionStrategy);
   isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), IslMaximizeBands);
+  isl_options_set_schedule_max_constant_term(S.getIslCtx(), MaxConstantTerm);
 
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_CONTINUE);
   isl_schedule *Schedule;
