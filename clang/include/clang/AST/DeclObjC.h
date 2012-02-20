@@ -1283,12 +1283,19 @@ class ObjCCategoryDecl : public ObjCContainerDecl {
   /// \brief The location of the category name in this declaration.
   SourceLocation CategoryNameLoc;
 
+  /// class extension may have private ivars.
+  SourceLocation IvarLBraceLoc;
+  SourceLocation IvarRBraceLoc;
+  
   ObjCCategoryDecl(DeclContext *DC, SourceLocation AtLoc,
                    SourceLocation ClassNameLoc, SourceLocation CategoryNameLoc,
-                   IdentifierInfo *Id, ObjCInterfaceDecl *IDecl)
+                   IdentifierInfo *Id, ObjCInterfaceDecl *IDecl,
+                   SourceLocation IvarLBraceLoc=SourceLocation(),
+                   SourceLocation IvarRBraceLoc=SourceLocation())
     : ObjCContainerDecl(ObjCCategory, DC, Id, ClassNameLoc, AtLoc),
       ClassInterface(IDecl), NextClassCategory(0), HasSynthBitfield(false),
-      CategoryNameLoc(CategoryNameLoc) {
+      CategoryNameLoc(CategoryNameLoc),
+      IvarLBraceLoc(IvarLBraceLoc), IvarRBraceLoc(IvarRBraceLoc) {
   }
 public:
 
@@ -1297,7 +1304,9 @@ public:
                                   SourceLocation ClassNameLoc,
                                   SourceLocation CategoryNameLoc,
                                   IdentifierInfo *Id,
-                                  ObjCInterfaceDecl *IDecl);
+                                  ObjCInterfaceDecl *IDecl,
+                                  SourceLocation IvarLBraceLoc=SourceLocation(),
+                                  SourceLocation IvarRBraceLoc=SourceLocation());
   static ObjCCategoryDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
   ObjCInterfaceDecl *getClassInterface() { return ClassInterface; }
@@ -1353,6 +1362,11 @@ public:
 
   SourceLocation getCategoryNameLoc() const { return CategoryNameLoc; }
   void setCategoryNameLoc(SourceLocation Loc) { CategoryNameLoc = Loc; }
+  
+  void setIvarLBraceLoc(SourceLocation Loc) { IvarLBraceLoc = Loc; }
+  SourceLocation getIvarLBraceLoc() const { return IvarLBraceLoc; }
+  void setIvarRBraceLoc(SourceLocation Loc) { IvarRBraceLoc = Loc; }
+  SourceLocation getIvarRBraceLoc() const { return IvarRBraceLoc; }
 
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const ObjCCategoryDecl *D) { return true; }
@@ -1521,6 +1535,10 @@ class ObjCImplementationDecl : public ObjCImplDecl {
   virtual void anchor();
   /// Implementation Class's super class.
   ObjCInterfaceDecl *SuperClass;
+  /// @implementation may have private ivars.
+  SourceLocation IvarLBraceLoc;
+  SourceLocation IvarRBraceLoc;
+  
   /// Support for ivar initialization.
   /// IvarInitializers - The arguments used to initialize the ivars
   CXXCtorInitializer **IvarInitializers;
@@ -1535,16 +1553,22 @@ class ObjCImplementationDecl : public ObjCImplDecl {
   ObjCImplementationDecl(DeclContext *DC,
                          ObjCInterfaceDecl *classInterface,
                          ObjCInterfaceDecl *superDecl,
-                         SourceLocation nameLoc, SourceLocation atStartLoc)
+                         SourceLocation nameLoc, SourceLocation atStartLoc,
+                         SourceLocation IvarLBraceLoc=SourceLocation(), 
+                         SourceLocation IvarRBraceLoc=SourceLocation())
     : ObjCImplDecl(ObjCImplementation, DC, classInterface, nameLoc, atStartLoc),
-       SuperClass(superDecl), IvarInitializers(0), NumIvarInitializers(0),
-       HasCXXStructors(false), HasSynthBitfield(false) {}
+       SuperClass(superDecl), IvarLBraceLoc(IvarLBraceLoc), 
+       IvarRBraceLoc(IvarRBraceLoc),
+       IvarInitializers(0), NumIvarInitializers(0),
+       HasCXXStructors(false), HasSynthBitfield(false){}
 public:
   static ObjCImplementationDecl *Create(ASTContext &C, DeclContext *DC,
                                         ObjCInterfaceDecl *classInterface,
                                         ObjCInterfaceDecl *superDecl,
                                         SourceLocation nameLoc,
-                                        SourceLocation atStartLoc);
+                                        SourceLocation atStartLoc,
+                                        SourceLocation IvarLBraceLoc=SourceLocation(), 
+                                        SourceLocation IvarRBraceLoc=SourceLocation());
 
   static ObjCImplementationDecl *CreateDeserialized(ASTContext &C, unsigned ID);
 
@@ -1623,6 +1647,11 @@ public:
 
   void setSuperClass(ObjCInterfaceDecl * superCls) { SuperClass = superCls; }
 
+  void setIvarLBraceLoc(SourceLocation Loc) { IvarLBraceLoc = Loc; }
+  SourceLocation getIvarLBraceLoc() const { return IvarLBraceLoc; }
+  void setIvarRBraceLoc(SourceLocation Loc) { IvarRBraceLoc = Loc; }
+  SourceLocation getIvarRBraceLoc() const { return IvarRBraceLoc; }
+  
   typedef specific_decl_iterator<ObjCIvarDecl> ivar_iterator;
   ivar_iterator ivar_begin() const {
     return ivar_iterator(decls_begin());

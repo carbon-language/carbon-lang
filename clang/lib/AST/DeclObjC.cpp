@@ -1070,10 +1070,13 @@ ObjCCategoryDecl *ObjCCategoryDecl::Create(ASTContext &C, DeclContext *DC,
                                            SourceLocation ClassNameLoc,
                                            SourceLocation CategoryNameLoc,
                                            IdentifierInfo *Id,
-                                           ObjCInterfaceDecl *IDecl) {
+                                           ObjCInterfaceDecl *IDecl,
+                                           SourceLocation IvarLBraceLoc,
+                                           SourceLocation IvarRBraceLoc) {
   ObjCCategoryDecl *CatDecl = new (C) ObjCCategoryDecl(DC, AtLoc, ClassNameLoc,
                                                        CategoryNameLoc, Id,
-                                                       IDecl);
+                                                       IDecl,
+                                                       IvarLBraceLoc, IvarRBraceLoc);
   if (IDecl) {
     // Link this category into its class's category list.
     CatDecl->NextClassCategory = IDecl->getCategoryList();
@@ -1209,11 +1212,14 @@ ObjCImplementationDecl::Create(ASTContext &C, DeclContext *DC,
                                ObjCInterfaceDecl *ClassInterface,
                                ObjCInterfaceDecl *SuperDecl,
                                SourceLocation nameLoc,
-                               SourceLocation atStartLoc) {
+                               SourceLocation atStartLoc,
+                               SourceLocation IvarLBraceLoc,
+                               SourceLocation IvarRBraceLoc) {
   if (ClassInterface && ClassInterface->hasDefinition())
     ClassInterface = ClassInterface->getDefinition();
   return new (C) ObjCImplementationDecl(DC, ClassInterface, SuperDecl,
-                                        nameLoc, atStartLoc);
+                                        nameLoc, atStartLoc,
+                                        IvarLBraceLoc, IvarRBraceLoc);
 }
 
 ObjCImplementationDecl *

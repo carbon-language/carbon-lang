@@ -3088,7 +3088,9 @@ Decl *ASTNodeImporter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
                                           Loc, 
                                        Importer.Import(D->getCategoryNameLoc()), 
                                           Name.getAsIdentifierInfo(),
-                                          ToInterface);
+                                          ToInterface,
+                                       Importer.Import(D->getIvarLBraceLoc()),
+                                       Importer.Import(D->getIvarRBraceLoc()));
     ToCategory->setLexicalDeclContext(LexicalDC);
     LexicalDC->addDeclInternal(ToCategory);
     Importer.Imported(D, ToCategory);
@@ -3434,7 +3436,9 @@ Decl *ASTNodeImporter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
                                   Importer.ImportContext(D->getDeclContext()),
                                           Iface, Super,
                                           Importer.Import(D->getLocation()),
-                                          Importer.Import(D->getAtStartLoc()));
+                                          Importer.Import(D->getAtStartLoc()),
+                                          Importer.Import(D->getIvarLBraceLoc()),
+                                          Importer.Import(D->getIvarRBraceLoc()));
     
     if (D->getDeclContext() != D->getLexicalDeclContext()) {
       DeclContext *LexicalDC

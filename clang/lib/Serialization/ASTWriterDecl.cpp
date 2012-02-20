@@ -541,6 +541,8 @@ void ASTDeclWriter::VisitObjCAtDefsFieldDecl(ObjCAtDefsFieldDecl *D) {
 void ASTDeclWriter::VisitObjCCategoryDecl(ObjCCategoryDecl *D) {
   VisitObjCContainerDecl(D);
   Writer.AddSourceLocation(D->getCategoryNameLoc(), Record);
+  Writer.AddSourceLocation(D->getIvarLBraceLoc(), Record);
+  Writer.AddSourceLocation(D->getIvarRBraceLoc(), Record);
   Writer.AddDeclRef(D->getClassInterface(), Record);
   Record.push_back(D->protocol_size());
   for (ObjCCategoryDecl::protocol_iterator
@@ -593,6 +595,8 @@ void ASTDeclWriter::VisitObjCCategoryImplDecl(ObjCCategoryImplDecl *D) {
 void ASTDeclWriter::VisitObjCImplementationDecl(ObjCImplementationDecl *D) {
   VisitObjCImplDecl(D);
   Writer.AddDeclRef(D->getSuperClass(), Record);
+  Writer.AddSourceLocation(D->getIvarLBraceLoc(), Record);
+  Writer.AddSourceLocation(D->getIvarRBraceLoc(), Record);
   Writer.AddCXXCtorInitializers(D->IvarInitializers, D->NumIvarInitializers,
                                 Record);
   Record.push_back(D->hasSynthBitfield());
