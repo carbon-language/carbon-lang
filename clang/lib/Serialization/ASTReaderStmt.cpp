@@ -1174,14 +1174,9 @@ void ASTStmtReader::VisitCXXNewExpr(CXXNewExpr *E) {
   E->setOperatorNew(ReadDeclAs<FunctionDecl>(Record, Idx));
   E->setOperatorDelete(ReadDeclAs<FunctionDecl>(Record, Idx));
   E->AllocatedTypeInfo = GetTypeSourceInfo(Record, Idx);
-  SourceRange TypeIdParens;
-  TypeIdParens.setBegin(ReadSourceLocation(Record, Idx));
-  TypeIdParens.setEnd(ReadSourceLocation(Record, Idx));
-  E->TypeIdParens = TypeIdParens;
+  E->TypeIdParens = ReadSourceRange(Record, Idx);
   E->StartLoc = ReadSourceLocation(Record, Idx);
-  SourceRange DirectInitRange;
-  DirectInitRange.setBegin(ReadSourceLocation(Record, Idx));
-  DirectInitRange.setEnd(ReadSourceLocation(Record, Idx));
+  E->DirectInitRange = ReadSourceRange(Record, Idx);
 
   E->AllocateArgsArray(Reader.getContext(), isArray, NumPlacementArgs,
                        E->StoredInitializationStyle != 0);
