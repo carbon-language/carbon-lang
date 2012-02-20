@@ -370,7 +370,8 @@ LineTableInfo &SourceManager::getLineTable() {
 SourceManager::SourceManager(DiagnosticsEngine &Diag, FileManager &FileMgr)
   : Diag(Diag), FileMgr(FileMgr), OverridenFilesKeepOriginalName(true),
     ExternalSLocEntries(0), LineTable(0), NumLinearScans(0),
-    NumBinaryProbes(0), FakeBufferForRecovery(0) {
+    NumBinaryProbes(0), FakeBufferForRecovery(0),
+    FakeContentCacheForRecovery(0) {
   clearIDTables();
   Diag.setSourceManager(this);
 }
@@ -396,6 +397,7 @@ SourceManager::~SourceManager() {
   }
   
   delete FakeBufferForRecovery;
+  delete FakeContentCacheForRecovery;
 
   for (llvm::DenseMap<FileID, MacroArgsMap *>::iterator
          I = MacroArgsCacheMap.begin(),E = MacroArgsCacheMap.end(); I!=E; ++I) {
@@ -469,6 +471,25 @@ SourceManager::createMemBufferContentCache(const MemoryBuffer *Buffer) {
   return Entry;
 }
 
+const SrcMgr::SLocEntry &SourceManager::loadSLocEntry(unsigned Index,
+                                                      bool *Invalid) const {
+  assert(!SLocEntryLoaded[Index]);
+  if (ExternalSLocEntries->ReadSLocEntry(-(static_cast<int>(Index) + 2))) {
+    if (Invalid)
+      *Invalid = true;
+    // If the file of the SLocEntry changed we could still have loaded it.
+    if (!SLocEntryLoaded[Index]) {
+      // Try to recover; create a SLocEntry so the rest of clang can handle it.
+      LoadedSLocEntryTable[Index] = SLocEntry::get(0,
+                                 FileInfo::get(SourceLocation(),
+                                               getFakeContentCacheForRecovery(),
+                                               SrcMgr::C_User));
+    }
+  }
+
+  return LoadedSLocEntryTable[Index];
+}
+
 std::pair<int, unsigned>
 SourceManager::AllocateLoadedSLocEntries(unsigned NumSLocEntries,
                                          unsigned TotalSize) {
@@ -489,6 +510,18 @@ const llvm::MemoryBuffer *SourceManager::getFakeBufferForRecovery() const {
       = llvm::MemoryBuffer::getMemBuffer("<<<INVALID BUFFER>>");
   
   return FakeBufferForRecovery;
+}
+
+/// \brief As part of recovering from missing or changed content, produce a
+/// fake content cache.
+const SrcMgr::ContentCache *
+SourceManager::getFakeContentCacheForRecovery() const {
+  if (!FakeContentCacheForRecovery) {
+    FakeContentCacheForRecovery = new ContentCache();
+    FakeContentCacheForRecovery->replaceBuffer(getFakeBufferForRecovery(),
+                                               /*DoNotFree=*/true);
+  }
+  return FakeContentCacheForRecovery;
 }
 
 //===----------------------------------------------------------------------===//

@@ -519,7 +519,7 @@ class SourceManager : public RefCountedBase<SourceManager> {
   ///
   /// Negative FileIDs are indexes into this table. To get from ID to an index,
   /// use (-ID - 2).
-  std::vector<SrcMgr::SLocEntry> LoadedSLocEntryTable;
+  mutable std::vector<SrcMgr::SLocEntry> LoadedSLocEntryTable;
 
   /// \brief The starting offset of the next local SLocEntry.
   ///
@@ -575,6 +575,8 @@ class SourceManager : public RefCountedBase<SourceManager> {
 
   // Cache for the "fake" buffer used for error-recovery purposes.
   mutable llvm::MemoryBuffer *FakeBufferForRecovery;
+
+  mutable SrcMgr::ContentCache *FakeContentCacheForRecovery;
 
   /// \brief Lazily computed map of macro argument chunks to their expanded
   /// source location.
@@ -1260,9 +1262,9 @@ public:
   const SrcMgr::SLocEntry &getLoadedSLocEntry(unsigned Index,
                                               bool *Invalid = 0) const {
     assert(Index < LoadedSLocEntryTable.size() && "Invalid index");
-    if (!SLocEntryLoaded[Index])
-      ExternalSLocEntries->ReadSLocEntry(-(static_cast<int>(Index) + 2));
-    return LoadedSLocEntryTable[Index];
+    if (SLocEntryLoaded[Index])
+      return LoadedSLocEntryTable[Index];
+    return loadSLocEntry(Index, Invalid);
   }
 
   const SrcMgr::SLocEntry &getSLocEntry(FileID FID, bool *Invalid = 0) const {
@@ -1313,6 +1315,9 @@ public:
 
 private:
   const llvm::MemoryBuffer *getFakeBufferForRecovery() const;
+  const SrcMgr::ContentCache *getFakeContentCacheForRecovery() const;
+
+  const SrcMgr::SLocEntry &loadSLocEntry(unsigned Index, bool *Invalid) const;
 
   /// \brief Get the entry with the given unwrapped FileID.
   const SrcMgr::SLocEntry &getSLocEntryByID(int ID) const {
@@ -1322,8 +1327,9 @@ private:
     return getLocalSLocEntry(static_cast<unsigned>(ID));
   }
 
-  const SrcMgr::SLocEntry &getLoadedSLocEntryByID(int ID) const {
-    return getLoadedSLocEntry(static_cast<unsigned>(-ID - 2));
+  const SrcMgr::SLocEntry &getLoadedSLocEntryByID(int ID,
+                                                  bool *Invalid = 0) const {
+    return getLoadedSLocEntry(static_cast<unsigned>(-ID - 2), Invalid);
   }
 
   /// createExpansionLoc - Implements the common elements of storing an
