@@ -337,8 +337,8 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     return llvm::DIType();
   case BuiltinType::ObjCClass:
     return DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-					"objc_class", getOrCreateMainFile(),
-					0);
+                                      "objc_class", getOrCreateMainFile(),
+                                      0);
   case BuiltinType::ObjCId: {
     // typedef struct objc_class *Class;
     // typedef struct objc_object {
@@ -347,8 +347,8 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
 
     llvm::DIType OCTy =
       DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-				   "objc_class", getOrCreateMainFile(),
-				   0);
+                                 "objc_class", getOrCreateMainFile(),
+                                 0);
     unsigned Size = CGM.getContext().getTypeSize(CGM.getContext().VoidPtrTy);
     
     llvm::DIType ISATy = DBuilder.createPointerType(OCTy, Size);
@@ -368,8 +368,8 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
   case BuiltinType::ObjCSel: {
     return
       DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
-				   "objc_selector", getOrCreateMainFile(),
-				   0);
+                                 "objc_selector", getOrCreateMainFile(),
+                                 0);
   }
   case BuiltinType::UChar:
   case BuiltinType::Char_U: Encoding = llvm::dwarf::DW_ATE_unsigned_char; break;
