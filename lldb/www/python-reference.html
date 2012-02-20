@@ -318,7 +318,7 @@ Enter your Python command(s). Type 'DONE' to end.
           don't have to change your PYTHONPATH for temporary scripts.  It also has another convenience
           that if your new script module has a function of the form:</p>
 
-<code><pre><tt>def __lldb_module_init(<b>debugger</b>, <b>dict</b>):
+<code><pre><tt>def __lldb_init_module(<b>debugger</b>, <b>dict</b>):
     <font color=green># Command Initialization code goes here</font>
 </tt></pre></code>
 
@@ -359,7 +359,7 @@ def ls(debugger, command, result, dict):
     result.PutCString(commands.getoutput('/bin/ls %s' % command))
 
 <font color=green># And the initialization code to add your commands </font>
-def __lldb_module_init(debugger, dict):
+def __lldb_init_module(debugger, dict):
     debugger.HandleCommand('command script add -f ls.ls ls')
     print 'The "ls" python command has been installed and is ready for use.'
 </tt></pre></code>
