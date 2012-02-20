@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin10.0.0 -emit-llvm -o - %s -fexceptions -std=c++11 | FileCheck %s
 
+// CHECK: @var = internal global
+auto var = [](int i) { return i+1; };
+
 int a() { return []{ return 1; }(); }
 // CHECK: define i32 @_Z1av
 // CHECK: call i32 @_ZZ1avENKUlvE_clEv
