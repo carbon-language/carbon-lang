@@ -745,7 +745,9 @@ void DIBasicType::print(raw_ostream &OS) const {
 
 /// print - Print derived type.
 void DIDerivedType::print(raw_ostream &OS) const {
-  OS << "\n\t Derived From: "; getTypeDerivedFrom().print(OS);
+  OS << "\n\t Derived From: ";
+  getTypeDerivedFrom().print(OS);
+  OS << "\n\t";
 }
 
 /// print - Print composite type.
