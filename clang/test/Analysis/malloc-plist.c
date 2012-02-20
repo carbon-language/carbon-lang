@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.unix.Malloc -analyzer-output=plist -o - %s | FileCheck %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=unix.Malloc -analyzer-output=plist -o - %s | FileCheck %s
 
 typedef __typeof(sizeof(int)) size_t;
 void *malloc(size_t);

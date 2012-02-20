@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -analyze -analyzer-checker=experimental.unix.cstring.BadSizeArg -analyzer-store=region -verify %s
+// RUN: %clang_cc1 -analyze -analyzer-checker=unix.cstring.BadSizeArg -analyzer-store=region -verify %s
 
 // Ensure we don't crash on C++ declarations with special names.
 struct X {

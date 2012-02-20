@@ -33,7 +33,8 @@ def Taint : Package<"taint">, InPackage<SecurityExperimental>, Hidden;
 
 def Unix : Package<"unix">;
 def UnixExperimental : Package<"unix">, InPackage<Experimental>, Hidden;
-def CString : Package<"cstring">, InPackage<UnixExperimental>, Hidden;
+def CString : Package<"cstring">, InPackage<Unix>, Hidden;
+def CStringExperimental : Package<"cstring">, InPackage<UnixExperimental>, Hidden;
 
 def OSX : Package<"osx">;
 def OSXExperimental : Package<"osx">, InPackage<Experimental>, Hidden;
@@ -277,6 +278,10 @@ let ParentPackage = Unix in {
 def UnixAPIChecker : Checker<"API">,
   HelpText<"Check calls to various UNIX/Posix functions">,
   DescFile<"UnixAPIChecker.cpp">;
+
+def MallocPessimistic : Checker<"Malloc">,
+  HelpText<"Check for memory leaks, double free, and use-after-free problems.">,
+  DescFile<"MallocChecker.cpp">;
   
 } // end "unix"
 
@@ -288,10 +293,6 @@ def ChrootChecker : Checker<"Chroot">,
 
 def MallocOptimistic : Checker<"MallocWithAnnotations">,
   HelpText<"Check for memory leaks, double free, and use-after-free problems. Assumes that all user-defined functions which might free a pointer are annotated.">,
-  DescFile<"MallocChecker.cpp">;
-
-def MallocPessimistic : Checker<"Malloc">,
-  HelpText<"Check for memory leaks, double free, and use-after-free problems.">,
   DescFile<"MallocChecker.cpp">;
 
 def MallocSizeofChecker : Checker<"MallocSizeof">,
@@ -314,6 +315,13 @@ def CStringNullArg : Checker<"NullArg">,
   HelpText<"Check for null pointers being passed as arguments to C string functions">,
   DescFile<"CStringChecker.cpp">;
 
+def CStringSyntaxChecker : Checker<"BadSizeArg">,
+  HelpText<"Check the size argument passed into C string functions for common erroneous patterns">,
+  DescFile<"CStringSyntaxChecker.cpp">;  
+}
+
+let ParentPackage = CStringExperimental in {
+
 def CStringOutOfBounds : Checker<"OutOfBounds">,
   HelpText<"Check for out-of-bounds access in string functions">,
   DescFile<"CStringChecker.cpp">;
@@ -325,10 +333,6 @@ def CStringBufferOverlap : Checker<"BufferOverlap">,
 def CStringNotNullTerm : Checker<"NotNullTerminated">,
   HelpText<"Check for arguments which are not null-terminating strings">,
   DescFile<"CStringChecker.cpp">;
-
-def CStringSyntaxChecker : Checker<"BadSizeArg">,
-  HelpText<"Check the size argument passed into C string functions for common erroneous patterns">,
-  DescFile<"CStringSyntaxChecker.cpp">;  
 }
 
 //===----------------------------------------------------------------------===//
