@@ -75,15 +75,13 @@ struct S {
 };
 
 // explicit specialization can differ in constepxr
-// FIXME: When checking the explicit specialization, we implicitly instantiate
-// the primary template then claim a constexpr mismatch.
-template <> notlit ft(notlit nl) { return nl; } // unexpected-error {{follows constexpr declaration}} unexpected-note {{here}}
-template <> char ft(char c) { return c; } // desired-note {{previous}} unexpected-error {{follows constexpr declaration}} unexpected-note {{here}}
-template <> constexpr char ft(char nl); // desired-error {{constexpr declaration of 'ft<char>' follows non-constexpr declaration}}
-template <> constexpr int gt(int nl) { return nl; } // unexpected-error {{follows non-constexpr declaration}} unexpected-note {{here}}
-template <> notlit S::f() const { return notlit(); } // unexpected-error {{follows constexpr declaration}} unexpected-note {{here}}
-template <> constexpr int S::g() { return 0; } // desired-note {{previous}} unexpected-error {{follows non-constexpr declaration}} unexpected-note {{here}}
-template <> int S::g() const; // desired-error {{non-constexpr declaration of 'g<int>' follows constexpr declaration}}
+template <> notlit ft(notlit nl) { return nl; }
+template <> char ft(char c) { return c; } // expected-note {{previous}}
+template <> constexpr char ft(char nl); // expected-error {{constexpr declaration of 'ft<char>' follows non-constexpr declaration}}
+template <> constexpr int gt(int nl) { return nl; }
+template <> notlit S::f() const { return notlit(); }
+template <> constexpr int S::g() { return 0; } // expected-note {{previous}}
+template <> int S::g() const; // expected-error {{non-constexpr declaration of 'g<int>' follows constexpr declaration}}
 // specializations can drop the 'constexpr' but not the implied 'const'.
 template <> char S::g() { return 0; } // expected-error {{no function template matches}}
 template <> double S::g() const { return 0; } // ok

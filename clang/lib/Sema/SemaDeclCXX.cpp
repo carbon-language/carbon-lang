@@ -516,13 +516,9 @@ bool Sema::MergeCXXFunctionDecl(FunctionDecl *New, FunctionDecl *Old) {
     }
   }
 
-  // C++0x [dcl.constexpr]p1: If any declaration of a function or function
+  // C++11 [dcl.constexpr]p1: If any declaration of a function or function
   // template has a constexpr specifier then all its declarations shall
-  // contain the constexpr specifier. [Note: An explicit specialization can
-  // differ from the template declaration with respect to the constexpr
-  // specifier. -- end note]
-  //
-  // FIXME: Don't reject changes in constexpr in explicit specializations.
+  // contain the constexpr specifier.
   if (New->isConstexpr() != Old->isConstexpr()) {
     Diag(New->getLocation(), diag::err_constexpr_redecl_mismatch)
       << New << New->isConstexpr();
