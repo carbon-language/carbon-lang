@@ -827,6 +827,10 @@ void MallocChecker::checkEndPath(CheckerContext &C) const {
   ProgramStateRef state = C.getState();
   RegionStateTy M = state->get<RegionState>();
 
+  // If inside inlined call, skip it.
+  if (C.getLocationContext()->getParent() != 0)
+    return;
+
   for (RegionStateTy::iterator I = M.begin(), E = M.end(); I != E; ++I) {
     RefState RS = I->second;
     if (RS.isAllocated()) {
@@ -885,8 +889,9 @@ void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
   if (checkUseAfterFree(Sym, C, E))
     return;
 
-  // Check if the symbol is escaping.
-  checkEscape(Sym, E, C);
+  // If this function body is not inlined, check if the symbol is escaping.
+  if (C.getLocationContext()->getParent() == 0)
+    checkEscape(Sym, E, C);
 }
 
 bool MallocChecker::checkUseAfterFree(SymbolRef Sym, CheckerContext &C,
