@@ -433,7 +433,7 @@ void TailDuplicatePass::DuplicateInstruction(MachineInstr *MI,
         MO.setReg(VI->second);
     }
   }
-  PredBB->insert(PredBB->end(), NewMI);
+  PredBB->insert(PredBB->instr_end(), NewMI);
 }
 
 /// UpdateSuccessorsPHIs - After FromBB is tail duplicated into its predecessor
@@ -778,8 +778,10 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
     // Clone the contents of TailBB into PredBB.
     DenseMap<unsigned, unsigned> LocalVRMap;
     SmallVector<std::pair<unsigned,unsigned>, 4> CopyInfos;
-    MachineBasicBlock::iterator I = TailBB->begin();
-    while (I != TailBB->end()) {
+    // Use instr_iterator here to properly handle bundles, e.g.
+    // ARM Thumb2 IT block.
+    MachineBasicBlock::instr_iterator I = TailBB->instr_begin();
+    while (I != TailBB->instr_end()) {
       MachineInstr *MI = &*I;
       ++I;
       if (MI->isPHI()) {
@@ -849,6 +851,7 @@ TailDuplicatePass::TailDuplicate(MachineBasicBlock *TailBB,
         // Replace def of virtual registers with new registers, and update
         // uses with PHI source register or the new registers.
         MachineInstr *MI = &*I++;
+        assert(!MI->isBundle() && "Not expecting bundles before regalloc!");
         DuplicateInstruction(MI, TailBB, PrevBB, MF, LocalVRMap, UsedByPhi);
         MI->eraseFromParent();
       }
