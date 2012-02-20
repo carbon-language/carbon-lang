@@ -2253,18 +2253,20 @@ static void CommitValueTo(Constant *Val, Constant *Addr) {
   GV->setInitializer(EvaluateStoreInto(GV->getInitializer(), Val, CE, 2));
 }
 
-/// Evaluate - This class evaluates LLVM IR, producing the Constant representing
-/// each SSA instruction.  Changes to global variables are stored in a mapping
-/// that can be iterated over after the evaluation is complete.  Once an
-/// evaluation call fails, the evaluation object should not be reused.
-class Evaluate {
+namespace {
+
+/// Evaluator - This class evaluates LLVM IR, producing the Constant
+/// representing each SSA instruction.  Changes to global variables are stored
+/// in a mapping that can be iterated over after the evaluation is complete.
+/// Once an evaluation call fails, the evaluation object should not be reused.
+class Evaluator {
 public:
-  Evaluate(const TargetData *TD, const TargetLibraryInfo *TLI)
+  Evaluator(const TargetData *TD, const TargetLibraryInfo *TLI)
     : TD(TD), TLI(TLI) {
     ValueStack.push_back(new DenseMap<Value*, Constant*>);
   }
 
-  ~Evaluate() {
+  ~Evaluator() {
     DeleteContainerPointers(ValueStack);
     while (!AllocaTmps.empty()) {
       GlobalVariable *Tmp = AllocaTmps.back();
@@ -2344,10 +2346,12 @@ private:
   const TargetLibraryInfo *TLI;
 };
 
+}  // anonymous namespace
+
 /// ComputeLoadResult - Return the value that would be computed by a load from
 /// P after the stores reflected by 'memory' have been performed.  If we can't
 /// decide, return null.
-Constant *Evaluate::ComputeLoadResult(Constant *P) {
+Constant *Evaluator::ComputeLoadResult(Constant *P) {
   // If this memory location has been recently stored, use the stored value: it
   // is the most up-to-date.
   DenseMap<Constant*, Constant*>::const_iterator I = MutatedMemory.find(P);
@@ -2375,7 +2379,8 @@ Constant *Evaluate::ComputeLoadResult(Constant *P) {
 /// EvaluateBlock - Evaluate all instructions in block BB, returning true if
 /// successful, false if we can't evaluate it.  NewBB returns the next BB that
 /// control flows into, or null upon return.
-bool Evaluate::EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB){
+bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
+                              BasicBlock *&NextBB) {
   // This is the main evaluation loop.
   while (1) {
     Constant *InstResult = 0;
@@ -2604,8 +2609,8 @@ bool Evaluate::EvaluateBlock(BasicBlock::iterator CurInst, BasicBlock *&NextBB){
 /// EvaluateFunction - Evaluate a call to function F, returning true if
 /// successful, false if we can't evaluate it.  ActualArgs contains the formal
 /// arguments for the function.
-bool Evaluate::EvaluateFunction(Function *F, Constant *&RetVal,
-                                const SmallVectorImpl<Constant*> &ActualArgs) {
+bool Evaluator::EvaluateFunction(Function *F, Constant *&RetVal,
+                                 const SmallVectorImpl<Constant*> &ActualArgs) {
   // Check to see if this function is already executing (recursion).  If so,
   // bail out.  TODO: we might want to accept limited recursion.
   if (std::find(CallStack.begin(), CallStack.end(), F) != CallStack.end())
@@ -2668,7 +2673,7 @@ bool Evaluate::EvaluateFunction(Function *F, Constant *&RetVal,
 static bool EvaluateStaticConstructor(Function *F, const TargetData *TD,
                                       const TargetLibraryInfo *TLI) {
   // Call the function.
-  Evaluate Eval(TD, TLI);
+  Evaluator Eval(TD, TLI);
   Constant *RetValDummy;
   bool EvalSuccess = Eval.EvaluateFunction(F, RetValDummy,
                                            SmallVector<Constant*, 0>());
