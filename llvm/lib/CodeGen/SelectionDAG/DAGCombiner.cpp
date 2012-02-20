@@ -2391,6 +2391,88 @@ SDValue DAGCombiner::visitAND(SDNode *N) {
       return SDValue(N, 0);   // Return N so it doesn't get rechecked!
     }
   }
+  // similarly fold (and (X (load ([non_ext|any_ext|zero_ext] V))), c) -> 
+  // (X (load ([non_ext|zero_ext] V))) if 'and' only clears top bits which must
+  // already be zero by virtue of the width of the base type of the load.
+  //
+  // the 'X' node here can either be nothing or an extract_vector_elt to catch
+  // more cases.
+  if ((N0.getOpcode() == ISD::EXTRACT_VECTOR_ELT &&
+       N0.getOperand(0).getOpcode() == ISD::LOAD) ||
+      N0.getOpcode() == ISD::LOAD) {
+    LoadSDNode *Load = cast<LoadSDNode>( (N0.getOpcode() == ISD::LOAD) ?
+                                         N0 : N0.getOperand(0) );
+
+    // Get the constant (if applicable) the zero'th operand is being ANDed with.
+    // This can be a pure constant or a vector splat, in which case we treat the
+    // vector as a scalar and use the splat value.
+    APInt Constant = APInt::getNullValue(1);
+    if (const ConstantSDNode *C = dyn_cast<ConstantSDNode>(N1)) {
+      Constant = C->getAPIntValue();
+    } else if (BuildVectorSDNode *Vector = dyn_cast<BuildVectorSDNode>(N1)) {
+      APInt SplatValue, SplatUndef;
+      unsigned SplatBitSize;
+      bool HasAnyUndefs;
+      bool IsSplat = Vector->isConstantSplat(SplatValue, SplatUndef,
+                                             SplatBitSize, HasAnyUndefs);
+      if (IsSplat) {
+        // Undef bits can contribute to a possible optimisation if set, so
+        // set them.
+        SplatValue |= SplatUndef;
+
+        // The splat value may be something like "0x00FFFFFF", which means 0 for
+        // the first vector value and FF for the rest, repeating. We need a mask
+        // that will apply equally to all members of the vector, so AND all the
+        // lanes of the constant together.
+        EVT VT = Vector->getValueType(0);
+        unsigned BitWidth = VT.getVectorElementType().getSizeInBits();
+        Constant = APInt::getAllOnesValue(BitWidth);
+        for (unsigned i = 0, n = VT.getVectorNumElements(); i < n; ++i)
+          Constant &= SplatValue.lshr(i*BitWidth).zextOrTrunc(BitWidth);
+      }
+    }
+
+    // If we want to change an EXTLOAD to a ZEXTLOAD, ensure a ZEXTLOAD is
+    // actually legal and isn't going to get expanded, else this is a false
+    // optimisation.
+    bool CanZextLoadProfitably = TLI.isLoadExtLegal(ISD::ZEXTLOAD,
+                                                    Load->getMemoryVT());
+
+    // Resize the constant to the same size as the original memory access before
+    // extension. If it is still the AllOnesValue then this AND is completely
+    // unneeded.
+    Constant =
+      Constant.zextOrTrunc(Load->getMemoryVT().getScalarType().getSizeInBits());
+
+    bool B;
+    switch (Load->getExtensionType()) {
+    default: B = false; break;
+    case ISD::EXTLOAD: B = CanZextLoadProfitably; break;
+    case ISD::ZEXTLOAD:
+    case ISD::NON_EXTLOAD: B = true; break;
+    }
+
+    if (B && Constant.isAllOnesValue()) {
+      // If the load type was an EXTLOAD, convert to ZEXTLOAD in order to
+      // preserve semantics once we get rid of the AND.
+      SDValue NewLoad(Load, 0);
+      if (Load->getExtensionType() == ISD::EXTLOAD) {
+        NewLoad = DAG.getLoad(Load->getAddressingMode(), ISD::ZEXTLOAD,
+                              Load->getValueType(0), Load->getDebugLoc(),
+                              Load->getChain(), Load->getBasePtr(),
+                              Load->getOffset(), Load->getMemoryVT(),
+                              Load->getMemOperand());
+        // Replace uses of the EXTLOAD with the new ZEXTLOAD.
+        CombineTo(Load, NewLoad.getValue(0), NewLoad.getValue(1));
+      }
+
+      // Fold the AND away, taking care not to fold to the old load node if we
+      // replaced it.
+      CombineTo(N, (N0.getNode() == Load) ? NewLoad : N0);
+
+      return SDValue(N, 0); // Return N so it doesn't get rechecked!
+    }
+  }
   // fold (and (setcc x), (setcc y)) -> (setcc (and x, y))
   if (isSetCCEquivalent(N0, LL, LR, CC0) && isSetCCEquivalent(N1, RL, RR, CC1)){
     ISD::CondCode Op0 = cast<CondCodeSDNode>(CC0)->get();
