@@ -28,7 +28,7 @@ CXXRecordDecl *Sema::createLambdaClosureType(SourceRange IntroducerRange) {
   // Start constructing the lambda class.
   CXXRecordDecl *Class = CXXRecordDecl::CreateLambda(Context, DC, 
                                                      IntroducerRange.getBegin());
-  CurContext->addDecl(Class);
+  DC->addDecl(Class);
   
   return Class;
 }
@@ -65,7 +65,7 @@ CXXMethodDecl *Sema::startLambdaDefinition(CXXRecordDecl *Class,
   
   // Temporarily set the lexical declaration context to the current
   // context, so that the Scope stack matches the lexical nesting.
-  Method->setLexicalDeclContext(Class->getDeclContext());  
+  Method->setLexicalDeclContext(CurContext);  
   
   // Add parameters.
   if (!Params.empty()) {

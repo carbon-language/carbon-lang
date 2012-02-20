@@ -3,6 +3,9 @@
 // CHECK: @var = internal global
 auto var = [](int i) { return i+1; };
 
+// CHECK: @cvar = global
+extern "C" auto cvar = []{};
+
 int a() { return []{ return 1; }(); }
 // CHECK: define i32 @_Z1av
 // CHECK: call i32 @_ZZ1avENKUlvE_clEv
