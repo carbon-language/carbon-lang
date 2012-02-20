@@ -1,4 +1,4 @@
-; RUN: llc -mtriple=x86_64-apple-macosx -mcpu=nocona < %s -disable-copyprop=false | FileCheck %s
+; RUN: llc -mtriple=x86_64-apple-macosx -mcpu=nocona < %s | FileCheck %s
 
 ; After tail duplication, two copies in an early exit BB can be cancelled out.
 ; rdar://10640363
