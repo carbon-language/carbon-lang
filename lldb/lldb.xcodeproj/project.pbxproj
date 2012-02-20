@@ -453,6 +453,7 @@
 		B271B11413D6139300C3FEDB /* FormatClasses.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 94A9112D13D5DF210046D8A6 /* FormatClasses.cpp */; };
 		B27318421416AC12006039C8 /* WatchpointList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B27318411416AC12006039C8 /* WatchpointList.cpp */; };
 		B28058A1139988B0002D96D0 /* InferiorCallPOSIX.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B28058A0139988B0002D96D0 /* InferiorCallPOSIX.cpp */; };
+		B299580B14F2FA1400050A04 /* DisassemblerLLVMC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B299580A14F2FA1400050A04 /* DisassemblerLLVMC.cpp */; };
 		B2A58722143119810092BFBA /* SBWatchpoint.h in Headers */ = {isa = PBXBuildFile; fileRef = B2A58721143119810092BFBA /* SBWatchpoint.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2A58723143119D50092BFBA /* SBWatchpoint.cpp */; };
 /* End PBXBuildFile section */
@@ -1396,6 +1397,8 @@
 		B287E63E12EFAE2C00C9BEFE /* ARMDefines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARMDefines.h; path = Utility/ARMDefines.h; sourceTree = "<group>"; };
 		B296983412C2FB2B002D92C3 /* CommandObjectVersion.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectVersion.cpp; path = source/Commands/CommandObjectVersion.cpp; sourceTree = "<group>"; };
 		B296983512C2FB2B002D92C3 /* CommandObjectVersion.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectVersion.h; path = source/Commands/CommandObjectVersion.h; sourceTree = "<group>"; };
+		B299580A14F2FA1400050A04 /* DisassemblerLLVMC.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DisassemblerLLVMC.cpp; sourceTree = "<group>"; };
+		B299580C14F2FA1F00050A04 /* DisassemblerLLVMC.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = DisassemblerLLVMC.h; sourceTree = "<group>"; };
 		B2A58721143119810092BFBA /* SBWatchpoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = SBWatchpoint.h; path = include/lldb/API/SBWatchpoint.h; sourceTree = "<group>"; };
 		B2A58723143119D50092BFBA /* SBWatchpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBWatchpoint.cpp; path = source/API/SBWatchpoint.cpp; sourceTree = "<group>"; };
 		B2A5872514313B480092BFBA /* SBWatchpoint.i */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = SBWatchpoint.i; sourceTree = "<group>"; };
@@ -1535,6 +1538,8 @@
 			children = (
 				260C897410F57C5600BB2B04 /* DisassemblerLLVM.cpp */,
 				260C897510F57C5600BB2B04 /* DisassemblerLLVM.h */,
+				B299580A14F2FA1400050A04 /* DisassemblerLLVMC.cpp */,
+				B299580C14F2FA1F00050A04 /* DisassemblerLLVMC.h */,
 			);
 			path = llvm;
 			sourceTree = "<group>";
@@ -3614,6 +3619,7 @@
 				4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */,
 				26A527C114E24F5F00F3A14A /* ProcessMachCore.cpp in Sources */,
 				26A527C314E24F5F00F3A14A /* ThreadMachCore.cpp in Sources */,
+				B299580B14F2FA1400050A04 /* DisassemblerLLVMC.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

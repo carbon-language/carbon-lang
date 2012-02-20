@@ -516,7 +516,8 @@ const char *DisassemblerLLVMC::SymbolLookup (uint64_t ReferenceValue,
     {        
         Address reference_address;
         
-        Target *target = m_exe_scope->CalculateTarget();
+        TargetSP target_sp (m_exe_scope->CalculateTarget());
+        Target *target = target_sp.get();
         
         if (target)
         {
