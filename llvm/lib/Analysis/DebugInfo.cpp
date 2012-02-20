@@ -721,8 +721,13 @@ void DIType::print(raw_ostream &OS) const {
 
   if (isBasicType())
     DIBasicType(DbgNode).print(OS);
-  else if (isDerivedType())
-    DIDerivedType(DbgNode).print(OS);
+  else if (isDerivedType()) {
+    DIDerivedType DTy = DIDerivedType(DbgNode);
+    DTy.print(OS);
+    DICompositeType CTy = getDICompositeType(DTy);
+    if (CTy.Verify())
+      CTy.print(OS);
+  }
   else if (isCompositeType())
     DICompositeType(DbgNode).print(OS);
   else {
