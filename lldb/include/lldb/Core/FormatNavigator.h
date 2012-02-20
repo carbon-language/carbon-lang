@@ -254,9 +254,6 @@ class FormatNavigator
 protected:
     typedef FormatMap<KeyType,ValueType> BackEndType;
     
-    template<typename, typename>
-    struct Types { };
-
 public:
     typedef typename BackEndType::MapType MapType;
     typedef typename MapType::iterator MapIterator;
@@ -279,13 +276,13 @@ public:
     void
     Add (const MapKeyType &type, const MapValueType& entry)
     {
-        Add_Impl(type, entry, Types<KeyType,ValueType>());
+        Add_Impl(type, entry, (KeyType*)NULL);
     }
     
     bool
     Delete (ConstString type)
     {
-        return Delete_Impl(type, Types<KeyType, ValueType>());
+        return Delete_Impl(type, (KeyType*)NULL);
     }
         
     bool
@@ -309,13 +306,13 @@ public:
     bool
     Get (ConstString type, MapValueType& entry)
     {
-        return Get_Impl(type, entry, Types<KeyType,ValueType>());
+        return Get_Impl(type, entry, (KeyType*)NULL);
     }
     
     bool
     GetExact (ConstString type, MapValueType& entry)
     {
-        return GetExact_Impl(type, entry, Types<KeyType,ValueType>());
+        return GetExact_Impl(type, entry, (KeyType*)NULL);
     }
     
     MapValueType
@@ -327,7 +324,7 @@ public:
     lldb::TypeNameSpecifierImplSP
     GetTypeNameSpecifierAtIndex (uint32_t index)
     {
-        return GetTypeNameSpecifierAtIndex_Impl(index, Types<KeyType,ValueType>());
+        return GetTypeNameSpecifierAtIndex_Impl(index, (KeyType*)NULL);
     }
     
     void
@@ -358,29 +355,25 @@ protected:
     
     ConstString m_id_cs;
                            
-    template<typename K, typename V>
     void
-    Add_Impl (const MapKeyType &type, const MapValueType& entry, Types<K,V>)
+    Add_Impl (const MapKeyType &type, const MapValueType& entry, lldb::RegularExpressionSP *dummy)
     {
        m_format_map.Add(type,entry);
     }
 
-    template<typename V>
-    void Add_Impl (const ConstString &type, const MapValueType& entry, Types<ConstString,V>)
+    void Add_Impl (const ConstString &type, const MapValueType& entry, ConstString *dummy)
     {
        m_format_map.Add(GetValidTypeName_Impl(type), entry);
     }
 
-    template<typename K, typename V>
     bool
-    Delete_Impl (ConstString type, Types<K,V>)
+    Delete_Impl (ConstString type, ConstString *dummy)
     {
        return m_format_map.Delete(type);
     }
 
-    template<typename V>
     bool
-    Delete_Impl (ConstString type, Types<lldb::RegularExpressionSP,V>)
+    Delete_Impl (ConstString type, lldb::RegularExpressionSP *dummy)
     {
        Mutex& x_mutex = m_format_map.mutex();
         lldb_private::Mutex::Locker locker(x_mutex);
@@ -399,23 +392,20 @@ protected:
        return false;
     }    
 
-    template<typename K, typename V>
     bool
-    Get_Impl (ConstString type, MapValueType& entry, Types<K,V>)
+    Get_Impl (ConstString type, MapValueType& entry, ConstString *dummy)
     {
        return m_format_map.Get(type, entry);
     }
 
-    template<typename K, typename V>
     bool
-    GetExact_Impl (ConstString type, MapValueType& entry, Types<K,V> dummy)
+    GetExact_Impl (ConstString type, MapValueType& entry, ConstString *dummy)
     {
-        return Get_Impl(type,entry,dummy);
+        return Get_Impl(type,entry, (KeyType*)0);
     }
     
-    template<typename K, typename V>
     lldb::TypeNameSpecifierImplSP
-    GetTypeNameSpecifierAtIndex_Impl (uint32_t index, Types<K,V> dummy)
+    GetTypeNameSpecifierAtIndex_Impl (uint32_t index, ConstString *dummy)
     {
         ConstString key = m_format_map.GetKeyAtIndex(index);
         if (key)
@@ -425,9 +415,8 @@ protected:
             return lldb::TypeNameSpecifierImplSP();
     }
     
-    template<typename V>
     lldb::TypeNameSpecifierImplSP
-    GetTypeNameSpecifierAtIndex_Impl (uint32_t index, Types<lldb::RegularExpressionSP,V> dummy)
+    GetTypeNameSpecifierAtIndex_Impl (uint32_t index, lldb::RegularExpressionSP *dummy)
     {
         lldb::RegularExpressionSP regex = m_format_map.GetKeyAtIndex(index);
         if (regex.get() == NULL)
@@ -436,9 +425,8 @@ protected:
                                                                        true));
     }
 
-    template<typename V>
     bool
-    Get_Impl (ConstString key, MapValueType& value, Types<lldb::RegularExpressionSP,V>)
+    Get_Impl (ConstString key, MapValueType& value, lldb::RegularExpressionSP *dummy)
     {
        Mutex& x_mutex = m_format_map.mutex();
        lldb_private::Mutex::Locker locker(x_mutex);
@@ -455,9 +443,8 @@ protected:
        return false;
     }
     
-    template<typename V>
     bool
-    GetExact_Impl (ConstString key, MapValueType& value, Types<lldb::RegularExpressionSP,V>)
+    GetExact_Impl (ConstString key, MapValueType& value, lldb::RegularExpressionSP *dummy)
     {
         Mutex& x_mutex = m_format_map.mutex();
         lldb_private::Mutex::Locker locker(x_mutex);
