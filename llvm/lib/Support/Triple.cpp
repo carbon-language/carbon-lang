@@ -215,8 +215,6 @@ const char *Triple::getArchNameForAssembler() {
     .Default(NULL);
 }
 
-//
-
 Triple::ArchType Triple::ParseArch(StringRef ArchName) {
   return StringSwitch<ArchType>(ArchName)
     .Cases("i386", "i486", "i586", "i686", x86)
@@ -302,6 +300,38 @@ void Triple::Parse() const {
   Environment = ParseEnvironment(getEnvironmentName());
 
   assert(isInitialized() && "Failed to initialize!");
+}
+
+/// \brief Construct a triple from the string representation provided.
+///
+/// This doesn't actually parse the string representation eagerly. Instead it
+/// stores it, and tracks the fact that it hasn't been parsed. The first time
+/// any of the structural queries are made, the string is parsed and the
+/// results cached in various members.
+Triple::Triple(const Twine &Str) : Data(Str.str()), Arch(InvalidArch) {}
+
+/// \brief Construct a triple from string representations of the architecture,
+/// vendor, and OS.
+///
+/// This doesn't actually use these already distinct strings to setup the
+/// triple information. Instead it joins them into a canonical form of a triple
+/// string, and lazily parses it on use.
+Triple::Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr)
+    : Data((ArchStr + Twine('-') + VendorStr + Twine('-') + OSStr).str()),
+      Arch(InvalidArch) {
+}
+
+/// \brief Construct a triple from string representations of the architecture,
+/// vendor, OS, and environment.
+///
+/// This doesn't actually use these already distinct strings to setup the
+/// triple information. Instead it joins them into a canonical form of a triple
+/// string, and lazily parses it on use.
+Triple::Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr,
+               const Twine &EnvironmentStr)
+    : Data((ArchStr + Twine('-') + VendorStr + Twine('-') + OSStr + Twine('-') +
+            EnvironmentStr).str()),
+      Arch(InvalidArch) {
 }
 
 std::string Triple::normalize(StringRef Str) {

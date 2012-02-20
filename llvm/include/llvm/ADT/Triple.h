@@ -136,18 +136,13 @@ public:
   /// @name Constructors
   /// @{
 
+  /// \brief Default constructor produces an empty, invalid triple.
   Triple() : Data(), Arch(InvalidArch) {}
-  explicit Triple(const Twine &Str) : Data(Str.str()), Arch(InvalidArch) {}
-  Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr)
-    : Data((ArchStr + Twine('-') + VendorStr + Twine('-') + OSStr).str()),
-      Arch(InvalidArch) {
-  }
 
+  explicit Triple(const Twine &Str);
+  Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr);
   Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr,
-         const Twine &EnvironmentStr)
-    : Data((ArchStr + Twine('-') + VendorStr + Twine('-') + OSStr + Twine('-') +
-            EnvironmentStr).str()), Arch(InvalidArch) {
-  }
+         const Twine &EnvironmentStr);
 
   /// @}
   /// @name Normalization
