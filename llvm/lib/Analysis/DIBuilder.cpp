@@ -672,7 +672,7 @@ DIType DIBuilder::createTemporaryType(DIFile F) {
 /// createForwardDecl - Create a temporary forward-declared type that
 /// can be RAUW'd if the full type is seen.
 DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name, DIFile F,
-                                    unsigned Line) {
+                                    unsigned Line, unsigned RuntimeLang) {
   // Create a temporary MDNode.
   Value *Elts[] = {
     GetTagConstant(VMContext, Tag),
@@ -685,7 +685,10 @@ DIType DIBuilder::createForwardDecl(unsigned Tag, StringRef Name, DIFile F,
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt32Ty(VMContext), 0),
     ConstantInt::get(Type::getInt32Ty(VMContext),
-                     DIDescriptor::FlagFwdDecl)
+                     DIDescriptor::FlagFwdDecl),
+    NULL,
+    DIArray(),
+    ConstantInt::get(Type::getInt32Ty(VMContext), RuntimeLang)
   };
   MDNode *Node = MDNode::getTemporary(VMContext, Elts);
   return DIType(Node);
