@@ -11,7 +11,24 @@ constexpr int f1(double) { return 0; }
 struct S { S(); };
 constexpr int f2(S &) { return 0; }
 
+// FIXME: I'm not entirely sure whether the following is legal or not...
+struct BeingDefined;
+extern BeingDefined beingdefined;
+struct BeingDefined { 
+  static constexpr BeingDefined& t = beingdefined;
+};
+
 // - a class type that has all of the following properties:
+
+// (implied) - it is complete
+
+struct Incomplete;
+template<class T> struct ClassTemp {};
+
+constexpr Incomplete incomplete = {}; // expected-error {{constexpr variable cannot have non-literal type 'const Incomplete'}}
+constexpr Incomplete incomplete2[] = {}; // expected-error {{constexpr variable cannot have non-literal type 'Incomplete const[]'}}
+constexpr ClassTemp<int> classtemplate = {};
+constexpr ClassTemp<int> classtemplate2[] = {};
 
 //  - it has a trivial destructor
 struct UserProvDtor {

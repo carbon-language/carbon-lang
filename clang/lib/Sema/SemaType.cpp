@@ -4249,7 +4249,9 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
                               const PartialDiagnostic &PD) {
   assert(!T->isDependentType() && "type should not be dependent");
 
-  RequireCompleteType(Loc, T, 0);
+  QualType ElemType = Context.getBaseElementType(T);
+  RequireCompleteType(Loc, ElemType, 0);
+
   if (T->isLiteralType())
     return false;
 
@@ -4261,11 +4263,15 @@ bool Sema::RequireLiteralType(SourceLocation Loc, QualType T,
   if (T->isVariableArrayType())
     return true;
 
-  const RecordType *RT = T->getBaseElementTypeUnsafe()->getAs<RecordType>();
+  const RecordType *RT = ElemType->getAs<RecordType>();
   if (!RT)
     return true;
 
   const CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
+
+  // FIXME: Better diagnostic for incomplete class?
+  if (!RD->isCompleteDefinition())
+    return true;
 
   // If the class has virtual base classes, then it's not an aggregate, and
   // cannot have any constexpr constructors or a trivial default constructor,
