@@ -5704,8 +5704,13 @@ LValue CGObjCNonFragileABIMac::EmitObjCValueForIvar(
                                                const ObjCIvarDecl *Ivar,
                                                unsigned CVRQualifiers) {
   ObjCInterfaceDecl *ID = ObjectTy->getAs<ObjCObjectType>()->getInterface();
+  llvm::Value *Offset = EmitIvarOffset(CGF, ID, Ivar);
+  if (llvm::LoadInst *LI = dyn_cast<llvm::LoadInst>(Offset))
+    LI->setMetadata(CGM.getModule().getMDKindID("invariant.load"), 
+                   llvm::MDNode::get(VMContext,
+                   ArrayRef<llvm::Value*>()));
   return EmitValueForIvarAtOffset(CGF, ID, BaseValue, Ivar, CVRQualifiers,
-                                  EmitIvarOffset(CGF, ID, Ivar));
+                                  Offset);
 }
 
 llvm::Value *CGObjCNonFragileABIMac::EmitIvarOffset(
