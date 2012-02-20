@@ -62,6 +62,11 @@ MaxConstantTerm("polly-opt-max-constant-term",
                 cl::desc("The maximal constant term allowed (-1 is unlimited)"),
                 cl::Hidden, cl::init(20));
 
+static cl::opt<int>
+MaxCoefficient("polly-opt-max-coefficient",
+               cl::desc("The maximal coefficient allowed (-1 is unlimited)"),
+               cl::Hidden, cl::init(20));
+
 static cl::opt<std::string>
 FusionStrategy("polly-opt-fusion",
                cl::desc("The fusion strategy to choose (min/max)"),
@@ -505,6 +510,7 @@ bool IslScheduleOptimizer::runOnScop(Scop &S) {
   isl_options_set_schedule_fuse(S.getIslCtx(), IslFusionStrategy);
   isl_options_set_schedule_maximize_band_depth(S.getIslCtx(), IslMaximizeBands);
   isl_options_set_schedule_max_constant_term(S.getIslCtx(), MaxConstantTerm);
+  isl_options_set_schedule_max_coefficient(S.getIslCtx(), MaxCoefficient);
 
   isl_options_set_on_error(S.getIslCtx(), ISL_ON_ERROR_CONTINUE);
   isl_schedule *Schedule;
