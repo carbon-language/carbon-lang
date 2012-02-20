@@ -551,7 +551,9 @@ llvm::DIType CGDebugInfo::CreatePointeeType(QualType PointeeTy,
     RecordDecl *RD = RTy->getDecl();
     llvm::DIDescriptor FDContext =
       getContextDescriptor(cast<Decl>(RD->getDeclContext()));
-    return createRecordFwdDecl(RD, FDContext);
+    llvm::DIType RetTy = createRecordFwdDecl(RD, FDContext);
+    TypeCache[QualType(RTy, 0).getAsOpaquePtr()] = RetTy;
+    return RetTy;
   }
   return getOrCreateType(PointeeTy, Unit);
 
@@ -1118,7 +1120,6 @@ CollectVTableInfo(const CXXRecordDecl *RD, llvm::DIFile Unit,
 llvm::DIType CGDebugInfo::getOrCreateRecordType(QualType RTy, 
                                                 SourceLocation Loc) {
   llvm::DIType T = getOrCreateType(RTy, getOrCreateFile(Loc));
-  DBuilder.retainType(T);
   return T;
 }
 
@@ -1767,7 +1768,7 @@ llvm::DIType CGDebugInfo::CreateLimitedType(const RecordType *Ty) {
     // than C++ class type, but needs llvm metadata changes first.
     RealDecl = DBuilder.createClassType(RDContext, RDName, DefUnit, Line,
 					Size, Align, 0, 0, llvm::DIType(),
-					llvm::DIArray(), NULL,
+					llvm::DIArray(), llvm::DIType(),
 					llvm::DIArray());
   } else
     RealDecl = DBuilder.createStructType(RDContext, RDName, DefUnit, Line,
@@ -2577,8 +2578,9 @@ void CGDebugInfo::finalize(void) {
         RepTy = llvm::DIType(cast<llvm::MDNode>(it->second));
     }
     
-    if (Ty.Verify() && RepTy.Verify())
+    if (Ty.Verify() && Ty.isForwardDecl() && RepTy.Verify()) {
       Ty.replaceAllUsesWith(RepTy);
+    }
   }
   DBuilder.finalize();
 }
