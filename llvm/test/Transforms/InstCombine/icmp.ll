@@ -615,3 +615,16 @@ define i1 @test60(i8* %foo, i64 %i, i64 %j) {
 ; CHECK-NEXT: icmp slt i64 %gep1.idx, %j
 ; CHECK-NEXT: ret i1
 }
+
+define i1 @test61(i8* %foo, i64 %i, i64 %j) {
+  %bit = bitcast i8* %foo to i32*
+  %gep1 = getelementptr i32* %bit, i64 %i
+  %gep2 = getelementptr  i8* %foo, i64 %j
+  %cast1 = bitcast i32* %gep1 to i8*
+  %cmp = icmp ult i8* %cast1, %gep2
+  ret i1 %cmp
+; Don't transform non-inbounds GEPs.
+; CHECK: @test61
+; CHECK: icmp ult i8* %cast1, %gep2
+; CHECK-NEXT: ret i1
+}
