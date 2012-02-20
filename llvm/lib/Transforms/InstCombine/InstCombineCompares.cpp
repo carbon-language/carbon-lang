@@ -607,6 +607,20 @@ Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
         return new ICmpInst(ICmpInst::getSignedPredicate(Cond),
                             GEPLHS->getOperand(0), GEPRHS->getOperand(0));
 
+      // If we're comparing GEPs with two base pointers that only differ in type
+      // and both GEPs have only constant indices or just one use, then fold
+      // the compare with the adjusted indices.
+      if (TD &&
+          (GEPLHS->hasAllConstantIndices() || GEPLHS->hasOneUse()) &&
+          (GEPRHS->hasAllConstantIndices() || GEPRHS->hasOneUse()) &&
+          PtrBase->stripPointerCasts() ==
+            GEPRHS->getOperand(0)->stripPointerCasts()) {
+        Value *Cmp = Builder->CreateICmp(ICmpInst::getSignedPredicate(Cond),
+                                         EmitGEPOffset(GEPLHS),
+                                         EmitGEPOffset(GEPRHS));
+        return ReplaceInstUsesWith(I, Cmp);
+      }
+
       // Otherwise, the base pointers are different and the indices are
       // different, bail out.
       return 0;

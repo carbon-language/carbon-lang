@@ -589,3 +589,29 @@ define void @test58() nounwind {
   ret void
 }
 declare i32 @test58_d(i64)
+
+define i1 @test59(i8* %foo) {
+  %bit = bitcast i8* %foo to i32*
+  %gep1 = getelementptr inbounds i32* %bit, i64 2
+  %gep2 = getelementptr inbounds i8* %foo, i64 10
+  %cast1 = bitcast i32* %gep1 to i8*
+  %cmp = icmp ult i8* %cast1, %gep2
+  %use = ptrtoint i8* %cast1 to i64
+  %call = call i32 @test58_d(i64 %use) nounwind
+  ret i1 %cmp
+; CHECK: @test59
+; CHECK: ret i1 true
+}
+
+define i1 @test60(i8* %foo, i64 %i, i64 %j) {
+  %bit = bitcast i8* %foo to i32*
+  %gep1 = getelementptr inbounds i32* %bit, i64 %i
+  %gep2 = getelementptr inbounds i8* %foo, i64 %j
+  %cast1 = bitcast i32* %gep1 to i8*
+  %cmp = icmp ult i8* %cast1, %gep2
+  ret i1 %cmp
+; CHECK: @test60
+; CHECK-NEXT: %gep1.idx = shl nuw i64 %i, 2
+; CHECK-NEXT: icmp slt i64 %gep1.idx, %j
+; CHECK-NEXT: ret i1
+}
