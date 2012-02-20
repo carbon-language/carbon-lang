@@ -1,3 +1,4 @@
+from clang.cindex import Cursor
 from clang.cindex import CursorKind
 from clang.cindex import Index
 from clang.cindex import TypeKind
@@ -30,10 +31,22 @@ def get_tu(source=kInput, lang='c'):
     assert tu is not None
     return tu
 
-def get_cursor(tu, spelling):
-    for cursor in tu.cursor.get_children():
+def get_cursor(source, spelling):
+    children = []
+    if isinstance(source, Cursor):
+        children = source.get_children()
+    else:
+        # Assume TU
+        children = source.cursor.get_children()
+
+    for cursor in children:
         if cursor.spelling == spelling:
             return cursor
+
+        # Recurse into children.
+        result = get_cursor(cursor, spelling)
+        if result is not None:
+            return result
 
     return None
 
@@ -249,3 +262,33 @@ def test_element_count():
         assert False
     except:
         assert True
+
+def test_is_volatile_qualified():
+    """Ensure Type.is_volatile_qualified works."""
+
+    tu = get_tu('volatile int i = 4; int j = 2;')
+
+    i = get_cursor(tu, 'i')
+    j = get_cursor(tu, 'j')
+
+    assert i is not None
+    assert j is not None
+
+    assert isinstance(i.type.is_volatile_qualified(), bool)
+    assert i.type.is_volatile_qualified()
+    assert not j.type.is_volatile_qualified()
+
+def test_is_restrict_qualified():
+    """Ensure Type.is_restrict_qualified works."""
+
+    tu = get_tu('struct s { void * restrict i; void * j };')
+
+    i = get_cursor(tu, 'i')
+    j = get_cursor(tu, 'j')
+
+    assert i is not None
+    assert j is not None
+
+    assert isinstance(i.type.is_restrict_qualified(), bool)
+    assert i.type.is_restrict_qualified()
+    assert not j.type.is_restrict_qualified()
