@@ -90,7 +90,7 @@ int main(int argc, char **argv) {
     return 0;
 
   DiagnosticOptions DiagOpts;
-  llvm::IntrusiveRefCntPtr<Diagnostic> Diags
+  IntrusiveRefCntPtr<Diagnostic> Diags
     = CompilerInstance::createDiagnostics(DiagOpts, argc, argv);
   for (unsigned i = 0, e = InputFilenames.size(); i != e; ++i) {
     const std::string &InFile = InputFilenames[i];

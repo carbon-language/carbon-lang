@@ -39,12 +39,12 @@ protected:
 
   FileSystemOptions FileMgrOpts;
   FileManager FileMgr;
-  llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID;
+  IntrusiveRefCntPtr<DiagnosticIDs> DiagID;
   DiagnosticsEngine Diags;
   SourceManager SourceMgr;
   LangOptions LangOpts;
   TargetOptions TargetOpts;
-  llvm::IntrusiveRefCntPtr<TargetInfo> Target;
+  IntrusiveRefCntPtr<TargetInfo> Target;
 };
 
 class VoidModuleLoader : public ModuleLoader {

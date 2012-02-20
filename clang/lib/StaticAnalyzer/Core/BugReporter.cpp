@@ -1550,10 +1550,10 @@ MakeReportGraph(const ExplodedGraph* G,
 /// CompactPathDiagnostic - This function postprocesses a PathDiagnostic object
 ///  and collapses PathDiagosticPieces that are expanded by macros.
 static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
-  typedef std::vector<std::pair<llvm::IntrusiveRefCntPtr<PathDiagnosticMacroPiece>, SourceLocation> >
+  typedef std::vector<std::pair<IntrusiveRefCntPtr<PathDiagnosticMacroPiece>, SourceLocation> >
           MacroStackTy;
 
-  typedef std::vector<llvm::IntrusiveRefCntPtr<PathDiagnosticPiece> >
+  typedef std::vector<IntrusiveRefCntPtr<PathDiagnosticPiece> >
           PiecesTy;
 
   MacroStackTy MacroStack;
@@ -1585,7 +1585,7 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
 
     // We aren't in the same group.  Are we descending into a new macro
     // or are part of an old one?
-    llvm::IntrusiveRefCntPtr<PathDiagnosticMacroPiece> MacroGroup;
+    IntrusiveRefCntPtr<PathDiagnosticMacroPiece> MacroGroup;
 
     SourceLocation ParentInstantiationLoc = InstantiationLoc.isMacroID() ?
                                           SM.getExpansionLoc(Loc) :

@@ -224,7 +224,7 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   SmallVector<StoredDiagnostic, 8> Diagnostics;
 
   /// \brief Diag object
-  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diag;
+  IntrusiveRefCntPtr<DiagnosticsEngine> Diag;
   
   /// \brief Language options used to adjust source locations.
   LangOptions LangOpts;
@@ -232,10 +232,10 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   FileSystemOptions FileSystemOpts;
 
   /// \brief File manager, used for diagnostics.
-  llvm::IntrusiveRefCntPtr<FileManager> FileMgr;
+  IntrusiveRefCntPtr<FileManager> FileMgr;
 
   /// \brief Source manager, used for diagnostics.
-  llvm::IntrusiveRefCntPtr<SourceManager> SourceMgr;
+  IntrusiveRefCntPtr<SourceManager> SourceMgr;
   
   /// \brief Temporary files that should be removed once we have finished
   /// with the code-completion results.
@@ -246,7 +246,7 @@ struct AllocatedCXCodeCompleteResults : public CXCodeCompleteResults {
   SmallVector<const llvm::MemoryBuffer *, 1> TemporaryBuffers;
   
   /// \brief Allocator used to store globally cached code-completion results.
-  llvm::IntrusiveRefCntPtr<clang::GlobalCodeCompletionAllocator> 
+  IntrusiveRefCntPtr<clang::GlobalCodeCompletionAllocator>
     CachedCompletionAllocator;
   
   /// \brief Allocator used to store code completion results.
@@ -282,7 +282,7 @@ AllocatedCXCodeCompleteResults::AllocatedCXCodeCompleteResults(
                                       const FileSystemOptions& FileSystemOpts)
   : CXCodeCompleteResults(),
     Diag(new DiagnosticsEngine(
-                   llvm::IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs))),
+                   IntrusiveRefCntPtr<DiagnosticIDs>(new DiagnosticIDs))),
     FileSystemOpts(FileSystemOpts),
     FileMgr(new FileManager(FileSystemOpts)),
     SourceMgr(new SourceManager(*Diag, *FileMgr)),

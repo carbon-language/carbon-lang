@@ -73,8 +73,8 @@ ModuleMap::ModuleMap(FileManager &FileMgr, const DiagnosticConsumer &DC,
                      const LangOptions &LangOpts, const TargetInfo *Target)
   : LangOpts(LangOpts), Target(Target), BuiltinIncludeDir(0)
 {
-  llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs(new DiagnosticIDs);
-  Diags = llvm::IntrusiveRefCntPtr<DiagnosticsEngine>(
+  IntrusiveRefCntPtr<DiagnosticIDs> DiagIDs(new DiagnosticIDs);
+  Diags = IntrusiveRefCntPtr<DiagnosticsEngine>(
             new DiagnosticsEngine(DiagIDs));
   Diags->setClient(DC.clone(*Diags), /*ShouldOwnClient=*/true);
   SourceMgr = new SourceManager(*Diags, FileMgr);

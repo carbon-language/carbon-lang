@@ -65,25 +65,25 @@ class TargetInfo;
 /// and a long form that takes explicit instances of any required objects.
 class CompilerInstance : public ModuleLoader {
   /// The options used in this compiler instance.
-  llvm::IntrusiveRefCntPtr<CompilerInvocation> Invocation;
+  IntrusiveRefCntPtr<CompilerInvocation> Invocation;
 
   /// The diagnostics engine instance.
-  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diagnostics;
+  IntrusiveRefCntPtr<DiagnosticsEngine> Diagnostics;
 
   /// The target being compiled for.
-  llvm::IntrusiveRefCntPtr<TargetInfo> Target;
+  IntrusiveRefCntPtr<TargetInfo> Target;
 
   /// The file manager.
-  llvm::IntrusiveRefCntPtr<FileManager> FileMgr;
+  IntrusiveRefCntPtr<FileManager> FileMgr;
 
   /// The source manager.
-  llvm::IntrusiveRefCntPtr<SourceManager> SourceMgr;
+  IntrusiveRefCntPtr<SourceManager> SourceMgr;
 
   /// The preprocessor.
-  llvm::IntrusiveRefCntPtr<Preprocessor> PP;
+  IntrusiveRefCntPtr<Preprocessor> PP;
 
   /// The AST context.
-  llvm::IntrusiveRefCntPtr<ASTContext> Context;
+  IntrusiveRefCntPtr<ASTContext> Context;
 
   /// The AST consumer.
   OwningPtr<ASTConsumer> Consumer;
@@ -509,7 +509,7 @@ public:
   /// used by some diagnostics printers (for logging purposes only).
   ///
   /// \return The new object on success, or null on failure.
-  static llvm::IntrusiveRefCntPtr<DiagnosticsEngine> 
+  static IntrusiveRefCntPtr<DiagnosticsEngine>
   createDiagnostics(const DiagnosticOptions &Opts, int Argc,
                     const char* const *Argv,
                     DiagnosticConsumer *Client = 0,

@@ -175,15 +175,15 @@ void CompilerInstance::createDiagnostics(int Argc, const char* const *Argv,
                                   &getCodeGenOpts());
 }
 
-llvm::IntrusiveRefCntPtr<DiagnosticsEngine>
+IntrusiveRefCntPtr<DiagnosticsEngine>
 CompilerInstance::createDiagnostics(const DiagnosticOptions &Opts,
                                     int Argc, const char* const *Argv,
                                     DiagnosticConsumer *Client,
                                     bool ShouldOwnClient,
                                     bool ShouldCloneClient,
                                     const CodeGenOptions *CodeGenOpts) {
-  llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  llvm::IntrusiveRefCntPtr<DiagnosticsEngine>
+  IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+  IntrusiveRefCntPtr<DiagnosticsEngine>
       Diags(new DiagnosticsEngine(DiagID));
 
   // Create the diagnostic client for reporting errors or for
@@ -734,7 +734,7 @@ static void compileModule(CompilerInstance &ImportingInstance,
     = ImportingInstance.getPreprocessor().getHeaderSearchInfo().getModuleMap();
     
   // Construct a compiler invocation for creating this module.
-  llvm::IntrusiveRefCntPtr<CompilerInvocation> Invocation
+  IntrusiveRefCntPtr<CompilerInvocation> Invocation
     (new CompilerInvocation(ImportingInstance.getInvocation()));
 
   PreprocessorOptions &PPOpts = Invocation->getPreprocessorOpts();

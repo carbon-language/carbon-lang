@@ -37,7 +37,7 @@ class ModuleMapParser;
   
 class ModuleMap {
   SourceManager *SourceMgr;
-  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
+  IntrusiveRefCntPtr<DiagnosticsEngine> Diags;
   const LangOptions &LangOpts;
   const TargetInfo *Target;
   

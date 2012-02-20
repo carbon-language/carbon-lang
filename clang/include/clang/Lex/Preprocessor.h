@@ -60,7 +60,7 @@ class ModuleLoader;
 /// single source file, and don't know anything about preprocessor-level issues
 /// like the #include stack, token expansion, etc.
 ///
-class Preprocessor : public llvm::RefCountedBase<Preprocessor> {
+class Preprocessor : public RefCountedBase<Preprocessor> {
   DiagnosticsEngine        *Diags;
   LangOptions       &Features;
   const TargetInfo  *Target;

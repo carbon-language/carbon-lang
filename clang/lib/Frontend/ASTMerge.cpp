@@ -37,10 +37,10 @@ void ASTMergeAction::ExecuteAction() {
                                          CI.getASTContext().getLangOptions());
   CI.getDiagnostics().SetArgToStringFn(&FormatASTNodeDiagnosticArgument,
                                        &CI.getASTContext());
-  llvm::IntrusiveRefCntPtr<DiagnosticIDs>
+  IntrusiveRefCntPtr<DiagnosticIDs>
       DiagIDs(CI.getDiagnostics().getDiagnosticIDs());
   for (unsigned I = 0, N = ASTFiles.size(); I != N; ++I) {
-    llvm::IntrusiveRefCntPtr<DiagnosticsEngine>
+    IntrusiveRefCntPtr<DiagnosticsEngine>
         Diags(new DiagnosticsEngine(DiagIDs, CI.getDiagnostics().getClient(),
                              /*ShouldOwnClient=*/false));
     ASTUnit *Unit = ASTUnit::LoadFromASTFile(ASTFiles[I], Diags,

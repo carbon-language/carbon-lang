@@ -10,6 +10,7 @@
 #ifndef LLVM_CLANG_PROGRAMSTATE_FWD_H
 #define LLVM_CLANG_PROGRAMSTATE_FWD_H
 
+#include "clang/Basic/LLVM.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 
 namespace clang {
@@ -34,7 +35,7 @@ namespace llvm {
 
 namespace clang {
 namespace ento {
-  typedef llvm::IntrusiveRefCntPtr<const ProgramState> ProgramStateRef;
+  typedef IntrusiveRefCntPtr<const ProgramState> ProgramStateRef;
 }
 }
 

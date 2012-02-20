@@ -483,7 +483,7 @@ public:
 /// the case of a macro expansion, for example, the spelling location indicates
 /// where the expanded token came from and the expansion location specifies
 /// where it was expanded.
-class SourceManager : public llvm::RefCountedBase<SourceManager> {
+class SourceManager : public RefCountedBase<SourceManager> {
   /// \brief DiagnosticsEngine object.
   DiagnosticsEngine &Diag;
 

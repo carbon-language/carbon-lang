@@ -260,7 +260,7 @@ public:
 // Path "pieces" for path-sensitive diagnostics.
 //===----------------------------------------------------------------------===//
 
-class PathDiagnosticPiece : public llvm::RefCountedBaseVPTR {
+class PathDiagnosticPiece : public RefCountedBaseVPTR {
 public:
   enum Kind { ControlFlow, Event, Macro, CallEnter, CallExit };
   enum DisplayHint { Above, Below };
@@ -326,7 +326,7 @@ public:
   
   
 class PathPieces :
-  public std::deque<llvm::IntrusiveRefCntPtr<PathDiagnosticPiece> > {
+  public std::deque<IntrusiveRefCntPtr<PathDiagnosticPiece> > {
 public:
   ~PathPieces();  
 };

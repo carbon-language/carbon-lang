@@ -107,8 +107,8 @@ static bool checkForMigration(StringRef resourcesPath,
                               ArrayRef<const char *> Args) {
   DiagnosticConsumer *DiagClient =
     new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
-  llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
+  IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+  IntrusiveRefCntPtr<DiagnosticsEngine> Diags(
       new DiagnosticsEngine(DiagID, DiagClient));
   // Chain in -verify checker, if requested.
   VerifyDiagnosticConsumer *verifyDiag = 0;
@@ -153,8 +153,8 @@ static bool performTransformations(StringRef resourcesPath,
 
   DiagnosticConsumer *DiagClient =
     new TextDiagnosticPrinter(llvm::errs(), DiagnosticOptions());
-  llvm::IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
-  llvm::IntrusiveRefCntPtr<DiagnosticsEngine> TopDiags(
+  IntrusiveRefCntPtr<DiagnosticIDs> DiagID(new DiagnosticIDs());
+  IntrusiveRefCntPtr<DiagnosticsEngine> TopDiags(
       new DiagnosticsEngine(DiagID, DiagClient));
 
   CompilerInvocation origCI;

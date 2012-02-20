@@ -105,7 +105,7 @@ public:
 /// "report warnings as errors" and passes them off to the DiagnosticConsumer
 /// for reporting to the user. DiagnosticsEngine is tied to one translation unit
 /// and one SourceManager.
-class DiagnosticsEngine : public llvm::RefCountedBase<DiagnosticsEngine> {
+class DiagnosticsEngine : public RefCountedBase<DiagnosticsEngine> {
 public:
   /// Level - The level of the diagnostic, after it has been through mapping.
   enum Level {
@@ -161,7 +161,7 @@ private:
   unsigned ConstexprBacktraceLimit; // Cap on depth of constexpr evaluation
                                     // backtrace stack, 0 -> no limit.
   ExtensionHandling ExtBehavior; // Map extensions onto warnings or errors?
-  llvm::IntrusiveRefCntPtr<DiagnosticIDs> Diags;
+  IntrusiveRefCntPtr<DiagnosticIDs> Diags;
   DiagnosticConsumer *Client;
   bool OwnsDiagClient;
   SourceManager *SourceMgr;
@@ -306,12 +306,12 @@ private:
 
 public:
   explicit DiagnosticsEngine(
-                      const llvm::IntrusiveRefCntPtr<DiagnosticIDs> &Diags,
+                      const IntrusiveRefCntPtr<DiagnosticIDs> &Diags,
                       DiagnosticConsumer *client = 0,
                       bool ShouldOwnClient = true);
   ~DiagnosticsEngine();
 
-  const llvm::IntrusiveRefCntPtr<DiagnosticIDs> &getDiagnosticIDs() const {
+  const IntrusiveRefCntPtr<DiagnosticIDs> &getDiagnosticIDs() const {
     return Diags;
   }
 

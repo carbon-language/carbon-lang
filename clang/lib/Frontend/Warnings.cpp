@@ -73,7 +73,7 @@ void clang::ProcessWarningOptions(DiagnosticsEngine &Diags,
     Diags.setExtensionHandlingBehavior(DiagnosticsEngine::Ext_Ignore);
 
   llvm::SmallVector<diag::kind, 10> _Diags;
-  const llvm::IntrusiveRefCntPtr< DiagnosticIDs > DiagIDs =
+  const IntrusiveRefCntPtr< DiagnosticIDs > DiagIDs =
     Diags.getDiagnosticIDs();
   // We parse the warning options twice.  The first pass sets diagnostic state,
   // while the second pass reports warnings/errors.  This has the effect that

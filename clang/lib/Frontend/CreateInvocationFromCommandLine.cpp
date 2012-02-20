@@ -30,7 +30,7 @@ using namespace clang;
 /// argument vector.
 CompilerInvocation *
 clang::createInvocationFromCommandLine(ArrayRef<const char *> ArgList,
-                            llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags) {
+                            IntrusiveRefCntPtr<DiagnosticsEngine> Diags) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.

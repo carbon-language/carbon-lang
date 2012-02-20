@@ -38,7 +38,7 @@ CompilerInvocationBase::CompilerInvocationBase()
   : LangOpts(new LangOptions()) {}
 
 CompilerInvocationBase::CompilerInvocationBase(const CompilerInvocationBase &X)
-  : llvm::RefCountedBase<CompilerInvocation>(),
+  : RefCountedBase<CompilerInvocation>(),
     LangOpts(new LangOptions(*X.getLangOpts())) {}
 
 //===----------------------------------------------------------------------===//

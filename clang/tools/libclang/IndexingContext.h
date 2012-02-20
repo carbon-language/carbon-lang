@@ -30,7 +30,7 @@ namespace cxindex {
 struct EntityInfo : public CXIdxEntityInfo {
   const NamedDecl *Dcl;
   IndexingContext *IndexCtx;
-  llvm::IntrusiveRefCntPtr<AttrListInfo> AttrList;
+  IntrusiveRefCntPtr<AttrListInfo> AttrList;
 
   EntityInfo() {
     name = USR = 0;

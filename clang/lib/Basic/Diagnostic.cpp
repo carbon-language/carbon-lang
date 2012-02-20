@@ -34,7 +34,7 @@ static void DummyArgToStringFn(DiagnosticsEngine::ArgumentKind AK, intptr_t QT,
 
 
 DiagnosticsEngine::DiagnosticsEngine(
-                       const llvm::IntrusiveRefCntPtr<DiagnosticIDs> &diags,
+                       const IntrusiveRefCntPtr<DiagnosticIDs> &diags,
                        DiagnosticConsumer *client, bool ShouldOwnClient)
   : Diags(diags), Client(client), OwnsDiagClient(ShouldOwnClient),
     SourceMgr(0) {

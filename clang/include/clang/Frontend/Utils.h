@@ -100,8 +100,8 @@ void CacheTokens(Preprocessor &PP, llvm::raw_fd_ostream* OS);
 /// argument vector.
 CompilerInvocation *
 createInvocationFromCommandLine(ArrayRef<const char *> Args,
-                            llvm::IntrusiveRefCntPtr<DiagnosticsEngine> Diags =
-                                llvm::IntrusiveRefCntPtr<DiagnosticsEngine>());
+                            IntrusiveRefCntPtr<DiagnosticsEngine> Diags =
+                                IntrusiveRefCntPtr<DiagnosticsEngine>());
 
 }  // end namespace clang
 

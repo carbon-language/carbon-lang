@@ -109,7 +109,7 @@ public:
 
 /// \brief Used for handling and querying diagnostic IDs. Can be used and shared
 /// by multiple Diagnostics for multiple translation units.
-class DiagnosticIDs : public llvm::RefCountedBase<DiagnosticIDs> {
+class DiagnosticIDs : public RefCountedBase<DiagnosticIDs> {
 public:
   /// Level - The level of the diagnostic, after it has been through mapping.
   enum Level {

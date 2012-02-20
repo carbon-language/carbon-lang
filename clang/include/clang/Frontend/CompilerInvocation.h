@@ -34,10 +34,10 @@ namespace clang {
 class CompilerInvocation;
 class DiagnosticsEngine;
   
-class CompilerInvocationBase : public llvm::RefCountedBase<CompilerInvocation> { 
+class CompilerInvocationBase : public RefCountedBase<CompilerInvocation> {
 protected:
   /// Options controlling the language variant.
-  llvm::IntrusiveRefCntPtr<LangOptions> LangOpts;
+  IntrusiveRefCntPtr<LangOptions> LangOpts;
 public:
   CompilerInvocationBase();
 
