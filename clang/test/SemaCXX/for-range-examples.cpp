@@ -169,3 +169,14 @@ namespace test3 {
   template<typename T> void f() { for (auto a : A()) {} }
   void g() { f<int>(); }
 }
+
+namespace test4 {
+  void f() {
+    int y;
+
+    // Make sure these don't crash. Better diagnostics would be nice.
+    for (: {1, 2, 3}) {} // expected-error {{expected expression}} expected-error {{expected ';'}}
+    for (x : {1, 2, 3}) {} // expected-error {{undeclared identifier}} expected-error {{expected ';'}}
+    for (y : {1, 2, 3}) {} // expected-error {{must declare a variable}} expected-warning {{result unused}}
+  }
+}
