@@ -112,3 +112,8 @@ int castViaInt[*(int*)(unsigned long)"test"]; // expected-error {{variable lengt
 // PR11391.
 struct PR11391 { _Complex float f; } pr11391;
 EVAL_EXPR(42, __builtin_constant_p(pr11391.f = 1))
+
+// PR12043
+float varfloat;
+const float constfloat = 0;
+EVAL_EXPR(43, varfloat && constfloat) // expected-error {{must have a constant size}}
