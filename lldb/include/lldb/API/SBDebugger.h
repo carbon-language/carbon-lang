@@ -32,6 +32,9 @@ public:
     static lldb::SBDebugger
     Create(bool source_init_files);
 
+    static lldb::SBDebugger
+    Create(bool source_init_files, lldb::LogOutputCallback callback, void *baton);
+
     static void
     Destroy (lldb::SBDebugger &debugger);
 
@@ -180,6 +183,9 @@ public:
 
     static bool
     StateIsStoppedState (lldb::StateType state);
+    
+    bool
+    EnableLog (const char *channel, const char **categories);
 
     void
     DispatchInput (void *baton, const void *data, size_t data_len);

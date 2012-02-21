@@ -39,10 +39,10 @@ public:
     GetLogIfAllCategoriesSet(uint32_t mask = 0);
 
     static void
-    DisableLog (lldb_private::Args &args, lldb_private::Stream *feedback_strm);
+    DisableLog (const char **categories, lldb_private::Stream *feedback_strm);
 
     static lldb::LogSP
-    EnableLog (lldb::StreamSP &log_stream_sp, uint32_t log_options, lldb_private::Args &args, lldb_private::Stream *feedback_strm);
+    EnableLog (lldb::StreamSP &log_stream_sp, uint32_t log_options, const char **categories, lldb_private::Stream *feedback_strm);
 
     static void
     ListLogCategories (lldb_private::Stream *strm);

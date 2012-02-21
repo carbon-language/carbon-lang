@@ -59,10 +59,10 @@ public:
     //------------------------------------------------------------------
     // Callback definitions for abstracted plug-in log access.
     //------------------------------------------------------------------
-    typedef void (*DisableCallback) (Args &args, Stream *feedback_strm);
+    typedef void (*DisableCallback) (const char **categories, Stream *feedback_strm);
     typedef lldb::LogSP (*EnableCallback) (lldb::StreamSP &log_stream_sp,
                                            uint32_t log_options,
-                                           Args &args,
+                                           const char **categories,
                                            Stream *feedback_strm);
     typedef void (*ListCategoriesCallback) (Stream *strm);
 
@@ -91,7 +91,7 @@ public:
     static void
     EnableAllLogChannels (lldb::StreamSP &log_stream_sp,
                           uint32_t log_options,
-                          Args &args,
+                          const char **categories,
                           Stream *feedback_strm);
 
     static void
@@ -203,14 +203,15 @@ public:
     static lldb::LogChannelSP
     FindPlugin (const char *plugin_name);
 
+    // categories is a an array of chars that ends with a NULL element.
     virtual void
-    Disable (Args &args, Stream *feedback_strm) = 0;
+    Disable (const char **categories, Stream *feedback_strm) = 0;
 
     virtual bool
     Enable (lldb::StreamSP &log_stream_sp,
             uint32_t log_options,
             Stream *feedback_strm,      // Feedback stream for argument errors etc
-            const Args &categories) = 0;// The categories to enable within this logging stream, if empty, enable default set
+            const char **categories) = 0;// The categories to enable within this logging stream, if empty, enable default set
 
     virtual void
     ListCategories (Stream *strm) = 0;

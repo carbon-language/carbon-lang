@@ -60,7 +60,7 @@ public:
     GetPluginVersion();
 
     virtual void
-    Disable (lldb_private::Args &args, lldb_private::Stream *feedback_strm);
+    Disable (const char** categories, lldb_private::Stream *feedback_strm);
 
     void
     Delete ();
@@ -69,7 +69,7 @@ public:
     Enable (lldb::StreamSP &log_stream_sp,
             uint32_t log_options,
             lldb_private::Stream *feedback_strm,      // Feedback stream for argument errors etc
-            const lldb_private::Args &categories);    // The categories to enable within this logging stream, if empty, enable default set
+            const char **categories);    // The categories to enable within this logging stream, if empty, enable default set
 
     virtual void
     ListCategories (lldb_private::Stream *strm);

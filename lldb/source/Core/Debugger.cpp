@@ -21,6 +21,7 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/State.h"
 #include "lldb/Core/StreamAsynchronousIO.h"
+#include "lldb/Core/StreamCallback.h"
 #include "lldb/Core/StreamString.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObject.h"
@@ -241,9 +242,9 @@ Debugger::SettingsTerminate ()
 }
 
 DebuggerSP
-Debugger::CreateInstance ()
+Debugger::CreateInstance (lldb::LogOutputCallback log_callback, void *baton)
 {
-    DebuggerSP debugger_sp (new Debugger);
+    DebuggerSP debugger_sp (new Debugger(log_callback, baton));
     // Scope for locker
     {
         Mutex::Locker locker (GetDebuggerListMutex ());
@@ -326,7 +327,7 @@ Debugger::FindTargetWithProcess (Process *process)
 }
 
 
-Debugger::Debugger () :
+Debugger::Debugger (lldb::LogOutputCallback log_callback, void *baton) :
     UserID (g_unique_id++),
     DebuggerInstanceSettings (GetSettingsController()),
     m_input_comm("debugger.input"),
@@ -342,6 +343,8 @@ Debugger::Debugger () :
     m_input_reader_stack (),
     m_input_reader_data ()
 {
+    if (log_callback)
+        m_log_callback_stream_sp.reset (new StreamCallback (log_callback, baton));
     m_command_interpreter_ap->Initialize ();
     // Always add our default platform to the platform list
     PlatformSP default_platform_sp (Platform::GetDefaultPlatform());
@@ -2304,6 +2307,76 @@ Debugger::FormatPrompt
     if (end) 
         *end = p;
     return success;
+}
+
+void
+Debugger::SetLoggingCallback (lldb::LogOutputCallback log_callback, void *baton)
+{
+    // For simplicity's sake, I am only allowing the logging callback to get
+    // set when the debugger is created.  Otherwise, I'd have to go turn off 
+    // all the log channels using this callback, and switch them to the new one...
+    m_log_callback_stream_sp.reset (new StreamCallback (log_callback, baton));
+}
+
+bool
+Debugger::EnableLog (const char *channel, const char **categories, const char *log_file, uint32_t log_options, Stream &error_stream)
+{
+    Log::Callbacks log_callbacks;
+
+    StreamSP log_stream_sp;
+    if (m_log_callback_stream_sp != NULL)
+    {
+        log_stream_sp = m_log_callback_stream_sp;
+        // For now when using the callback mode you always get thread & timestamp.
+        log_options |= LLDB_LOG_OPTION_PREPEND_TIMESTAMP | LLDB_LOG_OPTION_PREPEND_THREAD_NAME;
+    }
+    else if (log_file == NULL || *log_file == '\0')
+    {
+        log_stream_sp.reset(new StreamFile(GetOutputFile().GetDescriptor(), false));
+    }
+    else
+    {
+        LogStreamMap::iterator pos = m_log_streams.find(log_file);
+        if (pos == m_log_streams.end())
+        {
+            log_stream_sp.reset (new StreamFile (log_file));
+            m_log_streams[log_file] = log_stream_sp;
+        }
+        else
+            log_stream_sp = pos->second;
+    }
+    assert (log_stream_sp.get());
+    
+    if (log_options == 0)
+        log_options = LLDB_LOG_OPTION_PREPEND_THREAD_NAME | LLDB_LOG_OPTION_THREADSAFE;
+        
+    if (Log::GetLogChannelCallbacks (channel, log_callbacks))
+    {
+        log_callbacks.enable (log_stream_sp, log_options, categories, &error_stream);
+        return true;
+    }
+    else
+    {
+        LogChannelSP log_channel_sp (LogChannel::FindPlugin (channel));
+        if (log_channel_sp)
+        {
+            if (log_channel_sp->Enable (log_stream_sp, log_options, &error_stream, categories))
+            {
+                return true;
+            }
+            else
+            {
+                error_stream.Printf ("Invalid log channel '%s'.\n", channel);
+                return false;
+            }
+        }
+        else
+        {
+            error_stream.Printf ("Invalid log channel '%s'.\n", channel);
+            return false;
+        }
+    }
+    return false;
 }
 
 #pragma mark Debugger::SettingsController

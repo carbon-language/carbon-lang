@@ -81,16 +81,23 @@ SBDebugger::Clear ()
 SBDebugger
 SBDebugger::Create()
 {
-    return SBDebugger::Create(false);
+    return SBDebugger::Create(false, NULL, NULL);
 }
 
 SBDebugger
 SBDebugger::Create(bool source_init_files)
 {
+    return SBDebugger::Create (source_init_files, NULL, NULL);
+}
+
+SBDebugger
+SBDebugger::Create(bool source_init_files, lldb::LogOutputCallback callback, void *baton)
+
+{
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
 
     SBDebugger debugger;
-    debugger.reset(Debugger::CreateInstance());
+    debugger.reset(Debugger::CreateInstance(callback, baton));
 
     if (log)
     {
@@ -1200,3 +1207,16 @@ SBDebugger::GetSyntheticForType (SBTypeNameSpecifier type_name)
     return synth_chosen;
 }
 
+bool
+SBDebugger::EnableLog (const char *channel, const char **categories)
+{
+    if (m_opaque_sp)
+    {
+        uint32_t log_options = LLDB_LOG_OPTION_PREPEND_TIMESTAMP | LLDB_LOG_OPTION_PREPEND_THREAD_NAME;
+        StreamString errors;
+        return m_opaque_sp->EnableLog (channel, categories, NULL, log_options, errors);
+    
+    }
+    else
+        return false;
+}

@@ -289,7 +289,7 @@ public:
     GetSettingsController ();
 
     static lldb::DebuggerSP
-    CreateInstance ();
+    CreateInstance (lldb::LogOutputCallback log_callback = NULL, void *baton = NULL);
 
     static lldb::TargetSP
     FindTargetWithProcessID (lldb::pid_t pid);
@@ -480,9 +480,15 @@ public:
     
     void
     SetCloseInputOnEOF (bool b);
+    
+    bool
+    EnableLog (const char *channel, const char **categories, const char *log_file, uint32_t log_options, Stream &error_stream);
 
 protected:
 
+    void
+    SetLoggingCallback (lldb::LogOutputCallback log_callback, void *baton);
+    
     static void
     DispatchInputCallback (void *baton, const void *bytes, size_t bytes_len);
 
@@ -521,12 +527,15 @@ protected:
 
     InputReaderStack m_input_reader_stack;
     std::string m_input_reader_data;
+    typedef std::map<std::string, lldb::StreamSP> LogStreamMap;
+    LogStreamMap m_log_streams;
+    lldb::StreamSP m_log_callback_stream_sp;
 
 private:
 
     // Use Debugger::CreateInstance() to get a shared pointer to a new
     // debugger object
-    Debugger ();
+    Debugger (lldb::LogOutputCallback m_log_callback, void *baton);
 
     DISALLOW_COPY_AND_ASSIGN (Debugger);
     

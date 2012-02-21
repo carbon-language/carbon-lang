@@ -120,58 +120,18 @@ public:
         }
         else
         {
-            Log::Callbacks log_callbacks;
-
             std::string channel(args.GetArgumentAtIndex(0));
             args.Shift ();  // Shift off the channel
-            StreamSP log_stream_sp;
-            if (m_options.log_file.empty())
-            {
-                log_stream_sp.reset(new StreamFile(m_interpreter.GetDebugger().GetOutputFile().GetDescriptor(), false));
-            }
+            bool success = m_interpreter.GetDebugger().EnableLog (channel.c_str(), 
+                                                                  args.GetConstArgumentVector(), 
+                                                                  m_options.log_file.c_str(), 
+                                                                  m_options.log_options, 
+                                                                  result.GetErrorStream());
+            if (success)
+                result.SetStatus (eReturnStatusSuccessFinishNoResult);
             else
-            {
-                LogStreamMap::iterator pos = m_log_streams.find(m_options.log_file);
-                if (pos == m_log_streams.end())
-                {
-                    log_stream_sp.reset (new StreamFile (m_options.log_file.c_str()));
-                    m_log_streams[m_options.log_file] = log_stream_sp;
-                }
-                else
-                    log_stream_sp = pos->second;
-            }
-            assert (log_stream_sp.get());
-            
-            uint32_t log_options = m_options.log_options;
-            if (log_options == 0)
-                log_options = LLDB_LOG_OPTION_PREPEND_THREAD_NAME | LLDB_LOG_OPTION_THREADSAFE;
-            if (Log::GetLogChannelCallbacks (channel.c_str(), log_callbacks))
-            {
-                log_callbacks.enable (log_stream_sp, log_options, args, &result.GetErrorStream());
-                result.SetStatus(eReturnStatusSuccessFinishNoResult);
-            }
-            else
-            {
-                LogChannelSP log_channel_sp (LogChannel::FindPlugin (channel.c_str()));
-                if (log_channel_sp)
-                {
-                    if (log_channel_sp->Enable (log_stream_sp, log_options, &result.GetErrorStream(), args))
-                    {
-                        result.SetStatus (eReturnStatusSuccessFinishNoResult);
-                    }
-                    else
-                    {
-                        result.AppendErrorWithFormat("Invalid log channel '%s'.\n", channel.c_str());
-                        result.SetStatus (eReturnStatusFailed);
-                    }
-                }
-                else
-                {
-                    result.AppendErrorWithFormat("Invalid log channel '%s'.\n", channel.c_str());
-                    result.SetStatus (eReturnStatusFailed);
-                }
-            }
-        }
+                result.SetStatus (eReturnStatusFailed);
+        }    
         return result.Succeeded();
     }
 
@@ -241,9 +201,7 @@ public:
     };
 
 protected:
-    typedef std::map<std::string, StreamSP> LogStreamMap;
     CommandOptions m_options;
-    LogStreamMap m_log_streams;
 };
 
 OptionDefinition
@@ -316,7 +274,7 @@ public:
             args.Shift ();  // Shift off the channel
             if (Log::GetLogChannelCallbacks (channel.c_str(), log_callbacks))
             {
-                log_callbacks.disable (args, &result.GetErrorStream());
+                log_callbacks.disable (args.GetConstArgumentVector(), &result.GetErrorStream());
                 result.SetStatus(eReturnStatusSuccessFinishNoResult);
             }
             else if (channel == "all")
@@ -328,7 +286,7 @@ public:
                 LogChannelSP log_channel_sp (LogChannel::FindPlugin(channel.c_str()));
                 if (log_channel_sp)
                 {
-                    log_channel_sp->Disable(args, &result.GetErrorStream());
+                    log_channel_sp->Disable(args.GetConstArgumentVector(), &result.GetErrorStream());
                     result.SetStatus(eReturnStatusSuccessFinishNoResult);
                 }
                 else

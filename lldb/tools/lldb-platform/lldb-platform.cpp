@@ -172,7 +172,7 @@ main (int argc, char *argv[])
     {
         if (log_args.GetArgumentCount() == 0)
             log_args.AppendArgument("default");
-        ProcessGDBRemoteLog::EnableLog (log_stream_sp, 0,log_args, log_stream_sp.get());
+        ProcessGDBRemoteLog::EnableLog (log_stream_sp, 0,log_args.GetConstArgumentVector(), log_stream_sp.get());
     }
 
     // Skip any options we consumed with getopt_long

@@ -91,17 +91,16 @@ LogChannelDWARF::Delete ()
 
 
 void
-LogChannelDWARF::Disable (Args &categories, Stream *feedback_strm)
+LogChannelDWARF::Disable (const char **categories, Stream *feedback_strm)
 {
     if (!m_log_sp)
         return;
 
     g_log_channel = this;
     uint32_t flag_bits = m_log_sp->GetMask().Get();
-    const size_t argc = categories.GetArgumentCount();
-    for (size_t i = 0; i < argc; ++i)
+    for (size_t i = 0; categories[i] != NULL; ++i)
     {
-         const char *arg = categories.GetArgumentAtIndex(i);
+         const char *arg = categories[i];
 
         if      (::strcasecmp (arg, "all")        == 0   ) flag_bits &= ~DWARF_LOG_ALL;
         else if (::strcasecmp (arg, "info")       == 0   ) flag_bits &= ~DWARF_LOG_DEBUG_INFO;
@@ -132,7 +131,7 @@ LogChannelDWARF::Enable
     StreamSP &log_stream_sp,
     uint32_t log_options,
     Stream *feedback_strm,  // Feedback stream for argument errors etc
-    const Args &categories  // The categories to enable within this logging stream, if empty, enable default set
+    const char **categories  // The categories to enable within this logging stream, if empty, enable default set
 )
 {
     Delete ();
@@ -141,10 +140,9 @@ LogChannelDWARF::Enable
     g_log_channel = this;
     uint32_t flag_bits = 0;
     bool got_unknown_category = false;
-    const size_t argc = categories.GetArgumentCount();
-    for (size_t i=0; i<argc; ++i)
+    for (size_t i = 0; categories[i] != NULL; ++i)
     {
-        const char *arg = categories.GetArgumentAtIndex(i);
+        const char *arg = categories[i];
 
         if      (::strcasecmp (arg, "all")        == 0   ) flag_bits |= DWARF_LOG_ALL;
         else if (::strcasecmp (arg, "info")       == 0   ) flag_bits |= DWARF_LOG_DEBUG_INFO;

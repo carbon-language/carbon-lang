@@ -119,6 +119,9 @@ public:
     static lldb::SBDebugger
     Create();
 
+    static lldb::SBDebugger
+    Create(bool source_init_files);
+
     static void
     Destroy (lldb::SBDebugger &debugger);
 
@@ -261,6 +264,9 @@ public:
 
     static bool
     StateIsStoppedState (lldb::StateType state);
+
+    bool
+    EnableLog (const char *channel, const char ** types);
 
     void
     DispatchInput (void *baton, const void *data, size_t data_len);

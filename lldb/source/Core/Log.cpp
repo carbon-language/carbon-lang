@@ -118,6 +118,7 @@ Log::PrintfWithFlagsVarArg (uint32_t flags, const char *format, va_list args)
 
         header.PrintfVarArg (format, args);
         m_stream_sp->Printf("%s\n", header.GetData());
+        m_stream_sp->Flush();
     }
 }
 
@@ -362,7 +363,7 @@ Log::EnableAllLogChannels
 (
     StreamSP &log_stream_sp,
     uint32_t log_options,
-    Args &args,
+    const char **categories,
     Stream *feedback_strm
 )
 {
@@ -370,13 +371,13 @@ Log::EnableAllLogChannels
     CallbackMapIter pos, end = callback_map.end();
 
     for (pos = callback_map.begin(); pos != end; ++pos)
-        pos->second.enable (log_stream_sp, log_options, args, feedback_strm);
+        pos->second.enable (log_stream_sp, log_options, categories, feedback_strm);
 
     LogChannelMap &channel_map = GetChannelMap ();
     LogChannelMapIter channel_pos, channel_end = channel_map.end();
     for (channel_pos = channel_map.begin(); channel_pos != channel_end; ++channel_pos)
     {
-        channel_pos->second->Enable (log_stream_sp, log_options, feedback_strm, args);
+        channel_pos->second->Enable (log_stream_sp, log_options, feedback_strm, categories);
     }
 
 }
@@ -407,15 +408,15 @@ Log::DisableAllLogChannels (Stream *feedback_strm)
 {
     CallbackMap &callback_map = GetCallbackMap ();
     CallbackMapIter pos, end = callback_map.end();
-    Args args;
+    const char *categories[1] = {NULL};
 
     for (pos = callback_map.begin(); pos != end; ++pos)
-        pos->second.disable (args, feedback_strm);
+        pos->second.disable (categories, feedback_strm);
 
     LogChannelMap &channel_map = GetChannelMap ();
     LogChannelMapIter channel_pos, channel_end = channel_map.end();
     for (channel_pos = channel_map.begin(); channel_pos != channel_end; ++channel_pos)
-        channel_pos->second->Disable (args, feedback_strm);
+        channel_pos->second->Disable (categories, feedback_strm);
 }
 
 void

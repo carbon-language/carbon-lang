@@ -74,7 +74,7 @@ namespace lldb {
 //        {
 //            typedef lldb_private::IntrusiveSharingPtr<_Tp> Type;
 //        };
-
+          typedef void (*LogOutputCallback) (const char *, void *baton);
 } // namespace lldb
 
 #if defined(__MINGW32__)
