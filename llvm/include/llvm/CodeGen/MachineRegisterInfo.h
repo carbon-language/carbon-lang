@@ -20,7 +20,7 @@
 #include <vector>
 
 namespace llvm {
-  
+
 /// MachineRegisterInfo - Keep track of information for virtual and physical
 /// registers, including vreg register classes, use/def chains for registers,
 /// etc.
@@ -46,11 +46,11 @@ class MachineRegisterInfo {
   /// the allocator should prefer the physical register allocated to the virtual
   /// register of the hint.
   IndexedMap<std::pair<unsigned, unsigned>, VirtReg2IndexFunctor> RegAllocHints;
-  
+
   /// PhysRegUseDefLists - This is an array of the head of the use/def list for
   /// physical registers.
-  MachineOperand **PhysRegUseDefLists; 
-  
+  MachineOperand **PhysRegUseDefLists;
+
   /// UsedPhysRegs - This is a bit vector that is computed and set by the
   /// register allocator, and must be kept up to date by passes that run after
   /// register allocation (though most don't modify this).  This is used
@@ -79,7 +79,7 @@ class MachineRegisterInfo {
   /// stored in the second element.
   std::vector<std::pair<unsigned, unsigned> > LiveIns;
   std::vector<unsigned> LiveOuts;
-  
+
   MachineRegisterInfo(const MachineRegisterInfo&); // DO NOT IMPLEMENT
   void operator=(const MachineRegisterInfo&);      // DO NOT IMPLEMENT
 public:
@@ -155,7 +155,7 @@ public:
     return use_iterator(getRegUseDefListHead(RegNo));
   }
   static use_iterator use_end() { return use_iterator(0); }
-  
+
   /// use_empty - Return true if there are no instructions using the specified
   /// register.
   bool use_empty(unsigned RegNo) const { return use_begin(RegNo) == use_end(); }
@@ -171,7 +171,7 @@ public:
     return use_nodbg_iterator(getRegUseDefListHead(RegNo));
   }
   static use_nodbg_iterator use_nodbg_end() { return use_nodbg_iterator(0); }
-  
+
   /// use_nodbg_empty - Return true if there are no non-Debug instructions
   /// using the specified register.
   bool use_nodbg_empty(unsigned RegNo) const {
@@ -194,7 +194,7 @@ public:
   /// That function will return NULL if the virtual registers have incompatible
   /// constraints.
   void replaceRegWith(unsigned FromReg, unsigned ToReg);
-  
+
   /// getRegUseDefListHead - Return the head pointer for the register use/def
   /// list for the specified virtual or physical register.
   MachineOperand *&getRegUseDefListHead(unsigned RegNo) {
@@ -202,7 +202,7 @@ public:
       return VRegInfo[RegNo].second;
     return PhysRegUseDefLists[RegNo];
   }
-  
+
   MachineOperand *getRegUseDefListHead(unsigned RegNo) const {
     if (TargetRegisterInfo::isVirtualRegister(RegNo))
       return VRegInfo[RegNo].second;
@@ -219,7 +219,7 @@ public:
   /// optimization passes which extend register lifetimes and need only
   /// preserve conservative kill flag information.
   void clearKillFlags(unsigned Reg) const;
-  
+
 #ifndef NDEBUG
   void dumpUses(unsigned RegNo) const;
 #endif
@@ -232,7 +232,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Virtual Register Info
   //===--------------------------------------------------------------------===//
-  
+
   /// getRegClass - Return the register class of the specified virtual register.
   ///
   const TargetRegisterClass *getRegClass(unsigned Reg) const {
@@ -298,7 +298,7 @@ public:
   //===--------------------------------------------------------------------===//
   // Physical Register Use Info
   //===--------------------------------------------------------------------===//
-  
+
   /// isPhysRegUsed - Return true if the specified register is used in this
   /// function.  This only works after register allocation.
   bool isPhysRegUsed(unsigned Reg) const {
@@ -371,14 +371,14 @@ public:
   //===--------------------------------------------------------------------===//
   // LiveIn/LiveOut Management
   //===--------------------------------------------------------------------===//
-  
+
   /// addLiveIn/Out - Add the specified register as a live in/out.  Note that it
   /// is an error to add the same register to the same set more than once.
   void addLiveIn(unsigned Reg, unsigned vreg = 0) {
     LiveIns.push_back(std::make_pair(Reg, vreg));
   }
   void addLiveOut(unsigned Reg) { LiveOuts.push_back(Reg); }
-  
+
   // Iteration support for live in/out sets.  These sets are kept in sorted
   // order by their register number.
   typedef std::vector<std::pair<unsigned,unsigned> >::const_iterator
@@ -410,7 +410,7 @@ public:
 
 private:
   void HandleVRegListReallocation();
-  
+
 public:
   /// defusechain_iterator - This class provides iterator support for machine
   /// operands in the function that use or define a specific register.  If
@@ -438,31 +438,31 @@ public:
                           MachineInstr, ptrdiff_t>::reference reference;
     typedef std::iterator<std::forward_iterator_tag,
                           MachineInstr, ptrdiff_t>::pointer pointer;
-    
+
     defusechain_iterator(const defusechain_iterator &I) : Op(I.Op) {}
     defusechain_iterator() : Op(0) {}
-    
+
     bool operator==(const defusechain_iterator &x) const {
       return Op == x.Op;
     }
     bool operator!=(const defusechain_iterator &x) const {
       return !operator==(x);
     }
-    
+
     /// atEnd - return true if this iterator is equal to reg_end() on the value.
     bool atEnd() const { return Op == 0; }
-    
+
     // Iterator traversal: forward iteration only
     defusechain_iterator &operator++() {          // Preincrement
       assert(Op && "Cannot increment end iterator!");
       Op = Op->getNextOperandForReg();
-      
+
       // If this is an operand we don't care about, skip it.
-      while (Op && ((!ReturnUses && Op->isUse()) || 
+      while (Op && ((!ReturnUses && Op->isUse()) ||
                     (!ReturnDefs && Op->isDef()) ||
                     (SkipDebug && Op->isDebug())))
         Op = Op->getNextOperandForReg();
-      
+
       return *this;
     }
     defusechain_iterator operator++(int) {        // Postincrement
@@ -484,26 +484,26 @@ public:
       assert(Op && "Cannot dereference end iterator!");
       return *Op;
     }
-    
+
     /// getOperandNo - Return the operand # of this MachineOperand in its
     /// MachineInstr.
     unsigned getOperandNo() const {
       assert(Op && "Cannot dereference end iterator!");
       return Op - &Op->getParent()->getOperand(0);
     }
-    
+
     // Retrieve a reference to the current operand.
     MachineInstr &operator*() const {
       assert(Op && "Cannot dereference end iterator!");
       return *Op->getParent();
     }
-    
+
     MachineInstr *operator->() const {
       assert(Op && "Cannot dereference end iterator!");
       return Op->getParent();
     }
   };
-  
+
 };
 
 } // End llvm namespace
