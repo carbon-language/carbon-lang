@@ -16,6 +16,7 @@
 
 #include "clang/Basic/LLVM.h"
 #include "llvm/Support/PointerLikeTypeTraits.h"
+#include "llvm/Support/Compiler.h"
 #include <utility>
 #include <functional>
 #include <cassert>
@@ -324,7 +325,7 @@ public:
 
   /// Prints information about this FullSourceLoc to stderr. Useful for
   ///  debugging.
-  void dump() const { SourceLocation::dump(*SrcMgr); }
+  LLVM_ATTRIBUTE_USED void dump() const { SourceLocation::dump(*SrcMgr); }
 
   friend inline bool
   operator==(const FullSourceLoc &LHS, const FullSourceLoc &RHS) {
