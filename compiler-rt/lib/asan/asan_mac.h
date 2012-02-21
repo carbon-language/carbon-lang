@@ -18,8 +18,6 @@
 
 #include "asan_interceptors.h"
 
-// TODO(glider): need to check if the OS X version is 10.6 or greater.
-#include <dispatch/dispatch.h>
 #include <setjmp.h>
 #include <CoreFoundation/CFString.h>
 
@@ -37,6 +35,9 @@ int GetMacosVersion();
 typedef void* pthread_workqueue_t;
 typedef void* pthread_workitem_handle_t;
 
+typedef void* dispatch_group_t;
+typedef void* dispatch_queue_t;
+typedef uint64_t dispatch_time_t;
 typedef void (*dispatch_function_t)(void *block);
 typedef void* (*worker_t)(void *block);
 
@@ -78,10 +79,16 @@ typedef struct {
 
 
 extern "C" {
-// dispatch_barrier_async_f() is not declared in <dispatch/dispatch.h>.
-void dispatch_barrier_async_f(dispatch_queue_t dq,
-                              void *ctxt, dispatch_function_t func);
-// Neither is pthread_workqueue_additem_np().
+void dispatch_async_f(dispatch_queue_t dq, void *ctxt,
+                      dispatch_function_t func);
+void dispatch_sync_f(dispatch_queue_t dq, void *ctxt,
+                     dispatch_function_t func);
+void dispatch_after_f(dispatch_time_t when, dispatch_queue_t dq, void *ctxt,
+                      dispatch_function_t func);
+void dispatch_barrier_async_f(dispatch_queue_t dq, void *ctxt,
+                              dispatch_function_t func);
+void dispatch_group_async_f(dispatch_group_t group, dispatch_queue_t dq,
+                            void *ctxt, dispatch_function_t func);
 int pthread_workqueue_additem_np(pthread_workqueue_t workq,
     void *(*workitem_func)(void *), void * workitem_arg,
     pthread_workitem_handle_t * itemhandlep, unsigned int *gencountp);
