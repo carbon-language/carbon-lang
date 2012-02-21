@@ -123,11 +123,6 @@ private:
   /// The parsed Environment type.
   EnvironmentType Environment;
 
-  static ArchType ParseArch(StringRef ArchName);
-  static VendorType ParseVendor(StringRef VendorName);
-  static OSType ParseOS(StringRef OSName);
-  static EnvironmentType ParseEnvironment(StringRef EnvironmentName);
-
 public:
   /// @name Constructors
   /// @{
