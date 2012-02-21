@@ -14,7 +14,7 @@ inline void inline_func(int n) {
   // CHECK: call i32 @_ZZ11inline_funciENKUliE_clEi
   int l = [=] (int x) -> int { return x + i; }(n);
 
-  int inner(int i = []{ return 1; }());
+  int inner(int i = []{ return 17; }());
   // CHECK: call i32 @_ZZ11inline_funciENKUlvE2_clEv
   // CHECK-NEXT: call i32 @_Z5inneri
   inner();
@@ -49,13 +49,25 @@ void test_S(S s) {
   // the lambdas in the default arguments of g() won't be seen by
   // multiple translation units. We check them mainly to ensure that they don't 
   // get the special mangling for lambdas in in-class default arguments.
-  // CHECK: call i32 @_ZNK1SUlvE_clEv
-  // CHECK-NEXT: call i32 @_ZNK1SUlvE0_clEv
+  // CHECK: call i32 @"_ZNK1S3$_0clEv"
+  // CHECK-NEXT: call i32 @"_ZNK1S3$_1clEv"
   // CHECK-NEXT: call void @_ZN1S1gEi
   s.g();
 
   // CHECK-NEXT: ret void
 }
+
+// Check the linkage of the lambda call operators used in test_S.
+// CHECK: define linkonce_odr i32 @_ZZN1S1fEiiEd0_NKUlvE_clEv
+// CHECK: ret i32 1
+// CHECK: define linkonce_odr i32 @_ZZN1S1fEiiEd0_NKUlvE0_clEv
+// CHECK: ret i32 2
+// CHECK: define linkonce_odr i32 @_ZZN1S1fEiiEd_NKUlvE_clEv
+// CHECK: ret i32 3
+// CHECK: define internal i32 @"_ZNK1S3$_0clEv"
+// CHECK: ret i32 1
+// CHECK: define internal i32 @"_ZNK1S3$_1clEv"
+// CHECK: ret i32 2
 
 template<typename T>
 struct ST {
@@ -75,6 +87,14 @@ void test_ST(ST<double> st) {
 
   // CHECK-NEXT: ret void
 }
+
+// Check the linkage of the lambda call operators used in test_ST.
+// CHECK: define linkonce_odr double @_ZZN2ST1fET_S0_Ed0_NKUlvE_clEv
+// CHECK: ret double 1
+// CHECK: define linkonce_odr double @_ZZN2ST1fET_S0_Ed0_NKUlvE0_clEv
+// CHECK: ret double 2
+// CHECK: define linkonce_odr double @_ZZN2ST1fET_S0_Ed_NKUlvE_clEv
+// CHECK: ret double 3
 
 template<typename T> 
 struct StaticMembers {
@@ -98,15 +118,37 @@ T StaticMembers<T>::z = accept_lambda([]{return 4;});
 // CHECK: call i32 @_ZNK13StaticMembersIfE1xMUlvE_clEv
 // CHECK-NEXT: call i32 @_ZNK13StaticMembersIfE1xMUlvE0_clEv
 // CHECK-NEXT: add nsw
+// CHECK: define linkonce_odr i32 @_ZNK13StaticMembersIfE1xMUlvE_clEv
+// CHECK: ret i32 1
+// CHECK: define linkonce_odr i32 @_ZNK13StaticMembersIfE1xMUlvE0_clEv
+// CHECK: ret i32 2
 template float StaticMembers<float>::x;
 
 // CHECK: define internal void @__cxx_global_var_init1()
 // CHECK: call i32 @_ZNK13StaticMembersIfE1yMUlvE_clEv
+// CHECK: define linkonce_odr i32 @_ZNK13StaticMembersIfE1yMUlvE_clEv
+// CHECK: ret i32 3
 template float StaticMembers<float>::y;
 
 // CHECK: define internal void @__cxx_global_var_init2()
 // CHECK: call i32 @_Z13accept_lambdaIN13StaticMembersIfE1zMUlvE_EEiT_
+// CHECK: declare i32 @_Z13accept_lambdaIN13StaticMembersIfE1zMUlvE_EEiT_()
 template float StaticMembers<float>::z;
+
+// CHECK: define internal void @__cxx_global_var_init3
+// CHECK: call i32 @"_ZNK13StaticMembersIdE3$_2clEv"
+// CHECK: define internal i32 @"_ZNK13StaticMembersIdE3$_2clEv"
+// CHECK: ret i32 42
+template<> double StaticMembers<double>::z = []{return 42; }();
+
+template<typename T>
+void func_template(T = []{ return T(); }());
+
+// CHECK: define void @_Z17use_func_templatev()
+void use_func_template() {
+  // CHECK: call i32 @"_ZZ13func_templateIiEvT_ENKS_IiE3$_3clEv"
+  func_template<int>();
+}
 
 struct Members {
   int x = [] { return 1; }() + [] { return 2; }();
@@ -122,3 +164,23 @@ void test_Members() {
   Members members;
   // CHECK: ret void
 }
+
+// Check the linkage of the lambdas used in test_Members.
+// CHECK: define linkonce_odr i32 @_ZNK7Members1xMUlvE_clEv
+// CHECK: ret i32 1
+// CHECK: define linkonce_odr i32 @_ZNK7Members1xMUlvE0_clEv
+// CHECK: ret i32 2
+// CHECK: define linkonce_odr i32 @_ZNK7Members1yMUlvE_clEv
+// CHECK: ret i32 3
+
+// Check linkage of the various lambdas.
+// CHECK: define linkonce_odr i32 @_ZZ11inline_funciENKUlvE_clEv
+// CHECK: ret i32 1
+// CHECK: define linkonce_odr i32 @_ZZ11inline_funciENKUlvE0_clEv
+// CHECK: ret i32
+// CHECK: define linkonce_odr double @_ZZ11inline_funciENKUlvE1_clEv
+// CHECK: ret double
+// CHECK: define linkonce_odr i32 @_ZZ11inline_funciENKUliE_clEi
+// CHECK: ret i32
+// CHECK: define linkonce_odr i32 @_ZZ11inline_funciENKUlvE2_clEv
+// CHECK: ret i32 17

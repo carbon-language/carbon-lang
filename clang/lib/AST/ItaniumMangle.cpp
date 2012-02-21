@@ -52,7 +52,7 @@ static const DeclContext *getEffectiveDeclContext(const Decl *D) {
   if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
     if (RD->isLambda())
       if (ParmVarDecl *ContextParam
-          = dyn_cast_or_null<ParmVarDecl>(RD->getLambdaContextDecl()))
+            = dyn_cast_or_null<ParmVarDecl>(RD->getLambdaContextDecl()))
         return ContextParam->getDeclContext();
   }
   
@@ -1114,7 +1114,7 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
     // <closure-type-name> ::= Ul <lambda-sig> E [ <nonnegative number> ] _
     // <lambda-sig> ::= <parameter-type>+   # Parameter types or 'v' for 'void'.
     if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(TD)) {
-      if (Record->isLambda()) {
+      if (Record->isLambda() && Record->getLambdaManglingNumber()) {
         mangleLambda(Record);
         break;
       }
@@ -1347,10 +1347,10 @@ void CXXNameMangler::mangleLambda(const CXXRecordDecl *Lambda) {
   // (in lexical order) with that same <lambda-sig> and context.
   //
   // The AST keeps track of the number for us.
-  if (unsigned Number = Lambda->getLambdaManglingNumber()) {
-    if (Number > 1)
-      mangleNumber(Number - 2);
-  }
+  unsigned Number = Lambda->getLambdaManglingNumber();
+  assert(Number > 0 && "Lambda should be mangled as an unnamed class");
+  if (Number > 1)
+    mangleNumber(Number - 2);
   Out << '_';  
 }
 

@@ -815,7 +815,10 @@ LambdaExpr::LambdaExpr(QualType T,
     memcpy(getArrayIndexStarts(), ArrayIndexStarts.data(), 
            sizeof(unsigned) * Captures.size());
     getArrayIndexStarts()[Captures.size()] = ArrayIndexVars.size();
-  }  
+  }
+  
+  if (ManglingNumber)
+    Class->ClearLinkageCache();
 }
 
 LambdaExpr *LambdaExpr::Create(ASTContext &Context, 

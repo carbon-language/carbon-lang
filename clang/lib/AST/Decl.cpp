@@ -734,6 +734,32 @@ static LinkageInfo getLVForDecl(const NamedDecl *D, LVFlags Flags) {
     case Decl::ObjCPropertyImpl:
     case Decl::ObjCProtocol:
       return LinkageInfo::external();
+      
+    case Decl::CXXRecord: {
+      const CXXRecordDecl *Record = cast<CXXRecordDecl>(D);
+      if (Record->isLambda()) {
+        if (!Record->getLambdaManglingNumber()) {
+          // This lambda has no mangling number, so it's internal.
+          return LinkageInfo::internal();
+        }
+        
+        // This lambda has its linkage/visibility determined by its owner.
+        const DeclContext *DC = D->getDeclContext()->getRedeclContext();
+        if (Decl *ContextDecl = Record->getLambdaContextDecl()) {
+          if (isa<ParmVarDecl>(ContextDecl))
+            DC = ContextDecl->getDeclContext()->getRedeclContext();
+          else
+            return getLVForDecl(cast<NamedDecl>(ContextDecl), Flags);
+        }
+
+        if (const NamedDecl *ND = dyn_cast<NamedDecl>(DC))
+          return getLVForDecl(ND, Flags);
+        
+        return LinkageInfo::external();
+      }
+      
+      break;
+    }
   }
 
   // Handle linkage for namespace-scope names.
