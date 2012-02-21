@@ -154,7 +154,7 @@ TEST(TripleTest, Normalization) {
   // Check that normalizing a permutated set of valid components returns a
   // triple with the unpermuted components.
   StringRef C[4];
-  for (int Arch = 1+Triple::UnknownArch; Arch < Triple::InvalidArch; ++Arch) {
+  for (int Arch = 1+Triple::UnknownArch; Arch <= Triple::amdil; ++Arch) {
     C[0] = Triple::getArchTypeName(Triple::ArchType(Arch));
     for (int Vendor = 1+Triple::UnknownVendor; Vendor <= Triple::PC;
          ++Vendor) {
@@ -269,11 +269,6 @@ TEST(TripleTest, MutateName) {
 
 TEST(TripleTest, BitWidthPredicates) {
   Triple T;
-  EXPECT_FALSE(T.isArch16Bit());
-  EXPECT_FALSE(T.isArch32Bit());
-  EXPECT_FALSE(T.isArch64Bit());
-
-  T.setArch(Triple::InvalidArch);
   EXPECT_FALSE(T.isArch16Bit());
   EXPECT_FALSE(T.isArch32Bit());
   EXPECT_FALSE(T.isArch64Bit());

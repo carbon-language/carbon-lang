@@ -47,8 +47,7 @@ static struct TripleMap triplemap[] = {
   { Triple::x86,          "i386-unknown-unknown"    },
   { Triple::x86_64,       "x86_64-unknown-unknown"  },
   { Triple::arm,          "arm-unknown-unknown"     },
-  { Triple::thumb,        "thumb-unknown-unknown"   },
-  { Triple::InvalidArch,  NULL,                     }
+  { Triple::thumb,        "thumb-unknown-unknown"   }
 };
 
 /// infoFromArch - Returns the TripleMap corresponding to a given architecture,
@@ -128,8 +127,6 @@ EDDisassembler::EDDisassembler(CPUKey &key) :
   ErrorStream(nulls()), 
   Key(key),
   TgtTriple(key.Triple.c_str()) {        
-  if (TgtTriple.getArch() == Triple::InvalidArch)
-    return;
   
   LLVMSyntaxVariant = getLLVMSyntaxVariant(TgtTriple.getArch(), key.Syntax);
   

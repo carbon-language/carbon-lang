@@ -64,9 +64,7 @@ public:
     ptx32,   // PTX: ptx (32-bit)
     ptx64,   // PTX: ptx (64-bit)
     le32,    // le32: generic little-endian 32-bit CPU (PNaCl / Emscripten)
-    amdil,   // amdil: amd IL
-
-    InvalidArch
+    amdil   // amdil: amd IL
   };
   enum VendorType {
     UnknownVendor,
@@ -113,31 +111,29 @@ public:
 private:
   std::string Data;
 
-  /// The parsed arch type (or InvalidArch if uninitialized).
-  mutable ArchType Arch;
+  /// The parsed arch type.
+  ArchType Arch;
 
   /// The parsed vendor type.
-  mutable VendorType Vendor;
+  VendorType Vendor;
 
   /// The parsed OS type.
-  mutable OSType OS;
+  OSType OS;
 
   /// The parsed Environment type.
-  mutable EnvironmentType Environment;
+  EnvironmentType Environment;
 
-  bool isInitialized() const { return Arch != InvalidArch; }
   static ArchType ParseArch(StringRef ArchName);
   static VendorType ParseVendor(StringRef VendorName);
   static OSType ParseOS(StringRef OSName);
   static EnvironmentType ParseEnvironment(StringRef EnvironmentName);
-  void Parse() const;
 
 public:
   /// @name Constructors
   /// @{
 
   /// \brief Default constructor produces an empty, invalid triple.
-  Triple() : Data(), Arch(InvalidArch) {}
+  Triple() : Data(), Arch(), Vendor(), OS(), Environment() {}
 
   explicit Triple(const Twine &Str);
   Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr);
@@ -159,22 +155,13 @@ public:
   /// @{
 
   /// getArch - Get the parsed architecture type of this triple.
-  ArchType getArch() const {
-    if (!isInitialized()) Parse();
-    return Arch;
-  }
+  ArchType getArch() const { return Arch; }
 
   /// getVendor - Get the parsed vendor type of this triple.
-  VendorType getVendor() const {
-    if (!isInitialized()) Parse();
-    return Vendor;
-  }
+  VendorType getVendor() const { return Vendor; }
 
   /// getOS - Get the parsed operating system type of this triple.
-  OSType getOS() const {
-    if (!isInitialized()) Parse();
-    return OS;
-  }
+  OSType getOS() const { return OS; }
 
   /// hasEnvironment - Does this triple have the optional environment
   /// (fourth) component?
@@ -183,10 +170,7 @@ public:
   }
 
   /// getEnvironment - Get the parsed environment type of this triple.
-  EnvironmentType getEnvironment() const {
-    if (!isInitialized()) Parse();
-    return Environment;
-  }
+  EnvironmentType getEnvironment() const { return Environment; }
 
   /// getOSVersion - Parse the version number from the OS name component of the
   /// triple, if present.

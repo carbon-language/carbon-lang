@@ -17,7 +17,6 @@ using namespace llvm;
 
 const char *Triple::getArchTypeName(ArchType Kind) {
   switch (Kind) {
-  case InvalidArch: return "<invalid>";
   case UnknownArch: return "unknown";
 
   case arm:     return "arm";
@@ -291,24 +290,19 @@ Triple::EnvironmentType Triple::ParseEnvironment(StringRef EnvironmentName) {
     .Default(UnknownEnvironment);
 }
 
-void Triple::Parse() const {
-  assert(!isInitialized() && "Invalid parse call.");
-
-  Arch = ParseArch(getArchName());
-  Vendor = ParseVendor(getVendorName());
-  OS = ParseOS(getOSName());
-  Environment = ParseEnvironment(getEnvironmentName());
-
-  assert(isInitialized() && "Failed to initialize!");
-}
-
 /// \brief Construct a triple from the string representation provided.
 ///
 /// This doesn't actually parse the string representation eagerly. Instead it
 /// stores it, and tracks the fact that it hasn't been parsed. The first time
 /// any of the structural queries are made, the string is parsed and the
 /// results cached in various members.
-Triple::Triple(const Twine &Str) : Data(Str.str()), Arch(InvalidArch) {}
+Triple::Triple(const Twine &Str)
+    : Data(Str.str()),
+      Arch(ParseArch(getArchName())),
+      Vendor(ParseVendor(getVendorName())),
+      OS(ParseOS(getOSName())),
+      Environment(ParseEnvironment(getEnvironmentName())) {
+}
 
 /// \brief Construct a triple from string representations of the architecture,
 /// vendor, and OS.
@@ -318,7 +312,10 @@ Triple::Triple(const Twine &Str) : Data(Str.str()), Arch(InvalidArch) {}
 /// string, and lazily parses it on use.
 Triple::Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr)
     : Data((ArchStr + Twine('-') + VendorStr + Twine('-') + OSStr).str()),
-      Arch(InvalidArch) {
+      Arch(ParseArch(ArchStr.str())),
+      Vendor(ParseVendor(VendorStr.str())),
+      OS(ParseOS(OSStr.str())),
+      Environment() {
 }
 
 /// \brief Construct a triple from string representations of the architecture,
@@ -331,7 +328,10 @@ Triple::Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr,
                const Twine &EnvironmentStr)
     : Data((ArchStr + Twine('-') + VendorStr + Twine('-') + OSStr + Twine('-') +
             EnvironmentStr).str()),
-      Arch(InvalidArch) {
+      Arch(ParseArch(ArchStr.str())),
+      Vendor(ParseVendor(VendorStr.str())),
+      OS(ParseOS(OSStr.str())),
+      Environment(ParseEnvironment(EnvironmentStr.str())) {
 }
 
 std::string Triple::normalize(StringRef Str) {
@@ -577,8 +577,7 @@ bool Triple::getMacOSXVersion(unsigned &Major, unsigned &Minor,
 }
 
 void Triple::setTriple(const Twine &Str) {
-  Data = Str.str();
-  Arch = InvalidArch;
+  *this = Triple(Str);
 }
 
 void Triple::setArch(ArchType Kind) {
@@ -632,7 +631,6 @@ void Triple::setOSAndEnvironmentName(StringRef Str) {
 static unsigned getArchPointerBitWidth(llvm::Triple::ArchType Arch) {
   switch (Arch) {
   case llvm::Triple::UnknownArch:
-  case llvm::Triple::InvalidArch:
     return 0;
 
   case llvm::Triple::msp430:
@@ -682,7 +680,6 @@ Triple Triple::get32BitArchVariant() const {
   Triple T(*this);
   switch (getArch()) {
   case Triple::UnknownArch:
-  case Triple::InvalidArch:
   case Triple::msp430:
     T.setArch(UnknownArch);
     break;
@@ -718,7 +715,6 @@ Triple Triple::get32BitArchVariant() const {
 Triple Triple::get64BitArchVariant() const {
   Triple T(*this);
   switch (getArch()) {
-  case Triple::InvalidArch:
   case Triple::UnknownArch:
   case Triple::amdil:
   case Triple::arm:

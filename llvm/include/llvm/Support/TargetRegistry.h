@@ -786,7 +786,7 @@ namespace llvm {
   /// extern "C" void LLVMInitializeFooTargetInfo() {
   ///   RegisterTarget<Triple::foo> X(TheFooTarget, "foo", "Foo description");
   /// }
-  template<Triple::ArchType TargetArchType = Triple::InvalidArch,
+  template<Triple::ArchType TargetArchType = Triple::UnknownArch,
            bool HasJIT = false>
   struct RegisterTarget {
     RegisterTarget(Target &T, const char *Name, const char *Desc) {
