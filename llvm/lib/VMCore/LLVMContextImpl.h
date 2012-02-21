@@ -29,6 +29,7 @@
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/Hashing.h"
 #include <vector>
 
 namespace llvm {
@@ -85,6 +86,107 @@ struct DenseMapAPFloatKeyInfo {
     return Key.val.getHashValue();
   }
   static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) {
+    return LHS == RHS;
+  }
+};
+
+struct AnonStructTypeKeyInfo {
+  struct KeyTy {
+    ArrayRef<Type*> ETypes;
+    bool isPacked;
+    KeyTy(const ArrayRef<Type*>& E, bool P) :
+      ETypes(E), isPacked(P) {}
+    KeyTy(const KeyTy& that) :
+      ETypes(that.ETypes), isPacked(that.isPacked) {}
+    KeyTy(const StructType* ST) :
+      ETypes(ArrayRef<Type*>(ST->element_begin(), ST->element_end())),
+      isPacked(ST->isPacked()) {}
+    bool operator==(const KeyTy& that) const {
+      if (isPacked != that.isPacked)
+        return false;
+      if (ETypes != that.ETypes)
+        return false;
+      return true;
+    }
+    bool operator!=(const KeyTy& that) const {
+      return !this->operator==(that);
+    }
+  };
+  static inline StructType* getEmptyKey() {
+    return DenseMapInfo<StructType*>::getEmptyKey();
+  }
+  static inline StructType* getTombstoneKey() {
+    return DenseMapInfo<StructType*>::getTombstoneKey();
+  }
+  static unsigned getHashValue(const KeyTy& Key) {
+    GeneralHash Hash;
+    Hash.add(Key.ETypes);
+    Hash.add(Key.isPacked);
+    return Hash.finish();
+  }
+  static unsigned getHashValue(const StructType *ST) {
+    return getHashValue(KeyTy(ST));
+  }
+  static bool isEqual(const KeyTy& LHS, const StructType *RHS) {
+    if (RHS == getEmptyKey() || RHS == getTombstoneKey())
+      return false;
+    return LHS == KeyTy(RHS);
+  }
+  static bool isEqual(const StructType *LHS, const StructType *RHS) {
+    return LHS == RHS;
+  }
+};
+
+struct FunctionTypeKeyInfo {
+  struct KeyTy {
+    const Type *ReturnType;
+    ArrayRef<Type*> Params;
+    bool isVarArg;
+    KeyTy(const Type* R, const ArrayRef<Type*>& P, bool V) :
+      ReturnType(R), Params(P), isVarArg(V) {}
+    KeyTy(const KeyTy& that) :
+      ReturnType(that.ReturnType),
+      Params(that.Params),
+      isVarArg(that.isVarArg) {}
+    KeyTy(const FunctionType* FT) :
+      ReturnType(FT->getReturnType()),
+      Params(ArrayRef<Type*>(FT->param_begin(), FT->param_end())),
+      isVarArg(FT->isVarArg()) {}
+    bool operator==(const KeyTy& that) const {
+      if (ReturnType != that.ReturnType)
+        return false;
+      if (isVarArg != that.isVarArg)
+        return false;
+      if (Params != that.Params)
+        return false;
+      return true;
+    }
+    bool operator!=(const KeyTy& that) const {
+      return !this->operator==(that);
+    }
+  };
+  static inline FunctionType* getEmptyKey() {
+    return DenseMapInfo<FunctionType*>::getEmptyKey();
+  }
+  static inline FunctionType* getTombstoneKey() {
+    return DenseMapInfo<FunctionType*>::getTombstoneKey();
+  }
+  static unsigned getHashValue(const KeyTy& Key) {
+    GeneralHash Hash;
+    Hash.add(Key.ReturnType);
+    Hash.add(Key.Params);
+    Hash.add(Key.isVarArg);
+    return Hash.finish();
+  }
+  static unsigned getHashValue(const FunctionType *FT) {
+    return getHashValue(KeyTy(FT));
+  }
+  static bool isEqual(const KeyTy& LHS, const FunctionType *RHS) {
+    if (RHS == getEmptyKey() || RHS == getTombstoneKey())
+      return false;
+    return LHS == KeyTy(RHS);
+  }
+  static bool isEqual(const FunctionType *LHS, const FunctionType *RHS) {
     return LHS == RHS;
   }
 };
@@ -180,9 +282,10 @@ public:
   
   DenseMap<unsigned, IntegerType*> IntegerTypes;
   
-  // TODO: Optimize FunctionTypes/AnonStructTypes!
-  std::map<std::vector<Type*>, FunctionType*> FunctionTypes;
-  std::map<std::vector<Type*>, StructType*> AnonStructTypes;
+  typedef DenseMap<FunctionType*, bool, FunctionTypeKeyInfo> FunctionTypeMap;
+  FunctionTypeMap FunctionTypes;
+  typedef DenseMap<StructType*, bool, AnonStructTypeKeyInfo> StructTypeMap;
+  StructTypeMap AnonStructTypes;
   StringMap<StructType*> NamedStructTypes;
   unsigned NamedStructTypesUniqueID;
     

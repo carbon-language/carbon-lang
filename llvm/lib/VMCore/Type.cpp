@@ -390,24 +390,20 @@ FunctionType::FunctionType(Type *Result, ArrayRef<Type*> Params,
 // FunctionType::get - The factory function for the FunctionType class.
 FunctionType *FunctionType::get(Type *ReturnType,
                                 ArrayRef<Type*> Params, bool isVarArg) {
-  // TODO: This is brutally slow.
-  unsigned ParamsSize = Params.size();
-  std::vector<Type*> Key;
-  Key.reserve(ParamsSize + 2);
-  Key.push_back(const_cast<Type*>(ReturnType));
-  for (unsigned i = 0, e = ParamsSize; i != e; ++i)
-    Key.push_back(const_cast<Type*>(Params[i]));
-  if (isVarArg)
-    Key.push_back(0);
-  
   LLVMContextImpl *pImpl = ReturnType->getContext().pImpl;
-  FunctionType *&FT = pImpl->FunctionTypes[Key];
-  
-  if (FT == 0) {
+  FunctionTypeKeyInfo::KeyTy Key(ReturnType, Params, isVarArg);
+  LLVMContextImpl::FunctionTypeMap::iterator I =
+    pImpl->FunctionTypes.find_as(Key);
+  FunctionType *FT;
+
+  if (I == pImpl->FunctionTypes.end()) {
     FT = (FunctionType*) pImpl->TypeAllocator.
-      Allocate(sizeof(FunctionType) + sizeof(Type*) * (ParamsSize + 1),
+      Allocate(sizeof(FunctionType) + sizeof(Type*) * (Params.size() + 1),
                AlignOf<FunctionType>::Alignment);
     new (FT) FunctionType(ReturnType, Params, isVarArg);
+    pImpl->FunctionTypes[FT] = true;
+  } else {
+    FT = I->first;
   }
 
   return FT;
@@ -440,24 +436,22 @@ bool FunctionType::isValidArgumentType(Type *ArgTy) {
 
 StructType *StructType::get(LLVMContext &Context, ArrayRef<Type*> ETypes, 
                             bool isPacked) {
-  // FIXME: std::vector is horribly inefficient for this probe.
-  unsigned ETypesSize = ETypes.size();
-  std::vector<Type*> Key(ETypesSize);
-  for (unsigned i = 0, e = ETypesSize; i != e; ++i) {
-    assert(isValidElementType(ETypes[i]) &&
-           "Invalid type for structure element!");
-    Key[i] = ETypes[i];
+  LLVMContextImpl *pImpl = Context.pImpl;
+  AnonStructTypeKeyInfo::KeyTy Key(ETypes, isPacked);
+  LLVMContextImpl::StructTypeMap::iterator I =
+    pImpl->AnonStructTypes.find_as(Key);
+  StructType *ST;
+
+  if (I == pImpl->AnonStructTypes.end()) {
+    // Value not found.  Create a new type!
+    ST = new (Context.pImpl->TypeAllocator) StructType(Context);
+    ST->setSubclassData(SCDB_IsLiteral);  // Literal struct.
+    ST->setBody(ETypes, isPacked);
+    Context.pImpl->AnonStructTypes[ST] = true;
+  } else {
+    ST = I->first;
   }
-  if (isPacked)
-    Key.push_back(0);
-  
-  StructType *&ST = Context.pImpl->AnonStructTypes[Key];
-  if (ST) return ST;
-  
-  // Value not found.  Create a new type!
-  ST = new (Context.pImpl->TypeAllocator) StructType(Context);
-  ST->setSubclassData(SCDB_IsLiteral);  // Literal struct.
-  ST->setBody(ETypes, isPacked);
+
   return ST;
 }
 
