@@ -375,7 +375,9 @@ ValueObjectRegister::UpdateValue ()
         {
             if (m_reg_value.GetData (m_data))
             {
-                m_data.SetAddressByteSize(m_reg_ctx_sp->GetThread().GetProcess().GetAddressByteSize());
+                Process *process = exe_ctx.GetProcessPtr();
+                if (process)
+                    m_data.SetAddressByteSize(process->GetAddressByteSize());
                 m_value.SetContext(Value::eContextTypeRegisterInfo, (void *)&m_reg_info);
                 m_value.SetValueType(Value::eValueTypeHostAddress);
                 m_value.GetScalar() = (uintptr_t)m_data.GetDataStart();

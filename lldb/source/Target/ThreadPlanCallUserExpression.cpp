@@ -64,7 +64,7 @@ ThreadPlanCallUserExpression::GetRealStopInfo()
 {
     StopInfoSP stop_info_sp = ThreadPlanCallFunction::GetRealStopInfo();
     lldb::addr_t addr = GetStopAddress();
-    DynamicCheckerFunctions *checkers = m_thread.GetProcess().GetDynamicCheckers();
+    DynamicCheckerFunctions *checkers = m_thread.GetProcess()->GetDynamicCheckers();
     StreamString s;
     
     if (checkers && checkers->DoCheckersExplainStop(addr, s))

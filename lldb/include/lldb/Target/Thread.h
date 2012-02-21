@@ -203,19 +203,13 @@ public:
     static lldb::UserSettingsControllerSP &
     GetSettingsController ();
 
-    Thread (Process &process, lldb::tid_t tid);
+    Thread (const lldb::ProcessSP &process_sp, lldb::tid_t tid);
     virtual ~Thread();
 
-    Process &
-    GetProcess() 
+    lldb::ProcessSP
+    GetProcess() const
     {
-        return m_process; 
-    }
-
-    const Process &
-    GetProcess() const 
-    {
-        return m_process; 
+        return m_process_wp.lock(); 
     }
 
     int
@@ -829,25 +823,25 @@ protected:
     //------------------------------------------------------------------
     // Classes that inherit from Process can see and modify these
     //------------------------------------------------------------------
-    Process &           m_process;          ///< The process that owns this thread.
-    lldb::StopInfoSP    m_actual_stop_info_sp;     ///< The private stop reason for this thread
-    const uint32_t      m_index_id;         ///< A unique 1 based index assigned to each thread for easy UI/command line access.
-    lldb::RegisterContextSP   m_reg_context_sp;   ///< The register context for this thread's current register state.
-    lldb::StateType     m_state;            ///< The state of our process.
-    mutable Mutex       m_state_mutex;      ///< Multithreaded protection for m_state.
-    plan_stack          m_plan_stack;       ///< The stack of plans this thread is executing.
-    plan_stack          m_completed_plan_stack;  ///< Plans that have been completed by this stop.  They get deleted when the thread resumes.
-    plan_stack          m_discarded_plan_stack;  ///< Plans that have been discarded by this stop.  They get deleted when the thread resumes.
-    lldb::StackFrameListSP m_curr_frames_sp; ///< The stack frames that get lazily populated after a thread stops.
-    lldb::StackFrameListSP m_prev_frames_sp; ///< The previous stack frames from the last time this thread stopped.
-    int                 m_resume_signal;    ///< The signal that should be used when continuing this thread.
-    lldb::StateType     m_resume_state;     ///< This state is used to force a thread to be suspended from outside the ThreadPlan logic.
+    lldb::ProcessWP     m_process_wp;           ///< The process that owns this thread.
+    lldb::StopInfoSP    m_actual_stop_info_sp;  ///< The private stop reason for this thread
+    const uint32_t      m_index_id;             ///< A unique 1 based index assigned to each thread for easy UI/command line access.
+    lldb::RegisterContextSP m_reg_context_sp;   ///< The register context for this thread's current register state.
+    lldb::StateType     m_state;                ///< The state of our process.
+    mutable Mutex       m_state_mutex;          ///< Multithreaded protection for m_state.
+    plan_stack          m_plan_stack;           ///< The stack of plans this thread is executing.
+    plan_stack          m_completed_plan_stack; ///< Plans that have been completed by this stop.  They get deleted when the thread resumes.
+    plan_stack          m_discarded_plan_stack; ///< Plans that have been discarded by this stop.  They get deleted when the thread resumes.
+    lldb::StackFrameListSP m_curr_frames_sp;    ///< The stack frames that get lazily populated after a thread stops.
+    lldb::StackFrameListSP m_prev_frames_sp;    ///< The previous stack frames from the last time this thread stopped.
+    int                 m_resume_signal;        ///< The signal that should be used when continuing this thread.
+    lldb::StateType     m_resume_state;         ///< This state is used to force a thread to be suspended from outside the ThreadPlan logic.
     lldb::StateType     m_temporary_resume_state; ///< This state records what the thread was told to do by the thread plan logic for the current resume.
                                                   /// It gets set in Thread::WillResume.
     std::auto_ptr<lldb_private::Unwind> m_unwinder_ap;
-    bool                m_destroy_called;    // This is used internally to make sure derived Thread classes call DestroyThread.
-    uint32_t m_thread_stop_reason_stop_id;   // This is the stop id for which the StopInfo is valid.  Can use this so you know that
-                                             // the thread's m_actual_stop_info_sp is current and you don't have to fetch it again
+    bool                m_destroy_called;       // This is used internally to make sure derived Thread classes call DestroyThread.
+    uint32_t m_thread_stop_reason_stop_id;      // This is the stop id for which the StopInfo is valid.  Can use this so you know that
+                                                // the thread's m_actual_stop_info_sp is current and you don't have to fetch it again
 
 private:
     //------------------------------------------------------------------

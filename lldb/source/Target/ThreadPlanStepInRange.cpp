@@ -108,7 +108,7 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
     {
         StreamString s;
         s.Address (m_thread.GetRegisterContext()->GetPC(), 
-                   m_thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize());
+                   m_thread.CalculateTarget()->GetArchitecture().GetAddressByteSize());
         log->Printf("ThreadPlanStepInRange reached %s.", s.GetData());
     }
 

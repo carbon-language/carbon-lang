@@ -89,14 +89,14 @@ ThreadPlanStepRange::DumpRanges(Stream *s)
     size_t num_ranges = m_address_ranges.size();
     if (num_ranges == 1)
     {
-        m_address_ranges[0].Dump (s, &m_thread.GetProcess().GetTarget(), Address::DumpStyleLoadAddress);
+        m_address_ranges[0].Dump (s, m_thread.CalculateTarget().get(), Address::DumpStyleLoadAddress);
     }
     else
     {
         for (size_t i = 0; i < num_ranges; i++)
         {
             s->PutCString("%d: ");
-            m_address_ranges[i].Dump (s, &m_thread.GetProcess().GetTarget(), Address::DumpStyleLoadAddress);
+            m_address_ranges[i].Dump (s, m_thread.CalculateTarget().get(), Address::DumpStyleLoadAddress);
         }
     }
 }
@@ -112,7 +112,7 @@ ThreadPlanStepRange::InRange ()
     size_t num_ranges = m_address_ranges.size();
     for (size_t i = 0; i < num_ranges; i++)
     {
-        ret_value = m_address_ranges[i].ContainsLoadAddress(pc_load_addr, &m_thread.GetProcess().GetTarget());
+        ret_value = m_address_ranges[i].ContainsLoadAddress(pc_load_addr, m_thread.CalculateTarget().get());
         if (ret_value)
             break;
     }
@@ -136,13 +136,13 @@ ThreadPlanStepRange::InRange ()
                     {
                         StreamString s;
                         m_addr_context.line_entry.range.Dump (&s, 
-                                                              &m_thread.GetProcess().GetTarget(), 
+                                                              m_thread.CalculateTarget().get(), 
                                                               Address::DumpStyleLoadAddress);
 
                         log->Printf ("Step range plan stepped to another range of same line: %s", s.GetData());
                     }
                 }
-                else if (new_context.line_entry.range.GetBaseAddress().GetLoadAddress(&m_thread.GetProcess().GetTarget())
+                else if (new_context.line_entry.range.GetBaseAddress().GetLoadAddress(m_thread.CalculateTarget().get())
                          != pc_load_addr)
                 {
                     // Another thing that sometimes happens here is that we step out of one line into the MIDDLE of another
@@ -157,7 +157,7 @@ ThreadPlanStepRange::InRange ()
                     {
                         StreamString s;
                         m_addr_context.line_entry.range.Dump (&s, 
-                                                              &m_thread.GetProcess().GetTarget(), 
+                                                              m_thread.CalculateTarget().get(), 
                                                               Address::DumpStyleLoadAddress);
 
                         log->Printf ("Step range plan stepped to the middle of new line(%d): %s, continuing to clear this line.", 
@@ -184,11 +184,11 @@ ThreadPlanStepRange::InSymbol()
     lldb::addr_t cur_pc = m_thread.GetRegisterContext()->GetPC();
     if (m_addr_context.function != NULL)
     {
-        return m_addr_context.function->GetAddressRange().ContainsLoadAddress (cur_pc, &m_thread.GetProcess().GetTarget());
+        return m_addr_context.function->GetAddressRange().ContainsLoadAddress (cur_pc, m_thread.CalculateTarget().get());
     }
     else if (m_addr_context.symbol != NULL)
     {
-        return m_addr_context.symbol->GetAddressRangeRef().ContainsLoadAddress (cur_pc, &m_thread.GetProcess().GetTarget());
+        return m_addr_context.symbol->GetAddressRangeRef().ContainsLoadAddress (cur_pc, m_thread.CalculateTarget().get());
     }
     return false;
 }

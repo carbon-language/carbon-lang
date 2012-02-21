@@ -43,12 +43,12 @@
 using namespace lldb;
 using namespace lldb_private;
 
-Thread::Thread (Process &process, lldb::tid_t tid) :
+Thread::Thread (const ProcessSP &process_sp, lldb::tid_t tid) :
     UserID (tid),
     ThreadInstanceSettings (GetSettingsController()),
-    m_process (process),
+    m_process_wp (process_sp),
     m_actual_stop_info_sp (),
-    m_index_id (process.GetNextThreadIndexID ()),
+    m_index_id (process_sp->GetNextThreadIndexID ()),
     m_reg_context_sp (),
     m_state (eStateUnloaded),
     m_state_mutex (Mutex::eMutexTypeRecursive),
@@ -99,9 +99,11 @@ Thread::GetStopInfo ()
         return StopInfo::CreateStopReasonWithPlan (plan_sp, GetReturnValueObject());
     else
     {
-        if (m_actual_stop_info_sp 
+        ProcessSP process_sp (GetProcess());
+        if (process_sp 
+            && m_actual_stop_info_sp 
             && m_actual_stop_info_sp->IsValid()
-            && m_thread_stop_reason_stop_id == m_process.GetStopID())
+            && m_thread_stop_reason_stop_id == process_sp->GetStopID())
             return m_actual_stop_info_sp;
         else
             return GetPrivateStopReason ();
@@ -114,7 +116,11 @@ Thread::SetStopInfo (const lldb::StopInfoSP &stop_info_sp)
     m_actual_stop_info_sp = stop_info_sp;
     if (m_actual_stop_info_sp)
         m_actual_stop_info_sp->MakeStopInfoValid();
-    m_thread_stop_reason_stop_id = GetProcess().GetStopID();
+    ProcessSP process_sp (GetProcess());
+    if (process_sp)
+        m_thread_stop_reason_stop_id = process_sp->GetStopID();
+    else
+        m_thread_stop_reason_stop_id = UINT32_MAX;
 }
 
 void
@@ -138,8 +144,9 @@ Thread::CheckpointThreadState (ThreadStateCheckpoint &saved_state)
         return false;
 
     saved_state.stop_info_sp = GetStopInfo();
-    saved_state.orig_stop_id = GetProcess().GetStopID();
-
+    ProcessSP process_sp (GetProcess());
+    if (process_sp)
+        saved_state.orig_stop_id = process_sp->GetStopID();
     return true;
 }
 
@@ -193,7 +200,7 @@ Thread::SetupForResume ()
         // plan is.
 
         lldb::addr_t pc = GetRegisterContext()->GetPC();
-        BreakpointSiteSP bp_site_sp = GetProcess().GetBreakpointSiteList().FindByAddress(pc);
+        BreakpointSiteSP bp_site_sp = GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
         if (bp_site_sp && bp_site_sp->IsEnabled())
         {
             // Note, don't assume there's a ThreadPlanStepOverBreakpoint, the target may not require anything
@@ -234,7 +241,7 @@ Thread::WillResume (StateType resume_state)
     // the target, 'cause that slows down single stepping.  So assume that if we got to the point where
     // we're about to resume, and we haven't yet had to fetch the stop reason, then it doesn't need to know
     // about the fact that we are resuming...
-        const uint32_t process_stop_id = GetProcess().GetStopID();
+        const uint32_t process_stop_id = GetProcess()->GetStopID();
     if (m_thread_stop_reason_stop_id == process_stop_id &&
         (m_actual_stop_info_sp && m_actual_stop_info_sp->IsValid()))
     {
@@ -1018,13 +1025,18 @@ Thread::DumpThreadPlans (lldb_private::Stream *s) const
 TargetSP
 Thread::CalculateTarget ()
 {
-    return m_process.CalculateTarget();
+    TargetSP target_sp;
+    ProcessSP process_sp(GetProcess());
+    if (process_sp)
+        target_sp = process_sp->CalculateTarget();
+    return target_sp;
+    
 }
 
 ProcessSP
 Thread::CalculateProcess ()
 {
-    return m_process.shared_from_this();
+    return GetProcess();
 }
 
 ThreadSP
@@ -1042,9 +1054,7 @@ Thread::CalculateStackFrame ()
 void
 Thread::CalculateExecutionContext (ExecutionContext &exe_ctx)
 {
-    m_process.CalculateExecutionContext (exe_ctx);
-    exe_ctx.SetThreadPtr (this);
-    exe_ctx.SetFramePtr (NULL);
+    exe_ctx.SetContext (shared_from_this());
 }
 
 
@@ -1073,11 +1083,13 @@ Thread::GetFrameWithConcreteFrameIndex (uint32_t unwind_idx)
 void
 Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
 {
-    ExecutionContext exe_ctx;
+    ExecutionContext exe_ctx (shared_from_this());
+    Process *process = exe_ctx.GetProcessPtr();
+    if (process == NULL)
+        return;
+
     StackFrameSP frame_sp;
     SymbolContext frame_sc;
-    CalculateExecutionContext (exe_ctx);
-
     if (frame_idx != LLDB_INVALID_INDEX32)
     {
         frame_sp = GetStackFrameAtIndex (frame_idx);
@@ -1088,7 +1100,7 @@ Thread::DumpUsingSettingsFormat (Stream &strm, uint32_t frame_idx)
         }
     }
 
-    const char *thread_format = GetProcess().GetTarget().GetDebugger().GetThreadFormat();
+    const char *thread_format = exe_ctx.GetTargetRef().GetDebugger().GetThreadFormat();
     assert (thread_format);
     const char *end = NULL;
     Debugger::FormatPrompt (thread_format, 
@@ -1203,10 +1215,19 @@ Thread::RunModeAsCString (lldb::RunMode mode)
 size_t
 Thread::GetStatus (Stream &strm, uint32_t start_frame, uint32_t num_frames, uint32_t num_frames_with_source)
 {
+    ExecutionContext exe_ctx (shared_from_this());
+    Target *target = exe_ctx.GetTargetPtr();
+    Process *process = exe_ctx.GetProcessPtr();
     size_t num_frames_shown = 0;
     strm.Indent();
-    strm.Printf("%c ", GetProcess().GetThreadList().GetSelectedThread().get() == this ? '*' : ' ');
-    if (GetProcess().GetTarget().GetDebugger().GetUseExternalEditor())
+    bool is_selected = false;
+    if (process)
+    {
+        if (process->GetThreadList().GetSelectedThread().get() == this)
+            is_selected = true;
+    }
+    strm.Printf("%c ", is_selected ? '*' : ' ');
+    if (target && target->GetDebugger().GetUseExternalEditor())
     {
         StackFrameSP frame_sp = GetStackFrameAtIndex(start_frame);
         if (frame_sp)
@@ -1294,7 +1315,7 @@ Thread::GetUnwinder ()
 {
     if (m_unwinder_ap.get() == NULL)
     {
-        const ArchSpec target_arch (GetProcess().GetTarget().GetArchitecture ());
+        const ArchSpec target_arch (CalculateTarget()->GetArchitecture ());
         const llvm::Triple::ArchType machine = target_arch.GetMachine();
         switch (machine)
         {

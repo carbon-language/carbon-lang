@@ -450,7 +450,7 @@ static bool ReadIntegerArgument(Scalar           &scalar,
     {
         uint32_t byte_size = (bit_width + (8-1))/8;
         Error error;
-        if (thread.GetProcess().ReadScalarIntegerFromMemory(current_stack_argument, byte_size, is_signed, scalar, error))
+        if (thread.GetProcess()->ReadScalarIntegerFromMemory(current_stack_argument, byte_size, is_signed, scalar, error))
         {
             current_stack_argument += byte_size;
             return true;
@@ -690,12 +690,11 @@ ABISysV_x86_64::GetReturnValueObjectSimple (Thread &thread,
 }
 
 ValueObjectSP
-ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread,
-                      ClangASTType &ast_type) const
+ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread, ClangASTType &ast_type) const
 {
-
     ValueObjectSP return_valobj_sp;
     
+    ExecutionContext exe_ctx (thread.shared_from_this());
     return_valobj_sp = GetReturnValueObjectSimple(thread, ast_type);
     if (return_valobj_sp)
         return return_valobj_sp;
@@ -715,15 +714,15 @@ ABISysV_x86_64::GetReturnValueObjectImpl (Thread &thread,
     size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, ret_value_type);
     if (ClangASTContext::IsAggregateType(ret_value_type))
     {
-        Target &target = thread.GetProcess().GetTarget();
+        Target *target = exe_ctx.GetTargetPtr();
         bool is_memory = true;
         if (bit_width <= 128)
         {
-            ByteOrder target_byte_order = target.GetArchitecture().GetByteOrder();
+            ByteOrder target_byte_order = target->GetArchitecture().GetByteOrder();
             DataBufferSP data_sp (new DataBufferHeap(16, 0));
             DataExtractor return_ext (data_sp, 
                                       target_byte_order, 
-                                      target.GetArchitecture().GetAddressByteSize());
+                                      target->GetArchitecture().GetAddressByteSize());
                                                            
             const RegisterInfo *rax_info = reg_ctx_sp->GetRegisterInfoByName("rax", 0);
             const RegisterInfo *rdx_info = reg_ctx_sp->GetRegisterInfoByName("rdx", 0);

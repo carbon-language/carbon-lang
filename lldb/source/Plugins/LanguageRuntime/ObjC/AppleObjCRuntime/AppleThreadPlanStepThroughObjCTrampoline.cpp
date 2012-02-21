@@ -152,7 +152,7 @@ AppleThreadPlanStepThroughObjCTrampoline::ShouldStop (Event *event_ptr)
             if (log)
                 log->Printf("Running to ObjC method implementation: 0x%llx", target_addr);
             
-            ObjCLanguageRuntime *objc_runtime = GetThread().GetProcess().GetObjCLanguageRuntime();
+            ObjCLanguageRuntime *objc_runtime = GetThread().GetProcess()->GetObjCLanguageRuntime();
             assert (objc_runtime != NULL);
             objc_runtime->AddToMethodCache (m_isa_addr, m_sel_addr, target_addr);
             if (log)

@@ -312,7 +312,7 @@ ProcessKDP::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new_threa
         lldb::tid_t tid = cpu_mask_bit;
         ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
         if (!thread_sp)
-            thread_sp.reset(new ThreadKDP (*this, tid));
+            thread_sp.reset(new ThreadKDP (shared_from_this(), tid));
         new_thread_list.AddThread(thread_sp);
     }
     return new_thread_list.GetSize(false);

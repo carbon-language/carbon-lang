@@ -19,7 +19,7 @@ class ProcessMachCore;
 class ThreadMachCore : public lldb_private::Thread
 {
 public:
-    ThreadMachCore (ProcessMachCore &process, 
+    ThreadMachCore (const lldb::ProcessSP &process_sp,
                     lldb::tid_t tid);
 
     virtual
@@ -39,12 +39,6 @@ public:
 
     virtual void
     ClearStackFrames ();
-
-    ProcessMachCore &
-    GetMachCoreProcess ()
-    {
-        return (ProcessMachCore &)m_process;
-    }
 
     static bool
     ThreadIDIsValid (lldb::tid_t thread);
@@ -86,6 +80,7 @@ protected:
     std::string m_thread_name;
     std::string m_dispatch_queue_name;
     lldb::addr_t m_thread_dispatch_qaddr;
+    lldb::RegisterContextSP m_thread_reg_ctx_sp;
     //------------------------------------------------------------------
     // Member variables.
     //------------------------------------------------------------------

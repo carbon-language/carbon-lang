@@ -21,7 +21,7 @@ class ProcessGDBRemote;
 class ThreadGDBRemote : public lldb_private::Thread
 {
 public:
-    ThreadGDBRemote (ProcessGDBRemote &process, lldb::tid_t tid);
+    ThreadGDBRemote (const lldb::ProcessSP &process_sp, lldb::tid_t tid);
 
     virtual
     ~ThreadGDBRemote ();
@@ -46,18 +46,6 @@ public:
 
     virtual void
     ClearStackFrames ();
-
-    ProcessGDBRemote &
-    GetGDBProcess ()
-    {
-        return (ProcessGDBRemote &)m_process;
-    }
-
-    const ProcessGDBRemote &
-    GetGDBProcess () const
-    {
-        return (ProcessGDBRemote &)m_process;
-    }
 
     void
     Dump (lldb_private::Log *log, uint32_t index);

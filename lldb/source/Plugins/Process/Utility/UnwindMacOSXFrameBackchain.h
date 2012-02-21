@@ -60,10 +60,10 @@ private:
     std::vector<Cursor> m_cursors;
 
     size_t
-    GetStackFrameData_i386 (lldb_private::StackFrame *first_frame);
+    GetStackFrameData_i386 (const lldb_private::ExecutionContext &exe_ctx);
 
     size_t
-    GetStackFrameData_x86_64 (lldb_private::StackFrame *first_frame);
+    GetStackFrameData_x86_64 (const lldb_private::ExecutionContext &exe_ctx);
 
     //------------------------------------------------------------------
     // For UnwindMacOSXFrameBackchain only

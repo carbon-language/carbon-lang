@@ -546,7 +546,8 @@ DynamicLoaderMacOSXDYLD::NotifyBreakpointHit (void *baton,
     if (dyld_instance->InitializeFromAllImageInfos())
         return dyld_instance->GetStopWhenImagesChange(); 
 
-    Process *process = context->exe_ctx.GetProcessPtr();
+    ExecutionContext exe_ctx (context->exe_ctx_ref);
+    Process *process = exe_ctx.GetProcessPtr();
     const lldb::ABISP &abi = process->GetABI();
     if (abi != NULL)
     {
@@ -565,7 +566,7 @@ DynamicLoaderMacOSXDYLD::NotifyBreakpointHit (void *baton,
         input_value.SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
         argument_values.PushValue (input_value);
         
-        if (abi->GetArgumentValues (context->exe_ctx.GetThreadRef(), argument_values))
+        if (abi->GetArgumentValues (exe_ctx.GetThreadRef(), argument_values))
         {
             uint32_t dyld_mode = argument_values.GetValueAtIndex(0)->GetScalar().UInt (-1);
             if (dyld_mode != -1)
@@ -1555,7 +1556,8 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
             if (trampoline_name)
             {
                 SymbolContextList target_symbols;
-                ModuleList &images = thread.GetProcess().GetTarget().GetImages();
+                TargetSP target_sp (thread.CalculateTarget());
+                ModuleList &images = target_sp->GetImages();
                 
                 images.FindSymbolsWithNameAndType(trampoline_name, eSymbolTypeCode, target_symbols);
 
@@ -1611,7 +1613,7 @@ DynamicLoaderMacOSXDYLD::GetStepThroughTrampolinePlan (Thread &thread, bool stop
                             if (target_symbols.GetContextAtIndex(i, context))
                             {
                                 context.GetAddressRange (eSymbolContextEverything, 0, false, addr_range);
-                                lldb::addr_t load_addr = addr_range.GetBaseAddress().GetLoadAddress(&thread.GetProcess().GetTarget());
+                                lldb::addr_t load_addr = addr_range.GetBaseAddress().GetLoadAddress(target_sp.get());
                                 addresses[i] = load_addr;
                             }
                         }

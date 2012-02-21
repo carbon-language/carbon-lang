@@ -84,8 +84,8 @@ ThreadPlanStepOut::ThreadPlanStepOut
         // Find the return address and set a breakpoint there:
         // FIXME - can we do this more securely if we know first_insn?
 
-        m_return_addr = return_frame_sp->GetFrameCodeAddress().GetLoadAddress(&m_thread.GetProcess().GetTarget());
-        Breakpoint *return_bp = m_thread.GetProcess().GetTarget().CreateBreakpoint (m_return_addr, true).get();
+        m_return_addr = return_frame_sp->GetFrameCodeAddress().GetLoadAddress(&m_thread.GetProcess()->GetTarget());
+        Breakpoint *return_bp = m_thread.CalculateTarget()->CreateBreakpoint (m_return_addr, true).get();
         if (return_bp != NULL)
         {
             return_bp->SetThreadID(m_thread.GetID());
@@ -116,7 +116,7 @@ ThreadPlanStepOut::DidPush()
 ThreadPlanStepOut::~ThreadPlanStepOut ()
 {
     if (m_return_bp_id != LLDB_INVALID_BREAK_ID)
-        m_thread.GetProcess().GetTarget().RemoveBreakpointByID(m_return_bp_id);
+        m_thread.CalculateTarget()->RemoveBreakpointByID(m_return_bp_id);
 }
 
 void
@@ -191,7 +191,7 @@ ThreadPlanStepOut::PlanExplainsStop ()
         case eStopReasonBreakpoint:
         {
             // If this is OUR breakpoint, we're fine, otherwise we don't know why this happened...
-            BreakpointSiteSP site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (stop_info_sp->GetValue()));
+            BreakpointSiteSP site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (stop_info_sp->GetValue()));
             if (site_sp && site_sp->IsBreakpointAtThisSite (m_return_bp_id))
             {
                 const uint32_t num_frames = m_thread.GetStackFrameCount();
@@ -301,7 +301,7 @@ ThreadPlanStepOut::WillResume (StateType resume_state, bool current_plan)
 
     if (current_plan)
     {
-        Breakpoint *return_bp = m_thread.GetProcess().GetTarget().GetBreakpointByID(m_return_bp_id).get();
+        Breakpoint *return_bp = m_thread.CalculateTarget()->GetBreakpointByID(m_return_bp_id).get();
         if (return_bp != NULL)
             return_bp->SetEnabled (true);
     }
@@ -313,7 +313,7 @@ ThreadPlanStepOut::WillStop ()
 {
     if (m_return_bp_id != LLDB_INVALID_BREAK_ID)
     {
-        Breakpoint *return_bp = m_thread.GetProcess().GetTarget().GetBreakpointByID(m_return_bp_id).get();
+        Breakpoint *return_bp = m_thread.CalculateTarget()->GetBreakpointByID(m_return_bp_id).get();
         if (return_bp != NULL)
             return_bp->SetEnabled (false);
     }
@@ -337,7 +337,7 @@ ThreadPlanStepOut::MischiefManaged ()
             log->Printf("Completed step out plan.");
         if (m_return_bp_id != LLDB_INVALID_BREAK_ID)
         {
-            m_thread.GetProcess().GetTarget().RemoveBreakpointByID (m_return_bp_id);
+            m_thread.CalculateTarget()->RemoveBreakpointByID (m_return_bp_id);
             m_return_bp_id = LLDB_INVALID_BREAK_ID;
         }
         
@@ -424,7 +424,7 @@ ThreadPlanStepOut::CalculateReturnValue ()
         {
             ClangASTType ast_type (return_type->GetClangAST(), return_clang_type);
             
-            lldb::ABISP abi_sp = m_thread.GetProcess().GetABI();
+            lldb::ABISP abi_sp = m_thread.GetProcess()->GetABI();
             if (abi_sp)
             {
                 m_return_valobj_sp = abi_sp->GetReturnValueObject(m_thread, ast_type);

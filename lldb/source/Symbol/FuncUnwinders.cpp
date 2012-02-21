@@ -15,6 +15,7 @@
 #include "lldb/Symbol/UnwindPlan.h"
 #include "lldb/Symbol/UnwindTable.h"
 #include "lldb/Target/ABI.h"
+#include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Thread.h"
 #include "lldb/Target/Target.h"
@@ -224,7 +225,8 @@ FuncUnwinders::GetFirstNonPrologueInsn (Target& target)
 {
     if (m_first_non_prologue_insn.IsValid())
         return m_first_non_prologue_insn;
-    m_assembly_profiler->FirstNonPrologueInsn (m_range, target, NULL, m_first_non_prologue_insn);
+    ExecutionContext exe_ctx (target.shared_from_this(), false);
+    m_assembly_profiler->FirstNonPrologueInsn (m_range, exe_ctx, m_first_non_prologue_insn);
     return m_first_non_prologue_insn;
 }
 

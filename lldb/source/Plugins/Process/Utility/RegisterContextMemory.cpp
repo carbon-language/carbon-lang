@@ -134,11 +134,15 @@ RegisterContextMemory::ReadAllRegisterValues (DataBufferSP &data_sp)
 {
     if (m_reg_data_addr != LLDB_INVALID_ADDRESS)
     {
-        Error error;
-        if (m_thread.GetProcess().ReadMemory(m_reg_data_addr, data_sp->GetBytes(), data_sp->GetByteSize(), error) == data_sp->GetByteSize())
+        ProcessSP process_sp (CalculateProcess());
+        if (process_sp)
         {
-            SetAllRegisterValid (true);
-            return true;
+            Error error;
+            if (process_sp->ReadMemory(m_reg_data_addr, data_sp->GetBytes(), data_sp->GetByteSize(), error) == data_sp->GetByteSize())
+            {
+                SetAllRegisterValid (true);
+                return true;
+            }
         }
     }
     return false;
@@ -149,10 +153,14 @@ RegisterContextMemory::WriteAllRegisterValues (const DataBufferSP &data_sp)
 {
     if (m_reg_data_addr != LLDB_INVALID_ADDRESS)
     {
-        Error error;
-        SetAllRegisterValid (false);
-        if (m_thread.GetProcess().WriteMemory(m_reg_data_addr, data_sp->GetBytes(), data_sp->GetByteSize(), error) == data_sp->GetByteSize())
-            return true;
+        ProcessSP process_sp (CalculateProcess());
+        if (process_sp)
+        {
+            Error error;
+            SetAllRegisterValid (false);
+            if (process_sp->WriteMemory(m_reg_data_addr, data_sp->GetBytes(), data_sp->GetByteSize(), error) == data_sp->GetByteSize())
+                return true;
+        }
     }
     return false;
 }

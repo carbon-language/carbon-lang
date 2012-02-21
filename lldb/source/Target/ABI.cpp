@@ -105,8 +105,8 @@ ABI::GetRegisterInfoByKind (RegisterKind reg_kind, uint32_t reg_num, RegisterInf
 
 ValueObjectSP
 ABI::GetReturnValueObject (Thread &thread,
-                          ClangASTType &ast_type,
-                          bool persistent) const
+                           ClangASTType &ast_type,
+                           bool persistent) const
 {
     if (!ast_type.IsValid())
         return ValueObjectSP();
@@ -123,7 +123,7 @@ ABI::GetReturnValueObject (Thread &thread,
     
     if (persistent)
     {
-        ClangPersistentVariables& persistent_variables = thread.GetProcess().GetTarget().GetPersistentVariables();
+        ClangPersistentVariables& persistent_variables = thread.CalculateTarget()->GetPersistentVariables();
         ConstString persistent_variable_name (persistent_variables.GetNextPersistentVariableName());
 
         lldb::ValueObjectSP const_valobj_sp;

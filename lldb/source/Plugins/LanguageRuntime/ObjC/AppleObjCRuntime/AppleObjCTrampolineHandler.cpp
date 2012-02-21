@@ -400,7 +400,8 @@ AppleObjCTrampolineHandler::AppleObjCVTables::RefreshTrampolines (void *baton,
     {
         // The Update function is called with the address of an added region.  So we grab that address, and
         // feed it into ReadRegions.  Of course, our friend the ABI will get the values for us.
-        Process *process = context->exe_ctx.GetProcessPtr();
+        ExecutionContext exe_ctx (context->exe_ctx_ref);
+        Process *process = exe_ctx.GetProcessPtr();
         const ABI *abi = process->GetABI().get();
         
         ClangASTContext *clang_ast_context = process->GetTarget().GetScratchClangASTContext();
@@ -411,14 +412,14 @@ AppleObjCTrampolineHandler::AppleObjCVTables::RefreshTrampolines (void *baton,
         input_value.SetContext (Value::eContextTypeClangType, clang_void_ptr_type);
         argument_values.PushValue(input_value);
         
-        bool success = abi->GetArgumentValues (context->exe_ctx.GetThreadRef(), argument_values);
+        bool success = abi->GetArgumentValues (exe_ctx.GetThreadRef(), argument_values);
         if (!success)
             return false;
             
         // Now get a pointer value from the zeroth argument.
         Error error;
         DataExtractor data;
-        error = argument_values.GetValueAtIndex(0)->GetValueAsData (&(context->exe_ctx), 
+        error = argument_values.GetValueAtIndex(0)->GetValueAsData (&exe_ctx, 
                                                                     clang_ast_context->getASTContext(), 
                                                                     data, 
                                                                     0,

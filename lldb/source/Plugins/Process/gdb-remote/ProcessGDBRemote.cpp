@@ -1125,7 +1125,7 @@ ProcessGDBRemote::UpdateThreadList (ThreadList &old_thread_list, ThreadList &new
             tid_t tid = thread_ids[i];
             ThreadSP thread_sp (old_thread_list.FindThreadByID (tid, false));
             if (!thread_sp)
-                thread_sp.reset (new ThreadGDBRemote (*this, tid));
+                thread_sp.reset (new ThreadGDBRemote (shared_from_this(), tid));
             new_thread_list.AddThread(thread_sp);
         }
     }
@@ -1201,7 +1201,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                     if (!thread_sp)
                     {
                         // Create the thread if we need to
-                        thread_sp.reset (new ThreadGDBRemote (*this, tid));
+                        thread_sp.reset (new ThreadGDBRemote (shared_from_this(), tid));
                         m_thread_list.AddThread(thread_sp);
                     }
                 }
@@ -1292,7 +1292,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                         else if (reason.compare("breakpoint") == 0)
                         {
                             addr_t pc = gdb_thread->GetRegisterContext()->GetPC();
-                            lldb::BreakpointSiteSP bp_site_sp = gdb_thread->GetProcess().GetBreakpointSiteList().FindByAddress(pc);
+                            lldb::BreakpointSiteSP bp_site_sp = gdb_thread->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
                             if (bp_site_sp)
                             {
                                 // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,
@@ -1335,7 +1335,7 @@ ProcessGDBRemote::SetThreadStopInfo (StringExtractor& stop_packet)
                             // Currently we are going to assume SIGTRAP means we are either
                             // hitting a breakpoint or hardware single stepping. 
                             addr_t pc = gdb_thread->GetRegisterContext()->GetPC();
-                            lldb::BreakpointSiteSP bp_site_sp = gdb_thread->GetProcess().GetBreakpointSiteList().FindByAddress(pc);
+                            lldb::BreakpointSiteSP bp_site_sp = gdb_thread->GetProcess()->GetBreakpointSiteList().FindByAddress(pc);
                             if (bp_site_sp)
                             {
                                 // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,

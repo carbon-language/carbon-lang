@@ -20,7 +20,7 @@ class ProcessKDP;
 class ThreadKDP : public lldb_private::Thread
 {
 public:
-    ThreadKDP (ProcessKDP &process, 
+    ThreadKDP (const lldb::ProcessSP &process_sp, 
                lldb::tid_t tid);
 
     virtual
@@ -46,12 +46,6 @@ public:
 
     virtual void
     ClearStackFrames ();
-
-    ProcessKDP &
-    GetKDPProcess ()
-    {
-        return (ProcessKDP &)m_process;
-    }
 
     void
     Dump (lldb_private::Log *log, uint32_t index);

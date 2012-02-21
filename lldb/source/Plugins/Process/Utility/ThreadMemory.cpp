@@ -17,10 +17,10 @@
 using namespace lldb;
 using namespace lldb_private;
 
-ThreadMemory::ThreadMemory (Process &process, 
+ThreadMemory::ThreadMemory (const ProcessSP &process_sp, 
                               tid_t tid, 
                               const ValueObjectSP &thread_info_valobj_sp) :
-    Thread (process, tid),
+    Thread (process_sp, tid),
     m_thread_info_valobj_sp (thread_info_valobj_sp)
 {
 }
@@ -47,9 +47,13 @@ ThreadMemory::GetRegisterContext ()
 {
     if (!m_reg_context_sp)
     {
-        OperatingSystem *os = m_process.GetOperatingSystem ();
-        if (os)
-            m_reg_context_sp = os->CreateRegisterContextForThread (this);
+        ProcessSP process_sp (GetProcess());
+        if (process_sp)
+        {
+            OperatingSystem *os = process_sp->GetOperatingSystem ();
+            if (os)
+                m_reg_context_sp = os->CreateRegisterContextForThread (this);
+        }
     }
     return m_reg_context_sp;
 }
@@ -77,24 +81,29 @@ ThreadMemory::CreateRegisterContextForFrame (StackFrame *frame)
 lldb::StopInfoSP
 ThreadMemory::GetPrivateStopReason ()
 {
-    const uint32_t process_stop_id = GetProcess().GetStopID();
-    if (m_thread_stop_reason_stop_id != process_stop_id ||
-        (m_actual_stop_info_sp && !m_actual_stop_info_sp->IsValid()))
+    ProcessSP process_sp (GetProcess());
+
+    if (process_sp)
     {
-        // If GetGDBProcess().SetThreadStopInfo() doesn't find a stop reason
-        // for this thread, then m_actual_stop_info_sp will not ever contain
-        // a valid stop reason and the "m_actual_stop_info_sp->IsValid() == false"
-        // check will never be able to tell us if we have the correct stop info
-        // for this thread and we will continually send qThreadStopInfo packets
-        // down to the remote GDB server, so we need to keep our own notion
-        // of the stop ID that m_actual_stop_info_sp is valid for (even if it
-        // contains nothing). We use m_thread_stop_reason_stop_id for this below.
-        m_thread_stop_reason_stop_id = process_stop_id;
-        m_actual_stop_info_sp.reset();
-        
-        OperatingSystem *os = m_process.GetOperatingSystem ();
-        if (os)
-            m_actual_stop_info_sp = os->CreateThreadStopReason (this);
+        const uint32_t process_stop_id = process_sp->GetStopID();
+        if (m_thread_stop_reason_stop_id != process_stop_id ||
+            (m_actual_stop_info_sp && !m_actual_stop_info_sp->IsValid()))
+        {
+            // If GetGDBProcess().SetThreadStopInfo() doesn't find a stop reason
+            // for this thread, then m_actual_stop_info_sp will not ever contain
+            // a valid stop reason and the "m_actual_stop_info_sp->IsValid() == false"
+            // check will never be able to tell us if we have the correct stop info
+            // for this thread and we will continually send qThreadStopInfo packets
+            // down to the remote GDB server, so we need to keep our own notion
+            // of the stop ID that m_actual_stop_info_sp is valid for (even if it
+            // contains nothing). We use m_thread_stop_reason_stop_id for this below.
+            m_thread_stop_reason_stop_id = process_stop_id;
+            m_actual_stop_info_sp.reset();
+            
+            OperatingSystem *os = process_sp->GetOperatingSystem ();
+            if (os)
+                m_actual_stop_info_sp = os->CreateThreadStopReason (this);
+        }
     }
     return m_actual_stop_info_sp;
     

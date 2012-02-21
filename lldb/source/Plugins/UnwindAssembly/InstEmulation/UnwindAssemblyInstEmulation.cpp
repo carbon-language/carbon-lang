@@ -133,7 +133,7 @@ UnwindAssemblyInstEmulation::GetNonCallSiteUnwindPlanFromAssembly (AddressRange&
         if (log && log->GetVerbose ())
         {
             StreamString strm;
-            lldb::addr_t base_addr = range.GetBaseAddress().GetLoadAddress(&thread.GetProcess().GetTarget());
+            lldb::addr_t base_addr = range.GetBaseAddress().GetLoadAddress(thread.CalculateTarget().get());
             strm.Printf ("Resulting unwind rows for [0x%llx - 0x%llx):", base_addr, base_addr + range.GetByteSize());
             unwind_plan.Dump(strm, &thread, base_addr);
             log->PutCString (strm.GetData());
@@ -153,8 +153,7 @@ UnwindAssemblyInstEmulation::GetFastUnwindPlan (AddressRange& func,
 
 bool
 UnwindAssemblyInstEmulation::FirstNonPrologueInsn (AddressRange& func, 
-                                                   Target& target, 
-                                                   Thread* thread, 
+                                                   const ExecutionContext &exe_ctx, 
                                                    Address& first_non_prologue_insn)
 {
     return false;

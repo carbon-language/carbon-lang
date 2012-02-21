@@ -17,6 +17,7 @@
 #include "lldb/Core/RegisterValue.h"
 #include "lldb/Core/Scalar.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Target/ExecutionContext.h"
 // Project includes
 #include "Utility/StringExtractorGDBRemote.h"
 #include "ProcessGDBRemote.h"
@@ -59,18 +60,6 @@ GDBRemoteRegisterContext::GDBRemoteRegisterContext
 //----------------------------------------------------------------------
 GDBRemoteRegisterContext::~GDBRemoteRegisterContext()
 {
-}
-
-ProcessGDBRemote &
-GDBRemoteRegisterContext::GetGDBProcess()
-{
-    return static_cast<ProcessGDBRemote &>(m_thread.GetProcess());
-}
-
-ThreadGDBRemote &
-GDBRemoteRegisterContext::GetGDBThread()
-{
-    return static_cast<ThreadGDBRemote &>(m_thread);
 }
 
 void
@@ -158,7 +147,14 @@ GDBRemoteRegisterContext::PrivateSetRegisterValue (uint32_t reg, StringExtractor
 bool
 GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataExtractor &data)
 {
-    GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
+    ExecutionContext exe_ctx (CalculateThread());
+    
+    Process *process = exe_ctx.GetProcessPtr();
+    Thread *thread = exe_ctx.GetThreadPtr();
+    if (process == NULL || thread == NULL)
+        return false;
+
+    GDBRemoteCommunicationClient &gdb_comm (((ProcessGDBRemote *)process)->GetGDBRemote());
 
     InvalidateIfNeeded(false);
 
@@ -170,7 +166,8 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
         if (gdb_comm.GetSequenceMutex (locker))
         {
             const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
-            if (thread_suffix_supported || GetGDBProcess().GetGDBRemote().SetCurrentThread(m_thread.GetID()))
+            ProcessSP process_sp (m_thread.GetProcess());
+            if (thread_suffix_supported || static_cast<ProcessGDBRemote *>(process_sp.get())->GetGDBRemote().SetCurrentThread(m_thread.GetID()))
             {
                 char packet[64];
                 StringExtractorGDBRemote response;
@@ -238,7 +235,14 @@ GDBRemoteRegisterContext::WriteRegister (const RegisterInfo *reg_info,
 bool
 GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *reg_info, DataExtractor &data, uint32_t data_offset)
 {
-    GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
+    ExecutionContext exe_ctx (CalculateThread());
+    
+    Process *process = exe_ctx.GetProcessPtr();
+    Thread *thread = exe_ctx.GetThreadPtr();
+    if (process == NULL || thread == NULL)
+        return false;
+    
+    GDBRemoteCommunicationClient &gdb_comm (((ProcessGDBRemote *)process)->GetGDBRemote());
 // FIXME: This check isn't right because IsRunning checks the Public state, but this
 // is work you need to do - for instance in ShouldStop & friends - before the public 
 // state has been changed.
@@ -264,7 +268,8 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
         if (gdb_comm.GetSequenceMutex (locker))
         {
             const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
-            if (thread_suffix_supported || GetGDBProcess().GetGDBRemote().SetCurrentThread(m_thread.GetID()))
+            ProcessSP process_sp (m_thread.GetProcess());
+            if (thread_suffix_supported || static_cast<ProcessGDBRemote *>(process_sp.get())->GetGDBRemote().SetCurrentThread(m_thread.GetID()))
             {
                 uint32_t offset, end_offset;
                 StreamString packet;
@@ -334,7 +339,15 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
 bool
 GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
 {
-    GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
+    ExecutionContext exe_ctx (CalculateThread());
+    
+    Process *process = exe_ctx.GetProcessPtr();
+    Thread *thread = exe_ctx.GetThreadPtr();
+    if (process == NULL || thread == NULL)
+        return false;
+    
+    GDBRemoteCommunicationClient &gdb_comm (((ProcessGDBRemote *)process)->GetGDBRemote());
+
     StringExtractorGDBRemote response;
     
     Mutex::Locker locker;
@@ -342,7 +355,8 @@ GDBRemoteRegisterContext::ReadAllRegisterValues (lldb::DataBufferSP &data_sp)
     {
         char packet[32];
         const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
-        if (thread_suffix_supported || GetGDBProcess().GetGDBRemote().SetCurrentThread(m_thread.GetID()))
+        ProcessSP process_sp (m_thread.GetProcess());
+        if (thread_suffix_supported || static_cast<ProcessGDBRemote *>(process_sp.get())->GetGDBRemote().SetCurrentThread(m_thread.GetID()))
         {
             int packet_len = 0;
             if (thread_suffix_supported)
@@ -382,13 +396,22 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
     if (!data_sp || data_sp->GetBytes() == NULL || data_sp->GetByteSize() == 0)
         return false;
 
-    GDBRemoteCommunicationClient &gdb_comm (GetGDBProcess().GetGDBRemote());
+    ExecutionContext exe_ctx (CalculateThread());
+    
+    Process *process = exe_ctx.GetProcessPtr();
+    Thread *thread = exe_ctx.GetThreadPtr();
+    if (process == NULL || thread == NULL)
+        return false;
+    
+    GDBRemoteCommunicationClient &gdb_comm (((ProcessGDBRemote *)process)->GetGDBRemote());
+
     StringExtractorGDBRemote response;
     Mutex::Locker locker;
     if (gdb_comm.GetSequenceMutex (locker))
     {
         const bool thread_suffix_supported = gdb_comm.GetThreadSuffixSupported();
-        if (thread_suffix_supported || GetGDBProcess().GetGDBRemote().SetCurrentThread(m_thread.GetID()))
+        ProcessSP process_sp (m_thread.GetProcess());
+        if (thread_suffix_supported || static_cast<ProcessGDBRemote *>(process_sp.get())->GetGDBRemote().SetCurrentThread(m_thread.GetID()))
         {
             // The data_sp contains the entire G response packet including the
             // G, and if the thread suffix is supported, it has the thread suffix

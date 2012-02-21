@@ -96,7 +96,7 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
     {
         StreamString s;
         s.Address (m_thread.GetRegisterContext()->GetPC(), 
-                   m_thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize());
+                   m_thread.CalculateTarget()->GetArchitecture().GetAddressByteSize());
         log->Printf("ThreadPlanStepOverRange reached %s.", s.GetData());
     }
     

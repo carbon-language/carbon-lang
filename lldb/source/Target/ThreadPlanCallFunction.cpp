@@ -54,20 +54,24 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
 {
     SetOkayToDiscard (discard_on_error);
 
-    Process& process = thread.GetProcess();
-    Target& target = process.GetTarget();
-    const ABI *abi = process.GetABI().get();
+    ProcessSP process_sp (thread.GetProcess());
+    if (!process_sp)
+        return;
+    
+    const ABI *abi = process_sp->GetABI().get();
     
     if (!abi)
         return;
     
+    TargetSP target_sp (thread.CalculateTarget());
+
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     
     SetBreakpoints();
     
     m_function_sp = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
     
-    Module *exe_module = target.GetExecutableModulePointer();
+    Module *exe_module = target_sp->GetExecutableModulePointer();
 
     if (exe_module == NULL)
     {
@@ -95,7 +99,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
         }
     }
     
-    addr_t start_load_addr = m_start_addr.GetLoadAddress(&target);
+    addr_t start_load_addr = m_start_addr.GetLoadAddress (target_sp.get());
     
     // Checkpoint the thread state so we can restore it later.
     if (log && log->GetVerbose())
@@ -110,7 +114,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     // Now set the thread state to "no reason" so we don't run with whatever signal was outstanding...
     thread.SetStopInfoToNothing();
     
-    addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(&target);
+    addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress (target_sp.get());
         
     if (this_arg && cmd_arg)
     {
@@ -170,20 +174,24 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
 {
     SetOkayToDiscard (discard_on_error);
     
-    Process& process = thread.GetProcess();
-    Target& target = process.GetTarget();
-    const ABI *abi = process.GetABI().get();
+    ProcessSP process_sp (thread.GetProcess());
+    if (!process_sp)
+        return;
+    
+    const ABI *abi = process_sp->GetABI().get();
     
     if (!abi)
         return;
-    
+
+    TargetSP target_sp (thread.CalculateTarget());
+
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     
     SetBreakpoints();
     
     m_function_sp = thread.GetRegisterContext()->GetSP() - abi->GetRedZoneSize();
     
-    Module *exe_module = target.GetExecutableModulePointer();
+    Module *exe_module = target_sp->GetExecutableModulePointer();
     
     if (exe_module == NULL)
     {
@@ -211,7 +219,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
         }
     }
     
-    addr_t start_load_addr = m_start_addr.GetLoadAddress(&target);
+    addr_t start_load_addr = m_start_addr.GetLoadAddress(target_sp.get());
     
     // Checkpoint the thread state so we can restore it later.
     if (log && log->GetVerbose())
@@ -226,7 +234,7 @@ ThreadPlanCallFunction::ThreadPlanCallFunction (Thread &thread,
     // Now set the thread state to "no reason" so we don't run with whatever signal was outstanding...
     thread.SetStopInfoToNothing();
     
-    addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(&target);
+    addr_t FunctionLoadAddr = m_function_addr.GetLoadAddress(target_sp.get());
     
     if (!abi->PrepareTrivialCall (thread, 
                                   m_function_sp, 
@@ -285,7 +293,8 @@ ThreadPlanCallFunction::DoTakedown ()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
     if (!m_takedown_done)
     {
-        const ABI *abi = m_thread.GetProcess().GetABI().get();
+        ProcessSP process_sp (m_thread.GetProcess());
+        const ABI *abi = process_sp ? process_sp->GetABI().get() : NULL;
         if (abi && m_return_type.IsValid())
         {
             m_return_valobj_sp = abi->GetReturnValueObject (m_thread, m_return_type);
@@ -325,7 +334,8 @@ ThreadPlanCallFunction::GetDescription (Stream *s, DescriptionLevel level)
     }
     else
     {
-        s->Printf("Thread plan to call 0x%llx", m_function_addr.GetLoadAddress(&m_thread.GetProcess().GetTarget()));
+        TargetSP target_sp (m_thread.CalculateTarget());
+        s->Printf("Thread plan to call 0x%llx", m_function_addr.GetLoadAddress(target_sp.get()));
     }
 }
 
@@ -362,8 +372,11 @@ ThreadPlanCallFunction::PlanExplainsStop ()
     
     if (m_real_stop_info_sp && m_real_stop_info_sp->GetStopReason() == eStopReasonBreakpoint)
     {
+        ProcessSP process_sp (m_thread.CalculateProcess());
         uint64_t break_site_id = m_real_stop_info_sp->GetValue();
-        BreakpointSiteSP bp_site_sp = m_thread.GetProcess().GetBreakpointSiteList().FindByID(break_site_id);
+        BreakpointSiteSP bp_site_sp;
+        if (process_sp)
+            bp_site_sp = process_sp->GetBreakpointSiteList().FindByID(break_site_id);
         if (bp_site_sp)
         {
             uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
@@ -475,13 +488,17 @@ ThreadPlanCallFunction::MischiefManaged ()
 void
 ThreadPlanCallFunction::SetBreakpoints ()
 {
-    m_cxx_language_runtime = m_thread.GetProcess().GetLanguageRuntime(eLanguageTypeC_plus_plus);
-    m_objc_language_runtime = m_thread.GetProcess().GetLanguageRuntime(eLanguageTypeObjC);
+    ProcessSP process_sp (m_thread.CalculateProcess());
+    if (process_sp)
+    {
+        m_cxx_language_runtime = process_sp->GetLanguageRuntime(eLanguageTypeC_plus_plus);
+        m_objc_language_runtime = process_sp->GetLanguageRuntime(eLanguageTypeObjC);
     
-    if (m_cxx_language_runtime)
-        m_cxx_language_runtime->SetExceptionBreakpoints();
-    if (m_objc_language_runtime)
-        m_objc_language_runtime->SetExceptionBreakpoints();
+        if (m_cxx_language_runtime)
+            m_cxx_language_runtime->SetExceptionBreakpoints();
+        if (m_objc_language_runtime)
+            m_objc_language_runtime->SetExceptionBreakpoints();
+    }
 }
 
 void

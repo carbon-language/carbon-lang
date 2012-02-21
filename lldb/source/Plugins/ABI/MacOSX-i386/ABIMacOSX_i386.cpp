@@ -418,9 +418,12 @@ ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
                                    addr_t return_addr,
                                    ValueList &args) const
 {
+    ExecutionContext exe_ctx (thread.shared_from_this());
     RegisterContext *reg_ctx = thread.GetRegisterContext().get();
     if (!reg_ctx)
         return false;
+    
+    Process *process = exe_ctx.GetProcessPtr();
     Error error;
     uint32_t fp_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_FP);
     uint32_t pc_reg_num = reg_ctx->ConvertRegisterKindToRegisterNumber (eRegisterKindGeneric, LLDB_REGNUM_GENERIC_PC);
@@ -528,7 +531,7 @@ ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
                         
                         sp -= (cstr_length + 1);
                         
-                        if (thread.GetProcess().WriteMemory(sp, cstr, cstr_length + 1, error) != (cstr_length + 1))
+                        if (process->WriteMemory(sp, cstr, cstr_length + 1, error) != (cstr_length + 1))
                             return false;
                         
                         // Put the address of the string into the argument array.
@@ -563,14 +566,14 @@ ABIMacOSX_i386::PrepareNormalCall (Thread &thread,
     size_t numChunks = argLayout.size();
 
     for (index = 0; index < numChunks; ++index)
-        if (thread.GetProcess().WriteMemory(sp + (index * 4), &argLayout[index], sizeof(uint32_t), error) != sizeof(uint32_t))
+        if (process->WriteMemory(sp + (index * 4), &argLayout[index], sizeof(uint32_t), error) != sizeof(uint32_t))
             return false;
     
     // The return address is pushed onto the stack.
     
     sp -= 4;
     uint32_t returnAddressU32 = return_addr;
-    if (thread.GetProcess().WriteMemory (sp, &returnAddressU32, sizeof(returnAddressU32), error) != sizeof(returnAddressU32))
+    if (process->WriteMemory (sp, &returnAddressU32, sizeof(returnAddressU32), error) != sizeof(returnAddressU32))
         return false;
     
     // %esp is set to the actual stack value.
@@ -595,13 +598,13 @@ static bool
 ReadIntegerArgument (Scalar           &scalar,
                      unsigned int     bit_width,
                      bool             is_signed,
-                     Process          &process,
+                     Process          *process,
                      addr_t           &current_stack_argument)
 {
     
     uint32_t byte_size = (bit_width + (8-1))/8;
     Error error;
-    if (process.ReadScalarIntegerFromMemory(current_stack_argument, byte_size, is_signed, scalar, error))
+    if (process->ReadScalarIntegerFromMemory(current_stack_argument, byte_size, is_signed, scalar, error))
     {
         current_stack_argument += byte_size;
         return true;
@@ -652,29 +655,29 @@ ABIMacOSX_i386::GetArgumentValues (Thread &thread,
             default:
                 return false;
             case Value::eContextTypeClangType:
-            {
-                void *value_type = value->GetClangType();
-                bool is_signed;
-                
-                if (ClangASTContext::IsIntegerType (value_type, is_signed))
                 {
-                    size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+                    void *value_type = value->GetClangType();
+                    bool is_signed;
                     
-                    ReadIntegerArgument(value->GetScalar(),
-                                        bit_width, 
-                                        is_signed,
-                                        thread.GetProcess(), 
-                                        current_stack_argument);
+                    if (ClangASTContext::IsIntegerType (value_type, is_signed))
+                    {
+                        size_t bit_width = ClangASTType::GetClangTypeBitWidth(ast_context, value_type);
+                        
+                        ReadIntegerArgument(value->GetScalar(),
+                                            bit_width, 
+                                            is_signed,
+                                            thread.GetProcess().get(), 
+                                            current_stack_argument);
+                    }
+                    else if (ClangASTContext::IsPointerType (value_type))
+                    {
+                        ReadIntegerArgument(value->GetScalar(),
+                                            32,
+                                            false,
+                                            thread.GetProcess().get(),
+                                            current_stack_argument);
+                    }
                 }
-                else if (ClangASTContext::IsPointerType (value_type))
-                {
-                    ReadIntegerArgument(value->GetScalar(),
-                                        32,
-                                        false,
-                                        thread.GetProcess(),
-                                        current_stack_argument);
-                }
-            }
                 break;
         }
     }

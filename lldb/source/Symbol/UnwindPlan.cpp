@@ -387,7 +387,8 @@ UnwindPlan::Dump (Stream& s, Thread *thread, lldb::addr_t base_addr) const
     if (m_plan_valid_address_range.GetBaseAddress().IsValid() && m_plan_valid_address_range.GetByteSize() > 0)
     {
         s.PutCString ("Address range of this UnwindPlan: ");
-        m_plan_valid_address_range.Dump (&s, &thread->GetProcess().GetTarget(), Address::DumpStyleSectionNameOffset);
+        TargetSP target_sp(thread->CalculateTarget());
+        m_plan_valid_address_range.Dump (&s, target_sp.get(), Address::DumpStyleSectionNameOffset);
         s.EOL();
     }
     else

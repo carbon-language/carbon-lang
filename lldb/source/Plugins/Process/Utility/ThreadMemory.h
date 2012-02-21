@@ -17,9 +17,9 @@ class ThreadMemory :
 {
 public:
 
-    ThreadMemory (lldb_private::Process &process, 
-                   lldb::tid_t tid,
-                   const lldb::ValueObjectSP &thread_info_valobj_sp);
+    ThreadMemory (const lldb::ProcessSP &process_sp, 
+                  lldb::tid_t tid,
+                  const lldb::ValueObjectSP &thread_info_valobj_sp);
 
     virtual 
     ~ThreadMemory();

@@ -33,11 +33,15 @@ RegisterContextKDP_arm::~RegisterContextKDP_arm()
 int
 RegisterContextKDP_arm::DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr)
 {
-    Error error;
-    if (m_kdp_thread.GetKDPProcess().GetCommunication().SendRequestReadRegisters (tid, GPRRegSet, &gpr, sizeof(gpr), error))
+    ProcessSP process_sp (CalculateProcess());
+    if (process_sp)
     {
-        if (error.Success())
-            return 0;
+        Error error;
+        if (static_cast<ProcessKDP *>(process_sp.get())->GetCommunication().SendRequestReadRegisters (tid, GPRRegSet, &gpr, sizeof(gpr), error))
+        {
+            if (error.Success())
+                return 0;
+        }
     }
     return -1;
 }
@@ -45,11 +49,15 @@ RegisterContextKDP_arm::DoReadGPR (lldb::tid_t tid, int flavor, GPR &gpr)
 int
 RegisterContextKDP_arm::DoReadFPU (lldb::tid_t tid, int flavor, FPU &fpu)
 {
-    Error error;
-    if (m_kdp_thread.GetKDPProcess().GetCommunication().SendRequestReadRegisters (tid, FPURegSet, &fpu, sizeof(fpu), error))
+    ProcessSP process_sp (CalculateProcess());
+    if (process_sp)
     {
-        if (error.Success())
-            return 0;
+        Error error;
+        if (static_cast<ProcessKDP *>(process_sp.get())->GetCommunication().SendRequestReadRegisters (tid, FPURegSet, &fpu, sizeof(fpu), error))
+        {
+            if (error.Success())
+                return 0;
+        }
     }
     return -1;
 }
@@ -57,11 +65,15 @@ RegisterContextKDP_arm::DoReadFPU (lldb::tid_t tid, int flavor, FPU &fpu)
 int
 RegisterContextKDP_arm::DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc)
 {
-    Error error;
-    if (m_kdp_thread.GetKDPProcess().GetCommunication().SendRequestReadRegisters (tid, EXCRegSet, &exc, sizeof(exc), error))
+    ProcessSP process_sp (CalculateProcess());
+    if (process_sp)
     {
-        if (error.Success())
-            return 0;
+        Error error;
+        if (static_cast<ProcessKDP *>(process_sp.get())->GetCommunication().SendRequestReadRegisters (tid, EXCRegSet, &exc, sizeof(exc), error))
+        {
+            if (error.Success())
+                return 0;
+        }
     }
     return -1;
 }
@@ -69,11 +81,15 @@ RegisterContextKDP_arm::DoReadEXC (lldb::tid_t tid, int flavor, EXC &exc)
 int
 RegisterContextKDP_arm::DoReadDBG (lldb::tid_t tid, int flavor, DBG &dbg)
 {
-    Error error;
-    if (m_kdp_thread.GetKDPProcess().GetCommunication().SendRequestReadRegisters (tid, DBGRegSet, &dbg, sizeof(dbg), error))
+    ProcessSP process_sp (CalculateProcess());
+    if (process_sp)
     {
-        if (error.Success())
-            return 0;
+        Error error;
+        if (static_cast<ProcessKDP *>(process_sp.get())->GetCommunication().SendRequestReadRegisters (tid, DBGRegSet, &dbg, sizeof(dbg), error))
+        {
+            if (error.Success())
+                return 0;
+        }
     }
     return -1;
 }

@@ -1496,7 +1496,8 @@ ScriptInterpreterPython::BreakpointCallbackFunction
     if (!context)
         return true;
         
-    Target *target = context->exe_ctx.GetTargetPtr();
+    ExecutionContext exe_ctx (context->exe_ctx_ref);
+    Target *target = exe_ctx.GetTargetPtr();
     
     if (!target)
         return true;
@@ -1511,7 +1512,7 @@ ScriptInterpreterPython::BreakpointCallbackFunction
     if (python_function_name != NULL 
         && python_function_name[0] != '\0')
     {
-        const StackFrameSP stop_frame_sp (context->exe_ctx.GetFrameSP());
+        const StackFrameSP stop_frame_sp (exe_ctx.GetFrameSP());
         BreakpointSP breakpoint_sp = target->GetBreakpointByID (break_id);
         if (breakpoint_sp)
         {

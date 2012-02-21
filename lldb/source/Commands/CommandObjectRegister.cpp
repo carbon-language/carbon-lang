@@ -96,17 +96,20 @@ public:
                 bool prefix_with_altname = m_command_options.alternate_name;
                 bool prefix_with_name = !prefix_with_altname;
                 reg_value.Dump(&strm, reg_info, prefix_with_name, prefix_with_altname, m_format_options.GetFormat());
-                if (((reg_info->encoding == eEncodingUint) || (reg_info->encoding == eEncodingSint)) && 
-                    (reg_info->byte_size == reg_ctx->GetThread().GetProcess().GetAddressByteSize()))
+                if ((reg_info->encoding == eEncodingUint) || (reg_info->encoding == eEncodingSint))
                 {
-                    addr_t reg_addr = reg_value.GetAsUInt64(LLDB_INVALID_ADDRESS);
-                    if (reg_addr != LLDB_INVALID_ADDRESS)
+                    Process *process = exe_ctx.GetProcessPtr();
+                    if (process && reg_info->byte_size == process->GetAddressByteSize())
                     {
-                        Address so_reg_addr;
-                        if (exe_ctx.GetTargetRef().GetSectionLoadList().ResolveLoadAddress(reg_addr, so_reg_addr))
+                        addr_t reg_addr = reg_value.GetAsUInt64(LLDB_INVALID_ADDRESS);
+                        if (reg_addr != LLDB_INVALID_ADDRESS)
                         {
-                            strm.PutCString ("  ");
-                            so_reg_addr.Dump(&strm, exe_ctx.GetBestExecutionContextScope(), Address::DumpStyleResolvedDescription);
+                            Address so_reg_addr;
+                            if (exe_ctx.GetTargetRef().GetSectionLoadList().ResolveLoadAddress(reg_addr, so_reg_addr))
+                            {
+                                strm.PutCString ("  ");
+                                so_reg_addr.Dump(&strm, exe_ctx.GetBestExecutionContextScope(), Address::DumpStyleResolvedDescription);
+                            }
                         }
                     }
                 }

@@ -39,8 +39,7 @@ public:
     // thread may be NULL in which case we only use the Target (e.g. if this is called pre-process-launch).
     virtual bool
     FirstNonPrologueInsn (AddressRange& func, 
-                          Target& target, 
-                          Thread* thread, 
+                          const lldb_private::ExecutionContext &exe_ctx,
                           Address& first_non_prologue_insn) = 0;
 
 protected:

@@ -36,18 +36,18 @@ using namespace lldb_private;
 // Thread Registers
 //----------------------------------------------------------------------
 
-ThreadKDP::ThreadKDP (ProcessKDP &process, lldb::tid_t tid) :
-    Thread(process, tid),
+ThreadKDP::ThreadKDP (const lldb::ProcessSP &process_sp, lldb::tid_t tid) :
+    Thread(process_sp, tid),
     m_thread_name (),
     m_dispatch_queue_name (),
     m_thread_dispatch_qaddr (LLDB_INVALID_ADDRESS)
 {
-    ProcessKDPLog::LogIf(KDP_LOG_THREAD, "%p: ThreadKDP::ThreadKDP (pid = %i, tid = 0x%4.4x)", this, m_process.GetID(), GetID());
+    ProcessKDPLog::LogIf(KDP_LOG_THREAD, "%p: ThreadKDP::ThreadKDP (tid = 0x%4.4x)", this, GetID());
 }
 
 ThreadKDP::~ThreadKDP ()
 {
-    ProcessKDPLog::LogIf(KDP_LOG_THREAD, "%p: ThreadKDP::~ThreadKDP (pid = %i, tid = 0x%4.4x)", this, m_process.GetID(), GetID());
+    ProcessKDPLog::LogIf(KDP_LOG_THREAD, "%p: ThreadKDP::~ThreadKDP (tid = 0x%4.4x)", this, GetID());
     DestroyThread();
 }
 
@@ -157,20 +157,24 @@ ThreadKDP::CreateRegisterContextForFrame (StackFrame *frame)
 
     if (concrete_frame_idx == 0)
     {
-        switch (GetKDPProcess().GetCommunication().GetCPUType())
+        ProcessSP process_sp (CalculateProcess());
+        if (process_sp)
         {
-            case llvm::MachO::CPUTypeARM:
-                reg_ctx_sp.reset (new RegisterContextKDP_arm (*this, concrete_frame_idx));
-                break;
-            case llvm::MachO::CPUTypeI386:
-                reg_ctx_sp.reset (new RegisterContextKDP_i386 (*this, concrete_frame_idx));
-                break;
-            case llvm::MachO::CPUTypeX86_64:
-                reg_ctx_sp.reset (new RegisterContextKDP_x86_64 (*this, concrete_frame_idx));
-                break;
-            default:
-                assert (!"Add CPU type support in KDP");
-                break;
+            switch (static_cast<ProcessKDP *>(process_sp.get())->GetCommunication().GetCPUType())
+            {
+                case llvm::MachO::CPUTypeARM:
+                    reg_ctx_sp.reset (new RegisterContextKDP_arm (*this, concrete_frame_idx));
+                    break;
+                case llvm::MachO::CPUTypeI386:
+                    reg_ctx_sp.reset (new RegisterContextKDP_i386 (*this, concrete_frame_idx));
+                    break;
+                case llvm::MachO::CPUTypeX86_64:
+                    reg_ctx_sp.reset (new RegisterContextKDP_x86_64 (*this, concrete_frame_idx));
+                    break;
+                default:
+                    assert (!"Add CPU type support in KDP");
+                    break;
+            }
         }
     }
     else if (m_unwinder_ap.get())
@@ -181,26 +185,30 @@ ThreadKDP::CreateRegisterContextForFrame (StackFrame *frame)
 lldb::StopInfoSP
 ThreadKDP::GetPrivateStopReason ()
 {
-    const uint32_t process_stop_id = GetProcess().GetStopID();
-    if (m_thread_stop_reason_stop_id != process_stop_id ||
-        (m_actual_stop_info_sp && !m_actual_stop_info_sp->IsValid()))
+    ProcessSP process_sp (GetProcess());
+    if (process_sp)
     {
-        // TODO: can we query the initial state of the thread here?
-        // For now I am just going to pretend that a SIGSTOP happened.
+        const uint32_t process_stop_id = process_sp->GetStopID();
+        if (m_thread_stop_reason_stop_id != process_stop_id ||
+            (m_actual_stop_info_sp && !m_actual_stop_info_sp->IsValid()))
+        {
+            // TODO: can we query the initial state of the thread here?
+            // For now I am just going to pretend that a SIGSTOP happened.
 
-        SetStopInfo(StopInfo::CreateStopReasonWithSignal (*this, SIGSTOP));
+            SetStopInfo(StopInfo::CreateStopReasonWithSignal (*this, SIGSTOP));
 
-        // If GetKDPProcess().SetThreadStopInfo() doesn't find a stop reason
-        // for this thread, then m_actual_stop_info_sp will not ever contain
-        // a valid stop reason and the "m_actual_stop_info_sp->IsValid() == false"
-        // check will never be able to tell us if we have the correct stop info
-        // for this thread and we will continually send qThreadStopInfo packets
-        // down to the remote KDP server, so we need to keep our own notion
-        // of the stop ID that m_actual_stop_info_sp is valid for (even if it
-        // contains nothing). We use m_thread_stop_reason_stop_id for this below.
-//        m_thread_stop_reason_stop_id = process_stop_id;
-//        m_actual_stop_info_sp.reset();
+            // If GetKDPProcess().SetThreadStopInfo() doesn't find a stop reason
+            // for this thread, then m_actual_stop_info_sp will not ever contain
+            // a valid stop reason and the "m_actual_stop_info_sp->IsValid() == false"
+            // check will never be able to tell us if we have the correct stop info
+            // for this thread and we will continually send qThreadStopInfo packets
+            // down to the remote KDP server, so we need to keep our own notion
+            // of the stop ID that m_actual_stop_info_sp is valid for (even if it
+            // contains nothing). We use m_thread_stop_reason_stop_id for this below.
+    //        m_thread_stop_reason_stop_id = process_stop_id;
+    //        m_actual_stop_info_sp.reset();
 
+        }
     }
     return m_actual_stop_info_sp;
 }

@@ -16,6 +16,7 @@
 #include "lldb/Breakpoint/Watchpoint.h"
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Target/ExecutionContext.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/RegisterContext.h"
 #include "lldb/Target/Target.h"
@@ -31,7 +32,9 @@ StopInfoMachException::GetDescription ()
 {
     if (m_description.empty() && m_value != 0)
     {
-        const llvm::Triple::ArchType cpu = m_thread.GetProcess().GetTarget().GetArchitecture().GetMachine();
+        ExecutionContext exe_ctx (m_thread.shared_from_this());
+        Target *target = exe_ctx.GetTargetPtr();
+        const llvm::Triple::ArchType cpu = target ? target->GetArchitecture().GetMachine() : llvm::Triple::InvalidArch;
 
         const char *exc_desc = NULL;
         const char *code_label = "code";
@@ -252,7 +255,9 @@ StopInfoMachException::CreateStopReasonWithMachException
 {
     if (exc_type != 0)
     {
-        const llvm::Triple::ArchType cpu = thread.GetProcess().GetTarget().GetArchitecture().GetMachine();
+        ExecutionContext exe_ctx (thread.shared_from_this());
+        Target *target = exe_ctx.GetTargetPtr();
+        const llvm::Triple::ArchType cpu = target ? target->GetArchitecture().GetMachine() : llvm::Triple::InvalidArch;
 
         switch (exc_type)
         {
@@ -306,8 +311,9 @@ StopInfoMachException::CreateStopReasonWithMachException
 
                         // It's a watchpoint, then.
                         // The exc_sub_code indicates the data break address.
-                        lldb::WatchpointSP wp_sp =
-                            thread.GetProcess().GetTarget().GetWatchpointList().FindByAddress((lldb::addr_t)exc_sub_code);
+                        lldb::WatchpointSP wp_sp;
+                        if (target)
+                            wp_sp = target->GetWatchpointList().FindByAddress((lldb::addr_t)exc_sub_code);
                         if (wp_sp)
                         {
                             // Debugserver may piggyback the hardware index of the fired watchpoint in the exception data.
@@ -345,7 +351,11 @@ StopInfoMachException::CreateStopReasonWithMachException
                 if (is_software_breakpoint)
                 {
                     addr_t pc = thread.GetRegisterContext()->GetPC();
-                    lldb::BreakpointSiteSP bp_site_sp = thread.GetProcess().GetBreakpointSiteList().FindByAddress(pc);
+                    ProcessSP process_sp (thread.CalculateProcess());
+
+                    lldb::BreakpointSiteSP bp_site_sp;
+                    if (process_sp)
+                        bp_site_sp = process_sp->GetBreakpointSiteList().FindByAddress(pc);
                     if (bp_site_sp)
                     {
                         // If the breakpoint is for this thread, then we'll report the hit, but if it is for another thread,

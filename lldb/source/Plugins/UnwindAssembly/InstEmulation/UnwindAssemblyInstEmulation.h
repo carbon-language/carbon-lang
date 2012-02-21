@@ -38,8 +38,7 @@ public:
     // thread may be NULL in which case we only use the Target (e.g. if this is called pre-process-launch).
     virtual bool
     FirstNonPrologueInsn (lldb_private::AddressRange& func, 
-                          lldb_private::Target& target, 
-                          lldb_private::Thread* thread, 
+                          const lldb_private::ExecutionContext &exe_ctx, 
                           lldb_private::Address& first_non_prologue_insn);
 
     static lldb_private::UnwindAssembly *

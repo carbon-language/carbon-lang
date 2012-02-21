@@ -240,12 +240,6 @@ protected:
     void
     SetAllRegisterValid (bool b);
 
-    ProcessGDBRemote &
-    GetGDBProcess();
-
-    ThreadGDBRemote &
-    GetGDBThread();
-
     GDBRemoteDynamicRegisterInfo &m_reg_info;
     std::vector<bool> m_reg_valid;
     lldb_private::DataExtractor m_reg_data;

@@ -32,7 +32,7 @@ class StoppointCallbackContext
 public:
     StoppointCallbackContext();
 
-    StoppointCallbackContext(Event *event, Process* process, Thread *thread = NULL, StackFrame * frame = NULL, bool synchronously = false);
+    StoppointCallbackContext(Event *event, const ExecutionContext &exe_ctx, bool synchronously = false);
 
     //------------------------------------------------------------------
     /// Clear the object's state.
@@ -48,7 +48,7 @@ public:
     //------------------------------------------------------------------
     Event *event;               // This is the event, the callback can modify this to indicate
                                 // the meaning of the breakpoint hit
-    ExecutionContext exe_ctx;   // This tells us where we have stopped, what thread.
+    ExecutionContextRef exe_ctx_ref; // This tells us where we have stopped, what thread.
     bool is_synchronous;        // Is the callback being executed synchronously with the breakpoint, 
                                 // or asynchronously as the event is retrieved?
 };

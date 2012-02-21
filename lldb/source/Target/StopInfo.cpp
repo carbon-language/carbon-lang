@@ -34,8 +34,8 @@ using namespace lldb_private;
 
 StopInfo::StopInfo (Thread &thread, uint64_t value) :
     m_thread (thread),
-    m_stop_id (thread.GetProcess().GetStopID()),
-    m_resume_id (thread.GetProcess().GetResumeID()),
+    m_stop_id (thread.GetProcess()->GetStopID()),
+    m_resume_id (thread.GetProcess()->GetResumeID()),
     m_value (value)
 {
 }
@@ -43,20 +43,20 @@ StopInfo::StopInfo (Thread &thread, uint64_t value) :
 bool
 StopInfo::IsValid () const
 {
-    return m_thread.GetProcess().GetStopID() == m_stop_id;
+    return m_thread.GetProcess()->GetStopID() == m_stop_id;
 }
 
 void
 StopInfo::MakeStopInfoValid ()
 {
-    m_stop_id = m_thread.GetProcess().GetStopID();
-    m_resume_id = m_thread.GetProcess().GetResumeID();
+    m_stop_id = m_thread.GetProcess()->GetStopID();
+    m_resume_id = m_thread.GetProcess()->GetResumeID();
 }
 
 bool
 StopInfo::HasTargetRunSinceMe ()
 {
-    lldb::StateType ret_type = m_thread.GetProcess().GetPrivateState();
+    lldb::StateType ret_type = m_thread.GetProcess()->GetPrivateState();
     if (ret_type == eStateRunning)
     {
         return true;
@@ -69,8 +69,8 @@ StopInfo::HasTargetRunSinceMe ()
         // and resumes caused by expressions, and check if there are any resumes NOT caused
         // by expressions.
         
-        uint32_t curr_resume_id = m_thread.GetProcess().GetResumeID();
-        uint32_t last_user_expression_id = m_thread.GetProcess().GetLastUserExpressionResumeID ();
+        uint32_t curr_resume_id = m_thread.GetProcess()->GetResumeID();
+        uint32_t last_user_expression_id = m_thread.GetProcess()->GetLastUserExpressionResumeID ();
         if (curr_resume_id == m_resume_id)
         {
             return false;
@@ -101,7 +101,7 @@ public:
         m_should_perform_action (true),
         m_address (LLDB_INVALID_ADDRESS)
     {
-        BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
+        BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
         if (bp_site_sp)
         {
           m_address = bp_site_sp->GetLoadAddress();
@@ -116,7 +116,7 @@ public:
         m_should_perform_action (true),
         m_address (LLDB_INVALID_ADDRESS)
     {
-        BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
+        BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
         if (bp_site_sp)
         {
           m_address = bp_site_sp->GetLoadAddress();
@@ -139,15 +139,11 @@ public:
         if (!m_should_stop_is_valid)
         {
             // Only check once if we should stop at a breakpoint
-            BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
+            BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
             if (bp_site_sp)
             {
-                StoppointCallbackContext context (event_ptr, 
-                                                  &m_thread.GetProcess(), 
-                                                  &m_thread, 
-                                                  m_thread.GetStackFrameAtIndex(0).get(),
-                                                  true);
-                
+                ExecutionContext exe_ctx (m_thread.GetStackFrameAtIndex(0));
+                StoppointCallbackContext context (event_ptr, exe_ctx, true);
                 m_should_stop = bp_site_sp->ShouldStop (&context);
             }
             else
@@ -173,7 +169,7 @@ public:
         
         LogSP log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS);
         
-        BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
+        BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
         
         if (bp_site_sp)
         {
@@ -197,11 +193,8 @@ public:
                 
                 m_should_stop = false;
 
-                StoppointCallbackContext context (event_ptr, 
-                                                  &m_thread.GetProcess(), 
-                                                  &m_thread, 
-                                                  m_thread.GetStackFrameAtIndex(0).get(),
-                                                  false);
+                ExecutionContext exe_ctx (m_thread.GetStackFrameAtIndex(0));
+                StoppointCallbackContext context (event_ptr, exe_ctx, false);
 
                 for (size_t j = 0; j < num_owners; j++)
                 {
@@ -222,7 +215,7 @@ public:
                         ValueObjectSP result_value_sp;
                         const bool discard_on_error = true;
                         Error error;
-                        result_code = ClangUserExpression::EvaluateWithError (context.exe_ctx,
+                        result_code = ClangUserExpression::EvaluateWithError (exe_ctx,
                                                                               eExecutionPolicyAlways,
                                                                               lldb::eLanguageTypeUnknown,
                                                                               ClangUserExpression::eResultTypeAny,
@@ -256,7 +249,7 @@ public:
                         }
                         else
                         {
-                            Debugger &debugger = context.exe_ctx.GetTargetRef().GetDebugger();
+                            Debugger &debugger = exe_ctx.GetTargetRef().GetDebugger();
                             StreamSP error_sp = debugger.GetAsyncErrorStream ();
                             error_sp->Printf ("Stopped due to an error evaluating condition of breakpoint ");
                             bp_loc_sp->GetDescription (error_sp.get(), eDescriptionLevelBrief);
@@ -286,7 +279,7 @@ public:
                     // to get out of there.  So set it here.
                     // When we figure out how to nest breakpoint hits then this will change.
                     
-                    Debugger &debugger = m_thread.GetProcess().GetTarget().GetDebugger();
+                    Debugger &debugger = m_thread.CalculateTarget()->GetDebugger();
                     bool old_async = debugger.GetAsyncExecution();
                     debugger.SetAsyncExecution (true);
                     
@@ -326,7 +319,7 @@ public:
     virtual bool
     ShouldNotify (Event *event_ptr)
     {
-        BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
+        BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
         if (bp_site_sp)
         {
             bool all_internal = true;
@@ -349,7 +342,7 @@ public:
     {
         if (m_description.empty())
         {
-            BreakpointSiteSP bp_site_sp (m_thread.GetProcess().GetBreakpointSiteList().FindByID (m_value));
+            BreakpointSiteSP bp_site_sp (m_thread.GetProcess()->GetBreakpointSiteList().FindByID (m_value));
             if (bp_site_sp)
             {
                 StreamString strm;
@@ -422,16 +415,12 @@ public:
             return m_should_stop;
 
         WatchpointSP wp_sp =
-            m_thread.GetProcess().GetTarget().GetWatchpointList().FindByID(GetValue());
+            m_thread.CalculateTarget()->GetWatchpointList().FindByID(GetValue());
         if (wp_sp)
         {
             // Check if we should stop at a watchpoint.
-            StoppointCallbackContext context (event_ptr, 
-                                              &m_thread.GetProcess(), 
-                                              &m_thread, 
-                                              m_thread.GetStackFrameAtIndex(0).get(),
-                                              true);
-                
+            ExecutionContext exe_ctx (m_thread.GetStackFrameAtIndex(0));
+            StoppointCallbackContext context (event_ptr, exe_ctx, true);
             m_should_stop = wp_sp->ShouldStop (&context);
         }
         else
@@ -459,14 +448,11 @@ public:
         m_should_stop = true;
         
         WatchpointSP wp_sp =
-            m_thread.GetProcess().GetTarget().GetWatchpointList().FindByID(GetValue());
+            m_thread.CalculateTarget()->GetWatchpointList().FindByID(GetValue());
         if (wp_sp)
         {
-            StoppointCallbackContext context (event_ptr, 
-                                              &m_thread.GetProcess(), 
-                                              &m_thread, 
-                                              m_thread.GetStackFrameAtIndex(0).get(),
-                                              false);
+            ExecutionContext exe_ctx (m_thread.GetStackFrameAtIndex(0));
+            StoppointCallbackContext context (event_ptr, exe_ctx, false);
             bool stop_requested = wp_sp->InvokeCallback (&context);
             // Also make sure that the callback hasn't continued the target.  
             // If it did, when we'll set m_should_start to false and get out of here.
@@ -483,16 +469,11 @@ public:
             {
                 // We need to make sure the user sees any parse errors in their condition, so we'll hook the
                 // constructor errors up to the debugger's Async I/O.
-                StoppointCallbackContext context (event_ptr, 
-                                                  &m_thread.GetProcess(), 
-                                                  &m_thread, 
-                                                  m_thread.GetStackFrameAtIndex(0).get(),
-                                                  false);
                 ExecutionResults result_code;
                 ValueObjectSP result_value_sp;
                 const bool discard_on_error = true;
                 Error error;
-                result_code = ClangUserExpression::EvaluateWithError (context.exe_ctx,
+                result_code = ClangUserExpression::EvaluateWithError (exe_ctx,
                                                                       eExecutionPolicyAlways,
                                                                       lldb::eLanguageTypeUnknown,
                                                                       ClangUserExpression::eResultTypeAny,
@@ -532,7 +513,7 @@ public:
                 }
                 else
                 {
-                    Debugger &debugger = context.exe_ctx.GetTargetRef().GetDebugger();
+                    Debugger &debugger = exe_ctx.GetTargetRef().GetDebugger();
                     StreamSP error_sp = debugger.GetAsyncErrorStream ();
                     error_sp->Printf ("Stopped due to an error evaluating condition of watchpoint ");
                     wp_sp->GetDescription (error_sp.get(), eDescriptionLevelBrief);
@@ -609,7 +590,7 @@ public:
     virtual bool
     ShouldStop (Event *event_ptr)
     {
-        return m_thread.GetProcess().GetUnixSignals().GetShouldStop (m_value);
+        return m_thread.GetProcess()->GetUnixSignals().GetShouldStop (m_value);
     }
     
     
@@ -617,14 +598,14 @@ public:
     virtual bool
     ShouldNotify (Event *event_ptr)
     {
-        return m_thread.GetProcess().GetUnixSignals().GetShouldNotify (m_value);
+        return m_thread.GetProcess()->GetUnixSignals().GetShouldNotify (m_value);
     }
 
     
     virtual void
     WillResume (lldb::StateType resume_state)
     {
-        if (m_thread.GetProcess().GetUnixSignals().GetShouldSuppress(m_value) == false)
+        if (m_thread.GetProcess()->GetUnixSignals().GetShouldSuppress(m_value) == false)
             m_thread.SetResumeSignal(m_value);
     }
 
@@ -634,7 +615,7 @@ public:
         if (m_description.empty())
         {
             StreamString strm;
-            const char *signal_name = m_thread.GetProcess().GetUnixSignals().GetSignalAsCString (m_value);
+            const char *signal_name = m_thread.GetProcess()->GetUnixSignals().GetSignalAsCString (m_value);
             if (signal_name)
                 strm.Printf("signal %s", signal_name);
             else

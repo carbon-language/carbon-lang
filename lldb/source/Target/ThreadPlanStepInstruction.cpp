@@ -123,10 +123,10 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
                     StreamString s;
                     s.PutCString ("Stepped in to: ");
                     addr_t stop_addr = m_thread.GetStackFrameAtIndex(0)->GetRegisterContext()->GetPC();
-                    s.Address (stop_addr, m_thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize());
+                    s.Address (stop_addr, m_thread.CalculateTarget()->GetArchitecture().GetAddressByteSize());
                     s.PutCString (" stepping out to: ");
                     addr_t return_addr = return_frame->GetRegisterContext()->GetPC();
-                    s.Address (return_addr, m_thread.GetProcess().GetTarget().GetArchitecture().GetAddressByteSize());
+                    s.Address (return_addr, m_thread.CalculateTarget()->GetArchitecture().GetAddressByteSize());
                     log->Printf("%s.", s.GetData());
                 }
                 m_thread.QueueThreadPlanForStepOut(false, NULL, true, m_stop_other_threads, eVoteNo, eVoteNoOpinion, 0);

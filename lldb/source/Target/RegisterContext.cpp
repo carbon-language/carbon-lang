@@ -27,7 +27,7 @@ using namespace lldb_private;
 RegisterContext::RegisterContext (Thread &thread, uint32_t concrete_frame_idx) :
     m_thread (thread),
     m_concrete_frame_idx (concrete_frame_idx),
-    m_stop_id (thread.GetProcess().GetStopID())
+    m_stop_id (thread.GetProcess()->GetStopID())
 {
 }
 
@@ -41,9 +41,19 @@ RegisterContext::~RegisterContext()
 void
 RegisterContext::InvalidateIfNeeded (bool force)
 {
-    const uint32_t this_stop_id = GetStopID();
-    const uint32_t process_stop_id = m_thread.GetProcess().GetStopID();    
-    if (force || process_stop_id != this_stop_id)
+    ProcessSP process_sp (m_thread.GetProcess());
+    bool invalidate = force;
+    uint32_t process_stop_id = UINT32_MAX;
+
+    if (process_sp)
+        process_stop_id = process_sp->GetStopID();
+    else
+        invalidate = true;
+    
+    if (!invalidate)
+        invalidate = process_stop_id != GetStopID();
+
+    if (invalidate)
     {
         InvalidateAllRegisters ();
         SetStopID (process_stop_id);
@@ -279,33 +289,39 @@ RegisterContext::ReadRegisterValueFromMemory (const RegisterInfo *reg_info,
         return error;
     }
     
-    Process &process = m_thread.GetProcess();
-    uint8_t src[RegisterValue::kMaxRegisterByteSize];
-   
-    // Read the memory
-    const uint32_t bytes_read = process.ReadMemory (src_addr, src, src_len, error);
-
-    // Make sure the memory read succeeded...
-    if (bytes_read != src_len)
+    ProcessSP process_sp (m_thread.GetProcess());
+    if (process_sp)
     {
-        if (error.Success())
+        uint8_t src[RegisterValue::kMaxRegisterByteSize];
+       
+        // Read the memory
+        const uint32_t bytes_read = process_sp->ReadMemory (src_addr, src, src_len, error);
+
+        // Make sure the memory read succeeded...
+        if (bytes_read != src_len)
         {
-            // This might happen if we read _some_ bytes but not all
-            error.SetErrorStringWithFormat("read %u of %u bytes", bytes_read, src_len);
+            if (error.Success())
+            {
+                // This might happen if we read _some_ bytes but not all
+                error.SetErrorStringWithFormat("read %u of %u bytes", bytes_read, src_len);
+            }
+            return error;
         }
-        return error;
+        
+        // We now have a memory buffer that contains the part or all of the register
+        // value. Set the register value using this memory data.
+        // TODO: we might need to add a parameter to this function in case the byte
+        // order of the memory data doesn't match the process. For now we are assuming
+        // they are the same.
+        reg_value.SetFromMemoryData (reg_info, 
+                                     src, 
+                                     src_len, 
+                                     process_sp->GetByteOrder(), 
+                                     error);
     }
-    
-    // We now have a memory buffer that contains the part or all of the register
-    // value. Set the register value using this memory data.
-    // TODO: we might need to add a parameter to this function in case the byte
-    // order of the memory data doesn't match the process. For now we are assuming
-    // they are the same.
-    reg_value.SetFromMemoryData (reg_info, 
-                                 src, 
-                                 src_len, 
-                                 process.GetByteOrder(), 
-                                 error);
+    else
+        error.SetErrorString("invalid process");
+
     return error;
 }
 
@@ -320,37 +336,42 @@ RegisterContext::WriteRegisterValueToMemory (const RegisterInfo *reg_info,
 
     Error error;
 
-    Process &process = m_thread.GetProcess();
-
-    // TODO: we might need to add a parameter to this function in case the byte
-    // order of the memory data doesn't match the process. For now we are assuming
-    // they are the same.
-
-    const uint32_t bytes_copied = reg_value.GetAsMemoryData (reg_info, 
-                                                             dst, 
-                                                             dst_len, 
-                                                             process.GetByteOrder(), 
-                                                             error);
-
-    if (error.Success())
+    ProcessSP process_sp (m_thread.GetProcess());
+    if (process_sp)
     {
-        if (bytes_copied == 0)
+
+        // TODO: we might need to add a parameter to this function in case the byte
+        // order of the memory data doesn't match the process. For now we are assuming
+        // they are the same.
+
+        const uint32_t bytes_copied = reg_value.GetAsMemoryData (reg_info, 
+                                                                 dst, 
+                                                                 dst_len, 
+                                                                 process_sp->GetByteOrder(), 
+                                                                 error);
+
+        if (error.Success())
         {
-            error.SetErrorString("byte copy failed.");
-        }
-        else
-        {
-            const uint32_t bytes_written = process.WriteMemory (dst_addr, dst, bytes_copied, error);
-            if (bytes_written != bytes_copied)
+            if (bytes_copied == 0)
             {
-                if (error.Success())
+                error.SetErrorString("byte copy failed.");
+            }
+            else
+            {
+                const uint32_t bytes_written = process_sp->WriteMemory (dst_addr, dst, bytes_copied, error);
+                if (bytes_written != bytes_copied)
                 {
-                    // This might happen if we read _some_ bytes but not all
-                    error.SetErrorStringWithFormat("only wrote %u of %u bytes", bytes_written, bytes_copied);
+                    if (error.Success())
+                    {
+                        // This might happen if we read _some_ bytes but not all
+                        error.SetErrorStringWithFormat("only wrote %u of %u bytes", bytes_written, bytes_copied);
+                    }
                 }
             }
         }
     }
+    else
+        error.SetErrorString("invalid process");
 
     return error;
 

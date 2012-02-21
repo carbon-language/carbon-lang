@@ -264,14 +264,14 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
     }
     
 
-    Target *target = &thread.GetProcess().GetTarget();
+    TargetSP target_sp (thread.CalculateTarget());
     Address so_addr;
 
     // Figure out if our return address is ARM or Thumb by using the 
     // Address::GetCallableLoadAddress(Target*) which will figure out the ARM
     // thumb-ness and set the correct address bits for us.
-    so_addr.SetLoadAddress (return_addr, target);
-    return_addr = so_addr.GetCallableLoadAddress (target);
+    so_addr.SetLoadAddress (return_addr, target_sp.get());
+    return_addr = so_addr.GetCallableLoadAddress (target_sp.get());
 
     // Set "lr" to the return address
     if (!reg_ctx->WriteRegisterFromUnsigned (ra_reg_num, return_addr))
@@ -283,8 +283,8 @@ ABIMacOSX_arm::PrepareTrivialCall (Thread &thread,
     
     // If bit zero or 1 is set, this must be a thumb function, no need to figure
     // this out from the symbols.
-    so_addr.SetLoadAddress (function_addr, target);
-    function_addr = so_addr.GetCallableLoadAddress (target);
+    so_addr.SetLoadAddress (function_addr, target_sp.get());
+    function_addr = so_addr.GetCallableLoadAddress (target_sp.get());
     
     const RegisterInfo *cpsr_reg_info = reg_ctx->GetRegisterInfoByName("cpsr");
     const uint32_t curr_cpsr = reg_ctx->ReadRegisterAsUnsigned(cpsr_reg_info, 0);
@@ -319,10 +319,11 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
     uint32_t num_values = values.GetSize();
     
     
+    ExecutionContext exe_ctx (thread.shared_from_this());
     // For now, assume that the types in the AST values come from the Target's 
     // scratch AST.    
     
-    clang::ASTContext *ast_context = thread.CalculateTarget()->GetScratchClangASTContext()->getASTContext();
+    clang::ASTContext *ast_context = exe_ctx.GetTargetRef().GetScratchClangASTContext()->getASTContext();
     
     // Extract the register context so we can read arguments from registers
     
@@ -364,7 +365,7 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
                 return false;
             }
             
-            if (bit_width <= (thread.GetProcess().GetAddressByteSize() * 8))
+            if (bit_width <= (exe_ctx.GetProcessRef().GetAddressByteSize() * 8))
             {
                 if (value_idx < 4)
                 {
@@ -407,7 +408,7 @@ ABIMacOSX_arm::GetArgumentValues (Thread &thread,
                     // Arguments 5 on up are on the stack
                     const uint32_t arg_byte_size = (bit_width + (8-1)) / 8;
                     Error error;
-                    if (!thread.GetProcess().ReadScalarIntegerFromMemory(sp, arg_byte_size, is_signed, value->GetScalar(), error))
+                    if (!exe_ctx.GetProcessRef().ReadScalarIntegerFromMemory(sp, arg_byte_size, is_signed, value->GetScalar(), error))
                         return false;
 
                     sp += arg_byte_size;

@@ -799,7 +799,8 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
     
     if (commands.GetSize() > 0)
     {
-        Target *target = context->exe_ctx.GetTargetPtr();
+        ExecutionContext exe_ctx (context->exe_ctx_ref);
+        Target *target = exe_ctx.GetTargetPtr();
         if (target)
         {
             CommandReturnObject result;
@@ -817,7 +818,7 @@ CommandObjectBreakpointCommand::BreakpointOptionsCallbackFunction
             bool print_results    = true;
 
             debugger.GetCommandInterpreter().HandleCommands (commands, 
-                                                             &(context->exe_ctx),
+                                                             &exe_ctx,
                                                              stop_on_continue, 
                                                              data->stop_on_error, 
                                                              echo_commands, 

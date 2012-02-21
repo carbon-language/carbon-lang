@@ -56,8 +56,8 @@ ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, bool stop_others) 
         
         if (return_frame_sp)
         {
-            m_backstop_addr = return_frame_sp->GetFrameCodeAddress().GetLoadAddress(&m_thread.GetProcess().GetTarget());
-            Breakpoint *return_bp = m_thread.GetProcess().GetTarget().CreateBreakpoint (m_backstop_addr, true).get();
+            m_backstop_addr = return_frame_sp->GetFrameCodeAddress().GetLoadAddress(m_thread.CalculateTarget().get());
+            Breakpoint *return_bp = m_thread.GetProcess()->GetTarget().CreateBreakpoint (m_backstop_addr, true).get();
             if (return_bp != NULL)
             {
                 return_bp->SetThreadID(m_thread.GetID());
@@ -76,7 +76,7 @@ ThreadPlanStepThrough::~ThreadPlanStepThrough ()
 {
     if (m_backstop_bkpt_id != LLDB_INVALID_BREAK_ID)
     {
-        m_thread.GetProcess().GetTarget().RemoveBreakpointByID (m_backstop_bkpt_id);
+        m_thread.GetProcess()->GetTarget().RemoveBreakpointByID (m_backstop_bkpt_id);
         m_backstop_bkpt_id = LLDB_INVALID_BREAK_ID;
     }
 }
@@ -91,11 +91,11 @@ ThreadPlanStepThrough::DidPush ()
 void
 ThreadPlanStepThrough::LookForPlanToStepThroughFromCurrentPC()
 {
-    m_sub_plan_sp = m_thread.GetProcess().GetDynamicLoader()->GetStepThroughTrampolinePlan (m_thread, m_stop_others);
+    m_sub_plan_sp = m_thread.GetProcess()->GetDynamicLoader()->GetStepThroughTrampolinePlan (m_thread, m_stop_others);
     // If that didn't come up with anything, try the ObjC runtime plugin:
     if (!m_sub_plan_sp.get())
     {
-        ObjCLanguageRuntime *objc_runtime = m_thread.GetProcess().GetObjCLanguageRuntime();
+        ObjCLanguageRuntime *objc_runtime = m_thread.GetProcess()->GetObjCLanguageRuntime();
         if (objc_runtime)
             m_sub_plan_sp = objc_runtime->GetStepThroughTrampolinePlan (m_thread, m_stop_others);
     }
@@ -244,7 +244,7 @@ ThreadPlanStepThrough::MischiefManaged ()
         ThreadPlan::MischiefManaged ();
         if (m_backstop_bkpt_id != LLDB_INVALID_BREAK_ID)
         {
-            m_thread.GetProcess().GetTarget().RemoveBreakpointByID (m_backstop_bkpt_id);
+            m_thread.GetProcess()->GetTarget().RemoveBreakpointByID (m_backstop_bkpt_id);
             m_backstop_bkpt_id = LLDB_INVALID_BREAK_ID;
         }
         return true;
@@ -258,7 +258,7 @@ ThreadPlanStepThrough::HitOurBackstopBreakpoint()
     if (stop_info_sp && stop_info_sp->GetStopReason() == eStopReasonBreakpoint)
     {
         break_id_t stop_value = (break_id_t) stop_info_sp->GetValue();
-        BreakpointSiteSP cur_site_sp = m_thread.GetProcess().GetBreakpointSiteList().FindByID(stop_value);
+        BreakpointSiteSP cur_site_sp = m_thread.GetProcess()->GetBreakpointSiteList().FindByID(stop_value);
         if (cur_site_sp && cur_site_sp->IsBreakpointAtThisSite(m_backstop_bkpt_id))
         {
             size_t current_stack_depth = m_thread.GetStackFrameCount();

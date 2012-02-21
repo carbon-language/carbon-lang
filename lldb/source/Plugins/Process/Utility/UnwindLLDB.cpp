@@ -42,7 +42,8 @@ UnwindLLDB::DoGetFrameCount()
         if (!AddFirstFrame ())
             return 0;
 
-        ABI *abi = m_thread.GetProcess().GetABI().get();
+        ProcessSP process_sp (m_thread.GetProcess());
+        ABI *abi = process_sp ? process_sp->GetABI().get() : NULL;
 
         while (AddOneMoreFrame (abi))
         {
@@ -186,7 +187,8 @@ UnwindLLDB::DoGetFrameInfoAtIndex (uint32_t idx, addr_t& cfa, addr_t& pc)
             return false;
     }
 
-    ABI *abi = m_thread.GetProcess().GetABI().get();
+    ProcessSP process_sp (m_thread.GetProcess());
+    ABI *abi = process_sp ? process_sp->GetABI().get() : NULL;
 
     while (idx >= m_frames.size() && AddOneMoreFrame (abi))
         ;
@@ -217,7 +219,8 @@ UnwindLLDB::DoCreateRegisterContextForFrame (StackFrame *frame)
             return reg_ctx_sp;
     }
 
-    ABI *abi = m_thread.GetProcess().GetABI().get();
+    ProcessSP process_sp (m_thread.GetProcess());
+    ABI *abi = process_sp ? process_sp->GetABI().get() : NULL;
 
     while (idx >= m_frames.size())
     {

@@ -72,6 +72,50 @@ ExecutionContext::ExecutionContext (const lldb::StackFrameSP &frame_sp) :
         SetContext (frame_sp);
 }
 
+ExecutionContext::ExecutionContext (const lldb::TargetWP &target_wp, bool get_process) :
+    m_target_sp (),
+    m_process_sp (),
+    m_thread_sp (),
+    m_frame_sp ()
+{
+    lldb::TargetSP target_sp(target_wp.lock());
+    if (target_sp)
+        SetContext (target_sp, get_process);
+}
+
+ExecutionContext::ExecutionContext (const lldb::ProcessWP &process_wp) :
+    m_target_sp (),
+    m_process_sp (),
+    m_thread_sp (),
+    m_frame_sp ()
+{
+    lldb::ProcessSP process_sp(process_wp.lock());
+    if (process_sp)
+        SetContext (process_sp);
+}
+
+ExecutionContext::ExecutionContext (const lldb::ThreadWP &thread_wp) :
+    m_target_sp (),
+    m_process_sp (),
+    m_thread_sp (),
+    m_frame_sp ()
+{
+    lldb::ThreadSP thread_sp(thread_wp.lock());
+    if (thread_sp)
+        SetContext (thread_sp);
+}
+
+ExecutionContext::ExecutionContext (const lldb::StackFrameWP &frame_wp) :
+    m_target_sp (),
+    m_process_sp (),
+    m_thread_sp (),
+    m_frame_sp ()
+{
+    lldb::StackFrameSP frame_sp(frame_wp.lock());
+    if (frame_sp)
+        SetContext (frame_sp);
+}
+
 ExecutionContext::ExecutionContext (Target* t, bool fill_current_process_thread_frame) :
     m_target_sp (t->shared_from_this()),
     m_process_sp (),
@@ -208,28 +252,36 @@ ExecutionContext::GetBestExecutionContextScope () const
 Target &
 ExecutionContext::GetTargetRef () const
 {
+#if defined (LLDB_CONFIGURATION_DEBUG) || defined (LLDB_CONFIGURATION_RELEASE)
     assert (m_target_sp.get());
+#endif
     return *m_target_sp;
 }
 
 Process &
 ExecutionContext::GetProcessRef () const
 {
+#if defined (LLDB_CONFIGURATION_DEBUG) || defined (LLDB_CONFIGURATION_RELEASE)
     assert (m_process_sp.get());
+#endif
     return *m_process_sp;
 }
 
 Thread &
 ExecutionContext::GetThreadRef () const
 {
+#if defined (LLDB_CONFIGURATION_DEBUG) || defined (LLDB_CONFIGURATION_RELEASE)
     assert (m_thread_sp.get());
+#endif
     return *m_thread_sp;
 }
 
 StackFrame &
 ExecutionContext::GetFrameRef () const
 {
+#if defined (LLDB_CONFIGURATION_DEBUG) || defined (LLDB_CONFIGURATION_RELEASE)
     assert (m_frame_sp.get());
+#endif
     return *m_frame_sp;
 }
 
@@ -324,7 +376,7 @@ ExecutionContext::SetContext (const lldb::ThreadSP &thread_sp)
     m_thread_sp = thread_sp;
     if (thread_sp)
     {
-        m_process_sp = thread_sp->GetProcess().shared_from_this();
+        m_process_sp = thread_sp->GetProcess();
         if (m_process_sp)
             m_target_sp = m_process_sp->GetTarget().shared_from_this();
         else
@@ -346,7 +398,7 @@ ExecutionContext::SetContext (const lldb::StackFrameSP &frame_sp)
         m_thread_sp = frame_sp->CalculateThread();
         if (m_thread_sp)
         {
-            m_process_sp = m_thread_sp->GetProcess().shared_from_this();
+            m_process_sp = m_thread_sp->GetProcess();
             if (m_process_sp)
                 m_target_sp = m_process_sp->GetTarget().shared_from_this();
             else
