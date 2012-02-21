@@ -33,7 +33,7 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
                                        BasicBlock::iterator IP) {
   // All new or reused instructions must strictly dominate their uses.
   // It would be nice to assert this here, but we don't always know where
-  // the next instructions will be added as the the caller can move the
+  // the next instructions will be added as the caller can move the
   // Builder's InsertPt before creating them and we might be called with
   // an invalid InsertPt.
 
