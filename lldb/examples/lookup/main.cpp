@@ -34,7 +34,7 @@ using namespace lldb;
 //
 //    $ make
 //
-// then:
+// then (for example):
 //
 //    $ DYLD_FRAMEWORK_PATH=/Volumes/data/lldb/svn/ToT/build/Debug ./a.out executable_path file_address
 //----------------------------------------------------------------------
