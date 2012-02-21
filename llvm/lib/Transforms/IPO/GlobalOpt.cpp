@@ -2388,6 +2388,8 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
     if (StoreInst *SI = dyn_cast<StoreInst>(CurInst)) {
       if (!SI->isSimple()) return false;  // no volatile/atomic accesses.
       Constant *Ptr = getVal(SI->getOperand(1));
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
+        Ptr = ConstantFoldConstantExpression(CE, TD, TLI);
       if (!isSimpleEnoughPointerToCommit(Ptr))
         // If this is too complex for us to commit, reject it.
         return false;
@@ -2423,7 +2425,9 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
               Constant * const IdxList[] = {IdxZero, IdxZero};
 
               Ptr = ConstantExpr::getGetElementPtr(Ptr, IdxList);
-            
+              if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
+                Ptr = ConstantFoldConstantExpression(CE, TD, TLI);
+
             // If we can't improve the situation by introspecting NewTy,
             // we have to give up.
             } else {
@@ -2464,7 +2468,10 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
                                        cast<GEPOperator>(GEP)->isInBounds());
     } else if (LoadInst *LI = dyn_cast<LoadInst>(CurInst)) {
       if (!LI->isSimple()) return false;  // no volatile/atomic accesses.
-      InstResult = ComputeLoadResult(getVal(LI->getOperand(0)));
+      Constant *Ptr = getVal(LI->getOperand(0));
+      if (ConstantExpr *CE = dyn_cast<ConstantExpr>(Ptr))
+        Ptr = ConstantFoldConstantExpression(CE, TD, TLI);
+      InstResult = ComputeLoadResult(Ptr);
       if (InstResult == 0) return false; // Could not evaluate load.
     } else if (AllocaInst *AI = dyn_cast<AllocaInst>(CurInst)) {
       if (AI->isArrayAllocation()) return false;  // Cannot handle array allocs.
