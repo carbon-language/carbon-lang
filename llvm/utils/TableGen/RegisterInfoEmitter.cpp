@@ -391,8 +391,8 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
        << RC.SpillAlignment/8 << ", "
        << RC.CopyCost << ", "
        << RC.Allocatable << ", "
-       << RC.getName() << ", " << RC.getOrder().size() << ", "
-       << RC.getName() << "Bits, sizeof(" << RC.getName() << "Bits) },\n";
+       << RC.getName() << ", " << RC.getName() << "Bits, "
+       << RC.getOrder().size() << ", sizeof(" << RC.getName() << "Bits) },\n";
   }
 
   OS << "};\n\n";
