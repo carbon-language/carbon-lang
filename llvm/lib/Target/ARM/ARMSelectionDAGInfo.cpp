@@ -145,8 +145,8 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
                         SDValue Src, SDValue Size,
                         unsigned Align, bool isVolatile,
                         MachinePointerInfo DstPtrInfo) const {
-  // Use default for non AAPCS subtargets
-  if (!Subtarget->isAAPCS_ABI())
+  // Use default for non AAPCS (or Darwin) subtargets
+  if (!Subtarget->isAAPCS_ABI() || Subtarget->isTargetDarwin())
     return SDValue();
 
   const ARMTargetLowering &TLI =

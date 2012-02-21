@@ -1,4 +1,5 @@
 ; RUN: llc < %s -mtriple=armv7-apple-ios -o - | FileCheck %s
+; RUN: llc < %s -mtriple=thumbv7m-darwin-eabi -o - | FileCheck %s --check-prefix=DARWIN
 ; RUN: llc < %s -mtriple=arm-none-eabi -o - | FileCheck --check-prefix=EABI %s
 
 @from = common global [500 x i32] zeroinitializer, align 4
@@ -18,6 +19,8 @@ entry:
         ; EABI memset swaps arguments
         ; CHECK: mov r1, #0
         ; CHECK: memset
+        ; DARWIN: movs r1, #0
+        ; DARWIN: memset
         ; EABI: mov r2, #0
         ; EABI: __aeabi_memset
         call void @llvm.memset.p0i8.i32(i8* bitcast ([500 x i32]* @from to i8*), i8 0, i32 500, i32 0, i1 false)

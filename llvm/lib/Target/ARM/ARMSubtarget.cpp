@@ -105,6 +105,8 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   computeIssueWidth();
 
   if (TT.find("eabi") != std::string::npos)
+    // FIXME: We might want to separate AAPCS and EABI. Some systems, e.g.
+    // Darwin-EABI conforms to AACPS but not the rest of EABI.
     TargetABI = ARM_ABI_AAPCS;
 
   if (isAAPCS_ABI())
@@ -115,8 +117,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   else {
     IsR9Reserved = ReserveR9 | !HasV6Ops;
     UseMovt = DarwinUseMOVT && hasV6T2Ops();
-    const Triple &T = getTargetTriple();
-    SupportsTailCall = !T.isOSVersionLT(5, 0);
+    SupportsTailCall = !getTargetTriple().isOSVersionLT(5, 0);
   }
 
   if (!isThumb() || hasThumb2())

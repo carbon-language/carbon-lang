@@ -599,10 +599,8 @@ void ARMAsmPrinter::EmitStartOfAsmFile(Module &M) {
   OutStreamer.EmitAssemblerFlag(MCAF_SyntaxUnified);
 
   // Emit ARM Build Attributes
-  if (Subtarget->isTargetELF()) {
-
+  if (Subtarget->isTargetELF())
     emitAttributes();
-  }
 }
 
 
