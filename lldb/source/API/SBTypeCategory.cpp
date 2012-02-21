@@ -104,6 +104,7 @@ SBTypeCategory::GetNumFilters ()
     return m_opaque_sp->GetFilterNavigator()->GetCount() + m_opaque_sp->GetRegexFilterNavigator()->GetCount();
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 uint32_t
 SBTypeCategory::GetNumSynthetics ()
 {
@@ -111,6 +112,7 @@ SBTypeCategory::GetNumSynthetics ()
         return 0;
     return m_opaque_sp->GetSyntheticNavigator()->GetCount() + m_opaque_sp->GetRegexSyntheticNavigator()->GetCount();
 }
+#endif
 
 lldb::SBTypeNameSpecifier
 SBTypeCategory::GetTypeNameSpecifierForFilterAtIndex (uint32_t index)
@@ -136,6 +138,7 @@ SBTypeCategory::GetTypeNameSpecifierForSummaryAtIndex (uint32_t index)
     return SBTypeNameSpecifier(m_opaque_sp->GetTypeNameSpecifierForSummaryAtIndex(index));
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 lldb::SBTypeNameSpecifier
 SBTypeCategory::GetTypeNameSpecifierForSyntheticAtIndex (uint32_t index)
 {
@@ -143,6 +146,7 @@ SBTypeCategory::GetTypeNameSpecifierForSyntheticAtIndex (uint32_t index)
         return SBTypeNameSpecifier();
     return SBTypeNameSpecifier(m_opaque_sp->GetTypeNameSpecifierForSyntheticAtIndex(index));
 }
+#endif
 
 SBTypeFilter
 SBTypeCategory::GetFilterForType (SBTypeNameSpecifier spec)
@@ -183,6 +187,7 @@ SBTypeCategory::GetFormatForType (SBTypeNameSpecifier spec)
     return SBTypeFormat(DataVisualization::ValueFormats::GetFormat(ConstString(spec.GetName())));
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 SBTypeSummary
 SBTypeCategory::GetSummaryForType (SBTypeNameSpecifier spec)
 {
@@ -204,7 +209,9 @@ SBTypeCategory::GetSummaryForType (SBTypeNameSpecifier spec)
     
     return lldb::SBTypeSummary(summary_sp);
 }
+#endif // LLDB_DISABLE_PYTHON
 
+#ifndef LLDB_DISABLE_PYTHON
 SBTypeSynthetic
 SBTypeCategory::GetSyntheticForType (SBTypeNameSpecifier spec)
 {
@@ -228,7 +235,9 @@ SBTypeCategory::GetSyntheticForType (SBTypeNameSpecifier spec)
     
     return lldb::SBTypeSynthetic(synth_sp);
 }
+#endif
 
+#ifndef LLDB_DISABLE_PYTHON
 SBTypeFilter
 SBTypeCategory::GetFilterAtIndex (uint32_t index)
 {
@@ -243,6 +252,7 @@ SBTypeCategory::GetFilterAtIndex (uint32_t index)
     
     return lldb::SBTypeFilter(filter_sp);
 }
+#endif
 
 SBTypeFormat
 SBTypeCategory::GetFormatAtIndex (uint32_t index)
@@ -252,6 +262,7 @@ SBTypeCategory::GetFormatAtIndex (uint32_t index)
     return SBTypeFormat(DataVisualization::ValueFormats::GetFormatAtIndex((index)));
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 SBTypeSummary
 SBTypeCategory::GetSummaryAtIndex (uint32_t index)
 {
@@ -259,7 +270,9 @@ SBTypeCategory::GetSummaryAtIndex (uint32_t index)
         return SBTypeSummary();
     return SBTypeSummary(m_opaque_sp->GetSummaryAtIndex((index)));
 }
+#endif
 
+#ifndef LLDB_DISABLE_PYTHON
 SBTypeSynthetic
 SBTypeCategory::GetSyntheticAtIndex (uint32_t index)
 {
@@ -274,6 +287,7 @@ SBTypeCategory::GetSyntheticAtIndex (uint32_t index)
     
     return lldb::SBTypeSynthetic(synth_sp);
 }
+#endif
 
 bool
 SBTypeCategory::AddTypeFormat (SBTypeNameSpecifier type_name,
@@ -311,6 +325,7 @@ SBTypeCategory::DeleteTypeFormat (SBTypeNameSpecifier type_name)
     return DataVisualization::ValueFormats::Delete(ConstString(type_name.GetName()));
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 bool
 SBTypeCategory::AddTypeSummary (SBTypeNameSpecifier type_name,
                                 SBTypeSummary summary)
@@ -365,6 +380,7 @@ SBTypeCategory::AddTypeSummary (SBTypeNameSpecifier type_name,
     
     return true;
 }
+#endif
 
 bool
 SBTypeCategory::DeleteTypeSummary (SBTypeNameSpecifier type_name)
@@ -417,6 +433,7 @@ SBTypeCategory::DeleteTypeFilter (SBTypeNameSpecifier type_name)
         return m_opaque_sp->GetFilterNavigator()->Delete(ConstString(type_name.GetName()));
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 bool
 SBTypeCategory::AddTypeSynthetic (SBTypeNameSpecifier type_name,
                                   SBTypeSynthetic synth)
@@ -486,6 +503,7 @@ SBTypeCategory::DeleteTypeSynthetic (SBTypeNameSpecifier type_name)
     else
         return m_opaque_sp->GetSyntheticNavigator()->Delete(ConstString(type_name.GetName()));
 }
+#endif // LLDB_DISABLE_PYTHON
 
 bool
 SBTypeCategory::GetDescription (lldb::SBStream &description, 

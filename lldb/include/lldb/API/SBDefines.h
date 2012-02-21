@@ -64,7 +64,9 @@ class SBTypeFilter;
 class SBTypeFormat;
 class SBTypeNameSpecifier;
 class SBTypeSummary;
+#ifndef LLDB_DISABLE_PYTHON
 class SBTypeSynthetic;    
+#endif
 class SBTypeList;
 class SBValue;
 class SBValueList;

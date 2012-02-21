@@ -33,6 +33,15 @@ else
     Debug=0
 fi
 
+# If this project is being built with LLDB_DISABLE_PYTHON defined,
+# don't bother generating Python swig bindings -- we don't have
+# Python available.
+
+if echo $GCC_PREPROCESSOR_DEFINITIONS | grep LLDB_DISABLE_PYTHON
+then
+  echo "" > "${swig_output_file}"
+  exit 0
+fi
 
 HEADER_FILES="${SRC_ROOT}/include/lldb/lldb.h"\
 " ${SRC_ROOT}/include/lldb/lldb-defines.h"\

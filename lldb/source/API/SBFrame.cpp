@@ -979,7 +979,8 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
         expr_result.SetSP(expr_value_sp);
         Host::SetCrashDescription (NULL);
     }
-    
+
+#ifndef LLDB_DISABLE_PYTHON
     if (expr_log)
         expr_log->Printf("** [SBFrame::EvaluateExpression] Expression result is %s, summary %s **", 
                          expr_result.GetValue(), 
@@ -991,6 +992,7 @@ SBFrame::EvaluateExpression (const char *expr, lldb::DynamicValueType fetch_dyna
                      expr, 
                      expr_value_sp.get(),
                      exe_results);
+#endif
 
     return expr_result;
 }

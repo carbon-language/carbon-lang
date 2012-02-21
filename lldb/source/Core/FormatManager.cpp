@@ -589,7 +589,9 @@ FormatManager::FormatManager() :
     
     LoadSystemFormatters();
     LoadSTLFormatters();
+#ifndef LLDB_DISABLE_PYTHON
     LoadObjCFormatters();
+#endif
     
     EnableCategory(m_objc_category_name,CategoryMap::Last);
     //EnableCategory(m_corefoundation_category_name,CategoryMap::Last);
@@ -684,6 +686,7 @@ AddSummary(TypeCategoryImpl::SharedPointer category_sp,
                                             summary_sp);
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 void
 FormatManager::LoadObjCFormatters()
 {
@@ -850,3 +853,4 @@ FormatManager::LoadObjCFormatters()
                ConstString("vBool32"),
                vector_flags);
 }
+#endif // LLDB_DISABLE_PYTHON

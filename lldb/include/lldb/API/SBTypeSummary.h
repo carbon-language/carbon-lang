@@ -12,6 +12,8 @@
 
 #include "lldb/API/SBDefines.h"
 
+#ifndef LLDB_DISABLE_PYTHON
+
 namespace lldb {
     
     class SBTypeSummary
@@ -107,5 +109,7 @@ namespace lldb {
     
     
 } // namespace lldb
+
+#endif // LLDB_DISABLE_PYTHON
 
 #endif // LLDB_SBTypeSummary_h_

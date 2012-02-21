@@ -1135,6 +1135,7 @@ SBDebugger::GetFormatForType (SBTypeNameSpecifier type_name)
     return SBTypeFormat();
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 SBTypeSummary
 SBDebugger::GetSummaryForType (SBTypeNameSpecifier type_name)
 {
@@ -1158,6 +1159,7 @@ SBDebugger::GetSummaryForType (SBTypeNameSpecifier type_name)
     }
     return summary_chosen;
 }
+#endif // LLDB_DISABLE_PYTHON
 
 SBTypeFilter
 SBDebugger::GetFilterForType (SBTypeNameSpecifier type_name)
@@ -1183,6 +1185,7 @@ SBDebugger::GetFilterForType (SBTypeNameSpecifier type_name)
     return filter_chosen;
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 SBTypeSynthetic
 SBDebugger::GetSyntheticForType (SBTypeNameSpecifier type_name)
 {
@@ -1206,6 +1209,7 @@ SBDebugger::GetSyntheticForType (SBTypeNameSpecifier type_name)
     }
     return synth_chosen;
 }
+#endif // LLDB_DISABLE_PYTHON
 
 bool
 SBDebugger::EnableLog (const char *channel, const char **categories)

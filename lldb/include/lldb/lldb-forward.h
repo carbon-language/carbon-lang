@@ -291,7 +291,9 @@ namespace lldb {
     typedef std::tr1::shared_ptr<lldb_private::SyntheticChildren> SyntheticChildrenSP;
     typedef std::tr1::shared_ptr<lldb_private::SyntheticChildrenFrontEnd> SyntheticChildrenFrontEndSP;
     typedef std::tr1::shared_ptr<lldb_private::TypeFilterImpl> TypeFilterImplSP;
+#ifndef LLDB_DISABLE_PYTHON
     typedef std::tr1::shared_ptr<lldb_private::TypeSyntheticImpl> TypeSyntheticImplSP;
+#endif
     typedef std::tr1::shared_ptr<lldb_private::Target> TargetSP;
     typedef std::tr1::weak_ptr<lldb_private::Target> TargetWP;
     typedef std::tr1::shared_ptr<lldb_private::Thread> ThreadSP;

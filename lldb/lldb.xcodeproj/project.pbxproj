@@ -3133,7 +3133,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/Developer/usr/bin\"\n\nif [ ! -d \"${xcode_dir}\" ]; then\n    mkdir -p \"${xcode_dir}\"\nfi\n\nditto \"$TARGET_BUILD_DIR/$EXECUTABLE_PATH\" \"${xcode_dir}\"\nstrip -S \"${xcode_dir}/${EXECUTABLE_PATH}\"";
+			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/Developer/usr/bin\"; if echo \"$SDKROOT\" | grep -vi iphoneos >/dev/null; then [ ! -d \"${xcode_dir}\" ] && mkdir -p \"${xcode_dir}\"; ditto \"$TARGET_BUILD_DIR/$EXECUTABLE_PATH\" \"${xcode_dir}\"; strip -S \"${xcode_dir}/${EXECUTABLE_PATH}\"; fi";
 		};
 		2613F2F2146880EE00BFE551 /* Copy to Xcode.app */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -3147,7 +3147,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = "/bin/sh -x";
-			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/SharedFrameworks\"\n\nif [ ! -d \"${xcode_dir}\" ]; then\n    mkdir -p \"${xcode_dir}\"\nfi\n\nditto \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\" \"${xcode_dir}/${WRAPPER_NAME}\"\nstrip -S \"${xcode_dir}/${EXECUTABLE_PATH}\"";
+			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/SharedFrameworks\"; if echo \"$SDKROOT\" | grep -vi iphoneos >/dev/null; then [ ! -d \"${xcode_dir}\" ] && mkdir -p \"${xcode_dir}\"; ditto \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\" \"${xcode_dir}/${WRAPPER_NAME}\"; strip -S \"${xcode_dir}/${EXECUTABLE_PATH}\"; fi";
 		};
 		261B5A7511C3FA6F00AABD0A /* Fixup Framework Headers */ = {
 			isa = PBXShellScriptBuildPhase;

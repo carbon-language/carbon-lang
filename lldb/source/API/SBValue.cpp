@@ -310,6 +310,7 @@ SBValue::GetValueDidChange ()
     return result;
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 const char *
 SBValue::GetSummary ()
 {
@@ -334,6 +335,7 @@ SBValue::GetSummary ()
     }
     return cstr;
 }
+#endif // LLDB_DISABLE_PYTHON
 
 const char *
 SBValue::GetLocation ()
@@ -399,6 +401,7 @@ SBValue::GetTypeFormat ()
     return format;
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 lldb::SBTypeSummary
 SBValue::GetTypeSummary ()
 {
@@ -420,6 +423,7 @@ SBValue::GetTypeSummary ()
     }
     return summary;
 }
+#endif // LLDB_DISABLE_PYTHON
 
 lldb::SBTypeFilter
 SBValue::GetTypeFilter ()
@@ -447,6 +451,7 @@ SBValue::GetTypeFilter ()
     return filter;
 }
 
+#ifndef LLDB_DISABLE_PYTHON
 lldb::SBTypeSynthetic
 SBValue::GetTypeSynthetic ()
 {
@@ -472,6 +477,7 @@ SBValue::GetTypeSynthetic ()
     }
     return synthetic;
 }
+#endif
 
 lldb::SBValue
 SBValue::CreateChildAtOffset (const char *name, uint32_t offset, SBType type)

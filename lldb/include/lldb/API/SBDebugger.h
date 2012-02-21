@@ -268,14 +268,18 @@ public:
     SBTypeFormat
     GetFormatForType (SBTypeNameSpecifier);
 
+#ifndef LLDB_DISABLE_PYTHON
     SBTypeSummary
     GetSummaryForType (SBTypeNameSpecifier);
+#endif
 
     SBTypeFilter
     GetFilterForType (SBTypeNameSpecifier);
 
+#ifndef LLDB_DISABLE_PYTHON
     SBTypeSynthetic
     GetSyntheticForType (SBTypeNameSpecifier);
+#endif
 
 private:
 

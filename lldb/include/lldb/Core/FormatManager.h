@@ -692,9 +692,10 @@ private:
     void
     LoadSystemFormatters();
     
+#ifndef LLDB_DISABLE_PYTHON
     void
     LoadObjCFormatters();
-    
+#endif
 };
     
 } // namespace lldb_private

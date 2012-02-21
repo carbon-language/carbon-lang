@@ -16,6 +16,8 @@
 using namespace lldb;
 using namespace lldb_private;
 
+#ifndef LLDB_DISABLE_PYTHON
+
 SBTypeSummary::SBTypeSummary() :
 m_opaque_sp()
 {
@@ -296,3 +298,5 @@ SBTypeSummary::ChangeSummaryType (bool want_script)
     
     return true;
 }
+
+#endif // LLDB_DISABLE_PYTHON
