@@ -503,8 +503,9 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
     V = InsertNoopCastOfTo(V,
        Type::getInt8PtrTy(Ty->getContext(), PTy->getAddressSpace()));
 
-    Instruction *Inst = dyn_cast<Instruction>(V);
-    assert(!Inst || SE.DT->properlyDominates(Inst, Builder.GetInsertPoint()));
+    assert(!dyn_cast<Instruction>(V) ||
+           SE.DT->properlyDominates(dyn_cast<Instruction>(V),
+                                    Builder.GetInsertPoint()));
 
     // Expand the operands for a plain byte offset.
     Value *Idx = expandCodeFor(SE.getAddExpr(Ops), Ty);
