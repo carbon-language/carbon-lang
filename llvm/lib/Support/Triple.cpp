@@ -335,10 +335,7 @@ Triple::Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr,
 std::string Triple::normalize(StringRef Str) {
   // Parse into components.
   SmallVector<StringRef, 4> Components;
-  for (size_t First = 0, Last = 0; Last != StringRef::npos; First = Last + 1) {
-    Last = Str.find('-', First);
-    Components.push_back(Str.slice(First, Last));
-  }
+  Str.split(Components, "-");
 
   // If the first component corresponds to a known architecture, preferentially
   // use it for the architecture.  If the second component corresponds to a
