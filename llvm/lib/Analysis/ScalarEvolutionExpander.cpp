@@ -31,13 +31,11 @@ using namespace llvm;
 Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
                                        Instruction::CastOps Op,
                                        BasicBlock::iterator IP) {
-  // All new or reused instructions must strictly dominate the Builder's
-  // InsertPt to ensure that the expression's expansion dominates its uses.
-  // Assert that the requested insertion point works at least for new
-  // instructions.
-
-  // FIXME: disabled to make the bots happy.
-  //assert(SE.DT->dominates(IP, Builder.GetInsertPoint()));
+  // All new or reused instructions must strictly dominate their uses.
+  // It would be nice to assert this here, but we don't always know where
+  // the next instructions will be added as the the caller can move the
+  // Builder's InsertPt before creating them and we might be called with
+  // an invalid InsertPt.
 
   // Check to see if there is already a cast!
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
@@ -47,8 +45,7 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
       if (CastInst *CI = dyn_cast<CastInst>(U))
         if (CI->getOpcode() == Op) {
           // If the cast isn't where we want it, fix it.
-          if (BasicBlock::iterator(CI) != IP
-              || IP == Builder.GetInsertPoint()) {
+          if (BasicBlock::iterator(CI) != IP) {
             // Create a new cast, and leave the old cast in place in case
             // it is being used as an insert point. Clear its operand
             // so that it doesn't hold anything live.
@@ -505,6 +502,9 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
     // Cast the base to i8*.
     V = InsertNoopCastOfTo(V,
        Type::getInt8PtrTy(Ty->getContext(), PTy->getAddressSpace()));
+
+    Instruction *Inst = dyn_cast<Instruction>(V);
+    assert(!Inst || SE.DT->properlyDominates(Inst, Builder.GetInsertPoint()));
 
     // Expand the operands for a plain byte offset.
     Value *Idx = expandCodeFor(SE.getAddExpr(Ops), Ty);
