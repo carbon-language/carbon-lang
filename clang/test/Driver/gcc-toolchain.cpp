@@ -14,10 +14,10 @@
 // CHECK: "[[TOOLCHAIN]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../../../include/c++/4.5/backward"
 // CHECK: "-internal-isystem" "/usr/local/include"
 //
-// Test for linker toolchain detection. Note that we use a separate variable
-// because the '/'s may be different in the linker invocation than in the
-// header search.
+// Test for linker toolchain detection. Note that only the '-L' flags will use
+// the same precise formatting of the path as the '-internal-system' flags
+// above, so we just blanket wildcard match the 'crtbegin.o'.
 // CHECK: "{{[^"]*}}ld{{(.exe)?}}"
-// CHECK: "[[TOOLCHAIN2:[^"]*]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/crtbegin.o"
-// CHECK: "-L[[TOOLCHAIN2]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5"
-// CHECK: "-L[[TOOLCHAIN2]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../.."
+// CHECK: "{{[^"]*}}/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/crtbegin.o"
+// CHECK: "-L[[TOOLCHAIN]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5"
+// CHECK: "-L[[TOOLCHAIN]]/usr/lib/i386-linux-gnu/gcc/i686-linux-gnu/4.5/../../../.."
