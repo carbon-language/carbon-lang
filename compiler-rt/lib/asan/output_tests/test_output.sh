@@ -8,7 +8,7 @@ CC=$2
 FILE_CHECK=$3
 CXXFLAGS="-mno-omit-leaf-frame-pointer -fno-omit-frame-pointer -fno-optimize-sibling-calls"
 SYMBOLIZER=../scripts/asan_symbolize.py
-TMP_ASAN_REPORT=/tmp/asan_report
+TMP_ASAN_REPORT=asan_report.tmp
 
 run_program() {
   ./$1 2>&1 | $SYMBOLIZER 2> /dev/null | c++filt > $TMP_ASAN_REPORT
@@ -18,6 +18,7 @@ run_program() {
 check_program() {
   run_program $1
   $FILE_CHECK $2 --check-prefix=$3 < $TMP_ASAN_REPORT
+  rm -f $TMP_ASAN_REPORT
 }
 
 C_TEST=use-after-free
@@ -63,6 +64,7 @@ for t in  *.cc; do
         $FILE_CHECK $c.cc --check-prefix="Check-$OS" < $TMP_ASAN_REPORT
       fi
       rm ./$exe
+      rm ./$TMP_ASAN_REPORT
       [ -e "$so" ] && rm ./$so
     done
   done
