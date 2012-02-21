@@ -1053,7 +1053,7 @@ public:
   // Update intervals for all operands of MI from OldIdx to NewIdx.
   // This assumes that MI used to be at OldIdx, and now resides at
   // NewIdx.
-  void moveAllOperandsFrom(MachineInstr* MI, SlotIndex OldIdx) {
+  void moveAllRangesFrom(MachineInstr* MI, SlotIndex OldIdx) {
     assert(NewIdx != OldIdx && "No-op move? That's a bit strange.");
 
     // Collect the operands.
@@ -1078,7 +1078,9 @@ public:
 
   }
 
-  void moveAllOperandsInto(MachineInstr* MI, MachineInstr* BundleStart) {
+  // Update intervals for all operands of MI to refer to BundleStart's
+  // SlotIndex.
+  void moveAllRangesInto(MachineInstr* MI, MachineInstr* BundleStart) {
     if (MI == BundleStart)
       return; // Bundling instr with itself - nothing to do.
 
@@ -1086,15 +1088,32 @@ public:
     assert(LIS.getSlotIndexes()->getInstructionFromIndex(OldIdx) == MI &&
            "SlotIndex <-> Instruction mapping broken for MI");
 
-    BundleRanges BR = createBundleRanges(BundleStart);
-
+    // Collect all ranges already in the bundle.
+    MachineBasicBlock::instr_iterator BII(BundleStart);
     RangeSet Entering, Internal, Exiting;
     bool hasRegMaskOp = false;
+    collectRanges(BII, Entering, Internal, Exiting, hasRegMaskOp, NewIdx);
+    assert(!hasRegMaskOp && "Can't have RegMask operand in bundle.");
+    for (++BII; &*BII == MI || BII->isInsideBundle(); ++BII) {
+      if (&*BII == MI)
+        continue;
+      collectRanges(BII, Entering, Internal, Exiting, hasRegMaskOp, NewIdx);
+      assert(!hasRegMaskOp && "Can't have RegMask operand in bundle.");
+    }
+
+    BundleRanges BR = createBundleRanges(Entering, Internal, Exiting);
+
     collectRanges(MI, Entering, Internal, Exiting, hasRegMaskOp, OldIdx);
+    assert(!hasRegMaskOp && "Can't have RegMask operand in bundle.");
+
+    DEBUG(dbgs() << "Entering: " << Entering.size() << "\n");
+    DEBUG(dbgs() << "Internal: " << Internal.size() << "\n");
+    DEBUG(dbgs() << "Exiting: " << Exiting.size() << "\n");
 
     moveAllEnteringFromInto(OldIdx, Entering, BR);
     moveAllInternalFromInto(OldIdx, Internal, BR);
     moveAllExitingFromInto(OldIdx, Exiting, BR);
+
 
 #ifndef NDEBUG
     LIValidator validator;
@@ -1192,16 +1211,46 @@ private:
     }
   }
 
-  BundleRanges createBundleRanges(MachineInstr* BundleMI) {
-    BundleRanges BR;
+  // Collect IntRangePairs for all operands of MI that may need fixing.
+  void collectRangesInBundle(MachineInstr* MI, RangeSet& Entering,
+                             RangeSet& Exiting, SlotIndex MIStartIdx,
+                             SlotIndex MIEndIdx) {
+    for (MachineInstr::mop_iterator MOI = MI->operands_begin(),
+                                    MOE = MI->operands_end();
+         MOI != MOE; ++MOI) {
+      const MachineOperand& MO = *MOI;
+      assert(!MO.isRegMask() && "Can't have RegMasks in bundles.");
+      if (!MO.isReg() || MO.getReg() == 0)
+        continue;
 
-    MachineBasicBlock::instr_iterator BII(BundleMI);
-    RangeSet Entering, Internal, Exiting;
-    bool hasRegMaskOp = false;
-    collectRanges(BII, Entering, Internal, Exiting, hasRegMaskOp, NewIdx);
-    for (++BII; BII->isInsideBundle(); ++BII) {
-      collectRanges(BII, Entering, Internal, Exiting, hasRegMaskOp, NewIdx);
+      unsigned Reg = MO.getReg();
+
+      // TODO: Currently we're skipping uses that are reserved or have no
+      // interval, but we're not updating their kills. This should be
+      // fixed.
+      if (!LIS.hasInterval(Reg) ||
+          (TargetRegisterInfo::isPhysicalRegister(Reg) && LIS.isReserved(Reg)))
+        continue;
+
+      LiveInterval* LI = &LIS.getInterval(Reg);
+
+      if (MO.readsReg()) {
+        LiveRange* LR = LI->getLiveRangeContaining(MIStartIdx);
+        if (LR != 0)
+          Entering.insert(std::make_pair(LI, LR));
+      }
+      if (MO.isDef()) {
+        assert(!MO.isEarlyClobber() && "Early clobbers not allowed in bundles.");
+        assert(!MO.isDead() && "Dead-defs not allowed in bundles.");
+        LiveRange* LR = LI->getLiveRangeContaining(MIEndIdx.getDeadSlot());
+        assert(LR != 0 && "Internal ranges not allowed in bundles.");
+        Exiting.insert(std::make_pair(LI, LR));
+      }
     }
+  }
+
+  BundleRanges createBundleRanges(RangeSet& Entering, RangeSet& Internal, RangeSet& Exiting) {
+    BundleRanges BR;
 
     for (RangeSet::iterator EI = Entering.begin(), EE = Entering.end();
          EI != EE; ++EI) {
@@ -1481,5 +1530,11 @@ void LiveIntervals::handleMove(MachineInstr* MI) {
   assert(!MI->isBundled() && "Can't handle bundled instructions yet.");
 
   HMEditor HME(*this, *mri_, *tri_, NewIndex);
-  HME.moveAllOperandsFrom(MI, OldIndex);
+  HME.moveAllRangesFrom(MI, OldIndex);
+}
+
+void LiveIntervals::handleMoveIntoBundle(MachineInstr* MI, MachineInstr* BundleStart) {
+  SlotIndex NewIndex = indexes_->getInstructionIndex(BundleStart);
+  HMEditor HME(*this, *mri_, *tri_, NewIndex);
+  HME.moveAllRangesInto(MI, BundleStart);
 }

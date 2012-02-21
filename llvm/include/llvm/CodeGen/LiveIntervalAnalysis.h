@@ -284,7 +284,15 @@ namespace llvm {
     /// instruction 'mi' has been moved within a basic block. This will update
     /// the live intervals for all operands of mi. Moves between basic blocks
     /// are not supported.
-    void handleMove(MachineInstr* mi);
+    void handleMove(MachineInstr* MI);
+
+    /// moveIntoBundle - Update intervals for operands of MI so that they
+    /// begin/end on the SlotIndex for BundleStart.
+    ///
+    /// Requires MI and BundleStart to have SlotIndexes, and assumes
+    /// existing liveness is accurate. BundleStart should be the first
+    /// instruction in the Bundle.
+    void handleMoveIntoBundle(MachineInstr* MI, MachineInstr* BundleStart);
 
     // Register mask functions.
     //
