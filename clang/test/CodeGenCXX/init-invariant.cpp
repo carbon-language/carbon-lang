@@ -42,19 +42,19 @@ void e() {
 }
 
 // CHECK: call void @_ZN1AC1Ev({{.*}}* @a)
-// CHECK: call {{.*}}@llvm.invariant.start(i64 -1, i8* bitcast ({{.*}} @a to i8*))
+// CHECK: call {{.*}}@llvm.invariant.start(i64 4, i8* bitcast ({{.*}} @a to i8*))
 
 // CHECK: call void @_ZN1BC1Ev({{.*}}* @b)
-// CHECK-NOT: call {{.*}}@llvm.invariant.start(i64 -1, i8* bitcast ({{.*}} @b to i8*))
+// CHECK-NOT: call {{.*}}@llvm.invariant.start(i64 4, i8* bitcast ({{.*}} @b to i8*))
 
 // CHECK: call void @_ZN1CC1Ev({{.*}}* @c)
-// CHECK-NOT: call {{.*}}@llvm.invariant.start(i64 -1, i8* bitcast ({{.*}} @c to i8*))
+// CHECK-NOT: call {{.*}}@llvm.invariant.start(i64 4, i8* bitcast ({{.*}} @c to i8*))
 
 // CHECK: call i32 @_Z1fv(
 // CHECK: store {{.*}}, i32* @d
-// CHECK: call {{.*}}@llvm.invariant.start(i64 -1, i8* bitcast ({{.*}} @d to i8*))
+// CHECK: call {{.*}}@llvm.invariant.start(i64 4, i8* bitcast ({{.*}} @d to i8*))
 
 // CHECK: define void @_Z1ev(
 // CHECK: call void @_ZN1AC1Ev(%struct.A* @_ZZ1evE1a)
-// CHECK: call {{.*}}@llvm.invariant.start(i64 -1, i8* bitcast ({{.*}} @_ZZ1evE1a to i8*))
+// CHECK: call {{.*}}@llvm.invariant.start(i64 4, i8* bitcast ({{.*}} @_ZZ1evE1a to i8*))
 // CHECK-NOT: llvm.invariant.end

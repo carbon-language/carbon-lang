@@ -103,7 +103,8 @@ static void EmitDeclDestroy(CodeGenFunction &CGF, const VarDecl &D,
 
 /// Emit code to cause the variable at the given address to be considered as
 /// constant from this point onwards.
-static void EmitDeclInvariant(CodeGenFunction &CGF, llvm::Constant *Addr) {
+static void EmitDeclInvariant(CodeGenFunction &CGF, const VarDecl &D,
+                              llvm::Constant *Addr) {
   // Don't emit the intrinsic if we're not optimizing.
   if (!CGF.CGM.getCodeGenOpts().OptimizationLevel)
     return;
@@ -112,8 +113,10 @@ static void EmitDeclInvariant(CodeGenFunction &CGF, llvm::Constant *Addr) {
   llvm::Intrinsic::ID InvStartID = llvm::Intrinsic::invariant_start;
   llvm::Constant *InvariantStart = CGF.CGM.getIntrinsic(InvStartID);
 
-  // Emit a call, with size -1 signifying the whole object.
-  llvm::Value *Args[2] = { llvm::ConstantInt::getSigned(CGF.Int64Ty, -1),
+  // Emit a call with the size in bytes of the object.
+  CharUnits WidthChars = CGF.getContext().getTypeSizeInChars(D.getType());
+  uint64_t Width = WidthChars.getQuantity();
+  llvm::Value *Args[2] = { llvm::ConstantInt::getSigned(CGF.Int64Ty, Width),
                            llvm::ConstantExpr::getBitCast(Addr, CGF.Int8PtrTy)};
   CGF.Builder.CreateCall(InvariantStart, Args);
 }
@@ -129,7 +132,7 @@ void CodeGenFunction::EmitCXXGlobalVarDeclInit(const VarDecl &D,
     if (PerformInit)
       EmitDeclInit(*this, D, DeclPtr);
     if (CGM.isTypeConstant(D.getType(), true))
-      EmitDeclInvariant(*this, DeclPtr);
+      EmitDeclInvariant(*this, D, DeclPtr);
     else
       EmitDeclDestroy(*this, D, DeclPtr);
     return;
