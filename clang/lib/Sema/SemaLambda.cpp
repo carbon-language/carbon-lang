@@ -641,20 +641,28 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
   if (!ManglingNumber) {
     ContextDecl = ExprEvalContexts.back().LambdaContextDecl;
     
-    // FIXME: Data member initializers.
     enum ContextKind {
       Normal,
-      DefaultArgument
+      DefaultArgument,
+      DataMember
     } Kind = Normal;
 
     // Default arguments of member function parameters that appear in a class
-    // definition receive special treatment. Identify them.
-    if (ParmVarDecl *Param = dyn_cast_or_null<ParmVarDecl>(ContextDecl)) {
-      if (const DeclContext *LexicalDC
-            = Param->getDeclContext()->getLexicalParent())
-        if (LexicalDC->isRecord())
-          Kind = DefaultArgument;
-    }
+    // definition, as well as the initializers of data members, receive special
+    // treatment. Identify them.
+    if (ContextDecl) {
+      if (ParmVarDecl *Param = dyn_cast<ParmVarDecl>(ContextDecl)) {
+        if (const DeclContext *LexicalDC
+              = Param->getDeclContext()->getLexicalParent())
+          if (LexicalDC->isRecord())
+            Kind = DefaultArgument;
+      } else if (VarDecl *Var = dyn_cast<VarDecl>(ContextDecl)) {
+        if (Var->getDeclContext()->isRecord())
+          Kind = DataMember;
+      } else if (isa<FieldDecl>(ContextDecl)) {
+        Kind = DataMember;
+      }
+    }        
     
     switch (Kind) {
     case Normal:
@@ -663,6 +671,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
       break;
       
     case DefaultArgument:
+    case DataMember:
       ManglingNumber = ExprEvalContexts.back().getLambdaMangleContext()
                          .getManglingNumber(CallOperator);
       break;

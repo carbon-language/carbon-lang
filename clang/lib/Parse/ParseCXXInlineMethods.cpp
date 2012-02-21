@@ -478,7 +478,8 @@ void Parser::ParseLexedMemberInitializer(LateParsedMemberInitializer &MI) {
   ConsumeAnyToken();
 
   SourceLocation EqualLoc;
-  ExprResult Init = ParseCXXMemberInitializer(/*IsFunction=*/false, EqualLoc);
+  ExprResult Init = ParseCXXMemberInitializer(MI.Field, /*IsFunction=*/false, 
+                                              EqualLoc);
 
   Actions.ActOnCXXInClassMemberInitializer(MI.Field, EqualLoc, Init.release());
 

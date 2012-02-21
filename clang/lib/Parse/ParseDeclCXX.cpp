@@ -2000,7 +2000,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     } else if (HasInitializer) {
       // Normal initializer.
       if (!Init.isUsable())
-        Init = ParseCXXMemberInitializer(
+        Init = ParseCXXMemberInitializer(ThisDecl,
                  DeclaratorInfo.isDeclarationOfFunction(), EqualLoc);
       
       if (Init.isInvalid())
@@ -2096,11 +2096,14 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 ///
 /// Prior to C++0x, the assignment-expression in an initializer-clause must
 /// be a constant-expression.
-ExprResult Parser::ParseCXXMemberInitializer(bool IsFunction,
+ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
                                              SourceLocation &EqualLoc) {
   assert((Tok.is(tok::equal) || Tok.is(tok::l_brace))
          && "Data member initializer not starting with '=' or '{'");
 
+  EnterExpressionEvaluationContext Context(Actions, 
+                                           Sema::PotentiallyEvaluated,
+                                           D);
   if (Tok.is(tok::equal)) {
     EqualLoc = ConsumeToken();
     if (Tok.is(tok::kw_delete)) {

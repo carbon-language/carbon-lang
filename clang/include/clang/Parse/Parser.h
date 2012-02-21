@@ -2063,7 +2063,7 @@ private:
                            bool SuppressDeclarations = false);
   void ParseCXXMemberSpecification(SourceLocation StartLoc, unsigned TagType,
                                    Decl *TagDecl);
-  ExprResult ParseCXXMemberInitializer(bool IsFunction,
+  ExprResult ParseCXXMemberInitializer(Decl *D, bool IsFunction,
                                        SourceLocation &EqualLoc);
   void ParseCXXClassMemberDeclaration(AccessSpecifier AS, AttributeList *Attr,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),

@@ -75,3 +75,50 @@ void test_ST(ST<double> st) {
 
   // CHECK-NEXT: ret void
 }
+
+template<typename T> 
+struct StaticMembers {
+  static T x;
+  static T y;
+  static T z;
+};
+
+template<typename T> int accept_lambda(T);
+
+template<typename T>
+T StaticMembers<T>::x = []{return 1;}() + []{return 2;}();
+
+template<typename T>
+T StaticMembers<T>::y = []{return 3;}();
+
+template<typename T>
+T StaticMembers<T>::z = accept_lambda([]{return 4;});
+
+// CHECK: define internal void @__cxx_global_var_init()
+// CHECK: call i32 @_ZNK13StaticMembersIfE1xMUlvE_clEv
+// CHECK-NEXT: call i32 @_ZNK13StaticMembersIfE1xMUlvE0_clEv
+// CHECK-NEXT: add nsw
+template float StaticMembers<float>::x;
+
+// CHECK: define internal void @__cxx_global_var_init1()
+// CHECK: call i32 @_ZNK13StaticMembersIfE1yMUlvE_clEv
+template float StaticMembers<float>::y;
+
+// CHECK: define internal void @__cxx_global_var_init2()
+// CHECK: call i32 @_Z13accept_lambdaIN13StaticMembersIfE1zMUlvE_EEiT_
+template float StaticMembers<float>::z;
+
+struct Members {
+  int x = [] { return 1; }() + [] { return 2; }();
+  int y = [] { return 3; }();
+};
+
+void test_Members() {
+  // CHECK: define linkonce_odr void @_ZN7MembersC2Ev
+  // CHECK: call i32 @_ZNK7Members1xMUlvE_clEv
+  // CHECK-NEXT: call i32 @_ZNK7Members1xMUlvE0_clE
+  // CHECK-NEXT: add nsw i32
+  // CHECK: call i32 @_ZNK7Members1yMUlvE_clEv
+  Members members;
+  // CHECK: ret void
+}

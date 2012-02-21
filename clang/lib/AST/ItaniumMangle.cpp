@@ -1313,9 +1313,26 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
 }
 
 void CXXNameMangler::mangleLambda(const CXXRecordDecl *Lambda) {
-  // FIXME: Figure out if we're in a function body, default argument,
-  // or initializer for a class member.
-  
+  // If the context of a closure type is an initializer for a class member 
+  // (static or nonstatic), it is encoded in a qualified name with a final 
+  // <prefix> of the form:
+  //
+  //   <data-member-prefix> := <member source-name> M
+  //
+  // Technically, the data-member-prefix is part of the <prefix>. However,
+  // since a closure type will always be mangled with a prefix, it's easier
+  // to emit that last part of the prefix here.
+  if (Decl *Context = Lambda->getLambdaContextDecl()) {
+    if ((isa<VarDecl>(Context) || isa<FieldDecl>(Context)) &&
+        Context->getDeclContext()->isRecord()) {
+      if (const IdentifierInfo *Name
+            = cast<NamedDecl>(Context)->getIdentifier()) {
+        mangleSourceName(Name);
+        Out << 'M';            
+      }
+    }
+  }
+
   Out << "Ul";
   DeclarationName Name
     = getASTContext().DeclarationNames.getCXXOperatorName(OO_Call);
@@ -1392,26 +1409,27 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
     return;
   }
   
-  if (mangleSubstitution(cast<NamedDecl>(DC)))
+  const NamedDecl *ND = cast<NamedDecl>(DC);  
+  if (mangleSubstitution(ND))
     return;
-
+  
   // Check if we have a template.
   const TemplateArgumentList *TemplateArgs = 0;
-  if (const TemplateDecl *TD = isTemplate(cast<NamedDecl>(DC), TemplateArgs)) {
+  if (const TemplateDecl *TD = isTemplate(ND, TemplateArgs)) {
     mangleTemplatePrefix(TD);
     TemplateParameterList *TemplateParameters = TD->getTemplateParameters();
     mangleTemplateArgs(*TemplateParameters, *TemplateArgs);
   }
-  else if(NoFunction && (isa<FunctionDecl>(DC) || isa<ObjCMethodDecl>(DC)))
+  else if(NoFunction && (isa<FunctionDecl>(ND) || isa<ObjCMethodDecl>(ND)))
     return;
-  else if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(DC))
+  else if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(ND))
     mangleObjCMethodName(Method);
   else {
-    manglePrefix(getEffectiveParentContext(DC), NoFunction);
-    mangleUnqualifiedName(cast<NamedDecl>(DC));
+    manglePrefix(getEffectiveDeclContext(ND), NoFunction);
+    mangleUnqualifiedName(ND);
   }
 
-  addSubstitution(cast<NamedDecl>(DC));
+  addSubstitution(ND);
 }
 
 void CXXNameMangler::mangleTemplatePrefix(TemplateName Template) {
