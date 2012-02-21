@@ -1025,7 +1025,7 @@ bool LiveIntervals::checkRegMaskInterference(LiveInterval &LI,
 //                         IntervalUpdate class.
 //===----------------------------------------------------------------------===//
 
-/// HMEditor is a toolkit used by handleMove to trim or extend live intervals.
+// HMEditor is a toolkit used by handleMove to trim or extend live intervals.
 class LiveIntervals::HMEditor {
 private:
   LiveIntervals& LIS;
@@ -1078,10 +1078,13 @@ public:
 
   }
 
-  void moveAllOperandsInto(MachineInstr* MI, MachineInstr* BundleStart,
-                           SlotIndex OldIdx) {
+  void moveAllOperandsInto(MachineInstr* MI, MachineInstr* BundleStart) {
     if (MI == BundleStart)
       return; // Bundling instr with itself - nothing to do.
+
+    SlotIndex OldIdx = LIS.getSlotIndexes()->getInstructionIndex(MI);
+    assert(LIS.getSlotIndexes()->getInstructionFromIndex(OldIdx) == MI &&
+           "SlotIndex <-> Instruction mapping broken for MI");
 
     BundleRanges BR = createBundleRanges(BundleStart);
 
@@ -1201,14 +1204,14 @@ private:
     }
 
     for (RangeSet::iterator EI = Entering.begin(), EE = Entering.end();
-         EI == EE; ++EI) {
+         EI != EE; ++EI) {
       LiveInterval* LI = EI->first;
       LiveRange* LR = EI->second;
       BR[LI->reg].Use = LR;
     }
 
     for (RangeSet::iterator II = Internal.begin(), IE = Internal.end();
-         II == IE; ++II) {
+         II != IE; ++II) {
       LiveInterval* LI = II->first;
       LiveRange* LR = II->second;
       if (LR->end.isDead()) {
@@ -1219,7 +1222,7 @@ private:
     }
 
     for (RangeSet::iterator EI = Exiting.begin(), EE = Exiting.end();
-         EI == EE; ++EI) {
+         EI != EE; ++EI) {
       LiveInterval* LI = EI->first;
       LiveRange* LR = EI->second;
       BR[LI->reg].Def = LR;
@@ -1350,9 +1353,7 @@ private:
     }
 
     SlotIndex LastUse = findLastUseBefore(LI->reg, OldIdx);
-    // TODO: Kill flag transfer is broken. For "Into" methods NewIdx is the
-    // bundle start, so we need another way to find MI.
-    moveKillFlags(LI->reg, NewIdx, LastUse);
+    moveKillFlags(LI->reg, OldIdx, LastUse);
 
     if (LR->start < NewIdx) {
       // Becoming a new entering range.
