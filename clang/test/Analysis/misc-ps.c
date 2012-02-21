@@ -111,3 +111,18 @@ struct rdar10385775 {
 void RDar10385775(struct rdar10385775* p) {
     p->name = L"a";
 }
+
+// Test double loop of array and array literals.  Previously this
+// resulted in a false positive uninitailized value warning.
+void rdar10686586() {
+    int array1[] = { 1, 2, 3, 0 };
+    int array2[] = { 1, 2, 3, 0 };
+    int *array[] = { array1, array2 };
+    int sum = 0;
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 4; j++) {
+            sum += array[i][j]; // no-warning
+        }
+    }
+}
+

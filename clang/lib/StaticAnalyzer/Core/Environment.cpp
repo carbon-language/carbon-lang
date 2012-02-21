@@ -139,7 +139,14 @@ class MarkLiveCallback : public SymbolVisitor {
   SymbolReaper &SymReaper;
 public:
   MarkLiveCallback(SymbolReaper &symreaper) : SymReaper(symreaper) {}
-  bool VisitSymbol(SymbolRef sym) { SymReaper.markLive(sym); return true; }
+  bool VisitSymbol(SymbolRef sym) {
+    SymReaper.markLive(sym);
+    return true;
+  }
+  bool VisitMemRegion(const MemRegion *R) {
+    SymReaper.markLive(R);
+    return true;
+  }
 };
 } // end anonymous namespace
 
