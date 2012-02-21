@@ -575,7 +575,7 @@ Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
   // GEP is inbounds, the final add of the base pointer can have signed overflow
   // and would change the result of the icmp.
   // e.g. "&foo[0] <s &foo[1]" can't be folded to "true" because "foo" could be
-  // the minimum signed value for the pointer type.
+  // the maximum signed value for the pointer type.
   if (ICmpInst::isSigned(Cond))
     return 0;
 
