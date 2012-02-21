@@ -117,7 +117,7 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
                                                  NULL, 
                                                  NULL);
         
-            if (exe_module_sp->GetObjectFile() == NULL)
+            if (error.Fail() || exe_module_sp.get() == NULL || exe_module_sp->GetObjectFile() == NULL)
             {
                 exe_module_sp.reset();
                 error.SetErrorStringWithFormat ("'%s%s%s' doesn't contain the architecture %s",
