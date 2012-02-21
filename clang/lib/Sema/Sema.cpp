@@ -111,7 +111,7 @@ Sema::Sema(Preprocessor &pp, ASTContext &ctxt, ASTConsumer &consumer,
                                        &Context);
 
   ExprEvalContexts.push_back(
-        ExpressionEvaluationContextRecord(PotentiallyEvaluated, 0, false));
+        ExpressionEvaluationContextRecord(PotentiallyEvaluated, 0, false, 0));
 
   FunctionScopes.push_back(new FunctionScopeInfo(Diags));
 }

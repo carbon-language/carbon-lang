@@ -40,14 +40,38 @@ using namespace clang;
 
 namespace {
 
+/// \brief Retrieve the declaration context that should be used when mangling 
+/// the given declaration.
+static const DeclContext *getEffectiveDeclContext(const Decl *D) {
+  // The ABI assumes that lambda closure types that occur within 
+  // default arguments live in the context of the function. However, due to
+  // the way in which Clang parses and creates function declarations, this is
+  // not the case: the lambda closure type ends up living in the context 
+  // where the function itself resides, because the function declaration itself
+  // had not yet been created. Fix the context here.
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(D)) {
+    if (RD->isLambda())
+      if (ParmVarDecl *ContextParam
+          = dyn_cast_or_null<ParmVarDecl>(RD->getLambdaContextDecl()))
+        return ContextParam->getDeclContext();
+  }
+  
+  return D->getDeclContext();
+}
+
+static const DeclContext *getEffectiveParentContext(const DeclContext *DC) {
+  return getEffectiveDeclContext(cast<Decl>(DC));
+}
+  
 static const CXXRecordDecl *GetLocalClassDecl(const NamedDecl *ND) {
   const DeclContext *DC = dyn_cast<DeclContext>(ND);
   if (!DC)
-    DC = ND->getDeclContext();
+    DC = getEffectiveDeclContext(ND);
   while (!DC->isNamespace() && !DC->isTranslationUnit()) {
-    if (isa<FunctionDecl>(DC->getParent()))
+    const DeclContext *Parent = getEffectiveDeclContext(cast<Decl>(DC));
+    if (isa<FunctionDecl>(Parent))
       return dyn_cast<CXXRecordDecl>(DC);
-    DC = DC->getParent();
+    DC = Parent;
   }
   return 0;
 }
@@ -63,7 +87,7 @@ static const NamedDecl *getStructor(const NamedDecl *decl) {
   const FunctionDecl *fn = dyn_cast_or_null<FunctionDecl>(decl);
   return (fn ? getStructor(fn) : decl);
 }
-
+                                                    
 static const unsigned UnknownArity = ~0U;
 
 class ItaniumMangleContext : public MangleContext {
@@ -279,6 +303,7 @@ private:
   void mangleUnscopedTemplateName(TemplateName);
   void mangleSourceName(const IdentifierInfo *II);
   void mangleLocalName(const NamedDecl *ND);
+  void mangleLambda(const CXXRecordDecl *Lambda);
   void mangleNestedName(const NamedDecl *ND, const DeclContext *DC,
                         bool NoFunction=false);
   void mangleNestedName(const TemplateDecl *TD,
@@ -339,8 +364,8 @@ private:
 
 static bool isInCLinkageSpecification(const Decl *D) {
   D = D->getCanonicalDecl();
-  for (const DeclContext *DC = D->getDeclContext();
-       !DC->isTranslationUnit(); DC = DC->getParent()) {
+  for (const DeclContext *DC = getEffectiveDeclContext(D);
+       !DC->isTranslationUnit(); DC = getEffectiveParentContext(DC)) {
     if (const LinkageSpecDecl *Linkage = dyn_cast<LinkageSpecDecl>(DC))
       return Linkage->getLanguage() == LinkageSpecDecl::lang_c;
   }
@@ -372,17 +397,17 @@ bool ItaniumMangleContext::shouldMangleDeclName(const NamedDecl *D) {
 
   // Variables at global scope with non-internal linkage are not mangled
   if (!FD) {
-    const DeclContext *DC = D->getDeclContext();
+    const DeclContext *DC = getEffectiveDeclContext(D);
     // Check for extern variable declared locally.
     if (DC->isFunctionOrMethod() && D->hasLinkage())
       while (!DC->isNamespace() && !DC->isTranslationUnit())
-        DC = DC->getParent();
+        DC = getEffectiveParentContext(DC);
     if (DC->isTranslationUnit() && D->getLinkage() != InternalLinkage)
       return false;
   }
 
   // Class members are always mangled.
-  if (D->getDeclContext()->isRecord())
+  if (getEffectiveDeclContext(D)->isRecord())
     return true;
 
   // C functions and "main" are not mangled.
@@ -465,7 +490,7 @@ void CXXNameMangler::mangleFunctionEncoding(const FunctionDecl *FD) {
 
 static const DeclContext *IgnoreLinkageSpecDecls(const DeclContext *DC) {
   while (isa<LinkageSpecDecl>(DC)) {
-    DC = DC->getParent();
+    DC = getEffectiveParentContext(DC);
   }
 
   return DC;
@@ -473,7 +498,8 @@ static const DeclContext *IgnoreLinkageSpecDecls(const DeclContext *DC) {
 
 /// isStd - Return whether a given namespace is the 'std' namespace.
 static bool isStd(const NamespaceDecl *NS) {
-  if (!IgnoreLinkageSpecDecls(NS->getParent())->isTranslationUnit())
+  if (!IgnoreLinkageSpecDecls(getEffectiveParentContext(NS))
+                                ->isTranslationUnit())
     return false;
   
   const IdentifierInfo *II = NS->getOriginalNamespace()->getIdentifier();
@@ -515,20 +541,20 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
   //         ::= <unscoped-template-name> <template-args>
   //         ::= <local-name>
   //
-  const DeclContext *DC = ND->getDeclContext();
+  const DeclContext *DC = getEffectiveDeclContext(ND);
 
   // If this is an extern variable declared locally, the relevant DeclContext
   // is that of the containing namespace, or the translation unit.
   if (isa<FunctionDecl>(DC) && ND->hasLinkage())
     while (!DC->isNamespace() && !DC->isTranslationUnit())
-      DC = DC->getParent();
+      DC = getEffectiveParentContext(DC);
   else if (GetLocalClassDecl(ND)) {
     mangleLocalName(ND);
     return;
   }
 
   while (isa<LinkageSpecDecl>(DC))
-    DC = DC->getParent();
+    DC = getEffectiveParentContext(DC);
 
   if (DC->isTranslationUnit() || isStdNamespace(DC)) {
     // Check if we have a template.
@@ -554,7 +580,7 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
 void CXXNameMangler::mangleName(const TemplateDecl *TD,
                                 const TemplateArgument *TemplateArgs,
                                 unsigned NumTemplateArgs) {
-  const DeclContext *DC = IgnoreLinkageSpecDecls(TD->getDeclContext());
+  const DeclContext *DC = IgnoreLinkageSpecDecls(getEffectiveDeclContext(TD));
 
   if (DC->isTranslationUnit() || isStdNamespace(DC)) {
     mangleUnscopedTemplateName(TD);
@@ -568,7 +594,7 @@ void CXXNameMangler::mangleName(const TemplateDecl *TD,
 void CXXNameMangler::mangleUnscopedName(const NamedDecl *ND) {
   //  <unscoped-name> ::= <unqualified-name>
   //                  ::= St <unqualified-name>   # ::std::
-  if (isStdNamespace(ND->getDeclContext()))
+  if (isStdNamespace(getEffectiveDeclContext(ND)))
     Out << "St";
 
   mangleUnqualifiedName(ND);
@@ -1028,7 +1054,7 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
       // This naming convention is the same as that followed by GCC,
       // though it shouldn't actually matter.
       if (ND && ND->getLinkage() == InternalLinkage &&
-          ND->getDeclContext()->isFileContext())
+          getEffectiveDeclContext(ND)->isFileContext())
         Out << 'L';
 
       mangleSourceName(II);
@@ -1089,28 +1115,7 @@ void CXXNameMangler::mangleUnqualifiedName(const NamedDecl *ND,
     // <lambda-sig> ::= <parameter-type>+   # Parameter types or 'v' for 'void'.
     if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(TD)) {
       if (Record->isLambda()) {
-        // FIXME: Figure out if we're in a function body, default argument,
-        // or initializer for a class member.
-        
-        Out << "Ul";
-        DeclarationName Name
-          = getASTContext().DeclarationNames.getCXXOperatorName(OO_Call);
-        const FunctionProtoType *Proto
-          = cast<CXXMethodDecl>(*Record->lookup(Name).first)->getType()->
-              getAs<FunctionProtoType>();
-        mangleBareFunctionType(Proto, /*MangleReturnType=*/false);        
-        Out << "E";
-        
-        // The number is omitted for the first closure type with a given 
-        // <lambda-sig> in a given context; it is n-2 for the nth closure type 
-        // (in lexical order) with that same <lambda-sig> and context.
-        //
-        // The AST keeps track of the number for us.
-        if (unsigned Number = Record->getLambdaManglingNumber()) {
-          if (Number > 1)
-            mangleNumber(Number - 2);
-        }
-        Out << '_';
+        mangleLambda(Record);
         break;
       }
     }
@@ -1243,8 +1248,10 @@ void CXXNameMangler::mangleNestedName(const TemplateDecl *TD,
 void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
   // <local-name> := Z <function encoding> E <entity name> [<discriminator>]
   //              := Z <function encoding> E s [<discriminator>]
+  // <local-name> := Z <function encoding> E d [ <parameter number> ] 
+  //                 _ <entity name>
   // <discriminator> := _ <non-negative number>
-  const DeclContext *DC = ND->getDeclContext();
+  const DeclContext *DC = getEffectiveDeclContext(ND);
   if (isa<ObjCMethodDecl>(DC) && isa<FunctionDecl>(ND)) {
     // Don't add objc method name mangling to locally declared function
     mangleUnqualifiedName(ND);
@@ -1256,23 +1263,46 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
   if (const ObjCMethodDecl *MD = dyn_cast<ObjCMethodDecl>(DC)) {
    mangleObjCMethodName(MD);
   } else if (const CXXRecordDecl *RD = GetLocalClassDecl(ND)) {
-    mangleFunctionEncoding(cast<FunctionDecl>(RD->getDeclContext()));
+    mangleFunctionEncoding(cast<FunctionDecl>(getEffectiveDeclContext(RD)));
     Out << 'E';
 
+    // The parameter number is omitted for the last parameter, 0 for the 
+    // second-to-last parameter, 1 for the third-to-last parameter, etc. The 
+    // <entity name> will of course contain a <closure-type-name>: Its 
+    // numbering will be local to the particular argument in which it appears
+    // -- other default arguments do not affect its encoding.
+    bool SkipDiscriminator = false;
+    if (RD->isLambda()) {
+      if (const ParmVarDecl *Parm
+                 = dyn_cast_or_null<ParmVarDecl>(RD->getLambdaContextDecl())) {
+        if (const FunctionDecl *Func
+              = dyn_cast<FunctionDecl>(Parm->getDeclContext())) {
+          Out << 'd';
+          unsigned Num = Func->getNumParams() - Parm->getFunctionScopeIndex();
+          if (Num > 1)
+            mangleNumber(Num - 2);
+          Out << '_';
+          SkipDiscriminator = true;
+        }
+      }
+    }
+    
     // Mangle the name relative to the closest enclosing function.
     if (ND == RD) // equality ok because RD derived from ND above
       mangleUnqualifiedName(ND);
     else
       mangleNestedName(ND, DC, true /*NoFunction*/);
 
-    unsigned disc;
-    if (Context.getNextDiscriminator(RD, disc)) {
-      if (disc < 10)
-        Out << '_' << disc;
-      else
-        Out << "__" << disc << '_';
+    if (!SkipDiscriminator) {
+      unsigned disc;
+      if (Context.getNextDiscriminator(RD, disc)) {
+        if (disc < 10)
+          Out << '_' << disc;
+        else
+          Out << "__" << disc << '_';
+      }
     }
-
+    
     return;
   }
   else
@@ -1280,6 +1310,31 @@ void CXXNameMangler::mangleLocalName(const NamedDecl *ND) {
 
   Out << 'E';
   mangleUnqualifiedName(ND);
+}
+
+void CXXNameMangler::mangleLambda(const CXXRecordDecl *Lambda) {
+  // FIXME: Figure out if we're in a function body, default argument,
+  // or initializer for a class member.
+  
+  Out << "Ul";
+  DeclarationName Name
+    = getASTContext().DeclarationNames.getCXXOperatorName(OO_Call);
+  const FunctionProtoType *Proto
+    = cast<CXXMethodDecl>(*Lambda->lookup(Name).first)->getType()->
+        getAs<FunctionProtoType>();
+  mangleBareFunctionType(Proto, /*MangleReturnType=*/false);        
+  Out << "E";
+  
+  // The number is omitted for the first closure type with a given 
+  // <lambda-sig> in a given context; it is n-2 for the nth closure type 
+  // (in lexical order) with that same <lambda-sig> and context.
+  //
+  // The AST keeps track of the number for us.
+  if (unsigned Number = Lambda->getLambdaManglingNumber()) {
+    if (Number > 1)
+      mangleNumber(Number - 2);
+  }
+  Out << '_';  
 }
 
 void CXXNameMangler::manglePrefix(NestedNameSpecifier *qualifier) {
@@ -1322,13 +1377,13 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
   //           ::= <substitution>
 
   while (isa<LinkageSpecDecl>(DC))
-    DC = DC->getParent();
+    DC = getEffectiveParentContext(DC);
 
   if (DC->isTranslationUnit())
     return;
 
   if (const BlockDecl *Block = dyn_cast<BlockDecl>(DC)) {
-    manglePrefix(DC->getParent(), NoFunction);    
+    manglePrefix(getEffectiveParentContext(DC), NoFunction);    
     SmallString<64> Name;
     llvm::raw_svector_ostream NameStream(Name);
     Context.mangleBlock(Block, NameStream);
@@ -1352,7 +1407,7 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
   else if (const ObjCMethodDecl *Method = dyn_cast<ObjCMethodDecl>(DC))
     mangleObjCMethodName(Method);
   else {
-    manglePrefix(DC->getParent(), NoFunction);
+    manglePrefix(getEffectiveParentContext(DC), NoFunction);
     mangleUnqualifiedName(cast<NamedDecl>(DC));
   }
 
@@ -1399,7 +1454,7 @@ void CXXNameMangler::mangleTemplatePrefix(const TemplateDecl *ND) {
     return;
   }
 
-  manglePrefix(ND->getDeclContext());
+  manglePrefix(getEffectiveDeclContext(ND));
   mangleUnqualifiedName(ND->getTemplatedDecl());
   addSubstitution(ND);
 }
@@ -3159,7 +3214,7 @@ static bool isCharSpecialization(QualType T, const char *Name) {
   if (!SD)
     return false;
 
-  if (!isStdNamespace(SD->getDeclContext()))
+  if (!isStdNamespace(getEffectiveDeclContext(SD)))
     return false;
 
   const TemplateArgumentList &TemplateArgs = SD->getTemplateArgs();
@@ -3201,7 +3256,7 @@ bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
   }
 
   if (const ClassTemplateDecl *TD = dyn_cast<ClassTemplateDecl>(ND)) {
-    if (!isStdNamespace(TD->getDeclContext()))
+    if (!isStdNamespace(getEffectiveDeclContext(TD)))
       return false;
 
     // <substitution> ::= Sa # ::std::allocator
@@ -3219,7 +3274,7 @@ bool CXXNameMangler::mangleStandardSubstitution(const NamedDecl *ND) {
 
   if (const ClassTemplateSpecializationDecl *SD =
         dyn_cast<ClassTemplateSpecializationDecl>(ND)) {
-    if (!isStdNamespace(SD->getDeclContext()))
+    if (!isStdNamespace(getEffectiveDeclContext(SD)))
       return false;
 
     //    <substitution> ::= Ss # ::std::basic_string<char,

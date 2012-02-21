@@ -327,11 +327,11 @@ class ASTContext : public RefCountedBase<ASTContext> {
   /// expression used to copy the lambda object.
   llvm::DenseMap<const CXXConversionDecl *, Expr *> LambdaBlockPointerInits;
   
+  friend class CXXConversionDecl;
+  
   /// \brief Mapping from each declaration context to its corresponding lambda 
   /// mangling context.
   llvm::DenseMap<const DeclContext *, LambdaMangleContext> LambdaMangleContexts;
-  
-  friend class CXXConversionDecl;
   
   /// \brief Mapping that stores parameterIndex values for ParmVarDecls
   /// when that value exceeds the bitfield size of

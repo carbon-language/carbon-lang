@@ -4520,7 +4520,8 @@ void Parser::ParseParameterDeclarationClause(
           // The argument isn't actually potentially evaluated unless it is 
           // used.
           EnterExpressionEvaluationContext Eval(Actions,
-                                              Sema::PotentiallyEvaluatedIfUsed);
+                                              Sema::PotentiallyEvaluatedIfUsed,
+                                                Param);
 
           ExprResult DefArgResult(ParseAssignmentExpression());
           if (DefArgResult.isInvalid()) {

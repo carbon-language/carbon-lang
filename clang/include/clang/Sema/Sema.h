@@ -572,11 +572,37 @@ public:
     /// is indeed an unevaluated context.
     llvm::SmallVector<LambdaExpr *, 2> Lambdas;
 
+    /// \brief The declaration that provides context for the lambda expression
+    /// if the normal declaration context does not suffice, e.g., in a 
+    /// default function argument.
+    Decl *LambdaContextDecl;
+    
+    /// \brief The context information used to mangle lambda expressions
+    /// within this context.
+    ///
+    /// This mangling information is allocated lazily, since most contexts
+    /// do not have lambda expressions.
+    LambdaMangleContext *LambdaMangle;
+    
     ExpressionEvaluationContextRecord(ExpressionEvaluationContext Context,
                                       unsigned NumCleanupObjects,
-                                      bool ParentNeedsCleanups)
+                                      bool ParentNeedsCleanups,
+                                      Decl *LambdaContextDecl)
       : Context(Context), ParentNeedsCleanups(ParentNeedsCleanups),
-        NumCleanupObjects(NumCleanupObjects) { }
+        NumCleanupObjects(NumCleanupObjects), 
+        LambdaContextDecl(LambdaContextDecl), LambdaMangle() { }
+    
+    ~ExpressionEvaluationContextRecord() {
+      delete LambdaMangle;
+    }
+    
+    /// \brief Retrieve the mangling context for lambdas.
+    LambdaMangleContext &getLambdaMangleContext() {
+      assert(LambdaContextDecl && "Need to have a lambda context declaration");
+      if (!LambdaMangle)
+        LambdaMangle = new LambdaMangleContext;
+      return *LambdaMangle;
+    }
   };
 
   /// A stack of expression evaluation contexts.
@@ -2288,7 +2314,8 @@ public:
   void DiagnoseSentinelCalls(NamedDecl *D, SourceLocation Loc,
                              Expr **Args, unsigned NumArgs);
 
-  void PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext);
+  void PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext,
+                                       Decl *LambdaContextDecl = 0);
 
   void PopExpressionEvaluationContext();
 
@@ -3558,6 +3585,7 @@ public:
                              Scope *CurScope, 
                              llvm::Optional<unsigned> ManglingNumber 
                                = llvm::Optional<unsigned>(),
+                             Decl *ContextDecl = 0,
                              bool IsInstantiation = false);
 
   /// \brief Define the "body" of the conversion from a lambda object to a 
@@ -6541,9 +6569,10 @@ class EnterExpressionEvaluationContext {
 
 public:
   EnterExpressionEvaluationContext(Sema &Actions,
-                                   Sema::ExpressionEvaluationContext NewContext)
+                                   Sema::ExpressionEvaluationContext NewContext,
+                                   Decl *LambdaContextDecl = 0)
     : Actions(Actions) {
-    Actions.PushExpressionEvaluationContext(NewContext);
+    Actions.PushExpressionEvaluationContext(NewContext, LambdaContextDecl);
   }
 
   ~EnterExpressionEvaluationContext() {

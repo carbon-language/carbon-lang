@@ -561,7 +561,9 @@ class CXXRecordDecl : public RecordDecl {
     typedef LambdaExpr::Capture Capture;
     
     LambdaDefinitionData(CXXRecordDecl *D) 
-      : DefinitionData(D), NumCaptures(0), NumExplicitCaptures(0), Captures(0) { 
+      : DefinitionData(D), NumCaptures(0), NumExplicitCaptures(0), 
+        ContextDecl(0), Captures(0) 
+    {
       IsLambda = true;
     }
 
@@ -575,9 +577,14 @@ class CXXRecordDecl : public RecordDecl {
     /// mangling in the Itanium C++ ABI.
     unsigned ManglingNumber;
     
-    /// \brief The "extra" data associated with the lambda, including
-    /// captures, capture initializers, the body of the lambda, and the
-    /// array-index variables for array captures.
+    /// \brief The declaration that provides context for this lambda, if the
+    /// actual DeclContext does not suffice. This is used for lambdas that
+    /// occur within default arguments of function parameters within the class
+    /// or within a data member initializer.
+    Decl *ContextDecl;
+    
+    /// \brief The list of captures, both explicit and implicit, for this 
+    /// lambda.
     Capture *Captures;    
   };
 
@@ -1455,6 +1462,20 @@ public:
   unsigned getLambdaManglingNumber() const {
     assert(isLambda() && "Not a lambda closure type!");
     return getLambdaData().ManglingNumber;
+  }
+  
+  /// \brief Retrieve the declaration that provides additional context for a 
+  /// lambda, when the normal declaration context is not specific enough.
+  ///
+  /// Certain contexts (default arguments of in-class function parameters and 
+  /// the initializers of data members) have separate name mangling rules for
+  /// lambdas within the Itanium C++ ABI. For these cases, this routine provides
+  /// the declaration in which the lambda occurs, e.g., the function parameter 
+  /// or the non-static data member. Otherwise, it returns NULL to imply that
+  /// the declaration context suffices.
+  Decl *getLambdaContextDecl() const {
+    assert(isLambda() && "Not a lambda closure type!");
+    return getLambdaData().ContextDecl;    
   }
   
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

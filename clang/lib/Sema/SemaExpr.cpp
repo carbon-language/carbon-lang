@@ -9275,11 +9275,13 @@ ExprResult Sema::TranformToPotentiallyEvaluated(Expr *E) {
 }
 
 void
-Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext) {
+Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext,
+                                      Decl *LambdaContextDecl) {
   ExprEvalContexts.push_back(
              ExpressionEvaluationContextRecord(NewContext,
                                                ExprCleanupObjects.size(),
-                                               ExprNeedsCleanups));
+                                               ExprNeedsCleanups,
+                                               LambdaContextDecl));
   ExprNeedsCleanups = false;
   if (!MaybeODRUseExprs.empty())
     std::swap(MaybeODRUseExprs, ExprEvalContexts.back().SavedMaybeODRUseExprs);

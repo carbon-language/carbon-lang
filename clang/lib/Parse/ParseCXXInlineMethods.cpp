@@ -297,7 +297,8 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
                             Scope::FunctionPrototypeScope|Scope::DeclScope);
   for (unsigned I = 0, N = LM.DefaultArgs.size(); I != N; ++I) {
     // Introduce the parameter into scope.
-    Actions.ActOnDelayedCXXMethodParameter(getCurScope(), LM.DefaultArgs[I].Param);
+    Actions.ActOnDelayedCXXMethodParameter(getCurScope(), 
+                                           LM.DefaultArgs[I].Param);
 
     if (CachedTokens *Toks = LM.DefaultArgs[I].Toks) {
       // Save the current token position.
@@ -317,7 +318,8 @@ void Parser::ParseLexedMethodDeclaration(LateParsedMethodDeclaration &LM) {
       // The argument isn't actually potentially evaluated unless it is
       // used.
       EnterExpressionEvaluationContext Eval(Actions,
-                                            Sema::PotentiallyEvaluatedIfUsed);
+                                            Sema::PotentiallyEvaluatedIfUsed,
+                                            LM.DefaultArgs[I].Param);
 
       ExprResult DefArgResult(ParseAssignmentExpression());
       if (DefArgResult.isInvalid())

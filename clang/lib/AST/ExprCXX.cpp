@@ -765,7 +765,8 @@ LambdaExpr::LambdaExpr(QualType T,
                        ArrayRef<VarDecl *> ArrayIndexVars,
                        ArrayRef<unsigned> ArrayIndexStarts,
                        SourceLocation ClosingBrace,
-                       unsigned ManglingNumber)
+                       unsigned ManglingNumber,
+                       Decl *ContextDecl)
   : Expr(LambdaExprClass, T, VK_RValue, OK_Ordinary,
          T->isDependentType(), T->isDependentType(), T->isDependentType(),
          /*ContainsUnexpandedParameterPack=*/false),
@@ -787,6 +788,7 @@ LambdaExpr::LambdaExpr(QualType T,
   Data.NumCaptures = NumCaptures;
   Data.NumExplicitCaptures = 0;
   Data.ManglingNumber = ManglingNumber;
+  Data.ContextDecl = ContextDecl;
   Data.Captures = (Capture *)Context.Allocate(sizeof(Capture) * NumCaptures);
   Capture *ToCapture = Data.Captures;
   for (unsigned I = 0, N = Captures.size(); I != N; ++I) {
@@ -827,7 +829,8 @@ LambdaExpr *LambdaExpr::Create(ASTContext &Context,
                                ArrayRef<VarDecl *> ArrayIndexVars,
                                ArrayRef<unsigned> ArrayIndexStarts,
                                SourceLocation ClosingBrace,
-                               unsigned ManglingNumber) {
+                               unsigned ManglingNumber,
+                               Decl *ContextDecl) {
   // Determine the type of the expression (i.e., the type of the
   // function object we're creating).
   QualType T = Context.getTypeDeclType(Class);
@@ -840,7 +843,7 @@ LambdaExpr *LambdaExpr::Create(ASTContext &Context,
   return new (Mem) LambdaExpr(T, IntroducerRange, CaptureDefault, 
                               Captures, ExplicitParams, ExplicitResultType,
                               CaptureInits, ArrayIndexVars, ArrayIndexStarts,
-                              ClosingBrace, ManglingNumber);
+                              ClosingBrace, ManglingNumber, ContextDecl);
 }
 
 LambdaExpr *LambdaExpr::CreateDeserialized(ASTContext &C, unsigned NumCaptures,

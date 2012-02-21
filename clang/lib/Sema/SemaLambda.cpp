@@ -485,6 +485,7 @@ static void addBlockPointerConversion(Sema &S,
 ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body, 
                                  Scope *CurScope, 
                                  llvm::Optional<unsigned> ManglingNumber,
+                                 Decl *ContextDecl,
                                  bool IsInstantiation) {
   // Leave the expression-evaluation context.
   DiscardCleanupsInEvaluationContext();
@@ -638,8 +639,34 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
   // If we don't already have a mangling number for this lambda expression,
   // allocate one now.
   if (!ManglingNumber) {
-    // FIXME: Default arguments, data member initializers are special.
-    ManglingNumber = Context.getLambdaManglingNumber(CallOperator);
+    ContextDecl = ExprEvalContexts.back().LambdaContextDecl;
+    
+    // FIXME: Data member initializers.
+    enum ContextKind {
+      Normal,
+      DefaultArgument
+    } Kind = Normal;
+
+    // Default arguments of member function parameters that appear in a class
+    // definition receive special treatment. Identify them.
+    if (ParmVarDecl *Param = dyn_cast_or_null<ParmVarDecl>(ContextDecl)) {
+      if (const DeclContext *LexicalDC
+            = Param->getDeclContext()->getLexicalParent())
+        if (LexicalDC->isRecord())
+          Kind = DefaultArgument;
+    }
+    
+    switch (Kind) {
+    case Normal:
+      ManglingNumber = Context.getLambdaManglingNumber(CallOperator);
+      ContextDecl = 0;
+      break;
+      
+    case DefaultArgument:
+      ManglingNumber = ExprEvalContexts.back().getLambdaMangleContext()
+                         .getManglingNumber(CallOperator);
+      break;
+    }
   }
   
   LambdaExpr *Lambda = LambdaExpr::Create(Context, Class, IntroducerRange, 
@@ -647,7 +674,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                                           ExplicitParams, ExplicitResultType,
                                           CaptureInits, ArrayIndexVars, 
                                           ArrayIndexStarts, Body->getLocEnd(),
-                                          *ManglingNumber);
+                                          *ManglingNumber, ContextDecl);
 
   // C++11 [expr.prim.lambda]p2:
   //   A lambda-expression shall not appear in an unevaluated operand

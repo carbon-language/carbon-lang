@@ -7768,10 +7768,14 @@ TreeTransform<Derived>::TransformLambdaExpr(LambdaExpr *E) {
                                /*IsInstantiation=*/true);
     return ExprError();    
   }
-  
+
+  // Note: Once a lambda mangling number and context declaration have been
+  // assigned, they never change.
   unsigned ManglingNumber = E->getLambdaClass()->getLambdaManglingNumber();
+  Decl *ContextDecl = E->getLambdaClass()->getLambdaContextDecl();
   return getSema().ActOnLambdaExpr(E->getLocStart(), Body.take(), 
                                    /*CurScope=*/0, ManglingNumber,
+                                   ContextDecl,
                                    /*IsInstantiation=*/true);
 }
 
