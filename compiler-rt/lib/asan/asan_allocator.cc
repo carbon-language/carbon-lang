@@ -695,11 +695,6 @@ static void Deallocate(uint8_t *ptr, AsanStackTrace *stack) {
     Describe((uintptr_t)ptr, 1);
     ShowStatsAndAbort();
   } else if (m->chunk_state != CHUNK_ALLOCATED) {
-    if (ASAN_WINDOWS) {
-      // FIXME: On Windows there are a few extra "unknown free()s"
-      // from __endstdio, need investigating.
-      return;
-    }
     Report("ERROR: AddressSanitizer attempting free on address which was not"
            " malloc()-ed: %p\n", ptr);
     stack->PrintStack();
