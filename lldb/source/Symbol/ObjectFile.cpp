@@ -393,7 +393,15 @@ ObjectFile::ReadSectionData (const Section *section, off_t section_offset, void 
     }
     else
     {
-        return CopyData (section->GetFileOffset() + section_offset, dst_len, dst);
+        const uint64_t section_file_size = section->GetFileSize();
+        if (section_offset < section_file_size)
+        {
+            const uint64_t section_bytes_left = section_file_size - section_offset;
+            uint64_t section_dst_len = dst_len;
+            if (section_dst_len > section_bytes_left)
+                section_dst_len = section_bytes_left;
+            return CopyData (section->GetFileOffset() + section_offset, section_dst_len, dst);
+        }
     }
     return 0;
 }
