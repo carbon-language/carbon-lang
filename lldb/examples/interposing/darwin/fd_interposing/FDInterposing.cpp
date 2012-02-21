@@ -62,7 +62,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/time.h>
-#include <tr1/memory> // for std::tr1::shared_ptr
+#include <memory> // for std::shared_ptr
 #include <unistd.h>
 #include <string>
 #include <vector>
@@ -168,8 +168,8 @@ private:
 typedef std::vector<void *> Frames;
 class FDEvent;
 typedef std::vector<void *> Frames;
-typedef std::tr1::shared_ptr<FDEvent> FDEventSP;
-typedef std::tr1::shared_ptr<String> StringSP;
+typedef std::shared_ptr<FDEvent> FDEventSP;
+typedef std::shared_ptr<String> StringSP;
 
 
 //----------------------------------------------------------------------

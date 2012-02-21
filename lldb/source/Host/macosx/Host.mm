@@ -683,12 +683,12 @@ Host::OpenFileInExternalEditor (const FileSpec &file_spec, uint32_t line_no)
     long error;	
     BabelAESelInfo file_and_line_info = 
     {
-        0,              // reserved0
-        line_no - 1,    // fLineNumber (zero based line number)
-        1,              // fSelStart
-        1024,           // fSelEnd
-        0,              // reserved1
-        0               // reserved2
+        0,                         // reserved0
+        (int16_t)(line_no - 1),    // fLineNumber (zero based line number)
+        1,                         // fSelStart
+        1024,                      // fSelEnd
+        0,                         // reserved1
+        0                          // reserved2
     };
 
     AEKeyDesc file_and_line_desc;
@@ -1047,7 +1047,7 @@ GetMacOSXProcessArgs (const ProcessInstanceInfoMatch *match_info_ptr,
 {
     if (process_info.ProcessIDIsValid())
     {
-        int proc_args_mib[3] = { CTL_KERN, KERN_PROCARGS2, process_info.GetProcessID() };
+        int proc_args_mib[3] = { CTL_KERN, KERN_PROCARGS2, (int)process_info.GetProcessID() };
 
         char arg_data[8192];
         size_t arg_data_size = sizeof(arg_data);

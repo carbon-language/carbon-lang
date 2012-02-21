@@ -106,7 +106,7 @@ UnwindMacOSXFrameBackchain::GetStackFrameData_i386 (const ExecutionContext &exe_
     cursor.pc = reg_ctx->GetPC (LLDB_INVALID_ADDRESS);
     cursor.fp = reg_ctx->GetFP (0);
     
-    Frame_i386 frame = { cursor.fp, cursor.pc };
+    Frame_i386 frame = { static_cast<uint32_t>(cursor.fp), static_cast<uint32_t>(cursor.pc) };
 
     m_cursors.push_back(cursor);
 

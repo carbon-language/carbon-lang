@@ -345,7 +345,7 @@ MachThreadList::ProcessWillResume(MachProcess *process, const DNBThreadResumeAct
 
     UpdateThreadList(process, true, &new_threads);
 
-    DNBThreadResumeAction resume_new_threads = { -1, eStateRunning, 0, INVALID_NUB_ADDRESS };
+    DNBThreadResumeAction resume_new_threads = { -1U, eStateRunning, 0, INVALID_NUB_ADDRESS };
     // If we are planning to run only one thread, any new threads should be suspended.
     if (run_one_thread)
         resume_new_threads.state = eStateSuspended;
