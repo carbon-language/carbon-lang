@@ -128,7 +128,8 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
         {
             error = m_remote_platform_sp->ResolveExecutable (exe_file,
                                                              exe_arch,
-                                                             exe_module_sp);
+                                                             exe_module_sp,
+                                                             NULL);
         }
         else
         {
@@ -152,6 +153,7 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
                                                  0, 
                                                  exe_module_sp, 
                                                  NULL, 
+                                                 NULL,
                                                  NULL);
         
             if (exe_module_sp->GetObjectFile() == NULL)
@@ -180,6 +182,7 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
                                                      0, 
                                                      exe_module_sp, 
                                                      NULL, 
+                                                     NULL,
                                                      NULL);
                 // Did we find an executable using one of the 
                 if (error.Success())
@@ -367,7 +370,9 @@ PlatformLinux::Attach(ProcessAttachInfo &attach_info,
         {
             debugger.GetTargetList().SetSelectedTarget(target);
 
-            process_sp = target->CreateProcess (listener, attach_info.GetProcessPluginName());
+            process_sp = target->CreateProcess (listener,
+                                                attach_info.GetProcessPluginName(),
+                                                NULL);
 
             if (process_sp)
                 error = process_sp->Attach (attach_info);

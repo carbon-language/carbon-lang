@@ -34,7 +34,7 @@ StopInfoMachException::GetDescription ()
     {
         ExecutionContext exe_ctx (m_thread.shared_from_this());
         Target *target = exe_ctx.GetTargetPtr();
-        const llvm::Triple::ArchType cpu = target ? target->GetArchitecture().GetMachine() : llvm::Triple::InvalidArch;
+        const llvm::Triple::ArchType cpu = target ? target->GetArchitecture().GetMachine() : llvm::Triple::UnknownArch;
 
         const char *exc_desc = NULL;
         const char *code_label = "code";
@@ -257,7 +257,7 @@ StopInfoMachException::CreateStopReasonWithMachException
     {
         ExecutionContext exe_ctx (thread.shared_from_this());
         Target *target = exe_ctx.GetTargetPtr();
-        const llvm::Triple::ArchType cpu = target ? target->GetArchitecture().GetMachine() : llvm::Triple::InvalidArch;
+        const llvm::Triple::ArchType cpu = target ? target->GetArchitecture().GetMachine() : llvm::Triple::UnknownArch;
 
         switch (exc_type)
         {

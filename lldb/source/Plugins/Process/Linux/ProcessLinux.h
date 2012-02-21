@@ -30,9 +30,10 @@ public:
     //------------------------------------------------------------------
     // Static functions.
     //------------------------------------------------------------------
-    static Process*
+    static lldb::ProcessSP
     CreateInstance(lldb_private::Target& target,
-                   lldb_private::Listener &listener);
+                   lldb_private::Listener &listener,
+                   const lldb_private::FileSpec *);
 
     static void
     Initialize();

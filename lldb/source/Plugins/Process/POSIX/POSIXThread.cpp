@@ -29,10 +29,11 @@
 
 #include "UnwindLLDB.h"
 
+using namespace lldb;
 using namespace lldb_private;
 
 
-POSIXThread::POSIXThread(Process &process, lldb::tid_t tid)
+POSIXThread::POSIXThread(ProcessSP &process, lldb::tid_t tid)
     : Thread(process, tid),
       m_frame_ap(0)
 {
@@ -49,7 +50,8 @@ POSIXThread::~POSIXThread()
 ProcessMonitor &
 POSIXThread::GetMonitor()
 {
-    ProcessPOSIX &process = static_cast<ProcessPOSIX&>(GetProcess());
+    ProcessSP base = GetProcess();
+    ProcessPOSIX &process = static_cast<ProcessPOSIX&>(*base);
     return process.GetMonitor();
 }
 
@@ -62,7 +64,8 @@ POSIXThread::RefreshStateAfterStop()
 
     // Let all threads recover from stopping and do any clean up based
     // on the previous thread state (if any).
-    ProcessPOSIX &process = static_cast<ProcessPOSIX&>(GetProcess());
+    ProcessSP base = GetProcess();
+    ProcessPOSIX &process = static_cast<ProcessPOSIX&>(*base);
     process.GetThreadList().RefreshStateAfterStop();
 }
 
@@ -237,7 +240,7 @@ POSIXThread::BreakNotify(const ProcessMessage &message)
     lldb::addr_t pc = GetRegisterContext()->GetPC();
     if (log)
         log->Printf ("POSIXThread::%s () PC=0x%8.8llx", __FUNCTION__, pc);
-    lldb::BreakpointSiteSP bp_site(GetProcess().GetBreakpointSiteList().FindByAddress(pc));
+    lldb::BreakpointSiteSP bp_site(GetProcess()->GetBreakpointSiteList().FindByAddress(pc));
     assert(bp_site);
     lldb::break_id_t bp_id = bp_site->GetID();
     assert(bp_site && bp_site->ValidForThisThread(this));

@@ -364,7 +364,8 @@ RegisterContext_i386::~RegisterContext_i386()
 ProcessMonitor &
 RegisterContext_i386::GetMonitor()
 {
-    ProcessPOSIX *process = static_cast<ProcessPOSIX*>(CalculateProcess());
+    ProcessSP base = CalculateProcess();
+    ProcessPOSIX *process = static_cast<ProcessPOSIX*>(base.get());
     return process->GetMonitor();
 }
 

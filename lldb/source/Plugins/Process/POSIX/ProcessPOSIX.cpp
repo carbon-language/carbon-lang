@@ -500,8 +500,10 @@ ProcessPOSIX::UpdateThreadList(ThreadList &old_thread_list, ThreadList &new_thre
     // FIXME: We should be using tid, not pid.
     assert(m_monitor);
     ThreadSP thread_sp (old_thread_list.FindThreadByID (GetID(), false));
-    if (!thread_sp)
-        thread_sp.reset(new POSIXThread(*this, GetID()));
+    if (!thread_sp) {
+        ProcessSP me = this->shared_from_this();
+        thread_sp.reset(new POSIXThread(me, GetID()));
+    }
 
     if (log && log->GetMask().Test(POSIX_LOG_VERBOSE))
         log->Printf ("ProcessPOSIX::%s() updated pid = %i", __FUNCTION__, GetID());

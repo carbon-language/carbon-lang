@@ -307,7 +307,7 @@ DynamicLoaderPOSIXDYLD::GetStepThroughTrampolinePlan(Thread &thread, bool stop)
         return thread_plan_sp;
 
     SymbolContextList target_symbols;
-    Target &target = thread.GetProcess().GetTarget();
+    Target &target = thread.GetProcess()->GetTarget();
     ModuleList &images = target.GetImages();
 
     images.FindSymbolsWithNameAndType(sym_name, eSymbolTypeCode, target_symbols);

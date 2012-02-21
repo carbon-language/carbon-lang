@@ -15,7 +15,7 @@
 #include <vector>
 
 // Other libraries and framework includes
-#include "lldb/lldb-forward-rtti.h"
+#include "lldb/lldb-forward.h"
 
 namespace lldb_private {
 class DataExtractor;

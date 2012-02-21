@@ -44,44 +44,38 @@ ProcessPOSIXLog::GetLogIfAllCategoriesSet (uint32_t mask)
 }
 
 void
-ProcessPOSIXLog::DisableLog (Args &args, Stream *feedback_strm)
+ProcessPOSIXLog::DisableLog (const char **args, Stream *feedback_strm)
 {
     LogSP log (GetLog ());
     if (log)
     {
         uint32_t flag_bits = 0;
         
-        const size_t argc = args.GetArgumentCount ();
-        if (argc > 0)
+        flag_bits = log->GetMask().Get();
+        for (; args[0]; args++)
         {
-            flag_bits = log->GetMask().Get();
-            for (size_t i = 0; i < argc; ++i)
-            {
-                const char *arg = args.GetArgumentAtIndex (i);
-                
+            const char *arg = args[0];
 
-                if      (::strcasecmp (arg, "all")        == 0 ) flag_bits &= ~POSIX_LOG_ALL;
-                else if (::strcasecmp (arg, "async")      == 0 ) flag_bits &= ~POSIX_LOG_ASYNC;
-                else if (::strncasecmp (arg, "break", 5)  == 0 ) flag_bits &= ~POSIX_LOG_BREAKPOINTS;
-                else if (::strncasecmp (arg, "comm", 4)   == 0 ) flag_bits &= ~POSIX_LOG_COMM;
-                else if (::strcasecmp (arg, "default")    == 0 ) flag_bits &= ~POSIX_LOG_DEFAULT;
-                else if (::strcasecmp (arg, "packets")    == 0 ) flag_bits &= ~POSIX_LOG_PACKETS;
-                else if (::strcasecmp (arg, "memory")     == 0 ) flag_bits &= ~POSIX_LOG_MEMORY;
-                else if (::strcasecmp (arg, "data-short") == 0 ) flag_bits &= ~POSIX_LOG_MEMORY_DATA_SHORT;
-                else if (::strcasecmp (arg, "data-long")  == 0 ) flag_bits &= ~POSIX_LOG_MEMORY_DATA_LONG;
-                else if (::strcasecmp (arg, "process")    == 0 ) flag_bits &= ~POSIX_LOG_PROCESS;
-                else if (::strcasecmp (arg, "ptrace")     == 0 ) flag_bits &= ~POSIX_LOG_PTRACE;
-                else if (::strcasecmp (arg, "registers")  == 0 ) flag_bits &= ~POSIX_LOG_REGISTERS;
-                else if (::strcasecmp (arg, "step")       == 0 ) flag_bits &= ~POSIX_LOG_STEP;
-                else if (::strcasecmp (arg, "thread")     == 0 ) flag_bits &= ~POSIX_LOG_THREAD;
-                else if (::strcasecmp (arg, "verbose")    == 0 ) flag_bits &= ~POSIX_LOG_VERBOSE;
-                else if (::strncasecmp (arg, "watch", 5)  == 0 ) flag_bits &= ~POSIX_LOG_WATCHPOINTS;
-                else
-                {
-                    feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
-                    ListLogCategories (feedback_strm);
-                }
-                
+            if      (::strcasecmp (arg, "all")        == 0 ) flag_bits &= ~POSIX_LOG_ALL;
+            else if (::strcasecmp (arg, "async")      == 0 ) flag_bits &= ~POSIX_LOG_ASYNC;
+            else if (::strncasecmp (arg, "break", 5)  == 0 ) flag_bits &= ~POSIX_LOG_BREAKPOINTS;
+            else if (::strncasecmp (arg, "comm", 4)   == 0 ) flag_bits &= ~POSIX_LOG_COMM;
+            else if (::strcasecmp (arg, "default")    == 0 ) flag_bits &= ~POSIX_LOG_DEFAULT;
+            else if (::strcasecmp (arg, "packets")    == 0 ) flag_bits &= ~POSIX_LOG_PACKETS;
+            else if (::strcasecmp (arg, "memory")     == 0 ) flag_bits &= ~POSIX_LOG_MEMORY;
+            else if (::strcasecmp (arg, "data-short") == 0 ) flag_bits &= ~POSIX_LOG_MEMORY_DATA_SHORT;
+            else if (::strcasecmp (arg, "data-long")  == 0 ) flag_bits &= ~POSIX_LOG_MEMORY_DATA_LONG;
+            else if (::strcasecmp (arg, "process")    == 0 ) flag_bits &= ~POSIX_LOG_PROCESS;
+            else if (::strcasecmp (arg, "ptrace")     == 0 ) flag_bits &= ~POSIX_LOG_PTRACE;
+            else if (::strcasecmp (arg, "registers")  == 0 ) flag_bits &= ~POSIX_LOG_REGISTERS;
+            else if (::strcasecmp (arg, "step")       == 0 ) flag_bits &= ~POSIX_LOG_STEP;
+            else if (::strcasecmp (arg, "thread")     == 0 ) flag_bits &= ~POSIX_LOG_THREAD;
+            else if (::strcasecmp (arg, "verbose")    == 0 ) flag_bits &= ~POSIX_LOG_VERBOSE;
+            else if (::strncasecmp (arg, "watch", 5)  == 0 ) flag_bits &= ~POSIX_LOG_WATCHPOINTS;
+            else
+            {
+                feedback_strm->Printf("error: unrecognized log category '%s'\n", arg);
+                ListLogCategories (feedback_strm);
             }
         }
         
@@ -95,7 +89,7 @@ ProcessPOSIXLog::DisableLog (Args &args, Stream *feedback_strm)
 }
 
 LogSP
-ProcessPOSIXLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args &args, Stream *feedback_strm)
+ProcessPOSIXLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, const char **args, Stream *feedback_strm)
 {
     // Try see if there already is a log - that way we can reuse its settings.
     // We could reuse the log in toto, but we don't know that the stream is the same.
@@ -107,17 +101,16 @@ ProcessPOSIXLog::EnableLog (StreamSP &log_stream_sp, uint32_t log_options, Args 
     // Now make a new log with this stream if one was provided
     if (log_stream_sp)
     {
-        log = make_shared<Log>(log_stream_sp);
+        log = LogSP(new Log(log_stream_sp));
         GetLog () = log;
     }
 
     if (log)
     {
         bool got_unknown_category = false;
-        const size_t argc = args.GetArgumentCount();
-        for (size_t i=0; i<argc; ++i)
+        for (; args[0]; args++)
         {
-            const char *arg = args.GetArgumentAtIndex(i);
+            const char *arg = args[0];
 
             if      (::strcasecmp (arg, "all")        == 0 ) flag_bits |= POSIX_LOG_ALL;
             else if (::strcasecmp (arg, "async")      == 0 ) flag_bits |= POSIX_LOG_ASYNC;
