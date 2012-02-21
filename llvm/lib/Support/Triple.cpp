@@ -292,10 +292,8 @@ Triple::EnvironmentType Triple::ParseEnvironment(StringRef EnvironmentName) {
 
 /// \brief Construct a triple from the string representation provided.
 ///
-/// This doesn't actually parse the string representation eagerly. Instead it
-/// stores it, and tracks the fact that it hasn't been parsed. The first time
-/// any of the structural queries are made, the string is parsed and the
-/// results cached in various members.
+/// This stores the string representation and parses the various pieces into
+/// enum members.
 Triple::Triple(const Twine &Str)
     : Data(Str.str()),
       Arch(ParseArch(getArchName())),
@@ -307,9 +305,9 @@ Triple::Triple(const Twine &Str)
 /// \brief Construct a triple from string representations of the architecture,
 /// vendor, and OS.
 ///
-/// This doesn't actually use these already distinct strings to setup the
-/// triple information. Instead it joins them into a canonical form of a triple
-/// string, and lazily parses it on use.
+/// This joins each argument into a canonical string representation and parses
+/// them into enum members. It leaves the environment unknown and omits it from
+/// the string representation.
 Triple::Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr)
     : Data((ArchStr + Twine('-') + VendorStr + Twine('-') + OSStr).str()),
       Arch(ParseArch(ArchStr.str())),
@@ -321,9 +319,8 @@ Triple::Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr)
 /// \brief Construct a triple from string representations of the architecture,
 /// vendor, OS, and environment.
 ///
-/// This doesn't actually use these already distinct strings to setup the
-/// triple information. Instead it joins them into a canonical form of a triple
-/// string, and lazily parses it on use.
+/// This joins each argument into a canonical string representation and parses
+/// them into enum members.
 Triple::Triple(const Twine &ArchStr, const Twine &VendorStr, const Twine &OSStr,
                const Twine &EnvironmentStr)
     : Data((ArchStr + Twine('-') + VendorStr + Twine('-') + OSStr + Twine('-') +

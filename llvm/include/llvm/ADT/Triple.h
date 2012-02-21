@@ -132,7 +132,8 @@ public:
   /// @name Constructors
   /// @{
 
-  /// \brief Default constructor produces an empty, invalid triple.
+  /// \brief Default constructor is the same as an empty string and leaves all
+  /// triple fields unknown.
   Triple() : Data(), Arch(), Vendor(), OS(), Environment() {}
 
   explicit Triple(const Twine &Str);
