@@ -1706,7 +1706,7 @@ public:
     return CanonicalType;
   }
   CanQualType getCanonicalTypeUnqualified() const; // in CanonicalType.h
-  void dump() const;
+  LLVM_ATTRIBUTE_USED void dump() const;
 
   static bool classof(const Type *) { return true; }
 
