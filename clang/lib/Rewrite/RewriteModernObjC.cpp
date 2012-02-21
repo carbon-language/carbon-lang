@@ -3230,16 +3230,6 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
 /// and emits meta-data.
 
 void RewriteModernObjC::RewriteImplementations() {
-  
-  for (unsigned i = 0, e = ObjCInterfacesSeen.size(); i < e; i++) {
-    ObjCInterfaceDecl *CDecl = ObjCInterfacesSeen[i];
-    // Write struct declaration for the class matching its ivar declarations.
-    // Note that for modern abi, this is postponed until the end of TU
-    // because class extensions and the implementation might declare their own
-    // private ivars.
-    RewriteInterfaceDecl(CDecl);
-  }
-  
   int ClsDefCount = ClassImplementation.size();
   int CatDefCount = CategoryImplementation.size();
 
@@ -5022,6 +5012,15 @@ void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
     RewriteObjCProtocolMetaData(*I, Preamble);
 
   InsertText(SM->getLocForStartOfFile(MainFileID), Preamble, false);
+  for (unsigned i = 0, e = ObjCInterfacesSeen.size(); i < e; i++) {
+    ObjCInterfaceDecl *CDecl = ObjCInterfacesSeen[i];
+    // Write struct declaration for the class matching its ivar declarations.
+    // Note that for modern abi, this is postponed until the end of TU
+    // because class extensions and the implementation might declare their own
+    // private ivars.
+    RewriteInterfaceDecl(CDecl);
+  }
+
   if (ClassImplementation.size() || CategoryImplementation.size())
     RewriteImplementations();
 

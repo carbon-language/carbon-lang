@@ -60,3 +60,12 @@
   return (SUPER *)0;
 }
 @end
+
+@class FORM_CLASS;
+@interface INTF_DECL  {
+}
+@end
+
+double Meth(INTF_DECL *p, FORM_CLASS *f) {
+  return 1.34;
+}
