@@ -342,7 +342,10 @@ bool RABasic::runOnMachineFunction(MachineFunction &mf) {
   // Write out new DBG_VALUE instructions.
   getAnalysis<LiveDebugVariables>().emitDebugValues(VRM);
 
-  // The pass output is in VirtRegMap. Release all the transient data.
+  // All machine operands and other references to virtual registers have been
+  // replaced. Remove the virtual registers and release all the transient data.
+  VRM->clearAllVirt();
+  MRI->clearVirtRegs();
   releaseMemory();
 
   return true;

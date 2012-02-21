@@ -273,6 +273,9 @@ public:
   ///
   unsigned getNumVirtRegs() const { return VRegInfo.size(); }
 
+  /// clearVirtRegs - Remove all virtual registers (after physreg assignment).
+  void clearVirtRegs();
+
   /// setRegAllocationHint - Specify a register allocation hint for the
   /// specified virtual register.
   void setRegAllocationHint(unsigned Reg, unsigned Type, unsigned PrefReg) {

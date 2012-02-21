@@ -69,6 +69,8 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   const TargetRegisterInfo *TRI = Fn.getTarget().getRegisterInfo();
   const TargetFrameLowering *TFI = Fn.getTarget().getFrameLowering();
 
+  assert(!Fn.getRegInfo().getNumVirtRegs() && "Regalloc must assign all vregs");
+
   RS = TRI->requiresRegisterScavenging(Fn) ? new RegScavenger() : NULL;
   FrameIndexVirtualScavenging = TRI->requiresFrameIndexScavenging(Fn);
 
@@ -122,6 +124,9 @@ bool PEI::runOnMachineFunction(MachineFunction &Fn) {
   // inserted.
   if (TRI->requiresRegisterScavenging(Fn) && FrameIndexVirtualScavenging)
     scavengeFrameVirtualRegs(Fn);
+
+  // Clear any vregs created by virtual scavenging.
+  Fn.getRegInfo().clearVirtRegs();
 
   delete RS;
   clearAllSets();
@@ -803,6 +808,10 @@ void PEI::replaceFrameIndices(MachineFunction &Fn) {
 /// scavengeFrameVirtualRegs - Replace all frame index virtual registers
 /// with physical registers. Use the register scavenger to find an
 /// appropriate register to use.
+///
+/// FIXME: Iterating over the instruction stream is unnecessary. We can simply
+/// iterate over the vreg use list, which at this point only contains machine
+/// operands for which eliminateFrameIndex need a new scratch reg.
 void PEI::scavengeFrameVirtualRegs(MachineFunction &Fn) {
   // Run through the instructions and find any virtual registers.
   for (MachineFunction::iterator BB = Fn.begin(),

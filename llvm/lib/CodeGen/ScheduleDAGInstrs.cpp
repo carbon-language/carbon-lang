@@ -40,6 +40,8 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
     UnitLatencies(false), Defs(TRI->getNumRegs()), Uses(TRI->getNumRegs()),
     LoopRegs(MLI, MDT), FirstDbgValue(0) {
   DbgValues.clear();
+  assert(!(IsPostRA && MF.getRegInfo().getNumVirtRegs()) &&
+         "Virtual registers must be removed prior to PostRA scheduling");
 }
 
 /// Run - perform scheduling.

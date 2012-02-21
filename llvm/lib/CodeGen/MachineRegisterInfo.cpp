@@ -31,9 +31,7 @@ MachineRegisterInfo::MachineRegisterInfo(const TargetRegisterInfo &TRI)
 
 MachineRegisterInfo::~MachineRegisterInfo() {
 #ifndef NDEBUG
-  for (unsigned i = 0, e = getNumVirtRegs(); i != e; ++i)
-    assert(VRegInfo[TargetRegisterInfo::index2VirtReg(i)].second == 0 &&
-           "Vreg use list non-empty still?");
+  clearVirtRegs();
   for (unsigned i = 0, e = UsedPhysRegs.size(); i != e; ++i)
     assert(!PhysRegUseDefLists[i] &&
            "PhysRegUseDefLists has entries after all instructions are deleted");
@@ -116,6 +114,16 @@ MachineRegisterInfo::createVirtualRegister(const TargetRegisterClass *RegClass){
     // The vector reallocated, handle this now.
     HandleVRegListReallocation();
   return Reg;
+}
+
+/// clearVirtRegs - Remove all virtual registers (after physreg assignment).
+void MachineRegisterInfo::clearVirtRegs() {
+#ifndef NDEBUG
+  for (unsigned i = 0, e = getNumVirtRegs(); i != e; ++i)
+    assert(VRegInfo[TargetRegisterInfo::index2VirtReg(i)].second == 0 &&
+           "Vreg use list non-empty still?");
+#endif
+  VRegInfo.clear();
 }
 
 /// HandleVRegListReallocation - We just added a virtual register to the

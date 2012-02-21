@@ -1104,6 +1104,10 @@ bool RAFast::runOnMachineFunction(MachineFunction &Fn) {
       while (*Defs)
         MRI->setPhysRegUsed(*Defs++);
 
+  // All machine operands and other references to virtual registers have been
+  // replaced. Remove the virtual registers.
+  MRI->clearVirtRegs();
+
   SkippedInstrs.clear();
   StackSlotForVirtReg.clear();
   LiveDbgValueMap.clear();

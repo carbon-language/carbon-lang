@@ -667,6 +667,11 @@ bool RegAllocPBQP::runOnMachineFunction(MachineFunction &MF) {
   // Run rewriter
   vrm->rewrite(lis->getSlotIndexes());
 
+  // All machine operands and other references to virtual registers have been
+  // replaced. Remove the virtual registers.
+  vrm->clearAllVirt();
+  mri->clearVirtRegs();
+
   return true;
 }
 

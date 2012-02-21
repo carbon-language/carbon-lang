@@ -126,7 +126,9 @@ public:
 } // namespace
 
 TargetPassConfig *PTXTargetMachine::createPassConfig(PassManagerBase &PM) {
-  return new PTXPassConfig(this, PM);
+  PTXPassConfig *PassConfig = new PTXPassConfig(this, PM);
+  PassConfig->disablePass(PrologEpilogCodeInserterID);
+  return PassConfig;
 }
 
 bool PTXPassConfig::addInstSelector() {
