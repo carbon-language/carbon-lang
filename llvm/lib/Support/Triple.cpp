@@ -414,7 +414,8 @@ std::string Triple::normalize(StringRef Str) {
         // components to the right.
         for (unsigned i = Pos; !CurrentComponent.empty(); ++i) {
           // Skip over any fixed components.
-          while (i < array_lengthof(Found) && Found[i]) ++i;
+          while (i < array_lengthof(Found) && Found[i])
+            ++i;
           // Place the component at the new position, getting the component
           // that was at this position - it will be moved right.
           std::swap(CurrentComponent, Components[i]);
@@ -442,7 +443,8 @@ std::string Triple::normalize(StringRef Str) {
             Components.push_back(CurrentComponent);
 
           // Advance Idx to the component's new position.
-          while (++Idx < array_lengthof(Found) && Found[Idx]) {}
+          while (++Idx < array_lengthof(Found) && Found[Idx])
+            ;
         } while (Idx < Pos); // Add more until the final position is reached.
       }
       assert(Pos < Components.size() && Components[Pos] == Comp &&
