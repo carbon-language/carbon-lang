@@ -511,10 +511,6 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
                                  llvm::Optional<unsigned> ManglingNumber,
                                  Decl *ContextDecl,
                                  bool IsInstantiation) {
-  // Leave the expression-evaluation context.
-  DiscardCleanupsInEvaluationContext();
-  PopExpressionEvaluationContext();
-
   // Collect information from the lambda scope.
   llvm::SmallVector<LambdaExpr::Capture, 4> Captures;
   llvm::SmallVector<Expr *, 4> CaptureInits;
@@ -631,6 +627,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     ActOnFinishFunctionBody(CallOperator, Body, IsInstantiation);
     CallOperator->setLexicalDeclContext(Class);
     Class->addDecl(CallOperator);
+    PopExpressionEvaluationContext();
 
     // C++11 [expr.prim.lambda]p6:
     //   The closure type for a lambda-expression with no lambda-capture
@@ -654,7 +651,6 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     ActOnFields(0, Class->getLocation(), Class, Fields, 
                 SourceLocation(), SourceLocation(), 0);
     CheckCompletedCXXClass(Class);
-
   }
 
   if (LambdaExprNeedsCleanups)

@@ -87,3 +87,17 @@ namespace ImplicitCapture {
     []() { return h; }; // expected-error {{variable 'h' cannot be implicitly captured in a lambda with no capture-default specified}} expected-note {{lambda expression begins here}} 
   }
 }
+
+namespace PR12031 {
+  struct X {
+    template<typename T>
+    X(const T&);
+    ~X();
+  };
+
+  void f(int i, X x);
+  void g() {
+    const int v = 10;
+    f(v, [](){});
+  }
+}
