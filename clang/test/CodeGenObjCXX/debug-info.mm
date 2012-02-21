@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -g -emit-obj %s
+// RUN: %clang_cc1 -triple x86_64-apple-darwin10 -g -emit-obj %s -o /dev/null
 
 // This test passes if clang doesn't crash.
 
