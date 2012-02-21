@@ -307,8 +307,8 @@ public:
   /// dump - This does a local dump of the specified AST fragment.  It dumps the
   /// specified node and a few nodes underneath it, but not the whole subtree.
   /// This is useful in a debugger.
-  void dump() const;
-  void dump(SourceManager &SM) const;
+  LLVM_ATTRIBUTE_USED void dump() const;
+  LLVM_ATTRIBUTE_USED void dump(SourceManager &SM) const;
   void dump(raw_ostream &OS, SourceManager &SM) const;
 
   /// dumpAll - This does a dump of the specified AST fragment and all subtrees.
