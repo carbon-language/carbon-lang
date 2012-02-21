@@ -268,7 +268,8 @@ DNBProcessLaunch (const char *path,
             }
             else
             {
-                assert(AddProcessToMap(pid, processSP));
+                bool res = AddProcessToMap(pid, processSP);
+                assert(res && "Couldn't add process to map!");
                 return pid;
             }
         }
@@ -315,7 +316,8 @@ DNBProcessAttach (nub_process_t attach_pid, struct timespec *timeout, char *err_
 
         if (pid != INVALID_NUB_PROCESS)
         {
-            assert(AddProcessToMap(pid, processSP));
+            bool res = AddProcessToMap(pid, processSP);
+            assert(res && "Couldn't add process to map!");
             spawn_waitpid_thread(pid);
         }
     }
