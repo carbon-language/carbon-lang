@@ -32,6 +32,12 @@ static void test1() {
   my_malloc1(&data, 4); // expected-warning {{Memory is never released; potential memory leak}}
 }
 
+static void test11() {
+  void *data = 0;
+  my_malloc1(&data, 4);
+  my_free1(data);
+}
+
 static void test2() {
   void * data = my_malloc2(1, 4);
   data = my_malloc2(1, 4);// expected-warning {{Memory is never released; potential memory leak}}
@@ -52,3 +58,14 @@ int test4() {
   return *data; // expected-warning {{Use of memory after it is freed}}
 }
 
+void test6() {
+  int *data = (int *)my_malloc2(1, 4);
+  my_free1((int*)data);
+  my_free1((int*)data); // expected-warning{{Use of memory after it is freed}}
+}
+
+// TODO: We should warn here.
+void test5() {
+  int *data;
+  my_free1((int*)data);
+}
