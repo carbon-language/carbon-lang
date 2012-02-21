@@ -56,6 +56,7 @@
 
 @implementation INTF  
 - (SUPER *) Meth : (SUPER *)arg { 
-  return arg->p_super; 
+// NYI -  return arg->p_super; 
+  return (SUPER *)0;
 }
 @end

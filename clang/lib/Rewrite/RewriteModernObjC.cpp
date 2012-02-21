@@ -6408,7 +6408,7 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
   ObjCIvarDecl *D = IV->getDecl();
   
   Expr *Replacement = IV;
-  if (CurMethodDef) {
+  
     if (BaseExpr->getType()->isObjCObjectPointerType()) {
       const ObjCInterfaceType *iFaceDecl =
       dyn_cast<ObjCInterfaceType>(BaseExpr->getType()->getPointeeType());
@@ -6419,70 +6419,46 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
                                                    clsDeclared);
       assert(clsDeclared && "RewriteObjCIvarRefExpr(): Can't find class");
       
-      // Synthesize an explicit cast to gain access to the ivar.
-      std::string RecName = clsDeclared->getIdentifier()->getName();
-      RecName += "_IMPL";
-      IdentifierInfo *II = &Context->Idents.get(RecName);
-      RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
-                                          SourceLocation(), SourceLocation(),
-                                          II);
-      assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
-      QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
-      CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, castT,
+      // Build name of symbol holding ivar offset.
+      std::string IvarOffsetName = "OBJC_IVAR_$_";
+      IvarOffsetName += clsDeclared->getIdentifier()->getName();
+      IvarOffsetName += "_";
+      IvarOffsetName += D->getName();
+      // cast offset to "char *".
+      CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, 
+                                                    Context->getPointerType(Context->CharTy),
                                                     CK_BitCast,
-                                                    IV->getBase());
+                                                    BaseExpr);
+      VarDecl *NewVD = VarDecl::Create(*Context, TUDecl, SourceLocation(),
+                                       SourceLocation(), &Context->Idents.get(IvarOffsetName),
+                                       Context->UnsignedLongTy, 0, SC_Extern, SC_None);
+      DeclRefExpr *DRE = new (Context) DeclRefExpr(NewVD, Context->UnsignedLongTy, VK_LValue,
+                                                   SourceLocation());
+      BinaryOperator *addExpr = 
+        new (Context) BinaryOperator(castExpr, DRE, BO_Add, 
+                                     Context->getPointerType(Context->CharTy),
+                                     VK_RValue, OK_Ordinary, SourceLocation());
       // Don't forget the parens to enforce the proper binding.
-      ParenExpr *PE = new (Context) ParenExpr(OldRange.getBegin(),
-                                              OldRange.getEnd(),
-                                              castExpr);
-      if (IV->isFreeIvar() &&
-          declaresSameEntity(CurMethodDef->getClassInterface(), iFaceDecl->getDecl())) {
-        MemberExpr *ME = new (Context) MemberExpr(PE, true, D,
-                                                  IV->getLocation(),
-                                                  D->getType(),
-                                                  VK_LValue, OK_Ordinary);
-        Replacement = ME;
-      } else {
-        IV->setBase(PE);
-      }
-    }
-  } else { // we are outside a method.
-    assert(!IV->isFreeIvar() && "Cannot have a free standing ivar outside a method");
-    
-    // Explicit ivar refs need to have a cast inserted.
-    // FIXME: consider sharing some of this code with the code above.
-    if (BaseExpr->getType()->isObjCObjectPointerType()) {
-      const ObjCInterfaceType *iFaceDecl =
-      dyn_cast<ObjCInterfaceType>(BaseExpr->getType()->getPointeeType());
-      // lookup which class implements the instance variable.
-      ObjCInterfaceDecl *clsDeclared = 0;
-      iFaceDecl->getDecl()->lookupInstanceVariable(D->getIdentifier(),
-                                                   clsDeclared);
-      assert(clsDeclared && "RewriteObjCIvarRefExpr(): Can't find class");
+      ParenExpr *PE = new (Context) ParenExpr(SourceLocation(),
+                                              SourceLocation(),
+                                              addExpr);
       
-      // Synthesize an explicit cast to gain access to the ivar.
-      std::string RecName = clsDeclared->getIdentifier()->getName();
-      RecName += "_IMPL";
-      IdentifierInfo *II = &Context->Idents.get(RecName);
-      RecordDecl *RD = RecordDecl::Create(*Context, TTK_Struct, TUDecl,
-                                          SourceLocation(), SourceLocation(),
-                                          II);
-      assert(RD && "RewriteObjCIvarRefExpr(): Can't find RecordDecl");
-      QualType castT = Context->getPointerType(Context->getTagDeclType(RD));
-      CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, castT,
-                                                    CK_BitCast,
-                                                    IV->getBase());
-      // Don't forget the parens to enforce the proper binding.
-      ParenExpr *PE = new (Context) ParenExpr(IV->getBase()->getLocStart(),
-                                              IV->getBase()->getLocEnd(), castExpr);
-      // Cannot delete IV->getBase(), since PE points to it.
-      // Replace the old base with the cast. This is important when doing
-      // embedded rewrites. For example, [newInv->_container addObject:0].
-      IV->setBase(PE);
+      QualType castT = Context->getPointerType(D->getType());
+      castExpr = NoTypeInfoCStyleCastExpr(Context, 
+                                          castT,
+                                          CK_BitCast,
+                                          PE);
+      Expr *Exp = new (Context) UnaryOperator(castExpr, UO_Deref, castT,
+                                              VK_LValue, OK_Ordinary,
+                                              SourceLocation());
+      PE = new (Context) ParenExpr(OldRange.getBegin(),
+                                   OldRange.getEnd(),
+                                   Exp);
+
+      Replacement = PE;
     }
-  }
   
-  ReplaceStmtWithRange(IV, Replacement, OldRange);
-  return Replacement;  
+    ReplaceStmtWithRange(IV, Replacement, OldRange);
+    return Replacement;  
 }
 
