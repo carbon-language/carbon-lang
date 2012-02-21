@@ -451,7 +451,7 @@ public:
     string message() const;
 
     _LIBCPP_ALWAYS_INLINE
-    //explicit
+        _LIBCPP_EXPLICIT
         operator bool() const _NOEXCEPT {return __val_ != 0;}
 };
 
@@ -528,7 +528,7 @@ public:
     string message() const;
 
     _LIBCPP_ALWAYS_INLINE
-    //explicit
+        _LIBCPP_EXPLICIT
         operator bool() const _NOEXCEPT {return __val_ != 0;}
 };
 

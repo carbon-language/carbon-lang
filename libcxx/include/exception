@@ -132,7 +132,7 @@ public:
     ~exception_ptr() _NOEXCEPT;
 
     _LIBCPP_INLINE_VISIBILITY
-    // explicit
+    _LIBCPP_EXPLICIT
         operator bool() const _NOEXCEPT {return __ptr_ != nullptr;}
 
     friend _LIBCPP_INLINE_VISIBILITY

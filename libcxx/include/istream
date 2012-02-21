@@ -256,7 +256,7 @@ public:
 //    ~sentry() = default;
 
     _LIBCPP_INLINE_VISIBILITY
-    // explicit
+        _LIBCPP_EXPLICIT
         operator bool() const {return __ok_;}
 };
 

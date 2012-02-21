@@ -220,7 +220,7 @@ public:
     ~sentry();
 
     _LIBCPP_ALWAYS_INLINE
-    // explicit
+        _LIBCPP_EXPLICIT
         operator bool() const {return __ok_;}
 };
 

@@ -1163,7 +1163,7 @@ public:
 
     // function capacity:
     _LIBCPP_INLINE_VISIBILITY
-    /*explicit*/ operator bool() const _NOEXCEPT {return __f_;}
+        _LIBCPP_EXPLICIT operator bool() const _NOEXCEPT {return __f_;}
 
     // deleted overloads close possible hole in the type system
     template<class _R2, class... _ArgTypes2>

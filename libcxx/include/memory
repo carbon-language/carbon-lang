@@ -2688,9 +2688,9 @@ public:
         {return __ptr_.second();}
     _LIBCPP_INLINE_VISIBILITY _Dp_const_reference get_deleter() const _NOEXCEPT
         {return __ptr_.second();}
-    _LIBCPP_INLINE_VISIBILITY operator int __nat::*() const
-             _NOEXCEPT
-        {return __ptr_.first() ? &__nat::__for_bool_ : 0;}
+    _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_EXPLICIT operator bool() const _NOEXCEPT
+        {return __ptr_.first() != nullptr;}
 
     _LIBCPP_INLINE_VISIBILITY pointer release() _NOEXCEPT
     {
@@ -2881,8 +2881,9 @@ public:
         {return __ptr_.second();}
     _LIBCPP_INLINE_VISIBILITY _Dp_const_reference get_deleter() const _NOEXCEPT
         {return __ptr_.second();}
-    _LIBCPP_INLINE_VISIBILITY operator int __nat::*() const _NOEXCEPT
-        {return __ptr_.first() ? &__nat::__for_bool_ : 0;}
+    _LIBCPP_INLINE_VISIBILITY
+        _LIBCPP_EXPLICIT operator bool() const _NOEXCEPT
+        {return __ptr_.first() != nullptr;}
 
     _LIBCPP_INLINE_VISIBILITY pointer release() _NOEXCEPT
     {
@@ -3937,7 +3938,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     bool unique() const _NOEXCEPT {return use_count() == 1;}
     _LIBCPP_INLINE_VISIBILITY
-    /*explicit*/ operator bool() const _NOEXCEPT {return get() != 0;}
+    _LIBCPP_EXPLICIT operator bool() const _NOEXCEPT {return get() != 0;}
     template <class _Up>
         _LIBCPP_INLINE_VISIBILITY
         bool owner_before(shared_ptr<_Up> const& __p) const

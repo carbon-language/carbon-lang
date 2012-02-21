@@ -376,6 +376,12 @@ template <unsigned> struct __static_assert_check {};
 #define __has_feature(__x) 0
 #endif
 
+#if __has_feature(cxx_explicit_conversions)
+#   define _LIBCPP_EXPLICIT explicit
+#else
+#   define _LIBCPP_EXPLICIT
+#endif
+
 #ifdef _LIBCPP_HAS_NO_STRONG_ENUMS
 #define _LIBCPP_DECLARE_STRONG_ENUM(x) struct _LIBCPP_VISIBLE x { enum _
 #define _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(x) \

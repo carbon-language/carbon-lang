@@ -572,7 +572,8 @@ public:
     typedef typename traits_type::pos_type pos_type;
     typedef typename traits_type::off_type off_type;
 
-    _LIBCPP_ALWAYS_INLINE // explicit
+    _LIBCPP_ALWAYS_INLINE
+        _LIBCPP_EXPLICIT
         operator bool() const {return !fail();}
     _LIBCPP_ALWAYS_INLINE bool operator!() const    {return  fail();}
     _LIBCPP_ALWAYS_INLINE iostate rdstate() const   {return ios_base::rdstate();}

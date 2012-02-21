@@ -207,7 +207,7 @@ public:
     _LIBCPP_INLINE_VISIBILITY
     bool owns_lock() const {return __owns_;}
     _LIBCPP_INLINE_VISIBILITY
-//    explicit
+    _LIBCPP_EXPLICIT
         operator bool () const {return __owns_;}
     _LIBCPP_INLINE_VISIBILITY
     mutex_type* mutex() const {return __m_;}
