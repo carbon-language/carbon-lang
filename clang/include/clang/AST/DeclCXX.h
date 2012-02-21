@@ -560,18 +560,28 @@ class CXXRecordDecl : public RecordDecl {
   struct LambdaDefinitionData : public DefinitionData {
     typedef LambdaExpr::Capture Capture;
     
-    LambdaDefinitionData(CXXRecordDecl *D) 
-      : DefinitionData(D), NumCaptures(0), NumExplicitCaptures(0), 
-        ContextDecl(0), Captures(0) 
+    LambdaDefinitionData(CXXRecordDecl *D, bool Dependent) 
+      : DefinitionData(D), Dependent(Dependent), NumCaptures(0), 
+        NumExplicitCaptures(0), ManglingNumber(0), ContextDecl(0), Captures(0) 
     {
       IsLambda = true;
     }
 
+    /// \brief Whether this lambda is known to be dependent, even if its
+    /// context isn't dependent.
+    /// 
+    /// A lambda with a non-dependent context can be dependent if it occurs
+    /// within the default argument of a function template, because the
+    /// lambda will have been created with the enclosing context as its
+    /// declaration context, rather than function. This is an unfortunate
+    /// artifact of having to parse the default arguments before 
+    unsigned Dependent : 1;
+    
     /// \brief The number of captures in this lambda.
     unsigned NumCaptures : 16;
 
     /// \brief The number of explicit captures in this lambda.
-    unsigned NumExplicitCaptures : 16;
+    unsigned NumExplicitCaptures : 15;
 
     /// \brief The number used to indicate this lambda expression for name 
     /// mangling in the Itanium C++ ABI.
@@ -689,7 +699,7 @@ public:
                                IdentifierInfo *Id, CXXRecordDecl* PrevDecl=0,
                                bool DelayTypeCreation = false);
   static CXXRecordDecl *CreateLambda(const ASTContext &C, DeclContext *DC,
-                                     SourceLocation Loc);
+                                     SourceLocation Loc, bool DependentLambda);
   static CXXRecordDecl *CreateDeserialized(const ASTContext &C, unsigned ID);
 
   bool isDynamicClass() const {
@@ -1476,6 +1486,21 @@ public:
   Decl *getLambdaContextDecl() const {
     assert(isLambda() && "Not a lambda closure type!");
     return getLambdaData().ContextDecl;    
+  }
+  
+  /// \brief Determine whether this lambda expression was known to be dependent
+  /// at the time it was created, even if its context does not appear to be
+  /// dependent.
+  ///
+  /// This flag is a workaround for an issue with parsing, where default
+  /// arguments are parsed before their enclosing function declarations have
+  /// been created. This means that any lambda expressions within those
+  /// default arguments will have as their DeclContext the context enclosing
+  /// the function declaration, which may be non-dependent even when the
+  /// function declaration itself is dependent. This flag indicates when we
+  /// know that the lambda is dependent despite that.
+  bool isDependentLambda() const {
+    return isLambda() && getLambdaData().Dependent;
   }
   
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }

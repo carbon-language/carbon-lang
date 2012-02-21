@@ -8,3 +8,9 @@ void f2() {
   void g4(int = ([=]{ return 0; })());
   void g5(int = ([]{ return sizeof i; })());
 }
+
+namespace lambda_in_default_args {
+  int f(int = [] () -> int { int n; return ++n; } ());
+  template<typename T> T g(T = [] () -> T { T n; return ++n; } ());
+  int k = f() + g<int>();
+}

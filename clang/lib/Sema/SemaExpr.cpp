@@ -3146,7 +3146,8 @@ ExprResult Sema::BuildCXXDefaultArgExpr(SourceLocation CallLoc,
   // We already type-checked the argument, so we know it works. 
   // Just mark all of the declarations in this potentially-evaluated expression
   // as being "referenced".
-  MarkDeclarationsReferencedInExpr(Param->getDefaultArg());
+  MarkDeclarationsReferencedInExpr(Param->getDefaultArg(),
+                                   /*SkipLocalVariables=*/true);
   return Owned(CXXDefaultArgExpr::Create(Context, CallLoc, Param));
 }
 
@@ -10145,13 +10146,22 @@ namespace {
   /// potentially-evaluated subexpressions as "referenced".
   class EvaluatedExprMarker : public EvaluatedExprVisitor<EvaluatedExprMarker> {
     Sema &S;
+    bool SkipLocalVariables;
     
   public:
     typedef EvaluatedExprVisitor<EvaluatedExprMarker> Inherited;
     
-    explicit EvaluatedExprMarker(Sema &S) : Inherited(S.Context), S(S) { }
+    EvaluatedExprMarker(Sema &S, bool SkipLocalVariables) 
+      : Inherited(S.Context), S(S), SkipLocalVariables(SkipLocalVariables) { }
     
     void VisitDeclRefExpr(DeclRefExpr *E) {
+      // If we were asked not to visit local variables, don't.
+      if (SkipLocalVariables) {
+        if (VarDecl *VD = dyn_cast<VarDecl>(E->getDecl()))
+          if (VD->hasLocalStorage())
+            return;
+      }
+      
       S.MarkDeclRefReferenced(E);
     }
     
@@ -10193,6 +10203,10 @@ namespace {
     }
     
     void VisitBlockDeclRefExpr(BlockDeclRefExpr *E) {
+      // If we were asked not to visit local variables, don't.
+      if (SkipLocalVariables && E->getDecl()->hasLocalStorage())
+          return;
+
       S.MarkBlockDeclRefReferenced(E);
     }
     
@@ -10211,8 +10225,12 @@ namespace {
 
 /// \brief Mark any declarations that appear within this expression or any
 /// potentially-evaluated subexpressions as "referenced".
-void Sema::MarkDeclarationsReferencedInExpr(Expr *E) {
-  EvaluatedExprMarker(*this).Visit(E);
+///
+/// \param SkipLocalVariables If true, don't mark local variables as 
+/// 'referenced'.
+void Sema::MarkDeclarationsReferencedInExpr(Expr *E, 
+                                            bool SkipLocalVariables) {
+  EvaluatedExprMarker(*this, SkipLocalVariables).Visit(E);
 }
 
 /// \brief Emit a diagnostic that describes an effect on the run-time behavior

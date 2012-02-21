@@ -741,10 +741,14 @@ bool DeclContext::isDependentContext() const {
   if (isa<ClassTemplatePartialSpecializationDecl>(this))
     return true;
 
-  if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(this))
+  if (const CXXRecordDecl *Record = dyn_cast<CXXRecordDecl>(this)) {
     if (Record->getDescribedClassTemplate())
       return true;
-
+    
+    if (Record->isDependentLambda())
+      return true;
+  }
+  
   if (const FunctionDecl *Function = dyn_cast<FunctionDecl>(this)) {
     if (Function->getDescribedFunctionTemplate())
       return true;

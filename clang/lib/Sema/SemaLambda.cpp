@@ -21,14 +21,16 @@
 using namespace clang;
 using namespace sema;
 
-CXXRecordDecl *Sema::createLambdaClosureType(SourceRange IntroducerRange) {
+CXXRecordDecl *Sema::createLambdaClosureType(SourceRange IntroducerRange,
+                                             bool KnownDependent) {
   DeclContext *DC = CurContext;
   while (!(DC->isFunctionOrMethod() || DC->isRecord() || DC->isFileContext()))
     DC = DC->getParent();
   
   // Start constructing the lambda class.
   CXXRecordDecl *Class = CXXRecordDecl::CreateLambda(Context, DC, 
-                                                     IntroducerRange.getBegin());
+                                                     IntroducerRange.getBegin(),
+                                                     KnownDependent);
   DC->addDecl(Class);
   
   return Class;
@@ -142,7 +144,14 @@ void Sema::addLambdaParameters(CXXMethodDecl *CallOperator, Scope *CurScope) {
 void Sema::ActOnStartOfLambdaDefinition(LambdaIntroducer &Intro,
                                         Declarator &ParamInfo,
                                         Scope *CurScope) {
-  CXXRecordDecl *Class = createLambdaClosureType(Intro.Range);
+  // Determine if we're within a context where we know that the lambda will
+  // be dependent, because there are template parameters in scope.
+  bool KnownDependent = false;
+  if (Scope *TmplScope = CurScope->getTemplateParamParent())
+    if (!TmplScope->decl_empty())
+      KnownDependent = true;
+  
+  CXXRecordDecl *Class = createLambdaClosureType(Intro.Range, KnownDependent);
   
   // Determine the signature of the call operator.
   TypeSourceInfo *MethodTyInfo;

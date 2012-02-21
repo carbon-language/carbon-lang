@@ -2386,7 +2386,8 @@ public:
   QualType getCapturedDeclRefType(VarDecl *Var, SourceLocation Loc);
   
   void MarkDeclarationsReferencedInType(SourceLocation Loc, QualType T);
-  void MarkDeclarationsReferencedInExpr(Expr *E);
+  void MarkDeclarationsReferencedInExpr(Expr *E, 
+                                        bool SkipLocalVariables = false);
 
   /// \brief Try to recover by turning the given expression into a
   /// call.  Returns true if recovery was attempted or an error was
@@ -3543,7 +3544,8 @@ public:
   void ActOnCXXExitDeclInitializer(Scope *S, Decl *Dcl);
 
   /// \brief Create a new lambda closure type.
-  CXXRecordDecl *createLambdaClosureType(SourceRange IntroducerRange);
+  CXXRecordDecl *createLambdaClosureType(SourceRange IntroducerRange,
+                                         bool KnownDependent = false);
   
   /// \brief Start the definition of a lambda expression.
   CXXMethodDecl *startLambdaDefinition(CXXRecordDecl *Class,
