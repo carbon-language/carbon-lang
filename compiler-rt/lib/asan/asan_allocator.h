@@ -107,6 +107,7 @@ class FakeStack {
   static void OnFree(size_t ptr, size_t size, size_t real_stack);
   // Return the bottom of the maped region.
   uintptr_t AddrIsInFakeStack(uintptr_t addr);
+  bool StackSize() { return stack_size_; }
  private:
   static const size_t kMinStackFrameSizeLog = 9;  // Min frame is 512B.
   static const size_t kMaxStackFrameSizeLog = 16;  // Max stack frame is 64K.
