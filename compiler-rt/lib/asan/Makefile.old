@@ -227,9 +227,9 @@ b32: | mk_bin_dir
 	$(MAKE) -f $(MAKEFILE) ARCH=i386 asan_test asan_benchmarks
 
 lib64:
-	$(MAKE) $(MAKEFILE) ARCH=x86_64 lib
+	$(MAKE) -f $(MAKEFILE) ARCH=x86_64 lib
 lib32:
-	$(MAKE) $(MAKEFILE) ARCH=i386 lib
+	$(MAKE) -f $(MAKEFILE) ARCH=i386 lib
 
 mk_bin_dir:
 	mkdir -p $(BIN)
@@ -284,7 +284,7 @@ endif
 
 lib: $(LIBASAN_A)
 
-$(LIBASAN_A): $(BIN) $(LIBASAN_OBJ) $(MAKEFILE)
+$(LIBASAN_A): mk_bin_dir $(LIBASAN_OBJ) $(MAKEFILE)
 	mkdir -p $(LIBASAN_INST_DIR)
 	ar ru $@ $(LIBASAN_OBJ)
 	$(CXX) -shared $(CFLAGS) $(LIBASAN_OBJ) $(LD_FLAGS) -o $(BIN)/libasan$(SUFF).so
