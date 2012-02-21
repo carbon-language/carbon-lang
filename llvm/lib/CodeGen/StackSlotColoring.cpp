@@ -12,7 +12,6 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "stackcoloring"
-#include "VirtRegMap.h"
 #include "llvm/Function.h"
 #include "llvm/Module.h"
 #include "llvm/CodeGen/Passes.h"
@@ -92,8 +91,6 @@ namespace {
       AU.addRequired<SlotIndexes>();
       AU.addPreserved<SlotIndexes>();
       AU.addRequired<LiveStacks>();
-      AU.addRequired<VirtRegMap>();
-      AU.addPreserved<VirtRegMap>();
       AU.addRequired<MachineLoopInfo>();
       AU.addPreserved<MachineLoopInfo>();
       AU.addPreservedID(MachineDominatorsID);
@@ -121,7 +118,6 @@ INITIALIZE_PASS_BEGIN(StackSlotColoring, "stack-slot-coloring",
                 "Stack Slot Coloring", false, false)
 INITIALIZE_PASS_DEPENDENCY(SlotIndexes)
 INITIALIZE_PASS_DEPENDENCY(LiveStacks)
-INITIALIZE_PASS_DEPENDENCY(VirtRegMap)
 INITIALIZE_PASS_DEPENDENCY(MachineLoopInfo)
 INITIALIZE_PASS_END(StackSlotColoring, "stack-slot-coloring",
                 "Stack Slot Coloring", false, false)
