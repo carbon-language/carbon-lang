@@ -447,7 +447,8 @@ void MacOSKeychainAPIChecker::checkPostStmt(const CallExpr *CE,
   const Expr *ArgExpr = CE->getArg(FunctionsToTrack[idx].Param);
   // If the argument entered as an enclosing function parameter, skip it to
   // avoid false positives.
-  if (isEnclosingFunctionParam(ArgExpr))
+  if (isEnclosingFunctionParam(ArgExpr) &&
+      C.getLocationContext()->getParent() == 0)
     return;
 
   if (SymbolRef V = getAsPointeeSymbol(ArgExpr, C)) {
@@ -479,6 +480,10 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
                                            CheckerContext &C) const {
   const Expr *retExpr = S->getRetValue();
   if (!retExpr)
+    return;
+
+  // If inside inlined call, skip it.
+  if (C.getLocationContext()->getParent() != 0)
     return;
 
   // Check  if the value is escaping through the return.
@@ -549,6 +554,11 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
 // TODO: Remove this after we ensure that checkDeadSymbols are always called.
 void MacOSKeychainAPIChecker::checkEndPath(CheckerContext &Ctx) const {
   ProgramStateRef state = Ctx.getState();
+
+  // If inside inlined call, skip it.
+  if (Ctx.getLocationContext()->getParent() != 0)
+    return;
+
   AllocatedSetTy AS = state->get<AllocatedData>();
   if (AS.isEmpty())
     return;
