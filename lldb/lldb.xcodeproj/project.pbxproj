@@ -4110,6 +4110,7 @@
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /usr/bin;
+				"INSTALL_PATH[sdk=iphoneos*]" = /usr/local/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
@@ -4384,6 +4385,7 @@
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /usr/bin;
+				"INSTALL_PATH[sdk=iphoneos*]" = /usr/local/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LLVM_BUILD_DIR_ARCH = "$(OBJROOT)/llvm";
 				OTHER_LDFLAGS = (
@@ -4412,6 +4414,7 @@
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
 				INSTALL_PATH = /usr/bin;
+				"INSTALL_PATH[sdk=iphoneos*]" = /usr/local/bin;
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
