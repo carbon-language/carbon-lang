@@ -571,6 +571,14 @@ static Value *EvaluateGEPOffsetExpression(User *GEP, InstCombiner &IC) {
 Instruction *InstCombiner::FoldGEPICmp(GEPOperator *GEPLHS, Value *RHS,
                                        ICmpInst::Predicate Cond,
                                        Instruction &I) {
+  // Don't transform signed compares of GEPs into index compares. Even if the
+  // GEP is inbounds, the final add of the base pointer can have signed overflow
+  // and would change the result of the icmp.
+  // e.g. "&foo[0] <s &foo[1]" can't be folded to "true" because "foo" could be
+  // the minimum signed value for the pointer type.
+  if (ICmpInst::isSigned(Cond))
+    return 0;
+
   // Look through bitcasts.
   if (BitCastInst *BCI = dyn_cast<BitCastInst>(RHS))
     RHS = BCI->getOperand(0);

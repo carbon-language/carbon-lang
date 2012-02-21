@@ -628,3 +628,14 @@ define i1 @test61(i8* %foo, i64 %i, i64 %j) {
 ; CHECK: icmp ult i8* %cast1, %gep2
 ; CHECK-NEXT: ret i1
 }
+
+define i1 @test62(i8* %a) {
+  %arrayidx1 = getelementptr inbounds i8* %a, i64 1
+  %arrayidx2 = getelementptr inbounds i8* %a, i64 10
+  %cmp = icmp slt i8* %arrayidx1, %arrayidx2
+  ret i1 %cmp
+; Don't turn a signed cmp of GEPs into an index compare.
+; CHECK: @test62
+; CHECK: %cmp = icmp slt i8* %arrayidx1, %arrayidx2
+; CHECK-NEXT: ret i1 %cmp
+}
