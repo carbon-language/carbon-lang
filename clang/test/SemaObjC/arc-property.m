@@ -46,3 +46,12 @@
 @synthesize z;  // suppressed
 @end
 
+// rdar://problem/10904479
+// Don't crash.
+@interface Test2
+// Minor FIXME: kill the redundant error
+@property (strong) UndeclaredClass *test2;  // expected-error {{unknown type name 'UndeclaredClass'}} expected-error {{must be of object type}}
+@end
+@implementation Test2
+@synthesize test2;
+@end

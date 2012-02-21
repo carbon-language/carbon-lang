@@ -1777,6 +1777,7 @@ void Sema::CheckObjCPropertyAttributes(Decl *PDecl,
           Attributes & ObjCDeclSpec::DQ_PR_copy ? "copy" : "retain (or strong)");
     Attributes &= ~(ObjCDeclSpec::DQ_PR_weak   | ObjCDeclSpec::DQ_PR_copy |
                     ObjCDeclSpec::DQ_PR_retain | ObjCDeclSpec::DQ_PR_strong);
+    PropertyDecl->setInvalidDecl();
   }
 
   // Check for more than one of { assign, copy, retain }.
