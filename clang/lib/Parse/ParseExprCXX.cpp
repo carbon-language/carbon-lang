@@ -870,8 +870,10 @@ ExprResult Parser::ParseLambdaExpressionAfterIntroducer(
 
   // FIXME: Rename BlockScope -> ClosureScope if we decide to continue using
   // it.
-  ParseScope BodyScope(this, Scope::BlockScope | Scope::FnScope |
-                             Scope::DeclScope);
+  unsigned ScopeFlags = Scope::BlockScope | Scope::FnScope | Scope::DeclScope;
+  if (getCurScope()->getFlags() & Scope::ThisScope)
+    ScopeFlags |= Scope::ThisScope;
+  ParseScope BodyScope(this, ScopeFlags);
 
   Actions.ActOnStartOfLambdaDefinition(Intro, D, getCurScope());
 
