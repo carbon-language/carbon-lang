@@ -1447,13 +1447,27 @@ bool Sema::SemaCheckStringLiteral(const Expr *E, Expr **Args,
       //      vprintf(fmt, ap);  // Do NOT emit a warning about "fmt".
       //      ...
       //
-      //
-      //  FIXME: We don't have full attribute support yet, so just check to see
-      //    if the argument is a DeclRefExpr that references a parameter.  We'll
-      //    add proper support for checking the attribute later.
-      if (HasVAListArg)
-        if (isa<ParmVarDecl>(VD))
-          return true;
+      if (HasVAListArg) {
+        if (const ParmVarDecl *PV = dyn_cast<ParmVarDecl>(VD)) {
+          if (const NamedDecl *ND = dyn_cast<NamedDecl>(PV->getDeclContext())) {
+            int PVIndex = PV->getFunctionScopeIndex() + 1;
+            for (specific_attr_iterator<FormatAttr>
+                 i = ND->specific_attr_begin<FormatAttr>(),
+                 e = ND->specific_attr_end<FormatAttr>(); i != e ; ++i) {
+              FormatAttr *PVFormat = *i;
+              // adjust for implicit parameter
+              if (const CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(ND))
+                if (MD->isInstance())
+                  ++PVIndex;
+              // We also check if the formats are compatible.
+              // We can't pass a 'scanf' string to a 'printf' function.
+              if (PVIndex == PVFormat->getFormatIdx() &&
+                  Type == GetFormatStringType(PVFormat))
+                return true;
+            }
+          }
+        }
+      }
     }
 
     return false;

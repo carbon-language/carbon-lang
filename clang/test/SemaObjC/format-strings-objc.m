@@ -9,11 +9,13 @@
 // portable to non-Mac platforms.
 //===----------------------------------------------------------------------===//
 
+#include <stdarg.h>
+
 typedef signed char BOOL;
 typedef unsigned int NSUInteger;
 @class NSString, Protocol;
-extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
-extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
+extern void NSLog(NSString *format, ...);
+extern void NSLogv(NSString *format, va_list args);
 typedef struct _NSZone NSZone;
 @class NSInvocation, NSMethodSignature, NSCoder, NSString, NSEnumerator;
 @protocol NSObject  - (BOOL)isEqual:(id)object; @end
@@ -151,3 +153,26 @@ void test_percent_C() {
 void test_toll_free_bridging(CFStringRef x) {
   NSLog(@"%@", x); // no-warning
 }
+
+@interface Bar
++ (void)log:(NSString *)fmt, ...;
++ (void)log2:(NSString *)fmt, ... __attribute__((format(NSString, 1, 2)));
+@end
+
+@implementation Bar
+
++ (void)log:(NSString *)fmt, ... {
+  va_list ap;
+  va_start(ap,fmt);
+  NSLogv(fmt, ap); // expected-warning{{format string is not a string literal}}
+  va_end(ap);
+}
+
++ (void)log2:(NSString *)fmt, ... {
+  va_list ap;
+  va_start(ap,fmt);
+  NSLogv(fmt, ap); // no-warning
+  va_end(ap);
+}
+
+@end

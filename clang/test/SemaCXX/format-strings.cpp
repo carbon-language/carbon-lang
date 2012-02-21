@@ -1,8 +1,11 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wformat-nonliteral -pedantic %s
 
+#include <stdarg.h>
+
 extern "C" {
 extern int scanf(const char *restrict, ...);
 extern int printf(const char *restrict, ...);
+extern int vprintf(const char *restrict, va_list);
 }
 
 void f(char **sp, float *fp) {
@@ -23,11 +26,12 @@ class Foo {
 public:
   const char *gettext(const char *fmt) __attribute__((format_arg(2)));
 
-  int scanf(const char *restrict, ...) __attribute__((format(scanf, 2, 3)));
-  int printf(const char *restrict, ...) __attribute__((format(printf, 2, 3)));
+  int scanf(const char *, ...) __attribute__((format(scanf, 2, 3)));
+  int printf(const char *, ...) __attribute__((format(printf, 2, 3)));
+  int printf2(const char *, ...);
 
   static const char *gettext_static(const char *fmt) __attribute__((format_arg(1)));
-  static int printf_static(const char *restrict, ...) __attribute__((format(printf, 1, 2)));
+  static int printf_static(const char *fmt, ...) __attribute__((format(printf, 1, 2)));
 };
 
 void h(int *i) {
@@ -51,4 +55,24 @@ void rdar8269537(const char *f)
   test_null_format(0); // no-warning
   test_null_format(__null); // no-warning
   test_null_format(f); // expected-warning {{not a string literal}}
+}
+
+int Foo::printf(const char *fmt, ...) {
+  va_list ap;
+  va_start(ap,fmt);
+  const char * const format = fmt;
+  vprintf(format, ap); // no-warning
+
+  const char *format2 = fmt;
+  vprintf(format2, ap); // expected-warning{{format string is not a string literal}}
+
+  return 0;
+}
+
+int Foo::printf2(const char *fmt, ...) {
+  va_list ap;
+  va_start(ap,fmt);
+  vprintf(fmt, ap); // expected-warning{{format string is not a string literal}}
+
+  return 0;
 }

@@ -14,6 +14,8 @@ int vprintf(const char *restrict, va_list);
 int vsnprintf(char *, size_t, const char *, va_list);
 int vsprintf(char *restrict, const char *restrict, va_list); // expected-note{{passing argument to parameter here}}
 
+int vscanf(const char *restrict format, va_list arg);
+
 char * global_fmt;
 
 void check_string_literal( FILE* fp, const char* s, char *buf, ... ) {
@@ -23,20 +25,22 @@ void check_string_literal( FILE* fp, const char* s, char *buf, ... ) {
   va_start(ap,buf);
 
   printf(s); // expected-warning {{format string is not a string literal}}
-  vprintf(s,ap); // // no-warning
+  vprintf(s,ap); // expected-warning {{format string is not a string literal}}
   fprintf(fp,s); // expected-warning {{format string is not a string literal}}
-  vfprintf(fp,s,ap); // no-warning
+  vfprintf(fp,s,ap); // expected-warning {{format string is not a string literal}}
   asprintf(&b,s); // expected-warning {{format string is not a string lit}}
-  vasprintf(&b,s,ap); // no-warning
+  vasprintf(&b,s,ap); // expected-warning {{format string is not a string literal}}
   sprintf(buf,s); // expected-warning {{format string is not a string literal}}
   snprintf(buf,2,s); // expected-warning {{format string is not a string lit}}
   __builtin___sprintf_chk(buf,0,-1,s); // expected-warning {{format string is not a string literal}}
   __builtin___snprintf_chk(buf,2,0,-1,s); // expected-warning {{format string is not a string lit}}
-  vsprintf(buf,s,ap); // no-warning
-  vsnprintf(buf,2,s,ap); // no-warning
+  vsprintf(buf,s,ap); // expected-warning {{format string is not a string lit}}
+  vsnprintf(buf,2,s,ap); // expected-warning {{format string is not a string lit}}
   vsnprintf(buf,2,global_fmt,ap); // expected-warning {{format string is not a string literal}}
-  __builtin___vsnprintf_chk(buf,2,0,-1,s,ap); // no-warning
+  __builtin___vsnprintf_chk(buf,2,0,-1,s,ap); // expected-warning {{format string is not a string lit}}
   __builtin___vsnprintf_chk(buf,2,0,-1,global_fmt,ap); // expected-warning {{format string is not a string literal}}
+
+  vscanf(s, ap); // expected-warning {{format string is not a string literal}}
 
   // rdar://6079877
   printf("abc"
@@ -49,6 +53,25 @@ def"
   // the field width and precision.  This deviates from C99, but is reasonably safe
   // and is also accepted by GCC.
   printf("%*d", (unsigned) 1, 1); // no-warning  
+}
+
+__attribute__((__format__ (__printf__, 2, 4)))
+void check_string_literal2( FILE* fp, const char* s, char *buf, ... ) {
+  char * b;
+  va_list ap;
+  va_start(ap,buf);
+
+  printf(s); // expected-warning {{format string is not a string literal}}
+  vprintf(s,ap); // no-warning
+  fprintf(fp,s); // expected-warning {{format string is not a string literal}}
+  vfprintf(fp,s,ap); // no-warning
+  asprintf(&b,s); // expected-warning {{format string is not a string lit}}
+  vasprintf(&b,s,ap); // no-warning
+  sprintf(buf,s); // expected-warning {{format string is not a string literal}}
+  snprintf(buf,2,s); // expected-warning {{format string is not a string lit}}
+  __builtin___vsnprintf_chk(buf,2,0,-1,s,ap); // no-warning
+
+  vscanf(s, ap); // expected-warning {{format string is not a string literal}}
 }
 
 void check_conditional_literal(const char* s, int i) {
