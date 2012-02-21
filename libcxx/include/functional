@@ -536,12 +536,7 @@ struct _LIBCPP_VISIBLE greater : binary_function<_Tp, _Tp, bool>
         {return __x > __y;}
 };
 
-template <class _Tp>
-struct _LIBCPP_VISIBLE less : binary_function<_Tp, _Tp, bool>
-{
-    _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
-        {return __x < __y;}
-};
+// less in <__functional_base>
 
 template <class _Tp>
 struct _LIBCPP_VISIBLE greater_equal : binary_function<_Tp, _Tp, bool>

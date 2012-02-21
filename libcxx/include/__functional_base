@@ -50,6 +50,13 @@ public:
     static const bool value = sizeof(__test<_Tp>(0)) == 1;
 };
 
+template <class _Tp>
+struct _LIBCPP_VISIBLE less : binary_function<_Tp, _Tp, bool>
+{
+    _LIBCPP_INLINE_VISIBILITY bool operator()(const _Tp& __x, const _Tp& __y) const
+        {return __x < __y;}
+};
+
 #ifdef _LIBCPP_HAS_NO_VARIADICS
 
 #include <__functional_base_03>
