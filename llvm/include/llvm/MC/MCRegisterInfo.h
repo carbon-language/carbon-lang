@@ -33,7 +33,8 @@ public:
   const unsigned RegSize, Alignment; // Size & Alignment of register in bytes
   const int CopyCost;
   const bool Allocatable;
-  const iterator RegsBegin, RegsEnd;
+  const iterator RegsBegin;
+  unsigned RegsSize;
   const unsigned char *const RegSet;
   const unsigned RegSetSize;
 
@@ -48,11 +49,11 @@ public:
   /// begin/end - Return all of the registers in this class.
   ///
   iterator       begin() const { return RegsBegin; }
-  iterator         end() const { return RegsEnd; }
+  iterator         end() const { return RegsBegin + RegsSize; }
 
   /// getNumRegs - Return the number of registers in this class.
   ///
-  unsigned getNumRegs() const { return (unsigned)(RegsEnd-RegsBegin); }
+  unsigned getNumRegs() const { return RegsSize; }
 
   /// getRegister - Return the specified register in the class.
   ///
