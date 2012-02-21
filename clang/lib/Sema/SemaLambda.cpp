@@ -660,7 +660,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
       Normal,
       DefaultArgument,
       DataMember,
-      StaticDataMember,
+      StaticDataMember
     } Kind = Normal;
 
     // Default arguments of member function parameters that appear in a class
