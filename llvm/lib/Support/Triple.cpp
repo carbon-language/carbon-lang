@@ -107,7 +107,6 @@ const char *Triple::getOSTypeName(OSType Kind) {
   case MinGW32: return "mingw32";
   case NetBSD: return "netbsd";
   case OpenBSD: return "openbsd";
-  case Psp: return "psp";
   case Solaris: return "solaris";
   case Win32: return "win32";
   case Haiku: return "haiku";
@@ -232,7 +231,7 @@ static Triple::ArchType parseArch(StringRef ArchName) {
     .Cases("spu", "cellspu", Triple::cellspu)
     .Case("msp430", Triple::msp430)
     .Cases("mips", "mipseb", "mipsallegrex", Triple::mips)
-    .Cases("mipsel", "mipsallegrexel", "psp", Triple::mipsel)
+    .Cases("mipsel", "mipsallegrexel", Triple::mipsel)
     .Cases("mips64", "mips64eb", Triple::mips64)
     .Case("mips64el", Triple::mips64el)
     .Case("hexagon", Triple::hexagon)
@@ -270,7 +269,6 @@ static Triple::OSType parseOS(StringRef OSName) {
     .StartsWith("mingw32", Triple::MinGW32)
     .StartsWith("netbsd", Triple::NetBSD)
     .StartsWith("openbsd", Triple::OpenBSD)
-    .StartsWith("psp", Triple::Psp)
     .StartsWith("solaris", Triple::Solaris)
     .StartsWith("win32", Triple::Win32)
     .StartsWith("haiku", Triple::Haiku)
