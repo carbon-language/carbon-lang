@@ -44,7 +44,7 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
     LoopRegs(MLI, MDT), FirstDbgValue(0) {
   assert((IsPostRA || LIS) && "PreRA scheduling requires LiveIntervals");
   DbgValues.clear();
-  assert(!(IsPostRA && MF.getRegInfo().getNumVirtRegs()) &&
+  assert(!(IsPostRA && MRI.getNumVirtRegs()) &&
          "Virtual registers must be removed prior to PostRA scheduling");
 }
 
@@ -360,6 +360,10 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
 void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
   const MachineInstr *MI = SU->getInstr();
   unsigned Reg = MI->getOperand(OperIdx).getReg();
+
+  // SSA defs do not have output/anti dependencies.
+  if (llvm::next(MRI.def_begin(Reg)) == MRI.def_end())
+    return;
 
   // Add output dependence to the next nearest def of this vreg.
   //
