@@ -231,6 +231,7 @@ namespace llvm {
   public:
     SUnit *OrigNode;                    // If not this, the node from which
                                         // this node was cloned.
+                                        // (SD scheduling only)
 
     // Preds/Succs - The SUnits before/after us in the graph.
     SmallVector<SDep, 4> Preds;  // All sunit predecessors.

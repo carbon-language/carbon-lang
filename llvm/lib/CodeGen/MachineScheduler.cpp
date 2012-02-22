@@ -149,7 +149,8 @@ protected:
   MachineScheduler *Pass;
 public:
   ScheduleTopDownLive(MachineScheduler *P):
-    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT, /*IsPostRA=*/false), Pass(P) {}
+    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT, /*IsPostRA=*/false, P->LIS),
+    Pass(P) {}
 
   /// ScheduleDAGInstrs callback.
   void Schedule();
@@ -310,7 +311,8 @@ class DefaultMachineScheduler : public ScheduleDAGInstrs {
   MachineScheduler *Pass;
 public:
   DefaultMachineScheduler(MachineScheduler *P):
-    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT, /*IsPostRA=*/false), Pass(P) {}
+    ScheduleDAGInstrs(*P->MF, *P->MLI, *P->MDT, /*IsPostRA=*/false, P->LIS),
+    Pass(P) {}
 
   /// Schedule - This is called back from ScheduleDAGInstrs::Run() when it's
   /// time to do some work.
@@ -348,15 +350,14 @@ void DefaultMachineScheduler::Schedule() {
 
 #ifndef NDEBUG
 namespace {
-// Nodes with a higher number have lower priority. This way we attempt to
+// Nodes with a higher number have higher priority. This way we attempt to
 // schedule the latest instructions earliest.
 //
 // TODO: Relies on the property of the BuildSchedGraph that results in SUnits
-// being ordered in sequence bottom-up. This will be formalized, probably be
-// constructing SUnits in a prepass.
+// being ordered in sequence top-down.
 struct ShuffleSUnitOrder {
   bool operator()(SUnit *A, SUnit *B) const {
-    return A->NodeNum > B->NodeNum;
+    return A->NodeNum < B->NodeNum;
   }
 };
 

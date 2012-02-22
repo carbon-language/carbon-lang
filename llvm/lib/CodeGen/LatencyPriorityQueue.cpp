@@ -46,7 +46,7 @@ bool latency_sort::operator()(const SUnit *LHS, const SUnit *RHS) const {
 
   // Finally, just to provide a stable ordering, use the node number as a
   // deciding factor.
-  return LHSNum < RHSNum;
+  return RHSNum < LHSNum;
 }
 
 

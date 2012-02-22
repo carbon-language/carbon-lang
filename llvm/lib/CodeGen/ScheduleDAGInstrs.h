@@ -27,6 +27,7 @@
 namespace llvm {
   class MachineLoopInfo;
   class MachineDominatorTree;
+  class LiveIntervals;
 
   /// LoopDependencies - This class analyzes loop-oriented register
   /// dependencies, which are used to guide scheduling decisions.
@@ -108,6 +109,11 @@ namespace llvm {
     /// isPostRA flag indicates vregs cannot be present.
     bool IsPostRA;
 
+    /// Live Intervals provides reaching defs in preRA scheduling.
+    LiveIntervals *LIS;
+
+    DenseMap<MachineInstr*, SUnit*> MISUnitMap;
+
     /// UnitLatencies (misnamed) flag avoids computing def-use latencies, using
     /// the def-side latency only.
     bool UnitLatencies;
@@ -119,12 +125,9 @@ namespace llvm {
     std::vector<std::vector<SUnit *> > Defs;
     std::vector<std::vector<SUnit *> > Uses;
 
-    // Virtual register Defs and Uses.
-    //
-    // TODO: Eliminate VRegUses by creating SUnits in a prepass and looking up
-    // the live range's reaching def.
-    IndexedMap<SUnit*, VirtReg2IndexFunctor> VRegDefs;
-    IndexedMap<std::vector<SUnit*>, VirtReg2IndexFunctor> VRegUses;
+    // Track the last instructon in this region defining each virtual register.
+    // FIXME: turn this into a sparse set with constant time clear().
+    DenseMap<unsigned, SUnit*> VRegDefs;
 
     /// PendingLoads - Remember where unknown loads are after the most recent
     /// unknown store, as we iterate. As with Defs and Uses, this is here
@@ -152,7 +155,8 @@ namespace llvm {
     explicit ScheduleDAGInstrs(MachineFunction &mf,
                                const MachineLoopInfo &mli,
                                const MachineDominatorTree &mdt,
-                               bool IsPostRAFlag);
+                               bool IsPostRAFlag,
+                               LiveIntervals *LIS = 0);
 
     virtual ~ScheduleDAGInstrs() {}
 
@@ -168,6 +172,7 @@ namespace llvm {
       SUnits.back().OrigNode = &SUnits.back();
       return &SUnits.back();
     }
+
 
     /// Run - perform scheduling.
     ///
@@ -219,6 +224,14 @@ namespace llvm {
     virtual std::string getGraphNodeLabel(const SUnit *SU) const;
 
   protected:
+    SUnit *getSUnit(MachineInstr *MI) const {
+      DenseMap<MachineInstr*, SUnit*>::const_iterator I = MISUnitMap.find(MI);
+      if (I == MISUnitMap.end())
+        return 0;
+      return I->second;
+    }
+
+    void initSUnits();
     void addPhysRegDeps(SUnit *SU, unsigned OperIdx);
     void addVRegDefDeps(SUnit *SU, unsigned OperIdx);
     void addVRegUseDeps(SUnit *SU, unsigned OperIdx);
