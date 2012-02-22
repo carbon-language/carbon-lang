@@ -1011,7 +1011,7 @@ EVT ARMTargetLowering::getSetCCResultType(EVT VT) const {
 
 /// getRegClassFor - Return the register class that should be used for the
 /// specified value type.
-TargetRegisterClass *ARMTargetLowering::getRegClassFor(EVT VT) const {
+const TargetRegisterClass *ARMTargetLowering::getRegClassFor(EVT VT) const {
   // Map v4i64 to QQ registers but do not make the type legal. Similarly map
   // v8i64 to QQQQ registers. v4i64 and v8i64 are only used for REG_SEQUENCE to
   // load / store 4 to 8 consecutive D registers.
@@ -2422,7 +2422,7 @@ ARMTargetLowering::GetF64FormalArgument(CCValAssign &VA, CCValAssign &NextVA,
   MachineFunction &MF = DAG.getMachineFunction();
   ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
 
-  TargetRegisterClass *RC;
+  const TargetRegisterClass *RC;
   if (AFI->isThumb1OnlyFunction())
     RC = ARM::tGPRRegisterClass;
   else
@@ -2508,7 +2508,7 @@ ARMTargetLowering::VarArgStyleRegisters(CCState &CCInfo, SelectionDAG &DAG,
 
     SmallVector<SDValue, 4> MemOps;
     for (; firstRegToSaveIndex < 4; ++firstRegToSaveIndex) {
-      TargetRegisterClass *RC;
+      const TargetRegisterClass *RC;
       if (AFI->isThumb1OnlyFunction())
         RC = ARM::tGPRRegisterClass;
       else
@@ -2591,7 +2591,7 @@ ARMTargetLowering::LowerFormalArguments(SDValue Chain,
           ArgValue = GetF64FormalArgument(VA, ArgLocs[++i], Chain, DAG, dl);
 
       } else {
-        TargetRegisterClass *RC;
+        const TargetRegisterClass *RC;
 
         if (RegVT == MVT::f32)
           RC = ARM::SPRRegisterClass;
@@ -5299,7 +5299,7 @@ ARMTargetLowering::EmitAtomicBinary(MachineInstr *MI, MachineBasicBlock *BB,
                   BB->end());
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
-  TargetRegisterClass *TRC =
+  const TargetRegisterClass *TRC =
     isThumb2 ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
   unsigned scratch = MRI.createVirtualRegister(TRC);
   unsigned scratch2 = (!BinOpcode) ? incr : MRI.createVirtualRegister(TRC);
@@ -5409,7 +5409,7 @@ ARMTargetLowering::EmitAtomicBinaryMinMax(MachineInstr *MI,
                   BB->end());
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
-  TargetRegisterClass *TRC =
+  const TargetRegisterClass *TRC =
     isThumb2 ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
   unsigned scratch = MRI.createVirtualRegister(TRC);
   unsigned scratch2 = MRI.createVirtualRegister(TRC);
@@ -5519,7 +5519,7 @@ ARMTargetLowering::EmitAtomicBinary64(MachineInstr *MI, MachineBasicBlock *BB,
                   BB->end());
   exitMBB->transferSuccessorsAndUpdatePHIs(BB);
 
-  TargetRegisterClass *TRC =
+  const TargetRegisterClass *TRC =
     isThumb2 ? ARM::tGPRRegisterClass : ARM::GPRRegisterClass;
   unsigned storesuccess = MRI.createVirtualRegister(TRC);
 

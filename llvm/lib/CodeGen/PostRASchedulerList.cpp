@@ -134,7 +134,7 @@ namespace {
       MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
       AliasAnalysis *AA, const RegisterClassInfo&,
       TargetSubtargetInfo::AntiDepBreakMode AntiDepMode,
-      SmallVectorImpl<TargetRegisterClass*> &CriticalPathRCs);
+      SmallVectorImpl<const TargetRegisterClass*> &CriticalPathRCs);
 
     ~SchedulePostRATDList();
 
@@ -184,7 +184,7 @@ SchedulePostRATDList::SchedulePostRATDList(
   MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
   AliasAnalysis *AA, const RegisterClassInfo &RCI,
   TargetSubtargetInfo::AntiDepBreakMode AntiDepMode,
-  SmallVectorImpl<TargetRegisterClass*> &CriticalPathRCs)
+  SmallVectorImpl<const TargetRegisterClass*> &CriticalPathRCs)
   : ScheduleDAGInstrs(MF, MLI, MDT, /*IsPostRA=*/true), Topo(SUnits), AA(AA),
     KillIndices(TRI->getNumRegs())
 {
@@ -216,7 +216,7 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
   // Check for explicit enable/disable of post-ra scheduling.
   TargetSubtargetInfo::AntiDepBreakMode AntiDepMode =
     TargetSubtargetInfo::ANTIDEP_NONE;
-  SmallVector<TargetRegisterClass*, 4> CriticalPathRCs;
+  SmallVector<const TargetRegisterClass*, 4> CriticalPathRCs;
   if (EnablePostRAScheduler.getPosition() > 0) {
     if (!EnablePostRAScheduler)
       return false;

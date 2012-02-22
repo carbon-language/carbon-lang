@@ -2104,7 +2104,7 @@ unsigned X86FastISel::TargetMaterializeAlloca(const AllocaInst *C) {
   if (!X86SelectAddress(C, AM))
     return 0;
   unsigned Opc = Subtarget->is64Bit() ? X86::LEA64r : X86::LEA32r;
-  TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
+  const TargetRegisterClass* RC = TLI.getRegClassFor(TLI.getPointerTy());
   unsigned ResultReg = createResultReg(RC);
   addFullAddress(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                          TII.get(Opc), ResultReg), AM);

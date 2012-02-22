@@ -1835,7 +1835,7 @@ X86InstrInfo::convertToThreeAddress(MachineFunction::iterator &MFI,
     case X86::ADD32rr_DB: {
       assert(MI->getNumOperands() >= 3 && "Unknown add instruction!");
       unsigned Opc;
-      TargetRegisterClass *RC;
+      const TargetRegisterClass *RC;
       if (MIOpc == X86::ADD64rr || MIOpc == X86::ADD64rr_DB) {
         Opc = X86::LEA64r;
         RC = X86::GR64_NOSPRegisterClass;

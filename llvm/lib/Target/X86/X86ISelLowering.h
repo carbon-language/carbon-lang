@@ -832,7 +832,7 @@ namespace llvm {
                                                     unsigned cxchgOpc,
                                                     unsigned notOpc,
                                                     unsigned EAXreg,
-                                                    TargetRegisterClass *RC,
+                                              const TargetRegisterClass *RC,
                                                     bool invSrc = false) const;
 
     MachineBasicBlock *EmitAtomicBit6432WithCustomInserter(

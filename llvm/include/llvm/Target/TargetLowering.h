@@ -201,9 +201,9 @@ public:
 
   /// getRegClassFor - Return the register class that should be used for the
   /// specified value type.
-  virtual TargetRegisterClass *getRegClassFor(EVT VT) const {
+  virtual const TargetRegisterClass *getRegClassFor(EVT VT) const {
     assert(VT.isSimple() && "getRegClassFor called on illegal type!");
-    TargetRegisterClass *RC = RegClassForVT[VT.getSimpleVT().SimpleTy];
+    const TargetRegisterClass *RC = RegClassForVT[VT.getSimpleVT().SimpleTy];
     assert(RC && "This value type is not natively supported!");
     return RC;
   }
@@ -1043,7 +1043,7 @@ protected:
   /// addRegisterClass - Add the specified register class as an available
   /// regclass for the specified value type.  This indicates the selector can
   /// handle values of that class natively.
-  void addRegisterClass(EVT VT, TargetRegisterClass *RC) {
+  void addRegisterClass(EVT VT, const TargetRegisterClass *RC) {
     assert((unsigned)VT.getSimpleVT().SimpleTy < array_lengthof(RegClassForVT));
     AvailableRegClasses.push_back(std::make_pair(VT, RC));
     RegClassForVT[VT.getSimpleVT().SimpleTy] = RC;
@@ -1760,7 +1760,7 @@ private:
 
   /// RegClassForVT - This indicates the default register class to use for
   /// each ValueType the target supports natively.
-  TargetRegisterClass *RegClassForVT[MVT::LAST_VALUETYPE];
+  const TargetRegisterClass *RegClassForVT[MVT::LAST_VALUETYPE];
   unsigned char NumRegistersForVT[MVT::LAST_VALUETYPE];
   EVT RegisterTypeForVT[MVT::LAST_VALUETYPE];
 
@@ -1934,7 +1934,7 @@ private:
     return LegalizeKind(TypeSplitVector, NVT);
   }
 
-  std::vector<std::pair<EVT, TargetRegisterClass*> > AvailableRegClasses;
+  std::vector<std::pair<EVT, const TargetRegisterClass*> > AvailableRegClasses;
 
   /// TargetDAGCombineArray - Targets can specify ISD nodes that they would
   /// like PerformDAGCombine callbacks for by calling setTargetDAGCombine(),

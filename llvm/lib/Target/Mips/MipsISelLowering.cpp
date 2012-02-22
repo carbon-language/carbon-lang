@@ -710,7 +710,7 @@ LowerOperation(SDValue Op, SelectionDAG &DAG) const
 // MachineFunction as a live in value.  It also creates a corresponding
 // virtual register for it.
 static unsigned
-AddLiveIn(MachineFunction &MF, unsigned PReg, TargetRegisterClass *RC)
+AddLiveIn(MachineFunction &MF, unsigned PReg, const TargetRegisterClass *RC)
 {
   assert(RC->contains(PReg) && "Not the correct regclass!");
   unsigned VReg = MF.getRegInfo().createVirtualRegister(RC);
@@ -2601,7 +2601,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     if (IsRegLoc) {
       EVT RegVT = VA.getLocVT();
       unsigned ArgReg = VA.getLocReg();
-      TargetRegisterClass *RC = 0;
+      const TargetRegisterClass *RC;
 
       if (RegVT == MVT::i32)
         RC = Mips::CPURegsRegisterClass;
@@ -2684,7 +2684,7 @@ MipsTargetLowering::LowerFormalArguments(SDValue Chain,
     const unsigned *ArgRegs = IsO32 ? O32IntRegs : Mips64IntRegs;
     unsigned Idx = CCInfo.getFirstUnallocated(ArgRegs, NumOfRegs);
     int FirstRegSlotOffset = IsO32 ? 0 : -64 ; // offset of $a0's slot.
-    TargetRegisterClass *RC
+    const TargetRegisterClass *RC
       = IsO32 ? Mips::CPURegsRegisterClass : Mips::CPU64RegsRegisterClass;
     unsigned RegSize = RC->getSize();
     int RegSlotOffset = FirstRegSlotOffset + Idx * RegSize;

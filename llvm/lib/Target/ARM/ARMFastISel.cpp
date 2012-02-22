@@ -728,7 +728,7 @@ unsigned ARMFastISel::TargetMaterializeAlloca(const AllocaInst *AI) {
   // This will get lowered later into the correct offsets and registers
   // via rewriteXFrameIndex.
   if (SI != FuncInfo.StaticAllocaMap.end()) {
-    TargetRegisterClass* RC = TLI.getRegClassFor(VT);
+    const TargetRegisterClass* RC = TLI.getRegClassFor(VT);
     unsigned ResultReg = createResultReg(RC);
     unsigned Opc = isThumb2 ? ARM::t2ADDri : ARM::ADDri;
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -911,8 +911,8 @@ void ARMFastISel::ARMSimplifyAddress(Address &Addr, EVT VT, bool useAM3) {
   // put the alloca address into a register, set the base type back to
   // register and continue. This should almost never happen.
   if (needsLowering && Addr.BaseType == Address::FrameIndexBase) {
-    TargetRegisterClass *RC = isThumb2 ? ARM::tGPRRegisterClass :
-                              ARM::GPRRegisterClass;
+    const TargetRegisterClass *RC = isThumb2 ? ARM::tGPRRegisterClass
+                                             : ARM::GPRRegisterClass;
     unsigned ResultReg = createResultReg(RC);
     unsigned Opc = isThumb2 ? ARM::t2ADDri : ARM::ADDri;
     AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
@@ -987,7 +987,7 @@ bool ARMFastISel::ARMEmitLoad(EVT VT, unsigned &ResultReg, Address &Addr,
   unsigned Opc;
   bool useAM3 = false;
   bool needVMOV = false;
-  TargetRegisterClass *RC;  
+  const TargetRegisterClass *RC;
   switch (VT.getSimpleVT().SimpleTy) {
     // This is mostly going to be Neon/vector support.
     default: return false;
@@ -1490,8 +1490,8 @@ bool ARMFastISel::SelectCmp(const Instruction *I) {
   // Now set a register based on the comparison. Explicitly set the predicates
   // here.
   unsigned MovCCOpc = isThumb2 ? ARM::t2MOVCCi : ARM::MOVCCi;
-  TargetRegisterClass *RC = isThumb2 ? ARM::rGPRRegisterClass
-                                    : ARM::GPRRegisterClass;
+  const TargetRegisterClass *RC = isThumb2 ? ARM::rGPRRegisterClass
+                                           : ARM::GPRRegisterClass;
   unsigned DestReg = createResultReg(RC);
   Constant *Zero = ConstantInt::get(Type::getInt32Ty(*Context), 0);
   unsigned ZeroReg = TargetMaterializeConstant(Zero);
@@ -1955,7 +1955,7 @@ bool ARMFastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
       // For this move we copy into two registers and then move into the
       // double fp reg we want.
       EVT DestVT = RVLocs[0].getValVT();
-      TargetRegisterClass* DstRC = TLI.getRegClassFor(DestVT);
+      const TargetRegisterClass* DstRC = TLI.getRegClassFor(DestVT);
       unsigned ResultReg = createResultReg(DstRC);
       AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
                               TII.get(ARM::VMOVDRR), ResultReg)
@@ -1975,7 +1975,7 @@ bool ARMFastISel::FinishCall(MVT RetVT, SmallVectorImpl<unsigned> &UsedRegs,
       if (RetVT == MVT::i1 || RetVT == MVT::i8 || RetVT == MVT::i16)
         CopyVT = MVT::i32;
 
-      TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
+      const TargetRegisterClass* DstRC = TLI.getRegClassFor(CopyVT);
 
       unsigned ResultReg = createResultReg(DstRC);
       BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL, TII.get(TargetOpcode::COPY),

@@ -1829,7 +1829,7 @@ X86TargetLowering::LowerFormalArguments(SDValue Chain,
 
     if (VA.isRegLoc()) {
       EVT RegVT = VA.getLocVT();
-      TargetRegisterClass *RC = NULL;
+      const TargetRegisterClass *RC;
       if (RegVT == MVT::i32)
         RC = X86::GR32RegisterClass;
       else if (Is64Bit && RegVT == MVT::i64)
@@ -11209,7 +11209,7 @@ X86TargetLowering::EmitAtomicBitwiseWithCustomInserter(MachineInstr *bInstr,
                                                        unsigned CXchgOpc,
                                                        unsigned notOpc,
                                                        unsigned EAXreg,
-                                                       TargetRegisterClass *RC,
+                                                 const TargetRegisterClass *RC,
                                                        bool invSrc) const {
   // For the atomic bitwise operator, we generate
   //   thisMBB:

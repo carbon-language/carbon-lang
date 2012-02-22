@@ -896,7 +896,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
     if (VA.isRegLoc()) {
       MVT RegVT = VA.getLocVT();
       ArgRegEnd = VA.getLocReg();
-      TargetRegisterClass *RC = 0;
+      const TargetRegisterClass *RC;
 
       if (RegVT == MVT::i32)
         RC = MBlaze::GPRRegisterClass;
@@ -964,7 +964,7 @@ LowerFormalArguments(SDValue Chain, CallingConv::ID CallConv, bool isVarArg,
       StackPtr = DAG.getRegister(StackReg, getPointerTy());
 
     // The last register argument that must be saved is MBlaze::R10
-    TargetRegisterClass *RC = MBlaze::GPRRegisterClass;
+    const TargetRegisterClass *RC = MBlaze::GPRRegisterClass;
 
     unsigned Begin = getMBlazeRegisterNumbering(MBlaze::R5);
     unsigned Start = getMBlazeRegisterNumbering(ArgRegEnd+1);

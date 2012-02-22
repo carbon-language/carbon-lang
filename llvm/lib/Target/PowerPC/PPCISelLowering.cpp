@@ -1698,7 +1698,7 @@ PPCTargetLowering::LowerFormalArguments_SVR4(
 
     // Arguments stored in registers.
     if (VA.isRegLoc()) {
-      TargetRegisterClass *RC;
+      const TargetRegisterClass *RC;
       EVT ValVT = VA.getValVT();
 
       switch (ValVT.getSimpleVT().SimpleTy) {
