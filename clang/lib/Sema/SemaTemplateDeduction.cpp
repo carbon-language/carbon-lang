@@ -548,7 +548,7 @@ static TemplateParameter makeTemplateParameter(Decl *D) {
 /// arguments in a set of argument packs.
 static void PrepareArgumentPackDeduction(Sema &S,
                        SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                             const SmallVectorImpl<unsigned> &PackIndices,
+                                           ArrayRef<unsigned> PackIndices,
                      SmallVectorImpl<DeducedTemplateArgument> &SavedPacks,
          SmallVectorImpl<
            SmallVector<DeducedTemplateArgument, 4> > &NewlyDeducedPacks) {

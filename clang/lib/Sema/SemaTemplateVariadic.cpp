@@ -158,7 +158,7 @@ namespace {
 void
 Sema::DiagnoseUnexpandedParameterPacks(SourceLocation Loc,
                                        UnexpandedParameterPackContext UPPC,
-             const SmallVectorImpl<UnexpandedParameterPack> &Unexpanded) {
+                                 ArrayRef<UnexpandedParameterPack> Unexpanded) {
   if (Unexpanded.empty())
     return;
   

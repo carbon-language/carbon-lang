@@ -74,7 +74,7 @@ private:
   
   void VerifyJumps();
   void VerifyIndirectJumps();
-  void NoteJumpIntoScopes(const SmallVectorImpl<unsigned> &ToScopes);
+  void NoteJumpIntoScopes(ArrayRef<unsigned> ToScopes);
   void DiagnoseIndirectJump(IndirectGotoStmt *IG, unsigned IGScope,
                             LabelDecl *Target, unsigned TargetScope);
   void CheckJump(Stmt *From, Stmt *To, SourceLocation DiagLoc,
@@ -669,8 +669,7 @@ static void DiagnoseIndirectJumpStmt(Sema &S, IndirectGotoStmt *Jump,
 }
 
 /// Produce note diagnostics for a jump into a protected scope.
-void JumpScopeChecker::NoteJumpIntoScopes(
-                                    const SmallVectorImpl<unsigned> &ToScopes) {
+void JumpScopeChecker::NoteJumpIntoScopes(ArrayRef<unsigned> ToScopes) {
   assert(!ToScopes.empty());
   for (unsigned I = 0, E = ToScopes.size(); I != E; ++I)
     if (Scopes[ToScopes[I]].InDiag)
