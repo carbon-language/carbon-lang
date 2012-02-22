@@ -847,6 +847,63 @@ DeclFromUser<D>::Import(ClangASTImporter *importer, ASTContext &dest_ctx)
     return DeclFromParser<D>(dyn_cast<D>(parser_generic_decl.decl));
 }
 
+static bool
+FindObjCPropertyAndIvarDeclsWithOrigin (unsigned int current_id, 
+                                        NameSearchContext &context,
+                                        clang::ASTContext &ast_context,
+                                        ClangASTImporter *ast_importer,
+                                        DeclFromUser<const ObjCInterfaceDecl> &origin_iface_decl)
+{
+    lldb::LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_EXPRESSIONS));
+
+    if (origin_iface_decl.IsInvalid())
+        return false;
+    
+    std::string name_str = context.m_decl_name.getAsString();
+    StringRef name(name_str.c_str());
+    IdentifierInfo &name_identifier(origin_iface_decl->getASTContext().Idents.get(name));
+    
+    DeclFromUser<ObjCPropertyDecl> origin_property_decl(origin_iface_decl->FindPropertyDeclaration(&name_identifier));
+    
+    bool found = false;
+    
+    if (origin_property_decl.IsValid())
+    {
+        DeclFromParser<ObjCPropertyDecl> parser_property_decl(origin_property_decl.Import(ast_importer, ast_context));
+        if (parser_property_decl.IsValid())
+        {
+            if (log)
+            {
+                ASTDumper dumper((Decl*)parser_property_decl.decl);
+                log->Printf("  CAS::FOPD[%d] found %s", current_id, dumper.GetCString());
+            }
+            
+            context.AddNamedDecl(parser_property_decl.decl);
+            found = true;
+        }
+    }
+    
+    DeclFromUser<ObjCIvarDecl> origin_ivar_decl(origin_iface_decl->getIvarDecl(&name_identifier));
+    
+    if (origin_ivar_decl.IsValid())
+    {
+        DeclFromParser<ObjCIvarDecl> parser_ivar_decl(origin_ivar_decl.Import(ast_importer, ast_context));
+        if (parser_ivar_decl.IsValid())
+        {
+            if (log)
+            {
+                ASTDumper dumper((Decl*)parser_ivar_decl.decl);
+                log->Printf("  CAS::FOPD[%d] found %s", current_id, dumper.GetCString());
+            }
+            
+            context.AddNamedDecl(parser_ivar_decl.decl);
+            found = true;
+        }
+    }
+    
+    return found;
+}
+
 void
 ClangASTSource::FindObjCPropertyAndIvarDecls (NameSearchContext &context)
 {
@@ -857,54 +914,77 @@ ClangASTSource::FindObjCPropertyAndIvarDecls (NameSearchContext &context)
     
     DeclFromParser<const ObjCInterfaceDecl> parser_iface_decl(cast<ObjCInterfaceDecl>(context.m_decl_context));
     DeclFromUser<const ObjCInterfaceDecl> origin_iface_decl(parser_iface_decl.GetOrigin(m_ast_importer));
-    
-    if (origin_iface_decl.IsInvalid())
-        return;
-    
-    std::string name_str = context.m_decl_name.getAsString();
-    StringRef name(name_str.c_str());
-    IdentifierInfo &name_identifier(origin_iface_decl->getASTContext().Idents.get(name));
+
+    ConstString class_name(parser_iface_decl->getNameAsString().c_str());
     
     if (log)
         log->Printf("ClangASTSource::FindObjCPropertyAndIvarDecls[%d] on (ASTContext*)%p for '%s.%s'",
                     current_id, 
                     m_ast_context,
                     parser_iface_decl->getNameAsString().c_str(), 
-                    name_str.c_str());
+                    context.m_decl_name.getAsString().c_str());
     
-    DeclFromUser<ObjCPropertyDecl> origin_property_decl(origin_iface_decl->FindPropertyDeclaration(&name_identifier));
+    if (FindObjCPropertyAndIvarDeclsWithOrigin(current_id, 
+                                               context, 
+                                               *m_ast_context, 
+                                               m_ast_importer, 
+                                               origin_iface_decl))
+        return;
     
-    if (origin_property_decl.IsValid())
-    {
-        DeclFromParser<ObjCPropertyDecl> parser_property_decl(origin_property_decl.Import(m_ast_importer, *m_ast_context));
-        if (parser_property_decl.IsValid())
-        {
-            if (log)
-            {
-                ASTDumper dumper((Decl*)parser_property_decl.decl);
-                log->Printf("  CAS::FOPD[%d] found %s", current_id, dumper.GetCString());
-            }
-            
-            context.AddNamedDecl(parser_property_decl.decl);
-        }
-    }
+    if (log)
+        log->Printf("CAS::FOPD[%d] couldn't find the property on origin (ObjCInterfaceDecl*)%p/(ASTContext*)%p, searching elsewhere...",
+                    current_id,
+                    origin_iface_decl.decl, 
+                    &origin_iface_decl->getASTContext());
     
-    DeclFromUser<ObjCIvarDecl> origin_ivar_decl(origin_iface_decl->getIvarDecl(&name_identifier));
+    SymbolContext null_sc;
+    TypeList type_list;
     
-    if (origin_ivar_decl.IsValid())
-    {
-        DeclFromParser<ObjCIvarDecl> parser_ivar_decl(origin_ivar_decl.Import(m_ast_importer, *m_ast_context));
-        if (parser_ivar_decl.IsValid())
-        {
-            if (log)
-            {
-                ASTDumper dumper((Decl*)parser_ivar_decl.decl);
-                log->Printf("  CAS::FOPD[%d] found %s", current_id, dumper.GetCString());
-            }
-            
-            context.AddNamedDecl(parser_ivar_decl.decl);
-        }
-    }
+    lldb::ProcessSP process(m_target->GetProcessSP());
+    
+    if (!process)
+        return;
+    
+    ObjCLanguageRuntime *language_runtime(process->GetObjCLanguageRuntime());
+    
+    if (!language_runtime)
+        return;
+    
+    lldb::TypeSP complete_type_sp(language_runtime->LookupInCompleteClassCache(class_name));
+    
+    if (!complete_type_sp)
+        return;
+    
+    TypeFromUser complete_type = TypeFromUser(complete_type_sp->GetClangFullType(), complete_type_sp->GetClangAST());
+    lldb::clang_type_t complete_opaque_type = complete_type.GetOpaqueQualType();
+    
+    if (!complete_opaque_type)
+        return;
+    
+    const clang::Type *complete_clang_type = QualType::getFromOpaquePtr(complete_opaque_type).getTypePtr();
+    const ObjCInterfaceType *complete_interface_type = dyn_cast<ObjCInterfaceType>(complete_clang_type);
+    
+    if (!complete_interface_type)
+        return;
+    
+    DeclFromUser<const ObjCInterfaceDecl> complete_iface_decl(complete_interface_type->getDecl());
+    
+    if (complete_iface_decl.decl == origin_iface_decl.decl)
+        return; // already checked this one
+    
+    if (log)
+        log->Printf("CAS::FOPD[%d] trying origin (ObjCInterfaceDecl*)%p/(ASTContext*)%p...",
+                    current_id,
+                    complete_iface_decl.decl, 
+                    &complete_iface_decl->getASTContext());
+    
+    
+    if (FindObjCPropertyAndIvarDeclsWithOrigin(current_id, 
+                                               context, 
+                                               *m_ast_context, 
+                                               m_ast_importer, 
+                                               complete_iface_decl))
+        return;
 }
 
 typedef llvm::DenseMap <const FieldDecl *, uint64_t> FieldOffsetMap;

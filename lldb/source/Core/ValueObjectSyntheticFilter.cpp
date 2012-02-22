@@ -54,7 +54,7 @@ ValueObjectSynthetic::~ValueObjectSynthetic()
 }
 
 lldb::clang_type_t
-ValueObjectSynthetic::GetClangType ()
+ValueObjectSynthetic::GetClangTypeImpl ()
 {
     if (m_type_sp)
         return m_value.GetClangType();
@@ -79,7 +79,7 @@ ValueObjectSynthetic::CalculateNumChildren()
 }
 
 clang::ASTContext *
-ValueObjectSynthetic::GetClangAST ()
+ValueObjectSynthetic::GetClangASTImpl ()
 {
     const bool success = UpdateValueIfNeeded(false);
     if (success && m_type_sp)

@@ -4962,6 +4962,8 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
                                              &decl, 
                                              clang_type, 
                                              Type::eResolveStateForward));
+                    
+                    type_sp->SetIsCompleteObjCClass(is_complete_objc_class);
 
 
                     // Add our type to the unique type map so we don't

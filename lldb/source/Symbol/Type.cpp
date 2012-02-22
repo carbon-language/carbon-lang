@@ -20,6 +20,7 @@
 #include "lldb/Symbol/ObjectFile.h"
 #include "lldb/Symbol/SymbolContextScope.h"
 #include "lldb/Symbol/SymbolFile.h"
+#include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Symbol/TypeList.h"
 
@@ -61,9 +62,10 @@ Type::Type
     m_encoding_uid_type (encoding_uid_type),
     m_byte_size (byte_size),
     m_decl (decl),
-    m_clang_type (clang_type),
-    m_clang_type_resolve_state (clang_type ? clang_type_resolve_state : eResolveStateUnresolved)
+    m_clang_type (clang_type)
 {
+    m_flags.clang_type_resolve_state = (clang_type ? clang_type_resolve_state : eResolveStateUnresolved);
+    m_flags.is_complete_objc_class = false;
 }
 
 Type::Type () :
@@ -76,9 +78,10 @@ Type::Type () :
     m_encoding_uid_type (eEncodingInvalid),
     m_byte_size (0),
     m_decl (),
-    m_clang_type (NULL),
-    m_clang_type_resolve_state (eResolveStateUnresolved)
+    m_clang_type (NULL)
 {
+    m_flags.clang_type_resolve_state = eResolveStateUnresolved;
+    m_flags.is_complete_objc_class = false;
 }
 
 
@@ -93,7 +96,7 @@ Type::Type (const Type &rhs) :
     m_byte_size (rhs.m_byte_size),
     m_decl (rhs.m_decl),
     m_clang_type (rhs.m_clang_type),
-    m_clang_type_resolve_state (rhs.m_clang_type_resolve_state)
+    m_flags (rhs.m_flags)
 {
 }
 
@@ -458,7 +461,7 @@ Type::ResolveClangType (ResolveState clang_type_resolve_state)
                 if (encoding_type->ResolveClangType(clang_type_resolve_state))
                 {
                     m_clang_type = encoding_type->m_clang_type;
-                    m_clang_type_resolve_state = encoding_type->m_clang_type_resolve_state;
+                    m_flags.clang_type_resolve_state = encoding_type->m_flags.clang_type_resolve_state;
                 }
                 break;
 
@@ -544,9 +547,9 @@ Type::ResolveClangType (ResolveState clang_type_resolve_state)
     }
     
     // Check if we have a forward reference to a class/struct/union/enum?
-    if (m_clang_type && m_clang_type_resolve_state < clang_type_resolve_state)
+    if (m_clang_type && m_flags.clang_type_resolve_state < clang_type_resolve_state)
     {
-        m_clang_type_resolve_state = eResolveStateFull;
+        m_flags.clang_type_resolve_state = eResolveStateFull;
         if (!ClangASTType::IsDefined (m_clang_type))
         {
             // We have a forward declaration, we need to resolve it to a complete

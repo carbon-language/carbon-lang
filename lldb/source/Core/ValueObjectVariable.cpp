@@ -53,7 +53,7 @@ ValueObjectVariable::~ValueObjectVariable()
 }
 
 lldb::clang_type_t
-ValueObjectVariable::GetClangType ()
+ValueObjectVariable::GetClangTypeImpl ()
 {
     Type *var_type = m_variable_sp->GetType();
     if (var_type)
@@ -73,15 +73,19 @@ ValueObjectVariable::GetTypeName()
 
 uint32_t
 ValueObjectVariable::CalculateNumChildren()
-{
-    Type *var_type = m_variable_sp->GetType();
-    if (var_type)
-        return var_type->GetNumChildren(true);
-    return 0;
+{    
+    ClangASTType type(GetClangAST(),
+                      GetClangType());
+    
+    if (!type.IsValid())
+        return 0;
+    
+    const bool omit_empty_base_classes = true;
+    return ClangASTContext::GetNumChildren(type.GetASTContext(), type.GetOpaqueQualType(), omit_empty_base_classes);
 }
 
 clang::ASTContext *
-ValueObjectVariable::GetClangAST ()
+ValueObjectVariable::GetClangASTImpl ()
 {
     Type *var_type = m_variable_sp->GetType();
     if (var_type)
@@ -92,10 +96,13 @@ ValueObjectVariable::GetClangAST ()
 size_t
 ValueObjectVariable::GetByteSize()
 {
-    Type *type = m_variable_sp->GetType();
-    if (type)
-        return type->GetByteSize();
-    return 0;
+    ClangASTType type(GetClangAST(),
+                      GetClangType());
+    
+    if (!type.IsValid())
+        return 0;
+    
+    return (ClangASTType::GetClangTypeBitWidth(type.GetASTContext(), type.GetOpaqueQualType()) + 7) / 8;
 }
 
 lldb::ValueType

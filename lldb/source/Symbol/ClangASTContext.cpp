@@ -5831,6 +5831,49 @@ ClangASTContext::IsObjCClassType (clang_type_t clang_type)
     return false;
 }
 
+bool
+ClangASTContext::IsObjCObjectPointerType (lldb::clang_type_t clang_type, clang_type_t *class_type)
+{
+    if (clang_type)
+    {
+        QualType qual_type (QualType::getFromOpaquePtr(clang_type));
+        if (qual_type->isObjCObjectPointerType())
+        {
+            if (class_type)
+            {
+                *class_type = NULL;
+                
+                if (!qual_type->isObjCClassType() &&
+                    !qual_type->isObjCIdType())
+                {
+                    const ObjCObjectPointerType *obj_pointer_type = dyn_cast<ObjCObjectPointerType>(qual_type);
+                    *class_type = QualType(obj_pointer_type->getInterfaceType(), 0).getAsOpaquePtr();
+                }
+            }
+            return true;
+        }
+    }
+    return false;
+}
+
+bool
+ClangASTContext::GetObjCClassName (lldb::clang_type_t clang_type,
+                                   std::string &class_name)
+{
+    if (!clang_type)
+        return false;
+        
+    const ObjCObjectType *object_type = dyn_cast<ObjCObjectType>(QualType::getFromOpaquePtr(clang_type));
+    if (!object_type)
+        return false;
+    
+    const ObjCInterfaceDecl *interface = object_type->getInterface();
+    if (!interface)
+        return false;
+    
+    class_name = interface->getNameAsString();
+    return true;
+}
 
 bool 
 ClangASTContext::IsCharType (clang_type_t clang_type)

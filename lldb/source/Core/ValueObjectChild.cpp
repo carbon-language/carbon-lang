@@ -65,7 +65,7 @@ ValueObjectChild::GetValueType() const
 uint32_t
 ValueObjectChild::CalculateNumChildren()
 {
-    return ClangASTContext::GetNumChildren (GetClangAST (), m_clang_type, true);
+    return ClangASTContext::GetNumChildren (GetClangAST (), GetClangType(), true);
 }
 
 ConstString
@@ -101,7 +101,7 @@ ValueObjectChild::UpdateValue ()
     {
         if (parent->UpdateValueIfNeeded(false))
         {
-            m_value.SetContext(Value::eContextTypeClangType, m_clang_type);
+            m_value.SetContext(Value::eContextTypeClangType, GetClangType());
 
             // Copy the parent scalar value and the scalar value type
             m_value.GetScalar() = parent->GetValue().GetScalar();

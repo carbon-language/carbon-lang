@@ -95,7 +95,8 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
     m_is_child_at_offset(false),
-    m_is_getting_summary(false)
+    m_is_getting_summary(false),
+    m_did_calculate_complete_objc_class_type(false)
 {
     m_manager->ManageObject(this);
 }
@@ -141,7 +142,8 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
     m_is_bitfield_for_scalar(false),
     m_is_expression_path_child(false),
     m_is_child_at_offset(false),
-    m_is_getting_summary(false)
+    m_is_getting_summary(false),
+    m_did_calculate_complete_objc_class_type(false)
 {
     m_manager = new ValueObjectManager();
     m_manager->ManageObject (this);
@@ -269,6 +271,103 @@ ValueObject::SetNeedsUpdate ()
     // We have to clear the value string here so ConstResult children will notice if their values are
     // changed by hand (i.e. with SetValueAsCString).
     m_value_str.clear();
+}
+
+ClangASTType
+ValueObject::MaybeCalculateCompleteType ()
+{
+    ClangASTType ret(GetClangASTImpl(), GetClangTypeImpl());
+    
+    if (m_did_calculate_complete_objc_class_type)
+    {
+        if (m_override_type.IsValid())
+            return m_override_type;
+        else
+            return ret;
+    }
+    
+    clang_type_t ast_type(GetClangTypeImpl());
+    clang_type_t class_type;
+    bool is_pointer_type;
+    
+    if (ClangASTContext::IsObjCObjectPointerType(ast_type, &class_type))
+    {
+        is_pointer_type = true;
+    }
+    else if (ClangASTContext::IsObjCClassType(ast_type))
+    {
+        is_pointer_type = false;
+        class_type = ast_type;
+    }
+    else
+    {
+        return ret;
+    }
+    
+    m_did_calculate_complete_objc_class_type = true;
+    
+    if (!class_type)
+        return ret;
+    
+    std::string class_name;
+    
+    if (!ClangASTContext::GetObjCClassName(class_type, class_name))
+        return ret;
+    
+    ProcessSP process_sp(GetUpdatePoint().GetExecutionContextRef().GetProcessSP());
+    
+    if (!process_sp)
+        return ret;
+    
+    ObjCLanguageRuntime *objc_language_runtime(process_sp->GetObjCLanguageRuntime());
+    
+    if (!objc_language_runtime)
+        return ret;
+    
+    ConstString class_name_cs(class_name.c_str());
+    
+    TypeSP complete_objc_class_type_sp = objc_language_runtime->LookupInCompleteClassCache(class_name_cs);
+    
+    if (!complete_objc_class_type_sp)
+        return ret;
+    
+    ClangASTType complete_class(complete_objc_class_type_sp->GetClangAST(),
+                                complete_objc_class_type_sp->GetClangFullType());
+    
+    if (!ClangASTContext::GetCompleteType(complete_class.GetASTContext(), 
+                                          complete_class.GetOpaqueQualType()))
+        return ret;
+    
+    if (is_pointer_type)
+    {
+        clang_type_t pointer_type = ClangASTContext::CreatePointerType(complete_class.GetASTContext(),
+                                                                       complete_class.GetOpaqueQualType());
+        
+        m_override_type = ClangASTType(complete_class.GetASTContext(),
+                                       pointer_type);
+    }
+    else
+    {
+        m_override_type = complete_class;
+    }
+    
+    return m_override_type;
+}
+
+clang::ASTContext *
+ValueObject::GetClangAST ()
+{
+    ClangASTType type = MaybeCalculateCompleteType();
+    
+    return type.GetASTContext();
+}
+
+lldb::clang_type_t
+ValueObject::GetClangType ()
+{
+    ClangASTType type = MaybeCalculateCompleteType();
+    
+    return type.GetOpaqueQualType();
 }
 
 DataExtractor &

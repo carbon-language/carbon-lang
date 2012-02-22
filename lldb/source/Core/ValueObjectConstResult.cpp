@@ -275,7 +275,7 @@ ValueObjectConstResult::~ValueObjectConstResult()
 }
 
 lldb::clang_type_t
-ValueObjectConstResult::GetClangType()
+ValueObjectConstResult::GetClangTypeImpl()
 {
     return m_value.GetClangType();
 }
@@ -307,7 +307,7 @@ ValueObjectConstResult::CalculateNumChildren()
 }
 
 clang::ASTContext *
-ValueObjectConstResult::GetClangAST ()
+ValueObjectConstResult::GetClangASTImpl ()
 {
     return m_clang_ast;
 }

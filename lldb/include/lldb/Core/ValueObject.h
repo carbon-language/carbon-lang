@@ -492,18 +492,18 @@ public:
     SetNeedsUpdate ();
     
     virtual ~ValueObject();
+    
+    clang::ASTContext *
+    GetClangAST ();
+    
+    lldb::clang_type_t
+    GetClangType ();
 
     //------------------------------------------------------------------
     // Sublasses must implement the functions below.
     //------------------------------------------------------------------
     virtual size_t
     GetByteSize() = 0;
-
-    virtual clang::ASTContext *
-    GetClangAST () = 0;
-
-    virtual lldb::clang_type_t
-    GetClangType () = 0;
 
     virtual lldb::ValueType
     GetValueType() const = 0;
@@ -1084,6 +1084,8 @@ protected:
     std::string         m_object_desc_str; // Cached result of the "object printer".  This differs from the summary
                                               // in that the summary is consed up by us, the object_desc_string is builtin.
 
+    ClangASTType        m_override_type;// If the type of the value object should be overridden, the type to impose.
+    
     ValueObjectManager *m_manager;      // This object is managed by the root object (any ValueObject that gets created
                                         // without a parent.)  The manager gets passed through all the generations of
                                         // dependent objects, and will keep the whole cluster of objects alive as long
@@ -1119,7 +1121,8 @@ protected:
                         m_is_bitfield_for_scalar:1,
                         m_is_expression_path_child:1,
                         m_is_child_at_offset:1,
-                        m_is_getting_summary:1;
+                        m_is_getting_summary:1,
+                        m_did_calculate_complete_objc_class_type:1;
     
     friend class ClangExpressionDeclMap;  // For GetValue
     friend class ClangExpressionVariable; // For SetName
@@ -1188,10 +1191,23 @@ protected:
     DataExtractor &
     GetDataExtractor ();
     
+    //------------------------------------------------------------------
+    // Sublasses must implement the functions below.
+    //------------------------------------------------------------------
+    
+    virtual clang::ASTContext *
+    GetClangASTImpl () = 0;
+    
+    virtual lldb::clang_type_t
+    GetClangTypeImpl () = 0;
+    
 private:
     //------------------------------------------------------------------
     // For ValueObject only
     //------------------------------------------------------------------
+    
+    virtual ClangASTType
+    MaybeCalculateCompleteType ();
     
     lldb::ValueObjectSP
     GetValueForExpressionPath_Impl(const char* expression_cstr,

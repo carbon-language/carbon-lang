@@ -61,7 +61,7 @@ ValueObjectCast::~ValueObjectCast()
 }
 
 lldb::clang_type_t
-ValueObjectCast::GetClangType ()
+ValueObjectCast::GetClangTypeImpl ()
 {
     return m_cast_type.GetOpaqueQualType();
 }
@@ -79,7 +79,7 @@ ValueObjectCast::CalculateNumChildren()
 }
 
 clang::ASTContext *
-ValueObjectCast::GetClangAST ()
+ValueObjectCast::GetClangASTImpl ()
 {
     return m_cast_type.GetASTContext();
 }
@@ -159,7 +159,7 @@ ValueObjectDynamicValue::~ValueObjectDynamicValue()
 }
 
 lldb::clang_type_t
-ValueObjectDynamicValue::GetClangType ()
+ValueObjectDynamicValue::GetClangTypeImpl ()
 {
     if (m_type_sp)
         return m_value.GetClangType();
@@ -188,7 +188,7 @@ ValueObjectDynamicValue::CalculateNumChildren()
 }
 
 clang::ASTContext *
-ValueObjectDynamicValue::GetClangAST ()
+ValueObjectDynamicValue::GetClangASTImpl ()
 {
     const bool success = UpdateValueIfNeeded(false);
     if (success && m_type_sp)

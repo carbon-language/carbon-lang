@@ -33,12 +33,6 @@ namespace lldb_private {
         virtual size_t
         GetByteSize();
         
-        virtual clang::ASTContext *
-        GetClangAST ();
-        
-        virtual lldb::clang_type_t
-        GetClangType ();
-        
         virtual ConstString
         GetTypeName();
         
@@ -85,6 +79,12 @@ namespace lldb_private {
         virtual bool
         UpdateValue ();
         
+        virtual clang::ASTContext *
+        GetClangASTImpl ();
+        
+        virtual lldb::clang_type_t
+        GetClangTypeImpl ();
+        
         ClangASTType m_cast_type;
         
     private:
@@ -110,12 +110,6 @@ public:
 
     virtual size_t
     GetByteSize();
-
-    virtual clang::ASTContext *
-    GetClangAST ();
-
-    virtual lldb::clang_type_t
-    GetClangType ();
 
     virtual ConstString
     GetTypeName();
@@ -172,6 +166,12 @@ public:
 protected:
     virtual bool
     UpdateValue ();
+    
+    virtual clang::ASTContext *
+    GetClangASTImpl ();
+    
+    virtual lldb::clang_type_t
+    GetClangTypeImpl ();
 
     Address  m_address;  ///< The variable that this value object is based upon
     lldb::TypeSP m_type_sp;

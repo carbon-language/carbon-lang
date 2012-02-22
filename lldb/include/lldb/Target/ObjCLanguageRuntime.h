@@ -18,6 +18,7 @@
 // Project includes
 #include "lldb/lldb-private.h"
 #include "lldb/Core/PluginInterface.h"
+#include "lldb/Symbol/Type.h"
 #include "lldb/Target/LanguageRuntime.h"
 
 namespace lldb_private {
@@ -63,6 +64,9 @@ public:
     
     void
     AddToClassNameCache (lldb::addr_t class_addr, const TypeAndOrName &class_or_type_name);
+    
+    lldb::TypeSP
+    LookupInCompleteClassCache (ConstString &name);
     
     virtual ClangUtilityFunction *
     CreateObjectChecker (const char *) = 0;
@@ -246,6 +250,9 @@ protected:
     typedef std::map<lldb::addr_t,TypeAndOrName> ClassNameMap;
     typedef ClassNameMap::iterator ClassNameIterator;
     ClassNameMap m_class_name_cache;
+    
+    typedef std::map<ConstString, lldb::TypeWP> CompleteClassMap;
+    CompleteClassMap m_complete_class_cache;
 
     DISALLOW_COPY_AND_ASSIGN (ObjCLanguageRuntime);
 };

@@ -75,12 +75,6 @@ public:
     virtual size_t
     GetByteSize();
 
-    virtual clang::ASTContext *
-    GetClangAST ();
-
-    virtual lldb::clang_type_t
-    GetClangType ();
-
     virtual lldb::ValueType
     GetValueType() const;
 
@@ -141,6 +135,12 @@ public:
 protected:
     virtual bool
     UpdateValue ();
+    
+    virtual clang::ASTContext *
+    GetClangASTImpl ();
+    
+    virtual lldb::clang_type_t
+    GetClangTypeImpl ();
 
     // CalculateDynamicValue doesn't change the dynamic value, since this can get
     // called at any time and you can't reliably fetch the dynamic value at any time.

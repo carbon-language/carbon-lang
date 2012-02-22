@@ -265,6 +265,18 @@ public:
     
     bool
     IsRealObjCClass();
+    
+    bool
+    IsCompleteObjCClass()
+    {
+        return m_flags.is_complete_objc_class;
+    }
+    
+    void
+    SetIsCompleteObjCClass(bool is_complete_objc_class)
+    {
+        m_flags.is_complete_objc_class = is_complete_objc_class;
+    }
 
 protected:
     ConstString m_name;
@@ -276,7 +288,11 @@ protected:
     uint32_t m_byte_size;
     Declaration m_decl;
     lldb::clang_type_t m_clang_type;
-    ResolveState m_clang_type_resolve_state;
+    
+    struct Flags {
+        ResolveState    clang_type_resolve_state : 2;
+        bool            is_complete_objc_class   : 1;
+    } m_flags;
 
     Type *
     GetEncodingType ();

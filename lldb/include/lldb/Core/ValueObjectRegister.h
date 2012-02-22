@@ -34,12 +34,6 @@ public:
     virtual size_t
     GetByteSize();
 
-    virtual clang::ASTContext *
-    GetClangAST ();
-
-    virtual lldb::clang_type_t
-    GetClangType ();
-
     virtual lldb::ValueType
     GetValueType () const
     {
@@ -58,6 +52,12 @@ public:
 protected:
     virtual bool
     UpdateValue ();
+    
+    virtual clang::ASTContext *
+    GetClangASTImpl ();
+    
+    virtual lldb::clang_type_t
+    GetClangTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
 
@@ -80,12 +80,6 @@ public:
 
     virtual size_t
     GetByteSize();
-
-    virtual clang::ASTContext *
-    GetClangAST ();
-
-    virtual lldb::clang_type_t
-    GetClangType ();
 
     virtual lldb::ValueType
     GetValueType () const
@@ -112,6 +106,12 @@ public:
 protected:
     virtual bool
     UpdateValue ();
+    
+    virtual clang::ASTContext *
+    GetClangASTImpl ();
+    
+    virtual lldb::clang_type_t
+    GetClangTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
     const RegisterSet *m_reg_set;
@@ -139,12 +139,6 @@ public:
     virtual size_t
     GetByteSize();
 
-    virtual clang::ASTContext *
-    GetClangAST ();
-
-    virtual lldb::clang_type_t
-    GetClangType ();
-
     virtual lldb::ValueType
     GetValueType () const
     {
@@ -166,6 +160,12 @@ public:
 protected:
     virtual bool
     UpdateValue ();
+    
+    virtual clang::ASTContext *
+    GetClangASTImpl ();
+    
+    virtual lldb::clang_type_t
+    GetClangTypeImpl ();
 
     lldb::RegisterContextSP m_reg_ctx_sp;
     RegisterInfo m_reg_info;

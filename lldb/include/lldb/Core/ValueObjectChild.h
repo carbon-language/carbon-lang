@@ -50,18 +50,6 @@ public:
         return m_bitfield_bit_offset;
     }
 
-    virtual clang::ASTContext *
-    GetClangAST ()
-    {
-        return m_clang_ast;
-    }
-
-    virtual lldb::clang_type_t
-    GetClangType ()
-    {
-        return m_clang_type;
-    }
-
     virtual lldb::ValueType
     GetValueType() const;
 
@@ -90,6 +78,18 @@ protected:
     virtual bool
     UpdateValue ();
 
+    virtual clang::ASTContext *
+    GetClangASTImpl ()
+    {
+        return m_clang_ast;
+    }
+    
+    virtual lldb::clang_type_t
+    GetClangTypeImpl ()
+    {
+        return m_clang_type;
+    }
+    
     clang::ASTContext *m_clang_ast; // The clang AST that the clang type comes from
     void *m_clang_type; // The type of the child in question within the parent (m_parent_sp)
     ConstString m_type_name;

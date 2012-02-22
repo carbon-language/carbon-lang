@@ -869,6 +869,13 @@ public:
     
     static bool
     IsObjCClassType (lldb::clang_type_t clang_type);
+    
+    static bool
+    IsObjCObjectPointerType (lldb::clang_type_t clang_type, lldb::clang_type_t *target_type);
+    
+    static bool
+    GetObjCClassName (lldb::clang_type_t clang_type,
+                      std::string &class_name);
 
     static bool
     IsCharType (lldb::clang_type_t clang_type);

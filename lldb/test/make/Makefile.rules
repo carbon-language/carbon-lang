@@ -95,6 +95,10 @@ ifneq "$(strip $(DYLIB_C_SOURCES))" ""
 	DYLIB_OBJECTS +=$(strip $(DYLIB_C_SOURCES:.c=.o))
 endif
 
+ifneq "$(strip $(DYLIB_OBJC_SOURCES))" ""
+	DYLIB_OBJECTS +=$(strip $(DYLIB_OBJC_SOURCES:.m=.o))
+endif
+
 ifneq "$(strip $(DYLIB_CXX_SOURCES))" ""
     DYLIB_OBJECTS +=$(strip $(DYLIB_CXX_SOURCES:.cpp=.o))
     CXX = $(call cxx_compiler,$(CC))

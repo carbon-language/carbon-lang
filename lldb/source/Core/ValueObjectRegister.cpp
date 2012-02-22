@@ -43,7 +43,7 @@ ValueObjectRegisterContext::~ValueObjectRegisterContext()
 }
 
 lldb::clang_type_t
-ValueObjectRegisterContext::GetClangType ()
+ValueObjectRegisterContext::GetClangTypeImpl ()
 {
     return NULL;
 }
@@ -62,7 +62,7 @@ ValueObjectRegisterContext::CalculateNumChildren()
 }
 
 clang::ASTContext *
-ValueObjectRegisterContext::GetClangAST ()
+ValueObjectRegisterContext::GetClangASTImpl ()
 {
     return NULL;
 }
@@ -140,7 +140,7 @@ ValueObjectRegisterSet::~ValueObjectRegisterSet()
 }
 
 lldb::clang_type_t
-ValueObjectRegisterSet::GetClangType ()
+ValueObjectRegisterSet::GetClangTypeImpl ()
 {
     return NULL;
 }
@@ -161,7 +161,7 @@ ValueObjectRegisterSet::CalculateNumChildren()
 }
 
 clang::ASTContext *
-ValueObjectRegisterSet::GetClangAST ()
+ValueObjectRegisterSet::GetClangASTImpl ()
 {
     return NULL;
 }
@@ -303,7 +303,7 @@ ValueObjectRegister::~ValueObjectRegister()
 }
 
 lldb::clang_type_t
-ValueObjectRegister::GetClangType ()
+ValueObjectRegister::GetClangTypeImpl ()
 {
     if (m_clang_type == NULL)
     {
@@ -337,7 +337,7 @@ ValueObjectRegister::CalculateNumChildren()
 }
 
 clang::ASTContext *
-ValueObjectRegister::GetClangAST ()
+ValueObjectRegister::GetClangASTImpl ()
 {
     ExecutionContext exe_ctx (GetExecutionContextRef());
     Target *target = exe_ctx.GetTargetPtr();

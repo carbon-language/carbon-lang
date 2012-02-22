@@ -14,6 +14,7 @@
 #include "lldb/Symbol/ClangASTContext.h"
 #include "lldb/Symbol/Type.h"
 #include "lldb/Target/ObjCLanguageRuntime.h"
+#include "lldb/Target/Target.h"
 
 using namespace lldb;
 using namespace lldb_private;
@@ -92,6 +93,84 @@ ObjCLanguageRuntime::LookupInClassNameCache (lldb::addr_t class_addr)
     if (pos != end)
         return (*pos).second;
     return TypeAndOrName ();
+}
+
+lldb::TypeSP
+ObjCLanguageRuntime::LookupInCompleteClassCache (ConstString &name)
+{
+    CompleteClassMap::iterator complete_class_iter = m_complete_class_cache.find(name);
+    
+    if (complete_class_iter != m_complete_class_cache.end())
+    {
+        TypeSP ret(complete_class_iter->second);
+        
+        if (!ret)
+            m_complete_class_cache.erase(name);
+        else
+            return TypeSP(complete_class_iter->second);
+    }
+    
+    ModuleList &modules = m_process->GetTarget().GetImages();
+    
+    SymbolContextList sc_list;
+    
+    modules.FindSymbolsWithNameAndType(name, eSymbolTypeObjCClass, sc_list);
+    
+    if (sc_list.GetSize() == 0)
+        return TypeSP();
+    
+    SymbolContext sc;
+    
+    sc_list.GetContextAtIndex(0, sc);
+    
+    ModuleSP module_sp(sc.module_sp);
+    
+    if (!module_sp)
+        return TypeSP();
+    
+    const SymbolContext null_sc;
+    const ClangNamespaceDecl *null_namespace_decl = NULL;
+    const bool append = false;
+    const uint32_t max_matches = UINT32_MAX;
+    TypeList types;
+    
+    module_sp->FindTypes(null_sc, 
+                         name,
+                         null_namespace_decl,
+                         append, 
+                         max_matches, 
+                         types);
+    
+    if (types.GetSize() == 1)
+    {
+        TypeSP candidate_type = types.GetTypeAtIndex(0);
+        
+        if (ClangASTContext::IsObjCClassType(candidate_type->GetClangForwardType()))
+        {
+            m_complete_class_cache[name] = TypeWP(candidate_type);
+            return candidate_type;
+        }
+        else
+        {
+            return TypeSP();
+        }
+    }
+    
+    for (uint32_t ti = 0, te = types.GetSize();
+         ti < te;
+         ++ti)
+    {
+        TypeSP candidate_type = types.GetTypeAtIndex(ti);
+        
+        if (candidate_type->IsCompleteObjCClass() &&
+            ClangASTContext::IsObjCClassType(candidate_type->GetClangForwardType()))
+        {
+            m_complete_class_cache[name] = TypeWP(candidate_type);
+            return candidate_type;                                       
+        }
+    }
+    
+    return TypeSP();
 }
 
 size_t

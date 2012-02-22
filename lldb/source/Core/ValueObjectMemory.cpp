@@ -131,7 +131,7 @@ ValueObjectMemory::~ValueObjectMemory()
 }
 
 lldb::clang_type_t
-ValueObjectMemory::GetClangType ()
+ValueObjectMemory::GetClangTypeImpl ()
 {
     if (m_type_sp)
         return m_type_sp->GetClangForwardType();
@@ -158,7 +158,7 @@ ValueObjectMemory::CalculateNumChildren()
 }
 
 clang::ASTContext *
-ValueObjectMemory::GetClangAST ()
+ValueObjectMemory::GetClangASTImpl ()
 {
     if (m_type_sp)
         return m_type_sp->GetClangAST();
