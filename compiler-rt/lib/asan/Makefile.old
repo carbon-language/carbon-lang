@@ -320,7 +320,7 @@ asan_test: $(BIN)/asan_test$(SUFF)
 asan_benchmarks: $(BIN)/asan_benchmarks$(SUFF)
 
 # for now, build gtest with clang/asan even if we use a different compiler.
-$(GTEST_LIB):
+$(GTEST_LIB): $(LIBASAN_A)
 	mkdir -p $(GTEST_MAKE_DIR) && \
 	cd $(GTEST_MAKE_DIR) && \
 	$(MAKE) -f ../make/Makefile CXXFLAGS="$(PIE) $(CFLAGS) -g -w" \
