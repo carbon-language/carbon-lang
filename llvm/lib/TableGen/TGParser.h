@@ -42,11 +42,25 @@ namespace llvm {
     }
   };
   
+  /// ForeachLoop - Record the iteration state associated with a for loop.
+  /// This is used to instantiate items in the loop body.
+  struct ForeachLoop {
+    Init *IterVar;
+    Init *ListValue;
+
+    ForeachLoop(Init *IVar, Init *LValue) : IterVar(IVar), ListValue(LValue) {};
+  };
+
 class TGParser {
   TGLexer Lex;
   std::vector<std::vector<LetRecord> > LetStack;
   std::map<std::string, MultiClass*> MultiClasses;
   
+  /// Loops - Keep track of any foreach loops we are within.
+  ///
+  typedef std::vector<ForeachLoop> LoopVector;
+  LoopVector Loops;
+
   /// CurMultiClass - If we are parsing a 'multiclass' definition, this is the 
   /// current value.
   MultiClass *CurMultiClass;
@@ -60,8 +74,10 @@ class TGParser {
   // in the middle of creating in.  For those situations, allow the
   // parser to ignore missing object errors.
   enum IDParseMode {
-    ParseValueMode, // We are parsing a value we expect to look up.
-    ParseNameMode // We are parsing a name of an object that does not yet exist.
+    ParseValueMode,   // We are parsing a value we expect to look up.
+    ParseNameMode,    // We are parsing a name of an object that does not yet
+                      // exist.
+    ParseForeachMode  // We are parsing a foreach init.
   };
 
 public:
@@ -82,6 +98,7 @@ public:
   const std::vector<std::string> &getDependencies() const {
     return Lex.getDependencies();
   }
+
 private:  // Semantic analysis methods.
   bool AddValue(Record *TheRec, SMLoc Loc, const RecordVal &RV);
   bool SetValue(Record *TheRec, SMLoc Loc, Init *ValName, 
@@ -93,6 +110,23 @@ private:  // Semantic analysis methods.
   bool AddSubClass(Record *Rec, SubClassReference &SubClass);
   bool AddSubMultiClass(MultiClass *CurMC,
                         SubMultiClassReference &SubMultiClass);
+
+  // IterRecord: Map an iterator name to a value.
+  struct IterRecord {
+    Init *IterVar;
+    Init *IterValue;
+    IterRecord(Init *Var, Init *Val) : IterVar(Var), IterValue(Val) {}
+  };
+
+  // IterSet: The set of all iterator values at some point in the
+  // iteration space.
+  typedef std::vector<IterRecord> IterSet;
+
+  bool ProcessForeachDefs(Record *CurRec, MultiClass *CurMultiClass,
+                          SMLoc Loc);
+  bool ProcessForeachDefs(Record *CurRec, MultiClass *CurMultiClass,
+                          SMLoc Loc, IterSet &IterVals, ForeachLoop &CurLoop,
+                          LoopVector::iterator NextLoop);
 
 private:  // Parser methods.
   bool ParseObjectList(MultiClass *MC = 0);
@@ -116,6 +150,7 @@ private:  // Parser methods.
                             SMLoc DefmPrefixLoc);
   bool ParseDefm(MultiClass *CurMultiClass);
   bool ParseDef(MultiClass *CurMultiClass);
+  bool ParseForeach(MultiClass *CurMultiClass);
   bool ParseTopLevelLet(MultiClass *CurMultiClass);
   std::vector<LetRecord> ParseLetList();
 
@@ -125,6 +160,7 @@ private:  // Parser methods.
 
   bool ParseTemplateArgList(Record *CurRec);
   Init *ParseDeclaration(Record *CurRec, bool ParsingTemplateArgs);
+  Init *ParseForeachDeclaration(Init *&ForeachListValue);
 
   SubClassReference ParseSubClassReference(Record *CurRec, bool isDefm);
   SubMultiClassReference ParseSubMultiClassReference(MultiClass *CurMC);

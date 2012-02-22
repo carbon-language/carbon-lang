@@ -42,7 +42,7 @@ namespace tgtok {
     paste,              // #
 
     // Keywords.
-    Bit, Bits, Class, Code, Dag, Def, Defm, Field, In, Int, Let, List,
+    Bit, Bits, Class, Code, Dag, Def, Foreach, Defm, Field, In, Int, Let, List,
     MultiClass, String,
     
     // !keywords.

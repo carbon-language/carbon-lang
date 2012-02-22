@@ -274,6 +274,7 @@ tgtok::TokKind TGLexer::LexIdentifier() {
     .Case("dag", tgtok::Dag)
     .Case("class", tgtok::Class)
     .Case("def", tgtok::Def)
+    .Case("foreach", tgtok::Foreach)
     .Case("defm", tgtok::Defm)
     .Case("multiclass", tgtok::MultiClass)
     .Case("field", tgtok::Field)

@@ -1535,6 +1535,7 @@ struct MultiClass {
 
 class RecordKeeper {
   std::map<std::string, Record*> Classes, Defs;
+
 public:
   ~RecordKeeper() {
     for (std::map<std::string, Record*>::iterator I = Classes.begin(),
