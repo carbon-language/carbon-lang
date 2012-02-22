@@ -1878,7 +1878,7 @@ Sema::ActOnCapScopeReturnStmt(SourceLocation ReturnLoc, Expr *RetValExp) {
     // Delay processing for now.  TODO: there are lots of dependent
     // types we can conclusively prove aren't void.
   } else if (FnRetType->isVoidType()) {
-    if (RetValExp &&
+    if (RetValExp && !isa<InitListExpr>(RetValExp) &&
         !(getLangOptions().CPlusPlus &&
           (RetValExp->isTypeDependent() ||
            RetValExp->getType()->isVoidType()))) {
