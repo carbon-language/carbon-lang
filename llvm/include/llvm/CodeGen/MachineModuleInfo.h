@@ -161,10 +161,10 @@ class MachineModuleInfo : public ImmutablePass {
   /// in this module.
   bool DbgInfoAvailable;
 
-  /// CallsExternalVAFunctionWithFloatingPointArguments - True if this module
-  /// calls VarArg function with floating point arguments.  This is used to emit
-  /// an undefined reference to fltused on Windows targets.
-  bool CallsExternalVAFunctionWithFloatingPointArguments;
+  /// UsesVAFloatArgument - True if this module calls VarArg function with
+  /// floating-point arguments.  This is used to emit an undefined reference
+  /// to _fltused on Windows targets.
+  bool UsesVAFloatArgument;
 
 public:
   static char ID; // Pass identification, replacement for typeid
@@ -223,12 +223,12 @@ public:
   bool callsUnwindInit() const { return CallsUnwindInit; }
   void setCallsUnwindInit(bool b) { CallsUnwindInit = b; }
 
-  bool callsExternalVAFunctionWithFloatingPointArguments() const {
-    return CallsExternalVAFunctionWithFloatingPointArguments;
+  bool usesVAFloatArgument() const {
+    return UsesVAFloatArgument;
   }
 
-  void setCallsExternalVAFunctionWithFloatingPointArguments(bool b) {
-    CallsExternalVAFunctionWithFloatingPointArguments = b;
+  void setUsesVAFloatArgument(bool b) {
+    UsesVAFloatArgument = b;
   }
 
   /// getFrameMoves - Returns a reference to a list of moves done in the current

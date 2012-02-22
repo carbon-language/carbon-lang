@@ -561,6 +561,9 @@ bool FastISel::SelectCall(const User *I) {
     return true;
   }
 
+  MachineModuleInfo &MMI = FuncInfo.MF->getMMI();
+  ComputeUsesVAFloatArgument(*Call, &MMI);
+
   const Function *F = Call->getCalledFunction();
   if (!F) return false;
 

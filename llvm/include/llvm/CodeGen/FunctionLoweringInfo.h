@@ -202,7 +202,7 @@ public:
   /// setArgumentFrameIndex - Record frame index for the byval
   /// argument.
   void setArgumentFrameIndex(const Argument *A, int FI);
-  
+
   /// getArgumentFrameIndex - Get frame index for the byval argument.
   int getArgumentFrameIndex(const Argument *A);
 
@@ -210,6 +210,13 @@ private:
   /// LiveOutRegInfo - Information about live out vregs.
   IndexedMap<LiveOutInfo, VirtReg2IndexFunctor> LiveOutRegInfo;
 };
+
+/// ComputeUsesVAFloatArgument - Determine if any floating-point values are
+/// being passed to this variadic function, and set the MachineModuleInfo's
+/// usesVAFloatArgument flag if so. This flag is used to emit an undefined
+/// reference to _fltused on Windows, which will link in MSVCRT's
+/// floating-point support.
+void ComputeUsesVAFloatArgument(const CallInst &I, MachineModuleInfo *MMI);
 
 /// AddCatchInfo - Extract the personality and type infos from an eh.selector
 /// call, and add them to the specified machine basic block.

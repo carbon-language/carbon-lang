@@ -5454,23 +5454,8 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
     return;
   }
 
-  // See if any floating point values are being passed to this function. This is
-  // used to emit an undefined reference to fltused on Windows.
-  FunctionType *FT =
-    cast<FunctionType>(I.getCalledValue()->getType()->getContainedType(0));
   MachineModuleInfo &MMI = DAG.getMachineFunction().getMMI();
-  if (FT->isVarArg() &&
-      !MMI.callsExternalVAFunctionWithFloatingPointArguments()) {
-    for (unsigned i = 0, e = I.getNumArgOperands(); i != e; ++i) {
-      Type* T = I.getArgOperand(i)->getType();
-      for (po_iterator<Type*> i = po_begin(T), e = po_end(T);
-           i != e; ++i) {
-        if (!i->isFloatingPointTy()) continue;
-        MMI.setCallsExternalVAFunctionWithFloatingPointArguments(true);
-        break;
-      }
-    }
-  }
+  ComputeUsesVAFloatArgument(I, &MMI);
 
   const char *RenameFn = 0;
   if (Function *F = I.getCalledFunction()) {

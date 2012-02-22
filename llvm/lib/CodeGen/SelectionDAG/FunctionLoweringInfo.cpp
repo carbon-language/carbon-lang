@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #define DEBUG_TYPE "function-lowering-info"
+#include "llvm/ADT/PostOrderIterator.h"
 #include "llvm/CodeGen/FunctionLoweringInfo.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -369,6 +370,30 @@ int FunctionLoweringInfo::getArgumentFrameIndex(const Argument *A) {
     return I->second;
   DEBUG(dbgs() << "Argument does not have assigned frame index!");
   return 0;
+}
+
+/// ComputeUsesVAFloatArgument - Determine if any floating-point values are
+/// being passed to this variadic function, and set the MachineModuleInfo's
+/// usesVAFloatArgument flag if so. This flag is used to emit an undefined
+/// reference to _fltused on Windows, which will link in MSVCRT's
+/// floating-point support.
+void llvm::ComputeUsesVAFloatArgument(const CallInst &I,
+                                      MachineModuleInfo *MMI)
+{
+  FunctionType *FT = cast<FunctionType>(
+    I.getCalledValue()->getType()->getContainedType(0));
+  if (FT->isVarArg() && !MMI->usesVAFloatArgument()) {
+    for (unsigned i = 0, e = I.getNumArgOperands(); i != e; ++i) {
+      Type* T = I.getArgOperand(i)->getType();
+      for (po_iterator<Type*> i = po_begin(T), e = po_end(T);
+           i != e; ++i) {
+        if (i->isFloatingPointTy()) {
+          MMI->setUsesVAFloatArgument(true);
+          return;
+        }
+      }
+    }
+  }
 }
 
 /// AddCatchInfo - Extract the personality and type infos from an eh.selector

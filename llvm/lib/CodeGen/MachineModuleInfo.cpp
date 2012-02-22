@@ -257,7 +257,7 @@ MachineModuleInfo::MachineModuleInfo(const MCAsmInfo &MAI,
   : ImmutablePass(ID), Context(MAI, MRI, MOFI),
     ObjFileMMI(0), CompactUnwindEncoding(0), CurCallSite(0), CallsEHReturn(0),
     CallsUnwindInit(0), DbgInfoAvailable(false),
-    CallsExternalVAFunctionWithFloatingPointArguments(false) {
+    UsesVAFloatArgument(false) {
   initializeMachineModuleInfoPass(*PassRegistry::getPassRegistry());
   // Always emit some info, by default "no personality" info.
   Personalities.push_back(NULL);
