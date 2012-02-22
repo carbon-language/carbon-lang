@@ -81,6 +81,7 @@ option</a></li>
       <li><a href="#dss_smallset">"llvm/ADT/SmallSet.h"</a></li>
       <li><a href="#dss_smallptrset">"llvm/ADT/SmallPtrSet.h"</a></li>
       <li><a href="#dss_denseset">"llvm/ADT/DenseSet.h"</a></li>
+      <li><a href="#dss_sparseset">"llvm/ADT/SparseSet.h"</a></li>
       <li><a href="#dss_FoldingSet">"llvm/ADT/FoldingSet.h"</a></li>
       <li><a href="#dss_set">&lt;set&gt;</a></li>
       <li><a href="#dss_setvector">"llvm/ADT/SetVector.h"</a></li>
@@ -1485,6 +1486,24 @@ href="#dss_smallptrset">SmallPtrSet</a> for pointers).  Note that DenseSet has
 the same requirements for the value type that <a 
 href="#dss_densemap">DenseMap</a> has.
 </p>
+
+</div>
+
+<!-- _______________________________________________________________________ -->
+<h4>
+  <a name="dss_sparseset">"llvm/ADT/SparseSet.h"</a>
+</h4>
+
+<div>
+
+<p>SparseSet holds a small number of objects identified by unsigned keys of
+moderate size. It uses a lot of memory, but provides operations that are
+almost as fast as a vector. Typical keys are physical registers, virtual
+registers, or numbered basic blocks.</p>
+
+<p>SparseSet is useful for algorithms that need very fast clear/find/insert/erase
+and fast iteration over small sets.  It is not intended for building composite
+data structures.</p>
 
 </div>
 

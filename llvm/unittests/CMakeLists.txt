@@ -71,6 +71,7 @@ add_llvm_unittest(ADT
   ADT/SmallStringTest.cpp
   ADT/SmallVectorTest.cpp
   ADT/SparseBitVectorTest.cpp
+  ADT/SparseSetTest.cpp
   ADT/StringMapTest.cpp
   ADT/StringRefTest.cpp
   ADT/TripleTest.cpp
