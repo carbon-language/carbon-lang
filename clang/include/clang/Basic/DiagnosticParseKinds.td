@@ -223,10 +223,8 @@ def ext_inline_namespace : ExtWarn<
 def warn_cxx98_compat_inline_namespace : Warning<
   "inline namespaces are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
-def err_generalized_initializer_lists : Error<
-  "generalized initializer lists are a C++11 extension unsupported in Clang">;
 def ext_generalized_initializer_lists : ExtWarn<
-  "generalized initializer lists are a C++11 extension unsupported in Clang">,
+  "generalized initializer lists are a C++11 extension">,
   InGroup<CXX11>;
 def warn_cxx98_compat_generalized_initializer_lists : Warning<
   "generalized initializer lists are incompatible with C++98">,

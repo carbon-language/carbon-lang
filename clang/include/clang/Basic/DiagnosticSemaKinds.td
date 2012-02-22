@@ -5057,6 +5057,9 @@ def ext_return_has_expr : ExtWarn<
   DefaultError, InGroup<ReturnType>;
 def ext_return_has_void_expr : Extension<
   "void %select{function|method}1 %0 should not return void expression">;
+def err_return_init_list : Error<
+  "%select{void function|void method|constructor|destructor}1 %0 "
+  "must not return a value">;
 def warn_noreturn_function_has_return_expr : Warning<
   "function %0 declared 'noreturn' should not return">,
   InGroup<DiagGroup<"invalid-noreturn">>;

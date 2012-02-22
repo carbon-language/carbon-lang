@@ -153,9 +153,9 @@ namespace objects {
     G(std::initializer_list<int>, T ...);  // expected-note 3 {{not viable}}
   };
 
-  struct H { // expected-note 6 {{not viable}}
+  struct H { // expected-note 8 {{not viable}}
     explicit H(int, int); // expected-note 3 {{not viable}}
-    H(int, void*); // expected-note 3 {{not viable}}
+    H(int, void*); // expected-note 4 {{not viable}}
   };
 
   void edge_cases() {
@@ -186,4 +186,11 @@ namespace objects {
     (void) new H{1, 2};
     (void) H{1, 2};
   }
+
+  struct memberinit {
+    H h1{1, nullptr};
+    H h2 = {1, nullptr};
+    H h3{1, 1};
+    H h4 = {1, 1}; // expected-error {{no matching constructor}}
+  };
 }

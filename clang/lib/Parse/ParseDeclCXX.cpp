@@ -2012,7 +2012,7 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
       if (Init.isInvalid())
         SkipUntil(tok::comma, true, true);
       else if (ThisDecl)
-        Actions.AddInitializerToDecl(ThisDecl, Init.get(), false,
+        Actions.AddInitializerToDecl(ThisDecl, Init.get(), EqualLoc.isInvalid(),
                                    DS.getTypeSpecType() == DeclSpec::TST_auto);      
     } else if (ThisDecl && DS.getStorageClassSpec() == DeclSpec::SCS_static) {
       // No initializer.
@@ -2087,15 +2087,15 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
 ///
 ///   pure-specifier:
 ///     '= 0'
-///  
+///
 ///   brace-or-equal-initializer:
 ///     '=' initializer-expression
-///     braced-init-list                       [TODO]
-///  
+///     braced-init-list
+///
 ///   initializer-clause:
 ///     assignment-expression
-///     braced-init-list                       [TODO]
-///  
+///     braced-init-list
+///
 ///   defaulted/deleted function-definition:                                                                                                                                                                                               
 ///     '=' 'default'
 ///     '=' 'delete'
@@ -2137,9 +2137,8 @@ ExprResult Parser::ParseCXXMemberInitializer(Decl *D, bool IsFunction,
       return ExprResult();
     }
 
-    return ParseInitializer();
-  } else
-    return ExprError(Diag(Tok, diag::err_generalized_initializer_lists));
+  }
+  return ParseInitializer();
 }
 
 /// ParseCXXMemberSpecification - Parse the class definition.

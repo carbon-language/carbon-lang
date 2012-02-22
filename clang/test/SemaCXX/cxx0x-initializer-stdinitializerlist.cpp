@@ -130,6 +130,7 @@ void dangle() {
 
 struct haslist1 {
   std::initializer_list<int> il = {1, 2, 3}; // expected-warning{{at the end of the constructor}}
+  std::initializer_list<int> jl{1, 2, 3}; // expected-warning{{at the end of the constructor}}
   haslist1();
 };
 

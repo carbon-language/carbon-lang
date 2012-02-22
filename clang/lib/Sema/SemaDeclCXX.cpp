@@ -1640,12 +1640,17 @@ Sema::ActOnCXXInClassMemberInitializer(Decl *D, SourceLocation EqualLoc,
   ExprResult Init = InitExpr;
   if (!FD->getType()->isDependentType() && !InitExpr->isTypeDependent()) {
     if (isa<InitListExpr>(InitExpr) && isStdInitializerList(FD->getType(), 0)) {
-    Diag(FD->getLocation(), diag::warn_dangling_std_initializer_list)
+      Diag(FD->getLocation(), diag::warn_dangling_std_initializer_list)
         << /*at end of ctor*/1 << InitExpr->getSourceRange();
     }
-    // FIXME: if there is no EqualLoc, this is list-initialization.
-    Init = PerformCopyInitialization(
-      InitializedEntity::InitializeMember(FD), EqualLoc, InitExpr);
+    Expr **Inits = &InitExpr;
+    unsigned NumInits = 1;
+    InitializedEntity Entity = InitializedEntity::InitializeMember(FD);
+    InitializationKind Kind = EqualLoc.isInvalid()
+        ? InitializationKind::CreateDirectList(InitExpr->getLocStart())
+        : InitializationKind::CreateCopy(InitExpr->getLocStart(), EqualLoc);
+    InitializationSequence Seq(*this, Entity, Kind, Inits, NumInits);
+    Init = Seq.Perform(*this, Entity, Kind, MultiExprArg(Inits, NumInits));
     if (Init.isInvalid()) {
       FD->setInvalidDecl();
       return;
