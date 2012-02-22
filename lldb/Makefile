@@ -25,9 +25,6 @@ endif
 # Set LLVM source root level.
 LEVEL := $(LLDB_LEVEL)/../..
 
-# shared_ptr from libstdc++ requires RTTI.
-REQUIRES_RTTI := 1
-
 # Include LLVM common makefile.
 include $(LEVEL)/Makefile.common
 
