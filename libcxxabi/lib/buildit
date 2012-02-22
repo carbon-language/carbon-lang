@@ -27,7 +27,7 @@ then
   RC_ProjectSourceVersion=1
 fi
 
-EXTRA_FLAGS="-std=c++0x -stdlib=libc++ -fstrict-aliasing -Wstrict-aliasing=2"
+EXTRA_FLAGS="-std=c++0x -stdlib=libc++ -fstrict-aliasing -Wstrict-aliasing=2 -Wnewline-eof"
 
 case $TRIPLE in
   *-apple-*)
