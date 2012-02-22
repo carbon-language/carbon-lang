@@ -25,6 +25,7 @@
 #if defined (__APPLE__)
 
 #include <getopt.h>
+#include <limits.h>
 #include <mach/machine.h>
 #include <signal.h>
 #include <spawn.h>

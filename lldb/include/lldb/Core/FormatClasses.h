@@ -11,22 +11,6 @@
 #define lldb_FormatClasses_h_
 
 // C Includes
-
-#ifdef LLDB_DISABLE_PYTHON
-
-struct PyObject;
-
-#else   // #ifdef LLDB_DISABLE_PYTHON
-
-#if defined (__APPLE__)
-#include <Python/Python.h>
-#else
-#include <Python.h>
-#endif
-
-#endif  // #ifdef LLDB_DISABLE_PYTHON
-
-
 #include <stdint.h>
 #include <unistd.h>
 
