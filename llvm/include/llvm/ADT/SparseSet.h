@@ -21,6 +21,8 @@
 #define LLVM_ADT_SPARSESET_H
 
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/Support/DataTypes.h"
+#include <limits>
 
 namespace llvm {
 
