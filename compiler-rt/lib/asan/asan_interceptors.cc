@@ -24,7 +24,6 @@
 #include "interception/interception.h"
 
 #include <new>
-#include <limits.h>
 
 #if defined(_WIN32)
 // FIXME: remove when we start intercepting on Windows. Currently it's needed to
@@ -132,9 +131,9 @@ int64_t internal_simple_strtoll(const char *nptr, char **endptr, int base) {
     nptr++;
   }
   while (IsDigit(*nptr)) {
-    res = (res <= ULLONG_MAX / 10) ? res * 10 : ULLONG_MAX;
+    res = (res <= UINT64_MAX / 10) ? res * 10 : UINT64_MAX;
     int digit = ((*nptr) - '0');
-    res = (res <= ULLONG_MAX - digit) ? res + digit : ULLONG_MAX;
+    res = (res <= UINT64_MAX - digit) ? res + digit : UINT64_MAX;
     have_digits = true;
     nptr++;
   }
@@ -142,9 +141,9 @@ int64_t internal_simple_strtoll(const char *nptr, char **endptr, int base) {
     *endptr = (have_digits) ? (char*)nptr : old_nptr;
   }
   if (sgn > 0) {
-    return (int64_t)(Min((uint64_t)LLONG_MAX, res));
+    return (int64_t)(Min((uint64_t)INT64_MAX, res));
   } else {
-    return (res > LLONG_MAX) ? LLONG_MIN : ((int64_t)res * -1);
+    return (res > INT64_MAX) ? INT64_MIN : ((int64_t)res * -1);
   }
 }
 

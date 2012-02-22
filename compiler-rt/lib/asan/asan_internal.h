@@ -59,6 +59,22 @@ extern "C" void* _ReturnAddress(void);
 #endif
 #endif
 
+// Limits for integral types. We have to redefine it in case we don't
+// have stdint.h (like in Visual Studio 9).
+#if __WORDSIZE == 64
+# define __INT64_C(c)  c ## L
+# define __UINT64_C(c) c ## UL
+#else
+# define __INT64_C(c)  c ## LL
+# define __UINT64_C(c) c ## ULL
+#endif  // __WORDSIZE == 64
+# define INT32_MIN              (-2147483647-1)
+# define INT32_MAX              (2147483647)
+# define UINT32_MAX             (4294967295U)
+# define INT64_MIN              (-__INT64_C(9223372036854775807)-1)
+# define INT64_MAX              (__INT64_C(9223372036854775807))
+# define UINT64_MAX             (__UINT64_C(18446744073709551615))
+
 #if defined(__linux__)
 # define ASAN_LINUX   1
 #else
