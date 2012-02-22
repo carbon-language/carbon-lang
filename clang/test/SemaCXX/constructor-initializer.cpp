@@ -268,3 +268,15 @@ struct S4 {
 };
 
 }
+
+namespace PR12049 {
+  int function();
+
+  class Class
+  {
+  public:
+      Class() : member(function() {} // expected-note {{to match this '('}}
+
+      int member; // expected-error {{expected ')'}}
+  };
+}

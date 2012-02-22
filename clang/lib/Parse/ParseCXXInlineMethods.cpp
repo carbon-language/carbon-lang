@@ -145,16 +145,14 @@ Decl *Parser::ParseCXXInlineMethodDef(AccessSpecifier AS,
   // function body.
   if (ConsumeAndStoreFunctionPrologue(Toks)) {
     // We didn't find the left-brace we expected after the
-    // constructor initializer.
-    if (Tok.is(tok::semi)) {
-      // We found a semicolon; complain, consume the semicolon, and
-      // don't try to parse this method later.
-      Diag(Tok.getLocation(), diag::err_expected_lbrace);
-      ConsumeAnyToken();
-      delete getCurrentClass().LateParsedDeclarations.back();
-      getCurrentClass().LateParsedDeclarations.pop_back();
-      return FnD;
-    }
+    // constructor initializer; we already printed an error, and it's likely
+    // impossible to recover, so don't try to parse this method later.
+    // If we stopped at a semicolon, consume it to avoid an extra warning.
+     if (Tok.is(tok::semi))
+      ConsumeToken();
+    delete getCurrentClass().LateParsedDeclarations.back();
+    getCurrentClass().LateParsedDeclarations.pop_back();
+    return FnD;
   } else {
     // Consume everything up to (and including) the matching right brace.
     ConsumeAndStoreUntil(tok::r_brace, Toks, /*StopAtSemi=*/false);
@@ -606,6 +604,7 @@ bool Parser::ConsumeAndStoreFunctionPrologue(CachedTokens &Toks) {
     Toks.push_back(Tok);
     ConsumeToken();
   }
+  bool ReadInitializer = false;
   if (Tok.is(tok::colon)) {
     // Initializers can contain braces too.
     Toks.push_back(Tok);
@@ -613,37 +612,52 @@ bool Parser::ConsumeAndStoreFunctionPrologue(CachedTokens &Toks) {
 
     while (Tok.is(tok::identifier) || Tok.is(tok::coloncolon)) {
       if (Tok.is(tok::eof) || Tok.is(tok::semi))
-        return true;
+        return Diag(Tok.getLocation(), diag::err_expected_lbrace);
 
       // Grab the identifier.
       if (!ConsumeAndStoreUntil(tok::l_paren, tok::l_brace, Toks,
                                 /*StopAtSemi=*/true,
                                 /*ConsumeFinalToken=*/false))
-        return true;
+        return Diag(Tok.getLocation(), diag::err_expected_lparen);
 
       tok::TokenKind kind = Tok.getKind();
       Toks.push_back(Tok);
-      if (kind == tok::l_paren)
+      bool IsLParen = (kind == tok::l_paren);
+      SourceLocation LOpen = Tok.getLocation();
+
+      if (IsLParen) {
         ConsumeParen();
-      else {
+      } else {
         assert(kind == tok::l_brace && "Must be left paren or brace here.");
         ConsumeBrace();
         // In C++03, this has to be the start of the function body, which
-        // means the initializer is malformed.
+        // means the initializer is malformed; we'll diagnose it later.
         if (!getLang().CPlusPlus0x)
           return false;
       }
 
       // Grab the initializer
-      if (!ConsumeAndStoreUntil(kind == tok::l_paren ? tok::r_paren :
-                                                       tok::r_brace,
-                                Toks, /*StopAtSemi=*/true))
+      if (!ConsumeAndStoreUntil(IsLParen ? tok::r_paren : tok::r_brace,
+                                Toks, /*StopAtSemi=*/true)) {
+        Diag(Tok, IsLParen ? diag::err_expected_rparen :
+                             diag::err_expected_rbrace);
+        Diag(LOpen, diag::note_matching) << (IsLParen ? "(" : "{");
         return true;
+      }
+
+      // Grab pack ellipsis, if present
+      if (Tok.is(tok::ellipsis)) {
+        Toks.push_back(Tok);
+        ConsumeToken();
+      }
 
       // Grab the separating comma, if any.
       if (Tok.is(tok::comma)) {
         Toks.push_back(Tok);
         ConsumeToken();
+      } else if (Tok.isNot(tok::l_brace)) {
+        ReadInitializer = true;
+        break;
       }
     }
   }
@@ -651,11 +665,14 @@ bool Parser::ConsumeAndStoreFunctionPrologue(CachedTokens &Toks) {
   // Grab any remaining garbage to be diagnosed later. We stop when we reach a
   // brace: an opening one is the function body, while a closing one probably
   // means we've reached the end of the class.
-  if (!ConsumeAndStoreUntil(tok::l_brace, tok::r_brace, Toks,
-                            /*StopAtSemi=*/true, /*ConsumeFinalToken=*/false))
-    return true;
-  if(Tok.isNot(tok::l_brace))
-    return true;
+  ConsumeAndStoreUntil(tok::l_brace, tok::r_brace, Toks,
+                       /*StopAtSemi=*/true,
+                       /*ConsumeFinalToken=*/false);
+  if (Tok.isNot(tok::l_brace)) {
+    if (ReadInitializer)
+      return Diag(Tok.getLocation(), diag::err_expected_lbrace_or_comma);
+    return Diag(Tok.getLocation(), diag::err_expected_lbrace);
+  }
 
   Toks.push_back(Tok);
   ConsumeBrace();

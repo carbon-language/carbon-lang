@@ -91,6 +91,16 @@ struct X {
   X() : member()... { } // expected-error{{pack expansion for initialization of member 'member'}}
 };
 
+// There was a bug in the delayed parsing code for the
+// following case.
+template<typename ...T>
+struct DelayedParseTest : T...
+{
+  int a;
+  DelayedParseTest(T... i) : T{i}..., a{10} {}
+};
+
+
 // In a template-argument-list (14.3); the pattern is a template-argument.
 template<typename ...Types>
 struct tuple_of_refs {
