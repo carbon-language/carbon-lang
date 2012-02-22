@@ -55,3 +55,34 @@ void nesting() {
     }();
   }();
 }
+
+namespace overloading {
+  void bool_conversion() {
+    if ([](){}) {
+    }
+
+    bool b = []{};
+    b = (bool)[]{};
+  }
+
+  void conversions() {
+    int (*fp)(int) = [](int x) { return x + 1; };
+    fp = [](int x) { return x + 1; };
+
+    typedef int (*func_ptr)(int);
+    fp = (func_ptr)[](int x) { return x + 1; };
+
+    int (^bp)(int) = [](int x) { return x + 1; };
+    bp = [](int x) { return x + 1; };
+
+    typedef int (^block_ptr)(int);
+    bp = (block_ptr)[](int x) { return x + 1; };
+  }
+
+  int &accept_lambda_conv(int (*fp)(int));
+  float &accept_lambda_conv(int (^bp)(int));
+
+  void call_with_lambda() {
+    int &ir = accept_lambda_conv([](int x) { return x + 1; });
+  }
+}

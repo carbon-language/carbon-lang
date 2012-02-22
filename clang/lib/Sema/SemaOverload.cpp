@@ -3065,6 +3065,41 @@ Sema::DiagnoseMultipleUserDefinedConversion(Expr *From, QualType ToType) {
   return true;
 }
 
+/// \brief Compare the user-defined conversion functions or constructors
+/// of two user-defined conversion sequences to determine whether any ordering
+/// is possible.
+static ImplicitConversionSequence::CompareKind
+compareConversionFunctions(Sema &S,
+                           FunctionDecl *Function1,
+                           FunctionDecl *Function2) {
+  if (!S.getLangOptions().ObjC1 || !S.getLangOptions().CPlusPlus0x)
+    return ImplicitConversionSequence::Indistinguishable;
+  
+  // Objective-C++:
+  //   If both conversion functions are implicitly-declared conversions from
+  //   a lambda closure type to a function pointer and a block pointer, 
+  //   respectively, always prefer the conversion to a function pointer,
+  //   because the function pointer is more lightweight and is more likely
+  //   to keep code working.
+  CXXConversionDecl *Conv1 = dyn_cast<CXXConversionDecl>(Function1);
+  if (!Conv1)
+    return ImplicitConversionSequence::Indistinguishable;
+    
+  CXXConversionDecl *Conv2 = dyn_cast<CXXConversionDecl>(Function2);
+  if (!Conv2)
+    return ImplicitConversionSequence::Indistinguishable;
+  
+  if (Conv1->getParent()->isLambda() && Conv2->getParent()->isLambda()) {
+    bool Block1 = Conv1->getConversionType()->isBlockPointerType();
+    bool Block2 = Conv2->getConversionType()->isBlockPointerType();
+    if (Block1 != Block2)
+      return Block1? ImplicitConversionSequence::Worse 
+                   : ImplicitConversionSequence::Better;
+  }
+
+  return ImplicitConversionSequence::Indistinguishable;
+}
+  
 /// CompareImplicitConversionSequences - Compare two implicit
 /// conversion sequences to determine whether one is better than the
 /// other or if they are indistinguishable (C++ 13.3.3.2).
@@ -3118,6 +3153,10 @@ CompareImplicitConversionSequences(Sema &S,
       Result = CompareStandardConversionSequences(S,
                                                   ICS1.UserDefined.After,
                                                   ICS2.UserDefined.After);
+    else
+      Result = compareConversionFunctions(S, 
+                                          ICS1.UserDefined.ConversionFunction,
+                                          ICS2.UserDefined.ConversionFunction);
   }
 
   // List-initialization sequence L1 is a better conversion sequence than
@@ -7538,6 +7577,15 @@ isBetterOverloadCandidate(Sema &S,
   if (UserDefinedConversion && Cand1.Function && Cand2.Function &&
       isa<CXXConversionDecl>(Cand1.Function) &&
       isa<CXXConversionDecl>(Cand2.Function)) {
+    // First check whether we prefer one of the conversion functions over the
+    // other. This only distinguishes the results in non-standard, extension
+    // cases such as the conversion from a lambda closure type to a function
+    // pointer or block.
+    ImplicitConversionSequence::CompareKind FuncResult
+      = compareConversionFunctions(S, Cand1.Function, Cand2.Function);
+    if (FuncResult != ImplicitConversionSequence::Indistinguishable)
+      return FuncResult;
+          
     switch (CompareStandardConversionSequences(S,
                                                Cand1.FinalConversion,
                                                Cand2.FinalConversion)) {
