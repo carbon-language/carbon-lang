@@ -28,6 +28,19 @@ class AsanProcMaps {
   // address 'addr'. Returns true on success.
   bool GetObjectNameAndOffset(uintptr_t addr, uintptr_t *offset,
                               char filename[], size_t filename_size);
+  void Dump() {
+    Reset();
+    uintptr_t start, end;
+    const intptr_t kBufSize = 4095;
+    char filename[kBufSize];
+    Report("Process memory map follows:\n");
+    while (Next(&start, &end, /* file_offset */NULL,
+                filename, kBufSize)) {
+      Printf("\t%p-%p\t%s\n", (void*)start, (void*)end, filename);
+    }
+    Report("End of process memory map.\n");
+  }
+
   ~AsanProcMaps();
  private:
   // Default implementation of GetObjectNameAndOffset.
