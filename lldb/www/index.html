@@ -24,8 +24,8 @@
                         of reusable components which highly leverage existing libraries in the
                         larger LLVM Project, such as the Clang expression parser and LLVM
                         disassembler.</p>
-                    <p>LLDB is in early development, but is mature enough to support basic
-                        debugging scenarios on Mac OS X in C, Objective-C and C++.</p>
+                    <p>LLDB is the default debugger in Xcode on Mac OS X and supports
+                        debugging C, Objective-C and C++ on the desktop and iOS devices and simulator.</p>
 
                     <p>All of the code in the LLDB project is available under the standard
                         <a href="http://llvm.org/docs/DeveloperPolicy.html#license">LLVM
@@ -48,13 +48,50 @@
 			</div>
 
 			<div class="post">
+				<h1 class ="postheader">Compiler Integration Benefits</h1>
+				<div class="postcontent">
+						<p>LLDB currently converts debug information into clang types so that
+						it can leverage the clang compiler infrastructure.
+						This allows LLDB to support the latest C, C++, Objective C and Objective C++
+						language features and runtimes in expressions without having to reimplement <b>any</b> 
+						of this functionality. It also leverages the compiler to take care of all ABI
+						details when making functions calls for expressions, when disassembling
+						instructions and extracting instruciton details, and much more. 
+				   	<p>The major benefits include:</p>
+				   	<ul>
+					   	<li>Up to date language support for C, C++, Objective C</li>
+					   	<li>Multi-line expressions that can declare local variables and types</li>
+					   	<li>Utilitize the JIT for expressions when supported</li>
+					   	<li>Evaluate expression Intermediate Representation (IR) when JIT can't be used</li>
+				    </ul>
+				</div>
+			</div>
+
+			<div class="post">
+				<h1 class ="postheader">Reusability</h1>
+				<div class="postcontent">
+				   	<p>The LLDB debugger APIs are exposed as a C++ object oriented interface in a shared library. 
+					The <b>lldb</b> command line tool links to, and uses this public API. On Mac OS X the shared library
+					is exposed a framework name <b>LLDB.framework</b>, and unix systems expose it is <b>lldb.so</b>.
+					The entire API is also then exposed through Python script bindings which allow the API to be used
+					within the LLDB embedded script interpreter, and also in any python script that loads the <b>lldb.py</b>
+					module in standard python script files. See the <a href="python-reference.html">Python Reference</a> page for more details on how 
+					and where Python can be used with the LLDB API.</p>
+					<p>Sharing the LLDB API allows LLDB to not only be used for debugging, but also for symbolication,
+						disassembly, object and symbol file introspection, and much more.
+				</div>
+			</div>
+
+			<div class="post">
 				<h1 class ="postheader">Platform Support</h1>
 				<div class="postcontent">
 
 				   	<p>LLDB is known to work on the following platforms, but ports to new
 				       platforms are welcome:</p>
 				   	<ul>
-				   	<li>Mac OS X i386 and x86-64</li>
+					   	<li>Mac OS X desktop user space debugging for i386 and x86-64</li>
+					   	<li>iOS simulator debugging on i386</li>
+					   	<li>iOS device debugging on ARM</li>
 				    </ul>
 				</div>
 				<div class="postfooter"></div>
