@@ -268,7 +268,6 @@ void test_unicode_conversions(wchar_t *s) {
   // FIXME: This test reports inconsistent results. On Windows, '%C' expects
   // 'unsigned short'.
   // printf("%C", 10);
-  // FIXME: we report the expected type as 'int*' instead of 'wchar_t*'
   printf("%S", "hello"); // expected-warning{{but the argument has type 'char *'}}
 }
 

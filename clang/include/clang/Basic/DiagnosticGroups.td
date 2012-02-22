@@ -290,6 +290,7 @@ def Unused : DiagGroup<"unused",
 // Format settings.
 def FormatInvalidSpecifier : DiagGroup<"format-invalid-specifier">;
 def FormatSecurity : DiagGroup<"format-security">;
+def FormatNonStandard : DiagGroup<"format-non-standard">;
 def FormatY2K : DiagGroup<"format-y2k">;
 def Format : DiagGroup<"format",
                        [FormatExtraArgs, FormatZeroLength, NonNull,

@@ -602,3 +602,74 @@ bool FormatSpecifier::hasValidLengthModifier() const {
   }
   llvm_unreachable("Invalid LengthModifier Kind!");
 }
+
+bool FormatSpecifier::hasStandardLengthModifier() const {
+  switch (LM.getKind()) {
+    case LengthModifier::None:
+    case LengthModifier::AsChar:
+    case LengthModifier::AsShort:
+    case LengthModifier::AsLong:
+    case LengthModifier::AsLongLong:
+    case LengthModifier::AsIntMax:
+    case LengthModifier::AsSizeT:
+    case LengthModifier::AsPtrDiff:
+    case LengthModifier::AsLongDouble:
+      return true;
+    case LengthModifier::AsAllocate:
+    case LengthModifier::AsMAllocate:
+    case LengthModifier::AsQuad:
+      return false;
+  }
+  llvm_unreachable("Invalid LengthModifier Kind!");
+}
+
+bool FormatSpecifier::hasStandardConversionSpecifier(const LangOptions &LangOpt) const {
+  switch (CS.getKind()) {
+    case ConversionSpecifier::cArg:
+    case ConversionSpecifier::dArg:
+    case ConversionSpecifier::iArg:
+    case ConversionSpecifier::oArg:
+    case ConversionSpecifier::uArg:
+    case ConversionSpecifier::xArg:
+    case ConversionSpecifier::XArg:
+    case ConversionSpecifier::fArg:
+    case ConversionSpecifier::FArg:
+    case ConversionSpecifier::eArg:
+    case ConversionSpecifier::EArg:
+    case ConversionSpecifier::gArg:
+    case ConversionSpecifier::GArg:
+    case ConversionSpecifier::aArg:
+    case ConversionSpecifier::AArg:
+    case ConversionSpecifier::sArg:
+    case ConversionSpecifier::pArg:
+    case ConversionSpecifier::nArg:
+    case ConversionSpecifier::ObjCObjArg:
+    case ConversionSpecifier::ScanListArg:
+    case ConversionSpecifier::PercentArg:
+      return true;
+    case ConversionSpecifier::CArg:
+    case ConversionSpecifier::SArg:
+      return LangOpt.ObjC1 || LangOpt.ObjC2;
+    case ConversionSpecifier::InvalidSpecifier:
+    case ConversionSpecifier::PrintErrno:
+      return false;
+  }
+  llvm_unreachable("Invalid ConversionSpecifier Kind!");
+}
+
+bool FormatSpecifier::hasStandardLengthConversionCombination() const {
+  if (LM.getKind() == LengthModifier::AsLongDouble) {
+    switch(CS.getKind()) {
+        case ConversionSpecifier::dArg:
+        case ConversionSpecifier::iArg:
+        case ConversionSpecifier::oArg:
+        case ConversionSpecifier::uArg:
+        case ConversionSpecifier::xArg:
+        case ConversionSpecifier::XArg:
+          return false;
+        default:
+          return true;
+    }
+  }
+  return true;
+}

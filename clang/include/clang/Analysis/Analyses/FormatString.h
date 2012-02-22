@@ -348,6 +348,12 @@ public:
   bool usesPositionalArg() const { return UsesPositionalArg; }
 
   bool hasValidLengthModifier() const;
+
+  bool hasStandardLengthModifier() const;
+
+  bool hasStandardConversionSpecifier(const LangOptions &LangOpt) const;
+
+  bool hasStandardLengthConversionCombination() const;
 };
 
 } // end analyze_format_string namespace

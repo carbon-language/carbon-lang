@@ -4847,6 +4847,11 @@ def warn_printf_nonsensical_flag: Warning<
 def warn_format_nonsensical_length: Warning<
   "length modifier '%0' results in undefined behavior or no effect with '%1' conversion specifier">,
   InGroup<Format>;
+def warn_format_non_standard: ExtWarn<
+  "'%0' is a non-standard %1">, InGroup<FormatNonStandard>, DefaultIgnore;
+def warn_format_non_standard_conversion_spec: ExtWarn<
+  "using the length modifier '%0' with the conversion specifier '%1' is non-standard">,
+  InGroup<FormatNonStandard>, DefaultIgnore;
 def warn_printf_ignored_flag: Warning<
   "flag '%0' is ignored when flag '%1' is present">,
   InGroup<Format>;

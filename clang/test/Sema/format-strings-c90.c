@@ -5,9 +5,8 @@ int scanf(const char * restrict, ...);
 int printf(const char *restrict, ...);
 
 void foo(char **sp, float *fp, int *ip) {
-  /* TODO: Warn that the 'a' length modifier is an extension. */
-  scanf("%as", sp);
-  scanf("%a[abc]", sp);
+  scanf("%as", sp); /* expected-warning{{'a' is a non-standard length modifier}} */
+  scanf("%a[abc]", sp); /* expected-warning{{'a' is a non-standard length modifier}} */
 
   /* TODO: Warn that the 'a' conversion specifier is a C99 feature. */
   scanf("%a", fp);
@@ -21,7 +20,11 @@ void foo(char **sp, float *fp, int *ip) {
   scanf("%da", ip);
 
   /* Test argument type check for the 'a' length modifier. */
-  scanf("%as", fp); /* expected-warning{{format specifies type 'char **' but the argument has type 'float *'}} */
-  scanf("%aS", fp); /* expected-warning{{format specifies type 'wchar_t **' (aka 'int **') but the argument has type 'float *'}} */
-  scanf("%a[abc]", fp); /* expected-warning{{format specifies type 'char **' but the argument has type 'float *'}} */
+  scanf("%as", fp); /* expected-warning{{format specifies type 'char **' but the argument has type 'float *'}}
+                       expected-warning{{'a' is a non-standard length modifier}} */
+  scanf("%aS", fp); /* expected-warning{{format specifies type 'wchar_t **' (aka 'int **') but the argument has type 'float *'}}
+                       expected-warning{{'a' is a non-standard length modifier}}
+                       expected-warning{{'S' is a non-standard conversion specifier}} */
+  scanf("%a[abc]", fp); /* expected-warning{{format specifies type 'char **' but the argument has type 'float *'}}
+                           expected-warning{{'a' is a non-standard length modifier}} */
 }

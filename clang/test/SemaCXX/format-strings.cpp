@@ -9,8 +9,7 @@ extern int vprintf(const char *restrict, va_list);
 }
 
 void f(char **sp, float *fp) {
-  // TODO: Warn that the 'a' length modifier is an extension.
-  scanf("%as", sp);
+  scanf("%as", sp); // expected-warning{{'a' is a non-standard length modifier}}
 
   // TODO: Warn that the 'a' conversion specifier is a C++11 feature.
   printf("%a", 1.0);
