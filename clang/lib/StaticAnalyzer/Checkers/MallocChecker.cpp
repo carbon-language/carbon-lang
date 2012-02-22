@@ -881,7 +881,17 @@ void MallocChecker::checkPreStmt(const ReturnStmt *S, CheckerContext &C) const {
     return;
 
   // Check if we are returning a symbol.
-  SymbolRef Sym = C.getState()->getSVal(E, C.getLocationContext()).getAsSymbol();
+  SVal RetVal = C.getState()->getSVal(E, C.getLocationContext());
+  SymbolRef Sym = RetVal.getAsSymbol();
+  if (!Sym)
+    // If we are returning a field of the allocated struct or an array element,
+    // the callee could still free the memory.
+    // TODO: This logic should be a part of generic symbol escape callback.
+    if (const MemRegion *MR = RetVal.getAsRegion())
+      if (isa<FieldRegion>(MR) || isa<ElementRegion>(MR))
+        if (const SymbolicRegion *BMR =
+              dyn_cast<SymbolicRegion>(MR->getBaseRegion()))
+          Sym = BMR->getSymbol();
   if (!Sym)
     return;
 

@@ -631,6 +631,27 @@ void symbolLostWithStrcpy_InlineStrcpyVersion(char *s) {
   p = ((__builtin_object_size (p, 0) != (size_t) -1) ? __builtin___strcpy_chk (p, s, __builtin_object_size (p, 2 > 1)) : __inline_strcpy_chk (p, s));
   free(p);
 }
+
+// Here we are returning a pointer one past the allocated value. An idiom which
+// can be used for implementing special malloc. The correct uses of this might
+// be rare enough so that we could keep this as a warning.
+static void *specialMalloc(int n){
+  int *p;
+  p = malloc( n+8 );
+  if( p ){
+    p[0] = n;
+    p++;
+  }
+  return p;
+}
+
+// Potentially, the user could free the struct by performing pointer arithmetic on the return value.
+// This is a variation of the specialMalloc issue, though probably would be more rare in correct code.
+int *specialMallocWithStruct() {
+  struct StructWithInt *px= malloc(sizeof(struct StructWithInt));
+  return &(px->g);
+}
+
 // Below are the known false positives.
 
 // TODO: There should be no warning here. This one might be difficult to get rid of.
@@ -650,20 +671,6 @@ void dependsOnValueOfPtr(int *g, unsigned f) {
   return;
 }
 
-// TODO: Should this be a warning?
-// Here we are returning a pointer one past the allocated value. An idiom which
-// can be used for implementing special malloc. The correct uses of this might
-// be rare enough so that we could keep this as a warning.
-static void *specialMalloc(int n){
-  int *p;
-  p = malloc( n+8 );
-  if( p ){
-    p[0] = n;
-    p++;
-  }
-  return p;// expected-warning {{Memory is never released; potential memory leak}}
-}
-
 // False negatives.
 
 // TODO: This requires tracking symbols stored inside the structs/arrays.
@@ -671,6 +678,16 @@ void testMalloc5() {
   StructWithPtr St;
   StructWithPtr *pSt = &St;
   pSt->memP = malloc(12);
+}
+
+// TODO: This is another false negative.
+void testMallocWithParam(int **p) {
+  *p = (int*) malloc(sizeof(int));
+  *p = 0;
+}
+
+void testMallocWithParam_2(int **p) {
+  *p = (int*) malloc(sizeof(int));
 }
 
 // TODO: This should produce a warning, similar to the previous issue.
