@@ -31,11 +31,20 @@ using namespace llvm;
 Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
                                        Instruction::CastOps Op,
                                        BasicBlock::iterator IP) {
-  // All new or reused instructions must strictly dominate their uses.
-  // It would be nice to assert this here, but we don't always know where
-  // the next instructions will be added as the caller can move the
-  // Builder's InsertPt before creating them and we might be called with
-  // an invalid InsertPt.
+  // This function must be called with the builder having a valid insertion
+  // point. It doesn't need to be the actual IP where the uses of the returned
+  // cast will be added, but it must dominate such IP.
+  // We use this precondition to assert that we can produce a cast that will
+  // dominate all its uses. In particular, this is crussial for the case
+  // where the builder's insertion point *is* the point where we were asked
+  // to put the cast.
+  // Since we don't know the the builder's insertion point is actually
+  // where the uses will be added (only that it dominates it), we are
+  // not allowed to move it.
+  BasicBlock::iterator BIP = Builder.GetInsertPoint();
+
+  // FIXME: enable once our implementation of dominates is fixed.
+  //  assert(BIP == IP || SE.DT->dominates(IP, BIP));
 
   // Check to see if there is already a cast!
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
@@ -44,8 +53,9 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
     if (U->getType() == Ty)
       if (CastInst *CI = dyn_cast<CastInst>(U))
         if (CI->getOpcode() == Op) {
-          // If the cast isn't where we want it, fix it.
-          if (BasicBlock::iterator(CI) != IP) {
+          // If the cast isn't where we want it or if it doesn't dominate
+          // a use in BIP, fix it.
+          if (BasicBlock::iterator(CI) != IP || BIP == IP) {
             // Create a new cast, and leave the old cast in place in case
             // it is being used as an insert point. Clear its operand
             // so that it doesn't hold anything live.
