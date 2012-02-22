@@ -517,6 +517,6 @@ void __asan_init() {
   // On Windows, when using dynamic CRT (/MD), we can put a pointer
   // to __asan_init into the global list of C initializers.
   // See crt0dat.c in the CRT sources for the details.
-  #pragma section(".CRT$XIB",long,read)
+  #pragma section(".CRT$XIB", long, read)  // NOLINT
   __declspec(allocate(".CRT$XIB")) void (*__asan_preinit)() = __asan_init;
 #endif
