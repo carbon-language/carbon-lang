@@ -652,6 +652,25 @@ int *specialMallocWithStruct() {
   return &(px->g);
 }
 
+// Test various allocation/deallocation functions.
+
+char *strdup(const char *s);
+char *strndup(const char *s, size_t n);
+
+void testStrdup(const char *s, unsigned validIndex) {
+  char *s2 = strdup(s);
+  s2[validIndex + 1] = 'b';// expected-warning {{Memory is never released; potential memory leak}}
+}
+
+int testStrndup(const char *s, unsigned validIndex, unsigned size) {
+  char *s2 = strndup(s, size);
+  s2 [validIndex + 1] = 'b';
+  if (s2[validIndex] != 'a')
+    return 0;// expected-warning {{Memory is never released; potential memory leak}}
+  else
+    return 1;// expected-warning {{Memory is never released; potential memory leak}}
+}
+
 // Below are the known false positives.
 
 // TODO: There should be no warning here. This one might be difficult to get rid of.

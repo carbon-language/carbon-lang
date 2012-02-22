@@ -26,6 +26,8 @@
 #include "llvm/ADT/ImmutableMap.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
+#include <climits>
+
 using namespace clang;
 using namespace ento;
 
@@ -97,11 +99,13 @@ class MallocChecker : public Checker<check::DeadSymbols,
   mutable OwningPtr<BugType> BT_UseFree;
   mutable OwningPtr<BugType> BT_BadFree;
   mutable IdentifierInfo *II_malloc, *II_free, *II_realloc, *II_calloc,
-                         *II_valloc, *II_reallocf;
+                         *II_valloc, *II_reallocf, *II_strndup, *II_strdup;
+
+  static const unsigned InvalidArgIndex = UINT_MAX;
 
 public:
   MallocChecker() : II_malloc(0), II_free(0), II_realloc(0), II_calloc(0),
-                    II_valloc(0), II_reallocf(0) {}
+                    II_valloc(0), II_reallocf(0), II_strndup(0), II_strdup(0) {}
 
   /// In pessimistic mode, the checker assumes that it does not know which
   /// functions might free the memory.
@@ -140,7 +144,8 @@ private:
   /// pointed to by one of its arguments.
   bool isMemFunction(const FunctionDecl *FD, ASTContext &C) const;
 
-  static void MallocMem(CheckerContext &C, const CallExpr *CE);
+  static void MallocMem(CheckerContext &C, const CallExpr *CE,
+                        unsigned SizeIdx);
   static void MallocMemReturnsAttr(CheckerContext &C, const CallExpr *CE,
                                    const OwnershipAttr* Att);
   static ProgramStateRef MallocMemAux(CheckerContext &C, const CallExpr *CE,
@@ -283,6 +288,10 @@ void MallocChecker::initIdentifierInfo(ASTContext &Ctx) const {
     II_calloc = &Ctx.Idents.get("calloc");
   if (!II_valloc)
     II_valloc = &Ctx.Idents.get("valloc");
+  if (!II_strdup)
+    II_strdup = &Ctx.Idents.get("strdup");
+  if (!II_strndup)
+    II_strndup = &Ctx.Idents.get("strndup");
 }
 
 bool MallocChecker::isMemFunction(const FunctionDecl *FD, ASTContext &C) const {
@@ -294,9 +303,9 @@ bool MallocChecker::isMemFunction(const FunctionDecl *FD, ASTContext &C) const {
 
   initIdentifierInfo(C);
 
-  // TODO: Add more here : ex: reallocf!
   if (FunI == II_malloc || FunI == II_free || FunI == II_realloc ||
-      FunI == II_reallocf || FunI == II_calloc || FunI == II_valloc)
+      FunI == II_reallocf || FunI == II_calloc || FunI == II_valloc ||
+      FunI == II_strdup || FunI == II_strndup)
     return true;
 
   if (Filter.CMallocOptimistic && FD->hasAttrs() &&
@@ -319,7 +328,7 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
     return;
 
   if (FunI == II_malloc || FunI == II_valloc) {
-    MallocMem(C, CE);
+    MallocMem(C, CE, 0);
     return;
   } else if (FunI == II_realloc) {
     ReallocMem(C, CE, false);
@@ -330,8 +339,14 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
   } else if (FunI == II_calloc) {
     CallocMem(C, CE);
     return;
-  }else if (FunI == II_free) {
+  } else if (FunI == II_free) {
     FreeMem(C, CE);
+    return;
+  } else if (FunI == II_strdup) {
+    MallocMem(C, CE, InvalidArgIndex);
+    return;
+  } else if (FunI == II_strndup) {
+    MallocMem(C, CE, 1);
     return;
   }
 
@@ -358,10 +373,16 @@ void MallocChecker::checkPostStmt(const CallExpr *CE, CheckerContext &C) const {
   }
 }
 
-void MallocChecker::MallocMem(CheckerContext &C, const CallExpr *CE) {
-  ProgramStateRef state = MallocMemAux(C, CE, CE->getArg(0), UndefinedVal(),
-                                      C.getState());
-  C.addTransition(state);
+void MallocChecker::MallocMem(CheckerContext &C, const CallExpr *CE,
+                              unsigned SizeIdx) {
+  SVal Undef = UndefinedVal();
+  ProgramStateRef State;
+  if (SizeIdx != InvalidArgIndex)
+    State = MallocMemAux(C, CE, CE->getArg(SizeIdx), Undef, C.getState());
+  else
+    State = MallocMemAux(C, CE, Undef, Undef, C.getState());
+
+  C.addTransition(State);
 }
 
 void MallocChecker::MallocMemReturnsAttr(CheckerContext &C, const CallExpr *CE,
@@ -400,16 +421,17 @@ ProgramStateRef MallocChecker::MallocMemAux(CheckerContext &C,
   // Set the region's extent equal to the Size parameter.
   const SymbolicRegion *R =
       dyn_cast_or_null<SymbolicRegion>(retVal.getAsRegion());
-  if (!R || !isa<DefinedOrUnknownSVal>(Size))
+  if (!R)
     return 0;
+  if (isa<DefinedOrUnknownSVal>(Size)) {
+    DefinedOrUnknownSVal Extent = R->getExtent(svalBuilder);
+    DefinedOrUnknownSVal DefinedSize = cast<DefinedOrUnknownSVal>(Size);
+    DefinedOrUnknownSVal extentMatchesSize =
+        svalBuilder.evalEQ(state, Extent, DefinedSize);
 
-  DefinedOrUnknownSVal Extent = R->getExtent(svalBuilder);
-  DefinedOrUnknownSVal DefinedSize = cast<DefinedOrUnknownSVal>(Size);
-  DefinedOrUnknownSVal extentMatchesSize =
-    svalBuilder.evalEQ(state, Extent, DefinedSize);
-
-  state = state->assume(extentMatchesSize, true);
-  assert(state);
+    state = state->assume(extentMatchesSize, true);
+    assert(state);
+  }
   
   SymbolRef Sym = retVal.getAsLocSymbol();
   assert(Sym);
