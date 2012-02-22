@@ -644,7 +644,7 @@ SDValue MSP430TargetLowering::LowerExternalSymbol(SDValue Op,
   const char *Sym = cast<ExternalSymbolSDNode>(Op)->getSymbol();
   SDValue Result = DAG.getTargetExternalSymbol(Sym, getPointerTy());
 
-  return DAG.getNode(MSP430ISD::Wrapper, dl, getPointerTy(), Result);;
+  return DAG.getNode(MSP430ISD::Wrapper, dl, getPointerTy(), Result);
 }
 
 SDValue MSP430TargetLowering::LowerBlockAddress(SDValue Op,
@@ -653,7 +653,7 @@ SDValue MSP430TargetLowering::LowerBlockAddress(SDValue Op,
   const BlockAddress *BA = cast<BlockAddressSDNode>(Op)->getBlockAddress();
   SDValue Result = DAG.getBlockAddress(BA, getPointerTy(), /*isTarget=*/true);
 
-  return DAG.getNode(MSP430ISD::Wrapper, dl, getPointerTy(), Result);;
+  return DAG.getNode(MSP430ISD::Wrapper, dl, getPointerTy(), Result);
 }
 
 static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,

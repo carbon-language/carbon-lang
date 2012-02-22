@@ -650,7 +650,7 @@ void RegionInfo::buildRegionsTree(DomTreeNode *N, Region *region) {
   // This basic block is a start block of a region. It is already in the
   // BBtoRegion relation. Only the child basic blocks have to be updated.
   if (it != BBtoRegion.end()) {
-    Region *newRegion = it->second;;
+    Region *newRegion = it->second;
     region->addSubRegion(getTopMostParent(newRegion));
     region = newRegion;
   } else {

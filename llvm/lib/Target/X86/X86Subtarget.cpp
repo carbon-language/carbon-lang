@@ -302,7 +302,7 @@ void X86Subtarget::AutoDetectSubtargetFeatures() {
       }
       // FIXME: AVX2 codegen support is not ready.
       //if ((EBX >> 5) & 0x1) {
-      //  X86SSELevel = AVX2;;
+      //  X86SSELevel = AVX2;
       //  ToggleFeature(X86::FeatureAVX2);
       //}
       if ((EBX >> 8) & 0x1) {

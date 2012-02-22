@@ -779,7 +779,7 @@ int64_t ARMBaseRegisterInfo::
 getFrameIndexInstrOffset(const MachineInstr *MI, int Idx) const {
   const MCInstrDesc &Desc = MI->getDesc();
   unsigned AddrMode = (Desc.TSFlags & ARMII::AddrModeMask);
-  int64_t InstrOffs = 0;;
+  int64_t InstrOffs = 0;
   int Scale = 1;
   unsigned ImmIdx = 0;
   switch (AddrMode) {

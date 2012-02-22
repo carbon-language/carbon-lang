@@ -107,7 +107,7 @@ bool GCOVFunction::read(GCOVBuffer &Buff, GCOVFormat Format) {
     for (unsigned i = 0, e = Count; i != e; ++i) {
       Blocks[i]->addCount(Buff.readInt64());
     }
-    return true;;
+    return true;
   }
 
   LineNumber = Buff.readInt();

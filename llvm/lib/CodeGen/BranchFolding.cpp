@@ -1111,7 +1111,7 @@ ReoptimizeBlock:
         }
       }
       PrevBB.splice(PrevBB.end(), MBB, MBB->begin(), MBB->end());
-      PrevBB.removeSuccessor(PrevBB.succ_begin());;
+      PrevBB.removeSuccessor(PrevBB.succ_begin());
       assert(PrevBB.succ_empty());
       PrevBB.transferSuccessors(MBB);
       MadeChange = true;
@@ -1670,7 +1670,7 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
         LocalDefsSet.insert(*OR);
     }
 
-    HasDups = true;;
+    HasDups = true;
     ++TIB;
     ++FIB;
   }

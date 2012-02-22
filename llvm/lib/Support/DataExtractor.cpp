@@ -75,7 +75,7 @@ uint32_t DataExtractor::getU32(uint32_t *offset_ptr) const {
 uint32_t *DataExtractor::getU32(uint32_t *offset_ptr, uint32_t *dst,
                                 uint32_t count) const {
   return getUs<uint32_t>(offset_ptr, dst, count, this, IsLittleEndian,
-                        Data.data());;
+                        Data.data());
 }
 
 uint64_t DataExtractor::getU64(uint32_t *offset_ptr) const {
