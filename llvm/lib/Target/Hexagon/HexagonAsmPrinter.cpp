@@ -374,19 +374,6 @@ void HexagonAsmPrinter::EmitInstruction(const MachineInstr *MI) {
     O << "}";
     }
     printInstruction(MI, O);
-  } else if (MI->getOpcode() == Hexagon::STriwt) {
-    //
-    // Handle truncated store on Hexagon.
-    //
-    O << "\tmemw(";
-    printHexagonMEMriOperand(MI, 0, O);
-
-    O << ") = ";
-    unsigned SubRegNum =
-      TM.getRegisterInfo()->getSubReg(MI->getOperand(2)
-                                      .getReg(), Hexagon::subreg_loreg);
-    const char *SubRegName = getRegisterName(SubRegNum);
-    O << SubRegName << '\n';
   } else if (MI->getOpcode() == Hexagon::MPYI_rin) {
     // Handle multipy with -ve constant on Hexagon:
     // "$dst =- mpyi($src1, #$src2)"

@@ -1999,11 +1999,6 @@ def STriw_indexed : STInst<(outs),
             "memw($src1+#$src2) = $src3",
             [(store IntRegs:$src3, (add IntRegs:$src1, s11_2ImmPred:$src2))]>;
 
-def STriwt : STInst<(outs),
-            (ins MEMri:$addr, DoubleRegs:$src1),
-            "memw($addr) = $src1",
-            [(truncstorei32 DoubleRegs:$src1, ADDRriS11_2:$addr)]>;
-
 let mayStore = 1, neverHasSideEffects = 1 in
 def STriw_GP : STInst<(outs),
             (ins globaladdress:$global, u16Imm:$offset, IntRegs:$src),
@@ -2745,7 +2740,7 @@ def : Pat<(i32 (trunc DoubleRegs:$src)),
 def :  Pat<(i1 (trunc DoubleRegs:$src)),
        (i1 (TFR_PdRs (i32(EXTRACT_SUBREG DoubleRegs:$src, subreg_loreg))))>;
 
-// Map memw(Rs) = Rdd -> memw(Rs) = Rt.
+// Map memb(Rs) = Rdd -> memb(Rs) = Rt.
 def : Pat<(truncstorei8 DoubleRegs:$src, ADDRriS11_0:$addr),
       (STrib ADDRriS11_0:$addr, (i32 (EXTRACT_SUBREG DoubleRegs:$src,
                                                      subreg_loreg)))>;
@@ -2753,6 +2748,11 @@ def : Pat<(truncstorei8 DoubleRegs:$src, ADDRriS11_0:$addr),
 // Map memh(Rs) = Rdd -> memh(Rs) = Rt.
 def : Pat<(truncstorei16 DoubleRegs:$src, ADDRriS11_0:$addr),
       (STrih ADDRriS11_0:$addr, (i32 (EXTRACT_SUBREG DoubleRegs:$src,
+                                                     subreg_loreg)))>;
+
+// Map memw(Rs) = Rdd -> memw(Rs) = Rt.
+def : Pat<(truncstorei32 DoubleRegs:$src, ADDRriS11_0:$addr),
+      (STriw ADDRriS11_0:$addr, (i32 (EXTRACT_SUBREG DoubleRegs:$src,
                                                      subreg_loreg)))>;
 
 // Map from i1 = constant<-1>; memw(addr) = i1 -> r0 = 1; memw(addr) = r0.

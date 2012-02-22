@@ -206,8 +206,7 @@ void HexagonRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       } else if ((MI.getOpcode() == Hexagon::STriw) ||
                  (MI.getOpcode() == Hexagon::STrid) ||
                  (MI.getOpcode() == Hexagon::STrih) ||
-                 (MI.getOpcode() == Hexagon::STrib) ||
-                 (MI.getOpcode() == Hexagon::STriwt)) {
+                 (MI.getOpcode() == Hexagon::STrib)) {
         // For stores, we need a reserved register. Change
         // memw(r30 + #10000) = r0 to:
         //

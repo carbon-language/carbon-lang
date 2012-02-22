@@ -1397,7 +1397,6 @@ isValidOffset(const int Opcode, const int Offset) const {
 
   case Hexagon::LDriw:
   case Hexagon::STriw:
-  case Hexagon::STriwt:
     assert((Offset % 4 == 0) && "Offset has incorrect alignment");
     return (Offset >= Hexagon_MEMW_OFFSET_MIN) &&
       (Offset <= Hexagon_MEMW_OFFSET_MAX);
