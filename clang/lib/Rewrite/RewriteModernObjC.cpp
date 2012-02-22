@@ -133,7 +133,9 @@ namespace {
     llvm::SmallPtrSet<VarDecl *, 8> ImportedLocalExternalDecls;
     
     llvm::DenseMap<BlockExpr *, std::string> RewrittenBlockExprs;
-
+    llvm::DenseMap<ObjCInterfaceDecl *, 
+                    llvm::SmallPtrSet<ObjCIvarDecl *, 8> > ReferencedIvars;
+    
     // This maps an original source AST to it's rewritten form. This allows
     // us to avoid rewriting the same node twice (which is very uncommon).
     // This is needed to support some of the exotic property rewriting.
@@ -330,6 +332,9 @@ namespace {
     
     void RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
                                       std::string &Result);
+    
+    void RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
+                                  std::string &Result);
     
     virtual void Initialize(ASTContext &context);
     
@@ -1231,6 +1236,9 @@ void RewriteModernObjC::RewriteInterfaceDecl(ObjCInterfaceDecl *ClassDecl) {
     ResultStr += "typedef struct objc_object ";
     ResultStr += ClassDecl->getNameAsString();
     ResultStr += ";\n#endif\n";
+    
+    RewriteIvarOffsetSymbols(ClassDecl, ResultStr);
+    
     RewriteObjCInternalStruct(ClassDecl, ResultStr);
     // Mark this typedef as having been written into its c++ equivalent.
     ObjCWrittenInterfaces.insert(ClassDecl->getCanonicalDecl());
@@ -3221,6 +3229,24 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     llvm_unreachable("struct already synthesize- RewriteObjCInternalStruct");
 }
 
+/// RewriteIvarOffsetSymbols - Rewrite ivar offset symbols of those ivars which
+/// have been referenced in an ivar access expression.
+void RewriteModernObjC::RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
+                                                  std::string &Result) {
+  // write out ivar offset symbols which have been referenced in an ivar
+  // access expression.
+  llvm::SmallPtrSet<ObjCIvarDecl *, 8> Ivars = ReferencedIvars[CDecl];
+  if (Ivars.empty())
+    return;
+  for (llvm::SmallPtrSet<ObjCIvarDecl *, 8>::iterator i = Ivars.begin(),
+       e = Ivars.end(); i != e; i++) {
+    ObjCIvarDecl *IvarDecl = (*i);
+    Result += "\nextern unsigned long OBJC_IVAR_$_";
+    Result += CDecl->getName(); Result += "_";
+    Result += IvarDecl->getName(); Result += ";";
+  }
+}
+
 //===----------------------------------------------------------------------===//
 // Meta Data Emission
 //===----------------------------------------------------------------------===//
@@ -5020,7 +5046,7 @@ void RewriteModernObjC::HandleTranslationUnit(ASTContext &C) {
     // private ivars.
     RewriteInterfaceDecl(CDecl);
   }
-
+  
   if (ClassImplementation.size() || CategoryImplementation.size())
     RewriteImplementations();
 
@@ -6423,6 +6449,8 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
       IvarOffsetName += clsDeclared->getIdentifier()->getName();
       IvarOffsetName += "_";
       IvarOffsetName += D->getName();
+      ReferencedIvars[clsDeclared].insert(D);
+      
       // cast offset to "char *".
       CastExpr *castExpr = NoTypeInfoCStyleCastExpr(Context, 
                                                     Context->getPointerType(Context->CharTy),
