@@ -139,6 +139,9 @@ public:
     virtual ObjectFile::Strata
     CalculateStrata();
 
+    virtual uint32_t
+    GetVersion (uint32_t *versions, uint32_t num_versions);
+
 protected:
     mutable lldb_private::Mutex m_mutex;
     llvm::MachO::mach_header m_header;

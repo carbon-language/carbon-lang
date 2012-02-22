@@ -239,6 +239,10 @@ public:
     
     const char *
     GetTriple ();
+    
+    uint32_t
+    GetVersion (uint32_t *versions, 
+                uint32_t num_versions);
 
     %pythoncode %{
         class symbols_access(object):

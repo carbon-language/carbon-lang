@@ -2426,6 +2426,57 @@ ObjectFileMachO::CalculateStrata()
 }
 
 
+uint32_t
+ObjectFileMachO::GetVersion (uint32_t *versions, uint32_t num_versions)
+{
+    lldb_private::Mutex::Locker locker(m_mutex);
+    struct dylib_command load_cmd;
+    uint32_t offset = MachHeaderSizeFromMagic(m_header.magic);
+    uint32_t version_cmd = 0;
+    uint64_t version = 0;
+    uint32_t i;
+    for (i=0; i<m_header.ncmds; ++i)
+    {
+        const uint32_t cmd_offset = offset;
+        if (m_data.GetU32(&offset, &load_cmd, 2) == NULL)
+            break;
+        
+        if (load_cmd.cmd == LoadCommandDylibIdent)
+        {
+            if (version_cmd == 0)
+            {
+                version_cmd = load_cmd.cmd;
+                if (m_data.GetU32(&offset, &load_cmd.dylib, 4) == NULL)
+                    break;
+                version = load_cmd.dylib.current_version;
+            }
+            break; // Break for now unless there is another more complete version 
+                   // number load command in the future.
+        }
+        offset = cmd_offset + load_cmd.cmdsize;
+    }
+    
+    if (version_cmd == LoadCommandDylibIdent)
+    {
+        if (versions != NULL && num_versions > 0)
+        {
+            if (num_versions > 0)
+                versions[0] = (version & 0xFFFF0000ull) >> 16;
+            if (num_versions > 1)
+                versions[1] = (version & 0x0000FF00ull) >> 8;
+            if (num_versions > 2)
+                versions[2] = (version & 0x000000FFull);
+            // Fill in an remaining version numbers with invalid values
+            for (i=3; i<num_versions; ++i)
+                versions[i] = UINT32_MAX;
+        }
+        // The LC_ID_DYLIB load command has a version with 3 version numbers
+        // in it, so always return 3
+        return 3;
+    }
+    return false;
+}
+
 bool
 ObjectFileMachO::GetArchitecture (ArchSpec &arch)
 {
