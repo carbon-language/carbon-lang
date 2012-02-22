@@ -2269,7 +2269,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
 
         // On x86-32, only the ABCD registers have 8-bit subregisters.
         if (!Subtarget->is64Bit()) {
-          TargetRegisterClass *TRC = 0;
+          const TargetRegisterClass *TRC;
           switch (N0.getValueType().getSimpleVT().SimpleTy) {
           case MVT::i32: TRC = &X86::GR32_ABCDRegClass; break;
           case MVT::i16: TRC = &X86::GR16_ABCDRegClass; break;
@@ -2298,7 +2298,7 @@ SDNode *X86DAGToDAGISel::Select(SDNode *Node) {
         SDValue Reg = N0.getNode()->getOperand(0);
 
         // Put the value in an ABCD register.
-        TargetRegisterClass *TRC = 0;
+        const TargetRegisterClass *TRC;
         switch (N0.getValueType().getSimpleVT().SimpleTy) {
         case MVT::i64: TRC = &X86::GR64_ABCDRegClass; break;
         case MVT::i32: TRC = &X86::GR32_ABCDRegClass; break;

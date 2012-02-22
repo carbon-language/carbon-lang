@@ -480,7 +480,7 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
       OS << "  };\n";
 
       // Output the extern for the instance.
-      OS << "  extern " << Name << "Class\t" << Name << "RegClass;\n";
+      OS << "  extern const " << Name << "Class " << Name << "RegClass;\n";
       // Output the extern for the pointer to the instance (should remove).
       OS << "  static const TargetRegisterClass * const " << Name
          << "RegisterClass = &" << Name << "RegClass;\n";
@@ -548,8 +548,9 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     OS << "namespace " << RegisterClasses[0]->Namespace
        << " {   // Register class instances\n";
     for (unsigned i = 0, e = RegisterClasses.size(); i != e; ++i)
-      OS << "  " << RegisterClasses[i]->getName()  << "Class\t"
-         << RegisterClasses[i]->getName() << "RegClass;\n";
+      OS << "  extern const " << RegisterClasses[i]->getName()  << "Class "
+         << RegisterClasses[i]->getName() << "RegClass = "
+         << RegisterClasses[i]->getName() << "Class();\n";
 
     std::map<unsigned, std::set<unsigned> > SuperRegClassMap;
 
