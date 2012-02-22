@@ -5,6 +5,7 @@
 # This one has the scripting bridge enabled.
 
 import os
+import subprocess
 import sys
 import re
 import tempfile
@@ -13,6 +14,7 @@ import stat
 from AppKit import *
 
 def FindClangSpecs(path):
+  print "(+) Searching for xcspec file in: ", path
   for root, dirs, files in os.walk(path):
     for f in files:
       if f.endswith(".xcspec") and f.startswith("Clang LLVM"):
@@ -73,7 +75,13 @@ def main():
     print "(+) Using the Clang bundled with Xcode"
     path = options.default
   
-  for x in FindClangSpecs('/Developer'):
+  xcode_path = subprocess.check_output(["xcode-select", "-print-path"])
+  if (re.search("Xcode.app", xcode_path)):
+    # Cut off the 'Developer' dir, as the xcspec lies in another part
+    # of the Xcode.app subtree.
+    xcode_path = os.path.dirname(xcode_path)
+  
+  for x in FindClangSpecs(xcode_path):
     ModifySpec(x, path)
 
 if __name__ == '__main__':
