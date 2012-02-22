@@ -17,7 +17,6 @@
 #include "asan_internal.h"
 #include "asan_lock.h"
 #include "asan_mapping.h"
-#include "asan_procmaps.h"
 #include "asan_stack.h"
 #include "asan_stats.h"
 #include "asan_thread.h"
@@ -490,8 +489,7 @@ void __asan_init() {
   } else {
     Report("Shadow memory range interleaves with an existing memory mapping. "
            "ASan cannot proceed correctly. ABORTING.\n");
-    AsanProcMaps proc_maps;
-    proc_maps.Dump(); 
+    AsanDumpProcessMap();
     AsanDie();
   }
 

@@ -130,6 +130,7 @@ void *AsanDoesNotSupportStaticLinkage();
 bool AsanShadowRangeIsAvailable();
 int AsanOpenReadonly(const char* filename);
 const char *AsanGetEnv(const char *name);
+void AsanDumpProcessMap();
 
 void *AsanMmapFixedNoReserve(uintptr_t fixed_addr, size_t size);
 void *AsanMmapFixedReserve(uintptr_t fixed_addr, size_t size);

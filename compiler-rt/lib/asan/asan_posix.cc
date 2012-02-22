@@ -15,6 +15,7 @@
 
 #include "asan_internal.h"
 #include "asan_interceptors.h"
+#include "asan_procmaps.h"
 #include "asan_stack.h"
 #include "asan_thread_registry.h"
 
@@ -67,6 +68,19 @@ void AsanDisableCoreDumper() {
   nocore.rlim_cur = 0;
   nocore.rlim_max = 0;
   setrlimit(RLIMIT_CORE, &nocore);
+}
+
+void AsanDumpProcessMap() {
+  AsanProcMaps proc_maps;
+  uintptr_t start, end;
+  const intptr_t kBufSize = 4095;
+  char filename[kBufSize];
+  Report("Process memory map follows:\n");
+  while (proc_maps.Next(&start, &end, /* file_offset */NULL,
+                        filename, kBufSize)) {
+    Printf("\t%p-%p\t%s\n", (void*)start, (void*)end, filename);
+  }
+  Report("End of process memory map.\n");
 }
 
 int GetPid() {

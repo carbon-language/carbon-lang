@@ -232,6 +232,10 @@ const char* AsanGetEnv(const char* name) {
   return NULL;
 }
 
+void AsanDumpProcessMap() {
+  UNIMPLEMENTED();
+}
+
 int GetPid() {
   return GetProcessId(GetCurrentProcess());
 }
