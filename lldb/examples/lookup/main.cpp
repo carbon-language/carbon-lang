@@ -38,11 +38,23 @@ using namespace lldb;
 //
 //    $ DYLD_FRAMEWORK_PATH=/Volumes/data/lldb/svn/ToT/build/Debug ./a.out executable_path file_address
 //----------------------------------------------------------------------
+class LLDBSentry
+{
+public:
+    LLDBSentry() {
+        // Initialize LLDB
+        SBDebugger::Initialize();
+    }
+    ~LLDBSentry() {
+        // Terminate LLDB
+        SBDebugger::Terminate();
+    }
+};
 int
 main (int argc, char const *argv[])
 {
-    // Initialize LLDB
-    SBDebugger::Initialize();
+    // Use a sentry object to properly initialize/terminate LLDB.
+    LLDBSentry sentry;
 
     if (argc < 3)
         exit (1);
@@ -105,8 +117,6 @@ main (int argc, char const *argv[])
         }
     }
 
-    // Terminate LLDB
-    SBDebugger::Terminate();
     return 0;
 }
 
