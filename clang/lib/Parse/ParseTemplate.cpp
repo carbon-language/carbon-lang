@@ -1163,9 +1163,6 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
   if(!LMT.D)
      return;
 
-  // If this is a member template, introduce the template parameter scope.
-  ParseScope TemplateScope(this, Scope::TemplateParamScope);
-
   // Get the FunctionDecl.
   FunctionDecl *FD = 0;
   if (FunctionTemplateDecl *FunTmpl = dyn_cast<FunctionTemplateDecl>(LMT.D))
@@ -1173,19 +1170,20 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
   else
     FD = cast<FunctionDecl>(LMT.D);
   
-  // Reinject the template parameters.
+  // To restore the context after late parsing.
+  Sema::ContextRAII GlobalSavedContext(Actions, Actions.CurContext);
+
   SmallVector<ParseScope*, 4> TemplateParamScopeStack;
   DeclaratorDecl* Declarator = dyn_cast<DeclaratorDecl>(FD);
   if (Declarator && Declarator->getNumTemplateParameterLists() != 0) {
+    TemplateParamScopeStack.push_back(new ParseScope(this, Scope::TemplateParamScope));
     Actions.ActOnReenterDeclaratorTemplateScope(getCurScope(), Declarator);
     Actions.ActOnReenterTemplateScope(getCurScope(), LMT.D);
   } else {
-    Actions.ActOnReenterTemplateScope(getCurScope(), LMT.D);
-
     // Get the list of DeclContext to reenter.
     SmallVector<DeclContext*, 4> DeclContextToReenter;
     DeclContext *DD = FD->getLexicalParent();
-    while (DD && DD->isRecord()) {
+    while (DD && !DD->isTranslationUnit()) {
       DeclContextToReenter.push_back(DD);
       DD = DD->getLexicalParent();
     }
@@ -1196,7 +1194,7 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
     for (; II != DeclContextToReenter.rend(); ++II) {
       if (ClassTemplatePartialSpecializationDecl* MD =
                 dyn_cast_or_null<ClassTemplatePartialSpecializationDecl>(*II)) {
-       TemplateParamScopeStack.push_back(new ParseScope(this,
+        TemplateParamScopeStack.push_back(new ParseScope(this,
                                                    Scope::TemplateParamScope));
         Actions.ActOnReenterTemplateScope(getCurScope(), MD);
       } else if (CXXRecordDecl* MD = dyn_cast_or_null<CXXRecordDecl>(*II)) {
@@ -1206,8 +1204,14 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
         Actions.ActOnReenterTemplateScope(getCurScope(),
                                           MD->getDescribedClassTemplate());
       }
+      TemplateParamScopeStack.push_back(new ParseScope(this, Scope::DeclScope));
+      Actions.PushDeclContext(Actions.getCurScope(), *II);
     }
+    TemplateParamScopeStack.push_back(new ParseScope(this,
+                                      Scope::TemplateParamScope));
+    Actions.ActOnReenterTemplateScope(getCurScope(), LMT.D);
   }
+
   assert(!LMT.Toks.empty() && "Empty body!");
 
   // Append the current token at the end of the new token stream so that it
@@ -1224,8 +1228,8 @@ void Parser::ParseLateTemplatedFuncDef(LateParsedTemplatedFunction &LMT) {
   // to be re-used for method bodies as well.
   ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope);
 
-  // Recreate the DeclContext.
-  Sema::ContextRAII SavedContext(Actions, Actions.getContainingDC(FD));
+  // Recreate the containing function DeclContext.
+  Sema::ContextRAII FunctionSavedContext(Actions, Actions.getContainingDC(FD));
 
   if (FunctionTemplateDecl *FunctionTemplate
         = dyn_cast_or_null<FunctionTemplateDecl>(LMT.D))

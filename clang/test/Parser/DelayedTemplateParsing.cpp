@@ -63,3 +63,30 @@ public:
 
 }
 
+
+namespace PR11931 {
+
+template <typename RunType>
+struct BindState;
+
+  template<>
+struct BindState<void(void*)> {
+  static void Run() { }
+};
+
+class Callback {
+public:
+  typedef void RunType();
+
+  template <typename RunType>
+  Callback(BindState<RunType> bind_state) {
+    BindState<RunType>::Run();
+  }
+};
+
+
+Callback Bind() {
+  return Callback(BindState<void(void*)>());
+}
+
+}
