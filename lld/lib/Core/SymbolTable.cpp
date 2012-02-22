@@ -11,10 +11,11 @@
 #include "lld/Core/Atom.h"
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/UndefinedAtom.h"
+#include "lld/Core/SharedLibraryAtom.h"
+#include "lld/Core/AbsoluteAtom.h"
 #include "lld/Core/File.h"
 #include "lld/Core/InputFiles.h"
 #include "lld/Core/Resolver.h"
-#include "lld/Core/UndefinedAtom.h"
 #include "lld/Platform/Platform.h"
 
 #include "llvm/Support/ErrorHandling.h"
@@ -36,6 +37,14 @@ void SymbolTable::add(const UndefinedAtom &atom) {
   this->addByName(atom);
 }
 
+void SymbolTable::add(const SharedLibraryAtom &atom) {
+  this->addByName(atom);
+}
+  
+void SymbolTable::add(const AbsoluteAtom &atom) {
+  this->addByName(atom);
+}
+
 void SymbolTable::add(const DefinedAtom &atom) {
   assert(atom.scope() != DefinedAtom::scopeTranslationUnit);
   if ( !atom.name().empty() ) {
@@ -49,7 +58,9 @@ void SymbolTable::add(const DefinedAtom &atom) {
 enum NameCollisionResolution {
   NCR_First,
   NCR_Second,
-  NCR_Dup,
+  NCR_DupDef,
+  NCR_DupUndef,
+  NCR_DupShLib,
   NCR_Error
 };
 
@@ -57,7 +68,7 @@ static NameCollisionResolution cases[4][4] = {
   //regular     absolute    undef      sharedLib
   {
     // first is regular
-    NCR_Dup,   NCR_Error,   NCR_First, NCR_First
+    NCR_DupDef, NCR_Error,   NCR_First, NCR_First
   },
   {
     // first is absolute
@@ -65,11 +76,11 @@ static NameCollisionResolution cases[4][4] = {
   },
   {
     // first is undef
-    NCR_Second, NCR_Second, NCR_First, NCR_Second
+    NCR_Second, NCR_Second, NCR_DupUndef, NCR_Second
   },
   {
     // first is sharedLib
-    NCR_Second, NCR_Second, NCR_First, NCR_First
+    NCR_Second, NCR_Second, NCR_First, NCR_DupShLib
   }
 };
 
@@ -129,7 +140,7 @@ void SymbolTable::addByName(const Atom & newAtom) {
       case NCR_Second:
         useNew = true;
         break;
-      case NCR_Dup:
+      case NCR_DupDef:
         assert(existing->definition() == Atom::definitionRegular);
         assert(newAtom.definition() == Atom::definitionRegular);
         switch ( mergeSelect(((DefinedAtom*)existing)->merge(), 
@@ -146,6 +157,39 @@ void SymbolTable::addByName(const Atom & newAtom) {
           case MCR_Error:
             llvm::report_fatal_error("duplicate symbol error");
             break;
+        }
+        break;
+      case NCR_DupUndef: {
+          const UndefinedAtom* existingUndef = existing->undefinedAtom();
+          const UndefinedAtom* newUndef = newAtom.undefinedAtom();
+          assert(existingUndef != NULL);
+          assert(newUndef != NULL);
+          if ( existingUndef->canBeNull() == newUndef->canBeNull() ) {
+            useNew = false;
+          }
+          else {
+            useNew = (newUndef->canBeNull() < existingUndef->canBeNull());
+            // give platform a change to override which to use
+            _platform.undefineCanBeNullMismatch(*existingUndef, 
+                                                 *newUndef, useNew);
+          }
+        }
+        break;
+      case NCR_DupShLib: {
+          const SharedLibraryAtom* existingShLib = existing->sharedLibraryAtom();
+          const SharedLibraryAtom* newShLib = newAtom.sharedLibraryAtom();
+          assert(existingShLib != NULL);
+          assert(newShLib != NULL);
+          if ( (existingShLib->canBeNullAtRuntime() 
+                  == newShLib->canBeNullAtRuntime()) &&
+               existingShLib->loadName().equals(newShLib->loadName()) ) {
+            useNew = false;
+          }
+          else {
+            useNew = false; // use existing shared library by default
+            // give platform a change to override which to use
+            _platform.sharedLibrarylMismatch(*existingShLib, *newShLib, useNew);
+          }
         }
         break;
       default:

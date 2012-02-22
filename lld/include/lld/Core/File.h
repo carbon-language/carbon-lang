@@ -14,6 +14,8 @@
 
 #include "lld/Core/DefinedAtom.h"
 #include "lld/Core/UndefinedAtom.h"
+#include "lld/Core/SharedLibraryAtom.h"
+#include "lld/Core/AbsoluteAtom.h"
 
 namespace lld {
 
@@ -27,6 +29,8 @@ public:
     virtual ~AtomHandler() {}
     virtual void doDefinedAtom(const class DefinedAtom &) = 0;
     virtual void doUndefinedAtom(const class UndefinedAtom &) = 0;
+    virtual void doSharedLibraryAtom(const class SharedLibraryAtom &) = 0;
+    virtual void doAbsoluteAtom(const class AbsoluteAtom &) = 0;
     virtual void doFile(const class File &) = 0;
   };
 

@@ -141,6 +141,17 @@ public:
   virtual void errorWithUndefines(const std::vector<const Atom *> &undefs,
                                   const std::vector<const Atom *> &all) {}
 
+  // print out undefined can-be-null mismatches
+  virtual void undefineCanBeNullMismatch(const UndefinedAtom& undef1,
+                                         const UndefinedAtom& undef2,
+                                         bool& useUndef2) { }
+
+  // print out shared library mismatches
+  virtual void sharedLibrarylMismatch(const SharedLibraryAtom& shLib1,
+                                      const SharedLibraryAtom& shLib2,
+                                      bool& useShlib2) { }
+
+
   // last chance for platform to tweak atoms
   virtual void postResolveTweaks(std::vector<const Atom *> &all) {}
 
@@ -186,6 +197,20 @@ public:
       if ( atom ) 
           handler.doUndefinedAtom(*atom);
     }
+    // visit shared library atoms
+    for (std::vector<const Atom *>::iterator it = _atoms.begin();
+         it != _atoms.end(); ++it) {
+      const SharedLibraryAtom* atom = (*it)->sharedLibraryAtom();
+      if ( atom ) 
+          handler.doSharedLibraryAtom(*atom);
+    }
+    // visit absolute atoms
+    for (std::vector<const Atom *>::iterator it = _atoms.begin();
+         it != _atoms.end(); ++it) {
+      const AbsoluteAtom* atom = (*it)->absoluteAtom();
+      if ( atom ) 
+          handler.doAbsoluteAtom(*atom);
+    }
     return true;
   }
 
@@ -220,7 +245,7 @@ int main(int argc, const char *argv[]) {
   // write new atom graph out as YAML doc
   std::string errorInfo;
   llvm::raw_fd_ostream out("-", errorInfo);
-  //yaml::writeObjectText(outFile, out);
+//  yaml::writeObjectText(outFile, out);
 
   // make unique temp .o file to put generated object file
   int fd;
@@ -232,6 +257,8 @@ int main(int argc, const char *argv[]) {
   writeNativeObjectFile(outFile, binaryOut);
   binaryOut.close();  // manually close so that file can be read next
 
+//  out << "native file: " << tempPath.str() << "\n";
+  
   // read native file
   llvm::OwningPtr<lld::File> natFile;
   if ( error(parseNativeObjectFileOrSTDIN(tempPath, natFile)) ) 

@@ -90,12 +90,14 @@ enum NativeChunkSignatures {
   NCS_DefinedAtomsV1 = 1,
   NCS_AttributesArrayV1 = 2,
   NCS_UndefinedAtomsV1 = 3,
-  NCS_Strings = 4,
-  NCS_ReferencesArrayV1 = 5,
-  NCS_ReferencesArrayV2 = 6,
-  NCS_TargetsTable = 7,
-  NCS_AddendsTable = 8,
-  NCS_Content = 9,
+  NCS_SharedLibraryAtomsV1 = 4,
+  NCS_AbsoluteAtomsV1 = 5,
+  NCS_Strings = 6,
+  NCS_ReferencesArrayV1 = 7,
+  NCS_ReferencesArrayV2 = 8,
+  NCS_TargetsTable = 9,
+  NCS_AddendsTable = 10,
+  NCS_Content = 11,
 }; 
 
 //
@@ -163,6 +165,27 @@ struct NativeUndefinedAtomIvarsV1 {
   uint32_t  flags;
 };
 
+
+
+//
+// The NCS_SharedLibraryAtomsV1 chunk contains an array of these structs
+//
+struct NativeSharedLibraryAtomIvarsV1 {
+  uint32_t  nameOffset;
+  uint32_t  loadNameOffset;
+  uint32_t  flags;
+};
+
+
+
+//
+// The NCS_AbsoluteAtomsV1 chunk contains an array of these structs
+//
+struct NativeAbsoluteAtomIvarsV1 {
+  uint32_t  nameOffset;
+  uint32_t  reserved;
+  uint64_t  value;
+};
 
 
 

@@ -77,7 +77,7 @@ public:
       
   virtual DefinedAtom::DeadStripKind deadStrip() const {
      return (DefinedAtom::DeadStripKind)(attributes().deadStrip);
- }
+  }
     
   virtual DefinedAtom::ContentPermissions permissions() const {
      return (DefinedAtom::ContentPermissions)(attributes().permissions);
@@ -117,13 +117,61 @@ public:
   virtual const File& file() const;
   virtual llvm::StringRef name() const;
   
-  virtual bool weakImport() const {
-    return (_ivarData->flags & 0x1);
+  virtual CanBeNull canBeNull() const {
+    return (CanBeNull)(_ivarData->flags & 0x3);
   }
   
+
 private:
   const NativeFile*                 _file;
   const NativeUndefinedAtomIvarsV1* _ivarData;
+};
+
+
+//
+// An object of this class is instantied for each NativeUndefinedAtomIvarsV1
+// struct in the NCS_SharedLibraryAtomsV1 chunk.
+//
+class NativeSharedLibraryAtomV1 : public SharedLibraryAtom {
+public:
+       NativeSharedLibraryAtomV1(const NativeFile& f, 
+                             const NativeSharedLibraryAtomIvarsV1* ivarData)
+        : _file(&f), _ivarData(ivarData) { } 
+
+  virtual const File& file() const;
+  virtual llvm::StringRef name() const;
+  virtual llvm::StringRef loadName() const;
+  
+  virtual bool canBeNullAtRuntime() const {
+    return (_ivarData->flags & 0x1);
+  }
+
+private:
+  const NativeFile*                     _file;
+  const NativeSharedLibraryAtomIvarsV1* _ivarData;
+};
+
+
+//
+// An object of this class is instantied for each NativeAbsoluteAtomIvarsV1
+// struct in the NCS_AbsoluteAtomsV1 chunk.
+//
+class NativeAbsoluteAtomV1 : public AbsoluteAtom {
+public:
+       NativeAbsoluteAtomV1(const NativeFile& f, 
+                             const NativeAbsoluteAtomIvarsV1* ivarData)
+        : _file(&f), _ivarData(ivarData) { } 
+
+  virtual const File& file() const;
+  virtual llvm::StringRef name() const;
+  
+  virtual uint64_t value() const {
+    return _ivarData->value;
+  }
+
+private:
+  const NativeFile*                 _file;
+  const NativeAbsoluteAtomIvarsV1*  _ivarData;
 };
 
 
@@ -206,6 +254,12 @@ public:
         case NCS_UndefinedAtomsV1:
           ec = file->processUndefinedAtomsV1(base, chunk);
           break;
+        case NCS_SharedLibraryAtomsV1:
+          ec = file->processSharedLibraryAtomsV1(base, chunk);
+          break;
+        case NCS_AbsoluteAtomsV1:
+          ec = file->processAbsoluteAtomsV1(base, chunk);
+          break;
         case NCS_ReferencesArrayV1:
           ec = file->processReferencesV1(base, chunk);
           break;
@@ -247,23 +301,45 @@ public:
     // to just delete the memory.
     delete _definedAtoms.arrayStart;
     delete _undefinedAtoms.arrayStart;
+    delete _sharedLibraryAtoms.arrayStart;
+    delete _absoluteAtoms.arrayStart;
     delete _references.arrayStart;
     delete _targetsTable;
   }
   
   // visits each atom in the file
   virtual bool forEachAtom(AtomHandler& handler) const {
+    bool didSomething = false;
     for(const uint8_t* p=_definedAtoms.arrayStart; p != _definedAtoms.arrayEnd; 
           p += _definedAtoms.elementSize) {
       const DefinedAtom* atom = reinterpret_cast<const DefinedAtom*>(p);
       handler.doDefinedAtom(*atom);
+      didSomething = true;
     }
-    for(const uint8_t* p=_undefinedAtoms.arrayStart; p != _undefinedAtoms.arrayEnd; 
-          p += _undefinedAtoms.elementSize) {
+    for(const uint8_t* p=_undefinedAtoms.arrayStart; 
+                      p != _undefinedAtoms.arrayEnd; 
+                      p += _undefinedAtoms.elementSize) {
       const UndefinedAtom* atom = reinterpret_cast<const UndefinedAtom*>(p);
       handler.doUndefinedAtom(*atom);
+      didSomething = true;
     }
-    return (_definedAtoms.arrayStart != _definedAtoms.arrayEnd);
+    for(const uint8_t* p=_sharedLibraryAtoms.arrayStart; 
+                  p != _sharedLibraryAtoms.arrayEnd; 
+                  p += _sharedLibraryAtoms.elementSize) {
+      const SharedLibraryAtom* atom 
+                          = reinterpret_cast<const SharedLibraryAtom*>(p);
+      handler.doSharedLibraryAtom(*atom);
+      didSomething = true;
+    }
+    for(const uint8_t* p=_absoluteAtoms.arrayStart; 
+                  p != _absoluteAtoms.arrayEnd; 
+                  p += _absoluteAtoms.elementSize) {
+      const AbsoluteAtom* atom 
+                          = reinterpret_cast<const AbsoluteAtom*>(p);
+      handler.doAbsoluteAtom(*atom);
+      didSomething = true;
+    }
+    return didSomething;
   }
   
   // not used
@@ -275,6 +351,8 @@ public:
 private:
   friend class NativeDefinedAtomV1;
   friend class NativeUndefinedAtomV1;
+  friend class NativeSharedLibraryAtomV1;
+  friend class NativeAbsoluteAtomV1;
   friend class NativeReferenceV1;
   
   // instantiate array of DefinedAtoms from v1 ivar data in file
@@ -308,12 +386,14 @@ private:
   }
   
   // set up pointers to attributes array
-  llvm::error_code processAttributesV1(const uint8_t* base, const NativeChunk* chunk) {
+  llvm::error_code processAttributesV1(const uint8_t* base, 
+                                       const NativeChunk* chunk) {
     this->_attributes = base + chunk->fileOffset;
     this->_attributesMaxOffset = chunk->fileSize;
     return make_error_code(native_reader_error::success);
   }
   
+  // instantiate array of UndefinedAtoms from v1 ivar data in file
   llvm::error_code processUndefinedAtomsV1(const uint8_t* base, 
                                                 const NativeChunk* chunk) {
     const size_t atomSize = sizeof(NativeUndefinedAtomV1);
@@ -343,6 +423,70 @@ private:
     return make_error_code(native_reader_error::success);
   }
   
+  
+  // instantiate array of ShareLibraryAtoms from v1 ivar data in file
+  llvm::error_code processSharedLibraryAtomsV1(const uint8_t* base, 
+                                                const NativeChunk* chunk) {
+    const size_t atomSize = sizeof(NativeSharedLibraryAtomV1);
+    size_t atomsArraySize = chunk->elementCount * atomSize;
+    uint8_t* atomsStart = reinterpret_cast<uint8_t*>
+                                (operator new(atomsArraySize, std::nothrow));
+    if (atomsStart == NULL )
+      return make_error_code(native_reader_error::memory_error);
+    const size_t ivarElementSize = chunk->fileSize 
+                                          / chunk->elementCount;
+    if ( ivarElementSize != sizeof(NativeSharedLibraryAtomIvarsV1) )
+      return make_error_code(native_reader_error::file_malformed);
+    uint8_t* atomsEnd = atomsStart + atomsArraySize;
+    const NativeSharedLibraryAtomIvarsV1* ivarData = 
+                      reinterpret_cast<const NativeSharedLibraryAtomIvarsV1*>
+                                                  (base + chunk->fileOffset);
+    for(uint8_t* s = atomsStart; s != atomsEnd; s += atomSize) {
+      NativeSharedLibraryAtomV1* atomAllocSpace = 
+                  reinterpret_cast<NativeSharedLibraryAtomV1*>(s);
+      new (atomAllocSpace) NativeSharedLibraryAtomV1(*this, ivarData);
+      ++ivarData;
+    }
+    this->_sharedLibraryAtoms.arrayStart = atomsStart;
+    this->_sharedLibraryAtoms.arrayEnd = atomsEnd;
+    this->_sharedLibraryAtoms.elementSize = atomSize;
+    this->_sharedLibraryAtoms.elementCount = chunk->elementCount;
+    return make_error_code(native_reader_error::success);
+  }
+  
+ 
+   // instantiate array of AbsoluteAtoms from v1 ivar data in file
+  llvm::error_code processAbsoluteAtomsV1(const uint8_t* base, 
+                                                const NativeChunk* chunk) {
+    const size_t atomSize = sizeof(NativeAbsoluteAtomV1);
+    size_t atomsArraySize = chunk->elementCount * atomSize;
+    uint8_t* atomsStart = reinterpret_cast<uint8_t*>
+                                (operator new(atomsArraySize, std::nothrow));
+    if (atomsStart == NULL )
+      return make_error_code(native_reader_error::memory_error);
+    const size_t ivarElementSize = chunk->fileSize 
+                                          / chunk->elementCount;
+    if ( ivarElementSize != sizeof(NativeAbsoluteAtomIvarsV1) )
+      return make_error_code(native_reader_error::file_malformed);
+    uint8_t* atomsEnd = atomsStart + atomsArraySize;
+    const NativeAbsoluteAtomIvarsV1* ivarData = 
+                      reinterpret_cast<const NativeAbsoluteAtomIvarsV1*>
+                                                  (base + chunk->fileOffset);
+    for(uint8_t* s = atomsStart; s != atomsEnd; s += atomSize) {
+      NativeAbsoluteAtomV1* atomAllocSpace = 
+                  reinterpret_cast<NativeAbsoluteAtomV1*>(s);
+      new (atomAllocSpace) NativeAbsoluteAtomV1(*this, ivarData);
+      ++ivarData;
+    }
+    this->_absoluteAtoms.arrayStart = atomsStart;
+    this->_absoluteAtoms.arrayEnd = atomsEnd;
+    this->_absoluteAtoms.elementSize = atomSize;
+    this->_absoluteAtoms.elementCount = chunk->elementCount;
+    return make_error_code(native_reader_error::success);
+  }
+  
+ 
+ 
   
   // instantiate array of Referemces from v1 ivar data in file
   llvm::error_code processReferencesV1(const uint8_t* base, 
@@ -398,7 +542,24 @@ private:
         this->_targetsTable[i] = reinterpret_cast<const UndefinedAtom*>(p);
         continue;
       }
-      return make_error_code(native_reader_error::file_malformed);
+      const uint32_t slIndex = index - _definedAtoms.elementCount 
+                                     - _undefinedAtoms.elementCount;
+      if ( slIndex < _sharedLibraryAtoms.elementCount ) {
+        const uint8_t* p = _sharedLibraryAtoms.arrayStart 
+                                  + slIndex * _sharedLibraryAtoms.elementSize;
+        this->_targetsTable[i] = reinterpret_cast<const SharedLibraryAtom*>(p);
+        continue;
+      }
+      const uint32_t abIndex = index - _definedAtoms.elementCount 
+                                     - _undefinedAtoms.elementCount
+                                     - _sharedLibraryAtoms.elementCount;
+      if ( abIndex < _absoluteAtoms.elementCount ) {
+        const uint8_t* p = _absoluteAtoms.arrayStart 
+                                  + slIndex * _absoluteAtoms.elementSize;
+        this->_targetsTable[i] = reinterpret_cast<const AbsoluteAtom*>(p);
+        continue;
+      }
+     return make_error_code(native_reader_error::file_malformed);
     }
     return make_error_code(native_reader_error::success);
   }
@@ -491,7 +652,8 @@ private:
     _contentStart(NULL), 
     _contentEnd(NULL)
   {
-    _header = reinterpret_cast<const NativeFileHeader*>(_buffer->getBufferStart());
+    _header = reinterpret_cast<const NativeFileHeader*>
+                                                  (_buffer->getBufferStart());
   }
 
   struct IvarArray {
@@ -507,6 +669,8 @@ private:
   const NativeFileHeader*         _header;
   IvarArray                       _definedAtoms;
   IvarArray                       _undefinedAtoms;
+  IvarArray                       _sharedLibraryAtoms;
+  IvarArray                       _absoluteAtoms;
   const uint8_t*                  _attributes;
   uint32_t                        _attributesMaxOffset;
   IvarArray                       _references;
@@ -563,6 +727,31 @@ inline const class File& NativeUndefinedAtomV1::file() const {
 }
 
 inline llvm::StringRef NativeUndefinedAtomV1::name() const {
+  return _file->string(_ivarData->nameOffset);
+}
+
+
+
+
+inline const class File& NativeSharedLibraryAtomV1::file() const {
+  return *_file;
+}
+
+inline llvm::StringRef NativeSharedLibraryAtomV1::name() const {
+  return _file->string(_ivarData->nameOffset);
+}
+
+inline llvm::StringRef NativeSharedLibraryAtomV1::loadName() const {
+  return _file->string(_ivarData->loadNameOffset);
+}
+
+
+
+inline const class File& NativeAbsoluteAtomV1::file() const {
+  return *_file;
+}
+
+inline llvm::StringRef NativeAbsoluteAtomV1::name() const {
   return _file->string(_ivarData->nameOffset);
 }
 

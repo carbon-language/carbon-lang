@@ -30,10 +30,12 @@ const char* const KeyValues::isThumbKeyword         = "is-thumb";
 const char* const KeyValues::isAliasKeyword         = "is-alias";
 const char* const KeyValues::sectionNameKeyword     = "section-name";
 const char* const KeyValues::contentKeyword         = "content";
+const char* const KeyValues::loadNameKeyword        = "load-name";
 const char* const KeyValues::sizeKeyword            = "size";
+const char* const KeyValues::valueKeyword           = "value";
 const char* const KeyValues::fixupsKeyword          = "fixups";
 const char* const KeyValues::permissionsKeyword     = "permissions";
-const char* const KeyValues::weakImportKeyword      = "weak-import";
+const char* const KeyValues::canBeNullKeyword       = "can-be-null";
 const char* const KeyValues::fixupsKindKeyword      = "kind";
 const char* const KeyValues::fixupsOffsetKeyword    = "offset";
 const char* const KeyValues::fixupsTargetKeyword    = "target";
@@ -51,7 +53,7 @@ const DefinedAtom::Merge              KeyValues::mergeDefault = DefinedAtom::mer
 const DefinedAtom::ContentPermissions KeyValues::permissionsDefault = DefinedAtom::permR__;
 const bool                            KeyValues::isThumbDefault = false;
 const bool                            KeyValues::isAliasDefault = false;
-const bool                            KeyValues::weakImportDefault = false;
+const UndefinedAtom::CanBeNull        KeyValues::canBeNullDefault = UndefinedAtom::canBeNullNever;
 
 
 
@@ -389,17 +391,34 @@ const char* KeyValues::isAlias(bool b) {
 
 
 
-bool KeyValues::weakImport(const char* s)
+struct CanBeNullMapping {
+  const char*               string;
+  UndefinedAtom::CanBeNull  value;
+};
+
+static const CanBeNullMapping cbnMappings[] = {
+  { "never",         UndefinedAtom::canBeNullNever },
+  { "at-runtime",    UndefinedAtom::canBeNullAtRuntime },
+  { "at-buildtime",  UndefinedAtom::canBeNullAtBuildtime },
+  { NULL,            UndefinedAtom::canBeNullNever }
+};
+
+
+UndefinedAtom::CanBeNull KeyValues::canBeNull(const char* s)
 {
-  if ( strcmp(s, "true") == 0 )
-    return true;
-  else if ( strcmp(s, "false") == 0 )
-    return false;
-  llvm::report_fatal_error("bad weak-import value");
+  for (const CanBeNullMapping* p = cbnMappings; p->string != NULL; ++p) {
+    if ( strcmp(p->string, s) == 0 )
+      return p->value;
+  }
+  llvm::report_fatal_error("bad can-be-null value");
 }
 
-const char* KeyValues::weakImport(bool b) {
-  return b ? "true" : "false";
+const char* KeyValues::canBeNull(UndefinedAtom::CanBeNull c) {
+  for (const CanBeNullMapping* p = cbnMappings; p->string != NULL; ++p) {
+    if ( p->value == c )
+      return p->string;
+  }
+  llvm::report_fatal_error("bad can-be-null value");
 }
 
 

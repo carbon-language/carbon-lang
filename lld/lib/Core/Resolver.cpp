@@ -134,6 +134,24 @@ void Resolver::doDefinedAtom(const DefinedAtom &atom) {
   }
 }
 
+void Resolver::doSharedLibraryAtom(const SharedLibraryAtom& atom) {
+  // add to list of known atoms
+  _atoms.push_back(&atom);
+  
+  // tell symbol table
+  _symbolTable.add(atom);
+}
+  
+void Resolver::doAbsoluteAtom(const AbsoluteAtom& atom) {
+  // add to list of known atoms
+  _atoms.push_back(&atom);
+  
+  // tell symbol table
+  _symbolTable.add(atom);
+}
+
+
+  
 // utility to add a vector of atoms
 void Resolver::addAtoms(const std::vector<const DefinedAtom*>& newAtoms) {
   for (std::vector<const DefinedAtom *>::const_iterator it = newAtoms.begin();

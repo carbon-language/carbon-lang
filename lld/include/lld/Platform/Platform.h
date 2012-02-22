@@ -78,6 +78,24 @@ public:
   virtual void errorWithUndefines(const std::vector<const Atom *>& undefs,
                                   const std::vector<const Atom *>& all) = 0;
 
+  /// When core linking finds undefined atoms from different object
+  /// files that have different canBeNull values, this method is called.
+  /// The useUndef2 parameter is set to which canBeNull setting the
+  /// linker should use, and can be changed by this method.  Or this
+  /// method can emit a warning/error about the mismatch.
+  virtual void undefineCanBeNullMismatch(const UndefinedAtom& undef1,
+                                         const UndefinedAtom& undef2,
+                                         bool& useUndef2) = 0;
+
+  /// When core linking finds shared library atoms from different object
+  /// files that have different attribute values, this method is called.
+  /// The useShlib2 parameter is set to which atom attributes the
+  /// linker should use, and can be changed by this method.  Or this
+  /// method can emit a warning/error about the mismatch.
+  virtual void sharedLibrarylMismatch(const SharedLibraryAtom& shLib1,
+                                      const SharedLibraryAtom& shLib2,
+                                      bool& useShlib2) = 0;
+
   /// @brief last chance for platform to tweak atoms
   virtual void postResolveTweaks(std::vector<const Atom *>& all) = 0;
 };

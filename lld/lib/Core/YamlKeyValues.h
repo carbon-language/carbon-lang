@@ -12,6 +12,7 @@
 
 #include "lld/Core/Atom.h"
 #include "lld/Core/DefinedAtom.h"
+#include "lld/Core/UndefinedAtom.h"
 
 
 namespace lld {
@@ -24,6 +25,8 @@ public:
   static const char* const                sectionNameKeyword;
   static const char* const                contentKeyword;
   static const char* const                sizeKeyword;
+  static const char* const                loadNameKeyword;
+  static const char* const                valueKeyword;
   static const char* const                fixupsKeyword;
  
   static const char* const                definitionKeyword;
@@ -76,10 +79,10 @@ public:
   static bool                             isAlias(const char*);
   static const char*                      isAlias(bool);
 
-  static const char* const                weakImportKeyword;
-  static const bool                       weakImportDefault;
-  static bool                             weakImport(const char*);
-  static const char*                      weakImport(bool);
+  static const char* const                canBeNullKeyword;
+  static const UndefinedAtom::CanBeNull   canBeNullDefault;
+  static UndefinedAtom::CanBeNull         canBeNull(const char*);
+  static const char*                      canBeNull(UndefinedAtom::CanBeNull);
 
 
   static const char* const                fixupsKindKeyword;

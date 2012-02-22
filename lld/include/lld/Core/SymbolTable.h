@@ -24,6 +24,8 @@ namespace lld {
 class Atom;
 class DefinedAtom;
 class UndefinedAtom;
+class SharedLibraryAtom;
+class AbsoluteAtom;
 class Platform;
 
 /// The SymbolTable class is responsible for coalescing atoms.
@@ -41,6 +43,12 @@ public:
   /// @brief add atom to symbol table
   void add(const UndefinedAtom &);
 
+  /// @brief add atom to symbol table
+  void add(const SharedLibraryAtom &);
+  
+  /// @brief add atom to symbol table
+  void add(const AbsoluteAtom &);
+  
   /// @brief checks if name is in symbol table and if so atom is not
   ///        UndefinedAtom
   bool isDefined(llvm::StringRef sym);

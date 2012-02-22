@@ -71,6 +71,14 @@ public:
     buildDuplicateNameMap(atom);
   }
   
+  virtual void doSharedLibraryAtom(const SharedLibraryAtom& atom) {
+    buildDuplicateNameMap(atom);
+  }
+
+  virtual void doAbsoluteAtom(const AbsoluteAtom& atom) {
+    buildDuplicateNameMap(atom);
+  }
+                         
   void buildDuplicateNameMap(const Atom& atom) {
     assert(!atom.name().empty());
     NameToAtom::iterator pos = _nameMap.find(atom.name());
@@ -132,10 +140,14 @@ public:
   virtual void doFile(const class File &) { _firstAtom = true; }
   
   virtual void doDefinedAtom(const class DefinedAtom &atom) {
-    // add blank line between atoms for readability
-    if ( !_firstAtom )
+    if ( _firstAtom ) {
+      _out << "atoms:\n";
+      _firstAtom = false;
+    }
+    else {
+      // add blank line between atoms for readability
       _out << "\n";
-    _firstAtom = false;
+    }
     
     bool hasDash = false;
     if ( !atom.name().empty() ) {
@@ -313,35 +325,115 @@ public:
 
 
   virtual void doUndefinedAtom(const class UndefinedAtom &atom) {
-      // add blank line between atoms for readability
-      if ( !_firstAtom )
-        _out << "\n";
+    if ( _firstAtom ) {
+      _out << "atoms:\n";
       _firstAtom = false;
+    }
+    else {
+      // add blank line between atoms for readability
+      _out << "\n";
+    }
         
-      _out  << "    - "
-            << KeyValues::nameKeyword
-            << ":"
-            << spacePadding(KeyValues::nameKeyword)
-            << atom.name() 
-            << "\n";
+    _out  << "    - "
+          << KeyValues::nameKeyword
+          << ":"
+          << spacePadding(KeyValues::nameKeyword)
+          << atom.name() 
+          << "\n";
 
-      _out  << "      " 
-            << KeyValues::definitionKeyword 
-            << ":"
-            << spacePadding(KeyValues::definitionKeyword)
-            << KeyValues::definition(atom.definition()) 
-            << "\n";
+    _out  << "      " 
+          << KeyValues::definitionKeyword 
+          << ":"
+          << spacePadding(KeyValues::definitionKeyword)
+          << KeyValues::definition(atom.definition()) 
+          << "\n";
 
-    if ( atom.weakImport() != KeyValues::weakImportDefault ) {
+    if ( atom.canBeNull() != KeyValues::canBeNullDefault ) {
       _out  << "      " 
-            << KeyValues::weakImportKeyword 
+            << KeyValues::canBeNullKeyword 
             << ":"
-            << spacePadding(KeyValues::weakImportKeyword)
-            << KeyValues::weakImport(atom.weakImport()) 
+            << spacePadding(KeyValues::canBeNullKeyword)
+            << KeyValues::canBeNull(atom.canBeNull()) 
             << "\n";
     }
   }
 
+   virtual void doSharedLibraryAtom(const SharedLibraryAtom& atom) {
+    if ( _firstAtom ) {
+      _out << "atoms:\n";
+      _firstAtom = false;
+    }
+    else {
+      // add blank line between atoms for readability
+      _out << "\n";
+    }
+        
+    _out  << "    - "
+          << KeyValues::nameKeyword
+          << ":"
+          << spacePadding(KeyValues::nameKeyword)
+          << atom.name() 
+          << "\n";
+
+    _out  << "      " 
+          << KeyValues::definitionKeyword 
+          << ":"
+          << spacePadding(KeyValues::definitionKeyword)
+          << KeyValues::definition(atom.definition()) 
+          << "\n";
+
+    if ( !atom.loadName().empty() ) {
+      _out  << "      " 
+            << KeyValues::loadNameKeyword 
+            << ":"
+            << spacePadding(KeyValues::loadNameKeyword)
+            << atom.loadName()
+            << "\n";
+    }
+
+    if ( atom.canBeNullAtRuntime() ) {
+      _out  << "      " 
+            << KeyValues::canBeNullKeyword 
+            << ":"
+            << spacePadding(KeyValues::canBeNullKeyword)
+            << KeyValues::canBeNull(UndefinedAtom::canBeNullAtRuntime) 
+            << "\n";
+    }
+   }
+   
+   virtual void doAbsoluteAtom(const AbsoluteAtom& atom) {
+     if ( _firstAtom ) {
+      _out << "atoms:\n";
+      _firstAtom = false;
+    }
+    else {
+      // add blank line between atoms for readability
+      _out << "\n";
+    }
+        
+    _out  << "    - "
+          << KeyValues::nameKeyword
+          << ":"
+          << spacePadding(KeyValues::nameKeyword)
+          << atom.name() 
+          << "\n";
+
+    _out  << "      " 
+          << KeyValues::definitionKeyword 
+          << ":"
+          << spacePadding(KeyValues::definitionKeyword)
+          << KeyValues::definition(atom.definition()) 
+          << "\n";
+    
+    _out  << "      " 
+          << KeyValues::valueKeyword 
+          << ":"
+          << spacePadding(KeyValues::valueKeyword)
+          << "0x";
+     _out.write_hex(atom.value());
+     _out << "\n";
+   }
+                     
 
 private:
   // return a string of the correct number of spaces to align value
@@ -380,7 +472,6 @@ void writeObjectText(const File &file, llvm::raw_ostream &out) {
   // Write out all atoms
   AtomWriter h(rnb, out);
   out << "---\n";
-  out << "atoms:\n";
   file.forEachAtom(h);
   out << "...\n";
 }

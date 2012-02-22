@@ -13,6 +13,9 @@
 
 #include "lld/Core/YamlReader.h"
 #include "lld/Core/Atom.h"
+#include "lld/Core/UndefinedAtom.h"
+#include "lld/Core/SharedLibraryAtom.h"
+#include "lld/Core/AbsoluteAtom.h"
 #include "lld/Core/Error.h"
 #include "lld/Core/File.h"
 #include "lld/Core/Reference.h"
@@ -200,9 +203,7 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
       }
       break;
     case inValue:
-      if (isalnum(c) || (c == '-') || (c == '_')) {
-        *p++ = c;
-      } else if (c == '\n') {
+      if (c == '\n') {
         *p = '\0';
         entries.push_back(new Entry(key, value, NULL, depth,
                                     nextKeyIsStartOfDocument,
@@ -212,6 +213,9 @@ void YAML::parse(llvm::MemoryBuffer *mb, std::vector<const Entry *> &entries) {
         state = inDocument;
         depth = 0;
       }
+      else {
+        *p++ = c;
+      } 
       break;
     case inValueSequence:
       if (c == ']') {
@@ -300,6 +304,8 @@ public:
   void bindTargetReferences();
   void addDefinedAtom(YAMLDefinedAtom* atom, const char* refName);
   void addUndefinedAtom(UndefinedAtom* atom);
+  void addSharedLibraryAtom(SharedLibraryAtom* atom);
+  void addAbsoluteAtom(AbsoluteAtom* atom);
   Atom* findAtom(const char* name);
   
   struct NameAtomPair {
@@ -310,6 +316,8 @@ public:
 
   std::vector<YAMLDefinedAtom*>   _definedAtoms;
   std::vector<UndefinedAtom*>     _undefinedAtoms;
+  std::vector<SharedLibraryAtom*> _sharedLibraryAtoms;
+  std::vector<AbsoluteAtom*>      _absoluteAtoms;
   std::vector<YAMLReference>      _references;
   std::vector<NameAtomPair>       _nameToAtomMapping;
   unsigned int                    _lastRefIndex;
@@ -465,8 +473,9 @@ private:
 
 class YAMLUndefinedAtom : public UndefinedAtom {
 public:
-        YAMLUndefinedAtom(YAMLFile& f, int32_t ord, const char* nm, bool wi)
-            : _file(f), _name(nm), _ordinal(ord), _weakImport(wi) { }
+        YAMLUndefinedAtom(YAMLFile& f, int32_t ord, const char* nm, 
+                          UndefinedAtom::CanBeNull cbn)
+            : _file(f), _name(nm), _ordinal(ord), _canBeNull(cbn) { }
 
   virtual const class File& file() const {
     return _file;
@@ -476,16 +485,79 @@ public:
     return _name;
   }
 
-  virtual bool weakImport() const {
-    return _weakImport;
+  virtual CanBeNull canBeNull() const {
+    return _canBeNull;
   }
   
+ 
 private:
   YAMLFile&                   _file;
   const char *                _name;
   uint32_t                    _ordinal;
-  bool                        _weakImport;
+  UndefinedAtom::CanBeNull     _canBeNull;
 };
+
+
+
+class YAMLSharedLibraryAtom : public SharedLibraryAtom {
+public:
+        YAMLSharedLibraryAtom(YAMLFile& f, int32_t ord, const char* nm, 
+                                const char* ldnm, bool cbn)
+            : _file(f), _name(nm), _ordinal(ord), 
+              _loadName(ldnm), _canBeNull(cbn) { }
+
+  virtual const class File& file() const {
+    return _file;
+  }
+
+  virtual llvm::StringRef name() const {
+    return _name;
+  }
+
+  virtual llvm::StringRef loadName() const {
+    return _loadName;
+  }
+
+  virtual bool canBeNullAtRuntime() const {
+    return _canBeNull;
+  }
+  
+ 
+private:
+  YAMLFile&                   _file;
+  const char *                _name;
+  uint32_t                    _ordinal;
+  const char *                _loadName;
+  bool                        _canBeNull;
+};
+
+
+
+class YAMLAbsoluteAtom : public AbsoluteAtom {
+public:
+        YAMLAbsoluteAtom(YAMLFile& f, int32_t ord, const char* nm, uint64_t v)
+            : _file(f), _name(nm), _ordinal(ord), _value(v) { }
+
+  virtual const class File& file() const {
+    return _file;
+  }
+
+  virtual llvm::StringRef name() const {
+    return _name;
+  }
+
+  virtual uint64_t value() const {
+    return _value;
+  }
+
+private:
+  YAMLFile&        _file;
+  const char *     _name;
+  uint32_t         _ordinal;
+  uint64_t         _value;
+};
+
+
 
 
 bool YAMLFile::forEachAtom(File::AtomHandler &handler) const {
@@ -498,6 +570,17 @@ bool YAMLFile::forEachAtom(File::AtomHandler &handler) const {
        it != _undefinedAtoms.end(); ++it) {
     handler.doUndefinedAtom(**it);
   }
+  for (std::vector<SharedLibraryAtom *>::const_iterator 
+        it = _sharedLibraryAtoms.begin();
+        it != _sharedLibraryAtoms.end(); ++it) {
+    handler.doSharedLibraryAtom(**it);
+  }
+  for (std::vector<AbsoluteAtom *>::const_iterator 
+        it = _absoluteAtoms.begin();
+        it != _absoluteAtoms.end(); ++it) {
+    handler.doAbsoluteAtom(**it);
+  }
+  
   return true;
 }
 
@@ -534,6 +617,16 @@ void YAMLFile::addUndefinedAtom(UndefinedAtom* atom) {
   _nameToAtomMapping.push_back(NameAtomPair(atom->name().data(), atom));
 }
 
+void YAMLFile::addSharedLibraryAtom(SharedLibraryAtom* atom) {
+  _sharedLibraryAtoms.push_back(atom);
+  _nameToAtomMapping.push_back(NameAtomPair(atom->name().data(), atom));
+}
+
+void YAMLFile::addAbsoluteAtom(AbsoluteAtom* atom) {
+  _absoluteAtoms.push_back(atom);
+  _nameToAtomMapping.push_back(NameAtomPair(atom->name().data(), atom));
+}
+
 
 class YAMLAtomState {
 public:
@@ -544,9 +637,7 @@ public:
   void setAlign2(const char *n);
 
   void setFixupKind(const char *n);
-  void setFixupOffset(const char *n);
   void setFixupTarget(const char *n);
-  void setFixupAddend(const char *n);
   void addFixup(YAMLFile *f);
 
   void makeAtom(YAMLFile&);
@@ -554,7 +645,9 @@ public:
   const char *                _name;
   const char *                _refName;
   const char *                _sectionName;
+  const char*                 _loadName;
   unsigned long long          _size;
+  uint64_t                    _value;
   uint32_t                    _ordinal;
   std::vector<uint8_t>*       _content;
   DefinedAtom::Alignment      _alignment;
@@ -568,7 +661,7 @@ public:
   DefinedAtom::ContentPermissions _permissions;
   bool                        _isThumb;
   bool                        _isAlias;
-  bool                        _weakImport;
+  UndefinedAtom::CanBeNull    _canBeNull;
   YAMLReference               _ref;
 };
 
@@ -577,7 +670,9 @@ YAMLAtomState::YAMLAtomState()
   : _name(NULL)
   , _refName(NULL)
   , _sectionName(NULL)
+  , _loadName(NULL)
   , _size(0)
+  , _value(0)
   , _ordinal(0)
   , _content(NULL) 
   , _alignment(0, 0)
@@ -591,7 +686,7 @@ YAMLAtomState::YAMLAtomState()
   , _permissions(KeyValues::permissionsDefault)
   , _isThumb(KeyValues::isThumbDefault)
   , _isAlias(KeyValues::isAliasDefault) 
-  , _weakImport(false)
+  , _canBeNull(KeyValues::canBeNullDefault)
   {
   }
 
@@ -606,16 +701,30 @@ void YAMLAtomState::makeAtom(YAMLFile& f) {
     ++_ordinal;
   }
   else if ( _definition == Atom::definitionUndefined ) {
-    UndefinedAtom *a = new YAMLUndefinedAtom(f, _ordinal, _name, _weakImport);
+    UndefinedAtom *a = new YAMLUndefinedAtom(f, _ordinal, _name, _canBeNull);
     f.addUndefinedAtom(a);
     ++_ordinal;
   }
-  
+  else if ( _definition == Atom::definitionSharedLibrary ) {
+    bool nullable = (_canBeNull == UndefinedAtom::canBeNullAtRuntime);
+    SharedLibraryAtom *a = new YAMLSharedLibraryAtom(f, _ordinal, _name, 
+                                                      _loadName, nullable);
+    f.addSharedLibraryAtom(a);
+    ++_ordinal;
+  }
+   else if ( _definition == Atom::definitionAbsolute ) {
+    AbsoluteAtom *a = new YAMLAbsoluteAtom(f, _ordinal, _name, _value);
+    f.addAbsoluteAtom(a);
+    ++_ordinal;
+  }
+ 
   // reset state for next atom
   _name             = NULL;
   _refName          = NULL;
   _sectionName      = NULL;
+  _loadName         = NULL;
   _size             = 0;
+  _value            = 0;
   _ordinal          = 0;
   _content          = NULL;
   _alignment.powerOf2= 0;
@@ -630,7 +739,7 @@ void YAMLAtomState::makeAtom(YAMLFile& f) {
   _permissions      = KeyValues::permissionsDefault;
   _isThumb          = KeyValues::isThumbDefault;
   _isAlias          = KeyValues::isAliasDefault;
-  _weakImport       = KeyValues::weakImportDefault;
+  _canBeNull        = KeyValues::canBeNullDefault;
   _ref._target       = NULL;
   _ref._targetName   = NULL;
   _ref._addend       = 0;
@@ -666,22 +775,8 @@ void YAMLAtomState::setFixupKind(const char *s) {
   }
 }
 
-void YAMLAtomState::setFixupOffset(const char *s) {
-  if ((s[0] == '0') && (s[1] == 'x'))
-    llvm::StringRef(s).getAsInteger(16, _ref._offsetInAtom);
-  else
-    llvm::StringRef(s).getAsInteger(10, _ref._offsetInAtom);
-}
-
 void YAMLAtomState::setFixupTarget(const char *s) {
   _ref._targetName = s;
-}
-
-void YAMLAtomState::setFixupAddend(const char *s) {
-  if ((s[0] == '0') && (s[1] == 'x'))
-    llvm::StringRef(s).getAsInteger(16, _ref._addend);
-  else
-    llvm::StringRef(s).getAsInteger(10, _ref._addend);
 }
 
 
@@ -805,8 +900,12 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           atomState._isAlias = KeyValues::isAlias(entry->value);
           haveAtom = true;
         }
-        else if (strcmp(entry->key, KeyValues::weakImportKeyword) == 0) {
-          atomState._weakImport = KeyValues::weakImport(entry->value);
+        else if (strcmp(entry->key, KeyValues::canBeNullKeyword) == 0) {
+          atomState._canBeNull = KeyValues::canBeNull(entry->value);
+          if ( atomState._definition == Atom::definitionSharedLibrary ) {
+            if ( atomState._canBeNull == UndefinedAtom::canBeNullAtBuildtime )
+              return make_error_code(yaml_reader_error::illegal_value);
+          }
           haveAtom = true;
         }
         else if (strcmp(entry->key, KeyValues::sectionNameKeyword) == 0) {
@@ -829,7 +928,14 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
         } 
         else if (strcmp(entry->key, KeyValues::fixupsKeyword) == 0) {
           inFixups = true;
-          
+        }
+        else if (strcmp(entry->key, KeyValues::loadNameKeyword) == 0) {
+          atomState._loadName = entry->value;
+          haveAtom = true;
+        }
+        else if (strcmp(entry->key, KeyValues::valueKeyword) == 0) {
+          llvm::StringRef(entry->value).getAsInteger(0, atomState._value);
+          haveAtom = true;
         }
         else {
           return make_error_code(yaml_reader_error::unknown_keyword);
@@ -847,7 +953,8 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           haveFixup = true;
         } 
         else if (strcmp(entry->key, KeyValues::fixupsOffsetKeyword) == 0) {
-          atomState.setFixupOffset(entry->value);
+          llvm::StringRef(entry->value).getAsInteger(0, 
+                                              atomState._ref._offsetInAtom);
           haveFixup = true;
         } 
         else if (strcmp(entry->key, KeyValues::fixupsTargetKeyword) == 0) {
@@ -855,7 +962,8 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
           haveFixup = true;
         }
         else if (strcmp(entry->key, KeyValues::fixupsAddendKeyword) == 0) {
-          atomState.setFixupAddend(entry->value);
+          llvm::StringRef(entry->value).getAsInteger(0, 
+                                              atomState._ref._addend);
           haveFixup = true;
         }
       }
@@ -865,9 +973,10 @@ llvm::error_code parseObjectText( llvm::MemoryBuffer *mb
   if (haveAtom) {
     atomState.makeAtom(*file);
   }
-
-  file->bindTargetReferences();
-  result.push_back(file);
+  if ( file != NULL ) { 
+    file->bindTargetReferences();
+    result.push_back(file);
+  }
   return make_error_code(yaml_reader_error::success);
 }
 

@@ -21,8 +21,10 @@ namespace lld {
 class File;
 class DefinedAtom;
 class UndefinedAtom;
+class SharedLibraryAtom;
+class AbsoluteAtom;
 
-///
+  ///
 /// The linker has a Graph Theory model of linking. An object file is seen
 /// as a set of Atoms with References to other Atoms.  Each Atom is a node
 /// and each Reference is an edge. An Atom can be a DefinedAtom which has
@@ -52,11 +54,19 @@ public:
   
   /// definedAtom - like dynamic_cast, if atom is definitionRegular
   /// returns atom cast to DefinedAtom*, else returns nullptr;
-  virtual const DefinedAtom* definedAtom() const { return 0; }
+  virtual const DefinedAtom* definedAtom() const { return NULL; }
 
   /// undefinedAtom - like dynamic_cast, if atom is definitionUndefined
   /// returns atom cast to UndefinedAtom*, else returns NULL;
   virtual const UndefinedAtom* undefinedAtom() const { return NULL; }
+  
+  /// sharedLibraryAtom - like dynamic_cast, if atom is definitionSharedLibrary
+  /// returns atom cast to SharedLibraryAtom*, else returns nullptr;
+  virtual const SharedLibraryAtom* sharedLibraryAtom() const { return NULL; }
+  
+  /// absoluteAtom - like dynamic_cast, if atom is definitionAbsolute
+  /// returns atom cast to AbsoluteAtom*, else returns nullptr;
+  virtual const AbsoluteAtom* absoluteAtom() const { return NULL; }
   
 protected:
   /// Atom is an abstract base class.  Only subclasses can access constructor.

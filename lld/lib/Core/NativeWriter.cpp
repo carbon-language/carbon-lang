@@ -61,7 +61,21 @@ public:
       out.write((char*)&_undefinedAtomIvars[0], 
               _undefinedAtomIvars.size()*sizeof(NativeUndefinedAtomIvarsV1));
     }
-              
+    
+     if ( !_sharedLibraryAtomIvars.empty() ) {
+      assert( out.tell() == findChunk(NCS_SharedLibraryAtomsV1).fileOffset );
+      out.write((char*)&_sharedLibraryAtomIvars[0], 
+              _sharedLibraryAtomIvars.size() 
+              * sizeof(NativeSharedLibraryAtomIvarsV1));
+    }
+     
+    if ( !_absoluteAtomIvars.empty() ) {
+      assert( out.tell() == findChunk(NCS_AbsoluteAtomsV1).fileOffset );
+      out.write((char*)&_absoluteAtomIvars[0], 
+              _absoluteAtomIvars.size() 
+              * sizeof(NativeAbsoluteAtomIvarsV1));
+    }
+                       
     if (!_stringPool.empty()) {
       assert( out.tell() == findChunk(NCS_Strings).fileOffset );
       out.write(&_stringPool[0], _stringPool.size());
@@ -110,23 +124,55 @@ private:
     _undefinedAtomIndex[&atom] = _undefinedAtomIvars.size();
     NativeUndefinedAtomIvarsV1 ivar;
     ivar.nameOffset = getNameOffset(atom);
-    ivar.flags = (atom.weakImport() ? 1 : 0);
+    ivar.flags = (atom.canBeNull() & 0x03);
     _undefinedAtomIvars.push_back(ivar);
   }
   
+  // visitor routine called by forEachAtom() 
+  virtual void doSharedLibraryAtom(const SharedLibraryAtom& atom) {
+    _sharedLibraryAtomIndex[&atom] = _sharedLibraryAtomIvars.size();
+    NativeSharedLibraryAtomIvarsV1 ivar;
+    ivar.nameOffset = getNameOffset(atom);
+    ivar.loadNameOffset = getSharedLibraryNameOffset(atom.loadName());
+    ivar.flags = atom.canBeNullAtRuntime();
+    _sharedLibraryAtomIvars.push_back(ivar);
+  }
+   
+  // visitor routine called by forEachAtom() 
+  virtual void doAbsoluteAtom(const AbsoluteAtom& atom) {
+    _absoluteAtomIndex[&atom] = _absoluteAtomIvars.size();
+    NativeAbsoluteAtomIvarsV1 ivar;
+    ivar.nameOffset = getNameOffset(atom);
+    ivar.reserved = 0;
+    ivar.value = atom.value();
+    _absoluteAtomIvars.push_back(ivar);
+  }
+
   // visitor routine called by forEachAtom() 
   virtual void doFile(const File &) {
   }
 
   // fill out native file header and chunk directory
   void makeHeader() {
+    const bool hasDefines = !_definedAtomIvars.empty();
     const bool hasUndefines = !_undefinedAtomIvars.empty();
+    const bool hasSharedLibraries = !_sharedLibraryAtomIvars.empty();
+    const bool hasAbsolutes = !_absoluteAtomIvars.empty();
+    const bool hasReferences = !_references.empty();
     const bool hasTargetsTable = !_targetsTableIndex.empty();
     const bool hasAddendTable = !_addendsTableIndex.empty();
-    int chunkCount = 5;
+    const bool hasContent = !_contentPool.empty();
+
+    int chunkCount = 1; // always have string pool chunk
+    if ( hasDefines ) chunkCount += 2;
     if ( hasUndefines ) ++chunkCount;
+    if ( hasSharedLibraries ) ++chunkCount;
+    if ( hasAbsolutes ) ++chunkCount;
+    if ( hasReferences ) ++chunkCount;
     if ( hasTargetsTable ) ++chunkCount;
     if ( hasAddendTable ) ++chunkCount;
+    if ( hasContent ) ++chunkCount;
+
     _headerBufferSize = sizeof(NativeFileHeader) 
                          + chunkCount*sizeof(NativeChunk);
     _headerBuffer = reinterpret_cast<NativeFileHeader*>
@@ -140,23 +186,25 @@ private:
     _headerBuffer->fileSize = 0;
     _headerBuffer->chunkCount = chunkCount;
     
-    
-    // create chunk for atom ivar array
+    // create chunk for defined atom ivar array
     int nextIndex = 0;
-    NativeChunk& chd = chunks[nextIndex++];
-    chd.signature = NCS_DefinedAtomsV1;
-    chd.fileOffset = _headerBufferSize;
-    chd.fileSize = _definedAtomIvars.size()*sizeof(NativeDefinedAtomIvarsV1);
-    chd.elementCount = _definedAtomIvars.size();
-    uint32_t nextFileOffset = chd.fileOffset + chd.fileSize;
+    uint32_t nextFileOffset = _headerBufferSize;
+    if ( hasDefines ) {
+      NativeChunk& chd = chunks[nextIndex++];
+      chd.signature = NCS_DefinedAtomsV1;
+      chd.fileOffset = nextFileOffset;
+      chd.fileSize = _definedAtomIvars.size()*sizeof(NativeDefinedAtomIvarsV1);
+      chd.elementCount = _definedAtomIvars.size();
+      nextFileOffset = chd.fileOffset + chd.fileSize;
 
-    // create chunk for attributes 
-    NativeChunk& cha = chunks[nextIndex++];
-    cha.signature = NCS_AttributesArrayV1;
-    cha.fileOffset = nextFileOffset;
-    cha.fileSize = _attributes.size()*sizeof(NativeAtomAttributesV1);
-    cha.elementCount = _attributes.size();
-    nextFileOffset = cha.fileOffset + cha.fileSize;
+      // create chunk for attributes 
+      NativeChunk& cha = chunks[nextIndex++];
+      cha.signature = NCS_AttributesArrayV1;
+      cha.fileOffset = nextFileOffset;
+      cha.fileSize = _attributes.size()*sizeof(NativeAtomAttributesV1);
+      cha.elementCount = _attributes.size();
+      nextFileOffset = cha.fileOffset + cha.fileSize;
+    }
     
     // create chunk for undefined atom array
     if ( hasUndefines ) {
@@ -169,6 +217,28 @@ private:
       nextFileOffset = chu.fileOffset + chu.fileSize;
     }
     
+    // create chunk for shared library atom array
+    if ( hasSharedLibraries ) {
+      NativeChunk& chsl = chunks[nextIndex++];
+      chsl.signature = NCS_SharedLibraryAtomsV1;
+      chsl.fileOffset = nextFileOffset;
+      chsl.fileSize = _sharedLibraryAtomIvars.size() * 
+                                        sizeof(NativeSharedLibraryAtomIvarsV1);
+      chsl.elementCount = _sharedLibraryAtomIvars.size();
+      nextFileOffset = chsl.fileOffset + chsl.fileSize;
+    }
+   
+     // create chunk for shared library atom array
+    if ( hasAbsolutes ) {
+      NativeChunk& chsl = chunks[nextIndex++];
+      chsl.signature = NCS_AbsoluteAtomsV1;
+      chsl.fileOffset = nextFileOffset;
+      chsl.fileSize = _absoluteAtomIvars.size() * 
+                                        sizeof(NativeAbsoluteAtomIvarsV1);
+      chsl.elementCount = _absoluteAtomIvars.size();
+      nextFileOffset = chsl.fileOffset + chsl.fileSize;
+    }
+   
     // create chunk for symbol strings
     // pad end of string pool to 4-bytes 
     while ( (_stringPool.size() % 4) != 0 )
@@ -181,13 +251,15 @@ private:
     nextFileOffset = chs.fileOffset + chs.fileSize;
     
     // create chunk for references 
-    NativeChunk& chr = chunks[nextIndex++];
-    chr.signature = NCS_ReferencesArrayV1;
-    chr.fileOffset = nextFileOffset;
-    chr.fileSize = _references.size() * sizeof(NativeReferenceIvarsV1);
-    chr.elementCount = _references.size();
-    nextFileOffset = chr.fileOffset + chr.fileSize;
-
+    if ( hasReferences ) {
+      NativeChunk& chr = chunks[nextIndex++];
+      chr.signature = NCS_ReferencesArrayV1;
+      chr.fileOffset = nextFileOffset;
+      chr.fileSize = _references.size() * sizeof(NativeReferenceIvarsV1);
+      chr.elementCount = _references.size();
+      nextFileOffset = chr.fileOffset + chr.fileSize;
+    }
+    
     // create chunk for target table 
     if ( hasTargetsTable ) {
       NativeChunk& cht = chunks[nextIndex++];
@@ -209,13 +281,15 @@ private:
     }
     
     // create chunk for content 
-    NativeChunk& chc = chunks[nextIndex++];
-    chc.signature = NCS_Content;
-    chc.fileOffset = nextFileOffset;
-    chc.fileSize = _contentPool.size();
-    chc.elementCount = _contentPool.size();
-    nextFileOffset = chc.fileOffset + chc.fileSize;
-
+    if ( hasContent ) {
+      NativeChunk& chc = chunks[nextIndex++];
+      chc.signature = NCS_Content;
+      chc.fileOffset = nextFileOffset;
+      chc.fileSize = _contentPool.size();
+      chc.elementCount = _contentPool.size();
+      nextFileOffset = chc.fileOffset + chc.fileSize;
+    }
+    
     _headerBuffer->fileSize = nextFileOffset;
   }
 
@@ -237,7 +311,23 @@ private:
     return this->getNameOffset(atom.name());
   }
   
- // append atom name to string pool and return offset
+  // check if name is already in pool or append and return offset
+  uint32_t getSharedLibraryNameOffset(llvm::StringRef name) {
+    assert( ! name.empty() );
+    // look to see if this library name was used by another atom
+    for(NameToOffsetVector::iterator it = _sharedLibraryNames.begin(); 
+                                    it != _sharedLibraryNames.end(); ++it) {
+      if ( name.equals(it->first) )
+        return it->second;
+    }
+    // first use of this library name
+    uint32_t result = this->getNameOffset(name);
+    _sharedLibraryNames.push_back(
+                    std::make_pair<llvm::StringRef, uint32_t>(name, result));
+    return result;
+  }
+  
+  // append atom name to string pool and return offset
   uint32_t getNameOffset(llvm::StringRef name) {
     if ( name.empty() )
       return 0;
@@ -356,8 +446,26 @@ private:
       }
       else {
         pos = _undefinedAtomIndex.find(atom);
-        assert(pos != _undefinedAtomIndex.end());
-        atomIndex = pos->second + _definedAtomIvars.size();
+        if ( pos != _undefinedAtomIndex.end() ) {
+          atomIndex = pos->second + _definedAtomIvars.size();
+        }
+        else {
+          pos = _sharedLibraryAtomIndex.find(atom);
+          if ( pos != _sharedLibraryAtomIndex.end() ) {
+            assert(pos != _sharedLibraryAtomIndex.end());
+            atomIndex = pos->second 
+                      + _definedAtomIvars.size() 
+                      + _undefinedAtomIndex.size();
+          }
+          else {
+            pos = _absoluteAtomIndex.find(atom);
+            assert(pos != _absoluteAtomIndex.end());
+            atomIndex = pos->second 
+                      + _definedAtomIvars.size() 
+                      + _undefinedAtomIndex.size()
+                      + _sharedLibraryAtomIndex.size();
+         }
+        }
       }
       targetIndexes[targetIndex] = atomIndex;
     }
@@ -405,12 +513,17 @@ private:
   std::vector<NativeDefinedAtomIvarsV1>   _definedAtomIvars;
   std::vector<NativeAtomAttributesV1>     _attributes;
   std::vector<NativeUndefinedAtomIvarsV1> _undefinedAtomIvars;
+  std::vector<NativeSharedLibraryAtomIvarsV1> _sharedLibraryAtomIvars;
+  std::vector<NativeAbsoluteAtomIvarsV1>  _absoluteAtomIvars;
   std::vector<NativeReferenceIvarsV1>     _references;
   TargetToIndex                           _targetsTableIndex;
   TargetToIndex                           _definedAtomIndex;
   TargetToIndex                           _undefinedAtomIndex;
+  TargetToIndex                           _sharedLibraryAtomIndex;
+  TargetToIndex                           _absoluteAtomIndex;
   AddendToIndex                           _addendsTableIndex;
   NameToOffsetVector                      _sectionNames;
+  NameToOffsetVector                      _sharedLibraryNames;
 };
 
 

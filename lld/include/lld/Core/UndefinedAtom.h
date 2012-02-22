@@ -12,8 +12,6 @@
 
 #include "lld/Core/Atom.h"
 
-#include "llvm/ADT/StringRef.h"
-
 namespace lld {
 
 /// An UndefinedAtom has no content.
@@ -30,9 +28,40 @@ public:
     return this;
   }
 
-  /// returns if undefined symbol can be missing at runtime
-  virtual bool weakImport() const = 0;
+  /// Whether this undefined symbol needs to be resolved,
+  /// or whether it can just evaluate to NULL.
+  /// This concept is often called "weak", but that term
+  /// is overloaded to mean other things too.
+  enum CanBeNull {
+    /// Normal symbols must be resolved at build time
+    canBeNullNever,
+    
+    /// This symbol can be missing at runtime and will evalute to NULL.
+    /// That is, the static linker still must find a definition (usually
+    /// is some shared library), but at runtime, the dynamic loader
+    /// will allow the symbol to be missing and resolved to NULL.
+    ///
+    /// On Darwin this is generated using a function prototype with
+    /// __attribute__((weak_import)).  
+    /// On linux this is generated using a function prototype with
+    ///  __attribute__((weak)).
+    canBeNullAtRuntime,
+    
+    
+    /// This symbol can be missing at build time.
+    /// That is, the static linker will not error if a definition for
+    /// this symbol is not found at build time. Instead, the linker 
+    /// will build an executable that lets the dynamic loader find the
+    /// symbol at runtime.  
+    /// This feature is not supported on Darwin.
+    /// On linux this is generated using a function prototype with
+    ///  __attribute__((weak)).
+    canBeNullAtBuildtime
+  };
   
+  virtual CanBeNull canBeNull() const = 0;
+  
+   
 protected:
            UndefinedAtom() {}
   virtual ~UndefinedAtom() {}

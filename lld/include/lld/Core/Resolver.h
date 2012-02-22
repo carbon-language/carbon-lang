@@ -43,6 +43,8 @@ public:
   // AtomHandler methods
   virtual void doDefinedAtom(const class DefinedAtom&);
   virtual void doUndefinedAtom(const class UndefinedAtom&);
+  virtual void doSharedLibraryAtom(const class SharedLibraryAtom &);
+  virtual void doAbsoluteAtom(const class AbsoluteAtom &);
   virtual void doFile(const File&);
 
   /// @brief do work of merging and resolving and return list
