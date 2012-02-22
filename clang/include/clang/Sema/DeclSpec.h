@@ -1645,9 +1645,14 @@ public:
     case ForContext:
       return true;
 
+    case ConditionContext:
+      // This may not be followed by a direct initializer, but it can't be a
+      // function declaration either, and we'd prefer to perform a tentative
+      // parse in order to produce the right diagnostic.
+      return true;
+
     case KNRTypeListContext:
     case MemberContext:
-    case ConditionContext:
     case PrototypeContext:
     case ObjCParameterContext:
     case ObjCResultContext:

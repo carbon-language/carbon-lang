@@ -1271,6 +1271,8 @@ Parser::ParseCXXTypeConstructExpression(const DeclSpec &DS) {
 ///       condition:
 ///         expression
 ///         type-specifier-seq declarator '=' assignment-expression
+/// [C++11] type-specifier-seq declarator '=' initializer-clause
+/// [C++11] type-specifier-seq declarator braced-init-list
 /// [GNU]   type-specifier-seq declarator simple-asm-expr[opt] attributes[opt]
 ///             '=' assignment-expression
 ///
@@ -1342,17 +1344,34 @@ bool Parser::ParseCXXCondition(ExprResult &ExprOut,
 
   // '=' assignment-expression
   // If a '==' or '+=' is found, suggest a fixit to '='.
-  if (isTokenEqualOrEqualTypo()) {
+  bool CopyInitialization = isTokenEqualOrEqualTypo();
+  if (CopyInitialization)
     ConsumeToken();
-    ExprResult AssignExpr(ParseAssignmentExpression());
-    if (!AssignExpr.isInvalid()) 
-      Actions.AddInitializerToDecl(DeclOut, AssignExpr.take(), false,
-                                   DS.getTypeSpecType() == DeclSpec::TST_auto);
+
+  ExprResult InitExpr = ExprError();
+  if (getLang().CPlusPlus0x && Tok.is(tok::l_brace)) {
+    Diag(Tok.getLocation(),
+         diag::warn_cxx98_compat_generalized_initializer_lists);
+    InitExpr = ParseBraceInitializer();
+  } else if (CopyInitialization) {
+    InitExpr = ParseAssignmentExpression();
+  } else if (Tok.is(tok::l_paren)) {
+    // This was probably an attempt to initialize the variable.
+    SourceLocation LParen = ConsumeParen(), RParen = LParen;
+    if (SkipUntil(tok::r_paren, true, /*DontConsume=*/true))
+      RParen = ConsumeParen();
+    Diag(DeclOut ? DeclOut->getLocation() : LParen,
+         diag::err_expected_init_in_condition_lparen)
+      << SourceRange(LParen, RParen);
   } else {
-    // FIXME: C++0x allows a braced-init-list
-    Diag(Tok, diag::err_expected_equal_after_declarator);
+    Diag(DeclOut ? DeclOut->getLocation() : Tok.getLocation(),
+         diag::err_expected_init_in_condition);
   }
-  
+
+  if (!InitExpr.isInvalid())
+    Actions.AddInitializerToDecl(DeclOut, InitExpr.take(), !CopyInitialization,
+                                 DS.getTypeSpecType() == DeclSpec::TST_auto);
+
   // FIXME: Build a reference to this declaration? Convert it to bool?
   // (This is currently handled by Sema).
 

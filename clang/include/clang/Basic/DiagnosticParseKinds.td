@@ -381,8 +381,10 @@ def err_func_def_no_params : Error<
   "function definition does not declare parameters">;
 def err_expected_lparen_after_type : Error<
   "expected '(' for function-style cast or type construction">;
-def err_expected_equal_after_declarator : Error<
-  "expected '=' after declarator">;
+def err_expected_init_in_condition : Error<
+  "variable declaration in condition must have an initializer">;
+def err_expected_init_in_condition_lparen : Error<
+  "variable declaration in condition cannot have a parenthesized initializer">;
 def warn_parens_disambiguated_as_function_decl : Warning<
   "parentheses were disambiguated as a function declarator">,
   InGroup<VexingParse>;

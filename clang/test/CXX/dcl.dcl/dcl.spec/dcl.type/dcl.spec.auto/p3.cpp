@@ -13,9 +13,9 @@ void g() {
   
   auto *b; // expected-error{{declaration of variable 'b' with type 'auto *' requires an initializer}}
 
-  if (auto b) {} // expected-error {{expected '='}}
-  for (;auto b;) {} // expected-error {{expected '='}}
-  while (auto b) {} // expected-error {{expected '='}}
+  if (auto b) {} // expected-error {{must have an initializer}}
+  for (;auto b;) {} // expected-error {{must have an initializer}}
+  while (auto b) {} // expected-error {{must have an initializer}}
   if (auto b = true) { (void)b; }
 }
 
