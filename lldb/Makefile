@@ -69,7 +69,7 @@ EXTRA_OPTIONS += -Wno-sign-compare
 
 # Drop -Wunused-function and -Wunneeded-internal-declaration, which we are not
 # currently clean with.
-EXTRA_OPTIONS += -Wno-sign-compare -Wno-unused-function -Wno-unneeded-internal-declaration
+EXTRA_OPTIONS += -Wno-sign-compare -Wno-unused-function
 
 ###
 # LLDB Top Level specific stuff.
