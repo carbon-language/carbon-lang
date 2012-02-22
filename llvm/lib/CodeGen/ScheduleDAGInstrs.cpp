@@ -737,7 +737,9 @@ void ScheduleDAGInstrs::ComputeOperandLatency(SUnit *Def, SUnit *Use,
       //   %Q1<def> = VMULv8i16 %Q1<kill>, %Q3<kill>, ...
       // What we want is to compute latency between def of %D6/%D7 and use of
       // %Q3 instead.
-      DefIdx = DefMI->findRegisterDefOperandIdx(Reg, false, true, TRI);
+      unsigned Op2 = DefMI->findRegisterDefOperandIdx(Reg, false, true, TRI);
+      if (DefMI->getOperand(Op2).isReg())
+        DefIdx = Op2;
     }
     MachineInstr *UseMI = Use->getInstr();
     // For all uses of the register, calculate the maxmimum latency
