@@ -323,12 +323,6 @@ class ASTContext : public RefCountedBase<ASTContext> {
   typedef UsuallyTinyPtrVector<const CXXMethodDecl> CXXMethodVector;
   llvm::DenseMap<const CXXMethodDecl *, CXXMethodVector> OverriddenMethods;
 
-  /// \brief Mapping from lambda-to-block-pointer conversion functions to the
-  /// expression used to copy the lambda object.
-  llvm::DenseMap<const CXXConversionDecl *, Expr *> LambdaBlockPointerInits;
-  
-  friend class CXXConversionDecl;
-  
   /// \brief Mapping from each declaration context to its corresponding lambda 
   /// mangling context.
   llvm::DenseMap<const DeclContext *, LambdaMangleContext> LambdaMangleContexts;

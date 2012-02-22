@@ -516,7 +516,8 @@ void StmtDumper::VisitBlockExpr(BlockExpr *Node) {
     OS << "(capture ";
     if (i->isByRef()) OS << "byref ";
     if (i->isNested()) OS << "nested ";
-    DumpDeclRef(i->getVariable());
+    if (i->getVariable())
+      DumpDeclRef(i->getVariable());
     if (i->hasCopyExpr()) DumpSubTree(i->getCopyExpr());
     OS << ")";
   }

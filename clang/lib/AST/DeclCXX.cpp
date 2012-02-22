@@ -1770,16 +1770,6 @@ bool CXXConversionDecl::isLambdaToBlockPointerConversion() const {
          getConversionType()->isBlockPointerType();
 }
 
-Expr *CXXConversionDecl::getLambdaToBlockPointerCopyInit() const {
-  assert(isLambdaToBlockPointerConversion());
-  return getASTContext().LambdaBlockPointerInits[this];
-}
-
-void CXXConversionDecl::setLambdaToBlockPointerCopyInit(Expr *Init) {
-  assert(isLambdaToBlockPointerConversion());
-  getASTContext().LambdaBlockPointerInits[this] = Init;
-}
-
 void LinkageSpecDecl::anchor() { }
 
 LinkageSpecDecl *LinkageSpecDecl::Create(ASTContext &C,

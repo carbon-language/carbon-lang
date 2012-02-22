@@ -3000,9 +3000,11 @@ static Expr *EvalAddr(Expr *E, SmallVectorImpl<DeclRefExpr *> &refVars) {
     Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
     QualType T = SubExpr->getType();
 
-    if (SubExpr->getType()->isPointerType() ||
-        SubExpr->getType()->isBlockPointerType() ||
-        SubExpr->getType()->isObjCQualifiedIdType())
+    if (cast<CastExpr>(E)->getCastKind() == CK_CopyAndAutoreleaseBlockObject)
+      return 0;
+    else if (SubExpr->getType()->isPointerType() ||
+             SubExpr->getType()->isBlockPointerType() ||
+             SubExpr->getType()->isObjCQualifiedIdType())
       return EvalAddr(SubExpr, refVars);
     else if (T->isArrayType())
       return EvalVal(SubExpr, refVars);

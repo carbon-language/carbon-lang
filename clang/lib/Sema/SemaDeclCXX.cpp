@@ -8755,9 +8755,9 @@ bool Sema::isImplicitlyDeleted(FunctionDecl *FD) {
 /// \brief Mark the call operator of the given lambda closure type as "used".
 static void markLambdaCallOperatorUsed(Sema &S, CXXRecordDecl *Lambda) {
   CXXMethodDecl *CallOperator 
-  = cast<CXXMethodDecl>(
-      *Lambda->lookup(
-        S.Context.DeclarationNames.getCXXOperatorName(OO_Call)).first);
+    = cast<CXXMethodDecl>(
+        *Lambda->lookup(
+          S.Context.DeclarationNames.getCXXOperatorName(OO_Call)).first);
   CallOperator->setReferenced();
   CallOperator->setUsed();
 }
@@ -8805,14 +8805,21 @@ void Sema::DefineImplicitLambdaToBlockPointerConversion(
        SourceLocation CurrentLocation,
        CXXConversionDecl *Conv) 
 {
+  CXXRecordDecl *Lambda = Conv->getParent();
+  
   // Make sure that the lambda call operator is marked used.
-  markLambdaCallOperatorUsed(*this, Conv->getParent());
+  CXXMethodDecl *CallOperator 
+    = cast<CXXMethodDecl>(
+        *Lambda->lookup(
+          Context.DeclarationNames.getCXXOperatorName(OO_Call)).first);
+  CallOperator->setReferenced();
+  CallOperator->setUsed();
   Conv->setUsed();
   
   ImplicitlyDefinedFunctionScope Scope(*this, Conv);
   DiagnosticErrorTrap Trap(Diags);
   
-  // Copy-initialize the lambda object as needed to capture
+  // Copy-initialize the lambda object as needed to capture it.
   Expr *This = ActOnCXXThis(CurrentLocation).take();
   Expr *DerefThis =CreateBuiltinUnaryOp(CurrentLocation, UO_Deref, This).take();
   ExprResult Init = PerformCopyInitialization(
@@ -8823,16 +8830,78 @@ void Sema::DefineImplicitLambdaToBlockPointerConversion(
   if (!Init.isInvalid())
     Init = ActOnFinishFullExpr(Init.take());
   
-  if (!Init.isInvalid())
-    Conv->setLambdaToBlockPointerCopyInit(Init.take());
-  else {
+  if (Init.isInvalid()) {
     Diag(CurrentLocation, diag::note_lambda_to_block_conv);
+    Conv->setInvalidDecl();
+    return;
   }
   
-  // Introduce a bogus body, which IR generation will override anyway.
-  Conv->setBody(new (Context) CompoundStmt(Context, 0, 0, Conv->getLocation(),
+  // Create the new block to be returned.
+  BlockDecl *Block = BlockDecl::Create(Context, Conv, Conv->getLocation());
+  
+  // Set the type information.
+  Block->setSignatureAsWritten(CallOperator->getTypeSourceInfo());
+  Block->setIsVariadic(CallOperator->isVariadic());
+  Block->setBlockMissingReturnType(false);
+  
+  // Add parameters.
+  SmallVector<ParmVarDecl *, 4> BlockParams;
+  for (unsigned I = 0, N = CallOperator->getNumParams(); I != N; ++I) {
+    ParmVarDecl *From = CallOperator->getParamDecl(I);
+    BlockParams.push_back(ParmVarDecl::Create(Context, Block,
+                                              From->getLocStart(),
+                                              From->getLocation(),
+                                              From->getIdentifier(),
+                                              From->getType(),
+                                              From->getTypeSourceInfo(),
+                                              From->getStorageClass(),
+                                            From->getStorageClassAsWritten(),
+                                              /*DefaultArg=*/0));
+  }
+  Block->setParams(BlockParams);
+  
+  // Add capture. The capture is uses a fake (NULL) variable, since we don't
+  // actually want to have to name a capture variable. However, the 
+  // initializer copy-initializes the lambda object.
+  BlockDecl::Capture Capture(/*Variable=*/0, /*ByRef=*/false, /*Nested=*/false,
+                             /*Copy=*/Init.take());
+  Block->setCaptures(Context, &Capture, &Capture + 1, 
+                     /*CapturesCXXThis=*/false);
+  
+  // Add a fake function body to the block. IR generation is responsible
+  // for filling in the actual body, which cannot be expressed as an AST.
+  Block->setBody(new (Context) CompoundStmt(Context, 0, 0, 
+                                            Conv->getLocation(),
+                                            Conv->getLocation()));
+
+  // Create the block literal expression.
+  Expr *BuildBlock = new (Context) BlockExpr(Block, Conv->getConversionType());
+  ExprCleanupObjects.push_back(Block);
+  ExprNeedsCleanups = true;
+
+  // If we're not under ARC, make sure we still get the _Block_copy/autorelease
+  // behavior.
+  if (!getLangOptions().ObjCAutoRefCount)
+    BuildBlock = ImplicitCastExpr::Create(Context, BuildBlock->getType(),
+                                          CK_CopyAndAutoreleaseBlockObject,
+                                          BuildBlock, 0, VK_RValue);
+  
+  // Create the return statement that returns the block from the conversion
+  // function.
+  StmtResult Return = ActOnReturnStmt(Conv->getLocation(), BuildBlock);
+  if (Return.isInvalid()) {
+    Diag(CurrentLocation, diag::note_lambda_to_block_conv);
+    Conv->setInvalidDecl();
+    return;
+  }
+
+  // Set the body of the conversion function.
+  Stmt *ReturnS = Return.take();
+  Conv->setBody(new (Context) CompoundStmt(Context, &ReturnS, 1, 
+                                           Conv->getLocation(), 
                                            Conv->getLocation()));
   
+  // We're done; notify the mutation listener, if any.
   if (ASTMutationListener *L = getASTMutationListener()) {
     L->CompletedImplicitDefinition(Conv);
   }

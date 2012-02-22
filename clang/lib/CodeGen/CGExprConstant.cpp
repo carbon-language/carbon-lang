@@ -636,6 +636,7 @@ public:
     case CK_ARCConsumeObject:
     case CK_ARCReclaimReturnedObject:
     case CK_ARCExtendBlockObject:
+    case CK_CopyAndAutoreleaseBlockObject:
       return 0;
 
     // These don't need to be handled here because Evaluate knows how to

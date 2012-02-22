@@ -1076,6 +1076,11 @@ void CastExpr::CheckCastConsistency() const {
            !getSubExpr()->getType()->isBlockPointerType());
     goto CheckNoBasePath;
 
+  case CK_CopyAndAutoreleaseBlockObject:
+    assert(getType()->isBlockPointerType());
+    assert(getSubExpr()->getType()->isBlockPointerType());
+    goto CheckNoBasePath;
+      
   // These should not have an inheritance path.
   case CK_Dynamic:
   case CK_ToUnion:
@@ -1231,6 +1236,8 @@ const char *CastExpr::getCastKindName() const {
     return "AtomicToNonAtomic";
   case CK_NonAtomicToAtomic:
     return "NonAtomicToAtomic";
+  case CK_CopyAndAutoreleaseBlockObject:
+    return "CopyAndAutoreleaseBlockObject";
   }
 
   llvm_unreachable("Unhandled cast kind!");

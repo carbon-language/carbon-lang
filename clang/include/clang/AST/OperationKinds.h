@@ -281,7 +281,14 @@ enum CastKind {
   /// \brief Converts from _Atomic(T) to T.
   CK_AtomicToNonAtomic,
   /// \brief Converts from T to _Atomic(T).
-  CK_NonAtomicToAtomic
+  CK_NonAtomicToAtomic,
+  
+  /// \brief Causes a block literal to by copied to the heap and then 
+  /// autoreleased.
+  ///
+  /// This particular cast kind is used for the conversion from a C++11
+  /// lambda expression to a block pointer.
+  CK_CopyAndAutoreleaseBlockObject
 };
 
 #define CK_Invalid ((CastKind) -1)

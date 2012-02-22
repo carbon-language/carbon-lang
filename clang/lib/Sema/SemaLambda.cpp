@@ -643,7 +643,7 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
     //   non-explicit const conversion function to a block pointer having the
     //   same parameter and return types as the closure type's function call
     //   operator.
-    if (getLangOptions().Blocks)
+    if (getLangOptions().Blocks && getLangOptions().ObjC1)
       addBlockPointerConversion(*this, IntroducerRange, Class, CallOperator);
     
     // Finalize the lambda class.

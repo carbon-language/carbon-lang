@@ -2261,15 +2261,6 @@ public:
   /// a lambda closure type to a block pointer.
   bool isLambdaToBlockPointerConversion() const;
   
-  /// \brief For an implicit conversion function that converts a lambda
-  /// closure type to a block pointer, retrieve the expression used to
-  /// copy the closure object into the block.
-  Expr *getLambdaToBlockPointerCopyInit() const;
-  
-  /// \brief Set the copy-initialization expression to be used when converting
-  /// a lambda object to a block pointer.
-  void setLambdaToBlockPointerCopyInit(Expr *Init);
-  
   // Implement isa/cast/dyncast/etc.
   static bool classof(const Decl *D) { return classofKind(D->getKind()); }
   static bool classof(const CXXConversionDecl *D) { return true; }
