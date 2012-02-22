@@ -77,7 +77,7 @@
 # define INTERCEPTOR_ATTRIBUTE
 #elif defined(_WIN32)
 // TODO(timurrrr): we're likely to use something else later on Windows.
-# define WRAP(x) wrap_##x
+# define WRAP(x) x
 # define WRAPPER_NAME(x) #x
 # define INTERCEPTOR_ATTRIBUTE
 #else
@@ -128,7 +128,8 @@
 # define INTERCEPT_FUNCTION(func) INTERCEPT_FUNCTION_MAC(func)
 #else  // defined(_WIN32)
   // FIXME: deal with interception on Win.
-# define INTERCEPT_FUNCTION(func) true
+# include "interception_win.h"
+# define INTERCEPT_FUNCTION(func) INTERCEPT_FUNCTION_WIN(func)
 #endif
 
 #undef INCLUDED_FROM_INTERCEPTION_LIB

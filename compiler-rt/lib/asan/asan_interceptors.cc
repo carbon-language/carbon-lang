@@ -25,12 +25,6 @@
 
 #include <new>
 
-#if defined(_WIN32)
-// FIXME: remove when we start intercepting on Windows. Currently it's needed to
-// define memset/memcpy intrinsics.
-# include <intrin.h>
-#endif  // _WIN32
-
 #if defined(__APPLE__)
 // FIXME(samsonov): Gradually replace system headers with declarations of
 // intercepted functions.
@@ -299,6 +293,7 @@ INTERCEPTOR(void, longjmp, void *env, int val) {
   REAL(longjmp)(env, val);
 }
 
+#if !defined(_WIN32)
 INTERCEPTOR(void, _longjmp, void *env, int val) {
   __asan_handle_no_return();
   REAL(_longjmp)(env, val);
@@ -308,6 +303,7 @@ INTERCEPTOR(void, siglongjmp, void *env, int val) {
   __asan_handle_no_return();
   REAL(siglongjmp)(env, val);
 }
+#endif
 
 #if ASAN_HAS_EXCEPTIONS == 1
 #ifdef __APPLE__
@@ -586,13 +582,10 @@ INTERCEPTOR(size_t, strnlen, const char *s, size_t maxlen) {
 // ---------------------- InitializeAsanInterceptors ---------------- {{{1
 namespace __asan {
 void InitializeAsanInterceptors() {
-#ifndef __APPLE__
-  CHECK(INTERCEPT_FUNCTION(index));
-#else
-  CHECK(OVERRIDE_FUNCTION(index, WRAP(strchr)));
-#endif
+  // Intercept mem* functions.
   CHECK(INTERCEPT_FUNCTION(memcmp));
   CHECK(INTERCEPT_FUNCTION(memmove));
+  CHECK(INTERCEPT_FUNCTION(memset));
 #ifdef __APPLE__
   // Wrap memcpy() on OS X 10.6 only, because on 10.7 memcpy() and memmove()
   // are resolved into memmove$VARIANT$sse42.
@@ -608,47 +601,67 @@ void InitializeAsanInterceptors() {
   // Always wrap memcpy() on non-Darwin platforms.
   CHECK(INTERCEPT_FUNCTION(memcpy));
 #endif
-  CHECK(INTERCEPT_FUNCTION(memset));
-  CHECK(INTERCEPT_FUNCTION(strcasecmp));
+
+  // Intercept str* functions.
   CHECK(INTERCEPT_FUNCTION(strcat));  // NOLINT
   CHECK(INTERCEPT_FUNCTION(strchr));
   CHECK(INTERCEPT_FUNCTION(strcmp));
   CHECK(INTERCEPT_FUNCTION(strcpy));  // NOLINT
-  CHECK(INTERCEPT_FUNCTION(strdup));
   CHECK(INTERCEPT_FUNCTION(strlen));
-  CHECK(INTERCEPT_FUNCTION(strncasecmp));
   CHECK(INTERCEPT_FUNCTION(strncmp));
   CHECK(INTERCEPT_FUNCTION(strncpy));
+#if !defined(_WIN32)
+  CHECK(INTERCEPT_FUNCTION(strcasecmp));
+  CHECK(INTERCEPT_FUNCTION(strdup));
+  CHECK(INTERCEPT_FUNCTION(strncasecmp));
+# ifndef __APPLE__
+  CHECK(INTERCEPT_FUNCTION(index));
+# else
+  CHECK(OVERRIDE_FUNCTION(index, WRAP(strchr)));
+# endif
+#endif
+#if !defined(__APPLE__)
+  CHECK(INTERCEPT_FUNCTION(strnlen));
+#endif
 
-#ifndef ANDROID
+  // Intecept signal- and jump-related functions.
+  CHECK(INTERCEPT_FUNCTION(longjmp));
+#if !defined(ANDROID) && !defined(_WIN32)
   CHECK(INTERCEPT_FUNCTION(sigaction));
   CHECK(INTERCEPT_FUNCTION(signal));
 #endif
 
-  CHECK(INTERCEPT_FUNCTION(longjmp));
+#if !defined(_WIN32)
   CHECK(INTERCEPT_FUNCTION(_longjmp));
   INTERCEPT_FUNCTION(__cxa_throw);
-  CHECK(INTERCEPT_FUNCTION(pthread_create));
-
-#ifdef _WIN32
-  // FIXME: We don't intercept properly on Windows yet, so use the original
-  // functions for now.
-  REAL(memcpy) = memcpy;
-  REAL(memset) = memset;
+# if !defined(__APPLE__)
+  // On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
+  // there.
+  CHECK(INTERCEPT_FUNCTION(siglongjmp));
+# endif
 #endif
 
-#ifdef __APPLE__
-  CHECK(INTERCEPT_FUNCTION(dispatch_async_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_sync_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_after_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_barrier_async_f));
-  CHECK(INTERCEPT_FUNCTION(dispatch_group_async_f));
+  // Intercept threading-related functions
+#if !defined(_WIN32)
+  CHECK(INTERCEPT_FUNCTION(pthread_create));
+# if defined(__APPLE__)
   // We don't need to intercept pthread_workqueue_additem_np() to support the
   // libdispatch API, but it helps us to debug the unsupported functions. Let's
   // intercept it only during verbose runs.
   if (FLAG_v >= 2) {
     CHECK(INTERCEPT_FUNCTION(pthread_workqueue_additem_np));
   }
+# endif
+#endif
+
+  // Some Mac-specific interceptors.
+#if defined(__APPLE__)
+  CHECK(INTERCEPT_FUNCTION(dispatch_async_f));
+  CHECK(INTERCEPT_FUNCTION(dispatch_sync_f));
+  CHECK(INTERCEPT_FUNCTION(dispatch_after_f));
+  CHECK(INTERCEPT_FUNCTION(dispatch_barrier_async_f));
+  CHECK(INTERCEPT_FUNCTION(dispatch_group_async_f));
+
   // Normally CFStringCreateCopy should not copy constant CF strings.
   // Replacing the default CFAllocator causes constant strings to be copied
   // rather than just returned, which leads to bugs in big applications like
@@ -657,15 +670,8 @@ void InitializeAsanInterceptors() {
   // Until this problem is fixed we need to check that the string is
   // non-constant before calling CFStringCreateCopy.
   CHECK(INTERCEPT_FUNCTION(CFStringCreateCopy));
-#else
-  // On Darwin siglongjmp tailcalls longjmp, so we don't want to intercept it
-  // there.
-  CHECK(INTERCEPT_FUNCTION(siglongjmp));
 #endif
 
-#ifndef __APPLE__
-  CHECK(INTERCEPT_FUNCTION(strnlen));
-#endif
   if (FLAG_v > 0) {
     Printf("AddressSanitizer: libc interceptors initialized\n");
   }

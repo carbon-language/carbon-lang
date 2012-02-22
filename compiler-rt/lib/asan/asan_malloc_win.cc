@@ -21,6 +21,7 @@
 namespace __asan {
 void ReplaceSystemMalloc() {
   // FIXME: investigate whether any action is needed.
+  // Currenlty, we fail to intercept malloc() called from intercepted _strdup().
 }
 }  // namespace __asan
 

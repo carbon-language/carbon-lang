@@ -214,7 +214,9 @@ void AsanTSDSet(void *tsd) {
 
 // ---------------------- Various stuff ---------------- {{{1
 void *AsanDoesNotSupportStaticLinkage() {
-  // FIXME: shall we do anything here on Windows?
+#if !defined(_DLL) || defined(_DEBUG)
+#error Please build the runtime with /MD
+#endif
   return NULL;
 }
 
