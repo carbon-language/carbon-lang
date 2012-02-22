@@ -95,6 +95,10 @@ namespace {
     virtual void EmitInstruction(const MCInst &Inst) {}
 
     virtual void FinishImpl() {}
+
+    virtual void EmitCFIEndProcImpl(MCDwarfFrameInfo &Frame) {
+      RecordProcEnd(Frame);
+    }
     
     /// @}
   };
