@@ -15,7 +15,7 @@
 #ifdef __linux__
 
 #if !defined(INCLUDED_FROM_INTERCEPTION_LIB)
-# error "interception_mac.h should be included from interception library only"
+# error "interception_linux.h should be included from interception library only"
 #endif
 
 #ifndef INTERCEPTION_LINUX_H
