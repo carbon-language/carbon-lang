@@ -373,13 +373,18 @@ void ScheduleDAGInstrs::addVRegDefDeps(SUnit *SU, unsigned OperIdx) {
   // uses. We're conservative for now until we have a way to guarantee the uses
   // are not eliminated sometime during scheduling. The output dependence edge
   // is also useful if output latency exceeds def-use latency.
-  SUnit *&DefSU = VRegDefs[Reg];
-  if (DefSU && DefSU != SU && DefSU != &ExitSU) {
-    unsigned OutLatency = TII->getOutputLatency(InstrItins, MI, OperIdx,
-                                                DefSU->getInstr());
-    DefSU->addPred(SDep(SU, SDep::Output, OutLatency, Reg));
+  VReg2SUnitMap::iterator DefI = findVRegDef(Reg);
+  if (DefI == VRegDefs.end())
+    VRegDefs.insert(VReg2SUnit(Reg, SU));
+  else {
+    SUnit *DefSU = DefI->SU;
+    if (DefSU != SU && DefSU != &ExitSU) {
+      unsigned OutLatency = TII->getOutputLatency(InstrItins, MI, OperIdx,
+                                                  DefSU->getInstr());
+      DefSU->addPred(SDep(SU, SDep::Output, OutLatency, Reg));
+    }
+    DefI->SU = SU;
   }
-  DefSU = SU;
 }
 
 /// addVRegUseDeps - Add a register data dependency if the instruction that
@@ -418,12 +423,9 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
   }
 
   // Add antidependence to the following def of the vreg it uses.
-  DenseMap<unsigned, SUnit*>::const_iterator I = VRegDefs.find(Reg);
-  if (I != VRegDefs.end()) {
-    SUnit *DefSU = I->second;
-    if (DefSU != SU)
-      DefSU->addPred(SDep(SU, SDep::Anti, 0, Reg));
-  }
+  VReg2SUnitMap::iterator DefI = findVRegDef(Reg);
+  if (DefI != VRegDefs.end() && DefI->SU != SU)
+    DefI->SU->addPred(SDep(SU, SDep::Anti, 0, Reg));
 }
 
 /// Create an SUnit for each real instruction, numbered in top-down toplological
@@ -488,7 +490,11 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
     assert(Defs[i].empty() && "Only BuildGraph should push/pop Defs");
   }
 
-  assert(VRegDefs.size() == 0 && "Only BuildSchedGraph may access VRegDefs");
+  assert(VRegDefs.empty() && "Only BuildSchedGraph may access VRegDefs");
+  // FIXME: Allow SparseSet to reserve space for the creation of virtual
+  // registers during scheduling. Don't artificially inflate the Universe
+  // because we want to assert that vregs are not created during DAG building.
+  VRegDefs.setUniverse(MRI.getNumVirtRegs());
 
   // Walk the list of instructions, from bottom moving up.
   MachineInstr *PrevMI = NULL;

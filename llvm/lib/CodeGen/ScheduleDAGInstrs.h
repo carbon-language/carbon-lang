@@ -20,8 +20,8 @@
 #include "llvm/CodeGen/ScheduleDAG.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Target/TargetRegisterInfo.h"
-#include "llvm/ADT/IndexedMap.h"
 #include "llvm/ADT/SmallSet.h"
+#include "llvm/ADT/SparseSet.h"
 #include <map>
 
 namespace llvm {
@@ -125,9 +125,24 @@ namespace llvm {
     std::vector<std::vector<SUnit *> > Defs;
     std::vector<std::vector<SUnit *> > Uses;
 
+    /// An individual mapping from virtual register number to SUnit.
+    struct VReg2SUnit {
+      unsigned VirtReg;
+      SUnit *SU;
+
+      VReg2SUnit(unsigned reg, SUnit *su): VirtReg(reg), SU(su) {}
+
+      unsigned getSparseSetKey() const {
+        return TargetRegisterInfo::virtReg2Index(VirtReg);
+      }
+    };
+    // Use SparseSet as a SparseMap by relying on the fact that it never
+    // compares ValueT's, only unsigned keys. This allows the set to be cleared
+    // between scheduling regions in constant time.
+    typedef SparseSet<VReg2SUnit> VReg2SUnitMap;
+
     // Track the last instructon in this region defining each virtual register.
-    // FIXME: turn this into a sparse set with constant time clear().
-    DenseMap<unsigned, SUnit*> VRegDefs;
+    VReg2SUnitMap VRegDefs;
 
     /// PendingLoads - Remember where unknown loads are after the most recent
     /// unknown store, as we iterate. As with Defs and Uses, this is here
@@ -235,6 +250,10 @@ namespace llvm {
     void addPhysRegDeps(SUnit *SU, unsigned OperIdx);
     void addVRegDefDeps(SUnit *SU, unsigned OperIdx);
     void addVRegUseDeps(SUnit *SU, unsigned OperIdx);
+
+    VReg2SUnitMap::iterator findVRegDef(unsigned VirtReg) {
+      return VRegDefs.find(TargetRegisterInfo::virtReg2Index(VirtReg));
+    }
   };
 }
 
