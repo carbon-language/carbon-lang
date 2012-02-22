@@ -45,7 +45,7 @@ private:
   mutable OwningPtr<BugType> BT;
   inline void initBugType() const {
     if (!BT)
-      BT.reset(new BugType("Taint Analysis", "General"));
+      BT.reset(new BugType("Use of Untrusted Data", "Untrusted Data"));
   }
 
   /// \brief Catch taint related bugs. Check if tainted data is passed to a
@@ -174,14 +174,15 @@ const unsigned GenericTaintChecker::ReturnValueIndex;
 const unsigned GenericTaintChecker::InvalidArgIndex;
 
 const char GenericTaintChecker::MsgUncontrolledFormatString[] =
-  "Tainted format string (CWE-134: Uncontrolled Format String)";
+  "Untrusted data is used as a format string "
+  "(CWE-134: Uncontrolled Format String)";
 
 const char GenericTaintChecker::MsgSanitizeSystemArgs[] =
-  "Tainted data passed to a system call "
+  "Untrusted data is passed to a system call "
   "(CERT/STR02-C. Sanitize data passed to complex subsystems)";
 
 const char GenericTaintChecker::MsgTaintedBufferSize[] =
-  "Tainted data is used to specify the buffer size "
+  "Untrusted data is used to specify the buffer size "
   "(CERT/STR31-C. Guarantee that storage for strings has sufficient space for "
   "character data and the null terminator)";
 
