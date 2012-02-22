@@ -331,8 +331,8 @@ def CC_X86_32_ThisCall : CallingConv<[
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
-  // The 'nest' parameter, if any, is passed in EAX.
-  CCIfNest<CCAssignToReg<[EAX]>>,
+  // Pass sret arguments indirectly through EAX
+  CCIfSRet<CCAssignToReg<[EAX]>>,
 
   // The first integer argument is passed in ECX
   CCIfType<[i32], CCAssignToReg<[ECX]>>,
