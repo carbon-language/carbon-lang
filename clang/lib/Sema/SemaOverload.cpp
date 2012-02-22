@@ -740,6 +740,8 @@ namespace {
 /// Return true on unrecoverable error.
 static bool checkPlaceholderForOverload(Sema &S, Expr *&E,
                                         UnbridgedCastsSet *unbridgedCasts = 0) {
+  S.RequireCompleteType(E->getExprLoc(), E->getType(), 0);
+
   if (const BuiltinType *placeholder =  E->getType()->getAsPlaceholderType()) {
     // We can't handle overloaded expressions here because overload
     // resolution might reasonably tweak them.

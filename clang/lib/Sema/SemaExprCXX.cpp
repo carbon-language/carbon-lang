@@ -4315,11 +4315,14 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
     }
   }
 
-  // That should be enough to guarantee that this type is complete.
+  // That should be enough to guarantee that this type is complete, if we're
+  // not processing a decltype expression.
   CXXRecordDecl *RD = cast<CXXRecordDecl>(RT->getDecl());
   if (RD->isInvalidDecl() || RD->isDependentContext())
     return Owned(E);
-  CXXDestructorDecl *Destructor = LookupDestructor(RD);
+
+  bool IsDecltype = ExprEvalContexts.back().IsDecltype;
+  CXXDestructorDecl *Destructor = IsDecltype ? 0 : LookupDestructor(RD);
 
   if (Destructor) {
     MarkFunctionReferenced(E->getExprLoc(), Destructor);
@@ -4327,18 +4330,22 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
                           PDiag(diag::err_access_dtor_temp)
                             << E->getType());
     DiagnoseUseOfDecl(Destructor, E->getExprLoc());
-  }
 
-  // If destructor is trivial, we can avoid the extra copy.
-  if (Destructor->isTrivial())
-    return Owned(E);
+    // If destructor is trivial, we can avoid the extra copy.
+    if (Destructor->isTrivial())
+      return Owned(E);
 
-  if (Destructor)
     // We need a cleanup, but we don't need to remember the temporary.
     ExprNeedsCleanups = true;
+  }
 
   CXXTemporary *Temp = CXXTemporary::Create(Context, Destructor);
-  return Owned(CXXBindTemporaryExpr::Create(Context, Temp, E));
+  CXXBindTemporaryExpr *Bind = CXXBindTemporaryExpr::Create(Context, Temp, E);
+
+  if (IsDecltype)
+    ExprEvalContexts.back().DelayedDecltypeBinds.push_back(Bind);
+
+  return Owned(Bind);
 }
 
 ExprResult
@@ -4388,6 +4395,95 @@ Stmt *Sema::MaybeCreateStmtWithCleanups(Stmt *SubStmt) {
   Expr *E = new (Context) StmtExpr(CompStmt, Context.VoidTy, SourceLocation(),
                                    SourceLocation());
   return MaybeCreateExprWithCleanups(E);
+}
+
+/// Process the expression contained within a decltype. For such expressions,
+/// certain semantic checks on temporaries are delayed until this point, and
+/// are omitted for the 'topmost' call in the decltype expression. If the
+/// topmost call bound a temporary, strip that temporary off the expression.
+ExprResult Sema::ActOnDecltypeExpression(Expr *E) {
+  ExpressionEvaluationContextRecord &Rec = ExprEvalContexts.back();
+  assert(Rec.IsDecltype && "not in a decltype expression");
+
+  // C++11 [expr.call]p11:
+  //   If a function call is a prvalue of object type,
+  // -- if the function call is either
+  //   -- the operand of a decltype-specifier, or
+  //   -- the right operand of a comma operator that is the operand of a
+  //      decltype-specifier,
+  //   a temporary object is not introduced for the prvalue.
+
+  // Recursively rebuild ParenExprs and comma expressions to strip out the
+  // outermost CXXBindTemporaryExpr, if any.
+  if (ParenExpr *PE = dyn_cast<ParenExpr>(E)) {
+    ExprResult SubExpr = ActOnDecltypeExpression(PE->getSubExpr());
+    if (SubExpr.isInvalid())
+      return ExprError();
+    if (SubExpr.get() == PE->getSubExpr())
+      return Owned(E);
+    return ActOnParenExpr(PE->getLParen(), PE->getRParen(), SubExpr.take());
+  }
+  if (BinaryOperator *BO = dyn_cast<BinaryOperator>(E)) {
+    if (BO->getOpcode() == BO_Comma) {
+      ExprResult RHS = ActOnDecltypeExpression(BO->getRHS());
+      if (RHS.isInvalid())
+        return ExprError();
+      if (RHS.get() == BO->getRHS())
+        return Owned(E);
+      return Owned(new (Context) BinaryOperator(BO->getLHS(), RHS.take(),
+                                                BO_Comma, BO->getType(),
+                                                BO->getValueKind(),
+                                                BO->getObjectKind(),
+                                                BO->getOperatorLoc()));
+    }
+  }
+
+  CXXBindTemporaryExpr *TopBind = dyn_cast<CXXBindTemporaryExpr>(E);
+  if (TopBind)
+    E = TopBind->getSubExpr();
+
+  // Disable the special decltype handling now.
+  Rec.IsDecltype = false;
+
+  // Perform the semantic checks we delayed until this point.
+  CallExpr *TopCall = dyn_cast<CallExpr>(E);
+  for (unsigned I = 0, N = Rec.DelayedDecltypeCalls.size(); I != N; ++I) {
+    CallExpr *Call = Rec.DelayedDecltypeCalls[I];
+    if (Call == TopCall)
+      continue;
+
+    if (CheckCallReturnType(Call->getCallReturnType(),
+                            Call->getSourceRange().getBegin(),
+                            Call, Call->getDirectCallee()))
+      return ExprError();
+  }
+
+  // Now all relevant types are complete, check the destructors are accessible
+  // and non-deleted, and annotate them on the temporaries.
+  for (unsigned I = 0, N = Rec.DelayedDecltypeBinds.size(); I != N; ++I) {
+    CXXBindTemporaryExpr *Bind = Rec.DelayedDecltypeBinds[I];
+    if (Bind == TopBind)
+      continue;
+
+    CXXTemporary *Temp = Bind->getTemporary();
+
+    CXXRecordDecl *RD =
+      Bind->getType()->getBaseElementTypeUnsafe()->getAsCXXRecordDecl();
+    CXXDestructorDecl *Destructor = LookupDestructor(RD);
+    Temp->setDestructor(Destructor);
+
+    MarkFunctionReferenced(E->getExprLoc(), Destructor);
+    CheckDestructorAccess(E->getExprLoc(), Destructor,
+                          PDiag(diag::err_access_dtor_temp)
+                            << E->getType());
+    DiagnoseUseOfDecl(Destructor, E->getExprLoc());
+
+    // We need a cleanup, but we don't need to remember the temporary.
+    ExprNeedsCleanups = true;
+  }
+
+  // Possibly strip off the top CXXBindTemporaryExpr.
+  return Owned(E);
 }
 
 ExprResult

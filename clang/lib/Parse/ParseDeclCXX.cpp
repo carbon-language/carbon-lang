@@ -667,8 +667,8 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
 
     // C++0x [dcl.type.simple]p4:
     //   The operand of the decltype specifier is an unevaluated operand.
-    EnterExpressionEvaluationContext Unevaluated(Actions,
-                                                 Sema::Unevaluated);
+    EnterExpressionEvaluationContext Unevaluated(Actions, Sema::Unevaluated,
+                                                 0, /*IsDecltype=*/true);
     Result = ParseExpression();
     if (Result.isInvalid()) {
       SkipUntil(tok::r_paren, true, true);
@@ -682,6 +682,12 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
       DS.SetTypeSpecError();
       // FIXME: this should return the location of the last token
       //        that was consumed (by "consumeClose()")
+      return T.getCloseLocation();
+    }
+
+    Result = Actions.ActOnDecltypeExpression(Result.take());
+    if (Result.isInvalid()) {
+      DS.SetTypeSpecError();
       return T.getCloseLocation();
     }
 

@@ -9277,12 +9277,14 @@ ExprResult Sema::TranformToPotentiallyEvaluated(Expr *E) {
 
 void
 Sema::PushExpressionEvaluationContext(ExpressionEvaluationContext NewContext,
-                                      Decl *LambdaContextDecl) {
+                                      Decl *LambdaContextDecl,
+                                      bool IsDecltype) {
   ExprEvalContexts.push_back(
              ExpressionEvaluationContextRecord(NewContext,
                                                ExprCleanupObjects.size(),
                                                ExprNeedsCleanups,
-                                               LambdaContextDecl));
+                                               LambdaContextDecl,
+                                               IsDecltype));
   ExprNeedsCleanups = false;
   if (!MaybeODRUseExprs.empty())
     std::swap(MaybeODRUseExprs, ExprEvalContexts.back().SavedMaybeODRUseExprs);
@@ -10279,6 +10281,13 @@ bool Sema::CheckCallReturnType(QualType ReturnType, SourceLocation Loc,
                                CallExpr *CE, FunctionDecl *FD) {
   if (ReturnType->isVoidType() || !ReturnType->isIncompleteType())
     return false;
+
+  // If we're inside a decltype's expression, don't check for a valid return
+  // type or construct temporaries until we know whether this is the last call.
+  if (ExprEvalContexts.back().IsDecltype) {
+    ExprEvalContexts.back().DelayedDecltypeCalls.push_back(CE);
+    return false;
+  }
 
   PartialDiagnostic Note =
     FD ? PDiag(diag::note_function_with_incomplete_return_type_declared_here)

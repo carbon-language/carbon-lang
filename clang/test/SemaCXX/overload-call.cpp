@@ -534,3 +534,12 @@ namespace rdar9803316 {
     int &ir = (&foo)(0);
   }
 }
+
+namespace IncompleteArg {
+  // Ensure that overload resolution attempts to complete argument types.
+  template<typename T> struct S {
+    friend int f(const S&);
+  };
+  extern S<int> s;
+  int k = f(s);
+}
