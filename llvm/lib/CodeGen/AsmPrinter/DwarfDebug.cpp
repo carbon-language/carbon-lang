@@ -550,7 +550,7 @@ CompileUnit *DwarfDebug::constructCompileUnit(const MDNode *N) {
   unsigned ID = GetOrCreateSourceID(FN, CompilationDir);
 
   DIE *Die = new DIE(dwarf::DW_TAG_compile_unit);
-  CompileUnit *NewCU = new CompileUnit(ID, Die, Asm, this);
+  CompileUnit *NewCU = new CompileUnit(ID, DIUnit.getLanguage(), Die, Asm, this);
   NewCU->addString(Die, dwarf::DW_AT_producer, DIUnit.getProducer());
   NewCU->addUInt(Die, dwarf::DW_AT_language, dwarf::DW_FORM_data2,
                  DIUnit.getLanguage());
