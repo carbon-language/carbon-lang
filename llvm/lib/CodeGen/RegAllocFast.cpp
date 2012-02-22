@@ -232,7 +232,8 @@ void RAFast::addKillFlag(const LiveReg &LR) {
 /// killVirtReg - Mark virtreg as no longer available.
 void RAFast::killVirtReg(LiveRegMap::iterator LRI) {
   addKillFlag(*LRI);
-  assert(PhysRegState[LRI->PhysReg] == LRI->VirtReg && "Broken RegState mapping");
+  assert(PhysRegState[LRI->PhysReg] == LRI->VirtReg &&
+         "Broken RegState mapping");
   PhysRegState[LRI->PhysReg] = regFree;
   // Erase from LiveVirtRegs unless we're spilling in bulk.
   if (!isBulkSpilling)
@@ -304,8 +305,9 @@ void RAFast::spillVirtReg(MachineBasicBlock::iterator MI,
         DEBUG(dbgs() << "Inserting debug info due to spill:" << "\n" << *NewDV);
       }
     }
-    // Now this register is spilled there is should not be any DBG_VALUE pointing
-    // to this register because they are all pointing to spilled value now.
+    // Now this register is spilled there is should not be any DBG_VALUE
+    // pointing to this register because they are all pointing to spilled value
+    // now.
     LRIDbgValues.clear();
     if (SpillKill)
       LR.LastUse = 0; // Don't kill register again
