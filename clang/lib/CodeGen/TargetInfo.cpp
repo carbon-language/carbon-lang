@@ -424,7 +424,8 @@ class X86_32ABIInfo : public ABIInfo {
     return (Size == 8 || Size == 16 || Size == 32 || Size == 64);
   }
 
-  static bool shouldReturnTypeInRegister(QualType Ty, ASTContext &Context);
+  static bool shouldReturnTypeInRegister(QualType Ty, ASTContext &Context, 
+                                          unsigned callingConvention);
 
   /// getIndirectResult - Give a source type \arg Ty, return a suitable result
   /// such that the argument will be passed in memory.
@@ -435,11 +436,13 @@ class X86_32ABIInfo : public ABIInfo {
 
 public:
 
-  ABIArgInfo classifyReturnType(QualType RetTy) const;
+  ABIArgInfo classifyReturnType(QualType RetTy, 
+                                unsigned callingConvention) const;
   ABIArgInfo classifyArgumentType(QualType RetTy) const;
 
   virtual void computeInfo(CGFunctionInfo &FI) const {
-    FI.getReturnInfo() = classifyReturnType(FI.getReturnType());
+    FI.getReturnInfo() = classifyReturnType(FI.getReturnType(), 
+                                            FI.getCallingConvention());
     for (CGFunctionInfo::arg_iterator it = FI.arg_begin(), ie = FI.arg_end();
          it != ie; ++it)
       it->info = classifyArgumentType(it->type);
@@ -485,7 +488,8 @@ public:
 /// shouldReturnTypeInRegister - Determine if the given type should be
 /// passed in a register (for the Darwin ABI).
 bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
-                                               ASTContext &Context) {
+                                               ASTContext &Context,
+                                               unsigned callingConvention) {
   uint64_t Size = Context.getTypeSize(Ty);
 
   // Type must be register sized.
@@ -510,13 +514,21 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
 
   // Arrays are treated like records.
   if (const ConstantArrayType *AT = Context.getAsConstantArrayType(Ty))
-    return shouldReturnTypeInRegister(AT->getElementType(), Context);
+    return shouldReturnTypeInRegister(AT->getElementType(), Context,
+                                      callingConvention);
 
   // Otherwise, it must be a record type.
   const RecordType *RT = Ty->getAs<RecordType>();
   if (!RT) return false;
 
   // FIXME: Traverse bases here too.
+
+  // For thiscall conventions, structures will never be returned in
+  // a register.  This is for compatibility with the MSVC ABI
+  if (callingConvention == llvm::CallingConv::X86_ThisCall && 
+      RT->isStructureType()) {
+    return false;
+  }
 
   // Structure types are passed in register if all fields would be
   // passed in a register.
@@ -529,14 +541,15 @@ bool X86_32ABIInfo::shouldReturnTypeInRegister(QualType Ty,
       continue;
 
     // Check fields recursively.
-    if (!shouldReturnTypeInRegister(FD->getType(), Context))
+    if (!shouldReturnTypeInRegister(FD->getType(), Context, 
+                                    callingConvention))
       return false;
   }
-
   return true;
 }
 
-ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
+ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy, 
+                                            unsigned callingConvention) const {
   if (RetTy->isVoidType())
     return ABIArgInfo::getIgnore();
 
@@ -583,7 +596,8 @@ ABIArgInfo X86_32ABIInfo::classifyReturnType(QualType RetTy) const {
 
     // Small structures which are register sized are generally returned
     // in a register.
-    if (X86_32ABIInfo::shouldReturnTypeInRegister(RetTy, getContext())) {
+    if (X86_32ABIInfo::shouldReturnTypeInRegister(RetTy, getContext(), 
+                                                  callingConvention)) {
       uint64_t Size = getContext().getTypeSize(RetTy);
 
       // As a special-case, if the struct is a "single-element" struct, and
