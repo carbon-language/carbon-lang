@@ -16,7 +16,7 @@ namespace {
 
 typedef SparseSet<unsigned> USet;
 
-// Empty set tests
+// Empty set tests.
 TEST(SparseSetTest, EmptySet) {
   USet Set;
   EXPECT_TRUE(Set.empty());
@@ -39,7 +39,7 @@ TEST(SparseSetTest, EmptySet) {
   EXPECT_TRUE(I == CSet.end());
 }
 
-// Single entry set tests
+// Single entry set tests.
 TEST(SparseSetTest, SingleEntrySet) {
   USet Set;
   Set.setUniverse(10);
@@ -63,7 +63,7 @@ TEST(SparseSetTest, SingleEntrySet) {
   EXPECT_FALSE(IP.second);
   EXPECT_TRUE(IP.first == Set.begin());
 
-  // Erase non-existant element.
+  // Erase non-existent element.
   EXPECT_FALSE(Set.erase(1));
   EXPECT_EQ(1u, Set.size());
   EXPECT_EQ(5u, *Set.begin());
@@ -76,7 +76,7 @@ TEST(SparseSetTest, SingleEntrySet) {
   EXPECT_TRUE(Set.empty());
 }
 
-// Multiple entry set tests
+// Multiple entry set tests.
 TEST(SparseSetTest, MultipleEntrySet) {
   USet Set;
   Set.setUniverse(10);
