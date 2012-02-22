@@ -268,9 +268,8 @@ static void *asan_thread_start(void *arg) {
 }
 
 #ifndef _WIN32
-INTERCEPTOR(int, pthread_create, pthread_t *thread,
-                                 const pthread_attr_t *attr,
-                                 void *(*start_routine)(void*), void *arg) {
+INTERCEPTOR(int, pthread_create, void *thread,
+    void *attr, void *(*start_routine)(void*), void *arg) {
   GET_STACK_TRACE_HERE(kStackTraceMax);
   int current_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
   AsanThread *t = AsanThread::Create(current_tid, start_routine, arg, &stack);
