@@ -61,6 +61,14 @@ typedef int some_arr[array_size];
 const int default_param = 3;
 void foo4(int p = default_param);
 
+struct S2 {
+  int x,y;
+};
+
+void foo5() {
+  struct S2 s = { .y = 1, .x = 4};
+}
+
 // RUN: c-index-test -index-file %s | FileCheck %s
 // CHECK:      [indexDeclaration]: kind: namespace | name: NS
 // CHECK-NEXT: [indexDeclaration]: kind: variable | name: gx
@@ -108,3 +116,6 @@ void foo4(int p = default_param);
 // CHECK:      [indexEntityReference]: kind: variable | name: array_size | {{.*}} | loc: 59:22
 // CHECK:      [indexEntityReference]: kind: variable | name: default_param | {{.*}} | loc: 62:19
 // CHECK-NOT:  [indexEntityReference]: kind: variable | name: default_param | {{.*}} | loc: 62:19
+
+// CHECK:      [indexEntityReference]: kind: field | name: y | {{.*}} | loc: 69:20
+// CHECK-NEXT: [indexEntityReference]: kind: field | name: x | {{.*}} | loc: 69:28

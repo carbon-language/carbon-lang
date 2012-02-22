@@ -51,6 +51,17 @@ public:
     return true;
   }
 
+  bool VisitDesignatedInitExpr(DesignatedInitExpr *E) {
+    for (DesignatedInitExpr::reverse_designators_iterator
+           D = E->designators_rbegin(), DEnd = E->designators_rend();
+           D != DEnd; ++D) {
+      if (D->isFieldDesignator())
+        IndexCtx.handleReference(D->getField(), D->getFieldLoc(),
+                                 Parent, ParentDC, E);
+    }
+    return true;
+  }
+
   bool VisitObjCIvarRefExpr(ObjCIvarRefExpr *E) {
     IndexCtx.handleReference(E->getDecl(), E->getLocation(),
                              Parent, ParentDC, E);
