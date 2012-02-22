@@ -90,7 +90,7 @@ void MipsAnalyzeImmediate::ReplaceADDiuSLLWithLUi(InstSeq &Seq) {
     return;
 
   // Sign-extend and shift operand of ADDiu and see if it still fits in 16-bit.
-  int64_t Imm = (((int64_t)Seq[0].ImmOpnd) << 48) >> 48;
+  int64_t Imm = SignExtend64<16>(Seq[0].ImmOpnd);
   int64_t ShiftedImm = Imm << (Seq[1].ImmOpnd - 16);
 
   if (!isInt<16>(ShiftedImm))
