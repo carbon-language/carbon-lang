@@ -56,7 +56,7 @@ private:
                                 ///< from ClangExternalASTSourceCommon.  This magic
                                 ///< number exists to enforce that.
 };
-    
-};
+
+}
 
 #endif
