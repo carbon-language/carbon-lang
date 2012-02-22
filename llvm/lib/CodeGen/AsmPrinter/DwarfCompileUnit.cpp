@@ -616,7 +616,7 @@ DIE *CompileUnit::getOrCreateTypeDIE(const MDNode *TyNode) {
       // A runtime language of 0 actually means C/C++ and that any
       // non-negative value is some version of Objective-C/C++.
       IsImplementation = (CT.getRunTimeLang() == 0) ||
-        CT.isObjcClassComplete();;
+        CT.isObjcClassComplete();
     }
     unsigned Flags = IsImplementation ?
                      DwarfAccelTable::eTypeFlagClassIsImplementation : 0;
