@@ -2019,7 +2019,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
 }
 
 llvm::Value *CodeGenFunction::
-BuildVector(const SmallVectorImpl<llvm::Value*> &Ops) {
+BuildVector(ArrayRef<llvm::Value*> Ops) {
   assert((Ops.size() & (Ops.size() - 1)) == 0 &&
          "Not a power-of-two sized vector!");
   bool AllConstants = true;

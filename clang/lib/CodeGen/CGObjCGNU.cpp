@@ -337,10 +337,9 @@ private:
   /// containing a size and an array of structures containing instance variable
   /// metadata.  This is used purely for introspection in the fragile ABI.  In
   /// the non-fragile ABI, it's used for instance variable fixup.
-  llvm::Constant *GenerateIvarList(
-      const SmallVectorImpl<llvm::Constant *>  &IvarNames,
-      const SmallVectorImpl<llvm::Constant *>  &IvarTypes,
-      const SmallVectorImpl<llvm::Constant *>  &IvarOffsets);
+  llvm::Constant *GenerateIvarList(ArrayRef<llvm::Constant *> IvarNames,
+                                   ArrayRef<llvm::Constant *> IvarTypes,
+                                   ArrayRef<llvm::Constant *> IvarOffsets);
   /// Generates a method list structure.  This is a structure containing a size
   /// and an array of structures containing method metadata.
   ///
@@ -348,8 +347,8 @@ private:
   /// pointer allowing them to be chained together in a linked list.
   llvm::Constant *GenerateMethodList(const StringRef &ClassName,
       const StringRef &CategoryName,
-      const SmallVectorImpl<Selector>  &MethodSels,
-      const SmallVectorImpl<llvm::Constant *>  &MethodTypes,
+      ArrayRef<Selector> MethodSels,
+      ArrayRef<llvm::Constant *> MethodTypes,
       bool isClassMethodList);
   /// Emits an empty protocol.  This is used for @protocol() where no protocol
   /// is found.  The runtime will (hopefully) fix up the pointer to refer to the
@@ -362,8 +361,7 @@ private:
         SmallVectorImpl<llvm::Constant*> &InstanceMethodTypes);
   /// Generates a list of referenced protocols.  Classes, categories, and
   /// protocols all use this structure.
-  llvm::Constant *GenerateProtocolList(
-      const SmallVectorImpl<std::string> &Protocols);
+  llvm::Constant *GenerateProtocolList(ArrayRef<std::string> Protocols);
   /// To ensure that all protocols are seen by the runtime, we add a category on
   /// a class defined in the runtime, declaring no methods, but adopting the
   /// protocols.  This is a horribly ugly hack, but it allows us to collect all
@@ -388,8 +386,8 @@ private:
   /// Generates a method list.  This is used by protocols to define the required
   /// and optional methods.
   llvm::Constant *GenerateProtocolMethodList(
-      const SmallVectorImpl<llvm::Constant *>  &MethodNames,
-      const SmallVectorImpl<llvm::Constant *>  &MethodTypes);
+      ArrayRef<llvm::Constant *> MethodNames,
+      ArrayRef<llvm::Constant *> MethodTypes);
   /// Returns a selector with the specified type encoding.  An empty string is
   /// used to return an untyped selector (with the types field set to NULL).
   llvm::Value *GetSelector(CGBuilderTy &Builder, Selector Sel,
@@ -428,7 +426,7 @@ protected:
   /// significant bit being assumed to come first in the bitfield.  Therefore,
   /// a bitfield with the 64th bit set will be (int64_t)&{ 2, [0, 1<<31] },
   /// while a bitfield / with the 63rd bit set will be 1<<64.
-  llvm::Constant *MakeBitField(llvm::SmallVectorImpl<bool> &bits);
+  llvm::Constant *MakeBitField(ArrayRef<bool> bits);
 public:
   CGObjCGNU(CodeGenModule &cgm, unsigned runtimeABIVersion,
       unsigned protocolClassVersion);
@@ -1257,11 +1255,12 @@ CGObjCGNU::GenerateMessageSend(CodeGenFunction &CGF,
 
 /// Generates a MethodList.  Used in construction of a objc_class and
 /// objc_category structures.
-llvm::Constant *CGObjCGNU::GenerateMethodList(const StringRef &ClassName,
-                                              const StringRef &CategoryName,
-    const SmallVectorImpl<Selector> &MethodSels,
-    const SmallVectorImpl<llvm::Constant *> &MethodTypes,
-    bool isClassMethodList) {
+llvm::Constant *CGObjCGNU::
+GenerateMethodList(const StringRef &ClassName,
+                   const StringRef &CategoryName,
+                   ArrayRef<Selector> MethodSels,
+                   ArrayRef<llvm::Constant *> MethodTypes,
+                   bool isClassMethodList) {
   if (MethodSels.empty())
     return NULLPtr;
   // Get the method structure type.
@@ -1314,10 +1313,10 @@ llvm::Constant *CGObjCGNU::GenerateMethodList(const StringRef &ClassName,
 }
 
 /// Generates an IvarList.  Used in construction of a objc_class.
-llvm::Constant *CGObjCGNU::GenerateIvarList(
-    const SmallVectorImpl<llvm::Constant *>  &IvarNames,
-    const SmallVectorImpl<llvm::Constant *>  &IvarTypes,
-    const SmallVectorImpl<llvm::Constant *>  &IvarOffsets) {
+llvm::Constant *CGObjCGNU::
+GenerateIvarList(ArrayRef<llvm::Constant *> IvarNames,
+                 ArrayRef<llvm::Constant *> IvarTypes,
+                 ArrayRef<llvm::Constant *> IvarOffsets) {
   if (IvarNames.size() == 0)
     return NULLPtr;
   // Get the method structure type.
@@ -1444,9 +1443,9 @@ llvm::Constant *CGObjCGNU::GenerateClassStructure(
   return Class;
 }
 
-llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
-    const SmallVectorImpl<llvm::Constant *>  &MethodNames,
-    const SmallVectorImpl<llvm::Constant *>  &MethodTypes) {
+llvm::Constant *CGObjCGNU::
+GenerateProtocolMethodList(ArrayRef<llvm::Constant *> MethodNames,
+                           ArrayRef<llvm::Constant *> MethodTypes) {
   // Get the method structure type.
   llvm::StructType *ObjCMethodDescTy = llvm::StructType::get(
     PtrToInt8Ty, // Really a selector, but the runtime does the casting for us.
@@ -1473,8 +1472,7 @@ llvm::Constant *CGObjCGNU::GenerateProtocolMethodList(
 }
 
 // Create the protocol list structure used in classes, categories and so on
-llvm::Constant *CGObjCGNU::GenerateProtocolList(
-    const SmallVectorImpl<std::string> &Protocols) {
+llvm::Constant *CGObjCGNU::GenerateProtocolList(ArrayRef<std::string>Protocols){
   llvm::ArrayType *ProtocolArrayTy = llvm::ArrayType::get(PtrToInt8Ty,
       Protocols.size());
   llvm::StructType *ProtocolListTy = llvm::StructType::get(
@@ -1771,7 +1769,7 @@ void CGObjCGNU::GenerateProtocolHolderCategory(void) {
 /// significant bit being assumed to come first in the bitfield.  Therefore, a
 /// bitfield with the 64th bit set will be (int64_t)&{ 2, [0, 1<<31] }, while a
 /// bitfield / with the 63rd bit set will be 1<<64.
-llvm::Constant *CGObjCGNU::MakeBitField(llvm::SmallVectorImpl<bool> &bits) {
+llvm::Constant *CGObjCGNU::MakeBitField(ArrayRef<bool> bits) {
   int bitCount = bits.size();
   int ptrBits =
         (TheModule.getPointerSize() == llvm::Module::Pointer32) ? 32 : 64;
