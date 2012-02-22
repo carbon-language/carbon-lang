@@ -148,6 +148,8 @@ void RegScavenger::forward() {
   DefRegs.reset();
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
+    if (MO.isRegMask())
+      (isPred ? DefRegs : KillRegs).setBitsNotInMask(MO.getRegMask());
     if (!MO.isReg())
       continue;
     unsigned Reg = MO.getReg();
@@ -279,6 +281,8 @@ unsigned RegScavenger::findSurvivorReg(MachineBasicBlock::iterator StartMI,
     // Remove any candidates touched by instruction.
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = MI->getOperand(i);
+      if (MO.isRegMask())
+        Candidates.clearBitsNotInMask(MO.getRegMask());
       if (!MO.isReg() || MO.isUndef() || !MO.getReg())
         continue;
       if (TargetRegisterInfo::isVirtualRegister(MO.getReg())) {
