@@ -4451,6 +4451,19 @@ Process::GetThreadStatus (Stream &strm,
     return num_thread_infos_dumped;
 }
 
+void
+Process::AddInvalidMemoryRegion (const LoadRange &region)
+{
+    m_memory_cache.AddInvalidRange(region.GetRangeBase(), region.GetByteSize());
+}
+
+bool
+Process::RemoveInvalidMemoryRange (const LoadRange &region)
+{
+    return m_memory_cache.RemoveInvalidRange(region.GetRangeBase(), region.GetByteSize());
+}
+
+
 //--------------------------------------------------------------
 // class Process::SettingsController
 //--------------------------------------------------------------

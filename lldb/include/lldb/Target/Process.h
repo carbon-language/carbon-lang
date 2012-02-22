@@ -1297,6 +1297,8 @@ public:
         eBroadcastInternalStateControlResume = (1<<2)
     };
     
+    typedef Range<lldb::addr_t, lldb::addr_t> LoadRange;
+
     // These two functions fill out the Broadcaster interface:
     
     static ConstString &GetStaticBroadcasterClass ();
@@ -3091,6 +3093,23 @@ public:
     void
     SetSTDIOFileDescriptor (int file_descriptor);
 
+    //------------------------------------------------------------------
+    // Add a permanent region of memory that should never be read or 
+    // written to. This can be used to ensure that memory reads or writes
+    // to certain areas of memory never end up being sent to the 
+    // DoReadMemory or DoWriteMemory functions which can improve 
+    // performance.
+    //------------------------------------------------------------------
+    void
+    AddInvalidMemoryRegion (const LoadRange &region);
+    
+    //------------------------------------------------------------------
+    // Remove a permanent region of memory that should never be read or 
+    // written to that was previously added with AddInvalidMemoryRegion.
+    //------------------------------------------------------------------
+    bool
+    RemoveInvalidMemoryRange (const LoadRange &region);
+                              
 protected:
     //------------------------------------------------------------------
     // NextEventAction provides a way to register an action on the next

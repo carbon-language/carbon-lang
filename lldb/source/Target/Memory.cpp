@@ -26,8 +26,9 @@ using namespace lldb_private;
 MemoryCache::MemoryCache(Process &process) :
     m_process (process),
     m_cache_line_byte_size (512),
-    m_cache_mutex (Mutex::eMutexTypeRecursive),
-    m_cache ()
+    m_mutex (Mutex::eMutexTypeRecursive),
+    m_cache (),
+    m_invalid_ranges ()
 {
 }
 
@@ -41,7 +42,7 @@ MemoryCache::~MemoryCache()
 void
 MemoryCache::Clear()
 {
-    Mutex::Locker locker (m_cache_mutex);
+    Mutex::Locker locker (m_mutex);
     m_cache.clear();
 }
 
@@ -56,7 +57,7 @@ MemoryCache::Flush (addr_t addr, size_t size)
     const addr_t flush_start_addr = addr - (addr % cache_line_byte_size);
     const addr_t flush_end_addr = end_addr - (end_addr % cache_line_byte_size);
     
-    Mutex::Locker locker (m_cache_mutex);
+    Mutex::Locker locker (m_mutex);
     if (m_cache.empty())
         return;
     
@@ -64,11 +65,42 @@ MemoryCache::Flush (addr_t addr, size_t size)
     
     for (addr_t curr_addr = flush_start_addr; curr_addr <= flush_end_addr; curr_addr += cache_line_byte_size)
     {
-        collection::iterator pos = m_cache.find (curr_addr);
+        BlockMap::iterator pos = m_cache.find (curr_addr);
         if (pos != m_cache.end())
             m_cache.erase(pos);
     }
 }
+
+void
+MemoryCache::AddInvalidRange (lldb::addr_t base_addr, lldb::addr_t byte_size)
+{
+    if (byte_size > 0)
+    {
+        Mutex::Locker locker (m_mutex);
+        InvalidRanges::Entry range (base_addr, byte_size);
+        m_invalid_ranges.Append(range);
+        m_invalid_ranges.Sort();
+    }
+}
+
+bool
+MemoryCache::RemoveInvalidRange (lldb::addr_t base_addr, lldb::addr_t byte_size)
+{
+    if (byte_size > 0)
+    {
+        Mutex::Locker locker (m_mutex);
+        const uint32_t idx = m_invalid_ranges.FindEntryIndexThatContains(base_addr);
+        if (idx != UINT32_MAX)
+        {
+            const InvalidRanges::Entry *entry = m_invalid_ranges.GetEntryAtIndex (idx);
+            if (entry->GetRangeBase() == base_addr && entry->GetByteSize() == byte_size)
+                return m_invalid_ranges.RemoveEntrtAtIndex (idx);
+        }
+    }
+    return false;
+}
+
+
 
 size_t
 MemoryCache::Read (addr_t addr,  
@@ -83,12 +115,15 @@ MemoryCache::Read (addr_t addr,
         uint8_t *dst_buf = (uint8_t *)dst;
         addr_t curr_addr = addr - (addr % cache_line_byte_size);
         addr_t cache_offset = addr - curr_addr;
-        Mutex::Locker locker (m_cache_mutex);
+        Mutex::Locker locker (m_mutex);
         
         while (bytes_left > 0)
         {
-            collection::const_iterator pos = m_cache.find (curr_addr);
-            collection::const_iterator end = m_cache.end ();
+            if (m_invalid_ranges.FindEntryThatContains(curr_addr))
+                return dst_len - bytes_left;
+
+            BlockMap::const_iterator pos = m_cache.find (curr_addr);
+            BlockMap::const_iterator end = m_cache.end ();
             
             if (pos != end)
             {

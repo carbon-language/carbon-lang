@@ -433,39 +433,80 @@ DynamicLoaderMacOSXDYLD::UpdateImageLoadAddress (Module *module, DYLDImageInfo& 
             SectionList *section_list = image_object_file->GetSectionList ();
             if (section_list)
             {
+                std::vector<uint32_t> inaccessible_segment_indexes;
                 // We now know the slide amount, so go through all sections
                 // and update the load addresses with the correct values.
                 uint32_t num_segments = info.segments.size();
                 for (uint32_t i=0; i<num_segments; ++i)
                 {
+                    // Only load a segment if it has protections. Things like
+                    // __PAGEZERO don't have any protections, and they shouldn't
+                    // be slid
                     SectionSP section_sp(section_list->FindSectionByName(info.segments[i].name));
-                    const addr_t new_section_load_addr = info.segments[i].vmaddr + info.slide;
-                    static ConstString g_section_name_LINKEDIT ("__LINKEDIT");
 
-                    if (section_sp)
+                    if (info.segments[i].maxprot == 0)
                     {
-                        // Don't ever load any __LINKEDIT sections since the ones in the shared
-                        // cached will be coalesced into a single section and we will get warnings
-                        // about multiple sections mapping to the same address.
-                        if (section_sp->GetName() != g_section_name_LINKEDIT)
-                        {
-                            const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
-                            if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
-                                old_section_load_addr != new_section_load_addr)
-                            {
-                                if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), new_section_load_addr))
-                                    changed = true;
-                            }
-                        }
+                        inaccessible_segment_indexes.push_back(i);
                     }
                     else
                     {
-                        Host::SystemLog (Host::eSystemLogWarning, 
-                                         "warning: unable to find and load segment named '%s' at 0x%llx in '%s/%s' in macosx dynamic loader plug-in.\n",
-                                         info.segments[i].name.AsCString("<invalid>"),
-                                         (uint64_t)new_section_load_addr,
-                                         image_object_file->GetFileSpec().GetDirectory().AsCString(),
-                                         image_object_file->GetFileSpec().GetFilename().AsCString());
+                        const addr_t new_section_load_addr = info.segments[i].vmaddr + info.slide;
+                        static ConstString g_section_name_LINKEDIT ("__LINKEDIT");
+
+                        if (section_sp)
+                        {
+                            // Don't ever load any __LINKEDIT sections since the ones in the shared
+                            // cached will be coalesced into a single section and we will get warnings
+                            // about multiple sections mapping to the same address.
+                            if (section_sp->GetName() != g_section_name_LINKEDIT)
+                            {
+                                const addr_t old_section_load_addr = m_process->GetTarget().GetSectionLoadList().GetSectionLoadAddress (section_sp.get());
+                                if (old_section_load_addr == LLDB_INVALID_ADDRESS ||
+                                    old_section_load_addr != new_section_load_addr)
+                                {
+                                    if (m_process->GetTarget().GetSectionLoadList().SetSectionLoadAddress (section_sp.get(), new_section_load_addr))
+                                        changed = true;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            Host::SystemLog (Host::eSystemLogWarning, 
+                                             "warning: unable to find and load segment named '%s' at 0x%llx in '%s/%s' in macosx dynamic loader plug-in.\n",
+                                             info.segments[i].name.AsCString("<invalid>"),
+                                             (uint64_t)new_section_load_addr,
+                                             image_object_file->GetFileSpec().GetDirectory().AsCString(),
+                                             image_object_file->GetFileSpec().GetFilename().AsCString());
+                        }
+                    }
+                }
+                
+                // If the loaded the file (it changed) and we have segments that
+                // are not readable or writeable, add them to the invalid memory
+                // region cache for the process. This will typically only be
+                // the __PAGEZERO segment in the main executable. We might be able
+                // to apply this more generally to more sections that have no
+                // protections in the future, but for now we are going to just
+                // do __PAGEZERO.
+                if (changed && !inaccessible_segment_indexes.empty())
+                {
+                    for (uint32_t i=0; i<inaccessible_segment_indexes.size(); ++i)
+                    {
+                        const uint32_t seg_idx = inaccessible_segment_indexes[i];
+                        SectionSP section_sp(section_list->FindSectionByName(info.segments[seg_idx].name));
+
+                        if (section_sp)
+                        {
+                            static ConstString g_pagezero_section_name("__PAGEZERO");
+                            if (g_pagezero_section_name == section_sp->GetName())
+                            {
+                                // __PAGEZERO never slides...
+                                const lldb::addr_t vmaddr = info.segments[seg_idx].vmaddr;
+                                const lldb::addr_t vmsize = info.segments[seg_idx].vmsize;
+                                Process::LoadRange pagezero_range (vmaddr, vmsize);
+                                m_process->AddInvalidMemoryRegion(pagezero_range);
+                            }
+                        }
                     }
                 }
             }

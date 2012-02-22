@@ -188,6 +188,17 @@ namespace lldb_private {
             m_entries.push_back (entry);
         }
         
+        bool
+        RemoveEntrtAtIndex (uint32_t idx)
+        {
+            if (idx < m_entries.size())
+            {
+                m_entries.erase (m_entries.begin() + idx);
+                return true;
+            }
+            return false;
+        }
+        
         void
         Sort ()
         {

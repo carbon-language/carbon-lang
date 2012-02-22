@@ -16,10 +16,10 @@
 #include <vector>
 
 // Other libraries and framework includes
-//#include "llvm/ADT/BitVector.h"
 
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Core/RangeMap.h"
 #include "lldb/Host/Mutex.h"
 
 namespace lldb_private {
@@ -54,16 +54,24 @@ namespace lldb_private {
         {
             return m_cache_line_byte_size ;
         }
+        
+        void
+        AddInvalidRange (lldb::addr_t base_addr, lldb::addr_t byte_size);
+
+        bool
+        RemoveInvalidRange (lldb::addr_t base_addr, lldb::addr_t byte_size);
+
     protected:
-        typedef std::map<lldb::addr_t, lldb::DataBufferSP> collection;
+        typedef std::map<lldb::addr_t, lldb::DataBufferSP> BlockMap;
+        typedef RangeArray<lldb::addr_t, lldb::addr_t, 4> InvalidRanges;
         //------------------------------------------------------------------
         // Classes that inherit from MemoryCache can see and modify these
         //------------------------------------------------------------------
         Process &m_process;
         uint32_t m_cache_line_byte_size;
-        Mutex m_cache_mutex;
-        collection m_cache;
-        
+        Mutex m_mutex;
+        BlockMap m_cache;
+        InvalidRanges m_invalid_ranges;
     private:
         DISALLOW_COPY_AND_ASSIGN (MemoryCache);
     };
@@ -132,7 +140,6 @@ namespace lldb_private {
         const uint32_t m_chunk_size;  // The size of chunks that the memory at m_addr is divied up into
         typedef std::map<uint32_t, uint32_t> OffsetToChunkSize;
         OffsetToChunkSize m_offset_to_chunk_size;
-        //llvm::BitVector m_allocated;
     };
     
 
