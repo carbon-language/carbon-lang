@@ -490,6 +490,8 @@ void __asan_init() {
   } else {
     Report("Shadow memory range interleaves with an existing memory mapping. "
            "ASan cannot proceed correctly. ABORTING.\n");
+    AsanProcMaps proc_maps;
+    proc_maps.Dump(); 
     AsanDie();
   }
 
