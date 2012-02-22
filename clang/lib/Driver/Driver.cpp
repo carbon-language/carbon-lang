@@ -310,6 +310,10 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
       Cur = Split.second;
     }
   }
+  // FIXME: DefaultTargetTriple is used by the target-prefixed calls to as/ld
+  // and getToolChain is const.
+  if (const Arg *A = Args->getLastArg(options::OPT_target))
+    DefaultTargetTriple = A->getValue(*Args);
   if (const Arg *A = Args->getLastArg(options::OPT_ccc_install_dir))
     Dir = InstalledDir = A->getValue(*Args);
   for (arg_iterator it = Args->filtered_begin(options::OPT_B),
@@ -1513,6 +1517,7 @@ static bool isPathExecutable(llvm::sys::Path &P, bool WantFile) {
 
 std::string Driver::GetProgramPath(const char *Name, const ToolChain &TC,
                                    bool WantFile) const {
+  // FIXME: Needs a better variable than DefaultTargetTriple
   std::string TargetSpecificExecutable(DefaultTargetTriple + "-" + Name);
   // Respect a limited subset of the '-Bprefix' functionality in GCC by
   // attempting to use this prefix when lokup up program paths.
@@ -1583,6 +1588,7 @@ std::string Driver::GetTemporaryPath(StringRef Prefix, const char *Suffix)
 static llvm::Triple computeTargetTriple(StringRef DefaultTargetTriple,
                                         const ArgList &Args,
                                         StringRef DarwinArchName) {
+  // FIXME: Already done in Compilation *Driver::BuildCompilation
   if (const Arg *A = Args.getLastArg(options::OPT_target))
     DefaultTargetTriple = A->getValue(Args);
 
