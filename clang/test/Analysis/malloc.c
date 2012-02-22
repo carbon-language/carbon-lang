@@ -671,6 +671,12 @@ int testStrndup(const char *s, unsigned validIndex, unsigned size) {
     return 1;// expected-warning {{Memory is never released; potential memory leak}}
 }
 
+void testStrdupContentIsDefined(const char *s, unsigned validIndex) {
+  char *s2 = strdup(s);
+  char result = s2[1];// no warning
+  free(s2);
+}
+
 // Below are the known false positives.
 
 // TODO: There should be no warning here. This one might be difficult to get rid of.
