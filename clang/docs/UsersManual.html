@@ -198,26 +198,6 @@ introduces the language selection and other high level options like -c, -g, etc.
 
 <p><b>-ftemplate-backtrace-limit=123</b>: Only emit up to 123 template instantiation notes within the template instantiation backtrace for a single warning or error. The default is 10, and the limit can be disabled with -ftemplate-backtrace-limit=0.</p>
 
-<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
-<h3 id="cl_crash_diagnostics">Options to Control Clang Crash Diagnostics</h3>
-<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
-
-<p>As unbelievable as it may sound, Clang does crash from time to time.  
-Generally, this only occurs to those living on the 
-<a href="http://llvm.org/releases/download.html#svn">bleeding edge</a>.  Clang
-goes to great lengths to assist you in filing a bug report.  Specifically, Clang
-generates preprocessed source file(s) and associated run script(s) upon a
-crash.  These files should be attached to a bug report to ease reproducibility
-of the failure.  Below are the command line options to control the crash
-diagnostics.
-</p>
-
-<p><b>-fno-crash-diagnostics</b>: Disable auto-generation of preprocessed 
-source files during a clang crash.</p>
-
-<p>The -fno-crash-diagnostics flag can be helpful for speeding the process of
-generating a delta reduced test case.</p>
-
 <!-- ================================================= -->
 <h4 id="cl_diag_formatting">Formatting of Diagnostics</h4>
 <!-- ================================================= -->
@@ -437,7 +417,6 @@ quotes(as &quot;\&quot;&quot;) and non-printable characters (as octal
 
 </dl>
 
- 
 
 
 <!-- ===================================================== -->
@@ -530,6 +509,27 @@ off.</p>
 </dd>
 
 </dl>
+
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+<h3 id="cl_crash_diagnostics">Options to Control Clang Crash Diagnostics</h3>
+<!-- = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = = -->
+
+<p>As unbelievable as it may sound, Clang does crash from time to time.  
+Generally, this only occurs to those living on the 
+<a href="http://llvm.org/releases/download.html#svn">bleeding edge</a>.  Clang
+goes to great lengths to assist you in filing a bug report.  Specifically, Clang
+generates preprocessed source file(s) and associated run script(s) upon a
+crash.  These files should be attached to a bug report to ease reproducibility
+of the failure.  Below are the command line options to control the crash
+diagnostics.
+</p>
+
+<p><b>-fno-crash-diagnostics</b>: Disable auto-generation of preprocessed 
+source files during a clang crash.</p>
+
+<p>The -fno-crash-diagnostics flag can be helpful for speeding the process of
+generating a delta reduced test case.</p>
+
 
 <!-- ======================================================================= -->
 <h2 id="general_features">Language and Target-Independent Features</h2>
