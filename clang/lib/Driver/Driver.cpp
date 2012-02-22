@@ -113,6 +113,12 @@ InputArgList *Driver::ParseArgStrings(ArrayRef<const char *> ArgList) {
       Diag(clang::diag::err_drv_unsupported_opt) << A->getAsString(*Args);
       continue;
     }
+
+    // Warn about -mcpu= without an argument.
+    if (A->getOption().matches(options::OPT_mcpu_EQ) && 
+        A->containsValue("")) {
+      Diag(clang::diag::warn_drv_empty_joined_argument) << A->getAsString(*Args);
+    }
   }
 
   return Args;

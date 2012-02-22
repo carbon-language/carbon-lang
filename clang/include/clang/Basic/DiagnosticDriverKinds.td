@@ -105,6 +105,8 @@ def warn_drv_preprocessed_input_file_unused : Warning<
 def warn_drv_unused_argument : Warning<
   "argument unused during compilation: '%0'">,
   InGroup<DiagGroup<"unused-command-line-argument">>;
+def warn_drv_empty_joined_argument : Warning<
+  "joined argument expects addition arg: '%0'">;
 def warn_drv_not_using_clang_cpp : Warning<
   "not using the clang preprocessor due to user override">;
 def warn_drv_not_using_clang_cxx : Warning<
