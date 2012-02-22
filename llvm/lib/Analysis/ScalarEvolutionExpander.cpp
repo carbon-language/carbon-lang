@@ -53,8 +53,9 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
     if (U->getType() == Ty)
       if (CastInst *CI = dyn_cast<CastInst>(U))
         if (CI->getOpcode() == Op) {
-          // If the cast isn't where we want it or if it doesn't dominate
-          // a use in BIP, fix it.
+          // If the cast isn't where we want it, create a new cast at IP.
+          // Likewise, do not reuse a cast at BIP because it must dominate
+          // instructions that might be inserted before BIP.
           if (BasicBlock::iterator(CI) != IP || BIP == IP) {
             // Create a new cast, and leave the old cast in place in case
             // it is being used as an insert point. Clear its operand
