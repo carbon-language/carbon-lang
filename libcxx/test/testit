@@ -10,7 +10,12 @@
 
 if [ -z $CC ]
 then
-	CC=clang++
+	if which xcrun >/dev/null
+	then
+		CC="xcrun clang++"
+	else
+		CC=clang++
+	fi
 fi
 
 if [ -z "$OPTIONS" ]
