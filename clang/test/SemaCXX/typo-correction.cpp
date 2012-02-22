@@ -167,3 +167,19 @@ class Parent {
 };
 class Child: public Parent {};
 void Child::add_types(int value) {} // expected-error{{out-of-line definition of 'add_types' does not match any declaration in 'Child'}}
+
+// Fix the callback based filtering of typo corrections within
+// Sema::ActOnIdExpression by Parser::ParseCastExpression to allow type names as
+// potential corrections for template arguments.
+namespace clash {
+class ConstructExpr {}; // expected-note{{'clash::ConstructExpr' declared here}}
+}
+class ClashTool {
+  bool HaveConstructExpr();
+  template <class T> T* getExprAs();
+
+  void test() {
+    ConstructExpr *expr = // expected-error{{unknown type name 'ConstructExpr'; did you mean 'clash::ConstructExpr'?}}
+        getExprAs<ConstructExpr>(); // expected-error{{use of undeclared identifier 'ConstructExpr'; did you mean 'clash::ConstructExpr'?}}
+  }
+};

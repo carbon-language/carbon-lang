@@ -249,7 +249,7 @@ Parser::ParseAssignmentExprWithObjCMessageExprStart(SourceLocation LBracLoc,
 }
 
 
-ExprResult Parser::ParseConstantExpression() {
+ExprResult Parser::ParseConstantExpression(TypeCastState isTypeCast) {
   // C++03 [basic.def.odr]p2:
   //   An expression is potentially evaluated unless it appears where an
   //   integral constant expression is required (see 5.19) [...].
@@ -257,7 +257,7 @@ ExprResult Parser::ParseConstantExpression() {
   EnterExpressionEvaluationContext Unevaluated(Actions,
                                                Sema::ConstantEvaluated);
 
-  ExprResult LHS(ParseCastExpression(false));
+  ExprResult LHS(ParseCastExpression(false, false, isTypeCast));
   return ParseRHSOfBinaryExpression(LHS, prec::Conditional);
 }
 

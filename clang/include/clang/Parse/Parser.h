@@ -1288,7 +1288,7 @@ private:
   };
 
   ExprResult ParseExpression(TypeCastState isTypeCast = NotTypeCast);
-  ExprResult ParseConstantExpression();
+  ExprResult ParseConstantExpression(TypeCastState isTypeCast = NotTypeCast);
   // Expr that doesn't include commas.
   ExprResult ParseAssignmentExpression(TypeCastState isTypeCast = NotTypeCast);
 
