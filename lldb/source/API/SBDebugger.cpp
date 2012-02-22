@@ -1224,3 +1224,14 @@ SBDebugger::EnableLog (const char *channel, const char **categories)
     else
         return false;
 }
+
+void
+SBDebugger::SetLoggingCallback (lldb::LogOutputCallback log_callback, void *baton)
+{
+    if (m_opaque_sp)
+    {
+        return m_opaque_sp->SetLoggingCallback (log_callback, baton);
+    }
+}
+
+

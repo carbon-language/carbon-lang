@@ -484,11 +484,11 @@ public:
     bool
     EnableLog (const char *channel, const char **categories, const char *log_file, uint32_t log_options, Stream &error_stream);
 
-protected:
-
     void
     SetLoggingCallback (lldb::LogOutputCallback log_callback, void *baton);
     
+protected:
+
     static void
     DispatchInputCallback (void *baton, const void *bytes, size_t bytes_len);
 

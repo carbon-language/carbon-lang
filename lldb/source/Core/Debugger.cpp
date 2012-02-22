@@ -2312,9 +2312,9 @@ Debugger::FormatPrompt
 void
 Debugger::SetLoggingCallback (lldb::LogOutputCallback log_callback, void *baton)
 {
-    // For simplicity's sake, I am only allowing the logging callback to get
-    // set when the debugger is created.  Otherwise, I'd have to go turn off 
-    // all the log channels using this callback, and switch them to the new one...
+    // For simplicity's sake, I am not going to deal with how to close down any
+    // open logging streams, I just redirect everything from here on out to the
+    // callback.
     m_log_callback_stream_sp.reset (new StreamCallback (log_callback, baton));
 }
 
