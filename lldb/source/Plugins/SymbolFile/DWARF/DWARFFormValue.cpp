@@ -45,6 +45,17 @@ static uint8_t g_form_sizes_addr4[] =
     8, // 0x14 DW_FORM_ref8
     0, // 0x15 DW_FORM_ref_udata
     0, // 0x16 DW_FORM_indirect
+    4, // 0x17 DW_FORM_sec_offset
+    0, // 0x18 DW_FORM_exprloc
+    0, // 0x19 DW_FORM_flag_present
+    0, // 0x1a
+    0, // 0x1b
+    0, // 0x1c
+    0, // 0x1d
+    0, // 0x1e
+    0, // 0x1f
+    8, // 0x20 DW_FORM_ref_sig8
+
 };
 
 static uint8_t
@@ -73,6 +84,16 @@ g_form_sizes_addr8[] =
     8, // 0x14 DW_FORM_ref8
     0, // 0x15 DW_FORM_ref_udata
     0, // 0x16 DW_FORM_indirect
+    4, // 0x17 DW_FORM_sec_offset
+    0, // 0x18 DW_FORM_exprloc
+    0, // 0x19 DW_FORM_flag_present
+    0, // 0x1a
+    0, // 0x1b
+    0, // 0x1c
+    0, // 0x1d
+    0, // 0x1e
+    0, // 0x1f
+    8, // 0x20 DW_FORM_ref_sig8
 };
 
 const uint8_t * 
@@ -115,6 +136,7 @@ DWARFFormValue::ExtractValue(const DataExtractor& data, uint32_t* offset_ptr, co
                                 // so we can tell the differnence between DW_FORM_string and DW_FORM_strp form
                                 // values;
                                 m_value.data = (uint8_t*)m_value.value.cstr;                            break;
+        case DW_FORM_exprloc:
         case DW_FORM_block:     m_value.value.uval = data.GetULEB128(offset_ptr); is_block = true;      break;
         case DW_FORM_block1:    m_value.value.uval = data.GetU8(offset_ptr); is_block = true;           break;
         case DW_FORM_data1:     m_value.value.uval = data.GetU8(offset_ptr);                            break;
@@ -134,6 +156,9 @@ DWARFFormValue::ExtractValue(const DataExtractor& data, uint32_t* offset_ptr, co
             indirect = true;
             break;
 
+        case DW_FORM_sec_offset:    m_value.value.uval = data.GetU32(offset_ptr);                       break;
+        case DW_FORM_flag_present:  m_value.value.uval = 1;                                             break;
+        case DW_FORM_ref_sig8:      m_value.value.uval = data.GetU64(offset_ptr);                       break;
         default:
             return false;
             break;
@@ -169,57 +194,67 @@ DWARFFormValue::SkipValue(dw_form_t form, const DataExtractor& debug_info_data, 
         {
         // Blocks if inlined data that have a length field and the data bytes
         // inlined in the .debug_info
-        case DW_FORM_block      : { dw_uleb128_t size = debug_info_data.GetULEB128(offset_ptr); *offset_ptr += size; } return true;
-        case DW_FORM_block1     : { dw_uleb128_t size = debug_info_data.GetU8(offset_ptr);          *offset_ptr += size; } return true;
-        case DW_FORM_block2     : { dw_uleb128_t size = debug_info_data.GetU16(offset_ptr);         *offset_ptr += size; } return true;
-        case DW_FORM_block4     : { dw_uleb128_t size = debug_info_data.GetU32(offset_ptr);         *offset_ptr += size; } return true;
+        case DW_FORM_exprloc:
+        case DW_FORM_block:  { dw_uleb128_t size = debug_info_data.GetULEB128(offset_ptr); *offset_ptr += size; } return true;
+        case DW_FORM_block1: { dw_uleb128_t size = debug_info_data.GetU8(offset_ptr);      *offset_ptr += size; } return true;
+        case DW_FORM_block2: { dw_uleb128_t size = debug_info_data.GetU16(offset_ptr);     *offset_ptr += size; } return true;
+        case DW_FORM_block4: { dw_uleb128_t size = debug_info_data.GetU32(offset_ptr);     *offset_ptr += size; } return true;
 
         // Inlined NULL terminated C-strings
-        case DW_FORM_string     :
+        case DW_FORM_string:
             debug_info_data.GetCStr(offset_ptr);
             return true;
 
         // Compile unit address sized values
-        case DW_FORM_addr       :
-        case DW_FORM_ref_addr   :
+        case DW_FORM_addr:
+        case DW_FORM_ref_addr:
             *offset_ptr += DWARFCompileUnit::GetAddressByteSize(cu);
             return true;
 
+        // 0 bytes values (implied from DW_FORM)
+        case DW_FORM_flag_present:
+            return true;
+
         // 1 byte values
-        case DW_FORM_data1      :
-        case DW_FORM_flag       :
-        case DW_FORM_ref1       :
+        case DW_FORM_data1:
+        case DW_FORM_flag:
+        case DW_FORM_ref1:
             *offset_ptr += 1;
             return true;
 
         // 2 byte values
-        case DW_FORM_data2      :
-        case DW_FORM_ref2       :
+        case DW_FORM_data2:
+        case DW_FORM_ref2:
             *offset_ptr += 2;
             return true;
 
+        // 32 bit for DWARF 32, 64 for DWARF 64
+        case DW_FORM_sec_offset:
+            *offset_ptr += 4;
+            return true;
+
         // 4 byte values
-        case DW_FORM_strp       :
-        case DW_FORM_data4      :
-        case DW_FORM_ref4       :
+        case DW_FORM_strp:
+        case DW_FORM_data4:
+        case DW_FORM_ref4:
             *offset_ptr += 4;
             return true;
 
         // 8 byte values
-        case DW_FORM_data8      :
-        case DW_FORM_ref8       :
+        case DW_FORM_data8:
+        case DW_FORM_ref8:
+        case DW_FORM_ref_sig8:
             *offset_ptr += 8;
             return true;
 
         // signed or unsigned LEB 128 values
-    //  case DW_FORM_APPLE_db_str:
-        case DW_FORM_sdata      :
-        case DW_FORM_udata      :
-        case DW_FORM_ref_udata  :
+        case DW_FORM_sdata:
+        case DW_FORM_udata:
+        case DW_FORM_ref_udata:
             debug_info_data.Skip_LEB128(offset_ptr);
             return true;
 
-        case DW_FORM_indirect   :
+        case DW_FORM_indirect:
             indirect = true;
             form = debug_info_data.GetULEB128(offset_ptr);
             break;
@@ -230,124 +265,6 @@ DWARFFormValue::SkipValue(dw_form_t form, const DataExtractor& debug_info_data, 
     return true;
 }
 
-//bool
-//DWARFFormValue::PutUnsigned(dw_form_t form, dw_offset_t offset, uint64_t value, BinaryStreamBuf& out_buff, const DWARFCompileUnit* cu, bool fixup_cu_relative_refs)
-//{
-//  assert(offset != DW_INVALID_OFFSET);
-////    printf("PutUnsigned(%s, 0x%8.8x, 0x%16.16llx, %d)\n", DW_FORM_value_to_name(form), offset, value, fixup_cu_relative_refs);
-//  // Read the value for the form into value and follow and DW_FORM_indirect instances we run into
-//  switch (form)
-//  {
-//  case DW_FORM_addr:      offset = out_buff.PutMax64(offset, value, DWARFCompileUnit::GetAddressByteSize(cu));    break;
-//
-//  case DW_FORM_flag:
-//  case DW_FORM_data1:     offset = out_buff.Put8(offset, value);                  break;
-//  case DW_FORM_data2:     offset = out_buff.Put16(offset, value);                 break;
-//  case DW_FORM_data4:     offset = out_buff.Put32(offset, value);                 break;
-//  case DW_FORM_data8:     offset = out_buff.Put64(offset, value);                 break;
-////    case DW_FORM_udata:     offset = out_buff.Put32_as_ULEB128(offset, value);      break;
-////    case DW_FORM_sdata:     offset = out_buff.Put32_as_SLEB128(offset, value);      break;
-//  case DW_FORM_strp:      offset = out_buff.Put32(offset, value);                 break;
-////    case DW_FORM_APPLE_db_str:
-////                            offset = out_buff.Put32_as_ULEB128(offset, value);      break;
-//
-//  case DW_FORM_ref1:
-//      if (fixup_cu_relative_refs) value -= cu->GetOffset();
-//      offset = out_buff.Put8(offset, value);
-//      break;
-//  case DW_FORM_ref2:
-//      if (fixup_cu_relative_refs) value -= cu->GetOffset();
-//      offset = out_buff.Put16(offset, value);
-//      break;
-//  case DW_FORM_ref4:
-//      if (fixup_cu_relative_refs) value -= cu->GetOffset();
-//      offset = out_buff.Put32(offset, value);
-//      break;
-//  case DW_FORM_ref8:
-//      if (fixup_cu_relative_refs) value -= cu->GetOffset();
-//      offset = out_buff.Put64(offset, value);
-//      break;
-////    case DW_FORM_ref_udata:
-////        if (fixup_cu_relative_refs) value -= cu->GetOffset();
-////        offset = out_buff.Put32_as_ULEB128(offset, value);
-////        break;
-//  case DW_FORM_ref_addr:
-//      // TODO: Add support for DWARF3 if we ever start emitting DWARF3. The DW_FORM_ref_addr
-//      // is always the same size as an address prior to DWARF3, and with DWARF3 or later it
-//      // is 4 hard coded to bytes.
-//      offset = out_buff.PutMax64(offset, value, DWARFCompileUnit::GetAddressByteSize(cu));
-//      break;
-//
-//  default:
-//      return false;
-//  }
-//
-//  return true;
-//}
-
-//bool
-//DWARFFormValue::TransferValue(dw_form_t form, const DataExtractor& data, uint32_t* offset_ptr, const DWARFCompileUnit* cu, BinaryStreamBuf& out_buff)
-//{
-//  DWARFFormValue formValue(form);
-//  if (formValue.ExtractValue(data, offset_ptr,cu))
-//      return TransferValue(formValue, cu, out_buff);
-//  return false;
-//}
-
-//bool
-//DWARFFormValue::TransferValue(const DWARFFormValue& formValue, const DWARFCompileUnit* cu, BinaryStreamBuf& out_buff)
-//{
-//  // Read the value for the form into value and follow and DW_FORM_indirect instances we run into
-//  dw_form_t form = formValue.Form();
-//  switch (form)
-//  {
-//  case DW_FORM_addr:
-//  case DW_FORM_ref_addr:
-//      {
-//          uint8_t addr_size = DWARFCompileUnit::GetAddressByteSize(cu);
-//          out_buff.AppendMax64(formValue.Unsigned(), addr_size);
-//      }
-//      break;
-//
-//  case DW_FORM_block:     out_buff.Append32_as_ULEB128(formValue.Unsigned()); break;
-//  case DW_FORM_block1:    out_buff.Append8(formValue.Unsigned());             break;
-//  case DW_FORM_block2:    out_buff.Append16(formValue.Unsigned());            break;
-//  case DW_FORM_block4:    out_buff.Append32(formValue.Unsigned());            break;
-//
-//  case DW_FORM_flag:
-//  case DW_FORM_data1:     out_buff.Append8(formValue.Unsigned());             break;
-//  case DW_FORM_data2:     out_buff.Append16(formValue.Unsigned());            break;
-//  case DW_FORM_data4:     out_buff.Append32(formValue.Unsigned());            break;
-//  case DW_FORM_data8:     out_buff.Append64(formValue.Unsigned());            break;
-//  case DW_FORM_udata:     out_buff.Append32_as_ULEB128(formValue.Unsigned()); break;
-//  case DW_FORM_sdata:     out_buff.Append32_as_SLEB128(formValue.Signed());   break;
-//
-//  case DW_FORM_string:    out_buff.AppendCStr(formValue.m_value.value.cstr);      break;
-//  case DW_FORM_strp:      out_buff.Append32(formValue.Unsigned());            break;
-////    case DW_FORM_APPLE_db_str:
-////                            out_buff.Append32_as_ULEB128(formValue.Unsigned()); break;
-//
-//  case DW_FORM_ref1:      out_buff.Append8(formValue.Unsigned());             break;
-//  case DW_FORM_ref2:      out_buff.Append16(formValue.Unsigned());            break;
-//  case DW_FORM_ref4:      out_buff.Append32(formValue.Unsigned());            break;
-//  case DW_FORM_ref8:      out_buff.Append64(formValue.Unsigned());            break;
-//  case DW_FORM_ref_udata: out_buff.Append32_as_ULEB128(formValue.Unsigned()); break;
-//
-//  case DW_FORM_indirect:
-//      assert(!"DW_FORM_indirect found in DWARFFormValue::TransferValue() for an extracted form...");
-//      break;
-//
-//  default:
-//      Log::Error("DWARFFormValue::TransferValue() Unrecognized form: 0x%4.4x", form);
-//      return false;
-//      break;
-//  }
-//
-//  const uint8_t* block_data = formValue.BlockData();
-//  if (block_data)
-//      out_buff.AppendData(block_data, formValue.Unsigned());
-//  return true;
-//}
 
 void
 DWARFFormValue::Dump(Stream &s, const DataExtractor* debug_str_data, const DWARFCompileUnit* cu) const
@@ -363,9 +280,12 @@ DWARFFormValue::Dump(Stream &s, const DataExtractor* debug_str_data, const DWARF
     case DW_FORM_flag:
     case DW_FORM_data1:     s.PutHex8(uvalue);     break;
     case DW_FORM_data2:     s.PutHex16(uvalue);        break;
+    case DW_FORM_sec_offset:
     case DW_FORM_data4:     s.PutHex32(uvalue);        break;
+    case DW_FORM_ref_sig8:
     case DW_FORM_data8:     s.PutHex64(uvalue);        break;
     case DW_FORM_string:    s.QuotedCString(AsCString(NULL));          break;
+    case DW_FORM_exprloc:
     case DW_FORM_block:
     case DW_FORM_block1:
     case DW_FORM_block2:
@@ -374,6 +294,7 @@ DWARFFormValue::Dump(Stream &s, const DataExtractor* debug_str_data, const DWARF
         {
             switch (m_form)
             {
+            case DW_FORM_exprloc:
             case DW_FORM_block:  s.Printf("<0x%llx> ", uvalue);                break;
             case DW_FORM_block1: s.Printf("<0x%2.2x> ", (uint8_t)uvalue);      break;
             case DW_FORM_block2: s.Printf("<0x%4.4x> ", (uint16_t)uvalue);     break;
@@ -427,6 +348,7 @@ DWARFFormValue::Dump(Stream &s, const DataExtractor* debug_str_data, const DWARF
 
     // All DW_FORM_indirect attributes should be resolved prior to calling this function
     case DW_FORM_indirect:  s.PutCString("DW_FORM_indirect"); break;
+    case DW_FORM_flag_present: break;
     default:
         s.Printf("DW_FORM(0x%4.4x)", m_form);
         break;
@@ -578,6 +500,9 @@ DWARFFormValue::Compare (const DWARFFormValue& a_value, const DWARFFormValue& b_
     case DW_FORM_data8:
     case DW_FORM_udata:
     case DW_FORM_ref_addr:
+    case DW_FORM_sec_offset:
+    case DW_FORM_flag_present:
+    case DW_FORM_ref_sig8:
         {
             uint64_t a = a_value.Unsigned();
             uint64_t b = b_value.Unsigned();
@@ -619,6 +544,7 @@ DWARFFormValue::Compare (const DWARFFormValue& a_value, const DWARFFormValue& b_
     case DW_FORM_block1:
     case DW_FORM_block2:
     case DW_FORM_block4:
+    case DW_FORM_exprloc:
         {
             uint64_t a_len = a_value.Unsigned();
             uint64_t b_len = b_value.Unsigned();
