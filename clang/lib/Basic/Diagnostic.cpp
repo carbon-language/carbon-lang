@@ -27,7 +27,7 @@ static void DummyArgToStringFn(DiagnosticsEngine::ArgumentKind AK, intptr_t QT,
                                unsigned NumPrevArgs,
                                SmallVectorImpl<char> &Output,
                                void *Cookie,
-                               SmallVectorImpl<intptr_t> &QualTypeVals) {
+                               ArrayRef<intptr_t> QualTypeVals) {
   const char *Str = "<can't format argument>";
   Output.append(Str, Str+strlen(Str));
 }

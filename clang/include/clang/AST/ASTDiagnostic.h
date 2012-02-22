@@ -44,7 +44,7 @@ namespace clang {
       unsigned NumPrevArgs,
       SmallVectorImpl<char> &Output,
       void *Cookie,
-      SmallVectorImpl<intptr_t> &QualTypeVals);
+      ArrayRef<intptr_t> QualTypeVals);
 }  // end namespace clang
 
 #endif

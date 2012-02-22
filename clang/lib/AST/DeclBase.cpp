@@ -872,7 +872,7 @@ DeclContext::collectAllContexts(llvm::SmallVectorImpl<DeclContext *> &Contexts){
 }
 
 std::pair<Decl *, Decl *>
-DeclContext::BuildDeclChain(const SmallVectorImpl<Decl*> &Decls,
+DeclContext::BuildDeclChain(ArrayRef<Decl*> Decls,
                             bool FieldsAlreadyLoaded) {
   // Build up a chain of declarations via the Decl::NextInContextAndBits field.
   Decl *FirstNewDecl = 0;

@@ -583,7 +583,7 @@ FinishArgumentPackDeduction(Sema &S,
                             TemplateParameterList *TemplateParams,
                             bool HasAnyArguments,
                         SmallVectorImpl<DeducedTemplateArgument> &Deduced,
-                            const SmallVectorImpl<unsigned> &PackIndices,
+                            ArrayRef<unsigned> PackIndices,
                     SmallVectorImpl<DeducedTemplateArgument> &SavedPacks,
         SmallVectorImpl<
           SmallVector<DeducedTemplateArgument, 4> > &NewlyDeducedPacks,

@@ -154,17 +154,16 @@ static std::string
 ConvertTypeToDiagnosticString(ASTContext &Context, QualType Ty,
                               const DiagnosticsEngine::ArgumentValue *PrevArgs,
                               unsigned NumPrevArgs,
-                              SmallVectorImpl<intptr_t> &QualTypeVals) {
+                              ArrayRef<intptr_t> QualTypeVals) {
   // FIXME: Playing with std::string is really slow.
   bool ForceAKA = false;
   QualType CanTy = Ty.getCanonicalType();
   std::string S = Ty.getAsString(Context.getPrintingPolicy());
   std::string CanS = CanTy.getAsString(Context.getPrintingPolicy());
 
-  for (SmallVectorImpl<intptr_t>::iterator I = QualTypeVals.begin(),
-       E = QualTypeVals.end(); I != E; ++I) {
+  for (unsigned I = 0, E = QualTypeVals.size(); I != E; ++I) {
     QualType CompareTy =
-        QualType::getFromOpaquePtr(reinterpret_cast<void*>(*I));
+        QualType::getFromOpaquePtr(reinterpret_cast<void*>(QualTypeVals[I]));
     if (CompareTy == Ty)
       continue;  // Same types
     QualType CompareCanTy = CompareTy.getCanonicalType();
@@ -235,7 +234,7 @@ void clang::FormatASTNodeDiagnosticArgument(
     unsigned NumPrevArgs,
     SmallVectorImpl<char> &Output,
     void *Cookie,
-    SmallVectorImpl<intptr_t> &QualTypeVals) {
+    ArrayRef<intptr_t> QualTypeVals) {
   ASTContext &Context = *static_cast<ASTContext*>(Cookie);
   
   std::string S;

@@ -961,7 +961,7 @@ protected:
   ///
   /// \returns the first/last pair of declarations.
   static std::pair<Decl *, Decl *>
-  BuildDeclChain(const SmallVectorImpl<Decl*> &Decls, bool FieldsAlreadyLoaded);
+  BuildDeclChain(ArrayRef<Decl*> Decls, bool FieldsAlreadyLoaded);
 
    DeclContext(Decl::Kind K)
      : DeclKind(K), ExternalLexicalStorage(false),
