@@ -853,9 +853,14 @@ void AggExprEmitter::EmitNullInitializationToLValue(LValue lv) {
     return;
   
   if (!CGF.hasAggregateLLVMType(type)) {
-    // For non-aggregates, we can store zero
+    // For non-aggregates, we can store zero.
     llvm::Value *null = llvm::Constant::getNullValue(CGF.ConvertType(type));
-    CGF.EmitStoreThroughLValue(RValue::get(null), lv);
+    // Note that the following is not equivalent to
+    // EmitStoreThroughBitfieldLValue for ARC types.
+    if (lv.isBitField())
+      CGF.EmitStoreThroughBitfieldLValue(RValue::get(null), lv);
+    assert(lv.isSimple());
+    CGF.EmitStoreOfScalar(null, lv, /* isInitialization */ true);
   } else {
     // There's a potential optimization opportunity in combining
     // memsets; that would be easy for arrays, but relatively

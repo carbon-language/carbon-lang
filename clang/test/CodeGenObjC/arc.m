@@ -1533,3 +1533,15 @@ void test68(void) {
 // CHECK:      [[T0:%.*]] = load [[TEST69]]** [[SELF]], align 8
 // CHECK-NEXT: [[T1:%.*]] = bitcast [[TEST69]]* [[T0]] to i8*
 // CHECK-NEXT: ret i8* [[T1]]
+
+// rdar://problem/10907547
+void test70(id i) {
+  // CHECK: define void @test70
+  // CHECK: store i8* null, i8**
+  // CHECK: store i8* null, i8**
+  // CHECK: [[ID:%.*]] = call i8* @objc_retain(i8*
+  // CHECK: store i8* [[ID]], i8**
+  id x[3] = {
+    [2] = i
+  };
+}
