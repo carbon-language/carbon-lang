@@ -31,11 +31,11 @@ public:
 
 // CHECK: define void @_Z4testv()
 void test( void ) {
-// CHECK: call void @_ZN1CC1Ev(%class.C* %c)
+// CHECK: call void @_ZN1CC1Ev(%class.C* [[C:%.+]])
   C c;
 
-// CHECK: call x86_thiscallcc void @_ZNK1C5SmallEv(%struct.S* sret %tmp, %class.C* %c)
+// CHECK: call x86_thiscallcc void @_ZNK1C5SmallEv(%struct.S* sret %{{.+}}, %class.C* [[C]])
   (void)c.Small();
-// CHECK: call x86_thiscallcc void @_ZNK1C6MediumEv(%struct.M* sret %tmp1, %class.C* %c)
+// CHECK: call x86_thiscallcc void @_ZNK1C6MediumEv(%struct.M* sret %{{.+}}, %class.C* [[C]])
   (void)c.Medium();
 }
