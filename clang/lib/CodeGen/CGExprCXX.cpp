@@ -508,6 +508,7 @@ static CharUnits CalculateCookiePadding(CodeGenFunction &CGF,
 
 static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
                                         const CXXNewExpr *e,
+                                        unsigned minElements,
                                         llvm::Value *&numElements,
                                         llvm::Value *&sizeWithoutCookie) {
   QualType type = e->getAllocatedType();
@@ -581,6 +582,11 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
     // Okay, compute a count at the right width.
     llvm::APInt adjustedCount = count.zextOrTrunc(sizeWidth);
 
+    // If there is a brace-initializer, we cannot allocate fewer elements than
+    // there are initializers. If we do, that's treated like an overflow.
+    if (adjustedCount.ult(minElements))
+      hasAnyOverflow = true;
+
     // Scale numElements by that.  This might overflow, but we don't
     // care because it only overflows if allocationSize does, too, and
     // if that overflows then we shouldn't use this.
@@ -612,14 +618,16 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
 
   // Otherwise, we might need to use the overflow intrinsics.
   } else {
-    // There are up to four conditions we need to test for:
+    // There are up to five conditions we need to test for:
     // 1) if isSigned, we need to check whether numElements is negative;
     // 2) if numElementsWidth > sizeWidth, we need to check whether
     //   numElements is larger than something representable in size_t;
-    // 3) we need to compute
+    // 3) if minElements > 0, we need to check whether numElements is smaller
+    //    than that.
+    // 4) we need to compute
     //      sizeWithoutCookie := numElements * typeSizeMultiplier
     //    and check whether it overflows; and
-    // 4) if we need a cookie, we need to compute
+    // 5) if we need a cookie, we need to compute
     //      size := sizeWithoutCookie + cookieSize
     //    and check whether it overflows.
 
@@ -646,10 +654,11 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
       // If there's a non-1 type size multiplier, then we can do the
       // signedness check at the same time as we do the multiply
       // because a negative number times anything will cause an
-      // unsigned overflow.  Otherwise, we have to do it here.
+      // unsigned overflow.  Otherwise, we have to do it here. But at least
+      // in this case, we can subsume the >= minElements check.
       if (typeSizeMultiplier == 1)
         hasOverflow = CGF.Builder.CreateICmpSLT(numElements,
-                                      llvm::ConstantInt::get(CGF.SizeTy, 0));
+                              llvm::ConstantInt::get(CGF.SizeTy, minElements));
 
     // Otherwise, zext up to size_t if necessary.
     } else if (numElementsWidth < sizeWidth) {
@@ -657,6 +666,21 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
     }
 
     assert(numElements->getType() == CGF.SizeTy);
+
+    if (minElements) {
+      // Don't allow allocation of fewer elements than we have initializers.
+      if (!hasOverflow) {
+        hasOverflow = CGF.Builder.CreateICmpULT(numElements,
+                              llvm::ConstantInt::get(CGF.SizeTy, minElements));
+      } else if (numElementsWidth > sizeWidth) {
+        // The other existing overflow subsumes this check.
+        // We do an unsigned comparison, since any signed value < -1 is
+        // taken care of either above or below.
+        hasOverflow = CGF.Builder.CreateOr(hasOverflow,
+                          CGF.Builder.CreateICmpULT(numElements,
+                              llvm::ConstantInt::get(CGF.SizeTy, minElements)));
+      }
+    }
 
     size = numElements;
 
@@ -741,11 +765,8 @@ static llvm::Value *EmitCXXNewAllocSize(CodeGenFunction &CGF,
   return size;
 }
 
-static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const CXXNewExpr *E,
-                                    llvm::Value *NewPtr) {
-
-  const Expr *Init = E->getInitializer();
-  QualType AllocType = E->getAllocatedType();
+static void StoreAnyExprIntoOneUnit(CodeGenFunction &CGF, const Expr *Init,
+                                    QualType AllocType, llvm::Value *NewPtr) {
 
   CharUnits Alignment = CGF.getContext().getTypeAlignInChars(AllocType);
   if (!CGF.hasAggregateLLVMType(AllocType))
@@ -775,26 +796,39 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
   if (!E->hasInitializer())
     return; // We have a POD type.
 
-  // Check if the number of elements is constant.
-  bool checkZero = true;
-  if (llvm::ConstantInt *constNum = dyn_cast<llvm::ConstantInt>(numElements)) {
-    // If it's constant zero, skip the whole loop.
-    if (constNum->isZero()) return;
-
-    checkZero = false;
-  }
-
+  llvm::Value *explicitPtr = beginPtr;
   // Find the end of the array, hoisted out of the loop.
   llvm::Value *endPtr =
     Builder.CreateInBoundsGEP(beginPtr, numElements, "array.end");
 
+  unsigned initializerElements = 0;
+
+  const Expr *Init = E->getInitializer();
+  // If the initializer is an initializer list, first do the explicit elements.
+  if (const InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
+    initializerElements = ILE->getNumInits();
+    QualType elementType = E->getAllocatedType();
+    // FIXME: exception-safety for the explicit initializers
+    for (unsigned i = 0, e = ILE->getNumInits(); i != e; ++i) {
+      StoreAnyExprIntoOneUnit(*this, ILE->getInit(i), elementType, explicitPtr);
+      explicitPtr =Builder.CreateConstGEP1_32(explicitPtr, 1, "array.exp.next");
+    }
+
+    // The remaining elements are filled with the array filler expression.
+    Init = ILE->getArrayFiller();
+  }
+
   // Create the continuation block.
   llvm::BasicBlock *contBB = createBasicBlock("new.loop.end");
 
-  // If we need to check for zero, do so now.
-  if (checkZero) {
+  // If the number of elements isn't constant, we have to now check if there is
+  // anything left to initialize.
+  if (llvm::ConstantInt *constNum = dyn_cast<llvm::ConstantInt>(numElements)) {
+    // If all elements have already been initialized, skip the whole loop.
+    if (constNum->getZExtValue() <= initializerElements) return;
+  } else {
     llvm::BasicBlock *nonEmptyBB = createBasicBlock("new.loop.nonempty");
-    llvm::Value *isEmpty = Builder.CreateICmpEQ(beginPtr, endPtr,
+    llvm::Value *isEmpty = Builder.CreateICmpEQ(explicitPtr, endPtr,
                                                 "array.isempty");
     Builder.CreateCondBr(isEmpty, contBB, nonEmptyBB);
     EmitBlock(nonEmptyBB);
@@ -808,8 +842,8 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
 
   // Set up the current-element phi.
   llvm::PHINode *curPtr =
-    Builder.CreatePHI(beginPtr->getType(), 2, "array.cur");
-  curPtr->addIncoming(beginPtr, entryBB);
+    Builder.CreatePHI(explicitPtr->getType(), 2, "array.cur");
+  curPtr->addIncoming(explicitPtr, entryBB);
 
   // Enter a partial-destruction cleanup if necessary.
   QualType::DestructionKind dtorKind = elementType.isDestructedType();
@@ -823,7 +857,7 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
   }
 
   // Emit the initializer into this element.
-  StoreAnyExprIntoOneUnit(*this, E, curPtr);
+  StoreAnyExprIntoOneUnit(*this, Init, E->getAllocatedType(), curPtr);
 
   // Leave the cleanup if we entered one.
   if (cleanupDominator) {
@@ -895,7 +929,7 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
   if (!Init)
     return;
 
-  StoreAnyExprIntoOneUnit(CGF, E, NewPtr);
+  StoreAnyExprIntoOneUnit(CGF, Init, E->getAllocatedType(), NewPtr);
 }
 
 namespace {
@@ -1069,10 +1103,18 @@ llvm::Value *CodeGenFunction::EmitCXXNewExpr(const CXXNewExpr *E) {
   // The allocation size is the first argument.
   QualType sizeType = getContext().getSizeType();
 
+  // If there is a brace-initializer, cannot allocate fewer elements than inits.
+  unsigned minElements = 0;
+  if (E->isArray() && E->hasInitializer()) {
+    if (const InitListExpr *ILE = dyn_cast<InitListExpr>(E->getInitializer()))
+      minElements = ILE->getNumInits();
+  }
+
   llvm::Value *numElements = 0;
   llvm::Value *allocSizeWithoutCookie = 0;
   llvm::Value *allocSize =
-    EmitCXXNewAllocSize(*this, E, numElements, allocSizeWithoutCookie);
+    EmitCXXNewAllocSize(*this, E, minElements, numElements,
+                        allocSizeWithoutCookie);
   
   allocatorArgs.add(RValue::get(allocSize), sizeType);
 
