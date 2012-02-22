@@ -460,3 +460,43 @@ namespace P12023 {
       return 0;
   }
 }
+
+namespace PR12061 {
+  template <class C> struct scoped_array {
+    scoped_array(C* p = __null);
+  };
+  template <class Payload> struct Foo {
+    Foo() : a_(new scoped_array<int>[5]) { }
+    scoped_array< scoped_array<int> > a_;
+  };
+  class Bar {};
+  Foo<Bar> x;
+
+  template <class C> struct scoped_array2 {
+    scoped_array2(C* p = __null, C* q = __null);
+  };
+  template <class Payload> struct Foo2 {
+    Foo2() : a_(new scoped_array2<int>[5]) { }
+    scoped_array2< scoped_array2<int> > a_;
+  };
+  class Bar2 {};
+  Foo2<Bar2> x2;
+
+  class MessageLoop {
+  public:
+    explicit MessageLoop(int type = 0);
+  };
+  template <class CookieStoreTestTraits>
+  class CookieStoreTest {
+  protected:
+    CookieStoreTest() {
+      new MessageLoop;
+    }
+  };
+  struct CookieMonsterTestTraits {
+  };
+  class DeferredCookieTaskTest : public CookieStoreTest<CookieMonsterTestTraits>
+  {
+    DeferredCookieTaskTest() {}
+  };
+}

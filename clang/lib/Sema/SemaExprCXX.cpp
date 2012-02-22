@@ -1018,6 +1018,13 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   } else if (Initializer && isa<InitListExpr>(Initializer))
     initStyle = CXXNewExpr::ListInit;
   else {
+    // In template instantiation, the initializer could be a CXXDefaultArgExpr
+    // unwrapped from a CXXConstructExpr that was implicitly built. There is no
+    // particularly sane way we can handle this (especially since it can even
+    // occur for array new), so we throw the initializer away and have it be
+    // rebuilt.
+    if (Initializer && isa<CXXDefaultArgExpr>(Initializer))
+      Initializer = 0;
     assert((!Initializer || isa<ImplicitValueInitExpr>(Initializer) ||
             isa<CXXConstructExpr>(Initializer)) &&
            "Initializer expression that cannot have been implicitly created.");
