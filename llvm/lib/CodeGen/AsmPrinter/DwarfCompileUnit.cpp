@@ -780,8 +780,12 @@ void CompileUnit::constructTypeDIE(DIE &Buffer, DICompositeType CTy) {
         Buffer.addChild(Arg);
       }
     }
-    // Add prototype flag.
-    if (isPrototyped)
+    // Add prototype flag if we're dealing with a C language and the
+    // function has been prototyped.
+    if (isPrototyped &&
+	(Language == dwarf::DW_LANG_C89 ||
+	 Language == dwarf::DW_LANG_C99 ||
+	 Language == dwarf::DW_LANG_ObjC))
       addUInt(&Buffer, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
   }
     break;
@@ -1023,7 +1027,12 @@ DIE *CompileUnit::getOrCreateSubprogramDIE(DISubprogram SP) {
 
   addSourceLine(SPDie, SP);
 
-  if (SP.isPrototyped()) 
+  // Add the prototype if we have a prototype and we have a C like
+  // language.
+  if (SP.isPrototyped() &&
+      (Language == dwarf::DW_LANG_C89 ||
+       Language == dwarf::DW_LANG_C99 ||
+       Language == dwarf::DW_LANG_ObjC))
     addUInt(SPDie, dwarf::DW_AT_prototyped, dwarf::DW_FORM_flag, 1);
 
   // Add Return Type.
