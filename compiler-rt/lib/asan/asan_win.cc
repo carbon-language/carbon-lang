@@ -16,6 +16,7 @@
 
 #include <dbghelp.h>
 #include <stdio.h>  // FIXME: get rid of this.
+#include <stdlib.h>
 
 #include <new>  // FIXME: temporarily needed for placement new in AsanLock.
 
@@ -260,6 +261,10 @@ void SleepForSeconds(int seconds) {
 
 void Exit(int exitcode) {
   _exit(exitcode);
+}
+
+int Atexit(void (*function)(void)) {
+  return atexit(function);
 }
 
 }  // namespace __asan

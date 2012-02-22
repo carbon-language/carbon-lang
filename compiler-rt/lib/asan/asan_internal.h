@@ -18,7 +18,7 @@
 # error "This operating system is not supported by AddressSanitizer"
 #endif
 
-#include <stdlib.h>  // for size_t, uintptr_t, etc.
+#include <stddef.h>  // for size_t, uintptr_t, etc.
 
 #if defined(_WIN32)
 // There's no <stdint.h> in Visual Studio 9, so we have to define [u]int*_t.
@@ -74,6 +74,8 @@ extern "C" void* _ReturnAddress(void);
 # define INT64_MIN              (-__INT64_C(9223372036854775807)-1)
 # define INT64_MAX              (__INT64_C(9223372036854775807))
 # define UINT64_MAX             (__UINT64_C(18446744073709551615))
+
+#define ASAN_DEFAULT_FAILURE_EXITCODE 1
 
 #if defined(__linux__)
 # define ASAN_LINUX   1
@@ -229,6 +231,7 @@ enum LinkerInitialized { LINKER_INITIALIZED = 0 };
 void AsanDie();
 void SleepForSeconds(int seconds);
 void Exit(int exitcode);
+int Atexit(void (*function)(void));
 
 #define CHECK(cond) do { if (!(cond)) { \
   CheckFailed(#cond, __FILE__, __LINE__); \

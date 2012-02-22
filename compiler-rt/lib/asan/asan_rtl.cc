@@ -44,7 +44,7 @@ bool   FLAG_replace_intrin;
 bool   FLAG_replace_cfallocator;  // Used on Mac only.
 size_t FLAG_max_malloc_fill_size = 0;
 bool   FLAG_use_fake_stack;
-int    FLAG_exitcode = EXIT_FAILURE;
+int    FLAG_exitcode = ASAN_DEFAULT_FAILURE_EXITCODE;
 bool   FLAG_allow_user_poisoning;
 int    FLAG_sleep_before_dying;
 
@@ -433,13 +433,14 @@ void __asan_init() {
   FLAG_replace_str = IntFlagValue(options, "replace_str=", 1);
   FLAG_replace_intrin = IntFlagValue(options, "replace_intrin=", 1);
   FLAG_use_fake_stack = IntFlagValue(options, "use_fake_stack=", 1);
-  FLAG_exitcode = IntFlagValue(options, "exitcode=", EXIT_FAILURE);
+  FLAG_exitcode = IntFlagValue(options, "exitcode=",
+                               ASAN_DEFAULT_FAILURE_EXITCODE);
   FLAG_allow_user_poisoning = IntFlagValue(options,
                                            "allow_user_poisoning=", 1);
   FLAG_sleep_before_dying = IntFlagValue(options, "sleep_before_dying=", 0);
 
   if (FLAG_atexit) {
-    atexit(asan_atexit);
+    Atexit(asan_atexit);
   }
 
   // interceptors

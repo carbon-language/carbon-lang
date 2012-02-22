@@ -15,6 +15,10 @@
 #ifndef ASAN_INTERFACE_H
 #define ASAN_INTERFACE_H
 
+// ----------- ATTENTION -------------
+// This header should NOT include any other headers from ASan runtime.
+// All functions in this header are extern "C" and start with __asan_.
+
 #if !defined(_WIN32)
 #include <stdint.h>  // for uintptr_t
 #define ASAN_INTERFACE_FUNCTION_ATTRIBUTE __attribute__((visibility("default")))
@@ -22,10 +26,7 @@
 // TODO(timurrrr): find out what we need on Windows. __declspec(dllexport) ?
 #define ASAN_INTERFACE_FUNCTION_ATTRIBUTE
 #endif
-#include <stdlib.h>  // for size_t
-
-// This header should NOT include any other headers from ASan runtime.
-// All functions in this header are extern "C" and start with __asan_.
+#include <stddef.h>  // for size_t
 
 extern "C" {
   // This function should be called at the very beginning of the process,

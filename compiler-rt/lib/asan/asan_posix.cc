@@ -21,6 +21,7 @@
 
 #include <pthread.h>
 #include <signal.h>
+#include <stdlib.h>
 #include <sys/time.h>
 #include <sys/resource.h>
 #include <unistd.h>
@@ -97,6 +98,10 @@ void SleepForSeconds(int seconds) {
 
 void Exit(int exitcode) {
   return _exit(exitcode);
+}
+
+int Atexit(void (*function)(void)) {
+  return atexit(function);
 }
 
 int AtomicInc(int *a) {
