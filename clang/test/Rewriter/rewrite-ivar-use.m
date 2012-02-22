@@ -1,5 +1,8 @@
-// RUN: %clang_cc1 -rewrite-objc -fobjc-fragile-abi  -fms-extensions %s -o -
+// RUN: %clang_cc1 -x objective-c++ -Wno-return-type -fblocks -fms-extensions -rewrite-objc -fobjc-fragile-abi %s -o %t-rw.cpp
+// RUN: %clang_cc1 -fsyntax-only -fblocks -Wno-address-of-temporary -D"Class=void*" -D"id=void*" -D"SEL=void*" -D"__declspec(X)=" %t-rw.cpp
 // radar 7490331
+
+void *sel_registerName(const char *);
 
 @interface Foo {
         int a;
