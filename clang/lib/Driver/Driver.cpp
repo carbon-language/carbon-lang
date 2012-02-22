@@ -363,6 +363,9 @@ Compilation *Driver::BuildCompilation(ArrayRef<const char *> ArgList) {
 // diagnostic information to a bug report.
 void Driver::generateCompilationDiagnostics(Compilation &C,
                                             const Command *FailingCommand) {
+  if (C.getArgs().hasArg(options::OPT_fno_crash_diagnostics))
+    return;
+
   Diag(clang::diag::note_drv_command_failed_diag_msg)
     << "Please submit a bug report to " BUG_REPORT_URL " and include command"
     " line arguments and all diagnostic information.";
