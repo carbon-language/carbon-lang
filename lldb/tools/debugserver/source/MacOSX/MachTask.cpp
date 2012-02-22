@@ -33,7 +33,7 @@
 #include "DNBDataRef.h"
 #include "stack_logging.h"
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <SpringBoardServices/SpringBoardServer.h>
@@ -444,7 +444,7 @@ MachTask::ExceptionThread (void *arg)
     task_t task = mach_task->TaskPort();
     mach_msg_timeout_t periodic_timeout = 0;
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
     mach_msg_timeout_t watchdog_elapsed = 0;
     mach_msg_timeout_t watchdog_timeout = 60 * 1000;
     pid_t pid = mach_proc->ProcessID();
@@ -474,7 +474,7 @@ MachTask::ExceptionThread (void *arg)
         if (periodic_timeout == 0 || periodic_timeout > watchdog_timeout)
             periodic_timeout = watchdog_timeout;
     }
-#endif  // #if defined (__arm__)
+#endif  // #ifdef WITH_SPRINGBOARD
 
     while (mach_task->ExceptionPortIsValid())
     {
@@ -555,7 +555,7 @@ MachTask::ExceptionThread (void *arg)
                 continue;
             }
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
             if (watchdog.get())
             {
                 watchdog_elapsed += periodic_timeout;
@@ -583,7 +583,7 @@ MachTask::ExceptionThread (void *arg)
         }
     }
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
     if (watchdog.get())
     {
         // TODO: change SBSWatchdogAssertionRelease to SBSWatchdogAssertionCancel when we
@@ -593,7 +593,7 @@ MachTask::ExceptionThread (void *arg)
         DNBLogThreadedIf(LOG_TASK, "::SBSWatchdogAssertionRelease(%p)", watchdog.get());
         ::SBSWatchdogAssertionRelease (watchdog.get());
     }
-#endif  // #if defined (__arm__)
+#endif  // #ifdef WITH_SPRINGBOARD
 
     DNBLogThreadedIf(LOG_EXCEPTIONS, "MachTask::%s (%p): thread exiting...", __FUNCTION__, arg);
     return NULL;

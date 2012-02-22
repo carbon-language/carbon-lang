@@ -28,7 +28,7 @@ public:
         Generic = 0,
         MachKernel,
         POSIX
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
         , SpringBoard
 #endif
     } FlavorType;

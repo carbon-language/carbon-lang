@@ -383,7 +383,7 @@
 		08FB7793FE84155DC02AAC07 /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0420;
+				LastUpgradeCheck = 0430;
 			};
 			buildConfigurationList = 1DEB914E08733D8E0010E9CD /* Build configuration list for PBXProject "debugserver" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -563,6 +563,12 @@
 				INSTALL_PATH = /usr/bin;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
+				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-Wparentheses",
+					"-DWITH_LOCKDOWN",
+					"-DWITH_SPRINGBOARD",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
@@ -603,6 +609,12 @@
 				INSTALL_PATH = /usr/bin;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
+				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-Wparentheses",
+					"-DWITH_LOCKDOWN",
+					"-DWITH_SPRINGBOARD",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,
@@ -642,6 +654,12 @@
 				INSTALL_PATH = /usr/bin;
 				LLDB_DEBUGSERVER = 1;
 				OTHER_CFLAGS = "-Wparentheses";
+				"OTHER_CFLAGS[sdk=iphoneos*][arch=*]" = (
+					"-Wparentheses",
+					"-DWITH_LOCKDOWN",
+					"-DWITH_SPRINGBOARD",
+				);
+				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
 					__TEXT,

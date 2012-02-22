@@ -98,7 +98,7 @@ typedef enum
     eLaunchFlavorDefault = 0,
     eLaunchFlavorPosixSpawn,
     eLaunchFlavorForkExec,
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
     eLaunchFlavorSpringBoard,
 #endif
 } nub_launch_flavor_t;

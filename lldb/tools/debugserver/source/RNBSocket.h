@@ -27,7 +27,9 @@ public:
 
     RNBSocket () :
         m_fd (-1),
+#ifdef WITH_LOCKDOWN
         m_fd_from_lockdown (false),
+#endif
         m_timer (true)      // Make a thread safe timer
     {
     }
@@ -39,7 +41,9 @@ public:
     rnb_err_t Listen (in_port_t port, PortBoundCallback callback, const void *callback_baton);
     rnb_err_t Connect (const char *host, uint16_t port);
 
-#if defined (__arm__)
+    rnb_err_t useFD(int fd);
+
+#ifdef WITH_LOCKDOWN
     rnb_err_t ConnectToService();
 #endif
     rnb_err_t OpenFile (const char *path);
@@ -60,7 +64,11 @@ protected:
     rnb_err_t ClosePort (int& fd, bool save_errno);
 
     int m_fd;    // Socket we use to communicate once conn established
+
+#ifdef WITH_LOCKDOWN
     bool m_fd_from_lockdown;
+#endif
+
     DNBTimer m_timer;
 };
 

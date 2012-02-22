@@ -22,7 +22,7 @@
 #include "DNBLog.h"
 #include "DNBError.h"
 
-#if defined (__arm__)
+#ifdef WITH_LOCKDOWN
 #include "lockdown.h"
 #endif
 
@@ -169,7 +169,19 @@ RNBSocket::Connect (const char *host, uint16_t port)
     return rnb_success;
 }
 
-#if defined (__arm__)
+rnb_err_t
+RNBSocket::useFD(int fd)
+{
+       if (fd < 0) {
+               DNBLogThreadedIf(LOG_RNB_COMM, "Bad file descriptor passed in.");
+               return rnb_err;
+       }
+       
+       m_fd = fd;
+       return rnb_success;
+}
+
+#ifdef WITH_LOCKDOWN
 rnb_err_t
 RNBSocket::ConnectToService()
 {
@@ -222,8 +234,10 @@ RNBSocket::SetSocketOption(int fd, int level, int option_name, int option_value)
 rnb_err_t
 RNBSocket::Disconnect (bool save_errno)
 {
+#ifdef WITH_LOCKDOWN
     if (m_fd_from_lockdown)
         m_fd_from_lockdown = false;
+#endif
     return ClosePort (m_fd, save_errno);
 }
 
@@ -278,12 +292,12 @@ RNBSocket::Write (const void *buffer, size_t length)
         return rnb_err;
 
     DNBError err;
-    int bytessent = send (m_fd, buffer, length, 0);
+    int bytessent = write (m_fd, buffer, length);
     if (bytessent < 0)
         err.SetError(errno, DNBError::POSIX);
 
     if (err.Fail() || DNBLogCheckLogBit(LOG_RNB_COMM))
-        err.LogThreaded("::send ( socket = %i, buffer = %p, length = %zu, flags = 0 ) => %i", m_fd, buffer, length, bytessent);
+        err.LogThreaded("::write ( socket = %i, buffer = %p, length = %zu) => %i", m_fd, buffer, length, bytessent);
 
     if (bytessent < 0)
         return rnb_err;

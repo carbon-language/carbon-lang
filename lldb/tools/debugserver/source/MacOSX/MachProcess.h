@@ -77,7 +77,7 @@ public:
     static const void *     PrepareForAttach (const char *path, nub_launch_flavor_t launch_flavor, bool waitfor, DNBError &err_str);
     static void             CleanupAfterAttach (const void *attach_token, bool success, DNBError &err_str);
     static nub_process_t    CheckForProcess (const void *attach_token);
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
     pid_t                   SBLaunchForDebug (const char *app_bundle_path, char const *argv[], char const *envp[], bool no_stdio, DNBError &launch_err);
     static pid_t            SBForkChildForPTraceDebugging (const char *path, char const *argv[], char const *envp[], bool no_stdio, MachProcess* process, DNBError &launch_err);
 #endif

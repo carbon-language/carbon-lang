@@ -192,7 +192,7 @@ RNBRunLoopLaunchInferior (RNBRemote *remote, const char *stdin_path, const char 
         // Our default launch method is posix spawn
         launch_flavor = eLaunchFlavorPosixSpawn;
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
         // Check if we have an app bundle, if so launch using SpringBoard.
         if (strstr(inferior_argv[0], ".app"))
         {
@@ -955,7 +955,7 @@ main (int argc, char *argv[])
                         g_launch_flavor = eLaunchFlavorPosixSpawn;
                     else if (strcasestr(optarg, "fork") == optarg)
                         g_launch_flavor = eLaunchFlavorForkExec;
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
                     else if (strcasestr(optarg, "spring") == optarg)
                         g_launch_flavor = eLaunchFlavorSpringBoard;
 #endif
@@ -966,7 +966,7 @@ main (int argc, char *argv[])
                         RNBLogSTDERR ("  auto    Auto-detect the best launch method to use.\n");
                         RNBLogSTDERR ("  posix   Launch the executable using posix_spawn.\n");
                         RNBLogSTDERR ("  fork    Launch the executable using fork and exec.\n");
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
                         RNBLogSTDERR ("  spring  Launch the executable through Springboard.\n");
 #endif
                         exit (5);
@@ -1234,7 +1234,7 @@ main (int argc, char *argv[])
         switch (mode)
         {
             case eRNBRunLoopModeGetStartModeFromRemoteProtocol:
-#if defined (__arm__)
+#ifdef WITH_LOCKDOWN
                 if (g_lockdown_opt)
                 {
                     if (!remote->Comm().IsConnected())
@@ -1308,7 +1308,7 @@ main (int argc, char *argv[])
                         // Our default launch method is posix spawn
                         launch_flavor = eLaunchFlavorPosixSpawn;
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
                         // Check if we have an app bundle, if so launch using SpringBoard.
                         if (waitfor_pid_name.find (".app") != std::string::npos)
                         {

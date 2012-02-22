@@ -16,7 +16,7 @@
 #include "DNBLog.h"
 #include "PThreadMutex.h"
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
 #include <SpringBoardServices/SpringBoardServer.h>
 #endif
 
@@ -39,7 +39,7 @@ DNBError::AsString() const
             s = ::strerror (m_err);
             break;
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
         case SpringBoard:
             {
                 CFStringRef statusStr = SBSApplicationLaunchingErrorString (m_err);

@@ -42,7 +42,7 @@ extern "C" const double debugserverVersionNumber;
 
 #elif defined (__arm__)
 
-#define RNB_ARCH    "armv6"
+#define RNB_ARCH    "armv7"
 
 #else
 

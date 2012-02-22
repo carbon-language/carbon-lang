@@ -18,14 +18,14 @@
 #import "DNBLog.h"
 #include "MacOSX/CFUtils.h"
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
 #import <SpringBoardServices/SpringBoardServices.h>
 #endif
 
 int
 ListApplications(std::string& plist, bool opt_runningApps, bool opt_debuggable)
 {
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
     int result = -1;
 
     CFAllocatorRef alloc = kCFAllocatorDefault;
@@ -118,7 +118,7 @@ ListApplications(std::string& plist, bool opt_runningApps, bool opt_debuggable)
 bool
 IsSBProcess (nub_process_t pid)
 {
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
     bool opt_runningApps = true;
     bool opt_debuggable = false;
 

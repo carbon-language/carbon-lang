@@ -40,12 +40,11 @@
 
 static CFStringRef CopyBundleIDForPath (const char *app_buncle_path, DNBError &err_str);
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
 
 #include <CoreFoundation/CoreFoundation.h>
 #include <SpringBoardServices/SpringBoardServer.h>
 #include <SpringBoardServices/SBSWatchdogAssertion.h>
-
 
 static bool
 IsSBProcess (nub_process_t pid)
@@ -73,7 +72,6 @@ IsSBProcess (nub_process_t pid)
     }
     return false;
 }
-
 
 #endif
 
@@ -1328,7 +1326,7 @@ MachProcess::AttachForDebug (pid_t pid, char *err_str, size_t err_len)
         SetState(eStateAttaching);
         m_pid = pid;
         // Let ourselves know we are going to be using SBS if the correct flag bit is set...
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
         if (IsSBProcess(pid))
             m_flags |= eMachProcessFlagsUsingSBS;
 #endif
@@ -1377,7 +1375,7 @@ MachProcess::AttachForDebug (pid_t pid, char *err_str, size_t err_len)
 const void *
 MachProcess::PrepareForAttach (const char *path, nub_launch_flavor_t launch_flavor, bool waitfor, DNBError &err_str)
 {
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
     // Tell SpringBoard to halt the next launch of this application on startup.
 
     if (!waitfor)
@@ -1444,7 +1442,7 @@ MachProcess::CheckForProcess (const void *attach_token)
     if (attach_token == NULL)
         return INVALID_NUB_PROCESS;
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
     CFStringRef bundleIDCFStr = (CFStringRef) attach_token;
     Boolean got_it;
     nub_process_t attach_pid;
@@ -1465,7 +1463,7 @@ MachProcess::CheckForProcess (const void *attach_token)
 void
 MachProcess::CleanupAfterAttach (const void *attach_token, bool success, DNBError &err_str)
 {
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
     if (attach_token == NULL)
         return;
 
@@ -1540,7 +1538,7 @@ MachProcess::LaunchForDebug
                                                                 launch_err);
         break;
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
 
     case eLaunchFlavorSpringBoard:
         {
@@ -1898,7 +1896,7 @@ MachProcess::ForkChildForPTraceDebugging
     return pid;
 }
 
-#if defined (__arm__)
+#ifdef WITH_SPRINGBOARD
 
 pid_t
 MachProcess::SBLaunchForDebug (const char *path, char const *argv[], char const *envp[], bool no_stdio, DNBError &launch_err)
@@ -2151,6 +2149,6 @@ MachProcess::SBForkChildForPTraceDebugging (const char *app_bundle_path, char co
     return INVALID_NUB_PROCESS;
 }
 
-#endif // #if defined (__arm__)
+#endif // #ifdef WITH_SPRINGBOARD
 
 
