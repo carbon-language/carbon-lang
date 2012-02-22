@@ -88,6 +88,11 @@ namespace llvm {
     ///
     MCSymbol *CurrentFnSym;
 
+    /// The symbol used to represent the start of the current function for the
+    /// purpose of calculating its size (e.g. using the .size directive). By
+    /// default, this is equal to CurrentFnSym.
+    MCSymbol *CurrentFnSymForSize;
+
   private:
     // GCMetadataPrinters - The garbage collection metadata printer table.
     void *GCMetadataPrinters;  // Really a DenseMap.

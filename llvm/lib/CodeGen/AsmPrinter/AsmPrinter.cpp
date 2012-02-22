@@ -100,6 +100,7 @@ AsmPrinter::AsmPrinter(TargetMachine &tm, MCStreamer &Streamer)
     OutStreamer(Streamer),
     LastMI(0), LastFn(0), Counter(~0U), SetCounter(0) {
   DD = 0; DE = 0; MMI = 0; LI = 0;
+  CurrentFnSym = CurrentFnSymForSize = 0;
   GCMetadataPrinters = 0;
   VerboseAsm = Streamer.isVerboseAsm();
 }
@@ -761,7 +762,8 @@ void AsmPrinter::EmitFunctionBody() {
 
     const MCExpr *SizeExp =
       MCBinaryExpr::CreateSub(MCSymbolRefExpr::Create(FnEndLabel, OutContext),
-                              MCSymbolRefExpr::Create(CurrentFnSym, OutContext),
+                              MCSymbolRefExpr::Create(CurrentFnSymForSize,
+                                                      OutContext),
                               OutContext);
     OutStreamer.EmitELFSize(CurrentFnSym, SizeExp);
   }
@@ -951,6 +953,7 @@ void AsmPrinter::SetupMachineFunction(MachineFunction &MF) {
   this->MF = &MF;
   // Get the function symbol.
   CurrentFnSym = Mang->getSymbol(MF.getFunction());
+  CurrentFnSymForSize = CurrentFnSym;
 
   if (isVerbose())
     LI = &getAnalysis<MachineLoopInfo>();

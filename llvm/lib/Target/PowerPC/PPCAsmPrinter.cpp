@@ -398,7 +398,11 @@ void PPCLinuxAsmPrinter::EmitFunctionEntryLabel() {
   OutStreamer.EmitRawText("\t.quad .L." + Twine(CurrentFnSym->getName()) +
                           ",.TOC.@tocbase");
   OutStreamer.EmitRawText(StringRef("\t.previous"));
-  OutStreamer.EmitRawText(".L." + Twine(CurrentFnSym->getName()) + ":");
+
+  MCSymbol *RealFnSym = OutContext.GetOrCreateSymbol(
+                          ".L." + Twine(CurrentFnSym->getName()));
+  OutStreamer.EmitLabel(RealFnSym);
+  CurrentFnSymForSize = RealFnSym;
 }
 
 
