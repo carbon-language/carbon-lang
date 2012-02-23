@@ -124,9 +124,8 @@ namespace {
     /// AA - AliasAnalysis for making memory reference queries.
     AliasAnalysis *AA;
 
-    /// KillIndices - The index of the most recent kill (proceding bottom-up),
-    /// or ~0u if the register is not live.
-    std::vector<unsigned> KillIndices;
+    /// LiveRegs - true if the register is live.
+    BitVector LiveRegs;
 
   public:
     SchedulePostRATDList(
@@ -185,7 +184,7 @@ SchedulePostRATDList::SchedulePostRATDList(
   TargetSubtargetInfo::AntiDepBreakMode AntiDepMode,
   SmallVectorImpl<const TargetRegisterClass*> &CriticalPathRCs)
   : ScheduleDAGInstrs(MF, MLI, MDT, /*IsPostRA=*/true), Topo(SUnits), AA(AA),
-    KillIndices(TRI->getNumRegs())
+    LiveRegs(TRI->getNumRegs())
 {
   const TargetMachine &TM = MF.getTarget();
   const InstrItineraryData *InstrItins = TM.getInstrItineraryData();
@@ -367,9 +366,8 @@ void SchedulePostRATDList::FinishBlock() {
 /// StartBlockForKills - Initialize register live-range state for updating kills
 ///
 void SchedulePostRATDList::StartBlockForKills(MachineBasicBlock *BB) {
-  // Initialize the indices to indicate that no registers are live.
-  for (unsigned i = 0; i < TRI->getNumRegs(); ++i)
-    KillIndices[i] = ~0u;
+  // Start with no live registers.
+  LiveRegs.reset();
 
   // Determine the live-out physregs for this block.
   if (!BB->empty() && BB->back().isReturn()) {
@@ -377,12 +375,11 @@ void SchedulePostRATDList::StartBlockForKills(MachineBasicBlock *BB) {
     for (MachineRegisterInfo::liveout_iterator I = MRI.liveout_begin(),
            E = MRI.liveout_end(); I != E; ++I) {
       unsigned Reg = *I;
-      KillIndices[Reg] = BB->size();
+      LiveRegs.set(Reg);
       // Repeat, for all subregs.
       for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
-           *Subreg; ++Subreg) {
-        KillIndices[*Subreg] = BB->size();
-      }
+           *Subreg; ++Subreg)
+        LiveRegs.set(*Subreg);
     }
   }
   else {
@@ -392,12 +389,11 @@ void SchedulePostRATDList::StartBlockForKills(MachineBasicBlock *BB) {
       for (MachineBasicBlock::livein_iterator I = (*SI)->livein_begin(),
              E = (*SI)->livein_end(); I != E; ++I) {
         unsigned Reg = *I;
-        KillIndices[Reg] = BB->size();
+        LiveRegs.set(Reg);
         // Repeat, for all subregs.
         for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
-             *Subreg; ++Subreg) {
-          KillIndices[*Subreg] = BB->size();
-        }
+             *Subreg; ++Subreg)
+          LiveRegs.set(*Subreg);
       }
     }
   }
@@ -412,7 +408,7 @@ bool SchedulePostRATDList::ToggleKillFlag(MachineInstr *MI,
   }
 
   // If MO itself is live, clear the kill flag...
-  if (KillIndices[MO.getReg()] != ~0u) {
+  if (LiveRegs.test(MO.getReg())) {
     MO.setIsKill(false);
     return false;
   }
@@ -424,7 +420,7 @@ bool SchedulePostRATDList::ToggleKillFlag(MachineInstr *MI,
   const unsigned SuperReg = MO.getReg();
   for (const unsigned *Subreg = TRI->getSubRegisters(SuperReg);
        *Subreg; ++Subreg) {
-    if (KillIndices[*Subreg] != ~0u) {
+    if (LiveRegs.test(*Subreg)) {
       MI->addOperand(MachineOperand::CreateReg(*Subreg,
                                                true  /*IsDef*/,
                                                true  /*IsImp*/,
@@ -466,7 +462,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       if (MO.isRegMask())
         for (unsigned i = 0, e = TRI->getNumRegs(); i != e; ++i)
           if (MO.clobbersPhysReg(i))
-            KillIndices[i] = ~0u;
+            LiveRegs.reset(i);
       if (!MO.isReg()) continue;
       unsigned Reg = MO.getReg();
       if (Reg == 0) continue;
@@ -474,13 +470,12 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       // Ignore two-addr defs.
       if (MI->isRegTiedToUseOperand(i)) continue;
 
-      KillIndices[Reg] = ~0u;
+      LiveRegs.reset(Reg);
 
       // Repeat for all subregs.
       for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
-           *Subreg; ++Subreg) {
-        KillIndices[*Subreg] = ~0u;
-      }
+           *Subreg; ++Subreg)
+        LiveRegs.reset(*Subreg);
     }
 
     // Examine all used registers and set/clear kill flag. When a
@@ -499,7 +494,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
         // A register is not killed if any subregs are live...
         for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
              *Subreg; ++Subreg) {
-          if (KillIndices[*Subreg] != ~0u) {
+          if (LiveRegs.test(*Subreg)) {
             kill = false;
             break;
           }
@@ -508,7 +503,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
         // If subreg is not live, then register is killed if it became
         // live in this instruction
         if (kill)
-          kill = (KillIndices[Reg] == ~0u);
+          kill = !LiveRegs.test(Reg);
       }
 
       if (MO.isKill() != kill) {
@@ -529,12 +524,11 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       unsigned Reg = MO.getReg();
       if ((Reg == 0) || ReservedRegs.test(Reg)) continue;
 
-      KillIndices[Reg] = Count;
+      LiveRegs.set(Reg);
 
       for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
-           *Subreg; ++Subreg) {
-        KillIndices[*Subreg] = Count;
-      }
+           *Subreg; ++Subreg)
+        LiveRegs.set(*Subreg);
     }
   }
 }
