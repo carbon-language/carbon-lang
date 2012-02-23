@@ -244,9 +244,19 @@ class Class_Data_V2:
 	def is_tagged(self):
 		return False
 
+	def instance_size(self,align=False):
+		if self.is_valid() == False:
+			return None
+		if align:
+			unalign = self.instance_size(False)
+			if self.sys_params.lp64:
+				return ((unalign + 7) & ~7) % 0x100000000
+			else:
+				return ((unalign + 3) & ~3) % 0x100000000
+		else:
+			return self.rwt.rot.instanceSize
+
 # runtime v1 is much less intricate than v2 and stores relevant information directly in the class_t object
-# idea for improvement: read additional information just to check for faulty pointers (not too worried about it
-# since v1 is only used for 32bit desktop development)
 class Class_Data_V1:
 	def __init__(self,isa_pointer,params):
 		if (isa_pointer != None) and (Utilities.is_valid_pointer(isa_pointer.GetValueAsUnsigned(),params.pointer_size, allow_tagged=False)):
@@ -255,6 +265,15 @@ class Class_Data_V1:
 			self.isaPointer = Utilities.read_child_of(self.valobj,0,self.sys_params.addr_ptr_type)
 			self.superclassIsaPointer = Utilities.read_child_of(self.valobj,1*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
 			self.namePointer = Utilities.read_child_of(self.valobj,2*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
+			self.version = Utilities.read_child_of(self.valobj,3*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
+			self.info = Utilities.read_child_of(self.valobj,4*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
+			self.instanceSize = Utilities.read_child_of(self.valobj,5*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
+			# since we do not introspect ivars, methods, ... these four pointers need not be named in a meaningful way
+			# moreover, we do not care about their values, just that they are correctly aligned
+			self.ptr1 = Utilities.read_child_of(self.valobj,6*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
+			self.ptr2 = Utilities.read_child_of(self.valobj,7*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
+			self.ptr3 = Utilities.read_child_of(self.valobj,8*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
+			self.ptr4 = Utilities.read_child_of(self.valobj,9*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
 			self.check_valid()
 		else:
 			self.valid = False
@@ -306,10 +325,25 @@ class Class_Data_V1:
 	def __str__(self):
 		return 'isaPointer = ' + hex(self.isaPointer) + "\n" + \
 		 "superclassIsaPointer = " + hex(self.superclassIsaPointer) + "\n" + \
-		 "namePointer = " + hex(self.namePointer) + " --> " + self.name
+		 "namePointer = " + hex(self.namePointer) + " --> " + self.name + \
+		 "version = " + hex(self.version) + "\n" + \
+		 "info = " + hex(self.info) + "\n" + \
+		 "instanceSize = " + hex(self.instanceSize) + "\n"
 
 	def is_tagged(self):
 		return False
+
+	def instance_size(self,align=False):
+		if self.is_valid() == False:
+			return None
+		if align:
+			unalign = self.instance_size(False)
+			if self.sys_params.lp64:
+				return ((unalign + 7) & ~7) % 0x100000000
+			else:
+				return ((unalign + 3) & ~3) % 0x100000000
+		else:
+			return self.instanceSize
 
 class TaggedClass_Data:
 	def __init__(self,pointer,params):
@@ -370,6 +404,13 @@ class TaggedClass_Data:
 	# anything that is handled here is tagged
 	def is_tagged(self):
 		return True
+
+	# it seems reasonable to say that a tagged pointer is the size of a pointer
+	def instance_size(self,align=False):
+		if self.is_valid() == False:
+			return None
+		return 8 if self.sys_params.lp64 else 4
+
 
 class InvalidClass_Data:
 	def __init__(self):
@@ -498,3 +539,4 @@ class ObjCRuntime:
 		if data.is_valid():
 			isa_cache.add_item(isa_value,data,ok_to_replace=True)
 		return data
+
