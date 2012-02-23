@@ -11,46 +11,51 @@
 //  Declarations that describe the Hexagon register file.
 //===----------------------------------------------------------------------===//
 
-class HexagonReg<string n> : Register<n> {
-  field bits<5> Num;
-  let Namespace = "Hexagon";
-}
-
-class HexagonDoubleReg<string n, list<Register> subregs> :
-        RegisterWithSubRegs<n, subregs> {
-  field bits<5> Num;
-  let Namespace = "Hexagon";
-}
-
-// Registers are identified with 5-bit ID numbers.
-// Ri - 32-bit integer registers.
-class Ri<bits<5> num, string n> : HexagonReg<n> {
-  let Num = num;
-}
-
-// Rf - 32-bit floating-point registers.
-class Rf<bits<5> num, string n> : HexagonReg<n> {
-  let Num = num;
-}
-
-
-// Rd - 64 bit registers.
-class Rd<bits<5> num, string n, list<Register> subregs> :
-HexagonDoubleReg<n, subregs> {
-  let Num = num;
-  let SubRegs = subregs;
-}
-
-
-class Rp<bits<5> num, string n> : HexagonReg<n> {
-   let Num = num;
-}
-
-class Rc<bits<5> num, string n> : HexagonReg<n> {
-  let Num = num;
-}
-
 let Namespace = "Hexagon" in {
+
+  class HexagonReg<string n> : Register<n> {
+    field bits<5> Num;
+  }
+
+  class HexagonDoubleReg<string n, list<Register> subregs> :
+        RegisterWithSubRegs<n, subregs> {
+    field bits<5> Num;
+  }
+
+  // Registers are identified with 5-bit ID numbers.
+  // Ri - 32-bit integer registers.
+  class Ri<bits<5> num, string n> : HexagonReg<n> {
+    let Num = num;
+  }
+
+  // Rf - 32-bit floating-point registers.
+  class Rf<bits<5> num, string n> : HexagonReg<n> {
+    let Num = num;
+  }
+
+
+  // Rd - 64-bit registers.
+  class Rd<bits<5> num, string n, list<Register> subregs> :
+        HexagonDoubleReg<n, subregs> {
+    let Num = num;
+    let SubRegs = subregs;
+  }
+
+  // Rp - predicate registers
+  class Rp<bits<5> num, string n> : HexagonReg<n> {
+    let Num = num;
+  }
+
+  // Rc - control registers
+  class Rc<bits<5> num, string n> : HexagonReg<n> {
+    let Num = num;
+  }
+
+  // Rj - aliased integer registers
+  class Rj<string n, Ri R>: HexagonReg<n> {
+    let Num = R.Num;
+    let Aliases = [R];
+  }
 
   def subreg_loreg  : SubRegIndex;
   def subreg_hireg  : SubRegIndex;
@@ -89,17 +94,17 @@ let Namespace = "Hexagon" in {
   def R30 : Ri<30, "r30">, DwarfRegNum<[30]>;
   def R31 : Ri<31, "r31">, DwarfRegNum<[31]>;
 
-
-  def PC : Ri<31, "r31">, DwarfRegNum<[32]>;
-  def GP : Ri<31, "r31">, DwarfRegNum<[33]>;
+  def SP : Rj<"sp", R29>, DwarfRegNum<[29]>;
+  def FP : Rj<"fp", R30>, DwarfRegNum<[30]>;
+  def LR : Rj<"lr", R31>, DwarfRegNum<[31]>;
 
   // Aliases of the R* registers used to hold 64-bit int values (doubles).
   let SubRegIndices = [subreg_loreg, subreg_hireg], CoveredBySubRegs = 1 in {
-  def D0  : Rd< 0,  "r1:0", [R0,   R1]>, DwarfRegNum<[32]>;
-  def D1  : Rd< 2,  "r3:2", [R2,   R3]>, DwarfRegNum<[34]>;
-  def D2  : Rd< 4,  "r5:4", [R4,   R5]>, DwarfRegNum<[36]>;
-  def D3  : Rd< 6,  "r7:6", [R6,   R7]>, DwarfRegNum<[38]>;
-  def D4  : Rd< 8,  "r9:8", [R8,   R9]>, DwarfRegNum<[40]>;
+  def D0  : Rd< 0,  "r1:0",  [R0,  R1]>, DwarfRegNum<[32]>;
+  def D1  : Rd< 2,  "r3:2",  [R2,  R3]>, DwarfRegNum<[34]>;
+  def D2  : Rd< 4,  "r5:4",  [R4,  R5]>, DwarfRegNum<[36]>;
+  def D3  : Rd< 6,  "r7:6",  [R6,  R7]>, DwarfRegNum<[38]>;
+  def D4  : Rd< 8,  "r9:8",  [R8,  R9]>, DwarfRegNum<[40]>;
   def D5  : Rd<10, "r11:10", [R10, R11]>, DwarfRegNum<[42]>;
   def D6  : Rd<12, "r13:12", [R12, R13]>, DwarfRegNum<[44]>;
   def D7  : Rd<14, "r15:14", [R14, R15]>, DwarfRegNum<[46]>;
@@ -114,45 +119,38 @@ let Namespace = "Hexagon" in {
   }
 
   // Predicate registers.
-  def P0 : Rp< 0, "p0">, DwarfRegNum<[63]>;
-  def P1 : Rp< 0, "p1">, DwarfRegNum<[64]>;
-  def P2 : Rp< 0, "p2">, DwarfRegNum<[65]>;
-  def P3 : Rp< 0, "p3">, DwarfRegNum<[66]>;
+  def P0 : Rp<0, "p0">, DwarfRegNum<[63]>;
+  def P1 : Rp<1, "p1">, DwarfRegNum<[64]>;
+  def P2 : Rp<2, "p2">, DwarfRegNum<[65]>;
+  def P3 : Rp<3, "p3">, DwarfRegNum<[66]>;
 
   // Control registers.
   def SA0 : Rc<0, "sa0">, DwarfRegNum<[67]>;
-  def LC0 : Rc<0, "lc0">, DwarfRegNum<[68]>;
+  def LC0 : Rc<1, "lc0">, DwarfRegNum<[68]>;
 
-  def SA1 : Rc<0, "sa1">, DwarfRegNum<[69]>;
-  def LC1 : Rc<0, "lc1">, DwarfRegNum<[70]>;
+  def SA1 : Rc<2, "sa1">, DwarfRegNum<[69]>;
+  def LC1 : Rc<3, "lc1">, DwarfRegNum<[70]>;
+
+  def PC : Rc<9,  "pc">, DwarfRegNum<[32]>; // is the Dwarf number correct?
+  def GP : Rc<11, "gp">, DwarfRegNum<[33]>; // is the Dwarf number correct?
 }
-
-
-
-
-
-
-
-
-
 
 // Register classes.
 //
 // FIXME: the register order should be defined in terms of the preferred
 // allocation order...
 //
-def IntRegs : RegisterClass<"Hexagon", [i32], 32, (add (sequence "R%u", 0, 9),
-                                                       (sequence "R%u", 12, 28),
-                                                        R10, R11, R29, R30,
-                                                        R31)> {
+def IntRegs : RegisterClass<"Hexagon", [i32], 32,
+                            (add (sequence "R%u", 0, 9),
+                                 (sequence "R%u", 12, 28),
+                                 R10, R11, R29, R30, R31)> {
 }
 
 
 
-def DoubleRegs : RegisterClass<"Hexagon", [i64], 64, (add (sequence "D%u", 0,
-                                                           4),
-                                                    (sequence "D%u", 6, 13),
-                                                    D5, D14, D15)> {
+def DoubleRegs : RegisterClass<"Hexagon", [i64], 64,
+                               (add (sequence "D%u", 0, 4),
+                                    (sequence "D%u", 6, 13), D5, D14, D15)> {
   let SubRegClasses = [(IntRegs subreg_loreg, subreg_hireg)];
 }
 
@@ -162,8 +160,8 @@ def PredRegs : RegisterClass<"Hexagon", [i1], 32, (add (sequence "P%u", 0, 3))>
   let Size = 32;
 }
 
-def CRRegs : RegisterClass<"Hexagon", [i32], 32, (add (sequence "LC%u", 0, 1),
-                                                      (sequence "SA%u", 0, 1),
-                                                      PC)> {
+def CRRegs : RegisterClass<"Hexagon", [i32], 32,
+                           (add (sequence "LC%u", 0, 1),
+                                (sequence "SA%u", 0, 1), PC, GP)> {
   let Size = 32;
 }
