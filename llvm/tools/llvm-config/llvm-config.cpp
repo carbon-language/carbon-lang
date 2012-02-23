@@ -206,6 +206,7 @@ int main(int argc, char **argv) {
     ActiveObjRoot = LLVM_OBJ_ROOT;
   } else {
     IsInDevelopmentTree = false;
+    DevelopmentTreeLayout = MakefileStyle; // Initialized to avoid warnings.
   }
 
   // Compute various directory locations based on the derived location
