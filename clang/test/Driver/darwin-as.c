@@ -11,7 +11,7 @@
 // CHECK-STATIC-64: as{{(.exe)?}}" "-arch" "x86_64" "-force_cpusubtype_ALL" "-o"
 
 // RUN: %clang -target x86_64-apple-darwin10 -### \
-// RUN:   -arch armv6 -x assembler -c %s 2>%t
+// RUN:   -arch armv6 -no-integrated-as -x assembler -c %s 2>%t
 // RUN: FileCheck -check-prefix=ARMV6 --input-file %t %s
 //
 // CHECK-ARMV6: as{{(.exe)?}}" "-arch" "armv6" "-o"
