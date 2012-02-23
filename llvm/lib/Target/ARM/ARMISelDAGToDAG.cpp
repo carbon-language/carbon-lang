@@ -2376,7 +2376,6 @@ SDNode *ARMDAGToDAGISel::SelectCMOVOp(SDNode *N) {
 }
 
 SDNode *ARMDAGToDAGISel::SelectConditionalOp(SDNode *N) {
-  EVT VT = N->getValueType(0);
   SDValue FalseVal = N->getOperand(0);
   SDValue TrueVal  = N->getOperand(1);
   ARMCC::CondCodes CCVal =
