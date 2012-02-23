@@ -696,12 +696,15 @@ class OpaqueValueExpr : public Expr {
 
 public:
   OpaqueValueExpr(SourceLocation Loc, QualType T, ExprValueKind VK,
-                  ExprObjectKind OK = OK_Ordinary)
+                  ExprObjectKind OK = OK_Ordinary,
+                  Expr *SourceExpr = 0)
     : Expr(OpaqueValueExprClass, T, VK, OK,
-           T->isDependentType(), T->isDependentType(),
+           T->isDependentType(), 
+           T->isDependentType() || 
+           (SourceExpr && SourceExpr->isValueDependent()),
            T->isInstantiationDependentType(),
            false),
-      SourceExpr(0), Loc(Loc) {
+      SourceExpr(SourceExpr), Loc(Loc) {
   }
 
   /// Given an expression which invokes a copy constructor --- i.e.  a
@@ -735,7 +738,6 @@ public:
   /// expression which binds the opaque value expression in the first
   /// place.
   Expr *getSourceExpr() const { return SourceExpr; }
-  void setSourceExpr(Expr *e) { SourceExpr = e; }
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() == OpaqueValueExprClass;
@@ -3063,8 +3065,7 @@ public:
     SubExprs[COND] = cond;
     SubExprs[LHS] = lhs;
     SubExprs[RHS] = rhs;
-
-    OpaqueValue->setSourceExpr(common);
+    assert(OpaqueValue->getSourceExpr() == common && "Wrong opaque value");
   }
 
   /// \brief Build an empty conditional operator.

@@ -222,8 +222,8 @@ OpaqueValueExpr *PseudoOpBuilder::capture(Expr *e) {
   // Make a new OVE whose source is the given expression.
   OpaqueValueExpr *captured = 
     new (S.Context) OpaqueValueExpr(GenericLoc, e->getType(),
-                                    e->getValueKind());
-  captured->setSourceExpr(e);
+                                    e->getValueKind(), e->getObjectKind(),
+                                    e);
   
   // Make sure we bind that in the semantics.
   addSemanticExpr(captured);
