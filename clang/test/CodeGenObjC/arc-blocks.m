@@ -510,3 +510,7 @@ void test13(id x) {
   // CHECK-NEXT: ret void
 }
 
+// <rdar://problem/10907510>
+void test14() {
+  void (^const x[1])(void) = { ^{} };
+}

@@ -905,10 +905,8 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
       }
     }
 
-    QualType elementType = E->getType().getCanonicalType();
-    elementType = CGF.getContext().getQualifiedType(
-                    cast<ArrayType>(elementType)->getElementType(),
-                    elementType.getQualifiers() + Dest.getQualifiers());
+    QualType elementType =
+        CGF.getContext().getAsArrayType(E->getType())->getElementType();
 
     llvm::PointerType *APType =
       cast<llvm::PointerType>(DestPtr->getType());
