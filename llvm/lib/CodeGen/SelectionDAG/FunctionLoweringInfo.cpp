@@ -368,7 +368,7 @@ int FunctionLoweringInfo::getArgumentFrameIndex(const Argument *A) {
     ByValArgFrameIndexMap.find(A);
   if (I != ByValArgFrameIndexMap.end())
     return I->second;
-  DEBUG(dbgs() << "Argument does not have assigned frame index!");
+  DEBUG(dbgs() << "Argument does not have assigned frame index!\n");
   return 0;
 }
 
