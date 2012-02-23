@@ -460,9 +460,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (MO.isRegMask())
-        for (unsigned i = 0, e = TRI->getNumRegs(); i != e; ++i)
-          if (MO.clobbersPhysReg(i))
-            LiveRegs.reset(i);
+        LiveRegs.clearBitsNotInMask(MO.getRegMask());
       if (!MO.isReg()) continue;
       unsigned Reg = MO.getReg();
       if (Reg == 0) continue;
