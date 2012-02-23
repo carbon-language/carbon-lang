@@ -134,8 +134,9 @@ private:
 
   /// isUsed / isUnused - Test if a register is currently being used.
   ///
-  bool isUsed(unsigned Reg) const   { return !RegsAvailable.test(Reg); }
-  bool isUnused(unsigned Reg) const { return RegsAvailable.test(Reg); }
+  bool isUsed(unsigned Reg) const   {
+    return !RegsAvailable.test(Reg) || ReservedRegs.test(Reg);
+  }
 
   /// isAliasUsed - Is Reg or an alias currently in use?
   bool isAliasUsed(unsigned Reg) const;

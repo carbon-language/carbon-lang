@@ -59,9 +59,6 @@ void RegScavenger::initRegState() {
   // All registers started out unused.
   RegsAvailable.set();
 
-  // Reserved registers are always used.
-  RegsAvailable ^= ReservedRegs;
-
   if (!MBB)
     return;
 
@@ -225,9 +222,11 @@ void RegScavenger::forward() {
 
 void RegScavenger::getRegsUsed(BitVector &used, bool includeReserved) {
   used = RegsAvailable;
-  if (!includeReserved)
-    used |= ReservedRegs;
   used.flip();
+  if (includeReserved)
+    used |= ReservedRegs;
+  else
+    used.reset(ReservedRegs);
 }
 
 unsigned RegScavenger::FindUnusedReg(const TargetRegisterClass *RC) const {
