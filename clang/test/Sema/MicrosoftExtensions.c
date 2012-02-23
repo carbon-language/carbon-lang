@@ -86,3 +86,17 @@ typedef struct {
 typedef struct {
   AA; // expected-warning {{anonymous structs are a Microsoft extension}}
 } BB;
+
+__declspec(deprecated("This is deprecated")) enum DE1 { one, two } e1;
+struct __declspec(deprecated) DS1 { int i; float f; };
+
+#define MY_TEXT		"This is also deprecated"
+__declspec(deprecated(MY_TEXT)) void Dfunc1( void ) {}
+
+void test( void ) {
+	e1 = one;	// expected-warning {{'e1' is deprecated: This is deprecated}}
+	struct DS1 s = { 0 };	// expected-warning {{'DS1' is deprecated}}
+	Dfunc1();	// expected-warning {{'Dfunc1' is deprecated: This is also deprecated}}
+
+	enum DE1 no;	// no warning because E1 is not deprecated
+}
