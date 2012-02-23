@@ -2675,7 +2675,7 @@ namespace {
     
   public:
     explicit NonTrivialCallFinder(ASTContext &Context) 
-    : EvaluatedExprVisitor(Context), NonTrivial(false) { }
+      : Inherited(Context), NonTrivial(false) { }
     
     bool hasNonTrivialCall() const { return NonTrivial; }
     
