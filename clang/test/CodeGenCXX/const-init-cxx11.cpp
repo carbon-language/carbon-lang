@@ -254,6 +254,42 @@ namespace NonLiteralConstexpr {
   }
 }
 
+// PR12067
+namespace VirtualMembers {
+  struct A {
+    constexpr A(double d) : d(d) {}
+    virtual void f();
+    double d;
+  };
+  struct B : A {
+    constexpr B() : A(2.0), c{'h', 'e', 'l', 'l', 'o'} {}
+    constexpr B(int n) : A(n), c{'w', 'o', 'r', 'l', 'd'} {}
+    virtual void g();
+    char c[5];
+  };
+  struct C {
+    constexpr C() : n(64) {}
+    int n;
+  };
+  struct D : C, A, B {
+    constexpr D() : A(1.0), B(), s(5) {}
+    short s;
+  };
+  struct E : D, B {
+    constexpr E() : B(3), c{'b','y','e'} {}
+    char c[3];
+  };
+
+  // CHECK: @_ZN14VirtualMembers1eE = global { i8**, double, i32, i8**, double, [5 x i8], i16, i8**, double, [5 x i8], [3 x i8] } { i8** getelementptr inbounds ([11 x i8*]* @_ZTVN14VirtualMembers1EE, i64 0, i64 2), double 1.000000e+00, i32 64, i8** getelementptr inbounds ([11 x i8*]* @_ZTVN14VirtualMembers1EE, i64 0, i64 5), double 2.000000e+00, [5 x i8] c"hello", i16 5, i8** getelementptr inbounds ([11 x i8*]* @_ZTVN14VirtualMembers1EE, i64 0, i64 9), double 3.000000e+00, [5 x i8] c"world", [3 x i8] c"bye" }
+  E e;
+
+  struct nsMemoryImpl {
+    virtual void f();
+  };
+  // CHECK: @_ZN14VirtualMembersL13sGlobalMemoryE = internal global { i8** } { i8** getelementptr inbounds ([3 x i8*]* @_ZTVN14VirtualMembers12nsMemoryImplE, i64 0, i64 2) }
+  static nsMemoryImpl sGlobalMemory;
+}
+
 // Constant initialization tests go before this point,
 // dynamic initialization tests go after.
 

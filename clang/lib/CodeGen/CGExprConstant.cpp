@@ -53,8 +53,13 @@ private:
     NextFieldOffsetInChars(CharUnits::Zero()),
     LLVMStructAlignment(CharUnits::One()) { }
 
+  void AppendVTablePointer(BaseSubobject Base, llvm::Constant *VTable,
+                           const CXXRecordDecl *VTableClass);
+
   void AppendField(const FieldDecl *Field, uint64_t FieldOffset,
                    llvm::Constant *InitExpr);
+
+  void AppendBytes(CharUnits FieldOffsetInChars, llvm::Constant *InitCst);
 
   void AppendBitField(const FieldDecl *Field, uint64_t FieldOffset,
                       llvm::ConstantInt *InitExpr);
@@ -66,7 +71,9 @@ private:
   void ConvertStructToPacked();
 
   bool Build(InitListExpr *ILE);
-  void Build(const APValue &Val, QualType ValTy);
+  void Build(const APValue &Val, const RecordDecl *RD, bool IsPrimaryBase,
+             llvm::Constant *VTable, const CXXRecordDecl *VTableClass,
+             CharUnits BaseOffset);
   llvm::Constant *Finalize(QualType Ty);
 
   CharUnits getAlignment(const llvm::Constant *C) const {
@@ -81,13 +88,35 @@ private:
   }
 };
 
+void ConstStructBuilder::AppendVTablePointer(BaseSubobject Base,
+                                             llvm::Constant *VTable,
+                                             const CXXRecordDecl *VTableClass) {
+  // Find the appropriate vtable within the vtable group.
+  uint64_t AddressPoint =
+    CGM.getVTableContext().getVTableLayout(VTableClass).getAddressPoint(Base);
+  llvm::Value *Indices[] = {
+    llvm::ConstantInt::get(CGM.Int64Ty, 0),
+    llvm::ConstantInt::get(CGM.Int64Ty, AddressPoint)
+  };
+  llvm::Constant *VTableAddressPoint =
+    llvm::ConstantExpr::getInBoundsGetElementPtr(VTable, Indices);
+
+  // Add the vtable at the start of the object.
+  AppendBytes(CharUnits::Zero(), VTableAddressPoint);
+}
+
 void ConstStructBuilder::
 AppendField(const FieldDecl *Field, uint64_t FieldOffset,
             llvm::Constant *InitCst) {
-
   const ASTContext &Context = CGM.getContext();
 
   CharUnits FieldOffsetInChars = Context.toCharUnitsFromBits(FieldOffset);
+
+  AppendBytes(FieldOffsetInChars, InitCst);
+}
+
+void ConstStructBuilder::
+AppendBytes(CharUnits FieldOffsetInChars, llvm::Constant *InitCst) {
 
   assert(NextFieldOffsetInChars <= FieldOffsetInChars
          && "Field offset mismatch!");
@@ -399,23 +428,56 @@ bool ConstStructBuilder::Build(InitListExpr *ILE) {
   return true;
 }
 
-void ConstStructBuilder::Build(const APValue &Val, QualType ValTy) {
-  RecordDecl *RD = ValTy->getAs<RecordType>()->getDecl();
+namespace {
+struct BaseInfo {
+  BaseInfo(const CXXRecordDecl *Decl, CharUnits Offset, unsigned Index)
+    : Decl(Decl), Offset(Offset), Index(Index) {
+  }
+
+  const CXXRecordDecl *Decl;
+  CharUnits Offset;
+  unsigned Index;
+
+  bool operator<(const BaseInfo &O) const { return Offset < O.Offset; }
+};
+}
+
+void ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
+                               bool IsPrimaryBase, llvm::Constant *VTable,
+                               const CXXRecordDecl *VTableClass,
+                               CharUnits Offset) {
   const ASTRecordLayout &Layout = CGM.getContext().getASTRecordLayout(RD);
 
-  if (CXXRecordDecl *CD = dyn_cast<CXXRecordDecl>(RD)) {
+  if (const CXXRecordDecl *CD = dyn_cast<CXXRecordDecl>(RD)) {
+    // Add a vtable pointer, if we need one and it hasn't already been added.
+    if (CD->isDynamicClass() && !IsPrimaryBase)
+      AppendVTablePointer(BaseSubobject(CD, Offset), VTable, VTableClass);
+
+    // Accumulate and sort bases, in order to visit them in address order, which
+    // may not be the same as declaration order.
+    llvm::SmallVector<BaseInfo, 8> Bases;
+    Bases.reserve(CD->getNumBases());
     unsigned BaseNo = 0;
-    for (CXXRecordDecl::base_class_iterator Base = CD->bases_begin(),
+    for (CXXRecordDecl::base_class_const_iterator Base = CD->bases_begin(),
          BaseEnd = CD->bases_end(); Base != BaseEnd; ++Base, ++BaseNo) {
-      // Build the base class subobject at the appropriately-offset location
-      // within this object.
+      assert(!Base->isVirtual() && "should not have virtual bases here");
       const CXXRecordDecl *BD = Base->getType()->getAsCXXRecordDecl();
       CharUnits BaseOffset = Layout.getBaseClassOffset(BD);
-      NextFieldOffsetInChars -= BaseOffset;
+      Bases.push_back(BaseInfo(BD, BaseOffset, BaseNo));
+    }
+    std::stable_sort(Bases.begin(), Bases.end());
 
-      Build(Val.getStructBase(BaseNo), Base->getType());
+    for (unsigned I = 0, N = Bases.size(); I != N; ++I) {
+      BaseInfo &Base = Bases[I];
+      // Build the base class subobject at the appropriately-offset location
+      // within this object.
+      NextFieldOffsetInChars -= Base.Offset;
 
-      NextFieldOffsetInChars += BaseOffset;
+      bool IsPrimaryBase = Layout.getPrimaryBase() == Base.Decl;
+      Build(Val.getStructBase(Base.Index), Base.Decl, IsPrimaryBase,
+            VTable, VTableClass, Offset + Base.Offset);
+
+      NextFieldOffsetInChars += Base.Offset;
     }
   }
 
@@ -532,7 +594,15 @@ llvm::Constant *ConstStructBuilder::BuildStruct(CodeGenModule &CGM,
                                                 const APValue &Val,
                                                 QualType ValTy) {
   ConstStructBuilder Builder(CGM, CGF);
-  Builder.Build(Val, ValTy);
+
+  const RecordDecl *RD = ValTy->castAs<RecordType>()->getDecl();
+  const CXXRecordDecl *CD = dyn_cast<CXXRecordDecl>(RD);
+  llvm::Constant *VTable = 0;
+  if (CD && CD->isDynamicClass())
+    VTable = CGM.getVTables().GetAddrOfVTable(CD);
+
+  Builder.Build(Val, RD, false, VTable, CD, CharUnits::Zero());
+
   return Builder.Finalize(ValTy);
 }
 
