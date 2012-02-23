@@ -35,7 +35,7 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
   // point. It doesn't need to be the actual IP where the uses of the returned
   // cast will be added, but it must dominate such IP.
   // We use this precondition to assert that we can produce a cast that will
-  // dominate all its uses. In particular, this is crussial for the case
+  // dominate all its uses. In particular, this is crucial for the case
   // where the builder's insertion point *is* the point where we were asked
   // to put the cast.
   // Since we don't know the the builder's insertion point is actually
