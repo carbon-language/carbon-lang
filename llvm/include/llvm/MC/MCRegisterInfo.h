@@ -107,9 +107,9 @@ public:
 ///
 struct MCRegisterDesc {
   const char *Name;         // Printable name for the reg (for debugging)
-  int        Overlaps;      // Overlapping registers, described above
-  int        SubRegs;       // Sub-register set, described above
-  int        SuperRegs;     // Super-register set, described above
+  unsigned   Overlaps;      // Overlapping registers, described above
+  unsigned   SubRegs;       // Sub-register set, described above
+  unsigned   SuperRegs;     // Super-register set, described above
 };
 
 /// MCRegisterInfo base class - We assume that the target defines a static
@@ -213,7 +213,6 @@ public:
   ///
   const unsigned *getAliasSet(unsigned RegNo) const {
     // The Overlaps set always begins with Reg itself.
-    if (get(RegNo).Overlaps < 0) return 0;
     return Overlaps + get(RegNo).Overlaps + 1;
   }
 
@@ -223,7 +222,6 @@ public:
   /// These are exactly the registers in { x | regsOverlap(x, Reg) }.
   ///
   const unsigned *getOverlaps(unsigned RegNo) const {
-    if (get(RegNo).Overlaps < 0) return 0;
     return Overlaps + get(RegNo).Overlaps;
   }
 
@@ -233,7 +231,6 @@ public:
   /// relations. e.g. X86::RAX's sub-register list is EAX, AX, AL, AH.
   ///
   const unsigned *getSubRegisters(unsigned RegNo) const {
-    if (get(RegNo).SubRegs < 0) return 0;
     return SubRegs + get(RegNo).SubRegs;
   }
 
@@ -243,7 +240,6 @@ public:
   /// relations. e.g. X86::AL's super-register list is AX, EAX, RAX.
   ///
   const unsigned *getSuperRegisters(unsigned RegNo) const {
-    if (get(RegNo).SuperRegs < 0) return 0;
     return SuperRegs + get(RegNo).SuperRegs;
   }
 
