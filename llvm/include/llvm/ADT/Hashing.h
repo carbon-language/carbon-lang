@@ -19,6 +19,7 @@
 #include "llvm/Support/AlignOf.h"
 #include "llvm/Support/Compiler.h"
 #include "llvm/Support/DataTypes.h"
+#include <cstring>
 
 namespace llvm {
 
@@ -140,39 +141,32 @@ private:
     mix(uint32_t(Val));
   }
 
-  template<typename T, bool isAligned>
-  struct addBitsImpl {
-    static void add(GeneralHash &Hash, const T *I, const T *E) {
-      Hash.addUnaligned(
-        reinterpret_cast<const uint8_t *>(I),
-        reinterpret_cast<const uint8_t *>(E));
+  // Add a range of bytes from I to E.
+  void addBytes(const char *I, const char *E) {
+    uint32_t Data;
+    // Note that aliasing rules forbid us from dereferencing
+    // reinterpret_cast<uint32_t *>(I) even if I happens to be suitably
+    // aligned, so we use memcpy instead.
+    for (; E - I >= ptrdiff_t(sizeof Data); I += sizeof Data) {
+      // A clever compiler should be able to turn this memcpy into a single
+      // aligned or unaligned load (depending on the alignment of the type T
+      // that was used in the call to addBits).
+      std::memcpy(&Data, I, sizeof Data);
+      mix(Data);
     }
-  };
-
-  template<typename T>
-  struct addBitsImpl<T, true> {
-    static void add(GeneralHash &Hash, const T *I, const T *E) {
-      Hash.addAligned(
-        reinterpret_cast<const uint32_t *>(I),
-        reinterpret_cast<const uint32_t *>(E));
+    if (I != E) {
+      Data = 0;
+      std::memcpy(&Data, I, E - I);
+      mix(Data);
     }
-  };
+  }
 
   // Add a range of bits from I to E.
   template<typename T>
   void addBits(const T *I, const T *E) {
-    addBitsImpl<T, AlignOf<T>::Alignment_GreaterEqual_4Bytes>::add(*this, I, E);
+    addBytes(reinterpret_cast<const char *>(I),
+             reinterpret_cast<const char *>(E));
   }
-
-  // Add a range of uint32s
-  void addAligned(const uint32_t *I, const uint32_t *E) {
-    while (I < E) {
-      mix(*I++);
-    }
-  }
-
-  // Add a possibly unaligned sequence of bytes.
-  void addUnaligned(const uint8_t *I, const uint8_t *E);
 };
 
 } // end namespace llvm
