@@ -3055,39 +3055,31 @@ static Expr *EvalAddr(Expr *E, SmallVectorImpl<DeclRefExpr *> &refVars) {
   case Stmt::ImplicitCastExprClass:
   case Stmt::CStyleCastExprClass:
   case Stmt::CXXFunctionalCastExprClass:
-  case Stmt::ObjCBridgedCastExprClass: {
-    Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
-    QualType T = SubExpr->getType();
-
-    if (cast<CastExpr>(E)->getCastKind() == CK_CopyAndAutoreleaseBlockObject)
-      return 0;
-    else if (SubExpr->getType()->isPointerType() ||
-             SubExpr->getType()->isBlockPointerType() ||
-             SubExpr->getType()->isObjCQualifiedIdType())
-      return EvalAddr(SubExpr, refVars);
-    else if (T->isArrayType())
-      return EvalVal(SubExpr, refVars);
-    else
-      return 0;
-  }
-
-  // C++ casts.  For dynamic casts, static casts, and const casts, we
-  // are always converting from a pointer-to-pointer, so we just blow
-  // through the cast.  In the case the dynamic cast doesn't fail (and
-  // return NULL), we take the conservative route and report cases
-  // where we return the address of a stack variable.  For Reinterpre
-  // FIXME: The comment about is wrong; we're not always converting
-  // from pointer to pointer. I'm guessing that this code should also
-  // handle references to objects.
+  case Stmt::ObjCBridgedCastExprClass:
   case Stmt::CXXStaticCastExprClass:
   case Stmt::CXXDynamicCastExprClass:
   case Stmt::CXXConstCastExprClass:
   case Stmt::CXXReinterpretCastExprClass: {
-      Expr *S = cast<CXXNamedCastExpr>(E)->getSubExpr();
-      if (S->getType()->isPointerType() || S->getType()->isBlockPointerType())
-        return EvalAddr(S, refVars);
-      else
-        return NULL;
+    Expr* SubExpr = cast<CastExpr>(E)->getSubExpr();
+    switch (cast<CastExpr>(E)->getCastKind()) {
+    case CK_BitCast:
+    case CK_LValueToRValue:
+    case CK_NoOp:
+    case CK_BaseToDerived:
+    case CK_DerivedToBase:
+    case CK_UncheckedDerivedToBase:
+    case CK_Dynamic:
+    case CK_CPointerToObjCPointerCast:
+    case CK_BlockPointerToObjCPointerCast:
+    case CK_AnyPointerToBlockPointerCast:
+      return EvalAddr(SubExpr, refVars);
+
+    case CK_ArrayToPointerDecay:
+      return EvalVal(SubExpr, refVars);
+
+    default:
+      return 0;
+    }
   }
 
   case Stmt::MaterializeTemporaryExprClass:
