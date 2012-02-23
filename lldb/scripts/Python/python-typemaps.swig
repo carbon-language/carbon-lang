@@ -288,3 +288,45 @@
 %typemap(freearg) (double* array, size_t array_len) {
   free($1);
 }
+
+// these typemaps wrap SBModule::GetVersion() from requiring a memory buffer
+// to the more Pythonic style where a list is returned and no previous allocation
+// is necessary - this will break if more than 50 versions are ever returned
+%typemap(typecheck) (uint32_t *versions, uint32_t num_versions) {
+    $1 = ($input == Py_None ? 1 : 0);
+}
+
+%typemap(in, numinputs=0) (uint32_t *versions) {
+    $1 = (uint32_t*)malloc(sizeof(uint32_t) * 50);
+}
+
+%typemap(in, numinputs=0) (uint32_t num_versions) {
+    $1 = 50;
+}
+
+%typemap(argout) (uint32_t *versions, uint32_t num_versions) {
+    uint32_t count = result;
+    if (count >= $2)
+        count = $2;
+    PyObject* list = PyList_New(count);
+    for (int j = 0; j < count; j++)
+    {
+        if ($1[j] < UINT32_MAX)
+        {
+            PyObject* item = PyInt_FromLong($1[j]);
+            int ok = PyList_SetItem(list,j,item);
+            if (ok != 0)
+            {
+                $result = Py_None;
+                break;
+            }
+        }
+        else
+            break;
+    }
+    $result = list;
+}
+
+%typemap(freearg) (uint32_t *versions) {
+    free($1);
+}
