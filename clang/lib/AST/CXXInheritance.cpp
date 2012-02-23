@@ -23,12 +23,15 @@ using namespace clang;
 void CXXBasePaths::ComputeDeclsFound() {
   assert(NumDeclsFound == 0 && !DeclsFound &&
          "Already computed the set of declarations");
-  
-  std::set<NamedDecl *> Decls;
-  for (CXXBasePaths::paths_iterator Path = begin(), PathEnd = end();
-       Path != PathEnd; ++Path)
-    Decls.insert(*Path->Decls.first);
-  
+
+  SmallVector<NamedDecl *, 8> Decls;
+  for (paths_iterator Path = begin(), PathEnd = end(); Path != PathEnd; ++Path)
+    Decls.push_back(*Path->Decls.first);
+
+  // Eliminate duplicated decls.
+  llvm::array_pod_sort(Decls.begin(), Decls.end());
+  std::unique(Decls.begin(), Decls.end());
+
   NumDeclsFound = Decls.size();
   DeclsFound = new NamedDecl * [NumDeclsFound];
   std::copy(Decls.begin(), Decls.end(), DeclsFound);
