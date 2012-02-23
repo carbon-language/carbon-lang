@@ -1270,7 +1270,9 @@ BugReport::~BugReport() {
 void BugReport::Profile(llvm::FoldingSetNodeID& hash) const {
   hash.AddPointer(&BT);
   hash.AddString(Description);
-  if (Location.isValid()) {
+  if (UniqueingLocation.isValid()) {
+    UniqueingLocation.Profile(hash);
+  } else if (Location.isValid()) {
     Location.Profile(hash);
   } else {
     assert(ErrorNode);

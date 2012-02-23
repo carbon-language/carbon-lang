@@ -71,6 +71,7 @@ protected:
   std::string ShortDescription;
   std::string Description;
   PathDiagnosticLocation Location;
+  PathDiagnosticLocation UniqueingLocation;
   const ExplodedNode *ErrorNode;
   SmallVector<SourceRange, 4> Ranges;
   ExtraTextList ExtraText;
@@ -94,6 +95,18 @@ public:
   BugReport(BugType& bt, StringRef desc, PathDiagnosticLocation l)
     : BT(bt), Description(desc), Location(l), ErrorNode(0),
       Callbacks(F.getEmptyList()) {}
+
+  /// \brief Create a BugReport with a custom uniqueing location.
+  ///
+  /// The reports that have the same report location, description, bug type, and
+  /// ranges are uniqued - only one of the equivalent reports will be presented
+  /// to the user. This method allows to rest the location which should be used
+  /// for uniquing reports. For example, memory leaks checker, could set this to
+  /// the allocation site, rather then the location where the bug is reported.
+  BugReport(BugType& bt, StringRef desc, const ExplodedNode *errornode,
+            PathDiagnosticLocation LocationToUnique)
+    : BT(bt), Description(desc), UniqueingLocation(LocationToUnique),
+      ErrorNode(errornode), Callbacks(F.getEmptyList()) {}
 
   virtual ~BugReport();
 

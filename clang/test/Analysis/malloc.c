@@ -379,7 +379,7 @@ void mallocEscapeMalloc() {
 
 void mallocMalloc() {
   int *p = malloc(12);
-  p = malloc(12); // expected-warning{{Memory is never released; potential memory leak}}
+  p = malloc(12); // expected-warning 2 {{Memory is never released; potential memory leak}}
 }
 
 void mallocFreeMalloc() {
@@ -666,7 +666,7 @@ int testStrndup(const char *s, unsigned validIndex, unsigned size) {
   char *s2 = strndup(s, size);
   s2 [validIndex + 1] = 'b';
   if (s2[validIndex] != 'a')
-    return 0;// expected-warning {{Memory is never released; potential memory leak}}
+    return 0;
   else
     return 1;// expected-warning {{Memory is never released; potential memory leak}}
 }

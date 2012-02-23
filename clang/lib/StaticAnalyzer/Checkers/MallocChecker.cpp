@@ -186,6 +186,11 @@ private:
   static bool SummarizeRegion(raw_ostream &os, const MemRegion *MR);
   void ReportBadFree(CheckerContext &C, SVal ArgVal, SourceRange range) const;
 
+  /// Find the location of the allocation for Sym on the path leading to the
+  /// exploded node N.
+  const Stmt *getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
+                                CheckerContext &C) const;
+
   void reportLeak(SymbolRef Sym, ExplodedNode *N, CheckerContext &C) const;
 
   /// The bug visitor which allows us to print extra diagnostics along the
@@ -766,6 +771,24 @@ ProgramStateRef MallocChecker::CallocMem(CheckerContext &C, const CallExpr *CE){
   return MallocMemAux(C, CE, TotalSize, zeroVal, state);
 }
 
+const Stmt *
+MallocChecker::getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
+                                 CheckerContext &C) const {
+  // Walk the ExplodedGraph backwards and find the first node that referred to
+  // the tracked symbol.
+  const ExplodedNode *AllocNode = N;
+
+  while (N) {
+    if (!N->getState()->get<RegionState>(Sym))
+      break;
+    AllocNode = N;
+    N = N->pred_empty() ? NULL : *(N->pred_begin());
+  }
+
+  ProgramPoint P = AllocNode->getLocation();
+  return cast<clang::PostStmt>(P).getStmt();
+}
+
 void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
                                CheckerContext &C) const {
   assert(N);
@@ -779,8 +802,16 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
     BT_Leak->setSuppressOnSink(true);
   }
 
+  // Most bug reports are cached at the location where they occurred.
+  // With leaks, we want to unique them by the location where they were
+  // allocated, and only report a single path.
+  const Stmt *AllocStmt = getAllocationSite(N, Sym, C);
+  PathDiagnosticLocation LocUsedForUniqueing =
+    PathDiagnosticLocation::createBegin(AllocStmt, C.getSourceManager(),
+                                        N->getLocationContext());
+
   BugReport *R = new BugReport(*BT_Leak,
-                  "Memory is never released; potential memory leak", N);
+    "Memory is never released; potential memory leak", N, LocUsedForUniqueing);
   R->addVisitor(new MallocBugVisitor(Sym));
   C.EmitReport(R);
 }
@@ -818,14 +849,17 @@ void MallocChecker::checkDeadSymbols(SymbolReaper &SymReaper,
     }
   }
 
-  ExplodedNode *N = C.addTransition(state->set<RegionState>(RS));
+  // Generate leak node.
+  static SimpleProgramPointTag Tag("MallocChecker : DeadSymbolsLeak");
+  ExplodedNode *N = C.addTransition(C.getState(), C.getPredecessor(), &Tag);
 
-  if (N && generateReport) {
+  if (generateReport) {
     for (llvm::SmallVector<SymbolRef, 2>::iterator
          I = Errors.begin(), E = Errors.end(); I != E; ++I) {
       reportLeak(*I, N, C);
     }
   }
+  C.addTransition(state->set<RegionState>(RS), N);
 }
 
 void MallocChecker::checkEndPath(CheckerContext &C) const {
