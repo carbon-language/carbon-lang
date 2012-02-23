@@ -18,6 +18,7 @@
 #include "clang/AST/DeclObjC.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/DeclTemplate.h"
+#include "clang/AST/EvaluatedExprVisitor.h"
 #include "clang/AST/RecordLayout.h"
 #include "clang/AST/StmtVisitor.h"
 #include "clang/Lex/LiteralSupport.h"
@@ -2662,6 +2663,60 @@ bool Expr::isConstantInitializer(ASTContext &Ctx, bool IsForRef) const {
                                             ->isConstantInitializer(Ctx, false);
   }
   return isEvaluatable(Ctx);
+}
+
+namespace {
+  /// \brief Look for a call to a non-trivial function within an expression.
+  class NonTrivialCallFinder : public EvaluatedExprVisitor<NonTrivialCallFinder>
+  {
+    typedef EvaluatedExprVisitor<NonTrivialCallFinder> Inherited;
+    
+    bool NonTrivial;
+    
+  public:
+    explicit NonTrivialCallFinder(ASTContext &Context) 
+    : EvaluatedExprVisitor(Context), NonTrivial(false) { }
+    
+    bool hasNonTrivialCall() const { return NonTrivial; }
+    
+    void VisitCallExpr(CallExpr *E) {
+      if (CXXMethodDecl *Method
+          = dyn_cast_or_null<CXXMethodDecl>(E->getCalleeDecl())) {
+        if (Method->isTrivial()) {
+          // Recurse to children of the call.
+          Inherited::VisitStmt(E);
+          return;
+        }
+      }
+      
+      NonTrivial = true;
+    }
+    
+    void VisitCXXConstructExpr(CXXConstructExpr *E) {
+      if (E->getConstructor()->isTrivial()) {
+        // Recurse to children of the call.
+        Inherited::VisitStmt(E);
+        return;
+      }
+      
+      NonTrivial = true;
+    }
+    
+    void VisitCXXBindTemporaryExpr(CXXBindTemporaryExpr *E) {
+      if (E->getTemporary()->getDestructor()->isTrivial()) {
+        Inherited::VisitStmt(E);
+        return;
+      }
+      
+      NonTrivial = true;
+    }
+  };
+}
+
+bool Expr::hasNonTrivialCall(ASTContext &Ctx) {
+  NonTrivialCallFinder Finder(Ctx);
+  Finder.Visit(this);
+  return Finder.hasNonTrivialCall();  
 }
 
 /// isNullPointerConstant - C99 6.3.2.3p3 - Return whether this is a null 

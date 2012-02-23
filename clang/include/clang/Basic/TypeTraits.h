@@ -68,7 +68,8 @@ namespace clang {
     BTT_IsConvertible,
     BTT_IsConvertibleTo,
     BTT_IsSame,
-    BTT_TypeCompatible
+    BTT_TypeCompatible,
+    BTT_IsTriviallyAssignable
   };
 
   /// ArrayTypeTrait - Names for the array type traits.

@@ -39,6 +39,14 @@ struct DerivesEmpty : Empty {};
 struct HasCons { HasCons(int); };
 struct HasCopyAssign { HasCopyAssign operator =(const HasCopyAssign&); };
 struct HasMoveAssign { HasMoveAssign operator =(const HasMoveAssign&&); };
+struct HasDefaultTrivialCopyAssign { 
+  HasDefaultTrivialCopyAssign &operator =(const HasDefaultTrivialCopyAssign&)
+    = default; 
+};
+struct TrivialMoveButNotCopy { 
+  TrivialMoveButNotCopy &operator=(TrivialMoveButNotCopy&&) = default;
+  TrivialMoveButNotCopy &operator=(const TrivialMoveButNotCopy&);
+};
 struct HasDest { ~HasDest(); };
 class  HasPriv { int priv; };
 class  HasProt { protected: int prot; };
@@ -1637,6 +1645,39 @@ void is_trivially_copyable()
   { int arr[F(__is_trivially_copyable(DerivesHasVirt))]; }
   { int arr[F(__is_trivially_copyable(void))]; }
   { int arr[F(__is_trivially_copyable(cvoid))]; }
+
+  { int arr[T((__is_trivially_assignable(int&, int)))]; }
+  { int arr[T((__is_trivially_assignable(int&, int&)))]; }
+  { int arr[T((__is_trivially_assignable(int&, int&&)))]; }
+  { int arr[T((__is_trivially_assignable(int&, const int&)))]; }
+  { int arr[T((__is_trivially_assignable(POD&, POD)))]; }
+  { int arr[T((__is_trivially_assignable(POD&, POD&)))]; }
+  { int arr[T((__is_trivially_assignable(POD&, POD&&)))]; }
+  { int arr[T((__is_trivially_assignable(POD&, const POD&)))]; }
+  { int arr[T((__is_trivially_assignable(int*&, int*)))]; }
+
+  { int arr[F((__is_trivially_assignable(int*&, float*)))]; }
+  { int arr[F((__is_trivially_assignable(HasCopyAssign&, HasCopyAssign)))]; }
+  { int arr[F((__is_trivially_assignable(HasCopyAssign&, HasCopyAssign&)))]; }
+  { int arr[F((__is_trivially_assignable(HasCopyAssign&, const HasCopyAssign&)))]; }
+  { int arr[F((__is_trivially_assignable(HasCopyAssign&, HasCopyAssign&&)))]; }
+  { int arr[F((__is_trivially_assignable(TrivialMoveButNotCopy&,
+                                        TrivialMoveButNotCopy&)))]; }
+  { int arr[F((__is_trivially_assignable(TrivialMoveButNotCopy&,
+                                        const TrivialMoveButNotCopy&)))]; }
+
+  // FIXME: The following answers are wrong, because we don't properly
+  // mark user-declared constructors/assignment operators/destructors
+  // that are defaulted on their first declaration as trivial when we
+  // can.
+  { int arr[F((__is_trivially_assignable(HasDefaultTrivialCopyAssign&,
+                                         HasDefaultTrivialCopyAssign&)))]; }
+  { int arr[F((__is_trivially_assignable(HasDefaultTrivialCopyAssign&,
+                                       const HasDefaultTrivialCopyAssign&)))]; }
+  { int arr[F((__is_trivially_assignable(TrivialMoveButNotCopy&,
+                                         TrivialMoveButNotCopy)))]; }
+  { int arr[F((__is_trivially_assignable(TrivialMoveButNotCopy&,
+                                         TrivialMoveButNotCopy&&)))]; }
 }
 
 void array_rank() {

@@ -3301,6 +3301,54 @@ static bool EvaluateBinaryTypeTrait(Sema &Self, BinaryTypeTrait BTT,
     ExprResult Result = Init.Perform(Self, To, Kind, MultiExprArg(&FromPtr, 1));
     return !Result.isInvalid() && !SFINAE.hasErrorOccurred();
   }
+      
+  case BTT_IsTriviallyAssignable: {
+    // C++11 [meta.unary.prop]p3:
+    //   is_trivially_assignable is defined as:
+    //     is_assignable<T, U>::value is true and the assignment, as defined by
+    //     is_assignable, is known to call no operation that is not trivial
+    //
+    //   is_assignable is defined as:
+    //     The expression declval<T>() = declval<U>() is well-formed when 
+    //     treated as an unevaluated operand (Clause 5).
+    //
+    //   For both, T and U shall be complete types, (possibly cv-qualified) 
+    //   void, or arrays of unknown bound.
+    if (!LhsT->isVoidType() && !LhsT->isIncompleteArrayType() &&
+        Self.RequireCompleteType(KeyLoc, LhsT, 
+          diag::err_incomplete_type_used_in_type_trait_expr))
+      return false;
+    if (!RhsT->isVoidType() && !RhsT->isIncompleteArrayType() &&
+        Self.RequireCompleteType(KeyLoc, RhsT, 
+          diag::err_incomplete_type_used_in_type_trait_expr))
+      return false;
+
+    // cv void is never assignable.
+    if (LhsT->isVoidType() || RhsT->isVoidType())
+      return false;
+
+    // Build expressions that emulate the effect of declval<T>() and 
+    // declval<U>().
+    if (LhsT->isObjectType() || LhsT->isFunctionType())
+      LhsT = Self.Context.getRValueReferenceType(LhsT);
+    if (RhsT->isObjectType() || RhsT->isFunctionType())
+      RhsT = Self.Context.getRValueReferenceType(RhsT);
+    OpaqueValueExpr Lhs(KeyLoc, LhsT.getNonLValueExprType(Self.Context),
+                        Expr::getValueKindForType(LhsT));
+    OpaqueValueExpr Rhs(KeyLoc, RhsT.getNonLValueExprType(Self.Context),
+                        Expr::getValueKindForType(RhsT));
+    
+    // Attempt the assignment in an unevaluated context within a SFINAE 
+    // trap at translation unit scope.
+    EnterExpressionEvaluationContext Unevaluated(Self, Sema::Unevaluated);
+    Sema::SFINAETrap SFINAE(Self, /*AccessCheckingSFINAE=*/true);
+    Sema::ContextRAII TUContext(Self, Self.Context.getTranslationUnitDecl());
+    ExprResult Result = Self.BuildBinOp(/*S=*/0, KeyLoc, BO_Assign, &Lhs, &Rhs);
+    if (Result.isInvalid() || SFINAE.hasErrorOccurred())
+      return false;
+
+    return !Result.get()->hasNonTrivialCall(Self.Context);
+  }
   }
   llvm_unreachable("Unknown type trait or not implemented");
 }
@@ -3333,6 +3381,7 @@ ExprResult Sema::BuildBinaryTypeTrait(BinaryTypeTrait BTT,
   case BTT_IsSame:         ResultType = Context.BoolTy; break;
   case BTT_TypeCompatible: ResultType = Context.IntTy; break;
   case BTT_IsConvertibleTo: ResultType = Context.BoolTy; break;
+  case BTT_IsTriviallyAssignable: ResultType = Context.BoolTy;
   }
 
   return Owned(new (Context) BinaryTypeTraitExpr(KWLoc, BTT, LhsTSInfo,
