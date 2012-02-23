@@ -408,10 +408,12 @@ void ScheduleDAGInstrs::addVRegUseDeps(SUnit *SU, unsigned OperIdx) {
 
   // Lookup this operand's reaching definition.
   assert(LIS && "vreg dependencies requires LiveIntervals");
-  SlotIndex UseIdx = LIS->getSlotIndexes()->getInstructionIndex(MI);
+  SlotIndex UseIdx = LIS->getInstructionIndex(MI).getRegSlot();
   LiveInterval *LI = &LIS->getInterval(Reg);
-  VNInfo *VNI = LI->getVNInfoAt(UseIdx);
+  VNInfo *VNI = LI->getVNInfoBefore(UseIdx);
+  // VNI will be valid because MachineOperand::readsReg() is checked by caller.
   MachineInstr *Def = LIS->getInstructionFromIndex(VNI->def);
+  // Phis and other noninstructions (after coalescing) have a NULL Def.
   if (Def) {
     SUnit *DefSU = getSUnit(Def);
     if (DefSU) {
@@ -540,7 +542,7 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
         assert(!IsPostRA && "Virtual register encountered!");
         if (MO.isDef())
           addVRegDefDeps(SU, j);
-        else
+        else if (MO.readsReg()) // ignore undef operands
           addVRegUseDeps(SU, j);
       }
     }
