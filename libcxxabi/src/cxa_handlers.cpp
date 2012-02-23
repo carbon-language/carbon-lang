@@ -85,9 +85,14 @@ static void default_unexpected_handler()
     terminate();
 }
 
+extern "C"
+{
+
 terminate_handler  __cxa_terminate_handler = default_terminate_handler;
 unexpected_handler __cxa_unexpected_handler = default_unexpected_handler;
 new_handler __cxa_new_handler = 0;
+
+}  // extern "C"
 
 unexpected_handler
 set_unexpected(unexpected_handler func) _NOEXCEPT
