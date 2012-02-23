@@ -54,21 +54,21 @@ class HiddenIvarsTestCase(TestBase):
         self.common_setup()
 
         # This should display correctly.
-        self.expect("expression (i->bar)", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["= 3"])
+        self.expect("expression (j->_definer->bar)", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["= 5"])
             
-        self.expect("expression (*i)", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["foo = 0", "bar = 3"])
+        self.expect("expression *(j->_definer)", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["foo = 0", "bar = 5"])
 
     def frame_var(self):
         self.common_setup()
 
         # This should display correctly.
-        self.expect("frame variable i->bar", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["= 3"])
+        self.expect("frame variable j->_definer->bar", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["= 5"])
             
-        self.expect("frame variable *i", VARIABLES_DISPLAYED_CORRECTLY,
-            substrs = ["foo = 0", "bar = 3"])
+        self.expect("frame variable *j->_definer", VARIABLES_DISPLAYED_CORRECTLY,
+            substrs = ["foo = 0", "bar = 5"])
                        
 if __name__ == '__main__':
     import atexit
