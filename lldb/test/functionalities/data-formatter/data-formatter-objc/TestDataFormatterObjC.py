@@ -55,6 +55,7 @@ class ObjCDataFormatterTestCase(TestBase):
             self.runCmd('type category disable CoreFoundation', check=False)
             self.runCmd('type category disable CoreGraphics', check=False)
             self.runCmd('type category disable CoreServices', check=False)
+            self.runCmd('type category disable AppKit', check=False)
 
 
         # Execute the cleanup function during test case tear down.
@@ -105,145 +106,87 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect("frame variable *object",
                     substrs = ['a test']);
 
-        # Now check that the synth for CFString works
-        self.runCmd("script from CFString import *")
-        self.runCmd("type synth add -l CFStringSynthProvider NSString")
+        # Now enable AppKit and check we are displaying Cocoa classes correctly
+        self.runCmd("type category enable AppKit")
+        self.expect('frame variable num1 num2 num3 num4 num5 num6 num7 num8_Y num8_N num9',
+                    substrs = ['(NSNumber *) num1 = 0x0000000000000583 (int)5',
+                    '(NSNumber *) num2 = ',' (float)3.1',
+                    '(NSNumber *) num3 = ',' (double)3.14',
+                    '(NSNumber *) num4 = ',' (long)18446744073709551614',
+                    '(NSNumber *) num5 = ',' (char)65',
+                    '(NSNumber *) num6 = ',' (long)255',
+                    '(NSNumber *) num7 = ',' (long)2000000',
+                    '(NSNumber *) num8_Y = ',' @"1"',
+                    '(NSNumber *) num8_N = ',' @"0"',
+                    '(NSNumber *) num9 = ',' (short)33920'])
 
-        self.expect('frame variable str -P 1 -Y',
-            substrs = ['mutable =',
-                       'inline = ',
-                       'explicit = ',
-                       'content = ',
-                       'A rather short ASCII NSString object is here'])
+        self.expect('frame variable str0 str1 str2 str3 str4 str5 str6 str8 str9 str10 str11 label1 label2 processName str12',
+                    substrs = ['(NSString *) str1 = ',' @"A rather short ASCII NSString object is here"',
+                    '(NSString *) str0 = ',' @"255"',
+                    '(NSString *) str1 = ',' @"A rather short ASCII NSString object is here"',
+                    '(NSString *) str2 = ',' @"A rather short UTF8 NSString object is here"',
+                    '(NSString *) str3 = ',' @"A string made with the at sign is here"',
+                    '(NSString *) str4 = ',' @"This is string number 4 right here"',
+                    '(NSString *) str5 = ',' @"{{1, 1}, {5, 5}}"',
+                    '(NSString *) str6 = ',' @"1ST"',
+                    '(NSString *) str8 = ',' @"hasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTimehasVeryLongExtensionThisTime',
+                    '(NSString *) str9 = ',' @"a very much boring task to write a string this way!!',
+                    '(NSString *) str10 = ',' @"This is a Unicode string',
+                    '(NSString *) str11 = ',' @"__NSCFString"',
+                    '(NSString *) label1 = ',' @"Process Name: "',
+                    '(NSString *) label2 = ',' @"Process Id: "',
+                    '(NSString *) str12 = ',' @"Process Name:  a.out Process Id:'])
 
-        self.expect('frame variable str2 -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               'A rather short UTF8 NSString object is here'])
+        self.expect('frame variable newArray newDictionary newMutableDictionary cfdict_ref mutable_dict_ref cfarray_ref mutable_array_ref',
+                    substrs = ['(NSArray *) newArray = ',' size=50',
+                    '(NSDictionary *) newDictionary = ',' 12 key/value pairs',
+                    '(NSDictionary *) newMutableDictionary = ',' 21 key/value pairs',
+                    '(CFDictionaryRef) cfdict_ref = ',' 3 key/value pairs',
+                    '(CFMutableDictionaryRef) mutable_dict_ref = ',' 12 key/value pairs',
+                    '(CFArrayRef) cfarray_ref = ',' size=3',
+                    '(CFMutableArrayRef) mutable_array_ref = ',' size=11'])
 
-        self.expect('frame variable str3 -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               'A string made with the at sign is here'])
+        self.expect('frame variable attrString mutableAttrString mutableGetConst',
+                    substrs = ['(NSAttributedString *) attrString = ',' @"hello world from foo"',
+                    '(NSAttributedString *) mutableAttrString = ',' @"hello world from foo"',
+                    '(NSString *) mutableGetConst = ',' @"foo said this string needs to be very long so much longer than whatever other string has been seen ever before by anyone of the mankind that of course this is still not long enough given what foo our friend foo our lovely dearly friend foo desired of us so i am adding more stuff here for the sake of it and for the joy of our friend who is named guess what just foo. hence, dear friend foo, stay safe, your string is now  long enough to accommodate your testing need and I will make sure that if not we extend it with even more fuzzy random meaningless words pasted one after the other from a long tiresome friday evening spent working in my office. my office mate went home but I am still randomly typing just for the fun of seeing what happens of the length of a Mutable String in Cocoa if it goes beyond one byte.. so be it, dear foo"'])
 
-        self.expect('frame variable str4 -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               'This is string number 4 right here'])
-        
-        self.expect('frame variable str5 -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               '{{1, 1}, {5, 5}}'])
-                
-        self.expect('frame variable str6 -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               '1ST'])
-        
-        self.expect('frame variable str7 -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               '\\xcf\\x83xx'])
-        
-        self.expect('frame variable str8 -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               'hasVeryLongExtensionThisTime'])
+        self.expect('frame variable immutableData mutableData data_ref mutable_data_ref mutable_string_ref',
+                    substrs = ['(NSData *) immutableData = ',' 4 bytes',
+                    '(NSData *) mutableData = ',' 14 bytes',
+                    '(CFDataRef) data_ref = ',' 5 bytes',
+                    '(CFMutableDataRef) mutable_data_ref = ',' 5 bytes',
+                    '(CFMutableStringRef) mutable_string_ref = ',' @"Wish ya knew"'])
 
-        self.expect('frame variable str9 -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               'a very much boring task to write a string this way!!\\xcf\\x83'])
-        
-        self.expect('frame variable str10 -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               'This is a Unicode string \\xcf\\x83 number 4 right here'])
-        
-        self.expect('frame variable str11 -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               'NSCFString'])
-        
-        self.expect('frame variable processName -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               'a.out'])
-        
-        self.expect('frame variable str12 -P 1 -Y',
-                    substrs = ['mutable =',
-                               'inline = ',
-                               'explicit = ',
-                               'content = ',
-                               'Process Name:  a.out Process Id:'])
-        
-        # check that access to synthetic children by name works
-        self.expect("frame variable str12->mutable",
-            substrs = ['(int) mutable = 0'])
-        
-        # delete the synth and set a summary
-        self.runCmd("type synth delete NSString")
-        self.runCmd("type summary add -F CFString_SummaryProvider NSString")
+        self.expect('frame variable mutable_bag_ref cfbag_ref binheap_ref',
+                    substrs = ['(CFMutableBagRef) mutable_bag_ref = ',' 17 items',
+                    '(CFBagRef) cfbag_ref = ',' 15 items',
+                    '(CFBinaryHeapRef) binheap_ref = ',' 21 items'])
 
-        self.expect('frame variable str',
-            substrs = ['A rather short ASCII NSString object is here'])
-        self.expect('frame variable str2',
-                    substrs = ['A rather short UTF8 NSString object is here'])
-        self.expect('frame variable str3',
-                    substrs = ['A string made with the at sign is here'])
-        self.expect('frame variable str4',
-                    substrs = ['This is string number 4 right here'])
-        self.expect('frame variable str5',
-                    substrs = ['{{1, 1}, {5, 5}}'])
-        self.expect('frame variable str6',
-                    substrs = ['1ST'])
-        self.expect('frame variable str7',
-                    substrs = ['\\xcf\\x83xx'])
-        self.expect('frame variable str8',
-                    substrs = ['hasVeryLongExtensionThisTime'])
-        self.expect('frame variable str9',
-                    substrs = ['a very much boring task to write a string this way!!\\xcf\\x83'])
-        self.expect('frame variable str10',
-                    substrs = ['This is a Unicode string \\xcf\\x83 number 4 right here'])
-        self.expect('frame variable str11',
-                    substrs = ['NSCFString'])
-        self.expect('frame variable processName',
-                    substrs = ['a.out'])        
-        self.expect('frame variable str12',
-                    substrs = ['Process Name:  a.out Process Id:'])
-        self.expect('frame variable dyn_test', matching=False,
-                    substrs = ['Process Name:  a.out Process Id:'])
-        self.expect('frame variable dyn_test -d run-target -T',
-                    substrs = ['(__NSCFString *, dynamic type:',
-                               'Process Name:  a.out Process Id:'])
-        self.expect('frame variable dyn_test -d run-target',
-                    substrs = ['(__NSCFString *)',
-                               'Process Name:  a.out Process Id:'])
+        self.expect('frame variable cfurl_ref cfchildurl_ref cfgchildurl_ref',
+                    substrs = ['(CFURLRef) cfurl_ref = ',' @"http://www.foo.bar/"',
+                    'cfchildurl_ref = ',' @"page.html" (base path: @"http://www.foo.bar/")',
+                    '(CFURLRef) cfgchildurl_ref = ',' @"?whatever" (base path: @"http://www.foo.bar/page.html")'])
 
-            
+        self.expect('frame variable nsurl nsurl2 nsurl3',
+                    substrs = ['(NSURL *) nsurl = ',' @"http://www.foo.bar"',
+                    '(NSURL *) nsurl2 =',' @"page.html" (base path: @"http://www.foo.bar")',
+                    '(NSURL *) nsurl3 = ',' @"?whatever" (base path: @"http://www.foo.bar/page.html")'])
+
+        self.expect('frame variable bundle_string bundle_url main_bundle',
+                    substrs = ['(NSBundle *) bundle_string = ',' @"/System/Library/Frameworks/Accelerate.framework"',
+                    '(NSBundle *) bundle_url = ',' @"/System/Library/Frameworks/Cocoa.framework"',
+                    '(NSBundle *) main_bundle = ','test/functionalities/data-formatter/data-formatter-objc'])
+
+        self.expect('frame variable except0 except1 except2 except3',
+                    substrs = ['(NSException *) except0 = ',' @"TheGuyWhoHasNoName" @"cuz it\'s funny"',
+                    '(NSException *) except1 = ',' @"TheGuyWhoHasNoName~1" @"cuz it\'s funny"',
+                    '(NSException *) except2 = ',' @"TheGuyWhoHasNoName`2" @"cuz it\'s funny"',
+                    '(NSException *) except3 = ',' @"TheGuyWhoHasNoName/3" @"cuz it\'s funny"'])
+
+        self.expect('frame variable port',
+                    substrs = ['(NSMachPort *) port = ',' mach port: '])
+
         # check that we can format stuff out of the expression parser
         self.expect('expression ((id)@"Hello")', matching=False,
                     substrs = ['Hello'])

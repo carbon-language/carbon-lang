@@ -185,7 +185,7 @@ else
 fi
 
 # Copy the ObjC formatters over to the framework Python directory
-if [ -f "${SRC_ROOT}/examples/synthetic/objc.py" ]
+if [ -f "${SRC_ROOT}/examples/summaries/objc.py" ]
 then
     if [ $Debug == 1 ]
     then
@@ -196,6 +196,245 @@ else
     if [ $Debug == 1 ]
     then
         echo "Unable to find ${SRC_ROOT}/examples/summaries/objc.py"
+    fi
+fi
+
+# Copy the Cocoa formatters over to the framework Python directory
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/CFArray.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying CFArray.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/CFArray.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/CFArray.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/CFDictionary.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying CFDictionary.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/CFDictionary.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/CFDictionary.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/CFString.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying CFString.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/CFString.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/CFString.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/NSData.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying NSData.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/NSData.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/NSData.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/NSMachPort.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying NSMachPort.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/NSMachPort.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/NSMachPort.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/NSSet.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying NSSet.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/NSSet.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/NSSet.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/NSNotification.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying NSNotification.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/NSNotification.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/NSNotification.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/NSException.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying NSException.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/NSException.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/NSException.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/CFBag.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying CFBag.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/CFBag.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/CFBag.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/CFBinaryHeap.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying CFBinaryHeap.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/CFBinaryHeap.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/CFBinaryHeap.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/NSURL.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying NSURL.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/NSURL.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/NSURL.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/NSBundle.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying NSBundle.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/NSBundle.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/NSBundle.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/NSNumber.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying NSNumber.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/NSNumber.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/NSNumber.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/cache.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying cache.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/cache.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/cache.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/metrics.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying metrics.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/metrics.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/metrics.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/objc_lldb.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying objc_lldb.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/objc_lldb.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/objc_lldb.py"
+    fi
+fi
+
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/objc_runtime.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying objc_runtime.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/objc_runtime.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/objc_runtime.py"
     fi
 fi
 

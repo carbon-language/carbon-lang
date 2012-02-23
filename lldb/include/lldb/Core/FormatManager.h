@@ -675,6 +675,7 @@ private:
     ConstString m_coregraphics_category_name;
     ConstString m_coreservices_category_name;
     ConstString m_vectortypes_category_name;
+    ConstString m_appkit_category_name;
     
     CategoryMap&
     GetCategories ()

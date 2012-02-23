@@ -584,7 +584,8 @@ FormatManager::FormatManager() :
     m_corefoundation_category_name(ConstString("CoreFoundation")),
     m_coregraphics_category_name(ConstString("CoreGraphics")),
     m_coreservices_category_name(ConstString("CoreServices")),
-    m_vectortypes_category_name(ConstString("VectorTypes"))
+    m_vectortypes_category_name(ConstString("VectorTypes")),
+    m_appkit_category_name(ConstString("AppKit"))
 {
     
     LoadSystemFormatters();
@@ -595,6 +596,7 @@ FormatManager::FormatManager() :
     
     EnableCategory(m_objc_category_name,CategoryMap::Last);
     //EnableCategory(m_corefoundation_category_name,CategoryMap::Last);
+    //EnableCategory(m_appkit_category_name,CategoryMap::Last);
     //EnableCategory(m_coreservices_category_name,CategoryMap::Last);
     //EnableCategory(m_coregraphics_category_name,CategoryMap::Last);
     EnableCategory(m_gnu_cpp_category_name,CategoryMap::Last);
@@ -685,6 +687,24 @@ AddSummary(TypeCategoryImpl::SharedPointer category_sp,
     category_sp->GetSummaryNavigator()->Add(type_name,
                                             summary_sp);
 }
+
+static void
+AddScriptSummary(TypeCategoryImpl::SharedPointer category_sp,
+                 const char* funct_name,
+                 ConstString type_name,
+                 TypeSummaryImpl::Flags flags)
+{
+    
+    std::string code("     ");
+    code.append(funct_name).append("(valobj,dict)");
+    
+    lldb::TypeSummaryImplSP summary_sp(new ScriptSummaryFormat(flags,
+                                                               funct_name,
+                                                               code.c_str()));
+    category_sp->GetSummaryNavigator()->Add(type_name,
+                                            summary_sp);
+}
+
 
 #ifndef LLDB_DISABLE_PYTHON
 void
@@ -783,6 +803,56 @@ FormatManager::LoadObjCFormatters()
                "origin=${var.origin} size=${var.size}",
                ConstString("HIRect"),
                objc_flags);
+    
+    TypeCategoryImpl::SharedPointer appkit_category_sp = GetCategory(m_appkit_category_name);
+    
+    TypeSummaryImpl::Flags appkit_flags;
+    appkit_flags.SetCascades(true)
+    .SetSkipPointers(false)
+    .SetSkipReferences(false)
+    .SetDontShowChildren(true)
+    .SetDontShowValue(false)
+    .SetShowMembersOneLiner(false)
+    .SetHideItemNames(false);
+
+    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("NSArray"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("CFArrayRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFArray.CFArray_SummaryProvider", ConstString("CFMutableArrayRef"), appkit_flags);
+
+    AddScriptSummary(appkit_category_sp, "CFBag.CFBag_SummaryProvider", ConstString("CFBagRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFBag.CFBag_SummaryProvider", ConstString("CFMutableBagRef"), appkit_flags);
+    
+    AddScriptSummary(appkit_category_sp, "CFBinaryHeap.CFBinaryHeap_SummaryProvider", ConstString("CFBinaryHeapRef"), appkit_flags);
+    
+    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider", ConstString("NSDictionary"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider2", ConstString("CFDictionaryRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFDictionary.CFDictionary_SummaryProvider2", ConstString("CFMutableDictionaryRef"), appkit_flags);
+    
+    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("NSString"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("CFStringRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFString.CFString_SummaryProvider", ConstString("CFMutableStringRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFString.CFAttributedString_SummaryProvider", ConstString("NSAttributedString"), appkit_flags);
+    
+    AddScriptSummary(appkit_category_sp, "NSBundle.NSBundle_SummaryProvider", ConstString("NSBundle"), appkit_flags);
+    
+    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("NSData"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("CFDataRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSData.NSData_SummaryProvider", ConstString("CFMutableDataRef"), appkit_flags);
+    
+    AddScriptSummary(appkit_category_sp, "NSException.NSException_SummaryProvider", ConstString("NSException"), appkit_flags);
+
+    AddScriptSummary(appkit_category_sp, "NSMachPort.NSMachPort_SummaryProvider", ConstString("NSMachPort"), appkit_flags);
+    
+    AddScriptSummary(appkit_category_sp, "NSNotification.NSNotification_SummaryProvider", ConstString("NSNotification"), appkit_flags);
+    
+    AddScriptSummary(appkit_category_sp, "NSNumber.NSNumber_SummaryProvider", ConstString("NSNumber"), appkit_flags);
+
+    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider", ConstString("NSSet"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider2", ConstString("CFSetRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSSet.NSSet_SummaryProvider2", ConstString("CFMutableSetRef"), appkit_flags);
+
+    AddScriptSummary(appkit_category_sp, "NSURL.NSURL_SummaryProvider", ConstString("NSURL"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSURL.NSURL_SummaryProvider", ConstString("CFURLRef"), appkit_flags);
     
     TypeCategoryImpl::SharedPointer vectors_category_sp = GetCategory(m_vectortypes_category_name);
 
