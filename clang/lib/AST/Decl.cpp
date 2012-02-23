@@ -176,9 +176,9 @@ static LinkageInfo getLVForTemplateArgumentList(const TemplateArgument *Args,
       break;
 
     case TemplateArgument::Pack:
-      LV.merge(getLVForTemplateArgumentList(Args[I].pack_begin(),
-                                            Args[I].pack_size(),
-                                            F));
+      LV.mergeWithMin(getLVForTemplateArgumentList(Args[I].pack_begin(),
+                                                   Args[I].pack_size(),
+                                                   F));
       break;
     }
   }
@@ -279,6 +279,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
   //   scope and no storage-class specifier, its linkage is
   //   external.
   LinkageInfo LV;
+  LV.mergeVisibility(Context.getLangOptions().getVisibilityMode());
 
   if (F.ConsiderVisibilityAttributes) {
     if (llvm::Optional<Visibility> Vis = D->getExplicitVisibility()) {
@@ -413,7 +414,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
         LV.merge(getLVForDecl(specInfo->getTemplate(),
                               F.onlyTemplateVisibility()));
         const TemplateArgumentList &templateArgs = *specInfo->TemplateArguments;
-        LV.merge(getLVForTemplateArgumentList(templateArgs, F));
+        LV.mergeWithMin(getLVForTemplateArgumentList(templateArgs, F));
       }
     }
 
@@ -439,7 +440,7 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
 
         // The arguments at which the template was instantiated.
         const TemplateArgumentList &TemplateArgs = spec->getTemplateArgs();
-        LV.merge(getLVForTemplateArgumentList(TemplateArgs, F));
+        LV.mergeWithMin(getLVForTemplateArgumentList(TemplateArgs, F));
       }
     }
 
@@ -482,11 +483,6 @@ static LinkageInfo getLVForNamespaceScopeDecl(const NamedDecl *D, LVFlags F) {
   if (LV.linkage() != ExternalLinkage)
     return LinkageInfo(LV.linkage(), DefaultVisibility, false);
 
-  // If we didn't end up with hidden visibility, consider attributes
-  // and -fvisibility.
-  if (F.ConsiderGlobalVisibility)
-    LV.mergeVisibility(Context.getLangOptions().getVisibilityMode());
-
   return LV;
 }
 
@@ -503,6 +499,7 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
     return LinkageInfo::none();
 
   LinkageInfo LV;
+  LV.mergeVisibility(D->getASTContext().getLangOptions().getVisibilityMode());
 
   // The flags we're going to use to compute the class's visibility.
   LVFlags ClassF = F;
@@ -544,7 +541,8 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
     if (FunctionTemplateSpecializationInfo *spec
            = MD->getTemplateSpecializationInfo()) {
       if (shouldConsiderTemplateLV(MD, spec)) {
-        LV.merge(getLVForTemplateArgumentList(*spec->TemplateArguments, F));
+        LV.mergeWithMin(getLVForTemplateArgumentList(*spec->TemplateArguments,
+                                                     F));
         if (F.ConsiderTemplateParameterTypes)
           LV.merge(getLVForTemplateParameterList(
                               spec->getTemplate()->getTemplateParameters()));
@@ -583,7 +581,8 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
       if (shouldConsiderTemplateLV(spec)) {
         // Merge template argument/parameter information for member
         // class template specializations.
-        LV.merge(getLVForTemplateArgumentList(spec->getTemplateArgs(), F));
+        LV.mergeWithMin(getLVForTemplateArgumentList(spec->getTemplateArgs(),
+                                                     F));
       if (F.ConsiderTemplateParameterTypes)
         LV.merge(getLVForTemplateParameterList(
                     spec->getSpecializedTemplate()->getTemplateParameters()));
@@ -599,13 +598,6 @@ static LinkageInfo getLVForClassMember(const NamedDecl *D, LVFlags F) {
       LV.mergeLinkage(UniqueExternalLinkage);
     if (!LV.visibilityExplicit())
       LV.mergeVisibility(TypeLV.visibility(), TypeLV.visibilityExplicit());
-  }
-
-  F.ConsiderGlobalVisibility &= !LV.visibilityExplicit();
-
-  // Apply -fvisibility if desired.
-  if (F.ConsiderGlobalVisibility && LV.visibility() != HiddenVisibility) {
-    LV.mergeVisibility(D->getASTContext().getLangOptions().getVisibilityMode());
   }
 
   return LV;
@@ -697,6 +689,12 @@ llvm::Optional<Visibility> NamedDecl::getExplicitVisibility() const {
           = fn->getTemplateSpecializationInfo())
       return getVisibilityOf(templateInfo->getTemplate()->getTemplatedDecl());
 
+    // If the function is a member of a specialization of a class template
+    // and the corresponding decl has explicit visibility, use that.
+    FunctionDecl *InstantiatedFrom = fn->getInstantiatedFromMemberFunction();
+    if (InstantiatedFrom)
+      return getVisibilityOf(InstantiatedFrom);
+
     return llvm::Optional<Visibility>();
   }
 
@@ -710,6 +708,14 @@ llvm::Optional<Visibility> NamedDecl::getExplicitVisibility() const {
   if (const ClassTemplateSpecializationDecl *spec
         = dyn_cast<ClassTemplateSpecializationDecl>(this))
     return getVisibilityOf(spec->getSpecializedTemplate()->getTemplatedDecl());
+
+  // If this is a member class of a specialization of a class template
+  // and the corresponding decl has explicit visibility, use that.
+  if (const CXXRecordDecl *RD = dyn_cast<CXXRecordDecl>(this)) {
+    CXXRecordDecl *InstantiatedFrom = RD->getInstantiatedFromMemberClass();
+    if (InstantiatedFrom)
+      return getVisibilityOf(InstantiatedFrom);
+  }
 
   return llvm::Optional<Visibility>();
 }

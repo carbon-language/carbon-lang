@@ -5350,6 +5350,7 @@ Decl *Sema::ActOnStartOfFunctionTemplateDef(Scope *FnBodyScope,
 /// \brief Strips various properties off an implicit instantiation
 /// that has just been explicitly specialized.
 static void StripImplicitInstantiation(NamedDecl *D) {
+  // FIXME: "make check" is clean if the call to dropAttrs() is commented out.
   D->dropAttrs();
 
   if (FunctionDecl *FD = dyn_cast<FunctionDecl>(D)) {

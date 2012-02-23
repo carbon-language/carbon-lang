@@ -251,6 +251,10 @@ public:
       mergeLinkage(Other.linkage());
     }
 
+    // Merge the visibility V giving preference to explicit ones.
+    // This is used, for example, when merging the visibility of a class
+    // down to one of its members. If the member has no explicit visibility,
+    // the class visibility wins.
     void mergeVisibility(Visibility V, bool E = false) {
       // If one has explicit visibility and the other doesn't, keep the
       // explicit one.
@@ -262,13 +266,34 @@ public:
       // If both are explicit or both are implicit, keep the minimum.
       setVisibility(minVisibility(visibility(), V), visibilityExplicit() || E);
     }
+    // Merge the visibility V, keeping the most restrictive one.
+    // This is used for cases like merging the visibility of a template
+    // argument to an instantiation. If we already have a hidden class,
+    // no argument should give it default visibility.
+    void mergeVisibilityWithMin(Visibility V, bool E = false) {
+      // Never increase the visibility
+      if (visibility() < V)
+        return;
+
+      // If this visibility is explicit, keep it.
+      if (visibilityExplicit() && !E)
+        return;
+      setVisibility(V, E);
+    }
     void mergeVisibility(LinkageInfo Other) {
       mergeVisibility(Other.visibility(), Other.visibilityExplicit());
+    }
+    void mergeVisibilityWithMin(LinkageInfo Other) {
+      mergeVisibilityWithMin(Other.visibility(), Other.visibilityExplicit());
     }
 
     void merge(LinkageInfo Other) {
       mergeLinkage(Other);
       mergeVisibility(Other);
+    }
+    void mergeWithMin(LinkageInfo Other) {
+      mergeLinkage(Other);
+      mergeVisibilityWithMin(Other);
     }
 
     friend LinkageInfo merge(LinkageInfo L, LinkageInfo R) {
