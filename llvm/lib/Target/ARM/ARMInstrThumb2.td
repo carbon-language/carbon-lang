@@ -2943,6 +2943,44 @@ def t2MOVCCror : T2I_movcc_sh<0b11, (outs rGPR:$Rd),
                              (ins rGPR:$false, rGPR:$Rm, i32imm:$imm),
                              IIC_iCMOVsi, "ror", ".w\t$Rd, $Rm, $imm", []>,
                  RegConstraint<"$false = $Rd">;
+
+multiclass T2I_bincc_irs<bits<4> opcod, string opc,
+                   InstrItinClass iii, InstrItinClass iir, InstrItinClass iis> {
+   // shifted imm
+   def ri : T2sTwoRegImm<(outs rGPR:$Rd), (ins rGPR:$Rn, t2_so_imm:$imm),
+                         iii, opc, ".w\t$Rd, $Rn, $imm", []>,
+                         RegConstraint<"$Rn = $Rd"> {
+     let Inst{31-27} = 0b11110;
+     let Inst{25} = 0;
+     let Inst{24-21} = opcod;
+     let Inst{15} = 0;
+   }
+   // register
+   def rr : T2sThreeReg<(outs rGPR:$Rd), (ins rGPR:$Rn, rGPR:$Rm),
+                        iir, opc, ".w\t$Rd, $Rn, $Rm", []>,
+                        RegConstraint<"$Rn = $Rd"> {
+     let Inst{31-27} = 0b11101;
+     let Inst{26-25} = 0b01;
+     let Inst{24-21} = opcod;
+     let Inst{14-12} = 0b000; // imm3
+     let Inst{7-6} = 0b00; // imm2
+     let Inst{5-4} = 0b00; // type
+   }
+   // shifted register
+   def rs : T2sTwoRegShiftedReg<(outs rGPR:$Rd),
+                                (ins rGPR:$Rn, t2_so_reg:$ShiftedRm),
+                                iis, opc, ".w\t$Rd, $Rn, $ShiftedRm", []>,
+                                RegConstraint<"$Rn = $Rd"> {
+     let Inst{31-27} = 0b11101;
+     let Inst{26-25} = 0b01;
+     let Inst{24-21} = opcod;
+   }
+} // T2I_bincc_irs
+
+defm t2ANDCC : T2I_bincc_irs<0b0000, "and", IIC_iBITi, IIC_iBITr, IIC_iBITsi>;
+defm t2ORRCC : T2I_bincc_irs<0b0010, "orr", IIC_iBITi, IIC_iBITr, IIC_iBITsi>;
+defm t2EORCC : T2I_bincc_irs<0b0100, "eor", IIC_iBITi, IIC_iBITr, IIC_iBITsi>;
+
 } // isCodeGenOnly = 1
 } // neverHasSideEffects
 

@@ -58,3 +58,49 @@ define i32 @t4(i32 %a, i32 %b, i32 %x, i32 %y) nounwind {
   %s = or i32 %z, %y
  ret i32 %s
 }
+
+define i32 @t5(i32 %a, i32 %b, i32 %c) nounwind {
+entry:
+; ARM: t5:
+; ARM-NOT: moveq
+; ARM: orreq r2, r2, #1
+
+; T2: t5:
+; T2-NOT: moveq
+; T2: orreq.w r2, r2, #1
+  %tmp1 = icmp eq i32 %a, %b
+  %tmp2 = zext i1 %tmp1 to i32
+  %tmp3 = or i32 %tmp2, %c
+  ret i32 %tmp3
+}
+
+define i32 @t6(i32 %a, i32 %b, i32 %c, i32 %d) nounwind {
+; ARM: t6:
+; ARM-NOT: movge
+; ARM: eorlt r3, r3, r2
+
+; T2: t6:
+; T2-NOT: movge
+; T2: eorlt.w r3, r3, r2
+  %cond = icmp slt i32 %a, %b
+  %tmp1 = select i1 %cond, i32 %c, i32 0
+  %tmp2 = xor i32 %tmp1, %d
+  ret i32 %tmp2
+}
+
+define i32 @t7(i32 %a, i32 %b, i32 %c) nounwind {
+entry:
+; ARM: t7:
+; ARM-NOT: lsleq
+; ARM: andeq r2, r2, r2, lsl #1
+
+; T2: t7:
+; T2-NOT: lsleq.w
+; T2: andeq.w r2, r2, r2, lsl #1
+  %tmp1 = shl i32 %c, 1
+  %cond = icmp eq i32 %a, %b
+  %tmp2 = select i1 %cond, i32 %tmp1, i32 -1
+  %tmp3 = and i32 %c, %tmp2
+  ret i32 %tmp3
+}
+

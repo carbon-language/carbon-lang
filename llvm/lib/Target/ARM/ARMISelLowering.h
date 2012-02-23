@@ -56,7 +56,11 @@ namespace llvm {
       CMPFP,        // ARM VFP compare instruction, sets FPSCR.
       CMPFPw0,      // ARM VFP compare against zero instruction, sets FPSCR.
       FMSTAT,       // ARM fmstat instruction.
+
       CMOV,         // ARM conditional move instructions.
+      CAND,         // ARM conditional and instructions.
+      COR,          // ARM conditional or instructions.
+      CXOR,         // ARM conditional xor instructions.
 
       BCC_i64,
 

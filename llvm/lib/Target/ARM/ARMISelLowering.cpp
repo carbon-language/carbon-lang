@@ -794,10 +794,11 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
   setTargetDAGCombine(ISD::SUB);
   setTargetDAGCombine(ISD::MUL);
 
-  if (Subtarget->hasV6T2Ops() || Subtarget->hasNEON())
-    setTargetDAGCombine(ISD::OR);
-  if (Subtarget->hasNEON())
+  if (Subtarget->hasV6T2Ops() || Subtarget->hasNEON()) {
     setTargetDAGCombine(ISD::AND);
+    setTargetDAGCombine(ISD::OR);
+    setTargetDAGCombine(ISD::XOR);
+  }
 
   setStackPointerRegisterToSaveRestore(ARM::SP);
 
@@ -890,7 +891,11 @@ const char *ARMTargetLowering::getTargetNodeName(unsigned Opcode) const {
   case ARMISD::CMPFPw0:       return "ARMISD::CMPFPw0";
   case ARMISD::BCC_i64:       return "ARMISD::BCC_i64";
   case ARMISD::FMSTAT:        return "ARMISD::FMSTAT";
+
   case ARMISD::CMOV:          return "ARMISD::CMOV";
+  case ARMISD::CAND:          return "ARMISD::CAND";
+  case ARMISD::COR:           return "ARMISD::COR";
+  case ARMISD::CXOR:          return "ARMISD::CXOR";
 
   case ARMISD::RBIT:          return "ARMISD::RBIT";
 
@@ -6843,8 +6848,52 @@ static SDValue PerformMULCombine(SDNode *N,
   return SDValue();
 }
 
+static bool isCMOVWithZeroOrAllOnesLHS(SDValue N, bool AllOnes) {
+  if (N.getOpcode() != ARMISD::CMOV || !N.getNode()->hasOneUse())
+    return false;
+
+  SDValue FalseVal = N.getOperand(0);
+  ConstantSDNode *C = dyn_cast<ConstantSDNode>(FalseVal);
+  if (!C)
+    return false;
+  if (AllOnes)
+    return C->isAllOnesValue();
+  return C->isNullValue();
+}
+
+/// formConditionalOp - Combine an operation with a conditional move operand
+/// to form a conditional op. e.g. (or x, (cmov 0, y, cond)) => (or.cond x, y)
+/// (and x, (cmov -1, y, cond)) => (and.cond, x, y)
+static SDValue formConditionalOp(SDNode *N, SelectionDAG &DAG,
+                                 bool Commutable) {
+  SDValue N0 = N->getOperand(0);
+  SDValue N1 = N->getOperand(1);
+
+  bool isAND = N->getOpcode() == ISD::AND;
+  bool isCand = isCMOVWithZeroOrAllOnesLHS(N1, isAND);
+  if (!isCand && Commutable) {
+    isCand = isCMOVWithZeroOrAllOnesLHS(N0, isAND);
+    if (isCand)
+      std::swap(N0, N1);
+  }
+  if (!isCand)
+    return SDValue();
+
+  unsigned Opc = 0;
+  switch (N->getOpcode()) {
+  default: llvm_unreachable("Unexpected node");
+  case ISD::AND: Opc = ARMISD::CAND; break;
+  case ISD::OR:  Opc = ARMISD::COR; break;
+  case ISD::XOR: Opc = ARMISD::CXOR; break;
+  }
+  return DAG.getNode(Opc, N->getDebugLoc(), N->getValueType(0), N0,
+                     N1.getOperand(1), N1.getOperand(2), N1.getOperand(3),
+                     N1.getOperand(4));
+}
+
 static SDValue PerformANDCombine(SDNode *N,
-                                TargetLowering::DAGCombinerInfo &DCI) {
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 const ARMSubtarget *Subtarget) {
 
   // Attempt to use immediate-form VBIC
   BuildVectorSDNode *BVN = dyn_cast<BuildVectorSDNode>(N->getOperand(1));
@@ -6873,6 +6922,13 @@ static SDValue PerformANDCombine(SDNode *N,
         return DAG.getNode(ISD::BITCAST, dl, VT, Vbic);
       }
     }
+  }
+
+  if (!Subtarget->isThumb1Only()) {
+    // (and x, (cmov -1, y, cond)) => (and.cond x, y)
+    SDValue CAND = formConditionalOp(N, DAG, true);
+    if (CAND.getNode())
+      return CAND;
   }
 
   return SDValue();
@@ -6909,6 +6965,13 @@ static SDValue PerformORCombine(SDNode *N,
         return DAG.getNode(ISD::BITCAST, dl, VT, Vorr);
       }
     }
+  }
+
+  if (!Subtarget->isThumb1Only()) {
+    // (or x, (cmov 0, y, cond)) => (or.cond x, y)
+    SDValue COR = formConditionalOp(N, DAG, true);
+    if (COR.getNode())
+      return COR;
   }
 
   SDValue N0 = N->getOperand(0);
@@ -7054,6 +7117,25 @@ static SDValue PerformORCombine(SDNode *N,
 
     // Do not add new nodes to DAG combiner worklist.
     DCI.CombineTo(N, Res, false);
+  }
+
+  return SDValue();
+}
+
+static SDValue PerformXORCombine(SDNode *N,
+                                 TargetLowering::DAGCombinerInfo &DCI,
+                                 const ARMSubtarget *Subtarget) {
+  EVT VT = N->getValueType(0);
+  SelectionDAG &DAG = DCI.DAG;
+
+  if(!DAG.getTargetLoweringInfo().isTypeLegal(VT))
+    return SDValue();
+
+  if (!Subtarget->isThumb1Only()) {
+    // (xor x, (cmov 0, y, cond)) => (xor.cond x, y)
+    SDValue CXOR = formConditionalOp(N, DAG, true);
+    if (CXOR.getNode())
+      return CXOR;
   }
 
   return SDValue();
@@ -8110,7 +8192,8 @@ SDValue ARMTargetLowering::PerformDAGCombine(SDNode *N,
   case ISD::SUB:        return PerformSUBCombine(N, DCI);
   case ISD::MUL:        return PerformMULCombine(N, DCI, Subtarget);
   case ISD::OR:         return PerformORCombine(N, DCI, Subtarget);
-  case ISD::AND:        return PerformANDCombine(N, DCI);
+  case ISD::XOR:        return PerformXORCombine(N, DCI, Subtarget);
+  case ISD::AND:        return PerformANDCombine(N, DCI, Subtarget);
   case ARMISD::BFI:     return PerformBFICombine(N, DCI);
   case ARMISD::VMOVRRD: return PerformVMOVRRDCombine(N, DCI);
   case ARMISD::VMOVDRR: return PerformVMOVDRRCombine(N, DCI.DAG);
