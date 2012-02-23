@@ -32,7 +32,6 @@
 #include "clang/Sema/ParsedTemplate.h"
 #include "clang/Basic/PartialDiagnostic.h"
 #include "clang/Lex/Preprocessor.h"
-#include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/SmallString.h"
 #include "llvm/ADT/STLExtras.h"
 #include <map>
@@ -6469,7 +6468,7 @@ bool Sema::CheckUsingDeclQualifier(SourceLocation UsingLoc,
   // need to be repeated.
 
   struct UserData {
-    llvm::DenseSet<const CXXRecordDecl*> Bases;
+    llvm::SmallPtrSet<const CXXRecordDecl*, 4> Bases;
 
     static bool collect(const CXXRecordDecl *Base, void *OpaqueData) {
       UserData *Data = reinterpret_cast<UserData*>(OpaqueData);
