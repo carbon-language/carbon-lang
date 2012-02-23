@@ -3463,10 +3463,19 @@ static void handleObjCPreciseLifetimeAttr(Sema &S, Decl *D,
 }
 
 static bool isKnownDeclSpecAttr(const AttributeList &Attr) {
-  return Attr.getKind() == AttributeList::AT_dllimport ||
-         Attr.getKind() == AttributeList::AT_dllexport ||
-         Attr.getKind() == AttributeList::AT_uuid ||
-         Attr.getKind() == AttributeList::AT_deprecated;
+  switch (Attr.getKind()) {
+  default:
+    return false;
+  case AttributeList::AT_dllimport:
+  case AttributeList::AT_dllexport:
+  case AttributeList::AT_uuid:
+  case AttributeList::AT_deprecated:
+  case AttributeList::AT_noreturn:
+  case AttributeList::AT_nothrow:
+  case AttributeList::AT_naked:
+  case AttributeList::AT_noinline:
+    return true;
+  }
 }
 
 //===----------------------------------------------------------------------===//

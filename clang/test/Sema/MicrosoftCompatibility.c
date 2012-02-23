@@ -10,3 +10,7 @@ enum ENUM2 {
   ENUM2_b = 0x9FFFFFFF, // expected-warning {{enumerator value is not representable in the underlying type 'int'}}
   ENUM2_c = 0x100000000 // expected-warning {{enumerator value is not representable in the underlying type 'int'}}
 };
+
+__declspec(noreturn) void f6( void ) {
+	return;  // expected-warning {{function 'f6' declared 'noreturn' should not return}}
+}
