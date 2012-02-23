@@ -213,6 +213,13 @@ public:
     return std::make_pair(end() - 1, true);
   }
 
+  /// array subscript - If an element already exists with this key, return it.
+  /// Otherwise, automatically construct a new value from Key, insert it,
+  /// and return the newly inserted element.
+  ValueT &operator[](unsigned Key) {
+    return *insert(ValueT(Key)).first;
+  }
+
   /// erase - Erases an existing element identified by a valid iterator.
   ///
   /// This invalidates all iterators, but erase() returns an iterator pointing

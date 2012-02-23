@@ -118,12 +118,15 @@ namespace llvm {
     /// the def-side latency only.
     bool UnitLatencies;
 
-    /// Defs, Uses - Remember where defs and uses of each register are as we
-    /// iterate upward through the instructions. This is allocated here instead
-    /// of inside BuildSchedGraph to avoid the need for it to be initialized and
-    /// destructed for each block.
-    std::vector<std::vector<SUnit *> > Defs;
-    std::vector<std::vector<SUnit *> > Uses;
+    /// An individual mapping from physical register number to an SUnit vector.
+    struct Reg2SUnits {
+      unsigned PhysReg;
+      std::vector<SUnit*> SUnits;
+
+      explicit Reg2SUnits(unsigned reg): PhysReg(reg) {}
+
+      unsigned getSparseSetKey() const { return PhysReg; }
+    };
 
     /// An individual mapping from virtual register number to SUnit.
     struct VReg2SUnit {
@@ -139,7 +142,15 @@ namespace llvm {
     // Use SparseSet as a SparseMap by relying on the fact that it never
     // compares ValueT's, only unsigned keys. This allows the set to be cleared
     // between scheduling regions in constant time.
+    typedef SparseSet<Reg2SUnits> Reg2SUnitsMap;
     typedef SparseSet<VReg2SUnit> VReg2SUnitMap;
+
+    /// Defs, Uses - Remember where defs and uses of each register are as we
+    /// iterate upward through the instructions. This is allocated here instead
+    /// of inside BuildSchedGraph to avoid the need for it to be initialized and
+    /// destructed for each block.
+    Reg2SUnitsMap Defs;
+    Reg2SUnitsMap Uses;
 
     // Track the last instructon in this region defining each virtual register.
     VReg2SUnitMap VRegDefs;
@@ -247,6 +258,7 @@ namespace llvm {
     }
 
     void initSUnits();
+    void addPhysRegDataDeps(SUnit *SU, const MachineOperand &MO);
     void addPhysRegDeps(SUnit *SU, unsigned OperIdx);
     void addVRegDefDeps(SUnit *SU, unsigned OperIdx);
     void addVRegUseDeps(SUnit *SU, unsigned OperIdx);

@@ -39,9 +39,7 @@ ScheduleDAGInstrs::ScheduleDAGInstrs(MachineFunction &mf,
                                      LiveIntervals *lis)
   : ScheduleDAG(mf), MLI(mli), MDT(mdt), MFI(mf.getFrameInfo()),
     InstrItins(mf.getTarget().getInstrItineraryData()), IsPostRA(IsPostRAFlag),
-    LIS(lis), UnitLatencies(false),
-    Defs(TRI->getNumRegs()), Uses(TRI->getNumRegs()),
-    LoopRegs(MLI, MDT), FirstDbgValue(0) {
+    LIS(lis), UnitLatencies(false), LoopRegs(MLI, MDT), FirstDbgValue(0) {
   assert((IsPostRA || LIS) && "PreRA scheduling requires LiveIntervals");
   DbgValues.clear();
   assert(!(IsPostRA && MRI.getNumVirtRegs()) &&
@@ -173,7 +171,7 @@ void ScheduleDAGInstrs::AddSchedBarrierDeps() {
       if (Reg == 0) continue;
 
       if (TRI->isPhysicalRegister(Reg))
-        Uses[Reg].push_back(&ExitSU);
+        Uses[Reg].SUnits.push_back(&ExitSU);
       else
         assert(!IsPostRA && "Virtual register encountered after regalloc.");
     }
@@ -187,8 +185,59 @@ void ScheduleDAGInstrs::AddSchedBarrierDeps() {
              E = (*SI)->livein_end(); I != E; ++I) {
         unsigned Reg = *I;
         if (Seen.insert(Reg))
-          Uses[Reg].push_back(&ExitSU);
+          Uses[Reg].SUnits.push_back(&ExitSU);
       }
+  }
+}
+
+/// MO is an operand of SU's instruction that defines a physical register. Add
+/// data dependencies from SU to any uses of the physical register.
+void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU,
+                                           const MachineOperand &MO) {
+  assert(MO.isDef() && "expect physreg def");
+
+  // Ask the target if address-backscheduling is desirable, and if so how much.
+  const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
+  unsigned SpecialAddressLatency = ST.getSpecialAddressLatency();
+  unsigned DataLatency = SU->Latency;
+
+  for (const unsigned *Alias = TRI->getOverlaps(MO.getReg()); *Alias; ++Alias) {
+    Reg2SUnitsMap::iterator UsesI = Uses.find(*Alias);
+    if (UsesI == Uses.end())
+      continue;
+    std::vector<SUnit*> &UseList = UsesI->SUnits;
+    for (unsigned i = 0, e = UseList.size(); i != e; ++i) {
+      SUnit *UseSU = UseList[i];
+      if (UseSU == SU)
+        continue;
+      unsigned LDataLatency = DataLatency;
+      // Optionally add in a special extra latency for nodes that
+      // feed addresses.
+      // TODO: Perhaps we should get rid of
+      // SpecialAddressLatency and just move this into
+      // adjustSchedDependency for the targets that care about it.
+      if (SpecialAddressLatency != 0 && !UnitLatencies &&
+          UseSU != &ExitSU) {
+        MachineInstr *UseMI = UseSU->getInstr();
+        const MCInstrDesc &UseMCID = UseMI->getDesc();
+        int RegUseIndex = UseMI->findRegisterUseOperandIdx(*Alias);
+        assert(RegUseIndex >= 0 && "UseMI doesn't use register!");
+        if (RegUseIndex >= 0 &&
+            (UseMI->mayLoad() || UseMI->mayStore()) &&
+            (unsigned)RegUseIndex < UseMCID.getNumOperands() &&
+            UseMCID.OpInfo[RegUseIndex].isLookupPtrRegClass())
+          LDataLatency += SpecialAddressLatency;
+      }
+      // Adjust the dependence latency using operand def/use
+      // information (if any), and then allow the target to
+      // perform its own adjustments.
+      const SDep& dep = SDep(SU, SDep::Data, LDataLatency, *Alias);
+      if (!UnitLatencies) {
+        ComputeOperandLatency(SU, UseSU, const_cast<SDep &>(dep));
+        ST.adjustSchedDependency(SU, UseSU, const_cast<SDep &>(dep));
+      }
+      UseSU->addPred(dep);
+    }
   }
 }
 
@@ -198,11 +247,6 @@ void ScheduleDAGInstrs::AddSchedBarrierDeps() {
 void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
   const MachineInstr *MI = SU->getInstr();
   const MachineOperand &MO = MI->getOperand(OperIdx);
-  unsigned Reg = MO.getReg();
-
-  // Ask the target if address-backscheduling is desirable, and if so how much.
-  const TargetSubtargetInfo &ST = TM.getSubtarget<TargetSubtargetInfo>();
-  unsigned SpecialAddressLatency = ST.getSpecialAddressLatency();
 
   // Optionally add output and anti dependencies. For anti
   // dependencies we use a latency of 0 because for a multi-issue
@@ -211,8 +255,11 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
   // TODO: Using a latency of 1 here for output dependencies assumes
   //       there's no cost for reusing registers.
   SDep::Kind Kind = MO.isUse() ? SDep::Anti : SDep::Output;
-  for (const unsigned *Alias = TRI->getOverlaps(Reg); *Alias; ++Alias) {
-    std::vector<SUnit *> &DefList = Defs[*Alias];
+  for (const unsigned *Alias = TRI->getOverlaps(MO.getReg()); *Alias; ++Alias) {
+    Reg2SUnitsMap::iterator DefI = Defs.find(*Alias);
+    if (DefI == Defs.end())
+      continue;
+    std::vector<SUnit *> &DefList = DefI->SUnits;
     for (unsigned i = 0, e = DefList.size(); i != e; ++i) {
       SUnit *DefSU = DefList[i];
       if (DefSU == &ExitSU)
@@ -231,73 +278,32 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
     }
   }
 
-  // Retrieve the UseList to add data dependencies and update uses.
-  std::vector<SUnit *> &UseList = Uses[Reg];
-  if (MO.isDef()) {
-    // Update DefList. Defs are pushed in the order they are visited and
-    // never reordered.
-    std::vector<SUnit *> &DefList = Defs[Reg];
+  if (!MO.isDef()) {
+    // Either insert a new Reg2SUnits entry with an empty SUnits list, or
+    // retrieve the existing SUnits list for this register's uses.
+    // Push this SUnit on the use list.
+    Uses[MO.getReg()].SUnits.push_back(SU);
+  }
+  else {
+    addPhysRegDataDeps(SU, MO);
 
-    // Add any data dependencies.
-    unsigned DataLatency = SU->Latency;
-    for (unsigned i = 0, e = UseList.size(); i != e; ++i) {
-      SUnit *UseSU = UseList[i];
-      if (UseSU == SU)
-        continue;
-      unsigned LDataLatency = DataLatency;
-      // Optionally add in a special extra latency for nodes that
-      // feed addresses.
-      // TODO: Do this for register aliases too.
-      // TODO: Perhaps we should get rid of
-      // SpecialAddressLatency and just move this into
-      // adjustSchedDependency for the targets that care about it.
-      if (SpecialAddressLatency != 0 && !UnitLatencies &&
-          UseSU != &ExitSU) {
-        MachineInstr *UseMI = UseSU->getInstr();
-        const MCInstrDesc &UseMCID = UseMI->getDesc();
-        int RegUseIndex = UseMI->findRegisterUseOperandIdx(Reg);
-        assert(RegUseIndex >= 0 && "UseMI doesn's use register!");
-        if (RegUseIndex >= 0 &&
-            (UseMI->mayLoad() || UseMI->mayStore()) &&
-            (unsigned)RegUseIndex < UseMCID.getNumOperands() &&
-            UseMCID.OpInfo[RegUseIndex].isLookupPtrRegClass())
-          LDataLatency += SpecialAddressLatency;
-      }
-      // Adjust the dependence latency using operand def/use
-      // information (if any), and then allow the target to
-      // perform its own adjustments.
-      const SDep& dep = SDep(SU, SDep::Data, LDataLatency, Reg);
-      if (!UnitLatencies) {
-        ComputeOperandLatency(SU, UseSU, const_cast<SDep &>(dep));
-        ST.adjustSchedDependency(SU, UseSU, const_cast<SDep &>(dep));
-      }
-      UseSU->addPred(dep);
-    }
-    for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
-      std::vector<SUnit *> &UseList = Uses[*Alias];
-      for (unsigned i = 0, e = UseList.size(); i != e; ++i) {
-        SUnit *UseSU = UseList[i];
-        if (UseSU == SU)
-          continue;
-        const SDep& dep = SDep(SU, SDep::Data, DataLatency, *Alias);
-        if (!UnitLatencies) {
-          ComputeOperandLatency(SU, UseSU, const_cast<SDep &>(dep));
-          ST.adjustSchedDependency(SU, UseSU, const_cast<SDep &>(dep));
-        }
-        UseSU->addPred(dep);
-      }
-    }
+    // Either insert a new Reg2SUnits entry with an empty SUnits list, or
+    // retrieve the existing SUnits list for this register's defs.
+    std::vector<SUnit *> &DefList = Defs[MO.getReg()].SUnits;
 
     // If a def is going to wrap back around to the top of the loop,
     // backschedule it.
     if (!UnitLatencies && DefList.empty()) {
-      LoopDependencies::LoopDeps::iterator I = LoopRegs.Deps.find(Reg);
+      LoopDependencies::LoopDeps::iterator I = LoopRegs.Deps.find(MO.getReg());
       if (I != LoopRegs.Deps.end()) {
         const MachineOperand *UseMO = I->second.first;
         unsigned Count = I->second.second;
         const MachineInstr *UseMI = UseMO->getParent();
         unsigned UseMOIdx = UseMO - &UseMI->getOperand(0);
         const MCInstrDesc &UseMCID = UseMI->getDesc();
+        const TargetSubtargetInfo &ST =
+          TM.getSubtarget<TargetSubtargetInfo>();
+        unsigned SpecialAddressLatency = ST.getSpecialAddressLatency();
         // TODO: If we knew the total depth of the region here, we could
         // handle the case where the whole loop is inside the region but
         // is large enough that the isScheduleHigh trick isn't needed.
@@ -332,7 +338,11 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
       }
     }
 
-    UseList.clear();
+    // clear this register's use list
+    Reg2SUnitsMap::iterator UsesI = Uses.find(MO.getReg());
+    if (UsesI != Uses.end())
+      UsesI->SUnits.clear();
+
     if (!MO.isDead())
       DefList.clear();
 
@@ -345,9 +355,8 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
       while (!DefList.empty() && DefList.back()->isCall)
         DefList.pop_back();
     }
+    // Defs are pushed in the order they are visited and never reordered.
     DefList.push_back(SU);
-  } else {
-    UseList.push_back(SU);
   }
 }
 
@@ -482,19 +491,20 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   DbgValues.clear();
   FirstDbgValue = NULL;
 
-  // Model data dependencies between instructions being scheduled and the
-  // ExitSU.
-  AddSchedBarrierDeps();
-
-  for (int i = 0, e = TRI->getNumRegs(); i != e; ++i) {
-    assert(Defs[i].empty() && "Only BuildGraph should push/pop Defs");
-  }
+  assert(Defs.empty() && Uses.empty() &&
+         "Only BuildGraph should update Defs/Uses");
+  Defs.setUniverse(TRI->getNumRegs());
+  Uses.setUniverse(TRI->getNumRegs());
 
   assert(VRegDefs.empty() && "Only BuildSchedGraph may access VRegDefs");
   // FIXME: Allow SparseSet to reserve space for the creation of virtual
   // registers during scheduling. Don't artificially inflate the Universe
   // because we want to assert that vregs are not created during DAG building.
   VRegDefs.setUniverse(MRI.getNumVirtRegs());
+
+  // Model data dependencies between instructions being scheduled and the
+  // ExitSU.
+  AddSchedBarrierDeps();
 
   // Walk the list of instructions, from bottom moving up.
   MachineInstr *PrevMI = NULL;
@@ -685,10 +695,8 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
   if (PrevMI)
     FirstDbgValue = PrevMI;
 
-  for (int i = 0, e = TRI->getNumRegs(); i != e; ++i) {
-    Defs[i].clear();
-    Uses[i].clear();
-  }
+  Defs.clear();
+  Uses.clear();
   VRegDefs.clear();
   PendingLoads.clear();
   MISUnitMap.clear();
