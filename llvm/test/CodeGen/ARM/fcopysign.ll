@@ -1,5 +1,5 @@
-; RUN: llc < %s -mtriple=armv7-apple-darwin -mcpu=cortex-a8 | FileCheck %s -check-prefix=SOFT
-; RUN: llc < %s -mtriple=armv7-gnueabi -float-abi=hard -mcpu=cortex-a8 | FileCheck %s -check-prefix=HARD
+; RUN: llc < %s -disable-post-ra -mtriple=armv7-apple-darwin -mcpu=cortex-a8 | FileCheck %s -check-prefix=SOFT
+; RUN: llc < %s -disable-post-ra -mtriple=armv7-gnueabi -float-abi=hard -mcpu=cortex-a8 | FileCheck %s -check-prefix=HARD
 
 ; rdar://8984306
 define float @test1(float %x, float %y) nounwind {
@@ -60,8 +60,8 @@ entry:
 define float @test5() nounwind {
 entry:
 ; SOFT: test5:
-; SOFT: vmov.i32 [[REG6:(d[0-9]+)]], #0x80000000
 ; SOFT: vmov [[REG7:(d[0-9]+)]], r0, r1
+; SOFT: vmov.i32 [[REG6:(d[0-9]+)]], #0x80000000
 ; SOFT: vshr.u64 [[REG7]], [[REG7]], #32
 ; SOFT: vbsl [[REG6]], [[REG7]], 
   %0 = tail call double (...)* @bar() nounwind
