@@ -895,7 +895,7 @@ static void EmitNewInitializer(CodeGenFunction &CGF, const CXXNewExpr *E,
     if (const CXXConstructExpr *CCE = dyn_cast_or_null<CXXConstructExpr>(Init)){
       CXXConstructorDecl *Ctor = CCE->getConstructor();
       bool RequiresZeroInitialization = false;
-      if (Ctor->getParent()->hasTrivialDefaultConstructor()) {
+      if (Ctor->isTrivial()) {
         // If new expression did not specify value-initialization, then there
         // is no initialization.
         if (!CCE->requiresZeroInitialization() || Ctor->getParent()->isEmpty())
