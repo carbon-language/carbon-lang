@@ -2329,6 +2329,22 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
     // We can only watch up to four bytes that follow a 4 byte aligned address
     // per watchpoint register pair. Since we can only watch until the next 4
     // byte boundary, we need to make sure we can properly encode this.
+
+    // addr_word_offset = addr % 4, i.e, is in set([0, 1, 2, 3])
+    //
+    //     +---+---+---+---+
+    //     | 0 | 1 | 2 | 3 |
+    //     +---+---+---+---+
+    //     ^
+    //     |
+    // word address (4-byte aligned) = addr & 0xFFFFFFFC => goes into WVR
+    //
+    // examples:
+    // 1. addr_word_offset = 1, size = 1 to watch a uint_8 => byte_mask = (0b0001 << 1) = 0b0010
+    // 2. addr_word_offset = 2, size = 2 to watch a uint_16 => byte_mask = (0b0011 << 2) = 0b1100
+    //
+    // where byte_mask goes into WCR[8:5]
+
     uint32_t addr_word_offset = addr % 4;
     DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::EnableHardwareWatchpoint() - addr_word_offset = 0x%8.8x", addr_word_offset);
 
@@ -2348,10 +2364,10 @@ DNBArchMachARM::EnableHardwareWatchpoint (nub_addr_t addr, nub_size_t size, bool
         for (i=0; i<num_hw_watchpoints; ++i)
         {
             if ((m_state.dbg.__wcr[i] & WCR_ENABLE) == 0)
-                break; // We found an available hw breakpoint slot (in i)
+                break; // We found an available hw watchpoint slot (in i)
         }
 
-        // See if we found an available hw breakpoint slot above
+        // See if we found an available hw watchpoint slot above
         if (i < num_hw_watchpoints)
         {
             // Make the byte_mask into a valid Byte Address Select mask
