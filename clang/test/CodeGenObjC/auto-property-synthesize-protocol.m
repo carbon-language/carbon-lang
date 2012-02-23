@@ -1,5 +1,6 @@
 // RUN: %clang_cc1 -triple x86_64-apple-darwin -fobjc-default-synthesize-properties -emit-llvm  %s -o - | FileCheck %s
 // rdar://10907410
+// XFAIL: *
 
 @protocol P
 @optional
