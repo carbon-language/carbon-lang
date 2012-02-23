@@ -21,10 +21,8 @@
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DenseSet.h"
 #include "llvm/ADT/IndexedMap.h"
+#include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
-#ifndef NDEBUG
-#include "llvm/ADT/SmallSet.h"
-#endif
 #include "llvm/Analysis/BranchProbabilityInfo.h"
 #include "llvm/CodeGen/ValueTypes.h"
 #include "llvm/CodeGen/ISDOpcodes.h"
@@ -98,8 +96,8 @@ public:
   MachineBasicBlock::iterator InsertPt;
 
 #ifndef NDEBUG
-  SmallSet<const Instruction *, 8> CatchInfoLost;
-  SmallSet<const Instruction *, 8> CatchInfoFound;
+  SmallPtrSet<const Instruction *, 8> CatchInfoLost;
+  SmallPtrSet<const Instruction *, 8> CatchInfoFound;
 #endif
 
   struct LiveOutInfo {
@@ -112,7 +110,7 @@ public:
 
   /// VisitedBBs - The set of basic blocks visited thus far by instruction
   /// selection.
-  DenseSet<const BasicBlock*> VisitedBBs;
+  SmallPtrSet<const BasicBlock*, 4> VisitedBBs;
 
   /// PHINodesToUpdate - A list of phi instructions whose operand list will
   /// be updated after processing the current basic block.
