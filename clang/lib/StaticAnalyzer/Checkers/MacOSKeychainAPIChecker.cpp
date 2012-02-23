@@ -59,7 +59,7 @@ public:
   void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
   void checkPostStmt(const CallExpr *S, CheckerContext &C) const;
   void checkDeadSymbols(SymbolReaper &SR, CheckerContext &C) const;
-  void checkEndPath(CheckerContext &Ctx) const;
+  void checkEndPath(CheckerContext &C) const;
 
 private:
   typedef std::pair<SymbolRef, const AllocationState*> AllocationPair;
@@ -101,8 +101,13 @@ private:
                                          const Expr *ArgExpr,
                                          CheckerContext &C) const;
 
+  /// Find the allocation site for Sym on the path leading to the node N.
+  const Stmt *getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
+                                CheckerContext &C) const;
+
   BugReport *generateAllocatedDataNotReleasedReport(const AllocationPair &AP,
-                                                    ExplodedNode *N) const;
+                                                    ExplodedNode *N,
+                                                    CheckerContext &C) const;
 
   /// Check if RetSym evaluates to an error value in the current state.
   bool definitelyReturnedError(SymbolRef RetSym,
@@ -498,19 +503,46 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
   C.addTransition(state);
 }
 
+const Stmt *
+MacOSKeychainAPIChecker::getAllocationSite(const ExplodedNode *N,
+                                           SymbolRef Sym,
+                                           CheckerContext &C) const {
+  // Walk the ExplodedGraph backwards and find the first node that referred to
+  // the tracked symbol.
+  const ExplodedNode *AllocNode = N;
+
+  while (N) {
+    if (!N->getState()->get<AllocatedData>(Sym))
+      break;
+    AllocNode = N;
+    N = N->pred_empty() ? NULL : *(N->pred_begin());
+  }
+
+  ProgramPoint P = AllocNode->getLocation();
+  return cast<clang::PostStmt>(P).getStmt();
+}
+
 BugReport *MacOSKeychainAPIChecker::
   generateAllocatedDataNotReleasedReport(const AllocationPair &AP,
-                                         ExplodedNode *N) const {
+                                         ExplodedNode *N,
+                                         CheckerContext &C) const {
   const ADFunctionInfo &FI = FunctionsToTrack[AP.second->AllocatorIdx];
   initBugType();
   SmallString<70> sbuf;
   llvm::raw_svector_ostream os(sbuf);
-
   os << "Allocated data is not released: missing a call to '"
       << FunctionsToTrack[FI.DeallocatorIdx].Name << "'.";
-  BugReport *Report = new BugReport(*BT, os.str(), N);
+
+  // Most bug reports are cached at the location where they occurred.
+  // With leaks, we want to unique them by the location where they were
+  // allocated, and only report a single path.
+  const Stmt *AllocStmt = getAllocationSite(N, AP.first, C);
+  PathDiagnosticLocation LocUsedForUniqueing =
+    PathDiagnosticLocation::createBegin(AllocStmt, C.getSourceManager(),
+                                        N->getLocationContext());
+
+  BugReport *Report = new BugReport(*BT, os.str(), N, LocUsedForUniqueing);
   Report->addVisitor(new SecKeychainBugVisitor(AP.first));
-  Report->addRange(SourceRange());
   return Report;
 }
 
@@ -536,27 +568,31 @@ void MacOSKeychainAPIChecker::checkDeadSymbols(SymbolReaper &SR,
       continue;
     Errors.push_back(std::make_pair(I->first, &I->second));
   }
-  if (!Changed)
+  if (!Changed) {
+    // Generate the new, cleaned up state.
+    C.addTransition(State);
     return;
+  }
 
-  // Generate the new, cleaned up state.
-  ExplodedNode *N = C.addTransition(State);
-  if (!N)
-    return;
+  static SimpleProgramPointTag Tag("MacOSKeychainAPIChecker : DeadSymbolsLeak");
+  ExplodedNode *N = C.addTransition(C.getState(), C.getPredecessor(), &Tag);
 
   // Generate the error reports.
   for (AllocationPairVec::iterator I = Errors.begin(), E = Errors.end();
                                                        I != E; ++I) {
-    C.EmitReport(generateAllocatedDataNotReleasedReport(*I, N));
+    C.EmitReport(generateAllocatedDataNotReleasedReport(*I, N, C));
   }
+
+  // Generate the new, cleaned up state.
+  C.addTransition(State, N);
 }
 
 // TODO: Remove this after we ensure that checkDeadSymbols are always called.
-void MacOSKeychainAPIChecker::checkEndPath(CheckerContext &Ctx) const {
-  ProgramStateRef state = Ctx.getState();
+void MacOSKeychainAPIChecker::checkEndPath(CheckerContext &C) const {
+  ProgramStateRef state = C.getState();
 
   // If inside inlined call, skip it.
-  if (Ctx.getLocationContext()->getParent() != 0)
+  if (C.getLocationContext()->getParent() != 0)
     return;
 
   AllocatedSetTy AS = state->get<AllocatedData>();
@@ -574,25 +610,28 @@ void MacOSKeychainAPIChecker::checkEndPath(CheckerContext &Ctx) const {
     // allocation, do not report.
     if (state->getSymVal(I.getKey()) ||
         definitelyReturnedError(I->second.Region, state,
-                                Ctx.getSValBuilder())) {
+                                C.getSValBuilder())) {
       continue;
     }
     Errors.push_back(std::make_pair(I->first, &I->second));
   }
 
   // If no change, do not generate a new state.
-  if (!Changed)
+  if (!Changed) {
+    C.addTransition(state);
     return;
+  }
 
-  ExplodedNode *N = Ctx.addTransition(state);
-  if (!N)
-    return;
+  static SimpleProgramPointTag Tag("MacOSKeychainAPIChecker : EndPathLeak");
+  ExplodedNode *N = C.addTransition(C.getState(), C.getPredecessor(), &Tag);
 
   // Generate the error reports.
   for (AllocationPairVec::iterator I = Errors.begin(), E = Errors.end();
                                                        I != E; ++I) {
-    Ctx.EmitReport(generateAllocatedDataNotReleasedReport(*I, N));
+    C.EmitReport(generateAllocatedDataNotReleasedReport(*I, N, C));
   }
+
+  C.addTransition(state, N);
 }
 
 
