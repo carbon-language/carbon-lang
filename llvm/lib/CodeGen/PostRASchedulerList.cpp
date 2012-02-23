@@ -45,7 +45,6 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/Statistic.h"
-#include <set>
 using namespace llvm;
 
 STATISTIC(NumNoops, "Number of noops inserted");
@@ -446,7 +445,7 @@ bool SchedulePostRATDList::ToggleKillFlag(MachineInstr *MI,
 void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
   DEBUG(dbgs() << "Fixup kills for BB#" << MBB->getNumber() << '\n');
 
-  std::set<unsigned> killedRegs;
+  BitVector killedRegs(TRI->getNumRegs());
   BitVector ReservedRegs = TRI->getReservedRegs(MF);
 
   StartBlockForKills(MBB);
@@ -487,7 +486,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
     // Examine all used registers and set/clear kill flag. When a
     // register is used multiple times we only set the kill flag on
     // the first use.
-    killedRegs.clear();
+    killedRegs.reset();
     for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
       MachineOperand &MO = MI->getOperand(i);
       if (!MO.isReg() || !MO.isUse()) continue;
@@ -495,7 +494,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       if ((Reg == 0) || ReservedRegs.test(Reg)) continue;
 
       bool kill = false;
-      if (killedRegs.find(Reg) == killedRegs.end()) {
+      if (!killedRegs.test(Reg)) {
         kill = true;
         // A register is not killed if any subregs are live...
         for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
@@ -519,7 +518,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
         DEBUG(MI->dump());
       }
 
-      killedRegs.insert(Reg);
+      killedRegs.set(Reg);
     }
 
     // Mark any used register (that is not using undef) and subregs as
