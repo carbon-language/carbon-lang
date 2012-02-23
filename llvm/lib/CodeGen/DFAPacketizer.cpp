@@ -104,8 +104,8 @@ namespace {
 // DefaultVLIWScheduler - This class extends ScheduleDAGInstrs and overrides
 // Schedule method to build the dependence graph.
 //
-// ScheduleDAGInstrs has LLVM_LIBRARY_VISIBILITY so cannot be exposed to the
-// VLIWPacketizerImpl interface, even as an undefined pointer.
+// ScheduleDAGInstrs has LLVM_LIBRARY_VISIBILITY so we have to reference it as
+// an opaque pointer in VLIWPacketizerList.
 class DefaultVLIWScheduler : public ScheduleDAGInstrs {
 public:
   DefaultVLIWScheduler(MachineFunction &MF, MachineLoopInfo &MLI,
@@ -113,18 +113,7 @@ public:
   // Schedule - Actual scheduling work.
   void Schedule();
 };
-}
-
-namespace llvm {
-// Wrapper for holding library-local data types.
-class VLIWPacketizerImpl {
-public:
-  DefaultVLIWScheduler DAGBuilder;
-  VLIWPacketizerImpl(MachineFunction &MF, MachineLoopInfo &MLI,
-                     MachineDominatorTree &MDT, bool IsPostRA)
-    : DAGBuilder(MF, MLI, MDT, IsPostRA) {}
-};
-}
+} // end anonymous namespace
 
 DefaultVLIWScheduler::DefaultVLIWScheduler(
   MachineFunction &MF, MachineLoopInfo &MLI, MachineDominatorTree &MDT,
@@ -143,12 +132,12 @@ VLIWPacketizerList::VLIWPacketizerList(
   bool IsPostRA) : TM(MF.getTarget()), MF(MF)  {
   TII = TM.getInstrInfo();
   ResourceTracker = TII->CreateTargetScheduleState(&TM, 0);
-  Impl = new VLIWPacketizerImpl(MF, MLI, MDT, IsPostRA);
+  SchedulerImpl = new DefaultVLIWScheduler(MF, MLI, MDT, IsPostRA);
 }
 
 // VLIWPacketizerList Dtor
 VLIWPacketizerList::~VLIWPacketizerList() {
-  delete Impl;
+  delete (DefaultVLIWScheduler *)SchedulerImpl;
   delete ResourceTracker;
 }
 
@@ -195,10 +184,11 @@ void VLIWPacketizerList::endPacket(MachineBasicBlock *MBB,
 void VLIWPacketizerList::PacketizeMIs(MachineBasicBlock *MBB,
                                       MachineBasicBlock::iterator BeginItr,
                                       MachineBasicBlock::iterator EndItr) {
-  Impl->DAGBuilder.Run(MBB, BeginItr, EndItr, MBB->size());
+  DefaultVLIWScheduler *Scheduler = (DefaultVLIWScheduler *)SchedulerImpl;
+  Scheduler->Run(MBB, BeginItr, EndItr, MBB->size());
 
   // Remember scheduling units.
-  SUnits = Impl->DAGBuilder.SUnits;
+  SUnits = Scheduler->SUnits;
 
   // Generate MI -> SU map.
   std::map <MachineInstr*, SUnit*> MIToSUnit;
