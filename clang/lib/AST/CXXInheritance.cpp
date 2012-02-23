@@ -30,7 +30,7 @@ void CXXBasePaths::ComputeDeclsFound() {
 
   // Eliminate duplicated decls.
   llvm::array_pod_sort(Decls.begin(), Decls.end());
-  std::unique(Decls.begin(), Decls.end());
+  Decls.erase(std::unique(Decls.begin(), Decls.end()), Decls.end());
 
   NumDeclsFound = Decls.size();
   DeclsFound = new NamedDecl * [NumDeclsFound];
