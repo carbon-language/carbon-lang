@@ -3000,9 +3000,15 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
 
         // Consume the ':'.
         ConsumeToken();
-      
-        if ((getLang().CPlusPlus && 
-             isCXXDeclarationSpecifier() != TPResult::True()) ||
+
+        // If we see a type specifier followed by an open-brace, we have an
+        // ambiguity between an underlying type and a C++11 braced
+        // function-style cast. Resolve this by always treating it as an
+        // underlying type.
+        // FIXME: The standard is not entirely clear on how to disambiguate in
+        // this case.
+        if ((getLang().CPlusPlus &&
+             isCXXDeclarationSpecifier(TPResult::True()) != TPResult::True()) ||
             (!getLang().CPlusPlus && !isDeclarationSpecifier(true))) {
           // We'll parse this as a bitfield later.
           PossibleBitfield = true;
