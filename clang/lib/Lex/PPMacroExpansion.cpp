@@ -649,7 +649,7 @@ static bool HasFeature(const Preprocessor &PP, const IdentifierInfo *II) {
            .Case("cxx_implicit_moves", LangOpts.CPlusPlus0x)
          //.Case("cxx_inheriting_constructors", false)
            .Case("cxx_inline_namespaces", LangOpts.CPlusPlus0x)
-         //.Case("cxx_lambdas", false)
+           .Case("cxx_lambdas", LangOpts.CPlusPlus0x)
            .Case("cxx_nonstatic_member_init", LangOpts.CPlusPlus0x)
            .Case("cxx_noexcept", LangOpts.CPlusPlus0x)
            .Case("cxx_nullptr", LangOpts.CPlusPlus0x)

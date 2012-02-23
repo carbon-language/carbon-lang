@@ -16,7 +16,7 @@ int has_lambdas();
 int no_lambdas();
 #endif
 
-// CHECK-0X: no_lambdas
+// CHECK-0X: has_lambdas
 // CHECK-NO-0X: no_lambdas
 
 
