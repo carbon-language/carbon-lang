@@ -112,11 +112,11 @@ entry:
   ret i32 %conv3
 }
 
+; rdar://10750814
 define zeroext i16 @test9(i16 zeroext %v) nounwind readnone {
 entry:
 ; CHECK: test9
-; CHECK: rev r0, r0
-; CHECK: lsr r0, r0, #16
+; CHECK: rev16 r0, r0
   %conv = zext i16 %v to i32
   %shr4 = lshr i32 %conv, 8
   %shl = shl nuw nsw i32 %conv, 8

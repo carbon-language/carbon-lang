@@ -800,6 +800,9 @@ ARMTargetLowering::ARMTargetLowering(TargetMachine &TM)
     setTargetDAGCombine(ISD::XOR);
   }
 
+  if (Subtarget->hasV6Ops())
+    setTargetDAGCombine(ISD::SRL);
+
   setStackPointerRegisterToSaveRestore(ARM::SP);
 
   if (TM.Options.UseSoftFloat || Subtarget->isThumb1Only() ||
@@ -7964,6 +7967,18 @@ static SDValue PerformIntrinsicCombine(SDNode *N, SelectionDAG &DAG) {
 static SDValue PerformShiftCombine(SDNode *N, SelectionDAG &DAG,
                                    const ARMSubtarget *ST) {
   EVT VT = N->getValueType(0);
+  if (N->getOpcode() == ISD::SRL && VT == MVT::i32 && ST->hasV6Ops()) {
+    // Canonicalize (srl (bswap x), 16) to (rotr (bswap x), 16) if the high
+    // 16-bits of x is zero. This optimizes rev + lsr 16 to rev16.
+    SDValue N1 = N->getOperand(1);
+    if (ConstantSDNode *C = dyn_cast<ConstantSDNode>(N1)) {
+      SDValue N0 = N->getOperand(0);
+      if (C->getZExtValue() == 16 && N0.getOpcode() == ISD::BSWAP &&
+          DAG.MaskedValueIsZero(N0.getOperand(0),
+                                APInt::getHighBitsSet(32, 16)))
+        return DAG.getNode(ISD::ROTR, N->getDebugLoc(), VT, N0, N1);
+    }
+  }
 
   // Nothing to be done for scalar shifts.
   const TargetLowering &TLI = DAG.getTargetLoweringInfo();
