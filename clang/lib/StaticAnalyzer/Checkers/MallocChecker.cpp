@@ -1033,9 +1033,19 @@ bool MallocChecker::hasUnknownBehavior(const FunctionDecl *FD,
     return false;
   }
 
-  // If it's a system call, we know it does not free the memory.
+  // Most system calls, do not free the memory.
   SourceManager &SM = ASTC.getSourceManager();
   if (SM.isInSystemHeader(FD->getLocation())) {
+    const IdentifierInfo *II = FD->getIdentifier();
+
+    // White list the system functions whose arguments escape.
+    if (II) {
+      StringRef FName = II->getName();
+      if (FName.equals("pthread_setspecific"))
+        return true;
+    }
+
+    // Otherwise, assume that the function does not free memory.
     return false;
   }
 
@@ -1052,7 +1062,7 @@ MallocChecker::checkRegionChanges(ProgramStateRef State,
                                     ArrayRef<const MemRegion *> ExplicitRegions,
                                     ArrayRef<const MemRegion *> Regions,
                                     const CallOrObjCMessage *Call) const {
-  if (!invalidated)
+  if (!invalidated || invalidated->empty())
     return State;
   llvm::SmallPtrSet<SymbolRef, 8> WhitelistedSymbols;
 

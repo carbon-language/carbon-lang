@@ -187,6 +187,20 @@ static void findPtrToConstParams(llvm::SmallSet<unsigned, 1> &PreserveArgs,
     return;
 
   if (const FunctionDecl *FDecl = dyn_cast<FunctionDecl>(CallDecl)) {
+    const IdentifierInfo *II = FDecl->getIdentifier();
+
+    // List the cases, where the region should be invalidated even if the
+    // argument is const.
+    if (II) {
+      StringRef FName = II->getName();
+      // 'int pthread_setspecific(ptheread_key k, const void *)' stores a value
+      // into thread local storage. The value can later be retrieved with
+      // 'void *ptheread_getspecific(pthread_key)'. So even thought the
+      // parameter is 'const void *', the region escapes through the call.
+      if (FName.equals("pthread_setspecific"))
+        return;
+    }
+
     for (unsigned Idx = 0, E = Call.getNumArgs(); Idx != E; ++Idx) {
       if (FDecl && Idx < FDecl->getNumParams()) {
         if (isPointerToConst(FDecl->getParamDecl(Idx)))

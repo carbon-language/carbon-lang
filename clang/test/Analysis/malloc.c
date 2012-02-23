@@ -677,6 +677,16 @@ void testStrdupContentIsDefined(const char *s, unsigned validIndex) {
   free(s2);
 }
 
+// Test the system library functions to which the pointer can escape.
+
+// For now, we assume memory passed to pthread_specific escapes.
+// TODO: We could check that if a new pthread binding is set, the existing
+// binding must be freed; otherwise, a memory leak can occur.
+void testPthereadSpecificEscape(pthread_key_t key) {
+  void *buf = malloc(12);
+  pthread_setspecific(key, buf); // no warning
+}
+
 // Below are the known false positives.
 
 // TODO: There should be no warning here. This one might be difficult to get rid of.
