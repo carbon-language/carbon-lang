@@ -358,7 +358,7 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch) :
     m_disasm_context = ::LLVMCreateDisasm(arch.GetTriple().getTriple().c_str(), 
                                           (void*)this, 
                                           /*TagType=*/1,
-                                          DisassemblerLLVMC::OpInfoCallback,
+                                          NULL,
                                           DisassemblerLLVMC::SymbolLookupCallback);
     
     if (arch.GetTriple().getArch() == llvm::Triple::arm)
@@ -366,7 +366,7 @@ DisassemblerLLVMC::DisassemblerLLVMC (const ArchSpec &arch) :
         m_alternate_disasm_context = ::LLVMCreateDisasm("thumbv7-apple-darwin", 
                                                         (void*)this, 
                                                         /*TagType=*/1,
-                                                        DisassemblerLLVMC::OpInfoCallback,
+                                                        NULL,
                                                         DisassemblerLLVMC::SymbolLookupCallback);
     }
 }
@@ -526,26 +526,14 @@ const char *DisassemblerLLVMC::SymbolLookup (uint64_t ReferenceValue,
             else
                 target->GetImages().ResolveFileAddress(ReferenceValue, reference_address);
             
-            if (reference_address.IsValid())
+            if (reference_address.IsValid() && reference_address.GetSection())
             {
-                SymbolContext reference_sc;
-                
-                target->GetImages().ResolveSymbolContextForAddress(reference_address, 
-                                                                   eSymbolContextFunction | eSymbolContextSymbol,
-                                                                   reference_sc);
-                
                 StreamString ss;
                 
-                const bool show_fullpaths = false;
-                const bool show_module = true;
-                const bool show_inlined_frames = false;
-                
-                reference_sc.DumpStopContext(&ss, 
-                                             m_exe_scope, 
-                                             reference_address, 
-                                             show_fullpaths, 
-                                             show_module, 
-                                             show_inlined_frames);
+                reference_address.Dump (&ss, 
+                                        target, 
+                                        Address::DumpStyleResolvedDescriptionNoModule, 
+                                        Address::DumpStyleSectionNameOffset);
                 
                 m_inst->AddReferencedAddress(ss.GetString());
             }

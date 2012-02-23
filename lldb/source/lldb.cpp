@@ -73,7 +73,7 @@
 using namespace lldb;
 using namespace lldb_private;
 
-//#define USE_NEW_DISASSEMBLER
+#define USE_NEW_DISASSEMBLER
 
 void
 lldb_private::Initialize ()
