@@ -129,18 +129,24 @@ Watchpoint::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) c
     }
 
     if (description_level >= lldb::eDescriptionLevelVerbose)
+    {
         if (m_callback)
+        {
             s->Printf("\n    hw_index = %i  hit_count = %-4u  ignore_count = %-4u  callback = %8p baton = %8p",
                       GetHardwareIndex(),
                       GetHitCount(),
                       GetIgnoreCount(),
                       m_callback,
                       m_callback_baton);
+        }
         else
+        {
             s->Printf("\n    hw_index = %i  hit_count = %-4u  ignore_count = %-4u",
                       GetHardwareIndex(),
                       GetHitCount(),
                       GetIgnoreCount());
+        }
+    }
 }
 
 bool
