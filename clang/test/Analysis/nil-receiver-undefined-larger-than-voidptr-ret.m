@@ -48,7 +48,7 @@ void createFoo4() {
 }
 
 void createFoo5() {
-  MyClass *obj = @"";  
+  MyClass *obj = (id)@"";  
   
   double d = [obj doubleM]; // no-warning
 }

@@ -6,7 +6,7 @@
 // RUN: %clang_cc1 -fblocks -include-pch %t -fsyntax-only -verify %s 
 
 // Expressions
-int *A1 = (objc_string)0;   // expected-warning {{aka 'id'}}
+int *A1 = (objc_string)0;   // expected-warning {{aka 'NSString *'}}
 
 char A2 = (objc_encode){};  // expected-error {{not a compile-time constant}} \
                                expected-warning {{char [2]}}

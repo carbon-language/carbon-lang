@@ -113,9 +113,21 @@ ExprResult Sema::ParseObjCStringLiteral(SourceLocation *AtLocs,
       Ty = Context.getObjCConstantStringInterface();
       Ty = Context.getObjCObjectPointerType(Ty);
     } else {
-      // If there is no NSString interface defined then treat constant
-      // strings as untyped objects and let the runtime figure it out later.
-      Ty = Context.getObjCIdType();
+      // If there is no NSString interface defined, implicitly declare
+      // a @class NSString; and use that instead. This is to make sure
+      // type of an NSString literal is represented correctly, instead of
+      // being an 'id' type.
+      Ty = Context.getObjCNSStringType();
+      if (Ty.isNull()) {
+        ObjCInterfaceDecl *NSStringIDecl = 
+          ObjCInterfaceDecl::Create (Context, 
+                                     Context.getTranslationUnitDecl(), 
+                                     SourceLocation(), NSIdent, 
+                                     0, SourceLocation());
+        Ty = Context.getObjCInterfaceType(NSStringIDecl);
+        Context.setObjCNSStringType(Ty);
+      }
+      Ty = Context.getObjCObjectPointerType(Ty);
     }
   }
 

@@ -218,6 +218,8 @@ class ASTContext : public RefCountedBase<ASTContext> {
 
   QualType ObjCConstantStringType;
   mutable RecordDecl *CFConstantStringTypeDecl;
+  
+  QualType ObjCNSStringType;
 
   /// \brief The typedef declaration for the Objective-C "instancetype" type.
   TypedefDecl *ObjCInstanceTypeDecl;
@@ -944,6 +946,14 @@ public:
     return ObjCConstantStringType;
   }
 
+  QualType getObjCNSStringType() const {
+    return ObjCNSStringType;
+  }
+  
+  void setObjCNSStringType(QualType T) {
+    ObjCNSStringType = T;
+  }
+  
   /// \brief Retrieve the type that 'id' has been defined to, which may be
   /// different from the built-in 'id' if 'id' has been typedef'd.
   QualType getObjCIdRedefinitionType() const {
