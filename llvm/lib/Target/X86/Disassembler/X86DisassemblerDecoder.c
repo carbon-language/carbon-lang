@@ -1014,6 +1014,7 @@ static int readDisplacement(struct InternalInstruction* insn) {
     return 0;
   
   insn->consumedDisplacement = TRUE;
+  insn->displacementOffset = insn->readerCursor - insn->startLocation;
   
   switch (insn->eaDisplacement) {
   case EA_DISP_NONE:
@@ -1410,6 +1411,7 @@ static int readImmediate(struct InternalInstruction* insn, uint8_t size) {
     size = insn->immediateSize;
   else
     insn->immediateSize = size;
+  insn->immediateOffset = insn->readerCursor - insn->startLocation;
   
   switch (size) {
   case 1:

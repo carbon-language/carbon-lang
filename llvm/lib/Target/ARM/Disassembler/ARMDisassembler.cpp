@@ -440,40 +440,38 @@ static bool tryAddingSymbolicOperand(uint64_t Address, int32_t Value,
                                      MCInst &MI, const void *Decoder) {
   const MCDisassembler *Dis = static_cast<const MCDisassembler*>(Decoder);
   LLVMOpInfoCallback getOpInfo = Dis->getLLVMOpInfoCallback();
-  if (!getOpInfo)
-    return false;
-
   struct LLVMOpInfo1 SymbolicOp;
+  memset(&SymbolicOp, '\0', sizeof(struct LLVMOpInfo1));
   SymbolicOp.Value = Value;
   void *DisInfo = Dis->getDisInfoBlock();
-  if (!getOpInfo(DisInfo, Address, 0 /* Offset */, InstSize, 1, &SymbolicOp)) {
-    if (isBranch) {
-      LLVMSymbolLookupCallback SymbolLookUp =
-                                            Dis->getLLVMSymbolLookupCallback();
-      if (SymbolLookUp) {
-        uint64_t ReferenceType;
-        ReferenceType = LLVMDisassembler_ReferenceType_In_Branch;
-        const char *ReferenceName;
-        const char *Name = SymbolLookUp(DisInfo, Value, &ReferenceType, Address,
-                                        &ReferenceName);
-        if (Name) {
-          SymbolicOp.AddSymbol.Name = Name;
-          SymbolicOp.AddSymbol.Present = true;
-          SymbolicOp.Value = 0;
-        }
-        else {
-          SymbolicOp.Value = Value;
-        }
-        if(ReferenceType == LLVMDisassembler_ReferenceType_Out_SymbolStub)
-          (*Dis->CommentStream) << "symbol stub for: " << ReferenceName;
-      }
-      else {
-        return false;
-      }
-    }
-    else {
+
+  if (!getOpInfo ||
+      !getOpInfo(DisInfo, Address, 0 /* Offset */, InstSize, 1, &SymbolicOp)) {
+    // Clear SymbolicOp.Value from above and also all other fields.
+    memset(&SymbolicOp, '\0', sizeof(struct LLVMOpInfo1));
+    LLVMSymbolLookupCallback SymbolLookUp = Dis->getLLVMSymbolLookupCallback();
+    if (!SymbolLookUp)
       return false;
+    uint64_t ReferenceType;
+    if (isBranch)
+       ReferenceType = LLVMDisassembler_ReferenceType_In_Branch;
+    else
+       ReferenceType = LLVMDisassembler_ReferenceType_InOut_None;
+    const char *ReferenceName;
+    const char *Name = SymbolLookUp(DisInfo, Value, &ReferenceType, Address,
+                                    &ReferenceName);
+    if (Name) {
+      SymbolicOp.AddSymbol.Name = Name;
+      SymbolicOp.AddSymbol.Present = true;
     }
+    // For branches always create an MCExpr so it gets printed as hex address.
+    else if (isBranch) {
+      SymbolicOp.Value = Value;
+    }
+    if(ReferenceType == LLVMDisassembler_ReferenceType_Out_SymbolStub)
+      (*Dis->CommentStream) << "symbol stub for: " << ReferenceName;
+    if (!Name && !isBranch)
+      return false;
   }
 
   MCContext *Ctx = Dis->getMCContext();
@@ -548,7 +546,7 @@ static bool tryAddingSymbolicOperand(uint64_t Address, int32_t Value,
 /// a literal 'C' string if the referenced address of the literal pool's entry
 /// is an address into a section with 'C' string literals.
 static void tryAddingPcLoadReferenceComment(uint64_t Address, int Value,
-					    const void *Decoder) {
+                                            const void *Decoder) {
   const MCDisassembler *Dis = static_cast<const MCDisassembler*>(Decoder);
   LLVMSymbolLookupCallback SymbolLookUp = Dis->getLLVMSymbolLookupCallback();
   if (SymbolLookUp) {
@@ -1910,12 +1908,14 @@ DecodeBranchImmInstruction(llvm::MCInst &Inst, unsigned Insn,
   if (pred == 0xF) {
     Inst.setOpcode(ARM::BLXi);
     imm |= fieldFromInstruction32(Insn, 24, 1) << 1;
+    if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<26>(imm) + 8,
+                                  true, 4, Inst, Decoder))
     Inst.addOperand(MCOperand::CreateImm(SignExtend32<26>(imm)));
     return S;
   }
 
-  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<26>(imm) + 8, true,
-                                4, Inst, Decoder))
+  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<26>(imm) + 8,
+                                true, 4, Inst, Decoder))
     Inst.addOperand(MCOperand::CreateImm(SignExtend32<26>(imm)));
   if (!Check(S, DecodePredicateOperand(Inst, pred, Address, Decoder)))
     return MCDisassembler::Fail;
@@ -3127,7 +3127,9 @@ DecodeThumbBCCTargetOperand(llvm::MCInst &Inst, unsigned Val,
 
 static DecodeStatus DecodeThumbBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
                                        uint64_t Address, const void *Decoder){
-  Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
+  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<22>(Val<<1) + 8,
+                                true, 4, Inst, Decoder))
+    Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
   return MCDisassembler::Success;
 }
 

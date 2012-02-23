@@ -390,7 +390,11 @@ struct X86Operand : public MCParsedAsmOperand {
 
   void addAbsMemOperands(MCInst &Inst, unsigned N) const {
     assert((N == 1) && "Invalid number of operands!");
-    Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
+    // Add as immediates when possible.
+    if (const MCConstantExpr *CE = dyn_cast<MCConstantExpr>(getMemDisp()))
+      Inst.addOperand(MCOperand::CreateImm(CE->getValue()));
+    else
+      Inst.addOperand(MCOperand::CreateExpr(getMemDisp()));
   }
 
   static X86Operand *CreateToken(StringRef Str, SMLoc Loc) {

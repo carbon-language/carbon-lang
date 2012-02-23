@@ -459,6 +459,11 @@ struct InternalInstruction {
   uint8_t addressSize;
   uint8_t displacementSize;
   uint8_t immediateSize;
+
+  /* Offsets from the start of the instruction to the pieces of data, which is
+     needed to find relocation entries for adding symbolic operands */
+  uint8_t displacementOffset;
+  uint8_t immediateOffset;
   
   /* opcode state */
   

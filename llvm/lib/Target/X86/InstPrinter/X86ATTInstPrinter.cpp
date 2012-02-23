@@ -45,11 +45,12 @@ void X86ATTInstPrinter::printInst(const MCInst *MI, raw_ostream &OS,
   if (!printAliasInstr(MI, OS))
     printInstruction(MI, OS);
   
+  // Next always print the annotation.
+  printAnnotation(OS, Annot);
+
   // If verbose assembly is enabled, we can print some informative comments.
-  if (CommentStream) {
-    printAnnotation(OS, Annot);
+  if (CommentStream)
     EmitAnyX86InstComments(MI, *CommentStream, getRegisterName);
-  }
 }
 
 StringRef X86ATTInstPrinter::getOpcodeName(unsigned Opcode) const {
@@ -103,11 +104,21 @@ void X86ATTInstPrinter::print_pcrel_imm(const MCInst *MI, unsigned OpNo,
                                         raw_ostream &O) {
   const MCOperand &Op = MI->getOperand(OpNo);
   if (Op.isImm())
-    // Print this as a signed 32-bit value.
-    O << (int)Op.getImm();
+    O << Op.getImm();
   else {
     assert(Op.isExpr() && "unknown pcrel immediate operand");
-    O << *Op.getExpr();
+    // If a symbolic branch target was added as a constant expression then print
+    // that address in hex.
+    const MCConstantExpr *BranchTarget = dyn_cast<MCConstantExpr>(Op.getExpr());
+    int64_t Address;
+    if (BranchTarget && BranchTarget->EvaluateAsAbsolute(Address)) {
+      O << "0x";
+      O.write_hex(Address);
+    }
+    else {
+      // Otherwise, just print the expression.
+      O << *Op.getExpr();
+    }
   }
 }
 
