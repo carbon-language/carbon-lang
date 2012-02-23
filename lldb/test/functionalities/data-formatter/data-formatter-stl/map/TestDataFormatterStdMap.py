@@ -120,8 +120,11 @@ class StdMapDataFormatterTestCase(TestBase):
 
         # check that the expression parser does not make use of
         # synthetic children instead of running code
-        self.expect("expression ii[8]", matching=False, error=True,
-                    substrs = ['1234567'])
+        # TOT clang has a fix for this, which makes the expression command here succeed
+        # since this would make the test fail or succeed depending on clang version in use
+        # this is safer commented for the time being
+        #self.expect("expression ii[8]", matching=False, error=True,
+        #            substrs = ['1234567'])
 
         self.runCmd("n")
         
@@ -192,8 +195,11 @@ class StdMapDataFormatterTestCase(TestBase):
         
         # check that the expression parser does not make use of
         # synthetic children instead of running code
-        self.expect("expression si[0]", matching=False, error=True,
-                    substrs = ['first = ', 'zero'])
+        # TOT clang has a fix for this, which makes the expression command here succeed
+        # since this would make the test fail or succeed depending on clang version in use
+        # this is safer commented for the time being
+        #self.expect("expression si[0]", matching=False, error=True,
+        #            substrs = ['first = ', 'zero'])
 
         self.runCmd("n")
         
@@ -250,8 +256,11 @@ class StdMapDataFormatterTestCase(TestBase):
         
         # check that the expression parser does not make use of
         # synthetic children instead of running code
-        self.expect("expression is[0]", matching=False, error=True,
-                    substrs = ['first = ', 'goofy'])
+        # TOT clang has a fix for this, which makes the expression command here succeed
+        # since this would make the test fail or succeed depending on clang version in use
+        # this is safer commented for the time being
+        #self.expect("expression is[0]", matching=False, error=True,
+        #            substrs = ['first = ', 'goofy'])
 
         self.runCmd("n")
         
@@ -304,8 +313,11 @@ class StdMapDataFormatterTestCase(TestBase):
         
         # check that the expression parser does not make use of
         # synthetic children instead of running code
-        self.expect("expression ss[3]", matching=False, error=True,
-                    substrs = ['gatto'])
+        # TOT clang has a fix for this, which makes the expression command here succeed
+        # since this would make the test fail or succeed depending on clang version in use
+        # this is safer commented for the time being
+        #self.expect("expression ss[3]", matching=False, error=True,
+        #            substrs = ['gatto'])
 
         self.runCmd("n")
         
