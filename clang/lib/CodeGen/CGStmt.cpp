@@ -191,19 +191,12 @@ RValue CodeGenFunction::EmitCompoundStmt(const CompoundStmt &S, bool GetLast,
   PrettyStackTraceLoc CrashInfo(getContext().getSourceManager(),S.getLBracLoc(),
                              "LLVM IR generation of compound statement ('{}')");
 
-  CGDebugInfo *DI = getDebugInfo();
-  if (DI)
-    DI->EmitLexicalBlockStart(Builder, S.getLBracLoc());
-
-  // Keep track of the current cleanup stack depth.
-  RunCleanupsScope Scope(*this);
+  // Keep track of the current cleanup stack depth, including debug scopes.
+  LexicalScope Scope(*this, S.getSourceRange());
 
   for (CompoundStmt::const_body_iterator I = S.body_begin(),
        E = S.body_end()-GetLast; I != E; ++I)
     EmitStmt(*I);
-
-  if (DI)
-    DI->EmitLexicalBlockEnd(Builder, S.getRBracLoc());
 
   RValue RV;
   if (!GetLast)
