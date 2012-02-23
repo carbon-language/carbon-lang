@@ -267,6 +267,8 @@ Release Notes</a>.</h1>
       a fast memory error detector.</li>
   <li><a href="CodeGenerator.html#machineinstrbundle">MachineInstr Bundles</a>,
       Support to model instruction bundling / packing.</li>
+  <li><a href="#armintegratedassembler">ARM Integrated Assembler</a>,
+      A full featured assembler and direct-to-object support for ARM.</li>
   <li>....</li>
 </ul>
 
@@ -395,10 +397,28 @@ Release Notes</a>.</h1>
 
 <ul>
   <li>The constant island pass now supports basic block and constant pool entry
-  alignments greater than 4 bytes.</li> </ul>
+  alignments greater than 4 bytes.</li>
+  <li>On Darwin, the ARM target now has a full-featured integrated assembler.
+  </li>
+</ul>
 </div>
 
+<h4>
+<a name="armintegratedassembler">ARM Integrated Assembler</a>
+</h4>
+<div>
+<p>The ARM target now includes a full featured macro assembler, including
+direct-to-object module support for clang. The assembler is currently enabled
+by default for Darwin only pending testing and any additional necessary
+platform specific support for Linux.</p>
 
+<p>Full support is included for Thumb1, Thumb2 and ARM modes, along with
+subtarget and CPU specific extensions for VFP2, VFP3 and NEON.</p>
+
+<p>The assembler is Unified Syntax only (see ARM Architecural Reference Manual
+for details). While there is some, and growing, support for pre-unfied (divided)
+syntax, there are still significant gaps in that support.</p>
+</div>
 <!--=========================================================================-->
 <h3>
 <a name="MIPS">MIPS Target Improvements</a>
