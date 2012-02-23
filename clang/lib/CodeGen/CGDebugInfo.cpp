@@ -345,6 +345,7 @@ llvm::DIType CGDebugInfo::CreateType(const BuiltinType *BT) {
     //  Class isa;
     // } *id;
 
+    // TODO: Cache these two types to avoid duplicates.
     llvm::DIType OCTy =
       DBuilder.createForwardDecl(llvm::dwarf::DW_TAG_structure_type,
                                  "objc_class", getOrCreateMainFile(),
