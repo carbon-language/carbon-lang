@@ -235,7 +235,7 @@ public:
   /// Note that end() changes when elements are erased, unlike std::list.
   ///
   iterator erase(iterator I) {
-    assert(I - begin() < size() && "Invalid iterator");
+    assert(unsigned(I - begin()) < size() && "Invalid iterator");
     if (I != end() - 1) {
       *I = Dense.back();
       unsigned BackKey = KeyOf(Dense.back());
