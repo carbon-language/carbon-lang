@@ -280,6 +280,14 @@ Retry:
 
   case tok::kw___try:
     return ParseSEHTryBlock(attrs);
+
+  case tok::annot_pragma_vis:
+    HandlePragmaVisibility();
+    return StmtEmpty();
+
+  case tok::annot_pragma_pack:
+    HandlePragmaPack();
+    return StmtEmpty();
   }
 
   // If we reached this code, the statement must end in a semicolon.

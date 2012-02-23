@@ -574,6 +574,11 @@ ANNOTATION(pragma_unused)
 // handles them.
 ANNOTATION(pragma_vis)
 
+// Annotation for #pragma pack...
+// The lexer produces these so that they only take effect when the parser
+// handles them.
+ANNOTATION(pragma_pack)
+
 #undef ANNOTATION
 #undef TESTING_KEYWORD
 #undef OBJC2_AT_KEYWORD

@@ -410,6 +410,10 @@ private:
   /// #pragma GCC visibility...
   void HandlePragmaVisibility();
 
+  /// \brief Handle the annotation token produced for
+  /// #pragma pack...
+  void HandlePragmaPack();
+
   /// GetLookAheadToken - This peeks ahead N tokens and returns that token
   /// without consuming any tokens.  LookAhead(0) returns 'Tok', LookAhead(1)
   /// returns the token after Tok, etc.

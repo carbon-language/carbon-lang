@@ -549,6 +549,9 @@ Parser::ParseExternalDeclaration(ParsedAttributesWithRange &attrs,
   case tok::annot_pragma_vis:
     HandlePragmaVisibility();
     return DeclGroupPtrTy();
+  case tok::annot_pragma_pack:
+    HandlePragmaPack();
+    return DeclGroupPtrTy();
   case tok::semi:
     Diag(Tok, getLang().CPlusPlus0x ?
          diag::warn_cxx98_compat_top_level_semi : diag::ext_top_level_semi)

@@ -37,6 +37,24 @@ void Parser::HandlePragmaVisibility() {
   Actions.ActOnPragmaVisibility(VisType, VisLoc);
 }
 
+struct PragmaPackInfo {
+  Sema::PragmaPackKind Kind;
+  IdentifierInfo *Name;
+  Expr *Alignment;
+  SourceLocation LParenLoc;
+  SourceLocation RParenLoc;
+};
+
+void Parser::HandlePragmaPack() {
+  assert(Tok.is(tok::annot_pragma_pack));
+  PragmaPackInfo *Info =
+    static_cast<PragmaPackInfo *>(Tok.getAnnotationValue());
+  SourceLocation PragmaLoc = ConsumeToken();
+  Actions.ActOnPragmaPack(Info->Kind, Info->Name, Info->Alignment, PragmaLoc,
+                          Info->LParenLoc, Info->RParenLoc);
+  delete Info;
+}
+
 // #pragma GCC visibility comes in two variants:
 //   'push' '(' [visibility] ')'
 //   'pop'
@@ -196,8 +214,20 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
     return;
   }
 
-  Actions.ActOnPragmaPack(Kind, Name, Alignment.release(), PackLoc,
-                          LParenLoc, RParenLoc);
+  PragmaPackInfo *Info = new PragmaPackInfo;
+  Info->Kind = Kind;
+  Info->Name = Name;
+  Info->Alignment = Alignment.release();
+  Info->LParenLoc = LParenLoc;
+  Info->RParenLoc = RParenLoc;
+
+  Token *Toks = new Token[1];
+  Toks[0].startToken();
+  Toks[0].setKind(tok::annot_pragma_pack);
+  Toks[0].setLocation(PackLoc);
+  Toks[0].setAnnotationValue(static_cast<void*>(Info));
+  PP.EnterTokenStream(Toks, 1, /*DisableMacroExpansion=*/true,
+                      /*OwnsTokens=*/true);
 }
 
 // #pragma ms_struct on
