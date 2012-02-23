@@ -988,6 +988,25 @@ Decl *Sema::ActOnStartClassImplementation(
   return ActOnObjCContainerStartDefinition(IMPDecl);
 }
 
+Sema::DeclGroupPtrTy
+Sema::ActOnFinishObjCImplementation(Decl *ObjCImpDecl, ArrayRef<Decl *> Decls) {
+  SmallVector<Decl *, 64> DeclsInGroup;
+  DeclsInGroup.reserve(Decls.size() + 1);
+
+  for (unsigned i = 0, e = Decls.size(); i != e; ++i) {
+    Decl *Dcl = Decls[i];
+    if (!Dcl)
+      continue;
+    if (Dcl->getDeclContext()->isFileContext())
+      Dcl->setTopLevelDeclInObjCContainer();
+    DeclsInGroup.push_back(Dcl);
+  }
+
+  DeclsInGroup.push_back(ObjCImpDecl);
+
+  return BuildDeclaratorGroup(DeclsInGroup.data(), DeclsInGroup.size(), false);
+}
+
 void Sema::CheckImplementationIvars(ObjCImplementationDecl *ImpDecl,
                                     ObjCIvarDecl **ivars, unsigned numIvars,
                                     SourceLocation RBrace) {

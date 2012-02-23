@@ -1532,9 +1532,7 @@ Parser::ParseObjCAtImplementationDeclaration(SourceLocation AtLoc) {
     }
   }
 
-  DeclsInGroup.push_back(ObjCImpDecl);
-  return Actions.BuildDeclaratorGroup(
-           DeclsInGroup.data(), DeclsInGroup.size(), false);
+  return Actions.ActOnFinishObjCImplementation(ObjCImpDecl, DeclsInGroup);
 }
 
 Parser::DeclGroupPtrTy

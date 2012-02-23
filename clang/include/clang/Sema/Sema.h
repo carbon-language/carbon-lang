@@ -5477,6 +5477,9 @@ public:
                                          IdentifierInfo *CatName,
                                          SourceLocation CatLoc);
 
+  DeclGroupPtrTy ActOnFinishObjCImplementation(Decl *ObjCImpDecl,
+                                               ArrayRef<Decl *> Decls);
+
   DeclGroupPtrTy ActOnForwardClassDeclaration(SourceLocation Loc,
                                      IdentifierInfo **IdentList,
                                      SourceLocation *IdentLocs,
