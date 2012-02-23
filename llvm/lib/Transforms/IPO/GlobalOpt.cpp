@@ -2645,7 +2645,7 @@ bool Evaluator::EvaluateFunction(Function *F, Constant *&RetVal,
   BasicBlock::iterator CurInst = CurBB->begin();
 
   while (1) {
-    BasicBlock *NextBB;
+    BasicBlock *NextBB = 0; // Initialized to avoid compiler warnings.
     if (!EvaluateBlock(CurInst, NextBB))
       return false;
 
