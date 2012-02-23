@@ -188,6 +188,7 @@ getExplicitSectionGlobal(const GlobalValue *GV, SectionKind Kind,
 static const char *getSectionPrefixForGlobal(SectionKind Kind) {
   if (Kind.isText())                 return ".text.";
   if (Kind.isReadOnly())             return ".rodata.";
+  if (Kind.isBSS())                  return ".bss.";
 
   if (Kind.isThreadData())           return ".tdata.";
   if (Kind.isThreadBSS())            return ".tbss.";
@@ -216,7 +217,7 @@ SelectSectionForGlobal(const GlobalValue *GV, SectionKind Kind,
   // If this global is linkonce/weak and the target handles this by emitting it
   // into a 'uniqued' section name, create and return the section now.
   if ((GV->isWeakForLinker() || EmitUniquedSection) &&
-      !Kind.isCommon() && !Kind.isBSS()) {
+      !Kind.isCommon()) {
     const char *Prefix;
     Prefix = getSectionPrefixForGlobal(Kind);
 
