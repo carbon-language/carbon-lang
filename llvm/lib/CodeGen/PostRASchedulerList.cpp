@@ -266,7 +266,10 @@ bool PostRAScheduler::runOnMachineFunction(MachineFunction &Fn) {
     unsigned Count = MBB->size(), CurrentCount = Count;
     for (MachineBasicBlock::iterator I = Current; I != MBB->begin(); ) {
       MachineInstr *MI = llvm::prior(I);
-      if (TII->isSchedulingBoundary(MI, MBB, Fn)) {
+      // Calls are not scheduling boundaries before register allocation, but
+      // post-ra we don't gain anything by scheduling across calls since we
+      // don't need to worry about register pressure.
+      if (MI->isCall() || TII->isSchedulingBoundary(MI, MBB, Fn)) {
         Scheduler.Run(MBB, I, Current, CurrentCount);
         Scheduler.EmitSchedule();
         Current = MI;
