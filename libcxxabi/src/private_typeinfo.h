@@ -24,6 +24,8 @@ class __attribute__ ((__visibility__("hidden"))) __shim_type_info
 public:
     virtual ~__shim_type_info();
 
+    virtual void noop1() const;
+    virtual void noop2() const;
     virtual bool can_catch(const __shim_type_info* thrown_type, void*& adjustedPtr) const = 0;
 };
 
