@@ -4565,7 +4565,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     // Check if address has undef value.
     if (isa<UndefValue>(Address) ||
         (Address->use_empty() && !isa<Argument>(Address))) {
-      DEBUG(dbgs() << "Dropping debug info for " << DI);
+      DEBUG(dbgs() << "Dropping debug info for " << DI << "\n");
       return 0;
     }
 
@@ -4599,7 +4599,7 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                               0, dl, SDNodeOrder);
       else {
         // Can't do anything with other non-AI cases yet.
-        DEBUG(dbgs() << "Dropping debug info for " << DI);
+        DEBUG(dbgs() << "Dropping debug info for " << DI << "\n");
         return 0;
       }
       DAG.AddDbgValue(SDV, N.getNode(), isParameter);
