@@ -116,15 +116,13 @@ namespace NullPtr {
       int &k = f(m); // a null pointer constant
     } ();
 
-    // FIXME: At least the second of these cases should probably not be
-    // considered to be a null pointer constant.
     [=] () -> bool {
-      int &k = f(m);  // a null pointer constant?
-      return &m == 0; // no, captured!
+      int &k = f(m); // a null pointer constant
+      return &m == 0;
     } ();
 
     [m] {
-      int &k = f(m); // a null pointer constant?
+      int &k = f(m); // a null pointer constant
     } ();
   }
 }
