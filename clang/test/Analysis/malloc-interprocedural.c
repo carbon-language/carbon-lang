@@ -69,3 +69,19 @@ void test5() {
   int *data;
   my_free1((int*)data);
 }
+
+// Test that we keep processing after 'return;'
+void fooWithEmptyReturn(int x) {
+  if (x)
+    return;
+  x++;
+  return;
+}
+
+int uafAndCallsFooWithEmptyReturn() {
+  int *x = (int*)malloc(12);
+  free(x);
+  fooWithEmptyReturn(12);
+  return *x; // expected-warning {{Use of memory after it is freed}}
+}
+

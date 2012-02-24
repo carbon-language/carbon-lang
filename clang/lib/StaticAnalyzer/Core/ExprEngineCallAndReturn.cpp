@@ -432,7 +432,4 @@ void ExprEngine::VisitReturnStmt(const ReturnStmt *RS, ExplodedNode *Pred,
       B.generateNode(RS, *it, (*it)->getState());
     }
   }
-  else {
-    B.takeNodes(dstPreVisit);
-  }
 }
