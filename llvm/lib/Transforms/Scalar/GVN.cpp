@@ -154,9 +154,24 @@ Expression ValueTable::create_expression(Instruction *I) {
   for (Instruction::op_iterator OI = I->op_begin(), OE = I->op_end();
        OI != OE; ++OI)
     e.varargs.push_back(lookup_or_add(*OI));
+  if (I->isCommutative()) {
+    // Ensure that commutative instructions that only differ by a permutation
+    // of their operands get the same value number by sorting the operand value
+    // numbers.  Since all commutative instructions have two operands it is more
+    // efficient to sort by hand rather than using, say, std::sort.
+    assert(I->getNumOperands() == 2 && "Unsupported commutative instruction!");
+    if (e.varargs[0] > e.varargs[1])
+      std::swap(e.varargs[0], e.varargs[1]);
+  }
   
   if (CmpInst *C = dyn_cast<CmpInst>(I)) {
-    e.opcode = (C->getOpcode() << 8) | C->getPredicate();
+    // Sort the operand value numbers so x<y and y>x get the same value number.
+    CmpInst::Predicate Predicate = C->getPredicate();
+    if (e.varargs[0] > e.varargs[1]) {
+      std::swap(e.varargs[0], e.varargs[1]);
+      Predicate = CmpInst::getSwappedPredicate(Predicate);
+    }
+    e.opcode = (C->getOpcode() << 8) | Predicate;
   } else if (InsertValueInst *E = dyn_cast<InsertValueInst>(I)) {
     for (InsertValueInst::idx_iterator II = E->idx_begin(), IE = E->idx_end();
          II != IE; ++II)
