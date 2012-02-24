@@ -9,6 +9,182 @@
 
 namespace lldb {
 
+class SBLaunchInfo
+{
+    public:
+    SBLaunchInfo ();
+    
+    SBLaunchInfo (const char *executable_path, 
+                  const char *triple, 
+                  const char **argv);
+    
+    lldb::SBFileSpec
+    GetExecutable ();
+    
+    void
+    SetExecutable (const char *path);
+    
+    void
+    SetExecutable (lldb::SBFileSpec executable);
+    
+    uint32_t
+    GetUserID();
+    
+    uint32_t
+    GetGroupID();
+    
+    bool
+    UserIDIsValid ();
+    
+    bool
+    GroupIDIsValid ();
+    
+    void
+    SetUserID (uint32_t uid);
+    
+    void
+    SetGroupID (uint32_t gid);
+    
+    const char *
+    GetTriple ();
+    
+    void
+    SetTriple (const char *triple);
+    
+    uint32_t
+    GetNumArguments ();
+    
+    const char *
+    GetArgumentAtIndex (uint32_t idx);
+    
+    void
+    SetArguments (const char **argv, bool append);
+    
+    uint32_t
+    GetNumEnvironmentEntries ();
+    
+    const char *
+    GetEnvironmentEntryAtIndex (uint32_t idx);
+    
+    void
+    SetEnvironmentEntries (const char **envp, bool append);
+    
+    void
+    Clear ();
+    
+    const char *
+    GetWorkingDirectory () const;
+    
+    void
+    SetWorkingDirectory (const char *working_dir);
+    
+    uint32_t
+    GetLaunchFlags ();
+    
+    void
+    SetLaunchFlags (uint32_t flags);
+    
+    const char *
+    GetProcessPluginName ();
+    
+    void
+    SetProcessPluginName (const char *plugin_name);
+    
+    const char *
+    GetShell ();
+    
+    void
+    SetShell (const char * path);
+    
+    uint32_t
+    GetResumeCount ();
+    
+    void
+    SetResumeCount (uint32_t c);
+    
+    bool
+    AddCloseFileAction (int fd);
+    
+    bool
+    AddDuplicateFileAction (int fd, int dup_fd);
+    
+    bool
+    AddOpenFileAction (int fd, const char *path, bool read, bool write);
+    
+    bool
+    AddSuppressFileAction (int fd, bool read, bool write);
+};
+
+class SBAttachInfo
+{
+public:
+    SBAttachInfo ();
+    
+    SBAttachInfo (lldb::pid_t pid);
+    
+    SBAttachInfo (const char *path, bool wait_for);
+    
+    SBAttachInfo (const lldb::SBAttachInfo &rhs);
+    
+    lldb::pid_t
+    GetProcessID ();
+    
+    void
+    SetProcessID (lldb::pid_t pid);
+    
+    void
+    SetExecutable (const char *path);
+    
+    void
+    SetExecutable (lldb::SBFileSpec exe_file);
+    
+    bool
+    GetWaitForLaunch ();
+    
+    void
+    SetWaitForLaunch (bool b);
+    
+    uint32_t
+    GetResumeCount ();
+    
+    void
+    SetResumeCount (uint32_t c);
+    
+    const char *
+    GetProcessPluginName ();
+    
+    void
+    SetProcessPluginName (const char *plugin_name);
+    
+    uint32_t
+    GetEffectiveUserID();
+    
+    uint32_t
+    GetEffectiveGroupID();
+    
+    bool
+    EffectiveUserIDIsValid ();
+    
+    bool
+    EffectiveGroupIDIsValid ();
+    
+    void
+    SetEffectiveUserID (uint32_t uid);
+    
+    void
+    SetEffectiveGroupID (uint32_t gid);
+    
+    lldb::pid_t
+    GetParentProcessID ();
+    
+    void
+    SetParentProcessID (lldb::pid_t pid);
+    
+    bool
+    ParentProcessIDIsValid();
+};
+    
+    
 %feature("docstring",
 "Represents the target program running under the debugger.
 
@@ -205,6 +381,13 @@ public:
                   const char **envp,
                   const char *working_directory);
     
+    lldb::SBProcess
+    Launch (lldb::SBLaunchInfo &launch_info, lldb::SBError& error);
+    
+    lldb::SBProcess
+    Attach (lldb::SBAttachInfo &attach_info, lldb::SBError& error);
+    
+
     %feature("docstring", "
     //------------------------------------------------------------------
     /// Attach to process with pid.

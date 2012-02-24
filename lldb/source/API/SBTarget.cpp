@@ -54,6 +54,414 @@ using namespace lldb_private;
 
 #define DEFAULT_DISASM_BYTE_SIZE 32
 
+
+
+SBLaunchInfo::SBLaunchInfo () : 
+m_opaque_sp(new ProcessLaunchInfo())
+{
+}
+
+SBLaunchInfo::SBLaunchInfo (const char *path, const char *triple, const char **argv) : 
+m_opaque_sp(new ProcessLaunchInfo())
+{
+    SetExecutable(path);
+    if (triple && triple[0])
+        m_opaque_sp->GetArchitecture().SetTriple(triple, NULL);
+    if (argv)
+        SetArguments(argv, false);
+}
+
+SBFileSpec
+SBLaunchInfo::GetExecutable ()
+{
+    SBFileSpec exe_file;
+    exe_file.SetFileSpec (m_opaque_sp->GetExecutableFile());
+    return exe_file;
+}
+
+void
+SBLaunchInfo::SetExecutable (const char *path)
+{
+    if (path && path[0])
+        m_opaque_sp->GetExecutableFile().SetFile(path, false);
+    else
+        m_opaque_sp->GetExecutableFile().Clear();
+}
+
+void
+SBLaunchInfo::SetExecutable (SBFileSpec exe_file)
+{
+    if (exe_file.IsValid())
+        m_opaque_sp->GetExecutableFile() = exe_file.ref();
+    else
+        m_opaque_sp->GetExecutableFile().Clear();
+}
+
+uint32_t
+SBLaunchInfo::GetUserID()
+{
+    return m_opaque_sp->GetUserID();
+}
+
+uint32_t
+SBLaunchInfo::GetGroupID()
+{
+    return m_opaque_sp->GetGroupID();
+}
+
+bool
+SBLaunchInfo::UserIDIsValid ()
+{
+    return m_opaque_sp->UserIDIsValid();
+}
+
+bool
+SBLaunchInfo::GroupIDIsValid ()
+{
+    return m_opaque_sp->GroupIDIsValid();
+}
+
+void
+SBLaunchInfo::SetUserID (uint32_t uid)
+{
+    m_opaque_sp->SetUserID (uid);
+}
+
+void
+SBLaunchInfo::SetGroupID (uint32_t gid)
+{
+    m_opaque_sp->SetGroupID (gid);
+}
+
+const char *
+SBLaunchInfo::GetTriple ()
+{
+    const ArchSpec &arch = m_opaque_sp->GetArchitecture();
+    if (arch.IsValid())
+    {
+        std::string triple (arch.GetTriple().str());
+        if (!triple.empty())
+        {
+            // Unique the string so we don't run into ownership issues since
+            // the const strings put the string into the string pool once and
+            // the strings never comes out
+            ConstString const_triple (triple.c_str());
+            return const_triple.GetCString();
+        }
+    }
+    return NULL;
+}
+
+void
+SBLaunchInfo::SetTriple (const char *triple)
+{
+    m_opaque_sp->GetArchitecture().SetTriple(triple, NULL);
+}
+
+uint32_t
+SBLaunchInfo::GetNumArguments ()
+{
+    return m_opaque_sp->GetArguments().GetArgumentCount();
+}
+
+const char *
+SBLaunchInfo::GetArgumentAtIndex (uint32_t idx)
+{
+    return m_opaque_sp->GetArguments().GetArgumentAtIndex(idx);
+}
+
+void
+SBLaunchInfo::SetArguments (const char **argv, bool append)
+{
+    if (append)
+    {
+        if (argv)
+            m_opaque_sp->GetArguments().AppendArguments(argv);
+    }
+    else
+    {
+        if (argv)
+            m_opaque_sp->GetArguments().SetArguments(argv);
+        else
+            m_opaque_sp->GetArguments().Clear();
+    }
+}
+
+uint32_t
+SBLaunchInfo::GetNumEnvironmentEntries ()
+{
+    return m_opaque_sp->GetEnvironmentEntries().GetArgumentCount();
+}
+
+const char *
+SBLaunchInfo::GetEnvironmentEntryAtIndex (uint32_t idx)
+{
+    return m_opaque_sp->GetEnvironmentEntries().GetArgumentAtIndex(idx);
+}
+
+void
+SBLaunchInfo::SetEnvironmentEntries (const char **envp, bool append)
+{
+    if (append)
+    {
+        if (envp)
+            m_opaque_sp->GetEnvironmentEntries().AppendArguments(envp);
+    }
+    else
+    {
+        if (envp)
+            m_opaque_sp->GetEnvironmentEntries().SetArguments(envp);
+        else
+            m_opaque_sp->GetEnvironmentEntries().Clear();
+    }
+}
+
+void
+SBLaunchInfo::Clear ()
+{
+    m_opaque_sp->Clear();
+}
+
+const char *
+SBLaunchInfo::GetWorkingDirectory () const
+{
+    return m_opaque_sp->GetWorkingDirectory();
+}
+
+void
+SBLaunchInfo::SetWorkingDirectory (const char *working_dir)
+{
+    m_opaque_sp->SetWorkingDirectory(working_dir);
+}
+
+uint32_t
+SBLaunchInfo::GetLaunchFlags ()
+{
+    return m_opaque_sp->GetFlags().Get();
+}
+
+void
+SBLaunchInfo::SetLaunchFlags (uint32_t flags)
+{
+    m_opaque_sp->GetFlags().Reset(flags);
+}
+
+const char *
+SBLaunchInfo::GetProcessPluginName ()
+{
+    return m_opaque_sp->GetProcessPluginName();
+}
+
+void
+SBLaunchInfo::SetProcessPluginName (const char *plugin_name)
+{
+    return m_opaque_sp->SetProcessPluginName (plugin_name);
+}
+
+const char *
+SBLaunchInfo::GetShell ()
+{
+    return m_opaque_sp->GetShell();
+}
+
+void
+SBLaunchInfo::SetShell (const char * path)
+{
+    m_opaque_sp->SetShell (path);
+}
+
+uint32_t
+SBLaunchInfo::GetResumeCount ()
+{
+    return m_opaque_sp->GetResumeCount();
+}
+
+void
+SBLaunchInfo::SetResumeCount (uint32_t c)
+{
+    m_opaque_sp->SetResumeCount (c);
+}
+
+bool
+SBLaunchInfo::AddCloseFileAction (int fd)
+{
+    return m_opaque_sp->AppendCloseFileAction(fd);
+}
+
+bool
+SBLaunchInfo::AddDuplicateFileAction (int fd, int dup_fd)
+{
+    return m_opaque_sp->AppendDuplicateFileAction(fd, dup_fd);
+}
+
+bool
+SBLaunchInfo::AddOpenFileAction (int fd, const char *path, bool read, bool write)
+{
+    return m_opaque_sp->AppendOpenFileAction(fd, path, read, write);
+}
+
+bool
+SBLaunchInfo::AddSuppressFileAction (int fd, bool read, bool write)
+{
+    return m_opaque_sp->AppendSuppressFileAction(fd, read, write);
+}
+
+
+SBAttachInfo::SBAttachInfo () :
+m_opaque_sp (new ProcessAttachInfo())
+{
+}
+
+SBAttachInfo::SBAttachInfo (lldb::pid_t pid) :
+m_opaque_sp (new ProcessAttachInfo())
+{
+    m_opaque_sp->SetProcessID (pid);
+}
+
+SBAttachInfo::SBAttachInfo (const char *path, bool wait_for) :
+m_opaque_sp (new ProcessAttachInfo())
+{
+    if (path && path[0])
+        m_opaque_sp->GetExecutableFile().SetFile(path, false);
+    m_opaque_sp->SetWaitForLaunch (wait_for);
+}
+
+SBAttachInfo::SBAttachInfo (const SBAttachInfo &rhs) :
+m_opaque_sp (new ProcessAttachInfo())
+{
+    *m_opaque_sp = *rhs.m_opaque_sp;
+}
+
+SBAttachInfo &
+SBAttachInfo::operator = (const SBAttachInfo &rhs)
+{
+    if (this != &rhs)
+        *m_opaque_sp = *rhs.m_opaque_sp;
+    return *this;
+}
+
+lldb::pid_t
+SBAttachInfo::GetProcessID ()
+{
+    return m_opaque_sp->GetProcessID();
+}
+
+void
+SBAttachInfo::SetProcessID (lldb::pid_t pid)
+{
+    m_opaque_sp->SetProcessID (pid);
+}
+
+
+uint32_t
+SBAttachInfo::GetResumeCount ()
+{
+    return m_opaque_sp->GetResumeCount();
+}
+
+void
+SBAttachInfo::SetResumeCount (uint32_t c)
+{
+    m_opaque_sp->SetResumeCount (c);
+}
+
+const char *
+SBAttachInfo::GetProcessPluginName ()
+{
+    return m_opaque_sp->GetProcessPluginName();
+}
+
+void
+SBAttachInfo::SetProcessPluginName (const char *plugin_name)
+{
+    return m_opaque_sp->SetProcessPluginName (plugin_name);
+}
+
+void
+SBAttachInfo::SetExecutable (const char *path)
+{
+    if (path && path[0])
+        m_opaque_sp->GetExecutableFile().SetFile(path, false);
+    else
+        m_opaque_sp->GetExecutableFile().Clear();
+}
+
+void
+SBAttachInfo::SetExecutable (SBFileSpec exe_file)
+{
+    if (exe_file.IsValid())
+        m_opaque_sp->GetExecutableFile() = exe_file.ref();
+    else
+        m_opaque_sp->GetExecutableFile().Clear();
+}
+
+bool
+SBAttachInfo::GetWaitForLaunch ()
+{
+    return m_opaque_sp->GetWaitForLaunch();
+}
+
+void
+SBAttachInfo::SetWaitForLaunch (bool b)
+{
+    m_opaque_sp->SetWaitForLaunch (b);
+}
+
+uint32_t
+SBAttachInfo::GetEffectiveUserID()
+{
+    return m_opaque_sp->GetEffectiveUserID();
+}
+
+uint32_t
+SBAttachInfo::GetEffectiveGroupID()
+{
+    return m_opaque_sp->GetEffectiveGroupID();
+}
+
+bool
+SBAttachInfo::EffectiveUserIDIsValid ()
+{
+    return m_opaque_sp->EffectiveUserIDIsValid();
+}
+
+bool
+SBAttachInfo::EffectiveGroupIDIsValid ()
+{
+    return m_opaque_sp->EffectiveGroupIDIsValid ();
+}
+
+void
+SBAttachInfo::SetEffectiveUserID (uint32_t uid)
+{
+    m_opaque_sp->SetEffectiveUserID(uid);
+}
+
+void
+SBAttachInfo::SetEffectiveGroupID (uint32_t gid)
+{
+    m_opaque_sp->SetEffectiveGroupID(gid);
+}
+
+lldb::pid_t
+SBAttachInfo::GetParentProcessID ()
+{
+    return m_opaque_sp->GetParentProcessID();
+}
+
+void
+SBAttachInfo::SetParentProcessID (lldb::pid_t pid)
+{
+    m_opaque_sp->SetParentProcessID (pid);
+}
+
+bool
+SBAttachInfo::ParentProcessIDIsValid()
+{
+    return m_opaque_sp->ParentProcessIDIsValid();
+}
+
+
 //----------------------------------------------------------------------
 // SBTarget constructor
 //----------------------------------------------------------------------
@@ -294,6 +702,142 @@ SBTarget::Launch
 
     return sb_process;
 }
+
+SBProcess
+SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+    
+    SBProcess sb_process;
+    ProcessSP process_sp;
+    TargetSP target_sp(GetSP());
+    
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::Launch (launch_info, error)...", target_sp.get());
+    }
+    
+    if (target_sp)
+    {
+        Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        StateType state = eStateInvalid;
+        process_sp = target_sp->GetProcessSP();
+        if (process_sp)
+        {
+            state = process_sp->GetState();
+            
+            if (process_sp->IsAlive() && state != eStateConnected)
+            {       
+                if (state == eStateAttaching)
+                    error.SetErrorString ("process attach is in progress");
+                else
+                    error.SetErrorString ("a process is already being debugged");
+                return sb_process;
+            }            
+        }
+        
+        if (state != eStateConnected)
+            process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), NULL, NULL);
+        
+        if (process_sp)
+        {
+            sb_process.SetSP (process_sp);
+            lldb_private::ProcessLaunchInfo &launch_info = sb_launch_info.ref();
+            error.SetError (process_sp->Launch (launch_info));
+            if (error.Success())
+            {
+                // We we are stopping at the entry point, we can return now!
+                if (launch_info.GetFlags().Test(eLaunchFlagStopAtEntry))
+                    return sb_process;
+                
+                // Make sure we are stopped at the entry
+                StateType state = process_sp->WaitForProcessToStop (NULL);
+                if (state == eStateStopped)
+                {
+                    // resume the process to skip the entry point
+                    error.SetError (process_sp->Resume());
+                    if (error.Success())
+                    {
+                        // If we are doing synchronous mode, then wait for the
+                        // process to stop yet again!
+                        if (target_sp->GetDebugger().GetAsyncExecution () == false)
+                            process_sp->WaitForProcessToStop (NULL);
+                    }
+                }
+            }
+        }
+        else
+        {
+            error.SetErrorString ("unable to create lldb_private::Process");
+        }
+    }
+    else
+    {
+        error.SetErrorString ("SBTarget is invalid");
+    }
+    
+    log = lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API);
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::Launch (...) => SBProceess(%p)", 
+                     target_sp.get(), process_sp.get());
+    }
+    
+    return sb_process;
+}
+
+lldb::SBProcess
+SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
+{
+    SBProcess sb_process;
+    ProcessSP process_sp;
+    TargetSP target_sp(GetSP());
+    if (target_sp)
+    {
+        Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        
+        StateType state = eStateInvalid;
+        process_sp = target_sp->GetProcessSP();
+        if (process_sp)
+        {
+            state = process_sp->GetState();
+            
+            if (process_sp->IsAlive() && state != eStateConnected)
+            {       
+                if (state == eStateAttaching)
+                    error.SetErrorString ("process attach is in progress");
+                else
+                    error.SetErrorString ("a process is already being debugged");
+                return sb_process;
+            }            
+        }
+        
+        if (state != eStateConnected)
+            process_sp = target_sp->CreateProcess (target_sp->GetDebugger().GetListener(), NULL, NULL);
+
+        if (process_sp)
+        {
+            sb_process.SetSP (process_sp);
+            
+            ProcessAttachInfo &attach_info = sb_attach_info.ref();
+            error.SetError (process_sp->Attach (attach_info));            
+            // If we are doing synchronous mode, then wait for the
+            // process to stop!
+            if (target_sp->GetDebugger().GetAsyncExecution () == false)
+                process_sp->WaitForProcessToStop (NULL);
+        }
+        else
+        {
+            error.SetErrorString ("unable to create lldb_private::Process");
+        }
+    }
+    else
+    {
+        error.SetErrorString ("SBTarget is invalid");
+    }
+    return sb_process;
+}
+
 
 #if defined(__APPLE__)
 

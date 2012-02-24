@@ -267,6 +267,8 @@ namespace lldb {
     typedef std::tr1::shared_ptr<lldb_private::OptionValue> OptionValueSP;
     typedef std::tr1::shared_ptr<lldb_private::Platform> PlatformSP;
     typedef std::tr1::shared_ptr<lldb_private::Process> ProcessSP;
+    typedef std::tr1::shared_ptr<lldb_private::ProcessAttachInfo> ProcessAttachInfoSP;
+    typedef std::tr1::shared_ptr<lldb_private::ProcessLaunchInfo> ProcessLaunchInfoSP;
     typedef std::tr1::weak_ptr<lldb_private::Process> ProcessWP;
     typedef std::tr1::shared_ptr<lldb_private::RegisterContext> RegisterContextSP;
     typedef std::tr1::shared_ptr<lldb_private::RegularExpression> RegularExpressionSP;

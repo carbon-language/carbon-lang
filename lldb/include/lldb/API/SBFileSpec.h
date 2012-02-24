@@ -55,10 +55,12 @@ public:
     GetDescription (lldb::SBStream &description) const;
 
 private:
+    friend class SBAttachInfo;
     friend class SBBlock;
     friend class SBCompileUnit;
     friend class SBFileSpecList;
     friend class SBHostOS;
+    friend class SBLaunchInfo;
     friend class SBLineEntry;
     friend class SBModule;
     friend class SBProcess;

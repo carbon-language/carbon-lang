@@ -570,7 +570,7 @@ public:
     }
 
     bool
-    AppendDuplciateFileAction (int fd, int dup_fd)
+    AppendDuplicateFileAction (int fd, int dup_fd)
     {
         FileAction file_action;
         if (file_action.Duplicate (fd, dup_fd))
