@@ -51,11 +51,10 @@ PathDiagnosticPiece::PathDiagnosticPiece(Kind k, DisplayHint hint)
 
 PathDiagnosticPiece::~PathDiagnosticPiece() {}
 PathDiagnosticEventPiece::~PathDiagnosticEventPiece() {}
-PathDiagnosticCallEnterPiece::~PathDiagnosticCallEnterPiece() {}
-PathDiagnosticCallExitPiece::~PathDiagnosticCallExitPiece() {}
+PathDiagnosticCallPiece::~PathDiagnosticCallPiece() {}
 PathDiagnosticControlFlowPiece::~PathDiagnosticControlFlowPiece() {}
 PathDiagnosticMacroPiece::~PathDiagnosticMacroPiece() {}
-PathDiagnostic::PathDiagnostic() {}
+PathDiagnostic::PathDiagnostic() : path(pathImpl) {}
 PathPieces::~PathPieces() {}
 PathDiagnostic::~PathDiagnostic() {}
 
@@ -63,7 +62,8 @@ PathDiagnostic::PathDiagnostic(StringRef bugtype, StringRef desc,
                                StringRef category)
   : BugType(StripTrailingDots(bugtype)),
     Desc(StripTrailingDots(desc)),
-    Category(StripTrailingDots(category)) {}
+    Category(StripTrailingDots(category)),
+    path(pathImpl) {}
 
 void PathDiagnosticConsumer::anchor() { }
 
@@ -419,6 +419,78 @@ void PathDiagnosticLocation::flatten() {
     S = 0;
     D = 0;
   }
+}
+
+
+//===----------------------------------------------------------------------===//
+// Manipulation of PathDiagnosticCallPieces.
+//===----------------------------------------------------------------------===//
+
+static PathDiagnosticLocation getLastStmtLoc(const ExplodedNode *N,
+                                             const SourceManager &SM) {
+  while (N) {
+    ProgramPoint PP = N->getLocation();
+    if (const StmtPoint *SP = dyn_cast<StmtPoint>(&PP))
+      return PathDiagnosticLocation(SP->getStmt(), SM, PP.getLocationContext());
+    if (N->pred_empty())
+      break;
+    N = *N->pred_begin();
+  }
+  return PathDiagnosticLocation();
+}
+
+PathDiagnosticCallPiece *
+PathDiagnosticCallPiece::construct(const ExplodedNode *N,
+                                   const CallExit &CE,
+                                   const SourceManager &SM) {
+  const Decl *caller = CE.getLocationContext()->getParent()->getDecl();
+  PathDiagnosticLocation pos = getLastStmtLoc(N, SM);
+  return new PathDiagnosticCallPiece(caller, pos);
+}
+
+PathDiagnosticCallPiece *
+PathDiagnosticCallPiece::construct(PathPieces &path) {
+  PathDiagnosticCallPiece *C = new PathDiagnosticCallPiece(path);
+  path.clear();
+  path.push_front(C);
+  return C;
+}
+
+void PathDiagnosticCallPiece::setCallee(const CallEnter &CE,
+                                        const SourceManager &SM) {
+  const Decl *D = CE.getCalleeContext()->getDecl();
+  Caller = D;
+  callEnter = PathDiagnosticLocation(CE.getCallExpr(), SM,
+                                     CE.getLocationContext());  
+}
+
+IntrusiveRefCntPtr<PathDiagnosticEventPiece>
+PathDiagnosticCallPiece::getCallEnterEvent() const {
+  if (!Callee)
+    return 0;  
+  SmallString<256> buf;
+  llvm::raw_svector_ostream Out(buf);
+  if (isa<BlockDecl>(Callee))
+    Out << "Entering call to block";
+  else if (const NamedDecl *ND = dyn_cast<NamedDecl>(Callee))
+    Out << "Entering call to '" << *ND << "'";
+  StringRef msg = Out.str();
+  if (msg.empty())
+    return 0;
+  return new PathDiagnosticEventPiece(callEnter, msg);
+}
+
+IntrusiveRefCntPtr<PathDiagnosticEventPiece> 
+PathDiagnosticCallPiece::getCallExitEvent() const {
+  if (!Caller)
+    return 0;
+  SmallString<256> buf;
+  llvm::raw_svector_ostream Out(buf);
+  if (const NamedDecl *ND = dyn_cast_or_null<NamedDecl>(Caller))
+    Out << "Returning to '" << *ND << "'";
+  else
+    Out << "Returning to caller";
+  return new PathDiagnosticEventPiece(callReturn, Out.str());
 }
 
 //===----------------------------------------------------------------------===//

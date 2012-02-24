@@ -15,6 +15,7 @@
 #define LLVM_CLANG_PATH_DIAGNOSTIC_H
 
 #include "clang/Basic/SourceLocation.h"
+#include "clang/Analysis/ProgramPoint.h"
 #include "llvm/ADT/FoldingSet.h"
 #include "llvm/ADT/IntrusiveRefCntPtr.h"
 #include "llvm/ADT/PointerUnion.h"
@@ -262,7 +263,7 @@ public:
 
 class PathDiagnosticPiece : public RefCountedBaseVPTR {
 public:
-  enum Kind { ControlFlow, Event, Macro, CallEnter, CallExit };
+  enum Kind { ControlFlow, Event, Macro, Call };
   enum DisplayHint { Above, Below };
 
 private:
@@ -364,31 +365,53 @@ public:
     return P->getKind() == Event;
   }
 };
-  
-class PathDiagnosticCallEnterPiece : public PathDiagnosticSpotPiece {
-public:
-  PathDiagnosticCallEnterPiece(const PathDiagnosticLocation &pos,
-                              StringRef s)
-    : PathDiagnosticSpotPiece(pos, s, CallEnter, false) {}
-  
-  ~PathDiagnosticCallEnterPiece();
-  
-  static inline bool classof(const PathDiagnosticPiece *P) {
-    return P->getKind() == CallEnter;
-  }  
-};
 
-class PathDiagnosticCallExitPiece : public PathDiagnosticSpotPiece {
-public:
-  PathDiagnosticCallExitPiece(const PathDiagnosticLocation &pos,
-                             StringRef s)
-  : PathDiagnosticSpotPiece(pos, s, CallExit, false) {}
+class PathDiagnosticCallPiece : public PathDiagnosticPiece {
+  PathDiagnosticCallPiece(const Decl *callerD,
+                          const PathDiagnosticLocation &callReturnPos)
+    : PathDiagnosticPiece(Call), Caller(callerD),
+      Callee(0), callReturn(callReturnPos) {}
+
+  PathDiagnosticCallPiece(PathPieces &oldPath)
+    : PathDiagnosticPiece(Call), Caller(0), Callee(0), path(oldPath) {}
   
-  ~PathDiagnosticCallExitPiece();
+  const Decl *Caller;
+  const Decl *Callee;
+public:
+  PathDiagnosticLocation callEnter;
+  PathDiagnosticLocation callReturn;  
+  PathPieces path;
+  
+  virtual ~PathDiagnosticCallPiece();
+  
+  const Decl *getCaller() const { return Caller; }
+  
+  const Decl *getCallee() const { return Callee; }
+  void setCallee(const CallEnter &CE, const SourceManager &SM);
+  
+  virtual PathDiagnosticLocation getLocation() const {
+    return callEnter;
+  }
+  
+  IntrusiveRefCntPtr<PathDiagnosticEventPiece> getCallEnterEvent() const;
+  IntrusiveRefCntPtr<PathDiagnosticEventPiece> getCallExitEvent() const;
+
+  virtual void flattenLocations() {
+    callEnter.flatten();
+    callReturn.flatten();
+    for (PathPieces::iterator I = path.begin(), 
+         E = path.end(); I != E; ++I) (*I)->flattenLocations();
+  }
+  
+  static PathDiagnosticCallPiece *construct(const ExplodedNode *N,
+                                            const CallExit &CE,
+                                            const SourceManager &SM);
+  
+  static PathDiagnosticCallPiece *construct(PathPieces &pieces);
   
   static inline bool classof(const PathDiagnosticPiece *P) {
-    return P->getKind() == CallExit;
-  }  
+    return P->getKind() == Call;
+  }
 };
 
 class PathDiagnosticControlFlowPiece : public PathDiagnosticPiece {
@@ -479,8 +502,27 @@ class PathDiagnostic : public llvm::FoldingSetNode {
   std::string Desc;
   std::string Category;
   std::deque<std::string> OtherDesc;
+  PathPieces pathImpl;
+  llvm::SmallVector<PathPieces *, 3> pathStack;
 public:
-  PathPieces path;
+  const PathPieces &path;
+
+  /// Return the path currently used by builders for constructing the 
+  /// PathDiagnostic.
+  PathPieces &getActivePath() {
+    if (pathStack.empty())
+      return pathImpl;
+    return *pathStack.back();
+  }
+  
+  /// Return a mutable version of 'path'.
+  PathPieces &getMutablePieces() {
+    return pathImpl;
+  }
+    
+
+  void pushActivePath(PathPieces *p) { pathStack.push_back(p); }
+  void popActivePath() { if (!pathStack.empty()) pathStack.pop_back(); }
 
   PathDiagnostic();
   PathDiagnostic(StringRef bugtype, StringRef desc,
@@ -505,7 +547,7 @@ public:
   }
 
   void flattenLocations() {
-    for (PathPieces::iterator I = path.begin(), E = path.end(); 
+    for (PathPieces::iterator I = pathImpl.begin(), E = pathImpl.end(); 
          I != E; ++I) (*I)->flattenLocations();
   }
   

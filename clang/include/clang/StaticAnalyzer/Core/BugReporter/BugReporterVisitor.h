@@ -170,23 +170,6 @@ public:
                     llvm::raw_ostream &Out,
                     BugReporterContext &BRC);
 };
-
-class CallEnterExitBRVisitor : public BugReporterVisitor {
-  const bool showTopLevelCall;
-public:
-  void Profile(llvm::FoldingSetNodeID &ID) const {
-    static int x = 0;
-    ID.AddPointer(&x);
-  }
-  
-  CallEnterExitBRVisitor(bool showTopLevel)
-    : showTopLevelCall(showTopLevel) {}
-  
-  PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
-                                 const ExplodedNode *PrevN,
-                                 BugReporterContext &BRC,
-                                 BugReport &BR);
-};
   
 namespace bugreporter {
 
