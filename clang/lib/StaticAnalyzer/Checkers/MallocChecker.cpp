@@ -180,7 +180,8 @@ private:
 
   /// Check if the function is not known to us. So, for example, we could
   /// conservatively assume it can free/reallocate it's pointer arguments.
-  bool hasUnknownBehavior(const FunctionDecl *FD, ProgramStateRef State) const;
+  bool doesNotFreeMemory(const CallOrObjCMessage *Call,
+                         ProgramStateRef State) const;
 
   static bool SummarizeValue(raw_ostream &os, SVal V);
   static bool SummarizeRegion(raw_ostream &os, const MemRegion *MR);
@@ -1053,38 +1054,75 @@ ProgramStateRef MallocChecker::evalAssume(ProgramStateRef state,
   return state;
 }
 
-// Check if the function is not known to us. So, for example, we could
+// Check if the function is known to us. So, for example, we could
 // conservatively assume it can free/reallocate it's pointer arguments.
 // (We assume that the pointers cannot escape through calls to system
 // functions not handled by this checker.)
-bool MallocChecker::hasUnknownBehavior(const FunctionDecl *FD,
-                                       ProgramStateRef State) const {
+bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
+                                      ProgramStateRef State) const {
+  if (!Call)
+    return false;
+
+  // For now, assume that any C++ call can free memory.
+  // TODO: If we want to be more optimistic here, we'll need to make sure that
+  // regions escape to C++ containers. They seem to do that even now, but for
+  // mysterious reasons.
+  if (Call->isCXXCall())
+    return false;
+
+  const Decl *D = Call->getDecl();
+  if (!D)
+    return false;
+
   ASTContext &ASTC = State->getStateManager().getContext();
 
-  // If it's one of the allocation functions we can reason about, we model it's
-  // behavior explicitly.
-  if (isMemFunction(FD, ASTC)) {
-    return false;
+  // If it's one of the allocation functions we can reason about, we model
+  // it's behavior explicitly.
+  if (isa<FunctionDecl>(D) && isMemFunction(cast<FunctionDecl>(D), ASTC)) {
+    return true;
   }
 
-  // Most system calls, do not free the memory.
+  // If it's not a system call, assume it frees memory.
   SourceManager &SM = ASTC.getSourceManager();
-  if (SM.isInSystemHeader(FD->getLocation())) {
-    const IdentifierInfo *II = FD->getIdentifier();
+  if (!SM.isInSystemHeader(D->getLocation()))
+    return false;
 
+  // Process C functions.
+  if (const FunctionDecl *FD  = dyn_cast_or_null<FunctionDecl>(D)) {
     // White list the system functions whose arguments escape.
+    const IdentifierInfo *II = FD->getIdentifier();
     if (II) {
       StringRef FName = II->getName();
       if (FName.equals("pthread_setspecific"))
-        return true;
+        return false;
     }
 
     // Otherwise, assume that the function does not free memory.
-    return false;
+    // Most system calls, do not free the memory.
+    return true;
+
+  // Process ObjC functions.
+  } else if (const ObjCMethodDecl * ObjCD = dyn_cast<ObjCMethodDecl>(D)) {
+    Selector S = ObjCD->getSelector();
+
+    // White list the ObjC functions which do free memory.
+    // - Anything containing 'freeWhenDone' param set to 1.
+    //   Ex: dataWithBytesNoCopy:length:freeWhenDone.
+    for (unsigned i = 1; i < S.getNumArgs(); ++i) {
+      if (S.getNameForSlot(i).equals("freeWhenDone")) {
+        if (Call->getArgSVal(i).isConstant(1))
+          return false;
+      }
+    }
+
+    // Otherwise, assume that the function does not free memory.
+    // Most system calls, do not free the memory.
+    return true;
   }
 
   // Otherwise, assume that the function can free memory.
-  return true;
+  return false;
+
 }
 
 // If the symbol we are tracking is invalidated, but not explicitly (ex: the &p
@@ -1100,13 +1138,11 @@ MallocChecker::checkRegionChanges(ProgramStateRef State,
     return State;
   llvm::SmallPtrSet<SymbolRef, 8> WhitelistedSymbols;
 
-  const FunctionDecl *FD = (Call ?
-                            dyn_cast_or_null<FunctionDecl>(Call->getDecl()) :0);
-
   // If it's a call which might free or reallocate memory, we assume that all
-  // regions (explicit and implicit) escaped. Otherwise, whitelist explicit
-  // pointers; we still can track them.
-  if (!(FD && hasUnknownBehavior(FD, State))) {
+  // regions (explicit and implicit) escaped.
+
+  // Otherwise, whitelist explicit pointers; we still can track them.
+  if (!Call || doesNotFreeMemory(Call, State)) {
     for (ArrayRef<const MemRegion *>::iterator I = ExplicitRegions.begin(),
         E = ExplicitRegions.end(); I != E; ++I) {
       if (const SymbolicRegion *R = (*I)->StripCasts()->getAs<SymbolicRegion>())
