@@ -100,21 +100,37 @@
   DECLARE_REAL(ret_type, func, ##__VA_ARGS__); \
   extern "C" ret_type WRAP(func)(__VA_ARGS__);
 
-// Generally, you don't need to use DEFINE_REAL by itself, as INTERCEPTOR
-// macros does its job. In exceptional cases you may need to call REAL(foo)
-// without defining INTERCEPTOR(..., foo, ...). For example, if you override
-// foo with an interceptor for other function.
-#define DEFINE_REAL(ret_type, func, ...); \
-  typedef ret_type (*FUNC_TYPE(func))(__VA_ARGS__); \
+// FIXME(timurrrr): We might need to add DECLARE_REAL_EX etc to support
+// different calling conventions later.
+
+#define DEFINE_REAL_EX(ret_type, convention, func, ...); \
+  typedef ret_type (convention *FUNC_TYPE(func))(__VA_ARGS__); \
   namespace __interception { \
     FUNC_TYPE(func) PTR_TO_REAL(func); \
   }
 
-#define INTERCEPTOR(ret_type, func, ...) \
-  DEFINE_REAL(ret_type, func, __VA_ARGS__); \
+// Generally, you don't need to use DEFINE_REAL by itself, as INTERCEPTOR
+// macros does its job. In exceptional cases you may need to call REAL(foo)
+// without defining INTERCEPTOR(..., foo, ...). For example, if you override
+// foo with an interceptor for other function.
+#define DEFAULT_CONVENTION
+
+#define DEFINE_REAL(ret_type, func, ...); \
+  DEFINE_REAL_EX(ret_type, DEFAULT_CONVENTION, func, __VA_ARGS__);
+
+#define INTERCEPTOR_EX(ret_type, convention, func, ...) \
+  DEFINE_REAL_EX(ret_type, convention, func, __VA_ARGS__); \
   extern "C" \
   INTERCEPTOR_ATTRIBUTE \
-  ret_type WRAP(func)(__VA_ARGS__)
+  ret_type convention WRAP(func)(__VA_ARGS__)
+
+#define INTERCEPTOR(ret_type, func, ...) \
+  INTERCEPTOR_EX(ret_type, DEFAULT_CONVENTION, func, __VA_ARGS__)
+
+#if defined(_WIN32)
+# define INTERCEPTOR_WINAPI(ret_type, func, ...) \
+  INTERCEPTOR_EX(ret_type, __stdcall, func, __VA_ARGS__)
+#endif
 
 #define INCLUDED_FROM_INTERCEPTION_LIB
 
@@ -127,7 +143,6 @@
     OVERRIDE_FUNCTION_MAC(old_func, new_func)
 # define INTERCEPT_FUNCTION(func) INTERCEPT_FUNCTION_MAC(func)
 #else  // defined(_WIN32)
-  // FIXME: deal with interception on Win.
 # include "interception_win.h"
 # define INTERCEPT_FUNCTION(func) INTERCEPT_FUNCTION_WIN(func)
 #endif

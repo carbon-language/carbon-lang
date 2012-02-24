@@ -30,6 +30,7 @@ typedef __int8           int8_t;
 typedef __int16          int16_t;
 typedef __int32          int32_t;
 typedef __int64          int64_t;
+typedef unsigned long    DWORD;  // NOLINT
 
 extern "C" void* _ReturnAddress(void);
 # pragma intrinsic(_ReturnAddress)
@@ -265,6 +266,8 @@ const size_t kPageSize = 1UL << kPageSizeBits;
 const size_t kMmapGranularity = kPageSize;
 # define GET_CALLER_PC() (uintptr_t)__builtin_return_address(0)
 # define GET_CURRENT_FRAME() (uintptr_t)__builtin_frame_address(0)
+# define THREAD_CALLING_CONV
+typedef void* thread_return_t;
 #else
 const size_t kMmapGranularity = 1UL << 16;
 # define GET_CALLER_PC() (uintptr_t)_ReturnAddress()
@@ -272,12 +275,16 @@ const size_t kMmapGranularity = 1UL << 16;
 // FIXME: This macro is still used when printing error reports though it's not
 // clear if the BP value is needed in the ASan reports on Windows.
 # define GET_CURRENT_FRAME() (uintptr_t)0xDEADBEEF
+# define THREAD_CALLING_CONV __stdcall
+typedef DWORD thread_return_t;
 
 # ifndef ASAN_USE_EXTERNAL_SYMBOLIZER
 #  define ASAN_USE_EXTERNAL_SYMBOLIZER __asan::WinSymbolize
 bool WinSymbolize(const void *addr, char *out_buffer, int buffer_size);
 # endif
 #endif
+
+typedef thread_return_t (THREAD_CALLING_CONV *thread_callback_t)(void* arg);
 
 #define GET_BP_PC_SP \
   uintptr_t bp = GET_CURRENT_FRAME();              \

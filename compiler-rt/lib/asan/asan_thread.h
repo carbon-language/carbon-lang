@@ -65,12 +65,12 @@ class AsanThreadSummary {
 class AsanThread {
  public:
   explicit AsanThread(LinkerInitialized);  // for T0.
-  static AsanThread *Create(int parent_tid, void *(*start_routine) (void *),
+  static AsanThread *Create(int parent_tid, thread_callback_t start_routine,
                             void *arg, AsanStackTrace *stack);
   void Destroy();
 
   void Init();  // Should be called from the thread itself.
-  void *ThreadStart();
+  thread_return_t ThreadStart();
 
   uintptr_t stack_top() { return stack_top_; }
   uintptr_t stack_bottom() { return stack_bottom_; }
@@ -96,7 +96,7 @@ class AsanThread {
   void SetThreadStackTopAndBottom();
   void ClearShadowForThreadStack();
   AsanThreadSummary *summary_;
-  void *(*start_routine_) (void *param);
+  thread_callback_t start_routine_;
   void *arg_;
   uintptr_t  stack_top_;
   uintptr_t  stack_bottom_;

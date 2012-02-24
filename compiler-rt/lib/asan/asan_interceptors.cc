@@ -254,7 +254,7 @@ void operator delete(void *ptr, std::nothrow_t const&) throw()
 void operator delete[](void *ptr, std::nothrow_t const&) throw()
 { OPERATOR_DELETE_BODY;}
 
-static void *asan_thread_start(void *arg) {
+static thread_return_t THREAD_CALLING_CONV asan_thread_start(void *arg) {
   AsanThread *t = (AsanThread*)arg;
   asanThreadRegistry().SetCurrent(t);
   return t->ThreadStart();
@@ -579,6 +579,27 @@ INTERCEPTOR(size_t, strnlen, const char *s, size_t maxlen) {
 }
 #endif
 
+#if defined(_WIN32)
+INTERCEPTOR_WINAPI(DWORD, CreateThread,
+                   void* security, size_t stack_size,
+                   DWORD (__stdcall *start_routine)(void*), void* arg,
+                   DWORD flags, void* tid) {
+  GET_STACK_TRACE_HERE(kStackTraceMax);
+  int current_tid = asanThreadRegistry().GetCurrentTidOrMinusOne();
+  AsanThread *t = AsanThread::Create(current_tid, start_routine, arg, &stack);
+  asanThreadRegistry().RegisterThread(t);
+  return REAL(CreateThread)(security, stack_size,
+                            asan_thread_start, t, flags, tid);
+}
+
+namespace __asan {
+void InitializeWindowsInterceptors() {
+  CHECK(INTERCEPT_FUNCTION(CreateThread));
+}
+
+}  // namespace __asan
+#endif
+
 // ---------------------- InitializeAsanInterceptors ---------------- {{{1
 namespace __asan {
 void InitializeAsanInterceptors() {
@@ -652,6 +673,11 @@ void InitializeAsanInterceptors() {
     CHECK(INTERCEPT_FUNCTION(pthread_workqueue_additem_np));
   }
 # endif
+#endif
+
+  // Some Windows-specific interceptors.
+#if defined(_WIN32)
+  InitializeWindowsInterceptors();
 #endif
 
   // Some Mac-specific interceptors.

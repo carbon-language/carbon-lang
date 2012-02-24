@@ -47,7 +47,7 @@ void *AsanMprotect(uintptr_t fixed_addr, size_t size) {
 }
 
 void AsanUnmapOrDie(void *addr, size_t size) {
-  UNIMPLEMENTED();
+  CHECK(VirtualFree(addr, size, MEM_DECOMMIT));
 }
 
 // ---------------------- IO ---------------- {{{1

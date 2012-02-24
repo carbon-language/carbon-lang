@@ -26,7 +26,7 @@ AsanThread::AsanThread(LinkerInitialized x)
       malloc_storage_(x),
       stats_(x) { }
 
-AsanThread *AsanThread::Create(int parent_tid, void *(*start_routine) (void *),
+AsanThread *AsanThread::Create(int parent_tid, thread_callback_t start_routine,
                                void *arg, AsanStackTrace *stack) {
   size_t size = RoundUpTo(sizeof(AsanThread), kPageSize);
   AsanThread *thread = (AsanThread*)AsanMmapSomewhereOrDie(size, __FUNCTION__);
@@ -80,7 +80,7 @@ void AsanThread::Init() {
   fake_stack_.Init(stack_size());
 }
 
-void *AsanThread::ThreadStart() {
+thread_return_t AsanThread::ThreadStart() {
   Init();
 
   if (!start_routine_) {
@@ -91,7 +91,7 @@ void *AsanThread::ThreadStart() {
     return 0;
   }
 
-  void *res = start_routine_(arg_);
+  thread_return_t res = start_routine_(arg_);
   malloc_storage().CommitBack();
 
   this->Destroy();
