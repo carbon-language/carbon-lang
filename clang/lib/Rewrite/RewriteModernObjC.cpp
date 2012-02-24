@@ -6469,8 +6469,10 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
       ParenExpr *PE = new (Context) ParenExpr(SourceLocation(),
                                               SourceLocation(),
                                               addExpr);
+      QualType IvarT = D->getType();
+      convertBlockPointerToFunctionPointer(IvarT);
+      QualType castT = Context->getPointerType(IvarT);
       
-      QualType castT = Context->getPointerType(D->getType());
       castExpr = NoTypeInfoCStyleCastExpr(Context, 
                                           castT,
                                           CK_BitCast,
