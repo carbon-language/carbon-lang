@@ -6379,12 +6379,12 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
       return CheckEvalInICE(E, Ctx);
     return ICEDiag(2, E->getLocStart());
   }
-  case Expr::DeclRefExprClass:
+  case Expr::DeclRefExprClass: {
     if (isa<EnumConstantDecl>(cast<DeclRefExpr>(E)->getDecl()))
       return NoDiag();
-    if (Ctx.getLangOptions().CPlusPlus && IsConstNonVolatile(E->getType())) {
-      const NamedDecl *D = cast<DeclRefExpr>(E)->getDecl();
-
+    const ValueDecl *D = dyn_cast<ValueDecl>(cast<DeclRefExpr>(E)->getDecl());
+    if (Ctx.getLangOptions().CPlusPlus &&
+        D && IsConstNonVolatile(D->getType())) {
       // Parameter variables are never constants.  Without this check,
       // getAnyInitializer() can find a default argument, which leads
       // to chaos.
@@ -6408,6 +6408,7 @@ static ICEDiag CheckICE(const Expr* E, ASTContext &Ctx) {
       }
     }
     return ICEDiag(2, E->getLocStart());
+  }
   case Expr::UnaryOperatorClass: {
     const UnaryOperator *Exp = cast<UnaryOperator>(E);
     switch (Exp->getOpcode()) {

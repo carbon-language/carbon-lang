@@ -101,3 +101,30 @@ namespace PR12031 {
     f(v, [](){});
   }
 }
+
+namespace NullPtr {
+  int &f(int *p);
+  char &f(...);
+  void g() {
+    int n = 0;
+    [=] {
+      char &k = f(n); // not a null pointer constant
+    } ();
+
+    const int m = 0;
+    [=] {
+      int &k = f(m); // a null pointer constant
+    } ();
+
+    // FIXME: At least the second of these cases should probably not be
+    // considered to be a null pointer constant.
+    [=] () -> bool {
+      int &k = f(m);  // a null pointer constant?
+      return &m == 0; // no, captured!
+    } ();
+
+    [m] {
+      int &k = f(m); // a null pointer constant?
+    } ();
+  }
+}
