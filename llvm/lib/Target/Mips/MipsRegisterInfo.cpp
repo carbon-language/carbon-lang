@@ -101,12 +101,12 @@ BitVector MipsRegisterInfo::
 getReservedRegs(const MachineFunction &MF) const {
   static const unsigned ReservedCPURegs[] = {
     Mips::ZERO, Mips::AT, Mips::K0, Mips::K1, 
-    Mips::GP, Mips::SP, Mips::FP, Mips::RA
+    Mips::SP, Mips::FP, Mips::RA
   };
 
   static const unsigned ReservedCPU64Regs[] = {
     Mips::ZERO_64, Mips::AT_64, Mips::K0_64, Mips::K1_64, 
-    Mips::GP_64, Mips::SP_64, Mips::FP_64, Mips::RA_64
+    Mips::SP_64, Mips::FP_64, Mips::RA_64
   };
 
   BitVector Reserved(getNumRegs());
@@ -135,6 +135,12 @@ getReservedRegs(const MachineFunction &MF) const {
       Reserved.set(*Reg);
   }
   
+  // If GP is dedicated as a global base register, reserve it. 
+  if (MF.getInfo<MipsFunctionInfo>()->globalBaseRegFixed()) {
+    Reserved.set(Mips::GP);
+    Reserved.set(Mips::GP_64);
+  }
+
   return Reserved;
 }
 

@@ -106,7 +106,7 @@ public:
 
   virtual bool addInstSelector();
   virtual bool addPreRegAlloc();
-  virtual bool addPostRegAlloc();
+  virtual bool addPreSched2();
   virtual bool addPreEmitPass();
 };
 } // namespace
@@ -140,7 +140,7 @@ bool MipsPassConfig::addPreRegAlloc() {
   return true;
 }
 
-bool MipsPassConfig::addPostRegAlloc() {
+bool MipsPassConfig::addPreSched2() {
   PM.add(createMipsExpandPseudoPass(getMipsTargetMachine()));
   return true;
 }

@@ -244,12 +244,12 @@ def : Pat<(add CPU64Regs:$hi, (MipsLo tconstpool:$lo)),
 def : Pat<(add CPU64Regs:$hi, (MipsLo tglobaltlsaddr:$lo)),
           (DADDiu CPU64Regs:$hi, tglobaltlsaddr:$lo)>;
 
-def : WrapperPat<tglobaladdr, DADDiu, GP_64>;
-def : WrapperPat<tconstpool, DADDiu, GP_64>;
-def : WrapperPat<texternalsym, DADDiu, GP_64>;
-def : WrapperPat<tblockaddress, DADDiu, GP_64>;
-def : WrapperPat<tjumptable, DADDiu, GP_64>;
-def : WrapperPat<tglobaltlsaddr, DADDiu, GP_64>;
+def : WrapperPat<tglobaladdr, DADDiu, CPU64Regs>;
+def : WrapperPat<tconstpool, DADDiu, CPU64Regs>;
+def : WrapperPat<texternalsym, DADDiu, CPU64Regs>;
+def : WrapperPat<tblockaddress, DADDiu, CPU64Regs>;
+def : WrapperPat<tjumptable, DADDiu, CPU64Regs>;
+def : WrapperPat<tglobaltlsaddr, DADDiu, CPU64Regs>;
 
 defm : BrcondPats<CPU64Regs, BEQ64, BNE64, SLT64, SLTu64, SLTi64, SLTiu64,
                   ZERO_64>;

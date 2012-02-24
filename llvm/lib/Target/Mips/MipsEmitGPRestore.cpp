@@ -44,11 +44,14 @@ namespace {
 } // end of anonymous namespace
 
 bool Inserter::runOnMachineFunction(MachineFunction &F) {
-  if (TM.getRelocationModel() != Reloc::PIC_)
+  MipsFunctionInfo *MipsFI = F.getInfo<MipsFunctionInfo>();
+
+  if ((TM.getRelocationModel() != Reloc::PIC_) ||
+      (!MipsFI->globalBaseRegFixed()))
     return false;
 
   bool Changed = false;
-  int FI =  F.getInfo<MipsFunctionInfo>()->getGPFI();
+  int FI = MipsFI->getGPFI();
 
   for (MachineFunction::iterator MFI = F.begin(), MFE = F.end();
        MFI != MFE; ++MFI) {

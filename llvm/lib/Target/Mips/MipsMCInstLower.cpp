@@ -321,3 +321,29 @@ void MipsMCInstLower::LowerUnalignedLoadStore(const MachineInstr *MI,
   if (!TwoInstructions) MCInsts.push_back(Instr3);
 }
 
+// Convert
+//  "setgp01 $reg"
+// to
+//  "lui   $reg, %hi(_gp_disp)"
+//  "addiu $reg, $reg, %lo(_gp_disp)"
+void MipsMCInstLower::LowerSETGP01(const MachineInstr *MI,
+                                   SmallVector<MCInst, 4>& MCInsts) {
+  const MachineOperand &MO = MI->getOperand(0);
+  assert(MO.isReg());
+  MCOperand RegOpnd = MCOperand::CreateReg(MO.getReg());
+  StringRef SymName("_gp_disp");
+  const MCSymbol *Sym = Ctx.GetOrCreateSymbol(SymName);
+  const MCSymbolRefExpr *MCSym;
+
+  MCInsts.resize(2);
+
+  MCSym = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_Mips_ABS_HI, Ctx);
+  MCInsts[0].setOpcode(Mips::LUi);
+  MCInsts[0].addOperand(RegOpnd);
+  MCInsts[0].addOperand(MCOperand::CreateExpr(MCSym));
+  MCSym = MCSymbolRefExpr::Create(Sym, MCSymbolRefExpr::VK_Mips_ABS_LO, Ctx);
+  MCInsts[1].setOpcode(Mips::ADDiu);
+  MCInsts[1].addOperand(RegOpnd);
+  MCInsts[1].addOperand(RegOpnd);
+  MCInsts[1].addOperand(MCOperand::CreateExpr(MCSym));
+}

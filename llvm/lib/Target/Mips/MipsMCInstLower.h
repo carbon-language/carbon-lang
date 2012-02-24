@@ -39,6 +39,7 @@ public:
   void LowerCPRESTORE(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts); 
   void LowerUnalignedLoadStore(const MachineInstr *MI,
 		                           SmallVector<MCInst, 4>& MCInsts);
+  void LowerSETGP01(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts);
 private:
   MCOperand LowerSymbolOperand(const MachineOperand &MO,
                                MachineOperandType MOTy, unsigned Offset) const;

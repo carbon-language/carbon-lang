@@ -34,6 +34,8 @@
 #include "llvm/Instructions.h"
 #include "llvm/MC/MCStreamer.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCContext.h"
+#include "llvm/MC/MCExpr.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCSymbol.h"
 #include "llvm/Support/TargetRegistry.h"
@@ -114,6 +116,16 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
         OutStreamer.EmitInstruction(*I);
       return;
     }
+  }
+
+  if (Opc == Mips::SETGP01) {
+    MCInstLowering.LowerSETGP01(MI, MCInsts);
+
+    for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
+         I != MCInsts.end(); ++I)
+      OutStreamer.EmitInstruction(*I);
+
+    return;
   }
 
   OutStreamer.EmitInstruction(TmpInst0);

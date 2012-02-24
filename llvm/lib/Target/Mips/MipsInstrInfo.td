@@ -107,7 +107,7 @@ def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsDivRem,
 //  movn  %got(d)($gp), %got(c)($gp), $4
 // This instruction is illegal since movn can take only register operands.
 
-def MipsWrapper    : SDNode<"MipsISD::Wrapper",  SDTIntUnaryOp>;
+def MipsWrapper    : SDNode<"MipsISD::Wrapper", SDTIntBinOp>;
 
 // Pointer to dynamically allocated stack area.
 def MipsDynAlloc  : SDNode<"MipsISD::DynAlloc", SDT_MipsDynAlloc,
@@ -739,6 +739,22 @@ def ATMACRO   : MipsPseudo<(outs), (ins), ".set\tat", []>;
 def CPLOAD : MipsPseudo<(outs), (ins CPURegs:$picreg), ".cpload\t$picreg", []>;
 def CPRESTORE : MipsPseudo<(outs), (ins i32imm:$loc), ".cprestore\t$loc", []>;
 
+// For O32 ABI & PIC & non-fixed global base register, the following instruction
+// seqeunce is emitted to set the global base register:
+//
+//  0. lui   $2, %hi(_gp_disp)
+//  1. addiu $2, $2, %lo(_gp_disp)
+//  2. addu  $globalbasereg, $2, $t9
+//
+// SETGP01 is emitted during Prologue/Epilogue insertion and then converted to
+// instructions 0 and 1 in the sequence above during MC lowering.
+// SETGP2 is emitted just before register allocation and converted to
+// instruction 2 just prior to post-RA scheduling.
+
+def SETGP01 : MipsPseudo<(outs CPURegs:$dst), (ins), "", []>;
+def SETGP2 : MipsPseudo<(outs CPURegs:$globalreg), (ins CPURegs:$picreg), "",
+                        []>;
+
 let usesCustomInserter = 1 in {
   defm ATOMIC_LOAD_ADD_I8   : Atomic2Ops32<atomic_load_add_8, "load_add_8">;
   defm ATOMIC_LOAD_ADD_I16  : Atomic2Ops32<atomic_load_add_16, "load_add_16">;
@@ -995,16 +1011,16 @@ def : Pat<(add CPURegs:$gp, (MipsGPRel tconstpool:$in)),
           (ADDiu CPURegs:$gp, tconstpool:$in)>;
 
 // wrapper_pic
-class WrapperPat<SDNode node, Instruction ADDiuOp, Register GPReg>:
-      Pat<(MipsWrapper node:$in),
-          (ADDiuOp GPReg, node:$in)>;
+class WrapperPat<SDNode node, Instruction ADDiuOp, RegisterClass RC>:
+      Pat<(MipsWrapper RC:$gp, node:$in),
+          (ADDiuOp RC:$gp, node:$in)>;
 
-def : WrapperPat<tglobaladdr, ADDiu, GP>;
-def : WrapperPat<tconstpool, ADDiu, GP>;
-def : WrapperPat<texternalsym, ADDiu, GP>;
-def : WrapperPat<tblockaddress, ADDiu, GP>;
-def : WrapperPat<tjumptable, ADDiu, GP>;
-def : WrapperPat<tglobaltlsaddr, ADDiu, GP>;
+def : WrapperPat<tglobaladdr, ADDiu, CPURegs>;
+def : WrapperPat<tconstpool, ADDiu, CPURegs>;
+def : WrapperPat<texternalsym, ADDiu, CPURegs>;
+def : WrapperPat<tblockaddress, ADDiu, CPURegs>;
+def : WrapperPat<tjumptable, ADDiu, CPURegs>;
+def : WrapperPat<tglobaltlsaddr, ADDiu, CPURegs>;
 
 // Mips does not have "not", so we expand our way
 def : Pat<(not CPURegs:$in),

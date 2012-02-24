@@ -136,20 +136,16 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
   const MipsRegisterInfo *RegInfo =
     static_cast<const MipsRegisterInfo*>(MF.getTarget().getRegisterInfo());
-  MachineRegisterInfo& MRI = MF.getRegInfo();
   const MipsInstrInfo &TII =
     *static_cast<const MipsInstrInfo*>(MF.getTarget().getInstrInfo());
   MachineBasicBlock::iterator MBBI = MBB.begin();
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
   bool isPIC = (MF.getTarget().getRelocationModel() == Reloc::PIC_);
-  unsigned GP = STI.isABI_N64() ? Mips::GP_64 : Mips::GP;
-  unsigned T9 = STI.isABI_N64() ? Mips::T9_64 : Mips::T9;
   unsigned SP = STI.isABI_N64() ? Mips::SP_64 : Mips::SP;
   unsigned FP = STI.isABI_N64() ? Mips::FP_64 : Mips::FP;
   unsigned ZERO = STI.isABI_N64() ? Mips::ZERO_64 : Mips::ZERO;
   unsigned ADDu = STI.isABI_N64() ? Mips::DADDu : Mips::ADDu;
   unsigned ADDiu = STI.isABI_N64() ? Mips::DADDiu : Mips::ADDiu;
-  unsigned LUi = STI.isABI_N64() ? Mips::LUi64 : Mips::LUi;
 
   // First, compute final stack size.
   unsigned RegSize = STI.isGP32bit() ? 4 : 8;
@@ -164,16 +160,18 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   MFI->setStackSize(StackSize); 
   
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOREORDER));
-
-  // Emit instructions that set $gp using the the value of $t9.
-  // O32 uses the directive .cpload while N32/64 requires three instructions to
-  // do this.  
-  // TODO: Do not emit these instructions if no instructions use $gp.
-  if (isPIC && STI.isABI_O32())
-    BuildMI(MBB, MBBI, dl, TII.get(Mips::CPLOAD))
-      .addReg(RegInfo->getPICCallReg());
-
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOMACRO));
+
+  // Emit instructions that set the global base register if the target ABI is
+  // O32.
+  if (isPIC && MipsFI->globalBaseRegSet() && STI.isABI_O32()) {
+    if (MipsFI->globalBaseRegFixed())
+      BuildMI(MBB, llvm::prior(MBBI), dl, TII.get(Mips::CPLOAD))
+        .addReg(RegInfo->getPICCallReg());
+    else
+      // See MipsInstrInfo.td for explanation.
+      BuildMI(MBB, MBBI, dl, TII.get(Mips:: SETGP01), Mips::V0);
+  }
 
   // No need to allocate space on the stack.
   if (StackSize == 0 && !MFI->adjustsStack()) return;
@@ -238,21 +236,6 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
       }
     }
   }    
-
-  if ((STI.isABI_N64() || (isPIC && STI.isABI_N32())) &&
-      MRI.isPhysRegUsed(GP)) {
-    //  lui     $28,%hi(%neg(%gp_rel(fname)))
-    //  addu    $28,$28,$25
-    //  addiu   $28,$28,%lo(%neg(%gp_rel(fname)))
-    MachineBasicBlock::iterator InsPos = llvm::prior(MBBI);
-    const GlobalValue *FName = MF.getFunction();
-    BuildMI(MBB, MBBI, dl, TII.get(LUi), GP)
-      .addGlobalAddress(FName, 0, MipsII::MO_GPOFF_HI);
-    BuildMI(MBB, MBBI, dl, TII.get(ADDu), GP).addReg(GP).addReg(T9);
-    BuildMI(MBB, MBBI, dl, TII.get(ADDiu), GP).addReg(GP)
-      .addGlobalAddress(FName, 0, MipsII::MO_GPOFF_LO);
-    MBBI = ++InsPos;
-  }
 
   // if framepointer enabled, set it to point to the stack pointer.
   if (hasFP(MF)) {

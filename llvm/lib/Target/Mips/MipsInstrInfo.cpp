@@ -454,30 +454,3 @@ ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond) const
   return false;
 }
 
-/// getGlobalBaseReg - Return a virtual register initialized with the
-/// the global base register value. Output instructions required to
-/// initialize the register in the function entry block, if necessary.
-///
-unsigned MipsInstrInfo::getGlobalBaseReg(MachineFunction *MF) const {
-  MipsFunctionInfo *MipsFI = MF->getInfo<MipsFunctionInfo>();
-  unsigned GlobalBaseReg = MipsFI->getGlobalBaseReg();
-  if (GlobalBaseReg != 0)
-    return GlobalBaseReg;
-
-  // Insert the set of GlobalBaseReg into the first MBB of the function
-  MachineBasicBlock &FirstMBB = MF->front();
-  MachineBasicBlock::iterator MBBI = FirstMBB.begin();
-  MachineRegisterInfo &RegInfo = MF->getRegInfo();
-  const TargetInstrInfo *TII = MF->getTarget().getInstrInfo();
-  unsigned GP = IsN64 ? Mips::GP_64 : Mips::GP;
-  const TargetRegisterClass *RC
-    = IsN64 ? Mips::CPU64RegsRegisterClass : Mips::CPURegsRegisterClass;
-
-  GlobalBaseReg = RegInfo.createVirtualRegister(RC);
-  BuildMI(FirstMBB, MBBI, DebugLoc(), TII->get(TargetOpcode::COPY),
-          GlobalBaseReg).addReg(GP);
-  RegInfo.addLiveIn(GP);
-
-  MipsFI->setGlobalBaseReg(GlobalBaseReg);
-  return GlobalBaseReg;
-}
