@@ -106,7 +106,7 @@ let isCall = 1, PPC970_Unit = 7,
                          (outs), (ins aaddr:$func, variable_ops),
                          "bla $func", BrB, [(PPCcall_SVR4 (i64 imm:$func))]>;
   }
-  let Uses = [CTR8, RM] in {
+  let Uses = [X11, CTR8, RM] in {
     def BCTRL8_ELF : XLForm_2_ext<19, 528, 20, 0, 1,
                                (outs), (ins variable_ops),
                                "bctrl", BrB,
@@ -575,7 +575,8 @@ def LDtoc: Pseudo<(outs G8RC:$rD), (ins tocentry:$disp, G8RC:$reg),
                   "",
                   [(set G8RC:$rD,
                      (PPCtoc_entry tglobaladdr:$disp, G8RC:$reg))]>, isPPC64;
-                     
+
+let hasSideEffects = 1 in { 
 let RST = 2, DS_RA = 0 in // FIXME: Should be a pseudo.
 def LDinto_toc: DSForm_1<58, 0, (outs), (ins G8RC:$reg),
                     "ld 2, 8($reg)", LdStLD,
@@ -585,6 +586,7 @@ let RST = 2, DS_RA = 0 in // FIXME: Should be a pseudo.
 def LDtoc_restore : DSForm_1<58, 0, (outs), (ins),
                     "ld 2, 40(1)", LdStLD,
                     [(PPCtoc_restore)]>, isPPC64;
+}
 def LDX  : XForm_1<31,  21, (outs G8RC:$rD), (ins memrr:$src),
                    "ldx $rD, $src", LdStLD,
                    [(set G8RC:$rD, (load xaddr:$src))]>, isPPC64;

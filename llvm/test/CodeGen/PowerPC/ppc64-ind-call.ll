@@ -9,4 +9,8 @@ entry:
 }
 
 ; CHECK: @test1
+; CHECK: ld 11, 0(3)
+; CHECK: ld 2, 8(3)
+; CHECK: bctrl
+; CHECK: ld 2, 40(1)
 
