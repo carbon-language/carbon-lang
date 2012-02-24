@@ -4213,7 +4213,8 @@ static ImplicitConversionSequence
 TryCopyInitialization(Sema &S, Expr *From, QualType ToType,
                       bool SuppressUserConversions,
                       bool InOverloadResolution,
-                      bool AllowObjCWritebackConversion);
+                      bool AllowObjCWritebackConversion,
+                      bool AllowExplicit = false);
 
 /// TryListConversion - Try to copy-initialize a value of type ToType from the
 /// initializer list From.
@@ -4413,7 +4414,8 @@ static ImplicitConversionSequence
 TryCopyInitialization(Sema &S, Expr *From, QualType ToType,
                       bool SuppressUserConversions,
                       bool InOverloadResolution,
-                      bool AllowObjCWritebackConversion) {
+                      bool AllowObjCWritebackConversion,
+                      bool AllowExplicit) {
   if (InitListExpr *FromInitList = dyn_cast<InitListExpr>(From))
     return TryListConversion(S, FromInitList, ToType, SuppressUserConversions,
                              InOverloadResolution,AllowObjCWritebackConversion);
@@ -4422,7 +4424,7 @@ TryCopyInitialization(Sema &S, Expr *From, QualType ToType,
     return TryReferenceInit(S, From, ToType,
                             /*FIXME:*/From->getLocStart(),
                             SuppressUserConversions,
-                            /*AllowExplicit=*/false);
+                            AllowExplicit);
 
   return TryImplicitConversion(S, From, ToType,
                                SuppressUserConversions,
@@ -5103,7 +5105,8 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
                            Expr **Args, unsigned NumArgs,
                            OverloadCandidateSet& CandidateSet,
                            bool SuppressUserConversions,
-                           bool PartialOverloading) {
+                           bool PartialOverloading,
+                           bool AllowExplicit) {
   const FunctionProtoType* Proto
     = dyn_cast<FunctionProtoType>(Function->getType()->getAs<FunctionType>());
   assert(Proto && "Functions without a prototype cannot be overloaded");
@@ -5204,7 +5207,8 @@ Sema::AddOverloadCandidate(FunctionDecl *Function,
                                 SuppressUserConversions,
                                 /*InOverloadResolution=*/true,
                                 /*AllowObjCWritebackConversion=*/
-                                  getLangOptions().ObjCAutoRefCount);
+                                  getLangOptions().ObjCAutoRefCount,
+                                AllowExplicit);
       if (Candidate.Conversions[ArgIdx].isBad()) {
         Candidate.Viable = false;
         Candidate.FailureKind = ovl_fail_bad_conversion;

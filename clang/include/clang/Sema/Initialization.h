@@ -365,17 +365,18 @@ class InitializationKind {
 public:
   /// \brief The kind of initialization being performed.
   enum InitKind {
-    IK_Direct,     ///< Direct initialization
-    IK_DirectList, ///< Direct list-initialization
-    IK_Copy,       ///< Copy initialization
-    IK_Default,    ///< Default initialization
-    IK_Value       ///< Value initialization
+    IK_Direct,       ///< Direct initialization
+    IK_DirectList,   ///< Direct list-initialization
+    IK_Copy,         ///< Copy initialization
+    IK_Default,      ///< Default initialization
+    IK_Value         ///< Value initialization
   };
   
 private:
   /// \brief The context of the initialization.
   enum InitContext {
     IC_Normal,         ///< Normal context
+    IC_ExplicitConvs,  ///< Normal context, but allows explicit conversion funcs
     IC_Implicit,       ///< Implicit context (value initialization)
     IC_StaticCast,     ///< Static cast context
     IC_CStyleCast,     ///< C-style cast context
@@ -442,8 +443,11 @@ public:
 
   /// \brief Create a copy initialization.
   static InitializationKind CreateCopy(SourceLocation InitLoc,
-                                       SourceLocation EqualLoc) {
-    return InitializationKind(IK_Copy, IC_Normal, InitLoc, EqualLoc, EqualLoc);
+                                       SourceLocation EqualLoc,
+                                       bool AllowExplicitConvs = false) {
+    return InitializationKind(IK_Copy, 
+                              AllowExplicitConvs? IC_ExplicitConvs : IC_Normal,
+                              InitLoc, EqualLoc, EqualLoc);
   }
   
   /// \brief Create a default initialization.
@@ -511,6 +515,12 @@ public:
   ///        constructors.
   bool AllowExplicit() const { return !isCopyInit(); }
 
+  /// \brief Retrieve whether this initialization allows the use of explicit
+  /// conversion functions.
+  bool allowExplicitConversionFunctions() const {
+    return !isCopyInit() || Context == IC_ExplicitConvs;
+  }
+  
   /// \brief Retrieve the source range containing the locations of the open
   /// and closing parentheses for value and direct initializations.
   SourceRange getParenRange() const {

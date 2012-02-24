@@ -2827,10 +2827,22 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
                                        /*ExplicitArgs*/ 0,
                                        Args, NumArgs, CandidateSet,
                                        SuppressUserConversions);
-      else
+      else {
+        // C++ [over.match.copy]p1:
+        //   - When initializing a temporary to be bound to the first parameter 
+        //     of a constructor that takes a reference to possibly cv-qualified 
+        //     T as its first argument, called with a single argument in the 
+        //     context of direct-initialization, explicit conversion functions
+        //     are also considered.
+        bool AllowExplicitConv = AllowExplicit && !CopyInitializing && 
+                                 NumArgs == 1 &&
+                                 Constructor->isCopyOrMoveConstructor();
         S.AddOverloadCandidate(Constructor, FoundDecl,
                                Args, NumArgs, CandidateSet,
-                               SuppressUserConversions);
+                               SuppressUserConversions,
+                               /*PartialOverloading=*/false,
+                               /*AllowExplicit=*/AllowExplicitConv);
+      }
     }
   }
 
@@ -3122,8 +3134,8 @@ static void TryListInitialization(Sema &S,
 static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
                                              const InitializedEntity &Entity,
                                              const InitializationKind &Kind,
-                                                          Expr *Initializer,
-                                                          bool AllowRValues,
+                                             Expr *Initializer,
+                                             bool AllowRValues,
                                              InitializationSequence &Sequence) {
   QualType DestType = Entity.getType();
   QualType cv1T1 = DestType->getAs<ReferenceType>()->getPointeeType();
@@ -3151,7 +3163,8 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
   // Determine whether we are allowed to call explicit constructors or
   // explicit conversion operators.
   bool AllowExplicit = Kind.AllowExplicit();
-
+  bool AllowExplicitConvs = Kind.allowExplicitConversionFunctions();
+  
   const RecordType *T1RecordType = 0;
   if (AllowRValues && (T1RecordType = T1->getAs<RecordType>()) &&
       !S.RequireCompleteType(Kind.getLocation(), T1, 0)) {
@@ -3220,7 +3233,7 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
       // FIXME: Do we need to make sure that we only consider conversion
       // candidates with reference-compatible results? That might be needed to
       // break recursion.
-      if ((AllowExplicit || !Conv->isExplicit()) &&
+      if ((AllowExplicitConvs || !Conv->isExplicit()) &&
           (AllowRValues || Conv->getConversionType()->isLValueReferenceType())){
         if (ConvTemplate)
           S.AddTemplateConversionCandidate(ConvTemplate, I.getPair(),
@@ -4636,10 +4649,21 @@ PerformConstructorInitialization(Sema &S,
 
   ExprResult CurInit = S.Owned((Expr *)0);
 
+  // C++ [over.match.copy]p1:
+  //   - When initializing a temporary to be bound to the first parameter 
+  //     of a constructor that takes a reference to possibly cv-qualified 
+  //     T as its first argument, called with a single argument in the 
+  //     context of direct-initialization, explicit conversion functions
+  //     are also considered.
+  bool AllowExplicitConv = Kind.AllowExplicit() && !Kind.isCopyInit() &&
+                           Args.size() == 1 && 
+                           Constructor->isCopyOrMoveConstructor();
+
   // Determine the arguments required to actually perform the constructor
   // call.
   if (S.CompleteConstructorCall(Constructor, move(Args),
-                                Loc, ConstructorArgs))
+                                Loc, ConstructorArgs,
+                                AllowExplicitConv))
     return ExprError();
 
 
@@ -6097,7 +6121,8 @@ ExprResult
 Sema::PerformCopyInitialization(const InitializedEntity &Entity,
                                 SourceLocation EqualLoc,
                                 ExprResult Init,
-                                bool TopLevelOfInitList) {
+                                bool TopLevelOfInitList,
+                                bool AllowExplicit) {
   if (Init.isInvalid())
     return ExprError();
 
@@ -6108,7 +6133,8 @@ Sema::PerformCopyInitialization(const InitializedEntity &Entity,
     EqualLoc = InitE->getLocStart();
 
   InitializationKind Kind = InitializationKind::CreateCopy(InitE->getLocStart(),
-                                                           EqualLoc);
+                                                           EqualLoc,
+                                                           AllowExplicit);
   InitializationSequence Seq(*this, Entity, Kind, &InitE, 1);
   Init.release();
 

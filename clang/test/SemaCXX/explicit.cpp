@@ -43,16 +43,8 @@ namespace Conversion {
     class Y { }; // expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y &' for 1st argument}} \
 					          expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y &&' for 1st argument}} \
                     expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y &' for 1st argument}} \
-                    expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y' for 1st argument}} \
-					expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y' for 1st argument}} \
-					expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y' for 1st argument}} \
-					expected-note {{candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided}} \
-					expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y' for 1st argument}} \
-					expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y' for 1st argument}} \
-					expected-note {{candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided}} \
-					expected-note {{candidate constructor (the implicit copy constructor) not viable: no known conversion from 'Conversion::Z' to 'const Conversion::Y' for 1st argument}} \
-          expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y &&' for 1st argument}} \
-					expected-note {{candidate constructor (the implicit default constructor) not viable: requires 0 arguments, but 1 was provided}}
+          expected-note {{candidate constructor (the implicit move constructor) not viable: no known conversion from 'Conversion::Z' to 'Conversion::Y &&' for 1st argument}}
+
     struct Z {
       explicit operator Y() const;
       explicit operator int() const;
@@ -61,10 +53,9 @@ namespace Conversion {
     Z z;
     // 13.3.1.4p1 & 8.5p16:
     Y y2 = z; // expected-error {{no viable conversion from 'Conversion::Z' to 'Conversion::Y'}}
-    // FIXME: These are well-formed per C++0x 13.3.1.4p1 (see DR899).
-    Y y3 = (Y)z; // expected-error {{no matching conversion for C-style cast from 'Conversion::Z' to 'Conversion::Y'}}
-    Y y4 = Y(z); // expected-error {{no matching conversion for functional-style cast from 'Conversion::Z' to 'Conversion::Y'}}
-    Y y5 = static_cast<Y>(z); // expected-error {{no matching conversion for static_cast from 'Conversion::Z' to 'Conversion::Y'}}
+    Y y3 = (Y)z;
+    Y y4 = Y(z);
+    Y y5 = static_cast<Y>(z);
     // 13.3.1.5p1 & 8.5p16:
     int i1 = (int)z;
     int i2 = int(z);
