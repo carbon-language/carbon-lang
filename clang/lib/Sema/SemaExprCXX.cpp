@@ -3218,12 +3218,11 @@ static bool evaluateTypeTrait(Sema &S, TypeTrait Kind, SourceLocation KWLoc,
   switch (Kind) {
   case clang::TT_IsTriviallyConstructible: {
     // C++11 [meta.unary.prop]:
-    //   is_trivially_constructor is defined as:
+    //   is_trivially_constructible is defined as:
     //
-    //     is_constructible<T, Args...>::value is true and the variable 
-    //
-    ///  definition for is_constructible, as defined below, is known to call no
-    //   operation that is not trivial.
+    //     is_constructible<T, Args...>::value is true and the variable
+    //     definition for is_constructible, as defined below, is known to call no
+    //     operation that is not trivial.
     //
     //   The predicate condition for a template specialization 
     //   is_constructible<T, Args...> shall be satisfied if and only if the 
