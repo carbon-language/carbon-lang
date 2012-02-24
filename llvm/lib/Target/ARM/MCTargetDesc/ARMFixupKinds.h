@@ -1,4 +1,4 @@
-//===-- ARM/ARMFixupKinds.h - ARM Specific Fixup Entries --------*- C++ -*-===//
+//===-- ARMFixupKinds.h - ARM Specific Fixup Entries ------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
