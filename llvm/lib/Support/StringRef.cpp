@@ -241,7 +241,7 @@ void StringRef::split(SmallVectorImpl<StringRef> &A,
        ++splits) {
     std::pair<StringRef, StringRef> p = rest.split(Separators);
 
-    if (p.first.size() != 0 || KeepEmpty)
+    if (KeepEmpty || p.first.size() != 0)
       A.push_back(p.first);
     rest = p.second;
   }
