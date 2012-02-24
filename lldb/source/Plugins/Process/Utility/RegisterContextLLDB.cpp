@@ -500,7 +500,7 @@ RegisterContextLLDB::InitializeNonZerothFrame()
         if (active_row && log)
         {
             StreamString active_row_strm;
-            active_row->Dump(active_row_strm, m_full_unwind_plan_sp.get(), &m_thread, m_start_pc.GetLoadAddress(exe_ctx.GetTargetPtr()));
+            active_row->Dump(active_row_strm, m_fast_unwind_plan_sp.get(), &m_thread, m_start_pc.GetLoadAddress(exe_ctx.GetTargetPtr()));
             log->Printf("%*sFrame %u active row: %s",
                         m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number, active_row_strm.GetString().c_str());
         }
