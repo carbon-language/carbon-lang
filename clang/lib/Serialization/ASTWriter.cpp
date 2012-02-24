@@ -3860,6 +3860,9 @@ void ASTWriter::associateDeclWithFile(const Decl *D, DeclID ID) {
   // We only keep track of the file-level declarations of each file.
   if (!D->getLexicalDeclContext()->isFileContext())
     return;
+  // FIXME: We should never have ParmVarDecls with TU as context.
+  if (isa<ParmVarDecl>(D))
+    return;
 
   SourceManager &SM = Context->getSourceManager();
   SourceLocation FileLoc = SM.getFileLoc(Loc);
