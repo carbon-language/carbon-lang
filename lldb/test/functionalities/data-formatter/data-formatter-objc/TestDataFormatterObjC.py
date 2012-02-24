@@ -11,18 +11,38 @@ class ObjCDataFormatterTestCase(TestBase):
 
     mydir = os.path.join("functionalities", "data-formatter", "data-formatter-objc")
 
-    # rdar://problem/10153585 lldb ToT regression of test suite with r139772 check-in
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
-    def test_with_dsym_and_run_command(self):
-        """Test data formatter commands."""
+    def test_plain_objc_with_dsym_and_run_command(self):
+        """Test basic ObjC formatting behavior."""
         self.buildDsym()
-        self.data_formatter_commands()
+        self.plain_data_formatter_commands()
 
-    # rdar://problem/10153585 lldb ToT regression of test suite with r139772 check-in
-    def test_with_dwarf_and_run_command(self):
-        """Test data formatter commands."""
+    def test_plain_objc_with_dwarf_and_run_command(self):
+        """Test basic ObjC formatting behavior."""
         self.buildDwarf()
-        self.data_formatter_commands()
+        self.plain_data_formatter_commands()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_appkit_with_dsym_and_run_command(self):
+        """Test formatters for AppKit classes."""
+        self.buildDsym()
+        self.appkit_data_formatter_commands()
+
+    def test_appkit_with_dwarf_and_run_command(self):
+        """Test formatters for AppKit classes."""
+        self.buildDwarf()
+        self.appkit_data_formatter_commands()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_coreframeworks_with_dsym_and_run_command(self):
+        """Test formatters for Core OSX frameworks."""
+        self.buildDsym()
+        self.cf_data_formatter_commands()
+
+    def test_coreframeworks_with_dwarf_and_run_command(self):
+        """Test formatters for Core OSX frameworks."""
+        self.buildDwarf()
+        self.cf_data_formatter_commands()
 
     def setUp(self):
         # Call super's setUp().
@@ -30,8 +50,8 @@ class ObjCDataFormatterTestCase(TestBase):
         # Find the line number to break at.
         self.line = line_number('main.m', '// Set break point at this line.')
 
-    def data_formatter_commands(self):
-        """Test that that file and class static variables display correctly."""
+    def plain_data_formatter_commands(self):
+        """Test basic ObjC formatting behavior."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
 
         self.expect("breakpoint set -f main.m -l %d" % self.line,
@@ -106,10 +126,41 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect("frame variable *object",
                     substrs = ['a test']);
 
+    def appkit_data_formatter_commands(self):
+        """Test formatters for AppKit classes."""
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+
+        self.expect("breakpoint set -f main.m -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.m', line = %d, locations = 1" %
+                        self.line)
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # This is the function to remove the custom formats in order to have a
+        # clean slate for the next test case.
+        def cleanup():
+            self.runCmd('type format clear', check=False)
+            self.runCmd('type summary clear', check=False)
+            self.runCmd('type synth clear', check=False)
+            self.runCmd('type category disable CoreFoundation', check=False)
+            self.runCmd('type category disable CoreGraphics', check=False)
+            self.runCmd('type category disable CoreServices', check=False)
+            self.runCmd('type category disable AppKit', check=False)
+
+
+        # Execute the cleanup function during test case tear down.
+        self.addTearDownHook(cleanup)
+
         # Now enable AppKit and check we are displaying Cocoa classes correctly
         self.runCmd("type category enable AppKit")
         self.expect('frame variable num1 num2 num3 num4 num5 num6 num7 num8_Y num8_N num9',
-                    substrs = ['(NSNumber *) num1 = 0x0000000000000583 (int)5',
+                    substrs = ['(NSNumber *) num1 = ',' (int)5',
                     '(NSNumber *) num2 = ',' (float)3.1',
                     '(NSNumber *) num3 = ',' (double)3.14',
                     '(NSNumber *) num4 = ',' (long)18446744073709551614',
@@ -187,10 +238,11 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('frame variable port',
                     substrs = ['(NSMachPort *) port = ',' mach port: '])
 
-        # check that we can format stuff out of the expression parser
+        # check that the formatters are able to deal safely and correctly
+        # with ValueObjects that the expression parser returns
         self.expect('expression ((id)@"Hello")', matching=False,
                     substrs = ['Hello'])
-            
+
         self.expect('expression -d true -- ((id)@"Hello")',
         substrs = ['Hello'])
 
@@ -199,6 +251,37 @@ class ObjCDataFormatterTestCase(TestBase):
 
         self.expect('expr -d true -- @"Hello"',
             substrs = ['Hello'])
+
+    def cf_data_formatter_commands(self):
+        """Test formatters for Core OSX frameworks."""
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+
+        self.expect("breakpoint set -f main.m -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.m', line = %d, locations = 1" %
+                        self.line)
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # This is the function to remove the custom formats in order to have a
+        # clean slate for the next test case.
+        def cleanup():
+            self.runCmd('type format clear', check=False)
+            self.runCmd('type summary clear', check=False)
+            self.runCmd('type synth clear', check=False)
+            self.runCmd('type category disable CoreFoundation', check=False)
+            self.runCmd('type category disable CoreGraphics', check=False)
+            self.runCmd('type category disable CoreServices', check=False)
+            self.runCmd('type category disable AppKit', check=False)
+
+
+        # Execute the cleanup function during test case tear down.
+        self.addTearDownHook(cleanup)
 
         # check formatters for common Objective-C types
         self.runCmd('type category enable CoreFoundation')
@@ -225,6 +308,7 @@ class ObjCDataFormatterTestCase(TestBase):
              '(Point *) point_ptr = (v=7, h=12)',
              '(HIPoint) hi_point = (x=7, y=12)',
              '(HIRect) hi_rect = origin=(x=3, y=5) size=(width=4, height=6)'])
+
 
 if __name__ == '__main__':
     import atexit
