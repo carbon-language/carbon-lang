@@ -599,7 +599,12 @@ Thumb2SizeReduce::ReduceTo2Addr(MachineBasicBlock &MBB, MachineInstr *MI,
   unsigned Reg1 = MI->getOperand(1).getReg();
   // t2MUL is "special". The tied source operand is second, not first.
   if (MI->getOpcode() == ARM::t2MUL) {
-    if (Reg0 != MI->getOperand(2).getReg()) {
+    unsigned Reg2 = MI->getOperand(2).getReg();
+    // Early exit if the regs aren't all low regs.
+    if (!isARMLowRegister(Reg0) || !isARMLowRegister(Reg1)
+        || !isARMLowRegister(Reg2))
+      return false;
+    if (Reg0 != Reg2) {
       // If the other operand also isn't the same as the destination, we
       // can't reduce.
       if (Reg1 != Reg0)
