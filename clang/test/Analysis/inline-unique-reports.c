@@ -20,7 +20,6 @@ void test_bug_2() {
 // CHECK: <dict>
 // CHECK:  <key>files</key>
 // CHECK:  <array>
-// CHECK:   <string>/Volumes/Data/Users/kremenek/llvm/tools/clang/test/Analysis/inline-unique-reports.c</string>
 // CHECK:  </array>
 // CHECK:  <key>diagnostics</key>
 // CHECK:  <array>
