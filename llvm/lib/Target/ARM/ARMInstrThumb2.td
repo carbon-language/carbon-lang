@@ -3260,9 +3260,7 @@ def t2Bcc : T2I<(outs), (ins brtarget:$target), IIC_Br,
 // it goes here.
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // IOS version.
-  let Defs = [R0, R1, R2, R3, R9, R12, PC,
-              Q0, Q1, Q2, Q3, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15],
-      Uses = [SP] in
+  let Uses = [SP] in
   def tTAILJMPd: tPseudoExpand<(outs),
                    (ins uncondbrtarget:$dst, pred:$p, variable_ops),
                    4, IIC_Br, [],

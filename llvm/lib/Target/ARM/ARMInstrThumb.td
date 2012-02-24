@@ -406,10 +406,7 @@ let isReturn = 1, isTerminator = 1, isBarrier = 1 in {
 // potentially appearing dead.
 let isCall = 1,
   // On non-IOS platforms R9 is callee-saved.
-  Defs = [R0,  R1,  R2,  R3,  R12, LR,
-          Q0, Q1, Q2, Q3, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15,
-          CPSR, FPSCR],
-  Uses = [SP] in {
+  Defs = [LR], Uses = [SP] in {
   // Also used for Thumb2
   def tBL  : TIx2<0b11110, 0b11, 1,
                   (outs), (ins pred:$p, t_bltarget:$func, variable_ops), IIC_Br,
@@ -460,10 +457,7 @@ let isCall = 1,
   // On IOS R9 is call-clobbered.
   // R7 is marked as a use to prevent frame-pointer assignments from being
   // moved above / below calls.
-  Defs = [R0,  R1,  R2,  R3,  R9,  R12, LR,
-          Q0, Q1, Q2, Q3, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15,
-          CPSR, FPSCR],
-  Uses = [R7, SP] in {
+  Defs = [LR], Uses = [R7, SP] in {
   // Also used for Thumb2
   def tBLr9 : tPseudoExpand<(outs), (ins pred:$p, t_bltarget:$func, variable_ops),
                           4, IIC_Br, [(ARMtcall tglobaladdr:$func)],
@@ -529,9 +523,7 @@ let isBranch = 1, isTerminator = 1 in
 // Tail calls
 let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
   // IOS versions.
-  let Defs = [R0, R1, R2, R3, R9, R12,
-              Q0, Q1, Q2, Q3, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15, PC],
-      Uses = [SP] in {
+  let Uses = [SP] in {
     // tTAILJMPd: IOS version uses a Thumb2 branch (no Thumb1 tail calls
     // on IOS), so it's in ARMInstrThumb2.td.
     def tTAILJMPr : tPseudoExpand<(outs), (ins tcGPR:$dst, variable_ops),
@@ -540,9 +532,7 @@ let isCall = 1, isTerminator = 1, isReturn = 1, isBarrier = 1 in {
                      Requires<[IsThumb, IsIOS]>;
   }
   // Non-IOS versions (the difference is R9).
-  let Defs = [R0, R1, R2, R3, R12,
-              Q0, Q1, Q2, Q3, Q8, Q9, Q10, Q11, Q12, Q13, Q14, Q15, PC],
-      Uses = [SP] in {
+  let Uses = [SP] in {
     def tTAILJMPdND : tPseudoExpand<(outs),
                    (ins t_brtarget:$dst, pred:$p, variable_ops),
                    4, IIC_Br, [],
