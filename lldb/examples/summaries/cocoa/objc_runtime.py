@@ -434,7 +434,7 @@ class SystemParameters:
 		self.uint32_t = valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 		global runtime_version
 		pid = self.process.GetProcessID()
-		if runtime_version.look_for_key(pid) == None:
+		if runtime_version.look_for_key(pid):
 			self.runtime_version = runtime_version.get_value(pid)
 		else:
 			self.runtime_version = ObjCRuntime.runtime_version(self.process)
