@@ -4581,11 +4581,13 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       N = UnusedArgNodeMap[Address];
     SDDbgValue *SDV;
     if (N.getNode()) {
-      // Parameters are handled specially.
-      bool isParameter =
-        DIVariable(Variable).getTag() == dwarf::DW_TAG_arg_variable;
       if (const BitCastInst *BCI = dyn_cast<BitCastInst>(Address))
         Address = BCI->getOperand(0);
+      // Parameters are handled specially.
+      bool isParameter =
+        (DIVariable(Variable).getTag() == dwarf::DW_TAG_arg_variable ||
+         isa<Argument>(Address));
+
       const AllocaInst *AI = dyn_cast<AllocaInst>(Address);
 
       if (isParameter && !AI) {
@@ -4606,6 +4608,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
       else {
         // Can't do anything with other non-AI cases yet.
         DEBUG(dbgs() << "Dropping debug info for " << DI << "\n");
+        DEBUG(dbgs() << "non-AllocaInst issue for Address: \n\t");
+        DEBUG(Address->dump());
         return 0;
       }
       DAG.AddDbgValue(SDV, N.getNode(), isParameter);
