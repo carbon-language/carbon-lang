@@ -348,6 +348,42 @@ SBAttachInfo::SetWaitForLaunch (bool b)
 }
 
 uint32_t
+SBAttachInfo::GetUserID()
+{
+    return m_opaque_sp->GetUserID();
+}
+
+uint32_t
+SBAttachInfo::GetGroupID()
+{
+    return m_opaque_sp->GetGroupID();
+}
+
+bool
+SBAttachInfo::UserIDIsValid ()
+{
+    return m_opaque_sp->UserIDIsValid();
+}
+
+bool
+SBAttachInfo::GroupIDIsValid ()
+{
+    return m_opaque_sp->GroupIDIsValid();
+}
+
+void
+SBAttachInfo::SetUserID (uint32_t uid)
+{
+    m_opaque_sp->SetUserID (uid);
+}
+
+void
+SBAttachInfo::SetGroupID (uint32_t gid)
+{
+    m_opaque_sp->SetGroupID (gid);
+}
+
+uint32_t
 SBAttachInfo::GetEffectiveUserID()
 {
     return m_opaque_sp->GetEffectiveUserID();

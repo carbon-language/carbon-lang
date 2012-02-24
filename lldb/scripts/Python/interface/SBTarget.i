@@ -138,6 +138,24 @@ public:
     SetProcessPluginName (const char *plugin_name);
     
     uint32_t
+    GetUserID();
+    
+    uint32_t
+    GetGroupID();
+    
+    bool
+    UserIDIsValid ();
+    
+    bool
+    GroupIDIsValid ();
+    
+    void
+    SetUserID (uint32_t uid);
+    
+    void
+    SetGroupID (uint32_t gid);
+
+    uint32_t
     GetEffectiveUserID();
     
     uint32_t
