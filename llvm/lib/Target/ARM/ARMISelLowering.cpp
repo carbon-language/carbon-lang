@@ -2841,6 +2841,11 @@ SDValue ARMTargetLowering::LowerSELECT(SDValue Op, SelectionDAG &DAG) const {
     }
   }
 
+  // ARM's BooleanContents value is UndefinedBooleanContent. Mask out the
+  // undefined bits before doing a full-word comparison with zero.
+  Cond = DAG.getNode(ISD::AND, dl, Cond.getValueType(), Cond,
+                     DAG.getConstant(1, Cond.getValueType()));
+
   return DAG.getSelectCC(dl, Cond,
                          DAG.getConstant(0, Cond.getValueType()),
                          SelectTrue, SelectFalse, ISD::SETNE);
