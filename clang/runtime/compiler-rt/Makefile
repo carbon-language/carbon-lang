@@ -29,7 +29,10 @@ PROJ_resources_lib := $(PROJ_resources)/lib
 COMPILERRT_SRC_ROOT := $(LLVM_SRC_ROOT)/projects/compiler-rt
 
 # Additional flags to pass to Clang.
-CLANG_CCFLAGS := -no-integrated-as
+CLANG_CCFLAGS :=
+ifeq ($(ARCH), arm)
+CLANG_CCFLAGS += -no-integrated-as
+endif
 
 # We don't currently support building runtime libraries when we are
 # cross-compiling. The issue is that we really want to be set up so that the
