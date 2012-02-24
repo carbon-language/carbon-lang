@@ -148,6 +148,20 @@ void ScheduleDAGInstrs::StartBlock(MachineBasicBlock *BB) {
       LoopRegs.VisitLoop(ML);
 }
 
+/// Initialize the map with the number of registers.
+void ScheduleDAGInstrs::Reg2SUnitsMap::setRegLimit(unsigned Limit) {
+  PhysRegSet.setUniverse(Limit);
+  SUnits.resize(Limit);
+}
+
+/// Clear the map without deallocating storage.
+void ScheduleDAGInstrs::Reg2SUnitsMap::clear() {
+  for (const_iterator I = reg_begin(), E = reg_end(); I != E; ++I) {
+    SUnits[*I].clear();
+  }
+  PhysRegSet.clear();
+}
+
 /// AddSchedBarrierDeps - Add dependencies from instructions in the current
 /// list of instructions being scheduled to scheduling barrier by adding
 /// the exit SU to the register defs and use list. This is because we want to
@@ -171,7 +185,7 @@ void ScheduleDAGInstrs::AddSchedBarrierDeps() {
       if (Reg == 0) continue;
 
       if (TRI->isPhysicalRegister(Reg))
-        Uses[Reg].SUnits.push_back(&ExitSU);
+        Uses[Reg].push_back(&ExitSU);
       else
         assert(!IsPostRA && "Virtual register encountered after regalloc.");
     }
@@ -185,7 +199,7 @@ void ScheduleDAGInstrs::AddSchedBarrierDeps() {
              E = (*SI)->livein_end(); I != E; ++I) {
         unsigned Reg = *I;
         if (Seen.insert(Reg))
-          Uses[Reg].SUnits.push_back(&ExitSU);
+          Uses[Reg].push_back(&ExitSU);
       }
   }
 }
@@ -202,10 +216,9 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU,
   unsigned DataLatency = SU->Latency;
 
   for (const unsigned *Alias = TRI->getOverlaps(MO.getReg()); *Alias; ++Alias) {
-    Reg2SUnitsMap::iterator UsesI = Uses.find(*Alias);
-    if (UsesI == Uses.end())
+    if (!Uses.contains(*Alias))
       continue;
-    std::vector<SUnit*> &UseList = UsesI->SUnits;
+    std::vector<SUnit*> &UseList = Uses[*Alias];
     for (unsigned i = 0, e = UseList.size(); i != e; ++i) {
       SUnit *UseSU = UseList[i];
       if (UseSU == SU)
@@ -256,10 +269,9 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
   //       there's no cost for reusing registers.
   SDep::Kind Kind = MO.isUse() ? SDep::Anti : SDep::Output;
   for (const unsigned *Alias = TRI->getOverlaps(MO.getReg()); *Alias; ++Alias) {
-    Reg2SUnitsMap::iterator DefI = Defs.find(*Alias);
-    if (DefI == Defs.end())
+    if (!Defs.contains(*Alias))
       continue;
-    std::vector<SUnit *> &DefList = DefI->SUnits;
+    std::vector<SUnit *> &DefList = Defs[*Alias];
     for (unsigned i = 0, e = DefList.size(); i != e; ++i) {
       SUnit *DefSU = DefList[i];
       if (DefSU == &ExitSU)
@@ -282,14 +294,14 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
     // Either insert a new Reg2SUnits entry with an empty SUnits list, or
     // retrieve the existing SUnits list for this register's uses.
     // Push this SUnit on the use list.
-    Uses[MO.getReg()].SUnits.push_back(SU);
+    Uses[MO.getReg()].push_back(SU);
   }
   else {
     addPhysRegDataDeps(SU, MO);
 
     // Either insert a new Reg2SUnits entry with an empty SUnits list, or
     // retrieve the existing SUnits list for this register's defs.
-    std::vector<SUnit *> &DefList = Defs[MO.getReg()].SUnits;
+    std::vector<SUnit *> &DefList = Defs[MO.getReg()];
 
     // If a def is going to wrap back around to the top of the loop,
     // backschedule it.
@@ -339,9 +351,8 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
     }
 
     // clear this register's use list
-    Reg2SUnitsMap::iterator UsesI = Uses.find(MO.getReg());
-    if (UsesI != Uses.end())
-      UsesI->SUnits.clear();
+    if (Uses.contains(MO.getReg()))
+      Uses[MO.getReg()].clear();
 
     if (!MO.isDead())
       DefList.clear();
@@ -495,8 +506,8 @@ void ScheduleDAGInstrs::BuildSchedGraph(AliasAnalysis *AA) {
 
   assert(Defs.empty() && Uses.empty() &&
          "Only BuildGraph should update Defs/Uses");
-  Defs.setUniverse(TRI->getNumRegs());
-  Uses.setUniverse(TRI->getNumRegs());
+  Defs.setRegLimit(TRI->getNumRegs());
+  Uses.setRegLimit(TRI->getNumRegs());
 
   assert(VRegDefs.empty() && "Only BuildSchedGraph may access VRegDefs");
   // FIXME: Allow SparseSet to reserve space for the creation of virtual

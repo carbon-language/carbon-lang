@@ -118,15 +118,57 @@ namespace llvm {
     /// the def-side latency only.
     bool UnitLatencies;
 
-    /// An individual mapping from physical register number to an SUnit vector.
-    struct Reg2SUnits {
-      unsigned PhysReg;
-      std::vector<SUnit*> SUnits;
+    /// Combine a SparseSet with a 1x1 vector to track physical registers.
+    /// The SparseSet allows iterating over the (few) live registers for quickly
+    /// comparing against a regmask or clearing the set.
+    ///
+    /// Storage for the map is allocated once for the pass. The map can be
+    /// cleared between scheduling regions without freeing unused entries.
+    class Reg2SUnitsMap {
+      SparseSet<unsigned> PhysRegSet;
+      std::vector<std::vector<SUnit*> > SUnits;
+    public:
+      typedef SparseSet<unsigned>::const_iterator const_iterator;
 
-      explicit Reg2SUnits(unsigned reg): PhysReg(reg) {}
+      // Allow iteration over register numbers (keys) in the map. If needed, we
+      // can provide an iterator over SUnits (values) as well.
+      const_iterator reg_begin() const { return PhysRegSet.begin(); }
+      const_iterator reg_end() const { return PhysRegSet.end(); }
 
-      unsigned getSparseSetKey() const { return PhysReg; }
+      /// Initialize the map with the number of registers.
+      /// If the map is already large enough, no allocation occurs.
+      /// For simplicity we expect the map to be empty().
+      void setRegLimit(unsigned Limit);
+
+      /// Returns true if the map is empty.
+      bool empty() const { return PhysRegSet.empty(); }
+
+      /// Clear the map without deallocating storage.
+      void clear();
+
+      bool contains(unsigned Reg) const { return PhysRegSet.count(Reg); }
+
+      /// If this register is mapped, return its existing SUnits vector.
+      /// Otherwise map the register and return an empty SUnits vector.
+      std::vector<SUnit *> &operator[](unsigned Reg) {
+        bool New = PhysRegSet.insert(Reg).second;
+        assert(!New || SUnits[Reg].empty() && "stale SUnits vector");
+        (void)New;
+        return SUnits[Reg];
+      }
+
+      /// Erase an existing element without freeing memory.
+      void erase(unsigned Reg) {
+        PhysRegSet.erase(Reg);
+        SUnits[Reg].clear();
+      }
     };
+    /// Defs, Uses - Remember where defs and uses of each register are as we
+    /// iterate upward through the instructions. This is allocated here instead
+    /// of inside BuildSchedGraph to avoid the need for it to be initialized and
+    /// destructed for each block.
+    Reg2SUnitsMap Defs;
+    Reg2SUnitsMap Uses;
 
     /// An individual mapping from virtual register number to SUnit.
     struct VReg2SUnit {
@@ -139,20 +181,12 @@ namespace llvm {
         return TargetRegisterInfo::virtReg2Index(VirtReg);
       }
     };
-    // Use SparseSet as a SparseMap by relying on the fact that it never
-    // compares ValueT's, only unsigned keys. This allows the set to be cleared
-    // between scheduling regions in constant time.
-    typedef SparseSet<Reg2SUnits> Reg2SUnitsMap;
+    /// Use SparseSet as a SparseMap by relying on the fact that it never
+    /// compares ValueT's, only unsigned keys. This allows the set to be cleared
+    /// between scheduling regions in constant time as long as ValueT does not
+    /// require a destructor.
     typedef SparseSet<VReg2SUnit> VReg2SUnitMap;
-
-    /// Defs, Uses - Remember where defs and uses of each register are as we
-    /// iterate upward through the instructions. This is allocated here instead
-    /// of inside BuildSchedGraph to avoid the need for it to be initialized and
-    /// destructed for each block.
-    Reg2SUnitsMap Defs;
-    Reg2SUnitsMap Uses;
-
-    // Track the last instructon in this region defining each virtual register.
+    /// Track the last instructon in this region defining each virtual register.
     VReg2SUnitMap VRegDefs;
 
     /// PendingLoads - Remember where unknown loads are after the most recent
