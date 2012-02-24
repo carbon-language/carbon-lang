@@ -56,3 +56,51 @@ define <8 x i32> @DAGCombineB(<8 x i32> %v1, <8 x i32> %v2) nounwind readonly {
   %2 = add <8 x i32> %1, %v1
   ret <8 x i32> %2
 }
+
+; CHECK: insert_pd
+define <4 x double> @insert_pd(<4 x double> %a0, <2 x double> %a1) {
+; CHECK: vinsertf128
+%res = call <4 x double> @llvm.x86.avx.vinsertf128.pd.256(<4 x double> %a0, <2 x double> %a1, i8 0)
+ret <4 x double> %res
+}
+
+; CHECK: insert_undef_pd
+define <4 x double> @insert_undef_pd(<4 x double> %a0, <2 x double> %a1) {
+; CHECK: vmovaps	%ymm1, %ymm0
+%res = call <4 x double> @llvm.x86.avx.vinsertf128.pd.256(<4 x double> undef, <2 x double> %a1, i8 0)
+ret <4 x double> %res
+}
+declare <4 x double> @llvm.x86.avx.vinsertf128.pd.256(<4 x double>, <2 x double>, i8) nounwind readnone
+
+
+; CHECK: insert_ps
+define <8 x float> @insert_ps(<8 x float> %a0, <4 x float> %a1) {
+; CHECK: vinsertf128
+%res = call <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float> %a0, <4 x float> %a1, i8 0)
+ret <8 x float> %res
+}
+
+; CHECK: insert_undef_ps
+define <8 x float> @insert_undef_ps(<8 x float> %a0, <4 x float> %a1) {
+; CHECK: vmovaps	%ymm1, %ymm0
+%res = call <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float> undef, <4 x float> %a1, i8 0)
+ret <8 x float> %res
+}
+declare <8 x float> @llvm.x86.avx.vinsertf128.ps.256(<8 x float>, <4 x float>, i8) nounwind readnone
+
+
+; CHECK: insert_si
+define <8 x i32> @insert_si(<8 x i32> %a0, <4 x i32> %a1) {
+; CHECK: vinsertf128
+%res = call <8 x i32> @llvm.x86.avx.vinsertf128.si.256(<8 x i32> %a0, <4 x i32> %a1, i8 0)
+ret <8 x i32> %res
+}
+
+; CHECK: insert_undef_si
+define <8 x i32> @insert_undef_si(<8 x i32> %a0, <4 x i32> %a1) {
+; CHECK: vmovaps	%ymm1, %ymm0
+%res = call <8 x i32> @llvm.x86.avx.vinsertf128.si.256(<8 x i32> undef, <4 x i32> %a1, i8 0)
+ret <8 x i32> %res
+}
+declare <8 x i32> @llvm.x86.avx.vinsertf128.si.256(<8 x i32>, <4 x i32>, i8) nounwind readnone
+

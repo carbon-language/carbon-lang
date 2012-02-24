@@ -6606,15 +6606,6 @@ def VINSERTF128rm : AVXAIi8<0x18, MRMSrcMem, (outs VR256:$dst),
           []>, VEX_4V;
 }
 
-let Predicates = [HasAVX] in {
-def : Pat<(int_x86_avx_vinsertf128_pd_256 VR256:$src1, VR128:$src2, imm:$src3),
-          (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
-def : Pat<(int_x86_avx_vinsertf128_ps_256 VR256:$src1, VR128:$src2, imm:$src3),
-          (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
-def : Pat<(int_x86_avx_vinsertf128_si_256 VR256:$src1, VR128:$src2, imm:$src3),
-          (VINSERTF128rr VR256:$src1, VR128:$src2, imm:$src3)>;
-}
-
 //===----------------------------------------------------------------------===//
 // VEXTRACTF128 - Extract packed floating-point values
 //
