@@ -558,6 +558,11 @@ multiclass T2I_bin_w_irs<bits<4> opcod, string opc,
                      InstrItinClass iii, InstrItinClass iir, InstrItinClass iis,
                          PatFrag opnode, string baseOpc, bit Commutable = 0> :
     T2I_bin_irs<opcod, opc, iii, iir, iis, opnode, baseOpc, Commutable, ".w"> {
+  // Assembler aliases w/ the ".w" suffix.
+  def : t2InstAlias<!strconcat(opc, "${s}${p}.w", " $Rd, $Rn, $imm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "ri")) rGPR:$Rd, rGPR:$Rn,
+                                                    t2_so_imm:$imm, pred:$p,
+                                                    cc_out:$s)>;
   // Assembler aliases w/o the ".w" suffix.
   def : t2InstAlias<!strconcat(opc, "${s}${p}", " $Rd, $Rn, $Rm"),
      (!cast<Instruction>(!strconcat(baseOpc, "rr")) rGPR:$Rd, rGPR:$Rn,
@@ -569,6 +574,10 @@ multiclass T2I_bin_w_irs<bits<4> opcod, string opc,
                                                     cc_out:$s)>;
 
   // and with the optional destination operand, too.
+  def : t2InstAlias<!strconcat(opc, "${s}${p}.ri", " $Rdn, $imm"),
+     (!cast<Instruction>(!strconcat(baseOpc, "ri")) rGPR:$Rdn, rGPR:$Rdn,
+                                                    t2_so_imm:$imm, pred:$p,
+                                                    cc_out:$s)>;
   def : t2InstAlias<!strconcat(opc, "${s}${p}", " $Rdn, $Rm"),
      (!cast<Instruction>(!strconcat(baseOpc, "rr")) rGPR:$Rdn, rGPR:$Rdn,
                                                     rGPR:$Rm, pred:$p,
