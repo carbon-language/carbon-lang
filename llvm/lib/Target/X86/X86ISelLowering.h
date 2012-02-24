@@ -299,6 +299,9 @@ namespace llvm {
       // falls back to heap allocation if not.
       SEG_ALLOCA,
 
+      // WIN_FTOL - Windows's _ftol2 runtime routine to do fptoui.
+      WIN_FTOL,
+
       // Memory barrier
       MEMBARRIER,
       MFENCE,
@@ -609,6 +612,18 @@ namespace llvm {
     bool isScalarFPTypeInSSEReg(EVT VT) const {
       return (VT == MVT::f64 && X86ScalarSSEf64) || // f64 is when SSE2
       (VT == MVT::f32 && X86ScalarSSEf32);   // f32 is when SSE1
+    }
+
+    /// isTargetFTOL - Return true if the target uses the MSVC _ftol2 routine
+    /// for fptoui.
+    bool isTargetFTOL() const {
+      return Subtarget->isTargetWindows() && !Subtarget->is64Bit();
+    }
+
+    /// isIntegerTypeFTOL - Return true if the MSVC _ftol2 routine should be
+    /// used for fptoui to the given type.
+    bool isIntegerTypeFTOL(EVT VT) const {
+      return isTargetFTOL() && VT == MVT::i64;
     }
 
     /// createFastISel - This method returns a target specific FastISel object,

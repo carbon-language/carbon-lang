@@ -187,15 +187,18 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
     setLibcallName(RTLIB::SREM_I64, "_allrem");
     setLibcallName(RTLIB::UREM_I64, "_aullrem");
     setLibcallName(RTLIB::MUL_I64, "_allmul");
-    setLibcallName(RTLIB::FPTOUINT_F64_I64, "_ftol2");
-    setLibcallName(RTLIB::FPTOUINT_F32_I64, "_ftol2");
     setLibcallCallingConv(RTLIB::SDIV_I64, CallingConv::X86_StdCall);
     setLibcallCallingConv(RTLIB::UDIV_I64, CallingConv::X86_StdCall);
     setLibcallCallingConv(RTLIB::SREM_I64, CallingConv::X86_StdCall);
     setLibcallCallingConv(RTLIB::UREM_I64, CallingConv::X86_StdCall);
     setLibcallCallingConv(RTLIB::MUL_I64, CallingConv::X86_StdCall);
-    setLibcallCallingConv(RTLIB::FPTOUINT_F64_I64, CallingConv::C);
-    setLibcallCallingConv(RTLIB::FPTOUINT_F32_I64, CallingConv::C);
+
+    // The _ftol2 runtime function has an unusual calling conv, which
+    // is modeled by a special pseudo-instruction.
+    setLibcallName(RTLIB::FPTOUINT_F64_I64, 0);
+    setLibcallName(RTLIB::FPTOUINT_F32_I64, 0);
+    setLibcallName(RTLIB::FPTOUINT_F64_I32, 0);
+    setLibcallName(RTLIB::FPTOUINT_F32_I32, 0);
   }
 
   if (Subtarget->isTargetDarwin()) {
@@ -313,6 +316,12 @@ X86TargetLowering::X86TargetLowering(X86TargetMachine &TM)
       // With SSE3 we can use fisttpll to convert to a signed i64; without
       // SSE, we're stuck with a fistpll.
       setOperationAction(ISD::FP_TO_UINT   , MVT::i32  , Custom);
+  }
+
+  if (isTargetFTOL()) {
+    // Use the _ftol2 runtime function, which has a pseudo-instruction
+    // to handle its weird calling convention.
+    setOperationAction(ISD::FP_TO_UINT     , MVT::i64  , Custom);
   }
 
   // TODO: when we have SSE, these could be more efficient, by using movd/movq.
@@ -7708,14 +7717,14 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) const {
 
   EVT DstTy = Op.getValueType();
 
-  if (!IsSigned) {
+  if (!IsSigned && !isIntegerTypeFTOL(DstTy)) {
     assert(DstTy == MVT::i32 && "Unexpected FP_TO_UINT");
     DstTy = MVT::i64;
   }
 
   assert(DstTy.getSimpleVT() <= MVT::i64 &&
          DstTy.getSimpleVT() >= MVT::i16 &&
-         "Unknown FP_TO_SINT to lower!");
+         "Unknown FP_TO_INT to lower!");
 
   // These are really Legal.
   if (DstTy == MVT::i32 &&
@@ -7726,26 +7735,29 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) const {
       isScalarFPTypeInSSEReg(Op.getOperand(0).getValueType()))
     return std::make_pair(SDValue(), SDValue());
 
-  // We lower FP->sint64 into FISTP64, followed by a load, all to a temporary
-  // stack slot.
+  // We lower FP->int64 either into FISTP64 followed by a load from a temporary
+  // stack slot, or into the FTOL runtime function.
   MachineFunction &MF = DAG.getMachineFunction();
   unsigned MemSize = DstTy.getSizeInBits()/8;
   int SSFI = MF.getFrameInfo()->CreateStackObject(MemSize, MemSize, false);
   SDValue StackSlot = DAG.getFrameIndex(SSFI, getPointerTy());
 
-
-
   unsigned Opc;
-  switch (DstTy.getSimpleVT().SimpleTy) {
-  default: llvm_unreachable("Invalid FP_TO_SINT to lower!");
-  case MVT::i16: Opc = X86ISD::FP_TO_INT16_IN_MEM; break;
-  case MVT::i32: Opc = X86ISD::FP_TO_INT32_IN_MEM; break;
-  case MVT::i64: Opc = X86ISD::FP_TO_INT64_IN_MEM; break;
-  }
+  if (!IsSigned && isIntegerTypeFTOL(DstTy))
+    Opc = X86ISD::WIN_FTOL;
+  else
+    switch (DstTy.getSimpleVT().SimpleTy) {
+    default: llvm_unreachable("Invalid FP_TO_SINT to lower!");
+    case MVT::i16: Opc = X86ISD::FP_TO_INT16_IN_MEM; break;
+    case MVT::i32: Opc = X86ISD::FP_TO_INT32_IN_MEM; break;
+    case MVT::i64: Opc = X86ISD::FP_TO_INT64_IN_MEM; break;
+    }
 
   SDValue Chain = DAG.getEntryNode();
   SDValue Value = Op.getOperand(0);
   EVT TheVT = Op.getOperand(0).getValueType();
+  // FIXME This causes a redundant load/store if the SSE-class value is already
+  // in memory, such as if it is on the callstack.
   if (isScalarFPTypeInSSEReg(TheVT)) {
     assert(DstTy == MVT::i64 && "Invalid FP_TO_SINT to lower!");
     Chain = DAG.getStore(Chain, DL, Value, StackSlot,
@@ -7770,12 +7782,23 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) const {
     MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(SSFI),
                             MachineMemOperand::MOStore, MemSize, MemSize);
 
-  // Build the FP_TO_INT*_IN_MEM
-  SDValue Ops[] = { Chain, Value, StackSlot };
-  SDValue FIST = DAG.getMemIntrinsicNode(Opc, DL, DAG.getVTList(MVT::Other),
-                                         Ops, 3, DstTy, MMO);
-
-  return std::make_pair(FIST, StackSlot);
+  if (Opc != X86ISD::WIN_FTOL) {
+    // Build the FP_TO_INT*_IN_MEM
+    SDValue Ops[] = { Chain, Value, StackSlot };
+    SDValue FIST = DAG.getMemIntrinsicNode(Opc, DL, DAG.getVTList(MVT::Other),
+                                           Ops, 3, DstTy, MMO);
+    return std::make_pair(FIST, StackSlot);
+  } else {
+    SDValue ftol = DAG.getNode(X86ISD::WIN_FTOL, DL,
+      DAG.getVTList(MVT::Other, MVT::Glue),
+      Chain, Value);
+    SDValue eax = DAG.getCopyFromReg(ftol, DL, X86::EAX,
+      MVT::i32, ftol.getValue(1));
+    SDValue edx = DAG.getCopyFromReg(eax.getValue(1), DL, X86::EDX,
+      MVT::i32, eax.getValue(2));
+    SDValue pair = DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, eax, edx);
+    return std::make_pair(pair, SDValue());
+  }
 }
 
 SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op,
@@ -7788,10 +7811,14 @@ SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op,
   // If FP_TO_INTHelper failed, the node is actually supposed to be Legal.
   if (FIST.getNode() == 0) return Op;
 
-  // Load the result.
-  return DAG.getLoad(Op.getValueType(), Op.getDebugLoc(),
-                     FIST, StackSlot, MachinePointerInfo(),
-                     false, false, false, 0);
+  if (StackSlot.getNode())
+    // Load the result.
+    return DAG.getLoad(Op.getValueType(), Op.getDebugLoc(),
+                       FIST, StackSlot, MachinePointerInfo(),
+                       false, false, false, 0);
+  else
+    // The node is the result.
+    return FIST;
 }
 
 SDValue X86TargetLowering::LowerFP_TO_UINT(SDValue Op,
@@ -10837,16 +10864,25 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
   case ISD::SUBE:
     // We don't want to expand or promote these.
     return;
-  case ISD::FP_TO_SINT: {
+  case ISD::FP_TO_SINT:
+  case ISD::FP_TO_UINT: {
+    bool IsSigned = N->getOpcode() == ISD::FP_TO_SINT;
+
+    if (!IsSigned && !isIntegerTypeFTOL(SDValue(N, 0).getValueType()))
+      return;
+
     std::pair<SDValue,SDValue> Vals =
-        FP_TO_INTHelper(SDValue(N, 0), DAG, true);
+        FP_TO_INTHelper(SDValue(N, 0), DAG, IsSigned);
     SDValue FIST = Vals.first, StackSlot = Vals.second;
     if (FIST.getNode() != 0) {
       EVT VT = N->getValueType(0);
       // Return a load from the stack slot.
-      Results.push_back(DAG.getLoad(VT, dl, FIST, StackSlot,
-                                    MachinePointerInfo(), 
-                                    false, false, false, 0));
+      if (StackSlot.getNode() != 0)
+        Results.push_back(DAG.getLoad(VT, dl, FIST, StackSlot,
+                                      MachinePointerInfo(),
+                                      false, false, false, 0));
+      else
+        Results.push_back(FIST);
     }
     return;
   }
@@ -11060,6 +11096,7 @@ const char *X86TargetLowering::getTargetNodeName(unsigned Opcode) const {
   case X86ISD::WIN_ALLOCA:         return "X86ISD::WIN_ALLOCA";
   case X86ISD::MEMBARRIER:         return "X86ISD::MEMBARRIER";
   case X86ISD::SEG_ALLOCA:         return "X86ISD::SEG_ALLOCA";
+  case X86ISD::WIN_FTOL:           return "X86ISD::WIN_FTOL";
   }
 }
 

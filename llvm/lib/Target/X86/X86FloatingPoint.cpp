@@ -1644,6 +1644,32 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
     return;
   }
 
+  case X86::WIN_FTOL_32:
+  case X86::WIN_FTOL_64: {
+    MachineBasicBlock::iterator InsertPt = MI;
+
+    // Push the operand into ST0.
+    MachineOperand &Op = MI->getOperand(0);
+    assert(Op.isUse() && Op.isReg() &&
+      Op.getReg() >= X86::FP0 && Op.getReg() <= X86::FP6);
+    unsigned FPReg = getFPReg(Op);
+    if (Op.isKill())
+      moveToTop(FPReg, I);
+    else
+      duplicateToTop(FPReg, FPReg, I);
+
+    // Emit the call. This will pop the operand.
+    BuildMI(*MBB, I, MI->getDebugLoc(), TII->get(X86::CALLpcrel32))
+      .addExternalSymbol("_ftol2")
+      .addReg(X86::ST0, RegState::ImplicitKill)
+      .addReg(X86::EAX, RegState::Define | RegState::Implicit)
+      .addReg(X86::EDX, RegState::Define | RegState::Implicit)
+      .addReg(X86::EFLAGS, RegState::Define | RegState::Implicit);
+    --StackTop;
+
+    break;
+  }
+
   case X86::RET:
   case X86::RETI:
     // If RET has an FP register use operand, pass the first one in ST(0) and
