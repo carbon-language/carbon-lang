@@ -27,6 +27,7 @@ DIRS +=	ObjectContainer/Universal-Mach-O ObjectFile/Mach-O
 DIRS += SymbolVendor/MacOSX
 DIRS += OperatingSystem/Darwin-Kernel
 #DIRS += Process/MacOSX-User
+DIRS += Process/mach-core
 endif
 
 ifeq ($(HOST_OS),Linux)

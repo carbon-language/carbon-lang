@@ -77,7 +77,8 @@ ifeq ($(HOST_OS),Darwin)
               lldbPluginOperatingSystemDarwinKernel.a \
               lldbPluginSymbolVendorMacOSX.a \
               lldbPluginPlatformMacOSX.a \
-              lldbPluginProcessDarwin.a
+              lldbPluginProcessDarwin.a \
+              lldbPluginProcessMachCore.a
 endif
 
 ifeq ($(HOST_OS),Linux)
