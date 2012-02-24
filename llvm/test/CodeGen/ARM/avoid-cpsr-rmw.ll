@@ -6,9 +6,9 @@
 define i32 @t1(i32 %a, i32 %b, i32 %c, i32 %d) nounwind readnone {
  entry:
 ; CHECK: t1:
-; CHECK: muls [[REG:(r[0-9]+)]], r2, r3
-; CHECK-NEXT: mul  [[REG2:(r[0-9]+)]], r0, r1
-; CHECK-NEXT: muls r0, [[REG2]], [[REG]]
+; CHECK: muls [[REG:(r[0-9]+)]], r3, r2
+; CHECK-NEXT: mul  [[REG2:(r[0-9]+)]], r1, r0
+; CHECK-NEXT: muls r0, [[REG]], [[REG2]]
   %0 = mul nsw i32 %a, %b
   %1 = mul nsw i32 %c, %d
   %2 = mul nsw i32 %0, %1
