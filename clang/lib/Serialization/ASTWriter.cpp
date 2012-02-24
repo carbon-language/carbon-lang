@@ -3860,7 +3860,8 @@ void ASTWriter::associateDeclWithFile(const Decl *D, DeclID ID) {
   // We only keep track of the file-level declarations of each file.
   if (!D->getLexicalDeclContext()->isFileContext())
     return;
-  // FIXME: We should never have ParmVarDecls with TU as context.
+  // FIXME: ParmVarDecls that are part of a function type of a parameter of
+  // a function/objc method, should not have TU as lexical context.
   if (isa<ParmVarDecl>(D))
     return;
 
