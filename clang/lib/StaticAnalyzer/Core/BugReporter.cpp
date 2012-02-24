@@ -136,11 +136,14 @@ class PathDiagnosticBuilder : public BugReporterContext {
   OwningPtr<ParentMap> PM;
   NodeMapClosure NMC;
 public:
+  const LocationContext *LC;
+  
   PathDiagnosticBuilder(GRBugReporter &br,
                         BugReport *r, NodeBackMap *Backmap,
                         PathDiagnosticConsumer *pdc)
     : BugReporterContext(br),
-      R(r), PDC(pdc), NMC(Backmap) {}
+      R(r), PDC(pdc), NMC(Backmap), LC(r->getErrorNode()->getLocationContext())
+  {}
 
   PathDiagnosticLocation ExecutionContinues(const ExplodedNode *N);
 
@@ -150,12 +153,8 @@ public:
   BugReport *getBugReport() { return R; }
 
   Decl const &getCodeDecl() { return R->getErrorNode()->getCodeDecl(); }
-
-  const LocationContext* getLocationContext() {
-    return R->getErrorNode()->getLocationContext();
-  }
-
-  ParentMap& getParentMap() { return R->getErrorNode()->getParentMap(); }
+  
+  ParentMap& getParentMap() { return LC->getParentMap(); }
 
   const Stmt *getParent(const Stmt *S) {
     return getParentMap().getParent(S);
@@ -178,7 +177,7 @@ public:
 PathDiagnosticLocation
 PathDiagnosticBuilder::ExecutionContinues(const ExplodedNode *N) {
   if (const Stmt *S = GetNextStmt(N))
-    return PathDiagnosticLocation(S, getSourceManager(), getLocationContext());
+    return PathDiagnosticLocation(S, getSourceManager(), LC);
 
   return PathDiagnosticLocation::createDeclEnd(N->getLocationContext(),
                                                getSourceManager());
@@ -239,7 +238,6 @@ PathDiagnosticBuilder::getEnclosingStmtLocation(const Stmt *S) {
   assert(S && "Null Stmt *passed to getEnclosingStmtLocation");
   ParentMap &P = getParentMap();
   SourceManager &SMgr = getSourceManager();
-  const LocationContext *LC = getLocationContext();
 
   while (IsNested(S, P)) {
     const Stmt *Parent = P.getParentIgnoreParens(S);
@@ -521,11 +519,12 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                                           const ExplodedNode *N) {
 
   SourceManager& SMgr = PDB.getSourceManager();
-  const LocationContext *LC = PDB.getLocationContext();
+  const LocationContext *LC = PDB.LC;
   const ExplodedNode *NextNode = N->pred_empty()
                                         ? NULL : *(N->pred_begin());
   while (NextNode) {
     N = NextNode;
+    PDB.LC = N->getLocationContext();
     NextNode = GetPredecessorNode(N);
 
     ProgramPoint P = N->getLocation();
@@ -910,7 +909,7 @@ class EdgeBuilder {
       }
 
       if (S != Original)
-        L = PathDiagnosticLocation(S, L.getManager(), PDB.getLocationContext());
+        L = PathDiagnosticLocation(S, L.getManager(), PDB.LC);
     }
 
     if (firstCharOnly)
@@ -947,7 +946,7 @@ public:
     // Finally, add an initial edge from the start location of the first
     // statement (if it doesn't already exist).
     PathDiagnosticLocation L = PathDiagnosticLocation::createDeclBegin(
-                                                       PDB.getLocationContext(),
+                                                       PDB.LC,
                                                        PDB.getSourceManager());
     if (L.isValid())
       rawAddEdge(L);
@@ -1130,7 +1129,7 @@ void EdgeBuilder::addContext(const Stmt *S) {
   if (!S)
     return;
 
-  PathDiagnosticLocation L(S, PDB.getSourceManager(), PDB.getLocationContext());
+  PathDiagnosticLocation L(S, PDB.getSourceManager(), PDB.LC);
 
   while (!CLocs.empty()) {
     const PathDiagnosticLocation &TopContextLoc = CLocs.back();
@@ -1178,15 +1177,13 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         PD.pushActivePath(&C->path);
         break;
       }
-      
-      // Was the predecessor in a different stack frame?
-      if (NextNode &&
-          !isa<CallExit>(NextNode->getLocation()) &&
-          NextNode->getLocationContext()->getCurrentStackFrame() !=
-          N->getLocationContext()->getCurrentStackFrame()) {
-        EB.flushLocations();
-      }
-      
+
+      // Note that is important that we update the LocationContext
+      // after looking at CallExits.  CallExit basically adds an
+      // edge in the *caller*, so we don't want to update the LocationContext
+      // too soon.
+      PDB.LC = N->getLocationContext();
+
       // Pop the call hierarchy if we are done walking the contents
       // of a function call.
       if (const CallEnter *CE = dyn_cast<CallEnter>(&P)) {
@@ -1204,6 +1201,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         if (!C)
           C = PathDiagnosticCallPiece::construct(PD.getActivePath());
         C->setCallee(*CE, SM);
+        EB.flushLocations();
         EB.addContext(CE->getCallExpr());
         break;
       }
@@ -1215,7 +1213,7 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
 
         // Are we jumping to the head of a loop?  Add a special diagnostic.
         if (const Stmt *Loop = BE->getDst()->getLoopTarget()) {
-          PathDiagnosticLocation L(Loop, SM, PDB.getLocationContext());
+          PathDiagnosticLocation L(Loop, SM, PDB.LC);
           const CompoundStmt *CS = NULL;
 
           if (!Term) {
