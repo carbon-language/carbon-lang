@@ -18,8 +18,6 @@ void test_is_trivially_copy_constructible()
 {
     static_assert( std::is_trivially_copy_constructible<T>::value, "");
     static_assert( std::is_trivially_copy_constructible<const T>::value, "");
-    static_assert( std::is_trivially_copy_constructible<volatile T>::value, "");
-    static_assert( std::is_trivially_copy_constructible<const volatile T>::value, "");
 }
 
 template <class T>
@@ -27,8 +25,6 @@ void test_has_not_trivial_copy_constructor()
 {
     static_assert(!std::is_trivially_copy_constructible<T>::value, "");
     static_assert(!std::is_trivially_copy_constructible<const T>::value, "");
-    static_assert(!std::is_trivially_copy_constructible<volatile T>::value, "");
-    static_assert(!std::is_trivially_copy_constructible<const volatile T>::value, "");
 }
 
 class Empty

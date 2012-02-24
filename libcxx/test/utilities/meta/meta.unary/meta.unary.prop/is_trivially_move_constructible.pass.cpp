@@ -17,18 +17,12 @@ template <class T>
 void test_is_trivially_move_constructible()
 {
     static_assert( std::is_trivially_move_constructible<T>::value, "");
-    static_assert( std::is_trivially_move_constructible<const T>::value, "");
-    static_assert( std::is_trivially_move_constructible<volatile T>::value, "");
-    static_assert( std::is_trivially_move_constructible<const volatile T>::value, "");
 }
 
 template <class T>
 void test_has_not_trivial_move_constructor()
 {
     static_assert(!std::is_trivially_move_constructible<T>::value, "");
-    static_assert(!std::is_trivially_move_constructible<const T>::value, "");
-    static_assert(!std::is_trivially_move_constructible<volatile T>::value, "");
-    static_assert(!std::is_trivially_move_constructible<const volatile T>::value, "");
 }
 
 class Empty
@@ -59,6 +53,20 @@ struct A
     A(const A&);
 };
 
+#if __has_feature(cxx_defaulted_functions)
+
+struct MoveOnly1
+{
+    MoveOnly1(MoveOnly1&&);
+};
+
+struct MoveOnly2
+{
+    MoveOnly2(MoveOnly2&&) = default;
+};
+
+#endif
+
 int main()
 {
     test_has_not_trivial_move_constructor<void>();
@@ -66,7 +74,6 @@ int main()
     test_has_not_trivial_move_constructor<Abstract>();
     test_has_not_trivial_move_constructor<NotEmpty>();
 
-    test_is_trivially_move_constructible<int&>();
     test_is_trivially_move_constructible<Union>();
     test_is_trivially_move_constructible<Empty>();
     test_is_trivially_move_constructible<int>();
@@ -74,4 +81,9 @@ int main()
     test_is_trivially_move_constructible<int*>();
     test_is_trivially_move_constructible<const int*>();
     test_is_trivially_move_constructible<bit_zero>();
+
+#if __has_feature(cxx_defaulted_functions)
+    static_assert(!std::is_trivially_move_constructible<MoveOnly1>::value, "");
+    static_assert( std::is_trivially_move_constructible<MoveOnly2>::value, "");
+#endif
 }
