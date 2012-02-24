@@ -463,3 +463,13 @@ define i1 @alloca_compare(i64 %idx) {
   ; CHECK: alloca_compare
   ; CHECK: ret i1 false
 }
+
+; PR12075
+define i1 @infinite_gep() {
+  ret i1 1
+
+unreachableblock:
+  %X = getelementptr i32 *%X, i32 1
+  %Y = icmp eq i32* %X, null
+  ret i1 %Y
+}

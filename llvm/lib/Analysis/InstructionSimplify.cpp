@@ -1522,12 +1522,26 @@ static Value *ExtractEquivalentCondition(Value *V, CmpInst::Predicate Pred,
 
 /// stripPointerAdjustments - This is like Value::stripPointerCasts, but also
 /// removes inbounds gep operations, regardless of their indices.
-static Value *stripPointerAdjustments(Value *V) {
-  if (GEPOperator *GEP = dyn_cast<GEPOperator>(V))
-    if (GEP->isInBounds())
-      return stripPointerAdjustments(GEP->getOperand(0)->stripPointerCasts());
-  return V;
+static Value *stripPointerAdjustmentsImpl(Value *V,
+                                    SmallPtrSet<GEPOperator*, 8> &VisitedGEPs) {
+  GEPOperator *GEP = dyn_cast<GEPOperator>(V);
+  if (GEP == 0 || !GEP->isInBounds())
+    return V;
+
+  // If we've already seen this GEP, we will end up infinitely looping.  This
+  // can happen in unreachable code.
+  if (!VisitedGEPs.insert(GEP))
+    return V;
+  
+  return stripPointerAdjustmentsImpl(GEP->getOperand(0)->stripPointerCasts(),
+                                     VisitedGEPs);
 }
+
+static Value *stripPointerAdjustments(Value *V) {
+  SmallPtrSet<GEPOperator*, 8> VisitedGEPs;
+  return stripPointerAdjustmentsImpl(V, VisitedGEPs);
+}
+
 
 /// SimplifyICmpInst - Given operands for an ICmpInst, see if we can
 /// fold the result.  If not, this returns null.
