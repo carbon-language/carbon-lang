@@ -227,6 +227,24 @@ protected:
     unsigned InitializesStdInitializerList : 1;
   };
 
+  class TypeTraitExprBitfields {
+    friend class TypeTraitExpr;
+    friend class ASTStmtReader;
+    friend class ASTStmtWriter;
+    
+    unsigned : NumExprBits;
+    
+    /// \brief The kind of type trait, which is a value of a TypeTrait enumerator.
+    unsigned Kind : 8;
+    
+    /// \brief If this expression is not value-dependent, this indicates whether
+    /// the trait evaluated true or false.
+    unsigned Value : 1;
+
+    /// \brief The number of arguments to this type trait.
+    unsigned NumArgs : 32 - 8 - 1 - NumExprBits;
+  };
+  
   union {
     // FIXME: this is wasteful on 64-bit platforms.
     void *Aligner;
@@ -241,9 +259,11 @@ protected:
     PseudoObjectExprBitfields PseudoObjectExprBits;
     ObjCIndirectCopyRestoreExprBitfields ObjCIndirectCopyRestoreExprBits;
     InitListExprBitfields InitListExprBits;
+    TypeTraitExprBitfields TypeTraitExprBits;
   };
 
   friend class ASTStmtReader;
+  friend class ASTStmtWriter;
 
 public:
   // Only allow allocation of Stmts using the allocator in ASTContext

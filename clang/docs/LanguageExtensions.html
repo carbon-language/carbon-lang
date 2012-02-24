@@ -889,6 +889,8 @@ struct is_convertible_to {
   <li><code>__is_literal(type)</code>: Determines whether the given type is a literal type</li>
   <li><code>__is_final</code>: Determines whether the given type is declared with a <code>final</code> class-virt-specifier.</li>
   <li><code>__underlying_type(type)</code>: Retrieves the underlying type for a given <code>enum</code> type. This trait is required to implement the C++11 standard library.</li>
+  <li><code>__is_trivially_assignable(totype, fromtype)</code>: Determines whether a value of type <tt>totype</tt> can be assigned to from a value of type <tt>fromtype</tt> such that no non-trivial functions are called as part of that assignment. This trait is required to implement the C++11 standard library.</li>
+  <li><code>__is_trivially_constructible(type, argtypes...)</code>: Determines whether a value of type <tt>type</tt> can be direct-initialized with arguments of types <tt>argtypes...</tt> such that no non-trivial functions are called as part of that initialization. This trait is required to implement the C++11 standard library.</li>
 </ul>
 
 <!-- ======================================================================= -->

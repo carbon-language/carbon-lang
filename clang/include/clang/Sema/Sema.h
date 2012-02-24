@@ -3317,6 +3317,14 @@ public:
                                   TypeSourceInfo *RhsT,
                                   SourceLocation RParen);
 
+  /// \brief Parsed one of the type trait support pseudo-functions.
+  ExprResult ActOnTypeTrait(TypeTrait Kind, SourceLocation KWLoc,
+                            ArrayRef<ParsedType> Args,
+                            SourceLocation RParenLoc);
+  ExprResult BuildTypeTrait(TypeTrait Kind, SourceLocation KWLoc,
+                            ArrayRef<TypeSourceInfo *> Args,
+                            SourceLocation RParenLoc);
+  
   /// ActOnArrayTypeTrait - Parsed one of the bianry type trait support
   /// pseudo-functions.
   ExprResult ActOnArrayTypeTrait(ArrayTypeTrait ATT,

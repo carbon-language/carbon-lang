@@ -84,6 +84,12 @@ namespace clang {
     UETT_AlignOf,
     UETT_VecStep
   };
+  
+  /// \brief Names for type traits that operate specifically on types.
+  enum TypeTrait {
+    TT_IsTriviallyConstructible
+  };
+  
 }
 
 #endif

@@ -2022,6 +2022,17 @@ public:
     return getSema().BuildBinaryTypeTrait(Trait, StartLoc, LhsT, RhsT, RParenLoc);
   }
 
+  /// \brief Build a new type trait expression.
+  ///
+  /// By default, performs semantic analysis to build the new expression.
+  /// Subclasses may override this routine to provide different behavior.
+  ExprResult RebuildTypeTrait(TypeTrait Trait,
+                              SourceLocation StartLoc,
+                              ArrayRef<TypeSourceInfo *> Args,
+                              SourceLocation RParenLoc) {
+    return getSema().BuildTypeTrait(Trait, StartLoc, Args, RParenLoc);
+  }
+  
   /// \brief Build a new array type trait expression.
   ///
   /// By default, performs semantic analysis to build the new expression.
@@ -7432,6 +7443,128 @@ TreeTransform<Derived>::TransformBinaryTypeTraitExpr(BinaryTypeTraitExpr *E) {
                                             E->getLocStart(),
                                             LhsT, RhsT,
                                             E->getLocEnd());
+}
+
+template<typename Derived>
+ExprResult
+TreeTransform<Derived>::TransformTypeTraitExpr(TypeTraitExpr *E) {
+  bool ArgChanged = false;
+  llvm::SmallVector<TypeSourceInfo *, 4> Args;
+  for (unsigned I = 0, N = E->getNumArgs(); I != N; ++I) {
+    TypeSourceInfo *From = E->getArg(I);
+    TypeLoc FromTL = From->getTypeLoc();
+    if (!isa<PackExpansionTypeLoc>(FromTL)) {
+      TypeLocBuilder TLB;
+      TLB.reserve(FromTL.getFullDataSize());
+      QualType To = getDerived().TransformType(TLB, FromTL);
+      if (To.isNull())
+        return ExprError();
+      
+      if (To == From->getType())
+        Args.push_back(From);
+      else {
+        Args.push_back(TLB.getTypeSourceInfo(SemaRef.Context, To));
+        ArgChanged = true;
+      }
+      continue;
+    }
+    
+    ArgChanged = true;
+    
+    // We have a pack expansion. Instantiate it.
+    PackExpansionTypeLoc ExpansionTL = cast<PackExpansionTypeLoc>(FromTL);      
+    TypeLoc PatternTL = ExpansionTL.getPatternLoc();
+    SmallVector<UnexpandedParameterPack, 2> Unexpanded;
+    SemaRef.collectUnexpandedParameterPacks(PatternTL, Unexpanded);
+    
+    // Determine whether the set of unexpanded parameter packs can and should
+    // be expanded.
+    bool Expand = true;
+    bool RetainExpansion = false;
+    llvm::Optional<unsigned> OrigNumExpansions
+      = ExpansionTL.getTypePtr()->getNumExpansions();
+    llvm::Optional<unsigned> NumExpansions = OrigNumExpansions;
+    if (getDerived().TryExpandParameterPacks(ExpansionTL.getEllipsisLoc(),
+                                             PatternTL.getSourceRange(),
+                                             Unexpanded,
+                                             Expand, RetainExpansion,
+                                             NumExpansions))
+      return ExprError();
+    
+    if (!Expand) {
+      // The transform has determined that we should perform a simple
+      // transformation on the pack expansion, producing another pack 
+      // expansion.
+      Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(getSema(), -1);
+      
+      TypeLocBuilder TLB;
+      TLB.reserve(From->getTypeLoc().getFullDataSize());
+
+      QualType To = getDerived().TransformType(TLB, PatternTL);
+      if (To.isNull())
+        return ExprError();
+
+      To = getDerived().RebuildPackExpansionType(To, 
+                                                 PatternTL.getSourceRange(),
+                                                 ExpansionTL.getEllipsisLoc(),
+                                                 NumExpansions);
+      if (To.isNull())
+        return ExprError();
+      
+      PackExpansionTypeLoc ToExpansionTL
+        = TLB.push<PackExpansionTypeLoc>(To);
+      ToExpansionTL.setEllipsisLoc(ExpansionTL.getEllipsisLoc());
+      Args.push_back(TLB.getTypeSourceInfo(SemaRef.Context, To));
+      continue;
+    }
+
+    // Expand the pack expansion by substituting for each argument in the
+    // pack(s).
+    for (unsigned I = 0; I != *NumExpansions; ++I) {
+      Sema::ArgumentPackSubstitutionIndexRAII SubstIndex(SemaRef, I);
+      TypeLocBuilder TLB;
+      TLB.reserve(PatternTL.getFullDataSize());
+      QualType To = getDerived().TransformType(TLB, PatternTL);
+      if (To.isNull())
+        return ExprError();
+
+      Args.push_back(TLB.getTypeSourceInfo(SemaRef.Context, To));
+    }
+    
+    if (!RetainExpansion)
+      continue;
+    
+    // If we're supposed to retain a pack expansion, do so by temporarily
+    // forgetting the partially-substituted parameter pack.
+    ForgetPartiallySubstitutedPackRAII Forget(getDerived());
+
+    TypeLocBuilder TLB;
+    TLB.reserve(From->getTypeLoc().getFullDataSize());
+    
+    QualType To = getDerived().TransformType(TLB, PatternTL);
+    if (To.isNull())
+      return ExprError();
+    
+    To = getDerived().RebuildPackExpansionType(To, 
+                                               PatternTL.getSourceRange(),
+                                               ExpansionTL.getEllipsisLoc(),
+                                               NumExpansions);
+    if (To.isNull())
+      return ExprError();
+    
+    PackExpansionTypeLoc ToExpansionTL
+      = TLB.push<PackExpansionTypeLoc>(To);
+    ToExpansionTL.setEllipsisLoc(ExpansionTL.getEllipsisLoc());
+    Args.push_back(TLB.getTypeSourceInfo(SemaRef.Context, To));
+  }
+  
+  if (!getDerived().AlwaysRebuild() && !ArgChanged)
+    return SemaRef.Owned(E);
+
+  return getDerived().RebuildTypeTrait(E->getTrait(),
+                                       E->getLocStart(),
+                                       Args,
+                                       E->getLocEnd());
 }
 
 template<typename Derived>

@@ -2458,6 +2458,14 @@ static BinaryTypeTrait BinaryTypeTraitFromTokKind(tok::TokenKind kind) {
   }
 }
 
+static TypeTrait TypeTraitFromTokKind(tok::TokenKind kind) {
+  switch (kind) {
+  default: llvm_unreachable("Not a known type trait");
+  case tok::kw___is_trivially_constructible: 
+    return TT_IsTriviallyConstructible;
+  }
+}
+
 static ArrayTypeTrait ArrayTypeTraitFromTokKind(tok::TokenKind kind) {
   switch(kind) {
   default: llvm_unreachable("Not a known binary type trait");
@@ -2538,6 +2546,58 @@ ExprResult Parser::ParseBinaryTypeTrait() {
 
   return Actions.ActOnBinaryTypeTrait(BTT, Loc, LhsTy.get(), RhsTy.get(),
                                       T.getCloseLocation());
+}
+
+/// \brief Parse the built-in type-trait pseudo-functions that allow 
+/// implementation of the TR1/C++11 type traits templates.
+///
+///       primary-expression:
+///          type-trait '(' type-id-seq ')'
+///
+///       type-id-seq:
+///          type-id ...[opt] type-id-seq[opt]
+///
+ExprResult Parser::ParseTypeTrait() {
+  TypeTrait Kind = TypeTraitFromTokKind(Tok.getKind());
+  SourceLocation Loc = ConsumeToken();
+  
+  BalancedDelimiterTracker Parens(*this, tok::l_paren);
+  if (Parens.expectAndConsume(diag::err_expected_lparen))
+    return ExprError();
+
+  llvm::SmallVector<ParsedType, 2> Args;
+  do {
+    // Parse the next type.
+    TypeResult Ty = ParseTypeName();
+    if (Ty.isInvalid()) {
+      Parens.skipToEnd();
+      return ExprError();
+    }
+
+    // Parse the ellipsis, if present.
+    if (Tok.is(tok::ellipsis)) {
+      Ty = Actions.ActOnPackExpansion(Ty.get(), ConsumeToken());
+      if (Ty.isInvalid()) {
+        Parens.skipToEnd();
+        return ExprError();
+      }
+    }
+    
+    // Add this type to the list of arguments.
+    Args.push_back(Ty.get());
+    
+    if (Tok.is(tok::comma)) {
+      ConsumeToken();
+      continue;
+    }
+    
+    break;
+  } while (true);
+  
+  if (Parens.consumeClose())
+    return ExprError();
+  
+  return Actions.ActOnTypeTrait(Kind, Loc, Args, Parens.getCloseLocation());
 }
 
 /// ParseArrayTypeTrait - Parse the built-in array type-trait

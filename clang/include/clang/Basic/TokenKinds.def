@@ -365,6 +365,7 @@ KEYWORD(__is_trivial                , KEYCXX)
 KEYWORD(__is_union                  , KEYCXX)
 
 // Clang-only C++ Type Traits
+KEYWORD(__is_trivially_constructible, KEYCXX)
 KEYWORD(__is_trivially_copyable     , KEYCXX)
 KEYWORD(__is_trivially_assignable   , KEYCXX)
 KEYWORD(__underlying_type           , KEYCXX)

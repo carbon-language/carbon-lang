@@ -47,6 +47,10 @@ struct TrivialMoveButNotCopy {
   TrivialMoveButNotCopy &operator=(TrivialMoveButNotCopy&&) = default;
   TrivialMoveButNotCopy &operator=(const TrivialMoveButNotCopy&);
 };
+struct NonTrivialDefault {
+  NonTrivialDefault();
+};
+
 struct HasDest { ~HasDest(); };
 class  HasPriv { int priv; };
 class  HasProt { protected: int prot; };
@@ -102,6 +106,10 @@ class AllPrivate {
   AllPrivate(const AllPrivate&) throw();
   AllPrivate &operator=(const AllPrivate &) throw();
   ~AllPrivate() throw();
+};
+
+struct ThreeArgCtor {
+  ThreeArgCtor(int*, char*, int);
 };
 
 void is_pod()
@@ -1602,7 +1610,7 @@ void is_trivial()
   { int arr[F(__is_trivial(cvoid))]; }
 }
 
-void is_trivially_copyable()
+void trivial_checks()
 {
   { int arr[T(__is_trivially_copyable(int))]; }
   { int arr[T(__is_trivially_copyable(Enum))]; }
@@ -1646,6 +1654,25 @@ void is_trivially_copyable()
   { int arr[F(__is_trivially_copyable(void))]; }
   { int arr[F(__is_trivially_copyable(cvoid))]; }
 
+  { int arr[T((__is_trivially_constructible(int)))]; }
+  { int arr[T((__is_trivially_constructible(int, int)))]; }
+  { int arr[T((__is_trivially_constructible(int, float)))]; }
+  { int arr[T((__is_trivially_constructible(int, int&)))]; }
+  { int arr[T((__is_trivially_constructible(int, const int&)))]; }
+  { int arr[T((__is_trivially_constructible(int, int)))]; }
+  { int arr[T((__is_trivially_constructible(HasCopyAssign, HasCopyAssign)))]; }
+  { int arr[T((__is_trivially_constructible(HasCopyAssign, const HasCopyAssign&)))]; }
+  { int arr[T((__is_trivially_constructible(HasCopyAssign, HasCopyAssign&&)))]; }
+  { int arr[T((__is_trivially_constructible(HasCopyAssign)))]; }
+  { int arr[T((__is_trivially_constructible(NonTrivialDefault,
+                                            const NonTrivialDefault&)))]; }
+  { int arr[T((__is_trivially_constructible(NonTrivialDefault,
+                                            NonTrivialDefault&&)))]; }
+
+  { int arr[F((__is_trivially_constructible(int, int*)))]; }
+  { int arr[F((__is_trivially_constructible(NonTrivialDefault)))]; }
+  { int arr[F((__is_trivially_constructible(ThreeArgCtor, int*, char*, int&)))]; }
+
   { int arr[T((__is_trivially_assignable(int&, int)))]; }
   { int arr[T((__is_trivially_assignable(int&, int&)))]; }
   { int arr[T((__is_trivially_assignable(int&, int&&)))]; }
@@ -1678,6 +1705,33 @@ void is_trivially_copyable()
                                          TrivialMoveButNotCopy)))]; }
   { int arr[F((__is_trivially_assignable(TrivialMoveButNotCopy&,
                                          TrivialMoveButNotCopy&&)))]; }
+}
+
+// Instantiation of __is_trivially_constructible
+template<typename T, typename ...Args>
+struct is_trivially_constructible {
+  static const bool value = __is_trivially_constructible(T, Args...);
+};
+
+void is_trivially_constructible_test() {
+  { int arr[T((is_trivially_constructible<int>::value))]; }
+  { int arr[T((is_trivially_constructible<int, int>::value))]; }
+  { int arr[T((is_trivially_constructible<int, float>::value))]; }
+  { int arr[T((is_trivially_constructible<int, int&>::value))]; }
+  { int arr[T((is_trivially_constructible<int, const int&>::value))]; }
+  { int arr[T((is_trivially_constructible<int, int>::value))]; }
+  { int arr[T((is_trivially_constructible<HasCopyAssign, HasCopyAssign>::value))]; }
+  { int arr[T((is_trivially_constructible<HasCopyAssign, const HasCopyAssign&>::value))]; }
+  { int arr[T((is_trivially_constructible<HasCopyAssign, HasCopyAssign&&>::value))]; }
+  { int arr[T((is_trivially_constructible<HasCopyAssign>::value))]; }
+  { int arr[T((is_trivially_constructible<NonTrivialDefault,
+                                            const NonTrivialDefault&>::value))]; }
+  { int arr[T((is_trivially_constructible<NonTrivialDefault,
+                                            NonTrivialDefault&&>::value))]; }
+
+  { int arr[F((is_trivially_constructible<int, int*>::value))]; }
+  { int arr[F((is_trivially_constructible<NonTrivialDefault>::value))]; }
+  { int arr[F((is_trivially_constructible<ThreeArgCtor, int*, char*, int&>::value))]; }
 }
 
 void array_rank() {
