@@ -4531,7 +4531,8 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
       }
 
       // At least one member in each anonymous union must be non-const
-      if (CSM == Sema::CXXDefaultConstructor && AllVariantFieldsAreConst)
+      if (CSM == Sema::CXXDefaultConstructor && AllVariantFieldsAreConst &&
+          FieldRecord->field_begin() != FieldRecord->field_end())
         return true;
 
       // Don't try to initialize the anonymous union
@@ -4611,7 +4612,10 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
 ///   A defaulted default constructor for a class X is defined as deleted if
 /// X is a union and all of its variant members are of const-qualified type.
 bool SpecialMemberDeletionInfo::shouldDeleteForAllConstMembers() {
-  return CSM == Sema::CXXDefaultConstructor && inUnion() && AllFieldsAreConst;
+  // This is a silly definition, because it gives an empty union a deleted
+  // default constructor. Don't do that.
+  return CSM == Sema::CXXDefaultConstructor && inUnion() && AllFieldsAreConst &&
+    (MD->getParent()->field_begin() != MD->getParent()->field_end());
 }
 
 /// Determine whether a defaulted special member function should be defined as
