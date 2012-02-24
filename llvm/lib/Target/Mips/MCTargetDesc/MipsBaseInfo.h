@@ -1,4 +1,4 @@
-//===-- MipsBaseInfo.h - Top level definitions for MIPS MC --- --*- C++ -*-===//
+//===-- MipsBaseInfo.h - Top level definitions for MIPS MC ------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
