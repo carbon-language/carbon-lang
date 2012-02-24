@@ -804,12 +804,32 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
   unsigned initializerElements = 0;
 
   const Expr *Init = E->getInitializer();
+  llvm::AllocaInst *endOfInit = 0;
+  QualType::DestructionKind dtorKind = elementType.isDestructedType();
+  EHScopeStack::stable_iterator cleanup;
+  llvm::Instruction *cleanupDominator = 0;
   // If the initializer is an initializer list, first do the explicit elements.
   if (const InitListExpr *ILE = dyn_cast<InitListExpr>(Init)) {
     initializerElements = ILE->getNumInits();
-    QualType elementType = E->getAllocatedType();
-    // FIXME: exception-safety for the explicit initializers
+
+    // Enter a partial-destruction cleanup if necessary.
+    if (needsEHCleanup(dtorKind)) {
+      // In principle we could tell the cleanup where we are more
+      // directly, but the control flow can get so varied here that it
+      // would actually be quite complex.  Therefore we go through an
+      // alloca.
+      endOfInit = CreateTempAlloca(beginPtr->getType(), "array.endOfInit");
+      cleanupDominator = Builder.CreateStore(beginPtr, endOfInit);
+      pushIrregularPartialArrayCleanup(beginPtr, endOfInit, elementType,
+                                       getDestroyer(dtorKind));
+      cleanup = EHStack.stable_begin();
+    }
+
     for (unsigned i = 0, e = ILE->getNumInits(); i != e; ++i) {
+      // Tell the cleanup that it needs to destroy up to this
+      // element.  TODO: some of these stores can be trivially
+      // observed to be unnecessary.
+      if (endOfInit) Builder.CreateStore(explicitPtr, endOfInit);
       StoreAnyExprIntoOneUnit(*this, ILE->getInit(i), elementType, explicitPtr);
       explicitPtr =Builder.CreateConstGEP1_32(explicitPtr, 1, "array.exp.next");
     }
@@ -825,7 +845,12 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
   // anything left to initialize.
   if (llvm::ConstantInt *constNum = dyn_cast<llvm::ConstantInt>(numElements)) {
     // If all elements have already been initialized, skip the whole loop.
-    if (constNum->getZExtValue() <= initializerElements) return;
+    if (constNum->getZExtValue() <= initializerElements) {
+      // If there was a cleanup, deactivate it.
+      if (cleanupDominator)
+        DeactivateCleanupBlock(cleanup, cleanupDominator);;
+      return;
+    }
   } else {
     llvm::BasicBlock *nonEmptyBB = createBasicBlock("new.loop.nonempty");
     llvm::Value *isEmpty = Builder.CreateICmpEQ(explicitPtr, endPtr,
@@ -845,11 +870,11 @@ CodeGenFunction::EmitNewArrayInitializer(const CXXNewExpr *E,
     Builder.CreatePHI(explicitPtr->getType(), 2, "array.cur");
   curPtr->addIncoming(explicitPtr, entryBB);
 
+  // Store the new cleanup position for irregular cleanups.
+  if (endOfInit) Builder.CreateStore(curPtr, endOfInit);
+
   // Enter a partial-destruction cleanup if necessary.
-  QualType::DestructionKind dtorKind = elementType.isDestructedType();
-  EHScopeStack::stable_iterator cleanup;
-  llvm::Instruction *cleanupDominator = 0;
-  if (needsEHCleanup(dtorKind)) {
+  if (!cleanupDominator && needsEHCleanup(dtorKind)) {
     pushRegularPartialArrayCleanup(beginPtr, curPtr, elementType,
                                    getDestroyer(dtorKind));
     cleanup = EHStack.stable_begin();
