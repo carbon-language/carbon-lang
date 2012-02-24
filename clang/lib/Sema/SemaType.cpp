@@ -1938,7 +1938,7 @@ static QualType GetDeclSpecTypeForDeclarator(TypeProcessingState &state,
   return T;
 }
 
-std::string getFunctionQualifiersAsString(const FunctionProtoType *FnTy) {
+static std::string getFunctionQualifiersAsString(const FunctionProtoType *FnTy){
   std::string Quals =
     Qualifiers::fromCVRMask(FnTy->getTypeQuals()).getAsString();
 
