@@ -297,17 +297,6 @@ GenericValue Interpreter::callExternalFunction(Function *F,
 //  Functions "exported" to the running application...
 //
 
-// Visual Studio and Clang warn about returning GenericValue in extern "C" linkage
-#ifdef _MSC_VER
-    #pragma warning(disable : 4190)
-#endif
-#ifdef __clang__
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wreturn-type-c-linkage"
-#endif
-
-extern "C" {  // Don't add C++ manglings to llvm mangling :)
-
 // void atexit(Function*)
 GenericValue lle_X_atexit(FunctionType *FT,
                           const std::vector<GenericValue> &Args) {
@@ -472,17 +461,6 @@ GenericValue lle_X_fprintf(FunctionType *FT,
   fputs(Buffer, (FILE *) GVTOP(Args[0]));
   return GV;
 }
-
-} // End extern "C"
-
-// Done with externals; turn the warning back on for Clang and Visual Studio
-#ifdef __clang__
-    #pragma clang diagnostic pop
-#endif
-#ifdef _MSC_VER
-    #pragma warning(default: 4190)
-#endif
-
 
 void Interpreter::initializeExternalFunctions() {
   sys::ScopedLock Writer(*FunctionsLock);
