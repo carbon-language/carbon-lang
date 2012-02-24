@@ -93,8 +93,6 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo *MFI = MF.getFrameInfo();
   MachineModuleInfo *MMI = &MF.getMMI();
-  const XCoreRegisterInfo *RegInfo =
-    static_cast<const XCoreRegisterInfo*>(MF.getTarget().getRegisterInfo());
   const XCoreInstrInfo &TII =
     *static_cast<const XCoreInstrInfo*>(MF.getTarget().getInstrInfo());
   XCoreFunctionInfo *XFI = MF.getInfo<XCoreFunctionInfo>();
@@ -119,7 +117,7 @@ void XCoreFrameLowering::emitPrologue(MachineFunction &MF) const {
     // FIXME could emit multiple instructions.
     report_fatal_error("emitPrologue Frame size too big: " + Twine(FrameSize));
   }
-  bool emitFrameMoves = RegInfo->needsFrameMoves(MF);
+  bool emitFrameMoves = XCoreRegisterInfo::needsFrameMoves(MF);
 
   // Do we need to allocate space on the stack?
   if (FrameSize) {
