@@ -11,21 +11,8 @@ namespace lldb {
 
 class SBLaunchInfo
 {
-    public:
-    SBLaunchInfo ();
-    
-    SBLaunchInfo (const char *executable_path, 
-                  const char *triple, 
-                  const char **argv);
-    
-    lldb::SBFileSpec
-    GetExecutable ();
-    
-    void
-    SetExecutable (const char *path);
-    
-    void
-    SetExecutable (lldb::SBFileSpec executable);
+public:
+    SBLaunchInfo (const char **argv);
     
     uint32_t
     GetUserID();
@@ -44,12 +31,6 @@ class SBLaunchInfo
     
     void
     SetGroupID (uint32_t gid);
-    
-    const char *
-    GetTriple ();
-    
-    void
-    SetTriple (const char *triple);
     
     uint32_t
     GetNumArguments ();

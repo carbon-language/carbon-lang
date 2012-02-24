@@ -54,47 +54,12 @@ using namespace lldb_private;
 
 #define DEFAULT_DISASM_BYTE_SIZE 32
 
-
-
-SBLaunchInfo::SBLaunchInfo () : 
-m_opaque_sp(new ProcessLaunchInfo())
+SBLaunchInfo::SBLaunchInfo (const char **argv) : 
+    m_opaque_sp(new ProcessLaunchInfo())
 {
-}
-
-SBLaunchInfo::SBLaunchInfo (const char *path, const char *triple, const char **argv) : 
-m_opaque_sp(new ProcessLaunchInfo())
-{
-    SetExecutable(path);
-    if (triple && triple[0])
-        m_opaque_sp->GetArchitecture().SetTriple(triple, NULL);
-    if (argv)
-        SetArguments(argv, false);
-}
-
-SBFileSpec
-SBLaunchInfo::GetExecutable ()
-{
-    SBFileSpec exe_file;
-    exe_file.SetFileSpec (m_opaque_sp->GetExecutableFile());
-    return exe_file;
-}
-
-void
-SBLaunchInfo::SetExecutable (const char *path)
-{
-    if (path && path[0])
-        m_opaque_sp->GetExecutableFile().SetFile(path, false);
-    else
-        m_opaque_sp->GetExecutableFile().Clear();
-}
-
-void
-SBLaunchInfo::SetExecutable (SBFileSpec exe_file)
-{
-    if (exe_file.IsValid())
-        m_opaque_sp->GetExecutableFile() = exe_file.ref();
-    else
-        m_opaque_sp->GetExecutableFile().Clear();
+    m_opaque_sp->GetFlags().Reset (eLaunchFlagDebug | eLaunchFlagDisableASLR);
+    if (argv && argv[0])
+        m_opaque_sp->GetArguments().SetArguments(argv);
 }
 
 uint32_t
@@ -131,31 +96,6 @@ void
 SBLaunchInfo::SetGroupID (uint32_t gid)
 {
     m_opaque_sp->SetGroupID (gid);
-}
-
-const char *
-SBLaunchInfo::GetTriple ()
-{
-    const ArchSpec &arch = m_opaque_sp->GetArchitecture();
-    if (arch.IsValid())
-    {
-        std::string triple (arch.GetTriple().str());
-        if (!triple.empty())
-        {
-            // Unique the string so we don't run into ownership issues since
-            // the const strings put the string into the string pool once and
-            // the strings never comes out
-            ConstString const_triple (triple.c_str());
-            return const_triple.GetCString();
-        }
-    }
-    return NULL;
-}
-
-void
-SBLaunchInfo::SetTriple (const char *triple)
-{
-    m_opaque_sp->GetArchitecture().SetTriple(triple, NULL);
 }
 
 uint32_t
@@ -743,15 +683,34 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
         {
             sb_process.SetSP (process_sp);
             lldb_private::ProcessLaunchInfo &launch_info = sb_launch_info.ref();
+
+            bool add_exe_as_first_argv = true; //launch_info.GetArguments().GetArgumentCount() == 0;
+            Module *exe_module = target_sp->GetExecutableModulePointer();
+            if (exe_module)
+                launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), add_exe_as_first_argv);
+
+            const ArchSpec &arch_spec = target_sp->GetArchitecture();
+            if (arch_spec.IsValid())
+                launch_info.GetArchitecture () = arch_spec;
+    
             error.SetError (process_sp->Launch (launch_info));
+            const bool synchronous_execution = target_sp->GetDebugger().GetAsyncExecution () == false;
             if (error.Success())
             {
-                // We we are stopping at the entry point, we can return now!
+                StateType state = eStateInvalid;
                 if (launch_info.GetFlags().Test(eLaunchFlagStopAtEntry))
+                {
+                    // If we are doing synchronous mode, then wait for the initial
+                    // stop to happen, else, return and let the caller watch for
+                    // the stop
+                    if (synchronous_execution)
+                         state = process_sp->WaitForProcessToStop (NULL);
+                    // We we are stopping at the entry point, we can return now!
                     return sb_process;
+                }
                 
                 // Make sure we are stopped at the entry
-                StateType state = process_sp->WaitForProcessToStop (NULL);
+                state = process_sp->WaitForProcessToStop (NULL);
                 if (state == eStateStopped)
                 {
                     // resume the process to skip the entry point
@@ -760,7 +719,7 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
                     {
                         // If we are doing synchronous mode, then wait for the
                         // process to stop yet again!
-                        if (target_sp->GetDebugger().GetAsyncExecution () == false)
+                        if (synchronous_execution)
                             process_sp->WaitForProcessToStop (NULL);
                     }
                 }
