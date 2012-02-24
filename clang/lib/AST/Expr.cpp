@@ -499,28 +499,25 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
   return V.convertToDouble();
 }
 
-int StringLiteral::mapCharByteWidth(TargetInfo const &Target,
-                                    StringKind Kind) {
+int StringLiteral::mapCharByteWidth(TargetInfo const &target,StringKind k) {
   int CharByteWidth;
-  switch(Kind) {
+  switch(k) {
     case Ascii:
     case UTF8:
-      CharByteWidth = Target.getCharWidth();
+      CharByteWidth = target.getCharWidth();
       break;
     case Wide:
-      CharByteWidth = Target.getWCharWidth();
+      CharByteWidth = target.getWCharWidth();
       break;
     case UTF16:
-      CharByteWidth = Target.getChar16Width();
+      CharByteWidth = target.getChar16Width();
       break;
     case UTF32:
-      CharByteWidth = Target.getChar32Width();
-    default:
-      llvm_unreachable("Don't know byte width of this string kind!");
+      CharByteWidth = target.getChar32Width();
   }
   assert((CharByteWidth & 7) == 0 && "Assumes character size is byte multiple");
   CharByteWidth /= 8;
-  assert((CharByteWidth == 1 || CharByteWidth == 2 || CharByteWidth == 4)
+  assert((CharByteWidth==1 || CharByteWidth==2 || CharByteWidth==4)
          && "character byte widths supported are 1, 2, and 4 only");
   return CharByteWidth;
 }
@@ -565,7 +562,7 @@ void StringLiteral::setString(ASTContext &C, StringRef Str,
   this->Kind = Kind;
   this->IsPascal = IsPascal;
   
-  CharByteWidth = mapCharByteWidth(C.getTargetInfo(), Kind);
+  CharByteWidth = mapCharByteWidth(C.getTargetInfo(),Kind);
   assert((Str.size()%CharByteWidth == 0)
          && "size of data must be multiple of CharByteWidth");
   Length = Str.size()/CharByteWidth;
