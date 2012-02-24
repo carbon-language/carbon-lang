@@ -766,6 +766,9 @@ EmitMachineNode(SDNode *Node, bool IsClone, bool IsCloned,
       if (F->getOpcode() == ISD::CopyFromReg) {
         UsedRegs.push_back(cast<RegisterSDNode>(F->getOperand(1))->getReg());
         continue;
+      } else if (F->getOpcode() == ISD::CopyToReg) {
+        // Skip CopyToReg nodes that are internal to the glue chain.
+        continue;
       }
       // Collect declared implicit uses.
       const MCInstrDesc &MCID = TII->get(F->getMachineOpcode());
