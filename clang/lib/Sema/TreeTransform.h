@@ -7038,9 +7038,12 @@ TreeTransform<Derived>::TransformCXXThisExpr(CXXThisExpr *E) {
     T = getSema().Context.getPointerType(
       getSema().Context.getRecordType(cast<CXXRecordDecl>(DC)));
 
-  if (!getDerived().AlwaysRebuild() && T == E->getType())
+  if (!getDerived().AlwaysRebuild() && T == E->getType()) {
+    // Make sure that we capture 'this'.
+    getSema().CheckCXXThisCapture(E->getLocStart());
     return SemaRef.Owned(E);
-
+  }
+  
   return getDerived().RebuildCXXThisExpr(E->getLocStart(), T, E->isImplicit());
 }
 
@@ -8539,6 +8542,7 @@ TreeTransform<Derived>::TransformBlockExpr(BlockExpr *E) {
                                                  oldCapture));
       assert(blockScope->CaptureMap.count(newCapture));
     }
+    assert(oldBlock->capturesCXXThis() == blockScope->isCXXThisCaptured());
   }
 #endif
 

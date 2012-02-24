@@ -211,3 +211,18 @@ namespace test7 {
     return ^{ return *p; }();
   }
 }
+
+namespace test8 {
+  // <rdar://problem/10832617>: failure to capture this after skipping rebuild
+  // of the 'this' pointer.
+  struct X {
+    int x;
+
+    template<typename T>
+    int foo() {
+      return ^ { return x; }();
+    }
+  };
+
+  template int X::foo<int>();
+}

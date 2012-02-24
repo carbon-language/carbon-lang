@@ -4220,9 +4220,8 @@ protected:
 public:
   BlockExpr(BlockDecl *BD, QualType ty)
     : Expr(BlockExprClass, ty, VK_RValue, OK_Ordinary,
-           ty->isDependentType(), false,
-           // FIXME: Check for instantiate-dependence in the statement?
-           ty->isInstantiationDependentType(),
+           ty->isDependentType(), ty->isDependentType(),
+           ty->isInstantiationDependentType() || BD->isDependentContext(),
            false),
       TheBlock(BD) {}
 
