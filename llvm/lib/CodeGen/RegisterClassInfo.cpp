@@ -18,11 +18,15 @@
 #include "RegisterClassInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/Target/TargetMachine.h"
-
+#include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/raw_ostream.h"
 
 using namespace llvm;
+
+cl::opt<unsigned> StressRA("stress-regalloc", cl::Hidden, cl::init(0),
+                           cl::value_desc("N"),
+                           cl::desc("Limit all regclasses to N registers"));
 
 RegisterClassInfo::RegisterClassInfo() : Tag(0), MF(0), TRI(0), CalleeSaved(0)
 {}
@@ -98,6 +102,10 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
 
   // CSR aliases go after the volatile registers, preserve the target's order.
   std::copy(CSRAlias.begin(), CSRAlias.end(), &RCI.Order[N]);
+
+  // Register allocator stress test.  Clip register class to N registers.
+  if (StressRA && RCI.NumRegs > StressRA)
+    RCI.NumRegs = StressRA;
 
   // Check if RC is a proper sub-class.
   if (const TargetRegisterClass *Super = TRI->getLargestLegalSuperClass(RC))
