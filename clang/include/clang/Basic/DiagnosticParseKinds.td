@@ -254,9 +254,6 @@ def err_missing_comma_before_ellipsis : Error<
   "C requires a comma prior to the ellipsis in a variadic function type">;
 def err_unexpected_typedef_ident : Error<
   "unexpected type name %0: expected identifier">;
-def ext_gnu_decltype : Extension<
-  "'__decltype' type specifier is a GNU extension">,
-  InGroup<GNU>, DefaultIgnore;
 def warn_cxx98_compat_decltype : Warning<
   "'decltype' type specifier is incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;

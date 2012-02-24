@@ -653,8 +653,8 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
       return EndLoc;
     }
   } else {
-    Diag(Tok, Tok.getIdentifierInfo()->isStr("decltype")
-           ? diag::warn_cxx98_compat_decltype : diag::ext_gnu_decltype);
+    if (Tok.getIdentifierInfo()->isStr("decltype"))
+      Diag(Tok, diag::warn_cxx98_compat_decltype);
 
     ConsumeToken();
 
