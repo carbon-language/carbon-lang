@@ -114,63 +114,6 @@ namespace lldb {
 
 #endif
     
-
-Module::Module(const FileSpec& file_spec, const lldb::ProcessSP &process_sp, lldb::addr_t header_addr) :
-    m_mutex (Mutex::eMutexTypeRecursive),
-    m_mod_time (),
-    m_arch (),
-    m_uuid (),
-    m_file (file_spec),
-    m_platform_file(),
-    m_symfile_spec (),
-    m_object_name (),
-    m_object_offset (),
-    m_objfile_sp (),
-    m_symfile_ap (),
-    m_ast (),
-    m_did_load_objfile (false),
-    m_did_load_symbol_vendor (false),
-    m_did_parse_uuid (false),
-    m_did_init_ast (false),
-    m_is_dynamic_loader_module (false),
-    m_was_modified (false)
-{
-    // Scope for locker below...
-    {
-        Mutex::Locker locker (GetAllocationModuleCollectionMutex());
-        GetModuleCollection().push_back(this);
-    }
-    StreamString s;
-    if (m_file.GetFilename())
-        s << m_file.GetFilename();
-    s.Printf("[0x%16.16llx]", header_addr);
-    m_file.GetFilename().SetCString (s.GetData());
-    Mutex::Locker locker (m_mutex);
-    DataBufferSP data_sp;
-    if (process_sp)
-    {
-        m_did_load_objfile = true;
-        std::auto_ptr<DataBufferHeap> data_ap (new DataBufferHeap (512, 0));
-        Error error;
-        const size_t bytes_read = process_sp->ReadMemory (header_addr, 
-                                                          data_ap->GetBytes(), 
-                                                          data_ap->GetByteSize(), 
-                                                          error);
-        if (bytes_read == 512)
-        {
-            data_sp.reset (data_ap.release());
-            m_objfile_sp = ObjectFile::FindPlugin(shared_from_this(), process_sp, header_addr, data_sp);
-            if (m_objfile_sp)
-            {
-                // Once we get the object file, update our module with the object file's 
-                // architecture since it might differ in vendor/os if some parts were
-                // unknown.
-                m_objfile_sp->GetArchitecture (m_arch);
-            }
-        }
-    }
-}
-
 Module::Module(const FileSpec& file_spec, 
                const ArchSpec& arch, 
                const ConstString *object_name, 
@@ -242,6 +185,59 @@ Module::~Module()
     // down the symbol file first, then the object file.
     m_symfile_ap.reset();
     m_objfile_sp.reset();
+}
+
+ObjectFile *
+Module::GetMemoryObjectFile (const lldb::ProcessSP &process_sp, lldb::addr_t header_addr, Error &error)
+{
+    if (m_objfile_sp)
+    {
+        error.SetErrorString ("object file already exists");
+    }
+    else
+    {
+        Mutex::Locker locker (m_mutex);
+        if (process_sp)
+        {
+            StreamString s;
+            if (m_file.GetFilename())
+                s << m_file.GetFilename();
+                s.Printf("[0x%16.16llx]", header_addr);
+                m_file.GetFilename().SetCString (s.GetData());
+            m_did_load_objfile = true;
+            std::auto_ptr<DataBufferHeap> data_ap (new DataBufferHeap (512, 0));
+            Error readmem_error;
+            const size_t bytes_read = process_sp->ReadMemory (header_addr, 
+                                                              data_ap->GetBytes(), 
+                                                              data_ap->GetByteSize(), 
+                                                              readmem_error);
+            if (bytes_read == 512)
+            {
+                DataBufferSP data_sp(data_ap.release());
+                m_objfile_sp = ObjectFile::FindPlugin(shared_from_this(), process_sp, header_addr, data_sp);
+                if (m_objfile_sp)
+                {
+                    // Once we get the object file, update our module with the object file's 
+                    // architecture since it might differ in vendor/os if some parts were
+                    // unknown.
+                    m_objfile_sp->GetArchitecture (m_arch);
+                }
+                else
+                {
+                    error.SetErrorString ("unable to find suitable object file plug-in");
+                }
+            }
+            else
+            {
+                error.SetErrorStringWithFormat ("unable to read header from memory: %s", readmem_error.AsCString());
+            }
+        }
+        else
+        {
+            error.SetErrorString ("invalid process");
+        }
+    }
+    return m_objfile_sp.get();
 }
 
 

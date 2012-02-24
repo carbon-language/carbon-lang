@@ -96,9 +96,6 @@ public:
             const ConstString *object_name = NULL,
             off_t object_offset = 0);
 
-    Module (const FileSpec& file_spec, 
-            const lldb::ProcessSP &processSP,
-            lldb::addr_t header_addr);
     //------------------------------------------------------------------
     /// Destructor.
     //------------------------------------------------------------------
@@ -543,6 +540,11 @@ public:
     ObjectFile *
     GetObjectFile ();
 
+    // Load an object file from memory.
+    ObjectFile *
+    GetMemoryObjectFile (const lldb::ProcessSP &process_sp, 
+                         lldb::addr_t header_addr,
+                         Error &error);
     //------------------------------------------------------------------
     /// Get the symbol vendor interface for the current architecture.
     ///

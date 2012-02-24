@@ -2222,20 +2222,26 @@ Process::ReadModuleFromMemory (const FileSpec& file_spec,
                                bool add_image_to_target,
                                bool load_sections_in_target)
 {
-    ModuleSP module_sp (new Module (file_spec, shared_from_this(), header_addr));
+    ModuleSP module_sp (new Module (file_spec, ArchSpec()));
     if (module_sp)
     {
-        if (add_image_to_target)
+        Error error;
+        ObjectFile *objfile = module_sp->GetMemoryObjectFile (shared_from_this(), header_addr, error);
+        if (objfile)
         {
-            m_target.GetImages().Append(module_sp);
-            if (load_sections_in_target)
+            if (add_image_to_target)
             {
-                bool changed = false;
-                module_sp->SetLoadAddress (m_target, 0, changed);
+                m_target.GetImages().Append(module_sp);
+                if (load_sections_in_target)
+                {
+                    bool changed = false;
+                    module_sp->SetLoadAddress (m_target, 0, changed);
+                }
             }
+            return module_sp;
         }
     }
-    return module_sp;
+    return ModuleSP();
 }
 
 Error
