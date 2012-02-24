@@ -69,7 +69,7 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
   GetReturnInfo(Fn->getReturnType(),
                 Fn->getAttributes().getRetAttributes(), Outs, TLI);
   CanLowerReturn = TLI.CanLowerReturn(Fn->getCallingConv(), *MF,
-				      Fn->isVarArg(),
+                                      Fn->isVarArg(),
                                       Outs, Fn->getContext());
 
   // Initialize the mapping of values to registers.  This is only set up for
@@ -96,11 +96,13 @@ void FunctionLoweringInfo::set(const Function &fn, MachineFunction &mf) {
            (TySize >= 8 && isa<ArrayType>(Ty) &&
             cast<ArrayType>(Ty)->getElementType()->isIntegerTy(8)));
         StaticAllocaMap[AI] =
-          MF->getFrameInfo()->CreateStackObject(TySize, Align, false, MayNeedSP);
+          MF->getFrameInfo()->CreateStackObject(TySize, Align, false,
+                                                MayNeedSP);
       }
 
   for (; BB != EB; ++BB)
-    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end(); I != E; ++I) {
+    for (BasicBlock::const_iterator I = BB->begin(), E = BB->end();
+         I != E; ++I) {
       // Mark values used outside their block as exported, by allocating
       // a virtual register for them.
       if (isUsedOutsideOfDefiningBlock(I))
@@ -356,7 +358,7 @@ void FunctionLoweringInfo::ComputePHILiveOutRegInfo(const PHINode *PN) {
 /// argument. This overrides previous frame index entry for this argument,
 /// if any.
 void FunctionLoweringInfo::setArgumentFrameIndex(const Argument *A,
-                                                      int FI) {
+                                                 int FI) {
   ByValArgFrameIndexMap[A] = FI;
 }
 
