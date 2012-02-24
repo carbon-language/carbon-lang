@@ -3,6 +3,7 @@ Test lldb watchpoint that uses '-x size' to watch a pointed location with size.
 """
 
 import os, time
+import re
 import unittest2
 import lldb
 from lldbtest import *
@@ -62,9 +63,19 @@ class HelloWatchLocationTestCase(TestBase):
         # incrmenting the global pool by 2.
         self.expect("watchpoint set expression -w write -x 1 -- g_char_ptr", WATCHPOINT_CREATED,
             substrs = ['Watchpoint created', 'size = 1', 'type = w'])
+        # Get a hold of the watchpoint id just created, it is used later on to
+        # match the watchpoint id which is expected to be fired.
+        match = re.match("Watchpoint created: Watchpoint (.*):", self.res.GetOutput().splitlines()[0])
+        if match:
+            expected_wp_id = int(match.group(1), 0)
+        else:
+            self.fail("Grokking watchpoint id faailed!") 
+
         self.runCmd("expr unsigned val = *g_char_ptr; val")
         self.expect(self.res.GetOutput().splitlines()[0], exe=False,
             endstr = ' = 0')
+
+        self.runCmd("watchpoint set expression -w write -x 4 -- &g_thread_1")
 
         # Use the '-v' option to do verbose listing of the watchpoint.
         # The hit count should be 0 initially.
@@ -77,7 +88,7 @@ class HelloWatchLocationTestCase(TestBase):
         # only once.  The stop reason of the thread should be watchpoint.
         self.expect("thread list", STOPPED_DUE_TO_WATCHPOINT,
             substrs = ['stopped',
-                       'stop reason = watchpoint',
+                       'stop reason = watchpoint %d' % expected_wp_id,
                        self.violating_func])
 
         # Switch to the thread stopped due to watchpoint and issue some commands.
