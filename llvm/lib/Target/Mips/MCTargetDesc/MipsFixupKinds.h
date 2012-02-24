@@ -1,4 +1,4 @@
-//===-- Mips/MipsFixupKinds.h - Mips Specific Fixup Entries -----*- C++ -*-===//
+//===-- MipsFixupKinds.h - Mips Specific Fixup Entries ----------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_Mips_MipsFIXUPKINDS_H
-#define LLVM_Mips_MipsFIXUPKINDS_H
+#ifndef LLVM_MIPS_MIPSFIXUPKINDS_H
+#define LLVM_MIPS_MIPSFIXUPKINDS_H
 
 #include "llvm/MC/MCFixup.h"
 
