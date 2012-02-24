@@ -27,7 +27,7 @@
 
 using namespace llvm;
 
-cl::opt<bool>
+static cl::opt<bool>
 SpillAlignedNEONRegs("align-neon-spills", cl::Hidden, cl::init(true),
                      cl::desc("Align ARM NEON spills in prolog and epilog"));
 

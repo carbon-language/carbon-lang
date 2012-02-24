@@ -58,9 +58,6 @@
 
 using namespace llvm;
 
-cl::opt<int> DebugHexagonPeephole("debug-hexagon-peephole",
-    cl::Hidden, cl::desc(""));
-
 static cl::opt<bool> DisableHexagonPeephole("disable-hexagon-peephole",
     cl::Hidden, cl::ZeroOrMore, cl::init(false),
     cl::desc("Disable Peephole Optimization"));
