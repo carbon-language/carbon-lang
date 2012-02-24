@@ -173,7 +173,7 @@ namespace {
             break;
           } else {
             // Keep track of all interface declarations seen.
-            ObjCInterfacesSeen.push_back(Class->getCanonicalDecl());
+            ObjCInterfacesSeen.push_back(Class);
             break;
           }
         }
