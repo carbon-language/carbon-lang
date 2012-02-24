@@ -1234,7 +1234,7 @@ APInt APInt::lshr(const APInt &shiftAmt) const {
 /// @brief Logical right-shift function.
 APInt APInt::lshr(unsigned shiftAmt) const {
   if (isSingleWord()) {
-    if (shiftAmt == BitWidth)
+    if (shiftAmt >= BitWidth)
       return APInt(BitWidth, 0);
     else
       return APInt(BitWidth, this->VAL >> shiftAmt);
