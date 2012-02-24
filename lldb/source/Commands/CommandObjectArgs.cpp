@@ -148,15 +148,15 @@ CommandObjectArgs::Execute
         return false;
     }
     
-    Module *thread_module = thread_cur_frame->GetFrameCodeAddress ().GetModulePtr ();
-    if (!thread_module)
+    ModuleSP thread_module_sp (thread_cur_frame->GetFrameCodeAddress ().GetModule());
+    if (!thread_module_sp)
     {
         result.AppendError ("The PC has no associated module.");
         result.SetStatus (eReturnStatusFailed);
         return false;
     }
     
-    ClangASTContext &ast_context = thread_module->GetClangASTContext();
+    ClangASTContext &ast_context = thread_module_sp->GetClangASTContext();
     
     ValueList value_list;
     

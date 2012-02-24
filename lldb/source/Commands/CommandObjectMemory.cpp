@@ -595,7 +595,7 @@ public:
         if (!clang_ast_type.GetOpaqueQualType())
         {
             data_sp.reset (new DataBufferHeap (total_byte_size, '\0'));
-            Address address(NULL, addr);
+            Address address(addr, NULL);
             bytes_read = target->ReadMemory(address, false, data_sp->GetBytes (), data_sp->GetByteSize(), error);
             if (bytes_read == 0)
             {
@@ -677,7 +677,7 @@ public:
             for (uint32_t i = 0; i<item_count; ++i)
             {
                 addr_t item_addr = addr + (i * item_byte_size);
-                Address address (NULL, item_addr);
+                Address address (item_addr);
                 StreamString name_strm;
                 name_strm.Printf ("0x%llx", item_addr);
                 ValueObjectSP valobj_sp (ValueObjectMemory::Create (exe_scope, 

@@ -35,7 +35,7 @@ public:
     GetPluginDescriptionStatic();
 
     static lldb_private::ObjectContainer *
-    CreateInstance (lldb_private::Module* module,
+    CreateInstance (const lldb::ModuleSP &module_sp,
                     lldb::DataBufferSP& dataSP,
                     const lldb_private::FileSpec *file,
                     lldb::addr_t offset,
@@ -47,7 +47,7 @@ public:
     //------------------------------------------------------------------
     // Member Functions
     //------------------------------------------------------------------
-    ObjectContainerUniversalMachO (lldb_private::Module* module,
+    ObjectContainerUniversalMachO (const lldb::ModuleSP &module_sp,
                                    lldb::DataBufferSP& dataSP,
                                    const lldb_private::FileSpec *file,
                                    lldb::addr_t offset,

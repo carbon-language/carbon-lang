@@ -50,7 +50,7 @@ ObjectContainerUniversalMachO::GetPluginDescriptionStatic()
 ObjectContainer *
 ObjectContainerUniversalMachO::CreateInstance
 (
-    Module* module,
+    const lldb::ModuleSP &module_sp,
     DataBufferSP& data_sp,
     const FileSpec *file,
     addr_t offset,
@@ -61,7 +61,7 @@ ObjectContainerUniversalMachO::CreateInstance
     data.SetData (data_sp, offset, length);
     if (ObjectContainerUniversalMachO::MagicBytesMatch(data))
     {
-        std::auto_ptr<ObjectContainerUniversalMachO> container_ap(new ObjectContainerUniversalMachO (module, data_sp, file, offset, length));
+        std::auto_ptr<ObjectContainerUniversalMachO> container_ap(new ObjectContainerUniversalMachO (module_sp, data_sp, file, offset, length));
         if (container_ap->ParseHeader())
         {
             return container_ap.release();
@@ -82,13 +82,13 @@ ObjectContainerUniversalMachO::MagicBytesMatch (const DataExtractor &data)
 
 ObjectContainerUniversalMachO::ObjectContainerUniversalMachO
 (
-    Module* module,
+    const lldb::ModuleSP &module_sp,
     DataBufferSP& dataSP,
     const FileSpec *file,
     addr_t offset,
     addr_t length
 ) :
-    ObjectContainer (module, file, offset, length, dataSP),
+    ObjectContainer (module_sp, file, offset, length, dataSP),
     m_header(),
     m_fat_archs()
 {
@@ -190,27 +190,31 @@ ObjectContainerUniversalMachO::GetObjectFile (const FileSpec *file)
     ArchSpec arch;
     // If the module hasn't specified an architecture yet, set it to the default 
     // architecture:
-    if (!m_module->GetArchitecture().IsValid())
+    ModuleSP module_sp (GetModule());
+    if (module_sp)
     {
-        arch = Target::GetDefaultArchitecture ();
-        if (!arch.IsValid())
-            arch.SetTriple (LLDB_ARCH_DEFAULT, NULL);
-    }
-    else
-        arch = m_module->GetArchitecture();
-        
-    ArchSpec curr_arch;
-    for (arch_idx = 0; arch_idx < m_header.nfat_arch; ++arch_idx)
-    {
-        if (GetArchitectureAtIndex (arch_idx, curr_arch))
+        if (!module_sp->GetArchitecture().IsValid())
         {
-            if (arch == curr_arch)
+            arch = Target::GetDefaultArchitecture ();
+            if (!arch.IsValid())
+                arch.SetTriple (LLDB_ARCH_DEFAULT, NULL);
+        }
+        else
+            arch = module_sp->GetArchitecture();
+            
+        ArchSpec curr_arch;
+        for (arch_idx = 0; arch_idx < m_header.nfat_arch; ++arch_idx)
+        {
+            if (GetArchitectureAtIndex (arch_idx, curr_arch))
             {
-                return ObjectFile::FindPlugin (m_module, 
-                                               file, 
-                                               m_offset + m_fat_archs[arch_idx].offset, 
-                                               m_fat_archs[arch_idx].size,
-                                               m_data.GetSharedDataBuffer());
+                if (arch == curr_arch)
+                {
+                    return ObjectFile::FindPlugin (module_sp, 
+                                                   file, 
+                                                   m_offset + m_fat_archs[arch_idx].offset, 
+                                                   m_fat_archs[arch_idx].size,
+                                                   m_data.GetSharedDataBuffer());
+                }
             }
         }
     }

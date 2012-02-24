@@ -635,7 +635,7 @@ SBThread::RunToAddress (lldb::addr_t addr)
         bool abort_other_plans = true;
         bool stop_other_threads = true;
 
-        Address target_addr (NULL, addr);
+        Address target_addr (addr);
 
         Thread *thread = exe_ctx.GetThreadPtr();
         Process *process = exe_ctx.GetProcessPtr();

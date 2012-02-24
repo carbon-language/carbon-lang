@@ -28,7 +28,7 @@ AddressRange::AddressRange (addr_t file_addr, addr_t byte_size, const SectionLis
 {
 }
 
-AddressRange::AddressRange (const Section* section, addr_t offset, addr_t byte_size) :
+AddressRange::AddressRange (const lldb::SectionSP &section, addr_t offset, addr_t byte_size) :
     m_base_addr(section, offset),
     m_byte_size(byte_size)
 {
@@ -177,9 +177,9 @@ AddressRange::Dump(Stream *s, Target *target, Address::DumpStyle style, Address:
     {
         if (show_module)
         {
-            Module *module = GetBaseAddress().GetModulePtr();
-            if (module)
-                s->Printf("%s", module->GetFileSpec().GetFilename().AsCString());
+            ModuleSP module_sp (GetBaseAddress().GetModule());
+            if (module_sp)
+                s->Printf("%s", module_sp->GetFileSpec().GetFilename().AsCString());
         }
         s->AddressRange(vmaddr, vmaddr + GetByteSize(), addr_size);
         return true;
@@ -196,7 +196,7 @@ AddressRange::Dump(Stream *s, Target *target, Address::DumpStyle style, Address:
 void
 AddressRange::DumpDebug (Stream *s) const
 {
-    s->Printf("%p: AddressRange section = %p, offset = 0x%16.16llx, byte_size = 0x%16.16llx\n", this, m_base_addr.GetSection(), m_base_addr.GetOffset(), GetByteSize());
+    s->Printf("%p: AddressRange section = %p, offset = 0x%16.16llx, byte_size = 0x%16.16llx\n", this, m_base_addr.GetSection().get(), m_base_addr.GetOffset(), GetByteSize());
 }
 //
 //bool

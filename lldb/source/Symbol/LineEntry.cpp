@@ -29,7 +29,7 @@ LineEntry::LineEntry() :
 
 LineEntry::LineEntry
 (
-    lldb_private::Section *section,
+    const lldb::SectionSP &section_sp,
     lldb::addr_t section_offset,
     lldb::addr_t byte_size,
     const FileSpec &_file,
@@ -41,7 +41,7 @@ LineEntry::LineEntry
     bool _is_epilogue_begin,
     bool _is_terminal_entry
 ) :
-    range(section, section_offset, byte_size),
+    range(section_sp, section_offset, byte_size),
     file(_file),
     line(_line),
     column(_column),

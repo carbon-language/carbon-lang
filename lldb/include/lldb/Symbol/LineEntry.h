@@ -31,7 +31,7 @@ struct LineEntry
 
     LineEntry
     (
-        Section *section,
+        const lldb::SectionSP &section_sp,
         lldb::addr_t section_offset,
         lldb::addr_t byte_size,
         const FileSpec &file,

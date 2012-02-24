@@ -180,8 +180,7 @@ ItaniumABILanguageRuntime::GetDynamicTypeAndAddress (ValueObject &in_value,
                         lldb::addr_t dynamic_addr = original_ptr + offset_to_top;
                         if (!target->GetSectionLoadList().ResolveLoadAddress (dynamic_addr, dynamic_address))
                         {
-                            dynamic_address.SetOffset(dynamic_addr);
-                            dynamic_address.SetSection(NULL);
+                            dynamic_address.SetRawAddress(dynamic_addr);
                         }
                         return true;
                     }

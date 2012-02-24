@@ -125,10 +125,10 @@ AddSymbolicInfo (const ExecutionContext *exe_ctx,
     }
     else
     {
-        Module *module = inst_addr.GetModulePtr();
-        if (module)
+        ModuleSP module_sp (inst_addr.GetModule());
+        if (module_sp)
         {
-            if (module->ResolveFileAddress(operand_value, so_addr))
+            if (module_sp->ResolveFileAddress(operand_value, so_addr))
                 so_addr.Dump (&comment, 
                               exe_ctx ? exe_ctx->GetBestExecutionContextScope() : NULL, 
                               Address::DumpStyleResolvedDescriptionNoModule, 

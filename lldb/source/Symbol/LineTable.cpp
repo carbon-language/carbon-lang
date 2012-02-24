@@ -44,7 +44,7 @@ LineTable::~LineTable()
 void
 LineTable::AppendLineEntry
 (
-    SectionSP& section_sp,
+    const lldb::SectionSP& section_sp,
     lldb::addr_t section_offset,
     uint32_t line,
     uint16_t column,
@@ -65,7 +65,7 @@ LineTable::AppendLineEntry
 void
 LineTable::InsertLineEntry
 (
-    SectionSP& section_sp,
+    const SectionSP& section_sp,
     lldb::addr_t section_offset,
     uint32_t line,
     uint16_t column,
@@ -77,14 +77,18 @@ LineTable::InsertLineEntry
     bool is_terminal_entry
 )
 {
-    SectionSP line_section_sp(section_sp);
-    const Section *linked_section = line_section_sp->GetLinkedSection();
-    if (linked_section)
+    SectionSP line_section_sp;
+    SectionSP linked_section_sp (section_sp->GetLinkedSection());
+    if (linked_section_sp)
     {
-        section_offset += line_section_sp->GetLinkedOffset();
-        line_section_sp = linked_section->GetSharedPointer();
-        assert(line_section_sp.get());
+        section_offset += section_sp->GetLinkedOffset();
+        line_section_sp = linked_section_sp;
     }
+    else
+    {
+        line_section_sp = section_sp;
+    }
+    assert(line_section_sp.get());
 
     uint32_t sect_idx = m_section_list.AddUniqueSection (line_section_sp);
     Entry entry(sect_idx, section_offset, line, column, file_idx, is_start_of_statement, is_start_of_basic_block, is_prologue_end, is_epilogue_begin, is_terminal_entry);
@@ -168,7 +172,7 @@ LineTable::FindLineEntryByAddress (const Address &so_addr, LineEntry& line_entry
         *index_ptr = UINT32_MAX;
 
     bool success = false;
-    uint32_t sect_idx = m_section_list.FindSectionIndex (so_addr.GetSection());
+    uint32_t sect_idx = m_section_list.FindSectionIndex (so_addr.GetSection().get());
     if (sect_idx != UINT32_MAX)
     {
         Entry search_entry;
@@ -242,7 +246,7 @@ LineTable::ConvertEntryAtIndexToLineEntry (uint32_t idx, LineEntry &line_entry)
     if (idx < m_entries.size())
     {
         const Entry& entry = m_entries[idx];
-        line_entry.range.GetBaseAddress().SetSection(m_section_list.GetSectionAtIndex (entry.sect_idx).get());
+        line_entry.range.GetBaseAddress().SetSection(m_section_list.GetSectionAtIndex (entry.sect_idx));
         line_entry.range.GetBaseAddress().SetOffset(entry.sect_offset);
         if (!entry.is_terminal_entry && idx + 1 < m_entries.size())
         {
@@ -253,7 +257,7 @@ LineTable::ConvertEntryAtIndexToLineEntry (uint32_t idx, LineEntry &line_entry)
             }
             else
             {
-                Address next_line_addr(m_section_list.GetSectionAtIndex (next_entry.sect_idx).get(), next_entry.sect_offset);
+                Address next_line_addr(m_section_list.GetSectionAtIndex (next_entry.sect_idx), next_entry.sect_offset);
                 line_entry.range.SetByteSize(next_line_addr.GetFileAddress() - line_entry.range.GetBaseAddress().GetFileAddress());
             }
         }

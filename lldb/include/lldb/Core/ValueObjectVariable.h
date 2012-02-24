@@ -46,7 +46,7 @@ public:
     virtual bool
     IsInScope ();
 
-    virtual Module*
+    virtual lldb::ModuleSP
     GetModule();
     
     virtual SymbolContextScope *

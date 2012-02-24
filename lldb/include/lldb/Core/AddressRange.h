@@ -45,7 +45,7 @@ public:
     /// @param[in] byte_size
     ///     The size in bytes of the address range.
     //------------------------------------------------------------------
-    AddressRange (const Section* section, lldb::addr_t offset, lldb::addr_t byte_size);
+    AddressRange (const lldb::SectionSP &section, lldb::addr_t offset, lldb::addr_t byte_size);
 
     //------------------------------------------------------------------
     /// Construct with a virtual address, section list and byte size.

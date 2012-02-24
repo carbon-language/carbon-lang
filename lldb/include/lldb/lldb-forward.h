@@ -271,6 +271,7 @@ namespace lldb {
     typedef std::tr1::shared_ptr<lldb_private::RegisterContext> RegisterContextSP;
     typedef std::tr1::shared_ptr<lldb_private::RegularExpression> RegularExpressionSP;
     typedef std::tr1::shared_ptr<lldb_private::Section> SectionSP;
+    typedef std::tr1::weak_ptr<lldb_private::Section> SectionWP;
     typedef std::tr1::shared_ptr<lldb_private::SearchFilter> SearchFilterSP;
 #ifndef LLDB_DISABLE_PYTHON
     typedef std::tr1::shared_ptr<lldb_private::ScriptSummaryFormat> ScriptSummaryFormatSP;

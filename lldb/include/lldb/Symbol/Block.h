@@ -112,7 +112,7 @@ public:
     virtual void
     CalculateSymbolContext(SymbolContext* sc);
 
-    virtual Module *
+    virtual lldb::ModuleSP
     CalculateSymbolContextModule ();
 
     virtual CompileUnit *

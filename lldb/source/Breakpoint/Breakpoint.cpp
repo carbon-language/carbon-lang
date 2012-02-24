@@ -351,8 +351,8 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
                 BreakpointLocationSP break_loc = m_locations.GetByIndex(loc_idx);
                 if (!break_loc->IsEnabled())
                     continue;
-                const Section *section = break_loc->GetAddress().GetSection();
-                if (section == NULL || section->GetModule() == module_sp.get())
+                SectionSP section_sp (break_loc->GetAddress().GetSection());
+                if (!section_sp || section_sp->GetModule() == module_sp)
                 {
                     if (!seen)
                         seen = true;
@@ -419,23 +419,25 @@ Breakpoint::ModulesChanged (ModuleList &module_list, bool load)
             ModuleSP module_sp (module_list.GetModuleAtIndex (i));
             if (m_filter_sp->ModulePasses (module_sp))
             {
-                const size_t num_locs = m_locations.GetSize();
-                for (size_t loc_idx = 0; loc_idx < num_locs; ++loc_idx)
+                size_t loc_idx = 0;
+                while (loc_idx < m_locations.GetSize())
                 {
-                    BreakpointLocationSP break_loc = m_locations.GetByIndex(loc_idx);
-                    const Section *section = break_loc->GetAddress().GetSection();
-                    if (section && section->GetModule() == module_sp.get())
+                    BreakpointLocationSP break_loc_sp (m_locations.GetByIndex(loc_idx));
+                    SectionSP section_sp (break_loc_sp->GetAddress().GetSection());
+                    if (section_sp && section_sp->GetModule() == module_sp)
                     {
                         // Remove this breakpoint since the shared library is 
                         // unloaded, but keep the breakpoint location around
                         // so we always get complete hit count and breakpoint
                         // lifetime info
-                        break_loc->ClearBreakpointSite();
+                        break_loc_sp->ClearBreakpointSite();
                         if (removed_locations_event)
                         {
-                            removed_locations_event->GetBreakpointLocationCollection().Add(break_loc);
+                            removed_locations_event->GetBreakpointLocationCollection().Add(break_loc_sp);
                         }
+                        //m_locations.RemoveLocation  (break_loc_sp);
                     }
+                    ++loc_idx;
                 }
             }
         }

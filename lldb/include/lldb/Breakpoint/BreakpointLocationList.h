@@ -248,6 +248,9 @@ protected:
     AddLocation (const Address &addr,
                  bool *new_location = NULL);
 
+    bool
+    RemoveLocation (const lldb::BreakpointLocationSP &bp_loc_sp);
+
     typedef std::vector<lldb::BreakpointLocationSP> collection;
     typedef std::map<lldb_private::Address,
                      lldb::BreakpointLocationSP,

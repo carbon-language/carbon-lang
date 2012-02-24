@@ -190,7 +190,7 @@ ValueObjectChild::UpdateValue ()
             if (m_error.Success())
             {
                 ExecutionContext exe_ctx (GetExecutionContextRef().Lock());
-                m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST (), m_data, 0, GetModule());
+                m_error = m_value.GetValueAsData (&exe_ctx, GetClangAST (), m_data, 0, GetModule().get());
             }
         }
         else

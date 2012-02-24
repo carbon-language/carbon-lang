@@ -158,12 +158,12 @@ Block::CalculateSymbolContext (SymbolContext* sc)
     sc->block = this;
 }
 
-Module *
+lldb::ModuleSP
 Block::CalculateSymbolContextModule ()
 {
     if (m_parent_scope)
         return m_parent_scope->CalculateSymbolContextModule ();
-    return NULL;
+    return lldb::ModuleSP();
 }
 
 CompileUnit *
@@ -388,7 +388,7 @@ Block::AddRange (const Range& range)
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_SYMBOLS));
         if (log)
         {
-            Module *module = m_parent_scope->CalculateSymbolContextModule();
+            ModuleSP module_sp (m_parent_scope->CalculateSymbolContextModule());
             Function *function = m_parent_scope->CalculateSymbolContextFunction();
             const addr_t function_file_addr = function->GetAddressRange().GetBaseAddress().GetFileAddress();
             const addr_t block_start_addr = function_file_addr + range.GetRangeBase ();
@@ -408,8 +408,8 @@ Block::AddRange (const Range& range)
                              block_end_addr,
                              parent_block->GetID(),
                              function->GetID(),
-                             module->GetFileSpec().GetDirectory().GetCString(),
-                             module->GetFileSpec().GetFilename().GetCString());
+                             module_sp->GetFileSpec().GetDirectory().GetCString(),
+                             module_sp->GetFileSpec().GetFilename().GetCString());
             }
             else
             {
@@ -420,8 +420,8 @@ Block::AddRange (const Range& range)
                              block_end_addr,
                              parent_block->GetID(),
                              function->GetID(),
-                             module->GetFileSpec().GetDirectory().GetCString(),
-                             module->GetFileSpec().GetFilename().GetCString());
+                             module_sp->GetFileSpec().GetDirectory().GetCString(),
+                             module_sp->GetFileSpec().GetFilename().GetCString());
             }
         }
         parent_block->AddRange (range);

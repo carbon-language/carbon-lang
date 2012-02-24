@@ -232,7 +232,7 @@ UnwindLLDB::DoCreateRegisterContextForFrame (StackFrame *frame)
     if (idx < num_frames)
     {
         Cursor *frame_cursor = m_frames[idx].get();
-        reg_ctx_sp = frame_cursor->reg_ctx_lldb_sp->shared_from_this();
+        reg_ctx_sp = frame_cursor->reg_ctx_lldb_sp;
     }
     return reg_ctx_sp;
 }

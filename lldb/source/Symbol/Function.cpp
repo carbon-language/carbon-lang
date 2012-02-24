@@ -385,17 +385,17 @@ Function::CalculateSymbolContext(SymbolContext* sc)
     m_comp_unit->CalculateSymbolContext(sc);
 }
 
-Module *
+ModuleSP
 Function::CalculateSymbolContextModule ()
 {
-    const Section *section = m_range.GetBaseAddress().GetSection();
-    if (section)
+    SectionSP section_sp (m_range.GetBaseAddress().GetSection());
+    if (section_sp)
     {
-        const Section *linked_section = section->GetLinkedSection();
-        if (linked_section)
-            return linked_section->GetModule();
+        SectionSP linked_section_sp (section_sp->GetLinkedSection());
+        if (linked_section_sp)
+            return linked_section_sp->GetModule();
         else
-            return section->GetModule();
+            return section_sp->GetModule();
     }
     
     return this->GetCompileUnit()->GetModule();

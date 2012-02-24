@@ -145,11 +145,11 @@ ObjectFilePECOFF::GetPluginDescriptionStatic()
 
 
 ObjectFile *
-ObjectFilePECOFF::CreateInstance (Module* module, DataBufferSP& dataSP, const FileSpec* file, addr_t offset, addr_t length)
+ObjectFilePECOFF::CreateInstance (const lldb::ModuleSP &module_sp, DataBufferSP& dataSP, const FileSpec* file, addr_t offset, addr_t length)
 {
     if (ObjectFilePECOFF::MagicBytesMatch(dataSP))
     {
-        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFilePECOFF (module, dataSP, file, offset, length));
+        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFilePECOFF (module_sp, dataSP, file, offset, length));
         if (objfile_ap.get() && objfile_ap->ParseHeader())
             return objfile_ap.release();
     }
@@ -157,7 +157,7 @@ ObjectFilePECOFF::CreateInstance (Module* module, DataBufferSP& dataSP, const Fi
 }
 
 ObjectFile *
-ObjectFilePECOFF::CreateMemoryInstance (lldb_private::Module* module, 
+ObjectFilePECOFF::CreateMemoryInstance (const lldb::ModuleSP &module_sp, 
                                         lldb::DataBufferSP& data_sp, 
                                         const lldb::ProcessSP &process_sp, 
                                         lldb::addr_t header_addr)
@@ -175,12 +175,12 @@ ObjectFilePECOFF::MagicBytesMatch (DataBufferSP& dataSP)
 }
 
 
-ObjectFilePECOFF::ObjectFilePECOFF (Module* module, 
+ObjectFilePECOFF::ObjectFilePECOFF (const lldb::ModuleSP &module_sp, 
                                     DataBufferSP& dataSP, 
                                     const FileSpec* file, 
                                     addr_t offset, 
                                     addr_t length) :
-    ObjectFile (module, file, offset, length, dataSP),
+    ObjectFile (module_sp, file, offset, length, dataSP),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_dos_header (),
     m_coff_header (),
@@ -537,7 +537,7 @@ ObjectFilePECOFF::GetSymtab()
                 symbol.type     = symtab_data.GetU16 (&offset);
                 symbol.storage  = symtab_data.GetU8  (&offset);
                 symbol.naux     = symtab_data.GetU8  (&offset);		
-                Address symbol_addr(sect_list->GetSectionAtIndex(symbol.sect-1).get(), symbol.value);
+                Address symbol_addr(sect_list->GetSectionAtIndex(symbol.sect-1), symbol.value);
                 symbols[i].GetMangled ().SetValue (symbol_name.c_str(), symbol_name[0]=='_' && symbol_name[1] == 'Z');
                 symbols[i].SetValue(symbol_addr);
 
@@ -559,7 +559,7 @@ ObjectFilePECOFF::GetSectionList()
     {
         m_sections_ap.reset(new SectionList());
         const uint32_t nsects = m_sect_headers.size();
-        Module *module = GetModule();
+        ModuleSP module_sp (GetModule());
         for (uint32_t idx = 0; idx<nsects; ++idx)
         {
             std::string sect_name;
@@ -624,8 +624,7 @@ ObjectFilePECOFF::GetSectionList()
 
             // Use a segment ID of the segment index shifted left by 8 so they
             // never conflict with any of the sections.
-            SectionSP section_sp (new Section (NULL,
-                                               module,                       // Module to which this section belongs
+            SectionSP section_sp (new Section (module_sp,                    // Module to which this section belongs
                                                idx + 1,                      // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
                                                const_sect_name,              // Name of this section
                                                section_type,                    // This section is a container of other sections.

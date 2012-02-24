@@ -281,7 +281,7 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                 comp_unit_info->debug_map_sections_sp.reset(new SectionList);
 
                 Symtab *exe_symtab = m_obj_file->GetSymtab();
-                Module *oso_module = oso_objfile->GetModule();
+                ModuleSP oso_module_sp (oso_objfile->GetModule());
                 Symtab *oso_symtab = oso_objfile->GetSymtab();
 //#define DEBUG_OSO_DMAP    // Do not check in with this defined...
 #if defined(DEBUG_OSO_DMAP)
@@ -330,8 +330,8 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                                 if (oso_fun_symbol)
                                 {
                                     // If we found the symbol, then we
-                                    Section* exe_fun_section = const_cast<Section *>(exe_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
-                                    Section* oso_fun_section = const_cast<Section *>(oso_fun_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
+                                    SectionSP exe_fun_section (exe_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
+                                    SectionSP oso_fun_section (oso_fun_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
                                     if (oso_fun_section)
                                     {
                                         // Now we create a section that we will add as a child of the
@@ -342,14 +342,14 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                                         // size will reflect any size changes (ppc has been known to
                                         // shrink function sizes when it gets rid of jump islands that
                                         // aren't needed anymore).
-                                        SectionSP oso_fun_section_sp (new Section (const_cast<Section *>(oso_fun_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection()),
-                                                                                   oso_module,                         // Module (the .o file)
-                                                                                   sect_id++,                          // Section ID starts at 0x10000 and increments so the section IDs don't overlap with the standard mach IDs
-                                                                                   exe_symbol->GetMangled().GetName(Mangled::ePreferMangled), // Name the section the same as the symbol for which is was generated!
-                                                                                   eSectionTypeDebug,
-                                                                                   oso_fun_symbol->GetAddressRangePtr()->GetBaseAddress().GetOffset(),  // File VM address offset in the current section
-                                                                                   exe_symbol->GetByteSize(),          // File size (we need the size from the executable)
-                                                                                   0, 0, 0));
+                                        SectionSP oso_fun_section_sp (new Section (oso_fun_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection(),
+                                                                                        oso_module_sp,                         // Module (the .o file)
+                                                                                        sect_id++,                          // Section ID starts at 0x10000 and increments so the section IDs don't overlap with the standard mach IDs
+                                                                                        exe_symbol->GetMangled().GetName(Mangled::ePreferMangled), // Name the section the same as the symbol for which is was generated!
+                                                                                        eSectionTypeDebug,
+                                                                                        oso_fun_symbol->GetAddressRangePtr()->GetBaseAddress().GetOffset(),  // File VM address offset in the current section
+                                                                                        exe_symbol->GetByteSize(),          // File size (we need the size from the executable)
+                                                                                        0, 0, 0));
 
                                         oso_fun_section_sp->SetLinkedLocation (exe_fun_section,
                                                                                exe_symbol->GetValue().GetFileAddress() - exe_fun_section->GetFileAddress());
@@ -384,12 +384,12 @@ SymbolFileDWARFDebugMap::GetSymbolFileByCompUnitInfo (CompileUnitInfo *comp_unit
                                 if (exe_symbol && oso_gsym_symbol && exe_symbol->GetAddressRangePtr() && oso_gsym_symbol->GetAddressRangePtr())
                                 {
                                     // If we found the symbol, then we
-                                    Section* exe_gsym_section = const_cast<Section *>(exe_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
-                                    Section* oso_gsym_section = const_cast<Section *>(oso_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
+                                    SectionSP exe_gsym_section (exe_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
+                                    SectionSP oso_gsym_section (oso_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection());
                                     if (oso_gsym_section)
                                     {
-                                        SectionSP oso_gsym_section_sp (new Section (const_cast<Section *>(oso_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection()),
-                                                                                    oso_module,                         // Module (the .o file)
+                                        SectionSP oso_gsym_section_sp (new Section (oso_gsym_symbol->GetAddressRangePtr()->GetBaseAddress().GetSection(),
+                                                                                    oso_module_sp,                         // Module (the .o file)
                                                                                     sect_id++,                          // Section ID starts at 0x10000 and increments so the section IDs don't overlap with the standard mach IDs
                                                                                     exe_symbol->GetMangled().GetName(Mangled::ePreferMangled), // Name the section the same as the symbol for which is was generated!
                                                                                     eSectionTypeDebug,
@@ -624,7 +624,7 @@ SymbolFileDWARFDebugMap::ResolveSymbolContext (const Address& exe_so_addr, uint3
                     if (oso_symbol_section_sp)
                     {
                         const addr_t linked_file_addr = oso_symbol_section_sp->GetLinkedFileAddress();
-                        Address oso_so_addr (oso_symbol_section_sp.get(), exe_file_addr - linked_file_addr);
+                        Address oso_so_addr (oso_symbol_section_sp, exe_file_addr - linked_file_addr);
                         if (oso_so_addr.IsSectionOffset())
                             resolved_flags |= oso_dwarf->ResolveSymbolContext (oso_so_addr, resolve_scope, sc);
                     }
@@ -855,7 +855,7 @@ SymbolFileDWARFDebugMap::GetCompileUnitInfoForSymbolWithID (user_id_t symbol_id,
 
 
 static void
-RemoveFunctionsWithModuleNotEqualTo (Module *module, SymbolContextList &sc_list, uint32_t start_idx)
+RemoveFunctionsWithModuleNotEqualTo (const ModuleSP &module_sp, SymbolContextList &sc_list, uint32_t start_idx)
 {
     // We found functions in .o files. Not all functions in the .o files
     // will have made it into the final output file. The ones that did
@@ -870,8 +870,8 @@ RemoveFunctionsWithModuleNotEqualTo (Module *module, SymbolContextList &sc_list,
         sc_list.GetContextAtIndex(i, sc);
         if (sc.function)
         {
-            const Section *section = sc.function->GetAddressRange().GetBaseAddress().GetSection();
-            if (section->GetModule() != module)
+            const SectionSP section_sp (sc.function->GetAddressRange().GetBaseAddress().GetSection());
+            if (section_sp->GetModule() != module_sp)
             {
                 sc_list.RemoveContextAtIndex(i);
                 continue;

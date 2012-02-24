@@ -30,7 +30,7 @@ using namespace lldb_private;
 // also allow for finding separate debug information files.
 //----------------------------------------------------------------------
 SymbolVendor*
-SymbolVendor::FindPlugin (Module* module)
+SymbolVendor::FindPlugin (const lldb::ModuleSP &module_sp)
 {
     std::auto_ptr<SymbolVendor> instance_ap;
     //----------------------------------------------------------------------
@@ -39,7 +39,7 @@ SymbolVendor::FindPlugin (Module* module)
     SymbolVendorCreateInstance create_callback;
     for (uint32_t idx = 0; (create_callback = PluginManager::GetSymbolVendorCreateCallbackAtIndex(idx)) != NULL; ++idx)
     {
-        instance_ap.reset(create_callback(module));
+        instance_ap.reset(create_callback(module_sp));
 
         if (instance_ap.get())
         {
@@ -53,10 +53,10 @@ SymbolVendor::FindPlugin (Module* module)
     }
     // The default implementation just tries to create debug information using the
     // file representation for the module.
-    instance_ap.reset(new SymbolVendor(module));
+    instance_ap.reset(new SymbolVendor(module_sp));
     if (instance_ap.get())
     {
-        ObjectFile *objfile = module->GetObjectFile();
+        ObjectFile *objfile = module_sp->GetObjectFile();
         if (objfile)
             instance_ap->AddSymbolFileRepresentation(objfile->shared_from_this());
     }
@@ -66,8 +66,8 @@ SymbolVendor::FindPlugin (Module* module)
 //----------------------------------------------------------------------
 // SymbolVendor constructor
 //----------------------------------------------------------------------
-SymbolVendor::SymbolVendor(Module *module) :
-    ModuleChild(module),
+SymbolVendor::SymbolVendor(const lldb::ModuleSP &module_sp) :
+    ModuleChild (module_sp),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_type_list(),
     m_compile_units(),

@@ -25,17 +25,17 @@ using namespace lldb;
 using namespace lldb_private;
 
 ObjectFileSP
-ObjectFile::FindPlugin (Module* module, const FileSpec* file, addr_t file_offset, addr_t file_size, DataBufferSP &file_data_sp)
+ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp, const FileSpec* file, addr_t file_offset, addr_t file_size, DataBufferSP &file_data_sp)
 {
-    Timer scoped_timer (__PRETTY_FUNCTION__,
-                        "ObjectFile::FindPlugin (module = %s/%s, file = %p, file_offset = 0x%z8.8x, file_size = 0x%z8.8x)",
-                        module->GetFileSpec().GetDirectory().AsCString(),
-                        module->GetFileSpec().GetFilename().AsCString(),
-                        file, file_offset, file_size);
     ObjectFileSP object_file_sp;
 
-    if (module != NULL)
+    if (module_sp)
     {
+        Timer scoped_timer (__PRETTY_FUNCTION__,
+                            "ObjectFile::FindPlugin (module = %s/%s, file = %p, file_offset = 0x%z8.8x, file_size = 0x%z8.8x)",
+                            module_sp->GetFileSpec().GetDirectory().AsCString(),
+                            module_sp->GetFileSpec().GetFilename().AsCString(),
+                            file, file_offset, file_size);
         if (file)
         {
             // Memory map the entire file contents
@@ -49,7 +49,7 @@ ObjectFile::FindPlugin (Module* module, const FileSpec* file, addr_t file_offset
             {
                 // Check for archive file with format "/path/to/archive.a(object.o)"
                 char path_with_object[PATH_MAX*2];
-                module->GetFileSpec().GetPath(path_with_object, sizeof(path_with_object));
+                module_sp->GetFileSpec().GetPath(path_with_object, sizeof(path_with_object));
 
                 RegularExpression g_object_regex("(.*)\\(([^\\)]+)\\)$");
                 if (g_object_regex.Execute (path_with_object, 2))
@@ -64,7 +64,7 @@ ObjectFile::FindPlugin (Module* module, const FileSpec* file, addr_t file_offset
                         file_size = archive_file.GetByteSize();
                         if (file_size > 0)
                         {
-                            module->SetFileSpecAndObjectName (archive_file, ConstString(object.c_str()));
+                            module_sp->SetFileSpecAndObjectName (archive_file, ConstString(object.c_str()));
                             file_data_sp = archive_file.MemoryMapFileContents(file_offset, file_size);
                         }
                     }
@@ -80,7 +80,7 @@ ObjectFile::FindPlugin (Module* module, const FileSpec* file, addr_t file_offset
                 ObjectFileCreateInstance create_object_file_callback;
                 for (idx = 0; (create_object_file_callback = PluginManager::GetObjectFileCreateCallbackAtIndex(idx)) != NULL; ++idx)
                 {
-                    object_file_sp.reset (create_object_file_callback(module, file_data_sp, file, file_offset, file_size));
+                    object_file_sp.reset (create_object_file_callback(module_sp, file_data_sp, file, file_offset, file_size));
                     if (object_file_sp.get())
                         return object_file_sp;
                 }
@@ -91,7 +91,7 @@ ObjectFile::FindPlugin (Module* module, const FileSpec* file, addr_t file_offset
                 ObjectContainerCreateInstance create_object_container_callback;
                 for (idx = 0; (create_object_container_callback = PluginManager::GetObjectContainerCreateCallbackAtIndex(idx)) != NULL; ++idx)
                 {
-                    std::auto_ptr<ObjectContainer> object_container_ap(create_object_container_callback(module, file_data_sp, file, file_offset, file_size));
+                    std::auto_ptr<ObjectContainer> object_container_ap(create_object_container_callback(module_sp, file_data_sp, file, file_offset, file_size));
 
                     if (object_container_ap.get())
                         object_file_sp = object_container_ap->GetObjectFile(file);
@@ -109,20 +109,20 @@ ObjectFile::FindPlugin (Module* module, const FileSpec* file, addr_t file_offset
 }
 
 ObjectFileSP
-ObjectFile::FindPlugin (Module* module, 
+ObjectFile::FindPlugin (const lldb::ModuleSP &module_sp, 
                         const ProcessSP &process_sp,
                         lldb::addr_t header_addr,
                         DataBufferSP &file_data_sp)
 {
-    Timer scoped_timer (__PRETTY_FUNCTION__,
-                        "ObjectFile::FindPlugin (module = %s/%s, process = %p, header_addr = 0x%llx)",
-                        module->GetFileSpec().GetDirectory().AsCString(),
-                        module->GetFileSpec().GetFilename().AsCString(),
-                        process_sp.get(), header_addr);
     ObjectFileSP object_file_sp;
     
-    if (module != NULL)
+    if (module_sp)
     {
+        Timer scoped_timer (__PRETTY_FUNCTION__,
+                            "ObjectFile::FindPlugin (module = %s/%s, process = %p, header_addr = 0x%llx)",
+                            module_sp->GetFileSpec().GetDirectory().AsCString(),
+                            module_sp->GetFileSpec().GetFilename().AsCString(),
+                            process_sp.get(), header_addr);
         uint32_t idx;
         
         // Check if this is a normal object file by iterating through
@@ -130,7 +130,7 @@ ObjectFile::FindPlugin (Module* module,
         ObjectFileCreateMemoryInstance create_callback;
         for (idx = 0; (create_callback = PluginManager::GetObjectFileCreateMemoryCallbackAtIndex(idx)) != NULL; ++idx)
         {
-            object_file_sp.reset (create_callback(module, file_data_sp, process_sp, header_addr));
+            object_file_sp.reset (create_callback(module_sp, file_data_sp, process_sp, header_addr));
             if (object_file_sp.get())
                 return object_file_sp;
         }
@@ -142,12 +142,12 @@ ObjectFile::FindPlugin (Module* module,
     return object_file_sp;
 }
 
-ObjectFile::ObjectFile (Module* module, 
+ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp, 
                         const FileSpec *file_spec_ptr, 
                         addr_t file_offset, 
                         addr_t file_size, 
                         DataBufferSP& file_data_sp) :
-    ModuleChild (module),
+    ModuleChild (module_sp),
     m_file (),  // This file could be different from the original module's file
     m_type (eTypeInvalid),
     m_strata (eStrataInvalid),
@@ -169,8 +169,8 @@ ObjectFile::ObjectFile (Module* module,
         {
             log->Printf ("%p ObjectFile::ObjectFile () module = %s/%s, file = %s/%s, offset = 0x%8.8llx, size = %llu\n",
                          this,
-                         m_module->GetFileSpec().GetDirectory().AsCString(),
-                         m_module->GetFileSpec().GetFilename().AsCString(),
+                         module_sp->GetFileSpec().GetDirectory().AsCString(),
+                         module_sp->GetFileSpec().GetFilename().AsCString(),
                          m_file.GetDirectory().AsCString(),
                          m_file.GetFilename().AsCString(),
                          m_offset,
@@ -180,8 +180,8 @@ ObjectFile::ObjectFile (Module* module,
         {
             log->Printf ("%p ObjectFile::ObjectFile () module = %s/%s, file = <NULL>, offset = 0x%8.8llx, size = %llu\n",
                          this,
-                         m_module->GetFileSpec().GetDirectory().AsCString(),
-                         m_module->GetFileSpec().GetFilename().AsCString(),
+                         module_sp->GetFileSpec().GetDirectory().AsCString(),
+                         module_sp->GetFileSpec().GetFilename().AsCString(),
                          m_offset,
                          m_length);
         }
@@ -189,11 +189,11 @@ ObjectFile::ObjectFile (Module* module,
 }
 
 
-ObjectFile::ObjectFile (Module* module, 
+ObjectFile::ObjectFile (const lldb::ModuleSP &module_sp, 
                         const ProcessSP &process_sp,
                         lldb::addr_t header_addr, 
                         DataBufferSP& header_data_sp) :
-    ModuleChild (module),
+    ModuleChild (module_sp),
     m_file (),
     m_type (eTypeInvalid),
     m_strata (eStrataInvalid),
@@ -211,8 +211,8 @@ ObjectFile::ObjectFile (Module* module,
     {
         log->Printf ("%p ObjectFile::ObjectFile () module = %s/%s, process = %p, header_addr = 0x%llx\n",
                      this,
-                     m_module->GetFileSpec().GetDirectory().AsCString(),
-                     m_module->GetFileSpec().GetFilename().AsCString(),
+                     module_sp->GetFileSpec().GetDirectory().AsCString(),
+                     module_sp->GetFileSpec().GetFilename().AsCString(),
                      process_sp.get(),
                      m_offset);
     }
@@ -224,12 +224,13 @@ ObjectFile::~ObjectFile()
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
     if (log)
     {
+        ModuleSP module_sp (GetModule());
         if (m_file)
         {
             log->Printf ("%p ObjectFile::~ObjectFile () module = %s/%s, file = %s/%s, offset = 0x%8.8llx, size = %llu\n",
                          this,
-                         m_module->GetFileSpec().GetDirectory().AsCString(),
-                         m_module->GetFileSpec().GetFilename().AsCString(),
+                         module_sp->GetFileSpec().GetDirectory().AsCString(),
+                         module_sp->GetFileSpec().GetFilename().AsCString(),
                          m_file.GetDirectory().AsCString(),
                          m_file.GetFilename().AsCString(),
                          m_offset,
@@ -239,8 +240,8 @@ ObjectFile::~ObjectFile()
         {
             log->Printf ("%p ObjectFile::~ObjectFile () module = %s/%s, file = <NULL>, offset = 0x%8.8llx, size = %llu\n",
                          this,
-                         m_module->GetFileSpec().GetDirectory().AsCString(),
-                         m_module->GetFileSpec().GetFilename().AsCString(),
+                         module_sp->GetFileSpec().GetDirectory().AsCString(),
+                         module_sp->GetFileSpec().GetFilename().AsCString(),
                          m_offset,
                          m_length);
         }
@@ -250,7 +251,10 @@ ObjectFile::~ObjectFile()
 bool 
 ObjectFile::SetModulesArchitecture (const ArchSpec &new_arch)
 {
-    return m_module->SetArchitecture (new_arch);
+    ModuleSP module_sp (GetModule());
+    if (module_sp)
+        return module_sp->SetArchitecture (new_arch);
+    return false;
 }
 
 AddressClass
@@ -265,10 +269,10 @@ ObjectFile::GetAddressClass (addr_t file_addr)
             const AddressRange *range_ptr = symbol->GetAddressRangePtr();
             if (range_ptr)
             {
-                const Section *section = range_ptr->GetBaseAddress().GetSection();
-                if (section)
+                const SectionSP section_sp (range_ptr->GetBaseAddress().GetSection());
+                if (section_sp)
                 {
-                    const SectionType section_type = section->GetType();
+                    const SectionType section_type = section_sp->GetType();
                     switch (section_type)
                     {
                     case eSectionTypeInvalid:               return eAddressClassUnknown;

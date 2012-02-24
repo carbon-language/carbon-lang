@@ -1361,16 +1361,13 @@ DumpModuleSymbolVendor (Stream &strm, Module *module)
 }
 
 static bool
-LookupAddressInModule 
-(
- CommandInterpreter &interpreter, 
- Stream &strm, 
- Module *module, 
- uint32_t resolve_mask, 
- lldb::addr_t raw_addr, 
- lldb::addr_t offset,
- bool verbose
- )
+LookupAddressInModule (CommandInterpreter &interpreter, 
+                       Stream &strm, 
+                       Module *module, 
+                       uint32_t resolve_mask, 
+                       lldb::addr_t raw_addr, 
+                       lldb::addr_t offset,
+                       bool verbose)
 {
     if (module)
     {
@@ -1382,7 +1379,7 @@ LookupAddressInModule
         {
             if (!target->GetSectionLoadList().ResolveLoadAddress (addr, so_addr))
                 return false;
-            else if (so_addr.GetModulePtr() != module)
+            else if (so_addr.GetModule().get() != module)
                 return false;
         }
         else
@@ -2821,10 +2818,10 @@ public:
                     Address module_address;
                     if (module_address.SetLoadAddress(m_options.m_module_addr, target))
                     {
-                        Module *module = module_address.GetModulePtr();
-                        if (module)
+                        ModuleSP module_sp (module_address.GetModule());
+                        if (module_sp)
                         {
-                            PrintModule (target, module, UINT32_MAX, 0, strm);
+                            PrintModule (target, module_sp.get(), UINT32_MAX, 0, strm);
                             result.SetStatus (eReturnStatusSuccessFinishResult);
                         }
                         else
@@ -3511,6 +3508,205 @@ private:
 };
 
 
+
+class CommandObjectTargetSymbolsAdd : public CommandObject
+{
+public:
+    CommandObjectTargetSymbolsAdd (CommandInterpreter &interpreter) :
+    CommandObject (interpreter,
+                   "target symbols add",
+                   "Add a debug symbol file to one of the target's current modules.",
+                   "target symbols add [<symfile>]")
+    {
+    }
+    
+    virtual
+    ~CommandObjectTargetSymbolsAdd ()
+    {
+    }
+    
+    virtual bool
+    Execute (Args& args,
+             CommandReturnObject &result)
+    {
+        Target *target = m_interpreter.GetDebugger().GetSelectedTarget().get();
+        if (target == NULL)
+        {
+            result.AppendError ("invalid target, create a debug target using the 'target create' command");
+            result.SetStatus (eReturnStatusFailed);
+            return false;
+        }
+        else
+        {
+            const size_t argc = args.GetArgumentCount();
+            if (argc == 0)
+            {
+                result.AppendError ("one or more symbol file paths must be specified");
+                result.SetStatus (eReturnStatusFailed);
+                return false;
+            }
+            else
+            {
+                for (size_t i=0; i<argc; ++i)
+                {
+                    const char *symfile_path = args.GetArgumentAtIndex(i);
+                    if (symfile_path)
+                    {
+                        FileSpec symfile_spec(symfile_path, true);
+                        ArchSpec arch;
+                        if (symfile_spec.Exists())
+                        {
+                            ModuleSP symfile_module_sp (new Module (symfile_spec, target->GetArchitecture()));
+                            if (symfile_module_sp)
+                            {
+                                // We now have a module that represents a symbol file
+                                // that can be used for a module that might exist in the
+                                // current target, so we need to find that module in the
+                                // target
+                                
+                                ModuleSP old_module_sp (target->GetImages().FindModule (symfile_module_sp->GetUUID()));
+                                if (old_module_sp)
+                                {
+                                    const bool can_create = false;
+                                    if (old_module_sp->GetSymbolVendor (can_create))
+                                    {
+                                        // The current module already has a symbol file, so we need
+                                        // need to unload the existing references to this module,
+                                        // and reload with the new one.
+                                        
+                                        ModuleSP target_exe_module_sp (target->GetExecutableModule());
+                                        const bool adding_symbols_to_executable = target_exe_module_sp.get() == old_module_sp.get();
+                                        FileSpec target_module_file (old_module_sp->GetFileSpec());
+                                        ArchSpec target_module_arch (old_module_sp->GetArchitecture());
+
+                                        // Unload the old module
+                                        ModuleList module_list;
+                                        module_list.Append (old_module_sp);
+                                        target->ModulesDidUnload (module_list);
+
+                                        // Remove the module from the shared list
+                                        ModuleList::RemoveSharedModule (old_module_sp);
+
+                                        // Now create the new module and load it
+                                        module_list.Clear();
+                                        //ModuleSP new_module_sp (new Module (target_module_file, target_module_arch));
+                                        ModuleSP new_module_sp (target->GetSharedModule(target_module_file, target_module_arch));
+                                        if (new_module_sp)
+                                        {
+                                            new_module_sp->SetSymbolFileFileSpec (symfile_module_sp->GetFileSpec());
+                                            
+                                            if (adding_symbols_to_executable)
+                                            {
+                                                bool get_dependent_files = true;
+                                                target->SetExecutableModule(new_module_sp, get_dependent_files);
+                                            }
+                                            else
+                                            {
+                                                module_list.Append (new_module_sp);
+                                                target->ModulesDidLoad(module_list);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // The module has not yet created its symbol vendor, we can just
+                                        // give the existing target module the symfile path to use for
+                                        // when it decides to create it!
+                                        old_module_sp->SetSymbolFileFileSpec (symfile_module_sp->GetFileSpec());
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                result.AppendError ("one or more executable image paths must be specified");
+                                result.SetStatus (eReturnStatusFailed);
+                                return false;
+                            }
+                            result.SetStatus (eReturnStatusSuccessFinishResult);
+                        }
+                        else
+                        {
+                            char resolved_symfile_path[PATH_MAX];
+                            result.SetStatus (eReturnStatusFailed);
+                            if (symfile_spec.GetPath (resolved_symfile_path, sizeof(resolved_symfile_path)))
+                            {
+                                if (strcmp (resolved_symfile_path, symfile_path) != 0)
+                                {
+                                    result.AppendErrorWithFormat ("invalid module path '%s' with resolved path '%s'\n", symfile_path, resolved_symfile_path);
+                                    break;
+                                }
+                            }
+                            result.AppendErrorWithFormat ("invalid module path '%s'\n", symfile_path);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        return result.Succeeded();
+    }
+    
+    int
+    HandleArgumentCompletion (Args &input,
+                              int &cursor_index,
+                              int &cursor_char_position,
+                              OptionElementVector &opt_element_vector,
+                              int match_start_point,
+                              int max_return_elements,
+                              bool &word_complete,
+                              StringList &matches)
+    {
+        std::string completion_str (input.GetArgumentAtIndex(cursor_index));
+        completion_str.erase (cursor_char_position);
+        
+        CommandCompletions::InvokeCommonCompletionCallbacks (m_interpreter, 
+                                                             CommandCompletions::eDiskFileCompletion,
+                                                             completion_str.c_str(),
+                                                             match_start_point,
+                                                             max_return_elements,
+                                                             NULL,
+                                                             word_complete,
+                                                             matches);
+        return matches.GetSize();
+    }
+    
+};
+
+
+#pragma mark CommandObjectTargetSymbols
+
+//-------------------------------------------------------------------------
+// CommandObjectTargetSymbols
+//-------------------------------------------------------------------------
+
+class CommandObjectTargetSymbols : public CommandObjectMultiword
+{
+public:
+    //------------------------------------------------------------------
+    // Constructors and Destructors
+    //------------------------------------------------------------------
+    CommandObjectTargetSymbols(CommandInterpreter &interpreter) :
+        CommandObjectMultiword (interpreter,
+                            "target symbols",
+                            "A set of commands for adding and managing debug symbol files.",
+                            "target symbols <sub-command> ...")
+    {
+        LoadSubCommand ("add", CommandObjectSP (new CommandObjectTargetSymbolsAdd (interpreter)));
+        
+    }
+    virtual
+    ~CommandObjectTargetSymbols()
+    {
+    }
+    
+private:
+    //------------------------------------------------------------------
+    // For CommandObjectTargetModules only
+    //------------------------------------------------------------------
+    DISALLOW_COPY_AND_ASSIGN (CommandObjectTargetSymbols);
+};
+
+
 #pragma mark CommandObjectTargetStopHookAdd
 
 //-------------------------------------------------------------------------
@@ -4187,6 +4383,7 @@ CommandObjectMultiwordTarget::CommandObjectMultiwordTarget (CommandInterpreter &
     LoadSubCommand ("select",    CommandObjectSP (new CommandObjectTargetSelect (interpreter)));
     LoadSubCommand ("stop-hook", CommandObjectSP (new CommandObjectMultiwordTargetStopHooks (interpreter)));
     LoadSubCommand ("modules",   CommandObjectSP (new CommandObjectTargetModules (interpreter)));
+    LoadSubCommand ("symbols",   CommandObjectSP (new CommandObjectTargetSymbols (interpreter)));
     LoadSubCommand ("variable",  CommandObjectSP (new CommandObjectTargetVariable (interpreter)));
 }
 

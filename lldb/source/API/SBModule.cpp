@@ -331,7 +331,7 @@ SBModule::GetSectionAtIndex (size_t idx)
             SectionList *section_list = obj_file->GetSectionList ();
 
             if (section_list)
-                sb_section.SetSection(section_list->GetSectionAtIndex (idx).get());
+                sb_section.SetSP(section_list->GetSectionAtIndex (idx));
         }
     }
     return sb_section;
@@ -467,7 +467,7 @@ SBModule::FindSection (const char *sect_name)
                 SectionSP section_sp (section_list->FindSectionByName(const_sect_name));
                 if (section_sp)
                 {
-                    sb_section.SetSection(section_sp.get());
+                    sb_section.SetSP (section_sp);
                 }
             }
         }

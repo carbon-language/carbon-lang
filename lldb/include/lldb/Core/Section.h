@@ -34,10 +34,10 @@ public:
     ~SectionList();
 
     uint32_t
-    AddSection (lldb::SectionSP& sect_sp);
+    AddSection (const lldb::SectionSP& section_sp);
 
     uint32_t
-    AddUniqueSection (lldb::SectionSP& sect_sp);
+    AddUniqueSection (const lldb::SectionSP& section_sp);
 
     uint32_t
     FindSectionIndex (const Section* sect);
@@ -56,9 +56,6 @@ public:
 
     lldb::SectionSP
     FindSectionByType (lldb::SectionType sect_type, bool check_children, uint32_t start_idx = 0) const;
-
-    lldb::SectionSP
-    GetSharedPointer (const Section *section, bool check_children) const;
 
     lldb::SectionSP
     FindSectionContainingFileAddress (lldb::addr_t addr, uint32_t depth = UINT32_MAX) const;
@@ -81,7 +78,7 @@ public:
     GetNumSections (uint32_t depth) const;
 
     bool
-    ReplaceSection (lldb::user_id_t sect_id, lldb::SectionSP& sect_sp, uint32_t depth = UINT32_MAX);
+    ReplaceSection (lldb::user_id_t sect_id, const lldb::SectionSP& section_sp, uint32_t depth = UINT32_MAX);
 
     lldb::SectionSP
     GetSectionAtIndex (uint32_t idx) const;
@@ -95,31 +92,39 @@ protected:
 
 
 class Section :
+    public std::tr1::enable_shared_from_this<Section>,
     public ModuleChild,
     public UserID,
     public Flags
 {
 public:
-    Section (
-        Section *parent,    // NULL for top level sections, non-NULL for child sections
-        Module* module,
-        lldb::user_id_t sect_id,
-        const ConstString &name,
-        lldb::SectionType sect_type,
-        lldb::addr_t file_vm_addr,
-        lldb::addr_t vm_size,
-        uint64_t file_offset,
-        uint64_t file_size,
-        uint32_t flags);
+    // Create a root section (one that has no parent)
+    Section (const lldb::ModuleSP &module_sp,
+             lldb::user_id_t sect_id,
+             const ConstString &name,
+             lldb::SectionType sect_type,
+             lldb::addr_t file_vm_addr,
+             lldb::addr_t vm_size,
+             uint64_t file_offset,
+             uint64_t file_size,
+             uint32_t flags);
+
+    // Create a section that is a child of parent_section_sp
+    Section (const lldb::SectionSP &parent_section_sp,    // NULL for top level sections, non-NULL for child sections
+             const lldb::ModuleSP &module_sp,
+             lldb::user_id_t sect_id,
+             const ConstString &name,
+             lldb::SectionType sect_type,
+             lldb::addr_t file_vm_addr,
+             lldb::addr_t vm_size,
+             uint64_t file_offset,
+             uint64_t file_size,
+             uint32_t flags);
 
     ~Section ();
 
     static int
     Compare (const Section& a, const Section& b);
-
-    // Get a valid shared pointer to this section object
-    lldb::SectionSP
-    GetSharedPointer() const;
 
     bool
     ContainsFileAddress (lldb::addr_t vm_addr) const;
@@ -176,15 +181,7 @@ public:
     GetFileAddress () const;
 
     lldb::addr_t
-    GetOffset () const
-    {
-        // This section has a parent which means m_file_addr is an offset.
-        if (m_parent)
-            return m_file_addr;
-
-        // This section has no parent, so there is no offset to be had
-        return 0;
-    }
+    GetOffset () const;
 
 
     lldb::addr_t
@@ -226,9 +223,6 @@ public:
     bool
     IsDescendant (const Section *section);
 
-    ConstString&
-    GetName ();
-
     const ConstString&
     GetName () const;
 
@@ -236,15 +230,15 @@ public:
     Slide (lldb::addr_t slide_amount, bool slide_children);
 
     void
-    SetLinkedLocation (const Section *linked_section, uint64_t linked_offset);
+    SetLinkedLocation (const lldb::SectionSP &linked_section_sp, uint64_t linked_offset);
 
     bool
     ContainsLinkedFileAddress (lldb::addr_t vm_addr) const;
 
-    const Section *
+    lldb::SectionSP
     GetLinkedSection () const
     {
-        return m_linked_section;
+        return m_linked_section_wp.lock();
     }
 
     uint64_t
@@ -262,9 +256,15 @@ public:
         return m_type;
     }
 
+    lldb::SectionSP
+    GetParent () const
+    {
+        return m_parent_wp.lock();
+    }
+
 protected:
 
-    Section *       m_parent;           // Parent section or NULL if no parent.
+    lldb::SectionWP m_parent_wp;        // Weak pointer to parent section
     ConstString     m_name;             // Name of this section
     lldb::SectionType m_type;           // The type of this section
     lldb::addr_t    m_file_addr;        // The absolute file virtual address range of this section if m_parent == NULL,
@@ -278,7 +278,7 @@ protected:
                                         // that are contained in the address range for this section, but do not produce
                                         // hits unless the children contain the address.
                     m_encrypted:1;      // Set to true if the contents are encrypted
-    const Section * m_linked_section;
+    lldb::SectionWP m_linked_section_wp;
     uint64_t        m_linked_offset;
 private:
     DISALLOW_COPY_AND_ASSIGN (Section);

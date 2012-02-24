@@ -263,7 +263,7 @@ ObjectContainerBSDArchive::GetPluginDescriptionStatic()
 ObjectContainer *
 ObjectContainerBSDArchive::CreateInstance
 (
-    Module* module,
+    const lldb::ModuleSP &module_sp,
     DataBufferSP& data_sp,
     const FileSpec *file,
     addr_t offset,
@@ -275,13 +275,13 @@ ObjectContainerBSDArchive::CreateInstance
     {
         Timer scoped_timer (__PRETTY_FUNCTION__,
                             "ObjectContainerBSDArchive::CreateInstance (module = %s/%s, file = %p, file_offset = 0x%z8.8x, file_size = 0x%z8.8x)",
-                            module->GetFileSpec().GetDirectory().AsCString(),
-                            module->GetFileSpec().GetFilename().AsCString(),
+                            module_sp->GetFileSpec().GetDirectory().AsCString(),
+                            module_sp->GetFileSpec().GetFilename().AsCString(),
                             file, offset, length);
 
-        Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module->GetArchitecture(), module->GetModificationTime()));
+        Archive::shared_ptr archive_sp (Archive::FindCachedArchive (*file, module_sp->GetArchitecture(), module_sp->GetModificationTime()));
 
-        std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module, data_sp, file, offset, length));
+        std::auto_ptr<ObjectContainerBSDArchive> container_ap(new ObjectContainerBSDArchive (module_sp, data_sp, file, offset, length));
 
         if (container_ap.get())
         {
@@ -316,13 +316,13 @@ ObjectContainerBSDArchive::MagicBytesMatch (const DataExtractor &data)
 
 ObjectContainerBSDArchive::ObjectContainerBSDArchive
 (
-    Module* module,
+    const lldb::ModuleSP &module_sp,
     DataBufferSP& dataSP,
     const lldb_private::FileSpec *file,
     lldb::addr_t offset,
     lldb::addr_t size
 ) :
-    ObjectContainer (module, file, offset, size, dataSP),
+    ObjectContainer (module_sp, file, offset, size, dataSP),
     m_archive_sp ()
 {
 }
@@ -345,10 +345,14 @@ ObjectContainerBSDArchive::ParseHeader ()
     {
         if (m_data.GetByteSize() > 0)
         {
-            m_archive_sp = Archive::ParseAndCacheArchiveForFile (m_file,
-                                                                 m_module->GetArchitecture(),
-                                                                 m_module->GetModificationTime(),
-                                                                 m_data);
+            ModuleSP module_sp (GetModule());
+            if (module_sp)
+            {
+                m_archive_sp = Archive::ParseAndCacheArchiveForFile (m_file,
+                                                                     module_sp->GetArchitecture(),
+                                                                     module_sp->GetModificationTime(),
+                                                                     m_data);
+            }
         }
     }
     return m_archive_sp.get() != NULL;
@@ -383,15 +387,19 @@ ObjectContainerBSDArchive::Dump (Stream *s) const
 ObjectFileSP
 ObjectContainerBSDArchive::GetObjectFile (const FileSpec *file)
 {
-    if (m_module->GetObjectName() && m_archive_sp)
+    ModuleSP module_sp (GetModule());
+    if (module_sp)
     {
-        Object *object = m_archive_sp->FindObject (m_module->GetObjectName());
-        if (object)
-            return ObjectFile::FindPlugin (m_module, 
-                                           file, 
-                                           object->ar_file_offset, 
-                                           object->ar_file_size, 
-                                           m_data.GetSharedDataBuffer());
+        if (module_sp->GetObjectName() && m_archive_sp)
+        {
+            Object *object = m_archive_sp->FindObject (module_sp->GetObjectName());
+            if (object)
+                return ObjectFile::FindPlugin (module_sp, 
+                                               file, 
+                                               object->ar_file_offset, 
+                                               object->ar_file_size, 
+                                               m_data.GetSharedDataBuffer());
+        }
     }
     return ObjectFileSP();
 }

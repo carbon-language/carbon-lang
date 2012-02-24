@@ -15,23 +15,19 @@
 using namespace lldb;
 using namespace lldb_private;
 
-Section::Section
-(
-    Section *parent,
-    Module* module,
-    user_id_t sect_id,
-    const ConstString &name,
-    SectionType sect_type,
-    addr_t file_addr,
-    addr_t byte_size,
-    uint64_t file_offset,
-    uint64_t file_size,
-    uint32_t flags
-) :
-    ModuleChild     (module),
+Section::Section (const ModuleSP &module_sp,
+                  user_id_t sect_id,
+                  const ConstString &name,
+                  SectionType sect_type,
+                  addr_t file_addr,
+                  addr_t byte_size,
+                  uint64_t file_offset,
+                  uint64_t file_size,
+                  uint32_t flags) :
+    ModuleChild     (module_sp),
     UserID          (sect_id),
     Flags           (flags),
-    m_parent        (parent),
+    m_parent_wp     (),
     m_name          (name),
     m_type          (sect_type),
     m_file_addr     (file_addr),
@@ -40,73 +36,92 @@ Section::Section
     m_file_size     (file_size),
     m_children      (),
     m_fake          (false),
-    m_linked_section(NULL),
+    m_linked_section_wp(),
     m_linked_offset (0)
 {
+//    printf ("Section::Section(%p): module=%p, sect_id = 0x%16.16llx, addr=[0x%16.16llx - 0x%16.16llx), file [0x%16.16llx - 0x%16.16llx), flags = 0x%8.8x, name = %s\n",
+//            this, module_sp.get(), sect_id, file_addr, file_addr + byte_size, file_offset, file_offset + file_size, flags, name.GetCString());
+}
+
+Section::Section (const lldb::SectionSP &parent_section_sp,
+                  const ModuleSP &module_sp,
+                  user_id_t sect_id,
+                  const ConstString &name,
+                  SectionType sect_type,
+                  addr_t file_addr,
+                  addr_t byte_size,
+                  uint64_t file_offset,
+                  uint64_t file_size,
+                  uint32_t flags) :
+    ModuleChild     (module_sp),
+    UserID          (sect_id),
+    Flags           (flags),
+    m_parent_wp     (),
+    m_name          (name),
+    m_type          (sect_type),
+    m_file_addr     (file_addr),
+    m_byte_size     (byte_size),
+    m_file_offset   (file_offset),
+    m_file_size     (file_size),
+    m_children      (),
+    m_fake          (false),
+    m_linked_section_wp(),
+    m_linked_offset (0)
+{
+//    printf ("Section::Section(%p): module=%p, sect_id = 0x%16.16llx, addr=[0x%16.16llx - 0x%16.16llx), file [0x%16.16llx - 0x%16.16llx), flags = 0x%8.8x, name = %s.%s\n",
+//            this, module_sp.get(), sect_id, file_addr, file_addr + byte_size, file_offset, file_offset + file_size, flags, parent_section_sp->GetName().GetCString(), name.GetCString());
+    if (parent_section_sp)
+        m_parent_wp = parent_section_sp;
 }
 
 Section::~Section()
 {
-}
-
-
-// Get a valid shared pointer to this section object
-SectionSP
-Section::GetSharedPointer() const
-{
-    SectionSP this_sp;
-    if (m_parent)
-        this_sp = m_parent->GetChildren().GetSharedPointer (this, false);
-    else
-    {
-        ObjectFile *objfile = m_module->GetObjectFile();
-        if (objfile)
-        {
-            SectionList *section_list = objfile->GetSectionList();
-            if (section_list)
-                this_sp = section_list->GetSharedPointer (this, false);
-        }
-    }
-    return this_sp;
-}
-
-
-
-ConstString&
-Section::GetName()
-{
-    if (m_linked_section)
-        return const_cast<Section *>(m_linked_section)->GetName();
-    return m_name;
+//    printf ("Section::~Section(%p)\n", this);
 }
 
 const ConstString&
 Section::GetName() const
 {
-    if (m_linked_section)
-        return m_linked_section->GetName();
+    SectionSP linked_section_sp (m_linked_section_wp.lock());
+    if (linked_section_sp)
+        return linked_section_sp->GetName();
     return m_name;
 }
 
 addr_t
 Section::GetFileAddress () const
 {
-    if (m_parent)
+    SectionSP parent_sp (GetParent ());
+    if (parent_sp)
     {
         // This section has a parent which means m_file_addr is an offset into
         // the parent section, so the file address for this section is the file
         // address of the parent plus the offset
-        return m_parent->GetFileAddress() + m_file_addr;
+        return parent_sp->GetFileAddress() + m_file_addr;
     }
     // This section has no parent, so m_file_addr is the file base address
     return m_file_addr;
 }
 
+lldb::addr_t
+Section::GetOffset () const
+{
+    // This section has a parent which means m_file_addr is an offset.
+    SectionSP parent_sp (GetParent ());
+    if (parent_sp)
+        return m_file_addr;
+    
+    // This section has no parent, so there is no offset to be had
+    return 0;
+}
+
+
 addr_t
 Section::GetLinkedFileAddress () const
 {
-    if (m_linked_section)
-        return m_linked_section->GetFileAddress() + m_linked_offset;
+    SectionSP linked_section_sp (m_linked_section_wp.lock());
+    if (linked_section_sp)
+        return linked_section_sp->GetFileAddress() + m_linked_offset;
     return LLDB_INVALID_ADDRESS;
 }
 
@@ -115,22 +130,26 @@ addr_t
 Section::GetLoadBaseAddress (Target *target) const
 {
     addr_t load_base_addr = LLDB_INVALID_ADDRESS;
-    if (m_linked_section)
+    SectionSP linked_section_sp (m_linked_section_wp.lock());
+    if (linked_section_sp)
     {
-        load_base_addr = m_linked_section->GetLoadBaseAddress(target);
+        load_base_addr = linked_section_sp->GetLoadBaseAddress(target);
         if (load_base_addr != LLDB_INVALID_ADDRESS)
             load_base_addr += m_linked_offset;
     }
     else
-    if (m_parent)
     {
-        load_base_addr = m_parent->GetLoadBaseAddress (target);
-        if (load_base_addr != LLDB_INVALID_ADDRESS)
-            load_base_addr += GetOffset();
-    }
-    else
-    {
-        load_base_addr = target->GetSectionLoadList().GetSectionLoadAddress (this);
+        SectionSP parent_sp (GetParent ());
+        if (parent_sp)
+        {
+            load_base_addr = parent_sp->GetLoadBaseAddress (target);
+            if (load_base_addr != LLDB_INVALID_ADDRESS)
+                load_base_addr += GetOffset();
+        }
+        else
+        {
+            load_base_addr = target->GetSectionLoadList().GetSectionLoadAddress (this);
+        }
     }
 
     return load_base_addr;
@@ -151,15 +170,16 @@ Section::ResolveContainedAddress (addr_t offset, Address &so_addr) const
                 return child_section->ResolveContainedAddress (offset - child_offset, so_addr);
         }
     }
-    if (m_linked_section)
+    SectionSP linked_section_sp (m_linked_section_wp.lock());
+    if (linked_section_sp)
     {
         so_addr.SetOffset(m_linked_offset + offset);
-        so_addr.SetSection(m_linked_section);
+        so_addr.SetSection(linked_section_sp);
     }
     else
     {
         so_addr.SetOffset(offset);
-        so_addr.SetSection(this);
+        so_addr.SetSection(const_cast<Section *>(this)->shared_from_this());
     }
     return true;
 }
@@ -200,9 +220,9 @@ Section::Compare (const Section& a, const Section& b)
     if (&a == &b)
         return 0;
 
-    const Module* a_module = a.GetModule();
-    const Module* b_module = b.GetModule();
-    if (a_module == b_module)
+    const ModuleSP a_module_sp = a.GetModule();
+    const ModuleSP b_module_sp = b.GetModule();
+    if (a_module_sp == b_module_sp)
     {
         user_id_t a_sect_uid = a.GetID();
         user_id_t b_sect_uid = b.GetID();
@@ -215,7 +235,7 @@ Section::Compare (const Section& a, const Section& b)
     else
     {
         // The modules are different, just compare the module pointers
-        if (a_module < b_module)
+        if (a_module_sp.get() < b_module_sp.get())
             return -1;
         else
             return 1;   // We already know the modules aren't equal
@@ -232,11 +252,12 @@ Section::Dump (Stream *s, Target *target, uint32_t depth) const
     bool resolved = true;
     addr_t addr = LLDB_INVALID_ADDRESS;
 
+    SectionSP linked_section_sp (m_linked_section_wp.lock());
     if (GetByteSize() == 0)
         s->Printf("%39s", "");
     else
     {
-        if (target && m_linked_section == NULL)
+        if (target && linked_section_sp.get() == NULL)
             addr = GetLoadBaseAddress (target);
 
         if (addr == LLDB_INVALID_ADDRESS)
@@ -256,13 +277,13 @@ Section::Dump (Stream *s, Target *target, uint32_t depth) const
 
     s->EOL();
 
-    if (m_linked_section)
+    if (linked_section_sp)
     {
         addr = LLDB_INVALID_ADDRESS;
         resolved = true;
         if (target)
         {
-            addr = m_linked_section->GetLoadBaseAddress(target);
+            addr = linked_section_sp->GetLoadBaseAddress(target);
             if (addr != LLDB_INVALID_ADDRESS)
                 addr += m_linked_offset;
         }
@@ -271,7 +292,7 @@ Section::Dump (Stream *s, Target *target, uint32_t depth) const
         {
             if (target)
                 resolved = false;
-            addr = m_linked_section->GetFileAddress() + m_linked_offset;
+            addr = linked_section_sp->GetFileAddress() + m_linked_offset;
         }
 
         int indent = 26 + s->GetIndentLevel();
@@ -281,7 +302,7 @@ Section::Dump (Stream *s, Target *target, uint32_t depth) const
         indent = 3 * (sizeof(uint32_t) * 2 + 2 + 1) + 1;
         s->Printf("%c%*.*s", resolved ? ' ' : '*', indent, indent, "");
 
-        m_linked_section->DumpName(s);
+        linked_section_sp->DumpName(s);
         s->Printf(" + 0x%llx\n", m_linked_offset);
     }
 
@@ -292,17 +313,22 @@ Section::Dump (Stream *s, Target *target, uint32_t depth) const
 void
 Section::DumpName (Stream *s) const
 {
-    if (m_parent == NULL)
+    SectionSP parent_sp (GetParent ());
+    if (parent_sp)
     {
-        // The top most section prints the module basename
-        const char *module_basename = m_module->GetFileSpec().GetFilename().AsCString();
-        if (module_basename && module_basename[0])
-            s->Printf("%s.", module_basename);
+        parent_sp->DumpName (s);
+        s->PutChar('.');
     }
     else
     {
-        m_parent->DumpName (s);
-        s->PutChar('.');
+        // The top most section prints the module basename
+        ModuleSP module_sp (GetModule());
+        if (module_sp)
+        {
+            const char *module_basename = module_sp->GetFileSpec().GetFilename().AsCString();
+            if (module_basename && module_basename[0])
+                s->Printf("%s.", module_basename);
+        }
     }
     m_name.Dump(s);
 }
@@ -312,8 +338,9 @@ Section::IsDescendant (const Section *section)
 {
     if (this == section)
         return true;
-    if (m_parent)
-        return m_parent->IsDescendant (section);
+    SectionSP parent_sp (GetParent ());
+    if (parent_sp)
+        return parent_sp->IsDescendant (section);
     return false;
 }
 
@@ -336,11 +363,11 @@ Section::Slide (addr_t slide_amount, bool slide_children)
 }
 
 void
-Section::SetLinkedLocation (const Section *linked_section, uint64_t linked_offset)
+Section::SetLinkedLocation (const lldb::SectionSP &linked_section_sp, uint64_t linked_offset)
 {
-    if (linked_section)
-        m_module = linked_section->GetModule();
-    m_linked_section = linked_section;
+    if (linked_section_sp)
+        m_module_wp = linked_section_sp->GetModule();
+    m_linked_section_wp = linked_section_sp;
     m_linked_offset  = linked_offset;
 }
 
@@ -357,10 +384,11 @@ SectionList::~SectionList ()
 }
 
 uint32_t
-SectionList::AddSection (SectionSP& sect_sp)
+SectionList::AddSection (const lldb::SectionSP& section_sp)
 {
+    assert (section_sp.get());
     uint32_t section_index = m_sections.size();
-    m_sections.push_back(sect_sp);
+    m_sections.push_back(section_sp);
     return section_index;
 }
 
@@ -382,7 +410,7 @@ SectionList::FindSectionIndex (const Section* sect)
 }
 
 uint32_t
-SectionList::AddUniqueSection (SectionSP& sect_sp)
+SectionList::AddUniqueSection (const lldb::SectionSP& sect_sp)
 {
     uint32_t sect_idx = FindSectionIndex (sect_sp.get());
     if (sect_idx == UINT32_MAX)
@@ -392,7 +420,7 @@ SectionList::AddUniqueSection (SectionSP& sect_sp)
 
 
 bool
-SectionList::ReplaceSection (user_id_t sect_id, SectionSP& sect_sp, uint32_t depth)
+SectionList::ReplaceSection (user_id_t sect_id, const lldb::SectionSP& sect_sp, uint32_t depth)
 {
     iterator sect_iter, end = m_sections.end();
     for (sect_iter = m_sections.begin(); sect_iter != end; ++sect_iter)
@@ -441,19 +469,21 @@ SectionList::FindSectionByName (const ConstString &section_dstr) const
 {
     SectionSP sect_sp;
     // Check if we have a valid section string
-    if (section_dstr)
+    if (section_dstr && !m_sections.empty())
     {
         const_iterator sect_iter;
         const_iterator end = m_sections.end();
         for (sect_iter = m_sections.begin(); sect_iter != end && sect_sp.get() == NULL; ++sect_iter)
         {
-            if ((*sect_iter)->GetName() == section_dstr)
+            Section *child_section = sect_iter->get();
+            assert (child_section);
+            if (child_section->GetName() == section_dstr)
             {
                 sect_sp = *sect_iter;
             }
             else
             {
-                sect_sp = (*sect_iter)->GetChildren().FindSectionByName(section_dstr);
+                sect_sp = child_section->GetChildren().FindSectionByName(section_dstr);
             }
         }
     }
@@ -506,32 +536,6 @@ SectionList::FindSectionByType (SectionType sect_type, bool check_children, uint
     }
     return sect_sp;
 }
-
-SectionSP
-SectionList::GetSharedPointer (const Section *section, bool check_children) const
-{
-    SectionSP sect_sp;
-    if (section)
-    {
-        const_iterator sect_iter;
-        const_iterator end = m_sections.end();
-        for (sect_iter = m_sections.begin(); sect_iter != end && sect_sp.get() == NULL; ++sect_iter)
-        {
-            if (sect_iter->get() == section)
-            {
-                sect_sp = *sect_iter;
-                break;
-            }
-            else if (check_children)
-            {
-                sect_sp = (*sect_iter)->GetChildren().GetSharedPointer (section, true);
-            }
-        }
-    }
-    return sect_sp;
-}
-
-
 
 SectionSP
 SectionList::FindSectionContainingFileAddress (addr_t vm_addr, uint32_t depth) const

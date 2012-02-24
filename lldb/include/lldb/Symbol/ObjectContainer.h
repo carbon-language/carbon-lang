@@ -47,12 +47,12 @@ public:
     /// supplied upon construction. The at an offset within a file for
     /// objects that contain more than one architecture or object.
     //------------------------------------------------------------------
-    ObjectContainer (Module* module,
+    ObjectContainer (const lldb::ModuleSP &module_sp,
                      const FileSpec *file,
                      lldb::addr_t file_offset,
                      lldb::addr_t file_size,
                      lldb::DataBufferSP& file_data_sp) :
-        ModuleChild (module),
+        ModuleChild (module_sp),
         m_file (),  // This file can be different than the module's file spec
         m_offset (file_offset),
         m_length (file_size),

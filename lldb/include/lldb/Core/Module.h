@@ -149,7 +149,7 @@ public:
     virtual void
     CalculateSymbolContext (SymbolContext* sc);
 
-    virtual Module *
+    virtual lldb::ModuleSP
     CalculateSymbolContextModule ();
 
     void
@@ -464,6 +464,18 @@ public:
         m_platform_file = file;
     }
 
+    const FileSpec &
+    GetSymbolFileFileSpec () const
+    {
+        return m_symfile_spec;
+    }
+    
+    void
+    SetSymbolFileFileSpec (const FileSpec &file)
+    {
+        m_symfile_spec = file;
+    }
+
     const TimeValue &
     GetModificationTime () const;
    
@@ -740,6 +752,7 @@ protected:
     lldb_private::UUID          m_uuid;         ///< Each module is assumed to have a unique identifier to help match it up to debug symbols.
     FileSpec                    m_file;         ///< The file representation on disk for this module (if there is one).
     FileSpec                    m_platform_file;///< The path to the module on the platform on which it is being debugged
+    FileSpec                    m_symfile_spec; ///< If this path is valid, then this is the file that _will_ be used as the symbol file for this module
     ConstString                 m_object_name;  ///< The name an object within this module that is selected, or empty of the module is represented by \a m_file.
     uint64_t                    m_object_offset;
     lldb::ObjectFileSP          m_objfile_sp;   ///< A shared pointer to the object file parser for this module as it may or may not be shared with the SymbolFile

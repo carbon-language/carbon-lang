@@ -986,30 +986,33 @@ Target::ModuleIsExcludedForNonModuleSpecificSearches (const lldb::ModuleSP &modu
 size_t
 Target::ReadMemoryFromFileCache (const Address& addr, void *dst, size_t dst_len, Error &error)
 {
-    const Section *section = addr.GetSection();
-    if (section && section->GetModule())
+    SectionSP section_sp (addr.GetSection());
+    if (section_sp)
     {
-        ObjectFile *objfile = section->GetModule()->GetObjectFile();
-        if (objfile)
+        ModuleSP module_sp (section_sp->GetModule());
+        if (module_sp)
         {
-            size_t bytes_read = objfile->ReadSectionData (section, 
-                                                          addr.GetOffset(), 
-                                                          dst, 
-                                                          dst_len);
-            if (bytes_read > 0)
-                return bytes_read;
+            ObjectFile *objfile = section_sp->GetModule()->GetObjectFile();
+            if (objfile)
+            {
+                size_t bytes_read = objfile->ReadSectionData (section_sp.get(), 
+                                                              addr.GetOffset(), 
+                                                              dst, 
+                                                              dst_len);
+                if (bytes_read > 0)
+                    return bytes_read;
+                else
+                    error.SetErrorStringWithFormat("error reading data from section %s", section_sp->GetName().GetCString());
+            }
             else
-                error.SetErrorStringWithFormat("error reading data from section %s", section->GetName().GetCString());
+                error.SetErrorString("address isn't from a object file");
         }
         else
-        {
-            error.SetErrorString("address isn't from a object file");
-        }
+            error.SetErrorString("address isn't in a module");
     }
     else
-    {
         error.SetErrorString("address doesn't contain a section that points to a section in a object file");
-    }
+
     return 0;
 }
 
@@ -1070,12 +1073,12 @@ Target::ReadMemory (const Address& addr,
 
         if (load_addr == LLDB_INVALID_ADDRESS)
         {
-            Module *addr_module = resolved_addr.GetModulePtr();
-            if (addr_module && addr_module->GetFileSpec())
+            ModuleSP addr_module_sp (resolved_addr.GetModule());
+            if (addr_module_sp && addr_module_sp->GetFileSpec())
                 error.SetErrorStringWithFormat("%s[0x%llx] can't be resolved, %s in not currently loaded", 
-                                               addr_module->GetFileSpec().GetFilename().AsCString(), 
+                                               addr_module_sp->GetFileSpec().GetFilename().AsCString(), 
                                                resolved_addr.GetFileAddress(),
-                                               addr_module->GetFileSpec().GetFilename().AsCString());
+                                               addr_module_sp->GetFileSpec().GetFilename().AsCString());
             else
                 error.SetErrorStringWithFormat("0x%llx can't be resolved", resolved_addr.GetFileAddress());
         }

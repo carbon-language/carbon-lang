@@ -29,7 +29,7 @@ public:
     ///     The module that owns the object that inherits from this
     ///     class.
     //------------------------------------------------------------------
-    ModuleChild (Module* module);
+    ModuleChild (const lldb::ModuleSP &module_sp);
 
     //------------------------------------------------------------------
     /// Copy constructor.
@@ -61,22 +61,13 @@ public:
     operator= (const ModuleChild& rhs);
 
     //------------------------------------------------------------------
-    /// Get accessor for the module pointer.
-    ///
-    /// @return
-    ///     A pointer to the module that owns this object.
-    //------------------------------------------------------------------
-    Module *
-    GetModule ();
-
-    //------------------------------------------------------------------
     /// Get const accessor for the module pointer.
     ///
     /// @return
     ///     A const pointer to the module that owns the object that
     ///     inherits from this class.
     //------------------------------------------------------------------
-    Module *
+    lldb::ModuleSP
     GetModule () const;
 
     //------------------------------------------------------------------
@@ -87,14 +78,14 @@ public:
     ///      class.
     //------------------------------------------------------------------
     void
-    SetModule (Module *module);
+    SetModule (const lldb::ModuleSP &module_sp);
 
 protected:
     //------------------------------------------------------------------
     // Member variables
     //------------------------------------------------------------------
-    Module *m_module;   ///< The Module that owns the object that inherits
-                        ///< from this class.
+    lldb::ModuleWP m_module_wp;   ///< The Module that owns the object that inherits
+                                  ///< from this class.
 };
 
 } // namespace lldb_private

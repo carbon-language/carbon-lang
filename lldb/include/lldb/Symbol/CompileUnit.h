@@ -68,7 +68,7 @@ public:
     ///
     /// @see lldb::LanguageType
     //------------------------------------------------------------------
-    CompileUnit(Module *module, void *user_data, const char *pathname, lldb::user_id_t uid, lldb::LanguageType language);
+    CompileUnit(const lldb::ModuleSP &module_sp, void *user_data, const char *pathname, lldb::user_id_t uid, lldb::LanguageType language);
 
     //------------------------------------------------------------------
     /// Construct with a module, file spec, UID and language.
@@ -100,7 +100,7 @@ public:
     ///
     /// @see lldb::LanguageType
     //------------------------------------------------------------------
-    CompileUnit(Module *module, void *user_data, const FileSpec &file_spec, lldb::user_id_t uid, lldb::LanguageType language);
+    CompileUnit(const lldb::ModuleSP &module_sp, void *user_data, const FileSpec &file_spec, lldb::user_id_t uid, lldb::LanguageType language);
 
     //------------------------------------------------------------------
     /// Destructor
@@ -127,7 +127,7 @@ public:
     virtual void
     CalculateSymbolContext(SymbolContext* sc);
 
-    virtual Module *
+    virtual lldb::ModuleSP
     CalculateSymbolContextModule ();
     
     virtual CompileUnit *

@@ -19,9 +19,9 @@ namespace lldb_private
     typedef lldb::ABISP (*ABICreateInstance) (const ArchSpec &arch);
     typedef Disassembler* (*DisassemblerCreateInstance) (const ArchSpec &arch);
     typedef DynamicLoader* (*DynamicLoaderCreateInstance) (Process* process, bool force);
-    typedef ObjectContainer* (*ObjectContainerCreateInstance) (Module* module, lldb::DataBufferSP& dataSP, const FileSpec *file, lldb::addr_t offset, lldb::addr_t length);
-    typedef ObjectFile* (*ObjectFileCreateInstance) (Module* module, lldb::DataBufferSP& dataSP, const FileSpec* file, lldb::addr_t offset, lldb::addr_t length);
-    typedef ObjectFile* (*ObjectFileCreateMemoryInstance) (Module* module, lldb::DataBufferSP& dataSP, const lldb::ProcessSP &process_sp, lldb::addr_t offset);
+    typedef ObjectContainer* (*ObjectContainerCreateInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& dataSP, const FileSpec *file, lldb::addr_t offset, lldb::addr_t length);
+    typedef ObjectFile* (*ObjectFileCreateInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& dataSP, const FileSpec* file, lldb::addr_t offset, lldb::addr_t length);
+    typedef ObjectFile* (*ObjectFileCreateMemoryInstance) (const lldb::ModuleSP &module_sp, lldb::DataBufferSP& dataSP, const lldb::ProcessSP &process_sp, lldb::addr_t offset);
     typedef LogChannel* (*LogChannelCreateInstance) ();
     typedef EmulateInstruction * (*EmulateInstructionCreateInstance) (const ArchSpec &arch, InstructionType inst_type);
     typedef OperatingSystem* (*OperatingSystemCreateInstance) (Process *process, bool force);
@@ -29,7 +29,7 @@ namespace lldb_private
     typedef Platform* (*PlatformCreateInstance) ();
     typedef lldb::ProcessSP (*ProcessCreateInstance) (Target &target, Listener &listener, const FileSpec *crash_file_path);
     typedef SymbolFile* (*SymbolFileCreateInstance) (ObjectFile* obj_file);
-    typedef SymbolVendor* (*SymbolVendorCreateInstance) (Module *module);   // Module can be NULL for default system symbol vendor
+    typedef SymbolVendor* (*SymbolVendorCreateInstance) (const lldb::ModuleSP &module_sp);   // Module can be NULL for default system symbol vendor
     typedef bool (*BreakpointHitCallback) (void *baton, StoppointCallbackContext *context, lldb::user_id_t break_id, lldb::user_id_t break_loc_id);
     typedef bool (*WatchpointHitCallback) (void *baton, StoppointCallbackContext *context, lldb::user_id_t watch_id, uint32_t type);
     typedef ThreadPlan * (*ThreadPlanShouldStopHereCallback) (ThreadPlan *current_plan, Flags &flags, void *baton);

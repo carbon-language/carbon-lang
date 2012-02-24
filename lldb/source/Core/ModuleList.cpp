@@ -586,12 +586,12 @@ ModuleList::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t res
 {
     // The address is already section offset so it has a module
     uint32_t resolved_flags = 0;
-    Module *module = so_addr.GetModulePtr();
-    if (module)
+    ModuleSP module_sp (so_addr.GetModule());
+    if (module_sp)
     {
-        resolved_flags = module->ResolveSymbolContextForAddress (so_addr,
-                                                                 resolve_scope,
-                                                                 sc);
+        resolved_flags = module_sp->ResolveSymbolContextForAddress (so_addr,
+                                                                    resolve_scope,
+                                                                    sc);
     }
     else
     {

@@ -817,11 +817,11 @@ ValueObject::GetPointeeData (DataExtractor& data,
         {
             case eAddressTypeFile:
                 {
-                    Module* module = GetModule();
-                    if (module)
+                    ModuleSP module_sp (GetModule());
+                    if (module_sp)
                     {
                         Address so_addr;
-                        module->ResolveFileAddress(addr, so_addr);
+                        module_sp->ResolveFileAddress(addr, so_addr);
                         ExecutionContext exe_ctx (GetExecutionContextRef());
                         Target* target = exe_ctx.GetTargetPtr();
                         if (target)
@@ -873,7 +873,7 @@ ValueObject::GetData (DataExtractor& data)
 {
     UpdateValueIfNeeded(false);
     ExecutionContext exe_ctx (GetExecutionContextRef());
-    Error error = m_value.GetValueAsData(&exe_ctx, GetClangAST(), data, 0, GetModule());
+    Error error = m_value.GetValueAsData(&exe_ctx, GetClangAST(), data, 0, GetModule().get());
     if (error.Fail())
         return 0;
     data.SetAddressByteSize(m_data.GetAddressByteSize());
@@ -956,7 +956,7 @@ ValueObject::ReadPointedString (Stream& s,
             }
             if (cstr_address != 0 && cstr_address != LLDB_INVALID_ADDRESS)
             {
-                Address cstr_so_addr (NULL, cstr_address);
+                Address cstr_so_addr (cstr_address);
                 DataExtractor data;
                 size_t bytes_read = 0;
                 if (cstr_len > 0 && honor_array)
@@ -3383,7 +3383,7 @@ ValueObject::CreateConstantValue (const ConstString &name)
         data.SetByteOrder (m_data.GetByteOrder());
         data.SetAddressByteSize(m_data.GetAddressByteSize());
         
-        m_error = m_value.GetValueAsData (&exe_ctx, ast, data, 0, GetModule());
+        m_error = m_value.GetValueAsData (&exe_ctx, ast, data, 0, GetModule().get());
         
         valobj_sp = ValueObjectConstResult::Create (exe_ctx.GetBestExecutionContextScope(), 
                                                     ast,
@@ -3543,7 +3543,7 @@ ValueObject::CastPointerType (const char *name, ClangASTType &clang_ast_type)
     
     if (ptr_value != LLDB_INVALID_ADDRESS)
     {
-        Address ptr_addr (NULL, ptr_value);
+        Address ptr_addr (ptr_value);
         ExecutionContext exe_ctx (GetExecutionContextRef());
         valobj_sp = ValueObjectMemory::Create (exe_ctx.GetBestExecutionContextScope(),
                                                name, 
@@ -3562,7 +3562,7 @@ ValueObject::CastPointerType (const char *name, TypeSP &type_sp)
     
     if (ptr_value != LLDB_INVALID_ADDRESS)
     {
-        Address ptr_addr (NULL, ptr_value);
+        Address ptr_addr (ptr_value);
         ExecutionContext exe_ctx (GetExecutionContextRef());
         valobj_sp = ValueObjectMemory::Create (exe_ctx.GetBestExecutionContextScope(),
                                                name, 

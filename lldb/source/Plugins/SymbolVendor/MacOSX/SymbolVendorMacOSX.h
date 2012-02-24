@@ -32,12 +32,12 @@ public:
     GetPluginDescriptionStatic();
 
     static lldb_private::SymbolVendor*
-    CreateInstance (lldb_private::Module *module);
+    CreateInstance (const lldb::ModuleSP &module_sp);
 
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    SymbolVendorMacOSX (lldb_private::Module *module);
+    SymbolVendorMacOSX (const lldb::ModuleSP &module_sp);
 
     virtual
     ~SymbolVendorMacOSX();

@@ -303,7 +303,11 @@ SymbolFileDWARF::SymbolFileDWARF(ObjectFile* objfile) :
 SymbolFileDWARF::~SymbolFileDWARF()
 {
     if (m_is_external_ast_source)
-        m_obj_file->GetModule()->GetClangASTContext().RemoveExternalSource ();
+    {
+        ModuleSP module_sp (m_obj_file->GetModule());
+        if (module_sp)
+            module_sp->GetClangASTContext().RemoveExternalSource ();
+    }
 }
 
 static const ConstString &
@@ -346,8 +350,8 @@ void
 SymbolFileDWARF::InitializeObject()
 {
     // Install our external AST source callbacks so we can complete Clang types.
-    Module *module = m_obj_file->GetModule();
-    if (module)
+    ModuleSP module_sp (m_obj_file->GetModule());
+    if (module_sp)
     {
         const SectionList *section_list = m_obj_file->GetSectionList();
 
@@ -531,17 +535,17 @@ SymbolFileDWARF::GetCachedSectionData (uint32_t got_flag, SectionType sect_type,
         const SectionList *section_list = m_obj_file->GetSectionList();
         if (section_list)
         {
-            Section *section = section_list->FindSectionByType(sect_type, true).get();
-            if (section)
+            SectionSP section_sp (section_list->FindSectionByType(sect_type, true));
+            if (section_sp)
             {
                 // See if we memory mapped the DWARF segment?
                 if (m_dwarf_data.GetByteSize())
                 {
-                    data.SetData(m_dwarf_data, section->GetOffset (), section->GetByteSize());
+                    data.SetData(m_dwarf_data, section_sp->GetOffset (), section_sp->GetByteSize());
                 }
                 else
                 {
-                    if (m_obj_file->ReadSectionData (section, data) == 0)
+                    if (m_obj_file->ReadSectionData (section_sp.get(), data) == 0)
                         data.Clear();
                 }
             }
@@ -2183,7 +2187,7 @@ SymbolFileDWARF::GetFunction (DWARFCompileUnit* curr_cu, const DWARFDebugInfoEnt
         
     if (sc.function)
     {        
-        sc.module_sp = sc.function->CalculateSymbolContextModule()->shared_from_this();
+        sc.module_sp = sc.function->CalculateSymbolContextModule();
         return true;
     }
     
@@ -2195,7 +2199,7 @@ SymbolFileDWARF::ResolveSymbolContext (const Address& so_addr, uint32_t resolve_
 {
     Timer scoped_timer(__PRETTY_FUNCTION__,
                        "SymbolFileDWARF::ResolveSymbolContext (so_addr = { section = %p, offset = 0x%llx }, resolve_scope = 0x%8.8x)",
-                       so_addr.GetSection(),
+                       so_addr.GetSection().get(),
                        so_addr.GetOffset(),
                        resolve_scope);
     uint32_t resolved = 0;
@@ -2601,7 +2605,7 @@ SymbolFileDWARF::FindGlobalVariables (const ConstString &name, const lldb_privat
     if (num_matches)
     {
         SymbolContext sc;
-        sc.module_sp = m_obj_file->GetModule()->shared_from_this();
+        sc.module_sp = m_obj_file->GetModule();
         assert (sc.module_sp);
         
         DWARFDebugInfo* debug_info = DebugInfo();
@@ -2687,7 +2691,7 @@ SymbolFileDWARF::FindGlobalVariables(const RegularExpression& regex, bool append
     }
 
     SymbolContext sc;
-    sc.module_sp = m_obj_file->GetModule()->shared_from_this();
+    sc.module_sp = m_obj_file->GetModule();
     assert (sc.module_sp);
     
     DWARFCompileUnit* dwarf_cu = NULL;

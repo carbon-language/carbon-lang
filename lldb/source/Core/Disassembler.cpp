@@ -386,10 +386,10 @@ Disassembler::PrintInstructions
 
             prev_sc = sc;
 
-            Module *module = addr.GetModulePtr();
-            if (module)
+            ModuleSP module_sp (addr.GetModule());
+            if (module_sp)
             {
-                uint32_t resolved_mask = module->ResolveSymbolContextForAddress(addr, eSymbolContextEverything, sc);
+                uint32_t resolved_mask = module_sp->ResolveSymbolContextForAddress(addr, eSymbolContextEverything, sc);
                 if (resolved_mask)
                 {
                     if (num_mixed_context_lines)

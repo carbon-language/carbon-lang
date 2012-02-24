@@ -621,12 +621,12 @@ public:
     // Return the module associated with this value object in case the
     // value is from an executable file and might have its data in
     // sections of the file. This can be used for variables.
-    virtual Module *
+    virtual lldb::ModuleSP
     GetModule()
     {
         if (m_parent)
             return m_parent->GetModule();
-        return NULL;
+        return lldb::ModuleSP();
     }
     
     virtual bool

@@ -86,13 +86,13 @@ public:
     /// supplied upon construction. The at an offset within a file for
     /// objects that contain more than one architecture or object.
     //------------------------------------------------------------------
-    ObjectFile (Module* module, 
+    ObjectFile (const lldb::ModuleSP &module_sp, 
                 const FileSpec *file_spec_ptr, 
                 lldb::addr_t offset, 
                 lldb::addr_t length, 
                 lldb::DataBufferSP& headerDataSP);
 
-    ObjectFile (Module* module, 
+    ObjectFile (const lldb::ModuleSP &module_sp, 
                 const lldb::ProcessSP &process_sp,
                 lldb::addr_t header_addr, 
                 lldb::DataBufferSP& headerDataSP);
@@ -146,7 +146,7 @@ public:
     /// @see ObjectFile::ParseHeader()
     //------------------------------------------------------------------
     static lldb::ObjectFileSP
-    FindPlugin (Module* module,
+    FindPlugin (const lldb::ModuleSP &module_sp,
                 const FileSpec* file_spec,
                 lldb::addr_t file_offset,
                 lldb::addr_t file_size,
@@ -170,7 +170,7 @@ public:
     ///     The address of the header for the object file in memory.
     //------------------------------------------------------------------
     static lldb::ObjectFileSP
-    FindPlugin (Module* module, 
+    FindPlugin (const lldb::ModuleSP &module_sp, 
                 const lldb::ProcessSP &process_sp,
                 lldb::addr_t header_addr,
                 lldb::DataBufferSP &file_data_sp);

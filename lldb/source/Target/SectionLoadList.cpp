@@ -94,15 +94,15 @@ SectionLoadList::SetSectionLoadAddress (const Section *section, addr_t load_addr
     {
         if (section != ats_pos->second)
         {
-            Module *module = section->GetModule();
-            if (module)
+            ModuleSP module_sp (section->GetModule());
+            if (module_sp)
             {
-                module->ReportWarning ("address 0x%16.16llx maps to more than one section: %s.%s and %s.%s",
-                                       load_addr, 
-                                       module->GetFileSpec().GetFilename().GetCString(), 
-                                       section->GetName().GetCString(),
-                                       ats_pos->second->GetModule()->GetFileSpec().GetFilename().GetCString(), 
-                                       ats_pos->second->GetName().GetCString());
+                module_sp->ReportWarning ("address 0x%16.16llx maps to more than one section: %s.%s and %s.%s",
+                                          load_addr, 
+                                          module_sp->GetFileSpec().GetFilename().GetCString(), 
+                                          section->GetName().GetCString(),
+                                          ats_pos->second->GetModule()->GetFileSpec().GetFilename().GetCString(), 
+                                          ats_pos->second->GetName().GetCString());
             }
         }
         ats_pos->second = section;

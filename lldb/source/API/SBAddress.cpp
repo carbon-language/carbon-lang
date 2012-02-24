@@ -32,7 +32,7 @@ namespace lldb_private
         }
 
         AddressImpl (const Address &addr) :
-            m_module_sp (addr.GetModuleSP()),
+            m_module_sp (addr.GetModule()),
             m_address (addr)
         {
         }
@@ -105,7 +105,7 @@ SBAddress::SBAddress (const SBAddress &rhs) :
 
 
 SBAddress::SBAddress (lldb::SBSection section, lldb::addr_t offset) :
-    m_opaque_ap(new AddressImpl (Address(section.GetSection(), offset)))
+    m_opaque_ap(new AddressImpl (Address(section.GetSP(), offset)))
 {
 }
 
@@ -151,7 +151,7 @@ void
 SBAddress::SetAddress (lldb::SBSection section, lldb::addr_t offset)
 {
     Address &addr = ref();
-    addr.SetSection (section.GetSection());
+    addr.SetSection (section.GetSP());
     addr.SetOffset (offset);
 }
 
@@ -241,7 +241,7 @@ SBAddress::GetSection ()
 {
     lldb::SBSection sb_section;
     if (m_opaque_ap.get())
-        sb_section.SetSection(m_opaque_ap->GetAddress().GetSection());
+        sb_section.SetSP (m_opaque_ap->GetAddress().GetSection());
     return sb_section;
 }
 

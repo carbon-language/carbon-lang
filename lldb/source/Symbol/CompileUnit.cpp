@@ -16,8 +16,8 @@
 using namespace lldb;
 using namespace lldb_private;
 
-CompileUnit::CompileUnit (Module *module, void *user_data, const char *pathname, const lldb::user_id_t cu_sym_id, lldb::LanguageType language) :
-    ModuleChild(module),
+CompileUnit::CompileUnit (const lldb::ModuleSP &module_sp, void *user_data, const char *pathname, const lldb::user_id_t cu_sym_id, lldb::LanguageType language) :
+    ModuleChild(module_sp),
     FileSpec (pathname, false),
     UserID(cu_sym_id),
     Language (language),
@@ -28,11 +28,11 @@ CompileUnit::CompileUnit (Module *module, void *user_data, const char *pathname,
     m_line_table_ap (),
     m_variables()
 {
-    assert(module != NULL);
+    assert(module_sp);
 }
 
-CompileUnit::CompileUnit (Module *module, void *user_data, const FileSpec &fspec, const lldb::user_id_t cu_sym_id, lldb::LanguageType language) :
-    ModuleChild(module),
+CompileUnit::CompileUnit (const lldb::ModuleSP &module_sp, void *user_data, const FileSpec &fspec, const lldb::user_id_t cu_sym_id, lldb::LanguageType language) :
+    ModuleChild(module_sp),
     FileSpec (fspec),
     UserID(cu_sym_id),
     Language (language),
@@ -43,7 +43,7 @@ CompileUnit::CompileUnit (Module *module, void *user_data, const FileSpec &fspec
     m_line_table_ap (),
     m_variables()
 {
-    assert(module != NULL);
+    assert(module_sp);
 }
 
 CompileUnit::~CompileUnit ()
@@ -57,7 +57,7 @@ CompileUnit::CalculateSymbolContext(SymbolContext* sc)
     GetModule()->CalculateSymbolContext(sc);
 }
 
-Module *
+ModuleSP
 CompileUnit::CalculateSymbolContextModule ()
 {
     return GetModule();

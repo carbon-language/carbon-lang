@@ -88,10 +88,10 @@ public:
     CalculateSymbolContext (SymbolContext *sc) = 0;
 
 
-    virtual Module *
+    virtual lldb::ModuleSP
     CalculateSymbolContextModule ()
     {
-        return NULL;
+        return lldb::ModuleSP();
     }
 
     virtual CompileUnit *

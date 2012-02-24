@@ -24,8 +24,8 @@ using namespace lldb_private;
 //----------------------------------------------------------------------
 // SymbolVendorMacOSX constructor
 //----------------------------------------------------------------------
-SymbolVendorMacOSX::SymbolVendorMacOSX(Module *module) :
-    SymbolVendor(module)
+SymbolVendorMacOSX::SymbolVendorMacOSX(const lldb::ModuleSP &module_sp) :
+    SymbolVendor (module_sp)
 {
 }
 
@@ -118,44 +118,50 @@ SymbolVendorMacOSX::GetPluginDescriptionStatic()
 // also allow for finding separate debug information files.
 //----------------------------------------------------------------------
 SymbolVendor*
-SymbolVendorMacOSX::CreateInstance(Module* module)
+SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp)
 {
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "SymbolVendorMacOSX::CreateInstance (module = %s/%s)",
-                        module->GetFileSpec().GetDirectory().AsCString(),
-                        module->GetFileSpec().GetFilename().AsCString());
-    SymbolVendorMacOSX* symbol_vendor = new SymbolVendorMacOSX(module);
+                        module_sp->GetFileSpec().GetDirectory().AsCString(),
+                        module_sp->GetFileSpec().GetFilename().AsCString());
+    SymbolVendorMacOSX* symbol_vendor = new SymbolVendorMacOSX(module_sp);
     if (symbol_vendor)
     {
         char path[PATH_MAX];
         path[0] = '\0';
 
         // Try and locate the dSYM file on Mac OS X
-        ObjectFile * obj_file = module->GetObjectFile();
+        ObjectFile * obj_file = module_sp->GetObjectFile();
         if (obj_file)
         {
             Timer scoped_timer2 ("SymbolVendorMacOSX::CreateInstance () locate dSYM",
                                  "SymbolVendorMacOSX::CreateInstance (module = %s/%s) locate dSYM",
-                                 module->GetFileSpec().GetDirectory().AsCString(),
-                                 module->GetFileSpec().GetFilename().AsCString());
+                                 module_sp->GetFileSpec().GetDirectory().AsCString(),
+                                 module_sp->GetFileSpec().GetFilename().AsCString());
 
-            FileSpec dsym_fspec;
+            // First check to see if the module has a symbol file in mind already.
+            // If it does, then we MUST use that.
+            FileSpec dsym_fspec (module_sp->GetSymbolFileFileSpec());
+            
             ObjectFileSP dsym_objfile_sp;
-            const FileSpec &file_spec = obj_file->GetFileSpec();
-            if (file_spec)
+            if (!dsym_fspec)
             {
-                dsym_fspec = Symbols::LocateExecutableSymbolFile (&file_spec, &module->GetArchitecture(), &module->GetUUID());
-
-                if (dsym_fspec)
+                // No symbol file was specified in the module, lets try and find
+                // one ourselves.
+                const FileSpec &file_spec = obj_file->GetFileSpec();
+                if (file_spec)
+                    dsym_fspec = Symbols::LocateExecutableSymbolFile (&file_spec, &module_sp->GetArchitecture(), &module_sp->GetUUID());
+            }
+            
+            if (dsym_fspec)
+            {
+                DataBufferSP dsym_file_data_sp;
+                dsym_objfile_sp = ObjectFile::FindPlugin(module_sp, &dsym_fspec, 0, dsym_fspec.GetByteSize(), dsym_file_data_sp);
+                if (UUIDsMatch(module_sp.get(), dsym_objfile_sp.get()))
                 {
-                    DataBufferSP dsym_file_data_sp;
-                    dsym_objfile_sp = ObjectFile::FindPlugin(module, &dsym_fspec, 0, dsym_fspec.GetByteSize(), dsym_file_data_sp);
-                    if (UUIDsMatch(module, dsym_objfile_sp.get()))
-                    {
-                        ReplaceDSYMSectionsWithExecutableSections (obj_file, dsym_objfile_sp.get());
-                        symbol_vendor->AddSymbolFileRepresentation(dsym_objfile_sp);
-                        return symbol_vendor;
-                    }
+                    ReplaceDSYMSectionsWithExecutableSections (obj_file, dsym_objfile_sp.get());
+                    symbol_vendor->AddSymbolFileRepresentation(dsym_objfile_sp);
+                    return symbol_vendor;
                 }
             }
 

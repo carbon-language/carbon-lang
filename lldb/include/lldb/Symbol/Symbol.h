@@ -35,7 +35,7 @@ public:
             bool is_debug,
             bool is_trampoline,
             bool is_artificial,
-            const Section* section,
+            const lldb::SectionSP &section_sp,
             lldb::addr_t value,
             uint32_t size,
             uint32_t flags);
@@ -186,7 +186,7 @@ public:
     virtual void
     CalculateSymbolContext (SymbolContext *sc);
 
-    virtual Module *
+    virtual lldb::ModuleSP
     CalculateSymbolContextModule ();
     
     virtual Symbol *

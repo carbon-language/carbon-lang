@@ -25,7 +25,8 @@ BreakpointLocationList::BreakpointLocationList(Breakpoint &owner) :
     m_address_to_location (),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_new_location_recorder (NULL),
-    m_owner (owner)
+    m_owner (owner),
+    m_next_id (0)
 {
 }
 
@@ -38,7 +39,7 @@ BreakpointLocationList::Create (const Address &addr)
 {
     Mutex::Locker locker (m_mutex);
     // The location ID is just the size of the location list + 1
-    lldb::break_id_t bp_loc_id = m_locations.size() + 1;
+    lldb::break_id_t bp_loc_id = ++m_next_id;
     BreakpointLocationSP bp_loc_sp (new BreakpointLocation (bp_loc_id, m_owner, addr));
     m_locations.push_back (bp_loc_sp);
     m_address_to_location[addr] = bp_loc_sp;
@@ -98,8 +99,8 @@ BreakpointLocationList::FindInModule (Module *module,
     for (pos = m_locations.begin(); pos != end; ++pos)
     {
         BreakpointLocationSP break_loc = (*pos);
-        const Section *section = break_loc->GetAddress().GetSection();
-        if (section && section->GetModule() == module)
+        SectionSP section_sp (break_loc->GetAddress().GetSection());
+        if (section_sp && section_sp->GetModule().get() == module)
         {
             bp_loc_list.Add (break_loc);
         }
@@ -244,6 +245,29 @@ BreakpointLocationList::AddLocation (const Address &addr, bool *new_location)
 	}
     return bp_loc_sp;
 }
+
+bool
+BreakpointLocationList::RemoveLocation (const lldb::BreakpointLocationSP &bp_loc_sp)
+{
+    if (bp_loc_sp)
+    {
+        Mutex::Locker locker (m_mutex);
+        
+        m_address_to_location.erase (bp_loc_sp->GetAddress());
+
+        collection::iterator pos, end = m_locations.end();
+        for (pos = m_locations.begin(); pos != end; ++pos)
+        {
+            if ((*pos).get() == bp_loc_sp.get())
+            {
+                m_locations.erase (pos);
+                return true;
+            }
+        }
+	}
+    return false;
+}
+
 
 
 void

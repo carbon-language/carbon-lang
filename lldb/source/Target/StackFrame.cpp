@@ -50,7 +50,7 @@ StackFrame::StackFrame (const ThreadSP &thread_sp,
     m_concrete_frame_index (unwind_frame_index),    
     m_reg_context_sp (),
     m_id (pc, cfa, NULL),
-    m_frame_code_addr (NULL, pc),
+    m_frame_code_addr (pc),
     m_sc (),
     m_flags (),
     m_frame_base (),
@@ -78,7 +78,7 @@ StackFrame::StackFrame (const ThreadSP &thread_sp,
     m_concrete_frame_index (unwind_frame_index),    
     m_reg_context_sp (reg_context_sp),
     m_id (pc, cfa, NULL),
-    m_frame_code_addr (NULL, pc),
+    m_frame_code_addr (pc),
     m_sc (),
     m_flags (),
     m_frame_base (),
@@ -135,19 +135,18 @@ StackFrame::StackFrame (const ThreadSP &thread_sp,
             m_flags.Set (eSymbolContextTarget);
     }
     
-    Module *pc_module = pc_addr.GetModulePtr();
-    if (m_sc.module_sp.get() == NULL || m_sc.module_sp.get() != pc_module)
+    ModuleSP pc_module_sp (pc_addr.GetModule());
+    if (!m_sc.module_sp || m_sc.module_sp != pc_module_sp)
     {
-        if (pc_module)
+        if (pc_module_sp)
         {
-            m_sc.module_sp = pc_module->shared_from_this();
+            m_sc.module_sp = pc_module_sp;
             m_flags.Set (eSymbolContextModule);
         }
         else
         {
             m_sc.module_sp.reset();
         }
-
     }
 }
 
@@ -219,16 +218,11 @@ StackFrame::GetFrameCodeAddress()
             {
                 if (m_frame_code_addr.SetOpcodeLoadAddress (m_frame_code_addr.GetOffset(), target_sp.get()))
                 {
-                    const Section *section = m_frame_code_addr.GetSection();
-                    if (section)
+                    ModuleSP module_sp (m_frame_code_addr.GetModule());
+                    if (module_sp)
                     {
-                        Module *module = section->GetModule();
-                        if (module)
-                        {
-                            m_sc.module_sp = module->shared_from_this();
-                            if (m_sc.module_sp)
-                                m_flags.Set(eSymbolContextModule);
-                        }
+                        m_sc.module_sp = module_sp;
+                        m_flags.Set(eSymbolContextModule);
                     }
                 }
             }
@@ -240,8 +234,7 @@ StackFrame::GetFrameCodeAddress()
 void
 StackFrame::ChangePC (addr_t pc)
 {
-    m_frame_code_addr.SetOffset(pc);
-    m_frame_code_addr.SetSection(NULL);
+    m_frame_code_addr.SetRawAddress(pc);
     m_sc.Clear();
     m_flags.Reset(0);
     ThreadSP thread_sp (GetThread());

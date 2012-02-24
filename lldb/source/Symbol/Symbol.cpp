@@ -46,7 +46,7 @@ Symbol::Symbol
     bool is_debug,
     bool is_trampoline,
     bool is_artificial,
-    const Section* section,
+    const lldb::SectionSP &section_sp,
     addr_t offset,
     uint32_t size,
     uint32_t flags
@@ -63,7 +63,7 @@ Symbol::Symbol
     m_size_is_synthesized (false),
     m_type (type),
     m_flags (flags),
-    m_addr_range (section, offset, size)
+    m_addr_range (section_sp, offset, size)
 {
 }
 
@@ -185,8 +185,7 @@ Symbol::GetDescription (Stream *s, lldb::DescriptionLevel level, Target *target)
 {
     s->Printf("uid={%6u}", m_uid);
     
-    const Section *section = m_addr_range.GetBaseAddress().GetSection();
-    if (section != NULL)
+    if (m_addr_range.GetBaseAddress().GetSection())
     {
         if (m_addr_range.GetBaseAddress().IsSectionOffset())
         {
@@ -232,8 +231,8 @@ Symbol::Dump(Stream *s, Target *target, uint32_t index) const
               m_is_external ? 'X' : ' ',
               GetTypeAsString());
 
-    const Section *section = m_addr_range.GetBaseAddress().GetSection();
-    if (section != NULL)
+    SectionSP section_sp (m_addr_range.GetBaseAddress().GetSection());
+    if (section_sp)
     {
         if (!m_addr_range.GetBaseAddress().Dump(s, NULL, Address::DumpStyleFileAddress))
             s->Printf("%*s", 18, "");
@@ -272,11 +271,11 @@ Symbol::GetPrologueByteSize ()
         if (!m_type_data_resolved)
         {
             m_type_data_resolved = true;
-            Module *module = m_addr_range.GetBaseAddress().GetModulePtr();
+            ModuleSP module_sp (m_addr_range.GetBaseAddress().GetModule());
             SymbolContext sc;
-            if (module && module->ResolveSymbolContextForAddress (m_addr_range.GetBaseAddress(),
-                                                                  eSymbolContextLineEntry,
-                                                                  sc))
+            if (module_sp && module_sp->ResolveSymbolContextForAddress (m_addr_range.GetBaseAddress(),
+                                                                        eSymbolContextLineEntry,
+                                                                        sc))
             {
                 m_type_data = sc.line_entry.range.GetByteSize();
             }
@@ -294,8 +293,7 @@ Symbol::GetPrologueByteSize ()
 void
 Symbol::SetValue(addr_t value)
 {
-    m_addr_range.GetBaseAddress().SetSection(NULL);
-    m_addr_range.GetBaseAddress().SetOffset(value);
+    m_addr_range.GetBaseAddress().SetRawAddress(value);
 }
 
 
@@ -355,18 +353,18 @@ Symbol::CalculateSymbolContext (SymbolContext *sc)
     sc->symbol = this;
     const AddressRange *range = GetAddressRangePtr();
     if (range)
-        sc->module_sp = range->GetBaseAddress().GetModuleSP ();
+        sc->module_sp = range->GetBaseAddress().GetModule();
     else
         sc->module_sp.reset();
 }
 
-Module *
+ModuleSP
 Symbol::CalculateSymbolContextModule ()
 {
     const AddressRange *range = GetAddressRangePtr();
     if (range)
-        return range->GetBaseAddress().GetModulePtr ();
-    return NULL;
+        return range->GetBaseAddress().GetModule();
+    return ModuleSP();
 }
 
 Symbol *
@@ -383,11 +381,11 @@ Symbol::DumpSymbolContext (Stream *s)
     const AddressRange *range = GetAddressRangePtr();
     if (range)
     {   
-        Module *module = range->GetBaseAddress().GetModulePtr ();
-        if (module)
+        ModuleSP module_sp (range->GetBaseAddress().GetModule());
+        if (module_sp)
         {
             dumped_module = true;
-            module->DumpSymbolContext(s);
+            module_sp->DumpSymbolContext(s);
         }
     }
     if (dumped_module)

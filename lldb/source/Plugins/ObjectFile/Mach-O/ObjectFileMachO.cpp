@@ -364,11 +364,11 @@ ObjectFileMachO::GetPluginDescriptionStatic()
 
 
 ObjectFile *
-ObjectFileMachO::CreateInstance (Module* module, DataBufferSP& data_sp, const FileSpec* file, addr_t offset, addr_t length)
+ObjectFileMachO::CreateInstance (const lldb::ModuleSP &module_sp, DataBufferSP& data_sp, const FileSpec* file, addr_t offset, addr_t length)
 {
     if (ObjectFileMachO::MagicBytesMatch(data_sp, offset, length))
     {
-        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module, data_sp, file, offset, length));
+        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module_sp, data_sp, file, offset, length));
         if (objfile_ap.get() && objfile_ap->ParseHeader())
             return objfile_ap.release();
     }
@@ -376,14 +376,14 @@ ObjectFileMachO::CreateInstance (Module* module, DataBufferSP& data_sp, const Fi
 }
 
 ObjectFile *
-ObjectFileMachO::CreateMemoryInstance (Module* module, 
+ObjectFileMachO::CreateMemoryInstance (const lldb::ModuleSP &module_sp, 
                                        DataBufferSP& data_sp, 
                                        const ProcessSP &process_sp, 
                                        lldb::addr_t header_addr)
 {
     if (ObjectFileMachO::MagicBytesMatch(data_sp, 0, data_sp->GetByteSize()))
     {
-        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module, data_sp, process_sp, header_addr));
+        std::auto_ptr<ObjectFile> objfile_ap(new ObjectFileMachO (module_sp, data_sp, process_sp, header_addr));
         if (objfile_ap.get() && objfile_ap->ParseHeader())
             return objfile_ap.release();
     }
@@ -462,8 +462,8 @@ ObjectFileMachO::MagicBytesMatch (DataBufferSP& data_sp,
 }
 
 
-ObjectFileMachO::ObjectFileMachO(Module* module, DataBufferSP& data_sp, const FileSpec* file, addr_t offset, addr_t length) :
-    ObjectFile(module, file, offset, length, data_sp),
+ObjectFileMachO::ObjectFileMachO(const lldb::ModuleSP &module_sp, DataBufferSP& data_sp, const FileSpec* file, addr_t offset, addr_t length) :
+    ObjectFile(module_sp, file, offset, length, data_sp),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_sections_ap(),
     m_symtab_ap(),
@@ -477,11 +477,11 @@ ObjectFileMachO::ObjectFileMachO(Module* module, DataBufferSP& data_sp, const Fi
     ::memset (&m_dysymtab, 0, sizeof(m_dysymtab));
 }
 
-ObjectFileMachO::ObjectFileMachO (lldb_private::Module* module,
+ObjectFileMachO::ObjectFileMachO (const lldb::ModuleSP &module_sp,
                                   lldb::DataBufferSP& header_data_sp,
                                   const lldb::ProcessSP &process_sp,
                                   lldb::addr_t header_addr) :
-    ObjectFile(module, process_sp, header_addr, header_data_sp),
+    ObjectFile(module_sp, process_sp, header_addr, header_data_sp),
     m_mutex (Mutex::eMutexTypeRecursive),
     m_sections_ap(),
     m_symtab_ap(),
@@ -609,10 +609,10 @@ ObjectFileMachO::GetAddressClass (lldb::addr_t file_addr)
             const AddressRange *range_ptr = symbol->GetAddressRangePtr();
             if (range_ptr)
             {
-                const Section *section = range_ptr->GetBaseAddress().GetSection();
-                if (section)
+                SectionSP section_sp (range_ptr->GetBaseAddress().GetSection());
+                if (section_sp)
                 {
-                    const SectionType section_type = section->GetType();
+                    const SectionType section_type = section_sp->GetType();
                     switch (section_type)
                     {
                     case eSectionTypeInvalid:               return eAddressClassUnknown;
@@ -746,6 +746,7 @@ ObjectFileMachO::ParseSections ()
     uint32_t i;
     const bool is_core = GetType() == eTypeCoreFile;
     //bool dump_sections = false;
+    ModuleSP module_sp (GetModule());
     for (i=0; i<m_header.ncmds; ++i)
     {
         const uint32_t load_cmd_offset = offset;
@@ -775,8 +776,7 @@ ObjectFileMachO::ParseSections ()
                     SectionSP segment_sp;
                     if (segment_name || is_core)
                     {
-                        segment_sp.reset(new Section (NULL,
-                                                      GetModule(),            // Module to which this section belongs
+                        segment_sp.reset(new Section (module_sp,            // Module to which this section belongs
                                                       ++segID << 8,           // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
                                                       segment_name,           // Name of this section
                                                       eSectionTypeContainer,  // This section is a container of other sections.
@@ -872,16 +872,16 @@ ObjectFileMachO::ParseSections ()
                             else
                             {
                                 // Create a fake section for the section's named segment
-                                segment_sp.reset(new Section(segment_sp.get(),       // Parent section
-                                                             GetModule(),            // Module to which this section belongs
-                                                             ++segID << 8,           // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
-                                                             segment_name,           // Name of this section
-                                                             eSectionTypeContainer,  // This section is a container of other sections.
-                                                             sect64.addr,            // File VM address == addresses as they are found in the object file
-                                                             sect64.size,            // VM size in bytes of this section
-                                                             sect64.offset,          // Offset to the data for this section in the file
-                                                             sect64.offset ? sect64.size : 0,        // Size in bytes of this section as found in the the file
-                                                             load_cmd.flags));       // Flags for this section
+                                segment_sp.reset(new Section (segment_sp,            // Parent section
+                                                              module_sp,           // Module to which this section belongs
+                                                              ++segID << 8,          // Section ID is the 1 based segment index shifted right by 8 bits as not to collide with any of the 256 section IDs that are possible
+                                                              segment_name,          // Name of this section
+                                                              eSectionTypeContainer, // This section is a container of other sections.
+                                                              sect64.addr,           // File VM address == addresses as they are found in the object file
+                                                              sect64.size,           // VM size in bytes of this section
+                                                              sect64.offset,         // Offset to the data for this section in the file
+                                                              sect64.offset ? sect64.size : 0,        // Size in bytes of this section as found in the the file
+                                                              load_cmd.flags));      // Flags for this section
                                 segment_sp->SetIsFake(true);
                                 m_sections_ap->AddSection(segment_sp);
                                 segment_sp->SetIsEncrypted (segment_is_encrypted);
@@ -1000,16 +1000,16 @@ ObjectFileMachO::ParseSections ()
                             }
                         }
 
-                        SectionSP section_sp(new Section(segment_sp.get(),
-                                                         GetModule(),
-                                                         ++sectID,
-                                                         section_name,
-                                                         sect_type,
-                                                         sect64.addr - segment_sp->GetFileAddress(),
-                                                         sect64.size,
-                                                         sect64.offset,
-                                                         sect64.offset == 0 ? 0 : sect64.size,
-                                                         sect64.flags));
+                        SectionSP section_sp(new Section (segment_sp,
+                                                          module_sp,
+                                                          ++sectID,
+                                                          section_name,
+                                                          sect_type,
+                                                          sect64.addr - segment_sp->GetFileAddress(),
+                                                          sect64.size,
+                                                          sect64.offset,
+                                                          sect64.offset == 0 ? 0 : sect64.size,
+                                                          sect64.flags));
                         // Set the section to be encrypted to match the segment
                         section_sp->SetIsEncrypted (segment_is_encrypted);
 
@@ -1081,21 +1081,21 @@ public:
     }
 
 
-    Section *
+    SectionSP
     GetSection (uint8_t n_sect, addr_t file_addr)
     {
         if (n_sect == 0)
-            return NULL;
+            return SectionSP();
         if (n_sect < m_section_infos.size())
         {
-            if (m_section_infos[n_sect].section == NULL)
+            if (!m_section_infos[n_sect].section_sp)
             {
-                Section *section = m_section_list->FindSectionByID (n_sect).get();
-                m_section_infos[n_sect].section = section;
-                if (section != NULL)
+                SectionSP section_sp (m_section_list->FindSectionByID (n_sect));
+                m_section_infos[n_sect].section_sp = section_sp;
+                if (section_sp != NULL)
                 {
-                    m_section_infos[n_sect].vm_range.SetBaseAddress (section->GetFileAddress());
-                    m_section_infos[n_sect].vm_range.SetByteSize (section->GetByteSize());
+                    m_section_infos[n_sect].vm_range.SetBaseAddress (section_sp->GetFileAddress());
+                    m_section_infos[n_sect].vm_range.SetByteSize (section_sp->GetByteSize());
                 }
                 else
                 {
@@ -1105,7 +1105,7 @@ public:
             if (m_section_infos[n_sect].vm_range.Contains(file_addr))
             {
                 // Symbol is in section.
-                return m_section_infos[n_sect].section;
+                return m_section_infos[n_sect].section_sp;
             }
             else if (m_section_infos[n_sect].vm_range.GetByteSize () == 0 &&
                      m_section_infos[n_sect].vm_range.GetBaseAddress() == file_addr)
@@ -1113,10 +1113,10 @@ public:
                 // Symbol is in section with zero size, but has the same start
                 // address as the section. This can happen with linker symbols
                 // (symbols that start with the letter 'l' or 'L'.
-                return m_section_infos[n_sect].section;
+                return m_section_infos[n_sect].section_sp;
             }
         }
-        return m_section_list->FindSectionContainingFileAddress(file_addr).get();
+        return m_section_list->FindSectionContainingFileAddress(file_addr);
     }
 
 protected:
@@ -1124,12 +1124,12 @@ protected:
     {
         SectionInfo () :
             vm_range(),
-            section (NULL)
+            section_sp ()
         {
         }
 
         VMRange vm_range;
-        Section *section;
+        SectionSP section_sp;
     };
     SectionList *m_section_list;
     std::vector<SectionInfo> m_section_infos;
@@ -1307,22 +1307,26 @@ ObjectFileMachO::ParseSymtab (bool minimize)
                     const char *symbol_name = strtab_data.PeekCStr(nlist.n_strx);
                     if (symbol_name == NULL)
                     {
+                        ModuleSP module_sp (GetModule());
                         // No symbol should be NULL, even the symbols with no 
                         // string values should have an offset zero which points
                         // to an empty C-string
-                        Host::SystemLog (Host::eSystemLogError,
-                                         "error: symbol[%u] has invalid string table offset 0x%x in %s/%s, ignoring symbol\n", 
-                                         nlist_idx,
-                                         nlist.n_strx,
-                                         m_module->GetFileSpec().GetDirectory().GetCString(),
-                                         m_module->GetFileSpec().GetFilename().GetCString());
+                        if (module_sp)
+                        {
+                            Host::SystemLog (Host::eSystemLogError,
+                                             "error: symbol[%u] has invalid string table offset 0x%x in %s/%s, ignoring symbol\n", 
+                                             nlist_idx,
+                                             nlist.n_strx,
+                                             module_sp->GetFileSpec().GetDirectory().GetCString(),
+                                             module_sp->GetFileSpec().GetFilename().GetCString());
+                        }
                         continue;
                     }
                     const char *symbol_name_non_abi_mangled = NULL;
 
                     if (symbol_name[0] == '\0')
                         symbol_name = NULL;
-                    Section* symbol_section = NULL;
+                    SectionSP symbol_section;
                     bool add_nlist = true;
                     bool is_debug = ((nlist.n_type & NlistMaskStab) != 0);
 
@@ -2239,14 +2243,18 @@ ObjectFileMachO::GetEntryPointAddress ()
         // We couldn't read the UnixThread load command - maybe it wasn't there.  As a fallback look for the
         // "start" symbol in the main executable.
         
-        SymbolContextList contexts;
-        SymbolContext context;
-        if (!m_module->FindSymbolsWithNameAndType(ConstString ("start"), eSymbolTypeCode, contexts))
-            return m_entry_point_address;
+        ModuleSP module_sp (GetModule());
         
-        contexts.GetContextAtIndex(0, context);
-        
-        m_entry_point_address = context.symbol->GetValue();
+        if (module_sp)
+        {
+            SymbolContextList contexts;
+            SymbolContext context;
+            if (module_sp->FindSymbolsWithNameAndType(ConstString ("start"), eSymbolTypeCode, contexts))
+            {
+                if (contexts.GetContextAtIndex(0, context))
+                    m_entry_point_address = context.symbol->GetValue();
+            }
+        }
     }
     
     return m_entry_point_address;
@@ -2263,7 +2271,7 @@ ObjectFileMachO::GetHeaderAddress ()
         SectionSP text_segment_sp (section_list->FindSectionByName (GetSegmentNameTEXT()));
         if (text_segment_sp)
         {
-            header_addr.SetSection (text_segment_sp.get());
+            header_addr.SetSection (text_segment_sp);
             header_addr.SetOffset (0);
         }
     }

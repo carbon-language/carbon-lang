@@ -11,13 +11,13 @@
 
 using namespace lldb_private;
 
-ModuleChild::ModuleChild (Module* module) :
-    m_module(module)
+ModuleChild::ModuleChild (const lldb::ModuleSP &module_sp) :
+    m_module_wp (module_sp)
 {
 }
 
 ModuleChild::ModuleChild (const ModuleChild& rhs) :
-    m_module(rhs.m_module)
+    m_module_wp(rhs.m_module_wp)
 {
 }
 
@@ -29,24 +29,18 @@ const ModuleChild&
 ModuleChild::operator= (const ModuleChild& rhs)
 {
     if (this != &rhs)
-        m_module = rhs.m_module;
+        m_module_wp = rhs.m_module_wp;
     return *this;
 }
 
-Module *
-ModuleChild::GetModule ()
-{
-    return m_module;
-}
-
-Module *
+lldb::ModuleSP
 ModuleChild::GetModule () const
 {
-    return m_module;
+    return m_module_wp.lock();
 }
 
 void
-ModuleChild::SetModule (Module *module)
+ModuleChild::SetModule (const lldb::ModuleSP &module_sp)
 {
-    m_module = module;
+    m_module_wp = module_sp;
 }

@@ -205,7 +205,7 @@ ThreadPlanAssemblyTracer::Log ()
             if (addr_valid)
                 disassembler->DecodeInstructions (pc_addr, extractor, 0, 1, false);
             else
-                disassembler->DecodeInstructions (Address (NULL, pc), extractor, 0, 1, false);
+                disassembler->DecodeInstructions (Address (pc), extractor, 0, 1, false);
             
             InstructionList &instruction_list = disassembler->GetInstructionList();
             const uint32_t max_opcode_byte_size = instruction_list.GetMaxOpcocdeByteSize();

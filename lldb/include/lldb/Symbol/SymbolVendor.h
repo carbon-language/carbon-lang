@@ -47,12 +47,12 @@ public:
 
 
     static SymbolVendor*
-    FindPlugin (Module* module);
+    FindPlugin (const lldb::ModuleSP &module_sp);
 
     //------------------------------------------------------------------
     // Constructors and Destructors
     //------------------------------------------------------------------
-    SymbolVendor(Module *module);
+    SymbolVendor(const lldb::ModuleSP &module_sp);
 
     virtual
     ~SymbolVendor();

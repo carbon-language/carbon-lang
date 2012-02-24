@@ -18,7 +18,7 @@
 using namespace lldb_private;
 
 AppleObjCSymbolVendor::AppleObjCSymbolVendor(Process *process) :
-    SymbolVendor(NULL),
+    SymbolVendor(lldb::ModuleSP()),
     m_process(process->shared_from_this()),
     m_ast_ctx(process->GetTarget().GetArchitecture().GetTriple().getTriple().c_str())
 {

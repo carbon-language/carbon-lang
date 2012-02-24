@@ -1221,13 +1221,13 @@ SBValue::GetLoadAddress()
             value = value_sp->GetAddressOf(scalar_is_load_address, &addr_type);
             if (addr_type == eAddressTypeFile)
             {
-                Module* module = value_sp->GetModule();
-                if (!module)
+                ModuleSP module_sp (value_sp->GetModule());
+                if (!module_sp)
                     value = LLDB_INVALID_ADDRESS;
                 else
                 {
                     Address addr;
-                    module->ResolveFileAddress(value, addr);
+                    module_sp->ResolveFileAddress(value, addr);
                     value = addr.GetLoadAddress(target_sp.get());
                 }
             }
@@ -1259,9 +1259,9 @@ SBValue::GetAddress()
             value = value_sp->GetAddressOf(scalar_is_load_address, &addr_type);
             if (addr_type == eAddressTypeFile)
             {
-                Module* module = value_sp->GetModule();
-                if (module)
-                    module->ResolveFileAddress(value, addr);
+                ModuleSP module_sp (value_sp->GetModule());
+                if (module_sp)
+                    module_sp->ResolveFileAddress(value, addr);
             }
             else if (addr_type == eAddressTypeLoad)
             {

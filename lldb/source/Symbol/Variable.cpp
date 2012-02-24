@@ -146,8 +146,9 @@ Variable::Dump(Stream *s, bool show_context) const
         ABI *abi = NULL;
         if (m_owner_scope)
         {
-            Module *module = m_owner_scope->CalculateSymbolContextModule();
-            abi = ABI::FindPlugin (module->GetArchitecture()).get();
+            ModuleSP module_sp (m_owner_scope->CalculateSymbolContextModule());
+            if (module_sp)
+                abi = ABI::FindPlugin (module_sp->GetArchitecture()).get();
         }
         m_location.GetDescription(s, lldb::eDescriptionLevelBrief, loclist_base_addr, abi);
     }
@@ -243,7 +244,7 @@ Variable::LocationIsValidForAddress (const Address &address)
     {
         SymbolContext sc;
         CalculateSymbolContext(&sc);
-        if (sc.module_sp.get() == address.GetModulePtr())
+        if (sc.module_sp == address.GetModule())
         {
             // Is the variable is described by a single location?
             if (!m_location.IsLocationList())
@@ -480,13 +481,14 @@ Variable::DumpLocationForAddress (Stream *s, const Address &address)
     {
         SymbolContext sc;
         CalculateSymbolContext(&sc);
-        if (sc.module_sp.get() == address.GetModulePtr())
+        if (sc.module_sp == address.GetModule())
         {
             ABI *abi = NULL;
             if (m_owner_scope)
             {
-                Module *module = m_owner_scope->CalculateSymbolContextModule();
-                abi = ABI::FindPlugin (module->GetArchitecture()).get();
+                ModuleSP module_sp (m_owner_scope->CalculateSymbolContextModule());
+                if (module_sp)
+                    abi = ABI::FindPlugin (module_sp->GetArchitecture()).get();
             }
 
             const addr_t file_addr = address.GetFileAddress();

@@ -45,14 +45,14 @@ public:
     GetPluginDescriptionStatic();
 
     static lldb_private::ObjectFile *
-    CreateInstance(lldb_private::Module* module,
+    CreateInstance(const lldb::ModuleSP &module_sp,
                    lldb::DataBufferSP& dataSP,
                    const lldb_private::FileSpec* file,
                    lldb::addr_t offset,
                    lldb::addr_t length);
 
     static lldb_private::ObjectFile *
-    CreateMemoryInstance (lldb_private::Module* module, 
+    CreateMemoryInstance (const lldb::ModuleSP &module_sp, 
                           lldb::DataBufferSP& data_sp, 
                           const lldb::ProcessSP &process_sp, 
                           lldb::addr_t header_addr);
@@ -118,7 +118,7 @@ public:
     CalculateStrata();
 
 private:
-    ObjectFileELF(lldb_private::Module* module,
+    ObjectFileELF(const lldb::ModuleSP &module_sp,
                   lldb::DataBufferSP& dataSP,
                   const lldb_private::FileSpec* file,
                   lldb::addr_t offset,

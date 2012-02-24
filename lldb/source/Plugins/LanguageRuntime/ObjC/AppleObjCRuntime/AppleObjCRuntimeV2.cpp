@@ -251,8 +251,7 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
         if (error.Fail())
             return false;
 
-        address.SetSection (NULL);
-        address.SetOffset(object_ptr);
+        address.SetRawAddress(object_ptr);
 
         // First check the cache...
         SymbolContext sc;
@@ -283,14 +282,14 @@ AppleObjCRuntimeV2::GetDynamicTypeAndAddress (ValueObject &in_value,
             // If the ISA pointer points to one of the sections in the binary, then see if we can
             // get the class name from the symbols.
         
-            const Section *section = isa_address.GetSection();
+            SectionSP section_sp (isa_address.GetSection());
 
-            if (section)
+            if (section_sp)
             {
                 // If this points to a section that we know about, then this is
                 // some static class or nothing.  See if it is in the right section 
                 // and if its name is the right form.
-                ConstString section_name = section->GetName();
+                ConstString section_name = section_sp->GetName();
                 static ConstString g_objc_class_section_name ("__objc_data");
                 if (section_name == g_objc_class_section_name)
                 {

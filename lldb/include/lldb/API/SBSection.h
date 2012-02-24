@@ -80,15 +80,15 @@ private:
     friend class SBModule;
     friend class SBTarget;
     
-    SBSection (const lldb_private::Section *section);
+    SBSection (const lldb::SectionSP &section_sp);
 
-    const lldb_private::Section *
-    GetSection();
+    lldb::SectionSP
+    GetSP() const;
     
     void
-    SetSection (const lldb_private::Section *section);
+    SetSP(const lldb::SectionSP &section_sp);
     
-    std::auto_ptr<lldb_private::SectionImpl> m_opaque_ap;
+    lldb::SectionWP m_opaque_wp;
 };
 
 

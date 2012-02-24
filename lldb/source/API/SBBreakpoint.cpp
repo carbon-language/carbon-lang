@@ -151,8 +151,7 @@ SBBreakpoint::FindLocationByAddress (addr_t vm_addr)
             Target &target = m_opaque_sp->GetTarget();
             if (target.GetSectionLoadList().ResolveLoadAddress (vm_addr, address) == false)
             {
-                address.SetSection (NULL);
-                address.SetOffset (vm_addr);
+                address.SetRawAddress (vm_addr);
             }
             sb_bp_location.SetLocation (m_opaque_sp->FindLocationByAddress (address));
         }
@@ -172,8 +171,7 @@ SBBreakpoint::FindLocationIDByAddress (addr_t vm_addr)
         Target &target = m_opaque_sp->GetTarget();
         if (target.GetSectionLoadList().ResolveLoadAddress (vm_addr, address) == false)
         {
-            address.SetSection (NULL);
-            address.SetOffset (vm_addr);
+            address.SetRawAddress (vm_addr);
         }
         break_id = m_opaque_sp->FindLocationIDByAddress (address);
     }

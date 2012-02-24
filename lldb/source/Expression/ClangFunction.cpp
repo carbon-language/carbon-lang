@@ -398,7 +398,7 @@ ClangFunction::GetThreadPlanToCallFunction (ExecutionContext &exe_ctx,
 
     // Okay, now run the function:
 
-    Address wrapper_address (NULL, func_addr);
+    Address wrapper_address (func_addr);
     ThreadPlan *new_plan = new ThreadPlanCallFunction (*thread, 
                                                        wrapper_address,
                                                        ClangASTType(),

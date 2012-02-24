@@ -35,7 +35,11 @@ Type *
 SymbolFileType::GetType ()
 {
     if (!m_type_sp)
-        m_type_sp = m_symbol_file.ResolveTypeUID (GetID())->shared_from_this();
+    {
+        Type *resolved_type = m_symbol_file.ResolveTypeUID (GetID());
+        if (resolved_type)
+            m_type_sp = resolved_type->shared_from_this();
+    }
     return m_type_sp.get();
 }
 

@@ -122,6 +122,7 @@ Module::Module(const FileSpec& file_spec, const lldb::ProcessSP &process_sp, lld
     m_uuid (),
     m_file (file_spec),
     m_platform_file(),
+    m_symfile_spec (),
     m_object_name (),
     m_object_offset (),
     m_objfile_sp (),
@@ -158,7 +159,7 @@ Module::Module(const FileSpec& file_spec, const lldb::ProcessSP &process_sp, lld
         if (bytes_read == 512)
         {
             data_sp.reset (data_ap.release());
-            m_objfile_sp = ObjectFile::FindPlugin(this, process_sp, header_addr, data_sp);
+            m_objfile_sp = ObjectFile::FindPlugin(shared_from_this(), process_sp, header_addr, data_sp);
             if (m_objfile_sp)
             {
                 // Once we get the object file, update our module with the object file's 
@@ -170,13 +171,17 @@ Module::Module(const FileSpec& file_spec, const lldb::ProcessSP &process_sp, lld
     }
 }
 
-Module::Module(const FileSpec& file_spec, const ArchSpec& arch, const ConstString *object_name, off_t object_offset) :
+Module::Module(const FileSpec& file_spec, 
+               const ArchSpec& arch, 
+               const ConstString *object_name, 
+               off_t object_offset) :
     m_mutex (Mutex::eMutexTypeRecursive),
     m_mod_time (file_spec.GetModificationTime()),
     m_arch (arch),
     m_uuid (),
     m_file (file_spec),
     m_platform_file(),
+    m_symfile_spec (),
     m_object_name (),
     m_object_offset (object_offset),
     m_objfile_sp (),
@@ -320,10 +325,10 @@ Module::CalculateSymbolContext(SymbolContext* sc)
     sc->module_sp = shared_from_this();
 }
 
-Module *
+ModuleSP
 Module::CalculateSymbolContextModule ()
 {
-    return this;
+    return shared_from_this();
 }
 
 void
@@ -380,10 +385,10 @@ Module::ResolveSymbolContextForAddress (const Address& so_addr, uint32_t resolve
     sc.Clear();
 
     // Get the section from the section/offset address.
-    const Section *section = so_addr.GetSection();
+    SectionSP section_sp (so_addr.GetSection());
 
     // Make sure the section matches this module before we try and match anything
-    if (section && section->GetModule() == this)
+    if (section_sp && section_sp->GetModule().get() == this)
     {
         // If the section offset based address resolved itself, then this
         // is the right module.
@@ -667,7 +672,7 @@ Module::GetSymbolVendor (bool can_create)
         if (obj_file != NULL)
         {
             Timer scoped_timer(__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
-            m_symfile_ap.reset(SymbolVendor::FindPlugin(this));
+            m_symfile_ap.reset(SymbolVendor::FindPlugin(shared_from_this()));
             m_did_load_symbol_vendor = true;
         }
     }
@@ -890,7 +895,11 @@ Module::GetObjectFile()
         Timer scoped_timer(__PRETTY_FUNCTION__,
                            "Module::GetObjectFile () module = %s", GetFileSpec().GetFilename().AsCString(""));
         DataBufferSP file_data_sp;
-        m_objfile_sp = ObjectFile::FindPlugin(this, &m_file, m_object_offset, m_file.GetByteSize(), file_data_sp);
+        m_objfile_sp = ObjectFile::FindPlugin (shared_from_this(), 
+                                               &m_file, 
+                                               m_object_offset, 
+                                               m_file.GetByteSize(), 
+                                               file_data_sp);
         if (m_objfile_sp)
         {
 			// Once we get the object file, update our module with the object file's 

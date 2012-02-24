@@ -557,8 +557,7 @@ SBTarget::ResolveLoadAddress (lldb::addr_t vm_addr)
 
     // We have a load address that isn't in a section, just return an address
     // with the offset filled in (the address) and the section set to NULL
-    addr.SetSection(NULL);
-    addr.SetOffset(vm_addr);
+    addr.SetRawAddress(vm_addr);
     return sb_addr;
 }
 
@@ -1411,7 +1410,7 @@ SBTarget::SetSectionLoadAddress (lldb::SBSection section,
         }
         else
         {
-            target_sp->GetSectionLoadList().SetSectionLoadAddress (section.GetSection(), section_base_addr);
+            target_sp->GetSectionLoadList().SetSectionLoadAddress (section.GetSP().get(), section_base_addr);
         }
     }
     else
@@ -1435,7 +1434,7 @@ SBTarget::ClearSectionLoadAddress (lldb::SBSection section)
         }
         else
         {
-            target_sp->GetSectionLoadList().SetSectionUnloaded (section.GetSection());
+            target_sp->GetSectionLoadList().SetSectionUnloaded (section.GetSP().get());
         }
     }
     else

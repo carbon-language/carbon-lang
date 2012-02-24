@@ -55,7 +55,7 @@ public:
 
     // Called when you can guarantee the addresses are in increasing order
     void
-    AppendLineEntry (lldb::SectionSP& section_sp,
+    AppendLineEntry (const lldb::SectionSP& section_sp,
                      lldb::addr_t section_offset,
                      uint32_t line,
                      uint16_t column,
@@ -68,7 +68,7 @@ public:
 
     // Called when you can't guarantee the addresses are in increasing order
     void
-    InsertLineEntry (lldb::SectionSP& section_sp,
+    InsertLineEntry (const lldb::SectionSP& section_sp,
                      lldb::addr_t section_offset,
                      uint32_t line,
                      uint16_t column,
