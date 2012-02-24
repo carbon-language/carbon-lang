@@ -123,3 +123,10 @@ struct test12 {
   struct test12 (*p)(void);
 } test12g;
 
+
+void test13(int x) {
+  struct X { int a; int b : 10; int c; };
+  struct X y = {.c = x};
+  // CHECK: @test13
+  // CHECK: and i32 {{.*}}, -1024
+}
