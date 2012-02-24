@@ -117,7 +117,17 @@ DNBArchMachARM::Initialize()
 DNBArchProtocol *
 DNBArchMachARM::Create (MachThread *thread)
 {
-    return new DNBArchMachARM (thread);
+    DNBArchMachARM *obj = new DNBArchMachARM (thread);
+
+    // When new thread comes along, it tries to inherit from the global debug state, if it is valid.
+    if (Valid_Global_Debug_State)
+    {
+        obj->m_state.dbg = Global_Debug_State;
+        kern_return_t kret = obj->SetDBGState();
+        DNBLogThreadedIf(LOG_WATCHPOINTS,
+                         "DNBArchMachARM::Create() Inherit and SetDBGState() => 0x%8.8x.", kret);
+    }
+    return obj;
 }
 
 const uint8_t * const
