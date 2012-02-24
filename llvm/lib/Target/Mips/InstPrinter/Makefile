@@ -1,4 +1,4 @@
-##===- lib/Target/Mips/AsmPrinter/Makefile --------------*- Makefile -*-===##
+##===- lib/Target/Mips/AsmPrinter/Makefile -----------------*- Makefile -*-===##
 #
 #                     The LLVM Compiler Infrastructure
 #
