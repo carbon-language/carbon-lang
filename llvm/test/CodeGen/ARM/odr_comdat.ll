@@ -1,4 +1,4 @@
-; RUN: llc < %s -mtriple=arm-linux-gnueabi        | FileCheck %s -check-prefix=ARMGNUEABI
+; RUN: llc < %s -mtriple=arm-linux-gnueabi | FileCheck %s -check-prefix=ARMGNUEABI
 
 ; Checking that a comdat group gets generated correctly for a static member 
 ; of instantiated C++ templates.
