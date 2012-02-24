@@ -152,7 +152,7 @@ namespace llvm {
       /// Otherwise map the register and return an empty SUnits vector.
       std::vector<SUnit *> &operator[](unsigned Reg) {
         bool New = PhysRegSet.insert(Reg).second;
-        assert(!New || SUnits[Reg].empty() && "stale SUnits vector");
+        assert((!New || SUnits[Reg].empty()) && "stale SUnits vector");
         (void)New;
         return SUnits[Reg];
       }
