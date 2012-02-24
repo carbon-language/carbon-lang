@@ -70,6 +70,16 @@ void test5() {
   my_free1((int*)data);
 }
 
+static char *reshape(char *in) {
+    return 0;
+}
+
+void testThatRemoveDeadBindingsRunBeforeEachCall() {
+    char *v = malloc(12);
+    v = reshape(v);
+    v = reshape(v);// expected-warning {{Memory is never released; potential memory leak}}
+}
+
 // Test that we keep processing after 'return;'
 void fooWithEmptyReturn(int x) {
   if (x)

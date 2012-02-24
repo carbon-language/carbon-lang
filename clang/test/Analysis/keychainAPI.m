@@ -274,8 +274,8 @@ void DellocWithCFStringCreate2(CFAllocatorRef alloc) {
   char * x;
   st = SecKeychainItemCopyContent(2, ptr, ptr, &length, &bytes);
   if (st == noErr) {
-    CFStringRef userStr = CFStringCreateWithBytesNoCopy(alloc, bytes, length, 5, 0, kCFAllocatorNull); // expected-warning{{Allocated data is not released}}
-    CFRelease(userStr);
+    CFStringRef userStr = CFStringCreateWithBytesNoCopy(alloc, bytes, length, 5, 0, kCFAllocatorNull); 
+    CFRelease(userStr); // expected-warning{{Allocated data is not released}}
   }
 }
 
