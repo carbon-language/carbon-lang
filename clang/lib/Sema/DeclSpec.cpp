@@ -898,8 +898,6 @@ void DeclSpec::Finish(DiagnosticsEngine &D, Preprocessor &PP) {
   if (TypeSpecType == TST_char16 || TypeSpecType == TST_char32)
     Diag(D, TSTLoc, diag::warn_cxx98_compat_unicode_type)
       << (TypeSpecType == TST_char16 ? "char16_t" : "char32_t");
-  if (TypeSpecType == TST_decltype)
-    Diag(D, TSTLoc, diag::warn_cxx98_compat_decltype);
   if (Constexpr_specified)
     Diag(D, ConstexprLoc, diag::warn_cxx98_compat_constexpr);
 

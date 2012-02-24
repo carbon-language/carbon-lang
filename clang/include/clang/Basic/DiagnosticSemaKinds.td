@@ -1176,9 +1176,6 @@ def warn_cxx98_compat_temp_copy : Warning<
   InGroup<CXX98CompatBindToTemporaryCopy>, DefaultIgnore;
 
 // C++11 decltype
-def warn_cxx98_compat_decltype : Warning<
-  "'decltype' type specifier is incompatible with C++98">,
-  InGroup<CXX98Compat>, DefaultIgnore;
 def err_decltype_in_declarator : Error<
     "'decltype' cannot be used to name a declaration">;
     

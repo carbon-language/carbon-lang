@@ -99,6 +99,7 @@ char16_t c16 = 0; // expected-warning {{'char16_t' type specifier is incompatibl
 char32_t c32 = 0; // expected-warning {{'char32_t' type specifier is incompatible with C++98}}
 constexpr int const_expr = 0; // expected-warning {{'constexpr' specifier is incompatible with C++98}}
 decltype(const_expr) decl_type = 0; // expected-warning {{'decltype' type specifier is incompatible with C++98}}
+__decltype(const_expr) decl_type2 = 0; // ok
 void no_except() noexcept; // expected-warning {{noexcept specifications are incompatible with C++98}}
 bool no_except_expr = noexcept(1 + 1); // expected-warning {{noexcept expressions are incompatible with C++98}}
 void *null = nullptr; // expected-warning {{'nullptr' is incompatible with C++98}}
