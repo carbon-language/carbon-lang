@@ -103,4 +103,4 @@ namespace Mips {
 } // namespace llvm
 
 
-#endif // LLVM_Mips_MipsFIXUPKINDS_H
+#endif // LLVM_MIPS_MIPSFIXUPKINDS_H
