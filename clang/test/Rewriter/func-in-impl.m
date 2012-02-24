@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -rewrite-objc %s -o - | FileCheck %s
+// RUN: %clang_cc1 -E %s -o %t.m
+// RUN: %clang_cc1 -fobjc-fragile-abi -rewrite-objc %t.m -o - | FileCheck %s
 
 @interface I {
   id _delegate;
