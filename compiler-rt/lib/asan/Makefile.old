@@ -320,11 +320,11 @@ asan_test: $(BIN)/asan_test$(SUFF)
 asan_benchmarks: $(BIN)/asan_benchmarks$(SUFF)
 
 # for now, build gtest with clang/asan even if we use a different compiler.
-$(GTEST_LIB): $(LIBASAN_A)
+$(GTEST_LIB):
 	mkdir -p $(GTEST_MAKE_DIR) && \
 	cd $(GTEST_MAKE_DIR) && \
 	$(MAKE) -f ../make/Makefile CXXFLAGS="$(PIE) $(CFLAGS) -g -w" \
-	  CXX="$(CLANG_ASAN_CXX)"
+	  CXX="$(CLANG_CXX)"
 
 RTL_LINT_FITLER=-readability/casting,-readability/check,-build/include,-build/header_guard,-build/class,-legal/copyright
 # TODO(kcc): remove these filters one by one
