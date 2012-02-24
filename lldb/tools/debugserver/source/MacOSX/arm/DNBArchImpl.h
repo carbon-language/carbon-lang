@@ -238,6 +238,7 @@ protected:
 
     // Helper functions for watchpoint implementaions.
     static void ClearWatchpointOccurred();
+    static bool HasWatchpointOccurred();
     static bool IsWatchpointHit(const DBG &debug_state, uint32_t hw_index);
     static nub_addr_t GetWatchAddress(const DBG &debug_state, uint32_t hw_index);
 

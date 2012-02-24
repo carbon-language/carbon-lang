@@ -56,6 +56,10 @@
 #define WCR_LOAD                ((uint32_t)(1u << 3))
 #define WCR_STORE               ((uint32_t)(1u << 4))
 
+// Definitions for the Debug Status and Control Register fields:
+// [5:2] => Method of debug entry
+#define WATCHPOINT_OCCURRED     ((uint32_t)(2u))
+
 //#define DNB_ARCH_MACH_ARM_DEBUG_SW_STEP 1
 
 static const uint8_t g_arm_breakpoint_opcode[] = { 0xFE, 0xDE, 0xFF, 0xE7 };
@@ -342,6 +346,13 @@ DNBArchMachARM::ThreadWillResume()
             SetSingleStepSoftwareBreakpoints();
         }
     }
+
+    // Reset the method of debug entry field of the DSCR, if necessary, before we resume.
+    if (HasWatchpointOccurred())
+    {
+        ClearWatchpointOccurred();
+        DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::ThreadWillResume() ClearWatchpointOccurred() called");
+    }
 }
 
 bool
@@ -461,6 +472,8 @@ DNBArchMachARM::NotifyException(MachException::Data& exc)
                 //
                 // Check whether this corresponds to a watchpoint hit event.
                 // If yes, set the exc_sub_code to the data break address.
+                if (!HasWatchpointOccurred())
+                    break;
                 nub_addr_t addr = 0;
                 uint32_t hw_index = GetHardwareWatchpointHit(addr);
                 if (hw_index != INVALID_NUB_HW_INDEX)
@@ -2405,7 +2418,7 @@ DNBArchMachARM::DisableHardwareWatchpoint (uint32_t hw_index)
         if (hw_index < num_hw_points)
         {
             m_state.dbg.__wcr[hw_index] = 0;
-            DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::ClearHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
+            DNBLogThreadedIf(LOG_WATCHPOINTS, "DNBArchMachARM::DisableHardwareWatchpoint( %u ) - WVR%u = 0x%8.8x  WCR%u = 0x%8.8x",
                     hw_index,
                     hw_index,
                     m_state.dbg.__wvr[hw_index],
@@ -2435,7 +2448,7 @@ DNBArchMachARM::HardwareWatchpointStateChanged ()
     Valid_Global_Debug_State = true;
 }
 
-// Iterate through the debug status register; return the index of the first hit.
+// Iterate through the debug registers; return the index of the first hit.
 uint32_t
 DNBArchMachARM::GetHardwareWatchpointHit(nub_addr_t &addr)
 {
@@ -2475,13 +2488,27 @@ DNBArchMachARM::ClearWatchpointOccurred()
     // See also IsWatchpointHit().
     uint32_t register_DBGDSCR;
     asm("mrc p14, 0, %0, c0, c1, 0" : "=r" (register_DBGDSCR));
-    if (bits(register_DBGDSCR, 5, 2) == 0x2)
+    if (bits(register_DBGDSCR, 5, 2) == WATCHPOINT_OCCURRED)
     {
         uint32_t mask = ~(0xF << 2);
         register_DBGDSCR &= mask;
         asm("mcr p14, 0, %0, c0, c1, 0" : "=r" (register_DBGDSCR));
     }
     return;
+}
+
+// NotifyException() calls this to double check that a watchpoint has occurred
+// by inspecting the bits[5:2] field of the Debug Status and Control Register
+// (DSCR).
+// 
+// b0010 = a watchpoint occurred
+bool
+DNBArchMachARM::HasWatchpointOccurred()
+{
+    // See also IsWatchpointHit().
+    uint32_t register_DBGDSCR;
+    asm("mrc p14, 0, %0, c0, c1, 0" : "=r" (register_DBGDSCR));
+    return (bits(register_DBGDSCR, 5, 2) == WATCHPOINT_OCCURRED);
 }
 
 // FIXME: IsWatchpointHit() currently returns the first enabled watchpoint,
@@ -2492,7 +2519,7 @@ DNBArchMachARM::IsWatchpointHit(const DBG &debug_state, uint32_t hw_index)
     // Watchpoint Control Registers, bitfield definitions
     // ...
     // Bits    Value    Description
-    // [0]	   0        Watchpoint disabled
+    // [0]     0        Watchpoint disabled
     //         1        Watchpoint enabled.
     return (debug_state.__wcr[hw_index] & 1u);
 }
