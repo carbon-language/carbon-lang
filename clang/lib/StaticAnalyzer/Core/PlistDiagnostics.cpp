@@ -240,6 +240,33 @@ static void ReportEvent(raw_ostream &o, const PathDiagnosticPiece& P,
   Indent(o, indent); o << "</dict>\n";
 }
 
+static void ReportPiece(raw_ostream &o,
+                        const PathDiagnosticPiece &P,
+                        const FIDMap& FM, const SourceManager &SM,
+                        const LangOptions &LangOpts,
+                        unsigned indent,
+                        bool includeControlFlow);
+
+static void ReportCall(raw_ostream &o,
+                       const PathDiagnosticCallPiece &P,
+                       const FIDMap& FM, const SourceManager &SM,
+                       const LangOptions &LangOpts,
+                       unsigned indent) {
+  
+  IntrusiveRefCntPtr<PathDiagnosticEventPiece> callEnter =
+    P.getCallEnterEvent();  
+  if (callEnter)
+    ReportPiece(o, *callEnter, FM, SM, LangOpts, indent, true);
+
+  for (PathPieces::const_iterator I = P.path.begin(), E = P.path.end();I!=E;++I)
+    ReportPiece(o, **I, FM, SM, LangOpts, indent, true);
+  
+  IntrusiveRefCntPtr<PathDiagnosticEventPiece> callExit =
+    P.getCallExitEvent();
+  if (callExit)  
+    ReportPiece(o, *callExit, FM, SM, LangOpts, indent, true);
+}
+
 static void ReportMacro(raw_ostream &o,
                         const PathDiagnosticMacroPiece& P,
                         const FIDMap& FM, const SourceManager &SM,
@@ -248,43 +275,40 @@ static void ReportMacro(raw_ostream &o,
 
   for (PathPieces::const_iterator I = P.subPieces.begin(), E=P.subPieces.end();
        I!=E; ++I) {
-
-    switch ((*I)->getKind()) {
-    default:
-      break;
-    case PathDiagnosticPiece::Event:
-      ReportEvent(o, cast<PathDiagnosticEventPiece>(**I), FM, SM, LangOpts,
-                  indent);
-      break;
-    case PathDiagnosticPiece::Macro:
-      ReportMacro(o, cast<PathDiagnosticMacroPiece>(**I), FM, SM, LangOpts,
-                  indent);
-      break;
-    }
+    ReportPiece(o, **I, FM, SM, LangOpts, indent, false);
   }
 }
 
 static void ReportDiag(raw_ostream &o, const PathDiagnosticPiece& P,
                        const FIDMap& FM, const SourceManager &SM,
                        const LangOptions &LangOpts) {
+  ReportPiece(o, P, FM, SM, LangOpts, 4, true);
+}
 
-  unsigned indent = 4;
-
+static void ReportPiece(raw_ostream &o,
+                        const PathDiagnosticPiece &P,
+                        const FIDMap& FM, const SourceManager &SM,
+                        const LangOptions &LangOpts,
+                        unsigned indent,
+                        bool includeControlFlow) {
   switch (P.getKind()) {
-  case PathDiagnosticPiece::ControlFlow:
-    ReportControlFlow(o, cast<PathDiagnosticControlFlowPiece>(P), FM, SM,
-                      LangOpts, indent);
-    break;
-  case PathDiagnosticPiece::CallEnter:
-  case PathDiagnosticPiece::CallExit:
-  case PathDiagnosticPiece::Event:
-    ReportEvent(o, cast<PathDiagnosticSpotPiece>(P), FM, SM, LangOpts,
-                indent);
-    break;
-  case PathDiagnosticPiece::Macro:
-    ReportMacro(o, cast<PathDiagnosticMacroPiece>(P), FM, SM, LangOpts,
-                indent);
-    break;
+    case PathDiagnosticPiece::ControlFlow:
+      if (includeControlFlow)
+        ReportControlFlow(o, cast<PathDiagnosticControlFlowPiece>(P), FM, SM,
+                          LangOpts, indent);
+      break;
+    case PathDiagnosticPiece::Call:
+      ReportCall(o, cast<PathDiagnosticCallPiece>(P), FM, SM, LangOpts,
+                 indent);
+      break;
+    case PathDiagnosticPiece::Event:
+      ReportEvent(o, cast<PathDiagnosticSpotPiece>(P), FM, SM, LangOpts,
+                  indent);
+      break;
+    case PathDiagnosticPiece::Macro:
+      ReportMacro(o, cast<PathDiagnosticMacroPiece>(P), FM, SM, LangOpts,
+                  indent);
+      break;
   }
 }
 

@@ -16,11 +16,11 @@ void test_bug_2() {
 }
 
 // CHECK: <?xml version="1.0" encoding="UTF-8"?>
-// CHECK: <!DOCTYPE plist PUBLIC "-//Apple Computer//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 // CHECK: <plist version="1.0">
 // CHECK: <dict>
 // CHECK:  <key>files</key>
 // CHECK:  <array>
+// CHECK:   <string>/Volumes/Data/Users/kremenek/llvm/tools/clang/test/Analysis/inline-unique-reports.c</string>
 // CHECK:  </array>
 // CHECK:  <key>diagnostics</key>
 // CHECK:  <array>
@@ -88,7 +88,7 @@ void test_bug_2() {
 // CHECK:           </dict>
 // CHECK:           <dict>
 // CHECK:            <key>line</key><integer>10</integer>
-// CHECK:            <key>col</key><integer>8</integer>
+// CHECK:            <key>col</key><integer>3</integer>
 // CHECK:            <key>file</key><integer>0</integer>
 // CHECK:           </dict>
 // CHECK:          </array>
@@ -103,6 +103,21 @@ void test_bug_2() {
 // CHECK:       <key>col</key><integer>3</integer>
 // CHECK:       <key>file</key><integer>0</integer>
 // CHECK:      </dict>
+// CHECK:      <key>ranges</key>
+// CHECK:      <array>
+// CHECK:        <array>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>10</integer>
+// CHECK:          <key>col</key><integer>3</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:         <dict>
+// CHECK:          <key>line</key><integer>10</integer>
+// CHECK:          <key>col</key><integer>8</integer>
+// CHECK:          <key>file</key><integer>0</integer>
+// CHECK:         </dict>
+// CHECK:        </array>
+// CHECK:      </array>
 // CHECK:      <key>extended_message</key>
 // CHECK:      <string>Entering call to &apos;bug&apos;</string>
 // CHECK:      <key>message</key>

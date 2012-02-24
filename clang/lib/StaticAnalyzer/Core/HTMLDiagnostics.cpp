@@ -95,8 +95,31 @@ void HTMLDiagnostics::FlushDiagnosticsImpl(
   }
 }
 
+static void flattenPath(PathPieces &path, const PathPieces &oldPath) {
+  for (PathPieces::const_iterator it = oldPath.begin(), et = oldPath.end();
+       it != et; ++it ) {
+    PathDiagnosticPiece *piece = it->getPtr();
+    if (const PathDiagnosticCallPiece *call =
+        dyn_cast<PathDiagnosticCallPiece>(piece)) {
+      IntrusiveRefCntPtr<PathDiagnosticEventPiece> callEnter =
+        call->getCallEnterEvent();
+      if (callEnter)
+        path.push_back(callEnter);
+      flattenPath(path, call->path);
+      IntrusiveRefCntPtr<PathDiagnosticEventPiece> callExit =
+        call->getCallExitEvent();
+      if (callExit)
+        path.push_back(callExit);
+      continue;
+    }
+
+    path.push_back(piece);
+  }
+}
+
 void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
-                                 SmallVectorImpl<std::string> *FilesMade){
+                                 SmallVectorImpl<std::string> *FilesMade) {
+    
   // Create the HTML directory if it is missing.
   if (!createdDir) {
     createdDir = true;
@@ -119,11 +142,15 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   if (noDir)
     return;
 
-  const SourceManager &SMgr = (*D.path.begin())->getLocation().getManager();
+  // First flatten out the entire path to make it easier to use.
+  PathPieces path;
+  flattenPath(path, D.path);
+  
+  const SourceManager &SMgr = (*path.begin())->getLocation().getManager();
   FileID FID;
 
   // Verify that the entire path is from the same FileID.
-  for (PathPieces::const_iterator I = D.path.begin(), E = D.path.end();
+  for (PathPieces::const_iterator I = path.begin(), E = path.end();
        I != E; ++I) {
     FullSourceLoc L = (*I)->getLocation().asLocation().getExpansionLoc();
 
@@ -152,10 +179,11 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   Rewriter R(const_cast<SourceManager&>(SMgr), PP.getLangOptions());
 
   // Process the path.
-  unsigned n = D.path.size();
+  unsigned n = path.size();
   unsigned max = n;
 
-  for (PathPieces::const_reverse_iterator I = D.path.rbegin(), E=D.path.rend();
+  for (PathPieces::const_reverse_iterator I = path.rbegin(), 
+       E = path.rend();
         I != E; ++I, --n)
     HandlePiece(R, FID, **I, n, max);
 
@@ -200,9 +228,9 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
       << html::EscapeText(Entry->getName())
       << "</td></tr>\n<tr><td class=\"rowname\">Location:</td><td>"
          "<a href=\"#EndPath\">line "
-      << (*D.path.rbegin())->getLocation().asLocation().getExpansionLineNumber()
+      << (*path.rbegin())->getLocation().asLocation().getExpansionLineNumber()
       << ", column "
-      << (*D.path.rbegin())->getLocation().asLocation().getExpansionColumnNumber()
+      << (*path.rbegin())->getLocation().asLocation().getExpansionColumnNumber()
       << "</a></td></tr>\n"
          "<tr><td class=\"rowname\">Description:</td><td>"
       << D.getDescription() << "</td></tr>\n";
@@ -240,10 +268,10 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
     os << "\n<!-- BUGFILE " << DirName << Entry->getName() << " -->\n";
 
     os << "\n<!-- BUGLINE "
-       << D.path.back()->getLocation().asLocation().getExpansionLineNumber()
+       << path.back()->getLocation().asLocation().getExpansionLineNumber()
        << " -->\n";
 
-    os << "\n<!-- BUGPATHLENGTH " << D.path.size() << " -->\n";
+    os << "\n<!-- BUGPATHLENGTH " << path.size() << " -->\n";
 
     // Mark the end of the tags.
     os << "\n<!-- BUGMETAEND -->\n";
@@ -332,8 +360,8 @@ void HTMLDiagnostics::HandlePiece(Rewriter& R, FileID BugFileID,
 
   const char *Kind = 0;
   switch (P.getKind()) {
-  case PathDiagnosticPiece::CallEnter:
-  case PathDiagnosticPiece::CallExit:
+  case PathDiagnosticPiece::Call:
+      llvm_unreachable("Calls should already be handled");
   case PathDiagnosticPiece::Event:  Kind = "Event"; break;
   case PathDiagnosticPiece::ControlFlow: Kind = "Control"; break;
     // Setting Kind to "Control" is intentional.
