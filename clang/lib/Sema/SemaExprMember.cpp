@@ -138,25 +138,25 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
   if (Classes.empty())
     return IMA_Static;
 
+  if (SemaRef.getLangOptions().CPlusPlus0x && isField) {
+    // C++11 [expr.prim.general]p12:
+    //   An id-expression that denotes a non-static data member or non-static
+    //   member function of a class can only be used:
+    //   (...)
+    //   - if that id-expression denotes a non-static data member and it
+    //     appears in an unevaluated operand.
+    const Sema::ExpressionEvaluationContextRecord& record
+      = SemaRef.ExprEvalContexts.back();
+    if (record.Context == Sema::Unevaluated)
+      return IMA_Field_Uneval_Context;
+  }
+
   // If the current context is not an instance method, it can't be
   // an implicit member reference.
   if (isStaticContext) {
     if (hasNonInstance)
-        return IMA_Mixed_StaticContext;
-        
-    if (SemaRef.getLangOptions().CPlusPlus0x && isField) {
-      // C++11 [expr.prim.general]p12:
-      //   An id-expression that denotes a non-static data member or non-static
-      //   member function of a class can only be used:
-      //   (...)
-      //   - if that id-expression denotes a non-static data member and it
-      //     appears in an unevaluated operand.
-      const Sema::ExpressionEvaluationContextRecord& record
-        = SemaRef.ExprEvalContexts.back();
-      if (record.Context == Sema::Unevaluated)
-        return IMA_Field_Uneval_Context;
-    }
-    
+      return IMA_Mixed_StaticContext;
+
     return IMA_Error_StaticContext;
   }
 
