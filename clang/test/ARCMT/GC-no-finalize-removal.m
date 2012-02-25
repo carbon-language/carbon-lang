@@ -12,9 +12,7 @@ void test1(CFTypeRef *cft) {
   id x = NSMakeCollectable(cft);
 }
 
-@interface I1 {
-  __strong I1 *myivar;
-}
+@interface I1
 @end
 
 @implementation I1

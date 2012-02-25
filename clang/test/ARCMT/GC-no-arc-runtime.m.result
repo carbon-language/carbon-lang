@@ -12,9 +12,7 @@ void test1(CFTypeRef *cft) {
   id x = CFBridgingRelease(cft);
 }
 
-@interface I1 {
-   I1 *myivar;
-}
+@interface I1
 @end
 
 @implementation I1

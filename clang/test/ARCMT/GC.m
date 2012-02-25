@@ -12,9 +12,7 @@ void test1(CFTypeRef *cft) {
   id x = NSMakeCollectable(cft);
 }
 
-@interface I1 {
-  __strong I1 *myivar;
-}
+@interface I1
 @end
 
 @implementation I1
@@ -90,3 +88,8 @@ __attribute__((objc_arc_weak_reference_unavailable))
 @implementation rdar10532449
 @synthesize assign_prop, strong_readonly_prop, weak_prop;
 @end
+
+void test2(id p, __strong I1 *ap[]) {
+  for (__strong I1 *specRule in p) {
+  }
+}
