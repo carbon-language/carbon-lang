@@ -68,7 +68,7 @@ DisablePeephole("disable-peephole", cl::Hidden, cl::init(false),
 STATISTIC(NumReuse,      "Number of extension results reused");
 STATISTIC(NumBitcasts,   "Number of bitcasts eliminated");
 STATISTIC(NumCmps,       "Number of compares eliminated");
-STATISTIC(NumImmFold,    "Number of move immediate foled");
+STATISTIC(NumImmFold,    "Number of move immediate folded");
 
 namespace {
   class PeepholeOptimizer : public MachineFunctionPass {
