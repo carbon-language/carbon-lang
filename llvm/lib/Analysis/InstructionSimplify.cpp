@@ -1636,7 +1636,7 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     if (llvm::isKnownNonNull(LHSPtr) && isa<ConstantPointerNull>(RHSPtr))
       return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
 
-    // A local instruction (alloca or noalias call) can't alias any incoming
+    // A local instruction (alloca or noalias call) can't equal any incoming
     // argument.
     if ((isa<Instruction>(LHSPtr) && isa<Argument>(RHSPtr)) ||
         (isa<Instruction>(RHSPtr) && isa<Argument>(LHSPtr)))
