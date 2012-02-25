@@ -131,9 +131,11 @@ public:
     ///     The offset in bytes into \a section.
     //------------------------------------------------------------------
     Address (const lldb::SectionSP &section_sp, lldb::addr_t offset) :
-        m_section_wp (section_sp),
+        m_section_wp (), // Don't init with section_sp in case section_sp is invalid (the weak_ptr will throw)
         m_offset (offset)
     {
+        if (section_sp)
+            m_section_wp = section_sp;
     }
 
     //------------------------------------------------------------------
