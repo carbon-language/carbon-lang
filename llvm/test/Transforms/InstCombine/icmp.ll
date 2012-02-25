@@ -634,6 +634,8 @@ define i1 @test62(i8* %a) {
   %arrayidx2 = getelementptr inbounds i8* %a, i64 10
   %cmp = icmp slt i8* %arrayidx1, %arrayidx2
   ret i1 %cmp
+; Don't turn a signed cmp of GEPs into an index compare.
 ; CHECK: @test62
-; CHECK-NEXT: ret i1 true
+; CHECK: %cmp = icmp slt i8* %arrayidx1, %arrayidx2
+; CHECK-NEXT: ret i1 %cmp
 }
