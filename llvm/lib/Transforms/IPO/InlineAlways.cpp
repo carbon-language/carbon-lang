@@ -37,7 +37,7 @@ namespace {
     InlineCostAnalyzer CA;
   public:
     // Use extremely low threshold.
-    AlwaysInliner() : Inliner(ID, -2000000000, true) {
+    AlwaysInliner() : Inliner(ID, -2000000000, /*InsertLifetime*/true) {
       initializeAlwaysInlinerPass(*PassRegistry::getPassRegistry());
     }
     AlwaysInliner(bool InsertLifetime) : Inliner(ID, -2000000000,
