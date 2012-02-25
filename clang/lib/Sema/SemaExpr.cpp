@@ -1257,7 +1257,7 @@ Sema::DecomposeUnqualifiedId(const UnqualifiedId &Id,
 bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
                                CorrectionCandidateCallback &CCC,
                                TemplateArgumentListInfo *ExplicitTemplateArgs,
-                               Expr **Args, unsigned NumArgs) {
+                               llvm::ArrayRef<Expr *> Args) {
   DeclarationName Name = R.getLookupName();
 
   unsigned diagnostic = diag::err_undeclared_var_use;
@@ -1387,11 +1387,11 @@ bool Sema::DiagnoseEmptyLookup(Scope *S, CXXScopeSpec &SS, LookupResult &R,
                    dyn_cast<FunctionTemplateDecl>(*CD))
             AddTemplateOverloadCandidate(
                 FTD, DeclAccessPair::make(FTD, AS_none), ExplicitTemplateArgs,
-                Args, NumArgs, OCS);
+                Args, OCS);
           else if (FunctionDecl *FD = dyn_cast<FunctionDecl>(*CD))
             if (!ExplicitTemplateArgs || ExplicitTemplateArgs->size() == 0)
               AddOverloadCandidate(FD, DeclAccessPair::make(FD, AS_none),
-                                   Args, NumArgs, OCS);
+                                   Args, OCS);
         }
         switch (OCS.BestViableFunction(*this, R.getNameLoc(), Best)) {
           case OR_Success:
@@ -3450,7 +3450,8 @@ Sema::ActOnCallExpr(Scope *S, Expr *Fn, SourceLocation LParenLoc,
     bool Dependent = false;
     if (Fn->isTypeDependent())
       Dependent = true;
-    else if (Expr::hasAnyTypeDependentArguments(Args, NumArgs))
+    else if (Expr::hasAnyTypeDependentArguments(
+        llvm::makeArrayRef(Args, NumArgs)))
       Dependent = true;
 
     if (Dependent) {

@@ -669,8 +669,7 @@ public:
     return const_cast<Expr*>(this)->IgnoreParenNoopCasts(Ctx);
   }
 
-  static bool hasAnyTypeDependentArguments(Expr** Exprs, unsigned NumExprs);
-  static bool hasAnyValueDependentArguments(Expr** Exprs, unsigned NumExprs);
+  static bool hasAnyTypeDependentArguments(llvm::ArrayRef<Expr *> Exprs);
 
   static bool classof(const Stmt *T) {
     return T->getStmtClass() >= firstExprConstant &&

@@ -1332,7 +1332,8 @@ Parser::ParsePostfixExpressionSuffix(ExprResult LHS) {
       CommaLocsTy CommaLocs;
       
       if (Tok.is(tok::code_completion)) {
-        Actions.CodeCompleteCall(getCurScope(), LHS.get(), 0, 0);
+        Actions.CodeCompleteCall(getCurScope(), LHS.get(),
+                                 llvm::ArrayRef<Expr *>());
         cutOffParsing();
         return ExprError();
       }
@@ -2211,13 +2212,12 @@ bool Parser::ParseExpressionList(SmallVectorImpl<Expr*> &Exprs,
                             SmallVectorImpl<SourceLocation> &CommaLocs,
                                  void (Sema::*Completer)(Scope *S, 
                                                            Expr *Data,
-                                                           Expr **Args,
-                                                           unsigned NumArgs),
+                                                   llvm::ArrayRef<Expr *> Args),
                                  Expr *Data) {
   while (1) {
     if (Tok.is(tok::code_completion)) {
       if (Completer)
-        (Actions.*Completer)(getCurScope(), Data, Exprs.data(), Exprs.size());
+        (Actions.*Completer)(getCurScope(), Data, Exprs);
       else
         Actions.CodeCompleteOrdinaryName(getCurScope(), Sema::PCC_Expression);
       cutOffParsing();

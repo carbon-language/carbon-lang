@@ -2528,19 +2528,9 @@ bool Expr::isImplicitCXXThis() const {
 
 /// hasAnyTypeDependentArguments - Determines if any of the expressions
 /// in Exprs is type-dependent.
-bool Expr::hasAnyTypeDependentArguments(Expr** Exprs, unsigned NumExprs) {
-  for (unsigned I = 0; I < NumExprs; ++I)
+bool Expr::hasAnyTypeDependentArguments(llvm::ArrayRef<Expr *> Exprs) {
+  for (unsigned I = 0; I < Exprs.size(); ++I)
     if (Exprs[I]->isTypeDependent())
-      return true;
-
-  return false;
-}
-
-/// hasAnyValueDependentArguments - Determines if any of the expressions
-/// in Exprs is value-dependent.
-bool Expr::hasAnyValueDependentArguments(Expr** Exprs, unsigned NumExprs) {
-  for (unsigned I = 0; I < NumExprs; ++I)
-    if (Exprs[I]->isValueDependent())
       return true;
 
   return false;

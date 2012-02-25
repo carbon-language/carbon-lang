@@ -1336,8 +1336,7 @@ private:
                            SmallVectorImpl<SourceLocation> &CommaLocs,
                            void (Sema::*Completer)(Scope *S,
                                                    Expr *Data,
-                                                   Expr **Args,
-                                                   unsigned NumArgs) = 0,
+                                             llvm::ArrayRef<Expr *> Args) = 0,
                            Expr *Data = 0);
 
   /// ParenParseOption - Control what ParseParenExpression will parse.

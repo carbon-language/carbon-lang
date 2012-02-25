@@ -780,7 +780,7 @@ namespace clang {
 
     void NoteCandidates(Sema &S,
                         OverloadCandidateDisplayKind OCD,
-                        Expr **Args, unsigned NumArgs,
+                        llvm::ArrayRef<Expr *> Args,
                         const char *Opc = 0,
                         SourceLocation Loc = SourceLocation());
   };

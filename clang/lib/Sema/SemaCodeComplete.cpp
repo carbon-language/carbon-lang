@@ -3707,19 +3707,19 @@ namespace {
   };
 }
 
-static bool anyNullArguments(Expr **Args, unsigned NumArgs) {
-  if (NumArgs && !Args)
+static bool anyNullArguments(llvm::ArrayRef<Expr*> Args) {
+  if (Args.size() && !Args.data())
     return true;
-  
-  for (unsigned I = 0; I != NumArgs; ++I)
+
+  for (unsigned I = 0; I != Args.size(); ++I)
     if (!Args[I])
       return true;
-  
+
   return false;
 }
 
 void Sema::CodeCompleteCall(Scope *S, Expr *FnIn,
-                            Expr **ArgsIn, unsigned NumArgs) {
+                            llvm::ArrayRef<Expr *> Args) {
   if (!CodeCompleter)
     return;
 
@@ -3729,11 +3729,10 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn,
   // e.g., by merging the two kinds of results.
 
   Expr *Fn = (Expr *)FnIn;
-  Expr **Args = (Expr **)ArgsIn;
 
   // Ignore type-dependent call expressions entirely.
-  if (!Fn || Fn->isTypeDependent() || anyNullArguments(Args, NumArgs) ||
-      Expr::hasAnyTypeDependentArguments(Args, NumArgs)) {
+  if (!Fn || Fn->isTypeDependent() || anyNullArguments(Args) ||
+      Expr::hasAnyTypeDependentArguments(Args)) {
     CodeCompleteOrdinaryName(S, PCC_Expression);
     return;
   }
@@ -3751,7 +3750,7 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn,
 
   Expr *NakedFn = Fn->IgnoreParenCasts();
   if (UnresolvedLookupExpr *ULE = dyn_cast<UnresolvedLookupExpr>(NakedFn))
-    AddOverloadedCallCandidates(ULE, Args, NumArgs, CandidateSet,
+    AddOverloadedCallCandidates(ULE, Args, CandidateSet,
                                 /*PartialOverloading=*/ true);
   else if (DeclRefExpr *DRE = dyn_cast<DeclRefExpr>(NakedFn)) {
     FunctionDecl *FDecl = dyn_cast<FunctionDecl>(DRE->getDecl());
@@ -3761,9 +3760,8 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn,
         Results.push_back(ResultCandidate(FDecl));
       else
         // FIXME: access?
-        AddOverloadCandidate(FDecl, DeclAccessPair::make(FDecl, AS_none),
-                             Args, NumArgs, CandidateSet,
-                             false, /*PartialOverloading*/true);
+        AddOverloadCandidate(FDecl, DeclAccessPair::make(FDecl, AS_none), Args,
+                             CandidateSet, false, /*PartialOverloading*/true);
     }
   }
   
@@ -3786,12 +3784,12 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn,
     for (unsigned I = 0, N = Results.size(); I != N; ++I) {
       if (const FunctionType *FType = Results[I].getFunctionType())
         if (const FunctionProtoType *Proto = dyn_cast<FunctionProtoType>(FType))
-          if (NumArgs < Proto->getNumArgs()) {
+          if (Args.size() < Proto->getNumArgs()) {
             if (ParamType.isNull())
-              ParamType = Proto->getArgType(NumArgs);
+              ParamType = Proto->getArgType(Args.size());
             else if (!Context.hasSameUnqualifiedType(
                                             ParamType.getNonReferenceType(),
-                           Proto->getArgType(NumArgs).getNonReferenceType())) {
+                       Proto->getArgType(Args.size()).getNonReferenceType())) {
               ParamType = QualType();
               break;
             }
@@ -3812,8 +3810,8 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn,
     
     if (const FunctionProtoType *Proto
                                   = FunctionType->getAs<FunctionProtoType>()) {
-      if (NumArgs < Proto->getNumArgs())
-        ParamType = Proto->getArgType(NumArgs);
+      if (Args.size() < Proto->getNumArgs())
+        ParamType = Proto->getArgType(Args.size());
     }
   }
 
@@ -3823,7 +3821,7 @@ void Sema::CodeCompleteCall(Scope *S, Expr *FnIn,
     CodeCompleteExpression(S, ParamType);
   
   if (!Results.empty())
-    CodeCompleter->ProcessOverloadCandidates(*this, NumArgs, Results.data(), 
+    CodeCompleter->ProcessOverloadCandidates(*this, Args.size(), Results.data(),
                                              Results.size());
 }
 

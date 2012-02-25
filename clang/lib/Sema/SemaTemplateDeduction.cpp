@@ -2909,7 +2909,7 @@ static bool hasDeducibleTemplateParameters(Sema &S,
 Sema::TemplateDeductionResult
 Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
                               TemplateArgumentListInfo *ExplicitTemplateArgs,
-                              Expr **Args, unsigned NumArgs,
+                              llvm::ArrayRef<Expr *> Args,
                               FunctionDecl *&Specialization,
                               TemplateDeductionInfo &Info) {
   FunctionDecl *Function = FunctionTemplate->getTemplatedDecl();
@@ -2918,10 +2918,10 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
   //   Template argument deduction is done by comparing each function template
   //   parameter type (call it P) with the type of the corresponding argument
   //   of the call (call it A) as described below.
-  unsigned CheckArgs = NumArgs;
-  if (NumArgs < Function->getMinRequiredArguments())
+  unsigned CheckArgs = Args.size();
+  if (Args.size() < Function->getMinRequiredArguments())
     return TDK_TooFewArguments;
-  else if (NumArgs > Function->getNumParams()) {
+  else if (Args.size() > Function->getNumParams()) {
     const FunctionProtoType *Proto
       = Function->getType()->getAs<FunctionProtoType>();
     if (Proto->isTemplateVariadic())
@@ -3062,7 +3062,7 @@ Sema::DeduceTemplateArguments(FunctionTemplateDecl *FunctionTemplate,
     PrepareArgumentPackDeduction(*this, Deduced, PackIndices, SavedPacks,
                                  NewlyDeducedPacks);
     bool HasAnyArguments = false;
-    for (; ArgIdx < NumArgs; ++ArgIdx) {
+    for (; ArgIdx < Args.size(); ++ArgIdx) {
       HasAnyArguments = true;
 
       QualType OrigParamType = ParamPattern;

@@ -369,7 +369,7 @@ static bool tryDiagnoseOverloadedCast(Sema &S, CastType CT,
     << CT << srcType << destType
     << range << src->getSourceRange();
 
-  candidates.NoteCandidates(S, howManyCandidates, &src, 1);
+  candidates.NoteCandidates(S, howManyCandidates, src);
 
   return true;
 }

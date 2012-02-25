@@ -2738,11 +2738,11 @@ static bool TryListConstructionSpecialCases(Sema &S,
                 dyn_cast<FunctionTemplateDecl>(DefaultConstructor))
           S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                          /*ExplicitArgs*/ 0,
-                                         0, 0, CandidateSet,
+                                         ArrayRef<Expr*>(), CandidateSet,
                                          /*SuppressUserConversions*/ false);
         else
           S.AddOverloadCandidate(DefaultConstructor, FoundDecl,
-                                 0, 0, CandidateSet,
+                                 ArrayRef<Expr*>(), CandidateSet,
                                  /*SuppressUserConversions*/ false);
         Sequence.SetOverloadFailure(
                        InitializationSequence::FK_ListConstructorOverloadFailed,
@@ -2825,7 +2825,7 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
       if (ConstructorTmpl)
         S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                        /*ExplicitArgs*/ 0,
-                                       Args, NumArgs, CandidateSet,
+                                       llvm::makeArrayRef(Args, NumArgs), CandidateSet,
                                        SuppressUserConversions);
       else {
         // C++ [over.match.copy]p1:
@@ -2838,7 +2838,7 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
                                  NumArgs == 1 &&
                                  Constructor->isCopyOrMoveConstructor();
         S.AddOverloadCandidate(Constructor, FoundDecl,
-                               Args, NumArgs, CandidateSet,
+                               llvm::makeArrayRef(Args, NumArgs), CandidateSet,
                                SuppressUserConversions,
                                /*PartialOverloading=*/false,
                                /*AllowExplicit=*/AllowExplicitConv);
@@ -3192,11 +3192,11 @@ static OverloadingResult TryRefInitWithConversionFunction(Sema &S,
         if (ConstructorTmpl)
           S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                          /*ExplicitArgs*/ 0,
-                                         &Initializer, 1, CandidateSet,
+                                         Initializer, CandidateSet,
                                          /*SuppressUserConversions=*/true);
         else
           S.AddOverloadCandidate(Constructor, FoundDecl,
-                                 &Initializer, 1, CandidateSet,
+                                 Initializer, CandidateSet,
                                  /*SuppressUserConversions=*/true);
       }
     }
@@ -3730,11 +3730,11 @@ static void TryUserDefinedConversion(Sema &S,
           if (ConstructorTmpl)
             S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                            /*ExplicitArgs*/ 0,
-                                           &Initializer, 1, CandidateSet,
+                                           Initializer, CandidateSet,
                                            /*SuppressUserConversions=*/true);
           else
             S.AddOverloadCandidate(Constructor, FoundDecl,
-                                   &Initializer, 1, CandidateSet,
+                                   Initializer, CandidateSet,
                                    /*SuppressUserConversions=*/true);
         }
       }
@@ -3998,7 +3998,7 @@ InitializationSequence::InitializationSequence(Sema &S,
   QualType DestType = Entity.getType();
 
   if (DestType->isDependentType() ||
-      Expr::hasAnyTypeDependentArguments(Args, NumArgs)) {
+      Expr::hasAnyTypeDependentArguments(llvm::makeArrayRef(Args, NumArgs))) {
     SequenceKind = DependentSequence;
     return;
   }
@@ -4339,7 +4339,7 @@ static void LookupCopyAndMoveConstructors(Sema &S,
       DeclAccessPair FoundDecl
         = DeclAccessPair::make(Constructor, Constructor->getAccess());
       S.AddOverloadCandidate(Constructor, FoundDecl,
-                             &CurInitExpr, 1, CandidateSet);
+                             CurInitExpr, CandidateSet);
       continue;
     }
 
@@ -4358,7 +4358,7 @@ static void LookupCopyAndMoveConstructors(Sema &S,
     DeclAccessPair FoundDecl
       = DeclAccessPair::make(ConstructorTmpl, ConstructorTmpl->getAccess());
     S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl, 0,
-                                   &CurInitExpr, 1, CandidateSet, true);
+                                   CurInitExpr, CandidateSet, true);
   }
 }
 
@@ -4468,7 +4468,7 @@ static ExprResult CopyObject(Sema &S,
            : diag::err_temp_copy_no_viable)
       << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
-    CandidateSet.NoteCandidates(S, OCD_AllCandidates, &CurInitExpr, 1);
+    CandidateSet.NoteCandidates(S, OCD_AllCandidates, CurInitExpr);
     if (!IsExtraneousCopy || S.isSFINAEContext())
       return ExprError();
     return move(CurInit);
@@ -4477,7 +4477,7 @@ static ExprResult CopyObject(Sema &S,
     S.Diag(Loc, diag::err_temp_copy_ambiguous)
       << (int)Entity.getKind() << CurInitExpr->getType()
       << CurInitExpr->getSourceRange();
-    CandidateSet.NoteCandidates(S, OCD_ViableCandidates, &CurInitExpr, 1);
+    CandidateSet.NoteCandidates(S, OCD_ViableCandidates, CurInitExpr);
     return ExprError();
 
   case OR_Deleted:
@@ -4584,12 +4584,12 @@ static void CheckCXX98CompatAccessibleCopy(Sema &S,
 
   case OR_No_Viable_Function:
     S.Diag(Loc, Diag);
-    CandidateSet.NoteCandidates(S, OCD_AllCandidates, &CurInitExpr, 1);
+    CandidateSet.NoteCandidates(S, OCD_AllCandidates, CurInitExpr);
     break;
 
   case OR_Ambiguous:
     S.Diag(Loc, Diag);
-    CandidateSet.NoteCandidates(S, OCD_ViableCandidates, &CurInitExpr, 1);
+    CandidateSet.NoteCandidates(S, OCD_ViableCandidates, CurInitExpr);
     break;
 
   case OR_Deleted:
@@ -5433,14 +5433,16 @@ bool InitializationSequence::Diagnose(Sema &S,
           << DestType << Args[0]->getType()
           << Args[0]->getSourceRange();
 
-      FailedCandidateSet.NoteCandidates(S, OCD_ViableCandidates, Args, NumArgs);
+      FailedCandidateSet.NoteCandidates(S, OCD_ViableCandidates,
+                                        llvm::makeArrayRef(Args, NumArgs));
       break;
 
     case OR_No_Viable_Function:
       S.Diag(Kind.getLocation(), diag::err_typecheck_nonviable_condition)
         << Args[0]->getType() << DestType.getNonReferenceType()
         << Args[0]->getSourceRange();
-      FailedCandidateSet.NoteCandidates(S, OCD_AllCandidates, Args, NumArgs);
+      FailedCandidateSet.NoteCandidates(S, OCD_AllCandidates,
+                                        llvm::makeArrayRef(Args, NumArgs));
       break;
 
     case OR_Deleted: {
@@ -5581,7 +5583,7 @@ bool InitializationSequence::Diagnose(Sema &S,
         S.Diag(Kind.getLocation(), diag::err_ovl_ambiguous_init)
           << DestType << ArgsRange;
         FailedCandidateSet.NoteCandidates(S, OCD_ViableCandidates,
-                                          Args, NumArgs);
+                                          llvm::makeArrayRef(Args, NumArgs));
         break;
 
       case OR_No_Viable_Function:
@@ -5626,7 +5628,8 @@ bool InitializationSequence::Diagnose(Sema &S,
 
         S.Diag(Kind.getLocation(), diag::err_ovl_no_viable_function_in_init)
           << DestType << ArgsRange;
-        FailedCandidateSet.NoteCandidates(S, OCD_AllCandidates, Args, NumArgs);
+        FailedCandidateSet.NoteCandidates(S, OCD_AllCandidates,
+                                          llvm::makeArrayRef(Args, NumArgs));
         break;
 
       case OR_Deleted: {

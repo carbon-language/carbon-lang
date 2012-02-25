@@ -771,7 +771,8 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   SourceLocation TyBeginLoc = TInfo->getTypeLoc().getBeginLoc();
 
   if (Ty->isDependentType() ||
-      CallExpr::hasAnyTypeDependentArguments(Exprs, NumExprs)) {
+      CallExpr::hasAnyTypeDependentArguments(
+        llvm::makeArrayRef(Exprs, NumExprs))) {
     exprs.release();
 
     return Owned(CXXUnresolvedConstructExpr::Create(Context, TInfo,
@@ -1205,7 +1206,8 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   unsigned NumPlaceArgs = PlacementArgs.size();
 
   if (!AllocType->isDependentType() &&
-      !Expr::hasAnyTypeDependentArguments(PlaceArgs, NumPlaceArgs) &&
+      !Expr::hasAnyTypeDependentArguments(
+        llvm::makeArrayRef(PlaceArgs, NumPlaceArgs)) &&
       FindAllocationFunctions(StartLoc,
                               SourceRange(PlacementLParen, PlacementRParen),
                               UseGlobal, AllocType, ArraySize, PlaceArgs,
@@ -1280,7 +1282,8 @@ Sema::BuildCXXNew(SourceLocation StartLoc, bool UseGlobal,
   }
 
   if (!AllocType->isDependentType() &&
-      !Expr::hasAnyTypeDependentArguments(Inits, NumInits)) {
+      !Expr::hasAnyTypeDependentArguments(
+        llvm::makeArrayRef(Inits, NumInits))) {
     // C++11 [expr.new]p15:
     //   A new-expression that creates an object of type T initializes that
     //   object as follows:
@@ -1624,14 +1627,16 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
 
     if (FunctionTemplateDecl *FnTemplate = dyn_cast<FunctionTemplateDecl>(D)) {
       AddTemplateOverloadCandidate(FnTemplate, Alloc.getPair(),
-                                   /*ExplicitTemplateArgs=*/0, Args, NumArgs,
+                                   /*ExplicitTemplateArgs=*/0,
+                                   llvm::makeArrayRef(Args, NumArgs),
                                    Candidates,
                                    /*SuppressUserConversions=*/false);
       continue;
     }
 
     FunctionDecl *Fn = cast<FunctionDecl>(D);
-    AddOverloadCandidate(Fn, Alloc.getPair(), Args, NumArgs, Candidates,
+    AddOverloadCandidate(Fn, Alloc.getPair(),
+                         llvm::makeArrayRef(Args, NumArgs), Candidates,
                          /*SuppressUserConversions=*/false);
   }
 
@@ -1671,7 +1676,8 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     if (Diagnose) {
       Diag(StartLoc, diag::err_ovl_no_viable_function_in_call)
         << Name << Range;
-      Candidates.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
+      Candidates.NoteCandidates(*this, OCD_AllCandidates,
+                                llvm::makeArrayRef(Args, NumArgs));
     }
     return true;
 
@@ -1679,7 +1685,8 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
     if (Diagnose) {
       Diag(StartLoc, diag::err_ovl_ambiguous_call)
         << Name << Range;
-      Candidates.NoteCandidates(*this, OCD_ViableCandidates, Args, NumArgs);
+      Candidates.NoteCandidates(*this, OCD_ViableCandidates,
+                                llvm::makeArrayRef(Args, NumArgs));
     }
     return true;
 
@@ -1690,7 +1697,8 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
         << Name 
         << getDeletedOrUnavailableSuffix(Best->Function)
         << Range;
-      Candidates.NoteCandidates(*this, OCD_AllCandidates, Args, NumArgs);
+      Candidates.NoteCandidates(*this, OCD_AllCandidates,
+                                llvm::makeArrayRef(Args, NumArgs));
     }
     return true;
   }
