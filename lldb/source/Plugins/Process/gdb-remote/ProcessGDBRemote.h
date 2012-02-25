@@ -103,7 +103,12 @@ public:
     DoAttachToProcessWithID (lldb::pid_t pid);
     
     virtual lldb_private::Error
-    DoAttachToProcessWithName (const char *process_name, bool wait_for_launch);
+    DoAttachToProcessWithID (lldb::pid_t pid, const lldb_private::ProcessAttachInfo &attach_info);
+    
+    virtual lldb_private::Error
+    DoAttachToProcessWithName (const char *process_name,
+                               bool wait_for_launch,
+                               const lldb_private::ProcessAttachInfo &attach_info);
 
     virtual void
     DidAttach ();
@@ -260,6 +265,9 @@ protected:
 
     lldb_private::Error
     StartDebugserverProcess (const char *debugserver_url);
+    
+    lldb_private::Error
+    StartDebugserverProcess (const char *debugserver_url, const lldb_private::ProcessInfo &process_info);
 
     void
     KillDebugserverProcess ();

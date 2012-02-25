@@ -117,6 +117,19 @@ public:
     
     static const char *
     GetGroupName (uint32_t gid, std::string &group_name);
+    
+    static uint32_t
+    GetUserID ();
+    
+    static uint32_t
+    GetGroupID ();
+
+    static uint32_t
+    GetEffectiveUserID ();
+
+    static uint32_t
+    GetEffectiveGroupID ();
+
 
     enum SystemLogType
     {

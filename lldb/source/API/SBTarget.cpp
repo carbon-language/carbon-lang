@@ -901,6 +901,14 @@ SBTarget::AttachToProcessWithID
             
             ProcessAttachInfo attach_info;
             attach_info.SetProcessID (pid);
+            
+            PlatformSP platform_sp = target_sp->GetPlatform();
+            ProcessInstanceInfo instance_info;
+            if (platform_sp->GetProcessInfo(pid, instance_info))
+            {
+                attach_info.SetUserID(instance_info.GetEffectiveUserID());
+                
+            }
             error.SetError (process_sp->Attach (attach_info));            
             // If we are doing synchronous mode, then wait for the
             // process to stop!

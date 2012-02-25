@@ -1889,6 +1889,29 @@ public:
     }
 
     //------------------------------------------------------------------
+    /// Attach to an existing process using a process ID.
+    ///
+    /// @param[in] pid
+    ///     The process ID that we should attempt to attach to.
+    ///
+    /// @param[in] attach_info
+    ///     Information on how to do the attach. For example, GetUserID()
+    ///     will return the uid to attach as.
+    ///
+    /// @return
+    ///     Returns \a pid if attaching was successful, or
+    ///     LLDB_INVALID_PROCESS_ID if attaching fails.
+    /// hanming : need flag
+    //------------------------------------------------------------------
+    virtual Error
+    DoAttachToProcessWithID (lldb::pid_t pid,  const ProcessAttachInfo &attach_info)
+    {
+        Error error;
+        error.SetErrorStringWithFormat("error: %s does not support attaching to a process by pid", GetShortPluginName());
+        return error;
+    }
+
+    //------------------------------------------------------------------
     /// Attach to an existing process using a partial process name.
     ///
     /// @param[in] process_name
@@ -1899,12 +1922,16 @@ public:
     ///     as soon as possible after it does launch. If \b false, then
     ///     search for a matching process the currently exists.
     ///
+    /// @param[in] attach_info
+    ///     Information on how to do the attach. For example, GetUserID()
+    ///     will return the uid to attach as.
+    ///
     /// @return
     ///     Returns \a pid if attaching was successful, or
     ///     LLDB_INVALID_PROCESS_ID if attaching fails.
     //------------------------------------------------------------------
     virtual Error
-    DoAttachToProcessWithName (const char *process_name, bool wait_for_launch) 
+    DoAttachToProcessWithName (const char *process_name, bool wait_for_launch, const ProcessAttachInfo &attach_info) 
     {
         Error error;
         error.SetErrorString("attach by name is not supported");

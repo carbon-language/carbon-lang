@@ -9,6 +9,17 @@
 
 #include "lldb/Host/Host.h"
 
+#include <AvailabilityMacros.h>
+
+#if !defined(MAC_OS_X_VERSION_10_7) || MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_7
+#define BUILDING_ON_SNOW_LEOPARD 1
+#endif
+
+#if !BUILDING_ON_SNOW_LEOPARD
+#include <xpc/xpc.h>
+#include "LauncherXPCService.h"
+#endif
+
 #include <asl.h>
 #include <crt_externs.h>
 #include <execinfo.h>
@@ -53,8 +64,8 @@
 #else
 #include <ApplicationServices/ApplicationServices.h>
 #include <Carbon/Carbon.h>
+#include <Security/Security.h>
 #endif
-#include <Foundation/Foundation.h>
 
 #ifndef _POSIX_SPAWN_DISABLE_ASLR
 #define _POSIX_SPAWN_DISABLE_ASLR       0x0100
@@ -1219,57 +1230,216 @@ Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
     return false;
 }
 
-Error
-Host::LaunchProcess (ProcessLaunchInfo &launch_info)
+static short
+GetPosixspawnFlags (ProcessLaunchInfo &launch_info)
+{
+    short flags = POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK;
+    if (launch_info.GetFlags().Test (eLaunchFlagExec))
+        flags |= POSIX_SPAWN_SETEXEC;           // Darwin specific posix_spawn flag
+    
+    if (launch_info.GetFlags().Test (eLaunchFlagDebug))
+        flags |= POSIX_SPAWN_START_SUSPENDED;   // Darwin specific posix_spawn flag
+    
+    if (launch_info.GetFlags().Test (eLaunchFlagDisableASLR))
+        flags |= _POSIX_SPAWN_DISABLE_ASLR;     // Darwin specific posix_spawn flag
+    
+    //#ifdef POSIX_SPAWN_CLOEXEC_DEFAULT
+    //    // Close all files exception those with file actions if this is supported.
+    //    flags |= POSIX_SPAWN_CLOEXEC_DEFAULT;       
+    //#endif
+    
+    return flags;
+}
+
+#if !BUILDING_ON_SNOW_LEOPARD
+static void
+PackageXPCArguments (xpc_object_t message, const char *prefix, const Args& args)
+{
+    size_t count = args.GetArgumentCount();
+    char buf[50]; // long enough for 'argXXX'
+    memset(buf, 0, 50);
+    sprintf(buf, "%sCount", prefix);
+	xpc_dictionary_set_int64(message, buf, count);
+    for (int i=0; i<count; i++) {
+        memset(buf, 0, 50);
+        sprintf(buf, "%s%i", prefix, i);
+        xpc_dictionary_set_string(message, buf, args.GetArgumentAtIndex(i));
+    }
+}
+
+static Error
+getXPCAuthorization (ProcessLaunchInfo &launch_info)
 {
     Error error;
     LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
-    char exe_path[PATH_MAX];
-    PlatformSP host_platform_sp (Platform::GetDefaultPlatform ());
     
-    const ArchSpec &arch_spec = launch_info.GetArchitecture();
-
-    FileSpec exe_spec(launch_info.GetExecutableFile());
-
-    FileSpec::FileType file_type = exe_spec.GetFileType();
-    if (file_type != FileSpec::eFileTypeRegular)
+    if (launch_info.GetUserID() == 0)
     {
-        lldb::ModuleSP exe_module_sp;
-        error = host_platform_sp->ResolveExecutable (exe_spec,
-                                                     arch_spec,
-                                                     exe_module_sp,
-                                                     NULL);
-    
-        if (error.Fail())
+        CFDictionaryRef dict = NULL;
+        OSStatus osStatus;
+        const char *rightName = "com.apple.lldb.LaunchUsingXPC";
+
+        osStatus = AuthorizationRightGet(rightName, &dict);
+        if (dict) CFRelease(dict);
+        if (osStatus == errAuthorizationSuccess)
+        {
+            // Got the right already.
             return error;
-    
-        if (exe_module_sp)
-            exe_spec = exe_module_sp->GetFileSpec();
+        }
+        
+        AuthorizationFlags authorizationFlags = kAuthorizationFlagDefaults;
+        AuthorizationRef authorizationRef = NULL;
+        osStatus = AuthorizationCreate(NULL, kAuthorizationEmptyEnvironment, authorizationFlags, &authorizationRef);
+        if (osStatus != errAuthorizationSuccess)
+        {
+            error.SetError(1, eErrorTypeGeneric);
+            if (log)
+            {
+                error.PutToLog(log.get(), "Can't create authorizationRef.");
+            }
+            else {
+                error.SetErrorString("Can't create authorizationRef.");
+            }
+            return error;
+        }
+        
+        CFStringRef prompt = CFSTR("The debugger is debugging a root process. Please authenticate as an administrator.");
+//        CFStringRef keys[] = { CFSTR("") };
+//        CFTypeRef values[] = { prompt };
+//        CFDictionaryRef promptDict = CFDictionaryCreate( kCFAllocatorDefault, (const void **)keys, (const void **)values, 1, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        
+        int timeout = 1; // Make this 10
+        CFNumberRef timeoutRef = CFNumberCreate(NULL, kCFNumberIntType, &timeout);
+        CFStringRef keys1[] = { CFSTR("class"), CFSTR("group"), CFSTR("comment"),                       CFSTR("shared"), CFSTR("timeout") };
+        CFTypeRef values1[] = { CFSTR("user"),  CFSTR("admin"), CFSTR("com.apple.lldb.LaunchUsingXPC"), kCFBooleanFalse, timeoutRef};
+        dict = CFDictionaryCreate( kCFAllocatorDefault, (const void **)keys1, (const void **)values1, 5, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+        
+        osStatus = AuthorizationRightSet(authorizationRef, rightName, dict, prompt, NULL, NULL);
+        if (osStatus != errAuthorizationSuccess)
+        {
+            // Eventually when the commandline supports running as root and the user is not
+            // logged in in the current audit session, we will need the trick in gdb where
+            // we ask the user to type in the root passwd in the terminal.
+            error.SetError(2, eErrorTypeGeneric);
+            if (log)
+            {
+                error.PutToLog(log.get(), "Launching as root needs root authorization.");
+            }
+            else
+            {
+                error.SetErrorStringWithFormat("Launching as root needs root authorization.");
+            }
+        }
+        CFRelease(timeoutRef);
+//        CFRelease(promptDict);
+        CFRelease(dict);
+        if (authorizationRef) {
+            AuthorizationFree(authorizationRef, kAuthorizationFlagDestroyRights);
+        }
     }
+
+    return error;
+}
+#endif
+
+static Error
+LaunchProcessXPC (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t &pid)
+{
+#if !BUILDING_ON_SNOW_LEOPARD
+    Error error = getXPCAuthorization(launch_info);
+    if (error.Fail())
+        return error;
     
-    if (exe_spec.Exists())
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
+        
+    uid_t requested_uid = launch_info.GetUserID();
+    const char *xpc_service  = nil;
+    if ((requested_uid == UINT32_MAX) || (requested_uid == Host::GetEffectiveUserID()))
     {
-        exe_spec.GetPath (exe_path, sizeof(exe_path));
+        xpc_service = "com.apple.lldb.launcherXPCService";
+    }
+    else if (requested_uid == 0)
+    {
+        xpc_service = "com.apple.lldb.launcherRootXPCService";
     }
     else
     {
-        launch_info.GetExecutableFile().GetPath (exe_path, sizeof(exe_path));
-        error.SetErrorStringWithFormat ("executable doesn't exist: '%s'", exe_path);
+        error.SetError(2, eErrorTypeGeneric);
+        if (log)
+        {
+            error.PutToLog(log.get(), "Launching via XPC is only currently available for either the login user or root.");
+        }
+        else
+        {
+            error.SetErrorStringWithFormat("Launching via XPC is only currently available for either the login user or root.");
+        }
         return error;
     }
-
     
-    if (launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
+    xpc_connection_t conn = xpc_connection_create(xpc_service, NULL);
+    
+	xpc_connection_set_event_handler(conn, ^(xpc_object_t event) {
+        xpc_type_t	type = xpc_get_type(event);
+        
+        if (type == XPC_TYPE_ERROR) {
+            if (event == XPC_ERROR_CONNECTION_INTERRUPTED) {
+                // The service has either canceled itself, crashed, or been terminated. 
+                // The XPC connection is still valid and sending a message to it will re-launch the service.
+                // If the service is state-full, this is the time to initialize the new service.
+                return;
+            } else if (event == XPC_ERROR_CONNECTION_INVALID) {
+                // The service is invalid. Either the service name supplied to xpc_connection_create() is incorrect
+                // or we (this process) have canceled the service; we can do any cleanup of appliation state at this point.
+                // printf("Service disconnected");
+                return;
+            } else {
+                // printf("Unexpected error from service: %s", xpc_dictionary_get_string(event, XPC_ERROR_KEY_DESCRIPTION));
+            }
+            
+        } else {			
+            // printf("Received unexpected event in handler");
+        }
+    });
+    
+    xpc_connection_set_finalizer_f (conn, xpc_release);
+	xpc_connection_resume (conn);
+    xpc_object_t message = xpc_dictionary_create (nil, nil, 0);
+    
+    PackageXPCArguments(message, LauncherXPCServiceArgPrefxKey, launch_info.GetArguments());
+    PackageXPCArguments(message, LauncherXPCServiceEnvPrefxKey, launch_info.GetEnvironmentEntries());
+    
+    // Posix spawn stuff.
+    xpc_dictionary_set_int64(message, LauncherXPCServiceCPUTypeKey, launch_info.GetArchitecture().GetMachOCPUType());
+    xpc_dictionary_set_int64(message, LauncherXPCServicePosixspawnFlagsKey, GetPosixspawnFlags(launch_info));
+    
+    xpc_object_t reply = xpc_connection_send_message_with_reply_sync(conn, message);
+    
+    pid = xpc_dictionary_get_int64(reply, LauncherXPCServiceChildPIDKey);
+    if (pid == 0)
     {
-#if !defined(__arm__)
-        return LaunchInNewTerminalWithAppleScript (exe_path, launch_info);
-#else
-        error.SetErrorString ("launching a processs in a new terminal is not supported on iOS devices");
-        return error;
-#endif
+        int errorType = xpc_dictionary_get_int64(reply, LauncherXPCServiceErrorTypeKey);
+        int errorCode = xpc_dictionary_get_int64(reply, LauncherXPCServiceCodeTypeKey);
+        
+        error.SetError(errorCode, eErrorTypeGeneric);
+        if (log)
+        {
+            error.PutToLog(log.get(), "Problems with launching via XPC. Error type : %i, code : %i", errorType, errorCode);
+        }
+        else {
+            error.SetErrorStringWithFormat("Problems with launching via XPC. Error type : %i, code : %i", errorType, errorCode);
+        }
     }
+#endif
     
-    Error local_err;    // Errors that don't affect the spawning.
+    return error;
+}
+
+static Error
+LaunchProcessPosixSpawn (const char *exe_path, ProcessLaunchInfo &launch_info, ::pid_t &pid)
+{
+    Error error;
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_HOST | LIBLLDB_LOG_PROCESS));
+    
     posix_spawnattr_t attr;
     error.SetError( ::posix_spawnattr_init (&attr), eErrorTypePOSIX);
     
@@ -1289,21 +1459,7 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     ::posix_spawnattr_setsigmask(&attr, &no_signals);
     ::posix_spawnattr_setsigdefault(&attr, &all_signals);
 
-    short flags = POSIX_SPAWN_SETSIGDEF | POSIX_SPAWN_SETSIGMASK;
-    if (launch_info.GetFlags().Test (eLaunchFlagExec))
-        flags |= POSIX_SPAWN_SETEXEC;           // Darwin specific posix_spawn flag
-
-    if (launch_info.GetFlags().Test (eLaunchFlagDebug))
-        flags |= POSIX_SPAWN_START_SUSPENDED;   // Darwin specific posix_spawn flag
-
-    if (launch_info.GetFlags().Test (eLaunchFlagDisableASLR))
-        flags |= _POSIX_SPAWN_DISABLE_ASLR;     // Darwin specific posix_spawn flag
-    
-//#ifdef POSIX_SPAWN_CLOEXEC_DEFAULT
-//    // Close all files exception those with file actions if this is supported.
-//    flags |= POSIX_SPAWN_CLOEXEC_DEFAULT;       
-//#endif
-
+    short flags = GetPosixspawnFlags(launch_info);
     error.SetError( ::posix_spawnattr_setflags (&attr, flags), eErrorTypePOSIX);
     if (error.Fail() || log)
         error.PutToLog(log.get(), "::posix_spawnattr_setflags ( &attr, flags=0x%8.8x )", flags);
@@ -1315,6 +1471,7 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     // We don't need to do this for ARM, and we really shouldn't now that we
     // have multiple CPU subtypes and no posix_spawnattr call that allows us
     // to set which CPU subtype to launch...
+    const ArchSpec &arch_spec = launch_info.GetArchitecture();
     cpu_type_t cpu = arch_spec.GetMachOCPUType();
     if (cpu != 0 && 
         cpu != UINT32_MAX && 
@@ -1330,7 +1487,7 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
     }
     
 #endif
-    ::pid_t pid = LLDB_INVALID_PROCESS_ID;
+    
     const char *tmp_argv[2];
     char * const *argv = (char * const*)launch_info.GetArguments().GetConstArgumentVector();
     char * const *envp = (char * const*)launch_info.GetEnvironmentEntries().GetConstArgumentVector();
@@ -1420,7 +1577,98 @@ Host::LaunchProcess (ProcessLaunchInfo &launch_info)
         // No more thread specific current working directory
         __pthread_fchdir (-1);
     }
+    
+    return error;
+}
 
+static bool
+ShouldLaunchUsingXPC(const char *exe_path, ProcessLaunchInfo &launch_info)
+{
+    bool result = false;
+
+#if !BUILDING_ON_SNOW_LEOPARD    
+    const char *debugserver = "/debugserver";
+    int len = strlen(debugserver);
+    int exe_len = strlen(exe_path);
+    if (exe_len >= len)
+    {
+        const char *part = exe_path + (exe_len - len);
+        if (strcmp(part, debugserver) == 0)
+        {
+            // We are dealing with debugserver.
+            uid_t requested_uid = launch_info.GetUserID();
+            if (requested_uid == 0)
+            {
+                // Launching XPC works for root. It also works for the non-attaching case for current login
+                // but unfortunately, we can't detect it here.
+                result = true;
+            }
+        }
+    }
+#endif
+    
+    return result;
+}
+
+Error
+Host::LaunchProcess (ProcessLaunchInfo &launch_info)
+{
+    Error error;
+    char exe_path[PATH_MAX];
+    PlatformSP host_platform_sp (Platform::GetDefaultPlatform ());
+    
+    const ArchSpec &arch_spec = launch_info.GetArchitecture();
+    
+    FileSpec exe_spec(launch_info.GetExecutableFile());
+    
+    FileSpec::FileType file_type = exe_spec.GetFileType();
+    if (file_type != FileSpec::eFileTypeRegular)
+    {
+        lldb::ModuleSP exe_module_sp;
+        error = host_platform_sp->ResolveExecutable (exe_spec,
+                                                     arch_spec,
+                                                     exe_module_sp,
+                                                     NULL);
+        
+        if (error.Fail())
+            return error;
+        
+        if (exe_module_sp)
+            exe_spec = exe_module_sp->GetFileSpec();
+    }
+    
+    if (exe_spec.Exists())
+    {
+        exe_spec.GetPath (exe_path, sizeof(exe_path));
+    }
+    else
+    {
+        launch_info.GetExecutableFile().GetPath (exe_path, sizeof(exe_path));
+        error.SetErrorStringWithFormat ("executable doesn't exist: '%s'", exe_path);
+        return error;
+    }
+    
+    if (launch_info.GetFlags().Test (eLaunchFlagLaunchInTTY))
+    {
+#if !defined(__arm__)
+        return LaunchInNewTerminalWithAppleScript (exe_path, launch_info);
+#else
+        error.SetErrorString ("launching a processs in a new terminal is not supported on iOS devices");
+        return error;
+#endif
+    }
+    
+    ::pid_t pid = LLDB_INVALID_PROCESS_ID;
+    
+    if (ShouldLaunchUsingXPC(exe_path, launch_info))
+    {
+        error = LaunchProcessXPC(exe_path, launch_info, pid);
+    }
+    else
+    {
+        error = LaunchProcessPosixSpawn(exe_path, launch_info, pid);
+    }
+    
     if (pid != LLDB_INVALID_PROCESS_ID)
     {
         // If all went well, then set the process ID into the launch info

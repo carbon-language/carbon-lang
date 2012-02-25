@@ -496,7 +496,7 @@ ProcessGDBRemote::DoLaunch (Module *exe_module, const ProcessLaunchInfo &launch_
         // Make sure we aren't already connected?
         if (!m_gdb_comm.IsConnected())
         {
-            error = StartDebugserverProcess (host_port);
+            error = StartDebugserverProcess (host_port, launch_info);
             if (error.Fail())
             {
                 if (log)
@@ -762,6 +762,13 @@ ProcessGDBRemote::DidLaunch ()
 Error
 ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
 {
+    ProcessAttachInfo attach_info;
+    return DoAttachToProcessWithID(attach_pid, attach_info);
+}
+
+Error
+ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid, const ProcessAttachInfo &attach_info)
+{
     Error error;
     // Clear out and clean up from any current state
     Clear();
@@ -775,7 +782,7 @@ ProcessGDBRemote::DoAttachToProcessWithID (lldb::pid_t attach_pid)
             char connect_url[128];
             snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
 
-            error = StartDebugserverProcess (host_port);
+            error = StartDebugserverProcess (host_port, attach_info);
             
             if (error.Fail())
             {
@@ -824,7 +831,7 @@ ProcessGDBRemote::AttachInputReaderCallback
 }
 
 Error
-ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait_for_launch)
+ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait_for_launch, const ProcessAttachInfo &attach_info)
 {
     Error error;
     // Clear out and clean up from any current state
@@ -840,7 +847,7 @@ ProcessGDBRemote::DoAttachToProcessWithName (const char *process_name, bool wait
             char connect_url[128];
             snprintf (connect_url, sizeof(connect_url), "connect://%s", host_port);
 
-            error = StartDebugserverProcess (host_port);
+            error = StartDebugserverProcess (host_port, attach_info);
             if (error.Fail())
             {
                 const char *error_string = error.AsCString();
@@ -2019,7 +2026,14 @@ ProcessGDBRemote::DoSignal (int signo)
 }
 
 Error
-ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url)    // The connection string to use in the spawned debugserver ("localhost:1234" or "/dev/tty...")
+ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url)
+{
+    ProcessLaunchInfo launch_info;
+    return StartDebugserverProcess(debugserver_url, launch_info);
+}
+
+Error
+ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url, const ProcessInfo &process_info)    // The connection string to use in the spawned debugserver ("localhost:1234" or "/dev/tty...")
 {
     Error error;
     if (m_debugserver_pid == LLDB_INVALID_PROCESS_ID)
@@ -2027,9 +2041,9 @@ ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url)    // Th
         // If we locate debugserver, keep that located version around
         static FileSpec g_debugserver_file_spec;
 
-        ProcessLaunchInfo launch_info;
+        ProcessLaunchInfo debugserver_launch_info;
         char debugserver_path[PATH_MAX];
-        FileSpec &debugserver_file_spec = launch_info.GetExecutableFile();
+        FileSpec &debugserver_file_spec = debugserver_launch_info.GetExecutableFile();
 
         // Always check to see if we have an environment override for the path
         // to the debugserver to use and use it if we do.
@@ -2067,7 +2081,7 @@ ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url)    // Th
 
             LogSP log (ProcessGDBRemoteLog::GetLogIfAllCategoriesSet (GDBR_LOG_PROCESS));
 
-            Args &debugserver_args = launch_info.GetArguments();
+            Args &debugserver_args = debugserver_launch_info.GetArguments();
             char arg_cstr[PATH_MAX];
 
             // Start args with "debugserver /file/path -r --"
@@ -2130,11 +2144,11 @@ ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url)    // Th
             // Close STDIN, STDOUT and STDERR. We might need to redirect them
             // to "/dev/null" if we run into any problems.
             file_action.Close (STDIN_FILENO);
-            launch_info.AppendFileAction (file_action);
+            debugserver_launch_info.AppendFileAction (file_action);
             file_action.Close (STDOUT_FILENO);
-            launch_info.AppendFileAction (file_action);
+            debugserver_launch_info.AppendFileAction (file_action);
             file_action.Close (STDERR_FILENO);
-            launch_info.AppendFileAction (file_action);
+            debugserver_launch_info.AppendFileAction (file_action);
 
             if (log)
             {
@@ -2143,12 +2157,13 @@ ProcessGDBRemote::StartDebugserverProcess (const char *debugserver_url)    // Th
                 log->Printf("%s arguments:\n%s", debugserver_args.GetArgumentAtIndex(0), strm.GetData());
             }
 
-            launch_info.SetMonitorProcessCallback (MonitorDebugserverProcess, this, false);
+            debugserver_launch_info.SetMonitorProcessCallback (MonitorDebugserverProcess, this, false);
+            debugserver_launch_info.SetUserID(process_info.GetUserID());
 
-            error = Host::LaunchProcess(launch_info);
+            error = Host::LaunchProcess(debugserver_launch_info);
 
             if (error.Success ())
-                m_debugserver_pid = launch_info.GetProcessID();
+                m_debugserver_pid = debugserver_launch_info.GetProcessID();
             else
                 m_debugserver_pid = LLDB_INVALID_PROCESS_ID;
 

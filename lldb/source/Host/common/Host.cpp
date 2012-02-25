@@ -1173,7 +1173,31 @@ Host::GetOSKernelDescription (std::string &s)
 }
 #endif
 
-#if !defined(__APPLE__)
+uint32_t
+Host::GetUserID ()
+{
+    return getuid();
+}
+
+uint32_t
+Host::GetGroupID ()
+{
+    return getgid();
+}
+
+uint32_t
+Host::GetEffectiveUserID ()
+{
+    return geteuid();
+}
+
+uint32_t
+Host::GetEffectiveGroupID ()
+{
+    return getegid();
+}
+
+#if !defined (__APPLE__)
 uint32_t
 Host::FindProcesses (const ProcessInstanceInfoMatch &match_info, ProcessInstanceInfoList &process_infos)
 {

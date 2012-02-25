@@ -458,6 +458,11 @@
 		B299580B14F2FA1400050A04 /* DisassemblerLLVMC.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B299580A14F2FA1400050A04 /* DisassemblerLLVMC.cpp */; };
 		B2A58722143119810092BFBA /* SBWatchpoint.h in Headers */ = {isa = PBXBuildFile; fileRef = B2A58721143119810092BFBA /* SBWatchpoint.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		B2A58724143119D50092BFBA /* SBWatchpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = B2A58723143119D50092BFBA /* SBWatchpoint.cpp */; };
+		ED236E0814F84F6800153F6F /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDB919B414F6F10D008FF64B /* Security.framework */; };
+		EDB919B314F6EC85008FF64B /* LauncherXPCService.h in Headers */ = {isa = PBXBuildFile; fileRef = EDB919B214F6EC85008FF64B /* LauncherXPCService.h */; };
+		EDB919B714F6F22D008FF64B /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = EDB919B414F6F10D008FF64B /* Security.framework */; };
+		EDC6D4AA14E5C49E001B75F8 /* LauncherXPCService.mm in Sources */ = {isa = PBXBuildFile; fileRef = EDC6D49414E5C15C001B75F8 /* LauncherXPCService.mm */; };
+		EDE274E414EDCE1F005B0F75 /* LauncherXPCService.mm in Sources */ = {isa = PBXBuildFile; fileRef = EDC6D49414E5C15C001B75F8 /* LauncherXPCService.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -523,6 +528,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = 26DC6A0F1337FE6900FF7998;
 			remoteInfo = "lldb-platform";
+		};
+		ED00234514F6B471008CF6DD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EDE274E214EDCE1F005B0F75;
+			remoteInfo = launcherRootXPCService;
+		};
+		EDC09A4C14E5CAA40062243E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EDC6D49814E5C19B001B75F8;
+			remoteInfo = launcherXPCService;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -1407,6 +1426,14 @@
 		B2A58723143119D50092BFBA /* SBWatchpoint.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SBWatchpoint.cpp; path = source/API/SBWatchpoint.cpp; sourceTree = "<group>"; };
 		B2A5872514313B480092BFBA /* SBWatchpoint.i */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.h; path = SBWatchpoint.i; sourceTree = "<group>"; };
 		B2D3033612EFA5C500F84EB3 /* InstructionUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = InstructionUtils.h; path = Utility/InstructionUtils.h; sourceTree = "<group>"; };
+		EDB919B214F6EC85008FF64B /* LauncherXPCService.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LauncherXPCService.h; sourceTree = "<group>"; };
+		EDB919B414F6F10D008FF64B /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = /System/Library/Frameworks/Security.framework; sourceTree = "<absolute>"; };
+		EDC6D49214E5C15C001B75F8 /* LauncherXPCService-Info.plist */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; path = "LauncherXPCService-Info.plist"; sourceTree = "<group>"; };
+		EDC6D49314E5C15C001B75F8 /* LauncherXPCService.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = LauncherXPCService.entitlements; sourceTree = "<group>"; };
+		EDC6D49414E5C15C001B75F8 /* LauncherXPCService.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = LauncherXPCService.mm; sourceTree = "<group>"; };
+		EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = com.apple.lldb.launcherXPCService.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
+		EDE274E114EDCE0D005B0F75 /* LauncherRootXPCService-Info.plist */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; path = "LauncherRootXPCService-Info.plist"; sourceTree = "<group>"; };
+		EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = com.apple.lldb.launcherRootXPCService.xpc; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -1424,6 +1451,7 @@
 				268901161335BBC300698AC0 /* liblldb-core.a in Frameworks */,
 				2668022F115FD19D008E1FE4 /* CoreFoundation.framework in Frameworks */,
 				26680233115FD1A7008E1FE4 /* libobjc.dylib in Frameworks */,
+				ED236E0814F84F6800153F6F /* Security.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1441,6 +1469,7 @@
 				26DC6A171337FE8000FF7998 /* liblldb-core.a in Frameworks */,
 				26B1FCB813381071002886E2 /* CoreFoundation.framework in Frameworks */,
 				26B1FCBC13381071002886E2 /* libobjc.dylib in Frameworks */,
+				EDB919B714F6F22D008FF64B /* Security.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1451,6 +1480,20 @@
 				26F5C32C10F3DFDD009D5894 /* libedit.dylib in Frameworks */,
 				26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */,
 				2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EDC6D49614E5C19B001B75F8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EDE274E514EDCE1F005B0F75 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -1503,6 +1546,8 @@
 				26680207115FD0ED008E1FE4 /* LLDB.framework */,
 				26579F68126A25920007C5CB /* darwin-debug */,
 				26DC6A101337FE6900FF7998 /* lldb-platform */,
+				EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */,
+				EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -2659,6 +2704,7 @@
 				26BC7EF910F1B8AD00F91463 /* CFCString.h */,
 				26BC7EE810F1B88F00F91463 /* Host.mm */,
 				2689B0B5113EE47E00A4AEDB /* Symbols.cpp */,
+				EDC6D49114E5C15C001B75F8 /* launcherXPCService */,
 			);
 			name = MacOSX;
 			sourceTree = "<group>";
@@ -2793,6 +2839,7 @@
 				26F5C32410F3DF23009D5894 /* libpython.dylib */,
 				26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */,
 				4C74CB6212288704006A8171 /* Carbon.framework */,
+				EDB919B414F6F10D008FF64B /* Security.framework */,
 			);
 			name = Libraries;
 			sourceTree = "<group>";
@@ -2889,6 +2936,19 @@
 			path = source/Host/common;
 			sourceTree = "<group>";
 		};
+		EDC6D49114E5C15C001B75F8 /* launcherXPCService */ = {
+			isa = PBXGroup;
+			children = (
+				EDC6D49214E5C15C001B75F8 /* LauncherXPCService-Info.plist */,
+				EDE274E114EDCE0D005B0F75 /* LauncherRootXPCService-Info.plist */,
+				EDC6D49314E5C15C001B75F8 /* LauncherXPCService.entitlements */,
+				EDB919B214F6EC85008FF64B /* LauncherXPCService.h */,
+				EDC6D49414E5C15C001B75F8 /* LauncherXPCService.mm */,
+			);
+			name = launcherXPCService;
+			path = source/Host/macosx/launcherXPCService;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -2949,6 +3009,7 @@
 				4CAA56131422D96A001FFA01 /* BreakpointResolverFileRegex.h in Headers */,
 				26B8283D142D01E9002DBC64 /* SBSection.h in Headers */,
 				B2A58722143119810092BFBA /* SBWatchpoint.h in Headers */,
+				EDB919B314F6EC85008FF64B /* LauncherXPCService.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3001,6 +3062,8 @@
 				2689011513353E9B00698AC0 /* PBXTargetDependency */,
 				262CFC7211A450CB00946C6C /* PBXTargetDependency */,
 				26368AF6126B95FA00E8659F /* PBXTargetDependency */,
+				EDC09A4D14E5CAA40062243E /* PBXTargetDependency */,
+				ED00234614F6B471008CF6DD /* PBXTargetDependency */,
 			);
 			name = LLDB;
 			productName = LLDB;
@@ -3063,6 +3126,40 @@
 			productReference = 26F5C26A10F3D9A4009D5894 /* lldb */;
 			productType = "com.apple.product-type.tool";
 		};
+		EDC6D49814E5C19B001B75F8 /* launcherXPCService */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EDC6D4A614E5C19B001B75F8 /* Build configuration list for PBXNativeTarget "launcherXPCService" */;
+			buildPhases = (
+				EDC6D49514E5C19B001B75F8 /* Sources */,
+				EDC6D49614E5C19B001B75F8 /* Frameworks */,
+				EDC6D49714E5C19B001B75F8 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = launcherXPCService;
+			productName = launcherXPCService;
+			productReference = EDC6D49914E5C19B001B75F8 /* com.apple.lldb.launcherXPCService.xpc */;
+			productType = "com.apple.product-type.bundle";
+		};
+		EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = EDE274E814EDCE1F005B0F75 /* Build configuration list for PBXNativeTarget "launcherRootXPCService" */;
+			buildPhases = (
+				EDE274E314EDCE1F005B0F75 /* Sources */,
+				EDE274E514EDCE1F005B0F75 /* Frameworks */,
+				EDE274E714EDCE1F005B0F75 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = launcherRootXPCService;
+			productName = launcherXPCService;
+			productReference = EDE274EC14EDCE1F005B0F75 /* com.apple.lldb.launcherRootXPCService.xpc */;
+			productType = "com.apple.product-type.bundle";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -3093,6 +3190,8 @@
 				26579F67126A25920007C5CB /* darwin-debug */,
 				2689FFC913353D7A00698AC0 /* lldb-core */,
 				26DC6A0F1337FE6900FF7998 /* lldb-platform */,
+				EDC6D49814E5C19B001B75F8 /* launcherXPCService */,
+				EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */,
 			);
 		};
 /* End PBXProject section */
@@ -3115,6 +3214,20 @@
 				266E8C6A13528ABC000C2042 /* lldb-platform in Resources */,
 				262CFC7711A4510000946C6C /* debugserver in Resources */,
 				26368AF7126B960500E8659F /* darwin-debug in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EDC6D49714E5C19B001B75F8 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EDE274E714EDCE1F005B0F75 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3649,6 +3762,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		EDC6D49514E5C19B001B75F8 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EDC6D4AA14E5C49E001B75F8 /* LauncherXPCService.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		EDE274E314EDCE1F005B0F75 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EDE274E414EDCE1F005B0F75 /* LauncherXPCService.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -3691,6 +3820,16 @@
 			isa = PBXTargetDependency;
 			target = 26DC6A0F1337FE6900FF7998 /* lldb-platform */;
 			targetProxy = 26DC6A201338008100FF7998 /* PBXContainerItemProxy */;
+		};
+		ED00234614F6B471008CF6DD /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */;
+			targetProxy = ED00234514F6B471008CF6DD /* PBXContainerItemProxy */;
+		};
+		EDC09A4D14E5CAA40062243E /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EDC6D49814E5C19B001B75F8 /* launcherXPCService */;
+			targetProxy = EDC09A4C14E5CAA40062243E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -4429,6 +4568,177 @@
 			};
 			name = Release;
 		};
+		EDC6D4A714E5C19B001B75F8 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = "$(SYMROOT)";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherXPCService-Info.plist";
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
+					"NO0=0",
+					"YES0=1",
+					"RC_XBS=${RC_XBS}0",
+					"RC_BUILDIT=${RC_BUILDIT}0",
+				);
+				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				MACH_O_TYPE = mh_execute;
+				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				WRAPPER_EXTENSION = xpc;
+			};
+			name = Debug;
+		};
+		EDC6D4A814E5C19B001B75F8 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = YES;
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = "$(SYMROOT)";
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherXPCService-Info.plist";
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
+					"NO0=0",
+					"YES0=1",
+					"RC_XBS=${RC_XBS}0",
+					"RC_BUILDIT=${RC_BUILDIT}0",
+				);
+				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				MACH_O_TYPE = mh_execute;
+				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				WRAPPER_EXTENSION = xpc;
+			};
+			name = Release;
+		};
+		EDC6D4A914E5C19B001B75F8 /* BuildAndIntegration */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherXPCService-Info.plist";
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
+					"NO0=0",
+					"YES0=1",
+					"RC_XBS=${RC_XBS}0",
+					"RC_BUILDIT=${RC_BUILDIT}0",
+				);
+				INSTALL_PATH = "$(DSTROOT)/LLDB.framework/XPCServices";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				MACH_O_TYPE = mh_execute;
+				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				WRAPPER_EXTENSION = xpc;
+			};
+			name = BuildAndIntegration;
+		};
+		EDE274E914EDCE1F005B0F75 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = "$(SYMROOT)";
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherRootXPCService-Info.plist";
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
+					"NO0=0",
+					"YES0=1",
+					"RC_XBS=${RC_XBS}0",
+					"RC_BUILDIT=${RC_BUILDIT}0",
+				);
+				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				MACH_O_TYPE = mh_execute;
+				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				WRAPPER_EXTENSION = xpc;
+			};
+			name = Debug;
+		};
+		EDE274EA14EDCE1F005B0F75 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = YES;
+				DEPLOYMENT_LOCATION = YES;
+				DSTROOT = "$(SYMROOT)";
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherRootXPCService-Info.plist";
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
+					"NO0=0",
+					"YES0=1",
+					"RC_XBS=${RC_XBS}0",
+					"RC_BUILDIT=${RC_BUILDIT}0",
+				);
+				INSTALL_PATH = "/$(CONFIGURATION)/LLDB.framework/XPCServices";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				MACH_O_TYPE = mh_execute;
+				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				WRAPPER_EXTENSION = xpc;
+			};
+			name = Release;
+		};
+		EDE274EB14EDCE1F005B0F75 /* BuildAndIntegration */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
+				CODE_SIGN_IDENTITY = "-";
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherRootXPCService-Info.plist";
+				INFOPLIST_PREPROCESS = YES;
+				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
+					"NO0=0",
+					"YES0=1",
+					"RC_XBS=${RC_XBS}0",
+					"RC_BUILDIT=${RC_BUILDIT}0",
+				);
+				INSTALL_PATH = "$(DSTROOT)/LLDB.framework/XPCServices";
+				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
+				MACH_O_TYPE = mh_execute;
+				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "";
+				WRAPPER_EXTENSION = xpc;
+			};
+			name = BuildAndIntegration;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -4488,6 +4798,26 @@
 				26F5C26C10F3D9A5009D5894 /* Debug */,
 				26F5C26D10F3D9A5009D5894 /* Release */,
 				268A89B311963ECA00D953EB /* BuildAndIntegration */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
+		};
+		EDC6D4A614E5C19B001B75F8 /* Build configuration list for PBXNativeTarget "launcherXPCService" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EDC6D4A714E5C19B001B75F8 /* Debug */,
+				EDC6D4A814E5C19B001B75F8 /* Release */,
+				EDC6D4A914E5C19B001B75F8 /* BuildAndIntegration */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
+		};
+		EDE274E814EDCE1F005B0F75 /* Build configuration list for PBXNativeTarget "launcherRootXPCService" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EDE274E914EDCE1F005B0F75 /* Debug */,
+				EDE274EA14EDCE1F005B0F75 /* Release */,
+				EDE274EB14EDCE1F005B0F75 /* BuildAndIntegration */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = BuildAndIntegration;

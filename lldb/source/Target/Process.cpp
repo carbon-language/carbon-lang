@@ -2490,7 +2490,7 @@ Process::Attach (ProcessAttachInfo &attach_info)
                     m_should_detach = true;
 
                     SetPublicState (eStateAttaching);
-                    error = DoAttachToProcessWithName (process_name, wait_for_launch);
+                    error = DoAttachToProcessWithName (process_name, wait_for_launch, attach_info);
                     if (error.Fail())
                     {
                         if (GetID() != LLDB_INVALID_PROCESS_ID)
@@ -2557,7 +2557,7 @@ Process::Attach (ProcessAttachInfo &attach_info)
             m_should_detach = true;
             SetPublicState (eStateAttaching);
 
-            error = DoAttachToProcessWithID (attach_pid);
+            error = DoAttachToProcessWithID (attach_pid, attach_info);
             if (error.Success())
             {
                 
