@@ -184,7 +184,11 @@ void EmitAssemblyHelper::CreatePasses() {
   }
   case CodeGenOptions::OnlyAlwaysInlining:
     // Respect always_inline.
-    PMBuilder.Inliner = createAlwaysInlinerPass();
+    if (OptLevel == 0)
+      // Do not insert lifetime intrinsics at -O0.
+      PMBuilder.Inliner = createAlwaysInlinerPass(false);
+    else
+      PMBuilder.Inliner = createAlwaysInlinerPass();
     break;
   }
 
