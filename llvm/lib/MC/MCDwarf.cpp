@@ -715,7 +715,7 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
 //
 void MCGenDwarfLabelEntry::Make(MCSymbol *Symbol, MCStreamer *MCOS,
                                      SourceMgr &SrcMgr, SMLoc &Loc) {
-  // We won't create dwarf label's for temporary symbols or symbols not in
+  // We won't create dwarf labels for temporary symbols or symbols not in
   // the default text.
   if (Symbol->isTemporary())
     return;
