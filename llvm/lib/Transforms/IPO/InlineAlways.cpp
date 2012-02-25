@@ -37,7 +37,11 @@ namespace {
     InlineCostAnalyzer CA;
   public:
     // Use extremely low threshold.
-    AlwaysInliner() : Inliner(ID, -2000000000) {
+    AlwaysInliner() : Inliner(ID, -2000000000, true) {
+      initializeAlwaysInlinerPass(*PassRegistry::getPassRegistry());
+    }
+    AlwaysInliner(bool InsertLifetime) : Inliner(ID, -2000000000,
+                                                 InsertLifetime) {
       initializeAlwaysInlinerPass(*PassRegistry::getPassRegistry());
     }
     static char ID; // Pass identification, replacement for typeid
@@ -71,6 +75,10 @@ INITIALIZE_PASS_END(AlwaysInliner, "always-inline",
                 "Inliner for always_inline functions", false, false)
 
 Pass *llvm::createAlwaysInlinerPass() { return new AlwaysInliner(); }
+
+Pass *llvm::createAlwaysInlinerPass(bool InsertLifetime) {
+  return new AlwaysInliner(InsertLifetime);
+}
 
 // doInitialization - Initializes the vector of functions that have not
 // been annotated with the "always inline" attribute.

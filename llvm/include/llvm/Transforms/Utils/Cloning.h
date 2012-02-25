@@ -197,9 +197,9 @@ public:
 /// exists in the instruction stream.  Similarly this will inline a recursive
 /// function by one level.
 ///
-bool InlineFunction(CallInst *C, InlineFunctionInfo &IFI);
-bool InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI);
-bool InlineFunction(CallSite CS, InlineFunctionInfo &IFI);
+bool InlineFunction(CallInst *C, InlineFunctionInfo &IFI, bool InsertLifetime = true);
+bool InlineFunction(InvokeInst *II, InlineFunctionInfo &IFI, bool InsertLifetime = true);
+bool InlineFunction(CallSite CS, InlineFunctionInfo &IFI, bool InsertLifetime = true);
 
 } // End llvm namespace
 

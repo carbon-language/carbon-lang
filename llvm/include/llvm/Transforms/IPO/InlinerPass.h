@@ -31,7 +31,7 @@ namespace llvm {
 ///
 struct Inliner : public CallGraphSCCPass {
   explicit Inliner(char &ID);
-  explicit Inliner(char &ID, int Threshold);
+  explicit Inliner(char &ID, int Threshold, bool InsertLifetime);
 
   /// getAnalysisUsage - For this class, we declare that we require and preserve
   /// the call graph.  If the derived class implements this method, it should
@@ -86,6 +86,9 @@ struct Inliner : public CallGraphSCCPass {
 private:
   // InlineThreshold - Cache the value here for easy access.
   unsigned InlineThreshold;
+
+  // InsertLifetime - Insert @llvm.lifetime intrinsics.
+  bool InsertLifetime;
 
   /// shouldInline - Return true if the inliner should attempt to
   /// inline at the given CallSite.

@@ -48,11 +48,12 @@ HintThreshold("inlinehint-threshold", cl::Hidden, cl::init(325),
 const int OptSizeThreshold = 75;
 
 Inliner::Inliner(char &ID) 
-  : CallGraphSCCPass(ID), InlineThreshold(InlineLimit) {}
+  : CallGraphSCCPass(ID), InlineThreshold(InlineLimit), InsertLifetime(true) {}
 
-Inliner::Inliner(char &ID, int Threshold) 
+Inliner::Inliner(char &ID, int Threshold, bool InsertLifetime)
   : CallGraphSCCPass(ID), InlineThreshold(InlineLimit.getNumOccurrences() > 0 ?
-                                          InlineLimit : Threshold) {}
+                                          InlineLimit : Threshold),
+    InsertLifetime(InsertLifetime) {}
 
 /// getAnalysisUsage - For this class, we declare that we require and preserve
 /// the call graph.  If the derived class implements this method, it should
@@ -75,13 +76,13 @@ InlinedArrayAllocasTy;
 /// any new allocas to the set if not possible.
 static bool InlineCallIfPossible(CallSite CS, InlineFunctionInfo &IFI,
                                  InlinedArrayAllocasTy &InlinedArrayAllocas,
-                                 int InlineHistory) {
+                                 int InlineHistory, bool InsertLifetime) {
   Function *Callee = CS.getCalledFunction();
   Function *Caller = CS.getCaller();
 
   // Try to inline the function.  Get the list of static allocas that were
   // inlined.
-  if (!InlineFunction(CS, IFI))
+  if (!InlineFunction(CS, IFI, InsertLifetime))
     return false;
 
   // If the inlined function had a higher stack protection level than the
@@ -439,7 +440,7 @@ bool Inliner::runOnSCC(CallGraphSCC &SCC) {
 
         // Attempt to inline the function.
         if (!InlineCallIfPossible(CS, InlineInfo, InlinedArrayAllocas,
-                                  InlineHistoryID))
+                                  InlineHistoryID, InsertLifetime))
           continue;
         ++NumInlined;
         

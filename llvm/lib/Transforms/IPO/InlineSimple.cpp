@@ -37,7 +37,7 @@ namespace {
     SimpleInliner() : Inliner(ID) {
       initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
     }
-    SimpleInliner(int Threshold) : Inliner(ID, Threshold) {
+    SimpleInliner(int Threshold) : Inliner(ID, Threshold, true) {
       initializeSimpleInlinerPass(*PassRegistry::getPassRegistry());
     }
     static char ID; // Pass identification, replacement for typeid
