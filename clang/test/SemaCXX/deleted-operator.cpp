@@ -11,3 +11,8 @@ int PR10757f() {
   if(~a1) {} // expected-error {{overload resolution selected deleted operator}} expected-note 6 {{built-in candidate}}
   if(a1==a1) {} // expected-error {{overload resolution selected deleted operator}} expected-note 81 {{built-in candidate}}
 }
+
+struct DelOpDel {
+  virtual ~DelOpDel() {} // expected-error {{deleted function}}
+  void operator delete(void*) = delete; // expected-note {{deleted here}}
+};
