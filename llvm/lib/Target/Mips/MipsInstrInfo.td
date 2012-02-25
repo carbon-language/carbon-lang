@@ -134,6 +134,7 @@ def IsN64       : Predicate<"Subtarget.isABI_N64()">;
 def NotN64      : Predicate<"!Subtarget.isABI_N64()">;
 def RelocStatic : Predicate<"TM.getRelocationModel() == Reloc::Static">;
 def RelocPIC    : Predicate<"TM.getRelocationModel() == Reloc::PIC_">;
+def NoNaNsFPMath : Predicate<"TM.Options.NoNaNsFPMath">;
 
 //===----------------------------------------------------------------------===//
 // Mips Operand, Complex Patterns and Transformations Definitions.

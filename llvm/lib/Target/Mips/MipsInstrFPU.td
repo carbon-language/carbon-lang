@@ -59,6 +59,15 @@ def NotFP64bit       : Predicate<"!Subtarget.isFP64bit()">;
 def IsSingleFloat    : Predicate<"Subtarget.isSingleFloat()">;
 def IsNotSingleFloat : Predicate<"!Subtarget.isSingleFloat()">;
 
+// FP immediate patterns.
+def fpimm0 : PatLeaf<(fpimm), [{
+  return N->isExactlyValue(+0.0);
+}]>;
+
+def fpimm0neg : PatLeaf<(fpimm), [{
+  return N->isExactlyValue(-0.0);
+}]>;
+
 //===----------------------------------------------------------------------===//
 // Instruction Class Templates
 //
@@ -121,6 +130,19 @@ multiclass FFR2P_M<bits<6> funct, string opstr, SDNode OpNode, bit isComm = 0> {
              Requires<[IsFP64bit]>;
   }
 }
+
+// FP madd/msub/nmadd/nmsub instruction classes.
+class FMADDSUB<bits<3> funct, bits<3> fmt, string opstr, string fmtstr,
+               SDNode OpNode, RegisterClass RC> :
+  FFMADDSUB<funct, fmt, (outs RC:$fd), (ins RC:$fr, RC:$fs, RC:$ft),
+            !strconcat(opstr, ".", fmtstr, "\t$fd, $fr, $fs, $ft"),
+            [(set RC:$fd, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr))]>;
+
+class FNMADDSUB<bits<3> funct, bits<3> fmt, string opstr, string fmtstr,
+                SDNode OpNode, RegisterClass RC> :
+  FFMADDSUB<funct, fmt, (outs RC:$fd), (ins RC:$fr, RC:$fs, RC:$ft),
+            !strconcat(opstr, ".", fmtstr, "\t$fd, $fr, $fs, $ft"),
+            [(set RC:$fd, (fsub fpimm0, (OpNode (fmul RC:$fs, RC:$ft), RC:$fr)))]>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Instructions
@@ -224,6 +246,36 @@ defm FDIV : FFR2P_M<0x03, "div", fdiv>;
 defm FMUL : FFR2P_M<0x02, "mul", fmul, 1>;
 defm FSUB : FFR2P_M<0x01, "sub", fsub>;
 
+let Predicates = [HasMips32r2] in {
+  def MADD_S : FMADDSUB<0x4, 0, "madd", "s", fadd, FGR32>;
+  def MSUB_S : FMADDSUB<0x5, 0, "msub", "s", fsub, FGR32>;
+}
+
+let Predicates = [HasMips32r2, NoNaNsFPMath] in {
+  def NMADD_S : FNMADDSUB<0x6, 0, "nmadd", "s", fadd, FGR32>;
+  def NMSUB_S : FNMADDSUB<0x7, 0, "nmsub", "s", fsub, FGR32>;
+}
+
+let Predicates = [HasMips32r2, NotFP64bit] in {
+  def MADD_D32 : FMADDSUB<0x4, 1, "madd", "d", fadd, AFGR64>;
+  def MSUB_D32 : FMADDSUB<0x5, 1, "msub", "d", fsub, AFGR64>;
+}
+
+let Predicates = [HasMips32r2, NotFP64bit, NoNaNsFPMath] in {
+  def NMADD_D32 : FNMADDSUB<0x6, 1, "nmadd", "d", fadd, AFGR64>;
+  def NMSUB_D32 : FNMADDSUB<0x7, 1, "nmsub", "d", fsub, AFGR64>;
+}
+
+let Predicates = [HasMips32r2, IsFP64bit] in {
+  def MADD_D64 : FMADDSUB<0x4, 1, "madd", "d", fadd, FGR64>;
+  def MSUB_D64 : FMADDSUB<0x5, 1, "msub", "d", fsub, FGR64>;
+}
+
+let Predicates = [HasMips32r2, IsFP64bit, NoNaNsFPMath] in {
+  def NMADD_D64 : FNMADDSUB<0x6, 1, "nmadd", "d", fadd, FGR64>;
+  def NMSUB_D64 : FNMADDSUB<0x7, 1, "nmsub", "d", fsub, FGR64>;
+}
+
 //===----------------------------------------------------------------------===//
 // Floating Point Branch Codes
 //===----------------------------------------------------------------------===//
@@ -305,14 +357,6 @@ def ExtractElementF64 :
 //===----------------------------------------------------------------------===//
 // Floating Point Patterns
 //===----------------------------------------------------------------------===//
-def fpimm0 : PatLeaf<(fpimm), [{
-  return N->isExactlyValue(+0.0);
-}]>;
-
-def fpimm0neg : PatLeaf<(fpimm), [{
-  return N->isExactlyValue(-0.0);
-}]>;
-
 def : Pat<(f32 fpimm0), (MTC1 ZERO)>;
 def : Pat<(f32 fpimm0neg), (FNEG_S (MTC1 ZERO))>;
 
