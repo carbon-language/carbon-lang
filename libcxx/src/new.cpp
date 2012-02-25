@@ -24,7 +24,7 @@
     static std::new_handler __new_handler;
 #endif
 
-#ifndef _LIBCPPABI_VERSION
+//#ifndef _LIBCPPABI_VERSION
 
 // Implement all new and delete operators as weak definitions
 // in this shared library, so that they can be overriden by programs
@@ -134,7 +134,7 @@ operator delete[] (void* ptr, const std::nothrow_t&) _NOEXCEPT
     ::operator delete[](ptr);
 }
 
-#endif
+//#endif  // _LIBCPPABI_VERSION
 
 namespace std
 {
