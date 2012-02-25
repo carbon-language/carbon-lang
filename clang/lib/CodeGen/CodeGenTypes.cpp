@@ -201,11 +201,8 @@ bool CodeGenTypes::isFuncTypeArgumentConvertible(QualType Ty) {
   // convert it.  Note that getDefinition()==0 is not the same as !isDefinition.
   // The exception is an enumeration type with a fixed underlying type; these
   // can be converted even if they are forward declarations.
-  if (TT->getDecl()->getDefinition() == 0 &&
-      !(isa<EnumDecl>(TT->getDecl()) && 
-        cast<EnumDecl>(TT->getDecl())->isFixed())) {
+  if (TT->isIncompleteType())
     return false;
-  }
   
   // If this is an enum, then it is always safe to convert.
   const RecordType *RT = dyn_cast<RecordType>(TT);
