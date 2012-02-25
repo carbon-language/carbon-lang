@@ -42,22 +42,6 @@ using namespace llvm;
 // Useful predicates
 //===----------------------------------------------------------------------===//
 
-/// isKnownNonNull - Return true if we know that the specified value is never
-/// null.
-static bool isKnownNonNull(const Value *V) {
-  // Alloca never returns null, malloc might.
-  if (isa<AllocaInst>(V)) return true;
-  
-  // A byval argument is never null.
-  if (const Argument *A = dyn_cast<Argument>(V))
-    return A->hasByValAttr();
-
-  // Global values are not null unless extern weak.
-  if (const GlobalValue *GV = dyn_cast<GlobalValue>(V))
-    return !GV->hasExternalWeakLinkage();
-  return false;
-}
-
 /// isNonEscapingLocalObject - Return true if the pointer is to a function-local
 /// object that never escapes from the function.
 static bool isNonEscapingLocalObject(const Value *V) {
