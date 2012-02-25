@@ -624,7 +624,8 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
   // Using the computed layout, generate the actual block function.
   llvm::Constant *blockFn
     = CodeGenFunction(CGM).GenerateBlockFunction(CurGD, blockInfo,
-                                                 CurFuncDecl, LocalDeclMap);
+                                                 CurFuncDecl, LocalDeclMap,
+                                                 InLambdaConversionToBlock);
   blockFn = llvm::ConstantExpr::getBitCast(blockFn, VoidPtrTy);
 
   // If there is nothing to capture, we can emit this as a global block.
@@ -699,6 +700,11 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
       src = Builder.CreateStructGEP(LoadBlockStruct(),
                                     enclosingCapture.getIndex(),
                                     "block.capture.addr");
+    } else if (InLambdaConversionToBlock) {
+      // The lambda capture in a lambda's conversion-to-block-pointer is
+      // special; we know its argument is an lvalue we can simply emit.
+      CXXConstructExpr *CE = cast<CXXConstructExpr>(ci->getCopyExpr());
+      src = EmitLValue(CE->getArg(0)).getAddress();
     } else {
       // This is a [[type]]*.
       src = LocalDeclMap[variable];
@@ -921,7 +927,8 @@ CodeGenModule::GetAddrOfGlobalBlock(const BlockExpr *blockExpr,
     llvm::DenseMap<const Decl*, llvm::Value*> LocalDeclMap;
     blockFn = CodeGenFunction(*this).GenerateBlockFunction(GlobalDecl(),
                                                            blockInfo,
-                                                           0, LocalDeclMap);
+                                                           0, LocalDeclMap,
+                                                           false);
   }
   blockFn = llvm::ConstantExpr::getBitCast(blockFn, VoidPtrTy);
 
@@ -975,7 +982,8 @@ llvm::Function *
 CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
                                        const CGBlockInfo &blockInfo,
                                        const Decl *outerFnDecl,
-                                       const DeclMapTy &ldm) {
+                                       const DeclMapTy &ldm,
+                                       bool IsLambdaConversionToBlock) {
   const BlockDecl *blockDecl = blockInfo.getBlockDecl();
 
   // Check if we should generate debug info for this block function.
@@ -1092,7 +1100,10 @@ CodeGenFunction::GenerateBlockFunction(GlobalDecl GD,
   llvm::BasicBlock::iterator entry_ptr = Builder.GetInsertPoint();
   --entry_ptr;
 
-  EmitStmt(blockDecl->getBody());
+  if (IsLambdaConversionToBlock)
+    EmitLambdaBlockInvokeBody();
+  else
+    EmitStmt(blockDecl->getBody());
 
   // Remember where we were...
   llvm::BasicBlock *resume = Builder.GetInsertBlock();

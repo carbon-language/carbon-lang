@@ -11,6 +11,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "CGBlocks.h"
 #include "CGDebugInfo.h"
 #include "CodeGenFunction.h"
 #include "clang/AST/CXXInheritance.h"
@@ -1726,32 +1727,16 @@ CodeGenFunction::EmitCXXOperatorMemberCallee(const CXXOperatorCallExpr *E,
   return CGM.GetAddrOfFunction(MD, fnType);
 }
 
-void CodeGenFunction::EmitLambdaToBlockPointerBody(FunctionArgList &Args) {
-  CGM.ErrorUnsupported(CurFuncDecl, "lambda conversion to block");
-}
-
-void CodeGenFunction::EmitLambdaDelegatingInvokeBody(const CXXMethodDecl *MD) {
-  const CXXRecordDecl *Lambda = MD->getParent();
+void CodeGenFunction::EmitForwardingCallToLambda(const CXXRecordDecl *Lambda,
+                                                 CallArgList &CallArgs) {
+  // Lookup the call operator
   DeclarationName Name
     = getContext().DeclarationNames.getCXXOperatorName(OO_Call);
   DeclContext::lookup_const_result Calls = Lambda->lookup(Name);
   CXXMethodDecl *CallOperator = cast<CXXMethodDecl>(*Calls.first++);
-  const FunctionProtoType *FPT = MD->getType()->getAs<FunctionProtoType>();
+  const FunctionProtoType *FPT =
+      CallOperator->getType()->getAs<FunctionProtoType>();
   QualType ResultType = FPT->getResultType();
-
-  // Start building arguments for forwarding call
-  CallArgList CallArgs;
-
-  QualType ThisType = getContext().getPointerType(getContext().getRecordType(Lambda));
-  llvm::Value *ThisPtr = llvm::UndefValue::get(getTypes().ConvertType(ThisType));
-  CallArgs.add(RValue::get(ThisPtr), ThisType);
-
-  // Add the rest of the parameters.
-  for (FunctionDecl::param_const_iterator I = MD->param_begin(),
-       E = MD->param_end(); I != E; ++I) {
-    ParmVarDecl *param = *I;
-    EmitDelegateCallArg(CallArgs, param);
-  }
 
   // Get the address of the call operator.
   GlobalDecl GD(CallOperator);
@@ -1776,11 +1761,67 @@ void CodeGenFunction::EmitLambdaDelegatingInvokeBody(const CXXMethodDecl *MD) {
     EmitReturnOfRValue(RV, ResultType);
 }
 
+void CodeGenFunction::EmitLambdaBlockInvokeBody() {
+  const BlockDecl *BD = BlockInfo->getBlockDecl();
+  const VarDecl *variable = BD->capture_begin()->getVariable();
+  const CXXRecordDecl *Lambda = variable->getType()->getAsCXXRecordDecl();
+
+  // Start building arguments for forwarding call
+  CallArgList CallArgs;
+
+  QualType ThisType = getContext().getPointerType(getContext().getRecordType(Lambda));
+  llvm::Value *ThisPtr = GetAddrOfBlockDecl(variable, false);
+  CallArgs.add(RValue::get(ThisPtr), ThisType);
+
+  // Add the rest of the parameters.
+  for (BlockDecl::param_const_iterator I = BD->param_begin(),
+       E = BD->param_end(); I != E; ++I) {
+    ParmVarDecl *param = *I;
+    EmitDelegateCallArg(CallArgs, param);
+  }
+
+  EmitForwardingCallToLambda(Lambda, CallArgs);
+}
+
+void CodeGenFunction::EmitLambdaToBlockPointerBody(FunctionArgList &Args) {
+  if (cast<CXXMethodDecl>(CurFuncDecl)->isVariadic()) {
+    // FIXME: Making this work correctly is nasty because it requires either
+    // cloning the body of the call operator or making the call operator forward.
+    CGM.ErrorUnsupported(CurFuncDecl, "lambda conversion to variadic function");
+    return;
+  }
+
+  InLambdaConversionToBlock = true;
+  EmitFunctionBody(Args);
+  InLambdaConversionToBlock = false;
+}
+
+void CodeGenFunction::EmitLambdaDelegatingInvokeBody(const CXXMethodDecl *MD) {
+  const CXXRecordDecl *Lambda = MD->getParent();
+
+  // Start building arguments for forwarding call
+  CallArgList CallArgs;
+
+  QualType ThisType = getContext().getPointerType(getContext().getRecordType(Lambda));
+  llvm::Value *ThisPtr = llvm::UndefValue::get(getTypes().ConvertType(ThisType));
+  CallArgs.add(RValue::get(ThisPtr), ThisType);
+
+  // Add the rest of the parameters.
+  for (FunctionDecl::param_const_iterator I = MD->param_begin(),
+       E = MD->param_end(); I != E; ++I) {
+    ParmVarDecl *param = *I;
+    EmitDelegateCallArg(CallArgs, param);
+  }
+
+  EmitForwardingCallToLambda(Lambda, CallArgs);
+}
+
 void CodeGenFunction::EmitLambdaStaticInvokeFunction(const CXXMethodDecl *MD) {
   if (MD->isVariadic()) {
     // FIXME: Making this work correctly is nasty because it requires either
     // cloning the body of the call operator or making the call operator forward.
     CGM.ErrorUnsupported(MD, "lambda conversion to variadic function");
+    return;
   }
 
   EmitLambdaDelegatingInvokeBody(MD);

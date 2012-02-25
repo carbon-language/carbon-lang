@@ -8868,11 +8868,17 @@ void Sema::DefineImplicitLambdaToBlockPointerConversion(
   }
   Block->setParams(BlockParams);
   
-  // Add capture. The capture is uses a fake (NULL) variable, since we don't
-  // actually want to have to name a capture variable. However, the 
-  // initializer copy-initializes the lambda object.
-  BlockDecl::Capture Capture(/*Variable=*/0, /*ByRef=*/false, /*Nested=*/false,
-                             /*Copy=*/Init.take());
+  // Add capture. The capture uses a fake variable, which doesn't correspond
+  // to any actual memory location. However, the initializer copy-initializes
+  // the lambda object.
+  TypeSourceInfo *CapVarTSI =
+      Context.getTrivialTypeSourceInfo(DerefThis->getType());
+  VarDecl *CapVar = VarDecl::Create(Context, Block, Conv->getLocation(),
+                                    Conv->getLocation(), 0,
+                                    DerefThis->getType(), CapVarTSI,
+                                    SC_None, SC_None);
+  BlockDecl::Capture Capture(/*Variable=*/CapVar, /*ByRef=*/false,
+                             /*Nested=*/false, /*Copy=*/Init.take());
   Block->setCaptures(Context, &Capture, &Capture + 1, 
                      /*CapturesCXXThis=*/false);
   

@@ -601,6 +601,7 @@ public:
 
   llvm::DenseMap<const VarDecl *, FieldDecl *> LambdaCaptureFields;
   FieldDecl *LambdaThisCaptureField;
+  bool InLambdaConversionToBlock;
 
   /// \brief A mapping from NRVO variables to the flags used to indicate
   /// when the NRVO has been applied to this variable.
@@ -1335,7 +1336,8 @@ public:
   llvm::Function *GenerateBlockFunction(GlobalDecl GD,
                                         const CGBlockInfo &Info,
                                         const Decl *OuterFuncDecl,
-                                        const DeclMapTy &ldm);
+                                        const DeclMapTy &ldm,
+                                        bool IsLambdaConversionToBlock);
 
   llvm::Constant *GenerateCopyHelperFunction(const CGBlockInfo &blockInfo);
   llvm::Constant *GenerateDestroyHelperFunction(const CGBlockInfo &blockInfo);
@@ -1376,7 +1378,10 @@ public:
   void EmitDestructorBody(FunctionArgList &Args);
   void EmitFunctionBody(FunctionArgList &Args);
 
+  void EmitForwardingCallToLambda(const CXXRecordDecl *Lambda,
+                                  CallArgList &CallArgs);
   void EmitLambdaToBlockPointerBody(FunctionArgList &Args);
+  void EmitLambdaBlockInvokeBody();
   void EmitLambdaDelegatingInvokeBody(const CXXMethodDecl *MD);
   void EmitLambdaStaticInvokeFunction(const CXXMethodDecl *MD);
 
