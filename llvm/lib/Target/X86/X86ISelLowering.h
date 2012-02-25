@@ -708,7 +708,8 @@ namespace llvm {
                                          SelectionDAG &DAG) const;
 
     std::pair<SDValue,SDValue> FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG,
-                                               bool isSigned) const;
+                                               bool isSigned,
+                                               bool isReplace) const;
 
     SDValue LowerAsSplatVectorLoad(SDValue SrcOp, EVT VT, DebugLoc dl,
                                    SelectionDAG &DAG) const;

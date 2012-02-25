@@ -128,3 +128,17 @@ define {double, i64} @double_ui64_4(double %x, double %y) nounwind {
   %5 = insertvalue {double, i64} %4, i64 %3, 1
   ret {double, i64} %5
 }
+
+define i32 @double_ui32_5(double %X) {
+; FTOL: @double_ui32_5
+; FTOL: calll __ftol2
+  %tmp.1 = fptoui double %X to i32
+  ret i32 %tmp.1
+}
+
+define i64 @double_ui64_5(double %X) {
+; FTOL: @double_ui64_5
+; FTOL: calll __ftol2
+  %tmp.1 = fptoui double %X to i64
+  ret i64 %tmp.1
+}

@@ -7712,7 +7712,7 @@ SDValue X86TargetLowering::LowerUINT_TO_FP(SDValue Op,
 }
 
 std::pair<SDValue,SDValue> X86TargetLowering::
-FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) const {
+FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned, bool IsReplace) const {
   DebugLoc DL = Op.getDebugLoc();
 
   EVT DstTy = Op.getValueType();
@@ -7796,7 +7796,10 @@ FP_TO_INTHelper(SDValue Op, SelectionDAG &DAG, bool IsSigned) const {
       MVT::i32, ftol.getValue(1));
     SDValue edx = DAG.getCopyFromReg(eax.getValue(1), DL, X86::EDX,
       MVT::i32, eax.getValue(2));
-    SDValue pair = DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, eax, edx);
+    SDValue Ops[] = { eax, edx };
+    SDValue pair = IsReplace
+      ? DAG.getNode(ISD::BUILD_PAIR, DL, MVT::i64, Ops, 2)
+      : DAG.getMergeValues(Ops, 2, DL);
     return std::make_pair(pair, SDValue());
   }
 }
@@ -7806,7 +7809,8 @@ SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op,
   if (Op.getValueType().isVector())
     return SDValue();
 
-  std::pair<SDValue,SDValue> Vals = FP_TO_INTHelper(Op, DAG, true);
+  std::pair<SDValue,SDValue> Vals = FP_TO_INTHelper(Op, DAG,
+    /*IsSigned=*/ true, /*IsReplace=*/ false);
   SDValue FIST = Vals.first, StackSlot = Vals.second;
   // If FP_TO_INTHelper failed, the node is actually supposed to be Legal.
   if (FIST.getNode() == 0) return Op;
@@ -7823,14 +7827,19 @@ SDValue X86TargetLowering::LowerFP_TO_SINT(SDValue Op,
 
 SDValue X86TargetLowering::LowerFP_TO_UINT(SDValue Op,
                                            SelectionDAG &DAG) const {
-  std::pair<SDValue,SDValue> Vals = FP_TO_INTHelper(Op, DAG, false);
+  std::pair<SDValue,SDValue> Vals = FP_TO_INTHelper(Op, DAG,
+    /*IsSigned=*/ false, /*IsReplace=*/ false);
   SDValue FIST = Vals.first, StackSlot = Vals.second;
   assert(FIST.getNode() && "Unexpected failure");
 
-  // Load the result.
-  return DAG.getLoad(Op.getValueType(), Op.getDebugLoc(),
-                     FIST, StackSlot, MachinePointerInfo(),
-                     false, false, false, 0);
+  if (StackSlot.getNode())
+    // Load the result.
+    return DAG.getLoad(Op.getValueType(), Op.getDebugLoc(),
+                       FIST, StackSlot, MachinePointerInfo(),
+                       false, false, false, 0);
+  else
+    // The node is the result.
+    return FIST;
 }
 
 SDValue X86TargetLowering::LowerFABS(SDValue Op,
@@ -10872,7 +10881,7 @@ void X86TargetLowering::ReplaceNodeResults(SDNode *N,
       return;
 
     std::pair<SDValue,SDValue> Vals =
-        FP_TO_INTHelper(SDValue(N, 0), DAG, IsSigned);
+        FP_TO_INTHelper(SDValue(N, 0), DAG, IsSigned, /*IsReplace=*/ true);
     SDValue FIST = Vals.first, StackSlot = Vals.second;
     if (FIST.getNode() != 0) {
       EVT VT = N->getValueType(0);

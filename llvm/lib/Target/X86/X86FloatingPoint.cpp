@@ -1646,8 +1646,6 @@ void FPS::handleSpecialFP(MachineBasicBlock::iterator &I) {
 
   case X86::WIN_FTOL_32:
   case X86::WIN_FTOL_64: {
-    MachineBasicBlock::iterator InsertPt = MI;
-
     // Push the operand into ST0.
     MachineOperand &Op = MI->getOperand(0);
     assert(Op.isUse() && Op.isReg() &&
