@@ -168,7 +168,6 @@ namespace test3 {
 namespace test4 {
   struct X {
     X(int);
-    X(std::initializer_list<int>);
   };
 
   template <typename T>
@@ -186,9 +185,9 @@ namespace test4 {
   // CHECK: void @_ZN5test43tf1INS_1XEEEvDTnw_T_piLi1EEE
   template void tf1<X>(X*);
 
-  // FIXME: Need mangling for braced initializers
-  //template void tf2<X>(X*);
+  // CHECK: void @_ZN5test43tf2INS_1XEEEvDTnw_T_piilLi1EEEE
+  template void tf2<X>(X*);
 
-  // CHECK: void @_ZN5test43tf3INS_1XEEEvDTnw_T_blLi1EEE
+  // CHECK: void @_ZN5test43tf3INS_1XEEEvDTnw_T_ilLi1EEE
   template void tf3<X>(X*);
 }

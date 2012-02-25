@@ -2361,7 +2361,6 @@ recurse:
     llvm_unreachable("unexpected statement kind");
 
   // FIXME: invent manglings for all these.
-  case Expr::InitListExprClass:
   case Expr::BlockExprClass:
   case Expr::CXXPseudoDestructorExprClass:
   case Expr::ChooseExprClass:
@@ -2418,6 +2417,16 @@ recurse:
   case Expr::OpaqueValueExprClass:
     llvm_unreachable("cannot mangle opaque value; mangling wrong thing?");
 
+  case Expr::InitListExprClass: {
+    // Proposal by Jason Merrill, 2012-01-03
+    Out << "il";
+    const InitListExpr *InitList = cast<InitListExpr>(E);
+    for (unsigned i = 0, e = InitList->getNumInits(); i != e; ++i)
+      mangleExpression(InitList->getInit(i));
+    Out << "E";
+    break;
+  }
+
   case Expr::CXXDefaultArgExprClass:
     mangleExpression(cast<CXXDefaultArgExpr>(E)->getExpr(), Arity);
     break;
@@ -2463,12 +2472,9 @@ recurse:
     Out << '_';
     mangleType(New->getAllocatedType());
     if (New->hasInitializer()) {
-      // <initializer> is 'pi <expression>* E' in the current ABI for
-      // parenthesized initializers, but braced initializers are unspecified.
-      // We use 'bl <expression>* E' for "braced list". "bi" is too easy to
-      // confuse.
+      // Proposal by Jason Merrill, 2012-01-03
       if (New->getInitializationStyle() == CXXNewExpr::ListInit)
-        Out << "bl";
+        Out << "il";
       else
         Out << "pi";
       const Expr *Init = New->getInitializer();
@@ -2483,7 +2489,7 @@ recurse:
           mangleExpression(PLE->getExpr(i));
       } else if (New->getInitializationStyle() == CXXNewExpr::ListInit &&
                  isa<InitListExpr>(Init)) {
-        // Only take ParenListExprs apart for list-initialization.
+        // Only take InitListExprs apart for list-initialization.
         const InitListExpr *InitList = cast<InitListExpr>(Init);
         for (unsigned i = 0, e = InitList->getNumInits(); i != e; ++i)
           mangleExpression(InitList->getInit(i));
@@ -2552,7 +2558,11 @@ recurse:
     const CXXConstructExpr *CE = cast<CXXConstructExpr>(E);
     unsigned N = CE->getNumArgs();
 
-    Out << "cv";
+    // Proposal by Jason Merrill, 2012-01-03
+    if (CE->isListInitialization())
+      Out << "tl";
+    else
+      Out << "cv";
     mangleType(CE->getType());
     if (N != 1) Out << '_';
     for (unsigned I = 0; I != N; ++I) mangleExpression(CE->getArg(I));
