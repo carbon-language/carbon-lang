@@ -4095,6 +4095,9 @@ public:
   }
 
   bool VisitCallExpr(const CallExpr *E);
+  bool VisitBinLAnd(const BinaryOperator *E);
+  bool VisitBinLOr(const BinaryOperator *E);
+  bool VisitBinLogicalOp(const BinaryOperator *E);
   bool VisitBinaryOperator(const BinaryOperator *E);
   bool VisitOffsetOfExpr(const OffsetOfExpr *E);
   bool VisitUnaryOperator(const UnaryOperator *E);
@@ -4495,6 +4498,50 @@ static APSInt CheckedIntArithmetic(EvalInfo &Info, const Expr *E,
   return Result;
 }
 
+// Handle logical operators outside VisitBinaryOperator() to reduce
+// stack pressure for source with huge number of logical operators.
+bool IntExprEvaluator::VisitBinLAnd(const BinaryOperator *E) {
+  return VisitBinLogicalOp(E);
+}
+bool IntExprEvaluator::VisitBinLOr(const BinaryOperator *E) {
+  return VisitBinLogicalOp(E);
+}
+
+bool IntExprEvaluator::VisitBinLogicalOp(const BinaryOperator *E) {
+  // These need to be handled specially because the operands aren't
+  // necessarily integral nor evaluated.
+  bool lhsResult, rhsResult;
+
+  if (EvaluateAsBooleanCondition(E->getLHS(), lhsResult, Info)) {
+    // We were able to evaluate the LHS, see if we can get away with not
+    // evaluating the RHS: 0 && X -> 0, 1 || X -> 1
+    if (lhsResult == (E->getOpcode() == BO_LOr))
+      return Success(lhsResult, E);
+
+    if (EvaluateAsBooleanCondition(E->getRHS(), rhsResult, Info)) {
+      if (E->getOpcode() == BO_LOr)
+        return Success(lhsResult || rhsResult, E);
+      else
+        return Success(lhsResult && rhsResult, E);
+    }
+  } else {
+    // Since we weren't able to evaluate the left hand side, it
+    // must have had side effects.
+    Info.EvalStatus.HasSideEffects = true;
+
+    // Suppress diagnostics from this arm.
+    SpeculativeEvaluationRAII Speculative(Info);
+    if (EvaluateAsBooleanCondition(E->getRHS(), rhsResult, Info)) {
+      // We can't evaluate the LHS; however, sometimes the result
+      // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
+      if (rhsResult == (E->getOpcode() == BO_LOr))
+        return Success(rhsResult, E);
+    }
+  }
+
+  return false;
+}
+
 bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
   if (E->isAssignmentOp())
     return Error(E);
@@ -4504,40 +4551,7 @@ bool IntExprEvaluator::VisitBinaryOperator(const BinaryOperator *E) {
     return Visit(E->getRHS());
   }
 
-  if (E->isLogicalOp()) {
-    // These need to be handled specially because the operands aren't
-    // necessarily integral nor evaluated.
-    bool lhsResult, rhsResult;
-
-    if (EvaluateAsBooleanCondition(E->getLHS(), lhsResult, Info)) {
-      // We were able to evaluate the LHS, see if we can get away with not
-      // evaluating the RHS: 0 && X -> 0, 1 || X -> 1
-      if (lhsResult == (E->getOpcode() == BO_LOr))
-        return Success(lhsResult, E);
-
-      if (EvaluateAsBooleanCondition(E->getRHS(), rhsResult, Info)) {
-        if (E->getOpcode() == BO_LOr)
-          return Success(lhsResult || rhsResult, E);
-        else
-          return Success(lhsResult && rhsResult, E);
-      }
-    } else {
-      // Since we weren't able to evaluate the left hand side, it
-      // must have had side effects.
-      Info.EvalStatus.HasSideEffects = true;
-
-      // Suppress diagnostics from this arm.
-      SpeculativeEvaluationRAII Speculative(Info);
-      if (EvaluateAsBooleanCondition(E->getRHS(), rhsResult, Info)) {
-        // We can't evaluate the LHS; however, sometimes the result
-        // is determined by the RHS: X && 0 -> 0, X || 1 -> 1.
-        if (rhsResult == (E->getOpcode() == BO_LOr))
-          return Success(rhsResult, E);
-      }
-    }
-
-    return false;
-  }
+  assert(!E->isLogicalOp() && "Logical ops not handled separately?");
 
   QualType LHSTy = E->getLHS()->getType();
   QualType RHSTy = E->getRHS()->getType();
