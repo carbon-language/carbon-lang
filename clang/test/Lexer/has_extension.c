@@ -36,3 +36,9 @@ int has_c_alignas();
 int no_c_alignas();
 #endif
 
+// Arbitrary feature to test that the extension name can be surrounded with
+// double underscores.
+// CHECK-PED-NONE: has_double_underscores
+#if __has_extension(__c_alignas__)
+int has_double_underscores();
+#endif

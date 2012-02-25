@@ -21,7 +21,9 @@
 #error Clang should not have this
 #endif
 
-
+#if !__has_feature(__attribute_deprecated_with_message__)
+#error Feature name in double underscores does not work
+#endif
 
 // Make sure we have x86 builtins only (forced with target triple).
 
