@@ -138,7 +138,10 @@ Target::DeleteCurrentProcess ()
         m_breakpoint_list.ClearAllBreakpointSites();
         m_internal_breakpoint_list.ClearAllBreakpointSites();
         // Disable watchpoints just on the debugger side.
+        Mutex::Locker locker;
+        this->GetWatchpointList().GetListMutex(locker);
         DisableAllWatchpoints(false);
+        ClearAllWatchpointHitCounts();
         m_process_sp.reset();
     }
 }
@@ -668,6 +671,26 @@ Target::EnableAllWatchpoints (bool end_to_end)
         Error rc = m_process_sp->EnableWatchpoint(wp_sp.get());
         if (rc.Fail())
             return false;
+    }
+    return true; // Success!
+}
+
+// Assumption: Caller holds the list mutex lock for m_watchpoint_list.
+bool
+Target::ClearAllWatchpointHitCounts ()
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_WATCHPOINTS));
+    if (log)
+        log->Printf ("Target::%s\n", __FUNCTION__);
+
+    size_t num_watchpoints = m_watchpoint_list.GetSize();
+    for (size_t i = 0; i < num_watchpoints; ++i)
+    {
+        WatchpointSP wp_sp = m_watchpoint_list.GetByIndex(i);
+        if (!wp_sp)
+            return false;
+
+        wp_sp->ResetHitCount();
     }
     return true; // Success!
 }

@@ -12,8 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <list>
 #include <vector>
-#include <map>
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
@@ -35,6 +35,7 @@ class WatchpointList
 // This is not just some random collection of watchpoints.  Rather, the act of
 // adding the watchpoint to this list sets its ID.
 friend class Watchpoint;
+friend class Target;
 
 public:
     //------------------------------------------------------------------
@@ -72,7 +73,8 @@ public:
     DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
 
     //------------------------------------------------------------------
-    /// Returns a shared pointer to the watchpoint at address /// \a addr -
+    /// Returns a shared pointer to the watchpoint at address
+    /// \a addr -
     /// const version.
     ///
     /// @param[in] addr
@@ -86,10 +88,26 @@ public:
     FindByAddress (lldb::addr_t addr) const;
 
     //------------------------------------------------------------------
-    /// Returns a shared pointer to the watchpoint with id /// \a breakID, const
+    /// Returns a shared pointer to the watchpoint with watchpoint spec
+    /// \a spec -
+    /// const version.
+    ///
+    /// @param[in] spec
+    ///     The watchpoint spec to look for.
+    ///
+    /// @result
+    ///     A shared pointer to the watchpoint.  May contain a NULL
+    ///     pointer if the watchpoint doesn't exist.
+    //------------------------------------------------------------------
+    const lldb::WatchpointSP
+    FindBySpec (std::string spec) const;
+
+    //------------------------------------------------------------------
+    /// Returns a shared pointer to the watchpoint with id
+    /// \a watchID, const
     /// version.
     ///
-    /// @param[in] breakID
+    /// @param[in] watchID
     ///     The watchpoint location ID to seek for.
     ///
     /// @result
@@ -100,7 +118,8 @@ public:
     FindByID (lldb::watch_id_t watchID) const;
 
     //------------------------------------------------------------------
-    /// Returns the watchpoint id to the watchpoint /// at address \a addr.
+    /// Returns the watchpoint id to the watchpoint
+    /// at address \a addr.
     ///
     /// @param[in] addr
     ///     The address to match.
@@ -110,6 +129,19 @@ public:
     //------------------------------------------------------------------
     lldb::watch_id_t
     FindIDByAddress (lldb::addr_t addr);
+
+    //------------------------------------------------------------------
+    /// Returns the watchpoint id to the watchpoint
+    /// with watchpoint spec \a spec.
+    ///
+    /// @param[in] spec
+    ///     The watchpoint spec to match.
+    ///
+    /// @result
+    ///     The ID of the watchpoint, or LLDB_INVALID_WATCH_ID.
+    //------------------------------------------------------------------
+    lldb::watch_id_t
+    FindIDBySpec (std::string spec);
 
     //------------------------------------------------------------------
     /// Returns a shared pointer to the watchpoint with index \a i.
@@ -186,7 +218,7 @@ public:
     GetSize() const
     {
         Mutex::Locker locker(m_mutex);
-        return m_address_to_watchpoint.size();
+        return m_watchpoints.size();
     }
 
     //------------------------------------------------------------------
@@ -221,16 +253,22 @@ public:
     GetListMutex (lldb_private::Mutex::Locker &locker);
 
 protected:
-    typedef std::map<lldb::addr_t, lldb::WatchpointSP> addr_map;
+    typedef std::list<lldb::WatchpointSP> wp_collection;
+    typedef std::vector<lldb::watch_id_t> id_vector;
 
-    addr_map::iterator
+    id_vector
+    GetWatchpointIDs() const;
+
+    wp_collection::iterator
     GetIDIterator(lldb::watch_id_t watchID);
 
-    addr_map::const_iterator
+    wp_collection::const_iterator
     GetIDConstIterator(lldb::watch_id_t watchID) const;
 
-    addr_map m_address_to_watchpoint;
+    wp_collection m_watchpoints;
     mutable Mutex m_mutex;
+
+    lldb::watch_id_t m_next_wp_id;
 };
 
 } // namespace lldb_private

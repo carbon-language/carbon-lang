@@ -24,9 +24,9 @@ using namespace lldb;
 using namespace lldb_private;
 
 Watchpoint::Watchpoint (lldb::addr_t addr, size_t size, bool hardware) :
-    StoppointLocation (GetNextID(), addr, size, hardware),
+    StoppointLocation (0, addr, size, hardware),
     m_target(NULL),
-    m_enabled(0),
+    m_enabled(false),
     m_is_hardware(hardware),
     m_watch_read(0),
     m_watch_write(0),
@@ -36,19 +36,13 @@ Watchpoint::Watchpoint (lldb::addr_t addr, size_t size, bool hardware) :
     m_callback(NULL),
     m_callback_baton(NULL),
     m_decl_str(),
+    m_watch_spec_str(),
     m_error()
 {
 }
 
 Watchpoint::~Watchpoint()
 {
-}
-
-break_id_t
-Watchpoint::GetNextID()
-{
-    static break_id_t g_next_ID = 0;
-    return ++g_next_ID;
 }
 
 bool
@@ -63,6 +57,13 @@ void
 Watchpoint::SetDeclInfo (std::string &str)
 {
     m_decl_str = str;
+    return;
+}
+
+void
+Watchpoint::SetWatchSpec (std::string &str)
+{
+    m_watch_spec_str = str;
     return;
 }
 
@@ -117,13 +118,15 @@ Watchpoint::DumpWithLevel(Stream *s, lldb::DescriptionLevel description_level) c
               GetID(),
               GetLoadAddress(),
               m_byte_size,
-              m_enabled ? "enabled" : "disabled",
+              IsEnabled() ? "enabled" : "disabled",
               m_watch_read ? "r" : "",
               m_watch_write ? "w" : "");
 
     if (description_level >= lldb::eDescriptionLevelFull) {
         if (!m_decl_str.empty())
             s->Printf("\n    declare @ '%s'", m_decl_str.c_str());
+        if (!m_watch_spec_str.empty())
+            s->Printf("\n    static watchpoint spec = '%s'", m_watch_spec_str.c_str());
         if (GetConditionText())
             s->Printf("\n    condition = '%s'", GetConditionText());
     }

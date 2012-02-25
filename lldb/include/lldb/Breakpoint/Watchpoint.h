@@ -55,6 +55,7 @@ public:
     bool        SetCallback (WatchpointHitCallback callback, void *callback_baton);
     void        ClearCallback();
     void        SetDeclInfo (std::string &str);
+    void        SetWatchSpec (std::string &str);
     void        GetDescription (Stream *s, lldb::DescriptionLevel level);
     void        Dump (Stream *s) const;
     void        DumpWithLevel (Stream *s, lldb::DescriptionLevel description_level) const;
@@ -96,8 +97,11 @@ public:
 
 private:
     friend class Target;
+    friend class WatchpointList;
 
     void        SetTarget(Target *target_ptr) { m_target = target_ptr; }
+    std::string GetWatchSpec() { return m_watch_spec_str; }
+    void        ResetHitCount() { m_hit_count = 0; }
 
     Target      *m_target;
     bool        m_enabled;             // Is this watchpoint enabled
@@ -110,12 +114,12 @@ private:
     WatchpointHitCallback m_callback;
     void *      m_callback_baton;      // Callback user data to pass to callback
     std::string m_decl_str;            // Declaration information, if any.
+    std::string m_watch_spec_str;      // Spec for the watchpoint (for future use).
     Error       m_error;               // An error object describing errors creating watchpoint.
 
     std::auto_ptr<ClangUserExpression> m_condition_ap;  // The condition to test.
 
-    static lldb::break_id_t
-    GetNextID();
+    void SetID(lldb::watch_id_t id) { m_loc_id = id; }
 
     DISALLOW_COPY_AND_ASSIGN (Watchpoint);
 };

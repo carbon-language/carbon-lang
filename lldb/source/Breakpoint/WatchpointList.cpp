@@ -19,8 +19,9 @@ using namespace lldb;
 using namespace lldb_private;
 
 WatchpointList::WatchpointList() :
-    m_address_to_watchpoint (),
-    m_mutex (Mutex::eMutexTypeRecursive)
+    m_watchpoints (),
+    m_mutex (Mutex::eMutexTypeRecursive),
+    m_next_wp_id (0)
 {
 }
 
@@ -28,21 +29,13 @@ WatchpointList::~WatchpointList()
 {
 }
 
-// Add watchpoint loc to the list.  However, if the element already exists in the
-// list, then replace it with the input one.
-
+// Add a watchpoint to the list.
 lldb::watch_id_t
 WatchpointList::Add (const WatchpointSP &wp_sp)
 {
     Mutex::Locker locker (m_mutex);
-    lldb::addr_t wp_addr = wp_sp->GetLoadAddress();
-    addr_map::iterator iter = m_address_to_watchpoint.find(wp_addr);
-
-    if (iter == m_address_to_watchpoint.end())
-        m_address_to_watchpoint.insert(iter, addr_map::value_type(wp_addr, wp_sp));
-    else
-        m_address_to_watchpoint[wp_addr] = wp_sp;
-
+    wp_sp->SetID(++m_next_wp_id);
+    m_watchpoints.push_back(wp_sp);
     return wp_sp->GetID();
 }
 
@@ -59,11 +52,11 @@ WatchpointList::DumpWithLevel (Stream *s, lldb::DescriptionLevel description_lev
     s->Printf("%p: ", this);
     //s->Indent();
     s->Printf("WatchpointList with %zu Watchpoints:\n",
-              m_address_to_watchpoint.size());
+              m_watchpoints.size());
     s->IndentMore();
-    addr_map::const_iterator pos, end = m_address_to_watchpoint.end();
-    for (pos = m_address_to_watchpoint.begin(); pos != end; ++pos)
-        pos->second->DumpWithLevel(s, description_level);
+    wp_collection::const_iterator pos, end = m_watchpoints.end();
+    for (pos = m_watchpoints.begin(); pos != end; ++pos)
+        (*pos)->DumpWithLevel(s, description_level);
     s->IndentLess();
 }
 
@@ -72,11 +65,32 @@ WatchpointList::FindByAddress (lldb::addr_t addr) const
 {
     WatchpointSP wp_sp;
     Mutex::Locker locker (m_mutex);
-    if (!m_address_to_watchpoint.empty())
+    if (!m_watchpoints.empty())
     {
-        addr_map::const_iterator pos = m_address_to_watchpoint.find (addr);
-        if (pos != m_address_to_watchpoint.end())
-            wp_sp = pos->second;
+        wp_collection::const_iterator pos, end = m_watchpoints.end();
+        for (pos = m_watchpoints.begin(); pos != end; ++pos)
+            if ((*pos)->GetLoadAddress() == addr) {
+                wp_sp = *pos;
+                break;
+            }
+    }
+
+    return wp_sp;
+}
+
+const WatchpointSP
+WatchpointList::FindBySpec (std::string spec) const
+{
+    WatchpointSP wp_sp;
+    Mutex::Locker locker (m_mutex);
+    if (!m_watchpoints.empty())
+    {
+        wp_collection::const_iterator pos, end = m_watchpoints.end();
+        for (pos = m_watchpoints.begin(); pos != end; ++pos)
+            if ((*pos)->GetWatchSpec() == spec) {
+                wp_sp = *pos;
+                break;
+            }
     }
 
     return wp_sp;
@@ -90,27 +104,27 @@ public:
     {
     }
 
-    bool operator() (std::pair <lldb::addr_t, WatchpointSP> val_pair) const
+    bool operator() (const WatchpointSP &wp) const
     {
-        return m_watch_id == val_pair.second.get()->GetID();
+        return m_watch_id == wp->GetID();
     }
 
 private:
    const lldb::watch_id_t m_watch_id;
 };
 
-WatchpointList::addr_map::iterator
+WatchpointList::wp_collection::iterator
 WatchpointList::GetIDIterator (lldb::watch_id_t watch_id)
 {
-    return std::find_if(m_address_to_watchpoint.begin(), m_address_to_watchpoint.end(), // Search full range
-                        WatchpointIDMatches(watch_id));                                 // Predicate
+    return std::find_if(m_watchpoints.begin(), m_watchpoints.end(), // Search full range
+                        WatchpointIDMatches(watch_id));             // Predicate
 }
 
-WatchpointList::addr_map::const_iterator
+WatchpointList::wp_collection::const_iterator
 WatchpointList::GetIDConstIterator (lldb::watch_id_t watch_id) const
 {
-    return std::find_if(m_address_to_watchpoint.begin(), m_address_to_watchpoint.end(), // Search full range
-                        WatchpointIDMatches(watch_id));                                 // Predicate
+    return std::find_if(m_watchpoints.begin(), m_watchpoints.end(), // Search full range
+                        WatchpointIDMatches(watch_id));             // Predicate
 }
 
 WatchpointSP
@@ -118,9 +132,9 @@ WatchpointList::FindByID (lldb::watch_id_t watch_id) const
 {
     WatchpointSP wp_sp;
     Mutex::Locker locker (m_mutex);
-    addr_map::const_iterator pos = GetIDConstIterator(watch_id);
-    if (pos != m_address_to_watchpoint.end())
-        wp_sp = pos->second;
+    wp_collection::const_iterator pos = GetIDConstIterator(watch_id);
+    if (pos != m_watchpoints.end())
+        wp_sp = *pos;
 
     return wp_sp;
 }
@@ -136,16 +150,27 @@ WatchpointList::FindIDByAddress (lldb::addr_t addr)
     return LLDB_INVALID_WATCH_ID;
 }
 
+lldb::watch_id_t
+WatchpointList::FindIDBySpec (std::string spec)
+{
+    WatchpointSP wp_sp = FindBySpec (spec);
+    if (wp_sp)
+    {
+        return wp_sp->GetID();
+    }
+    return LLDB_INVALID_WATCH_ID;
+}
+
 WatchpointSP
 WatchpointList::GetByIndex (uint32_t i)
 {
     Mutex::Locker locker (m_mutex);
     WatchpointSP wp_sp;
-    if (i < m_address_to_watchpoint.size())
+    if (i < m_watchpoints.size())
     {
-        addr_map::const_iterator pos = m_address_to_watchpoint.begin();
+        wp_collection::const_iterator pos = m_watchpoints.begin();
         std::advance(pos, i);
-        wp_sp = pos->second;
+        wp_sp = *pos;
     }
     return wp_sp;
 }
@@ -155,23 +180,33 @@ WatchpointList::GetByIndex (uint32_t i) const
 {
     Mutex::Locker locker (m_mutex);
     WatchpointSP wp_sp;
-    if (i < m_address_to_watchpoint.size())
+    if (i < m_watchpoints.size())
     {
-        addr_map::const_iterator pos = m_address_to_watchpoint.begin();
+        wp_collection::const_iterator pos = m_watchpoints.begin();
         std::advance(pos, i);
-        wp_sp = pos->second;
+        wp_sp = *pos;
     }
     return wp_sp;
+}
+
+std::vector<lldb::watch_id_t>
+WatchpointList::GetWatchpointIDs() const
+{
+    std::vector<lldb::watch_id_t> IDs;
+    wp_collection::const_iterator pos, end = m_watchpoints.end();
+    for (pos = m_watchpoints.begin(); pos != end; ++pos)
+        IDs.push_back((*pos)->GetID());
+    return IDs;
 }
 
 bool
 WatchpointList::Remove (lldb::watch_id_t watch_id)
 {
     Mutex::Locker locker (m_mutex);
-    addr_map::iterator pos = GetIDIterator(watch_id);
-    if (pos != m_address_to_watchpoint.end())
+    wp_collection::iterator pos = GetIDIterator(watch_id);
+    if (pos != m_watchpoints.end())
     {
-        m_address_to_watchpoint.erase(pos);
+        m_watchpoints.erase(pos);
         return true;
     }
     return false;
@@ -182,9 +217,9 @@ WatchpointList::GetHitCount () const
 {
     uint32_t hit_count = 0;
     Mutex::Locker locker (m_mutex);
-    addr_map::const_iterator pos, end = m_address_to_watchpoint.end();
-    for (pos = m_address_to_watchpoint.begin(); pos != end; ++pos)
-        hit_count += pos->second->GetHitCount();
+    wp_collection::const_iterator pos, end = m_watchpoints.end();
+    for (pos = m_watchpoints.begin(); pos != end; ++pos)
+        hit_count += (*pos)->GetHitCount();
     return hit_count;
 }
 
@@ -209,12 +244,12 @@ void
 WatchpointList::GetDescription (Stream *s, lldb::DescriptionLevel level)
 {
     Mutex::Locker locker (m_mutex);
-    addr_map::iterator pos, end = m_address_to_watchpoint.end();
+    wp_collection::iterator pos, end = m_watchpoints.end();
 
-    for (pos = m_address_to_watchpoint.begin(); pos != end; ++pos)
+    for (pos = m_watchpoints.begin(); pos != end; ++pos)
     {
         s->Printf(" ");
-        pos->second->Dump(s);
+        (*pos)->Dump(s);
     }
 }
 
@@ -223,16 +258,16 @@ WatchpointList::SetEnabledAll (bool enabled)
 {
     Mutex::Locker locker(m_mutex);
 
-    addr_map::iterator pos, end = m_address_to_watchpoint.end();
-    for (pos = m_address_to_watchpoint.begin(); pos != end; ++pos)
-        pos->second->SetEnabled (enabled);
+    wp_collection::iterator pos, end = m_watchpoints.end();
+    for (pos = m_watchpoints.begin(); pos != end; ++pos)
+        (*pos)->SetEnabled (enabled);
 }
 
 void
 WatchpointList::RemoveAll ()
 {
     Mutex::Locker locker(m_mutex);
-    m_address_to_watchpoint.clear();
+    m_watchpoints.clear();
 }
 
 void

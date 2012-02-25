@@ -528,6 +528,9 @@ public:
     EnableAllWatchpoints (bool end_to_end = true);
 
     bool
+    ClearAllWatchpointHitCounts ();
+
+    bool
     IgnoreAllWatchpoints (uint32_t ignore_count);
 
     bool

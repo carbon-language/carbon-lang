@@ -51,10 +51,10 @@ public:
         return m_addr;
     }
 
-    virtual lldb::addr_t
-    SetLoadAddress () const
+    virtual void
+    SetLoadAddress (lldb::addr_t addr)
     {
-        return m_addr;
+        m_addr = addr;
     }
 
     uint32_t
