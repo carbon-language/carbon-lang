@@ -26,3 +26,14 @@ namespace rdar8367341 {
     static constexpr float y2 = foo(); // expected-error {{must be initialized by a constant expression}} expected-note {{non-constexpr function 'foo'}}
   };
 }
+
+
+namespace Foo {
+  // Regression test -- forward declaration of Foo should not cause error about
+  // nonstatic data member.
+  class Foo;
+  class Foo {
+    int x;
+    int y = x;
+  };
+}

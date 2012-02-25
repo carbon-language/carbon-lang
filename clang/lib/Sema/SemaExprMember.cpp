@@ -173,7 +173,8 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
   // ...if C is not X or a base class of X, the class member access expression
   // is ill-formed.
   if (R.getNamingClass() &&
-      contextClass != R.getNamingClass()->getCanonicalDecl() &&
+      contextClass->getCanonicalDecl() !=
+        R.getNamingClass()->getCanonicalDecl() &&
       contextClass->isProvablyNotDerivedFrom(R.getNamingClass()))
     return (hasNonInstance ? IMA_Mixed_Unrelated : IMA_Error_Unrelated);
 

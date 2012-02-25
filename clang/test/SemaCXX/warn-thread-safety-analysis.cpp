@@ -2100,3 +2100,17 @@ public:
 } // end namespace SelfLockingTest
 
 
+namespace InvalidNonstatic {
+
+// Forward decl here causes bogus "invalid use of non-static data member"
+// on reference to mutex_ in guarded_by attribute.
+class Foo;
+
+class Foo {
+  Mutex* mutex_;
+
+  int foo __attribute__((guarded_by(mutex_)));
+};
+
+}  // end namespace InvalidNonStatic
+
