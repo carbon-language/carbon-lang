@@ -4296,13 +4296,21 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
   Record.push_back(Data.HasProtectedFields);
   Record.push_back(Data.HasPublicFields);
   Record.push_back(Data.HasMutableFields);
+  Record.push_back(Data.HasOnlyCMembers);
   Record.push_back(Data.HasTrivialDefaultConstructor);
   Record.push_back(Data.HasConstexprNonCopyMoveConstructor);
+  Record.push_back(Data.DefaultedDefaultConstructorIsConstexpr);
+  Record.push_back(Data.DefaultedCopyConstructorIsConstexpr);
+  Record.push_back(Data.DefaultedMoveConstructorIsConstexpr);
+  Record.push_back(Data.HasConstexprDefaultConstructor);
+  Record.push_back(Data.HasConstexprCopyConstructor);
+  Record.push_back(Data.HasConstexprMoveConstructor);
   Record.push_back(Data.HasTrivialCopyConstructor);
   Record.push_back(Data.HasTrivialMoveConstructor);
   Record.push_back(Data.HasTrivialCopyAssignment);
   Record.push_back(Data.HasTrivialMoveAssignment);
   Record.push_back(Data.HasTrivialDestructor);
+  Record.push_back(Data.HasIrrelevantDestructor);
   Record.push_back(Data.HasNonLiteralTypeFieldsOrBases);
   Record.push_back(Data.ComputedVisibleConversions);
   Record.push_back(Data.UserProvidedDefaultConstructor);
@@ -4314,6 +4322,7 @@ void ASTWriter::AddCXXDefinitionData(const CXXRecordDecl *D, RecordDataImpl &Rec
   Record.push_back(Data.DeclaredDestructor);
   Record.push_back(Data.FailedImplicitMoveConstructor);
   Record.push_back(Data.FailedImplicitMoveAssignment);
+  // IsLambda bit is already saved.
 
   Record.push_back(Data.NumBases);
   if (Data.NumBases > 0)

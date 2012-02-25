@@ -52,6 +52,7 @@ CXXRecordDecl::DefinitionData::DefinitionData(CXXRecordDecl *D)
     HasConstexprMoveConstructor(false), HasTrivialCopyConstructor(true),
     HasTrivialMoveConstructor(true), HasTrivialCopyAssignment(true),
     HasTrivialMoveAssignment(true), HasTrivialDestructor(true),
+    HasIrrelevantDestructor(true),
     HasNonLiteralTypeFieldsOrBases(false), ComputedVisibleConversions(false),
     UserProvidedDefaultConstructor(false), DeclaredDefaultConstructor(false),
     DeclaredCopyConstructor(false), DeclaredMoveConstructor(false),
@@ -284,7 +285,10 @@ CXXRecordDecl::setBases(CXXBaseSpecifier const * const *Bases,
     //   have trivial destructors.
     if (!BaseClassDecl->hasTrivialDestructor())
       data().HasTrivialDestructor = false;
-    
+
+    if (!BaseClassDecl->hasIrrelevantDestructor())
+      data().HasIrrelevantDestructor = false;
+
     // A class has an Objective-C object member if... or any of its bases
     // has an Objective-C object member.
     if (BaseClassDecl->hasObjectMember())
@@ -648,7 +652,8 @@ NotASpecialMember:;
   if (CXXDestructorDecl *DD = dyn_cast<CXXDestructorDecl>(D)) {
     data().DeclaredDestructor = true;
     data().UserDeclaredDestructor = true;
-    
+    data().HasIrrelevantDestructor = false;
+
     // C++ [class]p4: 
     //   A POD-struct is an aggregate class that has [...] no user-defined 
     //   destructor.
@@ -865,6 +870,8 @@ NotASpecialMember:;
 
         if (!FieldRec->hasTrivialDestructor())
           data().HasTrivialDestructor = false;
+        if (!FieldRec->hasIrrelevantDestructor())
+          data().HasIrrelevantDestructor = false;
         if (FieldRec->hasObjectMember())
           setHasObjectMember(true);
 
@@ -1248,6 +1255,7 @@ void CXXRecordDecl::completeDefinition(CXXFinalOverriderMap *FinalOverriders) {
     Data.HasTrivialCopyConstructor = false;
     Data.HasTrivialCopyAssignment = false;
     Data.HasTrivialDestructor = false;
+    Data.HasIrrelevantDestructor = false;
   }
   
   // If the class may be abstract (but hasn't been marked as such), check for

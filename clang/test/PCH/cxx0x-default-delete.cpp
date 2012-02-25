@@ -12,6 +12,14 @@ struct foo {
   void bar() = delete; // expected-note{{deleted here}}
 };
 
+struct baz {
+  ~baz() = delete; // expected-note{{deleted here}}
+};
+
+class quux {
+  ~quux() = default; // expected-note{{private here}}
+};
+
 #else
 
 foo::foo() { } // expected-error{{definition of explicitly defaulted default constructor}}
@@ -19,5 +27,8 @@ foo f;
 void fn() {
   f.bar(); // expected-error{{deleted function}}
 }
+
+baz bz; // expected-error{{deleted function}}
+quux qx; // expected-error{{private destructor}}
 
 #endif

@@ -1849,16 +1849,29 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
     ToData.HasProtectedFields = FromData.HasProtectedFields;
     ToData.HasPublicFields = FromData.HasPublicFields;
     ToData.HasMutableFields = FromData.HasMutableFields;
+    ToData.HasOnlyCMembers = FromData.HasOnlyCMembers;
     ToData.HasTrivialDefaultConstructor = FromData.HasTrivialDefaultConstructor;
     ToData.HasConstexprNonCopyMoveConstructor
       = FromData.HasConstexprNonCopyMoveConstructor;
+    ToData.DefaultedDefaultConstructorIsConstexpr
+      = FromData.DefaultedDefaultConstructorIsConstexpr;
+    ToData.DefaultedCopyConstructorIsConstexpr
+      = FromData.DefaultedCopyConstructorIsConstexpr;
+    ToData.DefaultedMoveConstructorIsConstexpr
+      = FromData.DefaultedMoveConstructorIsConstexpr;
+    ToData.HasConstexprDefaultConstructor
+      = FromData.HasConstexprDefaultConstructor;
+    ToData.HasConstexprCopyConstructor = FromData.HasConstexprCopyConstructor;
+    ToData.HasConstexprMoveConstructor = FromData.HasConstexprMoveConstructor;
     ToData.HasTrivialCopyConstructor = FromData.HasTrivialCopyConstructor;
     ToData.HasTrivialMoveConstructor = FromData.HasTrivialMoveConstructor;
     ToData.HasTrivialCopyAssignment = FromData.HasTrivialCopyAssignment;
     ToData.HasTrivialMoveAssignment = FromData.HasTrivialMoveAssignment;
     ToData.HasTrivialDestructor = FromData.HasTrivialDestructor;
+    ToData.HasIrrelevantDestructor = FromData.HasIrrelevantDestructor;
     ToData.HasNonLiteralTypeFieldsOrBases
       = FromData.HasNonLiteralTypeFieldsOrBases;
+    // ComputedVisibleConversions not imported.
     ToData.UserProvidedDefaultConstructor
       = FromData.UserProvidedDefaultConstructor;
     ToData.DeclaredDefaultConstructor = FromData.DeclaredDefaultConstructor;
@@ -1870,7 +1883,8 @@ bool ASTNodeImporter::ImportDefinition(RecordDecl *From, RecordDecl *To,
     ToData.FailedImplicitMoveConstructor
       = FromData.FailedImplicitMoveConstructor;
     ToData.FailedImplicitMoveAssignment = FromData.FailedImplicitMoveAssignment;
-    
+    ToData.IsLambda = FromData.IsLambda;
+
     SmallVector<CXXBaseSpecifier *, 4> Bases;
     for (CXXRecordDecl::base_class_iterator 
                   Base1 = FromCXX->bases_begin(),
