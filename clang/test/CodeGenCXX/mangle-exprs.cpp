@@ -1,5 +1,37 @@
 // RUN: %clang_cc1 -std=c++11 -emit-llvm %s -o - -triple=x86_64-apple-darwin9 | FileCheck %s
 
+namespace std {
+  typedef decltype(sizeof(int)) size_t;
+
+  // libc++'s implementation
+  template <class _E>
+  class initializer_list
+  {
+    const _E* __begin_;
+    size_t    __size_;
+
+    initializer_list(const _E* __b, size_t __s)
+      : __begin_(__b),
+        __size_(__s)
+    {}
+
+  public:
+    typedef _E        value_type;
+    typedef const _E& reference;
+    typedef const _E& const_reference;
+    typedef size_t    size_type;
+
+    typedef const _E* iterator;
+    typedef const _E* const_iterator;
+
+    initializer_list() : __begin_(nullptr), __size_(0) {}
+
+    size_t    size()  const {return __size_;}
+    const _E* begin() const {return __begin_;}
+    const _E* end()   const {return __begin_ + __size_;}
+  };
+}
+
 template < bool condition, typename T = void >
 struct enable_if { typedef T type; };
 
@@ -131,4 +163,32 @@ namespace test3 {
     // CHECK: call void @_ZN5test31aINS_1XEMS1_PiEEvT_T0_DTdsfL0p_fL0p0_E
     a(x, &X::member, ip);
   }
+}
+
+namespace test4 {
+  struct X {
+    X(int);
+    X(std::initializer_list<int>);
+  };
+
+  template <typename T>
+  void tf1(decltype(new T(1)) p)
+  {}
+
+  template <typename T>
+  void tf2(decltype(new T({1})) p)
+  {}
+
+  template <typename T>
+  void tf3(decltype(new T{1}) p)
+  {}
+
+  // CHECK: void @_ZN5test43tf1INS_1XEEEvDTnw_T_piLi1EEE
+  template void tf1<X>(X*);
+
+  // FIXME: Need mangling for braced initializers
+  //template void tf2<X>(X*);
+
+  // CHECK: void @_ZN5test43tf3INS_1XEEEvDTnw_T_blLi1EEE
+  template void tf3<X>(X*);
 }

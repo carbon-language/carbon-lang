@@ -2356,12 +2356,12 @@ recurse:
   case Expr::CXXThisExprClass:
   case Expr::DesignatedInitExprClass:
   case Expr::ImplicitValueInitExprClass:
-  case Expr::InitListExprClass:
   case Expr::ParenListExprClass:
   case Expr::LambdaExprClass:
     llvm_unreachable("unexpected statement kind");
 
   // FIXME: invent manglings for all these.
+  case Expr::InitListExprClass:
   case Expr::BlockExprClass:
   case Expr::CXXPseudoDestructorExprClass:
   case Expr::ChooseExprClass:
@@ -2454,7 +2454,6 @@ recurse:
   }
 
   case Expr::CXXNewExprClass: {
-    // Proposal from David Vandervoorde, 2010.06.30
     const CXXNewExpr *New = cast<CXXNewExpr>(E);
     if (New->isGlobalNew()) Out << "gs";
     Out << (New->isArray() ? "na" : "nw");
@@ -2464,8 +2463,14 @@ recurse:
     Out << '_';
     mangleType(New->getAllocatedType());
     if (New->hasInitializer()) {
-      // FIXME: Does this mean "parenthesized initializer"?
-      Out << "pi";
+      // <initializer> is 'pi <expression>* E' in the current ABI for
+      // parenthesized initializers, but braced initializers are unspecified.
+      // We use 'bl <expression>* E' for "braced list". "bi" is too easy to
+      // confuse.
+      if (New->getInitializationStyle() == CXXNewExpr::ListInit)
+        Out << "bl";
+      else
+        Out << "pi";
       const Expr *Init = New->getInitializer();
       if (const CXXConstructExpr *CCE = dyn_cast<CXXConstructExpr>(Init)) {
         // Directly inline the initializers.
@@ -2476,6 +2481,12 @@ recurse:
       } else if (const ParenListExpr *PLE = dyn_cast<ParenListExpr>(Init)) {
         for (unsigned i = 0, e = PLE->getNumExprs(); i != e; ++i)
           mangleExpression(PLE->getExpr(i));
+      } else if (New->getInitializationStyle() == CXXNewExpr::ListInit &&
+                 isa<InitListExpr>(Init)) {
+        // Only take ParenListExprs apart for list-initialization.
+        const InitListExpr *InitList = cast<InitListExpr>(Init);
+        for (unsigned i = 0, e = InitList->getNumInits(); i != e; ++i)
+          mangleExpression(InitList->getInit(i));
       } else
         mangleExpression(Init);
     }
