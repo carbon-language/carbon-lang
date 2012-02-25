@@ -1,6 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 -Wc++98-compat -verify %s
 // RUN: %clang_cc1 -fsyntax-only -std=c++11 %s
 
+namespace std { struct type_info; }
+
 template<typename ...T>  // expected-warning {{variadic templates are incompatible with C++98}}
 class Variadic1 {};
 
@@ -267,4 +269,13 @@ Later: // expected-note {{possible target of indirect goto}}
   default: // expected-warning {{switch case would be in a protected scope in C++98}}
     return;
   }
+}
+
+namespace UnevaluatedMemberAccess {
+  struct S {
+    int n;
+    int f() { return sizeof(S::n); } // ok
+  };
+  int k = sizeof(S::n); // expected-warning {{use of non-static data member 'n' in an unevaluated context is incompatible with C++98}}
+  const std::type_info &ti = typeid(S::n); // expected-warning {{use of non-static data member 'n' in an unevaluated context is incompatible with C++98}}
 }

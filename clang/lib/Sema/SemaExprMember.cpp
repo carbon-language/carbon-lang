@@ -138,6 +138,7 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
   if (Classes.empty())
     return IMA_Static;
 
+  bool IsCXX11UnevaluatedField = false;
   if (SemaRef.getLangOptions().CPlusPlus0x && isField) {
     // C++11 [expr.prim.general]p12:
     //   An id-expression that denotes a non-static data member or non-static
@@ -148,7 +149,7 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
     const Sema::ExpressionEvaluationContextRecord& record
       = SemaRef.ExprEvalContexts.back();
     if (record.Context == Sema::Unevaluated)
-      return IMA_Field_Uneval_Context;
+      IsCXX11UnevaluatedField = true;
   }
 
   // If the current context is not an instance method, it can't be
@@ -157,7 +158,8 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
     if (hasNonInstance)
       return IMA_Mixed_StaticContext;
 
-    return IMA_Error_StaticContext;
+    return IsCXX11UnevaluatedField ? IMA_Field_Uneval_Context
+                                   : IMA_Error_StaticContext;
   }
 
   CXXRecordDecl *contextClass;
@@ -176,13 +178,17 @@ static IMAKind ClassifyImplicitMemberAccess(Sema &SemaRef,
       contextClass->getCanonicalDecl() !=
         R.getNamingClass()->getCanonicalDecl() &&
       contextClass->isProvablyNotDerivedFrom(R.getNamingClass()))
-    return (hasNonInstance ? IMA_Mixed_Unrelated : IMA_Error_Unrelated);
+    return hasNonInstance ? IMA_Mixed_Unrelated :
+           IsCXX11UnevaluatedField ? IMA_Field_Uneval_Context :
+                                     IMA_Error_Unrelated;
 
   // If we can prove that the current context is unrelated to all the
   // declaring classes, it can't be an implicit member reference (in
   // which case it's an error if any of those members are selected).
   if (IsProvablyNotDerivedFrom(SemaRef, contextClass, Classes))
-    return (hasNonInstance ? IMA_Mixed_Unrelated : IMA_Error_Unrelated);
+    return hasNonInstance ? IMA_Mixed_Unrelated :
+           IsCXX11UnevaluatedField ? IMA_Field_Uneval_Context :
+                                     IMA_Error_Unrelated;
 
   return (hasNonInstance ? IMA_Mixed : IMA_Instance);
 }
@@ -229,10 +235,13 @@ Sema::BuildPossibleImplicitMemberExpr(const CXXScopeSpec &SS,
   case IMA_Unresolved:
     return BuildImplicitMemberExpr(SS, TemplateKWLoc, R, TemplateArgs, false);
 
+  case IMA_Field_Uneval_Context:
+    Diag(R.getNameLoc(), diag::warn_cxx98_compat_non_static_member_use)
+      << R.getLookupNameInfo().getName();
+    // Fall through.
   case IMA_Static:
   case IMA_Mixed_StaticContext:
   case IMA_Unresolved_StaticContext:
-  case IMA_Field_Uneval_Context:
     if (TemplateArgs || TemplateKWLoc.isValid())
       return BuildTemplateIdExpr(SS, TemplateKWLoc, R, false, TemplateArgs);
     return BuildDeclarationNameExpr(SS, R, false);

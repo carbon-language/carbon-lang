@@ -3670,6 +3670,9 @@ def err_ref_qualifier_overload : Error<
 
 def err_invalid_non_static_member_use : Error<
   "invalid use of nonstatic data member %0">;
+def warn_cxx98_compat_non_static_member_use : Warning<
+  "use of non-static data member %0 in an unevaluated context is "
+  "incompatible with C++98">, InGroup<CXX98Compat>, DefaultIgnore;
 def err_invalid_incomplete_type_use : Error<
   "invalid use of incomplete type %0">;
 def err_builtin_func_cast_more_than_one_arg : Error<
