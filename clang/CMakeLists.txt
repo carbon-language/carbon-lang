@@ -204,7 +204,8 @@ macro(add_clang_library name)
   endif(MSVC)
   install(TARGETS ${name}
     LIBRARY DESTINATION lib${LLVM_LIBDIR_SUFFIX}
-    ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX})
+    ARCHIVE DESTINATION lib${LLVM_LIBDIR_SUFFIX}
+    RUNTIME DESTINATION bin)
   set_target_properties(${name} PROPERTIES FOLDER "Clang libraries")
 endmacro(add_clang_library)
 
