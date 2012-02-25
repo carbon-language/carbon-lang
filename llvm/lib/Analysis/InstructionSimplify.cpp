@@ -1626,20 +1626,21 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
   LHSPtr = stripPointerAdjustments(LHSPtr);
   if (llvm::isIdentifiedObject(LHSPtr)) {
     RHSPtr = stripPointerAdjustments(RHSPtr);
-    // If both sides are different identified objects, they aren't equal unless
-    // they're null.
-    if (LHSPtr != RHSPtr && llvm::isIdentifiedObject(RHSPtr) &&
-        (llvm::isKnownNonNull(LHSPtr) || llvm::isKnownNonNull(RHSPtr)))
-      return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
+    if (llvm::isKnownNonNull(LHSPtr) || llvm::isKnownNonNull(RHSPtr)) {
+      // If both sides are different identified objects, they aren't equal
+      // unless they're null.
+      if (LHSPtr != RHSPtr && llvm::isIdentifiedObject(RHSPtr))
+        return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
 
-    // Assume that the null is on the right.
+      // A local identified object (alloca or noalias call) can't equal any
+      // incoming argument, unless they're both null.
+      if ((isa<Instruction>(LHSPtr) && isa<Argument>(RHSPtr)) ||
+          (isa<Instruction>(RHSPtr) && isa<Argument>(LHSPtr)))
+        return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
+    }
+
+    // Assume that the constant null is on the right.
     if (llvm::isKnownNonNull(LHSPtr) && isa<ConstantPointerNull>(RHSPtr))
-      return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
-
-    // A local instruction (alloca or noalias call) can't equal any incoming
-    // argument.
-    if ((isa<Instruction>(LHSPtr) && isa<Argument>(RHSPtr)) ||
-        (isa<Instruction>(RHSPtr) && isa<Argument>(LHSPtr)))
       return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
   }
 

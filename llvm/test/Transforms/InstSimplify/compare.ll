@@ -41,14 +41,15 @@ define i1 @gep2() {
 }
 
 ; PR11238
-%t = type { i32, i32 }
-@y = global %t zeroinitializer, align 8
+%gept = type { i32, i32 }
+@gepy = global %gept zeroinitializer, align 8
+@gepz = extern_weak global %gept
 
 define i1 @gep3() {
 ; CHECK: @gep3
-  %x = alloca %t, align 8
-  %a = getelementptr %t* %x, i64 0, i32 0
-  %b = getelementptr %t* %x, i64 0, i32 1
+  %x = alloca %gept, align 8
+  %a = getelementptr %gept* %x, i64 0, i32 0
+  %b = getelementptr %gept* %x, i64 0, i32 1
   %equal = icmp eq i32* %a, %b
   ret i1 %equal
 ; CHECK-NEXT: ret i1 false
@@ -56,9 +57,9 @@ define i1 @gep3() {
 
 define i1 @gep4() {
 ; CHECK: @gep4
-  %x = alloca %t, align 8
-  %a = getelementptr %t* @y, i64 0, i32 0
-  %b = getelementptr %t* @y, i64 0, i32 1
+  %x = alloca %gept, align 8
+  %a = getelementptr %gept* @gepy, i64 0, i32 0
+  %b = getelementptr %gept* @gepy, i64 0, i32 1
   %equal = icmp eq i32* %a, %b
   ret i1 %equal
 ; CHECK-NEXT: ret i1 false
@@ -66,22 +67,31 @@ define i1 @gep4() {
 
 define i1 @gep5() {
 ; CHECK: @gep5
-  %x = alloca %t, align 8
-  %a = getelementptr inbounds %t* %x, i64 0, i32 1
-  %b = getelementptr %t* @y, i64 0, i32 0
+  %x = alloca %gept, align 8
+  %a = getelementptr inbounds %gept* %x, i64 0, i32 1
+  %b = getelementptr %gept* @gepy, i64 0, i32 0
   %equal = icmp eq i32* %a, %b
   ret i1 %equal
 ; CHECK-NEXT: ret i1 false
 }
 
-define i1 @gep6(%t* %x) {
+define i1 @gep6(%gept* %x) {
 ; Same as @gep3 but potentially null.
 ; CHECK: @gep6
-  %a = getelementptr %t* %x, i64 0, i32 0
-  %b = getelementptr %t* %x, i64 0, i32 1
+  %a = getelementptr %gept* %x, i64 0, i32 0
+  %b = getelementptr %gept* %x, i64 0, i32 1
   %equal = icmp eq i32* %a, %b
   ret i1 %equal
 ; CHECK-NEXT: ret i1 false
+}
+
+define i1 @gep7(%gept* %x) {
+; CHECK: @gep7
+  %a = getelementptr %gept* %x, i64 0, i32 0
+  %b = getelementptr %gept* @gepz, i64 0, i32 0
+  %equal = icmp eq i32* %a, %b
+  ret i1 %equal
+; CHECK: ret i1 %equal
 }
 
 define i1 @zext(i32 %x) {
