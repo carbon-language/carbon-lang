@@ -2558,6 +2558,7 @@ void ADLResult::insert(NamedDecl *New) {
 }
 
 void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
+                                   SourceLocation Loc,
                                    Expr **Args, unsigned NumArgs,
                                    ADLResult &Result,
                                    bool StdNamespaceIsAssociated) {
@@ -2577,6 +2578,13 @@ void Sema::ArgumentDependentLookup(DeclarationName Name, bool Operator,
     if (NumArgs >= 2)
       T2 = Args[1]->getType();
   }
+
+  // Try to complete all associated classes, in case they contain a
+  // declaration of a friend function.
+  for (AssociatedClassSet::iterator C = AssociatedClasses.begin(),
+                                    CEnd = AssociatedClasses.end();
+       C != CEnd; ++C)
+    RequireCompleteType(Loc, Context.getRecordType(*C), 0);
 
   // C++ [basic.lookup.argdep]p3:
   //   Let X be the lookup set produced by unqualified lookup (3.4.1)

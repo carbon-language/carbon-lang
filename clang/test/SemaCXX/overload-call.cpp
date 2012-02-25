@@ -536,10 +536,30 @@ namespace rdar9803316 {
 }
 
 namespace IncompleteArg {
-  // Ensure that overload resolution attempts to complete argument types.
+  // Ensure that overload resolution attempts to complete argument types when
+  // performing ADL.
   template<typename T> struct S {
     friend int f(const S&);
   };
   extern S<int> s;
   int k = f(s);
+
+  template<typename T> struct Op {
+    friend bool operator==(const Op &, const Op &);
+  };
+  extern Op<char> op;
+  bool b = op == op;
+
+  // ... and not in other cases! Nothing here requires U<int()> to be complete.
+  // (Note that instantiating U<int()> will fail.)
+  template<typename T> struct U {
+    T t;
+  };
+  struct Consumer {
+    template<typename T>
+    int operator()(const U<T> &);
+  };
+  template<typename T> U<T> &make();
+  Consumer c;
+  int n = sizeof(c(make<int()>()));
 }

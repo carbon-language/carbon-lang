@@ -740,8 +740,6 @@ namespace {
 /// Return true on unrecoverable error.
 static bool checkPlaceholderForOverload(Sema &S, Expr *&E,
                                         UnbridgedCastsSet *unbridgedCasts = 0) {
-  S.RequireCompleteType(E->getExprLoc(), E->getType(), 0);
-
   if (const BuiltinType *placeholder =  E->getType()->getAsPlaceholderType()) {
     // We can't handle overloaded expressions here because overload
     // resolution might reasonably tweak them.
@@ -7448,7 +7446,7 @@ Sema::AddBuiltinOperatorCandidates(OverloadedOperatorKind Op,
 /// candidate set (C++ [basic.lookup.argdep]).
 void
 Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
-                                           bool Operator,
+                                           bool Operator, SourceLocation Loc,
                                            Expr **Args, unsigned NumArgs,
                                  TemplateArgumentListInfo *ExplicitTemplateArgs,
                                            OverloadCandidateSet& CandidateSet,
@@ -7464,7 +7462,7 @@ Sema::AddArgumentDependentLookupCandidates(DeclarationName Name,
   // we supposed to consider on ADL candidates, anyway?
 
   // FIXME: Pass in the explicit template arguments?
-  ArgumentDependentLookup(Name, Operator, Args, NumArgs, Fns,
+  ArgumentDependentLookup(Name, Operator, Loc, Args, NumArgs, Fns,
                           StdNamespaceIsAssociated);
 
   // Erase all of the candidates we already knew about.
@@ -9223,6 +9221,7 @@ void Sema::AddOverloadedCallCandidates(UnresolvedLookupExpr *ULE,
 
   if (ULE->requiresADL())
     AddArgumentDependentLookupCandidates(ULE->getName(), /*Operator*/ false,
+                                         ULE->getExprLoc(),
                                          Args, NumArgs,
                                          ExplicitTemplateArgs,
                                          CandidateSet,
@@ -9665,7 +9664,7 @@ Sema::CreateOverloadedUnaryOp(SourceLocation OpLoc, unsigned OpcIn,
 
   // Add candidates from ADL.
   AddArgumentDependentLookupCandidates(OpName, /*Operator*/ true,
-                                       Args, NumArgs,
+                                       OpLoc, Args, NumArgs,
                                        /*ExplicitTemplateArgs*/ 0,
                                        CandidateSet);
 
@@ -9886,7 +9885,7 @@ Sema::CreateOverloadedBinOp(SourceLocation OpLoc,
 
   // Add candidates from ADL.
   AddArgumentDependentLookupCandidates(OpName, /*Operator*/ true,
-                                       Args, 2,
+                                       OpLoc, Args, 2,
                                        /*ExplicitTemplateArgs*/ 0,
                                        CandidateSet);
 

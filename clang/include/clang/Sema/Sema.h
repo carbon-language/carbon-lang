@@ -1568,7 +1568,7 @@ public:
                                     Expr **Args, unsigned NumArgs,
                                     OverloadCandidateSet& CandidateSet);
   void AddArgumentDependentLookupCandidates(DeclarationName Name,
-                                            bool Operator,
+                                            bool Operator, SourceLocation Loc,
                                             Expr **Args, unsigned NumArgs,
                                 TemplateArgumentListInfo *ExplicitTemplateArgs,
                                             OverloadCandidateSet& CandidateSet,
@@ -1814,6 +1814,7 @@ public:
   CXXDestructorDecl *LookupDestructor(CXXRecordDecl *Class);
 
   void ArgumentDependentLookup(DeclarationName Name, bool Operator,
+                               SourceLocation Loc,
                                Expr **Args, unsigned NumArgs,
                                ADLResult &Functions,
                                bool StdNamespaceIsAssociated = false);
