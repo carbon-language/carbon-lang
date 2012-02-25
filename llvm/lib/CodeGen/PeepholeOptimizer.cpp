@@ -237,6 +237,10 @@ OptimizeExtInstr(MachineInstr *MI, MachineBasicBlock *MBB,
       if (PHIBBs.count(UseMBB))
         continue;
 
+      // About to add uses of DstReg, clear DstReg's kill flags.
+      if (!Changed)
+        MRI->clearKillFlags(DstReg);
+
       unsigned NewVR = MRI->createVirtualRegister(RC);
       BuildMI(*UseMBB, UseMI, UseMI->getDebugLoc(),
               TII->get(TargetOpcode::COPY), NewVR)
