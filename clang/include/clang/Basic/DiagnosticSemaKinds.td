@@ -3622,6 +3622,8 @@ def ext_typecheck_comparison_of_distinct_pointers : ExtWarn<
   "comparison of distinct pointer types (%0 and %1)">;
 def ext_typecheck_cond_incompatible_operands : ExtWarn<
   "incompatible operand types (%0 and %1)">;
+def err_cond_voidptr_arc : Error <
+  "operands to conditional of types %0 and %1 are incompatible in ARC mode">;
 def err_typecheck_comparison_of_distinct_pointers : Error<
   "comparison of distinct pointer types (%0 and %1)">;
 def ext_typecheck_comparison_of_distinct_pointers_nonstandard : ExtWarn<
