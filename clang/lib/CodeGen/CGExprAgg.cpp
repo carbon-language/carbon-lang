@@ -324,6 +324,7 @@ void AggExprEmitter::EmitStdInitializerList(llvm::Value *destPtr,
   RecordDecl::field_iterator field = record->field_begin();
   if (field == record->field_end()) {
     CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+    return;
   }
 
   QualType elementPtr = ctx.getPointerType(element.withConst());
@@ -331,6 +332,7 @@ void AggExprEmitter::EmitStdInitializerList(llvm::Value *destPtr,
   // Start pointer.
   if (!ctx.hasSameType(field->getType(), elementPtr)) {
     CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+    return;
   }
   LValue start = CGF.EmitLValueForFieldInitialization(destPtr, *field, 0);
   llvm::Value *arrayStart = Builder.CreateStructGEP(alloc, 0, "arraystart");
@@ -339,6 +341,7 @@ void AggExprEmitter::EmitStdInitializerList(llvm::Value *destPtr,
 
   if (field == record->field_end()) {
     CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+    return;
   }
   LValue endOrLength = CGF.EmitLValueForFieldInitialization(destPtr, *field, 0);
   if (ctx.hasSameType(field->getType(), elementPtr)) {
@@ -350,6 +353,7 @@ void AggExprEmitter::EmitStdInitializerList(llvm::Value *destPtr,
     CGF.EmitStoreThroughLValue(RValue::get(Builder.getInt(size)), endOrLength);
   } else {
     CGF.ErrorUnsupported(initList, "weird std::initializer_list");
+    return;
   }
 
   if (!Dest.isExternallyDestructed())
