@@ -39,6 +39,7 @@
 #include "llvm/Module.h"
 #include "llvm/Intrinsics.h"
 #include "llvm/LLVMContext.h"
+#include "llvm/ADT/APSInt.h"
 #include "llvm/ADT/Triple.h"
 #include "llvm/Target/Mangler.h"
 #include "llvm/Target/TargetData.h"
@@ -1359,6 +1360,112 @@ CharUnits CodeGenModule::GetTargetTypeStoreSize(llvm::Type *Ty) const {
       TheTargetData.getTypeStoreSizeInBits(Ty));
 }
 
+llvm::Constant *
+CodeGenModule::MaybeEmitGlobalStdInitializerListInitializer(const VarDecl *D,
+                                                       const Expr *rawInit) {
+  ArrayRef<ExprWithCleanups::CleanupObject> cleanups;
+  if (const ExprWithCleanups *withCleanups =
+          dyn_cast<ExprWithCleanups>(rawInit)) {
+    cleanups = withCleanups->getObjects();
+    rawInit = withCleanups->getSubExpr();
+  }
+
+  const InitListExpr *init = dyn_cast<InitListExpr>(rawInit);
+  if (!init || !init->initializesStdInitializerList() ||
+      init->getNumInits() == 0)
+    return 0;
+
+  ASTContext &ctx = getContext();
+  // Synthesize a fake VarDecl for the array and initialize that.
+  unsigned numInits = init->getNumInits();
+  QualType elementType = init->getInit(0)->getType();
+  llvm::APInt numElements(ctx.getTypeSize(ctx.getSizeType()), numInits);
+  QualType arrayType = ctx.getConstantArrayType(elementType, numElements,
+                                                ArrayType::Normal, 0);
+
+  IdentifierInfo *name = &ctx.Idents.get(D->getNameAsString() + "__initlist");
+  TypeSourceInfo *sourceInfo = ctx.getTrivialTypeSourceInfo(
+                                              arrayType, D->getLocation());
+  VarDecl *backingArray = VarDecl::Create(ctx, const_cast<DeclContext*>(
+                                                          D->getDeclContext()),
+                                          D->getLocStart(), D->getLocation(),
+                                          name, arrayType, sourceInfo,
+                                          SC_Static, SC_Static);
+
+  // Now clone the InitListExpr to initialize the array instead.
+  // Incredible hack: we want to use the existing InitListExpr here, so we need
+  // to tell it that it no longer initializes a std::initializer_list.
+  Expr *arrayInit = new (ctx) InitListExpr(ctx, init->getLBraceLoc(),
+                                    const_cast<InitListExpr*>(init)->getInits(),
+                                                   init->getNumInits(),
+                                                   init->getRBraceLoc());
+  arrayInit->setType(arrayType);
+
+  if (!cleanups.empty())
+    arrayInit = ExprWithCleanups::Create(ctx, arrayInit, cleanups);
+
+  backingArray->setInit(arrayInit);
+
+  // Emit the definition of the array.
+  EmitGlobalVarDefinition(backingArray);
+
+  // Inspect the initializer list to validate it and determine its type.
+  // FIXME: doing this every time is probably inefficient; caching would be nice
+  RecordDecl *record = init->getType()->castAs<RecordType>()->getDecl();
+  RecordDecl::field_iterator field = record->field_begin();
+  if (field == record->field_end()) {
+    ErrorUnsupported(D, "weird std::initializer_list");
+    return 0;
+  }
+  QualType elementPtr = ctx.getPointerType(elementType.withConst());
+  // Start pointer.
+  if (!ctx.hasSameType(field->getType(), elementPtr)) {
+    ErrorUnsupported(D, "weird std::initializer_list");
+    return 0;
+  }
+  ++field;
+  if (field == record->field_end()) {
+    ErrorUnsupported(D, "weird std::initializer_list");
+    return 0;
+  }
+  bool isStartEnd = false;
+  if (ctx.hasSameType(field->getType(), elementPtr)) {
+    // End pointer.
+    isStartEnd = true;
+  } else if(!ctx.hasSameType(field->getType(), ctx.getSizeType())) {
+    ErrorUnsupported(D, "weird std::initializer_list");
+    return 0;
+  }
+
+  // Now build an APValue representing the std::initializer_list.
+  APValue initListValue(APValue::UninitStruct(), 0, 2);
+  APValue &startField = initListValue.getStructField(0);
+  APValue::LValuePathEntry startOffsetPathEntry;
+  startOffsetPathEntry.ArrayIndex = 0;
+  startField = APValue(APValue::LValueBase(backingArray),
+                       CharUnits::fromQuantity(0),
+                       llvm::makeArrayRef(startOffsetPathEntry),
+                       /*IsOnePastTheEnd=*/false, 0);
+
+  if (isStartEnd) {
+    APValue &endField = initListValue.getStructField(1);
+    APValue::LValuePathEntry endOffsetPathEntry;
+    endOffsetPathEntry.ArrayIndex = numInits;
+    endField = APValue(APValue::LValueBase(backingArray),
+                       ctx.getTypeSizeInChars(elementType) * numInits,
+                       llvm::makeArrayRef(endOffsetPathEntry),
+                       /*IsOnePastTheEnd=*/true, 0);
+  } else {
+    APValue &sizeField = initListValue.getStructField(1);
+    sizeField = APValue(llvm::APSInt(numElements));
+  }
+
+  // Emit the constant for the initializer_list.
+  llvm::Constant *llvmInit = EmitConstantValue(initListValue, D->getType());
+  assert(llvmInit && "failed to initialize as constant");
+  return llvmInit;
+}
+
 void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
   llvm::Constant *Init = 0;
   QualType ASTTy = D->getType();
@@ -1368,7 +1475,7 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
 
   const VarDecl *InitDecl;
   const Expr *InitExpr = D->getAnyInitializer(InitDecl);
-  
+
   if (!InitExpr) {
     // This is a tentative definition; tentative definitions are
     // implicitly initialized with { 0 }.
@@ -1382,7 +1489,15 @@ void CodeGenModule::EmitGlobalVarDefinition(const VarDecl *D) {
     assert(!ASTTy->isIncompleteType() && "Unexpected incomplete type");
     Init = EmitNullConstant(D->getType());
   } else {
-    Init = EmitConstantInit(*InitDecl);
+    // If this is a std::initializer_list, emit the special initializer.
+    Init = MaybeEmitGlobalStdInitializerListInitializer(D, InitExpr);
+    // An empty init list will perform zero-initialization, which happens
+    // to be exactly what we want.
+    // FIXME: It does so in a global constructor, which is *not* what we
+    // want.
+
+    if (!Init)
+      Init = EmitConstantInit(*InitDecl);
     if (!Init) {
       QualType T = InitExpr->getType();
       if (D->getType()->isReferenceType())

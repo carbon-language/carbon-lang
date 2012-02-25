@@ -55,6 +55,7 @@ namespace clang {
   class Decl;
   class Expr;
   class Stmt;
+  class InitListExpr;
   class StringLiteral;
   class NamedDecl;
   class ValueDecl;
@@ -877,6 +878,8 @@ private:
 
   void EmitGlobalFunctionDefinition(GlobalDecl GD);
   void EmitGlobalVarDefinition(const VarDecl *D);
+  llvm::Constant *MaybeEmitGlobalStdInitializerListInitializer(const VarDecl *D,
+                                                              const Expr *init);
   void EmitAliasDefinition(GlobalDecl GD);
   void EmitObjCPropertyImplementations(const ObjCImplementationDecl *D);
   void EmitObjCIvarInitializations(ObjCImplementationDecl *D);

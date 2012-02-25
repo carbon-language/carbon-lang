@@ -369,7 +369,7 @@ void ConstStructBuilder::ConvertStructToPacked() {
                             
 bool ConstStructBuilder::Build(InitListExpr *ILE) {
   if (ILE->initializesStdInitializerList()) {
-    CGM.ErrorUnsupported(ILE, "global std::initializer_list");
+    //CGM.ErrorUnsupported(ILE, "global std::initializer_list");
     return false;
   }
 

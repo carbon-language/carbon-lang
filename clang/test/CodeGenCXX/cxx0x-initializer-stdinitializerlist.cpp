@@ -32,6 +32,38 @@ namespace std {
   };
 }
 
+struct destroyme1 {
+  ~destroyme1();
+};
+struct destroyme2 {
+  ~destroyme2();
+};
+struct witharg1 {
+  witharg1(const destroyme1&);
+  ~witharg1();
+};
+struct wantslist1 {
+  wantslist1(std::initializer_list<destroyme1>);
+  ~wantslist1();
+};
+
+// CHECK: @_ZL25globalInitList1__initlist = internal global [3 x i32] [i32 1, i32 2, i32 3]
+// CHECK: @globalInitList1 = global %{{[^ ]+}} { i32* getelementptr inbounds ([3 x i32]* @_ZL25globalInitList1__initlist, i32 0, i32 0), i{{32|64}} 3 }
+std::initializer_list<int> globalInitList1 = {1, 2, 3};
+
+// CHECK: @_ZL25globalInitList2__initlist = internal global [2 x %{{[^ ]*}}] zeroinitializer
+// CHECK: @globalInitList2 = global %{{[^ ]+}} { %[[WITHARG:[^ *]+]]* getelementptr inbounds ([2 x
+// CHECK: appending global
+// CHECK: define internal void
+// CHECK: call void @_ZN8witharg1C1ERK10destroyme1(%[[WITHARG]]* getelementptr inbounds ([2 x %[[WITHARG]]]* @_ZL25globalInitList2__initlist, i{{32|64}} 0, i{{32|64}} 0
+// CHECK: call void @_ZN8witharg1C1ERK10destroyme1(%[[WITHARG]]* getelementptr inbounds ([2 x %[[WITHARG]]]* @_ZL25globalInitList2__initlist, i{{32|64}} 0, i{{32|64}} 1
+// CHECK: __cxa_atexit
+// CHECK: call void @_ZN10destroyme1D1Ev
+// CHECK: call void @_ZN10destroyme1D1Ev
+std::initializer_list<witharg1> globalInitList2 = {
+  witharg1(destroyme1()), witharg1(destroyme1())
+};
+
 void fn1(int i) {
   // CHECK: define void @_Z3fn1i
   // temporary array
@@ -51,21 +83,6 @@ void fn1(int i) {
   // CHECK-NEXT: store i{{32|64}} 3
   std::initializer_list<int> intlist{1, 2, i};
 }
-
-struct destroyme1 {
-  ~destroyme1();
-};
-struct destroyme2 {
-  ~destroyme2();
-};
-struct witharg1 {
-  witharg1(const destroyme1&);
-  ~witharg1();
-};
-struct wantslist1 {
-  wantslist1(std::initializer_list<destroyme1>);
-  ~wantslist1();
-};
 
 void fn2() {
   // CHECK: define void @_Z3fn2v
