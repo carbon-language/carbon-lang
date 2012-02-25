@@ -78,6 +78,8 @@
 
 #include <cstdarg>
 
+#pragma clang diagnostic ignored "-Wformat-zero-length"
+
 int main()
 {
     FILE* fp = 0;
