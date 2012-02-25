@@ -37,10 +37,8 @@ InclusionDirective::InclusionDirective(PreprocessingRecord &PPRec,
   this->FileName = StringRef(Memory, FileName.size());
 }
 
-PreprocessingRecord::PreprocessingRecord(SourceManager &SM,
-                                         bool IncludeNestedMacroExpansions)
-  : SourceMgr(SM), IncludeNestedMacroExpansions(IncludeNestedMacroExpansions),
-    ExternalSource(0)
+PreprocessingRecord::PreprocessingRecord(SourceManager &SM)
+  : SourceMgr(SM), ExternalSource(0)
 {
 }
 
@@ -331,7 +329,8 @@ MacroDefinition *PreprocessingRecord::findMacroDefinition(const MacroInfo *MI) {
 
 void PreprocessingRecord::MacroExpands(const Token &Id, const MacroInfo* MI,
                                        SourceRange Range) {
-  if (!IncludeNestedMacroExpansions && Id.getLocation().isMacroID())
+  // We don't record nested macro expansions.
+  if (Id.getLocation().isMacroID())
     return;
 
   if (MI->isBuiltinMacro())

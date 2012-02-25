@@ -258,10 +258,6 @@ private:
   
   /// \brief Whether we should be caching code-completion results.
   bool ShouldCacheCodeCompletionResults;
-  
-  /// \brief Whether we want to include nested macro expansions in the
-  /// detailed preprocessing record.
-  bool NestedMacroExpansions;
  
   /// \brief The language options used when we load an AST file.
   LangOptions ASTFileLangOpts;
@@ -707,8 +703,7 @@ public:
                                              bool CaptureDiagnostics = false,
                                              bool PrecompilePreamble = false,
                                       TranslationUnitKind TUKind = TU_Complete,
-                                       bool CacheCodeCompletionResults = false,
-                                       bool NestedMacroExpansions = true);
+                                       bool CacheCodeCompletionResults = false);
 
   /// LoadFromCommandLine - Create an ASTUnit from a vector of command line
   /// arguments, which must specify exactly one source file.
@@ -735,8 +730,7 @@ public:
                                       bool RemappedFilesKeepOriginalName = true,
                                       bool PrecompilePreamble = false,
                                       TranslationUnitKind TUKind = TU_Complete,
-                                      bool CacheCodeCompletionResults = false,
-                                      bool NestedMacroExpansions = true);
+                                      bool CacheCodeCompletionResults = false);
   
   /// \brief Reparse the source files using the same command-line options that
   /// were originally used to produce this translation unit.

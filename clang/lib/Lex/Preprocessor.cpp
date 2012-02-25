@@ -654,12 +654,10 @@ CommentHandler::~CommentHandler() { }
 
 CodeCompletionHandler::~CodeCompletionHandler() { }
 
-void Preprocessor::createPreprocessingRecord(
-                                      bool IncludeNestedMacroExpansions) {
+void Preprocessor::createPreprocessingRecord() {
   if (Record)
     return;
   
-  Record = new PreprocessingRecord(getSourceManager(),
-                                   IncludeNestedMacroExpansions);
+  Record = new PreprocessingRecord(getSourceManager());
   addPPCallbacks(Record);
 }

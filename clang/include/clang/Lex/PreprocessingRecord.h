@@ -284,10 +284,6 @@ namespace clang {
   /// expanded, etc.
   class PreprocessingRecord : public PPCallbacks {
     SourceManager &SourceMgr;
-
-    /// \brief Whether we should include nested macro expansions in
-    /// the preprocessing record.
-    bool IncludeNestedMacroExpansions;
     
     /// \brief Allocator used to store preprocessing objects.
     llvm::BumpPtrAllocator BumpAlloc;
@@ -353,7 +349,7 @@ namespace clang {
     
   public:
     /// \brief Construct a new preprocessing record.
-    PreprocessingRecord(SourceManager &SM, bool IncludeNestedMacroExpansions);
+    explicit PreprocessingRecord(SourceManager &SM);
     
     /// \brief Allocate memory in the preprocessing record.
     void *Allocate(unsigned Size, unsigned Align = 8) {

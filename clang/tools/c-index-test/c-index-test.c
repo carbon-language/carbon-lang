@@ -37,8 +37,6 @@ static unsigned getDefaultParsingOptions() {
     options |= clang_defaultEditingTranslationUnitOptions();
   if (getenv("CINDEXTEST_COMPLETION_CACHING"))
     options |= CXTranslationUnit_CacheCompletionResults;
-  if (getenv("CINDEXTEST_NESTED_MACROS"))
-    options |= CXTranslationUnit_NestedMacroExpansions;
   if (getenv("CINDEXTEST_COMPLETION_NO_CACHING"))
     options &= ~CXTranslationUnit_CacheCompletionResults;
   

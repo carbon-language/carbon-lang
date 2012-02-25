@@ -369,7 +369,6 @@ static void clang_indexSourceFile_Impl(void *UserData) {
   bool CacheCodeCompletionResults = false;
   PreprocessorOptions &PPOpts = CInvok->getPreprocessorOpts(); 
   PPOpts.DetailedRecord = false;
-  PPOpts.DetailedRecordIncludesNestedMacroExpansions = false;
 
   if (requestedToGetTU) {
     OnlyLocalDecls = CXXIdx->getOnlyLocalDecls();
@@ -379,8 +378,6 @@ static void clang_indexSourceFile_Impl(void *UserData) {
       = TU_options & CXTranslationUnit_CacheCompletionResults;
     if (TU_options & CXTranslationUnit_DetailedPreprocessingRecord) {
       PPOpts.DetailedRecord = true;
-      PPOpts.DetailedRecordIncludesNestedMacroExpansions
-          = (TU_options & CXTranslationUnit_NestedMacroExpansions);
     }
   }
 

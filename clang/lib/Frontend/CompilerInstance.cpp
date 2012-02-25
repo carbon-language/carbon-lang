@@ -257,8 +257,7 @@ void CompilerInstance::createPreprocessor() {
   }
 
   if (PPOpts.DetailedRecord)
-    PP->createPreprocessingRecord(
-                                  PPOpts.DetailedRecordIncludesNestedMacroExpansions);
+    PP->createPreprocessingRecord();
 
   InitializePreprocessor(*PP, PPOpts, getHeaderSearchOpts(), getFrontendOpts());
 

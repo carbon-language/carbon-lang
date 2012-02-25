@@ -220,7 +220,6 @@ ASTUnit::ASTUnit(bool _MainFileIsAST)
     PreambleRebuildCounter(0), SavedMainFileBuffer(0), PreambleBuffer(0),
     NumWarningsInPreamble(0),
     ShouldCacheCodeCompletionResults(false),
-    NestedMacroExpansions(true),
     CompletionCacheTopLevelHashValue(0),
     PreambleTopLevelHashValue(0),
     CurrentTopLevelHashValue(0),
@@ -1093,8 +1092,6 @@ bool ASTUnit::Parse(llvm::MemoryBuffer *OverrideMainBuffer) {
   // If the main file has been overridden due to the use of a preamble,
   // make that override happen and introduce the preamble.
   PreprocessorOptions &PreprocessorOpts = Clang->getPreprocessorOpts();
-  PreprocessorOpts.DetailedRecordIncludesNestedMacroExpansions
-    = NestedMacroExpansions;
   if (OverrideMainBuffer) {
     PreprocessorOpts.addRemappedFile(OriginalSourceFile, OverrideMainBuffer);
     PreprocessorOpts.PrecompiledPreambleBytes.first = Preamble.size();
@@ -1832,8 +1829,7 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
                                              bool CaptureDiagnostics,
                                              bool PrecompilePreamble,
                                              TranslationUnitKind TUKind,
-                                             bool CacheCodeCompletionResults,
-                                             bool NestedMacroExpansions) {  
+                                             bool CacheCodeCompletionResults) {  
   // Create the AST unit.
   OwningPtr<ASTUnit> AST;
   AST.reset(new ASTUnit(false));
@@ -1844,7 +1840,6 @@ ASTUnit *ASTUnit::LoadFromCompilerInvocation(CompilerInvocation *CI,
   AST->TUKind = TUKind;
   AST->ShouldCacheCodeCompletionResults = CacheCodeCompletionResults;
   AST->Invocation = CI;
-  AST->NestedMacroExpansions = NestedMacroExpansions;
   
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
@@ -1867,8 +1862,7 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
                                       bool RemappedFilesKeepOriginalName,
                                       bool PrecompilePreamble,
                                       TranslationUnitKind TUKind,
-                                      bool CacheCodeCompletionResults,
-                                      bool NestedMacroExpansions) {
+                                      bool CacheCodeCompletionResults) {
   if (!Diags.getPtr()) {
     // No diagnostics engine was provided, so create our own diagnostics object
     // with the default options.
@@ -1926,7 +1920,6 @@ ASTUnit *ASTUnit::LoadFromCommandLine(const char **ArgBegin,
   AST->StoredDiagnostics.swap(StoredDiagnostics);
   AST->Invocation = CI;
   CI = 0; // Zero out now to ease cleanup during crash recovery.
-  AST->NestedMacroExpansions = NestedMacroExpansions;
   
   // Recover resources if we crash before exiting this method.
   llvm::CrashRecoveryContextCleanupRegistrar<ASTUnit>
