@@ -1,4 +1,4 @@
-//===-- Verifier.cpp - Implement the Module Verifier -------------*- C++ -*-==//
+//===-- Verifier.cpp - Implement the Module Verifier -----------------------==//
 //
 //                     The LLVM Compiler Infrastructure
 //
