@@ -281,3 +281,17 @@ void test_neg() {
   bar(s);
 }
 
+//===----------------------------------------------------------------------===//
+// Test returning retained and not-retained values.
+//===----------------------------------------------------------------------===//
+
+id test_return_retained() {
+  return [[NSString alloc] init]; // expected-warning {{leak}}
+}
+
+void test_test_return_retained() {
+  id x = test_return_retained();
+  [x retain];
+  [x release];
+}
+

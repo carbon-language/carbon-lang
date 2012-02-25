@@ -3069,8 +3069,23 @@ bool RetainCountChecker::evalCall(const CallExpr *CE, CheckerContext &C) const {
 // Handle return statements.
 //===----------------------------------------------------------------------===//
 
+// Return true if the current LocationContext has no caller context.
+static bool inTopFrame(CheckerContext &C) {
+  const LocationContext *LC = C.getLocationContext();
+  return LC->getParent() == 0;  
+}
+
 void RetainCountChecker::checkPreStmt(const ReturnStmt *S,
                                       CheckerContext &C) const {
+
+  // Only adjust the reference count if this is the top-level call frame,
+  // and not the result of inlining.  In the future, we should do
+  // better checking even for inlined calls, and see if they match
+  // with their expected semantics (e.g., the method should return a retained
+  // object, etc.).
+  if (!inTopFrame(C))
+    return;
+
   const Expr *RetE = S->getRetValue();
   if (!RetE)
     return;
