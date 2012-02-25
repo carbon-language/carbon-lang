@@ -28,7 +28,8 @@ using namespace lldb_private;
 //------------------------------------------------------------------
 PlatformDarwin::PlatformDarwin (bool is_host) :
     Platform(is_host),  // This is the local host platform
-    m_remote_platform_sp ()
+    m_remote_platform_sp (),
+    m_developer_directory ()
 {
 }
 
@@ -601,6 +602,30 @@ PlatformDarwin::ModuleIsExcludedForNonModuleSpecificSearches (lldb_private::Targ
 }
 
 
+bool
+PlatformDarwin::x86GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
+{
+    if (idx == 0)
+    {
+        arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
+        return arch.IsValid();
+    }
+    else if (idx == 1)
+    {
+        ArchSpec platform_arch (Host::GetArchitecture (Host::eSystemDefaultArchitecture));
+        ArchSpec platform_arch64 (Host::GetArchitecture (Host::eSystemDefaultArchitecture64));
+        if (platform_arch == platform_arch64)
+        {
+            // This macosx platform supports both 32 and 64 bit. Since we already
+            // returned the 64 bit arch for idx == 0, return the 32 bit arch 
+            // for idx == 1
+            arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
+            return arch.IsValid();
+        }
+    }
+    return false;
+}
+
 // The architecture selection rules for arm processors
 // These cpu subtypes have distinct names (e.g. armv7f) but armv7 binaries run fine on an armv7f processor.
 
@@ -710,3 +735,78 @@ PlatformDarwin::ARMGetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch
     arch.Clear();
     return false;
 }
+
+
+const char *
+PlatformDarwin::GetDeveloperDirectory()
+{
+    if (m_developer_directory.empty())
+    {
+        bool developer_dir_path_valid = false;
+        char developer_dir_path[PATH_MAX];
+        FileSpec temp_file_spec;
+        if (Host::GetLLDBPath (ePathTypeLLDBShlibDir, temp_file_spec))
+        {
+            if (temp_file_spec.GetPath (developer_dir_path, sizeof(developer_dir_path)))
+            {
+                char *shared_frameworks = strstr (developer_dir_path, "/SharedFrameworks/LLDB.framework");
+                if (shared_frameworks)
+                {
+                    ::snprintf (shared_frameworks, 
+                                sizeof(developer_dir_path) - (shared_frameworks - developer_dir_path),
+                                "/Developer");
+                    developer_dir_path_valid = true;
+                }
+                else
+                {
+                    char *lib_priv_frameworks = strstr (developer_dir_path, "/Library/PrivateFrameworks/LLDB.framework");
+                    if (lib_priv_frameworks)
+                    {
+                        *lib_priv_frameworks = '\0';
+                        developer_dir_path_valid = true;
+                    }
+                }
+            }
+        }
+        
+        if (!developer_dir_path_valid)
+        {
+            std::string xcode_dir_path;
+            const char *xcode_select_prefix_dir = getenv ("XCODE_SELECT_PREFIX_DIR");
+            if (xcode_select_prefix_dir)
+                xcode_dir_path.append (xcode_select_prefix_dir);
+            xcode_dir_path.append ("/usr/share/xcode-select/xcode_dir_path");
+            temp_file_spec.SetFile(xcode_dir_path.c_str(), false);
+            size_t bytes_read = temp_file_spec.ReadFileContents(0, developer_dir_path, sizeof(developer_dir_path), NULL);
+            if (bytes_read > 0)
+            {
+                developer_dir_path[bytes_read] = '\0';
+                while (developer_dir_path[bytes_read-1] == '\r' ||
+                       developer_dir_path[bytes_read-1] == '\n')
+                    developer_dir_path[--bytes_read] = '\0';
+                developer_dir_path_valid = true;
+            }
+        }
+        
+        if (developer_dir_path_valid)
+        {
+            temp_file_spec.SetFile (developer_dir_path, false);
+            if (temp_file_spec.Exists())
+            {
+                m_developer_directory.assign (developer_dir_path);
+                return m_developer_directory.c_str();
+            }
+        }
+        // Assign a single NULL character so we know we tried to find the device
+        // support directory and we don't keep trying to find it over and over.
+        m_developer_directory.assign (1, '\0');
+    }
+    
+    // We should have put a single NULL character into m_developer_directory
+    // or it should have a valid path if the code gets here
+    assert (m_developer_directory.empty() == false);
+    if (m_developer_directory[0])
+        return m_developer_directory.c_str();
+    return NULL;
+}
+

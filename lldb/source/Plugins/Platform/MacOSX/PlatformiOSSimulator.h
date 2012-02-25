@@ -1,4 +1,4 @@
-//===-- PlatformRemoteiOS.h ----------------------------------------*- C++ -*-===//
+//===-- PlatformiOSSimulator.h ----------------------------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,8 +7,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef liblldb_PlatformRemoteiOS_h_
-#define liblldb_PlatformRemoteiOS_h_
+#ifndef liblldb_PlatformiOSSimulator_h_
+#define liblldb_PlatformiOSSimulator_h_
 
 // C Includes
 // C++ Includes
@@ -16,7 +16,7 @@
 // Project includes
 #include "PlatformDarwin.h"
 
-class PlatformRemoteiOS : public PlatformDarwin
+class PlatformiOSSimulator : public PlatformDarwin
 {
 public:
 
@@ -44,10 +44,10 @@ public:
     //------------------------------------------------------------
     // Class Methods
     //------------------------------------------------------------
-    PlatformRemoteiOS ();
+    PlatformiOSSimulator ();
 
     virtual
-    ~PlatformRemoteiOS();
+    ~PlatformiOSSimulator();
 
     //------------------------------------------------------------
     // lldb_private::PluginInterface functions
@@ -117,16 +117,16 @@ public:
                                      lldb_private::ArchSpec &arch);
 
 protected:
-    std::string m_device_support_directory_for_os_version;
+    std::string m_sdk_directory;
     std::string m_build_update;
     //std::vector<FileSpec> m_device_support_os_dirs;
     
     const char *
-    GetDeviceSupportDirectoryForOSVersion();
+    GetSDKDirectory();
 
 private:
-    DISALLOW_COPY_AND_ASSIGN (PlatformRemoteiOS);
+    DISALLOW_COPY_AND_ASSIGN (PlatformiOSSimulator);
 
 };
 
-#endif  // liblldb_PlatformRemoteiOS_h_
+#endif  // liblldb_PlatformiOSSimulator_h_

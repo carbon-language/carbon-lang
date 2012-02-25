@@ -11,6 +11,7 @@
 #endif
 
 #if !BUILDING_ON_SNOW_LEOPARD
+#define __XPC_PRIVATE_H__
 #include <xpc/xpc.h>
 #include <spawn.h>
 #include <signal.h>

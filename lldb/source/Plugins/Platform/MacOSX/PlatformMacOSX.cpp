@@ -133,26 +133,8 @@ PlatformMacOSX::GetSupportedArchitectureAtIndex (uint32_t idx, ArchSpec &arch)
 {
 #if defined (__arm__)
     return ARMGetSupportedArchitectureAtIndex (idx, arch);
+#else
+    return x86GetSupportedArchitectureAtIndex (idx, arch);
 #endif
-
-    if (idx == 0)
-    {
-        arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture);
-        return arch.IsValid();
-    }
-    else if (idx == 1)
-    {
-        ArchSpec platform_arch (Host::GetArchitecture (Host::eSystemDefaultArchitecture));
-        ArchSpec platform_arch64 (Host::GetArchitecture (Host::eSystemDefaultArchitecture64));
-        if (platform_arch == platform_arch64)
-        {
-            // This macosx platform supports both 32 and 64 bit. Since we already
-            // returned the 64 bit arch for idx == 0, return the 32 bit arch 
-            // for idx == 1
-            arch = Host::GetArchitecture (Host::eSystemDefaultArchitecture32);
-            return arch.IsValid();
-        }
-    }
-    return false;
 }
 

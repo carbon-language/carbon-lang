@@ -50,6 +50,7 @@
 #include "Plugins/Process/gdb-remote/ProcessGDBRemote.h"
 #include "Plugins/Platform/MacOSX/PlatformMacOSX.h"
 #include "Plugins/Platform/MacOSX/PlatformRemoteiOS.h"
+#include "Plugins/Platform/MacOSX/PlatformiOSSimulator.h"
 #endif
 
 #include "Plugins/Process/mach-core/ProcessMachCore.h"
@@ -125,6 +126,7 @@ lldb_private::Initialize ()
         SymbolVendorMacOSX::Initialize();
         PlatformMacOSX::Initialize();
         PlatformRemoteiOS::Initialize();
+        PlatformiOSSimulator::Initialize();
 #endif
 #if defined (__linux__)
         //----------------------------------------------------------------------
@@ -202,6 +204,7 @@ lldb_private::Terminate ()
     SymbolVendorMacOSX::Terminate();
     PlatformMacOSX::Terminate();
     PlatformRemoteiOS::Terminate();
+    PlatformiOSSimulator::Terminate();
 #endif
 
     Debugger::SettingsTerminate ();
