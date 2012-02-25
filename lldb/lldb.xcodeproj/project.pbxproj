@@ -4583,7 +4583,7 @@
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherXPCService-Info.plist";
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherXPCService-Info.plist";
 				INFOPLIST_PREPROCESS = YES;
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
 					"NO0=0",
@@ -4610,7 +4610,7 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherXPCService-Info.plist";
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherXPCService-Info.plist";
 				INFOPLIST_PREPROCESS = YES;
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
 					"NO0=0",
@@ -4635,7 +4635,7 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherXPCService-Info.plist";
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherXPCService-Info.plist";
 				INFOPLIST_PREPROCESS = YES;
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
 					"NO0=0",
@@ -4668,7 +4668,7 @@
 				);
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherRootXPCService-Info.plist";
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherRootXPCService-Info.plist";
 				INFOPLIST_PREPROCESS = YES;
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
 					"NO0=0",
@@ -4696,7 +4696,7 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherRootXPCService-Info.plist";
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherRootXPCService-Info.plist";
 				INFOPLIST_PREPROCESS = YES;
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
 					"NO0=0",
@@ -4722,7 +4722,7 @@
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
-				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/launcherRootXPCService-Info.plist";
+				INFOPLIST_FILE = "source/Host/macosx/launcherXPCService/LauncherRootXPCService-Info.plist";
 				INFOPLIST_PREPROCESS = YES;
 				INFOPLIST_PREPROCESSOR_DEFINITIONS = (
 					"NO0=0",
