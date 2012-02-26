@@ -21,7 +21,7 @@
 // RUN:     -target i686-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-X86 %s
-// CHECK-DEBIAN-X86: "{{.*}}clang{{(.exe)?}}" "-cc1"
+// CHECK-DEBIAN-X86: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-DEBIAN-X86: "-isysroot" "[[SYSROOT:[^"]+]]"
 // CHECK-DEBIAN-X86: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/i686-linux-gnu/4.5/../../../../include/c++/4.5"
 // CHECK-DEBIAN-X86: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/i686-linux-gnu/4.5/../../../../include/c++/4.5/i686-linux-gnu"
