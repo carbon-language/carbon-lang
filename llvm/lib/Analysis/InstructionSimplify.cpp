@@ -21,6 +21,7 @@
 #include "llvm/Operator.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Analysis/InstructionSimplify.h"
+#include "llvm/Analysis/AliasAnalysis.h"
 #include "llvm/Analysis/ConstantFolding.h"
 #include "llvm/Analysis/Dominators.h"
 #include "llvm/Analysis/ValueTracking.h"
@@ -1609,26 +1610,43 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     }
   }
 
-  // icmp <alloca*>, <global/alloca*/null> - Different stack variables have
-  // different addresses, and what's more the address of a stack variable is
-  // never null or equal to the address of a global.  Note that generalizing
-  // to the case where LHS is a global variable address or null is pointless,
-  // since if both LHS and RHS are constants then we already constant folded
-  // the compare, and if only one of them is then we moved it to RHS already.
+  // icmp <object*>, <object*/null> - Different identified objects have
+  // different addresses (unless null), and what's more the address of an
+  // identified local is never equal to another argument (again, barring null).
+  // Note that generalizing to the case where LHS is a global variable address
+  // or null is pointless, since if both LHS and RHS are constants then we
+  // already constant folded the compare, and if only one of them is then we
+  // moved it to RHS already.
   Value *LHSPtr = LHS->stripPointerCasts();
   Value *RHSPtr = RHS->stripPointerCasts();
   if (LHSPtr == RHSPtr)
     return ConstantInt::get(ITy, CmpInst::isTrueWhenEqual(Pred));
-  
+
   // Be more aggressive about stripping pointer adjustments when checking a
   // comparison of an alloca address to another object.  We can rip off all
   // inbounds GEP operations, even if they are variable.
   LHSPtr = stripPointerAdjustments(LHSPtr);
-  if (isa<AllocaInst>(LHSPtr)) {
+  if (llvm::isIdentifiedObject(LHSPtr)) {
     RHSPtr = stripPointerAdjustments(RHSPtr);
-    if (LHSPtr != RHSPtr &&
-        (isa<GlobalValue>(RHSPtr) || isa<AllocaInst>(RHSPtr)  ||
-         isa<ConstantPointerNull>(RHSPtr)))
+    if (llvm::isKnownNonNull(LHSPtr) || llvm::isKnownNonNull(RHSPtr)) {
+      // If both sides are different identified objects, they aren't equal
+      // unless they're null.
+      if (LHSPtr != RHSPtr && llvm::isIdentifiedObject(RHSPtr))
+        return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
+
+      // A local identified object (alloca or noalias call) can't equal any
+      // incoming argument, unless they're both null.
+      if (isa<Instruction>(LHSPtr) && isa<Argument>(RHSPtr))
+        return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
+    }
+
+    // Assume that the constant null is on the right.
+    if (llvm::isKnownNonNull(LHSPtr) && isa<ConstantPointerNull>(RHSPtr))
+      return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
+  } else if (isa<Argument>(LHSPtr)) {
+    RHSPtr = stripPointerAdjustments(RHSPtr);
+    // An alloca can't be equal to an argument.
+    if (isa<AllocaInst>(RHSPtr))
       return ConstantInt::get(ITy, CmpInst::isFalseWhenEqual(Pred));
   }
 
@@ -2238,6 +2256,28 @@ static Value *SimplifyICmpInst(unsigned Predicate, Value *LHS, Value *RHS,
     if (Pred == CmpInst::ICMP_UGT)
       // Always false.
       return getFalse(ITy);
+  }
+
+  // Simplify comparisons of GEPs.
+  if (GetElementPtrInst *GLHS = dyn_cast<GetElementPtrInst>(LHS)) {
+    if (GEPOperator *GRHS = dyn_cast<GEPOperator>(RHS)) {
+      if (GLHS->getPointerOperand() == GRHS->getPointerOperand() &&
+          GLHS->hasAllConstantIndices() && GRHS->hasAllConstantIndices() &&
+          (ICmpInst::isEquality(Pred) ||
+           (GLHS->isInBounds() && GRHS->isInBounds() &&
+            Pred == ICmpInst::getSignedPredicate(Pred)))) {
+        // The bases are equal and the indices are constant.  Build a constant
+        // expression GEP with the same indices and a null base pointer to see
+        // what constant folding can make out of it.
+        Constant *Null = Constant::getNullValue(GLHS->getPointerOperandType());
+        SmallVector<Value *, 4> IndicesLHS(GLHS->idx_begin(), GLHS->idx_end());
+        Constant *NewLHS = ConstantExpr::getGetElementPtr(Null, IndicesLHS);
+
+        SmallVector<Value *, 4> IndicesRHS(GRHS->idx_begin(), GRHS->idx_end());
+        Constant *NewRHS = ConstantExpr::getGetElementPtr(Null, IndicesRHS);
+        return ConstantExpr::getICmp(Pred, NewLHS, NewRHS);
+      }
+    }
   }
 
   // If the comparison is with the result of a select instruction, check whether
