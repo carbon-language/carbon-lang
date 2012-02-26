@@ -110,6 +110,19 @@ protected:
     return PT->at(Ran->Rand() % PT->size());
   }
 
+  Constant *getRandomConstant(Type *Tp) {
+    if (Tp->isIntegerTy()) {
+      if (Ran->Rand() & 1)
+        return ConstantInt::getAllOnesValue(Tp);
+      return ConstantInt::getNullValue(Tp);
+    } else if (Tp->isFloatingPointTy()) {
+      if (Ran->Rand() & 1)
+        return ConstantFP::getAllOnesValue(Tp);
+      return ConstantFP::getNullValue(Tp);
+    }
+    return UndefValue::get(Tp);
+  }
+
   /// Return a random value with a known type.
   Value *getRandomValue(Type *Tp) {
     unsigned index = Ran->Rand();
@@ -128,9 +141,18 @@ protected:
       if (Ran->Rand() & 1)
         return ConstantFP::getAllOnesValue(Tp);
       return ConstantFP::getNullValue(Tp);
+    } else if (Tp->isVectorTy()) {
+      VectorType *VTp = cast<VectorType>(Tp);
+
+      std::vector<Constant*> TempValues;
+      TempValues.reserve(VTp->getNumElements());
+      for (unsigned i = 0; i < VTp->getNumElements(); ++i)
+        TempValues.push_back(getRandomConstant(VTp->getScalarType()));
+
+      ArrayRef<Constant*> VectorValue(TempValues);
+      return ConstantVector::get(VectorValue);
     }
 
-    // TODO: return values for vector types.
     return UndefValue::get(Tp);
   }
 
