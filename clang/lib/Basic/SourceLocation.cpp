@@ -115,6 +115,10 @@ bool FullSourceLoc::isBeforeInTranslationUnitThan(SourceLocation Loc) const {
   return SrcMgr->isBeforeInTranslationUnit(*this, Loc);
 }
 
+void FullSourceLoc::dump() const {
+  SourceLocation::dump(*SrcMgr);
+}
+
 const char *FullSourceLoc::getCharacterData(bool *Invalid) const {
   assert(isValid());
   return SrcMgr->getCharacterData(*this, Invalid);

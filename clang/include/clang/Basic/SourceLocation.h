@@ -325,7 +325,7 @@ public:
 
   /// Prints information about this FullSourceLoc to stderr. Useful for
   ///  debugging.
-  LLVM_ATTRIBUTE_USED void dump() const { SourceLocation::dump(*SrcMgr); }
+  LLVM_ATTRIBUTE_USED void dump() const;
 
   friend inline bool
   operator==(const FullSourceLoc &LHS, const FullSourceLoc &RHS) {
