@@ -57,10 +57,10 @@ CXXNewExpr::CXXNewExpr(ASTContext &C, bool globalNew, FunctionDecl *operatorNew,
          ty->isDependentType(), ty->isDependentType(),
          ty->isInstantiationDependentType(),
          ty->containsUnexpandedParameterPack()),
-    GlobalNew(globalNew), UsualArrayDeleteWantsSize(usualArrayDeleteWantsSize),
     SubExprs(0), OperatorNew(operatorNew), OperatorDelete(operatorDelete),
     AllocatedTypeInfo(allocatedTypeInfo), TypeIdParens(typeIdParens),
-    StartLoc(startLoc), DirectInitRange(directInitRange) {
+    StartLoc(startLoc), DirectInitRange(directInitRange),
+    GlobalNew(globalNew), UsualArrayDeleteWantsSize(usualArrayDeleteWantsSize) {
   assert((initializer != 0 || initializationStyle == NoInit) &&
          "Only NoInit can have no initializer.");
   StoredInitializationStyle = initializer ? initializationStyle + 1 : 0;
@@ -256,8 +256,8 @@ OverloadExpr::OverloadExpr(StmtClass K, ASTContext &C,
           (QualifierLoc && 
            QualifierLoc.getNestedNameSpecifier()
                                       ->containsUnexpandedParameterPack()))),
-    Results(0), NumResults(End - Begin), NameInfo(NameInfo),
-    QualifierLoc(QualifierLoc),
+    NameInfo(NameInfo), QualifierLoc(QualifierLoc),
+    Results(0), NumResults(End - Begin),
     HasTemplateKWAndArgsInfo(TemplateArgs != 0 || TemplateKWLoc.isValid())
 {
   NumResults = End - Begin;

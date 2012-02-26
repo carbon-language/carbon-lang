@@ -1364,19 +1364,6 @@ public:
 /// CXXNewExpr - A new expression for memory allocation and constructor calls,
 /// e.g: "new CXXNewExpr(foo)".
 class CXXNewExpr : public Expr {
-  // Was the usage ::new, i.e. is the global new to be used?
-  bool GlobalNew : 1;
-  // Do we allocate an array? If so, the first SubExpr is the size expression.
-  bool Array : 1;
-  // If this is an array allocation, does the usual deallocation
-  // function for the allocated type want to know the allocated size?
-  bool UsualArrayDeleteWantsSize : 1;
-  // The number of placement new arguments.
-  unsigned NumPlacementArgs : 13;
-  // What kind of initializer do we have? Could be none, parens, or braces.
-  // In storage, we distinguish between "none, and no initializer expr", and
-  // "none, but an implicit initializer expr".
-  unsigned StoredInitializationStyle : 2;
   // Contains an optional array size expression, an optional initialization
   // expression, and any number of optional placement arguments, in that order.
   Stmt **SubExprs;
@@ -1397,6 +1384,20 @@ class CXXNewExpr : public Expr {
 
   /// \brief Source-range of a paren-delimited initializer.
   SourceRange DirectInitRange;
+
+  // Was the usage ::new, i.e. is the global new to be used?
+  bool GlobalNew : 1;
+  // Do we allocate an array? If so, the first SubExpr is the size expression.
+  bool Array : 1;
+  // If this is an array allocation, does the usual deallocation
+  // function for the allocated type want to know the allocated size?
+  bool UsualArrayDeleteWantsSize : 1;
+  // The number of placement new arguments.
+  unsigned NumPlacementArgs : 13;
+  // What kind of initializer do we have? Could be none, parens, or braces.
+  // In storage, we distinguish between "none, and no initializer expr", and
+  // "none, but an implicit initializer expr".
+  unsigned StoredInitializationStyle : 2;
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;
@@ -1546,6 +1547,12 @@ public:
 /// CXXDeleteExpr - A delete expression for memory deallocation and destructor
 /// calls, e.g. "delete[] pArray".
 class CXXDeleteExpr : public Expr {
+  // Points to the operator delete overload that is used. Could be a member.
+  FunctionDecl *OperatorDelete;
+  // The pointer expression to be deleted.
+  Stmt *Argument;
+  // Location of the expression.
+  SourceLocation Loc;
   // Is this a forced global delete, i.e. "::delete"?
   bool GlobalDelete : 1;
   // Is this the array form of delete, i.e. "delete[]"?
@@ -1557,12 +1564,6 @@ class CXXDeleteExpr : public Expr {
   // Does the usual deallocation function for the element type require
   // a size_t argument?
   bool UsualArrayDeleteWantsSize : 1;
-  // Points to the operator delete overload that is used. Could be a member.
-  FunctionDecl *OperatorDelete;
-  // The pointer expression to be deleted.
-  Stmt *Argument;
-  // Location of the expression.
-  SourceLocation Loc;
 public:
   CXXDeleteExpr(QualType ty, bool globalDelete, bool arrayForm,
                 bool arrayFormAsWritten, bool usualArrayDeleteWantsSize,
@@ -1570,10 +1571,10 @@ public:
     : Expr(CXXDeleteExprClass, ty, VK_RValue, OK_Ordinary, false, false,
            arg->isInstantiationDependent(),
            arg->containsUnexpandedParameterPack()),
+      OperatorDelete(operatorDelete), Argument(arg), Loc(loc),
       GlobalDelete(globalDelete),
       ArrayForm(arrayForm), ArrayFormAsWritten(arrayFormAsWritten),
-      UsualArrayDeleteWantsSize(usualArrayDeleteWantsSize),
-      OperatorDelete(operatorDelete), Argument(arg), Loc(loc) { }
+      UsualArrayDeleteWantsSize(usualArrayDeleteWantsSize) { }
   explicit CXXDeleteExpr(EmptyShell Shell)
     : Expr(CXXDeleteExprClass, Shell), OperatorDelete(0), Argument(0) { }
 
@@ -2149,18 +2150,18 @@ public:
 /// \brief A reference to an overloaded function set, either an
 /// \t UnresolvedLookupExpr or an \t UnresolvedMemberExpr.
 class OverloadExpr : public Expr {
+  /// The common name of these declarations.
+  DeclarationNameInfo NameInfo;
+
+  /// \brief The nested-name-specifier that qualifies the name, if any.
+  NestedNameSpecifierLoc QualifierLoc;
+
   /// The results.  These are undesugared, which is to say, they may
   /// include UsingShadowDecls.  Access is relative to the naming
   /// class.
   // FIXME: Allocate this data after the OverloadExpr subclass.
   DeclAccessPair *Results;
   unsigned NumResults;
-
-  /// The common name of these declarations.
-  DeclarationNameInfo NameInfo;
-
-  /// \brief The nested-name-specifier that qualifies the name, if any.
-  NestedNameSpecifierLoc QualifierLoc;
 
 protected:
   /// \brief Whether the name includes info for explicit template
@@ -2186,8 +2187,8 @@ protected:
                bool KnownContainsUnexpandedParameterPack);
 
   OverloadExpr(StmtClass K, EmptyShell Empty)
-    : Expr(K, Empty), Results(0), NumResults(0),
-      QualifierLoc(), HasTemplateKWAndArgsInfo(false) { }
+    : Expr(K, Empty), QualifierLoc(), Results(0), NumResults(0),
+      HasTemplateKWAndArgsInfo(false) { }
 
   void initializeResults(ASTContext &C,
                          UnresolvedSetIterator Begin,
@@ -3526,7 +3527,7 @@ public:
 class MaterializeTemporaryExpr : public Expr {
   /// \brief The temporary-generating expression whose value will be
   /// materialized.
- Stmt *Temporary;
+  Stmt *Temporary;
 
   friend class ASTStmtReader;
   friend class ASTStmtWriter;

@@ -176,9 +176,9 @@ public:
 
 /// ObjCIvarRefExpr - A reference to an ObjC instance variable.
 class ObjCIvarRefExpr : public Expr {
-  class ObjCIvarDecl *D;
-  SourceLocation Loc;
+  ObjCIvarDecl *D;
   Stmt *Base;
+  SourceLocation Loc;
   bool IsArrow:1;      // True if this is "X->F", false if this is "X.F".
   bool IsFreeIvar:1;   // True if ivar reference has no base (self assumed).
 
@@ -190,7 +190,7 @@ public:
          /*TypeDependent=*/false, base->isValueDependent(), 
          base->isInstantiationDependent(),
          base->containsUnexpandedParameterPack()), 
-    D(d), Loc(l), Base(base), IsArrow(arrow), IsFreeIvar(freeIvar) {}
+    D(d), Base(base), Loc(l), IsArrow(arrow), IsFreeIvar(freeIvar) {}
 
   explicit ObjCIvarRefExpr(EmptyShell Empty)
     : Expr(ObjCIvarRefExprClass, Empty) {}
