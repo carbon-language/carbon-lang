@@ -357,7 +357,7 @@ Release Notes</a>.</h1>
       closest user-defined super-class.</li>
   <li><code>MachineRegisterInfo</code> now allows the reserved registers to be
       frozen when register allocation starts.  Target hooks should use the
-      <code>MRI->canReserveReg(FramePtr)</code> method to avoid accidentally
+      <code>MRI-&gt;canReserveReg(FramePtr)</code> method to avoid accidentally
       disabling frame pointer elimination during register allocation.</li>
   <li>A new kind of <code>MachineOperand</code> provides a compact
       representation of large clobber lists on call instructions.  The register
@@ -481,6 +481,31 @@ syntax, there are still significant gaps in that support.</p>
 
 <p>In addition, many APIs have changed in this release.  Some of the major
    LLVM API changes are:</p>
+
+<ul>
+  <li>....</li>
+</ul>
+
+</div>
+
+</div>
+
+<!--=========================================================================-->
+<h3>
+<a name="tools_changes">Tools Changes</a>
+</h3>
+
+<div>
+
+<p>In addition, some tools have changed in this release. Some of the changes
+   are:</p>
+
+
+<ul>
+  <li>llvm-stress is a command line tool for generating random .ll files to fuzz
+      different LLVM components. </li>
+  <li>....</li>
+</ul>
 
 <ul>
   <li>....</li>

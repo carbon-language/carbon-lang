@@ -44,6 +44,7 @@ add_subdirectory(bugpoint)
 add_subdirectory(bugpoint-passes)
 add_subdirectory(llvm-bcanalyzer)
 add_subdirectory(llvm-stub)
+add_subdirectory(llvm-stress)
 
 if( NOT WIN32 )
   add_subdirectory(lto)
