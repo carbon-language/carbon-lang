@@ -108,11 +108,9 @@ and performance.
 
 <div>
 
-<p>The LLVM Getting Started documentation is <b>wildly</b> out of date and is 
-in dire need of an update. Most notably, Clang has replaced the GCC front end 
-entirely and building with the LLVM GCC front end is no longer supported. 
-The Clang <a href="http://clang.llvm.org/get_started.html">Getting Started</a>
-page might be a better place to start.</p>
+<p>The LLVM Getting Started documentation may be out of date.  So, the Clang 
+<a href="http://clang.llvm.org/get_started.html">Getting Started</a> page might 
+also be a good place to start.</p>
 
 <p>Here's the short story for getting up and running quickly with LLVM:</p>
 
@@ -120,69 +118,81 @@ page might be a better place to start.</p>
   <li>Read the documentation.</li>
   <li>Read the documentation.</li>
   <li>Remember that you were warned twice about reading the documentation.</li>
-  <li>Install the llvm-gcc-4.2 front end if you intend to compile C or C++
-      (see <a href="#installcf">Install the GCC Front End</a> for details):
-    <ol>
-      <li><tt>cd <i>where-you-want-the-C-front-end-to-live</i></tt></li>
-      <li><tt>gunzip --stdout llvm-gcc-4.2-<i>version</i>-<i>platform</i>.tar.gz | tar -xvf -</tt></li>
-	  <li><tt><i>install-binutils-binary-from-MinGW</i></tt> (Windows only)</li>
-	  <li>Note: If the binary extension is "<tt>.bz</tt>" use <tt>bunzip2</tt> instead of <tt>gunzip</tt>.</li>
-	  <li>Note: On Windows, use <a href="http://www.7-zip.org/">7-Zip</a> or a similar archiving tool.</li>
-	  <li>Add <tt>llvm-gcc</tt>'s "<tt>bin</tt>" directory to your <tt>PATH</tt> environment variable.</li>
-    </ol></li>
 
-  <li>Get the LLVM Source Code
+  <li>Checkout LLVM:
   <ul>
-    <li>With the distributed files (or use <a href="#checkout">SVN</a>):
-    <ol>
-      <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
-      <li><tt>gunzip --stdout llvm-<i>version</i>.tar.gz | tar -xvf -</tt>
-    </ol></li>
+    <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
+    <li><tt>svn co http://llvm.org/svn/llvm-project/llvm/trunk llvm</tt></li>
+  </ul>
+  </li>
 
-  </ul></li>
-
-  <li><b>[Optional]</b> Get the Test Suite Source Code 
+  <li>Checkout Clang:
   <ul>
-    <li>With the distributed files (or use <a href="#checkout">SVN</a>):
-    <ol>
-      <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
-      <li><tt>cd llvm/projects</tt>
-      <li><tt>gunzip --stdout llvm-test-<i>version</i>.tar.gz | tar -xvf -</tt>
-      <li><tt>mv llvm-test-<i>version</i> test-suite</tt>
-    </ol></li>
+    <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
+    <li><tt>cd llvm/tools</tt>
+    <li><tt>svn co http://llvm.org/svn/llvm-project/cfe/trunk clang</tt></li>
+  </ul>
+  </li>
 
-  </ul></li>
+  <li>Checkout Compiler-RT:
+  <ul>
+    <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
+    <li><tt>cd llvm/projects</tt>
+    <li><tt>svn co http://llvm.org/svn/llvm-project/compiler-rt/trunk
+        compiler-rt</tt></li>
+  </ul>
+  </li>
 
+  <li>Get the Test Suite Source Code <b>[Optional]</b>
+  <ul>
+    <li><tt>cd <i>where-you-want-llvm-to-live</i></tt>
+    <li><tt>cd llvm/projects</tt>
+    <li><tt>svn co http://llvm.org/svn/llvm-project/test-suite/trunk test-suite</tt></li>
+  </ul>
+  </li>
 
-  <li>Configure the LLVM Build Environment
-  <ol>
+  <li>Configure and build LLVM and Clang:
+  <ul>
     <li><tt>cd <i>where-you-want-to-build-llvm</i></tt></li>
-    <li><tt><i>/path/to/llvm/</i>configure [options]</tt><br>
+    <li><tt>mkdir build</tt> (for building without polluting the source dir)</li>
+    <li><tt>cd build</tt></li>
+    <li><tt>../llvm/configure [options]</tt></li>
     Some common options:
 
       <ul>
-        <li><tt>--prefix=<i>directory</i></tt>
-        <p>Specify for <i>directory</i> the full pathname of where you
+        <li><tt>--prefix=<i>directory</i></tt> -
+        Specify for <i>directory</i> the full pathname of where you
         want the LLVM tools and libraries to be installed (default
-        <tt>/usr/local</tt>).</p></li>
-        <li><tt>--with-llvmgccdir=<i>directory</i></tt>
-        <p>Optionally, specify for <i>directory</i> the full pathname of the 
-        C/C++ front end installation to use with this LLVM configuration. If
-        not specified, the PATH will be searched.  This is only needed if you
-        want to run test-suite or do some special kinds of LLVM builds.</p></li>
-        <li><tt>--enable-spec2000=<i>directory</i></tt>
-            <p>Enable the SPEC2000 benchmarks for testing.  The SPEC2000
-            benchmarks should be available in
-            <tt><i>directory</i></tt>.</p></li>
+        <tt>/usr/local</tt>).</li>
       </ul>
-  </ol></li>
 
-  <li>Build the LLVM Suite:
-  <ol>
-      <li><tt>gmake -k |&amp; tee gnumake.out
-      &nbsp;&nbsp;&nbsp;# this is csh or tcsh syntax</tt></li>
-      <li>If you get an "internal compiler error (ICE)" or test failures, see 
-          <a href="#brokengcc">below</a>.</li>
+      <ul>
+        <li><tt>--enable-optimized</tt> -
+        Compile with optimizations enabled (default is NO).</li>
+      </ul>
+
+      <ul>
+        <li><tt>--enable-assertions</tt> -
+        Compile with assertion checks enabled (default is YES).</li>
+      </ul>
+
+    <li><tt>make [-j]</tt> - The -j specifies the number of jobs (commands) to 
+    run simultaneously.  This builds both LLVM and Clang for Debug+Asserts mode.
+    The --enabled-optimized configure option is used to specify a Release build.</li>
+    <li><tt>make check-all</tt> -
+    This run the regression tests to ensure everything is in working order.</li>
+    <li><tt>make update</tt> -
+    This command is used to update all the svn repositories at once, rather then
+    having to <tt>cd</tt> into the individual repositories and running
+    <tt>svn update</tt>.</li>
+    <li>It is also possible to use CMake instead of the makefiles. With CMake
+    it is also possible to generate project files for several IDEs: Eclipse
+    CDT4, CodeBlocks, Qt-Creator (use the CodeBlocks generator), KDevelop3.</li>
+    <li>If you get an "internal compiler error (ICE)" or test failures, see 
+        <a href="#brokengcc">below</a>.</li>
+
+  </ul>
+  </li>
   </ol>
 
 </ol>
