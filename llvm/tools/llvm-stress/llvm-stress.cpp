@@ -1,4 +1,4 @@
-//===-- llvm-stress.cpp - Print the size of each object section ------------===//
+//===-- llvm-stress.cpp - Generate random LL files to stress-test LLVM -----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
