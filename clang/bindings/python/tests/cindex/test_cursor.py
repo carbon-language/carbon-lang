@@ -36,6 +36,7 @@ def test_get_children():
 
     assert len(tu_nodes) == 3
 
+    assert tu_nodes[0] != tu_nodes[1]
     assert tu_nodes[0].kind == CursorKind.STRUCT_DECL
     assert tu_nodes[0].spelling == 's0'
     assert tu_nodes[0].is_definition() == True
