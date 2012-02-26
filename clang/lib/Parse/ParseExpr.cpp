@@ -351,12 +351,23 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
     // be a throw-expression, which is not a valid cast-expression.
     // Therefore we need some special-casing here.
     // Also note that the third operand of the conditional operator is
-    // an assignment-expression in C++.
+    // an assignment-expression in C++, and in C++11, we can have a
+    // braced-init-list on the RHS of an assignment.
     ExprResult RHS;
-    if (getLang().CPlusPlus && NextTokPrec <= prec::Conditional)
+    if (getLang().CPlusPlus0x && MinPrec == prec::Assignment &&
+        Tok.is(tok::l_brace)) {
+      Diag(Tok, diag::warn_cxx98_compat_generalized_initializer_lists);
+      RHS = ParseBraceInitializer();
+      if (LHS.isInvalid() || RHS.isInvalid())
+        return ExprError();
+      // A braced-init-list can never be followed by more operators.
+      return Actions.ActOnBinOp(getCurScope(), OpToken.getLocation(),
+                                OpToken.getKind(), LHS.take(), RHS.take());
+    } else if (getLang().CPlusPlus && NextTokPrec <= prec::Conditional) {
       RHS = ParseAssignmentExpression();
-    else
+    } else {
       RHS = ParseCastExpression(false);
+    }
 
     if (RHS.isInvalid())
       LHS = ExprError();
