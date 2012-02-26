@@ -1340,10 +1340,10 @@ private:
     const uint32_t *asUInt32;
   } StrData;
   unsigned Length;
-  unsigned CharByteWidth;
-  unsigned NumConcatenated;
+  unsigned CharByteWidth : 4;
   unsigned Kind : 3;
-  bool IsPascal : 1;
+  unsigned IsPascal : 1;
+  unsigned NumConcatenated;
   SourceLocation TokLocs[1];
 
   StringLiteral(QualType Ty) :
