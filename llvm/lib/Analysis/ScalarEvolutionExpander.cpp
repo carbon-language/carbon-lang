@@ -43,7 +43,6 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
   // not allowed to move it.
   BasicBlock::iterator BIP = Builder.GetInsertPoint();
 
-  // FIXME: enable once our implementation of dominates is fixed.
   assert(BIP == IP || SE.DT->dominates(IP, BIP));
 
   // Check to see if there is already a cast!
