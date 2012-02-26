@@ -227,8 +227,8 @@ struct StoreModifier: public Modifier {
     Type  *ValTy = Val->getType();
 
     // Do not store vectors of i1s because they are unsupported
-    //by the codegen.
-    if (ValTy->isVectorTy() && (ValTy->getScalarSizeInBits() == 1))
+    // by the codegen.
+    if (ValTy->isVectorTy() && ValTy->getScalarSizeInBits() == 1)
       return;
 
     new StoreInst(Val, Ptr, BB->getTerminator());
