@@ -29,7 +29,6 @@
       <li><a href="#unpack">Unpacking the LLVM Archives</a></li>
       <li><a href="#checkout">Checkout LLVM from Subversion</a></li>
       <li><a href="#git_mirror">LLVM GIT mirror</a></li>
-      <li><a href="#installcf">Install the GCC Front End</a></li>
       <li><a href="#config">Local LLVM Configuration</a></li>
       <li><a href="#compile">Compiling the LLVM Suite Source Code</a></li>
       <li><a href="#cross-compile">Cross-Compiling LLVM</a></li>
@@ -966,76 +965,6 @@ git svn rebase -l
 
 <!-- ======================================================================= -->
 <h3>
-  <a name="installcf">Install the GCC Front End</a>
-</h3>
-
-<div>
-
-<p>Before configuring and compiling the LLVM suite (or if you want to use just the LLVM
-GCC front end) you can optionally extract the front end from the binary distribution.
-It is used for running the LLVM test-suite and for compiling C/C++ programs.  Note that
-you can optionally <a href="GCCFEBuildInstrs.html">build llvm-gcc yourself</a> after building the
-main LLVM repository.</p>
-
-<p>To install the GCC front end, do the following (on Windows, use an archival tool
-like <a href="http://www.7-zip.org/">7-zip</a> that understands gzipped tars):</p>
-
-<ol>
-  <li><tt>cd <i>where-you-want-the-front-end-to-live</i></tt></li>
-  <li><tt>gunzip --stdout llvm-gcc-4.2-<i>version</i>-<i>platform</i>.tar.gz | tar -xvf
-      -</tt></li>
-</ol>
-
-<p>Once the binary is uncompressed, if you're using a *nix-based system, add a symlink for
-<tt>llvm-gcc</tt> and <tt>llvm-g++</tt> to some directory in your path.  If you're using a
-Windows-based system, add the <tt>bin</tt> subdirectory of your front end installation directory
-to your <tt>PATH</tt> environment variable.  For example, if you uncompressed the binary to
-<tt>c:\llvm-gcc</tt>, add <tt>c:\llvm-gcc\bin</tt> to your <tt>PATH</tt>.</p>
-
-<p>If you now want to build LLVM from source, when you configure LLVM, it will 
-automatically detect <tt>llvm-gcc</tt>'s presence (if it is in your path) enabling its
-use in test-suite.  Note that you can always build or install <tt>llvm-gcc</tt> at any
-point after building the main LLVM repository: just reconfigure llvm and 
-test-suite will pick it up.
-</p>
-
-<p>As a convenience for Windows users, the front end binaries for MinGW/x86 include
-versions of the required w32api and mingw-runtime binaries.  The last remaining step for
-Windows users is to simply uncompress the binary binutils package from
-<a href="http://mingw.org/">MinGW</a> into your front end installation directory.  While the
-front end installation steps are not quite the same as a typical manual MinGW installation,
-they should be similar enough to those who have previously installed MinGW on Windows systems.</p>
-
-<p>To install binutils on Windows:</p>
-
-<ol>
-  <li><tt><i>download GNU Binutils from <a href="http://sourceforge.net/projects/mingw/files/">MinGW Downloads</a></i></tt></li>
-  <li><tt>cd <i>where-you-uncompressed-the-front-end</i></tt></li>
-  <li><tt><i>uncompress archived binutils directories (not the tar file) into the current directory</i></tt></li>
-</ol>
-
-<p>The binary versions of the LLVM GCC front end may not suit all of your needs.  For
-example, the binary distribution may include an old version of a system header
-file, not "fix" a header file that needs to be fixed for GCC, or it may be linked with
-libraries not available on your system.  In cases like these, you may want to try
-<a href="GCCFEBuildInstrs.html">building the GCC front end from source</a>.  Thankfully,
-this is much easier now than it was in the past.</p>
-
-<p>We also do not currently support updating of the GCC front end by manually overlaying
-newer versions of the w32api and mingw-runtime binary packages that may become available
-from MinGW.  At this time, it's best to think of the MinGW LLVM GCC front end binary as
-a self-contained convenience package that requires Windows users to simply download and
-uncompress the GNU Binutils binary package from the MinGW project.</p>
-
-<p>Regardless of your platform, if you discover that installing the LLVM GCC front end
-binaries is not as easy as previously described, or you would like to suggest improvements,
-please let us know how you would like to see things improved by dropping us a note on our
-<a href="http://llvm.org/docs/#maillist">mailing list</a>.</p>
-
-</div>
-
-<!-- ======================================================================= -->
-<h3>
   <a name="config">Local LLVM Configuration</a>
 </h3>
 
@@ -1072,29 +1001,6 @@ script to configure the build system:</p>
 <p>The following options can be used to set or enable LLVM specific options:</p>
 
 <dl>
-  <dt><i>--with-llvmgccdir</i></dt>
-  <dd>Path to the LLVM C/C++ FrontEnd to be used with this LLVM configuration. 
-  The value of this option should specify the full pathname of the C/C++ Front
-  End to be used. If this option is not provided, the PATH will be searched for
-  a program named <i>llvm-gcc</i> and the C/C++ FrontEnd install directory will
-  be inferred from the path found. If the option is not given, and no llvm-gcc
-  can be found in the path then a warning will be produced by 
-  <tt>configure</tt> indicating this situation. LLVM may still be built with 
-  the <tt>tools-only</tt> target but attempting to build the runtime libraries
-  will fail as these libraries require llvm-gcc and llvm-g++. See 
-  <a href="#installcf">Install the GCC Front End</a> for details on installing
-  the C/C++ Front End. See
-  <a href="GCCFEBuildInstrs.html">Bootstrapping the LLVM C/C++ Front-End</a>
-  for details on building the C/C++ Front End.</dd>
-  <dt><i>--with-tclinclude</i></dt>
-  <dd>Path to the tcl include directory under which <tt>tclsh</tt> can be
-  found. Use this if you have multiple tcl installations on your machine and you
-  want to use a specific one (8.x) for LLVM. LLVM only uses tcl for running the
-  dejagnu based test suite in <tt>llvm/test</tt>. If you don't specify this
-  option, the LLVM configure script will search for the tcl 8.4 and 8.3
-  releases.
-  <br><br>
-  </dd>
   <dt><i>--enable-optimized</i></dt>
   <dd>
     Enables optimized compilation (debugging symbols are removed
