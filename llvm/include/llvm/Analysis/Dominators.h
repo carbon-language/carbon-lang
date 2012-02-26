@@ -749,15 +749,11 @@ public:
     return DT->dominates(A, B);
   }
 
-  // dominates - Return true if A dominates B. This performs the
-  // special checks necessary if A and B are in the same basic block.
-  bool dominates(const Instruction *A, const Instruction *B) const;
-
-  /// properlyDominates - Use this instead of dominates() to determine whether a
-  /// user of A can be hoisted above B.
-  bool properlyDominates(const Instruction *A, const Instruction *B) const {
-    return A != B && dominates(A, B);
-  }
+  // dominates - Return true if Def dominates a use in User. This performs
+  // the special checks necessary if Def and User are in the same basic block.
+  // Note that Def doesn't dominate a use in Def itself!
+  bool dominates(const Instruction *Def, const Instruction *User) const;
+  bool dominates(const Instruction *Def, const BasicBlock *BB) const;
 
   bool properlyDominates(const DomTreeNode *A, const DomTreeNode *B) const {
     return DT->properlyDominates(A, B);

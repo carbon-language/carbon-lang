@@ -80,27 +80,97 @@ void DominatorTree::print(raw_ostream &OS, const Module *) const {
   DT->print(OS);
 }
 
-// dominates - Return true if A dominates a use in B. This performs the
-// special checks necessary if A and B are in the same basic block.
-bool DominatorTree::dominates(const Instruction *A, const Instruction *B) const{
-  const BasicBlock *BBA = A->getParent(), *BBB = B->getParent();
+// dominates - Return true if Def dominates a use in User. This performs
+// the special checks necessary if Def and User are in the same basic block.
+// Note that Def doesn't dominate a use in Def itself!
+bool DominatorTree::dominates(const Instruction *Def,
+                              const Instruction *User) const {
+  const BasicBlock *UseBB = User->getParent();
+  const BasicBlock *DefBB = Def->getParent();
 
-  // If A is an invoke instruction, its value is only available in this normal
-  // successor block.
-  if (const InvokeInst *II = dyn_cast<InvokeInst>(A))
-    BBA = II->getNormalDest();
+  assert(isReachableFromEntry(DefBB) && isReachableFromEntry(UseBB) &&
+         "We only handle reachable blocks");
 
-  if (BBA != BBB) return dominates(BBA, BBB);
-
-  // It is not possible to determine dominance between two PHI nodes
-  // based on their ordering.
-  if (isa<PHINode>(A) && isa<PHINode>(B))
+  // An instruction doesn't dominate a use in itself.
+  if (Def == User)
     return false;
 
-  // Loop through the basic block until we find A or B.
-  BasicBlock::const_iterator I = BBA->begin();
-  for (; &*I != A && &*I != B; ++I)
+  // The value defined by an invoke dominates an instruction only if
+  // it dominates every instruction in UseBB.
+  // A PHI is dominated only if the instruction dominates every possible use
+  // in the UseBB.
+  if (isa<InvokeInst>(Def) || isa<PHINode>(User))
+    return dominates(Def, UseBB);
+
+  if (DefBB != UseBB)
+    return dominates(DefBB, UseBB);
+
+  // Loop through the basic block until we find Def or User.
+  BasicBlock::const_iterator I = DefBB->begin();
+  for (; &*I != Def && &*I != User; ++I)
     /*empty*/;
 
-  return &*I == A;
+  return &*I == Def;
+}
+
+// true if Def would dominate a use in any instruction in UseBB.
+// note that dominates(Def, Def->getParent()) is false.
+bool DominatorTree::dominates(const Instruction *Def,
+                              const BasicBlock *UseBB) const {
+  const BasicBlock *DefBB = Def->getParent();
+
+  assert(isReachableFromEntry(DefBB) && isReachableFromEntry(UseBB) &&
+         "We only handle reachable blocks");
+
+  if (DefBB == UseBB)
+    return false;
+
+  const InvokeInst *II = dyn_cast<InvokeInst>(Def);
+  if (!II)
+    return dominates(DefBB, UseBB);
+
+  // Invoke results are only usable in the normal destination, not in the
+  // exceptional destination.
+  BasicBlock *NormalDest = II->getNormalDest();
+  if (!dominates(NormalDest, UseBB))
+    return false;
+
+  // Simple case: if the normal destination has a single predecessor, the
+  // fact that it dominates the use block implies that we also do.
+  if (NormalDest->getSinglePredecessor())
+    return true;
+
+  // The normal edge from the invoke is critical. Conceptually, what we would
+  // like to do is split it and check if the new block dominates the use.
+  // With X being the new block, the graph would look like:
+  //
+  //        DefBB
+  //          /\      .  .
+  //         /  \     .  .
+  //        /    \    .  .
+  //       /      \   |  |
+  //      A        X  B  C
+  //      |         \ | /
+  //      .          \|/
+  //      .      NormalDest
+  //      .
+  //
+  // Given the definition of dominance, NormalDest is dominated by X iff X
+  // dominates all of NormalDest's predecessors (X, B, C in the example). X
+  // trivially dominates itself, so we only have to find if it dominates the
+  // other predecessors. Since the only way out of X is via NormalDest, X can
+  // only properly dominate a node if NormalDest dominates that node too.
+  for (pred_iterator PI = pred_begin(NormalDest),
+         E = pred_end(NormalDest); PI != E; ++PI) {
+    const BasicBlock *BB = *PI;
+    if (BB == DefBB)
+      continue;
+
+    if (!DT->isReachableFromEntry(BB))
+      continue;
+
+    if (!dominates(NormalDest, BB))
+      return false;
+  }
+  return true;
 }

@@ -515,8 +515,7 @@ Value *SCEVExpander::expandAddToGEP(const SCEV *const *op_begin,
        Type::getInt8PtrTy(Ty->getContext(), PTy->getAddressSpace()));
 
     assert(!isa<Instruction>(V) ||
-           SE.DT->properlyDominates(cast<Instruction>(V),
-                                    Builder.GetInsertPoint()));
+           SE.DT->dominates(cast<Instruction>(V), Builder.GetInsertPoint()));
 
     // Expand the operands for a plain byte offset.
     Value *Idx = expandCodeFor(SE.getAddExpr(Ops), Ty);
@@ -908,7 +907,7 @@ Instruction *SCEVExpander::getIVIncOperand(Instruction *IncV,
   case Instruction::Add:
   case Instruction::Sub: {
     Instruction *OInst = dyn_cast<Instruction>(IncV->getOperand(1));
-    if (!OInst || SE.DT->properlyDominates(OInst, InsertPos))
+    if (!OInst || SE.DT->dominates(OInst, InsertPos))
       return dyn_cast<Instruction>(IncV->getOperand(0));
     return NULL;
   }
@@ -920,7 +919,7 @@ Instruction *SCEVExpander::getIVIncOperand(Instruction *IncV,
       if (isa<Constant>(*I))
         continue;
       if (Instruction *OInst = dyn_cast<Instruction>(*I)) {
-        if (!SE.DT->properlyDominates(OInst, InsertPos))
+        if (!SE.DT->dominates(OInst, InsertPos))
           return NULL;
       }
       if (allowScale) {
@@ -947,7 +946,7 @@ Instruction *SCEVExpander::getIVIncOperand(Instruction *IncV,
 /// it available to other uses in this loop. Recursively hoist any operands,
 /// until we reach a value that dominates InsertPos.
 bool SCEVExpander::hoistIVInc(Instruction *IncV, Instruction *InsertPos) {
-  if (SE.DT->properlyDominates(IncV, InsertPos))
+  if (SE.DT->dominates(IncV, InsertPos))
       return true;
 
   // InsertPos must itself dominate IncV so that IncV's new position satisfies
@@ -964,7 +963,7 @@ bool SCEVExpander::hoistIVInc(Instruction *IncV, Instruction *InsertPos) {
     // IncV is safe to hoist.
     IVIncs.push_back(IncV);
     IncV = Oper;
-    if (SE.DT->properlyDominates(IncV, InsertPos))
+    if (SE.DT->dominates(IncV, InsertPos))
       break;
   }
   for (SmallVectorImpl<Instruction*>::reverse_iterator I = IVIncs.rbegin(),
