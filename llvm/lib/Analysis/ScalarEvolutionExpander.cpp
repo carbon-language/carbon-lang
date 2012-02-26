@@ -44,7 +44,7 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
   BasicBlock::iterator BIP = Builder.GetInsertPoint();
 
   // FIXME: enable once our implementation of dominates is fixed.
-  //  assert(BIP == IP || SE.DT->dominates(IP, BIP));
+  assert(BIP == IP || SE.DT->dominates(IP, BIP));
 
   // Check to see if there is already a cast!
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
