@@ -2699,15 +2699,15 @@ public:
   struct ExtProtoInfo {
     ExtProtoInfo() :
       Variadic(false), HasTrailingReturn(false), ExceptionSpecType(EST_None),
-      TypeQuals(0), RefQualifier(RQ_None), NumExceptions(0), Exceptions(0),
+      RefQualifier(RQ_None), TypeQuals(0), NumExceptions(0), Exceptions(0),
       NoexceptExpr(0), ConsumedArguments(0) {}
 
     FunctionType::ExtInfo ExtInfo;
-    bool Variadic;
-    bool HasTrailingReturn;
-    ExceptionSpecificationType ExceptionSpecType;
+    bool Variadic : 1;
+    bool HasTrailingReturn : 1;
+    ExceptionSpecificationType ExceptionSpecType : 4;
+    RefQualifierKind RefQualifier : 2;
     unsigned char TypeQuals;
-    RefQualifierKind RefQualifier;
     unsigned NumExceptions;
     const QualType *Exceptions;
     Expr *NoexceptExpr;
