@@ -308,11 +308,12 @@ public:
                 ModuleList matching_modules;
                 for (unsigned i = 0, e = m_options.modules.size(); i != e; i++)
                 {
-                    FileSpec module_spec(m_options.modules[i].c_str(), false);
-                    if (module_spec)
+                    FileSpec module_file_spec(m_options.modules[i].c_str(), false);
+                    if (module_file_spec)
                     {
+                        ModuleSpec module_spec (module_file_spec);
                         matching_modules.Clear();
-                        target->GetImages().FindModules (&module_spec, NULL, NULL, NULL, matching_modules);
+                        target->GetImages().FindModules (module_spec, matching_modules);
                         num_matches += matching_modules.FindFunctions (name, eFunctionNameTypeAuto, include_symbols, include_inlines, append, sc_list);
                     }
                 }
@@ -502,11 +503,12 @@ public:
                 ModuleList matching_modules;
                 for (unsigned i = 0, e = m_options.modules.size(); i != e; i++)
                 {
-                    FileSpec module_spec(m_options.modules[i].c_str(), false);
-                    if (module_spec)
+                    FileSpec module_file_spec(m_options.modules[i].c_str(), false);
+                    if (module_file_spec)
                     {
+                        ModuleSpec module_spec (module_file_spec);
                         matching_modules.Clear();
-                        target->GetImages().FindModules (&module_spec, NULL, NULL, NULL, matching_modules);
+                        target->GetImages().FindModules (module_spec, matching_modules);
                         num_matches += matching_modules.ResolveSymbolContextForFilePath (filename,
                                                                                          0,
                                                                                          check_inlines,

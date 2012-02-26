@@ -346,11 +346,7 @@ public:
     UpdateInstanceName ();
 
     lldb::ModuleSP
-    GetSharedModule (const FileSpec& file_spec,
-                     const ArchSpec& arch,
-                     const lldb_private::UUID *uuid = NULL,
-                     const ConstString *object_name = NULL,
-                     off_t object_offset = 0,
+    GetSharedModule (const ModuleSpec &module_spec,
                      Error *error_ptr = NULL);
 private:
     //------------------------------------------------------------------

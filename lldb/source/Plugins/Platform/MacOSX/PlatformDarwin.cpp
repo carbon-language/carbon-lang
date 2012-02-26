@@ -106,13 +106,10 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
 
     if (error.Success())
     {
-        if (exe_arch.IsValid())
+        ModuleSpec module_spec (resolved_exe_file, exe_arch);
+        if (module_spec.GetArchitecture().IsValid())
         {
-            error = ModuleList::GetSharedModule (resolved_exe_file, 
-                                                 exe_arch, 
-                                                 NULL,
-                                                 NULL, 
-                                                 0, 
+            error = ModuleList::GetSharedModule (module_spec, 
                                                  exe_module_sp, 
                                                  module_search_paths_ptr,
                                                  NULL, 
@@ -134,14 +131,9 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
             // the architectures that we should be using (in the correct order)
             // and see if we can find a match that way
             StreamString arch_names;
-            ArchSpec platform_arch;
-            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, platform_arch); ++idx)
+            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, module_spec.GetArchitecture()); ++idx)
             {
-                error = ModuleList::GetSharedModule (resolved_exe_file, 
-                                                     platform_arch, 
-                                                     NULL,
-                                                     NULL, 
-                                                     0, 
+                error = ModuleList::GetSharedModule (module_spec, 
                                                      exe_module_sp, 
                                                      module_search_paths_ptr,
                                                      NULL, 
@@ -157,7 +149,7 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
                 
                 if (idx > 0)
                     arch_names.PutCString (", ");
-                arch_names.PutCString (platform_arch.GetArchitectureName());
+                arch_names.PutCString (module_spec.GetArchitecture().GetArchitectureName());
             }
             
             if (error.Fail() || !exe_module_sp)
@@ -178,11 +170,7 @@ PlatformDarwin::ResolveExecutable (const FileSpec &exe_file,
 
 
 Error
-PlatformDarwin::GetSharedModule (const FileSpec &platform_file, 
-                                 const ArchSpec &arch,
-                                 const UUID *uuid_ptr,
-                                 const ConstString *object_name_ptr,
-                                 off_t object_offset,
+PlatformDarwin::GetSharedModule (const ModuleSpec &module_spec,
                                  ModuleSP &module_sp,
                                  const FileSpecList *module_search_paths_ptr,
                                  ModuleSP *old_module_sp_ptr,
@@ -197,11 +185,7 @@ PlatformDarwin::GetSharedModule (const FileSpec &platform_file,
         // the shared module first.
         if (m_remote_platform_sp)
         {
-            error = m_remote_platform_sp->GetSharedModule (platform_file,
-                                                           arch,
-                                                           uuid_ptr,
-                                                           object_name_ptr,
-                                                           object_offset,
+            error = m_remote_platform_sp->GetSharedModule (module_spec,
                                                            module_sp,
                                                            module_search_paths_ptr,
                                                            old_module_sp_ptr,
@@ -212,16 +196,13 @@ PlatformDarwin::GetSharedModule (const FileSpec &platform_file,
     if (!module_sp)
     {
         // Fall back to the local platform and find the file locally
-        error = Platform::GetSharedModule (platform_file,
-                                           arch,
-                                           uuid_ptr,
-                                           object_name_ptr,
-                                           object_offset,
+        error = Platform::GetSharedModule (module_spec,
                                            module_sp,
                                            module_search_paths_ptr,
                                            old_module_sp_ptr,
                                            did_create_ptr);
         
+        const FileSpec &platform_file = module_spec.GetFileSpec();
         if (!module_sp && module_search_paths_ptr && platform_file)
         {
             // We can try to pull off part of the file path up to the bundle
@@ -244,11 +225,9 @@ PlatformDarwin::GetSharedModule (const FileSpec &platform_file,
                         FileSpec new_file_spec (new_path, false);
                         if (new_file_spec.Exists())
                         {
-                            Error new_error (Platform::GetSharedModule (new_file_spec,
-                                                                        arch,
-                                                                        uuid_ptr,
-                                                                        object_name_ptr,
-                                                                        object_offset,
+                            ModuleSpec new_module_spec (module_spec);
+                            new_module_spec.GetFileSpec() = new_file_spec;
+                            Error new_error (Platform::GetSharedModule (new_module_spec,
                                                                         module_sp,
                                                                         NULL,
                                                                         old_module_sp_ptr,
@@ -266,7 +245,7 @@ PlatformDarwin::GetSharedModule (const FileSpec &platform_file,
         }
     }
     if (module_sp)
-        module_sp->SetPlatformFileSpec(platform_file);
+        module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
     return error;
 }
 

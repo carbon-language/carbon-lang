@@ -107,6 +107,7 @@ class   LogChannel;
 class   Mangled;
 class   Module;
 class   ModuleList;
+class   ModuleSpec;
 class   Mutex;
 struct  NameSearchContext;
 class   ObjCLanguageRuntime;

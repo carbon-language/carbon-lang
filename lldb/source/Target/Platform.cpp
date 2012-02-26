@@ -88,11 +88,7 @@ Platform::GetFile (const FileSpec &platform_file,
 }
 
 Error
-Platform::GetSharedModule (const FileSpec &platform_file, 
-                           const ArchSpec &arch,
-                           const UUID *uuid_ptr,
-                           const ConstString *object_name_ptr,
-                           off_t object_offset,
+Platform::GetSharedModule (const ModuleSpec &module_spec,
                            ModuleSP &module_sp,
                            const FileSpecList *module_search_paths_ptr,
                            ModuleSP *old_module_sp_ptr,
@@ -106,11 +102,7 @@ Platform::GetSharedModule (const FileSpec &platform_file,
     // remote target, or might implement a download and cache 
     // locally implementation.
     const bool always_create = false;
-    return ModuleList::GetSharedModule (platform_file, 
-                                        arch, 
-                                        uuid_ptr, 
-                                        object_name_ptr, 
-                                        object_offset, 
+    return ModuleList::GetSharedModule (module_spec, 
                                         module_sp,
                                         module_search_paths_ptr,
                                         old_module_sp_ptr,
@@ -411,13 +403,10 @@ Platform::ResolveExecutable (const FileSpec &exe_file,
     Error error;
     if (exe_file.Exists())
     {
-        if (exe_arch.IsValid())
+        ModuleSpec module_spec (exe_file, exe_arch);
+        if (module_spec.GetArchitecture().IsValid())
         {
-            error = ModuleList::GetSharedModule (exe_file, 
-                                                 exe_arch, 
-                                                 NULL,
-                                                 NULL, 
-                                                 0, 
+            error = ModuleList::GetSharedModule (module_spec, 
                                                  exe_module_sp, 
                                                  module_search_paths_ptr,
                                                  NULL, 
@@ -428,14 +417,9 @@ Platform::ResolveExecutable (const FileSpec &exe_file,
             // No valid architecture was specified, ask the platform for
             // the architectures that we should be using (in the correct order)
             // and see if we can find a match that way
-            ArchSpec platform_arch;
-            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, platform_arch); ++idx)
+            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, module_spec.GetArchitecture()); ++idx)
             {
-                error = ModuleList::GetSharedModule (exe_file, 
-                                                     platform_arch, 
-                                                     NULL,
-                                                     NULL, 
-                                                     0, 
+                error = ModuleList::GetSharedModule (module_spec, 
                                                      exe_module_sp, 
                                                      module_search_paths_ptr,
                                                      NULL, 

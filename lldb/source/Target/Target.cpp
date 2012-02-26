@@ -849,8 +849,8 @@ Target::SetExecutableModule (ModuleSP& executable_sp, bool get_dependent_files)
                 else
                     platform_dependent_file_spec = dependent_file_spec;
 
-                ModuleSP image_module_sp(GetSharedModule (platform_dependent_file_spec,
-                                                          m_arch));
+                ModuleSpec module_spec (platform_dependent_file_spec, m_arch);
+                ModuleSP image_module_sp(GetSharedModule (module_spec));
                 if (image_module_sp.get())
                 {
                     ObjectFile *objfile = image_module_sp->GetObjectFile();
@@ -893,16 +893,12 @@ Target::SetArchitecture (const ArchSpec &arch_spec)
         
         if (executable_sp)
         {
-            FileSpec exec_file_spec = executable_sp->GetFileSpec();
-            Error error = ModuleList::GetSharedModule(exec_file_spec, 
-                                                      arch_spec, 
-                                                      NULL, 
-                                                      NULL, 
-                                                      0, 
-                                                      executable_sp, 
-                                                      &GetExecutableSearchPaths(),
-                                                      NULL, 
-                                                      NULL);
+            ModuleSpec module_spec (executable_sp->GetFileSpec(), arch_spec);
+            Error error = ModuleList::GetSharedModule (module_spec, 
+                                                       executable_sp, 
+                                                       &GetExecutableSearchPaths(),
+                                                       NULL, 
+                                                       NULL);
                                           
             if (!error.Fail() && executable_sp)
             {
@@ -964,7 +960,7 @@ Target::ModulesDidUnload (ModuleList &module_list)
 
 
 bool
-Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_spec)
+Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_file_spec)
 {
 
     if (!m_breakpoints_use_platform_avoid)
@@ -972,10 +968,8 @@ Target::ModuleIsExcludedForNonModuleSpecificSearches (const FileSpec &module_spe
     else
     {
         ModuleList matchingModules;
-        const ArchSpec *arch_ptr = NULL;
-        const lldb_private::UUID *uuid_ptr= NULL;
-        const ConstString *object_name = NULL;
-        size_t num_modules = GetImages().FindModules(&module_spec, arch_ptr, uuid_ptr, object_name, matchingModules);
+        ModuleSpec module_spec (module_file_spec);
+        size_t num_modules = GetImages().FindModules(module_spec, matchingModules);
         
         // If there is more than one module for this file spec, only return true if ALL the modules are on the
         // black list.
@@ -1238,15 +1232,7 @@ Target::ReadPointerFromMemory (const Address& addr,
 }
 
 ModuleSP
-Target::GetSharedModule
-(
-    const FileSpec& file_spec,
-    const ArchSpec& arch,
-    const lldb_private::UUID *uuid_ptr,
-    const ConstString *object_name,
-    off_t object_offset,
-    Error *error_ptr
-)
+Target::GetSharedModule (const ModuleSpec &module_spec, Error *error_ptr)
 {
     // Don't pass in the UUID so we can tell if we have a stale value in our list
     ModuleSP old_module_sp; // This will get filled in if we have a new version of the library
@@ -1258,15 +1244,11 @@ Target::GetSharedModule
     // If there are image search path entries, try to use them first to acquire a suitable image.
     if (m_image_search_paths.GetSize())
     {
-        FileSpec transformed_spec;        
-        if (m_image_search_paths.RemapPath (file_spec.GetDirectory(), transformed_spec.GetDirectory()))
+        ModuleSpec transformed_spec (module_spec);
+        if (m_image_search_paths.RemapPath (module_spec.GetFileSpec().GetDirectory(), transformed_spec.GetFileSpec().GetDirectory()))
         {
-            transformed_spec.GetFilename() = file_spec.GetFilename();
+            transformed_spec.GetFileSpec().GetFilename() = module_spec.GetFileSpec().GetFilename();
             error = ModuleList::GetSharedModule (transformed_spec, 
-                                                 arch, 
-                                                 uuid_ptr, 
-                                                 object_name, 
-                                                 object_offset, 
                                                  module_sp, 
                                                  &GetExecutableSearchPaths(),
                                                  &old_module_sp, 
@@ -1279,11 +1261,7 @@ Target::GetSharedModule
     if (m_platform_sp)
     {
         FileSpec platform_file_spec;        
-        error = m_platform_sp->GetSharedModule (file_spec, 
-                                                arch, 
-                                                uuid_ptr, 
-                                                object_name, 
-                                                object_offset, 
+        error = m_platform_sp->GetSharedModule (module_spec, 
                                                 module_sp, 
                                                 &GetExecutableSearchPaths(),
                                                 &old_module_sp, 

@@ -25,10 +25,10 @@ class Symbols
 {
 public:
     static FileSpec
-    LocateExecutableObjectFile (const FileSpec *in_exec, const ArchSpec* arch, const lldb_private::UUID *uuid);
+    LocateExecutableObjectFile (const ModuleSpec &module_spec);
 
     static FileSpec
-    LocateExecutableSymbolFile (const FileSpec *in_exec, const ArchSpec* arch, const lldb_private::UUID *uuid);
+    LocateExecutableSymbolFile (const ModuleSpec &module_spec);
 };
 
 } // namespace lldb_private

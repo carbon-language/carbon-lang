@@ -15,14 +15,14 @@ using namespace lldb_private;
 #if !defined (__APPLE__)
 
 FileSpec
-Symbols::LocateExecutableObjectFile (const FileSpec *exec_fspec, const ArchSpec* arch, const lldb_private::UUID *uuid)
+Symbols::LocateExecutableObjectFile (const ModuleSpec &module_spec)
 {
     // FIXME
     return FileSpec();
 }
 
 FileSpec
-Symbols::LocateExecutableSymbolFile (const FileSpec *exec_fspec, const ArchSpec* arch, const lldb_private::UUID *uuid)
+Symbols::LocateExecutableSymbolFile (const ModuleSpec &module_spec)
 {
     // FIXME
     return FileSpec();

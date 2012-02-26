@@ -34,11 +34,7 @@ public:
                        const lldb_private::FileSpecList *module_search_paths_ptr);
 
     virtual lldb_private::Error
-    GetSharedModule (const lldb_private::FileSpec &platform_file, 
-                     const lldb_private::ArchSpec &arch,
-                     const lldb_private::UUID *uuid_ptr,
-                     const lldb_private::ConstString *object_name_ptr,
-                     off_t object_offset,
+    GetSharedModule (const lldb_private::ModuleSpec &module_spec,
                      lldb::ModuleSP &module_sp,
                      const lldb_private::FileSpecList *module_search_paths_ptr,
                      lldb::ModuleSP *old_module_sp_ptr,

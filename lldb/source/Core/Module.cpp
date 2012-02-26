@@ -114,6 +114,44 @@ namespace lldb {
 
 #endif
     
+Module::Module (const ModuleSpec &module_spec) :
+    m_mutex (Mutex::eMutexTypeRecursive),
+    m_mod_time (module_spec.GetFileSpec().GetModificationTime()),
+    m_arch (module_spec.GetArchitecture()),
+    m_uuid (),
+    m_file (module_spec.GetFileSpec()),
+    m_platform_file(module_spec.GetPlatformFileSpec()),
+    m_symfile_spec (module_spec.GetSymbolFileSpec()),
+    m_object_name (module_spec.GetObjectName()),
+    m_object_offset (module_spec.GetObjectOffset()),
+    m_objfile_sp (),
+    m_symfile_ap (),
+    m_ast (),
+    m_did_load_objfile (false),
+    m_did_load_symbol_vendor (false),
+    m_did_parse_uuid (false),
+    m_did_init_ast (false),
+    m_is_dynamic_loader_module (false),
+    m_was_modified (false)
+{
+    // Scope for locker below...
+    {
+        Mutex::Locker locker (GetAllocationModuleCollectionMutex());
+        GetModuleCollection().push_back(this);
+    }
+    
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_OBJECT));
+    if (log)
+        log->Printf ("%p Module::Module((%s) '%s/%s%s%s%s')",
+                     this,
+                     m_arch.GetArchitectureName(),
+                     m_file.GetDirectory().AsCString(""),
+                     m_file.GetFilename().AsCString(""),
+                     m_object_name.IsEmpty() ? "" : "(",
+                     m_object_name.IsEmpty() ? "" : m_object_name.AsCString(""),
+                     m_object_name.IsEmpty() ? "" : ")");
+}
+
 Module::Module(const FileSpec& file_spec, 
                const ArchSpec& arch, 
                const ConstString *object_name, 
@@ -1071,5 +1109,50 @@ Module::SetLoadAddress (Target &target, lldb::addr_t offset, bool &changed)
         }
     }
     return false;
+}
+
+
+bool
+Module::MatchesModuleSpec (const ModuleSpec &module_ref)
+{
+    const UUID &uuid = module_ref.GetUUID();
+    
+    if (uuid.IsValid())
+    {
+        // If the UUID matches, then nothing more needs to match...
+        if (uuid == GetUUID())
+            return true;
+        else
+            return false;
+    }
+    
+    const FileSpec &file_spec = module_ref.GetFileSpec();
+    if (file_spec)
+    {
+        if (!FileSpec::Equal (file_spec, m_file, file_spec.GetDirectory()))
+            return false;
+    }
+
+    const FileSpec &platform_file_spec = module_ref.GetPlatformFileSpec();
+    if (platform_file_spec)
+    {
+        if (!FileSpec::Equal (platform_file_spec, m_platform_file, platform_file_spec.GetDirectory()))
+            return false;
+    }
+    
+    const ArchSpec &arch = module_ref.GetArchitecture();
+    if (arch.IsValid())
+    {
+        if (m_arch != arch)
+            return false;
+    }
+    
+    const ConstString &object_name = module_ref.GetObjectName();
+    if (object_name)
+    {
+        if (object_name != GetObjectName())
+            return false;
+    }
+    return true;
 }
 

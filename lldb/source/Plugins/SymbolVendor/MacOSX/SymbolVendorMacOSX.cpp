@@ -150,7 +150,11 @@ SymbolVendorMacOSX::CreateInstance (const lldb::ModuleSP &module_sp)
                 // one ourselves.
                 const FileSpec &file_spec = obj_file->GetFileSpec();
                 if (file_spec)
-                    dsym_fspec = Symbols::LocateExecutableSymbolFile (&file_spec, &module_sp->GetArchitecture(), &module_sp->GetUUID());
+                {
+                    ModuleSpec module_spec(file_spec, module_sp->GetArchitecture());
+                    module_spec.GetUUID() = module_sp->GetUUID();
+                    dsym_fspec = Symbols::LocateExecutableSymbolFile (module_spec);
+                }
             }
             
             if (dsym_fspec)

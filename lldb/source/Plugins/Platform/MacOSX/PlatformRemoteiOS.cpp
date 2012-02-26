@@ -142,11 +142,8 @@ PlatformRemoteiOS::ResolveExecutable (const FileSpec &exe_file,
     {
         if (exe_arch.IsValid())
         {
-            error = ModuleList::GetSharedModule (resolved_exe_file, 
-                                                 exe_arch, 
-                                                 NULL,
-                                                 NULL, 
-                                                 0, 
+            ModuleSpec module_spec (resolved_exe_file, exe_arch);
+            error = ModuleList::GetSharedModule (module_spec,
                                                  exe_module_sp, 
                                                  NULL,
                                                  NULL, 
@@ -163,11 +160,8 @@ PlatformRemoteiOS::ResolveExecutable (const FileSpec &exe_file,
         ArchSpec platform_arch;
         for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, platform_arch); ++idx)
         {
-            error = ModuleList::GetSharedModule (resolved_exe_file, 
-                                                 platform_arch, 
-                                                 NULL,
-                                                 NULL, 
-                                                 0, 
+            ModuleSpec module_spec (resolved_exe_file, platform_arch);
+            error = ModuleList::GetSharedModule (module_spec, 
                                                  exe_module_sp, 
                                                  NULL,
                                                  NULL, 
@@ -363,11 +357,7 @@ PlatformRemoteiOS::GetFile (const FileSpec &platform_file,
 }
 
 Error
-PlatformRemoteiOS::GetSharedModule (const FileSpec &platform_file, 
-                                    const ArchSpec &arch,
-                                    const UUID *uuid_ptr,
-                                    const ConstString *object_name_ptr,
-                                    off_t object_offset,
+PlatformRemoteiOS::GetSharedModule (const ModuleSpec &module_spec,
                                     ModuleSP &module_sp,
                                     const FileSpecList *module_search_paths_ptr,
                                     ModuleSP *old_module_sp_ptr,
@@ -377,21 +367,18 @@ PlatformRemoteiOS::GetSharedModule (const FileSpec &platform_file,
     // system. So first we ask for the file in the cached SDK,
     // then we attempt to get a shared module for the right architecture
     // with the right UUID.
-    Error error;
+    const FileSpec &platform_file = module_spec.GetFileSpec();
+
     FileSpec local_file;
-    error = GetFile (platform_file, uuid_ptr, local_file);
+    Error error (GetFile (platform_file, module_spec.GetUUIDPtr(), local_file));
     if (error.Success())
     {
-        error = ResolveExecutable (local_file, arch, module_sp, module_search_paths_ptr);
+        error = ResolveExecutable (local_file, module_spec.GetArchitecture(), module_sp, module_search_paths_ptr);
     }
     else
     {
         const bool always_create = false;
-        error = ModuleList::GetSharedModule (platform_file, 
-                                             arch, 
-                                             uuid_ptr, 
-                                             object_name_ptr, 
-                                             object_offset, 
+        error = ModuleList::GetSharedModule (module_spec, 
                                              module_sp,
                                              module_search_paths_ptr,
                                              old_module_sp_ptr,

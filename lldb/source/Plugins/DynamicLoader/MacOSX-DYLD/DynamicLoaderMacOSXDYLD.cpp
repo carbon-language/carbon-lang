@@ -274,41 +274,26 @@ DynamicLoaderMacOSXDYLD::FindTargetModuleForDYLDImageInfo (const DYLDImageInfo &
 {
     if (did_create_ptr)
         *did_create_ptr = false;
-    ModuleSP module_sp;
     ModuleList &target_images = m_process->GetTarget().GetImages();
-    const bool image_info_uuid_is_valid = image_info.uuid.IsValid();
-    if (image_info_uuid_is_valid)
-        module_sp = target_images.FindModule(image_info.uuid);
+    ModuleSpec module_spec (image_info.file_spec, image_info.GetArchitecture ());
+    module_spec.GetUUID() = image_info.uuid;
+    ModuleSP module_sp (target_images.FindFirstModule (module_spec));
     
+    if (module_sp)
+    {
+        // No UUID, we must rely upon the cached module modification 
+        // time and the modification time of the file on disk
+        if (module_sp->GetModificationTime() != module_sp->GetFileSpec().GetModificationTime())
+            module_sp.reset();
+    }
+
     if (!module_sp)
     {
-        ArchSpec arch(image_info.GetArchitecture ());
-
-        module_sp = target_images.FindFirstModuleForFileSpec (image_info.file_spec, &arch, NULL);
-
         if (can_create)
         {
-            if (module_sp)
-            {
-                if (image_info_uuid_is_valid)
-                {
-                    if (module_sp->GetUUID() != image_info.uuid)
-                        module_sp.reset();
-                }
-                else
-                {
-                    // No UUID, we must rely upon the cached module modification 
-                    // time and the modification time of the file on disk
-                    if (module_sp->GetModificationTime() != module_sp->GetFileSpec().GetModificationTime())
-                        module_sp.reset();
-                }
-            }
-            
             if (!module_sp)
             {
-                module_sp = m_process->GetTarget().GetSharedModule (image_info.file_spec,
-                                                                    arch,
-                                                                    image_info_uuid_is_valid ? &image_info.uuid : NULL);
+                module_sp = m_process->GetTarget().GetSharedModule (module_spec);
                 if (!module_sp || module_sp->GetObjectFile() == NULL)
                 {
                     const bool add_image_to_target = true;
@@ -822,19 +807,13 @@ DynamicLoaderMacOSXDYLD::AddModulesUsingImageInfos (DYLDImageInfo::collection &i
                     if (commpage_section)
                     {
                         ModuleList& target_images = m_process->GetTarget().GetImages();
-                        const FileSpec objfile_file_spec = objfile->GetFileSpec();
-                        ArchSpec arch (image_infos[idx].GetArchitecture ());
-                        ModuleSP commpage_image_module_sp(target_images.FindFirstModuleForFileSpec (objfile_file_spec, 
-                                                                                                    &arch, 
-                                                                                                    &commpage_dbstr));
+                        ModuleSpec module_spec (objfile->GetFileSpec(), image_infos[idx].GetArchitecture ());
+                        module_spec.GetObjectName() = commpage_dbstr;
+                        ModuleSP commpage_image_module_sp(target_images.FindFirstModule (module_spec));
                         if (!commpage_image_module_sp)
                         {
-                            commpage_image_module_sp 
-                                    = m_process->GetTarget().GetSharedModule (image_infos[idx].file_spec,
-                                                                              arch,
-                                                                              NULL,
-                                                                              &commpage_dbstr,
-                                                                              objfile->GetOffset() + commpage_section->GetFileOffset());
+                            module_spec.SetObjectOffset (objfile->GetOffset() + commpage_section->GetFileOffset());
+                            commpage_image_module_sp  = m_process->GetTarget().GetSharedModule (module_spec);
                             if (!commpage_image_module_sp || commpage_image_module_sp->GetObjectFile() == NULL)
                             {
                                 const bool add_image_to_target = true;
@@ -1305,9 +1284,10 @@ DynamicLoaderMacOSXDYLD::UpdateImageInfosHeaderAndLoadCommands(DYLDImageInfo::co
         if (!exe_module_sp)
         {
             ArchSpec exe_arch_spec (image_infos[exe_idx].GetArchitecture ());
-            exe_module_sp = m_process->GetTarget().GetSharedModule (image_infos[exe_idx].file_spec,
-                                                                    exe_arch_spec,
-                                                                    &image_infos[exe_idx].uuid);
+            ModuleSpec module_spec (image_infos[exe_idx].file_spec, 
+                                    image_infos[exe_idx].GetArchitecture ());
+            module_spec.GetUUID() = image_infos[exe_idx].uuid;
+            exe_module_sp = m_process->GetTarget().GetSharedModule (module_spec);
             if (!exe_module_sp || exe_module_sp->GetObjectFile() == NULL)
             {
                 const bool add_image_to_target = true;

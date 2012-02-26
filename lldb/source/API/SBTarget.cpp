@@ -1627,22 +1627,17 @@ SBTarget::AddModule (const char *path,
     TargetSP target_sp(GetSP());
     if (target_sp)
     {
-        FileSpec module_file_spec;
-        UUID module_uuid;
-        ArchSpec module_arch;
-
+        ModuleSpec module_spec;
         if (path)
-            module_file_spec.SetFile(path, false);
+            module_spec.GetFileSpec().SetFile(path, false);
 
         if (uuid_cstr)
-            module_uuid.SetfromCString(uuid_cstr);
+            module_spec.GetUUID().SetfromCString(uuid_cstr);
 
         if (triple)
-            module_arch.SetTriple (triple, target_sp->GetPlatform ().get());
+            module_spec.GetArchitecture().SetTriple (triple, target_sp->GetPlatform ().get());
 
-        sb_module.SetSP(target_sp->GetSharedModule (module_file_spec,
-                                                      module_arch,
-                                                      uuid_cstr ? &module_uuid : NULL));
+        sb_module.SetSP(target_sp->GetSharedModule (module_spec));
     }
     return sb_module;
 }
@@ -1697,8 +1692,9 @@ SBTarget::FindModule (const SBFileSpec &sb_file_spec)
     TargetSP target_sp(GetSP());
     if (target_sp && sb_file_spec.IsValid())
     {
+        ModuleSpec module_spec(*sb_file_spec);
         // The module list is thread safe, no need to lock
-        sb_module.SetSP (target_sp->GetImages().FindFirstModuleForFileSpec (*sb_file_spec, NULL, NULL));
+        sb_module.SetSP (target_sp->GetImages().FindFirstModule (module_spec));
     }
     return sb_module;
 }

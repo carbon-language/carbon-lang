@@ -2467,13 +2467,15 @@ ProcessGDBRemote::GetDispatchQueueNameForThread
         {
             static ConstString g_dispatch_queue_offsets_symbol_name ("dispatch_queue_offsets");
             const Symbol *dispatch_queue_offsets_symbol = NULL;
-            ModuleSP module_sp(GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libSystem.B.dylib", false), NULL, NULL));
+            ModuleSpec libSystem_module_spec (FileSpec("libSystem.B.dylib", false));
+            ModuleSP module_sp(GetTarget().GetImages().FindFirstModule (libSystem_module_spec));
             if (module_sp)
                 dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
             
             if (dispatch_queue_offsets_symbol == NULL)
             {
-                module_sp = GetTarget().GetImages().FindFirstModuleForFileSpec (FileSpec("libdispatch.dylib", false), NULL, NULL);
+                ModuleSpec libdispatch_module_spec (FileSpec("libdispatch.dylib", false));
+                module_sp = GetTarget().GetImages().FindFirstModule (libdispatch_module_spec);
                 if (module_sp)
                     dispatch_queue_offsets_symbol = module_sp->FindFirstSymbolWithNameAndType (g_dispatch_queue_offsets_symbol_name, eSymbolTypeData);
             }

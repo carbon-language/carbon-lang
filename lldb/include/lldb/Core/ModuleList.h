@@ -275,10 +275,7 @@ public:
     ///     The number of matching modules found by the search.
     //------------------------------------------------------------------
     size_t
-    FindModules (const FileSpec *file_spec_ptr,
-                 const ArchSpec *arch_ptr,
-                 const lldb_private::UUID *uuid_ptr,
-                 const ConstString *object_name,
+    FindModules (const ModuleSpec &module_spec,
                  ModuleList& matching_module_list) const;
 
     lldb::ModuleSP
@@ -295,14 +292,7 @@ public:
     FindModule (const UUID &uuid);
     
     lldb::ModuleSP
-    FindFirstModuleForFileSpec (const FileSpec &file_spec,
-                                const ArchSpec *arch_ptr,
-                                const ConstString *object_name);
-
-    lldb::ModuleSP
-    FindFirstModuleForPlatormFileSpec (const FileSpec &platform_file_spec, 
-                                       const ArchSpec *arch_ptr,
-                                       const ConstString *object_name);
+    FindFirstModule (const ModuleSpec &module_spec);
 
     size_t
     FindSymbolsWithNameAndType (const ConstString &name,
@@ -410,11 +400,7 @@ public:
     ModuleIsInCache (const Module *module_ptr);
 
     static Error
-    GetSharedModule (const FileSpec& file_spec,
-                     const ArchSpec& arch,
-                     const lldb_private::UUID *uuid_ptr,
-                     const ConstString *object_name,
-                     off_t object_offset,
+    GetSharedModule (const ModuleSpec &module_spec,
                      lldb::ModuleSP &module_sp,
                      const FileSpecList *module_search_paths_ptr,
                      lldb::ModuleSP *old_module_sp_ptr,
@@ -425,10 +411,7 @@ public:
     RemoveSharedModule (lldb::ModuleSP &module_sp);
 
     static size_t
-    FindSharedModules (const FileSpec& in_file_spec,
-                       const ArchSpec& arch,
-                       const lldb_private::UUID *uuid_ptr,
-                       const ConstString *object_name_ptr,
+    FindSharedModules (const ModuleSpec &module_spec,
                        ModuleList &matching_module_list);
 
     static uint32_t

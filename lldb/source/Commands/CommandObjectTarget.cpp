@@ -1658,6 +1658,7 @@ FindModulesByName (Target *target,
 {
 // Dump specified images (by basename or fullpath)
     FileSpec module_file_spec(module_name, false);
+    ModuleSpec module_spec (module_file_spec);
     
     const size_t initial_size = module_list.GetSize ();
 
@@ -1665,29 +1666,20 @@ FindModulesByName (Target *target,
     
     if (target)
     {
-        num_matches = target->GetImages().FindModules (&module_file_spec, 
-                                                       NULL, 
-                                                       NULL, 
-                                                       NULL, 
-                                                       module_list);
+        num_matches = target->GetImages().FindModules (module_spec, module_list);
     
         // Not found in our module list for our target, check the main
         // shared module list in case it is a extra file used somewhere
         // else
         if (num_matches == 0)
-            num_matches = ModuleList::FindSharedModules (module_file_spec, 
-                                                         target->GetArchitecture(), 
-                                                         NULL, 
-                                                         NULL, 
-                                                         module_list);
+        {
+            module_spec.GetArchitecture() = target->GetArchitecture();
+            num_matches = ModuleList::FindSharedModules (module_spec, module_list);
+        }
     }
     else
     {
-        num_matches = ModuleList::FindSharedModules (module_file_spec, 
-                                                     ArchSpec(),
-                                                     NULL, 
-                                                     NULL, 
-                                                     module_list);
+        num_matches = ModuleList::FindSharedModules (module_spec,module_list);
     }
     
     if (check_global_list && num_matches == 0)
@@ -1702,7 +1694,7 @@ FindModulesByName (Target *target,
             
             if (module)
             {
-                if (FileSpec::Equal(module->GetFileSpec(), module_file_spec, true))
+                if (module->MatchesModuleSpec (module_spec))
                 {
                     module_sp = module->shared_from_this();
                     module_list.AppendIfNeeded(module_sp);
@@ -2395,10 +2387,10 @@ public:
                     if (path)
                     {
                         FileSpec file_spec(path, true);
-                        ArchSpec arch;
                         if (file_spec.Exists())
                         {
-                            ModuleSP module_sp (target->GetSharedModule(file_spec, arch));
+                            ModuleSpec module_spec (file_spec);
+                            ModuleSP module_sp (target->GetSharedModule (module_spec));
                             if (!module_sp)
                             {
                                 result.AppendError ("one or more executable image paths must be specified");
@@ -2492,23 +2484,25 @@ public:
         else
         {
             const size_t argc = args.GetArgumentCount();
-            const FileSpec *file_ptr = NULL;
-            const UUID *uuid_ptr = NULL;
+            ModuleSpec module_spec;
+            bool search_using_module_spec = false;
             if (m_file_option.GetOptionValue().OptionWasSet())
-                file_ptr = &m_file_option.GetOptionValue().GetCurrentValue();
+            {
+                search_using_module_spec = true;
+                module_spec.GetFileSpec() = m_file_option.GetOptionValue().GetCurrentValue();
+            }
             
             if (m_uuid_option_group.GetOptionValue().OptionWasSet())
-                uuid_ptr = &m_uuid_option_group.GetOptionValue().GetCurrentValue();
+            {
+                search_using_module_spec = true;
+                module_spec.GetUUID() = m_uuid_option_group.GetOptionValue().GetCurrentValue();
+            }
 
-            if (file_ptr || uuid_ptr)
+            if (search_using_module_spec)
             {
                 
                 ModuleList matching_modules;
-                const size_t num_matches = target->GetImages().FindModules (file_ptr,   // File spec to match (can be NULL to match by UUID only)
-                                                                            NULL,       // Architecture
-                                                                            uuid_ptr,   // UUID to match (can be NULL to not match on UUID)
-                                                                            NULL,       // Object name
-                                                                            matching_modules);
+                const size_t num_matches = target->GetImages().FindModules (module_spec, matching_modules);
 
                 char path[PATH_MAX];
                 if (num_matches == 1)
@@ -2630,13 +2624,14 @@ public:
                 else
                 {
                     char uuid_cstr[64];
-                    if (file_ptr)
-                        file_ptr->GetPath (path, sizeof(path));
+                    
+                    if (module_spec.GetFileSpec())
+                        module_spec.GetFileSpec().GetPath (path, sizeof(path));
                     else
                         path[0] = '\0';
 
-                    if (uuid_ptr)
-                        uuid_ptr->GetAsCString(uuid_cstr, sizeof(uuid_cstr));
+                    if (module_spec.GetUUIDPtr())
+                        module_spec.GetUUID().GetAsCString(uuid_cstr, sizeof(uuid_cstr));
                     else
                         uuid_cstr[0] = '\0';
                     if (num_matches > 1)
@@ -3576,9 +3571,8 @@ public:
                                         
                                         ModuleSP target_exe_module_sp (target->GetExecutableModule());
                                         const bool adding_symbols_to_executable = target_exe_module_sp.get() == old_module_sp.get();
-                                        FileSpec target_module_file (old_module_sp->GetFileSpec());
-                                        ArchSpec target_module_arch (old_module_sp->GetArchitecture());
-
+                                        ModuleSpec module_spec (old_module_sp->GetFileSpec(), old_module_sp->GetArchitecture());
+                                        module_spec.GetSymbolFileSpec() = symfile_spec;
                                         // Unload the old module
                                         ModuleList module_list;
                                         module_list.Append (old_module_sp);
@@ -3590,7 +3584,14 @@ public:
                                         // Now create the new module and load it
                                         module_list.Clear();
                                         //ModuleSP new_module_sp (new Module (target_module_file, target_module_arch));
-                                        ModuleSP new_module_sp (target->GetSharedModule(target_module_file, target_module_arch));
+                                        ModuleSP new_module_sp;
+                                                                
+                                        Error error (ModuleList::GetSharedModule (module_spec, 
+                                                                                  new_module_sp, 
+                                                                                  &target->GetExecutableSearchPaths(),
+                                                                                  NULL,
+                                                                                  NULL));
+                                                        
                                         if (new_module_sp)
                                         {
                                             new_module_sp->SetSymbolFileFileSpec (symfile_module_sp->GetFileSpec());

@@ -190,7 +190,11 @@ DynamicLoaderDarwinKernel::OSKextLoadedKextSummary::LoadImageUsingMemoryModule (
             module_sp = target_images.FindModule(uuid);
             
             if (!module_sp)
-                module_sp = target.GetSharedModule (FileSpec(), target.GetArchitecture(), &uuid);
+            {
+                ModuleSpec module_spec (FileSpec(), target.GetArchitecture());
+                module_spec.GetUUID() = uuid;
+                module_sp = target.GetSharedModule (module_spec);
+            }
         }
     }
     

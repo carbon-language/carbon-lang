@@ -21,6 +21,7 @@
 #include "lldb/Core/ArchSpec.h"
 #include "lldb/Core/DataBuffer.h"
 #include "lldb/Core/DataExtractor.h"
+#include "lldb/Core/Module.h"
 #include "lldb/Core/Timer.h"
 #include "lldb/Core/UUID.h"
 #include "lldb/Host/Endian.h"
@@ -286,9 +287,7 @@ LocateDSYMMachFileInDSYMBundle
 static int
 LocateMacOSXFilesUsingDebugSymbols
 (
-    const FileSpec *exec_fspec, // An executable path that may or may not be correct if UUID is specified
-    const ArchSpec* arch,       // Limit the search to files with this architecture if non-NULL
-    const lldb_private::UUID *uuid,           // Match the UUID value if non-NULL,
+    const ModuleSpec &module_spec,
     FileSpec *out_exec_fspec,   // If non-NULL, try and find the executable
     FileSpec *out_dsym_fspec    // If non-NULL try and find the debug symbol file
 )
@@ -302,6 +301,9 @@ LocateMacOSXFilesUsingDebugSymbols
         out_dsym_fspec->Clear();
 
 #if !defined (__arm__) // No DebugSymbols on the iOS devices
+
+    const UUID *uuid = module_spec.GetUUIDPtr();
+    const ArchSpec *arch = module_spec.GetArchitecturePtr();
 
     if (uuid && uuid->IsValid())
     {
@@ -330,7 +332,7 @@ LocateMacOSXFilesUsingDebugSymbols
             if (module_uuid_ref.get())
             {
                 CFCReleaser<CFURLRef> exec_url;
-
+                const FileSpec *exec_fspec = module_spec.GetFileSpecPtr();
                 if (exec_fspec)
                 {
                     char exec_cf_path[PATH_MAX];
@@ -450,8 +452,9 @@ LocateMacOSXFilesUsingDebugSymbols
 }
 
 static bool
-LocateDSYMInVincinityOfExecutable (const FileSpec *exec_fspec, const ArchSpec* arch, const lldb_private::UUID *uuid, FileSpec &dsym_fspec)
+LocateDSYMInVincinityOfExecutable (const ModuleSpec &module_spec, FileSpec &dsym_fspec)
 {
+    const FileSpec *exec_fspec = module_spec.GetFileSpecPtr();
     if (exec_fspec)
     {
         char path[PATH_MAX];
@@ -466,7 +469,7 @@ LocateDSYMInVincinityOfExecutable (const FileSpec *exec_fspec, const ArchSpec* a
 
                 dsym_fspec.SetFile(path, false);
 
-                if (dsym_fspec.Exists() && FileAtPathContainsArchAndUUID (dsym_fspec, arch, uuid))
+                if (dsym_fspec.Exists() && FileAtPathContainsArchAndUUID (dsym_fspec, module_spec.GetArchitecturePtr(), module_spec.GetUUIDPtr()))
                 {
                     return true;
                 }
@@ -484,7 +487,7 @@ LocateDSYMInVincinityOfExecutable (const FileSpec *exec_fspec, const ArchSpec* a
                             strncat(path, ".dSYM/Contents/Resources/DWARF/", sizeof(path));
                             strncat(path, exec_fspec->GetFilename().AsCString(), sizeof(path));
                             dsym_fspec.SetFile(path, false);
-                            if (dsym_fspec.Exists() && FileAtPathContainsArchAndUUID (dsym_fspec, arch, uuid))
+                            if (dsym_fspec.Exists() && FileAtPathContainsArchAndUUID (dsym_fspec, module_spec.GetArchitecturePtr(), module_spec.GetUUIDPtr()))
                                 return true;
                             else
                             {
@@ -510,8 +513,11 @@ LocateDSYMInVincinityOfExecutable (const FileSpec *exec_fspec, const ArchSpec* a
 }
 
 FileSpec
-Symbols::LocateExecutableObjectFile (const FileSpec *exec_fspec, const ArchSpec* arch, const lldb_private::UUID *uuid)
+Symbols::LocateExecutableObjectFile (const ModuleSpec &module_spec)
 {
+    const FileSpec *exec_fspec = module_spec.GetFileSpecPtr();
+    const ArchSpec *arch = module_spec.GetArchitecturePtr();
+    const UUID *uuid = module_spec.GetUUIDPtr();
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "LocateExecutableObjectFile (file = %s, arch = %s, uuid = %p)",
                         exec_fspec ? exec_fspec->GetFilename().AsCString ("<NULL>") : "<NULL>",
@@ -519,16 +525,20 @@ Symbols::LocateExecutableObjectFile (const FileSpec *exec_fspec, const ArchSpec*
                         uuid);
 
     FileSpec objfile_fspec;
-    if (exec_fspec && FileAtPathContainsArchAndUUID (*exec_fspec, arch, uuid))
-        objfile_fspec = *exec_fspec;
+    if (exec_fspec && FileAtPathContainsArchAndUUID (exec_fspec, arch, uuid))
+        objfile_fspec = exec_fspec;
     else
-        LocateMacOSXFilesUsingDebugSymbols (exec_fspec, arch, uuid, &objfile_fspec, NULL);
+        LocateMacOSXFilesUsingDebugSymbols (module_spec, &objfile_fspec, NULL);
     return objfile_fspec;
 }
 
 FileSpec
-Symbols::LocateExecutableSymbolFile (const FileSpec *exec_fspec, const ArchSpec* arch, const lldb_private::UUID *uuid)
+Symbols::LocateExecutableSymbolFile (const ModuleSpec &module_spec)
 {
+    const FileSpec *exec_fspec = module_spec.GetFileSpecPtr();
+    const ArchSpec *arch = module_spec.GetArchitecturePtr();
+    const UUID *uuid = module_spec.GetUUIDPtr();
+
     Timer scoped_timer (__PRETTY_FUNCTION__,
                         "LocateExecutableSymbolFile (file = %s, arch = %s, uuid = %p)",
                         exec_fspec ? exec_fspec->GetFilename().AsCString ("<NULL>") : "<NULL>",
@@ -538,10 +548,10 @@ Symbols::LocateExecutableSymbolFile (const FileSpec *exec_fspec, const ArchSpec*
     FileSpec symbol_fspec;
     // First try and find the dSYM in the same directory as the executable or in
     // an appropriate parent directory
-    if (LocateDSYMInVincinityOfExecutable (exec_fspec, arch, uuid, symbol_fspec) == false)
+    if (LocateDSYMInVincinityOfExecutable (module_spec, symbol_fspec) == false)
     {
         // We failed to easily find the dSYM above, so use DebugSymbols
-        LocateMacOSXFilesUsingDebugSymbols (exec_fspec, arch, uuid, NULL, &symbol_fspec);
+        LocateMacOSXFilesUsingDebugSymbols (module_spec, NULL, &symbol_fspec);
     }
     return symbol_fspec;
 }

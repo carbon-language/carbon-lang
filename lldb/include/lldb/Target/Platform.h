@@ -232,11 +232,7 @@ namespace lldb_private {
                  FileSpec &local_file);
 
         virtual Error
-        GetSharedModule (const FileSpec &platform_file, 
-                         const ArchSpec &arch,
-                         const UUID *uuid_ptr,
-                         const ConstString *object_name_ptr,
-                         off_t object_offset,
+        GetSharedModule (const ModuleSpec &module_spec, 
                          lldb::ModuleSP &module_sp,
                          const FileSpecList *module_search_paths_ptr,
                          lldb::ModuleSP *old_module_sp_ptr,

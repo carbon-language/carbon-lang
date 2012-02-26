@@ -140,13 +140,10 @@ PlatformiOSSimulator::ResolveExecutable (const FileSpec &exe_file,
 
     if (resolved_exe_file.Exists())
     {
+        ModuleSpec module_spec(resolved_exe_file, exe_arch);
         if (exe_arch.IsValid())
         {
-            error = ModuleList::GetSharedModule (resolved_exe_file, 
-                                                 exe_arch, 
-                                                 NULL,
-                                                 NULL, 
-                                                 0, 
+            error = ModuleList::GetSharedModule (module_spec, 
                                                  exe_module_sp, 
                                                  NULL,
                                                  NULL, 
@@ -161,13 +158,10 @@ PlatformiOSSimulator::ResolveExecutable (const FileSpec &exe_file,
         // using (in the correct order) and see if we can find a match that way
         StreamString arch_names;
         ArchSpec platform_arch;
-        for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, platform_arch); ++idx)
+        for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, module_spec.GetArchitecture()); ++idx)
         {
-            error = ModuleList::GetSharedModule (resolved_exe_file, 
-                                                 platform_arch, 
-                                                 NULL,
-                                                 NULL, 
-                                                 0, 
+            
+            error = ModuleList::GetSharedModule (module_spec, 
                                                  exe_module_sp, 
                                                  NULL,
                                                  NULL, 
@@ -314,11 +308,7 @@ PlatformiOSSimulator::GetFile (const FileSpec &platform_file,
 }
 
 Error
-PlatformiOSSimulator::GetSharedModule (const FileSpec &platform_file, 
-                                       const ArchSpec &arch,
-                                       const UUID *uuid_ptr,
-                                       const ConstString *object_name_ptr,
-                                       off_t object_offset,
+PlatformiOSSimulator::GetSharedModule (const ModuleSpec &module_spec,
                                        ModuleSP &module_sp,
                                        const FileSpecList *module_search_paths_ptr,
                                        ModuleSP *old_module_sp_ptr,
@@ -330,19 +320,16 @@ PlatformiOSSimulator::GetSharedModule (const FileSpec &platform_file,
     // with the right UUID.
     Error error;
     FileSpec local_file;
-    error = GetFile (platform_file, uuid_ptr, local_file);
+    const FileSpec &platform_file = module_spec.GetFileSpec();
+    error = GetFile (platform_file, module_spec.GetUUIDPtr(), local_file);
     if (error.Success())
     {
-        error = ResolveExecutable (local_file, arch, module_sp, module_search_paths_ptr);
+        error = ResolveExecutable (local_file, module_spec.GetArchitecture(), module_sp, module_search_paths_ptr);
     }
     else
     {
         const bool always_create = false;
-        error = ModuleList::GetSharedModule (platform_file, 
-                                             arch, 
-                                             uuid_ptr, 
-                                             object_name_ptr, 
-                                             object_offset, 
+        error = ModuleList::GetSharedModule (module_spec, 
                                              module_sp,
                                              module_search_paths_ptr,
                                              old_module_sp_ptr,

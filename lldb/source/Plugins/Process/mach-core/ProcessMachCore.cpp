@@ -71,11 +71,8 @@ ProcessMachCore::CanDebug(Target &target, bool plugin_specified_by_name)
     // For now we are just making sure the file exists for a given module
     if (!m_core_module_sp && m_core_file.Exists())
     {
-        Error error (ModuleList::GetSharedModule (m_core_file, 
-                                                  target.GetArchitecture(), 
-                                                  NULL, 
-                                                  NULL, 
-                                                  0, 
+        ModuleSpec core_module_spec(m_core_file, target.GetArchitecture());
+        Error error (ModuleList::GetSharedModule (core_module_spec, 
                                                   m_core_module_sp, 
                                                   NULL,
                                                   NULL, 
