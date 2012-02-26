@@ -199,7 +199,7 @@ also be a good place to start.</p>
 <p>Consult the <a href="#starting">Getting Started with LLVM</a> section for
 detailed information on configuring and compiling LLVM.  See <a
 href="#environment">Setting Up Your Environment</a> for tips that simplify
-working with the GCC front end and LLVM tools.  Go to <a href="#layout">Program
+working with the Clang front end and LLVM tools.  Go to <a href="#layout">Program
 Layout</a> to learn about the layout of the source code tree.</p>
 
 </div>
@@ -375,10 +375,6 @@ able to assemble, disassemble, analyze, and optimize LLVM bitcode.  Code
 generation should work as well, although the generated native code may not work
 on your platform.</p>
 
-<p>The GCC front end is not very portable at the moment.  If you want to get it
-to work on another platform, you can download a copy of the source and <a
-href="GCCFEBuildInstrs.html">try to compile it</a> on your platform.</p>
-
 </div>
 
 <!-- ======================================================================= -->
@@ -551,8 +547,7 @@ href="http://gcc.gnu.org/PR13392">serious bug</a> which causes it to crash in
 the "<tt>convert_from_eh_region_ranges_1</tt>" GCC function.</p>
 
 <p><b>Cygwin GCC 3.3.3</b>: The version of GCC 3.3.3 commonly shipped with 
-   Cygwin does not work.  Please <a href="GCCFEBuildInstrs.html#cygwin">upgrade 
-   to a newer version</a> if possible.</p>
+   Cygwin does not work.</p>
 <p><b>SuSE GCC 3.3.3</b>: The version of GCC 3.3.3 shipped with SuSE 9.1 (and 
    possibly others) does not compile LLVM correctly (it appears that exception 
    handling is broken in some cases).  Please download the FSF 3.3.3 or upgrade
@@ -664,12 +659,6 @@ All these paths are absolute:</p>
     can be the same as SRC_ROOT).
     <br><br>
 
-    <dt>LLVMGCCDIR
-    <dd>
-    This is where the LLVM GCC Front End is installed.
-    <p>
-    For the pre-built GCC front end binaries, the LLVMGCCDIR is
-    <tt>llvm-gcc/<i>platform</i>/llvm-gcc</tt>.
 </dl>
 
 </div>
@@ -795,10 +784,6 @@ you get it from the Subversion repository:</p>
 <p>By placing it in the <tt>llvm/projects</tt>, it will be automatically
 configured by the LLVM configure script as well as automatically updated when
 you run <tt>svn update</tt>.</p>
-
-<p>If you would like to get the GCC front end source code, you can also get it 
-and build it yourself.  Please follow <a href="GCCFEBuildInstrs.html">these 
-instructions</a> to successfully get and build the LLVM GCC front-end.</p>
 
 </div>
 
@@ -1451,7 +1436,7 @@ different <a href="#tools">tools</a>.</p>
 <div>
 
 <p>This directory contains libraries which are compiled into LLVM bitcode and
-used when linking programs with the GCC front end.  Most of these libraries are
+used when linking programs with the Clang front end.  Most of these libraries are
 skeleton versions of real libraries; for example, libc is a stripped down
 version of glibc.</p>
 
