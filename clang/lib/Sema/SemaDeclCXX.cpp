@@ -7227,7 +7227,8 @@ CXXDestructorDecl *Sema::DeclareImplicitDestructor(CXXRecordDecl *ClassDecl) {
 void Sema::DefineImplicitDestructor(SourceLocation CurrentLocation,
                                     CXXDestructorDecl *Destructor) {
   assert((Destructor->isDefaulted() &&
-          !Destructor->doesThisDeclarationHaveABody()) &&
+          !Destructor->doesThisDeclarationHaveABody() &&
+          !Destructor->isDeleted()) &&
          "DefineImplicitDestructor - call it for implicit default dtor");
   CXXRecordDecl *ClassDecl = Destructor->getParent();
   assert(ClassDecl && "DefineImplicitDestructor - invalid destructor");
@@ -7677,7 +7678,8 @@ void Sema::DefineImplicitCopyAssignment(SourceLocation CurrentLocation,
   assert((CopyAssignOperator->isDefaulted() && 
           CopyAssignOperator->isOverloadedOperator() &&
           CopyAssignOperator->getOverloadedOperator() == OO_Equal &&
-          !CopyAssignOperator->doesThisDeclarationHaveABody()) &&
+          !CopyAssignOperator->doesThisDeclarationHaveABody() &&
+          !CopyAssignOperator->isDeleted()) &&
          "DefineImplicitCopyAssignment called for wrong function");
 
   CXXRecordDecl *ClassDecl = CopyAssignOperator->getParent();
@@ -8105,7 +8107,8 @@ void Sema::DefineImplicitMoveAssignment(SourceLocation CurrentLocation,
   assert((MoveAssignOperator->isDefaulted() && 
           MoveAssignOperator->isOverloadedOperator() &&
           MoveAssignOperator->getOverloadedOperator() == OO_Equal &&
-          !MoveAssignOperator->doesThisDeclarationHaveABody()) &&
+          !MoveAssignOperator->doesThisDeclarationHaveABody() &&
+          !MoveAssignOperator->isDeleted()) &&
          "DefineImplicitMoveAssignment called for wrong function");
 
   CXXRecordDecl *ClassDecl = MoveAssignOperator->getParent();
@@ -8592,7 +8595,8 @@ void Sema::DefineImplicitCopyConstructor(SourceLocation CurrentLocation,
                                    CXXConstructorDecl *CopyConstructor) {
   assert((CopyConstructor->isDefaulted() &&
           CopyConstructor->isCopyConstructor() &&
-          !CopyConstructor->doesThisDeclarationHaveABody()) &&
+          !CopyConstructor->doesThisDeclarationHaveABody() &&
+          !CopyConstructor->isDeleted()) &&
          "DefineImplicitCopyConstructor - call it for implicit copy ctor");
 
   CXXRecordDecl *ClassDecl = CopyConstructor->getParent();
@@ -8747,7 +8751,8 @@ void Sema::DefineImplicitMoveConstructor(SourceLocation CurrentLocation,
                                    CXXConstructorDecl *MoveConstructor) {
   assert((MoveConstructor->isDefaulted() &&
           MoveConstructor->isMoveConstructor() &&
-          !MoveConstructor->doesThisDeclarationHaveABody()) &&
+          !MoveConstructor->doesThisDeclarationHaveABody() &&
+          !MoveConstructor->isDeleted()) &&
          "DefineImplicitMoveConstructor - call it for implicit move ctor");
 
   CXXRecordDecl *ClassDecl = MoveConstructor->getParent();

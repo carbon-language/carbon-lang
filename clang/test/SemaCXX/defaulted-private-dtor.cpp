@@ -2,7 +2,7 @@
 
 class BadDtor {
   // A private, but nonetheless trivial, destructor.
-  ~BadDtor() = default; // expected-note 11{{here}}
+  ~BadDtor() = default; // expected-note 9{{here}}
   friend class K;
 };
 void f() {
@@ -14,13 +14,13 @@ void f() {
 }
 struct V { // expected-note {{here}}
   V();
-  BadDtor bd; // expected-error {{private destructor}}
+  BadDtor bd;
 };
-V v; // expected-error {{deleted function}} expected-note {{required here}}
-struct W : BadDtor { // expected-note {{here}} expected-error {{private destructor}}
+V v; // expected-error {{deleted function}}
+struct W : BadDtor { // expected-note {{here}}
   W();
 };
-W w; // expected-error {{deleted function}} expected-note {{required here}}
+W w; // expected-error {{deleted function}}
 struct X : BadDtor { // expected-error {{private destructor}}
   ~X() {}
 };
