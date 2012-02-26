@@ -1085,11 +1085,11 @@ public:
 /// the APFloat/APInt values will never get freed. APNumericStorage uses
 /// ASTContext's allocator for memory allocation.
 class APNumericStorage {
-  unsigned BitWidth;
   union {
     uint64_t VAL;    ///< Used to store the <= 64 bits integer value.
     uint64_t *pVal;  ///< Used to store the >64 bits integer value.
   };
+  unsigned BitWidth;
 
   bool hasAllocation() const { return llvm::APInt::getNumWords(BitWidth) > 1; }
 
@@ -1097,7 +1097,7 @@ class APNumericStorage {
   APNumericStorage& operator=(const APNumericStorage&); // do not implement
 
 protected:
-  APNumericStorage() : BitWidth(0), VAL(0) { }
+  APNumericStorage() : VAL(0), BitWidth(0) { }
 
   llvm::APInt getIntValue() const {
     unsigned NumWords = llvm::APInt::getNumWords(BitWidth);
@@ -1109,7 +1109,7 @@ protected:
   void setIntValue(ASTContext &C, const llvm::APInt &Val);
 };
 
-class APIntStorage : public APNumericStorage {
+class APIntStorage : private APNumericStorage {
 public:
   llvm::APInt getValue() const { return getIntValue(); }
   void setValue(ASTContext &C, const llvm::APInt &Val) { setIntValue(C, Val); }
@@ -1125,8 +1125,7 @@ public:
   }
 };
 
-class IntegerLiteral : public Expr {
-  APIntStorage Num;
+class IntegerLiteral : public Expr, public APIntStorage {
   SourceLocation Loc;
 
   /// \brief Construct an empty integer literal.
@@ -1156,13 +1155,11 @@ public:
   /// \brief Returns a new empty integer literal.
   static IntegerLiteral *Create(ASTContext &C, EmptyShell Empty);
 
-  llvm::APInt getValue() const { return Num.getValue(); }
   SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   /// \brief Retrieve the location of the literal.
   SourceLocation getLocation() const { return Loc; }
 
-  void setValue(ASTContext &C, const llvm::APInt &Val) { Num.setValue(C, Val); }
   void setLocation(SourceLocation Location) { Loc = Location; }
 
   static bool classof(const Stmt *T) {
