@@ -93,8 +93,8 @@ struct Modifier {
 
 public:
   /// C'tor
-  Modifier(BasicBlock *_BB, PieceTable *PT, Random *R):
-    BB(_BB),PT(PT),Ran(R),Context(BB->getContext()) {};
+  Modifier(BasicBlock *Block, PieceTable *PT, Random *R):
+    BB(Block),PT(PT),Ran(R),Context(BB->getContext()) {};
   /// Add a new instruction.
   virtual void Act() = 0;
   /// Add N new instructions,
