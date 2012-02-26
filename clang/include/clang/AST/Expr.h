@@ -1115,7 +1115,7 @@ public:
   void setValue(ASTContext &C, const llvm::APInt &Val) { setIntValue(C, Val); }
 };
 
-class APFloatStorage : public APNumericStorage {
+class APFloatStorage : private APNumericStorage {
 public:
   llvm::APFloat getValue(bool IsIEEE) const {
     return llvm::APFloat(getIntValue(), IsIEEE);
@@ -1183,28 +1183,30 @@ public:
 private:
   unsigned Value;
   SourceLocation Loc;
-  unsigned Kind : 2;
 public:
   // type should be IntTy
   CharacterLiteral(unsigned value, CharacterKind kind, QualType type,
                    SourceLocation l)
     : Expr(CharacterLiteralClass, type, VK_RValue, OK_Ordinary, false, false,
            false, false),
-      Value(value), Loc(l), Kind(kind) {
+      Value(value), Loc(l) {
+    CharacterLiteralBits.Kind = kind;
   }
 
   /// \brief Construct an empty character literal.
   CharacterLiteral(EmptyShell Empty) : Expr(CharacterLiteralClass, Empty) { }
 
   SourceLocation getLocation() const { return Loc; }
-  CharacterKind getKind() const { return static_cast<CharacterKind>(Kind); }
+  CharacterKind getKind() const {
+    return static_cast<CharacterKind>(CharacterLiteralBits.Kind);
+  }
 
   SourceRange getSourceRange() const { return SourceRange(Loc); }
 
   unsigned getValue() const { return Value; }
 
   void setLocation(SourceLocation Location) { Loc = Location; }
-  void setKind(CharacterKind kind) { Kind = kind; }
+  void setKind(CharacterKind kind) { CharacterLiteralBits.Kind = kind; }
   void setValue(unsigned Val) { Value = Val; }
 
   static bool classof(const Stmt *T) {
@@ -1216,41 +1218,41 @@ public:
   child_range children() { return child_range(); }
 };
 
-class FloatingLiteral : public Expr {
-  APFloatStorage Num;
-  bool IsIEEE : 1; // Distinguishes between PPC128 and IEEE128.
-  bool IsExact : 1;
+class FloatingLiteral : public Expr, private APFloatStorage {
   SourceLocation Loc;
 
   FloatingLiteral(ASTContext &C, const llvm::APFloat &V, bool isexact,
                   QualType Type, SourceLocation L)
     : Expr(FloatingLiteralClass, Type, VK_RValue, OK_Ordinary, false, false,
-           false, false),
-      IsIEEE(&C.getTargetInfo().getLongDoubleFormat() ==
-             &llvm::APFloat::IEEEquad),
-      IsExact(isexact), Loc(L) {
+           false, false), Loc(L) {
+    FloatingLiteralBits.IsIEEE =
+      &C.getTargetInfo().getLongDoubleFormat() == &llvm::APFloat::IEEEquad;
+    FloatingLiteralBits.IsExact = isexact;
     setValue(C, V);
   }
 
   /// \brief Construct an empty floating-point literal.
   explicit FloatingLiteral(ASTContext &C, EmptyShell Empty)
-    : Expr(FloatingLiteralClass, Empty),
-      IsIEEE(&C.getTargetInfo().getLongDoubleFormat() ==
-             &llvm::APFloat::IEEEquad),
-      IsExact(false) { }
+    : Expr(FloatingLiteralClass, Empty) {
+    FloatingLiteralBits.IsIEEE =
+      &C.getTargetInfo().getLongDoubleFormat() == &llvm::APFloat::IEEEquad;
+    FloatingLiteralBits.IsExact = false;
+  }
 
 public:
   static FloatingLiteral *Create(ASTContext &C, const llvm::APFloat &V,
                                  bool isexact, QualType Type, SourceLocation L);
   static FloatingLiteral *Create(ASTContext &C, EmptyShell Empty);
 
-  llvm::APFloat getValue() const { return Num.getValue(IsIEEE); }
+  llvm::APFloat getValue() const {
+    return APFloatStorage::getValue(FloatingLiteralBits.IsIEEE);
+  }
   void setValue(ASTContext &C, const llvm::APFloat &Val) {
-    Num.setValue(C, Val);
+    APFloatStorage::setValue(C, Val);
   }
 
-  bool isExact() const { return IsExact; }
-  void setExact(bool E) { IsExact = E; }
+  bool isExact() const { return FloatingLiteralBits.IsExact; }
+  void setExact(bool E) { FloatingLiteralBits.IsExact = E; }
 
   /// getValueAsApproximateDouble - This returns the value as an inaccurate
   /// double.  Note that this may cause loss of precision, but is useful for
@@ -1824,8 +1826,6 @@ public:
 /// expression operand.  Used for sizeof/alignof (C99 6.5.3.4) and
 /// vec_step (OpenCL 1.1 6.11.12).
 class UnaryExprOrTypeTraitExpr : public Expr {
-  unsigned Kind : 2;
-  bool isType : 1;    // true if operand is a type, false if an expression
   union {
     TypeSourceInfo *Ty;
     Stmt *Ex;
@@ -1842,7 +1842,9 @@ public:
            TInfo->getType()->isDependentType(),
            TInfo->getType()->isInstantiationDependentType(),
            TInfo->getType()->containsUnexpandedParameterPack()),
-      Kind(ExprKind), isType(true), OpLoc(op), RParenLoc(rp) {
+      OpLoc(op), RParenLoc(rp) {
+    UnaryExprOrTypeTraitExprBits.Kind = ExprKind;
+    UnaryExprOrTypeTraitExprBits.IsType = true;
     Argument.Ty = TInfo;
   }
 
@@ -1855,7 +1857,9 @@ public:
            E->isTypeDependent(),
            E->isInstantiationDependent(),
            E->containsUnexpandedParameterPack()),
-      Kind(ExprKind), isType(false), OpLoc(op), RParenLoc(rp) {
+      OpLoc(op), RParenLoc(rp) {
+    UnaryExprOrTypeTraitExprBits.Kind = ExprKind;
+    UnaryExprOrTypeTraitExprBits.IsType = false;
     Argument.Ex = E;
   }
 
@@ -1864,11 +1868,11 @@ public:
     : Expr(UnaryExprOrTypeTraitExprClass, Empty) { }
 
   UnaryExprOrTypeTrait getKind() const {
-    return static_cast<UnaryExprOrTypeTrait>(Kind);
+    return static_cast<UnaryExprOrTypeTrait>(UnaryExprOrTypeTraitExprBits.Kind);
   }
-  void setKind(UnaryExprOrTypeTrait K) { Kind = K; }
+  void setKind(UnaryExprOrTypeTrait K) { UnaryExprOrTypeTraitExprBits.Kind = K;}
 
-  bool isArgumentType() const { return isType; }
+  bool isArgumentType() const { return UnaryExprOrTypeTraitExprBits.IsType; }
   QualType getArgumentType() const {
     return getArgumentTypeInfo()->getType();
   }
@@ -1884,10 +1888,13 @@ public:
     return const_cast<UnaryExprOrTypeTraitExpr*>(this)->getArgumentExpr();
   }
 
-  void setArgument(Expr *E) { Argument.Ex = E; isType = false; }
+  void setArgument(Expr *E) {
+    Argument.Ex = E;
+    UnaryExprOrTypeTraitExprBits.IsType = false;
+  }
   void setArgument(TypeSourceInfo *TInfo) {
     Argument.Ty = TInfo;
-    isType = true;
+    UnaryExprOrTypeTraitExprBits.IsType = true;
   }
 
   /// Gets the argument type, or the type of the argument expression, whichever
