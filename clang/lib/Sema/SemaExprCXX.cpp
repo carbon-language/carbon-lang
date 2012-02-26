@@ -1666,9 +1666,13 @@ bool Sema::FindAllocationOverload(SourceLocation StartLoc, SourceRange Range,
 
       Args[i] = Result.takeAs<Expr>();
     }
+
     Operator = FnDecl;
-    CheckAllocationAccess(StartLoc, Range, R.getNamingClass(), Best->FoundDecl,
-                          Diagnose);
+
+    if (CheckAllocationAccess(StartLoc, Range, R.getNamingClass(),
+                              Best->FoundDecl, Diagnose) == AR_inaccessible)
+      return true;
+
     return false;
   }
 
@@ -1895,8 +1899,10 @@ bool Sema::FindDeallocationFunction(SourceLocation StartLoc, CXXRecordDecl *RD,
       return true;
     }
 
-    CheckAllocationAccess(StartLoc, SourceRange(), Found.getNamingClass(),
-                          Matches[0], Diagnose);
+    if (CheckAllocationAccess(StartLoc, SourceRange(), Found.getNamingClass(),
+                              Matches[0], Diagnose) == AR_inaccessible)
+      return true;
+
     return false;
 
   // We found multiple suitable operators;  complain about the ambiguity.

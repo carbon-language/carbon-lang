@@ -1062,6 +1062,10 @@ void CodeGenFunction::EnterDtorCleanups(const CXXDestructorDecl *DD,
     QualType::DestructionKind dtorKind = type.isDestructedType();
     if (!dtorKind) continue;
 
+    // Anonymous union members do not have their destructors called.
+    const RecordType *RT = type->getAsUnionType();
+    if (RT && RT->getDecl()->isAnonymousStructOrUnion()) continue;
+
     CleanupKind cleanupKind = getCleanupKind(dtorKind);
     EHStack.pushCleanup<DestroyField>(cleanupKind, field,
                                       getDestroyer(dtorKind),
