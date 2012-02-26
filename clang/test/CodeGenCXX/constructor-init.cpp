@@ -201,7 +201,7 @@ namespace PR10720 {
     pair2(const pair2&) = default;
   };
 
-  struct pair {
+  struct pair : X { // Make the copy constructor non-trivial, so we actually generate it.
     int second[4];
     // CHECK-PR10720: define linkonce_odr void @_ZN7PR107204pairC2ERKS0_
     // CHECK-PR10720-NOT: ret
@@ -220,4 +220,3 @@ namespace PR10720 {
   }
 
 }
-

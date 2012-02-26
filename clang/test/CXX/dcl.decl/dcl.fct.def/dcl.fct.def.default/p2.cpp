@@ -35,7 +35,8 @@ struct S3 {
 };
 constexpr S3 s3a = S3(0);
 constexpr S3 s3b = s3a;
-constexpr S3 s3c = S3(); // expected-error {{constant expression}} expected-note {{non-constexpr constructor}}
+constexpr S3 s3c = S3();
+constexpr S3 s3d; // expected-error {{constant expression}} expected-note {{non-constexpr constructor}}
 
 struct S4 {
   S4() = default;

@@ -3871,6 +3871,10 @@ void Sema::CheckExplicitlyDefaultedDefaultConstructor(CXXConstructorDecl *CD) {
     // FIXME: a compatible, but different, explicit exception specification
     // will be silently overridden. We should issue a warning if this happens.
     EPI.ExtInfo = CtorType->getExtInfo();
+
+    // Such a function is also trivial if the implicitly-declared function
+    // would have been.
+    CD->setTrivial(CD->getParent()->hasTrivialDefaultConstructor());
   }
 
   if (HadError) {
@@ -3966,6 +3970,10 @@ void Sema::CheckExplicitlyDefaultedCopyConstructor(CXXConstructorDecl *CD) {
     //  -- [...] it shall have the same parameter type as if it had been
     //     implicitly declared.
     CD->setType(Context.getFunctionType(Context.VoidTy, &ArgType, 1, EPI));
+
+    // Such a function is also trivial if the implicitly-declared function
+    // would have been.
+    CD->setTrivial(CD->getParent()->hasTrivialCopyConstructor());
   }
 
   if (HadError) {
@@ -4053,6 +4061,10 @@ void Sema::CheckExplicitlyDefaultedCopyAssignment(CXXMethodDecl *MD) {
     EPI.RefQualifier = OperType->getRefQualifier();
     EPI.ExtInfo = OperType->getExtInfo();
     MD->setType(Context.getFunctionType(ReturnType, &ArgType, 1, EPI));
+
+    // Such a function is also trivial if the implicitly-declared function
+    // would have been.
+    MD->setTrivial(MD->getParent()->hasTrivialCopyAssignment());
   }
 
   if (HadError) {
@@ -4146,6 +4158,10 @@ void Sema::CheckExplicitlyDefaultedMoveConstructor(CXXConstructorDecl *CD) {
     //  -- [...] it shall have the same parameter type as if it had been
     //     implicitly declared.
     CD->setType(Context.getFunctionType(Context.VoidTy, &ArgType, 1, EPI));
+
+    // Such a function is also trivial if the implicitly-declared function
+    // would have been.
+    CD->setTrivial(CD->getParent()->hasTrivialMoveConstructor());
   }
 
   if (HadError) {
@@ -4231,6 +4247,10 @@ void Sema::CheckExplicitlyDefaultedMoveAssignment(CXXMethodDecl *MD) {
     EPI.RefQualifier = OperType->getRefQualifier();
     EPI.ExtInfo = OperType->getExtInfo();
     MD->setType(Context.getFunctionType(ReturnType, &ArgType, 1, EPI));
+
+    // Such a function is also trivial if the implicitly-declared function
+    // would have been.
+    MD->setTrivial(MD->getParent()->hasTrivialMoveAssignment());
   }
 
   if (HadError) {
@@ -4278,6 +4298,10 @@ void Sema::CheckExplicitlyDefaultedDestructor(CXXDestructorDecl *DD) {
     // There are no parameters.
     EPI.ExtInfo = DtorType->getExtInfo();
     DD->setType(Context.getFunctionType(Context.VoidTy, 0, 0, EPI));
+
+    // Such a function is also trivial if the implicitly-declared function
+    // would have been.
+    DD->setTrivial(DD->getParent()->hasTrivialDestructor());
   }
 
   if (ShouldDeleteSpecialMember(DD, CXXDestructor)) {
@@ -10254,6 +10278,35 @@ void Sema::SetDeclDeleted(Decl *Dcl, SourceLocation DelLoc) {
     // recovery.
   }
   Fn->setDeletedAsWritten();
+
+  CXXMethodDecl *MD = dyn_cast<CXXMethodDecl>(Dcl);
+  if (!MD)
+    return;
+
+  // A deleted special member function is trivial if the corresponding
+  // implicitly-declared function would have been.
+  switch (getSpecialMember(MD)) {
+  case CXXInvalid:
+    break;
+  case CXXDefaultConstructor:
+    MD->setTrivial(MD->getParent()->hasTrivialDefaultConstructor());
+    break;
+  case CXXCopyConstructor:
+    MD->setTrivial(MD->getParent()->hasTrivialCopyConstructor());
+    break;
+  case CXXMoveConstructor:
+    MD->setTrivial(MD->getParent()->hasTrivialMoveConstructor());
+    break;
+  case CXXCopyAssignment:
+    MD->setTrivial(MD->getParent()->hasTrivialCopyAssignment());
+    break;
+  case CXXMoveAssignment:
+    MD->setTrivial(MD->getParent()->hasTrivialMoveAssignment());
+    break;
+  case CXXDestructor:
+    MD->setTrivial(MD->getParent()->hasTrivialDestructor());
+    break;
+  }
 }
 
 void Sema::SetDeclDefaulted(Decl *Dcl, SourceLocation DefaultLoc) {

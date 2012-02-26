@@ -25,10 +25,8 @@ union Deleted1a { UserProvidedDefCtor u; }; // expected-note {{defined here}}
 Deleted1a d1a; // expected-error {{implicitly-deleted default constructor}}
 union NotDeleted1a { DefaultedDefCtor1 nu; };
 NotDeleted1a nd1a;
-// FIXME: clang implements the pre-FDIS rule, under which DefaultedDefCtor2's
-// default constructor is non-trivial.
-union NotDeleted1b { DefaultedDefCtor2 nu; }; // unexpected-note {{defined here}}
-NotDeleted1b nd1b; // unexpected-error {{implicitly-deleted default constructor}}
+union NotDeleted1b { DefaultedDefCtor2 nu; };
+NotDeleted1b nd1b;
 
 // - any non-static data member with no brace-or-equal-initializer is of
 // reference type,
@@ -170,4 +168,3 @@ static_assert(__has_trivial_constructor(Trivial4<int>), "Trivial4 is trivial");
 
 template<typename T> class Trivial5 { Trivial5() = delete; };
 static_assert(__has_trivial_constructor(Trivial5<int>), "Trivial5 is trivial");
-
