@@ -19,6 +19,9 @@ class Ctor {
 class Ctor2 {
   Ctor2(); // expected-note 3 {{because type 'Ctor2' has a user-declared constructor}}
 };
+class CtorTmpl {
+  template<typename T> CtorTmpl(); // expected-note {{because type 'CtorTmpl' has a user-declared constructor}}
+};
 
 class CopyCtor {
   CopyCtor(CopyCtor &cc) { abort(); } // expected-note 4 {{because type 'CopyCtor' has a user-declared copy constructor}}
@@ -38,6 +41,7 @@ union U1 {
   VirtualBase vbase; // expected-error {{union member 'vbase' has a non-trivial copy constructor}}
   Ctor ctor; // expected-error {{union member 'ctor' has a non-trivial constructor}}
   Ctor2 ctor2; // expected-error {{union member 'ctor2' has a non-trivial constructor}}
+  CtorTmpl ctortmpl; // expected-error {{union member 'ctortmpl' has a non-trivial constructor}}
   CopyCtor copyctor; // expected-error {{union member 'copyctor' has a non-trivial copy constructor}}
   CopyAssign copyassign; // expected-error {{union member 'copyassign' has a non-trivial copy assignment operator}}
   Dtor dtor; // expected-error {{union member 'dtor' has a non-trivial destructor}}

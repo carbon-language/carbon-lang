@@ -8935,6 +8935,19 @@ bool Sema::CheckNontrivialField(FieldDecl *FD) {
   return false;
 }
 
+/// If the given constructor is user-provided, produce a diagnostic explaining
+/// that it makes the class non-trivial.
+static bool DiagnoseNontrivialUserProvidedCtor(Sema &S, QualType QT,
+                                               CXXConstructorDecl *CD,
+                                               Sema::CXXSpecialMember CSM) {
+  if (!CD->isUserProvided())
+    return false;
+
+  SourceLocation CtorLoc = CD->getLocation();
+  S.Diag(CtorLoc, diag::note_nontrivial_user_defined) << QT << CSM;
+  return true;
+}
+
 /// DiagnoseNontrivial - Given that a class has a non-trivial
 /// special member, figure out why.
 void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
@@ -8949,17 +8962,20 @@ void Sema::DiagnoseNontrivial(const RecordType* T, CXXSpecialMember member) {
   case CXXDefaultConstructor:
     if (RD->hasUserDeclaredConstructor()) {
       typedef CXXRecordDecl::ctor_iterator ctor_iter;
-      for (ctor_iter ci = RD->ctor_begin(), ce = RD->ctor_end(); ci != ce;++ci){
-        const FunctionDecl *body = 0;
-        ci->hasBody(body);
-        if (!body || !cast<CXXConstructorDecl>(body)->isImplicitlyDefined()) {
-          SourceLocation CtorLoc = ci->getLocation();
-          Diag(CtorLoc, diag::note_nontrivial_user_defined) << QT << member;
+      for (ctor_iter CI = RD->ctor_begin(), CE = RD->ctor_end(); CI != CE; ++CI)
+        if (DiagnoseNontrivialUserProvidedCtor(*this, QT, *CI, member))
           return;
-        }
-      }
 
-      llvm_unreachable("found no user-declared constructors");
+      // No user-provided constructors; look for constructor templates.
+      typedef CXXRecordDecl::specific_decl_iterator<FunctionTemplateDecl>
+          tmpl_iter;
+      for (tmpl_iter TI(RD->decls_begin()), TE(RD->decls_end());
+           TI != TE; ++TI) {
+        CXXConstructorDecl *CD =
+            dyn_cast<CXXConstructorDecl>(TI->getTemplatedDecl());
+        if (CD && DiagnoseNontrivialUserProvidedCtor(*this, QT, CD, member))
+          return;
+      }
     }
     break;
 

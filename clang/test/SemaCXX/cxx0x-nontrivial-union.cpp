@@ -25,3 +25,7 @@ struct s {
     non_trivial nt;
   };
 };
+
+// Don't crash on this.
+struct TemplateCtor { template<typename T> TemplateCtor(T); };
+union TemplateCtorMember { TemplateCtor s; };
