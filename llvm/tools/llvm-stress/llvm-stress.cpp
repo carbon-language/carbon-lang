@@ -224,10 +224,11 @@ struct StoreModifier: public Modifier {
     Value *Ptr = getRandomPointerValue();
     Type  *Tp = Ptr->getType();
     Value *Val = getRandomValue(Tp->getContainedType(0));
+    Type  *ValTy = Val->getType();
 
     // Do not store vectors of i1s because they are unsupported
     //by the codegen.
-    if (Tp->isVectorTy() && Tp->getScalarSizeInBits() == 1)
+    if (ValTy->isVectorTy() && (ValTy->getScalarSizeInBits() == 1))
       return;
 
     new StoreInst(Val, Ptr, BB->getTerminator());
