@@ -35,7 +35,7 @@
 // RUN:     -target x86_64-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-X86-64 %s
-// CHECK-DEBIAN-X86-64: "{{.*}}clang{{(.exe)?}}" "-cc1"
+// CHECK-DEBIAN-X86-64: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-DEBIAN-X86-64: "-isysroot" "[[SYSROOT:[^"]+]]"
 // CHECK-DEBIAN-X86-64: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.5/../../../../include/c++/4.5"
 // CHECK-DEBIAN-X86-64: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.5/../../../../include/c++/4.5/x86_64-linux-gnu"
@@ -49,7 +49,7 @@
 // RUN:     -target powerpc-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-PPC %s
-// CHECK-DEBIAN-PPC: "{{.*}}clang{{(.exe)?}}" "-cc1"
+// CHECK-DEBIAN-PPC: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-DEBIAN-PPC: "-isysroot" "[[SYSROOT:[^"]+]]"
 // CHECK-DEBIAN-PPC: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/powerpc-linux-gnu/4.5/../../../../include/c++/4.5"
 // CHECK-DEBIAN-PPC: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/powerpc-linux-gnu/4.5/../../../../include/c++/4.5/powerpc-linux-gnu"
@@ -63,7 +63,7 @@
 // RUN:     -target powerpc64-linux-gnu \
 // RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
 // RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-PPC64 %s
-// CHECK-DEBIAN-PPC64: "{{.*}}clang{{(.exe)?}}" "-cc1"
+// CHECK-DEBIAN-PPC64: "{{[^"]*}}clang{{[^"]*}}" "-cc1"
 // CHECK-DEBIAN-PPC64: "-isysroot" "[[SYSROOT:[^"]+]]"
 // CHECK-DEBIAN-PPC64: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/powerpc64-linux-gnu/4.5/../../../../include/c++/4.5"
 // CHECK-DEBIAN-PPC64: "-internal-isystem" "[[SYSROOT]]/usr/lib/gcc/powerpc64-linux-gnu/4.5/../../../../include/c++/4.5/powerpc64-linux-gnu"
