@@ -1648,8 +1648,8 @@ void Verifier::visitInstruction(Instruction &I) {
         }
 
         // Definition must dominate use unless use is unreachable!
-        Assert2(InstsInThisBlock.count(Op) || DT->dominates(Op, &I) ||
-                !DT->isReachableFromEntry(BB),
+        Assert2(InstsInThisBlock.count(Op) || !DT->isReachableFromEntry(BB)
+                || DT->dominates(Op, &I),
                 "Instruction does not dominate all uses!", Op, &I);
       }
     } else if (isa<InlineAsm>(I.getOperand(i))) {
