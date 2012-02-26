@@ -2157,12 +2157,12 @@ class MemberExpr : public Expr {
   /// In X.F, this is the decl referenced by F.
   ValueDecl *MemberDecl;
 
-  /// MemberLoc - This is the location of the member name.
-  SourceLocation MemberLoc;
-
   /// MemberDNLoc - Provides source/type location info for the
   /// declaration name embedded in MemberDecl.
   DeclarationNameLoc MemberDNLoc;
+
+  /// MemberLoc - This is the location of the member name.
+  SourceLocation MemberLoc;
 
   /// IsArrow - True if this is "X->F", false if this is "X.F".
   bool IsArrow : 1;
@@ -2206,8 +2206,8 @@ public:
            base->isValueDependent(),
            base->isInstantiationDependent(),
            base->containsUnexpandedParameterPack()),
-      Base(base), MemberDecl(memberdecl), MemberLoc(NameInfo.getLoc()),
-      MemberDNLoc(NameInfo.getInfo()), IsArrow(isarrow),
+      Base(base), MemberDecl(memberdecl), MemberDNLoc(NameInfo.getInfo()),
+      MemberLoc(NameInfo.getLoc()), IsArrow(isarrow),
       HasQualifierOrFoundDecl(false), HasTemplateKWAndArgsInfo(false),
       HadMultipleCandidates(false) {
     assert(memberdecl->getDeclName() == NameInfo.getName());
@@ -2224,7 +2224,7 @@ public:
            base->isTypeDependent(), base->isValueDependent(),
            base->isInstantiationDependent(),
            base->containsUnexpandedParameterPack()),
-      Base(base), MemberDecl(memberdecl), MemberLoc(l), MemberDNLoc(),
+      Base(base), MemberDecl(memberdecl), MemberDNLoc(), MemberLoc(l),
       IsArrow(isarrow),
       HasQualifierOrFoundDecl(false), HasTemplateKWAndArgsInfo(false),
       HadMultipleCandidates(false) {}
