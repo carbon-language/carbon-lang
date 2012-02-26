@@ -350,14 +350,18 @@ namespace {
 
     bool shouldExplore(Use *U) {
       Instruction *I = cast<Instruction>(U->getUser());
-      if (BeforeHere != I && DT->dominates(BeforeHere, I))
+      BasicBlock *BB = I->getParent();
+      if (BeforeHere != I &&
+          (!DT->isReachableFromEntry(BB) || DT->dominates(BeforeHere, I)))
         return false;
       return true;
     }
 
     bool captured(Use *U) {
       Instruction *I = cast<Instruction>(U->getUser());
-      if (BeforeHere != I && DT->dominates(BeforeHere, I))
+      BasicBlock *BB = I->getParent();
+      if (BeforeHere != I &&
+          (!DT->isReachableFromEntry(BB) || DT->dominates(BeforeHere, I)))
         return false;
       Captured = true;
       return true;
