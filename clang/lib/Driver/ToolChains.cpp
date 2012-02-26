@@ -1219,6 +1219,7 @@ Generic_GCC::GCCInstallationDetector::GCCInstallationDetector(
   };
   static const char *const PPC64LibDirs[] = { "/lib64", "/lib" };
   static const char *const PPC64Triples[] = {
+    "powerpc64-linux-gnu",
     "powerpc64-unknown-linux-gnu",
     "powerpc64-suse-linux",
     "ppc64-redhat-linux"
@@ -1961,6 +1962,14 @@ static std::string getMultiarchTriple(const llvm::Triple TargetTriple,
   case llvm::Triple::mipsel:
     if (llvm::sys::fs::exists(SysRoot + "/lib/mipsel-linux-gnu"))
       return "mipsel-linux-gnu";
+    return TargetTriple.str();
+  case llvm::Triple::ppc:
+    if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc-linux-gnu"))
+      return "powerpc-linux-gnu";
+    return TargetTriple.str();
+  case llvm::Triple::ppc64:
+    if (llvm::sys::fs::exists(SysRoot + "/lib/powerpc64-linux-gnu"))
+      return "powerpc64-linux-gnu";
     return TargetTriple.str();
   }
 }

@@ -194,3 +194,54 @@
 // RUN:   | FileCheck --check-prefix=CHECK-MIPS64EL %s
 // CHECK-MIPS64EL: "{{.*}}ld{{(.exe)?}}"
 // CHECK-MIPS64EL-NOT: "--hash-style={{gnu|both}}"
+//
+// Thoroughly exercise the Debian multiarch environment.
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target i686-linux-gnu \
+// RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-X86 %s
+// CHECK-DEBIAN-X86: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-DEBIAN-X86: "{{.*}}/usr/lib/gcc/i686-linux-gnu/4.5/crtbegin.o"
+// CHECK-DEBIAN-X86: "-L[[SYSROOT]]/usr/lib/gcc/i686-linux-gnu/4.5"
+// CHECK-DEBIAN-X86: "-L[[SYSROOT]]/usr/lib/gcc/i686-linux-gnu/4.5/../../../i386-linux-gnu"
+// CHECK-DEBIAN-X86: "-L[[SYSROOT]]/usr/lib/i386-linux-gnu"
+// CHECK-DEBIAN-X86: "-L[[SYSROOT]]/usr/lib/gcc/i686-linux-gnu/4.5/../../.."
+// CHECK-DEBIAN-X86: "-L[[SYSROOT]]/lib"
+// CHECK-DEBIAN-X86: "-L[[SYSROOT]]/usr/lib"
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target x86_64-linux-gnu \
+// RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-X86-64 %s
+// CHECK-DEBIAN-X86-64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-DEBIAN-X86-64: "{{.*}}/usr/lib/gcc/x86_64-linux-gnu/4.5/crtbegin.o"
+// CHECK-DEBIAN-X86-64: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.5"
+// CHECK-DEBIAN-X86-64: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.5/../../../x86_64-linux-gnu"
+// CHECK-DEBIAN-X86-64: "-L[[SYSROOT]]/usr/lib/x86_64-linux-gnu"
+// CHECK-DEBIAN-X86-64: "-L[[SYSROOT]]/usr/lib/gcc/x86_64-linux-gnu/4.5/../../.."
+// CHECK-DEBIAN-X86-64: "-L[[SYSROOT]]/lib"
+// CHECK-DEBIAN-X86-64: "-L[[SYSROOT]]/usr/lib"
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target powerpc-linux-gnu \
+// RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-PPC %s
+// CHECK-DEBIAN-PPC: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-DEBIAN-PPC: "{{.*}}/usr/lib/gcc/powerpc-linux-gnu/4.5/crtbegin.o"
+// CHECK-DEBIAN-PPC: "-L[[SYSROOT]]/usr/lib/gcc/powerpc-linux-gnu/4.5"
+// CHECK-DEBIAN-PPC: "-L[[SYSROOT]]/usr/lib/gcc/powerpc-linux-gnu/4.5/../../../powerpc-linux-gnu"
+// CHECK-DEBIAN-PPC: "-L[[SYSROOT]]/usr/lib/powerpc-linux-gnu"
+// CHECK-DEBIAN-PPC: "-L[[SYSROOT]]/usr/lib/gcc/powerpc-linux-gnu/4.5/../../.."
+// CHECK-DEBIAN-PPC: "-L[[SYSROOT]]/lib"
+// CHECK-DEBIAN-PPC: "-L[[SYSROOT]]/usr/lib"
+// RUN: %clang -no-canonical-prefixes %s -### -o %t.o 2>&1 \
+// RUN:     -target powerpc64-linux-gnu \
+// RUN:     --sysroot=%S/Inputs/debian_multiarch_tree \
+// RUN:   | FileCheck --check-prefix=CHECK-DEBIAN-PPC64 %s
+// CHECK-DEBIAN-PPC64: "{{.*}}ld{{(.exe)?}}" "--sysroot=[[SYSROOT:[^"]+]]"
+// CHECK-DEBIAN-PPC64: "{{.*}}/usr/lib/gcc/powerpc64-linux-gnu/4.5/crtbegin.o"
+// CHECK-DEBIAN-PPC64: "-L[[SYSROOT]]/usr/lib/gcc/powerpc64-linux-gnu/4.5"
+// CHECK-DEBIAN-PPC64: "-L[[SYSROOT]]/usr/lib/gcc/powerpc64-linux-gnu/4.5/../../../powerpc64-linux-gnu"
+// CHECK-DEBIAN-PPC64: "-L[[SYSROOT]]/usr/lib/powerpc64-linux-gnu"
+// CHECK-DEBIAN-PPC64: "-L[[SYSROOT]]/usr/lib/gcc/powerpc64-linux-gnu/4.5/../../.."
+// CHECK-DEBIAN-PPC64: "-L[[SYSROOT]]/lib"
+// CHECK-DEBIAN-PPC64: "-L[[SYSROOT]]/usr/lib"
+//
