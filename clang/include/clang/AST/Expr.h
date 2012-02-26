@@ -2430,9 +2430,9 @@ class CompoundLiteralExpr : public Expr {
 
   /// The type as written.  This can be an incomplete array type, in
   /// which case the actual expression type will be different.
-  TypeSourceInfo *TInfo;
+  /// The int part of the pair stores whether this expr is file scope.
+  llvm::PointerIntPair<TypeSourceInfo *, 1, bool> TInfoAndScope;
   Stmt *Init;
-  bool FileScope;
 public:
   CompoundLiteralExpr(SourceLocation lparenloc, TypeSourceInfo *tinfo,
                       QualType T, ExprValueKind VK, Expr *init, bool fileScope)
@@ -2442,7 +2442,7 @@ public:
            (init->isInstantiationDependent() ||
             tinfo->getType()->isInstantiationDependentType()),
            init->containsUnexpandedParameterPack()),
-      LParenLoc(lparenloc), TInfo(tinfo), Init(init), FileScope(fileScope) {}
+      LParenLoc(lparenloc), TInfoAndScope(tinfo, fileScope), Init(init) {}
 
   /// \brief Construct an empty compound literal.
   explicit CompoundLiteralExpr(EmptyShell Empty)
@@ -2452,14 +2452,18 @@ public:
   Expr *getInitializer() { return cast<Expr>(Init); }
   void setInitializer(Expr *E) { Init = E; }
 
-  bool isFileScope() const { return FileScope; }
-  void setFileScope(bool FS) { FileScope = FS; }
+  bool isFileScope() const { return TInfoAndScope.getInt(); }
+  void setFileScope(bool FS) { TInfoAndScope.setInt(FS); }
 
   SourceLocation getLParenLoc() const { return LParenLoc; }
   void setLParenLoc(SourceLocation L) { LParenLoc = L; }
 
-  TypeSourceInfo *getTypeSourceInfo() const { return TInfo; }
-  void setTypeSourceInfo(TypeSourceInfo* tinfo) { TInfo = tinfo; }
+  TypeSourceInfo *getTypeSourceInfo() const {
+    return TInfoAndScope.getPointer();
+  }
+  void setTypeSourceInfo(TypeSourceInfo *tinfo) {
+    TInfoAndScope.setPointer(tinfo);
+  }
 
   SourceRange getSourceRange() const {
     // FIXME: Init should never be null.
