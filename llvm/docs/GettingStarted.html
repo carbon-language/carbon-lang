@@ -52,7 +52,7 @@
 
   <li><a href="#tutorial">An Example Using the LLVM Tool Chain</a>
       <ol>
-         <li><a href="#tutorial4">Example with llvm-gcc4</a></li>
+         <li><a href="#tutorial4">Example with Clang</a></li>
       </ol>
   <li><a href="#problems">Common Problems</a>
   <li><a href="#links">Links</a>
@@ -84,13 +84,12 @@ basic information.</p>
 suite. This contains all of the tools, libraries, and header files
 needed to use LLVM.  It contains an assembler, disassembler, bitcode
 analyzer and bitcode optimizer.  It also contains basic regression tests that
-can be used to test the LLVM tools and the GCC front end.</p>
+can be used to test the LLVM tools and the Clang front end.</p>
 
-<p>The second piece is the GCC front end.  This component provides a version of
-GCC that compiles C and C++ code into LLVM bitcode.  Currently, the GCC front
-end uses the GCC parser to convert code to LLVM.  Once
-compiled into LLVM bitcode, a program can be manipulated with the LLVM tools
-from the LLVM suite.</p>
+<p>The second piece is the Clang front end.  This component compiles C, C++,
+Objective C, and Objective C++ code into LLVM bitcode. Once compiled into LLVM
+bitcode, a program can be manipulated with the LLVM tools from the LLVM suite.
+</p>
 
 <p>
 There is a third, optional piece called Test Suite.  It is a suite of programs
@@ -1721,20 +1720,11 @@ are code generators for parts of LLVM infrastructure.</p>
 <!-- *********************************************************************** -->
 
 <div>
-<p>This section gives an example of using LLVM.  llvm-gcc3 is now obsolete,
-so we only include instructions for llvm-gcc4.
-</p>
-
-<p><b>Note:</b> The <i>gcc4</i> frontend's invocation is <b><i>considerably different</i></b>
-from the previous <i>gcc3</i> frontend. In particular, the <i>gcc4</i> frontend <b><i>does not</i></b>
-create bitcode by default: <i>gcc4</i> produces native code. As the example below illustrates,
-the '--emit-llvm' flag is needed to produce LLVM bitcode output. For <i>makefiles</i> and
-<i>configure</i> scripts, the CFLAGS variable needs '--emit-llvm' to produce bitcode
-output.</p>
+<p>This section gives an example of using LLVM with the Clang front end.</p>
 
 <!-- ======================================================================= -->
 <h3>
-  <a name="tutorial4">Example with llvm-gcc4</a>
+  <a name="tutorial4">Example with clang</a>
 </h3>
 
 <div>
@@ -1754,24 +1744,21 @@ int main() {
 
   <li><p>Next, compile the C file into a native executable:</p>
 
-      <div class="doc_code"><pre>% llvm-gcc hello.c -o hello</pre></div>
+      <div class="doc_code"><pre>% clang hello.c -o hello</pre></div>
 
-      <p>Note that llvm-gcc works just like GCC by default.  The standard -S and
+      <p>Note that clang works just like GCC by default.  The standard -S and
         -c arguments work as usual (producing a native .s or .o file,
         respectively).</p></li>
 
   <li><p>Next, compile the C file into a LLVM bitcode file:</p>
 
       <div class="doc_code">
-      <pre>% llvm-gcc -O3 -emit-llvm hello.c -c -o hello.bc</pre></div>
+      <pre>% clang -O3 -emit-llvm hello.c -c -o hello.bc</pre></div>
 
       <p>The -emit-llvm option can be used with the -S or -c options to emit an
          LLVM ".ll" or ".bc" file (respectively) for the code.  This allows you
          to use the <a href="CommandGuide/index.html">standard LLVM tools</a> on
-         the bitcode file.</p>
-
-      <p>Unlike llvm-gcc3, llvm-gcc4 correctly responds to -O[0123] arguments.
-         </p></li>
+         the bitcode file.</p></li>
 
   <li><p>Run the program in both forms. To run the program, use:</p>
       
@@ -1810,7 +1797,7 @@ int main() {
 
       <div class="doc_code"><pre>% ./hello.native</pre></div>
 
-      <p>Note that using llvm-gcc to compile directly to native code (i.e. when
+      <p>Note that using clang to compile directly to native code (i.e. when
          the -emit-llvm option is not present) does steps 6/7/8 for you.</p>
         </li>
 
