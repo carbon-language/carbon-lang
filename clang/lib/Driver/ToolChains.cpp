@@ -2180,6 +2180,12 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
   const StringRef MIPSELMultiarchIncludeDirs[] = {
     "/usr/include/mipsel-linux-gnu"
   };
+  const StringRef PPCMultiarchIncludeDirs[] = {
+    "/usr/include/powerpc-linux-gnu"
+  };
+  const StringRef PPC64MultiarchIncludeDirs[] = {
+    "/usr/include/powerpc64-linux-gnu"
+  };
   ArrayRef<StringRef> MultiarchIncludeDirs;
   if (getTriple().getArch() == llvm::Triple::x86_64) {
     MultiarchIncludeDirs = X86_64MultiarchIncludeDirs;
@@ -2191,6 +2197,10 @@ void Linux::AddClangSystemIncludeArgs(const ArgList &DriverArgs,
     MultiarchIncludeDirs = MIPSMultiarchIncludeDirs;
   } else if (getTriple().getArch() == llvm::Triple::mipsel) {
     MultiarchIncludeDirs = MIPSELMultiarchIncludeDirs;
+  } else if (getTriple().getArch() == llvm::Triple::ppc) {
+    MultiarchIncludeDirs = PPCMultiarchIncludeDirs;
+  } else if (getTriple().getArch() == llvm::Triple::ppc64) {
+    MultiarchIncludeDirs = PPC64MultiarchIncludeDirs;
   }
   for (ArrayRef<StringRef>::iterator I = MultiarchIncludeDirs.begin(),
                                      E = MultiarchIncludeDirs.end();
