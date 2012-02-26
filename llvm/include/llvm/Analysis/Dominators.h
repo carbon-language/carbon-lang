@@ -820,7 +820,7 @@ public:
     DT->splitBlock(NewBB);
   }
 
-  bool isReachableFromEntry(const BasicBlock* A) {
+  bool isReachableFromEntry(const BasicBlock* A) const {
     return DT->isReachableFromEntry(A);
   }
 
