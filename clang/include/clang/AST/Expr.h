@@ -3667,14 +3667,14 @@ private:
   /// The number of designators in this initializer expression.
   unsigned NumDesignators : 15;
 
-  /// \brief The designators in this designated initialization
-  /// expression.
-  Designator *Designators;
-
   /// The number of subexpressions of this initializer expression,
   /// which contains both the initializer and any additional
   /// expressions used by array and array-range designators.
   unsigned NumSubExprs : 16;
+
+  /// \brief The designators in this designated initialization
+  /// expression.
+  Designator *Designators;
 
 
   DesignatedInitExpr(ASTContext &C, QualType Ty, unsigned NumDesignators,
@@ -3685,7 +3685,7 @@ private:
 
   explicit DesignatedInitExpr(unsigned NumSubExprs)
     : Expr(DesignatedInitExprClass, EmptyShell()),
-      NumDesignators(0), Designators(0), NumSubExprs(NumSubExprs) { }
+      NumDesignators(0), NumSubExprs(NumSubExprs), Designators(0) { }
 
 public:
   /// A field designator, e.g., ".x".
