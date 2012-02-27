@@ -406,7 +406,7 @@ namespace {
   /// certain things in certain situations.
   struct EvalInfo {
     ASTContext &Ctx;
-CCValue WVal;
+
     /// EvalStatus - Contains information about the evaluation.
     Expr::EvalStatus &EvalStatus;
 
@@ -1205,10 +1205,10 @@ static bool HandleConversionToBool(const CCValue &Val, bool &Result) {
 static bool EvaluateAsBooleanCondition(const Expr *E, bool &Result,
                                        EvalInfo &Info) {
   assert(E->isRValue() && "missing lvalue-to-rvalue conv in bool condition");
-  //CCValue Val;
-  if (!Evaluate(Info.WVal, Info, E))
+  CCValue Val;
+  if (!Evaluate(Val, Info, E))
     return false;
-  return HandleConversionToBool(Info.WVal, Result);
+  return HandleConversionToBool(Val, Result);
 }
 
 template<typename T>
