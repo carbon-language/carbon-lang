@@ -775,6 +775,7 @@ ProgramStateRef MallocChecker::CallocMem(CheckerContext &C, const CallExpr *CE){
 const Stmt *
 MallocChecker::getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
                                  CheckerContext &C) const {
+  const LocationContext *LeakContext = N->getLocationContext();
   // Walk the ExplodedGraph backwards and find the first node that referred to
   // the tracked symbol.
   const ExplodedNode *AllocNode = N;
@@ -782,12 +783,18 @@ MallocChecker::getAllocationSite(const ExplodedNode *N, SymbolRef Sym,
   while (N) {
     if (!N->getState()->get<RegionState>(Sym))
       break;
-    AllocNode = N;
+    // Allocation node, is the last node in the current context in which the
+    // symbol was tracked.
+    if (N->getLocationContext() == LeakContext)
+      AllocNode = N;
     N = N->pred_empty() ? NULL : *(N->pred_begin());
   }
 
   ProgramPoint P = AllocNode->getLocation();
-  return cast<clang::PostStmt>(P).getStmt();
+  if (!isa<StmtPoint>(P))
+    return 0;
+
+  return cast<StmtPoint>(P).getStmt();
 }
 
 void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
@@ -806,10 +813,10 @@ void MallocChecker::reportLeak(SymbolRef Sym, ExplodedNode *N,
   // Most bug reports are cached at the location where they occurred.
   // With leaks, we want to unique them by the location where they were
   // allocated, and only report a single path.
-  const Stmt *AllocStmt = getAllocationSite(N, Sym, C);
-  PathDiagnosticLocation LocUsedForUniqueing =
-    PathDiagnosticLocation::createBegin(AllocStmt, C.getSourceManager(),
-                                        N->getLocationContext());
+  PathDiagnosticLocation LocUsedForUniqueing;
+  if (const Stmt *AllocStmt = getAllocationSite(N, Sym, C))
+    LocUsedForUniqueing = PathDiagnosticLocation::createBegin(AllocStmt,
+                            C.getSourceManager(), N->getLocationContext());
 
   BugReport *R = new BugReport(*BT_Leak,
     "Memory is never released; potential memory leak", N, LocUsedForUniqueing);
