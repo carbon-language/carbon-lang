@@ -1632,6 +1632,8 @@ def : MnemonicAlias<"fcmovna",  "fcmovbe">;
 def : MnemonicAlias<"fcmovae",  "fcmovnb">;
 def : MnemonicAlias<"fcomip",   "fcompi">;
 def : MnemonicAlias<"fildq",    "fildll">;
+def : MnemonicAlias<"fistpq",   "fistpll">;
+def : MnemonicAlias<"fisttpq",  "fisttpll">;
 def : MnemonicAlias<"fldcww",   "fldcw">;
 def : MnemonicAlias<"fnstcww", "fnstcw">;
 def : MnemonicAlias<"fnstsww", "fnstsw">;
