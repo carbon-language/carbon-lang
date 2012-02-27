@@ -41,6 +41,10 @@ Specify where to find other target description files for inclusion. The
 F<directory> value should be a full or partial path to a directory that contains
 target description files.
 
+=item B<-asmparsernum> F<N>
+
+Make -gen-asm-parser emit assembly writer number F<N>.
+
 =item B<-asmwriternum> F<N>
 
 Make -gen-asm-writer emit assembly writer number F<N>.
@@ -57,27 +61,19 @@ Print all records to standard output (default).
 
 Print enumeration values for a class
 
+=item B<-print-sets>
+
+Print expanded sets for testing DAG exprs.
+
 =item B<-gen-emitter>
 
 Generate machine code emitter.
 
-=item B<-gen-register-enums>
+=item B<-gen-register-info>
 
-Generate the enumeration values for all registers.
+Generate registers and register classes info.
 
-=item B<-gen-register-desc>
-
-Generate a register info description for each register.
-
-=item B<-gen-register-desc-header>
-
-Generate a register info description header for each register.
-
-=item B<-gen-instr-enums>
-
-Generate enumeration values for instructions.
-
-=item B<-gen-instr-desc>
+=item B<-gen-instr-info>
 
 Generate instruction descriptions.
 
@@ -85,9 +81,29 @@ Generate instruction descriptions.
 
 Generate the assembly writer.
 
+=item B<-gen-disassembler>
+
+Generate disassembler.
+
+=item B<-gen-pseudo-lowering>
+
+Generate pseudo instruction lowering.
+
 =item B<-gen-dag-isel>
 
 Generate a DAG (Directed Acycle Graph) instruction selector.
+
+=item B<-gen-asm-matcher>
+
+Generate assembly instruction matcher.
+
+=item B<-gen-dfa-packetizer>
+
+Generate DFA Packetizer for VLIW targets.
+
+=item B<-gen-fast-isel>
+
+Generate a "fast" instruction selector.
 
 =item B<-gen-subtarget>
 
@@ -96,6 +112,14 @@ Generate subtarget enumerations.
 =item B<-gen-intrinsic>
 
 Generate intrinsic information.
+
+=item B<-gen-tgt-intrinsic>
+
+Generate target intrinsic information.
+
+=item B<-gen-enhanced-disassembly-info>
+
+Generate enhanced disassembly info.
 
 =item B<-version>
 
