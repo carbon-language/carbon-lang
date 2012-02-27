@@ -10,3 +10,9 @@ _Complex float x = { 1.0f, 1.0f/0.0f };
 _Complex float f(float x, float y) { _Complex float z = { x, y }; return z; }
 // CHECK: define <2 x float> @f
 // CHECK: alloca { float, float }
+// CHECK: alloca { float, float }
+
+_Complex float f2(float x, float y) { return (_Complex float){ x, y }; }
+// CHECK: define <2 x float> @f2
+// CHECK: alloca { float, float }
+// CHECK: alloca { float, float }

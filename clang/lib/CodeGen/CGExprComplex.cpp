@@ -261,6 +261,10 @@ public:
 
   ComplexPairTy VisitInitListExpr(InitListExpr *E);
 
+  ComplexPairTy VisitCompoundLiteralExpr(CompoundLiteralExpr *E) {
+    return EmitLoadOfLValue(E);
+  }
+
   ComplexPairTy VisitVAArgExpr(VAArgExpr *E);
 
   ComplexPairTy VisitAtomicExpr(AtomicExpr *E) {
