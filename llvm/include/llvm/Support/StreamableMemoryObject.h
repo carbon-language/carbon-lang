@@ -153,7 +153,7 @@ private:
   bool fetchToPos(size_t Pos) {
     if (EOFReached) return Pos < ObjectSize;
     while (Pos >= BytesRead) {
-      Bytes.resize(BytesRead + kChunkSize);
+      Bytes.resize(BytesRead + BytesSkipped + kChunkSize);
       size_t bytes = Streamer->GetBytes(&Bytes[BytesRead + BytesSkipped],
                                         kChunkSize);
       BytesRead += bytes;
