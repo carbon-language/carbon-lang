@@ -6,7 +6,6 @@ tablegen(LLVM HexagonGenAsmWriter.inc -gen-asm-writer)
 tablegen(LLVM HexagonGenDAGISel.inc -gen-dag-isel)
 tablegen(LLVM HexagonGenCallingConv.inc -gen-callingconv)
 tablegen(LLVM HexagonGenSubtargetInfo.inc -gen-subtarget)
-tablegen(LLVM HexagonGenIntrinsics.inc -gen-tgt-intrinsic)
 tablegen(LLVM HexagonGenDFAPacketizer.inc -gen-dfa-packetizer)
 add_public_tablegen_target(HexagonCommonTableGen)
 
