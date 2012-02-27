@@ -199,6 +199,11 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
       SourceNoLongerAvailable(Def, SrcMap, AvailCopyMap);
 
       // Remember Def is defined by the copy.
+      // ... Make sure to clear the def maps of aliases first.
+      for (const unsigned *AS = TRI->getAliasSet(Def); *AS; ++AS) {
+        CopyMap.erase(*AS);
+        AvailCopyMap.erase(*AS);
+      }
       CopyMap[Def] = MI;
       AvailCopyMap[Def] = MI;
       for (const unsigned *SR = TRI->getSubRegisters(Def); *SR; ++SR) {
