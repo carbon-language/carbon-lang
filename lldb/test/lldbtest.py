@@ -706,6 +706,8 @@ class Base(unittest2.TestCase):
                 self.child.expect(pexpect.EOF)
             except:
                 pass
+            # Give it one final blow to make sure the child is terminated.
+            self.child.close()
 
         # Check and run any hook functions.
         for hook in reversed(self.hooks):
