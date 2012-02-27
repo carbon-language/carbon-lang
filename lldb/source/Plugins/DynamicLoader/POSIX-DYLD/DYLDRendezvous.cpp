@@ -302,11 +302,11 @@ DYLDRendezvous::DumpToLog(LogSP log) const
         return;
 
     log->PutCString("DYLDRendezvous:");
-    log->Printf("   Address: %lx", GetRendezvousAddress());
+    log->Printf("   Address: %llx", GetRendezvousAddress());
     log->Printf("   Version: %d",  GetVersion());
-    log->Printf("   Link   : %lx", GetLinkMapAddress());
-    log->Printf("   Break  : %lx", GetBreakAddress());
-    log->Printf("   LDBase : %lx", GetLDBase());
+    log->Printf("   Link   : %llx", GetLinkMapAddress());
+    log->Printf("   Break  : %llx", GetBreakAddress());
+    log->Printf("   LDBase : %llx", GetLDBase());
     log->Printf("   State  : %s", 
                 (state == eConsistent) ? "consistent" :
                 (state == eAdd)        ? "add"        :
@@ -321,10 +321,10 @@ DYLDRendezvous::DumpToLog(LogSP log) const
     for (int i = 1; I != E; ++I, ++i) 
     {
         log->Printf("\n   SOEntry [%d] %s", i, I->path.c_str());
-        log->Printf("      Base : %lx", I->base_addr);
-        log->Printf("      Path : %lx", I->path_addr);
-        log->Printf("      Dyn  : %lx", I->dyn_addr);
-        log->Printf("      Next : %lx", I->next);
-        log->Printf("      Prev : %lx", I->prev);
+        log->Printf("      Base : %llx", I->base_addr);
+        log->Printf("      Path : %llx", I->path_addr);
+        log->Printf("      Dyn  : %llx", I->dyn_addr);
+        log->Printf("      Next : %llx", I->next);
+        log->Printf("      Prev : %llx", I->prev);
     }
 }

@@ -388,6 +388,12 @@
 		26F5C32C10F3DFDD009D5894 /* libedit.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32A10F3DFDD009D5894 /* libedit.dylib */; };
 		26F5C32D10F3DFDD009D5894 /* libtermcap.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 26F5C32B10F3DFDD009D5894 /* libtermcap.dylib */; };
 		26F73062139D8FDB00FD51C7 /* History.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26F73061139D8FDB00FD51C7 /* History.cpp */; };
+		26FFC19914FC072100087D58 /* AuxVector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FFC19314FC072100087D58 /* AuxVector.cpp */; };
+		26FFC19A14FC072100087D58 /* AuxVector.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19414FC072100087D58 /* AuxVector.h */; };
+		26FFC19B14FC072100087D58 /* DYLDRendezvous.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FFC19514FC072100087D58 /* DYLDRendezvous.cpp */; };
+		26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19614FC072100087D58 /* DYLDRendezvous.h */; };
+		26FFC19D14FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26FFC19714FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp */; };
+		26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */ = {isa = PBXBuildFile; fileRef = 26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */; };
 		494260DA14579144003C1C78 /* VerifyDecl.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 494260D914579144003C1C78 /* VerifyDecl.cpp */; };
 		4966DCC4148978A10028481B /* ClangExternalASTSourceCommon.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 4966DCC3148978A10028481B /* ClangExternalASTSourceCommon.cpp */; };
 		49A1CAC51430E8DE00306AC9 /* ExpressionSourceCode.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 49A1CAC31430E8BD00306AC9 /* ExpressionSourceCode.cpp */; };
@@ -1177,6 +1183,12 @@
 		26F996A8119B79C300412154 /* ARM_GCC_Registers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ARM_GCC_Registers.h; path = source/Utility/ARM_GCC_Registers.h; sourceTree = "<group>"; };
 		26FA4315130103F400E71120 /* FileSpec.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileSpec.h; path = include/lldb/Host/FileSpec.h; sourceTree = "<group>"; };
 		26FA43171301048600E71120 /* FileSpec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FileSpec.cpp; sourceTree = "<group>"; };
+		26FFC19314FC072100087D58 /* AuxVector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AuxVector.cpp; sourceTree = "<group>"; };
+		26FFC19414FC072100087D58 /* AuxVector.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AuxVector.h; sourceTree = "<group>"; };
+		26FFC19514FC072100087D58 /* DYLDRendezvous.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DYLDRendezvous.cpp; sourceTree = "<group>"; };
+		26FFC19614FC072100087D58 /* DYLDRendezvous.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DYLDRendezvous.h; sourceTree = "<group>"; };
+		26FFC19714FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DynamicLoaderPOSIXDYLD.cpp; sourceTree = "<group>"; };
+		26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DynamicLoaderPOSIXDYLD.h; sourceTree = "<group>"; };
 		4906FD4012F2255300A2A77C /* ASTDumper.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ASTDumper.cpp; path = source/Expression/ASTDumper.cpp; sourceTree = "<group>"; };
 		4906FD4412F2257600A2A77C /* ASTDumper.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTDumper.h; path = include/lldb/Expression/ASTDumper.h; sourceTree = "<group>"; };
 		4911934B1226383D00578B7F /* ASTStructExtractor.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = ASTStructExtractor.h; path = include/lldb/Expression/ASTStructExtractor.h; sourceTree = "<group>"; };
@@ -1602,6 +1614,7 @@
 			children = (
 				26274FA414030F79006BA130 /* Darwin-Kernel */,
 				260C897910F57C5600BB2B04 /* MacOSX-DYLD */,
+				26FFC19214FC072100087D58 /* POSIX-DYLD */,
 				268A683C1321B505000E3FB8 /* Static */,
 			);
 			path = DynamicLoader;
@@ -2851,6 +2864,19 @@
 			sourceTree = "<group>";
 			usesTabs = 0;
 		};
+		26FFC19214FC072100087D58 /* POSIX-DYLD */ = {
+			isa = PBXGroup;
+			children = (
+				26FFC19314FC072100087D58 /* AuxVector.cpp */,
+				26FFC19414FC072100087D58 /* AuxVector.h */,
+				26FFC19514FC072100087D58 /* DYLDRendezvous.cpp */,
+				26FFC19614FC072100087D58 /* DYLDRendezvous.h */,
+				26FFC19714FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp */,
+				26FFC19814FC072100087D58 /* DynamicLoaderPOSIXDYLD.h */,
+			);
+			path = "POSIX-DYLD";
+			sourceTree = "<group>";
+		};
 		4CCA643A13B40B82003BDF98 /* LanguageRuntime */ = {
 			isa = PBXGroup;
 			children = (
@@ -3027,6 +3053,9 @@
 				26A527C414E24F5F00F3A14A /* ThreadMachCore.h in Headers */,
 				4C6649A014EEE7F100B0316F /* StreamCallback.h in Headers */,
 				26B7564F14F89356008D9CB3 /* PlatformiOSSimulator.h in Headers */,
+				26FFC19A14FC072100087D58 /* AuxVector.h in Headers */,
+				26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */,
+				26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3749,6 +3778,9 @@
 				4C6649A314EEE81000B0316F /* StreamCallback.cpp in Sources */,
 				B299580B14F2FA1400050A04 /* DisassemblerLLVMC.cpp in Sources */,
 				26B7564E14F89356008D9CB3 /* PlatformiOSSimulator.cpp in Sources */,
+				26FFC19914FC072100087D58 /* AuxVector.cpp in Sources */,
+				26FFC19B14FC072100087D58 /* DYLDRendezvous.cpp in Sources */,
+				26FFC19D14FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

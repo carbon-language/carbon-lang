@@ -280,8 +280,9 @@ DynamicLoaderPOSIXDYLD::RefreshModules()
         for (I = m_rendezvous.unloaded_begin(); I != E; ++I)
         {
             FileSpec file(I->path.c_str(), true);
+            ModuleSpec module_spec (file);
             ModuleSP module_sp = 
-                loaded_modules.FindFirstModuleForFileSpec(file, NULL, NULL);
+                loaded_modules.FindFirstModule (module_spec);
             if (module_sp.get())
                 old_modules.Append(module_sp);
         }
@@ -371,11 +372,12 @@ DynamicLoaderPOSIXDYLD::LoadModuleAtAddress(const FileSpec &file, addr_t base_ad
     ModuleList &modules = target.GetImages();
     ModuleSP module_sp;
 
-    if ((module_sp = modules.FindFirstModuleForFileSpec(file, NULL, NULL))) 
+    ModuleSpec module_spec (file, target.GetArchitecture());
+    if ((module_sp = modules.FindFirstModule (module_spec))) 
     {
         UpdateLoadedSections(module_sp, base_addr);
     }
-    else if ((module_sp = target.GetSharedModule(file, target.GetArchitecture()))) 
+    else if ((module_sp = target.GetSharedModule(module_spec))) 
     {
         UpdateLoadedSections(module_sp, base_addr);
         modules.Append(module_sp);
