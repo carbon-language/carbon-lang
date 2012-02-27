@@ -53,9 +53,6 @@
 
 namespace lldb_private {
 
-uint32_t
-GetLogMask ();
-
 void
 LogIfAllCategoriesSet (uint32_t mask, const char *format, ...);
 
