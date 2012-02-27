@@ -674,9 +674,9 @@ SourceLocation Parser::ParseDecltypeSpecifier(DeclSpec &DS) {
                                                  0, /*IsDecltype=*/true);
     Result = ParseExpression();
     if (Result.isInvalid()) {
-      SkipUntil(tok::r_paren, true, true);
+      SkipUntil(tok::r_paren);
       DS.SetTypeSpecError();
-      return Tok.is(tok::eof) ? Tok.getLocation() : ConsumeParen();
+      return StartLoc;
     }
 
     // Match the ')'
