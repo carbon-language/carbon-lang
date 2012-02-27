@@ -1300,6 +1300,11 @@ ClangASTSource::GuardedCopyType (ASTContext *dest_context,
     
     SetImportInProgress(false);
     
+    if (ret_qual_type->getCanonicalTypeInternal().isNull()) 
+        // this shouldn't happen, but we're hardening because the AST importer seems to be generating bad types
+        // on occasion.
+        return NULL;
+    
     return ret;
 }
 
