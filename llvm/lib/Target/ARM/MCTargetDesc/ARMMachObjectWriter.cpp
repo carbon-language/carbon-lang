@@ -82,6 +82,8 @@ static bool getARMFixupKindMachOInfo(unsigned Kind, unsigned &RelocType,
   case ARM::fixup_arm_adr_pcrel_12:
   case ARM::fixup_arm_condbranch:
   case ARM::fixup_arm_uncondbranch:
+  case ARM::fixup_arm_bl:
+  case ARM::fixup_arm_blx:
     RelocType = unsigned(macho::RIT_ARM_Branch24Bit);
     // Report as 'long', even though that is not quite accurate.
     Log2Size = llvm::Log2_32(4);

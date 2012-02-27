@@ -177,6 +177,8 @@ unsigned ARMELFObjectWriter::GetRelocTypeInner(const MCValue &Target,
         break;
       }
       break;
+    case ARM::fixup_arm_bl:
+    case ARM::fixup_arm_blx:
     case ARM::fixup_arm_uncondbranch:
       switch (Modifier) {
       case MCSymbolRefExpr::VK_ARM_PLT:

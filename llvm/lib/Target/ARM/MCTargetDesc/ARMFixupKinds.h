@@ -59,6 +59,12 @@ enum Fixups {
   // fixup_arm_thumb_br - 12-bit fixup for Thumb B instructions.
   fixup_arm_thumb_br,
 
+  // fixup_arm_bl - Fixup for ARM BL instructions.
+  fixup_arm_bl,
+
+  // fixup_arm_blx - Fixup for ARM BLX instructions.
+  fixup_arm_blx,
+
   // fixup_arm_thumb_bl - Fixup for Thumb BL instructions.
   fixup_arm_thumb_bl,
 

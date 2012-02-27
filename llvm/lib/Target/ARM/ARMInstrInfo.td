@@ -349,13 +349,11 @@ def bltarget : Operand<i32> {
 // Call target for ARM. Handles conditional/unconditional
 // FIXME: rename bl_target to t2_bltarget?
 def bl_target : Operand<i32> {
-  // Encoded the same as branch targets.
-  let EncoderMethod = "getARMBranchTargetOpValue";
+  let EncoderMethod = "getARMBLTargetOpValue";
   let OperandType = "OPERAND_PCREL";
 }
 
 def blx_target : Operand<i32> {
-  // Encoded the same as branch targets.
   let EncoderMethod = "getARMBLXTargetOpValue";
   let OperandType = "OPERAND_PCREL";
 }

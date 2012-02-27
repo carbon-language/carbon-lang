@@ -92,11 +92,13 @@ public:
   virtual const MCFixupKindInfo &getFixupKindInfo(MCFixupKind Kind) const;
 
   /// processFixupValue - Target hook to adjust the literal value of a fixup
-  /// if necessary. The default does nothing.
+  /// if necessary. IsResolved signals whether the caller believes a relocation
+  /// is needed; the target can modify the value. The default does nothing.
   virtual void processFixupValue(const MCAssembler &Asm,
                                  const MCAsmLayout &Layout,
                                  const MCFixup &Fixup, const MCFragment *DF,
-                                 MCValue &Target, uint64_t &Value) {}
+                                 MCValue &Target, uint64_t &Value,
+                                 bool &IsResolved) {}
 
   /// @}
 

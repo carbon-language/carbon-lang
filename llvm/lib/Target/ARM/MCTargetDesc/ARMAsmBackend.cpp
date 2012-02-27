@@ -78,6 +78,8 @@ public:
 { "fixup_t2_condbranch",     0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_t2_uncondbranch",   0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_br",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_bl",            0,            24,  MCFixupKindInfo::FKF_IsPCRel },
+{ "fixup_arm_blx",           0,            24,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_bl",      0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_blx",     0,            32,  MCFixupKindInfo::FKF_IsPCRel },
 { "fixup_arm_thumb_cb",      0,            16,  MCFixupKindInfo::FKF_IsPCRel },
@@ -106,18 +108,28 @@ public:
   /// if necessary.
   void processFixupValue(const MCAssembler &Asm, const MCAsmLayout &Layout,
                          const MCFixup &Fixup, const MCFragment *DF,
-                         MCValue &Target, uint64_t &Value) {
+                         MCValue &Target, uint64_t &Value,
+                         bool &IsResolved) {
+    const MCSymbolRefExpr *A = Target.getSymA();
     // Some fixups to thumb function symbols need the low bit (thumb bit)
     // twiddled.
     if ((unsigned)Fixup.getKind() != ARM::fixup_arm_ldst_pcrel_12 &&
         (unsigned)Fixup.getKind() != ARM::fixup_t2_ldst_pcrel_12 &&
         (unsigned)Fixup.getKind() != ARM::fixup_arm_thumb_cp) {
-      if (const MCSymbolRefExpr *A = Target.getSymA()) {
+      if (A) {
         const MCSymbol &Sym = A->getSymbol().AliasedSymbol();
         if (Asm.isThumbFunc(&Sym))
           Value |= 1;
       }
     }
+    // We must always generate a relocation for BL/BLX instructions if we have
+    // a symbol to reference, as the linker relies on knowing the destination
+    // symbol's thumb-ness to get interworking right.
+    if (A && ((unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_blx ||
+              (unsigned)Fixup.getKind() == ARM::fixup_arm_thumb_bl ||
+              (unsigned)Fixup.getKind() == ARM::fixup_arm_blx ||
+              (unsigned)Fixup.getKind() == ARM::fixup_arm_bl))
+      IsResolved = false;
   }
 
   bool mayNeedRelaxation(const MCInst &Inst) const;
@@ -343,6 +355,8 @@ static unsigned adjustFixupValue(unsigned Kind, uint64_t Value) {
 
   case ARM::fixup_arm_condbranch:
   case ARM::fixup_arm_uncondbranch:
+  case ARM::fixup_arm_bl:
+  case ARM::fixup_arm_blx:
     // These values don't encode the low two bits since they're always zero.
     // Offset by 8 just as above.
     return 0xffffff & ((Value - 8) >> 2);
@@ -552,6 +566,8 @@ static unsigned getFixupKindNumBytes(unsigned Kind) {
   case ARM::fixup_arm_ldst_pcrel_12:
   case ARM::fixup_arm_pcrel_10:
   case ARM::fixup_arm_adr_pcrel_12:
+  case ARM::fixup_arm_bl:
+  case ARM::fixup_arm_blx:
   case ARM::fixup_arm_condbranch:
   case ARM::fixup_arm_uncondbranch:
     return 3;
