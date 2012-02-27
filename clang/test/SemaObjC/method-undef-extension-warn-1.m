@@ -5,7 +5,7 @@
 
 @protocol P
 - (void)Pmeth;
-- (void)Pmeth1; // expected-note {{method declared here}}
+- (void)Pmeth1; // expected-note {{method 'Pmeth1' declared here}}
 @end
 
 // Class extension
@@ -19,6 +19,6 @@
 @end
 
 @implementation MyClass // expected-warning {{incomplete implementation}}  \
-			// expected-warning {{method in protocol not implemented}}
+			// expected-warning {{method 'Pmeth1' in protocol not implemented}}
 - (void)Pmeth {}
 @end

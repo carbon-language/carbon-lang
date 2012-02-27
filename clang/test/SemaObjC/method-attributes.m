@@ -13,9 +13,9 @@
 @interface INTF
 - (int) foo1: (int)arg1 __attribute__((deprecated));
 
-- (int) foo: (int)arg1;  // expected-note {{method declared here}}
+- (int) foo: (int)arg1;  // expected-note {{method 'foo:' declared here}}
 
-- (int) foo2: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable)); // expected-note {{method declared here}}
+- (int) foo2: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable)); // expected-note {{method 'foo2:' declared here}}
 - (int) foo3: (int)arg1 __attribute__((deprecated)) __attribute__((unavailable)) __attribute__((ns_consumes_self));
 @end
 
@@ -39,7 +39,7 @@
 
 @interface Foo 
 - (void)doSomething1:(id)sender;
-- (void)doSomething2:(id)sender; // expected-note {{method declared here}}
+- (void)doSomething2:(id)sender; // expected-note {{method 'doSomething2:' declared here}}
 @end
 
 @implementation Foo

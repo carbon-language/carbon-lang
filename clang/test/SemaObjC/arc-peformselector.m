@@ -2,12 +2,12 @@
 // rdar://9659270
 
 @interface NSObject
-- (id)copy; // expected-note {{method declared here}}
-- (id) test __attribute__((ns_returns_retained)); // expected-note {{method declared here}}
-+ (id) new ; // expected-note {{method declared here}}
+- (id)copy; // expected-note {{method 'copy' declared here}}
+- (id) test __attribute__((ns_returns_retained)); // expected-note {{method 'test' declared here}}
++ (id) new ; // expected-note {{method 'new' declared here}}
 - (id) init __attribute__((ns_returns_not_retained));
 - (id)PlusZero;
-- (id)PlusOne __attribute__((ns_returns_retained)); // expected-note {{method declared here}}
+- (id)PlusOne __attribute__((ns_returns_retained)); // expected-note {{method 'PlusOne' declared here}}
 @end
 
 @interface I : NSObject

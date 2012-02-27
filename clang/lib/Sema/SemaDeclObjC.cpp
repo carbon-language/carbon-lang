@@ -242,7 +242,8 @@ static void DiagnoseObjCImplementedDeprecations(Sema &S,
   if (ND && ND->isDeprecated()) {
     S.Diag(ImplLoc, diag::warn_deprecated_def) << select;
     if (select == 0)
-      S.Diag(ND->getLocation(), diag::note_method_declared_at);
+      S.Diag(ND->getLocation(), diag::note_method_declared_at)
+        << ND->getDeclName();
     else
       S.Diag(ND->getLocation(), diag::note_previous_decl) << "class";
   }
@@ -1466,7 +1467,8 @@ void Sema::WarnExactTypedMethods(ObjCMethodDecl *ImpMethodDecl,
   if (match) {
     Diag(ImpMethodDecl->getLocation(), 
          diag::warn_category_method_impl_match);
-    Diag(MethodDecl->getLocation(), diag::note_method_declared_at);
+    Diag(MethodDecl->getLocation(), diag::note_method_declared_at)
+      << MethodDecl->getDeclName();
   }
 }
 
@@ -1539,7 +1541,8 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
             if (Diags.getDiagnosticLevel(DIAG, ImpLoc)
                 != DiagnosticsEngine::Ignored) {
               WarnUndefinedMethod(ImpLoc, method, IncompleteImpl, DIAG);
-              Diag(method->getLocation(), diag::note_method_declared_at);
+              Diag(method->getLocation(), diag::note_method_declared_at)
+                << method->getDeclName();
               Diag(CDecl->getLocation(), diag::note_required_for_protocol_at)
                 << PDecl->getDeclName();
             }
@@ -1561,7 +1564,8 @@ void Sema::CheckProtocolMethodDefs(SourceLocation ImpLoc,
       if (Diags.getDiagnosticLevel(DIAG, ImpLoc) !=
             DiagnosticsEngine::Ignored) {
         WarnUndefinedMethod(ImpLoc, method, IncompleteImpl, DIAG);
-        Diag(method->getLocation(), diag::note_method_declared_at);
+        Diag(method->getLocation(), diag::note_method_declared_at)
+          << method->getDeclName();
         Diag(IDecl->getLocation(), diag::note_required_for_protocol_at) <<
           PDecl->getDeclName();
       }
@@ -2798,7 +2802,8 @@ Decl *Sema::ActOnMethodDeclaration(
       SourceLocation MethodLoc = IMD->getLocation();
       if (!getSourceManager().isInSystemHeader(MethodLoc)) {
         Diag(EndLoc, diag::warn_attribute_method_def);
-        Diag(MethodLoc, diag::note_method_declared_at);
+        Diag(MethodLoc, diag::note_method_declared_at)
+          << ObjCMethod->getDeclName();
       }
     }
   } else {

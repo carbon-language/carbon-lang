@@ -2,15 +2,15 @@
 // rdar://8973810
 
 @protocol P
-- (void) D __attribute__((deprecated)); // expected-note {{method declared here}}
+- (void) D __attribute__((deprecated)); // expected-note {{method 'D' declared here}}
 @end
 
 @interface A <P>
-+ (void)F __attribute__((deprecated)); // expected-note {{method declared here}}
++ (void)F __attribute__((deprecated)); // expected-note {{method 'F' declared here}}
 @end
 
 @interface A()
-- (void) E __attribute__((deprecated)); // expected-note {{method declared here}}
+- (void) E __attribute__((deprecated)); // expected-note {{method 'E' declared here}}
 @end
 
 @implementation A
@@ -34,7 +34,7 @@ __attribute__((deprecated))
 @end
 
 @interface BASE
-- (void) B __attribute__((deprecated)); // expected-note {{method declared here}}
+- (void) B __attribute__((deprecated)); // expected-note {{method 'B' declared here}}
 @end
 
 @interface SUB : BASE

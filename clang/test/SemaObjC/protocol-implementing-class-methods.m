@@ -5,11 +5,11 @@
 @optional
 - (int) PMeth;
 @required
-- (void) : (double) arg; // expected-note {{method declared here}}
+- (void) : (double) arg; // expected-note {{method ':' declared here}}
 @end
 
 @interface NSImage <P1>
-- (void) initialize; // expected-note {{method declared here}}
+- (void) initialize; // expected-note {{method 'initialize' declared here}}
 @end
 
 @interface NSImage (AirPortUI)
@@ -17,7 +17,7 @@
 @end
 
 @interface NSImage()
-- (void) CEMeth; // expected-note {{method declared here}}
+- (void) CEMeth; // expected-note {{method 'CEMeth' declared here}}
 @end
 
 @implementation NSImage (AirPortUI)

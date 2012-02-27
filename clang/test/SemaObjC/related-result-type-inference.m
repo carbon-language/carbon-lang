@@ -150,7 +150,7 @@ void test_inference() {
 
 // <rdar://problem/9340699>
 @interface G 
-- (id)_ABC_init __attribute__((objc_method_family(init))); // expected-note {{method declared here}}
+- (id)_ABC_init __attribute__((objc_method_family(init))); // expected-note {{method '_ABC_init' declared here}}
 @end
 
 @interface G (Additions)

@@ -42,10 +42,10 @@ void test1(A *a) {
 // rdar://8843638
 
 @interface I
-- (id)retain; // expected-note {{method declared here}}
-- (id)autorelease; // expected-note {{method declared here}}
-- (oneway void)release; // expected-note {{method declared here}}
-- (NSUInteger)retainCount; // expected-note {{method declared here}}
+- (id)retain; // expected-note {{method 'retain' declared here}}
+- (id)autorelease; // expected-note {{method 'autorelease' declared here}}
+- (oneway void)release; // expected-note {{method 'release' declared here}}
+- (NSUInteger)retainCount; // expected-note {{method 'retainCount' declared here}}
 @end
 
 @implementation I

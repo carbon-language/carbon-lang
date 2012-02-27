@@ -13,7 +13,7 @@
 
 @protocol Test2Protocol
 + (id)alloc;
-- (id)alloc2; // expected-note 2 {{method declared here}}
+- (id)alloc2; // expected-note 2 {{method 'alloc2' declared here}}
 @end
 
 @implementation RandomObject
