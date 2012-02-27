@@ -699,6 +699,73 @@ template <> struct GraphTraits<Inverse<const MachineBasicBlock*> > {
   }
 };
 
+//===----------------------------------------------------------------------===//
+// MachineOperand iterator
+//
+
+/// MachineOperands - Iterator that can visit all operands on a MachineInstr,
+/// or all operands on a bundle of MachineInstrs.
+///
+/// Intended use:
+///
+///   for (MIOperands MIO(MI, true); MIO.isValid(); ++MIO) {
+///     if (!MIO->isReg())
+///       continue;
+///     ...
+///   }
+///
+class MIOperands {
+  MachineBasicBlock::instr_iterator InstrI, InstrE;
+  MachineInstr::mop_iterator OpI, OpE;
+
+  // If the operands on InstrI are exhausted, advance InstrI to the next
+  // bundled instruction with operands.
+  void advance() {
+    while (OpI == OpE) {
+      // Don't advance off the basic block, or into a new bundle.
+      if (++InstrI == InstrE || !InstrI->isInsideBundle())
+        break;
+      OpI = InstrI->operands_begin();
+      OpE = InstrI->operands_end();
+    }
+  }
+
+public:
+  /// MIOperands - Create an iterator that visits all operands on MI, or all
+  /// operands on every instruction in the bundle containing MI.
+  ///
+  /// @param MI The instruction to examine.
+  /// @param WholeBundle When true, visit all operands on the entire bundle.
+  ///
+  explicit MIOperands(MachineInstr *MI, bool WholeBundle = false) {
+    if (WholeBundle) {
+      InstrI = MI->getBundleStart();
+      InstrE = MI->getParent()->instr_end();
+    } else {
+      InstrI = InstrE = MI;
+      ++InstrE;
+    }
+    OpI = InstrI->operands_begin();
+    OpE = InstrI->operands_end();
+    if (WholeBundle)
+      advance();
+  }
+
+  /// isValid - Returns true until all the operands have been visited.
+  bool isValid() const { return OpI != OpE; }
+
+  /// Preincrement.  Move to the next operand.
+  MIOperands &operator++() {
+    assert(isValid() && "Cannot advance MIOperands beyond the last operand");
+    ++OpI;
+    advance();
+    return *this;
+  }
+
+  MachineOperand &operator* () const { return *OpI; }
+  MachineOperand *operator->() const { return &*OpI; }
+};
+
 } // End llvm namespace
 
 #endif
