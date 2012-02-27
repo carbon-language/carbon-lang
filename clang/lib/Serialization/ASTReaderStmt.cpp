@@ -618,6 +618,7 @@ void ASTStmtReader::VisitInitListExpr(InitListExpr *E) {
   } else
     E->ArrayFillerOrUnionFieldInit = ReadDeclAs<FieldDecl>(Record, Idx);
   E->sawArrayRangeDesignator(Record[Idx++]);
+  E->setInitializesStdInitializerList(Record[Idx++]);
   unsigned NumInits = Record[Idx++];
   E->reserveInits(Reader.getContext(), NumInits);
   if (isArrayFiller) {

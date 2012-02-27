@@ -598,6 +598,7 @@ void ASTStmtWriter::VisitInitListExpr(InitListExpr *E) {
   else
     Writer.AddDeclRef(E->getInitializedFieldInUnion(), Record);
   Record.push_back(E->hadArrayRangeDesignator());
+  Record.push_back(E->initializesStdInitializerList());
   Record.push_back(E->getNumInits());
   if (isArrayFiller) {
     // ArrayFiller may have filled "holes" due to designated initializer.
