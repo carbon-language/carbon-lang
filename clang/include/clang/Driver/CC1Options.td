@@ -86,6 +86,8 @@ def analyzer_max_nodes : Separate<"-analyzer-max-nodes">,
   HelpText<"The maximum number of nodes the analyzer can generate (150000 default, 0 = no limit)">;
 def analyzer_max_loop : Separate<"-analyzer-max-loop">,
   HelpText<"The maximum number of times the analyzer will go through a loop">;
+def analyzer_stats : Flag<"-analyzer-stats">,
+  HelpText<"Print internal analyzer statistics.">;
 
 def analyzer_checker : Separate<"-analyzer-checker">,
   HelpText<"Choose analyzer checkers to enable">;

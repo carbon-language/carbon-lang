@@ -84,6 +84,7 @@ public:
   unsigned CFGAddImplicitDtors : 1;
   unsigned CFGAddInitializers : 1;
   unsigned EagerlyTrimEGraph : 1;
+  unsigned PrintStats : 1;
 
 public:
   AnalyzerOptions() {
@@ -104,6 +105,7 @@ public:
     CFGAddImplicitDtors = 0;
     CFGAddInitializers = 0;
     EagerlyTrimEGraph = 0;
+    PrintStats = 0;
   }
 };
 
