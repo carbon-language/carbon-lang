@@ -156,8 +156,7 @@ class AbbreviationsTestCase(TestBase):
                         substrs = [ 'a.out',
                                     '/usr/lib/dyld',
                                     '/usr/lib/libstdc++',
-                                    '/usr/lib/libSystem.B.dylib',
-                                    '/usr/lib/system/libmathCommon.A.dylib'])
+                                    '/usr/lib/libSystem.B.dylib'])
 
 
 if __name__ == '__main__':
