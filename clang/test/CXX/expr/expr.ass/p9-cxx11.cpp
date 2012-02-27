@@ -11,10 +11,9 @@ void std_example() {
   z = { 1, 2 };
   z += { 1, 2 };
 
-  // FIXME: implement semantics of scalar init list assignment.
   int a, b;
-  a = b = { 1 }; // unexpected-error {{incompatible type 'void'}}
-  a = { 1 } = b; // unexpected-error {{incompatible type 'void'}}
+  a = b = { 1 };
+  a = { 1 } = b;
 }
 
 struct S {

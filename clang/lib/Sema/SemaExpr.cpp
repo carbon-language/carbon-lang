@@ -7612,6 +7612,25 @@ static void DiagnoseSelfAssignment(Sema &S, Expr *LHSExpr, Expr *RHSExpr,
 ExprResult Sema::CreateBuiltinBinOp(SourceLocation OpLoc,
                                     BinaryOperatorKind Opc,
                                     Expr *LHSExpr, Expr *RHSExpr) {
+  if (getLangOptions().CPlusPlus0x && isa<InitListExpr>(RHSExpr)) {
+    // The syntax only allows initializer lists on the RHS of assignment,
+    // so we don't need to worry about accepting invalid code for
+    // non-assignment operators.
+    // C++11 5.17p9:
+    //   The meaning of x = {v} [...] is that of x = T(v) [...]. The meaning
+    //   of x = {} is x = T().
+    InitializationKind Kind =
+        InitializationKind::CreateDirectList(RHSExpr->getLocStart());
+    InitializedEntity Entity =
+        InitializedEntity::InitializeTemporary(LHSExpr->getType());
+    InitializationSequence InitSeq(*this, Entity, Kind, &RHSExpr, 1);
+    ExprResult Init = InitSeq.Perform(*this, Entity, Kind,
+                                      MultiExprArg(&RHSExpr, 1));
+    if (Init.isInvalid())
+      return Init;
+    RHSExpr = Init.take();
+  }
+
   ExprResult LHS = Owned(LHSExpr), RHS = Owned(RHSExpr);
   QualType ResultTy;     // Result type of the binary operator.
   // The following two variables are used for compound assignment operators
