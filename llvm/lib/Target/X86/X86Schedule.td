@@ -103,6 +103,142 @@ def IIC_CALL_FAR_PTR : InstrItinClass;
 // ret
 def IIC_RET : InstrItinClass;
 def IIC_RET_IMM : InstrItinClass;
+// SSE scalar/parallel binary operations
+def IIC_SSE_ALU_F32S_RR : InstrItinClass;
+def IIC_SSE_ALU_F32S_RM : InstrItinClass;
+def IIC_SSE_ALU_F64S_RR : InstrItinClass;
+def IIC_SSE_ALU_F64S_RM : InstrItinClass;
+def IIC_SSE_MUL_F32S_RR : InstrItinClass;
+def IIC_SSE_MUL_F32S_RM : InstrItinClass;
+def IIC_SSE_MUL_F64S_RR : InstrItinClass;
+def IIC_SSE_MUL_F64S_RM : InstrItinClass;
+def IIC_SSE_DIV_F32S_RR : InstrItinClass;
+def IIC_SSE_DIV_F32S_RM : InstrItinClass;
+def IIC_SSE_DIV_F64S_RR : InstrItinClass;
+def IIC_SSE_DIV_F64S_RM : InstrItinClass;
+def IIC_SSE_ALU_F32P_RR : InstrItinClass;
+def IIC_SSE_ALU_F32P_RM : InstrItinClass;
+def IIC_SSE_ALU_F64P_RR : InstrItinClass;
+def IIC_SSE_ALU_F64P_RM : InstrItinClass;
+def IIC_SSE_MUL_F32P_RR : InstrItinClass;
+def IIC_SSE_MUL_F32P_RM : InstrItinClass;
+def IIC_SSE_MUL_F64P_RR : InstrItinClass;
+def IIC_SSE_MUL_F64P_RM : InstrItinClass;
+def IIC_SSE_DIV_F32P_RR : InstrItinClass;
+def IIC_SSE_DIV_F32P_RM : InstrItinClass;
+def IIC_SSE_DIV_F64P_RR : InstrItinClass;
+def IIC_SSE_DIV_F64P_RM : InstrItinClass;
+
+def IIC_SSE_COMIS_RR : InstrItinClass;
+def IIC_SSE_COMIS_RM : InstrItinClass;
+
+def IIC_SSE_HADDSUB_RR : InstrItinClass;
+def IIC_SSE_HADDSUB_RM : InstrItinClass;
+
+def IIC_SSE_BIT_P_RR  : InstrItinClass;
+def IIC_SSE_BIT_P_RM  : InstrItinClass;
+
+def IIC_SSE_INTALU_P_RR  : InstrItinClass;
+def IIC_SSE_INTALU_P_RM  : InstrItinClass;
+def IIC_SSE_INTALUQ_P_RR  : InstrItinClass;
+def IIC_SSE_INTALUQ_P_RM  : InstrItinClass;
+
+def IIC_SSE_INTMUL_P_RR : InstrItinClass;
+def IIC_SSE_INTMUL_P_RM : InstrItinClass;
+
+def IIC_SSE_INTSH_P_RR : InstrItinClass;
+def IIC_SSE_INTSH_P_RM : InstrItinClass;
+def IIC_SSE_INTSH_P_RI : InstrItinClass;
+
+def IIC_SSE_CMPP_RR : InstrItinClass;
+def IIC_SSE_CMPP_RM : InstrItinClass;
+
+def IIC_SSE_SHUFP : InstrItinClass;
+def IIC_SSE_PSHUF : InstrItinClass;
+
+def IIC_SSE_UNPCK : InstrItinClass;
+
+def IIC_SSE_MOVMSK : InstrItinClass;
+def IIC_SSE_MASKMOV : InstrItinClass;
+
+def IIC_SSE_PEXTRW : InstrItinClass;
+def IIC_SSE_PINSRW : InstrItinClass;
+
+def IIC_SSE_PABS_RR : InstrItinClass;
+def IIC_SSE_PABS_RM : InstrItinClass;
+
+def IIC_SSE_SQRTP_RR : InstrItinClass;
+def IIC_SSE_SQRTP_RM : InstrItinClass;
+def IIC_SSE_SQRTS_RR : InstrItinClass;
+def IIC_SSE_SQRTS_RM : InstrItinClass;
+
+def IIC_SSE_RCPP_RR : InstrItinClass;
+def IIC_SSE_RCPP_RM : InstrItinClass;
+def IIC_SSE_RCPS_RR : InstrItinClass;
+def IIC_SSE_RCPS_RM : InstrItinClass;
+
+def IIC_SSE_MOV_S_RR : InstrItinClass;
+def IIC_SSE_MOV_S_RM : InstrItinClass;
+def IIC_SSE_MOV_S_MR : InstrItinClass;
+
+def IIC_SSE_MOVA_P_RR : InstrItinClass;
+def IIC_SSE_MOVA_P_RM : InstrItinClass;
+def IIC_SSE_MOVA_P_MR : InstrItinClass;
+
+def IIC_SSE_MOVU_P_RR : InstrItinClass;
+def IIC_SSE_MOVU_P_RM : InstrItinClass;
+def IIC_SSE_MOVU_P_MR : InstrItinClass;
+
+def IIC_SSE_MOVDQ : InstrItinClass;
+def IIC_SSE_MOVD_ToGP : InstrItinClass;
+def IIC_SSE_MOVQ_RR : InstrItinClass;
+
+def IIC_SSE_MOV_LH : InstrItinClass;
+
+def IIC_SSE_LDDQU : InstrItinClass;
+
+def IIC_SSE_MOVNT : InstrItinClass;
+
+def IIC_SSE_PHADDSUBD_RR : InstrItinClass;
+def IIC_SSE_PHADDSUBD_RM : InstrItinClass;
+def IIC_SSE_PHADDSUBSW_RR : InstrItinClass;
+def IIC_SSE_PHADDSUBSW_RM : InstrItinClass;
+def IIC_SSE_PHADDSUBW_RR : InstrItinClass;
+def IIC_SSE_PHADDSUBW_RM : InstrItinClass;
+def IIC_SSE_PSHUFB_RR : InstrItinClass;
+def IIC_SSE_PSHUFB_RM : InstrItinClass;
+def IIC_SSE_PSIGN_RR : InstrItinClass;
+def IIC_SSE_PSIGN_RM : InstrItinClass;
+
+def IIC_SSE_PMADD : InstrItinClass;
+def IIC_SSE_PMULHRSW : InstrItinClass;
+def IIC_SSE_PALIGNR : InstrItinClass;
+def IIC_SSE_MWAIT : InstrItinClass;
+def IIC_SSE_MONITOR : InstrItinClass;
+
+def IIC_SSE_PREFETCH : InstrItinClass;
+def IIC_SSE_PAUSE : InstrItinClass;
+def IIC_SSE_LFENCE : InstrItinClass;
+def IIC_SSE_MFENCE : InstrItinClass;
+def IIC_SSE_SFENCE : InstrItinClass;
+def IIC_SSE_LDMXCSR : InstrItinClass;
+def IIC_SSE_STMXCSR : InstrItinClass;
+
+def IIC_SSE_CVT_PD_RR : InstrItinClass;
+def IIC_SSE_CVT_PD_RM : InstrItinClass;
+def IIC_SSE_CVT_PS_RR : InstrItinClass;
+def IIC_SSE_CVT_PS_RM : InstrItinClass;
+def IIC_SSE_CVT_PI2PS_RR : InstrItinClass;
+def IIC_SSE_CVT_PI2PS_RM : InstrItinClass;
+def IIC_SSE_CVT_Scalar_RR : InstrItinClass;
+def IIC_SSE_CVT_Scalar_RM : InstrItinClass;
+def IIC_SSE_CVT_SS2SI32_RM : InstrItinClass;
+def IIC_SSE_CVT_SS2SI32_RR : InstrItinClass;
+def IIC_SSE_CVT_SS2SI64_RM : InstrItinClass;
+def IIC_SSE_CVT_SS2SI64_RR : InstrItinClass;
+def IIC_SSE_CVT_SD2SI_RM : InstrItinClass;
+def IIC_SSE_CVT_SD2SI_RR : InstrItinClass;
+
 
 //===----------------------------------------------------------------------===//
 // Processor instruction itineraries.

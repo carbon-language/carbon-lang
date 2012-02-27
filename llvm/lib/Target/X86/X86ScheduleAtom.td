@@ -125,12 +125,159 @@ def AtomItineraries : ProcessorItineraries<
   InstrItinData<IIC_LOOPE, [InstrStage<8, [Port0, Port1]>] >,
   InstrItinData<IIC_LOOPNE, [InstrStage<17, [Port0, Port1]>] >,
   // call - all but reg/imm
-  InstrItinData<IIC_CALL_RI, [InstrStage<1, [Port0], 0>,  InstrStage<1, [Port1]>] >,
+  InstrItinData<IIC_CALL_RI, [InstrStage<1, [Port0], 0>,
+                              InstrStage<1, [Port1]>] >,
   InstrItinData<IIC_CALL_MEM, [InstrStage<15, [Port0, Port1]>] >,
   InstrItinData<IIC_CALL_FAR_MEM, [InstrStage<40, [Port0, Port1]>] >,
   InstrItinData<IIC_CALL_FAR_PTR, [InstrStage<39, [Port0, Port1]>] >,
   //ret
   InstrItinData<IIC_RET, [InstrStage<79, [Port0, Port1]>] >,
-  InstrItinData<IIC_RET_IMM, [InstrStage<1, [Port0], 0>,  InstrStage<1, [Port1]>] >
+  InstrItinData<IIC_RET_IMM, [InstrStage<1, [Port0], 0>,  InstrStage<1, [Port1]>] >,
+  // SSE binary operations
+  // arithmetic fp scalar
+  InstrItinData<IIC_SSE_ALU_F32S_RR, [InstrStage<5, [Port1]>] >,
+  InstrItinData<IIC_SSE_ALU_F32S_RM, [InstrStage<5, [Port0], 0>,
+                                   InstrStage<5, [Port1]>] >,
+  InstrItinData<IIC_SSE_ALU_F64S_RR, [InstrStage<5, [Port1]>] >,
+  InstrItinData<IIC_SSE_ALU_F64S_RM, [InstrStage<5, [Port0], 0>,
+                                   InstrStage<5, [Port1]>] >,
+  InstrItinData<IIC_SSE_MUL_F32S_RR, [InstrStage<4, [Port0]>] >,
+  InstrItinData<IIC_SSE_MUL_F32S_RM, [InstrStage<4, [Port0]>] >,
+  InstrItinData<IIC_SSE_MUL_F64S_RR, [InstrStage<5, [Port0]>] >,
+  InstrItinData<IIC_SSE_MUL_F64S_RM, [InstrStage<5, [Port0]>] >,
+  InstrItinData<IIC_SSE_DIV_F32S_RR, [InstrStage<34, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_DIV_F32S_RM, [InstrStage<34, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_DIV_F64S_RR, [InstrStage<62, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_DIV_F64S_RM, [InstrStage<62, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_SSE_COMIS_RR, [InstrStage<9, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_COMIS_RM, [InstrStage<10, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_SSE_HADDSUB_RR, [InstrStage<8, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_HADDSUB_RM, [InstrStage<9, [Port0, Port1]>] >,
+
+  // arithmetic fp parallel
+  InstrItinData<IIC_SSE_ALU_F32P_RR, [InstrStage<5, [Port1]>] >,
+  InstrItinData<IIC_SSE_ALU_F32P_RM, [InstrStage<5, [Port0], 0>,
+                                   InstrStage<5, [Port1]>] >,
+  InstrItinData<IIC_SSE_ALU_F64P_RR, [InstrStage<6, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_ALU_F64P_RM, [InstrStage<7, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_MUL_F32P_RR, [InstrStage<5, [Port0]>] >,
+  InstrItinData<IIC_SSE_MUL_F32P_RM, [InstrStage<5, [Port0]>] >,
+  InstrItinData<IIC_SSE_MUL_F64P_RR, [InstrStage<9, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_MUL_F64P_RM, [InstrStage<10, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_DIV_F32P_RR, [InstrStage<70, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_DIV_F32P_RM, [InstrStage<70, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_DIV_F64P_RR, [InstrStage<125, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_DIV_F64P_RM, [InstrStage<125, [Port0, Port1]>] >,
+
+  // bitwise parallel
+  InstrItinData<IIC_SSE_BIT_P_RR, [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_BIT_P_RM, [InstrStage<1, [Port0]>] >,
+
+  // arithmetic int parallel
+  InstrItinData<IIC_SSE_INTALU_P_RR, [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_INTALU_P_RM, [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_SSE_INTALUQ_P_RR, [InstrStage<2, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_INTALUQ_P_RM, [InstrStage<3, [Port0, Port1]>] >,
+
+  // multiply int parallel
+  InstrItinData<IIC_SSE_INTMUL_P_RR, [InstrStage<5, [Port0]>] >,
+  InstrItinData<IIC_SSE_INTMUL_P_RM, [InstrStage<5, [Port0]>] >,
+
+  // shift parallel
+  InstrItinData<IIC_SSE_INTSH_P_RR, [InstrStage<2, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_INTSH_P_RM, [InstrStage<3, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_INTSH_P_RI, [InstrStage<1, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_SSE_CMPP_RR, [InstrStage<6, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_CMPP_RM, [InstrStage<7, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_SSE_SHUFP, [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_SSE_PSHUF, [InstrStage<1, [Port0]>] >,
+
+  InstrItinData<IIC_SSE_UNPCK, [InstrStage<1, [Port0]>] >,
+
+  InstrItinData<IIC_SSE_SQRTP_RR, [InstrStage<13, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_SQRTP_RM, [InstrStage<14, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_SQRTS_RR, [InstrStage<11, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_SQRTS_RM, [InstrStage<12, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_SSE_RCPP_RR, [InstrStage<9, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_RCPP_RM, [InstrStage<10, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_RCPS_RR, [InstrStage<4, [Port0]>] >,
+  InstrItinData<IIC_SSE_RCPS_RM, [InstrStage<4, [Port0]>] >,
+
+  InstrItinData<IIC_SSE_MOVMSK, [InstrStage<3, [Port0]>] >,
+  InstrItinData<IIC_SSE_MASKMOV, [InstrStage<2, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_SSE_PEXTRW, [InstrStage<4, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_PINSRW, [InstrStage<1, [Port0]>] >,
+
+  InstrItinData<IIC_SSE_PABS_RR, [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_PABS_RM, [InstrStage<1, [Port0]>] >,
+
+  InstrItinData<IIC_SSE_MOV_S_RR, [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_MOV_S_RM, [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_SSE_MOV_S_MR, [InstrStage<1, [Port0]>] >,
+
+  InstrItinData<IIC_SSE_MOVA_P_RR, [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_MOVA_P_RM, [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_SSE_MOVA_P_MR, [InstrStage<1, [Port0]>] >,
+
+  InstrItinData<IIC_SSE_MOVU_P_RR, [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_MOVU_P_RM, [InstrStage<3, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_MOVU_P_MR, [InstrStage<2, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_SSE_MOV_LH, [InstrStage<1, [Port0]>] >,
+
+  InstrItinData<IIC_SSE_LDDQU, [InstrStage<3, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_SSE_MOVDQ, [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_SSE_MOVD_ToGP, [InstrStage<3, [Port0]>] >,
+  InstrItinData<IIC_SSE_MOVQ_RR, [InstrStage<1, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_SSE_MOVNT, [InstrStage<1, [Port0]>] >,
+
+  InstrItinData<IIC_SSE_PREFETCH, [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_SSE_PAUSE, [InstrStage<17, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_LFENCE, [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_MFENCE, [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_SSE_SFENCE, [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_SSE_LDMXCSR, [InstrStage<5, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_STMXCSR, [InstrStage<15, [Port0, Port1]>] >,
+
+  InstrItinData<IIC_SSE_PHADDSUBD_RR, [InstrStage<3, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_PHADDSUBD_RM, [InstrStage<4, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_PHADDSUBSW_RR, [InstrStage<7, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_PHADDSUBSW_RM, [InstrStage<8, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_PHADDSUBW_RR, [InstrStage<7, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_PHADDSUBW_RM, [InstrStage<8, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_PSHUFB_RR, [InstrStage<4, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_PSHUFB_RM, [InstrStage<5, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_PSIGN_RR, [InstrStage<1, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_PSIGN_RM, [InstrStage<1, [Port0]>] >,
+
+  InstrItinData<IIC_SSE_PMADD, [InstrStage<5, [Port0]>] >,
+  InstrItinData<IIC_SSE_PMULHRSW, [InstrStage<5, [Port0]>] >,
+  InstrItinData<IIC_SSE_PALIGNR, [InstrStage<1, [Port0]>] >,
+  InstrItinData<IIC_SSE_MWAIT, [InstrStage<46, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_MONITOR, [InstrStage<45, [Port0, Port1]>] >,
+
+  // conversions
+  // to/from PD ...
+  InstrItinData<IIC_SSE_CVT_PD_RR, [InstrStage<7, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_CVT_PD_RM, [InstrStage<8, [Port0, Port1]>] >,
+  // to/from PS except to/from PD and PS2PI
+  InstrItinData<IIC_SSE_CVT_PS_RR, [InstrStage<6, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_CVT_PS_RM, [InstrStage<7, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_CVT_Scalar_RR, [InstrStage<6, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_CVT_Scalar_RM, [InstrStage<7, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_CVT_SS2SI32_RR, [InstrStage<8, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_CVT_SS2SI32_RM, [InstrStage<9, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_CVT_SS2SI64_RR, [InstrStage<9, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_CVT_SS2SI64_RM, [InstrStage<10, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_CVT_SD2SI_RR, [InstrStage<8, [Port0, Port1]>] >,
+  InstrItinData<IIC_SSE_CVT_SD2SI_RM, [InstrStage<9, [Port0, Port1]>] >
 ]>;
 
