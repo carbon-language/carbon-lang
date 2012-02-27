@@ -2144,7 +2144,7 @@ bool GVN::processInstruction(Instruction *I) {
   }
 
   // Instructions with void type don't return a value, so there's
-  // no point in trying to find redudancies in them.
+  // no point in trying to find redundancies in them.
   if (I->getType()->isVoidTy()) return false;
   
   uint32_t NextNum = VN.getNextUnusedValueNumber();
@@ -2160,7 +2160,7 @@ bool GVN::processInstruction(Instruction *I) {
   // If the number we were assigned was a brand new VN, then we don't
   // need to do a lookup to see if the number already exists
   // somewhere in the domtree: it can't!
-  if (Num == NextNum) {
+  if (Num >= NextNum) {
     addToLeaderTable(Num, I, I->getParent());
     return false;
   }
