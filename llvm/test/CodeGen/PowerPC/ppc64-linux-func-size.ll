@@ -1,8 +1,10 @@
 ; RUN: llc < %s -mtriple=powerpc64-unknown-linux-gnu -mcpu=g5 | FileCheck %s
 
 ; CHECK: test1:
-; CHECK-NEXT:  .quad .L.test1,.TOC.@tocbase
-; CHECK-NEXT:  .previous
+; CHECK-NEXT:	.align 3
+; CHECK-NEXT:	.quad .L.test1
+; CHECK-NEXT:	.quad .TOC.@tocbase
+; CHECK-NEXT:	.text
 ; CHECK-NEXT: .L.test1:
 
 define i32 @test1(i32 %a) nounwind {
