@@ -90,6 +90,14 @@ class MemoryReadTestCase(TestBase):
         self.expect("memory read --format 'hex float' --size 16 `&argc`",
             substrs = ['unsupported byte size (16) for hex float format'])
 
+        self.expect("memory read --format 'float' --count 1 --size 8 `&my_double`",
+            substrs = ['1234.'])
+
+        # (lldb) memory read --format 'float' --count 1 --size 20 `&my_double`
+        # 0x7fff5fbff598: error: unsupported byte size (20) for float format
+        self.expect("memory read --format 'float' --count 1 --size 20 `&my_double`",
+            substrs = ['unsupported byte size (20) for float format'])
+
 
 if __name__ == '__main__':
     import atexit
