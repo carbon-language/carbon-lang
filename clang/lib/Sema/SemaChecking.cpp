@@ -4440,7 +4440,7 @@ static bool IsTailPaddedMemberArray(Sema &S, llvm::APInt Size,
 void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
                             const ArraySubscriptExpr *ASE,
                             bool AllowOnePastEnd, bool IndexNegated) {
-  IndexExpr = IndexExpr->IgnoreParenCasts();
+  IndexExpr = IndexExpr->IgnoreParenImpCasts();
   if (IndexExpr->isValueDependent())
     return;
 
@@ -4486,15 +4486,15 @@ void Sema::CheckArrayAccess(const Expr *BaseExpr, const Expr *IndexExpr,
     }
 
     if (size.getBitWidth() > index.getBitWidth())
-      index = index.sext(size.getBitWidth());
+      index = index.zext(size.getBitWidth());
     else if (size.getBitWidth() < index.getBitWidth())
-      size = size.sext(index.getBitWidth());
+      size = size.zext(index.getBitWidth());
 
     // For array subscripting the index must be less than size, but for pointer
     // arithmetic also allow the index (offset) to be equal to size since
     // computing the next address after the end of the array is legal and
     // commonly done e.g. in C++ iterators and range-based for loops.
-    if (AllowOnePastEnd ? index.sle(size) : index.slt(size))
+    if (AllowOnePastEnd ? index.ule(size) : index.ult(size))
       return;
 
     // Also don't warn for arrays of size 1 which are members of some

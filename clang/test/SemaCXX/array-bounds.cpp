@@ -247,3 +247,9 @@ void test_pr11007() {
   double a[5]; // expected-note {{array 'a' declared here}}
   test_pr11007_aux("foo", a[1000]); // expected-warning {{array index 1000 is past the end of the array}}
 }
+
+void test_rdar10916006(void)
+{
+	int a[128]; // expected-note {{array 'a' declared here}}
+	a[(unsigned char)'\xA1'] = 1; // expected-warning {{array index 161 is past the end of the array}}
+}
