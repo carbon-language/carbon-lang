@@ -1422,7 +1422,13 @@ DataExtractor::Dump (Stream *s,
         switch (item_format)
         {
         case eFormatBoolean:
-            s->Printf ("%s", GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset) ? "true" : "false");
+            if (item_byte_size <= 8)
+                s->Printf ("%s", GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset) ? "true" : "false");
+            else
+            {
+                s->Printf("error: unsupported byte size (%u) for boolean format", item_byte_size);
+                return offset;
+            }
             break;
 
         case eFormatBinary:
@@ -1505,6 +1511,7 @@ DataExtractor::Dump (Stream *s,
             }
             break;
 
+        case eFormatEnum:       // Print enum value as a signed integer when we don't get the enum type
         case eFormatDecimal:
             if (item_byte_size <= 8)
                 s->Printf ("%lld", GetMaxS64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
@@ -1568,11 +1575,6 @@ DataExtractor::Dump (Stream *s,
             }
             break;
             
-        case eFormatEnum:
-            // Print enum value as a signed integer when we don't get the enum type
-            s->Printf ("%lld", GetMaxU64Bitfield(&offset, item_byte_size, item_bit_size, item_bit_offset));
-            break;
-
         case eFormatCString:
             {
                 const char *cstr = GetCStr(&offset);
@@ -1631,6 +1633,11 @@ DataExtractor::Dump (Stream *s,
                     s->Printf("%llu", GetMaxU64Bitfield(&offset, complex_int_byte_size, 0, 0));
                     s->Printf(" + %llui", GetMaxU64Bitfield(&offset, complex_int_byte_size, 0, 0));
                 }
+                else
+                {
+                    s->Printf("error: unsupported byte size (%u) for complex integer format", item_byte_size);
+                    return offset;
+                }
             }
             break;
 
@@ -1660,8 +1667,8 @@ DataExtractor::Dump (Stream *s,
             }
             else
             {
-                s->Printf ("unsupported complex float byte size %u", item_byte_size);
-                return start_offset;
+                s->Printf("error: unsupported byte size (%u) for complex float format", item_byte_size);
+                return offset;
             }
             break;
 
@@ -1707,14 +1714,19 @@ DataExtractor::Dump (Stream *s,
             {
                 s->Printf ("%Lg", GetLongDouble(&offset));
             }
+            else
+            {
+                s->Printf("error: unsupported byte size (%u) for float format", item_byte_size);
+                return offset;
+            }
             break;
 
         case eFormatUnicode16:
-            s->Printf("0x%4.4x", GetU16 (&offset));
+            s->Printf("U+%4.4x", GetU16 (&offset));
             break;
 
         case eFormatUnicode32:
-            s->Printf("0x%8.8x", GetU32 (&offset));
+            s->Printf("U+0x%8.8x", GetU32 (&offset));
             break;
 
         case eFormatAddressInfo:
@@ -1757,8 +1769,8 @@ DataExtractor::Dump (Stream *s,
             }
             else
             {
-                s->Printf ("unsupported hex float byte size %u", item_byte_size);
-                return start_offset;
+                s->Printf("error: unsupported byte size (%u) for hex float format", item_byte_size);
+                return offset;
             }
             break;
 

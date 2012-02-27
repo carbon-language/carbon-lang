@@ -1135,24 +1135,26 @@ ValueObject::GetValueAsCString ()
                             }
                             StreamString sstr;
                             ExecutionContext exe_ctx (GetExecutionContextRef());
-                            if (ClangASTType::DumpTypeValue (GetClangAST(),            // The clang AST
-                                                             clang_type,               // The clang type to display
-                                                             &sstr,
-                                                             my_format,                   // Format to display this type with
-                                                             m_data,                   // Data to extract from
-                                                             0,                        // Byte offset into "m_data"
-                                                             GetByteSize(),            // Byte size of item in "m_data"
-                                                             GetBitfieldBitSize(),     // Bitfield bit size
-                                                             GetBitfieldBitOffset(),
-                                                             exe_ctx.GetBestExecutionContextScope()))  // Bitfield bit offset
-                                m_value_str.swap(sstr.GetString());
-                            else
-                            {
-                                m_error.SetErrorStringWithFormat ("unsufficient data for value (only %lu of %lu bytes available)", 
-                                                                  m_data.GetByteSize(),
-                                                                  GetByteSize());
+                            ClangASTType::DumpTypeValue (GetClangAST(),             // The clang AST
+                                                         clang_type,                // The clang type to display
+                                                         &sstr,
+                                                         my_format,                 // Format to display this type with
+                                                         m_data,                    // Data to extract from
+                                                         0,                         // Byte offset into "m_data"
+                                                         GetByteSize(),             // Byte size of item in "m_data"
+                                                         GetBitfieldBitSize(),      // Bitfield bit size
+                                                         GetBitfieldBitOffset(),    // Bitfield bit offset
+                                                         exe_ctx.GetBestExecutionContextScope()); 
+                            // Don't set the m_error to anything here otherwise
+                            // we won't be able to re-format as anything else. The
+                            // code for ClangASTType::DumpTypeValue() should always
+                            // return something, even if that something contains
+                            // an error messsage. "m_error" is used to detect errors
+                            // when reading the valid object, not for formatting errors.
+                            if (sstr.GetString().empty())
                                 m_value_str.clear();
-                            }
+                            else
+                                m_value_str.swap(sstr.GetString());
                         }
                     }
                     break;
