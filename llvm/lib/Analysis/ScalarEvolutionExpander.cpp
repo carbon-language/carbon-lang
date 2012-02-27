@@ -34,16 +34,15 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
   // This function must be called with the builder having a valid insertion
   // point. It doesn't need to be the actual IP where the uses of the returned
   // cast will be added, but it must dominate such IP.
-  // We use this precondition to assert that we can produce a cast that will
-  // dominate all its uses. In particular, this is crucial for the case
-  // where the builder's insertion point *is* the point where we were asked
-  // to put the cast.
+  // We use this precondition to produce a cast that will dominate all its
+  // uses. In particular, this is crucial for the case where the builder's
+  // insertion point *is* the point where we were asked to put the cast.
   // Since we don't know the the builder's insertion point is actually
   // where the uses will be added (only that it dominates it), we are
   // not allowed to move it.
   BasicBlock::iterator BIP = Builder.GetInsertPoint();
 
-  assert(BIP == IP || SE.DT->dominates(IP, BIP));
+  Instruction *Ret = NULL;
 
   // Check to see if there is already a cast!
   for (Value::use_iterator UI = V->use_begin(), E = V->use_end();
@@ -59,22 +58,28 @@ Value *SCEVExpander::ReuseOrCreateCast(Value *V, Type *Ty,
             // Create a new cast, and leave the old cast in place in case
             // it is being used as an insert point. Clear its operand
             // so that it doesn't hold anything live.
-            Instruction *NewCI = CastInst::Create(Op, V, Ty, "", IP);
-            NewCI->takeName(CI);
-            CI->replaceAllUsesWith(NewCI);
+            Ret = CastInst::Create(Op, V, Ty, "", IP);
+            Ret->takeName(CI);
+            CI->replaceAllUsesWith(Ret);
             CI->setOperand(0, UndefValue::get(V->getType()));
-            rememberInstruction(NewCI);
-            return NewCI;
+            break;
           }
-          rememberInstruction(CI);
-          return CI;
+          Ret = CI;
+          break;
         }
   }
 
   // Create a new cast.
-  Instruction *I = CastInst::Create(Op, V, Ty, V->getName(), IP);
-  rememberInstruction(I);
-  return I;
+  if (!Ret)
+    Ret = CastInst::Create(Op, V, Ty, V->getName(), IP);
+
+  // We assert at the end of the function since IP might point to an
+  // instruction with different dominance properties than a cast
+  // (an invoke for example) and not dominate BIP (but the cast does).
+  assert(SE.DT->dominates(Ret, BIP));
+
+  rememberInstruction(Ret);
+  return Ret;
 }
 
 /// InsertNoopCastOfTo - Insert a cast of V to the specified type,

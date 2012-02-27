@@ -38,3 +38,33 @@ bb8:
 bb9:
   resume { i8*, i32 } zeroinitializer
 }
+
+
+define void @h() {
+bb1:
+  invoke void @g() optsize
+          to label %bb2 unwind label %bb5
+bb2:
+  %arrayctor.cur = phi i8* [ undef, %bb1 ], [ %arrayctor.next, %bb3 ]
+  invoke void @g() optsize
+          to label %bb3 unwind label %bb6
+bb3:
+  %arrayctor.next = getelementptr inbounds i8* %arrayctor.cur, i64 1
+  br label %bb2
+bb4:
+  ret void
+bb5:
+  %tmp = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          cleanup
+  invoke void @g() optsize
+          to label %bb4 unwind label %bb7
+bb6:
+  %tmp1 = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          cleanup
+  %arraydestroy.isempty = icmp eq i8* undef, %arrayctor.cur
+  ret void
+bb7:
+  %lpad.nonloopexit = landingpad { i8*, i32 } personality i8* bitcast (i32 (...)* @__gxx_personality_v0 to i8*)
+          catch i8* null
+  ret void
+}
