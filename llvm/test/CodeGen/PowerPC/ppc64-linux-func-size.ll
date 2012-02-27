@@ -1,6 +1,7 @@
 ; RUN: llc < %s -mtriple=powerpc64-unknown-linux-gnu -mcpu=g5 | FileCheck %s
 
-; CHECK: test1:
+; CHECK:      .section	.opd,"aw",@progbits
+; CHECK-NEXT: test1:
 ; CHECK-NEXT:	.align 3
 ; CHECK-NEXT:	.quad .L.test1
 ; CHECK-NEXT:	.quad .TOC.@tocbase
