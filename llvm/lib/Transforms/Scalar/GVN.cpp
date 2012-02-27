@@ -96,12 +96,17 @@ namespace {
     uint32_t nextValueNumber;
 
     Expression create_expression(Instruction* I);
+    Expression create_cmp_expression(unsigned Opcode,
+                                     CmpInst::Predicate Predicate,
+                                     Value *LHS, Value *RHS);
     Expression create_extractvalue_expression(ExtractValueInst* EI);
     uint32_t lookup_or_add_call(CallInst* C);
   public:
     ValueTable() : nextValueNumber(1) { }
     uint32_t lookup_or_add(Value *V);
     uint32_t lookup(Value *V) const;
+    uint32_t lookup_or_add_cmp(unsigned Opcode, CmpInst::Predicate Pred,
+                               Value *LHS, Value *RHS);
     void add(Value *V, uint32_t num);
     void clear();
     void erase(Value *v);
@@ -178,6 +183,25 @@ Expression ValueTable::create_expression(Instruction *I) {
       e.varargs.push_back(*II);
   }
   
+  return e;
+}
+
+Expression ValueTable::create_cmp_expression(unsigned Opcode,
+                                             CmpInst::Predicate Predicate,
+                                             Value *LHS, Value *RHS) {
+  assert((Opcode == Instruction::ICmp || Opcode == Instruction::FCmp) &&
+         "Not a comparison!");
+  Expression e;
+  e.type = CmpInst::makeCmpResultType(LHS->getType());
+  e.varargs.push_back(lookup_or_add(LHS));
+  e.varargs.push_back(lookup_or_add(RHS));
+
+  // Sort the operand value numbers so x<y and y>x get the same value number.
+  if (e.varargs[0] > e.varargs[1]) {
+    std::swap(e.varargs[0], e.varargs[1]);
+    Predicate = CmpInst::getSwappedPredicate(Predicate);
+  }
+  e.opcode = (Opcode << 8) | Predicate;
   return e;
 }
 
@@ -428,6 +452,19 @@ uint32_t ValueTable::lookup(Value *V) const {
   DenseMap<Value*, uint32_t>::const_iterator VI = valueNumbering.find(V);
   assert(VI != valueNumbering.end() && "Value not numbered?");
   return VI->second;
+}
+
+/// lookup_or_add_cmp - Returns the value number of the given comparison,
+/// assigning it a new number if it did not have one before.  Useful when
+/// we deduced the result of a comparison, but don't immediately have an
+/// instruction realizing that comparison to hand.
+uint32_t ValueTable::lookup_or_add_cmp(unsigned Opcode,
+                                       CmpInst::Predicate Predicate,
+                                       Value *LHS, Value *RHS) {
+  Expression exp = create_cmp_expression(Opcode, Predicate, LHS, RHS);
+  uint32_t& e = expressionNumbering[exp];
+  if (!e) e = nextValueNumber++;
+  return e;
 }
 
 /// clear - Remove all entries from the ValueTable.
@@ -1987,14 +2024,35 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root) {
   }
 
   // If we are propagating an equality like "(A == B)" == "true" then also
-  // propagate the equality A == B.
+  // propagate the equality A == B.  When propagating a comparison such as
+  // "(A >= B)" == "true", replace all instances of "A < B" with "false".
   if (ICmpInst *Cmp = dyn_cast<ICmpInst>(LHS)) {
-    // Only equality comparisons are supported.
+    Value *Op0 = Cmp->getOperand(0), *Op1 = Cmp->getOperand(1);
+
+    // If "A == B" is known true, or "A != B" is known false, then replace
+    // A with B everywhere in the scope.
     if ((isKnownTrue && Cmp->getPredicate() == CmpInst::ICMP_EQ) ||
-        (isKnownFalse && Cmp->getPredicate() == CmpInst::ICMP_NE)) {
-      Value *Op0 = Cmp->getOperand(0), *Op1 = Cmp->getOperand(1);
+        (isKnownFalse && Cmp->getPredicate() == CmpInst::ICMP_NE))
       Changed |= propagateEquality(Op0, Op1, Root);
+
+    // If "A >= B" is known true, replace "A < B" with false everywhere.
+    CmpInst::Predicate NotPred = Cmp->getInversePredicate();
+    Constant *NotVal = ConstantInt::get(Cmp->getType(), isKnownFalse);
+    // Since we don't have the instruction "A < B" immediately to hand, work out
+    // the value number that it would have and use that to find an appropriate
+    // instruction (if any).
+    unsigned Num = VN.lookup_or_add_cmp(Cmp->getOpcode(), NotPred, Op0, Op1);
+    Value *NotCmp = findLeader(Root, Num);
+    if (NotCmp && isa<Instruction>(NotCmp)) {
+      unsigned NumReplacements =
+        replaceAllDominatedUsesWith(NotCmp, NotVal, Root);
+      Changed |= NumReplacements > 0;
+      NumGVNEqProp += NumReplacements;
     }
+    // Ensure that any instruction in scope that gets the "A < B" value number
+    // is replaced with false.
+    addToLeaderTable(Num, NotVal, Root);
+
     return Changed;
   }
 

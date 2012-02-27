@@ -111,3 +111,67 @@ case3:
 ; CHECK: call void @bar(i32 %x)
   ret void
 }
+
+; CHECK: @test5
+define i1 @test5(i32 %x, i32 %y) {
+  %cmp = icmp eq i32 %x, %y
+  br i1 %cmp, label %same, label %different
+
+same:
+  %cmp2 = icmp ne i32 %x, %y
+; CHECK: ret i1 false
+  ret i1 %cmp2
+
+different:
+  %cmp3 = icmp eq i32 %x, %y
+; CHECK: ret i1 false
+  ret i1 %cmp3
+}
+
+; CHECK: @test6
+define i1 @test6(i32 %x, i32 %y) {
+  %cmp2 = icmp ne i32 %x, %y
+  %cmp = icmp eq i32 %x, %y
+  %cmp3 = icmp eq i32 %x, %y
+  br i1 %cmp, label %same, label %different
+
+same:
+; CHECK: ret i1 false
+  ret i1 %cmp2
+
+different:
+; CHECK: ret i1 false
+  ret i1 %cmp3
+}
+
+; CHECK: @test7
+define i1 @test7(i32 %x, i32 %y) {
+  %cmp = icmp sgt i32 %x, %y
+  br i1 %cmp, label %same, label %different
+
+same:
+  %cmp2 = icmp sle i32 %x, %y
+; CHECK: ret i1 false
+  ret i1 %cmp2
+
+different:
+  %cmp3 = icmp sgt i32 %x, %y
+; CHECK: ret i1 false
+  ret i1 %cmp3
+}
+
+; CHECK: @test8
+define i1 @test8(i32 %x, i32 %y) {
+  %cmp2 = icmp sle i32 %x, %y
+  %cmp = icmp sgt i32 %x, %y
+  %cmp3 = icmp sgt i32 %x, %y
+  br i1 %cmp, label %same, label %different
+
+same:
+; CHECK: ret i1 false
+  ret i1 %cmp2
+
+different:
+; CHECK: ret i1 false
+  ret i1 %cmp3
+}
