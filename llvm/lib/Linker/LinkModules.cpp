@@ -580,7 +580,11 @@ void ModuleLinker::computeTypeMapping() {
     if (GlobalValue *DGV = getLinkedToGlobal(I))
       TypeMap.addTypeMapping(DGV->getType(), I->getType());
   }
-  
+
+#if 0
+  // FIXME: This doesn't play well with LTO. We cannot compile LLVM with this
+  //        enabled. <rdar://problem/10913281>.
+
   // Incorporate types by name, scanning all the types in the source module.
   // At this point, the destination module may have a type "%foo = { i32 }" for
   // example.  When the source module got loaded into the same LLVMContext, if
@@ -610,8 +614,8 @@ void ModuleLinker::computeTypeMapping() {
       if (!SrcStructTypesSet.count(DST))
         TypeMap.addTypeMapping(DST, ST);
   }
-  
-  
+#endif
+
   // Don't bother incorporating aliases, they aren't generally typed well.
   
   // Now that we have discovered all of the type equivalences, get a body for
