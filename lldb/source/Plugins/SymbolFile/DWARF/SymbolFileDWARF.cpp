@@ -1919,152 +1919,155 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
     case DW_TAG_structure_type:
     case DW_TAG_union_type:
     case DW_TAG_class_type:
-        ast.StartTagDeclarationDefinition (clang_type);
         {
             LayoutInfo layout_info;
-            if (die->HasChildren())
+            
+            ast.StartTagDeclarationDefinition (clang_type);
             {
-
-                LanguageType class_language = eLanguageTypeUnknown;
-                bool is_objc_class = ClangASTContext::IsObjCClassType (clang_type);
-                if (is_objc_class)
-                    class_language = eLanguageTypeObjC;
-
-                int tag_decl_kind = -1;
-                AccessType default_accessibility = eAccessNone;
-                if (tag == DW_TAG_structure_type)
+                if (die->HasChildren())
                 {
-                    tag_decl_kind = clang::TTK_Struct;
-                    default_accessibility = eAccessPublic;
-                }
-                else if (tag == DW_TAG_union_type)
-                {
-                    tag_decl_kind = clang::TTK_Union;
-                    default_accessibility = eAccessPublic;
-                }
-                else if (tag == DW_TAG_class_type)
-                {
-                    tag_decl_kind = clang::TTK_Class;
-                    default_accessibility = eAccessPrivate;
-                }
-
-                SymbolContext sc(GetCompUnitForDWARFCompUnit(curr_cu));
-                std::vector<clang::CXXBaseSpecifier *> base_classes;
-                std::vector<int> member_accessibilities;
-                bool is_a_class = false;
-                // Parse members and base classes first
-                DWARFDIECollection member_function_dies;
-
-                ParseChildMembers (sc, 
-                                   curr_cu, 
-                                   die, 
-                                   clang_type,
-                                   class_language,
-                                   base_classes, 
-                                   member_accessibilities,
-                                   member_function_dies,
-                                   default_accessibility, 
-                                   is_a_class,
-                                   layout_info);
-
-                // Now parse any methods if there were any...
-                size_t num_functions = member_function_dies.Size();                
-                if (num_functions > 0)
-                {
-                    for (size_t i=0; i<num_functions; ++i)
-                    {
-                        ResolveType(curr_cu, member_function_dies.GetDIEPtrAtIndex(i));
-                    }
-                }
-                
-                if (class_language == eLanguageTypeObjC)
-                {
-                    std::string class_str (ClangASTType::GetTypeNameForOpaqueQualType(clang_type));
-                    if (!class_str.empty())
-                    {
                     
-                        DIEArray method_die_offsets;
-                        if (m_using_apple_tables)
+                    LanguageType class_language = eLanguageTypeUnknown;
+                    bool is_objc_class = ClangASTContext::IsObjCClassType (clang_type);
+                    if (is_objc_class)
+                        class_language = eLanguageTypeObjC;
+                    
+                    int tag_decl_kind = -1;
+                    AccessType default_accessibility = eAccessNone;
+                    if (tag == DW_TAG_structure_type)
+                    {
+                        tag_decl_kind = clang::TTK_Struct;
+                        default_accessibility = eAccessPublic;
+                    }
+                    else if (tag == DW_TAG_union_type)
+                    {
+                        tag_decl_kind = clang::TTK_Union;
+                        default_accessibility = eAccessPublic;
+                    }
+                    else if (tag == DW_TAG_class_type)
+                    {
+                        tag_decl_kind = clang::TTK_Class;
+                        default_accessibility = eAccessPrivate;
+                    }
+                    
+                    SymbolContext sc(GetCompUnitForDWARFCompUnit(curr_cu));
+                    std::vector<clang::CXXBaseSpecifier *> base_classes;
+                    std::vector<int> member_accessibilities;
+                    bool is_a_class = false;
+                    // Parse members and base classes first
+                    DWARFDIECollection member_function_dies;
+                    
+                    ParseChildMembers (sc, 
+                                       curr_cu, 
+                                       die, 
+                                       clang_type,
+                                       class_language,
+                                       base_classes, 
+                                       member_accessibilities,
+                                       member_function_dies,
+                                       default_accessibility, 
+                                       is_a_class,
+                                       layout_info);
+                    
+                    // Now parse any methods if there were any...
+                    size_t num_functions = member_function_dies.Size();                
+                    if (num_functions > 0)
+                    {
+                        for (size_t i=0; i<num_functions; ++i)
                         {
-                            if (m_apple_objc_ap.get())
-                                m_apple_objc_ap->FindByName(class_str.c_str(), method_die_offsets);
+                            ResolveType(curr_cu, member_function_dies.GetDIEPtrAtIndex(i));
                         }
-                        else
+                    }
+                    
+                    if (class_language == eLanguageTypeObjC)
+                    {
+                        std::string class_str (ClangASTType::GetTypeNameForOpaqueQualType(clang_type));
+                        if (!class_str.empty())
                         {
-                            if (!m_indexed)
-                                Index ();
                             
-                            ConstString class_name (class_str.c_str());
-                            m_objc_class_selectors_index.Find (class_name, method_die_offsets);
-                        }
-
-                        if (!method_die_offsets.empty())
-                        {
-                            DWARFDebugInfo* debug_info = DebugInfo();
-
-                            DWARFCompileUnit* method_cu = NULL;
-                            const size_t num_matches = method_die_offsets.size();
-                            for (size_t i=0; i<num_matches; ++i)
+                            DIEArray method_die_offsets;
+                            if (m_using_apple_tables)
                             {
-                                const dw_offset_t die_offset = method_die_offsets[i];
-                                DWARFDebugInfoEntry *method_die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &method_cu);
+                                if (m_apple_objc_ap.get())
+                                    m_apple_objc_ap->FindByName(class_str.c_str(), method_die_offsets);
+                            }
+                            else
+                            {
+                                if (!m_indexed)
+                                    Index ();
                                 
-                                if (method_die)
-                                    ResolveType (method_cu, method_die);
-                                else
+                                ConstString class_name (class_str.c_str());
+                                m_objc_class_selectors_index.Find (class_name, method_die_offsets);
+                            }
+                            
+                            if (!method_die_offsets.empty())
+                            {
+                                DWARFDebugInfo* debug_info = DebugInfo();
+                                
+                                DWARFCompileUnit* method_cu = NULL;
+                                const size_t num_matches = method_die_offsets.size();
+                                for (size_t i=0; i<num_matches; ++i)
                                 {
-                                    if (m_using_apple_tables)
+                                    const dw_offset_t die_offset = method_die_offsets[i];
+                                    DWARFDebugInfoEntry *method_die = debug_info->GetDIEPtrWithCompileUnitHint (die_offset, &method_cu);
+                                    
+                                    if (method_die)
+                                        ResolveType (method_cu, method_die);
+                                    else
                                     {
-                                        GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_objc accelerator table had bad die 0x%8.8x for '%s')\n",
-                                                                                                   die_offset, class_str.c_str());
-                                    }
-                                }            
+                                        if (m_using_apple_tables)
+                                        {
+                                            GetObjectFile()->GetModule()->ReportErrorIfModifyDetected ("the DWARF debug information has been modified (.apple_objc accelerator table had bad die 0x%8.8x for '%s')\n",
+                                                                                                       die_offset, class_str.c_str());
+                                        }
+                                    }            
+                                }
                             }
                         }
                     }
+                    
+                    // If we have a DW_TAG_structure_type instead of a DW_TAG_class_type we
+                    // need to tell the clang type it is actually a class.
+                    if (class_language != eLanguageTypeObjC)
+                    {
+                        if (is_a_class && tag_decl_kind != clang::TTK_Class)
+                            ast.SetTagTypeKind (clang_type, clang::TTK_Class);
+                    }
+                    
+                    // Since DW_TAG_structure_type gets used for both classes
+                    // and structures, we may need to set any DW_TAG_member
+                    // fields to have a "private" access if none was specified.
+                    // When we parsed the child members we tracked that actual
+                    // accessibility value for each DW_TAG_member in the
+                    // "member_accessibilities" array. If the value for the
+                    // member is zero, then it was set to the "default_accessibility"
+                    // which for structs was "public". Below we correct this
+                    // by setting any fields to "private" that weren't correctly
+                    // set.
+                    if (is_a_class && !member_accessibilities.empty())
+                    {
+                        // This is a class and all members that didn't have
+                        // their access specified are private.
+                        ast.SetDefaultAccessForRecordFields (clang_type, 
+                                                             eAccessPrivate, 
+                                                             &member_accessibilities.front(), 
+                                                             member_accessibilities.size());
+                    }
+                    
+                    if (!base_classes.empty())
+                    {
+                        ast.SetBaseClassesForClassType (clang_type, 
+                                                        &base_classes.front(), 
+                                                        base_classes.size());
+                        
+                        // Clang will copy each CXXBaseSpecifier in "base_classes"
+                        // so we have to free them all.
+                        ClangASTContext::DeleteBaseClassSpecifiers (&base_classes.front(), 
+                                                                    base_classes.size());
+                    }
                 }
-                
-                // If we have a DW_TAG_structure_type instead of a DW_TAG_class_type we
-                // need to tell the clang type it is actually a class.
-                if (class_language != eLanguageTypeObjC)
-                {
-                    if (is_a_class && tag_decl_kind != clang::TTK_Class)
-                        ast.SetTagTypeKind (clang_type, clang::TTK_Class);
-                }
-
-                // Since DW_TAG_structure_type gets used for both classes
-                // and structures, we may need to set any DW_TAG_member
-                // fields to have a "private" access if none was specified.
-                // When we parsed the child members we tracked that actual
-                // accessibility value for each DW_TAG_member in the
-                // "member_accessibilities" array. If the value for the
-                // member is zero, then it was set to the "default_accessibility"
-                // which for structs was "public". Below we correct this
-                // by setting any fields to "private" that weren't correctly
-                // set.
-                if (is_a_class && !member_accessibilities.empty())
-                {
-                    // This is a class and all members that didn't have
-                    // their access specified are private.
-                    ast.SetDefaultAccessForRecordFields (clang_type, 
-                                                         eAccessPrivate, 
-                                                         &member_accessibilities.front(), 
-                                                         member_accessibilities.size());
-                }
-
-                if (!base_classes.empty())
-                {
-                    ast.SetBaseClassesForClassType (clang_type, 
-                                                    &base_classes.front(), 
-                                                    base_classes.size());
-
-                    // Clang will copy each CXXBaseSpecifier in "base_classes"
-                    // so we have to free them all.
-                    ClangASTContext::DeleteBaseClassSpecifiers (&base_classes.front(), 
-                                                                base_classes.size());
-                }
-                
             }
+            ast.CompleteTagDeclarationDefinition (clang_type);
             
             if (!layout_info.field_offsets.empty())
             {
@@ -2087,7 +2090,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                                                                   layout_info.bit_size,
                                                                   layout_info.alignment,
                                                                   (uint32_t)layout_info.field_offsets.size());
-                    
+                        
                         llvm::DenseMap <const clang::FieldDecl *, uint64_t>::const_iterator pos, end = layout_info.field_offsets.end();
                         for (pos = layout_info.field_offsets.begin(); pos != end; ++pos)
                         {
@@ -2102,7 +2105,7 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                 }
             }
         }
-        ast.CompleteTagDeclarationDefinition (clang_type);
+
         return clang_type;
 
     case DW_TAG_enumeration_type:
