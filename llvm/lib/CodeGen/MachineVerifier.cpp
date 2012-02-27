@@ -588,12 +588,15 @@ void MachineVerifier::visitMachineInstrBefore(const MachineInstr *MI) {
   }
 
   // Debug values must not have a slot index.
-  // Other instructions must have one.
+  // Other instructions must have one, unless they are inside a bundle.
   if (LiveInts) {
     bool mapped = !LiveInts->isNotInMIMap(MI);
     if (MI->isDebugValue()) {
       if (mapped)
         report("Debug instruction has a slot index", MI);
+    } else if (MI->isInsideBundle()) {
+      if (mapped)
+        report("Instruction inside bundle has a slot index", MI);
     } else {
       if (!mapped)
         report("Missing slot index", MI);
@@ -1086,26 +1089,35 @@ void MachineVerifier::verifyLiveIntervals() {
         }
       } else {
         // Non-PHI def.
-        const MachineInstr *MI = LiveInts->getInstructionFromIndex(VNI->def);
+        MachineInstr *MI = LiveInts->getInstructionFromIndex(VNI->def);
         if (!MI) {
           report("No instruction at def index", MF);
           *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
               << " in " << LI << '\n';
-        } else if (!MI->modifiesRegister(LI.reg, TRI)) {
-          report("Defining instruction does not modify register", MI);
-          *OS << "Valno #" << VNI->id << " in " << LI << '\n';
+          continue;
         }
 
+        bool hasDef = false;
         bool isEarlyClobber = false;
-        if (MI) {
-          for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
-               MOE = MI->operands_end(); MOI != MOE; ++MOI) {
-            if (MOI->isReg() && MOI->getReg() == LI.reg && MOI->isDef() &&
-                MOI->isEarlyClobber()) {
-              isEarlyClobber = true;
-              break;
-            }
+        for (MIOperands MOI(MI, true); MOI.isValid(); ++MOI) {
+          if (!MOI->isReg() || !MOI->isDef())
+            continue;
+          if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
+            if (MOI->getReg() != LI.reg)
+              continue;
+          } else {
+            if (!TargetRegisterInfo::isPhysicalRegister(MOI->getReg()) ||
+                !TRI->regsOverlap(LI.reg, MOI->getReg()))
+              continue;
           }
+          hasDef = true;
+          if (MOI->isEarlyClobber())
+            isEarlyClobber = true;
+        }
+
+        if (!hasDef) {
+          report("Defining instruction does not modify register", MI);
+          *OS << "Valno #" << VNI->id << " in " << LI << '\n';
         }
 
         // Early clobber defs begin at USE slots, but other defs must begin at
@@ -1164,32 +1176,76 @@ void MachineVerifier::verifyLiveIntervals() {
         *OS << " in " << LI << '\n';
         continue;
       }
-      if (I->end != LiveInts->getMBBEndIdx(EndMBB)) {
-        // The live segment is ending inside EndMBB
-        const MachineInstr *MI =
-                        LiveInts->getInstructionFromIndex(I->end.getPrevSlot());
-        if (!MI) {
-          report("Live segment doesn't end at a valid instruction", EndMBB);
+
+      // No more checks for live-out segments.
+      if (I->end == LiveInts->getMBBEndIdx(EndMBB))
+        continue;
+
+      // The live segment is ending inside EndMBB
+      MachineInstr *MI =
+        LiveInts->getInstructionFromIndex(I->end.getPrevSlot());
+      if (!MI) {
+        report("Live segment doesn't end at a valid instruction", EndMBB);
         I->print(*OS);
         *OS << " in " << LI << '\n' << "Basic block starts at "
-            << MBBStartIdx << '\n';
-        } else if (TargetRegisterInfo::isVirtualRegister(LI.reg) &&
-                   !MI->readsVirtualRegister(LI.reg)) {
-          // A live range can end with either a redefinition, a kill flag on a
-          // use, or a dead flag on a def.
-          // FIXME: Should we check for each of these?
-          bool hasDeadDef = false;
-          for (MachineInstr::const_mop_iterator MOI = MI->operands_begin(),
-               MOE = MI->operands_end(); MOI != MOE; ++MOI) {
-            if (MOI->isReg() && MOI->getReg() == LI.reg && MOI->isDef() && MOI->isDead()) {
-              hasDeadDef = true;
-              break;
-            }
-          }
+          << MBBStartIdx << '\n';
+        continue;
+      }
 
+      // The block slot must refer to a basic block boundary.
+      if (I->end.isBlock()) {
+        report("Live segment ends at B slot of an instruction", MI);
+        I->print(*OS);
+        *OS << " in " << LI << '\n';
+      }
+
+      if (I->end.isDead()) {
+        // Segment ends on the dead slot.
+        // That means there must be a dead def.
+        if (!SlotIndex::isSameInstr(I->start, I->end)) {
+          report("Live segment ending at dead slot spans instructions", MI);
+          I->print(*OS);
+          *OS << " in " << LI << '\n';
+        }
+      }
+
+      // A live segment can only end at an early-clobber slot if it is being
+      // redefined by an early-clobber def.
+      if (I->end.isEarlyClobber()) {
+        if (I+1 == E || (I+1)->start != I->end) {
+          report("Live segment ending at early clobber slot must be "
+                 "redefined by an EC def in the same instruction", MI);
+          I->print(*OS);
+          *OS << " in " << LI << '\n';
+        }
+      }
+
+      // The following checks only apply to virtual registers. Physreg liveness
+      // is too weird to check.
+      if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
+        // A live range can end with either a redefinition, a kill flag on a
+        // use, or a dead flag on a def.
+        bool hasRead = false;
+        bool hasDeadDef = false;
+        for (MIOperands MOI(MI, true); MOI.isValid(); ++MOI) {
+          if (!MOI->isReg() || MOI->getReg() != LI.reg)
+            continue;
+          if (MOI->readsReg())
+            hasRead = true;
+          if (MOI->isDef() && MOI->isDead())
+            hasDeadDef = true;
+        }
+
+        if (I->end.isDead()) {
           if (!hasDeadDef) {
-            report("Instruction killing live segment neither defines nor reads "
-                   "register", MI);
+            report("Instruction doesn't have a dead def operand", MI);
+            I->print(*OS);
+            *OS << " in " << LI << '\n';
+          }
+        } else {
+          if (!hasRead) {
+            report("Instruction ending live range doesn't read the register",
+                   MI);
             I->print(*OS);
             *OS << " in " << LI << '\n';
           }
