@@ -83,15 +83,13 @@ def fpimm0neg : PatLeaf<(fpimm), [{
 //===----------------------------------------------------------------------===//
 
 // FP load.
-class FPLoad<bits<6> op, string opstr, PatFrag FOp, RegisterClass RC,
-             Operand MemOpnd>:
+class FPLoad<bits<6> op, string opstr, RegisterClass RC, Operand MemOpnd>:
   FMem<op, (outs RC:$ft), (ins MemOpnd:$addr),
-      !strconcat(opstr, "\t$ft, $addr"), [(set RC:$ft, (FOp addr:$addr))],
+      !strconcat(opstr, "\t$ft, $addr"), [(set RC:$ft, (load addr:$addr))],
       IILoad>;
 
 // FP store.
-class FPStore<bits<6> op, string opstr, PatFrag FOp, RegisterClass RC,
-              Operand MemOpnd>:
+class FPStore<bits<6> op, string opstr, RegisterClass RC, Operand MemOpnd>:
   FMem<op, (outs), (ins RC:$ft, MemOpnd:$addr),
       !strconcat(opstr, "\t$ft, $addr"), [(store RC:$ft, addr:$addr)],
       IIStore>;
@@ -221,25 +219,25 @@ def FMOV_D64 : FFR1<0x6, 17, "mov", "d", FGR64, FGR64>,
 
 /// Floating Point Memory Instructions
 let Predicates = [IsN64] in {
-  def LWC1_P8   : FPLoad<0x31, "lwc1", load, FGR32, mem64>;
-  def SWC1_P8   : FPStore<0x39, "swc1", store, FGR32, mem64>;
-  def LDC164_P8 : FPLoad<0x35, "ldc1", load, FGR64, mem64>;
-  def SDC164_P8 : FPStore<0x3d, "sdc1", store, FGR64, mem64>;
+  def LWC1_P8   : FPLoad<0x31, "lwc1", FGR32, mem64>;
+  def SWC1_P8   : FPStore<0x39, "swc1", FGR32, mem64>;
+  def LDC164_P8 : FPLoad<0x35, "ldc1", FGR64, mem64>;
+  def SDC164_P8 : FPStore<0x3d, "sdc1", FGR64, mem64>;
 }
 
 let Predicates = [NotN64] in {
-  def LWC1   : FPLoad<0x31, "lwc1", load, FGR32, mem>;
-  def SWC1   : FPStore<0x39, "swc1", store, FGR32, mem>;
+  def LWC1   : FPLoad<0x31, "lwc1", FGR32, mem>;
+  def SWC1   : FPStore<0x39, "swc1", FGR32, mem>;
 }
 
 let Predicates = [NotN64, HasMips64] in {
-  def LDC164 : FPLoad<0x35, "ldc1", load, FGR64, mem>;
-  def SDC164 : FPStore<0x3d, "sdc1", store, FGR64, mem>;
+  def LDC164 : FPLoad<0x35, "ldc1", FGR64, mem>;
+  def SDC164 : FPStore<0x3d, "sdc1", FGR64, mem>;
 }
 
 let Predicates = [NotN64, NotMips64] in {
-  def LDC1   : FPLoad<0x35, "ldc1", load, AFGR64, mem>;
-  def SDC1   : FPStore<0x3d, "sdc1", store, AFGR64, mem>;
+  def LDC1   : FPLoad<0x35, "ldc1", AFGR64, mem>;
+  def SDC1   : FPStore<0x3d, "sdc1", AFGR64, mem>;
 }
 
 /// Floating-point Aritmetic
