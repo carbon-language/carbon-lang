@@ -230,14 +230,16 @@ let Predicates = [IsN64] in {
 let Predicates = [NotN64] in {
   def LWC1   : FPLoad<0x31, "lwc1", load, FGR32, mem>;
   def SWC1   : FPStore<0x39, "swc1", store, FGR32, mem>;
-  let Predicates = [HasMips64] in {
-    def LDC164 : FPLoad<0x35, "ldc1", load, FGR64, mem>;
-    def SDC164 : FPStore<0x3d, "sdc1", store, FGR64, mem>;
-  }
-  let Predicates = [NotMips64] in {
-    def LDC1   : FPLoad<0x35, "ldc1", load, AFGR64, mem>;
-    def SDC1   : FPStore<0x3d, "sdc1", store, AFGR64, mem>;
-  }
+}
+
+let Predicates = [NotN64, HasMips64] in {
+  def LDC164 : FPLoad<0x35, "ldc1", load, FGR64, mem>;
+  def SDC164 : FPStore<0x3d, "sdc1", store, FGR64, mem>;
+}
+
+let Predicates = [NotN64, NotMips64] in {
+  def LDC1   : FPLoad<0x35, "ldc1", load, AFGR64, mem>;
+  def SDC1   : FPStore<0x3d, "sdc1", store, AFGR64, mem>;
 }
 
 /// Floating-point Aritmetic
