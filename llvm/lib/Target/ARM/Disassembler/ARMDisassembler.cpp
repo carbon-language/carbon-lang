@@ -3127,7 +3127,7 @@ DecodeThumbBCCTargetOperand(llvm::MCInst &Inst, unsigned Val,
 
 static DecodeStatus DecodeThumbBLTargetOperand(llvm::MCInst &Inst, unsigned Val,
                                        uint64_t Address, const void *Decoder){
-  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<22>(Val<<1) + 8,
+  if (!tryAddingSymbolicOperand(Address, Address + SignExtend32<22>(Val<<1) + 4,
                                 true, 4, Inst, Decoder))
     Inst.addOperand(MCOperand::CreateImm(SignExtend32<22>(Val << 1)));
   return MCDisassembler::Success;
