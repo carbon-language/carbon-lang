@@ -41,6 +41,17 @@ static cl::opt<std::string>
 OutputFilename("o", cl::desc("Override output filename"),
                cl::value_desc("filename"));
 
+static cl::opt<bool> GenHalfFloat("generate-half-float",
+  cl::desc("Generate half-length floating-point values"), cl::init(false));
+static cl::opt<bool> GenX86FP80("generate-x86-fp80",
+  cl::desc("Generate 80-bit X86 floating-point values"), cl::init(false));
+static cl::opt<bool> GenFP128("generate-fp128",
+  cl::desc("Generate 128-bit floating-point values"), cl::init(false));
+static cl::opt<bool> GenPPCFP128("generate-ppc-fp128",
+  cl::desc("Generate 128-bit PPC floating-point values"), cl::init(false));
+static cl::opt<bool> GenX86MMX("generate-x86-mmx",
+  cl::desc("Generate X86 MMX floating-point values"), cl::init(false));
+
 /// A utility class to provide a pseudo-random number generator which is
 /// the same across all platforms. This is somewhat close to the libc
 /// implementation. Note: This is not a cryptographically secure pseudorandom
@@ -203,20 +214,35 @@ protected:
 
   /// Pick a random scalar type.
   Type *pickScalarType() {
-    switch (Ran->Rand() % 15) {
-    case 0: return Type::getInt1Ty(Context);
-    case 1: return Type::getInt8Ty(Context);
-    case 2: return Type::getInt16Ty(Context);
-    case 3: case 4:
-    case 5: return Type::getFloatTy(Context);
-    case 6: case 7:
-    case 8: return Type::getDoubleTy(Context);
-    case 9: case 10:
-    case 11: return Type::getInt32Ty(Context);
-    case 12: case 13:
-    case 14: return Type::getInt64Ty(Context);
-    }
-    llvm_unreachable("Invalid scalar value");
+    Type *t = 0;
+    do {
+      switch (Ran->Rand() % 30) {
+      case 0: t = Type::getInt1Ty(Context); break;
+      case 1: t = Type::getInt8Ty(Context); break;
+      case 2: t = Type::getInt16Ty(Context); break;
+      case 3: case 4:
+      case 5: t = Type::getFloatTy(Context); break;
+      case 6: case 7:
+      case 8: t = Type::getDoubleTy(Context); break;
+      case 9: case 10:
+      case 11: t = Type::getInt32Ty(Context); break;
+      case 12: case 13:
+      case 14: t = Type::getInt64Ty(Context); break;
+      case 15: case 16:
+      case 17: if (GenHalfFloat) t = Type::getHalfTy(Context); break;
+      case 18: case 19:
+      case 20: if (GenX86FP80) t = Type::getX86_FP80Ty(Context); break;
+      case 21: case 22:
+      case 23: if (GenFP128) t = Type::getFP128Ty(Context); break;
+      case 24: case 25:
+      case 26: if (GenPPCFP128) t = Type::getPPC_FP128Ty(Context); break;
+      case 27: case 28:
+      case 29: if (GenX86MMX) t = Type::getX86_MMXTy(Context); break;
+      default: llvm_unreachable("Invalid scalar value");
+      }
+    } while (t == 0);
+
+    return t;
   }
 
   /// Basic block to populate
