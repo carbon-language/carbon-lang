@@ -3163,9 +3163,15 @@ CompareImplicitConversionSequences(Sema &S,
   // list-initialization sequence L2 if L1 converts to std::initializer_list<X>
   // for some X and L2 does not.
   if (Result == ImplicitConversionSequence::Indistinguishable &&
+      !ICS1.isBad() &&
       ICS1.isListInitializationSequence() &&
       ICS2.isListInitializationSequence()) {
-    // FIXME: Find out if ICS1 converts to initializer_list and ICS2 doesn't.
+    if (ICS1.isStdInitializerListElement() &&
+        !ICS2.isStdInitializerListElement())
+      return ImplicitConversionSequence::Better;
+    if (!ICS1.isStdInitializerListElement() &&
+        ICS2.isStdInitializerListElement())
+      return ImplicitConversionSequence::Worse;
   }
 
   return Result;
@@ -4241,11 +4247,12 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
   //   all the elements can be implicitly converted to X, the implicit
   //   conversion sequence is the worst conversion necessary to convert an
   //   element of the list to X.
+  bool toStdInitializerList = false;
   QualType X;
   if (ToType->isArrayType())
     X = S.Context.getBaseElementType(ToType);
   else
-    (void)S.isStdInitializerList(ToType, &X);
+    toStdInitializerList = S.isStdInitializerList(ToType, &X);
   if (!X.isNull()) {
     for (unsigned i = 0, e = From->getNumInits(); i < e; ++i) {
       Expr *Init = From->getInit(i);
@@ -4265,6 +4272,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
         Result = ICS;
     }
     Result.setListInitializationSequence();
+    Result.setStdInitializerListElement(toStdInitializerList);
     return Result;
   }
 

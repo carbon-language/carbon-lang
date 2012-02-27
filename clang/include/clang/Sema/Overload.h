@@ -401,10 +401,14 @@ namespace clang {
     };
 
     /// ConversionKind - The kind of implicit conversion sequence.
-    unsigned ConversionKind : 31;
+    unsigned ConversionKind : 30;
 
     /// \brief Whether the argument is an initializer list.
     bool ListInitializationSequence : 1;
+
+    /// \brief Whether the target is really a std::initializer_list, and the
+    /// sequence only represents the worst element conversion.
+    bool StdInitializerListElement : 1;
 
     void setKind(Kind K) {
       destruct();
@@ -435,13 +439,16 @@ namespace clang {
     };
 
     ImplicitConversionSequence() 
-      : ConversionKind(Uninitialized), ListInitializationSequence(false) {}
+      : ConversionKind(Uninitialized), ListInitializationSequence(false),
+        StdInitializerListElement(false)
+    {}
     ~ImplicitConversionSequence() {
       destruct();
     }
     ImplicitConversionSequence(const ImplicitConversionSequence &Other)
       : ConversionKind(Other.ConversionKind), 
-        ListInitializationSequence(Other.ListInitializationSequence)
+        ListInitializationSequence(Other.ListInitializationSequence),
+        StdInitializerListElement(Other.StdInitializerListElement)
     {
       switch (ConversionKind) {
       case Uninitialized: break;
@@ -534,6 +541,16 @@ namespace clang {
 
     void setListInitializationSequence() {
       ListInitializationSequence = true;
+    }
+
+    /// \brief Whether the target is really a std::initializer_list, and the
+    /// sequence only represents the worst element conversion.
+    bool isStdInitializerListElement() const {
+      return StdInitializerListElement;
+    }
+
+    void setStdInitializerListElement(bool V = true) {
+      StdInitializerListElement = V;
     }
 
     // The result of a comparison between implicit conversion

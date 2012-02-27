@@ -194,3 +194,21 @@ namespace objects {
     H h4 = {1, 1}; // expected-error {{no matching constructor}}
   };
 }
+
+namespace PR12092 {
+
+  struct S {
+    S(const char*);
+  };
+  struct V {
+    template<typename T> V(T, T);
+    void f(std::initializer_list<S>);
+    void f(const V &);
+  };
+
+  void g() {
+    extern V s;
+    s.f({"foo", "bar"});
+  }
+
+}
