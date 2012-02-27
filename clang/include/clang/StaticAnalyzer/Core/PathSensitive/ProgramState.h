@@ -230,9 +230,6 @@ public:
   /// Get the lvalue for a variable reference.
   Loc getLValue(const VarDecl *D, const LocationContext *LC) const;
 
-  /// Get the lvalue for a StringLiteral.
-  Loc getLValue(const StringLiteral *literal) const;
-
   Loc getLValue(const CompoundLiteralExpr *literal, 
                 const LocationContext *LC) const;
 
@@ -634,10 +631,6 @@ inline ProgramStateRef ProgramState::bindLoc(SVal LV, SVal V) const {
 inline Loc ProgramState::getLValue(const VarDecl *VD,
                                const LocationContext *LC) const {
   return getStateManager().StoreMgr->getLValueVar(VD, LC);
-}
-
-inline Loc ProgramState::getLValue(const StringLiteral *literal) const {
-  return getStateManager().StoreMgr->getLValueString(literal);
 }
 
 inline Loc ProgramState::getLValue(const CompoundLiteralExpr *literal,

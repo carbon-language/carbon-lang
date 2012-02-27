@@ -94,10 +94,6 @@ public:
     return svalBuilder.makeLoc(MRMgr.getVarRegion(VD, LC));
   }
 
-  virtual Loc getLValueString(const StringLiteral* S) {
-    return svalBuilder.makeLoc(MRMgr.getStringRegion(S));
-  }
-
   Loc getLValueCompoundLiteral(const CompoundLiteralExpr *CL,
                                const LocationContext *LC) {
     return loc::MemRegionVal(MRMgr.getCompoundLiteralRegion(CL, LC));
