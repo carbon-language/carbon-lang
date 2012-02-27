@@ -29,6 +29,9 @@ namespace llvm {
   template<typename T, unsigned N> class SmallVector;
   template<typename T> class SmallVectorImpl;
 
+  template<typename T>
+  struct SaveAndRestore;
+
   // Reference counting.
   template <typename T> class IntrusiveRefCntPtr;
   template <typename T> struct IntrusiveRefCntPtrInfo;
@@ -56,6 +59,7 @@ namespace clang {
   using llvm::SmallString;
   using llvm::SmallVector;
   using llvm::SmallVectorImpl;
+  using llvm::SaveAndRestore;
 
   // Reference counting.
   using llvm::IntrusiveRefCntPtr;

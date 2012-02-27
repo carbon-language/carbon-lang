@@ -21,7 +21,7 @@
 #include "clang/Analysis/AnalysisContext.h"
 #include "clang/Analysis/Visitors/CFGRecStmtDeclVisitor.h"
 #include "clang/Analysis/Analyses/UninitializedValues.h"
-#include "clang/Analysis/Support/SaveAndRestore.h"
+#include "llvm/ADT/SaveAndRestore.h"
 
 using namespace clang;
 

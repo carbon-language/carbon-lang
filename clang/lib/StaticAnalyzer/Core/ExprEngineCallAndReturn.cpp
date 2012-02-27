@@ -14,7 +14,7 @@
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExprEngine.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ObjCMessage.h"
-#include "clang/Analysis/Support/SaveAndRestore.h"
+#include "llvm/ADT/SaveAndRestore.h"
 #include "clang/AST/DeclCXX.h"
 
 using namespace clang;
