@@ -2041,13 +2041,18 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root) {
     // Since we don't have the instruction "A < B" immediately to hand, work out
     // the value number that it would have and use that to find an appropriate
     // instruction (if any).
-    unsigned Num = VN.lookup_or_add_cmp(Cmp->getOpcode(), NotPred, Op0, Op1);
-    Value *NotCmp = findLeader(Root, Num);
-    if (NotCmp && isa<Instruction>(NotCmp)) {
-      unsigned NumReplacements =
-        replaceAllDominatedUsesWith(NotCmp, NotVal, Root);
-      Changed |= NumReplacements > 0;
-      NumGVNEqProp += NumReplacements;
+    uint32_t NextNum = VN.getNextUnusedValueNumber();
+    uint32_t Num = VN.lookup_or_add_cmp(Cmp->getOpcode(), NotPred, Op0, Op1);
+    // If the number we were assigned was brand new then there is no point in
+    // looking for an instruction realizing it: there cannot be one!
+    if (Num < NextNum) {
+      Value *NotCmp = findLeader(Root, Num);
+      if (NotCmp && isa<Instruction>(NotCmp)) {
+        unsigned NumReplacements =
+          replaceAllDominatedUsesWith(NotCmp, NotVal, Root);
+        Changed |= NumReplacements > 0;
+        NumGVNEqProp += NumReplacements;
+      }
     }
     // Ensure that any instruction in scope that gets the "A < B" value number
     // is replaced with false.
