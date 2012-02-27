@@ -155,7 +155,8 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
             }
             else
             {
-                error.SetErrorStringWithFormat("the platform is not currently connected, and '%s' doesn't exist in the system root.");
+                exe_file.GetPath(exe_path, sizeof(exe_path));
+                error.SetErrorStringWithFormat("the platform is not currently connected, and '%s' doesn't exist in the system root.", exe_path);
             }
         }
     }

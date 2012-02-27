@@ -38,6 +38,8 @@
 #include "Plugins/UnwindAssembly/InstEmulation/UnwindAssemblyInstEmulation.h"
 #include "Plugins/ObjectFile/PECOFF/ObjectFilePECOFF.h"
 #include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
+#include "Plugins/Platform/FreeBSD/PlatformFreeBSD.h"
+#include "Plugins/Platform/Linux/PlatformLinux.h"
 #if defined (__APPLE__)
 #include "Plugins/DynamicLoader/MacOSX-DYLD/DynamicLoaderMacOSXDYLD.h"
 #include "Plugins/DynamicLoader/Darwin-Kernel/DynamicLoaderDarwinKernel.h"
@@ -57,14 +59,10 @@
 #include "Plugins/Process/mach-core/ProcessMachCore.h"
 
 #if defined (__linux__)
-#include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
-#include "Plugins/Platform/Linux/PlatformLinux.h"
 #include "Plugins/Process/Linux/ProcessLinux.h"
 #endif
 
 #if defined (__FreeBSD__)
-#include "Plugins/DynamicLoader/POSIX-DYLD/DynamicLoaderPOSIXDYLD.h"
-#include "Plugins/Platform/FreeBSD/PlatformFreeBSD.h"
 #include "Plugins/Process/POSIX/ProcessPOSIX.h"
 #include "Plugins/Process/FreeBSD/ProcessFreeBSD.h"
 #endif
@@ -109,6 +107,8 @@ lldb_private::Initialize ()
         EmulateInstructionARM::Initialize ();
         ObjectFilePECOFF::Initialize ();
         DynamicLoaderPOSIXDYLD::Initialize ();
+        PlatformFreeBSD::Initialize();
+        PlatformLinux::Initialize();
 #if defined (__APPLE__)
         //----------------------------------------------------------------------
         // Apple/Darwin hosted plugins
@@ -134,14 +134,10 @@ lldb_private::Initialize ()
         //----------------------------------------------------------------------
         // Linux hosted plugins
         //----------------------------------------------------------------------
-        PlatformLinux::Initialize();
         ProcessLinux::Initialize();
-        DynamicLoaderPOSIXDYLD::Initialize();
 #endif
 #if defined (__FreeBSD__)
-        PlatformFreeBSD::Initialize();
         ProcessFreeBSD::Initialize();
-        DynamicLoaderPOSIXDYLD::Initialize();
 #endif
         //----------------------------------------------------------------------
         // Platform agnostic plugins
@@ -190,7 +186,8 @@ lldb_private::Terminate ()
     EmulateInstructionARM::Terminate ();
     ObjectFilePECOFF::Terminate ();
     DynamicLoaderPOSIXDYLD::Terminate ();
-
+    PlatformFreeBSD::Terminate();
+    PlatformLinux::Terminate();
 #if defined (__APPLE__)
     DynamicLoaderMacOSXDYLD::Terminate();
     DynamicLoaderDarwinKernel::Terminate();
@@ -213,15 +210,11 @@ lldb_private::Terminate ()
     Debugger::SettingsTerminate ();
 
 #if defined (__linux__)
-    PlatformLinux::Terminate();
     ProcessLinux::Terminate();
-    DynamicLoaderPOSIXDYLD::Terminate();
 #endif
 
 #if defined (__FreeBSD__)
-    PlatformFreeBSD::Terminate();
     ProcessFreeBSD::Terminate();
-    DynamicLoaderPOSIXDYLD::Terminate();
 #endif
     
     DynamicLoaderStatic::Terminate();

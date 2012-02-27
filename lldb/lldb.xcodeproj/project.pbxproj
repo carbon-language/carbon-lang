@@ -329,6 +329,10 @@
 		268F9D55123AA16600B91E9B /* SBSymbolContextList.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 268F9D54123AA16600B91E9B /* SBSymbolContextList.cpp */; };
 		2690B3711381D5C300ECFBAE /* Memory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2690B3701381D5C300ECFBAE /* Memory.cpp */; };
 		2692BA15136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2692BA13136610C100F9E14D /* UnwindAssemblyInstEmulation.cpp */; };
+		2694E99D14FC0BB30076DE67 /* PlatformFreeBSD.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2694E99A14FC0BB30076DE67 /* PlatformFreeBSD.cpp */; };
+		2694E99E14FC0BB30076DE67 /* PlatformFreeBSD.h in Headers */ = {isa = PBXBuildFile; fileRef = 2694E99B14FC0BB30076DE67 /* PlatformFreeBSD.h */; };
+		2694E9A414FC0BBD0076DE67 /* PlatformLinux.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2694E9A114FC0BBD0076DE67 /* PlatformLinux.cpp */; };
+		2694E9A514FC0BBD0076DE67 /* PlatformLinux.h in Headers */ = {isa = PBXBuildFile; fileRef = 2694E9A214FC0BBD0076DE67 /* PlatformLinux.h */; };
 		26954EBE1401EE8B00294D09 /* DynamicRegisterInfo.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26954EBC1401EE8B00294D09 /* DynamicRegisterInfo.cpp */; };
 		26957D9813D381C900670048 /* RegisterContextDarwin_arm.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9213D381C900670048 /* RegisterContextDarwin_arm.cpp */; };
 		26957D9A13D381C900670048 /* RegisterContextDarwin_i386.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26957D9413D381C900670048 /* RegisterContextDarwin_i386.cpp */; };
@@ -805,6 +809,10 @@
 		2692BA14136610C100F9E14D /* UnwindAssemblyInstEmulation.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = UnwindAssemblyInstEmulation.h; sourceTree = "<group>"; };
 		269416AD119A024800FF2715 /* CommandObjectTarget.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CommandObjectTarget.cpp; path = source/Commands/CommandObjectTarget.cpp; sourceTree = "<group>"; };
 		269416AE119A024800FF2715 /* CommandObjectTarget.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CommandObjectTarget.h; path = source/Commands/CommandObjectTarget.h; sourceTree = "<group>"; };
+		2694E99A14FC0BB30076DE67 /* PlatformFreeBSD.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformFreeBSD.cpp; sourceTree = "<group>"; };
+		2694E99B14FC0BB30076DE67 /* PlatformFreeBSD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformFreeBSD.h; sourceTree = "<group>"; };
+		2694E9A114FC0BBD0076DE67 /* PlatformLinux.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PlatformLinux.cpp; sourceTree = "<group>"; };
+		2694E9A214FC0BBD0076DE67 /* PlatformLinux.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlatformLinux.h; sourceTree = "<group>"; };
 		26954EBC1401EE8B00294D09 /* DynamicRegisterInfo.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DynamicRegisterInfo.cpp; path = Utility/DynamicRegisterInfo.cpp; sourceTree = "<group>"; };
 		26954EBD1401EE8B00294D09 /* DynamicRegisterInfo.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DynamicRegisterInfo.h; path = Utility/DynamicRegisterInfo.h; sourceTree = "<group>"; };
 		26957D9213D381C900670048 /* RegisterContextDarwin_arm.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RegisterContextDarwin_arm.cpp; path = Utility/RegisterContextDarwin_arm.cpp; sourceTree = "<group>"; };
@@ -2096,6 +2104,24 @@
 			path = x86;
 			sourceTree = "<group>";
 		};
+		2694E99814FC0BB30076DE67 /* FreeBSD */ = {
+			isa = PBXGroup;
+			children = (
+				2694E99A14FC0BB30076DE67 /* PlatformFreeBSD.cpp */,
+				2694E99B14FC0BB30076DE67 /* PlatformFreeBSD.h */,
+			);
+			path = FreeBSD;
+			sourceTree = "<group>";
+		};
+		2694E99F14FC0BBD0076DE67 /* Linux */ = {
+			isa = PBXGroup;
+			children = (
+				2694E9A114FC0BBD0076DE67 /* PlatformLinux.cpp */,
+				2694E9A214FC0BBD0076DE67 /* PlatformLinux.h */,
+			);
+			path = Linux;
+			sourceTree = "<group>";
+		};
 		26A3B4AB1181454800381BC2 /* BSD-Archive */ = {
 			isa = PBXGroup;
 			children = (
@@ -2729,7 +2755,9 @@
 		26C5577E132575B6008FD8FE /* Platform */ = {
 			isa = PBXGroup;
 			children = (
+				2694E99814FC0BB30076DE67 /* FreeBSD */,
 				264A97BC133918A30017F0BE /* GDB Server */,
+				2694E99F14FC0BBD0076DE67 /* Linux */,
 				26C5577F132575C8008FD8FE /* MacOSX */,
 			);
 			path = Platform;
@@ -3056,6 +3084,8 @@
 				26FFC19A14FC072100087D58 /* AuxVector.h in Headers */,
 				26FFC19C14FC072100087D58 /* DYLDRendezvous.h in Headers */,
 				26FFC19E14FC072100087D58 /* DynamicLoaderPOSIXDYLD.h in Headers */,
+				2694E99E14FC0BB30076DE67 /* PlatformFreeBSD.h in Headers */,
+				2694E9A514FC0BBD0076DE67 /* PlatformLinux.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -3781,6 +3811,8 @@
 				26FFC19914FC072100087D58 /* AuxVector.cpp in Sources */,
 				26FFC19B14FC072100087D58 /* DYLDRendezvous.cpp in Sources */,
 				26FFC19D14FC072100087D58 /* DynamicLoaderPOSIXDYLD.cpp in Sources */,
+				2694E99D14FC0BB30076DE67 /* PlatformFreeBSD.cpp in Sources */,
+				2694E9A414FC0BBD0076DE67 /* PlatformLinux.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

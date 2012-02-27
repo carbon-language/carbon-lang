@@ -93,7 +93,8 @@ PlatformLinux::Terminate ()
 Error
 PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
                                   const ArchSpec &exe_arch,
-                                  lldb::ModuleSP &exe_module_sp)
+                                  lldb::ModuleSP &exe_module_sp,
+                                  const FileSpecList *module_search_paths_ptr)
 {
     Error error;
     // Nothing special to do here, just use the actual file and architecture
@@ -144,13 +145,10 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
 
     if (error.Success())
     {
+        ModuleSpec module_spec (resolved_exe_file, exe_arch);
         if (exe_arch.IsValid())
         {
-            error = ModuleList::GetSharedModule (resolved_exe_file, 
-                                                 exe_arch, 
-                                                 NULL,
-                                                 NULL, 
-                                                 0, 
+            error = ModuleList::GetSharedModule (module_spec, 
                                                  exe_module_sp, 
                                                  NULL, 
                                                  NULL,
@@ -172,14 +170,9 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
             // the architectures that we should be using (in the correct order)
             // and see if we can find a match that way
             StreamString arch_names;
-            ArchSpec platform_arch;
-            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, platform_arch); ++idx)
+            for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, module_spec.GetArchitecture()); ++idx)
             {
-                error = ModuleList::GetSharedModule (resolved_exe_file, 
-                                                     platform_arch, 
-                                                     NULL,
-                                                     NULL, 
-                                                     0, 
+                error = ModuleList::GetSharedModule (module_spec, 
                                                      exe_module_sp, 
                                                      NULL, 
                                                      NULL,
@@ -195,7 +188,7 @@ PlatformLinux::ResolveExecutable (const FileSpec &exe_file,
                 
                 if (idx > 0)
                     arch_names.PutCString (", ");
-                arch_names.PutCString (platform_arch.GetArchitectureName());
+                arch_names.PutCString (module_spec.GetArchitecture().GetArchitectureName());
             }
             
             if (error.Fail() || !exe_module_sp)
