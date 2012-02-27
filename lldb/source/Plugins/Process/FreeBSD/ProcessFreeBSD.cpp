@@ -31,10 +31,15 @@ using namespace lldb_private;
 //------------------------------------------------------------------------------
 // Static functions.
 
-Process*
-ProcessFreeBSD::CreateInstance(Target& target, Listener &listener)
+lldb::ProcessSP
+ProcessFreeBSD::CreateInstance(Target& target,
+                               Listener &listener,
+                               const FileSpec *crash_file_path)
 {
-    return new ProcessFreeBSD(target, listener);
+    lldb::ProcessSP process_sp;
+    if (crash_file_path == NULL)
+        process_sp.reset(new ProcessFreeBSD (target, listener));
+    return process_sp;
 }
 
 void

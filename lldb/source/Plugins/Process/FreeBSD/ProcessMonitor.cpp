@@ -831,6 +831,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
 {
     ProcessMonitor *monitor = args->m_monitor;
     ProcessFreeBSD &process = monitor->GetProcess();
+    lldb::ProcessSP processSP = process.shared_from_this();
     const char **argv = args->m_argv;
     const char **envp = args->m_envp;
     const char *stdin_path = args->m_stdin_path;
@@ -951,7 +952,7 @@ ProcessMonitor::Launch(LaunchArgs *args)
         goto FINISH;
 
     // Update the process thread list with this new thread.
-    inferior.reset(new POSIXThread(process, pid));
+    inferior.reset(new POSIXThread(processSP, pid));
     process.GetThreadList().AddThread(inferior);
 
     // Let our process instance know the thread has stopped.
@@ -1011,6 +1012,7 @@ ProcessMonitor::Attach(AttachArgs *args)
 
     ProcessMonitor *monitor = args->m_monitor;
     ProcessFreeBSD &process = monitor->GetProcess();
+    lldb::ProcessSP processSP = process.shared_from_this();
     ThreadList &tl = process.GetThreadList();
     lldb::ThreadSP inferior;
 
@@ -1036,7 +1038,7 @@ ProcessMonitor::Attach(AttachArgs *args)
     }
 
     // Update the process thread list with the attached thread.
-    inferior.reset(new POSIXThread(process, pid));
+    inferior.reset(new POSIXThread(processSP, pid));
     tl.AddThread(inferior);
 
     // Let our process instance know the thread has stopped.

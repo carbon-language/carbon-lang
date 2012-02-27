@@ -101,7 +101,8 @@ PlatformFreeBSD::~PlatformFreeBSD()
 Error
 PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
                                     const ArchSpec &exe_arch,
-                                    lldb::ModuleSP &exe_module_sp)
+                                    lldb::ModuleSP &exe_module_sp,
+                                    const FileSpecList *module_search_paths_ptr)
 {
     Error error;
     // Nothing special to do here, just use the actual file and architecture
@@ -139,7 +140,8 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
         {
             error = m_remote_platform_sp->ResolveExecutable (exe_file,
                                                              exe_arch,
-                                                             exe_module_sp);
+                                                             exe_module_sp,
+                                                             module_search_paths_ptr);
         }
         else
         {
@@ -161,14 +163,12 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
 
     if (error.Success())
     {
-        if (exe_arch.IsValid())
+        ModuleSpec module_spec (resolved_exe_file, exe_arch);
+        if (module_spec.GetArchitecture().IsValid())
         {
-            error = ModuleList::GetSharedModule (resolved_exe_file,
-                                                 exe_arch,
-                                                 NULL,
-                                                 NULL,
-                                                 0,
+            error = ModuleList::GetSharedModule (module_spec,
                                                  exe_module_sp,
+                                                 module_search_paths_ptr,
                                                  NULL,
                                                  NULL);
 
@@ -191,12 +191,9 @@ PlatformFreeBSD::ResolveExecutable (const FileSpec &exe_file,
             ArchSpec platform_arch;
             for (uint32_t idx = 0; GetSupportedArchitectureAtIndex (idx, platform_arch); ++idx)
             {
-                error = ModuleList::GetSharedModule (resolved_exe_file,
-                                                     platform_arch,
-                                                     NULL,
-                                                     NULL,
-                                                     0,
+                error = ModuleList::GetSharedModule (module_spec,
                                                      exe_module_sp,
+                                                     module_search_paths_ptr,
                                                      NULL,
                                                      NULL);
                 // Did we find an executable using one of the
@@ -466,7 +463,7 @@ PlatformFreeBSD::Attach(ProcessAttachInfo &attach_info,
             // The freebsd always currently uses the GDB remote debugger plug-in
             // so even when debugging locally we are debugging remotely!
             // Just like the darwin plugin.
-            process_sp = target->CreateProcess (listener, "gdb-remote");
+            process_sp = target->CreateProcess (listener, "gdb-remote", NULL);
 
             if (process_sp)
                 error = process_sp->Attach (attach_info);
@@ -526,12 +523,9 @@ PlatformFreeBSD::GetFile (const FileSpec &platform_file,
 }
 
 Error
-PlatformFreeBSD::GetSharedModule (const FileSpec &platform_file,
-                                  const ArchSpec &arch,
-                                  const UUID *uuid_ptr,
-                                  const ConstString *object_name_ptr,
-                                  off_t object_offset,
+PlatformFreeBSD::GetSharedModule (const ModuleSpec &module_spec,
                                   ModuleSP &module_sp,
+                                  const FileSpecList *module_search_paths_ptr,
                                   ModuleSP *old_module_sp_ptr,
                                   bool *did_create_ptr)
 {
@@ -544,12 +538,9 @@ PlatformFreeBSD::GetSharedModule (const FileSpec &platform_file,
         // the shared module first.
         if (m_remote_platform_sp)
         {
-            error = m_remote_platform_sp->GetSharedModule (platform_file,
-                                                           arch,
-                                                           uuid_ptr,
-                                                           object_name_ptr,
-                                                           object_offset,
+            error = m_remote_platform_sp->GetSharedModule (module_spec,
                                                            module_sp,
+                                                           module_search_paths_ptr,
                                                            old_module_sp_ptr,
                                                            did_create_ptr);
         }
@@ -558,17 +549,14 @@ PlatformFreeBSD::GetSharedModule (const FileSpec &platform_file,
     if (!module_sp)
     {
         // Fall back to the local platform and find the file locally
-        error = Platform::GetSharedModule (platform_file,
-                                           arch,
-                                           uuid_ptr,
-                                           object_name_ptr,
-                                           object_offset,
+        error = Platform::GetSharedModule (module_spec,
                                            module_sp,
+                                           module_search_paths_ptr,
                                            old_module_sp_ptr,
                                            did_create_ptr);
     }
     if (module_sp)
-        module_sp->SetPlatformFileSpec(platform_file);
+        module_sp->SetPlatformFileSpec(module_spec.GetFileSpec());
     return error;
 }
 

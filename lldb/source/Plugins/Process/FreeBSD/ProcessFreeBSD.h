@@ -31,9 +31,10 @@ public:
     //------------------------------------------------------------------
     // Static functions.
     //------------------------------------------------------------------
-    static Process*
+    static lldb::ProcessSP
     CreateInstance(lldb_private::Target& target,
-                   lldb_private::Listener &listener);
+                   lldb_private::Listener &listener,
+                   const lldb_private::FileSpec *crash_file_path);
 
     static void
     Initialize();
@@ -51,7 +52,7 @@ public:
     // Constructors and destructors
     //------------------------------------------------------------------
     ProcessFreeBSD(lldb_private::Target& target,
-                 lldb_private::Listener &listener);
+                   lldb_private::Listener &listener);
 
     virtual uint32_t
     UpdateThreadList(lldb_private::ThreadList &old_thread_list, lldb_private::ThreadList &new_thread_list);
