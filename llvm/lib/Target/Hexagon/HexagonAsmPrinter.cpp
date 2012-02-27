@@ -11,9 +11,6 @@
 // of machine-dependent LLVM code to Hexagon assembly language. This printer is
 // the output mechanism used by `llc'.
 //
-// Documentation at http://developer.apple.com/documentation/DeveloperTools/
-// Reference/Assembler/ASMIntroduction/chapter_1_section_1.html
-//
 //===----------------------------------------------------------------------===//
 
 
