@@ -142,6 +142,7 @@ private:
   }
 
   // Add a range of bytes from I to E.
+  template<bool ElementsHaveEvenLength>
   void addBytes(const char *I, const char *E) {
     uint32_t Data;
     // Note that aliasing rules forbid us from dereferencing
@@ -154,7 +155,7 @@ private:
       std::memcpy(&Data, I, sizeof Data);
       mix(Data);
     }
-    if (I != E) {
+    if (!ElementsHaveEvenLength && I != E) {
       Data = 0;
       std::memcpy(&Data, I, E - I);
       mix(Data);
@@ -164,8 +165,9 @@ private:
   // Add a range of bits from I to E.
   template<typename T>
   void addBits(const T *I, const T *E) {
-    addBytes(reinterpret_cast<const char *>(I),
-             reinterpret_cast<const char *>(E));
+    addBytes<sizeof (T) % sizeof (uint32_t) == 0>(
+      reinterpret_cast<const char *>(I),
+      reinterpret_cast<const char *>(E));
   }
 };
 
