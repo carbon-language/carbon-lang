@@ -2706,7 +2706,7 @@ public:
     bool Variadic : 1;
     bool HasTrailingReturn : 1;
     ExceptionSpecificationType ExceptionSpecType : 4;
-    RefQualifierKind RefQualifier : 2;
+    RefQualifierKind RefQualifier : 3;
     unsigned char TypeQuals;
     unsigned NumExceptions;
     const QualType *Exceptions;
