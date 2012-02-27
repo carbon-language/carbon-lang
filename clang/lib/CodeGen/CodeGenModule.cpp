@@ -1376,8 +1376,19 @@ CodeGenModule::MaybeEmitGlobalStdInitializerListInitializer(const VarDecl *D,
     return 0;
 
   ASTContext &ctx = getContext();
-  // Synthesize a fake VarDecl for the array and initialize that.
   unsigned numInits = init->getNumInits();
+  // FIXME: This check is here because we would otherwise silently miscompile
+  // nested global std::initializer_lists. Better would be to have a real
+  // implementation.
+  for (unsigned i = 0; i < numInits; ++i) {
+    const InitListExpr *inner = dyn_cast<InitListExpr>(init->getInit(i));
+    if (inner && inner->initializesStdInitializerList()) {
+      ErrorUnsupported(inner, "nested global std::initializer_list");
+      return 0;
+    }
+  }
+
+  // Synthesize a fake VarDecl for the array and initialize that.
   QualType elementType = init->getInit(0)->getType();
   llvm::APInt numElements(ctx.getTypeSize(ctx.getSizeType()), numInits);
   QualType arrayType = ctx.getConstantArrayType(elementType, numElements,
