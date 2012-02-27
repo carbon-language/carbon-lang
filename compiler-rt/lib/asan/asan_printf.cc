@@ -22,12 +22,23 @@
 
 namespace __asan {
 
+extern char *error_message_buffer;
+extern size_t error_message_buffer_pos, error_message_buffer_size;
+
 void RawWrite(const char *buffer) {
   static const char *kRawWriteError = "RawWrite can't output requested buffer!";
   size_t length = (size_t)internal_strlen(buffer);
   if (length != AsanWrite(2, buffer, length)) {
     AsanWrite(2, kRawWriteError, internal_strlen(kRawWriteError));
     AsanDie();
+  }
+  if (error_message_buffer) {
+    int remaining = error_message_buffer_size - error_message_buffer_pos;
+    internal_strncpy(error_message_buffer + error_message_buffer_pos,
+                     buffer, remaining);
+    error_message_buffer[error_message_buffer_size - 1] = '\0';
+    // FIXME: reallocate the buffer instead of truncating the message.
+    error_message_buffer_pos += remaining > length ? length : remaining;
   }
 }
 

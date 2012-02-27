@@ -342,3 +342,21 @@ TEST(AddressSanitizerInterface, DISABLED_InvalidPoisonAndUnpoisonCallsTest) {
                kInvalidPoisonMessage);
   free(array);
 }
+
+static void ErrorReportCallbackOneToZ(const char *report) {
+  int len = strlen(report);
+  char *dup = (char*)malloc(len);
+  strcpy(dup, report);
+  for (int i = 0; i < len; i++) {
+    if (dup[i] == '1') dup[i] = 'Z';
+  }
+  write(2, dup, len);
+  free(dup);
+}
+
+TEST(AddressSanitizerInterface, SetErrorReportCallbackTest) {
+  __asan_set_error_report_callback(ErrorReportCallbackOneToZ);
+  char *array = Ident((char*)malloc(120));
+  EXPECT_DEATH(ACCESS(array, 120), "size Z");
+  __asan_set_error_report_callback(NULL);
+}

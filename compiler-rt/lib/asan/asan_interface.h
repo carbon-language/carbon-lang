@@ -121,6 +121,9 @@ extern "C" {
   void __asan_set_death_callback(void (*callback)(void))
       ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
 
+  void __asan_set_error_report_callback(void (*callback)(const char*))
+      ASAN_INTERFACE_FUNCTION_ATTRIBUTE;
+
   // Returns the estimated number of bytes that will be reserved by allocator
   // for request of "size" bytes. If ASan allocator can't allocate that much
   // memory, returns the maximal possible allocation size, otherwise returns

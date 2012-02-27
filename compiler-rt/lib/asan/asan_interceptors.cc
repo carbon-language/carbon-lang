@@ -222,6 +222,13 @@ int internal_strcmp(const char *s1, const char *s2) {
   return 0;
 }
 
+char *internal_strncpy(char *dst, const char *src, size_t n) {
+  size_t i;
+  for (i = 0; i < n && src[i]; i++)
+    dst[i] = src[i];
+  return dst;
+}
+
 }  // namespace __asan
 
 // ---------------------- Wrappers ---------------- {{{1

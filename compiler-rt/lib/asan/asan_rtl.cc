@@ -52,6 +52,10 @@ int    FLAG_sleep_before_dying;
 int asan_inited;
 bool asan_init_is_running;
 static void (*death_callback)(void);
+static void (*error_report_callback)(const char*);
+char *error_message_buffer = NULL;
+size_t error_message_buffer_pos = 0;
+size_t error_message_buffer_size = 0;
 
 // -------------------------- Misc ---------------- {{{1
 void ShowStatsAndAbort() {
@@ -237,7 +241,7 @@ ASAN_REPORT_ERROR(store, true, 16)
 // dynamic libraries access the symbol even if it is not used by the executable
 // itself. This should help if the build system is removing dead code at link
 // time.
-static void force_interface_symbols() {
+static NOINLINE void force_interface_symbols() {
   volatile int fake_condition = 0;  // prevent dead condition elimination.
   if (fake_condition) {
     __asan_report_load1(NULL);
@@ -253,6 +257,7 @@ static void force_interface_symbols() {
     __asan_register_global(0, 0, NULL);
     __asan_register_globals(NULL, 0);
     __asan_unregister_globals(NULL, 0);
+    __asan_set_error_report_callback(NULL);
   }
 }
 
@@ -298,6 +303,16 @@ void __asan_handle_no_return() {
 
 void __asan_set_death_callback(void (*callback)(void)) {
   death_callback = callback;
+}
+
+void NOINLINE __asan_set_error_report_callback(void (*callback)(const char*)) {
+  error_report_callback = callback;
+  if (callback) {
+    error_message_buffer_size = 1 << 14;
+    error_message_buffer =
+        (char*)AsanMmapSomewhereOrDie(error_message_buffer_size, __FUNCTION__);
+    error_message_buffer_pos = 0;
+  }
 }
 
 void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
@@ -389,6 +404,9 @@ void __asan_report_error(uintptr_t pc, uintptr_t bp, uintptr_t sp,
   PrintBytes("  ", (uintptr_t*)(aligned_shadow+2*kWordSize));
   PrintBytes("  ", (uintptr_t*)(aligned_shadow+3*kWordSize));
   PrintBytes("  ", (uintptr_t*)(aligned_shadow+4*kWordSize));
+  if (error_report_callback) {
+    error_report_callback(error_message_buffer);
+  }
   AsanDie();
 }
 
