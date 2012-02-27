@@ -249,6 +249,7 @@ static AsanChunk *PtrToChunk(uintptr_t ptr) {
 
 
 void AsanChunkFifoList::PushList(AsanChunkFifoList *q) {
+  CHECK(q->size() > 0);
   if (last_) {
     CHECK(first_);
     CHECK(!last_->next);
@@ -258,7 +259,10 @@ void AsanChunkFifoList::PushList(AsanChunkFifoList *q) {
     CHECK(!first_);
     last_ = q->last_;
     first_ = q->first_;
+    CHECK(first_);
   }
+  CHECK(last_);
+  CHECK(!last_->next);
   size_ += q->size();
   q->clear();
 }
