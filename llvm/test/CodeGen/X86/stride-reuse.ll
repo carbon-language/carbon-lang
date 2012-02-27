@@ -1,6 +1,6 @@
 ; RUN: llc < %s -march=x86            | FileCheck %s
 ; RUN: llc < %s -mtriple=x86_64-linux | FileCheck %s
-; CHECK-NOT:     lea
+; CHECK-NOT:    lea
 
 @B = external global [1000 x float], align 32
 @A = external global [1000 x float], align 32
