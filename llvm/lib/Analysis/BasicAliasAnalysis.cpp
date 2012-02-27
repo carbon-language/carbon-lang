@@ -120,11 +120,11 @@ static uint64_t getObjectSize(const Value *V, const TargetData &TD,
     return AliasAnalysis::UnknownSize;
 
   uint64_t Size = TD.getTypeAllocSize(AccessTy);
-  if (RoundToAlign) {
-    if (!Align)
-      return AliasAnalysis::UnknownSize;
+  // If there is an explicitly specified alignment, and we need to
+  // take alignment into account, round up the size. (If the alignment
+  // is implicit, getTypeAllocSize is sufficient.)
+  if (RoundToAlign && Align)
     Size = RoundUpToAlignment(Size, Align);
-  }
 
   return Size;
 }
