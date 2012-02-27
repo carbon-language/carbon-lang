@@ -329,9 +329,8 @@ public:
 #ifdef DISABLE_DEFAULT_INTEGRATED_ASSEMBLER
     return false;
 #else
-    // Default integrated assembler to on for x86.
-    return (getTriple().getArch() == llvm::Triple::x86 ||
-            getTriple().getArch() == llvm::Triple::x86_64);
+    // Default integrated assembler to on for Darwin.
+    return true;
 #endif
   }
   virtual bool IsStrictAliasingDefault() const {
