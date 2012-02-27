@@ -50,6 +50,8 @@ private:
   uint8_t SegOvr;
   /// The hasOpSizePrefix field from the record
   bool HasOpSizePrefix;
+  /// The hasAdSizePrefix field from the record
+  bool HasAdSizePrefix;
   /// The hasREX_WPrefix field from the record
   bool HasREX_WPrefix;
   /// The hasVEXPrefix field from the record

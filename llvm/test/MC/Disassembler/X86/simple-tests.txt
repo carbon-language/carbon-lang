@@ -6,6 +6,11 @@
 # CHECK: int	$33
 0xCD 0x21
 
+# CHECK: jrcxz -127
+0xe3 0x81
+
+# CHECK: jecxz -127
+0x67 0xe3 0x81
 
 # CHECK: addb	%al, (%rax)
 0 0

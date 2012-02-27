@@ -763,6 +763,8 @@ static int getID(struct InternalInstruction* insn, void *miiArg) {
   else {
     if (isPrefixAtLocation(insn, 0x66, insn->necessaryPrefixLocation))
       attrMask |= ATTR_OPSIZE;
+    else if (isPrefixAtLocation(insn, 0x67, insn->necessaryPrefixLocation))
+      attrMask |= ATTR_ADSIZE;
     else if (isPrefixAtLocation(insn, 0xf3, insn->necessaryPrefixLocation))
       attrMask |= ATTR_XS;
     else if (isPrefixAtLocation(insn, 0xf2, insn->necessaryPrefixLocation))

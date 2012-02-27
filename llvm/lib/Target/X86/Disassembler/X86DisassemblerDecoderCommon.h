@@ -54,8 +54,9 @@
   ENUM_ENTRY(ATTR_XD,     0x04) \
   ENUM_ENTRY(ATTR_REXW,   0x08) \
   ENUM_ENTRY(ATTR_OPSIZE, 0x10) \
-  ENUM_ENTRY(ATTR_VEX,    0x20) \
-  ENUM_ENTRY(ATTR_VEXL,   0x40)
+  ENUM_ENTRY(ATTR_ADSIZE, 0x20) \
+  ENUM_ENTRY(ATTR_VEX,    0x40) \
+  ENUM_ENTRY(ATTR_VEXL,   0x80)
 
 #define ENUM_ENTRY(n, v) n = v,
 enum attributeBits {
@@ -77,6 +78,8 @@ enum attributeBits {
                                         "64-bit mode but no more")             \
   ENUM_ENTRY(IC_OPSIZE,             3,  "requires an OPSIZE prefix, so "       \
                                         "operands change width")               \
+  ENUM_ENTRY(IC_ADSIZE,             3,  "requires an ADSIZE prefix, so "       \
+                                        "operands change width")               \
   ENUM_ENTRY(IC_XD,                 2,  "may say something about the opcode "  \
                                         "but not the operands")                \
   ENUM_ENTRY(IC_XS,                 2,  "may say something about the opcode "  \
@@ -88,6 +91,7 @@ enum attributeBits {
   ENUM_ENTRY(IC_64BIT_REXW,         4,  "requires a REX.W prefix, so operands "\
                                         "change width; overrides IC_OPSIZE")   \
   ENUM_ENTRY(IC_64BIT_OPSIZE,       3,  "Just as meaningful as IC_OPSIZE")     \
+  ENUM_ENTRY(IC_64BIT_ADSIZE,       3,  "Just as meaningful as IC_ADSIZE")     \
   ENUM_ENTRY(IC_64BIT_XD,           5,  "XD instructions are SSE; REX.W is "   \
                                         "secondary")                           \
   ENUM_ENTRY(IC_64BIT_XS,           5,  "Just as meaningful as IC_64BIT_XD")   \

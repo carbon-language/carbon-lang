@@ -225,6 +225,7 @@ RecognizableInstr::RecognizableInstr(DisassemblerTables &tables,
   SegOvr   = byteFromRec(Rec, "SegOvrBits");
   
   HasOpSizePrefix  = Rec->getValueAsBit("hasOpSizePrefix");
+  HasAdSizePrefix  = Rec->getValueAsBit("hasAdSizePrefix");
   HasREX_WPrefix   = Rec->getValueAsBit("hasREX_WPrefix");
   HasVEXPrefix     = Rec->getValueAsBit("hasVEXPrefix");
   HasVEX_4VPrefix  = Rec->getValueAsBit("hasVEX_4VPrefix");
@@ -343,6 +344,8 @@ InstructionContext RecognizableInstr::insnContext() const {
       insnContext = IC_64BIT_XS_OPSIZE;
     else if (HasOpSizePrefix)
       insnContext = IC_64BIT_OPSIZE;
+    else if (HasAdSizePrefix)
+      insnContext = IC_64BIT_ADSIZE;
     else if (HasREX_WPrefix &&
              (Prefix == X86Local::XS || Prefix == X86Local::T8XS))
       insnContext = IC_64BIT_REXW_XS;
@@ -369,6 +372,8 @@ InstructionContext RecognizableInstr::insnContext() const {
       insnContext = IC_XS_OPSIZE;
     else if (HasOpSizePrefix)
       insnContext = IC_OPSIZE;
+    else if (HasAdSizePrefix)
+      insnContext = IC_ADSIZE;
     else if (Prefix == X86Local::XD || Prefix == X86Local::T8XD ||
              Prefix == X86Local::TAXD)
       insnContext = IC_XD;

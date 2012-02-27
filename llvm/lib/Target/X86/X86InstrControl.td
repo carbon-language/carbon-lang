@@ -77,7 +77,7 @@ defm JLE : ICBr<0x7E, 0x8E, "jle\t$dst", X86_COND_LE>;
 defm JG  : ICBr<0x7F, 0x8F, "jg\t$dst" , X86_COND_G>;
 
 // jcx/jecx/jrcx instructions.
-let isAsmParserOnly = 1, isBranch = 1, isTerminator = 1 in {
+let isBranch = 1, isTerminator = 1 in {
   // These are the 32-bit versions of this instruction for the asmparser.  In
   // 32-bit mode, the address size prefix is jcxz and the unprefixed version is
   // jecxz.
