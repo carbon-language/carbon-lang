@@ -1,4 +1,5 @@
-// RUN: %clang_cc1 -analyze -analyzer-stats %s 2> FileCheck
+// RUN: %clang_cc1 -analyze -analyzer-stats %s 2>&1 | FileCheck %s
+// XFAIL: *
 
 void foo() {
   ;
