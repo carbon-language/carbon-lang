@@ -46,24 +46,17 @@ static const size_t kMinAllocSize = REDZONE * 2;
 static const uint64_t kMaxAvailableRam = 128ULL << 30;  // 128G
 static const size_t kMaxThreadLocalQuarantine = 1 << 20;  // 1M
 
-#if ASAN_LOW_MEMORY == 1
-static const size_t kMinMmapSize  = 4UL << 17;  // 128K
-  static const size_t kMaxSizeForThreadLocalFreeList = 1 << 15;  // 32K
-#else
-static const size_t kMinMmapSize  = 4UL << 20;  // 4M
-  static const size_t kMaxSizeForThreadLocalFreeList = 1 << 17;  // 128K
-#endif
+static const size_t kMinMmapSize = (ASAN_LOW_MEMORY) ? 4UL << 17 : 4UL << 20;
+static const size_t kMaxSizeForThreadLocalFreeList =
+    (ASAN_LOW_MEMORY) ? 1 << 15 : 1 << 17;
 
 // Size classes less than kMallocSizeClassStep are powers of two.
 // All other size classes are multiples of kMallocSizeClassStep.
 static const size_t kMallocSizeClassStepLog = 26;
 static const size_t kMallocSizeClassStep = 1UL << kMallocSizeClassStepLog;
 
-#if __WORDSIZE == 32
-static const size_t kMaxAllowedMallocSize = 3UL << 30;  // 3G
-#else
-static const size_t kMaxAllowedMallocSize = 8UL << 30;  // 8G
-#endif
+static const size_t kMaxAllowedMallocSize =
+    (__WORDSIZE == 32) ? 3UL << 30 : 8UL << 30;
 
 static inline bool IsAligned(uintptr_t a, uintptr_t alignment) {
   return (a & (alignment - 1)) == 0;

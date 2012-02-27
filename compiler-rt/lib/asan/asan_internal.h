@@ -129,6 +129,12 @@ extern "C" void* _ReturnAddress(void);
 # define ASAN_FLEXIBLE_MAPPING_AND_OFFSET 0
 #endif
 
+// If set, values like allocator chunk size, as well as defaults for some flags
+// will be changed towards less memory overhead.
+#ifndef ASAN_LOW_MEMORY
+# define ASAN_LOW_MEMORY 0
+#endif
+
 // All internal functions in asan reside inside the __asan namespace
 // to avoid namespace collisions with the user programs.
 // Seperate namespace also makes it simpler to distinguish the asan run-time

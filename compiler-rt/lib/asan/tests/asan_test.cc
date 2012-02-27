@@ -453,11 +453,7 @@ static void MallocStress(size_t n) {
 }
 
 TEST(AddressSanitizer, MallocStressTest) {
-#if ASAN_LOW_MEMORY == 1
-  MallocStress(20000);
-#else
-  MallocStress(200000);
-#endif
+  MallocStress((ASAN_LOW_MEMORY) ? 20000 : 200000);
 }
 
 static void TestLargeMalloc(size_t size) {
@@ -489,13 +485,11 @@ TEST(AddressSanitizer, HugeMallocTest) {
 
 TEST(AddressSanitizer, ThreadedMallocStressTest) {
   const int kNumThreads = 4;
+  const int kNumIterations = (ASAN_LOW_MEMORY) ? 10000 : 100000;
   pthread_t t[kNumThreads];
   for (int i = 0; i < kNumThreads; i++) {
-#if ASAN_LOW_MEMORY == 1
-    pthread_create(&t[i], 0, (void* (*)(void *x))MallocStress, (void*)10000);
-#else
-    pthread_create(&t[i], 0, (void* (*)(void *x))MallocStress, (void*)100000);
-#endif
+    pthread_create(&t[i], 0, (void* (*)(void *x))MallocStress,
+        (void*)kNumIterations);
   }
   for (int i = 0; i < kNumThreads; i++) {
     pthread_join(t[i], 0);
