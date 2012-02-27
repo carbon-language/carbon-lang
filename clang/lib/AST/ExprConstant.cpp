@@ -44,6 +44,7 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
+#include "llvm/ADT/SaveAndRestore.h"
 #include <cstring>
 #include <functional>
 
@@ -445,13 +446,18 @@ namespace {
     /// are suppressed.
     bool CheckingPotentialConstantExpression;
 
+    /// \brief Stack depth of IntExprEvaluator.
+    /// We check this against a maximum value to avoid stack overflow, see
+    /// test case in test/Sema/many-logical-ops.c.
+    // FIXME: This is a hack; handle properly unlimited logical ops.
+    unsigned IntExprEvaluatorDepth;
 
     EvalInfo(const ASTContext &C, Expr::EvalStatus &S)
       : Ctx(const_cast<ASTContext&>(C)), EvalStatus(S), CurrentCall(0),
         CallStackDepth(0), NextCallIndex(1),
         BottomFrame(*this, SourceLocation(), 0, 0, 0),
         EvaluatingDecl(0), EvaluatingDeclValue(0), HasActiveDiagnostic(false),
-        CheckingPotentialConstantExpression(false) {}
+        CheckingPotentialConstantExpression(false), IntExprEvaluatorDepth(0) {}
 
     const CCValue *getOpaqueValue(const OpaqueValueExpr *e) const {
       MapTy::const_iterator i = OpaqueValues.find(e);
@@ -4066,6 +4072,20 @@ public:
   }
 
   bool ZeroInitialization(const Expr *E) { return Success(0, E); }
+
+  // FIXME: See EvalInfo::IntExprEvaluatorDepth.
+  bool Visit(const Expr *E) {
+    SaveAndRestore<unsigned> Depth(Info.IntExprEvaluatorDepth,
+                                   Info.IntExprEvaluatorDepth+1);
+    const unsigned MaxDepth = 512;
+    if (Depth.get() > MaxDepth) {
+      Info.Ctx.getDiagnostics().Report(E->getExprLoc(),
+                                       diag::err_intexpr_depth_limit_exceeded);
+      return false;
+    }
+
+    return ExprEvaluatorBaseTy::Visit(E);
+  }
 
   //===--------------------------------------------------------------------===//
   //                            Visitor Methods

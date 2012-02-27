@@ -107,6 +107,11 @@ def note_constexpr_calls_suppressed : Note<
   "see all)">;
 def note_constexpr_call_here : Note<"in call to '%0'">;
 
+// FIXME: See EvalInfo::IntExprEvaluatorDepth.
+def err_intexpr_depth_limit_exceeded : Error<
+  "integer expression evaluation exceeded maximum sub-expression depth">,
+  DefaultFatal; // avoid emitting it multiple times for the same parent expr.
+
 // inline asm related.
 let CategoryName = "Inline Assembly Issue" in {
   def err_asm_invalid_escape : Error<
