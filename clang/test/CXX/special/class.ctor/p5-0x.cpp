@@ -35,10 +35,16 @@ class Deleted2a {  // expected-note {{defined here}}
   int &a; 
 }; 
 Deleted2a d2a; // expected-error {{implicitly-deleted default constructor}}
+struct Deleted2b { // expected-note {{here}}
+  int &&b;
+};
+Deleted2b d2b; // expected-error {{deleted default constructor}}
 class NotDeleted2a { int &a = n; };
 NotDeleted2a nd2a;
 class NotDeleted2b { int &a = error; }; // expected-error {{undeclared identifier}}
 NotDeleted2b nd2b;
+class NotDeleted2c { int &&a = 0; };
+NotDeleted2c nd2c;
 
 // - any non-variant non-static data member of const qualified type (or array
 // thereof) with no brace-or-equal-initializer does not have a user-provided
@@ -59,27 +65,26 @@ class NotDeleted3c { const DefaultedDefCtor2 a = DefaultedDefCtor2(); };
 NotDeleted3c nd3c;
 union NotDeleted3d { const int a; int b; };
 NotDeleted3d nd3d;
-// FIXME: this class should not have a deleted default constructor.
-union NotDeleted3e { const DefaultedDefCtor1 a[42]; int b; }; // unexpected-note {{here}}
-NotDeleted3e nd3e; // unexpected-error {{implicitly-deleted default constructor}}
-// FIXME: clang implements the pre-FDIS rule, under which DefaultedDefCtor2 is
-// non-trivial.
-union NotDeleted3f { const DefaultedDefCtor2 a; int b; }; // unexpected-note {{here}}
-NotDeleted3f nd3f; // unexpected-error {{implicitly-deleted default constructor}}
+union NotDeleted3e { const DefaultedDefCtor1 a[42]; int b; };
+NotDeleted3e nd3e;
+union NotDeleted3f { const DefaultedDefCtor2 a; int b; };
+NotDeleted3f nd3f;
+struct NotDeleted3g { union { const int a; int b; }; };
+NotDeleted3g nd3g;
 
 // - X is a union and all of its variant members are of const-qualified type (or
 // array thereof),
 union Deleted4a { const int a; const int b; const UserProvidedDefCtor c; }; // expected-note {{here}}
 Deleted4a d4a; // expected-error {{implicitly-deleted default constructor}}
-union Deleted4b { const int a; int b; };
-Deleted4b d4b;
+union NotDeleted4a { const int a; int b; };
+NotDeleted4a nd4a;
 
 // - X is a non-union class and all members of any anonymous union member are of
 // const-qualified type (or array thereof),
 struct Deleted5a { union { const int a; }; union { int b; }; }; // expected-note {{here}}
 Deleted5a d5a; // expected-error {{implicitly-deleted default constructor}}
-struct Deleted5b { union { const int a; int b; }; union { const int c; int d; }; };
-Deleted5b d5b;
+struct NotDeleted5a { union { const int a; int b; }; union { const int c; int d; }; };
+NotDeleted5a nd5a;
 
 // - any direct or virtual base class, or non-static data member with no
 // brace-or-equal-initializer, has class type M (or array thereof) and either

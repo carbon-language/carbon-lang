@@ -4485,6 +4485,15 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
 
     if (inUnion() && !FieldType.isConstQualified())
       AllFieldsAreConst = false;
+
+    // C++11 [class.ctor]p5: any non-variant non-static data member of
+    // const-qualified type (or array thereof) with no
+    // brace-or-equal-initializer does not have a user-provided default
+    // constructor.
+    if (!inUnion() && FieldType.isConstQualified() &&
+        !FD->hasInClassInitializer() &&
+        (!FieldRecord || !FieldRecord->hasUserProvidedDefaultConstructor()))
+      return true;
   } else if (CSM == Sema::CXXCopyConstructor) {
     // For a copy constructor, data members must not be of rvalue reference
     // type.
@@ -4497,13 +4506,6 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
   }
 
   if (FieldRecord) {
-    // For a default constructor, a const member must have a user-provided
-    // default constructor or else be explicitly initialized.
-    if (CSM == Sema::CXXDefaultConstructor && FieldType.isConstQualified() &&
-        !FD->hasInClassInitializer() &&
-        !FieldRecord->hasUserProvidedDefaultConstructor())
-      return true;
-
     // Some additional restrictions exist on the variant members.
     if (!inUnion() && FieldRecord->isUnion() &&
         FieldRecord->isAnonymousStructOrUnion()) {
@@ -4592,10 +4594,6 @@ bool SpecialMemberDeletionInfo::shouldDeleteForField(FieldDecl *FD) {
           return true;
       }
     }
-  } else if (CSM == Sema::CXXDefaultConstructor && !inUnion() &&
-             FieldType.isConstQualified() && !FD->hasInClassInitializer()) {
-    // We can't initialize a const member of non-class type to any value.
-    return true;
   } else if (IsAssignment && FieldType.isConstQualified()) {
     // C++11 [class.copy]p23:
     // -- a non-static data member of const non-class type (or array thereof)
