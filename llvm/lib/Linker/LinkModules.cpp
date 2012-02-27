@@ -581,41 +581,6 @@ void ModuleLinker::computeTypeMapping() {
       TypeMap.addTypeMapping(DGV->getType(), I->getType());
   }
 
-#if 0
-  // FIXME: This doesn't play well with LTO. We cannot compile LLVM with this
-  //        enabled. <rdar://problem/10913281>.
-
-  // Incorporate types by name, scanning all the types in the source module.
-  // At this point, the destination module may have a type "%foo = { i32 }" for
-  // example.  When the source module got loaded into the same LLVMContext, if
-  // it had the same type, it would have been renamed to "%foo.42 = { i32 }".
-  // Though it isn't required for correctness, attempt to link these up to clean
-  // up the IR.
-  std::vector<StructType*> SrcStructTypes;
-  SrcM->findUsedStructTypes(SrcStructTypes);
-  
-  SmallPtrSet<StructType*, 32> SrcStructTypesSet(SrcStructTypes.begin(),
-                                                 SrcStructTypes.end());
-  
-  for (unsigned i = 0, e = SrcStructTypes.size(); i != e; ++i) {
-    StructType *ST = SrcStructTypes[i];
-    if (!ST->hasName()) continue;
-    
-    // Check to see if there is a dot in the name followed by a digit.
-    size_t DotPos = ST->getName().rfind('.');
-    if (DotPos == 0 || DotPos == StringRef::npos ||
-        ST->getName().back() == '.' || !isdigit(ST->getName()[DotPos+1]))
-      continue;
-    
-    // Check to see if the destination module has a struct with the prefix name.
-    if (StructType *DST = DstM->getTypeByName(ST->getName().substr(0, DotPos)))
-      // Don't use it if this actually came from the source module.  They're in
-      // the same LLVMContext after all.
-      if (!SrcStructTypesSet.count(DST))
-        TypeMap.addTypeMapping(DST, ST);
-  }
-#endif
-
   // Don't bother incorporating aliases, they aren't generally typed well.
   
   // Now that we have discovered all of the type equivalences, get a body for
