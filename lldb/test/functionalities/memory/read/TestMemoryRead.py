@@ -86,9 +86,9 @@ class MemoryReadTestCase(TestBase):
             substrs = ['abcdefg'])
 
         # (lldb) memory read --format 'hex float' --size 16 `&argc`
-        # 0x7fff5fbff9a0: unsupported hex float byte size 16
+        # 0x7fff5fbff5b0: error: unsupported byte size (16) for hex float format
         self.expect("memory read --format 'hex float' --size 16 `&argc`",
-            substrs = ['unsupported hex float byte size'])
+            substrs = ['unsupported byte size (16) for hex float format'])
 
 
 if __name__ == '__main__':
