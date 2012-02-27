@@ -2559,7 +2559,7 @@ bool Evaluator::EvaluateBlock(BasicBlock::iterator CurInst,
         ValueStack.push_back(new DenseMap<Value*, Constant*>);
         if (!EvaluateFunction(Callee, RetVal, Formals))
           return false;
-        ValueStack.pop_back();
+        delete ValueStack.pop_back_val();
         InstResult = RetVal;
 
         if (InvokeInst *II = dyn_cast<InvokeInst>(CurInst)) {
