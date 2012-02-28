@@ -72,8 +72,9 @@ protected:
   /// Add spill ranges for every use/def of the live interval, inserting loads
   /// immediately before each use, and stores after each def. No folding or
   /// remat is attempted.
-  void trivialSpillEverywhere(LiveInterval *li,
-                              SmallVectorImpl<LiveInterval*> &newIntervals) {
+  void trivialSpillEverywhere(LiveRangeEdit& LRE) {
+    LiveInterval* li = &LRE.getParent();
+
     DEBUG(dbgs() << "Spilling everywhere " << *li << "\n");
 
     assert(li->weight != HUGE_VALF &&
@@ -115,17 +116,14 @@ protected:
       }
 
       // Create a new vreg & interval for this instr.
-      unsigned newVReg = mri->createVirtualRegister(trc);
-      vrm->grow();
-      vrm->assignVirt2StackSlot(newVReg, ss);
-      LiveInterval *newLI = &lis->getOrCreateInterval(newVReg);
+      LiveInterval *newLI = &LRE.create(*lis, *vrm);
       newLI->weight = HUGE_VALF;
 
       // Update the reg operands & kill flags.
       for (unsigned i = 0; i < indices.size(); ++i) {
         unsigned mopIdx = indices[i];
         MachineOperand &mop = mi->getOperand(mopIdx);
-        mop.setReg(newVReg);
+        mop.setReg(newLI->reg);
         if (mop.isUse() && !mi->isRegTiedToDefOperand(mopIdx)) {
           mop.setIsKill(true);
         }
@@ -135,7 +133,7 @@ protected:
       // Insert reload if necessary.
       MachineBasicBlock::iterator miItr(mi);
       if (hasUse) {
-        tii->loadRegFromStackSlot(*mi->getParent(), miItr, newVReg, ss, trc,
+        tii->loadRegFromStackSlot(*mi->getParent(), miItr, newLI->reg, ss, trc,
                                   tri);
         MachineInstr *loadInstr(prior(miItr));
         SlotIndex loadIndex =
@@ -148,7 +146,7 @@ protected:
 
       // Insert store if necessary.
       if (hasDef) {
-        tii->storeRegToStackSlot(*mi->getParent(), llvm::next(miItr), newVReg,
+        tii->storeRegToStackSlot(*mi->getParent(), llvm::next(miItr),newLI->reg,
                                  true, ss, trc, tri);
         MachineInstr *storeInstr(llvm::next(miItr));
         SlotIndex storeIndex =
@@ -158,8 +156,6 @@ protected:
           newLI->getNextValue(beginIndex, lis->getVNInfoAllocator());
         newLI->addRange(LiveRange(beginIndex, storeIndex, storeVNI));
       }
-
-      newIntervals.push_back(newLI);
     }
   }
 };
@@ -179,7 +175,7 @@ public:
 
   void spill(LiveRangeEdit &LRE) {
     // Ignore spillIs - we don't use it.
-    trivialSpillEverywhere(&LRE.getParent(), *LRE.getNewVRegs());
+    trivialSpillEverywhere(LRE);
   }
 };
 

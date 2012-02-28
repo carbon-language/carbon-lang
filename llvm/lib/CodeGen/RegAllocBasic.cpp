@@ -187,7 +187,7 @@ void RABasic::spillReg(LiveInterval& VirtReg, unsigned PhysReg,
     unassign(SpilledVReg, PhysReg);
 
     // Spill the extracted interval.
-    LiveRangeEdit LRE(SpilledVReg, SplitVRegs, 0, &PendingSpills);
+    LiveRangeEdit LRE(SpilledVReg, SplitVRegs);
     spiller().spill(LRE);
   }
   // After extracting segments, the query's results are invalid. But keep the

@@ -57,7 +57,6 @@ private:
   LiveInterval &parent_;
   SmallVectorImpl<LiveInterval*> &newRegs_;
   Delegate *const delegate_;
-  const SmallVectorImpl<LiveInterval*> *uselessRegs_;
 
   /// firstNew_ - Index of the first register added to newRegs_.
   const unsigned firstNew_;
@@ -93,15 +92,11 @@ public:
   /// @param parent The register being spilled or split.
   /// @param newRegs List to receive any new registers created. This needn't be
   ///                empty initially, any existing registers are ignored.
-  /// @param uselessRegs List of registers that can't be used when
-  ///        rematerializing values because they are about to be removed.
   LiveRangeEdit(LiveInterval &parent,
                 SmallVectorImpl<LiveInterval*> &newRegs,
-                Delegate *delegate = 0,
-                const SmallVectorImpl<LiveInterval*> *uselessRegs = 0)
+                Delegate *delegate = 0)
     : parent_(parent), newRegs_(newRegs),
       delegate_(delegate),
-      uselessRegs_(uselessRegs),
       firstNew_(newRegs.size()),
       scannedRemattable_(false) {}
 
@@ -118,13 +113,6 @@ public:
 
   ArrayRef<LiveInterval*> regs() const {
     return makeArrayRef(newRegs_).slice(firstNew_);
-  }
-
-  /// FIXME: Temporary accessors until we can get rid of
-  /// LiveIntervals::AddIntervalsForSpills
-  SmallVectorImpl<LiveInterval*> *getNewVRegs() { return &newRegs_; }
-  const SmallVectorImpl<LiveInterval*> *getUselessVRegs() {
-    return uselessRegs_;
   }
 
   /// createFrom - Create a new virtual register based on OldReg.
