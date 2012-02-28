@@ -3078,6 +3078,10 @@ void SelectionDAGBuilder::visitExtractValue(const ExtractValueInst &I) {
 void SelectionDAGBuilder::visitGetElementPtr(const User &I) {
   SDValue N = getValue(I.getOperand(0));
   Type *Ty = I.getOperand(0)->getType();
+  // If this is a vector of pointers, use the size of the
+  // vector element and not the size of the pointer.
+  if (VectorType *VTy = dyn_cast<VectorType>(Ty))
+    Ty = VTy->getElementType();
 
   for (GetElementPtrInst::const_op_iterator OI = I.op_begin()+1, E = I.op_end();
        OI != E; ++OI) {
