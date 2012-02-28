@@ -1286,7 +1286,7 @@ void ARMTargetLowering::PassF64ArgInRegs(DebugLoc dl, SelectionDAG &DAG,
 SDValue
 ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              CallingConv::ID CallConv, bool isVarArg,
-                             bool doesNotRet, bool &isTailCall,
+                             bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
                              const SmallVectorImpl<SDValue> &OutVals,
                              const SmallVectorImpl<ISD::InputArg> &Ins,
@@ -1582,20 +1582,12 @@ ARMTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   if (Subtarget->isThumb()) {
     if ((!isDirect || isARMFunc) && !Subtarget->hasV5TOps())
       CallOpc = ARMISD::CALL_NOLINK;
-    else if (doesNotRet && !isARMFunc &&
-             Subtarget->hasRAS() && !Subtarget->isThumb1Only())
-      // "mov lr, pc; b _foo" to avoid confusing the RSP
-      CallOpc = ARMISD::CALL_NOLINK;
     else
       CallOpc = isARMFunc ? ARMISD::CALL : ARMISD::tCALL;
   } else {
-    if (!isDirect && !Subtarget->hasV5TOps()) {
-      CallOpc = ARMISD::CALL_NOLINK;
-    } else if (doesNotRet && Subtarget->hasRAS())
-      // "mov lr, pc; b _foo" to avoid confusing the RSP
-      CallOpc = ARMISD::CALL_NOLINK;
-    else
-      CallOpc = isLocalARMFunc ? ARMISD::CALL_PRED : ARMISD::CALL;
+    CallOpc = (isDirect || Subtarget->hasV5TOps())
+      ? (isLocalARMFunc ? ARMISD::CALL_PRED : ARMISD::CALL)
+      : ARMISD::CALL_NOLINK;
   }
 
   std::vector<SDValue> Ops;
@@ -2088,8 +2080,7 @@ ARMTargetLowering::LowerToTLSGeneralDynamicModel(GlobalAddressSDNode *GA,
   std::pair<SDValue, SDValue> CallResult =
     LowerCallTo(Chain, (Type *) Type::getInt32Ty(*DAG.getContext()),
                 false, false, false, false,
-                0, CallingConv::C, /*isTailCall=*/false,
-                /*doesNotRet=*/false, /*isReturnValueUsed=*/true,
+                0, CallingConv::C, false, /*isReturnValueUsed=*/true,
                 DAG.getExternalSymbol("__tls_get_addr", PtrVT), Args, DAG, dl);
   return CallResult.first;
 }
