@@ -752,6 +752,10 @@ def CPRESTORE : MipsPseudo<(outs), (ins i32imm:$loc), ".cprestore\t$loc", []>;
 // instructions 0 and 1 in the sequence above during MC lowering.
 // SETGP2 is emitted just before register allocation and converted to
 // instruction 2 just prior to post-RA scheduling.
+//
+// These pseudo instructions are needed to ensure no instructions are inserted
+// before or between instructions 0 and 1, which is a limitation imposed by
+// GNU linker.
 
 def SETGP01 : MipsPseudo<(outs CPURegs:$dst), (ins), "", []>;
 def SETGP2 : MipsPseudo<(outs CPURegs:$globalreg), (ins CPURegs:$picreg), "",
