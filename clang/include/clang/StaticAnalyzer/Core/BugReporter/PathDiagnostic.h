@@ -68,6 +68,10 @@ public:
   virtual bool supportsLogicalOpControlFlow() const { return false; }
   virtual bool supportsAllBlockEdges() const { return false; }
   virtual bool useVerboseDescription() const { return true; }
+  
+  /// Return true if the PathDiagnosticConsumer supports individual
+  /// PathDiagnostics that span multiple files.
+  virtual bool supportsCrossFileDiagnostics() const { return false; }
 
 protected:
   bool flushed;

@@ -13,6 +13,7 @@
 
 #include "clang/StaticAnalyzer/Core/BugReporter/PathDiagnostic.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/ExplodedGraph.h"
+#include "clang/Basic/SourceManager.h"
 #include "clang/AST/Expr.h"
 #include "clang/AST/Decl.h"
 #include "clang/AST/DeclObjC.h"
@@ -76,18 +77,48 @@ PathDiagnosticConsumer::~PathDiagnosticConsumer() {
 }
 
 void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
-  if (!D)
-    return;
+  llvm::OwningPtr<PathDiagnostic> OwningD(D);
   
-  if (D->path.empty()) {
-    delete D;
+  if (!D || D->path.empty())
     return;
-  }
   
   // We need to flatten the locations (convert Stmt* to locations) because
   // the referenced statements may be freed by the time the diagnostics
   // are emitted.
   D->flattenLocations();
+
+  // If the PathDiagnosticConsumer does not support diagnostics that
+  // cross file boundaries, prune out such diagnostics now.
+  if (!supportsCrossFileDiagnostics()) {
+    // Verify that the entire path is from the same FileID.
+    FileID FID;
+    const SourceManager &SMgr = (*D->path.begin())->getLocation().getManager();
+
+    for (PathPieces::const_iterator I = D->path.begin(), E = D->path.end();
+         I != E; ++I) {
+      FullSourceLoc L = (*I)->getLocation().asLocation().getExpansionLoc();
+      
+      if (FID.isInvalid()) {
+        FID = SMgr.getFileID(L);
+      } else if (SMgr.getFileID(L) != FID)
+        return; // FIXME: Emit a warning?
+      
+      // Check the source ranges.
+      for (PathDiagnosticPiece::range_iterator RI = (*I)->ranges_begin(),
+           RE = (*I)->ranges_end();
+           RI != RE; ++RI) {
+        SourceLocation L = SMgr.getExpansionLoc(RI->getBegin());
+        if (!L.isFileID() || SMgr.getFileID(L) != FID)
+          return; // FIXME: Emit a warning?
+        L = SMgr.getExpansionLoc(RI->getEnd());
+        if (!L.isFileID() || SMgr.getFileID(L) != FID)
+          return; // FIXME: Emit a warning?
+      }
+    }
+    
+    if (FID.isInvalid())
+      return; // FIXME: Emit a warning?
+  }  
 
   // Profile the node to see if we already have something matching it
   llvm::FoldingSetNodeID profile;
@@ -110,16 +141,14 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
           shouldKeepOriginal = false;
       }
 
-      if (shouldKeepOriginal) {
-        delete D;
+      if (shouldKeepOriginal)
         return;
-      }
     }
     Diags.RemoveNode(orig);
     delete orig;
   }
   
-  Diags.InsertNode(D);
+  Diags.InsertNode(OwningD.take());
 }
 
 

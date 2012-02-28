@@ -145,35 +145,14 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
   // First flatten out the entire path to make it easier to use.
   PathPieces path;
   flattenPath(path, D.path);
-  
+
+  // The path as already been prechecked that all parts of the path are
+  // from the same file and that it is non-empty.
   const SourceManager &SMgr = (*path.begin())->getLocation().getManager();
-  FileID FID;
-
-  // Verify that the entire path is from the same FileID.
-  for (PathPieces::const_iterator I = path.begin(), E = path.end();
-       I != E; ++I) {
-    FullSourceLoc L = (*I)->getLocation().asLocation().getExpansionLoc();
-
-    if (FID.isInvalid()) {
-      FID = SMgr.getFileID(L);
-    } else if (SMgr.getFileID(L) != FID)
-      return; // FIXME: Emit a warning?
-
-    // Check the source ranges.
-    for (PathDiagnosticPiece::range_iterator RI = (*I)->ranges_begin(),
-                                             RE = (*I)->ranges_end();
-                                             RI != RE; ++RI) {
-      SourceLocation L = SMgr.getExpansionLoc(RI->getBegin());
-      if (!L.isFileID() || SMgr.getFileID(L) != FID)
-        return; // FIXME: Emit a warning?
-      L = SMgr.getExpansionLoc(RI->getEnd());
-      if (!L.isFileID() || SMgr.getFileID(L) != FID)
-        return; // FIXME: Emit a warning?
-    }
-  }
-
-  if (FID.isInvalid())
-    return; // FIXME: Emit a warning?
+  assert(!path.empty());
+  FileID FID =
+    (*path.begin())->getLocation().asLocation().getExpansionLoc().getFileID();
+  assert(!FID.isInvalid());
 
   // Create a new rewriter to generate HTML.
   Rewriter R(const_cast<SourceManager&>(SMgr), PP.getLangOptions());
