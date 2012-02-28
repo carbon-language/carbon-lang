@@ -89,6 +89,11 @@ def FeatureAvoidPartialCPSR : SubtargetFeature<"avoid-partial-cpsr",
                                                "AvoidCPSRPartialUpdate", "true",
                                  "Avoid CPSR partial update for OOO execution">;
 
+// Some processors perform return stack prediction. CodeGen should avoid issue
+// "normal" call instructions to callees which do not return.
+def FeatureHasRAS : SubtargetFeature<"ras", "HasRAS", "true",
+                                     "Has return address stack">;
+
 /// Some M architectures don't have the DSP extension (v7E-M vs. v7M)
 def FeatureDSPThumb2 : SubtargetFeature<"t2dsp", "Thumb2DSP", "true",
                                  "Supports v7 DSP instructions in Thumb2">;
@@ -204,13 +209,14 @@ def : Processor<"arm1156t2f-s",     ARMV6Itineraries, [HasV6T2Ops, FeatureVFP2,
 // V7a Processors.
 def : Processor<"cortex-a8",        CortexA8Itineraries,
                                     [ProcA8, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2]>;
+                                     FeatureDSPThumb2, FeatureHasRAS]>;
 def : Processor<"cortex-a9",        CortexA9Itineraries,
                                     [ProcA9, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2]>;
+                                     FeatureDSPThumb2, FeatureHasRAS]>;
 def : Processor<"cortex-a9-mp",     CortexA9Itineraries,
                                     [ProcA9, HasV7Ops, FeatureNEON, FeatureDB,
-                                     FeatureDSPThumb2, FeatureMP]>;
+                                     FeatureDSPThumb2, FeatureMP,
+                                     FeatureHasRAS]>;
 
 // V7M Processors.
 def : ProcNoItin<"cortex-m3",       [HasV7Ops,

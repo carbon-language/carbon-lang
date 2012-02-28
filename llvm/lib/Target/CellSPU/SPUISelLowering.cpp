@@ -83,8 +83,9 @@ namespace {
                 Op.getNode()->getValueType(0).getTypeForEVT(*DAG.getContext());
     std::pair<SDValue, SDValue> CallInfo =
             TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
-                            0, TLI.getLibcallCallingConv(LC), false,
-                            /*isReturnValueUsed=*/true,
+                            0, TLI.getLibcallCallingConv(LC),
+                            /*isTailCall=*/false,
+                            /*doesNotRet=*/false, /*isReturnValueUsed=*/true,
                             Callee, Args, DAG, Op.getDebugLoc());
 
     return CallInfo.first;
@@ -1274,7 +1275,7 @@ static SDNode *isLSAAddress(SDValue Op, SelectionDAG &DAG) {
 SDValue
 SPUTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              CallingConv::ID CallConv, bool isVarArg,
-                             bool &isTailCall,
+                             bool doesNotRet, bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
                              const SmallVectorImpl<SDValue> &OutVals,
                              const SmallVectorImpl<ISD::InputArg> &Ins,

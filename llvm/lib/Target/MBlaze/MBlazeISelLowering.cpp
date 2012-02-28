@@ -682,7 +682,7 @@ static bool CC_MBlaze_AssignReg(unsigned &ValNo, MVT &ValVT, MVT &LocVT,
 /// TODO: isVarArg, isTailCall.
 SDValue MBlazeTargetLowering::
 LowerCall(SDValue Chain, SDValue Callee, CallingConv::ID CallConv,
-          bool isVarArg, bool &isTailCall,
+          bool isVarArg, bool doesNotRet, bool &isTailCall,
           const SmallVectorImpl<ISD::OutputArg> &Outs,
           const SmallVectorImpl<SDValue> &OutVals,
           const SmallVectorImpl<ISD::InputArg> &Ins,

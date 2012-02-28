@@ -2311,8 +2311,10 @@ void DAGTypeLegalizer::ExpandIntRes_XMULO(SDNode *N,
   SDValue Func = DAG.getExternalSymbol(TLI.getLibcallName(LC), PtrVT);
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(Chain, RetTy, true, false, false, false,
-		    0, TLI.getLibcallCallingConv(LC), false,
-		    true, Func, Args, DAG, dl);
+		    0, TLI.getLibcallCallingConv(LC),
+                    /*isTailCall=*/false,
+		    /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
+                    Func, Args, DAG, dl);
 
   SplitInteger(CallInfo.first, Lo, Hi);
   SDValue Temp2 = DAG.getLoad(PtrVT, dl, CallInfo.second, Temp,

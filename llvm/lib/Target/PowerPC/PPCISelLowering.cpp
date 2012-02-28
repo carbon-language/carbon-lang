@@ -1427,8 +1427,9 @@ SDValue PPCTargetLowering::LowerINIT_TRAMPOLINE(SDValue Op,
   // Lower to a call to __trampoline_setup(Trmp, TrampSize, FPtr, ctx_reg)
   std::pair<SDValue, SDValue> CallResult =
     LowerCallTo(Chain, Type::getVoidTy(*DAG.getContext()),
-                false, false, false, false, 0, CallingConv::C, false,
-                /*isReturnValueUsed=*/true,
+                false, false, false, false, 0, CallingConv::C,
+                /*isTailCall=*/false,
+                /*doesNotRet=*/false, /*isReturnValueUsed=*/true,
                 DAG.getExternalSymbol("__trampoline_setup", PtrVT),
                 Args, DAG, dl);
 
@@ -2838,7 +2839,7 @@ PPCTargetLowering::FinishCall(CallingConv::ID CallConv, DebugLoc dl,
 SDValue
 PPCTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
                              CallingConv::ID CallConv, bool isVarArg,
-                             bool &isTailCall,
+                             bool doesNotRet, bool &isTailCall,
                              const SmallVectorImpl<ISD::OutputArg> &Outs,
                              const SmallVectorImpl<SDValue> &OutVals,
                              const SmallVectorImpl<ISD::InputArg> &Ins,

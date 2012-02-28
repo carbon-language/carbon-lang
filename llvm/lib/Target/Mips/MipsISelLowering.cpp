@@ -1586,7 +1586,9 @@ LowerGlobalTLSAddress(SDValue Op, SelectionDAG &DAG) const
     
     std::pair<SDValue, SDValue> CallResult =
       LowerCallTo(DAG.getEntryNode(), PtrTy,
-                  false, false, false, false, 0, CallingConv::C, false, true,
+                  false, false, false, false, 0, CallingConv::C,
+                  /*isTailCall=*/false, /*doesNotRet=*/false,
+                  /*isReturnValueUsed=*/true,
                   TlsGetAddr, Args, DAG, dl);
 
     SDValue Ret = CallResult.first;
@@ -2190,7 +2192,7 @@ PassByValArg64(SDValue& ByValChain, SDValue Chain, DebugLoc dl,
 SDValue
 MipsTargetLowering::LowerCall(SDValue InChain, SDValue Callee,
                               CallingConv::ID CallConv, bool isVarArg,
-                              bool &isTailCall,
+                              bool doesNotRet, bool &isTailCall,
                               const SmallVectorImpl<ISD::OutputArg> &Outs,
                               const SmallVectorImpl<SDValue> &OutVals,
                               const SmallVectorImpl<ISD::InputArg> &Ins,

@@ -1788,7 +1788,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, SDNode *Node,
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                     0, TLI.getLibcallCallingConv(LC), isTailCall,
-                    /*isReturnValueUsed=*/true,
+                    /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
                     Callee, Args, DAG, Node->getDebugLoc());
 
   if (!CallInfo.second.getNode())
@@ -1821,7 +1821,7 @@ SDValue SelectionDAGLegalize::ExpandLibCall(RTLIB::Libcall LC, EVT RetVT,
   std::pair<SDValue,SDValue> CallInfo =
   TLI.LowerCallTo(DAG.getEntryNode(), RetTy, isSigned, !isSigned, false,
                   false, 0, TLI.getLibcallCallingConv(LC), false,
-                  /*isReturnValueUsed=*/true,
+                  /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
                   Callee, Args, DAG, dl);
 
   return CallInfo.first;
@@ -1853,7 +1853,7 @@ SelectionDAGLegalize::ExpandChainLibCall(RTLIB::Libcall LC,
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                     0, TLI.getLibcallCallingConv(LC), /*isTailCall=*/false,
-                    /*isReturnValueUsed=*/true,
+                    /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
                     Callee, Args, DAG, Node->getDebugLoc());
 
   return CallInfo;
@@ -1985,7 +1985,8 @@ SelectionDAGLegalize::ExpandDivRemLibCall(SDNode *Node,
   std::pair<SDValue, SDValue> CallInfo =
     TLI.LowerCallTo(InChain, RetTy, isSigned, !isSigned, false, false,
                     0, TLI.getLibcallCallingConv(LC), /*isTailCall=*/false,
-                    /*isReturnValueUsed=*/true, Callee, Args, DAG, dl);
+                    /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
+                    Callee, Args, DAG, dl);
 
   // Remainder is loaded back from the stack frame.
   SDValue Rem = DAG.getLoad(RetVT, dl, CallInfo.second, FIPtr,
@@ -2563,7 +2564,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       TLI.LowerCallTo(Node->getOperand(0), Type::getVoidTy(*DAG.getContext()),
                       false, false, false, false, 0, CallingConv::C,
                       /*isTailCall=*/false,
-                      /*isReturnValueUsed=*/true,
+                      /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
                       DAG.getExternalSymbol("__sync_synchronize",
                                             TLI.getPointerTy()),
                       Args, DAG, dl);
@@ -2640,7 +2641,7 @@ void SelectionDAGLegalize::ExpandNode(SDNode *Node) {
       TLI.LowerCallTo(Node->getOperand(0), Type::getVoidTy(*DAG.getContext()),
                       false, false, false, false, 0, CallingConv::C,
                       /*isTailCall=*/false,
-                      /*isReturnValueUsed=*/true,
+                      /*doesNotReturn=*/false, /*isReturnValueUsed=*/true,
                       DAG.getExternalSymbol("abort", TLI.getPointerTy()),
                       Args, DAG, dl);
     Results.push_back(CallResult.second);
