@@ -990,7 +990,7 @@ void rdar8331641(int x) {
 // CHECK: <string>Object leaked: object allocated and stored into &apos;value&apos; is not referenced later in this execution path and has a retain count of +1</string>
 // CHECK:     </dict>
 // CHECK:    </array>
-// CHECK:    <key>description</key><string>Potential leak of an object allocated on line 53 and stored into &apos;value&apos;</string>
+// CHECK:    <key>description</key><string>Potential leak of an object stored into &apos;value&apos;</string>
 // CHECK:    <key>category</key><string>Memory (Core Foundation/Objective-C)</string>
 // CHECK:    <key>type</key><string>Leak</string>
 // CHECK:   <key>location</key>

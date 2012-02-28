@@ -2257,15 +2257,14 @@ CFRefLeakReport::CFRefLeakReport(CFRefBug &D, const LangOptions &LOpts,
   // Fill in the description of the bug.
   Description.clear();
   llvm::raw_string_ostream os(Description);
-  unsigned AllocLine = SMgr.getExpansionLineNumber(AllocStmt->getLocStart());
   os << "Potential leak ";
   if (GCEnabled)
     os << "(when using garbage collection) ";
-  os << "of an object allocated on line " << AllocLine;
+  os << "of an object";
 
   // FIXME: AllocBinding doesn't get populated for RegionStore yet.
   if (AllocBinding)
-    os << " and stored into '" << AllocBinding->getString() << '\'';
+    os << " stored into '" << AllocBinding->getString() << '\'';
 
   addVisitor(new CFRefLeakReportVisitor(sym, GCEnabled, Log));
 }

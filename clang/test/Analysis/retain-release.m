@@ -1468,7 +1468,7 @@ static void rdar_8724287(CFErrorRef error)
     while (error_to_dump != ((void*)0)) {
         CFDictionaryRef info;
 
-        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object allocated on line}}
+        info = CFErrorCopyUserInfo(error_to_dump); // expected-warning{{Potential leak of an object}}
 
         if (info != ((void*)0)) {
         }
