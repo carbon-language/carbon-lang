@@ -108,6 +108,7 @@ namespace {
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCSynthesizedStructs;
     llvm::SmallPtrSet<ObjCProtocolDecl*, 8> ObjCSynthesizedProtocols;
     llvm::SmallPtrSet<ObjCInterfaceDecl*, 8> ObjCWrittenInterfaces;
+    llvm::SmallPtrSet<TagDecl*, 8> TagsDefinedInIvarDecls;
     SmallVector<ObjCInterfaceDecl*, 32> ObjCInterfacesSeen;
     SmallVector<Stmt *, 32> Stmts;
     SmallVector<int, 8> ObjCBcLabelNo;
@@ -332,6 +333,8 @@ namespace {
     
     void RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
                                       std::string &Result);
+    
+    void RewriteObjCFieldDecl(FieldDecl *fieldDecl, std::string &Result);
     
     void RewriteIvarOffsetSymbols(ObjCInterfaceDecl *CDecl,
                                   std::string &Result);
@@ -3165,6 +3168,78 @@ bool RewriteModernObjC::BufferContainsPPDirectives(const char *startBuf,
   return false;
 }
 
+/// RewriteObjCFieldDecl - This routine rewrites a field into the buffer.
+/// It handles elaborated types, as well as enum types in the process.
+void RewriteModernObjC::RewriteObjCFieldDecl(FieldDecl *fieldDecl, 
+                                             std::string &Result) {
+  QualType Type = fieldDecl->getType();
+  std::string Name = fieldDecl->getNameAsString();
+
+  if (Type->isRecordType()) {
+    RecordDecl *RD = Type->getAs<RecordType>()->getDecl();
+    if (RD->isCompleteDefinition()) {
+      if (RD->isStruct())
+        Result += "\n\tstruct ";
+      else if (RD->isUnion())
+        Result += "\n\tunion ";
+      else
+        assert(false && "class not allowed as an ivar type");
+  
+      Result += RD->getName();
+      if (TagsDefinedInIvarDecls.count(RD)) {
+        // This struct is already defined. Do not write its definition again.
+        Result += " "; Result += Name; Result += ";\n";
+        return;
+      }
+      TagsDefinedInIvarDecls.insert(RD);
+      Result += " {\n";
+      for (RecordDecl::field_iterator i = RD->field_begin(), 
+          e = RD->field_end(); i != e; ++i) {
+        FieldDecl *FD = *i;
+        RewriteObjCFieldDecl(FD, Result);
+      }
+      Result += "\t} "; 
+      Result += Name; Result += ";\n";
+      return;
+    }
+  }
+  else if (Type->isEnumeralType()) {
+    EnumDecl *ED = Type->getAs<EnumType>()->getDecl();
+    if (ED->isCompleteDefinition()) {
+      Result += "\n\tenum ";
+      Result += ED->getName();
+      if (TagsDefinedInIvarDecls.count(ED)) {
+        // This enum is already defined. Do not write its definition again.
+        Result += " "; Result += Name; Result += ";\n";
+        return;
+      }
+      TagsDefinedInIvarDecls.insert(ED);
+      
+      Result += " {\n";
+      for (EnumDecl::enumerator_iterator EC = ED->enumerator_begin(),
+           ECEnd = ED->enumerator_end(); EC != ECEnd; ++EC) {
+        Result += "\t"; Result += EC->getName(); Result += " = ";
+        llvm::APSInt Val = EC->getInitVal();
+        Result += Val.toString(10);
+        Result += ",\n";
+      }
+      Result += "\t} "; 
+      Result += Name; Result += ";\n";
+      return;
+    }
+  }
+  
+  Result += "\t";
+  convertObjCTypeToCStyleType(Type);
+  
+  Type.getAsStringInternal(Name, Context->getPrintingPolicy());
+  Result += Name;
+  if (fieldDecl->isBitField()) {
+    Result += " : "; Result += utostr(fieldDecl->getBitWidthValue(*Context));
+  }
+  Result += ";\n";
+}
+
 /// RewriteObjCInternalStruct - Rewrite one internal struct corresponding to
 /// an objective-c class with ivars.
 void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
@@ -3205,22 +3280,10 @@ void RewriteModernObjC::RewriteObjCInternalStruct(ObjCInterfaceDecl *CDecl,
     Result += "_IMPL "; Result += RCDecl->getNameAsString();
     Result += "_IVARS;\n";
   }
-  
-  for (unsigned i = 0, e = IVars.size(); i < e; i++) {
-    ObjCIvarDecl *IvarDecl = IVars[i];
-    QualType Type = IvarDecl->getType();
-    std::string Name = IvarDecl->getNameAsString();
+  TagsDefinedInIvarDecls.clear();
+  for (unsigned i = 0, e = IVars.size(); i < e; i++)
+    RewriteObjCFieldDecl(IVars[i], Result);
 
-    Result += "\t";
-    convertObjCTypeToCStyleType(Type);
-    
-    Type.getAsStringInternal(Name, Context->getPrintingPolicy());
-    Result += Name;
-    if (IvarDecl->isBitField()) {
-      Result += " : "; Result += utostr(IvarDecl->getBitWidthValue(*Context));
-    }
-    Result += ";\n";
-  }
   Result += "};\n";
   endBuf += Lexer::MeasureTokenLength(LocEnd, *SM, LangOpts);
   ReplaceText(LocStart, endBuf-startBuf, Result);
