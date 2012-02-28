@@ -1094,14 +1094,32 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
   if (!SM.isInSystemHeader(D->getLocation()))
     return false;
 
-  // Process C functions.
+  // Process C/ObjC functions.
   if (const FunctionDecl *FD  = dyn_cast_or_null<FunctionDecl>(D)) {
     // White list the system functions whose arguments escape.
     const IdentifierInfo *II = FD->getIdentifier();
-    if (II) {
-      StringRef FName = II->getName();
-      if (FName.equals("pthread_setspecific"))
-        return false;
+    if (!II)
+      return true;
+    StringRef FName = II->getName();
+
+    // White list thread local storage.
+    if (FName.equals("pthread_setspecific"))
+      return false;
+
+    // White list the 'XXXNoCopy' ObjC Methods.
+    if (FName.endswith("NoCopy")) {
+      // Look for the deallocator argument. We know that the memory ownership
+      // is not transfered only if the deallocator argument is
+      // 'kCFAllocatorNull'.
+      for (unsigned i = 1; i < Call->getNumArgs(); ++i) {
+        const Expr *ArgE = Call->getArg(i)->IgnoreParenCasts();
+        if (const DeclRefExpr *DE = dyn_cast<DeclRefExpr>(ArgE)) {
+          StringRef DeallocatorName = DE->getFoundDecl()->getName();
+          if (DeallocatorName == "kCFAllocatorNull")
+            return true;
+        }
+      }
+      return false;
     }
 
     // Otherwise, assume that the function does not free memory.

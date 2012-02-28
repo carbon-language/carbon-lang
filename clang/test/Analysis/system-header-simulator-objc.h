@@ -1,9 +1,37 @@
 #pragma clang system_header
 
 typedef unsigned int UInt32;
+typedef unsigned short UInt16;
+
 typedef signed long CFIndex;
 typedef signed char BOOL;
 typedef unsigned long NSUInteger;
+typedef unsigned short unichar;
+typedef UInt16 UniChar;
+
+enum {
+    NSASCIIStringEncoding = 1,
+    NSNEXTSTEPStringEncoding = 2,
+    NSJapaneseEUCStringEncoding = 3,
+    NSUTF8StringEncoding = 4,
+    NSISOLatin1StringEncoding = 5,
+    NSSymbolStringEncoding = 6,
+    NSNonLossyASCIIStringEncoding = 7,
+};
+typedef const struct __CFString * CFStringRef;
+typedef struct __CFString * CFMutableStringRef;
+typedef NSUInteger NSStringEncoding;
+typedef UInt32 CFStringEncoding;
+
+typedef const void * CFTypeRef;
+
+typedef const struct __CFAllocator * CFAllocatorRef;
+extern const CFAllocatorRef kCFAllocatorDefault;
+extern const CFAllocatorRef kCFAllocatorSystemDefault;
+extern const CFAllocatorRef kCFAllocatorMalloc;
+extern const CFAllocatorRef kCFAllocatorMallocZone;
+extern const CFAllocatorRef kCFAllocatorNull;
+
 @class NSString, Protocol;
 extern void NSLog(NSString *format, ...) __attribute__((format(__NSString__, 1, 2)));
 typedef struct _NSZone NSZone;
@@ -44,17 +72,7 @@ NSFastEnumerationState;
 @end extern NSString * const NSBundleDidLoadNotification;
 typedef double NSTimeInterval;
 @interface NSDate : NSObject <NSCopying, NSCoding>  - (NSTimeInterval)timeIntervalSinceReferenceDate;
-@end            typedef unsigned short unichar;
-enum {
-    NSASCIIStringEncoding = 1,
-    NSNEXTSTEPStringEncoding = 2,
-    NSJapaneseEUCStringEncoding = 3,
-    NSUTF8StringEncoding = 4,
-    NSISOLatin1StringEncoding = 5,
-    NSSymbolStringEncoding = 6,
-    NSNonLossyASCIIStringEncoding = 7,
-};
-typedef NSUInteger NSStringEncoding;
+@end
 
 @interface NSString : NSObject <NSCopying, NSMutableCopying, NSCoding>
 - (NSUInteger)length;
@@ -73,3 +91,10 @@ typedef NSUInteger NSStringEncoding;
 - (id)initWithBytesNoCopy:(void *)bytes length:(NSUInteger)length;
 - (id)initWithBytesNoCopy:(void *)bytes length:(NSUInteger)length freeWhenDone:(BOOL)b;
 @end
+
+
+extern void CFRelease(CFTypeRef cf);
+
+extern CFMutableStringRef CFStringCreateMutableWithExternalCharactersNoCopy(CFAllocatorRef alloc, UniChar *chars, CFIndex numChars, CFIndex capacity, CFAllocatorRef externalCharactersAllocator);
+extern CFStringRef CFStringCreateWithCStringNoCopy(CFAllocatorRef alloc, const char *cStr, CFStringEncoding encoding, CFAllocatorRef contentsDeallocator);
+extern void CFStringAppend(CFMutableStringRef theString, CFStringRef appendedString);

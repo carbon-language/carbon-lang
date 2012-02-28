@@ -193,11 +193,14 @@ static void findPtrToConstParams(llvm::SmallSet<unsigned, 1> &PreserveArgs,
     // argument is const.
     if (II) {
       StringRef FName = II->getName();
-      // 'int pthread_setspecific(ptheread_key k, const void *)' stores a value
-      // into thread local storage. The value can later be retrieved with
+      //  - 'int pthread_setspecific(ptheread_key k, const void *)' stores a
+      // value into thread local storage. The value can later be retrieved with
       // 'void *ptheread_getspecific(pthread_key)'. So even thought the
       // parameter is 'const void *', the region escapes through the call.
-      if (FName.equals("pthread_setspecific"))
+      //  - ObjC functions that end with "NoCopy" can free memory, of the passed
+      // in buffer.
+      if (FName == "pthread_setspecific" ||
+          FName.endswith("NoCopy"))
         return;
     }
 

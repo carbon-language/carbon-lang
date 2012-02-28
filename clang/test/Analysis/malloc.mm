@@ -61,3 +61,25 @@ void testNSDatafFreeWhenDoneFN(NSUInteger dataLength) {
   NSData *nsdata = [NSData dataWithBytesNoCopy:data length:dataLength freeWhenDone:1];
   free(data); // false negative
 }
+
+// Test CF/NS...NoCopy. PR12100.
+
+void testNSDatafFreeWhenDone(NSUInteger dataLength) {
+  CFStringRef str;
+  char *bytes = (char*)malloc(12);
+  str = CFStringCreateWithCStringNoCopy(0, bytes, NSNEXTSTEPStringEncoding, 0); // no warning
+  CFRelease(str); // default allocator also frees bytes
+}
+
+void stringWithExternalContentsExample(void) {
+#define BufferSize 1000
+    CFMutableStringRef mutStr;
+    UniChar *myBuffer;
+ 
+    myBuffer = (UniChar *)malloc(BufferSize * sizeof(UniChar));
+ 
+    mutStr = CFStringCreateMutableWithExternalCharactersNoCopy(0, myBuffer, 0, BufferSize, kCFAllocatorNull); // expected-warning{{leak}}
+ 
+    CFRelease(mutStr);
+    //free(myBuffer);
+}
