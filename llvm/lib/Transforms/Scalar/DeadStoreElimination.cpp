@@ -259,6 +259,13 @@ static bool isShortenable(Instruction *I) {
   }
 }
 
+
+/// isMemset - Returns true if this instruction is an intrinsic memset
+static bool isMemset(Instruction *I) {
+  IntrinsicInst *II = dyn_cast<IntrinsicInst>(I);
+  return II && II->getIntrinsicID() == Intrinsic::memset;
+}
+
 /// getStoredPointerOperand - Return the pointer that is being written to.
 static Value *getStoredPointerOperand(Instruction *I) {
   if (StoreInst *SI = dyn_cast<StoreInst>(I))
@@ -310,14 +317,17 @@ namespace {
   {
     OverwriteComplete,
     OverwriteEnd,
+    OverwriteStart,
     OverwriteUnknown
   };
 }
 
 /// isOverwrite - Return 'OverwriteComplete' if a store to the 'Later' location
 /// completely overwrites a store to the 'Earlier' location.
-/// 'OverwriteEnd' if the end of the 'Earlier' location is completely 
-/// overwritten by 'Later', or 'OverwriteUnknown' if nothing can be determined
+/// 'OverwriteEnd' if the end of the 'Earlier' location is completely
+/// overwritten by 'Later', 'OverWriteStart' if the start of 'Earlier'
+/// is completely overwritten by 'Later' or 'OverwriteUnknown' if nothing
+/// can be determined
 static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
                                    const AliasAnalysis::Location &Earlier,
                                    AliasAnalysis &AA,
@@ -418,6 +428,21 @@ static OverwriteResult isOverwrite(const AliasAnalysis::Location &Later,
       LaterOff < int64_t(EarlierOff + Earlier.Size) &&
       int64_t(LaterOff + Later.Size) >= int64_t(EarlierOff + Earlier.Size))
     return OverwriteEnd;
+  
+  // The other interesting case is if the later store overwrites the end of
+  // the earlier store
+  //
+  //                    |--earlier--|
+  //      |--   later   --|
+  //
+  // In this case we may want to trim the size of earlier to avoid generating
+  // writes to addresses which will definitely be overwritten later
+  if (EarlierOff >= LaterOff &&
+      EarlierOff < int64_t(LaterOff + Later.Size) &&
+      int64_t(EarlierOff + Earlier.Size) >= int64_t(LaterOff + Later.Size)) {
+    LaterOff = LaterOff + Later.Size;
+    return OverwriteStart;
+  }
 
   // Otherwise, they don't completely overlap.
   return OverwriteUnknown;
@@ -587,6 +612,45 @@ bool DSE::runOnBasicBlock(BasicBlock &BB) {
                                                     InstWriteOffset - 
                                                     DepWriteOffset);
             DepIntrinsic->setLength(TrimmedLength);
+            MadeChange = true;
+          }
+        } else if (OR == OverwriteStart && isMemset(DepWrite)) {
+          // TODO: base this on the target vector size so that if the earlier
+          // store was too small to get vector writes anyway then its likely
+          // a good idea to shorten it
+          // Power of 2 vector writes are probably always a bad idea to optimize
+          // as any store/memset/memcpy is likely using vector instructions so
+          // shortening it to not vector size is likely to be slower
+          // TODO: shorten memcpy and memmove by offsetting the source address.
+          MemIntrinsic* DepIntrinsic = cast<MemIntrinsic>(DepWrite);
+          unsigned DepWriteAlign = DepIntrinsic->getAlignment();
+          if (llvm::isPowerOf2_64(InstWriteOffset) ||
+              ((DepWriteAlign != 0) && InstWriteOffset % DepWriteAlign == 0)) {
+            
+            DEBUG(dbgs() << "DSE: Remove Dead Store:\n  OW START: "
+                  << *DepWrite << "\n  KILLER (offset " 
+                  << InstWriteOffset << ", " 
+                  << DepWriteOffset << ", " 
+                  << DepLoc.Size << ")"
+                  << *Inst << '\n');
+            
+            Value* DepWriteLength = DepIntrinsic->getLength();
+            Value* TrimmedLength = ConstantInt::get(DepWriteLength->getType(),
+                                                    DepLoc.Size -
+                                                    (InstWriteOffset - 
+                                                    DepWriteOffset));
+            DepIntrinsic->setLength(TrimmedLength);
+            const TargetData *TD = AA->getTargetData();
+            Type *IntPtrTy = TD->getIntPtrType(BB.getContext());
+            Value* Offset = ConstantInt::get(IntPtrTy,
+                                             InstWriteOffset - DepWriteOffset);
+            // Offset the start of the memset with a GEP.  As the memset type is
+            // i8* a GEP will do this without needing to use ptrtoint, etc.
+            Value *Dest = GetElementPtrInst::Create(DepIntrinsic->getRawDest(),
+                                                    Offset,
+                                                    "",
+                                                    DepWrite);
+            DepIntrinsic->setDest(Dest);
             MadeChange = true;
           }
         }
