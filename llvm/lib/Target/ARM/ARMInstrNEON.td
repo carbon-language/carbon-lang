@@ -6996,6 +6996,20 @@ defm : NEONDTAnyInstAlias<"vswp${p}", "$Vd, $Vm",
 defm : NEONDTAnyInstAlias<"vswp${p}", "$Vd, $Vm",
                          (VSWPq QPR:$Vd, QPR:$Vm, pred:$p)>;
 
+// VBIF, VBIT, and VBSL allow, but do not require, a type suffix.
+defm : NEONDTAnyInstAlias<"vbif${p}", "$Vd, $Vn, $Vm",
+                         (VBIFd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
+defm : NEONDTAnyInstAlias<"vbit${p}", "$Vd, $Vn, $Vm",
+                         (VBITd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
+defm : NEONDTAnyInstAlias<"vbsl${p}", "$Vd, $Vn, $Vm",
+                         (VBSLd DPR:$Vd, DPR:$Vn, DPR:$Vm, pred:$p)>;
+defm : NEONDTAnyInstAlias<"vbif${p}", "$Vd, $Vn, $Vm",
+                         (VBIFq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
+defm : NEONDTAnyInstAlias<"vbit${p}", "$Vd, $Vn, $Vm",
+                         (VBITq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
+defm : NEONDTAnyInstAlias<"vbsl${p}", "$Vd, $Vn, $Vm",
+                         (VBSLq QPR:$Vd, QPR:$Vn, QPR:$Vm, pred:$p)>;
+
 // "vmov Rd, #-imm" can be handled via "vmvn".
 def : NEONInstAlias<"vmov${p}.i32 $Vd, $imm",
                     (VMVNv2i32 DPR:$Vd, nImmVMOVI32Neg:$imm, pred:$p)>;
