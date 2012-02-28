@@ -422,8 +422,10 @@ bool PPCLinuxAsmPrinter::doFinalization(Module &M) {
   bool isPPC64 = TD->getPointerSizeInBits() == 64;
 
   if (isPPC64 && !TOC.empty()) {
-    // FIXME 64-bit SVR4: Use MCSection here?
-    OutStreamer.EmitRawText(StringRef("\t.section\t\".toc\",\"aw\""));
+    const MCSectionELF *Section = OutStreamer.getContext().getELFSection(".toc",
+        ELF::SHT_PROGBITS, ELF::SHF_WRITE | ELF::SHF_ALLOC,
+        SectionKind::getReadOnly());
+    OutStreamer.SwitchSection(Section);
 
     // FIXME: This is nondeterminstic!
     for (DenseMap<MCSymbol*, MCSymbol*>::iterator I = TOC.begin(),
