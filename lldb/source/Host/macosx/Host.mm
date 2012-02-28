@@ -1244,10 +1244,10 @@ GetPosixspawnFlags (ProcessLaunchInfo &launch_info)
     if (launch_info.GetFlags().Test (eLaunchFlagDisableASLR))
         flags |= _POSIX_SPAWN_DISABLE_ASLR;     // Darwin specific posix_spawn flag
     
-    //#ifdef POSIX_SPAWN_CLOEXEC_DEFAULT
-    //    // Close all files exception those with file actions if this is supported.
-    //    flags |= POSIX_SPAWN_CLOEXEC_DEFAULT;       
-    //#endif
+//#ifdef POSIX_SPAWN_CLOEXEC_DEFAULT
+//    // Close all files exception those with file actions if this is supported.
+//    flags |= POSIX_SPAWN_CLOEXEC_DEFAULT;       
+//#endif
     
     return flags;
 }
@@ -1268,6 +1268,7 @@ PackageXPCArguments (xpc_object_t message, const char *prefix, const Args& args)
     }
 }
 
+static AuthorizationRef authorizationRef = NULL;
 static Error
 getXPCAuthorization (ProcessLaunchInfo &launch_info)
 {
@@ -1279,43 +1280,49 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
         CFDictionaryRef dict = NULL;
         OSStatus osStatus;
         const char *rightName = "com.apple.lldb.LaunchUsingXPC";
-
-        osStatus = AuthorizationRightGet(rightName, &dict);
-        if (dict) CFRelease(dict);
-        if (osStatus == errAuthorizationSuccess)
-        {
-            // Got the right already.
-            return error;
-        }
         
         AuthorizationFlags authorizationFlags = kAuthorizationFlagDefaults;
-        AuthorizationRef authorizationRef = NULL;
-        osStatus = AuthorizationCreate(NULL, kAuthorizationEmptyEnvironment, authorizationFlags, &authorizationRef);
-        if (osStatus != errAuthorizationSuccess)
+        if (!authorizationRef)
         {
-            error.SetError(1, eErrorTypeGeneric);
-            if (log)
+            osStatus = AuthorizationCreate(NULL, kAuthorizationEmptyEnvironment, authorizationFlags, &authorizationRef);
+            if (osStatus != errAuthorizationSuccess)
             {
-                error.PutToLog(log.get(), "Can't create authorizationRef.");
+                error.SetError(1, eErrorTypeGeneric);
+                if (log)
+                {
+                    error.PutToLog(log.get(), "Can't create authorizationRef.");
+                }
+                else {
+                    error.SetErrorString("Can't create authorizationRef.");
+                }
+                return error;
             }
-            else {
-                error.SetErrorString("Can't create authorizationRef.");
+
+            osStatus = AuthorizationRightGet(rightName, &dict);
+            if (dict) CFRelease(dict);
+            if (osStatus != errAuthorizationSuccess)
+            {
+                // No rights in the security database, Create it with the right prompt.
+                
+                CFStringRef prompt = CFSTR("The debugger needs administrator rights to debug a root process.");
+                CFStringRef keys[] = { CFSTR("en") };
+                CFTypeRef values[] = { prompt };
+                CFDictionaryRef promptDict = CFDictionaryCreate(kCFAllocatorDefault, (const void **)keys, (const void **)values, 2, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+                
+                CFStringRef keys1[] = { CFSTR("class"), CFSTR("group"), CFSTR("comment"),                       CFSTR("default-prompt"), CFSTR("shared") };
+                CFTypeRef values1[] = { CFSTR("user"),  CFSTR("admin"), CFSTR("com.apple.lldb.LaunchUsingXPC"), promptDict,              kCFBooleanFalse };
+                dict = CFDictionaryCreate(kCFAllocatorDefault, (const void **)keys1, (const void **)values1, 5, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
+                osStatus = AuthorizationRightSet(authorizationRef, rightName, dict, NULL, NULL, NULL);
+                CFRelease(promptDict);
+                CFRelease(dict);
             }
-            return error;
         }
-        
-        CFStringRef prompt = CFSTR("The debugger is debugging a root process. Please authenticate as an administrator.");
-//        CFStringRef keys[] = { CFSTR("") };
-//        CFTypeRef values[] = { prompt };
-//        CFDictionaryRef promptDict = CFDictionaryCreate( kCFAllocatorDefault, (const void **)keys, (const void **)values, 1, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-        
-        int timeout = 1; // Make this 10
-        CFNumberRef timeoutRef = CFNumberCreate(NULL, kCFNumberIntType, &timeout);
-        CFStringRef keys1[] = { CFSTR("class"), CFSTR("group"), CFSTR("comment"),                       CFSTR("shared"), CFSTR("timeout") };
-        CFTypeRef values1[] = { CFSTR("user"),  CFSTR("admin"), CFSTR("com.apple.lldb.LaunchUsingXPC"), kCFBooleanFalse, timeoutRef};
-        dict = CFDictionaryCreate( kCFAllocatorDefault, (const void **)keys1, (const void **)values1, 5, &kCFCopyStringDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks);
-        
-        osStatus = AuthorizationRightSet(authorizationRef, rightName, dict, prompt, NULL, NULL);
+  
+        AuthorizationItem item1 = { rightName, 0, NULL, 0 };
+        AuthorizationItem items[] = {item1};
+        AuthorizationRights requestedRights = {1, items };
+        authorizationFlags = kAuthorizationFlagInteractionAllowed | kAuthorizationFlagExtendRights;
+        osStatus = AuthorizationCopyRights(authorizationRef, &requestedRights, kAuthorizationEmptyEnvironment, authorizationFlags, NULL);
         if (osStatus != errAuthorizationSuccess)
         {
             // Eventually when the commandline supports running as root and the user is not
@@ -1330,12 +1337,6 @@ getXPCAuthorization (ProcessLaunchInfo &launch_info)
             {
                 error.SetErrorStringWithFormat("Launching as root needs root authorization.");
             }
-        }
-        CFRelease(timeoutRef);
-//        CFRelease(promptDict);
-        CFRelease(dict);
-        if (authorizationRef) {
-            AuthorizationFree(authorizationRef, kAuthorizationFlagDestroyRights);
         }
     }
 
