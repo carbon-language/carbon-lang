@@ -61,7 +61,10 @@ USEDLIBS = lldbAPI.a \
 	clangParse.a \
 	clangSema.a \
 	clangSerialization.a \
-	LLVMMCDisassembler.a
+	LLVMMCDisassembler.a \
+	lldbPluginPlatformMacOSX.a \
+	lldbPluginPlatformLinux.a \
+	lldbPluginPlatformFreeBSD.a
 
 include $(LLDB_LEVEL)/../../Makefile.config
 
@@ -76,7 +79,6 @@ ifeq ($(HOST_OS),Darwin)
               lldbPluginObjectFileMachO.a \
               lldbPluginOperatingSystemDarwinKernel.a \
               lldbPluginSymbolVendorMacOSX.a \
-              lldbPluginPlatformMacOSX.a \
               lldbPluginProcessDarwin.a \
               lldbPluginProcessMachCore.a
 endif
@@ -85,7 +87,6 @@ ifeq ($(HOST_OS),Linux)
   USEDLIBS += lldbPluginProcessPOSIX.a \
               lldbPluginProcessLinux.a \
               lldbPluginDynamicLoaderPOSIX.a \
-              lldbPluginPlatformLinux.a \
               lldbHostLinux.a
 endif
 
@@ -93,8 +94,7 @@ ifeq ($(HOST_OS),FreeBSD)
   USEDLIBS += lldbHostFreeBSD.a \
               lldbPluginDynamicLoaderPOSIX.a \
               lldbPluginProcessPOSIX.a \
-              lldbPluginProcessFreeBSD.a \
-              lldbPluginPlatformFreeBSD.a
+              lldbPluginProcessFreeBSD.a
 endif
 
 include $(LEVEL)/Makefile.common

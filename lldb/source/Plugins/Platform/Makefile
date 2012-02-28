@@ -11,18 +11,18 @@ LLDB_LEVEL := ../../..
 
 include $(LLDB_LEVEL)/../../Makefile.config
 
-DIRS := gdb-server
+DIRS := gdb-server MacOSX Linux FreeBSD
 
-ifeq ($(HOST_OS),Darwin)
-  DIRS += MacOSX
-endif
-
-ifeq ($(HOST_OS),Linux)
-  DIRS += Linux
-endif
-
-ifeq ($(HOST_OS),FreeBSD)
-  DIRS += FreeBSD
-endif
+# ifeq ($(HOST_OS),Darwin)
+#   DIRS += MacOSX
+# endif
+# 
+# ifeq ($(HOST_OS),Linux)
+#   DIRS += Linux
+# endif
+# 
+# ifeq ($(HOST_OS),FreeBSD)
+#   DIRS += FreeBSD
+# endif
 
 include $(LLDB_LEVEL)/Makefile
