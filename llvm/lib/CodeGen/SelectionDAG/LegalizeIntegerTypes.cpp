@@ -1402,7 +1402,7 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
   if ((KnownZero & HighBitMask) == HighBitMask) {
     // Calculate 31-x. 31 is used instead of 32 to avoid creating an undefined
     // shift if x is zero.  We can use XOR here because x is known to be smaller
-    // than 31.
+    // than 32.
     SDValue Amt2 = DAG.getNode(ISD::XOR, dl, ShTy, Amt,
                                DAG.getConstant(NVTBits-1, ShTy));
 
