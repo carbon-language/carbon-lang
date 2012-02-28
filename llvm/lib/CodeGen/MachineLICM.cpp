@@ -1151,8 +1151,8 @@ bool MachineLICM::IsProfitableToHoist(MachineInstr &MI) {
         (!IsGuaranteedToExecute(MI.getParent()) && !MayCSE(&MI)))
       return false;
 
-    // High register pressure situation, only hoist if the instruction is going to
-    // be remat'ed.
+    // High register pressure situation, only hoist if the instruction is going
+    // to be remat'ed.
     if (!TII->isTriviallyReMaterializable(&MI, AA) &&
         !MI.isInvariantLoad(AA))
       return false;
