@@ -499,6 +499,10 @@ ARMFrameLowering::ResolveFrameIndexReference(const MachineFunction &MF,
   else if (AFI->isDPRCalleeSavedAreaFrame(FI))
     return Offset - AFI->getDPRCalleeSavedAreaOffset();
 
+  // SP can move around if there are allocas.  We may also lose track of SP
+  // when emergency spilling inside a non-reserved call frame setup.
+  bool hasMovingSP = MFI->hasVarSizedObjects() || !hasReservedCallFrame(MF);
+
   // When dynamically realigning the stack, use the frame pointer for
   // parameters, and the stack/base pointer for locals.
   if (RegInfo->needsStackRealignment(MF)) {
@@ -506,7 +510,7 @@ ARMFrameLowering::ResolveFrameIndexReference(const MachineFunction &MF,
     if (isFixed) {
       FrameReg = RegInfo->getFrameRegister(MF);
       Offset = FPOffset;
-    } else if (MFI->hasVarSizedObjects()) {
+    } else if (hasMovingSP) {
       assert(RegInfo->hasBasePointer(MF) &&
              "VLAs and dynamic stack alignment, but missing base pointer!");
       FrameReg = RegInfo->getBaseRegister();
@@ -518,11 +522,10 @@ ARMFrameLowering::ResolveFrameIndexReference(const MachineFunction &MF,
   if (hasFP(MF) && AFI->hasStackFrame()) {
     // Use frame pointer to reference fixed objects. Use it for locals if
     // there are VLAs (and thus the SP isn't reliable as a base).
-    if (isFixed || (MFI->hasVarSizedObjects() &&
-                    !RegInfo->hasBasePointer(MF))) {
+    if (isFixed || (hasMovingSP && !RegInfo->hasBasePointer(MF))) {
       FrameReg = RegInfo->getFrameRegister(MF);
       return FPOffset;
-    } else if (MFI->hasVarSizedObjects()) {
+    } else if (hasMovingSP) {
       assert(RegInfo->hasBasePointer(MF) && "missing base pointer!");
       if (AFI->isThumb2Function()) {
         // Try to use the frame pointer if we can, else use the base pointer

@@ -484,11 +484,16 @@ ARMBaseRegisterInfo::avoidWriteAfterWrite(const TargetRegisterClass *RC) const {
 bool ARMBaseRegisterInfo::hasBasePointer(const MachineFunction &MF) const {
   const MachineFrameInfo *MFI = MF.getFrameInfo();
   const ARMFunctionInfo *AFI = MF.getInfo<ARMFunctionInfo>();
+  const TargetFrameLowering *TFI = MF.getTarget().getFrameLowering();
 
   if (!EnableBasePointer)
     return false;
 
-  if (needsStackRealignment(MF) && MFI->hasVarSizedObjects())
+  // When outgoing call frames are so large that we adjust the stack pointer
+  // around the call, we can no longer use the stack pointer to reach the
+  // emergency spill slot.
+  if (needsStackRealignment(MF) && (MFI->hasVarSizedObjects() ||
+                                    !TFI->hasReservedCallFrame(MF)))
     return true;
 
   // Thumb has trouble with negative offsets from the FP. Thumb2 has a limited
@@ -1055,6 +1060,21 @@ ARMBaseRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   unsigned FrameReg;
 
   int Offset = TFI->ResolveFrameIndexReference(MF, FrameIndex, FrameReg, SPAdj);
+
+  // PEI::scavengeFrameVirtualRegs() cannot accurately track SPAdj because the
+  // call frame setup/destroy instructions have already been eliminated.  That
+  // means the stack pointer cannot be used to access the emergency spill slot
+  // when !hasReservedCallFrame().
+#ifndef NDEBUG
+  if (RS && FrameReg == ARM::SP && FrameIndex == RS->getScavengingFrameIndex()){
+    assert(TFI->hasReservedCallFrame(MF) &&
+           "Cannot use SP to access the emergency spill slot in "
+           "functions without a reserved call frame");
+    assert(!MF.getFrameInfo()->hasVarSizedObjects() &&
+           "Cannot use SP to access the emergency spill slot in "
+           "functions with variable sized frame objects");
+  }
+#endif // NDEBUG
 
   // Special handling of dbg_value instructions.
   if (MI.isDebugValue()) {

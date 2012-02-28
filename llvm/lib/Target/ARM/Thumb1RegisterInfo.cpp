@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/MachineFunction.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/CodeGen/RegisterScavenging.h"
 #include "llvm/Target/TargetFrameLowering.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/CommandLine.h"
@@ -623,6 +624,21 @@ Thumb1RegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     } else
       FrameReg = BasePtr;
   }
+
+  // PEI::scavengeFrameVirtualRegs() cannot accurately track SPAdj because the
+  // call frame setup/destroy instructions have already been eliminated.  That
+  // means the stack pointer cannot be used to access the emergency spill slot
+  // when !hasReservedCallFrame().
+#ifndef NDEBUG
+  if (RS && FrameReg == ARM::SP && FrameIndex == RS->getScavengingFrameIndex()){
+    assert(MF.getTarget().getFrameLowering()->hasReservedCallFrame(MF) &&
+           "Cannot use SP to access the emergency spill slot in "
+           "functions without a reserved call frame");
+    assert(!MF.getFrameInfo()->hasVarSizedObjects() &&
+           "Cannot use SP to access the emergency spill slot in "
+           "functions with variable sized frame objects");
+  }
+#endif // NDEBUG
 
   // Special handling of dbg_value instructions.
   if (MI.isDebugValue()) {
