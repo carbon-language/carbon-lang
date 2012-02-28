@@ -393,8 +393,10 @@ void allocAndFree2(void *attrList) {
 
 void allocNoFree3() {
     UInt32 length = 32;
-    void *outData;
+    void *outData;    
+    void *outData2;
     OSStatus st = my_Allocate_Param(&outData, &length); // expected-warning{{Allocated data is not released}}
+    st = my_Allocate_Param(&outData2, &length); // expected-warning{{Allocated data is not released}}
 }
 
 void allocAndFree3(void *attrList) {
@@ -403,6 +405,5 @@ void allocAndFree3(void *attrList) {
     OSStatus st = my_Allocate_Param(&outData, &length); 
     if (st == noErr)
       SecKeychainItemFreeContent(attrList, outData);
-
 }
 

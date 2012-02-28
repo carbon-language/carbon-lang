@@ -503,10 +503,12 @@ void MacOSKeychainAPIChecker::checkPreStmt(const ReturnStmt *S,
   C.addTransition(state);
 }
 
+// TODO: This logic is the same as in Malloc checker.
 const Stmt *
 MacOSKeychainAPIChecker::getAllocationSite(const ExplodedNode *N,
                                            SymbolRef Sym,
                                            CheckerContext &C) const {
+  const LocationContext *LeakContext = N->getLocationContext();
   // Walk the ExplodedGraph backwards and find the first node that referred to
   // the tracked symbol.
   const ExplodedNode *AllocNode = N;
@@ -514,11 +516,16 @@ MacOSKeychainAPIChecker::getAllocationSite(const ExplodedNode *N,
   while (N) {
     if (!N->getState()->get<AllocatedData>(Sym))
       break;
-    AllocNode = N;
+    // Allocation node, is the last node in the current context in which the
+    // symbol was tracked.
+    if (N->getLocationContext() == LeakContext)
+      AllocNode = N;
     N = N->pred_empty() ? NULL : *(N->pred_begin());
   }
 
   ProgramPoint P = AllocNode->getLocation();
+  if (!isa<StmtPoint>(P))
+    return 0;
   return cast<clang::PostStmt>(P).getStmt();
 }
 
@@ -536,10 +543,10 @@ BugReport *MacOSKeychainAPIChecker::
   // Most bug reports are cached at the location where they occurred.
   // With leaks, we want to unique them by the location where they were
   // allocated, and only report a single path.
-  const Stmt *AllocStmt = getAllocationSite(N, AP.first, C);
-  PathDiagnosticLocation LocUsedForUniqueing =
-    PathDiagnosticLocation::createBegin(AllocStmt, C.getSourceManager(),
-                                        N->getLocationContext());
+  PathDiagnosticLocation LocUsedForUniqueing;
+  if (const Stmt *AllocStmt = getAllocationSite(N, AP.first, C))
+    LocUsedForUniqueing = PathDiagnosticLocation::createBegin(AllocStmt,
+                            C.getSourceManager(), N->getLocationContext());
 
   BugReport *Report = new BugReport(*BT, os.str(), N, LocUsedForUniqueing);
   Report->addVisitor(new SecKeychainBugVisitor(AP.first));
