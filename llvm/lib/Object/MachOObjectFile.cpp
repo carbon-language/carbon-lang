@@ -262,61 +262,35 @@ error_code MachOObjectFile::getSymbolNMTypeChar(DataRefImpl DRI,
   return object_error::success;
 }
 
-error_code MachOObjectFile::isSymbolInternal(DataRefImpl DRI,
-                                             bool &Result) const {
+error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
+                                           uint32_t &Result) const {
+  uint16_t MachOFlags;
+  uint8_t MachOType;
   if (MachOObj->is64Bit()) {
     InMemoryStruct<macho::Symbol64TableEntry> Entry;
     getSymbol64TableEntry(DRI, Entry);
-    Result = Entry->Flags & macho::STF_StabsEntryMask;
+    MachOFlags = Entry->Flags;
+    MachOType = Entry->Type;
   } else {
     InMemoryStruct<macho::SymbolTableEntry> Entry;
     getSymbolTableEntry(DRI, Entry);
-    Result = Entry->Flags & macho::STF_StabsEntryMask;
-  }
-  return object_error::success;
-}
-
-error_code MachOObjectFile::isSymbolGlobal(DataRefImpl Symb, bool &Res) const {
-
-  if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(Symb, Entry);
-    Res = Entry->Type & MachO::NlistMaskExternal;
-  } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(Symb, Entry);
-    Res = Entry->Type & MachO::NlistMaskExternal;
-  }
-  return object_error::success;
-}
-
-error_code MachOObjectFile::isSymbolWeak(DataRefImpl Symb, bool &Res) const {
-
-  if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(Symb, Entry);
-    Res = Entry->Flags & (MachO::NListDescWeakRef | MachO::NListDescWeakDef);
-  } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(Symb, Entry);
-    Res = Entry->Flags & (MachO::NListDescWeakRef | MachO::NListDescWeakDef);
-  }
-  return object_error::success;
-}
-
-error_code MachOObjectFile::isSymbolAbsolute(DataRefImpl Symb, bool &Res) const{
-  uint8_t n_type;
-  if (MachOObj->is64Bit()) {
-    InMemoryStruct<macho::Symbol64TableEntry> Entry;
-    getSymbol64TableEntry(Symb, Entry);
-    n_type = Entry->Type;
-  } else {
-    InMemoryStruct<macho::SymbolTableEntry> Entry;
-    getSymbolTableEntry(Symb, Entry);
-    n_type = Entry->Type;
+    MachOFlags = Entry->Flags;
+    MachOType = Entry->Type;
   }
 
-  Res = (n_type & MachO::NlistMaskType) == MachO::NListTypeAbsolute;
+  Result = SymbolRef::SF_None;
+  if (MachOFlags & macho::STF_StabsEntryMask)
+    Result |= SymbolRef::SF_FormatSpecific;
+
+  if (MachOType & MachO::NlistMaskExternal)
+    Result |= SymbolRef::SF_Global;
+
+  if (MachOFlags & (MachO::NListDescWeakRef | MachO::NListDescWeakDef))
+    Result |= SymbolRef::SF_Weak;
+
+  if ((MachOType & MachO::NlistMaskType) == MachO::NListTypeAbsolute)
+    Result |= SymbolRef::SF_Absolute;
+
   return object_error::success;
 }
 

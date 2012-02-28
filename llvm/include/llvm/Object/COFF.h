@@ -109,11 +109,8 @@ protected:
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
-  virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const;
-  virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const;
-  virtual error_code isSymbolWeak(DataRefImpl Symb, bool &Res) const;
+  virtual error_code getSymbolFlags(DataRefImpl Symb, uint32_t &Res) const;
   virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const;
-  virtual error_code isSymbolAbsolute(DataRefImpl Symb, bool &Res) const;
   virtual error_code getSymbolSection(DataRefImpl Symb,
                                       section_iterator &Res) const;
 

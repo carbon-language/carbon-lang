@@ -291,9 +291,9 @@ static void DumpSymbolNamesFromObject(ObjectFile *obj) {
   }
   for (symbol_iterator i = ibegin; i != iend; i.increment(ec)) {
     if (error(ec)) break;
-    bool internal;
-    if (error(i->isInternal(internal))) break;
-    if (!DebugSyms && internal)
+    uint32_t symflags;
+    if (error(i->getFlags(symflags))) break;
+    if (!DebugSyms && (symflags & SymbolRef::SF_FormatSpecific))
       continue;
     NMSymbol s;
     s.Size = object::UnknownAddressOrSize;

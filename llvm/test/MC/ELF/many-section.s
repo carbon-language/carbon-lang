@@ -1,5 +1,5 @@
 // RUN: llvm-mc -filetype=obj -triple x86_64-pc-linux-gnu %s -o %t
-// RUN: llvm-nm %t | FileCheck %s
+// RUN: llvm-nm -a %t | FileCheck %s
 
 // CHECK: s000a
 // CHECK-NOT: U

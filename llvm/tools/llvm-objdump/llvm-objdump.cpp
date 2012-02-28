@@ -482,20 +482,20 @@ static void PrintSymbolTable(const ObjectFile *o) {
       if (error(ec)) return;
       StringRef Name;
       uint64_t Address;
-      bool Global;
       SymbolRef::Type Type;
-      bool Weak;
-      bool Absolute;
       uint64_t Size;
+      uint32_t Flags;
       section_iterator Section = o->end_sections();
       if (error(si->getName(Name))) continue;
       if (error(si->getAddress(Address))) continue;
-      if (error(si->isGlobal(Global))) continue;
+      if (error(si->getFlags(Flags))) continue;
       if (error(si->getType(Type))) continue;
-      if (error(si->isWeak(Weak))) continue;
-      if (error(si->isAbsolute(Absolute))) continue;
       if (error(si->getSize(Size))) continue;
       if (error(si->getSection(Section))) continue;
+
+      bool Global = Flags & SymbolRef::SF_Global;
+      bool Weak = Flags & SymbolRef::SF_Weak;
+      bool Absolute = Flags & SymbolRef::SF_Absolute;
 
       if (Address == UnknownAddressOrSize)
         Address = 0;

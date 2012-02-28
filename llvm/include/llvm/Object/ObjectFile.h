@@ -188,6 +188,15 @@ public:
     ST_Other
   };
 
+  enum Flags {
+    SF_None            = 0,
+    SF_Global          = 1 << 0, // Global symbol
+    SF_Weak            = 1 << 1, // Weak symbol
+    SF_Absolute        = 1 << 2, // Absolute symbol
+    SF_FormatSpecific  = 1 << 3  // Specific to the object file format
+                                 // (e.g. section symbols)
+  };
+
   SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner);
 
   bool operator==(const SymbolRef &Other) const;
@@ -205,19 +214,8 @@ public:
   /// nm for this symbol.
   error_code getNMTypeChar(char &Result) const;
 
-  /// Returns true for symbols that are internal to the object file format such
-  /// as section symbols.
-  error_code isInternal(bool &Result) const;
-
-  /// Returns true for symbols that can be used in another objects,
-  /// such as library functions
-  error_code isGlobal(bool &Result) const;
-
-  /// Returns true for weak symbols.
-  error_code isWeak(bool &Result) const;
-
-  /// @brief Return true for absolute symbols.
-  error_code isAbsolute(bool &Result) const;
+  /// Get symbol flags (bitwise OR of SymbolRef::Flags)
+  error_code getFlags(uint32_t &Result) const;
 
   /// @brief Get section this symbol is defined in reference to. Result is
   /// end_sections() if it is undefined or is an absolute symbol.
@@ -261,10 +259,8 @@ protected:
   virtual error_code getSymbolType(DataRefImpl Symb,
                                    SymbolRef::Type &Res) const = 0;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const = 0;
-  virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const = 0;
-  virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const = 0;
-  virtual error_code isSymbolWeak(DataRefImpl Symb, bool &Res) const = 0;
-  virtual error_code isSymbolAbsolute(DataRefImpl Symb, bool &Res) const = 0;
+  virtual error_code getSymbolFlags(DataRefImpl Symb,
+                                    uint32_t &Res) const = 0;
   virtual error_code getSymbolSection(DataRefImpl Symb,
                                       section_iterator &Res) const = 0;
 
@@ -382,20 +378,8 @@ inline error_code SymbolRef::getNMTypeChar(char &Result) const {
   return OwningObject->getSymbolNMTypeChar(SymbolPimpl, Result);
 }
 
-inline error_code SymbolRef::isInternal(bool &Result) const {
-  return OwningObject->isSymbolInternal(SymbolPimpl, Result);
-}
-
-inline error_code SymbolRef::isGlobal(bool &Result) const {
-  return OwningObject->isSymbolGlobal(SymbolPimpl, Result);
-}
-
-inline error_code SymbolRef::isWeak(bool &Result) const {
-  return OwningObject->isSymbolWeak(SymbolPimpl, Result);
-}
-
-inline error_code SymbolRef::isAbsolute(bool &Result) const {
-  return OwningObject->isSymbolAbsolute(SymbolPimpl, Result);
+inline error_code SymbolRef::getFlags(uint32_t &Result) const {
+  return OwningObject->getSymbolFlags(SymbolPimpl, Result);
 }
 
 inline error_code SymbolRef::getSection(section_iterator &Result) const {

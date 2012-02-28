@@ -336,11 +336,8 @@ protected:
   virtual error_code getSymbolAddress(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolSize(DataRefImpl Symb, uint64_t &Res) const;
   virtual error_code getSymbolNMTypeChar(DataRefImpl Symb, char &Res) const;
-  virtual error_code isSymbolInternal(DataRefImpl Symb, bool &Res) const;
-  virtual error_code isSymbolGlobal(DataRefImpl Symb, bool &Res) const;
-  virtual error_code isSymbolWeak(DataRefImpl Symb, bool &Res) const;
+  virtual error_code getSymbolFlags(DataRefImpl Symb, uint32_t &Res) const;
   virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const;
-  virtual error_code isSymbolAbsolute(DataRefImpl Symb, bool &Res) const;
   virtual error_code getSymbolSection(DataRefImpl Symb,
                                       section_iterator &Res) const;
 
@@ -655,32 +652,26 @@ error_code ELFObjectFile<target_endianness, is64Bits>
 
 template<support::endianness target_endianness, bool is64Bits>
 error_code ELFObjectFile<target_endianness, is64Bits>
-                        ::isSymbolGlobal(DataRefImpl Symb,
-                                        bool &Result) const {
+                        ::getSymbolFlags(DataRefImpl Symb,
+                                         uint32_t &Result) const {
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
 
-  Result = symb->getBinding() == ELF::STB_GLOBAL;
-  return object_error::success;
-}
+  Result = SymbolRef::SF_None;
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
-                        ::isSymbolWeak(DataRefImpl Symb,
-                                       bool &Result) const {
-  validateSymbol(Symb);
-  const Elf_Sym  *symb = getSymbol(Symb);
+  if (symb->getBinding() != ELF::STB_LOCAL)
+    Result |= SymbolRef::SF_Global;
 
-  Result = symb->getBinding() == ELF::STB_WEAK;
-  return object_error::success;
-}
+  if (symb->getBinding() == ELF::STB_WEAK)
+    Result |= SymbolRef::SF_Weak;
 
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
-                        ::isSymbolAbsolute(DataRefImpl Symb, bool &Res) const {
-  validateSymbol(Symb);
-  const Elf_Sym  *symb = getSymbol(Symb);
-  Res = symb->st_shndx == ELF::SHN_ABS;
+  if (symb->st_shndx == ELF::SHN_ABS)
+    Result |= SymbolRef::SF_Absolute;
+
+  if (symb->getType() == ELF::STT_FILE ||
+      symb->getType() == ELF::STT_SECTION)
+    Result |= SymbolRef::SF_FormatSpecific;
+
   return object_error::success;
 }
 
@@ -698,20 +689,6 @@ error_code ELFObjectFile<target_endianness, is64Bits>
     Sec.p = reinterpret_cast<intptr_t>(sec);
     Res = section_iterator(SectionRef(Sec, this));
   }
-  return object_error::success;
-}
-
-template<support::endianness target_endianness, bool is64Bits>
-error_code ELFObjectFile<target_endianness, is64Bits>
-                        ::isSymbolInternal(DataRefImpl Symb,
-                                           bool &Result) const {
-  validateSymbol(Symb);
-  const Elf_Sym  *symb = getSymbol(Symb);
-
-  if (  symb->getType() == ELF::STT_FILE
-     || symb->getType() == ELF::STT_SECTION)
-    Result = true;
-  Result = false;
   return object_error::success;
 }
 

@@ -159,17 +159,23 @@ error_code COFFObjectFile::getSymbolType(DataRefImpl Symb,
   return object_error::success;
 }
 
-error_code COFFObjectFile::isSymbolGlobal(DataRefImpl Symb,
-                                          bool &Result) const {
+error_code COFFObjectFile::getSymbolFlags(DataRefImpl Symb,
+                                          uint32_t &Result) const {
   const coff_symbol *symb = toSymb(Symb);
-  Result = (symb->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL);
-  return object_error::success;
-}
+  Result = SymbolRef::SF_None;
 
-error_code COFFObjectFile::isSymbolWeak(DataRefImpl Symb,
-                                          bool &Result) const {
-  const coff_symbol *symb = toSymb(Symb);
-  Result = (symb->StorageClass == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL);
+  // TODO: Set SF_FormatSpecific.
+
+  // TODO: This are certainly too restrictive.
+  if (symb->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL)
+    Result |= SymbolRef::SF_Global;
+
+  if (symb->StorageClass == COFF::IMAGE_SYM_CLASS_WEAK_EXTERNAL)
+    Result |= SymbolRef::SF_Weak;
+
+  if (symb->SectionNumber == COFF::IMAGE_SYM_ABSOLUTE)
+    Result |= SymbolRef::SF_Absolute;
+
   return object_error::success;
 }
 
@@ -259,19 +265,6 @@ error_code COFFObjectFile::getSymbolNMTypeChar(DataRefImpl Symb,
     ret = ::toupper(ret);
 
   Result = ret;
-  return object_error::success;
-}
-
-error_code COFFObjectFile::isSymbolInternal(DataRefImpl Symb,
-                                            bool &Result) const {
-  Result = false;
-  return object_error::success;
-}
-
-error_code COFFObjectFile::isSymbolAbsolute(DataRefImpl Symb,
-                                            bool &Result) const {
-  const coff_symbol *symb = toSymb(Symb);
-  Result = symb->SectionNumber == COFF::IMAGE_SYM_ABSOLUTE;
   return object_error::success;
 }
 
