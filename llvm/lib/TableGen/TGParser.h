@@ -48,7 +48,7 @@ namespace llvm {
     Init *IterVar;
     Init *ListValue;
 
-    ForeachLoop(Init *IVar, Init *LValue) : IterVar(IVar), ListValue(LValue) {};
+    ForeachLoop(Init *IVar, Init *LValue) : IterVar(IVar), ListValue(LValue) {}
   };
 
 class TGParser {
