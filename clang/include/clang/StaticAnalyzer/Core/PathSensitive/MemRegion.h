@@ -18,6 +18,7 @@
 
 #include "clang/AST/CharUnits.h"
 #include "clang/AST/Decl.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/Basic/LLVM.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/SVals.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -94,6 +95,7 @@ public:
     CompoundLiteralRegionKind = BEG_TYPED_VALUE_REGIONS,
     CXXThisRegionKind,
     StringRegionKind,
+    ObjCStringRegionKind,
     ElementRegionKind,
     // Decl Regions.
     BEG_DECL_REGIONS,
@@ -694,6 +696,40 @@ public:
     return R->getKind() == StringRegionKind;
   }
 };
+  
+/// The region associated with an ObjCStringLiteral.
+class ObjCStringRegion : public TypedValueRegion {
+  friend class MemRegionManager;
+  const ObjCStringLiteral* Str;
+protected:
+  
+  ObjCStringRegion(const ObjCStringLiteral* str, const MemRegion* sreg)
+  : TypedValueRegion(sreg, ObjCStringRegionKind), Str(str) {}
+  
+  static void ProfileRegion(llvm::FoldingSetNodeID& ID,
+                            const ObjCStringLiteral* Str,
+                            const MemRegion* superRegion);
+  
+public:
+  
+  const ObjCStringLiteral* getObjCStringLiteral() const { return Str; }
+  
+  QualType getValueType() const {
+    return Str->getType();
+  }
+  
+  bool isBoundable() const { return false; }
+  
+  void Profile(llvm::FoldingSetNodeID& ID) const {
+    ProfileRegion(ID, Str, superRegion);
+  }
+  
+  void dumpToStream(raw_ostream &os) const;
+  
+  static bool classof(const MemRegion* R) {
+    return R->getKind() == ObjCStringRegionKind;
+  }
+};
 
 /// CompoundLiteralRegion - A memory region representing a compound literal.
 ///   Compound literals are essentially temporaries that are stack allocated
@@ -1067,7 +1103,9 @@ public:
   /// getSymbolicRegion - Retrieve or create a "symbolic" memory region.
   const SymbolicRegion* getSymbolicRegion(SymbolRef sym);
 
-  const StringRegion* getStringRegion(const StringLiteral* Str);
+  const StringRegion *getStringRegion(const StringLiteral* Str);
+
+  const ObjCStringRegion *getObjCStringRegion(const ObjCStringLiteral *Str);
 
   /// getVarRegion - Retrieve or create the memory region associated with
   ///  a specified VarDecl and LocationContext.

@@ -262,6 +262,14 @@ void StringRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
   ID.AddPointer(superRegion);
 }
 
+void ObjCStringRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
+                                     const ObjCStringLiteral* Str,
+                                     const MemRegion* superRegion) {
+  ID.AddInteger((unsigned) ObjCStringRegionKind);
+  ID.AddPointer(Str);
+  ID.AddPointer(superRegion);
+}
+
 void AllocaRegion::ProfileRegion(llvm::FoldingSetNodeID& ID,
                                  const Expr *Ex, unsigned cnt,
                                  const MemRegion *) {
@@ -486,6 +494,10 @@ void StringRegion::dumpToStream(raw_ostream &os) const {
   Str->printPretty(os, 0, PrintingPolicy(getContext().getLangOptions()));
 }
 
+void ObjCStringRegion::dumpToStream(raw_ostream &os) const {
+  Str->printPretty(os, 0, PrintingPolicy(getContext().getLangOptions()));
+}
+
 void SymbolicRegion::dumpToStream(raw_ostream &os) const {
   os << "SymRegion{" << sym << '}';
 }
@@ -611,6 +623,11 @@ const MemSpaceRegion *MemRegionManager::getCodeRegion() {
 //===----------------------------------------------------------------------===//
 const StringRegion* MemRegionManager::getStringRegion(const StringLiteral* Str){
   return getSubRegion<StringRegion>(Str, getGlobalsRegion());
+}
+
+const ObjCStringRegion *
+MemRegionManager::getObjCStringRegion(const ObjCStringLiteral* Str){
+  return getSubRegion<ObjCStringRegion>(Str, getGlobalsRegion());
 }
 
 const VarRegion* MemRegionManager::getVarRegion(const VarDecl *D,

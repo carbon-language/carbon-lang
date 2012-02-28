@@ -90,6 +90,11 @@ SVal Environment::getSVal(const EnvironmentEntry &Entry,
         continue;
       case Stmt::ObjCPropertyRefExprClass:
         return loc::ObjCPropRef(cast<ObjCPropertyRefExpr>(E));
+      case Stmt::ObjCStringLiteralClass: {
+        MemRegionManager &MRMgr = svalBuilder.getRegionManager();
+        const ObjCStringLiteral *SL = cast<ObjCStringLiteral>(E);
+        return svalBuilder.makeLoc(MRMgr.getObjCStringRegion(SL));
+      }
       case Stmt::StringLiteralClass: {
         MemRegionManager &MRMgr = svalBuilder.getRegionManager();
         const StringLiteral *SL = cast<StringLiteral>(E);
