@@ -902,13 +902,6 @@ public:
   // Symbol table / Decl tracking callbacks: SemaDecl.cpp.
   //
 
-  /// List of decls defined in a function prototype. This contains EnumConstants
-  /// that incorrectly end up in translation unit scope because there is no
-  /// function to pin them on. ActOnFunctionDeclarator reads this list and patches
-  /// them into the FunctionDecl.
-  std::vector<NamedDecl*> DeclsInPrototypeScope;
-  bool InFunctionDeclarator;
-
   DeclGroupPtrTy ConvertDeclToDeclGroup(Decl *Ptr, Decl *OwnedType = 0);
 
   void DiagnoseUseOfUnimplementedSelectors();
@@ -1055,7 +1048,6 @@ public:
   // Returns true if the variable declaration is a redeclaration
   bool CheckVariableDeclaration(VarDecl *NewVD, LookupResult &Previous);
   void CheckCompleteVariableDeclaration(VarDecl *var);
-  void ActOnStartFunctionDeclarator();
   NamedDecl* ActOnFunctionDeclarator(Scope* S, Declarator& D, DeclContext* DC,
                                      TypeSourceInfo *TInfo,
                                      LookupResult &Previous,

@@ -113,7 +113,7 @@ bool IdentifierResolver::isDeclInScope(Decl *D, DeclContext *Ctx,
                              bool ExplicitInstantiationOrSpecialization) const {
   Ctx = Ctx->getRedeclContext();
 
-  if (Ctx->isFunctionOrMethod() || S->isFunctionPrototypeScope()) {
+  if (Ctx->isFunctionOrMethod()) {
     // Ignore the scopes associated within transparent declaration contexts.
     while (S->getEntity() &&
            ((DeclContext *)S->getEntity())->isTransparentContext())

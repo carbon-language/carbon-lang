@@ -244,7 +244,6 @@ def VectorConversions : DiagGroup<"vector-conversions">;      // clang specific
 def VexingParse : DiagGroup<"vexing-parse">;
 def VLA : DiagGroup<"vla">;
 def VolatileRegisterVar : DiagGroup<"volatile-register-var">;
-def Visibility : DiagGroup<"visibility">;
 
 // GCC calls -Wdeprecated-writable-strings -Wwrite-strings.
 def GCCWriteStrings : DiagGroup<"write-strings" , [DeprecatedWritableStr]>;
