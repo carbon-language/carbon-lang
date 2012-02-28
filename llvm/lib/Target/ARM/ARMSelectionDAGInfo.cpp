@@ -189,6 +189,7 @@ EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
                     0,     // number of fixed arguments
                     TLI.getLibcallCallingConv(RTLIB::MEMSET), // call conv
                     false, // is tail call
+                    false, // does not return
                     false, // is return val used
                     DAG.getExternalSymbol(TLI.getLibcallName(RTLIB::MEMSET),
                                           TLI.getPointerTy()), // callee

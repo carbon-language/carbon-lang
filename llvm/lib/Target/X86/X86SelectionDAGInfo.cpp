@@ -65,7 +65,8 @@ X86SelectionDAGInfo::EmitTargetCodeForMemset(SelectionDAG &DAG, DebugLoc dl,
       std::pair<SDValue,SDValue> CallResult =
         TLI.LowerCallTo(Chain, Type::getVoidTy(*DAG.getContext()),
                         false, false, false, false,
-                        0, CallingConv::C, false, /*isReturnValueUsed=*/false,
+                        0, CallingConv::C, /*isTailCall=*/false,
+                        /*doesNotRet=*/false, /*isReturnValueUsed=*/false,
                         DAG.getExternalSymbol(bzeroEntry, IntPtr), Args,
                         DAG, dl);
       return CallResult.second;

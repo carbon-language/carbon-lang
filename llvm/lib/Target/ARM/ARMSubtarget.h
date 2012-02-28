@@ -125,6 +125,10 @@ protected:
   /// CPSR setting instruction.
   bool AvoidCPSRPartialUpdate;
 
+  /// HasRAS - Some processors perform return stack prediction. CodeGen should
+  /// avoid issue "normal" call instructions to callees which do not return.
+  bool HasRAS;
+
   /// HasMPExtension - True if the subtarget supports Multiprocessing
   /// extension (ARMv7 only).
   bool HasMPExtension;
@@ -214,6 +218,7 @@ protected:
   bool isFPOnlySP() const { return FPOnlySP; }
   bool prefers32BitThumb() const { return Pref32BitThumb; }
   bool avoidCPSRPartialUpdate() const { return AvoidCPSRPartialUpdate; }
+  bool hasRAS() const { return HasRAS; }
   bool hasMPExtension() const { return HasMPExtension; }
   bool hasThumb2DSP() const { return Thumb2DSP; }
 

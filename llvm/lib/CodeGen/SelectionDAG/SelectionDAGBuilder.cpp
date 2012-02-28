@@ -5083,7 +5083,8 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
     std::pair<SDValue, SDValue> Result =
       TLI.LowerCallTo(getRoot(), I.getType(),
                  false, false, false, false, 0, CallingConv::C,
-                 /*isTailCall=*/false, /*isReturnValueUsed=*/true,
+                 /*isTailCall=*/false,
+                 /*doesNotRet=*/false, /*isReturnValueUsed=*/true,
                  DAG.getExternalSymbol(TrapFuncName.data(), TLI.getPointerTy()),
                  Args, DAG, getCurDebugLoc());
     DAG.setRoot(Result.second);
@@ -5246,6 +5247,7 @@ void SelectionDAGBuilder::LowerCallTo(ImmutableCallSite CS, SDValue Callee,
                     CS.paramHasAttr(0, Attribute::InReg), FTy->getNumParams(),
                     CS.getCallingConv(),
                     isTailCall,
+                    CS.doesNotReturn(),
                     !CS.getInstruction()->use_empty(),
                     Callee, Args, DAG, getCurDebugLoc());
   assert((isTailCall || Result.second.getNode()) &&
@@ -6362,7 +6364,7 @@ TargetLowering::LowerCallTo(SDValue Chain, Type *RetTy,
                             bool RetSExt, bool RetZExt, bool isVarArg,
                             bool isInreg, unsigned NumFixedArgs,
                             CallingConv::ID CallConv, bool isTailCall,
-                            bool isReturnValueUsed,
+                            bool doesNotRet, bool isReturnValueUsed,
                             SDValue Callee,
                             ArgListTy &Args, SelectionDAG &DAG,
                             DebugLoc dl) const {
@@ -6459,7 +6461,7 @@ TargetLowering::LowerCallTo(SDValue Chain, Type *RetTy,
   }
 
   SmallVector<SDValue, 4> InVals;
-  Chain = LowerCall(Chain, Callee, CallConv, isVarArg, isTailCall,
+  Chain = LowerCall(Chain, Callee, CallConv, isVarArg, doesNotRet, isTailCall,
                     Outs, OutVals, Ins, dl, DAG, InVals);
 
   // Verify that the target's LowerCall behaved as expected.

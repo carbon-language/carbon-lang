@@ -1951,6 +1951,13 @@ let isCall = 1,
   def BMOVPCRX_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
                    8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
                    Requires<[IsARM, NoV4T, IsNotIOS]>;
+
+  // mov lr, pc; b if callee is marked noreturn to avoid confusing the
+  // return stack predictor.
+  def BMOVPCB_CALL : ARMPseudoInst<(outs),
+                                   (ins bl_target:$func, variable_ops),
+                               8, IIC_Br, [(ARMcall_nolink tglobaladdr:$func)]>,
+                      Requires<[IsARM, IsNotIOS]>;
 }
 
 let isCall = 1,
@@ -1993,6 +2000,12 @@ let isCall = 1,
   def BMOVPCRXr9_CALL : ARMPseudoInst<(outs), (ins tGPR:$func, variable_ops),
                   8, IIC_Br, [(ARMcall_nolink tGPR:$func)]>,
                   Requires<[IsARM, NoV4T, IsIOS]>;
+
+  // mov lr, pc; b if callee is marked noreturn to avoid confusing the
+  // return stack predictor.
+  def BMOVPCBr9_CALL : ARMPseudoInst<(outs),(ins bl_target:$func, variable_ops),
+                               8, IIC_Br, [(ARMcall_nolink tglobaladdr:$func)]>,
+                        Requires<[IsARM, IsIOS]>;
 }
 
 let isBranch = 1, isTerminator = 1 in {
@@ -4896,6 +4909,12 @@ def : ARMPat<(ARMtcret (i32 texternalsym:$dst)),
 def : ARMPat<(ARMcall texternalsym:$func), (BL texternalsym:$func)>,
       Requires<[IsARM, IsNotIOS]>;
 def : ARMPat<(ARMcall texternalsym:$func), (BLr9 texternalsym:$func)>,
+      Requires<[IsARM, IsIOS]>;
+def : ARMPat<(ARMcall_nolink texternalsym:$func),
+             (BMOVPCB_CALL texternalsym:$func)>,
+      Requires<[IsARM, IsNotIOS]>;
+def : ARMPat<(ARMcall_nolink texternalsym:$func),
+             (BMOVPCBr9_CALL texternalsym:$func)>,
       Requires<[IsARM, IsIOS]>;
 
 // zextload i1 -> zextload i8
