@@ -989,9 +989,23 @@ class __func<_Fp, _Alloc, _Rp(_ArgTypes...)>
     __compressed_pair<_Fp, _Alloc> __f_;
 public:
     _LIBCPP_INLINE_VISIBILITY
-    explicit __func(_Fp __f) : __f_(_VSTD::move(__f)) {}
+    explicit __func(_Fp&& __f)
+        : __f_(piecewise_construct, _VSTD::forward_as_tuple(_VSTD::move(__f)),
+                                    _VSTD::forward_as_tuple()) {}
     _LIBCPP_INLINE_VISIBILITY
-    explicit __func(_Fp __f, _Alloc __a) : __f_(_VSTD::move(__f), _VSTD::move(__a)) {}
+    explicit __func(const _Fp& __f, const _Alloc& __a)
+        : __f_(piecewise_construct, _VSTD::forward_as_tuple(__f),
+                                    _VSTD::forward_as_tuple(__a)) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    explicit __func(const _Fp& __f, _Alloc&& __a)
+        : __f_(piecewise_construct, _VSTD::forward_as_tuple(__f),
+                                    _VSTD::forward_as_tuple(_VSTD::move(__a))) {}
+
+    _LIBCPP_INLINE_VISIBILITY
+    explicit __func(_Fp&& __f, _Alloc&& __a)
+        : __f_(piecewise_construct, _VSTD::forward_as_tuple(_VSTD::move(__f)),
+                                    _VSTD::forward_as_tuple(_VSTD::move(__a))) {}
     virtual __base<_Rp(_ArgTypes...)>* __clone() const;
     virtual void __clone(__base<_Rp(_ArgTypes...)>*) const;
     virtual void destroy() _NOEXCEPT;
