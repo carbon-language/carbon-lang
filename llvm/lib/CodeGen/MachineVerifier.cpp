@@ -69,6 +69,7 @@ namespace {
     unsigned foundErrors;
 
     typedef SmallVector<unsigned, 16> RegVector;
+    typedef SmallVector<const uint32_t*, 4> RegMaskVector;
     typedef DenseSet<unsigned> RegSet;
     typedef DenseMap<unsigned, const MachineInstr*> RegMap;
 
@@ -78,6 +79,7 @@ namespace {
     BitVector regsAllocatable;
     RegSet regsLive;
     RegVector regsDefined, regsDead, regsKilled;
+    RegMaskVector regMasks;
     RegSet regsLiveInButUnused;
 
     SlotIndex lastIndex;
@@ -314,6 +316,7 @@ bool MachineVerifier::runOnMachineFunction(MachineFunction &MF) {
   regsDefined.clear();
   regsDead.clear();
   regsKilled.clear();
+  regMasks.clear();
   regsLiveInButUnused.clear();
   MBBInfoMap.clear();
 
@@ -819,6 +822,10 @@ MachineVerifier::visitMachineOperand(const MachineOperand *MO, unsigned MONum) {
     break;
   }
 
+  case MachineOperand::MO_RegisterMask:
+    regMasks.push_back(MO->getRegMask());
+    break;
+
   case MachineOperand::MO_MachineBasicBlock:
     if (MI->isPHI() && !MO->getMBB()->isSuccessor(MI->getParent()))
       report("PHI operand is not in the CFG", MO, MONum);
@@ -849,6 +856,14 @@ void MachineVerifier::visitMachineInstrAfter(const MachineInstr *MI) {
   BBInfo &MInfo = MBBInfoMap[MI->getParent()];
   set_union(MInfo.regsKilled, regsKilled);
   set_subtract(regsLive, regsKilled); regsKilled.clear();
+  // Kill any masked registers.
+  while (!regMasks.empty()) {
+    const uint32_t *Mask = regMasks.pop_back_val();
+    for (RegSet::iterator I = regsLive.begin(), E = regsLive.end(); I != E; ++I)
+      if (TargetRegisterInfo::isPhysicalRegister(*I) &&
+          MachineOperand::clobbersPhysReg(Mask, *I))
+        regsDead.push_back(*I);
+  }
   set_subtract(regsLive, regsDead);   regsDead.clear();
   set_union(regsLive, regsDefined);   regsDefined.clear();
 
