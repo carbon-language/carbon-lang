@@ -1809,6 +1809,7 @@ static void index_indexDeclaration(CXClientData client_data,
   const CXIdxObjCCategoryDeclInfo *CatInfo;
   const CXIdxObjCInterfaceDeclInfo *InterInfo;
   const CXIdxObjCProtocolRefListInfo *ProtoInfo;
+  const CXIdxObjCPropertyDeclInfo *PropInfo;
   const CXIdxCXXClassDeclInfo *CXXClassInfo;
   unsigned i;
   index_data = (IndexData *)client_data;
@@ -1868,6 +1869,17 @@ static void index_indexDeclaration(CXClientData client_data,
 
   if ((ProtoInfo = clang_index_getObjCProtocolRefListInfo(info))) {
     printProtocolList(ProtoInfo, client_data);
+  }
+
+  if ((PropInfo = clang_index_getObjCPropertyDeclInfo(info))) {
+    if (PropInfo->getter) {
+      printEntityInfo("     <getter>", client_data, PropInfo->getter);
+      printf("\n");
+    }
+    if (PropInfo->setter) {
+      printEntityInfo("     <setter>", client_data, PropInfo->setter);
+      printf("\n");
+    }
   }
 
   if ((CXXClassInfo = clang_index_getCXXClassDeclInfo(info))) {

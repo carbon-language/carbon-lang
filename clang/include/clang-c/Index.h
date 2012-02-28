@@ -4272,6 +4272,12 @@ typedef struct {
 
 typedef struct {
   const CXIdxDeclInfo *declInfo;
+  const CXIdxEntityInfo *getter;
+  const CXIdxEntityInfo *setter;
+} CXIdxObjCPropertyDeclInfo;
+
+typedef struct {
+  const CXIdxDeclInfo *declInfo;
   const CXIdxBaseClassInfo *const *bases;
   unsigned numBases;
 } CXIdxCXXClassDeclInfo;
@@ -4386,6 +4392,9 @@ clang_index_getObjCCategoryDeclInfo(const CXIdxDeclInfo *);
 
 CINDEX_LINKAGE const CXIdxObjCProtocolRefListInfo *
 clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *);
+
+CINDEX_LINKAGE const CXIdxObjCPropertyDeclInfo *
+clang_index_getObjCPropertyDeclInfo(const CXIdxDeclInfo *);
 
 CINDEX_LINKAGE const CXIdxIBOutletCollectionAttrInfo *
 clang_index_getIBOutletCollectionAttrInfo(const CXIdxAttrInfo *);

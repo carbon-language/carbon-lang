@@ -608,6 +608,18 @@ clang_index_getObjCProtocolRefListInfo(const CXIdxDeclInfo *DInfo) {
   return 0;
 }
 
+const CXIdxObjCPropertyDeclInfo *
+clang_index_getObjCPropertyDeclInfo(const CXIdxDeclInfo *DInfo) {
+  if (!DInfo)
+    return 0;
+
+  const DeclInfo *DI = static_cast<const DeclInfo *>(DInfo);
+  if (const ObjCPropertyDeclInfo *PropInfo = dyn_cast<ObjCPropertyDeclInfo>(DI))
+    return &PropInfo->ObjCPropDeclInfo;
+
+  return 0;
+}
+
 const CXIdxIBOutletCollectionAttrInfo *
 clang_index_getIBOutletCollectionAttrInfo(const CXIdxAttrInfo *AInfo) {
   if (!AInfo)

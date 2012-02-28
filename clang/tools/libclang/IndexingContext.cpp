@@ -517,8 +517,26 @@ bool IndexingContext::handleSynthesizedObjCMethod(const ObjCMethodDecl *D,
 }
 
 bool IndexingContext::handleObjCProperty(const ObjCPropertyDecl *D) {
-  DeclInfo DInfo(/*isRedeclaration=*/false, /*isDefinition=*/false,
-                 /*isContainer=*/false);
+  ObjCPropertyDeclInfo DInfo;
+  EntityInfo GetterEntity;
+  EntityInfo SetterEntity;
+  ScratchAlloc SA(*this);
+
+  DInfo.ObjCPropDeclInfo.declInfo = &DInfo;
+
+  if (ObjCMethodDecl *Getter = D->getGetterMethodDecl()) {
+    getEntityInfo(Getter, GetterEntity, SA);
+    DInfo.ObjCPropDeclInfo.getter = &GetterEntity;
+  } else {
+    DInfo.ObjCPropDeclInfo.getter = 0;
+  }
+  if (ObjCMethodDecl *Setter = D->getSetterMethodDecl()) {
+    getEntityInfo(Setter, SetterEntity, SA);
+    DInfo.ObjCPropDeclInfo.setter = &SetterEntity;
+  } else {
+    DInfo.ObjCPropDeclInfo.setter = 0;
+  }
+
   return handleDecl(D, D->getLocation(), getCursor(D), DInfo);
 }
 
