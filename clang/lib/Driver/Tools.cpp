@@ -4249,9 +4249,12 @@ void solaris::Link::ConstructJob(Compilation &C, const JobAction &JA,
     if (!Args.hasArg(options::OPT_shared)) {
       CmdArgs.push_back(Args.MakeArgString(LibPath + "crt1.o"));
       CmdArgs.push_back(Args.MakeArgString(LibPath + "crti.o"));
+      CmdArgs.push_back(Args.MakeArgString(LibPath + "values-Xa.o"));
       CmdArgs.push_back(Args.MakeArgString(GCCLibPath + "crtbegin.o"));
     } else {
       CmdArgs.push_back(Args.MakeArgString(LibPath + "crti.o"));
+      CmdArgs.push_back(Args.MakeArgString(LibPath + "values-Xa.o"));
+      CmdArgs.push_back(Args.MakeArgString(GCCLibPath + "crtbegin.o"));
     }
   }
 
@@ -4260,22 +4263,24 @@ void solaris::Link::ConstructJob(Compilation &C, const JobAction &JA,
   Args.AddAllArgs(CmdArgs, options::OPT_L);
   Args.AddAllArgs(CmdArgs, options::OPT_T_Group);
   Args.AddAllArgs(CmdArgs, options::OPT_e);
+  Args.AddAllArgs(CmdArgs, options::OPT_r);
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);
+  if (getToolChain().getDriver().CCCIsCXX)
+    getToolChain().AddCXXStdlibLibArgs(Args, CmdArgs);
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nodefaultlibs)) {
-    CmdArgs.push_back("-lgcc");
     CmdArgs.push_back("-lgcc_s");
-    if (!Args.hasArg(options::OPT_shared))
+    if (!Args.hasArg(options::OPT_shared)) {
+      CmdArgs.push_back("-lgcc");
       CmdArgs.push_back("-lc");
-
+    }
   }
 
   if (!Args.hasArg(options::OPT_nostdlib) &&
       !Args.hasArg(options::OPT_nostartfiles)) {
-    if (!Args.hasArg(options::OPT_shared))
-      CmdArgs.push_back(Args.MakeArgString(GCCLibPath + "crtend.o"));
+    CmdArgs.push_back(Args.MakeArgString(GCCLibPath + "crtend.o"));
   }
   CmdArgs.push_back(Args.MakeArgString(LibPath + "crtn.o"));
 
