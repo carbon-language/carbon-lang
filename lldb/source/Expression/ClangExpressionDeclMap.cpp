@@ -1043,10 +1043,22 @@ ClangExpressionDeclMap::LookupDecl (clang::NamedDecl *decl, ClangExpressionVaria
                         
             Value ret;
         
-            uint64_t symbol_addr = sym_address.GetFileAddress();
-
-            ret.GetScalar() = symbol_addr;
-            ret.SetValueType(Value::eValueTypeFileAddress);
+            ProcessSP process_sp (m_parser_vars->m_exe_ctx.GetProcessSP());
+            
+            if (process_sp)
+            {
+                uint64_t symbol_load_addr = sym_address.GetLoadAddress(&process_sp->GetTarget());
+                
+                ret.GetScalar() = symbol_load_addr;
+                ret.SetValueType(Value::eValueTypeLoadAddress);
+            }
+            else 
+            {
+                uint64_t symbol_file_addr = sym_address.GetFileAddress();
+                
+                ret.GetScalar() = symbol_file_addr;
+                ret.SetValueType(Value::eValueTypeFileAddress);
+            }
             
             return ret;
         }
