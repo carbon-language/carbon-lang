@@ -24,6 +24,8 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+
+#include "llvm/Support/Debug.h"
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
@@ -31,6 +33,7 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 
 namespace {
+
 class TypeMapTy : public ValueMapTypeRemapper {
   /// MappedTypes - This is a mapping from a source type to a destination type
   /// to use.
@@ -49,8 +52,8 @@ class TypeMapTy : public ValueMapTypeRemapper {
   /// DstResolvedOpaqueTypes - This is the set of opaque types in the
   /// destination modules who are getting a body from the source module.
   SmallPtrSet<StructType*, 16> DstResolvedOpaqueTypes;
+
 public:
-  
   /// addTypeMapping - Indicate that the specified type in the destination
   /// module is conceptually equivalent to the specified type in the source
   /// module.
@@ -75,6 +78,15 @@ private:
   
   bool areTypesIsomorphic(Type *DstTy, Type *SrcTy);
 };
+
+} // end anonymous namespace
+
+/// endsInDotNumber - Check to see if there is a dot in the name followed by a
+/// digit.
+static bool endsInDotNumber(StructType *Ty) {
+  size_t DotPos = Ty->getName().rfind('.');
+  return DotPos != 0 && DotPos != StringRef::npos &&
+    Ty->getName().back() != '.' && isdigit(Ty->getName()[DotPos + 1]);
 }
 
 void TypeMapTy::addTypeMapping(Type *DstTy, Type *SrcTy) {
@@ -85,15 +97,15 @@ void TypeMapTy::addTypeMapping(Type *DstTy, Type *SrcTy) {
     Entry = DstTy;
     return;
   }
-  
+
   // Check to see if these types are recursively isomorphic and establish a
   // mapping between them if so.
-  if (!areTypesIsomorphic(DstTy, SrcTy)) {
+  if (!areTypesIsomorphic(DstTy, SrcTy))
     // Oops, they aren't isomorphic.  Just discard this request by rolling out
     // any speculative mappings we've established.
     for (unsigned i = 0, e = SpeculativeTypes.size(); i != e; ++i)
       MappedTypes.erase(SpeculativeTypes[i]);
-  }
+
   SpeculativeTypes.clear();
 }
 
@@ -114,7 +126,7 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
     Entry = DstTy;
     return true;
   }
-  
+
   // Okay, we have two types with identical kinds that we haven't seen before.
 
   // If this is an opaque struct type, special case it.
@@ -173,10 +185,17 @@ bool TypeMapTy::areTypesIsomorphic(Type *DstTy, Type *SrcTy) {
   Entry = DstTy;
   SpeculativeTypes.push_back(SrcTy);
 
-  for (unsigned i = 0, e = SrcTy->getNumContainedTypes(); i != e; ++i)
-    if (!areTypesIsomorphic(DstTy->getContainedType(i),
-                            SrcTy->getContainedType(i)))
+  for (unsigned i = 0, e = SrcTy->getNumContainedTypes(); i != e; ++i) {
+    Type *SrcSubTy = SrcTy->getContainedType(i);
+    Type *DstSubTy = DstTy->getContainedType(i);
+
+    if (StructType *DST = dyn_cast<StructType>(DstSubTy))
+      if (DST->hasName() && endsInDotNumber(DST))
+        std::swap(SrcSubTy, DstSubTy);
+
+    if (!areTypesIsomorphic(DstSubTy, SrcSubTy))
       return false;
+  }
   
   // If everything seems to have lined up, then everything is great.
   return true;
@@ -223,7 +242,6 @@ void TypeMapTy::linkDefinedTypeBodies() {
   DstResolvedOpaqueTypes.clear();
 }
 
-
 /// get - Return the mapped type to use for the specified input type from the
 /// source module.
 Type *TypeMapTy::get(Type *Ty) {
@@ -240,7 +258,7 @@ Type *TypeMapTy::getImpl(Type *Ty) {
   // If we already have an entry for this type, return it.
   Type **Entry = &MappedTypes[Ty];
   if (*Entry) return *Entry;
-  
+
   // If this is not a named struct type, then just map all of the elements and
   // then rebuild the type from inside out.
   if (!isa<StructType>(Ty) || cast<StructType>(Ty)->isLiteral()) {
@@ -318,7 +336,7 @@ Type *TypeMapTy::getImpl(Type *Ty) {
   // If the type is opaque, we can just use it directly.
   if (STy->isOpaque())
     return *Entry = STy;
-  
+
   // Otherwise we create a new type and resolve its body later.  This will be
   // resolved by the top level of get().
   SrcDefinitionsToResolve.push_back(STy);
@@ -326,8 +344,6 @@ Type *TypeMapTy::getImpl(Type *Ty) {
   DstResolvedOpaqueTypes.insert(DTy);
   return *Entry = DTy;
 }
-
-
 
 //===----------------------------------------------------------------------===//
 // ModuleLinker implementation.
@@ -393,11 +409,11 @@ namespace {
       // there is no name match-up going on.
       if (!SrcGV->hasName() || SrcGV->hasLocalLinkage())
         return 0;
-      
+
       // Otherwise see if we have a match in the destination module's symtab.
       GlobalValue *DGV = DstM->getNamedValue(SrcGV->getName());
       if (DGV == 0) return 0;
-        
+
       // If we found a global with the same name in the dest module, but it has
       // internal linkage, we are really not doing any linkage here.
       if (DGV->hasLocalLinkage())
@@ -428,9 +444,7 @@ namespace {
     void linkAliasBodies();
     void linkNamedMDNodes();
   };
-}
-
-
+} // end anonymous namespace
 
 /// forceRenaming - The LLVM SymbolTable class autorenames globals that conflict
 /// in the symbol table.  This is good for all clients except for us.  Go
@@ -558,6 +572,7 @@ bool ModuleLinker::getLinkageResult(GlobalValue *Dest, const GlobalValue *Src,
 /// we have two struct types 'Foo' but one got renamed when the module was
 /// loaded into the same LLVMContext.
 void ModuleLinker::computeTypeMapping() {
+  return;
   // Incorporate globals.
   for (Module::global_iterator I = SrcM->global_begin(),
        E = SrcM->global_end(); I != E; ++I) {
@@ -581,12 +596,11 @@ void ModuleLinker::computeTypeMapping() {
       TypeMap.addTypeMapping(DGV->getType(), I->getType());
   }
 
-  // Incorporate types by name, scanning all the types in the source module.
-  // At this point, the destination module may have a type "%foo = { i32 }" for
+  // Incorporate types by name, scanning all the types in the source module.  At
+  // this point, the destination module may have a type "%foo = { i32 }" for
   // example.  When the source module got loaded into the same LLVMContext, if
   // it had the same type, it would have been renamed to "%foo.42 = { i32 }".
-  // Though it isn't required for correctness, attempt to link these up to clean
-  // up the IR.
+  // Attempt to link these up to clean up the IR.
   std::vector<StructType*> SrcStructTypes;
   SrcM->findUsedStructTypes(SrcStructTypes);
   
@@ -598,21 +612,23 @@ void ModuleLinker::computeTypeMapping() {
     if (!ST->hasName()) continue;
     
     // Check to see if there is a dot in the name followed by a digit.
-    size_t DotPos = ST->getName().rfind('.');
-    if (DotPos == 0 || DotPos == StringRef::npos ||
-        ST->getName().back() == '.' || !isdigit(ST->getName()[DotPos+1]))
-      continue;
+    if (endsInDotNumber(ST)) continue;
+
+    if (endsInDotNumber(ST))
+      DstM->dump();
     
     // Check to see if the destination module has a struct with the prefix name.
-    if (StructType *DST = DstM->getTypeByName(ST->getName().substr(0, DotPos)))
+    size_t DotPos = ST->getName().rfind('.');
+    if (StructType *DST = DstM->getTypeByName(ST->getName().substr(0,DotPos))) {
       // Don't use it if this actually came from the source module.  They're in
       // the same LLVMContext after all.
       if (!SrcStructTypesSet.count(DST))
         TypeMap.addTypeMapping(DST, ST);
+    }
   }
 
   // Don't bother incorporating aliases, they aren't generally typed well.
-  
+
   // Now that we have discovered all of the type equivalences, get a body for
   // any 'opaque' types in the dest module that are now resolved. 
   TypeMap.linkDefinedTypeBodies();
@@ -622,7 +638,6 @@ void ModuleLinker::computeTypeMapping() {
 /// them together now.  Return true on error.
 bool ModuleLinker::linkAppendingVarProto(GlobalVariable *DstGV,
                                          GlobalVariable *SrcGV) {
- 
   if (!SrcGV->hasAppendingLinkage() || !DstGV->hasAppendingLinkage())
     return emitError("Linking globals named '" + SrcGV->getName() +
            "': can only link appending global with another appending global!");
