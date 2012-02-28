@@ -43,7 +43,7 @@ unsigned MipsFunctionInfo::getGlobalBaseReg() {
   const TargetRegisterClass *RC;
   RC = ST.isABI_N64() ?
     Mips::CPU64RegsRegisterClass : Mips::CPURegsRegisterClass;
-    
+
   return GlobalBaseReg = MF.getRegInfo().createVirtualRegister(RC);
 }
 

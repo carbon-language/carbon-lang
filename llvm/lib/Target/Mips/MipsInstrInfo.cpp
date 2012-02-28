@@ -32,7 +32,7 @@ MipsInstrInfo::MipsInstrInfo(MipsTargetMachine &tm)
     RI(*TM.getSubtargetImpl(), *this),
     UncondBrOpc(TM.getRelocationModel() == Reloc::PIC_ ? Mips::B : Mips::J) {}
 
-const MipsRegisterInfo &MipsInstrInfo::getRegisterInfo() const { 
+const MipsRegisterInfo &MipsInstrInfo::getRegisterInfo() const {
   return RI;
 }
 
@@ -157,7 +157,7 @@ copyPhysReg(MachineBasicBlock &MBB,
   assert(Opc && "Cannot copy registers");
 
   MachineInstrBuilder MIB = BuildMI(MBB, I, DL, get(Opc));
-  
+
   if (DestReg)
     MIB.addReg(DestReg, RegState::Define);
 
@@ -173,7 +173,7 @@ static MachineMemOperand* GetMemOperand(MachineBasicBlock &MBB, int FI,
   MachineFunction &MF = *MBB.getParent();
   MachineFrameInfo &MFI = *MF.getFrameInfo();
   unsigned Align = MFI.getObjectAlignment(FI);
-  
+
   return MF.getMachineMemOperand(MachinePointerInfo::getFixedStack(FI), Flag,
                                  MFI.getObjectSize(FI), Align);
 }
@@ -283,7 +283,7 @@ static void AnalyzeCondBr(const MachineInstr* Inst, unsigned Opc,
                           SmallVectorImpl<MachineOperand>& Cond) {
   assert(GetAnalyzableBrOpc(Opc) && "Not an analyzable branch");
   int NumOp = Inst->getNumExplicitOperands();
-  
+
   // for both int and fp branches, the last explicit operand is the
   // MBB.
   BB = Inst->getOperand(NumOp-1).getMBB();
@@ -371,8 +371,8 @@ bool MipsInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   FBB = LastInst->getOperand(0).getMBB();
 
   return false;
-} 
-  
+}
+
 void MipsInstrInfo::BuildCondBr(MachineBasicBlock &MBB,
                                 MachineBasicBlock *TBB, DebugLoc DL,
                                 const SmallVectorImpl<MachineOperand>& Cond)

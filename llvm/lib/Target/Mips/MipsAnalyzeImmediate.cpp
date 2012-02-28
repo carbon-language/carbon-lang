@@ -77,7 +77,7 @@ void MipsAnalyzeImmediate::GetInstSeqLs(int64_t Imm, unsigned RemSize,
 }
 
 // Replace a ADDiu & SLL pair with a LUi.
-// e.g. the following two instructions 
+// e.g. the following two instructions
 //  ADDiu 0x0111
 //  SLL 18
 // are replaced with
@@ -149,5 +149,5 @@ const MipsAnalyzeImmediate::InstSeq
   // Set Insts to the shortest instruction sequence.
   GetShortestSeq(SeqLs, Insts);
 
-  return Insts;  
+  return Insts;
 }

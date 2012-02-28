@@ -1,4 +1,4 @@
-//==--- MipsFrameLowering.h - Define frame lowering for Mips --*- C++ -*---===//
+//===-- MipsFrameLowering.h - Define frame lowering for Mips ----*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

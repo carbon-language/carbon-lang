@@ -63,7 +63,7 @@ bool Inserter::runOnMachineFunction(MachineFunction &F) {
     if (MBB.isLandingPad()) {
       // Find EH_LABEL first.
       for (; I->getOpcode() != TargetOpcode::EH_LABEL; ++I) ;
-      
+
       // Insert lw.
       ++I;
       DebugLoc dl = I != MBB.end() ? I->getDebugLoc() : DebugLoc();
@@ -84,7 +84,7 @@ bool Inserter::runOnMachineFunction(MachineFunction &F) {
                                                          .addImm(0);
       Changed = true;
     }
-  } 
+  }
 
   return Changed;
 }

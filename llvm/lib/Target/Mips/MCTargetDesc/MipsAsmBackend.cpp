@@ -178,7 +178,7 @@ public:
   /// \parm Res [output] - On return, the relaxed instruction.
   void relaxInstruction(const MCInst &Inst, MCInst &Res) const {
   }
-  
+
   /// @}
 
   /// WriteNopData - Write an (optimal) nop sequence of Count bytes

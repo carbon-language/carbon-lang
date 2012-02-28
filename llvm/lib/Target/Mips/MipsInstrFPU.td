@@ -1,4 +1,4 @@
-//===- MipsInstrFPU.td - Mips FPU Instruction Information --*- tablegen -*-===//
+//===-- MipsInstrFPU.td - Mips FPU Instruction Information -*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -267,12 +267,12 @@ let Predicates = [HasMips32r2Or64] in {
 }
 
 let Predicates = [HasMips32r2, NotMips64] in {
-  def LDXC1 : FPIdxLoad<0x1, "ldxc1", AFGR64, CPURegs, load_a>; 
+  def LDXC1 : FPIdxLoad<0x1, "ldxc1", AFGR64, CPURegs, load_a>;
   def SDXC1 : FPIdxStore<0x9, "sdxc1", AFGR64, CPURegs, store_a>;
 }
 
 let Predicates = [HasMips64, NotN64] in {
-  def LDXC164 : FPIdxLoad<0x1, "ldxc1", FGR64, CPURegs, load_a>; 
+  def LDXC164 : FPIdxLoad<0x1, "ldxc1", FGR64, CPURegs, load_a>;
   def SDXC164 : FPIdxStore<0x9, "sdxc1", FGR64, CPURegs, store_a>;
 }
 
@@ -280,7 +280,7 @@ let Predicates = [HasMips64, NotN64] in {
 let Predicates = [IsN64] in {
   def LWXC1_P8   : FPIdxLoad<0x0, "lwxc1", FGR32, CPU64Regs, load_a>;
   def LUXC1_P8   : FPIdxLoad<0x5, "luxc1", FGR32, CPU64Regs, load_u>;
-  def LDXC164_P8 : FPIdxLoad<0x1, "ldxc1", FGR64, CPU64Regs, load_a>; 
+  def LDXC164_P8 : FPIdxLoad<0x1, "ldxc1", FGR64, CPU64Regs, load_a>;
   def SWXC1_P8   : FPIdxStore<0x8, "swxc1", FGR32, CPU64Regs, store_a>;
   def SUXC1_P8   : FPIdxStore<0xd, "suxc1", FGR32, CPU64Regs, store_u>;
   def SDXC164_P8 : FPIdxStore<0x9, "sdxc1", FGR64, CPU64Regs, store_a>;

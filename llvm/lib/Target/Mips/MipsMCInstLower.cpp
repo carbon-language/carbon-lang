@@ -89,7 +89,7 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
   default:
     llvm_unreachable("<unknown operand type>");
   }
-  
+
   const MCSymbolRefExpr *MCSym = MCSymbolRefExpr::Create(Symbol, Kind, Ctx);
 
   if (!Offset)
@@ -97,7 +97,7 @@ MCOperand MipsMCInstLower::LowerSymbolOperand(const MachineOperand &MO,
 
   // Assume offset is never negative.
   assert(Offset > 0);
-   
+
   const MCConstantExpr *OffsetExpr =  MCConstantExpr::Create(Offset, Ctx);
   const MCBinaryExpr *AddExpr = MCBinaryExpr::CreateAdd(MCSym, OffsetExpr, Ctx);
   return MCOperand::CreateExpr(AddExpr);
@@ -148,7 +148,7 @@ void MipsMCInstLower::LowerCPRESTORE(const MachineInstr *MI,
   MCInst Sw;
 
   if (Offset >= 0x8000) {
-    unsigned Hi = (Offset >> 16) + ((Offset & 0x8000) != 0); 
+    unsigned Hi = (Offset >> 16) + ((Offset & 0x8000) != 0);
     Offset &= 0xffff;
     Reg = Mips::AT;
 
@@ -163,7 +163,7 @@ void MipsMCInstLower::LowerCPRESTORE(const MachineInstr *MI,
     MCInsts[1].addOperand(MCOperand::CreateReg(Mips::AT));
     MCInsts[1].addOperand(MCOperand::CreateReg(Mips::SP));
   }
-  
+
   Sw.setOpcode(Mips::SW);
   Sw.addOperand(MCOperand::CreateReg(Mips::GP));
   Sw.addOperand(MCOperand::CreateReg(Reg));
@@ -172,9 +172,9 @@ void MipsMCInstLower::LowerCPRESTORE(const MachineInstr *MI,
 }
 
 MCOperand MipsMCInstLower::LowerOperand(const MachineOperand& MO,
-		                                    unsigned offset) const {
+                                        unsigned offset) const {
   MachineOperandType MOTy = MO.getType();
-  
+
   switch (MOTy) {
   default: llvm_unreachable("unknown operand type");
   case MachineOperand::MO_Register:
@@ -199,7 +199,7 @@ MCOperand MipsMCInstLower::LowerOperand(const MachineOperand& MO,
 
 void MipsMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
   OutMI.setOpcode(MI->getOpcode());
-  
+
   for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
     const MachineOperand &MO = MI->getOperand(i);
     MCOperand MCOp = LowerOperand(MO);
@@ -210,8 +210,8 @@ void MipsMCInstLower::Lower(const MachineInstr *MI, MCInst &OutMI) const {
 }
 
 void MipsMCInstLower::LowerUnalignedLoadStore(const MachineInstr *MI,
-		                                          SmallVector<MCInst,
-		                                          4>& MCInsts) {
+                                              SmallVector<MCInst,
+                                              4>& MCInsts) {
   unsigned Opc = MI->getOpcode();
   MCInst Instr1, Instr2, Instr3, Move;
 

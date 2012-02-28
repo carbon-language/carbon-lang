@@ -44,10 +44,10 @@ class MipsFunctionInfo : public MachineFunctionInfo {
   // InArgFIRange: Range of indices of all frame objects created during call to
   //               LowerFormalArguments.
   // OutArgFIRange: Range of indices of all frame objects created during call to
-  //                LowerCall except for the frame object for restoring $gp. 
+  //                LowerCall except for the frame object for restoring $gp.
   std::pair<int, int> InArgFIRange, OutArgFIRange;
-  int GPFI; // Index of the frame object for restoring $gp 
-  mutable int DynAllocFI; // Frame index of dynamically allocated stack area.   
+  int GPFI; // Index of the frame object for restoring $gp
+  mutable int DynAllocFI; // Frame index of dynamically allocated stack area.
   unsigned MaxCallFrameSize;
 
 public:
@@ -63,7 +63,7 @@ public:
   }
   void setLastInArgFI(int FI) { InArgFIRange.second = FI; }
 
-  bool isOutArgFI(int FI) const { 
+  bool isOutArgFI(int FI) const {
     return FI <= OutArgFIRange.first && FI >= OutArgFIRange.second;
   }
   void extendOutArgFIRange(int FirstFI, int LastFI) {

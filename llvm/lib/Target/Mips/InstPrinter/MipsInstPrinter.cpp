@@ -136,12 +136,12 @@ void MipsInstPrinter::printOperand(const MCInst *MI, unsigned OpNo,
     printRegName(O, Op.getReg());
     return;
   }
-  
+
   if (Op.isImm()) {
     O << Op.getImm();
     return;
   }
-  
+
   assert(Op.isExpr() && "unknown operand kind in printOperand");
   printExpr(Op.getExpr(), O);
 }

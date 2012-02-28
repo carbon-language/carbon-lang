@@ -56,7 +56,7 @@ static bool isUnalignedLoadStore(unsigned Opc) {
          Opc == Mips::ULHu64 || Opc == Mips::USD    || Opc == Mips::USW64 ||
          Opc == Mips::USH64  ||
          Opc == Mips::ULD_P8    || Opc == Mips::ULW64_P8  ||
-         Opc == Mips::ULH64_P8  || Opc == Mips::ULHu64_P8 || 
+         Opc == Mips::ULH64_P8  || Opc == Mips::ULHu64_P8 ||
          Opc == Mips::USD_P8    || Opc == Mips::USW64_P8  ||
          Opc == Mips::USH64_P8;
 }
@@ -109,7 +109,7 @@ void MipsAsmPrinter::EmitInstruction(const MachineInstr *MI) {
       MCInstLowering.LowerCPLOAD(MI, MCInsts);
     else if (Opc == Mips::CPRESTORE)
       MCInstLowering.LowerCPRESTORE(MI, MCInsts);
-    
+
     if (!MCInsts.empty()) {
       for (SmallVector<MCInst, 4>::iterator I = MCInsts.begin();
            I != MCInsts.end(); ++I)
@@ -244,7 +244,7 @@ void MipsAsmPrinter::emitFrameDirective() {
   unsigned returnReg = RI.getRARegister();
   unsigned stackSize = MF->getFrameInfo()->getStackSize();
 
-  if (OutStreamer.hasRawTextSupport()) 
+  if (OutStreamer.hasRawTextSupport())
     OutStreamer.EmitRawText("\t.frame\t$" +
            StringRef(MipsInstPrinter::getRegisterName(stackReg)).lower() +
            "," + Twine(stackSize) + ",$" +
@@ -263,7 +263,7 @@ const char *MipsAsmPrinter::getCurrentABIString() const {
 }
 
 void MipsAsmPrinter::EmitFunctionEntryLabel() {
-  if (OutStreamer.hasRawTextSupport()) 
+  if (OutStreamer.hasRawTextSupport())
     OutStreamer.EmitRawText("\t.ent\t" + Twine(CurrentFnSym->getName()));
   OutStreamer.EmitLabel(CurrentFnSym);
 }
@@ -316,18 +316,18 @@ bool MipsAsmPrinter::isBlockOnlyReachableByFallthrough(const MachineBasicBlock*
   // If there isn't exactly one predecessor, it can't be a fall through.
   MachineBasicBlock::const_pred_iterator PI = MBB->pred_begin(), PI2 = PI;
   ++PI2;
- 
+
   if (PI2 != MBB->pred_end())
-    return false;  
+    return false;
 
   // The predecessor has to be immediately before this block.
   if (!Pred->isLayoutSuccessor(MBB))
     return false;
-   
+
   // If the block is completely empty, then it definitely does fall through.
   if (Pred->empty())
     return true;
-  
+
   // Otherwise, check the last instruction.
   // Check if the last terminator is an unconditional branch.
   MachineBasicBlock::const_iterator I = Pred->end();
@@ -354,7 +354,7 @@ bool MipsAsmPrinter::PrintAsmMemoryOperand(const MachineInstr *MI,
                                            raw_ostream &O) {
   if (ExtraCode && ExtraCode[0])
      return true; // Unknown modifier.
-   
+
   const MachineOperand &MO = MI->getOperand(OpNum);
   assert(MO.isReg() && "unexpected inline asm memory operand");
   O << "0($" << MipsInstPrinter::getRegisterName(MO.getReg()) << ")";

@@ -1,4 +1,4 @@
-//===- MipsCallingConv.td - Calling Conventions for Mips ---*- tablegen -*-===//
+//===-- MipsCallingConv.td - Calling Conventions for Mips --*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -37,7 +37,7 @@ def RetCC_MipsO32 : CallingConv<[
 def CC_MipsN : CallingConv<[
    // Handles byval parameters.
   CCIfByVal<CCCustom<"CC_Mips64Byval">>,
- 
+
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 
@@ -74,7 +74,7 @@ def CC_MipsN : CallingConv<[
 def CC_MipsN_VarArg : CallingConv<[
    // Handles byval parameters.
   CCIfByVal<CCCustom<"CC_Mips64Byval">>,
- 
+
   // Promote i8/i16 arguments to i32.
   CCIfType<[i8, i16], CCPromoteToType<i32>>,
 

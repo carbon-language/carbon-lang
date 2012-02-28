@@ -103,7 +103,7 @@ def MipsDivRemU   : SDNode<"MipsISD::DivRemU", SDT_MipsDivRem,
 // target constant nodes that would otherwise remain unchanged with ADDiu
 // nodes. Without these wrapper node patterns, the following conditional move
 // instrucion is emitted when function cmov2 in test/CodeGen/Mips/cmov.ll is
-// compiled: 
+// compiled:
 //  movn  %got(d)($gp), %got(c)($gp), $4
 // This instruction is illegal since movn can take only register operands.
 
@@ -407,7 +407,7 @@ multiclass LoadM32<bits<6> op, string instr_asm, PatFrag OpNode,
                Requires<[NotN64]>;
   def _P8    : LoadM<op, instr_asm, OpNode, CPURegs, mem64, Pseudo>,
                Requires<[IsN64]>;
-} 
+}
 
 // 64-bit load.
 multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode,
@@ -416,7 +416,7 @@ multiclass LoadM64<bits<6> op, string instr_asm, PatFrag OpNode,
                Requires<[NotN64]>;
   def _P8    : LoadM<op, instr_asm, OpNode, CPU64Regs, mem64, Pseudo>,
                Requires<[IsN64]>;
-} 
+}
 
 // 32-bit load.
 multiclass LoadUnAlign32<bits<6> op> {
@@ -497,7 +497,7 @@ class JumpFJ<bits<6> op, string instr_asm>:
   let isTerminator=1;
   let isBarrier=1;
   let hasDelaySlot = 1;
-  let Predicates = [RelocStatic];  
+  let Predicates = [RelocStatic];
 }
 
 // Unconditional branch
@@ -510,7 +510,7 @@ class UncondBranch<bits<6> op, string instr_asm>:
   let isTerminator = 1;
   let isBarrier = 1;
   let hasDelaySlot = 1;
-  let Predicates = [RelocPIC];  
+  let Predicates = [RelocPIC];
 }
 
 let isBranch=1, isTerminator=1, isBarrier=1, rd=0, hasDelaySlot = 1,
@@ -647,7 +647,7 @@ class ReadHardware<RegisterClass CPURegClass, RegisterClass HWRegClass>
 
 // Ext and Ins
 class ExtBase<bits<6> _funct, string instr_asm, RegisterClass RC>:
-  FR<0x1f, _funct, (outs RC:$rt), (ins RC:$rs, uimm16:$pos, size_ext:$sz), 
+  FR<0x1f, _funct, (outs RC:$rt), (ins RC:$rs, uimm16:$pos, size_ext:$sz),
      !strconcat(instr_asm, " $rt, $rs, $pos, $sz"),
      [(set RC:$rt, (MipsExt RC:$rs, imm:$pos, imm:$sz))], NoItinerary> {
   bits<5> pos;
@@ -1133,7 +1133,7 @@ defm : SetgeImmPats<CPURegs, SLTi, SLTiu>;
 def : Pat<(MipsDynAlloc addr:$f), (DynAlloc addr:$f)>;
 
 // bswap pattern
-def : Pat<(bswap CPURegs:$rt), (ROTR (WSBH CPURegs:$rt), 16)>; 
+def : Pat<(bswap CPURegs:$rt), (ROTR (WSBH CPURegs:$rt), 16)>;
 
 //===----------------------------------------------------------------------===//
 // Floating Point Support

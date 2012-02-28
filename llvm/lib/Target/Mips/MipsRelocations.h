@@ -1,16 +1,16 @@
-//===- MipsRelocations.h - Mips Code Relocations ---------------*- C++ -*-===//
+//===-- MipsRelocations.h - Mips Code Relocations ---------------*- C++ -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 //
 // This file defines the Mips target-specific relocation types
 // (for relocation-model=static).
 //
-//===---------------------------------------------------------------------===//
+//===----------------------------------------------------------------------===//
 
 #ifndef MIPSRELOCATIONS_H_
 #define MIPSRELOCATIONS_H_

@@ -26,7 +26,7 @@ void MipsSubtarget::anchor() { }
 MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
                              const std::string &FS, bool little) :
   MipsGenSubtargetInfo(TT, CPU, FS),
-  MipsArchVersion(Mips32), MipsABI(UnknownABI), IsLittle(little), 
+  MipsArchVersion(Mips32), MipsABI(UnknownABI), IsLittle(little),
   IsSingleFloat(false), IsFP64bit(false), IsGP64bit(false), HasVFPU(false),
   IsLinux(true), HasSEInReg(false), HasCondMov(false), HasMulDivAdd(false),
   HasMinMax(false), HasSwap(false), HasBitCount(false)
@@ -43,7 +43,7 @@ MipsSubtarget::MipsSubtarget(const std::string &TT, const std::string &CPU,
 
   // Set MipsABI if it hasn't been set yet.
   if (MipsABI == UnknownABI)
-    MipsABI = hasMips64() ? N64 : O32; 
+    MipsABI = hasMips64() ? N64 : O32;
 
   // Check if Architecture and ABI are compatible.
   assert(((!hasMips64() && (isABI_O32() || isABI_EABI())) ||

@@ -1,4 +1,4 @@
-//===- MipsCondMov.td - Describe Mips Conditional Moves ---*- tablegen -*--===//
+//===-- MipsCondMov.td - Describe Mips Conditional Moves --*- tablegen -*--===//
 //
 //                     The LLVM Compiler Infrastructure
 //

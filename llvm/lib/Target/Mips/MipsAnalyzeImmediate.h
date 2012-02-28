@@ -51,7 +51,7 @@ namespace llvm {
     void ReplaceADDiuSLLWithLUi(InstSeq &Seq);
 
     /// GetShortestSeq - Find the shortest instruction sequence in SeqLs and
-    /// return it in Insts. 
+    /// return it in Insts.
     void GetShortestSeq(InstSeqLs &SeqLs, InstSeq &Insts);
 
     unsigned Size;

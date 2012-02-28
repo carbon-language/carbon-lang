@@ -1,4 +1,4 @@
-//===- MipsInstrFormats.td - Mips Instruction Formats ------*- tablegen -*-===//
+//===-- MipsInstrFormats.td - Mips Instruction Formats -----*- tablegen -*-===//
 //
 //                     The LLVM Compiler Infrastructure
 //

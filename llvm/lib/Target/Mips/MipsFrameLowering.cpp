@@ -101,7 +101,7 @@ static void expandLargeImm(unsigned Reg, int64_t Imm, bool IsN64,
                            MachineBasicBlock::iterator II, DebugLoc DL) {
   unsigned LUi = IsN64 ? Mips::LUi64 : Mips::LUi;
   unsigned ADDu = IsN64 ? Mips::DADDu : Mips::ADDu;
-  unsigned ZEROReg = IsN64 ? Mips::ZERO_64 : Mips::ZERO;    
+  unsigned ZEROReg = IsN64 ? Mips::ZERO_64 : Mips::ZERO;
   unsigned ATReg = IsN64 ? Mips::AT_64 : Mips::AT;
   MipsAnalyzeImmediate AnalyzeImm;
   const MipsAnalyzeImmediate::InstSeq &Seq =
@@ -125,7 +125,7 @@ static void expandLargeImm(unsigned Reg, int64_t Imm, bool IsN64,
   for (++Inst; Inst != Seq.end(); ++Inst)
     BuildMI(MBB, II, DL, TII.get(Inst->Opc), ATReg).addReg(ATReg)
       .addImm(SignExtend64<16>(Inst->ImmOpnd));
-  
+
   BuildMI(MBB, II, DL, TII.get(ADDu), Reg).addReg(Reg).addReg(ATReg);
   BuildMI(MBB, II, DL, TII.get(Mips::ATMACRO));
 }
@@ -150,15 +150,15 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
   // First, compute final stack size.
   unsigned RegSize = STI.isGP32bit() ? 4 : 8;
   unsigned StackAlign = getStackAlignment();
-  unsigned LocalVarAreaOffset = MipsFI->needGPSaveRestore() ? 
+  unsigned LocalVarAreaOffset = MipsFI->needGPSaveRestore() ?
     (MFI->getObjectOffset(MipsFI->getGPFI()) + RegSize) :
     MipsFI->getMaxCallFrameSize();
   uint64_t StackSize =  RoundUpToAlignment(LocalVarAreaOffset, StackAlign) +
      RoundUpToAlignment(MFI->getStackSize(), StackAlign);
 
    // Update stack size
-  MFI->setStackSize(StackSize); 
-  
+  MFI->setStackSize(StackSize);
+
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOREORDER));
   BuildMI(MBB, MBBI, dl, TII.get(Mips::NOMACRO));
 
@@ -201,13 +201,13 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
     // register to the stack.
     for (unsigned i = 0; i < CSI.size(); ++i)
       ++MBBI;
- 
+
     // Iterate over list of callee-saved registers and emit .cfi_offset
     // directives.
     MCSymbol *CSLabel = MMI.getContext().CreateTempSymbol();
     BuildMI(MBB, MBBI, dl,
             TII.get(TargetOpcode::PROLOG_LABEL)).addSym(CSLabel);
- 
+
     for (std::vector<CalleeSavedInfo>::const_iterator I = CSI.begin(),
            E = CSI.end(); I != E; ++I) {
       int64_t Offset = MFI->getObjectOffset(I->getFrameIdx());
@@ -235,14 +235,14 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
         Moves.push_back(MachineMove(CSLabel, DstML, SrcML));
       }
     }
-  }    
+  }
 
   // if framepointer enabled, set it to point to the stack pointer.
   if (hasFP(MF)) {
-    // Insert instruction "move $fp, $sp" at this location.    
+    // Insert instruction "move $fp, $sp" at this location.
     BuildMI(MBB, MBBI, dl, TII.get(ADDu), FP).addReg(SP).addReg(ZERO);
 
-    // emit ".cfi_def_cfa_register $fp" 
+    // emit ".cfi_def_cfa_register $fp"
     MCSymbol *SetFPLabel = MMI.getContext().CreateTempSymbol();
     BuildMI(MBB, MBBI, dl,
             TII.get(TargetOpcode::PROLOG_LABEL)).addSym(SetFPLabel);
@@ -280,7 +280,7 @@ void MipsFrameLowering::emitEpilogue(MachineFunction &MF,
   if (hasFP(MF)) {
     // Find the first instruction that restores a callee-saved register.
     MachineBasicBlock::iterator I = MBBI;
-    
+
     for (unsigned i = 0; i < MFI->getCalleeSavedInfo().size(); ++i)
       --I;
 
@@ -314,7 +314,7 @@ processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
   if (hasFP(MF))
     MRI.setPhysRegUsed(FP);
 
-  // The register allocator might determine $ra is used after seeing 
+  // The register allocator might determine $ra is used after seeing
   // instruction "jr $ra", but we do not want PrologEpilogInserter to insert
   // instructions to save/restore $ra unless there is a function call.
   // To correct this, $ra is explicitly marked unused if there is no

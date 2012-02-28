@@ -114,7 +114,7 @@ private:
 // passes from moving them.
 void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   MipsFunctionInfo *MipsFI = MF.getInfo<MipsFunctionInfo>();
-  
+
   if (!MipsFI->globalBaseRegSet())
     return;
 
@@ -132,8 +132,8 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   else {
     const TargetRegisterClass *RC;
     RC = Subtarget.isABI_N64() ?
-      Mips::CPU64RegsRegisterClass : Mips::CPURegsRegisterClass;
-    
+         Mips::CPU64RegsRegisterClass : Mips::CPURegsRegisterClass;
+
     V0 = RegInfo.createVirtualRegister(RC);
     V1 = RegInfo.createVirtualRegister(RC);
   }
@@ -178,12 +178,12 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
       BuildMI(MBB, I, DL, TII.get(Mips::SETGP2), GlobalBaseReg)
         .addReg(Mips::T9);
     }
-  }  
+  }
 }
 
 bool MipsDAGToDAGISel::runOnMachineFunction(MachineFunction &MF) {
   bool Ret = SelectionDAGISel::runOnMachineFunction(MF);
- 
+
   InitGlobalBaseReg(MF);
 
   return Ret;
@@ -251,7 +251,7 @@ SelectAddr(SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset) {
     //  lwc1 $f0, %lo($CPI1_0)($2)
     if (Addr.getOperand(1).getOpcode() == MipsISD::Lo) {
       SDValue LoVal = Addr.getOperand(1);
-      if (isa<ConstantPoolSDNode>(LoVal.getOperand(0)) || 
+      if (isa<ConstantPoolSDNode>(LoVal.getOperand(0)) ||
           isa<GlobalAddressSDNode>(LoVal.getOperand(0))) {
         Base = Addr.getOperand(0);
         Offset = LoVal.getOperand(0);
@@ -273,7 +273,7 @@ SelectAddr(SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset) {
 
 /// Select multiply instructions.
 std::pair<SDNode*, SDNode*>
-MipsDAGToDAGISel::SelectMULT(SDNode *N, unsigned Opc, DebugLoc dl, EVT Ty, 
+MipsDAGToDAGISel::SelectMULT(SDNode *N, unsigned Opc, DebugLoc dl, EVT Ty,
                              bool HasLo, bool HasHi) {
   SDNode *Lo = 0, *Hi = 0;
   SDNode *Mul = CurDAG->getMachineNode(Opc, dl, MVT::Glue, N->getOperand(0),
@@ -288,7 +288,7 @@ MipsDAGToDAGISel::SelectMULT(SDNode *N, unsigned Opc, DebugLoc dl, EVT Ty,
   if (HasHi)
     Hi = CurDAG->getMachineNode(Ty == MVT::i32 ? Mips::MFHI : Mips::MFHI64, dl,
                                 Ty, InFlag);
-  
+
   return std::make_pair(Lo, Hi);
 }
 
@@ -420,7 +420,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
 
     const MipsAnalyzeImmediate::InstSeq &Seq =
       AnalyzeImm.Analyze(Imm, Size, false);
-    
+
     MipsAnalyzeImmediate::InstSeq::const_iterator Inst = Seq.begin();
     DebugLoc DL = CN->getDebugLoc();
     SDNode *RegOpnd;
@@ -462,7 +462,7 @@ SDNode* MipsDAGToDAGISel::Select(SDNode *Node) {
       SrcReg = Mips::HWR29_64;
       DestReg = Mips::V1_64;
     }
-  
+
     SDNode *Rdhwr =
       CurDAG->getMachineNode(RdhwrOpc, Node->getDebugLoc(),
                              Node->getValueType(0),

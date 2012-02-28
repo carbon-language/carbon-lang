@@ -23,7 +23,7 @@ namespace llvm {
   class MachineFunction;
   class Mangler;
   class MipsAsmPrinter;
-  
+
 /// MipsMCInstLower - This class is used to lower an MachineInstr into an
 //                    MCInst.
 class LLVM_LIBRARY_VISIBILITY MipsMCInstLower {
@@ -33,10 +33,10 @@ class LLVM_LIBRARY_VISIBILITY MipsMCInstLower {
   MipsAsmPrinter &AsmPrinter;
 public:
   MipsMCInstLower(Mangler *mang, const MachineFunction &MF,
-                  MipsAsmPrinter &asmprinter);  
+                  MipsAsmPrinter &asmprinter);
   void Lower(const MachineInstr *MI, MCInst &OutMI) const;
   void LowerCPLOAD(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts);
-  void LowerCPRESTORE(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts); 
+  void LowerCPRESTORE(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts);
   void LowerUnalignedLoadStore(const MachineInstr *MI,
 		                           SmallVector<MCInst, 4>& MCInsts);
   void LowerSETGP01(const MachineInstr *MI, SmallVector<MCInst, 4>& MCInsts);

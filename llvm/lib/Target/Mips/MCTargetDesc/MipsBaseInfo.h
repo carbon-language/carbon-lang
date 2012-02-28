@@ -191,7 +191,7 @@ inline static unsigned getMipsRegisterNumbering(unsigned RegEnum)
   case Mips::HWR29:
     return 29;
   case Mips::FP: case Mips::FP_64: case Mips::F30: case Mips::D30_64:
-  case Mips::D15: 
+  case Mips::D15:
     return 30;
   case Mips::RA: case Mips::RA_64: case Mips::F31: case Mips::D31_64:
     return 31;

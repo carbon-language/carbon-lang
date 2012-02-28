@@ -108,7 +108,7 @@ let Predicates = [HasMips64r2] in {
 }
 
 /// Load and Store Instructions
-///  aligned 
+///  aligned
 defm LB64    : LoadM64<0x20, "lb",  sextloadi8>;
 defm LBu64   : LoadM64<0x24, "lbu", zextloadi8>;
 defm LH64    : LoadM64<0x21, "lh",  sextloadi16_a>;
@@ -267,7 +267,7 @@ def : Pat<(MipsDynAlloc addr:$f), (DynAlloc64 addr:$f)>, Requires<[IsN64]>;
 // truncate
 def : Pat<(i32 (trunc CPU64Regs:$src)),
           (SLL (EXTRACT_SUBREG CPU64Regs:$src, sub_32), 0)>, Requires<[IsN64]>;
- 
+
 // 32-to-64-bit extension
 def : Pat<(i64 (anyext CPURegs:$src)), (SLL64_32 CPURegs:$src)>;
 def : Pat<(i64 (zext CPURegs:$src)), (DSRL (DSLL64_32 CPURegs:$src), 32)>;
