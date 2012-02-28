@@ -436,6 +436,17 @@ PathDiagnosticPiece *ConditionBRVisitor::VisitNode(const ExplodedNode *N,
                                                    const ExplodedNode *Prev,
                                                    BugReporterContext &BRC,
                                                    BugReport &BR) {
+  PathDiagnosticPiece *piece = VisitNodeImpl(N, Prev, BRC, BR);
+  if (PathDiagnosticEventPiece *ev =
+      dyn_cast_or_null<PathDiagnosticEventPiece>(piece))
+    ev->setPrunable(true);
+  return piece;
+}
+
+PathDiagnosticPiece *ConditionBRVisitor::VisitNodeImpl(const ExplodedNode *N,
+                                                       const ExplodedNode *Prev,
+                                                       BugReporterContext &BRC,
+                                                       BugReport &BR) {
   
   const ProgramPoint &progPoint = N->getLocation();
 

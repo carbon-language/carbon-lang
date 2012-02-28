@@ -132,11 +132,17 @@ public:
     ID.AddPointer(&x);
   }
 
+  
   virtual PathDiagnosticPiece *VisitNode(const ExplodedNode *N,
                                          const ExplodedNode *Prev,
                                          BugReporterContext &BRC,
                                          BugReport &BR);
 
+  PathDiagnosticPiece *VisitNodeImpl(const ExplodedNode *N,
+                                     const ExplodedNode *Prev,
+                                     BugReporterContext &BRC,
+                                     BugReport &BR);
+  
   PathDiagnosticPiece *VisitTerminator(const Stmt *Term,
                                        const ExplodedNode *N,
                                        const CFGBlock *srcBlk,

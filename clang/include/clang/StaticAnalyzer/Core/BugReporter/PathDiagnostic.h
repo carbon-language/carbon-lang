@@ -353,14 +353,18 @@ public:
 };
 
 class PathDiagnosticEventPiece : public PathDiagnosticSpotPiece {
-
+  bool IsPrunable;
 public:
   PathDiagnosticEventPiece(const PathDiagnosticLocation &pos,
                            StringRef s, bool addPosRange = true)
-    : PathDiagnosticSpotPiece(pos, s, Event, addPosRange) {}
+    : PathDiagnosticSpotPiece(pos, s, Event, addPosRange),
+      IsPrunable(false) {}
 
   ~PathDiagnosticEventPiece();
 
+  void setPrunable(bool isPrunable) { IsPrunable = isPrunable; }
+  bool isPrunable() const { return IsPrunable; }
+  
   static inline bool classof(const PathDiagnosticPiece *P) {
     return P->getKind() == Event;
   }
@@ -527,7 +531,7 @@ public:
 
   void pushActivePath(PathPieces *p) { pathStack.push_back(p); }
   void popActivePath() { if (!pathStack.empty()) pathStack.pop_back(); }
-
+  
   PathDiagnostic();
   PathDiagnostic(StringRef bugtype, StringRef desc,
                  StringRef category);

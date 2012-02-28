@@ -111,6 +111,51 @@ GetCurrentOrNextStmt(const ExplodedNode *N) {
 }
 
 //===----------------------------------------------------------------------===//
+// Diagnostic cleanup.
+//===----------------------------------------------------------------------===//
+
+/// Recursively scan through a path and prune out calls and macros pieces
+/// that aren't needed.  Return true if afterwards the path contains
+/// "interesting stuff" which means it should be pruned from the parent path.
+static bool RemoveUneededCalls(PathPieces &pieces) {
+  bool containsSomethingInteresting = false;
+  const unsigned N = pieces.size();
+  
+  for (unsigned i = 0 ; i < N ; ++i) {
+    // Remove the front piece from the path.  If it is still something we
+    // want to keep once we are done, we will push it back on the end.
+    IntrusiveRefCntPtr<PathDiagnosticPiece> piece(pieces.front());
+    pieces.pop_front();
+    
+    if (PathDiagnosticCallPiece *call =
+        dyn_cast<PathDiagnosticCallPiece>(piece)) {      
+      // Recursively clean out the subclass.  Keep this call around if
+      // it contains any informative diagnostics.
+      if (!RemoveUneededCalls(call->path))
+        continue;
+      containsSomethingInteresting = true;
+    }
+    else if (PathDiagnosticMacroPiece *macro =
+             dyn_cast<PathDiagnosticMacroPiece>(piece)) {
+      if (!RemoveUneededCalls(macro->subPieces))
+        continue;
+      containsSomethingInteresting = true;
+    }
+    else if (PathDiagnosticEventPiece *event =
+             dyn_cast<PathDiagnosticEventPiece>(piece)) {
+      // We never throw away an event, but we do throw it away wholesale
+      // as part of a path if we throw the entire path away.
+      if (!event->isPrunable())
+        containsSomethingInteresting = true;
+    }
+    
+    pieces.push_back(piece);
+  }
+  
+  return containsSomethingInteresting;
+}
+
+//===----------------------------------------------------------------------===//
 // PathDiagnosticBuilder and its associated routines and helper objects.
 //===----------------------------------------------------------------------===//
 
@@ -1749,6 +1794,11 @@ void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,
       GenerateMinimalPathDiagnostic(PD, PDB, N);
       break;
   }
+  
+  // Finally, prune the diagnostic path of uninteresting stuff.
+  bool hasSomethingInteresting = RemoveUneededCalls(PD.getMutablePieces());
+  assert(hasSomethingInteresting);
+  (void) hasSomethingInteresting;
 }
 
 void BugReporter::Register(BugType *BT) {
