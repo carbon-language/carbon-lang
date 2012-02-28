@@ -209,7 +209,7 @@ static inline void EmitDwarfLineTable(MCStreamer *MCOS,
 //
 // This emits the Dwarf file and the line tables.
 //
-void MCDwarfFileTable::Emit(MCStreamer *MCOS) {
+const MCSymbol *MCDwarfFileTable::Emit(MCStreamer *MCOS) {
   MCContext &context = MCOS->getContext();
   // Switch to the section where the table will be emitted into.
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfLineSection());
@@ -322,6 +322,8 @@ void MCDwarfFileTable::Emit(MCStreamer *MCOS) {
   // This is the end of the section, so set the value of the symbol at the end
   // of this section (that was used in a previous expression).
   MCOS->EmitLabel(LineEndSym);
+
+  return LineStartSym;
 }
 
 /// Utility function to write the encoding to an object writer.
@@ -545,7 +547,9 @@ static void EmitGenDwarfAranges(MCStreamer *MCOS) {
 // When generating dwarf for assembly source files this emits the data for
 // .debug_info section which contains three parts.  The header, the compile_unit
 // DIE and a list of label DIEs.
-static void EmitGenDwarfInfo(MCStreamer *MCOS) {
+static void EmitGenDwarfInfo(MCStreamer *MCOS,
+                             const MCSymbol *AbbrevSectionSymbol,
+                             const MCSymbol *LineSectionSymbol) {
   MCContext &context = MCOS->getContext();
 
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection()); 
@@ -568,7 +572,11 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS) {
 
   // The 4 byte offset to the debug abbrevs from the start of the .debug_abbrev,
   // it is at the start of that section so this is zero.
-  MCOS->EmitIntValue(0, 4);
+  if (AbbrevSectionSymbol) {
+    MCOS->EmitSymbolValue(AbbrevSectionSymbol, 4);
+  } else {
+    MCOS->EmitIntValue(0, 4);
+  }
 
   const MCAsmInfo &asmInfo = context.getAsmInfo();
   int AddrSize = asmInfo.getPointerSize();
@@ -582,7 +590,11 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS) {
 
   // DW_AT_stmt_list, a 4 byte offset from the start of the .debug_line section,
   // which is at the start of that section so this is zero.
-  MCOS->EmitIntValue(0, 4);
+  if (LineSectionSymbol) {
+    MCOS->EmitSymbolValue(LineSectionSymbol, 4);
+  } else {
+    MCOS->EmitIntValue(0, 4);
+  }
 
   // AT_low_pc, the first address of the default .text section.
   const MCExpr *Start = MCSymbolRefExpr::Create(
@@ -686,11 +698,20 @@ static void EmitGenDwarfInfo(MCStreamer *MCOS) {
 // When generating dwarf for assembly source files this emits the Dwarf
 // sections.
 //
-void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
+void MCGenDwarfInfo::Emit(MCStreamer *MCOS, const MCSymbol *LineSectionSymbol) {
   // Create the dwarf sections in this order (.debug_line already created).
   MCContext &context = MCOS->getContext();
+  const MCAsmInfo &AsmInfo = context.getAsmInfo();
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfInfoSection());
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfAbbrevSection());
+  MCSymbol *AbbrevSectionSymbol;
+  if (AsmInfo.doesDwarfRequireRelocationForSectionOffset()) {
+    AbbrevSectionSymbol = context.CreateTempSymbol();
+    MCOS->EmitLabel(AbbrevSectionSymbol);
+  } else {
+    AbbrevSectionSymbol = NULL;
+    LineSectionSymbol = NULL;
+  }
   MCOS->SwitchSection(context.getObjectFileInfo()->getDwarfARangesSection());
 
   // If there are no line table entries then do not emit any section contents.
@@ -704,7 +725,7 @@ void MCGenDwarfInfo::Emit(MCStreamer *MCOS) {
   EmitGenDwarfAbbrev(MCOS);
 
   // Output the data for .debug_info section.
-  EmitGenDwarfInfo(MCOS);
+  EmitGenDwarfInfo(MCOS, AbbrevSectionSymbol, LineSectionSymbol);
 }
 
 //

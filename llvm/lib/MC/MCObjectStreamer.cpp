@@ -266,12 +266,13 @@ void MCObjectStreamer::EmitGPRel32Value(const MCExpr *Value) {
 
 void MCObjectStreamer::FinishImpl() {
   // Dump out the dwarf file & directory tables and line tables.
+  const MCSymbol *LineSectionSymbol;
   if (getContext().hasDwarfFiles())
-    MCDwarfFileTable::Emit(this);
+    LineSectionSymbol = MCDwarfFileTable::Emit(this);
 
   // If we are generating dwarf for assembly source files dump out the sections.
   if (getContext().getGenDwarfForAssembly())
-    MCGenDwarfInfo::Emit(this);
+    MCGenDwarfInfo::Emit(this, LineSectionSymbol);
 
   getAssembler().Finish();
 }
