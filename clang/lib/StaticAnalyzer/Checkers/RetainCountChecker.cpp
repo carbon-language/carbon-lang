@@ -2114,14 +2114,16 @@ namespace {
   };
 }
 
+// Find the first node in the current function context that referred to the
+// tracked symbol and the memory location that value was stored to. Note, the
+// value is only reported if the allocation occurred in the same function as
+// the leak.
 static std::pair<const ExplodedNode*,const MemRegion*>
 GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
                   SymbolRef Sym) {
-
-  // Find both first node that referred to the tracked symbol and the
-  // memory location that value was store to.
   const ExplodedNode *Last = N;
   const MemRegion* FirstBinding = 0;
+  const LocationContext *LeakContext = N->getLocationContext();
 
   while (N) {
     ProgramStateRef St = N->getState();
@@ -2134,8 +2136,18 @@ GetAllocationSite(ProgramStateManager& StateMgr, const ExplodedNode *N,
     StateMgr.iterBindings(St, FB);
     if (FB) FirstBinding = FB.getRegion();
 
-    Last = N;
+    // Allocation node, is the last node in the current context in which the
+    // symbol was tracked.
+    if (N->getLocationContext() == LeakContext)
+      Last = N;
+
     N = N->pred_empty() ? NULL : *(N->pred_begin());
+  }
+
+  // If allocation happened in a function different from the leak node context,
+  // do not report the binding.
+  if (N->getLocationContext() != LeakContext) {
+    FirstBinding = 0;
   }
 
   return std::make_pair(Last, FirstBinding);

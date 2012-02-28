@@ -253,6 +253,19 @@ extern CGColorSpaceRef CGColorSpaceCreateDeviceRGB(void);
 + (id)array;
 @end
 
+enum {
+    NSASCIIStringEncoding = 1,
+    NSNEXTSTEPStringEncoding = 2,
+    NSJapaneseEUCStringEncoding = 3,
+    NSUTF8StringEncoding = 4,
+    NSISOLatin1StringEncoding = 5,
+    NSSymbolStringEncoding = 6,
+    NSNonLossyASCIIStringEncoding = 7,
+};
+typedef struct __CFString * CFMutableStringRef;
+typedef NSUInteger NSStringEncoding;
+
+extern CFStringRef CFStringCreateWithCStringNoCopy(CFAllocatorRef alloc, const char *cStr, CFStringEncoding encoding, CFAllocatorRef contentsDeallocator);
 
 //===----------------------------------------------------------------------===//
 // Test cases.
@@ -285,13 +298,19 @@ void test_neg() {
 // Test returning retained and not-retained values.
 //===----------------------------------------------------------------------===//
 
-id test_return_retained() {
-  return [[NSString alloc] init]; // expected-warning {{leak}}
+// On return (intraprocedural), assume CF objects are leaked.
+CFStringRef test_return_ratained_CF(char *bytes) {
+  CFStringRef str;
+  return CFStringCreateWithCStringNoCopy(0, bytes, NSNEXTSTEPStringEncoding, 0); // expected-warning {{leak}}
+}
+
+// On return (intraprocedural), assume NSObjects are not leaked.
+id test_return_retained_NS() {
+  return [[NSString alloc] init]; // no-warning
 }
 
 void test_test_return_retained() {
-  id x = test_return_retained();
+  id x = test_return_retained_NS(); // expected-warning {{leak}}
   [x retain];
   [x release];
 }
-
