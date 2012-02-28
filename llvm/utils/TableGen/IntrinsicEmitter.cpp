@@ -517,37 +517,45 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
   else
     OS << "AttrListPtr Intrinsic::getAttributes(ID id) {\n";
 
-  // Compute the maximum number of attribute arguments.
-  std::vector<const CodeGenIntrinsic*> sortedIntrinsics(Ints.size());
+  // Compute the maximum number of attribute arguments and the map
+  typedef std::map<const CodeGenIntrinsic*, unsigned,
+                   AttributeComparator> UniqAttrMapTy;
+  UniqAttrMapTy UniqAttributes;
   unsigned maxArgAttrs = 0;
+  unsigned AttrNum = 0;
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
     const CodeGenIntrinsic &intrinsic = Ints[i];
-    sortedIntrinsics[i] = &intrinsic;
     maxArgAttrs =
       std::max(maxArgAttrs, unsigned(intrinsic.ArgumentAttributes.size()));
+    unsigned &N = UniqAttributes[&intrinsic];
+    if (N) continue;
+    assert(AttrNum < 256 && "Too many unique attributes for table!");
+    N = ++AttrNum;
   }
 
   // Emit an array of AttributeWithIndex.  Most intrinsics will have
   // at least one entry, for the function itself (index ~1), which is
   // usually nounwind.
+  OS << "  static const uint8_t IntrinsicsToAttributesMap[] = {\n";
+  OS << "    255, // Invalid intrinsic\n";
+
+  for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
+    const CodeGenIntrinsic &intrinsic = Ints[i];
+
+    OS << "    " << UniqAttributes[&intrinsic] << ", // "
+       << intrinsic.Name << "\n";
+  }
+  OS << "  };\n\n";
+
   OS << "  AttributeWithIndex AWI[" << maxArgAttrs+1 << "];\n";
   OS << "  unsigned NumAttrs = 0;\n";
-  OS << "  switch (id) {\n";
-  OS << "    default: break;\n";
+  OS << "  switch(IntrinsicsToAttributesMap[id]) {\n";
+  OS << "  default: llvm_unreachable(\"Invalid attribute number\");\n";
+  for (UniqAttrMapTy::const_iterator I = UniqAttributes.begin(),
+       E = UniqAttributes.end(); I != E; ++I) {
+    OS << "  case " << I->second << ":\n";
 
-  AttributeComparator precedes;
-
-  std::stable_sort(sortedIntrinsics.begin(), sortedIntrinsics.end(), precedes);
-
-  for (unsigned i = 0, e = sortedIntrinsics.size(); i != e; ++i) {
-    const CodeGenIntrinsic &intrinsic = *sortedIntrinsics[i];
-    OS << "  case " << TargetPrefix << "Intrinsic::"
-       << intrinsic.EnumName << ":\n";
-
-    // Fill out the case if this is the last case for this range of
-    // intrinsics.
-    if (i + 1 != e && !precedes(&intrinsic, sortedIntrinsics[i + 1]))
-      continue;
+    const CodeGenIntrinsic &intrinsic = *(I->first);
 
     // Keep track of the number of attributes we're writing out.
     unsigned numAttrs = 0;
@@ -555,7 +563,7 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
     // The argument attributes are alreadys sorted by argument index.
     for (unsigned ai = 0, ae = intrinsic.ArgumentAttributes.size(); ai != ae;) {
       unsigned argNo = intrinsic.ArgumentAttributes[ai].first;
-      
+
       OS << "    AWI[" << numAttrs++ << "] = AttributeWithIndex::get("
          << argNo+1 << ", ";
 
