@@ -1,0 +1,15 @@
+RUN: llvm-nm -D %p/Inputs/shared-object-test.elf-i386 \
+RUN:         | FileCheck %s -check-prefix ELF
+RUN: llvm-nm -D %p/Inputs/shared-object-test.elf-x86-64 \
+RUN:         | FileCheck %s -check-prefix ELF
+
+; Note: tls_sym should be 'D' (not '?'), but TLS is not
+; yet recognized by ObjectFile.
+
+ELF: {{[0-9a-f]+}} A __bss_start
+ELF: {{[0-9a-f]+}} A _edata
+ELF: {{[0-9a-f]+}} A _end
+ELF: {{[0-9a-f]+}} B common_sym
+ELF: {{[0-9a-f]+}} D defined_sym
+ELF: {{[0-9a-f]+}} T global_func
+ELF:               ? tls_sym

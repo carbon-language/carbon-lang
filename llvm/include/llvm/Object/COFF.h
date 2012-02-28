@@ -152,6 +152,8 @@ public:
   COFFObjectFile(MemoryBuffer *Object, error_code &ec);
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
+  virtual symbol_iterator begin_dynamic_symbols() const;
+  virtual symbol_iterator end_dynamic_symbols() const;
   virtual section_iterator begin_sections() const;
   virtual section_iterator end_sections() const;
 

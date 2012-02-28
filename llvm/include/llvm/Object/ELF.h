@@ -295,6 +295,7 @@ private:
   const Elf_Shdr *SectionHeaderTable;
   const Elf_Shdr *dot_shstrtab_sec; // Section header string table.
   const Elf_Shdr *dot_strtab_sec;   // Symbol header string table.
+  const Elf_Shdr *dot_dynstr_sec;   // Dynamic symbol string table.
   Sections_t SymbolTableSections;
   IndexMap_t SymbolTableSectionsIndexMap;
   DenseMap<const Elf_Sym*, ELF::Elf64_Word> ExtendedSymbolTable;
@@ -319,7 +320,10 @@ private:
   const Elf_Rela *getRela(DataRefImpl Rela) const;
   const char     *getString(uint32_t section, uint32_t offset) const;
   const char     *getString(const Elf_Shdr *section, uint32_t offset) const;
-  error_code      getSymbolName(const Elf_Sym *Symb, StringRef &Res) const;
+  error_code      getSymbolName(const Elf_Shdr *section,
+                                const Elf_Sym *Symb,
+                                StringRef &Res) const;
+  void VerifyStrTab(const Elf_Shdr *sh) const;
 
 protected:
   const Elf_Sym  *getSymbol(DataRefImpl Symb) const; // FIXME: Should be private?
@@ -375,6 +379,8 @@ public:
   ELFObjectFile(MemoryBuffer *Object, error_code &ec);
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
+  virtual symbol_iterator begin_dynamic_symbols() const;
+  virtual symbol_iterator end_dynamic_symbols() const;
   virtual section_iterator begin_sections() const;
   virtual section_iterator end_sections() const;
 
@@ -425,10 +431,14 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   // Check to see if we are at the end of this symbol table.
   if (Symb.d.a >= SymbolTableSection->getEntityCount()) {
     // We are at the end. If there are other symbol tables, jump to them.
-    ++Symb.d.b;
-    Symb.d.a = 1; // The 0th symbol in ELF is fake.
+    // If the symbol table is .dynsym, we are iterating dynamic symbols,
+    // and there is only one table of these.
+    if (Symb.d.b != 0) {
+      ++Symb.d.b;
+      Symb.d.a = 1; // The 0th symbol in ELF is fake.
+    }
     // Otherwise return the terminator.
-    if (Symb.d.b >= SymbolTableSections.size()) {
+    if (Symb.d.b == 0 || Symb.d.b >= SymbolTableSections.size()) {
       Symb.d.a = std::numeric_limits<uint32_t>::max();
       Symb.d.b = std::numeric_limits<uint32_t>::max();
     }
@@ -444,7 +454,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
                                         StringRef &Result) const {
   validateSymbol(Symb);
   const Elf_Sym *symb = getSymbol(Symb);
-  return getSymbolName(symb, Result);
+  return getSymbolName(SymbolTableSections[Symb.d.b], symb, Result);
 }
 
 template<support::endianness target_endianness, bool is64Bits>
@@ -1128,7 +1138,7 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   }
   const Elf_Sym *symb = getEntry<Elf_Sym>(sec->sh_link, symbol_index);
   StringRef symname;
-  if (error_code ec = getSymbolName(symb, symname))
+  if (error_code ec = getSymbolName(getSection(sec->sh_link), symb, symname))
     return ec;
   switch (Header->e_machine) {
   case ELF::EM_X86_64:
@@ -1156,6 +1166,16 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   return object_error::success;
 }
 
+// Verify that the last byte in the string table in a null.
+template<support::endianness target_endianness, bool is64Bits>
+void ELFObjectFile<target_endianness, is64Bits>
+                  ::VerifyStrTab(const Elf_Shdr *sh) const {
+  const char *strtab = (const char*)base() + sh->sh_offset;
+  if (strtab[sh->sh_size - 1] != 0)
+    // FIXME: Proper error handling.
+    report_fatal_error("String table must end with a null terminator!");
+}
+
 template<support::endianness target_endianness, bool is64Bits>
 ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
                                                           , error_code &ec)
@@ -1163,7 +1183,8 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
   , isDyldELFObject(false)
   , SectionHeaderTable(0)
   , dot_shstrtab_sec(0)
-  , dot_strtab_sec(0) {
+  , dot_strtab_sec(0)
+  , dot_dynstr_sec(0) {
 
   const uint64_t FileSize = Data->getBufferSize();
 
@@ -1194,6 +1215,10 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
   // To find the symbol tables we walk the section table to find SHT_SYMTAB.
   const Elf_Shdr* SymbolTableSectionHeaderIndex = 0;
   const Elf_Shdr* sh = SectionHeaderTable;
+
+  // Reserve SymbolTableSections[0] for .dynsym
+  SymbolTableSections.push_back(NULL);
+
   for (uint64_t i = 0, e = getNumSections(); i != e; ++i) {
     if (sh->sh_type == ELF::SHT_SYMTAB_SHNDX) {
       if (SymbolTableSectionHeaderIndex)
@@ -1204,6 +1229,13 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
     if (sh->sh_type == ELF::SHT_SYMTAB) {
       SymbolTableSectionsIndexMap[i] = SymbolTableSections.size();
       SymbolTableSections.push_back(sh);
+    }
+    if (sh->sh_type == ELF::SHT_DYNSYM) {
+      if (SymbolTableSections[0] != NULL)
+        // FIXME: Proper error handling.
+        report_fatal_error("More than one .dynsym!");
+      SymbolTableSectionsIndexMap[i] = 0;
+      SymbolTableSections[0] = sh;
     }
     if (sh->sh_type == ELF::SHT_REL || sh->sh_type == ELF::SHT_RELA) {
       SectionRelocMap[getSection(sh->sh_info)].push_back(i);
@@ -1221,10 +1253,7 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
   dot_shstrtab_sec = getSection(getStringTableIndex());
   if (dot_shstrtab_sec) {
     // Verify that the last byte in the string table in a null.
-    if (((const char*)base() + dot_shstrtab_sec->sh_offset)
-        [dot_shstrtab_sec->sh_size - 1] != 0)
-      // FIXME: Proper error handling.
-      report_fatal_error("String table must end with a null terminator!");
+    VerifyStrTab(dot_shstrtab_sec);
   }
 
   // Merge this into the above loop.
@@ -1239,10 +1268,13 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
           // FIXME: Proper error handling.
           report_fatal_error("Already found section named .strtab!");
         dot_strtab_sec = sh;
-        const char *dot_strtab = (const char*)base() + sh->sh_offset;
-          if (dot_strtab[sh->sh_size - 1] != 0)
-            // FIXME: Proper error handling.
-            report_fatal_error("String table must end with a null terminator!");
+        VerifyStrTab(dot_strtab_sec);
+      } else if (SectionName == ".dynstr") {
+        if (dot_dynstr_sec != 0)
+          // FIXME: Proper error handling.
+          report_fatal_error("Already found section named .dynstr!");
+        dot_dynstr_sec = sh;
+        VerifyStrTab(dot_dynstr_sec);
       }
     }
   }
@@ -1268,12 +1300,12 @@ symbol_iterator ELFObjectFile<target_endianness, is64Bits>
                              ::begin_symbols() const {
   DataRefImpl SymbolData;
   memset(&SymbolData, 0, sizeof(SymbolData));
-  if (SymbolTableSections.size() == 0) {
+  if (SymbolTableSections.size() <= 1) {
     SymbolData.d.a = std::numeric_limits<uint32_t>::max();
     SymbolData.d.b = std::numeric_limits<uint32_t>::max();
   } else {
     SymbolData.d.a = 1; // The 0th symbol in ELF is fake.
-    SymbolData.d.b = 0;
+    SymbolData.d.b = 1; // The 0th table is .dynsym
   }
   return symbol_iterator(SymbolRef(SymbolData, this));
 }
@@ -1281,6 +1313,31 @@ symbol_iterator ELFObjectFile<target_endianness, is64Bits>
 template<support::endianness target_endianness, bool is64Bits>
 symbol_iterator ELFObjectFile<target_endianness, is64Bits>
                              ::end_symbols() const {
+  DataRefImpl SymbolData;
+  memset(&SymbolData, 0, sizeof(SymbolData));
+  SymbolData.d.a = std::numeric_limits<uint32_t>::max();
+  SymbolData.d.b = std::numeric_limits<uint32_t>::max();
+  return symbol_iterator(SymbolRef(SymbolData, this));
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+symbol_iterator ELFObjectFile<target_endianness, is64Bits>
+                             ::begin_dynamic_symbols() const {
+  DataRefImpl SymbolData;
+  memset(&SymbolData, 0, sizeof(SymbolData));
+  if (SymbolTableSections[0] == NULL) {
+    SymbolData.d.a = std::numeric_limits<uint32_t>::max();
+    SymbolData.d.b = std::numeric_limits<uint32_t>::max();
+  } else {
+    SymbolData.d.a = 1; // The 0th symbol in ELF is fake.
+    SymbolData.d.b = 0; // The 0th table is .dynsym
+  }
+  return symbol_iterator(SymbolRef(SymbolData, this));
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+symbol_iterator ELFObjectFile<target_endianness, is64Bits>
+                             ::end_dynamic_symbols() const {
   DataRefImpl SymbolData;
   memset(&SymbolData, 0, sizeof(SymbolData));
   SymbolData.d.a = std::numeric_limits<uint32_t>::max();
@@ -1461,7 +1518,8 @@ const char *ELFObjectFile<target_endianness, is64Bits>
 
 template<support::endianness target_endianness, bool is64Bits>
 error_code ELFObjectFile<target_endianness, is64Bits>
-                        ::getSymbolName(const Elf_Sym *symb,
+                        ::getSymbolName(const Elf_Shdr *section,
+                                        const Elf_Sym *symb,
                                         StringRef &Result) const {
   if (symb->st_name == 0) {
     const Elf_Shdr *section = getSection(symb);
@@ -1472,8 +1530,13 @@ error_code ELFObjectFile<target_endianness, is64Bits>
     return object_error::success;
   }
 
-  // Use the default symbol table name section.
-  Result = getString(dot_strtab_sec, symb->st_name);
+  if (section == SymbolTableSections[0]) {
+    // Symbol is in .dynsym, use .dynstr string table
+    Result = getString(dot_dynstr_sec, symb->st_name);
+  } else {
+    // Use the default symbol table name section.
+    Result = getString(dot_strtab_sec, symb->st_name);
+  }
   return object_error::success;
 }
 

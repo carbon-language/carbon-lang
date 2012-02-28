@@ -508,6 +508,16 @@ symbol_iterator COFFObjectFile::end_symbols() const {
   return symbol_iterator(SymbolRef(ret, this));
 }
 
+symbol_iterator COFFObjectFile::begin_dynamic_symbols() const {
+  // TODO: implement
+  report_fatal_error("Dynamic symbols unimplemented in COFFObjectFile");
+}
+
+symbol_iterator COFFObjectFile::end_dynamic_symbols() const {
+  // TODO: implement
+  report_fatal_error("Dynamic symbols unimplemented in COFFObjectFile");
+}
+
 section_iterator COFFObjectFile::begin_sections() const {
   DataRefImpl ret;
   std::memset(&ret, 0, sizeof(DataRefImpl));

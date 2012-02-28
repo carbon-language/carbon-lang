@@ -388,6 +388,15 @@ symbol_iterator MachOObjectFile::end_symbols() const {
   return symbol_iterator(SymbolRef(DRI, this));
 }
 
+symbol_iterator MachOObjectFile::begin_dynamic_symbols() const {
+  // TODO: implement
+  report_fatal_error("Dynamic symbols unimplemented in MachOObjectFile");
+}
+
+symbol_iterator MachOObjectFile::end_dynamic_symbols() const {
+  // TODO: implement
+  report_fatal_error("Dynamic symbols unimplemented in MachOObjectFile");
+}
 
 /*===-- Sections ----------------------------------------------------------===*/
 
