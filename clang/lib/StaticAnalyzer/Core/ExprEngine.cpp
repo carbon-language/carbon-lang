@@ -13,6 +13,8 @@
 //
 //===----------------------------------------------------------------------===//
 
+#define DEBUG_TYPE "ExprEngine"
+
 #include "clang/StaticAnalyzer/Core/CheckerManager.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugType.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
@@ -27,6 +29,7 @@
 #include "clang/Basic/PrettyStackTrace.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/ImmutableList.h"
+#include "llvm/ADT/Statistic.h"
 
 #ifndef NDEBUG
 #include "llvm/Support/GraphWriter.h"
@@ -35,6 +38,11 @@
 using namespace clang;
 using namespace ento;
 using llvm::APSInt;
+
+STATISTIC(NumRemoveDeadBindings,
+            "The # of times RemoveDeadBindings is called");
+STATISTIC(NumRemoveDeadBindingsSkipped,
+            "The # of times RemoveDeadBindings is skipped");
 
 //===----------------------------------------------------------------------===//
 // Utility functions.
@@ -261,6 +269,7 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
   SymbolReaper SymReaper(LC, currentStmt, SymMgr, getStoreManager());
 
   if (shouldRemoveDeadBindings(AMgr, S, Pred, LC)) {
+    NumRemoveDeadBindings++;
     getCheckerManager().runCheckersForLiveSymbols(CleanedState, SymReaper);
 
     const StackFrameContext *SFC = LC->getCurrentStackFrame();
@@ -269,6 +278,8 @@ void ExprEngine::ProcessStmt(const CFGStmt S,
     // and the store. TODO: The function should just return new env and store,
     // not a new state.
     CleanedState = StateMgr.removeDeadBindings(CleanedState, SFC, SymReaper);
+  } else {
+    NumRemoveDeadBindingsSkipped++;
   }
 
   // Process any special transfer function for dead symbols.
