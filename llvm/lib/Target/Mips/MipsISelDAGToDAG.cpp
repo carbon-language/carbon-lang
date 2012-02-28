@@ -30,6 +30,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
 #include "llvm/CodeGen/SelectionDAGISel.h"
+#include "llvm/CodeGen/SelectionDAGNodes.h"
 #include "llvm/Target/TargetMachine.h"
 #include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
@@ -91,7 +92,7 @@ private:
   SDNode *Select(SDNode *N);
 
   // Complex Pattern.
-  bool SelectAddr(SDValue N, SDValue &Base, SDValue &Offset);
+  bool SelectAddr(SDNode *Parent, SDValue N, SDValue &Base, SDValue &Offset);
 
   // getImm - Return a target constant with the specified value.
   inline SDValue getImm(const SDNode *Node, unsigned Imm) {
@@ -197,7 +198,7 @@ SDNode *MipsDAGToDAGISel::getGlobalBaseReg() {
 /// ComplexPattern used on MipsInstrInfo
 /// Used on Mips Load/Store instructions
 bool MipsDAGToDAGISel::
-SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
+SelectAddr(SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset) {
   EVT ValTy = Addr.getValueType();
 
   // if Address is FI, get the TargetFrameIndex.
@@ -256,6 +257,12 @@ SelectAddr(SDValue Addr, SDValue &Base, SDValue &Offset) {
         return true;
       }
     }
+
+    // If an indexed load/store can be emitted, return false.
+    if (const LSBaseSDNode* LS = dyn_cast<LSBaseSDNode>(Parent))
+      if ((LS->getMemoryVT() == MVT::f32 || LS->getMemoryVT() == MVT::f64) &&
+          Subtarget.hasMips32r2Or64())
+        return false;
   }
 
   Base   = Addr;

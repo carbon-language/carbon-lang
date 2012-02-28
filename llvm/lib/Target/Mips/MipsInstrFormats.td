@@ -308,3 +308,23 @@ class FFMADDSUB<bits<3> funct, bits<3> fmt, dag outs, dag ins, string asmstr,
   let Inst{5-3} = funct;
   let Inst{2-0} = fmt;
 }
+
+// FP indexed load/store instructions.
+class FFMemIdx<bits<6> _funct, dag outs, dag ins, string asmstr,
+               list<dag> pattern> :
+  MipsInst<outs, ins, asmstr, pattern, NoItinerary, FrmOther>
+{
+  bits<5>  base;
+  bits<5>  index;
+  bits<5>  fs;
+  bits<5>  fd;
+  bits<6>  funct;
+
+  let Opcode = 0x13;
+
+  let Inst{25-21} = base;
+  let Inst{20-16} = index;
+  let Inst{15-11} = fs;
+  let Inst{10-6} = fd;
+  let Inst{5-0} = funct;
+}

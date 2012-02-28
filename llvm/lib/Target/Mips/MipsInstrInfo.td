@@ -128,6 +128,7 @@ def HasCondMov  : Predicate<"Subtarget.hasCondMov()">;
 def HasMips32    : Predicate<"Subtarget.hasMips32()">;
 def HasMips32r2  : Predicate<"Subtarget.hasMips32r2()">;
 def HasMips64    : Predicate<"Subtarget.hasMips64()">;
+def HasMips32r2Or64 : Predicate<"Subtarget.hasMips32r2Or64()">;
 def NotMips64    : Predicate<"!Subtarget.hasMips64()">;
 def HasMips64r2  : Predicate<"Subtarget.hasMips64r2()">;
 def IsN64       : Predicate<"Subtarget.isABI_N64()">;
@@ -231,7 +232,7 @@ def immZExt5 : ImmLeaf<i32, [{return Imm == (Imm & 0x1f);}]>;
 
 // Mips Address Mode! SDNode frameindex could possibily be a match
 // since load and store instructions from stack used it.
-def addr : ComplexPattern<iPTR, 2, "SelectAddr", [frameindex], []>;
+def addr : ComplexPattern<iPTR, 2, "SelectAddr", [frameindex], [SDNPWantParent]>;
 
 //===----------------------------------------------------------------------===//
 // Pattern fragment for load/store

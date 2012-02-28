@@ -94,6 +94,24 @@ class FPStore<bits<6> op, string opstr, RegisterClass RC, Operand MemOpnd>:
       !strconcat(opstr, "\t$ft, $addr"), [(store RC:$ft, addr:$addr)],
       IIStore>;
 
+// FP indexed load.
+class FPIdxLoad<bits<6> funct, string opstr, RegisterClass DRC,
+                RegisterClass PRC, PatFrag FOp>:
+  FFMemIdx<funct, (outs DRC:$fd), (ins PRC:$base, PRC:$index),
+           !strconcat(opstr, "\t$fd, $index($base)"),
+           [(set DRC:$fd, (FOp (add PRC:$base, PRC:$index)))]> {
+  let fs = 0;
+}
+
+// FP indexed store.
+class FPIdxStore<bits<6> funct, string opstr, RegisterClass DRC,
+                 RegisterClass PRC, PatFrag FOp>:
+  FFMemIdx<funct, (outs), (ins DRC:$fs, PRC:$base, PRC:$index),
+           !strconcat(opstr, "\t$fs, $index($base)"),
+           [(FOp DRC:$fs, (add PRC:$base, PRC:$index))]> {
+  let fd = 0;
+}
+
 // Instructions that convert an FP value to 32-bit fixed point.
 multiclass FFR1_W_M<bits<6> funct, string opstr> {
   def _S   : FFR1<funct, 16, opstr, "w.s", FGR32, FGR32>;
@@ -238,6 +256,34 @@ let Predicates = [NotN64, HasMips64] in {
 let Predicates = [NotN64, NotMips64] in {
   def LDC1   : FPLoad<0x35, "ldc1", AFGR64, mem>;
   def SDC1   : FPStore<0x3d, "sdc1", AFGR64, mem>;
+}
+
+// Indexed loads and stores.
+let Predicates = [HasMips32r2Or64] in {
+  def LWXC1 : FPIdxLoad<0x0, "lwxc1", FGR32, CPURegs, load_a>;
+  def LUXC1 : FPIdxLoad<0x5, "luxc1", FGR32, CPURegs, load_u>;
+  def SWXC1 : FPIdxStore<0x8, "swxc1", FGR32, CPURegs, store_a>;
+  def SUXC1 : FPIdxStore<0xd, "suxc1", FGR32, CPURegs, store_u>;
+}
+
+let Predicates = [HasMips32r2, NotMips64] in {
+  def LDXC1 : FPIdxLoad<0x1, "ldxc1", AFGR64, CPURegs, load_a>; 
+  def SDXC1 : FPIdxStore<0x9, "sdxc1", AFGR64, CPURegs, store_a>;
+}
+
+let Predicates = [HasMips64, NotN64] in {
+  def LDXC164 : FPIdxLoad<0x1, "ldxc1", FGR64, CPURegs, load_a>; 
+  def SDXC164 : FPIdxStore<0x9, "sdxc1", FGR64, CPURegs, store_a>;
+}
+
+// n64
+let Predicates = [IsN64] in {
+  def LWXC1_P8   : FPIdxLoad<0x0, "lwxc1", FGR32, CPU64Regs, load_a>;
+  def LUXC1_P8   : FPIdxLoad<0x5, "luxc1", FGR32, CPU64Regs, load_u>;
+  def LDXC164_P8 : FPIdxLoad<0x1, "ldxc1", FGR64, CPU64Regs, load_a>; 
+  def SWXC1_P8   : FPIdxStore<0x8, "swxc1", FGR32, CPU64Regs, store_a>;
+  def SUXC1_P8   : FPIdxStore<0xd, "suxc1", FGR32, CPU64Regs, store_u>;
+  def SDXC164_P8 : FPIdxStore<0x9, "sdxc1", FGR64, CPU64Regs, store_a>;
 }
 
 /// Floating-point Aritmetic
