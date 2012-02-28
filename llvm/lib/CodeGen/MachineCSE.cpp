@@ -170,6 +170,8 @@ MachineCSE::isPhysDefTriviallyDead(unsigned Reg,
     bool SeenDef = false;
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = I->getOperand(i);
+      if (MO.isRegMask() && MO.clobbersPhysReg(Reg))
+        SeenDef = true;
       if (!MO.isReg() || !MO.getReg())
         continue;
       if (!TRI->regsOverlap(MO.getReg(), Reg))
@@ -271,6 +273,10 @@ bool MachineCSE::PhysRegDefsReach(MachineInstr *CSMI, MachineInstr *MI,
 
     for (unsigned i = 0, e = I->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = I->getOperand(i);
+      // RegMasks go on instructions like calls that clobber lots of physregs.
+      // Don't attempt to CSE across such an instruction.
+      if (MO.isRegMask())
+        return false;
       if (!MO.isReg() || !MO.isDef())
         continue;
       unsigned MOReg = MO.getReg();
