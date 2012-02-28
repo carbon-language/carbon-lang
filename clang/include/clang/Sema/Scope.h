@@ -297,6 +297,10 @@ public:
   /// \brief Determine whether this scope is a C++ 'try' block.
   bool isTryScope() const { return getFlags() & Scope::TryScope; }
 
+  /// containedInPrototypeScope - Return true if this or a parent scope
+  /// is a FunctionPrototypeScope.
+  bool containedInPrototypeScope() const;
+
   typedef UsingDirectivesTy::iterator udir_iterator;
   typedef UsingDirectivesTy::const_iterator const_udir_iterator;
 

@@ -132,7 +132,11 @@ def warn_unused_variable : Warning<"unused variable %0">,
 def warn_unused_exception_param : Warning<"unused exception parameter %0">,
   InGroup<UnusedExceptionParameter>, DefaultIgnore;
 def warn_decl_in_param_list : Warning<
-  "declaration of %0 will not be visible outside of this function">;
+  "declaration of %0 will not be visible outside of this function">,
+  InGroup<Visibility>;
+def warn_redefinition_in_param_list : Warning<
+  "redefinition of %0 will not be visible outside of this function">,
+  InGroup<Visibility>;
 def warn_empty_parens_are_function_decl : Warning<
   "empty parentheses interpreted as a function declaration">,
   InGroup<VexingParse>;

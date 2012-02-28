@@ -497,6 +497,10 @@ struct XMLDumper : public XMLDeclVisitor<XMLDumper>,
     for (FunctionDecl::param_iterator
            I = D->param_begin(), E = D->param_end(); I != E; ++I)
       dispatch(*I);
+    for (llvm::ArrayRef<NamedDecl*>::iterator
+           I = D->getDeclsInPrototypeScope().begin(), E = D->getDeclsInPrototypeScope().end();
+         I != E; ++I)
+      dispatch(*I);
     if (D->doesThisDeclarationHaveABody())
       dispatch(D->getBody());
   }

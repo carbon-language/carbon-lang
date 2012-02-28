@@ -59,3 +59,13 @@ void Scope::Init(Scope *parent, unsigned flags) {
   Entity = 0;
   ErrorTrap.reset();
 }
+
+bool Scope::containedInPrototypeScope() const {
+  const Scope *S = this;
+  while (S) {
+    if (S->isFunctionPrototypeScope())
+      return true;
+    S = S->getParent();
+  }
+  return false;
+}

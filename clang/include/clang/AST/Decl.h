@@ -1431,6 +1431,11 @@ private:
   /// no formals.
   ParmVarDecl **ParamInfo;
 
+  /// DeclsInPrototypeScope - Array of pointers to NamedDecls for
+  /// decls defined in the function prototype that are not parameters. E.g.
+  /// 'enum Y' in 'void f(enum Y {AA} x) {}'.
+  llvm::ArrayRef<NamedDecl*> DeclsInPrototypeScope;
+
   LazyDeclStmtPtr Body;
 
   // FIXME: This can be packed into the bitfields in Decl.
@@ -1795,6 +1800,11 @@ public:
   void setParams(llvm::ArrayRef<ParmVarDecl *> NewParamInfo) {
     setParams(getASTContext(), NewParamInfo);
   }
+
+  const llvm::ArrayRef<NamedDecl*> &getDeclsInPrototypeScope() const {
+    return DeclsInPrototypeScope;
+  }
+  void setDeclsInPrototypeScope(llvm::ArrayRef<NamedDecl *> NewDecls);
 
   /// getMinRequiredArguments - Returns the minimum number of arguments
   /// needed to call this function. This may be fewer than the number of

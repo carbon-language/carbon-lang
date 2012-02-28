@@ -1249,6 +1249,10 @@ void Sema::ActOnPopScope(SourceLocation Loc, Scope *S) {
   }
 }
 
+void Sema::ActOnStartFunctionDeclarator() {
+  InFunctionDeclarator = true;
+}
+
 /// \brief Look for an Objective-C class in the translation unit.
 ///
 /// \param Id The name of the Objective-C class we're looking for. If
@@ -4810,6 +4814,8 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
   assert(R.getTypePtr()->isFunctionType());
 
+  InFunctionDeclarator = false;
+
   // TODO: consider using NameInfo for diagnostic.
   DeclarationNameInfo NameInfo = GetNameForDeclarator(D);
   DeclarationName Name = NameInfo.getName();
@@ -5240,6 +5246,15 @@ Sema::ActOnFunctionDeclarator(Scope *S, Declarator &D, DeclContext *DC,
 
   // Finally, we know we have the right number of parameters, install them.
   NewFD->setParams(Params);
+
+  // Find all anonymous symbols defined during the declaration of this function
+  // and add to NewFD. This lets us track decls such 'enum Y' in:
+  //
+  //   void f(enum Y {AA} x) {}
+  //
+  // which would otherwise incorrectly end up in the translation unit scope.
+  NewFD->setDeclsInPrototypeScope(DeclsInPrototypeScope);
+  DeclsInPrototypeScope.clear();
 
   // Process the non-inheritable attributes on this declaration.
   ProcessDeclAttributes(S, NewFD, D,
@@ -7225,6 +7240,43 @@ Decl *Sema::ActOnStartOfFunctionDef(Scope *FnBodyScope, Decl *D) {
     }
   }
 
+  // If we had any tags defined in the function prototype,
+  // introduce them into the function scope.
+  if (FnBodyScope) {
+    for (llvm::ArrayRef<NamedDecl*>::iterator I = FD->getDeclsInPrototypeScope().begin(),
+           E = FD->getDeclsInPrototypeScope().end(); I != E; ++E) {
+      NamedDecl *D = *I;
+
+      // Some of these decls (like enums) may have been pinned to the translation unit
+      // for lack of a real context earlier. If so, remove from the translation unit
+      // and reattach to the current context.
+      if (D->getLexicalDeclContext() == Context.getTranslationUnitDecl()) {
+        // Is the decl actually in the context?
+        for (DeclContext::decl_iterator DI = Context.getTranslationUnitDecl()->decls_begin(),
+               DE = Context.getTranslationUnitDecl()->decls_end(); DI != DE; ++DI) {
+          if (*DI == D) {  
+            Context.getTranslationUnitDecl()->removeDecl(D);
+            break;
+          }
+        }
+        // Either way, reassign the lexical decl context to our FunctionDecl.
+        D->setLexicalDeclContext(CurContext);
+      }
+
+      // If the decl has a non-null name, make accessible in the current scope.
+      if (!D->getName().empty())
+        PushOnScopeChains(D, FnBodyScope, /*AddToContext=*/false);
+
+      // Similarly, dive into enums and fish their constants out, making them
+      // accessible in this scope.
+      if (EnumDecl *ED = dyn_cast<EnumDecl>(D)) {
+        for (EnumDecl::enumerator_iterator EI = ED->enumerator_begin(),
+               EE = ED->enumerator_end(); EI != EE; ++EI)
+          PushOnScopeChains(*EI, FnBodyScope, /*AddToContext=*/false);
+      }
+    }
+  }
+
   // Checking attributes of current function definition
   // dllimport attribute.
   DLLImportAttr *DA = FD->getAttr<DLLImportAttr>();
@@ -8177,7 +8229,12 @@ Decl *Sema::ActOnTag(Scope *S, unsigned TagSpec, TagUseKind TUK,
                   !isa<CXXRecordDecl>(Def) ||
                   cast<CXXRecordDecl>(Def)->getTemplateSpecializationKind() 
                                                == TSK_ExplicitSpecialization) {
-                Diag(NameLoc, diag::err_redefinition) << Name;
+                // A redeclaration in function prototype scope in C isn't
+                // visible elsewhere, so merely issue a warning.
+                if (!getLangOptions().CPlusPlus && S->containedInPrototypeScope())
+                  Diag(NameLoc, diag::warn_redefinition_in_param_list) << Name;
+                else
+                  Diag(NameLoc, diag::err_redefinition) << Name;
                 Diag(Def->getLocation(), diag::note_previous_definition);
                 // If this is a redefinition, recover by making this
                 // struct be anonymous, which will make any later
@@ -8458,6 +8515,12 @@ CreateNewDecl:
         New->getDeclContext()->getRedeclContext()->isTranslationUnit() &&
         II->isStr("FILE"))
       Context.setFILEDecl(New);
+
+  // If we were in function prototype scope (and not in C++ mode), add this
+  // tag to the list of decls to inject into the function definition scope.
+  if (S->isFunctionPrototypeScope() && !getLangOptions().CPlusPlus &&
+      InFunctionDeclarator && Name)
+    DeclsInPrototypeScope.push_back(New);
 
   OwnedDecl = true;
   return New;
@@ -10142,6 +10205,12 @@ void Sema::ActOnEnumBody(SourceLocation EnumLoc, SourceLocation LBraceLoc,
 
   Enum->completeDefinition(BestType, BestPromotionType,
                            NumPositiveBits, NumNegativeBits);
+
+  // If we're declaring a function, ensure this decl isn't forgotten about -
+  // it needs to go into the function scope.
+  if (InFunctionDeclarator)
+    DeclsInPrototypeScope.push_back(Enum);
+
 }
 
 Decl *Sema::ActOnFileScopeAsmDecl(Expr *expr,

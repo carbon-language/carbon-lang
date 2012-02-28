@@ -4226,6 +4226,8 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
   ExprResult NoexceptExpr;
   ParsedType TrailingReturnType;
   
+  Actions.ActOnStartFunctionDeclarator();
+
   SourceLocation EndLoc;
   if (isFunctionDeclaratorIdentifierList()) {
     if (RequiresArg)
