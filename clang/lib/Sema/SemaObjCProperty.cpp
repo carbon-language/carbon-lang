@@ -263,7 +263,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   if (!PIDecl) {
     // No matching property found in the primary class. Just fall thru
     // and add property to continuation class's primary class.
-    ObjCPropertyDecl *PDecl =
+    ObjCPropertyDecl *PrimaryPDecl =
       CreatePropertyDecl(S, CCPrimary, AtLoc,
                          FD, GetterSel, SetterSel, isAssign, isReadWrite,
                          Attributes,AttributesAsWritten, T, MethodImplKind, DC);
@@ -271,11 +271,13 @@ Sema::HandlePropertyInClassExtension(Scope *S,
     // A case of continuation class adding a new property in the class. This
     // is not what it was meant for. However, gcc supports it and so should we.
     // Make sure setter/getters are declared here.
-    ProcessPropertyDecl(PDecl, CCPrimary, /* redeclaredProperty = */ 0,
+    ProcessPropertyDecl(PrimaryPDecl, CCPrimary, /* redeclaredProperty = */ 0,
                         /* lexicalDC = */ CDecl);
+    PDecl->setGetterMethodDecl(PrimaryPDecl->getGetterMethodDecl());
+    PDecl->setSetterMethodDecl(PrimaryPDecl->getSetterMethodDecl());
     if (ASTMutationListener *L = Context.getASTMutationListener())
-      L->AddedObjCPropertyInClassExtension(PDecl, /*OrigProp=*/0, CDecl);
-    return PDecl;
+      L->AddedObjCPropertyInClassExtension(PrimaryPDecl, /*OrigProp=*/0, CDecl);
+    return PrimaryPDecl;
   }
   if (!Context.hasSameType(PIDecl->getType(), PDecl->getType())) {
     bool IncompatibleObjC = false;
@@ -360,6 +362,8 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   *isOverridingProperty = true;
   // Make sure setter decl is synthesized, and added to primary class's list.
   ProcessPropertyDecl(PIDecl, CCPrimary, PDecl, CDecl);
+  PDecl->setGetterMethodDecl(PIDecl->getGetterMethodDecl());
+  PDecl->setSetterMethodDecl(PIDecl->getSetterMethodDecl());
   if (ASTMutationListener *L = Context.getASTMutationListener())
     L->AddedObjCPropertyInClassExtension(PDecl, PIDecl, CDecl);
   return 0;

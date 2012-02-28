@@ -41,6 +41,24 @@ public:
     }
   }
 
+  void handleObjCMethod(ObjCMethodDecl *D) {
+    IndexCtx.handleObjCMethod(D);
+    if (D->isImplicit())
+      return;
+
+    IndexCtx.indexTypeSourceInfo(D->getResultTypeSourceInfo(), D);
+    for (ObjCMethodDecl::param_iterator
+           I = D->param_begin(), E = D->param_end(); I != E; ++I)
+      handleDeclarator(*I, D);
+
+    if (D->isThisDeclarationADefinition()) {
+      const Stmt *Body = D->getBody();
+      if (Body) {
+        IndexCtx.indexBody(Body, D, D);
+      }
+    }
+  }
+
   bool VisitFunctionDecl(FunctionDecl *D) {
     IndexCtx.handleFunction(D);
     handleDeclarator(D);
@@ -161,22 +179,22 @@ public:
   }
 
   bool VisitObjCMethodDecl(ObjCMethodDecl *D) {
-    IndexCtx.handleObjCMethod(D);
-    IndexCtx.indexTypeSourceInfo(D->getResultTypeSourceInfo(), D);
-    for (ObjCMethodDecl::param_iterator
-           I = D->param_begin(), E = D->param_end(); I != E; ++I)
-      handleDeclarator(*I, D);
+    // Methods associated with a property, even user-declared ones, are
+    // handled when we handle the property.
+    if (D->isSynthesized())
+      return true;
 
-    if (D->isThisDeclarationADefinition()) {
-      const Stmt *Body = D->getBody();
-      if (Body) {
-        IndexCtx.indexBody(Body, D, D);
-      }
-    }
+    handleObjCMethod(D);
     return true;
   }
 
   bool VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
+    if (ObjCMethodDecl *MD = D->getGetterMethodDecl())
+      if (MD->getLexicalDeclContext() == D->getLexicalDeclContext())
+        handleObjCMethod(MD);
+    if (ObjCMethodDecl *MD = D->getSetterMethodDecl())
+      if (MD->getLexicalDeclContext() == D->getLexicalDeclContext())
+        handleObjCMethod(MD);
     IndexCtx.handleObjCProperty(D);
     IndexCtx.indexTypeSourceInfo(D->getTypeSourceInfo(), D);
     return true;
