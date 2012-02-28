@@ -126,7 +126,8 @@ void MipsDAGToDAGISel::InitGlobalBaseReg(MachineFunction &MF) {
   unsigned V0, V1, GlobalBaseReg = MipsFI->getGlobalBaseReg();
   bool FixGlobalBaseReg = MipsFI->globalBaseRegFixed();
 
-  if (FixGlobalBaseReg) // $gp is the global base register.
+  if (Subtarget.isABI_O32() && FixGlobalBaseReg)
+    // $gp is the global base register.
     V0 = V1 = GlobalBaseReg;
   else {
     const TargetRegisterClass *RC;
