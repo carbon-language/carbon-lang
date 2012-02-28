@@ -2774,5 +2774,30 @@ CodeGenFunction::GenerateObjCAtomicGetterCopyHelperFunction(
   return HelperFn;
 }
 
+llvm::Value *
+CodeGenFunction::EmitBlockCopyAndAutorelease(llvm::Value *Block, QualType Ty) {
+  // Get selectors for retain/autorelease.
+  IdentifierInfo *RetainID = &getContext().Idents.get("retain");
+  Selector RetainSelector =
+      getContext().Selectors.getNullarySelector(RetainID);
+  IdentifierInfo *AutoreleaseID = &getContext().Idents.get("autorelease");
+  Selector AutoreleaseSelector =
+      getContext().Selectors.getNullarySelector(AutoreleaseID);
+
+  // Emit calls to retain/autorelease.
+  CGObjCRuntime &Runtime = CGM.getObjCRuntime();
+  llvm::Value *Val = Block;
+  RValue Result;
+  Result = Runtime.GenerateMessageSend(*this, ReturnValueSlot(),
+                                       Ty, RetainSelector,
+                                       Val, CallArgList(), 0, 0);
+  Val = Result.getScalarVal();
+  Result = Runtime.GenerateMessageSend(*this, ReturnValueSlot(),
+                                       Ty, AutoreleaseSelector,
+                                       Val, CallArgList(), 0, 0);
+  Val = Result.getScalarVal();
+  return Val;
+}
+
 
 CGObjCRuntime::~CGObjCRuntime() {}

@@ -1149,8 +1149,7 @@ Value *ScalarExprEmitter::VisitCastExpr(CastExpr *CE) {
     return CGF.EmitARCExtendBlockObject(E);
 
   case CK_CopyAndAutoreleaseBlockObject:
-    CGF.ErrorUnsupported(E, "copy/autorelease block object");
-    return 0;
+    return CGF.EmitBlockCopyAndAutorelease(Visit(E), E->getType());
       
   case CK_FloatingRealToComplex:
   case CK_FloatingComplexCast:
