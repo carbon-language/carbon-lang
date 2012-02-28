@@ -4404,6 +4404,7 @@ TryListConversion(Sema &S, InitListExpr *From, QualType ToType,
       Result.setStandard();
       Result.Standard.setAsIdentityConversion();
     }
+    Result.setListInitializationSequence();
     return Result;
   }
 
