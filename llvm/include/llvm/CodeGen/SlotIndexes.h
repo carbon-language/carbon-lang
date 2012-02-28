@@ -493,8 +493,12 @@ namespace llvm {
     }
 
     /// Returns the base index for the given instruction.
-    SlotIndex getInstructionIndex(const MachineInstr *instr) const {
-      Mi2IndexMap::const_iterator itr = mi2iMap.find(instr);
+    SlotIndex getInstructionIndex(const MachineInstr *MI) const {
+      // Instructions inside a bundle have the same number as the bundle itself.
+      MachineBasicBlock::const_instr_iterator I = MI;
+      while (I->isInsideBundle())
+        --I;
+      Mi2IndexMap::const_iterator itr = mi2iMap.find(I);
       assert(itr != mi2iMap.end() && "Instruction not found in maps.");
       return itr->second;
     }
