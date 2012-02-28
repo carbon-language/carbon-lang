@@ -10,7 +10,7 @@ AC_DEFUN([AC_LINK_GET_VERSION],
 
    # Check for ld64.
    if (echo "$version_string" | grep -q "ld64"); then
-     llvm_cv_link_version=$(echo "$version_string" | sed -e "s#.*ld64-\([^ ]*\)#\1#")
+     llvm_cv_link_version=$(echo "$version_string" | sed -e "s#.*ld64-\([^ ]*\)\( (.*)\)\{0,1\}#\1#")
    else
      llvm_cv_link_version=$(echo "$version_string" | sed -e "s#[^0-9]*\([0-9.]*\).*#\1#")
    fi
