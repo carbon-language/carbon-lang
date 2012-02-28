@@ -35,6 +35,9 @@ protected:
   explicit ARMBaseInstrInfo(const ARMSubtarget &STI);
 
 public:
+  // Return whether the target has an explicit NOP encoding.
+  bool hasNOP() const;
+
   // Return the non-pre/post incrementing version of 'Opc'. Return 0
   // if there is not such an opcode.
   virtual unsigned getUnindexedOpcode(unsigned Opc) const =0;

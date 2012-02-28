@@ -21,6 +21,7 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
 #include "llvm/ADT/SmallVector.h"
+#include "llvm/MC/MCInst.h"
 #include "llvm/Support/CommandLine.h"
 
 using namespace llvm;
@@ -32,6 +33,13 @@ OldT2IfCvt("old-thumb2-ifcvt", cl::Hidden,
 
 Thumb2InstrInfo::Thumb2InstrInfo(const ARMSubtarget &STI)
   : ARMBaseInstrInfo(STI), RI(*this, STI) {
+}
+
+/// getNoopForMachoTarget - Return the noop instruction to use for a noop.
+void Thumb2InstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
+  NopInst.setOpcode(ARM::tNOP);
+  NopInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+  NopInst.addOperand(MCOperand::CreateReg(0));
 }
 
 unsigned Thumb2InstrInfo::getUnindexedOpcode(unsigned Opc) const {

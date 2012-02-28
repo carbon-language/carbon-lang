@@ -21,10 +21,27 @@
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineJumpTableInfo.h"
 #include "llvm/MC/MCAsmInfo.h"
+#include "llvm/MC/MCInst.h"
 using namespace llvm;
 
 ARMInstrInfo::ARMInstrInfo(const ARMSubtarget &STI)
   : ARMBaseInstrInfo(STI), RI(*this, STI) {
+}
+
+/// getNoopForMachoTarget - Return the noop instruction to use for a noop.
+void ARMInstrInfo::getNoopForMachoTarget(MCInst &NopInst) const {
+  if (hasNOP()) {
+    NopInst.setOpcode(ARM::NOP);
+    NopInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    NopInst.addOperand(MCOperand::CreateReg(0));
+  } else {
+    NopInst.setOpcode(ARM::MOVr);
+    NopInst.addOperand(MCOperand::CreateReg(ARM::R0));
+    NopInst.addOperand(MCOperand::CreateReg(ARM::R0));
+    NopInst.addOperand(MCOperand::CreateImm(ARMCC::AL));
+    NopInst.addOperand(MCOperand::CreateReg(0));
+    NopInst.addOperand(MCOperand::CreateReg(0));
+  }
 }
 
 unsigned ARMInstrInfo::getUnindexedOpcode(unsigned Opc) const {

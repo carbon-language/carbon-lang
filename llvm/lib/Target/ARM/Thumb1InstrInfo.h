@@ -27,6 +27,9 @@ class Thumb1InstrInfo : public ARMBaseInstrInfo {
 public:
   explicit Thumb1InstrInfo(const ARMSubtarget &STI);
 
+  /// getNoopForMachoTarget - Return the noop instruction to use for a noop.
+  void getNoopForMachoTarget(MCInst &NopInst) const;
+
   // Return the non-pre/post incrementing version of 'Opc'. Return 0
   // if there is not such an opcode.
   unsigned getUnindexedOpcode(unsigned Opc) const;

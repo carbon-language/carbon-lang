@@ -3003,3 +3003,7 @@ ARMBaseInstrInfo::setExecutionDomain(MachineInstr *MI, unsigned Domain) const {
   // This will go before any implicit ops.
   AddDefaultPred(MachineInstrBuilder(MI).addOperand(MI->getOperand(1)));
 }
+
+bool ARMBaseInstrInfo::hasNOP() const {
+  return (Subtarget.getFeatureBits() & ARM::HasV6T2Ops) != 0;
+}
