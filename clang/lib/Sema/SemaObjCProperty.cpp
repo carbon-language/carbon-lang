@@ -582,6 +582,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
     Diag(AtLoc, diag::error_missing_property_context);
     return 0;
   }
+  if (PropertyIvarLoc.isInvalid())
+    PropertyIvarLoc = PropertyLoc;
   ObjCPropertyDecl *property = 0;
   ObjCInterfaceDecl* IDecl = 0;
   // Find the class or category class where this property must have
@@ -729,7 +731,7 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
       }
 
       Ivar = ObjCIvarDecl::Create(Context, ClassImpDecl,
-                                  PropertyLoc, PropertyLoc, PropertyIvar,
+                                  PropertyIvarLoc,PropertyIvarLoc, PropertyIvar,
                                   PropertyIvarType, /*Dinfo=*/0,
                                   ObjCIvarDecl::Private,
                                   (Expr *)0, true);
@@ -762,10 +764,8 @@ Decl *Sema::ActOnPropertyImplDecl(Scope *S,
                                   PropertyIvarType->getAs<ObjCObjectPointerType>(),
                                   IvarType->getAs<ObjCObjectPointerType>());
       else {
-        SourceLocation Loc = PropertyIvarLoc;
-        if (Loc.isInvalid())
-          Loc = PropertyLoc;
-        compat = (CheckAssignmentConstraints(Loc, PropertyIvarType, IvarType)
+        compat = (CheckAssignmentConstraints(PropertyIvarLoc, PropertyIvarType,
+                                             IvarType)
                     == Compatible);
       }
       if (!compat) {

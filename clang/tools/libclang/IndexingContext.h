@@ -406,7 +406,8 @@ public:
   bool handleObjCMethod(const ObjCMethodDecl *D);
 
   bool handleSynthesizedObjCProperty(const ObjCPropertyImplDecl *D);
-  bool handleSynthesizedObjCMethod(const ObjCMethodDecl *D, SourceLocation Loc);
+  bool handleSynthesizedObjCMethod(const ObjCMethodDecl *D, SourceLocation Loc,
+                                   const DeclContext *LexicalDC);
 
   bool handleObjCProperty(const ObjCPropertyDecl *D);
 
@@ -452,7 +453,8 @@ public:
 private:
   bool handleDecl(const NamedDecl *D,
                   SourceLocation Loc, CXCursor Cursor,
-                  DeclInfo &DInfo);
+                  DeclInfo &DInfo,
+                  const DeclContext *LexicalDC = 0);
 
   bool handleObjCContainer(const ObjCContainerDecl *D,
                            SourceLocation Loc, CXCursor Cursor,

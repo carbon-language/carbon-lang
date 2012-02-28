@@ -216,11 +216,13 @@ public:
 
     if (ObjCMethodDecl *MD = PD->getGetterMethodDecl()) {
       if (MD->isSynthesized())
-        IndexCtx.handleSynthesizedObjCMethod(MD, D->getLocation());
+        IndexCtx.handleSynthesizedObjCMethod(MD, D->getLocation(),
+                                             D->getLexicalDeclContext());
     }
     if (ObjCMethodDecl *MD = PD->getSetterMethodDecl()) {
       if (MD->isSynthesized())
-        IndexCtx.handleSynthesizedObjCMethod(MD, D->getLocation());
+        IndexCtx.handleSynthesizedObjCMethod(MD, D->getLocation(),
+                                             D->getLexicalDeclContext());
     }
     return true;
   }
