@@ -567,6 +567,7 @@
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
+					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
@@ -613,6 +614,7 @@
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
+					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
@@ -658,6 +660,7 @@
 					"-Wparentheses",
 					"-DWITH_LOCKDOWN",
 					"-DWITH_SPRINGBOARD",
+					"-DOS_OBJECT_USE_OBJC=0",
 				);
 				"OTHER_CPLUSPLUSFLAGS[sdk=iphoneos*][arch=*]" = "$(OTHER_CFLAGS)";
 				OTHER_LDFLAGS = (
