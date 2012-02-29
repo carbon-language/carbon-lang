@@ -1419,10 +1419,10 @@ ExpandShiftWithKnownAmountBit(SDNode *N, SDValue &Lo, SDValue &Hi) {
       std::swap(InL, InH);
 
     // Use a little trick to get the bits that move from Lo to Hi. First
-    // calculate the shift with amount-1.
-    SDValue Sh1 = DAG.getNode(Op2, dl, NVT, InL, Amt2);
-    // Then shift one bit further to get the right result.
-    SDValue Sh2 = DAG.getNode(Op2, dl, NVT, Sh1, DAG.getConstant(1, ShTy));
+    // shift by one bit.
+    SDValue Sh1 = DAG.getNode(Op2, dl, NVT, InL, DAG.getConstant(1, ShTy));
+    // Then compute the remaining shift with amount-1.
+    SDValue Sh2 = DAG.getNode(Op2, dl, NVT, Sh1, Amt2);
 
     Lo = DAG.getNode(N->getOpcode(), dl, NVT, InL, Amt);
     Hi = DAG.getNode(ISD::OR, dl, NVT, DAG.getNode(Op1, dl, NVT, InH, Amt),Sh2);
