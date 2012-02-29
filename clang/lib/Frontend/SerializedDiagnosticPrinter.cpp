@@ -159,7 +159,7 @@ private:
   const DiagnosticOptions &DiagOpts;
   
   /// \brief The byte buffer for the serialized content.
-  std::vector<unsigned char> Buffer;
+  SmallString<1024> Buffer;
 
   /// \brief The BitStreamWriter for the serialized diagnostics.
   llvm::BitstreamWriter Stream;

@@ -709,7 +709,7 @@ class PCHGenerator : public SemaConsumer {
   raw_ostream *Out;
   Sema *SemaPtr;
   MemorizeStatCalls *StatCalls; // owned by the FileManager
-  std::vector<unsigned char> Buffer;
+  llvm::SmallVector<char, 128> Buffer;
   llvm::BitstreamWriter Stream;
   ASTWriter Writer;
 

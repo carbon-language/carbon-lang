@@ -2423,7 +2423,7 @@ bool ASTUnit::serialize(raw_ostream &OS) {
   if (getDiagnostics().hasErrorOccurred())
     return true;
 
-  std::vector<unsigned char> Buffer;
+  SmallString<128> Buffer;
   llvm::BitstreamWriter Stream(Buffer);
   ASTWriter Writer(Stream);
   // FIXME: Handle modules
