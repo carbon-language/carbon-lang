@@ -1,5 +1,8 @@
 // RUN: %clang_cc1 -fsyntax-only -Wconstant-conversion -verify %s
 
+// FIXME: Could we guarantee not to get stack overflow also on mingw?
+// XFAIL: mingw32
+
 // rdar://10913206
 // Check that we don't get stack overflow trying to evaluate a huge number of
 // logical operators.
