@@ -1326,10 +1326,43 @@ IRInterpreter::runOnFunction (lldb::ClangExpressionVariableSP &result,
                     return false;
                 }
                     
+                typedef SmallVector <Value *, 8> IndexVector;
+                typedef IndexVector::iterator IndexIterator;
+                
                 SmallVector <Value *, 8> indices (gep_inst->idx_begin(),
                                                   gep_inst->idx_end());
                 
-                uint64_t offset = target_data.getIndexedOffset(pointer_type, indices);
+                SmallVector <Value *, 8> const_indices;
+                
+                for (IndexIterator ii = indices.begin(), ie = indices.end();
+                     ii != ie;
+                     ++ii)
+                {
+                    ConstantInt *constant_index = dyn_cast<ConstantInt>(*ii);
+                    
+                    if (!constant_index)
+                    {
+                        lldb_private::Scalar I;
+                        
+                        if (!frame.EvaluateValue(I, *ii, llvm_module))
+                        {
+                            if (log)
+                                log->Printf("Couldn't evaluate %s", PrintValue(*ii).c_str());
+                            err.SetErrorToGenericError();
+                            err.SetErrorString(bad_value_error);
+                            return false;
+                        }
+                        
+                        if (log)
+                            log->Printf("Evaluated constant index %s as %llu", PrintValue(*ii).c_str(), I.ULongLong(LLDB_INVALID_ADDRESS));
+                        
+                        constant_index = cast<ConstantInt>(ConstantInt::get((*ii)->getType(), I.ULongLong(LLDB_INVALID_ADDRESS)));
+                    }
+                    
+                    const_indices.push_back(constant_index);
+                }
+                
+                uint64_t offset = target_data.getIndexedOffset(pointer_type, const_indices);
                 
                 lldb_private::Scalar Poffset = P + offset;
                 
