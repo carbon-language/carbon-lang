@@ -52,7 +52,6 @@ void Parser::HandlePragmaPack() {
   SourceLocation PragmaLoc = ConsumeToken();
   Actions.ActOnPragmaPack(Info->Kind, Info->Name, Info->Alignment, PragmaLoc,
                           Info->LParenLoc, Info->RParenLoc);
-  delete Info;
 }
 
 // #pragma GCC visibility comes in two variants:
@@ -214,20 +213,26 @@ void PragmaPackHandler::HandlePragma(Preprocessor &PP,
     return;
   }
 
-  PragmaPackInfo *Info = new PragmaPackInfo;
+  PragmaPackInfo *Info = 
+    (PragmaPackInfo*) PP.getPreprocessorAllocator().Allocate(
+      sizeof(PragmaPackInfo), llvm::alignOf<PragmaPackInfo>());
+  new (Info) PragmaPackInfo();
   Info->Kind = Kind;
   Info->Name = Name;
   Info->Alignment = Alignment.release();
   Info->LParenLoc = LParenLoc;
   Info->RParenLoc = RParenLoc;
 
-  Token *Toks = new Token[1];
+  Token *Toks = 
+    (Token*) PP.getPreprocessorAllocator().Allocate(
+      sizeof(Token) * 1, llvm::alignOf<Token>());
+  new (Toks) Token();
   Toks[0].startToken();
   Toks[0].setKind(tok::annot_pragma_pack);
   Toks[0].setLocation(PackLoc);
   Toks[0].setAnnotationValue(static_cast<void*>(Info));
   PP.EnterTokenStream(Toks, 1, /*DisableMacroExpansion=*/true,
-                      /*OwnsTokens=*/true);
+                      /*OwnsTokens=*/false);
 }
 
 // #pragma ms_struct on
@@ -256,7 +261,8 @@ void PragmaMSStructHandler::HandlePragma(Preprocessor &PP,
   }
   
   if (Tok.isNot(tok::eod)) {
-    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol) << "ms_struct";
+    PP.Diag(Tok.getLocation(), diag::warn_pragma_extra_tokens_at_eol)
+      << "ms_struct";
     return;
   }
   Actions.ActOnPragmaMSStruct(Kind);
@@ -401,7 +407,9 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP,
   // This allows us to cache a "#pragma unused" that occurs inside an inline
   // C++ member function.
 
-  Token *Toks = new Token[2*Identifiers.size()];
+  Token *Toks = 
+    (Token*) PP.getPreprocessorAllocator().Allocate(
+      sizeof(Token) * 2 * Identifiers.size(), llvm::alignOf<Token>());
   for (unsigned i=0; i != Identifiers.size(); i++) {
     Token &pragmaUnusedTok = Toks[2*i], &idTok = Toks[2*i+1];
     pragmaUnusedTok.startToken();
@@ -409,7 +417,8 @@ void PragmaUnusedHandler::HandlePragma(Preprocessor &PP,
     pragmaUnusedTok.setLocation(UnusedLoc);
     idTok = Identifiers[i];
   }
-  PP.EnterTokenStream(Toks, 2*Identifiers.size(), /*DisableMacroExpansion=*/true, /*OwnsTokens=*/true);
+  PP.EnterTokenStream(Toks, 2*Identifiers.size(),
+                      /*DisableMacroExpansion=*/true, /*OwnsTokens=*/false);
 }
 
 // #pragma weak identifier
