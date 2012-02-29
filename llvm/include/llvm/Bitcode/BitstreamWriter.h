@@ -59,6 +59,15 @@ class BitstreamWriter {
   };
   std::vector<BlockInfo> BlockInfoRecords;
 
+  // BackpatchWord - Backpatch a 32-bit word in the output with the specified
+  // value.
+  void BackpatchWord(unsigned ByteNo, unsigned NewWord) {
+    Out[ByteNo++] = (unsigned char)(NewWord >>  0);
+    Out[ByteNo++] = (unsigned char)(NewWord >>  8);
+    Out[ByteNo++] = (unsigned char)(NewWord >> 16);
+    Out[ByteNo  ] = (unsigned char)(NewWord >> 24);
+  }
+
 public:
   explicit BitstreamWriter(std::vector<unsigned char> &O)
     : Out(O), CurBit(0), CurValue(0), CurCodeSize(2) {}
@@ -77,8 +86,6 @@ public:
       BlockInfoRecords.pop_back();
     }
   }
-
-  std::vector<unsigned char> &getBuffer() { return Out; }
 
   /// \brief Retrieve the current position in the stream, in bits.
   uint64_t GetCurrentBitNo() const { return Out.size() * 8 + CurBit; }
@@ -162,15 +169,6 @@ public:
   /// EmitCode - Emit the specified code.
   void EmitCode(unsigned Val) {
     Emit(Val, CurCodeSize);
-  }
-
-  // BackpatchWord - Backpatch a 32-bit word in the output with the specified
-  // value.
-  void BackpatchWord(unsigned ByteNo, unsigned NewWord) {
-    Out[ByteNo++] = (unsigned char)(NewWord >>  0);
-    Out[ByteNo++] = (unsigned char)(NewWord >>  8);
-    Out[ByteNo++] = (unsigned char)(NewWord >> 16);
-    Out[ByteNo  ] = (unsigned char)(NewWord >> 24);
   }
 
   //===--------------------------------------------------------------------===//
