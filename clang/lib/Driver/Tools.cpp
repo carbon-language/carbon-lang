@@ -4220,6 +4220,9 @@ void solaris::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   ArgStringList CmdArgs;
 
+  // Demangle C++ names in errors
+  CmdArgs.push_back("-C");
+
   if ((!Args.hasArg(options::OPT_nostdlib)) &&
       (!Args.hasArg(options::OPT_shared))) {
     CmdArgs.push_back("-e");
