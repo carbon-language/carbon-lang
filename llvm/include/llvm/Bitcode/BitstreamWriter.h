@@ -74,10 +74,12 @@ class BitstreamWriter {
   }
 
   void WriteWord(unsigned Value) {
-    Out.push_back((unsigned char)(Value >>  0));
-    Out.push_back((unsigned char)(Value >>  8));
-    Out.push_back((unsigned char)(Value >> 16));
-    Out.push_back((unsigned char)(Value >> 24));
+    unsigned char Bytes[4] = {
+      (unsigned char)(Value >>  0),
+      (unsigned char)(Value >>  8),
+      (unsigned char)(Value >> 16),
+      (unsigned char)(Value >> 24) };
+    Out.append(&Bytes[0], &Bytes[4]);
   }
 
   unsigned GetBufferOffset() const {
