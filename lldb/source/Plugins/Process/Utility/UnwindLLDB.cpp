@@ -25,14 +25,15 @@ using namespace lldb_private;
 
 UnwindLLDB::UnwindLLDB (Thread &thread) :
     Unwind (thread),
-    m_frames()
+    m_frames(),
+    m_unwind_complete(false)
 {
 }
 
 uint32_t
 UnwindLLDB::DoGetFrameCount()
 {
-    if (m_frames.empty())
+    if (!m_unwind_complete)
     {
 //#define DEBUG_FRAME_SPEED 1
 #if DEBUG_FRAME_SPEED
@@ -68,6 +69,9 @@ UnwindLLDB::DoGetFrameCount()
 bool
 UnwindLLDB::AddFirstFrame ()
 {
+    if (m_frames.size() > 0)
+        return true;
+        
     // First, set up the 0th (initial) frame
     CursorSP first_cursor_sp(new Cursor ());
     RegisterContextLLDBSP reg_ctx_sp (new RegisterContextLLDB (m_thread, 
@@ -75,28 +79,35 @@ UnwindLLDB::AddFirstFrame ()
                                                                first_cursor_sp->sctx, 
                                                                0, *this));
     if (reg_ctx_sp.get() == NULL)
-        return false;
+        goto unwind_done;
     
     if (!reg_ctx_sp->IsValid())
-        return false;
+        goto unwind_done;
 
     if (!reg_ctx_sp->GetCFA (first_cursor_sp->cfa))
-        return false;
+        goto unwind_done;
 
     if (!reg_ctx_sp->ReadPC (first_cursor_sp->start_pc))
-        return false;
+        goto unwind_done;
 
     // Everything checks out, so release the auto pointer value and let the
     // cursor own it in its shared pointer
     first_cursor_sp->reg_ctx_lldb_sp = reg_ctx_sp;
     m_frames.push_back (first_cursor_sp);
     return true;
+unwind_done:
+    m_unwind_complete = true;
+    return false;
 }
 
 // For adding a non-zero stack frame to m_frames.
 bool
 UnwindLLDB::AddOneMoreFrame (ABI *abi)
 {
+    // If we've already gotten to the end of the stack, don't bother to try again...
+    if (m_unwind_complete)
+        return false;
+        
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
     CursorSP cursor_sp(new Cursor ());
 
@@ -111,7 +122,7 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
                                                               cur_idx, 
                                                               *this));
     if (reg_ctx_sp.get() == NULL)
-        return false;
+        goto unwind_done;
 
     if (!reg_ctx_sp->IsValid())
     {
@@ -120,7 +131,7 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
             log->Printf("%*sFrame %d invalid RegisterContext for this frame, stopping stack walk", 
                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
         }
-        return false;
+        goto unwind_done;
     }
     if (!reg_ctx_sp->GetCFA (cursor_sp->cfa))
     {
@@ -129,7 +140,7 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
             log->Printf("%*sFrame %d did not get CFA for this frame, stopping stack walk",
                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
         }
-        return false;
+        goto unwind_done;
     }
     if (abi && !abi->CallFrameAddressIsValid(cursor_sp->cfa))
     {
@@ -138,7 +149,7 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
             log->Printf("%*sFrame %d did not get a valid CFA for this frame, stopping stack walk",
                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
         }
-        return false;
+        goto unwind_done;
     }
     if (!reg_ctx_sp->ReadPC (cursor_sp->start_pc))
     {
@@ -147,7 +158,7 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
             log->Printf("%*sFrame %d did not get PC for this frame, stopping stack walk",
                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
         }
-        return false;
+        goto unwind_done;
     }
     if (abi && !abi->CodeAddressIsValid (cursor_sp->start_pc))
     {
@@ -156,26 +167,30 @@ UnwindLLDB::AddOneMoreFrame (ABI *abi)
             log->Printf("%*sFrame %d did not get a valid PC, stopping stack walk",
                         cur_idx < 100 ? cur_idx : 100, "", cur_idx);
         }
-        return false;
+        goto unwind_done;
     }
     if (!m_frames.empty())
     {
         if (m_frames.back()->start_pc == cursor_sp->start_pc)
         {
             if (m_frames.back()->cfa == cursor_sp->cfa)
-                return false; // Infinite loop where the current cursor is the same as the previous one...
+                goto unwind_done; // Infinite loop where the current cursor is the same as the previous one...
             else if (abi->StackUsesFrames())
             {
                 // We might have a CFA that is not using the frame pointer and
                 // we want to validate that the frame pointer is valid.
                 if (reg_ctx_sp->GetFP() == 0)
-                    return false;
+                    goto unwind_done;
             }
         }
     }
     cursor_sp->reg_ctx_lldb_sp = reg_ctx_sp;
     m_frames.push_back (cursor_sp);
     return true;
+    
+unwind_done:
+    m_unwind_complete = true;
+    return false;
 }
 
 bool

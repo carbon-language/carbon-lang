@@ -56,6 +56,7 @@ protected:
     DoClear()
     {
         m_frames.clear();
+        m_unwind_complete = false;
     }
 
     virtual uint32_t
@@ -98,6 +99,10 @@ private:
 
     typedef SHARED_PTR(Cursor) CursorSP;
     std::vector<CursorSP> m_frames;
+    bool m_unwind_complete; // If this is true, we've enumerated all the frames in the stack, and m_frames.size() is the 
+                            // number of frames, etc.  Otherwise we've only gone as far as directly asked, and m_frames.size()
+                            // is how far we've currently gone.
+ 
 
     bool AddOneMoreFrame (ABI *abi);
     bool AddFirstFrame ();

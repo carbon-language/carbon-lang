@@ -1069,7 +1069,10 @@ Thread::GetStackFrameList ()
 void
 Thread::ClearStackFrames ()
 {
-    if (m_curr_frames_sp && m_curr_frames_sp->GetNumFrames (false) > 1)
+    // Only store away the old "reference" StackFrameList if we got all its frames:
+    // FIXME: At some point we can try to splice in the frames we have fetched into
+    // the new frame as we make it, but let's not try that now.
+    if (m_curr_frames_sp && m_curr_frames_sp->GetAllFramesFetched())
         m_prev_frames_sp.swap (m_curr_frames_sp);
     m_curr_frames_sp.reset();
 }

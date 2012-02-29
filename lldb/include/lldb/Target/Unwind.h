@@ -51,6 +51,23 @@ public:
         Mutex::Locker locker(m_unwind_mutex);
         return DoGetFrameCount();
     }
+    
+    uint32_t
+    GetFramesUpTo (uint32_t end_idx)
+    {
+        lldb::addr_t cfa;
+        lldb::addr_t pc;
+        uint32_t idx;
+        
+        for (idx = 0; idx < end_idx; idx++)
+        {
+            if (!DoGetFrameInfoAtIndex (idx, cfa, pc))
+            {
+                break;
+            }
+        }
+        return idx;
+    }
 
     bool
     GetFrameInfoAtIndex (uint32_t frame_idx,

@@ -35,7 +35,7 @@ public:
 
     uint32_t
     GetNumFrames (bool can_create = true);
-
+    
     lldb::StackFrameSP
     GetFrameAtIndex (uint32_t idx);
 
@@ -53,7 +53,7 @@ public:
     GetSelectedFrameIndex () const;
 
     // Mark a stack frame as the current frame using the frame index
-    void
+    bool
     SetSelectedFrameByIndex (uint32_t idx);
 
     void
@@ -91,6 +91,21 @@ protected:
     Merge (std::auto_ptr<StackFrameList>& curr_ap, 
            lldb::StackFrameListSP& prev_sp);
 
+    void
+    GetFramesUpTo (uint32_t end_idx);
+    
+    bool
+    GetAllFramesFetched()
+    {
+        return m_concrete_frames_fetched == UINT32_MAX;
+    }
+    
+    void
+    SetAllFramesFetched ()
+    {
+        m_concrete_frames_fetched = UINT32_MAX;
+    }
+    
     //------------------------------------------------------------------
     // Classes that inherit from StackFrameList can see and modify these
     //------------------------------------------------------------------
@@ -103,6 +118,7 @@ protected:
     mutable Mutex m_mutex;
     collection m_frames;
     uint32_t m_selected_frame_idx;
+    uint32_t m_concrete_frames_fetched;
     bool m_show_inlined_frames;
 
 private:

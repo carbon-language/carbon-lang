@@ -196,7 +196,6 @@ public:
         Thread *thread = exe_ctx.GetThreadPtr();
         if (thread)
         {
-            const uint32_t num_frames = thread->GetStackFrameCount();
             uint32_t frame_idx = UINT32_MAX;
             if (m_options.relative_frame_offset != INT32_MIN)
             {
@@ -224,6 +223,9 @@ public:
                 }
                 else if (m_options.relative_frame_offset > 0)
                 {
+                    // I don't want "up 20" where "20" takes you past the top of the stack to produce
+                    // an error, but rather to just go to the top.  So I have to count the stack here...
+                    const uint32_t num_frames = thread->GetStackFrameCount();
                     if (num_frames - frame_idx > m_options.relative_frame_offset)
                         frame_idx += m_options.relative_frame_offset;
                     else
@@ -262,9 +264,9 @@ public:
                 }
             }
                 
-            if (frame_idx < num_frames)
+            bool success = thread->SetSelectedFrameByIndex (frame_idx);
+            if (success)
             {
-                thread->SetSelectedFrameByIndex (frame_idx);
                 exe_ctx.SetFrameSP(thread->GetSelectedFrame ());
                 StackFrame *frame = exe_ctx.GetFramePtr();
                 if (frame)

@@ -356,10 +356,10 @@ public:
         return GetStackFrameList().SetSelectedFrame(frame);
     }
 
-    void
+    bool
     SetSelectedFrameByIndex (uint32_t frame_idx)
     {
-        GetStackFrameList().SetSelectedFrameByIndex(frame_idx);
+        return GetStackFrameList().SetSelectedFrameByIndex(frame_idx);
     }
 
     void
