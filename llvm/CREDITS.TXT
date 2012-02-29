@@ -95,6 +95,10 @@ N: Alkis Evlogimenos
 E: alkis@evlogimenos.com
 D: Linear scan register allocator, many codegen improvements, Java frontend
 
+N: Hal Finkel
+E: hfinkel@anl.gov
+D: Basic-block autovectorization, PowerPC backend improvements
+
 N: Ryan Flynn
 E: pizza@parseerror.com
 D: Miscellaneous bug fixes
