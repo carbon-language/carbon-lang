@@ -1847,6 +1847,16 @@ void FunctionDecl::setParams(ASTContext &C,
   }
 }
 
+void FunctionDecl::setDeclsInPrototypeScope(llvm::ArrayRef<NamedDecl *> NewDecls) {
+  assert(DeclsInPrototypeScope.empty() && "Already has prototype decls!");
+
+  if (!NewDecls.empty()) {
+    NamedDecl **A = new (getASTContext()) NamedDecl*[NewDecls.size()];
+    std::copy(NewDecls.begin(), NewDecls.end(), A);
+    DeclsInPrototypeScope = llvm::ArrayRef<NamedDecl*>(A, NewDecls.size());
+  }
+}
+
 /// getMinRequiredArguments - Returns the minimum number of arguments
 /// needed to call this function. This may be fewer than the number of
 /// function parameters, if some of the parameters have default

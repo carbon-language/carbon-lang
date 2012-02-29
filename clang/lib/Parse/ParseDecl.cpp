@@ -4226,6 +4226,8 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
   ExprResult NoexceptExpr;
   ParsedType TrailingReturnType;
   
+  Actions.ActOnStartFunctionDeclarator();
+
   SourceLocation EndLoc;
   if (isFunctionDeclaratorIdentifierList()) {
     if (RequiresArg)
@@ -4308,6 +4310,8 @@ void Parser::ParseFunctionDeclarator(Declarator &D,
                                              EndLoc, D,
                                              TrailingReturnType),
                 attrs, EndLoc);
+
+  Actions.ActOnEndFunctionDeclarator();
 }
 
 /// isFunctionDeclaratorIdentifierList - This parameter list may have an
