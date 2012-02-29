@@ -602,7 +602,7 @@ error_code make_absolute(SmallVectorImpl<char> &path) {
 
   bool rootDirectory = path::has_root_directory(p),
 #ifdef LLVM_ON_WIN32
-       rootName = has_root_name(p);
+       rootName = path::has_root_name(p);
 #else
        rootName = true;
 #endif
