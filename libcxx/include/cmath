@@ -999,11 +999,8 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 sqrt(_A1 __x) {return sqrt((double)__x);}
 
-#ifndef __sun__
-
 // tan
 
-#endif // __sun__
 using ::tan;
 using ::tanf;
 #ifndef __sun__
@@ -1415,11 +1412,12 @@ typename enable_if<is_integral<_A1>::value, long>::type
 lround(_A1 __x) {return lround((double)__x);}
 
 // nan
-
+#endif // _MSC_VER
 #endif // __sun__
 using ::nan;
 using ::nanf;
 #ifndef __sun__
+#ifndef _MSC_VER
 
 // nearbyint
 
