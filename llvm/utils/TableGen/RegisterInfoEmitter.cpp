@@ -90,6 +90,20 @@ RegisterInfoEmitter::runEnums(raw_ostream &OS,
       OS << "}\n";
   }
 
+  ArrayRef<CodeGenSubRegIndex*> SubRegIndices = Bank.getSubRegIndices();
+  if (!SubRegIndices.empty()) {
+    OS << "\n// Subregister indices\n";
+    std::string Namespace =
+      SubRegIndices[0]->getNamespace();
+    if (!Namespace.empty())
+      OS << "namespace " << Namespace << " {\n";
+    OS << "enum {\n  NoSubRegister,\n";
+    for (unsigned i = 0, e = Bank.getNumNamedIndices(); i != e; ++i)
+      OS << "  " << SubRegIndices[i]->getName() << ",\t// " << i+1 << "\n";
+    OS << "  NUM_TARGET_NAMED_SUBREGS\n};\n";
+    if (!Namespace.empty())
+      OS << "}\n";
+  }
 
   OS << "} // End llvm namespace \n";
   OS << "#endif // GET_REGINFO_ENUM\n\n";
@@ -445,21 +459,6 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
         "const TargetRegisterClass*, const TargetRegisterClass*, "
         "unsigned) const;\n"
      << "};\n\n";
-
-  ArrayRef<CodeGenSubRegIndex*> SubRegIndices = RegBank.getSubRegIndices();
-  if (!SubRegIndices.empty()) {
-    OS << "\n// Subregister indices\n";
-    std::string Namespace =
-      SubRegIndices[0]->getNamespace();
-    if (!Namespace.empty())
-      OS << "namespace " << Namespace << " {\n";
-    OS << "enum {\n  NoSubRegister,\n";
-    for (unsigned i = 0, e = RegBank.getNumNamedIndices(); i != e; ++i)
-      OS << "  " << SubRegIndices[i]->getName() << ",\t// " << i+1 << "\n";
-    OS << "  NUM_TARGET_NAMED_SUBREGS\n};\n";
-    if (!Namespace.empty())
-      OS << "}\n";
-  }
 
   ArrayRef<CodeGenRegisterClass*> RegisterClasses = RegBank.getRegClasses();
 
