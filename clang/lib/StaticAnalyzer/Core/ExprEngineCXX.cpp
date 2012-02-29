@@ -335,15 +335,9 @@ void ExprEngine::VisitCXXNewExpr(const CXXNewExpr *CNE, ExplodedNode *Pred,
 
 void ExprEngine::VisitCXXDeleteExpr(const CXXDeleteExpr *CDE, 
                                     ExplodedNode *Pred, ExplodedNodeSet &Dst) {
-  // Should do more checking.
-  ExplodedNodeSet Argevaluated;
-  Visit(CDE->getArgument(), Pred, Argevaluated);
-  StmtNodeBuilder Bldr(Argevaluated, Dst, *currentBuilderContext);
-  for (ExplodedNodeSet::iterator I = Argevaluated.begin(), 
-                                 E = Argevaluated.end(); I != E; ++I) {
-    ProgramStateRef state = (*I)->getState();
-    Bldr.generateNode(CDE, *I, state);
-  }
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  ProgramStateRef state = Pred->getState();
+  Bldr.generateNode(CDE, Pred, state);
 }
 
 void ExprEngine::VisitCXXThisExpr(const CXXThisExpr *TE, ExplodedNode *Pred,

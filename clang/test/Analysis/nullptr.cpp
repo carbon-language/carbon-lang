@@ -39,7 +39,6 @@ void foo4(void) {
     *np = 0;  // no-warning
 }
 
-
 int pr10372(void *& x) {
   // GNU null is a pointer-sized integer, not a pointer.
   x = __null;
@@ -47,3 +46,7 @@ int pr10372(void *& x) {
   return __null;
 }
 
+void zoo1() {
+  char **p = 0;
+  delete *(p + 0); // expected-warning{{Dereference of null pointer}}
+}
