@@ -6533,14 +6533,14 @@ Stmt *RewriteModernObjC::RewriteObjCIvarRefExpr(ObjCIvarRefExpr *IV) {
                                               SourceLocation(),
                                               addExpr);
       QualType IvarT = D->getType();
-      convertBlockPointerToFunctionPointer(IvarT);
+      convertObjCTypeToCStyleType(IvarT);
       QualType castT = Context->getPointerType(IvarT);
       
       castExpr = NoTypeInfoCStyleCastExpr(Context, 
                                           castT,
                                           CK_BitCast,
                                           PE);
-      Expr *Exp = new (Context) UnaryOperator(castExpr, UO_Deref, castT,
+      Expr *Exp = new (Context) UnaryOperator(castExpr, UO_Deref, IvarT,
                                               VK_LValue, OK_Ordinary,
                                               SourceLocation());
       PE = new (Context) ParenExpr(OldRange.getBegin(),
