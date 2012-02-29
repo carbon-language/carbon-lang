@@ -667,7 +667,7 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters()
     // Note that the layout of the "composite" registers (d0-d15 and q0-q15) which comes after the
     // "primordial" registers is important.  This enables us to calculate the offset of the composite
     // register by using the offset of its first primordial register.  For example, to calculate the
-    // offset of q0, use the d16->offset.
+    // offset of q0, use s0's offset.
     if (g_register_infos[2].byte_offset == 0)
     {
         uint32_t byte_offset = 0;
