@@ -184,6 +184,9 @@ public:
   /// Does this tool chain support Objective-C garbage collection.
   virtual bool SupportsObjCGC() const { return true; }
 
+  /// Does this tool chain support Objective-C ARC.
+  virtual bool SupportsObjCARC() const { return true; }
+
   /// UseDwarfDebugFlags - Embed the compile options to clang into the Dwarf
   /// compile unit information.
   virtual bool UseDwarfDebugFlags() const { return false; }
