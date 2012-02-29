@@ -182,13 +182,15 @@ class BitcodeReader : public GVMaterializer {
 public:
   explicit BitcodeReader(MemoryBuffer *buffer, LLVMContext &C)
     : Context(C), TheModule(0), Buffer(buffer), BufferOwned(false),
-      LazyStreamer(0), SeenValueSymbolTable(false), ErrorString(0),
-      ValueList(C), MDValueList(C), SeenFirstFunctionBody(false) {
+      LazyStreamer(0), NextUnreadBit(0), SeenValueSymbolTable(false),
+      ErrorString(0), ValueList(C), MDValueList(C),
+      SeenFirstFunctionBody(false) {
   }
   explicit BitcodeReader(DataStreamer *streamer, LLVMContext &C)
     : Context(C), TheModule(0), Buffer(0), BufferOwned(false),
-      LazyStreamer(streamer), SeenValueSymbolTable(false), ErrorString(0),
-      ValueList(C), MDValueList(C), SeenFirstFunctionBody(false) {
+      LazyStreamer(streamer), NextUnreadBit(0), SeenValueSymbolTable(false),
+      ErrorString(0), ValueList(C), MDValueList(C),
+      SeenFirstFunctionBody(false) {
   }
   ~BitcodeReader() {
     FreeState();

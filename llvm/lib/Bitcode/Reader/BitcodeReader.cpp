@@ -2789,6 +2789,12 @@ bool BitcodeReader::MaterializeModule(Module *M, std::string *ErrInfo) {
         Materialize(F, ErrInfo))
       return true;
 
+  // At this point, if there are any function bodies, the current bit is
+  // pointing to the END_BLOCK record after them. Now make sure the rest
+  // of the bits in the module have been read.
+  if (NextUnreadBit)
+    ParseModule(true);
+
   // Upgrade any intrinsic calls that slipped through (should not happen!) and
   // delete the old functions to clean up. We can't do this unless the entire
   // module is materialized because there could always be another function body
