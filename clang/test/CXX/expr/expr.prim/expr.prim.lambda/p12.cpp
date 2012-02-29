@@ -52,9 +52,8 @@ void f1(int i) { // expected-note{{declared here}}
   auto m1 = [=]{
     int const M = 30;
     auto m2 = [i]{
-      // FIXME: We odr-use here, but we shouldn't.
-      //      int x[N][M];
-      //      x[0][0] = i;
+      int x[N][M];
+      x[0][0] = i;
     }; 
     (void)N;
     (void)M;

@@ -2341,6 +2341,8 @@ public:
   ExprResult TranformToPotentiallyEvaluated(Expr *E);
   ExprResult HandleExprEvaluationContextForTypeof(Expr *E);
 
+  ExprResult ActOnConstantExpression(ExprResult Res);
+
   // Functions for marking a declaration referenced.  These functions also
   // contain the relevant logic for marking if a reference to a function or
   // variable is an odr-use (in the C++11 sense).  There are separate variants

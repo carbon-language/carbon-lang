@@ -258,7 +258,8 @@ ExprResult Parser::ParseConstantExpression(TypeCastState isTypeCast) {
                                                Sema::ConstantEvaluated);
 
   ExprResult LHS(ParseCastExpression(false, false, isTypeCast));
-  return ParseRHSOfBinaryExpression(LHS, prec::Conditional);
+  ExprResult Res(ParseRHSOfBinaryExpression(LHS, prec::Conditional));
+  return Actions.ActOnConstantExpression(Res);
 }
 
 /// ParseRHSOfBinaryExpression - Parse a binary expression that starts with

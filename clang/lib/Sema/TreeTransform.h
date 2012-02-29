@@ -2950,6 +2950,7 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
       EnterExpressionEvaluationContext Unevaluated(getSema(),
                                                    Sema::ConstantEvaluated);
       ExprResult E = getDerived().TransformExpr(SourceExpr);
+      E = SemaRef.ActOnConstantExpression(E);
       SourceExpr = (E.isInvalid() ? 0 : E.take());
     }
 
@@ -2990,6 +2991,7 @@ bool TreeTransform<Derived>::TransformTemplateArgument(
     if (!InputExpr) InputExpr = Input.getArgument().getAsExpr();
 
     ExprResult E = getDerived().TransformExpr(InputExpr);
+    E = SemaRef.ActOnConstantExpression(E);
     if (E.isInvalid()) return true;
     Output = TemplateArgumentLoc(TemplateArgument(E.take()), E.take());
     return false;
@@ -3654,6 +3656,7 @@ TreeTransform<Derived>::TransformConstantArrayType(TypeLocBuilder &TLB,
     EnterExpressionEvaluationContext Unevaluated(SemaRef,
                                                  Sema::ConstantEvaluated);
     Size = getDerived().TransformExpr(Size).template takeAs<Expr>();
+    Size = SemaRef.ActOnConstantExpression(Size).take();
   }
   NewTL.setSizeExpr(Size);
 
@@ -3744,6 +3747,7 @@ TreeTransform<Derived>::TransformDependentSizedArrayType(TypeLocBuilder &TLB,
 
   ExprResult sizeResult
     = getDerived().TransformExpr(origSize);
+  sizeResult = SemaRef.ActOnConstantExpression(sizeResult);
   if (sizeResult.isInvalid())
     return QualType();
 
@@ -3788,6 +3792,7 @@ QualType TreeTransform<Derived>::TransformDependentSizedExtVectorType(
                                                Sema::ConstantEvaluated);
 
   ExprResult Size = getDerived().TransformExpr(T->getSizeExpr());
+  Size = SemaRef.ActOnConstantExpression(Size);
   if (Size.isInvalid())
     return QualType();
 
@@ -5061,11 +5066,13 @@ TreeTransform<Derived>::TransformCaseStmt(CaseStmt *S) {
 
     // Transform the left-hand case value.
     LHS = getDerived().TransformExpr(S->getLHS());
+    LHS = SemaRef.ActOnConstantExpression(LHS);
     if (LHS.isInvalid())
       return StmtError();
 
     // Transform the right-hand case value (for the GNU case-range extension).
     RHS = getDerived().TransformExpr(S->getRHS());
+    RHS = SemaRef.ActOnConstantExpression(RHS);
     if (RHS.isInvalid())
       return StmtError();
   }

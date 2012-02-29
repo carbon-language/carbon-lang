@@ -10023,6 +10023,18 @@ void Sema::UpdateMarkingForLValueToRValue(Expr *E) {
   MaybeODRUseExprs.erase(E->IgnoreParens());
 }
 
+ExprResult Sema::ActOnConstantExpression(ExprResult Res) {
+  if (!Res.isUsable())
+    return Res;
+
+  // If a constant-expression is a reference to a variable where we delay
+  // deciding whether it is an odr-use, just assume we will apply the
+  // lvalue-to-rvalue conversion.  In the one case where this doesn't happen
+  // (a non-type template argument), we have special handling anyway.
+  UpdateMarkingForLValueToRValue(Res.get());
+  return Res;
+}
+
 void Sema::CleanupVarDeclMarking() {
   for (llvm::SmallPtrSetIterator<Expr*> i = MaybeODRUseExprs.begin(),
                                         e = MaybeODRUseExprs.end();
