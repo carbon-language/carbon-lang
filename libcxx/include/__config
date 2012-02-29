@@ -58,6 +58,17 @@
 #  endif
 #endif  // _WIN32
 
+#ifdef __sun__
+# include <sys/isa_defs.h>
+# ifdef _LITTLE_ENDIAN
+#   define _LIBCPP_LITTLE_ENDIAN 1
+#   define _LIBCPP_BIG_ENDIAN    0
+# else
+#   define _LIBCPP_LITTLE_ENDIAN 0
+#   define _LIBCPP_BIG_ENDIAN    1
+# endif
+#endif // __sun__
+
 #if !defined(_LIBCPP_LITTLE_ENDIAN) || !defined(_LIBCPP_BIG_ENDIAN)
 # include <endian.h>
 # if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -394,7 +405,7 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_DECLARE_STRONG_ENUM_EPILOG(x)
 #endif  // _LIBCPP_HAS_NO_STRONG_ENUMS
 
-#if __APPLE__ || __FreeBSD__ || _WIN32
+#if __APPLE__ || __FreeBSD__ || _WIN32 || __sun__
 #define _LIBCPP_LOCALE__L_EXTENSIONS 1
 #endif
 #if __FreeBSD__
@@ -405,7 +416,7 @@ template <unsigned> struct __static_assert_check {};
 #define _LIBCPP_HAS_DEFAULTRUNELOCALE
 #endif
 
-#if __APPLE__ || __FreeBSD__
+#if __APPLE__ || __FreeBSD__ || __sun__
 #define _LIBCPP_WCTYPE_IS_MASK
 #endif
 

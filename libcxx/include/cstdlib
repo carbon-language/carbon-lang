@@ -132,7 +132,8 @@ using ::wctomb;
 using ::mbstowcs;
 using ::wcstombs;
 
-#ifndef _MSC_VER // MSVC already has the correct prototype in <stdlib.h.h> #ifdef __cplusplus
+// MSVC already has the correct prototype in <stdlib.h.h> #ifdef __cplusplus
+#if !defined(_MSC_VER) && !defined(__sun__)
 inline _LIBCPP_INLINE_VISIBILITY long      abs(     long __x) {return  labs(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long long abs(long long __x) {return llabs(__x);}
 

@@ -7,6 +7,12 @@
 //
 //===----------------------------------------------------------------------===//
 
+// On Solaris, we need to define something to make the C99 parts of localeconv
+// visible.
+#ifdef __sun__
+#define _LCONV_C99
+#endif
+
 #include "string"
 #include "locale"
 #include "codecvt"
@@ -925,11 +931,16 @@ ctype<char>::classic_table()  _NOEXCEPT
     return _DefaultRuneLocale.__runetype;
 #elif defined(__GLIBC__)
     return __cloc()->__ctype_b;
+#elif __sun__
+    return __ctype_mask;
 #elif _WIN32
     return _ctype+1; // internal ctype mask table defined in msvcrt.dll
 // This is assumed to be safe, which is a nonsense assumption because we're
 // going to end up dereferencing it later...
 #else
+    // Platform not supported: abort so the person doing the port knows what to
+    // fix
+    abort();
     return NULL;
 #endif
 }

@@ -12,7 +12,7 @@
 #include "vector"
 #include "future"
 #include <sys/types.h>
-#if !_WIN32
+#if !_WIN32 && !__sun__
 #include <sys/sysctl.h>
 #endif // _WIN32
 

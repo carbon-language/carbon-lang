@@ -646,12 +646,16 @@ using ::isunordered;
 using ::float_t;
 using ::double_t;
 
+#ifndef __sun__
 // abs
 
+#endif // __sun__
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_floating_point<_A1>::value, _A1>::type
 abs(_A1 __x) {return fabs(__x);}
+
+#ifndef __sun__
 
 // acos
 
@@ -769,15 +773,19 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 cosh(_A1 __x) {return cosh((double)__x);}
 
+#endif // __sun__
 // exp
 
 using ::exp;
 using ::expf;
 
+#ifndef __sun__
+
 #ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       exp(float __x)       {return expf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double exp(long double __x) {return expl(__x);}
 #endif
+
 
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
@@ -816,8 +824,10 @@ floor(_A1 __x) {return floor((double)__x);}
 
 // fmod
 
+#endif //__sun__
 using ::fmod;
 using ::fmodf;
+#ifndef __sun__
 
 #ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       fmod(float __x, float __y)             {return fmodf(__x, __y);}
@@ -839,6 +849,7 @@ fmod(_A1 __x, _A2 __y)
                       is_same<_A2, __result_type>::value)), "");
     return fmod((__result_type)__x, (__result_type)__y);
 }
+
 
 // frexp
 
@@ -872,8 +883,10 @@ ldexp(_A1 __x, int __e) {return ldexp((double)__x, __e);}
 
 // log
 
+#endif // __sun__
 using ::log;
 using ::logf;
+#ifndef __sun__
 
 #ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       log(float __x)       {return logf(__x);}
@@ -884,6 +897,7 @@ template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 log(_A1 __x) {return log((double)__x);}
+
 
 // log10
 
@@ -912,8 +926,11 @@ inline _LIBCPP_INLINE_VISIBILITY long double modf(long double __x, long double* 
 
 // pow
 
+#endif // __sun__ 
 using ::pow;
 using ::powf;
+
+#ifndef __sun__
 
 #ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       pow(float __x, float __y)             {return powf(__x, __y);}
@@ -935,6 +952,7 @@ pow(_A1 __x, _A2 __y)
                       is_same<_A2, __result_type>::value)), "");
     return pow((__result_type)__x, (__result_type)__y);
 }
+
 
 // sin
 
@@ -968,10 +986,12 @@ sinh(_A1 __x) {return sinh((double)__x);}
 
 // sqrt
 
+#endif // __sun__
 using ::sqrt;
 using ::sqrtf;
 
-#ifndef _MSC_VER
+
+#if !(defined(_MSC_VER) || defined(__sun__))
 inline _LIBCPP_INLINE_VISIBILITY float       sqrt(float __x)       {return sqrtf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double sqrt(long double __x) {return sqrtl(__x);}
 #endif
@@ -981,10 +1001,14 @@ inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 sqrt(_A1 __x) {return sqrt((double)__x);}
 
+#ifndef __sun__
+
 // tan
 
+#endif // __sun__
 using ::tan;
 using ::tanf;
+#ifndef __sun__
 
 #ifndef _MSC_VER
 inline _LIBCPP_INLINE_VISIBILITY float       tan(float __x)       {return tanf(__x);}
@@ -1294,10 +1318,12 @@ using ::lgammaf;
 inline _LIBCPP_INLINE_VISIBILITY float       lgamma(float __x)       {return lgammaf(__x);}
 inline _LIBCPP_INLINE_VISIBILITY long double lgamma(long double __x) {return lgammal(__x);}
 
+
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_integral<_A1>::value, double>::type
 lgamma(_A1 __x) {return lgamma((double)__x);}
+
 
 // llrint
 
@@ -1392,8 +1418,10 @@ lround(_A1 __x) {return lround((double)__x);}
 
 // nan
 
+#endif // __sun__
 using ::nan;
 using ::nanf;
+#ifndef __sun__
 
 // nearbyint
 
@@ -1635,6 +1663,10 @@ using ::tgammal;
 using ::truncl;
 #endif // !_MSC_VER
 
+#else 
+using ::lgamma;
+using ::lgammaf;
+#endif // __sun__
 _LIBCPP_END_NAMESPACE_STD
 
 #endif  // _LIBCPP_CMATH

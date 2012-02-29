@@ -10,6 +10,9 @@
 #include "random"
 #include "system_error"
 
+#ifdef __sun__
+#define rename solaris_headers_are_broken
+#endif
 #include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
