@@ -351,6 +351,12 @@ bool EmitAssemblyHelper::AddEmitPasses(BackendAction Action,
   // Create the code generator passes.
   PassManager *PM = getCodeGenPasses();
 
+  // Add LibraryInfo.
+  TargetLibraryInfo *TLI = new TargetLibraryInfo();
+  if (!CodeGenOpts.SimplifyLibCalls)
+    TLI->disableAllFunctions();
+  PM->add(TLI);
+
   // Normal mode, emit a .s or .o file by running the code generator. Note,
   // this also adds codegenerator level optimization passes.
   TargetMachine::CodeGenFileType CGFT = TargetMachine::CGFT_AssemblyFile;
