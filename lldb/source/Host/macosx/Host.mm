@@ -1221,12 +1221,20 @@ bool
 Host::GetProcessInfo (lldb::pid_t pid, ProcessInstanceInfo &process_info)
 {
     process_info.SetProcessID(pid);
+    bool success = false;
+    
     if (GetMacOSXProcessArgs (NULL, process_info))
-    {
-        GetMacOSXProcessCPUType (process_info);
-        GetMacOSXProcessUserAndGroup (process_info);
+        success = true;
+    
+    if (GetMacOSXProcessCPUType (process_info))
+        success = true;
+    
+    if (GetMacOSXProcessUserAndGroup (process_info))
+        success = true;
+    
+    if (success)
         return true;
-    }    
+    
     process_info.Clear();
     return false;
 }
