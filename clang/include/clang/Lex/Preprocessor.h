@@ -815,8 +815,8 @@ public:
   /// SmallVector. Note that the returned StringRef may not point to the
   /// supplied buffer if a copy can be avoided.
   StringRef getSpelling(const Token &Tok,
-                              SmallVectorImpl<char> &Buffer,
-                              bool *Invalid = 0) const;
+                        SmallVectorImpl<char> &Buffer,
+                        bool *Invalid = 0) const;
 
   /// getSpellingOfSingleCharacterNumericConstant - Tok is a numeric constant
   /// with length 1, return the character.
