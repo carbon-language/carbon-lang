@@ -83,14 +83,25 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
                 // if we need to
                 if (m_frames.empty())
                 {
-                    cfa = m_thread.m_reg_context_sp->GetSP();
+                    const bool success = unwinder->GetFrameInfoAtIndex(idx, cfa, pc);
+                    // There shouldn't be any way not to get the frame info for frame 0.
+                    assert (success);
                     m_thread.GetRegisterContext();
+                    assert (m_thread.m_reg_context_sp.get());
                     unwind_frame_sp.reset (new StackFrame (m_thread.shared_from_this(),
                                                            m_frames.size(), 
                                                            idx, 
-                                                           m_thread.m_reg_context_sp, 
+                                                           m_thread.m_reg_context_sp,
+// If set to 1 this will use the correct CFA & PC.
+// Note for some reason the ValueObject Summaries and Formatters were relying on getting incorrect (constantly changing) values.
+
+#if 1                                                            
                                                            cfa, 
-                                                           m_thread.m_reg_context_sp->GetPC(), 
+                                                           pc,
+#else
+                                                           m_thread.GetRegisterContext()->GetSP(),
+                                                           m_thread.GetRegisterContext()->GetPC(),
+#endif
                                                            NULL));
                     m_frames.push_back (unwind_frame_sp);
                 }
@@ -272,34 +283,16 @@ StackFrameList::GetFrameAtIndex (uint32_t idx)
 
     if (frame_sp)
         return frame_sp;
-
-    // Special case the first frame (idx == 0) so that we don't need to
-    // know how many stack frames there are to get it. If we need any other
-    // frames, then we do need to know if "idx" is a valid index.
-    if (idx == 0)
-    {
-        // If this is the first frame, we want to share the thread register
-        // context with the stack frame at index zero.
-        m_thread.GetRegisterContext();
-        assert (m_thread.m_reg_context_sp.get());
-        frame_sp.reset (new StackFrame (m_thread.shared_from_this(), 
-                                        0, 
-                                        0,
-                                        m_thread.m_reg_context_sp, 
-                                        m_thread.m_reg_context_sp->GetSP(), 
-                                        m_thread.m_reg_context_sp->GetPC(), 
-                                        NULL));
         
-        SetFrameAtIndex(idx, frame_sp);
-    }
-    else
-    {
+        // GetFramesUpTo will fill m_frames with as many frames as you asked for,
+        // if there are that many.  If there weren't then you asked for too many
+        // frames.
         GetFramesUpTo (idx);
         if (idx < m_frames.size())
         {
             if (m_show_inlined_frames)
             {
-                // When inline frames are enabled we cache up all frames in GetNumFrames()
+                // When inline frames are enabled we actually create all the frames in GetFramesUpTo.
                 frame_sp = m_frames[idx];
             }
             else
@@ -329,7 +322,6 @@ StackFrameList::GetFrameAtIndex (uint32_t idx)
                 }
             }
         }
-    }
     return frame_sp;
 }
 
