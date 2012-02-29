@@ -706,7 +706,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
 
   // Calculate the mapping of subregister+index pairs to physical registers.
-  // This will also create further anonymous indexes.
+  // This will also create further anonymous indices.
   unsigned NamedIndices = RegBank.getNumNamedIndices();
 
   // Emit SubRegIndex names, skipping 0
@@ -720,7 +720,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "\" };\n\n";
 
-  // Emit names of the anonymus subreg indexes.
+  // Emit names of the anonymous subreg indices.
   if (SubRegIndices.size() > NamedIndices) {
     OS << "  enum {";
     for (unsigned i = NamedIndices, e = SubRegIndices.size(); i != e; ++i) {
