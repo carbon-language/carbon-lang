@@ -774,21 +774,13 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     OS << "  return 0;\n}\n\n";
 
   OS << "unsigned " << ClassName
-     << "::getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const {\n"
-     << "  switch (RegNo) {\n"
-     << "  default:\n    return 0;\n";
-   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-     const CodeGenRegister::SubRegMap &SRM = Regs[i]->getSubRegs();
-     if (SRM.empty())
-       continue;
-    OS << "  case " << getQualifiedName(Regs[i]->TheDef) << ":\n";
-    for (CodeGenRegister::SubRegMap::const_iterator ii = SRM.begin(),
-         ie = SRM.end(); ii != ie; ++ii)
-      OS << "    if (SubRegNo == " << getQualifiedName(ii->second->TheDef)
-         << ")  return " << ii->first->getQualifiedName() << ";\n";
-    OS << "    return 0;\n";
+     << "::getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const {\n";
+  if (SubRegIndices.size()) {
+    OS << "  for (unsigned I = 0; I != array_lengthof("
+       << TargetName << "SubRegTable[0]); ++I)\n"
+       << "    if (" << TargetName << "SubRegTable[RegNo - 1][I] == SubRegNo)\n"
+       << "      return I + 1;\n";
   }
-  OS << "  };\n";
   OS << "  return 0;\n";
   OS << "}\n\n";
 
