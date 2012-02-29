@@ -244,6 +244,7 @@ class Class_Data_V2:
 class Class_Data_V1:
 	def __init__(self,isa_pointer,params):
 		if (isa_pointer != None) and (Utilities.is_valid_pointer(isa_pointer.GetValueAsUnsigned(),params.pointer_size, allow_tagged=False)):
+			self.valid = True
 			self.sys_params = params
 			self.valobj = isa_pointer
 			self.isaPointer = Utilities.read_child_of(self.valobj,0,self.sys_params.addr_ptr_type)
@@ -325,12 +326,18 @@ class Class_Data_V1:
 		else:
 			return self.instanceSize
 
-TaggedClass_Values_Lion = {3 : 'NSNumber', 6: 'NSDate'}; # double check NSDate
-TaggedClass_Values_NMOS = {3 : 'NSNumber', 6: 'NSDate'}; # double check NSNumber
+# these are the only tagged pointers values for current versions
+# of OSX - this might change in future OS releases, and no-one is
+# advised to rely on these values, or any of the bitmasking formulas
+# in TaggedClass_Data. doing otherwise is at your own risk
+TaggedClass_Values = {3 : 'NSNumber', \
+                      5: 'NSManagedObject', \
+                      6: 'NSDate', \
+                      7: 'NSDateTS' };
 
 class TaggedClass_Data:
 	def __init__(self,pointer,params):
-		global TaggedClass_Values_Lion, TaggedClass_Values_NMOS
+		global TaggedClass_Values
 		self.valid = True
 		self.name = None
 		self.sys_params = params
@@ -339,16 +346,10 @@ class TaggedClass_Data:
 		self.class_bits = (pointer & 0xE) >> 1
 		self.i_bits = (pointer & 0xF0) >> 4
 		
-		if self.sys_params.is_lion:
-			if self.class_bits in TaggedClass_Values_Lion:
-				self.name = TaggedClass_Values_Lion[self.class_bits]
-			else:
-				self.valid = False
+		if self.class_bits in TaggedClass_Values:
+			self.name = TaggedClass_Values[self.class_bits]
 		else:
-			if self.class_bits in TaggedClass_Values_NMOS:
-				self.name = TaggedClass_Values_NMOS[self.class_bits]
-			else:
-				self.valid = False
+			self.valid = False
 
 
 	def is_valid(self):
