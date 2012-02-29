@@ -66,12 +66,14 @@ function afunc
 					rm ./$TEST_EXE
 					let "pass+=1"
 				else
-					echo "$FILE failed at run time"
+					echo "`pwd`/$FILE failed at run time"
+					echo "Compile line was:" $CC $OPTIONS $HEADER_INCLUDE $SOURCE_LIB $FILE $LIBS
 					let "fail+=1"
 					rm ./$TEST_EXE
 				fi
 			else
-				echo "$FILE failed to compile"
+				echo "`pwd`/$FILE failed to compile"
+				echo "Compile line was:" $CC $OPTIONS $HEADER_INCLUDE $SOURCE_LIB $FILE $LIBS
 				let "fail+=1"
 			fi
 		done
