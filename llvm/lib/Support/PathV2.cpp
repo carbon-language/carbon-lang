@@ -600,8 +600,12 @@ namespace fs {
 error_code make_absolute(SmallVectorImpl<char> &path) {
   StringRef p(path.data(), path.size());
 
-  bool rootName      = path::has_root_name(p),
-       rootDirectory = path::has_root_directory(p);
+  bool rootDirectory = path::has_root_directory(p),
+#ifdef LLVM_ON_WIN32
+       rootName = has_root_name(p);
+#else
+       rootName = true;
+#endif
 
   // Already absolute.
   if (rootName && rootDirectory)
