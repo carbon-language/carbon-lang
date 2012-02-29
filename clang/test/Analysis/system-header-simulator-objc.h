@@ -92,6 +92,19 @@ typedef double NSTimeInterval;
 - (id)initWithBytesNoCopy:(void *)bytes length:(NSUInteger)length freeWhenDone:(BOOL)b;
 @end
 
+typedef struct {
+}
+CFDictionaryKeyCallBacks;
+extern const CFDictionaryKeyCallBacks kCFTypeDictionaryKeyCallBacks;
+typedef struct {
+}
+CFDictionaryValueCallBacks;
+extern const CFDictionaryValueCallBacks kCFTypeDictionaryValueCallBacks;
+typedef const struct __CFDictionary * CFDictionaryRef;
+typedef struct __CFDictionary * CFMutableDictionaryRef;
+extern CFMutableDictionaryRef CFDictionaryCreateMutable(CFAllocatorRef allocator, CFIndex capacity, const CFDictionaryKeyCallBacks *keyCallBacks, const CFDictionaryValueCallBacks *valueCallBacks);
+void CFDictionarySetValue(CFMutableDictionaryRef, const void *, const void *);
+
 
 extern void CFRelease(CFTypeRef cf);
 

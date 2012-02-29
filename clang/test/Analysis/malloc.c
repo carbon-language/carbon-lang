@@ -677,7 +677,9 @@ void testStrdupContentIsDefined(const char *s, unsigned validIndex) {
   free(s2);
 }
 
+// ----------------------------------------------------------------------------
 // Test the system library functions to which the pointer can escape.
+// This tests false positive suppression.
 
 // For now, we assume memory passed to pthread_specific escapes.
 // TODO: We could check that if a new pthread binding is set, the existing
@@ -687,6 +689,46 @@ void testPthereadSpecificEscape(pthread_key_t key) {
   pthread_setspecific(key, buf); // no warning
 }
 
+// PR12101: Test funopen().
+static int releasePtr(void *_ctx) {
+    free(_ctx);
+    return 0;
+}
+FILE *useFunOpen() {
+    void *ctx = malloc(sizeof(int));
+    FILE *f = funopen(ctx, 0, 0, 0, releasePtr); // no warning
+    if (f == 0) {
+        free(ctx);
+    }
+    return f;
+}
+FILE *useFunOpenNoReleaseFunction() {
+    void *ctx = malloc(sizeof(int));
+    FILE *f = funopen(ctx, 0, 0, 0, 0);
+    if (f == 0) {
+        free(ctx);
+    }
+    return f; // expected-warning{{leak}}
+}
+
+// Test setbuf, setvbuf.
+int my_main_no_warning() {
+    char *p = malloc(100);
+    setvbuf(stdout, p, 0, 100);
+    return 0;
+}
+int my_main_no_warning2() {
+    char *p = malloc(100);
+    setbuf(__stdoutp, p);
+    return 0;
+}
+int my_main_warn(FILE *f) {
+    char *p = malloc(100);
+    setvbuf(f, p, 0, 100);
+    return 0;// expected-warning {{leak}}
+}
+
+// ----------------------------------------------------------------------------
 // Below are the known false positives.
 
 // TODO: There should be no warning here. This one might be difficult to get rid of.
@@ -706,6 +748,7 @@ void dependsOnValueOfPtr(int *g, unsigned f) {
   return;
 }
 
+// ----------------------------------------------------------------------------
 // False negatives.
 
 // TODO: This requires tracking symbols stored inside the structs/arrays.

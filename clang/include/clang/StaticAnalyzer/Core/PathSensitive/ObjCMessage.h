@@ -21,9 +21,11 @@
 #include "clang/AST/ExprCXX.h"
 #include "clang/Basic/SourceManager.h"
 #include "llvm/ADT/PointerUnion.h"
+#include "llvm/ADT/StringExtras.h"
 
 namespace clang {
 namespace ento {
+using llvm::StrInStrNoCase;
 
 /// \brief Represents both explicit ObjC message expressions and implicit
 /// messages that are sent for handling properties in dot syntax.
@@ -253,6 +255,33 @@ public:
   SourceRange getReceiverSourceRange() const {
     assert(isObjCMessage());
     return Msg.getReceiverSourceRange();
+  }
+
+  /// \brief Check if the name corresponds to a CoreFoundation or CoreGraphics 
+  /// function that allows objects to escape.
+  ///
+  /// Many methods allow a tracked object to escape.  For example:
+  ///
+  ///   CFMutableDictionaryRef x = CFDictionaryCreateMutable(..., customDeallocator);
+  ///   CFDictionaryAddValue(y, key, x);
+  ///
+  /// We handle this and similar cases with the following heuristic.  If the
+  /// function name contains "InsertValue", "SetValue", "AddValue",
+  /// "AppendValue", or "SetAttribute", then we assume that arguments may
+  /// escape.
+  //
+  // TODO: To reduce false negatives here, we should track the container
+  // allocation site and check if a proper deallocator was set there.
+  static bool isCFCGAllowingEscape(StringRef FName) {
+    if (FName[0] == 'C' && (FName[1] == 'F' || FName[1] == 'G'))
+           if (StrInStrNoCase(FName, "InsertValue") != StringRef::npos||
+               StrInStrNoCase(FName, "AddValue") != StringRef::npos ||
+               StrInStrNoCase(FName, "SetValue") != StringRef::npos ||
+               StrInStrNoCase(FName, "AppendValue") != StringRef::npos||
+               StrInStrNoCase(FName, "SetAttribute") != StringRef::npos) {
+         return true;
+       }
+    return false;
   }
 };
 

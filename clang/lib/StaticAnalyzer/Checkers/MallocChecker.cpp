@@ -42,10 +42,8 @@ public:
   RefState(Kind k, const Stmt *s) : K(k), S(s) {}
 
   bool isAllocated() const { return K == AllocateUnchecked; }
-  //bool isFailed() const { return K == AllocateFailed; }
   bool isReleased() const { return K == Released; }
-  //bool isEscaped() const { return K == Escaped; }
-  //bool isRelinquished() const { return K == Relinquished; }
+
   const Stmt *getStmt() const { return S; }
 
   bool operator==(const RefState &X) const {
@@ -1119,6 +1117,43 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
             return true;
         }
       }
+      return false;
+    }
+
+    // PR12101
+    // Many CoreFoundation and CoreGraphics might allow a tracked object 
+    // to escape.
+    if (Call->isCFCGAllowingEscape(FName))
+      return false;
+
+    // Associating streams with malloced buffers. The pointer can escape if
+    // 'closefn' is specified (and if that function does free memory).
+    // Currently, we do not inspect the 'closefn' function (PR12101).
+    if (FName == "funopen")
+      if (Call->getNumArgs() >= 4 && !Call->getArgSVal(4).isConstant(0))
+        return false;
+
+    // Do not warn on pointers passed to 'setbuf' when used with std streams,
+    // these leaks might be intentional when setting the buffer for stdio.
+    // http://stackoverflow.com/questions/2671151/who-frees-setvbuf-buffer
+    if (FName == "setbuf" || FName =="setbuffer" ||
+        FName == "setlinebuf" || FName == "setvbuf") {
+      if (Call->getNumArgs() >= 1)
+        if (const DeclRefExpr *Arg =
+              dyn_cast<DeclRefExpr>(Call->getArg(0)->IgnoreParenCasts()))
+          if (const VarDecl *D = dyn_cast<VarDecl>(Arg->getDecl()))
+              if (D->getCanonicalDecl()->getName().find("std")
+                                                   != StringRef::npos)
+                return false;
+    }
+
+    // A bunch of other functions, which take ownership of a pointer (See retain
+    // release checker). Not all the parameters here are invalidated, but the
+    // Malloc checker cannot differentiate between them. The right way of doing
+    // this would be to implement a pointer escapes callback.
+    if (FName == "CVPixelBufferCreateWithBytes" ||
+        FName == "CGBitmapContextCreateWithData" ||
+        FName == "CVPixelBufferCreateWithPlanarBytes") {
       return false;
     }
 

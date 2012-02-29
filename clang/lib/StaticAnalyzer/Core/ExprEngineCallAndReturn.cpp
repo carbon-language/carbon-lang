@@ -197,10 +197,15 @@ static void findPtrToConstParams(llvm::SmallSet<unsigned, 1> &PreserveArgs,
       // value into thread local storage. The value can later be retrieved with
       // 'void *ptheread_getspecific(pthread_key)'. So even thought the
       // parameter is 'const void *', the region escapes through the call.
+      //  - funopen - sets a buffer for future IO calls.
       //  - ObjC functions that end with "NoCopy" can free memory, of the passed
       // in buffer.
+      // - Many CF containers allow objects to escape through custom
+      // allocators/deallocators upon container construction.
       if (FName == "pthread_setspecific" ||
-          FName.endswith("NoCopy"))
+          FName == "funopen" ||
+          FName.endswith("NoCopy") ||
+          Call.isCFCGAllowingEscape(FName))
         return;
     }
 
