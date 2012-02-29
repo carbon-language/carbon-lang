@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -S -O3 -fno-builtin -o - %s | FileCheck %s
+// rdar://10551066
 
 double ceil(double x);
 double copysign(double,double);
