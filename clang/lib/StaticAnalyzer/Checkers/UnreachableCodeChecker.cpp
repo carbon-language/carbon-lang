@@ -116,6 +116,14 @@ void UnreachableCodeChecker::checkEndAnalysis(ExplodedGraph &G,
     if (CB->size() > 0 && isInvalidPath(CB, *PM))
       continue;
 
+    // It is good practice to always have a "default" label in a "switch", even
+    // if we should never get there. It can be used to detect errors, for
+    // instance. Unreachable code directly under a "default" label is therefore
+    // likely to be a false positive.
+    if (const Stmt *label = CB->getLabel())
+      if (label->getStmtClass() == Stmt::DefaultStmtClass)
+        continue;
+
     // Special case for __builtin_unreachable.
     // FIXME: This should be extended to include other unreachable markers,
     // such as llvm_unreachable.

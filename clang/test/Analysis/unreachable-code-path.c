@@ -122,3 +122,20 @@ void test10() {
   goto d;
   f: ;
 }
+
+// test11: we can actually end up in the default case, even if it is not
+// obvious: there might be something wrong with the given argument.
+enum foobar { FOO, BAR };
+extern void error();
+void test11(enum foobar fb) {
+  switch (fb) {
+    case FOO:
+      break;
+    case BAR:
+      break;
+    default:
+      error(); // no-warning
+      return;
+      error(); // expected-warning {{never executed}}
+  }
+}
