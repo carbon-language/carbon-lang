@@ -212,3 +212,9 @@ namespace PR12092 {
   }
 
 }
+
+namespace PR12117 {
+  struct A { A(int); }; 
+  struct B { B(A); } b{{0}};
+  struct C { C(int); } c{0};
+}

@@ -2795,7 +2795,7 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
                            DeclContext::lookup_iterator ConEnd,
                            OverloadCandidateSet::iterator &Best,
                            bool CopyInitializing, bool AllowExplicit,
-                           bool OnlyListConstructors) {
+                           bool OnlyListConstructors, bool InitListSyntax) {
   CandidateSet.clear();
 
   for (; Con != ConEnd; ++Con) {
@@ -2813,9 +2813,10 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
       Constructor = cast<CXXConstructorDecl>(D);
 
       // If we're performing copy initialization using a copy constructor, we
-      // suppress user-defined conversions on the arguments.
-      // FIXME: Move constructors?
-      if (CopyInitializing && Constructor->isCopyConstructor())
+      // suppress user-defined conversions on the arguments. We do the same for
+      // move constructors.
+      if ((CopyInitializing || (InitListSyntax && NumArgs == 1)) &&
+          Constructor->isCopyOrMoveConstructor())
         SuppressUserConversions = true;
     }
 
@@ -2825,8 +2826,8 @@ ResolveConstructorOverload(Sema &S, SourceLocation DeclLoc,
       if (ConstructorTmpl)
         S.AddTemplateOverloadCandidate(ConstructorTmpl, FoundDecl,
                                        /*ExplicitArgs*/ 0,
-                                       llvm::makeArrayRef(Args, NumArgs), CandidateSet,
-                                       SuppressUserConversions);
+                                       llvm::makeArrayRef(Args, NumArgs),
+                                       CandidateSet, SuppressUserConversions);
       else {
         // C++ [over.match.copy]p1:
         //   - When initializing a temporary to be bound to the first parameter 
@@ -2919,7 +2920,8 @@ static void TryConstructorInitialization(Sema &S,
     Result = ResolveConstructorOverload(S, Kind.getLocation(), Args, NumArgs,
                                         CandidateSet, ConStart, ConEnd, Best,
                                         CopyInitialization, AllowExplicit,
-                                        /*OnlyListConstructor=*/true);
+                                        /*OnlyListConstructor=*/true,
+                                        InitListSyntax);
 
     // Time to unwrap the init list.
     InitListExpr *ILE = cast<InitListExpr>(Args[0]);
@@ -2937,7 +2939,8 @@ static void TryConstructorInitialization(Sema &S,
     Result = ResolveConstructorOverload(S, Kind.getLocation(), Args, NumArgs,
                                         CandidateSet, ConStart, ConEnd, Best,
                                         CopyInitialization, AllowExplicit,
-                                        /*OnlyListConstructors=*/false);
+                                        /*OnlyListConstructors=*/false,
+                                        InitListSyntax);
   }
   if (Result) {
     Sequence.SetOverloadFailure(InitListSyntax ?
