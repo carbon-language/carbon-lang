@@ -1823,6 +1823,7 @@ static void EmitDarwinBCTrailer(BitstreamWriter &Stream, unsigned BufferSize) {
   }
 }
 
+static void WriteBitcodeToStream(const Module *M, BitstreamWriter &Stream);
 
 /// WriteBitcodeToFile - Write the specified module to the specified output
 /// stream.
@@ -1838,9 +1839,7 @@ void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
   Out.write((char*)&Buffer.front(), Buffer.size());
 }
 
-/// WriteBitcodeToStream - Write the specified module to the specified output
-/// stream.
-void llvm::WriteBitcodeToStream(const Module *M, BitstreamWriter &Stream) {
+static void WriteBitcodeToStream(const Module *M, BitstreamWriter &Stream) {
   // If this is darwin or another generic macho target, emit a file header and
   // trailer if needed.
   Triple TT(M->getTargetTriple());

@@ -7,6 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 
+#include "llvm/ADT/SmallString.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/Bitcode/BitstreamWriter.h"
 #include "llvm/Bitcode/ReaderWriter.h"
@@ -43,17 +44,16 @@ static Module *makeLLVMModule() {
   return Mod;
 }
 
-static void writeModuleToBuffer(std::vector<unsigned char> &Buffer) {
+static void writeModuleToBuffer(SmallVectorImpl<char> &Buffer) {
   Module *Mod = makeLLVMModule();
-  BitstreamWriter Stream(Buffer);
-  WriteBitcodeToStream(Mod, Stream);
+  raw_svector_ostream OS(Buffer);
+  WriteBitcodeToFile(Mod, OS);
 }
 
 TEST(BitReaderTest, MaterializeFunctionsForBlockAddr) { // PR11677
-  std::vector<unsigned char> Mem;
+  SmallString<1024> Mem;
   writeModuleToBuffer(Mem);
-  StringRef Data((const char*)&Mem[0], Mem.size());
-  MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(Data, "test", false);
+  MemoryBuffer *Buffer = MemoryBuffer::getMemBuffer(Mem.str(), "test", false);
   std::string errMsg;
   Module *m = getLazyBitcodeModule(Buffer, getGlobalContext(), &errMsg);
   PassManager passes;
