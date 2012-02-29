@@ -749,44 +749,75 @@ CollectRecordFields(const RecordDecl *record, llvm::DIFile tunit,
                     SmallVectorImpl<llvm::Value *> &elements,
                     llvm::DIType RecordTy) {
   unsigned fieldNo = 0;
-  const FieldDecl *LastFD = 0;
-  bool IsMsStruct = record->hasAttr<MsStructAttr>();
-  
   const ASTRecordLayout &layout = CGM.getContext().getASTRecordLayout(record);
-  for (RecordDecl::field_iterator I = record->field_begin(),
-                                  E = record->field_end();
-       I != E; ++I, ++fieldNo) {
-    FieldDecl *field = *I;
-    if (IsMsStruct) {
-      // Zero-length bitfields following non-bitfield members are ignored
-      if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((field), LastFD)) {
-        --fieldNo;
+  const CXXRecordDecl *CXXDecl = dyn_cast<CXXRecordDecl>(record);
+
+  // For C++11 Lambdas a Fields will be the same as a Capture, but the Capture
+  // has the name and the location of the variable so we should iterate over
+  // both concurrently.
+  if (CXXDecl && CXXDecl->isLambda()) {
+    RecordDecl::field_iterator Field = CXXDecl->field_begin();
+    unsigned fieldno = 0;
+    for (CXXRecordDecl::capture_const_iterator I = CXXDecl->captures_begin(),
+           E = CXXDecl->captures_end(); I != E; ++I, ++Field, ++fieldno) {
+      const LambdaExpr::Capture C = *I;
+      // TODO: Need to handle 'this' in some way by probably renaming the
+      // this of the lambda class and having a field member of 'this'.
+      if (C.capturesVariable()) {
+        VarDecl *V = C.getCapturedVar();
+        llvm::DIFile VUnit = getOrCreateFile(C.getLocation());
+        StringRef VName = V->getName();
+        uint64_t SizeInBitsOverride = 0;
+        if (Field->isBitField()) {
+          SizeInBitsOverride = Field->getBitWidthValue(CGM.getContext());
+          assert(SizeInBitsOverride && "found named 0-width bitfield");
+        }
+        llvm::DIType fieldType
+          = createFieldType(VName, Field->getType(), SizeInBitsOverride, C.getLocation(),
+                            Field->getAccess(), layout.getFieldOffset(fieldno),
+                            VUnit, RecordTy);
+        elements.push_back(fieldType);
+      }
+    }
+  } else {
+    bool IsMsStruct = record->hasAttr<MsStructAttr>();
+    for (RecordDecl::field_iterator I = record->field_begin(),
+           E = record->field_end();
+         I != E; ++I, ++fieldNo) {
+      FieldDecl *field = *I;
+      const FieldDecl *LastFD = 0;
+
+      if (IsMsStruct) {
+        // Zero-length bitfields following non-bitfield members are ignored
+        if (CGM.getContext().ZeroBitfieldFollowsNonBitfield((field), LastFD)) {
+          --fieldNo;
+          continue;
+        }
+        LastFD = field;
+      }
+
+      StringRef name = field->getName();
+      QualType type = field->getType();
+
+      // Ignore unnamed fields unless they're anonymous structs/unions.
+      if (name.empty() && !type->isRecordType()) {
+        LastFD = field;
         continue;
       }
-      LastFD = field;
+
+      uint64_t SizeInBitsOverride = 0;
+      if (field->isBitField()) {
+        SizeInBitsOverride = field->getBitWidthValue(CGM.getContext());
+        assert(SizeInBitsOverride && "found named 0-width bitfield");
+      }
+
+      llvm::DIType fieldType
+        = createFieldType(name, type, SizeInBitsOverride,
+                          field->getLocation(), field->getAccess(),
+                          layout.getFieldOffset(fieldNo), tunit, RecordTy);
+
+      elements.push_back(fieldType);
     }
-
-    StringRef name = field->getName();
-    QualType type = field->getType();
-
-    // Ignore unnamed fields unless they're anonymous structs/unions.
-    if (name.empty() && !type->isRecordType()) {
-      LastFD = field;
-      continue;
-    }
-
-    uint64_t SizeInBitsOverride = 0;
-    if (field->isBitField()) {
-      SizeInBitsOverride = field->getBitWidthValue(CGM.getContext());
-      assert(SizeInBitsOverride && "found named 0-width bitfield");
-    }
-
-    llvm::DIType fieldType
-      = createFieldType(name, type, SizeInBitsOverride,
-                        field->getLocation(), field->getAccess(),
-                        layout.getFieldOffset(fieldNo), tunit, RecordTy);
-
-    elements.push_back(fieldType);
   }
 }
 
