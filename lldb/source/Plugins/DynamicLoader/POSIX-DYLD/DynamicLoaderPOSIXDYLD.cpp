@@ -293,7 +293,6 @@ DynamicLoaderPOSIXDYLD::RefreshModules()
 ThreadPlanSP
 DynamicLoaderPOSIXDYLD::GetStepThroughTrampolinePlan(Thread &thread, bool stop)
 {
-    LogSP log(GetLogIfAnyCategoriesSet(LIBLLDB_LOG_DYNAMIC_LOADER));
     ThreadPlanSP thread_plan_sp;
 
     StackFrame *frame = thread.GetStackFrameAtIndex(0).get();
