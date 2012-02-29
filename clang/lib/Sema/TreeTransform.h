@@ -4274,6 +4274,10 @@ QualType TreeTransform<Derived>::TransformTypeOfExprType(TypeLocBuilder &TLB,
   if (E.isInvalid())
     return QualType();
 
+  E = SemaRef.HandleExprEvaluationContextForTypeof(E.get());
+  if (E.isInvalid())
+    return QualType();
+
   QualType Result = TL.getType();
   if (getDerived().AlwaysRebuild() ||
       E.get() != TL.getUnderlyingExpr()) {
@@ -6234,20 +6238,17 @@ TreeTransform<Derived>::TransformUnaryExprOrTypeTraitExpr(
                                                     E->getSourceRange());
   }
 
-  ExprResult SubExpr;
-  {
-    // C++0x [expr.sizeof]p1:
-    //   The operand is either an expression, which is an unevaluated operand
-    //   [...]
-    EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
+  // C++0x [expr.sizeof]p1:
+  //   The operand is either an expression, which is an unevaluated operand
+  //   [...]
+  EnterExpressionEvaluationContext Unevaluated(SemaRef, Sema::Unevaluated);
 
-    SubExpr = getDerived().TransformExpr(E->getArgumentExpr());
-    if (SubExpr.isInvalid())
-      return ExprError();
+  ExprResult SubExpr = getDerived().TransformExpr(E->getArgumentExpr());
+  if (SubExpr.isInvalid())
+    return ExprError();
 
-    if (!getDerived().AlwaysRebuild() && SubExpr.get() == E->getArgumentExpr())
-      return SemaRef.Owned(E);
-  }
+  if (!getDerived().AlwaysRebuild() && SubExpr.get() == E->getArgumentExpr())
+    return SemaRef.Owned(E);
 
   return getDerived().RebuildUnaryExprOrTypeTrait(SubExpr.get(),
                                                   E->getOperatorLoc(),

@@ -9308,6 +9308,8 @@ namespace {
 }
 
 ExprResult Sema::TranformToPotentiallyEvaluated(Expr *E) {
+  assert(ExprEvalContexts.back().Context == Unevaluated &&
+         "Should only transform unevaluated expressions");
   ExprEvalContexts.back().Context =
       ExprEvalContexts[ExprEvalContexts.size()-2].Context;
   if (ExprEvalContexts.back().Context == Unevaluated)
