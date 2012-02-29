@@ -287,6 +287,27 @@ static bool tryAddingSymbolicOperand(int64_t Value, bool isBranch,
   return true;
 }
 
+/// tryAddingPcLoadReferenceComment - trys to add a comment as to what is being
+/// referenced by a load instruction with the base register that is the rip.
+/// These can often be addresses in a literal pool.  The Address of the
+/// instruction and its immediate Value are used to determine the address
+/// being referenced in the literal pool entry.  The SymbolLookUp call back will
+/// return a pointer to a literal 'C' string if the referenced address is an 
+/// address into a section with 'C' string literals.
+static void tryAddingPcLoadReferenceComment(uint64_t Address, uint64_t Value,
+                                            const void *Decoder) {
+  const MCDisassembler *Dis = static_cast<const MCDisassembler*>(Decoder);
+  LLVMSymbolLookupCallback SymbolLookUp = Dis->getLLVMSymbolLookupCallback();
+  if (SymbolLookUp) {
+    void *DisInfo = Dis->getDisInfoBlock();
+    uint64_t ReferenceType = LLVMDisassembler_ReferenceType_In_PCrel_Load;
+    const char *ReferenceName;
+    (void)SymbolLookUp(DisInfo, Value, &ReferenceType, Address, &ReferenceName);
+    if(ReferenceType == LLVMDisassembler_ReferenceType_Out_LitPool_CstrAddr)
+      (*Dis->CommentStream) << "literal pool for: " << ReferenceName;
+  }
+}
+
 /// translateImmediate  - Appends an immediate operand to an MCInst.
 ///
 /// @param mcInst       - The MCInst to append to.
@@ -502,6 +523,9 @@ static bool translateRMMemory(MCInst &mcInst, InternalInstruction &insn,
       if (insn.mode == MODE_64BIT){
         pcrel = insn.startLocation +
                 insn.displacementOffset + insn.displacementSize;
+        tryAddingPcLoadReferenceComment(insn.startLocation +
+                                        insn.displacementOffset,
+                                        insn.displacement + pcrel, Dis);
         baseReg = MCOperand::CreateReg(X86::RIP); // Section 2.2.1.6
       }
       else
