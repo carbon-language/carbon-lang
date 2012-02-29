@@ -753,7 +753,7 @@ Value *InstCombiner::FoldAndOfICmps(ICmpInst *LHS, ICmpInst *RHS) {
   // (trunc x) == C1 & (and x, CA) == C2 -> (and x, CA|CMAX) == C1|C2
   // where CMAX is the all ones value for the truncated type,
   // iff the lower bits of C2 and CA are zero.
-  if (LHSCC == RHSCC && ICmpInst::isEquality(LHSCC) &&
+  if (LHSCC == ICmpInst::ICMP_EQ && LHSCC == RHSCC &&
       LHS->hasOneUse() && RHS->hasOneUse()) {
     Value *V;
     ConstantInt *AndCst, *SmallCst = 0, *BigCst = 0;
