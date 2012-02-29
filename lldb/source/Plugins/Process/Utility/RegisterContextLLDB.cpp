@@ -86,27 +86,59 @@ void
 RegisterContextLLDB::InitializeZerothFrame()
 {
     ExecutionContext exe_ctx(m_thread.shared_from_this());
-    StackFrameSP frame_sp (m_thread.GetStackFrameAtIndex (0));
-    exe_ctx.SetFrameSP (frame_sp);
+    RegisterContextSP reg_ctx_sp = m_thread.GetRegisterContext();
 
     LogSP log(GetLogIfAllCategoriesSet (LIBLLDB_LOG_UNWIND));
 
-    if (m_thread.GetRegisterContext() == NULL)
+    if (reg_ctx_sp.get() == NULL)
     {
         m_frame_type = eNotAValidFrame;
         return;
     }
-    m_sym_ctx = frame_sp->GetSymbolContext (eSymbolContextFunction | eSymbolContextSymbol);
-    
+
+    addr_t current_pc = reg_ctx_sp->GetPC();
+
+    if (current_pc == LLDB_INVALID_ADDRESS)
+    {
+        m_frame_type = eNotAValidFrame;
+        return;
+    }
+
+    Process *process = exe_ctx.GetProcessPtr();
+
+    // Let ABIs fixup code addresses to make sure they are valid. In ARM ABIs
+    // this will strip bit zero in case we read a PC from memory or from the LR.
+    // (which would be a no-op in frame 0 where we get it from the register set,
+    // but still a good idea to make the call here for other ABIs that may exist.)
+    ABI *abi = process->GetABI().get();
+    if (abi)
+        current_pc = abi->FixCodeAddress(current_pc);
+
+    // Initialize m_current_pc, an Address object, based on current_pc, an addr_t.
+    process->GetTarget().GetSectionLoadList().ResolveLoadAddress (current_pc, m_current_pc);
+
+    // If we don't have a Module for some reason, we're not going to find symbol/function information - just
+    // stick in some reasonable defaults and hope we can unwind past this frame.
+    ModuleSP pc_module_sp (m_current_pc.GetModule());
+    if (!m_current_pc.IsValid() || !pc_module_sp)
+    {
+        if (log)
+        {
+            log->Printf("%*sFrame %u using architectural default unwind method",
+                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
+        }
+    }
+
     // We require that eSymbolContextSymbol be successfully filled in or this context is of no use to us.
-    if ((m_sym_ctx.GetResolvedMask() & eSymbolContextSymbol) == eSymbolContextSymbol)
+    if (pc_module_sp.get()
+        && (pc_module_sp->ResolveSymbolContextForAddress (m_current_pc, eSymbolContextFunction| eSymbolContextSymbol, m_sym_ctx) & eSymbolContextSymbol) == eSymbolContextSymbol)
+    {
         m_sym_ctx_valid = true;
+    }
 
     AddressRange addr_range;
     m_sym_ctx.GetAddressRange (eSymbolContextFunction | eSymbolContextSymbol, 0, false, addr_range);
     
-    m_current_pc = frame_sp->GetFrameCodeAddress();
-
     static ConstString g_sigtramp_name ("_sigtramp");
     if ((m_sym_ctx.function && m_sym_ctx.function->GetName() == g_sigtramp_name) ||
         (m_sym_ctx.symbol   && m_sym_ctx.symbol->GetName()   == g_sigtramp_name))
@@ -124,17 +156,17 @@ RegisterContextLLDB::InitializeZerothFrame()
     if (addr_range.GetBaseAddress().IsValid())
     {
         m_start_pc = addr_range.GetBaseAddress();
-        if (frame_sp->GetFrameCodeAddress().GetSection() == m_start_pc.GetSection())
+        if (m_current_pc.GetSection() == m_start_pc.GetSection())
         {
-            m_current_offset = frame_sp->GetFrameCodeAddress().GetOffset() - m_start_pc.GetOffset();
+            m_current_offset = m_current_pc.GetOffset() - m_start_pc.GetOffset();
         }
-        else if (frame_sp->GetFrameCodeAddress().GetModule() == m_start_pc.GetModule())
+        else if (m_current_pc.GetModule() == m_start_pc.GetModule())
         {
             // This means that whatever symbol we kicked up isn't really correct
-            // as no should cross section boundaries... We really should NULL out
+            // --- we should not cross section boundaries ... We really should NULL out
             // the function/symbol in this case unless there is a bad assumption
             // here due to inlined functions?
-            m_current_offset = frame_sp->GetFrameCodeAddress().GetFileAddress() - m_start_pc.GetFileAddress();
+            m_current_offset = m_current_pc.GetFileAddress() - m_start_pc.GetFileAddress();
         }
         m_current_offset_backed_up_one = m_current_offset;
     }
