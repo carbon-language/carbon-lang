@@ -68,6 +68,27 @@ class BitstreamWriter {
     Out[ByteNo  ] = (unsigned char)(NewWord >> 24);
   }
 
+  void WriteByte(unsigned char Value) {
+    Out.push_back(Value);
+  }
+
+  void WriteWord(unsigned Value) {
+    Out.push_back((unsigned char)(Value >>  0));
+    Out.push_back((unsigned char)(Value >>  8));
+    Out.push_back((unsigned char)(Value >> 16));
+    Out.push_back((unsigned char)(Value >> 24));
+  }
+
+  unsigned GetBufferOffset() const {
+    return Out.size();
+  }
+
+  unsigned GetWordIndex() const {
+    unsigned Offset = GetBufferOffset();
+    assert((Offset & 3) == 0 && "Not 32-bit aligned");
+    return Offset / 4;
+  }
+
 public:
   explicit BitstreamWriter(std::vector<unsigned char> &O)
     : Out(O), CurBit(0), CurValue(0), CurCodeSize(2) {}
@@ -88,7 +109,7 @@ public:
   }
 
   /// \brief Retrieve the current position in the stream, in bits.
-  uint64_t GetCurrentBitNo() const { return Out.size() * 8 + CurBit; }
+  uint64_t GetCurrentBitNo() const { return GetBufferOffset() * 8 + CurBit; }
 
   //===--------------------------------------------------------------------===//
   // Basic Primitives for emitting bits to the stream.
@@ -104,11 +125,7 @@ public:
     }
 
     // Add the current word.
-    unsigned V = CurValue;
-    Out.push_back((unsigned char)(V >>  0));
-    Out.push_back((unsigned char)(V >>  8));
-    Out.push_back((unsigned char)(V >> 16));
-    Out.push_back((unsigned char)(V >> 24));
+    WriteWord(CurValue);
 
     if (CurBit)
       CurValue = Val >> (32-CurBit);
@@ -128,11 +145,7 @@ public:
 
   void FlushToWord() {
     if (CurBit) {
-      unsigned V = CurValue;
-      Out.push_back((unsigned char)(V >>  0));
-      Out.push_back((unsigned char)(V >>  8));
-      Out.push_back((unsigned char)(V >> 16));
-      Out.push_back((unsigned char)(V >> 24));
+      WriteWord(CurValue);
       CurBit = 0;
       CurValue = 0;
     }
@@ -197,7 +210,7 @@ public:
     EmitVBR(CodeLen, bitc::CodeLenWidth);
     FlushToWord();
 
-    unsigned BlockSizeWordLoc = static_cast<unsigned>(Out.size());
+    unsigned BlockSizeWordIndex = GetWordIndex();
     unsigned OldCodeSize = CurCodeSize;
 
     // Emit a placeholder, which will be replaced when the block is popped.
@@ -207,7 +220,7 @@ public:
 
     // Push the outer block's abbrev set onto the stack, start out with an
     // empty abbrev set.
-    BlockScope.push_back(Block(OldCodeSize, BlockSizeWordLoc/4));
+    BlockScope.push_back(Block(OldCodeSize, BlockSizeWordIndex));
     BlockScope.back().PrevAbbrevs.swap(CurAbbrevs);
 
     // If there is a blockinfo for this BlockID, add all the predefined abbrevs
@@ -237,7 +250,7 @@ public:
     FlushToWord();
 
     // Compute the size of the block, in words, not counting the size field.
-    unsigned SizeInWords= static_cast<unsigned>(Out.size())/4-B.StartSizeWord-1;
+    unsigned SizeInWords = GetWordIndex() - B.StartSizeWord - 1;
     unsigned ByteNo = B.StartSizeWord*4;
 
     // Update the block size field in the header of this sub-block.
@@ -353,25 +366,24 @@ private:
         
         // Flush to a 32-bit alignment boundary.
         FlushToWord();
-        assert((Out.size() & 3) == 0 && "Not 32-bit aligned");
 
         // Emit each field as a literal byte.
         if (BlobData) {
           for (unsigned i = 0; i != BlobLen; ++i)
-            Out.push_back((unsigned char)BlobData[i]);
+            WriteByte((unsigned char)BlobData[i]);
           
           // Know that blob data is consumed for assertion below.
           BlobData = 0;
         } else {
           for (unsigned e = Vals.size(); RecordIdx != e; ++RecordIdx) {
             assert(Vals[RecordIdx] < 256 && "Value too large to emit as blob");
-            Out.push_back((unsigned char)Vals[RecordIdx]);
+            WriteByte((unsigned char)Vals[RecordIdx]);
           }
         }
+
         // Align end to 32-bits.
-        while (Out.size() & 3)
-          Out.push_back(0);
-        
+        while (GetBufferOffset() & 3)
+          WriteByte(0);
       } else {  // Single scalar field.
         assert(RecordIdx < Vals.size() && "Invalid abbrev/record");
         EmitAbbreviatedField(Op, Vals[RecordIdx]);
