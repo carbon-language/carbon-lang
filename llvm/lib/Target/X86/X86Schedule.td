@@ -103,6 +103,17 @@ def IIC_CALL_FAR_PTR : InstrItinClass;
 // ret
 def IIC_RET : InstrItinClass;
 def IIC_RET_IMM : InstrItinClass;
+//sign extension movs
+def IIC_MOVSX : InstrItinClass;
+def IIC_MOVSX_R16_R8 : InstrItinClass;
+def IIC_MOVSX_R16_M8 : InstrItinClass;
+def IIC_MOVSX_R16_R16 : InstrItinClass;
+def IIC_MOVSX_R32_R32 : InstrItinClass;
+//zero extension movs
+def IIC_MOVZX : InstrItinClass;
+def IIC_MOVZX_R16_R8 : InstrItinClass;
+def IIC_MOVZX_R16_M8 : InstrItinClass;
+
 // SSE scalar/parallel binary operations
 def IIC_SSE_ALU_F32S_RR : InstrItinClass;
 def IIC_SSE_ALU_F32S_RM : InstrItinClass;
