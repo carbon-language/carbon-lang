@@ -175,3 +175,60 @@ different:
 ; CHECK: ret i1 false
   ret i1 %cmp3
 }
+
+; PR1768
+; CHECK: @test9
+define i32 @test9(i32 %i, i32 %j) {
+  %cmp = icmp eq i32 %i, %j
+  br i1 %cmp, label %cond_true, label %ret
+
+cond_true:
+  %diff = sub i32 %i, %j
+  ret i32 %diff
+; CHECK: ret i32 0
+
+ret:
+  ret i32 5
+; CHECK: ret i32 5
+}
+
+; PR1768
+; CHECK: @test10
+define i32 @test10(i32 %j, i32 %i) {
+  %cmp = icmp eq i32 %i, %j
+  br i1 %cmp, label %cond_true, label %ret
+
+cond_true:
+  %diff = sub i32 %i, %j
+  ret i32 %diff
+; CHECK: ret i32 0
+
+ret:
+  ret i32 5
+; CHECK: ret i32 5
+}
+
+declare i32 @yogibar()
+
+; CHECK: @test11
+define i32 @test11(i32 %x) {
+  %v0 = call i32 @yogibar()
+  %v1 = call i32 @yogibar()
+  %cmp = icmp eq i32 %v0, %v1
+  br i1 %cmp, label %cond_true, label %next
+
+cond_true:
+  ret i32 %v1
+; CHECK: ret i32 %v0
+
+next:
+  %cmp2 = icmp eq i32 %x, %v0
+  br i1 %cmp2, label %cond_true2, label %next2
+
+cond_true2:
+  ret i32 %v0
+; CHECK: ret i32 %x
+
+next2:
+  ret i32 0
+}

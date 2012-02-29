@@ -1972,21 +1972,30 @@ bool GVN::propagateEquality(Value *LHS, Value *RHS, BasicBlock *Root) {
   if (isa<Constant>(LHS) && isa<Constant>(RHS))
     return false;
 
-  // Make sure that any constants are on the right-hand side.  In general the
-  // best results are obtained by placing the longest lived value on the RHS.
-  if (isa<Constant>(LHS))
+  // Prefer a constant on the right-hand side, or an Argument if no constants.
+  if (isa<Constant>(LHS) || (isa<Argument>(LHS) && !isa<Constant>(RHS)))
     std::swap(LHS, RHS);
+  assert((isa<Argument>(LHS) || isa<Instruction>(LHS)) && "Unexpected value!");
 
-  // If neither term is constant then bail out.  This is not for correctness,
-  // it's just that the non-constant case is much less useful: it occurs just
-  // as often as the constant case but handling it hardly ever results in an
-  // improvement.
-  if (!isa<Constant>(RHS))
-    return false;
+  // If there is no obvious reason to prefer the left-hand side over the right-
+  // hand side, ensure the longest lived term is on the right-hand side, so the
+  // shortest lived term will be replaced by the longest lived.  This tends to
+  // expose more simplifications.
+  uint32_t LVN = VN.lookup_or_add(LHS);
+  if ((isa<Argument>(LHS) && isa<Argument>(RHS)) ||
+      (isa<Instruction>(LHS) && isa<Instruction>(RHS))) {
+    // Move the 'oldest' value to the right-hand side, using the value number as
+    // a proxy for age.
+    uint32_t RVN = VN.lookup_or_add(RHS);
+    if (LVN < RVN) {
+      std::swap(LHS, RHS);
+      LVN = RVN;
+    }
+  }
 
   // If value numbering later deduces that an instruction in the scope is equal
   // to 'LHS' then ensure it will be turned into 'RHS'.
-  addToLeaderTable(VN.lookup_or_add(LHS), RHS, Root);
+  addToLeaderTable(LVN, RHS, Root);
 
   // Replace all occurrences of 'LHS' with 'RHS' everywhere in the scope.  As
   // LHS always has at least one use that is not dominated by Root, this will
