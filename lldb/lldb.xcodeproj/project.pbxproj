@@ -6,6 +6,44 @@
 	objectVersion = 46;
 	objects = {
 
+/* Begin PBXAggregateTarget section */
+		26CEF3A914FD58BF007286B2 /* desktop_no_xpc */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 26CEF3AD14FD58BF007286B2 /* Build configuration list for PBXAggregateTarget "desktop_no_xpc" */;
+			buildPhases = (
+			);
+			dependencies = (
+				26CEF3B014FD591F007286B2 /* PBXTargetDependency */,
+			);
+			name = desktop_no_xpc;
+			productName = snowleopard;
+		};
+		26CEF3B114FD592B007286B2 /* desktop */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 26CEF3B214FD592B007286B2 /* Build configuration list for PBXAggregateTarget "desktop" */;
+			buildPhases = (
+			);
+			dependencies = (
+				26CEF3BB14FD595B007286B2 /* PBXTargetDependency */,
+				26CEF3B914FD5952007286B2 /* PBXTargetDependency */,
+				26CEF3B714FD594E007286B2 /* PBXTargetDependency */,
+			);
+			name = desktop;
+			productName = desktop;
+		};
+		26CEF3BC14FD596A007286B2 /* ios */ = {
+			isa = PBXAggregateTarget;
+			buildConfigurationList = 26CEF3BD14FD596A007286B2 /* Build configuration list for PBXAggregateTarget "ios" */;
+			buildPhases = (
+			);
+			dependencies = (
+				26CEF3C214FD5973007286B2 /* PBXTargetDependency */,
+			);
+			name = ios;
+			productName = ios;
+		};
+/* End PBXAggregateTarget section */
+
 /* Begin PBXBuildFile section */
 		260E07C6136FA69E00CF21D3 /* OptionGroupUUID.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C5136FA69E00CF21D3 /* OptionGroupUUID.cpp */; };
 		260E07C8136FAB9200CF21D3 /* OptionGroupFile.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 260E07C7136FAB9200CF21D3 /* OptionGroupFile.cpp */; };
@@ -70,7 +108,6 @@
 		26680337116005F1008E1FE4 /* SBBreakpoint.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9AF16A9C11402D5B007A7B3F /* SBBreakpoint.cpp */; };
 		2668035C11601108008E1FE4 /* LLDB.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26680207115FD0ED008E1FE4 /* LLDB.framework */; };
 		266DFE9713FD656E00D0C574 /* OperatingSystem.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 266DFE9613FD656E00D0C574 /* OperatingSystem.cpp */; };
-		266E8C6A13528ABC000C2042 /* lldb-platform in Resources */ = {isa = PBXBuildFile; fileRef = 26DC6A101337FE6900FF7998 /* lldb-platform */; };
 		2671A0D013482601003A87BB /* ConnectionMachPort.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2671A0CF13482601003A87BB /* ConnectionMachPort.cpp */; };
 		26744EF11338317700EF765A /* GDBRemoteCommunicationClient.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EED1338317700EF765A /* GDBRemoteCommunicationClient.cpp */; };
 		26744EF31338317700EF765A /* GDBRemoteCommunicationServer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 26744EEF1338317700EF765A /* GDBRemoteCommunicationServer.cpp */; };
@@ -499,13 +536,6 @@
 			remoteGlobalIDString = 26680206115FD0ED008E1FE4;
 			remoteInfo = LLDB;
 		};
-		266E8C6C13528AD2000C2042 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 26DC6A0F1337FE6900FF7998;
-			remoteInfo = "lldb-platform";
-		};
 		2689011413353E9B00698AC0 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
@@ -520,12 +550,40 @@
 			remoteGlobalIDString = 26CE0594115C31C20022F371;
 			remoteInfo = "lldb-debugserver";
 		};
-		26CE060F115C438C0022F371 /* PBXContainerItemProxy */ = {
+		26CEF3AF14FD591F007286B2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
-			containerPortal = 265E9BE1115C2BAA00D0DCCB /* debugserver.xcodeproj */;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = 26CE0593115C31C20022F371;
-			remoteInfo = "lldb-debugserver";
+			remoteGlobalIDString = 26F5C26910F3D9A4009D5894;
+			remoteInfo = "lldb-tool";
+		};
+		26CEF3B614FD594E007286B2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EDC6D49814E5C19B001B75F8;
+			remoteInfo = launcherXPCService;
+		};
+		26CEF3B814FD5952007286B2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = EDE274E214EDCE1F005B0F75;
+			remoteInfo = launcherRootXPCService;
+		};
+		26CEF3BA14FD595B007286B2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26F5C26910F3D9A4009D5894;
+			remoteInfo = "lldb-tool";
+		};
+		26CEF3C114FD5973007286B2 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 26F5C26910F3D9A4009D5894;
+			remoteInfo = "lldb-tool";
 		};
 		26DC6A151337FE7300FF7998 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -533,27 +591,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = 2689FFC913353D7A00698AC0;
 			remoteInfo = "lldb-core";
-		};
-		26DC6A201338008100FF7998 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 26DC6A0F1337FE6900FF7998;
-			remoteInfo = "lldb-platform";
-		};
-		ED00234514F6B471008CF6DD /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = EDE274E214EDCE1F005B0F75;
-			remoteInfo = launcherRootXPCService;
-		};
-		EDC09A4C14E5CAA40062243E /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 08FB7793FE84155DC02AAC07 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = EDC6D49814E5C19B001B75F8;
-			remoteInfo = launcherXPCService;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -3119,17 +3156,13 @@
 				26680205115FD0ED008E1FE4 /* Frameworks */,
 				261B5A7511C3FA6F00AABD0A /* Fixup Framework Headers */,
 				9A19ACE2116563A700E0D453 /* Finish swig wrapper classes (lldb) */,
-				2613F2F2146880EE00BFE551 /* Copy to Xcode.app */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				266E8C6D13528AD2000C2042 /* PBXTargetDependency */,
 				2689011513353E9B00698AC0 /* PBXTargetDependency */,
 				262CFC7211A450CB00946C6C /* PBXTargetDependency */,
 				26368AF6126B95FA00E8659F /* PBXTargetDependency */,
-				EDC09A4D14E5CAA40062243E /* PBXTargetDependency */,
-				ED00234614F6B471008CF6DD /* PBXTargetDependency */,
 			);
 			name = LLDB;
 			productName = LLDB;
@@ -3178,14 +3211,11 @@
 			buildPhases = (
 				26F5C26710F3D9A4009D5894 /* Sources */,
 				26F5C26810F3D9A4009D5894 /* Frameworks */,
-				2613F2F1146880C200BFE551 /* Copy to Xcode.app */,
 			);
 			buildRules = (
 			);
 			dependencies = (
-				26CE0610115C438C0022F371 /* PBXTargetDependency */,
 				266803621160110D008E1FE4 /* PBXTargetDependency */,
-				26DC6A211338008100FF7998 /* PBXTargetDependency */,
 			);
 			name = "lldb-tool";
 			productName = lldb;
@@ -3251,6 +3281,9 @@
 			);
 			projectRoot = "";
 			targets = (
+				26CEF3B114FD592B007286B2 /* desktop */,
+				26CEF3A914FD58BF007286B2 /* desktop_no_xpc */,
+				26CEF3BC14FD596A007286B2 /* ios */,
 				26F5C26910F3D9A4009D5894 /* lldb-tool */,
 				26680206115FD0ED008E1FE4 /* LLDB */,
 				26579F67126A25920007C5CB /* darwin-debug */,
@@ -3277,7 +3310,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				266E8C6A13528ABC000C2042 /* lldb-platform in Resources */,
 				262CFC7711A4510000946C6C /* debugserver in Resources */,
 				26368AF7126B960500E8659F /* darwin-debug in Resources */,
 			);
@@ -3300,34 +3332,6 @@
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		2613F2F1146880C200BFE551 /* Copy to Xcode.app */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 8;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Copy to Xcode.app";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-			shellPath = /bin/sh;
-			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/Developer/usr/bin\"; if echo \"$SDKROOT\" | grep -vi iphoneos >/dev/null; then [ ! -d \"${xcode_dir}\" ] && mkdir -p \"${xcode_dir}\"; ditto \"$TARGET_BUILD_DIR/$EXECUTABLE_PATH\" \"${xcode_dir}\"; strip -S \"${xcode_dir}/${EXECUTABLE_PATH}\"; fi";
-		};
-		2613F2F2146880EE00BFE551 /* Copy to Xcode.app */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 8;
-			files = (
-			);
-			inputPaths = (
-			);
-			name = "Copy to Xcode.app";
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 1;
-			shellPath = "/bin/sh -x";
-			shellScript = "xcode_dir=\"${DSTROOT}/Applications/Xcode.app/Contents/SharedFrameworks\"; if echo \"$SDKROOT\" | grep -vi iphoneos >/dev/null; then [ ! -d \"${xcode_dir}\" ] && mkdir -p \"${xcode_dir}\"; ditto \"${TARGET_BUILD_DIR}/${WRAPPER_NAME}\" \"${xcode_dir}/${WRAPPER_NAME}\"; strip -S \"${xcode_dir}/${EXECUTABLE_PATH}\"; fi";
-		};
 		261B5A7511C3FA6F00AABD0A /* Fixup Framework Headers */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -3868,40 +3872,40 @@
 			target = 26680206115FD0ED008E1FE4 /* LLDB */;
 			targetProxy = 266803611160110D008E1FE4 /* PBXContainerItemProxy */;
 		};
-		266E8C6D13528AD2000C2042 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 26DC6A0F1337FE6900FF7998 /* lldb-platform */;
-			targetProxy = 266E8C6C13528AD2000C2042 /* PBXContainerItemProxy */;
-		};
 		2689011513353E9B00698AC0 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 2689FFC913353D7A00698AC0 /* lldb-core */;
 			targetProxy = 2689011413353E9B00698AC0 /* PBXContainerItemProxy */;
 		};
-		26CE0610115C438C0022F371 /* PBXTargetDependency */ = {
+		26CEF3B014FD591F007286B2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			name = "lldb-debugserver";
-			targetProxy = 26CE060F115C438C0022F371 /* PBXContainerItemProxy */;
+			target = 26F5C26910F3D9A4009D5894 /* lldb-tool */;
+			targetProxy = 26CEF3AF14FD591F007286B2 /* PBXContainerItemProxy */;
+		};
+		26CEF3B714FD594E007286B2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EDC6D49814E5C19B001B75F8 /* launcherXPCService */;
+			targetProxy = 26CEF3B614FD594E007286B2 /* PBXContainerItemProxy */;
+		};
+		26CEF3B914FD5952007286B2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */;
+			targetProxy = 26CEF3B814FD5952007286B2 /* PBXContainerItemProxy */;
+		};
+		26CEF3BB14FD595B007286B2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26F5C26910F3D9A4009D5894 /* lldb-tool */;
+			targetProxy = 26CEF3BA14FD595B007286B2 /* PBXContainerItemProxy */;
+		};
+		26CEF3C214FD5973007286B2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 26F5C26910F3D9A4009D5894 /* lldb-tool */;
+			targetProxy = 26CEF3C114FD5973007286B2 /* PBXContainerItemProxy */;
 		};
 		26DC6A161337FE7300FF7998 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 2689FFC913353D7A00698AC0 /* lldb-core */;
 			targetProxy = 26DC6A151337FE7300FF7998 /* PBXContainerItemProxy */;
-		};
-		26DC6A211338008100FF7998 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 26DC6A0F1337FE6900FF7998 /* lldb-platform */;
-			targetProxy = 26DC6A201338008100FF7998 /* PBXContainerItemProxy */;
-		};
-		ED00234614F6B471008CF6DD /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = EDE274E214EDCE1F005B0F75 /* launcherRootXPCService */;
-			targetProxy = ED00234514F6B471008CF6DD /* PBXContainerItemProxy */;
-		};
-		EDC09A4D14E5CAA40062243E /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = EDC6D49814E5C19B001B75F8 /* launcherXPCService */;
-			targetProxy = EDC09A4C14E5CAA40062243E /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -3944,6 +3948,8 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLDB_FRAMEWORK_INSTALL_DIR = /System/Library/PrivateFrameworks;
+				LLDB_TOOLS_INSTALL_DIR = /usr/bin;
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm-build/$(LLVM_CONFIGURATION)";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = "Debug+Asserts";
@@ -3996,6 +4002,8 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLDB_FRAMEWORK_INSTALL_DIR = /System/Library/PrivateFrameworks;
+				LLDB_TOOLS_INSTALL_DIR = /usr/bin;
 				LLVM_BUILD_DIR = "$(SRCROOT)/llvm-build/$(LLVM_CONFIGURATION)";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = Release;
@@ -4016,7 +4024,7 @@
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
 				GCC_DYNAMIC_NO_PIC = NO;
 				GCC_OPTIMIZATION_LEVEL = 0;
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "darwin-debug";
 				SKIP_INSTALL = YES;
@@ -4028,7 +4036,7 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "darwin-debug";
 				SKIP_INSTALL = YES;
@@ -4041,7 +4049,7 @@
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
 				FRAMEWORK_SEARCH_PATHS = /System/Library/PrivateFrameworks;
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
 				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "darwin-debug";
 				SKIP_INSTALL = YES;
@@ -4053,9 +4061,9 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CURRENT_PROJECT_VERSION = 117;
+				CURRENT_PROJECT_VERSION = 118;
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 117;
+				DYLIB_CURRENT_VERSION = 118;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4067,7 +4075,7 @@
 				GCC_OPTIMIZATION_LEVEL = 0;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
-				INSTALL_PATH = /System/Library/PrivateFrameworks;
+				INSTALL_PATH = "$(LLDB_FRAMEWORK_INSTALL_DIR)";
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
@@ -4113,10 +4121,10 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CURRENT_PROJECT_VERSION = 117;
+				CURRENT_PROJECT_VERSION = 118;
 				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 117;
+				DYLIB_CURRENT_VERSION = 118;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4127,7 +4135,7 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
-				INSTALL_PATH = /System/Library/PrivateFrameworks;
+				INSTALL_PATH = "$(LLDB_FRAMEWORK_INSTALL_DIR)";
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
@@ -4172,8 +4180,8 @@
 		2689FFD513353D7A00698AC0 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 117;
-				DYLIB_CURRENT_VERSION = 117;
+				CURRENT_PROJECT_VERSION = 118;
+				DYLIB_CURRENT_VERSION = 118;
 				EXECUTABLE_EXTENSION = a;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4201,8 +4209,8 @@
 		2689FFD613353D7A00698AC0 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 117;
-				DYLIB_CURRENT_VERSION = 117;
+				CURRENT_PROJECT_VERSION = 118;
+				DYLIB_CURRENT_VERSION = 118;
 				EXECUTABLE_EXTENSION = a;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4230,8 +4238,8 @@
 		2689FFD713353D7A00698AC0 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 117;
-				DYLIB_CURRENT_VERSION = 117;
+				CURRENT_PROJECT_VERSION = 118;
+				DYLIB_CURRENT_VERSION = 118;
 				EXECUTABLE_EXTENSION = a;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4293,6 +4301,9 @@
 				GCC_WARN_UNUSED_LABEL = YES;
 				GCC_WARN_UNUSED_VALUE = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
+				LLDB_FRAMEWORK_INSTALL_DIR = /System/Library/PrivateFrameworks;
+				LLDB_TOOLS_INSTALL_DIR = /usr/bin;
+				"LLDB_TOOLS_INSTALL_DIR[sdk=iphoneos*]" = /usr/local/bin;
 				LLVM_BUILD_DIR = "$(OBJROOT)/llvm";
 				LLVM_BUILD_DIR_ARCH = "$(CURRENT_ARCH)/";
 				LLVM_CONFIGURATION = Release;
@@ -4311,7 +4322,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 117;
+				CURRENT_PROJECT_VERSION = 118;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -4320,10 +4331,16 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
-				INSTALL_PATH = /usr/bin;
-				"INSTALL_PATH[sdk=iphoneos*]" = /usr/local/bin;
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
-				OTHER_LDFLAGS = (
+				"OTHER_LDFLAGS[sdk=iphoneos*]" = (
+					"-sectcreate",
+					__TEXT,
+					__info_plist,
+					"$(PROJECT_DIR)/tools/driver/lldb-Info.plist",
+					"-Wl,-rpath,@loader_path/../../../System/Library/PrivateFrameworks",
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
 					"-sectcreate",
 					__TEXT,
 					__info_plist,
@@ -4343,10 +4360,10 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
 				COPY_PHASE_STRIP = YES;
-				CURRENT_PROJECT_VERSION = 117;
+				CURRENT_PROJECT_VERSION = 118;
 				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
-				DYLIB_CURRENT_VERSION = 117;
+				DYLIB_CURRENT_VERSION = 118;
 				EXPORTED_SYMBOLS_FILE = "resources/lldb-framework-exports";
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
@@ -4357,7 +4374,7 @@
 				GCC_INLINES_ARE_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "resources/LLDB-Info.plist";
-				INSTALL_PATH = /System/Library/PrivateFrameworks;
+				INSTALL_PATH = "$(LLDB_FRAMEWORK_INSTALL_DIR)";
 				LD_DYLIB_INSTALL_NAME = "@rpath/LLDB.framework/LLDB";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
@@ -4400,6 +4417,69 @@
 			};
 			name = BuildAndIntegration;
 		};
+		26CEF3AA14FD58BF007286B2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		26CEF3AB14FD58BF007286B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		26CEF3AC14FD58BF007286B2 /* BuildAndIntegration */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = BuildAndIntegration;
+		};
+		26CEF3B314FD592B007286B2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		26CEF3B414FD592B007286B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		26CEF3B514FD592B007286B2 /* BuildAndIntegration */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = BuildAndIntegration;
+		};
+		26CEF3BE14FD596A007286B2 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		26CEF3BF14FD596A007286B2 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		26CEF3C014FD596A007286B2 /* BuildAndIntegration */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = BuildAndIntegration;
+		};
 		26DC6A121337FE6A00FF7998 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -4428,7 +4508,7 @@
 					"-t",
 					"-Wl,-v",
 				);
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
@@ -4487,7 +4567,7 @@
 					"-t",
 					"-Wl,-v",
 				);
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
@@ -4547,7 +4627,7 @@
 					"-t",
 					"-Wl,-v",
 				);
-				INSTALL_PATH = "$(DEVELOPER_DIR)/usr/bin";
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
 				LIBRARY_SEARCH_PATHS = (
 					"$(LLVM_BUILD_DIR)/$(LLVM_BUILD_DIR_ARCH)",
 					"$(inherited)",
@@ -4584,7 +4664,7 @@
 		26F5C26C10F3D9A5009D5894 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 117;
+				CURRENT_PROJECT_VERSION = 118;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -4595,8 +4675,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
-				INSTALL_PATH = /usr/bin;
-				"INSTALL_PATH[sdk=iphoneos*]" = /usr/local/bin;
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				LLVM_BUILD_DIR_ARCH = "$(OBJROOT)/llvm";
 				OTHER_LDFLAGS = (
@@ -4615,7 +4694,7 @@
 		26F5C26D10F3D9A5009D5894 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				CURRENT_PROJECT_VERSION = 117;
+				CURRENT_PROJECT_VERSION = 118;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_LIBRARY_DIR)/PrivateFrameworks\"",
@@ -4624,8 +4703,7 @@
 				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = "lldb-Info.plist";
-				INSTALL_PATH = /usr/bin;
-				"INSTALL_PATH[sdk=iphoneos*]" = /usr/local/bin;
+				INSTALL_PATH = "$(LLDB_TOOLS_INSTALL_DIR)";
 				LIBRARY_SEARCH_PATHS = "$(inherited)";
 				OTHER_LDFLAGS = (
 					"-sectcreate",
@@ -4715,7 +4793,7 @@
 					"RC_XBS=${RC_XBS}0",
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
-				INSTALL_PATH = "$(DSTROOT)/LLDB.framework/XPCServices";
+				INSTALL_PATH = "$(LLDB_FRAMEWORK_INSTALL_DIR)/LLDB.framework/XPCServices";
 				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
@@ -4802,7 +4880,7 @@
 					"RC_XBS=${RC_XBS}0",
 					"RC_BUILDIT=${RC_BUILDIT}0",
 				);
-				INSTALL_PATH = "$(DSTROOT)/LLDB.framework/XPCServices";
+				INSTALL_PATH = "$(LLDB_FRAMEWORK_INSTALL_DIR)/LLDB.framework/XPCServices";
 				IS_APPLE_CODE_SIGNED = "(anchor apple or (anchor apple generic and certificate leaf[field.1.2.840.113635.100.6.1.9]))";
 				MACH_O_TYPE = mh_execute;
 				PRODUCT_NAME = "com.apple.lldb.$(TARGET_NAME)";
@@ -4850,6 +4928,36 @@
 				2689FFD513353D7A00698AC0 /* Debug */,
 				2689FFD613353D7A00698AC0 /* Release */,
 				2689FFD713353D7A00698AC0 /* BuildAndIntegration */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
+		};
+		26CEF3AD14FD58BF007286B2 /* Build configuration list for PBXAggregateTarget "desktop_no_xpc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26CEF3AA14FD58BF007286B2 /* Debug */,
+				26CEF3AB14FD58BF007286B2 /* Release */,
+				26CEF3AC14FD58BF007286B2 /* BuildAndIntegration */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
+		};
+		26CEF3B214FD592B007286B2 /* Build configuration list for PBXAggregateTarget "desktop" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26CEF3B314FD592B007286B2 /* Debug */,
+				26CEF3B414FD592B007286B2 /* Release */,
+				26CEF3B514FD592B007286B2 /* BuildAndIntegration */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = BuildAndIntegration;
+		};
+		26CEF3BD14FD596A007286B2 /* Build configuration list for PBXAggregateTarget "ios" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				26CEF3BE14FD596A007286B2 /* Debug */,
+				26CEF3BF14FD596A007286B2 /* Release */,
+				26CEF3C014FD596A007286B2 /* BuildAndIntegration */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = BuildAndIntegration;
