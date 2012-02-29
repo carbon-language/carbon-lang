@@ -1819,7 +1819,7 @@ void CodeGenFunction::EmitLambdaExpr(const LambdaExpr *E, AggValueSlot Slot) {
   CXXRecordDecl::field_iterator CurField = E->getLambdaClass()->field_begin();
   for (LambdaExpr::capture_init_iterator i = E->capture_init_begin(),
                                          e = E->capture_init_end();
-      i != e; ++i, ++CurField) {
+       i != e; ++i, ++CurField) {
     // Emit initialization
     LValue LV = EmitLValueForFieldInitialization(Slot.getAddr(), *CurField, 0);
     ArrayRef<VarDecl *> ArrayIndexes;
