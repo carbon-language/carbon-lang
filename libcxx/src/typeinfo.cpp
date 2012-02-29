@@ -13,7 +13,7 @@
 
 #include "typeinfo"
 
-#ifndef _LIBCPPABI_VERSION
+#if !(defined(_LIBCPPABI_VERSION) || defined(LIBCXXRT))
 
 std::bad_cast::bad_cast() _NOEXCEPT
 {

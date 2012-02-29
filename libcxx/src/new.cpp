@@ -24,7 +24,7 @@
     static std::new_handler __new_handler;
 #endif
 
-//#ifndef _LIBCPPABI_VERSION
+#if !defined (LIBCXXRT) // && !defined(_LIBCPPABI_VERSION)
 
 // Implement all new and delete operators as weak definitions
 // in this shared library, so that they can be overriden by programs
@@ -134,7 +134,7 @@ operator delete[] (void* ptr, const std::nothrow_t&) _NOEXCEPT
     ::operator delete[](ptr);
 }
 
-//#endif  // _LIBCPPABI_VERSION
+#endif  // !_LIBCPPABI_VERSION && !LIBCXXRT
 
 namespace std
 {
@@ -154,6 +154,8 @@ get_new_handler() _NOEXCEPT
 {
     return __sync_fetch_and_add(&__new_handler, (new_handler)0);
 }
+
+#ifndef LIBCXXRT
 
 bad_alloc::bad_alloc() _NOEXCEPT
 {
@@ -184,6 +186,7 @@ bad_array_new_length::what() const _NOEXCEPT
 }
 
 #endif
+#endif //LIBCXXRT
 
 void
 __throw_bad_alloc()
