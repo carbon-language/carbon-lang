@@ -529,14 +529,14 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters()
     static uint32_t g_d13_regs[] = { 52, 53, LLDB_INVALID_REGNUM }; // (s26, s27)
     static uint32_t g_d14_regs[] = { 54, 55, LLDB_INVALID_REGNUM }; // (s28, s29)
     static uint32_t g_d15_regs[] = { 56, 57, LLDB_INVALID_REGNUM }; // (s30, s31)
-    static uint32_t g_q0_regs[] =  { 75, 76, LLDB_INVALID_REGNUM }; // (d0, d1)
-    static uint32_t g_q1_regs[] =  { 77, 78, LLDB_INVALID_REGNUM }; // (d2, d3)
-    static uint32_t g_q2_regs[] =  { 79, 80, LLDB_INVALID_REGNUM }; // (d4, d5)
-    static uint32_t g_q3_regs[] =  { 81, 82, LLDB_INVALID_REGNUM }; // (d6, d7)
-    static uint32_t g_q4_regs[] =  { 83, 84, LLDB_INVALID_REGNUM }; // (d8, d9)
-    static uint32_t g_q5_regs[] =  { 85, 86, LLDB_INVALID_REGNUM }; // (d10, d11)
-    static uint32_t g_q6_regs[] =  { 87, 88, LLDB_INVALID_REGNUM }; // (d12, d13)
-    static uint32_t g_q7_regs[] =  { 89, 90, LLDB_INVALID_REGNUM }; // (d14, d15)
+    static uint32_t g_q0_regs[] =  { 26, 27, 28, 29, LLDB_INVALID_REGNUM }; // (d0, d1) -> (s0, s1, s2, s3)
+    static uint32_t g_q1_regs[] =  { 30, 31, 32, 33, LLDB_INVALID_REGNUM }; // (d2, d3) -> (s4, s5, s6, s7)
+    static uint32_t g_q2_regs[] =  { 34, 35, 36, 37, LLDB_INVALID_REGNUM }; // (d4, d5) -> (s8, s9, s10, s11)
+    static uint32_t g_q3_regs[] =  { 38, 39, 40, 41, LLDB_INVALID_REGNUM }; // (d6, d7) -> (s12, s13, s14, s15)
+    static uint32_t g_q4_regs[] =  { 42, 43, 44, 45, LLDB_INVALID_REGNUM }; // (d8, d9) -> (s16, s17, s18, s19)
+    static uint32_t g_q5_regs[] =  { 46, 47, 48, 49, LLDB_INVALID_REGNUM }; // (d10, d11) -> (s20, s21, s22, s23)
+    static uint32_t g_q6_regs[] =  { 50, 51, 52, 53, LLDB_INVALID_REGNUM }; // (d12, d13) -> (s24, s25, s26, s27)
+    static uint32_t g_q7_regs[] =  { 54, 55, 56, 57, LLDB_INVALID_REGNUM }; // (d14, d15) -> (s28, s29, s30, s31)
     static uint32_t g_q8_regs[] =  { 59, 60, LLDB_INVALID_REGNUM }; // (d16, d17)
     static uint32_t g_q9_regs[] =  { 61, 62, LLDB_INVALID_REGNUM }; // (d18, d19)
     static uint32_t g_q10_regs[] = { 63, 64, LLDB_INVALID_REGNUM }; // (d20, d21)
@@ -664,13 +664,28 @@ GDBRemoteDynamicRegisterInfo::HardcodeARMRegisters()
     static ConstString vfp_reg_set ("Floating Point Registers");
     uint32_t i;
     // Calculate the offsets of the registers
+    // Note that the layout of the "composite" registers (d0-d15 and q0-q15) which comes after the
+    // "primordial" registers is important.  This enables us to calculate the offset of the composite
+    // register by using the offset of its first primordial register.  For example, to calculate the
+    // offset of q0, use the d16->offset.
     if (g_register_infos[2].byte_offset == 0)
     {
         uint32_t byte_offset = 0;
         for (i=0; i<num_registers; ++i)
         {
-            g_register_infos[i].byte_offset = byte_offset;
-            byte_offset += g_register_infos[i].byte_size;
+            // For primordial registers, increment the byte_offset by the byte_size to arrive at the
+            // byte_offset for the next register.  Otherwise, we have a composite register whose
+            // offset can be calculated by consulting the offset of its first primordial register.
+            if (!g_register_infos[i].value_regs)
+            {
+                g_register_infos[i].byte_offset = byte_offset;
+                byte_offset += g_register_infos[i].byte_size;
+            }
+            else
+            {
+                const uint32_t first_primordial_reg = g_register_infos[i].value_regs[0];
+                g_register_infos[i].byte_offset = g_register_infos[first_primordial_reg].byte_offset;
+            }
         }
     }
     for (i=0; i<num_registers; ++i)
