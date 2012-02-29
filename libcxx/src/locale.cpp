@@ -940,6 +940,7 @@ ctype<char>::classic_table()  _NOEXCEPT
 #else
     // Platform not supported: abort so the person doing the port knows what to
     // fix
+# warning  ctype<char>::classic_table() is not implemented
     abort();
     return NULL;
 #endif
