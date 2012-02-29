@@ -307,23 +307,23 @@ g_reg_sets[k_num_register_sets] =
 
 #define DEFINE_GPR(reg, alt, kind1, kind2, kind3, kind4)        \
     { #reg, alt, GPR_SIZE(reg), GPR_OFFSET(reg), eEncodingUint, \
-      eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg } }
+      eFormatHex, { kind1, kind2, kind3, kind4, gpr_##reg }, NULL, NULL }
 
 #define DEFINE_FPR(reg, kind1, kind2, kind3, kind4)              \
     { #reg, NULL, FPR_SIZE(reg), FPR_OFFSET(reg), eEncodingUint, \
-      eFormatHex, { kind1, kind2, kind3, kind4, fpu_##reg } }
+      eFormatHex, { kind1, kind2, kind3, kind4, fpu_##reg }, NULL, NULL }
 
 #define DEFINE_FP(reg, i)                                          \
     { #reg#i, NULL, FP_SIZE, FPR_OFFSET(reg[i]), eEncodingVector,  \
       eFormatVectorOfUInt8,                                        \
       { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,            \
-        LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i } }
+        LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i }, NULL, NULL }
 
 #define DEFINE_XMM(reg, i)                                         \
     { #reg#i, NULL, XMM_SIZE, FPR_OFFSET(reg[i]), eEncodingVector, \
       eFormatVectorOfUInt8,                                        \
       { gcc_dwarf_fpu_##reg##i, gcc_dwarf_fpu_##reg##i,            \
-        LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i } }
+        LLDB_INVALID_REGNUM, gdb_fpu_##reg##i, fpu_##reg##i }, NULL, NULL }
 
 #define REG_CONTEXT_SIZE (sizeof(GPR) + sizeof(RegisterContext_x86_64::FPU))
 

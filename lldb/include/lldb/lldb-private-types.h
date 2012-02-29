@@ -30,6 +30,8 @@ namespace lldb_private
         lldb::Encoding encoding; // Encoding of the register bits
         lldb::Format format;     // Default display format
         uint32_t kinds[lldb::kNumRegisterKinds]; // Holds all of the various register numbers for all register kinds
+        uint32_t *value_regs;    // List of registers that must be terminated with LLDB_INVALID_REGNUM
+        uint32_t *invalidate_regs; // List of registers that must be invalidated when this register is modified, list must be terminated with LLDB_INVALID_REGNUM
     } RegisterInfo;
 
     //----------------------------------------------------------------------

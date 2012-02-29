@@ -185,7 +185,25 @@ enum
     dwarf_d28,
     dwarf_d29,
     dwarf_d30,
-    dwarf_d31
+    dwarf_d31,
+
+    // Neon quadword registers
+    dwarf_q0 = 288,
+    dwarf_q1,
+    dwarf_q2,
+    dwarf_q3,
+    dwarf_q4,
+    dwarf_q5,
+    dwarf_q6,
+    dwarf_q7,
+    dwarf_q8,
+    dwarf_q9,
+    dwarf_q10,
+    dwarf_q11,
+    dwarf_q12,
+    dwarf_q13,
+    dwarf_q14,
+    dwarf_q15
 };
 
 const char *
