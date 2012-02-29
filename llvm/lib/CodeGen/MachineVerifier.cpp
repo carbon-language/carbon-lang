@@ -28,6 +28,7 @@
 #include "llvm/CodeGen/LiveIntervalAnalysis.h"
 #include "llvm/CodeGen/LiveVariables.h"
 #include "llvm/CodeGen/LiveStackAnalysis.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/CodeGen/MachineFunctionPass.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineMemOperand.h"
@@ -1104,7 +1105,7 @@ void MachineVerifier::verifyLiveIntervals() {
         }
       } else {
         // Non-PHI def.
-        MachineInstr *MI = LiveInts->getInstructionFromIndex(VNI->def);
+        const MachineInstr *MI = LiveInts->getInstructionFromIndex(VNI->def);
         if (!MI) {
           report("No instruction at def index", MF);
           *OS << "Valno #" << VNI->id << " is defined at " << VNI->def
@@ -1114,7 +1115,7 @@ void MachineVerifier::verifyLiveIntervals() {
 
         bool hasDef = false;
         bool isEarlyClobber = false;
-        for (MIOperands MOI(MI, true); MOI.isValid(); ++MOI) {
+        for (ConstMIBundleOperands MOI(MI); MOI.isValid(); ++MOI) {
           if (!MOI->isReg() || !MOI->isDef())
             continue;
           if (TargetRegisterInfo::isVirtualRegister(LI.reg)) {
@@ -1197,7 +1198,7 @@ void MachineVerifier::verifyLiveIntervals() {
         continue;
 
       // The live segment is ending inside EndMBB
-      MachineInstr *MI =
+      const MachineInstr *MI =
         LiveInts->getInstructionFromIndex(I->end.getPrevSlot());
       if (!MI) {
         report("Live segment doesn't end at a valid instruction", EndMBB);
@@ -1242,7 +1243,7 @@ void MachineVerifier::verifyLiveIntervals() {
         // use, or a dead flag on a def.
         bool hasRead = false;
         bool hasDeadDef = false;
-        for (MIOperands MOI(MI, true); MOI.isValid(); ++MOI) {
+        for (ConstMIBundleOperands MOI(MI); MOI.isValid(); ++MOI) {
           if (!MOI->isReg() || MOI->getReg() != LI.reg)
             continue;
           if (MOI->readsReg())

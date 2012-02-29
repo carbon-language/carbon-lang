@@ -41,6 +41,114 @@ MachineBasicBlock::instr_iterator finalizeBundle(MachineBasicBlock &MBB,
 /// MachineFunction. Return true if any bundles are finalized.
 bool finalizeBundles(MachineFunction &MF);
 
+//===----------------------------------------------------------------------===//
+// MachineOperand iterator
+//
+
+/// MachineOperandIteratorBase - Iterator that can visit all operands on a
+/// MachineInstr, or all operands on a bundle of MachineInstrs.  This class is
+/// not intended to be used directly, use one of the sub-classes instead.
+///
+/// Intended use:
+///
+///   for (MIBundleOperands MIO(MI); MIO.isValid(); ++MIO) {
+///     if (!MIO->isReg())
+///       continue;
+///     ...
+///   }
+///
+class MachineOperandIteratorBase {
+  MachineBasicBlock::instr_iterator InstrI, InstrE;
+  MachineInstr::mop_iterator OpI, OpE;
+
+  // If the operands on InstrI are exhausted, advance InstrI to the next
+  // bundled instruction with operands.
+  void advance() {
+    while (OpI == OpE) {
+      // Don't advance off the basic block, or into a new bundle.
+      if (++InstrI == InstrE || !InstrI->isInsideBundle())
+        break;
+      OpI = InstrI->operands_begin();
+      OpE = InstrI->operands_end();
+    }
+  }
+
+protected:
+  /// MachineOperandIteratorBase - Create an iterator that visits all operands
+  /// on MI, or all operands on every instruction in the bundle containing MI.
+  ///
+  /// @param MI The instruction to examine.
+  /// @param WholeBundle When true, visit all operands on the entire bundle.
+  ///
+  explicit MachineOperandIteratorBase(MachineInstr *MI, bool WholeBundle) {
+    if (WholeBundle) {
+      InstrI = MI->getBundleStart();
+      InstrE = MI->getParent()->instr_end();
+    } else {
+      InstrI = InstrE = MI;
+      ++InstrE;
+    }
+    OpI = InstrI->operands_begin();
+    OpE = InstrI->operands_end();
+    if (WholeBundle)
+      advance();
+  }
+
+  MachineOperand &deref() const { return *OpI; }
+
+public:
+  /// isValid - Returns true until all the operands have been visited.
+  bool isValid() const { return OpI != OpE; }
+
+  /// Preincrement.  Move to the next operand.
+  void operator++() {
+    assert(isValid() && "Cannot advance MIOperands beyond the last operand");
+    ++OpI;
+    advance();
+  }
+
+};
+
+/// MIOperands - Iterate over operands of a single instruction.
+///
+class MIOperands : public MachineOperandIteratorBase {
+public:
+  MIOperands(MachineInstr *MI) : MachineOperandIteratorBase(MI, false) {}
+  MachineOperand &operator* () const { return deref(); }
+  MachineOperand *operator->() const { return &deref(); }
+};
+
+/// ConstMIOperands - Iterate over operands of a single const instruction.
+///
+class ConstMIOperands : public MachineOperandIteratorBase {
+public:
+  ConstMIOperands(const MachineInstr *MI)
+    : MachineOperandIteratorBase(const_cast<MachineInstr*>(MI), false) {}
+  const MachineOperand &operator* () const { return deref(); }
+  const MachineOperand *operator->() const { return &deref(); }
+};
+
+/// MIBundleOperands - Iterate over all operands in a bundle of machine
+/// instructions.
+///
+class MIBundleOperands : public MachineOperandIteratorBase {
+public:
+  MIBundleOperands(MachineInstr *MI) : MachineOperandIteratorBase(MI, true) {}
+  MachineOperand &operator* () const { return deref(); }
+  MachineOperand *operator->() const { return &deref(); }
+};
+
+/// ConstMIBundleOperands - Iterate over all operands in a const bundle of
+/// machine instructions.
+///
+class ConstMIBundleOperands : public MachineOperandIteratorBase {
+public:
+  ConstMIBundleOperands(const MachineInstr *MI)
+    : MachineOperandIteratorBase(const_cast<MachineInstr*>(MI), true) {}
+  const MachineOperand &operator* () const { return deref(); }
+  const MachineOperand *operator->() const { return &deref(); }
+};
+
 } // End llvm namespace
 
 #endif
