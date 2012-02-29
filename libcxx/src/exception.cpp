@@ -99,6 +99,10 @@ bool uncaught_exception() _NOEXCEPT
 #if __APPLE__
     // on Darwin, there is a helper function so __cxa_get_globals is private
     return __cxa_uncaught_exception();
+#elif LIBCXXRT
+    __cxa_eh_globals * globals = __cxa_get_globals();
+    return (globals->uncaughtExceptions != 0);
+#else  // __APPLE__
     #warning uncaught_exception not yet implemented
     ::abort();
 #endif  // __APPLE__
