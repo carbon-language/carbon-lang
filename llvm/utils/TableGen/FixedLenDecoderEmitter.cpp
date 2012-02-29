@@ -291,7 +291,8 @@ protected:
     // disassembler should return SoftFail instead of Success.
     //
     // This is used for marking UNPREDICTABLE instructions in the ARM world.
-    BitsInit *SFBits = AllInstructions[Opcode]->TheDef->getValueAsBitsInit("SoftFail");
+    BitsInit *SFBits =
+      AllInstructions[Opcode]->TheDef->getValueAsBitsInit("SoftFail");
 
     for (unsigned i = 0; i < BitWidth; ++i) {
       if (SFBits && bitFromBits(*SFBits, i) == BIT_TRUE)
@@ -587,8 +588,9 @@ unsigned Filter::usefulness() const {
 void FilterChooser::emitTop(raw_ostream &o, unsigned Indentation,
                             std::string Namespace) {
   o.indent(Indentation) <<
-    "static MCDisassembler::DecodeStatus decode" << Namespace << "Instruction" << BitWidth
-    << "(MCInst &MI, uint" << BitWidth << "_t insn, uint64_t Address, "
+    "static MCDisassembler::DecodeStatus decode" << Namespace << "Instruction"
+    << BitWidth << "(MCInst &MI, uint" << BitWidth
+    << "_t insn, uint64_t Address, "
     << "const void *Decoder, const MCSubtargetInfo &STI) {\n";
   o.indent(Indentation) << "  unsigned tmp = 0;\n";
   o.indent(Indentation) << "  (void)tmp;\n";
@@ -771,7 +773,8 @@ void FilterChooser::emitBinaryParser(raw_ostream &o, unsigned &Indentation,
 
   if (Decoder != "")
     o.indent(Indentation) << "  " << Emitter->GuardPrefix << Decoder
-                          << "(MI, tmp, Address, Decoder)" << Emitter->GuardPostfix << "\n";
+                          << "(MI, tmp, Address, Decoder)"
+                          << Emitter->GuardPostfix << "\n";
   else
     o.indent(Indentation) << "  MI.addOperand(MCOperand::CreateImm(tmp));\n";
 
@@ -788,7 +791,8 @@ static void emitSinglePredicateMatch(raw_ostream &o, StringRef str,
 
 bool FilterChooser::emitPredicateMatch(raw_ostream &o, unsigned &Indentation,
                                            unsigned Opc) {
-  ListInit *Predicates = AllInstructions[Opc]->TheDef->getValueAsListInit("Predicates");
+  ListInit *Predicates =
+    AllInstructions[Opc]->TheDef->getValueAsListInit("Predicates");
   for (unsigned i = 0; i < Predicates->getSize(); ++i) {
     Record *Pred = Predicates->getElementAsRecord(i);
     if (!Pred->getValue("AssemblerMatcherPredicate"))
@@ -814,8 +818,10 @@ bool FilterChooser::emitPredicateMatch(raw_ostream &o, unsigned &Indentation,
   return Predicates->getSize() > 0;
 }
 
-void FilterChooser::emitSoftFailCheck(raw_ostream &o, unsigned Indentation, unsigned Opc) {
-  BitsInit *SFBits = AllInstructions[Opc]->TheDef->getValueAsBitsInit("SoftFail");
+void FilterChooser::emitSoftFailCheck(raw_ostream &o, unsigned Indentation,
+                                      unsigned Opc) {
+  BitsInit *SFBits =
+    AllInstructions[Opc]->TheDef->getValueAsBitsInit("SoftFail");
   if (!SFBits) return;
   BitsInit *InstBits = AllInstructions[Opc]->TheDef->getValueAsBitsInit("Inst");
 
@@ -902,15 +908,16 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
       // If a custom instruction decoder was specified, use that.
       if (I->numFields() == 0 && I->Decoder.size()) {
         o.indent(Indentation) << "  " << Emitter->GuardPrefix << I->Decoder
-                              << "(MI, insn, Address, Decoder)" << Emitter->GuardPostfix << "\n";
+                              << "(MI, insn, Address, Decoder)"
+                              << Emitter->GuardPostfix << "\n";
         break;
       }
 
       emitBinaryParser(o, Indentation, *I);
     }
 
-    o.indent(Indentation) << "  return " << Emitter->ReturnOK << "; // " << nameWithID(Opc)
-                          << '\n';
+    o.indent(Indentation) << "  return " << Emitter->ReturnOK << "; // "
+                          << nameWithID(Opc) << '\n';
     o.indent(Indentation) << "}\n"; // Closing predicate block.
     return true;
   }
@@ -952,14 +959,15 @@ bool FilterChooser::emitSingletonDecoder(raw_ostream &o, unsigned &Indentation,
     // If a custom instruction decoder was specified, use that.
     if (I->numFields() == 0 && I->Decoder.size()) {
       o.indent(Indentation) << "  " << Emitter->GuardPrefix << I->Decoder
-                            << "(MI, insn, Address, Decoder)" << Emitter->GuardPostfix << "\n";
+                            << "(MI, insn, Address, Decoder)"
+                            << Emitter->GuardPostfix << "\n";
       break;
     }
 
     emitBinaryParser(o, Indentation, *I);
   }
-  o.indent(Indentation) << "  return " << Emitter->ReturnOK << "; // " << nameWithID(Opc)
-                        << '\n';
+  o.indent(Indentation) << "  return " << Emitter->ReturnOK << "; // "
+                        << nameWithID(Opc) << '\n';
   o.indent(Indentation) << "}\n";
 
   return false;
