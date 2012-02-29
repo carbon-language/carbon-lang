@@ -4859,7 +4859,12 @@ IfUnequal:
    variables that must have an address available.  When the function returns
    (either with the <tt><a href="#i_ret">ret</a></tt>
    or <tt><a href="#i_resume">resume</a></tt> instructions), the memory is
-   reclaimed.  Allocating zero bytes is legal, but the result is undefined.</p>
+   reclaimed.  Allocating zero bytes is legal, but the result is undefined.
+   The order in which memory is allocated (ie., which way the stack grows) is
+   not specified, and relational comparisons involving '<tt>alloca</tt>'s are
+   undefined.</p>
+
+<p>
 
 <h5>Example:</h5>
 <pre>
