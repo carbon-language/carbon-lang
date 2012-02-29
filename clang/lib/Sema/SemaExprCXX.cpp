@@ -787,20 +787,6 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
   SourceRange FullRange = SourceRange(TyBeginLoc,
       ListInitialization ? Exprs[0]->getSourceRange().getEnd() : RParenLoc);
 
-  if (Ty->isArrayType())
-    return ExprError(Diag(TyBeginLoc,
-                          diag::err_value_init_for_array_type) << FullRange);
-  if (!Ty->isVoidType() &&
-      RequireCompleteType(TyBeginLoc, Ty,
-                          PDiag(diag::err_invalid_incomplete_type_use)
-                            << FullRange))
-    return ExprError();
-
-  if (RequireNonAbstractType(TyBeginLoc, Ty,
-                             diag::err_allocation_of_abstract_type))
-    return ExprError();
-
-
   // C++ [expr.type.conv]p1:
   // If the expression list is a single expression, the type conversion
   // expression is equivalent (in definedness, and if defined in meaning) to the
@@ -810,6 +796,24 @@ Sema::BuildCXXTypeConstructExpr(TypeSourceInfo *TInfo,
     exprs.release();
     return BuildCXXFunctionalCastExpr(TInfo, LParenLoc, Arg, RParenLoc);
   }
+
+  QualType ElemTy = Ty;
+  if (Ty->isArrayType()) {
+    if (!ListInitialization)
+      return ExprError(Diag(TyBeginLoc,
+                            diag::err_value_init_for_array_type) << FullRange);
+    ElemTy = Context.getBaseElementType(Ty);
+  }
+
+  if (!Ty->isVoidType() &&
+      RequireCompleteType(TyBeginLoc, ElemTy,
+                          PDiag(diag::err_invalid_incomplete_type_use)
+                            << FullRange))
+    return ExprError();
+
+  if (RequireNonAbstractType(TyBeginLoc, Ty,
+                             diag::err_allocation_of_abstract_type))
+    return ExprError();
 
   InitializedEntity Entity = InitializedEntity::InitializeTemporary(TInfo);
   InitializationKind Kind

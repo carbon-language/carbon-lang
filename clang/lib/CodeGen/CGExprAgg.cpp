@@ -898,7 +898,7 @@ void AggExprEmitter::VisitInitListExpr(InitListExpr *E) {
     return;
   }
 
-  llvm::Value *DestPtr = Dest.getAddr();
+  llvm::Value *DestPtr = EnsureSlot(E->getType()).getAddr();
 
   // Handle initialization of an array.
   if (E->getType()->isArrayType()) {
