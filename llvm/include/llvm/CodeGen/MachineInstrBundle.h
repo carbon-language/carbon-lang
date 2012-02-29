@@ -107,6 +107,39 @@ public:
     advance();
   }
 
+  /// getOperandNo - Returns the number of the current operand relative to its
+  /// instruction.
+  ///
+  unsigned getOperandNo() const {
+    return OpI - InstrI->operands_begin();
+  }
+
+  /// RegInfo - Information about a virtual register used by a set of operands.
+  ///
+  struct RegInfo {
+    /// Reads - One of the operands read the virtual register.  This does not
+    /// include <undef> or <internal> use operands, see MO::readsReg().
+    bool Reads;
+
+    /// Writes - One of the operands writes the virtual register.
+    bool Writes;
+
+    /// Tied - Uses and defs must use the same register. This can be because of
+    /// a two-address constraint, or there may be a partial redefinition of a
+    /// sub-register.
+    bool Tied;
+  };
+
+  /// analyzeVirtReg - Analyze how the current instruction or bundle uses a
+  /// virtual register.  This function should not be called after operator++(),
+  /// it expects a fresh iterator.
+  ///
+  /// @param Reg The virtual register to analyze.
+  /// @param Ops When set, this vector will receive an (MI, OpNum) entry for
+  ///            each operand referring to Reg.
+  /// @returns A filled-in RegInfo struct.
+  RegInfo analyzeVirtReg(unsigned Reg,
+                 SmallVectorImpl<std::pair<MachineInstr*, unsigned> > *Ops = 0);
 };
 
 /// MIOperands - Iterate over operands of a single instruction.
