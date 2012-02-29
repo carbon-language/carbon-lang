@@ -92,6 +92,13 @@ public:
                       int max_return_elements,
                       lldb::SBStringList &matches);
 
+    // Catch commands before they execute by registering a callback that will
+    // get called when the command gets executed. This allows GUI or command
+    // line interfaces to intercept a command and stop it from happening
+    bool
+    SetCommandOverrideCallback (const char *command_name,
+                                lldb::CommandOverrideCallback callback,
+                                void *baton);
 protected:
 
     lldb_private::CommandInterpreter &

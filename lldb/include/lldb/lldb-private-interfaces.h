@@ -35,6 +35,7 @@ namespace lldb_private
     typedef ThreadPlan * (*ThreadPlanShouldStopHereCallback) (ThreadPlan *current_plan, Flags &flags, void *baton);
     typedef UnwindAssembly* (*UnwindAssemblyCreateInstance) (const ArchSpec &arch);
     typedef int (*ComparisonFunction)(const void *, const void *);
+    typedef bool (*CommandOverrideCallback)(void *baton, const char **argv);
 
 } // namespace lldb_private
 

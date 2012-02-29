@@ -135,6 +135,18 @@ public:
         return m_debugger.InputReaderIsTopReader (m_editline_reader);
     }
 
+    bool
+    GetIsDone () const
+    {
+        return m_done;
+    }
+
+    void
+    SetIsDone ()
+    {
+        m_done = true;
+    }
+
 private:
     lldb::SBDebugger m_debugger;
     lldb_utility::PseudoTerminal m_editline_pty;
@@ -143,6 +155,7 @@ private:
     std::auto_ptr<IOChannel> m_io_channel_ap;
     OptionData m_option_data;
     bool m_waiting_for_command;
+    bool m_done;
 
     void
     ResetOptionValues ();

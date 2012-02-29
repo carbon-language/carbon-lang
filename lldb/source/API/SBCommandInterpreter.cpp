@@ -310,6 +310,22 @@ SBCommandInterpreter::GetArgumentDescriptionAsCString (const lldb::CommandArgume
     return CommandObject::GetArgumentDescriptionAsCString (arg_type);
 }
 
+bool
+SBCommandInterpreter::SetCommandOverrideCallback (const char *command_name,
+                                                  lldb::CommandOverrideCallback callback,
+                                                  void *baton)
+{
+    if (command_name && command_name[0] && m_opaque_ptr)
+    {
+        CommandObject *cmd_obj = m_opaque_ptr->GetCommandObject(command_name);
+        if (cmd_obj)
+        {
+            cmd_obj->SetOverrideCallback (callback, baton);
+            return true;
+        }
+    }
+    return false;
+}
 
 #ifndef LLDB_DISABLE_PYTHON
 
@@ -341,3 +357,4 @@ SBCommandInterpreter::InitializeSWIG ()
 #endif
     }
 }
+

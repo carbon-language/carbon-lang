@@ -1088,6 +1088,14 @@ Driver::EditLineInputReaderCallback
     return bytes_len;
 }
 
+// Intercept when the quit command is called and tell our driver that it is done
+static bool
+QuitCommandOverrideCallback (void *baton, const char **argv)
+{
+    ((Driver *)baton)->SetIsDone();
+    return true;
+}
+
 void
 Driver::MainLoop ()
 {
@@ -1189,6 +1197,10 @@ Driver::MainLoop ()
     }
 
     SBCommandInterpreter sb_interpreter = m_debugger.GetCommandInterpreter();
+
+    // Intercept when the quit command is called and tell our driver that it is done
+    bool quit_success = sb_interpreter.SetCommandOverrideCallback ("quit", QuitCommandOverrideCallback, this);
+    assert (quit_success);
 
     m_io_channel_ap.reset (new IOChannel(m_editline_slave_fh, editline_output_slave_fh, stdout, stderr, this));
 
@@ -1371,8 +1383,7 @@ Driver::MainLoop ()
                         
             ReadyForCommand ();
 
-            bool done = false;
-            while (!done)
+            while (!GetIsDone())
             {
                 listener.WaitForEvent (UINT32_MAX, event);
                 if (event.IsValid())
@@ -1385,12 +1396,15 @@ Driver::MainLoop ()
                             if ((event_type & IOChannel::eBroadcastBitThreadShouldExit) ||
                                 (event_type & IOChannel::eBroadcastBitThreadDidExit))
                             {
-                                done = true;
+                                SetIsDone();
                                 if (event_type & IOChannel::eBroadcastBitThreadDidExit)
                                     iochannel_thread_exited = true;
                             }
                             else
-                                done = HandleIOEvent (event);
+                            {
+                                if (HandleIOEvent (event))
+                                    SetIsDone();
+                            }
                         }
                         else if (SBProcess::EventIsProcessEvent (event))
                         {
@@ -1402,9 +1416,12 @@ Driver::MainLoop ()
                         }
                         else if (event.BroadcasterMatchesRef (sb_interpreter.GetBroadcaster()))
                         {
+                            // TODO: deprecate the eBroadcastBitQuitCommandReceived event
+                            // now that we have SBCommandInterpreter::SetCommandOverrideCallback()
+                            // that can take over a command
                             if (event_type & SBCommandInterpreter::eBroadcastBitQuitCommandReceived)
                             {
-                                done = true;
+                                SetIsDone();
                             }
                             else if (event_type & SBCommandInterpreter::eBroadcastBitAsynchronousErrorData)
                             {

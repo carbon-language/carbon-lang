@@ -53,7 +53,9 @@ CommandObject::CommandObject
     m_cmd_syntax (),
     m_is_alias (false),
     m_flags (flags),
-    m_arguments()
+    m_arguments(),
+    m_command_override_callback (NULL),
+    m_command_override_baton (NULL)
 {
     if (help && help[0])
         m_cmd_help_short = help;
@@ -160,17 +162,6 @@ const Flags&
 CommandObject::GetFlags() const
 {
     return m_flags;
-}
-
-bool
-CommandObject::ExecuteCommandString
-(
-    const char *command_line,
-    CommandReturnObject &result
-)
-{
-    Args command_args(command_line);
-    return ExecuteWithOptions (command_args, result);
 }
 
 bool
