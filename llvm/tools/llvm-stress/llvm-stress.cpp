@@ -1,4 +1,4 @@
-//===-- llvm-stress.cpp - Generate random LL files to stress-test LLVM -----===//
+//===-- llvm-stress.cpp - Generate random LL files to stress-test LLVM ----===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -105,7 +105,7 @@ struct Modifier {
 public:
   /// C'tor
   Modifier(BasicBlock *Block, PieceTable *PT, Random *R):
-    BB(Block),PT(PT),Ran(R),Context(BB->getContext()) {};
+    BB(Block),PT(PT),Ran(R),Context(BB->getContext()) {}
   /// Add a new instruction.
   virtual void Act() = 0;
   /// Add N new instructions,
@@ -256,7 +256,7 @@ protected:
 };
 
 struct LoadModifier: public Modifier {
-  LoadModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {};
+  LoadModifier(BasicBlock *BB, PieceTable *PT, Random *R):Modifier(BB, PT, R) {}
   virtual void Act() {
     // Try to use predefined pointers. If non exist, use undef pointer value;
     Value *Ptr = getRandomPointerValue();
