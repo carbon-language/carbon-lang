@@ -211,7 +211,9 @@ _LIBCPP_BEGIN_NAMESPACE_STD
 
 typedef _VSTD::remove_pointer<locale_t>::type __locale_struct;
 typedef _VSTD::unique_ptr<__locale_struct, decltype(&freelocale)> __locale_unique_ptr;
+#ifndef _LIBCPP_LOCALE__L_EXTENSIONS
 typedef _VSTD::unique_ptr<__locale_struct, decltype(&uselocale)> __locale_raii;
+#endif
 
 // OSX has nice foo_l() functions that let you turn off use of the global
 // locale.  Linux, not so much.  The following functions avoid the locale when
