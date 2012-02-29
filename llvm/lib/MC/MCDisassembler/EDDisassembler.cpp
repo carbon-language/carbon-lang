@@ -199,8 +199,8 @@ namespace {
                    void *arg) : Callback(callback), Arg(arg) { }
     ~EDMemoryObject() { }
     uint64_t getBase() const { return 0x0; }
-    uint64_t getExtent() { return (uint64_t)-1; }
-    int readByte(uint64_t address, uint8_t *ptr) {
+    uint64_t getExtent() const { return (uint64_t)-1; }
+    int readByte(uint64_t address, uint8_t *ptr) const {
       if (!Callback)
         return -1;
       

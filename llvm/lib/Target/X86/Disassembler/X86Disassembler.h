@@ -117,7 +117,7 @@ public:
   /// getInstruction - See MCDisassembler.
   DecodeStatus getInstruction(MCInst &instr,
                               uint64_t &size,
-                              MemoryObject &region,
+                              const MemoryObject &region,
                               uint64_t address,
                               raw_ostream &vStream,
                               raw_ostream &cStream) const;

@@ -45,7 +45,7 @@ class StreamableMemoryObject : public MemoryObject {
   ///                   May block until all bytes in the stream have been read
   ///
   /// @result         - The size of the region.
-  virtual uint64_t getExtent() = 0;
+  virtual uint64_t getExtent() const = 0;
 
   /// readByte        - Tries to read a single byte from the region.
   ///                   May block until (address - base) bytes have been read
@@ -53,7 +53,7 @@ class StreamableMemoryObject : public MemoryObject {
   /// @param ptr      - A pointer to a byte to be filled in.  Must be non-NULL.
   /// @result         - 0 if successful; -1 if not.  Failure may be due to a
   ///                   bounds violation or an implementation-specific error.
-  virtual int readByte(uint64_t address, uint8_t* ptr) = 0;
+  virtual int readByte(uint64_t address, uint8_t* ptr) const = 0;
 
   /// readBytes       - Tries to read a contiguous range of bytes from the
   ///                   region, up to the end of the region.
@@ -74,7 +74,7 @@ class StreamableMemoryObject : public MemoryObject {
   virtual int readBytes(uint64_t address,
                         uint64_t size,
                         uint8_t* buf,
-                        uint64_t* copied) = 0;
+                        uint64_t* copied) const = 0;
 
   /// getPointer  - Ensures that the requested data is in memory, and returns
   ///               A pointer to it. More efficient than using readBytes if the
@@ -83,21 +83,21 @@ class StreamableMemoryObject : public MemoryObject {
   /// @param address - address of the byte, in the same space as getBase()
   /// @param size    - amount of data that must be available on return
   /// @result        - valid pointer to the requested data
-  virtual const uint8_t *getPointer(uint64_t address, uint64_t size) = 0;
+  virtual const uint8_t *getPointer(uint64_t address, uint64_t size) const = 0;
 
   /// isValidAddress - Returns true if the address is within the object
   ///                  (i.e. between base and base + extent - 1 inclusive)
   ///                  May block until (address - base) bytes have been read
   /// @param address - address of the byte, in the same space as getBase()
   /// @result        - true if the address may be read with readByte()
-  virtual bool isValidAddress(uint64_t address) = 0;
+  virtual bool isValidAddress(uint64_t address) const = 0;
 
   /// isObjectEnd    - Returns true if the address is one past the end of the
   ///                  object (i.e. if it is equal to base + extent)
   ///                  May block until (address - base) bytes have been read
   /// @param address - address of the byte, in the same space as getBase()
   /// @result        - true if the address is equal to base + extent
-  virtual bool isObjectEnd(uint64_t address) = 0;
+  virtual bool isObjectEnd(uint64_t address) const = 0;
 };
 
 /// StreamingMemoryObject - interface to data which is actually streamed from
@@ -108,13 +108,13 @@ class StreamingMemoryObject : public StreamableMemoryObject {
 public:
   StreamingMemoryObject(DataStreamer *streamer);
   virtual uint64_t getBase() const { return 0; }
-  virtual uint64_t getExtent();
-  virtual int readByte(uint64_t address, uint8_t* ptr);
+  virtual uint64_t getExtent() const;
+  virtual int readByte(uint64_t address, uint8_t* ptr) const;
   virtual int readBytes(uint64_t address,
                         uint64_t size,
                         uint8_t* buf,
-                        uint64_t* copied);
-  virtual const uint8_t *getPointer(uint64_t address, uint64_t size) {
+                        uint64_t* copied) const ;
+  virtual const uint8_t *getPointer(uint64_t address, uint64_t size) const {
     // This could be fixed by ensuring the bytes are fetched and making a copy,
     // requiring that the bitcode size be known, or otherwise ensuring that
     // the memory doesn't go away/get reallocated, but it's
@@ -122,8 +122,8 @@ public:
     assert(0 && "getPointer in streaming memory objects not allowed");
     return NULL;
   }
-  virtual bool isValidAddress(uint64_t address);
-  virtual bool isObjectEnd(uint64_t address);
+  virtual bool isValidAddress(uint64_t address) const;
+  virtual bool isObjectEnd(uint64_t address) const;
 
   /// Drop s bytes from the front of the stream, pushing the positions of the
   /// remaining bytes down by s. This is used to skip past the bitcode header,
@@ -138,19 +138,19 @@ public:
 
 private:
   const static uint32_t kChunkSize = 4096 * 4;
-  std::vector<unsigned char> Bytes;
+  mutable std::vector<unsigned char> Bytes;
   OwningPtr<DataStreamer> Streamer;
-  size_t BytesRead;   // Bytes read from stream
+  mutable size_t BytesRead;   // Bytes read from stream
   size_t BytesSkipped;// Bytes skipped at start of stream (e.g. wrapper/header)
-  size_t ObjectSize; // 0 if unknown, set if wrapper was seen or EOF reached
-  bool EOFReached;
+  mutable size_t ObjectSize; // 0 if unknown, set if wrapper seen or EOF reached
+  mutable bool EOFReached;
 
   // Fetch enough bytes such that Pos can be read or EOF is reached
   // (i.e. BytesRead > Pos). Return true if Pos can be read.
   // Unlike most of the functions in BitcodeReader, returns true on success.
   // Most of the requests will be small, but we fetch at kChunkSize bytes
   // at a time to avoid making too many potentially expensive GetBytes calls
-  bool fetchToPos(size_t Pos) {
+  bool fetchToPos(size_t Pos) const {
     if (EOFReached) return Pos < ObjectSize;
     while (Pos >= BytesRead) {
       Bytes.resize(BytesRead + BytesSkipped + kChunkSize);

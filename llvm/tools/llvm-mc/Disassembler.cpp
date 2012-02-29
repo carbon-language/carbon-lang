@@ -42,9 +42,9 @@ public:
   VectorMemoryObject(const ByteArrayTy &bytes) : Bytes(bytes) {}
 
   uint64_t getBase() const { return 0; }
-  uint64_t getExtent() { return Bytes.size(); }
+  uint64_t getExtent() const { return Bytes.size(); }
 
-  int readByte(uint64_t Addr, uint8_t *Byte) {
+  int readByte(uint64_t Addr, uint8_t *Byte) const {
     if (Addr >= getExtent())
       return -1;
     *Byte = Bytes[Addr].first;
@@ -365,4 +365,3 @@ int Disassembler::disassembleEnhanced(const std::string &TS,
 
   return 0;
 }
-

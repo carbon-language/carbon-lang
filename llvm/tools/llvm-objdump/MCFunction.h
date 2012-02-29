@@ -79,7 +79,7 @@ public:
   // Create an MCFunction from a region of binary machine code.
   static MCFunction
   createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
-                       MemoryObject &Region, uint64_t Start, uint64_t End,
+                       const MemoryObject &Region, uint64_t Start, uint64_t End,
                        const MCInstrAnalysis *Ana, raw_ostream &DebugOut,
                        SmallVectorImpl<uint64_t> &Calls);
 

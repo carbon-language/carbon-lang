@@ -28,7 +28,7 @@ using namespace llvm;
 
 MCFunction
 MCFunction::createFunctionFromMC(StringRef Name, const MCDisassembler *DisAsm,
-                                 MemoryObject &Region, uint64_t Start,
+                                 const MemoryObject &Region, uint64_t Start,
                                  uint64_t End, const MCInstrAnalysis *Ana,
                                  raw_ostream &DebugOut,
                                  SmallVectorImpl<uint64_t> &Calls) {
