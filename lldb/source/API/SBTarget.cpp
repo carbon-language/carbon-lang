@@ -815,6 +815,16 @@ SBTarget::Attach (SBAttachInfo &sb_attach_info, SBError& error)
             sb_process.SetSP (process_sp);
             
             ProcessAttachInfo &attach_info = sb_attach_info.ref();
+            lldb::pid_t attach_pid = attach_info.GetProcessID();
+            if (attach_pid != LLDB_INVALID_PROCESS_ID)
+            {
+                PlatformSP platform_sp = target_sp->GetPlatform();
+                ProcessInstanceInfo instance_info;
+                if (platform_sp->GetProcessInfo(attach_pid, instance_info))
+                {
+                    attach_info.SetUserID(instance_info.GetEffectiveUserID());
+                }
+            }
             error.SetError (process_sp->Attach (attach_info));            
             // If we are doing synchronous mode, then wait for the
             // process to stop!
@@ -907,7 +917,6 @@ SBTarget::AttachToProcessWithID
             if (platform_sp->GetProcessInfo(pid, instance_info))
             {
                 attach_info.SetUserID(instance_info.GetEffectiveUserID());
-                
             }
             error.SetError (process_sp->Attach (attach_info));            
             // If we are doing synchronous mode, then wait for the
