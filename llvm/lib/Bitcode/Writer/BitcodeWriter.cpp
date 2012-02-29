@@ -1774,8 +1774,7 @@ enum {
   DarwinBCHeaderSize = 5*4
 };
 
-static void WriteInt32ToBuffer(uint32_t Value,
-                               std::vector<unsigned char> &Buffer,
+static void WriteInt32ToBuffer(uint32_t Value, SmallVectorImpl<char> &Buffer,
                                uint32_t &Position) {
   Buffer[Position + 0] = (unsigned char) (Value >>  0);
   Buffer[Position + 1] = (unsigned char) (Value >>  8);
@@ -1784,7 +1783,7 @@ static void WriteInt32ToBuffer(uint32_t Value,
   Position += 4;
 }
 
-static void EmitDarwinBCHeaderAndTrailer(std::vector<unsigned char> &Buffer,
+static void EmitDarwinBCHeaderAndTrailer(SmallVectorImpl<char> &Buffer,
                                          const Triple &TT) {
   unsigned CPUType = ~0U;
 
@@ -1833,7 +1832,7 @@ static void EmitDarwinBCHeaderAndTrailer(std::vector<unsigned char> &Buffer,
 /// WriteBitcodeToFile - Write the specified module to the specified output
 /// stream.
 void llvm::WriteBitcodeToFile(const Module *M, raw_ostream &Out) {
-  std::vector<unsigned char> Buffer;
+  SmallVector<char, 1024> Buffer;
   Buffer.reserve(256*1024);
 
   // If this is darwin or another generic macho target, reserve space for the

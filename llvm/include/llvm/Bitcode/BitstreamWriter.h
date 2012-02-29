@@ -16,13 +16,14 @@
 #define BITSTREAM_WRITER_H
 
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/Bitcode/BitCodes.h"
 #include <vector>
 
 namespace llvm {
 
 class BitstreamWriter {
-  std::vector<unsigned char> &Out;
+  SmallVectorImpl<char> &Out;
 
   /// CurBit - Always between 0 and 31 inclusive, specifies the next bit to use.
   unsigned CurBit;
@@ -90,7 +91,7 @@ class BitstreamWriter {
   }
 
 public:
-  explicit BitstreamWriter(std::vector<unsigned char> &O)
+  explicit BitstreamWriter(SmallVectorImpl<char> &O)
     : Out(O), CurBit(0), CurValue(0), CurCodeSize(2) {}
 
   ~BitstreamWriter() {
