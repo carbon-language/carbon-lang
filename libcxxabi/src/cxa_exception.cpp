@@ -466,9 +466,9 @@ __cxa_rethrow()
         globals->caughtExceptions = 0;
     }
 #if __arm__
-    (void) _Unwind_SjLj_Resume_or_Rethrow(&exception_header->unwindHeader);
+    _Unwind_SjLj_RaiseException(&exception_header->unwindHeader);
 #else
-    (void)_Unwind_RaiseException(&exception_header->unwindHeader);
+    _Unwind_RaiseException(&exception_header->unwindHeader);
 #endif
 
     //  If we get here, some kind of unwinding error has occurred.

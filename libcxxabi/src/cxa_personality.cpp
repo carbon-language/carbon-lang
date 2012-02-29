@@ -48,19 +48,36 @@
 | callSiteEncoding | (char) | Encoding for Call Site Table |
 +------------------+--+-----+-----+------------------------+--------------------------+
 | callSiteTableLength | (ULEB128) | Call Site Table length, used to find Action table |
-+---------------------+-----------+------------------------------------------------+--+
-| Beginning of Call Site Table            If the current ip lies within the        |
++---------------------+-----------+---------------------------------------------------+
+#if !__arm__
++---------------------+-----------+------------------------------------------------+
+| Beginning of Call Site Table            The current ip lies within the           |
 | ...                                     (start, length) range of one of these    |
-|                                         call sites, there may be action needed.  |
+|                                         call sites. There may be action needed.  |
 | +-------------+---------------------------------+------------------------------+ |
 | | start       | (encoded with callSiteEncoding) | offset relative to funcStart | |
-| | length      | (encoded with callSiteEncoding) | lenght of code fragment      | |
+| | length      | (encoded with callSiteEncoding) | length of code fragment      | |
 | | landingPad  | (encoded with callSiteEncoding) | offset relative to lpStart   | |
 | | actionEntry | (ULEB128)                       | Action Table Index 1-based   | |
 | |             |                                 | actionEntry == 0 -> cleanup  | |
 | +-------------+---------------------------------+------------------------------+ |
 | ...                                                                              |
-+---------------------------------------------------------------------+------------+
++----------------------------------------------------------------------------------+
+#else  // __arm_
++---------------------+-----------+------------------------------------------------+
+| Beginning of Call Site Table            The current ip is a 1-based index into   |
+| ...                                     this table.  Or it is -1 meaning no      |
+|                                         action is needed.  Or it is 0 meaning    |
+|                                         terminate.                               |
+| +-------------+---------------------------------+------------------------------+ |
+| | landingPad  | (ULEB128)                       | offset relative to lpStart   | |
+| | actionEntry | (ULEB128)                       | Action Table Index 1-based   | |
+| |             |                                 | actionEntry == 0 -> cleanup  | |
+| +-------------+---------------------------------+------------------------------+ |
+| ...                                                                              |
++----------------------------------------------------------------------------------+
+#endif  // __arm_
++---------------------------------------------------------------------+
 | Beginning of Action Table       ttypeIndex == 0 : cleanup           |
 | ...                             ttypeIndex  > 0 : catch             |
 |                                 ttypeIndex  < 0 : exception spec    |
@@ -477,7 +494,19 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
     // Get beginning current frame's code (as defined by the 
     // emitted dwarf code)
     uintptr_t funcStart = _Unwind_GetRegionStart(context);
+#if __arm__
+    if (ip == uintptr_t(-1))
+    {
+        // no action
+        results.reason = _URC_CONTINUE_UNWIND;
+        return;
+    }
+    else if (ip == 0)
+        call_terminate(native_exception, unwind_exception);
+    // ip is 1-based index into call site table
+#else  // __arm__
     uintptr_t ipOffset = ip - funcStart;
+#endif  // __arm__
     const uint8_t* classInfo = NULL;
     // Note: See JITDwarfEmitter::EmitExceptionTable(...) for corresponding
     //       dwarf emission
@@ -506,6 +535,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
     while (true)
     {
         // There is one entry per call site.
+#if !__arm__
         // The call sites are non-overlapping in [start, start+length)
         // The call sites are ordered in increasing value of start
         uintptr_t start = readEncodedPointer(&callSitePtr, callSiteEncoding);
@@ -513,6 +543,12 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
         uintptr_t landingPad = readEncodedPointer(&callSitePtr, callSiteEncoding);
         uintptr_t actionEntry = readULEB128(&callSitePtr);
         if ((start <= ipOffset) && (ipOffset < (start + length)))
+#else  // __arm__
+        // ip is 1-based index into this table
+        uintptr_t landingPad = readULEB128(&callSitePtr);
+        uintptr_t actionEntry = readULEB128(&callSitePtr);
+        if (--ip == 0)
+#endif  // __arm__
         {
             // Found the call site containing ip.
             if (landingPad == 0)
@@ -713,6 +749,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
                 action += actionOffset;
             }  // there is no break out of this loop, only return
         }
+#if !__arm__
         else if (ipOffset < start)
         {
             // There is no call site for this ip
@@ -720,6 +757,7 @@ scan_eh_tab(scan_results& results, _Unwind_Action actions, bool native_exception
             // Possible stack corruption.
             call_terminate(native_exception, unwind_exception);
         }
+#endif  // !__arm__
     }  // there is no break out of this loop, only return
 }
 
@@ -772,7 +810,12 @@ _UA_CLEANUP_PHASE
 */
 
 _Unwind_Reason_Code
-__gxx_personality_v0(int version, _Unwind_Action actions, uint64_t exceptionClass,
+#if __arm__
+__gxx_personality_sj0
+#else
+__gxx_personality_v0
+#endif
+                    (int version, _Unwind_Action actions, uint64_t exceptionClass,
                      _Unwind_Exception* unwind_exception, _Unwind_Context* context)
 {
     if (version != 1 || unwind_exception == 0 || context == 0)
