@@ -625,12 +625,10 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   validateSymbol(Symb);
   const Elf_Sym  *symb = getSymbol(Symb);
 
-  if (getSymbolTableIndex(symb) == ELF::SHN_UNDEF) {
-    Result = SymbolRef::ST_External;
-    return object_error::success;
-  }
-
   switch (symb->getType()) {
+  case ELF::STT_NOTYPE:
+    Result = SymbolRef::ST_Unknown;
+    break;
   case ELF::STT_SECTION:
     Result = SymbolRef::ST_Debug;
     break;
@@ -641,6 +639,8 @@ error_code ELFObjectFile<target_endianness, is64Bits>
     Result = SymbolRef::ST_Function;
     break;
   case ELF::STT_OBJECT:
+  case ELF::STT_COMMON:
+  case ELF::STT_TLS:
     Result = SymbolRef::ST_Data;
     break;
   default:
@@ -671,6 +671,16 @@ error_code ELFObjectFile<target_endianness, is64Bits>
   if (symb->getType() == ELF::STT_FILE ||
       symb->getType() == ELF::STT_SECTION)
     Result |= SymbolRef::SF_FormatSpecific;
+
+  if (getSymbolTableIndex(symb) == ELF::SHN_UNDEF)
+    Result |= SymbolRef::SF_Undefined;
+
+  if (symb->getType() == ELF::STT_COMMON ||
+      getSymbolTableIndex(symb) == ELF::SHN_COMMON)
+    Result |= SymbolRef::SF_Common;
+
+  if (symb->getType() == ELF::STT_TLS)
+    Result |= SymbolRef::SF_ThreadLocal;
 
   return object_error::success;
 }

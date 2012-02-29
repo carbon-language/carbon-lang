@@ -502,7 +502,7 @@ static void PrintSymbolTable(const ObjectFile *o) {
       if (Size == UnknownAddressOrSize)
         Size = 0;
       char GlobLoc = ' ';
-      if (Type != SymbolRef::ST_External)
+      if (Type != SymbolRef::ST_Unknown)
         GlobLoc = Global ? 'g' : 'l';
       char Debug = (Type == SymbolRef::ST_Debug || Type == SymbolRef::ST_File)
                    ? 'd' : ' ';

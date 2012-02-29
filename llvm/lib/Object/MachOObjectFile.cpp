@@ -278,7 +278,12 @@ error_code MachOObjectFile::getSymbolFlags(DataRefImpl DRI,
     MachOType = Entry->Type;
   }
 
+  // TODO: Correctly set SF_ThreadLocal and SF_Common.
   Result = SymbolRef::SF_None;
+
+  if ((MachOType & MachO::NlistMaskType) == MachO::NListTypeUndefined)
+    Result |= SymbolRef::SF_Undefined;
+
   if (MachOFlags & macho::STF_StabsEntryMask)
     Result |= SymbolRef::SF_FormatSpecific;
 
@@ -337,7 +342,7 @@ error_code MachOObjectFile::getSymbolType(DataRefImpl Symb,
 
   switch (n_type & MachO::NlistMaskType) {
     case MachO::NListTypeUndefined :
-      Res = SymbolRef::ST_External;
+      Res = SymbolRef::ST_Unknown;
       break;
     case MachO::NListTypeSection :
       Res = SymbolRef::ST_Function;
@@ -554,7 +559,7 @@ error_code MachOObjectFile::sectionContainsSymbol(DataRefImpl Sec,
                                                   bool &Result) const {
   SymbolRef::Type ST;
   getSymbolType(Symb, ST);
-  if (ST == SymbolRef::ST_External) {
+  if (ST == SymbolRef::ST_Unknown) {
     Result = false;
     return object_error::success;
   }

@@ -180,9 +180,9 @@ public:
   }
 
   enum Type {
+    ST_Unknown, // Type not specified
     ST_Data,
     ST_Debug,
-    ST_External,    // Defined in another object file
     ST_File,
     ST_Function,
     ST_Other
@@ -190,11 +190,14 @@ public:
 
   enum Flags {
     SF_None            = 0,
-    SF_Global          = 1 << 0, // Global symbol
-    SF_Weak            = 1 << 1, // Weak symbol
-    SF_Absolute        = 1 << 2, // Absolute symbol
-    SF_FormatSpecific  = 1 << 3  // Specific to the object file format
-                                 // (e.g. section symbols)
+    SF_Undefined       = 1U << 0,  // Symbol is defined in another object file
+    SF_Global          = 1U << 1,  // Global symbol
+    SF_Weak            = 1U << 2,  // Weak symbol
+    SF_Absolute        = 1U << 3,  // Absolute symbol
+    SF_ThreadLocal     = 1U << 4,  // Thread local symbol
+    SF_Common          = 1U << 5,  // Symbol has common linkage
+    SF_FormatSpecific  = 1U << 31  // Specific to the object file format
+                                   // (e.g. section symbols)
   };
 
   SymbolRef(DataRefImpl SymbolP, const ObjectFile *Owner);

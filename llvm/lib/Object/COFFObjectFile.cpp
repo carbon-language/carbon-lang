@@ -143,7 +143,7 @@ error_code COFFObjectFile::getSymbolType(DataRefImpl Symb,
   Result = SymbolRef::ST_Other;
   if (symb->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
       symb->SectionNumber == COFF::IMAGE_SYM_UNDEFINED) {
-    Result = SymbolRef::ST_External;
+    Result = SymbolRef::ST_Unknown;
   } else {
     if (symb->getComplexType() == COFF::IMAGE_SYM_DTYPE_FUNCTION) {
       Result = SymbolRef::ST_Function;
@@ -164,7 +164,11 @@ error_code COFFObjectFile::getSymbolFlags(DataRefImpl Symb,
   const coff_symbol *symb = toSymb(Symb);
   Result = SymbolRef::SF_None;
 
-  // TODO: Set SF_FormatSpecific.
+  // TODO: Correctly set SF_FormatSpecific, SF_ThreadLocal, SF_Common
+
+  if (symb->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL &&
+      symb->SectionNumber == COFF::IMAGE_SYM_UNDEFINED)
+    Result |= SymbolRef::SF_Undefined;
 
   // TODO: This are certainly too restrictive.
   if (symb->StorageClass == COFF::IMAGE_SYM_CLASS_EXTERNAL)
