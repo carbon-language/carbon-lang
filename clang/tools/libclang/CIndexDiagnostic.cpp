@@ -130,7 +130,7 @@ public:
   virtual void emitCodeContext(SourceLocation Loc,
                                DiagnosticsEngine::Level Level,
                                SmallVectorImpl<CharSourceRange>& Ranges,
-                               ArrayRef<FixItHint> Hints) {};
+                               ArrayRef<FixItHint> Hints) {}
   
   virtual void emitNote(SourceLocation Loc, StringRef Message) {
     CXSourceLocation L = translateSourceLocation(SM, LangOpts, Loc);
