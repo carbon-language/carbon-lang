@@ -236,7 +236,9 @@ ProcessGDBRemote::BuildDynamicRegisterInfo (bool force)
                         LLDB_INVALID_REGNUM, // generic reg num
                         reg_num,             // GDB reg num
                         reg_num           // native register number
-                    }
+                    },
+                    NULL,
+                    NULL
                 };
 
                 while (response.GetNameColonValue(name, value))
