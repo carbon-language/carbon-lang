@@ -854,6 +854,8 @@ FormatManager::LoadObjCFormatters()
     AddScriptSummary(appkit_category_sp, "NSURL.NSURL_SummaryProvider", ConstString("NSURL"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "NSURL.NSURL_SummaryProvider", ConstString("CFURLRef"), appkit_flags);
     
+    AddScriptSummary(appkit_category_sp, "NSDate.NSDate_SummaryProvider", ConstString("NSDate"), appkit_flags);
+    
     TypeCategoryImpl::SharedPointer vectors_category_sp = GetCategory(m_vectortypes_category_name);
 
     TypeSummaryImpl::Flags vector_flags;

@@ -15,7 +15,7 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class CFBinaryHeapRef_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -26,7 +26,7 @@ class CFBinaryHeapRef_SummaryProvider:
 	def update(self):
 		self.adjust_for_architecture();
 		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.lp64:
+		if self.is_64_bit:
 			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
 		else:
 			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
@@ -35,7 +35,7 @@ class CFBinaryHeapRef_SummaryProvider:
 	# 16 bytes on x64
 	# most probably 2 pointers
 	def offset(self):
-		if self.lp64:
+		if self.is_64_bit:
 			return 16
 		else:
 			return 8
@@ -49,7 +49,7 @@ class CFBinaryHeapRef_SummaryProvider:
 
 class CFBinaryHeapUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -117,7 +117,7 @@ def CFBinaryHeap_SummaryProvider (valobj,dict):
 		if summary == None:
 			summary = 'no valid set here'
 		else:
-			if provider.lp64:
+			if provider.is_64_bit:
 				summary = summary & ~0x1fff000000000000
 		if summary == 1:
 			return '1 item'

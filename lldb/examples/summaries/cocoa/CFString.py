@@ -76,7 +76,7 @@ class CFStringSynthProvider:
 	# handle the special case strings
 	# only use the custom code for the tested LP64 case
 	def handle_special(self):
-		if self.lp64 == False:
+		if self.is_64_bit == False:
 			# for 32bit targets, use safe ObjC code
 			return self.handle_unicode_string_safe()
 		offset = 12
@@ -127,7 +127,7 @@ class CFStringSynthProvider:
 			"(char*)\"" + pystr.encode('utf-8') + "\"")
 
 	def handle_inline_explicit(self):
-		if self.lp64:
+		if self.is_64_bit:
 			offset = 24
 		else:
 			offset = 12
@@ -136,7 +136,7 @@ class CFStringSynthProvider:
 				"(char*)(" + str(offset) + ")")
 
 	def handle_mutable_string(self):
-		if self.lp64:
+		if self.is_64_bit:
 			offset = 16
 		else:
 			offset = 8
@@ -223,7 +223,7 @@ class CFStringSynthProvider:
 	# to get its size we add up sizeof(pointer)+4
 	# and then add 4 more bytes if we are on a 64bit system
 	def size_of_cfruntime_base(self):
-		if self.lp64 == True:
+		if self.is_64_bit == True:
 			return 8+4+4;
 		else:
 			return 4+4;
@@ -234,7 +234,7 @@ class CFStringSynthProvider:
 	# on big-endian this means going to byte 3, if we are on
 	# little endian (OSX & iOS), this means reading byte 0
 	def offset_of_info_bits(self):
-		if self.lp64 == True:
+		if self.is_64_bit == True:
 			offset = 8;
 		else:
 			offset = 4;
@@ -282,7 +282,7 @@ class CFStringSynthProvider:
 	# preparing ourselves to read into memory
 	# by adjusting architecture-specific info
 	def adjust_for_architecture(self):
-		self.lp64 = self.is_64bit();
+		self.is_64_bit = self.is_64bit();
 		self.is_little = self.is_little_endian();
 
 	# reading info bits out of the CFString and computing

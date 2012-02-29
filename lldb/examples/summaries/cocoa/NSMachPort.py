@@ -15,7 +15,7 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class NSMachPortKnown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -32,7 +32,7 @@ class NSMachPortKnown_SummaryProvider:
 	# then we have one other internal pointer, plus
 	# 4 bytes worth of flags. hence, these values
 	def offset(self):
-		if self.lp64:
+		if self.is_64_bit:
 			return 20
 		else:
 			return 12
@@ -46,7 +46,7 @@ class NSMachPortKnown_SummaryProvider:
 
 class NSMachPortUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 

@@ -16,7 +16,7 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class NSTaggedNumber_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -60,7 +60,7 @@ class NSTaggedNumber_SummaryProvider:
 
 class NSUntaggedNumber_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -114,7 +114,7 @@ class NSUntaggedNumber_SummaryProvider:
 								self.int)
 			statistics.metric_hit('code_notrun',self.valobj)
 			return '(int)' + str(data_vo.GetValueAsUnsigned(0) % (256*256*256*256))
-		# apparently, on lp64 architectures, these are the only values that will ever
+		# apparently, on is_64_bit architectures, these are the only values that will ever
 		# be represented by a non tagged pointers
 		elif data_type == 0B10001 or data_type == 0B0100:
 			data_offset = data_offset + self.pointer_size
@@ -146,7 +146,7 @@ class NSUntaggedNumber_SummaryProvider:
 
 class NSUnknownNumber_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 

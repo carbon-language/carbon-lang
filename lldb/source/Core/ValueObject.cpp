@@ -674,7 +674,8 @@ ValueObject::GetSummaryAsCString ()
 
             if (summary_format)
             {
-                m_summary_str = summary_format->FormatObject(GetSP());
+                 summary_format->FormatObject(GetSP(),
+                                              m_summary_str);
             }
             else
             {

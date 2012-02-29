@@ -12,7 +12,7 @@ statistics.add_metric('code_notrun')
 
 class NSConcreteNotification_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -27,7 +27,7 @@ class NSConcreteNotification_SummaryProvider:
 
 	# skip the ISA and go to the name pointer
 	def offset(self):
-		if self.lp64:
+		if self.is_64_bit:
 			return 8
 		else:
 			return 4
@@ -41,7 +41,7 @@ class NSConcreteNotification_SummaryProvider:
 
 class NSNotificationUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 

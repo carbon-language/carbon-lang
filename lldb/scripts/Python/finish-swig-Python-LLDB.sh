@@ -382,6 +382,20 @@ else
     fi
 fi
 
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/NSDate.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying NSDate.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/NSDate.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/NSDate.py"
+    fi
+fi
+
 if [ -f "${SRC_ROOT}/examples/summaries/cocoa/cache.py" ]
 then
     if [ $Debug == 1 ]

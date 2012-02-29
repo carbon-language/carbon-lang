@@ -136,6 +136,7 @@ class   RegisterValue;
 class   RegularExpression;
 class   Scalar;
 class   ScriptInterpreter;
+class   ScriptInterpreterObject;
 #ifndef LLDB_DISABLE_PYTHON
 class   ScriptInterpreterPython;
 struct  ScriptSummaryFormat;
@@ -276,6 +277,7 @@ namespace lldb {
     typedef std::tr1::shared_ptr<lldb_private::Section> SectionSP;
     typedef std::tr1::weak_ptr<lldb_private::Section> SectionWP;
     typedef std::tr1::shared_ptr<lldb_private::SearchFilter> SearchFilterSP;
+    typedef std::tr1::shared_ptr<lldb_private::ScriptInterpreterObject> ScriptInterpreterObjectSP;
 #ifndef LLDB_DISABLE_PYTHON
     typedef std::tr1::shared_ptr<lldb_private::ScriptSummaryFormat> ScriptSummaryFormatSP;
 #endif // #ifndef LLDB_DISABLE_PYTHON

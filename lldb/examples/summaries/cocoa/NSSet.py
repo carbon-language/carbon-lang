@@ -15,7 +15,7 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class NSCFSet_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -32,7 +32,7 @@ class NSCFSet_SummaryProvider:
 	# then we have one other internal pointer, plus
 	# 4 bytes worth of flags. hence, these values
 	def offset(self):
-		if self.lp64:
+		if self.is_64_bit:
 			return 20
 		else:
 			return 12
@@ -46,7 +46,7 @@ class NSCFSet_SummaryProvider:
 
 class NSSetUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -67,7 +67,7 @@ class NSSetUnknown_SummaryProvider:
 
 class NSSetI_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -78,14 +78,14 @@ class NSSetI_SummaryProvider:
 	def update(self):
 		self.adjust_for_architecture();
 		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.lp64:
+		if self.is_64_bit:
 			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
 		else:
 			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 
 	# we just need to skip the ISA and the count immediately follows
 	def offset(self):
-		if self.lp64:
+		if self.is_64_bit:
 			return 8
 		else:
 			return 4
@@ -100,7 +100,7 @@ class NSSetI_SummaryProvider:
 			# not sure if it is a bug or some weird sort of feature, but masking it out
 			# gets the count right (unless, of course, someone's dictionaries grow
 			#                       too large - but I have not tested this)
-			if self.lp64:
+			if self.is_64_bit:
 				value = value & ~0xFF00000000000000
 			else:
 				value = value & ~0xFF000000
@@ -108,7 +108,7 @@ class NSSetI_SummaryProvider:
 
 class NSSetM_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -119,14 +119,14 @@ class NSSetM_SummaryProvider:
 	def update(self):
 		self.adjust_for_architecture();
 		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.lp64:
+		if self.is_64_bit:
 			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
 		else:
 			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 
 	# we just need to skip the ISA and the count immediately follows
 	def offset(self):
-		if self.lp64:
+		if self.is_64_bit:
 			return 8
 		else:
 			return 4
@@ -200,7 +200,7 @@ def NSSet_SummaryProvider2 (valobj,dict):
 		if summary == None:
 			summary = 'no valid set here'
 		else:
-			if provider.lp64:
+			if provider.is_64_bit:
 				summary = int(summary) & ~0x1fff000000000000
 		return str(summary) + ' objects'
 	return ''

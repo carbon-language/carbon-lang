@@ -113,9 +113,11 @@ public:
                                 lldb::user_id_t break_id,
                                 lldb::user_id_t break_loc_id);
     
-    static std::string
-    CallPythonScriptFunction (const char *python_function_name,
-                              lldb::ValueObjectSP valobj);
+    virtual bool
+    GetScriptedSummary (const char *function_name,
+                        lldb::ValueObjectSP valobj,
+                        lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
+                        std::string& retval);
     
     virtual std::string
     GetDocumentationForItem (const char* item);
@@ -124,7 +126,10 @@ public:
     LoadScriptingModule (const char* filename,
                          bool can_reload,
                          lldb_private::Error& error);
-
+    
+    virtual lldb::ScriptInterpreterObjectSP
+    MakeScriptObject (void* object);
+    
     void
     CollectDataForBreakpointCommandCallback (BreakpointOptions *bp_options,
                                              CommandReturnObject &result);
@@ -147,17 +152,7 @@ public:
     InitializePrivate ();
 
     static void
-    InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
-                           SWIGBreakpointCallbackFunction python_swig_breakpoint_callback,
-                           SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback,
-                           SWIGPythonCreateSyntheticProvider python_swig_synthetic_script,
-                           SWIGPythonCalculateNumChildren python_swig_calc_children,
-                           SWIGPythonGetChildAtIndex python_swig_get_child_index,
-                           SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
-                           SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
-                           SWIGPythonUpdateSynthProviderInstance python_swig_update_provider,
-                           SWIGPythonCallCommand python_swig_call_command,
-                           SWIGPythonCallModuleInit python_swig_call_mod_init);
+    InitializeInterpreter (SWIGInitCallback python_swig_init_callback);
 
 protected:
 
@@ -185,6 +180,29 @@ private:
         SynchronicityHandler(lldb::DebuggerSP,
                              ScriptedCommandSynchronicity);
         ~SynchronicityHandler();
+    };
+    
+    class ScriptInterpreterPythonObject : public ScriptInterpreterObject
+    {
+    public:
+        ScriptInterpreterPythonObject() :
+        ScriptInterpreterObject()
+        {}
+        
+        ScriptInterpreterPythonObject(void* obj) :
+        ScriptInterpreterObject(obj)
+        {
+            Py_XINCREF(m_object);
+        }
+        
+        virtual
+        ~ScriptInterpreterPythonObject()
+        {
+            Py_XDECREF(m_object);
+            m_object = NULL;
+        }
+        private:
+            DISALLOW_COPY_AND_ASSIGN (ScriptInterpreterPythonObject);
     };
     
 	class Locker

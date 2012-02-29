@@ -31,10 +31,7 @@ static PyObject*
 ResolvePythonName(const char* name,
                   PyObject* pmodule = NULL)
 {
-
-    //printf("Resolving %s\n", name);
-
-    if (!name || !name[0])
+    if (!name)
         return pmodule;
 
     PyErr_Cleaner pyerr_cleanup(true);  // show Python errors
@@ -65,40 +62,33 @@ ResolvePythonName(const char* name,
 
     if (!dot_pos)
     {
-        if (PyDict_Check (main_dict))
+        dest_object = NULL;   
+        while (PyDict_Next (main_dict, &pos, &key, &value))
         {
-            dest_object = NULL;   
-            while (PyDict_Next (main_dict, &pos, &key, &value))
+            // We have stolen references to the key and value objects in the dictionary; we need to increment 
+            // them now so that Python's garbage collector doesn't collect them out from under us.
+            Py_INCREF (key);
+            Py_INCREF (value);
+            if (strcmp (PyString_AsString (key), name) == 0)
             {
-                // We have stolen references to the key and value objects in the dictionary; we need to increment 
-                // them now so that Python's garbage collector doesn't collect them out from under us.
-                Py_INCREF (key);
-                Py_INCREF (value);
-                //printf("Comparing %s and %s\n", name, PyString_AsString (key));
-                if (strcmp (PyString_AsString (key), name) == 0)
-                {
-                    dest_object = value;
-                    break;
-                }
+                dest_object = value;
+                break;
             }
-        }
-        
+        }        
         if (!dest_object || dest_object == Py_None)
             return NULL;
         return dest_object;
     }
-    // foo.bar.ba
-    // 0123456789
-    // len = 3 - 0 
-    size_t len = dot_pos - name;
-    std::string piece(name,len);
-    dest_object = ResolvePythonName(piece.c_str(), main_dict);
-    //printf("Resolved %s to %p\n", piece.c_str(), dest_object);
-    if (!dest_object)
-        return NULL;
-    //printf("Now moving to resolve %s\n", dot_pos+1);
-    return ResolvePythonName(dot_pos+1,dest_object); // tail recursion.. should be optimized by the compiler
-
+    else
+    {
+        size_t len = dot_pos - name;
+        std::string piece(name,len);
+        pmodule = ResolvePythonName(piece.c_str(), main_dict);
+        if (!pmodule)
+            return NULL;
+        name = dot_pos+1;
+        return ResolvePythonName(dot_pos+1,pmodule); // tail recursion.. should be optimized by the compiler
+    }
 }
 
 static PyObject*
@@ -186,85 +176,69 @@ LLDBSwigPythonBreakpointCallbackFunction
     return stop_at_breakpoint;
 }
 
-SWIGEXPORT std::string
+SWIGEXPORT bool
 LLDBSwigPythonCallTypeScript 
 (
     const char *python_function_name,
-    const char *session_dictionary_name,
-    const lldb::ValueObjectSP& valobj_sp
+    const void *session_dictionary,
+    const lldb::ValueObjectSP& valobj_sp,
+    void** pyfunct_wrapper,
+    std::string& retval
 )
 {
     lldb::SBValue sb_value (valobj_sp);
 
-    std::string retval = "";
-
     PyObject *ValObj_PyObj = SWIG_NewPointerObj((void *) &sb_value, SWIGTYPE_p_lldb__SBValue, 0);
     
     if (ValObj_PyObj == NULL)
-        return retval;
+        return false;
         
-    if (!python_function_name || !session_dictionary_name)
-        return retval;
+    if (!python_function_name || !session_dictionary)
+        return false;
 
-    PyObject *session_dict, *pfunc;
-    PyObject *pargs, *pvalue;
+    PyObject *session_dict = (PyObject*)session_dictionary, *pfunc = NULL, *pargs = NULL, *pvalue = NULL;
     
-    session_dict = FindSessionDictionary (session_dictionary_name);
-    if (session_dict != NULL)
+    if (pyfunct_wrapper && *pyfunct_wrapper && PyFunction_Check (*pyfunct_wrapper))
     {
-        pfunc = ResolvePythonName (python_function_name, session_dict);
-        if (pfunc != NULL)
+        pfunc = (PyObject*)(*pyfunct_wrapper);
+        if (pfunc->ob_refcnt == 1)
         {
-            // Set up the arguments and call the function.
-                
-            if (PyCallable_Check (pfunc))
-            {
-                pargs = PyTuple_New (2);
-                if (pargs == NULL)
-                {
-                    if (PyErr_Occurred())
-                        PyErr_Clear();
-                    return retval;
-                }
-                
-                PyTuple_SetItem (pargs, 0, ValObj_PyObj);  // This "steals" a reference to ValObj_PyObj
-                PyTuple_SetItem (pargs, 1, session_dict); // This "steals" a reference to session_dict
-                pvalue = PyObject_CallObject (pfunc, pargs);
-                Py_DECREF (pargs);
-                
-                if (pvalue != NULL)
-                {
-                    if (pvalue != Py_None && PyString_CheckExact(pvalue))
-                        retval = std::string(PyString_AsString(pvalue));
-                    else
-                        retval = "None";
-                    Py_DECREF (pvalue);
-                }
-                else if (PyErr_Occurred ())
-                {
-                    PyErr_Print();
-                    PyErr_Clear();
-                }
-                Py_INCREF (session_dict);
-            }
-            else if (PyErr_Occurred())
-            {
-                PyErr_Print();
-                PyErr_Clear();
-            }
-        }
-        else if (PyErr_Occurred())
-        {
-            PyErr_Print();
-            PyErr_Clear();
+            Py_XDECREF(pfunc);
+            pfunc = NULL;
         }
     }
-    else if (PyErr_Occurred ())
+
+    if (PyDict_Check(session_dict))
     {
-        PyErr_Print();
-        PyErr_Clear ();
+        PyErr_Cleaner pyerr_cleanup(true);  // show Python errors
+        
+        if (!pfunc)
+        {
+            pfunc = ResolvePythonName (python_function_name, session_dict);
+            if (!pfunc || !PyFunction_Check (pfunc))
+                return false;
+            else
+            {
+                if (pyfunct_wrapper)
+                    *pyfunct_wrapper = pfunc;
+            }
+        }
+        /*else
+            printf("caching works!!!!\n");*/
+        
+        pargs = PyTuple_Pack(2, ValObj_PyObj, session_dict);
+        if (pargs == NULL)
+            return false;
+        
+        pvalue = PyObject_CallObject (pfunc, pargs);
+        Py_DECREF (pargs);
+        
+        if (pvalue != NULL && pvalue != Py_None && PyString_Check(pvalue))
+            retval.assign(PyString_AsString(pvalue));
+        Py_XDECREF (pvalue);
+        Py_INCREF (session_dict);
     }
-    return retval;
+    return true;
 }
 
 SWIGEXPORT void*

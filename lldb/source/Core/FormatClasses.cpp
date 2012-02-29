@@ -35,6 +35,7 @@ struct PyObject;
 #include "lldb/Core/Debugger.h"
 #include "lldb/Core/FormatClasses.h"
 #include "lldb/Core/StreamString.h"
+#include "lldb/Core/Timer.h"
 #include "lldb/Core/ValueObjectConstResult.h"
 #include "lldb/Interpreter/CommandInterpreter.h"
 #include "lldb/Symbol/ClangASTType.h"
@@ -78,11 +79,15 @@ StringSummaryFormat::StringSummaryFormat(const TypeSummaryImpl::Flags& flags,
     m_format.assign(format_cstr);
 }
 
-std::string
-StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
+bool
+StringSummaryFormat::FormatObject(lldb::ValueObjectSP object,
+                                  std::string& retval)
 {
     if (!object.get())
-        return "NULL";
+    {
+        retval.assign("NULL sp");
+        return false;
+    }
     
     StreamString s;
     ExecutionContext exe_ctx (object->GetExecutionContextRef());
@@ -117,18 +122,28 @@ StringSummaryFormat::FormatObject(lldb::ValueObjectSP object)
             
             s.PutChar(')');
             
-            return s.GetString();
+            retval.assign(s.GetString());
+            return true;
         }
         else
-            return "";
+        {
+            retval.assign("error: oneliner for no children");
+            return false;
+        }
         
     }
     else
     {
         if (Debugger::FormatPrompt(m_format.c_str(), &sc, &exe_ctx, &sc.line_entry.range.GetBaseAddress(), s, NULL, object.get()))
-            return s.GetString();
+        {
+            retval.assign(s.GetString());
+            return true;
+        }
         else
-            return "";
+        {
+            retval.assign("error: summary string parsing error");
+            return false;
+        }
     }
 }
 
@@ -156,7 +171,8 @@ ScriptSummaryFormat::ScriptSummaryFormat(const TypeSummaryImpl::Flags& flags,
                                          const char * python_script) :
     TypeSummaryImpl(flags),
     m_function_name(),
-    m_python_script()
+    m_python_script(),
+    m_script_function_sp()
 {
    if (function_name)
      m_function_name.assign(function_name);
@@ -164,11 +180,26 @@ ScriptSummaryFormat::ScriptSummaryFormat(const TypeSummaryImpl::Flags& flags,
      m_python_script.assign(python_script);
 }
 
-std::string
-ScriptSummaryFormat::FormatObject(lldb::ValueObjectSP object)
+bool
+ScriptSummaryFormat::FormatObject(lldb::ValueObjectSP object,
+                                  std::string& retval)
 {
-    return std::string(ScriptInterpreterPython::CallPythonScriptFunction(m_function_name.c_str(),
-                                                                         object).c_str());
+    Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
+
+    Debugger& dbg = object->GetTargetSP()->GetDebugger();
+    ScriptInterpreter *script_interpreter = dbg.GetCommandInterpreter().GetScriptInterpreter();
+    
+    if (!script_interpreter)
+    {
+        retval.assign("error: no ScriptInterpreter");
+        return false;
+    }
+        
+    return script_interpreter->GetScriptedSummary(m_function_name.c_str(),
+                                                  object,
+                                                  m_script_function_sp,
+                                                  retval);
+
 }
 
 std::string

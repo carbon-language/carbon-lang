@@ -20,6 +20,43 @@
 
 namespace lldb_private {
 
+class ScriptInterpreterObject
+{
+public:
+    ScriptInterpreterObject() :
+    m_object(NULL)
+    {}
+    
+    ScriptInterpreterObject(void* obj) :
+    m_object(obj)
+    {}
+    
+    ScriptInterpreterObject(const ScriptInterpreterObject& rhs)
+    : m_object(rhs.m_object)
+    {}
+    
+    virtual void*
+    GetObject()
+    {
+        return m_object;
+    }
+    
+    ScriptInterpreterObject&
+    operator = (const ScriptInterpreterObject& rhs)
+    {
+        if (this != &rhs)
+            m_object = rhs.m_object;
+        return *this;
+    }
+        
+    virtual
+    ~ScriptInterpreterObject()
+    {}
+    
+protected:
+    void* m_object;
+};
+
 class ScriptInterpreter
 {
 public:
@@ -31,9 +68,11 @@ public:
                                                     const lldb::StackFrameSP& frame_sp,
                                                     const lldb::BreakpointLocationSP &bp_loc_sp);
     
-    typedef std::string (*SWIGPythonTypeScriptCallbackFunction) (const char *python_function_name,
-                                                                 const char *session_dictionary_name,
-                                                                 const lldb::ValueObjectSP& valobj_sp);
+    typedef bool (*SWIGPythonTypeScriptCallbackFunction) (const char *python_function_name,
+                                                          void *session_dictionary,
+                                                          const lldb::ValueObjectSP& valobj_sp,
+                                                          void** pyfunct_wrapper,
+                                                          std::string& retval);
     
     typedef void* (*SWIGPythonCreateSyntheticProvider) (const std::string python_class_name,
                                                         const char *session_dictionary_name,
@@ -163,6 +202,15 @@ public:
         return;
     }
     
+    virtual bool
+    GetScriptedSummary (const char *function_name,
+                        lldb::ValueObjectSP valobj,
+                        lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
+                        std::string& retval)
+    {
+        return false;
+    }
+    
     virtual uint32_t
     CalculateNumChildren (void *implementor)
     {
@@ -211,6 +259,12 @@ public:
         return false;
     }
 
+    virtual lldb::ScriptInterpreterObjectSP
+    MakeScriptObject (void* object)
+    {
+        return lldb::ScriptInterpreterObjectSP(new ScriptInterpreterObject(object));
+    }
+    
     const char *
     GetScriptInterpreterPtyName ();
 
@@ -224,17 +278,7 @@ public:
     LanguageToString (lldb::ScriptLanguage language);
     
     static void
-    InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
-                           SWIGBreakpointCallbackFunction python_swig_breakpoint_callback,
-                           SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback,
-                           SWIGPythonCreateSyntheticProvider python_swig_synthetic_script,
-                           SWIGPythonCalculateNumChildren python_swig_calc_children,
-                           SWIGPythonGetChildAtIndex python_swig_get_child_index,
-                           SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
-                           SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
-                           SWIGPythonUpdateSynthProviderInstance python_swig_update_provider,
-                           SWIGPythonCallCommand python_swig_call_command,
-                           SWIGPythonCallModuleInit python_swig_call_mod_init);
+    InitializeInterpreter (SWIGInitCallback python_swig_init_callback);
 
     static void
     TerminateInterpreter ();

@@ -17,6 +17,7 @@ class ObjCDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.plain_data_formatter_commands()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_plain_objc_with_dwarf_and_run_command(self):
         """Test basic ObjC formatting behavior."""
         self.buildDwarf()
@@ -28,6 +29,7 @@ class ObjCDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.appkit_data_formatter_commands()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_appkit_with_dwarf_and_run_command(self):
         """Test formatters for AppKit classes."""
         self.buildDwarf()
@@ -39,10 +41,23 @@ class ObjCDataFormatterTestCase(TestBase):
         self.buildDsym()
         self.cf_data_formatter_commands()
 
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_coreframeworks_with_dwarf_and_run_command(self):
         """Test formatters for Core OSX frameworks."""
         self.buildDwarf()
         self.cf_data_formatter_commands()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_kvo_with_dsym_and_run_command(self):
+        """Test the behavior of formatters when KVO is in use."""
+        self.buildDsym()
+        self.kvo_data_formatter_commands()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    def test_kvo_with_dwarf_and_run_command(self):
+        """Test the behavior of formatters when KVO is in use."""
+        self.buildDwarf()
+        self.kvo_data_formatter_commands()
 
     def setUp(self):
         # Call super's setUp().
@@ -153,7 +168,6 @@ class ObjCDataFormatterTestCase(TestBase):
             self.runCmd('type category disable CoreServices', check=False)
             self.runCmd('type category disable AppKit', check=False)
 
-
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
 
@@ -189,13 +203,13 @@ class ObjCDataFormatterTestCase(TestBase):
                     '(NSString *) str12 = ',' @"Process Name:  a.out Process Id:'])
 
         self.expect('frame variable newArray newDictionary newMutableDictionary cfdict_ref mutable_dict_ref cfarray_ref mutable_array_ref',
-                    substrs = ['(NSArray *) newArray = ',' size=50',
+                    substrs = ['(NSArray *) newArray = ',' 50 objects',
                     '(NSDictionary *) newDictionary = ',' 12 key/value pairs',
                     '(NSDictionary *) newMutableDictionary = ',' 21 key/value pairs',
                     '(CFDictionaryRef) cfdict_ref = ',' 3 key/value pairs',
                     '(CFMutableDictionaryRef) mutable_dict_ref = ',' 12 key/value pairs',
-                    '(CFArrayRef) cfarray_ref = ',' size=3',
-                    '(CFMutableArrayRef) mutable_array_ref = ',' size=11'])
+                    '(CFArrayRef) cfarray_ref = ',' 3 objects',
+                    '(CFMutableArrayRef) mutable_array_ref = ',' 11 objects'])
 
         self.expect('frame variable attrString mutableAttrString mutableGetConst',
                     substrs = ['(NSAttributedString *) attrString = ',' @"hello world from foo"',
@@ -278,6 +292,7 @@ class ObjCDataFormatterTestCase(TestBase):
             self.runCmd('type category disable CoreGraphics', check=False)
             self.runCmd('type category disable CoreServices', check=False)
             self.runCmd('type category disable AppKit', check=False)
+            self.runCmd('log timers disable', check=False)
 
 
         # Execute the cleanup function during test case tear down.
@@ -287,6 +302,8 @@ class ObjCDataFormatterTestCase(TestBase):
         self.runCmd('type category enable CoreFoundation')
         self.runCmd('type category enable CoreGraphics')
         self.runCmd('type category enable CoreServices')
+        self.runCmd("type category enable AppKit")
+        self.runCmd("log timers enable")
         self.expect("frame variable",
              substrs = ['(CFGregorianUnits) cf_greg_units = 1 years, 3 months, 5 days, 12 hours, 5 minutes 7 seconds',
              '(CFRange) cf_range = location=4 length=4',
@@ -307,8 +324,59 @@ class ObjCDataFormatterTestCase(TestBase):
              '(Point) point = (v=7, h=12)',
              '(Point *) point_ptr = (v=7, h=12)',
              '(HIPoint) hi_point = (x=7, y=12)',
-             '(HIRect) hi_rect = origin=(x=3, y=5) size=(width=4, height=6)'])
+             '(HIRect) hi_rect = origin=(x=3, y=5) size=(width=4, height=6)',
+             '@"TheGuyWhoHasNoName" @"cuz it\'s funny"'])
+        self.runCmd('log timers dump')
 
+
+    def kvo_data_formatter_commands(self):
+        """Test the behavior of formatters when KVO is in use."""
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+
+        self.expect("breakpoint set -f main.m -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.m', line = %d, locations = 1" %
+                        self.line)
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # This is the function to remove the custom formats in order to have a
+        # clean slate for the next test case.
+        def cleanup():
+            self.runCmd('type format clear', check=False)
+            self.runCmd('type summary clear', check=False)
+            self.runCmd('type synth clear', check=False)
+            self.runCmd('type category disable CoreFoundation', check=False)
+            self.runCmd('type category disable CoreGraphics', check=False)
+            self.runCmd('type category disable CoreServices', check=False)
+            self.runCmd('type category disable AppKit', check=False)
+
+
+        # Execute the cleanup function during test case tear down.
+        self.addTearDownHook(cleanup)
+
+        # check formatters for common Objective-C types
+        self.runCmd('type category enable AppKit')
+
+        # as long as KVO is implemented by subclassing, this test should succeed
+        # we should be able to dynamically figure out that the KVO implementor class
+        # is a subclass of Molecule, and use the appropriate summary for it
+        self.runCmd("type summary add -s JustAMoleculeHere Molecule")
+        self.expect('frame variable molecule', substrs = ['JustAMoleculeHere'])
+        self.runCmd("next")
+        self.expect("thread list",
+            substrs = ['stopped',
+                       'step over'])
+        self.expect('frame variable molecule', substrs = ['JustAMoleculeHere'])
+
+        self.runCmd("next")
+        # check that NSMutableDictionary's formatter is not confused when dealing with a KVO'd dictionary
+        self.expect('frame variable newMutableDictionary', substrs = ['(NSDictionary *) newMutableDictionary = ',' 21 key/value pairs'])
 
 if __name__ == '__main__':
     import atexit

@@ -16,7 +16,7 @@ statistics.add_metric('code_notrun')
 class NSArrayKVC_SynthProvider:
 
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -51,7 +51,7 @@ class NSArrayKVC_SynthProvider:
 class NSArrayCF_SynthProvider:
 
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 		self.cfruntime_size = self.size_of_cfruntime_base()
@@ -61,7 +61,7 @@ class NSArrayCF_SynthProvider:
 	# to get its size we add up sizeof(pointer)+4
 	# and then add 4 more bytes if we are on a 64bit system
 	def size_of_cfruntime_base(self):
-		if self.lp64 == True:
+		if self.is_64_bit == True:
 			return 8+4+4;
 		else:
 			return 4+4;
@@ -93,7 +93,7 @@ class NSArrayCF_SynthProvider:
 class NSArrayI_SynthProvider:
 
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -133,7 +133,7 @@ class NSArrayI_SynthProvider:
 class NSArrayM_SynthProvider:
 
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -223,7 +223,7 @@ class NSArrayM_SynthProvider:
 class NSArray_SynthProvider:
 
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
@@ -314,7 +314,7 @@ def CFArray_SummaryProvider (valobj,dict):
 	        summary = None
 	    if summary == None:
 	        summary = 'no valid array here'
-	    return 'size='+summary
+	    return summary + " objects"
 	return ''
 
 def __lldb_init_module(debugger,dict):

@@ -66,6 +66,70 @@
 
 @end
 
+@interface Atom : NSObject {
+    float mass;
+}
+-(void)setMass:(float)newMass;
+-(float)mass;
+@end
+
+@interface Molecule : NSObject {
+    NSArray *atoms;
+}
+-(void)setAtoms:(NSArray *)newAtoms;
+-(NSArray *)atoms;
+@end
+
+@implementation  Atom
+
+-(void)setMass:(float)newMass
+{
+    mass = newMass;
+}
+-(float)mass
+{
+    return mass;
+}
+
+@end
+
+@implementation Molecule
+
+-(void)setAtoms:(NSArray *)newAtoms
+{
+    atoms = newAtoms;
+}
+-(NSArray *)atoms
+{
+    return atoms;
+}
+@end
+
+@interface My_KVO_Observer : NSObject
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change 
+	context:(void *)context;
+- (id) init;
+- (void) dealloc;
+@end
+
+@implementation My_KVO_Observer
+-(void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change 
+                      context:(void *)context {
+	// we do not really care about KVO'ing - do nothing
+	return;
+}
+- (id) init
+{
+    self = [super init]; 
+    return self;
+}
+
+- (void) dealloc
+{
+    [super dealloc];
+}
+@end
+
 int main (int argc, const char * argv[])
 {
     
@@ -479,7 +543,16 @@ int main (int argc, const char * argv[])
 	HIPoint hi_point = {7,12};
 	HIRect hi_rect = {{3,5},{4,6}};
 
+	Molecule *molecule = [Molecule new];
+
     // Set break point at this line.
+
+    [molecule addObserver:[My_KVO_Observer new] forKeyPath:@"atoms" options:0 context:NULL];
+    [newMutableDictionary addObserver:[My_KVO_Observer new] forKeyPath:@"weirdKeyToKVO" options:NSKeyValueObservingOptionNew context:NULL];
+
+    [molecule setAtoms:nil];
+    [molecule setAtoms:[NSMutableArray new]];
+
     [pool drain];
     return 0;
 }

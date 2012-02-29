@@ -15,7 +15,7 @@ class ObjCRuntime:
 		self.adjust_for_architecture() 
 
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 		self.addr_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
@@ -112,7 +112,7 @@ class ObjCRuntime:
 
 		# read ro pointer
 		ro_pointer = data + 12 + self.pointer_size
-		if self.lp64:
+		if self.is_64_bit:
 			ro_pointer += 4
 		ro_object = self.valobj.CreateValueFromAddress("ro",
 			ro_pointer,

@@ -312,58 +312,10 @@ SBCommandInterpreter::GetArgumentDescriptionAsCString (const lldb::CommandArgume
 
 
 #ifndef LLDB_DISABLE_PYTHON
-extern "C" bool
-LLDBSwigPythonBreakpointCallbackFunction 
-(
-    const char *python_function_name,
-    const char *session_dictionary_name,
-    const lldb::StackFrameSP& sb_frame, 
-    const lldb::BreakpointLocationSP& sb_bp_loc
-);
-
-extern "C" std::string
-LLDBSwigPythonCallTypeScript 
-(
-    const char *python_function_name,
-    const char *session_dictionary_name,
-    const lldb::ValueObjectSP& valobj_sp
-);
-
-extern "C" void*
-LLDBSwigPythonCreateSyntheticProvider 
-(
-    const std::string python_class_name,
-    const char *session_dictionary_name,
-    const lldb::ValueObjectSP& valobj_sp
-);
-
-
-extern "C" uint32_t       LLDBSwigPython_CalculateNumChildren        (void *implementor);
-extern "C" void*          LLDBSwigPython_GetChildAtIndex             (void *implementor, uint32_t idx);
-extern "C" int            LLDBSwigPython_GetIndexOfChildWithName     (void *implementor, const char* child_name);
-extern "C" void*          LLDBSWIGPython_CastPyObjectToSBValue       (void* data);
-extern "C" void           LLDBSwigPython_UpdateSynthProviderInstance (void* implementor);
-
-extern "C" bool           LLDBSwigPythonCallCommand 
-(
-    const char *python_function_name,
-    const char *session_dictionary_name,
-    lldb::DebuggerSP& debugger,
-    const char* args,
-    std::string& err_msg,
-    lldb_private::CommandReturnObject& cmd_retobj
-);
 
 // Defined in the SWIG source file
 extern "C" void 
 init_lldb(void);
-
-extern "C" bool           LLDBSwigPythonCallModuleInit 
-(
-    const std::string python_module_name,
-    const char *session_dictionary_name,
-    lldb::DebuggerSP& debugger
-);
 
 #else
 
@@ -385,17 +337,7 @@ SBCommandInterpreter::InitializeSWIG ()
     {
         g_initialized = true;
 #ifndef LLDB_DISABLE_PYTHON
-        ScriptInterpreter::InitializeInterpreter (init_lldb, 
-                                                  LLDBSwigPythonBreakpointCallbackFunction,
-                                                  LLDBSwigPythonCallTypeScript,
-                                                  LLDBSwigPythonCreateSyntheticProvider,
-                                                  LLDBSwigPython_CalculateNumChildren,
-                                                  LLDBSwigPython_GetChildAtIndex,
-                                                  LLDBSwigPython_GetIndexOfChildWithName,
-                                                  LLDBSWIGPython_CastPyObjectToSBValue,
-                                                  LLDBSwigPython_UpdateSynthProviderInstance,
-                                                  LLDBSwigPythonCallCommand,
-                                                  LLDBSwigPythonCallModuleInit);
+        ScriptInterpreter::InitializeInterpreter (init_lldb);
 #endif
     }
 }

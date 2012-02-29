@@ -54,6 +54,62 @@ static ScriptInterpreter::SWIGPythonUpdateSynthProviderInstance g_swig_update_pr
 static ScriptInterpreter::SWIGPythonCallCommand g_swig_call_command = NULL;
 static ScriptInterpreter::SWIGPythonCallModuleInit g_swig_call_module_init = NULL;
 
+// these are the Pythonic implementations of the required callbacks
+// these are scripting-language specific, which is why they belong here
+// we still need to use function pointers to them instead of relying
+// on linkage-time resolution because the SWIG stuff and this file
+// get built at different times
+extern "C" bool
+LLDBSwigPythonBreakpointCallbackFunction 
+(
+ const char *python_function_name,
+ const char *session_dictionary_name,
+ const lldb::StackFrameSP& sb_frame, 
+ const lldb::BreakpointLocationSP& sb_bp_loc
+ );
+
+extern "C" bool
+LLDBSwigPythonCallTypeScript 
+(
+ const char *python_function_name,
+ void *session_dictionary,
+ const lldb::ValueObjectSP& valobj_sp,
+ void** pyfunct_wrapper,
+ std::string& retval
+ );
+
+extern "C" void*
+LLDBSwigPythonCreateSyntheticProvider 
+(
+ const std::string python_class_name,
+ const char *session_dictionary_name,
+ const lldb::ValueObjectSP& valobj_sp
+ );
+
+
+extern "C" uint32_t       LLDBSwigPython_CalculateNumChildren        (void *implementor);
+extern "C" void*          LLDBSwigPython_GetChildAtIndex             (void *implementor, uint32_t idx);
+extern "C" int            LLDBSwigPython_GetIndexOfChildWithName     (void *implementor, const char* child_name);
+extern "C" void*          LLDBSWIGPython_CastPyObjectToSBValue       (void* data);
+extern "C" void           LLDBSwigPython_UpdateSynthProviderInstance (void* implementor);
+
+extern "C" bool           LLDBSwigPythonCallCommand 
+(
+ const char *python_function_name,
+ const char *session_dictionary_name,
+ lldb::DebuggerSP& debugger,
+ const char* args,
+ std::string& err_msg,
+ lldb_private::CommandReturnObject& cmd_retobj
+ );
+
+extern "C" bool           LLDBSwigPythonCallModuleInit 
+(
+ const std::string python_module_name,
+ const char *session_dictionary_name,
+ lldb::DebuggerSP& debugger
+ );
+
 static int
 _check_and_flush (FILE *stream)
 {
@@ -226,7 +282,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     // WARNING: temporary code that loads Cocoa formatters - this should be done on a per-platform basis rather than loading the whole set
     // and letting the individual formatter classes exploit APIs to check whether they can/cannot do their task
     run_string.Clear();
-    run_string.Printf ("run_one_line (%s, 'import CFString, CFArray, CFDictionary, NSData, NSMachPort, NSSet, NSNotification, NSException, CFBag, CFBinaryHeap, NSURL, NSBundle, NSNumber')", m_dictionary_name.c_str());
+    run_string.Printf ("run_one_line (%s, 'import CFString, CFArray, CFDictionary, NSData, NSMachPort, NSSet, NSNotification, NSException, CFBag, CFBinaryHeap, NSURL, NSBundle, NSNumber, NSDate')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
 
     int new_count = Debugger::TestDebuggerRefCount();
@@ -1454,44 +1510,88 @@ ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user
     return true;
 }
 
-std::string
-ScriptInterpreterPython::CallPythonScriptFunction (const char *python_function_name,
-                                                   lldb::ValueObjectSP valobj)
+static PyObject*
+FindSessionDictionary(const char* dict_name)
+{
+    static std::map<ConstString,PyObject*> g_dict_map;
+    
+    ConstString dict(dict_name);
+    
+    std::map<ConstString,PyObject*>::iterator iter = g_dict_map.find(dict);
+    
+    if (iter != g_dict_map.end())
+        return iter->second;
+    
+    PyObject *main_mod = PyImport_AddModule ("__main__");
+    if (main_mod != NULL)
+    {
+        PyObject *main_dict = PyModule_GetDict (main_mod);
+        if ((main_dict != NULL)
+            && PyDict_Check (main_dict))
+        {
+            // Go through the main dictionary looking for the correct python script interpreter dictionary
+            PyObject *key, *value;
+            Py_ssize_t pos = 0;
+            
+            while (PyDict_Next (main_dict, &pos, &key, &value))
+            {
+                // We have stolen references to the key and value objects in the dictionary; we need to increment 
+                // them now so that Python's garbage collector doesn't collect them out from under us.
+                Py_INCREF (key);
+                Py_INCREF (value);
+                if (strcmp (PyString_AsString (key), dict_name) == 0)
+                {
+                    g_dict_map[dict] = value;
+                    return value;
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
+bool
+ScriptInterpreterPython::GetScriptedSummary (const char *python_function_name,
+                                             lldb::ValueObjectSP valobj,
+                                             lldb::ScriptInterpreterObjectSP& callee_wrapper_sp,
+                                             std::string& retval)
 {
     
-    if (!python_function_name || !(*python_function_name))
-        return "<no function>";
+    Timer scoped_timer (__PRETTY_FUNCTION__, __PRETTY_FUNCTION__);
     
     if (!valobj.get())
-        return "<no object>";
+    {
+        retval.assign("<no object>");
+        return false;
+    }
         
-    ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
-    Target *target = exe_ctx.GetTargetPtr();
+    void* old_callee = (callee_wrapper_sp ? callee_wrapper_sp->GetObject() : NULL);
+    void* new_callee = old_callee;
     
-    if (!target)
-        return "<no target>";
-    
-    Debugger &debugger = target->GetDebugger();
-    ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
-    ScriptInterpreterPython *python_interpreter = (ScriptInterpreterPython *) script_interpreter;
-    
-    if (!script_interpreter)
-        return "<no python>";
-    
-    std::string ret_val;
-    
+    bool ret_val;
     if (python_function_name 
         && *python_function_name)
     {
         {
-            Locker py_lock(python_interpreter);
-            ret_val = g_swig_typescript_callback (python_function_name, 
-                                                  python_interpreter->m_dictionary_name.c_str(),
-                                                  valobj);
+            Locker py_lock(this);
+            {
+            Timer scoped_timer ("g_swig_typescript_callback","g_swig_typescript_callback");
+            ret_val = g_swig_typescript_callback (python_function_name,
+                                                  FindSessionDictionary(m_dictionary_name.c_str()),
+                                                  valobj,
+                                                  &new_callee,
+                                                  retval);
+            }
         }
     }
     else
-        return "<no function name>";
+    {
+        retval.assign("<no function name>");
+        return false;
+    }
+    
+    if (new_callee && old_callee != new_callee)
+        callee_wrapper_sp = MakeScriptObject(new_callee);
     
     return ret_val;
     
@@ -1822,6 +1922,12 @@ ScriptInterpreterPython::LoadScriptingModule (const char* pathname,
     }
 }
 
+lldb::ScriptInterpreterObjectSP
+ScriptInterpreterPython::MakeScriptObject (void* object)
+{
+    return lldb::ScriptInterpreterObjectSP(new ScriptInterpreterPythonObject(object));
+}
+
 ScriptInterpreterPython::SynchronicityHandler::SynchronicityHandler (lldb::DebuggerSP debugger_sp,
                                                                      ScriptedCommandSynchronicity synchro) :
     m_debugger_sp(debugger_sp),
@@ -1914,29 +2020,19 @@ ScriptInterpreterPython::GetDocumentationForItem(const char* item)
 }
 
 void
-ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
-                                                SWIGBreakpointCallbackFunction python_swig_breakpoint_callback,
-                                                SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback,
-                                                SWIGPythonCreateSyntheticProvider python_swig_synthetic_script,
-                                                SWIGPythonCalculateNumChildren python_swig_calc_children,
-                                                SWIGPythonGetChildAtIndex python_swig_get_child_index,
-                                                SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
-                                                SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
-                                                SWIGPythonUpdateSynthProviderInstance python_swig_update_provider,
-                                                SWIGPythonCallCommand python_swig_call_command,
-                                                SWIGPythonCallModuleInit python_swig_call_mod_init)
+ScriptInterpreterPython::InitializeInterpreter (SWIGInitCallback python_swig_init_callback)
 {
     g_swig_init_callback = python_swig_init_callback;
-    g_swig_breakpoint_callback = python_swig_breakpoint_callback;
-    g_swig_typescript_callback = python_swig_typescript_callback;
-    g_swig_synthetic_script = python_swig_synthetic_script;
-    g_swig_calc_children = python_swig_calc_children;
-    g_swig_get_child_index = python_swig_get_child_index;
-    g_swig_get_index_child = python_swig_get_index_child;
-    g_swig_cast_to_sbvalue = python_swig_cast_to_sbvalue;
-    g_swig_update_provider = python_swig_update_provider;
-    g_swig_call_command = python_swig_call_command;
-    g_swig_call_module_init = python_swig_call_mod_init;
+    g_swig_breakpoint_callback = LLDBSwigPythonBreakpointCallbackFunction;
+    g_swig_typescript_callback = LLDBSwigPythonCallTypeScript;
+    g_swig_synthetic_script = LLDBSwigPythonCreateSyntheticProvider;
+    g_swig_calc_children = LLDBSwigPython_CalculateNumChildren;
+    g_swig_get_child_index = LLDBSwigPython_GetChildAtIndex;
+    g_swig_get_index_child = LLDBSwigPython_GetIndexOfChildWithName;
+    g_swig_cast_to_sbvalue = LLDBSWIGPython_CastPyObjectToSBValue;
+    g_swig_update_provider = LLDBSwigPython_UpdateSynthProviderInstance;
+    g_swig_call_command = LLDBSwigPythonCallCommand;
+    g_swig_call_module_init = LLDBSwigPythonCallModuleInit;
 }
 
 void

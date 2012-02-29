@@ -69,30 +69,10 @@ ScriptInterpreter::LanguageToString (lldb::ScriptLanguage language)
 }
 
 void
-ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_callback,
-                                          SWIGBreakpointCallbackFunction python_swig_breakpoint_callback,
-                                          SWIGPythonTypeScriptCallbackFunction python_swig_typescript_callback,
-                                          SWIGPythonCreateSyntheticProvider python_swig_synthetic_script,
-                                          SWIGPythonCalculateNumChildren python_swig_calc_children,
-                                          SWIGPythonGetChildAtIndex python_swig_get_child_index,
-                                          SWIGPythonGetIndexOfChildWithName python_swig_get_index_child,
-                                          SWIGPythonCastPyObjectToSBValue python_swig_cast_to_sbvalue,
-                                          SWIGPythonUpdateSynthProviderInstance python_swig_update_provider,
-                                          SWIGPythonCallCommand python_swig_call_command,
-                                          SWIGPythonCallModuleInit python_swig_call_mod_init)
+ScriptInterpreter::InitializeInterpreter (SWIGInitCallback python_swig_init_callback)
 {
 #ifndef LLDB_DISABLE_PYTHON
-    ScriptInterpreterPython::InitializeInterpreter (python_swig_init_callback, 
-                                                    python_swig_breakpoint_callback,
-                                                    python_swig_typescript_callback,
-                                                    python_swig_synthetic_script,
-                                                    python_swig_calc_children,
-                                                    python_swig_get_child_index,
-                                                    python_swig_get_index_child,
-                                                    python_swig_cast_to_sbvalue,
-                                                    python_swig_update_provider,
-                                                    python_swig_call_command,
-                                                    python_swig_call_mod_init);
+    ScriptInterpreterPython::InitializeInterpreter (python_swig_init_callback);
 #endif // #ifndef LLDB_DISABLE_PYTHON
 }
 

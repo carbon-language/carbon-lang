@@ -1158,8 +1158,9 @@ public:
     {
     }
     
-    virtual std::string
-    FormatObject (lldb::ValueObjectSP object) = 0;
+    virtual bool
+    FormatObject (lldb::ValueObjectSP object,
+                  std::string& dest) = 0;
     
     virtual std::string
     GetDescription () = 0;
@@ -1211,8 +1212,9 @@ struct StringSummaryFormat : public TypeSummaryImpl
     {
     }
     
-    virtual std::string
-    FormatObject(lldb::ValueObjectSP object);
+    virtual bool
+    FormatObject(lldb::ValueObjectSP object,
+                 std::string& dest);
     
     virtual std::string
     GetDescription();
@@ -1232,6 +1234,7 @@ struct ScriptSummaryFormat : public TypeSummaryImpl
 {
     std::string m_function_name;
     std::string m_python_script;
+    lldb::ScriptInterpreterObjectSP m_script_function_sp;
     
     ScriptSummaryFormat(const TypeSummaryImpl::Flags& flags,
                         const char *function_name,
@@ -1273,8 +1276,9 @@ struct ScriptSummaryFormat : public TypeSummaryImpl
     {
     }
     
-    virtual std::string
-    FormatObject(lldb::ValueObjectSP object);
+    virtual bool
+    FormatObject(lldb::ValueObjectSP object,
+                 std::string& dest);
     
     virtual std::string
     GetDescription();

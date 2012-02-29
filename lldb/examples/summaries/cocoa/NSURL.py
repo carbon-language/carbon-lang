@@ -16,7 +16,7 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class NSURLKnown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
@@ -27,7 +27,7 @@ class NSURLKnown_SummaryProvider:
 	def update(self):
 		self.adjust_for_architecture();
 		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.lp64:
+		if self.is_64_bit:
 			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
 			self.pointer_size = 8
 		else:
@@ -41,7 +41,7 @@ class NSURLKnown_SummaryProvider:
 	# (which are also present on a 32-bit system)
 	# plus another pointer, and then the real data
 	def offset(self):
-		if self.lp64:
+		if self.is_64_bit:
 			return 24
 		else:
 			return 16
@@ -61,7 +61,7 @@ class NSURLKnown_SummaryProvider:
 
 class NSURLUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.lp64 = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
 		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
 		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
 
