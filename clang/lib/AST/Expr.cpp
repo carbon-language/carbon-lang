@@ -500,7 +500,7 @@ double FloatingLiteral::getValueAsApproximateDouble() const {
 }
 
 int StringLiteral::mapCharByteWidth(TargetInfo const &target,StringKind k) {
-  int CharByteWidth;
+  int CharByteWidth = 0;
   switch(k) {
     case Ascii:
     case UTF8:
@@ -514,6 +514,7 @@ int StringLiteral::mapCharByteWidth(TargetInfo const &target,StringKind k) {
       break;
     case UTF32:
       CharByteWidth = target.getChar32Width();
+      break;
   }
   assert((CharByteWidth & 7) == 0 && "Assumes character size is byte multiple");
   CharByteWidth /= 8;

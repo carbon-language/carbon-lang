@@ -9000,7 +9000,7 @@ bool Sema::DiagnoseAssignmentResult(AssignConvertType ConvTy,
   // Decode the result (notice that AST's are still created for extensions).
   bool CheckInferredResultType = false;
   bool isInvalid = false;
-  unsigned DiagKind;
+  unsigned DiagKind = 0;
   FixItHint Hint;
   ConversionFixItGenerator ConvHints;
   bool MayHaveConvFixit = false;
