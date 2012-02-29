@@ -736,8 +736,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit the data table for getSubReg().
   if (SubRegIndices.size()) {
-    OS << "static const unsigned short " << TargetName << "SubRegTable[]["
-      << SubRegIndices.size() << "] = {\n";
+    OS << "static const " << getMinimalTypeForRange(Regs.size()) << ' '
+       << TargetName << "SubRegTable[][" << SubRegIndices.size() << "] = {\n";
     for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
       const CodeGenRegister::SubRegMap &SRM = Regs[i]->getSubRegs();
       OS << "  /* " << Regs[i]->TheDef->getName() << " */\n";

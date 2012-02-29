@@ -2008,15 +2008,6 @@ static bool EmitMnemonicAliases(raw_ostream &OS, const AsmMatcherInfo &Info) {
   return true;
 }
 
-static const char *getMinimalTypeForRange(uint64_t Range) {
-  assert(Range < 0xFFFFFFFFULL && "Enum too large");
-  if (Range > 0xFFFF)
-    return "uint32_t";
-  if (Range > 0xFF)
-    return "uint16_t";
-  return "uint8_t";
-}
-
 static void EmitCustomOperandParsing(raw_ostream &OS, CodeGenTarget &Target,
                               const AsmMatcherInfo &Info, StringRef ClassName) {
   // Emit the static custom operand parsing table;

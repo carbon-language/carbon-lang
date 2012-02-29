@@ -108,6 +108,14 @@ std::string llvm::getQualifiedName(const Record *R) {
   return Namespace + "::" + R->getName();
 }
 
+const char *llvm::getMinimalTypeForRange(uint64_t Range) {
+  assert(Range < 0xFFFFFFFFULL && "Enum too large");
+  if (Range > 0xFFFF)
+    return "uint32_t";
+  if (Range > 0xFF)
+    return "uint16_t";
+  return "uint8_t";
+}
 
 /// getTarget - Return the current instance of the Target class.
 ///
