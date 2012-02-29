@@ -93,26 +93,43 @@ void PathDiagnosticConsumer::HandlePathDiagnostic(PathDiagnostic *D) {
     // Verify that the entire path is from the same FileID.
     FileID FID;
     const SourceManager &SMgr = (*D->path.begin())->getLocation().getManager();
+    llvm::SmallVector<const PathPieces *, 5> WorkList;
+    WorkList.push_back(&D->path);
 
-    for (PathPieces::const_iterator I = D->path.begin(), E = D->path.end();
-         I != E; ++I) {
-      FullSourceLoc L = (*I)->getLocation().asLocation().getExpansionLoc();
+    while (!WorkList.empty()) {
+      const PathPieces &path = *WorkList.back();
+      WorkList.pop_back();
+
+      for (PathPieces::const_iterator I = path.begin(), E = path.end();
+           I != E; ++I) {
+        const PathDiagnosticPiece *piece = I->getPtr();
+        FullSourceLoc L = piece->getLocation().asLocation().getExpansionLoc();
       
-      if (FID.isInvalid()) {
-        FID = SMgr.getFileID(L);
-      } else if (SMgr.getFileID(L) != FID)
-        return; // FIXME: Emit a warning?
+        if (FID.isInvalid()) {
+          FID = SMgr.getFileID(L);
+        } else if (SMgr.getFileID(L) != FID)
+          return; // FIXME: Emit a warning?
       
-      // Check the source ranges.
-      for (PathDiagnosticPiece::range_iterator RI = (*I)->ranges_begin(),
-           RE = (*I)->ranges_end();
-           RI != RE; ++RI) {
-        SourceLocation L = SMgr.getExpansionLoc(RI->getBegin());
-        if (!L.isFileID() || SMgr.getFileID(L) != FID)
-          return; // FIXME: Emit a warning?
-        L = SMgr.getExpansionLoc(RI->getEnd());
-        if (!L.isFileID() || SMgr.getFileID(L) != FID)
-          return; // FIXME: Emit a warning?
+        // Check the source ranges.
+        for (PathDiagnosticPiece::range_iterator RI = piece->ranges_begin(),
+             RE = piece->ranges_end();
+             RI != RE; ++RI) {
+          SourceLocation L = SMgr.getExpansionLoc(RI->getBegin());
+          if (!L.isFileID() || SMgr.getFileID(L) != FID)
+            return; // FIXME: Emit a warning?
+          L = SMgr.getExpansionLoc(RI->getEnd());
+          if (!L.isFileID() || SMgr.getFileID(L) != FID)
+            return; // FIXME: Emit a warning?
+        }
+        
+        if (const PathDiagnosticCallPiece *call =
+            dyn_cast<PathDiagnosticCallPiece>(piece)) {
+          WorkList.push_back(&call->path);
+        }
+        else if (const PathDiagnosticMacroPiece *macro =
+                 dyn_cast<PathDiagnosticMacroPiece>(piece)) {
+          WorkList.push_back(&macro->subPieces);
+        }
       }
     }
     
