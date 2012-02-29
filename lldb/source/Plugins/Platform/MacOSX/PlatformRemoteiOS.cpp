@@ -149,7 +149,7 @@ PlatformRemoteiOS::ResolveExecutable (const FileSpec &exe_file,
                                                  NULL, 
                                                  NULL);
         
-            if (exe_module_sp->GetObjectFile())
+            if (exe_module_sp && exe_module_sp->GetObjectFile())
                 return error;
             exe_module_sp.reset();
         }
