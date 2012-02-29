@@ -646,10 +646,8 @@ using ::isunordered;
 using ::float_t;
 using ::double_t;
 
-#ifndef __sun__
 // abs
 
-#endif // __sun__
 template <class _A1>
 inline _LIBCPP_INLINE_VISIBILITY
 typename enable_if<is_floating_point<_A1>::value, _A1>::type
