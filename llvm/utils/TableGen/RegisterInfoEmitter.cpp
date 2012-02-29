@@ -735,28 +735,44 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   std::string ClassName = Target.getName() + "GenRegisterInfo";
 
+  // Emit the data table for getSubReg().
+  if (SubRegIndices.size()) {
+    OS << "static const unsigned short " << TargetName << "SubRegTable[]["
+      << SubRegIndices.size() << "] = {\n";
+    for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+      const CodeGenRegister::SubRegMap &SRM = Regs[i]->getSubRegs();
+      OS << "  /* " << Regs[i]->TheDef->getName() << " */\n";
+      if (SRM.empty()) {
+        OS << "  {0},\n";
+        continue;
+      }
+      OS << "  {";
+      for (unsigned j = 0, je = SubRegIndices.size(); j != je; ++j) {
+        // FIXME: We really should keep this to 80 columns...
+        CodeGenRegister::SubRegMap::const_iterator SubReg =
+          SRM.find(SubRegIndices[j]);
+        if (SubReg != SRM.end())
+          OS << getQualifiedName(SubReg->second->TheDef);
+        else
+          OS << "0";
+        if (j != je - 1)
+          OS << ", ";
+      }
+      OS << "}" << (i != e ? "," : "") << "\n";
+    }
+    OS << "};\n\n";
+  }
+
   // Emit the subregister + index mapping function based on the information
   // calculated above.
   OS << "unsigned " << ClassName
      << "::getSubReg(unsigned RegNo, unsigned Index) const {\n"
-     << "  switch (RegNo) {\n"
-     << "  default:\n    return 0;\n";
-  for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-    const CodeGenRegister::SubRegMap &SRM = Regs[i]->getSubRegs();
-    if (SRM.empty())
-      continue;
-    OS << "  case " << getQualifiedName(Regs[i]->TheDef) << ":\n";
-    OS << "    switch (Index) {\n";
-    OS << "    default: return 0;\n";
-    for (CodeGenRegister::SubRegMap::const_iterator ii = SRM.begin(),
-         ie = SRM.end(); ii != ie; ++ii)
-      OS << "    case " << ii->first->getQualifiedName()
-         << ": return " << getQualifiedName(ii->second->TheDef) << ";\n";
-    OS << "    };\n" << "    break;\n";
-  }
-  OS << "  };\n";
-  OS << "  return 0;\n";
-  OS << "}\n\n";
+     << "  assert(RegNo > 0 && Index > 0 && \"invalid subreg query!\");\n";
+  if (SubRegIndices.size())
+     OS << "  return " << TargetName << "SubRegTable[RegNo - 1][Index - 1];\n"
+        << "}\n\n";
+  else
+    OS << "  return 0;\n}\n\n";
 
   OS << "unsigned " << ClassName
      << "::getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const {\n"
