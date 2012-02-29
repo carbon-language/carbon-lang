@@ -303,6 +303,15 @@ ScriptInterpreterPython::RestoreTerminalState ()
 void
 ScriptInterpreterPython::LeaveSession ()
 {
+    PyObject *sysmod = PyImport_AddModule ("sys");
+    PyObject *sysdict = PyModule_GetDict (sysmod);
+
+    if (m_new_sysout && sysmod && sysdict)
+    {
+        PyDict_SetItemString (sysdict, "stdout", (PyObject*)m_old_sysout);
+        PyDict_SetItemString (sysdict, "stderr", (PyObject*)m_old_sysout);
+    }
+
     m_session_is_active = false;
 }
 
@@ -336,16 +345,18 @@ ScriptInterpreterPython::EnterSession ()
 
     PyRun_SimpleString (run_string.GetData());
     run_string.Clear();
-    
+
     PyObject *sysmod = PyImport_AddModule ("sys");
     PyObject *sysdict = PyModule_GetDict (sysmod);
-    
+
     if (m_new_sysout && sysmod && sysdict)
     {
+        m_old_sysout = PyDict_GetItemString(sysdict, "stdout");
+        m_old_syserr = PyDict_GetItemString(sysdict, "stderr");
         PyDict_SetItemString (sysdict, "stdout", (PyObject*)m_new_sysout);
         PyDict_SetItemString (sysdict, "stderr", (PyObject*)m_new_sysout);
     }
-            
+
     if (PyErr_Occurred())
         PyErr_Clear ();
 }

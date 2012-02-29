@@ -252,6 +252,8 @@ private:
     lldb::InputReaderSP m_embedded_thread_input_reader_sp;
     FILE *m_dbg_stdout;
     void *m_new_sysout; // This is a PyObject.
+    void *m_old_sysout; // This is a PyObject.
+    void *m_old_syserr; // This is a PyObject.
     std::string m_dictionary_name;
     TerminalState m_terminal_state;
     bool m_session_is_active;
