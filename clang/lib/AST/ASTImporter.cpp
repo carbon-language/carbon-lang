@@ -3544,6 +3544,7 @@ Decl *ASTNodeImporter::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
     = ObjCPropertyDecl::Create(Importer.getToContext(), DC, Loc,
                                Name.getAsIdentifierInfo(), 
                                Importer.Import(D->getAtLoc()),
+                               Importer.Import(D->getLParenLoc()),
                                T,
                                D->getPropertyImplementation());
   Importer.Imported(D, ToProperty);

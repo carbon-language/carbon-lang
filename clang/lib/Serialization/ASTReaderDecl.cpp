@@ -801,6 +801,7 @@ void ASTDeclReader::VisitObjCCompatibleAliasDecl(ObjCCompatibleAliasDecl *CAD) {
 void ASTDeclReader::VisitObjCPropertyDecl(ObjCPropertyDecl *D) {
   VisitNamedDecl(D);
   D->setAtLoc(ReadSourceLocation(Record, Idx));
+  D->setLParenLoc(ReadSourceLocation(Record, Idx));
   D->setType(GetTypeSourceInfo(Record, Idx));
   // FIXME: stable encoding
   D->setPropertyAttributes(

@@ -1957,6 +1957,7 @@ public:
   ////  class extensions.
   Decl *HandlePropertyInClassExtension(Scope *S,
                                        SourceLocation AtLoc,
+                                       SourceLocation LParenLoc,
                                        FieldDeclarator &FD,
                                        Selector GetterSel,
                                        Selector SetterSel,
@@ -1973,6 +1974,7 @@ public:
   ObjCPropertyDecl *CreatePropertyDecl(Scope *S,
                                        ObjCContainerDecl *CDecl,
                                        SourceLocation AtLoc,
+                                       SourceLocation LParenLoc,
                                        FieldDeclarator &FD,
                                        Selector GetterSel,
                                        Selector SetterSel,
@@ -5564,6 +5566,7 @@ public:
                    DeclGroupPtrTy *allTUVars = 0, unsigned tuvNum = 0);
 
   Decl *ActOnProperty(Scope *S, SourceLocation AtLoc,
+                      SourceLocation LParenLoc,
                       FieldDeclarator &FD, ObjCDeclSpec &ODS,
                       Selector GetterSel, Selector SetterSel,
                       bool *OverridingProperty,

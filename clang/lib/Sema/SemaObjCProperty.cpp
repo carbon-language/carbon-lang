@@ -101,6 +101,7 @@ static void checkARCPropertyDecl(Sema &S, ObjCPropertyDecl *property) {
 }
 
 Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
+                          SourceLocation LParenLoc,
                           FieldDeclarator &FD,
                           ObjCDeclSpec &ODS,
                           Selector GetterSel,
@@ -135,7 +136,7 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
 
   if (ObjCCategoryDecl *CDecl = dyn_cast<ObjCCategoryDecl>(ClassDecl))
     if (CDecl->IsClassExtension()) {
-      Decl *Res = HandlePropertyInClassExtension(S, AtLoc,
+      Decl *Res = HandlePropertyInClassExtension(S, AtLoc, LParenLoc,
                                            FD, GetterSel, SetterSel,
                                            isAssign, isReadWrite,
                                            Attributes,
@@ -150,7 +151,7 @@ Decl *Sema::ActOnProperty(Scope *S, SourceLocation AtLoc,
       return Res;
     }
   
-  ObjCPropertyDecl *Res = CreatePropertyDecl(S, ClassDecl, AtLoc, FD,
+  ObjCPropertyDecl *Res = CreatePropertyDecl(S, ClassDecl, AtLoc, LParenLoc, FD,
                                              GetterSel, SetterSel,
                                              isAssign, isReadWrite,
                                              Attributes,
@@ -201,7 +202,9 @@ makePropertyAttributesAsWritten(unsigned Attributes) {
 
 Decl *
 Sema::HandlePropertyInClassExtension(Scope *S,
-                                     SourceLocation AtLoc, FieldDeclarator &FD,
+                                     SourceLocation AtLoc,
+                                     SourceLocation LParenLoc,
+                                     FieldDeclarator &FD,
                                      Selector GetterSel, Selector SetterSel,
                                      const bool isAssign,
                                      const bool isReadWrite,
@@ -235,7 +238,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
   // FIXME. We should really be using CreatePropertyDecl for this.
   ObjCPropertyDecl *PDecl =
     ObjCPropertyDecl::Create(Context, DC, FD.D.getIdentifierLoc(),
-                             PropertyId, AtLoc, T);
+                             PropertyId, AtLoc, LParenLoc, T);
   PDecl->setPropertyAttributesAsWritten(
                           makePropertyAttributesAsWritten(AttributesAsWritten));
   if (Attributes & ObjCDeclSpec::DQ_PR_readonly)
@@ -264,7 +267,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
     // No matching property found in the primary class. Just fall thru
     // and add property to continuation class's primary class.
     ObjCPropertyDecl *PrimaryPDecl =
-      CreatePropertyDecl(S, CCPrimary, AtLoc,
+      CreatePropertyDecl(S, CCPrimary, AtLoc, LParenLoc,
                          FD, GetterSel, SetterSel, isAssign, isReadWrite,
                          Attributes,AttributesAsWritten, T, MethodImplKind, DC);
 
@@ -329,7 +332,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
       ContextRAII SavedContext(*this, CCPrimary);
       
       Decl *ProtocolPtrTy =
-        ActOnProperty(S, AtLoc, FD, ProtocolPropertyODS,
+        ActOnProperty(S, AtLoc, LParenLoc, FD, ProtocolPropertyODS,
                       PIDecl->getGetterName(),
                       PIDecl->getSetterName(),
                       isOverridingProperty,
@@ -372,6 +375,7 @@ Sema::HandlePropertyInClassExtension(Scope *S,
 ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
                                            ObjCContainerDecl *CDecl,
                                            SourceLocation AtLoc,
+                                           SourceLocation LParenLoc,
                                            FieldDeclarator &FD,
                                            Selector GetterSel,
                                            Selector SetterSel,
@@ -404,7 +408,7 @@ ObjCPropertyDecl *Sema::CreatePropertyDecl(Scope *S,
   DeclContext *DC = cast<DeclContext>(CDecl);
   ObjCPropertyDecl *PDecl = ObjCPropertyDecl::Create(Context, DC,
                                                      FD.D.getIdentifierLoc(),
-                                                     PropertyId, AtLoc, TInfo);
+                                                     PropertyId, AtLoc, LParenLoc, TInfo);
 
   if (ObjCPropertyDecl *prevDecl =
         ObjCPropertyDecl::findPropertyDecl(DC, PropertyId)) {
@@ -1530,7 +1534,34 @@ Sema::AtomicPropertySetterGetterRules (ObjCImplDecl* IMPDecl,
         Diag(MethodLoc, diag::warn_atomic_property_rule)
           << Property->getIdentifier() << (GetterMethod != 0)
           << (SetterMethod != 0);
-        Diag(MethodLoc, diag::note_atomic_property_fixup_suggest);
+        // fixit stuff.
+        if (!AttributesAsWritten) {
+          if (Property->getLParenLoc().isValid()) {
+            // @property () ... case.
+            SourceRange PropSourceRange(Property->getAtLoc(), 
+                                        Property->getLParenLoc());
+            Diag(Property->getLocation(), diag::note_atomic_property_fixup_suggest) <<
+              FixItHint::CreateReplacement(PropSourceRange, "@property (nonatomic");
+          }
+          else {
+            //@property id etc.
+            SourceLocation endLoc = 
+              Property->getTypeSourceInfo()->getTypeLoc().getBeginLoc();
+            endLoc = endLoc.getLocWithOffset(-1);
+            SourceRange PropSourceRange(Property->getAtLoc(), endLoc);
+            Diag(Property->getLocation(), diag::note_atomic_property_fixup_suggest) <<
+              FixItHint::CreateReplacement(PropSourceRange, "@property (nonatomic) ");
+          }
+        }
+        else if (!(AttributesAsWritten & ObjCPropertyDecl::OBJC_PR_atomic)) {
+          // @property () ... case.
+          SourceLocation endLoc = Property->getLParenLoc();
+          SourceRange PropSourceRange(Property->getAtLoc(), endLoc);
+          Diag(Property->getLocation(), diag::note_atomic_property_fixup_suggest) <<
+           FixItHint::CreateReplacement(PropSourceRange, "@property (nonatomic, ");
+        }
+        else
+          Diag(MethodLoc, diag::note_atomic_property_fixup_suggest);
         Diag(Property->getLocation(), diag::note_property_declare);
       }
     }
