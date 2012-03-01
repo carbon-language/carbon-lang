@@ -176,6 +176,71 @@ struct Elf_Sym_Impl : Elf_Sym_Base<target_endianness, is64Bits> {
   }
 };
 
+// Elf_Dyn: Entry in the dynamic table
+template<support::endianness target_endianness, bool is64Bits>
+struct Elf_Dyn_Base;
+
+template<support::endianness target_endianness>
+struct Elf_Dyn_Base<target_endianness, false> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, false)
+  Elf_Sword d_tag;
+  union {
+    Elf_Word d_val;
+    Elf_Addr d_ptr;
+  } d_un;
+};
+
+template<support::endianness target_endianness>
+struct Elf_Dyn_Base<target_endianness, true> {
+  LLVM_ELF_IMPORT_TYPES(target_endianness, true)
+  Elf_Sxword d_tag;
+  union {
+    Elf_Xword d_val;
+    Elf_Addr d_ptr;
+  } d_un;
+};
+
+template<support::endianness target_endianness, bool is64Bits>
+struct Elf_Dyn_Impl : Elf_Dyn_Base<target_endianness, is64Bits> {
+  using Elf_Dyn_Base<target_endianness, is64Bits>::d_tag;
+  using Elf_Dyn_Base<target_endianness, is64Bits>::d_un;
+  int64_t getTag() const { return d_tag; }
+  uint64_t getVal() const { return d_un.d_val; }
+  uint64_t getPtr() const { return d_un.ptr; }
+};
+
+template<support::endianness target_endianness, bool is64Bits>
+class ELFObjectFile;
+
+// DynRefImpl: Reference to an entry in the dynamic table
+// This is an ELF-specific interface.
+template<support::endianness target_endianness, bool is64Bits>
+class DynRefImpl {
+  typedef Elf_Dyn_Impl<target_endianness, is64Bits> Elf_Dyn;
+  typedef ELFObjectFile<target_endianness, is64Bits> OwningType;
+
+  DataRefImpl DynPimpl;
+  const OwningType *OwningObject;
+
+public:
+  DynRefImpl() : OwningObject(NULL) {
+    std::memset(&DynPimpl, 0, sizeof(DynPimpl));
+  }
+
+  DynRefImpl(DataRefImpl DynP, const OwningType *Owner);
+
+  bool operator==(const DynRefImpl &Other) const;
+  bool operator <(const DynRefImpl &Other) const;
+
+  error_code getNext(DynRefImpl &Result) const;
+  int64_t getTag() const;
+  uint64_t getVal() const;
+  uint64_t getPtr() const;
+
+  DataRefImpl getRawDataRefImpl() const;
+};
+
+// Elf_Rel: Elf Relocation
 template<support::endianness target_endianness, bool is64Bits, bool isRela>
 struct Elf_Rel_Base;
 
@@ -255,8 +320,11 @@ class ELFObjectFile : public ObjectFile {
 
   typedef Elf_Shdr_Impl<target_endianness, is64Bits> Elf_Shdr;
   typedef Elf_Sym_Impl<target_endianness, is64Bits> Elf_Sym;
+  typedef Elf_Dyn_Impl<target_endianness, is64Bits> Elf_Dyn;
   typedef Elf_Rel_Impl<target_endianness, is64Bits, false> Elf_Rel;
   typedef Elf_Rel_Impl<target_endianness, is64Bits, true> Elf_Rela;
+  typedef DynRefImpl<target_endianness, is64Bits> DynRef;
+  typedef content_iterator<DynRef> dyn_iterator;
 
 protected:
   struct Elf_Ehdr {
@@ -300,6 +368,8 @@ private:
   IndexMap_t SymbolTableSectionsIndexMap;
   DenseMap<const Elf_Sym*, ELF::Elf64_Word> ExtendedSymbolTable;
 
+  const Elf_Shdr *dot_dynamic_sec; // .dynamic
+
   /// @brief Map sections to an array of relocation sections that reference
   ///        them sorted by section index.
   RelocMap_t SectionRelocMap;
@@ -329,6 +399,9 @@ protected:
   const Elf_Sym  *getSymbol(DataRefImpl Symb) const; // FIXME: Should be private?
   void            validateSymbol(DataRefImpl Symb) const;
 
+public:
+  const Elf_Dyn  *getDyn(DataRefImpl DynData) const;
+
 protected:
   virtual error_code getSymbolNext(DataRefImpl Symb, SymbolRef &Res) const;
   virtual error_code getSymbolName(DataRefImpl Symb, StringRef &Res) const;
@@ -340,6 +413,12 @@ protected:
   virtual error_code getSymbolType(DataRefImpl Symb, SymbolRef::Type &Res) const;
   virtual error_code getSymbolSection(DataRefImpl Symb,
                                       section_iterator &Res) const;
+
+  friend class DynRefImpl<target_endianness, is64Bits>;
+  virtual error_code getDynNext(DataRefImpl DynData, DynRef &Result) const;
+
+  virtual error_code getLibraryNext(DataRefImpl Data, LibraryRef &Result) const;
+  virtual error_code getLibraryPath(DataRefImpl Data, StringRef &Res) const;
 
   virtual error_code getSectionNext(DataRefImpl Sec, SectionRef &Res) const;
   virtual error_code getSectionName(DataRefImpl Sec, StringRef &Res) const;
@@ -376,10 +455,18 @@ public:
   ELFObjectFile(MemoryBuffer *Object, error_code &ec);
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
+
   virtual symbol_iterator begin_dynamic_symbols() const;
   virtual symbol_iterator end_dynamic_symbols() const;
+
   virtual section_iterator begin_sections() const;
   virtual section_iterator end_sections() const;
+
+  virtual library_iterator begin_libraries_needed() const;
+  virtual library_iterator end_libraries_needed() const;
+
+  virtual dyn_iterator begin_dynamic_table() const;
+  virtual dyn_iterator end_dynamic_table() const;
 
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
@@ -1171,7 +1258,8 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
   , SectionHeaderTable(0)
   , dot_shstrtab_sec(0)
   , dot_strtab_sec(0)
-  , dot_dynstr_sec(0) {
+  , dot_dynstr_sec(0)
+  , dot_dynamic_sec(0) {
 
   const uint64_t FileSize = Data->getBufferSize();
 
@@ -1226,6 +1314,12 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
     }
     if (sh->sh_type == ELF::SHT_REL || sh->sh_type == ELF::SHT_RELA) {
       SectionRelocMap[getSection(sh->sh_info)].push_back(i);
+    }
+    if (sh->sh_type == ELF::SHT_DYNAMIC) {
+      if (dot_dynamic_sec != NULL)
+        // FIXME: Proper error handling.
+        report_fatal_error("More than one .dynamic!");
+      dot_dynamic_sec = sh;
     }
     ++sh;
   }
@@ -1353,6 +1447,121 @@ section_iterator ELFObjectFile<target_endianness, is64Bits>
 }
 
 template<support::endianness target_endianness, bool is64Bits>
+typename ELFObjectFile<target_endianness, is64Bits>::dyn_iterator
+ELFObjectFile<target_endianness, is64Bits>::begin_dynamic_table() const {
+  DataRefImpl DynData;
+  memset(&DynData, 0, sizeof(DynData));
+  if (dot_dynamic_sec == NULL || dot_dynamic_sec->sh_size == 0) {
+    DynData.d.a = std::numeric_limits<uint32_t>::max();
+  } else {
+    DynData.d.a = 0;
+  }
+  return dyn_iterator(DynRef(DynData, this));
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+typename ELFObjectFile<target_endianness, is64Bits>::dyn_iterator
+ELFObjectFile<target_endianness, is64Bits>
+                          ::end_dynamic_table() const {
+  DataRefImpl DynData;
+  memset(&DynData, 0, sizeof(DynData));
+  DynData.d.a = std::numeric_limits<uint32_t>::max();
+  return dyn_iterator(DynRef(DynData, this));
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getDynNext(DataRefImpl DynData,
+                                     DynRef &Result) const {
+  ++DynData.d.a;
+
+  // Check to see if we are at the end of .dynamic
+  if (DynData.d.a >= dot_dynamic_sec->getEntityCount()) {
+    // We are at the end. Return the terminator.
+    DynData.d.a = std::numeric_limits<uint32_t>::max();
+  }
+
+  Result = DynRef(DynData, this);
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+library_iterator ELFObjectFile<target_endianness, is64Bits>
+                             ::begin_libraries_needed() const {
+  // Find the first DT_NEEDED entry
+  dyn_iterator i = begin_dynamic_table();
+  dyn_iterator e = end_dynamic_table();
+  error_code ec;
+  while (i != e) {
+    if (i->getTag() == ELF::DT_NEEDED)
+      break;
+    i.increment(ec);
+    if (ec)
+      report_fatal_error("dynamic table iteration failed");
+  }
+  // Use the same DataRefImpl format as DynRef.
+  return library_iterator(LibraryRef(i->getRawDataRefImpl(), this));
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+                        ::getLibraryNext(DataRefImpl Data,
+                                         LibraryRef &Result) const {
+  // Use the same DataRefImpl format as DynRef.
+  dyn_iterator i = dyn_iterator(DynRef(Data, this));
+  dyn_iterator e = end_dynamic_table();
+
+  // Skip the current dynamic table entry.
+  error_code ec;
+  if (i != e) {
+    i.increment(ec);
+    // TODO: proper error handling
+    if (ec)
+      report_fatal_error("dynamic table iteration failed");
+  }
+
+  // Find the next DT_NEEDED entry.
+  while (i != e) {
+    if (i->getTag() == ELF::DT_NEEDED)
+      break;
+    i.increment(ec);
+    if (ec)
+      report_fatal_error("dynamic table iteration failed");
+  }
+  Result = LibraryRef(i->getRawDataRefImpl(), this);
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+error_code ELFObjectFile<target_endianness, is64Bits>
+         ::getLibraryPath(DataRefImpl Data, StringRef &Res) const {
+  dyn_iterator i = dyn_iterator(DynRef(Data, this));
+  if (i == end_dynamic_table())
+    report_fatal_error("getLibraryPath() called on iterator end");
+
+  if (i->getTag() != ELF::DT_NEEDED)
+    report_fatal_error("Invalid library_iterator");
+
+  // This uses .dynstr to lookup the name of the DT_NEEDED entry.
+  // THis works as long as DT_STRTAB == .dynstr. This is true most of
+  // the time, but the specification allows exceptions.
+  // TODO: This should really use DT_STRTAB instead. Doing this requires
+  // reading the program headers.
+  if (dot_dynstr_sec == NULL)
+    report_fatal_error("Dynamic string table is missing");
+  Res = getString(dot_dynstr_sec, i->getVal());
+  return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+library_iterator ELFObjectFile<target_endianness, is64Bits>
+                             ::end_libraries_needed() const {
+  dyn_iterator e = end_dynamic_table();
+  // Use the same DataRefImpl format as DynRef.
+  return library_iterator(LibraryRef(e->getRawDataRefImpl(), this));
+}
+
+template<support::endianness target_endianness, bool is64Bits>
 uint8_t ELFObjectFile<target_endianness, is64Bits>::getBytesInAddress() const {
   return is64Bits ? 8 : 4;
 }
@@ -1450,6 +1659,12 @@ ELFObjectFile<target_endianness, is64Bits>::getSymbol(DataRefImpl Symb) const {
 }
 
 template<support::endianness target_endianness, bool is64Bits>
+const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Dyn *
+ELFObjectFile<target_endianness, is64Bits>::getDyn(DataRefImpl DynData) const {
+  return getEntry<Elf_Dyn>(dot_dynamic_sec, DynData.d.a);
+}
+
+template<support::endianness target_endianness, bool is64Bits>
 const typename ELFObjectFile<target_endianness, is64Bits>::Elf_Rel *
 ELFObjectFile<target_endianness, is64Bits>::getRel(DataRefImpl Rel) const {
   return getEntry<Elf_Rel>(Rel.w.b, Rel.w.c);
@@ -1525,6 +1740,54 @@ error_code ELFObjectFile<target_endianness, is64Bits>
     Result = getString(dot_strtab_sec, symb->st_name);
   }
   return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+inline DynRefImpl<target_endianness, is64Bits>
+                 ::DynRefImpl(DataRefImpl DynP, const OwningType *Owner)
+  : DynPimpl(DynP)
+  , OwningObject(Owner) {}
+
+template<support::endianness target_endianness, bool is64Bits>
+inline bool DynRefImpl<target_endianness, is64Bits>
+                      ::operator==(const DynRefImpl &Other) const {
+  return DynPimpl == Other.DynPimpl;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+inline bool DynRefImpl<target_endianness, is64Bits>
+                      ::operator <(const DynRefImpl &Other) const {
+  return DynPimpl < Other.DynPimpl;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+inline error_code DynRefImpl<target_endianness, is64Bits>
+                            ::getNext(DynRefImpl &Result) const {
+  return OwningObject->getDynNext(DynPimpl, Result);
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+inline int64_t DynRefImpl<target_endianness, is64Bits>
+                            ::getTag() const {
+  return OwningObject->getDyn(DynPimpl)->d_tag;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+inline uint64_t DynRefImpl<target_endianness, is64Bits>
+                            ::getVal() const {
+  return OwningObject->getDyn(DynPimpl)->d_un.d_val;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+inline uint64_t DynRefImpl<target_endianness, is64Bits>
+                            ::getPtr() const {
+  return OwningObject->getDyn(DynPimpl)->d_un.d_ptr;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+inline DataRefImpl DynRefImpl<target_endianness, is64Bits>
+                             ::getRawDataRefImpl() const {
+  return DynPimpl;
 }
 
 }

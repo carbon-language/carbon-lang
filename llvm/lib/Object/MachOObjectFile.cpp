@@ -377,6 +377,16 @@ symbol_iterator MachOObjectFile::end_dynamic_symbols() const {
   report_fatal_error("Dynamic symbols unimplemented in MachOObjectFile");
 }
 
+library_iterator MachOObjectFile::begin_libraries_needed() const {
+  // TODO: implement
+  report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
+}
+
+library_iterator MachOObjectFile::end_libraries_needed() const {
+  // TODO: implement
+  report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
+}
+
 /*===-- Sections ----------------------------------------------------------===*/
 
 void MachOObjectFile::moveToNextSection(DataRefImpl &DRI) const {
@@ -1174,6 +1184,17 @@ error_code MachOObjectFile::getRelocationHidden(DataRefImpl Rel,
 
   return object_error::success;
 }
+
+error_code MachOObjectFile::getLibraryNext(DataRefImpl LibData,
+                                           LibraryRef &Res) const {
+  report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
+}
+
+error_code MachOObjectFile::getLibraryPath(DataRefImpl LibData,
+                                           StringRef &Res) const {
+  report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
+}
+
 
 /*===-- Miscellaneous -----------------------------------------------------===*/
 

@@ -37,6 +37,7 @@ add_subdirectory(llvm-extract)
 add_subdirectory(llvm-diff)
 add_subdirectory(macho-dump)
 add_subdirectory(llvm-objdump)
+add_subdirectory(llvm-readobj)
 add_subdirectory(llvm-rtdyld)
 add_subdirectory(llvm-dwarfdump)
 

@@ -145,12 +145,19 @@ protected:
   virtual error_code getRelocationValueString(DataRefImpl Rel,
                                            SmallVectorImpl<char> &Result) const;
 
+  virtual error_code getLibraryNext(DataRefImpl LibData,
+                                    LibraryRef &Result) const;
+  virtual error_code getLibraryPath(DataRefImpl LibData,
+                                    StringRef &Result) const;
+
 public:
   COFFObjectFile(MemoryBuffer *Object, error_code &ec);
   virtual symbol_iterator begin_symbols() const;
   virtual symbol_iterator end_symbols() const;
   virtual symbol_iterator begin_dynamic_symbols() const;
   virtual symbol_iterator end_dynamic_symbols() const;
+  virtual library_iterator begin_libraries_needed() const;
+  virtual library_iterator end_libraries_needed() const;
   virtual section_iterator begin_sections() const;
   virtual section_iterator end_sections() const;
 

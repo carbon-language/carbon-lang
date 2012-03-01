@@ -1,12 +1,14 @@
 ; How to make the shared objects from this file:
 ;
+; LDARGS="--unresolved-symbols=ignore-all -soname=libfoo.so --no-as-needed -lc -lm"
+;
 ; X86-32 ELF:
 ;   llc -mtriple=i386-linux-gnu shared.ll -filetype=obj -o tmp32.o -relocation-model=pic
-;   ld -melf_i386 -shared tmp32.o -o shared-object-test.elf-i386 --unresolved-symbols=ignore-all
+;   ld -melf_i386 -shared tmp32.o -o shared-object-test.elf-i386 $LDARGS
 ;
 ; X86-64 ELF:
 ;   llc -mtriple=x86_64-linux-gnu shared.ll -filetype=obj -o tmp64.o -relocation-model=pic
-;   ld -melf_x86_64 -shared tmp64.o -o shared-object-test.elf-x86-64 --unresolved-symbols=ignore-all
+;   ld -melf_x86_64 -shared tmp64.o -o shared-object-test.elf-x86-64 $LDARGS
 
 @defined_sym = global i32 1, align 4
 

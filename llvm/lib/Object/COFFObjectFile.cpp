@@ -515,6 +515,16 @@ symbol_iterator COFFObjectFile::end_dynamic_symbols() const {
   report_fatal_error("Dynamic symbols unimplemented in COFFObjectFile");
 }
 
+library_iterator COFFObjectFile::begin_libraries_needed() const {
+  // TODO: implement
+  report_fatal_error("Libraries needed unimplemented in COFFObjectFile");
+}
+
+library_iterator COFFObjectFile::end_libraries_needed() const {
+  // TODO: implement
+  report_fatal_error("Libraries needed unimplemented in COFFObjectFile");
+}
+
 section_iterator COFFObjectFile::begin_sections() const {
   DataRefImpl ret;
   std::memset(&ret, 0, sizeof(DataRefImpl));
@@ -724,6 +734,16 @@ error_code COFFObjectFile::getRelocationValueString(DataRefImpl Rel,
   if (error_code ec = getSymbolName(sym, symname)) return ec;
   Result.append(symname.begin(), symname.end());
   return object_error::success;
+}
+
+error_code COFFObjectFile::getLibraryNext(DataRefImpl LibData,
+                                          LibraryRef &Result) const {
+  report_fatal_error("getLibraryNext not implemented in COFFObjectFile");
+}
+
+error_code COFFObjectFile::getLibraryPath(DataRefImpl LibData,
+                                          StringRef &Result) const {
+  report_fatal_error("getLibraryPath not implemented in COFFObjectFile");
 }
 
 namespace llvm {
