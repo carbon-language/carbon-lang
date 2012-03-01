@@ -282,12 +282,6 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
     Token OpToken = Tok;
     ConsumeToken();
 
-    if (!LHS.isInvalid() && isa<InitListExpr>(LHS.get())) {
-      Diag(OpToken, diag::err_init_list_bin_op)
-        << /*LHS*/0 << PP.getSpelling(OpToken) << LHS.get()->getSourceRange();
-      LHS = ExprError();
-    }
-
     // Special case handling for the ternary operator.
     ExprResult TernaryMiddle(true);
     if (NextTokPrec == prec::Conditional) {
@@ -363,9 +357,11 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
     // parse as if we were allowed braced-init-lists everywhere, and check that
     // they only appear on the RHS of assignments later.
     ExprResult RHS;
-    if (getLang().CPlusPlus0x && Tok.is(tok::l_brace))
+    bool RHSIsInitList = false;
+    if (getLang().CPlusPlus0x && Tok.is(tok::l_brace)) {
       RHS = ParseBraceInitializer();
-    else if (getLang().CPlusPlus && NextTokPrec <= prec::Conditional)
+      RHSIsInitList = true;
+    } else if (getLang().CPlusPlus && NextTokPrec <= prec::Conditional)
       RHS = ParseAssignmentExpression();
     else
       RHS = ParseCastExpression(false);
@@ -387,10 +383,10 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
     // more tightly with RHS than we do, evaluate it completely first.
     if (ThisPrec < NextTokPrec ||
         (ThisPrec == NextTokPrec && isRightAssoc)) {
-      if (!LHS.isInvalid() && isa<InitListExpr>(LHS.get())) {
-        Diag(OpToken, diag::err_init_list_bin_op)
-          << /*LHS*/0 << PP.getSpelling(OpToken) << LHS.get()->getSourceRange();
-        LHS = ExprError();
+      if (!RHS.isInvalid() && RHSIsInitList) {
+        Diag(Tok, diag::err_init_list_bin_op)
+          << /*LHS*/0 << PP.getSpelling(Tok) << Actions.getExprRange(RHS.get());
+        RHS = ExprError();
       }
       // If this is left-associative, only parse things on the RHS that bind
       // more tightly than the current operator.  If it is left-associative, it
@@ -399,6 +395,7 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
       // The function takes ownership of the RHS.
       RHS = ParseRHSOfBinaryExpression(RHS, 
                             static_cast<prec::Level>(ThisPrec + !isRightAssoc));
+      RHSIsInitList = false;
 
       if (RHS.isInvalid())
         LHS = ExprError();
@@ -408,13 +405,14 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
     }
     assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
 
-    if (!RHS.isInvalid() && isa<InitListExpr>(RHS.get())) {
+    if (!RHS.isInvalid() && RHSIsInitList) {
       if (ThisPrec == prec::Assignment) {
         Diag(OpToken, diag::warn_cxx98_compat_generalized_initializer_lists)
-          << RHS.get()->getSourceRange();
+          << Actions.getExprRange(RHS.get());
       } else {
         Diag(OpToken, diag::err_init_list_bin_op)
-          << /*RHS*/1 << PP.getSpelling(OpToken) << RHS.get()->getSourceRange();
+          << /*RHS*/1 << PP.getSpelling(OpToken)
+          << Actions.getExprRange(RHS.get());
         LHS = ExprError();
       }
     }
