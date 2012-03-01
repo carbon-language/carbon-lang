@@ -116,8 +116,16 @@ class NSUntaggedNumber_SummaryProvider:
 			return '(int)' + str(data_vo.GetValueAsUnsigned(0) % (256*256*256*256))
 		# apparently, on is_64_bit architectures, these are the only values that will ever
 		# be represented by a non tagged pointers
-		elif data_type == 0B10001 or data_type == 0B0100:
-			data_offset = data_offset + self.pointer_size
+		elif data_type == 0B10001:
+			data_offset = data_offset + 8 # 8 is needed even if we are on 32bit
+			data_vo = self.valobj.CreateChildAtOffset("data",
+								data_offset,
+								self.longlong)
+			statistics.metric_hit('code_notrun',self.valobj)
+			return '(long)' + str(data_vo.GetValueAsUnsigned(0))
+		elif data_type == 0B0100:
+			if self.is_64_bit:
+				data_offset = data_offset + self.pointer_size
 			data_vo = self.valobj.CreateChildAtOffset("data",
 								data_offset,
 								self.longlong)

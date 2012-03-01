@@ -3,6 +3,7 @@ import lldb
 import ctypes
 import objc_runtime
 import metrics
+import CFBag
 
 statistics = metrics.Metrics()
 statistics.add_metric('invalid_isa')
@@ -138,6 +139,35 @@ class NSSetM_SummaryProvider:
 		return num_children_vo.GetValueAsUnsigned(0)
 
 
+class NSCountedSet_SummaryProvider:
+	def adjust_for_architecture(self):
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
+		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+
+	def __init__(self, valobj):
+		self.valobj = valobj;
+		self.update();
+
+	def update(self):
+		self.adjust_for_architecture();
+		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
+		self.voidptr_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeVoid).GetPointerType()
+
+	# an NSCountedSet is implemented using a CFBag whose pointer just follows the ISA
+	def offset(self):
+		if self.is_64_bit:
+			return 8
+		else:
+			return 4
+
+	def count(self):
+		cfbag_vo = self.valobj.CreateChildAtOffset("bag_impl",
+							self.offset(),
+							self.voidptr_type)
+		return CFBag.CFBagRef_SummaryProvider(cfbag_vo).length()
+
+
 def GetSummary_Impl(valobj):
 	global statistics
 	class_data = objc_runtime.ObjCRuntime(valobj)
@@ -166,6 +196,9 @@ def GetSummary_Impl(valobj):
 		statistics.metric_hit('code_notrun',valobj)
 	elif name_string == '__NSSetM':
 		wrapper = NSSetM_SummaryProvider(valobj)
+		statistics.metric_hit('code_notrun',valobj)
+	elif name_string == 'NSCountedSet':
+		wrapper = NSCountedSet_SummaryProvider(valobj)
 		statistics.metric_hit('code_notrun',valobj)
 	else:
 		wrapper = NSSetUnknown_SummaryProvider(valobj)

@@ -1,6 +1,7 @@
 # synthetic children and summary provider for CFString
 # (and related NSString class)
 import lldb
+import objc_runtime
 
 def CFString_SummaryProvider (valobj,dict):
 	provider = CFStringSynthProvider(valobj,dict);
@@ -109,7 +110,12 @@ class CFStringSynthProvider:
 				# content begins at * (i.e. 8 bytes into variants, skipping void* buffer in
 				# __notInlineImmutable1 entirely, while the length byte is correctly located
 				# for an inline string)
-				pointer = pointer + 8;
+				# on NMOS in 32 bit mode, we need to skip 4 bytes instead of why
+				# if the same occurs on Lion, then this simply needs to be pointer + pointer_size
+				if self.is_64_bit == False and objc_runtime.Utilities.check_is_osx_lion(self.valobj.GetTarget()) == False:
+					pointer = pointer + 4
+				else:
+					pointer = pointer + 8;
 		else:
 			pointer = self.valobj.GetValueAsUnsigned(0) + self.size_of_cfruntime_base();
 			# read 8 bytes here and make an address out of them

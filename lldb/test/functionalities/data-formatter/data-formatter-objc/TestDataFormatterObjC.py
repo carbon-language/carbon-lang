@@ -6,6 +6,7 @@ import os, time
 import unittest2
 import lldb
 from lldbtest import *
+import datetime
 
 class ObjCDataFormatterTestCase(TestBase):
 
@@ -58,6 +59,20 @@ class ObjCDataFormatterTestCase(TestBase):
         """Test the behavior of formatters when KVO is in use."""
         self.buildDwarf()
         self.kvo_data_formatter_commands()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @expectedFailurei386
+    def test_expr_with_dsym_and_run_command(self):
+        """Test common cases of expression parser <--> formatters interaction."""
+        self.buildDsym()
+        self.expr_objc_data_formatter_commands()
+
+    @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
+    @expectedFailurei386
+    def test_expr_with_dwarf_and_run_command(self):
+        """Test common cases of expression parser <--> formatters interaction."""
+        self.buildDwarf()
+        self.expr_objc_data_formatter_commands()
 
     def setUp(self):
         # Call super's setUp().
@@ -180,7 +195,7 @@ class ObjCDataFormatterTestCase(TestBase):
                     '(NSNumber *) num4 = ',' (long)18446744073709551614',
                     '(NSNumber *) num5 = ',' (char)65',
                     '(NSNumber *) num6 = ',' (long)255',
-                    '(NSNumber *) num7 = ',' (long)2000000',
+                    '(NSNumber *) num7 = ','2000000',
                     '(NSNumber *) num8_Y = ',' @"1"',
                     '(NSNumber *) num8_N = ',' @"0"',
                     '(NSNumber *) num9 = ',' (short)33920'])
@@ -252,6 +267,69 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('frame variable port',
                     substrs = ['(NSMachPort *) port = ',' mach port: '])
 
+        self.expect('frame variable date1 date2',
+                    substrs = ['10','1985','1','2011'])
+
+        # this test might fail if we hit the breakpoint late on December 31st of some given year
+        # and midnight comes between hitting the breakpoint and running this line of code
+        # hopefully the output will be revealing enough in that case :-)
+        now_year = str(datetime.datetime.now().year)
+
+        self.expect('frame variable date3 date4',
+                    substrs = [now_year,'1970'])
+
+        self.expect('frame variable date1_abs date2_abs',
+                    substrs = ['10','1985','1','2011'])
+
+        self.expect('frame variable date3_abs date4_abs',
+                    substrs = [now_year,'1970'])
+
+        #self.runCmd('mem read `&date4_abs`')
+
+        #self.runCmd('mem read `nscounted_set`')
+
+        self.expect('frame variable nscounted_set',
+                    substrs = ['(NSCountedSet *) nscounted_set = ','5 objects'])
+
+        #self.runCmd('mem read `imset`')
+        #self.runCmd("p (int)[imset count]")
+
+        self.expect('frame variable iset1 iset2 imset',
+                    substrs = ['4 objects','512 objects','10 objects'])
+
+    def expr_objc_data_formatter_commands(self):
+        """Test common cases of expression parser <--> formatters interaction."""
+        self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
+
+        self.expect("breakpoint set -f main.m -l %d" % self.line,
+                    BREAKPOINT_CREATED,
+            startstr = "Breakpoint created: 1: file ='main.m', line = %d, locations = 1" %
+                        self.line)
+
+        self.runCmd("run", RUN_SUCCEEDED)
+
+        # The stop reason of the thread should be breakpoint.
+        self.expect("thread list", STOPPED_DUE_TO_BREAKPOINT,
+            substrs = ['stopped',
+                       'stop reason = breakpoint'])
+
+        # This is the function to remove the custom formats in order to have a
+        # clean slate for the next test case.
+        def cleanup():
+            self.runCmd('type format clear', check=False)
+            self.runCmd('type summary clear', check=False)
+            self.runCmd('type synth clear', check=False)
+            self.runCmd('type category disable CoreFoundation', check=False)
+            self.runCmd('type category disable CoreGraphics', check=False)
+            self.runCmd('type category disable CoreServices', check=False)
+            self.runCmd('type category disable AppKit', check=False)
+
+        # Execute the cleanup function during test case tear down.
+        self.addTearDownHook(cleanup)
+
+        # Now enable AppKit
+        self.runCmd("type category enable AppKit")
+
         # check that the formatters are able to deal safely and correctly
         # with ValueObjects that the expression parser returns
         self.expect('expression ((id)@"Hello")', matching=False,
@@ -307,13 +385,13 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect("frame variable",
              substrs = ['(CFGregorianUnits) cf_greg_units = 1 years, 3 months, 5 days, 12 hours, 5 minutes 7 seconds',
              '(CFRange) cf_range = location=4 length=4',
-             '(NSPoint) ns_point = x=4, y=4',
+             '(NSPoint) ns_point = (x=4, y=4)',
              '(NSRange) ns_range = location=4, length=4',
              '(NSRect *) ns_rect_ptr = (x=1, y=1), (width=5, height=5)',
              '(NSRect) ns_rect = (x=1, y=1), (width=5, height=5)',
              '(NSRectArray) ns_rect_arr = ((x=1, y=1), (width=5, height=5)), ...',
-             '(NSSize) ns_size = width=5, height=7',
-             '(NSSize *) ns_size_ptr = width=5, height=7',
+             '(NSSize) ns_size = (width=5, height=7)',
+             '(NSSize *) ns_size_ptr = (width=5, height=7)',
              '(CGSize) cg_size = (width=1, height=6)',
              '(CGPoint) cg_point = (x=2, y=7)',
              '(CGRect) cg_rect = origin=(x=1, y=2) size=(width=7, height=7)',

@@ -738,7 +738,7 @@ FormatManager::LoadObjCFormatters()
                ConstString("CFRange"),
                objc_flags);
     AddSummary(corefoundation_category_sp,
-               "x=${var.x}, y=${var.y}",
+               "(x=${var.x}, y=${var.y})",
                ConstString("NSPoint"),
                objc_flags);
     AddSummary(corefoundation_category_sp,
@@ -754,7 +754,7 @@ FormatManager::LoadObjCFormatters()
                ConstString("NSRectArray"),
                objc_flags);
     AddSummary(objc_category_sp,
-               "width=${var.width}, height=${var.height}",
+               "(width=${var.width}, height=${var.height})",
                ConstString("NSSize"),
                objc_flags);
     
@@ -856,6 +856,15 @@ FormatManager::LoadObjCFormatters()
     
     AddScriptSummary(appkit_category_sp, "NSDate.NSDate_SummaryProvider", ConstString("NSDate"), appkit_flags);
     
+    // CFAbsoluteTime is actually a double rather than a pointer to an object
+    // we do not care about the numeric value, since it is probably meaningless to users
+    appkit_flags.SetDontShowValue(true);
+    AddScriptSummary(appkit_category_sp, "NSDate.CFAbsoluteTime_SummaryProvider", ConstString("CFAbsoluteTime"), appkit_flags);
+    appkit_flags.SetDontShowValue(false);
+    
+    AddScriptSummary(appkit_category_sp, "NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSIndexSet"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSMutableIndexSet"), appkit_flags);
+
     TypeCategoryImpl::SharedPointer vectors_category_sp = GetCategory(m_vectortypes_category_name);
 
     TypeSummaryImpl::Flags vector_flags;
