@@ -124,7 +124,7 @@ void Preprocessor::ReadMacroName(Token &MacroNameTok, char isDefineUndef) {
     const IdentifierInfo &Info = Identifiers.get(Spelling);
 
     // Allow #defining |and| and friends in microsoft mode.
-    if (Info.isCPlusPlusOperatorKeyword() && getLangOptions().MicrosoftExt) {
+    if (Info.isCPlusPlusOperatorKeyword() && getLangOptions().MicrosoftMode) {
       MacroNameTok.setIdentifierInfo(getIdentifierInfo(Spelling));
       return;
     }

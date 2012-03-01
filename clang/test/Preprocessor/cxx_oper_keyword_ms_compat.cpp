@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 %s -E -fms-extensions
+// RUN: %clang_cc1 %s -E -fms-compatibility
 
 bool f() {
   // Check that operators still work before redefining them.
