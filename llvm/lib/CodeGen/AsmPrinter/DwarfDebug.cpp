@@ -530,7 +530,7 @@ unsigned DwarfDebug::GetOrCreateSourceID(StringRef FileName,
 
   std::map<std::pair<std::string, std::string>, unsigned>::iterator I;
   bool NewlyInserted;
-  tie(I, NewlyInserted) = SourceIdMap.insert(Entry);
+  llvm::tie(I, NewlyInserted) = SourceIdMap.insert(Entry);
   if (!NewlyInserted)
     return I->second;
 
