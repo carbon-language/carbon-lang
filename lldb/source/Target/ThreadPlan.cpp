@@ -101,7 +101,8 @@ ThreadPlan::ShouldReportStop (Event *event_ptr)
         {
             Vote prev_vote = prev_plan->ShouldReportStop (event_ptr);
             if (log)
-                log->Printf ("ThreadPlan::ShouldReportStop() returning previous thread plan vote: %s", GetVoteAsCString (prev_vote));
+                log->Printf ("ThreadPlan::ShouldReportStop() returning previous thread plan vote: %s", 
+                             GetVoteAsCString (prev_vote));
             return prev_vote;
         }
     }
@@ -153,7 +154,8 @@ ThreadPlan::WillResume (StateType resume_state, bool current_plan)
             addr_t pc = reg_ctx->GetPC();
             addr_t sp = reg_ctx->GetSP();
             addr_t fp = reg_ctx->GetFP();
-            log->Printf("%s Thread #%u: tid = 0x%4.4llx, pc = 0x%8.8llx, sp = 0x%8.8llx, fp = 0x%8.8llx, plan = '%s', state = %s, stop others = %d", 
+            log->Printf("%s Thread #%u: tid = 0x%4.4llx, pc = 0x%8.8llx, sp = 0x%8.8llx, fp = 0x%8.8llx, "
+                        "plan = '%s', state = %s, stop others = %d", 
                         __FUNCTION__,
                         m_thread.GetIndexID(), 
                         m_thread.GetID(),  

@@ -50,11 +50,12 @@ public:
 
 protected:
     bool QueueInlinedStepPlan (bool queue_now);
-    
+
 private:
     SymbolContext *m_step_from_context;
     lldb::addr_t m_step_from_insn;
-    uint32_t m_stack_depth;
+    StackID  m_step_out_to_id;
+    StackID  m_immediate_step_from_id;
     lldb::break_id_t m_return_bp_id;
     lldb::addr_t m_return_addr;
     bool m_first_insn;

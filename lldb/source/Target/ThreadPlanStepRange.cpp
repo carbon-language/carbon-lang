@@ -43,13 +43,11 @@ ThreadPlanStepRange::ThreadPlanStepRange (ThreadPlanKind kind,
     m_addr_context (addr_context),
     m_address_ranges (),
     m_stop_others (stop_others),
-    m_stack_depth (0),
     m_stack_id (),
     m_no_more_plans (false),
     m_first_run_event (true)
 {
     AddRange(range);
-    m_stack_depth = m_thread.GetStackFrameCount();
     m_stack_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
 }
 
@@ -199,58 +197,26 @@ ThreadPlanStepRange::InSymbol()
 // Ideally we should remember the whole stack frame list, and then compare that
 // to the current list.
 
-bool
-ThreadPlanStepRange::FrameIsYounger ()
+lldb::FrameComparison
+ThreadPlanStepRange::CompareCurrentFrameToStartFrame()
 {
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
+    FrameComparison frame_order;
     
-    // FIXME: Might be better to do this by storing the FrameID we started in and seeing if that is still above
-    // us on the stack.  Counting the whole stack could be expensive.
+    StackID cur_frame_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
     
-    uint32_t current_depth = m_thread.GetStackFrameCount();
-    if (current_depth == m_stack_depth)
+    if (cur_frame_id == m_stack_id)
     {
-        if (log)
-            log->Printf ("Step range FrameIsYounger still in start function.");
-        return false;
+        frame_order = eFrameCompareEqual;
     }
-    else if (current_depth < m_stack_depth)
+    else if (cur_frame_id < m_stack_id)
     {
-        if (log)
-            log->Printf ("Step range FrameIsYounger stepped out: start depth: %d current depth %d.", m_stack_depth, current_depth);
-        return false;
+        frame_order = eFrameCompareYounger;
     }
     else
     {
-        if (log)
-            log->Printf ("Step range FrameIsYounger stepped in: start depth: %d current depth %d.", m_stack_depth, current_depth);
-        return true;
+        frame_order = eFrameCompareOlder;
     }
-}
-
-bool
-ThreadPlanStepRange::FrameIsOlder ()
-{
-    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-    uint32_t current_depth = m_thread.GetStackFrameCount();
-    if (current_depth == m_stack_depth)
-    {
-        if (log)
-            log->Printf ("Step range FrameIsOlder still in start function.");
-        return false;
-    }
-    else if (current_depth < m_stack_depth)
-    {
-        if (log)
-            log->Printf ("Step range FrameIsOlder stepped out: start depth: %d current depth %d.", m_stack_depth, current_depth);
-        return true;
-    }
-    else
-    {
-        if (log)
-            log->Printf ("Step range FrameIsOlder stepped in: start depth: %d current depth %d.", m_stack_depth, current_depth);
-        return false;
-    }
+    return frame_order;
 }
 
 bool
@@ -285,15 +251,19 @@ ThreadPlanStepRange::MischiefManaged ()
         {
             done = false;
         }
-        else if (!FrameIsOlder())
+        else 
         {
-            if (m_no_more_plans)
-                done = true;
+            FrameComparison frame_order = CompareCurrentFrameToStartFrame();
+            if (frame_order != eFrameCompareOlder)
+            {
+                if (m_no_more_plans)
+                    done = true;
+                else
+                    done = false;
+            }
             else
-                done = false;
+                done = true;
         }
-        else
-            done = true;
     }
 
     if (done)

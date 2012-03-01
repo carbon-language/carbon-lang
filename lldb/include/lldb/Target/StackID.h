@@ -140,6 +140,8 @@ protected:
 
 bool operator== (const StackID& lhs, const StackID& rhs);
 bool operator!= (const StackID& lhs, const StackID& rhs);
+
+// frame_id_1 < frame_id_2 means "frame_id_1 is YOUNGER than frame_id_2"
 bool operator<  (const StackID& lhs, const StackID& rhs);
 
 } // namespace lldb_private

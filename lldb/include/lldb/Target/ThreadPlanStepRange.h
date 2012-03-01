@@ -48,15 +48,13 @@ public:
 protected:
 
     bool InRange();
-    bool FrameIsYounger();
-    bool FrameIsOlder();
+    lldb::FrameComparison CompareCurrentFrameToStartFrame();
     bool InSymbol();
     void DumpRanges (Stream *s);
     
     SymbolContext m_addr_context;
     std::vector<AddressRange> m_address_ranges;
     lldb::RunMode m_stop_others;
-    uint32_t m_stack_depth;
     StackID m_stack_id;    // Use the stack ID so we can tell step out from step in.
     bool m_no_more_plans;  // Need this one so we can tell if we stepped into a call, but can't continue,
                            // in which case we are done.

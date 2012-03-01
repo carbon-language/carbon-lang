@@ -423,7 +423,6 @@ protected:
     virtual lldb::StateType
     GetPlanRunState () = 0;
 
-
     Thread &m_thread;
     Vote m_stop_vote;
     Vote m_run_vote;

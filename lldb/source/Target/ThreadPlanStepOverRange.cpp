@@ -114,8 +114,10 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
         stop_others = false;
 
     ThreadPlan* new_plan = NULL;
-
-    if (FrameIsOlder())
+    
+    FrameComparison frame_order = CompareCurrentFrameToStartFrame();
+    
+    if (frame_order == eFrameCompareOlder)
     {
         // If we're in an older frame then we should stop.
         //
@@ -129,15 +131,32 @@ ThreadPlanStepOverRange::ShouldStop (Event *event_ptr)
         if (new_plan != NULL && log)
             log->Printf("Thought I stepped out, but in fact arrived at a trampoline.");
     }
-    else if (FrameIsYounger())
+    else if (frame_order == eFrameCompareYounger)
     {
-        new_plan = m_thread.QueueThreadPlanForStepOut (false, 
-                                                       NULL, 
-                                                       true, 
-                                                       stop_others, 
-                                                       eVoteNo, 
-                                                       eVoteNoOpinion,
-                                                       0);
+        // Make sure we really are in a new frame.  Do that by unwinding and seeing if the
+        // start function really is our start function...
+        StackFrameSP older_frame_sp = m_thread.GetStackFrameAtIndex(1);
+        
+        // But if we can't even unwind one frame we should just get out of here & stop...
+        if (older_frame_sp)
+        {
+            const SymbolContext &older_context = older_frame_sp->GetSymbolContext(eSymbolContextEverything);
+            if (older_context == m_addr_context)
+            {
+                new_plan = m_thread.QueueThreadPlanForStepOut (false, 
+                                                           NULL, 
+                                                           true, 
+                                                           stop_others, 
+                                                           eVoteNo, 
+                                                           eVoteNoOpinion,
+                                                           0);
+            }
+            else 
+            {
+                new_plan = m_thread.QueueThreadPlanForStepThrough (false, stop_others);
+                
+            }
+        }
     }
     else if (!InSymbol())
     {

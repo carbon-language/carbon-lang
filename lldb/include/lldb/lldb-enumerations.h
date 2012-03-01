@@ -615,7 +615,20 @@ namespace lldb {
         eTypeOptionShowOneLiner    = (1u << 5),
         eTypeOptionHideNames       = (1u << 6)
     } TypeOptions;
-    
+
+   //----------------------------------------------------------------------
+   // This is the return value for frame comparisons.  When frame A pushes
+   // frame B onto the stack, frame A is OLDER than frame B.
+   //----------------------------------------------------------------------
+   typedef enum FrameComparison
+   {
+       eFrameCompareInvalid,
+       eFrameCompareUnknown,
+       eFrameCompareEqual,
+       eFrameCompareYounger,
+       eFrameCompareOlder
+   } FrameComparison;
+   
 } // namespace lldb
 
 

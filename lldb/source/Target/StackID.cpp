@@ -75,6 +75,12 @@ lldb_private::operator< (const StackID& lhs, const StackID& rhs)
     const lldb::addr_t lhs_cfa = lhs.GetCallFrameAddress();
     const lldb::addr_t rhs_cfa = rhs.GetCallFrameAddress();
     
+    // FIXME: We are assuming that the stacks grow downward in memory.  That's not necessary, but true on
+    // all the machines we care about at present.  If this changes, we'll have to deal with that.  The ABI is the
+    // agent who knows this ordering, but the StackID has no access to the ABI.  The most straightforward way
+    // to handle this is to add a "m_grows_downward" bool to the StackID, and set it in the constructor.  
+    // But I'm not going to waste a bool per StackID on this till we need it.
+    
     if (lhs_cfa != rhs_cfa)
         return lhs_cfa < rhs_cfa;
 

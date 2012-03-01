@@ -41,15 +41,14 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
     uint32_t frame_idx
 ) :
     ThreadPlan (ThreadPlan::eKindStepUntil, "Step until", thread, eVoteNoOpinion, eVoteNoOpinion),
-    m_stack_depth (0),
     m_step_from_insn (LLDB_INVALID_ADDRESS),
-    m_return_bp_id(LLDB_INVALID_BREAK_ID),
+    m_return_bp_id (LLDB_INVALID_BREAK_ID),
     m_return_addr (LLDB_INVALID_ADDRESS),
-    m_stepped_out(false),
-    m_should_stop(false),
+    m_stepped_out (false),
+    m_should_stop (false),
     m_ran_analyze (false),
-    m_explains_stop(false),
-    m_until_points(),
+    m_explains_stop (false),
+    m_until_points (),
     m_stop_others (stop_others)
 {
 
@@ -79,7 +78,7 @@ ThreadPlanStepUntil::ThreadPlanStepUntil
             }
         }
 
-        m_stack_depth = m_thread.GetStackFrameCount() - frame_idx;
+        m_stack_id = m_thread.GetStackFrameAtIndex(frame_idx)->GetStackID();
 
         // Now set breakpoints on all our return addresses:
         for (int i = 0; i < num_addresses; i++)
@@ -207,7 +206,15 @@ ThreadPlanStepUntil::AnalyzeStop()
                     // If there was another breakpoint here, then we don't explain the stop, but we won't
                     // mark ourselves Completed, because maybe that breakpoint will continue, and then
                     // we'll finish the "until".
-                    if (m_stack_depth > m_thread.GetStackFrameCount())
+                    bool done;
+                    StackID cur_frame_zero_id;
+                    
+                    if (m_stack_id < cur_frame_zero_id)
+                        done = true;
+                    else 
+                        done = false;
+                    
+                    if (done)
                     {
                         m_stepped_out = true;
                         SetPlanComplete();
@@ -230,7 +237,36 @@ ThreadPlanStepUntil::AnalyzeStop()
                         if (this_site->IsBreakpointAtThisSite ((*pos).second))
                         {
                             // If we're at the right stack depth, then we're done.
-                            if (m_stack_depth == m_thread.GetStackFrameCount())
+                            
+                            bool done;
+                            StackID frame_zero_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
+                            
+                            if (frame_zero_id == m_stack_id)
+                                done = true;
+                            else if (frame_zero_id < m_stack_id)
+                                done = false;
+                            else
+                            {
+                                StackFrameSP older_frame_sp = m_thread.GetStackFrameAtIndex(1);
+        
+                                // But if we can't even unwind one frame we should just get out of here & stop...
+                                if (older_frame_sp)
+                                {
+                                    const SymbolContext &older_context 
+                                        = older_frame_sp->GetSymbolContext(eSymbolContextEverything);
+                                    SymbolContext stack_context;
+                                    m_stack_id.GetSymbolContextScope()->CalculateSymbolContext(&stack_context);
+                                    
+                                    if (older_context == stack_context)
+                                        done = true;
+                                    else
+                                        done = false;
+                                }
+                                else
+                                    done = false;
+                            }
+                            
+                            if (done)
                                 SetPlanComplete();
                             else
                                 m_should_stop = false;

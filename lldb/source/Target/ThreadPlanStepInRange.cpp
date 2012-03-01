@@ -130,7 +130,9 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
     else
         stop_others = false;
         
-    if (FrameIsOlder())
+    FrameComparison frame_order = CompareCurrentFrameToStartFrame();
+    
+    if (frame_order == eFrameCompareOlder)
     {
         // If we're in an older frame then we should stop.
         //
@@ -146,7 +148,7 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
         }
 
     }
-    else if (!FrameIsYounger() && InSymbol())
+    else if (frame_order != eFrameCompareYounger && InSymbol())
     {
         // If we are not in a place we should step through, we're done.
         // One tricky bit here is that some stubs don't push a frame, so we have to check
@@ -174,13 +176,13 @@ ThreadPlanStepInRange::ShouldStop (Event *event_ptr)
     
     // If not, give the "should_stop" callback a chance to push a plan to get us out of here.
     // But only do that if we actually have stepped in.
-    if (!new_plan && FrameIsYounger())
+    if (!new_plan && frame_order == eFrameCompareYounger)
         new_plan = InvokeShouldStopHereCallback();
 
     // If we've stepped in and we are going to stop here, check to see if we were asked to
     // run past the prologue, and if so do that.
     
-    if (new_plan == NULL && FrameIsYounger() && m_step_past_prologue)
+    if (new_plan == NULL && frame_order == eFrameCompareYounger && m_step_past_prologue)
     {
         lldb::StackFrameSP curr_frame = m_thread.GetStackFrameAtIndex(0);
         if (curr_frame)
