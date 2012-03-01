@@ -257,6 +257,7 @@ static NOINLINE void force_interface_symbols() {
     __asan_register_global(0, 0, NULL);
     __asan_register_globals(NULL, 0);
     __asan_unregister_globals(NULL, 0);
+    __asan_set_death_callback(NULL);
     __asan_set_error_report_callback(NULL);
   }
 }
@@ -301,7 +302,7 @@ void __asan_handle_no_return() {
   PoisonShadow(bottom, top - bottom, 0);
 }
 
-void __asan_set_death_callback(void (*callback)(void)) {
+void NOINLINE __asan_set_death_callback(void (*callback)(void)) {
   death_callback = callback;
 }
 
