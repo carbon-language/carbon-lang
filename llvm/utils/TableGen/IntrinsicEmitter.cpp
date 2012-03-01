@@ -618,34 +618,36 @@ EmitAttributes(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS) {
 /// EmitModRefBehavior - Determine intrinsic alias analysis mod/ref behavior.
 void IntrinsicEmitter::
 EmitModRefBehavior(const std::vector<CodeGenIntrinsic> &Ints, raw_ostream &OS){
-  OS << "// Determine intrinsic alias analysis mod/ref behavior.\n";
-  OS << "#ifdef GET_INTRINSIC_MODREF_BEHAVIOR\n";
-  OS << "switch (iid) {\n";
-  OS << "default:\n    return UnknownModRefBehavior;\n";
+  OS << "// Determine intrinsic alias analysis mod/ref behavior.\n"
+     << "#ifdef GET_INTRINSIC_MODREF_BEHAVIOR\n"
+     << "assert(iid <= Intrinsic::" << Ints.back().EnumName << " && "
+     << "\"Unknown intrinsic.\");\n\n";
+
+  OS << "static const uint8_t IntrinsicModRefBehavior[] = {\n"
+     << "  /* invalid */ UnknownModRefBehavior,\n";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
-    if (Ints[i].ModRef == CodeGenIntrinsic::ReadWriteMem)
-      continue;
-    OS << "case " << TargetPrefix << "Intrinsic::" << Ints[i].EnumName
-      << ":\n";
+    OS << "  /* " << TargetPrefix << Ints[i].EnumName << " */ ";
     switch (Ints[i].ModRef) {
-    default:
-      assert(false && "Unknown Mod/Ref type!");
     case CodeGenIntrinsic::NoMem:
-      OS << "  return DoesNotAccessMemory;\n";
+      OS << "DoesNotAccessMemory,\n";
       break;
     case CodeGenIntrinsic::ReadArgMem:
-      OS << "  return OnlyReadsArgumentPointees;\n";
+      OS << "OnlyReadsArgumentPointees,\n";
       break;
     case CodeGenIntrinsic::ReadMem:
-      OS << "  return OnlyReadsMemory;\n";
+      OS << "OnlyReadsMemory,\n";
       break;
     case CodeGenIntrinsic::ReadWriteArgMem:
-      OS << "  return OnlyAccessesArgumentPointees;\n";
+      OS << "OnlyAccessesArgumentPointees,\n";
+      break;
+    case CodeGenIntrinsic::ReadWriteMem:
+      OS << "UnknownModRefBehavior,\n";
       break;
     }
   }
-  OS << "}\n";
-  OS << "#endif // GET_INTRINSIC_MODREF_BEHAVIOR\n\n";
+  OS << "};\n\n"
+     << "return static_cast<ModRefBehavior>(IntrinsicModRefBehavior[iid]);\n"
+     << "#endif // GET_INTRINSIC_MODREF_BEHAVIOR\n\n";
 }
 
 void IntrinsicEmitter::
