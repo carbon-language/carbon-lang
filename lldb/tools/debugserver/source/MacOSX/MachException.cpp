@@ -465,16 +465,42 @@ MachException::Data::Dump() const
     }
 }
 
+#define PREV_EXC_MASK_ALL (EXC_MASK_BAD_ACCESS      | \
+                           EXC_MASK_BAD_INSTRUCTION | \
+                           EXC_MASK_ARITHMETIC      | \
+                           EXC_MASK_EMULATION       | \
+                           EXC_MASK_SOFTWARE        | \
+                           EXC_MASK_BREAKPOINT      | \
+                           EXC_MASK_SYSCALL         | \
+                           EXC_MASK_MACH_SYSCALL    | \
+                           EXC_MASK_RPC_ALERT       | \
+                           EXC_MASK_MACHINE)
+
 
 kern_return_t
 MachException::PortInfo::Save (task_t task)
 {
-    count = (sizeof (ports) / sizeof (ports[0]));
     DNBLogThreadedIf(LOG_EXCEPTIONS | LOG_VERBOSE, "MachException::PortInfo::Save ( task = 0x%4.4x )", task);
+    // Be careful to be able to have debugserver built on a newer OS than what
+    // it is currently running on by being able to start with all exceptions
+    // and back off to just what is supported on the current system
     DNBError err;
-    err = ::task_get_exception_ports (task, EXC_MASK_ALL, masks, &count, ports, behaviors, flavors);
+
+    exception_mask_t exception_mask = EXC_MASK_ALL;
+
+    count = (sizeof (ports) / sizeof (ports[0]));
+    err = ::task_get_exception_ports (task, exception_mask, masks, &count, ports, behaviors, flavors);
     if (DNBLogCheckLogBit(LOG_EXCEPTIONS) || err.Fail())
-        err.LogThreaded("::task_get_exception_ports ( task = 0x%4.4x, mask = 0x%x, maskCnt => %u, ports, behaviors, flavors )", task, EXC_MASK_ALL, count);
+        err.LogThreaded("::task_get_exception_ports ( task = 0x%4.4x, mask = 0x%x, maskCnt => %u, ports, behaviors, flavors )", task, exception_mask, count);
+
+    if (err.Error() == KERN_INVALID_ARGUMENT && exception_mask != PREV_EXC_MASK_ALL)
+    {
+        exception_mask = PREV_EXC_MASK_ALL;
+        count = (sizeof (ports) / sizeof (ports[0]));
+        err = ::task_get_exception_ports (task, exception_mask, masks, &count, ports, behaviors, flavors);
+        if (DNBLogCheckLogBit(LOG_EXCEPTIONS) || err.Fail())
+            err.LogThreaded("::task_get_exception_ports ( task = 0x%4.4x, mask = 0x%x, maskCnt => %u, ports, behaviors, flavors )", task, exception_mask, count);
+    }
     if (err.Fail())
         count = 0;
     return err.Error();
