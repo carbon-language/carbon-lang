@@ -127,26 +127,33 @@ static bool RemoveUneededCalls(PathPieces &pieces) {
     IntrusiveRefCntPtr<PathDiagnosticPiece> piece(pieces.front());
     pieces.pop_front();
     
-    if (PathDiagnosticCallPiece *call =
-        dyn_cast<PathDiagnosticCallPiece>(piece)) {      
-      // Recursively clean out the subclass.  Keep this call around if
-      // it contains any informative diagnostics.
-      if (!RemoveUneededCalls(call->path))
-        continue;
-      containsSomethingInteresting = true;
-    }
-    else if (PathDiagnosticMacroPiece *macro =
-             dyn_cast<PathDiagnosticMacroPiece>(piece)) {
-      if (!RemoveUneededCalls(macro->subPieces))
-        continue;
-      containsSomethingInteresting = true;
-    }
-    else if (PathDiagnosticEventPiece *event =
-             dyn_cast<PathDiagnosticEventPiece>(piece)) {
-      // We never throw away an event, but we do throw it away wholesale
-      // as part of a path if we throw the entire path away.
-      if (!event->isPrunable())
+    switch (piece->getKind()) {
+      case PathDiagnosticPiece::Call: {
+        PathDiagnosticCallPiece *call = cast<PathDiagnosticCallPiece>(piece);
+        // Recursively clean out the subclass.  Keep this call around if
+        // it contains any informative diagnostics.
+        if (!RemoveUneededCalls(call->path))
+          continue;
         containsSomethingInteresting = true;
+        break;
+      }
+      case PathDiagnosticPiece::Macro: {
+        PathDiagnosticMacroPiece *macro = cast<PathDiagnosticMacroPiece>(piece);
+        if (!RemoveUneededCalls(macro->subPieces))
+          continue;
+        containsSomethingInteresting = true;
+        break;
+      }
+      case PathDiagnosticPiece::Event: {
+        PathDiagnosticEventPiece *event = cast<PathDiagnosticEventPiece>(piece);
+        // We never throw away an event, but we do throw it away wholesale
+        // as part of a path if we throw the entire path away.
+        if (!event->isPrunable())
+          containsSomethingInteresting = true;
+        break;
+      }
+      case PathDiagnosticPiece::ControlFlow:
+        break;
     }
     
     pieces.push_back(piece);
