@@ -100,7 +100,7 @@ public:
     TrimGraph = 0;
     VisualizeEGDot = 0;
     VisualizeEGUbi = 0;
-    InlineCall = 0;
+    InlineCall = 1;
     UnoptimizedCFG = 0;
     CFGAddImplicitDtors = 0;
     CFGAddInitializers = 0;

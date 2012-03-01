@@ -294,9 +294,11 @@ int test_invalidate_field_test_positive() {
 struct ArrayWrapper { unsigned char y[16]; };
 struct WrappedStruct { unsigned z; };
 
+void test_handle_array_wrapper_helper();
+
 int test_handle_array_wrapper() {
   struct ArrayWrapper x;
-  test_handle_array_wrapper(&x);
+  test_handle_array_wrapper_helper(&x);
   struct WrappedStruct *p = (struct WrappedStruct*) x.y; // expected-warning{{Casting a non-structure type to a structure type and accessing a field can lead to memory access errors or data corruption.}}
   return p->z;  // no-warning
 }
