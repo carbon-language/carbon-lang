@@ -41,11 +41,10 @@ ThreadPlanStepInstruction::ThreadPlanStepInstruction
     ThreadPlan (ThreadPlan::eKindStepInstruction, "Step over single instruction", thread, stop_vote, run_vote),
     m_instruction_addr (0),
     m_stop_other_threads (stop_other_threads),
-    m_step_over (step_over),
-    m_stack_depth (0)
+    m_step_over (step_over)
 {
     m_instruction_addr = m_thread.GetRegisterContext()->GetPC(0);
-    m_stack_depth = m_thread.GetStackFrameCount();
+    m_stack_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
 }
 
 ThreadPlanStepInstruction::~ThreadPlanStepInstruction ()
@@ -102,7 +101,10 @@ ThreadPlanStepInstruction::ShouldStop (Event *event_ptr)
     if (m_step_over)
     {
         LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
-        if (m_thread.GetStackFrameCount() <= m_stack_depth)
+        
+        StackID cur_frame_zero_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
+        
+        if (cur_frame_zero_id == m_stack_id || m_stack_id < cur_frame_zero_id)
         {
             if (m_thread.GetRegisterContext()->GetPC(0) != m_instruction_addr)
             {

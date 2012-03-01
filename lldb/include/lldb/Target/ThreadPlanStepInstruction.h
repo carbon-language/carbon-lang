@@ -49,7 +49,7 @@ private:
     bool m_stop_other_threads;
     bool m_step_over;
     // This is used only for the step over case.
-    uint64_t m_stack_depth;
+    StackID m_stack_id;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepInstruction);
 

@@ -37,7 +37,6 @@ ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, bool stop_others) 
     m_start_address (0),
     m_backstop_bkpt_id (LLDB_INVALID_BREAK_ID),
     m_backstop_addr(LLDB_INVALID_ADDRESS),
-    m_stack_depth (0),
     m_stop_others (stop_others)
 {
 
@@ -47,8 +46,8 @@ ThreadPlanStepThrough::ThreadPlanStepThrough (Thread &thread, bool stop_others) 
     if (m_sub_plan_sp)
     {
         m_start_address = GetThread().GetRegisterContext()->GetPC(0);
-        m_stack_depth = m_thread.GetStackFrameCount() - 1;
-        
+        m_stack_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
+                
         // We are going to return back to the concrete frame 1, we might pass by some inlined code that we're in 
         // the middle of by doing this, but it's easier than trying to figure out where the inlined code might return to.
             
@@ -261,8 +260,9 @@ ThreadPlanStepThrough::HitOurBackstopBreakpoint()
         BreakpointSiteSP cur_site_sp = m_thread.GetProcess()->GetBreakpointSiteList().FindByID(stop_value);
         if (cur_site_sp && cur_site_sp->IsBreakpointAtThisSite(m_backstop_bkpt_id))
         {
-            size_t current_stack_depth = m_thread.GetStackFrameCount();
-            if (current_stack_depth == m_stack_depth)
+            StackID cur_frame_zero_id = m_thread.GetStackFrameAtIndex(0)->GetStackID();
+            
+            if (cur_frame_zero_id == m_stack_id)
             {
                 LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_STEP));
                 if (log)

@@ -54,7 +54,7 @@ private:
     lldb::addr_t      m_start_address;
     lldb::break_id_t  m_backstop_bkpt_id;
     lldb::addr_t      m_backstop_addr;
-    size_t            m_stack_depth;
+    StackID           m_stack_id;
     bool              m_stop_others;
 
     DISALLOW_COPY_AND_ASSIGN (ThreadPlanStepThrough);
