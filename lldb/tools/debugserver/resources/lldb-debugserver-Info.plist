@@ -5,11 +5,11 @@
     <key>CFBundleDevelopmentRegion</key>
     <string>English</string>
     <key>CFBundleIdentifier</key>
-    <string>com.apple.${PRODUCT_NAME:rfc1034identifier}</string>
+    <string>com.apple.debugserver</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>${EXECUTABLE_NAME}</string>
+    <string>debugserver</string>
     <key>CFBundleVersion</key>
     <string>2</string>
 	<key>SecTaskAccess</key>
