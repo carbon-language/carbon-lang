@@ -1,14 +1,26 @@
-// RUN: %clang_cc1 %s
-// RUN: %clang_cc1 %s -E
-#ifndef __has_attribute
-#error Should have __has_attribute
+// RUN: %clang_cc1 -E %s -o - | FileCheck %s
+
+// CHECK: always_inline
+#if __has_attribute(always_inline)
+int always_inline();
 #endif
 
-#if __has_attribute(something_we_dont_have)
-#error Bad
+// CHECK: __always_inline__
+#if __has_attribute(__always_inline__)
+int __always_inline__();
 #endif
 
-#if !__has_attribute(__always_inline__) || \
-    !__has_attribute(always_inline)
-#error Clang should have this
+// CHECK: no_dummy_attribute
+#if !__has_attribute(dummy_attribute)
+int no_dummy_attribute();
+#endif
+
+// CHECK: has_has_attribute
+#ifdef __has_attribute
+int has_has_attribute();
+#endif
+
+// CHECK: has_something_we_dont_have
+#if !__has_attribute(something_we_dont_have)
+int has_something_we_dont_have();
 #endif
