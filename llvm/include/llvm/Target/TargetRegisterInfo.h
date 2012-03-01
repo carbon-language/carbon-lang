@@ -38,23 +38,14 @@ public:
   typedef const unsigned* const_iterator;
   typedef const MVT::SimpleValueType* vt_iterator;
   typedef const TargetRegisterClass* const * sc_iterator;
-private:
-  virtual void anchor();
+
+  // Instance variables filled by tablegen, do not use!
   const MCRegisterClass *MC;
   const vt_iterator VTs;
   const unsigned *SubClassMask;
   const sc_iterator SuperClasses;
   const sc_iterator SuperRegClasses;
-public:
-  TargetRegisterClass(const MCRegisterClass *MC,
-                      const MVT::SimpleValueType *vts,
-                      const unsigned *subcm,
-                      const TargetRegisterClass * const *supcs,
-                      const TargetRegisterClass * const *superregcs)
-    : MC(MC), VTs(vts), SubClassMask(subcm), SuperClasses(supcs),
-      SuperRegClasses(superregcs) {}
-
-  virtual ~TargetRegisterClass() {}     // Allow subclasses
+  ArrayRef<unsigned> (*OrderFunc)(const MachineFunction&);
 
   /// getID() - Return the register class ID number.
   ///
@@ -199,9 +190,8 @@ public:
   ///
   /// By default, this method returns all registers in the class.
   ///
-  virtual
   ArrayRef<unsigned> getRawAllocationOrder(const MachineFunction &MF) const {
-    return makeArrayRef(begin(), getNumRegs());
+    return OrderFunc ? OrderFunc(MF) : makeArrayRef(begin(), getNumRegs());
   }
 };
 
