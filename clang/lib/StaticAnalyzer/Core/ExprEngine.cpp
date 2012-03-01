@@ -480,7 +480,6 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
   switch (S->getStmtClass()) {
     // C++ and ARC stuff we don't support yet.
     case Expr::ObjCIndirectCopyRestoreExprClass:
-    case Stmt::CXXBindTemporaryExprClass:
     case Stmt::CXXCatchStmtClass:
     case Stmt::CXXDependentScopeMemberExprClass:
     case Stmt::CXXPseudoDestructorExprClass:
@@ -607,6 +606,7 @@ void ExprEngine::Visit(const Stmt *S, ExplodedNode *Pred,
     case Stmt::SizeOfPackExprClass:
     case Stmt::StringLiteralClass:
     case Stmt::ObjCStringLiteralClass:
+    case Stmt::CXXBindTemporaryExprClass:
     case Stmt::CXXNullPtrLiteralExprClass: {
       Bldr.takeNodes(Pred);
       ExplodedNodeSet preVisit;
