@@ -9,6 +9,8 @@
 
 
 // C Includes
+#include <stddef.h>  // offsetof
+
 // C++ Includes
 // Other libraries and framework includes
 #include "lldb/Core/DataBufferHeap.h"

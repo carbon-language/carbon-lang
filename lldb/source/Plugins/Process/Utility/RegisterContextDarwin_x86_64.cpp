@@ -10,6 +10,7 @@
 
 // C Includes
 #include <stdarg.h>
+#include <stddef.h>  // offsetof
 
 // C++ Includes
 // Other libraries and framework includes
