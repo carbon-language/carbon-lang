@@ -225,19 +225,6 @@ RegisterContextLLDB::InitializeZerothFrame()
                     m_cfa, cfa_regval, cfa_offset);
     }
     
-
-    // A couple of sanity checks..
-    if (cfa_regval == LLDB_INVALID_ADDRESS || cfa_regval == 0 || cfa_regval == 1)
-    {
-        if (log)
-        {   
-            log->Printf("%*sFrame %u could not find a valid cfa address",
-                        m_frame_number < 100 ? m_frame_number : 100, "", m_frame_number);
-        }
-        m_frame_type = eNotAValidFrame;
-        return;
-    }
-
     if (log)
     {
         log->Printf("%*sThread %d Frame %u initialized frame current pc is 0x%llx cfa is 0x%llx using %s UnwindPlan", 
