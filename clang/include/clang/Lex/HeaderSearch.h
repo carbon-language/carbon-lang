@@ -228,7 +228,7 @@ public:
 
   StringRef MapHeader(const StringRef& Source, bool isAngled) {
     // Do any filename replacements before anything else
-    llvm::StringMap<std::pair<StringRef,bool>>::const_iterator iter = 
+    llvm::StringMap<std::pair<StringRef,bool> >::const_iterator iter = 
       IncludeAliasMap.find(Source);
     if (iter != IncludeAliasMap.end()) {
       // If the angling matches, then we've found a replacement
