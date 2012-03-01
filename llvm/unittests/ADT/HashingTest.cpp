@@ -273,7 +273,7 @@ TEST(HashingTest, HashCombineRangeGoldenTest) {
   for (unsigned i = 0; i < sizeof(golden_data)/sizeof(*golden_data); ++i) {
     StringRef str = golden_data[i].s;
     hash_code hash = hash_combine_range(str.begin(), str.end());
-#if 1 // Enable this to generate paste-able text for the above structure.
+#if 0 // Enable this to generate paste-able text for the above structure.
     std::string member_str = "\"" + str.str() + "\",";
     fprintf(stderr, " { %-35s 0x%016llxULL },\n",
             member_str.c_str(), static_cast<uint64_t>(hash));
