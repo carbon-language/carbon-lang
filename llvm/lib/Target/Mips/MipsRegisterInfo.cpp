@@ -56,45 +56,29 @@ unsigned MipsRegisterInfo::getPICCallReg() { return Mips::T9; }
 const unsigned* MipsRegisterInfo::
 getCalleeSavedRegs(const MachineFunction *MF) const
 {
-  // Mips callee-save register range is $16-$23, $f20-$f30
-  static const unsigned SingleFloatOnlyCalleeSavedRegs[] = {
-    Mips::F31, Mips::F30, Mips::F29, Mips::F28, Mips::F27, Mips::F26,
-    Mips::F25, Mips::F24, Mips::F23, Mips::F22, Mips::F21, Mips::F20,
-    Mips::RA, Mips::FP, Mips::S7, Mips::S6, Mips::S5, Mips::S4,
-    Mips::S3, Mips::S2, Mips::S1, Mips::S0, 0
-  };
-
-  static const unsigned Mips32CalleeSavedRegs[] = {
-    Mips::D15, Mips::D14, Mips::D13, Mips::D12, Mips::D11, Mips::D10,
-    Mips::RA, Mips::FP, Mips::S7, Mips::S6, Mips::S5, Mips::S4,
-    Mips::S3, Mips::S2, Mips::S1, Mips::S0, 0
-  };
-
-  static const unsigned N32CalleeSavedRegs[] = {
-    Mips::D31_64, Mips::D29_64, Mips::D27_64, Mips::D25_64, Mips::D23_64,
-    Mips::D21_64,
-    Mips::RA_64, Mips::FP_64, Mips::GP_64, Mips::S7_64, Mips::S6_64,
-    Mips::S5_64, Mips::S4_64, Mips::S3_64, Mips::S2_64, Mips::S1_64,
-    Mips::S0_64, 0
-  };
-
-  static const unsigned N64CalleeSavedRegs[] = {
-    Mips::D31_64, Mips::D30_64, Mips::D29_64, Mips::D28_64, Mips::D27_64,
-    Mips::D26_64, Mips::D25_64, Mips::D24_64,
-    Mips::RA_64, Mips::FP_64, Mips::GP_64, Mips::S7_64, Mips::S6_64,
-    Mips::S5_64, Mips::S4_64, Mips::S3_64, Mips::S2_64, Mips::S1_64,
-    Mips::S0_64, 0
-  };
-
   if (Subtarget.isSingleFloat())
-    return SingleFloatOnlyCalleeSavedRegs;
+    return CSR_SingleFloatOnly_SaveList;
   else if (!Subtarget.hasMips64())
-    return Mips32CalleeSavedRegs;
+    return CSR_O32_SaveList;
   else if (Subtarget.isABI_N32())
-    return N32CalleeSavedRegs;
+    return CSR_N32_SaveList;
+  
+  assert(Subtarget.isABI_N64());
+  return CSR_N64_SaveList;  
+}
+
+const uint32_t*
+MipsRegisterInfo::getCallPreservedMask(CallingConv::ID) const
+{  
+  if (Subtarget.isSingleFloat())
+    return CSR_SingleFloatOnly_RegMask;
+  else if (!Subtarget.hasMips64())
+    return CSR_O32_RegMask;
+  else if (Subtarget.isABI_N32())
+    return CSR_N32_RegMask;
 
   assert(Subtarget.isABI_N64());
-  return N64CalleeSavedRegs;
+  return CSR_N64_RegMask;  
 }
 
 BitVector MipsRegisterInfo::

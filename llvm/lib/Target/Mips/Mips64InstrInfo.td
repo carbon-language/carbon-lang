@@ -145,13 +145,6 @@ def BGTZ64 : CBranchZero<0x07, 0, "bgtz", setgt, CPU64Regs>;
 def BLEZ64 : CBranchZero<0x07, 0, "blez", setle, CPU64Regs>;
 def BLTZ64 : CBranchZero<0x01, 0, "bltz", setlt, CPU64Regs>;
 
-// NOTE: These registers are N64's temporary registers. N32 has a different
-//       set of temporary registers.
-let Defs = [AT_64, V0_64, V1_64, A0_64, A1_64, A2_64, A3_64, T0_64, T1_64,
-            T2_64, T3_64, T4_64, T5_64, T6_64, T7_64, T8_64, T9_64, K0_64,
-            K1_64, D0_64, D1_64, D2_64, D3_64, D4_64, D5_64, D6_64, D7_64,
-            D8_64, D9_64, D10_64, D11_64, D12_64, D13_64, D14_64, D15_64,
-            D16_64, D17_64, D18_64, D19_64, D20_64, D21_64, D22_64, D23_64] in
 def JALR64 : JumpLinkReg<0x00, 0x09, "jalr", CPU64Regs>;
 
 /// Multiply and Divide Instructions.

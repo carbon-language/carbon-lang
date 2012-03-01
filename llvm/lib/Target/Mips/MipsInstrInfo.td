@@ -886,14 +886,10 @@ def BGTZ    : CBranchZero<0x07, 0, "bgtz", setgt, CPURegs>;
 def BLEZ    : CBranchZero<0x06, 0, "blez", setle, CPURegs>;
 def BLTZ    : CBranchZero<0x01, 0, "bltz", setlt, CPURegs>;
 
-// All calls clobber the non-callee saved registers...
-let Defs = [AT, V0, V1, A0, A1, A2, A3, T0, T1, T2, T3, T4, T5, T6, T7, T8, T9,
-            K0, K1, GP, D0, D1, D2, D3, D4, D5, D6, D7, D8, D9] in {
-  def JAL  : JumpLink<0x03, "jal">;
-  def JALR : JumpLinkReg<0x00, 0x09, "jalr", CPURegs>;
-  def BGEZAL  : BranchLink<"bgezal", 0x11, CPURegs>;
-  def BLTZAL  : BranchLink<"bltzal", 0x10, CPURegs>;
-}
+def JAL  : JumpLink<0x03, "jal">;
+def JALR : JumpLinkReg<0x00, 0x09, "jalr", CPURegs>;
+def BGEZAL  : BranchLink<"bgezal", 0x11, CPURegs>;
+def BLTZAL  : BranchLink<"bltzal", 0x10, CPURegs>;
 
 let isReturn=1, isTerminator=1, hasDelaySlot=1,
     isBarrier=1, hasCtrlDep=1, rd=0, rt=0, shamt=0 in
