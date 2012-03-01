@@ -202,6 +202,21 @@ bool MipsDAGToDAGISel::
 SelectAddr(SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset) {
   EVT ValTy = Addr.getValueType();
 
+  // If Parent is an unaligned f32 load or store, select a (base + index)
+  // floating point load/store instruction (luxc1 or suxc1).
+  const LSBaseSDNode* LS = 0;
+
+  if (Parent && (LS = dyn_cast<LSBaseSDNode>(Parent))) {
+    EVT VT = LS->getMemoryVT();
+
+    if (VT.getSizeInBits() / 8 > LS->getAlignment()) {
+      assert(TLI.allowsUnalignedMemoryAccesses(VT) &&
+             "Unaligned loads/stores not supported for this type.");
+      if (VT == MVT::f32)
+        return false;
+    }
+  }
+
   // if Address is FI, get the TargetFrameIndex.
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
     Base   = CurDAG->getTargetFrameIndex(FIN->getIndex(), ValTy);
@@ -259,11 +274,10 @@ SelectAddr(SDNode *Parent, SDValue Addr, SDValue &Base, SDValue &Offset) {
       }
     }
 
-    // If an indexed load/store can be emitted, return false.
-    if (const LSBaseSDNode* LS = dyn_cast<LSBaseSDNode>(Parent))
-      if ((LS->getMemoryVT() == MVT::f32 || LS->getMemoryVT() == MVT::f64) &&
-          Subtarget.hasMips32r2Or64())
-        return false;
+    // If an indexed floating point load/store can be emitted, return false.
+    if (LS && (LS->getMemoryVT() == MVT::f32 || LS->getMemoryVT() == MVT::f64) &&
+        Subtarget.hasMips32r2Or64())
+      return false;
   }
 
   Base   = Addr;

@@ -85,13 +85,13 @@ def fpimm0neg : PatLeaf<(fpimm), [{
 // FP load.
 class FPLoad<bits<6> op, string opstr, RegisterClass RC, Operand MemOpnd>:
   FMem<op, (outs RC:$ft), (ins MemOpnd:$addr),
-      !strconcat(opstr, "\t$ft, $addr"), [(set RC:$ft, (load addr:$addr))],
+      !strconcat(opstr, "\t$ft, $addr"), [(set RC:$ft, (load_a addr:$addr))],
       IILoad>;
 
 // FP store.
 class FPStore<bits<6> op, string opstr, RegisterClass RC, Operand MemOpnd>:
   FMem<op, (outs), (ins RC:$ft, MemOpnd:$addr),
-      !strconcat(opstr, "\t$ft, $addr"), [(store RC:$ft, addr:$addr)],
+      !strconcat(opstr, "\t$ft, $addr"), [(store_a RC:$ft, addr:$addr)],
       IIStore>;
 
 // FP indexed load.
@@ -432,4 +432,17 @@ let Predicates = [IsFP64bit] in {
 
   def : Pat<(f32 (fround FGR64:$src)), (CVT_S_D64 FGR64:$src)>;
   def : Pat<(f64 (fextend FGR32:$src)), (CVT_D64_S FGR32:$src)>;
+}
+
+// Patterns for unaligned floating point loads and stores.
+let Predicates = [HasMips32r2Or64, NotN64] in {
+  def : Pat<(f32 (load_u CPURegs:$addr)), (LUXC1 CPURegs:$addr, ZERO)>; 
+  def : Pat<(store_u FGR32:$src, CPURegs:$addr),
+            (SUXC1 FGR32:$src, CPURegs:$addr, ZERO)>;
+}
+
+let Predicates = [IsN64] in {
+  def : Pat<(f32 (load_u CPU64Regs:$addr)), (LUXC1_P8 CPU64Regs:$addr, ZERO_64)>; 
+  def : Pat<(store_u FGR32:$src, CPU64Regs:$addr),
+            (SUXC1_P8 FGR32:$src, CPU64Regs:$addr, ZERO_64)>;
 }
