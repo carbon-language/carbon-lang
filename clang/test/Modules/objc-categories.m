@@ -6,7 +6,7 @@
 // RUN: %clang_cc1 -fmodules -fmodule-cache-path %t -x objective-c -fmodule-name=category_other -emit-module %S/Inputs/module.map
 // RUN: %clang_cc1 -fmodules -fmodule-cache-path %t %s -verify
 
-@import category_bottom;
+@__experimental_modules_import category_bottom;
 
 
 
@@ -33,7 +33,7 @@ void test(Foo *foo, LeftFoo *leftFoo) {
 
 // Load another module that also adds categories to Foo, verify that
 // we see those categories.
-@import category_other;
+@__experimental_modules_import category_other;
 
 void test_other(Foo *foo) {
   [foo other];

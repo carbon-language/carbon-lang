@@ -1,1 +1,1 @@
-@import diamond_bottom;
+@__experimental_modules_import diamond_bottom;

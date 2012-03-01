@@ -1,4 +1,4 @@
-@import redecl_merge_top;
+@__experimental_modules_import redecl_merge_top;
 
 @interface Super
 @end
@@ -86,7 +86,7 @@ public:
 #endif
 
 int ONE;
-@import redecl_merge_top.Explicit;
+@__experimental_modules_import redecl_merge_top.Explicit;
 const int one = ONE;
 
 @interface ClassWithDef 

@@ -67,7 +67,7 @@ class IdentifierInfo {
   bool OutOfDate              : 1; // True if there may be additional
                                    // information about this identifier
                                    // stored externally.
-  bool IsImport               : 1; // True if this is the 'import' contextual
+  bool IsModulesImport               : 1; // True if this is the 'import' contextual
                                    // keyword.
   // 1 bit left in 32-bit word.
   
@@ -283,12 +283,14 @@ public:
       RecomputeNeedsHandleIdentifier();
   }
   
-  /// \brief Determine whether this is the contextual keyword 'import'.
-  bool isImport() const { return IsImport; }
+  /// \brief Determine whether this is the contextual keyword
+  /// '__experimental_modules_import'.
+  bool isModulesImport() const { return IsModulesImport; }
   
-  /// \brief Set whether this identifier is the contextual keyword 'import'.
-  void setImport(bool I) {
-    IsImport = I;
+  /// \brief Set whether this identifier is the contextual keyword 
+  /// '__experimental_modules_import'.
+  void setModulesImport(bool I) {
+    IsModulesImport = I;
     if (I)
       NeedsHandleIdentifier = true;
     else
@@ -307,7 +309,7 @@ private:
     NeedsHandleIdentifier =
       (isPoisoned() | hasMacroDefinition() | isCPlusPlusOperatorKeyword() |
        isExtensionToken() | isCXX11CompatKeyword() || isOutOfDate() ||
-       isImport());
+       isModulesImport());
   }
 };
 
@@ -458,9 +460,10 @@ public:
     // contents.
     II->Entry = &Entry;
 
-    // If this is the 'import' contextual keyword, mark it as such.
-    if (Name.equals("import"))
-      II->setImport(true);
+    // If this is the '__experimental_modules_import' contextual keyword,
+    // mark it as such.
+    if (Name.equals("__experimental_modules_import"))
+      II->setModulesImport(true);
 
     return *II;
   }
@@ -496,7 +499,7 @@ public:
       
       // If this is the 'import' contextual keyword, mark it as such.
       if (Name.equals("import"))
-        II->setImport(true);
+        II->setModulesImport(true);
     }
 
     return *II;

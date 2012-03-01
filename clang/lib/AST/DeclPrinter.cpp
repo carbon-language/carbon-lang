@@ -650,7 +650,7 @@ void DeclPrinter::VisitFileScopeAsmDecl(FileScopeAsmDecl *D) {
 }
 
 void DeclPrinter::VisitImportDecl(ImportDecl *D) {
-  Out << "@import " << D->getImportedModule()->getFullModuleName()
+  Out << "@__experimental_modules_import " << D->getImportedModule()->getFullModuleName()
       << ";\n";
 }
 

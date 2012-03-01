@@ -8,7 +8,7 @@ int getUmbrella() {
   return umbrella + umbrella_sub; 
 }
 
-@import Umbrella2;
+@__experimental_modules_import Umbrella2;
 
 #include "a1.h"
 #include "b1.h"
@@ -18,7 +18,7 @@ int test() {
   return a1 + b1 + nested2;
 }
 
-@import nested_umbrella.a;
+@__experimental_modules_import nested_umbrella.a;
 
 int testNestedUmbrellaA() {
   return nested_umbrella_a;
@@ -28,7 +28,7 @@ int testNestedUmbrellaBFail() {
   return nested_umbrella_b; // expected-error{{use of undeclared identifier 'nested_umbrella_b'; did you mean 'nested_umbrella_a'?}}
 }
 
-@import nested_umbrella.b;
+@__experimental_modules_import nested_umbrella.b;
 
 int testNestedUmbrellaB() {
   return nested_umbrella_b;

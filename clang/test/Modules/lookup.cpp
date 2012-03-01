@@ -1,8 +1,8 @@
 
-#define import @import
+#define import @__experimental_modules_import
 import lookup_left_cxx;
 #undef import
-#define IMPORT(X) @import X
+#define IMPORT(X) @__experimental_modules_import X
 IMPORT(lookup_right_cxx);
 
 void test(int i, float f) {

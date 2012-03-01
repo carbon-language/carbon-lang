@@ -1,4 +1,4 @@
-@import category_top;
+@__experimental_modules_import category_top;
 
 @interface Foo(Right1)
 -(void)right1;

@@ -41,7 +41,7 @@ IdentifierInfo::IdentifierInfo() {
   ChangedAfterLoad = false;
   RevertedTokenID = false;
   OutOfDate = false;
-  IsImport = false;
+  IsModulesImport = false;
   FETokenInfo = 0;
   Entry = 0;
 }

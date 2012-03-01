@@ -4,7 +4,7 @@
 // RUN: %clang_cc1 -E -fmodules -x objective-c -fmodule-cache-path %t %s | FileCheck -check-prefix CHECK-PREPROCESSED %s
 // FIXME: When we have a syntax for modules in C, use that.
 
-@import macros;
+@__experimental_modules_import macros;
 
 #ifndef INTEGER
 #  error INTEGER macro should be visible

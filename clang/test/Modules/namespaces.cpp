@@ -7,8 +7,8 @@ namespace N6 {
 
 namespace N8 { }
 
-@import namespaces_left;
-@import namespaces_right;
+@__experimental_modules_import namespaces_left;
+@__experimental_modules_import namespaces_right;
 
 void test() {
   int &ir1 = N1::f(1);

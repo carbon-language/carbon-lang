@@ -4,12 +4,12 @@
 @class C2;
 @class C3;
 @class C3;
-@import redecl_merge_left;
+@__experimental_modules_import redecl_merge_left;
 typedef struct my_struct_type *my_struct_ref;
 @protocol P4;
 @class C3;
 @class C3;
-@import redecl_merge_right;
+@__experimental_modules_import redecl_merge_right;
 
 @implementation A
 - (Super*)init { return self; }
@@ -113,7 +113,7 @@ C4 *global_C4;
 
 ClassWithDef *cwd1;
 
-@import redecl_merge_left_left;
+@__experimental_modules_import redecl_merge_left_left;
 
 void test_C4a(C4 *c4) {
   global_C4 = c4 = get_a_C4();
@@ -124,7 +124,7 @@ void test_ClassWithDef(ClassWithDef *cwd) {
   [cwd method];
 }
 
-@import redecl_merge_bottom;
+@__experimental_modules_import redecl_merge_bottom;
 
 void test_C4b() {
   if (&refers_to_C4) {

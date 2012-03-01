@@ -1609,7 +1609,7 @@ void Parser::ParseMicrosoftIfExistsExternalDeclaration() {
 }
 
 Parser::DeclGroupPtrTy Parser::ParseModuleImport(SourceLocation AtLoc) {
-  assert(Tok.isObjCAtKeyword(tok::objc_import) && 
+  assert(Tok.isObjCAtKeyword(tok::objc___experimental_modules_import) && 
          "Improper start to module import");
   SourceLocation ImportLoc = ConsumeToken();
   

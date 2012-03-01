@@ -3,7 +3,7 @@
 // RUN: %clang_cc1 -fmodules -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -x objective-c++ -fmodule-cache-path %t -F %S/Inputs -I %S/Inputs -verify %s
 // RUN: %clang_cc1 -fmodules -fno-objc-infer-related-result-type -Werror -Wno-error=incomplete-umbrella -fmodule-cache-path %t -F %S/Inputs -I %S/Inputs -verify %s
 #define FOO
-@import Module;
+@__experimental_modules_import Module;
 @interface OtherClass
 @end
 
@@ -22,6 +22,6 @@ void test_getModuleVersion() {
 #  error MODULE_SUBFRAMEWORK_H should be hidden
 #endif
 
-@import subdir;
+@__experimental_modules_import subdir;
 
 const char *getSubdirTest() { return getSubdir(); }

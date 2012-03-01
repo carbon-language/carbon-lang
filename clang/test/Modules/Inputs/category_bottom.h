@@ -1,10 +1,10 @@
-@import category_left;
+@__experimental_modules_import category_left;
 
 @interface Foo(Bottom)
 -(void)bottom;
 @end
 
-@import category_right;
+@__experimental_modules_import category_right;
 
 @interface LeftFoo(Bottom)
 -(void)bottom;

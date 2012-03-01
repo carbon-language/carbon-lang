@@ -10,10 +10,10 @@
 
 // in other file: expected-note{{previous definition is here}}
 
-@import decldef;
+@__experimental_modules_import decldef;
 A *a1; // expected-error{{unknown type name 'A'}}
 B *b1; // expected-error{{unknown type name 'B'}}
-@import decldef.Decl;
+@__experimental_modules_import decldef.Decl;
 
 A *a2;
 B *b;

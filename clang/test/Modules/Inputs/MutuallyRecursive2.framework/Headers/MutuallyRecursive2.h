@@ -1,6 +1,6 @@
 
 
-@import MutuallyRecursive1;
+@__experimental_modules_import MutuallyRecursive1;
 
 
 
