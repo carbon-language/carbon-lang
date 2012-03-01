@@ -814,7 +814,8 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
          e = NewMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = NewMI->getOperand(i);
     if (MO.isReg()) {
-      assert(MO.isDef() && MO.isImplicit() && MO.isDead());
+      assert(MO.isDef() && MO.isImplicit() && MO.isDead() &&
+             TargetRegisterInfo::isPhysicalRegister(MO.getReg()));
       NewMIImplDefs.push_back(MO.getReg());
     }
   }
@@ -824,8 +825,13 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
   for (unsigned i = CopyMI->getDesc().getNumOperands(),
          e = CopyMI->getNumOperands(); i != e; ++i) {
     MachineOperand &MO = CopyMI->getOperand(i);
-    if (MO.isReg() && MO.isImplicit())
-      NewMI->addOperand(MO);
+    if (MO.isReg()) {
+      assert(MO.isImplicit() && "No explicit operands after implict operands.");
+      // Discard VReg implicit defs.
+      if (TargetRegisterInfo::isPhysicalRegister(MO.getReg())) {
+        NewMI->addOperand(MO);
+      }
+    }
   }
 
   LIS->ReplaceMachineInstrInMaps(CopyMI, NewMI);
@@ -840,7 +846,6 @@ bool RegisterCoalescer::ReMaterializeTrivialDef(LiveInterval &SrcInt,
     li.addRange(lr);
   }
 
-  NewMI->copyImplicitOps(CopyMI);
   CopyMI->eraseFromParent();
   ReMatCopies.insert(CopyMI);
   ReMatDefs.insert(DefMI);
