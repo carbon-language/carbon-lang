@@ -460,11 +460,6 @@ public:
     // contents.
     II->Entry = &Entry;
 
-    // If this is the '__experimental_modules_import' contextual keyword,
-    // mark it as such.
-    if (Name.equals("__experimental_modules_import"))
-      II->setModulesImport(true);
-
     return *II;
   }
 
