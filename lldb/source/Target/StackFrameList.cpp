@@ -83,25 +83,25 @@ StackFrameList::GetFramesUpTo(uint32_t end_idx)
                 // if we need to
                 if (m_frames.empty())
                 {
-                    const bool success = unwinder->GetFrameInfoAtIndex(idx, cfa, pc);
-                    // There shouldn't be any way not to get the frame info for frame 0.
-                    assert (success);
                     m_thread.GetRegisterContext();
                     assert (m_thread.m_reg_context_sp.get());
+
+                    const bool success = unwinder->GetFrameInfoAtIndex(idx, cfa, pc);
+                    // There shouldn't be any way not to get the frame info for frame 0.
+                    // But if the unwinder can't make one, lets make one by hand with the
+                    // SP as the CFA and see if that gets any further.
+                    if (!success)
+                    {
+                        cfa = m_thread.GetRegisterContext()->GetSP();
+                        pc = m_thread.GetRegisterContext()->GetPC();
+                    }
+                    
                     unwind_frame_sp.reset (new StackFrame (m_thread.shared_from_this(),
                                                            m_frames.size(), 
                                                            idx, 
                                                            m_thread.m_reg_context_sp,
-// If set to 1 this will use the correct CFA & PC.
-// Note for some reason the ValueObject Summaries and Formatters were relying on getting incorrect (constantly changing) values.
-
-#if 1                                                            
-                                                           cfa, 
+                                                           cfa,
                                                            pc,
-#else
-                                                           m_thread.GetRegisterContext()->GetSP(),
-                                                           m_thread.GetRegisterContext()->GetPC(),
-#endif
                                                            NULL));
                     m_frames.push_back (unwind_frame_sp);
                 }
