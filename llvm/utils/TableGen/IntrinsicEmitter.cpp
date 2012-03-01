@@ -160,17 +160,20 @@ EmitIntrinsicToNameTable(const std::vector<CodeGenIntrinsic> &Ints,
 void IntrinsicEmitter::
 EmitIntrinsicToOverloadTable(const std::vector<CodeGenIntrinsic> &Ints, 
                          raw_ostream &OS) {
-  OS << "// Intrinsic ID to overload table\n";
+  OS << "// Intrinsic ID to overload bitset\n";
   OS << "#ifdef GET_INTRINSIC_OVERLOAD_TABLE\n";
-  OS << "  // Note that entry #0 is the invalid intrinsic!\n";
+  OS << "static const uint8_t OTable[] = {\n";
+  OS << "  0";
   for (unsigned i = 0, e = Ints.size(); i != e; ++i) {
-    OS << "  ";
+    // Add one to the index so we emit a null bit for the invalid #0 intrinsic.
+    if ((i+1)%8 == 0)
+      OS << ",\n  0";
     if (Ints[i].isOverloaded)
-      OS << "true";
-    else
-      OS << "false";
-    OS << ",\n";
+      OS << " | (1<<" << (i+1)%8 << ')';
   }
+  OS << "\n};\n\n";
+  // OTable contains a true bit at the position if the intrinsic is overloaded.
+  OS << "return (OTable[id/8] & (1 << (id%8))) != 0;\n";
   OS << "#endif\n\n";
 }
 

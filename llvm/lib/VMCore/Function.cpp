@@ -372,13 +372,9 @@ FunctionType *Intrinsic::getType(LLVMContext &Context,
 }
 
 bool Intrinsic::isOverloaded(ID id) {
-  static const bool OTable[] = {
-    false,
 #define GET_INTRINSIC_OVERLOAD_TABLE
 #include "llvm/Intrinsics.gen"
 #undef GET_INTRINSIC_OVERLOAD_TABLE
-  };
-  return OTable[id];
 }
 
 /// This defines the "Intrinsic::getAttributes(ID id)" method.

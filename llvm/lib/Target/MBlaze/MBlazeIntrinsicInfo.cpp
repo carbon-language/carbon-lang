@@ -74,16 +74,13 @@ lookupGCCName(const char *Name) const {
 }
 
 bool MBlazeIntrinsicInfo::isOverloaded(unsigned IntrID) const {
-  // Overload Table
-  const bool OTable[] = {
+  if (IntrID == 0)
+    return false;
+
+  unsigned id = IntrID - Intrinsic::num_intrinsics + 1;
 #define GET_INTRINSIC_OVERLOAD_TABLE
 #include "MBlazeGenIntrinsics.inc"
 #undef GET_INTRINSIC_OVERLOAD_TABLE
-  };
-  if (IntrID == 0)
-    return false;
-  else
-    return OTable[IntrID - Intrinsic::num_intrinsics];
 }
 
 /// This defines the "getAttributes(ID id)" method.
