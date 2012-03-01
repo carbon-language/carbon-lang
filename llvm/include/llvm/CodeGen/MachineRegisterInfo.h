@@ -15,6 +15,7 @@
 #define LLVM_CODEGEN_MACHINEREGISTERINFO_H
 
 #include "llvm/Target/TargetRegisterInfo.h"
+#include "llvm/CodeGen/MachineInstrBundle.h"
 #include "llvm/ADT/BitVector.h"
 #include "llvm/ADT/IndexedMap.h"
 #include <vector>
@@ -480,6 +481,14 @@ public:
       MachineInstr *MI = Op->getParent();
       do ++*this;
       while (Op && Op->getParent() == MI);
+      return MI;
+    }
+
+    MachineInstr *skipBundle() {
+      if (!Op) return 0;
+      MachineInstr *MI = getBundleStart(Op->getParent());
+      do ++*this;
+      while (Op && getBundleStart(Op->getParent()) == MI);
       return MI;
     }
 
