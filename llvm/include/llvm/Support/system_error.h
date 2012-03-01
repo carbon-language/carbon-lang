@@ -470,17 +470,6 @@ template <> struct hash<std::error_code>;
 
 namespace llvm {
 
-template <class T, T v>
-struct integral_constant {
-  typedef T value_type;
-  static const value_type value = v;
-  typedef integral_constant<T,v> type;
-  operator value_type() { return value; }
-};
-
-typedef integral_constant<bool, true> true_type;
-typedef integral_constant<bool, false> false_type;
-
 // is_error_code_enum
 
 template <class Tp> struct is_error_code_enum : public false_type {};

@@ -119,10 +119,9 @@ struct AnonStructTypeKeyInfo {
     return DenseMapInfo<StructType*>::getTombstoneKey();
   }
   static unsigned getHashValue(const KeyTy& Key) {
-    GeneralHash Hash;
-    Hash.add(Key.ETypes);
-    Hash.add(Key.isPacked);
-    return Hash.finish();
+    return hash_combine(hash_combine_range(Key.ETypes.begin(),
+                                           Key.ETypes.end()),
+                        Key.isPacked);
   }
   static unsigned getHashValue(const StructType *ST) {
     return getHashValue(KeyTy(ST));
@@ -172,11 +171,10 @@ struct FunctionTypeKeyInfo {
     return DenseMapInfo<FunctionType*>::getTombstoneKey();
   }
   static unsigned getHashValue(const KeyTy& Key) {
-    GeneralHash Hash;
-    Hash.add(Key.ReturnType);
-    Hash.add(Key.Params);
-    Hash.add(Key.isVarArg);
-    return Hash.finish();
+    return hash_combine(Key.ReturnType,
+                        hash_combine_range(Key.Params.begin(),
+                                           Key.Params.end()),
+                        Key.isVarArg);
   }
   static unsigned getHashValue(const FunctionType *FT) {
     return getHashValue(KeyTy(FT));

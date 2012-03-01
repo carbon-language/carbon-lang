@@ -17,6 +17,7 @@
 #ifndef LLVM_SUPPORT_TYPE_TRAITS_H
 #define LLVM_SUPPORT_TYPE_TRAITS_H
 
+#include "llvm/Support/DataTypes.h"
 #include <utility>
 
 // This is actually the conforming implementation which works with abstract
@@ -68,17 +69,62 @@ struct isPodLike<std::pair<T, U> > {
 };
   
 
-/// \brief Metafunction that determines whether the two given types are 
-/// equivalent.
-template<typename T, typename U>
-struct is_same {
-  static const bool value = false;
+template <class T, T v>
+struct integral_constant {
+  typedef T value_type;
+  static const value_type value = v;
+  typedef integral_constant<T,v> type;
+  operator value_type() { return value; }
 };
 
-template<typename T>
-struct is_same<T, T> {
-  static const bool value = true;
+typedef integral_constant<bool, true> true_type;
+typedef integral_constant<bool, false> false_type;
+
+/// \brief Metafunction that determines whether the two given types are 
+/// equivalent.
+template<typename T, typename U> struct is_same       : public false_type {};
+template<typename T>             struct is_same<T, T> : public true_type {};
+
+/// \brief Metafunction that removes const qualification from a type.
+template <typename T> struct remove_const          { typedef T type; };
+template <typename T> struct remove_const<const T> { typedef T type; };
+
+/// \brief Metafunction that removes volatile qualification from a type.
+template <typename T> struct remove_volatile             { typedef T type; };
+template <typename T> struct remove_volatile<volatile T> { typedef T type; };
+
+/// \brief Metafunction that removes both const and volatile qualification from
+/// a type.
+template <typename T> struct remove_cv {
+  typedef typename remove_const<typename remove_volatile<T>::type>::type type;
 };
+
+/// \brief Helper to implement is_integral metafunction.
+template <typename T> struct is_integral_impl           : false_type {};
+template <> struct is_integral_impl<         bool>      : true_type {};
+template <> struct is_integral_impl<         char>      : true_type {};
+template <> struct is_integral_impl<  signed char>      : true_type {};
+template <> struct is_integral_impl<unsigned char>      : true_type {};
+template <> struct is_integral_impl<         wchar_t>   : true_type {};
+template <> struct is_integral_impl<         short>     : true_type {};
+template <> struct is_integral_impl<unsigned short>     : true_type {};
+template <> struct is_integral_impl<         int>       : true_type {};
+template <> struct is_integral_impl<unsigned int>       : true_type {};
+template <> struct is_integral_impl<         long>      : true_type {};
+template <> struct is_integral_impl<unsigned long>      : true_type {};
+template <> struct is_integral_impl<         long long> : true_type {};
+template <> struct is_integral_impl<unsigned long long> : true_type {};
+
+/// \brief Metafunction that determines whether the given type is an integral
+/// type.
+template <typename T>
+struct is_integral : is_integral_impl<T> {};
+
+/// \brief Metafunction that determines whether the given type is a pointer
+/// type.
+template <typename T> struct is_pointer : false_type {};
+template <typename T> struct is_pointer<T*> : true_type {};
+
   
 // enable_if_c - Enable/disable a template based on a metafunction
 template<bool Cond, typename T = void>
