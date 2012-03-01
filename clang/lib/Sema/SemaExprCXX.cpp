@@ -4460,11 +4460,8 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
     // For message sends and property references, we try to find an
     // actual method.  FIXME: we should infer retention by selector in
     // cases where we don't have an actual method.
-    } else {
-      ObjCMethodDecl *D = 0;
-      if (ObjCMessageExpr *Send = dyn_cast<ObjCMessageExpr>(E)) {
-        D = Send->getMethodDecl();
-      }
+    } else if (ObjCMessageExpr *Send = dyn_cast<ObjCMessageExpr>(E)) {
+      ObjCMethodDecl *D = Send->getMethodDecl();
 
       ReturnsRetained = (D && D->hasAttr<NSReturnsRetainedAttr>());
 
@@ -4474,6 +4471,13 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
       if (!ReturnsRetained &&
           D && D->getMethodFamily() == OMF_performSelector)
         return Owned(E);
+    } else if (isa<CastExpr>(E) &&
+               isa<BlockExpr>(cast<CastExpr>(E)->getSubExpr())) {
+      // We hit this case with the lambda conversion-to-block optimization;
+      // we don't want any extra casts here.
+      return Owned(E);
+    } else {
+      ReturnsRetained = false;
     }
 
     // Don't reclaim an object of Class type.
@@ -5089,6 +5093,34 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
 ExprResult Sema::BuildCXXMemberCallExpr(Expr *E, NamedDecl *FoundDecl,
                                         CXXConversionDecl *Method,
                                         bool HadMultipleCandidates) {
+  if (Method->getParent()->isLambda() &&
+      Method->getConversionType()->isBlockPointerType()) {
+    // This is a lambda coversion to block pointer; check if the argument
+    // is a LambdaExpr.
+    Expr *SubE = E;
+    CastExpr *CE = dyn_cast<CastExpr>(SubE);
+    if (CE && CE->getCastKind() == CK_NoOp)
+      SubE = CE->getSubExpr();
+    SubE = SubE->IgnoreParens();
+    if (CXXBindTemporaryExpr *BE = dyn_cast<CXXBindTemporaryExpr>(SubE))
+      SubE = BE->getSubExpr();
+    if (isa<LambdaExpr>(SubE)) {
+      // For the conversion to block pointer on a lambda expression, we
+      // construct a special BlockLiteral instead; this doesn't really make
+      // a difference in ARC, but outside of ARC the resulting block literal
+      // follows the normal lifetime rules for block literals instead of being
+      // autoreleased.
+      DiagnosticErrorTrap Trap(Diags);
+      ExprResult Exp = BuildBlockForLambdaConversion(E->getExprLoc(),
+                                                     E->getExprLoc(),
+                                                     Method, E);
+      if (Exp.isInvalid())
+        Diag(E->getExprLoc(), diag::note_lambda_to_block_conv);
+      return Exp;
+    }
+  }
+      
+
   ExprResult Exp = PerformObjectArgumentInitialization(E, /*Qualifier=*/0,
                                           FoundDecl, Method);
   if (Exp.isInvalid())

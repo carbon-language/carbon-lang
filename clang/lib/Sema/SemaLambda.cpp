@@ -740,3 +740,81 @@ ExprResult Sema::ActOnLambdaExpr(SourceLocation StartLoc, Stmt *Body,
   
   return MaybeBindToTemporary(Lambda);
 }
+
+ExprResult Sema::BuildBlockForLambdaConversion(SourceLocation CurrentLocation,
+                                               SourceLocation ConvLocation,
+                                               CXXConversionDecl *Conv,
+                                               Expr *Src) {
+  // Make sure that the lambda call operator is marked used.
+  CXXRecordDecl *Lambda = Conv->getParent();
+  CXXMethodDecl *CallOperator 
+    = cast<CXXMethodDecl>(
+        *Lambda->lookup(
+          Context.DeclarationNames.getCXXOperatorName(OO_Call)).first);
+  CallOperator->setReferenced();
+  CallOperator->setUsed();
+
+  ExprResult Init = PerformCopyInitialization(
+                      InitializedEntity::InitializeBlock(ConvLocation, 
+                                                         Src->getType(), 
+                                                         /*NRVO=*/false),
+                      CurrentLocation, Src);
+  if (!Init.isInvalid())
+    Init = ActOnFinishFullExpr(Init.take());
+  
+  if (Init.isInvalid())
+    return ExprError();
+  
+  // Create the new block to be returned.
+  BlockDecl *Block = BlockDecl::Create(Context, CurContext, ConvLocation);
+
+  // Set the type information.
+  Block->setSignatureAsWritten(CallOperator->getTypeSourceInfo());
+  Block->setIsVariadic(CallOperator->isVariadic());
+  Block->setBlockMissingReturnType(false);
+
+  // Add parameters.
+  SmallVector<ParmVarDecl *, 4> BlockParams;
+  for (unsigned I = 0, N = CallOperator->getNumParams(); I != N; ++I) {
+    ParmVarDecl *From = CallOperator->getParamDecl(I);
+    BlockParams.push_back(ParmVarDecl::Create(Context, Block,
+                                              From->getLocStart(),
+                                              From->getLocation(),
+                                              From->getIdentifier(),
+                                              From->getType(),
+                                              From->getTypeSourceInfo(),
+                                              From->getStorageClass(),
+                                            From->getStorageClassAsWritten(),
+                                              /*DefaultArg=*/0));
+  }
+  Block->setParams(BlockParams);
+
+  Block->setIsConversionFromLambda(true);
+
+  // Add capture. The capture uses a fake variable, which doesn't correspond
+  // to any actual memory location. However, the initializer copy-initializes
+  // the lambda object.
+  TypeSourceInfo *CapVarTSI =
+      Context.getTrivialTypeSourceInfo(Src->getType());
+  VarDecl *CapVar = VarDecl::Create(Context, Block, ConvLocation,
+                                    ConvLocation, 0,
+                                    Src->getType(), CapVarTSI,
+                                    SC_None, SC_None);
+  BlockDecl::Capture Capture(/*Variable=*/CapVar, /*ByRef=*/false,
+                             /*Nested=*/false, /*Copy=*/Init.take());
+  Block->setCaptures(Context, &Capture, &Capture + 1, 
+                     /*CapturesCXXThis=*/false);
+
+  // Add a fake function body to the block. IR generation is responsible
+  // for filling in the actual body, which cannot be expressed as an AST.
+  Block->setBody(new (Context) CompoundStmt(Context, 0, 0, 
+                                            ConvLocation,
+                                            ConvLocation));
+
+  // Create the block literal expression.
+  Expr *BuildBlock = new (Context) BlockExpr(Block, Conv->getConversionType());
+  ExprCleanupObjects.push_back(Block);
+  ExprNeedsCleanups = true;
+
+  return BuildBlock;
+}

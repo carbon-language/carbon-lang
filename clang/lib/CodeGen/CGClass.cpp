@@ -1795,9 +1795,7 @@ void CodeGenFunction::EmitLambdaToBlockPointerBody(FunctionArgList &Args) {
     return;
   }
 
-  InLambdaConversionToBlock = true;
   EmitFunctionBody(Args);
-  InLambdaConversionToBlock = false;
 }
 
 void CodeGenFunction::EmitLambdaDelegatingInvokeBody(const CXXMethodDecl *MD) {

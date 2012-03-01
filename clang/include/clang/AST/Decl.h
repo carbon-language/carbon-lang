@@ -3060,6 +3060,7 @@ private:
   bool IsVariadic : 1;
   bool CapturesCXXThis : 1;
   bool BlockMissingReturnType : 1;
+  bool IsConversionFromLambda : 1;
   /// ParamInfo - new[]'d array of pointers to ParmVarDecls for the formal
   /// parameters of this function.  This is null if a prototype or if there are
   /// no formals.
@@ -3076,7 +3077,7 @@ protected:
   BlockDecl(DeclContext *DC, SourceLocation CaretLoc)
     : Decl(Block, DC, CaretLoc), DeclContext(Block),
       IsVariadic(false), CapturesCXXThis(false),
-      BlockMissingReturnType(true),
+      BlockMissingReturnType(true), IsConversionFromLambda(false),
       ParamInfo(0), NumParams(0), Body(0),
       SignatureAsWritten(0), Captures(0), NumCaptures(0) {}
 
@@ -3137,6 +3138,9 @@ public:
   bool capturesCXXThis() const { return CapturesCXXThis; }
   bool blockMissingReturnType() const { return BlockMissingReturnType; }
   void setBlockMissingReturnType(bool val) { BlockMissingReturnType = val; }
+
+  bool isConversionFromLambda() const { return IsConversionFromLambda; }
+  void setIsConversionFromLambda(bool val) { IsConversionFromLambda = val; }
 
   bool capturesVariable(const VarDecl *var) const;
 

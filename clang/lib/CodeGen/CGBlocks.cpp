@@ -622,10 +622,11 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const BlockExpr *blockExpr) {
 
 llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
   // Using the computed layout, generate the actual block function.
+  bool isLambdaConv = blockInfo.getBlockDecl()->isConversionFromLambda();
   llvm::Constant *blockFn
     = CodeGenFunction(CGM).GenerateBlockFunction(CurGD, blockInfo,
                                                  CurFuncDecl, LocalDeclMap,
-                                                 InLambdaConversionToBlock);
+                                                 isLambdaConv);
   blockFn = llvm::ConstantExpr::getBitCast(blockFn, VoidPtrTy);
 
   // If there is nothing to capture, we can emit this as a global block.
@@ -700,11 +701,10 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
       src = Builder.CreateStructGEP(LoadBlockStruct(),
                                     enclosingCapture.getIndex(),
                                     "block.capture.addr");
-    } else if (InLambdaConversionToBlock) {
+    } else if (blockDecl->isConversionFromLambda()) {
       // The lambda capture in a lambda's conversion-to-block-pointer is
-      // special; we know its argument is an lvalue we can simply emit.
-      CXXConstructExpr *CE = cast<CXXConstructExpr>(ci->getCopyExpr());
-      src = EmitLValue(CE->getArg(0)).getAddress();
+      // special; we'll simply emit it directly.
+      src = 0;
     } else {
       // This is a [[type]]*.
       src = LocalDeclMap[variable];
@@ -726,7 +726,19 @@ llvm::Value *CodeGenFunction::EmitBlockLiteral(const CGBlockInfo &blockInfo) {
 
     // If we have a copy constructor, evaluate that into the block field.
     } else if (const Expr *copyExpr = ci->getCopyExpr()) {
-      EmitSynthesizedCXXCopyCtor(blockField, src, copyExpr);
+      if (blockDecl->isConversionFromLambda()) {
+        // If we have a lambda conversion, emit the expression
+        // directly into the block instead.
+        CharUnits Align = getContext().getTypeAlignInChars(type);
+        AggValueSlot Slot =
+            AggValueSlot::forAddr(blockField, Align, Qualifiers(),
+                                  AggValueSlot::IsDestructed,
+                                  AggValueSlot::DoesNotNeedGCBarriers,
+                                  AggValueSlot::IsNotAliased);
+        EmitAggExpr(copyExpr, Slot);
+      } else {
+        EmitSynthesizedCXXCopyCtor(blockField, src, copyExpr);
+      }
 
     // If it's a reference variable, copy the reference into the block field.
     } else if (type->isReferenceType()) {

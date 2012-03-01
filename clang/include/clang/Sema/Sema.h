@@ -3654,7 +3654,12 @@ public:
   /// block pointer conversion.
   void DefineImplicitLambdaToBlockPointerConversion(SourceLocation CurrentLoc,
                                                     CXXConversionDecl *Conv);
-  
+
+  ExprResult BuildBlockForLambdaConversion(SourceLocation CurrentLocation,
+                                           SourceLocation ConvLocation,
+                                           CXXConversionDecl *Conv,
+                                           Expr *Src);
+
   // ParseObjCStringLiteral - Parse Objective-C string literals.
   ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs,
                                     Expr **Strings,
