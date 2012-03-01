@@ -571,6 +571,11 @@ Thumb1RegisterInfo::saveScavengerRegister(MachineBasicBlock &MBB,
     // If this instruction affects R12, adjust our restore point.
     for (unsigned i = 0, e = II->getNumOperands(); i != e; ++i) {
       const MachineOperand &MO = II->getOperand(i);
+      if (MO.isRegMask() && MO.clobbersPhysReg(ARM::R12)) {
+        UseMI = II;
+        done = true;
+        break;
+      }
       if (!MO.isReg() || MO.isUndef() || !MO.getReg() ||
           TargetRegisterInfo::isVirtualRegister(MO.getReg()))
         continue;
