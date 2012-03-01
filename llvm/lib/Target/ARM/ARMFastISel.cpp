@@ -489,7 +489,7 @@ unsigned ARMFastISel::ARMMoveToFPReg(EVT VT, unsigned SrcReg) {
 
   unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                          TII.get(ARM::VMOVRS), MoveReg)
+                          TII.get(ARM::VMOVSR), MoveReg)
                   .addReg(SrcReg));
   return MoveReg;
 }
@@ -499,7 +499,7 @@ unsigned ARMFastISel::ARMMoveToIntReg(EVT VT, unsigned SrcReg) {
 
   unsigned MoveReg = createResultReg(TLI.getRegClassFor(VT));
   AddOptionalDefs(BuildMI(*FuncInfo.MBB, FuncInfo.InsertPt, DL,
-                          TII.get(ARM::VMOVSR), MoveReg)
+                          TII.get(ARM::VMOVRS), MoveReg)
                   .addReg(SrcReg));
   return MoveReg;
 }
