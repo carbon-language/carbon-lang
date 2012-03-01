@@ -663,6 +663,101 @@ void Preprocessor::HandlePragmaPopMacro(Token &PopMacroTok) {
   }
 }
 
+void Preprocessor::HandlePragmaIncludeAlias(Token& Tok) {
+  // We will either get a quoted filename or a bracketed filename, and we 
+  // have to track which we got.  The first filename is the source name,
+  // and the second name is the mapped filename.  If the first is quoted,
+  // the second must be as well (cannot mix and match quotes and brackets).
+  SourceLocation Loc = Tok.getLocation();
+
+  // Get the open paren
+  Lex(Tok);
+  if (Tok.isNot(tok::l_paren)) {
+    Diag(Tok, diag::warn_pragma_include_alias_expected) << "(";
+    return;
+  }
+
+  // We expect either a quoted string literal, or a bracketed name
+  Token SourceFilenameTok;
+  CurPPLexer->LexIncludeFilename(SourceFilenameTok);
+  if (SourceFilenameTok.is(tok::eod)) {
+    // The diagnostic has already been handled
+    return;
+  }
+
+  StringRef SourceFileName;
+  SmallString<128> FileNameBuffer;
+  if (SourceFilenameTok.is(tok::string_literal) || 
+      SourceFilenameTok.is(tok::angle_string_literal)) {
+    SourceFileName = getSpelling(SourceFilenameTok, FileNameBuffer);
+  } else if (SourceFilenameTok.is(tok::less)) {
+    // This could be a path instead of just a name
+    FileNameBuffer.push_back('<');
+    SourceLocation End;
+    if (ConcatenateIncludeName(FileNameBuffer, End))
+      return; // Diagnostic already emitted
+    SourceFileName = FileNameBuffer.str();
+  } else {
+    Diag(Tok, diag::warn_pragma_include_alias_expected) << "include filename";
+    return;
+  }
+  FileNameBuffer.clear();
+
+  // Now we expect a comma, followed by another include name
+  Lex(Tok);
+  if (Tok.isNot(tok::comma)) {
+    Diag(Tok, diag::warn_pragma_include_alias_expected) << ",";
+    return;
+  }
+
+  Token ReplaceFilenameTok;
+  CurPPLexer->LexIncludeFilename(ReplaceFilenameTok);
+  if (ReplaceFilenameTok.is(tok::eod)) {
+    // The diagnostic has already been handled
+    return;
+  }
+
+  StringRef ReplaceFileName;
+  if (ReplaceFilenameTok.is(tok::string_literal) || 
+      ReplaceFilenameTok.is(tok::angle_string_literal)) {
+    ReplaceFileName = getSpelling(ReplaceFilenameTok, FileNameBuffer);
+  } else if (ReplaceFilenameTok.is(tok::less)) {
+    // This could be a path instead of just a name
+    FileNameBuffer.push_back('<');
+    SourceLocation End;
+    if (ConcatenateIncludeName(FileNameBuffer, End))
+      return; // Diagnostic already emitted
+    ReplaceFileName = FileNameBuffer.str();
+  } else {
+    Diag(Tok, diag::warn_pragma_include_alias_expected) << "include filename";
+    return;
+  }
+
+  // Finally, we expect the closing paren
+  Lex(Tok);
+  if (Tok.isNot(tok::r_paren)) {
+    Diag(Tok, diag::warn_pragma_include_alias_expected) << ")";
+    return;
+  }
+
+  // Now that we have the source and target filenames, we need to make sure
+  // they're both of the same type (angled vs non-angled)
+  bool SourceIsAngled = 
+    GetIncludeFilenameSpelling(SourceFilenameTok.getLocation(), 
+                                SourceFileName);
+  bool ReplaceIsAngled =
+    GetIncludeFilenameSpelling(ReplaceFilenameTok.getLocation(),
+                                ReplaceFileName);
+  if (SourceIsAngled != ReplaceIsAngled) {
+    Diag(Loc, diag::warn_pragma_include_alias_mismatch);
+    return;
+  }
+
+  // Now we can let the include handler know about this mapping
+  getHeaderSearchInfo().AddHeaderMapping(SourceFileName, ReplaceFileName, 
+                                          SourceIsAngled);
+}
+
 /// AddPragmaHandler - Add the specified pragma handler to the preprocessor.
 /// If 'Namespace' is non-null, then it is a token required to exist on the
 /// pragma line before the pragma string starts, e.g. "STDC" or "GCC".
@@ -943,6 +1038,15 @@ struct PragmaCommentHandler : public PragmaHandler {
   }
 };
 
+/// PragmaIncludeAliasHandler - "#pragma include_alias("...")".
+struct PragmaIncludeAliasHandler : public PragmaHandler {
+  PragmaIncludeAliasHandler() : PragmaHandler("include_alias") {}
+  virtual void HandlePragma(Preprocessor &PP, PragmaIntroducerKind Introducer,
+                            Token &IncludeAliasTok) {
+      PP.HandlePragmaIncludeAlias(IncludeAliasTok);
+  }
+};
+
 /// PragmaMessageHandler - "#pragma message("...")".
 struct PragmaMessageHandler : public PragmaHandler {
   PragmaMessageHandler() : PragmaHandler("message") {}
@@ -1095,5 +1199,6 @@ void Preprocessor::RegisterBuiltinPragmas() {
   // MS extensions.
   if (Features.MicrosoftExt) {
     AddPragmaHandler(new PragmaCommentHandler());
+    AddPragmaHandler(new PragmaIncludeAliasHandler());
   }
 }

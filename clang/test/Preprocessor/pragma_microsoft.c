@@ -38,3 +38,20 @@ void f()
   // this warning should go away.
   MACRO_WITH__PRAGMA // expected-warning {{expression result unused}}
 }
+
+
+// This should include macro_arg_directive even though the include
+// is looking for test.h  This allows us to assign to "n"
+#pragma include_alias("test.h", "macro_arg_directive.h" )
+#include "test.h"
+void test( void ) {
+  n = 12;
+}
+
+#pragma include_alias("foo.h", <bar.h>) // expected-warning {{pragma include_alias requires matching include directives (e.g include_alias("foo.h", "bar.h") or include_alias(<foo.h>, <bar.h>))}}
+#pragma include_alias("test.h") // expected-warning {{pragma include_alias expected ','}}
+
+// Make sure that the names match exactly for a replacement, including path information.  If
+// this were to fail, we would get a file not found error
+#pragma include_alias(".\pp-record.h", "does_not_exist.h")
+#include "pp-record.h"
