@@ -264,6 +264,8 @@ def fapple_kext : Flag<"-fapple-kext">, Group<f_Group>;
 def fapple_pragma_pack : Flag<"-fapple-pragma-pack">, Group<f_Group>;
 def faddress_sanitizer : Flag<"-faddress-sanitizer">, Group<f_Group>;
 def fno_address_sanitizer : Flag<"-fno-address-sanitizer">, Group<f_Group>;
+def fthread_sanitizer : Flag<"-fthread-sanitizer">, Group<f_Group>;
+def fno_thread_sanitizer : Flag<"-fno-thread-sanitizer">, Group<f_Group>;
 def fasm : Flag<"-fasm">, Group<f_Group>;
 
 def fasm_blocks : Flag<"-fasm-blocks">, Group<f_Group>;

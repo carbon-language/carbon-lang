@@ -1928,6 +1928,10 @@ void Clang::ConstructJob(Compilation &C, const JobAction &JA,
                    options::OPT_fno_address_sanitizer, false))
     CmdArgs.push_back("-faddress-sanitizer");
 
+  if (Args.hasFlag(options::OPT_fthread_sanitizer,
+                   options::OPT_fno_thread_sanitizer, false))
+    CmdArgs.push_back("-fthread-sanitizer");
+
   // -flax-vector-conversions is default.
   if (!Args.hasFlag(options::OPT_flax_vector_conversions,
                     options::OPT_fno_lax_vector_conversions))

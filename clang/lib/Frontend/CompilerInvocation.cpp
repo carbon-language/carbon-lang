@@ -684,6 +684,8 @@ static void LangOptsToArgs(const LangOptions &Opts,
     Res.push_back("-fcatch-undefined-behavior");
   if (Opts.AddressSanitizer)
     Res.push_back("-faddress-sanitizer");
+  if (Opts.ThreadSanitizer)
+    Res.push_back("-fthread-sanitizer");
   if (Opts.WritableStrings)
     Res.push_back("-fwritable-strings");
   if (Opts.ConstStrings)
@@ -1888,6 +1890,7 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   Opts.DebuggerSupport = Args.hasArg(OPT_fdebugger_support);
   Opts.DebuggerCastResultToId = Args.hasArg(OPT_fdebugger_cast_result_to_id);
   Opts.AddressSanitizer = Args.hasArg(OPT_faddress_sanitizer);
+  Opts.ThreadSanitizer = Args.hasArg(OPT_fthread_sanitizer);
   Opts.ApplePragmaPack = Args.hasArg(OPT_fapple_pragma_pack);
   Opts.CurrentModule = Args.getLastArgValue(OPT_fmodule_name);
 

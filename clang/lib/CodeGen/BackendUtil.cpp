@@ -126,6 +126,11 @@ static void addAddressSanitizerPass(const PassManagerBuilder &Builder,
   PM.add(createAddressSanitizerPass());
 }
 
+static void addThreadSanitizerPass(const PassManagerBuilder &Builder,
+                                   PassManagerBase &PM) {
+  PM.add(createThreadSanitizerPass());
+}
+
 void EmitAssemblyHelper::CreatePasses() {
   unsigned OptLevel = CodeGenOpts.OptimizationLevel;
   CodeGenOptions::InliningMethod Inlining = CodeGenOpts.Inlining;
@@ -161,7 +166,14 @@ void EmitAssemblyHelper::CreatePasses() {
     PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
                            addAddressSanitizerPass);
   }
-  
+
+  if (LangOpts.ThreadSanitizer) {
+    PMBuilder.addExtension(PassManagerBuilder::EP_ScalarOptimizerLate,
+                           addThreadSanitizerPass);
+    PMBuilder.addExtension(PassManagerBuilder::EP_EnabledOnOptLevel0,
+                           addThreadSanitizerPass);
+  }
+
   // Figure out TargetLibraryInfo.
   Triple TargetTriple(TheModule->getTargetTriple());
   PMBuilder.LibraryInfo = new TargetLibraryInfo(TargetTriple);
