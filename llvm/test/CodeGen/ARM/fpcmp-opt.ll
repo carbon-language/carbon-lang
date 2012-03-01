@@ -1,24 +1,16 @@
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 -mattr=+vfp2 -enable-unsafe-fp-math -enable-no-nans-fp-math | FileCheck -check-prefix=FINITE %s
-; RUN: llc < %s -march=arm -mcpu=cortex-a8 -mattr=+vfp2 -enable-unsafe-fp-math | FileCheck -check-prefix=NAN %s
+; RUN: llc < %s -march=arm -mcpu=cortex-a8 -mattr=+vfp2 -enable-unsafe-fp-math | FileCheck %s
 ; rdar://7461510
+; rdar://10964603
 
+; Disable this optimization unless we know one of them is zero.
 define arm_apcscc i32 @t1(float* %a, float* %b) nounwind {
 entry:
-; FINITE: t1:
-; FINITE-NOT: vldr
-; FINITE: ldr
-; FINITE: ldr
-; FINITE: cmp r0, r1
-; FINITE-NOT: vcmpe.f32
-; FINITE-NOT: vmrs
-; FINITE: beq
-
-; NAN: t1:
-; NAN: vldr s0,
-; NAN: vldr s1,
-; NAN: vcmpe.f32 s1, s0
-; NAN: vmrs apsr_nzcv, fpscr
-; NAN: beq
+; CHECK: t1:
+; CHECK: vldr s0,
+; CHECK: vldr s1,
+; CHECK: vcmpe.f32 s1, s0
+; CHECK: vmrs apsr_nzcv, fpscr
+; CHECK: beq
   %0 = load float* %a
   %1 = load float* %b
   %2 = fcmp une float %0, %1
@@ -33,17 +25,21 @@ bb2:
   ret i32 %4
 }
 
+; If one side is zero, the other size sign bit is masked off to allow
+; +0.0 == -0.0
 define arm_apcscc i32 @t2(double* %a, double* %b) nounwind {
 entry:
-; FINITE: t2:
-; FINITE-NOT: vldr
-; FINITE: ldrd r0, r1, [r0]
-; FINITE-NOT: b LBB
-; FINITE: cmp r0, #0
-; FINITE: cmpeq r1, #0
-; FINITE-NOT: vcmpe.f32
-; FINITE-NOT: vmrs
-; FINITE: bne
+; CHECK: t2:
+; CHECK-NOT: vldr
+; CHECK: ldr [[REG1:(r[0-9]+)]], [r0]
+; CHECK: ldr [[REG2:(r[0-9]+)]], [r0, #4]
+; CHECK-NOT: b LBB
+; CHECK: cmp [[REG1]], #0
+; CHECK: bfc [[REG2]], #31, #1
+; CHECK: cmpeq [[REG2]], #0
+; CHECK-NOT: vcmpe.f32
+; CHECK-NOT: vmrs
+; CHECK: bne
   %0 = load double* %a
   %1 = fcmp oeq double %0, 0.000000e+00
   br i1 %1, label %bb1, label %bb2
@@ -59,13 +55,14 @@ bb2:
 
 define arm_apcscc i32 @t3(float* %a, float* %b) nounwind {
 entry:
-; FINITE: t3:
-; FINITE-NOT: vldr
-; FINITE: ldr r0, [r0]
-; FINITE: cmp r0, #0
-; FINITE-NOT: vcmpe.f32
-; FINITE-NOT: vmrs
-; FINITE: bne
+; CHECK: t3:
+; CHECK-NOT: vldr
+; CHECK: ldr [[REG3:(r[0-9]+)]], [r0]
+; CHECK: mvn [[REG4:(r[0-9]+)]], #-2147483648
+; CHECK: tst [[REG3]], [[REG4]]
+; CHECK-NOT: vcmpe.f32
+; CHECK-NOT: vmrs
+; CHECK: bne
   %0 = load float* %a
   %1 = fcmp oeq float %0, 0.000000e+00
   br i1 %1, label %bb1, label %bb2
