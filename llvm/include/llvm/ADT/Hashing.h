@@ -219,7 +219,7 @@ inline uint64_t hash_33to64_bytes(const char *s, size_t len, uint64_t seed) {
   uint64_t wf = a + z;
   uint64_t ws = b + rotate(a, 31) + c;
   uint64_t r = shift_mix((vf + ws) * k2 + (wf + vs) * k0);
-  return shift_mix(seed ^ (r * k0) + vs) * k2;
+  return shift_mix((seed ^ (r * k0)) + vs) * k2;
 }
 
 inline uint64_t hash_short(const char *s, size_t length, uint64_t seed) {
@@ -325,8 +325,9 @@ inline size_t get_execution_seed() {
   //
   // However, if there is a fixed seed override set the first time this is
   // called, return that instead of the per-execution seed.
+  const uint64_t seed_prime = 0xff51afd7ed558ccdULL;
   static size_t seed = fixed_seed_override ? fixed_seed_override
-                                           : 0xff51afd7ed558ccdULL;
+                                           : static_cast<size_t>(seed_prime);
   return seed;
 }
 
