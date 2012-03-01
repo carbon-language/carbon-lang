@@ -87,14 +87,20 @@ void BumpPtrAllocator::Reset() {
 /// Allocate - Allocate space at the specified alignment.
 ///
 void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
+  // 0-byte alignment means 1-byte alignment.
+  if (Alignment == 0) Alignment = 1;
+
+  size_t PaddedSize = Size + sizeof(MemSlab) + Alignment - 1;
+
+  // If requested size exceeds slab size, increase slab size.
+  while (PaddedSize > SlabSize)
+    SlabSize *= 2;
+
   if (!CurSlab) // Start a new slab if we haven't allocated one already.
     StartNewSlab();
 
   // Keep track of how many bytes we've allocated.
   BytesAllocated += Size;
-
-  // 0-byte alignment means 1-byte alignment.
-  if (Alignment == 0) Alignment = 1;
 
   // Allocate the aligned space, going forwards from CurPtr.
   char *Ptr = AlignPtr(CurPtr, Alignment);
@@ -106,7 +112,6 @@ void *BumpPtrAllocator::Allocate(size_t Size, size_t Alignment) {
   }
 
   // If Size is really big, allocate a separate slab for it.
-  size_t PaddedSize = Size + sizeof(MemSlab) + Alignment - 1;
   if (PaddedSize > SizeThreshold) {
     MemSlab *NewSlab = Allocator.Allocate(PaddedSize);
 

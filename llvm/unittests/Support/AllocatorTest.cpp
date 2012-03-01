@@ -93,6 +93,14 @@ TEST(AllocatorTest, TestOverflow) {
   EXPECT_EQ(2U, Alloc.GetNumSlabs());
 }
 
+// Test allocating with a size larger than the initial slab size.
+TEST(AllocatorTest, TestSmallSlabSize) {
+  BumpPtrAllocator Alloc(128);
+
+  Alloc.Allocate(200, 0);
+  EXPECT_EQ(1U, Alloc.GetNumSlabs());
+}
+
 // Mock slab allocator that returns slabs aligned on 4096 bytes.  There is no
 // easy portable way to do this, so this is kind of a hack.
 class MockSlabAllocator : public SlabAllocator {
