@@ -154,9 +154,6 @@ class HeaderSearch {
   llvm::StringMap<const DirectoryEntry *, llvm::BumpPtrAllocator>
     FrameworkMap;
 
-  llvm::StringMap<std::pair<StringRef, bool>, llvm::BumpPtrAllocator>
-    IncludeAliasMap;
-
   /// HeaderMaps - This is a mapping from FileEntry -> HeaderMap, uniquing
   /// headermaps.  This vector owns the headermap.
   std::vector<std::pair<const FileEntry*, const HeaderMap*> > HeaderMaps;
@@ -218,25 +215,6 @@ public:
     if (!isAngled)
       AngledDirIdx++;
     SystemDirIdx++;
-  }
-
-  /// AddHeaderMapping -- Map the source include name to the dest include name
-  void AddHeaderMapping(const StringRef& Source, const StringRef& Dest, 
-                        bool IsAngled) {
-    IncludeAliasMap[Source] = std::make_pair(Dest, IsAngled);
-  }
-
-  StringRef MapHeader(const StringRef& Source, bool isAngled) {
-    // Do any filename replacements before anything else
-    llvm::StringMap<std::pair<StringRef,bool> >::const_iterator iter = 
-      IncludeAliasMap.find(Source);
-    if (iter != IncludeAliasMap.end()) {
-      // If the angling matches, then we've found a replacement
-      if (iter->second.second == isAngled) {
-        return iter->second.first;
-      }
-    }
-    return Source;
   }
 
   /// \brief Set the path to the module cache.

@@ -1304,9 +1304,6 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     PragmaARCCFCodeAuditedLoc = SourceLocation();
   }
 
-  // Map the filename
-  Filename = HeaderInfo.MapHeader(Filename, isAngled);
-
   // Search include directories.
   const DirectoryLookup *CurDir;
   SmallString<1024> SearchPath;
