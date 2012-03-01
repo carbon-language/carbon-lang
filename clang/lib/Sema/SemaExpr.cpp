@@ -9630,6 +9630,7 @@ static ExprResult captureInLambda(Sema &S, LambdaScopeInfo *LSI,
   //   An entity captured by a lambda-expression is odr-used (3.2) in
   //   the scope containing the lambda-expression.
   Expr *Ref = new (S.Context) DeclRefExpr(Var, DeclRefType, VK_LValue, Loc);
+  Var->setReferenced(true);
   Var->setUsed(true);
 
   // When the field has array type, create index variables for each

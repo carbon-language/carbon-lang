@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -fsyntax-only -Wunused-parameter -verify %s
+// RUN: %clang_cc1 -fsyntax-only -Wunused-parameter -verify -std=c++11 %s
 template<typename T>
 struct X {
   T f0(T x);
@@ -23,4 +23,12 @@ void test_X(X<int> &x, int i) {
   x.f3(i);
   x.f4(i);
   x.f5(i);
+}
+
+// Make sure both parameters aren't considered unused.
+template <typename... T>
+static int test_pack(T... t, T... s)
+{
+  auto l = [&t...]() { return sizeof...(s); };
+  return l();
 }
