@@ -383,11 +383,6 @@ public:
   /// used by register scavenger to determine what registers are free.
   virtual BitVector getReservedRegs(const MachineFunction &MF) const = 0;
 
-  /// getSubRegIndex - For a given register pair, return the sub-register index
-  /// if the second register is a sub-register of the first. Return zero
-  /// otherwise.
-  virtual unsigned getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const = 0;
-
   /// getMatchingSuperReg - Return a super-register of the specified register
   /// Reg so its sub-register of index SubIdx is Reg.
   unsigned getMatchingSuperReg(unsigned Reg, unsigned SubIdx,

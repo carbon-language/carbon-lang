@@ -248,6 +248,16 @@ public:
     return *(SubRegIndices + (Reg - 1) * NumSubRegIndices + Idx - 1);
   }
 
+  /// getSubRegIndex - For a given register pair, return the sub-register index
+  /// if the second register is a sub-register of the first. Return zero
+  /// otherwise.
+  unsigned getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const {
+    for (unsigned I = 1; I <= NumSubRegIndices; ++I)
+      if (getSubReg(RegNo, I) == SubRegNo)
+        return I;
+    return 0;
+  }
+
   /// getSuperRegisters - Return the list of registers that are super-registers
   /// of the specified register, or a null list of there are none. The list
   /// returned is zero terminated and sorted according to super-sub register

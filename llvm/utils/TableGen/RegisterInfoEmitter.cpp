@@ -486,7 +486,6 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
      << "(unsigned RA, unsigned D = 0, unsigned E = 0);\n"
      << "  virtual bool needsStackRealignment(const MachineFunction &) const\n"
      << "     { return false; }\n"
-     << "  unsigned getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const;\n"
      << "  unsigned composeSubRegIndices(unsigned, unsigned) const;\n"
      << "  const TargetRegisterClass *"
         "getSubClassWithSubReg(const TargetRegisterClass*, unsigned) const;\n"
@@ -765,16 +764,6 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "\n";
 
   std::string ClassName = Target.getName() + "GenRegisterInfo";
-
-  OS << "unsigned " << ClassName
-     << "::getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const {\n";
-  if (SubRegIndices.size()) {
-    OS << "  for (unsigned I = 1; I <= " << SubRegIndices.size() << "; ++I)\n"
-       << "    if (getSubReg(RegNo, I) == SubRegNo)\n"
-       << "      return I;\n";
-  }
-  OS << "  return 0;\n";
-  OS << "}\n\n";
 
   // Emit composeSubRegIndices
   OS << "unsigned " << ClassName
