@@ -692,7 +692,10 @@ void ARMInstPrinter::printMSRMaskOperand(const MCInst *MI, unsigned OpNum,
 void ARMInstPrinter::printPredicateOperand(const MCInst *MI, unsigned OpNum,
                                            raw_ostream &O) {
   ARMCC::CondCodes CC = (ARMCC::CondCodes)MI->getOperand(OpNum).getImm();
-  if (CC != ARMCC::AL)
+  // Handle the undefined 15 CC value here for printing so we don't abort().
+  if ((unsigned)CC == 15)
+    O << "<und>";
+  else if (CC != ARMCC::AL)
     O << ARMCondCodeToString(CC);
 }
 
