@@ -1,4 +1,4 @@
-; RUN: llc < %s -march=x86-64 -enable-lsr-nested -o %t
+; RUN: llc < %s -mcpu=generic -march=x86-64 -enable-lsr-nested -o %t
 ; RUN: not grep inc %t
 ; RUN: grep dec %t | count 2
 ; RUN: grep addq %t | count 12
