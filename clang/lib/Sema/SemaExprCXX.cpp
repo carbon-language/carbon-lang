@@ -2292,7 +2292,8 @@ static ExprResult BuildCXXCastArgument(Sema &S,
     assert(!From->getType()->isPointerType() && "Arg can't have pointer type!");
 
     // Create an implicit call expr that calls it.
-    ExprResult Result = S.BuildCXXMemberCallExpr(From, FoundDecl, Method,
+    CXXConversionDecl *Conv = cast<CXXConversionDecl>(Method);
+    ExprResult Result = S.BuildCXXMemberCallExpr(From, FoundDecl, Conv,
                                                  HadMultipleCandidates);
     if (Result.isInvalid())
       return ExprError();
@@ -5086,7 +5087,7 @@ ExprResult Sema::ActOnPseudoDestructorExpr(Scope *S, Expr *Base,
 }
 
 ExprResult Sema::BuildCXXMemberCallExpr(Expr *E, NamedDecl *FoundDecl,
-                                        CXXMethodDecl *Method,
+                                        CXXConversionDecl *Method,
                                         bool HadMultipleCandidates) {
   ExprResult Exp = PerformObjectArgumentInitialization(E, /*Qualifier=*/0,
                                           FoundDecl, Method);
