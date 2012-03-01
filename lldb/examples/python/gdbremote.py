@@ -72,6 +72,7 @@ def stop_gdb_log(debugger, command, result, dict):
     parser = optparse.OptionParser(description=description, prog='stop_gdb_log',usage=usage)
     parser.add_option('-v', '--verbose', action='store_true', dest='verbose', help='display verbose debug info', default=False)
     parser.add_option('-q', '--quiet', action='store_true', dest='quiet', help='display verbose debug info', default=False)
+    parser.add_option('-c', '--sort-by-count', action='store_true', dest='sort_count', help='display verbose debug info', default=False)
     try:
         (options, args) = parser.parse_args(command_args)
     except:
@@ -108,6 +109,7 @@ def parse_gdb_log_file(file, options):
     packet_send_time = 0.0
     packet_name = None
     packet_total_times = {}
+    packet_count = {}
     file = open(file)
     lines = file.read().splitlines()
     for line in lines:
@@ -131,8 +133,10 @@ def parse_gdb_log_file(file, options):
             elif line.find('read packet: $') >= 0 and packet_name:
                 if packet_name in packet_total_times:
                     packet_total_times[packet_name] += delta
+                    packet_count[packet_name] += 1
                 else:
                     packet_total_times[packet_name] = delta
+                    packet_count[packet_name] = 1
                 packet_name = None
 
             if not options or not options.quiet:
@@ -142,25 +146,34 @@ def parse_gdb_log_file(file, options):
             print line
     if packet_total_times:
         total_packet_time = 0.0
+        total_packet_count = 0
         for key, vvv in packet_total_times.items():
             # print '  key = (%s) "%s"' % (type(key), key)
             # print 'value = (%s) %s' % (type(vvv), vvv)
             # if type(vvv) == 'float':
             total_packet_time += vvv
-        print '#--------------------------------------------'
+        for key, vvv in packet_count.items():
+            total_packet_count += vvv
+
+        print '#---------------------------------------------------'
         print '# Packet timing summary:'
-        print '#--------------------------------------------'
-        print '# Packet                   Time (sec) Percent'
-        print '#------------------------- ---------- -------'
-        res = sorted(packet_total_times, key=packet_total_times.__getitem__, reverse=True)
+        print '# Totals: time - %6f count %6d' % (total_packet_time, total_packet_count)
+        print '#---------------------------------------------------'
+        print '# Packet                   Time (sec) Percent Count '
+        print '#------------------------- ---------- ------- ------'
+        if options and options.sort_count:
+            res = sorted(packet_count, key=packet_count.__getitem__, reverse=True)
+        else:
+            res = sorted(packet_total_times, key=packet_total_times.__getitem__, reverse=True)
+
         if last_time > 0.0:
             for item in res:
                 packet_total_time = packet_total_times[item]
                 packet_percent = (packet_total_time / total_packet_time)*100.0
                 if packet_percent >= 10.0:
-                    print "  %24s %.6f   %.2f%%" % (item, packet_total_time, packet_percent)
+                    print "  %24s %.6f   %.2f%% %6d" % (item, packet_total_time, packet_percent, packet_count[item])
                 else:
-                    print "  %24s %.6f   %.2f%%" % (item, packet_total_time, packet_percent)
+                    print "  %24s %.6f   %.2f%%  %6d" % (item, packet_total_time, packet_percent, packet_count[item])
                     
     
     
