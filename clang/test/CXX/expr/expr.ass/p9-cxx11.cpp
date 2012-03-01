@@ -13,7 +13,10 @@ void std_example() {
 
   int a, b;
   a = b = { 1 };
-  a = { 1 } = b;
+  a = { 1 } = b; // expected-error {{initializer list cannot be used on the left hand side of operator '='}}
+  a = a + { 4 }; // expected-error {{initializer list cannot be used on the right hand side of operator '+'}}
+  a = { 3 } * { 4 }; // expected-error {{initializer list cannot be used on the left hand side of operator '*'}} \
+                        expected-error {{initializer list cannot be used on the right hand side of operator '*'}}
 }
 
 struct S {
@@ -27,5 +30,5 @@ struct T {
 static_assert((T() = {4, 9}) == 4, "");
 static_assert((T() += {4, 9}) == 9, "");
 
-int k1 = T() = { 1, 2 } = { 3, 4 }; // expected-error {{expected ';'}}
-int k2 = T() = { 1, 2 } + 1; // expected-error {{expected ';'}}
+int k1 = T() = { 1, 2 } = { 3, 4 }; // expected-error {{initializer list cannot be used on the left hand side of operator '='}}
+int k2 = T() = { 1, 2 } + 1; // expected-error {{initializer list cannot be used on the left hand side of operator '+'}}

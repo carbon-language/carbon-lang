@@ -229,6 +229,8 @@ def ext_generalized_initializer_lists : ExtWarn<
 def warn_cxx98_compat_generalized_initializer_lists : Warning<
   "generalized initializer lists are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;
+def err_init_list_bin_op : Error<"initializer list cannot be used on the "
+  "%select{left|right}0 hand side of operator '%1'">;
 def warn_cxx98_compat_trailing_return_type : Warning<
   "trailing return types are incompatible with C++98">,
   InGroup<CXX98Compat>, DefaultIgnore;

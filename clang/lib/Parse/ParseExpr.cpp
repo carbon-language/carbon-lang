@@ -282,6 +282,12 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
     Token OpToken = Tok;
     ConsumeToken();
 
+    if (!LHS.isInvalid() && isa<InitListExpr>(LHS.get())) {
+      Diag(OpToken, diag::err_init_list_bin_op)
+        << /*LHS*/0 << PP.getSpelling(OpToken) << LHS.get()->getSourceRange();
+      LHS = ExprError();
+    }
+
     // Special case handling for the ternary operator.
     ExprResult TernaryMiddle(true);
     if (NextTokPrec == prec::Conditional) {
@@ -353,22 +359,16 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
     // Therefore we need some special-casing here.
     // Also note that the third operand of the conditional operator is
     // an assignment-expression in C++, and in C++11, we can have a
-    // braced-init-list on the RHS of an assignment.
+    // braced-init-list on the RHS of an assignment. For better diagnostics,
+    // parse as if we were allowed braced-init-lists everywhere, and check that
+    // they only appear on the RHS of assignments later.
     ExprResult RHS;
-    if (getLang().CPlusPlus0x && MinPrec == prec::Assignment &&
-        Tok.is(tok::l_brace)) {
-      Diag(Tok, diag::warn_cxx98_compat_generalized_initializer_lists);
+    if (getLang().CPlusPlus0x && Tok.is(tok::l_brace))
       RHS = ParseBraceInitializer();
-      if (LHS.isInvalid() || RHS.isInvalid())
-        return ExprError();
-      // A braced-init-list can never be followed by more operators.
-      return Actions.ActOnBinOp(getCurScope(), OpToken.getLocation(),
-                                OpToken.getKind(), LHS.take(), RHS.take());
-    } else if (getLang().CPlusPlus && NextTokPrec <= prec::Conditional) {
+    else if (getLang().CPlusPlus && NextTokPrec <= prec::Conditional)
       RHS = ParseAssignmentExpression();
-    } else {
+    else
       RHS = ParseCastExpression(false);
-    }
 
     if (RHS.isInvalid())
       LHS = ExprError();
@@ -387,6 +387,11 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
     // more tightly with RHS than we do, evaluate it completely first.
     if (ThisPrec < NextTokPrec ||
         (ThisPrec == NextTokPrec && isRightAssoc)) {
+      if (!LHS.isInvalid() && isa<InitListExpr>(LHS.get())) {
+        Diag(OpToken, diag::err_init_list_bin_op)
+          << /*LHS*/0 << PP.getSpelling(OpToken) << LHS.get()->getSourceRange();
+        LHS = ExprError();
+      }
       // If this is left-associative, only parse things on the RHS that bind
       // more tightly than the current operator.  If it is left-associative, it
       // is okay, to bind exactly as tightly.  For example, compile A=B=C=D as
@@ -402,6 +407,17 @@ Parser::ParseRHSOfBinaryExpression(ExprResult LHS, prec::Level MinPrec) {
                                        getLang().CPlusPlus0x);
     }
     assert(NextTokPrec <= ThisPrec && "Recursion didn't work!");
+
+    if (!RHS.isInvalid() && isa<InitListExpr>(RHS.get())) {
+      if (ThisPrec == prec::Assignment) {
+        Diag(OpToken, diag::warn_cxx98_compat_generalized_initializer_lists)
+          << RHS.get()->getSourceRange();
+      } else {
+        Diag(OpToken, diag::err_init_list_bin_op)
+          << /*RHS*/1 << PP.getSpelling(OpToken) << RHS.get()->getSourceRange();
+        LHS = ExprError();
+      }
+    }
 
     if (!LHS.isInvalid()) {
       // Combine the LHS and RHS into the LHS (e.g. build AST).
