@@ -58,10 +58,6 @@ std::string getEnumName(MVT::SimpleValueType T);
 /// namespace qualifier if the record contains one.
 std::string getQualifiedName(const Record *R);
 
-/// getMinimalTypeForRange - Helper method to get the minimum data type required
-/// to represent Range.
-const char *getMinimalTypeForRange(uint64_t Range);
-
 /// CodeGenTarget - This class corresponds to the Target class in the .td files.
 ///
 class CodeGenTarget {
