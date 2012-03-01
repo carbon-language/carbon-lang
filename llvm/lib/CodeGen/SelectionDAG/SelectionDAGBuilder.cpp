@@ -5627,7 +5627,8 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                  (LibInfo->has(LibFunc::log2l) && Name == "log2l")) {
         if (I.getNumArgOperands() == 1 && // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
-            I.getType() == I.getArgOperand(0)->getType()) {
+            I.getType() == I.getArgOperand(0)->getType() &&
+            I.onlyReadsMemory()) {
           SDValue Tmp = getValue(I.getArgOperand(0));
           setValue(&I, DAG.getNode(ISD::FLOG2, getCurDebugLoc(),
                                    Tmp.getValueType(), Tmp));
@@ -5638,7 +5639,8 @@ void SelectionDAGBuilder::visitCall(const CallInst &I) {
                  (LibInfo->has(LibFunc::exp2l) && Name == "exp2l")) {
         if (I.getNumArgOperands() == 1 && // Basic sanity checks.
             I.getArgOperand(0)->getType()->isFloatingPointTy() &&
-            I.getType() == I.getArgOperand(0)->getType()) {
+            I.getType() == I.getArgOperand(0)->getType() &&
+            I.onlyReadsMemory()) {
           SDValue Tmp = getValue(I.getArgOperand(0));
           setValue(&I, DAG.getNode(ISD::FEXP2, getCurDebugLoc(),
                                    Tmp.getValueType(), Tmp));
