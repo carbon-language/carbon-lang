@@ -1,4 +1,4 @@
-; RUN: llc -march x86 %s -o - | FileCheck %s
+; RUN: llc -mtriple=i386-linux-gnueabi %s -o - | FileCheck %s
 
 ; Log2 and exp2 are string-matched to intrinsics. If they are not declared
 ; readnone, they can't be changed to intrinsics (because they can change errno).
