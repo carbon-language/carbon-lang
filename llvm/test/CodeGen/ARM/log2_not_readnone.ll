@@ -7,9 +7,9 @@ declare double @log2(double)
 declare double @exp2(double)
 
 define void @f() {
-       ; CHECK: bl _log2
+       ; CHECK: bl log2
        %1 = call double @log2(double 0.000000e+00)
-       ; CHECK: bl _exp2
+       ; CHECK: bl exp2
        %2 = call double @exp2(double 0.000000e+00)
        ret void
 }
