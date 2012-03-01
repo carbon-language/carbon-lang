@@ -36,8 +36,7 @@ StreamString &
 StreamCallback::FindStreamForThread(lldb::tid_t cur_tid)
 {
     Mutex::Locker (m_collection_mutex);
-    collection::iterator iter, end_iter = m_accumulated_data.end();
-    iter = m_accumulated_data.find (cur_tid);
+    collection::iterator iter = m_accumulated_data.find (cur_tid);
     if (iter == m_accumulated_data.end())
     {
         std::pair<collection::iterator, bool> ret;

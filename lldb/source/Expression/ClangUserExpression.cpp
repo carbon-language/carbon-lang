@@ -156,17 +156,6 @@ ClangUserExpression::ScanContext(ExecutionContext &exe_ctx, Error &err)
             
             m_cplusplus = true;
             m_needs_object_ptr = true;
-            
-            do {
-                clang::QualType this_type = method_decl->getThisType(decl_context->getParentASTContext());
-
-                const clang::PointerType *this_pointer_type = this_type->getAs<clang::PointerType>();
-
-                if (!this_pointer_type)
-                    break;
-                
-                clang::QualType this_pointee_type = this_pointer_type->getPointeeType();
-            } while (0);
         }
     }
     else if (clang::ObjCMethodDecl *method_decl = llvm::dyn_cast<clang::ObjCMethodDecl>(decl_context))

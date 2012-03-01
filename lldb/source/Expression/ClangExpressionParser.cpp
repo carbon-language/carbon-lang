@@ -363,7 +363,7 @@ ClangExpressionParser::Parse (Stream &stream)
     diag_buf->FlushDiagnostics (m_compiler->getDiagnostics());
     
     MemoryBuffer *memory_buffer = MemoryBuffer::getMemBufferCopy(m_expr.Text(), __FUNCTION__);
-    FileID memory_buffer_file_id = m_compiler->getSourceManager().createMainFileIDForMemBuffer (memory_buffer);
+    m_compiler->getSourceManager().createMainFileIDForMemBuffer (memory_buffer);
     
     diag_buf->BeginSourceFile(m_compiler->getLangOpts(), &m_compiler->getPreprocessor());
     
@@ -626,6 +626,7 @@ ClangExpressionParser::PrepareForExecution (lldb::addr_t &func_allocation_addr,
     }
         
     jit_memory_manager->CommitAllocations(*process);
+    jit_memory_manager->ReportAllocations(*execution_engine);
     jit_memory_manager->WriteData(*process);
     
     std::vector<JittedFunction>::iterator pos, end = m_jitted_functions.end();

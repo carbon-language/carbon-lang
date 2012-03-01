@@ -1135,7 +1135,6 @@ ClangASTType::DumpSummary
 )
 {
     uint32_t length = 0;
-    clang::QualType qual_type(clang::QualType::getFromOpaquePtr(clang_type));
     if (ClangASTContext::IsCStringType (clang_type, length))
     {
         if (exe_ctx)

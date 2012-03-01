@@ -328,6 +328,16 @@ public:
     CommitAllocations (Process &process);
     
     //------------------------------------------------------------------
+    /// [Convenience method for ClangExpressionParser] Report all committed
+    /// allocations to the execution engine.
+    ///
+    /// @param[in] engine
+    ///     The execution engine to notify.
+    //------------------------------------------------------------------
+    void
+    ReportAllocations (llvm::ExecutionEngine &engine);
+    
+    //------------------------------------------------------------------
     /// [Convenience method for ClangExpressionParser] Write the contents
     /// of all allocations to the process. 
     ///

@@ -10,6 +10,7 @@
 // C Includes
 // C++ Includes
 // Other libraries and framework includes
+#include "llvm/ExecutionEngine/ExecutionEngine.h"
 // Project includes
 #include "lldb/Expression/RecordingMemoryManager.h"
 
@@ -274,6 +275,20 @@ RecordingMemoryManager::CommitAllocations (Process &process)
     }
     
     return ret;
+}
+
+void
+RecordingMemoryManager::ReportAllocations (llvm::ExecutionEngine &engine)
+{
+    for (AllocationList::iterator ai = m_allocations.begin(), ae = m_allocations.end();
+         ai != ae;
+         ++ai)
+    {
+        if (!ai->m_allocated)
+            continue;
+        
+        engine.mapSectionAddress((void*)ai->m_local_start, ai->m_remote_start);
+    }
 }
 
 bool

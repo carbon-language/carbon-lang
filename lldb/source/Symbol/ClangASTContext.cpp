@@ -2284,6 +2284,7 @@ ClangASTContext::AddObjCClassProperty
                                                                            SourceLocation(), // Source Location
                                                                            &identifier_table->get(property_name),
                                                                            SourceLocation(), //Source Location for AT
+                                                                           SourceLocation(), //Source location for (
                                                                            prop_type_source
                                                                            );
                 if (property_decl)
