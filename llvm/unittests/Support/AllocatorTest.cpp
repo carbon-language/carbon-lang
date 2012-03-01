@@ -98,7 +98,7 @@ TEST(AllocatorTest, TestSmallSlabSize) {
   BumpPtrAllocator Alloc(128);
 
   Alloc.Allocate(200, 0);
-  EXPECT_EQ(1U, Alloc.GetNumSlabs());
+  EXPECT_EQ(2U, Alloc.GetNumSlabs());
 }
 
 // Mock slab allocator that returns slabs aligned on 4096 bytes.  There is no
