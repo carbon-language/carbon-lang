@@ -15,7 +15,7 @@
 #include "ClangSACheckers.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtVisitor.h"
-#include "llvm/ADT/SaveAndRestore.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "clang/StaticAnalyzer/Core/PathSensitive/AnalysisManager.h"
 #include "clang/StaticAnalyzer/Core/Checker.h"
 #include "clang/StaticAnalyzer/Core/BugReporter/BugReporter.h"

@@ -27,7 +27,7 @@
 #include "clang/AST/NestedNameSpecifier.h"
 #include "clang/AST/Type.h"
 #include "clang/AST/TypeLocVisitor.h"
-#include "llvm/ADT/SaveAndRestore.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "clang/Lex/MacroInfo.h"
 #include "clang/Lex/PreprocessingRecord.h"
 #include "clang/Lex/Preprocessor.h"

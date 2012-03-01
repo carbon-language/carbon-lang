@@ -44,7 +44,7 @@
 #include "clang/Basic/Builtins.h"
 #include "clang/Basic/TargetInfo.h"
 #include "llvm/ADT/SmallString.h"
-#include "llvm/ADT/SaveAndRestore.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include <cstring>
 #include <functional>
 

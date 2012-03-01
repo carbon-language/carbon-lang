@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "llvm/ADT/SaveAndRestore.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "clang/Analysis/CFG.h"
 #include "clang/AST/DeclCXX.h"
 #include "clang/AST/StmtVisitor.h"

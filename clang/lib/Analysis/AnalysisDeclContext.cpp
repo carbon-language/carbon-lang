@@ -24,7 +24,7 @@
 #include "clang/Analysis/CFG.h"
 #include "clang/Analysis/CFGStmtMap.h"
 #include "clang/Analysis/Support/BumpVector.h"
-#include "llvm/ADT/SaveAndRestore.h"
+#include "llvm/Support/SaveAndRestore.h"
 #include "llvm/ADT/SmallSet.h"
 #include "llvm/Support/ErrorHandling.h"
 
