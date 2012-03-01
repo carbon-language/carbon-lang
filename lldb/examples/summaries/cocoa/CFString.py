@@ -101,18 +101,8 @@ class CFStringSynthProvider:
 				# untested, use the safe code path
 				return self.handle_unicode_string_safe();
 			else:
-				# not sure why 8 bytes are skipped here
-				# (lldb) mem read -c 50 0x00000001001154f0
-				# 0x1001154f0: 98 1a 85 71 ff 7f 00 00 90 07 00 00 01 00 00 00  ...q?...........
-				# 0x100115500: 03 00 00 00 00 00 00 00 *c3 03 78 00 78 00 00 00  ........?.x.x...
-				# 0x100115510: 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00  ................
-				# 0x100115520: 00 00                                            ..
-				# content begins at * (i.e. 8 bytes into variants, skipping void* buffer in
-				# __notInlineImmutable1 entirely, while the length byte is correctly located
-				# for an inline string)
-				# on NMOS in 32 bit mode, we need to skip 4 bytes instead of why
-				# if the same occurs on Lion, then this simply needs to be pointer + pointer_size
-				if self.is_64_bit == False and objc_runtime.Utilities.check_is_osx_lion(self.valobj.GetTarget()) == False:
+				# a full pointer is skipped here before getting to the live data
+				if self.is_64_bit == False:
 					pointer = pointer + 4
 				else:
 					pointer = pointer + 8;
