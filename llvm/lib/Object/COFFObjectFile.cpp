@@ -525,6 +525,12 @@ library_iterator COFFObjectFile::end_libraries_needed() const {
   report_fatal_error("Libraries needed unimplemented in COFFObjectFile");
 }
 
+StringRef COFFObjectFile::getLoadName() const {
+  // COFF does not have this field.
+  return "";
+}
+
+
 section_iterator COFFObjectFile::begin_sections() const {
   DataRefImpl ret;
   std::memset(&ret, 0, sizeof(DataRefImpl));

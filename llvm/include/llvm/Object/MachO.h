@@ -42,6 +42,7 @@ public:
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
   virtual unsigned getArch() const;
+  virtual StringRef getLoadName() const;
 
   MachOObject *getObject() { return MachOObj; }
 

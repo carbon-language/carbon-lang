@@ -14,6 +14,7 @@
 #include <string.h>
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Analysis/Verifier.h"
+#include "llvm/ADT/Triple.h"
 #include "llvm/Support/Format.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/PrettyStackTrace.h"
@@ -155,6 +156,16 @@ void DumpLibrariesNeeded(const ObjectFile *obj) {
   outs() << "  Total: " << count << "\n\n";
 }
 
+void DumpHeaders(const ObjectFile *obj) {
+  outs() << "File Format : " << obj->getFileFormatName() << "\n";
+  outs() << "Arch        : "
+         << Triple::getArchTypeName((llvm::Triple::ArchType)obj->getArch())
+         << "\n";
+  outs() << "Address Size: " << (8*obj->getBytesInAddress()) << " bits\n";
+  outs() << "Load Name   : " << obj->getLoadName() << "\n";
+  outs() << "\n";
+}
+
 int main(int argc, char** argv) {
   error_code ec;
   sys::PrintStackTraceOnErrorSignal();
@@ -180,6 +191,7 @@ int main(int argc, char** argv) {
     errs() << InputFilename << ": Object type not recognized\n";
   }
 
+  DumpHeaders(obj);
   DumpSymbols(obj);
   DumpDynamicSymbols(obj);
   DumpLibrariesNeeded(obj);

@@ -387,6 +387,11 @@ library_iterator MachOObjectFile::end_libraries_needed() const {
   report_fatal_error("Needed libraries unimplemented in MachOObjectFile");
 }
 
+StringRef MachOObjectFile::getLoadName() const {
+  // TODO: Implement
+  report_fatal_error("get_load_name() unimplemented in MachOObjectFile");
+}
+
 /*===-- Sections ----------------------------------------------------------===*/
 
 void MachOObjectFile::moveToNextSection(DataRefImpl &DRI) const {

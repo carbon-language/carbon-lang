@@ -1,7 +1,22 @@
 RUN: llvm-readobj %p/Inputs/shared-object-test.elf-i386 \
 RUN:         | FileCheck %s -check-prefix ELF
+RUN: llvm-readobj %p/Inputs/shared-object-test.elf-i386 \
+RUN:         | FileCheck %s -check-prefix ELF32
+
 RUN: llvm-readobj %p/Inputs/shared-object-test.elf-x86-64 \
 RUN:         | FileCheck %s -check-prefix ELF
+RUN: llvm-readobj %p/Inputs/shared-object-test.elf-x86-64 \
+RUN:         | FileCheck %s -check-prefix ELF64
+
+ELF64:File Format : ELF64-x86-64
+ELF64:Arch        : x86_64
+ELF64:Address Size: 64 bits
+ELF64:Load Name   : libfoo.so
+
+ELF32:File Format : ELF32-i386
+ELF32:Arch        : i386
+ELF32:Address Size: 32 bits
+ELF32:Load Name   : libfoo.so
 
 ELF:Symbols:
 ELF:  .dynsym                DBG             {{[0-9a-f]+}}  {{[0-9a-f]+}}  {{[0-9a-f]+}}  formatspecific

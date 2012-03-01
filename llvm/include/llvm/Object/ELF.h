@@ -369,6 +369,9 @@ private:
   DenseMap<const Elf_Sym*, ELF::Elf64_Word> ExtendedSymbolTable;
 
   const Elf_Shdr *dot_dynamic_sec; // .dynamic
+  // Pointer to SONAME entry in dynamic string table
+  // This is set the first time getLoadName is called.
+  mutable const char *dt_soname;
 
   /// @brief Map sections to an array of relocation sections that reference
   ///        them sorted by section index.
@@ -471,6 +474,7 @@ public:
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
   virtual unsigned getArch() const;
+  virtual StringRef getLoadName() const;
 
   uint64_t getNumSections() const;
   uint64_t getStringTableIndex() const;
@@ -1259,7 +1263,8 @@ ELFObjectFile<target_endianness, is64Bits>::ELFObjectFile(MemoryBuffer *Object
   , dot_shstrtab_sec(0)
   , dot_strtab_sec(0)
   , dot_dynstr_sec(0)
-  , dot_dynamic_sec(0) {
+  , dot_dynamic_sec(0)
+  , dt_soname(0) {
 
   const uint64_t FileSize = Data->getBufferSize();
 
@@ -1483,6 +1488,32 @@ error_code ELFObjectFile<target_endianness, is64Bits>
 
   Result = DynRef(DynData, this);
   return object_error::success;
+}
+
+template<support::endianness target_endianness, bool is64Bits>
+StringRef
+ELFObjectFile<target_endianness, is64Bits>::getLoadName() const {
+  if (!dt_soname) {
+    // Find the DT_SONAME entry
+    dyn_iterator it = begin_dynamic_table();
+    dyn_iterator ie = end_dynamic_table();
+    error_code ec;
+    while (it != ie) {
+      if (it->getTag() == ELF::DT_SONAME)
+        break;
+      it.increment(ec);
+      if (ec)
+        report_fatal_error("dynamic table iteration failed");
+    }
+    if (it != ie) {
+      if (dot_dynstr_sec == NULL)
+        report_fatal_error("Dynamic string table is missing");
+      dt_soname = getString(dot_dynstr_sec, it->getVal());
+    } else {
+      dt_soname = "";
+    }
+  }
+  return dt_soname;
 }
 
 template<support::endianness target_endianness, bool is64Bits>

@@ -359,6 +359,11 @@ public:
   virtual StringRef getFileFormatName() const = 0;
   virtual /* Triple::ArchType */ unsigned getArch() const = 0;
 
+  /// For shared objects, returns the name which this object should be
+  /// loaded from at runtime. This corresponds to DT_SONAME on ELF and
+  /// LC_ID_DYLIB (install name) on MachO.
+  virtual StringRef getLoadName() const = 0;
+
   /// @returns Pointer to ObjectFile subclass to handle this type of object.
   /// @param ObjectPath The path to the object file. ObjectPath.isObject must
   ///        return true.

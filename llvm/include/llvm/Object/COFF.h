@@ -164,6 +164,7 @@ public:
   virtual uint8_t getBytesInAddress() const;
   virtual StringRef getFileFormatName() const;
   virtual unsigned getArch() const;
+  virtual StringRef getLoadName() const;
 
   error_code getHeader(const coff_file_header *&Res) const;
   error_code getSection(int32_t index, const coff_section *&Res) const;
