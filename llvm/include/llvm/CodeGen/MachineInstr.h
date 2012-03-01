@@ -234,11 +234,6 @@ public:
   /// if either itself or its following instruction is marked "InsideBundle".
   bool isBundled() const;
 
-  /// getBundleStart - If this instruction is inside a bundle return the
-  /// instruction at the start of the bundle. Otherwise just returns the
-  /// instruction itself.
-  MachineInstr* getBundleStart();
-
   /// getDebugLoc - Returns the debug location id of this MachineInstr.
   ///
   DebugLoc getDebugLoc() const { return debugLoc; }

@@ -41,6 +41,22 @@ MachineBasicBlock::instr_iterator finalizeBundle(MachineBasicBlock &MBB,
 /// MachineFunction. Return true if any bundles are finalized.
 bool finalizeBundles(MachineFunction &MF);
 
+/// getBundleStart - Returns the first instruction in the bundle containing MI.
+///
+static inline MachineInstr *getBundleStart(MachineInstr *MI) {
+  MachineBasicBlock::instr_iterator I = MI;
+  while (I->isInsideBundle())
+    --I;
+  return I;
+}
+
+static inline const MachineInstr *getBundleStart(const MachineInstr *MI) {
+  MachineBasicBlock::const_instr_iterator I = MI;
+  while (I->isInsideBundle())
+    --I;
+  return I;
+}
+
 //===----------------------------------------------------------------------===//
 // MachineOperand iterator
 //
@@ -82,7 +98,7 @@ protected:
   ///
   explicit MachineOperandIteratorBase(MachineInstr *MI, bool WholeBundle) {
     if (WholeBundle) {
-      InstrI = MI->getBundleStart();
+      InstrI = getBundleStart(MI);
       InstrE = MI->getParent()->instr_end();
     } else {
       InstrI = InstrE = MI;

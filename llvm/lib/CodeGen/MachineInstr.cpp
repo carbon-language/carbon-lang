@@ -900,16 +900,6 @@ bool MachineInstr::isBundled() const {
   return nextMI != Parent->instr_end() && nextMI->isInsideBundle();
 }
 
-MachineInstr* MachineInstr::getBundleStart() {
-  if (!isInsideBundle())
-    return this;
-  MachineBasicBlock::reverse_instr_iterator MII(this);
-  ++MII;
-  while (MII->isInsideBundle())
-    ++MII;
-  return &*MII;
-}
-
 bool MachineInstr::isStackAligningInlineAsm() const {
   if (isInlineAsm()) {
     unsigned ExtraInfo = getOperand(InlineAsm::MIOp_ExtraInfo).getImm();

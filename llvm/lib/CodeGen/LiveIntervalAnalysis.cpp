@@ -1522,7 +1522,7 @@ void LiveIntervals::handleMove(MachineInstr* MI) {
   SlotIndex OldIndex = indexes_->getInstructionIndex(MI);
   indexes_->removeMachineInstrFromMaps(MI);
   SlotIndex NewIndex = MI->isInsideBundle() ?
-                        indexes_->getInstructionIndex(MI->getBundleStart()) :
+                        indexes_->getInstructionIndex(MI) :
                         indexes_->insertMachineInstrInMaps(MI);
   assert(getMBBStartIdx(MI->getParent()) <= OldIndex &&
          OldIndex < getMBBEndIdx(MI->getParent()) &&
