@@ -136,6 +136,9 @@ private:
   const unsigned *Overlaps;                   // Pointer to the overlaps array
   const unsigned *SubRegs;                    // Pointer to the subregs array
   const unsigned *SuperRegs;                  // Pointer to the superregs array
+  const unsigned short *SubRegIndices;        // Pointer to the subreg lookup
+                                              // array.
+  unsigned NumSubRegIndices;                  // Number of subreg indices.
   DenseMap<unsigned, int> L2DwarfRegs;        // LLVM to Dwarf regs mapping
   DenseMap<unsigned, int> EHL2DwarfRegs;      // LLVM to Dwarf regs mapping EH
   DenseMap<unsigned, unsigned> Dwarf2LRegs;   // Dwarf to LLVM regs mapping
@@ -148,7 +151,9 @@ public:
   void InitMCRegisterInfo(const MCRegisterDesc *D, unsigned NR, unsigned RA,
                           const MCRegisterClass *C, unsigned NC,
                           const unsigned *O, const unsigned *Sub,
-                          const unsigned *Super) {
+                          const unsigned *Super,
+                          const unsigned short *SubIndices,
+                          unsigned NumIndices) {
     Desc = D;
     NumRegs = NR;
     RAReg = RA;
@@ -157,6 +162,8 @@ public:
     SubRegs = Sub;
     SuperRegs = Super;
     NumClasses = NC;
+    SubRegIndices = SubIndices;
+    NumSubRegIndices = NumIndices;
   }
 
   /// mapLLVMRegToDwarfReg - Used to initialize LLVM register to Dwarf
@@ -232,6 +239,13 @@ public:
   ///
   const unsigned *getSubRegisters(unsigned RegNo) const {
     return SubRegs + get(RegNo).SubRegs;
+  }
+
+  /// getSubReg - Returns the physical register number of sub-register "Index"
+  /// for physical register RegNo. Return zero if the sub-register does not
+  /// exist.
+  unsigned getSubReg(unsigned Reg, unsigned Idx) const {
+    return *(SubRegIndices + (Reg - 1) * NumSubRegIndices + Idx - 1);
   }
 
   /// getSuperRegisters - Return the list of registers that are super-registers

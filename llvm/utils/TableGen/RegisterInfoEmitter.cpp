@@ -411,6 +411,38 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   OS << "};\n\n";
 
+  // Emit the data table for getSubReg().
+  ArrayRef<CodeGenSubRegIndex*> SubRegIndices = RegBank.getSubRegIndices();
+  if (SubRegIndices.size()) {
+    OS << "const unsigned short " << TargetName << "SubRegTable[]["
+      << SubRegIndices.size() << "] = {\n";
+    for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
+      const CodeGenRegister::SubRegMap &SRM = Regs[i]->getSubRegs();
+      OS << "  /* " << Regs[i]->TheDef->getName() << " */\n";
+      if (SRM.empty()) {
+        OS << "  {0},\n";
+        continue;
+      }
+      OS << "  {";
+      for (unsigned j = 0, je = SubRegIndices.size(); j != je; ++j) {
+        // FIXME: We really should keep this to 80 columns...
+        CodeGenRegister::SubRegMap::const_iterator SubReg =
+          SRM.find(SubRegIndices[j]);
+        if (SubReg != SRM.end())
+          OS << getQualifiedName(SubReg->second->TheDef);
+        else
+          OS << "0";
+        if (j != je - 1)
+          OS << ", ";
+      }
+      OS << "}" << (i != e ? "," : "") << "\n";
+    }
+    OS << "};\n\n";
+    OS << "const unsigned short *get" << TargetName
+       << "SubRegTable() {\n  return (const unsigned short *)" << TargetName
+       << "SubRegTable;\n}\n\n";
+  }
+
   // MCRegisterInfo initialization routine.
   OS << "static inline void Init" << TargetName
      << "MCRegisterInfo(MCRegisterInfo *RI, unsigned RA, "
@@ -418,12 +450,16 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "  RI->InitMCRegisterInfo(" << TargetName << "RegDesc, "
      << Regs.size()+1 << ", RA, " << TargetName << "MCRegisterClasses, "
      << RegisterClasses.size() << ", " << TargetName << "RegOverlaps, "
-     << TargetName << "SubRegsSet, " << TargetName << "SuperRegsSet);\n\n";
+     << TargetName << "SubRegsSet, " << TargetName << "SuperRegsSet, ";
+  if (SubRegIndices.size() != 0)
+    OS << "(unsigned short*)" << TargetName << "SubRegTable, "
+       << SubRegIndices.size() << ");\n\n";
+  else
+    OS << "NULL, 0);\n\n";
 
   EmitRegMapping(OS, Regs, false);
 
   OS << "}\n\n";
-
 
   OS << "} // End llvm namespace \n";
   OS << "#endif // GET_REGINFO_MC_DESC\n\n";
@@ -450,7 +486,6 @@ RegisterInfoEmitter::runTargetHeader(raw_ostream &OS, CodeGenTarget &Target,
      << "(unsigned RA, unsigned D = 0, unsigned E = 0);\n"
      << "  virtual bool needsStackRealignment(const MachineFunction &) const\n"
      << "     { return false; }\n"
-     << "  unsigned getSubReg(unsigned RegNo, unsigned Index) const;\n"
      << "  unsigned getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const;\n"
      << "  unsigned composeSubRegIndices(unsigned, unsigned) const;\n"
      << "  const TargetRegisterClass *"
@@ -731,52 +766,12 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   std::string ClassName = Target.getName() + "GenRegisterInfo";
 
-  // Emit the data table for getSubReg().
-  if (SubRegIndices.size()) {
-    OS << "static const unsigned short " << TargetName << "SubRegTable[]["
-      << SubRegIndices.size() << "] = {\n";
-    for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
-      const CodeGenRegister::SubRegMap &SRM = Regs[i]->getSubRegs();
-      OS << "  /* " << Regs[i]->TheDef->getName() << " */\n";
-      if (SRM.empty()) {
-        OS << "  {0},\n";
-        continue;
-      }
-      OS << "  {";
-      for (unsigned j = 0, je = SubRegIndices.size(); j != je; ++j) {
-        // FIXME: We really should keep this to 80 columns...
-        CodeGenRegister::SubRegMap::const_iterator SubReg =
-          SRM.find(SubRegIndices[j]);
-        if (SubReg != SRM.end())
-          OS << getQualifiedName(SubReg->second->TheDef);
-        else
-          OS << "0";
-        if (j != je - 1)
-          OS << ", ";
-      }
-      OS << "}" << (i != e ? "," : "") << "\n";
-    }
-    OS << "};\n\n";
-  }
-
-  // Emit the subregister + index mapping function based on the information
-  // calculated above.
-  OS << "unsigned " << ClassName
-     << "::getSubReg(unsigned RegNo, unsigned Index) const {\n"
-     << "  assert(RegNo > 0 && Index > 0 && \"invalid subreg query!\");\n";
-  if (SubRegIndices.size())
-     OS << "  return " << TargetName << "SubRegTable[RegNo - 1][Index - 1];\n"
-        << "}\n\n";
-  else
-    OS << "  return 0;\n}\n\n";
-
   OS << "unsigned " << ClassName
      << "::getSubRegIndex(unsigned RegNo, unsigned SubRegNo) const {\n";
   if (SubRegIndices.size()) {
-    OS << "  for (unsigned I = 0; I != array_lengthof("
-       << TargetName << "SubRegTable[0]); ++I)\n"
-       << "    if (" << TargetName << "SubRegTable[RegNo - 1][I] == SubRegNo)\n"
-       << "      return I + 1;\n";
+    OS << "  for (unsigned I = 1; I <= " << SubRegIndices.size() << "; ++I)\n"
+       << "    if (getSubReg(RegNo, I) == SubRegNo)\n"
+       << "      return I;\n";
   }
   OS << "  return 0;\n";
   OS << "}\n\n";
@@ -893,16 +888,26 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "extern const unsigned " << TargetName << "RegOverlaps[];\n";
   OS << "extern const unsigned " << TargetName << "SubRegsSet[];\n";
   OS << "extern const unsigned " << TargetName << "SuperRegsSet[];\n";
+  if (SubRegIndices.size() != 0)
+    OS << "extern const unsigned short *get" << TargetName
+       << "SubRegTable();\n";
 
-  OS << ClassName << "::" << ClassName
+  OS << ClassName << "::\n" << ClassName
      << "(unsigned RA, unsigned DwarfFlavour, unsigned EHFlavour)\n"
      << "  : TargetRegisterInfo(" << TargetName << "RegInfoDesc"
      << ", RegisterClasses, RegisterClasses+" << RegisterClasses.size() <<",\n"
-     << "                 " << TargetName << "SubRegIndexTable) {\n"
+     << "             " << TargetName << "SubRegIndexTable) {\n"
      << "  InitMCRegisterInfo(" << TargetName << "RegDesc, "
-     << Regs.size()+1 << ", RA, " << TargetName << "MCRegisterClasses, "
-     << RegisterClasses.size() << ", " << TargetName << "RegOverlaps, "
-     << TargetName << "SubRegsSet, " << TargetName << "SuperRegsSet);\n\n";
+     << Regs.size()+1 << ", RA,\n                     " << TargetName
+     << "MCRegisterClasses, " << RegisterClasses.size() << ",\n"
+     << "                     " << TargetName << "RegOverlaps, "
+     << TargetName << "SubRegsSet, " << TargetName << "SuperRegsSet,\n"
+     << "                     ";
+  if (SubRegIndices.size() != 0)
+    OS << "get" << TargetName << "SubRegTable(), "
+       << SubRegIndices.size() << ");\n\n";
+  else
+    OS << "NULL, 0);\n\n";
 
   EmitRegMapping(OS, Regs, true);
 
