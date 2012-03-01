@@ -129,9 +129,8 @@ unsigned MipsELFObjectWriter::GetRelocType(const MCValue &Target,
   return Type;
 }
 
-MCObjectWriter *llvm::createMipsELFObjectWriter(raw_ostream &OS,
-                                               bool IsLittleEndian,
-                                               uint8_t OSABI) {
+MCObjectWriter *llvm::createMipsELFObjectWriter(raw_ostream &OS, uint8_t OSABI,
+                                                bool IsLittleEndian) {
   MCELFObjectTargetWriter *MOTW = new MipsELFObjectWriter(OSABI);
   return createELFObjectWriter(MOTW, OS, IsLittleEndian);
 }

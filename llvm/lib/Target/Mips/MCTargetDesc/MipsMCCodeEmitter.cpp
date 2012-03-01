@@ -34,10 +34,12 @@ class MipsMCCodeEmitter : public MCCodeEmitter {
   const MCInstrInfo &MCII;
   const MCSubtargetInfo &STI;
   MCContext &Ctx;
+  bool IsLittleEndian;
 
 public:
   MipsMCCodeEmitter(const MCInstrInfo &mcii, const MCSubtargetInfo &sti,
-                    MCContext &ctx) : MCII(mcii), STI(sti) , Ctx(ctx) {}
+                    MCContext &ctx, bool IsLittle) :
+            MCII(mcii), STI(sti) , Ctx(ctx), IsLittleEndian(IsLittle) {}
 
   ~MipsMCCodeEmitter() {}
 
@@ -88,11 +90,18 @@ public:
 }; // class MipsMCCodeEmitter
 }  // namespace
 
-MCCodeEmitter *llvm::createMipsMCCodeEmitter(const MCInstrInfo &MCII,
-                                             const MCSubtargetInfo &STI,
-                                             MCContext &Ctx)
+MCCodeEmitter *llvm::createMipsMCCodeEmitterEB(const MCInstrInfo &MCII,
+                                               const MCSubtargetInfo &STI,
+                                               MCContext &Ctx)
 {
-  return new MipsMCCodeEmitter(MCII, STI, Ctx);
+  return new MipsMCCodeEmitter(MCII, STI, Ctx, false);
+}
+
+MCCodeEmitter *llvm::createMipsMCCodeEmitterEL(const MCInstrInfo &MCII,
+                                               const MCSubtargetInfo &STI,
+                                               MCContext &Ctx)
+{
+  return new MipsMCCodeEmitter(MCII, STI, Ctx, true);
 }
 
 /// EncodeInstruction - Emit the instruction.
