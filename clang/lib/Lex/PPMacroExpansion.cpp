@@ -760,7 +760,12 @@ static bool HasExtension(const Preprocessor &PP, const IdentifierInfo *II) {
 /// HasAttribute -  Return true if we recognize and implement the attribute
 /// specified by the given identifier.
 static bool HasAttribute(const IdentifierInfo *II) {
-    return llvm::StringSwitch<bool>(II->getName())
+  StringRef Name = II->getName();
+  // Normalize the attribute name, __foo__ becomes foo.
+  if (Name.startswith("__") && Name.endswith("__") && Name.size() >= 4)
+    Name = Name.substr(2, Name.size() - 4);
+
+  return llvm::StringSwitch<bool>(Name)
 #include "clang/Lex/AttrSpellings.inc"
         .Default(false);
 }
