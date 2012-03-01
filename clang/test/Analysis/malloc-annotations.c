@@ -6,6 +6,8 @@ void *realloc(void *ptr, size_t size);
 void *calloc(size_t nmemb, size_t size);
 void __attribute((ownership_returns(malloc))) *my_malloc(size_t);
 void __attribute((ownership_takes(malloc, 1))) my_free(void *);
+void my_freeBoth(void *, void *)
+       __attribute((ownership_holds(malloc, 1, 2)));
 void __attribute((ownership_returns(malloc, 1))) *my_malloc2(size_t);
 void __attribute((ownership_holds(malloc, 1))) my_hold(void *);
 
@@ -260,3 +262,10 @@ char callocZeroesBad () {
   }
   return result; // expected-warning{{never released}}
 }
+
+void testMultipleFreeAnnotations() {
+  int *p = malloc(12);
+  int *q = malloc(12);
+  my_freeBoth(p, q);
+}
+

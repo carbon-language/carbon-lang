@@ -442,12 +442,16 @@ ProgramStateRef MallocChecker::FreeMemAttr(CheckerContext &C,
   if (Att->getModule() != "malloc")
     return 0;
 
+  ProgramStateRef State = C.getState();
+
   for (OwnershipAttr::args_iterator I = Att->args_begin(), E = Att->args_end();
        I != E; ++I) {
-    return FreeMemAux(C, CE, C.getState(), *I,
-                      Att->getOwnKind() == OwnershipAttr::Holds);
+    ProgramStateRef StateI = FreeMemAux(C, CE, State, *I,
+                               Att->getOwnKind() == OwnershipAttr::Holds);
+    if (StateI)
+      State = StateI;
   }
-  return 0;
+  return State;
 }
 
 ProgramStateRef MallocChecker::FreeMemAux(CheckerContext &C,
