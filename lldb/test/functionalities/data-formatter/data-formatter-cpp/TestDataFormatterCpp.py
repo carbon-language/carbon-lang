@@ -267,6 +267,10 @@ class CppDataFormatterTestCase(TestBase):
         self.expect("frame variable the_coolest_guy", matching=False,
                     substrs = ['(i_am_cooler) the_coolest_guy = goofy'])
 
+        # check that formats are not sticking since that is the behavior we want
+        self.expect("frame variable iAmInt --format hex", substrs = ['(int) iAmInt = 0x00000001'])
+        self.expect("frame variable iAmInt", matching=False, substrs = ['(int) iAmInt = 0x00000001'])
+        self.expect("frame variable iAmInt", substrs = ['(int) iAmInt = 1'])
 
 if __name__ == '__main__':
     import atexit

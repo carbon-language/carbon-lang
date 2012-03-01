@@ -111,18 +111,21 @@ class ScriptDataFormatterTestCase(TestBase):
         self.runCmd("type summary add --name test_summary --python-script \"%s\"" % script)
 
         # attach the Python named summary to someone
-        self.runCmd("frame variable one --summary test_summary")
-
-        self.expect("frame variable one",
+        self.expect("frame variable one --summary test_summary",
                 substrs = ['Python summary'])
 
         # should not bind to the type
         self.expect("frame variable two", matching=False,
                     substrs = ['Python summary'])
 
+        # and should not stick to the variable
+        self.expect("frame variable one",matching=False,
+                substrs = ['Python summary'])
+
         self.runCmd("type summary add i_am_cool --summary-string \"Text summary\"")
 
-        self.expect("frame variable one",
+        # should be temporary only
+        self.expect("frame variable one",matching=False,
                     substrs = ['Python summary'])
 
         # use the type summary

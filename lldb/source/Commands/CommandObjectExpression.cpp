@@ -354,22 +354,23 @@ CommandObjectExpression::EvaluateExpression
                 if (format != eFormatDefault)
                     result_valobj_sp->SetFormat (format);
 
+                ValueObject::DumpValueObjectOptions options;
+                options.SetMaximumPointerDepth(0)
+                .SetMaximumDepth(UINT32_MAX)
+                .SetShowLocation(false)
+                .SetShowTypes(m_command_options.show_types)
+                .SetUseObjectiveC(m_command_options.print_object)
+                .SetUseDynamicType(use_dynamic)
+                .SetScopeChecked(true)
+                .SetFlatOutput(false)
+                .SetUseSyntheticValue(lldb::eUseSyntheticFilter)
+                .SetOmitSummaryDepth(0)
+                .SetIgnoreCap(false)
+                .SetFormat(format)
+                .SetSummary();
                 ValueObject::DumpValueObject (*(output_stream),
                                               result_valobj_sp.get(),   // Variable object to dump
-                                              result_valobj_sp->GetName().GetCString(),// Root object name
-                                              0,                        // Pointer depth to traverse (zero means stop at pointers)
-                                              0,                        // Current depth, this is the top most, so zero...
-                                              UINT32_MAX,               // Max depth to go when dumping concrete types, dump everything...
-                                              m_command_options.show_types,     // Show types when dumping?
-                                              false,                    // Show locations of variables, no since this is a host address which we don't care to see
-                                              m_command_options.print_object,   // Print the objective C object?
-                                              use_dynamic,
-                                              true,                     // Use synthetic children if available
-                                              true,                     // Scope is already checked. Const results are always in scope.
-                                              false,                    // Don't flatten output
-                                              0,                        // Always use summaries (you might want an option --no-summary like there is for frame variable)
-                                              false,                    // Do not show more children than settings allow
-                                              format);                  // Format override
+                                              options);
                 if (result)
                     result->SetStatus (eReturnStatusSuccessFinishResult);
             }

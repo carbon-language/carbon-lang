@@ -691,22 +691,22 @@ public:
 
                     bool scope_already_checked = true;
                     
+                    ValueObject::DumpValueObjectOptions options;
+                    options.SetMaximumPointerDepth(m_varobj_options.ptr_depth)
+                    .SetMaximumDepth(m_varobj_options.max_depth)
+                    .SetShowLocation(m_varobj_options.show_location)
+                    .SetShowTypes(m_varobj_options.show_types)
+                    .SetUseObjectiveC(m_varobj_options.use_objc)
+                    .SetScopeChecked(scope_already_checked)
+                    .SetFlatOutput(m_varobj_options.flat_output)
+                    .SetUseSyntheticValue(m_varobj_options.be_raw ? lldb::eNoSyntheticFilter : (m_varobj_options.use_synth ? lldb::eUseSyntheticFilter : lldb::eNoSyntheticFilter) )
+                    .SetOmitSummaryDepth(m_varobj_options.be_raw ? UINT32_MAX : m_varobj_options.no_summary_depth)
+                    .SetIgnoreCap(m_varobj_options.be_raw ? true : m_varobj_options.ignore_cap)
+                    .SetFormat(format)
+                    .SetSummary();
                     ValueObject::DumpValueObject (*output_stream,
                                                   valobj_sp.get(),
-                                                  NULL,
-                                                  m_varobj_options.ptr_depth,
-                                                  0,
-                                                  m_varobj_options.max_depth,
-                                                  m_varobj_options.show_types,
-                                                  m_varobj_options.show_location,
-                                                  m_varobj_options.use_objc,
-                                                  m_varobj_options.use_dynamic,
-                                                  m_varobj_options.be_raw ? false : m_varobj_options.use_synth,
-                                                  scope_already_checked,
-                                                  m_varobj_options.flat_output,
-                                                  m_varobj_options.be_raw ? UINT32_MAX : m_varobj_options.no_summary_depth,
-                                                  m_varobj_options.be_raw ? true : m_varobj_options.ignore_cap,
-                                                  format);
+                                                  options);
                 }
                 else
                 {

@@ -408,7 +408,7 @@ public:
         
         ValueObject::DumpValueObjectOptions options;
         
-        options.SetPointerDepth(m_varobj_options.ptr_depth)
+        options.SetMaximumPointerDepth(m_varobj_options.ptr_depth)
             .SetMaximumDepth(m_varobj_options.max_depth)
             .SetShowTypes(m_varobj_options.show_types)
             .SetShowLocation(m_varobj_options.show_location)
@@ -417,7 +417,8 @@ public:
             .SetUseSyntheticValue((lldb::SyntheticValueType)m_varobj_options.use_synth)
             .SetFlatOutput(m_varobj_options.flat_output)
             .SetOmitSummaryDepth(m_varobj_options.no_summary_depth)
-            .SetIgnoreCap(m_varobj_options.ignore_cap);
+            .SetIgnoreCap(m_varobj_options.ignore_cap)
+            .SetSummary(summary_format_sp);
 
         if (m_varobj_options.be_raw)
             options.SetRawDisplay(true);
@@ -425,6 +426,7 @@ public:
         if (variable_list)
         {
             const Format format = m_option_format.GetFormat();
+            options.SetFormat(format);
 
             if (command.GetArgumentCount() > 0)
             {
@@ -466,12 +468,9 @@ public:
                                                 if (var_sp->DumpDeclaration(&s, show_fullpaths, show_module))
                                                     s.PutCString (": ");
                                             }
-                                            if (summary_format_sp)
-                                                valobj_sp->SetCustomSummaryFormat(summary_format_sp);
                                             ValueObject::DumpValueObject (result.GetOutputStream(), 
                                                                           valobj_sp.get(),
-                                                                          options,
-                                                                          format);
+                                                                          options);
                                         }
                                     }
                                 }
@@ -509,15 +508,14 @@ public:
                                 var_sp->GetDeclaration ().DumpStopContext (&s, false);
                                 s.PutCString (": ");
                             }
-                            if (summary_format_sp)
-                                valobj_sp->SetCustomSummaryFormat(summary_format_sp);
+                            
+                            options.SetFormat(format);
 
                             Stream &output_stream = result.GetOutputStream();
+                            options.SetRootValueObjectName(valobj_sp->GetParent() ? name_cstr : NULL);
                             ValueObject::DumpValueObject (output_stream, 
                                                           valobj_sp.get(), 
-                                                          valobj_sp->GetParent() ? name_cstr : NULL,
-                                                          options,
-                                                          format);
+                                                          options);
                         }
                         else
                         {
@@ -590,13 +588,12 @@ public:
                                         var_sp->GetDeclaration ().DumpStopContext (&s, false);
                                         s.PutCString (": ");
                                     }
-                                    if (summary_format_sp)
-                                        valobj_sp->SetCustomSummaryFormat(summary_format_sp);
+                                    
+                                    options.SetFormat(format);
+                                    options.SetRootValueObjectName(name_cstr);
                                     ValueObject::DumpValueObject (result.GetOutputStream(), 
                                                                   valobj_sp.get(), 
-                                                                  name_cstr,
-                                                                  options,
-                                                                  format);
+                                                                  options);
                                 }
                             }
                         }

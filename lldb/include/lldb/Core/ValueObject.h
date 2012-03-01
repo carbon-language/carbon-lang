@@ -205,7 +205,7 @@ public:
     
     struct DumpValueObjectOptions
     {
-        uint32_t m_ptr_depth;
+        uint32_t m_max_ptr_depth;
         uint32_t m_max_depth;
         bool m_show_types;
         bool m_show_location;
@@ -216,10 +216,12 @@ public:
         bool m_flat_output;
         uint32_t m_omit_summary_depth;
         bool m_ignore_cap;
-        lldb::Format m_override_format;
+        lldb::Format m_format;
+        lldb::TypeSummaryImplSP m_summary_sp;
+        std::string m_root_valobj_name;
         
         DumpValueObjectOptions() :
-            m_ptr_depth(0),
+            m_max_ptr_depth(0),
             m_max_depth(UINT32_MAX),
             m_show_types(false),
             m_show_location(false),
@@ -230,7 +232,9 @@ public:
             m_flat_output(false),
             m_omit_summary_depth(0),
             m_ignore_cap(false), 
-            m_override_format (lldb::eFormatDefault)
+            m_format (lldb::eFormatDefault),
+            m_summary_sp(),
+            m_root_valobj_name()
         {}
         
         static const DumpValueObjectOptions
@@ -241,10 +245,27 @@ public:
             return g_default_options;
         }
         
+        DumpValueObjectOptions (const DumpValueObjectOptions& rhs) :
+            m_max_ptr_depth(rhs.m_max_ptr_depth),
+            m_max_depth(rhs.m_max_depth),
+            m_show_types(rhs.m_show_types),
+            m_show_location(rhs.m_show_location),
+            m_use_objc(rhs.m_use_objc),
+            m_use_dynamic(rhs.m_use_dynamic),
+            m_use_synthetic(rhs.m_use_synthetic),
+            m_scope_already_checked(rhs.m_scope_already_checked),
+            m_flat_output(rhs.m_flat_output),
+            m_omit_summary_depth(rhs.m_omit_summary_depth),
+            m_ignore_cap(rhs.m_ignore_cap),
+            m_format(rhs.m_format),
+            m_summary_sp(rhs.m_summary_sp),
+            m_root_valobj_name(rhs.m_root_valobj_name)
+        {}
+        
         DumpValueObjectOptions&
-        SetPointerDepth(uint32_t depth = 0)
+        SetMaximumPointerDepth(uint32_t depth = 0)
         {
-            m_ptr_depth = depth;
+            m_max_ptr_depth = depth;
             return *this;
         }
         
@@ -333,6 +354,30 @@ public:
                 SetOmitSummaryDepth(0);
                 SetIgnoreCap(false);
             }
+            return *this;
+        }
+
+        DumpValueObjectOptions&
+        SetFormat (lldb::Format format = lldb::eFormatDefault)
+        {
+            m_format = format;
+            return *this;
+        }
+        
+        DumpValueObjectOptions&
+        SetSummary (lldb::TypeSummaryImplSP summary = lldb::TypeSummaryImplSP())
+        {
+            m_summary_sp = summary;
+            return *this;
+        }
+        
+        DumpValueObjectOptions&
+        SetRootValueObjectName (const char* name = NULL)
+        {
+            if (name)
+                m_root_valobj_name.assign(name);
+            else
+                m_root_valobj_name.clear();
             return *this;
         }
 
@@ -612,6 +657,10 @@ public:
     virtual const char *
     GetValueAsCString ();
     
+    virtual bool
+    GetValueAsCString (lldb::Format format,
+                       std::string& destination);
+    
     virtual uint64_t
     GetValueAsUnsigned (uint64_t fail_value);
 
@@ -667,6 +716,10 @@ public:
 
     const char *
     GetSummaryAsCString ();
+    
+    bool
+    GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
+                         std::string& destination);
     
     const char *
     GetObjectDescription ();
@@ -805,106 +858,11 @@ public:
     
     static void
     DumpValueObject (Stream &s,
-                     ValueObject *valobj)
-    {
-        
-        if (!valobj)
-            return;
-        
-        ValueObject::DumpValueObject(s,
-                                     valobj,
-                                     DumpValueObjectOptions::DefaultOptions());
-    }
-    
+                     ValueObject *valobj);    
     static void
     DumpValueObject (Stream &s,
                      ValueObject *valobj,
-                     const char *root_valobj_name)
-    {
-        
-        if (!valobj)
-            return;
-        
-        ValueObject::DumpValueObject(s,
-                                     valobj,
-                                     root_valobj_name,
-                                     DumpValueObjectOptions::DefaultOptions());
-    }
-
-    static void
-    DumpValueObject (Stream &s,
-                     ValueObject *valobj,
-                     const DumpValueObjectOptions& options,
-                     lldb::Format format = lldb::eFormatDefault)
-    {
-        
-        if (!valobj)
-            return;
-        
-        ValueObject::DumpValueObject(s,
-                                     valobj,
-                                     valobj->GetName().AsCString(),
-                                     options.m_ptr_depth,
-                                     0,
-                                     options.m_max_depth,
-                                     options.m_show_types,
-                                     options.m_show_location,
-                                     options.m_use_objc,
-                                     options.m_use_dynamic,
-                                     options.m_use_synthetic,
-                                     options.m_scope_already_checked,
-                                     options.m_flat_output,
-                                     options.m_omit_summary_depth,
-                                     options.m_ignore_cap,
-                                     format);
-    }
-                     
-    static void
-    DumpValueObject (Stream &s,
-                     ValueObject *valobj,
-                     const char *root_valobj_name,
-                     const DumpValueObjectOptions& options,
-                     lldb::Format format = lldb::eFormatDefault)
-    {
-        
-        if (!valobj)
-            return;
-        
-        ValueObject::DumpValueObject(s,
-                                     valobj,
-                                     root_valobj_name,
-                                     options.m_ptr_depth,
-                                     0,
-                                     options.m_max_depth,
-                                     options.m_show_types,
-                                     options.m_show_location,
-                                     options.m_use_objc,
-                                     options.m_use_dynamic,
-                                     options.m_use_synthetic,
-                                     options.m_scope_already_checked,
-                                     options.m_flat_output,
-                                     options.m_omit_summary_depth,
-                                     options.m_ignore_cap,
-                                     format);
-    }
-    
-    static void
-    DumpValueObject (Stream &s,
-                     ValueObject *valobj,
-                     const char *root_valobj_name,
-                     uint32_t ptr_depth,
-                     uint32_t curr_depth,
-                     uint32_t max_depth,
-                     bool show_types,
-                     bool show_location,
-                     bool use_objc,
-                     lldb::DynamicValueType use_dynamic,
-                     bool use_synthetic,
-                     bool scope_already_checked,
-                     bool flat_output,
-                     uint32_t omit_summary_depth,
-                     bool ignore_cap,
-                     lldb::Format format = lldb::eFormatDefault);
+                     const DumpValueObjectOptions& options);
     
     // returns true if this is a char* or a char[]
     // if it is a char* and check_pointer is true,
@@ -955,47 +913,17 @@ public:
         m_format = format;
     }
     
-    void
-    SetCustomSummaryFormat(lldb::TypeSummaryImplSP format)
-    {
-        m_forced_summary_format = format;
-        m_user_id_of_forced_summary = m_update_point.GetModID();
-        m_summary_str.clear();
-        m_is_getting_summary = false;
-    }
-    
-    lldb::TypeSummaryImplSP
-    GetCustomSummaryFormat()
-    {
-        return m_forced_summary_format;
-    }
-    
-    void
-    ClearCustomSummaryFormat()
-    {
-        m_forced_summary_format.reset();
-        m_summary_str.clear();
-    }
-    
-    bool
-    HasCustomSummaryFormat()
-    {
-        return (m_forced_summary_format.get());
-    }
-    
     lldb::TypeSummaryImplSP
     GetSummaryFormat()
     {
         UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
-        if (HasCustomSummaryFormat())
-            return m_forced_summary_format;
-        return m_last_summary_format;
+        return m_type_summary_sp;
     }
     
     void
     SetSummaryFormat(lldb::TypeSummaryImplSP format)
     {
-        m_last_summary_format = format;
+        m_type_summary_sp = format;
         m_summary_str.clear();
         m_is_getting_summary = false;
     }
@@ -1003,7 +931,7 @@ public:
     void
     SetValueFormat(lldb::TypeFormatImplSP format)
     {
-        m_last_value_format = format;
+        m_type_format_sp = format;
         m_value_str.clear();
     }
     
@@ -1011,13 +939,13 @@ public:
     GetValueFormat()
     {
         UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
-        return m_last_value_format;
+        return m_type_format_sp;
     }
     
     void
     SetSyntheticChildren(lldb::SyntheticChildrenSP synth)
     {
-        m_last_synthetic_filter = synth;
+        m_synthetic_children_sp = synth;
         m_synthetic_value = NULL;
     }
     
@@ -1025,7 +953,7 @@ public:
     GetSyntheticChildren()
     {
         UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
-        return m_last_synthetic_filter;
+        return m_synthetic_children_sp;
     }
 
     // Use GetParent for display purposes, but if you want to tell the parent to update itself
@@ -1105,10 +1033,9 @@ protected:
     lldb::Format                m_format;
     uint32_t                    m_last_format_mgr_revision;
     lldb::DynamicValueType      m_last_format_mgr_dynamic;
-    lldb::TypeSummaryImplSP     m_last_summary_format;
-    lldb::TypeSummaryImplSP     m_forced_summary_format;
-    lldb::TypeFormatImplSP      m_last_value_format;
-    lldb::SyntheticChildrenSP   m_last_synthetic_filter;
+    lldb::TypeSummaryImplSP     m_type_summary_sp;
+    lldb::TypeFormatImplSP      m_type_format_sp;
+    lldb::SyntheticChildrenSP   m_synthetic_children_sp;
     ProcessModID                m_user_id_of_forced_summary;
     AddressType                 m_address_type_of_ptr_or_ref_children;
     

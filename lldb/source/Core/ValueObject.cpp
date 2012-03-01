@@ -80,10 +80,9 @@ ValueObject::ValueObject (ValueObject &parent) :
     m_format (eFormatDefault),
     m_last_format_mgr_revision(0),
     m_last_format_mgr_dynamic(parent.m_last_format_mgr_dynamic),
-    m_last_summary_format(),
-    m_forced_summary_format(),
-    m_last_value_format(),
-    m_last_synthetic_filter(),
+    m_type_summary_sp(),
+    m_type_format_sp(),
+    m_synthetic_children_sp(),
     m_user_id_of_forced_summary(),
     m_address_type_of_ptr_or_ref_children(eAddressTypeInvalid),
     m_value_is_valid (false),
@@ -127,10 +126,9 @@ ValueObject::ValueObject (ExecutionContextScope *exe_scope,
     m_format (eFormatDefault),
     m_last_format_mgr_revision(0),
     m_last_format_mgr_dynamic(eNoDynamicValues),
-    m_last_summary_format(),
-    m_forced_summary_format(),
-    m_last_value_format(),
-    m_last_synthetic_filter(),
+    m_type_summary_sp(),
+    m_type_format_sp(),
+    m_synthetic_children_sp(),
     m_user_id_of_forced_summary(),
     m_address_type_of_ptr_or_ref_children(child_ptr_or_ref_addr_type),
     m_value_is_valid (false),
@@ -239,13 +237,6 @@ ValueObject::UpdateFormatsIfNeeded(DynamicValueType use_dynamic)
            DataVisualization::GetCurrentRevision());
     
     bool any_change = false;
-    
-    if (HasCustomSummaryFormat() && m_update_point.GetModID() != m_user_id_of_forced_summary)
-    {
-        ClearCustomSummaryFormat();
-        
-        any_change = true;
-    }
     
     if ( (m_last_format_mgr_revision != DataVisualization::GetCurrentRevision()) ||
           m_last_format_mgr_dynamic != use_dynamic)
@@ -656,87 +647,94 @@ ValueObject::CreateChildAtIndex (uint32_t idx, bool synthetic_array_member, int3
     return valobj;
 }
 
-const char *
-ValueObject::GetSummaryAsCString ()
+bool
+ValueObject::GetSummaryAsCString (TypeSummaryImpl* summary_ptr,
+                                  std::string& destination)
 {
-    // Watch for recursion which can happen with summary strings and other
-    // variable formatting options.
-    if (m_is_getting_summary)
-        return NULL;
+    destination.clear();
+
+    // ideally we would like to bail out if passing NULL, but if we do so
+    // we end up not providing the summary for function pointers anymore
+    if (/*summary_ptr == NULL ||*/ m_is_getting_summary)
+        return false;
     
     m_is_getting_summary = true;
-
-    if (UpdateValueIfNeeded (true))
-    {        
-        if (m_summary_str.empty())
+    if (UpdateValueIfNeeded (false))
+    {
+        if (summary_ptr)
         {
-            TypeSummaryImpl *summary_format = GetSummaryFormat().get();
-
-            if (summary_format)
+            summary_ptr->FormatObject(GetSP(), destination);
+        }
+        else
+        {
+            clang_type_t clang_type = GetClangType();
+            
+            // Do some default printout for function pointers
+            if (clang_type)
             {
-                 summary_format->FormatObject(GetSP(),
-                                              m_summary_str);
-            }
-            else
-            {
-                clang_type_t clang_type = GetClangType();
-
-                // Do some default printout for function pointers
-                if (clang_type)
+                StreamString sstr;
+                clang_type_t elem_or_pointee_clang_type;
+                const Flags type_flags (ClangASTContext::GetTypeInfo (clang_type, 
+                                                                      GetClangAST(), 
+                                                                      &elem_or_pointee_clang_type));
+                
+                if (ClangASTContext::IsFunctionPointerType (clang_type))
                 {
-                    StreamString sstr;
-                    clang_type_t elem_or_pointee_clang_type;
-                    const Flags type_flags (ClangASTContext::GetTypeInfo (clang_type, 
-                                                                          GetClangAST(), 
-                                                                          &elem_or_pointee_clang_type));
-
-                    if (ClangASTContext::IsFunctionPointerType (clang_type))
+                    AddressType func_ptr_address_type = eAddressTypeInvalid;
+                    addr_t func_ptr_address = GetPointerValue (&func_ptr_address_type);
+                    if (func_ptr_address != 0 && func_ptr_address != LLDB_INVALID_ADDRESS)
                     {
-                        AddressType func_ptr_address_type = eAddressTypeInvalid;
-                        addr_t func_ptr_address = GetPointerValue (&func_ptr_address_type);
-                        if (func_ptr_address != 0 && func_ptr_address != LLDB_INVALID_ADDRESS)
+                        switch (func_ptr_address_type)
                         {
-                            switch (func_ptr_address_type)
-                            {
                             case eAddressTypeInvalid:
                             case eAddressTypeFile:
                                 break;
-
+                                
                             case eAddressTypeLoad:
+                            {
+                                ExecutionContext exe_ctx (GetExecutionContextRef());
+                                
+                                Address so_addr;
+                                Target *target = exe_ctx.GetTargetPtr();
+                                if (target && target->GetSectionLoadList().IsEmpty() == false)
                                 {
-                                    ExecutionContext exe_ctx (GetExecutionContextRef());
-
-                                    Address so_addr;
-                                    Target *target = exe_ctx.GetTargetPtr();
-                                    if (target && target->GetSectionLoadList().IsEmpty() == false)
+                                    if (target->GetSectionLoadList().ResolveLoadAddress(func_ptr_address, so_addr))
                                     {
-                                        if (target->GetSectionLoadList().ResolveLoadAddress(func_ptr_address, so_addr))
-                                        {
-                                            so_addr.Dump (&sstr, 
-                                                          exe_ctx.GetBestExecutionContextScope(), 
-                                                          Address::DumpStyleResolvedDescription, 
-                                                          Address::DumpStyleSectionNameOffset);
-                                        }
+                                        so_addr.Dump (&sstr, 
+                                                      exe_ctx.GetBestExecutionContextScope(), 
+                                                      Address::DumpStyleResolvedDescription, 
+                                                      Address::DumpStyleSectionNameOffset);
                                     }
                                 }
+                            }
                                 break;
-
+                                
                             case eAddressTypeHost:
                                 break;
-                            }
                         }
-                        if (sstr.GetSize() > 0)
-                        {
-                            m_summary_str.assign (1, '(');
-                            m_summary_str.append (sstr.GetData(), sstr.GetSize());
-                            m_summary_str.append (1, ')');
-                        }
+                    }
+                    if (sstr.GetSize() > 0)
+                    {
+                        destination.assign (1, '(');
+                        destination.append (sstr.GetData(), sstr.GetSize());
+                        destination.append (1, ')');
                     }
                 }
             }
         }
     }
     m_is_getting_summary = false;
+    return !destination.empty();
+}
+
+const char *
+ValueObject::GetSummaryAsCString ()
+{
+    if (UpdateValueIfNeeded(true) && m_summary_str.empty())
+    {
+        GetSummaryAsCString(GetSummaryFormat().get(),
+                            m_summary_str);
+    }
     if (m_summary_str.empty())
         return NULL;
     return m_summary_str.c_str();
@@ -1100,110 +1098,113 @@ ValueObject::GetObjectDescription ()
         return m_object_desc_str.c_str();
 }
 
+bool
+ValueObject::GetValueAsCString (lldb::Format format,
+                                std::string& destination)
+{
+    if (ClangASTContext::IsAggregateType (GetClangType()) == false &&
+        UpdateValueIfNeeded(false))
+    {
+        const Value::ContextType context_type = m_value.GetContextType();
+        
+        switch (context_type)
+        {
+            case Value::eContextTypeClangType:
+            case Value::eContextTypeLLDBType:
+            case Value::eContextTypeVariable:
+            {
+                clang_type_t clang_type = GetClangType ();
+                if (clang_type)
+                {
+                    StreamString sstr;
+                    ExecutionContext exe_ctx (GetExecutionContextRef());
+                    ClangASTType::DumpTypeValue (GetClangAST(),             // The clang AST
+                                                 clang_type,                // The clang type to display
+                                                 &sstr,
+                                                 format,                    // Format to display this type with
+                                                 m_data,                    // Data to extract from
+                                                 0,                         // Byte offset into "m_data"
+                                                 GetByteSize(),             // Byte size of item in "m_data"
+                                                 GetBitfieldBitSize(),      // Bitfield bit size
+                                                 GetBitfieldBitOffset(),    // Bitfield bit offset
+                                                 exe_ctx.GetBestExecutionContextScope()); 
+                    // Don't set the m_error to anything here otherwise
+                    // we won't be able to re-format as anything else. The
+                    // code for ClangASTType::DumpTypeValue() should always
+                    // return something, even if that something contains
+                    // an error messsage. "m_error" is used to detect errors
+                    // when reading the valid object, not for formatting errors.
+                    if (sstr.GetString().empty())
+                        destination.clear();
+                    else
+                        destination.swap(sstr.GetString());
+                }
+            }
+                break;
+                
+            case Value::eContextTypeRegisterInfo:
+            {
+                const RegisterInfo *reg_info = m_value.GetRegisterInfo();
+                if (reg_info)
+                {
+                    ExecutionContext exe_ctx (GetExecutionContextRef());
+                    
+                    StreamString reg_sstr;
+                    m_data.Dump (&reg_sstr, 
+                                 0, 
+                                 format, 
+                                 reg_info->byte_size, 
+                                 1, 
+                                 UINT32_MAX, 
+                                 LLDB_INVALID_ADDRESS, 
+                                 0, 
+                                 0, 
+                                 exe_ctx.GetBestExecutionContextScope());
+                    destination.swap(reg_sstr.GetString());
+                }
+            }
+                break;
+                
+            default:
+                break;
+        }
+        return !destination.empty();
+    }
+    else
+        return false;
+}
+
 const char *
 ValueObject::GetValueAsCString ()
 {
-    // If our byte size is zero this is an aggregate type that has children
-    if (ClangASTContext::IsAggregateType (GetClangType()) == false)
+    if (UpdateValueIfNeeded(true) && m_value_str.empty())
     {
-        if (UpdateValueIfNeeded(true))
+        lldb::Format my_format = GetFormat();
+        if (m_format == lldb::eFormatDefault)
         {
-            if (m_value_str.empty())
+            if (m_type_format_sp)
+                my_format = m_type_format_sp->GetFormat();
+            else
             {
-                const Value::ContextType context_type = m_value.GetContextType();
-
-                switch (context_type)
+                if (m_is_bitfield_for_scalar)
+                    my_format = eFormatUnsigned;
+                else
                 {
-                case Value::eContextTypeClangType:
-                case Value::eContextTypeLLDBType:
-                case Value::eContextTypeVariable:
-                    {
-                        lldb::Format my_format = GetFormat();
-                        clang_type_t clang_type = GetClangType ();
-                        if (clang_type)
-                        {
-                            if (m_format == lldb::eFormatDefault)
-                            {
-                                if (m_last_value_format)
-                                    my_format = m_last_value_format->GetFormat();
-                                else
-                                {
-                                    if (m_is_bitfield_for_scalar)
-                                        my_format = eFormatUnsigned;
-                                    else
-                                        my_format = ClangASTType::GetFormat(clang_type);
-                                }
-                            }
-                            StreamString sstr;
-                            ExecutionContext exe_ctx (GetExecutionContextRef());
-                            ClangASTType::DumpTypeValue (GetClangAST(),             // The clang AST
-                                                         clang_type,                // The clang type to display
-                                                         &sstr,
-                                                         my_format,                 // Format to display this type with
-                                                         m_data,                    // Data to extract from
-                                                         0,                         // Byte offset into "m_data"
-                                                         GetByteSize(),             // Byte size of item in "m_data"
-                                                         GetBitfieldBitSize(),      // Bitfield bit size
-                                                         GetBitfieldBitOffset(),    // Bitfield bit offset
-                                                         exe_ctx.GetBestExecutionContextScope()); 
-                            // Don't set the m_error to anything here otherwise
-                            // we won't be able to re-format as anything else. The
-                            // code for ClangASTType::DumpTypeValue() should always
-                            // return something, even if that something contains
-                            // an error messsage. "m_error" is used to detect errors
-                            // when reading the valid object, not for formatting errors.
-                            if (sstr.GetString().empty())
-                                m_value_str.clear();
-                            else
-                                m_value_str.swap(sstr.GetString());
-                        }
-                    }
-                    break;
-
-                case Value::eContextTypeRegisterInfo:
+                    if (m_value.GetContextType() == Value::eContextTypeRegisterInfo)
                     {
                         const RegisterInfo *reg_info = m_value.GetRegisterInfo();
                         if (reg_info)
-                        {
-                            lldb::Format my_format = GetFormat();
-                            if (m_format == lldb::eFormatDefault)
-                            {
-                                if (m_last_value_format)
-                                    my_format = m_last_value_format->GetFormat();
-                                else
-                                    my_format = reg_info->format;
-                            }
-                            
-                            ExecutionContext exe_ctx (GetExecutionContextRef());
-
-                            StreamString reg_sstr;
-                            m_data.Dump (&reg_sstr, 
-                                         0, 
-                                         my_format, 
-                                         reg_info->byte_size, 
-                                         1, 
-                                         UINT32_MAX, 
-                                         LLDB_INVALID_ADDRESS, 
-                                         0, 
-                                         0, 
-                                         exe_ctx.GetBestExecutionContextScope());
-                            m_value_str.swap(reg_sstr.GetString());
-                        }
+                            my_format = reg_info->format;
                     }
-                    break;
-                    
-                default:
-                    break;
+                    else
+                    {
+                        clang_type_t clang_type = GetClangType ();
+                        my_format = ClangASTType::GetFormat(clang_type);
+                    }
                 }
             }
-            
-            if (!m_value_did_change && m_old_value_valid)
-            {
-                // The value was gotten successfully, so we consider the
-                // value as changed if the value string differs
-                SetValueDidChange (m_old_value_str != m_value_str);
-            }
         }
+        GetValueAsCString(my_format, m_value_str);
     }
     if (m_value_str.empty())
         return NULL;
@@ -1977,11 +1978,11 @@ ValueObject::CalculateSyntheticValue (SyntheticValueType use_synthetic)
     
     UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
     
-    if (m_last_synthetic_filter.get() == NULL)
+    if (m_synthetic_children_sp.get() == NULL)
         return;
     
     if (m_synthetic_value == NULL)
-        m_synthetic_value = new ValueObjectSynthetic(*this, m_last_synthetic_filter);
+        m_synthetic_value = new ValueObjectSynthetic(*this, m_synthetic_children_sp);
     
 }
 
@@ -2063,7 +2064,7 @@ ValueObject::GetSyntheticValue (SyntheticValueType use_synthetic)
     
     UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
     
-    if (m_last_synthetic_filter.get() == NULL)
+    if (m_synthetic_children_sp.get() == NULL)
         return GetSP();
     
     CalculateSyntheticValue(use_synthetic);
@@ -2079,7 +2080,7 @@ ValueObject::HasSyntheticValue()
 {
     UpdateFormatsIfNeeded(m_last_format_mgr_dynamic);
     
-    if (m_last_synthetic_filter.get() == NULL)
+    if (m_synthetic_children_sp.get() == NULL)
         return false;
     
     CalculateSyntheticValue(eUseSyntheticFilter);
@@ -3066,34 +3067,25 @@ ValueObject::ExpandArraySliceExpression(const char* expression_cstr,
     }
 }
 
-void
-ValueObject::DumpValueObject 
-(
-    Stream &s,
-    ValueObject *valobj,
-    const char *root_valobj_name,
-    uint32_t ptr_depth,
-    uint32_t curr_depth,
-    uint32_t max_depth,
-    bool show_types,
-    bool show_location,
-    bool use_objc,
-    DynamicValueType use_dynamic,
-    bool use_synth,
-    bool scope_already_checked,
-    bool flat_output,
-    uint32_t omit_summary_depth,
-    bool ignore_cap,
-    Format format_override       // Normally the format is in the valobj, but we might want to override this
-)
+static void
+DumpValueObject_Impl (Stream &s,
+                      ValueObject *valobj,
+                      const ValueObject::DumpValueObjectOptions& options,
+                      uint32_t ptr_depth,
+                      uint32_t curr_depth)
 {
     if (valobj)
     {
-        bool update_success = valobj->UpdateValueIfNeeded (use_dynamic, true);
+        bool update_success = valobj->UpdateValueIfNeeded (options.m_use_dynamic, true);
 
-        if (update_success && use_dynamic != eNoDynamicValues)
+        const char *root_valobj_name = 
+            options.m_root_valobj_name.empty() ? 
+                valobj->GetName().AsCString() :
+                options.m_root_valobj_name.c_str();
+        
+        if (update_success && options.m_use_dynamic != eNoDynamicValues)
         {
-            ValueObject *dynamic_value = valobj->GetDynamicValue(use_dynamic).get();
+            ValueObject *dynamic_value = valobj->GetDynamicValue(options.m_use_dynamic).get();
             if (dynamic_value)
                 valobj = dynamic_value;
         }
@@ -3105,11 +3097,11 @@ ValueObject::DumpValueObject
         const bool has_children = type_flags.Test (ClangASTContext::eTypeHasChildren);
         const bool has_value = type_flags.Test (ClangASTContext::eTypeHasValue);
         
-        const bool print_valobj = flat_output == false || has_value;
+        const bool print_valobj = options.m_flat_output == false || has_value;
         
         if (print_valobj)
         {
-            if (show_location)
+            if (options.m_show_location)
             {
                 s.Printf("%s: ", valobj->GetLocationAsCString());
             }
@@ -3117,12 +3109,12 @@ ValueObject::DumpValueObject
             s.Indent();
 
             // Always show the type for the top level items.
-            if (show_types || (curr_depth == 0 && !flat_output))
+            if (options.m_show_types || (curr_depth == 0 && !options.m_flat_output))
             {
                 const char* typeName = valobj->GetTypeName().AsCString("<invalid type>");
                 s.Printf("(%s", typeName);
                 // only show dynamic types if the user really wants to see types
-                if (show_types && use_dynamic != eNoDynamicValues &&
+                if (options.m_show_types && options.m_use_dynamic != eNoDynamicValues &&
                     (/*strstr(typeName, "id") == typeName ||*/
                      ClangASTType::GetMinimumLanguage(valobj->GetClangAST(), valobj->GetClangType()) == eLanguageTypeObjC))
                 {
@@ -3151,10 +3143,10 @@ ValueObject::DumpValueObject
             }
 
 
-            if (flat_output)
+            if (options.m_flat_output)
             {
                 // If we are showing types, also qualify the C++ base classes 
-                const bool qualify_cxx_base_classes = show_types;
+                const bool qualify_cxx_base_classes = options.m_show_types;
                 valobj->GetExpressionPath(s, qualify_cxx_base_classes);
                 s.PutCString(" =");
             }
@@ -3164,39 +3156,33 @@ ValueObject::DumpValueObject
                 s.Printf ("%s =", name_cstr);
             }
 
-            if (!scope_already_checked && !valobj->IsInScope())
+            if (!options.m_scope_already_checked && !valobj->IsInScope())
             {
                 err_cstr = "out of scope";
             }
         }
         
+        std::string summary_str;
         std::string value_str;
         const char *val_cstr = NULL;
         const char *sum_cstr = NULL;
-        TypeSummaryImpl* entry = valobj->GetSummaryFormat().get();
+        TypeSummaryImpl* entry = options.m_summary_sp ? options.m_summary_sp.get() : valobj->GetSummaryFormat().get();
         
-        if (omit_summary_depth > 0)
+        if (options.m_omit_summary_depth > 0)
             entry = NULL;
         
-        Format orig_format = kNumFormats;
         if (err_cstr == NULL)
         {
-            if (format_override != eFormatDefault)
+            if (options.m_format != eFormatDefault && options.m_format != valobj->GetFormat())
             {
-                orig_format = valobj->GetFormat();
-                valobj->SetFormat (format_override);
+                valobj->GetValueAsCString(options.m_format,
+                                          value_str);
             }
-            val_cstr = valobj->GetValueAsCString();
-            if (val_cstr)
+            else
             {
-                // Cache the value in our own storage as running summaries might
-                // change our value from underneath us
-                value_str = val_cstr;
-            }
-            if (orig_format != kNumFormats && orig_format != format_override)
-            {
-                valobj->SetFormat (orig_format);
-                orig_format = kNumFormats;
+                val_cstr = valobj->GetValueAsCString();
+                if (val_cstr)
+                    value_str = val_cstr;
             }
             err_cstr = valobj->GetError().AsCString();
         }
@@ -3210,8 +3196,16 @@ ValueObject::DumpValueObject
             const bool is_ref = type_flags.Test (ClangASTContext::eTypeIsReference);
             if (print_valobj)
             {
-                if (omit_summary_depth == 0)
-                    sum_cstr = valobj->GetSummaryAsCString();
+                if (options.m_omit_summary_depth == 0)
+                {
+                    if (options.m_summary_sp)
+                    {
+                        valobj->GetSummaryAsCString(entry, summary_str);
+                        sum_cstr = summary_str.c_str();
+                    }
+                    else
+                        sum_cstr = valobj->GetSummaryAsCString();
+                }
 
                 // Make sure we have a value and make sure the summary didn't
                 // specify that the value should not be printed
@@ -3219,18 +3213,9 @@ ValueObject::DumpValueObject
                     s.Printf(" %s", value_str.c_str());
 
                 if (sum_cstr)
-                {
-                    // for some reason, using %@ (ObjC description) in a summary string, makes
-                    // us believe we need to reset ourselves, thus invalidating the content of
-                    // sum_cstr. Thus, IF we had a valid sum_cstr before, but it is now empty
-                    // let us recalculate it!
-                    if (sum_cstr[0] == '\0')
-                        s.Printf(" %s", valobj->GetSummaryAsCString());
-                    else
-                        s.Printf(" %s", sum_cstr);
-                }
+                    s.Printf(" %s", sum_cstr);
                 
-                if (use_objc)
+                if (options.m_use_objc)
                 {
                     const char *object_desc = valobj->GetObjectDescription();
                     if (object_desc)
@@ -3241,7 +3226,7 @@ ValueObject::DumpValueObject
                 }
             }
 
-            if (curr_depth < max_depth)
+            if (curr_depth < options.m_max_depth)
             {
                 // We will show children for all concrete types. We won't show
                 // pointer contents unless a pointer depth has been specified.
@@ -3277,14 +3262,14 @@ ValueObject::DumpValueObject
                 
                 if (print_children && (!entry || entry->DoesPrintChildren() || !sum_cstr))
                 {
-                    ValueObjectSP synth_valobj = valobj->GetSyntheticValue (use_synth ?
+                    ValueObjectSP synth_valobj = valobj->GetSyntheticValue (options.m_use_synthetic ?
                                                                             eUseSyntheticFilter : 
                                                                             eNoSyntheticFilter);
                     uint32_t num_children = synth_valobj->GetNumChildren();
                     bool print_dotdotdot = false;
                     if (num_children)
                     {
-                        if (flat_output)
+                        if (options.m_flat_output)
                         {
                             if (print_valobj)
                                 s.EOL();
@@ -3298,37 +3283,30 @@ ValueObject::DumpValueObject
                         
                         uint32_t max_num_children = valobj->GetTargetSP()->GetMaximumNumberOfChildrenToDisplay();
                         
-                        if (num_children > max_num_children && !ignore_cap)
+                        if (num_children > max_num_children && !options.m_ignore_cap)
                         {
                             num_children = max_num_children;
                             print_dotdotdot = true;
                         }
 
+                        ValueObject::DumpValueObjectOptions child_options(options);
+                        child_options.SetFormat().SetSummary().SetRootValueObjectName();
+                        child_options.SetScopeChecked(true)
+                        .SetOmitSummaryDepth(child_options.m_omit_summary_depth > 1 ? child_options.m_omit_summary_depth - 1 : 0);
                         for (uint32_t idx=0; idx<num_children; ++idx)
                         {
                             ValueObjectSP child_sp(synth_valobj->GetChildAtIndex(idx, true));
                             if (child_sp.get())
                             {
-                                DumpValueObject (s,
-                                                 child_sp.get(),
-                                                 NULL,
-                                                 (is_ptr || is_ref) ? curr_ptr_depth - 1 : curr_ptr_depth,
-                                                 curr_depth + 1,
-                                                 max_depth,
-                                                 show_types,
-                                                 show_location,
-                                                 false,
-                                                 use_dynamic,
-                                                 use_synth,
-                                                 true,
-                                                 flat_output,
-                                                 omit_summary_depth > 1 ? omit_summary_depth - 1 : 0,
-                                                 ignore_cap,
-                                                 format_override);
+                                DumpValueObject_Impl (s,
+                                                      child_sp.get(),
+                                                      child_options,
+                                                      (is_ptr || is_ref) ? curr_ptr_depth - 1 : curr_ptr_depth,
+                                                      curr_depth + 1);
                             }
                         }
 
-                        if (!flat_output)
+                        if (!options.m_flat_output)
                         {
                             if (print_dotdotdot)
                             {
@@ -3371,6 +3349,33 @@ ValueObject::DumpValueObject
     }
 }
 
+void
+ValueObject::DumpValueObject (Stream &s,
+                              ValueObject *valobj)
+{
+    
+    if (!valobj)
+        return;
+    
+    DumpValueObject_Impl(s,
+                         valobj,
+                         DumpValueObjectOptions::DefaultOptions(),
+                         0,
+                         0);
+}
+
+void
+ValueObject::DumpValueObject (Stream &s,
+                              ValueObject *valobj,
+                              const DumpValueObjectOptions& options)
+{
+    DumpValueObject_Impl(s,
+                         valobj,
+                         options,
+                         options.m_max_ptr_depth, // max pointer depth allowed, we will go down from here
+                         0 // current object depth is 0 since we are just starting
+                         );
+}
 
 ValueObjectSP
 ValueObject::CreateConstantValue (const ConstString &name)
@@ -3833,6 +3838,7 @@ ValueObject::ClearUserVisibleData()
     m_value_str.clear();
     m_summary_str.clear();
     m_object_desc_str.clear();
+    m_synthetic_value = NULL;
     m_is_getting_summary = false;
 }
 

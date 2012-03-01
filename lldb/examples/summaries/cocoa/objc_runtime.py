@@ -327,17 +327,22 @@ class Class_Data_V1:
 			return self.instanceSize
 
 # these are the only tagged pointers values for current versions
-# of OSX - this might change in future OS releases, and no-one is
+# of OSX - they might change in future OS releases, and no-one is
 # advised to rely on these values, or any of the bitmasking formulas
 # in TaggedClass_Data. doing otherwise is at your own risk
-TaggedClass_Values = {3 : 'NSNumber', \
-                      5: 'NSManagedObject', \
-                      6: 'NSDate', \
-                      7: 'NSDateTS' };
+TaggedClass_Values_Lion = {1 : 'NSNumber', \
+                           5: 'NSManagedObject', \
+                           6: 'NSDate', \
+                           7: 'NSDateTS' };
+TaggedClass_Values_NMOS = {0: 'NSAtom', \
+                           3 : 'NSNumber', \
+                           4: 'NSDateTS', \
+                           5: 'NSManagedObject', \
+                           6: 'NSDate' };
 
 class TaggedClass_Data:
 	def __init__(self,pointer,params):
-		global TaggedClass_Values
+		global TaggedClass_Values_Lion,TaggedClass_Values_NMOS
 		self.valid = True
 		self.name = None
 		self.sys_params = params
@@ -346,10 +351,16 @@ class TaggedClass_Data:
 		self.class_bits = (pointer & 0xE) >> 1
 		self.i_bits = (pointer & 0xF0) >> 4
 		
-		if self.class_bits in TaggedClass_Values:
-			self.name = TaggedClass_Values[self.class_bits]
+		if self.sys_params.is_lion:
+			if self.class_bits in TaggedClass_Values_Lion:
+				self.name = TaggedClass_Values_Lion[self.class_bits]
+			else:
+				self.valid = False
 		else:
-			self.valid = False
+			if self.class_bits in TaggedClass_Values_NMOS:
+				self.name = TaggedClass_Values_NMOS[self.class_bits]
+			else:
+				self.valid = False
 
 
 	def is_valid(self):

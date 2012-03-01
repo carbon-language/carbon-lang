@@ -594,7 +594,7 @@ public:
     {
         ValueObject::DumpValueObjectOptions options;
         
-        options.SetPointerDepth(m_varobj_options.ptr_depth)
+        options.SetMaximumPointerDepth(m_varobj_options.ptr_depth)
                .SetMaximumDepth(m_varobj_options.max_depth)
                .SetShowTypes(m_varobj_options.show_types)
                .SetShowLocation(m_varobj_options.show_location)
@@ -641,13 +641,13 @@ public:
         
         const Format format = m_option_format.GetFormat();
         if (format != eFormatDefault)
-            valobj_sp->SetFormat (format);
+            options.SetFormat(format);
+
+        options.SetRootValueObjectName(root_name);
         
         ValueObject::DumpValueObject (s, 
                                       valobj_sp.get(), 
-                                      root_name,
-                                      options,
-                                      format);                                        
+                                      options);                                        
 
     }
     
