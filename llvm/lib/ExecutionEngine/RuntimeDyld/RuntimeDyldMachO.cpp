@@ -150,7 +150,7 @@ loadSegment32(const MachOObject *Obj,
     // Allocate memory via the MM for the section.
     uint8_t *Buffer;
     uint32_t SectionID = Sections.size();
-    if (Sect->Flags != 0x80000400)
+    if (Sect->Flags == 0x80000400)
       Buffer = MemMgr->allocateCodeSection(Sect->Size, Sect->Align, SectionID);
     else
       Buffer = MemMgr->allocateDataSection(Sect->Size, Sect->Align, SectionID);
