@@ -104,6 +104,14 @@ void f(Mat m, const Foo& const_foo, char *buffer) {
   // Copy to raw buffer shouldn't warn either
   memcpy(&foo, &arr, sizeof(Foo));
   memcpy(&arr, &foo, sizeof(Foo));
+
+  // Shouldn't warn, and shouldn't crash either.
+  memset(({
+    if (0) {}
+    while (0) {}
+    for (;;) {}
+    &s;
+  }), 0, sizeof(s));
 }
 
 namespace ns {
