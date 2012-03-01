@@ -2871,6 +2871,8 @@ void Parser::ParseStructUnionBody(SourceLocation RecordLoc,
 ///[C99/C++]'enum' identifier[opt] '{' enumerator-list ',' '}'
 /// [GNU]   'enum' attributes[opt] identifier[opt] '{' enumerator-list ',' [opt]
 ///                                                 '}' attributes[opt]
+/// [MS]    'enum' __declspec[opt] identifier[opt] '{' enumerator-list ',' [opt]
+///                                                 '}'
 ///         'enum' identifier
 /// [GNU]   'enum' attributes[opt] identifier
 ///
@@ -2915,6 +2917,10 @@ void Parser::ParseEnumSpecifier(SourceLocation StartLoc, DeclSpec &DS,
   // If attributes exist after tag, parse them.
   ParsedAttributes attrs(AttrFactory);
   MaybeParseGNUAttributes(attrs);
+
+  // If declspecs exist after tag, parse them.
+  while (Tok.is(tok::kw___declspec))
+    ParseMicrosoftDeclSpec(attrs);
 
   bool AllowFixedUnderlyingType 
     = getLang().CPlusPlus0x || getLang().MicrosoftExt || getLang().ObjC2;

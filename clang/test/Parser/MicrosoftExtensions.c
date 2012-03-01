@@ -49,8 +49,8 @@ char x = FOO(a);
 typedef enum E { e1 };
 
 
-
-
+enum __declspec(deprecated) E2 { i, j, k };
+__declspec(deprecated) enum E3 { a, b, c } e;
 
 
 /* Microsoft attribute tests */
