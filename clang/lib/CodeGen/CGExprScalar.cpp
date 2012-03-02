@@ -212,21 +212,18 @@ public:
   // l-values.
   Value *VisitDeclRefExpr(DeclRefExpr *E) {
     Expr::EvalResult Result;
-    bool IsReferenceConstant = false;
-    QualType EvalTy = E->getType();
-    if (!E->EvaluateAsRValue(Result, CGF.getContext())) {
-      // If this is a reference, try to determine what it is bound to.
-      if (!E->getDecl()->getType()->isReferenceType() ||
-          !E->EvaluateAsLValue(Result, CGF.getContext()))
-        return EmitLoadOfLValue(E);
-
-      IsReferenceConstant = true;
-      EvalTy = E->getDecl()->getType();
-    }
+    if (!E->EvaluateAsRValue(Result, CGF.getContext()))
+      return EmitLoadOfLValue(E);
 
     assert(!Result.HasSideEffects && "Constant declref with side-effect?!");
 
-    llvm::Constant *C = CGF.CGM.EmitConstantValue(Result.Val, EvalTy, &CGF);
+    llvm::Constant *C;
+    if (Result.Val.isInt())
+      C = Builder.getInt(Result.Val.getInt());
+    else if (Result.Val.isFloat())
+      C = llvm::ConstantFP::get(VMContext, Result.Val.getFloat());
+    else
+      return EmitLoadOfLValue(E);
 
     // Make sure we emit a debug reference to the global variable.
     if (VarDecl *VD = dyn_cast<VarDecl>(E->getDecl())) {
@@ -235,9 +232,6 @@ public:
     } else if (isa<EnumConstantDecl>(E->getDecl())) {
       CGF.EmitDeclRefExprDbgValue(E, C);
     }
-
-    if (IsReferenceConstant)
-      return EmitLoadOfLValue(CGF.MakeNaturalAlignAddrLValue(C, E->getType()));
 
     return C;
   }
