@@ -224,26 +224,46 @@ Value *IslGenerator::generateIslPwAff(__isl_take isl_pw_aff *PwAff) {
   return User.Result;
 }
 
+/// @brief Generate a new basic block for a polyhedral statement.
+///
+/// The only public function exposed is generate().
 class BlockGenerator {
 public:
-  static void generate(IRBuilder<> &B, ValueMapT &ValueMap, ScopStmt &Stmt,
-                       Pass *P) {
-    BlockGenerator Generator(B, ValueMap, Stmt, P);
-    Generator.copyBB();
+  /// @brief Generate a new BasicBlock for a ScopStmt.
+  ///
+  /// @param Builder   The LLVM-IR Builder used to generate the statement. The
+  ///                  code is generated at the location, the Builder points to.
+  /// @param Stmt      The statement to code generate.
+  /// @param GlobalMap A map that defines for certain Values referenced from the
+  ///                  original code new Values they should be replaced with.
+  /// @param P         A reference to the pass this function is called from.
+  ///                  The pass is needed to update other analysis.
+  static void generate(IRBuilder<> &Builder, ScopStmt &Stmt,
+                       ValueMapT &GlobalMap, Pass *P) {
+    BlockGenerator Generator(Builder, Stmt, P);
+    Generator.copyBB(GlobalMap);
   }
 
 protected:
   IRBuilder<> &Builder;
-  ValueMapT &GlobalMap;
-  Scop &S;
   ScopStmt &Statement;
-
   Pass *P;
 
-  BlockGenerator(IRBuilder<> &B, ValueMapT &vmap, ScopStmt &Stmt, Pass *P);
+  BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P);
 
-  Value *getOperand(const Value *OldOperand, ValueMapT &BBMap,
-                    ValueMapT &GlobalMap);
+  /// @brief Get the new version of a Value.
+  ///
+  /// @param Old       The old Value.
+  /// @param BBMap     A mapping form old values to their new values
+  ///                  (for values recalculated within this basic block).
+  /// @param GlobalMap A mapping from old values to their new values
+  ///                  (for values recalculated in the new ScoP, but not
+  ///                   within this basic block).
+  ///
+  /// @returns  o The old value, if it is still valid.
+  ///           o The new value, if available.
+  ///           o NULL, if no value is found.
+  Value *getNewValue(const Value *Old, ValueMapT &BBMap, ValueMapT &GlobalMap);
 
   void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
                       ValueMapT &GlobalMap);
@@ -266,43 +286,59 @@ protected:
   Value *generateScalarLoad(const LoadInst *load, ValueMapT &BBMap,
                             ValueMapT &GlobalMap);
 
-  void copyInstruction(const Instruction *Inst, ValueMapT &ScalarMap,
+  /// @brief Copy a single Instruction.
+  ///
+  /// This copies a single Instruction and updates references to old values
+  /// with references to new values, as defined by GlobalMap and BBMap.
+  ///
+  /// @param BBMap     A mapping form old values to their new values
+  ///                  (for values recalculated within this basic block).
+  /// @param GlobalMap A mapping from old values to their new values
+  ///                  (for values recalculated in the new ScoP, but not
+  ///                  within this basic block).
+  void copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
                        ValueMapT &GlobalMap);
 
-  void copyBB();
+  /// @brief Copy the basic block.
+  ///
+  /// This copies the entire basic block and updates references to old values
+  /// with references to new values, as defined by GlobalMap.
+  ///
+  /// @param GlobalMap A mapping from old values to their new values
+  ///                  (for values recalculated in the new ScoP, but not
+  ///                  within this basic block).
+  void copyBB(ValueMapT &GlobalMap);
 };
 
-BlockGenerator::BlockGenerator(IRBuilder<> &B, ValueMapT &vmap, ScopStmt &Stmt,
-                               Pass *P) :
-  Builder(B), GlobalMap(vmap), S(*Stmt.getParent()), Statement(Stmt), P(P) {}
+BlockGenerator::BlockGenerator(IRBuilder<> &B, ScopStmt &Stmt, Pass *P):
+  Builder(B), Statement(Stmt), P(P) {}
 
-Value *BlockGenerator::getOperand(const Value *OldOperand, ValueMapT &BBMap,
-                                  ValueMapT &GlobalMap) {
-  const Instruction *OpInst = dyn_cast<Instruction>(OldOperand);
+Value *BlockGenerator::getNewValue(const Value *Old, ValueMapT &BBMap,
+                                   ValueMapT &GlobalMap) {
+  const Instruction *Inst = dyn_cast<Instruction>(Old);
 
-  if (!OpInst)
-    return const_cast<Value*>(OldOperand);
+  if (!Inst)
+    return const_cast<Value*>(Old);
 
   // OldOperand was redefined outside of this BasicBlock.
-  if (GlobalMap.count(OldOperand)) {
-    Value *NewOperand = GlobalMap[OldOperand];
+  if (GlobalMap.count(Old)) {
+    Value *New = GlobalMap[Old];
 
-    if (OldOperand->getType()->getScalarSizeInBits()
-        < NewOperand->getType()->getScalarSizeInBits())
-      NewOperand = Builder.CreateTruncOrBitCast(NewOperand,
-                                                OldOperand->getType());
+    if (Old->getType()->getScalarSizeInBits()
+        < New->getType()->getScalarSizeInBits())
+      New = Builder.CreateTruncOrBitCast(New, Old->getType());
 
-    return NewOperand;
+    return New;
   }
 
   // OldOperand was recalculated within this BasicBlock.
-  if (BBMap.count(OldOperand)) {
-    return BBMap[OldOperand];
+  if (BBMap.count(Old)) {
+    return BBMap[Old];
   }
 
   // OldOperand is SCoP invariant.
-  if (!S.getRegion().contains(OpInst->getParent()))
-    return const_cast<Value*>(OldOperand);
+  if (!Statement.getParent()->getRegion().contains(Inst->getParent()))
+    return const_cast<Value*>(Old);
 
   // We could not find any valid new operand.
   return NULL;
@@ -316,7 +352,7 @@ void BlockGenerator::copyInstScalar(const Instruction *Inst, ValueMapT &BBMap,
   for (Instruction::const_op_iterator OI = Inst->op_begin(),
        OE = Inst->op_end(); OI != OE; ++OI) {
     Value *OldOperand = *OI;
-    Value *NewOperand = getOperand(OldOperand, BBMap, GlobalMap);
+    Value *NewOperand = getNewValue(OldOperand, BBMap, GlobalMap);
 
     if (!NewOperand) {
       assert(!isa<StoreInst>(NewInst)
@@ -381,7 +417,7 @@ Value *BlockGenerator::generateLocationAccessed(const Instruction *Inst,
   Value *NewPointer;
 
   if (!NewAccessRelation) {
-    NewPointer = getOperand(Pointer, BBMap, GlobalMap);
+    NewPointer = getNewValue(Pointer, BBMap, GlobalMap);
   } else {
     Value *BaseAddress = const_cast<Value*>(Access.getBaseAddr());
     NewPointer = getNewAccessOperand(NewAccessRelation, BaseAddress, Pointer,
@@ -420,7 +456,7 @@ void BlockGenerator::copyInstruction(const Instruction *Inst,
 }
 
 
-void BlockGenerator::copyBB() {
+void BlockGenerator::copyBB(ValueMapT &GlobalMap) {
   BasicBlock *BB = Statement.getBasicBlock();
   BasicBlock *CopyBB = SplitBlock(Builder.GetInsertBlock(),
                                   Builder.GetInsertPoint(), P);
@@ -434,27 +470,55 @@ void BlockGenerator::copyBB() {
       copyInstruction(II, BBMap, GlobalMap);
 }
 
+/// @brief Generate a new vector basic block for a polyhedral statement.
+///
+/// The only public function exposed is generate().
 class VectorBlockGenerator : BlockGenerator {
 public:
-  static void generate(IRBuilder<> &B, ValueMapT &ValueMap,
-                       VectorValueMapT &VectorMaps, ScopStmt &Stmt,
-                       __isl_keep isl_set *Domain, Pass *P) {
-    VectorBlockGenerator Generator(B, ValueMap, VectorMaps, Stmt, Domain, P);
+  /// @brief Generate a new vector basic block for a ScoPStmt.
+  ///
+  /// This code generation is similar to the normal, scalar code generation,
+  /// except that each instruction is code generated for several vector lanes
+  /// at a time. If possible instructions are issued as actual vector
+  /// instructions, but e.g. for address calculation instructions we currently
+  /// generate scalar instructions for each vector lane.
+  ///
+  /// @param Builder    The LLVM-IR Builder used to generate the statement. The
+  ///                   code is generated at the location, the builder points
+  ///                   to.
+  /// @param Stmt       The statement to code generate.
+  /// @param GlobalMaps A vector of maps that define for certain Values
+  ///                   referenced from the original code new Values they should
+  ///                   be replaced with. Each map in the vector of maps is
+  ///                   used for one vector lane. The number of elements in the
+  ///                   vector defines the width of the generated vector
+  ///                   instructions.
+  /// @param P          A reference to the pass this function is called from.
+  ///                   The pass is needed to update other analysis.
+  static void generate(IRBuilder<> &B, ScopStmt &Stmt,
+                       VectorValueMapT &GlobalMaps, __isl_keep isl_set *Domain,
+                       Pass *P) {
+    VectorBlockGenerator Generator(B, GlobalMaps, Stmt, Domain, P);
     Generator.copyBB();
   }
 
 private:
+  // This is a vector of global value maps.  The first map is used for the first
+  // vector lane, ...
+  // Each map, contains information about Instructions in the old ScoP, which
+  // are recalculated in the new SCoP. When copying the basic block, we replace
+  // all referenes to the old instructions with their recalculated values.
   VectorValueMapT &GlobalMaps;
 
   isl_set *Domain;
 
-  VectorBlockGenerator(IRBuilder<> &B, ValueMapT &vmap, VectorValueMapT &vmaps,
-                 ScopStmt &Stmt, __isl_keep isl_set *domain, Pass *p);
+  VectorBlockGenerator(IRBuilder<> &B, VectorValueMapT &GlobalMaps,
+                       ScopStmt &Stmt, __isl_keep isl_set *Domain, Pass *P);
 
   int getVectorWidth();
 
-  Value *getVectorOperand(const Value *OldOperand, ValueMapT &VectorMap,
-                          VectorValueMapT &ScalarMaps);
+  Value *getVectorValue(const Value *Old, ValueMapT &VectorMap,
+                        VectorValueMapT &ScalarMaps);
 
   Type *getVectorPtrTy(const Value *V, int Width);
 
@@ -511,37 +575,35 @@ private:
   void copyInstruction(const Instruction *Inst, ValueMapT &VectorMap,
                        VectorValueMapT &ScalarMaps);
 
-  // Insert a copy of a basic block in the newly generated code.
   void copyBB();
 };
 
-VectorBlockGenerator::VectorBlockGenerator(IRBuilder<> &B, ValueMapT &vmap,
-                               VectorValueMapT &vmaps, ScopStmt &Stmt,
-                               __isl_keep isl_set *Domain, Pass *P)
-    : BlockGenerator(B, vmap, Stmt, P), GlobalMaps(vmaps), Domain(Domain) {
+VectorBlockGenerator::VectorBlockGenerator(IRBuilder<> &B,
+  VectorValueMapT &GlobalMaps, ScopStmt &Stmt, __isl_keep isl_set *Domain,
+  Pass *P) : BlockGenerator(B, Stmt, P), GlobalMaps(GlobalMaps),
+  Domain(Domain) {
     assert(GlobalMaps.size() > 1 && "Only one vector lane found");
     assert(Domain && "No statement domain provided");
   }
 
-
-Value *VectorBlockGenerator::getVectorOperand(const Value *Operand,
-                                              ValueMapT &VectorMap,
-                                              VectorValueMapT &ScalarMaps) {
-  if (VectorMap.count(Operand))
-    return VectorMap[Operand];
+Value *VectorBlockGenerator::getVectorValue(const Value *Old,
+                                            ValueMapT &VectorMap,
+                                            VectorValueMapT &ScalarMaps) {
+  if (VectorMap.count(Old))
+    return VectorMap[Old];
 
   int Width = getVectorWidth();
 
-  Value *Vector = UndefValue::get(VectorType::get(Operand->getType(), Width));
+  Value *Vector = UndefValue::get(VectorType::get(Old->getType(), Width));
 
   for (int Lane = 0; Lane < Width; Lane++)
     Vector = Builder.CreateInsertElement(Vector,
-                                         getOperand(Operand,
-                                                    ScalarMaps[Lane],
-                                                    GlobalMaps[Lane]),
+                                         getNewValue(Old,
+                                                     ScalarMaps[Lane],
+                                                     GlobalMaps[Lane]),
                                          Builder.getInt32(Lane));
 
-  VectorMap[Operand] = Vector;
+  VectorMap[Old] = Vector;
 
   return Vector;
 }
@@ -560,7 +622,7 @@ Value *VectorBlockGenerator::generateStrideOneLoad(const LoadInst *Load,
                                                    ValueMapT &BBMap) {
   const Value *Pointer = Load->getPointerOperand();
   Type *VectorPtrType = getVectorPtrTy(Pointer, getVectorWidth());
-  Value *NewPointer = getOperand(Pointer, BBMap, GlobalMaps[0]);
+  Value *NewPointer = getNewValue(Pointer, BBMap, GlobalMaps[0]);
   Value *VectorPtr = Builder.CreateBitCast(NewPointer, VectorPtrType,
                                            "vector_ptr");
   LoadInst *VecLoad = Builder.CreateLoad(VectorPtr,
@@ -575,7 +637,7 @@ Value *VectorBlockGenerator::generateStrideZeroLoad(const LoadInst *Load,
                                                     ValueMapT &BBMap) {
   const Value *Pointer = Load->getPointerOperand();
   Type *VectorPtrType = getVectorPtrTy(Pointer, 1);
-  Value *NewPointer = getOperand(Pointer, BBMap, GlobalMaps[0]);
+  Value *NewPointer = getNewValue(Pointer, BBMap, GlobalMaps[0]);
   Value *VectorPtr = Builder.CreateBitCast(NewPointer, VectorPtrType,
                                            Load->getName() + "_p_vec_p");
   LoadInst *ScalarLoad= Builder.CreateLoad(VectorPtr,
@@ -605,7 +667,7 @@ Value *VectorBlockGenerator::generateUnknownStrideLoad(const LoadInst *Load,
   Value *Vector = UndefValue::get(VectorType);
 
   for (int i = 0; i < VectorWidth; i++) {
-    Value *NewPointer = getOperand(Pointer, ScalarMaps[i], GlobalMaps[i]);
+    Value *NewPointer = getNewValue(Pointer, ScalarMaps[i], GlobalMaps[i]);
     Value *ScalarLoad = Builder.CreateLoad(NewPointer,
                                            Load->getName() + "_p_scalar_");
     Vector = Builder.CreateInsertElement(Vector, ScalarLoad,
@@ -637,8 +699,8 @@ void VectorBlockGenerator::copyUnaryInst(const UnaryInstruction *Inst,
                                          ValueMapT &VectorMap,
                                          VectorValueMapT &ScalarMaps) {
   int VectorWidth = getVectorWidth();
-  Value *NewOperand = getVectorOperand(Inst->getOperand(0), VectorMap,
-                                       ScalarMaps);
+  Value *NewOperand = getVectorValue(Inst->getOperand(0), VectorMap,
+                                     ScalarMaps);
 
   assert(isa<CastInst>(Inst) && "Can not generate vector code for instruction");
 
@@ -654,8 +716,8 @@ void VectorBlockGenerator::copyBinaryInst(const BinaryOperator *Inst,
   Value *OpOne = Inst->getOperand(1);
 
   Value *NewOpZero, *NewOpOne;
-  NewOpZero = getVectorOperand(OpZero, VectorMap, ScalarMaps);
-  NewOpOne = getVectorOperand(OpOne, VectorMap, ScalarMaps);
+  NewOpZero = getVectorValue(OpZero, VectorMap, ScalarMaps);
+  NewOpOne = getVectorValue(OpOne, VectorMap, ScalarMaps);
 
   Value *NewInst = Builder.CreateBinOp(Inst->getOpcode(), NewOpZero,
                                        NewOpOne,
@@ -671,12 +733,12 @@ void VectorBlockGenerator::copyStore(const StoreInst *Store,
   MemoryAccess &Access = Statement.getAccessFor(Store);
 
   const Value *Pointer = Store->getPointerOperand();
-  Value *Vector = getVectorOperand(Store->getValueOperand(), VectorMap,
+  Value *Vector = getVectorValue(Store->getValueOperand(), VectorMap,
                                    ScalarMaps);
 
   if (Access.isStrideOne(isl_set_copy(Domain))) {
     Type *VectorPtrType = getVectorPtrTy(Pointer, VectorWidth);
-    Value *NewPointer = getOperand(Pointer, ScalarMaps[0], GlobalMaps[0]);
+    Value *NewPointer = getNewValue(Pointer, ScalarMaps[0], GlobalMaps[0]);
 
     Value *VectorPtr = Builder.CreateBitCast(NewPointer, VectorPtrType,
                                              "vector_ptr");
@@ -688,7 +750,7 @@ void VectorBlockGenerator::copyStore(const StoreInst *Store,
     for (unsigned i = 0; i < ScalarMaps.size(); i++) {
       Value *Scalar = Builder.CreateExtractElement(Vector,
                                                    Builder.getInt32(i));
-      Value *NewPointer = getOperand(Pointer, ScalarMaps[i], GlobalMaps[i]);
+      Value *NewPointer = getNewValue(Pointer, ScalarMaps[i], GlobalMaps[i]);
       Builder.CreateStore(Scalar, NewPointer);
     }
   }
@@ -1094,7 +1156,7 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
   int VectorDimensions = IVS ? IVS->size() : 1;
 
   if (VectorDimensions == 1) {
-    BlockGenerator::generate(Builder, ValueMap, *Statement, P);
+    BlockGenerator::generate(Builder, *Statement, ValueMap, P);
     return;
   }
 
@@ -1111,8 +1173,7 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
     }
   }
 
-  VectorBlockGenerator::generate(Builder, ValueMap, VectorMap, *Statement,
-                                 Domain, P);
+  VectorBlockGenerator::generate(Builder, *Statement, VectorMap, Domain, P);
 }
 
 void ClastStmtCodeGen::codegen(const clast_block *b) {
