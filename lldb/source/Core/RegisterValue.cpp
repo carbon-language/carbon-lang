@@ -363,6 +363,58 @@ RegisterValue::SetValueFromData (const RegisterInfo *reg_info, DataExtractor &sr
     return error;
 }
 
+#include "llvm/ADT/StringRef.h"
+#include <vector>
+static inline void StripSpaces(llvm::StringRef &Str)
+{
+    while (!Str.empty() && isspace(Str[0]))
+        Str = Str.substr(1);
+    while (!Str.empty() && isspace(Str.back()))
+        Str = Str.substr(0, Str.size()-1);
+}
+static inline void LStrip(llvm::StringRef &Str, char c)
+{
+    if (!Str.empty() && Str.front() == c)
+        Str = Str.substr(1);
+}
+static inline void RStrip(llvm::StringRef &Str, char c)
+{
+    if (!Str.empty() && Str.back() == c)
+        Str = Str.substr(0, Str.size()-1);
+}
+// Helper function for RegisterValue::SetValueFromCString()
+static bool
+ParseVectorEncoding(const RegisterInfo *reg_info, const char *vector_str, const uint32_t byte_size, RegisterValue *reg_value)
+{
+    // Example: vector_str = "{0x2c 0x4b 0x2a 0x3e 0xd0 0x4f 0x2a 0x3e 0xac 0x4a 0x2a 0x3e 0x84 0x4f 0x2a 0x3e}".
+    llvm::StringRef Str(vector_str);
+    StripSpaces(Str);
+    LStrip(Str, '{');
+    RStrip(Str, '}');
+    StripSpaces(Str);
+
+    char Sep = ' ';
+
+    // The first split should give us:
+    // ('0x2c', '0x4b 0x2a 0x3e 0xd0 0x4f 0x2a 0x3e 0xac 0x4a 0x2a 0x3e 0x84 0x4f 0x2a 0x3e').
+    std::pair<llvm::StringRef, llvm::StringRef> Pair = Str.split(Sep);
+    std::vector<uint8_t> bytes;
+    unsigned byte = 0;
+
+    // Using radix auto-sensing by passing 0 as the radix.
+    // Keep on processing the vector elements as long as the parsing succeeds and the vector size is < byte_size.
+    while (!Pair.first.getAsInteger(0, byte) && bytes.size() < byte_size) {
+        bytes.push_back(byte);
+        Pair = Pair.second.split(Sep);
+    }
+
+    // Check for vector of exact byte_size elements.
+    if (bytes.size() != byte_size)
+        return false;
+
+    reg_value->SetBytes(&(bytes.front()), byte_size, eByteOrderLittle);
+    return true;
+}
 Error
 RegisterValue::SetValueFromCString (const RegisterInfo *reg_info, const char *value_str)
 {
@@ -459,7 +511,8 @@ RegisterValue::SetValueFromCString (const RegisterInfo *reg_info, const char *va
             break;
             
         case eEncodingVector:
-            error.SetErrorString ("vector encoding unsupported.");
+            if (!ParseVectorEncoding(reg_info, value_str, byte_size, this))
+                error.SetErrorString ("unrecognized vector encoding string value.");
             break;
     }
     if (error.Fail())

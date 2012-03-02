@@ -143,7 +143,25 @@ GDBRemoteRegisterContext::PrivateSetRegisterValue (uint32_t reg, StringExtractor
     return success;
 }
 
+// Helper function for GDBRemoteRegisterContext::ReadRegisterBytes().
+bool
+GDBRemoteRegisterContext::GetPrimordialRegister(const lldb_private::RegisterInfo *reg_info,
+                                                GDBRemoteCommunicationClient &gdb_comm)
+{
+    char packet[64];
+    StringExtractorGDBRemote response;
+    int packet_len = 0;
+    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+    if (gdb_comm.GetThreadSuffixSupported())
+        packet_len = ::snprintf (packet, sizeof(packet), "p%x;thread:%4.4llx;", reg, m_thread.GetID());
+    else
+        packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg);
+    assert (packet_len < (sizeof(packet) - 1));
+    if (gdb_comm.SendPacketAndWaitForResponse(packet, response, false))
+        return PrivateSetRegisterValue (reg, response);
 
+    return false;
+}
 bool
 GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataExtractor &data)
 {
@@ -187,17 +205,39 @@ GDBRemoteRegisterContext::ReadRegisterBytes (const RegisterInfo *reg_info, DataE
                                 SetAllRegisterValid (true);
                     }
                 }
-                else
+                else if (!reg_info->value_regs)
                 {
                     // Get each register individually
+                    GetPrimordialRegister(reg_info, gdb_comm);
+                }
+                else
+                {
+                    // Process this composite register request by delegating to the constituent
+                    // primordial registers.
 
-                    if (thread_suffix_supported)
-                        packet_len = ::snprintf (packet, sizeof(packet), "p%x;thread:%4.4llx;", reg, m_thread.GetID());
-                    else
-                        packet_len = ::snprintf (packet, sizeof(packet), "p%x", reg);
-                    assert (packet_len < (sizeof(packet) - 1));
-                    if (gdb_comm.SendPacketAndWaitForResponse(packet, response, false))
-                        PrivateSetRegisterValue (reg, response);
+                    // Index of the primordial register.
+                    uint32_t prim_reg_idx;
+                    bool success = true;
+                    for (uint32_t idx = 0;
+                         (prim_reg_idx = reg_info->value_regs[idx]) != LLDB_INVALID_REGNUM;
+                         ++idx)
+                    {
+                        // We have a valid primordial regsiter as our constituent.
+                        // Grab the corresponding register info.
+                        const RegisterInfo *prim_reg_info = GetRegisterInfoAtIndex(prim_reg_idx);
+                        if (!GetPrimordialRegister(prim_reg_info, gdb_comm))
+                        {
+                            success = false;
+                            // Some failure occurred.  Let's break out of the for loop.
+                            break;
+                        }
+                    }
+                    if (success)
+                    {
+                        // If we reach this point, all primordial register requests have succeeded.
+                        // Validate this composite register.
+                        m_reg_valid[reg_info->kinds[eRegisterKindLLDB]] = true;
+                    }
                 }
             }
         }
@@ -231,7 +271,35 @@ GDBRemoteRegisterContext::WriteRegister (const RegisterInfo *reg_info,
     return false;
 }
 
+// Helper function for GDBRemoteRegisterContext::WriteRegisterBytes().
+bool
+GDBRemoteRegisterContext::SetPrimordialRegister(const lldb_private::RegisterInfo *reg_info,
+                                                GDBRemoteCommunicationClient &gdb_comm)
+{
+    StreamString packet;
+    StringExtractorGDBRemote response;
+    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+    packet.Printf ("P%x=", reg);
+    packet.PutBytesAsRawHex8 (m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size),
+                              reg_info->byte_size,
+                              lldb::endian::InlHostByteOrder(),
+                              lldb::endian::InlHostByteOrder());
 
+    if (gdb_comm.GetThreadSuffixSupported())
+        packet.Printf (";thread:%4.4llx;", m_thread.GetID());
+
+    // Invalidate just this register
+    m_reg_valid[reg] = false;
+    if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
+                                              packet.GetString().size(),
+                                              response,
+                                              false))
+    {
+        if (response.IsOKResponse())
+            return true;
+    }
+    return false;
+}
 bool
 GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *reg_info, DataExtractor &data, uint32_t data_offset)
 {
@@ -248,8 +316,6 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
 // state has been changed.
 //    if (gdb_comm.IsRunning())
 //        return false;
-
-    const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
 
     // Grab a pointer to where we are going to put this register
     uint8_t *dst = const_cast<uint8_t*>(m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size));
@@ -276,7 +342,7 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
                 StringExtractorGDBRemote response;
                 if (m_read_all_at_once)
                 {
-                    // Get all registers in one packet
+                    // Set all registers in one packet
                     packet.PutChar ('G');
                     offset = 0;
                     end_offset = m_reg_data.GetByteSize();
@@ -304,30 +370,53 @@ GDBRemoteRegisterContext::WriteRegisterBytes (const lldb_private::RegisterInfo *
                         }
                     }
                 }
+                else if (!reg_info->value_regs)
+                {
+                    // Set each register individually
+                    return SetPrimordialRegister(reg_info, gdb_comm);
+                }
                 else
                 {
-                    // Get each register individually
-                    packet.Printf ("P%x=", reg);
-                    packet.PutBytesAsRawHex8 (m_reg_data.PeekData(reg_info->byte_offset, reg_info->byte_size),
-                                              reg_info->byte_size,
-                                              lldb::endian::InlHostByteOrder(),
-                                              lldb::endian::InlHostByteOrder());
+                    // Process this composite register request by delegating to the constituent
+                    // primordial registers.
 
-                    if (thread_suffix_supported)
-                        packet.Printf (";thread:%4.4llx;", m_thread.GetID());
+                    // Invalidate this composite register first.
+                    m_reg_valid[reg_info->kinds[eRegisterKindLLDB]] = false;
 
-                    // Invalidate just this register
-                    m_reg_valid[reg] = false;
-                    if (gdb_comm.SendPacketAndWaitForResponse(packet.GetString().c_str(),
-                                                              packet.GetString().size(),
-                                                              response,
-                                                              false))
+                    // Index of the primordial register.
+                    uint32_t prim_reg_idx;
+                    // For loop index.
+                    uint32_t idx;
+
+                    // Invalidate the invalidate_regs, if present.
+                    if (reg_info->invalidate_regs)
                     {
-                        if (response.IsOKResponse())
+                        for (idx = 0;
+                             (prim_reg_idx = reg_info->invalidate_regs[idx]) != LLDB_INVALID_REGNUM;
+                             ++idx)
                         {
-                            return true;
+                            // Grab the invalidate register info.
+                            const RegisterInfo *prim_reg_info = GetRegisterInfoAtIndex(prim_reg_idx);
+                            m_reg_valid[prim_reg_info->kinds[eRegisterKindLLDB]] = false;
                         }
                     }
+
+                    bool success = true;
+                    for (idx = 0;
+                         (prim_reg_idx = reg_info->value_regs[idx]) != LLDB_INVALID_REGNUM;
+                         ++idx)
+                    {
+                        // We have a valid primordial regsiter as our constituent.
+                        // Grab the corresponding register info.
+                        const RegisterInfo *prim_reg_info = GetRegisterInfoAtIndex(prim_reg_idx);
+                        if (!SetPrimordialRegister(prim_reg_info, gdb_comm))
+                        {
+                            success = false;
+                            // Some failure occurred.  Let's break out of the for loop.
+                            break;
+                        }
+                    }
+                    return success;
                 }
             }
         }
@@ -454,6 +543,10 @@ GDBRemoteRegisterContext::WriteAllRegisterValues (const lldb::DataBufferSP &data
                     for (uint32_t reg_idx=0; (reg_info = GetRegisterInfoAtIndex (reg_idx)) != NULL; ++reg_idx, reg_byte_offset += reg_info->byte_size)
                     {
                         const uint32_t reg = reg_info->kinds[eRegisterKindLLDB];
+
+                        // Skip composite registers.
+                        if (reg_info->value_regs)
+                            continue;
 
                         // Only write down the registers that need to be written
                         // if we are going to be doing registers individually.
