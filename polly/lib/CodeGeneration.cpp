@@ -159,9 +159,9 @@ public:
   /// @brief Generate code for single basic block.
   static void generate(IRBuilder<> &B, ValueMapT &ValueMap,
                        VectorValueMapT &VectorMaps, ScopStmt &Stmt,
-                       __isl_keep isl_set *Domain, BasicBlock *BB, Pass *P) {
+                       __isl_keep isl_set *Domain, Pass *P) {
     BlockGenerator Generator(B, ValueMap, VectorMaps, Stmt, Domain);
-    Generator.copyBB(BB, P);
+    Generator.copyBB(P);
   }
 
 private:
@@ -278,12 +278,11 @@ private:
   //
   // @param Builder The builder used to insert the code. It also specifies
   //                where to insert the code.
-  // @param BB      The basic block to copy
   // @param VMap    A map returning for any old value its new equivalent. This
   //                is used to update the operands of the statements.
   //                For new statements a relation old->new is inserted in this
   //                map.
-  void copyBB(BasicBlock *BB, Pass *P);
+  void copyBB(Pass *P);
 };
 
 BlockGenerator::BlockGenerator(IRBuilder<> &B, ValueMapT &vmap,
@@ -711,7 +710,8 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
   copyInstScalar(Inst, BBMap);
 }
 
-void BlockGenerator::copyBB(BasicBlock *BB, Pass *P) {
+void BlockGenerator::copyBB(Pass *P) {
+  BasicBlock *BB = Statement.getBasicBlock();
   BasicBlock *CopyBB = SplitBlock(Builder.GetInsertBlock(),
                                   Builder.GetInsertPoint(), P);
   CopyBB->setName("polly.stmt." + BB->getName());
@@ -1058,16 +1058,15 @@ void ClastStmtCodeGen::codegenSubstitutions(const clast_stmt *Assignment,
 
 void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
                                std::vector<Value*> *IVS , const char *iterator,
-                               isl_set *scatteringDomain) {
+                               isl_set *Domain) {
   ScopStmt *Statement = (ScopStmt *)u->statement->usr;
-  BasicBlock *BB = Statement->getBasicBlock();
 
   if (u->substitutions)
     codegenSubstitutions(u->substitutions, Statement);
 
   int vectorDimensions = IVS ? IVS->size() : 1;
 
-  VectorValueMapT VectorValueMap(vectorDimensions);
+  VectorValueMapT VectorMap(vectorDimensions);
 
   if (IVS) {
     assert (u->substitutions && "Substitutions expected!");
@@ -1075,13 +1074,12 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
     for (std::vector<Value*>::iterator II = IVS->begin(), IE = IVS->end();
          II != IE; ++II) {
       (*clastVars)[iterator] = *II;
-      codegenSubstitutions(u->substitutions, Statement, i, &VectorValueMap);
+      codegenSubstitutions(u->substitutions, Statement, i, &VectorMap);
       i++;
     }
   }
 
-  BlockGenerator::generate(Builder, ValueMap, VectorValueMap, *Statement,
-                           scatteringDomain, BB, P);
+  BlockGenerator::generate(Builder, ValueMap, VectorMap, *Statement, Domain, P);
 }
 
 void ClastStmtCodeGen::codegen(const clast_block *b) {
