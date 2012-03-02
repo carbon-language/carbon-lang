@@ -246,9 +246,8 @@ private:
 
   Value *generateScalarLoad(const LoadInst *load, ValueMapT &BBMap);
 
-  /// @brief Load a value (or several values as a vector) from memory.
-  void generateLoad(const LoadInst *Load, ValueMapT &VectorMap,
-                    VectorValueMapT &ScalarMaps);
+  void generateVectorLoad(const LoadInst *Load, ValueMapT &VectorMap,
+                          VectorValueMapT &ScalarMaps);
 
   void copyVectorUnaryInst(const UnaryInstruction *Inst, ValueMapT &BBMap,
                            ValueMapT &VectorMap);
@@ -267,9 +266,8 @@ private:
 
   bool isVectorBlock();
 
-  void copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
-                       ValueMapT &VectorMap, VectorValueMapT &ScalarMaps,
-                       int VectorDimension);
+  void copyInstruction(const Instruction *Inst, ValueMapT &VectorMap,
+                       VectorValueMapT &ScalarMaps);
 
   // Insert a copy of a basic block in the newly generated code.
   //
@@ -535,13 +533,9 @@ Value *BlockGenerator::generateScalarLoad(const LoadInst *Load,
   return ScalarLoad;
 }
 
-void BlockGenerator::generateLoad(const LoadInst *Load, ValueMapT &VectorMap,
-                                  VectorValueMapT &ScalarMaps) {
-  if (ScalarMaps.size() == 1) {
-    ScalarMaps[0][Load] = generateScalarLoad(Load, ScalarMaps[0]);
-    return;
-  }
-
+void BlockGenerator::generateVectorLoad(const LoadInst *Load,
+                                          ValueMapT &VectorMap,
+                                          VectorValueMapT &ScalarMaps) {
   Value *NewLoad;
 
   MemoryAccess &Access = Statement.getAccessFor(Load);
@@ -665,53 +659,50 @@ bool BlockGenerator::isVectorBlock() {
   return getVectorWidth() > 1;
 }
 
-void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
+void BlockGenerator::copyInstruction(const Instruction *Inst,
                                      ValueMapT &VectorMap,
-                                     VectorValueMapT &ScalarMaps,
-                                     int VectorDimension) {
+                                     VectorValueMapT &ScalarMaps) {
   // Terminator instructions control the control flow. They are explicitly
   // expressed in the clast and do not need to be copied.
   if (Inst->isTerminator())
     return;
 
   if (isVectorBlock()) {
-    // If this instruction is already in the vectorMap, a vector instruction
-    // was already issued, that calculates the values of all dimensions. No
-    // need to create any more instructions.
-    if (VectorMap.count(Inst))
+    if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
+      generateVectorLoad(Load, VectorMap, ScalarMaps);
       return;
+    }
 
-    // Stores are not in the VectorMap
-    if (isa<StoreInst>(Inst) && VectorDimension > 0)
-      return;
+    if (hasVectorOperands(Inst, VectorMap)) {
+      if (const StoreInst *Store = dyn_cast<StoreInst>(Inst)) {
+        copyVectorStore(Store, ScalarMaps[0], VectorMap, ScalarMaps);
+        return;
+      }
 
-  }
+      if (const UnaryInstruction *Unary = dyn_cast<UnaryInstruction>(Inst)) {
+        copyVectorUnaryInst(Unary, ScalarMaps[0], VectorMap);
+        return;
+      }
 
-  if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
-    generateLoad(Load, VectorMap, ScalarMaps);
+      if (const BinaryOperator *Binary = dyn_cast<BinaryOperator>(Inst)) {
+        copyVectorBinInst(Binary, ScalarMaps[0], VectorMap);
+        return;
+      }
+
+      llvm_unreachable("Cannot issue vector code for this instruction");
+    }
+
+    for (int VectorLane = 0; VectorLane < getVectorWidth(); VectorLane++)
+      copyInstScalar(Inst, ScalarMaps[VectorLane]);
     return;
   }
 
-  if (isVectorBlock() && hasVectorOperands(Inst, VectorMap)) {
-    if (const StoreInst *Store = dyn_cast<StoreInst>(Inst)) {
-      copyVectorStore(Store, BBMap, VectorMap, ScalarMaps);
-      return;
-    }
-
-    if (const UnaryInstruction *UnaryInst = dyn_cast<UnaryInstruction>(Inst)) {
-      copyVectorUnaryInst(UnaryInst, BBMap, VectorMap);
-      return;
-    }
-
-    if (const BinaryOperator *BinaryInst = dyn_cast<BinaryOperator>(Inst)) {
-      copyVectorBinInst(BinaryInst, BBMap, VectorMap);
-      return;
-    }
-
-    llvm_unreachable("Cannot issue vector code for this instruction");
+  if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
+    ScalarMaps[0][Load] = generateScalarLoad(Load, ScalarMaps[0]);
+    return;
   }
 
-  copyInstScalar(Inst, BBMap);
+  copyInstScalar(Inst, ScalarMaps[0]);
 }
 
 void BlockGenerator::copyBB() {
@@ -740,9 +731,7 @@ void BlockGenerator::copyBB() {
 
   for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end();
        II != IE; ++II)
-    for (int VectorLane = 0; VectorLane < getVectorWidth(); VectorLane++)
-      copyInstruction(II, ScalarBlockMap[VectorLane], VectorBlockMap,
-                      ScalarBlockMap, VectorLane);
+      copyInstruction(II, VectorBlockMap, ScalarBlockMap);
 }
 
 /// Class to generate LLVM-IR that calculates the value of a clast_expr.
