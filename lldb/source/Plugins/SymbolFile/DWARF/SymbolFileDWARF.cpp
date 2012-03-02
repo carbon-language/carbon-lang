@@ -2908,8 +2908,41 @@ SymbolFileDWARF::FunctionDieMatchesPartialName (const DWARFDebugInfoEntry* die,
             if (demangled)
             {
                 std::string name_no_parens(partial_name, base_name_end - partial_name);
-                if (strstr (demangled, name_no_parens.c_str()) == NULL)
+                const char *partial_in_demangled = strstr (demangled, name_no_parens.c_str());
+                if (partial_in_demangled == NULL)
                     return false;
+                else
+                {
+                    // Sort out the case where our name is something like "Process::Destroy" and the match is
+                    // "SBProcess::Destroy" - that shouldn't be a match.  We should really always match on
+                    // namespace boundaries...
+                    
+                    if (partial_name[0] == ':'  && partial_name[1] == ':')
+                    {
+                        // The partial name was already on a namespace boundary so all matches are good.
+                        return true;
+                    }
+                    else if (partial_in_demangled == demangled)
+                    {
+                        // They both start the same, so this is an good match.
+                        return true;
+                    }
+                    else
+                    {
+                        if (partial_in_demangled - demangled == 1)
+                        {
+                            // Only one character difference, can't be a namespace boundary...
+                            return false;
+                        }
+                        else if (*(partial_in_demangled - 1) == ':' && *(partial_in_demangled - 2) == ':')
+                        {
+                            // We are on a namespace boundary, so this is also good.
+                            return true;
+                        }
+                        else
+                            return false;
+                    }
+                }
             }
         }
     }
