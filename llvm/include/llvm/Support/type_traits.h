@@ -126,24 +126,6 @@ struct is_integral : is_integral_impl<T> {};
 template <typename T> struct is_pointer : false_type {};
 template <typename T> struct is_pointer<T*> : true_type {};
 
-/// \brief Metafunction to compute whether a type requires alignment padding.
-/// When true, an object of this type will have padding bytes inside its
-/// 'sizeof' bytes.
-template <typename T> class is_alignment_padded {
-  struct pod_size_tester { T t; char c; };
-public:
-  enum { value = offsetof(pod_size_tester, c) != sizeof(T) };
-};
-
-/// \brief Metafunction to determine whether an adjacent pair of two types will
-/// require padding between them due to alignment.
-template <typename T, typename U> class is_pod_pair_padded {
-  struct pod_pair { T t; U u; };
-  struct pod_char_pair { T t; char c; };
-public:
-  enum { value = offsetof(pod_pair, u) != offsetof(pod_char_pair, c) };
-};
-
   
 // enable_if_c - Enable/disable a template based on a metafunction
 template<bool Cond, typename T = void>

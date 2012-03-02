@@ -42,6 +42,16 @@ using namespace llvm;
 
 namespace {
 
+struct NonPOD {
+  uint64_t x, y;
+  NonPOD(uint64_t x, uint64_t y) : x(x), y(y) {}
+  ~NonPOD() {}
+  friend hash_code hash_value(const NonPOD &obj) {
+    return hash_combine(obj.x, obj.y);
+  }
+};
+
+
 TEST(HashingTest, HashValueBasicTest) {
   int x = 42, y = 43, c = 'x';
   void *p = 0;
@@ -73,6 +83,16 @@ TEST(HashingTest, HashValueBasicTest) {
             hash_value(std::make_pair(42, std::make_pair(43, 44))));
   EXPECT_EQ(hash_value(std::make_pair(42, std::make_pair(43, 44))),
             hash_value(std::make_pair(std::make_pair(42, 43), 44)));
+
+  // Ensure that pairs which have padding bytes *inside* them don't get treated
+  // this way.
+  EXPECT_EQ(hash_combine('0', hash_combine(1ull, '2')),
+            hash_value(std::make_pair('0', std::make_pair(1ull, '2'))));
+
+  // Ensure that non-POD pairs don't explode the traits used.
+  NonPOD obj1(1, 2), obj2(3, 4), obj3(5, 6);
+  EXPECT_EQ(hash_combine(obj1, hash_combine(obj2, obj3)),
+            hash_value(std::make_pair(obj1, std::make_pair(obj2, obj3))));
 }
 
 template <typename T, size_t N> T *begin(T (&arr)[N]) { return arr; }

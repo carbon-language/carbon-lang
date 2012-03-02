@@ -357,8 +357,8 @@ template <typename T> struct is_hashable_data
 template <typename T, typename U> struct is_hashable_data<std::pair<T, U> >
   : integral_constant<bool, (is_hashable_data<T>::value &&
                              is_hashable_data<U>::value &&
-                             !is_alignment_padded<std::pair<T, U> >::value &&
-                             !is_pod_pair_padded<T, U>::value)> {};
+                             (sizeof(T) + sizeof(U)) ==
+                              sizeof(std::pair<T, U>))> {};
 
 /// \brief Helper to get the hashable data representation for a type.
 /// This variant is enabled when the type itself can be used.
