@@ -53,7 +53,6 @@ TEST(HashingTest, HashValueBasicTest) {
   EXPECT_EQ(hash_value(42), hash_value(x));
   EXPECT_NE(hash_value(42), hash_value(y));
   EXPECT_NE(hash_value(42), hash_value(p));
-  EXPECT_NE(hash_code::get_null_code(), hash_value(p));
   EXPECT_EQ(hash_value(71), hash_value(i));
   EXPECT_EQ(hash_value(71), hash_value(ci));
   EXPECT_EQ(hash_value(71), hash_value(vi));
@@ -75,13 +74,10 @@ TEST(HashingTest, HashCombineRangeBasicTest) {
   // Leave this uninitialized in the hope that valgrind will catch bad reads.
   int dummy;
   hash_code dummy_hash = hash_combine_range(&dummy, &dummy);
-  EXPECT_NE(hash_code::get_null_code(), dummy_hash);
-  EXPECT_NE(hash_code::get_invalid_code(), dummy_hash);
+  EXPECT_NE(hash_code(0), dummy_hash);
 
   const int arr1[] = { 1, 2, 3 };
   hash_code arr1_hash = hash_combine_range(begin(arr1), end(arr1));
-  EXPECT_NE(hash_code::get_null_code(), arr1_hash);
-  EXPECT_NE(hash_code::get_invalid_code(), arr1_hash);
   EXPECT_NE(dummy_hash, arr1_hash);
   EXPECT_EQ(arr1_hash, hash_combine_range(begin(arr1), end(arr1)));
 
@@ -96,22 +92,16 @@ TEST(HashingTest, HashCombineRangeBasicTest) {
 
   const int arr2[] = { 3, 2, 1 };
   hash_code arr2_hash = hash_combine_range(begin(arr2), end(arr2));
-  EXPECT_NE(hash_code::get_null_code(), arr2_hash);
-  EXPECT_NE(hash_code::get_invalid_code(), arr2_hash);
   EXPECT_NE(dummy_hash, arr2_hash);
   EXPECT_NE(arr1_hash, arr2_hash);
 
   const int arr3[] = { 1, 1, 2, 3 };
   hash_code arr3_hash = hash_combine_range(begin(arr3), end(arr3));
-  EXPECT_NE(hash_code::get_null_code(), arr3_hash);
-  EXPECT_NE(hash_code::get_invalid_code(), arr3_hash);
   EXPECT_NE(dummy_hash, arr3_hash);
   EXPECT_NE(arr1_hash, arr3_hash);
 
   const int arr4[] = { 1, 2, 3, 3 };
   hash_code arr4_hash = hash_combine_range(begin(arr4), end(arr4));
-  EXPECT_NE(hash_code::get_null_code(), arr4_hash);
-  EXPECT_NE(hash_code::get_invalid_code(), arr4_hash);
   EXPECT_NE(dummy_hash, arr4_hash);
   EXPECT_NE(arr1_hash, arr4_hash);
 

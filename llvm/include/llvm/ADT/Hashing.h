@@ -82,34 +82,15 @@ class hash_code {
   size_t value;
 
 public:
-  /// \brief Default construct a hash_code. Constructs a null code.
-  hash_code() : value() {}
+  /// \brief Default construct a hash_code.
+  /// Note that this leaves the value uninitialized.
+  hash_code() {}
 
   /// \brief Form a hash code directly from a numerical value.
-  hash_code(size_t value) : value(value) {
-    // Ensure we don't form a hash_code with one of the prohibited values.
-    assert(value != get_null_code().value);
-    assert(value != get_invalid_code().value);
-  }
+  hash_code(size_t value) : value(value) {}
 
   /// \brief Convert the hash code to its numerical value for use.
   /*explicit*/ operator size_t() const { return value; }
-
-  /// \brief Get a hash_code object which corresponds to a null code.
-  ///
-  /// The null code must never be the result of any 'hash_value' calls and can
-  /// be used to detect an unset hash_code.
-  static hash_code get_null_code() { return hash_code(); }
-
-  /// \brief Get a hash_code object which corresponds to an invalid code.
-  ///
-  /// The invalid code must never be the result of any 'hash_value' calls. This
-  /// can be used to flag invalid hash_codes or mark entries in a hash table.
-  static hash_code get_invalid_code() {
-    hash_code invalid_code;
-    invalid_code.value = static_cast<size_t>(-1);
-    return invalid_code;
-  }
 
   friend bool operator==(const hash_code &lhs, const hash_code &rhs) {
     return lhs.value == rhs.value;
@@ -223,27 +204,18 @@ inline uint64_t hash_33to64_bytes(const char *s, size_t len, uint64_t seed) {
 }
 
 inline uint64_t hash_short(const char *s, size_t length, uint64_t seed) {
-  uint64_t hash;
   if (length >= 4 && length <= 8)
-    hash = hash_4to8_bytes(s, length, seed);
-  else if (length > 8 && length <= 16)
-    hash = hash_9to16_bytes(s, length, seed);
-  else if (length > 16 && length <= 32)
-    hash = hash_17to32_bytes(s, length, seed);
-  else if (length > 32)
-    hash = hash_33to64_bytes(s, length, seed);
-  else if (length != 0)
-    hash = hash_1to3_bytes(s, length, seed);
-  else
-    return k2 ^ seed;
+    return hash_4to8_bytes(s, length, seed);
+  if (length > 8 && length <= 16)
+    return hash_9to16_bytes(s, length, seed);
+  if (length > 16 && length <= 32)
+    return hash_17to32_bytes(s, length, seed);
+  if (length > 32)
+    return hash_33to64_bytes(s, length, seed);
+  if (length != 0)
+    return hash_1to3_bytes(s, length, seed);
 
-  // FIXME: The invalid hash_code check is really expensive; there should be
-  // a better way of ensuring these invariants hold.
-  if (hash == static_cast<uint64_t>(hash_code::get_null_code()))
-    hash = k1 ^ seed;
-  else if (hash == static_cast<uint64_t>(hash_code::get_invalid_code()))
-    hash = k3 ^ seed;
-  return hash;
+  return k2 ^ seed;
 }
 
 /// \brief The intermediate state used during hashing.
@@ -299,14 +271,8 @@ struct hash_state {
   /// \brief Compute the final 64-bit hash code value based on the current
   /// state and the length of bytes hashed.
   uint64_t finalize(size_t length) {
-    uint64_t final_value
-      = hash_16_bytes(hash_16_bytes(h3, h5) + shift_mix(h1) * k1 + h2,
-                      hash_16_bytes(h4, h6) + shift_mix(length) * k1 + h0);
-    if (final_value == static_cast<uint64_t>(hash_code::get_null_code()))
-      final_value = k1 ^ seed;
-    if (final_value == static_cast<uint64_t>(hash_code::get_invalid_code()))
-      final_value = k3 ^ seed;
-    return final_value;
+    return hash_16_bytes(hash_16_bytes(h3, h5) + shift_mix(h1) * k1 + h2,
+                         hash_16_bytes(h4, h6) + shift_mix(length) * k1 + h0);
   }
 };
 
