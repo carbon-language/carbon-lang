@@ -47,9 +47,18 @@ namespace clang {
   /// Clang was built.
   std::string getClangRepositoryPath();
 
+  /// \brief Retrieves the repository path from which LLVM was built. Supports
+  /// LLVM residing in a separate repository from clang.
+  std::string getLLVMRepositoryPath();
+
   /// \brief Retrieves the repository revision number (or identifer) from which
   ///  this Clang was built.
   std::string getClangRevision();
+
+  /// \brief Retrieves the repository revision number (or identifer) from which
+  /// LLVM was built. If Clang and LLVM are in the same repository, this returns
+  /// the same string as getClangRevision.
+  std::string getLLVMRevision();
 
   /// \brief Retrieves the full repository version that is an amalgamation of
   ///  the information in getClangRepositoryPath() and getClangRevision().

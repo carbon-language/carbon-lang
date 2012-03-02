@@ -19,7 +19,7 @@
 #include <cstdlib>
 
 namespace clang {
-  
+
 std::string getClangRepositoryPath() {
 #if defined(CLANG_REPOSITORY_STRING)
   return CLANG_REPOSITORY_STRING;
@@ -50,9 +50,32 @@ std::string getClangRepositoryPath() {
 #endif
 }
 
+std::string getLLVMRepositoryPath() {
+#ifdef LLVM_REPOSITORY
+  StringRef URL(LLVM_REPOSITORY);
+#else
+  StringRef URL("");
+#endif
+
+  // Trim path prefix off, assuming path came from standard llvm path.
+  size_t Start = URL.find("llvm/");
+  if (Start != StringRef::npos)
+    URL = URL.substr(Start + 5);
+
+  return URL;
+}
+
 std::string getClangRevision() {
 #ifdef SVN_REVISION
   return SVN_REVISION;
+#else
+  return "";
+#endif
+}
+
+std::string getLLVMRevision() {
+#ifdef LLVM_REVISION
+  return LLVM_REVISION;
 #else
   return "";
 #endif
@@ -70,9 +93,17 @@ std::string getClangFullRepositoryVersion() {
       OS << ' ';
     OS << Revision;
   }
+  // Support LLVM in a separate repository.
+  std::string LLVMRev = getLLVMRevision();
+  if (!LLVMRev.empty() && LLVMRev != Revision) {
+    std::string LLVMRepo = getLLVMRepositoryPath();
+    if (!LLVMRepo.empty())
+      OS << ' ' << LLVMRepo;
+    OS << ' ' << LLVMRev;
+  }
   return OS.str();
 }
-  
+
 std::string getClangFullVersion() {
   std::string buf;
   llvm::raw_string_ostream OS(buf);
