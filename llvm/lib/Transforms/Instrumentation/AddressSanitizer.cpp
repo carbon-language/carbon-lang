@@ -167,7 +167,7 @@ struct AddressSanitizer : public ModulePass {
 
   uint64_t getAllocaSizeInBytes(AllocaInst *AI) {
     Type *Ty = AI->getAllocatedType();
-    uint64_t SizeInBytes = TD->getTypeStoreSizeInBits(Ty) / 8;
+    uint64_t SizeInBytes = TD->getTypeAllocSize(Ty);
     return SizeInBytes;
   }
   uint64_t getAlignedSize(uint64_t SizeInBytes) {
