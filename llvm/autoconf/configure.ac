@@ -1447,6 +1447,11 @@ AC_SUBST(LLVM_INFODIR)
 AC_SUBST(LLVM_MANDIR)
 AC_SUBST(LLVM_CONFIGTIME)
 
+dnl Disable embedding timestamps in the build directory, with ENABLE_TIMESTAMPS.
+if test "${ENABLE_TIMESTAMPS}" = "0"; then
+  LLVM_CONFIGTIME="(timestamp not enabled)"
+fi
+
 dnl Place the various directories into the config.h file as #defines so that we
 dnl can know about the installation paths within LLVM.
 AC_DEFINE_UNQUOTED(LLVM_PREFIX,"$LLVM_PREFIX",

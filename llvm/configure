@@ -20820,6 +20820,10 @@ LLVM_CONFIGTIME=`date`
 
 
 
+if test "${ENABLE_TIMESTAMPS}" = "0"; then
+  LLVM_CONFIGTIME="(timestamp not enabled)"
+fi
+
 
 cat >>confdefs.h <<_ACEOF
 #define LLVM_PREFIX "$LLVM_PREFIX"
