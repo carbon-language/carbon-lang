@@ -1589,6 +1589,11 @@ bool X86TargetLowering::isUsedByReturnOnly(SDNode *N) const {
       Copy->getOpcode() != ISD::FP_EXTEND)
     return false;
 
+  // If anything is glued to the copy, then we can't safely perform a tail call.
+  if (Copy->getOpcode() == ISD::CopyToReg &&
+      Copy->getNumOperands() == 4)
+    return false;
+
   bool HasRet = false;
   for (SDNode::use_iterator UI = Copy->use_begin(), UE = Copy->use_end();
        UI != UE; ++UI) {
