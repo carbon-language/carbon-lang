@@ -100,8 +100,8 @@ namespace CaseStatements {
 }
 
 extern int &Recurse1;
-int &Recurse2 = Recurse1; // expected-note 2{{declared here}} expected-note {{initializer of 'Recurse1' is not a constant expression}}
-int &Recurse1 = Recurse2; // expected-note {{declared here}} expected-note {{initializer of 'Recurse2' is not a constant expression}}
+int &Recurse2 = Recurse1; // expected-note {{declared here}}
+int &Recurse1 = Recurse2;
 constexpr int &Recurse3 = Recurse2; // expected-error {{must be initialized by a constant expression}} expected-note {{initializer of 'Recurse2' is not a constant expression}}
 
 extern const int RecurseA;

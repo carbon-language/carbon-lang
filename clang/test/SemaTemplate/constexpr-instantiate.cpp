@@ -65,3 +65,13 @@ namespace DataMember {
   constexpr int m = S<int>::k; // ok
   constexpr int o = n; // expected-error {{constant expression}} expected-note {{initializer of 'n'}}
 }
+
+namespace Reference {
+  const int k = 5;
+  template<typename T> struct S {
+    static volatile int &r;
+  };
+  template<typename T> volatile int &S<T>::r = const_cast<volatile int&>(k);
+  constexpr int n = const_cast<int&>(S<int>::r);
+  static_assert(n == 5, "");
+}

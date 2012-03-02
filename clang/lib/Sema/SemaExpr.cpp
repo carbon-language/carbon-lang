@@ -10108,9 +10108,10 @@ static void DoMarkVarDeclReferenced(Sema &SemaRef, SourceLocation Loc,
   // is immediately applied."  We check the first part here, and
   // Sema::UpdateMarkingForLValueToRValue deals with the second part.
   // Note that we use the C++11 definition everywhere because nothing in
-  // C++03 depends on whether we get the C++03 version correct.
+  // C++03 depends on whether we get the C++03 version correct. This does not
+  // apply to references, since they are not objects.
   const VarDecl *DefVD;
-  if (E && !isa<ParmVarDecl>(Var) &&
+  if (E && !isa<ParmVarDecl>(Var) && !Var->getType()->isReferenceType() &&
       Var->isUsableInConstantExpressions() &&
       Var->getAnyInitializer(DefVD) && DefVD->checkInitIsICE())
     SemaRef.MaybeODRUseExprs.insert(E);

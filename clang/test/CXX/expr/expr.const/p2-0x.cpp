@@ -362,8 +362,8 @@ namespace References {
   constexpr int e = 42;
   int &f = const_cast<int&>(e);
   extern int &g;
-  constexpr int &h(); // expected-note 2{{here}}
-  int &i = h(); // expected-note {{here}} expected-note {{undefined function 'h' cannot be used in a constant expression}}
+  constexpr int &h(); // expected-note {{here}}
+  int &i = h(); // expected-note {{here}}
   constexpr int &j() { return b; }
   int &k = j();
 
