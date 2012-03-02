@@ -1,4 +1,5 @@
 // RUN: %clang_cc1 -fsyntax-only -verify -Wno-array-bounds %s -fpascal-strings
+// RUN: %clang_cc1 -fdiagnostics-parseable-fixits -x c++ %s 2>&1 -Wno-array-bounds -fpascal-strings | FileCheck %s
 
 void consume(const char* c) {}
 void consume(const unsigned char* c) {}
@@ -24,6 +25,9 @@ const char* operator+(OperatorOverloadEnum e, const char* c) {
 
 void f(int index) {
   // Should warn.
+  // CHECK: fix-it:"{{.*}}":{31:11-31:11}:"&"
+  // CHECK: fix-it:"{{.*}}":{31:17-31:18}:"["
+  // CHECK: fix-it:"{{.*}}":{31:20-31:20}:"]"
   consume("foo" + 5);  // expected-warning {{adding 'int' to a string does not append to the string}} expected-note {{use array indexing to silence this warning}}
   consume("foo" + index);  // expected-warning {{adding 'int' to a string does not append to the string}} expected-note {{use array indexing to silence this warning}}
   consume("foo" + kMyEnum);  // expected-warning {{adding 'MyEnum' to a string does not append to the string}} expected-note {{use array indexing to silence this warning}}
