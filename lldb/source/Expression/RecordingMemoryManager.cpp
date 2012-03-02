@@ -241,7 +241,7 @@ RecordingMemoryManager::CommitAllocations (Process &process)
         size_t allocation_size = (ai->m_size ? ai->m_size : 1) + ai->m_alignment - 1;
         
         if (allocation_size == 0)
-            allocation_size = 1;œ
+            allocation_size = 1;
         
         ai->m_remote_allocation = process.AllocateMemory(
             allocation_size,
