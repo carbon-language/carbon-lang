@@ -720,10 +720,9 @@ SBTarget::Launch (SBLaunchInfo &sb_launch_info, SBError& error)
             sb_process.SetSP (process_sp);
             lldb_private::ProcessLaunchInfo &launch_info = sb_launch_info.ref();
 
-            bool add_exe_as_first_argv = true; //launch_info.GetArguments().GetArgumentCount() == 0;
             Module *exe_module = target_sp->GetExecutableModulePointer();
             if (exe_module)
-                launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), add_exe_as_first_argv);
+                launch_info.SetExecutableFile(exe_module->GetPlatformFileSpec(), true);
 
             const ArchSpec &arch_spec = target_sp->GetArchitecture();
             if (arch_spec.IsValid())

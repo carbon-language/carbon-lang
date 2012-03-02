@@ -165,17 +165,14 @@ public:
             m_executable = exe_file;
             if (add_exe_file_as_first_arg)
             {
-                m_arguments.Clear();
                 char filename[PATH_MAX];
                 if (exe_file.GetPath(filename, sizeof(filename)))
-                    m_arguments.AppendArgument (filename);
+                    m_arguments.InsertArgumentAtIndex (0, filename);
             }
         }
         else
         {
             m_executable.Clear();
-            if (add_exe_file_as_first_arg)
-                m_arguments.Clear();
         }
     }
 
