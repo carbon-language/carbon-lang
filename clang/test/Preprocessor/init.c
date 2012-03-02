@@ -852,7 +852,7 @@
 // PPC-LINUX:#define __INTMAX_MAX__ 9223372036854775807LL
 // PPC-LINUX:#define __INTMAX_TYPE__ long long int
 // PPC-LINUX:#define __INTMAX_WIDTH__ 64
-// PPC-LINUX:#define __INTPTR_TYPE__ long int
+// PPC-LINUX:#define __INTPTR_TYPE__ int
 // PPC-LINUX:#define __INTPTR_WIDTH__ 32
 // PPC-LINUX:#define __INT_MAX__ 2147483647
 // PPC-LINUX:#define __LDBL_DENORM_MIN__ 4.94065645841246544176568792868221e-324L
@@ -875,7 +875,7 @@
 // PPC-LINUX:#define __NO_INLINE__ 1
 // PPC-LINUX:#define __POINTER_WIDTH__ 32
 // PPC-LINUX:#define __POWERPC__ 1
-// PPC-LINUX:#define __PTRDIFF_TYPE__ long int
+// PPC-LINUX:#define __PTRDIFF_TYPE__ int
 // PPC-LINUX:#define __PTRDIFF_WIDTH__ 32
 // PPC-LINUX:#define __REGISTER_PREFIX__
 // PPC-LINUX:#define __SCHAR_MAX__ 127

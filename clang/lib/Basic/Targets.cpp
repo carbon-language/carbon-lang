@@ -865,6 +865,8 @@ public:
     case llvm::Triple::FreeBSD:
     case llvm::Triple::NetBSD:
       SizeType = UnsignedInt;
+      PtrDiffType = SignedInt;
+      IntPtrType = SignedInt;
       break;
     default:
       break;
