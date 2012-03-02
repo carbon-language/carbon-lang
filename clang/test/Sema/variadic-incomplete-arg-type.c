@@ -8,5 +8,6 @@ void junk(int, ...);
 int main()
 {
  CFErrorRef error;
- junk(1, *error); // expected-error {{incomplete type 'struct __CFError' where a complete type is required}}
+ junk(1, *error, (void)0); // expected-error {{argument type 'struct __CFError' is incomplete}} \
+                           // expected-error {{argument type 'void' is incomplete}}
 }

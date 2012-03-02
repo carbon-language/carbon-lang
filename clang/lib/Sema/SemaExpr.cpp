@@ -587,11 +587,10 @@ ExprResult Sema::DefaultVariadicArgumentPromotion(Expr *E, VariadicCallType CT,
       E = Comma.get();
     }
   }
-  // c++ rules are enfroced elsewhere.
+  // c++ rules are enforced elsewhere.
   if (!getLangOptions().CPlusPlus &&
-      !E->getType()->isVoidType() &&
       RequireCompleteType(E->getExprLoc(), E->getType(),
-                          diag::err_incomplete_type))
+                          diag::err_call_incomplete_argument))
     return ExprError();
   
   return Owned(E);
