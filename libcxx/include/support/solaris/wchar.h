@@ -16,6 +16,7 @@
 #define wcswidth sun_wcswidth
 #define wcwidth sun_wcwidth
 #define wctype sun_wctype
+#define _WCHAR_T 1
 #include_next "wchar.h"
 #undef iswalpha 
 #undef iswupper
