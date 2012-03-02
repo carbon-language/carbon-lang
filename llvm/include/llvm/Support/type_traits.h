@@ -18,6 +18,7 @@
 #define LLVM_SUPPORT_TYPE_TRAITS_H
 
 #include "llvm/Support/DataTypes.h"
+#include <cstddef>
 #include <utility>
 
 // This is actually the conforming implementation which works with abstract
