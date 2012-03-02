@@ -292,6 +292,19 @@ def warn_has_warning_invalid_option :
    ExtWarn<"__has_warning expected option name (e.g. \"-Wundef\")">,
    InGroup<MalformedWarningCheck>;
 
+def warn_pragma_include_alias_mismatch_angle :
+   ExtWarn<"angle-bracketed include <%0> cannot be aliased to double-quoted "
+   "include \"%1\"">, InGroup<UnknownPragmas>;
+def warn_pragma_include_alias_mismatch_quote :
+   ExtWarn<"double-quoted include \"%0\" cannot be aliased to angle-bracketed "
+   "include <%1>">, InGroup<UnknownPragmas>;
+def warn_pragma_include_alias_expected :
+   ExtWarn<"pragma include_alias expected '%0'">,
+   InGroup<UnknownPragmas>;
+def warn_pragma_include_alias_expected_filename :
+   ExtWarn<"pragma include_alias expected include filename">,
+   InGroup<UnknownPragmas>;
+
 def err__Pragma_malformed : Error<
   "_Pragma takes a parenthesized string literal">;
 def err_pragma_comment_malformed : Error<

@@ -1274,6 +1274,7 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
     return;
   }
 
+  StringRef OriginalFilename = Filename;
   bool isAngled =
     GetIncludeFilenameSpelling(FilenameTok.getLocation(), Filename);
   // If GetIncludeFilenameSpelling set the start ptr to null, there was an
@@ -1302,6 +1303,15 @@ void Preprocessor::HandleIncludeDirective(SourceLocation HashLoc,
 
     // Immediately leave the pragma.
     PragmaARCCFCodeAuditedLoc = SourceLocation();
+  }
+
+  if (HeaderInfo.HasIncludeAliasMap()) {
+    // Map the filename with the brackets still attached.  If the name doesn't 
+    // map to anything, fall back on the filename we've already gotten the 
+    // spelling for.
+    StringRef NewName = HeaderInfo.MapHeaderToIncludeAlias(OriginalFilename);
+    if (!NewName.empty())
+      Filename = NewName;
   }
 
   // Search include directories.
