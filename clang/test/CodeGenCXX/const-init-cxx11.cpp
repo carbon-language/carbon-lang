@@ -345,8 +345,8 @@ namespace Unreferenced {
   // We must not emit a load of 'p' here, since it's not odr-used.
   int q = *p;
   // CHECK-NOT: _ZN12Unreferenced1pE
-  // CHECK: %0 = load i32* @_ZN12Unreferenced1nE
-  // CHECK-NEXT: store i32 %0, i32* @_ZN12Unreferenced1qE
+  // CHECK: = load i32* @_ZN12Unreferenced1nE
+  // CHECK-NEXT: store i32 {{.*}}, i32* @_ZN12Unreferenced1qE
   // CHECK-NOT: _ZN12Unreferenced1pE
 
   // Technically, we are not required to substitute variables of reference types
