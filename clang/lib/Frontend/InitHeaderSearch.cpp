@@ -461,6 +461,11 @@ void InitHeaderSearch::AddDefaultIncludePaths(const LangOptions &Lang,
           AddPath(P.str(), CXXSystem, true, false, false, true);
         }
       }
+      // On Solaris, include the support directory for things like xlocale and
+      // fudged system headers.
+      if (triple.getOS() == llvm::Triple::Solaris) 
+        AddPath("/usr/include/c++/v1/support/solaris", CXXSystem, true, false,
+            false);
       
       AddPath("/usr/include/c++/v1", CXXSystem, true, false, false);
     } else {
