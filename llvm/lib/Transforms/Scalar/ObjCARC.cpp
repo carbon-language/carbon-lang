@@ -88,13 +88,14 @@ namespace {
     }
 #endif
 
-    ValueT &operator[](KeyT Arg) {
+    ValueT &operator[](const KeyT &Arg) {
       std::pair<typename MapTy::iterator, bool> Pair =
         Map.insert(std::make_pair(Arg, size_t(0)));
       if (Pair.second) {
-        Pair.first->second = Vector.size();
+        size_t Num = Vector.size();
+        Pair.first->second = Num;
         Vector.push_back(std::make_pair(Arg, ValueT()));
-        return Vector.back().second;
+        return Vector[Num].second;
       }
       return Vector[Pair.first->second].second;
     }
@@ -104,14 +105,15 @@ namespace {
       std::pair<typename MapTy::iterator, bool> Pair =
         Map.insert(std::make_pair(InsertPair.first, size_t(0)));
       if (Pair.second) {
-        Pair.first->second = Vector.size();
+        size_t Num = Vector.size();
+        Pair.first->second = Num;
         Vector.push_back(InsertPair);
-        return std::make_pair(llvm::prior(Vector.end()), true);
+        return std::make_pair(Vector.begin() + Num, true);
       }
       return std::make_pair(Vector.begin() + Pair.first->second, false);
     }
 
-    const_iterator find(KeyT Key) const {
+    const_iterator find(const KeyT &Key) const {
       typename MapTy::const_iterator It = Map.find(Key);
       if (It == Map.end()) return Vector.end();
       return Vector.begin() + It->second;
@@ -121,7 +123,7 @@ namespace {
     /// from the vector, it just zeros out the key in the vector. This leaves
     /// iterators intact, but clients must be prepared for zeroed-out keys when
     /// iterating.
-    void blot(KeyT Key) {
+    void blot(const KeyT &Key) {
       typename MapTy::iterator It = Map.find(Key);
       if (It == Map.end()) return;
       Vector[It->second].first = KeyT();
@@ -2400,7 +2402,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
                                BBState &MyStates) const {
   // If any top-down local-use or possible-dec has a succ which is earlier in
   // the sequence, forget it.
-  for (BBState::ptr_const_iterator I = MyStates.top_down_ptr_begin(),
+  for (BBState::ptr_iterator I = MyStates.top_down_ptr_begin(),
        E = MyStates.top_down_ptr_end(); I != E; ++I)
     switch (I->second.GetSeq()) {
     default: break;
@@ -2409,7 +2411,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       const TerminatorInst *TI = cast<TerminatorInst>(&BB->back());
       bool SomeSuccHasSame = false;
       bool AllSuccsHaveSame = true;
-      PtrState &S = MyStates.getPtrTopDownState(Arg);
+      PtrState &S = I->second;
       succ_const_iterator SI(TI), SE(TI, false);
 
       // If the terminator is an invoke marked with the
@@ -2452,7 +2454,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
       const TerminatorInst *TI = cast<TerminatorInst>(&BB->back());
       bool SomeSuccHasSame = false;
       bool AllSuccsHaveSame = true;
-      PtrState &S = MyStates.getPtrTopDownState(Arg);
+      PtrState &S = I->second;
       succ_const_iterator SI(TI), SE(TI, false);
 
       // If the terminator is an invoke marked with the
