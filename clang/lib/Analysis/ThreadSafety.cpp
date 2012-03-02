@@ -126,12 +126,56 @@ class MutexID {
         DeclSeq.push_back(0);  // Use 0 to represent 'this'.
         return;  // mutexID is still valid in this case
       }
-    } else if (UnaryOperator *UOE = dyn_cast<UnaryOperator>(Exp))
+    } else if (CXXMemberCallExpr *CMCE = dyn_cast<CXXMemberCallExpr>(Exp)) {
+      DeclSeq.push_back(CMCE->getMethodDecl()->getCanonicalDecl());
+      buildMutexID(CMCE->getImplicitObjectArgument(),
+                   D, Parent, NumArgs, FunArgs);
+      unsigned NumCallArgs = CMCE->getNumArgs();
+      Expr** CallArgs = CMCE->getArgs();
+      for (unsigned i = 0; i < NumCallArgs; ++i) {
+        buildMutexID(CallArgs[i], D, Parent, NumArgs, FunArgs);
+      }
+    } else if (CallExpr *CE = dyn_cast<CallExpr>(Exp)) {
+      buildMutexID(CE->getCallee(), D, Parent, NumArgs, FunArgs);
+      unsigned NumCallArgs = CE->getNumArgs();
+      Expr** CallArgs = CE->getArgs();
+      for (unsigned i = 0; i < NumCallArgs; ++i) {
+        buildMutexID(CallArgs[i], D, Parent, NumArgs, FunArgs);
+      }
+    } else if (BinaryOperator *BOE = dyn_cast<BinaryOperator>(Exp)) {
+      buildMutexID(BOE->getLHS(), D, Parent, NumArgs, FunArgs);
+      buildMutexID(BOE->getRHS(), D, Parent, NumArgs, FunArgs);
+    } else if (UnaryOperator *UOE = dyn_cast<UnaryOperator>(Exp)) {
       buildMutexID(UOE->getSubExpr(), D, Parent, NumArgs, FunArgs);
-    else if (CastExpr *CE = dyn_cast<CastExpr>(Exp))
+    } else if (ArraySubscriptExpr *ASE = dyn_cast<ArraySubscriptExpr>(Exp)) {
+      buildMutexID(ASE->getBase(), D, Parent, NumArgs, FunArgs);
+      buildMutexID(ASE->getIdx(), D, Parent, NumArgs, FunArgs);
+    } else if (AbstractConditionalOperator *CE =
+                 dyn_cast<AbstractConditionalOperator>(Exp)) {
+      buildMutexID(CE->getCond(), D, Parent, NumArgs, FunArgs);
+      buildMutexID(CE->getTrueExpr(), D, Parent, NumArgs, FunArgs);
+      buildMutexID(CE->getFalseExpr(), D, Parent, NumArgs, FunArgs);
+    } else if (ChooseExpr *CE = dyn_cast<ChooseExpr>(Exp)) {
+      buildMutexID(CE->getCond(), D, Parent, NumArgs, FunArgs);
+      buildMutexID(CE->getLHS(), D, Parent, NumArgs, FunArgs);
+      buildMutexID(CE->getRHS(), D, Parent, NumArgs, FunArgs);
+    } else if (CastExpr *CE = dyn_cast<CastExpr>(Exp)) {
       buildMutexID(CE->getSubExpr(), D, Parent, NumArgs, FunArgs);
-    else
-      DeclSeq.clear(); // Mark as invalid lock expression.
+    } else if (ParenExpr *PE = dyn_cast<ParenExpr>(Exp)) {
+      buildMutexID(PE->getSubExpr(), D, Parent, NumArgs, FunArgs);
+    } else if (isa<CharacterLiteral>(Exp) ||
+             isa<CXXNullPtrLiteralExpr>(Exp) ||
+             isa<GNUNullExpr>(Exp) ||
+             isa<CXXBoolLiteralExpr>(Exp) ||
+             isa<FloatingLiteral>(Exp) ||
+             isa<ImaginaryLiteral>(Exp) ||
+             isa<IntegerLiteral>(Exp) ||
+             isa<StringLiteral>(Exp) ||
+             isa<ObjCStringLiteral>(Exp)) {
+      return;  // FIXME: Ignore literals for now
+    } else {
+      // Ignore.  FIXME: mark as invalid expression?
+    }
   }
 
   /// \brief Construct a MutexID from an expression.
@@ -233,11 +277,11 @@ public:
   /// The caret will point unambiguously to the lock expression, so using this
   /// name in diagnostics is a way to get simple, and consistent, mutex names.
   /// We do not want to output the entire expression text for security reasons.
-  StringRef getName() const {
+  std::string getName() const {
     assert(isValid());
     if (!DeclSeq.front())
       return "this";  // Use 0 to represent 'this'.
-    return DeclSeq.front()->getName();
+    return DeclSeq.front()->getNameAsString();
   }
 
   void Profile(llvm::FoldingSetNodeID &ID) const {

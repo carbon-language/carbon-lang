@@ -766,27 +766,7 @@ void es_bad_7() {
 // Unparseable lock expressions
 // ----------------------------------------------//
 
-Mutex UPmu;
-// FIXME: add support for lock expressions involving arrays.
-Mutex mua[5];
-
-int x __attribute__((guarded_by(UPmu = sls_mu)));
-int y __attribute__((guarded_by(mua[0])));
-
-
-void testUnparse() {
-  x = 5; // \
-    // expected-warning{{cannot resolve lock expression}}
-  y = 5; // \
-    // expected-warning{{cannot resolve lock expression}}
-}
-
-void testUnparse2() {
-  mua[0].Lock(); // \
-    // expected-warning{{cannot resolve lock expression}}
-  (&(mua[0]) + 4)->Lock(); // \
-    // expected-warning{{cannot resolve lock expression}}
-}
+// FIXME -- derive new tests for unhandled expressions
 
 
 //----------------------------------------------------------------------------//
@@ -2166,5 +2146,98 @@ class Foo {
 };
 
 } // end namespace WarnNoDecl
+
+
+
+namespace MoreLockExpressions {
+
+class Foo {
+public:
+  Mutex mu_;
+  int a GUARDED_BY(mu_);
+};
+
+class Bar {
+public:
+  int b;
+  Foo* f;
+
+  Foo& getFoo()              { return *f; }
+  Foo& getFoo2(int c)        { return *f; }
+  Foo& getFoo3(int c, int d) { return *f; }
+
+  Foo& getFooey() { return *f; }
+};
+
+Foo& getBarFoo(Bar &bar, int c) { return bar.getFoo2(c); }
+
+void test() {
+  Foo foo;
+  Foo *fooArray;
+  Bar bar;
+  int a;
+  int b;
+  int c;
+
+  bar.getFoo().mu_.Lock();
+  bar.getFoo().a = 0;
+  bar.getFoo().mu_.Unlock();
+
+  (bar.getFoo().mu_).Lock();   // test parenthesis
+  bar.getFoo().a = 0;
+  (bar.getFoo().mu_).Unlock();
+
+  bar.getFoo2(a).mu_.Lock();
+  bar.getFoo2(a).a = 0;
+  bar.getFoo2(a).mu_.Unlock();
+
+  bar.getFoo3(a, b).mu_.Lock();
+  bar.getFoo3(a, b).a = 0;
+  bar.getFoo3(a, b).mu_.Unlock();
+
+  getBarFoo(bar, a).mu_.Lock();
+  getBarFoo(bar, a).a = 0;
+  getBarFoo(bar, a).mu_.Unlock();
+
+  bar.getFoo2(10).mu_.Lock();
+  bar.getFoo2(10).a = 0;
+  bar.getFoo2(10).mu_.Unlock();
+
+  bar.getFoo2(a + 1).mu_.Lock();
+  bar.getFoo2(a + 1).a = 0;
+  bar.getFoo2(a + 1).mu_.Unlock();
+
+  (a > 0 ? fooArray[1] : fooArray[b]).mu_.Lock();
+  (a > 0 ? fooArray[1] : fooArray[b]).a = 0;
+  (a > 0 ? fooArray[1] : fooArray[b]).mu_.Unlock();
+
+  bar.getFoo().mu_.Lock();
+  bar.getFooey().a = 0; // \
+    // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+  bar.getFoo().mu_.Unlock();
+
+  bar.getFoo2(a).mu_.Lock();
+  bar.getFoo2(b).a = 0; // \
+    // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+  bar.getFoo2(a).mu_.Unlock();
+
+  bar.getFoo3(a, b).mu_.Lock();
+  bar.getFoo3(a, c).a = 0;  // \
+    // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+  bar.getFoo3(a, b).mu_.Unlock();
+
+  getBarFoo(bar, a).mu_.Lock();
+  getBarFoo(bar, b).a = 0;  // \
+    // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+  getBarFoo(bar, a).mu_.Unlock();
+
+  (a > 0 ? fooArray[1] : fooArray[b]).mu_.Lock();
+  (a > 0 ? fooArray[b] : fooArray[c]).a = 0; // \
+    // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+  (a > 0 ? fooArray[1] : fooArray[b]).mu_.Unlock();
+}
+
+
+} // end namespace
 
 
