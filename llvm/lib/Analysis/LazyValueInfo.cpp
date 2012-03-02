@@ -24,6 +24,7 @@
 #include "llvm/Support/CFG.h"
 #include "llvm/Support/ConstantRange.h"
 #include "llvm/Support/Debug.h"
+#include "llvm/Support/PatternMatch.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/ValueHandle.h"
 #include "llvm/ADT/DenseSet.h"
@@ -31,6 +32,7 @@
 #include <map>
 #include <stack>
 using namespace llvm;
+using namespace PatternMatch;
 
 char LazyValueInfo::ID = 0;
 INITIALIZE_PASS_BEGIN(LazyValueInfo, "lazy-value-info",
@@ -795,9 +797,8 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
       // If the condition of the branch is an equality comparison, we may be
       // able to infer the value.
       ICmpInst *ICI = dyn_cast<ICmpInst>(BI->getCondition());
-      if (ICI && ICI->getOperand(0) == Val &&
-          isa<Constant>(ICI->getOperand(1))) {
-        if (ICI->isEquality()) {
+      if (ICI && isa<Constant>(ICI->getOperand(1))) {
+        if (ICI->isEquality() && ICI->getOperand(0) == Val) {
           // We know that V has the RHS constant if this is a true SETEQ or
           // false SETNE. 
           if (isTrueDest == (ICI->getPredicate() == ICmpInst::ICMP_EQ))
@@ -807,11 +808,22 @@ bool LazyValueInfoCache::getEdgeValue(Value *Val, BasicBlock *BBFrom,
           return true;
         }
 
-        if (ConstantInt *CI = dyn_cast<ConstantInt>(ICI->getOperand(1))) {
+        // Recognize the range checking idiom that InstCombine produces.
+        // (X-C1) u< C2 --> [C1, C1+C2)
+        ConstantInt *NegOffset = 0;
+        if (ICI->getPredicate() == ICmpInst::ICMP_ULT)
+          match(ICI->getOperand(0), m_Add(m_Specific(Val),
+                                          m_ConstantInt(NegOffset)));
+
+        ConstantInt *CI = dyn_cast<ConstantInt>(ICI->getOperand(1));
+        if (CI && (ICI->getOperand(0) == Val || NegOffset)) {
           // Calculate the range of values that would satisfy the comparison.
           ConstantRange CmpRange(CI->getValue(), CI->getValue()+1);
           ConstantRange TrueValues =
             ConstantRange::makeICmpRegion(ICI->getPredicate(), CmpRange);
+
+          if (NegOffset) // Apply the offset from above.
+            TrueValues = TrueValues.subtract(NegOffset->getValue());
 
           // If we're interested in the false dest, invert the condition.
           if (!isTrueDest) TrueValues = TrueValues.inverse();
