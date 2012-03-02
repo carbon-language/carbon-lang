@@ -47,6 +47,8 @@
 
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/Support/DataTypes.h"
+#include "llvm/Support/Host.h"
+#include "llvm/Support/SwapByteOrder.h"
 #include "llvm/Support/type_traits.h"
 #include <algorithm>
 #include <cassert>
@@ -149,12 +151,16 @@ namespace detail {
 inline uint64_t fetch64(const char *p) {
   uint64_t result;
   memcpy(&result, p, sizeof(result));
+  if (sys::isBigEndianHost())
+    return sys::SwapByteOrder(result);
   return result;
 }
 
 inline uint32_t fetch32(const char *p) {
   uint32_t result;
   memcpy(&result, p, sizeof(result));
+  if (sys::isBigEndianHost())
+    return sys::SwapByteOrder(result);
   return result;
 }
 
