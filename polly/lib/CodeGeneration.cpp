@@ -261,8 +261,8 @@ public:
   bool isVectorBlock();
 
   void copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
-                       ValueMapT &vectorMap, VectorValueMapT &scalarMaps,
-                       int vectorDimension, int vectorWidth);
+                       ValueMapT &VectorMap, VectorValueMapT &ScalarMaps,
+                       int VectorDimension, int VectorWidth);
 
   // Insert a copy of a basic block in the newly generated code.
   //
