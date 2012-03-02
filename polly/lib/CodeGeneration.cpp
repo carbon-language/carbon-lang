@@ -155,6 +155,19 @@ static Value *createLoop(IRBuilder<> *Builder, Value *LB, Value *UB,
 }
 
 class BlockGenerator {
+public:
+  /// @brief Generate code for single basic block.
+  static void generate(IRBuilder<> &B, ValueMapT &ValueMap,
+                       VectorValueMapT &VectorMaps, ScopStmt &Stmt,
+                       __isl_keep isl_set *Domain, BasicBlock *BB, Pass *P) {
+    BlockGenerator Generator(B, ValueMap, VectorMaps, Stmt, Domain);
+    Generator.copyBB(BB, P);
+  }
+
+private:
+  BlockGenerator(IRBuilder<> &B, ValueMapT &vmap, VectorValueMapT &vmaps,
+                 ScopStmt &Stmt, __isl_keep isl_set *domain);
+
   IRBuilder<> &Builder;
   ValueMapT &VMap;
   VectorValueMapT &ValueMaps;
@@ -162,9 +175,6 @@ class BlockGenerator {
   ScopStmt &Statement;
   isl_set *ScatteringDomain;
 
-public:
-  BlockGenerator(IRBuilder<> &B, ValueMapT &vmap, VectorValueMapT &vmaps,
-                 ScopStmt &Stmt, __isl_keep isl_set *domain);
 
   const Region &getRegion();
 
@@ -1070,9 +1080,8 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
     }
   }
 
-  BlockGenerator Generator(Builder, ValueMap, VectorValueMap, *Statement,
-                           scatteringDomain);
-  Generator.copyBB(BB, P);
+  BlockGenerator::generate(Builder, ValueMap, VectorValueMap, *Statement,
+                           scatteringDomain, BB, P);
 }
 
 void ClastStmtCodeGen::codegen(const clast_block *b) {
