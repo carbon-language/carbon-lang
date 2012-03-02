@@ -160,13 +160,13 @@ public:
   static void generate(IRBuilder<> &B, ValueMapT &ValueMap,
                        VectorValueMapT &VectorMaps, ScopStmt &Stmt,
                        __isl_keep isl_set *Domain, Pass *P) {
-    BlockGenerator Generator(B, ValueMap, VectorMaps, Stmt, Domain);
-    Generator.copyBB(P);
+    BlockGenerator Generator(B, ValueMap, VectorMaps, Stmt, Domain, P);
+    Generator.copyBB();
   }
 
 private:
   BlockGenerator(IRBuilder<> &B, ValueMapT &vmap, VectorValueMapT &vmaps,
-                 ScopStmt &Stmt, __isl_keep isl_set *domain);
+                 ScopStmt &Stmt, __isl_keep isl_set *domain, Pass *p);
 
   IRBuilder<> &Builder;
   ValueMapT &VMap;
@@ -174,6 +174,7 @@ private:
   Scop &S;
   ScopStmt &Statement;
   isl_set *ScatteringDomain;
+  Pass *P;
 
 
   const Region &getRegion();
@@ -282,14 +283,14 @@ private:
   //                is used to update the operands of the statements.
   //                For new statements a relation old->new is inserted in this
   //                map.
-  void copyBB(Pass *P);
+  void copyBB();
 };
 
 BlockGenerator::BlockGenerator(IRBuilder<> &B, ValueMapT &vmap,
                                VectorValueMapT &vmaps, ScopStmt &Stmt,
-                               __isl_keep isl_set *domain)
+                               __isl_keep isl_set *domain, Pass *P)
     : Builder(B), VMap(vmap), ValueMaps(vmaps), S(*Stmt.getParent()),
-      Statement(Stmt), ScatteringDomain(domain) {}
+      Statement(Stmt), ScatteringDomain(domain), P(P) {}
 
 const Region &BlockGenerator::getRegion() {
   return S.getRegion();
@@ -710,7 +711,7 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
   copyInstScalar(Inst, BBMap);
 }
 
-void BlockGenerator::copyBB(Pass *P) {
+void BlockGenerator::copyBB() {
   BasicBlock *BB = Statement.getBasicBlock();
   BasicBlock *CopyBB = SplitBlock(Builder.GetInsertBlock(),
                                   Builder.GetInsertPoint(), P);
