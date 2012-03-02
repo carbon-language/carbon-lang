@@ -3,7 +3,7 @@ set(LLVM_USED_LIBS clangBasic clangAST)
 add_clang_library(clangIndex
   ASTLocation.cpp
   Analyzer.cpp
-  CallGraph.cpp
+  GlobalCallGraph.cpp
   DeclReferenceMap.cpp
   Entity.cpp
   GlobalSelector.cpp
