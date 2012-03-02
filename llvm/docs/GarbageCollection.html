@@ -1,4 +1,4 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN"
                       "http://www.w3.org/TR/html4/strict.dtd">
 <html>
 <head>
@@ -429,7 +429,8 @@ programs that use different garbage collection algorithms (or none at all).</p>
 <p>The <tt>llvm.gcroot</tt> intrinsic is used to inform LLVM that a stack
 variable references an object on the heap and is to be tracked for garbage
 collection. The exact impact on generated code is specified by a <a
-href="#plugin">compiler plugin</a>.</p>
+href="#plugin">compiler plugin</a>. All calls to <tt>llvm.gcroot</tt> <b>must</b> reside
+ inside the first basic block.</p>
 
 <p>A compiler which uses mem2reg to raise imperative code using <tt>alloca</tt>
 into SSA form need only add a call to <tt>@llvm.gcroot</tt> for those variables
@@ -437,7 +438,9 @@ which a pointers into the GC heap.</p>
 
 <p>It is also important to mark intermediate values with <tt>llvm.gcroot</tt>.
 For example, consider <tt>h(f(), g())</tt>. Beware leaking the result of
-<tt>f()</tt> in the case that <tt>g()</tt> triggers a collection.</p>
+<tt>f()</tt> in the case that <tt>g()</tt> triggers a collection. Note, that
+stack variables must be initialized and marked with <tt>llvm.gcroot</tt> in
+function's prologue.</p>
 
 <p>The first argument <b>must</b> be a value referring to an alloca instruction
 or a bitcast of an alloca. The second contains a pointer to metadata that
