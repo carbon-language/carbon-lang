@@ -511,7 +511,7 @@ void ConstStructBuilder::Build(const APValue &Val, const RecordDecl *RD,
     const APValue &FieldValue =
       RD->isUnion() ? Val.getUnionValue() : Val.getStructField(FieldNo);
     llvm::Constant *EltInit =
-      CGM.EmitConstantValue(FieldValue, Field->getType(), CGF);
+      CGM.EmitConstantValueForMemory(FieldValue, Field->getType(), CGF);
     assert(EltInit && "EmitConstantValue can't fail");
 
     if (!Field->isBitField()) {
@@ -1015,7 +1015,7 @@ public:
 llvm::Constant *CodeGenModule::EmitConstantInit(const VarDecl &D,
                                                 CodeGenFunction *CGF) {
   if (const APValue *Value = D.evaluateValue())
-    return EmitConstantValue(*Value, D.getType(), CGF);
+    return EmitConstantValueForMemory(*Value, D.getType(), CGF);
 
   // FIXME: Implement C++11 [basic.start.init]p2: if the initializer of a
   // reference is a constant expression, and the reference binds to a temporary,
@@ -1049,10 +1049,12 @@ llvm::Constant *CodeGenModule::EmitConstantExpr(const Expr *E,
   else
     Success = E->EvaluateAsRValue(Result, Context);
 
+  llvm::Constant *C = 0;
   if (Success && !Result.HasSideEffects)
-    return EmitConstantValue(Result.Val, DestType, CGF);
+    C = EmitConstantValue(Result.Val, DestType, CGF);
+  else
+    C = ConstExprEmitter(*this, CGF).Visit(const_cast<Expr*>(E));
 
-  llvm::Constant* C = ConstExprEmitter(*this, CGF).Visit(const_cast<Expr*>(E));
   if (C && C->getType()->isIntegerTy(1)) {
     llvm::Type *BoolTy = getTypes().ConvertTypeForMem(E->getType());
     C = llvm::ConstantExpr::getZExt(C, BoolTy);
@@ -1110,16 +1112,8 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
       return C;
     }
   }
-  case APValue::Int: {
-    llvm::Constant *C = llvm::ConstantInt::get(VMContext,
-                                               Value.getInt());
-
-    if (C->getType()->isIntegerTy(1)) {
-      llvm::Type *BoolTy = getTypes().ConvertTypeForMem(DestType);
-      C = llvm::ConstantExpr::getZExt(C, BoolTy);
-    }
-    return C;
-  }
+  case APValue::Int:
+    return llvm::ConstantInt::get(VMContext, Value.getInt());
   case APValue::ComplexInt: {
     llvm::Constant *Complex[2];
 
@@ -1199,16 +1193,16 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
     // Emit array filler, if there is one.
     llvm::Constant *Filler = 0;
     if (Value.hasArrayFiller())
-      Filler = EmitConstantValue(Value.getArrayFiller(),
-                                 CAT->getElementType(), CGF);
+      Filler = EmitConstantValueForMemory(Value.getArrayFiller(),
+                                          CAT->getElementType(), CGF);
 
     // Emit initializer elements.
     llvm::Type *CommonElementType = 0;
     for (unsigned I = 0; I < NumElements; ++I) {
       llvm::Constant *C = Filler;
       if (I < NumInitElts)
-        C = EmitConstantValue(Value.getArrayInitializedElt(I),
-                              CAT->getElementType(), CGF);
+        C = EmitConstantValueForMemory(Value.getArrayInitializedElt(I),
+                                       CAT->getElementType(), CGF);
       if (I == 0)
         CommonElementType = C->getType();
       else if (C->getType() != CommonElementType)
@@ -1234,6 +1228,18 @@ llvm::Constant *CodeGenModule::EmitConstantValue(const APValue &Value,
     return getCXXABI().EmitMemberPointer(Value, DestType);
   }
   llvm_unreachable("Unknown APValue kind");
+}
+
+llvm::Constant *
+CodeGenModule::EmitConstantValueForMemory(const APValue &Value,
+                                          QualType DestType,
+                                          CodeGenFunction *CGF) {
+  llvm::Constant *C = EmitConstantValue(Value, DestType, CGF);
+  if (C->getType()->isIntegerTy(1)) {
+    llvm::Type *BoolTy = getTypes().ConvertTypeForMem(DestType);
+    C = llvm::ConstantExpr::getZExt(C, BoolTy);
+  }
+  return C;
 }
 
 llvm::Constant *

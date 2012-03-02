@@ -337,3 +337,75 @@ namespace VirtualBase {
   X<D> x;
   // CHECK: call {{.*}}@_ZN11VirtualBase1XINS_1DEEC1Ev
 }
+
+// PR12145
+namespace Unreferenced {
+  int n;
+  constexpr int *p = &n;
+  // We must not emit a load of 'p' here, since it's not odr-used.
+  int q = *p;
+  // CHECK-NOT: _ZN12Unreferenced1pE
+  // CHECK: = load i32* @_ZN12Unreferenced1nE
+  // CHECK-NEXT: store i32 {{.*}}, i32* @_ZN12Unreferenced1qE
+  // CHECK-NOT: _ZN12Unreferenced1pE
+
+  // Technically, we are not required to substitute variables of reference types
+  // initialized by constant expressions, because the special case for odr-use
+  // of variables in [basic.def.odr]p2 only applies to objects. But we do so
+  // anyway.
+
+  constexpr int &r = n;
+  // CHECK-NOT: _ZN12Unreferenced1rE
+  int s = r;
+
+  const int t = 1;
+  const int &rt = t;
+  int f(int);
+  int u = f(rt);
+  // CHECK: call i32 @_ZN12Unreferenced1fEi(i32 1)
+}
+
+namespace InitFromConst {
+  template<typename T> void consume(T);
+
+  const bool b = true;
+  const int n = 5;
+  const double d = 4.3;
+
+  struct S { int n = 7; S *p = 0; };
+  constexpr S s = S();
+  const S &r = s;
+  constexpr const S *p = &r;
+  constexpr int S::*mp = &S::n;
+  constexpr int a[3] = { 1, 4, 9 };
+
+  void test() {
+    // CHECK: call void @_ZN13InitFromConst7consumeIbEEvT_(i1 zeroext true)
+    consume(b);
+
+    // CHECK: call void @_ZN13InitFromConst7consumeIiEEvT_(i32 5)
+    consume(n);
+
+    // CHECK: call void @_ZN13InitFromConst7consumeIdEEvT_(double 4.300000e+00)
+    consume(d);
+
+    // CHECK: call void @_ZN13InitFromConst7consumeIRKNS_1SEEEvT_(%"struct.InitFromConst::S"* @_ZN13InitFromConstL1sE)
+    consume<const S&>(s);
+
+    // FIXME CHECK-NOT: call void @_ZN13InitFromConst7consumeIRKNS_1SEEEvT_(%"struct.InitFromConst::S"* @_ZN13InitFromConstL1sE)
+    // There's no lvalue-to-rvalue conversion here, so 'r' is odr-used, and
+    // we're permitted to emit a load of it. This seems likely to be a defect
+    // in the standard. If we start emitting a direct reference to 's', update
+    // this test.
+    consume<const S&>(r);
+
+    // CHECK: call void @_ZN13InitFromConst7consumeIPKNS_1SEEEvT_(%"struct.InitFromConst::S"* @_ZN13InitFromConstL1sE)
+    consume(p);
+
+    // CHECK: call void @_ZN13InitFromConst7consumeIMNS_1SEiEEvT_(i64 0)
+    consume(mp);
+
+    // CHECK: call void @_ZN13InitFromConst7consumeIPKiEEvT_(i32* getelementptr inbounds ([3 x i32]* @_ZN13InitFromConstL1aE, i32 0, i32 0))
+    consume(a);
+  }
+}

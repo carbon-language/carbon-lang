@@ -1472,7 +1472,8 @@ CodeGenModule::MaybeEmitGlobalStdInitializerListInitializer(const VarDecl *D,
   }
 
   // Emit the constant for the initializer_list.
-  llvm::Constant *llvmInit = EmitConstantValue(initListValue, D->getType());
+  llvm::Constant *llvmInit =
+      EmitConstantValueForMemory(initListValue, D->getType());
   assert(llvmInit && "failed to initialize as constant");
   return llvmInit;
 }
