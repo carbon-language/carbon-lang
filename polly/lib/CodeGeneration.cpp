@@ -251,14 +251,13 @@ private:
                     VectorValueMapT &ScalarMaps);
 
   void copyUnaryInst(const UnaryInstruction *Inst, ValueMapT &BBMap,
-                     ValueMapT &VectorMap, int VectorDimension);
+                     ValueMapT &VectorMap);
 
   void copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
-                   ValueMapT &VectorMap, int VectorDimension);
+                   ValueMapT &VectorMap);
 
   void copyVectorStore(const StoreInst *Store, ValueMapT &BBMap,
-                       ValueMapT &VectorMap, VectorValueMapT &ScalarMaps,
-                       int VectorDimension);
+                       ValueMapT &VectorMap, VectorValueMapT &ScalarMaps);
 
   void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap);
 
@@ -560,8 +559,7 @@ void BlockGenerator::generateLoad(const LoadInst *Load, ValueMapT &VectorMap,
 }
 
 void BlockGenerator::copyUnaryInst(const UnaryInstruction *Inst,
-                                   ValueMapT &BBMap, ValueMapT &VectorMap,
-                                   int VectorDimension) {
+                                   ValueMapT &BBMap, ValueMapT &VectorMap) {
   int VectorWidth = getVectorWidth();
   Value *NewOperand = getOperand(Inst->getOperand(0), BBMap, &VectorMap);
   NewOperand = makeVectorOperand(NewOperand);
@@ -574,7 +572,7 @@ void BlockGenerator::copyUnaryInst(const UnaryInstruction *Inst,
 }
 
 void BlockGenerator::copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
-                                 ValueMapT &VectorMap, int VectorDimension) {
+                                 ValueMapT &VectorMap) {
   Value *OpZero = Inst->getOperand(0);
   Value *OpOne = Inst->getOperand(1);
 
@@ -593,13 +591,8 @@ void BlockGenerator::copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
 
 void BlockGenerator::copyVectorStore(const StoreInst *Store, ValueMapT &BBMap,
                                      ValueMapT &VectorMap,
-                                     VectorValueMapT &ScalarMaps,
-                                     int VectorDimension) {
+                                     VectorValueMapT &ScalarMaps) {
   int VectorWidth = getVectorWidth();
-
-  // In vector mode we only generate a store for the first dimension.
-  if (VectorDimension > 0)
-    return;
 
   MemoryAccess &Access = Statement.getAccessFor(Store);
 
@@ -686,6 +679,11 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
     // need to create any more instructions.
     if (VectorMap.count(Inst))
       return;
+
+    // Stores are not in the VectorMap
+    if (isa<StoreInst>(Inst) && VectorDimension > 0)
+      return;
+
   }
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
@@ -694,17 +692,22 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
   }
 
   if (isVectorBlock() && hasVectorOperands(Inst, VectorMap)) {
-    if (const UnaryInstruction *UnaryInst = dyn_cast<UnaryInstruction>(Inst))
-      copyUnaryInst(UnaryInst, BBMap, VectorMap, VectorDimension);
-    else if
-      (const BinaryOperator *BinaryInst = dyn_cast<BinaryOperator>(Inst))
-        copyBinInst(BinaryInst, BBMap, VectorMap, VectorDimension);
-    else if (const StoreInst *Store = dyn_cast<StoreInst>(Inst))
-      copyVectorStore(Store, BBMap, VectorMap, ScalarMaps, VectorDimension);
-    else
-      llvm_unreachable("Cannot issue vector code for this instruction");
+    if (const StoreInst *Store = dyn_cast<StoreInst>(Inst)) {
+      copyVectorStore(Store, BBMap, VectorMap, ScalarMaps);
+      return;
+    }
 
-    return;
+    if (const UnaryInstruction *UnaryInst = dyn_cast<UnaryInstruction>(Inst)) {
+      copyUnaryInst(UnaryInst, BBMap, VectorMap);
+      return;
+    }
+
+    if (const BinaryOperator *BinaryInst = dyn_cast<BinaryOperator>(Inst)) {
+      copyBinInst(BinaryInst, BBMap, VectorMap);
+      return;
+    }
+
+    llvm_unreachable("Cannot issue vector code for this instruction");
   }
 
   copyInstScalar(Inst, BBMap);
