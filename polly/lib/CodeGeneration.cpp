@@ -523,17 +523,10 @@ Value *VectorBlockGenerator::makeVectorOperand(Value *Operand) {
   if (Operand->getType()->isVectorTy())
     return Operand;
 
-  VectorType *VectorType = VectorType::get(Operand->getType(), VectorWidth);
-  Value *Vector = UndefValue::get(VectorType);
+  Value *Vector = UndefValue::get(VectorType::get(Operand->getType(), 1));
   Vector = Builder.CreateInsertElement(Vector, Operand, Builder.getInt32(0));
-
-  std::vector<Constant*> Splat;
-
-  for (int i = 0; i < VectorWidth; i++)
-    Splat.push_back (Builder.getInt32(0));
-
-  Constant *SplatVector = ConstantVector::get(Splat);
-
+  Constant *SplatVector = ConstantVector::getSplat(VectorWidth,
+                                                   Builder.getInt32(0));
   return Builder.CreateShuffleVector(Vector, Vector, SplatVector);
 }
 

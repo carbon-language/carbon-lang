@@ -41,7 +41,7 @@ bb:
   ret i32 %tmp1
 }
 
-; CHECK: insertelement <4 x float> undef, float %p_tmp4, i32 0
-; CHECK: shufflevector <4 x float> %0, <4 x float> %0, <4 x i32> zeroinitializer
+; CHECK: insertelement <1 x float> undef, float %p_tmp4, i32 0
+; CHECK: shufflevector <1 x float> %0, <1 x float> %0, <4 x i32> zeroinitializer
 ; CHECK: fadd <4 x float> %tmp_p_vec_full, %1
 
