@@ -1,4 +1,4 @@
-/*===- pso-stub.c - Stub executable to run llvm bitcode files -------------===//
+//===- llvm-readobj.cpp - Dump contents of an Object File -----------------===//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -7,11 +7,15 @@
 //
 //===----------------------------------------------------------------------===//
 //
-//===----------------------------------------------------------------------===*/
+// This program is a utility that works like traditional Unix "readelf",
+// except that it can handle any type of object file recognized by lib/Object.
+//
+// It makes use of the generic ObjectFile interface.
+//
+// Caution: This utility is new, experimental, unsupported, and incomplete.
+//
+//===----------------------------------------------------------------------===//
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
 #include "llvm/Object/ObjectFile.h"
 #include "llvm/Analysis/Verifier.h"
 #include "llvm/ADT/Triple.h"
