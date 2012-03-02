@@ -820,7 +820,7 @@ Decl *Sema::ActOnStartCategoryImplementation(
                       IdentifierInfo *CatName, SourceLocation CatLoc) {
   ObjCInterfaceDecl *IDecl = getObjCInterfaceDecl(ClassName, ClassLoc, true);
   ObjCCategoryDecl *CatIDecl = 0;
-  if (IDecl) {
+  if (IDecl && IDecl->hasDefinition()) {
     CatIDecl = IDecl->FindCategoryDeclaration(CatName);
     if (!CatIDecl) {
       // Category @implementation with no corresponding @interface.

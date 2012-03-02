@@ -95,3 +95,7 @@
 @synthesize name = _name;
 @end
 
+// rdar://10968158
+@class I; // expected-note {{forward declaration}}
+@implementation I(cat) // expected-error{{cannot find interface declaration}}
+@end

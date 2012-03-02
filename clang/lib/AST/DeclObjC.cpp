@@ -806,6 +806,10 @@ ObjCIvarDecl *ObjCInterfaceDecl::all_declared_ivar_begin() {
 ///
 ObjCCategoryDecl *
 ObjCInterfaceDecl::FindCategoryDeclaration(IdentifierInfo *CategoryId) const {
+  // FIXME: Should make sure no callers ever do this.
+  if (!hasDefinition())
+    return 0;
+
   if (data().ExternallyCompleted)
     LoadExternalDefinition();
 
