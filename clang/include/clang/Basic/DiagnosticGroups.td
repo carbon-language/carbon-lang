@@ -27,6 +27,7 @@ def : DiagGroup<"bad-function-cast">;
 def Availability : DiagGroup<"availability">;
 def AutoImport : DiagGroup<"auto-import">;
 def BoolConversions : DiagGroup<"bool-conversions">;
+def IntConversions : DiagGroup<"int-conversions">;
 def BuiltinRequiresHeader : DiagGroup<"builtin-requires-header">;
 def CXXCompat: DiagGroup<"c++-compat">;
 def CastAlign : DiagGroup<"cast-align">;
@@ -278,7 +279,8 @@ def Conversion : DiagGroup<"conversion",
                             DiagGroup<"literal-conversion">,
                             DiagGroup<"string-conversion">,
                             DiagGroup<"sign-conversion">,
-                            BoolConversions]>,
+                            BoolConversions,
+                            IntConversions]>,
                  DiagCategory<"Value Conversion Issue">;
 
 def Unused : DiagGroup<"unused",
