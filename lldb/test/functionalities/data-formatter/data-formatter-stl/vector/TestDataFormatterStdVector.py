@@ -58,13 +58,13 @@ class StdVectorDataFormatterTestCase(TestBase):
 
         # empty vectors (and storage pointers SHOULD BOTH BE NULL..)
         self.expect("frame variable numbers",
-            substrs = ['numbers = {}'])
+            substrs = ['numbers = size=0'])
 
         self.runCmd("n")
         
         # first value added
         self.expect("frame variable numbers",
-                    substrs = ['numbers = {',
+                    substrs = ['numbers = size=1',
                                '[0] = 1',
                                '}'])
 
@@ -72,7 +72,7 @@ class StdVectorDataFormatterTestCase(TestBase):
         self.runCmd("n");self.runCmd("n");self.runCmd("n");
     
         self.expect("frame variable numbers",
-                    substrs = ['numbers = {',
+                    substrs = ['numbers = size=4',
                                '[0] = 1',
                                '[1] = 12',
                                '[2] = 123',
@@ -80,7 +80,7 @@ class StdVectorDataFormatterTestCase(TestBase):
                                '}'])
 
         self.expect("p numbers",
-                    substrs = ['$', '= {',
+                    substrs = ['$', 'size=4',
                                '[0] = 1',
                                '[1] = 12',
                                '[2] = 123',
@@ -106,7 +106,7 @@ class StdVectorDataFormatterTestCase(TestBase):
         self.runCmd("n");self.runCmd("n");self.runCmd("n");
 
         self.expect("frame variable numbers",
-                    substrs = ['numbers = {',
+                    substrs = ['numbers = size=7',
                                '[0] = 1',
                                '[1] = 12',
                                '[2] = 123',
@@ -117,7 +117,7 @@ class StdVectorDataFormatterTestCase(TestBase):
                                '}'])
             
         self.expect("p numbers",
-                    substrs = ['$', ' = {',
+                    substrs = ['$', 'size=7',
                                '[0] = 1',
                                '[1] = 12',
                                '[2] = 123',
@@ -147,13 +147,13 @@ class StdVectorDataFormatterTestCase(TestBase):
         self.runCmd("n")
 
         self.expect("frame variable numbers",
-            substrs = ['numbers = {}'])
+            substrs = ['numbers = size=0'])
 
         self.runCmd("n")
 
         # first value added
         self.expect("frame variable numbers",
-                    substrs = ['numbers = {',
+                    substrs = ['numbers = size=1',
                                '[0] = 7',
                                '}'])
 

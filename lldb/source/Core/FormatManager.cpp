@@ -646,6 +646,7 @@ FormatManager::LoadSTLFormatters()
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
                                                                                                  "gnu_libstdcpp.StdListSynthProvider")));
     
+    stl_summary_flags.SetDontShowChildren(false);
     gnu_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?vector<.+>$")),
                                                      TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags,
                                                                                                "size=${svar%#}")));
