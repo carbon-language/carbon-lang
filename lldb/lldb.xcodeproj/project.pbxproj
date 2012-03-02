@@ -4061,8 +4061,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_OBJC_RUNTIME = NO;
 				CLANG_LINK_OBJC_RUNTIME = NO;
+				CLANG_OBJC_RUNTIME = NO;
 				CURRENT_PROJECT_VERSION = 121;
 				DYLIB_COMPATIBILITY_VERSION = 1;
 				DYLIB_CURRENT_VERSION = 121;
@@ -4123,8 +4123,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_OBJC_RUNTIME = NO;
 				CLANG_LINK_OBJC_RUNTIME = NO;
+				CLANG_OBJC_RUNTIME = NO;
 				CURRENT_PROJECT_VERSION = 121;
 				DEAD_CODE_STRIPPING = YES;
 				DYLIB_COMPATIBILITY_VERSION = 1;
@@ -4364,8 +4364,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
-				CLANG_OBJC_RUNTIME = NO;
 				CLANG_LINK_OBJC_RUNTIME = NO;
+				CLANG_OBJC_RUNTIME = NO;
 				COPY_PHASE_STRIP = YES;
 				CURRENT_PROJECT_VERSION = 121;
 				DEAD_CODE_STRIPPING = YES;
@@ -4728,6 +4728,8 @@
 		EDC6D4A714E5C19B001B75F8 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_LINK_OBJC_RUNTIME = NO;
+				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_IDENTITY = "-";
 				DEPLOYMENT_LOCATION = YES;
 				DSTROOT = "$(SYMROOT)";
@@ -4760,6 +4762,8 @@
 		EDC6D4A814E5C19B001B75F8 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_LINK_OBJC_RUNTIME = NO;
+				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = YES;
 				DEPLOYMENT_LOCATION = YES;
@@ -4787,6 +4791,8 @@
 		EDC6D4A914E5C19B001B75F8 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_LINK_OBJC_RUNTIME = NO;
+				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = YES;
 				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
@@ -4812,6 +4818,8 @@
 		EDE274E914EDCE1F005B0F75 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_LINK_OBJC_RUNTIME = NO;
+				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				DEPLOYMENT_LOCATION = YES;
@@ -4845,6 +4853,8 @@
 		EDE274EA14EDCE1F005B0F75 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_LINK_OBJC_RUNTIME = NO;
+				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = YES;
@@ -4873,6 +4883,8 @@
 		EDE274EB14EDCE1F005B0F75 /* BuildAndIntegration */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				CLANG_LINK_OBJC_RUNTIME = NO;
+				CLANG_OBJC_RUNTIME = NO;
 				CODE_SIGN_ENTITLEMENTS = source/Host/macosx/launcherXPCService/LauncherXPCService.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				COPY_PHASE_STRIP = YES;
