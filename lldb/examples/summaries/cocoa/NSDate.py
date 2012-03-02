@@ -68,7 +68,6 @@ class NSTaggedDate_SummaryProvider:
 		# unfortunately, it is made as a time-delta after Jan 1 2001 midnight GMT
 		# while all Python knows about is the "epoch", which is a platform-dependent
 		# year (1970 of *nix) whose Jan 1 at midnight is taken as reference
-		print hex(self.data)
 		value_double = struct.unpack('d', struct.pack('Q', self.data))[0]
 		return time.ctime(osx_to_python_time(value_double))
 
