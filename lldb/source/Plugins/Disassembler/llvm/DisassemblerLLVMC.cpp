@@ -37,7 +37,8 @@ public:
         m_disasm(disasm),
         m_is_valid(false),
         m_no_comments(true),
-        m_comment_stream()
+        m_comment_stream(),
+        m_does_branch(eLazyBoolCalculate)
     {
     }
     
@@ -147,7 +148,7 @@ public:
     virtual bool
     DoesBranch () const
     {
-        return false;
+        return m_does_branch == eLazyBoolYes;
     }
     
     virtual size_t
@@ -251,6 +252,90 @@ protected:
         }
     }
     
+    bool StringRepresentsBranch (const char *data, size_t size)
+    {
+        const char *cursor = data;
+
+        bool inWhitespace = true;
+
+        while (inWhitespace && cursor < data + size)
+        {
+            switch (*cursor)
+            {
+            default:
+                inWhitespace = false;
+                break;
+            case ' ':
+                break;
+            case '\t':
+                break;
+            }
+            
+            if (inWhitespace)
+                ++cursor;
+        }
+        
+        if (cursor >= data + size)
+            return false;
+        
+        llvm::Triple::ArchType arch = m_disasm.GetArchitecture().GetMachine();
+        
+        switch (arch)
+        {
+        default:
+            return false;
+        case llvm::Triple::x86:
+        case llvm::Triple::x86_64:
+            switch (cursor[0])
+            {
+            default:
+                return false;
+            case 'j':
+                return true;
+            case 'c':
+                if (cursor[1] == 'a' &&
+                    cursor[2] == 'l' &&
+                    cursor[3] == 'l')
+                    return true;
+                else
+                    return false;
+            }
+        case llvm::Triple::arm:
+        case llvm::Triple::thumb:
+            switch (cursor[0])
+            {
+            default:
+                return false;
+            case 'b':
+                {
+                    switch (cursor[1])
+                    {
+                    default:
+                        return false;
+                    case 'l':
+                    case 'x':
+                    case ' ':
+                    case '\t':
+                        return true;
+                    }
+                    return false;
+                }
+            case 'c':
+                {
+                    switch (cursor[1])
+                    {
+                    default:
+                        return false;
+                    case 'b':
+                        return true;
+                    }
+                }
+            }
+        }
+        
+        return false;
+    }
+    
     template <bool Reparse> bool Parse (const lldb_private::Address &address, 
                                         lldb_private::AddressClass addr_class,
                                         const DataExtractor &extractor,
@@ -278,6 +363,10 @@ protected:
                                                    address.GetFileAddress(), 
                                                    out_string.data(), 
                                                    out_string.size());
+        
+        if (m_does_branch == eLazyBoolCalculate)
+            m_does_branch = (StringRepresentsBranch (out_string.data(), out_string.size()) ?
+                             eLazyBoolYes : eLazyBoolNo);
         
         m_comment_stream.Flush();
         m_no_comments = false;
@@ -331,6 +420,7 @@ protected:
     
     bool                    m_no_comments;
     StreamString            m_comment_stream;
+    LazyBool                m_does_branch;
     
     static bool             s_regex_compiled;
     static ::regex_t        s_regex;
