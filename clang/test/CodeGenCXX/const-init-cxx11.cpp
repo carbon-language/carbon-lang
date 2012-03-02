@@ -337,3 +337,30 @@ namespace VirtualBase {
   X<D> x;
   // CHECK: call {{.*}}@_ZN11VirtualBase1XINS_1DEEC1Ev
 }
+
+// PR12145
+namespace Unreferenced {
+  int n;
+  constexpr int *p = &n;
+  // We must not emit a load of 'p' here, since it's not odr-used.
+  int q = *p;
+  // CHECK-NOT: _ZN12Unreferenced1pE
+  // CHECK: %0 = load i32* @_ZN12Unreferenced1nE
+  // CHECK-NEXT: store i32 %0, i32* @_ZN12Unreferenced1qE
+  // CHECK-NOT: _ZN12Unreferenced1pE
+
+  // Technically, we are not required to substitute variables of reference types
+  // initialized by constant expressions, because the special case for odr-use
+  // of variables in [basic.def.odr]p2 only applies to objects. But we do so
+  // anyway.
+
+  constexpr int &r = n;
+  // CHECK-NOT: _ZN12Unreferenced1rE
+  int s = r;
+
+  const int t = 1;
+  const int &rt = t;
+  int f(int);
+  int u = f(rt);
+  // CHECK: call i32 @_ZN12Unreferenced1fEi(i32 1)
+}
