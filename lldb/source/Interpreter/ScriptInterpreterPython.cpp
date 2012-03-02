@@ -282,7 +282,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     // WARNING: temporary code that loads Cocoa formatters - this should be done on a per-platform basis rather than loading the whole set
     // and letting the individual formatter classes exploit APIs to check whether they can/cannot do their task
     run_string.Clear();
-    run_string.Printf ("run_one_line (%s, 'import CFString, CFArray, CFDictionary, NSData, NSMachPort, NSSet, NSNotification, NSException, CFBag, CFBinaryHeap, NSURL, NSBundle, NSNumber, NSDate, NSIndexSet')", m_dictionary_name.c_str());
+    run_string.Printf ("run_one_line (%s, 'import CFString, CFArray, CFDictionary, NSData, NSMachPort, NSSet, NSNotification, NSException, CFBag, CFBinaryHeap, NSURL, NSBundle, NSNumber, NSDate, NSIndexSet, Selector')", m_dictionary_name.c_str());
     PyRun_SimpleString (run_string.GetData());
 
     int new_count = Debugger::TestDebuggerRefCount();

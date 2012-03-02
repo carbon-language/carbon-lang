@@ -552,7 +552,26 @@ int main (int argc, const char * argv[])
 	    [imset addIndex:62];
 	    [imset addIndex:63];
 
+	    CFTimeZoneRef cupertino = CFTimeZoneCreateWithName (
+	                                            NULL,
+	                                            CFSTR("PST"),
+	                                            YES);
+	    CFTimeZoneRef home = CFTimeZoneCreateWithName (
+	                                            NULL,
+	                                            CFSTR("Europe/Rome"),
+	                                            YES);
+	    CFTimeZoneRef europe = CFTimeZoneCreateWithName (
+	                                            NULL,
+	                                            CFSTR("CET"),
+	                                            YES);
+
+		NSTimeZone *cupertino_ns = [NSTimeZone timeZoneWithAbbreviation:@"PST"];
+		NSTimeZone *home_ns = [NSTimeZone timeZoneWithName:@"Europe/Rome"];
+		NSTimeZone *europe_ns = [NSTimeZone timeZoneWithAbbreviation:@"CET"];
+
+
 	CFGregorianUnits cf_greg_units = {1,3,5,12,5,7};
+	CFGregorianDate cf_greg_date = CFAbsoluteTimeGetGregorianDate(CFDateGetAbsoluteTime(date1), NULL);
 	CFRange cf_range = {4,4};
 	NSPoint ns_point = {4,4};
 	NSRange ns_range = {4,4};
@@ -577,6 +596,8 @@ int main (int argc, const char * argv[])
 	
 	HIPoint hi_point = {7,12};
 	HIRect hi_rect = {{3,5},{4,6}};
+	
+	SEL foo_selector = @selector(foo_selector_impl);
 
 	Molecule *molecule = [Molecule new];
 

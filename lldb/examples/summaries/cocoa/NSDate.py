@@ -6,6 +6,7 @@ import metrics
 import struct
 import time
 import datetime
+import CFString
 
 statistics = metrics.Metrics()
 statistics.add_metric('invalid_isa')
@@ -132,6 +133,32 @@ class NSCalendarDate_SummaryProvider:
 		value_double = struct.unpack('d', struct.pack('Q', value.GetValueAsUnsigned(0)))[0]
 		return time.ctime(osx_to_python_time(value_double))
 
+class NSTimeZoneClass_SummaryProvider:
+	def adjust_for_architecture(self):
+		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
+		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
+		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+
+	def __init__(self, valobj):
+		self.valobj = valobj;
+		self.update()
+
+	def update(self):
+		self.adjust_for_architecture();
+		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
+		self.voidptr_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeVoid).GetPointerType()
+
+	def offset(self):
+		if self.is_64_bit:
+			return 8
+		else:
+			return 4
+
+	def timezone(self):
+		tz_string = self.valobj.CreateChildAtOffset("tz_name",
+							self.offset(),
+							self.voidptr_type)
+		return CFString.CFString_SummaryProvider(tz_string,None)
 
 class NSUnknownDate_SummaryProvider:
 	def adjust_for_architecture(self):
@@ -184,8 +211,10 @@ def GetSummary_Impl(valobj):
 	elif name_string == 'NSCalendarDate':
 		wrapper = NSCalendarDate_SummaryProvider(valobj)
 		statistics.metric_hit('code_notrun',valobj)
+	elif name_string == '__NSTimeZone':
+		wrapper = NSTimeZoneClass_SummaryProvider(valobj)
+		statistics.metric_hit('code_notrun',valobj)
 	else:
-		print name_string # comment this out in release mode
 		wrapper = NSUnknownDate_SummaryProvider(valobj)
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
@@ -203,6 +232,19 @@ def NSDate_SummaryProvider (valobj,dict):
 	    return str(summary)
 	return ''
 
+def NSTimeZone_SummaryProvider (valobj,dict):
+	provider = GetSummary_Impl(valobj);
+	if provider != None:
+	    try:
+	        summary = provider.timezone();
+	    except:
+	        summary = None
+	    if summary == None:
+	        summary = 'no valid timezone here'
+	    return str(summary)
+	return ''
+
+
 def CFAbsoluteTime_SummaryProvider (valobj,dict):
 	try:
 		value_double = struct.unpack('d', struct.pack('Q', valobj.GetValueAsUnsigned(0)))[0]
@@ -214,4 +256,5 @@ def CFAbsoluteTime_SummaryProvider (valobj,dict):
 def __lldb_init_module(debugger,dict):
 	debugger.HandleCommand("type summary add -F NSDate.NSDate_SummaryProvider NSDate")
 	debugger.HandleCommand("type summary add -F NSDate.CFAbsoluteTime_SummaryProvider CFAbsoluteTime")
+	debugger.HandleCommand("type summary add -F NSDate.NSTimeZone_SummaryProvider NSTimeZone CFTimeZoneRef")
 

@@ -297,6 +297,18 @@ class ObjCDataFormatterTestCase(TestBase):
         self.expect('frame variable iset1 iset2 imset',
                     substrs = ['4 objects','512 objects','10 objects'])
 
+        self.expect('frame variable cupertino home europe',
+                    substrs = ['@"America/Los_Angeles"',
+                    '@"Europe/Rome"',
+                    '@"Europe/Paris"'])
+
+
+        self.expect('frame variable cupertino_ns home_ns europe_ns',
+                    substrs = ['@"America/Los_Angeles"',
+                    '@"Europe/Rome"',
+                    '@"Europe/Paris"'])
+
+
     def expr_objc_data_formatter_commands(self):
         """Test common cases of expression parser <--> formatters interaction."""
         self.runCmd("file a.out", CURRENT_EXECUTABLE_SET)
@@ -403,7 +415,9 @@ class ObjCDataFormatterTestCase(TestBase):
              '(Point *) point_ptr = (v=7, h=12)',
              '(HIPoint) hi_point = (x=7, y=12)',
              '(HIRect) hi_rect = origin=(x=3, y=5) size=(width=4, height=6)',
-             '@"TheGuyWhoHasNoName" @"cuz it\'s funny"'])
+             '@"TheGuyWhoHasNoName" @"cuz it\'s funny"',
+             '1985',
+             'foo_selector_impl'])
         self.runCmd('log timers dump')
 
 
@@ -455,6 +469,10 @@ class ObjCDataFormatterTestCase(TestBase):
         self.runCmd("next")
         # check that NSMutableDictionary's formatter is not confused when dealing with a KVO'd dictionary
         self.expect('frame variable newMutableDictionary', substrs = ['(NSDictionary *) newMutableDictionary = ',' 21 key/value pairs'])
+
+        self.runCmd("breakpoint set -r setAtoms")
+        self.runCmd("continue")
+        self.expect("frame variable _cmd",substrs = ['setAtoms:'])
 
 if __name__ == '__main__':
     import atexit

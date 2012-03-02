@@ -607,13 +607,16 @@ FormatManager::FormatManager() :
 void
 FormatManager::LoadSTLFormatters()
 {
-    lldb::TypeSummaryImplSP std_string_summary_sp(new StringSummaryFormat(TypeSummaryImpl::Flags().SetCascades(true)
-                                                                          .SetSkipPointers(false)
-                                                                          .SetSkipReferences(false)
-                                                                          .SetDontShowChildren(true)
-                                                                          .SetDontShowValue(true)
-                                                                          .SetShowMembersOneLiner(false)
-                                                                          .SetHideItemNames(false),
+    TypeSummaryImpl::Flags stl_summary_flags;
+    stl_summary_flags.SetCascades(true)
+    .SetSkipPointers(false)
+    .SetSkipReferences(false)
+    .SetDontShowChildren(true)
+    .SetDontShowValue(true)
+    .SetShowMembersOneLiner(false)
+    .SetHideItemNames(false);
+    
+    lldb::TypeSummaryImplSP std_string_summary_sp(new StringSummaryFormat(stl_summary_flags,
                                                                           "${var._M_dataplus._M_p}"));
     
     TypeCategoryImpl::SharedPointer gnu_category_sp = GetCategory(m_gnu_cpp_category_name);
@@ -642,6 +645,10 @@ FormatManager::LoadSTLFormatters()
     gnu_category_sp->GetRegexSyntheticNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?list<.+>$")),
                                                        SyntheticChildrenSP(new TypeSyntheticImpl(stl_synth_flags,
                                                                                                  "gnu_libstdcpp.StdListSynthProvider")));
+    
+    gnu_category_sp->GetRegexSummaryNavigator()->Add(RegularExpressionSP(new RegularExpression("^(std::)?vector<.+>$")),
+                                                     TypeSummaryImplSP(new StringSummaryFormat(stl_summary_flags,
+                                                                                               "size=${svar%#}")));
 #endif
 }
 
@@ -726,7 +733,14 @@ FormatManager::LoadObjCFormatters()
     objc_category_sp->GetSummaryNavigator()->Add(ConstString("BOOL"),
                                                  ObjC_BOOL_summary);
     
-    
+    // we need to skip pointers here since we are special casing a SEL* when retrieving its value
+    objc_flags.SetSkipPointers(true);
+    AddScriptSummary(objc_category_sp, "Selector.SEL_Summary", ConstString("SEL"), objc_flags);
+    AddScriptSummary(objc_category_sp, "Selector.SEL_Summary", ConstString("struct objc_selector"), objc_flags);
+    AddScriptSummary(objc_category_sp, "Selector.SEL_Summary", ConstString("objc_selector"), objc_flags);
+    AddScriptSummary(objc_category_sp, "Selector.SELPointer_Summary", ConstString("objc_selector *"), objc_flags);
+    objc_flags.SetSkipPointers(false);
+
     TypeCategoryImpl::SharedPointer corefoundation_category_sp = GetCategory(m_corefoundation_category_name);
 
     AddSummary(corefoundation_category_sp,
@@ -855,7 +869,10 @@ FormatManager::LoadObjCFormatters()
     AddScriptSummary(appkit_category_sp, "NSURL.NSURL_SummaryProvider", ConstString("CFURLRef"), appkit_flags);
     
     AddScriptSummary(appkit_category_sp, "NSDate.NSDate_SummaryProvider", ConstString("NSDate"), appkit_flags);
-    
+
+    AddScriptSummary(appkit_category_sp, "NSDate.NSTimeZone_SummaryProvider", ConstString("NSTimeZone"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "NSDate.NSTimeZone_SummaryProvider", ConstString("CFTimeZoneRef"), appkit_flags);
+
     // CFAbsoluteTime is actually a double rather than a pointer to an object
     // we do not care about the numeric value, since it is probably meaningless to users
     appkit_flags.SetDontShowValue(true);
@@ -865,6 +882,8 @@ FormatManager::LoadObjCFormatters()
     AddScriptSummary(appkit_category_sp, "NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSIndexSet"), appkit_flags);
     AddScriptSummary(appkit_category_sp, "NSIndexSet.NSIndexSet_SummaryProvider", ConstString("NSMutableIndexSet"), appkit_flags);
 
+    AddSummary(appkit_category_sp, "@\"${var.month%d}/${var.day%d}/${var.year%d} ${var.hour%d}:${var.minute%d}:${var.second}\"", ConstString("CFGregorianDate"), appkit_flags);
+    
     TypeCategoryImpl::SharedPointer vectors_category_sp = GetCategory(m_vectortypes_category_name);
 
     TypeSummaryImpl::Flags vector_flags;
