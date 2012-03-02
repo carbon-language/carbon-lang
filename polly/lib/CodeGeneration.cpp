@@ -226,9 +226,9 @@ Value *IslGenerator::generateIslPwAff(__isl_take isl_pw_aff *PwAff) {
 
 class BlockGenerator {
 public:
-  static void generate(IRBuilder<> &B, ValueMapT &ValueMap,
-                       ScopStmt &Stmt, __isl_keep isl_set *Domain, Pass *P) {
-    BlockGenerator Generator(B, ValueMap, Stmt, Domain, P);
+  static void generate(IRBuilder<> &B, ValueMapT &ValueMap, ScopStmt &Stmt,
+                       Pass *P) {
+    BlockGenerator Generator(B, ValueMap, Stmt, P);
     Generator.copyBB();
   }
 
@@ -237,11 +237,10 @@ protected:
   ValueMapT &VMap;
   Scop &S;
   ScopStmt &Statement;
-  isl_set *ScatteringDomain;
+
   Pass *P;
 
-  BlockGenerator(IRBuilder<> &B, ValueMapT &vmap, ScopStmt &Stmt,
-                 __isl_keep isl_set *Domain, Pass *p);
+  BlockGenerator(IRBuilder<> &B, ValueMapT &vmap, ScopStmt &Stmt, Pass *P);
 
   Value *getOperand(const Value *oldOperand, ValueMapT &BBMap);
 
@@ -269,9 +268,8 @@ protected:
 };
 
 BlockGenerator::BlockGenerator(IRBuilder<> &B, ValueMapT &vmap, ScopStmt &Stmt,
-                               __isl_keep isl_set *domain, Pass *P) :
-  Builder(B), VMap(vmap), S(*Stmt.getParent()), Statement(Stmt),
-  ScatteringDomain(domain), P(P) {}
+                               Pass *P) :
+  Builder(B), VMap(vmap), S(*Stmt.getParent()), Statement(Stmt), P(P) {}
 
 Value *BlockGenerator::getOperand(const Value *OldOperand, ValueMapT &BBMap) {
   const Instruction *OpInst = dyn_cast<Instruction>(OldOperand);
@@ -441,6 +439,8 @@ public:
 private:
   VectorValueMapT &ValueMaps;
 
+  isl_set *Domain;
+
   VectorBlockGenerator(IRBuilder<> &B, ValueMapT &vmap, VectorValueMapT &vmaps,
                  ScopStmt &Stmt, __isl_keep isl_set *domain, Pass *p);
 
@@ -513,9 +513,10 @@ private:
 
 VectorBlockGenerator::VectorBlockGenerator(IRBuilder<> &B, ValueMapT &vmap,
                                VectorValueMapT &vmaps, ScopStmt &Stmt,
-                               __isl_keep isl_set *domain, Pass *P)
-    : BlockGenerator(B, vmap, Stmt, domain, P), ValueMaps(vmaps) {
+                               __isl_keep isl_set *Domain, Pass *P)
+    : BlockGenerator(B, vmap, Stmt, P), ValueMaps(vmaps), Domain(Domain) {
     assert(ValueMaps.size() > 1 && "Only one vector lane found");
+    assert(Domain && "No statement domain provided");
   }
 
 Value *VectorBlockGenerator::makeVectorOperand(Value *Operand) {
@@ -621,11 +622,9 @@ void VectorBlockGenerator::generateLoad(const LoadInst *Load,
 
   MemoryAccess &Access = Statement.getAccessFor(Load);
 
-  assert(ScatteringDomain && "No scattering domain available");
-
-  if (Access.isStrideZero(isl_set_copy(ScatteringDomain)))
+  if (Access.isStrideZero(isl_set_copy(Domain)))
     NewLoad = generateStrideZeroLoad(Load, ScalarMaps[0]);
-  else if (Access.isStrideOne(isl_set_copy(ScatteringDomain)))
+  else if (Access.isStrideOne(isl_set_copy(Domain)))
     NewLoad = generateStrideOneLoad(Load, ScalarMaps[0]);
   else
     NewLoad = generateUnknownStrideLoad(Load, ScalarMaps);
@@ -673,12 +672,10 @@ void VectorBlockGenerator::copyStore(const StoreInst *Store, ValueMapT &BBMap,
 
   MemoryAccess &Access = Statement.getAccessFor(Store);
 
-  assert(ScatteringDomain && "No scattering domain available");
-
   const Value *Pointer = Store->getPointerOperand();
   Value *Vector = getOperand(Store->getValueOperand(), BBMap, &VectorMap);
 
-  if (Access.isStrideOne(isl_set_copy(ScatteringDomain))) {
+  if (Access.isStrideOne(isl_set_copy(Domain))) {
     Type *VectorPtrType = getVectorPtrTy(Pointer, VectorWidth);
     Value *NewPointer = getOperand(Pointer, BBMap, &VectorMap);
 
@@ -1098,7 +1095,7 @@ void ClastStmtCodeGen::codegen(const clast_user_stmt *u,
   int VectorDimensions = IVS ? IVS->size() : 1;
 
   if (VectorDimensions == 1) {
-    BlockGenerator::generate(Builder, ValueMap, *Statement, Domain, P);
+    BlockGenerator::generate(Builder, ValueMap, *Statement, P);
     return;
   }
 
