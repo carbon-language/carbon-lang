@@ -1944,6 +1944,14 @@ TEST(AddressSanitizerMac, CFStringCreateCopy) {
 
 #endif  // __APPLE__
 
+// Test that instrumentation of stack allocations takes into account
+// AllocSize of a type, and not its StoreSize (16 vs 10 bytes for long double).
+// See http://llvm.org/bugs/show_bug.cgi?id=12047 for more details.
+TEST(AddressSanitizer, LongDoubleNegativeTest) {
+  long double a, b;
+  memcpy(Ident(&a), Ident(&b), sizeof(long double));
+};
+
 int main(int argc, char **argv) {
   progname = argv[0];
   testing::GTEST_FLAG(death_test_style) = "threadsafe";
