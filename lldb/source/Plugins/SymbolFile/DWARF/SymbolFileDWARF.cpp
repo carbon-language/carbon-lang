@@ -4759,7 +4759,9 @@ SymbolFileDWARF::ParseType (const SymbolContext& sc, DWARFCompileUnit* dwarf_cu,
 
                     UniqueDWARFASTType unique_ast_entry;
 
-                    if (GetUniqueDWARFASTTypeMap().Find (type_name_const_str,
+                    // Only try and unique the type if it has a name. 
+                    if (type_name_const_str &&
+                        GetUniqueDWARFASTTypeMap().Find (type_name_const_str,
                                                          this,
                                                          dwarf_cu,
                                                          die,
