@@ -2067,6 +2067,9 @@ SymbolFileDWARF::ResolveClangOpaqueTypeDefinition (lldb::clang_type_t clang_type
                     }
                 }
             }
+            
+            ast.BuildIndirectFields (clang_type);
+            
             ast.CompleteTagDeclarationDefinition (clang_type);
             
             if (!layout_info.field_offsets.empty())

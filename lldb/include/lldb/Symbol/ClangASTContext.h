@@ -282,6 +282,17 @@ public:
                                                       bitfield_bit_size);
     }
     
+    static void
+    BuildIndirectFields (clang::ASTContext *ast,
+                         lldb::clang_type_t record_qual_type);
+    
+    void
+    BuildIndirectFields (lldb::clang_type_t record_qual_type)
+    {
+        ClangASTContext::BuildIndirectFields(getASTContext(),
+                                             record_qual_type);
+    }
+    
     static clang::CXXMethodDecl *
     AddMethodToCXXRecordType (clang::ASTContext *ast,
                               lldb::clang_type_t record_opaque_type,

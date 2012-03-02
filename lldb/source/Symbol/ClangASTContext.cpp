@@ -1943,6 +1943,9 @@ ClangASTContext::AddFieldToRecordType
                                                   bit_width,  // BitWidth
                                                   false,      // Mutable
                                                   false);     // HasInit
+            
+            if (!name)
+                field->setImplicit();
 
             field->setAccess (ConvertAccessTypeToAccessSpecifier (access));
 
@@ -1972,6 +1975,131 @@ ClangASTContext::AddFieldToRecordType
         }
     }
     return field;
+}
+
+static clang::AccessSpecifier UnifyAccessSpecifiers (clang::AccessSpecifier lhs,
+                                                     clang::AccessSpecifier rhs)
+{
+    clang::AccessSpecifier ret = lhs;
+    
+    // Make the access equal to the stricter of the field and the nested field's access
+    switch (ret)
+    {
+        case clang::AS_none:
+            break;
+        case clang::AS_private:
+            break;
+        case clang::AS_protected:
+            if (rhs == AS_private)
+                ret = AS_private;
+            break;
+        case clang::AS_public:
+            ret = rhs;
+            break;
+    }
+    
+    return ret;
+}
+
+void
+ClangASTContext::BuildIndirectFields (clang::ASTContext *ast,
+                                      lldb::clang_type_t record_clang_type)
+{
+    QualType record_qual_type(QualType::getFromOpaquePtr(record_clang_type));
+
+    const RecordType *record_type = record_qual_type->getAs<RecordType>();
+    
+    if (!record_type)
+        return;
+    
+    RecordDecl *record_decl = record_type->getDecl();
+    
+    if (!record_decl)
+        return;
+    
+    typedef llvm::SmallVector <IndirectFieldDecl *, 1> IndirectFieldVector;
+    
+    IndirectFieldVector indirect_fields;
+    
+    for (RecordDecl::field_iterator fi = record_decl->field_begin(), fe = record_decl->field_end();
+         fi != fe;
+         ++fi)
+    {
+        if (fi->isAnonymousStructOrUnion())
+        {
+            QualType field_qual_type = fi->getType();
+            
+            const RecordType *field_record_type = field_qual_type->getAs<RecordType>();
+            
+            if (!field_record_type)
+                continue;
+            
+            RecordDecl *field_record_decl = field_record_type->getDecl();
+            
+            if (!field_record_decl)
+                continue;
+            
+            for (RecordDecl::decl_iterator di = field_record_decl->decls_begin(), de = field_record_decl->decls_end();
+                 di != de;
+                 ++di)
+            {
+                if (FieldDecl *nested_field_decl = dyn_cast<FieldDecl>(*di))
+                {
+                    NamedDecl **chain = new (*ast) NamedDecl*[2];
+                    chain[0] = *fi;
+                    chain[1] = nested_field_decl;
+                    IndirectFieldDecl *indirect_field = IndirectFieldDecl::Create(*ast,
+                                                                                  record_decl,
+                                                                                  SourceLocation(),
+                                                                                  nested_field_decl->getIdentifier(),
+                                                                                  nested_field_decl->getType(),
+                                                                                  chain,
+                                                                                  2);
+                    
+                    indirect_field->setAccess(UnifyAccessSpecifiers(fi->getAccess(),
+                                                                    nested_field_decl->getAccess()));
+                    
+                    indirect_fields.push_back(indirect_field);
+                }
+                else if (IndirectFieldDecl *nested_indirect_field_decl = dyn_cast<IndirectFieldDecl>(*di))
+                {
+                    int nested_chain_size = nested_indirect_field_decl->getChainingSize();
+                    NamedDecl **chain = new (*ast) NamedDecl*[nested_chain_size + 1];
+                    chain[0] = *fi;
+                    
+                    int chain_index = 1;
+                    for (IndirectFieldDecl::chain_iterator nci = nested_indirect_field_decl->chain_begin(),
+                         nce = nested_indirect_field_decl->chain_end();
+                         nci < nce;
+                         ++nci)
+                    {
+                        chain[chain_index] = *nci;
+                        chain_index++;
+                    }
+                    
+                    IndirectFieldDecl *indirect_field = IndirectFieldDecl::Create(*ast,
+                                                                                  record_decl,
+                                                                                  SourceLocation(),
+                                                                                  nested_indirect_field_decl->getIdentifier(),
+                                                                                  nested_indirect_field_decl->getType(),
+                                                                                  chain,
+                                                                                  nested_chain_size + 1);
+                                        
+                    indirect_field->setAccess(UnifyAccessSpecifiers(fi->getAccess(),
+                                                                    nested_indirect_field_decl->getAccess()));
+                    
+                    indirect_fields.push_back(indirect_field);
+                }
+            }
+        }
+    }
+    
+    for (IndirectFieldVector::iterator ifi = indirect_fields.begin(), ife = indirect_fields.end();
+         ifi < ife;
+         ++ifi)
+    {
+        record_decl->addDecl(*ifi);
+    }
 }
 
 bool
