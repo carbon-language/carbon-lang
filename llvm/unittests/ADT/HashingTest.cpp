@@ -66,11 +66,13 @@ TEST(HashingTest, HashValueBasicTest) {
   EXPECT_NE(hash_combine(42, 43), hash_value(std::make_pair(42ull, 43ull)));
   EXPECT_NE(hash_combine(42, 43), hash_value(std::make_pair(42, 43ull)));
   EXPECT_NE(hash_combine(42, 43), hash_value(std::make_pair(42ull, 43)));
-  EXPECT_EQ(hash_combine(42, hash_combine(43, hash_combine(44, 45))),
-            hash_value(
-              std::make_pair(42, std::make_pair(43, std::make_pair(44, 45)))));
-  EXPECT_EQ(hash_combine(42, 43), hash_value(std::make_pair(42, 43)));
-  EXPECT_EQ(hash_combine(42, 43), hash_value(std::make_pair(42, 43)));
+
+  // Note that pairs are implicitly flattened to a direct sequence of data and
+  // hashed efficiently as a consequence.
+  EXPECT_EQ(hash_combine(42, 43, 44),
+            hash_value(std::make_pair(42, std::make_pair(43, 44))));
+  EXPECT_EQ(hash_value(std::make_pair(42, std::make_pair(43, 44))),
+            hash_value(std::make_pair(std::make_pair(42, 43), 44)));
 }
 
 template <typename T, size_t N> T *begin(T (&arr)[N]) { return arr; }

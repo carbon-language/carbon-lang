@@ -350,6 +350,16 @@ template <typename T> struct is_hashable_data
   : integral_constant<bool, ((is_integral<T>::value || is_pointer<T>::value) &&
                              64 % sizeof(T) == 0)> {};
 
+// Special case std::pair to detect when both types are viable and when there
+// is no alignment-derived padding in the pair. This is a bit of a lie because
+// std::pair isn't truly POD, but it's close enough in all reasonable
+// implementations for our use case of hashing the underlying data.
+template <typename T, typename U> struct is_hashable_data<std::pair<T, U> >
+  : integral_constant<bool, (is_hashable_data<T>::value &&
+                             is_hashable_data<U>::value &&
+                             !is_alignment_padded<std::pair<T, U> >::value &&
+                             !is_pod_pair_padded<T, U>::value)> {};
+
 /// \brief Helper to get the hashable data representation for a type.
 /// This variant is enabled when the type itself can be used.
 template <typename T>
