@@ -33,8 +33,8 @@ CPP.Defines += -I$(PROJ_SRC_DIR)/../../include -I$(PROJ_OBJ_DIR)/../../include \
          -DLLVM_REVISION='"$(LLVM_REVISION)"' -DLLVM_REPOSITORY='"$(LLVM_REPOSITORY)"'
 
 $(ObjDir)/.ver-svn .ver: $(ObjDir)/.dir
-        @if [ '$(SVN_REVISION) $(LLVM_REVISION)' != '$(shell cat $(ObjDir)/.ver-svn 2>/dev/null)' ]; then\
-                echo '$(SVN_REVISION) $(LLVM_REVISION)' > $(ObjDir)/.ver-svn;                    \
-        fi
+	@if [ '$(SVN_REVISION) $(LLVM_REVISION)' != '$(shell cat $(ObjDir)/.ver-svn 2>/dev/null)' ]; then\
+		echo '$(SVN_REVISION) $(LLVM_REVISION)' > $(ObjDir)/.ver-svn;                    \
+	fi
 $(ObjDir)/.ver-svn: .ver
 $(ObjDir)/Version.o: $(ObjDir)/.ver-svn
