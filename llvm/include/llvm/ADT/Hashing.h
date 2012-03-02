@@ -103,6 +103,42 @@ public:
   friend size_t hash_value(const hash_code &code) { return code.value; }
 };
 
+/// \brief Compute a hash_code for any integer value.
+///
+/// Note that this function is intended to compute the same hash_code for
+/// a particular value without regard to the pre-promotion type. This is in
+/// contrast to hash_combine which may produce different hash_codes for
+/// differing argument types even if they would implicit promote to a common
+/// type without changing the value.
+template <typename T>
+typename enable_if<is_integral<T>, hash_code>::type hash_value(T value);
+
+/// \brief Compute a hash_code for a pointer's address.
+///
+/// N.B.: This hashes the *address*. Not the value and not the type.
+template <typename T> hash_code hash_value(const T *ptr);
+
+/// \brief Compute a hash_code for a pair of objects.
+template <typename T, typename U>
+hash_code hash_value(const std::pair<T, U> &arg);
+
+
+/// \brief Override the execution seed with a fixed value.
+///
+/// This hashing library uses a per-execution seed designed to change on each
+/// run with high probability in order to ensure that the hash codes are not
+/// attackable and to ensure that output which is intended to be stable does
+/// not rely on the particulars of the hash codes produced.
+///
+/// That said, there are use cases where it is important to be able to
+/// reproduce *exactly* a specific behavior. To that end, we provide a function
+/// which will forcibly set the seed to a fixed value. This must be done at the
+/// start of the program, before any hashes are computed. Also, it cannot be
+/// undone. This makes it thread-hostile and very hard to use outside of
+/// immediately on start of a simple program designed for reproducible
+/// behavior.
+void set_fixed_execution_hash_seed(size_t fixed_value);
+
 
 // All of the implementation details of actually computing the various hash
 // code values are held within this namespace. These routines are included in
@@ -297,65 +333,6 @@ inline size_t get_execution_seed() {
   return seed;
 }
 
-
-/// \brief Helper to hash the value of a single integer.
-///
-/// Overloads for smaller integer types are not provided to ensure consistent
-/// behavior in the presence of integral promotions. Essentially,
-/// "hash_value('4')" and "hash_value('0' + 4)" should be the same.
-inline hash_code hash_integer_value(uint64_t value) {
-  // Similar to hash_4to8_bytes but using a seed instead of length.
-  const uint64_t seed = get_execution_seed();
-  const char *s = reinterpret_cast<const char *>(&value);
-  const uint64_t a = fetch32(s);
-  return hash_16_bytes(seed + (a << 3), fetch32(s + 4));
-}
-
-} // namespace detail
-} // namespace hashing
-
-
-/// \brief Override the execution seed with a fixed value.
-///
-/// This hashing library uses a per-execution seed designed to change on each
-/// run with high probability in order to ensure that the hash codes are not
-/// attackable and to ensure that output which is intended to be stable does
-/// not rely on the particulars of the hash codes produced.
-///
-/// That said, there are use cases where it is important to be able to
-/// reproduce *exactly* a specific behavior. To that end, we provide a function
-/// which will forcibly set the seed to a fixed value. This must be done at the
-/// start of the program, before any hashes are computed. Also, it cannot be
-/// undone. This makes it thread-hostile and very hard to use outside of
-/// immediately on start of a simple program designed for reproducible
-/// behavior.
-void set_fixed_execution_hash_seed(size_t fixed_value);
-
-
-/// \brief Compute a hash_code for any integer value.
-///
-/// Note that this function is intended to compute the same hash_code for
-/// a particular value without regard to the pre-promotion type. This is in
-/// contrast to hash_combine which may produce different hash_codes for
-/// differing argument types even if they would implicit promote to a common
-/// type without changing the value.
-template <typename T>
-typename enable_if<is_integral<T>, hash_code>::type hash_value(T value) {
-  return ::llvm::hashing::detail::hash_integer_value(value);
-}
-
-/// \brief Compute a hash_code for a pointer's address.
-///
-/// N.B.: This hashes the *address*. Not the value and not the type.
-template <typename T> hash_code hash_value(const T *ptr) {
-  return ::llvm::hashing::detail::hash_integer_value(
-    reinterpret_cast<uintptr_t>(ptr));
-}
-
-
-// Implementation details for implementing hash combining functions.
-namespace hashing {
-namespace detail {
 
 /// \brief Trait to indicate whether a type's bits can be hashed directly.
 ///
@@ -712,6 +689,49 @@ hash_code hash_combine(const T1 &arg1) {
 }
 
 #endif
+
+
+// Implementation details for implementatinos of hash_value overloads provided
+// here.
+namespace hashing {
+namespace detail {
+
+/// \brief Helper to hash the value of a single integer.
+///
+/// Overloads for smaller integer types are not provided to ensure consistent
+/// behavior in the presence of integral promotions. Essentially,
+/// "hash_value('4')" and "hash_value('0' + 4)" should be the same.
+inline hash_code hash_integer_value(uint64_t value) {
+  // Similar to hash_4to8_bytes but using a seed instead of length.
+  const uint64_t seed = get_execution_seed();
+  const char *s = reinterpret_cast<const char *>(&value);
+  const uint64_t a = fetch32(s);
+  return hash_16_bytes(seed + (a << 3), fetch32(s + 4));
+}
+
+} // namespace detail
+} // namespace hashing
+
+// Declared and documented above, but defined here so that any of the hashing
+// infrastructure is available.
+template <typename T>
+typename enable_if<is_integral<T>, hash_code>::type hash_value(T value) {
+  return ::llvm::hashing::detail::hash_integer_value(value);
+}
+
+// Declared and documented above, but defined here so that any of the hashing
+// infrastructure is available.
+template <typename T> hash_code hash_value(const T *ptr) {
+  return ::llvm::hashing::detail::hash_integer_value(
+    reinterpret_cast<uintptr_t>(ptr));
+}
+
+// Declared and documented above, but defined here so that any of the hashing
+// infrastructure is available.
+template <typename T, typename U>
+hash_code hash_value(const std::pair<T, U> &arg) {
+  return hash_combine(arg.first, arg.second);
+}
 
 } // namespace llvm
 

@@ -60,6 +60,17 @@ TEST(HashingTest, HashValueBasicTest) {
   EXPECT_EQ(hash_value(c), hash_value('x'));
   EXPECT_EQ(hash_value('4'), hash_value('0' + 4));
   EXPECT_EQ(hash_value(addr), hash_value(&y));
+
+  EXPECT_EQ(hash_combine(42, 43), hash_value(std::make_pair(42, 43)));
+  EXPECT_NE(hash_combine(43, 42), hash_value(std::make_pair(42, 43)));
+  EXPECT_NE(hash_combine(42, 43), hash_value(std::make_pair(42ull, 43ull)));
+  EXPECT_NE(hash_combine(42, 43), hash_value(std::make_pair(42, 43ull)));
+  EXPECT_NE(hash_combine(42, 43), hash_value(std::make_pair(42ull, 43)));
+  EXPECT_EQ(hash_combine(42, hash_combine(43, hash_combine(44, 45))),
+            hash_value(
+              std::make_pair(42, std::make_pair(43, std::make_pair(44, 45)))));
+  EXPECT_EQ(hash_combine(42, 43), hash_value(std::make_pair(42, 43)));
+  EXPECT_EQ(hash_combine(42, 43), hash_value(std::make_pair(42, 43)));
 }
 
 template <typename T, size_t N> T *begin(T (&arr)[N]) { return arr; }
