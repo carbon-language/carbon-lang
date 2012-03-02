@@ -1287,5 +1287,21 @@ template <class T>
 void Bar<T>::bar() __attribute__((exclusive_locks_required(mu_))) { }
 
 void baz(Foo *f) __attribute__((exclusive_locks_required(f->mu_))) { }
+
+} // end namespace
+
+
+namespace TestMultiDecl {
+
+class Foo {
+public:
+  int __attribute__((guarded_by(mu_))) a;
+  int __attribute__((guarded_by(mu_))) b, c;
+
+private:
+  Mu mu_;
 };
+
+
+} // end namespace TestMultiDecl
 

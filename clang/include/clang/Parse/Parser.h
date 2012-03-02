@@ -796,15 +796,15 @@ private:
     CachedTokens Toks;
     IdentifierInfo &AttrName;
     SourceLocation AttrNameLoc;
-    Decl *D;
+    SmallVector<Decl*, 2> Decls;
 
     explicit LateParsedAttribute(Parser *P, IdentifierInfo &Name,
                                  SourceLocation Loc)
-      : Self(P), AttrName(Name), AttrNameLoc(Loc), D(0)  {}
+      : Self(P), AttrName(Name), AttrNameLoc(Loc) {}
 
     virtual void ParseLexedAttributes();
 
-    void setDecl(Decl *Dec) { D = Dec; }
+    void addDecl(Decl *D) { Decls.push_back(D); }
   };
 
   /// A list of late parsed attributes.  Used by ParseGNUAttributes.
@@ -1670,7 +1670,8 @@ private:
   void ParseDeclarationSpecifiers(DeclSpec &DS,
                 const ParsedTemplateInfo &TemplateInfo = ParsedTemplateInfo(),
                                   AccessSpecifier AS = AS_none,
-                                  DeclSpecContext DSC = DSC_normal);
+                                  DeclSpecContext DSC = DSC_normal,
+                                  LateParsedAttrList *LateAttrs = 0);
   bool ParseOptionalTypeSpecifier(DeclSpec &DS, bool &isInvalid,
                                   const char *&PrevSpec,
                                   unsigned &DiagID,

@@ -2130,4 +2130,28 @@ void test1() {
   }
 }
 
+} // end namespace NoReturnTest
+
+
+namespace TestMultiDecl {
+
+class Foo {
+public:
+  int GUARDED_BY(mu_) a;
+  int GUARDED_BY(mu_) b, c;
+
+  void foo() {
+    a = 0; // \
+      // expected-warning {{writing variable 'a' requires locking 'mu_' exclusively}}
+    b = 0; // \
+      // expected-warning {{writing variable 'b' requires locking 'mu_' exclusively}}
+    c = 0; // \
+      // expected-warning {{writing variable 'c' requires locking 'mu_' exclusively}}
+  }
+
+private:
+  Mutex mu_;
 };
+
+} // end namespace TestMultiDecl
+

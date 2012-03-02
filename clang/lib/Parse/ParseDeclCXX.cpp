@@ -1782,11 +1782,15 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     return;
   }
 
+  // Hold late-parsed attributes so we can attach a Decl to them later.
+  LateParsedAttrList CommonLateParsedAttrs;
+
   // decl-specifier-seq:
   // Parse the common declaration-specifiers piece.
   ParsingDeclSpec DS(*this, TemplateDiags);
   DS.takeAttributesFrom(attrs);
-  ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class);
+  ParseDeclarationSpecifiers(DS, TemplateInfo, AS, DSC_class,
+                             &CommonLateParsedAttrs);
 
   MultiTemplateParamsArg TemplateParams(Actions,
       TemplateInfo.TemplateParams? TemplateInfo.TemplateParams->data() : 0,
@@ -1893,8 +1897,11 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
         ParseCXXInlineMethodDef(AS, AccessAttrs, DeclaratorInfo, TemplateInfo,
                                 VS, DefinitionKind, Init);
 
+      for (unsigned i = 0, ni = CommonLateParsedAttrs.size(); i < ni; ++i) {
+        CommonLateParsedAttrs[i]->addDecl(FunDecl);
+      }
       for (unsigned i = 0, ni = LateParsedAttrs.size(); i < ni; ++i) {
-        LateParsedAttrs[i]->setDecl(FunDecl);
+        LateParsedAttrs[i]->addDecl(FunDecl);
       }
       LateParsedAttrs.clear();
 
@@ -1981,8 +1988,11 @@ void Parser::ParseCXXClassMemberDeclaration(AccessSpecifier AS,
     }
     
     // Set the Decl for any late parsed attributes
+    for (unsigned i = 0, ni = CommonLateParsedAttrs.size(); i < ni; ++i) {
+      CommonLateParsedAttrs[i]->addDecl(ThisDecl);
+    }
     for (unsigned i = 0, ni = LateParsedAttrs.size(); i < ni; ++i) {
-      LateParsedAttrs[i]->setDecl(ThisDecl);
+      LateParsedAttrs[i]->addDecl(ThisDecl);
     }
     LateParsedAttrs.clear();
 

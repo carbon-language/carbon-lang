@@ -742,7 +742,7 @@ void Parser::ParseLexedAttributes(ParsingClass &Class) {
 void Parser::ParseLexedAttributeList(LateParsedAttrList &LAs, Decl *D,
                                      bool EnterScope, bool OnDefinition) {
   for (unsigned i = 0, ni = LAs.size(); i < ni; ++i) {
-    LAs[i]->setDecl(D);
+    LAs[i]->addDecl(D);
     ParseLexedAttribute(*LAs[i], EnterScope, OnDefinition);
   }
   LAs.clear();
@@ -774,33 +774,43 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
   ParsedAttributes Attrs(AttrFactory);
   SourceLocation endLoc;
 
-  // If the Decl is templatized, add template parameters to scope.
-  bool HasTemplateScope = EnterScope && LA.D && LA.D->isTemplateDecl();
-  ParseScope TempScope(this, Scope::TemplateParamScope, HasTemplateScope);
-  if (HasTemplateScope)
-    Actions.ActOnReenterTemplateScope(Actions.CurScope, LA.D);
+  // Late parsed attributes must be attached to Decls by hand.  If there
+  // are no Decls, then this was not done properly.
+  assert(LA.Decls.size() > 0 && "No decls attached to late parsed attribute");
 
-  // If the Decl is on a function, add function parameters to the scope.
-  bool HasFunctionScope = EnterScope && LA.D &&
-                          LA.D->isFunctionOrFunctionTemplate();
-  ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope, HasFunctionScope);
-  if (HasFunctionScope)
-    Actions.ActOnReenterFunctionContext(Actions.CurScope, LA.D);
+  if (LA.Decls.size() == 1) {
+    Decl *D = LA.Decls[0];
 
-  ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc);
+    // If the Decl is templatized, add template parameters to scope.
+    bool HasTemplateScope = EnterScope && D->isTemplateDecl();
+    ParseScope TempScope(this, Scope::TemplateParamScope, HasTemplateScope);
+    if (HasTemplateScope)
+      Actions.ActOnReenterTemplateScope(Actions.CurScope, D);
 
-  if (HasFunctionScope) {
-    Actions.ActOnExitFunctionContext();
-    FnScope.Exit();  // Pop scope, and remove Decls from IdResolver
+    // If the Decl is on a function, add function parameters to the scope.
+    bool HasFunctionScope = EnterScope && D->isFunctionOrFunctionTemplate();
+    ParseScope FnScope(this, Scope::FnScope|Scope::DeclScope, HasFunctionScope);
+    if (HasFunctionScope)
+      Actions.ActOnReenterFunctionContext(Actions.CurScope, D);
+
+    ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc);
+
+    if (HasFunctionScope) {
+      Actions.ActOnExitFunctionContext();
+      FnScope.Exit();  // Pop scope, and remove Decls from IdResolver
+    }
+    if (HasTemplateScope) {
+      TempScope.Exit();
+    }
+  } else {
+    // If there are multiple decls, then the decl cannot be within the
+    // function scope.
+    ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc);
   }
-  if (HasTemplateScope) {
-    TempScope.Exit();
-  }
 
-  // Late parsed attributes must be attached to Decls by hand.  If the
-  // LA.D is not set, then this was not done properly.
-  assert(LA.D && "No decl attached to late parsed attribute");
-  Actions.ActOnFinishDelayedAttribute(getCurScope(), LA.D, Attrs);
+  for (unsigned i = 0, ni = LA.Decls.size(); i < ni; ++i) {
+    Actions.ActOnFinishDelayedAttribute(getCurScope(), LA.Decls[i], Attrs);
+  }
 
   if (Tok.getLocation() != OrigLoc) {
     // Due to a parsing error, we either went over the cached tokens or
@@ -1702,7 +1712,8 @@ void Parser::ParseAlignmentSpecifier(ParsedAttributes &Attrs,
 void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
                                         const ParsedTemplateInfo &TemplateInfo,
                                         AccessSpecifier AS,
-                                        DeclSpecContext DSContext) { 
+                                        DeclSpecContext DSContext,
+                                        LateParsedAttrList *LateAttrs) {
   if (DS.getSourceRange().isInvalid()) {
     DS.SetRangeStart(Tok.getLocation());
     DS.SetRangeEnd(Tok.getLocation());
@@ -2033,7 +2044,7 @@ void Parser::ParseDeclarationSpecifiers(DeclSpec &DS,
 
     // GNU attributes support.
     case tok::kw___attribute:
-      ParseGNUAttributes(DS.getAttributes());
+      ParseGNUAttributes(DS.getAttributes(), 0, LateAttrs);
       continue;
 
     // Microsoft declspec support.
