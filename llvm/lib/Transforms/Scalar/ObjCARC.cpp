@@ -2421,12 +2421,22 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
         --SE;
 
       for (; SI != SE; ++SI) {
-        PtrState &SuccS = BBStates[*SI].getPtrBottomUpState(Arg);
-        switch (SuccS.GetSeq()) {
+        Sequence SuccSSeq = S_None;
+        bool SuccSRRIKnownSafe = false;
+        // If VisitBottomUp has visited this successor, take what we know about it.
+        DenseMap<const BasicBlock *, BBState>::iterator BBI = BBStates.find(*SI);
+        if (BBI != BBStates.end()) {
+          const PtrState &SuccS = BBI->second.getPtrBottomUpState(Arg);
+          SuccSSeq = SuccS.GetSeq();
+          SuccSRRIKnownSafe = SuccS.RRI.KnownSafe;
+        }
+        switch (SuccSSeq) {
         case S_None:
         case S_CanRelease: {
-          if (!S.RRI.KnownSafe && !SuccS.RRI.KnownSafe)
+          if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe) {
             S.ClearSequenceProgress();
+            break;
+          }
           continue;
         }
         case S_Use:
@@ -2435,7 +2445,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
         case S_Stop:
         case S_Release:
         case S_MovableRelease:
-          if (!S.RRI.KnownSafe && !SuccS.RRI.KnownSafe)
+          if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe)
             AllSuccsHaveSame = false;
           break;
         case S_Retain:
@@ -2464,11 +2474,21 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
         --SE;
 
       for (; SI != SE; ++SI) {
-        PtrState &SuccS = BBStates[*SI].getPtrBottomUpState(Arg);
-        switch (SuccS.GetSeq()) {
+        Sequence SuccSSeq = S_None;
+        bool SuccSRRIKnownSafe = false;
+        // If VisitBottomUp has visited this successor, take what we know about it.
+        DenseMap<const BasicBlock *, BBState>::iterator BBI = BBStates.find(*SI);
+        if (BBI != BBStates.end()) {
+          const PtrState &SuccS = BBI->second.getPtrBottomUpState(Arg);
+          SuccSSeq = SuccS.GetSeq();
+          SuccSRRIKnownSafe = SuccS.RRI.KnownSafe;
+        }
+        switch (SuccSSeq) {
         case S_None: {
-          if (!S.RRI.KnownSafe && !SuccS.RRI.KnownSafe)
+          if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe) {
             S.ClearSequenceProgress();
+            break;
+          }
           continue;
         }
         case S_CanRelease:
@@ -2478,7 +2498,7 @@ ObjCARCOpt::CheckForCFGHazards(const BasicBlock *BB,
         case S_Release:
         case S_MovableRelease:
         case S_Use:
-          if (!S.RRI.KnownSafe && !SuccS.RRI.KnownSafe)
+          if (!S.RRI.KnownSafe && !SuccSRRIKnownSafe)
             AllSuccsHaveSame = false;
           break;
         case S_Retain:
