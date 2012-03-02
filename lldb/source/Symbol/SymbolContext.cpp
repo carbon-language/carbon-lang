@@ -427,26 +427,16 @@ SymbolContext::GetAddressRange (uint32_t scope,
         }            
     } 
     
-    if ((scope & eSymbolContextSymbol) && (symbol != NULL) && (symbol->GetAddressRangePtr() != NULL))
+    if ((scope & eSymbolContextSymbol) && (symbol != NULL))
     {
         if (range_idx == 0)
         {
-            range = *symbol->GetAddressRangePtr();
-
-            if (range.GetByteSize() == 0)
+            const AddressRange *range_ptr = symbol->GetAddressRangePtr();
+            if (range_ptr)
             {
-                if (module_sp)
-                {
-                    ObjectFile *objfile = module_sp->GetObjectFile();
-                    if (objfile)
-                    {
-                        Symtab *symtab = objfile->GetSymtab();
-                        if (symtab)
-                            range.SetByteSize(symtab->CalculateSymbolSize (symbol));
-                    }
-                }
+                range = *range_ptr;
+                return true;
             }
-            return true;
         }
     }
     range.Clear();

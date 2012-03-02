@@ -108,7 +108,7 @@ public:
     GetSiblingIndex () const;
 
     lldb::addr_t
-    GetByteSize () const { return m_addr_range.GetByteSize(); }
+    GetByteSize () const;
 
     lldb::SymbolType
     GetType () const { return (lldb::SymbolType)m_type; }
@@ -211,6 +211,7 @@ protected:
                     m_is_external:1,        // non-zero if this symbol is globally visible
                     m_size_is_sibling:1,    // m_size contains the index of this symbol's sibling
                     m_size_is_synthesized:1,// non-zero if this symbol's size was calculated using a delta between this symbol and the next
+                    m_calculated_size:1,
                     m_type:8;
     uint32_t        m_flags;                // A copy of the flags from the original symbol table, the ObjectFile plug-in can interpret these
     AddressRange    m_addr_range;           // Contains the value, or the section offset address when the value is an address in a section, and the size (if any)

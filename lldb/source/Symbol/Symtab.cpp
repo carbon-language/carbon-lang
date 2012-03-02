@@ -929,7 +929,7 @@ Symtab::FindSymbolContainingFileAddress (addr_t file_addr, const uint32_t* index
             return info.match_symbol;
         }
 
-        const size_t symbol_byte_size = CalculateSymbolSize(info.match_symbol);
+        const size_t symbol_byte_size = info.match_symbol->GetByteSize();
         
         if (symbol_byte_size == 0)
         {

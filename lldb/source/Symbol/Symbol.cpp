@@ -30,6 +30,7 @@ Symbol::Symbol() :
     m_is_external (false),
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
+    m_calculated_size (false),
     m_type (eSymbolTypeInvalid),
     m_flags (),
     m_addr_range ()
@@ -61,6 +62,7 @@ Symbol::Symbol
     m_is_external (external),
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
+    m_calculated_size (size > 0),
     m_type (type),
     m_flags (flags),
     m_addr_range (section_sp, offset, size)
@@ -90,6 +92,7 @@ Symbol::Symbol
     m_is_external (external),
     m_size_is_sibling (false),
     m_size_is_synthesized (false),
+    m_calculated_size (range.GetByteSize() > 0),
     m_type (type),
     m_flags (flags),
     m_addr_range (range)
@@ -107,6 +110,7 @@ Symbol::Symbol(const Symbol& rhs):
     m_is_external (rhs.m_is_external),
     m_size_is_sibling (rhs.m_size_is_sibling),
     m_size_is_synthesized (false),
+    m_calculated_size (rhs.m_calculated_size),
     m_type (rhs.m_type),
     m_flags (rhs.m_flags),
     m_addr_range (rhs.m_addr_range)
@@ -128,6 +132,7 @@ Symbol::operator= (const Symbol& rhs)
         m_is_external = rhs.m_is_external;
         m_size_is_sibling = rhs.m_size_is_sibling;
         m_size_is_synthesized = rhs.m_size_is_sibling;
+        m_calculated_size = rhs.m_calculated_size;
         m_type = rhs.m_type;
         m_flags = rhs.m_flags;
         m_addr_range = rhs.m_addr_range;
@@ -147,6 +152,7 @@ Symbol::Clear()
     m_is_external = false;
     m_size_is_sibling = false;
     m_size_is_synthesized = false;
+    m_calculated_size = false;
     m_type = eSymbolTypeInvalid;
     m_flags = 0;
     m_addr_range.Clear();
@@ -156,7 +162,11 @@ AddressRange *
 Symbol::GetAddressRangePtr()
 {
     if (m_addr_range.GetBaseAddress().GetSection())
+    {
+        if (!m_calculated_size)
+            GetByteSize();
         return &m_addr_range;
+    }
     return NULL;
 }
 
@@ -164,7 +174,11 @@ const AddressRange *
 Symbol::GetAddressRangePtr() const
 {
     if (m_addr_range.GetBaseAddress().GetSection())
+    {
+        if (!m_calculated_size)
+            GetByteSize();
         return &m_addr_range;
+    }
     return NULL;
 }
 
@@ -394,4 +408,33 @@ Symbol::DumpSymbolContext (Stream *s)
     s->Printf("Symbol{0x%8.8x}", GetID());
 }
 
+
+lldb::addr_t
+Symbol::GetByteSize () const
+{
+    addr_t byte_size = m_addr_range.GetByteSize();
+    if (byte_size == 0 && !m_calculated_size)
+    {
+        const_cast<Symbol*>(this)->m_calculated_size = true;
+        const AddressRange *range = GetAddressRangePtr();
+        if (range)
+        {
+            ModuleSP module_sp (range->GetBaseAddress().GetModule());
+            if (module_sp)
+            {
+                ObjectFile *objfile = module_sp->GetObjectFile();
+                if (objfile)
+                {
+                    Symtab *symtab = objfile->GetSymtab();
+                    if (symtab)
+                    {
+                        const_cast<AddressRange &>(m_addr_range).SetByteSize(symtab->CalculateSymbolSize (const_cast<Symbol *>(this)));
+                        byte_size = m_addr_range.GetByteSize();
+                    }
+                }
+            }
+        }
+    }
+    return byte_size;
+}
 
