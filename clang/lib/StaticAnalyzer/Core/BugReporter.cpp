@@ -1229,17 +1229,14 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         PD.pushActivePath(&C->path);
         break;
       }
-
-      // Note that is important that we update the LocationContext
-      // after looking at CallExits.  CallExit basically adds an
-      // edge in the *caller*, so we don't want to update the LocationContext
-      // too soon.
-      PDB.LC = N->getLocationContext();
-
+      
       // Pop the call hierarchy if we are done walking the contents
       // of a function call.
       if (const CallEnter *CE = dyn_cast<CallEnter>(&P)) {
+        EB.flushLocations();
         PD.popActivePath();
+        assert(!PD.getActivePath().empty());
+        PDB.LC = N->getLocationContext();
         // The current active path should never be empty.  Either we
         // just added a bunch of stuff to the top-level path, or
         // we have a previous CallExit.  If the front of the active
@@ -1247,16 +1244,20 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
         // path terminated within a function call.  We must then take the
         // current contents of the active path and place it within
         // a new PathDiagnosticCallPiece.
-        assert(!PD.getActivePath().empty());
-        PathDiagnosticCallPiece *C = 
+        PathDiagnosticCallPiece *C =
           dyn_cast<PathDiagnosticCallPiece>(PD.getActivePath().front());
         if (!C)
           C = PathDiagnosticCallPiece::construct(PD.getActivePath());
         C->setCallee(*CE, SM);
-        EB.flushLocations();
         EB.addContext(CE->getCallExpr());
         break;
       }
+      
+      // Note that is important that we update the LocationContext
+      // after looking at CallExits.  CallExit basically adds an
+      // edge in the *caller*, so we don't want to update the LocationContext
+      // too soon.
+      PDB.LC = N->getLocationContext();
 
       // Block edges.
       if (const BlockEdge *BE = dyn_cast<BlockEdge>(&P)) {        
