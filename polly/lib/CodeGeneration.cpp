@@ -154,6 +154,77 @@ static Value *createLoop(IRBuilder<> *Builder, Value *LB, Value *UB,
   return IV;
 }
 
+class IslGenerator;
+
+class IslGenerator {
+public:
+  IslGenerator(IRBuilder<> &Builder) : Builder(Builder) {}
+  Value *generateIslInt(__isl_take isl_int Int);
+  Value *generateIslAff(__isl_take isl_aff *Aff);
+  Value *generateIslPwAff(__isl_take isl_pw_aff *PwAff);
+
+private:
+  typedef struct {
+    Value *Result;
+    class IslGenerator *Generator;
+  } IslGenInfo;
+
+  IRBuilder<> &Builder;
+  static int mergeIslAffValues(__isl_take isl_set *Set,
+                               __isl_take isl_aff *Aff, void *User);
+};
+
+Value *IslGenerator::generateIslInt(isl_int Int) {
+  mpz_t IntMPZ;
+  mpz_init(IntMPZ);
+  isl_int_get_gmp(Int, IntMPZ);
+  Value *IntValue = Builder.getInt(APInt_from_MPZ(IntMPZ));
+  mpz_clear(IntMPZ);
+  return IntValue;
+}
+
+Value *IslGenerator::generateIslAff(__isl_take isl_aff *Aff) {
+  assert(isl_aff_is_cst(Aff) && "Only constant access functions supported");
+  Value *ConstValue;
+  isl_int ConstIsl;
+
+  isl_int_init(ConstIsl);
+  isl_aff_get_constant(Aff, &ConstIsl);
+  ConstValue = generateIslInt(ConstIsl);
+
+  isl_int_clear(ConstIsl);
+  isl_aff_free(Aff);
+
+  return ConstValue;
+}
+
+int IslGenerator::mergeIslAffValues(__isl_take isl_set *Set,
+                                    __isl_take isl_aff *Aff, void *User) {
+  IslGenInfo *GenInfo = (IslGenInfo *)User;
+
+  assert((GenInfo->Result == NULL) && "Result is already set."
+         "Currently only single isl_aff is supported");
+  assert(isl_set_plain_is_universe(Set)
+         && "Code generation failed because the set is not universe");
+
+  GenInfo->Result = GenInfo->Generator->generateIslAff(Aff);
+
+  isl_set_free(Set);
+  return 0;
+}
+
+Value *IslGenerator::generateIslPwAff(__isl_take isl_pw_aff *PwAff) {
+  IslGenInfo User;
+  User.Result = NULL;
+  User.Generator = this;
+  isl_pw_aff_foreach_piece(PwAff, mergeIslAffValues, &User);
+  assert(User.Result && "Code generation for isl_pw_aff failed");
+
+  isl_pw_aff_free(PwAff);
+  return User.Result;
+}
+
+
 class BlockGenerator {
 public:
   /// @brief Generate code for single basic block.
@@ -218,14 +289,6 @@ private:
   ///
   Value *generateUnknownStrideLoad(const LoadInst *Load,
                                    VectorValueMapT &ScalarMaps);
-
-  static Value* islAffToValue(__isl_take isl_aff *Aff,
-                              IslPwAffUserInfo *UserInfo);
-
-  static int mergeIslAffValues(__isl_take isl_set *Set,
-                               __isl_take isl_aff *Aff, void *User);
-
-  Value* islPwAffToValue(__isl_take isl_pw_aff *PwAff);
 
   /// @brief Get the memory access offset to be added to the base address
   std::vector <Value*> getMemoryAccessIndex(__isl_keep isl_map *AccessRelation,
@@ -411,64 +474,14 @@ Value *BlockGenerator::generateUnknownStrideLoad(const LoadInst *Load,
   return Vector;
 }
 
-Value *BlockGenerator::islAffToValue(__isl_take isl_aff *Aff,
-                                     IslPwAffUserInfo *UserInfo) {
-  assert(isl_aff_is_cst(Aff) && "Only constant access functions supported");
-
-  IRBuilder<> *Builder = UserInfo->Builder;
-
-  isl_int OffsetIsl;
-  mpz_t OffsetMPZ;
-
-  isl_int_init(OffsetIsl);
-  mpz_init(OffsetMPZ);
-  isl_aff_get_constant(Aff, &OffsetIsl);
-  isl_int_get_gmp(OffsetIsl, OffsetMPZ);
-
-  Value *OffsetValue = NULL;
-  APInt Offset = APInt_from_MPZ(OffsetMPZ);
-  OffsetValue = ConstantInt::get(Builder->getContext(), Offset);
-
-  mpz_clear(OffsetMPZ);
-  isl_int_clear(OffsetIsl);
-  isl_aff_free(Aff);
-
-  return OffsetValue;
-}
-
-int BlockGenerator::mergeIslAffValues(__isl_take isl_set *Set,
-                                      __isl_take isl_aff *Aff, void *User) {
-  IslPwAffUserInfo *UserInfo = (IslPwAffUserInfo *)User;
-
-  assert((UserInfo->Result == NULL) && "Result is already set."
-         "Currently only single isl_aff is supported");
-  assert(isl_set_plain_is_universe(Set)
-         && "Code generation failed because the set is not universe");
-
-  UserInfo->Result = islAffToValue(Aff, UserInfo);
-
-  isl_set_free(Set);
-  return 0;
-}
-
-Value *BlockGenerator::islPwAffToValue(__isl_take isl_pw_aff *PwAff) {
-  IslPwAffUserInfo UserInfo;
-  UserInfo.Result = NULL;
-  UserInfo.Builder = &Builder;
-  isl_pw_aff_foreach_piece(PwAff, mergeIslAffValues, &UserInfo);
-  assert(UserInfo.Result && "Code generation for isl_pw_aff failed");
-
-  isl_pw_aff_free(PwAff);
-  return UserInfo.Result;
-}
-
 std::vector <Value*> BlockGenerator::getMemoryAccessIndex(
   __isl_keep isl_map *AccessRelation, Value *BaseAddress) {
   assert((isl_map_dim(AccessRelation, isl_dim_out) == 1)
          && "Only single dimensional access functions supported");
 
   isl_pw_aff *PwAff = isl_map_dim_max(isl_map_copy(AccessRelation), 0);
-  Value *OffsetValue = islPwAffToValue(PwAff);
+  IslGenerator IslGen(Builder);
+  Value *OffsetValue = IslGen.generateIslPwAff(PwAff);
 
   PointerType *BaseAddressType = dyn_cast<PointerType>(
     BaseAddress->getType());
