@@ -169,11 +169,6 @@ protected:
   /// LLVMTargetMachine provides standard regalloc passes for most targets.
   virtual void addOptimizedRegAlloc(FunctionPass *RegAllocPass);
 
-  /// getSchedPass - This method may be implemented by target that want to
-  /// completely override the MachineScheduler pass with a new pass, rather than
-  /// inheriting from ScheduleDAGInstrs.
-  virtual char &getSchedPass() { return NoPassID; }
-
   /// addFinalizeRegAlloc - This method may be implemented by targets that want
   /// to run passes within the regalloc pipeline, immediately after the register
   /// allocation pass itself. These passes run as soon as virtual regisiters
