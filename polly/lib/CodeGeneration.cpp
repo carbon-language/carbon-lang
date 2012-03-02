@@ -277,11 +277,10 @@ Value *BlockGenerator::getOperand(const Value *OldOperand, ValueMapT &BBMap) {
   if (!OpInst)
     return const_cast<Value*>(OldOperand);
 
-  // IVS and Parameters.
+  // OldOperand was redefined outside of this BasicBlock.
   if (VMap.count(OldOperand)) {
     Value *NewOperand = VMap[OldOperand];
 
-    // Insert a cast if types are different
     if (OldOperand->getType()->getScalarSizeInBits()
         < NewOperand->getType()->getScalarSizeInBits())
       NewOperand = Builder.CreateTruncOrBitCast(NewOperand,
@@ -290,18 +289,17 @@ Value *BlockGenerator::getOperand(const Value *OldOperand, ValueMapT &BBMap) {
     return NewOperand;
   }
 
-  // Instructions calculated in the current BB.
+  // OldOperand was recalculated within this BasicBlock.
   if (BBMap.count(OldOperand)) {
     return BBMap[OldOperand];
   }
 
-  // Ignore instructions that are referencing ops in the old BB. These
-  // instructions are unused. They where replace by new ones during
-  // createIndependentBlocks().
-  if (S.getRegion().contains(OpInst->getParent()))
-    return NULL;
+  // OldOperand is SCoP invariant.
+  if (!S.getRegion().contains(OpInst->getParent()))
+    return const_cast<Value*>(OldOperand);
 
-  return const_cast<Value*>(OldOperand);
+  // We could not find any valid new operand.
+  return NULL;
 }
 
 void BlockGenerator::copyInstScalar(const Instruction *Inst, ValueMapT &BBMap) {
