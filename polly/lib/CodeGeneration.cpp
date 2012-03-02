@@ -1408,17 +1408,23 @@ void ClastStmtCodeGen::codegenForVector(const clast_for *f) {
 }
 
 void ClastStmtCodeGen::codegen(const clast_for *f) {
-  if (Vector && isInnermostLoop(f) && DP->isParallelFor(f)
-      && (-1 != getNumberOfIterations(f))
-      && (getNumberOfIterations(f) <= 16)) {
-    codegenForVector(f);
-  } else if (OpenMP && !parallelCodeGeneration && DP->isParallelFor(f)) {
-    parallelCodeGeneration = true;
-    parallelLoops.push_back(f->iterator);
-    codegenForOpenMP(f);
-    parallelCodeGeneration = false;
-  } else
-    codegenForSequential(f);
+  if ((Vector || OpenMP) && DP->isParallelFor(f)) {
+    if (Vector && isInnermostLoop(f) && (-1 != getNumberOfIterations(f))
+        && (getNumberOfIterations(f) <= 16)) {
+      codegenForVector(f);
+      return;
+    }
+
+    if (OpenMP && !parallelCodeGeneration) {
+      parallelCodeGeneration = true;
+      parallelLoops.push_back(f->iterator);
+      codegenForOpenMP(f);
+      parallelCodeGeneration = false;
+      return;
+    }
+  }
+
+  codegenForSequential(f);
 }
 
 Value *ClastStmtCodeGen::codegen(const clast_equation *eq) {
