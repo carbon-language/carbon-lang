@@ -564,7 +564,7 @@ public:
 // "Minimal" path diagnostic generation algorithm.
 //===----------------------------------------------------------------------===//
 
-static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM);
+static void CompactPathDiagnostic(PathPieces &path, const SourceManager& SM);
 
 static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
                                           PathDiagnosticBuilder &PDB,
@@ -877,7 +877,7 @@ static void GenerateMinimalPathDiagnostic(PathDiagnostic& PD,
 
   // After constructing the full PathDiagnostic, do a pass over it to compact
   // PathDiagnosticPieces that occur within a macro.
-  CompactPathDiagnostic(PD, PDB.getSourceManager());
+  CompactPathDiagnostic(PD.getMutablePieces(), PDB.getSourceManager());
 }
 
 //===----------------------------------------------------------------------===//
@@ -1652,7 +1652,7 @@ MakeReportGraph(const ExplodedGraph* G,
 
 /// CompactPathDiagnostic - This function postprocesses a PathDiagnostic object
 ///  and collapses PathDiagosticPieces that are expanded by macros.
-static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
+static void CompactPathDiagnostic(PathPieces &path, const SourceManager& SM) {
   typedef std::vector<std::pair<IntrusiveRefCntPtr<PathDiagnosticMacroPiece>,
                                 SourceLocation> > MacroStackTy;
 
@@ -1662,10 +1662,18 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
   MacroStackTy MacroStack;
   PiecesTy Pieces;
 
-  for (PathPieces::const_iterator I = PD.path.begin(), E = PD.path.end();
+  for (PathPieces::const_iterator I = path.begin(), E = path.end();
        I!=E; ++I) {
+    
+    PathDiagnosticPiece *piece = I->getPtr();
+
+    // Recursively compact calls.
+    if (PathDiagnosticCallPiece *call=dyn_cast<PathDiagnosticCallPiece>(piece)){
+      CompactPathDiagnostic(call->path, SM);
+    }
+    
     // Get the location of the PathDiagnosticPiece.
-    const FullSourceLoc Loc = (*I)->getLocation().asLocation();
+    const FullSourceLoc Loc = piece->getLocation().asLocation();
 
     // Determine the instantiation location, which is the location we group
     // related PathDiagnosticPieces.
@@ -1675,7 +1683,7 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
 
     if (Loc.isFileID()) {
       MacroStack.clear();
-      Pieces.push_back(*I);
+      Pieces.push_back(piece);
       continue;
     }
 
@@ -1683,7 +1691,7 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
 
     // Is the PathDiagnosticPiece within the same macro group?
     if (!MacroStack.empty() && InstantiationLoc == MacroStack.back().second) {
-      MacroStack.back().first->subPieces.push_back(*I);
+      MacroStack.back().first->subPieces.push_back(piece);
       continue;
     }
 
@@ -1714,7 +1722,7 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
       // Create a new macro group and add it to the stack.
       PathDiagnosticMacroPiece *NewGroup =
         new PathDiagnosticMacroPiece(
-          PathDiagnosticLocation::createSingleLocation((*I)->getLocation()));
+          PathDiagnosticLocation::createSingleLocation(piece->getLocation()));
 
       if (MacroGroup)
         MacroGroup->subPieces.push_back(NewGroup);
@@ -1728,15 +1736,14 @@ static void CompactPathDiagnostic(PathDiagnostic &PD, const SourceManager& SM) {
     }
 
     // Finally, add the PathDiagnosticPiece to the group.
-    MacroGroup->subPieces.push_back(*I);
+    MacroGroup->subPieces.push_back(piece);
   }
 
   // Now take the pieces and construct a new PathDiagnostic.
-  PD.getMutablePieces().clear();
+  path.clear();
 
-  for (PiecesTy::iterator I=Pieces.begin(), E=Pieces.end(); I!=E; ++I) {
-    PD.getMutablePieces().push_back(*I);
-  }
+  for (PiecesTy::iterator I=Pieces.begin(), E=Pieces.end(); I!=E; ++I)
+    path.push_back(*I);
 }
 
 void GRBugReporter::GeneratePathDiagnostic(PathDiagnostic& PD,

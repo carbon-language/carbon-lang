@@ -95,7 +95,8 @@ void HTMLDiagnostics::FlushDiagnosticsImpl(
   }
 }
 
-static void flattenPath(PathPieces &path, const PathPieces &oldPath) {
+static void flattenPath(PathPieces &primaryPath, PathPieces &currentPath,
+                        const PathPieces &oldPath) {
   for (PathPieces::const_iterator it = oldPath.begin(), et = oldPath.end();
        it != et; ++it ) {
     PathDiagnosticPiece *piece = it->getPtr();
@@ -104,16 +105,24 @@ static void flattenPath(PathPieces &path, const PathPieces &oldPath) {
       IntrusiveRefCntPtr<PathDiagnosticEventPiece> callEnter =
         call->getCallEnterEvent();
       if (callEnter)
-        path.push_back(callEnter);
-      flattenPath(path, call->path);
+        currentPath.push_back(callEnter);
+      flattenPath(primaryPath, primaryPath, call->path);
       IntrusiveRefCntPtr<PathDiagnosticEventPiece> callExit =
         call->getCallExitEvent();
       if (callExit)
-        path.push_back(callExit);
+        currentPath.push_back(callExit);
       continue;
     }
-
-    path.push_back(piece);
+    if (PathDiagnosticMacroPiece *macro =
+        dyn_cast<PathDiagnosticMacroPiece>(piece)) {
+      currentPath.push_back(piece);
+      PathPieces newPath;
+      flattenPath(primaryPath, newPath, macro->subPieces);
+      macro->subPieces = newPath;
+      continue;
+    }
+    
+    currentPath.push_back(piece);
   }
 }
 
@@ -144,7 +153,7 @@ void HTMLDiagnostics::ReportDiag(const PathDiagnostic& D,
 
   // First flatten out the entire path to make it easier to use.
   PathPieces path;
-  flattenPath(path, D.path);
+  flattenPath(path, path, D.path);
 
   // The path as already been prechecked that all parts of the path are
   // from the same file and that it is non-empty.
