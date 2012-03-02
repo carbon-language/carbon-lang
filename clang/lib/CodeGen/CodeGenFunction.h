@@ -2581,6 +2581,16 @@ private:
                     const AutoVarEmission &emission);
 
   void AddObjCARCExceptionMetadata(llvm::Instruction *Inst);
+
+  /// GetPointeeAlignment - Given an expression with a pointer type, find the
+  /// alignment of the type referenced by the pointer.  Skip over implicit
+  /// casts.
+  unsigned GetPointeeAlignment(const Expr *Addr);
+
+  /// GetPointeeAlignmentValue - Given an expression with a pointer type, find
+  /// the alignment of the type referenced by the pointer.  Skip over implicit
+  /// casts.  Return the alignment as an llvm::Value.
+  llvm::Value *GetPointeeAlignmentValue(const Expr *Addr);
 };
 
 /// Helper class with most of the code for saving a value for a

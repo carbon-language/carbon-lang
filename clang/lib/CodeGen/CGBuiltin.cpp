@@ -540,7 +540,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
   case Builtin::BI__builtin_bzero: {
     Value *Address = EmitScalarExpr(E->getArg(0));
     Value *SizeVal = EmitScalarExpr(E->getArg(1));
-    Builder.CreateMemSet(Address, Builder.getInt8(0), SizeVal, 1, false);
+    unsigned Align = GetPointeeAlignment(E->getArg(0));
+    Builder.CreateMemSet(Address, Builder.getInt8(0), SizeVal, Align, false);
     return RValue::get(Address);
   }
   case Builtin::BImemcpy:
@@ -548,7 +549,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Address = EmitScalarExpr(E->getArg(0));
     Value *SrcAddr = EmitScalarExpr(E->getArg(1));
     Value *SizeVal = EmitScalarExpr(E->getArg(2));
-    Builder.CreateMemCpy(Address, SrcAddr, SizeVal, 1, false);
+    unsigned Align = std::min(GetPointeeAlignment(E->getArg(0)),
+                              GetPointeeAlignment(E->getArg(1)));
+    Builder.CreateMemCpy(Address, SrcAddr, SizeVal, Align, false);
     return RValue::get(Address);
   }
       
@@ -563,7 +566,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Dest = EmitScalarExpr(E->getArg(0));
     Value *Src = EmitScalarExpr(E->getArg(1));
     Value *SizeVal = llvm::ConstantInt::get(Builder.getContext(), Size);
-    Builder.CreateMemCpy(Dest, Src, SizeVal, 1, false);
+    unsigned Align = std::min(GetPointeeAlignment(E->getArg(0)),
+                              GetPointeeAlignment(E->getArg(1)));
+    Builder.CreateMemCpy(Dest, Src, SizeVal, Align, false);
     return RValue::get(Dest);
   }
       
@@ -587,7 +592,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Dest = EmitScalarExpr(E->getArg(0));
     Value *Src = EmitScalarExpr(E->getArg(1));
     Value *SizeVal = llvm::ConstantInt::get(Builder.getContext(), Size);
-    Builder.CreateMemMove(Dest, Src, SizeVal, 1, false);
+    unsigned Align = std::min(GetPointeeAlignment(E->getArg(0)),
+                              GetPointeeAlignment(E->getArg(1)));
+    Builder.CreateMemMove(Dest, Src, SizeVal, Align, false);
     return RValue::get(Dest);
   }
 
@@ -596,7 +603,9 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *Address = EmitScalarExpr(E->getArg(0));
     Value *SrcAddr = EmitScalarExpr(E->getArg(1));
     Value *SizeVal = EmitScalarExpr(E->getArg(2));
-    Builder.CreateMemMove(Address, SrcAddr, SizeVal, 1, false);
+    unsigned Align = std::min(GetPointeeAlignment(E->getArg(0)),
+                              GetPointeeAlignment(E->getArg(1)));
+    Builder.CreateMemMove(Address, SrcAddr, SizeVal, Align, false);
     return RValue::get(Address);
   }
   case Builtin::BImemset:
@@ -605,7 +614,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *ByteVal = Builder.CreateTrunc(EmitScalarExpr(E->getArg(1)),
                                          Builder.getInt8Ty());
     Value *SizeVal = EmitScalarExpr(E->getArg(2));
-    Builder.CreateMemSet(Address, ByteVal, SizeVal, 1, false);
+    unsigned Align = GetPointeeAlignment(E->getArg(0));
+    Builder.CreateMemSet(Address, ByteVal, SizeVal, Align, false);
     return RValue::get(Address);
   }
   case Builtin::BI__builtin___memset_chk: {
@@ -620,7 +630,8 @@ RValue CodeGenFunction::EmitBuiltinExpr(const FunctionDecl *FD,
     Value *ByteVal = Builder.CreateTrunc(EmitScalarExpr(E->getArg(1)),
                                          Builder.getInt8Ty());
     Value *SizeVal = llvm::ConstantInt::get(Builder.getContext(), Size);
-    Builder.CreateMemSet(Address, ByteVal, SizeVal, 1, false);
+    unsigned Align = GetPointeeAlignment(E->getArg(0));
+    Builder.CreateMemSet(Address, ByteVal, SizeVal, Align, false);
     
     return RValue::get(Address);
   }
@@ -1248,12 +1259,12 @@ Value *CodeGenFunction::EmitNeonShiftVector(Value *V, llvm::Type *Ty,
 /// GetPointeeAlignment - Given an expression with a pointer type, find the
 /// alignment of the type referenced by the pointer.  Skip over implicit
 /// casts.
-static Value *GetPointeeAlignment(CodeGenFunction &CGF, const Expr *Addr) {
+unsigned CodeGenFunction::GetPointeeAlignment(const Expr *Addr) {
   unsigned Align = 1;
   // Check if the type is a pointer.  The implicit cast operand might not be.
   while (Addr->getType()->isPointerType()) {
     QualType PtTy = Addr->getType()->getPointeeType();
-    unsigned NewA = CGF.getContext().getTypeAlignInChars(PtTy).getQuantity();
+    unsigned NewA = getContext().getTypeAlignInChars(PtTy).getQuantity();
     if (NewA > Align)
       Align = NewA;
 
@@ -1264,7 +1275,14 @@ static Value *GetPointeeAlignment(CodeGenFunction &CGF, const Expr *Addr) {
     }
     break;
   }
-  return llvm::ConstantInt::get(CGF.Int32Ty, Align);
+  return Align;
+}
+
+/// GetPointeeAlignmentValue - Given an expression with a pointer type, find
+/// the alignment of the type referenced by the pointer.  Skip over implicit
+/// casts.  Return the alignment as an llvm::Value.
+Value *CodeGenFunction::GetPointeeAlignmentValue(const Expr *Addr) {
+  return llvm::ConstantInt::get(Int32Ty, GetPointeeAlignment(Addr));
 }
 
 Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
@@ -1510,7 +1528,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return EmitNeonCall(CGM.getIntrinsic(Int, Ty), Ops, "vhsub");
   case ARM::BI__builtin_neon_vld1_v:
   case ARM::BI__builtin_neon_vld1q_v:
-    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
+    Ops.push_back(GetPointeeAlignmentValue(E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vld1, Ty),
                         Ops, "vld1");
   case ARM::BI__builtin_neon_vld1_lane_v:
@@ -1519,7 +1537,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ty = llvm::PointerType::getUnqual(VTy->getElementType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     LoadInst *Ld = Builder.CreateLoad(Ops[0]);
-    Value *Align = GetPointeeAlignment(*this, E->getArg(0));
+    Value *Align = GetPointeeAlignmentValue(E->getArg(0));
     Ld->setAlignment(cast<ConstantInt>(Align)->getZExtValue());
     return Builder.CreateInsertElement(Ops[1], Ld, Ops[2], "vld1_lane");
   }
@@ -1529,7 +1547,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ty = llvm::PointerType::getUnqual(VTy->getElementType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
     LoadInst *Ld = Builder.CreateLoad(Ops[0]);
-    Value *Align = GetPointeeAlignment(*this, E->getArg(0));
+    Value *Align = GetPointeeAlignmentValue(E->getArg(0));
     Ld->setAlignment(cast<ConstantInt>(Align)->getZExtValue());
     llvm::Constant *CI = ConstantInt::get(Int32Ty, 0);
     Ops[0] = Builder.CreateInsertElement(V, Ld, CI);
@@ -1538,7 +1556,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vld2_v:
   case ARM::BI__builtin_neon_vld2q_v: {
     Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld2, Ty);
-    Value *Align = GetPointeeAlignment(*this, E->getArg(1));
+    Value *Align = GetPointeeAlignmentValue(E->getArg(1));
     Ops[1] = Builder.CreateCall2(F, Ops[1], Align, "vld2");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1547,7 +1565,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vld3_v:
   case ARM::BI__builtin_neon_vld3q_v: {
     Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld3, Ty);
-    Value *Align = GetPointeeAlignment(*this, E->getArg(1));
+    Value *Align = GetPointeeAlignmentValue(E->getArg(1));
     Ops[1] = Builder.CreateCall2(F, Ops[1], Align, "vld3");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1556,7 +1574,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
   case ARM::BI__builtin_neon_vld4_v:
   case ARM::BI__builtin_neon_vld4q_v: {
     Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld4, Ty);
-    Value *Align = GetPointeeAlignment(*this, E->getArg(1));
+    Value *Align = GetPointeeAlignmentValue(E->getArg(1));
     Ops[1] = Builder.CreateCall2(F, Ops[1], Align, "vld4");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1567,7 +1585,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Function *F = CGM.getIntrinsic(Intrinsic::arm_neon_vld2lane, Ty);
     Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
     Ops[3] = Builder.CreateBitCast(Ops[3], Ty);
-    Ops.push_back(GetPointeeAlignment(*this, E->getArg(1)));
+    Ops.push_back(GetPointeeAlignmentValue(E->getArg(1)));
     Ops[1] = Builder.CreateCall(F, makeArrayRef(Ops).slice(1), "vld2_lane");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1579,7 +1597,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops[2] = Builder.CreateBitCast(Ops[2], Ty);
     Ops[3] = Builder.CreateBitCast(Ops[3], Ty);
     Ops[4] = Builder.CreateBitCast(Ops[4], Ty);
-    Ops.push_back(GetPointeeAlignment(*this, E->getArg(1)));
+    Ops.push_back(GetPointeeAlignmentValue(E->getArg(1)));
     Ops[1] = Builder.CreateCall(F, makeArrayRef(Ops).slice(1), "vld3_lane");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1592,7 +1610,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ops[3] = Builder.CreateBitCast(Ops[3], Ty);
     Ops[4] = Builder.CreateBitCast(Ops[4], Ty);
     Ops[5] = Builder.CreateBitCast(Ops[5], Ty);
-    Ops.push_back(GetPointeeAlignment(*this, E->getArg(1)));
+    Ops.push_back(GetPointeeAlignmentValue(E->getArg(1)));
     Ops[1] = Builder.CreateCall(F, makeArrayRef(Ops).slice(1), "vld3_lane");
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1616,7 +1634,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
       default: llvm_unreachable("unknown vld_dup intrinsic?");
       }
       Function *F = CGM.getIntrinsic(Int, Ty);
-      Value *Align = GetPointeeAlignment(*this, E->getArg(1));
+      Value *Align = GetPointeeAlignmentValue(E->getArg(1));
       Ops[1] = Builder.CreateCall2(F, Ops[1], Align, "vld_dup");
       Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
       Ops[0] = Builder.CreateBitCast(Ops[0], Ty);
@@ -1643,7 +1661,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
 
     llvm::Constant *CI = ConstantInt::get(Int32Ty, 0);
     Args.push_back(CI);
-    Args.push_back(GetPointeeAlignment(*this, E->getArg(1)));
+    Args.push_back(GetPointeeAlignmentValue(E->getArg(1)));
     
     Ops[1] = Builder.CreateCall(F, Args, "vld_dup");
     // splat lane 0 to all elts in each vector of the result.
@@ -1876,7 +1894,7 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     return Builder.CreateAdd(Ops[0], Ops[1]);
   case ARM::BI__builtin_neon_vst1_v:
   case ARM::BI__builtin_neon_vst1q_v:
-    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
+    Ops.push_back(GetPointeeAlignmentValue(E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst1, Ty),
                         Ops, "");
   case ARM::BI__builtin_neon_vst1_lane_v:
@@ -1886,38 +1904,38 @@ Value *CodeGenFunction::EmitARMBuiltinExpr(unsigned BuiltinID,
     Ty = llvm::PointerType::getUnqual(Ops[1]->getType());
     StoreInst *St = Builder.CreateStore(Ops[1],
                                         Builder.CreateBitCast(Ops[0], Ty));
-    Value *Align = GetPointeeAlignment(*this, E->getArg(0));
+    Value *Align = GetPointeeAlignmentValue(E->getArg(0));
     St->setAlignment(cast<ConstantInt>(Align)->getZExtValue());
     return St;
   }
   case ARM::BI__builtin_neon_vst2_v:
   case ARM::BI__builtin_neon_vst2q_v:
-    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
+    Ops.push_back(GetPointeeAlignmentValue(E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst2, Ty),
                         Ops, "");
   case ARM::BI__builtin_neon_vst2_lane_v:
   case ARM::BI__builtin_neon_vst2q_lane_v:
-    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
+    Ops.push_back(GetPointeeAlignmentValue(E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst2lane, Ty),
                         Ops, "");
   case ARM::BI__builtin_neon_vst3_v:
   case ARM::BI__builtin_neon_vst3q_v:
-    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
+    Ops.push_back(GetPointeeAlignmentValue(E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst3, Ty),
                         Ops, "");
   case ARM::BI__builtin_neon_vst3_lane_v:
   case ARM::BI__builtin_neon_vst3q_lane_v:
-    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
+    Ops.push_back(GetPointeeAlignmentValue(E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst3lane, Ty),
                         Ops, "");
   case ARM::BI__builtin_neon_vst4_v:
   case ARM::BI__builtin_neon_vst4q_v:
-    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
+    Ops.push_back(GetPointeeAlignmentValue(E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst4, Ty),
                         Ops, "");
   case ARM::BI__builtin_neon_vst4_lane_v:
   case ARM::BI__builtin_neon_vst4q_lane_v:
-    Ops.push_back(GetPointeeAlignment(*this, E->getArg(0)));
+    Ops.push_back(GetPointeeAlignmentValue(E->getArg(0)));
     return EmitNeonCall(CGM.getIntrinsic(Intrinsic::arm_neon_vst4lane, Ty),
                         Ops, "");
   case ARM::BI__builtin_neon_vsubhn_v:
