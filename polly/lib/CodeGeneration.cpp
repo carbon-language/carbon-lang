@@ -176,9 +176,6 @@ private:
   isl_set *ScatteringDomain;
   Pass *P;
 
-
-  const Region &getRegion();
-
   Value *makeVectorOperand(Value *Operand);
 
   Value *getOperand(const Value *oldOperand, ValueMapT &BBMap,
@@ -288,10 +285,6 @@ BlockGenerator::BlockGenerator(IRBuilder<> &B, ValueMapT &vmap,
     : Builder(B), VMap(vmap), ValueMaps(vmaps), S(*Stmt.getParent()),
       Statement(Stmt), ScatteringDomain(domain), P(P) {}
 
-const Region &BlockGenerator::getRegion() {
-  return S.getRegion();
-}
-
 Value *BlockGenerator::makeVectorOperand(Value *Operand) {
   int VectorWidth = getVectorWidth();
   if (Operand->getType()->isVectorTy())
@@ -342,7 +335,7 @@ Value *BlockGenerator::getOperand(const Value *OldOperand, ValueMapT &BBMap,
   // Ignore instructions that are referencing ops in the old BB. These
   // instructions are unused. They where replace by new ones during
   // createIndependentBlocks().
-  if (getRegion().contains(OpInst->getParent()))
+  if (S.getRegion().contains(OpInst->getParent()))
     return NULL;
 
   return const_cast<Value*>(OldOperand);
