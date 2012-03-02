@@ -804,9 +804,6 @@ void DwarfDebug::endModule() {
   // Compute DIE offsets and sizes.
   computeSizeAndOffsets();
 
-  // Emit info into a debug str section.
-  emitDebugStr();
-
   // Emit all the DIEs into a debug info section
   emitDebugInfo();
 
@@ -838,6 +835,9 @@ void DwarfDebug::endModule() {
 
   // Emit inline info.
   emitDebugInlineInfo();
+
+  // Emit info into a debug str section.
+  emitDebugStr();
 
   // clean up.
   DeleteContainerSeconds(DeadFnScopeMap);

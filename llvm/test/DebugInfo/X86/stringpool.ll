@@ -14,14 +14,6 @@
 !6 = metadata !{i32 720937, metadata !"z.c", metadata !"/home/nicholas", null} ; [ DW_TAG_file_type ]
 !7 = metadata !{i32 720932, null, metadata !"int", null, i32 0, i64 32, i64 32, i64 0, i32 0, i32 5} ; [ DW_TAG_base_type ]
 
-; Verify that "yyyy" ended up in the stringpool.
-; LINUX: .section .debug_str,"MS",@progbits,1
-; LINUX: yyyy
-; LINUX: .section .debug_info
-; DARWIN: .section __DWARF,__debug_str,regular,debug
-; DARWIN: yyyy
-; DARWIN: .section __DWARF,__debug_info
-
 ; Verify that we refer to 'yyyy' with a relocation.
 ; LINUX:      .long   .Lstring3               # DW_AT_name
 ; LINUX-NEXT: .long   39                      # DW_AT_type
@@ -42,3 +34,11 @@
 ; DARWIN-NEXT:        .byte   9                       ## DW_AT_location
 ; DARWIN-NEXT:        .byte   3
 ; DARWIN-NEXT:        .quad   _yyyy
+
+; Verify that "yyyy" ended up in the stringpool.
+; LINUX: .section .debug_str,"MS",@progbits,1
+; LINUX-NOT: .section
+; LINUX: yyyy
+; DARWIN: .section __DWARF,__debug_str,regular,debug
+; DARWIN-NOT: .section
+; DARWIN: yyyy
