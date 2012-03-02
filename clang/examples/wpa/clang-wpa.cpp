@@ -22,7 +22,7 @@
 #include "clang/StaticAnalyzer/Checkers/LocalCheckers.h"
 #include "clang/Frontend/ASTUnit.h"
 #include "clang/Frontend/CompilerInstance.h"
-#include "clang/Index/CallGraph.h"
+#include "clang/Index/GlobalCallGraph.h"
 #include "clang/Index/Indexer.h"
 #include "clang/Index/TranslationUnit.h"
 #include "clang/Index/DeclReferenceMap.h"
@@ -104,8 +104,8 @@ int main(int argc, char **argv) {
   }
 
   if (ViewCallGraph) {
-    OwningPtr<CallGraph> CG;
-    CG.reset(new CallGraph(Prog));
+    OwningPtr<clang::idx::CallGraph> CG;
+    CG.reset(new clang::idx::CallGraph(Prog));
 
     for (unsigned i = 0, e = ASTUnits.size(); i != e; ++i)
       CG->addTU(ASTUnits[i]->getASTContext());

@@ -1,4 +1,4 @@
-//== CallGraph.cpp - Call graph building ------------------------*- C++ -*--==//
+//== GlobalCallGraph.h - Call graph building --------------------*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,8 +11,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_ANALYSIS_CALLGRAPH
-#define LLVM_CLANG_ANALYSIS_CALLGRAPH
+#ifndef LLVM_CLANG_INDEX_CALLGRAPH
+#define LLVM_CLANG_INDEX_CALLGRAPH
 
 #include "clang/Index/ASTLocation.h"
 #include "clang/Index/Entity.h"
@@ -23,15 +23,18 @@
 #include <vector>
 #include <map>
 
+using namespace clang;
+
 namespace clang {
+namespace idx {
 
 class CallGraphNode {
-  idx::Entity F;
-  typedef std::pair<idx::ASTLocation, CallGraphNode*> CallRecord;
+  Entity F;
+  typedef std::pair<ASTLocation, CallGraphNode*> CallRecord;
   std::vector<CallRecord> CalledFunctions;
 
 public:
-  CallGraphNode(idx::Entity f) : F(f) {}
+  CallGraphNode(Entity f) : F(f) {}
 
   typedef std::vector<CallRecord>::iterator iterator;
   typedef std::vector<CallRecord>::const_iterator const_iterator;
@@ -41,7 +44,7 @@ public:
   const_iterator begin() const { return CalledFunctions.begin(); }
   const_iterator end()   const { return CalledFunctions.end();   }
 
-  void addCallee(idx::ASTLocation L, CallGraphNode *Node) {
+  void addCallee(ASTLocation L, CallGraphNode *Node) {
     CalledFunctions.push_back(std::make_pair(L, Node));
   }
 
@@ -54,9 +57,9 @@ public:
 
 class CallGraph {
   /// Program manages all Entities.
-  idx::Program &Prog;
+  Program &Prog;
 
-  typedef std::map<idx::Entity, CallGraphNode *> FunctionMapTy;
+  typedef std::map<Entity, CallGraphNode *> FunctionMapTy;
 
   /// FunctionMap owns all CallGraphNodes.
   FunctionMapTy FunctionMap;
@@ -71,7 +74,7 @@ class CallGraph {
   CallGraphNode *ExternalCallingNode;
 
 public:
-  CallGraph(idx::Program &P);
+  CallGraph(Program &P);
   ~CallGraph();
 
   typedef FunctionMapTy::iterator iterator;
@@ -88,7 +91,7 @@ public:
 
   void addTU(ASTContext &AST);
 
-  idx::Program &getProgram() { return Prog; }
+  Program &getProgram() { return Prog; }
 
   CallGraphNode *getOrInsertFunction(idx::Entity F);
 
@@ -100,13 +103,13 @@ public:
   void ViewCallGraph() const;
 };
 
-} // end clang namespace
+}} // end clang idx namespace
 
 namespace llvm {
 
-template <> struct GraphTraits<clang::CallGraph> {
-  typedef clang::CallGraph GraphType;
-  typedef clang::CallGraphNode NodeType;
+template <> struct GraphTraits<clang::idx::CallGraph> {
+  typedef clang::idx::CallGraph GraphType;
+  typedef clang::idx::CallGraphNode NodeType;
 
   typedef std::pair<clang::idx::ASTLocation, NodeType*> CGNPairTy;
   typedef std::pointer_to_unary_function<CGNPairTy, NodeType*> CGNDerefFun;

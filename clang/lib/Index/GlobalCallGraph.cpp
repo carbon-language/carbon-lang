@@ -1,4 +1,4 @@
-//== CallGraph.cpp - Call graph building ------------------------*- C++ -*--==//
+//== GlobalCallGraph.cpp - Call graph building ------------------*- C++ -*--==//
 //
 //                     The LLVM Compiler Infrastructure
 //
@@ -11,15 +11,17 @@
 //
 //===----------------------------------------------------------------------===//
 
-#include "clang/Index/CallGraph.h"
+#include "clang/Index/GlobalCallGraph.h"
 
 #include "clang/AST/ASTContext.h"
 #include "clang/AST/StmtVisitor.h"
 
 #include "llvm/Support/GraphWriter.h"
 
-using namespace clang;
-using namespace idx;
+using namespace clang::idx;
+using clang::FunctionDecl;
+using clang::DeclContext;
+using clang::ASTContext;
 
 namespace {
 class CGBuilder : public StmtVisitor<CGBuilder> {
