@@ -238,8 +238,13 @@ RecordingMemoryManager::CommitAllocations (Process &process)
         
         lldb_private::Error err;
         
+        size_t allocation_size = ai->m_size + ai->m_alignment - 1;
+        
+        if (allocation_size == 0)
+            allocation_size = 1;
+        
         ai->m_remote_allocation = process.AllocateMemory(
-            ai->m_size + ai->m_alignment - 1, 
+            allocation_size,
             ai->m_executable ? (lldb::ePermissionsReadable | lldb::ePermissionsExecutable) 
                              : (lldb::ePermissionsReadable | lldb::ePermissionsWritable), 
             err);
