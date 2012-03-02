@@ -211,6 +211,7 @@ TEST(HashingTest, HashCombineRangeGoldenTest) {
     { "abababab",                         0xee14a29ddf0ce54cULL },
     { "ababababababa",                    0x38b3ddaada2d52b4ULL },
     { "ababababababababababa",            0xd3665364219f2b85ULL },
+    { "abababababababababababababababab", 0xa75cd6afbf1bc972ULL },
     { "abababababababababababababababab"
       "abababababababababababababababab"
       "abababababababababababababababab"
