@@ -552,7 +552,7 @@ namespace llvm {
          ExceptionsType == ExceptionHandling::ARM ||
          ExceptionsType == ExceptionHandling::Win64);
     }
-    bool doesDwarfUsesInlineInfoSection() const {
+    bool doesDwarfUseInlineInfoSection() const {
       return DwarfUsesInlineInfoSection;
     }
     const char *getDwarfSectionOffsetDirective() const {
@@ -561,7 +561,7 @@ namespace llvm {
     bool doesDwarfRequireRelocationForSectionOffset() const {
       return DwarfRequiresRelocationForSectionOffset;
     }
-    bool doesDwarfUsesLabelOffsetForRanges() const {
+    bool doesDwarfUseLabelOffsetForRanges() const {
       return DwarfUsesLabelOffsetForRanges;
     }
     bool doesDwarfUseRelocationsForStringPool() const {

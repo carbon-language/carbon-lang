@@ -1607,7 +1607,7 @@ void DwarfDebug::emitDIE(DIE *Die) {
       // DW_AT_range Value encodes offset in debug_range section.
       DIEInteger *V = cast<DIEInteger>(Values[i]);
 
-      if (Asm->MAI->doesDwarfUsesLabelOffsetForRanges()) {
+      if (Asm->MAI->doesDwarfUseLabelOffsetForRanges()) {
         Asm->EmitLabelPlusOffset(DwarfDebugRangeSectionSym,
                                  V->getValue(),
                                  4);
@@ -2100,7 +2100,7 @@ void DwarfDebug::emitDebugMacInfo() {
 /// __debug_info section, and the low_pc is the starting address for the
 /// inlining instance.
 void DwarfDebug::emitDebugInlineInfo() {
-  if (!Asm->MAI->doesDwarfUsesInlineInfoSection())
+  if (!Asm->MAI->doesDwarfUseInlineInfoSection())
     return;
 
   if (!FirstCU)
