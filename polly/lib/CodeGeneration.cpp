@@ -250,11 +250,11 @@ private:
   void generateLoad(const LoadInst *Load, ValueMapT &VectorMap,
                     VectorValueMapT &ScalarMaps);
 
-  void copyUnaryInst(const UnaryInstruction *Inst, ValueMapT &BBMap,
-                     ValueMapT &VectorMap);
+  void copyVectorUnaryInst(const UnaryInstruction *Inst, ValueMapT &BBMap,
+                           ValueMapT &VectorMap);
 
-  void copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
-                   ValueMapT &VectorMap);
+  void copyVectorBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
+                        ValueMapT &VectorMap);
 
   void copyVectorStore(const StoreInst *Store, ValueMapT &BBMap,
                        ValueMapT &VectorMap, VectorValueMapT &ScalarMaps);
@@ -558,8 +558,9 @@ void BlockGenerator::generateLoad(const LoadInst *Load, ValueMapT &VectorMap,
   VectorMap[Load] = NewLoad;
 }
 
-void BlockGenerator::copyUnaryInst(const UnaryInstruction *Inst,
-                                   ValueMapT &BBMap, ValueMapT &VectorMap) {
+void BlockGenerator::copyVectorUnaryInst(const UnaryInstruction *Inst,
+                                         ValueMapT &BBMap,
+                                         ValueMapT &VectorMap) {
   int VectorWidth = getVectorWidth();
   Value *NewOperand = getOperand(Inst->getOperand(0), BBMap, &VectorMap);
   NewOperand = makeVectorOperand(NewOperand);
@@ -571,8 +572,8 @@ void BlockGenerator::copyUnaryInst(const UnaryInstruction *Inst,
   VectorMap[Inst] = Builder.CreateCast(Cast->getOpcode(), NewOperand, DestType);
 }
 
-void BlockGenerator::copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
-                                 ValueMapT &VectorMap) {
+void BlockGenerator::copyVectorBinInst(const BinaryOperator *Inst,
+                                       ValueMapT &BBMap, ValueMapT &VectorMap) {
   Value *OpZero = Inst->getOperand(0);
   Value *OpOne = Inst->getOperand(1);
 
@@ -698,12 +699,12 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
     }
 
     if (const UnaryInstruction *UnaryInst = dyn_cast<UnaryInstruction>(Inst)) {
-      copyUnaryInst(UnaryInst, BBMap, VectorMap);
+      copyVectorUnaryInst(UnaryInst, BBMap, VectorMap);
       return;
     }
 
     if (const BinaryOperator *BinaryInst = dyn_cast<BinaryOperator>(Inst)) {
-      copyBinInst(BinaryInst, BBMap, VectorMap);
+      copyVectorBinInst(BinaryInst, BBMap, VectorMap);
       return;
     }
 
