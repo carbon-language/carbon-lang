@@ -208,9 +208,9 @@ inline uint64_t hash_4to8_bytes(const char *s, size_t len, uint64_t seed) {
 }
 
 inline uint64_t hash_9to16_bytes(const char *s, size_t len, uint64_t seed) {
-    uint64_t a = fetch64(s);
-    uint64_t b = fetch64(s + len - 8);
-    return hash_16_bytes(seed ^ a, rotate(b + len, len)) ^ b;
+  uint64_t a = fetch64(s);
+  uint64_t b = fetch64(s + len - 8);
+  return hash_16_bytes(seed ^ a, rotate(b + len, len)) ^ b;
 }
 
 inline uint64_t hash_17to32_bytes(const char *s, size_t len, uint64_t seed) {
