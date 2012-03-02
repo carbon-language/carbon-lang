@@ -1047,6 +1047,12 @@ static bool ParseAnalyzerArgs(AnalyzerOptions &Opts, ArgList &Args,
   if (Args.hasArg(OPT_analyzer_inline_call))
     Opts.InlineCall = 1;
   Opts.PrintStats = Args.hasArg(OPT_analyzer_stats);
+  Opts.InlineMaxStackDepth =
+    Args.getLastArgIntValue(OPT_analyzer_inline_max_stack_depth,
+                            Opts.InlineMaxStackDepth, Diags);
+  Opts.InlineMaxFunctionSize =
+    Args.getLastArgIntValue(OPT_analyzer_inline_max_function_size,
+                            Opts.InlineMaxFunctionSize, Diags);
 
   Opts.CheckersControlList.clear();
   for (arg_iterator it = Args.filtered_begin(OPT_analyzer_checker,

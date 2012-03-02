@@ -53,27 +53,38 @@ class AnalysisManager : public BugReporterData {
 
   enum AnalysisScope { ScopeTU, ScopeDecl } AScope;
 
-  // The maximum number of exploded nodes the analyzer will generate.
+  /// \brief The maximum number of exploded nodes the analyzer will generate.
   unsigned MaxNodes;
 
-  // The maximum number of times the analyzer visit a block.
+  /// \brief The maximum number of times the analyzer visits a block.
   unsigned MaxVisit;
 
   bool VisualizeEGDot;
   bool VisualizeEGUbi;
   AnalysisPurgeMode PurgeDead;
 
-  /// EargerlyAssume - A flag indicating how the engine should handle
-  //   expressions such as: 'x = (y != 0)'.  When this flag is true then
-  //   the subexpression 'y != 0' will be eagerly assumed to be true or false,
-  //   thus evaluating it to the integers 0 or 1 respectively.  The upside
-  //   is that this can increase analysis precision until we have a better way
-  //   to lazily evaluate such logic.  The downside is that it eagerly
-  //   bifurcates paths.
+  /// \brief The flag regulates if we should eagerly assume evaluations of
+  /// conditionals, thus, bifurcating the path.
+  ///
+  /// EagerlyAssume - A flag indicating how the engine should handle
+  ///   expressions such as: 'x = (y != 0)'.  When this flag is true then
+  ///   the subexpression 'y != 0' will be eagerly assumed to be true or false,
+  ///   thus evaluating it to the integers 0 or 1 respectively.  The upside
+  ///   is that this can increase analysis precision until we have a better way
+  ///   to lazily evaluate such logic.  The downside is that it eagerly
+  ///   bifurcates paths.
   bool EagerlyAssume;
   bool TrimGraph;
   bool InlineCall;
   bool EagerlyTrimEGraph;
+
+public:
+  // Settings for inlining tuning.
+
+  /// \brief The inlining stack depth limit.
+  unsigned InlineMaxStackDepth;
+  /// \brief The max number of basic blocks in a function being inlined.
+  unsigned InlineMaxFunctionSize;
 
 public:
   AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags, 
@@ -87,7 +98,9 @@ public:
                   bool eager, bool trim,
                   bool inlinecall, bool useUnoptimizedCFG,
                   bool addImplicitDtors, bool addInitializers,
-                  bool eagerlyTrimEGraph);
+                  bool eagerlyTrimEGraph,
+                  unsigned inlineMaxStack,
+                  unsigned inlineMaxFunctionSize);
 
   /// Construct a clone of the given AnalysisManager with the given ASTContext
   /// and DiagnosticsEngine.

@@ -142,13 +142,16 @@ bool ExprEngine::InlineCall(ExplodedNodeSet &Dst,
       // FIXME: Handle C++.
       break;
     case Stmt::CallExprClass: {
-      // Cap the stack depth at 4 calls (5 stack frames, base + 4 calls).
-      // These heuristics are a WIP.
-      if (getNumberStackFrames(Pred->getLocationContext()) == 5)
+      if (getNumberStackFrames(Pred->getLocationContext())
+            == AMgr.InlineMaxStackDepth)
         return false;
-      
-      // Construct a new stack frame for the callee.
+
       AnalysisDeclContext *CalleeADC = AMgr.getAnalysisDeclContext(FD);
+      const CFG *CalleeCFG = CalleeADC->getCFG();
+      if (CalleeCFG->getNumBlockIDs() > AMgr.InlineMaxFunctionSize)
+        return false;
+
+      // Construct a new stack frame for the callee.
       const StackFrameContext *CallerSFC =
       Pred->getLocationContext()->getCurrentStackFrame();
       const StackFrameContext *CalleeSFC =

@@ -81,7 +81,11 @@ def analyzer_viz_egraph_graphviz : Flag<"-analyzer-viz-egraph-graphviz">,
 def analyzer_viz_egraph_ubigraph : Flag<"-analyzer-viz-egraph-ubigraph">,
   HelpText<"Display exploded graph using Ubigraph">;
 def analyzer_inline_call : Flag<"-analyzer-inline-call">,
-  HelpText<"Experimental transfer function inlining callees when its definition is available.">;
+  HelpText<"Experimental: Inline callees when their definitions are available">;
+def analyzer_inline_max_stack_depth : Separate<"-analyzer-inline-max-stack-depth">,
+  HelpText<"Bound on stack depth while inlining (4 by default)">;
+def analyzer_inline_max_function_size : Separate<"-analyzer-inline-max-function-size">,
+  HelpText<"Bound on the number of basic blocks in an inlined function (10 by default)">;
 def analyzer_max_nodes : Separate<"-analyzer-max-nodes">,
   HelpText<"The maximum number of nodes the analyzer can generate (150000 default, 0 = no limit)">;
 def analyzer_max_loop : Separate<"-analyzer-max-loop">,

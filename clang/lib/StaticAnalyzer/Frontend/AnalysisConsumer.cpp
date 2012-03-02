@@ -157,7 +157,9 @@ public:
                                   Opts.TrimGraph, Opts.InlineCall,
                                   Opts.UnoptimizedCFG, Opts.CFGAddImplicitDtors,
                                   Opts.CFGAddInitializers,
-                                  Opts.EagerlyTrimEGraph));
+                                  Opts.EagerlyTrimEGraph,
+                                  Opts.InlineMaxStackDepth,
+                                  Opts.InlineMaxFunctionSize));
     if (Opts.PrintStats)
       llvm::EnableStatistics();
   }

@@ -29,7 +29,9 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
                                  bool eager, bool trim,
                                  bool inlinecall, bool useUnoptimizedCFG,
                                  bool addImplicitDtors, bool addInitializers,
-                                 bool eagerlyTrimEGraph)
+                                 bool eagerlyTrimEGraph,
+                                 unsigned inlineMaxStack,
+                                 unsigned inlineMaxFunctionSize)
   : AnaCtxMgr(useUnoptimizedCFG, addImplicitDtors, addInitializers),
     Ctx(ctx), Diags(diags), LangInfo(lang), PD(pd),
     CreateStoreMgr(storemgr), CreateConstraintMgr(constraintmgr),
@@ -37,7 +39,9 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
     AScope(ScopeDecl), MaxNodes(maxnodes), MaxVisit(maxvisit),
     VisualizeEGDot(vizdot), VisualizeEGUbi(vizubi), PurgeDead(purge),
     EagerlyAssume(eager), TrimGraph(trim), InlineCall(inlinecall),
-    EagerlyTrimEGraph(eagerlyTrimEGraph)
+    EagerlyTrimEGraph(eagerlyTrimEGraph),
+    InlineMaxStackDepth(inlineMaxStack),
+    InlineMaxFunctionSize(inlineMaxFunctionSize)
 {
   AnaCtxMgr.getCFGBuildOptions().setAllAlwaysAdd();
 }
@@ -62,7 +66,9 @@ AnalysisManager::AnalysisManager(ASTContext &ctx, DiagnosticsEngine &diags,
     EagerlyAssume(ParentAM.EagerlyAssume),
     TrimGraph(ParentAM.TrimGraph),
     InlineCall(ParentAM.InlineCall),
-    EagerlyTrimEGraph(ParentAM.EagerlyTrimEGraph)
+    EagerlyTrimEGraph(ParentAM.EagerlyTrimEGraph),
+    InlineMaxStackDepth(ParentAM.InlineMaxStackDepth),
+    InlineMaxFunctionSize(ParentAM.InlineMaxFunctionSize)
 {
   AnaCtxMgr.getCFGBuildOptions().setAllAlwaysAdd();
 }
