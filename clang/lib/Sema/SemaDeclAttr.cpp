@@ -4121,6 +4121,11 @@ void Sema::HandleDelayedDeprecationCheck(DelayedDiagnostic &DD,
     Diag(DD.Loc, diag::warn_deprecated_message)
       << DD.getDeprecationDecl()->getDeclName()
       << DD.getDeprecationMessage();
+  else if (DD.getUnknownObjCClass()) {
+    Diag(DD.Loc, diag::warn_deprecated_fwdclass_message) 
+      << DD.getDeprecationDecl()->getDeclName();
+    Diag(DD.getUnknownObjCClass()->getLocation(), diag::note_forward_class);
+  }
   else
     Diag(DD.Loc, diag::warn_deprecated)
       << DD.getDeprecationDecl()->getDeclName();
@@ -4131,7 +4136,9 @@ void Sema::EmitDeprecationWarning(NamedDecl *D, StringRef Message,
                                   const ObjCInterfaceDecl *UnknownObjCClass) {
   // Delay if we're currently parsing a declaration.
   if (DelayedDiagnostics.shouldDelayDiagnostics()) {
-    DelayedDiagnostics.add(DelayedDiagnostic::makeDeprecation(Loc, D, Message));
+    DelayedDiagnostics.add(DelayedDiagnostic::makeDeprecation(Loc, D, 
+                                                              UnknownObjCClass,
+                                                              Message));
     return;
   }
 

@@ -122,8 +122,9 @@ public:
   void Destroy();
 
   static DelayedDiagnostic makeDeprecation(SourceLocation Loc,
-                                           const NamedDecl *D,
-                                           StringRef Msg);
+           const NamedDecl *D,
+           const ObjCInterfaceDecl *UnknownObjCClass,
+           StringRef Msg);
 
   static DelayedDiagnostic makeAccess(SourceLocation Loc,
                                       const AccessedEntity &Entity) {
@@ -187,12 +188,17 @@ public:
     assert(Kind == ForbiddenType && "not a forbidden-type diagnostic");
     return QualType::getFromOpaquePtr(ForbiddenTypeData.OperandType);
   }
+  
+  const ObjCInterfaceDecl *getUnknownObjCClass() const {
+    return DeprecationData.UnknownObjCClass;
+  }
 
 private:
   union {
     /// Deprecation.
     struct {
       const NamedDecl *Decl;
+      const ObjCInterfaceDecl *UnknownObjCClass;
       const char *Message;
       size_t MessageLen;
     } DeprecationData;
