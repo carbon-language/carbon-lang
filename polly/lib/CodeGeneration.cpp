@@ -668,7 +668,7 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
                                      ValueMapT &VectorMap,
                                      VectorValueMapT &ScalarMaps,
                                      int VectorDimension) {
-  // Terminator instructions control the control flow. They are explicitally
+  // Terminator instructions control the control flow. They are explicitly
   // expressed in the clast and do not need to be copied.
   if (Inst->isTerminator())
     return;
