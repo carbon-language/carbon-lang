@@ -161,6 +161,7 @@ def : DiagGroup<"stack-protector">;
 def : DiagGroup<"switch-default">;
 def : DiagGroup<"synth">;
 def SizeofArrayArgument : DiagGroup<"sizeof-array-argument">;
+def StringPlusInt : DiagGroup<"string-plus-int">;
 def StrncatSize : DiagGroup<"strncat-size">;
 def TautologicalCompare : DiagGroup<"tautological-compare">;
 def HeaderHygiene : DiagGroup<"header-hygiene">;
@@ -326,6 +327,7 @@ def Most : DiagGroup<"most", [
     ReturnType,
     SelfAssignment,
     SizeofArrayArgument,
+    StringPlusInt,
     Trigraphs,
     Uninitialized,
     UnknownPragmas,

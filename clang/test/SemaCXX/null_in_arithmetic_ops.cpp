@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -triple x86_64-unknown-unknown -fsyntax-only -fblocks -Wnull-arithmetic -verify %s
+// RUN: %clang_cc1 -triple x86_64-unknown-unknown -fsyntax-only -fblocks -Wnull-arithmetic -verify -Wno-string-plus-int %s
 #include <stddef.h>
 
 void f() {

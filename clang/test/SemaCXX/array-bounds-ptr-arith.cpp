@@ -1,4 +1,4 @@
-// RUN: %clang_cc1 -verify -Warray-bounds-pointer-arithmetic %s
+// RUN: %clang_cc1 -verify -Wno-string-plus-int -Warray-bounds-pointer-arithmetic %s
 
 void swallow (const char *x) { (void)x; }
 void test_pointer_arithmetic(int n) {

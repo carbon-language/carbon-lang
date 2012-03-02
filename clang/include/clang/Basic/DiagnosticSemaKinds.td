@@ -3430,6 +3430,12 @@ def warn_self_assignment : Warning<
   "explicitly assigning a variable of type %0 to itself">,
   InGroup<SelfAssignment>, DefaultIgnore;
 
+def warn_string_plus_int : Warning<
+  "adding %0 to a string does not append to the string">,
+  InGroup<StringPlusInt>;
+def note_string_plus_int_silence : Note<
+  "use array indexing to silence this warning">;
+
 def warn_sizeof_array_param : Warning<
   "sizeof on array function parameter will return size of %0 instead of %1">,
   InGroup<SizeofArrayArgument>;
