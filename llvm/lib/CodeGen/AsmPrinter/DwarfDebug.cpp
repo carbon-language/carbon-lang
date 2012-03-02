@@ -2132,10 +2132,9 @@ void DwarfDebug::emitDebugInlineInfo() {
     StringRef Name = SP.getName();
 
     Asm->OutStreamer.AddComment("MIPS linkage name");
-    if (LName.empty()) {
-      Asm->OutStreamer.EmitBytes(Name, 0);
-      Asm->OutStreamer.EmitIntValue(0, 1, 0); // nul terminator.
-    } else
+    if (LName.empty())
+      Asm->EmitSectionOffset(getStringPoolEntry(Name), DwarfStrSectionSym);
+    else
       Asm->EmitSectionOffset(getStringPoolEntry(getRealLinkageName(LName)),
                              DwarfStrSectionSym);
 
