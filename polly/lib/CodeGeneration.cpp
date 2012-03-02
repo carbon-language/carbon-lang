@@ -489,18 +489,17 @@ private:
   Value *generateUnknownStrideLoad(const LoadInst *Load,
                                    VectorValueMapT &ScalarMaps);
 
-
   void generateLoad(const LoadInst *Load, ValueMapT &VectorMap,
                     VectorValueMapT &ScalarMaps);
 
   void copyUnaryInst(const UnaryInstruction *Inst, ValueMapT &BBMap,
-                           ValueMapT &VectorMap);
+                     ValueMapT &VectorMap);
 
   void copyBinaryInst(const BinaryOperator *Inst, ValueMapT &BBMap,
-                        ValueMapT &VectorMap);
+                      ValueMapT &VectorMap);
 
-  void copyStore(const StoreInst *Store, ValueMapT &BBMap,
-                       ValueMapT &VectorMap, VectorValueMapT &ScalarMaps);
+  void copyStore(const StoreInst *Store, ValueMapT &BBMap, ValueMapT &VectorMap,
+                 VectorValueMapT &ScalarMaps);
 
   bool hasVectorOperands(const Instruction *Inst, ValueMapT &VectorMap);
 
