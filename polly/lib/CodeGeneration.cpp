@@ -179,12 +179,12 @@ private:
 
   const Region &getRegion();
 
-  Value *makeVectorOperand(Value *operand, int vectorWidth);
+  Value *makeVectorOperand(Value *Operand);
 
   Value *getOperand(const Value *oldOperand, ValueMapT &BBMap,
                     ValueMapT *VectorMap = 0);
 
-  Type *getVectorPtrTy(const Value *V, int vectorWidth);
+  Type *getVectorPtrTy(const Value *V, int Width);
 
   /// @brief Load a vector from a set of adjacent scalars
   ///
@@ -194,8 +194,7 @@ private:
   /// %vector_ptr= bitcast double* %p to <4 x double>*
   /// %vec_full = load <4 x double>* %vector_ptr
   ///
-  Value *generateStrideOneLoad(const LoadInst *load, ValueMapT &BBMap,
-                               int size);
+  Value *generateStrideOneLoad(const LoadInst *Load, ValueMapT &BBMap);
 
   /// @brief Load a vector initialized from a single scalar in memory
   ///
@@ -207,8 +206,7 @@ private:
   /// %splat = shufflevector <1 x double> %splat_one, <1 x
   ///       double> %splat_one, <4 x i32> zeroinitializer
   ///
-  Value *generateStrideZeroLoad(const LoadInst *load, ValueMapT &BBMap,
-                                int size);
+  Value *generateStrideZeroLoad(const LoadInst *Load, ValueMapT &BBMap);
 
   /// @Load a vector from scalars distributed in memory
   ///
@@ -221,8 +219,8 @@ private:
   /// %scalar 2 = load double* %p_2
   /// %vec_2 = insertelement <2 x double> %vec_1, double %scalar_1, i32 1
   ///
-  Value *generateUnknownStrideLoad(const LoadInst *load,
-                                   VectorValueMapT &scalarMaps, int size);
+  Value *generateUnknownStrideLoad(const LoadInst *Load,
+                                   VectorValueMapT &ScalarMaps);
 
   static Value* islAffToValue(__isl_take isl_aff *Aff,
                               IslPwAffUserInfo *UserInfo);
@@ -249,31 +247,30 @@ private:
   Value *generateScalarLoad(const LoadInst *load, ValueMapT &BBMap);
 
   /// @brief Load a value (or several values as a vector) from memory.
-  void generateLoad(const LoadInst *load, ValueMapT &vectorMap,
-                    VectorValueMapT &scalarMaps, int vectorWidth);
+  void generateLoad(const LoadInst *Load, ValueMapT &VectorMap,
+                    VectorValueMapT &ScalarMaps);
 
   void copyUnaryInst(const UnaryInstruction *Inst, ValueMapT &BBMap,
-                     ValueMapT &VectorMap, int VectorDimension,
-                     int VectorWidth);
+                     ValueMapT &VectorMap, int VectorDimension);
 
   void copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
-                   ValueMapT &vectorMap, int vectorDimension, int vectorWidth);
+                   ValueMapT &VectorMap, int VectorDimension);
 
-  void copyVectorStore(const StoreInst *store, ValueMapT &BBMap,
-                       ValueMapT &vectorMap, VectorValueMapT &scalarMaps,
-                       int vectorDimension, int vectorWidth);
+  void copyVectorStore(const StoreInst *Store, ValueMapT &BBMap,
+                       ValueMapT &VectorMap, VectorValueMapT &ScalarMaps,
+                       int VectorDimension);
 
   void copyInstScalar(const Instruction *Inst, ValueMapT &BBMap);
 
   bool hasVectorOperands(const Instruction *Inst, ValueMapT &VectorMap);
 
-  int getVectorSize();
+  int getVectorWidth();
 
   bool isVectorBlock();
 
   void copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
                        ValueMapT &VectorMap, VectorValueMapT &ScalarMaps,
-                       int VectorDimension, int VectorWidth);
+                       int VectorDimension);
 
   // Insert a copy of a basic block in the newly generated code.
   //
@@ -296,7 +293,8 @@ const Region &BlockGenerator::getRegion() {
   return S.getRegion();
 }
 
-Value *BlockGenerator::makeVectorOperand(Value *Operand, int VectorWidth) {
+Value *BlockGenerator::makeVectorOperand(Value *Operand) {
+  int VectorWidth = getVectorWidth();
   if (Operand->getType()->isVectorTy())
     return Operand;
 
@@ -351,20 +349,20 @@ Value *BlockGenerator::getOperand(const Value *OldOperand, ValueMapT &BBMap,
   return const_cast<Value*>(OldOperand);
 }
 
-Type *BlockGenerator::getVectorPtrTy(const Value *Val, int VectorWidth) {
+Type *BlockGenerator::getVectorPtrTy(const Value *Val, int Width) {
   PointerType *PointerTy = dyn_cast<PointerType>(Val->getType());
   assert(PointerTy && "PointerType expected");
 
   Type *ScalarType = PointerTy->getElementType();
-  VectorType *VectorType = VectorType::get(ScalarType, VectorWidth);
+  VectorType *VectorType = VectorType::get(ScalarType, Width);
 
   return PointerType::getUnqual(VectorType);
 }
 
 Value *BlockGenerator::generateStrideOneLoad(const LoadInst *Load,
-                                             ValueMapT &BBMap, int Size) {
+                                             ValueMapT &BBMap) {
   const Value *Pointer = Load->getPointerOperand();
-  Type *VectorPtrType = getVectorPtrTy(Pointer, Size);
+  Type *VectorPtrType = getVectorPtrTy(Pointer, getVectorWidth());
   Value *NewPointer = getOperand(Pointer, BBMap);
   Value *VectorPtr = Builder.CreateBitCast(NewPointer, VectorPtrType,
                                            "vector_ptr");
@@ -377,7 +375,7 @@ Value *BlockGenerator::generateStrideOneLoad(const LoadInst *Load,
 }
 
 Value *BlockGenerator::generateStrideZeroLoad(const LoadInst *Load,
-                                              ValueMapT &BBMap, int Size) {
+                                              ValueMapT &BBMap) {
   const Value *Pointer = Load->getPointerOperand();
   Type *VectorPtrType = getVectorPtrTy(Pointer, 1);
   Value *NewPointer = getOperand(Pointer, BBMap);
@@ -390,7 +388,8 @@ Value *BlockGenerator::generateStrideZeroLoad(const LoadInst *Load,
     ScalarLoad->setAlignment(8);
 
   Constant *SplatVector =
-    Constant::getNullValue(VectorType::get(Builder.getInt32Ty(), Size));
+    Constant::getNullValue(VectorType::get(Builder.getInt32Ty(),
+                                           getVectorWidth()));
 
   Value *VectorLoad = Builder.CreateShuffleVector(ScalarLoad, ScalarLoad,
                                                   SplatVector,
@@ -400,15 +399,15 @@ Value *BlockGenerator::generateStrideZeroLoad(const LoadInst *Load,
 }
 
 Value *BlockGenerator::generateUnknownStrideLoad(const LoadInst *Load,
-                                                 VectorValueMapT &ScalarMaps,
-                                                 int Size) {
+                                                 VectorValueMapT &ScalarMaps) {
+  int VectorWidth = getVectorWidth();
   const Value *Pointer = Load->getPointerOperand();
   VectorType *VectorType = VectorType::get(
-    dyn_cast<PointerType>(Pointer->getType())->getElementType(), Size);
+    dyn_cast<PointerType>(Pointer->getType())->getElementType(), VectorWidth);
 
   Value *Vector = UndefValue::get(VectorType);
 
-  for (int i = 0; i < Size; i++) {
+  for (int i = 0; i < VectorWidth; i++) {
     Value *NewPointer = getOperand(Pointer, ScalarMaps[i]);
     Value *ScalarLoad = Builder.CreateLoad(NewPointer,
                                            Load->getName() + "_p_scalar_");
@@ -538,8 +537,7 @@ Value *BlockGenerator::generateScalarLoad(const LoadInst *Load,
 }
 
 void BlockGenerator::generateLoad(const LoadInst *Load, ValueMapT &VectorMap,
-                                  VectorValueMapT &ScalarMaps,
-                                  int VectorWidth) {
+                                  VectorValueMapT &ScalarMaps) {
   if (ScalarMaps.size() == 1) {
     ScalarMaps[0][Load] = generateScalarLoad(Load, ScalarMaps[0]);
     return;
@@ -552,20 +550,21 @@ void BlockGenerator::generateLoad(const LoadInst *Load, ValueMapT &VectorMap,
   assert(ScatteringDomain && "No scattering domain available");
 
   if (Access.isStrideZero(isl_set_copy(ScatteringDomain)))
-    NewLoad = generateStrideZeroLoad(Load, ScalarMaps[0], VectorWidth);
+    NewLoad = generateStrideZeroLoad(Load, ScalarMaps[0]);
   else if (Access.isStrideOne(isl_set_copy(ScatteringDomain)))
-    NewLoad = generateStrideOneLoad(Load, ScalarMaps[0], VectorWidth);
+    NewLoad = generateStrideOneLoad(Load, ScalarMaps[0]);
   else
-    NewLoad = generateUnknownStrideLoad(Load, ScalarMaps, VectorWidth);
+    NewLoad = generateUnknownStrideLoad(Load, ScalarMaps);
 
   VectorMap[Load] = NewLoad;
 }
 
 void BlockGenerator::copyUnaryInst(const UnaryInstruction *Inst,
                                    ValueMapT &BBMap, ValueMapT &VectorMap,
-                                   int VectorDimension, int VectorWidth) {
+                                   int VectorDimension) {
+  int VectorWidth = getVectorWidth();
   Value *NewOperand = getOperand(Inst->getOperand(0), BBMap, &VectorMap);
-  NewOperand = makeVectorOperand(NewOperand, VectorWidth);
+  NewOperand = makeVectorOperand(NewOperand);
 
   assert(isa<CastInst>(Inst) && "Can not generate vector code for instruction");
 
@@ -575,8 +574,7 @@ void BlockGenerator::copyUnaryInst(const UnaryInstruction *Inst,
 }
 
 void BlockGenerator::copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
-                                 ValueMapT &VectorMap, int VectorDimension,
-                                 int VectorWidth) {
+                                 ValueMapT &VectorMap, int VectorDimension) {
   Value *OpZero = Inst->getOperand(0);
   Value *OpOne = Inst->getOperand(1);
 
@@ -584,8 +582,8 @@ void BlockGenerator::copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
   NewOpZero = getOperand(OpZero, BBMap, &VectorMap);
   NewOpOne = getOperand(OpOne, BBMap, &VectorMap);
 
-  NewOpZero = makeVectorOperand(NewOpZero, VectorWidth);
-  NewOpOne = makeVectorOperand(NewOpOne, VectorWidth);
+  NewOpZero = makeVectorOperand(NewOpZero);
+  NewOpOne = makeVectorOperand(NewOpOne);
 
   Value *NewInst = Builder.CreateBinOp(Inst->getOpcode(), NewOpZero,
                                        NewOpOne,
@@ -596,7 +594,9 @@ void BlockGenerator::copyBinInst(const BinaryOperator *Inst, ValueMapT &BBMap,
 void BlockGenerator::copyVectorStore(const StoreInst *Store, ValueMapT &BBMap,
                                      ValueMapT &VectorMap,
                                      VectorValueMapT &ScalarMaps,
-                                     int VectorDimension, int VectorWidth) {
+                                     int VectorDimension) {
+  int VectorWidth = getVectorWidth();
+
   // In vector mode we only generate a store for the first dimension.
   if (VectorDimension > 0)
     return;
@@ -663,18 +663,18 @@ bool BlockGenerator::hasVectorOperands(const Instruction *Inst,
   return false;
 }
 
-int BlockGenerator::getVectorSize() {
+int BlockGenerator::getVectorWidth() {
   return ValueMaps.size();
 }
 
 bool BlockGenerator::isVectorBlock() {
-  return getVectorSize() > 1;
+  return getVectorWidth() > 1;
 }
 
 void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
                                      ValueMapT &VectorMap,
                                      VectorValueMapT &ScalarMaps,
-                                     int VectorDimension, int VectorWidth) {
+                                     int VectorDimension) {
   // Terminator instructions control the control flow. They are explicitally
   // expressed in the clast and do not need to be copied.
   if (Inst->isTerminator())
@@ -689,19 +689,18 @@ void BlockGenerator::copyInstruction(const Instruction *Inst, ValueMapT &BBMap,
   }
 
   if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
-    generateLoad(Load, VectorMap, ScalarMaps, VectorWidth);
+    generateLoad(Load, VectorMap, ScalarMaps);
     return;
   }
 
   if (isVectorBlock() && hasVectorOperands(Inst, VectorMap)) {
     if (const UnaryInstruction *UnaryInst = dyn_cast<UnaryInstruction>(Inst))
-      copyUnaryInst(UnaryInst, BBMap, VectorMap, VectorDimension, VectorWidth);
+      copyUnaryInst(UnaryInst, BBMap, VectorMap, VectorDimension);
     else if
       (const BinaryOperator *BinaryInst = dyn_cast<BinaryOperator>(Inst))
-        copyBinInst(BinaryInst, BBMap, VectorMap, VectorDimension, VectorWidth);
+        copyBinInst(BinaryInst, BBMap, VectorMap, VectorDimension);
     else if (const StoreInst *Store = dyn_cast<StoreInst>(Inst))
-      copyVectorStore(Store, BBMap, VectorMap, ScalarMaps, VectorDimension,
-                      VectorWidth);
+      copyVectorStore(Store, BBMap, VectorMap, ScalarMaps, VectorDimension);
     else
       llvm_unreachable("Cannot issue vector code for this instruction");
 
@@ -732,15 +731,14 @@ void BlockGenerator::copyBB() {
   // in the vector map once (as it is calculating >vectorwidth< values at a
   // time. Or (if the values are calculated using scalar operations), it
   // appears once in every dimension of the scalarMap.
-  VectorValueMapT ScalarBlockMap(getVectorSize());
+  VectorValueMapT ScalarBlockMap(getVectorWidth());
   ValueMapT VectorBlockMap;
 
   for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end();
        II != IE; ++II)
-    for (int i = 0; i < getVectorSize(); i++) {
-      copyInstruction(II, ScalarBlockMap[i], VectorBlockMap,
-                      ScalarBlockMap, i, getVectorSize());
-    }
+    for (int VectorLane = 0; VectorLane < getVectorWidth(); VectorLane++)
+      copyInstruction(II, ScalarBlockMap[VectorLane], VectorBlockMap,
+                      ScalarBlockMap, VectorLane);
 }
 
 /// Class to generate LLVM-IR that calculates the value of a clast_expr.
