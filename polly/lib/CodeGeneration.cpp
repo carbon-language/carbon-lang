@@ -738,9 +738,6 @@ void BlockGenerator::copyBB() {
   for (BasicBlock::const_iterator II = BB->begin(), IE = BB->end();
        II != IE; ++II)
     for (int i = 0; i < getVectorSize(); i++) {
-      if (isVectorBlock())
-        VMap = ValueMaps[i];
-
       copyInstruction(II, ScalarBlockMap[i], VectorBlockMap,
                       ScalarBlockMap, i, getVectorSize());
     }
