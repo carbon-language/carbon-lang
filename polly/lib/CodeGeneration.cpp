@@ -1321,50 +1321,38 @@ void ClastStmtCodeGen::addOpenMPSubfunctionBody(Function *FN,
   Builder.SetInsertPoint(PrevInsertPoint);
 }
 
-void ClastStmtCodeGen::codegenForOpenMP(const clast_for *f) {
+void ClastStmtCodeGen::codegenForOpenMP(const clast_for *For) {
   Module *M = Builder.GetInsertBlock()->getParent()->getParent();
-  IntegerType *intPtrTy = TD->getIntPtrType(Builder.getContext());
+  IntegerType *IntPtrTy = TD->getIntPtrType(Builder.getContext());
 
   Function *SubFunction = addOpenMPSubfunction(M);
   SetVector<Value*> OMPDataVals = createOpenMPStructValues();
-  Value *structData = addValuesToOpenMPStruct(OMPDataVals, SubFunction);
+  Value *StructData = addValuesToOpenMPStruct(OMPDataVals, SubFunction);
 
-  addOpenMPSubfunctionBody(SubFunction, f, structData, OMPDataVals);
+  addOpenMPSubfunctionBody(SubFunction, For, StructData, OMPDataVals);
 
   // Create call for GOMP_parallel_loop_runtime_start.
-  Value *subfunctionParam = Builder.CreateBitCast(structData,
+  Value *SubfunctionParam = Builder.CreateBitCast(StructData,
                                                   Builder.getInt8PtrTy(),
                                                   "omp_data");
 
-  Value *numberOfThreads = Builder.getInt32(0);
-  Value *lowerBound = ExpGen.codegen(f->LB, intPtrTy);
-  Value *upperBound = ExpGen.codegen(f->UB, intPtrTy);
+  Value *NumberOfThreads = Builder.getInt32(0);
+  Value *LowerBound = ExpGen.codegen(For->LB, IntPtrTy);
+  Value *UpperBound = ExpGen.codegen(For->UB, IntPtrTy);
 
   // Add one as the upper bound provided by openmp is a < comparison
   // whereas the codegenForSequential function creates a <= comparison.
-  upperBound = Builder.CreateAdd(upperBound, ConstantInt::get(intPtrTy, 1));
-  APInt APStride = APInt_from_MPZ(f->stride);
-  Value *stride = ConstantInt::get(intPtrTy,
-                                   APStride.zext(intPtrTy->getBitWidth()));
+  UpperBound = Builder.CreateAdd(UpperBound, ConstantInt::get(IntPtrTy, 1));
+  APInt APStride = APInt_from_MPZ(For->stride);
+  Value *Stride = ConstantInt::get(IntPtrTy,
+                                   APStride.zext(IntPtrTy->getBitWidth()));
 
-  SmallVector<Value *, 6> Arguments;
-  Arguments.push_back(SubFunction);
-  Arguments.push_back(subfunctionParam);
-  Arguments.push_back(numberOfThreads);
-  Arguments.push_back(lowerBound);
-  Arguments.push_back(upperBound);
-  Arguments.push_back(stride);
-
-  Function *parallelStartFunction =
-    M->getFunction("GOMP_parallel_loop_runtime_start");
-  Builder.CreateCall(parallelStartFunction, Arguments);
-
-  // Create call to the subfunction.
-  Builder.CreateCall(SubFunction, subfunctionParam);
-
-  // Create call for GOMP_parallel_end.
-  Function *FN = M->getFunction("GOMP_parallel_end");
-  Builder.CreateCall(FN);
+  Value *Arguments[] = { SubFunction, SubfunctionParam, NumberOfThreads,
+    LowerBound, UpperBound, Stride};
+  Builder.CreateCall(M->getFunction("GOMP_parallel_loop_runtime_start"),
+                     Arguments);
+  Builder.CreateCall(SubFunction, SubfunctionParam);
+  Builder.CreateCall(M->getFunction("GOMP_parallel_end"));
 }
 
 bool ClastStmtCodeGen::isInnermostLoop(const clast_for *f) {
