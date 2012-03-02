@@ -266,6 +266,8 @@ private:
 
   bool isVectorBlock();
 
+  void copyVectorInstruction(const Instruction *Inst, ValueMapT &VectorMap,
+                             VectorValueMapT &ScalarMaps);
   void copyInstruction(const Instruction *Inst, ValueMapT &VectorMap,
                        VectorValueMapT &ScalarMaps);
 
@@ -659,6 +661,37 @@ bool BlockGenerator::isVectorBlock() {
   return getVectorWidth() > 1;
 }
 
+void BlockGenerator::copyVectorInstruction(const Instruction *Inst,
+                                           ValueMapT &VectorMap,
+                                           VectorValueMapT &ScalarMaps) {
+  if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
+    generateVectorLoad(Load, VectorMap, ScalarMaps);
+    return;
+  }
+
+  if (hasVectorOperands(Inst, VectorMap)) {
+    if (const StoreInst *Store = dyn_cast<StoreInst>(Inst)) {
+      copyVectorStore(Store, ScalarMaps[0], VectorMap, ScalarMaps);
+      return;
+    }
+
+    if (const UnaryInstruction *Unary = dyn_cast<UnaryInstruction>(Inst)) {
+      copyVectorUnaryInst(Unary, ScalarMaps[0], VectorMap);
+      return;
+    }
+
+    if (const BinaryOperator *Binary = dyn_cast<BinaryOperator>(Inst)) {
+      copyVectorBinInst(Binary, ScalarMaps[0], VectorMap);
+      return;
+    }
+
+    llvm_unreachable("Cannot issue vector code for this instruction");
+  }
+
+  for (int VectorLane = 0; VectorLane < getVectorWidth(); VectorLane++)
+    copyInstScalar(Inst, ScalarMaps[VectorLane]);
+}
+
 void BlockGenerator::copyInstruction(const Instruction *Inst,
                                      ValueMapT &VectorMap,
                                      VectorValueMapT &ScalarMaps) {
@@ -668,32 +701,7 @@ void BlockGenerator::copyInstruction(const Instruction *Inst,
     return;
 
   if (isVectorBlock()) {
-    if (const LoadInst *Load = dyn_cast<LoadInst>(Inst)) {
-      generateVectorLoad(Load, VectorMap, ScalarMaps);
-      return;
-    }
-
-    if (hasVectorOperands(Inst, VectorMap)) {
-      if (const StoreInst *Store = dyn_cast<StoreInst>(Inst)) {
-        copyVectorStore(Store, ScalarMaps[0], VectorMap, ScalarMaps);
-        return;
-      }
-
-      if (const UnaryInstruction *Unary = dyn_cast<UnaryInstruction>(Inst)) {
-        copyVectorUnaryInst(Unary, ScalarMaps[0], VectorMap);
-        return;
-      }
-
-      if (const BinaryOperator *Binary = dyn_cast<BinaryOperator>(Inst)) {
-        copyVectorBinInst(Binary, ScalarMaps[0], VectorMap);
-        return;
-      }
-
-      llvm_unreachable("Cannot issue vector code for this instruction");
-    }
-
-    for (int VectorLane = 0; VectorLane < getVectorWidth(); VectorLane++)
-      copyInstScalar(Inst, ScalarMaps[VectorLane]);
+    copyVectorInstruction(Inst, VectorMap, ScalarMaps);
     return;
   }
 
