@@ -774,10 +774,6 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
   ParsedAttributes Attrs(AttrFactory);
   SourceLocation endLoc;
 
-  // Late parsed attributes must be attached to Decls by hand.  If there
-  // are no Decls, then this was not done properly.
-  assert(LA.Decls.size() > 0 && "No decls attached to late parsed attribute");
-
   if (LA.Decls.size() == 1) {
     Decl *D = LA.Decls[0];
 
@@ -802,10 +798,12 @@ void Parser::ParseLexedAttribute(LateParsedAttribute &LA,
     if (HasTemplateScope) {
       TempScope.Exit();
     }
-  } else {
+  } else if (LA.Decls.size() > 0) {
     // If there are multiple decls, then the decl cannot be within the
     // function scope.
     ParseGNUAttributeArgs(&LA.AttrName, LA.AttrNameLoc, Attrs, &endLoc);
+  } else {
+    Diag(Tok, diag::warn_attribute_no_decl) << LA.AttrName.getName();
   }
 
   for (unsigned i = 0, ni = LA.Decls.size(); i < ni; ++i) {
