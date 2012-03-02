@@ -1526,6 +1526,10 @@ void ThreadSafetyAnalyzer::runAnalysis(AnalysisDeclContext &AC) {
       if (*PI == 0 || !VisitedBlocks.alreadySet(*PI))
         continue;
 
+      // Ignore edges from blocks that can't return.
+      if ((*PI)->hasNoReturnElement())
+        continue;
+
       // If the previous block ended in a 'continue' or 'break' statement, then
       // a difference in locksets is probably due to a bug in that block, rather
       // than in some other predecessor. In that case, keep the other

@@ -2114,3 +2114,20 @@ class Foo {
 
 }  // end namespace InvalidNonStatic
 
+
+namespace NoReturnTest {
+
+bool condition();
+void fatal() __attribute__((noreturn));
+
+Mutex mu_;
+
+void test1() {
+  MutexLock lock(&mu_);
+  if (condition()) {
+    fatal();
+    return;
+  }
+}
+
+};
