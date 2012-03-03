@@ -11,16 +11,12 @@ class PythonSynthDataFormatterTestCase(TestBase):
 
     mydir = os.path.join("functionalities", "data-formatter", "data-formatter-python-synth")
 
-    # rdar://problem/10887661
-    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     def test_with_dsym_and_run_command(self):
         """Test data formatter commands."""
         self.buildDsym()
         self.data_formatter_commands()
 
-    # rdar://problem/10887661
-    @unittest2.expectedFailure
     def test_with_dwarf_and_run_command(self):
         """Test data formatter commands."""
         self.buildDwarf()
@@ -55,7 +51,6 @@ class PythonSynthDataFormatterTestCase(TestBase):
             self.runCmd('type summary clear', check=False)
             self.runCmd('type filter clear', check=False)
             self.runCmd('type synth clear', check=False)
-            self.runCmd("settings set target.max-children-count 256", check=False)
 
         # Execute the cleanup function during test case tear down.
         self.addTearDownHook(cleanup)
@@ -92,12 +87,6 @@ class PythonSynthDataFormatterTestCase(TestBase):
         self.runCmd("type summary add --summary-string \"fake_a=${svar.fake_a}\" foo")
         self.expect('frame variable f00_1',
                     substrs = ['fake_a=16777216'])
-        #self.runCmd("type summary add --summary-string \"fake_a=${var.fake_a}\" foo")
-        #self.expect('frame variable f00_1',
-        #            substrs = ['fake_a=16777216'])
-        #self.runCmd("type summary add --summary-string \"fake_a=${var[1]}\" foo")
-        #self.expect('frame variable f00_1',
-        #            substrs = ['fake_a=16777216'])
         self.runCmd("type summary add --summary-string \"fake_a=${svar[1]}\" foo")
         self.expect('frame variable f00_1',
             substrs = ['fake_a=16777216'])
@@ -119,20 +108,6 @@ class PythonSynthDataFormatterTestCase(TestBase):
                     substrs = ['r = 33',
                                'fake_a = 16777217',
                                'a = 280']);
-        
-        # check that capping works for synthetic children as well
-        self.runCmd("settings set target.max-children-count 2", check=False)
-        
-        self.expect("frame variable f00_1",
-                    substrs = ['...',
-                               'fake_a = 16777217',
-                               'a = 280']);
-        
-        self.expect("frame variable f00_1", matching=False,
-                    substrs = ['r = 33']);
-
-        
-        self.runCmd("settings set target.max-children-count 256", check=False)
 
         # check that expanding a pointer does the right thing
         self.expect("frame variable -P 1 f00_ptr",
