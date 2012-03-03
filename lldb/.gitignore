@@ -1,6 +1,5 @@
 *.pyc
 build/
-llvm/
 llvm-build/
 *xcuserdata
 test/20*
