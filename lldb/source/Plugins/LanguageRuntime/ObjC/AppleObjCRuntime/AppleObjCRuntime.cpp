@@ -288,6 +288,20 @@ AppleObjCRuntime::GetObjCVersion (Process *process, ModuleSP &objc_module_sp)
 }
 
 void
+AppleObjCRuntime::SetExceptionBreakpoints ()
+{
+    const bool catch_bp = false;
+    const bool throw_bp = true;
+    const bool is_internal = true;
+    
+    if (!m_objc_exception_bp_sp)
+        m_objc_exception_bp_sp = CreateExceptionBreakpoint (catch_bp, throw_bp, is_internal);
+    else
+        m_objc_exception_bp_sp->SetEnabled(true);
+}
+
+
+void
 AppleObjCRuntime::ClearExceptionBreakpoints ()
 {
     if (!m_process)
@@ -317,20 +331,18 @@ AppleObjCRuntime::ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason)
     
     uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
     
-    bool        check_objc_exception = false;
     break_id_t  objc_exception_bid;
     
-    if (m_objc_exception_bp_sp)
-    {
-        check_objc_exception = true;
-        objc_exception_bid = m_objc_exception_bp_sp->GetID();
-    }
+    if (!m_objc_exception_bp_sp)
+        return false;
+
+    objc_exception_bid = m_objc_exception_bp_sp->GetID();
     
     for (uint32_t i = 0; i < num_owners; i++)
     {
         break_id_t bid = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().GetID();
         
-        if ((check_objc_exception && (bid == objc_exception_bid)))
+        if (bid == objc_exception_bid)
             return true;
     }
     

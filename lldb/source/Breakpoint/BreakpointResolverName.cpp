@@ -31,23 +31,41 @@ BreakpointResolverName::BreakpointResolverName
     bool skip_prologue
 ) :
     BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
-    m_func_name (func_name),
     m_func_name_type_mask (func_name_type_mask),
     m_class_name (),
     m_regex (),
     m_match_type (type),
     m_skip_prologue (skip_prologue)
 {
-
+    
     if (m_match_type == Breakpoint::Regexp)
     {
-        if (!m_regex.Compile (m_func_name.AsCString()))
+        if (!m_regex.Compile (func_name))
         {
             LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_BREAKPOINTS));
 
             if (log)
-                log->Warning ("function name regexp: \"%s\" did not compile.", m_func_name.AsCString());
+                log->Warning ("function name regexp: \"%s\" did not compile.", func_name);
         }
+    }
+    else
+    {
+        m_func_names.push_back(ConstString(func_name));
+    }
+}
+
+BreakpointResolverName::BreakpointResolverName (Breakpoint *bkpt,
+                                                const char *names[],
+                                                size_t num_names,
+                                                uint32_t name_type_mask,
+                                                bool skip_prologue) :
+    BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
+    m_func_name_type_mask (name_type_mask),
+    m_skip_prologue (skip_prologue)
+{
+    for (size_t i = 0; i < num_names; i++)
+    {
+        m_func_names.push_back (ConstString (names[i]));
     }
 }
 
@@ -58,7 +76,6 @@ BreakpointResolverName::BreakpointResolverName
     bool skip_prologue
 ) :
     BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
-    m_func_name (NULL),
     m_class_name (NULL),
     m_regex (func_regex),
     m_match_type (Breakpoint::Regexp),
@@ -75,13 +92,12 @@ BreakpointResolverName::BreakpointResolverName
     bool skip_prologue
 ) :
     BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
-    m_func_name (method),
     m_class_name (class_name),
     m_regex (),
     m_match_type (type),
     m_skip_prologue (skip_prologue)
 {
-
+    m_func_names.push_back(ConstString(method));
 }
 
 BreakpointResolverName::~BreakpointResolverName ()
@@ -121,7 +137,7 @@ BreakpointResolverName::SearchCallback
     
     const bool include_symbols = false;
     const bool include_inlines = true;
-    const bool append = false;
+    const bool append = true;
     bool filter_by_cu = (filter.GetFilterRequiredItems() & eSymbolContextCompUnit) != 0;
 
     switch (m_match_type)
@@ -129,20 +145,24 @@ BreakpointResolverName::SearchCallback
         case Breakpoint::Exact:
             if (context.module_sp)
             {
-                uint32_t num_functions = context.module_sp->FindFunctions (m_func_name, 
-                                                                           NULL,
-                                                                           m_func_name_type_mask, 
-                                                                           include_symbols,
-                                                                           include_inlines, 
-                                                                           append, 
-                                                                           func_list);
-                // If the search filter specifies a Compilation Unit, then we don't need to bother to look in plain
-                // symbols, since all the ones from a set compilation unit will have been found above already.
-                
-                if (num_functions == 0 && !filter_by_cu)
+                size_t num_names = m_func_names.size();
+                for (int i = 0; i < num_names; i++)
                 {
-                    if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeAuto))
-                        context.module_sp->FindSymbolsWithNameAndType (m_func_name, eSymbolTypeCode, sym_list);
+                    uint32_t num_functions = context.module_sp->FindFunctions (m_func_names[i], 
+                                                                               NULL,
+                                                                               m_func_name_type_mask, 
+                                                                               include_symbols,
+                                                                               include_inlines, 
+                                                                               append, 
+                                                                               func_list);
+                    // If the search filter specifies a Compilation Unit, then we don't need to bother to look in plain
+                    // symbols, since all the ones from a set compilation unit will have been found above already.
+                    
+                    if (num_functions == 0 && !filter_by_cu)
+                    {
+                        if (m_func_name_type_mask & (eFunctionNameTypeBase | eFunctionNameTypeFull | eFunctionNameTypeAuto))
+                            context.module_sp->FindSymbolsWithNameAndType (m_func_names[i], eSymbolTypeCode, sym_list);
+                    }
                 }
             }
             break;
@@ -299,7 +319,20 @@ BreakpointResolverName::GetDescription (Stream *s)
     if (m_match_type == Breakpoint::Regexp)
         s->Printf("regex = '%s'", m_regex.GetText());
     else
-        s->Printf("name = '%s'", m_func_name.AsCString());
+    {
+        size_t num_names = m_func_names.size();
+        if (num_names == 1)
+            s->Printf("name = '%s'", m_func_names[0].AsCString());
+        else
+        {
+            s->Printf("names = {");
+            for (size_t i = 0; i < num_names - 1; i++)
+            {
+                s->Printf ("'%s', ", m_func_names[i].AsCString());
+            }
+            s->Printf ("'%s'}", m_func_names[num_names - 1].AsCString());
+        }
+    }
 }
 
 void

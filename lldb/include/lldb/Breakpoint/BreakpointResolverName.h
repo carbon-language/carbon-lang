@@ -35,6 +35,13 @@ public:
                             Breakpoint::MatchType type,
                             bool skip_prologue);
 
+    // This one takes an array of names.  It is always MatchType = Name.
+    BreakpointResolverName (Breakpoint *bkpt,
+                            const char *names[],
+                            size_t num_names,
+                            uint32_t name_type_mask,
+                            bool skip_prologue);
+
     // Creates a function breakpoint by regular expression.  Takes over control of the lifespan of func_regex.
     BreakpointResolverName (Breakpoint *bkpt,
                             RegularExpression &func_regex,
@@ -71,7 +78,7 @@ public:
     }
 
 protected:
-    ConstString m_func_name;
+    std::vector<ConstString> m_func_names;
     uint32_t m_func_name_type_mask;  // See FunctionNameType
     ConstString m_class_name;  // FIXME: Not used yet.  The idea would be to stop on methods of this class.
     RegularExpression m_regex;

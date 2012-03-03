@@ -15,6 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-private.h"
+#include "lldb/Breakpoint/BreakpointResolver.h"
 #include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/CPPLanguageRuntime.h"
 #include "lldb/Core/Value.h"
@@ -73,11 +74,13 @@ namespace lldb_private {
         ExceptionBreakpointsExplainStop (lldb::StopInfoSP stop_reason);
         
     protected:
+        virtual lldb::BreakpointSP
+        CreateExceptionBreakpoint (bool catch_bp, bool throw_bp, bool is_internal = false);
+
     private:
         ItaniumABILanguageRuntime(Process *process) : lldb_private::CPPLanguageRuntime(process) { } // Call CreateInstance instead.
         
         lldb::BreakpointSP                              m_cxx_exception_bp_sp;
-        lldb::BreakpointSP                              m_cxx_exception_alloc_bp_sp;
     };
     
 } // namespace lldb_private

@@ -209,7 +209,7 @@ ItaniumABILanguageRuntime::IsVTableName (const char *name)
 //------------------------------------------------------------------
 // Static Functions
 //------------------------------------------------------------------
-lldb_private::LanguageRuntime *
+LanguageRuntime *
 ItaniumABILanguageRuntime::CreateInstance (Process *process, lldb::LanguageType language)
 {
     // FIXME: We have to check the process and make sure we actually know that this process supports
@@ -255,29 +255,56 @@ ItaniumABILanguageRuntime::GetPluginVersion()
     return 1;
 }
 
+static const char *exception_names[] = {"__cxa_throw", "__cxa_allocate", "__cxa_rethrow", "__cxa_catch"};
+static const int num_throw_names = 3;
+
+BreakpointSP
+ItaniumABILanguageRuntime::CreateExceptionBreakpoint (bool catch_bp, bool throw_bp, bool is_internal)
+{
+    BreakpointSP exc_breakpt_sp;
+    if (catch_bp && throw_bp)
+        exc_breakpt_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                  NULL,
+                                                                  exception_names,
+                                                                  sizeof (exception_names)/sizeof (char *),
+                                                                  eFunctionNameTypeBase, 
+                                                                  is_internal, 
+                                                                  eLazyBoolNo);
+    else if (throw_bp)
+        exc_breakpt_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                  NULL,
+                                                                  exception_names,
+                                                                  num_throw_names,
+                                                                  eFunctionNameTypeBase, 
+                                                                  is_internal, 
+                                                                  eLazyBoolNo);
+    else if (catch_bp)
+        exc_breakpt_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                  NULL,
+                                                                  exception_names + num_throw_names,
+                                                                  sizeof (exception_names)/sizeof (char *) - num_throw_names,
+                                                                  eFunctionNameTypeBase, 
+                                                                  is_internal, 
+                                                                  eLazyBoolNo);
+
+    return exc_breakpt_sp;
+}
+
 void
 ItaniumABILanguageRuntime::SetExceptionBreakpoints ()
 {
     if (!m_process)
         return;
     
+    const bool catch_bp = false;
+    const bool throw_bp = true;
+    const bool is_internal = true;
+    
     if (!m_cxx_exception_bp_sp)
-        m_cxx_exception_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
-                                                                         NULL,
-                                                                         "__cxa_throw",
-                                                                         eFunctionNameTypeBase, 
-                                                                         true);
+        m_cxx_exception_bp_sp = CreateExceptionBreakpoint (catch_bp, throw_bp, is_internal);
     else
         m_cxx_exception_bp_sp->SetEnabled (true);
     
-    if (!m_cxx_exception_alloc_bp_sp)
-        m_cxx_exception_alloc_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
-                                                                               NULL,
-                                                                               "__cxa_allocate",
-                                                                               eFunctionNameTypeBase,
-                                                                               true);
-    else
-        m_cxx_exception_alloc_bp_sp->SetEnabled (true);
 }
 
 void
@@ -289,12 +316,7 @@ ItaniumABILanguageRuntime::ClearExceptionBreakpoints ()
     if (m_cxx_exception_bp_sp.get())
     {
         m_cxx_exception_bp_sp->SetEnabled (false);
-    }
-    
-    if (m_cxx_exception_alloc_bp_sp.get())
-    {
-        m_cxx_exception_bp_sp->SetEnabled (false);
-    }
+    }    
 }
 
 bool
@@ -315,30 +337,18 @@ ItaniumABILanguageRuntime::ExceptionBreakpointsExplainStop (lldb::StopInfoSP sto
     
     uint32_t num_owners = bp_site_sp->GetNumberOfOwners();
     
-    bool        check_cxx_exception = false;
     break_id_t  cxx_exception_bid;
     
-    bool        check_cxx_exception_alloc = false;
-    break_id_t  cxx_exception_alloc_bid;
-    
-    if (m_cxx_exception_bp_sp)
-    {
-        check_cxx_exception = true;
-        cxx_exception_bid = m_cxx_exception_bp_sp->GetID();
-    }
-    
-    if (m_cxx_exception_alloc_bp_sp)
-    {
-        check_cxx_exception_alloc = true;
-        cxx_exception_alloc_bid = m_cxx_exception_alloc_bp_sp->GetID();
-    }
-    
+    if (!m_cxx_exception_bp_sp)
+        return false;
+        
+    cxx_exception_bid = m_cxx_exception_bp_sp->GetID();
+        
     for (uint32_t i = 0; i < num_owners; i++)
     {
         break_id_t bid = bp_site_sp->GetOwnerAtIndex(i)->GetBreakpoint().GetID();
         
-        if ((check_cxx_exception        && (bid == cxx_exception_bid)) ||
-            (check_cxx_exception_alloc  && (bid == cxx_exception_alloc_bid)))
+        if (bid == cxx_exception_bid)
             return true;
     }
     

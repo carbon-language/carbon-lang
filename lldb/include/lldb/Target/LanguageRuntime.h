@@ -15,6 +15,7 @@
 // Other libraries and framework includes
 // Project includes
 #include "lldb/lldb-public.h"
+#include "lldb/Breakpoint/BreakpointResolver.h"
 #include "lldb/Core/PluginInterface.h"
 #include "lldb/lldb-private.h"
 #include "lldb/Core/ValueObject.h"
@@ -68,10 +69,18 @@ public:
     {
         return false;
     }
+    
 protected:
     //------------------------------------------------------------------
     // Classes that inherit from LanguageRuntime can see and modify these
     //------------------------------------------------------------------
+    
+    // The Target is the one that knows how to create breakpoints, so this function is meant to be used either
+    // by the target or internally in Set/ClearExceptionBreakpoints.
+    
+    virtual lldb::BreakpointSP
+    CreateExceptionBreakpoint (bool catch_bp, bool throw_bp, bool is_internal = false) = 0;
+        
     LanguageRuntime(Process *process);
     Process *m_process;
 private:

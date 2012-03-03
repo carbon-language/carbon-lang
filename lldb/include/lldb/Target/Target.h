@@ -468,6 +468,19 @@ public:
                       uint32_t func_name_type_mask, 
                       bool internal = false,
                       LazyBool skip_prologue = eLazyBoolCalculate);
+    
+    // This is the same as the func_name breakpoint except that you can specify a vector of names.  This is cheaper
+    // than a regular expression breakpoint in the case where you just want to set a breakpoint on a set of names
+    // you already know.
+    lldb::BreakpointSP
+    CreateBreakpoint (const FileSpecList *containingModules,
+                      const FileSpecList *containingSourceFiles,
+                      const char *func_names[],
+                      size_t num_names, 
+                      uint32_t func_name_type_mask, 
+                      bool internal = false,
+                      LazyBool skip_prologue = eLazyBoolCalculate);
+
 
     // Use this to create a general breakpoint:
     lldb::BreakpointSP

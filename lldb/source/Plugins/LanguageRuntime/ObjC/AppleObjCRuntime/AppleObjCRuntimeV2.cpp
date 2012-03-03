@@ -444,22 +444,22 @@ AppleObjCRuntimeV2::GetPluginVersion()
     return 1;
 }
 
-void
-AppleObjCRuntimeV2::SetExceptionBreakpoints ()
+BreakpointSP
+AppleObjCRuntimeV2::CreateExceptionBreakpoint (bool catch_bp, bool throw_bp, bool is_internal)
 {
+    BreakpointSP exc_breakpt_sp;
     if (!m_process)
-        return;
-        
-    if (!m_objc_exception_bp_sp)
-    {
-        m_objc_exception_bp_sp = m_process->GetTarget().CreateBreakpoint (NULL,
-                                                                          NULL,
-                                                                          "__cxa_throw",
-                                                                          eFunctionNameTypeBase, 
-                                                                          true);
-    }
-    else
-        m_objc_exception_bp_sp->SetEnabled (true);
+        return exc_breakpt_sp;
+    
+    
+    // FIXME: Only do throw for now...
+    if (throw_bp)
+        exc_breakpt_sp = m_process->GetTarget().CreateBreakpoint (NULL,
+                                                                  NULL,
+                                                                  "objc_exception_throw",
+                                                                  eFunctionNameTypeBase, 
+                                                                  is_internal);
+    return exc_breakpt_sp;
 }
 
 ClangUtilityFunction *

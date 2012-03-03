@@ -60,9 +60,6 @@ public:
     virtual uint32_t
     GetPluginVersion();
     
-    virtual void
-    SetExceptionBreakpoints ();
-    
     virtual ObjCRuntimeVersions
     GetRuntimeVersion ()
     {
@@ -94,7 +91,9 @@ public:
     }
 
 protected:
-    
+    virtual lldb::BreakpointSP
+    CreateExceptionBreakpoint (bool catch_bp, bool throw_bp, bool is_internal = false);
+            
 private:
     AppleObjCRuntimeV1(Process *process) : 
         lldb_private::AppleObjCRuntime (process)

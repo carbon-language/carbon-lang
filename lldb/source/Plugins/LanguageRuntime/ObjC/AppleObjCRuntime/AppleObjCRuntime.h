@@ -104,6 +104,8 @@ protected:
     // PluginInterface protocol
     //------------------------------------------------------------------
 public:
+    virtual void
+    SetExceptionBreakpoints();
 
     virtual void
     ClearExceptionBreakpoints ();

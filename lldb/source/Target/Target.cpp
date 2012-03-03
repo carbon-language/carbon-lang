@@ -287,6 +287,29 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
     return bp_sp;
 }
 
+BreakpointSP
+Target::CreateBreakpoint (const FileSpecList *containingModules,
+                          const FileSpecList *containingSourceFiles,
+                          const char *func_names[],
+                          size_t num_names, 
+                          uint32_t func_name_type_mask, 
+                          bool internal,
+                          LazyBool skip_prologue)
+{
+    BreakpointSP bp_sp;
+    if (num_names > 0)
+    {
+        SearchFilterSP filter_sp(GetSearchFilterForModuleAndCUList (containingModules, containingSourceFiles));
+        
+        BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL, 
+                                                                      func_names,
+                                                                      num_names, 
+                                                                      func_name_type_mask, 
+                                                                      skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
+        bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal);
+    }
+    return bp_sp;
+}
 
 SearchFilterSP
 Target::GetSearchFilterForModule (const FileSpec *containingModule)
