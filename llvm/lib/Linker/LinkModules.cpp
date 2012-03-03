@@ -24,6 +24,7 @@
 #include "llvm/Support/Path.h"
 #include "llvm/Transforms/Utils/Cloning.h"
 #include "llvm/Transforms/Utils/ValueMapper.h"
+#include <cctype>
 using namespace llvm;
 
 //===----------------------------------------------------------------------===//
