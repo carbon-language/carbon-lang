@@ -273,9 +273,8 @@ struct hash_state {
   static hash_state create(const char *s, uint64_t seed) {
     hash_state state = {
       0, seed, hash_16_bytes(seed, k1), rotate(seed ^ k1, 49),
-      seed * k1, shift_mix(seed), hash_16_bytes(state.h4, state.h5),
-      seed
-    };
+      seed * k1, shift_mix(seed), 0, seed };
+    state.h6 = hash_16_bytes(state.h4, state.h5);
     state.mix(s);
     return state;
   }
