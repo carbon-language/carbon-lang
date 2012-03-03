@@ -113,7 +113,7 @@ void StackAddrEscapeChecker::EmitStackError(CheckerContext &C, const MemRegion *
 }
 
 void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
-                                        CheckerContext &C) const {
+                                          CheckerContext &C) const {
   
   const Expr *RetE = RS->getRetValue();
   if (!RetE)
@@ -122,18 +122,26 @@ void StackAddrEscapeChecker::checkPreStmt(const ReturnStmt *RS,
   SVal V = C.getState()->getSVal(RetE, C.getLocationContext());
   const MemRegion *R = V.getAsRegion();
 
-  if (!R || !R->hasStackStorage())
-    return;  
-  
-  if (R->hasStackStorage()) {
-    // Automatic reference counting automatically copies blocks.
-    if (C.getASTContext().getLangOptions().ObjCAutoRefCount &&
-        isa<BlockDataRegion>(R))
-      return;
-
-    EmitStackError(C, R, RetE);
+  if (!R)
     return;
-  }
+  
+  const StackSpaceRegion *SS =
+    dyn_cast_or_null<StackSpaceRegion>(R->getMemorySpace());
+    
+  if (!SS)
+    return;
+
+  // Return stack memory in an ancestor stack frame is fine.
+  const StackFrameContext *SFC = SS->getStackFrame();
+  if (SFC != C.getLocationContext()->getCurrentStackFrame())
+    return;
+
+  // Automatic reference counting automatically copies blocks.
+  if (C.getASTContext().getLangOptions().ObjCAutoRefCount &&
+      isa<BlockDataRegion>(R))
+    return;
+
+  EmitStackError(C, R, RetE);
 }
 
 void StackAddrEscapeChecker::checkEndPath(CheckerContext &Ctx) const {

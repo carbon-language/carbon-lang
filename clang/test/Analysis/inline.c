@@ -58,3 +58,22 @@ void test_factorial_2() {
     *p = 0xDEADBEEF; // no-warning
   }
 }
+
+// Test that returning stack memory from a parent stack frame does
+// not trigger a warning.
+static char *return_buf(char *buf) {
+  return buf + 10;
+}
+
+void test_return_stack_memory_ok() {
+  char stack_buf[100];
+  char *pos = return_buf(stack_buf);
+  (void) pos;
+}
+
+char *test_return_stack_memory_bad() {
+  char stack_buf[100];
+  char *x = stack_buf;
+  return x; // expected-warning {{stack memory associated}}
+}
+
