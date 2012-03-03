@@ -3376,26 +3376,13 @@ ASTContext::getCanonicalNestedNameSpecifier(NestedNameSpecifier *NNS) const {
     // types, e.g.,
     //   typedef typename T::type T1;
     //   typedef typename T1::type T2;
-    if (const DependentNameType *DNT = T->getAs<DependentNameType>()) {
-      NestedNameSpecifier *Prefix
-        = getCanonicalNestedNameSpecifier(DNT->getQualifier());
-      return NestedNameSpecifier::Create(*this, Prefix, 
+    if (const DependentNameType *DNT = T->getAs<DependentNameType>())
+      return NestedNameSpecifier::Create(*this, DNT->getQualifier(), 
                            const_cast<IdentifierInfo *>(DNT->getIdentifier()));
-    }    
 
-    // Do the same thing as above, but with dependent-named specializations.
-    if (const DependentTemplateSpecializationType *DTST
-          = T->getAs<DependentTemplateSpecializationType>()) {
-      NestedNameSpecifier *Prefix
-        = getCanonicalNestedNameSpecifier(DTST->getQualifier());
-      
-      T = getDependentTemplateSpecializationType(DTST->getKeyword(),
-                                                 Prefix, DTST->getIdentifier(),
-                                                 DTST->getNumArgs(),
-                                                 DTST->getArgs());
-      T = getCanonicalType(T);
-    }
-    
+    // Otherwise, just canonicalize the type, and force it to be a TypeSpec.
+    // FIXME: Why are TypeSpec and TypeSpecWithTemplate distinct in the
+    // first place?
     return NestedNameSpecifier::Create(*this, 0, false,
                                        const_cast<Type*>(T.getTypePtr()));
   }
