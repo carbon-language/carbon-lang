@@ -266,7 +266,7 @@ void MCObjectStreamer::EmitGPRel32Value(const MCExpr *Value) {
 
 void MCObjectStreamer::FinishImpl() {
   // Dump out the dwarf file & directory tables and line tables.
-  const MCSymbol *LineSectionSymbol;
+  const MCSymbol *LineSectionSymbol = NULL;
   if (getContext().hasDwarfFiles())
     LineSectionSymbol = MCDwarfFileTable::Emit(this);
 

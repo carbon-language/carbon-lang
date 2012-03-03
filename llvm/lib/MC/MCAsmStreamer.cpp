@@ -1311,7 +1311,7 @@ void MCAsmStreamer::EmitRawText(StringRef String) {
 void MCAsmStreamer::FinishImpl() {
   // FIXME: This header is duplicated with MCObjectStreamer
   // Dump out the dwarf file & directory tables and line tables.
-  const MCSymbol *LineSectionSymbol;
+  const MCSymbol *LineSectionSymbol = NULL;
   if (getContext().hasDwarfFiles() && !UseLoc)
     LineSectionSymbol = MCDwarfFileTable::Emit(this);
 
