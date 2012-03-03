@@ -4,6 +4,9 @@ struct NonTrivial {
   NonTrivial(const NonTrivial&);
 };
 
+// A defaulted copy constructor for a class X is defined as deleted if X has:
+
+// -- a variant member with a non-trivial corresponding constructor
 union DeletedNTVariant { // expected-note{{here}}
   NonTrivial NT;
   DeletedNTVariant();
@@ -20,6 +23,9 @@ struct DeletedNTVariant2 { // expected-note{{here}}
 DeletedNTVariant2 DV2a;
 DeletedNTVariant2 DV2b(DV2a); // expected-error{{call to implicitly-deleted copy constructor}}
 
+// -- a non-static data member of class type M (or array thereof) that cannot be
+//    copied because overload resolution results in an ambiguity or a function
+//    that is deleted or inaccessible
 struct NoAccess {
   NoAccess() = default;
 private:
@@ -63,6 +69,25 @@ struct Deleted { // expected-note{{here}}
 Deleted Da;
 Deleted Db(Da); // expected-error{{call to implicitly-deleted copy constructor}}
 
+// -- a direct or virtual base class B that cannot be copied because overload
+//    resolution results in an ambiguity or a function that is deleted or
+//    inaccessible
+struct AmbiguousCopyBase : Ambiguity { // expected-note {{here}}
+  NonConst NC;
+};
+extern AmbiguousCopyBase ACBa;
+AmbiguousCopyBase ACBb(ACBa); // expected-error {{deleted copy constructor}}
+
+struct DeletedCopyBase : AmbiguousCopyBase {}; // expected-note {{here}}
+extern DeletedCopyBase DCBa;
+DeletedCopyBase DCBb(DCBa); // expected-error {{deleted copy constructor}}
+
+struct InaccessibleCopyBase : NoAccess {}; // expected-note {{here}}
+extern InaccessibleCopyBase ICBa;
+InaccessibleCopyBase ICBb(ICBa); // expected-error {{deleted copy constructor}}
+
+// -- any direct or virtual base class or non-static data member of a type with
+//    a destructor that is deleted or inaccessible
 struct NoAccessDtor {
 private:
   ~NoAccessDtor();
@@ -83,6 +108,12 @@ struct HasAccessDtor {
 HasAccessDtor HADa;
 HasAccessDtor HADb(HADa);
 
+struct HasNoAccessDtorBase : NoAccessDtor { // expected-note{{here}}
+};
+extern HasNoAccessDtorBase HNADBa;
+HasNoAccessDtorBase HNADBb(HNADBa); // expected-error{{implicitly-deleted copy constructor}}
+
+// -- a non-static data member of rvalue reference type
 struct RValue { // expected-note{{here}}
   int && ri = 1;
 };

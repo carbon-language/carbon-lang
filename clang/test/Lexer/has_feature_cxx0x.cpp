@@ -235,3 +235,12 @@ int no_generalized_initializers();
 
 // CHECK-0X: has_generalized_initializers
 // CHECK-NO-0X: no_generalized_initializers
+
+#if __has_feature(cxx_unrestricted_unions)
+int has_unrestricted_unions();
+#else
+int no_unrestricted_unions();
+#endif
+
+// CHECK-0X: has_unrestricted_unions
+// CHECK-NO-0X: no_unrestricted_unions
