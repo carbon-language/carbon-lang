@@ -21,9 +21,27 @@
 
 namespace clang {
 
+/// Bitfields of LangOptions, split out from LangOptions in order to ensure that
+/// this large collection of bitfields is a trivial class type.
+class LangOptionsBase {
+public:
+  // Define simple language options (with no accessors).
+#define LANGOPT(Name, Bits, Default, Description) unsigned Name : Bits;
+#define ENUM_LANGOPT(Name, Type, Bits, Default, Description)
+#include "clang/Basic/LangOptions.def"
+
+protected:
+  // Define language options of enumeration type. These are private, and will
+  // have accessors (below).
+#define LANGOPT(Name, Bits, Default, Description)
+#define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
+  unsigned Name : Bits;
+#include "clang/Basic/LangOptions.def"
+};
+
 /// LangOptions - This class keeps track of the various options that can be
 /// enabled, which controls the dialect of C that is accepted.
-class LangOptions : public RefCountedBase<LangOptions> {
+class LangOptions : public RefCountedBase<LangOptions>, public LangOptionsBase {
 public:
   typedef clang::Visibility Visibility;
   
@@ -36,19 +54,6 @@ public:
     SOB_Trapping    // -ftrapv
   };
 
-  // Define simple language options (with no accessors).
-#define LANGOPT(Name, Bits, Default, Description) unsigned Name : Bits;
-#define ENUM_LANGOPT(Name, Type, Bits, Default, Description)
-#include "clang/Basic/LangOptions.def"
-  
-private:
-  // Define language options of enumeration type. These are private, and will
-  // have accessors (below).
-#define LANGOPT(Name, Bits, Default, Description) 
-#define ENUM_LANGOPT(Name, Type, Bits, Default, Description) \
-  unsigned Name : Bits;
-#include "clang/Basic/LangOptions.def"
-  
 public:
   std::string ObjCConstantStringClass;
   
