@@ -572,6 +572,10 @@ public:
   /// Create the default output file (from the invocation's options) and add it
   /// to the list of tracked output files.
   ///
+  /// The files created by this function always use temporary files to write to
+  /// their result (that is, the data is written to a temporary file which will
+  /// atomically replace the target output on success).
+  ///
   /// \return - Null on error.
   llvm::raw_fd_ostream *
   createDefaultOutputFile(bool Binary = true, StringRef BaseInput = "",

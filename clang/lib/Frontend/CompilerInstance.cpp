@@ -470,7 +470,8 @@ CompilerInstance::createDefaultOutputFile(bool Binary,
                                           StringRef InFile,
                                           StringRef Extension) {
   return createOutputFile(getFrontendOpts().OutputFile, Binary,
-                          /*RemoveFileOnSignal=*/true, InFile, Extension);
+                          /*RemoveFileOnSignal=*/true, InFile, Extension,
+                          /*UseTemporary=*/true);
 }
 
 llvm::raw_fd_ostream *
