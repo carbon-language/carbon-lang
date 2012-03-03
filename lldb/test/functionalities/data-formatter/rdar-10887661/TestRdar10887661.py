@@ -75,8 +75,8 @@ class Rdar10887661TestCase(TestBase):
         
         self.expect("frame variable f00_1",
                     substrs = ['...',
-                               'fake_a = 16777217',
-                               'a = 280']);
+                               'fake_a = 16777216',
+                               'a = 0']);
         
         self.expect("frame variable f00_1", matching=False,
                     substrs = ['r = 33']);
