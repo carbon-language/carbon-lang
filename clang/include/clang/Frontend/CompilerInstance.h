@@ -586,7 +586,8 @@ public:
                    bool Binary = true, bool RemoveFileOnSignal = true,
                    StringRef BaseInput = "",
                    StringRef Extension = "",
-                   bool UseTemporary = false);
+                   bool UseTemporary = false,
+                   bool CreateMissingDirectories = false);
 
   /// Create a new output file, optionally deriving the output path name.
   ///
@@ -606,7 +607,9 @@ public:
   /// llvm::sys::RemoveFileOnSignal. Note that this is not safe for
   /// multithreaded use, as the underlying signal mechanism is not reentrant
   /// \param UseTemporary - Create a new temporary file that must be renamed to
-  ///         OutputPath in the end
+  /// OutputPath in the end.
+  /// \param CreateMissingDirectories - When \arg UseTemporary is true, create
+  /// missing directories in the output path.
   /// \param ResultPathName [out] - If given, the result path name will be
   /// stored here on success.
   /// \param TempPathName [out] - If given, the temporary file path name
@@ -617,6 +620,7 @@ public:
                    StringRef BaseInput = "",
                    StringRef Extension = "",
                    bool UseTemporary = false,
+                   bool CreateMissingDirectories = false,
                    std::string *ResultPathName = 0,
                    std::string *TempPathName = 0);
 

@@ -340,7 +340,8 @@ bool GenerateModuleAction::ComputeASTConsumerArguments(CompilerInstance &CI,
   // We use a temporary to avoid race conditions.
   OS = CI.createOutputFile(CI.getFrontendOpts().OutputFile, /*Binary=*/true,
                            /*RemoveFileOnSignal=*/false, InFile,
-                           /*Extension=*/"", /*useTemporary=*/true);
+                           /*Extension=*/"", /*useTemporary=*/true,
+                           /*CreateMissingDirectories=*/true);
   if (!OS)
     return true;
   

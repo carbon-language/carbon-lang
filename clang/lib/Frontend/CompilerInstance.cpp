@@ -478,12 +478,14 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
                                    bool Binary, bool RemoveFileOnSignal,
                                    StringRef InFile,
                                    StringRef Extension,
-                                   bool UseTemporary) {
+                                   bool UseTemporary,
+                                   bool CreateMissingDirectories) {
   std::string Error, OutputPathName, TempPathName;
   llvm::raw_fd_ostream *OS = createOutputFile(OutputPath, Error, Binary,
                                               RemoveFileOnSignal,
                                               InFile, Extension,
                                               UseTemporary,
+                                              CreateMissingDirectories,
                                               &OutputPathName,
                                               &TempPathName);
   if (!OS) {
@@ -508,8 +510,12 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
                                    StringRef InFile,
                                    StringRef Extension,
                                    bool UseTemporary,
+                                   bool CreateMissingDirectories,
                                    std::string *ResultPathName,
                                    std::string *TempPathName) {
+  assert((!CreateMissingDirectories || UseTemporary) &&
+         "CreateMissingDirectories is only allowed when using temporary files");
+
   std::string OutFile, TempFile;
   if (!OutputPath.empty()) {
     OutFile = OutputPath;
@@ -528,12 +534,20 @@ CompilerInstance::createOutputFile(StringRef OutputPath,
   std::string OSFile;
 
   if (UseTemporary && OutFile != "-") {
-    llvm::sys::Path OutPath(OutFile);
-    // Only create the temporary if we can actually write to OutPath, otherwise
-    // we want to fail early.
+    // Only create the temporary if the parent directory exists (or create
+    // missing directories is true) and we can actually write to OutPath,
+    // otherwise we want to fail early.
+    SmallString<256> AbsPath(OutputPath);
+    llvm::sys::fs::make_absolute(AbsPath);
+    llvm::sys::Path OutPath(AbsPath);
+    bool ParentExists = false;
+    if (llvm::sys::fs::exists(llvm::sys::path::parent_path(AbsPath.str()),
+                              ParentExists))
+      ParentExists = false;
     bool Exists;
-    if ((llvm::sys::fs::exists(OutPath.str(), Exists) || !Exists) ||
-        (OutPath.isRegularFile() && OutPath.canWrite())) {
+    if ((CreateMissingDirectories || ParentExists) &&
+        ((llvm::sys::fs::exists(AbsPath.str(), Exists) || !Exists) ||
+         (OutPath.isRegularFile() && OutPath.canWrite()))) {
       // Create a temporary file.
       SmallString<128> TempPath;
       TempPath = OutFile;
