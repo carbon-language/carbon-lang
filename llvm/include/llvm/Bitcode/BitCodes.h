@@ -155,11 +155,13 @@ public:
 
 };
 
+template <> struct isPodLike<BitCodeAbbrevOp> { static const bool value=true; };
+
 /// BitCodeAbbrev - This class represents an abbreviation record.  An
 /// abbreviation allows a complex record that has redundancy to be stored in a
 /// specialized format instead of the fully-general, fully-vbr, format.
 class BitCodeAbbrev {
-  SmallVector<BitCodeAbbrevOp, 8> OperandList;
+  SmallVector<BitCodeAbbrevOp, 32> OperandList;
   unsigned char RefCount; // Number of things using this.
   ~BitCodeAbbrev() {}
 public:
