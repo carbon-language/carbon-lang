@@ -30,6 +30,15 @@ void PrintTo(const hash_code &code, std::ostream *os) {
 // objects.
 struct LargeTestInteger { uint64_t arr[8]; };
 
+struct NonPOD {
+  uint64_t x, y;
+  NonPOD(uint64_t x, uint64_t y) : x(x), y(y) {}
+  ~NonPOD() {}
+  friend hash_code hash_value(const NonPOD &obj) {
+    return hash_combine(obj.x, obj.y);
+  }
+};
+
 namespace hashing {
 namespace detail {
 template <> struct is_hashable_data<LargeTestInteger> : true_type {};
@@ -42,15 +51,6 @@ using namespace llvm;
 
 namespace {
 
-struct NonPOD {
-  uint64_t x, y;
-  NonPOD(uint64_t x, uint64_t y) : x(x), y(y) {}
-  ~NonPOD() {}
-  friend hash_code hash_value(const NonPOD &obj) {
-    return hash_combine(obj.x, obj.y);
-  }
-};
-
 
 TEST(HashingTest, HashValueBasicTest) {
   int x = 42, y = 43, c = 'x';
@@ -60,39 +60,39 @@ TEST(HashingTest, HashValueBasicTest) {
   volatile int vi = 71;
   const volatile int cvi = 71;
   uintptr_t addr = reinterpret_cast<uintptr_t>(&y);
-  EXPECT_EQ(llvm::hash_value(42), llvm::hash_value(x));
-  EXPECT_NE(llvm::hash_value(42), llvm::hash_value(y));
-  EXPECT_NE(llvm::hash_value(42), llvm::hash_value(p));
-  EXPECT_EQ(llvm::hash_value(71), llvm::hash_value(i));
-  EXPECT_EQ(llvm::hash_value(71), llvm::hash_value(ci));
-  EXPECT_EQ(llvm::hash_value(71), llvm::hash_value(vi));
-  EXPECT_EQ(llvm::hash_value(71), llvm::hash_value(cvi));
-  EXPECT_EQ(llvm::hash_value(c), llvm::hash_value('x'));
-  EXPECT_EQ(llvm::hash_value('4'), llvm::hash_value('0' + 4));
-  EXPECT_EQ(llvm::hash_value(addr), llvm::hash_value(&y));
+  EXPECT_EQ(hash_value(42), hash_value(x));
+  EXPECT_NE(hash_value(42), hash_value(y));
+  EXPECT_NE(hash_value(42), hash_value(p));
+  EXPECT_EQ(hash_value(71), hash_value(i));
+  EXPECT_EQ(hash_value(71), hash_value(ci));
+  EXPECT_EQ(hash_value(71), hash_value(vi));
+  EXPECT_EQ(hash_value(71), hash_value(cvi));
+  EXPECT_EQ(hash_value(c), hash_value('x'));
+  EXPECT_EQ(hash_value('4'), hash_value('0' + 4));
+  EXPECT_EQ(hash_value(addr), hash_value(&y));
 
-  EXPECT_EQ(llvm::hash_combine(42, 43), llvm::hash_value(std::make_pair(42, 43)));
-  EXPECT_NE(llvm::hash_combine(43, 42), llvm::hash_value(std::make_pair(42, 43)));
-  EXPECT_NE(llvm::hash_combine(42, 43), llvm::hash_value(std::make_pair(42ull, 43ull)));
-  EXPECT_NE(llvm::hash_combine(42, 43), llvm::hash_value(std::make_pair(42, 43ull)));
-  EXPECT_NE(llvm::hash_combine(42, 43), llvm::hash_value(std::make_pair(42ull, 43)));
+  EXPECT_EQ(hash_combine(42, 43), hash_value(std::make_pair(42, 43)));
+  EXPECT_NE(hash_combine(43, 42), hash_value(std::make_pair(42, 43)));
+  EXPECT_NE(hash_combine(42, 43), hash_value(std::make_pair(42ull, 43ull)));
+  EXPECT_NE(hash_combine(42, 43), hash_value(std::make_pair(42, 43ull)));
+  EXPECT_NE(hash_combine(42, 43), hash_value(std::make_pair(42ull, 43)));
 
   // Note that pairs are implicitly flattened to a direct sequence of data and
   // hashed efficiently as a consequence.
-  EXPECT_EQ(llvm::hash_combine(42, 43, 44),
-            llvm::hash_value(std::make_pair(42, std::make_pair(43, 44))));
-  EXPECT_EQ(llvm::hash_value(std::make_pair(42, std::make_pair(43, 44))),
-            llvm::hash_value(std::make_pair(std::make_pair(42, 43), 44)));
+  EXPECT_EQ(hash_combine(42, 43, 44),
+            hash_value(std::make_pair(42, std::make_pair(43, 44))));
+  EXPECT_EQ(hash_value(std::make_pair(42, std::make_pair(43, 44))),
+            hash_value(std::make_pair(std::make_pair(42, 43), 44)));
 
   // Ensure that pairs which have padding bytes *inside* them don't get treated
   // this way.
-  EXPECT_EQ(llvm::hash_combine('0', hash_combine(1ull, '2')),
-            llvm::hash_value(std::make_pair('0', std::make_pair(1ull, '2'))));
+  EXPECT_EQ(hash_combine('0', hash_combine(1ull, '2')),
+            hash_value(std::make_pair('0', std::make_pair(1ull, '2'))));
 
   // Ensure that non-POD pairs don't explode the traits used.
   NonPOD obj1(1, 2), obj2(3, 4), obj3(5, 6);
-  EXPECT_EQ(llvm::hash_combine(obj1, hash_combine(obj2, obj3)),
-            llvm::hash_value(std::make_pair(obj1, std::make_pair(obj2, obj3))));
+  EXPECT_EQ(hash_combine(obj1, hash_combine(obj2, obj3)),
+            hash_value(std::make_pair(obj1, std::make_pair(obj2, obj3))));
 }
 
 template <typename T, size_t N> T *begin(T (&arr)[N]) { return arr; }
