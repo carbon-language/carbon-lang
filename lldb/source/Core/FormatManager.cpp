@@ -885,6 +885,9 @@ FormatManager::LoadObjCFormatters()
 
     AddSummary(appkit_category_sp, "@\"${var.month%d}/${var.day%d}/${var.year%d} ${var.hour%d}:${var.minute%d}:${var.second}\"", ConstString("CFGregorianDate"), appkit_flags);
     
+    AddScriptSummary(appkit_category_sp, "CFBitVector.CFBitVector_SummaryProvider", ConstString("CFBitVectorRef"), appkit_flags);
+    AddScriptSummary(appkit_category_sp, "CFBitVector.CFBitVector_SummaryProvider", ConstString("CFMutableBitVectorRef"), appkit_flags);
+
     TypeCategoryImpl::SharedPointer vectors_category_sp = GetCategory(m_vectortypes_category_name);
 
     TypeSummaryImpl::Flags vector_flags;

@@ -134,12 +134,164 @@ public:
     SetDataFromDoubleArray (double* array, size_t array_len);
 
     %pythoncode %{
+        
+        class read_data_helper:
+            def __init__(self, sbdata, readerfunc, item_size):
+                self.sbdata = sbdata
+                self.readerfunc = readerfunc
+                self.item_size = item_size
+            def __getitem__(self,key):
+                if isinstance(key,slice):
+                    list = []
+                    for x in range(*key.indices(self.__len__())):
+                        list.append(self.__getitem__(x))
+                    return list
+                if not (isinstance(key,(int,long))):
+                    raise TypeError('must be int')
+                key = key * self.item_size # SBData uses byte-based indexes, but we want to use itemsize-based indexes here
+                error = SBError()
+                my_data = self.readerfunc(self.sbdata,error,key)
+                if error.Fail():
+                    raise IndexError(error.GetCString())
+                else:
+                    return my_data
+            def __len__(self):
+                return self.sbdata.GetByteSize()/self.item_size
+            def all(self):
+                return self[0:len(self)]
+        
+        def _make_helper(self, sbdata, getfunc, itemsize):
+            return self.read_data_helper(sbdata, getfunc, itemsize)
+            
+        def _make_helper_uint8(self):
+            return self._make_helper(self, SBData.GetUnsignedInt8, 1)
+
+        def _make_helper_uint16(self):
+            return self._make_helper(self, SBData.GetUnsignedInt16, 2)
+
+        def _make_helper_uint32(self):
+            return self._make_helper(self, SBData.GetUnsignedInt32, 4)
+
+        def _make_helper_uint64(self):
+            return self._make_helper(self, SBData.GetUnsignedInt64, 8)
+
+        def _make_helper_sint8(self):
+            return self._make_helper(self, SBData.GetSignedInt8, 1)
+
+        def _make_helper_sint16(self):
+            return self._make_helper(self, SBData.GetSignedInt16, 2)
+
+        def _make_helper_sint32(self):
+            return self._make_helper(self, SBData.GetSignedInt32, 4)
+
+        def _make_helper_sint64(self):
+            return self._make_helper(self, SBData.GetSignedInt64, 8)
+
+        def _make_helper_float(self):
+            return self._make_helper(self, SBData.GetFloat, 4)
+
+        def _make_helper_double(self):
+            return self._make_helper(self, SBData.GetDouble, 8)
+        
+        def _read_all_uint8(self):
+            return self._make_helper_uint8().all()
+
+        def _read_all_uint16(self):
+            return self._make_helper_uint16().all()
+            
+        def _read_all_uint32(self):
+            return self._make_helper_uint32().all()
+            
+        def _read_all_uint64(self):
+            return self._make_helper_uint64().all()
+            
+        def _read_all_sint8(self):
+            return self._make_helper_sint8().all()
+            
+        def _read_all_sint16(self):
+            return self._make_helper_sint16().all()
+            
+        def _read_all_sint32(self):
+            return self._make_helper_sint32().all()
+            
+        def _read_all_sint64(self):
+            return self._make_helper_sint64().all()
+            
+        def _read_all_float(self):
+            return self._make_helper_float().all()
+            
+        def _read_all_double(self):
+            return self._make_helper_double().all()
+
+        __swig_getmethods__["uint8"] = _make_helper_uint8
+        if _newclass: uint8 = property(_make_helper_uint8, None, doc='Returns an array-like object out of which you can read uint8 values')
+        
+        __swig_getmethods__["uint16"] = _make_helper_uint16
+        if _newclass: uint16 = property(_make_helper_uint16, None, doc='Returns an array-like object out of which you can read uint16 values')
+        
+        __swig_getmethods__["uint32"] = _make_helper_uint32
+        if _newclass: uint32 = property(_make_helper_uint32, None, doc='Returns an array-like object out of which you can read uint32 values')
+        
+        __swig_getmethods__["uint64"] = _make_helper_uint64
+        if _newclass: uint64 = property(_make_helper_uint64, None, doc='Returns an array-like object out of which you can read uint64 values')
+
+        __swig_getmethods__["sint8"] = _make_helper_sint8
+        if _newclass: sint8 = property(_make_helper_sint8, None, doc='Returns an array-like object out of which you can read sint8 values')
+        
+        __swig_getmethods__["sint16"] = _make_helper_sint16
+        if _newclass: sint16 = property(_make_helper_sint16, None, doc='Returns an array-like object out of which you can read sint16 values')
+        
+        __swig_getmethods__["sint32"] = _make_helper_sint32
+        if _newclass: sint32 = property(_make_helper_sint32, None, doc='Returns an array-like object out of which you can read sint32 values')
+        
+        __swig_getmethods__["sint64"] = _make_helper_sint64
+        if _newclass: sint64 = property(_make_helper_sint64, None, doc='Returns an array-like object out of which you can read sint64 values')
+        
+        __swig_getmethods__["float"] = _make_helper_float
+        if _newclass: float = property(_make_helper_float, None, doc='Returns an array-like object out of which you can read float values')
+
+        __swig_getmethods__["double"] = _make_helper_double
+        if _newclass: double = property(_make_helper_double, None, doc='Returns an array-like object out of which you can read double values')
+                  
+        __swig_getmethods__["uint8s"] = _read_all_uint8
+        if _newclass: uint8s = property(_read_all_uint8, None, doc='Returns an array with all the contents of this SBData represented as uint8 values')
+        
+        __swig_getmethods__["uint16s"] = _read_all_uint16
+        if _newclass: uint16s = property(_read_all_uint16, None, doc='Returns an array with all the contents of this SBData represented as uint16 values')
+        
+        __swig_getmethods__["uint32s"] = _read_all_uint32
+        if _newclass: uint32s = property(_read_all_uint32, None, doc='Returns an array with all the contents of this SBData represented as uint32 values')
+        
+        __swig_getmethods__["uint64s"] = _read_all_uint64
+        if _newclass: uint64s = property(_read_all_uint64, None, doc='Returns an array with all the contents of this SBData represented as uint64 values')
+
+        __swig_getmethods__["sint8s"] = _read_all_sint8
+        if _newclass: sint8s = property(_read_all_sint8, None, doc='Returns an array with all the contents of this SBData represented as sint8 values')
+        
+        __swig_getmethods__["sint16s"] = _read_all_sint16
+        if _newclass: sint16s = property(_read_all_sint16, None, doc='Returns an array with all the contents of this SBData represented as sint16 values')
+        
+        __swig_getmethods__["sint32s"] = _read_all_sint32
+        if _newclass: sint32s = property(_read_all_sint32, None, doc='Returns an array with all the contents of this SBData represented as sint32 values')
+        
+        __swig_getmethods__["sint64s"] = _read_all_sint64
+        if _newclass: sint64s = property(_read_all_sint64, None, doc='Returns an array with all the contents of this SBData represented as sint64 values')
+        
+        __swig_getmethods__["floats"] = _read_all_float
+        if _newclass: floats = property(_read_all_float, None, doc='Returns an array with all the contents of this SBData represented as float values')
+
+        __swig_getmethods__["doubles"] = _read_all_double
+        if _newclass: doubles = property(_read_all_double, None, doc='Returns an array with all the contents of this SBData represented as double values')
+                  
+    %}
+    
+    %pythoncode %{
         __swig_getmethods__["byte_order"] = GetByteOrder
         __swig_setmethods__["byte_order"] = SetByteOrder
-        if _newclass: x = property(GetByteOrder, SetByteOrder)
+        if _newclass: byte_order = property(GetByteOrder, SetByteOrder, doc='Allows getting and setting the endianness of this SBData object')
         
         __swig_getmethods__["size"] = GetByteSize
-        if _newclass: x = property(GetByteSize, None)
+        if _newclass: size = property(GetByteSize, None, doc='Returns the size (in bytes) of the contents of this SBData object')
         
     %}
 

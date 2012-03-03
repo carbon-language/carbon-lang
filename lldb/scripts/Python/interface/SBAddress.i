@@ -160,35 +160,35 @@ public:
             return '0x%x' % int(self)
 
         __swig_getmethods__["module"] = GetModule
-        if _newclass: x = property(GetModule, None)
+        if _newclass: module = property(GetModule, None, doc='Returns the same result as GetModule()')
 
         __swig_getmethods__["compile_unit"] = GetCompileUnit
-        if _newclass: x = property(GetCompileUnit, None)
+        if _newclass: compile_unit = property(GetCompileUnit, None, doc='Returns the same result as GetCompileUnit()')
 
         __swig_getmethods__["line_entry"] = GetLineEntry
-        if _newclass: x = property(GetLineEntry, None)
+        if _newclass: line_entry = property(GetLineEntry, None, doc='Returns the same result as GetLineEntry()')
 
         __swig_getmethods__["function"] = GetFunction
-        if _newclass: x = property(GetFunction, None)
+        if _newclass: function = property(GetFunction, None, doc='Returns the same result as GetFunction()')
 
         __swig_getmethods__["block"] = GetBlock
-        if _newclass: x = property(GetBlock, None)
+        if _newclass: block = property(GetBlock, None, doc='Returns the same result as GetBlock()')
 
         __swig_getmethods__["symbol"] = GetSymbol
-        if _newclass: x = property(GetSymbol, None)
+        if _newclass: symbol = property(GetSymbol, None, doc='Returns the same result as GetSymbol()')
 
         __swig_getmethods__["offset"] = GetOffset
-        if _newclass: x = property(GetOffset, None)
+        if _newclass: offset = property(GetOffset, None, doc='Returns the same result as GetOffset()')
 
         __swig_getmethods__["section"] = GetSection
-        if _newclass: x = property(GetSection, None)
+        if _newclass: section = property(GetSection, None, doc='Returns the same result as GetSection()')
 
         __swig_getmethods__["file_addr"] = GetFileAddress
-        if _newclass: x = property(GetFileAddress, None)
+        if _newclass: file_addr = property(GetFileAddress, None, doc='Returns the same result as GetFileAddress()')
 
         __swig_getmethods__["load_addr"] = __get_load_addr_property__
         __swig_setmethods__["load_addr"] = __set_load_addr_property__
-        if _newclass: x = property(__get_load_addr_property__, __set_load_addr_property__)
+        if _newclass: load_addr = property(__get_load_addr_property__, __set_load_addr_property__, doc='Returns a corresponding load address, resolving this SBAddress via lldb.target')
 
     %}
 

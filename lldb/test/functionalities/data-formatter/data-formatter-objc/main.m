@@ -598,6 +598,36 @@ int main (int argc, const char * argv[])
 	HIRect hi_rect = {{3,5},{4,6}};
 	
 	SEL foo_selector = @selector(foo_selector_impl);
+	
+	CFMutableBitVectorRef mut_bv = CFBitVectorCreateMutable(NULL, 64);
+	CFBitVectorSetCount(mut_bv, 50);
+    CFBitVectorSetBitAtIndex(mut_bv, 0, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 1, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 2, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 5, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 6, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 8, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 10, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 11, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 16, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 17, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 19, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 20, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 22, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 24, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 28, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 29, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 30, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 30, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 31, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 34, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 35, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 37, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 39, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 40, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 41, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 43, 1);
+    CFBitVectorSetBitAtIndex(mut_bv, 47, 1);
 
 	Molecule *molecule = [Molecule new];
 

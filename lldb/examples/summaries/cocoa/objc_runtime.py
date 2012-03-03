@@ -407,6 +407,9 @@ class InvalidClass_Data:
 runtime_version = cache.Cache()
 os_version = cache.Cache()
 
+# TODO: make more extensive use of this class in the individual formatters
+# instead of recalculating the same information - since we are building this object
+# it makes sense to pass it around to the formatters
 class SystemParameters:
 	def __init__(self,valobj):
 		self.adjust_for_architecture(valobj)
@@ -432,6 +435,7 @@ class SystemParameters:
 		else:
 			self.is_lion = Utilities.check_is_osx_lion(valobj.GetTarget())
 			os_version.add_item(pid,self.is_lion)
+		self.cfruntime_size = 16 if self.is_64_bit else 8
 
 isa_cache = cache.Cache()
 

@@ -2221,24 +2221,26 @@ ValueObject::GetValueForExpressionPath(const char* expression,
                                                            final_task_on_target ? final_task_on_target : &dummy_final_task_on_target);
     
     if (!final_task_on_target || *final_task_on_target == ValueObject::eNothing)
-    {
         return ret_val;
-    }
-    if (ret_val.get() && *final_value_type == ePlain) // I can only deref and takeaddress of plain objects
+
+    if (ret_val.get() && ((final_value_type ? *final_value_type : dummy_final_value_type) == ePlain)) // I can only deref and takeaddress of plain objects
     {
-        if (*final_task_on_target == ValueObject::eDereference)
+        if ( (final_task_on_target ? *final_task_on_target : dummy_final_task_on_target) == ValueObject::eDereference)
         {
             Error error;
             ValueObjectSP final_value = ret_val->Dereference(error);
             if (error.Fail() || !final_value.get())
             {
-                *reason_to_stop = ValueObject::eDereferencingFailed;
-                *final_value_type = ValueObject::eInvalid;
+                if (reason_to_stop)
+                    *reason_to_stop = ValueObject::eDereferencingFailed;
+                if (final_value_type)
+                    *final_value_type = ValueObject::eInvalid;
                 return ValueObjectSP();
             }
             else
             {
-                *final_task_on_target = ValueObject::eNothing;
+                if (final_task_on_target)
+                    *final_task_on_target = ValueObject::eNothing;
                 return final_value;
             }
         }
@@ -2248,13 +2250,16 @@ ValueObject::GetValueForExpressionPath(const char* expression,
             ValueObjectSP final_value = ret_val->AddressOf(error);
             if (error.Fail() || !final_value.get())
             {
-                *reason_to_stop = ValueObject::eTakingAddressFailed;
-                *final_value_type = ValueObject::eInvalid;
+                if (reason_to_stop)
+                    *reason_to_stop = ValueObject::eTakingAddressFailed;
+                if (final_value_type)
+                    *final_value_type = ValueObject::eInvalid;
                 return ValueObjectSP();
             }
             else
             {
-                *final_task_on_target = ValueObject::eNothing;
+                if (final_task_on_target)
+                    *final_task_on_target = ValueObject::eNothing;
                 return final_value;
             }
         }

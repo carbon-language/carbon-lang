@@ -302,6 +302,8 @@ class ObjCDataFormatterTestCase(TestBase):
                     '@"Europe/Rome"',
                     '@"Europe/Paris"'])
 
+        self.expect('frame variable mut_bv',
+                    substrs = ['(CFMutableBitVectorRef) mut_bv = ', '1110 0110 1011 0000 1101 1010 1000 1111 0011 0101 1101 0001 00'])
 
         self.expect('frame variable cupertino_ns home_ns europe_ns',
                     substrs = ['@"America/Los_Angeles"',
