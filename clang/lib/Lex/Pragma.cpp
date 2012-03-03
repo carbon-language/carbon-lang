@@ -668,7 +668,6 @@ void Preprocessor::HandlePragmaIncludeAlias(Token &Tok) {
   // have to track which we got.  The first filename is the source name,
   // and the second name is the mapped filename.  If the first is quoted,
   // the second must be as well (cannot mix and match quotes and brackets).
-  SourceLocation Loc = Tok.getLocation();
 
   // Get the open paren
   Lex(Tok);
