@@ -6,9 +6,9 @@
 define arm_apcscc i32 @t1(float* %a, float* %b) nounwind {
 entry:
 ; CHECK: t1:
-; CHECK: vldr s0,
-; CHECK: vldr s1,
-; CHECK: vcmpe.f32 s1, s0
+; CHECK: vldr [[S0:s[0-9]+]],
+; CHECK: vldr [[S1:s[0-9]+]],
+; CHECK: vcmpe.f32 [[S1]], [[S0]]
 ; CHECK: vmrs apsr_nzcv, fpscr
 ; CHECK: beq
   %0 = load float* %a
