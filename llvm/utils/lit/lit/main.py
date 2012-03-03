@@ -456,9 +456,10 @@ def main(builtinParameters = {}):    # Bump the GIL check interval, its more imp
         parser.error('No inputs specified')
 
     if opts.configPrefix is not None:
-        global gConfigName, gSiteConfigName
+        global gConfigName, gSiteConfigName, kLocalConfigName
         gConfigName = '%s.cfg' % opts.configPrefix
         gSiteConfigName = '%s.site.cfg' % opts.configPrefix
+        kLocalConfigName = '%s.local.cfg' % opts.configPrefix
 
     if opts.numThreads is None:
 # Python <2.5 has a race condition causing lit to always fail with numThreads>1
