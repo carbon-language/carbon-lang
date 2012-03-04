@@ -34,6 +34,7 @@ namespace RegState {
     Undef          = 0x20,
     EarlyClobber   = 0x40,
     Debug          = 0x80,
+    DefineNoRead   = Define | Undef,
     ImplicitDefine = Implicit | Define,
     ImplicitKill   = Implicit | Kill
   };
