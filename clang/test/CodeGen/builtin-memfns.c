@@ -48,3 +48,14 @@ void test5(char *P, char *Q) {
 int test6(char *X) {
   return __builtin___memcpy_chk(X, X, 42, 42) != 0;
 }
+
+// CHECK: @test7
+// PR12094
+int test7(int *p) {
+  // CHECK: call void @llvm.memset{{.*}}256, i32 4, i1 false)
+  __builtin_memset(p, 0, 256);  // Should be alignment = 4
+  struct snd_pcm_hw_params_t* hwparams;  // incomplete type.
+
+  __builtin_memset(hwparams, 0, 256);  // No crash alignment = 1
+  // CHECK: call void @llvm.memset{{.*}}256, i32 1, i1 false)
+}

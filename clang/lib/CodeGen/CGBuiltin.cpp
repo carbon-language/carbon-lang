@@ -1264,9 +1264,13 @@ unsigned CodeGenFunction::GetPointeeAlignment(const Expr *Addr) {
   // Check if the type is a pointer.  The implicit cast operand might not be.
   while (Addr->getType()->isPointerType()) {
     QualType PtTy = Addr->getType()->getPointeeType();
-    unsigned NewA = getContext().getTypeAlignInChars(PtTy).getQuantity();
-    if (NewA > Align)
-      Align = NewA;
+    
+    // Can't get alignment of incomplete types.
+    if (!PtTy->isIncompleteType()) {
+      unsigned NewA = getContext().getTypeAlignInChars(PtTy).getQuantity();
+      if (NewA > Align)
+        Align = NewA;
+    }
 
     // If the address is an implicit cast, repeat with the cast operand.
     if (const ImplicitCastExpr *CastAddr = dyn_cast<ImplicitCastExpr>(Addr)) {
