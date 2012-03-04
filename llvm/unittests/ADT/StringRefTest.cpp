@@ -9,6 +9,7 @@
 
 #include "gtest/gtest.h"
 #include "llvm/ADT/StringRef.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
@@ -289,6 +290,24 @@ TEST(StringRefTest, Misc) {
   raw_string_ostream OS(Storage);
   OS << StringRef("hello");
   EXPECT_EQ("hello", OS.str());
+}
+
+TEST(StringRefTest, Hashing) {
+  EXPECT_EQ(hash_value(std::string()), hash_value(StringRef()));
+  EXPECT_EQ(hash_value(std::string()), hash_value(StringRef("")));
+  std::string S = "hello world";
+  hash_code H = hash_value(S);
+  EXPECT_EQ(H, hash_value(StringRef("hello world")));
+  EXPECT_EQ(H, hash_value(StringRef(S)));
+  EXPECT_NE(H, hash_value(StringRef("hello worl")));
+  EXPECT_EQ(hash_value(std::string("hello worl")),
+            hash_value(StringRef("hello worl")));
+  EXPECT_NE(H, hash_value(StringRef("hello world ")));
+  EXPECT_EQ(hash_value(std::string("hello world ")),
+            hash_value(StringRef("hello world ")));
+  EXPECT_EQ(H, hash_value(StringRef("hello world\0")));
+  EXPECT_NE(hash_value(std::string("ello worl")),
+            hash_value(StringRef("hello world").slice(1, -1)));
 }
 
 } // end anonymous namespace

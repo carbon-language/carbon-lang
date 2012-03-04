@@ -10,6 +10,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/APInt.h"
 #include "llvm/ADT/OwningPtr.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/edit_distance.h"
 #include <bitset>
 
@@ -446,4 +447,10 @@ bool StringRef::getAsInteger(unsigned Radix, APInt &Result) const {
   }
 
   return false;
+}
+
+
+// Implementation of StringRef hashing.
+hash_code llvm::hash_value(StringRef S) {
+  return hash_combine_range(S.begin(), S.end());
 }

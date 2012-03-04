@@ -19,6 +19,7 @@ namespace llvm {
   template<typename T>
   class SmallVectorImpl;
   class APInt;
+  class hash_code;
 
   /// StringRef - Represent a constant reference to a string, i.e. a character
   /// array and a length, which need not be null terminated.
@@ -489,6 +490,9 @@ namespace llvm {
   }
 
   /// @}
+
+  /// \brief Compute a hash_code for a StringRef.
+  hash_code hash_value(StringRef S);
 
   // StringRefs can be treated like a POD type.
   template <typename T> struct isPodLike;
