@@ -35,9 +35,9 @@ typedef const char c;
 void operator "" _good (c*);
 
 // Check extra cv-qualifiers
-void operator "" _cv_good (volatile const char *, const size_t);
+void operator "" _cv_good (volatile const char *, const size_t); // expected-error {{parameter declaration for literal operator 'operator "" _cv_good' is not valid}}
 
-// Template delcaration (not implemented yet)
-// template <char...> void operator "" good ();
+// Template declaration
+template <char...> void operator "" _good ();
 
 // FIXME: Test some invalid decls that might crop up.

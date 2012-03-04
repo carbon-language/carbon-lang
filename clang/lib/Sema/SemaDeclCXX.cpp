@@ -9297,12 +9297,17 @@ bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
     return true;
   }
 
+  if (FnDecl->isExternC()) {
+    Diag(FnDecl->getLocation(), diag::err_literal_operator_extern_c);
+    return true;
+  }
+
   bool Valid = false;
 
   // template <char...> type operator "" name() is the only valid template
   // signature, and the only valid signature with no parameters.
-  if (FnDecl->param_size() == 0) {
-    if (FunctionTemplateDecl *TpDecl = FnDecl->getDescribedFunctionTemplate()) {
+  if (FunctionTemplateDecl *TpDecl = FnDecl->getDescribedFunctionTemplate()) {
+    if (FnDecl->param_size() == 0) {
       // Must have only one template parameter
       TemplateParameterList *Params = TpDecl->getTemplateParameters();
       if (Params->size() == 1) {
@@ -9315,11 +9320,11 @@ bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
           Valid = true;
       }
     }
-  } else {
+  } else if (FnDecl->param_size()) {
     // Check the first parameter
     FunctionDecl::param_iterator Param = FnDecl->param_begin();
 
-    QualType T = (*Param)->getType();
+    QualType T = (*Param)->getType().getUnqualifiedType();
 
     // unsigned long long int, long double, and any character type are allowed
     // as the only parameters.
@@ -9339,7 +9344,7 @@ bool Sema::CheckLiteralOperatorDeclaration(FunctionDecl *FnDecl) {
     if (!PT)
       goto FinishedParams;
     T = PT->getPointeeType();
-    if (!T.isConstQualified())
+    if (!T.isConstQualified() || T.isVolatileQualified())
       goto FinishedParams;
     T = T.getUnqualifiedType();
 

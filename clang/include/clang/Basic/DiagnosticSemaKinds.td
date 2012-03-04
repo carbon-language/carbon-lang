@@ -4684,6 +4684,8 @@ def err_literal_operator_outside_namespace : Error<
 // FIXME: This diagnostic sucks
 def err_literal_operator_params : Error<
   "parameter declaration for literal operator %0 is not valid">;
+def err_literal_operator_extern_c : Error<
+  "literal operator must have C++ linkage">;
 def warn_user_literal_hexfloat : Warning<
   "user-defined literal with suffix '%0' is preempted by C99 hexfloat "
   "extension">, InGroup<UserDefinedLiterals>;
