@@ -4,7 +4,7 @@ target triple = "i386-apple-darwin8"
 
 ; Without CSE of libcalls, there are two calls in the output instead of one.
 
-define i32 @u_f_nonbon(double %lambda) nounwind {
+define double @u_f_nonbon(double %lambda) nounwind {
 entry:
 	%tmp19.i.i = load double* null, align 4		; <double> [#uses=2]
 	%tmp6.i = fcmp olt double %tmp19.i.i, 1.000000e+00		; <i1> [#uses=1]
@@ -26,5 +26,5 @@ bb502.loopexit.i:		; preds = %bb28.i
 	br i1 false, label %bb.nph53.i, label %bb508.i
 
 bb508.i:		; preds = %bb502.loopexit.i, %entry
-	ret i32 1
+	ret double %tmp10.i4
 }

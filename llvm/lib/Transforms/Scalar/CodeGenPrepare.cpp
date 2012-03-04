@@ -65,6 +65,11 @@ static cl::opt<bool> DisableBranchOpts(
   "disable-cgp-branch-opts", cl::Hidden, cl::init(false),
   cl::desc("Disable branch optimizations in CodeGenPrepare"));
 
+// FIXME: Remove this abomination once all of the tests pass without it!
+static cl::opt<bool> DisableDeleteDeadBlocks(
+  "disable-cgp-delete-dead-blocks", cl::Hidden, cl::init(false),
+  cl::desc("Disable deleting dead blocks in CodeGenPrepare"));
+
 namespace {
   class CodeGenPrepare : public FunctionPass {
     /// TLI - Keep a pointer of a TargetLowering to consult for determining
@@ -160,8 +165,22 @@ bool CodeGenPrepare::runOnFunction(Function &F) {
 
   if (!DisableBranchOpts) {
     MadeChange = false;
-    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB)
+    SmallPtrSet<BasicBlock*, 8> WorkList;
+    for (Function::iterator BB = F.begin(), E = F.end(); BB != E; ++BB) {
+      SmallVector<BasicBlock*, 2> Successors(succ_begin(BB), succ_end(BB));
       MadeChange |= ConstantFoldTerminator(BB, true);
+      if (!MadeChange) continue;
+
+      for (SmallVectorImpl<BasicBlock*>::iterator
+             II = Successors.begin(), IE = Successors.end(); II != IE; ++II)
+        if (pred_begin(*II) == pred_end(*II))
+          WorkList.insert(*II);
+    }
+
+    if (!DisableDeleteDeadBlocks)
+      for (SmallPtrSet<BasicBlock*, 8>::iterator
+             I = WorkList.begin(), E = WorkList.end(); I != E; ++I)
+        DeleteDeadBlock(*I);
 
     if (MadeChange)
       ModifiedDT = true;

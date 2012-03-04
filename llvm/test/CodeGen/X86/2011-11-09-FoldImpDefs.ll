@@ -1,4 +1,4 @@
-; RUN: llc < %s -verify-regalloc | FileCheck %s
+; RUN: llc < %s -disable-cgp-delete-dead-blocks -verify-regalloc | FileCheck %s
 ; PR11347
 ;
 ; This test case materializes the constant 1 in a register:
