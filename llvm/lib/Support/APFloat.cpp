@@ -14,8 +14,9 @@
 
 #include "llvm/ADT/APFloat.h"
 #include "llvm/ADT/APSInt.h"
-#include "llvm/ADT/StringRef.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/Hashing.h"
+#include "llvm/ADT/StringRef.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/MathExtras.h"
 #include <limits.h>
@@ -2681,21 +2682,19 @@ APFloat::convertNormalToHexString(char *dst, unsigned int hexDigits,
   return writeSignedDecimal (dst, exponent);
 }
 
-// For good performance it is desirable for different APFloats
-// to produce different integers.
-uint32_t
-APFloat::getHashValue() const
-{
-  if (category==fcZero) return sign<<8 | semantics->precision ;
-  else if (category==fcInfinity) return sign<<9 | semantics->precision;
-  else if (category==fcNaN) return 1<<10 | semantics->precision;
-  else {
-    uint32_t hash = sign<<11 | semantics->precision | exponent<<12;
-    const integerPart* p = significandParts();
-    for (int i=partCount(); i>0; i--, p++)
-      hash ^= ((uint32_t)*p) ^ (uint32_t)((*p)>>32);
-    return hash;
-  }
+hash_code llvm::hash_value(const APFloat &Arg) {
+  if (Arg.category != APFloat::fcNormal)
+    return hash_combine((uint8_t)Arg.category,
+                        // NaN has no sign, fix it at zero.
+                        Arg.isNaN() ? (uint8_t)0 : (uint8_t)Arg.sign,
+                        Arg.semantics->precision);
+
+  // Normal floats need their exponent and significand hashed.
+  return hash_combine((uint8_t)Arg.category, (uint8_t)Arg.sign,
+                      Arg.semantics->precision, Arg.exponent,
+                      hash_combine_range(
+                        Arg.significandParts(),
+                        Arg.significandParts() + Arg.partCount()));
 }
 
 // Conversion from APFloat to/from host float/double.  It may eventually be

@@ -52,12 +52,14 @@ struct DenseMapAPIntKeyInfo {
     bool operator!=(const KeyTy& that) const {
       return !this->operator==(that);
     }
+    friend hash_code hash_value(const KeyTy &Key) {
+      return hash_combine(Key.type, Key.val);
+    }
   };
   static inline KeyTy getEmptyKey() { return KeyTy(APInt(1,0), 0); }
   static inline KeyTy getTombstoneKey() { return KeyTy(APInt(1,1), 0); }
   static unsigned getHashValue(const KeyTy &Key) {
-    return DenseMapInfo<void*>::getHashValue(Key.type) ^ 
-      Key.val.getHashValue();
+    return static_cast<unsigned>(hash_value(Key));
   }
   static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) {
     return LHS == RHS;
@@ -75,6 +77,9 @@ struct DenseMapAPFloatKeyInfo {
     bool operator!=(const KeyTy& that) const {
       return !this->operator==(that);
     }
+    friend hash_code hash_value(const KeyTy &Key) {
+      return hash_combine(Key.val);
+    }
   };
   static inline KeyTy getEmptyKey() { 
     return KeyTy(APFloat(APFloat::Bogus,1));
@@ -83,7 +88,7 @@ struct DenseMapAPFloatKeyInfo {
     return KeyTy(APFloat(APFloat::Bogus,2)); 
   }
   static unsigned getHashValue(const KeyTy &Key) {
-    return Key.val.getHashValue();
+    return static_cast<unsigned>(hash_value(Key));
   }
   static bool isEqual(const KeyTy &LHS, const KeyTy &RHS) {
     return LHS == RHS;

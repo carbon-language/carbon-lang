@@ -328,8 +328,16 @@ namespace llvm {
 
     APFloat& operator=(const APFloat &);
 
-    /* Return an arbitrary integer value usable for hashing. */
-    uint32_t getHashValue() const;
+    /// \brief Overload to compute a hash code for an APFloat value.
+    ///
+    /// Note that the use of hash codes for floating point values is in general
+    /// frought with peril. Equality is hard to define for these values. For
+    /// example, should negative and positive zero hash to different codes? Are
+    /// they equal or not? This hash value implementation specifically
+    /// emphasizes producing different codes for different inputs in order to
+    /// be used in canonicalization and memoization. As such, equality is
+    /// bitwiseIsEqual, and 0 != -0.
+    friend hash_code hash_value(const APFloat &Arg);
 
     /// Converts this value into a decimal string.
     ///

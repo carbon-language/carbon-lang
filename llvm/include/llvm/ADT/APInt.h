@@ -23,11 +23,12 @@
 #include <string>
 
 namespace llvm {
-  class Serializer;
   class Deserializer;
   class FoldingSetNodeID;
-  class raw_ostream;
+  class Serializer;
   class StringRef;
+  class hash_code;
+  class raw_ostream;
 
   template<typename T>
   class SmallVectorImpl;
@@ -502,10 +503,8 @@ public:
     return getAllOnesValue(numBits).lshr(numBits - loBitsSet);
   }
 
-  /// The hash value is computed as the sum of the words and the bit width.
-  /// @returns A hash value computed from the sum of the APInt words.
-  /// @brief Get a hash value based on this APInt
-  uint64_t getHashValue() const;
+  /// \brief Overload to compute a hash_code for an APInt value.
+  friend hash_code hash_value(const APInt &Arg);
 
   /// This function returns a pointer to the internal storage of the APInt.
   /// This is useful for writing out the APInt in binary form without any
