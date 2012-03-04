@@ -33,9 +33,9 @@ SparcRegisterInfo::SparcRegisterInfo(SparcSubtarget &st,
   : SparcGenRegisterInfo(SP::I7), Subtarget(st), TII(tii) {
 }
 
-const unsigned* SparcRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
+const uint16_t* SparcRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
                                                                          const {
-  static const unsigned CalleeSavedRegs[] = { 0 };
+  static const uint16_t CalleeSavedRegs[] = { 0 };
   return CalleeSavedRegs;
 }
 

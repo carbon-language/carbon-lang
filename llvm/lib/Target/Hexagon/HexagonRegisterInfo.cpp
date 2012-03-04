@@ -44,13 +44,13 @@ HexagonRegisterInfo::HexagonRegisterInfo(HexagonSubtarget &st,
    TII(tii) {
 }
 
-const unsigned* HexagonRegisterInfo::getCalleeSavedRegs(const MachineFunction
+const uint16_t* HexagonRegisterInfo::getCalleeSavedRegs(const MachineFunction
                                                         *MF)
   const {
-  static const unsigned CalleeSavedRegsV2[] = {
-  Hexagon::R24,   Hexagon::R25,   Hexagon::R26,   Hexagon::R27, 0
+  static const uint16_t CalleeSavedRegsV2[] = {
+    Hexagon::R24,   Hexagon::R25,   Hexagon::R26,   Hexagon::R27, 0
   };
-  static const unsigned CalleeSavedRegsV3[] = {
+  static const uint16_t CalleeSavedRegsV3[] = {
     Hexagon::R16,   Hexagon::R17,   Hexagon::R18,   Hexagon::R19,
     Hexagon::R20,   Hexagon::R21,   Hexagon::R22,   Hexagon::R23,
     Hexagon::R24,   Hexagon::R25,   Hexagon::R26,   Hexagon::R27, 0

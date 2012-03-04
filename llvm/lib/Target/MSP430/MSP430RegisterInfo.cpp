@@ -38,27 +38,27 @@ MSP430RegisterInfo::MSP430RegisterInfo(MSP430TargetMachine &tm,
   StackAlign = TM.getFrameLowering()->getStackAlignment();
 }
 
-const unsigned*
+const uint16_t*
 MSP430RegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   const TargetFrameLowering *TFI = MF->getTarget().getFrameLowering();
   const Function* F = MF->getFunction();
-  static const unsigned CalleeSavedRegs[] = {
+  static const uint16_t CalleeSavedRegs[] = {
     MSP430::FPW, MSP430::R5W, MSP430::R6W, MSP430::R7W,
     MSP430::R8W, MSP430::R9W, MSP430::R10W, MSP430::R11W,
     0
   };
-  static const unsigned CalleeSavedRegsFP[] = {
+  static const uint16_t CalleeSavedRegsFP[] = {
     MSP430::R5W, MSP430::R6W, MSP430::R7W,
     MSP430::R8W, MSP430::R9W, MSP430::R10W, MSP430::R11W,
     0
   };
-  static const unsigned CalleeSavedRegsIntr[] = {
+  static const uint16_t CalleeSavedRegsIntr[] = {
     MSP430::FPW,  MSP430::R5W,  MSP430::R6W,  MSP430::R7W,
     MSP430::R8W,  MSP430::R9W,  MSP430::R10W, MSP430::R11W,
     MSP430::R12W, MSP430::R13W, MSP430::R14W, MSP430::R15W,
     0
   };
-  static const unsigned CalleeSavedRegsIntrFP[] = {
+  static const uint16_t CalleeSavedRegsIntrFP[] = {
     MSP430::R5W,  MSP430::R6W,  MSP430::R7W,
     MSP430::R8W,  MSP430::R9W,  MSP430::R10W, MSP430::R11W,
     MSP430::R12W, MSP430::R13W, MSP430::R14W, MSP430::R15W,

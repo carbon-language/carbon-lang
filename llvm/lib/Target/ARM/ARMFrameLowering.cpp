@@ -81,7 +81,7 @@ ARMFrameLowering::canSimplifyCallFramePseudos(const MachineFunction &MF) const {
   return hasReservedCallFrame(MF) || MF.getFrameInfo()->hasVarSizedObjects();
 }
 
-static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
+static bool isCalleeSavedRegister(unsigned Reg, const uint16_t *CSRegs) {
   for (unsigned i = 0; CSRegs[i]; ++i)
     if (Reg == CSRegs[i])
       return true;
@@ -90,7 +90,7 @@ static bool isCalleeSavedRegister(unsigned Reg, const unsigned *CSRegs) {
 
 static bool isCSRestore(MachineInstr *MI,
                         const ARMBaseInstrInfo &TII,
-                        const unsigned *CSRegs) {
+                        const uint16_t *CSRegs) {
   // Integer spill area is handled with "pop".
   if (MI->getOpcode() == ARM::LDMIA_RET ||
       MI->getOpcode() == ARM::t2LDMIA_RET ||
@@ -359,7 +359,7 @@ void ARMFrameLowering::emitEpilogue(MachineFunction &MF,
       emitSPUpdate(isARM, MBB, MBBI, dl, TII, NumBytes);
   } else {
     // Unwind MBBI to point to first LDR / VLDRD.
-    const unsigned *CSRegs = RegInfo->getCalleeSavedRegs();
+    const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs();
     if (MBBI != MBB.begin()) {
       do
         --MBBI;
@@ -1244,7 +1244,7 @@ ARMFrameLowering::processFunctionBeforeCalleeSavedScan(MachineFunction &MF,
 
   // Don't spill FP if the frame can be eliminated. This is determined
   // by scanning the callee-save registers to see if any is used.
-  const unsigned *CSRegs = RegInfo->getCalleeSavedRegs();
+  const uint16_t *CSRegs = RegInfo->getCalleeSavedRegs();
   for (unsigned i = 0; CSRegs[i]; ++i) {
     unsigned Reg = CSRegs[i];
     bool Spilled = false;

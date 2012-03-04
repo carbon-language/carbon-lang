@@ -98,10 +98,10 @@ PPCRegisterInfo::getPointerRegClass(unsigned Kind) const {
   return &PPC::GPRCRegClass;
 }
 
-const unsigned*
+const uint16_t*
 PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   // 32-bit Darwin calling convention. 
-  static const unsigned Darwin32_CalleeSavedRegs[] = {
+  static const uint16_t Darwin32_CalleeSavedRegs[] = {
               PPC::R13, PPC::R14, PPC::R15,
     PPC::R16, PPC::R17, PPC::R18, PPC::R19,
     PPC::R20, PPC::R21, PPC::R22, PPC::R23,
@@ -123,7 +123,7 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   };
 
   // 32-bit SVR4 calling convention.
-  static const unsigned SVR4_CalleeSavedRegs[] = {
+  static const uint16_t SVR4_CalleeSavedRegs[] = {
                         PPC::R14, PPC::R15,
     PPC::R16, PPC::R17, PPC::R18, PPC::R19,
     PPC::R20, PPC::R21, PPC::R22, PPC::R23,
@@ -147,7 +147,7 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
     0
   };
   // 64-bit Darwin calling convention. 
-  static const unsigned Darwin64_CalleeSavedRegs[] = {
+  static const uint16_t Darwin64_CalleeSavedRegs[] = {
     PPC::X14, PPC::X15,
     PPC::X16, PPC::X17, PPC::X18, PPC::X19,
     PPC::X20, PPC::X21, PPC::X22, PPC::X23,
@@ -169,7 +169,7 @@ PPCRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const {
   };
 
   // 64-bit SVR4 calling convention.
-  static const unsigned SVR4_64_CalleeSavedRegs[] = {
+  static const uint16_t SVR4_64_CalleeSavedRegs[] = {
     PPC::X14, PPC::X15,
     PPC::X16, PPC::X17, PPC::X18, PPC::X19,
     PPC::X20, PPC::X21, PPC::X22, PPC::X23,

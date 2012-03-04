@@ -845,7 +845,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     const unsigned BVWords = (RegisterClasses.size()+31)/32;
     BitVector BV(RegisterClasses.size());
 
-    OS << "  static const unsigned Table[" << RegisterClasses.size()
+    OS << "  static const uint32_t Table[" << RegisterClasses.size()
        << "][" << SubRegIndices.size() << "][" << BVWords << "] = {\n";
     for (unsigned rci = 0, rce = RegisterClasses.size(); rci != rce; ++rci) {
       const CodeGenRegisterClass &RC = *RegisterClasses[rci];
@@ -912,7 +912,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     assert(Regs && "Cannot expand CalleeSavedRegs instance");
 
     // Emit the *_SaveList list of callee-saved registers.
-    OS << "static const unsigned " << CSRSet->getName()
+    OS << "static const uint16_t " << CSRSet->getName()
        << "_SaveList[] = { ";
     for (unsigned r = 0, re = Regs->size(); r != re; ++r)
       OS << getQualifiedName((*Regs)[r]) << ", ";

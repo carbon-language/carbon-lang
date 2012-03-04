@@ -73,9 +73,9 @@ bool XCoreRegisterInfo::needsFrameMoves(const MachineFunction &MF) {
     MF.getFunction()->needsUnwindTableEntry();
 }
 
-const unsigned* XCoreRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
+const uint16_t* XCoreRegisterInfo::getCalleeSavedRegs(const MachineFunction *MF)
                                                                          const {
-  static const unsigned CalleeSavedRegs[] = {
+  static const uint16_t CalleeSavedRegs[] = {
     XCore::R4, XCore::R5, XCore::R6, XCore::R7,
     XCore::R8, XCore::R9, XCore::R10, XCore::LR,
     0

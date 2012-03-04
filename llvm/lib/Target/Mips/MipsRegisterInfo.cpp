@@ -53,7 +53,7 @@ unsigned MipsRegisterInfo::getPICCallReg() { return Mips::T9; }
 //===----------------------------------------------------------------------===//
 
 /// Mips Callee Saved Registers
-const unsigned* MipsRegisterInfo::
+const uint16_t* MipsRegisterInfo::
 getCalleeSavedRegs(const MachineFunction *MF) const
 {
   if (Subtarget.isSingleFloat())

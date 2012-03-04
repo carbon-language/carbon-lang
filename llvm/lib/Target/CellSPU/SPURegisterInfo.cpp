@@ -197,11 +197,11 @@ SPURegisterInfo::getPointerRegClass(unsigned Kind) const {
   return &SPU::R32CRegClass;
 }
 
-const unsigned *
+const uint16_t *
 SPURegisterInfo::getCalleeSavedRegs(const MachineFunction *MF) const
 {
   // Cell ABI calling convention
-  static const unsigned SPU_CalleeSaveRegs[] = {
+  static const uint16_t SPU_CalleeSaveRegs[] = {
     SPU::R80, SPU::R81, SPU::R82, SPU::R83,
     SPU::R84, SPU::R85, SPU::R86, SPU::R87,
     SPU::R88, SPU::R89, SPU::R90, SPU::R91,
