@@ -576,6 +576,7 @@ void CGRecordLayoutBuilder::LayoutUnion(const RecordDecl *D) {
     }
   }
   if (unionAlign.isZero()) {
+    (void)hasOnlyZeroSizedBitFields;
     assert(hasOnlyZeroSizedBitFields &&
            "0-align record did not have all zero-sized bit-fields!");
     unionAlign = CharUnits::One();
