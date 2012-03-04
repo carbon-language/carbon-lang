@@ -236,7 +236,7 @@ void RegAllocBase::allocatePhysRegs() {
 // physical register. Return the interfering register.
 unsigned RegAllocBase::checkPhysRegInterference(LiveInterval &VirtReg,
                                                 unsigned PhysReg) {
-  for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI)
+  for (const uint16_t *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI)
     if (query(VirtReg, *AliasI).checkInterference())
       return *AliasI;
   return 0;

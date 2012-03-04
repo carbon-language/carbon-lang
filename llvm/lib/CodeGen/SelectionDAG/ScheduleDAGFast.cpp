@@ -447,7 +447,7 @@ static bool CheckForLiveRegDef(SUnit *SU, unsigned Reg,
       Added = true;
     }
   }
-  for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
+  for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
     if (LiveRegDefs[*Alias] && LiveRegDefs[*Alias] != SU) {
       if (RegAdded.insert(*Alias)) {
         LRegs.push_back(*Alias);

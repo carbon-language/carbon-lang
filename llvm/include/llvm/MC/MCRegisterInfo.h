@@ -133,7 +133,7 @@ private:
   unsigned RAReg;                             // Return address register
   const MCRegisterClass *Classes;             // Pointer to the regclass array
   unsigned NumClasses;                        // Number of entries in the array
-  const unsigned *Overlaps;                   // Pointer to the overlaps array
+  const uint16_t *Overlaps;                   // Pointer to the overlaps array
   const unsigned *SubRegs;                    // Pointer to the subregs array
   const unsigned *SuperRegs;                  // Pointer to the superregs array
   const uint16_t *SubRegIndices;              // Pointer to the subreg lookup
@@ -150,7 +150,7 @@ public:
   /// auto-generated routines. *DO NOT USE*.
   void InitMCRegisterInfo(const MCRegisterDesc *D, unsigned NR, unsigned RA,
                           const MCRegisterClass *C, unsigned NC,
-                          const unsigned *O, const unsigned *Sub,
+                          const uint16_t *O, const unsigned *Sub,
                           const unsigned *Super,
                           const uint16_t *SubIndices,
                           unsigned NumIndices) {
@@ -218,7 +218,7 @@ public:
   /// register, or a null list of there are none.  The list returned is zero
   /// terminated.
   ///
-  const unsigned *getAliasSet(unsigned RegNo) const {
+  const uint16_t *getAliasSet(unsigned RegNo) const {
     // The Overlaps set always begins with Reg itself.
     return Overlaps + get(RegNo).Overlaps + 1;
   }
@@ -228,7 +228,7 @@ public:
   /// list.
   /// These are exactly the registers in { x | regsOverlap(x, Reg) }.
   ///
-  const unsigned *getOverlaps(unsigned RegNo) const {
+  const uint16_t *getOverlaps(unsigned RegNo) const {
     return Overlaps + get(RegNo).Overlaps;
   }
 

@@ -1175,7 +1175,7 @@ static void CheckForLiveRegDef(SUnit *SU, unsigned Reg,
                                SmallSet<unsigned, 4> &RegAdded,
                                SmallVector<unsigned, 4> &LRegs,
                                const TargetRegisterInfo *TRI) {
-  for (const unsigned *AliasI = TRI->getOverlaps(Reg); *AliasI; ++AliasI) {
+  for (const uint16_t *AliasI = TRI->getOverlaps(Reg); *AliasI; ++AliasI) {
 
     // Check if Ref is live.
     if (!LiveRegDefs[*AliasI]) continue;

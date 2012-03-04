@@ -461,7 +461,7 @@ bool RegisterCoalescer::AdjustCopiesBackFrom(const CoalescerPair &CP,
   // of its aliases is overlapping the live interval of the virtual register.
   // If so, do not coalesce.
   if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
-    for (const unsigned *AS = TRI->getAliasSet(IntB.reg); *AS; ++AS)
+    for (const uint16_t *AS = TRI->getAliasSet(IntB.reg); *AS; ++AS)
       if (LIS->hasInterval(*AS) && IntA.overlaps(LIS->getInterval(*AS))) {
         DEBUG({
             dbgs() << "\t\tInterfere with alias ";
@@ -653,7 +653,7 @@ bool RegisterCoalescer::RemoveCopyByCommutingDef(const CoalescerPair &CP,
   // Abort if the aliases of IntB.reg have values that are not simply the
   // clobbers from the superreg.
   if (TargetRegisterInfo::isPhysicalRegister(IntB.reg))
-    for (const unsigned *AS = TRI->getAliasSet(IntB.reg); *AS; ++AS)
+    for (const uint16_t *AS = TRI->getAliasSet(IntB.reg); *AS; ++AS)
       if (LIS->hasInterval(*AS) &&
           HasOtherReachingDefs(IntA, LIS->getInterval(*AS), AValNo, 0))
         return false;
@@ -1412,7 +1412,7 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
              "Invalid join with reserved register");
       // Deny any overlapping intervals.  This depends on all the reserved
       // register live ranges to look like dead defs.
-      for (const unsigned *AS = TRI->getOverlaps(CP.getDstReg()); *AS; ++AS) {
+      for (const uint16_t *AS = TRI->getOverlaps(CP.getDstReg()); *AS; ++AS) {
         if (!LIS->hasInterval(*AS)) {
           // Make sure at least DstReg itself exists before attempting a join.
           if (*AS == CP.getDstReg())
@@ -1439,7 +1439,7 @@ bool RegisterCoalescer::JoinIntervals(CoalescerPair &CP) {
       return false;
     }
 
-    for (const unsigned *AS = TRI->getAliasSet(CP.getDstReg()); *AS; ++AS){
+    for (const uint16_t *AS = TRI->getAliasSet(CP.getDstReg()); *AS; ++AS){
       if (!LIS->hasInterval(*AS))
         continue;
       const LiveInterval &LHS = LIS->getInterval(*AS);

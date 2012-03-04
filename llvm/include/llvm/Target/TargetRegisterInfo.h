@@ -325,7 +325,7 @@ public:
     if (regA == regB) return true;
     if (isVirtualRegister(regA) || isVirtualRegister(regB))
       return false;
-    for (const unsigned *regList = getOverlaps(regA)+1; *regList; ++regList) {
+    for (const uint16_t *regList = getOverlaps(regA)+1; *regList; ++regList) {
       if (*regList == regB) return true;
     }
     return false;

@@ -248,7 +248,7 @@ std::auto_ptr<PBQPRAProblem> PBQPBuilder::build(MachineFunction *mf,
       }
 
       // Also remove any aliases.
-      const unsigned *aliasItr = tri->getAliasSet(preg);
+      const uint16_t *aliasItr = tri->getAliasSet(preg);
       if (aliasItr != 0) {
         for (; *aliasItr != 0; ++aliasItr) {
           VRAllowed::iterator eraseItr =

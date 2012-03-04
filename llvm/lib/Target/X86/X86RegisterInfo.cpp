@@ -304,16 +304,16 @@ BitVector X86RegisterInfo::getReservedRegs(const MachineFunction &MF) const {
 
     for (unsigned n = 0; n != 8; ++n) {
       // R8, R9, ...
-      const unsigned GPR64[] = {
+      static const uint16_t GPR64[] = {
         X86::R8,  X86::R9,  X86::R10, X86::R11,
         X86::R12, X86::R13, X86::R14, X86::R15
       };
-      for (const unsigned *AI = getOverlaps(GPR64[n]); unsigned Reg = *AI; ++AI)
+      for (const uint16_t *AI = getOverlaps(GPR64[n]); unsigned Reg = *AI; ++AI)
         Reserved.set(Reg);
 
       // XMM8, XMM9, ...
       assert(X86::XMM15 == X86::XMM8+7);
-      for (const unsigned *AI = getOverlaps(X86::XMM8 + n); unsigned Reg = *AI;
+      for (const uint16_t *AI = getOverlaps(X86::XMM8 + n); unsigned Reg = *AI;
            ++AI)
         Reserved.set(Reg);
     }

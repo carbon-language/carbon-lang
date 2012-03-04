@@ -219,7 +219,7 @@ bool MachineCSE::hasLivePhysRegDefUses(const MachineInstr *MI,
     PhysRefs.insert(Reg);
     if (MO.isDef())
       PhysDefs.push_back(Reg);
-    for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
+    for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias)
       PhysRefs.insert(*Alias);
   }
 

@@ -314,7 +314,7 @@ public:
   bool isPhysRegOrOverlapUsed(unsigned Reg) const {
     if (UsedPhysRegMask.test(Reg))
       return true;
-    for (const unsigned *AI = TRI->getOverlaps(Reg); *AI; ++AI)
+    for (const uint16_t *AI = TRI->getOverlaps(Reg); *AI; ++AI)
       if (UsedPhysRegs.test(*AI))
         return true;
     return false;

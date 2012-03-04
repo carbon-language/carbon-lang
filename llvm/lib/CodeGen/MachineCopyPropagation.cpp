@@ -68,7 +68,7 @@ MachineCopyPropagation::SourceNoLongerAvailable(unsigned Reg,
         AvailCopyMap.erase(*SR);
     }
   }
-  for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
+  for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
     SI = SrcMap.find(*AS);
     if (SI != SrcMap.end()) {
       unsigned MappedDef = SI->second;
@@ -180,7 +180,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
       CI = CopyMap.find(Src);
       if (CI != CopyMap.end())
         MaybeDeadCopies.remove(CI->second);
-      for (const unsigned *AS = TRI->getAliasSet(Src); *AS; ++AS) {
+      for (const uint16_t *AS = TRI->getAliasSet(Src); *AS; ++AS) {
         CI = CopyMap.find(*AS);
         if (CI != CopyMap.end())
           MaybeDeadCopies.remove(CI->second);
@@ -200,7 +200,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
 
       // Remember Def is defined by the copy.
       // ... Make sure to clear the def maps of aliases first.
-      for (const unsigned *AS = TRI->getAliasSet(Def); *AS; ++AS) {
+      for (const uint16_t *AS = TRI->getAliasSet(Def); *AS; ++AS) {
         CopyMap.erase(*AS);
         AvailCopyMap.erase(*AS);
       }
@@ -245,7 +245,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
       DenseMap<unsigned, MachineInstr*>::iterator CI = CopyMap.find(Reg);
       if (CI != CopyMap.end())
         MaybeDeadCopies.remove(CI->second);
-      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
+      for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
         CI = CopyMap.find(*AS);
         if (CI != CopyMap.end())
           MaybeDeadCopies.remove(CI->second);
@@ -284,7 +284,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
       // No longer defined by a copy.
       CopyMap.erase(Reg);
       AvailCopyMap.erase(Reg);
-      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
+      for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
         CopyMap.erase(*AS);
         AvailCopyMap.erase(*AS);
       }

@@ -539,7 +539,7 @@ bool RAGreedy::canEvictInterference(LiveInterval &VirtReg, unsigned PhysReg,
     Cascade = NextCascade;
 
   EvictionCost Cost;
-  for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
+  for (const uint16_t *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
     LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
     // If there is 10 or more interferences, chances are one is heavier.
     if (Q.collectInterferingVRegs(10) >= 10)
@@ -597,7 +597,7 @@ void RAGreedy::evictInterference(LiveInterval &VirtReg, unsigned PhysReg,
 
   DEBUG(dbgs() << "evicting " << PrintReg(PhysReg, TRI)
                << " interference: Cascade " << Cascade << '\n');
-  for (const unsigned *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
+  for (const uint16_t *AliasI = TRI->getOverlaps(PhysReg); *AliasI; ++AliasI) {
     LiveIntervalUnion::Query &Q = query(VirtReg, *AliasI);
     assert(Q.seenAllInterferences() && "Didn't check all interfererences.");
     for (unsigned i = 0, e = Q.interferingVRegs().size(); i != e; ++i) {
@@ -1291,7 +1291,7 @@ void RAGreedy::calcGapWeights(unsigned PhysReg,
   GapWeight.assign(NumGaps, 0.0f);
 
   // Add interference from each overlapping register.
-  for (const unsigned *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
+  for (const uint16_t *AI = TRI->getOverlaps(PhysReg); *AI; ++AI) {
     if (!query(const_cast<LiveInterval&>(SA->getParent()), *AI)
            .checkInterference())
       continue;

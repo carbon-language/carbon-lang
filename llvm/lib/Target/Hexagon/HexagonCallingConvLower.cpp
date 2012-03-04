@@ -58,7 +58,7 @@ void Hexagon_CCState::HandleByVal(unsigned ValNo, EVT ValVT,
 void Hexagon_CCState::MarkAllocated(unsigned Reg) {
   UsedRegs[Reg/32] |= 1 << (Reg&31);
 
-  if (const unsigned *RegAliases = TRI.getAliasSet(Reg))
+  if (const uint16_t *RegAliases = TRI.getAliasSet(Reg))
     for (; (Reg = *RegAliases); ++RegAliases)
       UsedRegs[Reg/32] |= 1 << (Reg&31);
 }

@@ -45,7 +45,7 @@ void RegScavenger::setUsed(unsigned Reg) {
 bool RegScavenger::isAliasUsed(unsigned Reg) const {
   if (isUsed(Reg))
     return true;
-  for (const unsigned *R = TRI->getAliasSet(Reg); *R; ++R)
+  for (const uint16_t *R = TRI->getAliasSet(Reg); *R; ++R)
     if (isUsed(*R))
       return true;
   return false;
@@ -292,7 +292,7 @@ unsigned RegScavenger::findSurvivorReg(MachineBasicBlock::iterator StartMI,
         continue;
       }
       Candidates.reset(MO.getReg());
-      for (const unsigned *R = TRI->getAliasSet(MO.getReg()); *R; R++)
+      for (const uint16_t *R = TRI->getAliasSet(MO.getReg()); *R; R++)
         Candidates.reset(*R);
     }
     // If we're not in a virtual reg's live range, this is a valid

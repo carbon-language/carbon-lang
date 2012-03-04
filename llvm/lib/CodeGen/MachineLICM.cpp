@@ -434,7 +434,7 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
     }
 
     if (MO.isImplicit()) {
-      for (const unsigned *AS = TRI->getOverlaps(Reg); *AS; ++AS)
+      for (const uint16_t *AS = TRI->getOverlaps(Reg); *AS; ++AS)
         PhysRegClobbers.set(*AS);
       if (!MO.isDead())
         // Non-dead implicit def? This cannot be hoisted.
@@ -454,7 +454,7 @@ void MachineLICM::ProcessMI(MachineInstr *MI,
     // If we have already seen another instruction that defines the same
     // register, then this is not safe.  Two defs is indicated by setting a
     // PhysRegClobbers bit.
-    for (const unsigned *AS = TRI->getOverlaps(Reg); *AS; ++AS) {
+    for (const uint16_t *AS = TRI->getOverlaps(Reg); *AS; ++AS) {
       if (PhysRegDefs.test(*AS))
         PhysRegClobbers.set(*AS);
       if (PhysRegClobbers.test(*AS))
@@ -502,7 +502,7 @@ void MachineLICM::HoistRegionPostRA() {
     for (MachineBasicBlock::livein_iterator I = BB->livein_begin(),
            E = BB->livein_end(); I != E; ++I) {
       unsigned Reg = *I;
-      for (const unsigned *AS = TRI->getOverlaps(Reg); *AS; ++AS)
+      for (const uint16_t *AS = TRI->getOverlaps(Reg); *AS; ++AS)
         PhysRegDefs.set(*AS);
     }
 

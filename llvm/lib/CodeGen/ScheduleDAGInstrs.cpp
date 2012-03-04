@@ -215,7 +215,7 @@ void ScheduleDAGInstrs::addPhysRegDataDeps(SUnit *SU,
   unsigned SpecialAddressLatency = ST.getSpecialAddressLatency();
   unsigned DataLatency = SU->Latency;
 
-  for (const unsigned *Alias = TRI->getOverlaps(MO.getReg()); *Alias; ++Alias) {
+  for (const uint16_t *Alias = TRI->getOverlaps(MO.getReg()); *Alias; ++Alias) {
     if (!Uses.contains(*Alias))
       continue;
     std::vector<SUnit*> &UseList = Uses[*Alias];
@@ -268,7 +268,7 @@ void ScheduleDAGInstrs::addPhysRegDeps(SUnit *SU, unsigned OperIdx) {
   // TODO: Using a latency of 1 here for output dependencies assumes
   //       there's no cost for reusing registers.
   SDep::Kind Kind = MO.isUse() ? SDep::Anti : SDep::Output;
-  for (const unsigned *Alias = TRI->getOverlaps(MO.getReg()); *Alias; ++Alias) {
+  for (const uint16_t *Alias = TRI->getOverlaps(MO.getReg()); *Alias; ++Alias) {
     if (!Defs.contains(*Alias))
       continue;
     std::vector<SUnit *> &DefList = Defs[*Alias];

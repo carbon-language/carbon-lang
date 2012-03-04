@@ -1533,7 +1533,7 @@ void MachineInstr::print(raw_ostream &OS, const TargetMachine *TM) const {
         const MachineRegisterInfo &MRI = MF->getRegInfo();
         if (MRI.use_empty(Reg) && !MRI.isLiveOut(Reg)) {
           bool HasAliasLive = false;
-          for (const unsigned *Alias = TM->getRegisterInfo()->getAliasSet(Reg);
+          for (const uint16_t *Alias = TM->getRegisterInfo()->getAliasSet(Reg);
                unsigned AliasReg = *Alias; ++Alias)
             if (!MRI.use_empty(AliasReg) || MRI.isLiveOut(AliasReg)) {
               HasAliasLive = true;

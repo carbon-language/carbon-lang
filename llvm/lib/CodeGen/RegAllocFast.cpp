@@ -354,7 +354,7 @@ void RAFast::usePhysReg(MachineOperand &MO) {
   }
 
   // Maybe a superregister is reserved?
-  for (const unsigned *AS = TRI->getAliasSet(PhysReg);
+  for (const uint16_t *AS = TRI->getAliasSet(PhysReg);
        unsigned Alias = *AS; ++AS) {
     switch (PhysRegState[Alias]) {
     case regDisabled:
@@ -408,7 +408,7 @@ void RAFast::definePhysReg(MachineInstr *MI, unsigned PhysReg,
 
   // This is a disabled register, disable all aliases.
   PhysRegState[PhysReg] = NewState;
-  for (const unsigned *AS = TRI->getAliasSet(PhysReg);
+  for (const uint16_t *AS = TRI->getAliasSet(PhysReg);
        unsigned Alias = *AS; ++AS) {
     switch (unsigned VirtReg = PhysRegState[Alias]) {
     case regDisabled:
@@ -456,7 +456,7 @@ unsigned RAFast::calcSpillCost(unsigned PhysReg) const {
   // This is a disabled register, add up cost of aliases.
   DEBUG(dbgs() << PrintReg(PhysReg, TRI) << " is disabled.\n");
   unsigned Cost = 0;
-  for (const unsigned *AS = TRI->getAliasSet(PhysReg);
+  for (const uint16_t *AS = TRI->getAliasSet(PhysReg);
        unsigned Alias = *AS; ++AS) {
     if (UsedInInstr.test(Alias))
       return spillImpossible;
@@ -707,7 +707,7 @@ void RAFast::handleThroughOperands(MachineInstr *MI,
     UsedInInstr.set(Reg);
     if (ThroughRegs.count(PhysRegState[Reg]))
       definePhysReg(MI, Reg, regFree);
-    for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
+    for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS) {
       UsedInInstr.set(*AS);
       if (ThroughRegs.count(PhysRegState[*AS]))
         definePhysReg(MI, *AS, regFree);
@@ -1030,7 +1030,7 @@ void RAFast::AllocateBasicBlock() {
         // Look for physreg defs and tied uses.
         if (!MO.isDef() && !MI->isRegTiedToDefOperand(i)) continue;
         UsedInInstr.set(Reg);
-        for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
+        for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS)
           UsedInInstr.set(*AS);
       }
     }

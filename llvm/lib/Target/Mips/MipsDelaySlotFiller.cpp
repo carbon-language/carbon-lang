@@ -244,7 +244,7 @@ bool Filler::IsRegInSet(SmallSet<unsigned, 32>& RegSet, unsigned Reg) {
   if (RegSet.count(Reg))
     return true;
   // check Aliased Registers
-  for (const unsigned *Alias = TM.getRegisterInfo()->getAliasSet(Reg);
+  for (const uint16_t *Alias = TM.getRegisterInfo()->getAliasSet(Reg);
        *Alias; ++Alias)
     if (RegSet.count(*Alias))
       return true;

@@ -50,7 +50,7 @@ void RegisterClassInfo::runOnMachineFunction(const MachineFunction &mf) {
     CSRNum.clear();
     CSRNum.resize(TRI->getNumRegs(), 0);
     for (unsigned N = 0; unsigned Reg = CSR[N]; ++N)
-      for (const unsigned *AS = TRI->getOverlaps(Reg);
+      for (const uint16_t *AS = TRI->getOverlaps(Reg);
            unsigned Alias = *AS; ++AS)
         CSRNum[Alias] = N + 1; // 0 means no CSR, 1 means CalleeSaved[0], ...
     Update = true;

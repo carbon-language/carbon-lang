@@ -67,7 +67,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
       DefIndices[Reg] = ~0u;
 
       // Repeat, for all aliases.
-      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+      for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         unsigned AliasReg = *Alias;
         Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
         KillIndices[AliasReg] = BB->size();
@@ -89,7 +89,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
       DefIndices[Reg] = ~0u;
 
       // Repeat, for all aliases.
-      for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+      for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
         unsigned AliasReg = *Alias;
         Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
         KillIndices[AliasReg] = BB->size();
@@ -110,7 +110,7 @@ void CriticalAntiDepBreaker::StartBlock(MachineBasicBlock *BB) {
     DefIndices[Reg] = ~0u;
 
     // Repeat, for all aliases.
-    for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+    for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
       unsigned AliasReg = *Alias;
       Classes[AliasReg] = reinterpret_cast<TargetRegisterClass *>(-1);
       KillIndices[AliasReg] = BB->size();
@@ -217,7 +217,7 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
       Classes[Reg] = reinterpret_cast<TargetRegisterClass *>(-1);
 
     // Now check for aliases.
-    for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+    for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
       // If an alias of the reg is used during the live range, give up.
       // Note that this allows us to skip checking if AntiDepReg
       // overlaps with any of the aliases, among other things.
@@ -326,7 +326,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
                "Kill and Def maps aren't consistent for Reg!");
     }
     // Repeat, for all aliases.
-    for (const unsigned *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
+    for (const uint16_t *Alias = TRI->getAliasSet(Reg); *Alias; ++Alias) {
       unsigned AliasReg = *Alias;
       if (KillIndices[AliasReg] == ~0u) {
         KillIndices[AliasReg] = Count;

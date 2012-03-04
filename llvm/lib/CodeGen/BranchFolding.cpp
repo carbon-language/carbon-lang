@@ -1454,7 +1454,7 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
       continue;
     if (MO.isUse()) {
       Uses.insert(Reg);
-      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
+      for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS)
         Uses.insert(*AS);
     } else if (!MO.isDead())
       // Don't try to hoist code in the rare case the terminator defines a
@@ -1516,7 +1516,7 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
       continue;
     if (MO.isUse()) {
       Uses.insert(Reg);
-      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
+      for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS)
         Uses.insert(*AS);
     } else {
       if (Uses.count(Reg)) {
@@ -1525,7 +1525,7 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
           Uses.erase(*SR); // Use getSubRegisters to be conservative
       }
       Defs.insert(Reg);
-      for (const unsigned *AS = TRI->getAliasSet(Reg); *AS; ++AS)
+      for (const uint16_t *AS = TRI->getAliasSet(Reg); *AS; ++AS)
         Defs.insert(*AS);
     }
   }
@@ -1653,7 +1653,7 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
       unsigned Reg = MO.getReg();
       if (!Reg || !LocalDefsSet.count(Reg))
         continue;
-      for (const unsigned *OR = TRI->getOverlaps(Reg); *OR; ++OR)
+      for (const uint16_t *OR = TRI->getOverlaps(Reg); *OR; ++OR)
         LocalDefsSet.erase(*OR);
     }
 
@@ -1666,7 +1666,7 @@ bool BranchFolder::HoistCommonCodeInSuccs(MachineBasicBlock *MBB) {
       if (!Reg)
         continue;
       LocalDefs.push_back(Reg);
-      for (const unsigned *OR = TRI->getOverlaps(Reg); *OR; ++OR)
+      for (const uint16_t *OR = TRI->getOverlaps(Reg); *OR; ++OR)
         LocalDefsSet.insert(*OR);
     }
 

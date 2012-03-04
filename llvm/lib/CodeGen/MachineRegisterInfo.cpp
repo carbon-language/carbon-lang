@@ -269,14 +269,14 @@ bool MachineRegisterInfo::isConstantPhysReg(unsigned PhysReg,
   assert(TargetRegisterInfo::isPhysicalRegister(PhysReg));
 
   // Check if any overlapping register is modified.
-  for (const unsigned *R = TRI->getOverlaps(PhysReg); *R; ++R)
+  for (const uint16_t *R = TRI->getOverlaps(PhysReg); *R; ++R)
     if (!def_empty(*R))
       return false;
 
   // Check if any overlapping register is allocatable so it may be used later.
   if (AllocatableRegs.empty())
     AllocatableRegs = TRI->getAllocatableSet(MF);
-  for (const unsigned *R = TRI->getOverlaps(PhysReg); *R; ++R)
+  for (const uint16_t *R = TRI->getOverlaps(PhysReg); *R; ++R)
     if (AllocatableRegs.test(*R))
       return false;
   return true;

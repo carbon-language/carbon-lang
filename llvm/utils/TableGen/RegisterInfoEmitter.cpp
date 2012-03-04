@@ -271,7 +271,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   const std::vector<CodeGenRegister*> &Regs = RegBank.getRegisters();
 
-  OS << "extern const unsigned " << TargetName << "RegOverlaps[] = {\n";
+  OS << "extern const uint16_t " << TargetName << "RegOverlaps[] = {\n";
 
   // Emit an overlap list for all registers.
   for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
@@ -874,7 +874,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   // Emit the constructor of the class...
   OS << "extern const MCRegisterDesc " << TargetName << "RegDesc[];\n";
-  OS << "extern const unsigned " << TargetName << "RegOverlaps[];\n";
+  OS << "extern const uint16_t " << TargetName << "RegOverlaps[];\n";
   OS << "extern const unsigned " << TargetName << "SubRegsSet[];\n";
   OS << "extern const unsigned " << TargetName << "SuperRegsSet[];\n";
   if (SubRegIndices.size() != 0)

@@ -1294,7 +1294,7 @@ void DwarfDebug::beginFunction(const MachineFunction *MF) {
                MOE = MI->operands_end(); MOI != MOE; ++MOI) {
           if (!MOI->isReg() || !MOI->isDef() || !MOI->getReg())
             continue;
-          for (const unsigned *AI = TRI->getOverlaps(MOI->getReg());
+          for (const uint16_t *AI = TRI->getOverlaps(MOI->getReg());
                unsigned Reg = *AI; ++AI) {
             const MDNode *Var = LiveUserVar[Reg];
             if (!Var)
