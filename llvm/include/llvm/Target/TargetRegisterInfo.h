@@ -34,8 +34,8 @@ class raw_ostream;
 
 class TargetRegisterClass {
 public:
-  typedef const unsigned* iterator;
-  typedef const unsigned* const_iterator;
+  typedef const uint16_t* iterator;
+  typedef const uint16_t* const_iterator;
   typedef const MVT::SimpleValueType* vt_iterator;
   typedef const TargetRegisterClass* const * sc_iterator;
 
@@ -45,7 +45,7 @@ public:
   const unsigned *SubClassMask;
   const sc_iterator SuperClasses;
   const sc_iterator SuperRegClasses;
-  ArrayRef<unsigned> (*OrderFunc)(const MachineFunction&);
+  ArrayRef<uint16_t> (*OrderFunc)(const MachineFunction&);
 
   /// getID() - Return the register class ID number.
   ///
@@ -190,7 +190,7 @@ public:
   ///
   /// By default, this method returns all registers in the class.
   ///
-  ArrayRef<unsigned> getRawAllocationOrder(const MachineFunction &MF) const {
+  ArrayRef<uint16_t> getRawAllocationOrder(const MachineFunction &MF) const {
     return OrderFunc ? OrderFunc(MF) : makeArrayRef(begin(), getNumRegs());
   }
 };
@@ -514,7 +514,7 @@ public:
   ///
   /// Register allocators need only call this function to resolve
   /// target-dependent hints, but it should work without hinting as well.
-  virtual ArrayRef<unsigned>
+  virtual ArrayRef<uint16_t>
   getRawAllocationOrder(const TargetRegisterClass *RC,
                         unsigned HintType, unsigned HintReg,
                         const MachineFunction &MF) const {

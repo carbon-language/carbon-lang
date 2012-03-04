@@ -25,8 +25,8 @@ namespace llvm {
 /// MCRegisterClass - Base class of TargetRegisterClass.
 class MCRegisterClass {
 public:
-  typedef const unsigned* iterator;
-  typedef const unsigned* const_iterator;
+  typedef const uint16_t* iterator;
+  typedef const uint16_t* const_iterator;
 
   const unsigned ID;
   const char *Name;
@@ -34,7 +34,7 @@ public:
   const int CopyCost;
   const bool Allocatable;
   const iterator RegsBegin;
-  const unsigned char *const RegSet;
+  const uint8_t *const RegSet;
   const unsigned RegsSize;
   const unsigned RegSetSize;
 
@@ -136,7 +136,7 @@ private:
   const unsigned *Overlaps;                   // Pointer to the overlaps array
   const unsigned *SubRegs;                    // Pointer to the subregs array
   const unsigned *SuperRegs;                  // Pointer to the superregs array
-  const unsigned short *SubRegIndices;        // Pointer to the subreg lookup
+  const uint16_t *SubRegIndices;              // Pointer to the subreg lookup
                                               // array.
   unsigned NumSubRegIndices;                  // Number of subreg indices.
   DenseMap<unsigned, int> L2DwarfRegs;        // LLVM to Dwarf regs mapping
@@ -152,7 +152,7 @@ public:
                           const MCRegisterClass *C, unsigned NC,
                           const unsigned *O, const unsigned *Sub,
                           const unsigned *Super,
-                          const unsigned short *SubIndices,
+                          const uint16_t *SubIndices,
                           unsigned NumIndices) {
     Desc = D;
     NumRegs = NR;

@@ -71,7 +71,7 @@ TargetRegisterInfo::getMinimalPhysRegClass(unsigned reg, EVT VT) const {
 /// registers for the specific register class.
 static void getAllocatableSetForRC(const MachineFunction &MF,
                                    const TargetRegisterClass *RC, BitVector &R){
-  ArrayRef<unsigned> Order = RC->getRawAllocationOrder(MF);
+  ArrayRef<uint16_t> Order = RC->getRawAllocationOrder(MF);
   for (unsigned i = 0; i != Order.size(); ++i)
     R.set(Order[i]);
 }

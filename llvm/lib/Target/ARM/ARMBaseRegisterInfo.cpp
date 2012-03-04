@@ -290,7 +290,7 @@ ARMBaseRegisterInfo::getRegPressureLimit(const TargetRegisterClass *RC,
 
 /// getRawAllocationOrder - Returns the register allocation order for a
 /// specified register class with a target-dependent hint.
-ArrayRef<unsigned>
+ArrayRef<uint16_t>
 ARMBaseRegisterInfo::getRawAllocationOrder(const TargetRegisterClass *RC,
                                            unsigned HintType, unsigned HintReg,
                                            const MachineFunction &MF) const {
@@ -299,71 +299,71 @@ ARMBaseRegisterInfo::getRawAllocationOrder(const TargetRegisterClass *RC,
   // of register pairs.
 
   // No FP, R9 is available.
-  static const unsigned GPREven1[] = {
+  static const uint16_t GPREven1[] = {
     ARM::R0, ARM::R2, ARM::R4, ARM::R6, ARM::R8, ARM::R10,
     ARM::R1, ARM::R3, ARM::R12,ARM::LR, ARM::R5, ARM::R7,
     ARM::R9, ARM::R11
   };
-  static const unsigned GPROdd1[] = {
+  static const uint16_t GPROdd1[] = {
     ARM::R1, ARM::R3, ARM::R5, ARM::R7, ARM::R9, ARM::R11,
     ARM::R0, ARM::R2, ARM::R12,ARM::LR, ARM::R4, ARM::R6,
     ARM::R8, ARM::R10
   };
 
   // FP is R7, R9 is available.
-  static const unsigned GPREven2[] = {
+  static const uint16_t GPREven2[] = {
     ARM::R0, ARM::R2, ARM::R4,          ARM::R8, ARM::R10,
     ARM::R1, ARM::R3, ARM::R12,ARM::LR, ARM::R5, ARM::R6,
     ARM::R9, ARM::R11
   };
-  static const unsigned GPROdd2[] = {
+  static const uint16_t GPROdd2[] = {
     ARM::R1, ARM::R3, ARM::R5,          ARM::R9, ARM::R11,
     ARM::R0, ARM::R2, ARM::R12,ARM::LR, ARM::R4, ARM::R6,
     ARM::R8, ARM::R10
   };
 
   // FP is R11, R9 is available.
-  static const unsigned GPREven3[] = {
+  static const uint16_t GPREven3[] = {
     ARM::R0, ARM::R2, ARM::R4, ARM::R6, ARM::R8,
     ARM::R1, ARM::R3, ARM::R10,ARM::R12,ARM::LR, ARM::R5, ARM::R7,
     ARM::R9
   };
-  static const unsigned GPROdd3[] = {
+  static const uint16_t GPROdd3[] = {
     ARM::R1, ARM::R3, ARM::R5, ARM::R6, ARM::R9,
     ARM::R0, ARM::R2, ARM::R10,ARM::R12,ARM::LR, ARM::R4, ARM::R7,
     ARM::R8
   };
 
   // No FP, R9 is not available.
-  static const unsigned GPREven4[] = {
+  static const uint16_t GPREven4[] = {
     ARM::R0, ARM::R2, ARM::R4, ARM::R6,          ARM::R10,
     ARM::R1, ARM::R3, ARM::R12,ARM::LR, ARM::R5, ARM::R7, ARM::R8,
     ARM::R11
   };
-  static const unsigned GPROdd4[] = {
+  static const uint16_t GPROdd4[] = {
     ARM::R1, ARM::R3, ARM::R5, ARM::R7,          ARM::R11,
     ARM::R0, ARM::R2, ARM::R12,ARM::LR, ARM::R4, ARM::R6, ARM::R8,
     ARM::R10
   };
 
   // FP is R7, R9 is not available.
-  static const unsigned GPREven5[] = {
+  static const uint16_t GPREven5[] = {
     ARM::R0, ARM::R2, ARM::R4,                   ARM::R10,
     ARM::R1, ARM::R3, ARM::R12,ARM::LR, ARM::R5, ARM::R6, ARM::R8,
     ARM::R11
   };
-  static const unsigned GPROdd5[] = {
+  static const uint16_t GPROdd5[] = {
     ARM::R1, ARM::R3, ARM::R5,                   ARM::R11,
     ARM::R0, ARM::R2, ARM::R12,ARM::LR, ARM::R4, ARM::R6, ARM::R8,
     ARM::R10
   };
 
   // FP is R11, R9 is not available.
-  static const unsigned GPREven6[] = {
+  static const uint16_t GPREven6[] = {
     ARM::R0, ARM::R2, ARM::R4, ARM::R6,
     ARM::R1, ARM::R3, ARM::R10,ARM::R12,ARM::LR, ARM::R5, ARM::R7, ARM::R8
   };
-  static const unsigned GPROdd6[] = {
+  static const uint16_t GPROdd6[] = {
     ARM::R1, ARM::R3, ARM::R5, ARM::R7,
     ARM::R0, ARM::R2, ARM::R10,ARM::R12,ARM::LR, ARM::R4, ARM::R6, ARM::R8
   };

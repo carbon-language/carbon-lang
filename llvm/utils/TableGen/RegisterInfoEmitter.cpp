@@ -372,7 +372,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
     // Emit the register list now.
     OS << "  // " << Name << " Register Class...\n"
-       << "  const unsigned " << Name
+       << "  const uint16_t " << Name
        << "[] = {\n    ";
     for (unsigned i = 0, e = Order.size(); i != e; ++i) {
       Record *Reg = Order[i];
@@ -381,7 +381,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
     OS << "\n  };\n\n";
 
     OS << "  // " << Name << " Bit set.\n"
-       << "  const unsigned char " << Name
+       << "  const uint8_t " << Name
        << "Bits[] = {\n    ";
     BitVectorEmitter BVE;
     for (unsigned i = 0, e = Order.size(); i != e; ++i) {
@@ -414,7 +414,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   // Emit the data table for getSubReg().
   ArrayRef<CodeGenSubRegIndex*> SubRegIndices = RegBank.getSubRegIndices();
   if (SubRegIndices.size()) {
-    OS << "const unsigned short " << TargetName << "SubRegTable[]["
+    OS << "const uint16_t " << TargetName << "SubRegTable[]["
       << SubRegIndices.size() << "] = {\n";
     for (unsigned i = 0, e = Regs.size(); i != e; ++i) {
       const CodeGenRegister::SubRegMap &SRM = Regs[i]->getSubRegs();
@@ -438,8 +438,8 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
       OS << "}" << (i != e ? "," : "") << "\n";
     }
     OS << "};\n\n";
-    OS << "const unsigned short *get" << TargetName
-       << "SubRegTable() {\n  return (const unsigned short *)" << TargetName
+    OS << "const uint16_t *get" << TargetName
+       << "SubRegTable() {\n  return (const uint16_t *)" << TargetName
        << "SubRegTable;\n}\n\n";
   }
 
@@ -452,7 +452,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
      << RegisterClasses.size() << ", " << TargetName << "RegOverlaps, "
      << TargetName << "SubRegsSet, " << TargetName << "SuperRegsSet, ";
   if (SubRegIndices.size() != 0)
-    OS << "(unsigned short*)" << TargetName << "SubRegTable, "
+    OS << "(uint16_t*)" << TargetName << "SubRegTable, "
        << SubRegIndices.size() << ");\n\n";
   else
     OS << "NULL, 0);\n\n";
@@ -657,12 +657,12 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
         OS << "\nstatic inline unsigned " << RC.getName()
            << "AltOrderSelect(const MachineFunction &MF) {"
            << RC.AltOrderSelect << "}\n\n"
-           << "static ArrayRef<unsigned> " << RC.getName()
+           << "static ArrayRef<uint16_t> " << RC.getName()
            << "GetRawAllocationOrder(const MachineFunction &MF) {\n";
         for (unsigned oi = 1 , oe = RC.getNumOrders(); oi != oe; ++oi) {
           ArrayRef<Record*> Elems = RC.getOrder(oi);
           if (!Elems.empty()) {
-            OS << "  static const unsigned AltOrder" << oi << "[] = {";
+            OS << "  static const uint16_t AltOrder" << oi << "[] = {";
             for (unsigned elem = 0; elem != Elems.size(); ++elem)
               OS << (elem ? ", " : " ") << getQualifiedName(Elems[elem]);
             OS << " };\n";
@@ -670,11 +670,11 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
         }
         OS << "  const MCRegisterClass &MCR = " << Target.getName()
            << "MCRegisterClasses[" << RC.getQualifiedName() + "RegClassID];\n"
-           << "  const ArrayRef<unsigned> Order[] = {\n"
+           << "  const ArrayRef<uint16_t> Order[] = {\n"
            << "    makeArrayRef(MCR.begin(), MCR.getNumRegs()";
         for (unsigned oi = 1, oe = RC.getNumOrders(); oi != oe; ++oi)
           if (RC.getOrder(oi).empty())
-            OS << "),\n    ArrayRef<unsigned>(";
+            OS << "),\n    ArrayRef<uint16_t>(";
           else
             OS << "),\n    makeArrayRef(AltOrder" << oi;
         OS << ")\n  };\n  const unsigned Select = " << RC.getName()
@@ -878,7 +878,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   OS << "extern const unsigned " << TargetName << "SubRegsSet[];\n";
   OS << "extern const unsigned " << TargetName << "SuperRegsSet[];\n";
   if (SubRegIndices.size() != 0)
-    OS << "extern const unsigned short *get" << TargetName
+    OS << "extern const uint16_t *get" << TargetName
        << "SubRegTable();\n";
 
   OS << ClassName << "::\n" << ClassName

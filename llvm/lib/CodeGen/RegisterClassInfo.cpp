@@ -85,7 +85,7 @@ void RegisterClassInfo::compute(const TargetRegisterClass *RC) const {
 
   // FIXME: Once targets reserve registers instead of removing them from the
   // allocation order, we can simply use begin/end here.
-  ArrayRef<unsigned> RawOrder = RC->getRawAllocationOrder(*MF);
+  ArrayRef<uint16_t> RawOrder = RC->getRawAllocationOrder(*MF);
   for (unsigned i = 0; i != RawOrder.size(); ++i) {
     unsigned PhysReg = RawOrder[i];
     // Remove reserved registers from the allocation order.

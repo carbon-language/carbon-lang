@@ -119,7 +119,7 @@ public:
   unsigned getRegPressureLimit(const TargetRegisterClass *RC,
                                MachineFunction &MF) const;
 
-  ArrayRef<unsigned> getRawAllocationOrder(const TargetRegisterClass *RC,
+  ArrayRef<uint16_t> getRawAllocationOrder(const TargetRegisterClass *RC,
                                            unsigned HintType, unsigned HintReg,
                                            const MachineFunction &MF) const;
 
