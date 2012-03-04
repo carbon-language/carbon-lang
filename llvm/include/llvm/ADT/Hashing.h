@@ -124,6 +124,10 @@ template <typename T> hash_code hash_value(const T *ptr);
 template <typename T, typename U>
 hash_code hash_value(const std::pair<T, U> &arg);
 
+/// \brief Compute a hash_code for a standard string.
+template <typename T>
+hash_code hash_value(const std::basic_string<T> &arg);
+
 
 /// \brief Override the execution seed with a fixed value.
 ///
@@ -746,6 +750,13 @@ template <typename T> hash_code hash_value(const T *ptr) {
 template <typename T, typename U>
 hash_code hash_value(const std::pair<T, U> &arg) {
   return hash_combine(arg.first, arg.second);
+}
+
+// Declared and documented above, but defined here so that any of the hashing
+// infrastructure is available.
+template <typename T>
+hash_code hash_value(const std::basic_string<T> &arg) {
+  return hash_combine_range(arg.begin(), arg.end());
 }
 
 } // namespace llvm

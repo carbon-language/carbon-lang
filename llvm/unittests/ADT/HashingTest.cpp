@@ -97,6 +97,23 @@ TEST(HashingTest, HashValueStdPair) {
             hash_value(std::make_pair(obj1, std::make_pair(obj2, obj3))));
 }
 
+TEST(HashingTest, HashValueStdString) {
+  std::string s = "Hello World!";
+  EXPECT_EQ(hash_combine_range(s.c_str(), s.c_str() + s.size()), hash_value(s));
+  EXPECT_EQ(hash_combine_range(s.c_str(), s.c_str() + s.size() - 1),
+            hash_value(s.substr(0, s.size() - 1)));
+  EXPECT_EQ(hash_combine_range(s.c_str() + 1, s.c_str() + s.size() - 1),
+            hash_value(s.substr(1, s.size() - 2)));
+
+  std::wstring ws = L"Hello Wide World!";
+  EXPECT_EQ(hash_combine_range(ws.c_str(), ws.c_str() + ws.size()),
+            hash_value(ws));
+  EXPECT_EQ(hash_combine_range(ws.c_str(), ws.c_str() + ws.size() - 1),
+            hash_value(ws.substr(0, ws.size() - 1)));
+  EXPECT_EQ(hash_combine_range(ws.c_str() + 1, ws.c_str() + ws.size() - 1),
+            hash_value(ws.substr(1, ws.size() - 2)));
+}
+
 template <typename T, size_t N> T *begin(T (&arr)[N]) { return arr; }
 template <typename T, size_t N> T *end(T (&arr)[N]) { return arr + N; }
 
