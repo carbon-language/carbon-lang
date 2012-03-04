@@ -935,13 +935,10 @@ RegisterCoalescer::UpdateRegDefsUses(const CoalescerPair &CP) {
     SmallVector<unsigned,8> Ops;
     bool Reads, Writes;
     tie(Reads, Writes) = UseMI->readsWritesVirtualRegister(SrcReg, &Ops);
-    bool Kills = false, Deads = false;
 
     // Replace SrcReg with DstReg in all UseMI operands.
     for (unsigned i = 0, e = Ops.size(); i != e; ++i) {
       MachineOperand &MO = UseMI->getOperand(Ops[i]);
-      Kills |= MO.isKill();
-      Deads |= MO.isDead();
 
       // Make sure we don't create read-modify-write defs accidentally.  We
       // assume here that a SrcReg def cannot be joined into a live DstReg.  If
@@ -960,19 +957,6 @@ RegisterCoalescer::UpdateRegDefsUses(const CoalescerPair &CP) {
     // This instruction is a copy that will be removed.
     if (JoinedCopies.count(UseMI))
       continue;
-
-    if (SubIdx) {
-      // If UseMI was a simple SrcReg def, make sure we didn't turn it into a
-      // read-modify-write of DstReg.
-      if (Deads)
-        UseMI->addRegisterDead(DstReg, TRI);
-      else if (!Reads && Writes)
-        UseMI->addRegisterDefined(DstReg, TRI);
-
-      // Kill flags apply to the whole physical register.
-      if (DstIsPhys && Kills)
-        UseMI->addRegisterKilled(DstReg, TRI);
-    }
 
     DEBUG({
         dbgs() << "\t\tupdated: ";
