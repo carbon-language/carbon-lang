@@ -258,16 +258,6 @@ public:
 
   /// VisitAsmStmt - Transfer function logic for inline asm.
   void VisitAsmStmt(const AsmStmt *A, ExplodedNode *Pred, ExplodedNodeSet &Dst);
-
-  void VisitAsmStmtHelperOutputs(const AsmStmt *A,
-                                 AsmStmt::const_outputs_iterator I,
-                                 AsmStmt::const_outputs_iterator E,
-                                 ExplodedNode *Pred, ExplodedNodeSet &Dst);
-
-  void VisitAsmStmtHelperInputs(const AsmStmt *A,
-                                AsmStmt::const_inputs_iterator I,
-                                AsmStmt::const_inputs_iterator E,
-                                ExplodedNode *Pred, ExplodedNodeSet &Dst);
   
   /// VisitBlockExpr - Transfer function logic for BlockExprs.
   void VisitBlockExpr(const BlockExpr *BE, ExplodedNode *Pred, 

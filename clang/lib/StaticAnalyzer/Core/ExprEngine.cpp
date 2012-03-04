@@ -1642,66 +1642,28 @@ void ExprEngine::evalEagerlyAssume(ExplodedNodeSet &Dst, ExplodedNodeSet &Src,
 }
 
 void ExprEngine::VisitAsmStmt(const AsmStmt *A, ExplodedNode *Pred,
-                                ExplodedNodeSet &Dst) {
-  VisitAsmStmtHelperOutputs(A, A->begin_outputs(), A->end_outputs(), Pred, Dst);
-}
+                              ExplodedNodeSet &Dst) {
+  StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
+  // We have processed both the inputs and the outputs.  All of the outputs
+  // should evaluate to Locs.  Nuke all of their values.
 
-void ExprEngine::VisitAsmStmtHelperOutputs(const AsmStmt *A,
-                                             AsmStmt::const_outputs_iterator I,
-                                             AsmStmt::const_outputs_iterator E,
-                                     ExplodedNode *Pred, ExplodedNodeSet &Dst) {
-  if (I == E) {
-    VisitAsmStmtHelperInputs(A, A->begin_inputs(), A->end_inputs(), Pred, Dst);
-    return;
+  // FIXME: Some day in the future it would be nice to allow a "plug-in"
+  // which interprets the inline asm and stores proper results in the
+  // outputs.
+
+  ProgramStateRef state = Pred->getState();
+
+  for (AsmStmt::const_outputs_iterator OI = A->begin_outputs(),
+       OE = A->end_outputs(); OI != OE; ++OI) {
+    SVal X = state->getSVal(*OI, Pred->getLocationContext());
+    assert (!isa<NonLoc>(X));  // Should be an Lval, or unknown, undef.
+
+    if (isa<Loc>(X))
+      state = state->bindLoc(cast<Loc>(X), UnknownVal());
   }
 
-  ExplodedNodeSet Tmp;
-  Visit(*I, Pred, Tmp);
-  ++I;
-
-  for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end();NI != NE;++NI)
-    VisitAsmStmtHelperOutputs(A, I, E, *NI, Dst);
+  Bldr.generateNode(A, Pred, state);
 }
-
-void ExprEngine::VisitAsmStmtHelperInputs(const AsmStmt *A,
-                                            AsmStmt::const_inputs_iterator I,
-                                            AsmStmt::const_inputs_iterator E,
-                                            ExplodedNode *Pred,
-                                            ExplodedNodeSet &Dst) {
-  if (I == E) {
-    StmtNodeBuilder Bldr(Pred, Dst, *currentBuilderContext);
-    // We have processed both the inputs and the outputs.  All of the outputs
-    // should evaluate to Locs.  Nuke all of their values.
-
-    // FIXME: Some day in the future it would be nice to allow a "plug-in"
-    // which interprets the inline asm and stores proper results in the
-    // outputs.
-
-    ProgramStateRef state = Pred->getState();
-
-    for (AsmStmt::const_outputs_iterator OI = A->begin_outputs(),
-                                   OE = A->end_outputs(); OI != OE; ++OI) {
-
-      SVal X = state->getSVal(*OI, Pred->getLocationContext());
-      assert (!isa<NonLoc>(X));  // Should be an Lval, or unknown, undef.
-
-      if (isa<Loc>(X))
-        state = state->bindLoc(cast<Loc>(X), UnknownVal());
-    }
-
-    Bldr.generateNode(A, Pred, state);
-    return;
-  }
-
-  ExplodedNodeSet Tmp;
-  Visit(*I, Pred, Tmp);
-
-  ++I;
-
-  for (ExplodedNodeSet::iterator NI = Tmp.begin(), NE = Tmp.end(); NI!=NE; ++NI)
-    VisitAsmStmtHelperInputs(A, I, E, *NI, Dst);
-}
-
 
 //===----------------------------------------------------------------------===//
 // Visualization.
