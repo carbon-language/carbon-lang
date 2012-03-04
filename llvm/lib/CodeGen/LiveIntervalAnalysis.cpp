@@ -187,21 +187,9 @@ void LiveIntervals::handleVirtualRegisterDef(MachineBasicBlock *mbb,
     // Get the Idx of the defining instructions.
     SlotIndex defIndex = MIIdx.getRegSlot(MO.isEarlyClobber());
 
-    // Make sure the first definition is not a partial redefinition. Add an
-    // <imp-def> of the full register.
-    // FIXME: LiveIntervals shouldn't modify the code like this.  Whoever
-    // created the machine instruction should annotate it with <undef> flags
-    // as needed.  Then we can simply assert here.  The REG_SEQUENCE lowering
-    // is the main suspect.
-    if (MO.getSubReg()) {
-      mi->addRegisterDefined(interval.reg);
-      // Mark all defs of interval.reg on this instruction as reading <undef>.
-      for (unsigned i = MOIdx, e = mi->getNumOperands(); i != e; ++i) {
-        MachineOperand &MO2 = mi->getOperand(i);
-        if (MO2.isReg() && MO2.getReg() == interval.reg && MO2.getSubReg())
-          MO2.setIsUndef();
-      }
-    }
+    // Make sure the first definition is not a partial redefinition.
+    assert(!MO.readsReg() && "First def cannot also read virtual register "
+           "missing <undef> flag?");
 
     VNInfo *ValNo = interval.getNextValue(defIndex, VNInfoAllocator);
     assert(ValNo->id == 0 && "First value in interval is not 0?");
