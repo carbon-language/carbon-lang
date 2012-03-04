@@ -343,8 +343,8 @@ typedef enum {
  *   operand.
  */
 struct OperandSpecifier {
-  OperandEncoding  encoding;
-  OperandType      type;
+  uint8_t encoding;
+  uint8_t type;
 };
 
 /*
@@ -371,7 +371,7 @@ typedef enum {
  * its operands.
  */
 struct InstructionSpecifier {
-  ModifierType modifierType;
+  uint8_t modifierType;
   uint8_t modifierBase;
   struct OperandSpecifier operands[X86_MAX_OPERANDS];
   

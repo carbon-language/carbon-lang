@@ -320,7 +320,7 @@ static void translateImmediate(MCInst &mcInst, uint64_t immediate,
                                const MCDisassembler *Dis) {  
   // Sign-extend the immediate if necessary.
 
-  OperandType type = operand.type;
+  OperandType type = (OperandType)operand.type;
 
   if (type == TYPE_RELv) {
     switch (insn.displacementSize) {

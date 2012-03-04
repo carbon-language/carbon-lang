@@ -457,11 +457,11 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o, uint32_t &i)
   for (index = 0; index < numInstructions; ++index) {
     o.indent(i * 2) << "{ /* " << index << " */" << "\n";
     i++;
-    
-    o.indent(i * 2) << 
-      stringForModifierType(InstructionSpecifiers[index].modifierType);
+
+    o.indent(i * 2) << stringForModifierType(
+                       (ModifierType)InstructionSpecifiers[index].modifierType);
     o << "," << "\n";
-    
+
     o.indent(i * 2) << "0x";
     o << format("%02hhx", (uint16_t)InstructionSpecifiers[index].modifierBase);
     o << "," << "\n";
@@ -471,11 +471,11 @@ void DisassemblerTables::emitInstructionInfo(raw_ostream &o, uint32_t &i)
 
     for (operandIndex = 0; operandIndex < X86_MAX_OPERANDS; ++operandIndex) {
       o.indent(i * 2) << "{ ";
-      o << stringForOperandEncoding(InstructionSpecifiers[index]
-                                    .operands[operandIndex]
-                                    .encoding);
+      o <<stringForOperandEncoding((OperandEncoding)InstructionSpecifiers[index]
+                                   .operands[operandIndex]
+                                   .encoding);
       o << ", ";
-      o << stringForOperandType(InstructionSpecifiers[index]
+      o << stringForOperandType((OperandType)InstructionSpecifiers[index]
                                 .operands[operandIndex]
                                 .type);
       o << " }";
