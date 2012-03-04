@@ -232,3 +232,20 @@ cond_true2:
 next2:
   ret i32 0
 }
+
+; CHECK: @test12
+define i32 @test12(i32 %x) {
+  %cmp = icmp eq i32 %x, 0
+  br i1 %cmp, label %cond_true, label %cond_false
+
+cond_true:
+  br label %ret
+
+cond_false:
+  br label %ret
+
+ret:
+  %res = phi i32 [ %x, %cond_true ], [ %x, %cond_false ]
+; CHECK: %res = phi i32 [ 0, %cond_true ], [ %x, %cond_false ]
+  ret i32 %res
+}

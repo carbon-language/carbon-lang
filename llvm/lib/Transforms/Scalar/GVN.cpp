@@ -1953,7 +1953,17 @@ unsigned GVN::replaceAllDominatedUsesWith(Value *From, Value *To,
   for (Value::use_iterator UI = From->use_begin(), UE = From->use_end();
        UI != UE; ) {
     Use &U = (UI++).getUse();
-    if (DT->dominates(Root, cast<Instruction>(U.getUser())->getParent())) {
+
+    // If From occurs as a phi node operand then the use implicitly lives in the
+    // corresponding incoming block.  Otherwise it is the block containing the
+    // user that must be dominated by Root.
+    BasicBlock *UsingBlock;
+    if (PHINode *PN = dyn_cast<PHINode>(U.getUser()))
+      UsingBlock = PN->getIncomingBlock(U);
+    else
+      UsingBlock = cast<Instruction>(U.getUser())->getParent();
+
+    if (DT->dominates(Root, UsingBlock)) {
       U.set(To);
       ++Count;
     }
