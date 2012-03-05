@@ -66,8 +66,6 @@ Configs += profile_ios
 UniversalArchs.profile_ios := $(call CheckArches,i386 x86_64 armv6 armv7,profile_ios)
 
 # Configurations which define the ASAN support functions.
-#
-# Note that ASAN doesn't appear to currently support i386.
 Configs += asan_osx
 UniversalArchs.asan_osx := $(call CheckArches,i386 x86_64,asan_osx)
 
