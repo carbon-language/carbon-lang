@@ -41,6 +41,7 @@
 #include "llvm/Analysis/ValueTracking.h"
 #include "llvm/Transforms/Utils/Local.h"
 #include "llvm/ADT/DenseMap.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/Statistic.h"
@@ -66,7 +67,8 @@ struct DenseMapInfo<std::pair<BasicBlock*, unsigned> > {
     return EltTy(reinterpret_cast<BasicBlock*>(-2), 0U);
   }
   static unsigned getHashValue(const std::pair<BasicBlock*, unsigned> &Val) {
-    return DenseMapInfo<void*>::getHashValue(Val.first) + Val.second*2;
+    using llvm::hash_value;
+    return static_cast<unsigned>(hash_value(Val));
   }
   static bool isEqual(const EltTy &LHS, const EltTy &RHS) {
     return LHS == RHS;
