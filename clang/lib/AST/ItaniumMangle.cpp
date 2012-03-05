@@ -553,8 +553,7 @@ void CXXNameMangler::mangleName(const NamedDecl *ND) {
     return;
   }
 
-  while (isa<LinkageSpecDecl>(DC))
-    DC = getEffectiveParentContext(DC);
+  DC = IgnoreLinkageSpecDecls(DC);
 
   if (DC->isTranslationUnit() || isStdNamespace(DC)) {
     // Check if we have a template.
@@ -594,7 +593,8 @@ void CXXNameMangler::mangleName(const TemplateDecl *TD,
 void CXXNameMangler::mangleUnscopedName(const NamedDecl *ND) {
   //  <unscoped-name> ::= <unqualified-name>
   //                  ::= St <unqualified-name>   # ::std::
-  if (isStdNamespace(getEffectiveDeclContext(ND)))
+
+  if (isStdNamespace(IgnoreLinkageSpecDecls(getEffectiveDeclContext(ND))))
     Out << "St";
 
   mangleUnqualifiedName(ND);
@@ -1393,8 +1393,7 @@ void CXXNameMangler::manglePrefix(const DeclContext *DC, bool NoFunction) {
   //           ::= # empty
   //           ::= <substitution>
 
-  while (isa<LinkageSpecDecl>(DC))
-    DC = getEffectiveParentContext(DC);
+  DC = IgnoreLinkageSpecDecls(DC);
 
   if (DC->isTranslationUnit())
     return;
