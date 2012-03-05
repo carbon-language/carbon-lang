@@ -16,43 +16,36 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class NSURLKnown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not(self.sys_params.types_cache.NSString):
+			self.sys_params.types_cache.NSString = self.valobj.GetTarget().FindFirstType('NSString').GetPointerType()
+		if not(self.sys_params.types_cache.NSURL):
+			self.sys_params.types_cache.NSURL = self.valobj.GetTarget().FindFirstType('NSURL').GetPointerType()
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.is_64_bit:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-			self.pointer_size = 8
-		else:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
-			self.pointer_size = 4
-		self.NSString = self.valobj.GetTarget().FindFirstType('NSString')
-		self.NSURL = self.valobj.GetTarget().FindFirstType('NSURL')
 
 	# one pointer is the ISA
 	# then there is one more pointer and 8 bytes of plain data
 	# (which are also present on a 32-bit system)
 	# plus another pointer, and then the real data
-	def offset(self):
-		if self.is_64_bit:
-			return 24
-		else:
-			return 16
+	def offset_text(self):
+		return 24 if self.sys_params.is_64_bit else 16
+	def offset_base(self):
+		return self.offset_text()+self.sys_params.pointer_size
 
 	def url_text(self):
 		text = self.valobj.CreateChildAtOffset("text",
-							self.offset(),
-							self.NSString.GetPointerType())
+							self.offset_text(),
+							self.sys_params.types_cache.NSString)
 		base = self.valobj.CreateChildAtOffset("base",
-							self.offset()+self.pointer_size,
-							self.NSURL.GetPointerType())
+							self.offset_base(),
+							self.sys_params.types_cache.NSURL)
 		my_string = CFString.CFString_SummaryProvider(text,None)
 		if base.GetValueAsUnsigned(0) != 0:
 			my_string = my_string + " (base path: " + NSURL_SummaryProvider(base,None) + ")"
@@ -61,17 +54,15 @@ class NSURLKnown_SummaryProvider:
 
 class NSURLUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
 		self.update()
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 
 	def url_text(self):
 		stream = lldb.SBStream()
@@ -101,10 +92,10 @@ def GetSummary_Impl(valobj):
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSURL':
-		wrapper = NSURLKnown_SummaryProvider(valobj)
+		wrapper = NSURLKnown_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	else:
-		wrapper = NSURLUnknown_SummaryProvider(valobj)
+		wrapper = NSURLUnknown_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
 

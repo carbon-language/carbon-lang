@@ -16,24 +16,26 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class NSCFSet_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not(self.sys_params.types_cache.NSUInteger):
+			if self.sys_params.is_64_bit:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+			else:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
 
 	# one pointer is the ISA
 	# then we have one other internal pointer, plus
 	# 4 bytes worth of flags. hence, these values
 	def offset(self):
-		if self.is_64_bit:
+		if self.sys_params.is_64_bit:
 			return 20
 		else:
 			return 12
@@ -41,23 +43,21 @@ class NSCFSet_SummaryProvider:
 	def count(self):
 		vcount = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
-							self.NSUInteger)
+							self.sys_params.types_cache.NSUInteger)
 		return vcount.GetValueAsUnsigned(0)
 
 
 class NSSetUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
-		self.update()
+		self.sys_params = params
+		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 
 	def count(self):
 		stream = lldb.SBStream()
@@ -68,40 +68,36 @@ class NSSetUnknown_SummaryProvider:
 
 class NSSetI_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not(self.sys_params.types_cache.NSUInteger):
+			if self.sys_params.is_64_bit:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+			else:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.is_64_bit:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		else:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 
 	# we just need to skip the ISA and the count immediately follows
 	def offset(self):
-		if self.is_64_bit:
-			return 8
-		else:
-			return 4
+		return self.sys_params.pointer_size
 
 	def count(self):
 		num_children_vo = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
-							self.NSUInteger)
+							self.sys_params.types_cache.NSUInteger)
 		value = num_children_vo.GetValueAsUnsigned(0)
 		if value != None:
 			# the MSB on immutable sets seems to be taken by some other data
 			# not sure if it is a bug or some weird sort of feature, but masking it out
 			# gets the count right (unless, of course, someone's dictionaries grow
 			#                       too large - but I have not tested this)
-			if self.is_64_bit:
+			if self.sys_params.is_64_bit:
 				value = value & ~0xFF00000000000000
 			else:
 				value = value & ~0xFF000000
@@ -109,63 +105,55 @@ class NSSetI_SummaryProvider:
 
 class NSSetM_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not(self.sys_params.types_cache.NSUInteger):
+			if self.sys_params.is_64_bit:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+			else:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.is_64_bit:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		else:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 
 	# we just need to skip the ISA and the count immediately follows
 	def offset(self):
-		if self.is_64_bit:
-			return 8
-		else:
-			return 4
+		return self.sys_params.pointer_size
 
 	def count(self):
 		num_children_vo = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
-							self.NSUInteger)
+							self.sys_params.types_cache.NSUInteger)
 		return num_children_vo.GetValueAsUnsigned(0)
 
 
 class NSCountedSet_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not (self.sys_params.types_cache.voidptr):
+			self.sys_params.types_cache.voidptr = self.valobj.GetType().GetBasicType(lldb.eBasicTypeVoid).GetPointerType()
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		self.voidptr_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeVoid).GetPointerType()
 
 	# an NSCountedSet is implemented using a CFBag whose pointer just follows the ISA
 	def offset(self):
-		if self.is_64_bit:
-			return 8
-		else:
-			return 4
+		return self.sys_params.pointer_size
 
 	def count(self):
 		cfbag_vo = self.valobj.CreateChildAtOffset("bag_impl",
 							self.offset(),
-							self.voidptr_type)
-		return CFBag.CFBagRef_SummaryProvider(cfbag_vo).length()
+							self.sys_params.types_cache.voidptr)
+		return CFBag.CFBagRef_SummaryProvider(cfbag_vo,self.sys_params).length()
 
 
 def GetSummary_Impl(valobj):
@@ -189,16 +177,16 @@ def GetSummary_Impl(valobj):
 	
 	name_string = class_data.class_name()
 	if name_string == '__NSCFSet':
-		wrapper = NSCFSet_SummaryProvider(valobj)
+		wrapper = NSCFSet_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	elif name_string == '__NSSetI':
-		wrapper = NSSetI_SummaryProvider(valobj)
+		wrapper = NSSetI_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	elif name_string == '__NSSetM':
-		wrapper = NSSetM_SummaryProvider(valobj)
+		wrapper = NSSetM_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	elif name_string == 'NSCountedSet':
-		wrapper = NSCountedSet_SummaryProvider(valobj)
+		wrapper = NSCountedSet_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	else:
 		wrapper = NSSetUnknown_SummaryProvider(valobj)
@@ -233,7 +221,7 @@ def NSSet_SummaryProvider2 (valobj,dict):
 		if summary == None:
 			summary = 'no valid set here'
 		else:
-			if provider.is_64_bit:
+			if provider.sys_params.is_64_bit:
 				summary = int(summary) & ~0x1fff000000000000
 		return str(summary) + ' objects'
 	return ''

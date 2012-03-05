@@ -30,25 +30,23 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class CFBitVectorKnown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = self.sys_params.is_64_bit
-		self.is_little = self.sys_params.is_little
-		self.pointer_size = self.sys_params.pointer_size
-		self.cfruntime_size = 16 if self.is_64_bit else 8
+		self.uiint_size = self.sys_params.types_cache.NSUInteger.GetByteSize()
+		pass
 
 	def __init__(self, valobj, params):
 		self.valobj = valobj;
 		self.sys_params = params
+		if not(self.sys_params.types_cache.NSUInteger):
+			if self.sys_params.is_64_bit:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+			else:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
+		if not(self.sys_params.types_cache.charptr):
+			self.sys_params.types_cache.charptr = self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar).GetPointerType()
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.is_64_bit:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		else:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
-		self.charptr_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar).GetPointerType()
-		self.uiint_size = self.NSUInteger.GetByteSize()
 
 	# we skip the CFRuntimeBase
 	# then the next CFIndex is the count
@@ -56,15 +54,15 @@ class CFBitVectorKnown_SummaryProvider:
 	# that wraps the individual bits
 
 	def contents(self):
-		count_vo = self.valobj.CreateChildAtOffset("count",self.cfruntime_size,
-													self.NSUInteger)
+		count_vo = self.valobj.CreateChildAtOffset("count",self.sys_params.cfruntime_size,
+													self.sys_params.types_cache.NSUInteger)
 		count = count_vo.GetValueAsUnsigned(0)
 		if count == 0:
 			return '(empty)'
 		
 		array_vo = self.valobj.CreateChildAtOffset("data",
-													self.cfruntime_size+2*self.uiint_size,
-													self.charptr_type)
+													self.sys_params.cfruntime_size+2*self.uiint_size,
+													self.sys_params.types_cache.charptr)
 		
 		data_list = []
 		cur_byte_pos = None
@@ -92,17 +90,15 @@ class CFBitVectorKnown_SummaryProvider:
 
 class CFBitVectorUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
-		self.update()
+		self.sys_params = params
+		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 
 	def contents(self):
 		return '*** unknown class *** very bad thing *** find out my name ***'
@@ -141,7 +137,7 @@ def GetSummary_Impl(valobj):
 				wrapper = CFBitVectorUnknown_SummaryProvider(valobj)
 				print pointee_type.GetName()
 	else:
-		wrapper = CFBitVectorUnknown_SummaryProvider(valobj)
+		wrapper = CFBitVectorUnknown_SummaryProvider(valobj, class_data.sys_params)
 		print name_string
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;

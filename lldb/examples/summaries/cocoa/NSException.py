@@ -12,49 +12,43 @@ statistics.add_metric('code_notrun')
 
 class NSKnownException_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not (self.sys_params.types_cache.id):
+			self.sys_params.types_cache.id = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
 
-	# skip the ISA and go to the name pointer
-	def offset(self):
-		if self.is_64_bit:
-			return 8
-		else:
-			return 4
+	def offset_name(self):
+		return self.sys_params.pointer_size
+	def offset_reason(self):
+		return 2*self.sys_params.pointer_size
 
 	def description(self):
 		name_ptr = self.valobj.CreateChildAtOffset("name",
-							self.offset(),
-							self.id_type)
+							self.offset_name(),
+							self.sys_params.types_cache.id)
 		reason_ptr = self.valobj.CreateChildAtOffset("reason",
-							2*self.offset(),
-							self.id_type)
+							self.offset_reason(),
+							self.sys_params.types_cache.id)
 		return CFString.CFString_SummaryProvider(name_ptr,None) + " " + CFString.CFString_SummaryProvider(reason_ptr,None)
-
 
 class NSUnknownException_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
-		self.update()
+		self.sys_params = params
+		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 
 	def description(self):
 		stream = lldb.SBStream()
@@ -85,10 +79,10 @@ def GetSummary_Impl(valobj):
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSException':
-		wrapper = NSKnownException_SummaryProvider(valobj)
+		wrapper = NSKnownException_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	else:
-		wrapper = NSUnknownException_SummaryProvider(valobj)
+		wrapper = NSUnknownException_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
 

@@ -15,28 +15,27 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class NSCFDictionary_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not(self.sys_params.types_cache.NSUInteger):
+			if self.sys_params.is_64_bit:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+			else:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.is_64_bit:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		else:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 
 	# empirically determined on both 32 and 64bit desktop Mac OS X
 	# probably boils down to 2 pointers and 4 bytes of data, but
 	# the description of __CFDictionary is not readily available so most
 	# of this is guesswork, plain and simple
 	def offset(self):
-		if self.is_64_bit:
+		if self.sys_params.is_64_bit:
 			return 20
 		else:
 			return 12
@@ -44,45 +43,41 @@ class NSCFDictionary_SummaryProvider:
 	def num_children(self):
 		num_children_vo = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
-							self.NSUInteger)
+							self.sys_params.types_cache.NSUInteger)
 		return num_children_vo.GetValueAsUnsigned(0)
 
 
 class NSDictionaryI_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not(self.sys_params.types_cache.NSUInteger):
+			if self.sys_params.is_64_bit:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+			else:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.is_64_bit:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		else:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 
 	# we just need to skip the ISA and the count immediately follows
 	def offset(self):
-		if self.is_64_bit:
-			return 8
-		else:
-			return 4
+		return self.sys_params.pointer_size
 
 	def num_children(self):
 		num_children_vo = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
-							self.NSUInteger)
+							self.sys_params.types_cache.NSUInteger)
 		value = num_children_vo.GetValueAsUnsigned(0)
 		if value != None:
 			# the MS6bits on immutable dictionaries seem to be taken by the LSB of capacity
 			# not sure if it is a bug or some weird sort of feature, but masking that out
 			# gets the count right
-			if self.is_64_bit:
+			if self.sys_params.is_64_bit:
 				value = value & ~0xFC00000000000000
 			else:
 				value = value & ~0xFC000000
@@ -90,58 +85,51 @@ class NSDictionaryI_SummaryProvider:
 
 class NSDictionaryM_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not(self.sys_params.types_cache.NSUInteger):
+			if self.sys_params.is_64_bit:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+			else:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.is_64_bit:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		else:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 
 	# we just need to skip the ISA and the count immediately follows
 	def offset(self):
-		if self.is_64_bit:
-			return 8
-		else:
-			return 4
+		return self.sys_params.pointer_size
 
 	def num_children(self):
 		num_children_vo = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
-							self.NSUInteger)
+							self.sys_params.types_cache.NSUInteger)
 		value = num_children_vo.GetValueAsUnsigned(0)
 		if value != None:
-			# the MS6bits on mutable dictionaries seem to be taken by flags for
-			# KVO and probably other features. however, masking it out does get
-			# the count right
-			if self.is_64_bit:
+			# the MS6bits on immutable dictionaries seem to be taken by the LSB of capacity
+			# not sure if it is a bug or some weird sort of feature, but masking that out
+			# gets the count right
+			if self.sys_params.is_64_bit:
 				value = value & ~0xFC00000000000000
 			else:
 				value = value & ~0xFC000000
 		return value
 
-
 class NSDictionaryUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
-		self.update()
+		self.sys_params = params
+		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 
 	def num_children(self):
 		stream = lldb.SBStream()
@@ -171,16 +159,16 @@ def GetSummary_Impl(valobj):
 	
 	name_string = class_data.class_name()
 	if name_string == '__NSCFDictionary':
-		wrapper = NSCFDictionary_SummaryProvider(valobj)
+		wrapper = NSCFDictionary_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	elif name_string == '__NSDictionaryI':
-		wrapper = NSDictionaryI_SummaryProvider(valobj)
+		wrapper = NSDictionaryI_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	elif name_string == '__NSDictionaryM':
-		wrapper = NSDictionaryM_SummaryProvider(valobj)
+		wrapper = NSDictionaryM_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	else:
-		wrapper = NSDictionaryUnknown_SummaryProvider(valobj)
+		wrapper = NSDictionaryUnknown_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
 
@@ -200,14 +188,14 @@ def CFDictionary_SummaryProvider2 (valobj,dict):
 	provider = GetSummary_Impl(valobj);
 	if provider != None:
 		try:
-			summary = (provider.num_children());
+			summary = provider.num_children();
 		except:
 			summary = None
 		if summary == None:
 			summary = 'no valid dictionary here'
 		# needed on OSX Mountain Lion
-		elif provider.is_64_bit:
-			summary = int(summary) & ~0x0f1f000000000000
+		elif provider.sys_params.is_64_bit:
+			summary = summary & ~0x0f1f000000000000
 		return str(summary) + " key/value pairs"
 	return ''
 

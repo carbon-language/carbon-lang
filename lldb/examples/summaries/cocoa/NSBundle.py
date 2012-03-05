@@ -16,41 +16,33 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class NSBundleKnown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not(self.sys_params.types_cache.NSString):
+			self.sys_params.types_cache.NSString = self.valobj.GetTarget().FindFirstType('NSString').GetPointerType()
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.is_64_bit:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-			self.pointer_size = 8
-		else:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
-			self.pointer_size = 4
-		self.NSString = self.valobj.GetTarget().FindFirstType('NSString')
-		self.NSURL = self.valobj.GetTarget().FindFirstType('NSURL')
 
 	# we need to skip the ISA, plus four other values
 	# that are luckily each a pointer in size
 	# which makes our computation trivial :-)
 	def offset(self):
-		return 5 * self.pointer_size
+		return 5 * self.sys_params.pointer_size
 
 	def url_text(self):
 		global statistics
 		text = self.valobj.CreateChildAtOffset("text",
 							self.offset(),
-							self.NSString.GetPointerType())
+							self.sys_params.types_cache.NSString)
 		my_string = text.GetSummary()
 		if (my_string == None) or (my_string == ''):
 			statistics.metric_hit('unknown_class',str(self.valobj) + " triggered unkown pointer location")
-			return NSBundleUnknown_SummaryProvider(self.valobj).url_text()
+			return NSBundleUnknown_SummaryProvider(self.valobj, self.sys_params).url_text()
 		else:
 			statistics.metric_hit('code_notrun',self.valobj)
 			return my_string
@@ -58,17 +50,15 @@ class NSBundleKnown_SummaryProvider:
 
 class NSBundleUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
 		self.update()
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 
 	def url_text(self):
 		stream = lldb.SBStream()
@@ -99,13 +89,13 @@ def GetSummary_Impl(valobj):
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSBundle':
-		wrapper = NSBundleKnown_SummaryProvider(valobj)
+		wrapper = NSBundleKnown_SummaryProvider(valobj, class_data.sys_params)
 		# [NSBundle mainBundle] does return an object that is
 		# not correctly filled out for our purposes, so we still
 		# end up having to run code in that case
 		#statistics.metric_hit('code_notrun',valobj)
 	else:
-		wrapper = NSBundleUnknown_SummaryProvider(valobj)
+		wrapper = NSBundleUnknown_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
 

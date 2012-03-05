@@ -16,30 +16,17 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class NSTaggedNumber_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj, info_bits, data):
+	def __init__(self, valobj, info_bits, data, params):
 		self.valobj = valobj;
-		self.update();
+		self.sys_params = params
 		self.info_bits = info_bits
 		self.data = data
+		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-
-		self.char = self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar)
-		self.short = self.valobj.GetType().GetBasicType(lldb.eBasicTypeShort)
-		self.ushort = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedShort)
-		self.int = self.valobj.GetType().GetBasicType(lldb.eBasicTypeInt)
-		self.long = self.valobj.GetType().GetBasicType(lldb.eBasicTypeLong)
-		self.ulong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		self.longlong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeLongLong)
-		self.ulonglong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLongLong)
-		self.float = self.valobj.GetType().GetBasicType(lldb.eBasicTypeFloat)
-		self.double = self.valobj.GetType().GetBasicType(lldb.eBasicTypeDouble)
 
 	def value(self):
 		# in spite of the plenty of types made available by the public NSNumber API
@@ -60,28 +47,35 @@ class NSTaggedNumber_SummaryProvider:
 
 class NSUntaggedNumber_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
-		self.update()
+		self.sys_params = params
+		if not(self.sys_params.types_cache.char):
+			self.sys_params.types_cache.char = self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar)
+		if not(self.sys_params.types_cache.short):
+			self.sys_params.types_cache.short = self.valobj.GetType().GetBasicType(lldb.eBasicTypeShort)
+		if not(self.sys_params.types_cache.ushort):
+			self.sys_params.types_cache.ushort = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedShort)
+		if not(self.sys_params.types_cache.int):
+			self.sys_params.types_cache.int = self.valobj.GetType().GetBasicType(lldb.eBasicTypeInt)
+		if not(self.sys_params.types_cache.long):
+			self.sys_params.types_cache.long = self.valobj.GetType().GetBasicType(lldb.eBasicTypeLong)
+		if not(self.sys_params.types_cache.ulong):
+			self.sys_params.types_cache.ulong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+		if not(self.sys_params.types_cache.longlong):
+			self.sys_params.types_cache.longlong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeLongLong)
+		if not(self.sys_params.types_cache.ulonglong):
+			self.sys_params.types_cache.ulonglong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLongLong)
+		if not(self.sys_params.types_cache.float):
+			self.sys_params.types_cache.float = self.valobj.GetType().GetBasicType(lldb.eBasicTypeFloat)
+		if not(self.sys_params.types_cache.double):
+			self.sys_params.types_cache.double = self.valobj.GetType().GetBasicType(lldb.eBasicTypeDouble)
+		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-
-		self.char = self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar)
-		self.short = self.valobj.GetType().GetBasicType(lldb.eBasicTypeShort)
-		self.ushort = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedShort)
-		self.int = self.valobj.GetType().GetBasicType(lldb.eBasicTypeInt)
-		self.long = self.valobj.GetType().GetBasicType(lldb.eBasicTypeLong)
-		self.ulong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		self.longlong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeLongLong)
-		self.ulonglong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLongLong)
-		self.float = self.valobj.GetType().GetBasicType(lldb.eBasicTypeFloat)
-		self.double = self.valobj.GetType().GetBasicType(lldb.eBasicTypeDouble)
 
 	def value(self):
 		global statistics
@@ -89,20 +83,20 @@ class NSUntaggedNumber_SummaryProvider:
 		# we then skip one other full pointer worth of data and then fetch the contents
 		# if we are fetching an int64 value, one more pointer must be skipped to get at our data
 		data_type_vo = self.valobj.CreateChildAtOffset("dt",
-							self.pointer_size,
-							self.char)
+							self.sys_params.pointer_size,
+							self.sys_params.types_cache.char)
 		data_type = ((data_type_vo.GetValueAsUnsigned(0) % 256) & 0x1F)
-		data_offset = 2 * self.pointer_size
+		data_offset = 2 * self.sys_params.pointer_size
 		if data_type == 0B00001:
 			data_vo = self.valobj.CreateChildAtOffset("data",
 								data_offset,
-								self.char)
+								self.sys_params.types_cache.char)
 			statistics.metric_hit('code_notrun',self.valobj)
 			return '(char)' + str(data_vo.GetValueAsUnsigned(0))
 		elif data_type == 0B0010:
 			data_vo = self.valobj.CreateChildAtOffset("data",
 								data_offset,
-								self.short)
+								self.sys_params.types_cache.short)
 			statistics.metric_hit('code_notrun',self.valobj)
 			return '(short)' + str(data_vo.GetValueAsUnsigned(0) % (256*256))
 		# IF tagged pointers are possible on 32bit+v2 runtime
@@ -111,7 +105,7 @@ class NSUntaggedNumber_SummaryProvider:
 		elif data_type == 0B0011:
 			data_vo = self.valobj.CreateChildAtOffset("data",
 								data_offset,
-								self.int)
+								self.sys_params.types_cache.int)
 			statistics.metric_hit('code_notrun',self.valobj)
 			return '(int)' + str(data_vo.GetValueAsUnsigned(0) % (256*256*256*256))
 		# apparently, on is_64_bit architectures, these are the only values that will ever
@@ -120,21 +114,21 @@ class NSUntaggedNumber_SummaryProvider:
 			data_offset = data_offset + 8 # 8 is needed even if we are on 32bit
 			data_vo = self.valobj.CreateChildAtOffset("data",
 								data_offset,
-								self.longlong)
+								self.sys_params.types_cache.longlong)
 			statistics.metric_hit('code_notrun',self.valobj)
 			return '(long)' + str(data_vo.GetValueAsUnsigned(0))
 		elif data_type == 0B0100:
-			if self.is_64_bit:
-				data_offset = data_offset + self.pointer_size
+			if self.sys_params.is_64_bit:
+				data_offset = data_offset + self.sys_params.pointer_size
 			data_vo = self.valobj.CreateChildAtOffset("data",
 								data_offset,
-								self.longlong)
+								self.sys_params.types_cache.longlong)
 			statistics.metric_hit('code_notrun',self.valobj)
 			return '(long)' + str(data_vo.GetValueAsUnsigned(0))
 		elif data_type == 0B0101:
 			data_vo = self.valobj.CreateChildAtOffset("data",
 								data_offset,
-								self.longlong)
+								self.sys_params.types_cache.longlong)
 			data_plain = int(str(data_vo.GetValueAsUnsigned(0) & 0x00000000FFFFFFFF))
 			packed = struct.pack('I', data_plain)
 			data_float = struct.unpack('f', packed)[0]
@@ -143,7 +137,7 @@ class NSUntaggedNumber_SummaryProvider:
 		elif data_type == 0B0110:
 			data_vo = self.valobj.CreateChildAtOffset("data",
 								data_offset,
-								self.longlong)
+								self.sys_params.types_cache.longlong)
 			data_plain = data_vo.GetValueAsUnsigned(0)
 			data_double = struct.unpack('d', struct.pack('Q', data_plain))[0]
 			statistics.metric_hit('code_notrun',self.valobj)
@@ -154,17 +148,15 @@ class NSUntaggedNumber_SummaryProvider:
 
 class NSUnknownNumber_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
-		self.update()
+		self.sys_params = params
+		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 
 	def value(self):
 		stream = lldb.SBStream()
@@ -195,14 +187,14 @@ def GetSummary_Impl(valobj):
 	name_string = class_data.class_name()
 	if name_string == 'NSNumber' or name_string == '__NSCFNumber':
 		if class_data.is_tagged():
-			wrapper = NSTaggedNumber_SummaryProvider(valobj,class_data.info_bits(),class_data.value())
+			wrapper = NSTaggedNumber_SummaryProvider(valobj,class_data.info_bits(),class_data.value(), class_data.sys_params)
 			statistics.metric_hit('code_notrun',valobj)
 		else:
 			# the wrapper might be unable to decipher what is into the NSNumber
 			# and then have to run code on it
-			wrapper = NSUntaggedNumber_SummaryProvider(valobj)
+			wrapper = NSUntaggedNumber_SummaryProvider(valobj, class_data.sys_params)
 	else:
-		wrapper = NSUnknownNumber_SummaryProvider(valobj)
+		wrapper = NSUnknownNumber_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
 

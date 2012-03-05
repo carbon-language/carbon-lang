@@ -15,18 +15,20 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class NSIndexSetClass_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not(self.sys_params.types_cache.NSUInteger):
+			if self.sys_params.is_64_bit:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+			else:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
 
 	# NS(Mutable)IndexSet works in one of two modes: when having a compact block of data (e.g. a Range)
 	# the count is stored in the set itself, 3 pointers into it
@@ -37,10 +39,10 @@ class NSIndexSetClass_SummaryProvider:
 	# location to go look for count in mode 2
 	def count(self):
 		mode_chooser_vo = self.valobj.CreateChildAtOffset("mode_chooser",
-							2*self.pointer_size,
-							self.NSUInteger)
+							2*self.sys_params.pointer_size,
+							self.sys_params.types_cache.NSUInteger)
 		mode_chooser =  mode_chooser_vo.GetValueAsUnsigned(0)
-		if self.is_64_bit:
+		if self.sys_params.is_64_bit:
 			mode_chooser = mode_chooser & 0xFFFFFFFFFFFFFF00
 		else:
 			mode_chooser = mode_chooser & 0xFFFFFF00
@@ -50,29 +52,27 @@ class NSIndexSetClass_SummaryProvider:
 			mode = 2
 		if mode == 1:
 			count_vo = self.valobj.CreateChildAtOffset("count",
-								3*self.pointer_size,
-								self.NSUInteger)
+								3*self.sys_params.pointer_size,
+								self.sys_params.types_cache.NSUInteger)
 		else:
 			count_ptr = mode_chooser_vo.GetValueAsUnsigned(0)
 			count_vo = self.valobj.CreateValueFromAddress("count",
-								count_ptr+2*self.pointer_size,
-								self.NSUInteger)
+								count_ptr+2*self.sys_params.pointer_size,
+								self.sys_params.types_cache.NSUInteger)
 		return count_vo.GetValueAsUnsigned(0)
 
 
 class NSIndexSetUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
-		self.update()
+		self.sys_params = params
+		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 
 	def count(self):
 		stream = lldb.SBStream()
@@ -103,10 +103,10 @@ def GetSummary_Impl(valobj):
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSIndexSet' or name_string == 'NSMutableIndexSet':
-		wrapper = NSIndexSetClass_SummaryProvider(valobj)
+		wrapper = NSIndexSetClass_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	else:
-		wrapper = NSIndexSetUnknown_SummaryProvider(valobj)
+		wrapper = NSIndexSetUnknown_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
 

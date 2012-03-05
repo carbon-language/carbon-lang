@@ -1,6 +1,14 @@
-# a wrapper for the Objective-C runtime for use by LLDB
+"""
+Objective-C runtime wrapper for use by LLDB Python formatters
+
+part of The LLVM Compiler Infrastructure
+This file is distributed under the University of Illinois Open Source
+License. See LICENSE.TXT for details.
+"""
 import lldb
 import cache
+import attrib_fromdict
+import functools
 
 class Utilities:
 	@staticmethod
@@ -72,11 +80,11 @@ class RoT_Data:
 			self.sys_params = params
 			self.valobj = rot_pointer
 			#self.flags = Utilities.read_child_of(self.valobj,0,self.sys_params.uint32_t)
-			self.instanceStart = Utilities.read_child_of(self.valobj,4,self.sys_params.uint32_t)
-			self.instanceSize = Utilities.read_child_of(self.valobj,8,self.sys_params.uint32_t)
+			#self.instanceStart = Utilities.read_child_of(self.valobj,4,self.sys_params.uint32_t)
+			self.instanceSize = None # lazy fetching
 			offset = 24 if self.sys_params.is_64_bit else 16
 			#self.ivarLayoutPtr = Utilities.read_child_of(self.valobj,offset,self.sys_params.addr_ptr_type)
-			self.namePointer = Utilities.read_child_of(self.valobj,offset,self.sys_params.addr_ptr_type)
+			self.namePointer = Utilities.read_child_of(self.valobj,offset,self.sys_params.types_cache.addr_ptr_type)
 			self.check_valid()
 		else:
 			self.valid = False
@@ -85,7 +93,7 @@ class RoT_Data:
 			if not(Utilities.is_valid_identifier(self.name)):
 				self.valid = False
 
-	# perform sanity checks on the contents of this class_rw_t
+	# perform sanity checks on the contents of this class_ro_t
 	def check_valid(self):
 		self.valid = True
 		# misaligned pointers seem to be possible for this field
@@ -95,13 +103,25 @@ class RoT_Data:
 
 	def __str__(self):
 		return \
-		 "instanceStart = " + hex(self.instanceStart) + "\n" + \
-		 "instanceSize = " + hex(self.instanceSize) + "\n" + \
+		 "instanceSize = " + hex(self.instance_size()) + "\n" + \
 		 "namePointer = " + hex(self.namePointer) + " --> " + self.name
 
 	def is_valid(self):
 		return self.valid
 
+	def instance_size(self,align=False):
+		if self.is_valid() == False:
+			return None
+		if self.instanceSize == None:
+			self.instanceSize = Utilities.read_child_of(self.valobj,8,self.sys_params.types_cache.uint32_t)
+		if align:
+			unalign = self.instance_size(False)
+			if self.sys_params.is_64_bit:
+				return ((unalign + 7) & ~7) % 0x100000000
+			else:
+				return ((unalign + 3) & ~3) % 0x100000000
+		else:
+			return self.instanceSize
 
 class RwT_Data:
 	def __init__(self,rwt_pointer,params):
@@ -110,12 +130,12 @@ class RwT_Data:
 			self.valobj = rwt_pointer
 			#self.flags = Utilities.read_child_of(self.valobj,0,self.sys_params.uint32_t)
 			#self.version = Utilities.read_child_of(self.valobj,4,self.sys_params.uint32_t)
-			self.roPointer = Utilities.read_child_of(self.valobj,8,self.sys_params.addr_ptr_type)
+			self.roPointer = Utilities.read_child_of(self.valobj,8,self.sys_params.types_cache.addr_ptr_type)
 			self.check_valid()
 		else:
 			self.valid = False
 		if self.valid:
-			self.rot = self.valobj.CreateValueFromAddress("rot",self.roPointer,self.sys_params.addr_ptr_type).AddressOf()
+			self.rot = self.valobj.CreateValueFromAddress("rot",self.roPointer,self.sys_params.types_cache.addr_ptr_type).AddressOf()
 			self.data = RoT_Data(self.rot,self.sys_params)
 
 	# perform sanity checks on the contents of this class_rw_t
@@ -138,53 +158,56 @@ class Class_Data_V2:
 		if (isa_pointer != None) and (Utilities.is_valid_pointer(isa_pointer.GetValueAsUnsigned(),params.pointer_size, allow_tagged=False)):
 			self.sys_params = params
 			self.valobj = isa_pointer
-			self.isaPointer = Utilities.read_child_of(self.valobj,0,self.sys_params.addr_ptr_type)
-			self.superclassIsaPointer = Utilities.read_child_of(self.valobj,1*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
-			self.cachePointer = Utilities.read_child_of(self.valobj,2*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
-			self.vtablePointer = Utilities.read_child_of(self.valobj,3*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
-			self.dataPointer = Utilities.read_child_of(self.valobj,4*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
 			self.check_valid()
 		else:
 			self.valid = False
 		if self.valid:
-			self.rwt = self.valobj.CreateValueFromAddress("rwt",self.dataPointer,self.sys_params.addr_ptr_type).AddressOf()
+			self.rwt = self.valobj.CreateValueFromAddress("rwt",self.dataPointer,self.sys_params.types_cache.addr_ptr_type).AddressOf()
 			self.data = RwT_Data(self.rwt,self.sys_params)
 
 	# perform sanity checks on the contents of this class_t
+	# this call tries to minimize the amount of data fetched- as soon as we have "proven"
+	# that we have an invalid object, we stop reading
 	def check_valid(self):
 		self.valid = True
+		
+		self.isaPointer = Utilities.read_child_of(self.valobj,0,self.sys_params.types_cache.addr_ptr_type)
 		if not(Utilities.is_valid_pointer(self.isaPointer,self.sys_params.pointer_size,allow_tagged=False)):
-			self.valid = False
-			return
-		if not(Utilities.is_valid_pointer(self.superclassIsaPointer,self.sys_params.pointer_size,allow_tagged=False)):
-			# NULL is a valid value for superclass (it means we have reached NSObject)
-			if self.superclassIsaPointer != 0:
-				self.valid = False
-				return
-		if not(Utilities.is_valid_pointer(self.cachePointer,self.sys_params.pointer_size,allow_tagged=False)):
-			self.valid = False
-			return
-		if not(Utilities.is_valid_pointer(self.vtablePointer,self.sys_params.pointer_size,allow_tagged=False)):
-			self.valid = False
-			return
-		if not(Utilities.is_valid_pointer(self.dataPointer,self.sys_params.pointer_size,allow_tagged=False)):
 			self.valid = False
 			return
 		if not(Utilities.is_allowed_pointer(self.isaPointer)):
 			self.valid = False
 			return
-		if not(Utilities.is_allowed_pointer(self.superclassIsaPointer)):
-			# NULL is a valid value for superclass (it means we have reached NSObject)
-			if self.superclassIsaPointer != 0:
-				self.valid = False
-				return
+
+		self.cachePointer = Utilities.read_child_of(self.valobj,2*self.sys_params.pointer_size,self.sys_params.types_cache.addr_ptr_type)
+		if not(Utilities.is_valid_pointer(self.cachePointer,self.sys_params.pointer_size,allow_tagged=False)):
+			self.valid = False
+			return
 		if not(Utilities.is_allowed_pointer(self.cachePointer)):
+			self.valid = False
+			return
+
+		self.vtablePointer = Utilities.read_child_of(self.valobj,3*self.sys_params.pointer_size,self.sys_params.types_cache.addr_ptr_type)
+		if not(Utilities.is_valid_pointer(self.vtablePointer,self.sys_params.pointer_size,allow_tagged=False)):
 			self.valid = False
 			return
 		if not(Utilities.is_allowed_pointer(self.vtablePointer)):
 			self.valid = False
 			return
+
+		self.dataPointer = Utilities.read_child_of(self.valobj,4*self.sys_params.pointer_size,self.sys_params.types_cache.addr_ptr_type)
+		if not(Utilities.is_valid_pointer(self.dataPointer,self.sys_params.pointer_size,allow_tagged=False)):
+			self.valid = False
+			return
 		if not(Utilities.is_allowed_pointer(self.dataPointer)):
+			self.valid = False
+			return
+
+		self.superclassIsaPointer = Utilities.read_child_of(self.valobj,1*self.sys_params.pointer_size,self.sys_params.types_cache.addr_ptr_type)
+		if not(Utilities.is_valid_pointer(self.superclassIsaPointer,self.sys_params.pointer_size,allow_tagged=False, allow_NULL=True)):
+			self.valid = False
+			return
+		if not(Utilities.is_allowed_pointer(self.superclassIsaPointer)):
 			self.valid = False
 			return
 
@@ -197,6 +220,14 @@ class Class_Data_V2:
 			if self.class_name().startswith("NSKVONotifying_"):
 				return True
 		return False
+
+	# some CF classes have a valid ObjC isa in their CFRuntimeBase
+	# but instead of being class-specific this isa points to a match-'em-all class
+	# which is __NSCFType (the versions without __ also exists and we are matching to it
+	#                      just to be on the safe side)
+	def is_cftype(self):
+		if self.is_valid():
+			return self.name == '__NSCFType' or self.name == 'NSCFType'
 
 	def get_superclass(self):
 		if self.is_valid():
@@ -231,14 +262,7 @@ class Class_Data_V2:
 	def instance_size(self,align=False):
 		if self.is_valid() == False:
 			return None
-		if align:
-			unalign = self.instance_size(False)
-			if self.sys_params.is_64_bit:
-				return ((unalign + 7) & ~7) % 0x100000000
-			else:
-				return ((unalign + 3) & ~3) % 0x100000000
-		else:
-			return self.rwt.rot.instanceSize
+		return self.rwt.rot.instance_size(align)
 
 # runtime v1 is much less intricate than v2 and stores relevant information directly in the class_t object
 class Class_Data_V1:
@@ -247,12 +271,7 @@ class Class_Data_V1:
 			self.valid = True
 			self.sys_params = params
 			self.valobj = isa_pointer
-			self.isaPointer = Utilities.read_child_of(self.valobj,0,self.sys_params.addr_ptr_type)
-			self.superclassIsaPointer = Utilities.read_child_of(self.valobj,1*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
-			self.namePointer = Utilities.read_child_of(self.valobj,2*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
-			self.version = Utilities.read_child_of(self.valobj,3*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
-			self.info = Utilities.read_child_of(self.valobj,4*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
-			self.instanceSize = Utilities.read_child_of(self.valobj,5*self.sys_params.pointer_size,self.sys_params.addr_ptr_type)
+			self.check_valid()
 		else:
 			self.valid = False
 		if self.valid:
@@ -263,17 +282,21 @@ class Class_Data_V1:
 	# perform sanity checks on the contents of this class_t
 	def check_valid(self):
 		self.valid = True
+
+		self.isaPointer = Utilities.read_child_of(self.valobj,0,self.sys_params.types_cache.addr_ptr_type)
 		if not(Utilities.is_valid_pointer(self.isaPointer,self.sys_params.pointer_size,allow_tagged=False)):
 			self.valid = False
 			return
-		if not(Utilities.is_valid_pointer(self.superclassIsaPointer,self.sys_params.pointer_size,allow_tagged=False)):
-			# NULL is a valid value for superclass (it means we have reached NSObject)
-			if self.superclassIsaPointer != 0:
-				self.valid = False
-				return
-		if not(Utilities.is_valid_pointer(self.namePointer,self.sys_params.pointer_size,allow_tagged=False,allow_NULL=True)):
+
+		self.superclassIsaPointer = Utilities.read_child_of(self.valobj,1*self.sys_params.pointer_size,self.sys_params.types_cache.addr_ptr_type)
+		if not(Utilities.is_valid_pointer(self.superclassIsaPointer,self.sys_params.pointer_size,allow_tagged=False,allow_NULL=True)):
 			self.valid = False
 			return
+
+		self.namePointer = Utilities.read_child_of(self.valobj,2*self.sys_params.pointer_size,self.sys_params.types_cache.addr_ptr_type)
+		#if not(Utilities.is_valid_pointer(self.namePointer,self.sys_params.pointer_size,allow_tagged=False,allow_NULL=False)):
+		#	self.valid = False
+		#	return
 
 	# in general, KVO is implemented by transparently subclassing
 	# however, there could be exceptions where a class does something else
@@ -284,6 +307,14 @@ class Class_Data_V1:
 			if self.class_name().startswith("NSKVONotifying_"):
 				return True
 		return False
+
+	# some CF classes have a valid ObjC isa in their CFRuntimeBase
+	# but instead of being class-specific this isa points to a match-'em-all class
+	# which is __NSCFType (the versions without __ also exists and we are matching to it
+	#                      just to be on the safe side)
+	def is_cftype(self):
+		if self.is_valid():
+			return self.name == '__NSCFType' or self.name == 'NSCFType'
 
 	def get_superclass(self):
 		if self.is_valid():
@@ -307,9 +338,7 @@ class Class_Data_V1:
 		return 'isaPointer = ' + hex(self.isaPointer) + "\n" + \
 		 "superclassIsaPointer = " + hex(self.superclassIsaPointer) + "\n" + \
 		 "namePointer = " + hex(self.namePointer) + " --> " + self.name + \
-		 "version = " + hex(self.version) + "\n" + \
-		 "info = " + hex(self.info) + "\n" + \
-		 "instanceSize = " + hex(self.instanceSize) + "\n"
+		 "instanceSize = " + hex(self.instanceSize()) + "\n"
 
 	def is_tagged(self):
 		return False
@@ -317,6 +346,8 @@ class Class_Data_V1:
 	def instance_size(self,align=False):
 		if self.is_valid() == False:
 			return None
+		if self.instanceSize == None:
+			self.instanceSize = Utilities.read_child_of(self.valobj,5*self.sys_params.pointer_size,self.sys_params.types_cache.addr_ptr_type)
 		if align:
 			unalign = self.instance_size(False)
 			if self.sys_params.is_64_bit:
@@ -381,6 +412,9 @@ class TaggedClass_Data:
 	def is_kvo(self):
 		return False
 
+	def is_cftype(self):
+		return False
+
 	# we would need to go around looking for the superclass or ask the runtime
 	# for now, we seem not to require support for this operation so we will merrily
 	# pretend to be at a root point in the hierarchy
@@ -395,7 +429,7 @@ class TaggedClass_Data:
 	def instance_size(self,align=False):
 		if self.is_valid() == False:
 			return None
-		return 8 if self.sys_params.is_64_bit else 4
+		return self.sys_params.pointer_size
 
 
 class InvalidClass_Data:
@@ -404,40 +438,106 @@ class InvalidClass_Data:
 	def is_valid(self):
 		return False
 
+@functools.total_ordering
+class Version:
+	def __init__(self, major, minor, release, build_string):
+		self._major = major
+		self._minor = minor
+		self._release = release
+		self._build_string = build_string
+
+	def get_major(self):
+		return self._major
+	def get_minor(self):
+		return self._minor
+	def get_release(self):
+		return self._release
+	def get_build_string(self):
+		return self._build_string
+
+	major = property(get_major,None)
+	minor = property(get_minor,None)
+	release = property(get_release,None)
+	build_string = property(get_build_string,None)
+
+	def __lt__(self,other):
+		if (self.major < other.major):
+			return True
+		if (self.minor < other.minor):
+			return True
+		if (self.release < other.release):
+			return True
+		# build strings are not compared since they are heavily platform-dependent and might not always
+		# be available
+		return False
+
+	def __eq__(self,other):
+		return (self.major == other.major) and \
+		       (self.minor == other.minor) and \
+		       (self.release == other.release) and \
+		       (self.build_string == other.build_string)
+
 runtime_version = cache.Cache()
 os_version = cache.Cache()
+types_caches = cache.Cache()
+isa_caches = cache.Cache()
 
-# TODO: make more extensive use of this class in the individual formatters
-# instead of recalculating the same information - since we are building this object
-# it makes sense to pass it around to the formatters
 class SystemParameters:
 	def __init__(self,valobj):
 		self.adjust_for_architecture(valobj)
+		self.adjust_for_process(valobj)
 
-	def adjust_for_architecture(self,valobj):
-		self.process = valobj.GetTarget().GetProcess()
-		self.is_64_bit = (self.process.GetAddressByteSize() == 8)
-		self.is_little = (self.process.GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.process.GetAddressByteSize()
-		self.addr_type = valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		self.addr_ptr_type = self.addr_type.GetPointerType()
-		self.uint32_t = valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
+	def adjust_for_process(self, valobj):
 		global runtime_version
 		global os_version
-		pid = self.process.GetProcessID()
-		if runtime_version.look_for_key(pid):
-			self.runtime_version = runtime_version.get_value(pid)
+		global types_caches
+		global isa_caches
+		
+		process = valobj.GetTarget().GetProcess()
+		self.pid = process.GetProcessID()
+		
+		if runtime_version.look_for_key(self.pid):
+			self.runtime_version = runtime_version.get_value(self.pid)
 		else:
-			self.runtime_version = ObjCRuntime.runtime_version(self.process)
-			runtime_version.add_item(pid,self.runtime_version)
-		if os_version.look_for_key(pid):
-			self.is_lion = os_version.get_value(pid)
+			self.runtime_version = ObjCRuntime.runtime_version(process)
+			runtime_version.add_item(self.pid,self.runtime_version)
+		
+		if os_version.look_for_key(self.pid):
+			self.is_lion = os_version.get_value(self.pid)
 		else:
 			self.is_lion = Utilities.check_is_osx_lion(valobj.GetTarget())
-			os_version.add_item(pid,self.is_lion)
+			os_version.add_item(self.pid,self.is_lion)
+		
+		if types_caches.look_for_key(self.pid):
+			self.types_cache = types_caches.get_value(self.pid)
+		else:
+			self.types_cache = attrib_fromdict.AttributesDictionary(allow_reset=False)
+			self.types_cache.addr_type = valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+			self.types_cache.addr_ptr_type = self.types_cache.addr_type.GetPointerType()
+			self.types_cache.uint32_t = valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
+			types_caches.add_item(self.pid,self.types_cache)
+		
+		if isa_caches.look_for_key(self.pid):
+			self.isa_cache = isa_caches.get_value(self.pid)
+		else:
+			self.isa_cache = cache.Cache()
+			isa_caches.add_item(self.pid,self.isa_cache)
+
+	def adjust_for_architecture(self,valobj):
+		process = valobj.GetTarget().GetProcess()
+		self.pointer_size = process.GetAddressByteSize()
+		self.is_64_bit = (self.pointer_size == 8)
+		self.is_little = (process.GetByteOrder() == lldb.eByteOrderLittle)
 		self.cfruntime_size = 16 if self.is_64_bit else 8
 
-isa_cache = cache.Cache()
+	# a simple helper function that makes it more explicit that one is calculating
+	# an offset that is made up of X pointers and Y bytes of additional data
+	# taking into account pointer size - if you know there is going to be some padding
+	# you can pass that in and it will be taken into account (since padding may be different between
+	# 32 and 64 bit versions, you can pass padding value for both, the right one will be used)
+	def calculate_offset(self, num_pointers = 0, bytes_count = 0, padding32 = 0, padding64 = 0):
+		value = bytes_count + num_pointers*self.pointer_size
+		return value + padding64 if self.is_64_bit else value + padding32
 
 class ObjCRuntime:
 
@@ -477,32 +577,28 @@ class ObjCRuntime:
 		self.isa_value = None
 
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
-		self.addr_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		self.addr_ptr_type = self.addr_type.GetPointerType()
+		pass
 
 # an ObjC pointer can either be tagged or must be aligned
 	def is_tagged(self):
 		if self.valobj is None:
 			return False
-		return (Utilities.is_valid_pointer(self.unsigned_value,self.pointer_size, allow_tagged=True) and \
-		not(Utilities.is_valid_pointer(self.unsigned_value,self.pointer_size, allow_tagged=False)))
+		return (Utilities.is_valid_pointer(self.unsigned_value,self.sys_params.pointer_size, allow_tagged=True) and \
+		not(Utilities.is_valid_pointer(self.unsigned_value,self.sys_params.pointer_size, allow_tagged=False)))
 
 	def is_valid(self):
 		if self.valobj is None:
 			return False
 		if self.valobj.IsInScope() == False:
 			return False
-		return Utilities.is_valid_pointer(self.unsigned_value,self.pointer_size, allow_tagged=True)
+		return Utilities.is_valid_pointer(self.unsigned_value,self.sys_params.pointer_size, allow_tagged=True)
 
 	def read_isa(self):
 		if self.isa_value != None:
 			return self.isa_value
 		isa_pointer = self.valobj.CreateChildAtOffset("cfisa",
 			0,
-			self.addr_ptr_type)
+			self.sys_params.types_cache.addr_ptr_type)
 		if isa_pointer == None or isa_pointer.IsValid() == False:
 			return None;
 		if isa_pointer.GetValueAsUnsigned(1) == 1:
@@ -530,7 +626,7 @@ class ObjCRuntime:
 		isa_value = isa.GetValueAsUnsigned(1)
 		if isa_value == 1:
 			return InvalidClass_Data()
-		data = isa_cache.get_value(isa_value,default=None)
+		data = self.sys_params.isa_cache.get_value(isa_value,default=None)
 		if data != None:
 			return data
 		if self.sys_params.runtime_version == 2:
@@ -540,6 +636,6 @@ class ObjCRuntime:
 		if data == None:
 			return InvalidClass_Data()
 		if data.is_valid():
-			isa_cache.add_item(isa_value,data,ok_to_replace=True)
+			self.sys_params.isa_cache.add_item(isa_value,data,ok_to_replace=True)
 		return data
 

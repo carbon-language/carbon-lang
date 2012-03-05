@@ -15,27 +15,26 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class CFBagRef_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not(self.sys_params.types_cache.NSUInteger):
+			if self.sys_params.is_64_bit:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+			else:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		if self.is_64_bit:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		else:
-			self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 
 	# 12 bytes on i386
 	# 20 bytes on x64
 	# most probably 2 pointers and 4 bytes of data
 	def offset(self):
-		if self.is_64_bit:
+		if self.sys_params.is_64_bit:
 			return 20
 		else:
 			return 12
@@ -43,23 +42,21 @@ class CFBagRef_SummaryProvider:
 	def length(self):
 		size = self.valobj.CreateChildAtOffset("count",
 							self.offset(),
-							self.NSUInteger)
+							self.sys_params.types_cache.NSUInteger)
 		return size.GetValueAsUnsigned(0)
 
 
 class CFBagUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
-		self.update()
+		self.sys_params = params
+		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 
 	def length(self):
 		stream = lldb.SBStream()
@@ -98,10 +95,10 @@ def GetSummary_Impl(valobj):
 			actual_name = pointee_type.GetName()
 			if actual_name == '__CFBag' or \
 			   actual_name == 'const struct __CFBag':
-				wrapper = CFBagRef_SummaryProvider(valobj)
+				wrapper = CFBagRef_SummaryProvider(valobj, class_data.sys_params)
 				statistics.metric_hit('code_notrun',valobj)
 				return wrapper
-	wrapper = CFBagUnknown_SummaryProvider(valobj)
+	wrapper = CFBagUnknown_SummaryProvider(valobj, class_data.sys_params)
 	statistics.metric_hit('unknown_class',str(valobj) + " seen as " + actual_name)
 	return wrapper;
 
@@ -120,7 +117,7 @@ def CFBag_SummaryProvider (valobj,dict):
 		if summary == None:
 			summary = 'no valid set here'
 		else:
-			if provider.is_64_bit:
+			if provider.sys_params.is_64_bit:
 				summary = summary & ~0x1fff000000000000
 		if summary == 1:
 			return '1 item'

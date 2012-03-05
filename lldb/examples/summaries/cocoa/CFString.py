@@ -102,10 +102,7 @@ class CFStringSynthProvider:
 				return self.handle_unicode_string_safe();
 			else:
 				# a full pointer is skipped here before getting to the live data
-				if self.is_64_bit == False:
-					pointer = pointer + 4
-				else:
-					pointer = pointer + 8;
+				pointer = pointer + self.pointer_size
 		else:
 			pointer = self.valobj.GetValueAsUnsigned(0) + self.size_of_cfruntime_base();
 			# read 8 bytes here and make an address out of them
@@ -123,19 +120,13 @@ class CFStringSynthProvider:
 			"(char*)\"" + pystr.encode('utf-8') + "\"")
 
 	def handle_inline_explicit(self):
-		if self.is_64_bit:
-			offset = 24
-		else:
-			offset = 12
+		offset = 3*self.pointer_size
 		offset = offset + self.valobj.GetValueAsUnsigned(0)
 		return self.valobj.CreateValueFromExpression("content",
 				"(char*)(" + str(offset) + ")")
 
 	def handle_mutable_string(self):
-		if self.is_64_bit:
-			offset = 16
-		else:
-			offset = 8
+		offset = 2 * self.pointer_size
 		data = self.valobj.CreateChildAtOffset("content",
 			offset, self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar).GetPointerType());
 		data_value = data.GetValueAsUnsigned(0)
@@ -208,21 +199,12 @@ class CFStringSynthProvider:
 		if name == "special":
 			return 4;
 
-	def is_64bit(self):
-		return self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8
-
-	def is_little_endian(self):
-		return self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle
-
 	# CFRuntimeBase is defined as having an additional
 	# 4 bytes (padding?) on LP64 architectures
 	# to get its size we add up sizeof(pointer)+4
 	# and then add 4 more bytes if we are on a 64bit system
 	def size_of_cfruntime_base(self):
-		if self.is_64_bit == True:
-			return 8+4+4;
-		else:
-			return 4+4;
+		return self.pointer_size+4+(4 if self.is_64_bit else 0)
 
 	# the info bits are part of the CFRuntimeBase structure
 	# to get at them we have to skip a uintptr_t and then get
@@ -230,10 +212,7 @@ class CFStringSynthProvider:
 	# on big-endian this means going to byte 3, if we are on
 	# little endian (OSX & iOS), this means reading byte 0
 	def offset_of_info_bits(self):
-		if self.is_64_bit == True:
-			offset = 8;
-		else:
-			offset = 4;
+		offset = self.pointer_size
 		if self.is_little == False:
 			offset = offset + 3;
 		return offset;
@@ -278,8 +257,9 @@ class CFStringSynthProvider:
 	# preparing ourselves to read into memory
 	# by adjusting architecture-specific info
 	def adjust_for_architecture(self):
-		self.is_64_bit = self.is_64bit();
-		self.is_little = self.is_little_endian();
+		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		self.is_64_bit = self.pointer_size == 8
+		self.is_little = self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle
 
 	# reading info bits out of the CFString and computing
 	# useful values to get at the real data

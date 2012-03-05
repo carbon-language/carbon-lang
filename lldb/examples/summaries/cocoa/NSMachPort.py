@@ -15,24 +15,26 @@ statistics.add_metric('code_notrun')
 # obey the interface specification for synthetic children providers
 class NSMachPortKnown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not(self.sys_params.types_cache.NSUInteger):
+			if self.sys_params.is_64_bit:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
+			else:
+				self.sys_params.types_cache.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedInt)
 		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
 
 	# one pointer is the ISA
 	# then we have one other internal pointer, plus
 	# 4 bytes worth of flags. hence, these values
 	def offset(self):
-		if self.is_64_bit:
+		if self.sys_params.is_64_bit:
 			return 20
 		else:
 			return 12
@@ -40,23 +42,21 @@ class NSMachPortKnown_SummaryProvider:
 	def port(self):
 		vport = self.valobj.CreateChildAtOffset("port",
 							self.offset(),
-							self.NSUInteger)
+							self.sys_params.types_cache.NSUInteger)
 		return vport.GetValueAsUnsigned(0)
 
 
 class NSMachPortUnknown_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
-		self.update()
+		self.sys_params = params
+		self.update();
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 
 	def port(self):
 		stream = lldb.SBStream()
@@ -86,10 +86,10 @@ def GetSummary_Impl(valobj):
 	
 	name_string = class_data.class_name()
 	if name_string == 'NSMachPort':
-		wrapper = NSMachPortKnown_SummaryProvider(valobj)
+		wrapper = NSMachPortKnown_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	else:
-		wrapper = NSMachPortUnknown_SummaryProvider(valobj)
+		wrapper = NSMachPortUnknown_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
 

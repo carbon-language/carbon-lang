@@ -37,12 +37,11 @@ def osx_to_python_time(osx):
 # obey the interface specification for synthetic children providers
 class NSTaggedDate_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj, info_bits, data):
+	def __init__(self, valobj, info_bits, data, params):
 		self.valobj = valobj;
+		self.sys_params = params
 		self.update();
 		# NSDate is not using its info_bits for info like NSNumber is
 		# so we need to regroup info_bits and data
@@ -50,18 +49,6 @@ class NSTaggedDate_SummaryProvider:
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-
-		self.char = self.valobj.GetType().GetBasicType(lldb.eBasicTypeChar)
-		self.short = self.valobj.GetType().GetBasicType(lldb.eBasicTypeShort)
-		self.ushort = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedShort)
-		self.int = self.valobj.GetType().GetBasicType(lldb.eBasicTypeInt)
-		self.long = self.valobj.GetType().GetBasicType(lldb.eBasicTypeLong)
-		self.ulong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		self.longlong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeLongLong)
-		self.ulonglong = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLongLong)
-		self.float = self.valobj.GetType().GetBasicType(lldb.eBasicTypeFloat)
-		self.double = self.valobj.GetType().GetBasicType(lldb.eBasicTypeDouble)
 
 	def value(self):
 		# the value of the date-time object is wrapped into the pointer value
@@ -74,96 +61,78 @@ class NSTaggedDate_SummaryProvider:
 
 class NSUntaggedDate_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not (self.sys_params.types_cache.double):
+			self.sys_params.types_cache.double = self.valobj.GetType().GetBasicType(lldb.eBasicTypeDouble)
 		self.update()
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		self.double = self.valobj.GetType().GetBasicType(lldb.eBasicTypeDouble)
 
 	def offset(self):
-		if self.is_64_bit:
-			return 8
-		else:
-			return 4
-
+		return self.sys_params.pointer_size
 
 	def value(self):
 		value = self.valobj.CreateChildAtOffset("value",
 							self.offset(),
-							self.double)
+							self.sys_params.types_cache.double)
 		value_double = struct.unpack('d', struct.pack('Q', value.GetValueAsUnsigned(0)))[0]
 		return time.ctime(osx_to_python_time(value_double))
 
 class NSCalendarDate_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not (self.sys_params.types_cache.double):
+			self.sys_params.types_cache.double = self.valobj.GetType().GetBasicType(lldb.eBasicTypeDouble)
 		self.update()
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		self.NSUInteger = self.valobj.GetType().GetBasicType(lldb.eBasicTypeUnsignedLong)
-		self.double = self.valobj.GetType().GetBasicType(lldb.eBasicTypeDouble)
 
 	def offset(self):
-		if self.is_64_bit:
-			return 16
-		else:
-			return 8
-
+		return 2*self.sys_params.pointer_size
 
 	def value(self):
 		value = self.valobj.CreateChildAtOffset("value",
 							self.offset(),
-							self.double)
+							self.sys_params.types_cache.double)
 		value_double = struct.unpack('d', struct.pack('Q', value.GetValueAsUnsigned(0)))[0]
 		return time.ctime(osx_to_python_time(value_double))
 
 class NSTimeZoneClass_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
-	def __init__(self, valobj):
+	def __init__(self, valobj, params):
 		self.valobj = valobj;
+		self.sys_params = params
+		if not (self.sys_params.types_cache.voidptr):
+			self.sys_params.types_cache.voidptr = self.valobj.GetType().GetBasicType(lldb.eBasicTypeVoid).GetPointerType()
 		self.update()
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
-		self.voidptr_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeVoid).GetPointerType()
 
 	def offset(self):
-		if self.is_64_bit:
-			return 8
-		else:
-			return 4
+		return self.sys_params.pointer_size
 
 	def timezone(self):
 		tz_string = self.valobj.CreateChildAtOffset("tz_name",
 							self.offset(),
-							self.voidptr_type)
+							self.sys_params.types_cache.voidptr)
 		return CFString.CFString_SummaryProvider(tz_string,None)
 
 class NSUnknownDate_SummaryProvider:
 	def adjust_for_architecture(self):
-		self.is_64_bit = (self.valobj.GetTarget().GetProcess().GetAddressByteSize() == 8)
-		self.is_little = (self.valobj.GetTarget().GetProcess().GetByteOrder() == lldb.eByteOrderLittle)
-		self.pointer_size = self.valobj.GetTarget().GetProcess().GetAddressByteSize()
+		pass
 
 	def __init__(self, valobj):
 		self.valobj = valobj;
@@ -171,7 +140,6 @@ class NSUnknownDate_SummaryProvider:
 
 	def update(self):
 		self.adjust_for_architecture();
-		self.id_type = self.valobj.GetType().GetBasicType(lldb.eBasicTypeObjCID)
 
 	def value(self):
 		stream = lldb.SBStream()
@@ -202,19 +170,19 @@ def GetSummary_Impl(valobj):
 	name_string = class_data.class_name()
 	if name_string == 'NSDate' or name_string == '__NSDate' or name_string == '__NSTaggedDate':
 		if class_data.is_tagged():
-			wrapper = NSTaggedDate_SummaryProvider(valobj,class_data.info_bits(),class_data.value())
+			wrapper = NSTaggedDate_SummaryProvider(valobj,class_data.info_bits(),class_data.value(), class_data.sys_params)
 			statistics.metric_hit('code_notrun',valobj)
 		else:
-			wrapper = NSUntaggedDate_SummaryProvider(valobj)
+			wrapper = NSUntaggedDate_SummaryProvider(valobj, class_data.sys_params)
 			statistics.metric_hit('code_notrun',valobj)
 	elif name_string == 'NSCalendarDate':
-		wrapper = NSCalendarDate_SummaryProvider(valobj)
+		wrapper = NSCalendarDate_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	elif name_string == '__NSTimeZone':
-		wrapper = NSTimeZoneClass_SummaryProvider(valobj)
+		wrapper = NSTimeZoneClass_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('code_notrun',valobj)
 	else:
-		wrapper = NSUnknownDate_SummaryProvider(valobj)
+		wrapper = NSUnknownDate_SummaryProvider(valobj, class_data.sys_params)
 		statistics.metric_hit('unknown_class',str(valobj) + " seen as " + name_string)
 	return wrapper;
 

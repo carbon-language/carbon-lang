@@ -1,6 +1,7 @@
 """
-Objective-C runtime wrapper - Replicates the behavior of AppleObjCRuntimeV2.cpp in Python code
-for the benefit of synthetic children providers and Python summaries
+Objective-C runtime wrapper for use by LLDB Python formatters
+This is an old and deprecated version of the wrapper
+The new code, to which everyone should convert, is in objc_runtime.py
 
 part of The LLVM Compiler Infrastructure
 This file is distributed under the University of Illinois Open Source
