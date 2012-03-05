@@ -167,7 +167,7 @@ void clang::RewriteMacrosInInput(Preprocessor &PP, raw_ostream *OS) {
       // Comment out a whole run of tokens instead of bracketing each one with
       // comments.  Add a leading space if RawTok didn't have one.
       bool HasSpace = RawTok.hasLeadingSpace();
-      RB.InsertTextAfter(RawOffs, " /*"+HasSpace);
+      RB.InsertTextAfter(RawOffs, &" /*"[HasSpace]);
       unsigned EndPos;
 
       do {
