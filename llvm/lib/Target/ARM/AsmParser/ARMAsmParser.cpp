@@ -1085,11 +1085,6 @@ public:
     return VectorList.Count == 1;
   }
 
-  bool isVecListTwoD() const {
-    if (!isSingleSpacedVectorList()) return false;
-    return VectorList.Count == 2;
-  }
-
   bool isVecListDPair() const {
     if (!isSingleSpacedVectorList()) return false;
     return (ARMMCRegisterClasses[ARM::DPairRegClassID]

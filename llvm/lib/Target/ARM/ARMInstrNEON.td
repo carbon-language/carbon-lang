@@ -89,15 +89,6 @@ def VecListOneD : RegisterOperand<DPR, "printVectorListOne"> {
   let ParserMatchClass = VecListOneDAsmOperand;
 }
 // Register list of two sequential D registers.
-def VecListTwoDAsmOperand : AsmOperandClass {
-  let Name = "VecListTwoD";
-  let ParserMethod = "parseVectorList";
-  let RenderMethod = "addVecListOperands";
-}
-def VecListTwoD : RegisterOperand<DPR, "printVectorListTwo"> {
-  let ParserMatchClass = VecListTwoDAsmOperand;
-}
-// FIXME: Replace all VecListTwoD with VecListDPair
 def VecListDPairAsmOperand : AsmOperandClass {
   let Name = "VecListDPair";
   let ParserMethod = "parseVectorList";
