@@ -70,8 +70,6 @@ private:
   RecordKeeper &Records;
   CodeGenTarget Target;
   std::vector<const CodeGenInstruction*> NumberedInstructions;
-  std::vector<unsigned> Opcodes;
-  std::map<unsigned, std::vector<OperandInfo> > Operands;
 public:
   std::string PredicateNamespace;
   std::string GuardPrefix, GuardPostfix;
