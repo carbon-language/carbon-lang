@@ -2433,6 +2433,18 @@ ClangExpressionDeclMap::FindExternalVisibleDecls (NameSearchContext &context,
             
             AddOneType(context, class_user_type, current_id, true);
             
+            if (method_decl->isInstance())
+            {
+                // self is a pointer to the object
+                
+                QualType class_pointer_type = method_decl->getASTContext().getPointerType(class_qual_type);
+                
+                TypeFromUser self_user_type(class_pointer_type.getAsOpaquePtr(),
+                                            &method_decl->getASTContext());
+                
+                m_struct_vars->m_object_pointer_type = self_user_type;
+            }
+            
             return;
         }
         
