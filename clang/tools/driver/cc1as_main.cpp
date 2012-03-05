@@ -323,7 +323,7 @@ static bool ExecuteAssembler(AssemblerInvocation &Opts,
   // FIXME: There is a bit of code duplication with addPassesToEmitFile.
   if (Opts.OutputType == AssemblerInvocation::FT_Asm) {
     MCInstPrinter *IP =
-      TheTarget->createMCInstPrinter(Opts.OutputAsmVariant, *MAI, *STI);
+      TheTarget->createMCInstPrinter(Opts.OutputAsmVariant, *MAI, *MRI, *STI);
     MCCodeEmitter *CE = 0;
     MCAsmBackend *MAB = 0;
     if (Opts.ShowEncoding) {
