@@ -10,6 +10,8 @@ class TestObjCStepping(TestBase):
 
     mydir = os.path.join("lang", "objc", "objc-stepping")
 
+    # rdar://problem/10986147
+    @unittest2.expectedFailure
     @unittest2.skipUnless(sys.platform.startswith("darwin"), "requires Darwin")
     @python_api_test
     def test_with_dsym_and_python_api(self):
@@ -17,6 +19,8 @@ class TestObjCStepping(TestBase):
         self.buildDsym()
         self.objc_stepping()
 
+    # rdar://problem/10986147
+    @unittest2.expectedFailure
     @python_api_test
     def test_with_dwarf_and_python_api(self):
         """Test stepping through ObjC method dispatch in various forms."""
