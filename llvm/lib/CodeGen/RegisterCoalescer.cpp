@@ -490,7 +490,7 @@ bool RegisterCoalescer::AdjustCopiesBackFrom(const CoalescerPair &CP,
   // If the IntB live range is assigned to a physical register, and if that
   // physreg has sub-registers, update their live intervals as well.
   if (TargetRegisterInfo::isPhysicalRegister(IntB.reg)) {
-    for (const unsigned *SR = TRI->getSubRegisters(IntB.reg); *SR; ++SR) {
+    for (const uint16_t *SR = TRI->getSubRegisters(IntB.reg); *SR; ++SR) {
       if (!LIS->hasInterval(*SR))
         continue;
       LiveInterval &SRLI = LIS->getInterval(*SR);
@@ -974,7 +974,7 @@ static bool removeIntervalIfEmpty(LiveInterval &li, LiveIntervals *LIS,
                                   const TargetRegisterInfo *TRI) {
   if (li.empty()) {
     if (TargetRegisterInfo::isPhysicalRegister(li.reg))
-      for (const unsigned* SR = TRI->getSubRegisters(li.reg); *SR; ++SR) {
+      for (const uint16_t* SR = TRI->getSubRegisters(li.reg); *SR; ++SR) {
         if (!LIS->hasInterval(*SR))
           continue;
         LiveInterval &sli = LIS->getInterval(*SR);
@@ -1936,7 +1936,7 @@ bool RegisterCoalescer::runOnMachineFunction(MachineFunction &fn) {
         // remain alive.
         if (!TargetRegisterInfo::isPhysicalRegister(reg))
           continue;
-        for (const unsigned *SR = TRI->getSubRegisters(reg);
+        for (const uint16_t *SR = TRI->getSubRegisters(reg);
              unsigned S = *SR; ++SR)
           if (LIS->hasInterval(S) && LIS->getInterval(S).liveAt(DefIdx))
             MI->addRegisterDefined(S, TRI);

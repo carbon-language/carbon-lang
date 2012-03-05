@@ -159,7 +159,7 @@ public:
   /// getSubClassMask - Returns a bit vector of subclasses, including this one.
   /// The vector is indexed by class IDs, see hasSubClassEq() above for how to
   /// use it.
-  const unsigned *getSubClassMask() const {
+  const uint32_t *getSubClassMask() const {
     return SubClassMask;
   }
 
@@ -340,7 +340,7 @@ public:
   /// isSuperRegister - Returns true if regB is a super-register of regA.
   ///
   bool isSuperRegister(unsigned regA, unsigned regB) const {
-    for (const unsigned *regList = getSuperRegisters(regA); *regList;++regList){
+    for (const uint16_t *regList = getSuperRegisters(regA); *regList;++regList){
       if (*regList == regB) return true;
     }
     return false;
@@ -387,7 +387,7 @@ public:
   /// Reg so its sub-register of index SubIdx is Reg.
   unsigned getMatchingSuperReg(unsigned Reg, unsigned SubIdx,
                                const TargetRegisterClass *RC) const {
-    for (const unsigned *SRs = getSuperRegisters(Reg); unsigned SR = *SRs;++SRs)
+    for (const uint16_t *SRs = getSuperRegisters(Reg); unsigned SR = *SRs;++SRs)
       if (Reg == getSubReg(SR, SubIdx) && RC->contains(SR))
         return SR;
     return 0;

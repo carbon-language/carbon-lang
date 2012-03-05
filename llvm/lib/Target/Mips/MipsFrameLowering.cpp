@@ -216,7 +216,7 @@ void MipsFrameLowering::emitPrologue(MachineFunction &MF) const {
       // If Reg is a double precision register, emit two cfa_offsets,
       // one for each of the paired single precision registers.
       if (Mips::AFGR64RegisterClass->contains(Reg)) {
-        const unsigned *SubRegs = RegInfo->getSubRegisters(Reg);
+        const uint16_t *SubRegs = RegInfo->getSubRegisters(Reg);
         MachineLocation DstML0(MachineLocation::VirtualFP, Offset);
         MachineLocation DstML1(MachineLocation::VirtualFP, Offset + 4);
         MachineLocation SrcML0(*SubRegs);

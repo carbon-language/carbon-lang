@@ -234,7 +234,7 @@ void CriticalAntiDepBreaker::PrescanInstruction(MachineInstr *MI) {
 
     if (MO.isUse() && Special) {
       if (KeepRegs.insert(Reg)) {
-        for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+        for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
              *Subreg; ++Subreg)
           KeepRegs.insert(*Subreg);
       }
@@ -280,7 +280,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
       Classes[Reg] = 0;
       RegRefs.erase(Reg);
       // Repeat, for all subregs.
-      for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+      for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
            *Subreg; ++Subreg) {
         unsigned SubregReg = *Subreg;
         DefIndices[SubregReg] = Count;
@@ -290,7 +290,7 @@ void CriticalAntiDepBreaker::ScanInstruction(MachineInstr *MI,
         RegRefs.erase(SubregReg);
       }
       // Conservatively mark super-registers as unusable.
-      for (const unsigned *Super = TRI->getSuperRegisters(Reg);
+      for (const uint16_t *Super = TRI->getSuperRegisters(Reg);
            *Super; ++Super) {
         unsigned SuperReg = *Super;
         Classes[SuperReg] = reinterpret_cast<TargetRegisterClass *>(-1);

@@ -64,7 +64,7 @@ MachineCopyPropagation::SourceNoLongerAvailable(unsigned Reg,
     unsigned MappedDef = SI->second;
     // Source of copy is no longer available for propagation.
     if (AvailCopyMap.erase(MappedDef)) {
-      for (const unsigned *SR = TRI->getSubRegisters(MappedDef); *SR; ++SR)
+      for (const uint16_t *SR = TRI->getSubRegisters(MappedDef); *SR; ++SR)
         AvailCopyMap.erase(*SR);
     }
   }
@@ -73,7 +73,7 @@ MachineCopyPropagation::SourceNoLongerAvailable(unsigned Reg,
     if (SI != SrcMap.end()) {
       unsigned MappedDef = SI->second;
       if (AvailCopyMap.erase(MappedDef)) {
-        for (const unsigned *SR = TRI->getSubRegisters(MappedDef); *SR; ++SR)
+        for (const uint16_t *SR = TRI->getSubRegisters(MappedDef); *SR; ++SR)
           AvailCopyMap.erase(*SR);
       }
     }
@@ -206,7 +206,7 @@ bool MachineCopyPropagation::CopyPropagateBlock(MachineBasicBlock &MBB) {
       }
       CopyMap[Def] = MI;
       AvailCopyMap[Def] = MI;
-      for (const unsigned *SR = TRI->getSubRegisters(Def); *SR; ++SR) {
+      for (const uint16_t *SR = TRI->getSubRegisters(Def); *SR; ++SR) {
         CopyMap[*SR] = MI;
         AvailCopyMap[*SR] = MI;
       }

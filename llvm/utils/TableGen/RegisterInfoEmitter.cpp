@@ -288,7 +288,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "};\n\n";
 
-  OS << "extern const unsigned " << TargetName << "SubRegsSet[] = {\n";
+  OS << "extern const uint16_t " << TargetName << "SubRegsSet[] = {\n";
   // Emit the empty sub-registers list
   OS << "  /* Empty_SubRegsSet */ 0,\n";
   // Loop over all of the registers which have sub-registers, emitting the
@@ -307,7 +307,7 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
   }
   OS << "};\n\n";
 
-  OS << "extern const unsigned " << TargetName << "SuperRegsSet[] = {\n";
+  OS << "extern const uint16_t " << TargetName << "SuperRegsSet[] = {\n";
   // Emit the empty super-registers list
   OS << "  /* Empty_SuperRegsSet */ 0,\n";
   // Loop over all of the registers which have super-registers, emitting the
@@ -629,7 +629,7 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
       // Give the register class a legal C name if it's anonymous.
       std::string Name = RC.getName();
 
-      OS << "static const unsigned " << Name << "SubclassMask[] = {\n  ";
+      OS << "static const uint32_t " << Name << "SubclassMask[] = {\n  ";
       printBitVectorAsHex(OS, RC.getSubClasses(), 32);
       OS << "\n};\n\n";
     }
@@ -863,8 +863,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
     OS << "  };\n  assert(A && B && \"Missing regclass\");\n"
        << "  --Idx;\n"
        << "  assert(Idx < " << SubRegIndices.size() << " && \"Bad subreg\");\n"
-       << "  const unsigned *TV = Table[B->getID()][Idx];\n"
-       << "  const unsigned *SC = A->getSubClassMask();\n"
+       << "  const uint32_t *TV = Table[B->getID()][Idx];\n"
+       << "  const uint32_t *SC = A->getSubClassMask();\n"
        << "  for (unsigned i = 0; i != " << BVWords << "; ++i)\n"
        << "    if (unsigned Common = TV[i] & SC[i])\n"
        << "      return getRegClass(32*i + CountTrailingZeros_32(Common));\n"
@@ -875,8 +875,8 @@ RegisterInfoEmitter::runTargetDesc(raw_ostream &OS, CodeGenTarget &Target,
   // Emit the constructor of the class...
   OS << "extern const MCRegisterDesc " << TargetName << "RegDesc[];\n";
   OS << "extern const uint16_t " << TargetName << "RegOverlaps[];\n";
-  OS << "extern const unsigned " << TargetName << "SubRegsSet[];\n";
-  OS << "extern const unsigned " << TargetName << "SuperRegsSet[];\n";
+  OS << "extern const uint16_t " << TargetName << "SubRegsSet[];\n";
+  OS << "extern const uint16_t " << TargetName << "SuperRegsSet[];\n";
   if (SubRegIndices.size() != 0)
     OS << "extern const uint16_t *get" << TargetName
        << "SubRegTable();\n";

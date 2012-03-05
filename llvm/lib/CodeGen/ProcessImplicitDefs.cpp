@@ -113,7 +113,7 @@ bool ProcessImplicitDefs::runOnMachineFunction(MachineFunction &fn) {
         unsigned Reg = MI->getOperand(0).getReg();
         ImpDefRegs.insert(Reg);
         if (TargetRegisterInfo::isPhysicalRegister(Reg)) {
-          for (const unsigned *SS = TRI->getSubRegisters(Reg); *SS; ++SS)
+          for (const uint16_t *SS = TRI->getSubRegisters(Reg); *SS; ++SS)
             ImpDefRegs.insert(*SS);
         }
         continue;

@@ -235,7 +235,7 @@ HexagonFrameLowering::spillCalleeSavedRegisters(
     //
     // Check if we can use a double-word store.
     //
-    const unsigned* SuperReg = TRI->getSuperRegisters(Reg);
+    const uint16_t* SuperReg = TRI->getSuperRegisters(Reg);
 
     // Assume that there is exactly one superreg.
     assert(SuperReg[0] && !SuperReg[1] && "Expected exactly one superreg");
@@ -243,7 +243,7 @@ HexagonFrameLowering::spillCalleeSavedRegisters(
     const TargetRegisterClass* SuperRegClass = 0;
 
     if (ContiguousRegs && (i < CSI.size()-1)) {
-      const unsigned* SuperRegNext = TRI->getSuperRegisters(CSI[i+1].getReg());
+      const uint16_t* SuperRegNext = TRI->getSuperRegisters(CSI[i+1].getReg());
       assert(SuperRegNext[0] && !SuperRegNext[1] &&
              "Expected exactly one superreg");
       SuperRegClass = TRI->getMinimalPhysRegClass(SuperReg[0]);
@@ -295,14 +295,14 @@ bool HexagonFrameLowering::restoreCalleeSavedRegisters(
     //
     // Check if we can use a double-word load.
     //
-    const unsigned* SuperReg = TRI->getSuperRegisters(Reg);
+    const uint16_t* SuperReg = TRI->getSuperRegisters(Reg);
     const TargetRegisterClass* SuperRegClass = 0;
 
     // Assume that there is exactly one superreg.
     assert(SuperReg[0] && !SuperReg[1] && "Expected exactly one superreg");
     bool CanUseDblLoad = false;
     if (ContiguousRegs && (i < CSI.size()-1)) {
-      const unsigned* SuperRegNext = TRI->getSuperRegisters(CSI[i+1].getReg());
+      const uint16_t* SuperRegNext = TRI->getSuperRegisters(CSI[i+1].getReg());
       assert(SuperRegNext[0] && !SuperRegNext[1] &&
              "Expected exactly one superreg");
       SuperRegClass = TRI->getMinimalPhysRegClass(SuperReg[0]);

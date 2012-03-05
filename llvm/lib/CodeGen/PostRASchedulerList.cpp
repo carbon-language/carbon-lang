@@ -377,7 +377,7 @@ void SchedulePostRATDList::StartBlockForKills(MachineBasicBlock *BB) {
       unsigned Reg = *I;
       LiveRegs.set(Reg);
       // Repeat, for all subregs.
-      for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+      for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
            *Subreg; ++Subreg)
         LiveRegs.set(*Subreg);
     }
@@ -391,7 +391,7 @@ void SchedulePostRATDList::StartBlockForKills(MachineBasicBlock *BB) {
         unsigned Reg = *I;
         LiveRegs.set(Reg);
         // Repeat, for all subregs.
-        for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+        for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
              *Subreg; ++Subreg)
           LiveRegs.set(*Subreg);
       }
@@ -418,7 +418,7 @@ bool SchedulePostRATDList::ToggleKillFlag(MachineInstr *MI,
   MO.setIsKill(false);
   bool AllDead = true;
   const unsigned SuperReg = MO.getReg();
-  for (const unsigned *Subreg = TRI->getSubRegisters(SuperReg);
+  for (const uint16_t *Subreg = TRI->getSubRegisters(SuperReg);
        *Subreg; ++Subreg) {
     if (LiveRegs.test(*Subreg)) {
       MI->addOperand(MachineOperand::CreateReg(*Subreg,
@@ -471,7 +471,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       LiveRegs.reset(Reg);
 
       // Repeat for all subregs.
-      for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+      for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
            *Subreg; ++Subreg)
         LiveRegs.reset(*Subreg);
     }
@@ -490,7 +490,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
       if (!killedRegs.test(Reg)) {
         kill = true;
         // A register is not killed if any subregs are live...
-        for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+        for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
              *Subreg; ++Subreg) {
           if (LiveRegs.test(*Subreg)) {
             kill = false;
@@ -524,7 +524,7 @@ void SchedulePostRATDList::FixupKills(MachineBasicBlock *MBB) {
 
       LiveRegs.set(Reg);
 
-      for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+      for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
            *Subreg; ++Subreg)
         LiveRegs.set(*Subreg);
     }

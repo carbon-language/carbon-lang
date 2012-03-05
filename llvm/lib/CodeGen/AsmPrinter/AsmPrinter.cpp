@@ -798,7 +798,7 @@ void AsmPrinter::EmitDwarfRegOp(const MachineLocation &MLoc) const {
   const TargetRegisterInfo *TRI = TM.getRegisterInfo();
   int Reg = TRI->getDwarfRegNum(MLoc.getReg(), false);
 
-  for (const unsigned *SR = TRI->getSuperRegisters(MLoc.getReg());
+  for (const uint16_t *SR = TRI->getSuperRegisters(MLoc.getReg());
        *SR && Reg < 0; ++SR) {
     Reg = TRI->getDwarfRegNum(*SR, false);
     // FIXME: Get the bit range this register uses of the superregister

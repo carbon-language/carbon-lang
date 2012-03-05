@@ -95,7 +95,7 @@ void MipsExpandPseudo::ExpandBuildPairF64(MachineBasicBlock& MBB,
   unsigned LoReg = I->getOperand(1).getReg(), HiReg = I->getOperand(2).getReg();
   const MCInstrDesc& Mtc1Tdd = TII->get(Mips::MTC1);
   DebugLoc dl = I->getDebugLoc();
-  const unsigned* SubReg =
+  const uint16_t* SubReg =
     TM.getRegisterInfo()->getSubRegisters(DstReg);
 
   // mtc1 Lo, $fp
@@ -111,7 +111,7 @@ void MipsExpandPseudo::ExpandExtractElementF64(MachineBasicBlock& MBB,
   unsigned N = I->getOperand(2).getImm();
   const MCInstrDesc& Mfc1Tdd = TII->get(Mips::MFC1);
   DebugLoc dl = I->getDebugLoc();
-  const unsigned* SubReg = TM.getRegisterInfo()->getSubRegisters(SrcReg);
+  const uint16_t* SubReg = TM.getRegisterInfo()->getSubRegisters(SrcReg);
 
   BuildMI(MBB, I, dl, Mfc1Tdd, DstReg).addReg(*(SubReg + N));
 }

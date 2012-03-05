@@ -962,7 +962,7 @@ static void InitPredRedefs(MachineBasicBlock *BB, SmallSet<unsigned,4> &Redefs,
          E = BB->livein_end(); I != E; ++I) {
     unsigned Reg = *I;
     Redefs.insert(Reg);
-    for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+    for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
          *Subreg; ++Subreg)
       Redefs.insert(*Subreg);
   }
@@ -983,7 +983,7 @@ static void UpdatePredRedefs(MachineInstr *MI, SmallSet<unsigned,4> &Redefs,
       Defs.push_back(Reg);
     else if (MO.isKill()) {
       Redefs.erase(Reg);
-      for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
+      for (const uint16_t *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
         Redefs.erase(*SR);
     }
   }
@@ -996,7 +996,7 @@ static void UpdatePredRedefs(MachineInstr *MI, SmallSet<unsigned,4> &Redefs,
                                                 true/*IsImp*/,false/*IsKill*/));
     } else {
       Redefs.insert(Reg);
-      for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
+      for (const uint16_t *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
         Redefs.insert(*SR);
     }
   }
@@ -1335,7 +1335,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
           // These are defined before ctrl flow reach the 'false' instructions.
           // They cannot be modified by the 'true' instructions.
           ExtUses.insert(Reg);
-          for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
+          for (const uint16_t *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
             ExtUses.insert(*SR);
         }
       }
@@ -1344,7 +1344,7 @@ bool IfConverter::IfConvertDiamond(BBInfo &BBI, IfcvtKind Kind,
         unsigned Reg = Defs[i];
         if (!ExtUses.count(Reg)) {
           RedefsByFalse.insert(Reg);
-          for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
+          for (const uint16_t *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
             RedefsByFalse.insert(*SR);
         }
       }

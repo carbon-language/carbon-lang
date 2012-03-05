@@ -76,7 +76,7 @@ static void TrackDefUses(MachineInstr *MI,
   for (unsigned i = 0, e = LocalUses.size(); i != e; ++i) {
     unsigned Reg = LocalUses[i];
     Uses.insert(Reg);
-    for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+    for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
          *Subreg; ++Subreg)
       Uses.insert(*Subreg);
   }
@@ -84,7 +84,7 @@ static void TrackDefUses(MachineInstr *MI,
   for (unsigned i = 0, e = LocalDefs.size(); i != e; ++i) {
     unsigned Reg = LocalDefs[i];
     Defs.insert(Reg);
-    for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+    for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
          *Subreg; ++Subreg)
       Defs.insert(*Subreg);
     if (Reg == ARM::CPSR)

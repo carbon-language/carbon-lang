@@ -136,7 +136,7 @@ bool BranchFolder::OptimizeImpDefsBlock(MachineBasicBlock *MBB) {
       break;
     unsigned Reg = I->getOperand(0).getReg();
     ImpDefRegs.insert(Reg);
-    for (const unsigned *SubRegs = TRI->getSubRegisters(Reg);
+    for (const uint16_t *SubRegs = TRI->getSubRegisters(Reg);
          unsigned SubReg = *SubRegs; ++SubRegs)
       ImpDefRegs.insert(SubReg);
     ++I;
@@ -1521,7 +1521,7 @@ MachineBasicBlock::iterator findHoistingInsertPosAndDeps(MachineBasicBlock *MBB,
     } else {
       if (Uses.count(Reg)) {
         Uses.erase(Reg);
-        for (const unsigned *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
+        for (const uint16_t *SR = TRI->getSubRegisters(Reg); *SR; ++SR)
           Uses.erase(*SR); // Use getSubRegisters to be conservative
       }
       Defs.insert(Reg);

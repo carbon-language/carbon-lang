@@ -265,7 +265,7 @@ void AggressiveAntiDepBreaker::GetPassthruRegs(MachineInstr *MI,
         IsImplicitDefUse(MI, MO)) {
       const unsigned Reg = MO.getReg();
       PassthruRegs.insert(Reg);
-      for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+      for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
            *Subreg; ++Subreg) {
         PassthruRegs.insert(*Subreg);
       }
@@ -333,7 +333,7 @@ void AggressiveAntiDepBreaker::HandleLastUse(unsigned Reg, unsigned KillIdx,
     DEBUG(dbgs() << "->g" << State->GetGroup(Reg) << tag);
   }
   // Repeat for subregisters.
-  for (const unsigned *Subreg = TRI->getSubRegisters(Reg);
+  for (const uint16_t *Subreg = TRI->getSubRegisters(Reg);
        *Subreg; ++Subreg) {
     unsigned SubregReg = *Subreg;
     if (!State->IsLive(SubregReg)) {

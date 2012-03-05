@@ -107,9 +107,9 @@ public:
 ///
 struct MCRegisterDesc {
   const char *Name;         // Printable name for the reg (for debugging)
-  unsigned   Overlaps;      // Overlapping registers, described above
-  unsigned   SubRegs;       // Sub-register set, described above
-  unsigned   SuperRegs;     // Super-register set, described above
+  uint16_t   Overlaps;      // Overlapping registers, described above
+  uint16_t   SubRegs;       // Sub-register set, described above
+  uint16_t   SuperRegs;     // Super-register set, described above
 };
 
 /// MCRegisterInfo base class - We assume that the target defines a static
@@ -134,8 +134,8 @@ private:
   const MCRegisterClass *Classes;             // Pointer to the regclass array
   unsigned NumClasses;                        // Number of entries in the array
   const uint16_t *Overlaps;                   // Pointer to the overlaps array
-  const unsigned *SubRegs;                    // Pointer to the subregs array
-  const unsigned *SuperRegs;                  // Pointer to the superregs array
+  const uint16_t *SubRegs;                    // Pointer to the subregs array
+  const uint16_t *SuperRegs;                  // Pointer to the superregs array
   const uint16_t *SubRegIndices;              // Pointer to the subreg lookup
                                               // array.
   unsigned NumSubRegIndices;                  // Number of subreg indices.
@@ -150,8 +150,8 @@ public:
   /// auto-generated routines. *DO NOT USE*.
   void InitMCRegisterInfo(const MCRegisterDesc *D, unsigned NR, unsigned RA,
                           const MCRegisterClass *C, unsigned NC,
-                          const uint16_t *O, const unsigned *Sub,
-                          const unsigned *Super,
+                          const uint16_t *O, const uint16_t *Sub,
+                          const uint16_t *Super,
                           const uint16_t *SubIndices,
                           unsigned NumIndices) {
     Desc = D;
@@ -237,7 +237,7 @@ public:
   /// returned is zero terminated and sorted according to super-sub register
   /// relations. e.g. X86::RAX's sub-register list is EAX, AX, AL, AH.
   ///
-  const unsigned *getSubRegisters(unsigned RegNo) const {
+  const uint16_t *getSubRegisters(unsigned RegNo) const {
     return SubRegs + get(RegNo).SubRegs;
   }
 
@@ -263,7 +263,7 @@ public:
   /// returned is zero terminated and sorted according to super-sub register
   /// relations. e.g. X86::AL's super-register list is AX, EAX, RAX.
   ///
-  const unsigned *getSuperRegisters(unsigned RegNo) const {
+  const uint16_t *getSuperRegisters(unsigned RegNo) const {
     return SuperRegs + get(RegNo).SuperRegs;
   }
 
