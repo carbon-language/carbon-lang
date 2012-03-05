@@ -30,10 +30,6 @@ using namespace llvm;
 #define PRINT_ALIAS_INSTR
 #include "X86GenAsmWriter.inc"
 
-X86ATTInstPrinter::X86ATTInstPrinter(const MCAsmInfo &MAI)
-  : MCInstPrinter(MAI) {
-}
-
 void X86ATTInstPrinter::printRegName(raw_ostream &OS,
                                      unsigned RegNo) const {
   OS << '%' << getRegisterName(RegNo);

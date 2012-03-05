@@ -26,6 +26,7 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/Casting.h"
 #include "llvm/Support/CommandLine.h"
@@ -246,9 +247,15 @@ static void DisassembleObject(const ObjectFile *Obj, bool InlineRelocs) {
       return;
     }
 
+    OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
+    if (!MRI) {
+      errs() << "error: no register info for target " << TripleName << "\n";
+      return;
+    }
+
     int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
     OwningPtr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
-                                AsmPrinterVariant, *AsmInfo, *STI));
+                                AsmPrinterVariant, *AsmInfo, *MRI, *STI));
     if (!IP) {
       errs() << "error: no instruction printer for target " << TripleName
              << '\n';

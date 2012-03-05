@@ -21,6 +21,7 @@
 #include "llvm/MC/MCDisassembler.h"
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCInstPrinter.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Triple.h"
@@ -160,16 +161,22 @@ int Disassembler::disassemble(const Target &T,
     errs() << "error: no subtarget info for target " << Triple << "\n";
     return -1;
   }
-  
+
   OwningPtr<const MCDisassembler> DisAsm(T.createMCDisassembler(*STI));
   if (!DisAsm) {
     errs() << "error: no disassembler for target " << Triple << "\n";
     return -1;
   }
 
+  OwningPtr<const MCRegisterInfo> MRI(T.createMCRegInfo(Triple));
+  if (!MRI) {
+    errs() << "error: no register info for target " << Triple << "\n";
+    return -1;
+  }
+
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
   OwningPtr<MCInstPrinter> IP(T.createMCInstPrinter(AsmPrinterVariant,
-                                                    *AsmInfo, *STI));
+                                                    *AsmInfo, *MRI, *STI));
   if (!IP) {
     errs() << "error: no instruction printer for target " << Triple << '\n';
     return -1;

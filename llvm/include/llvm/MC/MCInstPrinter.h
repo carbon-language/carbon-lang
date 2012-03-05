@@ -14,6 +14,7 @@ namespace llvm {
 class MCInst;
 class raw_ostream;
 class MCAsmInfo;
+class MCRegisterInfo;
 class StringRef;
 
 /// MCInstPrinter - This is an instance of a target assembly language printer
@@ -25,6 +26,7 @@ protected:
   /// assembly emission is disable.
   raw_ostream *CommentStream;
   const MCAsmInfo &MAI;
+  const MCRegisterInfo &MRI;
 
   /// The current set of available features.
   unsigned AvailableFeatures;
@@ -32,8 +34,8 @@ protected:
   /// Utility function for printing annotations.
   void printAnnotation(raw_ostream &OS, StringRef Annot);
 public:
-  MCInstPrinter(const MCAsmInfo &mai)
-    : CommentStream(0), MAI(mai), AvailableFeatures(0) {}
+  MCInstPrinter(const MCAsmInfo &mai, const MCRegisterInfo &mri)
+    : CommentStream(0), MAI(mai), MRI(mri), AvailableFeatures(0) {}
 
   virtual ~MCInstPrinter();
 

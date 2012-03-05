@@ -21,8 +21,8 @@ namespace llvm {
 
   class MBlazeInstPrinter : public MCInstPrinter {
   public:
-    MBlazeInstPrinter(const MCAsmInfo &MAI)
-      : MCInstPrinter(MAI) {}
+    MBlazeInstPrinter(const MCAsmInfo &MAI, const MCRegisterInfo &MRI)
+      : MCInstPrinter(MAI, MRI) {}
 
     virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
 

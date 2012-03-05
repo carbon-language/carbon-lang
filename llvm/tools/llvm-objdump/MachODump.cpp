@@ -26,6 +26,7 @@
 #include "llvm/MC/MCInstrAnalysis.h"
 #include "llvm/MC/MCInstrDesc.h"
 #include "llvm/MC/MCInstrInfo.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/MC/MCSubtargetInfo.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/Debug.h"
@@ -257,9 +258,10 @@ void llvm::DisassembleInputMachO(StringRef Filename) {
   OwningPtr<const MCSubtargetInfo>
     STI(TheTarget->createMCSubtargetInfo(TripleName, "", ""));
   OwningPtr<const MCDisassembler> DisAsm(TheTarget->createMCDisassembler(*STI));
+  OwningPtr<const MCRegisterInfo> MRI(TheTarget->createMCRegInfo(TripleName));
   int AsmPrinterVariant = AsmInfo->getAssemblerDialect();
   OwningPtr<MCInstPrinter> IP(TheTarget->createMCInstPrinter(
-                              AsmPrinterVariant, *AsmInfo, *STI));
+                              AsmPrinterVariant, *AsmInfo, *MRI, *STI));
 
   if (!InstrAnalysis || !AsmInfo || !STI || !DisAsm || !IP) {
     errs() << "error: couldn't initialize disassembler for target "

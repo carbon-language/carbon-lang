@@ -23,7 +23,8 @@ class MCOperand;
 
 class ARMInstPrinter : public MCInstPrinter {
 public:
-    ARMInstPrinter(const MCAsmInfo &MAI, const MCSubtargetInfo &STI);
+  ARMInstPrinter(const MCAsmInfo &MAI, const MCRegisterInfo &MRI,
+                 const MCSubtargetInfo &STI);
 
   virtual void printInst(const MCInst *MI, raw_ostream &O, StringRef Annot);
   virtual StringRef getOpcodeName(unsigned Opcode) const;
