@@ -18,6 +18,7 @@
 #include "llvm/Support/Format.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/FoldingSet.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/STLExtras.h"
 #include "llvm/ADT/StringExtras.h"
@@ -28,6 +29,8 @@ using namespace llvm;
 //===----------------------------------------------------------------------===//
 //    std::string wrapper for DenseMap purposes
 //===----------------------------------------------------------------------===//
+
+namespace llvm {
 
 /// TableGenStringKey - This is a wrapper for std::string suitable for
 /// using as a key to a DenseMap.  Because there isn't a particularly
@@ -43,14 +46,16 @@ public:
   TableGenStringKey(const char *str) : data(str) {}
 
   const std::string &str() const { return data; }
-  
+
+  friend hash_code hash_value(const TableGenStringKey &Value) {
+    using llvm::hash_value;
+    return hash_value(Value.str());
+  }
 private:
   std::string data;
 };
 
 /// Specialize DenseMapInfo for TableGenStringKey.
-namespace llvm {
-
 template<> struct DenseMapInfo<TableGenStringKey> {
   static inline TableGenStringKey getEmptyKey() {
     TableGenStringKey Empty("<<<EMPTY KEY>>>");
@@ -61,7 +66,8 @@ template<> struct DenseMapInfo<TableGenStringKey> {
     return Tombstone;
   }
   static unsigned getHashValue(const TableGenStringKey& Val) {
-    return HashString(Val.str());
+    using llvm::hash_value;
+    return hash_value(Val);
   }
   static bool isEqual(const TableGenStringKey& LHS,
                       const TableGenStringKey& RHS) {
@@ -69,7 +75,7 @@ template<> struct DenseMapInfo<TableGenStringKey> {
   }
 };
 
-}
+} // namespace llvm
 
 //===----------------------------------------------------------------------===//
 //    Type implementations
