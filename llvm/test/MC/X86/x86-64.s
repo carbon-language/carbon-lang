@@ -339,15 +339,20 @@ rclb	$1, %bl   // CHECK: rclb %bl     # encoding: [0xd0,0xd3]
 rclb	$2, %bl   // CHECK: rclb $2, %bl # encoding: [0xc0,0xd3,0x02]
 
 // rdar://8418316
+// PR12173
+// CHECK: shldw	%cl, %bx, %bx
+// CHECK: shldw	%cl, %bx, %bx
 // CHECK: shldw	$1, %bx, %bx
-// CHECK: shldw	$1, %bx, %bx
-// CHECK: shrdw	$1, %bx, %bx
+// CHECK: shrdw	%cl, %bx, %bx
+// CHECK: shrdw	%cl, %bx, %bx
 // CHECK: shrdw	$1, %bx, %bx
 
-shld	%bx,%bx
-shld	$1, %bx,%bx
-shrd	%bx,%bx
-shrd	$1, %bx,%bx
+shld  %bx, %bx
+shld  %cl, %bx, %bx
+shld  $1, %bx, %bx
+shrd  %bx, %bx
+shrd  %cl, %bx, %bx
+shrd  $1, %bx, %bx
 
 // CHECK: sldtl	%ecx
 // CHECK: encoding: [0x0f,0x00,0xc1]
