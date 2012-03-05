@@ -34,6 +34,7 @@
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/Support/Path.h"
 #include "llvm/Support/Program.h"
+#include "llvm/Support/Timer.h"
 #include "llvm/ADT/OwningPtr.h"
 #include "llvm/ADT/Statistic.h"
 
@@ -77,12 +78,24 @@ public:
   OwningPtr<CheckerManager> checkerMgr;
   OwningPtr<AnalysisManager> Mgr;
 
+  /// Time the analyzes time of each translation unit.
+  static llvm::Timer* TUTotalTimer;
+
   AnalysisConsumer(const Preprocessor& pp,
                    const std::string& outdir,
                    const AnalyzerOptions& opts,
                    ArrayRef<std::string> plugins)
     : Ctx(0), PP(pp), OutDir(outdir), Opts(opts), Plugins(plugins), PD(0) {
     DigestAnalyzerOptions();
+    if (Opts.PrintStats) {
+      llvm::EnableStatistics();
+      TUTotalTimer = new llvm::Timer("Analyzer Total Time");
+    }
+  }
+
+  ~AnalysisConsumer() {
+    if (Opts.PrintStats)
+      delete TUTotalTimer;
   }
 
   void DigestAnalyzerOptions() {
@@ -160,8 +173,6 @@ public:
                                   Opts.EagerlyTrimEGraph,
                                   Opts.InlineMaxStackDepth,
                                   Opts.InlineMaxFunctionSize));
-    if (Opts.PrintStats)
-      llvm::EnableStatistics();
   }
 
   virtual void HandleTranslationUnit(ASTContext &C);
@@ -175,6 +186,7 @@ public:
 //===----------------------------------------------------------------------===//
 // AnalysisConsumer implementation.
 //===----------------------------------------------------------------------===//
+llvm::Timer* AnalysisConsumer::TUTotalTimer = 0;
 
 void AnalysisConsumer::HandleDeclContext(ASTContext &C, DeclContext *dc) {
   for (DeclContext::decl_iterator I = dc->decls_begin(), E = dc->decls_end();
@@ -242,6 +254,8 @@ void AnalysisConsumer::HandleDeclContextDecl(ASTContext &C, Decl *D) {
 
 void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
   {
+    if (TUTotalTimer) TUTotalTimer->startTimer();
+
     // Introduce a scope to destroy BR before Mgr.
     BugReporter BR(*Mgr);
     TranslationUnitDecl *TU = C.getTranslationUnitDecl();
@@ -257,6 +271,8 @@ void AnalysisConsumer::HandleTranslationUnit(ASTContext &C) {
   // side-effects in PathDiagnosticConsumer's destructor. This is required when
   // used with option -disable-free.
   Mgr.reset(NULL);
+
+  if (TUTotalTimer) TUTotalTimer->stopTimer();
 }
 
 static void FindBlocks(DeclContext *D, SmallVectorImpl<Decl*> &WL) {
