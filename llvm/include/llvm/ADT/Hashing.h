@@ -338,7 +338,7 @@ inline size_t get_execution_seed() {
   // called, return that instead of the per-execution seed.
   const uint64_t seed_prime = 0xff51afd7ed558ccdULL;
   static size_t seed = fixed_seed_override ? fixed_seed_override
-                                           : static_cast<size_t>(seed_prime);
+                                           : (size_t)seed_prime;
   return seed;
 }
 
