@@ -8902,7 +8902,12 @@ ExprResult Sema::ActOnBlockStmtExpr(SourceLocation CaretLoc,
     ExprCleanupObjects.push_back(Result->getBlockDecl());
     ExprNeedsCleanups = true;
   }
-
+  
+  if (BSI->TheDecl->blockMissingReturnType() &&
+      !RetTy->isDependentType() &&
+      !Context.getCanonicalType(RetTy)->isVoidType())
+    Diag(CaretLoc, diag::warn_block_missing_return_type);
+  
   return Owned(Result);
 }
 
