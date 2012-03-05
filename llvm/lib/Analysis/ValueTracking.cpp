@@ -691,8 +691,8 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
       if (P->hasConstantValue() == P)
         break;
 
-      KnownZero = APInt::getAllOnesValue(BitWidth);
-      KnownOne = APInt::getAllOnesValue(BitWidth);
+      KnownZero = Mask;
+      KnownOne = Mask;
       for (unsigned i = 0, e = P->getNumIncomingValues(); i != e; ++i) {
         // Skip direct self references.
         if (P->getIncomingValue(i) == P) continue;
