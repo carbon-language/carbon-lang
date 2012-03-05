@@ -4503,9 +4503,9 @@ SelectionDAGBuilder::visitIntrinsicCall(const CallInst &I, unsigned Intrinsic) {
                              getValue(I.getArgOperand(0))));
     return 0;
   case Intrinsic::setjmp:
-    return "_setjmp"+!TLI.usesUnderscoreSetJmp();
+    return &"_setjmp"[!TLI.usesUnderscoreSetJmp()];
   case Intrinsic::longjmp:
-    return "_longjmp"+!TLI.usesUnderscoreLongJmp();
+    return &"_longjmp"[!TLI.usesUnderscoreLongJmp()];
   case Intrinsic::memcpy: {
     // Assert for address < 256 since we support only user defined address
     // spaces.
