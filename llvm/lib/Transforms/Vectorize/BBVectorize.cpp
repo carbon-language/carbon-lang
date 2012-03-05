@@ -456,34 +456,34 @@ namespace {
       ShouldContinue = getCandidatePairs(BB, Start, CandidatePairs,
                                          PairableInsts);
       if (PairableInsts.empty()) continue;
-  
+
       // Now we have a map of all of the pairable instructions and we need to
       // select the best possible pairing. A good pairing is one such that the
       // users of the pair are also paired. This defines a (directed) forest
       // over the pairs such that two pairs are connected iff the second pair
       // uses the first.
-  
+
       // Note that it only matters that both members of the second pair use some
       // element of the first pair (to allow for splatting).
-  
+
       std::multimap<ValuePair, ValuePair> ConnectedPairs;
       computeConnectedPairs(CandidatePairs, PairableInsts, ConnectedPairs);
       if (ConnectedPairs.empty()) continue;
-  
+
       // Build the pairable-instruction dependency map
       DenseSet<ValuePair> PairableInstUsers;
       buildDepMap(BB, CandidatePairs, PairableInsts, PairableInstUsers);
-  
+
       // There is now a graph of the connected pairs. For each variable, pick
       // the pairing with the largest tree meeting the depth requirement on at
       // least one branch. Then select all pairings that are part of that tree
       // and remove them from the list of available pairings and pairable
       // variables.
-  
+
       DenseMap<Value *, Value *> ChosenPairs;
       choosePairs(CandidatePairs, PairableInsts, ConnectedPairs,
         PairableInstUsers, ChosenPairs);
-  
+
       if (ChosenPairs.empty()) continue;
       AllPairableInsts.insert(AllPairableInsts.end(), PairableInsts.begin(),
                               PairableInsts.end());
@@ -492,14 +492,14 @@ namespace {
 
     if (AllChosenPairs.empty()) return false;
     NumFusedOps += AllChosenPairs.size();
- 
+
     // A set of pairs has now been selected. It is now necessary to replace the
     // paired instructions with vector instructions. For this procedure each
     // operand much be replaced with a vector operand. This vector is formed
     // by using build_vector on the old operands. The replaced values are then
     // replaced with a vector_extract on the result.  Subsequent optimization
     // passes should coalesce the build/extract combinations.
-  
+
     fuseChosenPairs(BB, AllPairableInsts, AllChosenPairs);
     return true;
   }
