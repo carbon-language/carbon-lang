@@ -723,17 +723,17 @@ void llvm::ComputeMaskedBits(Value *V, const APInt &Mask,
         // If this call is undefined for 0, the result will be less than 2^n.
         if (II->getArgOperand(1) == ConstantInt::getTrue(II->getContext()))
           LowBits -= 1;
-        KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
+        KnownZero = Mask & APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
         break;
       }
       case Intrinsic::ctpop: {
         unsigned LowBits = Log2_32(BitWidth)+1;
-        KnownZero = APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
+        KnownZero = Mask & APInt::getHighBitsSet(BitWidth, BitWidth - LowBits);
         break;
       }
       case Intrinsic::x86_sse42_crc32_64_8:
       case Intrinsic::x86_sse42_crc32_64_64:
-        KnownZero = APInt::getHighBitsSet(64, 32);
+        KnownZero = Mask & APInt::getHighBitsSet(64, 32);
         break;
       }
     }
