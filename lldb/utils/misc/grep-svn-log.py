@@ -59,6 +59,7 @@ def grep(regexp):
             # At this state, we keep on accumulating lines until the separator
             # is encountered.  At which point, we can return the log content.
             if line == separator:
+                log.finish()
                 print log.getvalue()
                 return
             log.add_line(line)
@@ -78,6 +79,7 @@ def main():
 
     regexp = re.compile(sys.argv[1])
     grep(regexp)
+    sys.stdin.close()
 
 if __name__ == '__main__':
     main()
