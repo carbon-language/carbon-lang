@@ -575,6 +575,7 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   REG("QQQQPR");
   REG("VecListOneD");
   REG("VecListTwoD");
+  REG("VecListDPair");
   REG("VecListThreeD");
   REG("VecListFourD");
   REG("VecListTwoQ");

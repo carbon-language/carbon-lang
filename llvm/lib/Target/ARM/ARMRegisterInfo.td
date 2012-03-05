@@ -304,7 +304,11 @@ def TuplesOE2D : RegisterTuples<[dsub_0, dsub_1],
 
 // Register class representing a pair of consecutive D registers.
 // Use the Q registers for the even-odd pairs.
-def DPair : RegisterClass<"ARM", [v2i64], 128, (interleave QPR, TuplesOE2D)>;
+def DPair : RegisterClass<"ARM", [v2i64], 128, (interleave QPR, TuplesOE2D)> {
+  // Allocate starting at non-VFP2 registers D16-D31 first.
+  let AltOrders = [(rotl DPair, 16)];
+  let AltOrderSelect = [{ return 1; }];
+}
 
 // Pseudo-registers representing 3 consecutive D registers.
 def Tuples3D : RegisterTuples<[dsub_0, dsub_1, dsub_2],

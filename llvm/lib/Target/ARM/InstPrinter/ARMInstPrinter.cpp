@@ -18,6 +18,7 @@
 #include "llvm/MC/MCInst.h"
 #include "llvm/MC/MCAsmInfo.h"
 #include "llvm/MC/MCExpr.h"
+#include "llvm/MC/MCRegisterInfo.h"
 #include "llvm/Support/raw_ostream.h"
 using namespace llvm;
 
@@ -1031,6 +1032,14 @@ void ARMInstPrinter::printVectorListTwo(const MCInst *MI, unsigned OpNum,
   // sort order is guaranteed because they're all of the form D<n>.
   O << "{" << getRegisterName(MI->getOperand(OpNum).getReg()) << ", "
     << getRegisterName(MI->getOperand(OpNum).getReg() + 1) << "}";
+}
+
+void ARMInstPrinter::printVectorListDPair(const MCInst *MI, unsigned OpNum,
+                                          raw_ostream &O) {
+  unsigned Reg = MI->getOperand(OpNum).getReg();
+  unsigned Reg0 = MRI.getSubReg(Reg, ARM::dsub_0);
+  unsigned Reg1 = MRI.getSubReg(Reg, ARM::dsub_1);
+  O << "{" << getRegisterName(Reg0) << ", " << getRegisterName(Reg1) << "}";
 }
 
 void ARMInstPrinter::printVectorListThree(const MCInst *MI, unsigned OpNum,

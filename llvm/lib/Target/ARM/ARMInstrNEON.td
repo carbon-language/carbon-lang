@@ -97,6 +97,15 @@ def VecListTwoDAsmOperand : AsmOperandClass {
 def VecListTwoD : RegisterOperand<DPR, "printVectorListTwo"> {
   let ParserMatchClass = VecListTwoDAsmOperand;
 }
+// FIXME: Replace all VecListTwoD with VecListDPair
+def VecListDPairAsmOperand : AsmOperandClass {
+  let Name = "VecListDPair";
+  let ParserMethod = "parseVectorList";
+  let RenderMethod = "addVecListOperands";
+}
+def VecListDPair : RegisterOperand<DPair, "printVectorListDPair"> {
+  let ParserMatchClass = VecListDPairAsmOperand;
+}
 // Register list of three sequential D registers.
 def VecListThreeDAsmOperand : AsmOperandClass {
   let Name = "VecListThreeD";
@@ -593,7 +602,7 @@ class VLD1D<bits<4> op7_4, string Dt>
   let DecoderMethod = "DecodeVLDInstruction";
 }
 class VLD1Q<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b10,0b1010,op7_4, (outs VecListTwoD:$Vd),
+  : NLdSt<0,0b10,0b1010,op7_4, (outs VecListDPair:$Vd),
           (ins addrmode6:$Rn), IIC_VLD1x2,
           "vld1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
@@ -610,11 +619,6 @@ def  VLD1q8   : VLD1Q<{0,0,?,?}, "8">;
 def  VLD1q16  : VLD1Q<{0,1,?,?}, "16">;
 def  VLD1q32  : VLD1Q<{1,0,?,?}, "32">;
 def  VLD1q64  : VLD1Q<{1,1,?,?}, "64">;
-
-def  VLD1q8Pseudo  : VLDQPseudo<IIC_VLD1x2>;
-def  VLD1q16Pseudo : VLDQPseudo<IIC_VLD1x2>;
-def  VLD1q32Pseudo : VLDQPseudo<IIC_VLD1x2>;
-def  VLD1q64Pseudo : VLDQPseudo<IIC_VLD1x2>;
 
 // ...with address register writeback:
 multiclass VLD1DWB<bits<4> op7_4, string Dt> {
@@ -637,7 +641,7 @@ multiclass VLD1DWB<bits<4> op7_4, string Dt> {
   }
 }
 multiclass VLD1QWB<bits<4> op7_4, string Dt> {
-  def _fixed : NLdSt<0,0b10,0b1010,op7_4, (outs VecListTwoD:$Vd, GPR:$wb),
+  def _fixed : NLdSt<0,0b10,0b1010,op7_4, (outs VecListDPair:$Vd, GPR:$wb),
                     (ins addrmode6:$Rn), IIC_VLD1x2u,
                      "vld1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
@@ -646,7 +650,7 @@ multiclass VLD1QWB<bits<4> op7_4, string Dt> {
     let DecoderMethod = "DecodeVLDInstruction";
     let AsmMatchConverter = "cvtVLDwbFixed";
   }
-  def _register : NLdSt<0,0b10,0b1010,op7_4, (outs VecListTwoD:$Vd, GPR:$wb),
+  def _register : NLdSt<0,0b10,0b1010,op7_4, (outs VecListDPair:$Vd, GPR:$wb),
                         (ins addrmode6:$Rn, rGPR:$Rm), IIC_VLD1x2u,
                         "vld1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
@@ -664,15 +668,6 @@ defm VLD1q8wb  : VLD1QWB<{0,0,?,?}, "8">;
 defm VLD1q16wb : VLD1QWB<{0,1,?,?}, "16">;
 defm VLD1q32wb : VLD1QWB<{1,0,?,?}, "32">;
 defm VLD1q64wb : VLD1QWB<{1,1,?,?}, "64">;
-
-def VLD1q8PseudoWB_fixed  : VLDQWBfixedPseudo<IIC_VLD1x2u>;
-def VLD1q16PseudoWB_fixed : VLDQWBfixedPseudo<IIC_VLD1x2u>;
-def VLD1q32PseudoWB_fixed : VLDQWBfixedPseudo<IIC_VLD1x2u>;
-def VLD1q64PseudoWB_fixed : VLDQWBfixedPseudo<IIC_VLD1x2u>;
-def VLD1q8PseudoWB_register  : VLDQWBregisterPseudo<IIC_VLD1x2u>;
-def VLD1q16PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD1x2u>;
-def VLD1q32PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD1x2u>;
-def VLD1q64PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD1x2u>;
 
 // ...with 3 registers
 class VLD1D3<bits<4> op7_4, string Dt>
@@ -767,17 +762,13 @@ class VLD2<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy,
   let DecoderMethod = "DecodeVLDInstruction";
 }
 
-def  VLD2d8   : VLD2<0b1000, {0,0,?,?}, "8", VecListTwoD, IIC_VLD2>;
-def  VLD2d16  : VLD2<0b1000, {0,1,?,?}, "16", VecListTwoD, IIC_VLD2>;
-def  VLD2d32  : VLD2<0b1000, {1,0,?,?}, "32", VecListTwoD, IIC_VLD2>;
+def  VLD2d8   : VLD2<0b1000, {0,0,?,?}, "8", VecListDPair, IIC_VLD2>;
+def  VLD2d16  : VLD2<0b1000, {0,1,?,?}, "16", VecListDPair, IIC_VLD2>;
+def  VLD2d32  : VLD2<0b1000, {1,0,?,?}, "32", VecListDPair, IIC_VLD2>;
 
 def  VLD2q8   : VLD2<0b0011, {0,0,?,?}, "8", VecListFourD, IIC_VLD2x2>;
 def  VLD2q16  : VLD2<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VLD2x2>;
 def  VLD2q32  : VLD2<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VLD2x2>;
-
-def  VLD2d8Pseudo  : VLDQPseudo<IIC_VLD2>;
-def  VLD2d16Pseudo : VLDQPseudo<IIC_VLD2>;
-def  VLD2d32Pseudo : VLDQPseudo<IIC_VLD2>;
 
 def  VLD2q8Pseudo  : VLDQQPseudo<IIC_VLD2x2>;
 def  VLD2q16Pseudo : VLDQQPseudo<IIC_VLD2x2>;
@@ -805,20 +796,13 @@ multiclass VLD2WB<bits<4> op11_8, bits<4> op7_4, string Dt,
   }
 }
 
-defm VLD2d8wb  : VLD2WB<0b1000, {0,0,?,?}, "8", VecListTwoD, IIC_VLD2u>;
-defm VLD2d16wb : VLD2WB<0b1000, {0,1,?,?}, "16", VecListTwoD, IIC_VLD2u>;
-defm VLD2d32wb : VLD2WB<0b1000, {1,0,?,?}, "32", VecListTwoD, IIC_VLD2u>;
+defm VLD2d8wb  : VLD2WB<0b1000, {0,0,?,?}, "8", VecListDPair, IIC_VLD2u>;
+defm VLD2d16wb : VLD2WB<0b1000, {0,1,?,?}, "16", VecListDPair, IIC_VLD2u>;
+defm VLD2d32wb : VLD2WB<0b1000, {1,0,?,?}, "32", VecListDPair, IIC_VLD2u>;
 
 defm VLD2q8wb  : VLD2WB<0b0011, {0,0,?,?}, "8", VecListFourD, IIC_VLD2x2u>;
 defm VLD2q16wb : VLD2WB<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VLD2x2u>;
 defm VLD2q32wb : VLD2WB<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VLD2x2u>;
-
-def VLD2d8PseudoWB_fixed     : VLDQWBfixedPseudo<IIC_VLD2u>;
-def VLD2d16PseudoWB_fixed    : VLDQWBfixedPseudo<IIC_VLD2u>;
-def VLD2d32PseudoWB_fixed    : VLDQWBfixedPseudo<IIC_VLD2u>;
-def VLD2d8PseudoWB_register  : VLDQWBregisterPseudo<IIC_VLD2u>;
-def VLD2d16PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD2u>;
-def VLD2d32PseudoWB_register : VLDQWBregisterPseudo<IIC_VLD2u>;
 
 def VLD2q8PseudoWB_fixed     : VLDQQWBfixedPseudo<IIC_VLD2x2u>;
 def VLD2q16PseudoWB_fixed    : VLDQQWBfixedPseudo<IIC_VLD2x2u>;
@@ -1597,7 +1581,7 @@ class VST1D<bits<4> op7_4, string Dt>
   let DecoderMethod = "DecodeVSTInstruction";
 }
 class VST1Q<bits<4> op7_4, string Dt>
-  : NLdSt<0,0b00,0b1010,op7_4, (outs), (ins addrmode6:$Rn, VecListTwoD:$Vd),
+  : NLdSt<0,0b00,0b1010,op7_4, (outs), (ins addrmode6:$Rn, VecListDPair:$Vd),
           IIC_VST1x2, "vst1", Dt, "$Vd, $Rn", "", []> {
   let Rm = 0b1111;
   let Inst{5-4} = Rn{5-4};
@@ -1613,11 +1597,6 @@ def  VST1q8   : VST1Q<{0,0,?,?}, "8">;
 def  VST1q16  : VST1Q<{0,1,?,?}, "16">;
 def  VST1q32  : VST1Q<{1,0,?,?}, "32">;
 def  VST1q64  : VST1Q<{1,1,?,?}, "64">;
-
-def  VST1q8Pseudo  : VSTQPseudo<IIC_VST1x2>;
-def  VST1q16Pseudo : VSTQPseudo<IIC_VST1x2>;
-def  VST1q32Pseudo : VSTQPseudo<IIC_VST1x2>;
-def  VST1q64Pseudo : VSTQPseudo<IIC_VST1x2>;
 
 // ...with address register writeback:
 multiclass VST1DWB<bits<4> op7_4, string Dt> {
@@ -1642,7 +1621,7 @@ multiclass VST1DWB<bits<4> op7_4, string Dt> {
 }
 multiclass VST1QWB<bits<4> op7_4, string Dt> {
   def _fixed : NLdSt<0,0b00,0b1010,op7_4, (outs GPR:$wb),
-                    (ins addrmode6:$Rn, VecListTwoD:$Vd), IIC_VLD1x2u,
+                    (ins addrmode6:$Rn, VecListDPair:$Vd), IIC_VLD1x2u,
                      "vst1", Dt, "$Vd, $Rn!",
                      "$Rn.addr = $wb", []> {
     let Rm = 0b1101; // NLdSt will assign to the right encoding bits.
@@ -1651,7 +1630,7 @@ multiclass VST1QWB<bits<4> op7_4, string Dt> {
     let AsmMatchConverter = "cvtVSTwbFixed";
   }
   def _register : NLdSt<0,0b00,0b1010,op7_4, (outs GPR:$wb),
-                        (ins addrmode6:$Rn, rGPR:$Rm, VecListTwoD:$Vd),
+                        (ins addrmode6:$Rn, rGPR:$Rm, VecListDPair:$Vd),
                         IIC_VLD1x2u,
                         "vst1", Dt, "$Vd, $Rn, $Rm",
                         "$Rn.addr = $wb", []> {
@@ -1670,15 +1649,6 @@ defm VST1q8wb  : VST1QWB<{0,0,?,?}, "8">;
 defm VST1q16wb : VST1QWB<{0,1,?,?}, "16">;
 defm VST1q32wb : VST1QWB<{1,0,?,?}, "32">;
 defm VST1q64wb : VST1QWB<{1,1,?,?}, "64">;
-
-def VST1q8PseudoWB_fixed  : VSTQWBfixedPseudo<IIC_VST1x2u>;
-def VST1q16PseudoWB_fixed : VSTQWBfixedPseudo<IIC_VST1x2u>;
-def VST1q32PseudoWB_fixed : VSTQWBfixedPseudo<IIC_VST1x2u>;
-def VST1q64PseudoWB_fixed : VSTQWBfixedPseudo<IIC_VST1x2u>;
-def VST1q8PseudoWB_register  : VSTQWBregisterPseudo<IIC_VST1x2u>;
-def VST1q16PseudoWB_register : VSTQWBregisterPseudo<IIC_VST1x2u>;
-def VST1q32PseudoWB_register : VSTQWBregisterPseudo<IIC_VST1x2u>;
-def VST1q64PseudoWB_register : VSTQWBregisterPseudo<IIC_VST1x2u>;
 
 // ...with 3 registers
 class VST1D3<bits<4> op7_4, string Dt>
@@ -1779,17 +1749,13 @@ class VST2<bits<4> op11_8, bits<4> op7_4, string Dt, RegisterOperand VdTy,
   let DecoderMethod = "DecodeVSTInstruction";
 }
 
-def  VST2d8   : VST2<0b1000, {0,0,?,?}, "8",  VecListTwoD, IIC_VST2>;
-def  VST2d16  : VST2<0b1000, {0,1,?,?}, "16", VecListTwoD, IIC_VST2>;
-def  VST2d32  : VST2<0b1000, {1,0,?,?}, "32", VecListTwoD, IIC_VST2>;
+def  VST2d8   : VST2<0b1000, {0,0,?,?}, "8",  VecListDPair, IIC_VST2>;
+def  VST2d16  : VST2<0b1000, {0,1,?,?}, "16", VecListDPair, IIC_VST2>;
+def  VST2d32  : VST2<0b1000, {1,0,?,?}, "32", VecListDPair, IIC_VST2>;
 
 def  VST2q8   : VST2<0b0011, {0,0,?,?}, "8",  VecListFourD, IIC_VST2x2>;
 def  VST2q16  : VST2<0b0011, {0,1,?,?}, "16", VecListFourD, IIC_VST2x2>;
 def  VST2q32  : VST2<0b0011, {1,0,?,?}, "32", VecListFourD, IIC_VST2x2>;
-
-def  VST2d8Pseudo  : VSTQPseudo<IIC_VST2>;
-def  VST2d16Pseudo : VSTQPseudo<IIC_VST2>;
-def  VST2d32Pseudo : VSTQPseudo<IIC_VST2>;
 
 def  VST2q8Pseudo  : VSTQQPseudo<IIC_VST2x2>;
 def  VST2q16Pseudo : VSTQQPseudo<IIC_VST2x2>;
@@ -1837,20 +1803,13 @@ multiclass VST2QWB<bits<4> op7_4, string Dt> {
   }
 }
 
-defm VST2d8wb    : VST2DWB<0b1000, {0,0,?,?}, "8",  VecListTwoD>;
-defm VST2d16wb   : VST2DWB<0b1000, {0,1,?,?}, "16", VecListTwoD>;
-defm VST2d32wb   : VST2DWB<0b1000, {1,0,?,?}, "32", VecListTwoD>;
+defm VST2d8wb    : VST2DWB<0b1000, {0,0,?,?}, "8",  VecListDPair>;
+defm VST2d16wb   : VST2DWB<0b1000, {0,1,?,?}, "16", VecListDPair>;
+defm VST2d32wb   : VST2DWB<0b1000, {1,0,?,?}, "32", VecListDPair>;
 
 defm VST2q8wb    : VST2QWB<{0,0,?,?}, "8">;
 defm VST2q16wb   : VST2QWB<{0,1,?,?}, "16">;
 defm VST2q32wb   : VST2QWB<{1,0,?,?}, "32">;
-
-def VST2d8PseudoWB_fixed     : VSTQWBfixedPseudo<IIC_VST2u>;
-def VST2d16PseudoWB_fixed    : VSTQWBfixedPseudo<IIC_VST2u>;
-def VST2d32PseudoWB_fixed    : VSTQWBfixedPseudo<IIC_VST2u>;
-def VST2d8PseudoWB_register  : VSTQWBregisterPseudo<IIC_VST2u>;
-def VST2d16PseudoWB_register : VSTQWBregisterPseudo<IIC_VST2u>;
-def VST2d32PseudoWB_register : VSTQWBregisterPseudo<IIC_VST2u>;
 
 def VST2q8PseudoWB_fixed     : VSTQQWBfixedPseudo<IIC_VST2x2u>;
 def VST2q16PseudoWB_fixed    : VSTQQWBfixedPseudo<IIC_VST2x2u>;
@@ -5444,7 +5403,7 @@ def  VTBL1
 let hasExtraSrcRegAllocReq = 1 in {
 def  VTBL2
   : N3V<1,1,0b11,0b1001,0,0, (outs DPR:$Vd),
-        (ins VecListTwoD:$Vn, DPR:$Vm), NVTBLFrm, IIC_VTB2,
+        (ins VecListDPair:$Vn, DPR:$Vm), NVTBLFrm, IIC_VTB2,
         "vtbl", "8", "$Vd, $Vn, $Vm", "", []>;
 def  VTBL3
   : N3V<1,1,0b11,0b1010,0,0, (outs DPR:$Vd),
@@ -5457,8 +5416,6 @@ def  VTBL4
         "vtbl", "8", "$Vd, $Vn, $Vm", "", []>;
 } // hasExtraSrcRegAllocReq = 1
 
-def  VTBL2Pseudo
-  : PseudoNeonI<(outs DPR:$dst), (ins QPR:$tbl, DPR:$src), IIC_VTB2, "", []>;
 def  VTBL3Pseudo
   : PseudoNeonI<(outs DPR:$dst), (ins QQPR:$tbl, DPR:$src), IIC_VTB3, "", []>;
 def  VTBL4Pseudo
@@ -5474,7 +5431,7 @@ def  VTBX1
 let hasExtraSrcRegAllocReq = 1 in {
 def  VTBX2
   : N3V<1,1,0b11,0b1001,1,0, (outs DPR:$Vd),
-        (ins DPR:$orig, VecListTwoD:$Vn, DPR:$Vm), NVTBLFrm, IIC_VTBX2,
+        (ins DPR:$orig, VecListDPair:$Vn, DPR:$Vm), NVTBLFrm, IIC_VTBX2,
         "vtbx", "8", "$Vd, $Vn, $Vm", "$orig = $Vd", []>;
 def  VTBX3
   : N3V<1,1,0b11,0b1010,1,0, (outs DPR:$Vd),
@@ -5489,9 +5446,6 @@ def  VTBX4
         "$orig = $Vd", []>;
 } // hasExtraSrcRegAllocReq = 1
 
-def  VTBX2Pseudo
-  : PseudoNeonI<(outs DPR:$dst), (ins DPR:$orig, QPR:$tbl, DPR:$src),
-                IIC_VTBX2, "$orig = $dst", []>;
 def  VTBX3Pseudo
   : PseudoNeonI<(outs DPR:$dst), (ins DPR:$orig, QQPR:$tbl, DPR:$src),
                 IIC_VTBX3, "$orig = $dst", []>;

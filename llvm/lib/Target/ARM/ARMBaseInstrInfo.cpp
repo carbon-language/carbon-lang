@@ -760,7 +760,7 @@ storeRegToStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
       if (ARM::QPRRegClass.hasSubClassEq(RC)) {
         // Use aligned spills if the stack can be realigned.
         if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
-          AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1q64Pseudo))
+          AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VST1q64))
                      .addFrameIndex(FI).addImm(16)
                      .addReg(SrcReg, getKillRegState(isKill))
                      .addMemOperand(MMO));
@@ -845,7 +845,7 @@ ARMBaseInstrInfo::isStoreToStackSlot(const MachineInstr *MI,
       return MI->getOperand(0).getReg();
     }
     break;
-  case ARM::VST1q64Pseudo:
+  case ARM::VST1q64:
     if (MI->getOperand(0).isFI() &&
         MI->getOperand(2).getSubReg() == 0) {
       FrameIndex = MI->getOperand(0).getIndex();
@@ -909,7 +909,7 @@ loadRegFromStackSlot(MachineBasicBlock &MBB, MachineBasicBlock::iterator I,
   case 16:
     if (ARM::QPRRegClass.hasSubClassEq(RC)) {
       if (Align >= 16 && getRegisterInfo().canRealignStack(MF)) {
-        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1q64Pseudo), DestReg)
+        AddDefaultPred(BuildMI(MBB, I, DL, get(ARM::VLD1q64), DestReg)
                      .addFrameIndex(FI).addImm(16)
                      .addMemOperand(MMO));
       } else {
@@ -989,7 +989,7 @@ ARMBaseInstrInfo::isLoadFromStackSlot(const MachineInstr *MI,
       return MI->getOperand(0).getReg();
     }
     break;
-  case ARM::VLD1q64Pseudo:
+  case ARM::VLD1q64:
     if (MI->getOperand(1).isFI() &&
         MI->getOperand(0).getSubReg() == 0) {
       FrameIndex = MI->getOperand(1).getIndex();
@@ -2694,33 +2694,33 @@ ARMBaseInstrInfo::getOperandLatency(const InstrItineraryData *ItinData,
   if (DefAlign < 8 && Subtarget.isCortexA9())
     switch (DefMCID.getOpcode()) {
     default: break;
-    case ARM::VLD1q8Pseudo:
-    case ARM::VLD1q16Pseudo:
-    case ARM::VLD1q32Pseudo:
-    case ARM::VLD1q64Pseudo:
-    case ARM::VLD1q8PseudoWB_register:
-    case ARM::VLD1q16PseudoWB_register:
-    case ARM::VLD1q32PseudoWB_register:
-    case ARM::VLD1q64PseudoWB_register:
-    case ARM::VLD1q8PseudoWB_fixed:
-    case ARM::VLD1q16PseudoWB_fixed:
-    case ARM::VLD1q32PseudoWB_fixed:
-    case ARM::VLD1q64PseudoWB_fixed:
-    case ARM::VLD2d8Pseudo:
-    case ARM::VLD2d16Pseudo:
-    case ARM::VLD2d32Pseudo:
+    case ARM::VLD1q8:
+    case ARM::VLD1q16:
+    case ARM::VLD1q32:
+    case ARM::VLD1q64:
+    case ARM::VLD1q8wb_register:
+    case ARM::VLD1q16wb_register:
+    case ARM::VLD1q32wb_register:
+    case ARM::VLD1q64wb_register:
+    case ARM::VLD1q8wb_fixed:
+    case ARM::VLD1q16wb_fixed:
+    case ARM::VLD1q32wb_fixed:
+    case ARM::VLD1q64wb_fixed:
+    case ARM::VLD2d8:
+    case ARM::VLD2d16:
+    case ARM::VLD2d32:
     case ARM::VLD2q8Pseudo:
     case ARM::VLD2q16Pseudo:
     case ARM::VLD2q32Pseudo:
-    case ARM::VLD2d8PseudoWB_fixed:
-    case ARM::VLD2d16PseudoWB_fixed:
-    case ARM::VLD2d32PseudoWB_fixed:
+    case ARM::VLD2d8wb_fixed:
+    case ARM::VLD2d16wb_fixed:
+    case ARM::VLD2d32wb_fixed:
     case ARM::VLD2q8PseudoWB_fixed:
     case ARM::VLD2q16PseudoWB_fixed:
     case ARM::VLD2q32PseudoWB_fixed:
-    case ARM::VLD2d8PseudoWB_register:
-    case ARM::VLD2d16PseudoWB_register:
-    case ARM::VLD2d32PseudoWB_register:
+    case ARM::VLD2d8wb_register:
+    case ARM::VLD2d16wb_register:
+    case ARM::VLD2d32wb_register:
     case ARM::VLD2q8PseudoWB_register:
     case ARM::VLD2q16PseudoWB_register:
     case ARM::VLD2q32PseudoWB_register:

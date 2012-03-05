@@ -126,6 +126,8 @@ static DecodeStatus DecodeDPR_VFP2RegisterClass(llvm::MCInst &Inst,
                                                 const void *Decoder);
 static DecodeStatus DecodeQPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
                                    uint64_t Address, const void *Decoder);
+static DecodeStatus DecodeDPairRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
+                                   uint64_t Address, const void *Decoder);
 
 static DecodeStatus DecodePredicateOperand(llvm::MCInst &Inst, unsigned Val,
                                uint64_t Address, const void *Decoder);
@@ -983,6 +985,25 @@ static DecodeStatus DecodeQPRRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
   RegNo >>= 1;
 
   unsigned Register = QPRDecoderTable[RegNo];
+  Inst.addOperand(MCOperand::CreateReg(Register));
+  return MCDisassembler::Success;
+}
+
+static const unsigned DPairDecoderTable[] = {
+  ARM::Q0,  ARM::D1_D2,   ARM::Q1,  ARM::D3_D4,   ARM::Q2,  ARM::D5_D6,
+  ARM::Q3,  ARM::D7_D8,   ARM::Q4,  ARM::D9_D10,  ARM::Q5,  ARM::D11_D12,
+  ARM::Q6,  ARM::D13_D14, ARM::Q7,  ARM::D15_D16, ARM::Q8,  ARM::D17_D18,
+  ARM::Q9,  ARM::D19_D20, ARM::Q10, ARM::D21_D22, ARM::Q11, ARM::D23_D24,
+  ARM::Q12, ARM::D25_D26, ARM::Q13, ARM::D27_D28, ARM::Q14, ARM::D29_D30,
+  ARM::Q15
+};
+
+static DecodeStatus DecodeDPairRegisterClass(llvm::MCInst &Inst, unsigned RegNo,
+                                   uint64_t Address, const void *Decoder) {
+  if (RegNo > 30)
+    return MCDisassembler::Fail;
+
+  unsigned Register = DPairDecoderTable[RegNo];
   Inst.addOperand(MCOperand::CreateReg(Register));
   return MCDisassembler::Success;
 }
@@ -1953,8 +1974,35 @@ static DecodeStatus DecodeVLDInstruction(llvm::MCInst &Inst, unsigned Insn,
   unsigned Rm = fieldFromInstruction32(Insn, 0, 4);
 
   // First output register
-  if (!Check(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)))
-    return MCDisassembler::Fail;
+  switch (Inst.getOpcode()) {
+  case ARM::VLD1q16:
+  case ARM::VLD1q32:
+  case ARM::VLD1q64:
+  case ARM::VLD1q8:
+  case ARM::VLD1q16wb_fixed:
+  case ARM::VLD1q16wb_register:
+  case ARM::VLD1q32wb_fixed:
+  case ARM::VLD1q32wb_register:
+  case ARM::VLD1q64wb_fixed:
+  case ARM::VLD1q64wb_register:
+  case ARM::VLD1q8wb_fixed:
+  case ARM::VLD1q8wb_register:
+  case ARM::VLD2d16:
+  case ARM::VLD2d32:
+  case ARM::VLD2d8:
+  case ARM::VLD2d16wb_fixed:
+  case ARM::VLD2d16wb_register:
+  case ARM::VLD2d32wb_fixed:
+  case ARM::VLD2d32wb_register:
+  case ARM::VLD2d8wb_fixed:
+  case ARM::VLD2d8wb_register:
+    if (!Check(S, DecodeDPairRegisterClass(Inst, Rd, Address, Decoder)))
+      return MCDisassembler::Fail;
+    break;
+  default:
+    if (!Check(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)))
+      return MCDisassembler::Fail;
+  }
 
   // Second output register
   switch (Inst.getOpcode()) {
@@ -2285,8 +2333,35 @@ static DecodeStatus DecodeVSTInstruction(llvm::MCInst &Inst, unsigned Insn,
 
 
   // First input register
-  if (!Check(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)))
-    return MCDisassembler::Fail;
+  switch (Inst.getOpcode()) {
+  case ARM::VST1q16:
+  case ARM::VST1q32:
+  case ARM::VST1q64:
+  case ARM::VST1q8:
+  case ARM::VST1q16wb_fixed:
+  case ARM::VST1q16wb_register:
+  case ARM::VST1q32wb_fixed:
+  case ARM::VST1q32wb_register:
+  case ARM::VST1q64wb_fixed:
+  case ARM::VST1q64wb_register:
+  case ARM::VST1q8wb_fixed:
+  case ARM::VST1q8wb_register:
+  case ARM::VST2d16:
+  case ARM::VST2d32:
+  case ARM::VST2d8:
+  case ARM::VST2d16wb_fixed:
+  case ARM::VST2d16wb_register:
+  case ARM::VST2d32wb_fixed:
+  case ARM::VST2d32wb_register:
+  case ARM::VST2d8wb_fixed:
+  case ARM::VST2d8wb_register:
+    if (!Check(S, DecodeDPairRegisterClass(Inst, Rd, Address, Decoder)))
+      return MCDisassembler::Fail;
+    break;
+  default:
+    if (!Check(S, DecodeDPRRegisterClass(Inst, Rd, Address, Decoder)))
+      return MCDisassembler::Fail;
+  }
 
   // Second input register
   switch (Inst.getOpcode()) {
@@ -2652,8 +2727,16 @@ static DecodeStatus DecodeTBLInstruction(llvm::MCInst &Inst, unsigned Insn,
     return MCDisassembler::Fail; // Writeback
   }
 
-  if (!Check(S, DecodeDPRRegisterClass(Inst, Rn, Address, Decoder)))
-    return MCDisassembler::Fail;
+  switch (Inst.getOpcode()) {
+  case ARM::VTBL2:
+  case ARM::VTBX2:
+    if (!Check(S, DecodeDPairRegisterClass(Inst, Rn, Address, Decoder)))
+      return MCDisassembler::Fail;
+    break;
+  default:
+    if (!Check(S, DecodeDPRRegisterClass(Inst, Rn, Address, Decoder)))
+      return MCDisassembler::Fail;
+  }
 
   if (!Check(S, DecodeDPRRegisterClass(Inst, Rm, Address, Decoder)))
     return MCDisassembler::Fail;

@@ -830,8 +830,7 @@ static void emitAlignedDPRCS2Spills(MachineBasicBlock &MBB,
                                                ARM::QPRRegisterClass);
     MBB.addLiveIn(SupReg);
     AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(ARM::VST1q64))
-                   .addReg(ARM::R4).addImm(16).addReg(NextReg)
-                   .addReg(SupReg, RegState::ImplicitKill));
+                   .addReg(ARM::R4).addImm(16).addReg(SupReg));
     NextReg += 2;
     NumAlignedDPRCS2Regs -= 2;
   }
@@ -944,9 +943,8 @@ static void emitAlignedDPRCS2Restores(MachineBasicBlock &MBB,
   if (NumAlignedDPRCS2Regs >= 2) {
     unsigned SupReg = TRI->getMatchingSuperReg(NextReg, ARM::dsub_0,
                                                ARM::QPRRegisterClass);
-    AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(ARM::VLD1q64), NextReg)
-                   .addReg(ARM::R4).addImm(16)
-                   .addReg(SupReg, RegState::ImplicitDefine));
+    AddDefaultPred(BuildMI(MBB, MI, DL, TII.get(ARM::VLD1q64), SupReg)
+                   .addReg(ARM::R4).addImm(16));
     NextReg += 2;
     NumAlignedDPRCS2Regs -= 2;
   }

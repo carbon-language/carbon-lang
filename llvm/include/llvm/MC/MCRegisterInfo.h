@@ -252,7 +252,7 @@ public:
   /// Reg so its sub-register of index SubIdx is Reg.
   unsigned getMatchingSuperReg(unsigned Reg, unsigned SubIdx,
                                const MCRegisterClass *RC) const {
-    for (const unsigned *SRs = getSuperRegisters(Reg); unsigned SR = *SRs;++SRs)
+    for (const uint16_t *SRs = getSuperRegisters(Reg); unsigned SR = *SRs;++SRs)
       if (Reg == getSubReg(SR, SubIdx) && RC->contains(SR))
         return SR;
     return 0;

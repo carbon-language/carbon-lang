@@ -44,6 +44,7 @@ enum VectorLaneTy { NoLanes, AllLanes, IndexedLane };
 class ARMAsmParser : public MCTargetAsmParser {
   MCSubtargetInfo &STI;
   MCAsmParser &Parser;
+  const MCRegisterInfo *MRI;
 
   // Map of register aliases registers via the .req directive.
   StringMap<unsigned> RegisterReqs;
@@ -235,6 +236,9 @@ public:
   ARMAsmParser(MCSubtargetInfo &_STI, MCAsmParser &_Parser)
     : MCTargetAsmParser(), STI(_STI), Parser(_Parser) {
     MCAsmParserExtension::Initialize(_Parser);
+
+    // Cache the MCRegisterInfo.
+    MRI = &getContext().getRegisterInfo();
 
     // Initialize the set of available features.
     setAvailableFeatures(ComputeAvailableFeatures(STI.getFeatureBits()));
@@ -1084,6 +1088,12 @@ public:
   bool isVecListTwoD() const {
     if (!isSingleSpacedVectorList()) return false;
     return VectorList.Count == 2;
+  }
+
+  bool isVecListDPair() const {
+    if (!isSingleSpacedVectorList()) return false;
+    return (ARMMCRegisterClasses[ARM::DPairRegClassID]
+              .contains(VectorList.RegNum));
   }
 
   bool isVecListThreeD() const {
@@ -2969,6 +2979,12 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       switch (LaneKind) {
       case NoLanes:
         E = Parser.getTok().getLoc();
+        // VLD1 wants a DPair register.
+        // FIXME: Make the rest of the two-reg instructions want the same
+        // thing.
+        Reg = MRI->getMatchingSuperReg(Reg, ARM::dsub_0,
+                                      &ARMMCRegisterClasses[ARM::DPairRegClassID]);
+
         Operands.push_back(ARMOperand::CreateVectorList(Reg, 2, false, S, E));
         break;
       case AllLanes:
@@ -3138,6 +3154,14 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   switch (LaneKind) {
   case NoLanes:
+    if (Count == 2 && Spacing == 1)
+      // VLD1 wants a DPair register.
+      // FIXME: Make the rest of the two-reg instructions want the same
+      // thing.
+      FirstReg = MRI->getMatchingSuperReg(FirstReg, ARM::dsub_0,
+                                   &ARMMCRegisterClasses[ARM::DPairRegClassID]);
+
+
     Operands.push_back(ARMOperand::CreateVectorList(FirstReg, Count,
                                                     (Spacing == 2), S, E));
     break;
