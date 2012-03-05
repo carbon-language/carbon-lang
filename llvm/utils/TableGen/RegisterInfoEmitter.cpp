@@ -399,14 +399,14 @@ RegisterInfoEmitter::runMCDesc(raw_ostream &OS, CodeGenTarget &Target,
 
   for (unsigned rc = 0, e = RegisterClasses.size(); rc != e; ++rc) {
     const CodeGenRegisterClass &RC = *RegisterClasses[rc];
-    OS << "  { " << RC.getQualifiedName() + "RegClassID" << ", "
-       << '\"' << RC.getName() << "\", "
+    OS << "  { " << '\"' << RC.getName() << "\", "
+       << RC.getName() << ", " << RC.getName() << "Bits, "
+       << RC.getOrder().size() << ", sizeof(" << RC.getName() << "Bits), "
+       << RC.getQualifiedName() + "RegClassID" << ", "
        << RC.SpillSize/8 << ", "
        << RC.SpillAlignment/8 << ", "
        << RC.CopyCost << ", "
-       << RC.Allocatable << ", "
-       << RC.getName() << ", " << RC.getName() << "Bits, "
-       << RC.getOrder().size() << ", sizeof(" << RC.getName() << "Bits) },\n";
+       << RC.Allocatable << " },\n";
   }
 
   OS << "};\n\n";

@@ -28,15 +28,15 @@ public:
   typedef const uint16_t* iterator;
   typedef const uint16_t* const_iterator;
 
-  const unsigned ID;
   const char *Name;
-  const unsigned RegSize, Alignment; // Size & Alignment of register in bytes
-  const int CopyCost;
-  const bool Allocatable;
   const iterator RegsBegin;
   const uint8_t *const RegSet;
-  const unsigned RegsSize;
-  const unsigned RegSetSize;
+  const uint8_t RegsSize;
+  const uint8_t RegSetSize;
+  const uint8_t ID;
+  const uint8_t RegSize, Alignment; // Size & Alignment of register in bytes
+  const int8_t CopyCost;
+  const bool Allocatable;
 
   /// getID() - Return the register class ID number.
   ///
