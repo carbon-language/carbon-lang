@@ -385,6 +385,12 @@ Target::CreateFuncRegexBreakpoint (const FileSpecList *containingModules,
     return CreateBreakpoint (filter_sp, resolver_sp, internal);
 }
 
+lldb::BreakpointSP
+Target::CreateExceptionBreakpoint (enum lldb::LanguageType language, bool catch_bp, bool throw_bp, bool internal)
+{
+    return LanguageRuntime::CreateExceptionBreakpoint (*this, language, catch_bp, throw_bp, internal);
+}
+    
 BreakpointSP
 Target::CreateBreakpoint (SearchFilterSP &filter_sp, BreakpointResolverSP &resolver_sp, bool internal)
 {

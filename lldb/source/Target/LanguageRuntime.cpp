@@ -8,6 +8,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "lldb/Target/LanguageRuntime.h"
+#include "lldb/Target/Target.h"
 #include "lldb/Core/PluginManager.h"
 
 using namespace lldb;
@@ -46,3 +47,118 @@ LanguageRuntime::LanguageRuntime(Process *process) :
 LanguageRuntime::~LanguageRuntime()
 {
 }
+
+BreakpointSP
+LanguageRuntime::CreateExceptionBreakpoint(
+    Target &target, 
+    lldb::LanguageType language, 
+    bool catch_bp, 
+    bool throw_bp, 
+    bool is_internal)
+{
+    BreakpointSP exc_breakpt_sp;
+    BreakpointResolverSP resolver_sp(new ExceptionBreakpointResolver(NULL, language, catch_bp, throw_bp));
+    SearchFilterSP filter_sp(target.GetSearchFilterForModule(NULL));
+    
+    exc_breakpt_sp = target.CreateBreakpoint (filter_sp, resolver_sp, is_internal);
+    
+    return exc_breakpt_sp;
+}
+
+LanguageRuntime::ExceptionBreakpointResolver::ExceptionBreakpointResolver (Breakpoint *bkpt,
+                        LanguageType language,
+                        bool catch_bp,
+                        bool throw_bp) :
+    BreakpointResolver (bkpt, ExceptionResolver),
+    m_language (language),
+    m_catch_bp (catch_bp),
+    m_throw_bp (throw_bp)
+
+{
+}
+                        
+void
+LanguageRuntime::ExceptionBreakpointResolver::GetDescription (Stream *s)
+{
+    s->Printf ("Exception breakpoint (catch: %s throw: %s) using: ", 
+           m_catch_bp ? "on" : "off",
+           m_throw_bp ? "on" : "off");
+       
+    SetActualResolver();
+    if (m_actual_resolver_sp)
+    {
+        s->Printf (" using: ");
+        m_actual_resolver_sp->GetDescription (s);
+    }
+    else
+        s->Printf (".");
+}
+
+bool
+LanguageRuntime::ExceptionBreakpointResolver::SetActualResolver()
+{
+    ProcessSP process_sp = m_process_wp.lock();
+    
+    // See if our process weak pointer is still good:
+    if (!process_sp)
+    {
+        // If not, our resolver is no good, so chuck that.  Then see if we can get the 
+        // target's new process.
+        m_actual_resolver_sp.reset();
+        if (m_breakpoint)
+        {
+            Target &target = m_breakpoint->GetTarget();
+            process_sp = target.GetProcessSP();
+            if (process_sp)
+            {
+                m_process_wp = process_sp;
+                process_sp = m_process_wp.lock();
+            }
+        }
+    }
+    
+    if (process_sp)
+    {
+        if (m_actual_resolver_sp)
+            return true;
+        else
+        {
+            // If we have a process but not a resolver, set one now.
+            LanguageRuntime *runtime = process_sp->GetLanguageRuntime(m_language);
+            if (runtime)
+            {
+                m_actual_resolver_sp = runtime->CreateExceptionResolver (m_breakpoint, m_catch_bp, m_throw_bp);
+                return m_actual_resolver_sp;
+            }
+            else
+                return false;
+        }
+    }
+    else
+        return false;
+}
+
+Searcher::CallbackReturn
+LanguageRuntime::ExceptionBreakpointResolver::SearchCallback (SearchFilter &filter,
+                SymbolContext &context,
+                Address *addr,
+                bool containing)
+{
+    
+    if (!SetActualResolver())
+    {
+        return eCallbackReturnStop;
+    }
+    else
+        return m_actual_resolver_sp->SearchCallback (filter, context, addr, containing);
+}
+
+Searcher::Depth
+LanguageRuntime::ExceptionBreakpointResolver::GetDepth ()
+{
+    if (!SetActualResolver())
+        return eDepthTarget;
+    else
+        return m_actual_resolver_sp->GetDepth();
+}
+

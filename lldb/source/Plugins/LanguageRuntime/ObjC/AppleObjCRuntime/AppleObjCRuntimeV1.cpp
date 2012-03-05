@@ -104,22 +104,18 @@ AppleObjCRuntimeV1::GetPluginVersion()
     return 1;
 }
 
-BreakpointSP
-AppleObjCRuntimeV1::CreateExceptionBreakpoint (bool catch_bp, bool throw_bp, bool is_internal)
+BreakpointResolverSP
+AppleObjCRuntimeV1::CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp)
 {
-    BreakpointSP exc_breakpt_sp;
-    if (!m_process)
-        return exc_breakpt_sp;
+    BreakpointResolverSP resolver_sp;
     
-    
-    // FIXME: Only do throw for now...
-    if (throw_bp)
-        exc_breakpt_sp = m_process->GetTarget().CreateBreakpoint (NULL,
-                                                                  NULL,
-                                                                  "objc_exception_throw",
-                                                                  eFunctionNameTypeBase, 
-                                                                  is_internal);
-    return exc_breakpt_sp;
+    if (catch_bp && throw_bp)
+        resolver_sp.reset (new BreakpointResolverName (bkpt,
+                                                       "objc_exception_throw",
+                                                       eFunctionNameTypeBase,
+                                                       Breakpoint::Exact,
+                                                       eLazyBoolNo));
+    return resolver_sp;
 }
 
 struct BufStruct {

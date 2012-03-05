@@ -468,6 +468,9 @@ public:
                       uint32_t func_name_type_mask, 
                       bool internal = false,
                       LazyBool skip_prologue = eLazyBoolCalculate);
+                      
+    lldb::BreakpointSP
+    CreateExceptionBreakpoint (enum lldb::LanguageType language, bool catch_bp, bool throw_bp, bool internal = false);
     
     // This is the same as the func_name breakpoint except that you can specify a vector of names.  This is cheaper
     // than a regular expression breakpoint in the case where you just want to set a breakpoint on a set of names
@@ -1108,6 +1111,17 @@ public:
         DISALLOW_COPY_AND_ASSIGN (SettingsController);
     };
     
+    //------------------------------------------------------------------
+    // Methods.
+    //------------------------------------------------------------------
+    lldb::SearchFilterSP
+    GetSearchFilterForModule (const FileSpec *containingModule);
+
+    lldb::SearchFilterSP
+    GetSearchFilterForModuleList (const FileSpecList *containingModuleList);
+    
+    lldb::SearchFilterSP
+    GetSearchFilterForModuleAndCUList (const FileSpecList *containingModules, const FileSpecList *containingSourceFiles);
 
 protected:    
     //------------------------------------------------------------------
@@ -1142,19 +1156,6 @@ protected:
     lldb::user_id_t         m_stop_hook_next_id;
     bool                    m_suppress_stop_hooks;
     
-    //------------------------------------------------------------------
-    // Methods.
-    //------------------------------------------------------------------
-    lldb::SearchFilterSP
-    GetSearchFilterForModule (const FileSpec *containingModule);
-
-    lldb::SearchFilterSP
-    GetSearchFilterForModuleList (const FileSpecList *containingModuleList);
-    
-    lldb::SearchFilterSP
-    GetSearchFilterForModuleAndCUList (const FileSpecList *containingModules, const FileSpecList *containingSourceFiles);
-
-
     static void
     ImageSearchPathsChanged (const PathMappingList &path_list,
                              void *baton);

@@ -91,8 +91,8 @@ public:
     }
 
 protected:
-    virtual lldb::BreakpointSP
-    CreateExceptionBreakpoint (bool catch_bp, bool throw_bp, bool is_internal = false);
+    virtual lldb::BreakpointResolverSP
+    CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp);
             
 private:
     AppleObjCRuntimeV1(Process *process) : 

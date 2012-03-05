@@ -295,7 +295,11 @@ AppleObjCRuntime::SetExceptionBreakpoints ()
     const bool is_internal = true;
     
     if (!m_objc_exception_bp_sp)
-        m_objc_exception_bp_sp = CreateExceptionBreakpoint (catch_bp, throw_bp, is_internal);
+        m_objc_exception_bp_sp = LanguageRuntime::CreateExceptionBreakpoint (m_process->GetTarget(),
+                                                                            GetLanguageType(),
+                                                                            catch_bp, 
+                                                                            throw_bp, 
+                                                                            is_internal);
     else
         m_objc_exception_bp_sp->SetEnabled(true);
 }

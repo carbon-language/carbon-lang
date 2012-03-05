@@ -258,36 +258,31 @@ ItaniumABILanguageRuntime::GetPluginVersion()
 static const char *exception_names[] = {"__cxa_throw", "__cxa_allocate", "__cxa_rethrow", "__cxa_catch"};
 static const int num_throw_names = 3;
 
-BreakpointSP
-ItaniumABILanguageRuntime::CreateExceptionBreakpoint (bool catch_bp, bool throw_bp, bool is_internal)
+BreakpointResolverSP
+ItaniumABILanguageRuntime::CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bool throw_bp)
 {
-    BreakpointSP exc_breakpt_sp;
+    BreakpointResolverSP resolver_sp;
+    
     if (catch_bp && throw_bp)
-        exc_breakpt_sp = m_process->GetTarget().CreateBreakpoint (NULL,
-                                                                  NULL,
-                                                                  exception_names,
-                                                                  sizeof (exception_names)/sizeof (char *),
-                                                                  eFunctionNameTypeBase, 
-                                                                  is_internal, 
-                                                                  eLazyBoolNo);
+        resolver_sp.reset (new BreakpointResolverName (bkpt,
+                                                       exception_names,
+                                                       sizeof (exception_names)/sizeof (char *),
+                                                       eFunctionNameTypeBase,
+                                                       eLazyBoolNo));
     else if (throw_bp)
-        exc_breakpt_sp = m_process->GetTarget().CreateBreakpoint (NULL,
-                                                                  NULL,
-                                                                  exception_names,
-                                                                  num_throw_names,
-                                                                  eFunctionNameTypeBase, 
-                                                                  is_internal, 
-                                                                  eLazyBoolNo);
+        resolver_sp.reset (new BreakpointResolverName (bkpt,
+                                                       exception_names,
+                                                       num_throw_names,
+                                                       eFunctionNameTypeBase,
+                                                       eLazyBoolNo));
     else if (catch_bp)
-        exc_breakpt_sp = m_process->GetTarget().CreateBreakpoint (NULL,
-                                                                  NULL,
-                                                                  exception_names + num_throw_names,
-                                                                  sizeof (exception_names)/sizeof (char *) - num_throw_names,
-                                                                  eFunctionNameTypeBase, 
-                                                                  is_internal, 
-                                                                  eLazyBoolNo);
+        resolver_sp.reset (new BreakpointResolverName (bkpt,
+                                                       exception_names + num_throw_names,
+                                                       sizeof (exception_names)/sizeof (char *) - num_throw_names,
+                                                       eFunctionNameTypeBase,
+                                                       eLazyBoolNo));
 
-    return exc_breakpt_sp;
+    return resolver_sp;
 }
 
 void
@@ -301,7 +296,11 @@ ItaniumABILanguageRuntime::SetExceptionBreakpoints ()
     const bool is_internal = true;
     
     if (!m_cxx_exception_bp_sp)
-        m_cxx_exception_bp_sp = CreateExceptionBreakpoint (catch_bp, throw_bp, is_internal);
+        m_cxx_exception_bp_sp = LanguageRuntime::CreateExceptionBreakpoint (m_process->GetTarget(),
+                                                                            GetLanguageType(),
+                                                                            catch_bp, 
+                                                                            throw_bp, 
+                                                                            is_internal);
     else
         m_cxx_exception_bp_sp->SetEnabled (true);
     
