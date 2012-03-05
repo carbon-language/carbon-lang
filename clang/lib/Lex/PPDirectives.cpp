@@ -313,9 +313,6 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         CurPPLexer->pushConditionalLevel(Tok.getLocation(), /*wasskipping*/true,
                                        /*foundnonskip*/false,
                                        /*foundelse*/false);
-
-        if (Callbacks)
-          Callbacks->Endif();
       }
     } else if (Directive[0] == 'e') {
       StringRef Sub = Directive.substr(1);
@@ -328,8 +325,11 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         assert(!InCond && "Can't be skipping if not in a conditional!");
 
         // If we popped the outermost skipping block, we're done skipping!
-        if (!CondInfo.WasSkipping)
+        if (!CondInfo.WasSkipping) {
+          if (Callbacks)
+            Callbacks->Endif(Tok.getLocation(), CondInfo.IfLoc);
           break;
+        }
       } else if (Sub == "lse") { // "else".
         // #else directive in a skipping conditional.  If not in some other
         // skipping conditional, and if #else hasn't already been seen, enter it
@@ -342,14 +342,13 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         // Note that we've seen a #else in this conditional.
         CondInfo.FoundElse = true;
 
-        if (Callbacks)
-          Callbacks->Else();
-
         // If the conditional is at the top level, and the #if block wasn't
         // entered, enter the #else block now.
         if (!CondInfo.WasSkipping && !CondInfo.FoundNonSkip) {
           CondInfo.FoundNonSkip = true;
           CheckEndOfDirective("else");
+          if (Callbacks)
+            Callbacks->Else(Tok.getLocation(), CondInfo.IfLoc);
           break;
         } else {
           DiscardUntilEndOfDirective();  // C99 6.10p4.
@@ -378,12 +377,13 @@ void Preprocessor::SkipExcludedConditionalBlock(SourceLocation IfTokenLoc,
         // If this is a #elif with a #else before it, report the error.
         if (CondInfo.FoundElse) Diag(Tok, diag::pp_err_elif_after_else);
 
-        if (Callbacks)
-          Callbacks->Elif(SourceRange(ConditionalBegin, ConditionalEnd));
-
         // If this condition is true, enter it!
         if (ShouldEnter) {
           CondInfo.FoundNonSkip = true;
+          if (Callbacks)
+            Callbacks->Elif(Tok.getLocation(),
+                            SourceRange(ConditionalBegin, ConditionalEnd),
+                            CondInfo.IfLoc);
           break;
         }
       }
@@ -1897,6 +1897,13 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
   if (MI)  // Mark it used.
     markMacroAsUsed(MI);
 
+  if (Callbacks) {
+    if (isIfndef)
+      Callbacks->Ifndef(DirectiveTok.getLocation(), MacroNameTok);
+    else
+      Callbacks->Ifdef(DirectiveTok.getLocation(), MacroNameTok);
+  }
+
   // Should we include the stuff contained by this directive?
   if (!MI == isIfndef) {
     // Yes, remember that we are inside a conditional, then lex the next token.
@@ -1908,13 +1915,6 @@ void Preprocessor::HandleIfdefDirective(Token &Result, bool isIfndef,
     SkipExcludedConditionalBlock(DirectiveTok.getLocation(),
                                  /*Foundnonskip*/false,
                                  /*FoundElse*/false);
-  }
-
-  if (Callbacks) {
-    if (isIfndef)
-      Callbacks->Ifndef(MacroNameTok);
-    else
-      Callbacks->Ifdef(MacroNameTok);
   }
 }
 
@@ -1939,6 +1939,10 @@ void Preprocessor::HandleIfDirective(Token &IfToken,
       CurPPLexer->MIOpt.EnterTopLevelConditional();
   }
 
+  if (Callbacks)
+    Callbacks->If(IfToken.getLocation(),
+                  SourceRange(ConditionalBegin, ConditionalEnd));
+
   // Should we include the stuff contained by this directive?
   if (ConditionalTrue) {
     // Yes, remember that we are inside a conditional, then lex the next token.
@@ -1949,9 +1953,6 @@ void Preprocessor::HandleIfDirective(Token &IfToken,
     SkipExcludedConditionalBlock(IfToken.getLocation(), /*Foundnonskip*/false,
                                  /*FoundElse*/false);
   }
-
-  if (Callbacks)
-    Callbacks->If(SourceRange(ConditionalBegin, ConditionalEnd));
 }
 
 /// HandleEndifDirective - Implements the #endif directive.
@@ -1977,7 +1978,7 @@ void Preprocessor::HandleEndifDirective(Token &EndifToken) {
          "This code should only be reachable in the non-skipping case!");
 
   if (Callbacks)
-    Callbacks->Endif();
+    Callbacks->Endif(EndifToken.getLocation(), CondInfo.IfLoc);
 }
 
 /// HandleElseDirective - Implements the #else directive.
@@ -2001,12 +2002,12 @@ void Preprocessor::HandleElseDirective(Token &Result) {
   // If this is a #else with a #else before it, report the error.
   if (CI.FoundElse) Diag(Result, diag::pp_err_else_after_else);
 
+  if (Callbacks)
+    Callbacks->Else(Result.getLocation(), CI.IfLoc);
+
   // Finally, skip the rest of the contents of this block.
   SkipExcludedConditionalBlock(CI.IfLoc, /*Foundnonskip*/true,
                                /*FoundElse*/true, Result.getLocation());
-
-  if (Callbacks)
-    Callbacks->Else();
 }
 
 /// HandleElifDirective - Implements the #elif directive.
@@ -2033,12 +2034,13 @@ void Preprocessor::HandleElifDirective(Token &ElifToken) {
 
   // If this is a #elif with a #else before it, report the error.
   if (CI.FoundElse) Diag(ElifToken, diag::pp_err_elif_after_else);
+  
+  if (Callbacks)
+    Callbacks->Elif(ElifToken.getLocation(),
+                    SourceRange(ConditionalBegin, ConditionalEnd), CI.IfLoc);
 
   // Finally, skip the rest of the contents of this block.
   SkipExcludedConditionalBlock(CI.IfLoc, /*Foundnonskip*/true,
                                /*FoundElse*/CI.FoundElse,
                                ElifToken.getLocation());
-
-  if (Callbacks)
-    Callbacks->Elif(SourceRange(ConditionalBegin, ConditionalEnd));
 }

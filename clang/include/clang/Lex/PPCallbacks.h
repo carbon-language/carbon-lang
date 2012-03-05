@@ -192,33 +192,34 @@ public:
   /// If -- This hook is called whenever an #if is seen.
   /// \param Range The SourceRange of the expression being tested.
   // FIXME: better to pass in a list (or tree!) of Tokens.
-  virtual void If(SourceRange Range) {
+  virtual void If(SourceLocation Loc, SourceRange ConditionRange) {
   }
 
   /// Elif -- This hook is called whenever an #elif is seen.
   /// \param Range The SourceRange of the expression being tested.
   // FIXME: better to pass in a list (or tree!) of Tokens.
-  virtual void Elif(SourceRange Range) {
+  virtual void Elif(SourceLocation Loc, SourceRange ConditionRange,
+                    SourceLocation IfLoc) {
   }
 
   /// Ifdef -- This hook is called whenever an #ifdef is seen.
   /// \param Loc The location of the token being tested.
   /// \param II Information on the token being tested.
-  virtual void Ifdef(const Token &MacroNameTok) {
+  virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok) {
   }
 
   /// Ifndef -- This hook is called whenever an #ifndef is seen.
   /// \param Loc The location of the token being tested.
   /// \param II Information on the token being tested.
-  virtual void Ifndef(const Token &MacroNameTok) {
+  virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok) {
   }
 
   /// Else -- This hook is called whenever an #else is seen.
-  virtual void Else() {
+  virtual void Else(SourceLocation Loc, SourceLocation IfLoc) {
   }
 
   /// Endif -- This hook is called whenever an #endif is seen.
-  virtual void Endif() {
+  virtual void Endif(SourceLocation Loc, SourceLocation IfLoc) {
   }
 };
 
@@ -335,39 +336,40 @@ public:
   }
 
   /// If -- This hook is called whenever an #if is seen.
-  virtual void If(SourceRange Range) {
-    First->If(Range);
-    Second->If(Range);
+  virtual void If(SourceLocation Loc, SourceRange ConditionRange) {
+    First->If(Loc, ConditionRange);
+    Second->If(Loc, ConditionRange);
   }
 
   /// Elif -- This hook is called whenever an #if is seen.
-  virtual void Elif(SourceRange Range) {
-    First->Elif(Range);
-    Second->Elif(Range);
+  virtual void Elif(SourceLocation Loc, SourceRange ConditionRange,
+                    SourceLocation IfLoc) {
+    First->Elif(Loc, ConditionRange, IfLoc);
+    Second->Elif(Loc, ConditionRange, IfLoc);
   }
 
   /// Ifdef -- This hook is called whenever an #ifdef is seen.
-  virtual void Ifdef(const Token &MacroNameTok) {
-    First->Ifdef(MacroNameTok);
-    Second->Ifdef(MacroNameTok);
+  virtual void Ifdef(SourceLocation Loc, const Token &MacroNameTok) {
+    First->Ifdef(Loc, MacroNameTok);
+    Second->Ifdef(Loc, MacroNameTok);
   }
 
   /// Ifndef -- This hook is called whenever an #ifndef is seen.
-  virtual void Ifndef(const Token &MacroNameTok) {
-    First->Ifndef(MacroNameTok);
-    Second->Ifndef(MacroNameTok);
+  virtual void Ifndef(SourceLocation Loc, const Token &MacroNameTok) {
+    First->Ifndef(Loc, MacroNameTok);
+    Second->Ifndef(Loc, MacroNameTok);
   }
 
   /// Else -- This hook is called whenever an #else is seen.
-  virtual void Else() {
-    First->Else();
-    Second->Else();
+  virtual void Else(SourceLocation Loc, SourceLocation IfLoc) {
+    First->Else(Loc, IfLoc);
+    Second->Else(Loc, IfLoc);
   }
 
   /// Endif -- This hook is called whenever an #endif is seen.
-  virtual void Endif() {
-    First->Endif();
-    Second->Endif();
+  virtual void Endif(SourceLocation Loc, SourceLocation IfLoc) {
+    First->Endif(Loc, IfLoc);
+    Second->Endif(Loc, IfLoc);
   }
 };
 
