@@ -2596,21 +2596,25 @@ void Sema::InstantiateStaticDataMemberDefinition(
     return;
   }
 
+  TemplateSpecializationKind TSK = Var->getTemplateSpecializationKind();
+
   // Never instantiate an explicit specialization.
-  if (Var->getTemplateSpecializationKind() == TSK_ExplicitSpecialization)
+  if (TSK == TSK_ExplicitSpecialization)
     return;
 
   // C++0x [temp.explicit]p9:
   //   Except for inline functions, other explicit instantiation declarations
   //   have the effect of suppressing the implicit instantiation of the entity
   //   to which they refer.
-  if (Var->getTemplateSpecializationKind()
-        == TSK_ExplicitInstantiationDeclaration)
+  if (TSK == TSK_ExplicitInstantiationDeclaration)
     return;
 
   // If we already have a definition, we're done.
-  if (Var->getDefinition())
+  if (Var->getDefinition()) {
+    if (TSK == TSK_ExplicitInstantiationDefinition)
+      Consumer.MarkVarRequired(Var);
     return;
+  }
 
   InstantiatingTemplate Inst(*this, PointOfInstantiation, Var);
   if (Inst)

@@ -35,6 +35,7 @@ public:
 
   // ASTConsumer
   virtual void Initialize(ASTContext &Context);
+  virtual void MarkVarRequired(VarDecl *VD);
   virtual bool HandleTopLevelDecl(DeclGroupRef D);
   virtual void HandleInterestingDecl(DeclGroupRef D);
   virtual void HandleTranslationUnit(ASTContext &Ctx);

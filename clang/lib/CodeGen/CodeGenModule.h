@@ -658,6 +658,11 @@ public:
   /// EmitTopLevelDecl - Emit code for a single top level declaration.
   void EmitTopLevelDecl(Decl *D);
 
+  /// MarkVarRequired - Tell the consumer that this variable must be output.
+  /// This is needed when the definition is initially one that can be deferred,
+  /// but we then see an explicit template instantiation definition.
+  void MarkVarRequired(VarDecl *VD);
+
   /// AddUsedGlobal - Add a global which should be forced to be
   /// present in the object file; these are emitted to the llvm.used
   /// metadata global.

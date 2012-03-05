@@ -209,6 +209,11 @@ bool MultiplexConsumer::HandleTopLevelDecl(DeclGroupRef D) {
   return Continue;
 }
 
+void  MultiplexConsumer::MarkVarRequired(VarDecl *VD) {
+  for (size_t i = 0, e = Consumers.size(); i != e; ++i)
+    Consumers[i]->MarkVarRequired(VD);
+}
+
 void MultiplexConsumer::HandleInterestingDecl(DeclGroupRef D) {
   for (size_t i = 0, e = Consumers.size(); i != e; ++i)
     Consumers[i]->HandleInterestingDecl(D);

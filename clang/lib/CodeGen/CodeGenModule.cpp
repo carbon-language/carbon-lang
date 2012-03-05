@@ -1722,6 +1722,9 @@ static void ReplaceUsesOfNonProtoTypeWithRealFunction(llvm::GlobalValue *Old,
   }
 }
 
+void CodeGenModule::MarkVarRequired(VarDecl *VD) {
+  GetAddrOfGlobalVar(VD);
+}
 
 void CodeGenModule::EmitGlobalFunctionDefinition(GlobalDecl GD) {
   const FunctionDecl *D = cast<FunctionDecl>(GD.getDecl());

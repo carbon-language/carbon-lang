@@ -59,6 +59,10 @@ namespace {
                                                *M, *TD, Diags));
     }
 
+    virtual void MarkVarRequired(VarDecl *VD) {
+      Builder->MarkVarRequired(VD);
+    }
+
     virtual bool HandleTopLevelDecl(DeclGroupRef DG) {
       // Make sure to emit all elements of a Decl.
       for (DeclGroupRef::iterator I = DG.begin(), E = DG.end(); I != E; ++I)

@@ -73,6 +73,10 @@ namespace clang {
     llvm::Module *takeModule() { return TheModule.take(); }
     llvm::Module *takeLinkModule() { return LinkModule.take(); }
 
+    virtual void MarkVarRequired(VarDecl *VD) {
+      Gen->MarkVarRequired(VD);
+    }
+
     virtual void Initialize(ASTContext &Ctx) {
       Context = &Ctx;
 
