@@ -466,6 +466,20 @@ else
     fi
 fi
 
+if [ -f "${SRC_ROOT}/examples/summaries/cocoa/attrib_fromdict.py" ]
+then
+    if [ $Debug == 1 ]
+    then
+        echo "Copying attrib_fromdict.py to ${framework_python_dir}"
+    fi
+    cp "${SRC_ROOT}/examples/summaries/cocoa/attrib_fromdict.py" "${framework_python_dir}"
+else
+    if [ $Debug == 1 ]
+    then
+        echo "Unable to find ${SRC_ROOT}/examples/summaries/cocoa/attrib_fromdict.py"
+    fi
+fi
+
 if [ -f "${SRC_ROOT}/examples/summaries/cocoa/objc_lldb.py" ]
 then
     if [ $Debug == 1 ]
