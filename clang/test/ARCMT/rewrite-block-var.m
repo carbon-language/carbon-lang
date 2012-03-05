@@ -23,3 +23,23 @@ void test2(Foo *p) {
     x = [p something];
   });
 }
+
+void test3(Foo *p) {
+  __block Foo *x; // __block used as output variable.
+  bar(^{
+    [x something];
+  });
+  bar(^{
+    x = 0;
+  });
+}
+
+void test4(Foo *p) {
+  __block Foo *x = p; // __block used just to break cycle.
+  bar(^{
+    [x something];
+  });
+  bar(^{
+    [x something];
+  });
+}

@@ -553,6 +553,7 @@ static void traverseAST(MigrationPass &pass) {
     MigrateCtx.addTraverser(new GCAttrsTraverser());
   }
   MigrateCtx.addTraverser(new PropertyRewriteTraverser());
+  MigrateCtx.addTraverser(new BlockObjCVariableTraverser());
 
   MigrateCtx.traverse(pass.Ctx.getTranslationUnitDecl());
 }
@@ -564,7 +565,6 @@ static void independentTransforms(MigrationPass &pass) {
   removeZeroOutPropsInDeallocFinalize(pass);
   makeAssignARCSafe(pass);
   rewriteUnbridgedCasts(pass);
-  rewriteBlockObjCVariable(pass);
   checkAPIUses(pass);
   traverseAST(pass);
 }

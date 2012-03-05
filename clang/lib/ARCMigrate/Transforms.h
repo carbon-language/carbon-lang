@@ -37,7 +37,6 @@ void rewriteUnbridgedCasts(MigrationPass &pass);
 void makeAssignARCSafe(MigrationPass &pass);
 void removeRetainReleaseDeallocFinalize(MigrationPass &pass);
 void removeZeroOutPropsInDeallocFinalize(MigrationPass &pass);
-void rewriteBlockObjCVariable(MigrationPass &pass);
 void rewriteUnusedInitDelegate(MigrationPass &pass);
 void checkAPIUses(MigrationPass &pass);
 
@@ -128,6 +127,11 @@ public:
 class PropertyRewriteTraverser : public ASTTraverser {
 public:
   virtual void traverseObjCImplementation(ObjCImplementationContext &ImplCtx);
+};
+
+class BlockObjCVariableTraverser : public ASTTraverser {
+public:
+  virtual void traverseBody(BodyContext &BodyCtx);
 };
 
 // GC transformations

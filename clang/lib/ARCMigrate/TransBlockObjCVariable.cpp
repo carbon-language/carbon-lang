@@ -38,7 +38,7 @@ namespace {
 class RootBlockObjCVarRewriter :
                           public RecursiveASTVisitor<RootBlockObjCVarRewriter> {
   MigrationPass &Pass;
-  llvm::DenseSet<VarDecl *> CheckedVars;
+  llvm::DenseSet<VarDecl *> &VarsToChange;
 
   class BlockVarChecker : public RecursiveASTVisitor<BlockVarChecker> {
     VarDecl *Var;
@@ -71,7 +71,9 @@ class RootBlockObjCVarRewriter :
   };
 
 public:
-  RootBlockObjCVarRewriter(MigrationPass &pass) : Pass(pass) { }
+  RootBlockObjCVarRewriter(MigrationPass &pass,
+                           llvm::DenseSet<VarDecl *> &VarsToChange)
+    : Pass(pass), VarsToChange(VarsToChange) { }
 
   bool VisitBlockDecl(BlockDecl *block) {
     SmallVector<VarDecl *, 4> BlockVars;
@@ -80,7 +82,6 @@ public:
            I = block->capture_begin(), E = block->capture_end(); I != E; ++I) {
       VarDecl *var = I->getVariable();
       if (I->isByRef() &&
-          !isAlreadyChecked(var) &&
           var->getType()->isObjCObjectPointerType() &&
           isImplicitStrong(var->getType())) {
         BlockVars.push_back(var);
@@ -89,32 +90,19 @@ public:
 
     for (unsigned i = 0, e = BlockVars.size(); i != e; ++i) {
       VarDecl *var = BlockVars[i];
-      CheckedVars.insert(var);
 
       BlockVarChecker checker(var);
       bool onlyValueOfVarIsNeeded = checker.TraverseStmt(block->getBody());
-      if (onlyValueOfVarIsNeeded) {
-        BlocksAttr *attr = var->getAttr<BlocksAttr>();
-        if(!attr)
-          continue;
-        bool useWeak = canApplyWeak(Pass.Ctx, var->getType());
-        SourceManager &SM = Pass.Ctx.getSourceManager();
-        Transaction Trans(Pass.TA);
-        Pass.TA.replaceText(SM.getExpansionLoc(attr->getLocation()),
-                            "__block",
-                            useWeak ? "__weak" : "__unsafe_unretained");
-      }
-
+      if (onlyValueOfVarIsNeeded)
+        VarsToChange.insert(var);
+      else
+        VarsToChange.erase(var);
     }
 
     return true;
   }
 
 private:
-  bool isAlreadyChecked(VarDecl *VD) {
-    return CheckedVars.count(VD);
-  }
-
   bool isImplicitStrong(QualType ty) {
     if (isa<AttributedType>(ty.getTypePtr()))
       return false;
@@ -124,19 +112,39 @@ private:
 
 class BlockObjCVarRewriter : public RecursiveASTVisitor<BlockObjCVarRewriter> {
   MigrationPass &Pass;
+  llvm::DenseSet<VarDecl *> &VarsToChange;
 
 public:
-  BlockObjCVarRewriter(MigrationPass &pass) : Pass(pass) { }
+  BlockObjCVarRewriter(MigrationPass &pass,
+                       llvm::DenseSet<VarDecl *> &VarsToChange)
+    : Pass(pass), VarsToChange(VarsToChange) { }
 
   bool TraverseBlockDecl(BlockDecl *block) {
-    RootBlockObjCVarRewriter(Pass).TraverseDecl(block);
+    RootBlockObjCVarRewriter(Pass, VarsToChange).TraverseDecl(block);
     return true;
   }
 };
 
 } // anonymous namespace
 
-void trans::rewriteBlockObjCVariable(MigrationPass &pass) {
-  BlockObjCVarRewriter trans(pass);
-  trans.TraverseDecl(pass.Ctx.getTranslationUnitDecl());
+void BlockObjCVariableTraverser::traverseBody(BodyContext &BodyCtx) {
+  MigrationPass &Pass = BodyCtx.getMigrationContext().Pass;
+  llvm::DenseSet<VarDecl *> VarsToChange;
+
+  BlockObjCVarRewriter trans(Pass, VarsToChange);
+  trans.TraverseStmt(BodyCtx.getTopStmt());
+
+  for (llvm::DenseSet<VarDecl *>::iterator
+         I = VarsToChange.begin(), E = VarsToChange.end(); I != E; ++I) {
+    VarDecl *var = *I;
+    BlocksAttr *attr = var->getAttr<BlocksAttr>();
+    if(!attr)
+      continue;
+    bool useWeak = canApplyWeak(Pass.Ctx, var->getType());
+    SourceManager &SM = Pass.Ctx.getSourceManager();
+    Transaction Trans(Pass.TA);
+    Pass.TA.replaceText(SM.getExpansionLoc(attr->getLocation()),
+                        "__block",
+                        useWeak ? "__weak" : "__unsafe_unretained");
+  }
 }
