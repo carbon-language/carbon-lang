@@ -714,6 +714,24 @@ SVal SimpleSValBuilder::evalBinOpLL(ProgramStateRef state,
 
     // The two regions are from the same base region. See if they're both a
     // type of region we know how to compare.
+    const MemSpaceRegion *LeftMS = LeftBase->getMemorySpace();
+    const MemSpaceRegion *RightMS = RightBase->getMemorySpace();
+
+    // Heuristic: assume that no symbolic region (whose memory space is
+    // unknown) is on the stack.
+    // FIXME: we should be able to be more precise once we can do better
+    // aliasing constraints for symbolic regions, but this is a reasonable,
+    // albeit unsound, assumption that holds most of the time.
+    if (isa<StackSpaceRegion>(LeftMS) ^ isa<StackSpaceRegion>(RightMS)) {
+      switch (op) {
+        default:
+          break;
+        case BO_EQ:
+          return makeTruthVal(false, resultTy);
+        case BO_NE:
+          return makeTruthVal(true, resultTy);
+      }
+    }
 
     // FIXME: If/when there is a getAsRawOffset() for FieldRegions, this
     // ElementRegion path and the FieldRegion path below should be unified.

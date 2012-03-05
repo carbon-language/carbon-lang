@@ -269,7 +269,7 @@ void symbolic_region(int *p) {
   int a;
 
   if (&a == p)
-    WARN; // expected-warning{{}}
+    WARN; // no-warning
   if (&a != p)
     WARN; // expected-warning{{}}
   if (&a > p)

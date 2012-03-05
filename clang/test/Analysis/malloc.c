@@ -728,6 +728,38 @@ int my_main_warn(FILE *f) {
     return 0;// expected-warning {{leak}}
 }
 
+// <rdar://problem/10978247>.
+// some people use stack allocated memory as an optimization to avoid
+// a heap allocation for small work sizes.  This tests the analyzer's
+// understanding that the malloc'ed memory is not the same as stackBuffer.
+void radar10978247(int myValueSize) {
+  char stackBuffer[128];
+  char *buffer;
+
+  if (myValueSize <= sizeof(stackBuffer))
+    buffer = stackBuffer;
+  else 
+    buffer = malloc(myValueSize);
+
+  // do stuff with the buffer
+  if (buffer != stackBuffer)
+    free(buffer);
+}
+
+void radar10978247_positive(int myValueSize) {
+  char stackBuffer[128];
+  char *buffer;
+
+  if (myValueSize <= sizeof(stackBuffer))
+    buffer = stackBuffer;
+  else 
+    buffer = malloc(myValueSize);
+
+  // do stuff with the buffer
+  if (buffer == stackBuffer) // expected-warning {{leak}}
+    return;
+}
+
 // ----------------------------------------------------------------------------
 // Below are the known false positives.
 
