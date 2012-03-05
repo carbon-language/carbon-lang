@@ -688,7 +688,7 @@ def warn_unimplemented_protocol_method : Warning<
 // C++ declarations
 def err_static_assert_expression_is_not_constant : Error<
   "static_assert expression is not an integral constant expression">;
-def err_static_assert_failed : Error<"static_assert failed \"%0\"">;
+def err_static_assert_failed : Error<"static_assert failed %0">;
 
 def warn_inline_namespace_reopened_noninline : Warning<
   "inline namespace cannot be re-opened as a non-inline namespace">;

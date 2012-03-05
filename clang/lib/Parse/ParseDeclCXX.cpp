@@ -610,7 +610,7 @@ Decl *Parser::ParseStaticAssertDeclaration(SourceLocation &DeclEnd){
   if (ExpectAndConsume(tok::comma, diag::err_expected_comma, "", tok::semi))
     return 0;
 
-  if (Tok.isNot(tok::string_literal)) {
+  if (!isTokenStringLiteral()) {
     Diag(Tok, diag::err_expected_string_literal);
     SkipUntil(tok::semi);
     return 0;

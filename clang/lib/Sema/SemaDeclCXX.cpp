@@ -9646,9 +9646,13 @@ Decl *Sema::ActOnStaticAssertDeclaration(SourceLocation StaticAssertLoc,
           /*AllowFold=*/false).isInvalid())
       return 0;
 
-    if (!Cond)
+    if (!Cond) {
+      llvm::SmallString<256> MsgBuffer;
+      llvm::raw_svector_ostream Msg(MsgBuffer);
+      AssertMessage->printPretty(Msg, Context, 0, getPrintingPolicy());
       Diag(StaticAssertLoc, diag::err_static_assert_failed)
-        << AssertMessage->getString() << AssertExpr->getSourceRange();
+        << Msg.str() << AssertExpr->getSourceRange();
+    }
   }
 
   if (DiagnoseUnexpandedParameterPack(AssertExpr, UPPC_StaticAssertExpression))
