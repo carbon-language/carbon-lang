@@ -87,10 +87,6 @@ namespace {
     }
 
     friend hash_code hash_value(const Expression &Value) {
-      // Optimize for the common case.
-      if (Value.varargs.empty())
-        return hash_combine(Value.opcode, Value.type);
-
       return hash_combine(Value.opcode, Value.type,
                           hash_combine_range(Value.varargs.begin(),
                                              Value.varargs.end()));
