@@ -574,11 +574,10 @@ static int ARMFlagFromOpName(LiteralConstantEmitter *type,
   REG("QQPR");
   REG("QQQQPR");
   REG("VecListOneD");
-  REG("VecListTwoD");
   REG("VecListDPair");
+  REG("VecListDPairSpaced");
   REG("VecListThreeD");
   REG("VecListFourD");
-  REG("VecListTwoQ");
   REG("VecListOneDAllLanes");
   REG("VecListTwoDAllLanes");
   REG("VecListTwoQAllLanes");

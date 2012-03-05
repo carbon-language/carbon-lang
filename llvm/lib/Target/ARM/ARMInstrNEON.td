@@ -116,13 +116,13 @@ def VecListFourD : RegisterOperand<DPR, "printVectorListFour"> {
   let ParserMatchClass = VecListFourDAsmOperand;
 }
 // Register list of two D registers spaced by 2 (two sequential Q registers).
-def VecListTwoQAsmOperand : AsmOperandClass {
-  let Name = "VecListTwoQ";
+def VecListDPairSpacedAsmOperand : AsmOperandClass {
+  let Name = "VecListDPairSpaced";
   let ParserMethod = "parseVectorList";
   let RenderMethod = "addVecListOperands";
 }
-def VecListTwoQ : RegisterOperand<DPR, "printVectorListTwoSpaced"> {
-  let ParserMatchClass = VecListTwoQAsmOperand;
+def VecListDPairSpaced : RegisterOperand<DPair, "printVectorListDPairSpaced"> {
+  let ParserMatchClass = VecListDPairSpacedAsmOperand;
 }
 // Register list of three D registers spaced by 2 (three Q registers).
 def VecListThreeQAsmOperand : AsmOperandClass {
@@ -803,12 +803,12 @@ def VLD2q16PseudoWB_register : VLDQQWBregisterPseudo<IIC_VLD2x2u>;
 def VLD2q32PseudoWB_register : VLDQQWBregisterPseudo<IIC_VLD2x2u>;
 
 // ...with double-spaced registers
-def  VLD2b8    : VLD2<0b1001, {0,0,?,?}, "8", VecListTwoQ, IIC_VLD2>;
-def  VLD2b16   : VLD2<0b1001, {0,1,?,?}, "16", VecListTwoQ, IIC_VLD2>;
-def  VLD2b32   : VLD2<0b1001, {1,0,?,?}, "32", VecListTwoQ, IIC_VLD2>;
-defm VLD2b8wb  : VLD2WB<0b1001, {0,0,?,?}, "8", VecListTwoQ, IIC_VLD2u>;
-defm VLD2b16wb : VLD2WB<0b1001, {0,1,?,?}, "16", VecListTwoQ, IIC_VLD2u>;
-defm VLD2b32wb : VLD2WB<0b1001, {1,0,?,?}, "32", VecListTwoQ, IIC_VLD2u>;
+def  VLD2b8    : VLD2<0b1001, {0,0,?,?}, "8", VecListDPairSpaced, IIC_VLD2>;
+def  VLD2b16   : VLD2<0b1001, {0,1,?,?}, "16", VecListDPairSpaced, IIC_VLD2>;
+def  VLD2b32   : VLD2<0b1001, {1,0,?,?}, "32", VecListDPairSpaced, IIC_VLD2>;
+defm VLD2b8wb  : VLD2WB<0b1001, {0,0,?,?}, "8", VecListDPairSpaced, IIC_VLD2u>;
+defm VLD2b16wb : VLD2WB<0b1001, {0,1,?,?}, "16", VecListDPairSpaced, IIC_VLD2u>;
+defm VLD2b32wb : VLD2WB<0b1001, {1,0,?,?}, "32", VecListDPairSpaced, IIC_VLD2u>;
 
 //   VLD3     : Vector Load (multiple 3-element structures)
 class VLD3D<bits<4> op11_8, bits<4> op7_4, string Dt>
@@ -1810,12 +1810,12 @@ def VST2q16PseudoWB_register : VSTQQWBregisterPseudo<IIC_VST2x2u>;
 def VST2q32PseudoWB_register : VSTQQWBregisterPseudo<IIC_VST2x2u>;
 
 // ...with double-spaced registers
-def VST2b8      : VST2<0b1001, {0,0,?,?}, "8",  VecListTwoQ, IIC_VST2>;
-def VST2b16     : VST2<0b1001, {0,1,?,?}, "16", VecListTwoQ, IIC_VST2>;
-def VST2b32     : VST2<0b1001, {1,0,?,?}, "32", VecListTwoQ, IIC_VST2>;
-defm VST2b8wb   : VST2DWB<0b1001, {0,0,?,?}, "8",  VecListTwoQ>;
-defm VST2b16wb  : VST2DWB<0b1001, {0,1,?,?}, "16", VecListTwoQ>;
-defm VST2b32wb  : VST2DWB<0b1001, {1,0,?,?}, "32", VecListTwoQ>;
+def VST2b8      : VST2<0b1001, {0,0,?,?}, "8",  VecListDPairSpaced, IIC_VST2>;
+def VST2b16     : VST2<0b1001, {0,1,?,?}, "16", VecListDPairSpaced, IIC_VST2>;
+def VST2b32     : VST2<0b1001, {1,0,?,?}, "32", VecListDPairSpaced, IIC_VST2>;
+defm VST2b8wb   : VST2DWB<0b1001, {0,0,?,?}, "8",  VecListDPairSpaced>;
+defm VST2b16wb  : VST2DWB<0b1001, {0,1,?,?}, "16", VecListDPairSpaced>;
+defm VST2b32wb  : VST2DWB<0b1001, {1,0,?,?}, "32", VecListDPairSpaced>;
 
 //   VST3     : Vector Store (multiple 3-element structures)
 class VST3D<bits<4> op11_8, bits<4> op7_4, string Dt>

@@ -1106,6 +1106,12 @@ public:
     return VectorList.Count == 2;
   }
 
+  bool isVecListDPairSpaced() const {
+    if (!isSingleSpacedVectorList()) return false;
+    return (ARMMCRegisterClasses[ARM::DPairSpcRegClassID]
+              .contains(VectorList.RegNum));
+  }
+
   bool isVecListThreeQ() const {
     if (!isDoubleSpacedVectorList()) return false;
     return VectorList.Count == 3;
@@ -2974,9 +2980,6 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       switch (LaneKind) {
       case NoLanes:
         E = Parser.getTok().getLoc();
-        // VLD1 wants a DPair register.
-        // FIXME: Make the rest of the two-reg instructions want the same
-        // thing.
         Reg = MRI->getMatchingSuperReg(Reg, ARM::dsub_0,
                                       &ARMMCRegisterClasses[ARM::DPairRegClassID]);
 
@@ -3149,13 +3152,14 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   switch (LaneKind) {
   case NoLanes:
-    if (Count == 2 && Spacing == 1)
-      // VLD1 wants a DPair register.
-      // FIXME: Make the rest of the two-reg instructions want the same
-      // thing.
-      FirstReg = MRI->getMatchingSuperReg(FirstReg, ARM::dsub_0,
-                                   &ARMMCRegisterClasses[ARM::DPairRegClassID]);
-
+    // Non-lane two-register operands have been converted to the
+    // composite register classes.
+    if (Count == 2) {
+      const MCRegisterClass *RC = (Spacing == 1) ?
+        &ARMMCRegisterClasses[ARM::DPairRegClassID] :
+        &ARMMCRegisterClasses[ARM::DPairSpcRegClassID];
+      FirstReg = MRI->getMatchingSuperReg(FirstReg, ARM::dsub_0, RC);
+    }
 
     Operands.push_back(ARMOperand::CreateVectorList(FirstReg, Count,
                                                     (Spacing == 2), S, E));
