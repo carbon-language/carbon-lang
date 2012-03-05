@@ -512,7 +512,7 @@ public:
 
   /// \brief Create a new preprocessing record, which will keep track of
   /// all macro expansions, macro definitions, etc.
-  void createPreprocessingRecord();
+  void createPreprocessingRecord(bool RecordConditionalDirectives);
 
   /// EnterMainSourceFile - Enter the specified FileID as the main source file,
   /// which implicitly adds the builtin defines etc.
