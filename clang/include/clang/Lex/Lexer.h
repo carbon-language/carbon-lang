@@ -530,6 +530,8 @@ private:
   // Other lexer functions.
 
   void SkipBytes(unsigned Bytes, bool StartOfLine);
+
+  const char *LexUDSuffix(Token &Result, const char *CurPtr);
   
   // Helper functions to lex the remainder of a token of the specific type.
   void LexIdentifier         (Token &Result, const char *CurPtr);

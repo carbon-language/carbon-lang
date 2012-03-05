@@ -731,7 +731,11 @@ NumericLiteralParser::GetFloatValue(llvm::APFloat &Result) {
 }
 
 
-///       character-literal: [C++0x lex.ccon]
+///       user-defined-character-literal: [C++11 lex.ext]
+///         character-literal ud-suffix
+///       ud-suffix:
+///         identifier
+///       character-literal: [C++11 lex.ccon]
 ///         ' c-char-sequence '
 ///         u' c-char-sequence '
 ///         U' c-char-sequence '
@@ -744,7 +748,7 @@ NumericLiteralParser::GetFloatValue(llvm::APFloat &Result) {
 ///           backslash \, or new-line character
 ///         escape-sequence
 ///         universal-character-name
-///       escape-sequence: [C++0x lex.ccon]
+///       escape-sequence:
 ///         simple-escape-sequence
 ///         octal-escape-sequence
 ///         hexadecimal-escape-sequence
@@ -757,7 +761,7 @@ NumericLiteralParser::GetFloatValue(llvm::APFloat &Result) {
 ///       hexadecimal-escape-sequence:
 ///         \x hexadecimal-digit
 ///         hexadecimal-escape-sequence hexadecimal-digit
-///       universal-character-name:
+///       universal-character-name: [C++11 lex.charset]
 ///         \u hex-quad
 ///         \U hex-quad hex-quad
 ///       hex-quad:
@@ -780,8 +784,17 @@ CharLiteralParser::CharLiteralParser(const char *begin, const char *end,
   assert(begin[0] == '\'' && "Invalid token lexed");
   ++begin;
 
+  // Remove an optional ud-suffix.
+  if (end[-1] != '\'') {
+    const char *UDSuffixEnd = end;
+    do {
+      --end;
+    } while (end[-1] != '\'');
+    UDSuffixBuf.assign(end, UDSuffixEnd);
+  }
+
   // Trim the ending quote.
-  assert(end[-1] == '\'' && "Invalid token lexed");
+  assert(end != begin && "Invalid token lexed");
   --end;
 
   // FIXME: The "Value" is an uint64_t so we can handle char literals of
@@ -1071,6 +1084,8 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
 
   Pascal = false;
 
+  SourceLocation UDSuffixTokLoc;
+
   for (unsigned i = 0, e = NumStringToks; i != e; ++i) {
     const char *ThisTokBuf = &TokenBuf[0];
     // Get the spelling of the token, which eliminates trigraphs, etc.  We know
@@ -1085,7 +1100,39 @@ void StringLiteralParser::init(const Token *StringToks, unsigned NumStringToks){
       continue;
     }
 
-    const char *ThisTokEnd = ThisTokBuf+ThisTokLen-1;  // Skip end quote.
+    const char *ThisTokEnd = ThisTokBuf+ThisTokLen;
+
+    // Remove an optional ud-suffix.
+    if (ThisTokEnd[-1] != '"') {
+      const char *UDSuffixEnd = ThisTokEnd;
+      do {
+        --ThisTokEnd;
+      } while (ThisTokEnd[-1] != '"');
+
+      StringRef UDSuffix(ThisTokEnd, UDSuffixEnd - ThisTokEnd);
+
+      if (UDSuffixBuf.empty()) {
+        UDSuffixBuf.assign(UDSuffix);
+        UDSuffixTokLoc = StringToks[i].getLocation();
+      } else if (!UDSuffixBuf.equals(UDSuffix)) {
+        // C++11 [lex.ext]p8: At the end of phase 6, if a string literal is the
+        // result of a concatenation involving at least one user-defined-string-
+        // literal, all the participating user-defined-string-literals shall
+        // have the same ud-suffix.
+        if (Diags) {
+          SourceLocation TokLoc = StringToks[i].getLocation();
+          Diags->Report(TokLoc, diag::err_string_concat_mixed_suffix)
+            << UDSuffixBuf << UDSuffix
+            << SourceRange(UDSuffixTokLoc, UDSuffixTokLoc)
+            << SourceRange(TokLoc, TokLoc);
+        }
+        hadError = true;
+      }
+    }
+
+    // Strip the end quote.
+    --ThisTokEnd;
+
     // TODO: Input character set mapping support.
 
     // Skip marker for wide or unicode strings.

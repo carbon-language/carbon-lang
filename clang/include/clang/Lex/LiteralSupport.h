@@ -128,6 +128,7 @@ class CharLiteralParser {
   tok::TokenKind Kind;
   bool IsMultiChar;
   bool HadError;
+  SmallString<32> UDSuffixBuf;
 public:
   CharLiteralParser(const char *begin, const char *end,
                     SourceLocation Loc, Preprocessor &PP,
@@ -140,6 +141,7 @@ public:
   bool isUTF32() const { return Kind == tok::utf32_char_constant; }
   bool isMultiChar() const { return IsMultiChar; }
   uint64_t getValue() const { return Value; }
+  StringRef getUDSuffix() const { return UDSuffixBuf; }
 };
 
 /// StringLiteralParser - This decodes string escape characters and performs
@@ -157,6 +159,7 @@ class StringLiteralParser {
   tok::TokenKind Kind;
   SmallString<512> ResultBuf;
   char *ResultPtr; // cursor
+  SmallString<32> UDSuffixBuf;
 public:
   StringLiteralParser(const Token *StringToks, unsigned NumStringToks,
                       Preprocessor &PP, bool Complain = true);
@@ -195,6 +198,8 @@ public:
   bool isUTF16() const { return Kind == tok::utf16_string_literal; }
   bool isUTF32() const { return Kind == tok::utf32_string_literal; }
   bool isPascal() const { return Pascal; }
+
+  StringRef getUDSuffix() const { return UDSuffixBuf; }
 
 private:
   void init(const Token *StringToks, unsigned NumStringToks);

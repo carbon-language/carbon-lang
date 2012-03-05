@@ -1078,6 +1078,12 @@ static void InitCharacterInfo() {
 }
 
 
+/// isIdentifierHead - Return true if this is the first character of an
+/// identifier, which is [a-zA-Z_].
+static inline bool isIdentifierHead(unsigned char c) {
+  return (CharInfo[c] & (CHAR_LETTER|CHAR_UNDER)) ? true : false;
+}
+
 /// isIdentifierBody - Return true if this is the body character of an
 /// identifier, which is [a-zA-Z0-9_].
 static inline bool isIdentifierBody(unsigned char c) {
@@ -1543,7 +1549,7 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   unsigned Size;
   char C = getCharAndSize(CurPtr, Size);
   char PrevCh = 0;
-  while (isNumberBody(C)) { // FIXME: UCNs?
+  while (isNumberBody(C)) { // FIXME: UCNs.
     CurPtr = ConsumeChar(CurPtr, Size, Result);
     PrevCh = C;
     C = getCharAndSize(CurPtr, Size);
@@ -1565,6 +1571,23 @@ void Lexer::LexNumericConstant(Token &Result, const char *CurPtr) {
   const char *TokStart = BufferPtr;
   FormTokenWithChars(Result, CurPtr, tok::numeric_constant);
   Result.setLiteralData(TokStart);
+}
+
+/// LexUDSuffix - Lex the ud-suffix production for user-defined literal suffixes
+/// in C++11.
+const char *Lexer::LexUDSuffix(Token &Result, const char *CurPtr) {
+  assert(getFeatures().CPlusPlus0x && "ud-suffix only exists in C++11");
+
+  // Maximally munch an identifier. FIXME: UCNs.
+  unsigned Size;
+  char C = getCharAndSize(CurPtr, Size);
+  if (isIdentifierHead(C)) {
+    do {
+      CurPtr = ConsumeChar(CurPtr, Size, Result);
+      C = getCharAndSize(CurPtr, Size);
+    } while (isIdentifierBody(C));
+  }
+  return CurPtr;
 }
 
 /// LexStringLiteral - Lex the remainder of a string literal, after having lexed
@@ -1605,6 +1628,10 @@ void Lexer::LexStringLiteral(Token &Result, const char *CurPtr,
     }
     C = getAndAdvanceChar(CurPtr, Result);
   }
+
+  // If we are in C++11, lex the optional ud-suffix.
+  if (getFeatures().CPlusPlus0x)
+    CurPtr = LexUDSuffix(Result, CurPtr);
 
   // If a nul character existed in the string, warn about it.
   if (NulCharacter && !isLexingRawMode())
@@ -1684,6 +1711,10 @@ void Lexer::LexRawStringLiteral(Token &Result, const char *CurPtr,
       return;
     }
   }
+
+  // If we are in C++11, lex the optional ud-suffix.
+  if (getFeatures().CPlusPlus0x)
+    CurPtr = LexUDSuffix(Result, CurPtr);
 
   // Update the location of token as well as BufferPtr.
   const char *TokStart = BufferPtr;
@@ -1767,6 +1798,10 @@ void Lexer::LexCharConstant(Token &Result, const char *CurPtr,
     }
     C = getAndAdvanceChar(CurPtr, Result);
   }
+
+  // If we are in C++11, lex the optional ud-suffix.
+  if (getFeatures().CPlusPlus0x)
+    CurPtr = LexUDSuffix(Result, CurPtr);
 
   // If a nul character existed in the character, warn about it.
   if (NulCharacter && !isLexingRawMode())

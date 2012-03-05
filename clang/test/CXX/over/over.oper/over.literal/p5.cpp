@@ -7,8 +7,12 @@ template<char...> void operator "" _a();
 template<char... C> S<C...> operator "" _a();
 
 template<typename T> struct U {
+  friend int operator "" _a(const char *, size_t);
   // FIXME: It's not entirely clear whether this is intended to be legal.
   friend U operator "" _a(const T *, size_t); // expected-error {{parameter}}
+};
+template<char...> struct V {
+  friend void operator "" _b(); // expected-error {{parameter}}
 };
 
 template<char... C, int N = 0> void operator "" _b(); // expected-error {{parameter}}
