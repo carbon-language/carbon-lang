@@ -443,19 +443,6 @@ namespace llvm {
       return getExtendedVectorVT(Context, VT, NumElements);
     }
 
-    /// getIntVectorWithNumElements - Return any integer vector type that has
-    /// the specified number of elements.
-    static EVT getIntVectorWithNumElements(LLVMContext &C, unsigned NumElts) {
-      switch (NumElts) {
-      default: return getVectorVT(C, MVT::i8, NumElts);
-      case  1: return MVT::v1i64;
-      case  2: return MVT::v2i32;
-      case  4: return MVT::v4i16;
-      case  8: return MVT::v8i8;
-      case 16: return MVT::v16i8;
-      }
-    }
-
     /// changeVectorElementTypeToInteger - Return a vector with the same number
     /// of elements as this vector, but with the element type converted to an
     /// integer type with the same bitwidth.
