@@ -1,5 +1,6 @@
 """
 Use lldb Python SBFrame API to get the argument values of the call stacks.
+And other SBFrame API tests.
 """
 
 import os, time
@@ -30,6 +31,12 @@ class FrameAPITestCase(TestBase):
         """Exercise SBFrame APIs with boundary condition inputs."""
         self.buildDefault()
         self.frame_api_boundary_condition()
+
+    @python_api_test
+    def test_frame_api_IsEqual(self):
+        """Exercise SBFrame API IsEqual."""
+        self.buildDefault()
+        self.frame_api_IsEqual()
 
     def do_get_arg_vals(self):
         """Get argument vals for the call stack when stopped on a breakpoint."""
@@ -151,6 +158,61 @@ class FrameAPITestCase(TestBase):
             print "val2:", val2
 
         frame.EvaluateExpression(None)
+
+    def frame_api_IsEqual(self):
+        """Exercise SBFrame API IsEqual."""
+        exe = os.path.join(os.getcwd(), "a.out")
+
+        # Create a target by the debugger.
+        target = self.dbg.CreateTarget(exe)
+        self.assertTrue(target, VALID_TARGET)
+
+        # Now create a breakpoint on main.c by name 'c'.
+        breakpoint = target.BreakpointCreateByName('c', 'a.out')
+        #print "breakpoint:", breakpoint
+        self.assertTrue(breakpoint and
+                        breakpoint.GetNumLocations() == 1,
+                        VALID_BREAKPOINT)
+
+        # Now launch the process, and do not stop at the entry point.
+        process = target.LaunchSimple(None, None, os.getcwd())
+
+        process = target.GetProcess()
+        self.assertTrue(process.GetState() == lldb.eStateStopped,
+                        PROCESS_STOPPED)
+
+        thread = process.GetThreadAtIndex(0)
+        self.assertTrue(thread)
+
+        frameEntered = thread.GetFrameAtIndex(0)
+        if self.TraceOn():
+            print frameEntered
+            lldbutil.print_stacktrace(thread)
+        self.assertTrue(frameEntered)
+
+        # Doing two step overs while still inside c().
+        thread.StepOver()
+        thread.StepOver()
+        self.assertTrue(thread)
+        frameNow = thread.GetFrameAtIndex(0)
+        if self.TraceOn():
+            print frameNow
+            lldbutil.print_stacktrace(thread)
+        self.assertTrue(frameNow)
+
+        # The latest two frames are considered equal.
+        self.assertTrue(frameEntered.IsEqual(frameNow))
+
+        # Now let's step out of frame c().
+        thread.StepOutOfFrame(frameNow)
+        frameOutOfC = thread.GetFrameAtIndex(0)
+        if self.TraceOn():
+            print frameOutOfC
+            lldbutil.print_stacktrace(thread)
+        self.assertTrue(frameOutOfC)
+
+        # The latest two frames should not be equal.
+        self.assertFalse(frameEntered.IsEqual(frameNow))
 
 
 if __name__ == '__main__':

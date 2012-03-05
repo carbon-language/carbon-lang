@@ -30,6 +30,9 @@ public:
    ~SBFrame();
 
     bool
+    IsEqual (const lldb::SBFrame &that) const;
+
+    bool
     IsValid() const;
 
     uint32_t

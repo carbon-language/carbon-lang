@@ -718,15 +718,23 @@ SBFrame::FindValue (const char *name, ValueType value_type, lldb::DynamicValueTy
 }
 
 bool
+SBFrame::IsEqual (const SBFrame &that) const
+{
+    lldb::StackFrameSP this_sp = GetFrameSP();
+    lldb::StackFrameSP that_sp = that.GetFrameSP();
+    return (this_sp && that_sp && this_sp->GetStackID() == that_sp->GetStackID());
+}
+
+bool
 SBFrame::operator == (const SBFrame &rhs) const
 {
-    return GetFrameSP().get() == rhs.GetFrameSP().get();
+    return IsEqual(rhs);
 }
 
 bool
 SBFrame::operator != (const SBFrame &rhs) const
 {
-    return GetFrameSP().get() != rhs.GetFrameSP().get();
+    return !IsEqual(rhs);
 }
 
 SBThread
