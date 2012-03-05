@@ -232,3 +232,21 @@ void fn11() {
   destroyme2 dm2;
   // CHECK: call void @_ZN10destroyme2D1Ev
 }
+
+namespace PR12178 {
+  struct string {
+    string(int);
+    ~string();
+  };
+
+  struct pair {
+    string a;
+    int b;
+  };
+
+  struct map {
+    map(std::initializer_list<pair>);
+  };
+
+  map m{ {1, 2}, {3, 4} };
+}

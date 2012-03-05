@@ -5309,6 +5309,19 @@ InitializationSequence::Perform(Sema &S,
       bool Success = S.isStdInitializerList(Dest, &E);
       (void)Success;
       assert(Success && "Destination type changed?");
+
+      // If the element type has a destructor, check it.
+      if (CXXRecordDecl *RD = E->getAsCXXRecordDecl()) {
+        if (!RD->hasIrrelevantDestructor()) {
+          if (CXXDestructorDecl *Destructor = S.LookupDestructor(RD)) {
+            S.MarkFunctionReferenced(Kind.getLocation(), Destructor);
+            S.CheckDestructorAccess(Kind.getLocation(), Destructor,
+                                    S.PDiag(diag::err_access_dtor_temp) << E);
+            S.DiagnoseUseOfDecl(Destructor, Kind.getLocation());
+          }
+        }
+      }
+
       InitListExpr *ILE = cast<InitListExpr>(CurInit.take());
       unsigned NumInits = ILE->getNumInits();
       SmallVector<Expr*, 16> Converted(NumInits);

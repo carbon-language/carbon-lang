@@ -641,8 +641,7 @@ ExprResult Sema::CheckCXXThrowOperand(SourceLocation ThrowLoc, Expr *E,
   if (RD->hasIrrelevantDestructor())
     return Owned(E);
 
-  CXXDestructorDecl *Destructor
-    = const_cast<CXXDestructorDecl*>(LookupDestructor(RD));
+  CXXDestructorDecl *Destructor = LookupDestructor(RD);
   if (!Destructor)
     return Owned(E);
 
