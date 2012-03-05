@@ -1108,7 +1108,7 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
     if (FName.equals("pthread_setspecific"))
       return false;
 
-    // White list the 'XXXNoCopy' ObjC Methods.
+    // White list the 'XXXNoCopy' ObjC functions.
     if (FName.endswith("NoCopy")) {
       // Look for the deallocator argument. We know that the memory ownership
       // is not transfered only if the deallocator argument is
@@ -1176,7 +1176,16 @@ bool MallocChecker::doesNotFreeMemory(const CallOrObjCMessage *Call,
       if (S.getNameForSlot(i).equals("freeWhenDone")) {
         if (Call->getArgSVal(i).isConstant(1))
           return false;
+        else
+          return true;
       }
+    }
+
+    // If the first selector ends with NoCopy, assume that the ownership is
+    // transfered as well.
+    // Ex:  [NSData dataWithBytesNoCopy:bytes length:10];
+    if (S.getNameForSlot(0).endswith("NoCopy")) {
+      return false;
     }
 
     // Otherwise, assume that the function does not free memory.

@@ -91,3 +91,9 @@ void TestCallbackReleasesMemory(CFDictionaryKeyCallBacks keyCallbacks) {
   CFDictionarySetValue(x, key, val); 
   return;// no-warning
 }
+
+NSData *radar10976702() {
+  void *bytes = malloc(10);
+  return [NSData dataWithBytesNoCopy:bytes length:10]; // no-warning
+}
+
