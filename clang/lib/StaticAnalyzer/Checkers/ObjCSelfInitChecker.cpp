@@ -54,7 +54,7 @@ static bool isInitMessage(const ObjCMessage &msg);
 static bool isSelfVar(SVal location, CheckerContext &C);
 
 namespace {
-class ObjCSelfInitChecker : public Checker<
+class ObjCSelfInitChecker : public Checker<  check::PreObjCMessage,
                                              check::PostObjCMessage,
                                              check::PostStmt<ObjCIvarRefExpr>,
                                              check::PreStmt<ReturnStmt>,
@@ -62,6 +62,7 @@ class ObjCSelfInitChecker : public Checker<
                                              check::PostStmt<CallExpr>,
                                              check::Location > {
 public:
+  void checkPreObjCMessage(ObjCMessage msg, CheckerContext &C) const;
   void checkPostObjCMessage(ObjCMessage msg, CheckerContext &C) const;
   void checkPostStmt(const ObjCIvarRefExpr *E, CheckerContext &C) const;
   void checkPreStmt(const ReturnStmt *S, CheckerContext &C) const;
@@ -69,6 +70,10 @@ public:
   void checkPostStmt(const CallExpr *CE, CheckerContext &C) const;
   void checkLocation(SVal location, bool isLoad, const Stmt *S,
                      CheckerContext &C) const;
+
+  void checkPreStmt(const CallOrObjCMessage &CE, CheckerContext &C) const;
+  void checkPostStmt(const CallOrObjCMessage &CE, CheckerContext &C) const;
+
 };
 } // end anonymous namespace
 
@@ -178,6 +183,9 @@ static void checkForInvalidSelf(const Expr *E, CheckerContext &C,
 
 void ObjCSelfInitChecker::checkPostObjCMessage(ObjCMessage msg,
                                                CheckerContext &C) const {
+  CallOrObjCMessage MsgWrapper(msg, C.getState(), C.getLocationContext());
+  checkPostStmt(MsgWrapper, C);
+
   // When encountering a message that does initialization (init rule),
   // tag the return value so that we know later on that if self has this value
   // then it is properly initialized.
@@ -249,10 +257,28 @@ void ObjCSelfInitChecker::checkPreStmt(const ReturnStmt *S,
 
 void ObjCSelfInitChecker::checkPreStmt(const CallExpr *CE,
                                        CheckerContext &C) const {
+  CallOrObjCMessage CEWrapper(CE, C.getState(), C.getLocationContext());
+  checkPreStmt(CEWrapper, C);
+}
+
+void ObjCSelfInitChecker::checkPostStmt(const CallExpr *CE,
+                                        CheckerContext &C) const {
+  CallOrObjCMessage CEWrapper(CE, C.getState(), C.getLocationContext());
+  checkPostStmt(CEWrapper, C);
+}
+
+void ObjCSelfInitChecker::checkPreObjCMessage(ObjCMessage Msg,
+                                              CheckerContext &C) const {
+  CallOrObjCMessage MsgWrapper(Msg, C.getState(), C.getLocationContext());
+  checkPreStmt(MsgWrapper, C);
+}
+
+void ObjCSelfInitChecker::checkPreStmt(const CallOrObjCMessage &CE,
+                                       CheckerContext &C) const {
   ProgramStateRef state = C.getState();
-  for (CallExpr::const_arg_iterator
-         I = CE->arg_begin(), E = CE->arg_end(); I != E; ++I) {
-    SVal argV = state->getSVal(*I, C.getLocationContext());
+  unsigned NumArgs = CE.getNumArgs();
+  for (unsigned i = 0; i < NumArgs; ++i) {
+    SVal argV = CE.getArgSVal(i);
     if (isSelfVar(argV, C)) {
       unsigned selfFlags = getSelfFlags(state->getSVal(cast<Loc>(argV)), C);
       C.addTransition(state->set<PreCallSelfFlags>(selfFlags));
@@ -265,13 +291,12 @@ void ObjCSelfInitChecker::checkPreStmt(const CallExpr *CE,
   }
 }
 
-void ObjCSelfInitChecker::checkPostStmt(const CallExpr *CE,
+void ObjCSelfInitChecker::checkPostStmt(const CallOrObjCMessage &CE,
                                         CheckerContext &C) const {
   ProgramStateRef state = C.getState();
-  const LocationContext *LCtx = C.getLocationContext();
-  for (CallExpr::const_arg_iterator
-         I = CE->arg_begin(), E = CE->arg_end(); I != E; ++I) {
-    SVal argV = state->getSVal(*I, LCtx);
+  unsigned NumArgs = CE.getNumArgs();
+  for (unsigned i = 0; i < NumArgs; ++i) {
+    SVal argV = CE.getArgSVal(i);
     if (isSelfVar(argV, C)) {
       SelfFlagEnum prevFlags = (SelfFlagEnum)state->get<PreCallSelfFlags>();
       state = state->remove<PreCallSelfFlags>();
@@ -280,7 +305,7 @@ void ObjCSelfInitChecker::checkPostStmt(const CallExpr *CE,
     } else if (hasSelfFlag(argV, SelfFlag_Self, C)) {
       SelfFlagEnum prevFlags = (SelfFlagEnum)state->get<PreCallSelfFlags>();
       state = state->remove<PreCallSelfFlags>();
-      addSelfFlag(state, state->getSVal(CE, LCtx), prevFlags, C);
+      addSelfFlag(state, state->getSVal(cast<Loc>(argV)), prevFlags, C);
       return;
     }
   }
