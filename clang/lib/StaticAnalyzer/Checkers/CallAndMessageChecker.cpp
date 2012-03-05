@@ -44,7 +44,10 @@ private:
   static void PreVisitProcessArgs(CheckerContext &C,CallOrObjCMessage callOrMsg,
                              const char *BT_desc, OwningPtr<BugType> &BT);
   static bool PreVisitProcessArg(CheckerContext &C, SVal V,SourceRange argRange,
-          const Expr *argEx, const char *BT_desc, OwningPtr<BugType> &BT);
+                                 const Expr *argEx,
+                                 const bool checkUninitFields,
+                                 const char *BT_desc,
+                                 OwningPtr<BugType> &BT);
 
   static void EmitBadCall(BugType *BT, CheckerContext &C, const CallExpr *CE);
   void emitNilReceiverBug(CheckerContext &C, const ObjCMessage &msg,
@@ -77,9 +80,19 @@ void CallAndMessageChecker::PreVisitProcessArgs(CheckerContext &C,
                                                 CallOrObjCMessage callOrMsg,
                                                 const char *BT_desc,
                                                 OwningPtr<BugType> &BT) {
+  // Don't check for uninitialized field values in arguments if the
+  // caller has a body that is available and we have the chance to inline it.
+  // This is a hack, but is a reasonable compromise betweens sometimes warning
+  // and sometimes not depending on if we decide to inline a function.
+  const Decl *D = callOrMsg.getDecl();
+  const bool checkUninitFields =
+    !(C.getAnalysisManager().shouldInlineCall() &&
+      (D && D->getBody()));
+  
   for (unsigned i = 0, e = callOrMsg.getNumArgs(); i != e; ++i)
     if (PreVisitProcessArg(C, callOrMsg.getArgSVal(i),
                            callOrMsg.getArgSourceRange(i), callOrMsg.getArg(i),
+                           checkUninitFields,
                            BT_desc, BT))
       return;
 }
@@ -87,9 +100,9 @@ void CallAndMessageChecker::PreVisitProcessArgs(CheckerContext &C,
 bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
                                                SVal V, SourceRange argRange,
                                                const Expr *argEx,
+                                               const bool checkUninitFields,
                                                const char *BT_desc,
                                                OwningPtr<BugType> &BT) {
-
   if (V.isUndef()) {
     if (ExplodedNode *N = C.generateSink()) {
       LazyInit_BT(BT_desc, BT);
@@ -104,6 +117,9 @@ bool CallAndMessageChecker::PreVisitProcessArg(CheckerContext &C,
     return true;
   }
 
+  if (!checkUninitFields)
+    return false;
+  
   if (const nonloc::LazyCompoundVal *LV =
         dyn_cast<nonloc::LazyCompoundVal>(&V)) {
 
