@@ -248,6 +248,16 @@ public:
     return *(SubRegIndices + (Reg - 1) * NumSubRegIndices + Idx - 1);
   }
 
+  /// getMatchingSuperReg - Return a super-register of the specified register
+  /// Reg so its sub-register of index SubIdx is Reg.
+  unsigned getMatchingSuperReg(unsigned Reg, unsigned SubIdx,
+                               const MCRegisterClass *RC) const {
+    for (const unsigned *SRs = getSuperRegisters(Reg); unsigned SR = *SRs;++SRs)
+      if (Reg == getSubReg(SR, SubIdx) && RC->contains(SR))
+        return SR;
+    return 0;
+  }
+
   /// getSubRegIndex - For a given register pair, return the sub-register index
   /// if the second register is a sub-register of the first. Return zero
   /// otherwise.

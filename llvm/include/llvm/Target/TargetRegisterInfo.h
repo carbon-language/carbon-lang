@@ -387,10 +387,7 @@ public:
   /// Reg so its sub-register of index SubIdx is Reg.
   unsigned getMatchingSuperReg(unsigned Reg, unsigned SubIdx,
                                const TargetRegisterClass *RC) const {
-    for (const uint16_t *SRs = getSuperRegisters(Reg); unsigned SR = *SRs;++SRs)
-      if (Reg == getSubReg(SR, SubIdx) && RC->contains(SR))
-        return SR;
-    return 0;
+    return MCRegisterInfo::getMatchingSuperReg(Reg, SubIdx, RC->MC);
   }
 
   /// canCombineSubRegIndices - Given a register class and a list of
