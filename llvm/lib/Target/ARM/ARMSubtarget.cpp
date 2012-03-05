@@ -49,7 +49,7 @@ ARMSubtarget::ARMSubtarget(const std::string &TT, const std::string &CPU,
   , HasVFPv3(false)
   , HasVFPv4(false)
   , HasNEON(false)
-  , HasNEONVFPv4(false)
+  , HasNEON2(false)
   , UseNEONForSinglePrecisionFP(false)
   , SlowFPVMLx(false)
   , HasVMLxForwarding(false)

@@ -51,7 +51,7 @@ protected:
   bool HasVFPv3;
   bool HasVFPv4;
   bool HasNEON;
-  bool HasNEONVFPv4;
+  bool HasNEON2;
 
   /// UseNEONForSinglePrecisionFP - if the NEONFP attribute has been
   /// specified. Use the method useNEONForSinglePrecisionFP() to
@@ -205,7 +205,7 @@ protected:
   bool hasVFP3() const { return HasVFPv3; }
   bool hasVFP4() const { return HasVFPv4; }
   bool hasNEON() const { return HasNEON;  }
-  bool hasNEONVFP4() const { return HasNEONVFPv4;  }
+  bool hasNEON2() const { return HasNEON2 || (HasNEON && HasVFPv4);  }
   bool useNEONForSinglePrecisionFP() const {
     return hasNEON() && UseNEONForSinglePrecisionFP; }
 
