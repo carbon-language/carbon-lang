@@ -1128,13 +1128,15 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
     QualType NewBaseType
       = Context.getCanonicalType(Bases[idx]->getType());
     NewBaseType = NewBaseType.getLocalUnqualifiedType();
-    if (KnownBaseTypes[NewBaseType]) {
+
+    CXXBaseSpecifier *&KnownBase = KnownBaseTypes[NewBaseType];
+    if (KnownBase) {
       // C++ [class.mi]p3:
       //   A class shall not be specified as a direct base class of a
       //   derived class more than once.
       Diag(Bases[idx]->getSourceRange().getBegin(),
            diag::err_duplicate_base_class)
-        << KnownBaseTypes[NewBaseType]->getType()
+        << KnownBase->getType()
         << Bases[idx]->getSourceRange();
 
       // Delete the duplicate base class specifier; we're going to
@@ -1144,7 +1146,7 @@ bool Sema::AttachBaseSpecifiers(CXXRecordDecl *Class, CXXBaseSpecifier **Bases,
       Invalid = true;
     } else {
       // Okay, add this new base class.
-      KnownBaseTypes[NewBaseType] = Bases[idx];
+      KnownBase = Bases[idx];
       Bases[NumGoodBases++] = Bases[idx];
       if (const RecordType *Record = NewBaseType->getAs<RecordType>())
         if (const CXXRecordDecl *RD = cast<CXXRecordDecl>(Record->getDecl()))
