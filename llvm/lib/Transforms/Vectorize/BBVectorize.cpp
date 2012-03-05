@@ -495,7 +495,7 @@ namespace {
 
     // A set of pairs has now been selected. It is now necessary to replace the
     // paired instructions with vector instructions. For this procedure each
-    // operand much be replaced with a vector operand. This vector is formed
+    // operand must be replaced with a vector operand. This vector is formed
     // by using build_vector on the old operands. The replaced values are then
     // replaced with a vector_extract on the result.  Subsequent optimization
     // passes should coalesce the build/extract combinations.
@@ -1045,7 +1045,7 @@ namespace {
       PrunedTree.insert(QTop.first);
 
       // Visit each child, pruning as necessary...
-      DenseMap<ValuePair, size_t> BestChilden;
+      DenseMap<ValuePair, size_t> BestChildren;
       VPPIteratorPair QTopRange = ConnectedPairs.equal_range(QTop.first);
       for (std::multimap<ValuePair, ValuePair>::iterator K = QTopRange.first;
            K != QTopRange.second; ++K) {
@@ -1078,7 +1078,7 @@ namespace {
 
         bool CanAdd = true;
         for (DenseMap<ValuePair, size_t>::iterator C2
-              = BestChilden.begin(), E2 = BestChilden.end();
+              = BestChildren.begin(), E2 = BestChildren.end();
              C2 != E2; ++C2) {
           if (C2->first.first == C->first.first ||
               C2->first.first == C->first.second ||
@@ -1163,22 +1163,22 @@ namespace {
         // conflict is found, then remove the previously-selected child
         // before adding this one in its place.
         for (DenseMap<ValuePair, size_t>::iterator C2
-              = BestChilden.begin(); C2 != BestChilden.end();) {
+              = BestChildren.begin(); C2 != BestChildren.end();) {
           if (C2->first.first == C->first.first ||
               C2->first.first == C->first.second ||
               C2->first.second == C->first.first ||
               C2->first.second == C->first.second ||
               pairsConflict(C2->first, C->first, PairableInstUsers))
-            BestChilden.erase(C2++);
+            BestChildren.erase(C2++);
           else
             ++C2;
         }
 
-        BestChilden.insert(ValuePairWithDepth(C->first, C->second));
+        BestChildren.insert(ValuePairWithDepth(C->first, C->second));
       }
 
       for (DenseMap<ValuePair, size_t>::iterator C
-            = BestChilden.begin(), E2 = BestChilden.end();
+            = BestChildren.begin(), E2 = BestChildren.end();
            C != E2; ++C) {
         size_t DepthF = getDepthFactor(C->first.first);
         Q.push_back(ValuePairWithDepth(C->first, QTop.second+DepthF));
