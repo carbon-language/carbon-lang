@@ -36,6 +36,7 @@
 #include "llvm/Transforms/Utils/SSAUpdater.h"
 #include "llvm/ADT/DenseMap.h"
 #include "llvm/ADT/DepthFirstIterator.h"
+#include "llvm/ADT/Hashing.h"
 #include "llvm/ADT/SmallPtrSet.h"
 #include "llvm/ADT/Statistic.h"
 #include "llvm/Support/Allocator.h"
@@ -84,6 +85,16 @@ namespace {
         return false;
       return true;
     }
+
+    friend hash_code hash_value(const Expression &Value) {
+      // Optimize for the common case.
+      if (Value.varargs.empty())
+        return hash_combine(Value.opcode, Value.type);
+
+      return hash_combine(Value.opcode, Value.type,
+                          hash_combine_range(Value.varargs.begin(),
+                                             Value.varargs.end()));
+    }
   };
 
   class ValueTable {
@@ -130,16 +141,8 @@ template <> struct DenseMapInfo<Expression> {
   }
 
   static unsigned getHashValue(const Expression e) {
-    unsigned hash = e.opcode;
-
-    hash = ((unsigned)((uintptr_t)e.type >> 4) ^
-            (unsigned)((uintptr_t)e.type >> 9));
-
-    for (SmallVector<uint32_t, 4>::const_iterator I = e.varargs.begin(),
-         E = e.varargs.end(); I != E; ++I)
-      hash = *I + hash * 37;
-    
-    return hash;
+    using llvm::hash_value;
+    return static_cast<unsigned>(hash_value(e));
   }
   static bool isEqual(const Expression &LHS, const Expression &RHS) {
     return LHS == RHS;
