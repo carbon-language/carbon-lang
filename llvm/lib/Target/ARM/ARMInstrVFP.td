@@ -206,6 +206,14 @@ def : InstAlias<"vpop${p} $r",  (VLDMDIA_UPD SP, pred:$p, dpr_reglist:$r)>,
                 Requires<[HasVFP2]>;
 def : InstAlias<"vpop${p} $r",  (VLDMSIA_UPD SP, pred:$p, spr_reglist:$r)>,
                 Requires<[HasVFP2]>;
+defm : VFPDTAnyInstAlias<"vpush${p}", "$r",
+                         (VSTMSDB_UPD SP, pred:$p, spr_reglist:$r)>;
+defm : VFPDTAnyInstAlias<"vpush${p}", "$r",
+                         (VSTMDDB_UPD SP, pred:$p, dpr_reglist:$r)>;
+defm : VFPDTAnyInstAlias<"vpop${p}", "$r",
+                         (VLDMSIA_UPD SP, pred:$p, spr_reglist:$r)>;
+defm : VFPDTAnyInstAlias<"vpop${p}", "$r",
+                         (VLDMDIA_UPD SP, pred:$p, dpr_reglist:$r)>;
 
 // FLDMX, FSTMX - mixing S/D registers for pre-armv6 cores
 
