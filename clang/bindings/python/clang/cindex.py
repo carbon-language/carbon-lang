@@ -893,7 +893,7 @@ class Cursor(Structure):
         return Cursor_eq(self, other)
 
     def __ne__(self, other):
-        return not Cursor_eq(self, other)
+        return not self.__eq__(other)
 
     def is_definition(self):
         """
@@ -1876,7 +1876,7 @@ Cursor_def.errcheck = Cursor.from_result
 
 Cursor_eq = lib.clang_equalCursors
 Cursor_eq.argtypes = [Cursor, Cursor]
-Cursor_eq.restype = c_uint
+Cursor_eq.restype = bool
 
 Cursor_hash = lib.clang_hashCursor
 Cursor_hash.argtypes = [Cursor]
