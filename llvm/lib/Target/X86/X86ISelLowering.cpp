@@ -1585,13 +1585,12 @@ bool X86TargetLowering::isUsedByReturnOnly(SDNode *N) const {
     return false;
 
   SDNode *Copy = *N->use_begin();
-  if (Copy->getOpcode() != ISD::CopyToReg &&
-      Copy->getOpcode() != ISD::FP_EXTEND)
-    return false;
-
-  // If anything is glued to the copy, then we can't safely perform a tail call.
-  if (Copy->getOpcode() == ISD::CopyToReg &&
-      Copy->getNumOperands() == 4)
+  if (Copy->getOpcode() == ISD::CopyToReg) {
+    // If the copy has a glue operand, we conservatively assume it isn't safe to
+    // perform a tail call.
+    if (Copy->getOperand(Copy->getNumOperands()-1).getValueType() == MVT::Glue)
+      return false;
+  } else if (Copy->getOpcode() != ISD::FP_EXTEND)
     return false;
 
   bool HasRet = false;
