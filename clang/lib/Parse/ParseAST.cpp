@@ -53,8 +53,8 @@ void clang::ParseAST(Preprocessor &PP, ASTConsumer *Consumer,
 void clang::ParseAST(Sema &S, bool PrintStats) {
   // Collect global stats on Decls/Stmts (until we have a module streamer).
   if (PrintStats) {
-    Decl::CollectingStats(true);
-    Stmt::CollectingStats(true);
+    Decl::EnableStatistics();
+    Stmt::EnableStatistics();
   }
 
   // Also turn on collection of stats inside of the Sema object.

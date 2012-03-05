@@ -39,8 +39,6 @@ using namespace clang;
 #define ABSTRACT_DECL(DECL)
 #include "clang/AST/DeclNodes.inc"
 
-static bool StatSwitch = false;
-
 void *Decl::AllocateDeserializedDecl(const ASTContext &Context, 
                                      unsigned ID,
                                      unsigned Size) {
@@ -88,9 +86,9 @@ const char *DeclContext::getDeclKindName() const {
   }
 }
 
-bool Decl::CollectingStats(bool Enable) {
-  if (Enable) StatSwitch = true;
-  return StatSwitch;
+bool Decl::StatisticsEnabled = false;
+void Decl::EnableStatistics() {
+  StatisticsEnabled = true;
 }
 
 void Decl::PrintStats() {

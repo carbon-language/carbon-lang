@@ -260,6 +260,9 @@ private:
   /// are regarded as "referenced" but not "used".
   unsigned Referenced : 1;
 
+  /// \brief Whether statistic collection is enabled.
+  static bool StatisticsEnabled;
+
 protected:
   /// Access - Used by C++ decls for the access specifier.
   // NOTE: VC++ treats enums as signed, avoid using the AccessSpecifier enum
@@ -304,7 +307,7 @@ protected:
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
   {
-    if (Decl::CollectingStats()) add(DK);
+    if (StatisticsEnabled) add(DK);
   }
 
   Decl(Kind DK, EmptyShell Empty)
@@ -314,7 +317,7 @@ protected:
       IdentifierNamespace(getIdentifierNamespaceForKind(DK)),
       HasCachedLinkage(0)
   {
-    if (Decl::CollectingStats()) add(DK);
+    if (StatisticsEnabled) add(DK);
   }
 
   virtual ~Decl();
@@ -761,7 +764,7 @@ public:
 
   // global temp stats (until we have a per-module visitor)
   static void add(Kind k);
-  static bool CollectingStats(bool Enable = false);
+  static void EnableStatistics();
   static void PrintStats();
 
   /// isTemplateParameter - Determines whether this declaration is a

@@ -78,11 +78,9 @@ void Stmt::addStmtClass(StmtClass s) {
   ++getStmtInfoTableEntry(s).Counter;
 }
 
-static bool StatSwitch = false;
-
-bool Stmt::CollectingStats(bool Enable) {
-  if (Enable) StatSwitch = true;
-  return StatSwitch;
+bool Stmt::StatisticsEnabled = false;
+void Stmt::EnableStatistics() {
+  StatisticsEnabled = true;
 }
 
 Stmt *Stmt::IgnoreImplicit() {
