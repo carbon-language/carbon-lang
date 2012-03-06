@@ -387,6 +387,7 @@ class PathDiagnosticCallPiece : public PathDiagnosticPiece {
   const Decl *Callee;
 public:
   PathDiagnosticLocation callEnter;
+  PathDiagnosticLocation callEnterWithin;
   PathDiagnosticLocation callReturn;  
   PathPieces path;
   
@@ -402,6 +403,8 @@ public:
   }
   
   IntrusiveRefCntPtr<PathDiagnosticEventPiece> getCallEnterEvent() const;
+  IntrusiveRefCntPtr<PathDiagnosticEventPiece>
+    getCallEnterWithinCallerEvent() const;
   IntrusiveRefCntPtr<PathDiagnosticEventPiece> getCallExitEvent() const;
 
   virtual void flattenLocations() {

@@ -1233,10 +1233,18 @@ static void GenerateExtensivePathDiagnostic(PathDiagnostic& PD,
       // Pop the call hierarchy if we are done walking the contents
       // of a function call.
       if (const CallEnter *CE = dyn_cast<CallEnter>(&P)) {
+        // Add an edge to the start of the function.
+        const Decl *D = CE->getCalleeContext()->getDecl();
+        PathDiagnosticLocation pos =
+          PathDiagnosticLocation::createBegin(D, SM);
+        EB.addEdge(pos);
+        
+        // Flush all locations, and pop the active path.
         EB.flushLocations();
         PD.popActivePath();
         assert(!PD.getActivePath().empty());
         PDB.LC = N->getLocationContext();
+
         // The current active path should never be empty.  Either we
         // just added a bunch of stuff to the top-level path, or
         // we have a previous CallExit.  If the front of the active

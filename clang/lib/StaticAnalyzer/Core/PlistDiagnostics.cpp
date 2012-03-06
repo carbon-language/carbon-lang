@@ -255,15 +255,23 @@ static void ReportCall(raw_ostream &o,
   
   IntrusiveRefCntPtr<PathDiagnosticEventPiece> callEnter =
     P.getCallEnterEvent();  
+
   if (callEnter)
     ReportPiece(o, *callEnter, FM, SM, LangOpts, indent, true);
 
+  IntrusiveRefCntPtr<PathDiagnosticEventPiece> callEnterWithinCaller =
+    P.getCallEnterWithinCallerEvent();
+  
+  if (callEnterWithinCaller)
+    ReportPiece(o, *callEnterWithinCaller, FM, SM, LangOpts, indent, true);
+  
   for (PathPieces::const_iterator I = P.path.begin(), E = P.path.end();I!=E;++I)
     ReportPiece(o, **I, FM, SM, LangOpts, indent, true);
   
   IntrusiveRefCntPtr<PathDiagnosticEventPiece> callExit =
     P.getCallExitEvent();
-  if (callExit)  
+
+  if (callExit)
     ReportPiece(o, *callExit, FM, SM, LangOpts, indent, true);
 }
 
