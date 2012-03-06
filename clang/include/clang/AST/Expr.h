@@ -21,7 +21,6 @@
 #include "clang/AST/OperationKinds.h"
 #include "clang/AST/ASTVector.h"
 #include "clang/AST/TemplateBase.h"
-#include "clang/Basic/UsuallyTinyPtrVector.h"
 #include "clang/Basic/TargetInfo.h"
 #include "clang/Basic/TypeTraits.h"
 #include "llvm/ADT/APSInt.h"
