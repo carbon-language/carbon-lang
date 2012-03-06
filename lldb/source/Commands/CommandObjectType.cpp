@@ -824,24 +824,17 @@ public:
             out_stream->Flush();
             return;
         }
-        StringList funct_name_sl;
+        std::string funct_name_str;
         if (!interpreter->GenerateTypeScriptFunction (options->m_user_source, 
-                                                      funct_name_sl))
+                                                      funct_name_str))
         {
             out_stream->Printf ("Internal error #3: no script attached.\n");
             out_stream->Flush();
             return;
         }
-        if (funct_name_sl.GetSize() == 0)
+        if (funct_name_str.empty())
         {
             out_stream->Printf ("Internal error #4: no script attached.\n");
-            out_stream->Flush();
-            return;
-        }
-        const char *funct_name = funct_name_sl.GetStringAtIndex(0);
-        if (!funct_name || !funct_name[0])
-        {
-            out_stream->Printf ("Internal error #5: no script attached.\n");
             out_stream->Flush();
             return;
         }
@@ -849,7 +842,7 @@ public:
         
         TypeSummaryImplSP script_format;
         script_format.reset(new ScriptSummaryFormat(options->m_flags,
-                                                    funct_name,
+                                                    funct_name_str.c_str(),
                                                     options->m_user_source.CopyList("     ").c_str()));
         
         Error error;
@@ -1068,24 +1061,17 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
         }
         StringList funct_sl;
         funct_sl << m_options.m_python_script.c_str();
-        StringList funct_name_sl;
+        std::string funct_name_str;
         if (!interpreter->GenerateTypeScriptFunction (funct_sl, 
-                                                      funct_name_sl))
+                                                      funct_name_str))
         {
             result.AppendError ("Internal error #2Q: no script attached.\n");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
-        if (funct_name_sl.GetSize() == 0)
+        if (funct_name_str.empty())
         {
             result.AppendError ("Internal error #3Q: no script attached.\n");
-            result.SetStatus (eReturnStatusFailed);
-            return false;
-        }
-        const char *funct_name = funct_name_sl.GetStringAtIndex(0);
-        if (!funct_name || !funct_name[0])
-        {
-            result.AppendError ("Internal error #4Q: no script attached.\n");
             result.SetStatus (eReturnStatusFailed);
             return false;
         }
@@ -1093,7 +1079,7 @@ CommandObjectTypeSummaryAdd::Execute_ScriptSummary (Args& command, CommandReturn
         std::string code = "     " + m_options.m_python_script;
         
         script_format.reset(new ScriptSummaryFormat(m_options.m_flags,
-                                                    funct_name,
+                                                    funct_name_str.c_str(),
                                                     code.c_str()));
     }
     else // use an InputReader to grab Python code from the user
@@ -3314,24 +3300,17 @@ public:
             out_stream->Flush();
             return;
         }
-        StringList class_name_sl;
+        std::string class_name_str;
         if (!interpreter->GenerateTypeSynthClass (options->m_user_source, 
-                                                  class_name_sl))
+                                                  class_name_str))
         {
             out_stream->Printf ("Internal error #3: no script attached.\n");
             out_stream->Flush();
             return;
         }
-        if (class_name_sl.GetSize() == 0)
+        if (class_name_str.empty())
         {
             out_stream->Printf ("Internal error #4: no script attached.\n");
-            out_stream->Flush();
-            return;
-        }
-        const char *class_name = class_name_sl.GetStringAtIndex(0);
-        if (!class_name || !class_name[0])
-        {
-            out_stream->Printf ("Internal error #5: no script attached.\n");
             out_stream->Flush();
             return;
         }
@@ -3342,7 +3321,7 @@ public:
         synth_provider.reset(new TypeSyntheticImpl(SyntheticChildren::Flags().SetCascades(options->m_cascade).
                                                          SetSkipPointers(options->m_skip_pointers).
                                                          SetSkipReferences(options->m_skip_references),
-                                                         class_name));
+                                                         class_name_str.c_str()));
         
         
         lldb::TypeCategoryImplSP category;

@@ -9,20 +9,6 @@
 
 // C Includes
 
-#ifdef LLDB_DISABLE_PYTHON
-
-struct PyObject;
-
-#else   // #ifdef LLDB_DISABLE_PYTHON
-
-#if defined (__APPLE__)
-#include <Python/Python.h>
-#else
-#include <Python.h>
-#endif
-
-#endif  // #ifdef LLDB_DISABLE_PYTHON
-
 // C++ Includes
 #include <ostream>
 
@@ -269,35 +255,30 @@ SyntheticArrayView::GetDescription()
 
 TypeSyntheticImpl::FrontEnd::FrontEnd(std::string pclass, lldb::ValueObjectSP be) :
     SyntheticChildrenFrontEnd(be),
-    m_python_class(pclass)
+    m_python_class(pclass),
+    m_wrapper_sp(),
+    m_interpreter(NULL)
 {
     if (be.get() == NULL)
-    {
-        m_interpreter = NULL;
-        m_wrapper = NULL;
         return;
-    }
     
     m_interpreter = m_backend->GetTargetSP()->GetDebugger().GetCommandInterpreter().GetScriptInterpreter();
     
-    if (m_interpreter == NULL)
-        m_wrapper = NULL;
-    else
-        m_wrapper = m_interpreter->CreateSyntheticScriptedProvider(m_python_class, m_backend);
+    if (m_interpreter != NULL)
+        m_wrapper_sp = m_interpreter->CreateSyntheticScriptedProvider(m_python_class, m_backend);
 }
 
 TypeSyntheticImpl::FrontEnd::~FrontEnd()
 {
-    Py_XDECREF((PyObject*)m_wrapper);
 }
 
 lldb::ValueObjectSP
 TypeSyntheticImpl::FrontEnd::GetChildAtIndex (uint32_t idx, bool can_create)
 {
-    if (m_wrapper == NULL || m_interpreter == NULL)
+    if (!m_wrapper_sp || !m_interpreter)
         return lldb::ValueObjectSP();
     
-    return m_interpreter->GetChildAtIndex(m_wrapper, idx);
+    return m_interpreter->GetChildAtIndex(m_wrapper_sp, idx);
 }
 
 std::string

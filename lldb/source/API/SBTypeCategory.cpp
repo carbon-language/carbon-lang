@@ -359,13 +359,13 @@ SBTypeCategory::AddTypeSummary (SBTypeNameSpecifier type_name,
                 ScriptInterpreter* interpreter_ptr = debugger_sp->GetCommandInterpreter().GetScriptInterpreter();
                 if (interpreter_ptr)
                 {
-                    StringList output;
-                    if (interpreter_ptr->GenerateTypeScriptFunction(input, output, name_token) && output.GetSize() > 0)
+                    std::string output;
+                    if (interpreter_ptr->GenerateTypeScriptFunction(input, output, name_token) && !output.empty())
                     {
                         if (need_set)
                         {
                             need_set = false;
-                            summary.SetFunctionName(output.GetStringAtIndex(0));
+                            summary.SetFunctionName(output.c_str());
                         }
                     }
                 }
@@ -467,13 +467,13 @@ SBTypeCategory::AddTypeSynthetic (SBTypeNameSpecifier type_name,
                 ScriptInterpreter* interpreter_ptr = debugger_sp->GetCommandInterpreter().GetScriptInterpreter();
                 if (interpreter_ptr)
                 {
-                    StringList output;
-                    if (interpreter_ptr->GenerateTypeSynthClass(input, output, name_token) && output.GetSize() > 0)
+                    std::string output;
+                    if (interpreter_ptr->GenerateTypeSynthClass(input, output, name_token) && !output.empty())
                     {
                         if (need_set)
                         {
                             need_set = false;
-                            synth.SetClassName(output.GetStringAtIndex(0));
+                            synth.SetClassName(output.c_str());
                         }
                     }
                 }

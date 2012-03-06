@@ -56,36 +56,36 @@ public:
     ExportFunctionDefinitionToInterpreter (StringList &function_def);
 
     bool
-    GenerateTypeScriptFunction (StringList &input, StringList &output, void* name_token = NULL);
+    GenerateTypeScriptFunction (StringList &input, std::string& output, void* name_token = NULL);
     
     bool
-    GenerateTypeSynthClass (StringList &input, StringList &output, void* name_token = NULL);
+    GenerateTypeSynthClass (StringList &input, std::string& output, void* name_token = NULL);
     
     bool
-    GenerateTypeSynthClass (const char* oneliner, StringList &output, void* name_token = NULL);
+    GenerateTypeSynthClass (const char* oneliner, std::string& output, void* name_token = NULL);
     
     // use this if the function code is just a one-liner script
     bool
-    GenerateTypeScriptFunction (const char* oneliner, StringList &output, void* name_token = NULL);
+    GenerateTypeScriptFunction (const char* oneliner, std::string& output, void* name_token = NULL);
     
     virtual bool
-    GenerateScriptAliasFunction (StringList &input, StringList &output);
+    GenerateScriptAliasFunction (StringList &input, std::string& output);
     
-    void*
+    lldb::ScriptInterpreterObjectSP
     CreateSyntheticScriptedProvider (std::string class_name,
                                      lldb::ValueObjectSP valobj);
     
     virtual uint32_t
-    CalculateNumChildren (void *implementor);
+    CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor);
     
     virtual lldb::ValueObjectSP
-    GetChildAtIndex (void *implementor, uint32_t idx);
+    GetChildAtIndex (const lldb::ScriptInterpreterObjectSP& implementor, uint32_t idx);
     
     virtual int
-    GetIndexOfChildWithName (void *implementor, const char* child_name);
+    GetIndexOfChildWithName (const lldb::ScriptInterpreterObjectSP& implementor, const char* child_name);
     
     virtual void
-    UpdateSynthProviderInstance (void* implementor);
+    UpdateSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor);
     
     virtual bool
     RunScriptBasedCommand(const char* impl_function,
@@ -95,10 +95,10 @@ public:
                           Error& error);
     
     bool
-    GenerateFunction(std::string& signature, StringList &input, StringList &output);
+    GenerateFunction(const char *signature, const StringList &input);
     
     bool
-    GenerateBreakpointCommandCallbackData (StringList &input, StringList &output);
+    GenerateBreakpointCommandCallbackData (StringList &input, std::string& output);
 
     static size_t
     GenerateBreakpointOptionsCommandCallback (void *baton, 
@@ -269,9 +269,10 @@ private:
     lldb_utility::PseudoTerminal m_embedded_python_pty;
     lldb::InputReaderSP m_embedded_thread_input_reader_sp;
     FILE *m_dbg_stdout;
-    void *m_new_sysout; // This is a PyObject.
-    void *m_old_sysout; // This is a PyObject.
-    void *m_old_syserr; // This is a PyObject.
+    PyObject *m_new_sysout;
+    PyObject *m_old_sysout;
+    PyObject *m_old_syserr;
+    PyObject *m_run_one_line;
     std::string m_dictionary_name;
     TerminalState m_terminal_state;
     bool m_session_is_active;

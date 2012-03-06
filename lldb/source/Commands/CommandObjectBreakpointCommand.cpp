@@ -422,7 +422,7 @@ CommandObjectBreakpointCommandAdd::SetBreakpointCommandCallback (BreakpointOptio
     // The former is used to generate callback description (as in breakpoint command list)
     // while the latter is used for Python to interpret during the actual callback.
     data_ap->user_source.AppendString (oneliner);
-    data_ap->script_source.AppendString (oneliner);
+    data_ap->script_source.assign (oneliner);
     data_ap->stop_on_error = m_options.m_stop_on_error;
 
     BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
@@ -499,7 +499,7 @@ CommandObjectBreakpointCommandAdd::GenerateBreakpointCommandCallback
                 if (bp_options_baton)
                 {
                     ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->user_source.Clear();
-                    ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->script_source.Clear();
+                    ((BreakpointOptions::CommandData *) bp_options_baton->m_data)->script_source.clear();
                 }
             }
             if (!batch_mode)

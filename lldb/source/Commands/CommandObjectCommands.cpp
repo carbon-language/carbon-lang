@@ -1571,33 +1571,25 @@ private:
                 out_stream->Flush();
                 return;
             }
-            StringList funct_name_sl;
+            std::string funct_name_str;
             if (!interpreter->GenerateScriptAliasFunction (m_user_input, 
-                                                           funct_name_sl))
+                                                           funct_name_str))
             {
                 out_stream->Printf ("Unable to create function: no script attached.\n");
                 out_stream->Flush();
                 return;
             }
-            if (funct_name_sl.GetSize() == 0)
+            if (funct_name_str.empty())
             {
                 out_stream->Printf ("Unable to obtain a function name: no script attached.\n");
                 out_stream->Flush();
                 return;
             }
-            const char *funct_name = funct_name_sl.GetStringAtIndex(0);
-            if (!funct_name || !funct_name[0])
-            {
-                out_stream->Printf ("Invalid function name: no script attached.\n");
-                out_stream->Flush();
-                return;
-            }
-            
             // everything should be fine now, let's add this alias
             
             CommandObjectSP command_obj_sp(new CommandObjectPythonFunction(m_interpreter,
                                                                            m_cmd_name,
-                                                                           funct_name,
+                                                                           funct_name_str.c_str(),
                                                                            m_synchronous));
             
             if (!m_interpreter.AddUserCommand(m_cmd_name, command_obj_sp, true))

@@ -240,6 +240,7 @@ ScriptInterpreterPython::ScriptInterpreterPython (CommandInterpreter &interprete
     m_embedded_thread_input_reader_sp (),
     m_dbg_stdout (interpreter.GetDebugger().GetOutputFile().GetStream()),
     m_new_sysout (NULL),
+    m_run_one_line (NULL),
     m_dictionary_name (interpreter.GetDebugger().GetInstanceName().AsCString()),
     m_terminal_state (),
     m_session_is_active (false),
@@ -417,6 +418,64 @@ ScriptInterpreterPython::EnterSession ()
         PyErr_Clear ();
 }
 
+static PyObject*
+FindSessionDictionary (const char* dict_name)
+{
+    static std::map<ConstString,PyObject*> g_dict_map;
+    
+    ConstString dict(dict_name);
+    
+    std::map<ConstString,PyObject*>::iterator iter = g_dict_map.find(dict);
+    
+    if (iter != g_dict_map.end())
+        return iter->second;
+    
+    PyObject *main_mod = PyImport_AddModule ("__main__");
+    if (main_mod != NULL)
+    {
+        PyObject *main_dict = PyModule_GetDict (main_mod);
+        if ((main_dict != NULL)
+            && PyDict_Check (main_dict))
+        {
+            // Go through the main dictionary looking for the correct python script interpreter dictionary
+            PyObject *key, *value;
+            Py_ssize_t pos = 0;
+            
+            while (PyDict_Next (main_dict, &pos, &key, &value))
+            {
+                // We have stolen references to the key and value objects in the dictionary; we need to increment 
+                // them now so that Python's garbage collector doesn't collect them out from under us.
+                Py_INCREF (key);
+                Py_INCREF (value);
+                if (strcmp (PyString_AsString (key), dict_name) == 0)
+                {
+                    g_dict_map[dict] = value;
+                    return value;
+                }
+            }
+        }
+    }
+    return NULL;
+}
+
+static std::string
+GenerateUniqueName (const char* base_name_wanted,
+                    uint32_t& functions_counter,
+                    void* name_token = NULL)
+{
+    StreamString sstr;
+    
+    if (!base_name_wanted)
+        return std::string();
+    
+    if (!name_token)
+        sstr.Printf ("%s_%d", base_name_wanted, functions_counter++);
+    else
+        sstr.Printf ("%s_%p", base_name_wanted, name_token);
+    
+    return sstr.GetString();
+}
+
 bool
 ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObject *result)
 {
@@ -437,41 +496,18 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
     if (command)
     {
         // Find the correct script interpreter dictionary in the main module.
-        PyObject *main_mod = PyImport_AddModule ("__main__");
-        PyObject *script_interpreter_dict = NULL;
-        if  (main_mod != NULL)
+        PyObject *script_interpreter_dict = FindSessionDictionary(m_dictionary_name.c_str());
+        if (script_interpreter_dict != NULL)
         {
-            PyObject *main_dict = PyModule_GetDict (main_mod);
-            if ((main_dict != NULL)
-                && PyDict_Check (main_dict))
+            PyObject *pfunc = (PyObject*)m_run_one_line;
+            PyObject *pmod = PyImport_AddModule ("embedded_interpreter");
+            if (pmod != NULL)
             {
-                // Go through the main dictionary looking for the correct python script interpreter dictionary
-                PyObject *key, *value;
-                Py_ssize_t pos = 0;
-                
-                while (PyDict_Next (main_dict, &pos, &key, &value))
+                PyObject *pmod_dict = PyModule_GetDict (pmod);
+                if ((pmod_dict != NULL)
+                    && PyDict_Check (pmod_dict))
                 {
-                    // We have stolen references to the key and value objects in the dictionary; we need to increment 
-                    // them now so that Python's garbage collector doesn't collect them out from under us.
-                    Py_INCREF (key);
-                    Py_INCREF (value);
-                    if (strcmp (PyString_AsString (key), m_dictionary_name.c_str()) == 0)
-                    {
-                        script_interpreter_dict = value;
-                        break;
-                    }
-                }
-            }
-            
-            if (script_interpreter_dict != NULL)
-            {
-                PyObject *pfunc = NULL;
-                PyObject *pmod = PyImport_AddModule ("embedded_interpreter");
-                if (pmod != NULL)
-                {
-                    PyObject *pmod_dict = PyModule_GetDict (pmod);
-                    if ((pmod_dict != NULL)
-                        && PyDict_Check (pmod_dict))
+                    if (!pfunc)
                     {
                         PyObject *key, *value;
                         Py_ssize_t pos = 0;
@@ -486,33 +522,31 @@ ScriptInterpreterPython::ExecuteOneLine (const char *command, CommandReturnObjec
                                 break;
                             }
                         }
-                        
-                        PyObject *string_arg = PyString_FromString (command);
-                        if (pfunc && string_arg && PyCallable_Check (pfunc))
+                        m_run_one_line = pfunc;
+                    }
+                    
+                    if (pfunc && PyCallable_Check (pfunc))
+                    {
+                        PyObject *pargs = Py_BuildValue("(Os)",script_interpreter_dict,command);
+                        if (pargs != NULL)
                         {
-                            PyObject *pargs = PyTuple_New (2);
-                            if (pargs != NULL)
+                            PyObject *pvalue = PyObject_CallObject (pfunc, pargs);
+                            Py_DECREF (pargs);
+                            if (pvalue != NULL)
                             {
-                                PyTuple_SetItem (pargs, 0, script_interpreter_dict);
-                                PyTuple_SetItem (pargs, 1, string_arg);
-                                PyObject *pvalue = PyObject_CallObject (pfunc, pargs);
-                                Py_DECREF (pargs);
-                                if (pvalue != NULL)
-                                {
-                                    Py_DECREF (pvalue);
-                                    success = true;
-                                }
-                                else if (PyErr_Occurred ())
-                                {
-                                    PyErr_Print();
-                                    PyErr_Clear();
-                                }
+                                Py_DECREF (pvalue);
+                                success = true;
+                            }
+                            else if (PyErr_Occurred ())
+                            {
+                                PyErr_Print();
+                                PyErr_Clear();
                             }
                         }
                     }
                 }
-                Py_INCREF (script_interpreter_dict);
             }
+            Py_INCREF (script_interpreter_dict);
         }
 
         if (success)
@@ -739,25 +773,8 @@ ScriptInterpreterPython::ExecuteOneLineWithReturn (const char *in_string,
     bool should_decrement_locals = false;
     int success;
     
-    if (PyDict_Check (globals))
-    {
-        PyObject *key, *value;
-        Py_ssize_t pos = 0;
-        
-        int i = 0;
-        while (PyDict_Next (globals, &pos, &key, &value))
-        {
-            // We have stolen references to the key and value objects in the dictionary; we need to increment them now
-            // so that Python's garbage collector doesn't collect them out from under us.
-            Py_INCREF (key);
-            Py_INCREF (value);
-            char *c_str = PyString_AsString (key);
-            if (strcmp (c_str, m_dictionary_name.c_str()) == 0)
-                locals = value;
-            ++i;
-        }
-    }
-
+    locals = FindSessionDictionary(m_dictionary_name.c_str());
+    
     if (locals == NULL)
     {
         locals = PyObject_GetAttrString (globals, m_dictionary_name.c_str());
@@ -918,22 +935,8 @@ ScriptInterpreterPython::ExecuteMultipleLines (const char *in_string)
     PyObject *py_error = NULL;
     bool should_decrement_locals = false;
 
-    if (PyDict_Check (globals))
-    {
-        PyObject *key, *value;
-        Py_ssize_t pos = 0;
-        
-        while (PyDict_Next (globals, &pos, &key, &value))
-        {
-            // We have stolen references to the key and value objects in the dictionary; we need to increment them now
-            // so that Python's garbage collector doesn't collect them out from under us.
-            Py_INCREF (key);
-            Py_INCREF (value);
-            if (strcmp (PyString_AsString (key), m_dictionary_name.c_str()) == 0)
-                locals = value;
-        }
-    }
-
+    locals = FindSessionDictionary(m_dictionary_name.c_str());
+    
     if (locals == NULL)
     {
         locals = PyObject_GetAttrString (globals, m_dictionary_name.c_str());
@@ -1064,11 +1067,8 @@ ScriptInterpreterPython::GenerateBreakpointOptionsCommandCallback
                     if (interpreter->GenerateBreakpointCommandCallbackData (data_ap->user_source, 
                                                                             data_ap->script_source))
                     {
-                        if (data_ap->script_source.GetSize() == 1)
-                        {
-                            BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
-                            bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
-                        }
+                        BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
+                        bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
                     }
                     else if (!batch_mode)
                     {
@@ -1141,11 +1141,8 @@ ScriptInterpreterPython::SetBreakpointCommandCallback (BreakpointOptions *bp_opt
 
     if (GenerateBreakpointCommandCallbackData (data_ap->user_source, data_ap->script_source))
     {
-        if (data_ap->script_source.GetSize() == 1)
-        {
-            BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
-            bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
-        }
+        BatonSP baton_sp (new BreakpointOptions::CommandBaton (data_ap.release()));
+        bp_options->SetCallback (ScriptInterpreterPython::BreakpointCallbackFunction, baton_sp);
     }
     
     return;
@@ -1155,32 +1152,24 @@ bool
 ScriptInterpreterPython::ExportFunctionDefinitionToInterpreter (StringList &function_def)
 {
     // Convert StringList to one long, newline delimited, const char *.
-    std::string function_def_string;
-
-    int num_lines = function_def.GetSize();
-
-    for (int i = 0; i < num_lines; ++i)
-    {
-        function_def_string.append (function_def.GetStringAtIndex(i));
-        if (function_def_string.at (function_def_string.length() - 1) != '\n')
-            function_def_string.append ("\n");
-
-    }
+    std::string function_def_string(function_def.CopyList());
 
     return ExecuteMultipleLines (function_def_string.c_str());
 }
 
-// TODO move both GenerateTypeScriptFunction and GenerateBreakpointCommandCallbackData to actually
-// use this code to generate their functions
 bool
-ScriptInterpreterPython::GenerateFunction(std::string& signature, StringList &input, StringList &output)
+ScriptInterpreterPython::GenerateFunction(const char *signature, const StringList &input)
 {
     int num_lines = input.GetSize ();
     if (num_lines == 0)
         return false;
+    
+    if (!signature || *signature == 0)
+        return false;
+
     StreamString sstr;
     StringList auto_generated_function;
-    auto_generated_function.AppendString (signature.c_str());
+    auto_generated_function.AppendString (signature);
     auto_generated_function.AppendString ("     global_dict = globals()");   // Grab the global dictionary
     auto_generated_function.AppendString ("     new_keys = dict.keys()");    // Make a list of keys in the session dict
     auto_generated_function.AppendString ("     old_keys = global_dict.keys()"); // Save list of keys in global dict
@@ -1209,14 +1198,11 @@ ScriptInterpreterPython::GenerateFunction(std::string& signature, StringList &in
 
 }
 
-// this implementation is identical to GenerateBreakpointCommandCallbackData (apart from the name
-// given to generated functions, of course)
 bool
-ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, StringList &output, void* name_token)
+ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, std::string& output, void* name_token)
 {
-    static int num_created_functions = 0;
+    static uint32_t num_created_functions = 0;
     user_input.RemoveBlankLines ();
-    int num_lines = user_input.GetSize ();
     StreamString sstr;
     
     // Check to see if we have any data; if not, just return.
@@ -1226,125 +1212,45 @@ ScriptInterpreterPython::GenerateTypeScriptFunction (StringList &user_input, Str
     // Take what the user wrote, wrap it all up inside one big auto-generated Python function, passing in the
     // ValueObject as parameter to the function.
     
-    if (!name_token)
-        sstr.Printf ("lldb_autogen_python_type_print_func_%d", num_created_functions);
-    else
-        sstr.Printf ("lldb_gen_python_type_print_func_%p", name_token);        
-    ++num_created_functions;
-    std::string auto_generated_function_name = sstr.GetData();
-    
-    sstr.Clear();
-    StringList auto_generated_function;
-    
-    // Create the function name & definition string.
-    
+    std::string auto_generated_function_name(GenerateUniqueName("lldb_autogen_python_type_print_func", num_created_functions, name_token));
     sstr.Printf ("def %s (valobj, dict):", auto_generated_function_name.c_str());
-    auto_generated_function.AppendString (sstr.GetData());
     
-    // Pre-pend code for setting up the session dictionary.
-    
-    auto_generated_function.AppendString ("     global_dict = globals()");   // Grab the global dictionary
-    auto_generated_function.AppendString ("     new_keys = dict.keys()");    // Make a list of keys in the session dict
-    auto_generated_function.AppendString ("     old_keys = global_dict.keys()"); // Save list of keys in global dict
-    auto_generated_function.AppendString ("     global_dict.update (dict)"); // Add the session dictionary to the 
-    // global dictionary.
-    
-    // Wrap everything up inside the function, increasing the indentation.
-    
-    for (int i = 0; i < num_lines; ++i)
-    {
-        sstr.Clear ();
-        sstr.Printf ("     %s", user_input.GetStringAtIndex (i));
-        auto_generated_function.AppendString (sstr.GetData());
-    }
-    
-    // Append code to clean up the global dictionary and update the session dictionary (all updates in the function
-    // got written to the values in the global dictionary, not the session dictionary).
-    
-    auto_generated_function.AppendString ("     for key in new_keys:");  // Iterate over all the keys from session dict
-    auto_generated_function.AppendString ("         dict[key] = global_dict[key]");  // Update session dict values
-    auto_generated_function.AppendString ("         if key not in old_keys:");       // If key was not originally in global dict
-    auto_generated_function.AppendString ("             del global_dict[key]");      //  ...then remove key/value from global dict
-    
-    // Verify that the results are valid Python.
-    
-    if (!ExportFunctionDefinitionToInterpreter (auto_generated_function))
+    if (!GenerateFunction(sstr.GetData(), user_input))
         return false;
-    
+
     // Store the name of the auto-generated function to be called.
-    
-    output.AppendString (auto_generated_function_name.c_str());
+    output.assign(auto_generated_function_name);
     return true;
 }
 
 bool
-ScriptInterpreterPython::GenerateScriptAliasFunction (StringList &user_input, StringList &output)
+ScriptInterpreterPython::GenerateScriptAliasFunction (StringList &user_input, std::string &output)
 {
-    static int num_created_functions = 0;
+    static uint32_t num_created_functions = 0;
     user_input.RemoveBlankLines ();
-    int num_lines = user_input.GetSize ();
     StreamString sstr;
     
     // Check to see if we have any data; if not, just return.
     if (user_input.GetSize() == 0)
         return false;
     
-    // Take what the user wrote, wrap it all up inside one big auto-generated Python function, passing in the
-    // required data as parameters to the function.
-    
-    sstr.Printf ("lldb_autogen_python_cmd_alias_func_%d", num_created_functions);
-    ++num_created_functions;
-    std::string auto_generated_function_name = sstr.GetData();
-    
-    sstr.Clear();
-    StringList auto_generated_function;
-    
-    // Create the function name & definition string.
-    
+    std::string auto_generated_function_name(GenerateUniqueName("lldb_autogen_python_cmd_alias_func", num_created_functions));
+
     sstr.Printf ("def %s (debugger, args, result, dict):", auto_generated_function_name.c_str());
-    auto_generated_function.AppendString (sstr.GetData());
     
-    // Pre-pend code for setting up the session dictionary.
-    
-    auto_generated_function.AppendString ("     global_dict = globals()");   // Grab the global dictionary
-    auto_generated_function.AppendString ("     new_keys = dict.keys()");    // Make a list of keys in the session dict
-    auto_generated_function.AppendString ("     old_keys = global_dict.keys()"); // Save list of keys in global dict
-    auto_generated_function.AppendString ("     global_dict.update (dict)"); // Add the session dictionary to the 
-    // global dictionary.
-    
-    // Wrap everything up inside the function, increasing the indentation.
-    
-    for (int i = 0; i < num_lines; ++i)
-    {
-        sstr.Clear ();
-        sstr.Printf ("     %s", user_input.GetStringAtIndex (i));
-        auto_generated_function.AppendString (sstr.GetData());
-    }
-    
-    // Append code to clean up the global dictionary and update the session dictionary (all updates in the function
-    // got written to the values in the global dictionary, not the session dictionary).
-    
-    auto_generated_function.AppendString ("     for key in new_keys:");  // Iterate over all the keys from session dict
-    auto_generated_function.AppendString ("         dict[key] = global_dict[key]");  // Update session dict values
-    auto_generated_function.AppendString ("         if key not in old_keys:");       // If key was not originally in global dict
-    auto_generated_function.AppendString ("             del global_dict[key]");      //  ...then remove key/value from global dict
-    
-    // Verify that the results are valid Python.
-    
-    if (!ExportFunctionDefinitionToInterpreter (auto_generated_function))
+    if (!GenerateFunction(sstr.GetData(),user_input))
         return false;
     
     // Store the name of the auto-generated function to be called.
-    
-    output.AppendString (auto_generated_function_name.c_str());
+    output.assign(auto_generated_function_name);
     return true;
 }
 
 
 bool
-ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, StringList &output, void* name_token)
+ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, std::string &output, void* name_token)
 {
-    static int num_created_classes = 0;
+    static uint32_t num_created_classes = 0;
     user_input.RemoveBlankLines ();
     int num_lines = user_input.GetSize ();
     StreamString sstr;
@@ -1355,14 +1261,8 @@ ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, StringL
     
     // Wrap all user input into a Python class
     
-    if (!name_token)
-        sstr.Printf ("lldb_autogen_python_type_synth_class_%d", num_created_classes);
-    else
-        sstr.Printf ("lldb_gen_python_type_synth_class_%p", name_token);        
-    ++num_created_classes;
-    std::string auto_generated_class_name = sstr.GetData();
+    std::string auto_generated_class_name(GenerateUniqueName("lldb_autogen_python_type_synth_class",num_created_classes,name_token));
     
-    sstr.Clear();
     StringList auto_generated_class;
     
     // Create the function name & definition string.
@@ -1388,32 +1288,32 @@ ScriptInterpreterPython::GenerateTypeSynthClass (StringList &user_input, StringL
     
     // Store the name of the auto-generated class
     
-    output.AppendString (auto_generated_class_name.c_str());
+    output.assign(auto_generated_class_name);
     return true;
 }
 
-void*
+lldb::ScriptInterpreterObjectSP
 ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name,
                                                           lldb::ValueObjectSP valobj)
 {
     if (class_name.empty())
-        return NULL;
+        return lldb::ScriptInterpreterObjectSP();
     
     if (!valobj.get())
-        return NULL;
+        return lldb::ScriptInterpreterObjectSP();
     
     ExecutionContext exe_ctx (valobj->GetExecutionContextRef());
     Target *target = exe_ctx.GetTargetPtr();
     
     if (!target)
-        return NULL;
+        return lldb::ScriptInterpreterObjectSP();
     
     Debugger &debugger = target->GetDebugger();
     ScriptInterpreter *script_interpreter = debugger.GetCommandInterpreter().GetScriptInterpreter();
     ScriptInterpreterPython *python_interpreter = (ScriptInterpreterPython *) script_interpreter;
     
     if (!script_interpreter)
-        return NULL;
+        return lldb::ScriptInterpreterObjectSP();
     
     void* ret_val;
 
@@ -1424,11 +1324,11 @@ ScriptInterpreterPython::CreateSyntheticScriptedProvider (std::string class_name
                                               valobj);
     }
     
-    return ret_val;
+    return MakeScriptObject(ret_val);
 }
 
 bool
-ScriptInterpreterPython::GenerateTypeScriptFunction (const char* oneliner, StringList &output, void* name_token)
+ScriptInterpreterPython::GenerateTypeScriptFunction (const char* oneliner, std::string& output, void* name_token)
 {
     StringList input;
     input.SplitIntoLines(oneliner, strlen(oneliner));
@@ -1436,7 +1336,7 @@ ScriptInterpreterPython::GenerateTypeScriptFunction (const char* oneliner, Strin
 }
 
 bool
-ScriptInterpreterPython::GenerateTypeSynthClass (const char* oneliner, StringList &output, void* name_token)
+ScriptInterpreterPython::GenerateTypeSynthClass (const char* oneliner, std::string& output, void* name_token)
 {
     StringList input;
     input.SplitIntoLines(oneliner, strlen(oneliner));
@@ -1445,109 +1345,24 @@ ScriptInterpreterPython::GenerateTypeSynthClass (const char* oneliner, StringLis
 
 
 bool
-ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user_input, StringList &callback_data)
+ScriptInterpreterPython::GenerateBreakpointCommandCallbackData (StringList &user_input, std::string& output)
 {
-    static int num_created_functions = 0;
+    static uint32_t num_created_functions = 0;
     user_input.RemoveBlankLines ();
-    int num_lines = user_input.GetSize ();
     StreamString sstr;
 
-    // Check to see if we have any data; if not, just return.
     if (user_input.GetSize() == 0)
         return false;
 
-    // Take what the user wrote, wrap it all up inside one big auto-generated Python function, passing in the
-    // frame and breakpoint location as parameters to the function.
-
-
-    sstr.Printf ("lldb_autogen_python_bp_callback_func_%d", num_created_functions);
-    ++num_created_functions;
-    std::string auto_generated_function_name = sstr.GetData();
-
-    sstr.Clear();
-    StringList auto_generated_function;
-
-    // Create the function name & definition string.
-
+    std::string auto_generated_function_name(GenerateUniqueName("lldb_autogen_python_bp_callback_func_",num_created_functions));
     sstr.Printf ("def %s (frame, bp_loc, dict):", auto_generated_function_name.c_str());
-    auto_generated_function.AppendString (sstr.GetData());
     
-    // Pre-pend code for setting up the session dictionary.
-    
-    auto_generated_function.AppendString ("     global_dict = globals()");   // Grab the global dictionary
-    auto_generated_function.AppendString ("     new_keys = dict.keys()");    // Make a list of keys in the session dict
-    auto_generated_function.AppendString ("     old_keys = global_dict.keys()"); // Save list of keys in global dict
-    auto_generated_function.AppendString ("     global_dict.update (dict)"); // Add the session dictionary to the 
-                                                                             // global dictionary.
-
-    // Wrap everything up inside the function, increasing the indentation.
-
-    for (int i = 0; i < num_lines; ++i)
-    {
-        sstr.Clear ();
-        sstr.Printf ("     %s", user_input.GetStringAtIndex (i));
-        auto_generated_function.AppendString (sstr.GetData());
-    }
-
-    // Append code to clean up the global dictionary and update the session dictionary (all updates in the function
-    // got written to the values in the global dictionary, not the session dictionary).
-    
-    auto_generated_function.AppendString ("     for key in new_keys:");  // Iterate over all the keys from session dict
-    auto_generated_function.AppendString ("         dict[key] = global_dict[key]");  // Update session dict values
-    auto_generated_function.AppendString ("         if key not in old_keys:");       // If key was not originally in global dict
-    auto_generated_function.AppendString ("             del global_dict[key]");      //  ...then remove key/value from global dict
-
-    // Verify that the results are valid Python.
-
-    if (!ExportFunctionDefinitionToInterpreter (auto_generated_function))
-    {
+    if (!GenerateFunction(sstr.GetData(), user_input))
         return false;
-    }
-
+    
     // Store the name of the auto-generated function to be called.
-
-    callback_data.AppendString (auto_generated_function_name.c_str());
+    output.assign(auto_generated_function_name);
     return true;
-}
-
-static PyObject*
-FindSessionDictionary(const char* dict_name)
-{
-    static std::map<ConstString,PyObject*> g_dict_map;
-    
-    ConstString dict(dict_name);
-    
-    std::map<ConstString,PyObject*>::iterator iter = g_dict_map.find(dict);
-    
-    if (iter != g_dict_map.end())
-        return iter->second;
-    
-    PyObject *main_mod = PyImport_AddModule ("__main__");
-    if (main_mod != NULL)
-    {
-        PyObject *main_dict = PyModule_GetDict (main_mod);
-        if ((main_dict != NULL)
-            && PyDict_Check (main_dict))
-        {
-            // Go through the main dictionary looking for the correct python script interpreter dictionary
-            PyObject *key, *value;
-            Py_ssize_t pos = 0;
-            
-            while (PyDict_Next (main_dict, &pos, &key, &value))
-            {
-                // We have stolen references to the key and value objects in the dictionary; we need to increment 
-                // them now so that Python's garbage collector doesn't collect them out from under us.
-                Py_INCREF (key);
-                Py_INCREF (value);
-                if (strcmp (PyString_AsString (key), dict_name) == 0)
-                {
-                    g_dict_map[dict] = value;
-                    return value;
-                }
-            }
-        }
-    }
-    return NULL;
 }
 
 bool
@@ -1607,7 +1422,7 @@ ScriptInterpreterPython::BreakpointCallbackFunction
 )
 {
     BreakpointOptions::CommandData *bp_option_data = (BreakpointOptions::CommandData *) baton;
-    const char *python_function_name = bp_option_data->script_source.GetStringAtIndex (0);
+    const char *python_function_name = bp_option_data->script_source.c_str();
 
     if (!context)
         return true;
@@ -1745,8 +1560,13 @@ ScriptInterpreterPython::RunEmbeddedPythonInterpreter (lldb::thread_arg_t baton)
 }
 
 uint32_t
-ScriptInterpreterPython::CalculateNumChildren (void *implementor)
+ScriptInterpreterPython::CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor_sp)
 {
+    if (!implementor_sp)
+        return 0;
+    
+    void* implementor = implementor_sp->GetObject();
+    
     if (!implementor)
         return 0;
     
@@ -1764,8 +1584,13 @@ ScriptInterpreterPython::CalculateNumChildren (void *implementor)
 }
 
 lldb::ValueObjectSP
-ScriptInterpreterPython::GetChildAtIndex (void *implementor, uint32_t idx)
+ScriptInterpreterPython::GetChildAtIndex (const lldb::ScriptInterpreterObjectSP& implementor_sp, uint32_t idx)
 {
+    if (!implementor_sp)
+        return lldb::ValueObjectSP();
+    
+    void* implementor = implementor_sp->GetObject();
+    
     if (!implementor)
         return lldb::ValueObjectSP();
     
@@ -1797,8 +1622,13 @@ ScriptInterpreterPython::GetChildAtIndex (void *implementor, uint32_t idx)
 }
 
 int
-ScriptInterpreterPython::GetIndexOfChildWithName (void *implementor, const char* child_name)
+ScriptInterpreterPython::GetIndexOfChildWithName (const lldb::ScriptInterpreterObjectSP& implementor_sp, const char* child_name)
 {
+    if (!implementor_sp)
+        return UINT32_MAX;
+    
+    void* implementor = implementor_sp->GetObject();
+    
     if (!implementor)
         return UINT32_MAX;
     
@@ -1816,8 +1646,13 @@ ScriptInterpreterPython::GetIndexOfChildWithName (void *implementor, const char*
 }
 
 void
-ScriptInterpreterPython::UpdateSynthProviderInstance (void* implementor)
+ScriptInterpreterPython::UpdateSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor_sp)
 {
+    if (!implementor_sp)
+        return;
+    
+    void* implementor = implementor_sp->GetObject();
+    
     if (!implementor)
         return;
     

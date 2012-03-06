@@ -220,7 +220,7 @@ public:
         }
         
         StringList user_source;
-        StringList script_source;
+        std::string script_source;
         bool stop_on_error;
     };
 

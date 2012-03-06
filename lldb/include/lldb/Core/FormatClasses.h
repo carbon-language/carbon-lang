@@ -636,7 +636,7 @@ public:
     {
     private:
         std::string m_python_class;
-        void *m_wrapper; // Wraps PyObject.
+        lldb::ScriptInterpreterObjectSP m_wrapper_sp;
         ScriptInterpreter *m_interpreter;
     public:
         
@@ -649,9 +649,9 @@ public:
         virtual uint32_t
         CalculateNumChildren()
         {
-            if (m_wrapper == NULL || m_interpreter == NULL)
+            if (!m_wrapper_sp || m_interpreter == NULL)
                 return 0;
-            return m_interpreter->CalculateNumChildren(m_wrapper);
+            return m_interpreter->CalculateNumChildren(m_wrapper_sp);
         }
         
         virtual lldb::ValueObjectSP
@@ -660,18 +660,18 @@ public:
         virtual void
         Update()
         {
-            if (m_wrapper == NULL || m_interpreter == NULL)
+            if (!m_wrapper_sp || m_interpreter == NULL)
                 return;
             
-            m_interpreter->UpdateSynthProviderInstance(m_wrapper);
+            m_interpreter->UpdateSynthProviderInstance(m_wrapper_sp);
         }
                 
         virtual uint32_t
         GetIndexOfChildWithName (const ConstString &name)
         {
-            if (m_wrapper == NULL || m_interpreter == NULL)
+            if (!m_wrapper_sp || m_interpreter == NULL)
                 return UINT32_MAX;
-            return m_interpreter->GetIndexOfChildWithName(m_wrapper, name.GetCString());
+            return m_interpreter->GetIndexOfChildWithName(m_wrapper_sp, name.GetCString());
         }
         
         typedef SHARED_PTR(SyntheticChildrenFrontEnd) SharedPointer;

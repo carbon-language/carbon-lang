@@ -142,50 +142,50 @@ public:
     }
 
     virtual bool
-    GenerateBreakpointCommandCallbackData (StringList &input, StringList &output)
+    GenerateBreakpointCommandCallbackData (StringList &input, std::string& output)
     {
         return false;
     }
     
     virtual bool
-    GenerateTypeScriptFunction (const char* oneliner, StringList &output, void* name_token = NULL)
+    GenerateTypeScriptFunction (const char* oneliner, std::string& output, void* name_token = NULL)
     {
         return false;
     }
     
     virtual bool
-    GenerateTypeScriptFunction (StringList &input, StringList &output, void* name_token = NULL)
+    GenerateTypeScriptFunction (StringList &input, std::string& output, void* name_token = NULL)
     {
         return false;
     }
     
     virtual bool
-    GenerateScriptAliasFunction (StringList &input, StringList &output)
+    GenerateScriptAliasFunction (StringList &input, std::string& output)
     {
         return false;
     }
     
     virtual bool
-    GenerateTypeSynthClass (StringList &input, StringList &output, void* name_token = NULL)
+    GenerateTypeSynthClass (StringList &input, std::string& output, void* name_token = NULL)
     {
         return false;
     }
     
     virtual bool
-    GenerateTypeSynthClass (const char* oneliner, StringList &output, void* name_token = NULL)
+    GenerateTypeSynthClass (const char* oneliner, std::string& output, void* name_token = NULL)
     {
         return false;
     }
     
-    virtual void*
+    virtual lldb::ScriptInterpreterObjectSP
     CreateSyntheticScriptedProvider (std::string class_name,
                                      lldb::ValueObjectSP valobj)
     {
-        return NULL;
+        return lldb::ScriptInterpreterObjectSP();
     }
     
     virtual bool
-    GenerateFunction(std::string& signature, StringList &input, StringList &output)
+    GenerateFunction(const char *signature, const StringList &input)
     {
         return false;
     }
@@ -212,25 +212,25 @@ public:
     }
     
     virtual uint32_t
-    CalculateNumChildren (void *implementor)
+    CalculateNumChildren (const lldb::ScriptInterpreterObjectSP& implementor)
     {
         return 0;
     }
     
     virtual lldb::ValueObjectSP
-    GetChildAtIndex (void *implementor, uint32_t idx)
+    GetChildAtIndex (const lldb::ScriptInterpreterObjectSP& implementor, uint32_t idx)
     {
         return lldb::ValueObjectSP();
     }
     
     virtual int
-    GetIndexOfChildWithName (void *implementor, const char* child_name)
+    GetIndexOfChildWithName (const lldb::ScriptInterpreterObjectSP& implementor, const char* child_name)
     {
         return UINT32_MAX;
     }
     
     virtual void
-    UpdateSynthProviderInstance (void* implementor)
+    UpdateSynthProviderInstance (const lldb::ScriptInterpreterObjectSP& implementor)
     {
     }
         
