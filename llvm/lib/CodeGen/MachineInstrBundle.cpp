@@ -229,6 +229,8 @@ bool llvm::finalizeBundles(MachineFunction &MF) {
            "First instr cannot be inside bundle before finalization!");
 
     MachineBasicBlock::instr_iterator MIE = MBB.instr_end();
+    if (MII == MIE)
+      continue;
     for (++MII; MII != MIE; ) {
       if (!MII->isInsideBundle())
         ++MII;
