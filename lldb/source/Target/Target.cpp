@@ -287,6 +287,29 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
     return bp_sp;
 }
 
+lldb::BreakpointSP
+Target::CreateBreakpoint (const FileSpecList *containingModules,
+                  const FileSpecList *containingSourceFiles,
+                  std::vector<std::string> func_names,
+                  uint32_t func_name_type_mask, 
+                  bool internal,
+                  LazyBool skip_prologue)
+{
+    BreakpointSP bp_sp;
+    size_t num_names = func_names.size();
+    if (num_names > 0)
+    {
+        SearchFilterSP filter_sp(GetSearchFilterForModuleAndCUList (containingModules, containingSourceFiles));
+        
+        BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL, 
+                                                                      func_names,
+                                                                      func_name_type_mask,
+                                                                      skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
+        bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal);
+    }
+    return bp_sp;
+}
+
 BreakpointSP
 Target::CreateBreakpoint (const FileSpecList *containingModules,
                           const FileSpecList *containingSourceFiles,
@@ -304,7 +327,7 @@ Target::CreateBreakpoint (const FileSpecList *containingModules,
         BreakpointResolverSP resolver_sp (new BreakpointResolverName (NULL, 
                                                                       func_names,
                                                                       num_names, 
-                                                                      func_name_type_mask, 
+                                                                      func_name_type_mask,
                                                                       skip_prologue == eLazyBoolCalculate ? GetSkipPrologue() : skip_prologue));
         bp_sp = CreateBreakpoint (filter_sp, resolver_sp, internal);
     }

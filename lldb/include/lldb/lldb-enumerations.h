@@ -301,6 +301,8 @@ namespace lldb {
     ///
     /// These enumerations use the same language enumerations as the DWARF
     /// specification for ease of use and consistency.
+    /// The enum -> string code is in LanguageRuntime.cpp, don't change this
+    /// table without updating that code as well.
     //----------------------------------------------------------------------
     typedef enum LanguageType
     {
@@ -373,6 +375,7 @@ namespace lldb {
         eArgTypeFunctionName,
         eArgTypeGDBFormat,
         eArgTypeIndex,
+        eArgTypeLanguage,
         eArgTypeLineNum,
         eArgTypeLogCategory,
         eArgTypeLogChannel,

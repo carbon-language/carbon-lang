@@ -487,7 +487,10 @@ Breakpoint::GetDescription (Stream *s, lldb::DescriptionLevel level, bool show_l
         }
         else
         {
-            s->Printf(", locations = 0 (pending)");
+            // Don't print the pending notification for exception resolvers since we don't generally
+            // know how to set them until the target is run.
+            if (m_resolver_sp->getResolverID() != BreakpointResolver::ExceptionResolver)
+                s->Printf(", locations = 0 (pending)");
         }
 
         GetOptions()->GetDescription(s, level);

@@ -449,12 +449,14 @@ AppleObjCRuntimeV2::CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bo
 {
     BreakpointResolverSP resolver_sp;
     
-    if (catch_bp && throw_bp)
+    if (throw_bp)
         resolver_sp.reset (new BreakpointResolverName (bkpt,
                                                        "objc_exception_throw",
                                                        eFunctionNameTypeBase,
                                                        Breakpoint::Exact,
                                                        eLazyBoolNo));
+    // FIXME: We don't do catch breakpoints for ObjC yet.
+    // Should there be some way for the runtime to specify what it can do in this regard?
     return resolver_sp;
 }
 

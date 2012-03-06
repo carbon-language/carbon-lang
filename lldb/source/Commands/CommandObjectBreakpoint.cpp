@@ -53,8 +53,8 @@ CommandObjectBreakpointSet::CommandOptions::CommandOptions(CommandInterpreter &i
     m_line_num (0),
     m_column (0),
     m_check_inlines (true),
-    m_func_name (),
-    m_func_name_type_mask (0),
+    m_func_names (),
+    m_func_name_type_mask (eFunctionNameTypeNone),
     m_func_regexp (),
     m_source_text_regexp(),
     m_modules (),
@@ -63,7 +63,10 @@ CommandObjectBreakpointSet::CommandOptions::CommandOptions(CommandInterpreter &i
     m_thread_id(LLDB_INVALID_THREAD_ID),
     m_thread_index (UINT32_MAX),
     m_thread_name(),
-    m_queue_name()
+    m_queue_name(),
+    m_catch_bp (false),
+    m_throw_bp (false),
+    m_language (eLanguageTypeUnknown)
 {
 }
 
@@ -71,12 +74,13 @@ CommandObjectBreakpointSet::CommandOptions::~CommandOptions ()
 {
 }
 
-#define LLDB_OPT_FILE (LLDB_OPT_SET_1 | LLDB_OPT_SET_3 | LLDB_OPT_SET_4 | LLDB_OPT_SET_5 | LLDB_OPT_SET_6 | LLDB_OPT_SET_7 | LLDB_OPT_SET_8 | LLDB_OPT_SET_9 )
+#define LLDB_OPT_FILE ( LLDB_OPT_SET_1 | LLDB_OPT_SET_3 | LLDB_OPT_SET_4 | LLDB_OPT_SET_5 | LLDB_OPT_SET_6 | LLDB_OPT_SET_7 | LLDB_OPT_SET_8 | LLDB_OPT_SET_9 )
+#define LLDB_OPT_NOT_10 ( LLDB_OPT_SET_ALL & ~LLDB_OPT_SET_10 )
 
 OptionDefinition
 CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
 {
-    { LLDB_OPT_SET_ALL, false, "shlib", 's', required_argument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName,
+    { LLDB_OPT_NOT_10, false, "shlib", 's', required_argument, NULL, CommandCompletions::eModuleCompletion, eArgTypeShlibName,
         "Set the breakpoint only in this shared library (can use this option multiple times for multiple shlibs)."},
 
     { LLDB_OPT_SET_ALL, false, "ignore-count", 'i', required_argument,   NULL, 0, eArgTypeCount,
@@ -130,6 +134,14 @@ CommandObjectBreakpointSet::CommandOptions::g_option_table[] =
     { LLDB_OPT_SET_9, true, "source-pattern-regexp", 'p', required_argument, NULL, 0, eArgTypeRegularExpression,
         "Set the breakpoint specifying a regular expression to match a pattern in the source text in a given source file." },
 
+    { LLDB_OPT_SET_10, true, "language-exception", 'E', required_argument, NULL, 0, eArgTypeLanguage,
+        "Set the breakpoint on exceptions thrown by the specified language (without options, on throw but not catch.)" },
+
+    { LLDB_OPT_SET_10, false, "on-throw", 'w', required_argument, NULL, 0, eArgTypeBoolean,
+        "Set the breakpoint on exception throW." },
+
+    { LLDB_OPT_SET_10, false, "on-catch", 'h', required_argument, NULL, 0, eArgTypeBoolean,
+        "Set the breakpoint on exception catcH." },
 
     { 0, false, NULL, 0, 0, NULL, 0, eArgTypeNone, NULL }
 };
@@ -170,27 +182,27 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
             break;
 
         case 'b':
-            m_func_name.assign (option_arg);
+            m_func_names.push_back (option_arg);
             m_func_name_type_mask |= eFunctionNameTypeBase;
             break;
 
         case 'n':
-            m_func_name.assign (option_arg);
+            m_func_names.push_back (option_arg);
             m_func_name_type_mask |= eFunctionNameTypeAuto;
             break;
 
         case 'F':
-            m_func_name.assign (option_arg);
+            m_func_names.push_back (option_arg);
             m_func_name_type_mask |= eFunctionNameTypeFull;
             break;
 
         case 'S':
-            m_func_name.assign (option_arg);
+            m_func_names.push_back (option_arg);
             m_func_name_type_mask |= eFunctionNameTypeSelector;
             break;
 
         case 'M':
-            m_func_name.assign (option_arg);
+            m_func_names.push_back (option_arg);
             m_func_name_type_mask |= eFunctionNameTypeMethod;
             break;
 
@@ -235,6 +247,50 @@ CommandObjectBreakpointSet::CommandOptions::SetOptionValue (uint32_t option_idx,
             
         }
         break;
+        case 'E':
+        {
+            LanguageType language = LanguageRuntime::GetLanguageTypeFromString (option_arg);
+
+            switch (language)
+            {
+                case eLanguageTypeC89:
+                case eLanguageTypeC:
+                case eLanguageTypeC99:
+                    m_language = eLanguageTypeC;
+                    break;
+                case eLanguageTypeC_plus_plus:
+                    m_language = eLanguageTypeC_plus_plus;
+                    break;
+                case eLanguageTypeObjC:
+                    m_language = eLanguageTypeObjC;
+                    break;
+                case eLanguageTypeObjC_plus_plus:
+                    error.SetErrorStringWithFormat ("Set exception breakpoints separately for c++ and objective-c");
+                    break;
+                case eLanguageTypeUnknown:
+                    error.SetErrorStringWithFormat ("Unknown language type: '%s' for exception breakpoint", option_arg);
+                    break;
+                default:
+                    error.SetErrorStringWithFormat ("Unsupported language type: '%s' for exception breakpoint", option_arg);
+            }
+        }
+        break;
+        case 'w':
+        {
+            bool success;
+            m_throw_bp = Args::StringToBoolean (option_arg, true, &success);
+            if (!success)
+                error.SetErrorStringWithFormat ("Invalid boolean value for on-throw option: '%s'", option_arg);
+        }
+        break;
+        case 'h':
+        {
+            bool success;
+            m_catch_bp = Args::StringToBoolean (option_arg, true, &success);
+            if (!success)
+                error.SetErrorStringWithFormat ("Invalid boolean value for on-catch option: '%s'", option_arg);
+        }
+        break;
         default:
             error.SetErrorStringWithFormat ("unrecognized option '%c'", short_option);
             break;
@@ -249,7 +305,7 @@ CommandObjectBreakpointSet::CommandOptions::OptionParsingStarting ()
     m_filenames.Clear();
     m_line_num = 0;
     m_column = 0;
-    m_func_name.clear();
+    m_func_names.clear();
     m_func_name_type_mask = 0;
     m_func_regexp.clear();
     m_load_addr = LLDB_INVALID_ADDRESS;
@@ -259,6 +315,9 @@ CommandObjectBreakpointSet::CommandOptions::OptionParsingStarting ()
     m_thread_index = UINT32_MAX;
     m_thread_name.clear();
     m_queue_name.clear();
+    m_language = eLanguageTypeUnknown;
+    m_catch_bp = false;
+    m_throw_bp = true;
 }
 
 //-------------------------------------------------------------------------
@@ -345,6 +404,7 @@ CommandObjectBreakpointSet::Execute
     //   3).  -n  [-s -g]         (setting breakpoint by function name)
     //   4).  -r  [-s -g]         (setting breakpoint by function name regular expression)
     //   5).  -p -f               (setting a breakpoint by comparing a reg-exp to source text)
+    //   6).  -E [-w -h]          (setting a breakpoint for exceptions for a given language.)
 
     BreakpointSetType break_type = eSetTypeInvalid;
 
@@ -352,12 +412,14 @@ CommandObjectBreakpointSet::Execute
         break_type = eSetTypeFileAndLine;
     else if (m_options.m_load_addr != LLDB_INVALID_ADDRESS)
         break_type = eSetTypeAddress;
-    else if (!m_options.m_func_name.empty())
+    else if (!m_options.m_func_names.empty())
         break_type = eSetTypeFunctionName;
     else if  (!m_options.m_func_regexp.empty())
         break_type = eSetTypeFunctionRegexp;
     else if (!m_options.m_source_text_regexp.empty())
         break_type = eSetTypeSourceRegexp;
+    else if (m_options.m_language != eLanguageTypeUnknown)
+        break_type = eSetTypeException;
 
     Breakpoint *bp = NULL;
     FileSpec module_spec;
@@ -408,11 +470,11 @@ CommandObjectBreakpointSet::Execute
                 
                 if (name_type_mask == 0)
                     name_type_mask = eFunctionNameTypeAuto;
-                                                
+                
                 bp = target->CreateBreakpoint (&(m_options.m_modules),
                                                &(m_options.m_filenames),
-                                               m_options.m_func_name.c_str(), 
-                                               name_type_mask, 
+                                               m_options.m_func_names,
+                                               name_type_mask,
                                                Breakpoint::Exact).get();
             }
             break;
@@ -465,6 +527,11 @@ CommandObjectBreakpointSet::Execute
                 bp = target->CreateSourceRegexBreakpoint (&(m_options.m_modules), &(m_options.m_filenames), regexp).get();
             }
             break;
+        case eSetTypeException:
+            {
+                bp = target->CreateExceptionBreakpoint (m_options.m_language, m_options.m_catch_bp, m_options.m_throw_bp).get();
+            }
+            break;
         default:
             break;
     }
@@ -494,7 +561,9 @@ CommandObjectBreakpointSet::Execute
         output_stream.Printf ("Breakpoint created: ");
         bp->GetDescription(&output_stream, lldb::eDescriptionLevelBrief);
         output_stream.EOL();
-        if (bp->GetNumLocations() == 0)
+        // Don't print out this warning for exception breakpoints.  They can get set before the target
+        // is set, but we won't know how to actually set the breakpoint till we run.
+        if (bp->GetNumLocations() == 0 && break_type != eSetTypeException)
             output_stream.Printf ("WARNING:  Unable to resolve breakpoint to any actual locations.\n");
         result.SetStatus (eReturnStatusSuccessFinishResult);
     }

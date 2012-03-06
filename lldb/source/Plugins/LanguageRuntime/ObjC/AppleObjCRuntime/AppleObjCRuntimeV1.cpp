@@ -109,12 +109,13 @@ AppleObjCRuntimeV1::CreateExceptionResolver (Breakpoint *bkpt, bool catch_bp, bo
 {
     BreakpointResolverSP resolver_sp;
     
-    if (catch_bp && throw_bp)
+    if (throw_bp)
         resolver_sp.reset (new BreakpointResolverName (bkpt,
                                                        "objc_exception_throw",
                                                        eFunctionNameTypeBase,
                                                        Breakpoint::Exact,
                                                        eLazyBoolNo));
+    // FIXME: don't do catch yet.
     return resolver_sp;
 }
 

@@ -61,11 +61,29 @@ BreakpointResolverName::BreakpointResolverName (Breakpoint *bkpt,
                                                 bool skip_prologue) :
     BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
     m_func_name_type_mask (name_type_mask),
+    m_match_type (Breakpoint::Exact),
     m_skip_prologue (skip_prologue)
 {
     for (size_t i = 0; i < num_names; i++)
     {
         m_func_names.push_back (ConstString (names[i]));
+    }
+}
+
+BreakpointResolverName::BreakpointResolverName (Breakpoint *bkpt,
+                                                std::vector<std::string> names,
+                                                uint32_t name_type_mask,
+                                                bool skip_prologue) :
+    BreakpointResolver (bkpt, BreakpointResolver::NameResolver),
+    m_func_name_type_mask (name_type_mask),
+    m_match_type (Breakpoint::Exact),
+    m_skip_prologue (skip_prologue)
+{
+    size_t num_names = names.size();
+    
+    for (size_t i = 0; i < num_names; i++)
+    {
+        m_func_names.push_back (ConstString (names[i].c_str()));
     }
 }
 

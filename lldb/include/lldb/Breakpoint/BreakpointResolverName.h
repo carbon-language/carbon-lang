@@ -12,6 +12,8 @@
 
 // C Includes
 // C++ Includes
+#include <vector>
+#include <string>
 // Other libraries and framework includes
 // Project includes
 #include "lldb/Breakpoint/BreakpointResolver.h"
@@ -35,10 +37,16 @@ public:
                             Breakpoint::MatchType type,
                             bool skip_prologue);
 
-    // This one takes an array of names.  It is always MatchType = Name.
+    // This one takes an array of names.  It is always MatchType = Exact.
     BreakpointResolverName (Breakpoint *bkpt,
                             const char *names[],
                             size_t num_names,
+                            uint32_t name_type_mask,
+                            bool skip_prologue);
+
+    // This one takes a C++ array of names.  It is always MatchType = Exact.
+    BreakpointResolverName (Breakpoint *bkpt,
+                            std::vector<std::string> names,
                             uint32_t name_type_mask,
                             bool skip_prologue);
 

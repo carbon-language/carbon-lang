@@ -484,6 +484,14 @@ public:
                       bool internal = false,
                       LazyBool skip_prologue = eLazyBoolCalculate);
 
+    lldb::BreakpointSP
+    CreateBreakpoint (const FileSpecList *containingModules,
+                      const FileSpecList *containingSourceFiles,
+                      std::vector<std::string> func_names,
+                      uint32_t func_name_type_mask, 
+                      bool internal = false,
+                      LazyBool skip_prologue = eLazyBoolCalculate);
+
 
     // Use this to create a general breakpoint:
     lldb::BreakpointSP

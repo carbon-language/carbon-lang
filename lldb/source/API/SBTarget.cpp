@@ -41,6 +41,7 @@
 #include "lldb/Interpreter/Args.h"
 #include "lldb/Symbol/SymbolVendor.h"
 #include "lldb/Symbol/VariableList.h"
+#include "lldb/Target/LanguageRuntime.h"
 #include "lldb/Target/Process.h"
 #include "lldb/Target/Target.h"
 #include "lldb/Target/TargetList.h"
@@ -1237,6 +1238,49 @@ SBTarget::BreakpointCreateByName (const char *symbol_name,
     return sb_bp;
 }
 
+lldb::SBBreakpoint
+SBTarget::BreakpointCreateByNames (const char *symbol_names[],
+                                   uint32_t num_names,
+                                   uint32_t name_type_mask,
+                                   const SBFileSpecList &module_list,
+                                   const SBFileSpecList &comp_unit_list)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBBreakpoint sb_bp;
+    TargetSP target_sp(GetSP());
+    if (target_sp && num_names > 0)
+    {
+        Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        *sb_bp = target_sp->CreateBreakpoint (module_list.get(), 
+                                                comp_unit_list.get(), 
+                                                symbol_names,
+                                                num_names,
+                                                name_type_mask, 
+                                                false);
+    }
+    
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::BreakpointCreateByName (symbols={", target_sp.get());
+        for (uint32_t i = 0 ; i < num_names; i++)
+        {
+            char sep;
+            if (i < num_names - 1)
+                sep = ',';
+            else
+                sep = '}';
+            if (symbol_names[i] != NULL)
+                log->Printf ("\"%s\"%c ", symbol_names[i], sep);
+            else
+                log->Printf ("\"<NULL>\"%c ", sep);
+            
+        }
+        log->Printf ("name_type: %d) => SBBreakpoint(%p)", name_type_mask, sb_bp.get());
+    }
+
+    return sb_bp;
+}
 
 SBBreakpoint
 SBTarget::BreakpointCreateByRegex (const char *symbol_name_regex, const char *module_name)
@@ -1377,6 +1421,34 @@ SBTarget::BreakpointCreateBySourceRegex (const char *source_regex,
     {
         log->Printf ("SBTarget(%p)::BreakpointCreateByRegex (source_regex=\"%s\") => SBBreakpoint(%p)", 
                      target_sp.get(), source_regex, sb_bp.get());
+    }
+
+    return sb_bp;
+}
+
+lldb::SBBreakpoint
+SBTarget::BreakpointCreateForException  (lldb::LanguageType language,
+                               bool catch_bp,
+                               bool throw_bp)
+{
+    LogSP log(lldb_private::GetLogIfAllCategoriesSet (LIBLLDB_LOG_API));
+
+    SBBreakpoint sb_bp;
+    TargetSP target_sp(GetSP());
+    if (target_sp)
+    {
+        Mutex::Locker api_locker (target_sp->GetAPIMutex());
+        *sb_bp = target_sp->CreateExceptionBreakpoint (language, catch_bp, throw_bp);
+    }
+
+    if (log)
+    {
+        log->Printf ("SBTarget(%p)::BreakpointCreateByRegex (Language: %s, catch: %s throw: %s) => SBBreakpoint(%p)", 
+                     target_sp.get(),
+                     LanguageRuntime::GetNameForLanguageType(language),
+                     catch_bp ? "on" : "off",
+                     throw_bp ? "on" : "off",
+                     sb_bp.get());
     }
 
     return sb_bp;

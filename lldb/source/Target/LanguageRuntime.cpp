@@ -69,7 +69,7 @@ LanguageRuntime::ExceptionBreakpointResolver::ExceptionBreakpointResolver (Break
                         LanguageType language,
                         bool catch_bp,
                         bool throw_bp) :
-    BreakpointResolver (bkpt, ExceptionResolver),
+    BreakpointResolver (bkpt, BreakpointResolver::ExceptionResolver),
     m_language (language),
     m_catch_bp (catch_bp),
     m_throw_bp (throw_bp)
@@ -80,7 +80,7 @@ LanguageRuntime::ExceptionBreakpointResolver::ExceptionBreakpointResolver (Break
 void
 LanguageRuntime::ExceptionBreakpointResolver::GetDescription (Stream *s)
 {
-    s->Printf ("Exception breakpoint (catch: %s throw: %s) using: ", 
+    s->Printf ("Exception breakpoint (catch: %s throw: %s)", 
            m_catch_bp ? "on" : "off",
            m_throw_bp ? "on" : "off");
        
@@ -91,7 +91,7 @@ LanguageRuntime::ExceptionBreakpointResolver::GetDescription (Stream *s)
         m_actual_resolver_sp->GetDescription (s);
     }
     else
-        s->Printf (".");
+        s->Printf (" the correct runtime exception handler will be determined when you run");
 }
 
 bool
@@ -162,3 +162,49 @@ LanguageRuntime::ExceptionBreakpointResolver::GetDepth ()
         return m_actual_resolver_sp->GetDepth();
 }
 
+static const char *language_names[] =
+{
+    "unknown",
+    "c89",
+    "c",
+    "ada83",
+    "c++",
+    "cobol74",
+    "cobol85",
+    "fortran77",
+    "fortran90",
+    "pascal83",
+    "modula2",
+    "java",
+    "c99",
+    "ada95",
+    "fortran95",
+    "pli",
+    "objective-c",
+    "objective-c++",
+    "upc",
+    "d",
+    "python"
+};
+static uint32_t num_languages = sizeof(language_names) / sizeof (char *);
+
+LanguageType
+LanguageRuntime::GetLanguageTypeFromString (const char *string)
+{
+    for (uint32_t i = 0; i < num_languages; i++)
+    {
+        if (strcmp (language_names[i], string) == 0)
+            return (LanguageType) i;
+    }
+    return eLanguageTypeUnknown;
+}
+
+const char *
+LanguageRuntime::GetNameForLanguageType (LanguageType language)
+{
+    if (language < num_languages)
+        return language_names[language];
+    else
+        return language_names[eLanguageTypeUnknown];
+}
+        

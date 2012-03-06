@@ -77,6 +77,12 @@ public:
                                bool catch_bp, 
                                bool throw_bp, 
                                bool is_internal = false);
+                            
+    static lldb::LanguageType
+    GetLanguageTypeFromString (const char *string);
+    
+    static const char *
+    GetNameForLanguageType (lldb::LanguageType language);
         
 protected:
     //------------------------------------------------------------------
