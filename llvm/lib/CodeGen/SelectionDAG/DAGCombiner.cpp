@@ -6142,8 +6142,7 @@ SDValue DAGCombiner::visitBR_CC(SDNode *N) {
 
 /// canFoldInAddressingMode - Return true if 'Use' is a load or a store that
 /// uses N as its base pointer and that N may be folded in the load / store
-/// addressing mode. FIXME: This currently only looks for folding of
-/// [reg +/- imm] addressing modes.
+/// addressing mode.
 static bool canFoldInAddressingMode(SDNode *N, SDNode *Use,
                                     SelectionDAG &DAG,
                                     const TargetLowering &TLI) {
@@ -6163,15 +6162,19 @@ static bool canFoldInAddressingMode(SDNode *N, SDNode *Use,
   if (N->getOpcode() == ISD::ADD) {
     ConstantSDNode *Offset = dyn_cast<ConstantSDNode>(N->getOperand(1));
     if (Offset)
+      // [reg +/- imm]
       AM.BaseOffs = Offset->getSExtValue();
     else
-      return false;
+      // [reg +/- reg]
+      AM.Scale = 1;
   } else if (N->getOpcode() == ISD::SUB) {
     ConstantSDNode *Offset = dyn_cast<ConstantSDNode>(N->getOperand(1));
     if (Offset)
+      // [reg +/- imm]
       AM.BaseOffs = -Offset->getSExtValue();
     else
-      return false;
+      // [reg +/- reg]
+      AM.Scale = 1;
   } else
     return false;
 
