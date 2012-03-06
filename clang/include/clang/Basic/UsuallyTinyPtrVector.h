@@ -12,8 +12,8 @@
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef LLVM_CLANG_AST_USUALLY_TINY_PTR_VECTOR_H
-#define LLVM_CLANG_AST_USUALLY_TINY_PTR_VECTOR_H
+#ifndef LLVM_CLANG_BASIC_USUALLY_TINY_PTR_VECTOR_H
+#define LLVM_CLANG_BASIC_USUALLY_TINY_PTR_VECTOR_H
 
 #include <vector>
 
@@ -44,6 +44,7 @@ public:
   size_t size() const;
 
   void push_back(T *Method);
+  iterator erase(const iterator ElementPos);
   void Destroy();
 };
 
@@ -100,6 +101,28 @@ void UsuallyTinyPtrVector<T>::push_back(T *Element) {
 
   // Add the new element to the vector.
   Vec->push_back(Element);
+}
+
+template<typename T>
+typename UsuallyTinyPtrVector<T>::iterator
+UsuallyTinyPtrVector<T>::erase(
+  const typename UsuallyTinyPtrVector<T>::iterator ElementPos) {
+  // only one item
+  if ((Storage & 0x01) == 0) {
+    // if the element is found remove it
+    if (ElementPos == reinterpret_cast<T **>(&Storage))
+      Storage = 0;
+  } else {
+    // multiple items in a vector; just do the erase, there is no
+    // benefit to collapsing back to a pointer
+    vector_type *Vec = reinterpret_cast<vector_type *>(Storage & ~0x01);
+    unsigned index = ElementPos -
+         const_cast<typename UsuallyTinyPtrVector<T>::iterator>(&Vec->front());
+    if (index < Vec->size())
+      return const_cast<typename UsuallyTinyPtrVector<T>::iterator>(
+                                         &*(Vec->erase(Vec->begin() + index)));
+  }
+  return end();
 }
 
 template<typename T>
