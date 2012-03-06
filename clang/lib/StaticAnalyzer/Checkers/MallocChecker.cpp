@@ -99,8 +99,6 @@ class MallocChecker : public Checker<check::DeadSymbols,
   mutable IdentifierInfo *II_malloc, *II_free, *II_realloc, *II_calloc,
                          *II_valloc, *II_reallocf, *II_strndup, *II_strdup;
 
-  static const unsigned InvalidArgIndex = UINT_MAX;
-
 public:
   MallocChecker() : II_malloc(0), II_free(0), II_realloc(0), II_calloc(0),
                     II_valloc(0), II_reallocf(0), II_strndup(0), II_strdup(0) {}
