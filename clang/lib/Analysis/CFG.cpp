@@ -339,6 +339,7 @@ private:
   CFGBlock *VisitLabelStmt(LabelStmt *L);
   CFGBlock *VisitMemberExpr(MemberExpr *M, AddStmtChoice asc);
   CFGBlock *VisitObjCAtCatchStmt(ObjCAtCatchStmt *S);
+  CFGBlock *VisitObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt *S);
   CFGBlock *VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S);
   CFGBlock *VisitObjCAtThrowStmt(ObjCAtThrowStmt *S);
   CFGBlock *VisitObjCAtTryStmt(ObjCAtTryStmt *S);
@@ -1013,6 +1014,9 @@ CFGBlock *CFGBuilder::Visit(Stmt * S, AddStmtChoice asc) {
 
     case Stmt::ObjCAtCatchStmtClass:
       return VisitObjCAtCatchStmt(cast<ObjCAtCatchStmt>(S));
+
+    case Stmt::ObjCAutoreleasePoolStmtClass:
+    return VisitObjCAutoreleasePoolStmt(cast<ObjCAutoreleasePoolStmt>(S));
 
     case Stmt::ObjCAtSynchronizedStmtClass:
       return VisitObjCAtSynchronizedStmt(cast<ObjCAtSynchronizedStmt>(S));
@@ -1927,6 +1931,12 @@ CFGBlock *CFGBuilder::VisitObjCForCollectionStmt(ObjCForCollectionStmt *S) {
   // Now create a prologue block to contain the collection expression.
   Block = createBlock();
   return addStmt(S->getCollection());
+}
+
+CFGBlock *CFGBuilder::VisitObjCAutoreleasePoolStmt(ObjCAutoreleasePoolStmt *S) {
+  // Inline the body.
+  return addStmt(S->getSubStmt());
+  // TODO: consider adding cleanups for the end of @autoreleasepool scope.
 }
 
 CFGBlock *CFGBuilder::VisitObjCAtSynchronizedStmt(ObjCAtSynchronizedStmt *S) {
