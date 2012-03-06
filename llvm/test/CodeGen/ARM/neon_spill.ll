@@ -1,4 +1,5 @@
 ; RUN: llc < %s -verify-machineinstrs
+; RUN: llc < %s -verify-machineinstrs -O0
 ; PR12177
 ;
 ; This test case spills a QQQQ register.
