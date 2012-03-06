@@ -4456,11 +4456,27 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
     } else if (isa<StmtExpr>(E)) {
       ReturnsRetained = true;
 
+    // We hit this case with the lambda conversion-to-block optimization;
+    // we don't want any extra casts here.
+    } else if (isa<CastExpr>(E) &&
+               isa<BlockExpr>(cast<CastExpr>(E)->getSubExpr())) {
+      return Owned(E);
+
     // For message sends and property references, we try to find an
     // actual method.  FIXME: we should infer retention by selector in
     // cases where we don't have an actual method.
-    } else if (ObjCMessageExpr *Send = dyn_cast<ObjCMessageExpr>(E)) {
-      ObjCMethodDecl *D = Send->getMethodDecl();
+    } else {
+      ObjCMethodDecl *D = 0;
+      if (ObjCMessageExpr *Send = dyn_cast<ObjCMessageExpr>(E)) {
+        D = Send->getMethodDecl();
+      } else if (ObjCNumericLiteral *NumLit = dyn_cast<ObjCNumericLiteral>(E)) {
+        D = NumLit->getObjCNumericLiteralMethod();
+      } else if (ObjCArrayLiteral *ArrayLit = dyn_cast<ObjCArrayLiteral>(E)) {
+        D = ArrayLit->getArrayWithObjectsMethod();
+      } else if (ObjCDictionaryLiteral *DictLit
+                                        = dyn_cast<ObjCDictionaryLiteral>(E)) {
+        D = DictLit->getDictWithObjectsMethod();
+      }
 
       ReturnsRetained = (D && D->hasAttr<NSReturnsRetainedAttr>());
 
@@ -4470,13 +4486,6 @@ ExprResult Sema::MaybeBindToTemporary(Expr *E) {
       if (!ReturnsRetained &&
           D && D->getMethodFamily() == OMF_performSelector)
         return Owned(E);
-    } else if (isa<CastExpr>(E) &&
-               isa<BlockExpr>(cast<CastExpr>(E)->getSubExpr())) {
-      // We hit this case with the lambda conversion-to-block optimization;
-      // we don't want any extra casts here.
-      return Owned(E);
-    } else {
-      ReturnsRetained = false;
     }
 
     // Don't reclaim an object of Class type.

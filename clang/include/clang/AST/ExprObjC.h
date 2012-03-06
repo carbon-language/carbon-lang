@@ -18,6 +18,7 @@
 #include "clang/AST/Expr.h"
 #include "clang/AST/SelectorLocationsKind.h"
 #include "clang/Basic/IdentifierTable.h"
+#include "clang/Sema/Ownership.h"
 
 namespace clang {
   class IdentifierInfo;
@@ -55,6 +56,281 @@ public:
   // Iterators
   child_range children() { return child_range(&String, &String+1); }
 };
+
+/// ObjCBoolLiteralExpr - Objective-C Boolean Literal.
+///
+class ObjCBoolLiteralExpr : public Expr {
+  bool Value;
+  SourceLocation Loc;
+public:
+  ObjCBoolLiteralExpr(bool val, QualType Ty, SourceLocation l) :
+  Expr(ObjCBoolLiteralExprClass, Ty, VK_RValue, OK_Ordinary, false, false,
+       false, false), Value(val), Loc(l) {}
+    
+  explicit ObjCBoolLiteralExpr(EmptyShell Empty)
+  : Expr(ObjCBoolLiteralExprClass, Empty) { }
+    
+  bool getValue() const { return Value; }
+  void setValue(bool V) { Value = V; }
+    
+  SourceRange getSourceRange() const { return SourceRange(Loc); }
+    
+  SourceLocation getLocation() const { return Loc; }
+  void setLocation(SourceLocation L) { Loc = L; }
+    
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjCBoolLiteralExprClass;
+  }
+  static bool classof(const ObjCBoolLiteralExpr *) { return true; }
+    
+  // Iterators
+  child_range children() { return child_range(); }
+};
+
+/// ObjCNumericLiteral - used for objective-c numeric literals;
+/// as in: @42 or @true (c++/objc++) or @__yes (c/objc)
+class ObjCNumericLiteral : public Expr {
+  /// Number - expression AST node for the numeric literal
+  Stmt *Number;
+  ObjCMethodDecl *ObjCNumericLiteralMethod;
+  SourceLocation AtLoc;
+public:
+  ObjCNumericLiteral(Stmt *NL, QualType T, ObjCMethodDecl *method,
+                     SourceLocation L)
+  : Expr(ObjCNumericLiteralClass, T, VK_RValue, OK_Ordinary, 
+         false, false, false, false), Number(NL), 
+    ObjCNumericLiteralMethod(method), AtLoc(L) {}
+  explicit ObjCNumericLiteral(EmptyShell Empty)
+  : Expr(ObjCNumericLiteralClass, Empty) {}
+  
+  Expr *getNumber() { return cast<Expr>(Number); }
+  const Expr *getNumber() const { return cast<Expr>(Number); }
+  
+  ObjCMethodDecl *getObjCNumericLiteralMethod() const {
+    return ObjCNumericLiteralMethod; 
+  }
+    
+  SourceLocation getAtLoc() const { return AtLoc; }
+  
+  SourceRange getSourceRange() const {
+    return SourceRange(AtLoc, Number->getSourceRange().getEnd());
+  }
+
+  static bool classof(const Stmt *T) {
+      return T->getStmtClass() == ObjCNumericLiteralClass;
+  }
+  static bool classof(const ObjCNumericLiteral *) { return true; }
+  
+  // Iterators
+  child_range children() { return child_range(&Number, &Number+1); }
+    
+  friend class ASTStmtReader;
+};
+
+/// ObjCArrayLiteral - used for objective-c array containers; as in:
+/// @[@"Hello", NSApp, [NSNumber numberWithInt:42]];
+class ObjCArrayLiteral : public Expr {
+  unsigned NumElements;
+  SourceRange Range;
+  ObjCMethodDecl *ArrayWithObjectsMethod;
+  
+  ObjCArrayLiteral(llvm::ArrayRef<Expr *> Elements,
+                   QualType T, ObjCMethodDecl * Method,
+                   SourceRange SR);
+  
+  explicit ObjCArrayLiteral(EmptyShell Empty, unsigned NumElements)
+    : Expr(ObjCArrayLiteralClass, Empty), NumElements(NumElements) {}
+
+public:
+  static ObjCArrayLiteral *Create(ASTContext &C, 
+                                  llvm::ArrayRef<Expr *> Elements,
+                                  QualType T, ObjCMethodDecl * Method,
+                                  SourceRange SR);
+
+  static ObjCArrayLiteral *CreateEmpty(ASTContext &C, unsigned NumElements);
+
+  SourceRange getSourceRange() const { return Range; }
+
+  static bool classof(const Stmt *T) {
+      return T->getStmtClass() == ObjCArrayLiteralClass;
+  }
+  static bool classof(const ObjCArrayLiteral *) { return true; }
+
+  /// \brief Retrieve elements of array of literals.
+  Expr **getElements() { return reinterpret_cast<Expr **>(this + 1); }
+
+  /// \brief Retrieve elements of array of literals.
+  const Expr * const *getElements() const { 
+    return reinterpret_cast<const Expr * const*>(this + 1); 
+  }
+
+  /// getNumElements - Return number of elements of objective-c array literal.
+  unsigned getNumElements() const { return NumElements; }
+    
+    /// getExpr - Return the Expr at the specified index.
+  Expr *getElement(unsigned Index) {
+    assert((Index < NumElements) && "Arg access out of range!");
+    return cast<Expr>(getElements()[Index]);
+  }
+  const Expr *getElement(unsigned Index) const {
+    assert((Index < NumElements) && "Arg access out of range!");
+    return cast<Expr>(getElements()[Index]);
+  }
+    
+  ObjCMethodDecl *getArrayWithObjectsMethod() const {
+    return ArrayWithObjectsMethod; 
+  }
+    
+  // Iterators
+  child_range children() { 
+    return child_range((Stmt **)getElements(), 
+                       (Stmt **)getElements() + NumElements);
+  }
+    
+  friend class ASTStmtReader;
+};
+
+/// \brief An element in an Objective-C dictionary literal.
+///
+struct ObjCDictionaryElement {
+  /// \brief The key for the dictionary element.
+  Expr *Key;
+  
+  /// \brief The value of the dictionary element.
+  Expr *Value;
+  
+  /// \brief The location of the ellipsis, if this is a pack expansion.
+  SourceLocation EllipsisLoc;
+  
+  /// \brief The number of elements this pack expansion will expand to, if
+  /// this is a pack expansion and is known.
+  llvm::Optional<unsigned> NumExpansions;
+
+  /// \brief Determines whether this dictionary element is a pack expansion.
+  bool isPackExpansion() const { return EllipsisLoc.isValid(); }
+};
+
+/// ObjCDictionaryLiteral - AST node to represent objective-c dictionary 
+/// literals; as in:  @{@"name" : NSUserName(), @"date" : [NSDate date] };
+class ObjCDictionaryLiteral : public Expr {
+  /// \brief Key/value pair used to store the key and value of a given element.
+  ///
+  /// Objects of this type are stored directly after the expression.
+  struct KeyValuePair {
+    Expr *Key;
+    Expr *Value;
+  };
+  
+  /// \brief Data that describes an element that is a pack expansion, used if any
+  /// of the elements in the dictionary literal are pack expansions.
+  struct ExpansionData {
+    /// \brief The location of the ellipsis, if this element is a pack
+    /// expansion.
+    SourceLocation EllipsisLoc;
+
+    /// \brief If non-zero, the number of elements that this pack
+    /// expansion will expand to (+1).
+    unsigned NumExpansionsPlusOne;
+  };
+
+  /// \brief The number of elements in this dictionary literal.
+  unsigned NumElements : 31;
+  
+  /// \brief Determine whether this dictionary literal has any pack expansions.
+  ///
+  /// If the dictionary literal has pack expansions, then there will
+  /// be an array of pack expansion data following the array of
+  /// key/value pairs, which provide the locations of the ellipses (if
+  /// any) and number of elements in the expansion (if known). If
+  /// there are no pack expansions, we optimize away this storage.
+  unsigned HasPackExpansions : 1;
+  
+  SourceRange Range;
+  ObjCMethodDecl *DictWithObjectsMethod;
+    
+  ObjCDictionaryLiteral(ArrayRef<ObjCDictionaryElement> VK, 
+                        bool HasPackExpansions,
+                        QualType T, ObjCMethodDecl *method,
+                        SourceRange SR);
+
+  explicit ObjCDictionaryLiteral(EmptyShell Empty, unsigned NumElements,
+                                 bool HasPackExpansions)
+    : Expr(ObjCDictionaryLiteralClass, Empty), NumElements(NumElements),
+      HasPackExpansions(HasPackExpansions) {}
+
+  KeyValuePair *getKeyValues() {
+    return reinterpret_cast<KeyValuePair *>(this + 1);
+  }
+  
+  const KeyValuePair *getKeyValues() const {
+    return reinterpret_cast<const KeyValuePair *>(this + 1);
+  }
+
+  ExpansionData *getExpansionData() {
+    if (!HasPackExpansions)
+      return 0;
+    
+    return reinterpret_cast<ExpansionData *>(getKeyValues() + NumElements);
+  }
+
+  const ExpansionData *getExpansionData() const {
+    if (!HasPackExpansions)
+      return 0;
+    
+    return reinterpret_cast<const ExpansionData *>(getKeyValues()+NumElements);
+  }
+
+public:
+  static ObjCDictionaryLiteral *Create(ASTContext &C,
+                                       ArrayRef<ObjCDictionaryElement> VK, 
+                                       bool HasPackExpansions,
+                                       QualType T, ObjCMethodDecl *method,
+                                       SourceRange SR);
+  
+  static ObjCDictionaryLiteral *CreateEmpty(ASTContext &C, 
+                                            unsigned NumElements,
+                                            bool HasPackExpansions);
+  
+  /// getNumElements - Return number of elements of objective-c dictionary 
+  /// literal.
+  unsigned getNumElements() const { return NumElements; }
+
+  ObjCDictionaryElement getKeyValueElement(unsigned Index) const {
+    assert((Index < NumElements) && "Arg access out of range!");
+    const KeyValuePair &KV = getKeyValues()[Index];
+    ObjCDictionaryElement Result = { KV.Key, KV.Value, SourceLocation(),
+                                     llvm::Optional<unsigned>() };
+    if (HasPackExpansions) {
+      const ExpansionData &Expansion = getExpansionData()[Index];
+      Result.EllipsisLoc = Expansion.EllipsisLoc;
+      if (Expansion.NumExpansionsPlusOne > 0)
+        Result.NumExpansions = Expansion.NumExpansionsPlusOne - 1;
+    }
+    return Result;
+  }
+    
+  ObjCMethodDecl *getDictWithObjectsMethod() const
+    { return DictWithObjectsMethod; }
+
+  SourceRange getSourceRange() const { return Range; }
+  
+  static bool classof(const Stmt *T) {
+      return T->getStmtClass() == ObjCDictionaryLiteralClass;
+  }
+  static bool classof(const ObjCDictionaryLiteral *) { return true; }
+    
+  // Iterators
+  child_range children() { 
+    // Note: we're taking advantage of the layout of the KeyValuePair struct
+    // here. If that struct changes, this code will need to change as well.
+    return child_range(reinterpret_cast<Stmt **>(this + 1),
+                       reinterpret_cast<Stmt **>(this + 1) + NumElements * 2);
+  }
+    
+  friend class ASTStmtReader;
+  friend class ASTStmtWriter;
+};
+
 
 /// ObjCEncodeExpr, used for @encode in Objective-C.  @encode has the same type
 /// and behavior as StringLiteral except that the string initializer is obtained
@@ -430,6 +706,88 @@ private:
   void setLocation(SourceLocation L) { IdLoc = L; }
   void setReceiverLocation(SourceLocation Loc) { ReceiverLoc = Loc; }
 };
+  
+/// ObjCSubscriptRefExpr - used for array and dictionary subscripting.
+/// array[4] = array[3]; dictionary[key] = dictionary[alt_key];
+///
+class ObjCSubscriptRefExpr : public Expr {
+  // Location of ']' in an indexing expression.
+  SourceLocation RBracket;
+  // array/dictionary base expression.
+  // for arrays, this is a numeric expression. For dictionaries, this is
+  // an objective-c object pointer expression.
+  enum { BASE, KEY, END_EXPR };
+  Stmt* SubExprs[END_EXPR];
+  
+  ObjCMethodDecl *GetAtIndexMethodDecl;
+  
+  // For immutable objects this is null. When ObjCSubscriptRefExpr is to read
+  // an indexed object this is null too.
+  ObjCMethodDecl *SetAtIndexMethodDecl;
+  
+public:
+  
+  ObjCSubscriptRefExpr(Expr *base, Expr *key, QualType T,
+                       ExprValueKind VK, ExprObjectKind OK,
+                       ObjCMethodDecl *getMethod,
+                       ObjCMethodDecl *setMethod, SourceLocation RB)
+    : Expr(ObjCSubscriptRefExprClass, T, VK, OK, 
+           base->isTypeDependent() || key->isTypeDependent(), 
+           base->isValueDependent() || key->isValueDependent(),
+           base->isInstantiationDependent() || key->isInstantiationDependent(),
+           (base->containsUnexpandedParameterPack() ||
+            key->containsUnexpandedParameterPack())),
+      RBracket(RB), 
+  GetAtIndexMethodDecl(getMethod), 
+  SetAtIndexMethodDecl(setMethod) 
+    {SubExprs[BASE] = base; SubExprs[KEY] = key;}
+
+  explicit ObjCSubscriptRefExpr(EmptyShell Empty)
+    : Expr(ObjCSubscriptRefExprClass, Empty) {}
+  
+  static ObjCSubscriptRefExpr *Create(ASTContext &C,
+                                      Expr *base,
+                                      Expr *key, QualType T, 
+                                      ObjCMethodDecl *getMethod,
+                                      ObjCMethodDecl *setMethod, 
+                                      SourceLocation RB);
+  
+  SourceLocation getRBracket() const { return RBracket; }
+  void setRBracket(SourceLocation RB) { RBracket = RB; }
+  SourceRange getSourceRange() const {
+    return SourceRange(SubExprs[BASE]->getLocStart(), RBracket);
+  }
+  
+  static bool classof(const Stmt *T) {
+    return T->getStmtClass() == ObjCSubscriptRefExprClass;
+  }
+  static bool classof(const ObjCSubscriptRefExpr *) { return true; }
+  
+  Expr *getBaseExpr() const { return cast<Expr>(SubExprs[BASE]); }
+  void setBaseExpr(Stmt *S) { SubExprs[BASE] = S; }
+  
+  Expr *getKeyExpr() const { return cast<Expr>(SubExprs[KEY]); }
+  void setKeyExpr(Stmt *S) { SubExprs[KEY] = S; }
+  
+  ObjCMethodDecl *getAtIndexMethodDecl() const {
+    return GetAtIndexMethodDecl;
+  }
+ 
+  ObjCMethodDecl *setAtIndexMethodDecl() const {
+    return SetAtIndexMethodDecl;
+  }
+  
+  bool isArraySubscriptRefExpr() const {
+    return getKeyExpr()->getType()->isIntegralOrEnumerationType();
+  }
+  
+  child_range children() {
+    return child_range(SubExprs, SubExprs+END_EXPR);
+  }
+private:
+  friend class ASTStmtReader;
+};
+  
 
 /// \brief An expression that sends a message to the given Objective-C
 /// object or class.

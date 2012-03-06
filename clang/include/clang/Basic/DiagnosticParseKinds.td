@@ -331,6 +331,8 @@ def warn_objc_protocol_qualifier_missing_id : Warning<
 def err_objc_unknown_at : Error<"expected an Objective-C directive after '@'">;
 def err_illegal_super_cast : Error<
   "cannot cast 'super' (it isn't an expression)">;
+def err_nsnumber_nonliteral_unary : Error<
+  "@%0 must be followed by a number to form an NSNumber object">;
 
 let CategoryName = "ARC Parse Issue" in {
 def err_arc_bridge_retain : Error<
@@ -410,6 +412,8 @@ def warn_cxx98_compat_noexcept_decl : Warning<
   InGroup<CXX98Compat>, DefaultIgnore;
 def err_expected_catch : Error<"expected catch">;
 def err_expected_lbrace_or_comma : Error<"expected '{' or ','">;
+def err_expected_rbrace_or_comma : Error<"expected '}' or ','">;
+def err_expected_rsquare_or_comma : Error<"expected ']' or ','">;
 def err_using_namespace_in_class : Error<
   "'using namespace' is not allowed in classes">;
 def err_destructor_tilde_identifier : Error<

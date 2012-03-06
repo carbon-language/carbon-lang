@@ -707,6 +707,10 @@ ExprResult Parser::ParseCastExpression(bool isUnaryExpression,
   case tok::kw_true:
   case tok::kw_false:
     return ParseCXXBoolLiteral();
+  
+  case tok::kw___objc_yes:
+  case tok::kw___objc_no:
+      return ParseObjCBoolLiteral();
 
   case tok::kw_nullptr:
     Diag(Tok, diag::warn_cxx98_compat_nullptr);
@@ -2402,4 +2406,13 @@ ExprResult Parser::ParseBlockLiteralExpression() {
   else
     Actions.ActOnBlockError(CaretLoc, getCurScope());
   return move(Result);
+}
+
+/// ParseObjCBoolLiteral - This handles the objective-c Boolean literals.
+///
+///         '__objc_yes'
+///         '__objc_no'
+ExprResult Parser::ParseObjCBoolLiteral() {
+  tok::TokenKind Kind = Tok.getKind();
+  return Actions.ActOnObjCBoolLiteral(ConsumeToken(), Kind);
 }

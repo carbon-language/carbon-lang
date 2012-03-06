@@ -542,6 +542,7 @@ def warn_strict_multiple_method_decl : Warning<
   "multiple methods named %0 found">, InGroup<StrictSelector>, DefaultIgnore;
 def warn_accessor_property_type_mismatch : Warning<
   "type of property %0 does not match type of accessor %1">;
+def not_conv_function_declared_at : Note<"type conversion function declared here">;
 def note_method_declared_at : Note<"method %0 declared here">;
 def err_setter_type_void : Error<"type of setter must be void">;
 def err_duplicate_method_decl : Error<"duplicate declaration of method %0">;
@@ -1484,6 +1485,39 @@ def err_attr_objc_ownership_redundant : Error<
   "the type %0 is already explicitly ownership-qualified">;
 def err_attribute_not_string : Error<
   "argument to %0 attribute was not a string literal">;
+def err_undeclared_nsnumber : Error<
+  "NSNumber must be available to use Objective-C literals">;
+def err_invalid_nsnumber_type : Error<
+  "%0 is not a valid literal type for NSNumber">;
+def err_undeclared_nsarray : Error<
+  "NSArray must be available to use Objective-C array literals">;
+def err_undeclared_nsdictionary : Error<
+  "NSDictionary must be available to use Objective-C dictionary "
+  "literals">;
+def err_undeclared_arraywithobjects : Error<
+  "declaration of %0 is missing in NSArray class">;
+def err_undeclared_dictwithobjects : Error<
+  "declaration of %0 is missing in NSDictionary class">;
+def err_undeclared_nsnumber_method : Error<
+  "declaration of %0 is missing in NSNumber class">;
+def err_objc_literal_method_sig : Error<
+  "literal construction method %0 has incompatible signature">;
+def note_objc_literal_method_param : Note<
+  "%select{first|second|third}0 parameter has unexpected type %1 "
+  "(should be %2)">;
+def note_objc_literal_method_return : Note<
+  "method returns unexpected type %0 (should be an object type)">;
+def err_invalid_collection_element : Error<
+  "collection element of type %0 is not an Objective-C object">;
+def err_box_literal_collection : Error<
+  "%select{string|character|boolean|numeric}0 literal must be prefixed by '@' "
+  "in a collection">;
+
+let CategoryName = "Cocoa API Issue" in {
+def warn_objc_redundant_literal_use : Warning<
+  "using %0 with a literal is redundant">, InGroup<ObjCRedundantLiteralUse>;
+}
+
 def err_only_annotate_after_access_spec : Error<
   "access specifier can only have annotation attributes">;
 def err_attribute_section_invalid_for_target : Error<
@@ -2642,6 +2676,8 @@ def err_template_id_not_a_type : Error<
 def note_template_declared_here : Note<
   "%select{function template|class template|type alias template|template template parameter}0 "
   "%1 declared here">;
+def note_parameter_type : Note<
+  "parameter of type %0 is declared here">;
 
 // C++11 Variadic Templates
 def err_template_param_pack_default_arg : Error<
@@ -3709,6 +3745,33 @@ def err_invalid_property_name : Error<
   "%0 is not a valid property name (accessing an object of type %1)">;
 def err_getter_not_found : Error<
   "expected getter method not found on object of type %0">;
+def err_objc_subscript_method_not_found : Error<
+  "expected method to %select{read|write}1 %select{dictionary|array}2 element not "
+  "found on object of type %0">;
+def err_objc_subscript_index_type : Error<
+  "method index parameter type %0 is not integral type">;
+def err_objc_subscript_key_type : Error<
+  "method key parameter type %0 is not object type">;
+def err_objc_subscript_dic_object_type : Error<
+  "method object parameter type %0 is not object type">;
+def err_objc_subscript_object_type : Error<
+  "cannot assign to this %select{dictionary|array}1 because assigning method's 2nd parameter"
+  " of type %0 is not an objective-C pointer type">;
+def err_objc_subscript_base_type : Error<
+  "%select{dictionary|array}1 subscript base type %0 is not an Objective-C object">;
+def err_objc_multiple_subscript_type_conversion : Error<
+  "indexing expression is invalid because subscript type %0 has "
+  "multiple type conversion functions">;
+def err_objc_subscript_type_conversion : Error<
+  "indexing expression is invalid because subscript type %0 is not an intergal"
+  "or objective-C pointer type">;
+def err_objc_indexing_method_result_type : Error<
+  "method for accessing %select{dictionary|array}1 element must have Objective-C"
+  " object return type instead of %0">;
+def err_objc_index_incomplete_class_type : Error<
+  "objective-C index expression has incomplete class type %0">;
+def err_illegal_container_subscripting_op : Error<
+  "illegal operation on objective-c container subscripting">;
 def err_property_not_found_forward_class : Error<
   "property %0 cannot be found in forward class object %1">;
 def err_property_not_as_forward_class : Error<
@@ -4437,6 +4500,9 @@ def warn_unused_voidptr : Warning<
   InGroup<UnusedValue>;
 def warn_unused_property_expr : Warning<
  "property access result unused - getters should not be used for side effects">,
+  InGroup<UnusedValue>;
+def warn_unused_container_subscript_expr : Warning<
+ "container access result unused - container access should not be used for side effects">,
   InGroup<UnusedValue>;
 def warn_unused_call : Warning<
   "ignoring return value of function declared with %0 attribute">,

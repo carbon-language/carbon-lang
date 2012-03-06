@@ -29,6 +29,10 @@ using namespace CodeGen;
 typedef llvm::PointerIntPair<llvm::Value*,1,bool> TryEmitResult;
 static TryEmitResult
 tryEmitARCRetainScalarExpr(CodeGenFunction &CGF, const Expr *e);
+static RValue AdjustRelatedResultType(CodeGenFunction &CGF,
+                                      const Expr *E,
+                                      const ObjCMethodDecl *Method,
+                                      RValue Result);
 
 /// Given the address of a variable of pointer type, find the correct
 /// null to store into it.
@@ -45,6 +49,138 @@ llvm::Value *CodeGenFunction::EmitObjCStringLiteral(const ObjCStringLiteral *E)
       CGM.getObjCRuntime().GenerateConstantString(E->getString());
   // FIXME: This bitcast should just be made an invariant on the Runtime.
   return llvm::ConstantExpr::getBitCast(C, ConvertType(E->getType()));
+}
+
+/// EmitObjCNumericLiteral - This routine generates code for
+/// the appropriate +[NSNumber numberWith<Type>:] method.
+///
+llvm::Value *CodeGenFunction::EmitObjCNumericLiteral(const ObjCNumericLiteral *E) {
+  // Generate the correct selector for this literal's concrete type.
+  const Expr *NL = E->getNumber();
+  // Get the method.
+  const ObjCMethodDecl *Method = E->getObjCNumericLiteralMethod();
+  assert(Method && "NSNumber method is null");
+  Selector Sel = Method->getSelector();
+  
+  // Generate a reference to the class pointer, which will be the receiver.
+  QualType ResultType = E->getType(); // should be NSNumber *
+  const ObjCObjectPointerType *InterfacePointerType = 
+    ResultType->getAsObjCInterfacePointerType();
+  ObjCInterfaceDecl *NSNumberDecl = 
+    InterfacePointerType->getObjectType()->getInterface();
+  CGObjCRuntime &Runtime = CGM.getObjCRuntime();
+  llvm::Value *Receiver = Runtime.GetClass(Builder, NSNumberDecl);
+
+  const ParmVarDecl *argDecl = *Method->param_begin();
+  QualType ArgQT = argDecl->getType().getUnqualifiedType();
+  RValue RV = EmitAnyExpr(NL);
+  CallArgList Args;
+  Args.add(RV, ArgQT);
+
+  RValue result = Runtime.GenerateMessageSend(*this, ReturnValueSlot(), 
+                                              ResultType, Sel, Receiver, Args, 
+                                              NSNumberDecl, Method);
+  return Builder.CreateBitCast(result.getScalarVal(), 
+                               ConvertType(E->getType()));
+}
+
+llvm::Value *CodeGenFunction::EmitObjCCollectionLiteral(const Expr *E,
+                                    const ObjCMethodDecl *MethodWithObjects) {
+  ASTContext &Context = CGM.getContext();
+  const ObjCDictionaryLiteral *DLE = 0;
+  const ObjCArrayLiteral *ALE = dyn_cast<ObjCArrayLiteral>(E);
+  if (!ALE)
+    DLE = cast<ObjCDictionaryLiteral>(E);
+  
+  // Compute the type of the array we're initializing.
+  uint64_t NumElements = 
+    ALE ? ALE->getNumElements() : DLE->getNumElements();
+  llvm::APInt APNumElements(Context.getTypeSize(Context.getSizeType()),
+                            NumElements);
+  QualType ElementType = Context.getObjCIdType().withConst();
+  QualType ElementArrayType 
+    = Context.getConstantArrayType(ElementType, APNumElements, 
+                                   ArrayType::Normal, /*IndexTypeQuals=*/0);
+
+  // Allocate the temporary array(s).
+  llvm::Value *Objects = CreateMemTemp(ElementArrayType, "objects");  
+  llvm::Value *Keys = 0;
+  if (DLE)
+    Keys = CreateMemTemp(ElementArrayType, "keys");
+  
+  // Perform the actual initialialization of the array(s).
+  for (uint64_t i = 0; i < NumElements; i++) {
+    if (ALE) {
+      // Emit the initializer.
+      const Expr *Rhs = ALE->getElement(i);
+      LValue LV = LValue::MakeAddr(Builder.CreateStructGEP(Objects, i),
+                                   ElementType,
+                                   Context.getTypeAlignInChars(Rhs->getType()),
+                                   Context);
+      EmitScalarInit(Rhs, /*D=*/0, LV, /*capturedByInit=*/false);
+    } else {      
+      // Emit the key initializer.
+      const Expr *Key = DLE->getKeyValueElement(i).Key;
+      LValue KeyLV = LValue::MakeAddr(Builder.CreateStructGEP(Keys, i),
+                                      ElementType,
+                                    Context.getTypeAlignInChars(Key->getType()),
+                                      Context);
+      EmitScalarInit(Key, /*D=*/0, KeyLV, /*capturedByInit=*/false);
+
+      // Emit the value initializer.
+      const Expr *Value = DLE->getKeyValueElement(i).Value;  
+      LValue ValueLV = LValue::MakeAddr(Builder.CreateStructGEP(Objects, i), 
+                                        ElementType,
+                                  Context.getTypeAlignInChars(Value->getType()),
+                                        Context);
+      EmitScalarInit(Value, /*D=*/0, ValueLV, /*capturedByInit=*/false);
+    }
+  }
+  
+  // Generate the argument list.
+  CallArgList Args;  
+  ObjCMethodDecl::param_const_iterator PI = MethodWithObjects->param_begin();
+  const ParmVarDecl *argDecl = *PI++;
+  QualType ArgQT = argDecl->getType().getUnqualifiedType();
+  Args.add(RValue::get(Objects), ArgQT);
+  if (DLE) {
+    argDecl = *PI++;
+    ArgQT = argDecl->getType().getUnqualifiedType();
+    Args.add(RValue::get(Keys), ArgQT);
+  }
+  argDecl = *PI;
+  ArgQT = argDecl->getType().getUnqualifiedType();
+  llvm::Value *Count = 
+    llvm::ConstantInt::get(CGM.getTypes().ConvertType(ArgQT), NumElements);
+  Args.add(RValue::get(Count), ArgQT);
+
+  // Generate a reference to the class pointer, which will be the receiver.
+  Selector Sel = MethodWithObjects->getSelector();
+  QualType ResultType = E->getType();
+  const ObjCObjectPointerType *InterfacePointerType
+    = ResultType->getAsObjCInterfacePointerType();
+  ObjCInterfaceDecl *Class 
+    = InterfacePointerType->getObjectType()->getInterface();
+  CGObjCRuntime &Runtime = CGM.getObjCRuntime();
+  llvm::Value *Receiver = Runtime.GetClass(Builder, Class);
+
+  // Generate the message send.
+  RValue result = Runtime.GenerateMessageSend(*this, ReturnValueSlot(), 
+                                              MethodWithObjects->getResultType(),
+                                              Sel,
+                                              Receiver, Args, Class,
+                                              MethodWithObjects);
+  return Builder.CreateBitCast(result.getScalarVal(), 
+                               ConvertType(E->getType()));
+}
+
+llvm::Value *CodeGenFunction::EmitObjCArrayLiteral(const ObjCArrayLiteral *E) {
+  return EmitObjCCollectionLiteral(E, E->getArrayWithObjectsMethod());
+}
+
+llvm::Value *CodeGenFunction::EmitObjCDictionaryLiteral(
+                                            const ObjCDictionaryLiteral *E) {
+  return EmitObjCCollectionLiteral(E, E->getDictWithObjectsMethod());
 }
 
 /// Emit a selector.
@@ -884,6 +1020,26 @@ static bool hasTrivialSetExpr(const ObjCPropertyImplDecl *PID) {
   return false;
 }
 
+bool UseOptimizedSetter(CodeGenModule &CGM) {
+  if (CGM.getLangOptions().getGC() != LangOptions::NonGC)
+    return false;
+  const TargetInfo &Target = CGM.getContext().getTargetInfo();
+  StringRef TargetPlatform = Target.getPlatformName();
+  if (TargetPlatform.empty())
+    return false;
+  VersionTuple TargetMinVersion = Target.getPlatformMinVersion();
+  
+  if (TargetPlatform.compare("macosx") ||
+      TargetMinVersion.getMajor() <= 9)
+    return false;
+  
+  unsigned minor = 0;
+  if (llvm::Optional<unsigned> Minor = TargetMinVersion.getMinor())
+    minor = *Minor;
+  
+  return (minor >= 8);
+}
+
 void
 CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
                                         const ObjCPropertyImplDecl *propImpl,
@@ -937,13 +1093,27 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
 
   case PropertyImplStrategy::GetSetProperty:
   case PropertyImplStrategy::SetPropertyAndExpressionGet: {
-    llvm::Value *setPropertyFn =
-      CGM.getObjCRuntime().GetPropertySetFunction();
-    if (!setPropertyFn) {
-      CGM.ErrorUnsupported(propImpl, "Obj-C setter requiring atomic copy");
-      return;
+  
+    llvm::Value *setOptimizedPropertyFn = 0;
+    llvm::Value *setPropertyFn = 0;
+    if (UseOptimizedSetter(CGM)) {
+      // 10.8 code and GC is off
+      setOptimizedPropertyFn = 
+        CGM.getObjCRuntime().GetOptimizedPropertySetFunction(strategy.isAtomic(),
+                                                             strategy.isCopy());
+      if (!setOptimizedPropertyFn) {
+        CGM.ErrorUnsupported(propImpl, "Obj-C optimized setter - NYI");
+        return;
+      }
     }
-
+    else {
+      setPropertyFn = CGM.getObjCRuntime().GetPropertySetFunction();
+      if (!setPropertyFn) {
+        CGM.ErrorUnsupported(propImpl, "Obj-C setter requiring atomic copy");
+        return;
+      }
+    }
+   
     // Emit objc_setProperty((id) self, _cmd, offset, arg,
     //                       <is-atomic>, <is-copy>).
     llvm::Value *cmd =
@@ -958,18 +1128,28 @@ CodeGenFunction::generateObjCSetterBody(const ObjCImplementationDecl *classImpl,
     CallArgList args;
     args.add(RValue::get(self), getContext().getObjCIdType());
     args.add(RValue::get(cmd), getContext().getObjCSelType());
-    args.add(RValue::get(ivarOffset), getContext().getPointerDiffType());
-    args.add(RValue::get(arg), getContext().getObjCIdType());
-    args.add(RValue::get(Builder.getInt1(strategy.isAtomic())),
-             getContext().BoolTy);
-    args.add(RValue::get(Builder.getInt1(strategy.isCopy())),
-             getContext().BoolTy);
-    // FIXME: We shouldn't need to get the function info here, the runtime
-    // already should have computed it to build the function.
-    EmitCall(getTypes().arrangeFunctionCall(getContext().VoidTy, args,
-                                            FunctionType::ExtInfo(),
-                                            RequiredArgs::All),
-             setPropertyFn, ReturnValueSlot(), args);
+    if (setOptimizedPropertyFn) {
+      args.add(RValue::get(arg), getContext().getObjCIdType());
+      args.add(RValue::get(ivarOffset), getContext().getPointerDiffType());
+      EmitCall(getTypes().arrangeFunctionCall(getContext().VoidTy, args,
+                                              FunctionType::ExtInfo(),
+                                              RequiredArgs::All),
+               setOptimizedPropertyFn, ReturnValueSlot(), args);
+    } else {
+      args.add(RValue::get(ivarOffset), getContext().getPointerDiffType());
+      args.add(RValue::get(arg), getContext().getObjCIdType());
+      args.add(RValue::get(Builder.getInt1(strategy.isAtomic())),
+               getContext().BoolTy);
+      args.add(RValue::get(Builder.getInt1(strategy.isCopy())),
+               getContext().BoolTy);
+      // FIXME: We shouldn't need to get the function info here, the runtime
+      // already should have computed it to build the function.
+      EmitCall(getTypes().arrangeFunctionCall(getContext().VoidTy, args,
+                                              FunctionType::ExtInfo(),
+                                              RequiredArgs::All),
+               setPropertyFn, ReturnValueSlot(), args);
+    }
+    
     return;
   }
 

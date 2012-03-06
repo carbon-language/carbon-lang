@@ -205,6 +205,7 @@ private:
   std::string MacosxVersionMin;
 
   bool hasARCRuntime() const;
+  bool hasSubscriptingRuntime() const;
 
 private:
   void AddDeploymentTarget(DerivedArgList &Args) const;
@@ -250,6 +251,12 @@ public:
   bool isTargetIOSSimulator() const {
     assert(TargetInitialized && "Target not initialized!");
     return TargetIsIPhoneOSSimulator;
+  }
+
+  bool isTargetMacOS() const {
+    return !isTargetIOSSimulator() &&
+           !isTargetIPhoneOS() &&
+           ARCRuntimeForSimulator == ARCSimulator_None;
   }
 
   bool isTargetInitialized() const { return TargetInitialized; }

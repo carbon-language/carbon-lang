@@ -25,9 +25,11 @@
 #include "clang/Sema/TypoCorrection.h"
 #include "clang/Sema/Weak.h"
 #include "clang/AST/Expr.h"
+#include "clang/AST/ExprObjC.h"
 #include "clang/AST/DeclarationName.h"
 #include "clang/AST/ExternalASTSource.h"
 #include "clang/AST/TypeLoc.h"
+#include "clang/AST/NSAPI.h"
 #include "clang/Lex/ModuleLoader.h"
 #include "clang/Basic/Specifiers.h"
 #include "clang/Basic/TemplateKinds.h"
@@ -511,10 +513,33 @@ public:
   /// \brief The MSVC "_GUID" struct, which is defined in MSVC header files.
   RecordDecl *MSVCGuidDecl;
 
+  /// \brief Caches identifiers/selectors for NSFoundation APIs.
+  llvm::OwningPtr<NSAPI> NSAPIObj;
+
+  /// \brief The declaration of the Objective-C NSNumber class.
+  ObjCInterfaceDecl *NSNumberDecl;
+  
+  /// \brief The Objective-C NSNumber methods used to create NSNumber literals.
+  ObjCMethodDecl *NSNumberLiteralMethods[NSAPI::NumNSNumberLiteralMethods];
+  
+  /// \brief The declaration of the Objective-C NSArray class.
+  ObjCInterfaceDecl *NSArrayDecl;
+
+  /// \brief The declaration of the arrayWithObjects:count: method.
+  ObjCMethodDecl *ArrayWithObjectsMethod;
+  
+  /// \brief The declaration of the Objective-C NSDictionary class.
+  ObjCInterfaceDecl *NSDictionaryDecl;
+
+  /// \brief The declaration of the dictionaryWithObjects:forKeys:count: method.
+  ObjCMethodDecl *DictionaryWithObjectsMethod;
+
+  /// \brief id<NSCopying> type.
+  QualType QIDNSCopying;
+
   /// A flag to remember whether the implicit forms of operator new and delete
   /// have been declared.
   bool GlobalNewDeleteDeclared;
-
 
   /// A flag that is set when parsing a -dealloc method and no [super dealloc]
   /// call was found yet.
@@ -1500,6 +1525,12 @@ public:
                                      const PartialDiagnostic &AmbigNote,
                                      const PartialDiagnostic &ConvDiag,
                                      bool AllowScopedEnumerations);
+  enum ObjCSubscriptKind {
+    OS_Array,
+    OS_Dictionary,
+    OS_Error
+  };
+  ObjCSubscriptKind CheckSubscriptingKind(Expr *FromE);
 
   ExprResult PerformObjectMemberConversion(Expr *From,
                                            NestedNameSpecifier *Qualifier,
@@ -2515,6 +2546,7 @@ public:
                                       NamedDecl *D);
 
   ExprResult ActOnPredefinedExpr(SourceLocation Loc, tok::TokenKind Kind);
+  ExprResult ActOnIntegerConstant(SourceLocation Loc, uint64_t Val);
   ExprResult ActOnNumericConstant(const Token &Tok);
   ExprResult ActOnCharacterConstant(const Token &Tok);
   ExprResult ActOnParenExpr(SourceLocation L, SourceLocation R, Expr *E);
@@ -3232,6 +3264,10 @@ public:
 
   /// ActOnCXXBoolLiteral - Parse {true,false} literals.
   ExprResult ActOnCXXBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind);
+  
+  
+  /// ActOnObjCBoolLiteral - Parse {__objc_yes,__objc_no} literals.
+  ExprResult ActOnObjCBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind);
 
   /// ActOnCXXNullPtrLiteral - Parse 'nullptr'.
   ExprResult ActOnCXXNullPtrLiteral(SourceLocation Loc);
@@ -3664,7 +3700,26 @@ public:
   ExprResult ParseObjCStringLiteral(SourceLocation *AtLocs,
                                     Expr **Strings,
                                     unsigned NumStrings);
-
+    
+  ExprResult BuildObjCStringLiteral(SourceLocation AtLoc, StringLiteral *S);
+  
+  /// BuildObjCNumericLiteral - builds an ObjCNumericLiteral AST node for the
+  /// numeric literal expression. Type of the expression will be "NSNumber *"
+  /// or "id" if NSNumber is unavailable.
+  ExprResult BuildObjCNumericLiteral(SourceLocation AtLoc, Expr *Number);
+  ExprResult ActOnObjCBoolLiteral(SourceLocation AtLoc, SourceLocation ValueLoc,
+                                  bool Value);
+  ExprResult BuildObjCArrayLiteral(SourceRange SR, MultiExprArg Elements);
+  
+  ExprResult BuildObjCSubscriptExpression(SourceLocation RB, Expr *BaseExpr,
+                                          Expr *IndexExpr,
+                                          ObjCMethodDecl *getterMethod,
+                                          ObjCMethodDecl *setterMethod);
+    
+  ExprResult BuildObjCDictionaryLiteral(SourceRange SR,                                         
+                                        ObjCDictionaryElement *Elements,
+                                        unsigned NumElements);
+ 
   ExprResult BuildObjCEncodeExpression(SourceLocation AtLoc,
                                   TypeSourceInfo *EncodedTypeInfo,
                                   SourceLocation RParenLoc);

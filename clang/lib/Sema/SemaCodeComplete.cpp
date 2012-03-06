@@ -4392,6 +4392,26 @@ static void AddObjCExpressionResults(ResultBuilder &Results, bool NeedAt) {
   Builder.AddPlaceholderChunk("selector");
   Builder.AddChunk(CodeCompletionString::CK_RightParen);
   Results.AddResult(Result(Builder.TakeString()));
+  
+  // @[ objects, ... ]
+  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,[));
+  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Builder.AddPlaceholderChunk("objects, ...");
+  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Builder.AddChunk(CodeCompletionString::CK_RightBracket);
+  Results.AddResult(Result(Builder.TakeString()));
+
+  // @{ key : object, ... }
+  Builder.AddTypedTextChunk(OBJC_AT_KEYWORD_NAME(NeedAt,{));
+  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Builder.AddPlaceholderChunk("key");
+  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Builder.AddChunk(CodeCompletionString::CK_Colon);
+  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Builder.AddPlaceholderChunk("object, ...");
+  Builder.AddChunk(CodeCompletionString::CK_HorizontalSpace);
+  Builder.AddChunk(CodeCompletionString::CK_RightBrace);
+  Results.AddResult(Result(Builder.TakeString()));
 }
 
 static void AddObjCStatementResults(ResultBuilder &Results, bool NeedAt) {

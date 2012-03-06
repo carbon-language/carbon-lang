@@ -258,6 +258,9 @@ KEYWORD(_Generic                    , KEYALL)
 KEYWORD(_Imaginary                  , KEYALL)
 KEYWORD(_Static_assert              , KEYALL)
 KEYWORD(__func__                    , KEYALL)
+KEYWORD(__objc_yes                  , KEYALL)
+KEYWORD(__objc_no                   , KEYALL)
+
 
 // C++ 2.11p1: Keywords.
 KEYWORD(asm                         , KEYCXX|KEYGNU)

@@ -2390,14 +2390,18 @@ ExprResult Sema::ActOnCharacterConstant(const Token &Tok) {
                                               Tok.getLocation()));
 }
 
+ExprResult Sema::ActOnIntegerConstant(SourceLocation Loc, uint64_t Val) {
+  unsigned IntSize = Context.getTargetInfo().getIntWidth();
+  return Owned(IntegerLiteral::Create(Context, llvm::APInt(IntSize, Val),
+                                      Context.IntTy, Loc));
+}
+
 ExprResult Sema::ActOnNumericConstant(const Token &Tok) {
   // Fast path for a single digit (which is quite common).  A single digit
   // cannot have a trigraph, escaped newline, radix prefix, or type suffix.
   if (Tok.getLength() == 1) {
     const char Val = PP.getSpellingOfSingleCharacterNumericConstant(Tok);
-    unsigned IntSize = Context.getTargetInfo().getIntWidth();
-    return Owned(IntegerLiteral::Create(Context, llvm::APInt(IntSize, Val-'0'),
-                    Context.IntTy, Tok.getLocation()));
+    return ActOnIntegerConstant(Tok.getLocation(), Val-'0');
   }
 
   SmallString<512> IntegerBuffer;
@@ -2926,7 +2930,8 @@ Sema::ActOnArraySubscriptExpr(Scope *S, Expr *Base, SourceLocation LLoc,
       (LHSExp->getType()->isRecordType() ||
        LHSExp->getType()->isEnumeralType() ||
        RHSExp->getType()->isRecordType() ||
-       RHSExp->getType()->isEnumeralType())) {
+       RHSExp->getType()->isEnumeralType()) &&
+      !LHSExp->getType()->isObjCObjectPointerType()) {
     return CreateOverloadedArraySubscriptExpr(LLoc, RLoc, Base, Idx);
   }
 
@@ -2979,6 +2984,9 @@ Sema::CreateBuiltinArraySubscriptExpr(Expr *Base, SourceLocation LLoc,
                LHSTy->getAs<ObjCObjectPointerType>()) {
     BaseExpr = LHSExp;
     IndexExpr = RHSExp;
+    Result = BuildObjCSubscriptExpression(RLoc, BaseExpr, IndexExpr, 0, 0);
+    if (!Result.isInvalid())
+      return Owned(Result.take());
     ResultType = PTy->getPointeeType();
   } else if (const ObjCObjectPointerType *PTy =
                RHSTy->getAs<ObjCObjectPointerType>()) {
@@ -11000,4 +11008,13 @@ bool Sema::CheckCaseExpression(Expr *E) {
   if (E->isValueDependent() || E->isIntegerConstantExpr(Context))
     return E->getType()->isIntegralOrEnumerationType();
   return false;
+}
+
+/// ActOnObjCBoolLiteral - Parse {__objc_yes,__objc_no} literals.
+ExprResult
+Sema::ActOnObjCBoolLiteral(SourceLocation OpLoc, tok::TokenKind Kind) {
+  assert((Kind == tok::kw___objc_yes || Kind == tok::kw___objc_no) &&
+         "Unknown Objective-C Boolean value!");
+  return Owned(new (Context) ObjCBoolLiteralExpr(Kind == tok::kw___objc_yes,
+                                        Context.ObjCBuiltinBoolTy, OpLoc));
 }

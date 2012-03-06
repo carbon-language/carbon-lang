@@ -93,6 +93,22 @@ namespace {
       return inherited::TraverseTemplateName(Template);
     }
 
+    /// \brief Suppress traversal into Objective-C container literal
+    /// elements that are pack expansions.
+    bool TraverseObjCDictionaryLiteral(ObjCDictionaryLiteral *E) {
+      if (!E->containsUnexpandedParameterPack())
+        return true;
+
+      for (unsigned I = 0, N = E->getNumElements(); I != N; ++I) {
+        ObjCDictionaryElement Element = E->getKeyValueElement(I);
+        if (Element.isPackExpansion())
+          continue;
+
+        TraverseStmt(Element.Key);
+        TraverseStmt(Element.Value);
+      }
+      return true;
+    }
     //------------------------------------------------------------------------
     // Pruning the search for unexpanded parameter packs.
     //------------------------------------------------------------------------

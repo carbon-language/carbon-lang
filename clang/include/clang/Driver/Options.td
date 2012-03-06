@@ -463,6 +463,7 @@ def fobjc_infer_related_result_type : Flag<"-fobjc-infer-related-result-type">,
                                       Group<f_Group>;
 def fno_objc_infer_related_result_type : Flag<
   "-fno-objc-infer-related-result-type">, Group<f_Group>;
+def fobjc_link_runtime: Flag<"-fobjc-link-runtime">, Group<f_Group>;
 
 // Objective-C ABI options.
 def fobjc_abi_version_EQ : Joined<"-fobjc-abi-version=">, Group<f_Group>;

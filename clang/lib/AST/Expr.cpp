@@ -2089,6 +2089,16 @@ Expr::CanThrowResult Expr::CanThrow(ASTContext &C) const {
     // specs.
   case ObjCMessageExprClass:
   case ObjCPropertyRefExprClass:
+  case ObjCSubscriptRefExprClass:
+    return CT_Can;
+
+    // All the ObjC literals that are implemented as calls are
+    // potentially throwing unless we decide to close off that
+    // possibility.
+  case ObjCArrayLiteralClass:
+  case ObjCBoolLiteralExprClass:
+  case ObjCDictionaryLiteralClass:
+  case ObjCNumericLiteralClass:
     return CT_Can;
 
     // Many other things have subexpressions, so we have to test those.
@@ -3637,6 +3647,117 @@ BlockDeclRefExpr::BlockDeclRefExpr(VarDecl *d, QualType t, ExprValueKind VK,
   ExprBits.InstantiationDependent = InstantiationDependent;
 }
 
+ObjCArrayLiteral::ObjCArrayLiteral(llvm::ArrayRef<Expr *> Elements, 
+                                   QualType T, ObjCMethodDecl *Method,
+                                   SourceRange SR)
+  : Expr(ObjCArrayLiteralClass, T, VK_RValue, OK_Ordinary, 
+         false, false, false, false), 
+    NumElements(Elements.size()), Range(SR), ArrayWithObjectsMethod(Method)
+{
+  Expr **SaveElements = getElements();
+  for (unsigned I = 0, N = Elements.size(); I != N; ++I) {
+    if (Elements[I]->isTypeDependent() || Elements[I]->isValueDependent())
+      ExprBits.ValueDependent = true;
+    if (Elements[I]->isInstantiationDependent())
+      ExprBits.InstantiationDependent = true;
+    if (Elements[I]->containsUnexpandedParameterPack())
+      ExprBits.ContainsUnexpandedParameterPack = true;
+    
+    SaveElements[I] = Elements[I];
+  }
+}
+
+ObjCArrayLiteral *ObjCArrayLiteral::Create(ASTContext &C, 
+                                           llvm::ArrayRef<Expr *> Elements,
+                                           QualType T, ObjCMethodDecl * Method,
+                                           SourceRange SR) {
+  void *Mem = C.Allocate(sizeof(ObjCArrayLiteral) 
+                         + Elements.size() * sizeof(Expr *));
+  return new (Mem) ObjCArrayLiteral(Elements, T, Method, SR);
+}
+
+ObjCArrayLiteral *ObjCArrayLiteral::CreateEmpty(ASTContext &C, 
+                                                unsigned NumElements) {
+  
+  void *Mem = C.Allocate(sizeof(ObjCArrayLiteral) 
+                         + NumElements * sizeof(Expr *));
+  return new (Mem) ObjCArrayLiteral(EmptyShell(), NumElements);
+}
+
+ObjCDictionaryLiteral::ObjCDictionaryLiteral(
+                                             ArrayRef<ObjCDictionaryElement> VK, 
+                                             bool HasPackExpansions,
+                                             QualType T, ObjCMethodDecl *method,
+                                             SourceRange SR)
+  : Expr(ObjCDictionaryLiteralClass, T, VK_RValue, OK_Ordinary, false, false,
+         false, false),
+    NumElements(VK.size()), HasPackExpansions(HasPackExpansions), Range(SR), 
+    DictWithObjectsMethod(method)
+{
+  KeyValuePair *KeyValues = getKeyValues();
+  ExpansionData *Expansions = getExpansionData();
+  for (unsigned I = 0; I < NumElements; I++) {
+    if (VK[I].Key->isTypeDependent() || VK[I].Key->isValueDependent() ||
+        VK[I].Value->isTypeDependent() || VK[I].Value->isValueDependent())
+      ExprBits.ValueDependent = true;
+    if (VK[I].Key->isInstantiationDependent() ||
+        VK[I].Value->isInstantiationDependent())
+      ExprBits.InstantiationDependent = true;
+    if (VK[I].EllipsisLoc.isInvalid() &&
+        (VK[I].Key->containsUnexpandedParameterPack() ||
+         VK[I].Value->containsUnexpandedParameterPack()))
+      ExprBits.ContainsUnexpandedParameterPack = true;
+
+    KeyValues[I].Key = VK[I].Key;
+    KeyValues[I].Value = VK[I].Value; 
+    if (Expansions) {
+      Expansions[I].EllipsisLoc = VK[I].EllipsisLoc;
+      if (VK[I].NumExpansions)
+        Expansions[I].NumExpansionsPlusOne = *VK[I].NumExpansions + 1;
+      else
+        Expansions[I].NumExpansionsPlusOne = 0;
+    }
+  }
+}
+
+ObjCDictionaryLiteral *
+ObjCDictionaryLiteral::Create(ASTContext &C,
+                              ArrayRef<ObjCDictionaryElement> VK, 
+                              bool HasPackExpansions,
+                              QualType T, ObjCMethodDecl *method,
+                              SourceRange SR) {
+  unsigned ExpansionsSize = 0;
+  if (HasPackExpansions)
+    ExpansionsSize = sizeof(ExpansionData) * VK.size();
+    
+  void *Mem = C.Allocate(sizeof(ObjCDictionaryLiteral) + 
+                         sizeof(KeyValuePair) * VK.size() + ExpansionsSize);
+  return new (Mem) ObjCDictionaryLiteral(VK, HasPackExpansions, T, method, SR);
+}
+
+ObjCDictionaryLiteral *
+ObjCDictionaryLiteral::CreateEmpty(ASTContext &C, unsigned NumElements,
+                                   bool HasPackExpansions) {
+  unsigned ExpansionsSize = 0;
+  if (HasPackExpansions)
+    ExpansionsSize = sizeof(ExpansionData) * NumElements;
+  void *Mem = C.Allocate(sizeof(ObjCDictionaryLiteral) + 
+                         sizeof(KeyValuePair) * NumElements + ExpansionsSize);
+  return new (Mem) ObjCDictionaryLiteral(EmptyShell(), NumElements, 
+                                         HasPackExpansions);
+}
+
+ObjCSubscriptRefExpr *ObjCSubscriptRefExpr::Create(ASTContext &C,
+                                                   Expr *base,
+                                                   Expr *key, QualType T, 
+                                                   ObjCMethodDecl *getMethod,
+                                                   ObjCMethodDecl *setMethod, 
+                                                   SourceLocation RB) {
+  void *Mem = C.Allocate(sizeof(ObjCSubscriptRefExpr));
+  return new (Mem) ObjCSubscriptRefExpr(base, key, T, VK_LValue, 
+                                        OK_ObjCSubscript,
+                                        getMethod, setMethod, RB);
+}
 
 AtomicExpr::AtomicExpr(SourceLocation BLoc, Expr **args, unsigned nexpr,
                        QualType t, AtomicOp op, SourceLocation RP)

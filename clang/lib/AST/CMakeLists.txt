@@ -33,6 +33,7 @@ add_clang_library(clangAST
   MicrosoftCXXABI.cpp
   MicrosoftMangle.cpp
   NestedNameSpecifier.cpp
+  NSAPI.cpp
   ParentMap.cpp
   RecordLayout.cpp
   RecordLayoutBuilder.cpp

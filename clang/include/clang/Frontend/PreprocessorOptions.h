@@ -10,6 +10,7 @@
 #ifndef LLVM_CLANG_FRONTEND_PREPROCESSOROPTIONS_H_
 #define LLVM_CLANG_FRONTEND_PREPROCESSOROPTIONS_H_
 
+#include "llvm/ADT/SmallVector.h"
 #include "llvm/ADT/StringRef.h"
 #include <cassert>
 #include <string>

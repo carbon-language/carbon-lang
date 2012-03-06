@@ -472,6 +472,8 @@ public:
   virtual llvm::Function *ModuleInitFunction();
   virtual llvm::Constant *GetPropertyGetFunction();
   virtual llvm::Constant *GetPropertySetFunction();
+  virtual llvm::Constant *GetOptimizedPropertySetFunction(bool atomic, 
+                                                          bool copy);
   virtual llvm::Constant *GetSetStructFunction();
   virtual llvm::Constant *GetCppAtomicObjectFunction();
   virtual llvm::Constant *GetGetStructFunction();
@@ -2425,6 +2427,11 @@ llvm::Constant *CGObjCGNU::GetPropertyGetFunction() {
 
 llvm::Constant *CGObjCGNU::GetPropertySetFunction() {
   return SetPropertyFn;
+}
+
+llvm::Constant *CGObjCGNU::GetOptimizedPropertySetFunction(bool atomic,
+                                                           bool copy) {
+  return 0;
 }
 
 llvm::Constant *CGObjCGNU::GetGetStructFunction() {

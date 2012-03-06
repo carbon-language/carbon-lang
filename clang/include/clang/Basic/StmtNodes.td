@@ -132,6 +132,9 @@ def LambdaExpr : DStmt<Expr>;
 
 // Obj-C Expressions.
 def ObjCStringLiteral : DStmt<Expr>;
+def ObjCNumericLiteral : DStmt<Expr>;
+def ObjCArrayLiteral : DStmt<Expr>;
+def ObjCDictionaryLiteral : DStmt<Expr>;
 def ObjCEncodeExpr : DStmt<Expr>;
 def ObjCMessageExpr : DStmt<Expr>;
 def ObjCSelectorExpr : DStmt<Expr>;
@@ -140,6 +143,8 @@ def ObjCIvarRefExpr : DStmt<Expr>;
 def ObjCPropertyRefExpr : DStmt<Expr>;
 def ObjCIsaExpr : DStmt<Expr>;
 def ObjCIndirectCopyRestoreExpr : DStmt<Expr>;
+def ObjCBoolLiteralExpr : DStmt<Expr>;
+def ObjCSubscriptRefExpr : DStmt<Expr>;
 
 // Obj-C ARC Expressions.
 def ObjCBridgedCastExpr : DStmt<ExplicitCastExpr>;

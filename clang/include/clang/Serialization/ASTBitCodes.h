@@ -1065,6 +1065,12 @@ namespace clang {
 
       /// \brief An ObjCStringLiteral record.
       EXPR_OBJC_STRING_LITERAL,
+
+      EXPR_OBJC_NUMERIC_LITERAL,
+      EXPR_OBJC_ARRAY_LITERAL,
+      EXPR_OBJC_DICTIONARY_LITERAL,
+
+    
       /// \brief An ObjCEncodeExpr record.
       EXPR_OBJC_ENCODE,
       /// \brief An ObjCSelectorExpr record.
@@ -1075,6 +1081,8 @@ namespace clang {
       EXPR_OBJC_IVAR_REF_EXPR,
       /// \brief An ObjCPropertyRefExpr record.
       EXPR_OBJC_PROPERTY_REF_EXPR,
+      /// \brief An ObjCSubscriptRefExpr record.
+      EXPR_OBJC_SUBSCRIPT_REF_EXPR,
       /// \brief UNUSED
       EXPR_OBJC_KVC_REF_EXPR,
       /// \brief An ObjCMessageExpr record.
@@ -1098,6 +1106,8 @@ namespace clang {
       STMT_OBJC_AT_THROW,
       /// \brief An ObjCAutoreleasePoolStmt record.
       STMT_OBJC_AUTORELEASE_POOL,
+      /// \brief A ObjCBoolLiteralExpr record.
+      EXPR_OBJC_BOOL_LITERAL,
 
       // C++
       

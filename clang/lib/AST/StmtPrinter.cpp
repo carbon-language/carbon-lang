@@ -603,6 +603,14 @@ void StmtPrinter::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *Node) {
     OS << Node->getExplicitProperty()->getName();
 }
 
+void StmtPrinter::VisitObjCSubscriptRefExpr(ObjCSubscriptRefExpr *Node) {
+  
+  PrintExpr(Node->getBaseExpr());
+  OS << "[";
+  PrintExpr(Node->getKeyExpr());
+  OS << "]";
+}
+
 void StmtPrinter::VisitPredefinedExpr(PredefinedExpr *Node) {
   switch (Node->getIdentType()) {
     default:
@@ -1646,6 +1654,41 @@ void StmtPrinter::VisitObjCStringLiteral(ObjCStringLiteral *Node) {
   VisitStringLiteral(Node->getString());
 }
 
+void StmtPrinter::VisitObjCNumericLiteral(ObjCNumericLiteral *E) {
+  OS << "@";
+  Visit(E->getNumber());
+}
+
+void StmtPrinter::VisitObjCArrayLiteral(ObjCArrayLiteral *E) {
+  OS << "@[ ";
+  StmtRange ch = E->children();
+  if (ch.first != ch.second) {
+    while (1) {
+      Visit(*ch.first);
+      ++ch.first;
+      if (ch.first == ch.second) break;
+      OS << ", ";
+    }
+  }
+  OS << " ]";
+}
+
+void StmtPrinter::VisitObjCDictionaryLiteral(ObjCDictionaryLiteral *E) {
+  OS << "@{ ";
+  for (unsigned I = 0, N = E->getNumElements(); I != N; ++I) {
+    if (I > 0)
+      OS << ", ";
+    
+    ObjCDictionaryElement Element = E->getKeyValueElement(I);
+    Visit(Element.Key);
+    OS << " : ";
+    Visit(Element.Value);
+    if (Element.isPackExpansion())
+      OS << "...";
+  }
+  OS << " }";
+}
+
 void StmtPrinter::VisitObjCEncodeExpr(ObjCEncodeExpr *Node) {
   OS << "@encode(" << Node->getEncodedType().getAsString(Policy) << ')';
 }
@@ -1694,6 +1737,10 @@ void StmtPrinter::VisitObjCMessageExpr(ObjCMessageExpr *Mess) {
     }
   }
   OS << "]";
+}
+
+void StmtPrinter::VisitObjCBoolLiteralExpr(ObjCBoolLiteralExpr *Node) {
+  OS << (Node->getValue() ? "__objc_yes" : "__objc_no");
 }
 
 void

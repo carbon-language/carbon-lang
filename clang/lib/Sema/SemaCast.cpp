@@ -1528,6 +1528,8 @@ static TryCastResult TryReinterpretCast(Sema &Self, ExprResult &SrcExpr,
     case OK_BitField:        inappropriate = "bit-field";           break;
     case OK_VectorComponent: inappropriate = "vector element";      break;
     case OK_ObjCProperty:    inappropriate = "property expression"; break;
+    case OK_ObjCSubscript:   inappropriate = "container subscripting expression"; 
+                             break;
     }
     if (inappropriate) {
       Self.Diag(OpRange.getBegin(), diag::err_bad_reinterpret_cast_reference)

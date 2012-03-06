@@ -379,3 +379,13 @@ def Microsoft : DiagGroup<"microsoft">;
 def ObjCNonUnifiedException : DiagGroup<"objc-nonunified-exceptions">;
 
 def ObjCProtocolMethodImpl : DiagGroup<"objc-protocol-method-implementation">;
+
+// ObjC API warning groups.
+def ObjCRedundantLiteralUse : DiagGroup<"objc-redundant-literal-use">;
+def ObjCRedundantAPIUse : DiagGroup<"objc-redundant-api-use", [
+    ObjCRedundantLiteralUse
+  ]>;
+
+def ObjCCocoaAPI : DiagGroup<"objc-cocoa-api", [
+    ObjCRedundantAPIUse
+  ]>;

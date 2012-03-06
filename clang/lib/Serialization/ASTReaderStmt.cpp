@@ -823,6 +823,45 @@ void ASTStmtReader::VisitObjCStringLiteral(ObjCStringLiteral *E) {
   E->setAtLoc(ReadSourceLocation(Record, Idx));
 }
 
+void ASTStmtReader::VisitObjCNumericLiteral(ObjCNumericLiteral *E) {
+  VisitExpr(E);
+  // could be one of several IntegerLiteral, FloatLiteral, etc.
+  E->Number = Reader.ReadSubStmt();
+  E->ObjCNumericLiteralMethod = ReadDeclAs<ObjCMethodDecl>(Record, Idx);
+  E->AtLoc = ReadSourceLocation(Record, Idx);
+}
+
+void ASTStmtReader::VisitObjCArrayLiteral(ObjCArrayLiteral *E) {
+  VisitExpr(E);
+  unsigned NumElements = Record[Idx++];
+  assert(NumElements == E->getNumElements() && "Wrong number of elements");
+  Expr **Elements = E->getElements();
+  for (unsigned I = 0, N = NumElements; I != N; ++I)
+    Elements[I] = Reader.ReadSubExpr();
+  E->ArrayWithObjectsMethod = ReadDeclAs<ObjCMethodDecl>(Record, Idx);
+  E->Range = ReadSourceRange(Record, Idx);
+}
+
+void ASTStmtReader::VisitObjCDictionaryLiteral(ObjCDictionaryLiteral *E) {
+  VisitExpr(E);
+  unsigned NumElements = Record[Idx++];
+  assert(NumElements == E->getNumElements() && "Wrong number of elements");
+  bool HasPackExpansions = Record[Idx++];
+  assert(HasPackExpansions == E->HasPackExpansions &&"Pack expansion mismatch");
+  ObjCDictionaryLiteral::KeyValuePair *KeyValues = E->getKeyValues();
+  ObjCDictionaryLiteral::ExpansionData *Expansions = E->getExpansionData();
+  for (unsigned I = 0; I != NumElements; ++I) {
+    KeyValues[I].Key = Reader.ReadSubExpr();
+    KeyValues[I].Value = Reader.ReadSubExpr();
+    if (HasPackExpansions) {
+      Expansions[I].EllipsisLoc = ReadSourceLocation(Record, Idx);
+      Expansions[I].NumExpansionsPlusOne = Record[Idx++];
+    }
+  }
+  E->DictWithObjectsMethod = ReadDeclAs<ObjCMethodDecl>(Record, Idx);
+  E->Range = ReadSourceRange(Record, Idx);
+}
+
 void ASTStmtReader::VisitObjCEncodeExpr(ObjCEncodeExpr *E) {
   VisitExpr(E);
   E->setEncodedTypeSourceInfo(GetTypeSourceInfo(Record, Idx));
@@ -876,6 +915,15 @@ void ASTStmtReader::VisitObjCPropertyRefExpr(ObjCPropertyRefExpr *E) {
     E->setClassReceiver(ReadDeclAs<ObjCInterfaceDecl>(Record, Idx));
     break;
   }
+}
+
+void ASTStmtReader::VisitObjCSubscriptRefExpr(ObjCSubscriptRefExpr *E) {
+  VisitExpr(E);
+  E->setRBracket(ReadSourceLocation(Record, Idx));
+  E->setBaseExpr(Reader.ReadSubExpr());
+  E->setKeyExpr(Reader.ReadSubExpr());
+  E->GetAtIndexMethodDecl = ReadDeclAs<ObjCMethodDecl>(Record, Idx);
+  E->SetAtIndexMethodDecl = ReadDeclAs<ObjCMethodDecl>(Record, Idx);
 }
 
 void ASTStmtReader::VisitObjCMessageExpr(ObjCMessageExpr *E) {
@@ -978,6 +1026,12 @@ void ASTStmtReader::VisitObjCAtThrowStmt(ObjCAtThrowStmt *S) {
   VisitStmt(S);
   S->setThrowExpr(Reader.ReadSubStmt());
   S->setThrowLoc(ReadSourceLocation(Record, Idx));
+}
+
+void ASTStmtReader::VisitObjCBoolLiteralExpr(ObjCBoolLiteralExpr *E) {
+  VisitExpr(E);
+  E->setValue(Record[Idx++]);
+  E->setLocation(ReadSourceLocation(Record, Idx));
 }
 
 //===----------------------------------------------------------------------===//
@@ -1834,6 +1888,18 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
     case EXPR_OBJC_STRING_LITERAL:
       S = new (Context) ObjCStringLiteral(Empty);
       break;
+    case EXPR_OBJC_NUMERIC_LITERAL:
+      S = new (Context) ObjCNumericLiteral(Empty);
+      break;
+    case EXPR_OBJC_ARRAY_LITERAL:
+      S = ObjCArrayLiteral::CreateEmpty(Context,
+                                        Record[ASTStmtReader::NumExprFields]);
+      break;
+    case EXPR_OBJC_DICTIONARY_LITERAL:
+      S = ObjCDictionaryLiteral::CreateEmpty(Context,
+            Record[ASTStmtReader::NumExprFields],
+            Record[ASTStmtReader::NumExprFields + 1]);
+      break;
     case EXPR_OBJC_ENCODE:
       S = new (Context) ObjCEncodeExpr(Empty);
       break;
@@ -1848,6 +1914,9 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
     case EXPR_OBJC_PROPERTY_REF_EXPR:
       S = new (Context) ObjCPropertyRefExpr(Empty);
+      break;
+    case EXPR_OBJC_SUBSCRIPT_REF_EXPR:
+      S = new (Context) ObjCSubscriptRefExpr(Empty);
       break;
     case EXPR_OBJC_KVC_REF_EXPR:
       llvm_unreachable("mismatching AST file");
@@ -1887,6 +1956,9 @@ Stmt *ASTReader::ReadStmtFromStream(ModuleFile &F) {
       break;
     case STMT_OBJC_AUTORELEASE_POOL:
       S = new (Context) ObjCAutoreleasePoolStmt(Empty);
+      break;
+    case EXPR_OBJC_BOOL_LITERAL:
+      S = new (Context) ObjCBoolLiteralExpr(Empty);
       break;
     case STMT_SEH_EXCEPT:
       S = new (Context) SEHExceptStmt(Empty);

@@ -177,6 +177,9 @@ public:
   Value *VisitCharacterLiteral(const CharacterLiteral *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
+  Value *VisitObjCBoolLiteralExpr(const ObjCBoolLiteralExpr *E) {
+    return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
+  }
   Value *VisitCXXBoolLiteralExpr(const CXXBoolLiteralExpr *E) {
     return llvm::ConstantInt::get(ConvertType(E->getType()), E->getValue());
   }
@@ -518,6 +521,15 @@ public:
   Value *VisitVAArgExpr(VAArgExpr *VE);
   Value *VisitObjCStringLiteral(const ObjCStringLiteral *E) {
     return CGF.EmitObjCStringLiteral(E);
+  }
+  Value *VisitObjCNumericLiteral(ObjCNumericLiteral *E) {
+    return CGF.EmitObjCNumericLiteral(E);
+  }
+  Value *VisitObjCArrayLiteral(ObjCArrayLiteral *E) {
+    return CGF.EmitObjCArrayLiteral(E);
+  }
+  Value *VisitObjCDictionaryLiteral(ObjCDictionaryLiteral *E) {
+    return CGF.EmitObjCDictionaryLiteral(E);
   }
   Value *VisitAsTypeExpr(AsTypeExpr *CE);
   Value *VisitAtomicExpr(AtomicExpr *AE);

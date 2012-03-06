@@ -141,6 +141,8 @@ protected:
     friend class CallExpr; // ctor
     friend class OffsetOfExpr; // ctor
     friend class ObjCMessageExpr; // ctor
+    friend class ObjCArrayLiteral; // ctor
+    friend class ObjCDictionaryLiteral; // ctor
     friend class ShuffleVectorExpr; // ctor
     friend class ParenListExpr; // ctor
     friend class CXXUnresolvedConstructExpr; // ctor

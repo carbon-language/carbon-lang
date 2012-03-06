@@ -93,12 +93,17 @@ bool Darwin::hasARCRuntime() const {
     return !isMacosxVersionLT(10, 7);
 }
 
+bool Darwin::hasSubscriptingRuntime() const {
+    return !isTargetIPhoneOS() && !isMacosxVersionLT(10, 8);
+}
+
 /// Darwin provides an ARC runtime starting in MacOS X 10.7 and iOS 5.0.
 void Darwin::configureObjCRuntime(ObjCRuntime &runtime) const {
   if (runtime.getKind() != ObjCRuntime::NeXT)
     return ToolChain::configureObjCRuntime(runtime);
 
   runtime.HasARC = runtime.HasWeak = hasARCRuntime();
+  runtime.HasSubscripting = hasSubscriptingRuntime();
 
   // So far, objc_terminate is only available in iOS 5.
   // FIXME: do the simulator logic properly.

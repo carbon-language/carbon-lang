@@ -136,6 +136,13 @@ static bool isObjCAutoRefCount(const ArgList &Args) {
   return Args.hasFlag(options::OPT_fobjc_arc, options::OPT_fno_objc_arc, false);
 }
 
+/// \brief Determine whether we are linking the ObjC runtime.
+static bool isObjCRuntimeLinked(const ArgList &Args) {
+  if (isObjCAutoRefCount(Args))
+    return true;
+  return Args.hasArg(options::OPT_fobjc_link_runtime);
+}
+
 static void addProfileRT(const ToolChain &TC, const ArgList &Args,
                          ArgStringList &CmdArgs,
                          llvm::Triple Triple) {
@@ -4025,7 +4032,7 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
                 CmdArgs.push_back("-lcrt1.o");
               else if (getDarwinToolChain().isMacosxVersionLT(10, 6))
                 CmdArgs.push_back("-lcrt1.10.5.o");
-              else
+              else if (getDarwinToolChain().isMacosxVersionLT(10, 8))
                 CmdArgs.push_back("-lcrt1.10.6.o");
 
               // darwin_crt2 spec is empty.
@@ -4064,14 +4071,24 @@ void darwin::Link::ConstructJob(Compilation &C, const JobAction &JA,
 
   getDarwinToolChain().AddLinkSearchPathArgs(Args, CmdArgs);
 
-  // In ARC, if we don't have runtime support, link in the runtime
-  // stubs.  We have to do this *before* adding any of the normal
-  // linker inputs so that its initializer gets run first.
-  if (isObjCAutoRefCount(Args)) {
-    ObjCRuntime runtime;
-    getDarwinToolChain().configureObjCRuntime(runtime);
-    if (!runtime.HasARC)
-      getDarwinToolChain().AddLinkARCArgs(Args, CmdArgs);
+  if (isObjCRuntimeLinked(Args)) {
+    // Avoid linking compatibility stubs on i386 mac.
+    if (!getDarwinToolChain().isTargetMacOS() ||
+        getDarwinToolChain().getArchName() != "i386") {
+      // If we don't have ARC or subscripting runtime support, link in the
+      // runtime stubs.  We have to do this *before* adding any of the normal
+      // linker inputs so that its initializer gets run first.
+      ObjCRuntime runtime;
+      getDarwinToolChain().configureObjCRuntime(runtime);
+      // We use arclite library for both ARC and subscripting support.
+      if ((!runtime.HasARC && isObjCAutoRefCount(Args)) ||
+          !runtime.HasSubscripting)
+        getDarwinToolChain().AddLinkARCArgs(Args, CmdArgs);
+      CmdArgs.push_back("-framework");
+      CmdArgs.push_back("Foundation");
+    }
+    // Link libobj.
+    CmdArgs.push_back("-lobjc");
   }
 
   AddLinkerInputs(getToolChain(), Inputs, Args, CmdArgs);

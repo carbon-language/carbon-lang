@@ -30,6 +30,9 @@ public:
   /// True if the runtime supports ARC zeroing __weak.
   unsigned HasWeak : 1;
 
+  /// \brief True if the runtime supports subscripting methods.
+  unsigned HasSubscripting : 1;
+
   /// True if the runtime provides the following entrypoint:
   ///   void objc_terminate(void);
   /// If available, this will be called instead of abort() when an
@@ -37,7 +40,7 @@ public:
   unsigned HasTerminate : 1;
 
   ObjCRuntime() : RuntimeKind(NeXT), HasARC(false), HasWeak(false),
-    HasTerminate(false) {}
+    HasSubscripting(false), HasTerminate(false) {}
 };
 
 }
