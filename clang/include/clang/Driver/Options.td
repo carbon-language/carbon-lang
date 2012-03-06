@@ -419,8 +419,8 @@ def fno_elide_constructors : Flag<"-fno-elide-constructors">, Group<f_Group>;
 def fno_eliminate_unused_debug_symbols : Flag<"-fno-eliminate-unused-debug-symbols">, Group<f_Group>;
 def fno_exceptions : Flag<"-fno-exceptions">, Group<f_Group>;
 def fno_gnu_keywords : Flag<"-fno-gnu-keywords">, Group<f_Group>;
-def fno_inline_functions : Flag<"-fno-inline-functions">, Group<clang_ignored_f_Group>;
-def fno_inline : Flag<"-fno-inline">, Group<f_Group>;
+def fno_inline_functions : Flag<"-fno-inline-functions">, Group<f_Group>;
+def fno_inline : Flag<"-fno-inline">, Group<clang_ignored_f_Group>;
 def fno_keep_inline_functions : Flag<"-fno-keep-inline-functions">, Group<clang_ignored_f_Group>;
 def fno_lax_vector_conversions : Flag<"-fno-lax-vector-conversions">, Group<f_Group>;
 def fno_limit_debug_info : Flag<"-fno-limit-debug-info">, Group<f_Group>,

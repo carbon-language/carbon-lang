@@ -1104,8 +1104,8 @@ static bool ParseCodeGenArgs(CodeGenOptions &Opts, ArgList &Args, InputKind IK,
   // We must always run at least the always inlining pass.
   Opts.Inlining = (Opts.OptimizationLevel > 1) ? CodeGenOptions::NormalInlining
     : CodeGenOptions::OnlyAlwaysInlining;
-  // -fno-inline overrides OptimizationLevel > 1.
-  Opts.Inlining = Args.hasArg(OPT_fno_inline) ? 
+  // -fno-inline-functions overrides OptimizationLevel > 1.
+  Opts.Inlining = Args.hasArg(OPT_fno_inline_functions) ? 
     CodeGenOptions::OnlyAlwaysInlining : Opts.Inlining;
 
   Opts.DebugInfo = Args.hasArg(OPT_g);
@@ -1939,7 +1939,8 @@ static void ParseLangArgs(LangOptions &Opts, ArgList &Args, InputKind IK,
   // optimization level and -fno-inline, not actually whether the backend has
   // inlining enabled.
   //
-  Opts.NoInline = !Opt || Args.hasArg(OPT_fno_inline);
+  // FIXME: This is affected by other options (-fno-inline).
+  Opts.NoInline = !Opt;
 
   Opts.FastMath = Args.hasArg(OPT_ffast_math);
 
