@@ -107,9 +107,9 @@ public:
 ///
 struct MCRegisterDesc {
   const char *Name;         // Printable name for the reg (for debugging)
-  uint16_t   Overlaps;      // Overlapping registers, described above
-  uint16_t   SubRegs;       // Sub-register set, described above
-  uint16_t   SuperRegs;     // Super-register set, described above
+  uint32_t   Overlaps;      // Overlapping registers, described above
+  uint32_t   SubRegs;       // Sub-register set, described above
+  uint32_t   SuperRegs;     // Super-register set, described above
 };
 
 /// MCRegisterInfo base class - We assume that the target defines a static
