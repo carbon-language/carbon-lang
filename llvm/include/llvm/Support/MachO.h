@@ -114,6 +114,10 @@ namespace llvm {
       LoadCommandVersionMinIPhoneOS       = 0x00000025u, // LC_VERSION_MIN_IPHONEOS
       LoadCommandFunctionStarts           = 0x00000026u, // LC_FUNCTION_STARTS
       LoadCommandDyldEnvironment          = 0x00000027u, // LC_DYLD_ENVIRONMENT
+      LoadCommandMain                     = 0x80000028u, // LC_MAIN
+      LoadCommandDataInCode               = 0x00000029u, // LC_DATA_IN_CODE
+      LoadCommandSourceVersion            = 0x0000002Au, // LC_SOURCE_VERSION
+      LoadCommandCodeSignDRs              = 0x0000002Bu, // LC_DYLIB_CODE_SIGN_DRS
 
       // Constant bits for the "flags" field in llvm::MachO::segment_command
       SegmentCommandFlagBitHighVM             = 0x1u, // SG_HIGHVM
