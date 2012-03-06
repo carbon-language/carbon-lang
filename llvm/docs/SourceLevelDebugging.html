@@ -2140,7 +2140,7 @@ The DWARF for this would be:
   table are publicly visible names only. This means no static or hidden
   functions show up in the .debug_pubnames. No static variables or private class
   variables are in the .debug_pubtypes. Many compilers add different things to
-  these tables, so we can't rely upon the contents between gcc, icc, or clang.
+  these tables, so we can't rely upon the contents between gcc, icc, or clang.</p>
 
 <p>The typical query given by users tends not to match up with the contents of
   these tables. For example, the DWARF spec states that "In the case of the
@@ -2153,7 +2153,7 @@ The DWARF for this would be:
   "a::b::c(int,const Foo&) const", but rather as "c", "b::c" , or "a::b::c".  So
   the name entered in the name table must be demangled in order to chop it up
   appropriately and additional names must be manually entered into the table
-  to make it effective as a name lookup table for debuggers to use.
+  to make it effective as a name lookup table for debuggers to use.</p>
 
 <p>All debuggers currently ignore the .debug_pubnames table as a result of
   its inconsistent and useless public-only name content making it a waste of
@@ -2161,13 +2161,13 @@ The DWARF for this would be:
   not sorted in any way, leaving every debugger to do its own parsing
   and sorting. These tables also include an inlined copy of the string values
   in the table itself making the tables much larger than they need to be on
-  disk, especially for large C++ programs.
+  disk, especially for large C++ programs.</p>
 
 <p>Can't we just fix the sections by adding all of the names we need to this
   table? No, because that is not what the tables are defined to contain and we
   won't know the difference between the old bad tables and the new good tables.
   At best we could make our own renamed sections that contain all of the data
-  we need.
+  we need.</p>
 
 <p>These tables are also insufficient for what a debugger like LLDB needs.
   LLDB uses clang for its expression parsing where LLDB acts as a PCH. LLDB is
@@ -2176,13 +2176,14 @@ The DWARF for this would be:
   tables. Since clang asks a lot of questions when it is parsing an expression,
   we need to be very fast when looking up names, as it happens a lot. Having new
   accelerator tables that are optimized for very quick lookups will benefit
-  this type of debugging experience greatly.
+  this type of debugging experience greatly.</p>
 
 <p>We would like to generate name lookup tables that can be mapped into
   memory from disk, and used as is, with little or no up-front parsing. We would
   also be able to control the exact content of these different tables so they
   contain exactly what we need. The Name Accelerator Tables were designed
-  to fix these issues. In order to solve these issues we need to:
+  to fix these issues. In order to solve these issues we need to:</p>
+
 <ul>
   <li>Have a format that can be mapped into memory from disk and used as is</li>
   <li>Lookups should be very fast</li>
@@ -2190,29 +2191,36 @@ The DWARF for this would be:
   <li>Contain all of the names needed for typical lookups out of the box</li>
   <li>Strict rules for the contents of tables</li>
 </ul>
+
 <p>Table size is important and the accelerator table format should allow the
   reuse of strings from common string tables so the strings for the names are
   not duplicated. We also want to make sure the table is ready to be used as-is
-  by simply mapping the table into memory with minimal header parsing.
+  by simply mapping the table into memory with minimal header parsing.</p>
 
 <p>The name lookups need to be fast and optimized for the kinds of lookups
   that debuggers tend to do. Optimally we would like to touch as few parts of
   the mapped table as possible when doing a name lookup and be able to quickly
   find the name entry we are looking for, or discover there are no matches. In
-  the case of debuggers we optimized for lookups that fail most of the time.
+  the case of debuggers we optimized for lookups that fail most of the time.</p>
 
 <p>Each table that is defined should have strict rules on exactly what is in
-  the accelerator tables and documented so clients can rely on the content.
+  the accelerator tables and documented so clients can rely on the content.</p>
+
 </div>
+
 <!-- ======================================================================= -->
 <h4>
   <a name="acceltablehashes">Hash Tables</a>
 </h4>
 <!-- ======================================================================= -->
+
 <div>
 <h5>Standard Hash Tables</h5>
+
 <p>Typical hash tables have a header, buckets, and each bucket points to the
 bucket contents:
+</p>
+
 <div class="doc_code">
 <pre>
 .------------.
@@ -2224,7 +2232,9 @@ bucket contents:
 `------------'
 </pre>
 </div>
-<p>The BUCKETS are an array of offsets to DATA for each hash:
+
+<p>The BUCKETS are an array of offsets to DATA for each hash:</p>
+
 <div class="doc_code">
 <pre>
 .------------.
@@ -2237,10 +2247,12 @@ bucket contents:
 '------------'
 </pre>
 </div>
+
 <p>So for bucket[3] in the example above, we have an offset into the table
   0x000034f0 which points to a chain of entries for the bucket. Each bucket
   must contain a next pointer, full 32 bit hash value, the string itself,
-  and the data for the current string value.
+  and the data for the current string value.</p>
+
 <div class="doc_code">
 <pre>
             .------------.
@@ -2261,6 +2273,7 @@ bucket contents:
             `------------'
 </pre>
 </div>
+
 <p>The problem with this layout for debuggers is that we need to optimize for
   the negative lookup case where the symbol we're searching for is not present.
   So if we were to lookup "printf" in the table above, we would make a 32 hash
@@ -2269,14 +2282,15 @@ bucket contents:
   need to read the next pointer, then read the hash, compare it, and skip to
   the next bucket. Each time we are skipping many bytes in memory and touching
   new cache pages just to do the compare on the full 32 bit hash. All of these
-  accesses then tell us that we didn't have a match.
+  accesses then tell us that we didn't have a match.</p>
 
 <h5>Name Hash Tables</h5>
 
 <p>To solve the issues mentioned above we have structured the hash tables
   a bit differently: a header, buckets, an array of all unique 32 bit hash
   values, followed by an array of hash value data offsets, one for each hash
-  value, then the data for all hash values:
+  value, then the data for all hash values:</p>
+
 <div class="doc_code">
 <pre>
 .-------------.
@@ -2292,13 +2306,15 @@ bucket contents:
 `-------------'
 </pre>
 </div>
+
 <p>The BUCKETS in the name tables are an index into the HASHES array. By
   making all of the full 32 bit hash values contiguous in memory, we allow
   ourselves to efficiently check for a match while touching as little
   memory as possible. Most often checking the 32 bit hash values is as far as
   the lookup goes. If it does match, it usually is a match with no collisions.
   So for a table with "n_buckets" buckets, and "n_hashes" unique 32 bit hash
-  values, we can clarify the contents of the BUCKETS, HASHES and OFFSETS as:
+  values, we can clarify the contents of the BUCKETS, HASHES and OFFSETS as:</p>
+
 <div class="doc_code">
 <pre>
 .-------------------------.
@@ -2320,8 +2336,10 @@ bucket contents:
 `-------------------------'
 </pre>
 </div>
+
 <p>So taking the exact same data from the standard hash example above we end up
-  with:
+  with:</p>
+
 <div class="doc_code">
 <pre>
             .------------.
@@ -2406,6 +2424,7 @@ bucket contents:
             `------------'
 </pre>
 </div>
+
 <p>So we still have all of the same data, we just organize it more efficiently
   for debugger lookup. If we repeat the same "printf" lookup from above, we
   would hash "printf" and find it matches BUCKETS[3] by taking the 32 bit hash
@@ -2416,14 +2435,15 @@ bucket contents:
   3. In the case of a failed lookup we would access the memory for BUCKETS[3], and
   then compare a few consecutive 32 bit hashes before we know that we have no match.
   We don't end up marching through multiple words of memory and we really keep the
-  number of processor data cache lines being accessed as small as possible.
+  number of processor data cache lines being accessed as small as possible.</p>
 
 <p>The string hash that is used for these lookup tables is the Daniel J.
   Bernstein hash which is also used in the ELF GNU_HASH sections. It is a very
-  good hash for all kinds of names in programs with very few hash collisions.
+  good hash for all kinds of names in programs with very few hash collisions.</p>
 
-<p>Empty buckets are designated by using an invalid hash index of UINT32_MAX.
+<p>Empty buckets are designated by using an invalid hash index of UINT32_MAX.</p>
 </div>
+
 <!-- ======================================================================= -->
 <h4>
   <a name="acceltabledetails">Details</a>
@@ -2433,11 +2453,11 @@ bucket contents:
 <p>These name hash tables are designed to be generic where specializations of
   the table get to define additional data that goes into the header
   ("HeaderData"), how the string value is stored ("KeyType") and the content
-  of the data for each hash value.
+  of the data for each hash value.</p>
 
 <h5>Header Layout</h5>
 <p>The header has a fixed part, and the specialized part. The exact format of
-  the header is:
+  the header is:</p>
 <div class="doc_code">
 <pre>
 struct Header
@@ -2461,7 +2481,7 @@ struct Header
   which allows the table to be revised and modified in the future. The current
   version number is 1. "hash_function" is a uint16_t enumeration that specifies
   which hash function was used to produce this table. The current values for the
-  hash function enumerations include:
+  hash function enumerations include:</p>
 <div class="doc_code">
 <pre>
 enum HashFunctionType
@@ -2475,7 +2495,7 @@ enum HashFunctionType
   values that are in the HASHES array, and is the same number of offsets are
   contained in the OFFSETS array. "header_data_len" specifies the size in
   bytes of the HeaderData that is filled in by specialized versions of this
-  table.
+  table.</p>
 
 <h5>Fixed Lookup</h5>
 <p>The header is followed by the buckets, hashes, offsets, and hash value
@@ -2493,24 +2513,24 @@ struct FixedTable
 <p>"buckets" is an array of 32 bit indexes into the "hashes" array. The
   "hashes" array contains all of the 32 bit hash values for all names in the
   hash table. Each hash in the "hashes" table has an offset in the "offsets"
-  array that points to the data for the hash value.
+  array that points to the data for the hash value.</p>
 
 <p>This table setup makes it very easy to repurpose these tables to contain
   different data, while keeping the lookup mechanism the same for all tables.
   This layout also makes it possible to save the table to disk and map it in
-  later and do very efficient name lookups with little or no parsing.
+  later and do very efficient name lookups with little or no parsing.</p>
 
 <p>DWARF lookup tables can be implemented in a variety of ways and can store
   a lot of information for each name. We want to make the DWARF tables
   extensible and able to store the data efficiently so we have used some of the
   DWARF features that enable efficient data storage to define exactly what kind
-  of data we store for each name.
+  of data we store for each name.</p>
 
 <p>The "HeaderData" contains a definition of the contents of each HashData
   chunk. We might want to store an offset to all of the debug information
   entries (DIEs) for each name. To keep things extensible, we create a list of
   items, or Atoms, that are contained in the data for each name. First comes the
-  type of the data in each atom:
+  type of the data in each atom:</p>
 <div class="doc_code">
 <pre>
 enum AtomType
@@ -2524,7 +2544,7 @@ enum AtomType
 };
 </pre>
 </div>
-<p>The enumeration values and their meanings are:
+<p>The enumeration values and their meanings are:</p>
 <div class="doc_code">
 <pre>
   eAtomTypeNULL       - a termination atom that specifies the end of the atom list
@@ -2536,7 +2556,7 @@ enum AtomType
 </pre>
 </div>
 <p>Then we allow each atom type to define the atom type and how the data for
-  each atom type data is encoded:
+  each atom type data is encoded:</p>
 <div class="doc_code">
 <pre>
 struct Atom
@@ -2548,7 +2568,7 @@ struct Atom
 </div>
 <p>The "form" type above is from the DWARF specification and defines the
   exact encoding of the data for the Atom type. See the DWARF specification for
-  the DW_FORM_ definitions.
+  the DW_FORM_ definitions.</p>
 <div class="doc_code">
 <pre>
 struct HeaderData
@@ -2563,11 +2583,11 @@ struct HeaderData
   that are encoded using the DW_FORM_ref1, DW_FORM_ref2, DW_FORM_ref4,
   DW_FORM_ref8 or DW_FORM_ref_udata. It also defines what is contained in
   each "HashData" object -- Atom.form tells us how large each field will be in
-  the HashData and the Atom.type tells us how this data should be interpreted.
+  the HashData and the Atom.type tells us how this data should be interpreted.</p>
 
 <p>For the current implementations of the ".apple_names" (all functions + globals),
   the ".apple_types" (names of all types that are defined), and the
-  ".apple_namespaces" (all namespaces), we currently set the Atom array to be:
+  ".apple_namespaces" (all namespaces), we currently set the Atom array to be:</p>
 <div class="doc_code">
 <pre>
 HeaderData.atom_count = 1;
@@ -2580,7 +2600,7 @@ HeaderData.atoms[0].form = DW_FORM_data4;
   multiple matching DIEs in a single file, which could come up with an inlined
   function for instance. Future tables could include more information about the
   DIE such as flags indicating if the DIE is a function, method, block,
-  or inlined.
+  or inlined.</p>
 
 <p>The KeyType for the DWARF table is a 32 bit string table offset into the
   ".debug_str" table. The ".debug_str" is the string table for the DWARF which
@@ -2588,11 +2608,11 @@ HeaderData.atoms[0].form = DW_FORM_data4;
   help from the compiler, that we reuse the strings between all of the DWARF
   sections and keeps the hash table size down. Another benefit to having the
   compiler generate all strings as DW_FORM_strp in the debug info, is that
-  DWARF parsing can be made much faster.
+  DWARF parsing can be made much faster.</p>
 
 <p>After a lookup is made, we get an offset into the hash data. The hash data
   needs to be able to deal with 32 bit hash collisions, so the chunk of data
-  at the offset in the hash data consists of a triple:
+  at the offset in the hash data consists of a triple:</p>
 <div class="doc_code">
 <pre>
 uint32_t str_offset
@@ -2601,7 +2621,7 @@ HashData[hash_data_count]
 </pre>
 </div>
 <p>If "str_offset" is zero, then the bucket contents are done. 99.9% of the
-  hash data chunks contain a single item (no 32 bit hash collision):
+  hash data chunks contain a single item (no 32 bit hash collision):</p>
 <div class="doc_code">
 <pre>
 .------------.
@@ -2615,7 +2635,7 @@ HashData[hash_data_count]
 `------------'
 </pre>
 </div>
-<p>If there are collisions, you will have multiple valid string offsets:
+<p>If there are collisions, you will have multiple valid string offsets:</p>
 <div class="doc_code">
 <pre>
 .------------.
@@ -2634,7 +2654,7 @@ HashData[hash_data_count]
 </pre>
 </div>
 <p>Current testing with real world C++ binaries has shown that there is around 1
-  32 bit hash collision per 100,000 name entries.
+  32 bit hash collision per 100,000 name entries.</p>
 </div>
 <!-- ======================================================================= -->
 <h4>
@@ -2644,7 +2664,7 @@ HashData[hash_data_count]
 <div>
 <p>As we said, we want to strictly define exactly what is included in the
   different tables. For DWARF, we have 3 tables: ".apple_names", ".apple_types",
-  and ".apple_namespaces".
+  and ".apple_namespaces".</p>
 
 <p>".apple_names" sections should contain an entry for each DWARF DIE whose
   DW_TAG is a DW_TAG_label, DW_TAG_inlined_subroutine, or DW_TAG_subprogram that
@@ -2652,7 +2672,7 @@ HashData[hash_data_count]
   DW_AT_entry_pc. It also contains DW_TAG_variable DIEs that have a DW_OP_addr
   in the location (global and static variables). All global and static variables
   should be included, including those scoped withing functions and classes. For
-  example using the following code:
+  example using the following code:</p>
 <div class="doc_code">
 <pre>
 static int var = 0;
@@ -2669,10 +2689,10 @@ void f ()
   DW_AT_MIPS_linkage_name attribute, and the DW_AT_name contains the function
   basename. If global or static variables have a mangled name in a
   DW_AT_MIPS_linkage_name attribute, this should be emitted along with the
-  simple name found in the DW_AT_name attribute.
+  simple name found in the DW_AT_name attribute.</p>
 
 <p>".apple_types" sections should contain an entry for each DWARF DIE whose
-  tag is one of:
+  tag is one of:</p>
 <ul>
   <li>DW_TAG_array_type</li>
   <li>DW_TAG_class_type</li>
@@ -2701,7 +2721,7 @@ void f ()
 </ul>
 <p>Only entries with a DW_AT_name attribute are included, and the entry must
   not be a forward declaration (DW_AT_declaration attribute with a non-zero value).
-  For example, using the following code:
+  For example, using the following code:</p>
 <div class="doc_code">
 <pre>
 int main ()
@@ -2711,7 +2731,7 @@ int main ()
 }
 </pre>
 </div>
-<p>We get a few type DIEs:
+<p>We get a few type DIEs:</p>
 <div class="doc_code">
 <pre>
 0x00000067:     TAG_base_type [5]
@@ -2724,13 +2744,13 @@ int main ()
                 AT_byte_size( 0x08 )
 </pre>
 </div>
-<p>The DW_TAG_pointer_type is not included because it does not have a DW_AT_name.
+<p>The DW_TAG_pointer_type is not included because it does not have a DW_AT_name.</p>
 
 <p>".apple_namespaces" section should contain all DW_TAG_namespace DIEs. If
   we run into a namespace that has no name this is an anonymous namespace,
   and the name should be output as "(anonymous namespace)" (without the quotes).
   Why? This matches the output of the abi::cxa_demangle() that is in the standard
-  C++ library that demangles mangled names.
+  C++ library that demangles mangled names.</p>
 </div>
 
 <!-- ======================================================================= -->
@@ -2759,16 +2779,16 @@ int main ()
   functions for a class + category name. This table does not contain any selector
   names, it just maps Objective-C class names (or class names + category) to all
   of the methods and class functions. The selectors are added as function
-  basenames in the .debug_names section.
+  basenames in the .debug_names section.</p>
 
 <p>In the ".apple_names" section for Objective-C functions, the full name is the
   entire function name with the brackets ("-[NSString stringWithCString:]") and the
-  basename is the selector only ("stringWithCString:").
+  basename is the selector only ("stringWithCString:").</p>
 
 <h5>Mach-O Changes</h5>
 <p>The sections names for the apple hash tables are for non mach-o files. For
   mach-o files, the sections should be contained in the "__DWARF" segment with
-  names as follows:
+  names as follows:</p>
 <ul>
   <li>".apple_names" -> "__apple_names"</li>
   <li>".apple_types" -> "__apple_types"</li>
