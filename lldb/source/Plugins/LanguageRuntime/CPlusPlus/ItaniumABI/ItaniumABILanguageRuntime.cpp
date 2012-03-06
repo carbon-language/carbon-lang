@@ -255,7 +255,7 @@ ItaniumABILanguageRuntime::GetPluginVersion()
     return 1;
 }
 
-static const char *exception_names[] = {"__cxa_throw", "__cxa_allocate", "__cxa_rethrow", "__cxa_catch"};
+static const char *exception_names[] = {"__cxa_throw", "__cxa_allocate_exception", "__cxa_rethrow", "__cxa_begin_catch"};
 static const int num_throw_names = 3;
 
 BreakpointResolverSP
