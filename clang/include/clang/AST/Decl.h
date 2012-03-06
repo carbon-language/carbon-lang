@@ -451,12 +451,18 @@ public:
 
   /// \brief Get the original (first) namespace declaration.
   NamespaceDecl *getOriginalNamespace() {
-    return getCanonicalDecl();
+    if (isFirstDeclaration())
+      return this;
+
+    return AnonOrFirstNamespaceAndInline.getPointer();
   }
 
   /// \brief Get the original (first) namespace declaration.
   const NamespaceDecl *getOriginalNamespace() const {
-    return getCanonicalDecl();
+    if (isFirstDeclaration())
+      return this;
+
+    return AnonOrFirstNamespaceAndInline.getPointer();
   }
 
   /// \brief Return true if this declaration is an original (first) declaration
@@ -478,16 +484,10 @@ public:
 
   /// Retrieves the canonical declaration of this namespace.
   NamespaceDecl *getCanonicalDecl() {
-    if (isFirstDeclaration())
-      return this;
-    
-    return AnonOrFirstNamespaceAndInline.getPointer();
+    return getOriginalNamespace();
   }
   const NamespaceDecl *getCanonicalDecl() const {
-    if (isFirstDeclaration())
-      return this;
-    
-    return AnonOrFirstNamespaceAndInline.getPointer();
+    return getOriginalNamespace();
   }
   
   virtual SourceRange getSourceRange() const {
