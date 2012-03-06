@@ -133,9 +133,9 @@ public:
   void printFBits32(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVectorIndex(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVectorListOne(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printVectorListDPair(const MCInst *MI, unsigned OpNum, raw_ostream &O);
-  void printVectorListDPairSpaced(const MCInst *MI, unsigned OpNum,
-                                  raw_ostream &O);
+  void printVectorListTwo(const MCInst *MI, unsigned OpNum, raw_ostream &O);
+  void printVectorListTwoSpaced(const MCInst *MI, unsigned OpNum,
+                               raw_ostream &O);
   void printVectorListThree(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVectorListFour(const MCInst *MI, unsigned OpNum, raw_ostream &O);
   void printVectorListOneAllLanes(const MCInst *MI, unsigned OpNum,
@@ -146,8 +146,6 @@ public:
                                     raw_ostream &O);
   void printVectorListFourAllLanes(const MCInst *MI, unsigned OpNum,
                                    raw_ostream &O);
-  void printVectorListTwoSpaced(const MCInst *MI, unsigned OpNum,
-                                raw_ostream &O);
   void printVectorListTwoSpacedAllLanes(const MCInst *MI, unsigned OpNum,
                                         raw_ostream &O);
   void printVectorListThreeSpacedAllLanes(const MCInst *MI, unsigned OpNum,

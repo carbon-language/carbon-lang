@@ -1133,9 +1133,10 @@ public:
     return VectorList.Count == 1;
   }
 
-  bool isVecListTwoDAllLanes() const {
+  bool isVecListDPairAllLanes() const {
     if (!isSingleSpacedVectorAllLanes()) return false;
-    return VectorList.Count == 2;
+    return (ARMMCRegisterClasses[ARM::DPairRegClassID]
+              .contains(VectorList.RegNum));
   }
 
   bool isVecListTwoQAllLanes() const {
@@ -2981,12 +2982,13 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
       case NoLanes:
         E = Parser.getTok().getLoc();
         Reg = MRI->getMatchingSuperReg(Reg, ARM::dsub_0,
-                                      &ARMMCRegisterClasses[ARM::DPairRegClassID]);
-
+                                   &ARMMCRegisterClasses[ARM::DPairRegClassID]);
         Operands.push_back(ARMOperand::CreateVectorList(Reg, 2, false, S, E));
         break;
       case AllLanes:
         E = Parser.getTok().getLoc();
+        Reg = MRI->getMatchingSuperReg(Reg, ARM::dsub_0,
+                                   &ARMMCRegisterClasses[ARM::DPairRegClassID]);
         Operands.push_back(ARMOperand::CreateVectorListAllLanes(Reg, 2, false,
                                                                 S, E));
         break;
@@ -3152,7 +3154,7 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
 
   switch (LaneKind) {
   case NoLanes:
-    // Non-lane two-register operands have been converted to the
+    // Two-register operands have been converted to the
     // composite register classes.
     if (Count == 2) {
       const MCRegisterClass *RC = (Spacing == 1) ?
@@ -3165,6 +3167,12 @@ parseVectorList(SmallVectorImpl<MCParsedAsmOperand*> &Operands) {
                                                     (Spacing == 2), S, E));
     break;
   case AllLanes:
+    // Two-register operands have been converted to the
+    // composite register classes.
+    if (Count == 2 && Spacing == 1) {
+      const MCRegisterClass *RC = &ARMMCRegisterClasses[ARM::DPairRegClassID];
+      FirstReg = MRI->getMatchingSuperReg(FirstReg, ARM::dsub_0, RC);
+    }
     Operands.push_back(ARMOperand::CreateVectorListAllLanes(FirstReg, Count,
                                                             (Spacing == 2),
                                                             S, E));

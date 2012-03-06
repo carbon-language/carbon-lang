@@ -1589,9 +1589,9 @@ static unsigned getVLDSTRegisterUpdateOpcode(unsigned Opc) {
   case ARM::VST2q16PseudoWB_fixed: return ARM::VST2q16PseudoWB_register;
   case ARM::VST2q32PseudoWB_fixed: return ARM::VST2q32PseudoWB_register;
 
-  case ARM::VLD2DUPd8PseudoWB_fixed: return ARM::VLD2DUPd8PseudoWB_register;
-  case ARM::VLD2DUPd16PseudoWB_fixed: return ARM::VLD2DUPd16PseudoWB_register;
-  case ARM::VLD2DUPd32PseudoWB_fixed: return ARM::VLD2DUPd32PseudoWB_register;
+  case ARM::VLD2DUPd8wb_fixed: return ARM::VLD2DUPd8wb_register;
+  case ARM::VLD2DUPd16wb_fixed: return ARM::VLD2DUPd16wb_register;
+  case ARM::VLD2DUPd32wb_fixed: return ARM::VLD2DUPd32wb_register;
   }
   return Opc; // If not one we handle, return it unchanged.
 }
@@ -2891,8 +2891,8 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   }
 
   case ARMISD::VLD2DUP: {
-    unsigned Opcodes[] = { ARM::VLD2DUPd8Pseudo, ARM::VLD2DUPd16Pseudo,
-                           ARM::VLD2DUPd32Pseudo };
+    unsigned Opcodes[] = { ARM::VLD2DUPd8, ARM::VLD2DUPd16,
+                           ARM::VLD2DUPd32 };
     return SelectVLDDup(N, false, 2, Opcodes);
   }
 
@@ -2909,9 +2909,8 @@ SDNode *ARMDAGToDAGISel::Select(SDNode *N) {
   }
 
   case ARMISD::VLD2DUP_UPD: {
-    unsigned Opcodes[] = { ARM::VLD2DUPd8PseudoWB_fixed,
-                           ARM::VLD2DUPd16PseudoWB_fixed,
-                           ARM::VLD2DUPd32PseudoWB_fixed };
+    unsigned Opcodes[] = { ARM::VLD2DUPd8wb_fixed, ARM::VLD2DUPd16wb_fixed,
+                           ARM::VLD2DUPd32wb_fixed };
     return SelectVLDDup(N, true, 2, Opcodes);
   }
 
